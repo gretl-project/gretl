@@ -614,19 +614,44 @@ static void alt_gtk_init (int *pargc,
 			  char *filearg,
 			  GError **popterr)
 {
-    gchar **argv = g_win32_get_command_line();
+    int argc_w = 0;
+    int initted = 0;
+    LPWSTR *argv_w;
 
-    if (argv != NULL) {
-	int argc = g_strv_length(argv);
+    /* get args as UTF-16 */
+    argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
 
-	gtk_init_with_args(&argc, &argv, _(param_msg),
-			   options, "gretl", popterr);
-	if (argc > 1 && *filearg == '\0') {
-	    strncat(filearg, argv[1], MAXLEN - 1);
+    if (argv_w != NULL) {
+	gchar **argv_u8 = calloc(argc_w, sizeof *argv_u8);
+	gchar **origp = argv_u8; /* for use with g_free */
+	int n_u8 = argc_w;
+	int i, uerr = 0;
+
+	/* for GTK, convert args to UTF-8 */
+	for (i=0; i<argc_w && !uerr; i++) {
+	    argv_u8[i] = g_utf16_to_utf8(argv_w[i], -1, NULL, NULL, NULL);
+	    if (argv_u8[i] == NULL) {
+		uerr = 1;
+	    }
 	}
-	*pargc = argc; /* update (residual) arg count */
-	g_strfreev(argv);
-    } else {
+	if (!uerr) {
+	    gtk_init_with_args(&argc_w, &argv_u8, _(param_msg),
+			       options, "gretl", popterr);
+	    if (argc_w > 1 && *filearg == '\0') {
+		strncat(filearg, argv_u8[1], MAXLEN - 1);
+	    }
+	    *pargc = argc_w; /* update (residual) arg count */
+	    initted = 1;
+	}
+	/* clean up */
+	for (i=0; i<n_u8; i++) {
+	    g_free(origp[i]);
+	}
+	g_free(origp);
+	LocalFree(argv_w);
+    }
+
+    if (!initted) {
 	/* try fallback? */
 	gtk_init_with_args(pargc, pargv, _(param_msg), options,
 			   "gretl", popterr);
