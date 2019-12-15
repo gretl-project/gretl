@@ -16,7 +16,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{October 2018, release 0.5, this is still small but growing... }
+\date{December 2019, release 0.6, still growing... }
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -38,7 +38,7 @@ Note that functions that are exact lookalikes of Matlab functions
 do not live here, but would go into the \texttt{matlab\_utilities}
 package.
 
-\section{Functions working without a dataset}
+\section{Matrix-related functions}
 
 \subsection{commute}
 
@@ -57,6 +57,8 @@ non-zero, then does post-multiplication ($A\times K_{mn}$).
 
 Arguments: \texttt{matrix vecA}
 
+\noindent Return type: \texttt{matrix}
+
 Each column of the input vecA is assumed to come from the operation vec(A) 
 on a square matrix, thus rows(vecA) must be a square number.
 Returns vech(A), which is the result of pre-multiplying vec(A) with the 
@@ -64,19 +66,16 @@ Returns vech(A), which is the result of pre-multiplying vec(A) with the
 If vecA has several columns, each column is 
 treated separately as described above (and the results stacked side-by-side).
 
-\noindent Return type: \texttt{matrix}
-
-
 \subsection{duplicate}
 
 Arguments: \texttt{matrix vechA}
+
+\noindent Return type: \texttt{matrix}
 
 The input is a vector assumed to come from an operation like vech(A).
 Returns vec(A), which is the result of pre-multiplying vech(A) with the 
 "duplication" matrix $D_m$. If vechA has several columns, each column is 
 treated separately as described above (and the results stacked side-by-side).
-
-\noindent Return type: \texttt{matrix}
 
 \subsection{nearPSD}
 
@@ -91,6 +90,35 @@ apparently mimicking the nearPD() function in R. Because of re-scaling
 (to correlation matrix), the \texttt{epsilon} criterion value should
 implicitly apply to the correlation-based eigenvalues. The return
 value 0 or 1 indicates whether \texttt{m} was altered or not. 
+
+\subsection{zeroifclose}
+
+Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
+(optional) 
+
+\noindent Return type: \texttt{scalar}
+
+Sets elements of \texttt{m} to zero if they are really close. The
+return value 0 or 1 indicates whether \texttt{m} was altered or not.
+
+\subsection{drill}
+
+Arguments: \texttt{matrices} array, \texttt{matrix rowspec} (optional), 
+  \texttt{matrix colspec} (optional)
+  
+\noindent Return type: \texttt{matrix}
+
+This function "drills through" a matrix array and returns a matrix;
+for example, drill(x, 2, 3) returns a vector with the [2,3] elements
+of all matrices in the x array. Not specifiying one of rowspec, colspec
+or entering "0" means to select all rows or columns respectively. 
+(Of course at least one of rowspec, colspec must be specified.)
+
+Nota bene: all matrices in the array must be of the same dimensions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Other functions working without a dataset in place}
 
 \subsection{scores2x2}
 
@@ -133,7 +161,6 @@ The input is always sanitized by taking the upper 2x2 part, using
 absolute values, and integer-ization. Warnings are issued if \texttt{verbose}
 is 1. 
 
-
 \subsection{truncnorm}
 
 Arguments: \texttt{int n, scalar m, scalar sigma, scalar below, scalar
@@ -146,20 +173,12 @@ and std.\,dev. \texttt{sigma}, and the left/right truncation values
 \texttt{below} and \texttt{above}. (Pass NA for any one of them to
 skip the respective truncation.) Returns a col vector of values.
 
-\subsection{zeroifclose}
-
-Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
-(optional) 
-
-\noindent Return type: \texttt{scalar}
-
-Sets elements of \texttt{m} to zero if they are really close. The
-return value 0 or 1 indicates whether \texttt{m} was altered or not.
-
 \subsection{WSRcritical}
 
 Arguments: \texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
 (optional)
+
+\noindent Return type: \texttt{matrix}
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4). Tries to find the critical values
@@ -176,13 +195,13 @@ normal approximation case. The normal approximation instead of the
 exact table values can be enforced with the \texttt{forcenorm}
 argument (default: zero, do not enforce).
 
-\noindent Return type: \texttt{matrix}
-
 See also the sister function WSRpvalue.
 
 \subsection{WSRpvalue}
 
 Arguments: \texttt{int n, scalar W, bool forcenorm} (optional)
+
+\noindent Return type: \texttt{scalar}
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4), returns $P(X\geq W)$. In the interior
@@ -203,8 +222,6 @@ The normal approximation instead of the exact table values can be
 enforced with the \texttt{forcenorm} argument (default: zero, do not
 enforce).
 
-\noindent Return type: \texttt{scalar}
-
 See also the sister function WSRcritical.
 
 \subsection{powerset}
@@ -218,17 +235,42 @@ array. Being a set, the ordering is not defined and arbitrary.
 
 \noindent Return type: \texttt{strings} (array)
 
-\subsection{strpos}
+% \subsection{strpos}
 
-Arguments: \texttt{strings S, string str, bool print\_warnings}
-(optional)
+% Arguments: \texttt{strings S, string str, bool print\_warnings}
+% (optional)
 
-Returns the positional entries of a string 'str' in array 'S' in a column
-vector if 'S' contains string 'str', 0 otherwise.
+% \noindent Return type: \texttt{matrix}
 
+% Returns the positional entries of a string 'str' in array 'S' in a column
+% vector if 'S' contains string 'str', 0 otherwise.
+
+\subsection{onemode}
+
+Arguments: \texttt{matrix v}
 
 \noindent Return type: \texttt{matrix}
 
+Finds the mode of the empirical distribution of the input data. 
+When that is multi-modal the first mode is found (following the native
+imaxc function). Returns a 2-element column vector with the modal 
+value and its absolute frequency.
+
+\subsection{bwritejson}
+
+Arguments: \texttt{bundle b}
+
+\noindent Return type: \texttt{string}
+
+Similar to the native function bwrite: Instead of an XML representation 
+of the input bundle this function produces a JSON serialized representation.
+Supported bundle member types are string, scalar, series (will be saved as a
+vector), matrix, string arrays.
+(The returned string can then be written to a file; perhaps this function will 
+be changed to write the file itself.)
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Functions requiring a dataset}
 
@@ -266,16 +308,22 @@ determines only the lower frequency and \texttt{phi} the upper.
 
 \section{Authors}
 \begin{itemize}
-\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset: Jack Lucchetti
-\item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue:
+\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset, drill:
+ Jack Lucchetti
+
+\item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode:
 Sven Schreiber 
+
 \item winsor: Sven Schreiber, original code JoshuaHe
-\item strpos: Artur Tarassow
+\item bwritejson: Artur Tarassow
+
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
-\item November 2019: 0.6, add drill, gbundle2json, onemode, strpos
+\item December 2019: 0.6, add drill, bwritejson, onemode; % , strpos
+    finally remove the retired sepstr2arr (use native strsplit instead);
+    rearrange the documentation a little
 \item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add powerset,
   eliminate, duplicate
 \item February 2018: 0.41, allow non-integer input in WSRpvalue

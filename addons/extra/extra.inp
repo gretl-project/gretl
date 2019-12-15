@@ -1,42 +1,6 @@
-# author='The gretl team'
-# email='<use the mailing list or trackers>'
-# version='0.5'
-# date='2018-10-27'
+include extra_matrix.inp
+include extra_string.inp 
 
-function strings powerset (strings S)
-    # Computes the powerset of the input S,
-    # i.e. all possible cominations of the
-    # string elements in S. (Including the
-    # empty set / empty string "".)
-    # Each combination
-    # yields one string in the output array.
-    # Being a set, the ordering is not
-    # defined.
-    l = nelem(S)
-    N = 2^l
-    matrix P = zeros(N,l)
-    matrix s = seq(0, N-1)'
-
-    loop i=1..l --quiet
-        matrix a = s % 2
-        P[,i] = a
-        s = (s - a) / 2
-    endloop
-
-    strings PS = array(N)
-
-    loop i = 1..N --quiet
-        string c = ""
-        loop j = 1..l --quiet
-            if P[i, j]
-                c = c ~ " " ~ S[j]
-            endif
-        endloop
-        PS[i] = c
-    endloop
-
-    return PS
-end function
 
 function matrix WPtable (int n[4::12] "number of trials")
 /*
@@ -148,112 +112,6 @@ function series winsor (series x,
     return x
 end function
 
-function scalar nearPSD (matrix *m,
-                         scalar epsilon[0::0])
-    # FIXME: cover the case with some variances == 0
-    # (use misszero() after scaling, or something)
-    #
-    # Forces the matrix m into the positive semi-definite region.
-    #
-    # Ported from "DomPazz" in Stackoverflow, apparently
-    # mimicking the nearPD() function in R.
-    # Because of re-scaling ( to correlation matrix ), the
-    # epsilon should implicitly apply to the correlation-based
-    # eigenvalues.
-    #
-    # The return value 0 or 1 indicates whether m was altered or not.
-    matrix s = sqrt(diag(m)) # std dev
-    matrix scaling = s * s'
-    matrix ms = m ./ scaling	# rescaled
-    matrix eigvec
-    matrix eigval = eigensym(ms, &eigvec)
-    matrix val = (eigval .> epsilon) ? eigval : epsilon	# like xmax
-    if sum(val .> eigval)	# actually something was changed
-        matrix T = 1 / ( (eigvec .^2) * val )
-        # transform vector T to a diagonal matrix
-        matrix temp = I(rows(T))
-        temp[diag] = sqrt(T)
-        # and also val
-        matrix temp2 = I(rows(T))
-        temp2[diag] = sqrt(val)
-        matrix B = temp * eigvec * temp2
-        ms = B * B'
-        # undo the re-scaling
-        m = ms .* scaling
-        return 1
-    else
-        return 0
-    endif
-end function
-
-function scalar zeroifclose (matrix *m,
-                             scalar thresh[0::1e-50])
-    # Sets elements to zero if they are really close.
-    # The return value 0 or 1 indicates whether m was altered or not.
-    # (an older version copied and returned the matrix)
-    matrix indicator = (abs(m) .< thresh)
-    m = indicator ? 0 : m
-    if sum(indicator)
-        return 1
-    else
-        return 0
-    endif
-end function
-
-function matrix commute (const matrix A,
-                         int m[1::],
-                         int n[0::0],
-                         bool post[0])
-    # returns A premultiplied by K_mn,
-    # K_mn being the commutation matrix, see Magnus/Neudecker
-    # (more efficient than explicit pre-multiplication,
-    # just reshuffles stuff)
-    # If post != 0, does post-multiplication:
-    # if n == 0 (default), then it's understood to be equal to m,
-    # as per Magnus/Neudecker convention: K_nn = K_n
-    n = n ? n : m
-    if !post && (rows(A) != n*m)
-        funcerr "m*n doesn't match row dim of input"
-    elif post && (cols(A) != n*m)
-        funcerr "m*n doesn't match col dim of input"
-    endif
-
-    matrix e = vec(mshape(seq(1, m*n), m, n)')
-    return post ? A[,e] : A[e,]
-end function
-
-function matrix eliminate (const matrix vecA)
-    # Each column of the input vecA is assumed to
-    # come from the operation vec(A) on a square
-    # matrix, thus rows(vecA) must be a square number.
-    # Returns vech(A), which is the result of pre-
-    # multiplying vec(A) with the "elimination"
-    # matrix L_m.
-    # If vecA has several columns, each column is
-    # treated separately as described above
-    # (and the results stacked side-by-side).
-
-    r = sqrt(rows(vecA))
-    if r != round(r)
-        funcerr "input must have a square number of rows"
-    endif
-    e = vech(mshape(seq(1,r^2), r, r)')
-    return vecA[e,]
-end function
-
-function matrix duplicate (const matrix vechA)
-    # The input is a vector assumed to come from
-    # an operation like vech(A).
-    # Returns vec(A), which is the result of pre-
-    # multiplying vech(A) with the "duplication"
-    # matrix D_m.
-    # If vechA has several columns, each column is
-    # treated separately as described above
-    # (and the results stacked side-by-side).
-
-    e = vec(unvech(seq(1,rows(vechA))'))
-    return vechA[e,]
-end function
 
 function matrix truncnorm (int n[1::],
                            scalar m[0],
@@ -491,101 +349,10 @@ function matrix onemode (const matrix v "Vector of values")
     return E[where, 1] | howmuch[where]
 end function
 
-function matrix drill(const matrices x,
-                      matrix rowspec[null],
-                      matrix colspec[null])
-
-    # This function "drills through" a matrix array and returns a matrix;
-    # for example, drill(x, 2, 3) returns a vector with the [2,3] elements
-    # of all matrices in the x array. "0" means "all".
-    #
-    # NOTA BENE: all matrices must be the same size
-
-    matrix ret = {}
-    n = nelem(x)
-
-    if n == 0
-        return ret
-    endif
-
-    ### check sizes
-
-    nr = rows(x[1])
-    nc = cols(x[1])
-    
-    same_dim = 1
-    loop i = 2 .. n --quiet
-        same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc) 
-        if !same_dim
-            printf "Error: Inconsistent dimensions (not all matrices are the same size)\n"
-            return ret
-        endif
-    endloop
-
-    ### process specs
-
-    if !exists(rowspec) 
-        matrix rs = seq(1, nr)'
-    else
-        if rowspec[1] == 0
-            matrix rs = seq(1, nr)'
-        else
-            matrix rs = vec(rowspec) # force to column
-        endif
-    endif
-
-    if !exists(colspec)
-        matrix cs = seq(1, nc)'
-    else
-        if colspec[1] == 0
-            matrix cs = seq(1, nc)'
-        else
-            matrix cs = vec(colspec) # force to column
-        endif
-    endif
-        
-    ### check for multiple or illegal specs
-    
-    scalar nrspec = rows(rs)
-    scalar ncspec = rows(cs)
-
-    if xmin(nrspec, ncspec) > 1
-        printf "Error: you can’t have multiple row and column specs\n"
-        return ret
-    endif
-    
-    if minc(rs|cs) < 0
-        printf "Error: negative spec not allowed\n"
-        return ret
-    endif
-    
-    if maxc(rs) > nr
-        printf "Error: incorrect row spec (matrices have %d rows, but %d wanted)\n", nr, maxc(rs)
-        return ret
-    endif
-    
-    if maxc(cs) > nc
-        printf "Error: incorrect col spec (matrices have %d columns, but %d wanted)\n", nc, maxc(cs)
-        return ret
-    endif
-    
-    ### do the actual drilling
-
-    if nrspec == 1 
-        ret = flatten(x)[rs,]
-        ret = transp(mshape(ret, nc, n))
-        ret = ret[,cs]
-    elif ncspec == 1 
-        ret = flatten(x,1)[,cs]
-        ret = mshape(ret, nr, n)
-        ret = ret[rs,]
-    endif
-    
-    return ret
-end function
-
-function string gbundle2json (bundle b)
+function string bwritejson (const bundle b)
     # Write bundle elements to json-file.
+	# FIXME: should we mimic bwrite() and actually write the file?!
+
 
     strings keys = getkeys(b)
     string out = "{"
@@ -620,6 +387,9 @@ function string gbundle2json (bundle b)
             endloop
         elif typ == "array"
             # string array always two-dim
+			# FIXME: This apparently pre-supposes a string array?
+			# -> Need to test for other arrays.
+
             strings S = b[key]
             out ~= "["
             loop r=1..nelem(S) -q

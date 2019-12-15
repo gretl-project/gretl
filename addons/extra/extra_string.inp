@@ -1,0 +1,36 @@
+# extra_string.inp for string-related functions
+
+function strings powerset (strings S)
+    # Computes the powerset of the input S,
+    # i.e. all possible cominations of the
+    # string elements in S. (Including the
+    # empty set / empty string "".)
+    # Each combination
+    # yields one string in the output array.
+    # Being a set, the ordering is not
+    # defined.
+    l = nelem(S)
+    N = 2^l
+    matrix P = zeros(N,l)
+    matrix s = seq(0, N-1)'
+
+    loop i=1..l --quiet
+        matrix a = s % 2
+        P[,i] = a
+        s = (s - a) / 2
+    endloop
+
+    strings PS = array(N)
+
+    loop i = 1..N --quiet
+        string c = ""
+        loop j = 1..l --quiet
+            if P[i, j]
+                c = c ~ " " ~ S[j]
+            endif
+        endloop
+        PS[i] = c
+    endloop
+
+    return PS
+end function
