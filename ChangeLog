@@ -19,6 +19,8 @@ version 2019d, in progress
   sample forecasts in some cases where it ought to be OK
 - Fix bug: "(" could in certain cases be misinterpreted as
   starting a series lag specification
+- Fix bug: strsplit() could produce 1 less than the correct
+  number of elements when "\n" is used as separator
 - Fix obscure bug: ensure that a user-function does not
   return directly a variable passed as a const argument
 - Fix obscure bug: ensure that a function cannot access
