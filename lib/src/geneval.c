@@ -14107,12 +14107,8 @@ static NODE *stringify_series (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	gretl_array *A = r->v.a;
-
-	/* flag an error on error? */
-	ret->v.xval = series_set_string_vals(p->dset, l->vnum, A);
+	ret->v.xval = series_set_string_vals(p->dset, l->vnum, r->v.a);
 	if (ret->v.xval != 0.0) {
-	    /* for now, yes */
 	    p->err = E_DATA;
 	}
     }

@@ -122,8 +122,8 @@ work two conditions must be met:
 \begin{enumerate}
 \item The series must have only integer values and the smallest value
   must be 1 or greater.
-\item The array of strings must have at least $n$ members, where $n$
-  is the largest value found in the series.
+\item The array of strings must have at least $n$ distinct members,
+  where $n$ is the largest value found in the series.
 \end{enumerate}
 
 The logic of these conditions is that we're looking to create a
@@ -133,12 +133,6 @@ series in question is an incomplete sample from an associated
 population. Suppose we have a series that goes 2, 3, 5, 9, 10. This is
 taken to be a sample from a population that has at least 10 discrete
 values, 1, 2, \dots{}, 10, and so requires at least 10 value-strings.
-
-One aspect of \cmd{stringify()} is debatable. At present the
-function returns 0 on success, otherwise an integer error code; it
-doesn't explicitly ``fail'' if the required conditions are not met,
-and it's up to the user to check if things went OK. Maybe it should
-just fail on error?
 
 Here's (a simplified version of) an example that one of the authors
 has had cause to use: deriving US-style ``letter grades'' from a
