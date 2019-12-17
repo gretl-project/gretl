@@ -7759,12 +7759,7 @@ static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
 	    char **S = NULL;
 	    int ns = 0;
 
-	    if (!strcmp(sep, "\n") || !strcmp(sep, "\r\n")) {
-		/* just splitting on newlines */
-		S = gretl_string_split_lines(s, &ns);
-	    } else {
-		S = gretl_string_split(s, &ns, sep);
-	    }
+	    S = gretl_string_split(s, &ns, sep);
 	    if (!p->err) {
 		if (k > 0) {
 		    ret->v.str = gretl_strdup(k > ns ? "" : S[k-1]);
