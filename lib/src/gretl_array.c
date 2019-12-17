@@ -268,6 +268,66 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
     return AS;
 }
 
+char **gretl_array_get_stringify_strings (gretl_array *A,
+					  int nreq, int *pns,
+					  int *err)
+{
+    char **S = NULL;
+
+    *pns = 0;
+
+    if (A == NULL) {
+	*err = E_DATA;
+    } else if (A->type != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else if (A->n < nreq) {
+	gretl_errmsg_sprintf("Too few strings: %d given but %d needed",
+			     A->n, nreq);
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	char **AS = (char **) A->data;
+
+	S = strings_array_new(A->n);
+	if (S == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int myerr = 0;
+	    int ndone = 0;
+	    int i, j;
+
+	    for (i=0; i<A->n && !myerr; i++) {
+		if (AS[i] == NULL || AS[i][0] == '\0') {
+		    myerr = E_DATA;
+		} else {
+		    S[i] = gretl_strdup(AS[i]);
+		    if (i > 0) {
+			for (j=0; j<i; j++) {
+			    if (!strcmp(AS[j], S[i])) {
+				gretl_errmsg_sprintf("Duplicated string '%s'", S[i]);
+				myerr = E_DATA;
+			    }
+			}
+		    }
+		}
+		if (!myerr) {
+		    ndone++;
+		}
+	    }
+	    if (myerr && ndone < nreq) {
+		*err = myerr;
+		strings_array_free(S, A->n);
+		S = NULL;
+	    } else {
+		*pns = ndone;
+	    }
+	}
+    }
+
+    return S;
+}
+
 /* note: the return value is newly allocated, and owned by the caller */
 
 char *gretl_strings_array_flatten (gretl_array *A, int space, int *err)

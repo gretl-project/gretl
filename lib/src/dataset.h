@@ -547,8 +547,7 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s);
 int string_series_assign_value (DATASET *dset, int i,
 				int t, double x);
 
-int series_set_string_vals (DATASET *dset, int i, 
-			    char **S, int ns);
+int series_set_string_vals (DATASET *dset, int i, void *ptr);
 
 double series_decode_string (const DATASET *dset, int i, const char *s);
 

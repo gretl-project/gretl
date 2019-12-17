@@ -14108,20 +14108,12 @@ static NODE *stringify_series (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL) {
 	gretl_array *A = r->v.a;
-	char **S;
-	int ns = 0;
 
-	S = gretl_array_get_strings(A, &ns);
-
-	if (S == NULL) {
+	/* flag an error on error? */
+	ret->v.xval = series_set_string_vals(p->dset, l->vnum, A);
+	if (ret->v.xval != 0.0) {
+	    /* for now, yes */
 	    p->err = E_DATA;
-	} else {
-	    /* flag an error on error? */
-	    ret->v.xval = series_set_string_vals(p->dset, l->vnum, S, ns);
-	    if (ret->v.xval != 0.0) {
-		/* for now, yes */
-		p->err = E_DATA;
-	    }
 	}
     }
 

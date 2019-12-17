@@ -4544,13 +4544,15 @@ static void maybe_adjust_label (DATASET *dset, int v,
 /* here we're trying to set strings values on a series from
    scratch */
 
-int series_set_string_vals (DATASET *dset, int i,
-			    char **S, int ns)
+int series_set_string_vals (DATASET *dset, int i, void *ptr)
 {
+    gretl_array *a = ptr;
     gretl_matrix *vals = NULL;
+    char **S = NULL;
+    int ns = 0;
     int err = 0;
 
-    if (S == NULL || dset == NULL || i < 1 || i >= dset->v) {
+    if (a == NULL || dset == NULL || i < 1 || i >= dset->v) {
 	return E_DATA;
     }
 
@@ -4566,13 +4568,7 @@ int series_set_string_vals (DATASET *dset, int i,
 	    gretl_errmsg_set("The minimum value of the target series "
 			     "must be >= 1");
 	    err = E_DATA;
-	} else if (x1 > ns) {
-	    gretl_errmsg_sprintf("Too few strings: %d given but %g needed",
-				 ns, floor(x1));
-	    err = E_DATA;
-	}
-
-	if (!err) {
+	} else {
 	    /* the values should all be integers */
 	    for (i=0; i<nvals && !err; i++) {
 		x1 = gretl_vector_get(vals, i);
@@ -4581,12 +4577,16 @@ int series_set_string_vals (DATASET *dset, int i,
 		    err = E_DATA;
 		}
 	    }
-	    /* and the strings should all be UTF8 */
+	}
+
+	if (!err) {
+	    S = gretl_array_get_stringify_strings(a, (int) x1, &ns, &err);
+	}
+
+	if (!err) {
+	    /* the strings should all be UTF-8 */
 	    for (i=0; i<ns && !err; i++) {
-		if (S[i] == NULL) {
-		    gretl_errmsg_sprintf("String %d is NULL", i+1);
-		    err = E_DATA;
-		} else if (!g_utf8_validate(S[i], -1, NULL)) {
+		if (!g_utf8_validate(S[i], -1, NULL)) {
 		    gretl_errmsg_sprintf("String %d is not valid UTF-8", i+1);
 		    err = E_DATA;
 		}
@@ -4595,19 +4595,11 @@ int series_set_string_vals (DATASET *dset, int i,
     }
 
     if (!err) {
-	char **Scpy = strings_array_dup(S, ns);
-	series_table *st = NULL;
+	series_table *st = series_table_new(S, ns);
 
-	if (Scpy == NULL) {
+	if (st == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    st = series_table_new(Scpy, ns);
-	    if (st == NULL) {
-		err = E_ALLOC;
-		strings_array_free(Scpy, ns);
-	    }
-	}
-	if (!err) {
 	    if (dset->varinfo[i]->st != NULL) {
 		/* remove any pre-existing table */
 		series_table_destroy(dset->varinfo[i]->st);
@@ -4616,6 +4608,10 @@ int series_set_string_vals (DATASET *dset, int i,
 	    dset->varinfo[i]->st = st;
 	    maybe_adjust_label(dset, i, S, ns);
 	}
+    }
+
+    if (err && S != NULL && ns > 0) {
+	strings_array_free(S, ns);
     }
 
     gretl_matrix_free(vals);
