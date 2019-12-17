@@ -116,9 +116,7 @@ function matrix drill(const matrices x,
     # of all matrices in the x array. "0" means "all".
     #
     # NOTA BENE: all matrices must be the same size
-
-	# FIXME: I (Sven) think we should throw funcerr instead of 
-	# returning an empty matrix.
+	# (might perhaps be relaxed in the future?)
 
     matrix ret = {}
     n = nelem(x)
@@ -133,59 +131,44 @@ function matrix drill(const matrices x,
     nc = cols(x[1])
     
     same_dim = 1
-    loop i = 2 .. n --quiet
+    loop i = 2..n --quiet
         same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc) 
         if !same_dim
-            printf "Error: Inconsistent dimensions (not all matrices are the same size)\n"
-            return ret
+			printf "Matrix number %d with different dimensions\n", i
+            funcerr "Error: not all matrices are the same size."
         endif
     endloop
 
     ### process specs
 
-    if !exists(rowspec) 
-        matrix rs = seq(1, nr)'
-    else
-        if rowspec[1] == 0
-            matrix rs = seq(1, nr)'
-        else
-            matrix rs = vec(rowspec) # force to column
-        endif
+    matrix rs = seq(1, nr)'	# default
+    if exists(rowspec)
+        rs = (rowspec[1] == 0) ? rs : vec(rowspec) # force to column
     endif
 
-    if !exists(colspec)
-        matrix cs = seq(1, nc)'
-    else
-        if colspec[1] == 0
-            matrix cs = seq(1, nc)'
-        else
-            matrix cs = vec(colspec) # force to column
-        endif
+    matrix cs = seq(1, nc)' # default
+    if exists(colspec)
+        cs = (colspec[1] == 0) ? cs : vec(colspec) # force to column
     endif
         
     ### check for multiple or illegal specs
     
-    scalar nrspec = rows(rs)
-    scalar ncspec = rows(cs)
+    nrspec = rows(rs)
+    ncspec = rows(cs)
 
     if xmin(nrspec, ncspec) > 1
-        printf "Error: you can’t have multiple row and column specs\n"
-        return ret
-    endif
+        funcerr "Error: can’t have multiple row and column specs"
+   
+    elif minc(rs|cs) < 0
+        funcerr "Error: negative spec not allowed"
     
-    if minc(rs|cs) < 0
-        printf "Error: negative spec not allowed\n"
-        return ret
-    endif
+    elif maxc(rs) > nr
+        printf "(matrices have %d rows, but %d wanted)\n", nr, maxc(rs)
+        funcerr "Error: incorrect row spec"
     
-    if maxc(rs) > nr
-        printf "Error: incorrect row spec (matrices have %d rows, but %d wanted)\n", nr, maxc(rs)
-        return ret
-    endif
-    
-    if maxc(cs) > nc
-        printf "Error: incorrect col spec (matrices have %d columns, but %d wanted)\n", nc, maxc(cs)
-        return ret
+    elif maxc(cs) > nc
+        printf "(matrices have %d columns, but %d wanted)\n", nc, maxc(cs)
+        funcerr "Error: incorrect col spec"
     endif
     
     ### do the actual drilling
@@ -194,6 +177,7 @@ function matrix drill(const matrices x,
         ret = flatten(x)[rs,]
         ret = transp(mshape(ret, nc, n))
         ret = ret[,cs]
+
     elif ncspec == 1 
         ret = flatten(x,1)[,cs]
         ret = mshape(ret, nr, n)

@@ -349,32 +349,38 @@ function matrix onemode (const matrix v "Vector of values")
     return E[where, 1] | howmuch[where]
 end function
 
-function string bwritejson (const bundle b)
-    # Write bundle elements to json-file.
-	# FIXME: should we mimic bwrite() and actually write the file?!
+function string bundle2json (const bundle b)
+    # Bundle elements represented as a json-formatted string.
+	# Not all gretl object types are supported yet, in particular
+	# no nesting, and among arrays only strings.
 
+	# TODO: check whether printing the key of an unsupported element
+	# and then skipping the element gives valid output)
 
     strings keys = getkeys(b)
     string out = "{"
 
-    loop k=1..nelem(keys) -q
+    loop k = 1..nelem(keys) -q
         string key = keys[k]
 
         # print the key
         out ~= sprintf("\n\"%s\": ", key)
-        # print the value
-        string typ = typestr(typeof(b["@key"]))
+
+        ## print the value
+        string typ = typestr(typeof(b[key]))
 
         if typ == "string"
             out ~= sprintf("\"%s\"", b[key])
+
         elif typ == "scalar"
             out ~= sprintf("%g", b[key])
+
         elif typ == "series" || typ == "matrix" # (series as vector)
             matrix m = (typ == "series") ? {b[key]} : b[key]
 
             # matrix and vector always two-dim
             out ~= "["
-            loop r=1..rows(m) -q
+            loop r = 1..rows(m) -q
                 if int(m[r,]) == m[r,]
                     string sprintf_stmt = sprintf("%14.d", m[r,])
                 else
@@ -385,17 +391,19 @@ function string bwritejson (const bundle b)
                 # replace (multiple) blanks
                 out ~= (r < rows(m)) ? sprintf(",\n") : sprintf("]")
             endloop
-        elif typ == "array"
-            # string array always two-dim
-			# FIXME: This apparently pre-supposes a string array?
-			# -> Need to test for other arrays.
 
-            strings S = b[key]
-            out ~= "["
-            loop r=1..nelem(S) -q
-                out ~= sprintf("\"%s\"", S[r])
-                out ~= (r < nelem(S)) ? sprintf(",") : sprintf("]")
-            endloop
+        elif typ == "array"
+            if typestr(typeof(b[key][1])) != "string"
+                print "Warning: Only string arrays supported. Skipping array."
+
+            else
+                strings S = b[key]
+                out ~= "["
+                loop r = 1..nelem(S) -q
+                    out ~= sprintf("\"%s\"", S[r])
+                    out ~= (r < nelem(S)) ? sprintf(",") : sprintf("]")
+                endloop
+            endif
         else
             printf "Warning: Type %s not supported. Skipping.\n", typ
         endif
@@ -403,4 +411,15 @@ function string bwritejson (const bundle b)
     endloop
 
     return out
+end function
+
+function scalar bwritejson (const bundle b, string fname, bool export[0])
+    # The interface mimics the native bwrite function.
+    # Saves the input bundle b in JSON representation.
+    # 
+
+    # FIXME: will use the new helper function pathsplit.
+    funcerr "Not ready yet"
+
+    return 1
 end function
