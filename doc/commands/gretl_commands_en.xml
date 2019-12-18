@@ -589,7 +589,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/AR Errors (GLS)</menu-path>
+      <menu-path>/Model/Univariate time series/AR Errors (GLS)</menu-path>
     </gui-access>
 
   </command>
@@ -670,7 +670,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/AR Errors (GLS)</menu-path>
+      <menu-path>/Model/Univariate time series/AR Errors (GLS)</menu-path>
     </gui-access>
 
   </command>
@@ -1110,7 +1110,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/ARIMA</menu-path>
+      <menu-path>/Model/Univariate time series/ARIMA</menu-path>
     </gui-access>
 
   </command>
@@ -1828,7 +1828,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Multivariate</menu-path>
+      <menu-path>/Model/Multivariate time series</menu-path>
     </gui-access>
 
   </command>
@@ -2030,7 +2030,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Multivariate</menu-path>
+      <menu-path>/Model/Multivariate time series</menu-path>
     </gui-access>
 
   </command>
@@ -4709,7 +4709,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/GARCH</menu-path>
+      <menu-path>/Model/Univariate time series/GARCH</menu-path>
     </gui-access>
 
   </command>
@@ -8285,7 +8285,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/MIDAS</menu-path>
+      <menu-path>/Model/Univariate time series/MIDAS</menu-path>
     </gui-access>
   </command>
 
@@ -10084,7 +10084,7 @@
 	The official Addons are included in the gretl installers for
 	Windows and Mac. On Linux if they are not preinstalled then
 	they are downloaded on demand (for example, if you select the
-	menu item /Model/Time series/GARCH variants, gretl will
+	menu item /Model/Univariate time series/GARCH variants, gretl will
 	download the <lit>gig</lit> (GARCH in gretl) Addon. You can
 	check that your Addons are up to date via <mnu
 	targ="SFAddons">Check for addons</mnu> in the Help menu.
@@ -15040,7 +15040,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Multivariate</menu-path>
+      <menu-path>/Model/Multivariate time series</menu-path>
     </gui-access>
 
   </command>
@@ -15341,7 +15341,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/Multivariate</menu-path>
+      <menu-path>/Model/Multivariate time series</menu-path>
     </gui-access>
 
   </command>
