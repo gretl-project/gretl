@@ -331,17 +331,18 @@ determines only the lower frequency and \texttt{phi} the upper.
 \item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset, drill:
  Jack Lucchetti
 
-\item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode:
+\item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
+splitfname:
 Sven Schreiber 
 
 \item winsor: Sven Schreiber, original code JoshuaHe
-\item bwritejson: Artur Tarassow
+\item bwritejson: Artur Tarassow and Sven Schreiber
 
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
-\item December 2019: 0.6, add drill, bwritejson, onemode; % , strpos
+\item December 2019: 0.6, add drill, bwritejson, onemode, splitfname; 
     finally remove the retired sepstr2arr (use native strsplit instead);
     rearrange the documentation a little
 \item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add powerset,
