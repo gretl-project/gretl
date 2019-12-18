@@ -47,12 +47,12 @@ function void splitfname_check(strings out, int num)
 end function
 
 function strings splitfname (const string fn)
-    /* The idea is take a file name or full path and extract 
+    /* The idea is to take a file name or full path and extract 
       up to 3 components:
     1. The path prefix (may be empty; without the trailing / or \ )
     2. The "base" component of the file name, without the 
        extension and without the path prefix 
-    2. The file extension (without the dot; may be empty)
+    3. The file extension (without the dot; may be empty)
 	
     Example:
     Input string: "/what/on/earth/isthisfile.gdt"

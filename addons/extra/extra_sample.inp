@@ -6,17 +6,17 @@ set verbose off
 
 ######## Examples for functions not needing a dataset ##########
 
-# nearPSD
+print "---- nearPSD -----"
 matrix mc = {1, -1.2; -1.2, 1}	# eigenvalues -0.2 and 2.2
 eval nearPSD(&mc)
 print mc
 
-# zeroifclose
+print "---- zeroifclose -----" 
 mc = {1, 1e-12}
 eval zeroifclose(&mc, 1e-10)
 print mc
 
-# truncnorm
+print "---- truncnorm -----" 
 m = 0.5
 s = 1
 matrix left = truncnorm(20, m, s, NA, 1)
@@ -24,7 +24,7 @@ matrix right = truncnorm(20, m, s, -1, NA)
 matrix both = truncnorm(20, m, s, -1, 1)
 print left right both
 
-## commute
+print "---- commute -----" ## 
 # vec application
 eval commute( vec( I(2) ~ ones(2,1) ), 2, 3)
 # commutation of the Kronecker product
@@ -34,16 +34,16 @@ eval B**A
 matrix temp = commute(A**B, rows(B), rows(A))	
 eval commute(temp, cols(B), cols(A), 1) # post-multipl.; should give B**A
 
-## eliminate
+print "---- eliminate -----" 
 eval eliminate(vec(I(3)))
 
-## duplicate
+print "---- duplicate -----" 
 eval duplicate(vech(I(3)))
 
-## scores2x2
+print "---- scores2x2 -----"## 
 eval scores2x2({24, 4; 12, 9})
 
-## WSRpvalue()
+print "---- WSRpvalue -----" 
 print "============================="
 print "Some examples for WSRpvalue()"
 loop N=11..14 -q            # loop over n
@@ -60,7 +60,7 @@ loop N=11..14 -q            # loop over n
       
 endloop 
 
-## WSRcritical()
+print "---- WSRcritical -----"  
 print "----------------------------------------"
 print "Some examples for WSRcritical()"
 loop N=11..13 -q            # loop over n
@@ -74,16 +74,16 @@ loop N=11..13 -q            # loop over n
   endloop
 endloop
 
-## powerset
+print "---- powerset -----"   
 strings pp =  powerset(defarray("a", "b", "c", "x", "y", "z"))  
 loop i=1..nelem(pp) -q
   eval pp[i]
 endloop
 
-## onemode
+print "---- onemode -----"   
 eval onemode({1,2,3,1,1,2})
 
-## drill
+print "---- drill -----"  
 matrix A = mshape(seq(1,9),3,3)
 matrix B = A
 matrices x = defarray(A, B)
@@ -93,23 +93,30 @@ eval drill(x, 2, 1)			# one row & one column
 eval drill(x, {1,3}, 2)		# multiple rows
 eval drill(x, 2, {1,3})		# multiple columns
 
+print "---- splitfname -----"  ## 
+eval splitfname(sprintf("\\do\\.you\\believe.input"))
 
-## bwritejson
+print "---- bwritejson -----"  ## 
 bundle bin = defbundle("a", "heyho", "b", $pi, \
 "mm", mnormal(5,2), "m2", ones(1,3))
-eval bwritejson(bin)
+
+eval bwritejson(bin, "out.json", 1)
+string strtemp = ""
+eval bwritejson(bin, , , &strtemp)
+print strtemp
 
 
 ######## Examples that require a dataset ############
 
 open denmark	# get some data
 
-# gap_filler
+print "---- gap_filler -----"  # 
 series play = LRM
 play[10] = NA	# insert missing
 series playout = gap_filler(play, 2)
 print playout
 
-# winsor
+print "---- winsor -----"  # 
 series winDM = winsor(ldiff(LRM))
 series winDM_asy = winsor(ldiff(LRM), 0.01, 0.8)
+print winDM_asy

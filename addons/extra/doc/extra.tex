@@ -38,6 +38,8 @@ Note that functions that are exact lookalikes of Matlab functions
 do not live here, but would go into the \texttt{matlab\_utilities}
 package.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \section{Matrix-related functions}
 
 \subsection{commute}
@@ -55,7 +57,7 @@ non-zero, then does post-multiplication ($A\times K_{mn}$).
 
 \subsection{eliminate}
 
-Arguments: \texttt{matrix vecA}
+Argument: \texttt{matrix vecA}
 
 \noindent Return type: \texttt{matrix}
 
@@ -68,7 +70,7 @@ treated separately as described above (and the results stacked side-by-side).
 
 \subsection{duplicate}
 
-Arguments: \texttt{matrix vechA}
+Argument: \texttt{matrix vechA}
 
 \noindent Return type: \texttt{matrix}
 
@@ -226,28 +228,19 @@ See also the sister function WSRcritical.
 
 \subsection{powerset}
 
-Arguments: \texttt{strings S}
+Argument: \texttt{strings S}
+
+\noindent Return type: \texttt{strings} (array)
 
 Computes the powerset of the input S, i.e. all possible combinations 
 of the string elements in S. (Including the empty set / 
 empty string "".) Each combination yields one string in the output 
 array. Being a set, the ordering is not defined and arbitrary. 
 
-\noindent Return type: \texttt{strings} (array)
-
-% \subsection{strpos}
-
-% Arguments: \texttt{strings S, string str, bool print\_warnings}
-% (optional)
-
-% \noindent Return type: \texttt{matrix}
-
-% Returns the positional entries of a string 'str' in array 'S' in a column
-% vector if 'S' contains string 'str', 0 otherwise.
 
 \subsection{onemode}
 
-Arguments: \texttt{matrix v}
+Argument: \texttt{matrix v}
 
 \noindent Return type: \texttt{matrix}
 
@@ -258,17 +251,44 @@ value and its absolute frequency.
 
 \subsection{bwritejson}
 
-Arguments: \texttt{bundle b}
+Arguments: \texttt{bundle b, string fname, bool export} (optional), 
+    \texttt{string *jsonresult} (pointer form, optional)
 
-\noindent Return type: \texttt{string}
+\noindent Return type: \texttt{scalar}
 
 Similar to the native function bwrite: Instead of an XML representation 
 of the input bundle this function produces a JSON serialized representation.
 Supported bundle member types are string, scalar, series (will be saved as a
 vector), matrix, string arrays.
-(The returned string can then be written to a file; perhaps this function will 
-be changed to write the file itself.)
 
+The standard usage is to pass a valid file name in fname and have the result written 
+to that file. However, if the pointer string argument jsonresult is used, then the file name 
+input is ignored (could be omitted) and the JSON string is just copied to the jsonresult string 
+variable. 
+
+Returns 0 after successful completion.
+
+\subsection{splitfname}
+
+Argument: \texttt{string fn}
+
+\noindent Return type: \texttt{strings} (array)
+
+The idea is to take a file name or full path and extract three components:
+\begin{enumerate}
+\item The path prefix (may be empty; without the trailing / or \textbackslash)
+\item The "base" component of the file name, without the extension and without the path prefix 
+\item The file extension (without the dot; may be empty)
+\end{enumerate}	
+In principle should work with forward as well as backslashes and also with double forward slashes.
+
+Example:
+
+Input string: "/what/on/earth/isthisfile.gdt"
+
+Output equivalent to: 
+
+\texttt{defarray("/what/on/earth", "isthisfile", "gdt")}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

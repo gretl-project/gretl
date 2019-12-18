@@ -413,13 +413,51 @@ function string bundle2json (const bundle b)
     return out
 end function
 
-function scalar bwritejson (const bundle b, string fname, bool export[0])
+function scalar bwritejson (const bundle b, string fname[null], 
+         bool export[0],
+         string *jsonresult[null])
     # The interface mimics the native bwrite function.
     # Saves the input bundle b in JSON representation.
-    # 
+    # (or copies it to jsonresult)
 
-    # FIXME: will use the new helper function pathsplit.
-    funcerr "Not ready yet"
+	string json = bundle2json(b)
 
-    return 1
+    # No-file usage variant
+    if exists(jsonresult)
+        jsonresult = json 
+        return 0
+
+    elif !exists(fname)
+        funcerr "Need file name input"
+
+    elif !strlen(fname)
+        funcerr "Need non-empty file name input"
+    endif
+    
+    # Writing to files
+    if export 
+        strings pathparts = splitfname(fname)
+        if strlen(pathparts[1])
+            print "Warning: export to dotdir requested, ignoring path prefix"
+        endif 
+        fname = $dotdir ~ "/" ~ pathparts[2]  # also works on Windows
+        
+        # append extension
+        if strlen(pathparts[3])
+            fname = fname ~ "." ~ pathparts[3]
+        endif
+    endif
+
+    catch outfile @fname --quiet
+        print json
+    end outfile
+    err = $error
+    if err 
+        printf "bwritejson: Writing file failed; %s\n", errmsg(err)
+        result = 1
+    else
+        result = 0
+    endif
+
+    return result
 end function
