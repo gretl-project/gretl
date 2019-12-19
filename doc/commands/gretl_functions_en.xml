@@ -7524,44 +7524,44 @@
 	<para>
 	  Reads a matrix from a file named
 	  <argname>fname</argname>. This is mostly intended for
-	  reading files with a specific format, described below, but it
-	  can also be used on delimited text files of various
-	  sorts. For the latter usage see the section titled
-	  <quote>Delimited text files</quote>.
+	  reading files with a specific format described below, but it
+	  can also be used on generic delimited text files.  For the
+	  latter usage see the section titled <quote>Delimited text
+	  files</quote> below.
 	</para>
 	<para>
-	  If the filename has the suffix
-	  <quote><lit>.gz</lit></quote> it is assumed that gzip
-	  compression has been applied in writing the data; if it has
-	  the suffix <quote><lit>.bin</lit></quote> the file is
-	  assumed to be in binary format (see <fncref targ="mwrite"/>
-	  for details). Otherwise the file is assumed to be plain
+	  If the filename has the suffix <quote><lit>.gz</lit></quote>
+	  it is assumed that gzip compression has been applied in
+	  writing the data; if it has the suffix
+	  <quote><lit>.bin</lit></quote> the file is assumed to be in
+	  binary format (see <fncref targ="mwrite"/> for
+	  details). Otherwise if the filename has suffix
+	  <quote><lit>.mat</lit></quote> it is assumed to be plain
 	  text, conforming to the following specification:
 	</para>
 	<ilist>
 	  <li>
             <para>
-	      It may start with any number of comments, defined
-	      as lines that start with the hash mark, <lit>#</lit>;
-	      such lines are ignored.
+	      It starts with zero or more comments, defined as lines
+	      that start with the hash mark, <lit>#</lit>; such lines
+	      are ignored.
             </para>
 	  </li>
 	  <li>
             <para>
-              The first non-comment line must contain two integers,
-              separated by a space or a tab, indicating the number of
+              The first non-comment line contains two integers,
+              separated by a tab character, indicating the number of
               rows and columns, respectively.
             </para>
 	  </li>
 	  <li>
             <para>
-              The columns must be separated by spaces or tab
-              characters.
+              The columns are separated by tabs.
             </para>
 	  </li>
 	  <li>
             <para>
-              The decimal separator must be the dot character,
+              The decimal separator is the dot character,
               <quote><lit>.</lit></quote>.
             </para>
 	  </li>
@@ -7582,14 +7582,16 @@
 	<subhead>Delimited text files</subhead>
 	<para>
 	  If the name of the file to be read has extension
-	  <quote><lit>.csv</lit></quote> or
-	  <quote><lit>.txt</lit></quote> the rules governing the
-	  format of the file are relaxed&mdash;in particular, we do
-	  not require that the actual data be preceded by
-	  specification of the number of rows and columns. The program
-	  will try to figure out the delimiter (space, tab, comma or
-	  semicolon) and do its best to import the matrix, allowing
-	  for use of comma as decimal separator if need be.
+	  <quote><lit>.csv</lit></quote> the rules governing the
+	  format of the file are different, and more relaxed. In this
+	  case the actual data should <emphasis>not</emphasis> be
+	  preceded by a line giving the number of rows and
+	  columns. Gretl will try to figure out the delimiter (comma,
+	  semicolon or space) and do its best to import the matrix,
+	  allowing for use of comma as decimal separator if need be.
+	  Note that the delimiter should not be the tab character, on
+	  pain of confusing such files with those in gretl's
+	  <quote>native</quote> matrix format.
 	</para>
 	<para>
 	  <seelist>
@@ -7821,7 +7823,10 @@
 	  tab character, representing the number of rows and columns;
 	  on the following lines the matrix elements appear, in
 	  scientific notation, separated by tabs (one line per row).
-	  See below for alternative formats.
+	  To avoid confusion on reading, files to be written in this
+	  format should be named with the suffix
+	  <quote><lit>.mat</lit></quote>.  See below for alternative
+	  formats.
 	</para>
 	<para>
 	  If a file <argname>fname</argname> already exists, it will be
@@ -7847,7 +7852,7 @@
 	  <guideref targ="chap:matrices"/> for details.
 	</para>
 	<para>
-	  Two mutually exclusive inflections of this function are
+	  Three mutually exclusive inflections of this function are
 	  available, as follows:
 	</para>
 	<ilist>
@@ -7855,22 +7860,33 @@
 	    <para>
 	      If <argname>fname</argname> has the suffix
 	      <quote><lit>.gz</lit></quote> then the file is written
-	      with gzip compression.
+	      in the format described above but with gzip compression.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      If <argname>fname</argname> has the suffix
-	      <quote><lit>.bin</lit></quote> then the file is written
-	      in binary format. In this case the first 19 bytes
-	      contain the characters <lit>gretl_binary_matrix</lit>,
-	      the next 8 bytes contain two 32-bit integers giving the
-	      number of rows and columns, and the remainder of the
-	      file contains the matrix elements as little-endian
-	      <quote>doubles</quote>, in column-major order. If gretl
-	      is run on a big-endian system, the binary values are
-	      converted to little endian on writing, and converted to
-	      big endian on reading.
+	      <quote><lit>.bin</lit></quote> then the matrix is
+	      written in binary format. In this case the first 19
+	      bytes contain the characters
+	      <lit>gretl_binary_matrix</lit>, the next 8 bytes contain
+	      two 32-bit integers giving the number of rows and
+	      columns, and the remainder of the file contains the
+	      matrix elements as little-endian <quote>doubles</quote>,
+	      in column-major order. If gretl is run on a big-endian
+	      system, the binary values are converted to little endian
+	      on writing, and converted to big endian on reading.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      If <argname>fname</argname> has the suffix
+	      <quote><lit>.csv</lit></quote> then the matrix is
+	      written in comma-separated format, without a header
+	      line indicating the number of rows and columns to
+	      follow. This may be easier for third-party programs to
+	      handle, but it is not recommended if the matrix file
+	      is intended for reading by gretl.
 	    </para>
 	  </li>
 	</ilist>
