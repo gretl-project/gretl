@@ -344,24 +344,33 @@ function string bundle2json (const bundle b)
             out ~= sprintf("\"%s\"", b[key])
 
         elif typ == "scalar"
-            out ~= sprintf("%g", b[key])
+            if ok(b[key])
+                out ~= sprintf("%g", b[key])
+            else
+                out ~= "[]"	# in case of "NA"
+            endif
 
         elif typ == "series" || typ == "matrix" # (series as vector)
             matrix m = (typ == "series") ? {b[key]} : b[key]
 
-            # matrix and vector always two-dim
-            out ~= "["
-            loop r = 1..rows(m) -q
-                if int(m[r,]) == m[r,]
-                    string sprintf_stmt = sprintf("%14.d", m[r,])
-                else
-                    string sprintf_stmt = sprintf("%14.10f", m[r,])
-                endif
-                string stemp = "["~ strstrip(sprintf_stmt) ~"]"
-                out ~= regsub(stemp, "\s+", ",")
-                # replace (multiple) blanks
-                out ~= (r < rows(m)) ? sprintf(",\n") : sprintf("]")
-            endloop
+            if nelem(m) == 0
+                out ~= "[]"	# in case of "NA"
+            else
+
+                # matrix and vector always two-dim
+                out ~= "["
+                loop r = 1..rows(m) -q
+                    if int(m[r,]) == m[r,]
+                        string sprintf_stmt = sprintf("%14.d", m[r,])
+                    else
+                        string sprintf_stmt = sprintf("%14.10f", m[r,])
+                    endif
+                    string stemp = "["~ strstrip(sprintf_stmt) ~"]"
+                    out ~= regsub(stemp, "\s+", ",")
+                    # replace (multiple) blanks
+                    out ~= (r < rows(m)) ? sprintf(",\n") : sprintf("]")
+                endloop
+            endif
 
         elif typ == "array"
             if typestr(typeof(b[key][1])) != "string"
