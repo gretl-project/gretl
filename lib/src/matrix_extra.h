@@ -83,6 +83,10 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 				    gretlopt opt,
 				    int *err);
 
+int write_matrix_as_dataset (const char *fname,
+			     gretlopt opt,
+			     PRN *prn);
+
 int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 			    FitType fit, int t1, int t2, 
 			    gretl_matrix **py, gretl_matrix **pX);

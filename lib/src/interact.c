@@ -44,6 +44,7 @@
 #include "libglue.h"
 #include "csvdata.h"
 #include "gretl_zip.h"
+#include "matrix_extra.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -3344,13 +3345,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case STORE:
-	if (dset == NULL || dset->Z == NULL) {
-	    err = E_NODATA;
-	} else if (!has_param(cmd)) {
+	if (!has_param(cmd)) {
 	    pputs(prn, _("store: no filename given\n"));
 	    err = E_PARSE;
-	}
-	if (!err) {
+	} else if (cmd->opt & OPT_A) {
+	    err = write_matrix_as_dataset(cmd->param, cmd->opt, prn);
+	} else if (dset == NULL || dset->Z == NULL) {
+	    err = E_NODATA;
+	} else {
 	    err = write_data(cmd->param, cmd->list, dset, cmd->opt, prn);
 	}
 	break;

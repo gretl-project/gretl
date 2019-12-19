@@ -778,8 +778,9 @@ gretl_matrix_data_subset_special (const int *list,
  * gretl_dataset_from_matrix:
  * @m: source matrix.
  * @list: list of columns (1-based) to include, or NULL.
- * @opt: may include OPT_B to attempt "borrowing" of data;
- * may include OPT_N to use plain numbers as variable names.
+ * @opt: may include OPT_B to attempt "borrowing" of data,
+ * OPT_N to use plain numbers as variable names, OPT_R to
+ * experiment with handling row-names, if present.
  * @err: location to receive error code.
  *
  * Creates a gretl dataset from matrix @m, either using the
@@ -796,7 +797,9 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 				    int *err)
 {
     DATASET *dset = NULL;
-    const char **names;
+    gretlopt dsopt = OPT_NONE;
+    const char **cnames = NULL;
+    const char **rnames = NULL;
     double x;
     int i, t, col, nv, T;
 
@@ -805,8 +808,8 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	return NULL;
     }
 
-    T = gretl_matrix_rows(m);
-    nv = gretl_matrix_cols(m);
+    T = m->rows;
+    nv = m->cols;
 
     if (list != NULL) {
 	for (i=1; i<=list[0]; i++) {
@@ -815,31 +818,22 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 		gretl_errmsg_sprintf("Variable number %d is out of bounds", col);
 		*err = E_DATA;
 		break;
-	    } else if (opt & OPT_B) {
-		/* try borrowing? */
-		for (t=0; t<T; t++) {
-		    x = gretl_matrix_get(m, t, col-1);
-		    if (na(x)) {
-			opt = OPT_NONE;
-			break;
-		    }
-		}
 	    }
 	}
 	nv = list[0];
-    } else if (opt & OPT_B) {
-	int N = T * nv;
-
-	for (i=0; i<N; i++) {
-	    if (na(m->val[i])) {
-		opt = OPT_NONE;
-		break;
-	    }
-	}
     }
 
     if (!*err) {
-	dset = create_auxiliary_dataset(nv + 1, T, opt);
+	if (opt & OPT_B) {
+	    dsopt |= OPT_B;
+	}
+	if (opt & OPT_R) {
+	    rnames = gretl_matrix_get_rownames(m);
+	    if (rnames != NULL) {
+		dsopt |= OPT_M;
+	    }
+	}
+	dset = create_auxiliary_dataset(nv + 1, T, dsopt);
 	if (dset == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -849,7 +843,7 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	return NULL;
     }
 
-    names = gretl_matrix_get_colnames(m);
+    cnames = gretl_matrix_get_colnames(m);
 
     for (i=1; i<=nv; i++) {
 	col = (list != NULL)? list[i] - 1 : i - 1;
@@ -864,8 +858,9 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 		dset->Z[i][t] = x;
 	    }
 	}
-	if (names != NULL) {
-	    strcpy(dset->varname[i], names[col]);
+	if (cnames != NULL) {
+	    dset->varname[i][0] = '\0';
+	    strncat(dset->varname[i], cnames[col], VNAMELEN-1);
 	} else if (opt & OPT_N) {
 	    sprintf(dset->varname[i], "%d", col + 1);
 	} else {
@@ -873,7 +868,40 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	}
     }
 
+    if (rnames != NULL) {
+	for (t=0; t<T; t++) {
+	    dset->S[t][0] = '\0';
+	    strncat(dset->S[t], rnames[t], OBSLEN-1);
+	}
+    }
+
     return dset;
+}
+
+int write_matrix_as_dataset (const char *fname,
+			     gretlopt opt,
+			     PRN *prn)
+{
+    const char *mname;
+    gretl_matrix *m;
+    DATASET *mdset;
+    int err = 0;
+
+    mname = get_optval_string(STORE, OPT_A);
+    m = get_matrix_by_name(mname);
+    if (m == NULL) {
+	return E_DATA;
+    }
+
+    mdset = gretl_dataset_from_matrix(m, NULL, OPT_R, &err);
+    if (!err) {
+	opt &= ~OPT_A;
+	err = write_data(fname, NULL, mdset, opt, prn);
+    }
+
+    destroy_dataset(mdset);
+
+    return err;
 }
 
 /**
@@ -1294,6 +1322,52 @@ static void win32_xna_out (double x, char pad, PRN *prn)
 
 #endif
 
+#define CSV_WRITE 1
+
+#if CSV_WRITE
+
+static int matrix_to_csv (const gretl_matrix *A, const char *fname)
+{
+    const char *na_str;
+    char delim;
+    FILE *fp;
+    double aij;
+    int i, j;
+
+    fp = gretl_fopen(fname, "wb");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    na_str = get_csv_na_write_string();
+    delim = get_data_export_delimiter();
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<A->rows; i++) {
+	for (j=0; j<A->cols; j++) {
+	    aij = gretl_matrix_get(A, i, j);
+	    if (na(aij)) {
+		fputs(na_str, fp);
+	    } else {
+		fprintf(fp, "%.17g", aij);
+	    }
+	    if (j < A->cols - 1) {
+		fputc(delim, fp);
+	    } else {
+		fputc('\n', fp);
+	    }
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+    fclose(fp);
+
+    return 0;
+}
+
+#endif /* CSV_WRITE */
+
 /**
  * gretl_matrix_write_to_file:
  * @A: matrix to write.
@@ -1315,6 +1389,7 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     int is_complex = 0;
     PRN *prn = NULL;
     FILE *fp = NULL;
+    int csv = 0;
     int gz, bin = 0;
     int err = 0;
 
@@ -1324,12 +1399,25 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	bin = has_suffix(fname, ".bin");
     }
 
+    if (!gz && !bin) {
+	csv = has_suffix(fname, ".csv");
+	if (csv && A->is_complex) {
+	    return E_CMPLX;
+	}
+    }
+
     if (export) {
 	gretl_build_path(targ, gretl_dotdir(), fname, NULL);
     } else {
 	fname = gretl_maybe_switch_dir(fname);
 	strcpy(targ, fname);
     }
+
+#if CSV_WRITE
+    if (csv) {
+	return matrix_to_csv(A, targ);
+    }
+#endif
 
     if (bin) {
 	fp = gretl_fopen(targ, "wb");

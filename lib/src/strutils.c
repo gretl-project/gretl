@@ -1937,12 +1937,10 @@ int strings_array_add_uniq (char ***pS, int *n, const char *p)
 	}
     }
 
-    Tmp = realloc(*pS, (m + 1) * sizeof *Tmp);
+    Tmp = realloc(S, (m + 1) * sizeof *Tmp);
     if (Tmp == NULL) {
 	return E_ALLOC;
     }
-
-    *pS = Tmp;
 
     if (p != NULL) {
 	Tmp[m] = gretl_strdup(p);
@@ -1953,6 +1951,7 @@ int strings_array_add_uniq (char ***pS, int *n, const char *p)
 	Tmp[m] = NULL;
     }
 
+    *pS = Tmp;
     *n += 1;
 
     return 0;
