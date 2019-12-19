@@ -612,48 +612,6 @@ b
     -0.39078      0.43928
 \end{code}
 
-\subsection{Complex multiplication and division}
-\label{sec:complex}
-
-Gretl has no native provision for complex numbers. However, basic
-operations can be performed on vectors of complex numbers by using the
-convention that a vector of $n$ complex numbers is represented as a $n
-\times 2$ matrix, where the first column contains the real part and
-the second the imaginary part.
-
-Addition and subtraction are trivial; the functions \texttt{cmult}
-and \texttt{cdiv} compute the complex product and division,
-respectively, of two input matrices, $A$ and $B$, representing complex
-numbers.  These matrices must have the same number of rows, $n$, and
-either one or two columns.  The first column contains the real part
-and the second (if present) the imaginary part.  The return value is
-an $n \times 2$ matrix, or, if the result has no imaginary part, an
-$n$-vector.
-
-For example, suppose you have $z_1 = [ 1 + 2i , 3 + 4i ]'$ and $z_2 =
-[ 1, i ]'$:
-
-\begin{code}
-? z1 = {1,2;3,4}
- z1 = {1,2;3,4}
-Generated matrix z1
-? z2 = I(2)
- z2 = I(2)
-Generated matrix z2
-? conj_z1 = z1 .* {1,-1}
- conj_z1 = z1 .* {1,-1}
-Generated matrix conj_z1
-? eval cmult(z1,z2)
- eval cmult(z1,z2)
-   1    2 
-  -4    3 
-
-? eval cmult(z1,conj_z1)
- eval cmult(z1,conj_z1)
-   5 
-  25 
-\end{code}
-
 \subsection{Multiple returns and the \texttt{null} keyword}
 \label{matrix-multiples}
 
