@@ -4329,6 +4329,41 @@ static NODE *list_reverse_node (NODE *n, parser *p)
     return ret;
 }
 
+static int check_matrix_file (const char *fname, int *csv_etc)
+{
+    char line[1024];
+    FILE *fp;
+    int r, c, n;
+
+    fp = gretl_fopen(fname, "rb");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    *csv_etc = 1;
+
+    while (fgets(line, sizeof line, fp)) {
+	if (*line != '#') {
+	    /* heuristic: if the non-comment portion of the file
+	       starts with two tab-separated integers, it's
+	       actually a native gretl .mat file regardless of
+	       the filename suffix?
+	    */
+	    n = sscanf(line, "%d\t%d", &r, &c);
+	    if (n == 2 && count_fields(line, "\t") == 2) {
+		*csv_etc = 0;
+	    }
+	    break;
+	}
+    }
+
+    fprintf(stderr, "check_matrix_file : csv_etc = %d\n", *csv_etc);
+
+    fclose(fp);
+
+    return 0;
+}
+
 static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret;
@@ -4341,10 +4376,25 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const char *fname = n->v.str;
+	const char *realpath = fname;
+	gchar *tmp = NULL;
 	int import = node_get_bool(r, p, 0);
+	int csv = 0;
 	int done = 0;
 
 	gretl_error_clear();
+
+	if (import) {
+	    tmp = gretl_make_dotpath(fname);
+	    realpath = tmp;
+	}
+
+	if (has_suffix(realpath, ".csv")) {
+	    p->err = check_matrix_file(realpath, &csv);
+	    if (p->err) {
+		return ret;
+	    }
+	}
 
 	switch (f) {
 	case F_MREAD:
@@ -4354,21 +4404,20 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 		done = 1;
 	    }
 #endif
-	    if (!done && (has_suffix(fname, ".csv") ||
-			  has_suffix(fname, ".txt"))) {
-		ret->v.m = import_csv_as_matrix(fname, &p->err);
+	    if (!done && csv) {
+		ret->v.m = import_csv_as_matrix(realpath, &p->err);
 	    } else if (!done) {
-		ret->v.m = gretl_matrix_read_from_file(fname, import,
-						       &p->err);
+		ret->v.m = gretl_matrix_read_from_file(realpath, 0, &p->err);
 	    }
 	    break;
 	case F_BREAD:
-	    ret->v.b = gretl_bundle_read_from_file(fname, import,
-						   &p->err);
+	    ret->v.b = gretl_bundle_read_from_file(realpath, 0, &p->err);
 	    break;
 	default:
 	    break;
 	}
+
+	g_free(tmp);
     }
 
     return ret;

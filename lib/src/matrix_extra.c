@@ -1322,10 +1322,6 @@ static void win32_xna_out (double x, char pad, PRN *prn)
 
 #endif
 
-#define CSV_WRITE 1
-
-#if CSV_WRITE
-
 static int matrix_to_csv (const gretl_matrix *A, const char *fname)
 {
     const char *na_str;
@@ -1341,6 +1337,10 @@ static int matrix_to_csv (const gretl_matrix *A, const char *fname)
 
     na_str = get_csv_na_write_string();
     delim = get_data_export_delimiter();
+    if (delim == '\t') {
+	/* we can't allow this! */
+	delim = ',';
+    }
 
     gretl_push_c_numeric_locale();
 
@@ -1365,8 +1365,6 @@ static int matrix_to_csv (const gretl_matrix *A, const char *fname)
 
     return 0;
 }
-
-#endif /* CSV_WRITE */
 
 /**
  * gretl_matrix_write_to_file:
@@ -1413,11 +1411,9 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	strcpy(targ, fname);
     }
 
-#if CSV_WRITE
     if (csv) {
 	return matrix_to_csv(A, targ);
     }
-#endif
 
     if (bin) {
 	fp = gretl_fopen(targ, "wb");
