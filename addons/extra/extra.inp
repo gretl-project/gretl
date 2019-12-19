@@ -1,5 +1,5 @@
 include extra_matrix.inp
-include extra_string.inp 
+include extra_string.inp
 
 
 function matrix WPtable (int n[4::12] "number of trials")
@@ -306,35 +306,6 @@ function scalar WSRpvalue (int n[4::] "number of trials",
     endif
 end function
 
-
-function matrix strpos (const strings S "Array of strings",
-                        const string str "String being searched for in S",
-                        const bool print_warnings[1] "Print eventual warnings")
-    # Returns the positional entries of string in S in a column vector
-    # if S contains string, 0 otherwise.
-
-    if nelem(S) == 0
-        if print_warnings
-            printf "Warning: String array '%s' is empty.\n", argname(S)
-        endif
-        return {0}
-    endif
-
-    matrix ret = {}
-    loop i=1..nelem(S) -q
-        if S[i] == str
-            ret |= $i
-        endif
-    endloop
-
-    if rows(ret) > 0
-        return ret
-    else
-        return {0}
-    endif
-end function
-
-
 function matrix onemode (const matrix v "Vector of values")
 /* This function only returns one mode (modal value) of the
    input data v. If that is multi-modal, the behavior of imaxc
@@ -351,11 +322,11 @@ end function
 
 function string bundle2json (const bundle b)
     # Bundle elements represented as a json-formatted string.
-	# Not all gretl object types are supported yet, in particular
-	# no nesting, and among arrays only strings.
+    # Not all gretl object types are supported yet, in particular
+    # no nesting, and among arrays only strings.
 
-	# TODO: check whether printing the key of an unsupported element
-	# and then skipping the element gives valid output)
+    # TODO: check whether printing the key of an unsupported element
+    # and then skipping the element gives valid output)
 
     strings keys = getkeys(b)
     string out = "{"
@@ -413,18 +384,18 @@ function string bundle2json (const bundle b)
     return out
 end function
 
-function scalar bwritejson (const bundle b, string fname[null], 
-         bool export[0],
-         string *jsonresult[null])
+function scalar bwritejson (const bundle b, string fname[null],
+                            bool export[0],
+                            string *jsonresult[null])
     # The interface mimics the native bwrite function.
     # Saves the input bundle b in JSON representation.
     # (or copies it to jsonresult)
 
-	string json = bundle2json(b)
+    string json = bundle2json(b)
 
     # No-file usage variant
     if exists(jsonresult)
-        jsonresult = json 
+        jsonresult = json
         return 0
 
     elif !exists(fname)
@@ -433,15 +404,15 @@ function scalar bwritejson (const bundle b, string fname[null],
     elif !strlen(fname)
         funcerr "Need non-empty file name input"
     endif
-    
+
     # Writing to files
-    if export 
+    if export
         strings pathparts = splitfname(fname)
         if strlen(pathparts[1])
             print "Warning: export to dotdir requested, ignoring path prefix"
-        endif 
+        endif
         fname = $dotdir ~ "/" ~ pathparts[2]  # also works on Windows
-        
+
         # append extension
         if strlen(pathparts[3])
             fname = fname ~ "." ~ pathparts[3]
@@ -452,7 +423,7 @@ function scalar bwritejson (const bundle b, string fname[null],
         print json
     end outfile
     err = $error
-    if err 
+    if err
         printf "bwritejson: Writing file failed; %s\n", errmsg(err)
         result = 1
     else
