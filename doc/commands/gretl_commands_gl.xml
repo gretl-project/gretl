@@ -589,7 +589,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/Perturbacións AR (MCX)</menu-path>
+      <menu-path>/Modelar/Series temporais univariantes/Perturbacións AR (MCX)</menu-path>
     </gui-access>
 
   </command>
@@ -670,7 +670,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/Perturbacións AR (MCX)</menu-path>
+      <menu-path>/Modelar/Series temporais univariantes/Perturbacións AR (MCX)</menu-path>
     </gui-access>
 
   </command>
@@ -1110,7 +1110,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/ARIMA</menu-path>
+      <menu-path>/Modelar/Series temporais univariantes/ARIMA</menu-path>
     </gui-access>
 
   </command>
@@ -1828,7 +1828,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/Multivariante</menu-path>
+      <menu-path>/Modelar/Series temporais multivariantes</menu-path>
     </gui-access>
 
   </command>
@@ -2030,7 +2030,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/Multivariante</menu-path>
+      <menu-path>/Modelar/Series temporais multivariantes</menu-path>
     </gui-access>
 
   </command>
@@ -4709,7 +4709,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/GARCH</menu-path>
+      <menu-path>/Modelar/Series temporais univariantes/GARCH</menu-path>
     </gui-access>
 
   </command>
@@ -8285,7 +8285,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/MIDAS</menu-path>
+      <menu-path>/Modelar/Series temporais univariantes/MIDAS</menu-path>
     </gui-access>
   </command>
 
@@ -10083,8 +10083,8 @@
       <para>
 	Os 'Complementos' oficiais están incluídos nos instaladores de Gretl
 	para Windows e para Mac. Para Linux, se non se instalan previamente,
-	entón descárganse cando se solicite (por exemplo, se escolles o
-	elemento do menú /Modelar/Series temporais/GARCH, entón Gretl
+	entón descárganse cando se solicite (por exemplo, se escolles o elemento
+	do menú /Modelar/Series temporais univariantes/GARCH, entón Gretl
 	vai descargar o 'Complemento' <lit>gig</lit> (GARCH in Gretl). Podes
 	verificar que os teus 'Complementos' están actualizados mediante
 	<mnu targ="SFAddons">Comprobar complementos</mnu> no menú Axuda.
@@ -11038,7 +11038,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Variable Dependente Limitada/Datos de reconto</menu-path>
+      <menu-path>/Modelar/Variable Dependente Limitada/Datos de Reconto</menu-path>
     </gui-access>
 
   </command>
@@ -14043,7 +14043,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Engadir/Tipificar as variables escollidas</menu-path>
+      <menu-path>/Engadir/Tipificar as variables seleccionadas</menu-path>
     </gui-access>
 
   </command>
@@ -15040,7 +15040,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/Multivariante</menu-path>
+      <menu-path>/Modelar/Series temporais multivariantes</menu-path>
     </gui-access>
 
   </command>
@@ -15341,7 +15341,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Series temporais/Multivariante</menu-path>
+      <menu-path>/Modelar/Series temporais multivariante</menu-path>
     </gui-access>
 
   </command>
