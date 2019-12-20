@@ -203,7 +203,6 @@ enum {
     F_MEANR,
     F_MEANC,
     F_CHOL,
-    F_PSDROOT,
     F_INV,
     F_INVPD,
     F_GINV,
@@ -399,6 +398,7 @@ enum {
     F_RANDPERM,
     F_STDIZE,
     F_CSWITCH,
+    F_PSDROOT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
