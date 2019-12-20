@@ -1,11 +1,9 @@
 set verbose off
 clear
 
-string WD = "/home/at/git/gretl-git/addons/extra"
-
-set workdir @WD
-include "extra.inp" --force
-
+# include "../extra.inp" --force
+# This won't work with the package extra.gfn, as it uses private functions.
+# So you need to run extra.inp manually to have all the functions available.
 
 print "Start with bundle2json()"
 
@@ -20,6 +18,9 @@ string sout = bundle2json(bin)
 if strlen(sout) == 0
     stop
 endif
+
+print sout
+
 if instring(sout, "int_1") != 1 || instring(sout, "int_2") != 1 || \
       instring(sout, "int_3") != 1 || instring(sout, "int_4") != 1 || \
       instring(sout, "scalar_1") != 1 || instring(sout, "scalar_2") != 1
@@ -135,19 +136,6 @@ print m
 matrix m2 = {}
 sscanf(jsonget(sout, "$.mat_2"), "%m", m2)
 print m2
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 printf "\nInfo: All tests passed.\n"
