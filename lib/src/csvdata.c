@@ -6114,7 +6114,7 @@ static int determine_gdt_matches (const char *fname,
 	/* form array of unique wanted identifiers */
 	for (i=0; i<jspec->ncols && !err; i++) {
 	    if (jspec->colnames[i] != NULL) {
-		err = strings_array_add_uniq(&S, &ns, jspec->colnames[i]);
+		err = strings_array_add_uniq(&S, &ns, jspec->colnames[i], NULL);
 	    }
 	}
 
