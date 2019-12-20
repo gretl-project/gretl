@@ -320,13 +320,54 @@ function matrix onemode (const matrix v "Vector of values")
     return E[where, 1] | howmuch[where]
 end function
 
+#######################
+
+function string mrow2json (const matrix m)
+    # Helper function to convert a matrix row to json-format array string.
+    # Below we check for integer values to potentially
+    # save a lot of space and bytes in the output file.
+ 
+    if rows(m) != 1
+        funcerr "This function only for a single row"
+    endif
+    if !cols(m)
+        return "[]"
+    endif
+
+    # check for missings or NaN or other invalid stuff
+    if min(ok(m)) == 0
+
+        # now need to go elem-by-elem 
+        string out = "["
+        loop c = 1..cols(m) -q
+            scalar x = m[c]
+            string s = "null"
+            if ok(x)
+                s = (int(x) == x) ? sprintf("%14.d", x) : sprintf("%14.10f", x)              
+            endif
+
+            out ~= s
+            out ~= (c < cols(m)) ? "," : "]"
+        endloop
+
+    else    # all values OK, can do in one go
+        
+        string out = (int(m) == m) ? sprintf("%14.d", m) : sprintf("%14.10f", m)
+        out = "[" ~ strstrip(out) ~ "]"
+        # replace (multiple) blanks inside with comma sep
+        out = regsub(out, "\s+", ",") 
+    endif
+
+    return out
+end function
+
 function string bundle2json (const bundle b)
     # Bundle elements represented as a json-formatted string.
     # Not all gretl object types are supported yet, in particular
     # no nesting, and among arrays only strings.
 
-    # TODO: check whether printing the key of an unsupported element
-    # and then skipping the element gives valid output)
+    # Any unsupported element type will produce a missing ("null")
+    # entry.
 
     strings keys = getkeys(b)
     string out = "{"
@@ -347,34 +388,29 @@ function string bundle2json (const bundle b)
             if ok(b[key])
                 out ~= sprintf("%g", b[key])
             else
-                out ~= "[]"	# in case of "NA"
+                out ~= "null"	# in case of "NA"
             endif
 
         elif typ == "series" || typ == "matrix" # (series as vector)
             matrix m = (typ == "series") ? {b[key]} : b[key]
 
-            if nelem(m) == 0
-                out ~= "[]"	# in case of "NA"
+            if !nelem(m)
+                out ~= "[[]]"	# empty 2-d array
             else
 
-                # matrix and vector always two-dim
+                # matrix and vector always done as 2-dim
                 out ~= "["
                 loop r = 1..rows(m) -q
-                    if int(m[r,]) == m[r,]
-                        string sprintf_stmt = sprintf("%14.d", m[r,])
-                    else
-                        string sprintf_stmt = sprintf("%14.10f", m[r,])
-                    endif
-                    string stemp = "["~ strstrip(sprintf_stmt) ~"]"
-                    out ~= regsub(stemp, "\s+", ",")
-                    # replace (multiple) blanks
-                    out ~= (r < rows(m)) ? sprintf(",\n") : sprintf("]")
+                    out ~= mrow2json(m[r,])  
+                    out ~= (r < rows(m)) ? sprintf(",\n") : "]"
                 endloop
             endif
 
         elif typ == "array"
             if typestr(typeof(b[key][1])) != "string"
-                print "Warning: Only string arrays supported. Skipping array."
+                print "Warning: Only string arrays supported."
+                print "(Treat array as missing.)"
+                out ~= "null"
 
             else
                 strings S = b[key]
@@ -385,7 +421,10 @@ function string bundle2json (const bundle b)
                 endloop
             endif
         else
-            printf "Warning: Type %s not supported. Skipping.\n", typ
+            printf "Warning: Type %s not supported.\n", typ
+            print "(Treat as missing.)"
+            out ~= "null"
+
         endif
         out ~= (k < nelem(keys)) ? "," : sprintf("\n}")
     endloop
