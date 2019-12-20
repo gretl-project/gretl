@@ -7525,43 +7525,43 @@
 	  Le unha matriz gardada no ficheiro chamado
 	  <argname>nomeficheiro</argname>. Isto está pensado principalmente
 	  para ler ficheiros cun formato específico, como se describe máis
-	  abaixo, pero tamén podes usalo con ficheiros de texto delimitado
-	  de varios tipos. Para este último tipo de uso, consulta a sección
-	  titulada <quote>Ficheiros con texto delimitado</quote>.
+	  abaixo; pero tamén podes usalo con ficheiros xenéricos de texto
+	  delimitado. Para este último tipo de uso, consulta máis abaixo a
+	  sección titulada <quote>Ficheiros con texto delimitado</quote>.
 	</para>
 	<para>
 	  Se o ficheiro posúe a extensión <quote><lit>.gz</lit></quote> asúmese
 	  que se aplicou a compresión gzip ao gardar os datos. Se ten a
 	  extensión <quote><lit>.bin</lit></quote> asúmese que o ficheiro
 	  está en formato binario (consulta a función <fncref targ="mwrite"/>
-	  para ter máis detalles). Noutro caso, asúmese que o ficheiro ten
-	  un formato de texto simple, de acordo coas seguintes
+	  para ter máis detalles). Noutro caso, se o nome do ficheiro inclúe
+	  o sufixo <quote><lit>.mat</lit></quote>, asúmese que o ficheiro
+	  ten un formato de texto simple, de acordo coas seguintes
 	  especificacións:
 	</para>
 	<ilist>
 	  <li>
             <para>
-	          O ficheiro pode comezar con unha cantidade calquera de
+	          O ficheiro comeza con ningún ou con un número calquera de
 	          comentarios, definidos por liñas que comezan co carácter
 	          cancelo, <lit>#</lit>; estas liñas van ignorarse.
             </para>
 	  </li>
 	  <li>
             <para>
-              A primeira liña que non sexa un comentario debe de conter
-              dous enteiros, separados por un espazo ou unha tabulación,
-              para indicar o número de filas e columnas, respectivamente.
+              A primeira liña que non sexa un comentario contén dous
+              enteiros, separados por un carácter de tabulación, para
+              indicar o número de filas e de columnas, respectivamente.
             </para>
 	  </li>
 	  <li>
             <para>
-              As columnas deben de estar separadas por espazos ou por
-              tabulacións.
+              As columnas se separan mediante tabulacións.
             </para>
 	  </li>
 	  <li>
             <para>
-              O separador decimal debe de ser o carácter punto,
+              O separador decimal é o carácter punto,
               <quote><lit>.</lit></quote>.
             </para>
 	  </li>
@@ -7582,14 +7582,16 @@
 	<subhead>Ficheiros con texto delimitado</subhead>
 	<para>
 	  Se o nome do ficheiro que se vai ler ten a extensión
-	  <quote><lit>.csv</lit></quote> ou <quote><lit>.txt</lit></quote>,
-	  reláxanse as regras que administran a lectura do ficheiro segundo
-	  o seu formato (en particular, non se necesita que o conxunto de
-	  datos presentes estea precedido pola especificación do número de
-	  filas e de columnas). O programa vai tratar de determinar o 
-	  delimitador utilizado (espazo, tabulador, coma, ou punto e coma),
-	  e fará o que poda para importar a matriz, permitindo o uso da coma
-	  como separador decimal, se é necesario.
+	  <quote><lit>.csv</lit></quote>, as regras que administran a lectura
+	  do ficheiro segundo o seu formato son diferentes, e máis laxas.
+	  Neste caso, o conxunto de datos presentes <emphasis>non</emphasis>
+	  debe estar precedido por unha liña que especifique o número de
+	  filas e de columnas. Gretl vai tratar de determinar o delimitador
+	  utilizado (coma, espazo, ou punto e coma), e fará o que poda para
+	  importar a matriz, permitindo o uso da coma como separador decimal,
+	  se é necesario. Cae na conta de que o delimitador non debe ser o
+	  carácter do tabulador, polo risco de confundir ese tipo de ficheiros
+	  cos que teñen o formato <quote>orixinal</quote> de Gretl.
 	</para>
 	<para>
 	  <seelist>
@@ -7816,12 +7818,15 @@
       <description>
 	<para>
 	  Escribe a matriz do argumento <argname>X</argname> nun ficheiro co
-	  nome <argname>nomeficheiro</argname>. Por defecto, este ficheiro vai ser de
-	  texto plano e, na primeira liña, vai conter dous números enteiros que
-	  representan o número de filas e de columnas (respectivamente) separados
-	  por un carácter de tabulación. Nas seguintes filas, os elementos da
-	  matriz amósanse con notación científica, separados por tabulacións
-	  (unha liña por fila). Para formatos alternativos, mira máis abaixo.
+	  nome <argname>nomeficheiro</argname>. Por defecto, este ficheiro
+	  vai ser de texto plano e, na primeira liña, vai conter dous números
+	  enteiros que representan o número de filas e de columnas separados
+	  (respectivamente) por un carácter de tabulación. Nas seguintes filas,
+	  os elementos da matriz amósanse con notación científica, separados
+	  por tabulacións (unha liña por fila). Para evitar confusións á hora
+	  da súa lectura, os ficheiros que se escriban neste formato deben
+	  ser nomeados co sufixo <quote><lit>.mat</lit></quote>. Para formatos
+	  alternativos, mira máis abaixo.
 	</para>
 	<para>
 	  Cando xa existe un ficheiro chamado <argname>nomeficheiro</argname>, vaise
@@ -7847,21 +7852,21 @@
 	  Consulta o <guideref targ="chap:matrices"/> para obter máis detalles.
 	</para>
 	<para>
-	  Dúas matizacións, que se exclúen mutuamente, desta función están
+	  Tres matizacións, que se exclúen mutuamente, desta función están
 	  dispoñibles como se indica deseguido:
 	</para>
 	<ilist>
 	  <li>
 	    <para>
 	      Se o argumento <argname>nomeficheiro</argname> ten a extensión
-	      <quote><lit>.gz</lit></quote>, entón o ficheiro gárdase coa
-	      compresión gzip.
+	      <quote><lit>.gz</lit></quote>, entón o ficheiro gárdase co formato
+	      descrito máis arriba, pero usando a compresión gzip.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      Se o argumento <argname>nomeficheiro</argname> ten a extensión
-	      <quote><lit>.bin</lit></quote>, entón o ficheiro gárdase con
+	      <quote><lit>.bin</lit></quote>, entón a matriz gárdase con
 	      formato binario. Neste caso, os primeiros 19 bytes conteñen
 	      os caracteres <lit>gretl_binary_matrix</lit>; os seguintes
 	      8 bytes conteñen dous enteiros de 32 bits que proporcionan
@@ -7871,6 +7876,17 @@
 	      Gretl nun sistema <quote>big-endian</quote>, os valores
 	      binarios convértense a <quote>little-endian</quote> ao
 	      escribilos, e a <quote>big-endian</quote> aos ler.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Se o argumento <argname>nomeficheiro</argname> ten a extensión
+	      <quote><lit>.csv</lit></quote>, entón a matriz gárdase con
+	      formato de separación con comas, sen a liña de encabezamento
+	      que indique o número de filas e de columnas que a seguen.
+	      Isto podería facer máis doado o tratamento con programas de
+	      terceiros, pero non se recomenda cando se pretende ler o
+	      ficheiro cos elementos da matriz por medio de Gretl.
 	    </para>
 	  </li>
 	</ilist>
