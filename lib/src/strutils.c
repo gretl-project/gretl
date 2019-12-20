@@ -1916,6 +1916,9 @@ int strings_array_donate (char ***pS, int *n, char *p)
  * @pS: pointer to strings array.
  * @n: location of present number of strings in array.
  * @p: string to test for addition to array.
+ * @pos: location to receive the position of @p
+ * int the array (whether already matched or newly
+ * added), or NULL.
  *
  * If the array does not already include a copy of @p,
  * allocates storage for an extra member of @pS and adds a
@@ -1925,7 +1928,8 @@ int strings_array_donate (char ***pS, int *n, char *p)
  * Returns: 0 on success, %E_ALLOC on failure.
  */
 
-int strings_array_add_uniq (char ***pS, int *n, const char *p)
+int strings_array_add_uniq (char ***pS, int *n, const char *p,
+			    int *pos)
 {
     char **Tmp, **S = *pS;
     int m = *n;
@@ -1933,6 +1937,9 @@ int strings_array_add_uniq (char ***pS, int *n, const char *p)
 
     for (i=0; i<m; i++) {
 	if (S[i] != NULL && strcmp(S[i], p) == 0) {
+	    if (pos != NULL) {
+		*pos = i;
+	    }
 	    return 0; /* no-op */
 	}
     }
@@ -1949,6 +1956,10 @@ int strings_array_add_uniq (char ***pS, int *n, const char *p)
 	}
     } else {
 	Tmp[m] = NULL;
+    }
+
+    if (pos != NULL) {
+	*pos = m;
     }
 
     *pS = Tmp;
