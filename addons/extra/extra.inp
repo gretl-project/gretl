@@ -341,7 +341,7 @@ function string mrow2json (const matrix m)
         string out = "["
         loop c = 1..cols(m) -q
             scalar x = m[c]
-            string s = "null"
+            string s = sprintf("\"null\"")
             if ok(x)
                 s = (int(x) == x) ? sprintf("%14.d", x) : sprintf("%14.10f", x)              
             endif
@@ -367,8 +367,9 @@ function string bundle2json (const bundle b)
     # no nesting, and among arrays only strings.
 
     # Any unsupported element type will produce a missing ("null")
-    # entry.
+    # entry (quoted in double quotes in the output).
 
+	string quotnull = sprintf("\"null\"")
     strings keys = getkeys(b)
     string out = "{"
 
@@ -388,7 +389,7 @@ function string bundle2json (const bundle b)
             if ok(b[key])
                 out ~= sprintf("%g", b[key])
             else
-                out ~= "null"	# in case of "NA"
+                out ~= quotnull	# in case of "NA"
             endif
 
         elif typ == "series" || typ == "matrix" # (series as vector)
@@ -410,7 +411,7 @@ function string bundle2json (const bundle b)
             if typestr(typeof(b[key][1])) != "string"
                 print "Warning: Only string arrays supported."
                 print "(Treat array as missing.)"
-                out ~= "null"
+                out ~= quotnull
 
             else
                 strings S = b[key]
@@ -423,7 +424,7 @@ function string bundle2json (const bundle b)
         else
             printf "Warning: Type %s not supported.\n", typ
             print "(Treat as missing.)"
-            out ~= "null"
+            out ~= quotnull
 
         endif
         out ~= (k < nelem(keys)) ? "," : sprintf("\n}")
