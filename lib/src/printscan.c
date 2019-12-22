@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* support for C-like (s)printf and sscanf */
@@ -38,8 +38,8 @@
 */
 
 static void printf_series (int v, const DATASET *dset,
-			   const char *fmt, 
-			   int wid, int prec, 
+			   const char *fmt,
+			   int wid, int prec,
 			   int wstar, int pstar,
 			   PRN *prn)
 {
@@ -92,7 +92,7 @@ static int printf_escape (int c, PRN *prn)
     return 0;
 }
 
-static char *printf_get_string (char *s, DATASET *dset, 
+static char *printf_get_string (char *s, DATASET *dset,
 				int t, int *err)
 {
     char *ret = NULL;
@@ -130,7 +130,7 @@ static char *printf_get_string (char *s, DATASET *dset,
 /* here we're trying to get a field width or precision
    specifier */
 
-static int printf_get_int (const char *s, DATASET *dset, 
+static int printf_get_int (const char *s, DATASET *dset,
 			   int *err)
 {
     int ret = 0;
@@ -144,14 +144,14 @@ static int printf_get_int (const char *s, DATASET *dset,
     if (*err) {
 	*err = 0;
 	gretl_error_clear();
-	/* we'll allow a bit of slop with regard to 
+	/* we'll allow a bit of slop with regard to
 	   integerhood here */
 	ret = (int) generate_scalar(s, dset, err);
     }
-    
+
     if (!*err && abs(ret) > 255) {
 	*err = E_DATA;
-    } 
+    }
 
 #if PSDEBUG
     fprintf(stderr, "printf_get_int: returning %d\n", ret);
@@ -167,15 +167,15 @@ static int printf_get_int (const char *s, DATASET *dset,
    attempt to generate a value (of type unknown).
 */
 
-static int gen_arg_val (const char *s, DATASET *dset, 
-			double *px, gretl_matrix **pm, 
+static int gen_arg_val (const char *s, DATASET *dset,
+			double *px, gretl_matrix **pm,
 			int *pv, int *scalar)
 {
     const char *name = "$ptmp";
     char *genstr;
     int err = 0;
 
-    genstr = gretl_strdup_printf("%s=%s", name, s); 
+    genstr = gretl_strdup_printf("%s=%s", name, s);
     if (genstr == NULL) {
 	return E_ALLOC;
     }
@@ -227,7 +227,7 @@ static char *get_next_arg (const char *s, int *len, int *err)
     *len = strspn(s, ", ");
     s += *len;
     p = s;
-    
+
     while (*p) {
 	if (*p == '"' && (p == s || *(p-1) != '\\')) {
 	    quoted = !quoted;
@@ -307,7 +307,7 @@ get_printf_format_chunk (const char *s, char *conv,
     if (*p == '+') {
 	p++;
     }
- 
+
     /* optional width? */
     n = strspn(p, numchars);
     if (n == 0 && *p == '*') {
@@ -348,7 +348,7 @@ get_printf_format_chunk (const char *s, char *conv,
     }
     p++;
     *len = n = p - s;
-    
+
     if (n > 0) {
 	chunk = gretl_strndup(s, n);
 	if (chunk == NULL) {
@@ -386,7 +386,7 @@ static int printf_as_int (double x, int fc,
     } else if (fc == 'u' || fc == 'x') {
 	if (x < 0 || x > UINT_MAX) {
 	    return E_INVARG;
-	}	
+	}
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, (unsigned) x);
 	} else if (wstar || pstar) {
@@ -394,7 +394,7 @@ static int printf_as_int (double x, int fc,
 	    pprintf(prn, fmt, wid, (unsigned) x);
 	} else {
 	    pprintf(prn, fmt, (unsigned) x);
-	}	    
+	}
     } else if (fc == 'd' && lflag) {
 	if (x < LONG_MIN || x > LONG_MAX) {
 	    return E_INVARG;
@@ -443,7 +443,7 @@ static void maybe_adjust_string_format (char *str,
 	const char *s = *fmt;
 	char *p, *tmp = NULL;
 	int uwid = 0, uprec = 0;
-	
+
 	if (*wstar) {
 	    /* got width in variable form */
 	    uwid = *wid;
@@ -453,7 +453,7 @@ static void maybe_adjust_string_format (char *str,
 		uwid = atoi(s + 1);
 	    }
 	}
-	
+
 	if (*pstar) {
 	    /* got "precision" in variable form */
 	    p = g_utf8_offset_to_pointer(str, *prec);
@@ -462,7 +462,7 @@ static void maybe_adjust_string_format (char *str,
 	    /* got inline precision? */
 	    uprec = atoi(p + 1);
 	    p = g_utf8_offset_to_pointer(str, uprec);
-	    uprec = p - str;	    
+	    uprec = p - str;
 	}
 
 	if (uwid != 0) {
@@ -499,7 +499,7 @@ static void maybe_adjust_string_format (char *str,
    we're doing the "genr markers" special thing.
 */
 
-static int print_arg (const char **pfmt, const char **pargs, 
+static int print_arg (const char **pfmt, const char **pargs,
 		      DATASET *dset, int t, PRN *prn)
 {
     const char *intconv = "dxu";
@@ -595,7 +595,7 @@ static int print_arg (const char **pfmt, const char **pargs,
 	} else if ((v = current_series_index(dset, arg)) >= 0) {
 	    /* printing a named series, unless t >= 0 */
 	    if (t < 0) {
-		series_v = v; 
+		series_v = v;
 	    } else {
 		x = dset->Z[v][t];
 		got_scalar = 1;
@@ -609,7 +609,7 @@ static int print_arg (const char **pfmt, const char **pargs,
 		series_v = v;
 		free_v = 1;
 	    }
-	} 
+	}
 	*pargs += alen;
     }
 
@@ -646,7 +646,7 @@ static int print_arg (const char **pfmt, const char **pargs,
 	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
     } else if (series_v >= 0) {
 	/* printing a series */
-	printf_series(series_v, dset, fmt, wid, prec, 
+	printf_series(series_v, dset, fmt, wid, prec,
 		      wstar, pstar, prn);
     } else if (fc == 's') {
 	/* printing a string */
@@ -693,7 +693,7 @@ static int print_arg (const char **pfmt, const char **pargs,
 
     free(fmt);
     free(str);
-    
+
     if (free_m) {
 	gretl_matrix_free(m);
     } else if (free_v) {
@@ -702,8 +702,8 @@ static int print_arg (const char **pfmt, const char **pargs,
 
 #if PSDEBUG
     fprintf(stderr, "print_arg: returning %d\n", err);
-#endif	
-    
+#endif
+
     return err;
 }
 
@@ -716,6 +716,10 @@ static int real_do_printf (const char *format,
 {
     PRN *prn = NULL;
     int err = 0;
+
+    if (inprn == NULL) {
+	return 0;
+    }
 
     gretl_error_clear();
 
@@ -731,7 +735,7 @@ static int real_do_printf (const char *format,
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
     if (err) {
 	return err;
-    }    
+    }
 
     if (format != NULL) {
 	const char *p = format;
@@ -765,10 +769,12 @@ static int real_do_printf (const char *format,
     } else {
 	const char *buf = gretl_print_get_buffer(prn);
 
-	if (nchars != NULL) {
-	    *nchars = strlen(buf);
+	if (buf != NULL) {
+	    if (nchars != NULL) {
+		*nchars = strlen(buf);
+	    }
+	    pputs(inprn, buf);
 	}
-	pputs(inprn, buf);
     }
 
     gretl_print_destroy(prn);
@@ -824,7 +830,7 @@ char *do_sprintf_function (const char *format, const char *args,
     prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
     if (*err) {
 	return NULL;
-    }    
+    }
 
     while (*p && !*err) {
 	if (*p == '%' && *(p+1) == '%') {
@@ -876,14 +882,14 @@ static int bscan_escape (char *s)
 		s[i] = '\t';
 		shift_string_left(s + i + 1, 1);
 		i++;
-	    }		
+	    }
 	}
     }
 
     return 0;
 }
 
-static int 
+static int
 parse_bracket_scanner (const char **pfmt, struct bracket_scan *bscan)
 {
     const char *p, *s = *pfmt;
@@ -896,12 +902,12 @@ parse_bracket_scanner (const char **pfmt, struct bracket_scan *bscan)
 	bscan->reverse = 1;
 	s++;
 	k++;
-    } 
+    }
     if (*s == ']') {
 	s++;
 	k++;
     }
-    
+
     p = s;
     while (*p) {
 	if (*p == ']') {
@@ -936,8 +942,8 @@ parse_bracket_scanner (const char **pfmt, struct bracket_scan *bscan)
 #define WIDTH_UNSPEC -1
 
 static char *
-get_scanf_format_chunk (const char *s, int *fc, int *len, 
-			int *width, int *supp, 
+get_scanf_format_chunk (const char *s, int *fc, int *len,
+			int *width, int *supp,
 			struct bracket_scan *bscan,
 			int *err)
 {
@@ -953,7 +959,7 @@ get_scanf_format_chunk (const char *s, int *fc, int *len,
 	/* suppress assignment */
 	*supp = 1;
 	p++;
-    } 
+    }
 
     /* optional max width? */
     n = strspn(p, numchars);
@@ -983,7 +989,7 @@ get_scanf_format_chunk (const char *s, int *fc, int *len,
     }
 
     *len = n = p - s;
-    
+
     if (n > 0) {
 	chunk = gretl_strndup(s, n);
 	if (chunk == NULL) {
@@ -1000,8 +1006,8 @@ get_scanf_format_chunk (const char *s, int *fc, int *len,
     return chunk;
 }
 
-static int 
-scan_string (char *targ, const char **psrc, int width, 
+static int
+scan_string (char *targ, const char **psrc, int width,
 	     struct bracket_scan *bscan, int *ns)
 {
     int n, err = 0;
@@ -1014,7 +1020,7 @@ scan_string (char *targ, const char **psrc, int width,
 	} else {
 	    n = strspn(*psrc, bscan->chrs);
 	}
-    } else {	    
+    } else {
 	n = strcspn(*psrc, " \t\n");
     }
 
@@ -1057,7 +1063,7 @@ scan_string (char *targ, const char **psrc, int width,
 }
 
 static int scan_scalar (char *targ, const char **psrc,
-			int fc, int width, DATASET *dset, 
+			int fc, int width, DATASET *dset,
 			int *ns)
 {
     char *endp = NULL;
@@ -1131,7 +1137,7 @@ static int scan_scalar (char *targ, const char **psrc,
     return err;
 }
 
-static int scan_matrix (char *targ, const char **psrc, 
+static int scan_matrix (char *targ, const char **psrc,
 			int rows, int *ns)
 {
     const char *src = *psrc;
@@ -1147,7 +1153,7 @@ static int scan_matrix (char *targ, const char **psrc,
 	strtod(src, &endp);
 	if (endp == src || errno == ERANGE) {
 	    break;
-	} 
+	}
 	c++;
 	src = endp;
 	src += strspn(src, " \t");
@@ -1181,7 +1187,7 @@ static int scan_matrix (char *targ, const char **psrc,
 	m = gretl_matrix_alloc(r, c0);
 	if (m == NULL) {
 	    return E_ALLOC;
-	}	
+	}
 
 	src = *psrc;
 	for (i=0; i<r; i++) {
@@ -1192,7 +1198,7 @@ static int scan_matrix (char *targ, const char **psrc,
 		src += strspn(src, " \t\n\r");
 	    }
 	}
- 
+
 	err = user_matrix_replace_matrix_by_name(targ, m);
 	if (err) {
 	    gretl_matrix_free(m);
@@ -1207,7 +1213,7 @@ static int scan_matrix (char *targ, const char **psrc,
     return err;
 }
 
-static int scan_arg (const char **psrc, const char **pfmt, const char **pargs, 
+static int scan_arg (const char **psrc, const char **pfmt, const char **pargs,
 		     DATASET *dset, int *ns)
 {
     char *fmt = NULL;
@@ -1229,7 +1235,7 @@ static int scan_arg (const char **psrc, const char **pfmt, const char **pargs,
     bscan.chrs = NULL;
 
     /* select current conversion format */
-    fmt = get_scanf_format_chunk(*pfmt, &fc, &flen, &wid, &supp, 
+    fmt = get_scanf_format_chunk(*pfmt, &fc, &flen, &wid, &supp,
 				 &bscan, &err);
     if (err) {
 	return err;
@@ -1271,7 +1277,7 @@ static int scan_arg (const char **psrc, const char **pfmt, const char **pargs,
     free(arg);
     free(str);
     free(bscan.chrs);
-    
+
     return err;
 }
 
@@ -1341,7 +1347,7 @@ static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
     static int warned;
     char *tmp;
     int err;
-    
+
     if (!warned) {
 	pputs(prn, "*** \"sscanf\": obsolete command, please use the "
 	      "function of the same name\n");
@@ -1361,7 +1367,7 @@ static int sscanf_driver (const char *args, DATASET *dset, PRN *prn)
     return err;
 }
 
-/* apparatus to support the command-forms of printf, sprintf 
+/* apparatus to support the command-forms of printf, sprintf
    and sscanf */
 
 int do_printscan_command (int ci, const char *parm1, const char *parm2,
@@ -1422,6 +1428,6 @@ int generate_obs_markers (const char *s, DATASET *dset)
     }
 
     gretl_print_destroy(prn);
-	
+
     return err;
 }
