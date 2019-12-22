@@ -415,26 +415,29 @@ static double abs_sum (const gretl_vector *z)
     return ret;
 }
 
-/* calculate the lasso criterion */
+/* calculate the lasso objective function */
 
-static double objective (const gretl_matrix *A,
+static double objective (const gretl_matrix *X,
+			 const gretl_vector *y,
 			 const gretl_vector *b,
-			 const gretl_vector *z,
 			 double lambda,
-			 gretl_vector *Azb)
+			 gretl_vector *u,
+			 double TSS,
+			 double *R2)
 {
     double SSR;
     double obj = 0;
 
-    gretl_matrix_multiply(A, z, Azb);
+    gretl_matrix_multiply(X, b, u);
     if (ybar != 0) {
-	vector_add_scalar(Azb, ybar, A->rows);
+	vector_add_scalar(u, ybar, u->rows);
     }
-    vector_subtract_from(Azb, b, A->rows);
-    SSR = gretl_vector_dot_product(Azb, Azb, NULL);
-    obj = 0.5 * SSR + lambda * abs_sum(z);
+    vector_subtract_from(u, y, y->rows);
+    SSR = gretl_vector_dot_product(u, u, NULL);
+    obj = 0.5 * SSR + lambda * abs_sum(b);
+    *R2 = 1.0 - SSR/TSS;
 
-    return obj / A->rows;
+    return obj / y->rows;
 }
 
 /* calculate the cross validation criterion */
@@ -678,149 +681,61 @@ static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
 
 #if TRY_CCD
 
-#include "ccd_iter.c"
+extern int ccd_driver (gretl_matrix *X, gretl_matrix *y,
+		       int nlam, int autolam, int stdize,
+		       gretl_matrix **pB,
+		       gretl_matrix **plam,
+		       gretl_matrix **pR2,
+		       gretl_matrix **pcrit,
+		       PRN *prn);
 
-static int real_ccd_lasso (const gretl_matrix *X,
-			   const gretl_matrix *y,
+static int real_ccd_lasso (gretl_matrix *X,
+			   gretl_matrix *y,
 			   gretl_bundle *bun,
 			   PRN *prn)
 {
-    double lcritmin = 1e200;
     gretl_matrix *B = NULL;
-    gretl_matrix *lfrac;
-    gretl_matrix *g, *xv;
-    gretl_matrix *R2;
-    double lmax, ssq, xij;
-    int *ia, *df;
-    int nlam = 1;
-    int m, n, i, j;
-    int jmin, jmax;
-    int idxmin = 0;
-    int nlp = 0;
-    int err = 0;
+    gretl_matrix *lam = NULL;
+    gretl_matrix *R2 = NULL;
+    gretl_matrix *lcrit = NULL;
+    int nlam = 40;
+    int autolam = 1;
+    int stdize = 1;
+    int err;
 
-    int stdize = gretl_bundle_get_int(bun, "stdize", &err);
-    int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
-    int verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
+    /* FIXME get @nlam or @lfrac from @bun */
 
-    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
-
-    if (err) {
-	return err;
-    }
-
-    /* dimensions */
-    nlam = gretl_vector_get_length(lfrac);
-    m = X->rows;
-    n = X->cols;
-
-    xv = gretl_matrix_alloc(n, 1);
-    g = gretl_matrix_alloc(n, 1);
-    R2 = gretl_matrix_alloc(nlam, 1);
-    df = malloc(nlam * sizeof *df);
-    ia = malloc(n * sizeof *ia);
-
-    /* g = X'y */
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      y, GRETL_MOD_NONE,
-			      g, GRETL_MOD_NONE);
-    lmax = gretl_matrix_infinity_norm(g);    
-
-    /* xv: sums of squares of columns of X */
-    for (j=0; j<n; j++) {
-	ssq = 0.0;
-	for (i=0; i<m; i++) {
-	    xij = gretl_matrix_get(X, i, j);
-	    ssq += xij * xij;
-	}
-	gretl_vector_set(xv, j, ssq);
-    }
-
-    if (!xvalid && verbose > 0) {
-	if (nlam > 1) {
-	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
-		    nlam, lfrac->val[0]);
-	} else {
-	    pprintf(prn, "using lambda-fraction %g\n", lfrac->val[0]);
-	}
-    }
-
-    B = make_coeff_matrix(bun, xvalid, n + stdize, nlam, &jmin, &jmax);
-    if (B == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    if (!xvalid && verbose > 0 && nlam > 1) {
-	pputc(prn, '\n');
-	pprintf(prn, "      lambda     df     criterion\n");
-    }
-
-    err = ccd_iteration(1.0, n, g->val, m, X, nlam, lfrac->val,
-			lmax, 1.0e-7, 200000, xv->val, B, stdize,
-			ia, df, R2->val, &nlp);
-    printf("ccd: err=%d, nlp=%d\n", err, nlp);
+    err = ccd_driver(X, y, nlam, autolam, stdize,
+		     &B, &lam, &R2, &lcrit, prn);
 
     if (!err) {
-	double lambda, lcrit, nulldev = 0.0;
-	gretl_matrix *b = gretl_matrix_alloc(n, 1);
-	gretl_matrix *m1 = gretl_matrix_alloc(m, 1);
-	size_t bsize = n * sizeof *b->val;
+	double lmax = lam->val[0];
 
-	for (i=0; i<y->rows; i++) {
-	    nulldev += y->val[i] * y->val[i];
-	}
-	for (j=0; j<nlam; j++) {
-	    lambda = lfrac->val[j] * lmax;
-	    R2->val[j] /= nulldev;
-	    memcpy(b->val, B->val + j * B->rows + stdize, bsize);
-	    if (!xvalid) {
-		lcrit = objective(X, y, b, lambda, m1);
-		if (verbose > 0 && nlam > 1) {
-		    pprintf(prn, "%#12.6g  %5d    %#.8g\n",
-			    lambda/m, df[j], lcrit);
-		}
-		if (lcrit < lcritmin) {
-		    lcritmin = lcrit;
+	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_set_scalar(bun, "lmax", lmax);
+
+	if (nlam > 1) {
+	    double lcritmin = 1e200;
+	    int j, idxmin = 0;
+
+	    for (j=0; j<nlam; j++) {
+		if (lcrit->val[j] < lcritmin) {
+		    lcritmin = lcrit->val[j];
 		    idxmin = j;
 		}
 	    }
-	}
-	gretl_matrix_free(b);
-	gretl_matrix_free(m1);
-	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
-    } else {
-	gretl_matrix_free(B);
-    }
-
-    if (!err) {
-	gretl_bundle_set_scalar(bun, "lmax", lmax);
-	if (!xvalid) {
-	    if (nlam > 1) {
-		gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
-		gretl_bundle_set_scalar(bun, "lfmin", lfrac->val[idxmin]);
-	    }
+	    gretl_bundle_set_scalar(bun, "lfmin", lam->val[idxmin]/lmax);
+	    gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
 	    gretl_bundle_set_scalar(bun, "lcrit", lcritmin);
-	}
-	if (nlam == 1) {
-	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+	} else {
+	    gretl_bundle_set_scalar(bun, "lcrit", lcrit->val[0]);
 	}
     }
-
- bailout:
-
-    gretl_bundle_delete_data(bun, "verbosity");
-
-    gretl_matrix_free(g);
-    gretl_matrix_free(xv);
-    gretl_matrix_free(R2);
-    free(ia);
-    free(df);
 
     return err;
 }
 
-#endif
+#endif /* TRY_CCD */
 
 /* This function is executed when we want to obtain a set
    of coefficients using the full training data, with either
@@ -881,6 +796,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 			      Atb, GRETL_MOD_NONE);
 
     lmax = gretl_matrix_infinity_norm(Atb);
+    pprintf(prn, "lambda-max = %g\n", lmax);
 
     if (!xvalid && verbose > 0) {
 	if (nlam > 1) {
@@ -901,7 +817,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     if (!xvalid && verbose > 0 && nlam > 1) {
 	pputc(prn, '\n');
-	pprintf(prn, "      lambda     df     criterion   iters\n");
+	pprintf(prn, "      lambda     df   criterion      R^2\n");
     }
 
     for (j=jmin; j<jmax && !err; j++) {
@@ -926,10 +842,12 @@ static int real_admm_lasso (const gretl_matrix *A,
 		}
 	    }
 	    if (!xvalid) {
-		lcrit = objective(A, b, z, lambda, m1);
+		double R2, TSS = gretl_vector_dot_product(b, b, NULL);
+
+		lcrit = objective(A, b, z, lambda, m1, TSS, &R2);
 		if (verbose > 0 && nlam > 1) {
-		    pprintf(prn, "%#12.6g  %5d    %#.8g   %5d\n",
-			    lambda/m, nnz, lcrit, iters);
+		    pprintf(prn, "%12f  %5d    %f   %.4f\n",
+			    lambda/m, nnz, lcrit, R2);
 		}
 		if (lcrit < lcritmin) {
 		    lcritmin = lcrit;
@@ -1505,8 +1423,15 @@ int admm_lasso (gretl_matrix *A,
     double rho = 8.0;
     int xv;
 
-    prepare_admm_params(A, b, bun, &rho);
     xv = gretl_bundle_get_bool(bun, "xvalidate", 0);
+
+#if TRY_CCD
+    if (!xv && gretl_bundle_get_bool(bun, "try_ccd", 0)) {
+	return real_ccd_lasso(A, b, bun, prn);
+    }
+#endif
+
+    prepare_admm_params(A, b, bun, &rho);
 
     if (xv) {
 #ifdef HAVE_MPI
@@ -1521,13 +1446,9 @@ int admm_lasso (gretl_matrix *A,
 	}
 #endif
 	return admm_lasso_xv(A, b, bun, rho, prn);
+    } else {
+	return real_admm_lasso(A, b, bun, rho, prn);
     }
-#if TRY_CCD
-    if (gretl_bundle_get_bool(bun, "try_ccd", 0)) {
-	return real_ccd_lasso(A, b, bun, prn);
-    }
-#endif
-    return real_admm_lasso(A, b, bun, rho, prn);
 }
 
 #ifdef HAVE_MPI
