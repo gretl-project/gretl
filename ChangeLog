@@ -10,7 +10,9 @@ version 2019d, in progress
   and sampling without replacement)
 - New function stdize() for standardization or centering
   of series, list or matrix; plus new "stdize" command
-- "set" command: add new "boot_iters" argument to se the
+- mwrite() and mread(): treat "*.csv" filenames specially
+  on both read and write to ensure correct round-trip
+- "set" command: add new "boot_iters" argument to set the
   number of iterations used when computing impulse response
   functions with confidence interval
 - Fix bug: possible crash on appending multiple lists to a
@@ -60,6 +62,7 @@ version 2019d, in progress
 - Builds for MS Windows and Mac: switch to use of libgsf
   for zipping/unzipping
 - Update support for building gretl on MS Windows
+- MS windows package: add new "Windows-10" theme
 
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
