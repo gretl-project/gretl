@@ -322,7 +322,7 @@ end function
 
 #######################
 
-function string mrow2json (const matrix m)
+function string mrow2json (const matrix m, string misscode)
     # Helper function to convert a matrix row to json-format array string.
     # Below we check for integer values to potentially
     # save a lot of space and bytes in the output file.
@@ -341,9 +341,13 @@ function string mrow2json (const matrix m)
         string out = "["
         loop c = 1..cols(m) -q
             scalar x = m[c]
-            string s = sprintf("\"null\"")
-            if ok(x)
-                s = (int(x) == x) ? sprintf("%14.d", x) : sprintf("%14.10f", x)              
+            string s = misscode
+            if ok(x) 
+                if abs(x) < 1e9	&& int(x) == x # avoid overflow
+                    s = sprintf("%14d", x) 
+                else
+                    s = sprintf("%14.10f", x) 
+                endif             
             endif
 
             out ~= s
@@ -351,8 +355,11 @@ function string mrow2json (const matrix m)
         endloop
 
     else    # all values OK, can do in one go
-        
-        string out = (int(m) == m) ? sprintf("%14.d", m) : sprintf("%14.10f", m)
+        if max(abs(m)) < 1e9 && int(m) == m # avoid overflow
+            string out = sprintf("%14d", m)
+        else
+            string out = sprintf("%14.10f", m)
+        endif
         out = "[" ~ strstrip(out) ~ "]"
         # replace (multiple) blanks inside with comma sep
         out = regsub(out, "\s+", ",") 
@@ -361,7 +368,7 @@ function string mrow2json (const matrix m)
     return out
 end function
 
-function string bundle2json (const bundle b)
+function string bundle2json (const bundle b, string misscode)
     # Bundle elements represented as a json-formatted string.
     # Not all gretl object types are supported yet, in particular
     # no nesting, and among arrays only strings.
@@ -369,7 +376,6 @@ function string bundle2json (const bundle b)
     # Any unsupported element type will produce a missing ("null")
     # entry (quoted in double quotes in the output).
 
-	string quotnull = sprintf("\"null\"")
     strings keys = getkeys(b)
     string out = "{"
 
@@ -389,7 +395,7 @@ function string bundle2json (const bundle b)
             if ok(b[key])
                 out ~= sprintf("%g", b[key])
             else
-                out ~= quotnull	# in case of "NA"
+                out ~= misscode	# in case of "NA"
             endif
 
         elif typ == "series" || typ == "matrix" # (series as vector)
@@ -402,7 +408,7 @@ function string bundle2json (const bundle b)
                 # matrix and vector always done as 2-dim
                 out ~= "["
                 loop r = 1..rows(m) -q
-                    out ~= mrow2json(m[r,])  
+                    out ~= mrow2json(m[r,], misscode)  
                     out ~= (r < rows(m)) ? sprintf(",\n") : "]"
                 endloop
             endif
@@ -411,7 +417,7 @@ function string bundle2json (const bundle b)
             if typestr(typeof(b[key][1])) != "string"
                 print "Warning: Only string arrays supported."
                 print "(Treat array as missing.)"
-                out ~= quotnull
+                out ~= misscode
 
             else
                 strings S = b[key]
@@ -424,7 +430,7 @@ function string bundle2json (const bundle b)
         else
             printf "Warning: Type %s not supported.\n", typ
             print "(Treat as missing.)"
-            out ~= quotnull
+            out ~= misscode
 
         endif
         out ~= (k < nelem(keys)) ? "," : sprintf("\n}")
@@ -435,12 +441,17 @@ end function
 
 function scalar bwritejson (const bundle b, string fname[null],
                             bool export[0],
-                            string *jsonresult[null])
+                            string *jsonresult[null],
+                            string misscode[null])
     # The interface mimics the native bwrite function.
     # Saves the input bundle b in JSON representation.
     # (or copies it to jsonresult)
 
-    string json = bundle2json(b)
+    if !exists(misscode)
+        string misscode = "NaN"
+    endif
+
+    string json = bundle2json(b, misscode)
 
     # No-file usage variant
     if exists(jsonresult)
