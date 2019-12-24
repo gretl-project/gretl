@@ -677,14 +677,13 @@ static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
     return B;
 }
 
-#define TRY_CCD 0 /* not for now */
+#define TRY_CCD 0 /* not just yet */
 
 #if TRY_CCD
 
 extern int ccd_driver (gretl_matrix *X, gretl_matrix *y,
-		       int nlam, int autolam, int stdize,
+		       gretl_matrix *lam, int stdize,
 		       gretl_matrix **pB,
-		       gretl_matrix **plam,
 		       gretl_matrix **pR2,
 		       gretl_matrix **pcrit,
 		       PRN *prn);
@@ -698,18 +697,19 @@ static int real_ccd_lasso (gretl_matrix *X,
     gretl_matrix *lam = NULL;
     gretl_matrix *R2 = NULL;
     gretl_matrix *lcrit = NULL;
-    int nlam = 40;
-    int autolam = 1;
     int stdize = 1;
     int err;
 
-    /* FIXME get @nlam or @lfrac from @bun */
+    lam = gretl_bundle_get_matrix(bun, "lfrac", NULL);
+    if (lam == NULL) {
+	return E_DATA;
+    }
 
-    err = ccd_driver(X, y, nlam, autolam, stdize,
-		     &B, &lam, &R2, &lcrit, prn);
+    err = ccd_driver(X, y, lam, stdize, &B, &R2, &lcrit, prn);
 
     if (!err) {
 	double lmax = lam->val[0];
+	int nlam = lam->rows;
 
 	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
 	gretl_bundle_set_scalar(bun, "lmax", lmax);
@@ -726,9 +726,10 @@ static int real_ccd_lasso (gretl_matrix *X,
 	    }
 	    gretl_bundle_set_scalar(bun, "lfmin", lam->val[idxmin]/lmax);
 	    gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
-	    gretl_bundle_set_scalar(bun, "lcrit", lcritmin);
+	    gretl_bundle_donate_data(bun, "lcrit", lcrit, GRETL_TYPE_MATRIX, 0);
 	} else {
 	    gretl_bundle_set_scalar(bun, "lcrit", lcrit->val[0]);
+	    gretl_matrix_free(lcrit);
 	}
     }
 
@@ -753,6 +754,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     double lcritmin = 1e200;
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
+    gretl_matrix *lcrit = NULL;
     double lmax, rho = rho0;
     int ldim, nlam = 1;
     int m, n, i, j;
@@ -798,6 +800,10 @@ static int real_admm_lasso (const gretl_matrix *A,
     lmax = gretl_matrix_infinity_norm(Atb);
     pprintf(prn, "lambda-max = %g\n", lmax);
 
+    if (!xvalid && nlam > 1) {
+	lcrit = gretl_matrix_alloc(nlam, 1);
+    }
+
     if (!xvalid && verbose > 0) {
 	if (nlam > 1) {
 	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
@@ -822,7 +828,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     for (j=jmin; j<jmax && !err; j++) {
 	/* loop across lambda values */
-	double lcrit, lambda = lfrac->val[j] * lmax;
+	double critj, lambda = lfrac->val[j] * lmax;
 	int tune_rho = 1;
 	int iters = 0;
 	int nnz = 0;
@@ -844,14 +850,17 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    if (!xvalid) {
 		double R2, TSS = gretl_vector_dot_product(b, b, NULL);
 
-		lcrit = objective(A, b, z, lambda, m1, TSS, &R2);
+		critj = objective(A, b, z, lambda, m1, TSS, &R2);
 		if (verbose > 0 && nlam > 1) {
 		    pprintf(prn, "%12f  %5d    %f   %.4f\n",
-			    lambda/m, nnz, lcrit, R2);
+			    lambda/m, nnz, critj, R2);
 		}
-		if (lcrit < lcritmin) {
-		    lcritmin = lcrit;
+		if (critj < lcritmin) {
+		    lcritmin = critj;
 		    idxmin = j;
+		}
+		if (lcrit != NULL) {
+		    lcrit->val[j] = critj;
 		}
 	    }
 	}
@@ -863,7 +872,11 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
 	    gretl_bundle_set_scalar(bun, "lfmin", lfrac->val[idxmin]);
 	}
-	gretl_bundle_set_scalar(bun, "lcrit", lcritmin);
+	if (lcrit != NULL) {
+	    gretl_bundle_donate_data(bun, "lcrit", lcrit, GRETL_TYPE_MATRIX, 0);
+	} else {
+	    gretl_bundle_set_scalar(bun, "lcrit", lcritmin);
+	}
     }
     if (nlam == 1) {
 	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
