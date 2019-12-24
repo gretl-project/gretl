@@ -43,6 +43,8 @@
 # endif
 #endif
 
+#define TRY_CCD 1 /* experimental */
+
 #define MAX_ITER 20000
 
 #define RELTOL_DEFAULT 1.0e-4
@@ -503,7 +505,7 @@ static int admm_iteration (const gretl_matrix *X,
 	/* u-update: u = u + r */
 	vector_add_to(u, r, n);
 
-	/* v-update: v = (X^T X + rho I) \ (X^T y + rho b - y) */
+	/* v-update: v = (X^T X + rho I) \ (X^T y + rho b - u) */
 
 	compute_q(q, b, u, Xty, rho, n);
 	if (X->rows >= X->cols) {
@@ -524,9 +526,9 @@ static int admm_iteration (const gretl_matrix *X,
 
 	/* sqrt(sum ||r_i||_2^2) */
 	prires  = sqrt(gretl_vector_dot_product(r, r, NULL));
-	/* sqrt(sum ||r_i||_2^2) */
+	/* sqrt(sum ||v_i||_2^2) */
 	nxstack = sqrt(gretl_vector_dot_product(v, v, NULL));
-	/* sqrt(sum ||y_i||_2^2) */
+	/* sqrt(sum ||u_i||_2^2) */
 	nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
 	nystack = sqrt(nystack);
 
@@ -622,8 +624,6 @@ static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
 
     return B;
 }
-
-#define TRY_CCD 1 /* not just yet */
 
 #if TRY_CCD
 
@@ -1401,11 +1401,6 @@ int admm_lasso (gretl_matrix *X,
    instances.
 */
 
-/* Using shared memory to transfer matrices is perhaps
-   a little faster, but it's not yet tested on Windows.
-*/
-#define MPI_USE_SHM 0
-
 int admm_xv_mpi (PRN *prn)
 {
     gretl_bundle *bun = NULL;
@@ -1417,13 +1412,8 @@ int admm_xv_mpi (PRN *prn)
     rank = gretl_mpi_rank();
 
     /* read matrices deposited by parent process */
-#if MPI_USE_SHM
-    X = shm_read_matrix("lasso_X.shm", 0, &err);
-    y = shm_read_matrix("lasso_y.shm", 0, &err);
-#else
     X = gretl_matrix_read_from_file("lasso_X.bin", 1, &err);
     y = gretl_matrix_read_from_file("lasso_y.bin", 1, &err);
-#endif
 
     if (!err) {
 	bun = gretl_bundle_read_from_file("lasso_bun.xml", 1, &err);
@@ -1441,13 +1431,6 @@ int admm_xv_mpi (PRN *prn)
 	}
     }
 
-#if MPI_USE_SHM
-    if (rank == 0) {
-	shm_finalize_matrix("lasso_A.shm");
-	shm_finalize_matrix("lasso_b.shm");
-    }
-#endif
-
     gretl_matrix_free(X);
     gretl_matrix_free(y);
     gretl_bundle_destroy(bun);
@@ -1463,17 +1446,10 @@ static int mpi_parent_action (gretl_matrix *X,
 {
     int err;
 
-#if MPI_USE_SHM
-    err = shm_write_matrix(X, "lasso_X.shm");
-    if (!err) {
-	err = shm_write_matrix(y, "lasso_y.shm");
-    }
-#else
     err = gretl_matrix_write_to_file(X, "lasso_X.bin", 1);
     if (!err) {
 	err = gretl_matrix_write_to_file(y, "lasso_y.bin", 1);
     }
-#endif
 
     if (!err) {
 	err = gretl_bundle_write_to_file(bun, "lasso_bun.xml", 1);
