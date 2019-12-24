@@ -192,37 +192,34 @@ static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
     return 0;
 }
 
-static int ccd_iteration (int ni, double *g,
-			  int no, const gretl_matrix *X, int nlam,
+static int ccd_iteration (int nx, double *g,
+			  const gretl_matrix *X, int nlam,
 			  const double *ulam, double thr,
 			  int maxit, const double *xv, int *lmu,
 			  gretl_matrix *B, int *ia, int *kin,
 			  double *Rsqo, int *nlp)
 {
     gretl_matrix *C;
-    double alm, rsq, u, v;
+    double alm, u, v, rsq = 0;
     double ak, del, dlx, cij;
     double *a, *da;
-    int *mm, nin, iz, jz;
+    int *mm, nin, jz, iz = 0;
     int j, k, l, m;
     int err = 0;
 
-    C = gretl_matrix_alloc(ni, ni);
-    a = malloc(ni * sizeof *a);
-    da = malloc(ni * sizeof *da);
-    mm = malloc(ni * sizeof *mm);
+    C = gretl_matrix_alloc(nx, nx);
+    a = malloc(nx * sizeof *a);
+    da = malloc(nx * sizeof *da);
+    mm = malloc(nx * sizeof *mm);
     if (C == NULL || a == NULL || da == NULL || mm == NULL) {
 	return E_ALLOC;
     }
-    /* zero @a and @mm */
-    for (j=0; j<ni; j++) {
+    /* "zero" @a and @mm */
+    for (j=0; j<nx; j++) {
 	a[j] = 0.0;
 	mm[j] = -1;
     }
-    rsq = 0.0;
-    *nlp = 0;
-    nin = *nlp;
-    iz = 0;
+    nin = *nlp = 0;
 
     for (m=0; m<nlam; m++) {
 	alm = ulam[m];
@@ -231,20 +228,20 @@ static int ccd_iteration (int ni, double *g,
 	if (iz*jz == 0) {
             *nlp += 1;
             dlx = 0.0;
-	    for (k=0; k<ni; k++) {
+	    for (k=0; k<nx; k++) {
 		ak = a[k];
 		u = g[k] + ak*xv[k];
 		v = fabs(u) - alm;
 		a[k] = v > 0.0 ? sign(v,u) / xv[k] : 0.0;
 		if (a[k] != ak) {
 		    if (mm[k] < 0) {
-			if (nin >= ni) goto check_conv;
-			for (j=0; j<ni; j++) {
+			if (nin >= nx) goto check_conv;
+			for (j=0; j<nx; j++) {
 			    if (mm[j] >= 0) {
 				cij = gretl_matrix_get(C, k, mm[j]);
 				gretl_matrix_set(C, j, nin, cij);
 			    } else if (j != k) {
-				cij = dot_prod1(X, j, k, no);
+				cij = dot_prod1(X, j, k, X->rows);
 				gretl_matrix_set(C, j, nin, cij);
 			    } else {
 				gretl_matrix_set(C, j, nin, xv[j]);
@@ -257,14 +254,14 @@ static int ccd_iteration (int ni, double *g,
 		    del = a[k] - ak;
 		    rsq += del*(2*g[k]-del*xv[k]);
 		    dlx = max(xv[k]*del*del, dlx);
-		    for (j=0; j<ni; j++) {
+		    for (j=0; j<nx; j++) {
 			cij = gretl_matrix_get(C, j, mm[k]);
 			g[j] -= cij*del;
 		    }
 		}
             }
 	check_conv:
-	    if (dlx < thr || nin > ni) {
+	    if (dlx < thr || nin > nx) {
 		goto m_finish;
 	    } else if (*nlp > maxit) {
 		fprintf(stderr, "ccd: max iters reached\n");
@@ -295,7 +292,7 @@ static int ccd_iteration (int ni, double *g,
 	}
 	if (dlx < thr) {
 	    range_set_sub(da, a, ia, nin, 1);
-	    for (j=0; j<ni; j++) {
+	    for (j=0; j<nx; j++) {
 		if (mm[j] < 0) {
 		    g[j] -= dot_prod2(da, C, j, nin);
 		}
@@ -311,7 +308,7 @@ static int ccd_iteration (int ni, double *g,
 	    goto getout;
 	}
     m_finish:
-	if (nin <= ni) {
+	if (nin <= nx) {
 	    if (nin > 0) {
 		fill_coeff_column(B, m, a, ia, nin);
 	    }
@@ -473,7 +470,7 @@ int ccd_driver (gretl_matrix *X, gretl_matrix *y,
     /* note: set thresh to 1.0e-9 to get results as accurate as
        those from ADMM */
 
-    err = ccd_iteration(k, g->val, n, X, nlam, lam->val,
+    err = ccd_iteration(k, g->val, X, nlam, lam->val,
 			1.0e-7, 100000, xv->val, &lmu, B,
 			ia, nin, R2->val, &nlp);
     printf("ccd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);

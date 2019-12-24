@@ -137,7 +137,8 @@ SRCS = excel_import.c \
 	reprobit.c \
 	interpolate.c \
 	iso3166.c \
-	admm.c
+	admm.c \
+	ccd.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -360,7 +361,7 @@ json_get.la: json_get.lo
 svm.la: svm.lo svmlib.lo
 	$(LDXX) -o $@ $^ $(GRETLLIB)
 
-admm.la: admm.lo
+admm.la: admm.lo ccd.lo
 	$(LINK) -o $@ $^ $(GRETLLIB)
 
 # plugins that require GTK+
