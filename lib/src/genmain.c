@@ -81,7 +81,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	}
 	if (t != SERIES && t != LIST && t != MAT) {
 	    /* we'll not print a message for modification
-	       of container types (bundle, array) */
+	       of container types (bundle, array)
+	    */
 	    return;
 	}
     }
@@ -199,7 +200,8 @@ static void gen_write_label (parser *p, int oldv)
 
     if (p->lh.expr != NULL) {
 	/* don't touch the label if we generated a single
-	   observation in a series */
+	   observation in a series
+	*/
 	return;
     }
 
