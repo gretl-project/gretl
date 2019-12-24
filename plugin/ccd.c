@@ -68,7 +68,7 @@ static double dot_product (const double *x, const double *y, int n)
 
 #endif
 
-/* fortran: dot_product(X(:,j),X(:,k)) for @X with @n rows */
+/* fortran: dot_product(X(:,j), X(:,k)) for @X with @n rows */
 
 static double dot_prod_jk (const gretl_matrix *X, int j, int k, int n)
 {
@@ -78,7 +78,7 @@ static double dot_prod_jk (const gretl_matrix *X, int j, int k, int n)
     return dot_product(xj, xk, n);
 }
 
-/* fortran: dot_product(v(1:n),m(j,1:n)) */
+/* fortran: dot_product(v(1:n), m(j,1:n)) */
 
 static double dot_prod_vm (const double *v,
 			   const gretl_matrix *m,
@@ -94,7 +94,7 @@ static double dot_prod_vm (const double *v,
     return ret;
 }
 
-/* handle these fortran lines:
+/* implement these fortran lines:
 
    x(1:n) = y(idx(1:n)) - x(1:n) !! sub = 1
    x(1:n) = y(idx(1:n))          !! sub = 0
@@ -116,13 +116,13 @@ static void range_set_sub (double *x, const double *y,
     }
 }
 
-/* fortran: B(1:n,m) = a(idx(1:n)) */
+/* fortran: B(1:n,j) = a(idx(1:n)) */
 
-static void fill_coeff_column (gretl_matrix *B, int m,
+static void fill_coeff_column (gretl_matrix *B, int j,
 			       const double *a, const int *idx,
 			       int n)
 {
-    double *b = B->val + m * B->rows;
+    double *b = B->val + j * B->rows;
     int i;
 
     for (i=0; i<n; i++) {
@@ -160,9 +160,8 @@ static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
     return 0;
 }
 
-static int ccd_iteration (int nx, double *g,
-			  const gretl_matrix *X, int nlam,
-			  const double *ulam, double thr,
+static int ccd_iteration (const gretl_matrix *X, double *g,
+			  int nlam, const double *ulam, double thr,
 			  int maxit, const double *xv, int *lmu,
 			  gretl_matrix *B, int *ia, int *kin,
 			  double *Rsq, int *pnlp)
@@ -173,6 +172,7 @@ static int ccd_iteration (int nx, double *g,
     double *a, *da;
     int *mm, nin, jz, iz = 0;
     int j, k, l, m, nlp = 0;
+    int nx = X->cols;
     int err = 0;
 
     C = gretl_matrix_alloc(nx, nx);
@@ -220,7 +220,7 @@ static int ccd_iteration (int nx, double *g,
 			nin++;
 		    }
 		    del = a[k] - ak;
-		    rsq += del*(2*g[k]-del*xv[k]);
+		    rsq += del * (2*g[k] - del*xv[k]);
 		    dlx = max(xv[k]*del*del, dlx);
 		    for (j=0; j<nx; j++) {
 			cij = gretl_matrix_get(C, j, mm[k]);
@@ -250,7 +250,7 @@ static int ccd_iteration (int nx, double *g,
 	    a[k] = v > 0.0 ? sign(v,u)/xv[k] : 0.0;
 	    if (a[k] != ak) {
 		del = a[k] - ak;
-		rsq += del*(2*g[k]-del*xv[k]);
+		rsq += del * (2*g[k] - del*xv[k]);
 		dlx = max(xv[k]*del*del, dlx);
 		for (j=0; j<nin; j++) {
 		    cij = gretl_matrix_get(C, ia[j], mm[k]);
@@ -317,13 +317,13 @@ static gretl_matrix *ccd_c_unpack (gretl_matrix *B,
     int nlam = B->cols;
     int i, j;
 
-    BB = gretl_zero_matrix_new(k+stdize, nlam);
+    BB = gretl_zero_matrix_new(k + stdize, nlam);
     if (BB == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    /* figure lasso criterion */
+    /* figure lasso criterion, if wanted */
     if (crit != NULL) {
 	for (j=0; j<lmu; j++) {
 	    bsum = 0;
@@ -337,12 +337,12 @@ static gretl_matrix *ccd_c_unpack (gretl_matrix *B,
 	}
     }
 
-    /* and "unpack" @B into @BB */
+    /* "unpack" @B into @BB */
     for (j=0; j<nlam; j++) {
 	bj = B->val + j*k;
 	for (i=0; i<k; i++) {
 	    if (fabs(bj[i]) > 0) {
-		gretl_matrix_set(BB, ia[i]+stdize, j, bj[i]);
+		gretl_matrix_set(BB, ia[i] + stdize, j, bj[i]);
 	    }
 	}
     }
@@ -399,11 +399,16 @@ int ccd_driver (gretl_matrix *X, gretl_matrix *y,
     gretl_matrix *crit = NULL;
     double thresh = 1.0e-7;
     double lmax;
-    int *nin, *ia;
+    int maxit = 100000;
+    int *nnz, *ia;
     int nlp = 0, lmu = 0;
     int nlam;
     int n, k, i;
     int err = 0;
+
+    /* note: set @thresh to 1.0e-9 to get results as accurate as
+       those from ADMM with its default tolerances
+    */
 
     n = X->rows;
     k = X->cols;
@@ -425,25 +430,22 @@ int ccd_driver (gretl_matrix *X, gretl_matrix *y,
     }
 
     R2 = gretl_matrix_alloc(nlam, 1);
-    nin = malloc(nlam * sizeof *nin);
+    nnz = malloc(nlam * sizeof *nnz);
     ia = malloc(k * sizeof *ia);
     if (pcrit != NULL) {
 	crit = gretl_matrix_alloc(nlam, 1);
     }
 
-    if (R2 == NULL || nin == NULL || ia == NULL ||
+    if (R2 == NULL || nnz == NULL || ia == NULL ||
 	(pcrit != NULL && crit == NULL)) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    /* note: set thresh to 1.0e-9 to get results as accurate as
-       those from ADMM */
-
-    err = ccd_iteration(k, g->val, X, nlam, lam->val,
-			thresh, 100000, xv->val, &lmu, B,
-			ia, nin, R2->val, &nlp);
-    printf("ccd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
+    err = ccd_iteration(X, g->val, nlam, lam->val,
+			thresh, maxit, xv->val, &lmu, B,
+			ia, nnz, R2->val, &nlp);
+    fprintf(stderr, "ccd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
 
     if (!err) {
 	gretl_matrix *BB;
@@ -454,7 +456,7 @@ int ccd_driver (gretl_matrix *X, gretl_matrix *y,
 		nulldev += y->val[i] * y->val[i];
 	    }
 	}
-	BB = ccd_c_unpack(B, lam, R2, nin, ia, lmu, stdize,
+	BB = ccd_c_unpack(B, lam, R2, nnz, ia, lmu, stdize,
 			  crit, nulldev, &err);
 	if (!err) {
 	    ccd_print(B, R2, lam, crit, prn);
@@ -473,7 +475,7 @@ int ccd_driver (gretl_matrix *X, gretl_matrix *y,
 	gretl_matrix_free(crit);
     }
     gretl_matrix_block_destroy(MB);
-    free(nin);
+    free(nnz);
     free(ia);
 
     return 0;
