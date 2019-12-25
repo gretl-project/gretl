@@ -303,7 +303,7 @@ struct plugin_function_info plugin_functions[] = {
     { "gretl_svm_driver", P_SVM},
 
     /* ADMM optimizer */
-    { "admm_lasso",  P_ADMM},
+    { "gretl_lasso", P_ADMM},
     { "admm_xv_mpi", P_ADMM},
 
     /* sentinel */

@@ -11746,14 +11746,14 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    /* otherwise three args needed */
 	    p->err = E_TYPES;
 	} else {
-	    int (*admmfunc) (const gretl_matrix *, const gretl_matrix *,
-			     gretl_bundle *, PRN *);
+	    int (*lassofunc) (const gretl_matrix *, const gretl_matrix *,
+			      gretl_bundle *, PRN *);
 
-	    admmfunc = get_plugin_function("admm_lasso");
-	    if (admmfunc == NULL) {
+	    lassofunc = get_plugin_function("gretl_lasso");
+	    if (lassofunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		p->err = admmfunc(l->v.m, m->v.m, r->v.b, p->prn);
+		p->err = lassofunc(l->v.m, m->v.m, r->v.b, p->prn);
 	    }
 	}
 	if (!p->err) {
