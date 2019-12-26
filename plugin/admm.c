@@ -1681,7 +1681,7 @@ static int lasso_xv (gretl_matrix *X,
     }
 
     verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
-    ccd = gretl_bundle_get_bool(bun, "try_ccd", 0);
+    ccd = gretl_bundle_get_bool(bun, "use_ccd", 0);
 
     fsize = X->rows / nf;
     esize = (nf - 1) * fsize;
@@ -1933,7 +1933,7 @@ int gretl_lasso (gretl_matrix *X,
 
     xv = gretl_bundle_get_bool(bun, "xvalidate", 0);
 
-    if (gretl_bundle_get_bool(bun, "try_ccd", 0)) {
+    if (gretl_bundle_get_bool(bun, "use_ccd", 0)) {
 	if (xv) {
 	    return lasso_xv(X, y, bun, rho, prn);
 	} else {
