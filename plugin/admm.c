@@ -17,10 +17,19 @@
  *
  */
 
-/* Code to use ADMM to solve the Lasso problem. Based on Boyd et al,
-   "Distributed Optimization and Statistical Learning via the
-   Alternating Direction Method of Multipliers", Foundations and
-   Trends in Machine Learning, Vol. 3, No. 1 (2010) 1-122.
+/* Code to solve the Lasso problem; two methods are implemented:
+
+   ADMM: Based on Boyd et al, "Distributed Optimization and
+   Statistical Learning via the Alternating Direction Method of
+   Multipliers", Foundations and Trends in Machine Learning, Vol. 3,
+   No. 1 (2010) 1-122.
+
+   CCD (Cyclical Coordinate Descent): Based on the Fortran code
+   employed by R's glmnet for the Gaussian case and the "covariance"
+   algorithm.
+
+   With the default tolerances, CCD is faster but ADMM is more
+   accurate.
 */
 
 #include "libgretl.h"
@@ -279,9 +288,6 @@ static inline void compute_q (gretl_vector *q,
 	r256 = _mm256_broadcast_sd(&rho);
     }
 
-    /* FIXME check for _mm256_fmadd_pd() and use it
-       if available? */
-
     for (i=0; i<imax; i++) {
 	b256 = _mm256_loadu_pd(bx);
 	u256 = _mm256_loadu_pd(ux);
@@ -504,7 +510,7 @@ static double abs_sum (const gretl_vector *z)
 /* Cyclical Coordinate Descent (CCD) auxiliary functions */
 
 static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
-		      double *g, double *xv)
+		      double *xty, double *xv)
 {
     double *xj, v = sqrt(1.0/n);
     int i, j;
@@ -518,7 +524,7 @@ static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
 	    xj[i] *= v;
 	}
 	xv[j] = dot_product(xj, xj, n);
-	g[j] = dot_product(y, xj, n);
+	xty[j] = dot_product(y, xj, n);
     }
 
     return 0;
@@ -697,13 +703,23 @@ static int ccd_iteration (const gretl_matrix *X, double *g,
 static int ccd_get_crit (const gretl_matrix *B,
 		         const gretl_matrix *lam,
 		         const gretl_matrix *R2,
+			 const gretl_matrix *y,
 		         gretl_matrix *lcrit,
 		         int *nin, int *ia,
-		         int nx, double nulldev)
+		         int nx)
 {
     double *bj, bsum, SSR;
+    double nulldev = 1.0;
     int imin = B->rows > nx;
     int i, j;
+
+    if (B->rows == nx) {
+	/* no intercept */
+	nulldev = 0.0;
+	for (i=0; i<y->rows; i++) {
+	    nulldev += y->val[i] * y->val[i];
+	}
+    }
 
     for (j=0; j<B->cols; j++) {
 	bsum = 0;
@@ -1076,49 +1092,36 @@ static int ccd_lasso (gretl_matrix *X,
 			ia, nnz, Rsq, &nlp);
     fprintf(stderr, "ccd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
 
-    if (!err) {
-	double nulldev = 1.0;
+    if (!err && !xvalid) {
+	ccd_get_crit(B, lam, R2, y, lcrit, nnz, ia, k);
+	if (verbose) {
+	    ccd_print(B, R2, lam, lcrit, k, prn);
+	}
+	if (nlam > 1) {
+	    double lcritmin = 1e200;
+	    int j, idxmin = 0;
 
-	if (lcrit != NULL && !stdize) {
-	    for (i=0; i<n; i++) {
-		nulldev += y->val[i] * y->val[i];
+	    for (j=0; j<nlam; j++) {
+		if (lcrit->val[j] < lcritmin) {
+		    lcritmin = lcrit->val[j];
+		    idxmin = j;
+		}
 	    }
+	    gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
+	    gretl_bundle_set_scalar(bun, "lfmin", lfrac->val[idxmin]);
 	}
-	if (lcrit != NULL) {
-	    ccd_get_crit(B, lam, R2, lcrit, nnz, ia, k, nulldev);
-	}
-	if (!err) {
-	    if (verbose && R2 != NULL) {
-		ccd_print(B, R2, lam, lcrit, k, prn);
-	    }
-	    gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
-	    B = NULL;
+	if (lcrit->rows > 1) {
+	    gretl_bundle_donate_data(bun, "lcrit", lcrit, GRETL_TYPE_MATRIX, 0);
+	    lcrit = NULL;
+	} else {
+	    gretl_bundle_set_scalar(bun, "lcrit", lcrit->val[0]);
 	}
     }
 
     if (!err) {
+	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+	B = NULL;
 	gretl_bundle_set_scalar(bun, "lmax", lmax * n);
-	if (!xvalid) {
-	    if (nlam > 1) {
-		double lcritmin = 1e200;
-		int j, idxmin = 0;
-
-		for (j=0; j<nlam; j++) {
-		    if (lcrit->val[j] < lcritmin) {
-			lcritmin = lcrit->val[j];
-			idxmin = j;
-		    }
-		}
-		gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
-		gretl_bundle_set_scalar(bun, "lfmin", lfrac->val[idxmin]);
-	    }
-	    if (lcrit->rows > 1) {
-		gretl_bundle_donate_data(bun, "lcrit", lcrit, GRETL_TYPE_MATRIX, 0);
-		lcrit = NULL;
-	    } else {
-		gretl_bundle_set_scalar(bun, "lcrit", lcrit->val[0]);
-	    }
-	}
 	if (nlam == 1) {
 	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
 	}
