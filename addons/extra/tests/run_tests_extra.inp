@@ -141,6 +141,13 @@ if instring(json, "[[1,3],\n[2,4]]") != 1 || instring(json, "[[]],") != 1 || \
     stop
 endif
 
+print "bwritejson() and write to external json-file but fname is invalid"
+delete fname
+catch bwritejson(bin)
+if $error != 47
+    stop
+endif
+
 
 print "bwritejson() and copy to string variable"
 string json = ""
@@ -158,33 +165,6 @@ if instring(json, "[[1,3],\n[2,4]]") != 1 || instring(json, "[[]],") != 1 || \
     stop
 endif
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-# No-file usage variant
-if exists(jsonresult) && !exists(fname)
-    jsonresult = json
-    return 0
-
-elif exists(fname)
-    # "fname" dominates: Write to some file irrespective of whether jsonresult exists
-    # Priority can be changed of course
-    if !strlen(fname)
-        funcerr "Need non-empty file name input"
-    endif
-else
-    funcerr "Need non-empty file name input or copy output to string 'jsonresult'."
-endif
 
 
 printf "\nInfo: All tests passed.\n"
