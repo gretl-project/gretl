@@ -501,7 +501,7 @@ static double abs_sum (const gretl_vector *z)
     return ret;
 }
 
-/* Cyclical Coordinate Descent (CCD) functions */
+/* Cyclical Coordinate Descent (CCD) auxiliary functions */
 
 static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
 		      double *g, double *xv)
@@ -1117,8 +1117,6 @@ static int ccd_lasso (gretl_matrix *X,
 		lcrit = NULL;
 	    } else {
 		gretl_bundle_set_scalar(bun, "lcrit", lcrit->val[0]);
-		gretl_matrix_free(lcrit);
-		lcrit = NULL;
 	    }
 	}
 	if (nlam == 1) {
