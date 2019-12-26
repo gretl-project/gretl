@@ -524,6 +524,29 @@ static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
     return 0;
 }
 
+static void finalize_ccd_coeffs (gretl_matrix *B,
+				 double *a, int nx,
+				 int *ia)
+{
+    int offset = B->rows > nx;
+    size_t asize = nx * sizeof *a;
+    double *bj;
+    int i, j;
+
+    for (j=0; j<B->cols; j++) {
+	bj = B->val + j*B->rows + offset;
+	memcpy(a, bj, asize);
+	for (i=0; i<nx; i++) {
+	    bj[i] = 0.0;
+	}
+	for (i=0; i<nx; i++) {
+	    if (a[i] != 0) {
+		bj[ia[i]] = a[i];
+	    }
+	}
+    }
+}
+
 static int ccd_iteration (const gretl_matrix *X, double *g,
 			  int nlam, const double *ulam, double thr,
 			  int maxit, const double *xv, int *lmu,
@@ -658,6 +681,10 @@ static int ccd_iteration (const gretl_matrix *X, double *g,
 
  getout:
 
+    if (!err) {
+	finalize_ccd_coeffs(B, a, nx, ia);
+    }
+
     *pnlp = nlp;
     free(a);
     free(mm);
@@ -667,44 +694,25 @@ static int ccd_iteration (const gretl_matrix *X, double *g,
     return err;
 }
 
-static int ccd_unpack (gretl_matrix *BB,
-		       gretl_matrix *B,
-		       const gretl_matrix *lam,
-		       const gretl_matrix *R2,
-		       int *nin, int *ia,
-		       int lmu, int stdize,
-		       gretl_matrix *crit,
-		       double nulldev)
+static int ccd_get_crit (const gretl_matrix *B,
+		         const gretl_matrix *lam,
+		         const gretl_matrix *R2,
+		         gretl_matrix *lcrit,
+		         int *nin, int *ia,
+		         int nx, double nulldev)
 {
-    double *bj;
-    int k = B->rows;
-    int nlam = B->cols;
+    double *bj, bsum, SSR;
+    int imin = B->rows > nx;
     int i, j;
 
-    /* figure lasso criterion, if wanted */
-    if (crit != NULL) {
-	double bsum, SSR;
-
-	for (j=0; j<lmu; j++) {
-	    bsum = 0;
-	    bj = B->val + j*k;
-	    for (i=0; i<nin[j]; i++) {
-		bsum += fabs(bj[i]);
-	    }
-	    SSR = nulldev * (1.0 - R2->val[j]);
-	    bsum *= lam->val[j];
-	    gretl_vector_set(crit, j, 0.5 * SSR + bsum);
+    for (j=0; j<B->cols; j++) {
+	bsum = 0;
+	bj = B->val + j*B->rows;
+	for (i=imin; i<B->rows; i++) {
+	    bsum += fabs(bj[i]);
 	}
-    }
-
-    /* "unpack" @B into @BB */
-    for (j=0; j<nlam; j++) {
-	bj = B->val + j*k;
-	for (i=0; i<k; i++) {
-	    if (fabs(bj[i]) > 0) {
-		gretl_matrix_set(BB, ia[i] + stdize, j, bj[i]);
-	    }
-	}
+	SSR = nulldev * (1.0 - R2->val[j]);
+	gretl_vector_set(lcrit, j, 0.5 * SSR + lam->val[j] * bsum);
     }
 
     return 0;
@@ -719,7 +727,6 @@ static void ccd_print (const gretl_matrix *B,
     double *bj;
     int k = B->rows;
     int nlam = B->cols;
-    int imin = k > nx;
     int i, j, dfj;
 
     pputc(prn, '\n');
@@ -733,7 +740,7 @@ static void ccd_print (const gretl_matrix *B,
     for (j=0; j<nlam; j++) {
 	bj = B->val + j*k;
 	dfj = 0;
-	for (i=imin; i<k; i++) {
+	for (i=0; i<k; i++) {
 	    dfj += fabs(bj[i]) > 0;
 	}
 	if (crit != NULL) {
@@ -1031,12 +1038,11 @@ static int ccd_lasso (gretl_matrix *X,
     nlam = lfrac->rows;
 
     MB = gretl_matrix_block_new(&xv, k, 1, &Xty, k, 1,
-				&lam, nlam, 1, &B, k, nlam,
-				NULL);
-    if (MB == NULL) {
+				&lam, nlam, 1, NULL);
+    B = gretl_zero_matrix_new(k + stdize, nlam);
+    if (MB == NULL || B == NULL) {
 	return E_ALLOC;
     }
-    gretl_matrix_zero(B);
 
     /* scale data by sqrt(1/n) */
     ccd_scale(n, k, X, y->val, Xty->val, xv->val);
@@ -1071,23 +1077,22 @@ static int ccd_lasso (gretl_matrix *X,
     fprintf(stderr, "ccd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
 
     if (!err) {
-	gretl_matrix *BB;
 	double nulldev = 1.0;
-
-	BB = gretl_zero_matrix_new(k + stdize, nlam);
 
 	if (lcrit != NULL && !stdize) {
 	    for (i=0; i<n; i++) {
 		nulldev += y->val[i] * y->val[i];
 	    }
 	}
-	ccd_unpack(BB, B, lam, R2, nnz, ia, lmu, stdize,
-		   lcrit, nulldev);
+	if (lcrit != NULL) {
+	    ccd_get_crit(B, lam, R2, lcrit, nnz, ia, k, nulldev);
+	}
 	if (!err) {
 	    if (verbose && R2 != NULL) {
 		ccd_print(B, R2, lam, lcrit, k, prn);
 	    }
-	    gretl_bundle_donate_data(bun, "B", BB, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+	    B = NULL;
 	}
     }
 
@@ -1109,6 +1114,7 @@ static int ccd_lasso (gretl_matrix *X,
 	    }
 	    if (lcrit->rows > 1) {
 		gretl_bundle_donate_data(bun, "lcrit", lcrit, GRETL_TYPE_MATRIX, 0);
+		lcrit = NULL;
 	    } else {
 		gretl_bundle_set_scalar(bun, "lcrit", lcrit->val[0]);
 		gretl_matrix_free(lcrit);
@@ -1126,6 +1132,7 @@ static int ccd_lasso (gretl_matrix *X,
 
     gretl_matrix_free(lcrit);
     gretl_matrix_free(R2);
+    gretl_matrix_free(B);
     gretl_matrix_block_destroy(MB);
     free(nnz);
     free(ia);
@@ -1357,8 +1364,6 @@ static int admm_do_fold (const gretl_matrix *X,
     return err;
 }
 
-#if 1 /* not yet */
-
 static int ccd_do_fold (gretl_matrix *X,
 			gretl_matrix *y,
 			gretl_matrix *X_out,
@@ -1370,7 +1375,6 @@ static int ccd_do_fold (gretl_matrix *X,
     static gretl_matrix_block *MB;
     static gretl_matrix *Xty, *xv;
     static gretl_matrix *B;
-    static gretl_matrix *BB;
     static gretl_matrix *u;
     static int *nnz, *ia;
     double thresh = 1.0e-7;
@@ -1399,8 +1403,8 @@ static int ccd_do_fold (gretl_matrix *X,
 
     if (MB == NULL) {
 	MB = gretl_matrix_block_new(&xv, k, 1, &Xty, k, 1,
-				    &B, k, nlam, &BB, k, nlam,
-				    &u, nout, 1, NULL);
+				    &B, k, nlam, &u, nout, 1,
+				    NULL);
 	nnz = malloc(nlam * sizeof *nnz);
 	ia = malloc(k * sizeof *ia);
 	if (MB == NULL || nnz == NULL || ia == NULL) {
@@ -1422,18 +1426,13 @@ static int ccd_do_fold (gretl_matrix *X,
     fprintf(stderr, "ccd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
 
     if (!err) {
-	gretl_matrix_zero(BB);
-	ccd_unpack(BB, B, lam, NULL, nnz, ia, lmu, 0, NULL, 0);
-    }
-
-    if (!err) {
 	/* record out-of-sample criteria */
 	gretl_matrix *b = gretl_matrix_alloc(k, 1);
 	size_t bsize = k * sizeof(double);
 	double score;
 
 	for (j=0; j<nlam; j++) {
-	    memcpy(b->val, BB->val + j*k, bsize);
+	    memcpy(b->val, B->val + j*k, bsize);
 	    score = xv_score(X_out, y_out, b, u, crit_type);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
@@ -1441,8 +1440,6 @@ static int ccd_do_fold (gretl_matrix *X,
 
     return err;
 }
-
-#endif
 
 static void prepare_xv_data (const gretl_matrix *X,
 			     const gretl_matrix *y,
