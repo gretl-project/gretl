@@ -1,4 +1,5 @@
 version 20210a, in progress
+- Work on lasso back-end (not public yet)
 
 2019-12-22 version 2019d
 - Add support for complex matrices, with new functions
