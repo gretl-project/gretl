@@ -302,9 +302,9 @@ struct plugin_function_info plugin_functions[] = {
     /* libsvm interface */
     { "gretl_svm_driver", P_SVM},
 
-    /* ADMM optimizer */
-    { "gretl_lasso", P_ADMM},
-    { "admm_xv_mpi", P_ADMM},
+    /* LASSO */
+    { "gretl_lasso",  P_ADMM},
+    { "lasso_xv_mpi", P_ADMM},
 
     /* sentinel */
     { NULL, 0 }

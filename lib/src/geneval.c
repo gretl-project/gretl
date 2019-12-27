@@ -11730,17 +11730,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = gretl_matrix_resample(l->v.m, draws, &p->err);
 	    }
 	}
-    } else if (f == HF_ADMM) {
+    } else if (f == HF_LASSO) {
 	post_process = 0;
 	if (null_node(l) && null_node(m) && null_node(r)) {
 	    /* doing automatic MPI: no args needed */
-	    int (*admmfunc) (PRN *);
+	    int (*lassofunc) (PRN *);
 
-	    admmfunc = get_plugin_function("admm_xv_mpi");
-	    if (admmfunc == NULL) {
+	    lassofunc = get_plugin_function("lasso_xv_mpi");
+	    if (lassofunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		p->err = admmfunc(p->prn);
+		p->err = lassofunc(p->prn);
 	    }
 	} else if (l->t != MAT || m->t != MAT || r->t != BUNDLE) {
 	    /* otherwise three args needed */
@@ -16436,7 +16436,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LRCOVAR:
     case F_BRENAME:
     case F_ISOWEEK:
-    case HF_ADMM:
+    case HF_LASSO:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
