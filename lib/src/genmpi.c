@@ -61,7 +61,7 @@ static int node_replace_array (NODE *n, gretl_array *a)
     return err;
 }
 
-static Gretl_MPI_Op reduce_op_from_string (const char *s)
+static Gretl_MPI_Op real_get_reduce_op (const char *s)
 {
     if (!strcmp(s, "sum")) {
 	return GRETL_MPI_SUM;
@@ -82,7 +82,7 @@ static Gretl_MPI_Op reduce_op_from_string (const char *s)
     }
 }
 
-static Gretl_MPI_Op scatter_op_from_string (const char *s)
+static Gretl_MPI_Op real_get_scatter_op (const char *s)
 {
     if (!strcmp(s, "bycols")) {
 	return GRETL_MPI_HSPLIT;
@@ -91,6 +91,34 @@ static Gretl_MPI_Op scatter_op_from_string (const char *s)
     } else {
 	return 0;
     }
+}
+
+static Gretl_MPI_Op reduce_op_from_string (const char *s)
+{
+    Gretl_MPI_Op op = real_get_reduce_op(s);
+
+    if (op == 0) {
+	s = get_string_by_name(s);
+	if (s != NULL) {
+	    op = real_get_reduce_op(s);
+	}
+    }
+
+    return op;
+}
+
+static Gretl_MPI_Op scatter_op_from_string (const char *s)
+{
+    Gretl_MPI_Op op = real_get_scatter_op(s);
+
+    if (op == 0) {
+	s = get_string_by_name(s);
+	if (s != NULL) {
+	    op = real_get_scatter_op(s);
+	}
+    }
+
+    return op;
 }
 
 static gretl_matrix *get_transfer_matrix (NODE *t, int f, parser *p)
