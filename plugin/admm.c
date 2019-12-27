@@ -1126,7 +1126,8 @@ static int ccd_lasso (gretl_matrix *X,
 	B = NULL;
 	gretl_bundle_set_scalar(bun, "lmax", lmax * n);
 	if (nlam == 1) {
-	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+	    /* show a value comparable with ADMM */
+	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax * n);
 	}
     }
 
