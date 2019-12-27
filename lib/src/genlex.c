@@ -1221,12 +1221,13 @@ static char *get_quoted_string (parser *p)
     char *s = NULL;
     int n;
 
-    /* FIXME: should backslash be taken as literal or
-       as escape character? Depends on the context,
+    /* Should backslash be taken as literal or as
+       escape character? Depends on the context,
        but in exactly what way?
     */
 
-    if (parsing_query) {
+    if (0 && parsing_query) {
+	/* this branch disabled 2019-12-27 */
 	n = gretl_charpos('"', p->point);
     } else {
 	/* look for a matching (non-escaped) double-quote */

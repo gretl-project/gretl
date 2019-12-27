@@ -1157,7 +1157,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	/* get the next argument */
 
 	if (p->sym == P_COM) {
-	    /* 2017-04-08: implies an empty argument slot */
+	    /* implies an empty argument slot */
 	    child = newempty();
 	} else if (i < 4 && callargs && callargs[i]) {
 	    /* a function-call argument: don't insist on quotation */
