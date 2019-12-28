@@ -341,25 +341,32 @@ struct iodata {
     int fd;
     char buf[4096];
     int len;
+    int finished;
+    int got_all;
+    int *err;
     PRN *prn;
 };
 
 static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
-    int *finished = (int *) p;
+    struct iodata *io = p;
 
-#if 0 /* GLIB_MINOR_VERSION >= 34 */
-    fprintf(stderr, "gretlmpi: child process exited %s\n",
-	    g_spawn_check_exit_status(status, NULL)?
-	    "normally" : "abnormally");
+#if GLIB_MINOR_VERSION >= 34
+    GError *gerr = NULL;
+
+    if (!g_spawn_check_exit_status(status, &gerr)) {
+	pprintf(io->prn, "gretlmpi: %s\n", gerr->message);
+	*(io->err) = E_EXTERNAL;
+	io->got_all = 1;
+    }
 #endif
     g_spawn_close_pid(pid);
-    *finished = 1;
+    io->finished = 1;
 }
 
-static int relay_mpi_output (struct iodata *io, PRN *prn)
+static void relay_mpi_output (struct iodata *io)
 {
-    int got, done = 0;
+    int got;
 
     memset(io->buf, 0, io->len);
     got = read(io->fd, io->buf, io->len - 1);
@@ -368,14 +375,12 @@ static int relay_mpi_output (struct iodata *io, PRN *prn)
 	char *s = strstr(io->buf, "__GRETLMPI_EXIT__");
 
 	if (s != NULL) {
-	    done = 1;
+	    io->got_all = 1;
 	    *s = '\0';
 	}
-	pputs(prn, io->buf);
-	gretl_flush(prn);
+	pputs(io->prn, io->buf);
+	gretl_flush(io->prn);
     }
-
-    return done;
 }
 
 static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
@@ -403,24 +408,24 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	g_error_free(gerr);
 	err = 1;
     } else {
-	struct iodata io;
-	int finished = 0;
-	int got_all = 0;
+	struct iodata io = {0};
 
 	io.fd = sout;
 	io.len = sizeof io.buf;
+	io.err = &err;
+	io.prn = prn;
 
-	g_child_watch_add(child_pid, mpi_childwatch, &finished);
+	g_child_watch_add(child_pid, mpi_childwatch, &io);
 
-	while (!finished && !got_all) {
-	    got_all = relay_mpi_output(&io, prn);
-	    if (!got_all) {
+	while (!io.finished && !io.got_all) {
+	    relay_mpi_output(&io);
+	    if (!io.got_all) {
 		g_usleep(100000); /* 0.10 seconds */
 	    }
 	    g_main_context_iteration(NULL, FALSE);
 	}
-	while (!got_all) {
-	    got_all = relay_mpi_output(&io, prn);
+	while (!err && !io.got_all) {
+	    relay_mpi_output(&io);
 	}
 	close(sout);
     }
