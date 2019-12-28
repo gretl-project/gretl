@@ -10185,26 +10185,12 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
     return evals;
 }
 
-/**
- * gretl_matrix_SVD:
- * @x: m x n matrix to decompose.
- * @pu: location for matrix U, or NULL if not wanted.
- * @ps: location for vector of singular values, or NULL if not wanted.
- * @pvt: location for matrix V (transposed), or NULL if not wanted.
- * @full: if U and/or V are to be computed, a non-zero value flags
- * production of "full-size" U (m x m) and/or V (n x n). Otherwise U
- * will be m x min(m,n) and and V' will be min(m,n) x n. Note that
- * this flag matters only if @x is not square.
- *
- * Computes SVD factorization of a general matrix using the lapack
- * function dgesvd. A = u * diag(s) * vt.
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
+/* gretl_matrix_SVD1 uses DGESVD */
 
-int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
-		      gretl_vector **ps, gretl_matrix **pvt,
-		      int full)
+static int
+gretl_matrix_SVD1 (const gretl_matrix *x, gretl_matrix **pu,
+		   gretl_vector **ps, gretl_matrix **pvt,
+		   int full)
 {
     integer m, n, lda;
     integer ldu = 1, ldvt = 1;
@@ -10329,6 +10315,156 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     gretl_matrix_free(vt);
 
     return err;
+}
+
+/* gretl_matrix_SVD2 uses DGESDD */
+
+static int
+gretl_matrix_SVD2 (const gretl_matrix *x, gretl_matrix **pu,
+		   gretl_vector **ps, gretl_matrix **pvt,
+		   int full)
+{
+    integer m, n, lda;
+    integer ldu = 1, ldvt = 1;
+    integer lwork = -1;
+    integer *iwork = NULL;
+    integer info;
+    gretl_matrix *a = NULL;
+    gretl_matrix *s = NULL;
+    gretl_matrix *u = NULL;
+    gretl_matrix *vt = NULL;
+    char jobz = 'N';
+    double xu, xvt;
+    double *uval = &xu, *vtval = &xvt;
+    double *work = NULL;
+    int k, err = 0;
+
+    if (pu == NULL && ps == NULL && pvt == NULL) {
+	/* no-op */
+	return 0;
+    }
+
+    if (gretl_is_null_matrix(x)) {
+	return E_DATA;
+    }
+
+    lda = m = x->rows;
+    n = x->cols;
+
+    a = gretl_matrix_copy_tmp(x);
+    if (a == NULL) {
+	return E_ALLOC;
+    }
+
+    k = (m < n)? m : n;
+
+    s = gretl_vector_alloc(k);
+    if (s == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (pu != NULL || pvt != NULL) {
+	int ucols = full ? m : k;
+
+	ldu = m;
+	ldvt = full ? n : k;
+	u = gretl_matrix_alloc(ldu, ucols);
+	vt = gretl_matrix_alloc(ldvt, n);
+	if (u == NULL || vt == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    uval = u->val;
+	    vtval = vt->val;
+	    jobz = full ? 'A' : 'S';
+	}
+    }
+
+    work = lapack_malloc(sizeof *work);
+    iwork = malloc(8 * k * sizeof *iwork);
+    if (work == NULL || iwork == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* workspace query */
+    dgesdd_(&jobz, &m, &n, a->val, &lda, s->val, uval, &ldu,
+	    vtval, &ldvt, work, &lwork, iwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	err = wspace_fail(info, work[0]);
+	goto bailout;
+    }
+
+    lwork = (integer) work[0];
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* actual computation */
+    dgesdd_(&jobz, &m, &n, a->val, &lda, s->val, uval, &ldu,
+	    vtval, &ldvt, work, &lwork, iwork, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_matrix_SVD: info = %d\n", (int) info);
+	err = E_DATA;
+	goto bailout;
+    }
+
+    if (ps != NULL) {
+	*ps = s;
+	s = NULL;
+    }
+    if (pu != NULL) {
+	*pu = u;
+	u = NULL;
+    }
+    if (pvt != NULL) {
+	*pvt = vt;
+	vt = NULL;
+    }
+
+ bailout:
+
+    lapack_free(work);
+    free(iwork);
+    gretl_matrix_free(a);
+    gretl_matrix_free(s);
+    gretl_matrix_free(u);
+    gretl_matrix_free(vt);
+
+    return err;
+}
+
+/**
+ * gretl_matrix_SVD:
+ * @x: m x n matrix to decompose.
+ * @pu: location for matrix U, or NULL if not wanted.
+ * @ps: location for vector of singular values, or NULL if not wanted.
+ * @pvt: location for matrix V (transposed), or NULL if not wanted.
+ * @full: if U and/or V are to be computed, a non-zero value flags
+ * production of "full-size" U (m x m) and/or V (n x n). Otherwise U
+ * will be m x min(m,n) and and V' will be min(m,n) x n. Note that
+ * this flag matters only if @x is not square.
+ *
+ * Computes SVD factorization of a general matrix using the lapack
+ * function dgesvd. A = u * diag(s) * vt.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
+		      gretl_vector **ps, gretl_matrix **pvt,
+		      int full)
+{
+    if (0) {
+	return gretl_matrix_SVD1(x, pu, ps, pvt, full);
+    } else {
+	return gretl_matrix_SVD2(x, pu, ps, pvt, full);
+    }
 }
 
 /**
@@ -11604,7 +11740,7 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     integer m, n;
     integer nrhs = 1;
     integer lda, ldb;
-    integer lwork = -1L;
+    integer lwork = -1;
     integer liwork = 0;
     integer rank;
     integer info;
@@ -11663,7 +11799,6 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     lwork = (integer) work[0];
-
     work = lapack_realloc(work, lwork * sizeof *work);
     iwork = malloc(liwork * sizeof *iwork);
     if (work == NULL || iwork == NULL) {
@@ -11801,7 +11936,6 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     }
 
     lwork = (integer) work[0];
-
     work = lapack_realloc(work, lwork * sizeof *work);
     iwork = malloc(liwork * sizeof *iwork);
     if (work == NULL || iwork == NULL) {
