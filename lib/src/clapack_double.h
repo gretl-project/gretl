@@ -137,6 +137,10 @@ int dgelss_(integer *m, integer *n, integer *nrhs, double *a, integer *lda,
 	    double *b, integer *ldb, double *s, double *rcond, integer *rank,
 	    double *work, integer *lwork, integer *info);
 
+int dgelsd_(integer *m, integer *n, integer *nrhs, double *a, integer *lda,
+	    double *b, integer *ldb, double *s, double *rcond, integer *rank,
+	    double *work, integer *lwork, integer *iwork, integer *info);
+
 int dgelsx_(integer *m, integer *n, integer *nrhs, double *a, integer *lda,
 	    double *b, integer *ldb, integer *jpvt, double *rcond,
 	    integer *rank, double *work, integer *info);

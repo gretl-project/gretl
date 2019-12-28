@@ -11575,85 +11575,6 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
     }
 }
 
-#define SVD_CHECK_BOUND 0
-
-#if SVD_CHECK_BOUND
-
-/* Euclidean norm of vector x of length n; fancy scaling stuff
-   courtesy of dnrm2 in BLAS */
-
-static double vecnorm2 (int n, const double *x)
-{
-    if (n < 1) {
-	return 0;
-    } else if (n == 1) {
-	return fabs(x[0]);
-    } else {
-	double absxi, scale = 0.0;
-	double xs, ssq = 1.0;
-	int i;
-
-	for (i=0; i<n; i++) {
-	    if (x[i] != 0.0) {
-		absxi = fabs(x[i]);
-		if (scale < absxi) {
-		    xs = scale / absxi;
-		    ssq = 1 + ssq * xs * xs;
-		    scale = absxi;
-		} else {
-		    xs = absxi / scale;
-		    ssq += xs * xs;
-		}
-	    }
-	}
-	return scale * sqrt(ssq);
-    }
-}
-
-#define ERRBD_MAX 0.01 /* ?? */
-
-/* What's going on here?  Trying to implement error-bound checking as
-   discussed on netlib:
-
-   http://www.netlib.org/lapack/lug/node82.html
-
-   This is for the case where the SVD code has not diagnosed outright
-   rank deficiency, yet we're concerned that the results may not be
-   sufficiently accurate.  However, I'm not sure I have it right yet
-   -- or don't really know what to do with the error bound once it's
-   calculated.
-*/
-
-static int svd_bound_check (const gretl_matrix *y,
-			    const gretl_matrix *B,
-			    int T, int k,
-			    const double *s)
-{
-    char E = 'E';
-    double bnorm = vecnorm2(T, y->val);
-    double rnorm = vecnorm2(T - k, B->val + k);
-    double epsmch = dlamch_(&E); /* is this always available? */
-    double rcond, sint, cost, tant, errbd;
-
-    /* ratio of smallest to largest singular value */
-    rcond = s[k-1] / s[0];
-    rcond = max(rcond, epsmch);
-    sint = (bnorm > 0.0)? rnorm / bnorm : 0.0;
-    cost = sqrt((1.0 - sint) * (1.0 + sint));
-    cost = max(cost, epsmch);
-    tant = sint / cost;
-    errbd = epsmch * (2.0/(rcond * cost) + tant / (rcond * rcond));
-    if (errbd > ERRBD_MAX) {
-	fprintf(stderr, "dgelss: bnorm = %g, rnorm = %g, rcond = %g\n",
-		bnorm, rnorm, rcond);
-	fprintf(stderr, " Error Bound = %g\n", errbd);
-    }
-
-    return 0;
-}
-
-#endif /* SVD_CHECK_BOUND */
-
 /**
  * gretl_matrix_SVD_ols:
  * @y: dependent variable vector.
@@ -11684,10 +11605,12 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     integer nrhs = 1;
     integer lda, ldb;
     integer lwork = -1L;
+    integer liwork = 0;
     integer rank;
     integer info;
     double rcond = 0.0;
     double *work = NULL;
+    integer *iwork = NULL;
     double *s = NULL;
     int err = 0;
 
@@ -11731,8 +11654,8 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     /* workspace query */
-    dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, &info);
+    dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, &liwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
@@ -11742,14 +11665,15 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     lwork = (integer) work[0];
 
     work = lapack_realloc(work, lwork * sizeof *work);
-    if (work == NULL) {
+    iwork = malloc(liwork * sizeof *iwork);
+    if (work == NULL || iwork == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     /* get actual solution */
-    dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, &info);
+    dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, iwork, &info);
 
     if (info != 0) {
 	err = 1;
@@ -11757,15 +11681,9 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 
     if (rank < k) {
 	fprintf(stderr, "gretl_matrix_SVD_ols:\n"
-		" dgelss: data matrix X (%d x %d) has column rank %d\n",
+		" dgelsd: data matrix X (%d x %d) has column rank %d\n",
 		X->rows, X->cols, (int) rank);
     }
-
-#if SVD_CHECK_BOUND
-    if (!err && rank == k) {
-	err = svd_bound_check(y, B, T, k, s);
-    }
-#endif
 
     if (!err) {
 	int i;
@@ -11786,6 +11704,7 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     gretl_matrix_free(A);
     gretl_matrix_free(B);
     lapack_free(work);
+    free(iwork);
     free(s);
 
     return err;
@@ -11818,11 +11737,13 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     gretl_matrix *C = NULL;
     integer m, n, nrhs;
     integer lda, ldb;
-    integer lwork = -1L;
+    integer lwork = -1;
+    integer liwork = 0;
     integer rank;
     integer info;
     double rcond = -1.0;
     double *work = NULL;
+    integer *iwork = NULL;
     double *s = NULL;
     int err = 0;
 
@@ -11871,8 +11792,8 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     }
 
     /* workspace query */
-    dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, &info);
+    dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, &liwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
@@ -11882,14 +11803,15 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     lwork = (integer) work[0];
 
     work = lapack_realloc(work, lwork * sizeof *work);
-    if (work == NULL) {
+    iwork = malloc(liwork * sizeof *iwork);
+    if (work == NULL || iwork == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     /* get actual solution */
-    dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, &info);
+    dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, iwork, &info);
 
     if (info != 0) {
 	err = 1;
@@ -11899,9 +11821,6 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	fprintf(stderr, "gretl_matrix_multi_SVD_ols:\n"
 		" dgelss: data matrix X (%d x %d) has column rank %d\n",
 		T, k, (int) rank);
-#if 0
-	gretl_matrix_print(X, "X");
-#endif
     }
 
     if (!err) {
@@ -11942,6 +11861,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     gretl_matrix_free(A);
     gretl_matrix_free(C);
     lapack_free(work);
+    free(iwork);
     free(s);
 
     return err;
