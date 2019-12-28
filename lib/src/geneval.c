@@ -13432,7 +13432,7 @@ static NODE *eval_feval (NODE *t, parser *p)
     ufunc *u = NULL;
     int i, k = n->v.bn.n_nodes;
 
-    if (k < 2) {
+    if (k < 1) {
 	p->err = E_ARGS;
 	return NULL;
     }
