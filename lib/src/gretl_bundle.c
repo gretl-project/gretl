@@ -1838,7 +1838,11 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 	int n = strlen(s);
 
 	if (n + indent < 70) {
-	    pprintf(prn, "%s = %s", kstr, s);
+	    if (strchr(s, '"') != NULL) {
+		pprintf(prn, "%s = '%s'", kstr, s);
+	    } else {
+		pprintf(prn, "%s = \"%s\"", kstr, s);
+	    }
 	} else {
 	    pprintf(prn, "%s (%s, %d bytes)", kstr,
 		    gretl_type_get_name(t), n);

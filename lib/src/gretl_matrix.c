@@ -12812,7 +12812,6 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
     /* create (X'X)^{-1} = RR' */
     if (!err && XTXi != NULL) {
 	*XTXi = gretl_matrix_alloc(k, k);
-
 	if (*XTXi == NULL) {
 	    err = E_ALLOC;
 	} else {
