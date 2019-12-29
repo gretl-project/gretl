@@ -2,6 +2,12 @@ version 20210a, in progress
 - Work on lasso back-end (not public yet)
 - mpireduce() and mpiscatter(): accept a string variable
   for selection of the "op" argument
+- feval(): handle functions that take no arguments
+- sprintf(): fix potential breakage when used within a
+  ternary query statement
+- Reorganization of time-series model menu: add code to
+  protect packages written for gretl < 2019d
+- SVD: use faster divide-and-conquer lapack functions
 
 2019-12-22 version 2019d
 - Add support for complex matrices, with new functions
