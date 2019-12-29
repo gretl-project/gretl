@@ -9918,7 +9918,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     w = evals->val;
 
-    lwork = -1L; /* find optimal workspace size */
+    lwork = -1; /* find optimal workspace size */
     dsyev_(&jobz, &uplo, &n, m->val, &n,
 	   w, work, &lwork, &info);
 
@@ -9928,7 +9928,6 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     }
 
     lwork = (integer) work[0];
-
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
 	*err = E_ALLOC;
@@ -10468,8 +10467,10 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 	svdver = s != NULL ? 1 : 2;
     }
     if (svdver == 1) {
+	/* use dgesvd */
 	return gretl_matrix_SVD1(x, pu, ps, pvt, full);
     } else {
+	/* use dgesdd */
 	return gretl_matrix_SVD2(x, pu, ps, pvt, full);
     }
 }
