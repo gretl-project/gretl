@@ -5421,9 +5421,9 @@ static void print_package_code (const fnpkg *pkg,
 static void maybe_update_ts_path (fnpkg *pkg)
 {
     if (pkg->mpath != NULL) {
-	if (!strcmp(pkg->mpath, "/menubar/Model/TSModels/TSMulti")) {
+	if (!strcmp(pkg->mpath, "MAINWIN/Model/TSModels/TSMulti")) {
 	    free(pkg->mpath);
-	    pkg->mpath = gretl_strdup("/menubar/Model/TSMulti");
+	    pkg->mpath = gretl_strdup("MAINWIN/Model/TSMulti");
 	}
     }
 }

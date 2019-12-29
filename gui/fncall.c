@@ -3283,9 +3283,14 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		break;
 	    }
 
+	    fprintf(stderr, "HERE path='%s'\n", path);
+
 	    if (!strcmp(name, "SVAR") &&
 		!strcmp(path, "/menubar/Model/TSModels")) {
 		/* update menu path */
+		free(path);
+		path = gretl_strdup("/menubar/Model/TSMulti");
+	    } else if (strstr(path, "TSModels/TSMulti")) {
 		free(path);
 		path = gretl_strdup("/menubar/Model/TSMulti");
 	    }
@@ -3854,23 +3859,30 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
    appear.
 */
 
-static const gchar *pkg_get_attachment (const gchar *mpath,
-					int *modelwin)
+static gchar *pkg_get_attachment (const gchar *mpath,
+				  int *modelwin)
 {
-    const gchar *relpath = mpath;
+    const gchar *src = mpath;
+    gchar *relpath = NULL;
 
 #if PKG_DEBUG
     fprintf(stderr, "pkg_get_attachment: mpath = '%s'\n", mpath);
 #endif
 
     if (!strncmp(mpath, "MAINWIN/", 8)) {
-	relpath = mpath + 7;
+	src = mpath + 7;
     } else if (!strncmp(mpath, "menubar/", 8)) {
 	/* backward compatibility for old packages */
-	relpath = mpath + 7;
+	src = mpath + 7;
     } else if (!strncmp(mpath, "MODELWIN/", 9)) {
-	relpath = mpath + 8;
+	src = mpath + 8;
 	*modelwin = 1;
+    }
+
+    if (!strcmp(src, "/Model/TSModels/TSMulti")) {
+	relpath = g_strdup("/Model/TSMulti");
+    } else {
+	relpath = g_strdup(src);
     }
 
     return relpath;
@@ -3950,7 +3962,7 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
     }
 
     if (do_update) {
-	const char *relpath;
+	gchar *relpath;
 	int modelwin = 0;
 
 	relpath = pkg_get_attachment(mpath, &modelwin);
@@ -3965,6 +3977,7 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
 	if (err) {
 	    gui_errmsg(err);
 	}
+	g_free(relpath);
     }
 
     return err;
@@ -4115,7 +4128,7 @@ int gui_function_pkg_query_register (const char *fname,
 
     if (package_has_menu_attachment(fname, &pkgname, &menupath,
 				    &label)) {
-	const gchar *relpath;
+	gchar *relpath;
 	int resp, modelwin = 0;
 
 	relpath = pkg_get_attachment(menupath, &modelwin);
@@ -4127,6 +4140,7 @@ int gui_function_pkg_query_register (const char *fname,
 				      modelwin);
 	}
 	notified = 1;
+	g_free(relpath);
     }
 
     free(pkgname);

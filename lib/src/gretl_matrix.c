@@ -10460,7 +10460,14 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		      gretl_vector **ps, gretl_matrix **pvt,
 		      int full)
 {
-    if (0) {
+    static int svdver;
+
+    if (svdver == 0) {
+	char *s = getenv("GRETL_OLD_SVD");
+
+	svdver = s != NULL ? 1 : 2;
+    }
+    if (svdver == 1) {
 	return gretl_matrix_SVD1(x, pu, ps, pvt, full);
     } else {
 	return gretl_matrix_SVD2(x, pu, ps, pvt, full);
