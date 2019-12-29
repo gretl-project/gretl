@@ -3283,11 +3283,9 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		break;
 	    }
 
-	    fprintf(stderr, "HERE path='%s'\n", path);
-
 	    if (!strcmp(name, "SVAR") &&
 		!strcmp(path, "/menubar/Model/TSModels")) {
-		/* update menu path */
+		/* update menu path (legacy SVAR) */
 		free(path);
 		path = gretl_strdup("/menubar/Model/TSMulti");
 	    } else if (strstr(path, "TSModels/TSMulti")) {
