@@ -9877,19 +9877,6 @@ gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
     char jobz = eigenvecs ? 'V' : 'N';
     char uplo = 'U';
 
-    *err = 0;
-
-    if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (!real_gretl_matrix_is_symmetric(m, 1)) {
-	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
-	*err = E_NONCONF;
-	return NULL;
-    }
-
     n = m->rows;
 
     work = lapack_malloc(sizeof *work);
@@ -9955,19 +9942,6 @@ gretl_symmetric_matrix_eigenvals1 (gretl_matrix *m, int eigenvecs, int *err)
     double *w = NULL;
     char jobz = eigenvecs ? 'V' : 'N';
     char uplo = 'U';
-
-    *err = 0;
-
-    if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (!real_gretl_matrix_is_symmetric(m, 1)) {
-	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
-	*err = E_NONCONF;
-	return NULL;
-    }
 
     n = m->rows;
 
@@ -10040,6 +10014,17 @@ gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 {
     static int syev;
+
+    *err = 0;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    } else if (!real_gretl_matrix_is_symmetric(m, 1)) {
+	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
+	*err = E_NONCONF;
+	return NULL;
+    }
 
     if (syev == 0) {
 	char *s = getenv("GRETL_OLD_EV");
@@ -10305,15 +10290,6 @@ gretl_matrix_SVD1 (const gretl_matrix *x, gretl_matrix **pu,
     double *work = NULL;
     int k, err = 0;
 
-    if (pu == NULL && ps == NULL && pvt == NULL) {
-	/* no-op */
-	return 0;
-    }
-
-    if (gretl_is_null_matrix(x)) {
-	return E_DATA;
-    }
-
     lda = m = x->rows;
     n = x->cols;
 
@@ -10438,15 +10414,6 @@ gretl_matrix_SVD2 (const gretl_matrix *x, gretl_matrix **pu,
     double *work = NULL;
     int k, err = 0;
 
-    if (pu == NULL && ps == NULL && pvt == NULL) {
-	/* no-op */
-	return 0;
-    }
-
-    if (gretl_is_null_matrix(x)) {
-	return E_DATA;
-    }
-
     lda = m = x->rows;
     n = x->cols;
 
@@ -10560,6 +10527,13 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		      int full)
 {
     static int svdver;
+
+    if (pu == NULL && ps == NULL && pvt == NULL) {
+	/* no-op */
+	return 0;
+    } else if (gretl_is_null_matrix(x)) {
+	return E_DATA;
+    }
 
     if (svdver == 0) {
 	char *s = getenv("GRETL_OLD_SVD");
