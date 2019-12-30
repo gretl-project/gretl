@@ -9864,23 +9864,90 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
     return err;
 }
 
-/**
- * gretl_symmetric_matrix_eigenvals:
- * @m: n x n matrix to operate on.
- * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
- * @err: location to receive error code.
- *
- * Computes the eigenvalues of the real symmetric matrix @m.
- * If @eigenvecs is non-zero, also compute the orthonormal
- * eigenvectors of @m, which are stored in @m. Uses the lapack
- * function dsyev().
- *
- * Returns: n x 1 matrix containing the eigenvalues in ascending
- * order, or NULL on failure.
- */
+static gretl_matrix *
+gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
+				   int eigenvecs,
+				   int *err)
+{
+    integer n, info, lwork, liwork;
+    gretl_matrix *evals = NULL;
+    double *work = NULL;
+    double *w = NULL;
+    integer *iwork = NULL;
+    char jobz = eigenvecs ? 'V' : 'N';
+    char uplo = 'U';
 
-gretl_matrix *
-gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
+    *err = 0;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (!real_gretl_matrix_is_symmetric(m, 1)) {
+	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    n = m->rows;
+
+    work = lapack_malloc(sizeof *work);
+    iwork = malloc(sizeof *iwork);
+    if (work == NULL || iwork == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    evals = gretl_column_vector_alloc(n);
+    if (evals == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    w = evals->val;
+
+    lwork = liwork = -1; /* find optimal workspace size */
+    dsyevd_(&jobz, &uplo, &n, m->val, &n, w, work,
+	    &lwork, iwork, &liwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	*err = wspace_fail(info, work[0]);
+	goto bailout;
+    }
+
+    lwork = (integer) work[0];
+    liwork = iwork[0];
+    work = lapack_realloc(work, lwork * sizeof *work);
+    iwork = realloc(iwork, liwork * sizeof *iwork);
+    if (work == NULL || iwork == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (!*err) {
+	dsyevd_(&jobz, &uplo, &n, m->val, &n, w, work,
+		&lwork, iwork, &liwork, &info);
+	if (info != 0) {
+	    fprintf(stderr, "dsyevd: info = %d\n", info);
+	    *err = E_DATA;
+	}
+    }
+
+ bailout:
+
+    lapack_free(work);
+    free(iwork);
+
+    if (*err && evals != NULL) {
+	gretl_matrix_free(evals);
+	evals = NULL;
+    }
+
+    return evals;
+}
+
+static gretl_matrix *
+gretl_symmetric_matrix_eigenvals1 (gretl_matrix *m, int eigenvecs, int *err)
 {
     integer n, info, lwork;
     gretl_matrix *evals = NULL;
@@ -9952,6 +10019,39 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     }
 
     return evals;
+}
+
+/**
+ * gretl_symmetric_matrix_eigenvals:
+ * @m: n x n matrix to operate on.
+ * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
+ * @err: location to receive error code.
+ *
+ * Computes the eigenvalues of the real symmetric matrix @m.
+ * If @eigenvecs is non-zero, also compute the orthonormal
+ * eigenvectors of @m, which are stored in @m. Uses the lapack
+ * function dsyev().
+ *
+ * Returns: n x 1 matrix containing the eigenvalues in ascending
+ * order, or NULL on failure.
+ */
+
+gretl_matrix *
+gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
+{
+    static int syev;
+
+    if (syev == 0) {
+	char *s = getenv("GRETL_OLD_EV");
+
+	syev = s != NULL ? 1 : 2;
+    }
+
+    if (syev == 1) {
+	return gretl_symmetric_matrix_eigenvals1(m, eigenvecs, err);
+    } else {
+	return gretl_symmetric_matrix_eigenvals2(m, eigenvecs, err);
+    }
 }
 
 static gretl_matrix *
