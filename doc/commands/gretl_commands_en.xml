@@ -13241,6 +13241,27 @@
 	</li>
       </ilist>
 
+      <subhead>Miscellaneous</subhead>
+
+      <ilist>
+	<li>
+	  <para><lit>mpi_use_smt</lit>: <lit>on</lit> or
+	  <lit>off</lit> (the default). This switch affects the
+	  default number of processes launched in an <lit>mpi</lit>
+	  block within a script. If the switch is <lit>off</lit> the
+	  default number of processes equals the number of physical
+	  cores on the local machine; if it's <lit>on</lit> the
+	  default is the maximum number of threads, which will be
+	  twice the number of physical cores if the cores support SMT
+	  (Simultaneous MultiThreading, also known as
+	  Hyper-Threading). This applies only if the user has not
+	  specified a number of processes, either directly or
+	  indirectly (by specifying a <lit>hosts</lit> file for use
+	  with MPI).
+	  </para>
+	</li>
+      </ilist>
+
     </description>
   </command>
 
