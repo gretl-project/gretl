@@ -10124,13 +10124,13 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	char *s = getenv("GRETL_EV_VERSION");
 
 	if (s == NULL) {
+	    ev_ver = 3;
+	} else if (!strcmp(s, "1")) {
 	    ev_ver = 1;
 	} else if (!strcmp(s, "2")) {
 	    ev_ver = 2;
-	} else if (!strcmp(s, "3")) {
-	    ev_ver = 3;
 	} else {
-	    ev_ver = 1;
+	    ev_ver = 3;
 	}
     }
 
