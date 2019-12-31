@@ -16,7 +16,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{October 2018, release 0.5, this is still small but growing... }
+\date{December 2019, release 0.6, still growing... }
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -38,7 +38,9 @@ Note that functions that are exact lookalikes of Matlab functions
 do not live here, but would go into the \texttt{matlab\_utilities}
 package.
 
-\section{Functions working without a dataset}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Matrix-related functions}
 
 \subsection{commute}
 
@@ -55,7 +57,9 @@ non-zero, then does post-multiplication ($A\times K_{mn}$).
 
 \subsection{eliminate}
 
-Arguments: \texttt{matrix vecA}
+Argument: \texttt{matrix vecA}
+
+\noindent Return type: \texttt{matrix}
 
 Each column of the input vecA is assumed to come from the operation vec(A) 
 on a square matrix, thus rows(vecA) must be a square number.
@@ -64,19 +68,16 @@ Returns vech(A), which is the result of pre-multiplying vec(A) with the
 If vecA has several columns, each column is 
 treated separately as described above (and the results stacked side-by-side).
 
-\noindent Return type: \texttt{matrix}
-
-
 \subsection{duplicate}
 
-Arguments: \texttt{matrix vechA}
+Argument: \texttt{matrix vechA}
+
+\noindent Return type: \texttt{matrix}
 
 The input is a vector assumed to come from an operation like vech(A).
 Returns vec(A), which is the result of pre-multiplying vech(A) with the 
 "duplication" matrix $D_m$. If vechA has several columns, each column is 
 treated separately as described above (and the results stacked side-by-side).
-
-\noindent Return type: \texttt{matrix}
 
 \subsection{nearPSD}
 
@@ -91,6 +92,35 @@ apparently mimicking the nearPD() function in R. Because of re-scaling
 (to correlation matrix), the \texttt{epsilon} criterion value should
 implicitly apply to the correlation-based eigenvalues. The return
 value 0 or 1 indicates whether \texttt{m} was altered or not. 
+
+\subsection{zeroifclose}
+
+Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
+(optional) 
+
+\noindent Return type: \texttt{scalar}
+
+Sets elements of \texttt{m} to zero if they are really close. The
+return value 0 or 1 indicates whether \texttt{m} was altered or not.
+
+\subsection{drill}
+
+Arguments: \texttt{matrices} array, \texttt{matrix rowspec} (optional), 
+  \texttt{matrix colspec} (optional)
+  
+\noindent Return type: \texttt{matrix}
+
+This function "drills through" a matrix array and returns a matrix;
+for example, drill(x, 2, 3) returns a vector with the [2,3] elements
+of all matrices in the x array. Not specifiying one of rowspec, colspec
+or entering "0" means to select all rows or columns respectively. 
+(Of course at least one of rowspec, colspec must be specified.)
+
+Nota bene: all matrices in the array must be of the same dimensions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Other functions working without a dataset in place}
 
 \subsection{scores2x2}
 
@@ -133,19 +163,6 @@ The input is always sanitized by taking the upper 2x2 part, using
 absolute values, and integer-ization. Warnings are issued if \texttt{verbose}
 is 1. 
 
-\subsection{sepstr2arr}
-
-% Arguments: \texttt{string in, string sep }(optional)
-
-% \noindent Return type: \texttt{strings} array
-
-Transforms comma-separated string to an array of strings. 
-(Retired as of v0.5, use the extended functionality of gretl's built-in 
-strsplit function.)
-%(The comma
-%as separation character can be overridden with the sep argument, but
-%only the first character is used.) 
-
 \subsection{truncnorm}
 
 Arguments: \texttt{int n, scalar m, scalar sigma, scalar below, scalar
@@ -158,20 +175,12 @@ and std.\,dev. \texttt{sigma}, and the left/right truncation values
 \texttt{below} and \texttt{above}. (Pass NA for any one of them to
 skip the respective truncation.) Returns a col vector of values.
 
-\subsection{zeroifclose}
-
-Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
-(optional) 
-
-\noindent Return type: \texttt{scalar}
-
-Sets elements of \texttt{m} to zero if they are really close. The
-return value 0 or 1 indicates whether \texttt{m} was altered or not.
-
 \subsection{WSRcritical}
 
 Arguments: \texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
 (optional)
+
+\noindent Return type: \texttt{matrix}
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4). Tries to find the critical values
@@ -188,13 +197,13 @@ normal approximation case. The normal approximation instead of the
 exact table values can be enforced with the \texttt{forcenorm}
 argument (default: zero, do not enforce).
 
-\noindent Return type: \texttt{matrix}
-
 See also the sister function WSRpvalue.
 
 \subsection{WSRpvalue}
 
 Arguments: \texttt{int n, scalar W, bool forcenorm} (optional)
+
+\noindent Return type: \texttt{scalar}
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4), returns $P(X\geq W)$. In the interior
@@ -215,20 +224,84 @@ The normal approximation instead of the exact table values can be
 enforced with the \texttt{forcenorm} argument (default: zero, do not
 enforce).
 
-\noindent Return type: \texttt{scalar}
-
 See also the sister function WSRcritical.
 
 \subsection{powerset}
 
-Arguments: \texttt{strings S}
+Argument: \texttt{strings S}
+
+\noindent Return type: \texttt{strings} (array)
 
 Computes the powerset of the input S, i.e. all possible combinations 
 of the string elements in S. (Including the empty set / 
 empty string "".) Each combination yields one string in the output 
 array. Being a set, the ordering is not defined and arbitrary. 
 
+
+\subsection{onemode}
+
+Argument: \texttt{matrix v}
+
+\noindent Return type: \texttt{matrix}
+
+Finds the mode of the empirical distribution of the input data. 
+When that is multi-modal the first mode is found (following the native
+imaxc function). Returns a 2-element column vector with the modal 
+value and its absolute frequency.
+
+\subsection{bwritejson}
+
+Arguments: \texttt{bundle b, string fname, bool export} (optional), 
+    \texttt{string *jsonresult} (pointer form, optional), 
+    \texttt{string misscode} (optional)
+
+\noindent Return type: \texttt{scalar}
+
+Similar to the native function \texttt{bwrite}: Instead of an XML representation 
+of the input bundle this function produces a JSON serialized representation.
+So far supported bundle member types are string, scalar, series (will be saved as a
+vector), matrix, string arrays.
+
+The standard usage is to pass a valid file name in \texttt{fname} and have the result 
+written to that file. However, if the pointer string argument \texttt{jsonresult} is used, 
+then the file name input is ignored (could be omitted) and the JSON string is just 
+copied to the \texttt{jsonresult} string variable. 
+
+Missing values are supported, but the JSON specification does not define them. The 
+default is to print "NaN" for any missing value (in a numerical object), but this can 
+be overridden with the string in the optional \texttt{misscode} argument.\footnote{Note 
+that round-tripping the result with gretl's native \texttt{jsonget} and \texttt{jsongetb} 
+functions does not fully work, apparently due to a limitation of the underlying third-party
+library. However, this function is not meant for internal gretl usage, but for exporting data.
+For just storing gretl bundles use the native XML-based format produced by gretl's
+\texttt{bwrite}.}
+
+Returns 0 after successful completion, or the non-zero gretl error code if writing the 
+output file failed for some reason (in which case also a warning message is printed).
+
+\subsection{splitfname}
+
+Argument: \texttt{string fn}
+
 \noindent Return type: \texttt{strings} (array)
+
+The idea is to take a file name or full path and extract three components:
+\begin{enumerate}
+\item The path prefix (may be empty; without the trailing / or \textbackslash)
+\item The "base" component of the file name, without the extension and without the path prefix 
+\item The file extension (without the dot; may be empty)
+\end{enumerate}	
+In principle should work with forward as well as backslashes and also with double forward slashes.
+
+Example:
+
+Input string: "/what/on/earth/isthisfile.gdt"
+
+Output equivalent to: 
+
+\texttt{defarray("/what/on/earth", "isthisfile", "gdt")}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Functions requiring a dataset}
 
@@ -266,14 +339,23 @@ determines only the lower frequency and \texttt{phi} the upper.
 
 \section{Authors}
 \begin{itemize}
-\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset: Jack Lucchetti
-\item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue:
+\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset, drill:
+ Jack Lucchetti
+
+\item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
+splitfname:
 Sven Schreiber 
+
 \item winsor: Sven Schreiber, original code JoshuaHe
+\item bwritejson: Artur Tarassow and Sven Schreiber
+
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
+\item December 2019: 0.6, add drill, bwritejson, onemode, splitfname; 
+    finally remove the retired sepstr2arr (use native strsplit instead);
+    rearrange the documentation a little
 \item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add powerset,
   eliminate, duplicate
 \item February 2018: 0.41, allow non-integer input in WSRpvalue
