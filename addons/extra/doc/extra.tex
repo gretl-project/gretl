@@ -252,21 +252,32 @@ value and its absolute frequency.
 \subsection{bwritejson}
 
 Arguments: \texttt{bundle b, string fname, bool export} (optional), 
-    \texttt{string *jsonresult} (pointer form, optional)
+    \texttt{string *jsonresult} (pointer form, optional), 
+    \texttt{string misscode} (optional)
 
 \noindent Return type: \texttt{scalar}
 
-Similar to the native function bwrite: Instead of an XML representation 
+Similar to the native function \texttt{bwrite}: Instead of an XML representation 
 of the input bundle this function produces a JSON serialized representation.
-Supported bundle member types are string, scalar, series (will be saved as a
+So far supported bundle member types are string, scalar, series (will be saved as a
 vector), matrix, string arrays.
 
-The standard usage is to pass a valid file name in fname and have the result written 
-to that file. However, if the pointer string argument jsonresult is used, then the file name 
-input is ignored (could be omitted) and the JSON string is just copied to the jsonresult string 
-variable. 
+The standard usage is to pass a valid file name in \texttt{fname} and have the result 
+written to that file. However, if the pointer string argument \texttt{jsonresult} is used, 
+then the file name input is ignored (could be omitted) and the JSON string is just 
+copied to the \texttt{jsonresult} string variable. 
 
-Returns 0 after successful completion.
+Missing values are supported, but the JSON specification does not define them. The 
+default is to print "NaN" for any missing value (in a numerical object), but this can 
+be overridden with the string in the optional \texttt{misscode} argument.\footnote{Note 
+that round-tripping the result with gretl's native \texttt{jsonget} and \texttt{jsongetb} 
+functions does not fully work, apparently due to a limitation of the underlying third-party
+library. However, this function is not meant for internal gretl usage, but for exporting data.
+For just storing gretl bundles use the native XML-based format produced by gretl's
+\texttt{bwrite}.}
+
+Returns 0 after successful completion, or the non-zero gretl error code if writing the 
+output file failed for some reason (in which case also a warning message is printed).
 
 \subsection{splitfname}
 

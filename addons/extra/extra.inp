@@ -350,7 +350,7 @@ function string mrow2json (const matrix m, string misscode)
                 endif             
             endif
 
-            out ~= s
+            out ~= strstrip(s)
             out ~= (c < cols(m)) ? "," : "]"
         endloop
 
@@ -485,7 +485,7 @@ function scalar bwritejson (const bundle b, string fname[null],
     err = $error
     if err
         printf "bwritejson: Writing file failed; %s\n", errmsg(err)
-        result = 1
+        result = err
     else
         result = 0
     endif
