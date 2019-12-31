@@ -9864,6 +9864,8 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
     return err;
 }
 
+#if 0 /* dsyevd */
+
 static gretl_matrix *
 gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
 				   int eigenvecs,
@@ -9932,6 +9934,104 @@ gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
 
     return evals;
 }
+
+#else /* dsyevr */
+
+static gretl_matrix *
+gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
+				   int eigenvecs,
+				   int *err)
+{
+    integer n, info, lwork, liwork;
+    integer nv, ldz = 1;
+    gretl_matrix *evals = NULL;
+    double *z = NULL;
+    double *work = NULL;
+    double *w = NULL;
+    integer *iwork = NULL;
+    integer *isuppz = NULL;
+    char jobz = eigenvecs ? 'V' : 'N';
+    double abstol = 0;
+    char range = 'A';
+    char uplo = 'U';
+
+    n = m->rows;
+
+    work = lapack_malloc(sizeof *work);
+    iwork = malloc(sizeof *iwork);
+    if (work == NULL || iwork == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    evals = gretl_column_vector_alloc(n);
+    if (evals == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (eigenvecs) {
+	z = malloc(n * n * sizeof *z);
+	isuppz = malloc(2 * n * sizeof *isuppz);
+	if (z == NULL || isuppz == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+	ldz = n;
+    }
+
+    w = evals->val;
+
+    lwork = liwork = -1; /* find optimal workspace size */
+    dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
+	    NULL, NULL, NULL, NULL, &abstol, &nv, w,
+	    z, &ldz, isuppz, work, &lwork, iwork,
+	    &liwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	*err = wspace_fail(info, work[0]);
+	goto bailout;
+    }
+
+    lwork = (integer) work[0];
+    liwork = iwork[0];
+    work = lapack_realloc(work, lwork * sizeof *work);
+    iwork = realloc(iwork, liwork * sizeof *iwork);
+    if (work == NULL || iwork == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (!*err) {
+	dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
+		NULL, NULL, NULL, NULL, &abstol, &nv, w,
+		z, &ldz, isuppz, work, &lwork, iwork,
+		&liwork, &info);
+	if (info != 0) {
+	    fprintf(stderr, "dsyevr: info = %d\n", info);
+	    *err = E_DATA;
+	}
+    }
+
+    if (!*err && eigenvecs) {
+	memcpy(m->val, z, n*n*sizeof *z);
+    }
+
+ bailout:
+
+    lapack_free(work);
+    free(iwork);
+    free(isuppz);
+    free(z);
+
+    if (*err && evals != NULL) {
+	gretl_matrix_free(evals);
+	evals = NULL;
+    }
+
+    return evals;
+}
+
+#endif /* alternates for gretl_symmetric_matrix_eigenvals2 */
 
 static gretl_matrix *
 gretl_symmetric_matrix_eigenvals1 (gretl_matrix *m, int eigenvecs, int *err)
