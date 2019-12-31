@@ -9864,8 +9864,6 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
     return err;
 }
 
-#if 0 /* dsyevd */
-
 static gretl_matrix *
 gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
 				   int eigenvecs,
@@ -9935,10 +9933,8 @@ gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
     return evals;
 }
 
-#else /* dsyevr */
-
 static gretl_matrix *
-gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
+gretl_symmetric_matrix_eigenvals3 (gretl_matrix *m,
 				   int eigenvecs,
 				   int *err)
 {
@@ -9974,7 +9970,7 @@ gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
 	z = malloc(n * n * sizeof *z);
 	isuppz = malloc(2 * n * sizeof *isuppz);
 	if (z == NULL || isuppz == NULL) {
-	    *err = E_ALLOC;
+ 	    *err = E_ALLOC;
 	    goto bailout;
 	}
 	ldz = n;
@@ -10013,7 +10009,7 @@ gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
     }
 
     if (!*err && eigenvecs) {
-	memcpy(m->val, z, n*n*sizeof *z);
+	memcpy(m->val, z, n*n * sizeof *z);
     }
 
  bailout:
@@ -10030,8 +10026,6 @@ gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
 
     return evals;
 }
-
-#endif /* alternates for gretl_symmetric_matrix_eigenvals2 */
 
 static gretl_matrix *
 gretl_symmetric_matrix_eigenvals1 (gretl_matrix *m, int eigenvecs, int *err)
@@ -10113,7 +10107,7 @@ gretl_symmetric_matrix_eigenvals1 (gretl_matrix *m, int eigenvecs, int *err)
 gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 {
-    static int syev;
+    static int ev_ver;
 
     *err = 0;
 
@@ -10126,16 +10120,26 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    if (syev == 0) {
-	char *s = getenv("GRETL_OLD_EV");
+    if (ev_ver == 0) {
+	char *s = getenv("GRETL_EV_VERSION");
 
-	syev = s != NULL ? 1 : 2;
+	if (s == NULL) {
+	    ev_ver = 1;
+	} else if (!strcmp(s, "2")) {
+	    ev_ver = 2;
+	} else if (!strcmp(s, "3")) {
+	    ev_ver = 3;
+	} else {
+	    ev_ver = 1;
+	}
     }
 
-    if (syev == 1) {
+    if (ev_ver == 1) {
 	return gretl_symmetric_matrix_eigenvals1(m, eigenvecs, err);
-    } else {
+    } else if (ev_ver == 2) {
 	return gretl_symmetric_matrix_eigenvals2(m, eigenvecs, err);
+    } else {
+	return gretl_symmetric_matrix_eigenvals3(m, eigenvecs, err);
     }
 }
 
