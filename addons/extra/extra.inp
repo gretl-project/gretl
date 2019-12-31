@@ -1,45 +1,9 @@
-# author='The gretl team'
-# email='<use the mailing list or trackers>'
-# version='0.5'
-# date='2018-10-27'
+include extra_matrix.inp
+include extra_string.inp
 
-function strings powerset(strings S)
-  # Computes the powerset of the input S,
-  # i.e. all possible cominations of the 
-  # string elements in S. (Including the
-  # empty set / empty string "".) 
-  # Each combination
-  # yields one string in the output array. 
-  # Being a set, the ordering is not
-  # defined. 
-    l = nelem(S)
-    N = 2^l
-    matrix P = zeros(N,l)
-    matrix s = seq(0, N-1)'
-
-    loop i=1..l --quiet
-        matrix a = s % 2
-        P[,i] = a
-        s = (s - a) / 2
-    endloop
-
-    strings PS = array(N)
-
-    loop i = 1..N --quiet
-        string c = ""
-        loop j = 1..l --quiet
-            if P[i, j]
-                c = c ~ " " ~ S[j]
-            endif
-        endloop
-        PS[i] = c
-    endloop
-
-    return PS
-end function 
 
 function matrix WPtable (int n[4::12] "number of trials")
-   /*
+/*
    Upper and Lower Percentiles of the Wilcoxon Signed
    Rank Statistic W
    Returns a 3 x M matrix of critical values:
@@ -148,126 +112,6 @@ function series winsor (series x,
     return x
 end function
 
-function scalar nearPSD (matrix *m,
-                         scalar epsilon[0::0])
-    # FIXME: cover the case with some variances == 0
-    # (use misszero() after scaling, or something)
-    #
-    # Forces the matrix m into the positive semi-definite region.
-    #
-    # Ported from "DomPazz" in Stackoverflow, apparently
-    # mimicking the nearPD() function in R.
-    # Because of re-scaling ( to correlation matrix ), the
-    # epsilon should implicitly apply to the correlation-based
-    # eigenvalues.
-    #
-    # The return value 0 or 1 indicates whether m was altered or not.
-    matrix s = sqrt(diag(m)) # std dev
-    matrix scaling = s * s'
-    matrix ms = m ./ scaling	# rescaled
-    matrix eigvec
-    matrix eigval = eigensym(ms, &eigvec)
-    matrix val = (eigval .> epsilon) ? eigval : epsilon	# like xmax
-    if sum(val .> eigval)	# actually something was changed
-        matrix T = 1 / ( (eigvec .^2) * val )
-        # transform vector T to a diagonal matrix
-        matrix temp = I(rows(T))
-        temp[diag] = sqrt(T)
-        # and also val
-        matrix temp2 = I(rows(T))
-        temp2[diag] = sqrt(val)
-        matrix B = temp * eigvec * temp2
-        ms = B * B'
-        # undo the re-scaling
-        m = ms .* scaling
-        return 1
-    else
-        return 0
-    endif
-end function
-
-function scalar zeroifclose (matrix *m,
-                             scalar thresh[0::1e-50])
-    # Sets elements to zero if they are really close.
-    # The return value 0 or 1 indicates whether m was altered or not.
-    # (an older version copied and returned the matrix)
-    matrix indicator = (abs(m) .< thresh)
-    m = indicator ? 0 : m
-    if sum(indicator)
-        return 1
-    else
-        return 0
-    endif
-end function
-
-function strings sepstr2arr (string in,
-                             string sep[null])
-    # Transforms comma-separated string to an array of strings.
-    # (The comma as separation character can be overridden with
-    #  the sep argument, but only the first character is used.)
-    if !exists(sep)
-        string sep = ","
-    else
-        sep = substr(sep,1,1)	# only first char
-    endif
-    strings out = strsplit(strsub(in, sep, " "))
-    return out
-end function
-
-function matrix commute (const matrix A,
-                         int m[1::],
-                         int n[0::0],
-                         bool post[0])
-    # returns A premultiplied by K_mn,
-    # K_mn being the commutation matrix, see Magnus/Neudecker
-    # (more efficient than explicit pre-multiplication,
-    # just reshuffles stuff)
-    # If post != 0, does post-multiplication:
-    # if n == 0 (default), then it's understood to be equal to m,
-    # as per Magnus/Neudecker convention: K_nn = K_n
-    n = n ? n : m
-    if !post && (rows(A) != n*m)
-        funcerr "m*n doesn't match row dim of input"
-    elif post && (cols(A) != n*m)
-        funcerr "m*n doesn't match col dim of input"
-    endif
-     
-    matrix e = vec(mshape(seq(1, m*n), m, n)')
-    return post ? A[,e] : A[e,]
-end function
-
-function matrix eliminate(const matrix vecA)
-  # Each column of the input vecA is assumed to 
-  # come from the operation vec(A) on a square 
-  # matrix, thus rows(vecA) must be a square number.
-  # Returns vech(A), which is the result of pre-
-  # multiplying vec(A) with the "elimination"
-  # matrix L_m.
-  # If vecA has several columns, each column is 
-  # treated separately as described above 
-  # (and the results stacked side-by-side).
-  
-  r = sqrt(rows(vecA))
-  if r != round(r)
-    funcerr "input must have a square number of rows"
-  endif
-  e = vech(mshape(seq(1,r^2), r, r)')
-  return vecA[e,]
-end function 
-
-function matrix duplicate(const matrix vechA)
-  # The input is a vector assumed to come from 
-  # an operation like vech(A).
-  # Returns vec(A), which is the result of pre-
-  # multiplying vech(A) with the "duplication"
-  # matrix D_m. 
-  # If vechA has several columns, each column is 
-  # treated separately as described above 
-  # (and the results stacked side-by-side).
-
-  e = vec(unvech(seq(1,rows(vechA))'))
-  return vechA[e,]
-end function
 
 function matrix truncnorm (int n[1::],
                            scalar m[0],
@@ -413,10 +257,10 @@ function scalar WSRpvalue (int n[4::] "number of trials",
        values 1e-3 or 1 - 1e-3 as an approximation here.
        The normal approximation instead of the exact table values can be
        enforced with the 'forcenorm' argument.
-       
-       Source of the table: Wilfrid J Dixon and Frank J. Massey, Jr., 
-         Introduction to Statistical Analysis, 2nd ed. (New York: McGraw-Hill, 1957), 
-         pp. 443-444.
+
+       Source of the table: Wilfrid J Dixon and Frank J. Massey, Jr.,
+       Introduction to Statistical Analysis, 2nd ed. (New York: McGraw-Hill, 1957),
+       pp. 443-444.
     */
     # input check
     if W > n * (n+1) / 2
@@ -460,4 +304,191 @@ function scalar WSRpvalue (int n[4::] "number of trials",
         Wstar = (W - Wmean) / Wsigma
         return pvalue(N, Wstar)
     endif
+end function
+
+function matrix onemode (const matrix v "Vector of values")
+/* This function only returns one mode (modal value) of the
+   input data v. If that is multi-modal, the behavior of imaxc
+   is inherited, i.e. it should be the first occurrence.
+    */
+
+    # v should be a vector
+    matrix E = ecdf(vec(v))
+    matrix howmuch = diff(0 | E[,2])[2:] 	# make sure 1st is also diffed
+    matrix where = imaxc(howmuch)
+
+    return E[where, 1] | howmuch[where]
+end function
+
+#######################
+
+function string mrow2json (const matrix m, string misscode)
+    # Helper function to convert a matrix row to json-format array string.
+    # Below we check for integer values to potentially
+    # save a lot of space and bytes in the output file.
+ 
+    if rows(m) != 1
+        funcerr "This function only for a single row"
+    endif
+    if !cols(m)
+        return "[]"
+    endif
+
+    # check for missings or NaN or other invalid stuff
+    if min(ok(m)) == 0
+
+        # now need to go elem-by-elem 
+        string out = "["
+        loop c = 1..cols(m) -q
+            scalar x = m[c]
+            string s = misscode
+            if ok(x) 
+                if abs(x) < 1e9	&& int(x) == x # avoid overflow
+                    s = sprintf("%14d", x) 
+                else
+                    s = sprintf("%14.10f", x) 
+                endif             
+            endif
+
+            out ~= strstrip(s)
+            out ~= (c < cols(m)) ? "," : "]"
+        endloop
+
+    else    # all values OK, can do in one go
+        if max(abs(m)) < 1e9 && int(m) == m # avoid overflow
+            string out = sprintf("%14d", m)
+        else
+            string out = sprintf("%14.10f", m)
+        endif
+        out = "[" ~ strstrip(out) ~ "]"
+        # replace (multiple) blanks inside with comma sep
+        out = regsub(out, "\s+", ",") 
+    endif
+
+    return out
+end function
+
+function string bundle2json (const bundle b, string misscode)
+    # Bundle elements represented as a json-formatted string.
+    # Not all gretl object types are supported yet, in particular
+    # no nesting, and among arrays only strings.
+
+    # Any unsupported element type will produce a missing ("null")
+    # entry (quoted in double quotes in the output).
+
+    strings keys = getkeys(b)
+    string out = "{"
+
+    loop k = 1..nelem(keys) -q
+        string key = keys[k]
+
+        # print the key
+        out ~= sprintf("\n\"%s\": ", key)
+
+        ## print the value
+        string typ = typestr(typeof(b[key]))
+
+        if typ == "string"
+            out ~= sprintf("\"%s\"", b[key])
+
+        elif typ == "scalar"
+            if ok(b[key])
+                out ~= sprintf("%g", b[key])
+            else
+                out ~= misscode	# in case of "NA"
+            endif
+
+        elif typ == "series" || typ == "matrix" # (series as vector)
+            matrix m = (typ == "series") ? {b[key]} : b[key]
+
+            if !nelem(m)
+                out ~= "[[]]"	# empty 2-d array
+            else
+
+                # matrix and vector always done as 2-dim
+                out ~= "["
+                loop r = 1..rows(m) -q
+                    out ~= mrow2json(m[r,], misscode)  
+                    out ~= (r < rows(m)) ? sprintf(",\n") : "]"
+                endloop
+            endif
+
+        elif typ == "array"
+            if typestr(typeof(b[key][1])) != "string"
+                print "Warning: Only string arrays supported."
+                print "(Treat array as missing.)"
+                out ~= misscode
+
+            else
+                strings S = b[key]
+                out ~= "["
+                loop r = 1..nelem(S) -q
+                    out ~= sprintf("\"%s\"", S[r])
+                    out ~= (r < nelem(S)) ? sprintf(",") : sprintf("]")
+                endloop
+            endif
+        else
+            printf "Warning: Type %s not supported.\n", typ
+            print "(Treat as missing.)"
+            out ~= misscode
+
+        endif
+        out ~= (k < nelem(keys)) ? "," : sprintf("\n}")
+    endloop
+
+    return out
+end function
+
+function scalar bwritejson (const bundle b, string fname[null],
+                            bool export[0],
+                            string *jsonresult[null],
+                            string misscode[null])
+    # The interface mimics the native bwrite function.
+    # Saves the input bundle b in JSON representation.
+    # (or copies it to jsonresult)
+
+    if !exists(misscode)
+        string misscode = "NaN"
+    endif
+
+    string json = bundle2json(b, misscode)
+
+    # No-file usage variant
+    if exists(jsonresult)
+        jsonresult = json
+        return 0
+
+    elif !exists(fname)
+        funcerr "Need file name input"
+
+    elif !strlen(fname)
+        funcerr "Need non-empty file name input"
+    endif
+
+    # Writing to files
+    if export
+        strings pathparts = splitfname(fname)
+        if strlen(pathparts[1])
+            print "Warning: export to dotdir requested, ignoring path prefix"
+        endif
+        fname = $dotdir ~ "/" ~ pathparts[2]  # also works on Windows
+
+        # append extension
+        if strlen(pathparts[3])
+            fname = fname ~ "." ~ pathparts[3]
+        endif
+    endif
+
+    catch outfile @fname --quiet
+        print json
+    end outfile
+    err = $error
+    if err
+        printf "bwritejson: Writing file failed; %s\n", errmsg(err)
+        result = err
+    else
+        result = 0
+    endif
+
+    return result
 end function

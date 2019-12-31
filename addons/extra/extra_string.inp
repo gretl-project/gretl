@@ -1,0 +1,104 @@
+# extra_string.inp for string-related functions
+
+function strings powerset (strings S)
+    # Computes the powerset of the input S,
+    # i.e. all possible cominations of the
+    # string elements in S. (Including the
+    # empty set / empty string "".)
+    # Each combination
+    # yields one string in the output array.
+    # Being a set, the ordering is not
+    # defined.
+    l = nelem(S)
+    N = 2^l
+    matrix P = zeros(N,l)
+    matrix s = seq(0, N-1)'
+
+    loop i=1..l --quiet
+        matrix a = s % 2
+        P[,i] = a
+        s = (s - a) / 2
+    endloop
+
+    strings PS = array(N)
+
+    loop i = 1..N --quiet
+        string c = ""
+        loop j = 1..l --quiet
+            if P[i, j]
+                c = c ~ " " ~ S[j]
+            endif
+        endloop
+        PS[i] = c
+    endloop
+
+    return PS
+end function
+
+######################
+
+function void splitfname_check(strings out, int num)
+    # Just a stupid debug checker and error catcher
+    # for splitfname.
+    if nelem(out) != num
+        print out
+        funcerr "shouldn't happen (weird input?)"
+    endif
+end function
+
+function strings splitfname (const string fn)
+    /* The idea is to take a file name or full path and extract 
+      up to 3 components:
+    1. The path prefix (may be empty; without the trailing / or \ )
+    2. The "base" component of the file name, without the 
+       extension and without the path prefix 
+    3. The file extension (without the dot; may be empty)
+	
+    Example:
+    Input string: "/what/on/earth/isthisfile.gdt"
+	Output: 
+    defarray("/what/on/earth", "isthisfile", "gdt")
+
+    (To separate the path prefix we just look for the last / _OR_ 
+     \ (forward or backward slash) and also think of the possibility of //.)
+
+    We use the \t character as internal separator because \n doesn't 
+    work properly with strsplit (bug fixed in gretl Dec 17th, 2019, for 2019d). 
+    */
+
+    hasslash = instring(fn, "/") || instring(fn, sprintf("\\"))
+
+    # Test for a dot in a position where it signals an extension 
+    # (not the Unixy other meanings)
+    hasext = 0
+    if regsub(fn, ".*[\w\s]+\.[\w\s]+", "!") == "!" && (fn != "!")
+        hasext = 1 
+    endif
+
+	if hasext && hasslash    # the full monty
+        string sepa = regsub(fn, "(.*)[/\\]+([^/\\]*)\.([^\./\\]*)", \
+           "\1\t\2\t\3")
+        strings out = strsplit(sepa, "\t")
+        splitfname_check(out, 3)
+
+    elif hasext           # only base file name and ext, no prefix
+        string sepa = regsub(fn, "(.*)\.([^\.]*)", "\1\t\2")
+        strings parts = strsplit(sepa, "\t") 
+        splitfname_check(parts, 2)
+
+        strings out = defarray("") + parts # empty prefix first
+
+    elif hasslash        # no extension
+        string sepa = regsub(fn, "(.*)[/\\]+([^/\\]*)", "\1\t\2")
+        strings parts = strsplit(sepa, "\t")
+        splitfname_check(parts, 2)
+
+        strings out = parts + defarray("") # empty ext last
+
+    else                 # no slash, no ext, just simple filename
+        strings out = defarray("", fn, "")
+
+    endif
+
+	return out
+end function
