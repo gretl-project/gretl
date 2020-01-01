@@ -527,7 +527,9 @@ static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
 	for (i=0; i<n; i++) {
 	    xj[i] *= v;
 	}
-	xv[j] = dot_product(xj, xj, n);
+	if (xv != NULL) {
+	    xv[j] = dot_product(xj, xj, n);
+	}
 	xty[j] = dot_product(y, xj, n);
     }
 
@@ -1259,6 +1261,8 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     return err;
 }
 
+#define SVD_USE_CCD_SCALE 0
+
 static int svd_ridge (gretl_matrix *X,
 		      gretl_matrix *y,
 		      gretl_bundle *bun,
@@ -1296,15 +1300,25 @@ static int svd_ridge (gretl_matrix *X,
 	return E_ALLOC;
     }
 
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      y, GRETL_MOD_NONE,
-			      Xty, GRETL_MOD_NONE);
-    lmax = gretl_matrix_infinity_norm(Xty);
+#if SVD_USE_CCD_SCALE
+    /* scale data by sqrt(1/n) */
+    ccd_scale(n, k, X, y->val, Xty->val, NULL);
+
     gretl_matrix_copy_values(lam, lfrac);
+    lmax = gretl_matrix_infinity_norm(Xty);
+    lmax /= 1.0e-3;
     for (i=0; i<nlam; i++) {
-	lam->val[i] *= 1000 * lmax;
+	lam->val[i] *= lmax;
     }
     lam->val[0] = big;
+#else
+    /* 1.0 = squared Frobenius norm */
+    gretl_matrix_copy_values(lam, lfrac);
+    lmax = X->cols;
+    for (i=0; i<nlam; i++) {
+	lam->val[i] *= lmax;
+    }
+#endif
 
     if (!xvalid) {
 	R2 = gretl_matrix_alloc(nlam, 1);
@@ -1323,8 +1337,10 @@ static int svd_ridge (gretl_matrix *X,
 	goto bailout;
     }
 
+#if SVD_USE_CCD_SCALE
     /* not entirely truthful! */
-    lam->val[0] = exp(log(lam->val[1]) - log(lam->val[nlam-1]) / (nlam-1));
+    lam->val[0] = lfrac->val[0] * lmax;
+#endif
 
     if (!xvalid) {
 	ccd_get_crit(B, lam, R2, y, crit, 0.0, k);
@@ -1357,7 +1373,7 @@ static int svd_ridge (gretl_matrix *X,
 	B = NULL;
 	gretl_bundle_set_scalar(bun, "lmax", lmax * n);
 	if (nlam == 1) {
-	    /* show a value comparable with ADMM */
+	    /* show a value comparable with ADMM? */
 	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax * n);
 	}
     }
