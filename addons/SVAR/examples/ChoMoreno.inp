@@ -1,0 +1,64 @@
+# Example script for sign restrictions in gretl's SVAR addon
+
+set verbose off
+set seed 909090
+
+include SVAR.gfn
+
+### ----------------------------------------------------
+### Ouliaris et al's example on the Cho_Moreno dataset
+### see https://www.eviews.com/StructVAR/structvar.html
+### ----------------------------------------------------
+
+# data handling (original file chomoreno.wf1)
+
+open chomoreno_fromeviewswf.gdt --quiet	--frompkg=SVAR
+
+# set up the model
+
+list X = GAP INFL FF
+list Z = const
+scalar order = 2
+
+mod = SVAR_setup("plain", X, Z, order, 0)
+mod.horizon = 32
+err = SVAR_estimate(&mod,0) # just needed for the VAR parameters, really
+
+# set up the sign restictions
+
+mod.snames = defarray("Demand", "Cost Push", "Interest Rate")
+
+mod.SRest = {}
+SVAR_SRplain(&mod, "GAP", "Demand", "+")
+SVAR_SRplain(&mod, "INFL", "Demand", "+")
+SVAR_SRplain(&mod, "FF", "Demand", "+")
+
+SVAR_SRplain(&mod, "GAP", "Cost Push", "-")
+SVAR_SRplain(&mod, "INFL", "Cost Push", "+")
+SVAR_SRplain(&mod, "FF", "Cost Push", "+")
+
+SVAR_SRplain(&mod, "GAP", "Interest Rate", "-")
+SVAR_SRplain(&mod, "INFL", "Interest Rate", "-")
+SVAR_SRplain(&mod, "FF", "Interest Rate", "+")
+
+# do the rotations (this is the computationally intensive part)
+moo = SVAR_setidIRF(mod, 256, 0, 5000)
+
+# draw the irfs
+bundle IrfData = IRF_plotdata(moo, 0.975)
+
+k = 1
+loop j = 1..3 --quiet
+    loop foreach i X --quiet
+        matrix grph = IrfData.ms[,k] ~ seq(0, mod.horizon)'
+        matrix band = IrfData.lo_cb[,k] ~ IrfData.hi_cb[,k]
+        band = 0.5 * band * {1, 1; 1, -1}
+
+        plot grph
+            options with-lines fit=none
+            options band=band,1 band-style=fill
+            printf "set title '%s shock -> %s'", mod.snames[j], "$i"
+        end plot --output=display
+        k++
+    endloop
+endloop

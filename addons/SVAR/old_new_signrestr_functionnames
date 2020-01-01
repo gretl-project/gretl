@@ -1,0 +1,12 @@
+Small reminder about the sign restriction function renaming:
+(Jan 1st, 2020)
+
+SignRest -> SVAR_SRplain
+
+set_id_IRFs -> SVAR_setidIRF
+
+ExoticRest -> SVAR_SRexotic
+
+SpaghettiPlot -> SVAR_spagplot
+
+SResFull -> SVAR_SRfull

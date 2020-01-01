@@ -1,0 +1,438 @@
+# include extra.gfn # for what was this needed apart from drill?
+
+# For now drill() comes from: include SVAR_compatibility_funcs.inp 
+# And the following functions come from include SVAR_signrestr_utils.inp:
+#  correspondence, normalize, check_one_irf, check_irfs, check_id;
+
+
+###
+### functions for setting the set constraints
+###
+
+function void SVAR_SRfull(bundle *mod,
+                          string sname, string yname,
+                          scalar lo[NA], scalar hi[NA],
+                          scalar ini[0], scalar fin[0])
+
+    # this function will add to the appropriate element of
+    # the bundle "mod" a set of sign restrictions relative
+    # to one variable and one shock, organised as a row
+    # vector with the following elements; input values are:
+    #
+    # mod      : the VAR model bundle (in pointer form)
+    # sname    : a string with the shock name
+    # yname    : a string with the name of the observable to examine
+    # lo, hi   : bounds (NA for +- infty)
+    # ini, fin : IRF interval to check (0-based)
+    #
+    # for example, if we assume that a monetary policy shock will
+    # impact prices with a negative sign on lags from 0 to 4, then
+    # the function call should be
+    #
+    # SVAR_SRfull(mod, 1, "p", NA, 0, 0, 4)
+    #
+    # assuming the series for prices is called "p" and that we want
+    # our monetary policy shock to come 1st in the ordering (useful for
+    # models with sign restrictions on more than one shock)
+
+    scalar snum = 0
+    scalar k = 0
+
+    if !inbundle(mod, "SRest")
+        mod.SRest = {}
+    endif
+
+    loop i = 1 .. nelem(mod.snames) --quiet
+        if sname == mod.snames[i]
+            snum = i
+            break
+        endif
+    endloop
+
+    if snum == 0
+        printf "You don't have a shock named %s in your model\n", sname
+    endif
+
+    loop i = 1 .. nelem(mod.Ynames) --quiet
+        if yname == mod.Ynames[i]
+            k = i
+            break
+        endif
+    endloop
+
+    if k == 0
+        printf "Variable %s in not in the model\n", sname
+    endif
+
+    if missing(lo) && missing(hi)
+        printf "No bounds specified!\n"
+    endif
+
+    lo = ok(lo) ? lo : -$huge
+    hi = ok(hi) ? hi :  $huge
+
+    if lo > hi
+        printf "Invalid bound specified! [%g : %g]\n", lo, hi
+    endif
+
+    mod.SRest |= {k, lo, hi, ini+1, fin+1, snum}
+
+end function
+
+function void SVAR_SRplain(bundle *mod,
+                           string yname,
+                           string sname,
+                           string what,
+                           scalar length[0], scalar start[0])
+
+    # shorthand for sign restrictions
+
+    if what == "+"
+        scalar h = NA
+        scalar l = 0
+    elif what == "-"
+        scalar h = 0
+        scalar l = NA
+    else
+        funcerr "invalid restriction"
+    endif
+
+    SVAR_SRfull(&mod, sname, yname, l, h, start, start+length)
+end function
+
+function void SVAR_SRexotic(bundle *mod, string chk,
+                            scalar length[0], scalar start[0],
+                            scalar needs_model[0])
+
+    if !inbundle(mod, "exoticSR")
+        strings checks = null
+        bundle mod.exoticSR = defbundle("checks", checks, "spans", {},
+          "super", {})
+    endif
+
+    mod.exoticSR.checks += chk
+    mod.exoticSR.spans = mod.exoticSR.spans | { start + 1, start + length + 1 }
+    mod.exoticSR.super = mod.exoticSR.super | { needs_model }
+
+end function
+
+###
+### other functions
+###
+
+function matrices BayesianDraw(const matrix iXX, const matrix B,
+                               const matrix Sigma, scalar T)
+
+    scalar r = rows(B)
+    scalar c = cols(B)
+    Sigma_draw = iwishart(Sigma*T, T)
+    V = Sigma_draw ** iXX
+    K = cholesky(V)
+    B_draw = vec(B)
+
+    # se = sqrt(diag(V))
+    # print B_draw se Sigma_draw iXX K
+    B_draw += K * mnormal(rows(B_draw), 1)
+    B_draw = mshape(B_draw, r, c)
+
+    ret = defarray(B_draw, Sigma_draw)
+    return ret
+end function
+
+function matrices gen_irfs(bundle b, scalar h, matrix to_cum)
+
+    matrix B = b.B
+    k = b.detterms
+
+    scalar any_cumul = nelem(to_cum) > 0
+
+    scalar n = cols(B)
+    scalar p = (rows(B) - k) / n # VAR lags
+    comp = B[k+1:,]'
+
+    if p > 1
+        comp = comp | I(n*(p-1), n*p)
+    endif
+
+    matrix K = cholesky(b.Sigma) * b.rot
+    matrices ret = array(h)
+    ret[1] = K
+    matrix tmp = I(rows(comp))
+    loop i = 2 .. h --quiet
+        tmp = tmp * comp
+        irf_i = tmp[1:n,1:n] * K
+        if any_cumul
+            irf_i[to_cum,] = irf_i[to_cum,] + ret[i-1][to_cum,]
+        endif
+        ret[i] = irf_i
+    endloop
+
+    return ret
+end function
+
+function bundles SVAR_setidIRF(bundle mod, scalar rep, bool DO_BAYES[0],
+                             int maxiter[10000])
+
+    # This function draws a random rotations of the Cholesky model
+    # until "rep" draws satisfying the sign restrictions have come up.
+    # If the DO_BAYES flag is on, the VAR parameters (including Sigma)
+    # are resampled too; otherwise, they are kept fixed at the ols
+    # estimates.
+
+    #
+    # Recover VAR parameters from the model bundle
+    #
+
+    matrix B = mod.mu | mod.VARpar'
+    matrix Sigma = mod.Sigma
+    scalar horizon = mod.horizon + 1 # original is 0-based
+    scalar p = mod.p
+    scalar T = mod.T
+    scalar n = mod.n
+    scalar df = T - nelem(B)
+
+    DO_NORM = 1
+
+    if DO_BAYES
+        # this is only needed for sampling from the posterior
+        matrix Data = (mod.X ~ lags(mod.p,mod.Y,1))[p+1:,]
+        matrix iXX = invpd(Data'Data)
+    endif
+
+
+    if 0
+        # print out a few parameters to make sure we don't
+        # screq up with lags, ordering etc
+
+        hhh = 10
+        matrix V = Sigma ** iXX
+        chk = B[1:hhh,1] ~ sqrt(diag(V[1:hhh, 1:hhh]))
+        strings pnames = array(hhh)
+        loop i = 1 .. hhh
+            pnames[i] = sprintf("chk%d", i)
+        endloop
+        modprint chk pnames
+    endif
+
+    #
+    # prepare the output array and other auxiliary stuff
+    #
+
+    bundles drawn = array(0)
+    good = 0
+    iter = 1
+    SRmat = mod.SRest
+
+    # how many shocks are to be identified via sign restrictions?
+    matrix shocks = values(SRmat[,6])
+    scalar nshocks = rows(shocks)
+
+    # do we have exotic restrictions?
+    scalar has_exotic = inbundle(mod, "exoticSR")
+
+    if has_exotic
+        exotic = mod.exoticSR
+        scalar n_exotic = nelem(exotic.checks)
+        if n_exotic == 0
+            has_exotic = 0
+        endif
+    endif
+
+    #
+    # the main loop
+    #
+
+    bundle b = null
+    b.detterms = rows(mod.mu)
+    b.B = B
+    b.Sigma = Sigma
+
+    loop while good<rep && iter<=maxiter --quiet
+        if DO_BAYES
+            matrices Mats = BayesianDraw(iXX, B, Sigma, df)
+            b.B = Mats[1]
+            b.Sigma = Mats[2]
+        endif
+
+        b.rot = qrdecomp(mnormal(n,n))
+        b.detterms = rows(mod.mu)
+        to_cum = mod.ncumul ? mod.cumul : {}
+        irfs = gen_irfs(b, horizon, to_cum)
+
+        # printf "iter %d\n", iter
+        # loop i = 1 .. 4 --quiet
+        #     eval irfs[i]
+        # endloop
+        # printf "---------------------------------------------------\n\n"
+
+        id_matrix = zeros(nshocks, n)
+        loop i = 1 .. nshocks --quiet
+            Ai = selifr(SRmat, SRmat[,6] .= shocks[i])
+            # print Ai
+            id_matrix[i,] = check_irfs(irfs, Ai)
+        endloop
+
+        if DO_NORM
+            # printf "Before normalization:\n%6.0f\n", id_matrix
+            id_matrix = normalize(id_matrix)
+            # printf "After normalization:\n%6.0f\n", id_matrix
+            chk = (rows(id_matrix) == nshocks) && check_id(id_matrix)
+        else
+            # printf "Before normalization:\n%6.0f\n", id_matrix
+            chk = check_id(id_matrix)
+        endif
+
+        if chk
+            # perform the "reflection-permutation" step
+            loop i = 1..nelem(irfs) --quiet
+                irfs[i] = irfs[i] * id_matrix'
+            endloop
+
+            # --- now check for exotic restrictions if necessary -------
+            if has_exotic
+                loop i = 1..n_exotic --quiet
+                    string exo_restrict = exotic.checks[i]
+                    scalar ini = exotic.spans[i,1]
+                    scalar fin = exotic.spans[i,2]
+                    scalar needs_model = exotic.super[i]
+
+                    out = 0
+                    loop t = ini .. fin --quiet
+                        matrix M = irfs[t]
+                        if needs_model
+                            exocheck = feval(exo_restrict, M, mod)
+                        else
+                            exocheck = @exo_restrict
+                        endif
+
+                        if !exocheck
+                            chk = 0
+                            out = 1
+                            if 0
+                                printf "Exotic check %s failed on M[%d]:\n", \
+                                       exo_restrict, t-1
+                                printf "%7.4f\n", M
+                            endif
+                            break
+                        endif
+                    endloop
+                    if out
+                        break
+                    endif
+                endloop
+            endif
+
+            if chk
+                good++
+
+                b.irfs = irfs
+                drawn += b
+            endif
+        else
+            # print id_matrix
+            # printf "No luck this time\n"
+        endif
+
+        factor = (DO_BAYES ? 10 : 50) * xmax(1,floor(sqrt(maxiter/1000)))
+
+        if iter % factor == 0
+            printf "draw %5d done (good so far = %5d)\n", iter, good
+            flush
+        endif
+        iter++
+    endloop
+
+    if good < rep
+        printf "\n\nWARNING: COULDN'T ACHIEVE THE DESIRED NUMBER OF DRAWS"
+        printf " (only %d out of %d)\n", good, rep
+    else
+        printf "draw %5d done (good = %5d)\n", iter-1, good
+    endif
+
+    return drawn
+end function
+
+###
+### plotting functions
+###
+
+function void SVAR_spagplot(bundles bs, bundle mod, scalar Var, scalar Shk)
+    one_irf = bs[1].irfs
+    rep = nelem(bs)
+    h = mod.horizon
+
+    IRFs = zeros(h + 1, rep) ~ seq(0, h)'
+
+    loop i = 1 .. rep --quiet
+        IRFs[,i] = drill(bs[i].irfs, Var, Shk)
+    endloop
+
+    plot IRFs
+        option with-lines
+        #    literal set linetype cycle 4
+        literal set linetype 1 lc rgb "#000000" lw 0.1
+        literal set linetype 2 lc rgb "#000000" lw 0.1
+        literal set linetype 3 lc rgb "#000000" lw 0.1
+        literal set linetype 4 lc rgb "#000000" lw 0.1
+        literal set linetype 5 lc rgb "#000000" lw 0.1
+        literal set linetype 6 lc rgb "#000000" lw 0.1
+        literal set linetype 7 lc rgb "#000000" lw 0.1
+        literal set linetype 8 lc rgb "#000000" lw 0.1
+        literal set xlabel 'lags'
+        literal set nokey
+        printf "set title '%s -> %s'\n", mod.snames[Shk], mod.Ynames[Var]
+    end plot --output=display
+end function
+
+
+function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
+
+    # here we store the data for plotting the irfs in a matrix, conceptually
+    # similar to the "bands" matrix we use in SVAR_boot, that is with H rows
+    # (so that descriptive statistics are easy to compute) and ns * nv *
+    # horizon columns
+
+    # get dimensions
+    H = nelem(bs)
+    nv = rows(bs[1].Sigma)
+    h = nelem(bs[1].irfs)
+    ns = cols(bs[1].irfs[1])
+    matrix A = zeros(H, ns * nv * h)
+
+    loop i = 1 .. H --quiet
+        sel = seq(1, ns*nv*h, h)
+        #        sel = seq(1, ns*nv)
+        bundle b = bs[i]
+        loop t = 1 .. h --quiet
+            # compute the relevant IRFs
+            # print IRFt
+            # store them in the appropriate column
+            A[i, sel] = vec(b.irfs[t])'
+            sel += 1
+        endloop
+    endloop
+
+    matrix m    = meanc(A)
+    matrix s    = sdc(A)
+    bundle ret = null
+
+    # ret.raw = A
+    matrix ret.ms    = mshape(m, h, ns*nv)
+    matrix ret.ss    = mshape(s, h, ns*nv)
+
+    # ripped from SVAR_boot
+
+    matrix locb = quantile(A, 1 - alpha)
+    matrix hicb = quantile(A, alpha)
+    matrix mdn  = quantile(A, 0.5)
+
+    ret.rep   = H             # no of replications
+    ret.alpha = alpha           # alpha
+    ret.biascorr  = 0   # type of bias correction
+    matrix ret.lo_cb = mshape(locb, h, ns*nv)
+    matrix ret.hi_cb = mshape(hicb, h, ns*nv)
+    matrix ret.mdns  = mshape(mdn, h, ns*nv)
+
+    return ret
+end function
+

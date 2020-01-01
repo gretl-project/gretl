@@ -35,8 +35,11 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_plots.inp \
 	SVAR_utils.inp \
 	SVAR_main.inp \
-	SVAR_estim_backend.inp
-
+	SVAR_estim_backend.inp \
+	SVAR_signrestr.inp \
+	SVAR_signrestr_utils.inp \
+	SVAR_compatibility_funcs.inp
+	
 all: $(PKG).gfn pdfdoc
 
 $(PKG).gfn: links.stamp $(INP) $(PKG).spec

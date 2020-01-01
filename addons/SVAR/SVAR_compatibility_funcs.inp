@@ -1,0 +1,113 @@
+# Backward compatibility functions which eventually should become
+# obsolete
+# (either because they are in extra.zip, or other reasons)
+
+
+###########################
+# A very similar functionality is in splitfname in extra 0.6
+
+function strings basename(string fn)
+    string base = regsub(fn, "(.*)\.([^\.]*)", "\1")
+    string ext = fn + (strlen(base) + 1)
+    return defarray(base, ext)
+end function
+
+
+
+###
+### the drill() function is in extra >= 0.6
+###
+
+function matrix drill(const matrices x,
+                      matrix rowspec[null],
+                      matrix colspec[null])
+
+    # This function "drills through" a matrix array and returns a matrix;
+    # for example, drill(x, 2, 3) returns a vector with the [2,3] elements
+    # of all matrices in the x array. "0" means "all".
+    #
+    # NOTA BENE: all matrices must be the same size
+
+    matrix ret = {}
+    n = nelem(x)
+
+    if n == 0
+        return ret
+    endif
+
+    ### check sizes
+
+    nr = rows(x[1])
+    nc = cols(x[1])
+    
+    same_dim = 1
+    loop i = 2 .. n --quiet
+        same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc) 
+        if !same_dim
+            printf "Error: Inconsistent dimensions (not all matrices are the same size)\n"
+            return ret
+        endif
+    endloop
+
+    ### process specs
+
+    if !exists(rowspec) 
+        matrix rs = seq(1, nr)'
+    else
+        if rowspec[1] == 0
+            matrix rs = seq(1, nr)'
+        else
+            matrix rs = vec(rowspec) # force to column
+        endif
+    endif
+
+    if !exists(colspec)
+        matrix cs = seq(1, nc)'
+    else
+        if colspec[1] == 0
+            matrix cs = seq(1, nc)'
+        else
+            matrix cs = vec(colspec) # force to column
+        endif
+    endif
+        
+    ### check for multiple or illegal specs
+    
+    scalar nrspec = rows(rs)
+    scalar ncspec = rows(cs)
+
+    if xmin(nrspec, ncspec) > 1
+        printf "Error: you can’t have multiple row and column specs\n"
+        return ret
+    endif
+    
+    if minc(rs|cs) < 0
+        printf "Error: negative spec not allowed\n"
+        return ret
+    endif
+    
+    if maxc(rs) > nr
+        printf "Error: incorrect row spec (matrices have %d rows, but %d wanted)\n", nr, maxc(rs)
+        return ret
+    endif
+    
+    if maxc(cs) > nc
+        printf "Error: incorrect col spec (matrices have %d columns, but %d wanted)\n", nc, maxc(cs)
+        return ret
+    endif
+    
+    ### do the actual drilling
+
+    if nrspec == 1 
+        ret = flatten(x)[rs,]
+        ret = transp(mshape(ret, nc, n))
+        ret = ret[,cs]
+    elif ncspec == 1 
+        ret = flatten(x,1)[,cs]
+        ret = mshape(ret, nr, n)
+        ret = ret[rs,]
+    endif
+    
+    return ret
+end function
+ 

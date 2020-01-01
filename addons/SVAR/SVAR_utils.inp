@@ -1,12 +1,4 @@
-###########################
-# If this helper function is kept, it should probably be moved to an extra file
-# in the medium term, or even to extra.gfn.
-
-function strings basename(string fn)
-    string base = regsub(fn, "(.*)\.([^\.]*)", "\1")
-    string ext = fn + (strlen(base) + 1)
-    return defarray(base, ext)
-end function
+include SVAR_compatibility_funcs.inp # for basename()
 
 ###########################
 

@@ -87,7 +87,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{Version 1.52}
+\date{Version 1.90}
 \begin{document}
 
 \maketitle
@@ -2083,7 +2083,305 @@ longrun (3 x 3)
   Log-likelihood = -295.974
 \end{code}
 
-%\pagebreak[4]
+%%%%%%%%%%%%%%%%%%%
+% sign restrictions
+
+\section{Set-identified SVARs}
+
+Starting with version 1.9 the SVAR addon also makes it possible to 
+estimate set-identified structural VAR models. 
+What is currently still missing is a graphical interface and some other final
+bits of integration.
+
+FIXME: explain SVAR\_spagplot function (spaghetti plots)
+
+\subsection{Notation}
+
+At the risk of repeating some parts of earlier sections, here is some notation first:
+The reduced-form VAR is assumed to be
+\begin{eqnarray}
+  \label{eq:VAR}
+  y_t & = & \mu_t + \sum_{i=1}^p \Phi_i y_{t-1} + \varepsilon_t \\
+  \varepsilon_t & = & y_t - E(y_t |F_{t-1}) \\
+  E(\varepsilon_t \varepsilon_t') & = & \Sigma
+\end{eqnarray}
+where $n$ is the number of variables and $F_{t-1}$ is the information
+set at $t-1$. The structural model can be written as
+\[
+  A \varepsilon_t = B u_t .
+\]
+The relationship between the VAR shocks and the structural ones is,
+therefore,
+\[
+\varepsilon_t = C u_t ,
+\]
+where $C = A^{-1} B$, which entails $\Sigma = CC'$.
+
+In order to write down the VMA representation, we assume that the
+$\Phi(L)$ polynomial is invertible, so $y_t$ can be written as:
+\[
+y_t = m_t + \Theta(L) \varepsilon_t,
+\]
+where $\Theta(L) = \Phi(L)^{-1}$. Therefore, the structural VMA
+representation of the process is
+\[
+y_t = m_t + M_0 u_t + M_1 u_{t-1} + \cdots
+\]
+where $M_i = \Theta_i C$; since $\Theta_0 = I$, $M_0$ is simply equal
+to $C$. As for $C$, it is assumed that it can be written as
+\begin{equation}
+  \label{eq:rotation}
+  C = K Q
+\end{equation}
+where $K$ is the Cholesky decomposition of $\Sigma$ and $Q$ is an
+orthogonal matrix $Q'Q = I$.
+
+Set identification is typically achieved by stipulating conditions on
+the elements of the $M_i$ matrices.
+
+\subsection{Set identification}
+
+The apparatus we have makes it possible to handle very general set
+constraints on the $M_i$ matrices, that can be expressed as
+$g(M_i) \in A$, where $g$ is a pretty arbitrary function and $A$ is a
+pretty arbitrary set. In most cases, however, identification is
+attained by simple \emph{sign restrictions}, that is constraints of
+the kind
+\[
+  [M_k]_{i,j} > 0 \qquad \mathrm{or} \qquad [M_k]_{i,j} < 0
+\]
+where we're using the notation $[A]_{i,j}$ to indicate the element on row
+$i$ and column $j$ of the matrix $A$ and of course $k$ can be any
+non-negative integer. The general case may be more involved; a
+real-life example is provided by the ``elasticity bounds'' constraints
+used in Kilian and Murphy (2014, FIXME reference), where you have
+\[
+  a < \frac{[M_k]_{i,j}}{[M_k]_{l,j}} < b .
+\]
+
+These constraints are often imposed for a contiguous range of lags:
+when $h=0$ restrictions implicitly apply to $C$, since $M_0 = C$;
+however, one could conceivably impose restrictions on
+$\underline{H} \le h \le \overline{H}$, where $\underline{H}$ should
+in most cases (but not always) be 0.\footnote{Something we can't do,
+  at the moment, is imposing cross-matrix constraints, such as, for
+  example, $[M_0]_{i,j} > [M_1]_{i,j}$. Is this needed? Is there any
+  literature around doing this?} Each restriction corresponds to an
+a-priori idea of the impact of the $j$-th structural shock on the
+$i$-th variable. Of course, the ordering of the structural shocks is
+arbitrary, so the user is required to make a choice here (see below).
+
+It is assumed that we have a model bundle like the one that comes out
+of the \texttt{SVAR} function \texttt{SVAR\_estimate()}. The bundle
+must contain
+\begin{itemize}
+\item an array of strings with names for the shocks, under the key \texttt{snames}, and
+\item a matrix holding the sign restrictions, under the key \texttt{SRest}.
+\end{itemize}
+The former element is already created by the existing
+\texttt{SVAR\_setup} function, and all is needed is to modify the
+pre-set strings as needed. The second element is not created by the
+public version of the \texttt{SVAR} package, so it is created at the
+top level in the example scripts, but the development version contains
+it already.
+
+\subsection{Sign restrictions}
+
+Sign restrictions are specified through the \texttt{SVAR\_SRplain}
+function, that takes 6 arguments:
+\begin{enumerate}
+  \item the model bundle, in pointer form
+  \item a string with the name of the $i$-th variable
+  \item a string with the name of the $j$-th shock
+  \item a character, that can be either \texttt{"+"} or \texttt{"-"}
+  \item an optional scalar with the time span the constraints applies
+    to (defaults to 0)
+  \item an optional scalar with the first lag the constraints applies
+    to  (defaults to 0)
+\end{enumerate}
+
+Each call to \texttt{SVAR\_SRplain} adds a row vector to the
+\texttt{SRest} matrix contained in the bundle referenced as the first
+argument; the restriction matrix is simply created by stacking these
+rows vertically.  For example,
+\begin{code}
+SVAR_SRplain(&mod, "price", "monetary", "+")
+\end{code}
+means that the shock named \texttt{monetary} has a positive
+instantaneous impact on \texttt{price}; in other words,
+$[M_0]_{ij} > 0$, where $i$ is the ordinal number of the variable
+\texttt{price} in the input list and $j$ is the ordinal number of the
+string \texttt{monetary} in the \texttt{snames} array inside the model
+bundle. Another example:
+\begin{code}
+SVAR_SRplain(&mod, "bar", "foo", "-", 3)
+\end{code}
+means that the shock named \texttt{foo} has a negative impact on the
+observable variable \texttt{bar} over the horizon from 0 to
+3. Finally,
+\begin{code}
+SVAR_SRplain(&mod, "quantity", "supply", "+", 6, 6)
+\end{code}
+means that the shock named \texttt{supply} has a negative impact on the
+observable variable \texttt{quantity} over the horizon from 6 to 12.
+
+\subsection{General (``exotic'') set restrictions}
+
+General set restrictions are specified via the function
+\texttt{SVAR\_SRexotic}, which takes 2 mandatory arguments and 2 optional ones:
+\begin{enumerate}
+  \item the model bundle, in pointer form;
+  \item a string describing the constraint you want on the $M_k$ matrix;
+  \item an optional scalar with the time span the constraints applies
+    to (defaults to 0);
+  \item an optional scalar with the first lag the constraints applies
+    to  (defaults to 0)
+\end{enumerate}
+
+The string you pass as argument 2 must contain a valid hansl
+expression, in terms of a matrix whose name nust be \texttt{M},
+yielding a scalar. This code snippet is assumed to perform some kind
+of check on the elements of the matrix, the convention being that a
+non-zero result implies that the restriction holds. For example, the
+string
+\begin{code}
+string boundscheck = "abs(M[1,1]) < 0.1"
+\end{code}
+will check whether $-0.1 < [M]_{1,1} < 0.1$. In order to impose
+this restriction on $M_0, M_1$ and $M_2$ you invoke the function 
+like this:
+\begin{code}
+string boundscheck = "abs(M[1,1]) < 0.1"
+SVAR_SRexotic(&mod, boundscheck, 2)
+\end{code}
+
+If you want more restrictions, you just invoke the function more times
+with suitable strings as arguments.
+
+Internally, the exotic restrictions are stored in a bundle named
+\texttt{exoticSR} inside the main model bundle, which contains a
+string array (named \texttt{checks}) with the $p$ restriction strings
+and a $p \times 2$ matrix called \texttt{spans} with the initial and
+final period the restriction applies to (NB: \texttt{spans} is
+1-based, rather than 0-based).
+
+\subsection{The workflow}
+
+So what we do at present is:
+\begin{enumerate}
+\item We set up the model as per usual via the \verb|SVAR_setup|
+  function with the ``plain'' option and estimate the VAR parameters
+  by \verb|SVAR_estimate|;
+\item we specify the sign restrictions through the \texttt{SVAR\_SRplain}
+  and \texttt{SVAR\_SRexotic} functions;
+\item the draw is performed by the function \texttt{SVAR\_setidIRF}, that
+  takes as arguments the model bundle, the number of draws and the
+  drawing strategy (more on this later); the function returns an array
+  of bundles (one per successful draw), containing ther identified IRFs.
+\end{enumerate}
+
+The bundle array just created by \texttt{SVAR\_setidIRF} can be passed
+to another function, called \texttt{IRF\_plotdata}, that takes care of
+generating all the matrices used for plotting. This function takes an
+extra argument $\alpha$ for the quantiles (in the same way we do in
+\verb|SVAR_boot|).
+
+FIXME: we must integrate this with the IRF plotting functions we
+already have, somehow.
+
+\subsection{The \texttt{SVAR\_setidIRF} function}
+
+This is the function that explores the space of possible
+rotations, via $H$ random draws from the space of rotation matrices.
+Once the VAR parameters ($\hat{\Phi}_i$ and $\hat{\Sigma}$)
+are computed, this can be done by either
+\begin{itemize}
+\item applying the random rotation (\ref{eq:rotation}) to the Cholesky
+  factor of $\hat{\Sigma}$, and computing the $M_i$ matrices from the
+  $\hat{\Phi}_i$ matrices, or  
+\item sampling from the posterior distribution\footnote{The standard
+    Normal-inverse Wishart distribution is used.} of the parameter and
+  get new matrices $\tilde{\Sigma}$ and $\tilde{\Phi}_i$, and then
+  compute the $M_i$ matrices from those.
+\end{itemize}
+Let's call option 1 the ``frequentist'' option and option 2 the
+``Bayesian'' option.  This choice corresponds to a Boolean flag which
+is the third argument to the \texttt{SVAR\_setidIRF} function: the
+default, 0, is to skip the sampling from the posterior and just use
+the frequentist estimates.
+
+What happens inside this function? First, the relevant items from the
+model bundle are copied: this of course includes the VAR parameters
+and $\hat{\Sigma}$, but we'll also need $(X'X)^{-1}$ for the Bayesian
+option, when we draw from the posterior.
+
+Then, after setting up some stuff, we enter the main loop: we iterate
+until we get enough valid draws (or we hit the maximum number of
+iterations --- the fourth argument to the function). For each
+iteration:
+\begin{enumerate}
+\item for the Bayesian option, first we draw from the posterior of the
+  VAR parameters (this is where we need $(X'X)^{-1}$; in the
+  frequentist case, we just use $\hat{\Phi}_i$ and $\hat{\Sigma}$).
+\item We then create a bundle containing the draw above, a generated
+  rotation matrix $Q$ and the number of deterministic terms in the
+  VAR; this bundle is used by the \verb|gen_irfs| internal function
+  that computes the IRFs for the simulate parameters. Note that:
+  \begin{itemize}
+    \item We generate $Q$ via the QR decomposition algorithm, but we
+      \emph{don't} perform any kind of sign checks on its elements;
+    \item we generate one $Q$ per iterations, so the number that
+      Lütkepohl \& Kilian (FIXME reference) call $N$ on page\footnote{This is the page
+        of the official CUP version. In the ``unofficial'' pdf file
+        that has been circulating for a while it's on page 432.} 441
+      (Step 2) is fixed at 1; this wouldn't be difficult to change if
+      needed;
+    \item we compute all the IRFs up to the desired horizon even if we
+      don't need all of them for checking the sign restrictions.\footnote{%
+      Perhaps we could optimise this, but the computational
+      gain would likely be marginal.}
+    \end{itemize}
+  \item Now we check if the generated $M_i$ matrices satisfy the
+    restrictions; this entails three steps:
+    \begin{enumerate}
+    \item For each set of sign restrictions, we generate a row vector
+      with $n$ elements that tells you if that particular restriction
+      is met by each of the rotated shocks. The convention is that 1
+      means ``yes'', 0 means ``no'' and -1 means ``yes, but the sign
+      of the shock must be flipped''.
+    \item All these row vectors are coalesced into a matrix and passed
+      to the \verb|check_id| function, that checks if there is a
+      sensible way to map the rotated shocks to the desired structural
+      shocks. Note that this function returns a matrix in which there
+      could be more than one candidate for each shock. The internal
+      function \texttt{normalize} takes care of establishing a
+      one-to-one correspondence; if the sign restrictions are met,
+      then we reshuffle the IRFs taking care of the structural shocks
+      desired ordering and possible sign flips. 
+    \item At this point, the $M_i$ matrices should contain the IRFs in
+      the appropriate positions: $[M_k]_{i,j}$ contains the impact at
+      $k$ steps of the $j$-th shock to the $i$-th observable, where
+      the ordering of the observables is the one implicit in the imput
+      list and the order of the shocks is the one given by the
+      \texttt{snames} bundle element. Therefore, we can proceed with
+      checking the exotic restrictions (if any).
+    \end{enumerate}
+  \item If all the restrictions are met, we accept the draw and store the
+    results away as an element of the bundle array that we eventually
+    return. 
+\end{enumerate}
+
+\subsection{Still to do (for set identification)}
+
+\begin{itemize}
+\item proper statistics on accepted/rejected iterations
+\item VMAs and historical decomposition
+\item mixed identification (signs + zero restrictions on $C$)
+\end{itemize}
+
+
+% end sign restrictions part
+%%%%%%%%%%%%%%%%%%%
 
 \bibliography{SVAR}
 
@@ -2262,6 +2560,8 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 
 \section{Alphabetical list of (public) functions}
 \label{sec:syntax}
+
+FIXME: Add the sign restriction functions...
 
 The name of the model bundle which is passed around in pointer form between 
 most of these functions is determined by the user when the bundle is assigned
@@ -2503,6 +2803,19 @@ implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
 \end{funcdoc}
 
+\begin{funcdoc}{SVAR\_setidIRF(bundle mod, scalar rep, bool
+    DO\_BAYES[0], \\
+    int maxiter[10000])}
+\begin{description}
+\item[Return type]: \texttt{array of bundles}
+\item[\texttt{*mod}]: pointer to the SVAR model bundle;
+\item[\texttt{rep}]: an integer, the number of (accepted) draws $H$
+\item[\texttt{DO\_BAYES}]: Boolean flag for the Bayesian option
+  (default = 0 $\to$ frequentist).
+\item[\texttt{maxiter}]: Maximum number of draws (default = 10000).
+\end{description}
+\end{funcdoc}
+
 \begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder, 
   bool checkident[1])}
   Initialises a model: the function's output is a bundle. The function
@@ -2519,6 +2832,9 @@ a warning will be printed.
 \end{funcdoc}
 
 \section{Contents of the model bundle}
+
+FIXME: add new sign restriction stuff
+
 \label{sec:bundle_struct}
 
   \centering
@@ -2604,6 +2920,11 @@ a warning will be printed.
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 1.90, January 2020}
+\begin{itemize}
+\item Add set-identified model estimation (a.k.a. sign restrictions).
+\end{itemize}
 
 \subsection*{Version 1.52, November 2019}
 \begin{itemize}

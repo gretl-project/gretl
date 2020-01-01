@@ -1,0 +1,164 @@
+# Utility functions for the sign restriction method in SVAR.
+# (Later could probably merged into SVAR_utils.inp)
+
+###
+### functions for shock identification/normalization
+###
+
+function matrix correspondence(const matrix A)
+
+    # this function checks for a possible way to couple
+    # shocks with observables, given the "candidate" matrix A
+    
+    nr = rows(A)
+    nc = cols(A)
+    if nr == 0
+        return {}
+    endif
+    
+    r = 1
+    c = 0
+    x = 0
+    loop while r <= nr --quiet
+        matrix candidate = A[r,]
+        matrix z = !(candidate .= 0)
+        if sumr(z) == 1
+            # candidate is ok
+            scalar x = selifc(candidate, z) 
+            scalar c = selifc(seq(1,nc), z) 
+            break
+        endif
+        r++
+    endloop
+    
+    if c>0
+        matrix rest = correspondence(A[-r, -c])
+        if rows(rest) > 0
+            rest[,1] += rest[,1] .>= r
+            rest[,2] += rest[,2] .>= c
+        endif
+    else
+        matrix rest = {}
+    endif
+    
+    return {r, c, x} | rest # FIXME: can this work if rest = {} as above ??
+end function
+
+function matrix normalize(const matrix A)
+    
+    # this function is for normalizing the "candidate" matrix A
+    
+    matrix U = correspondence(A)
+    matrix ret = zeros(rows(A), cols(A))
+    loop i = 1..rows(U) --quiet
+        r = U[i,1]
+        c = U[i,2]
+        if c != 0
+            x = U[i,3]
+            ret[r,c] = x
+        endif
+    endloop
+    return selifr(ret, maxr(abs(ret)) .> 0)
+end function
+
+function matrix check_one_irf(matrices M, matrix spec,
+                              int verbose[0])
+    # this function will return a row vector with elements
+    # that are either:
+    #  1 if the corresponding column satifies the bounds
+    # -1 if column satifies the bounds after a sign change
+    #  0 if the bounds condition isn't met
+
+    n = cols(M[1])
+    h = nelem(M)
+    vndx = spec[1] # always matrix?
+
+    # reshape IRFs so as to have columns as candidates
+    matrix tmp = mshape(flatten(M)[vndx,], n, h)'
+
+    # consider only selected rows
+    matrix sel = seq(spec[4], spec[5])
+    tmp = tmp[sel,]
+    Max = maxc(tmp)
+    Min = minc(tmp)
+
+    scalar lo = spec[2]
+    scalar hi = spec[3]
+
+    noflip = (Min .> lo) && (Max .< hi) # shocks that respect the bounds
+    flip = (Max .< -lo) && (Min .> -hi) # shocks that need to be flipped
+    ret = noflip - flip
+
+    if verbose
+        print tmp
+	if verbose > 1
+            print lo hi
+            print Min Max
+	endif
+        print noflip flip ret
+    endif
+
+    return ret
+end function
+
+function matrix check_irfs(matrices M, matrix A, int verbose[0])
+
+    # here we examine the constraints on the IRFs we return a vector
+    # indicating if all the constraints contained in the matrix A are
+    # satisfied; each row of A contains
+    #
+    # 1    : ordinal no of variable to check
+    # 2, 3 : bounds (NA for +-infty)
+    # 4, 5 : IRF interval to check (0-based)
+    #
+    # It may happen that the IRFs are ok up to a sign swap; we flag this
+    # case by setting the corresponding column to -1
+
+    n = cols(M[1])
+    rA = rows(A)
+    # check consistency
+
+    matrix chks = zeros(rA, n)
+    loop i = 1..rA --quiet
+        chks[i,] = check_one_irf(M, A[i,], verbose)
+    endloop
+
+    if verbose
+        print chks
+    endif
+    
+    matrix positives = minc(chks) .= 1
+    matrix negatives = maxc(chks) .= -1
+
+    return positives - negatives
+
+end function
+
+function scalar check_id(matrix id)
+    # here we check if the sign check restriction allow us to
+    # form a coherent set of IRFs for the problem at hand
+    #
+    # the input matrix is has r rows and c columns, where r is the
+    # number of shocks we want to identify and c is the number
+    # of variables in the system; note that r can be smaller
+    # than c for partially identified models; for example, in Uhlig
+    # (2005) KME, c = 6 but r = 1 (the monetary policy shock)
+    #
+    # id can only contain 0s, 1s and -1s; therefore, for completely
+    # identified models, we just check if "id" is a proper orthogonal
+    # matrix; for partially identified models, we need to make sure
+    # that we have only one non-zero entry for each row, and that
+    # the rank of id is r.
+
+    r = rows(id)
+    c = cols(id)
+
+    if r < c
+        # partial identification
+        ret = (rank(id) == r) && minc(sumr(abs(id)) .= 1) == 1
+    else
+        ret = maxc(abs((id'id) - I(r))) < 1.0e-15
+    endif
+
+    return ret
+end function 

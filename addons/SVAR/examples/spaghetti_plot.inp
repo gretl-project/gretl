@@ -1,0 +1,55 @@
+# Example script for sign restrictions in gretl's SVAR addon
+
+set verbose off
+include SVAR.gfn
+
+### supply & demand (artificial example)
+
+nulldata 240
+setobs 12 1:1
+b = -0.8 # demand elasticity
+c =  1.1 # supply elasticity
+
+Gamma = {1, -c; -b, 1}
+iG = inv(Gamma)
+U = 3 + filter(mnormal($nobs, 2), 1, 0.8)
+Y = U * iG'
+series p = Y[,1]
+series q = Y[,2]
+list X = p q
+
+var 1 X --quiet
+eval $sigma
+eval iG*iG'
+
+# set up the model
+
+list W = const
+scalar order = 1
+
+mod = SVAR_setup("plain", X, W, order, 0)
+err = SVAR_estimate(&mod,0) # just needed for the VAR parameters, really
+
+# set up the sign restictions
+
+mod.snames[1] = "Supply"
+mod.snames[2] = "Demand"
+
+# instantaneous restrictions
+
+mod.SRest = {}
+SVAR_SRplain(&mod, "p", "Supply", "-")  # supply shock brings price down
+SVAR_SRplain(&mod, "q", "Supply", "+")  # and quantity up
+SVAR_SRplain(&mod, "p", "Demand", "+")  # demand shock raises price
+SVAR_SRplain(&mod, "q", "Demand", "+")  # as well as quantity
+
+rep = 128
+
+# do the rotations (this is the computationally intensive part)
+moo = SVAR_setidIRF(mod, rep)
+# draw the irfs
+
+SVAR_spagplot(moo, mod, 1, 1)
+SVAR_spagplot(moo, mod, 1, 2)
+SVAR_spagplot(moo, mod, 2, 1)
+SVAR_spagplot(moo, mod, 2, 2)
