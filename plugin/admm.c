@@ -713,9 +713,7 @@ static int ccd_get_crit (const gretl_matrix *B,
 		         const gretl_matrix *R2,
 			 const gretl_matrix *y,
 		         gretl_matrix *crit,
-			 double alpha,
-		         int *nin, int *ia,
-		         int nx)
+			 double alpha, int nx)
 {
     double *bj, bsum, SSR;
     double nulldev = 1.0;
@@ -1134,7 +1132,7 @@ static int ccd_lasso (gretl_matrix *X,
     }
 
     if (!xvalid) {
-	ccd_get_crit(B, lam, R2, y, crit, alpha, nnz, ia, k);
+	ccd_get_crit(B, lam, R2, y, crit, alpha, k);
 	if (verbose) {
 	    ccd_print(B, R2, lam, crit, k, prn);
 	}
@@ -1179,6 +1177,199 @@ static int ccd_lasso (gretl_matrix *X,
     gretl_matrix_block_destroy(MB);
     free(nnz);
     free(ia);
+
+    return err;
+}
+
+static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
+		       gretl_matrix *y, gretl_matrix *B,
+		       gretl_matrix *R2, int covmat)
+{
+    gretl_matrix_block *MB = NULL;
+    gretl_matrix *U = NULL;
+    gretl_matrix *Vt = NULL;
+    gretl_matrix *sv = NULL;
+    gretl_matrix *sve = NULL;
+    gretl_matrix *Uty = NULL;
+    gretl_matrix *L = NULL;
+    gretl_matrix *yh = NULL;
+    gretl_matrix *b = NULL;
+    double vij, ui, SSR, TSS = 0;
+    int offset = 0;
+    int n = X->rows;
+    int k = X->cols;
+    int i, j, l, err;
+
+    err = gretl_matrix_SVD(X, &U, &sv, &Vt, 0);
+
+    if (!err) {
+	MB = gretl_matrix_block_new(&sve, 1, k, &Uty, k, 1,
+				    &L, k, k, &b, k, 1,
+				    &yh, n, 1, NULL);
+	if (MB == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+    if (err) {
+	goto bailout;
+    }
+
+    if (R2 != NULL) {
+	for (i=0; i<n; i++) {
+	    TSS += y->val[i] * y->val[i];
+	}
+    }
+
+    offset = B->rows > k;
+
+    gretl_matrix_multiply_mod(U, GRETL_MOD_TRANSPOSE,
+			      y, GRETL_MOD_NONE,
+			      Uty, GRETL_MOD_NONE);
+
+    for (l=0; l<nlam; l++) {
+	for (i=0; i<k; i++) {
+	    sve->val[i] = sv->val[i] / (sv->val[i] * sv->val[i] + lam[l]);
+	}
+	for (j=0; j<k; j++) {
+	    for (i=0; i<k; i++) {
+		vij = gretl_matrix_get(Vt, j, i);
+		gretl_matrix_set(L, i, j, vij * sve->val[j]);
+	    }
+	}
+	gretl_matrix_multiply(L, Uty, b);
+	gretl_matrix_multiply(X, b, yh);
+	if (R2 != NULL) {
+	    SSR = 0.0;
+	    for (i=0; i<n; i++) {
+		ui = y->val[i] - yh->val[i];
+		SSR += ui * ui;
+	    }
+	    R2->val[l] = 1.0 - SSR/TSS;
+	}
+	memcpy(B->val + l * B->rows + offset, b->val, k * sizeof(double));
+    }
+
+ bailout:
+
+    gretl_matrix_block_destroy(MB);
+    gretl_matrix_free(U);
+    gretl_matrix_free(sv);
+    gretl_matrix_free(Vt);
+
+    return err;
+}
+
+static int svd_ridge (gretl_matrix *X,
+		      gretl_matrix *y,
+		      gretl_bundle *bun,
+		      PRN *prn)
+{
+    gretl_matrix_block *MB;
+    gretl_matrix *Xty = NULL;
+    gretl_matrix *B = NULL;
+    gretl_matrix *lam = NULL;
+    gretl_matrix *R2 = NULL;
+    gretl_matrix *crit = NULL;
+    gretl_matrix *lfrac;
+    double lmax, big = 9.9e35;
+    int nlam;
+    int n, k, i;
+    int err = 0;
+
+    int stdize = gretl_bundle_get_int(bun, "stdize", &err);
+    int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
+    int verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
+
+    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+
+    if (err) {
+	return err;
+    }
+
+    n = X->rows;
+    k = X->cols;
+    nlam = lfrac->rows;
+
+    MB = gretl_matrix_block_new(&Xty, k, 1, &lam, nlam, 1, NULL);
+    B = gretl_zero_matrix_new(k + stdize, nlam);
+    if (MB == NULL || B == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      y, GRETL_MOD_NONE,
+			      Xty, GRETL_MOD_NONE);
+    lmax = gretl_matrix_infinity_norm(Xty);
+    gretl_matrix_copy_values(lam, lfrac);
+    for (i=0; i<nlam; i++) {
+	lam->val[i] *= 1000 * lmax;
+    }
+    lam->val[0] = big;
+
+    if (!xvalid) {
+	R2 = gretl_matrix_alloc(nlam, 1);
+	crit = gretl_matrix_alloc(nlam, 1);
+	if (R2 == NULL || crit == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    err = ridge_bhat(lam->val, nlam, X, y, B, R2, 0);
+#if 0
+    fprintf(stderr, "ridge: err=%d\n", err);
+#endif
+    if (err) {
+	goto bailout;
+    }
+
+    /* not entirely truthful! */
+    lam->val[0] = exp(log(lam->val[1]) - log(lam->val[nlam-1]) / (nlam-1));
+
+    if (!xvalid) {
+	ccd_get_crit(B, lam, R2, y, crit, 0.0, k);
+	if (verbose) {
+	    ccd_print(B, R2, lam, crit, k, prn);
+	}
+	if (nlam > 1) {
+	    double critmin = 1e200;
+	    int j, idxmin = 0;
+
+	    for (j=0; j<nlam; j++) {
+		if (crit->val[j] < critmin) {
+		    critmin = crit->val[j];
+		    idxmin = j;
+		}
+	    }
+	    gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
+	    gretl_bundle_set_scalar(bun, "lfmin", lfrac->val[idxmin]);
+	}
+	if (crit->rows > 1) {
+	    gretl_bundle_donate_data(bun, "crit", crit, GRETL_TYPE_MATRIX, 0);
+	    crit = NULL;
+	} else {
+	    gretl_bundle_set_scalar(bun, "crit", crit->val[0]);
+	}
+    }
+
+    if (!err) {
+	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+	B = NULL;
+	gretl_bundle_set_scalar(bun, "lmax", lmax * n);
+	if (nlam == 1) {
+	    /* show a value comparable with ADMM */
+	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax * n);
+	}
+    }
+
+ bailout:
+
+    gretl_bundle_delete_data(bun, "verbosity");
+
+    gretl_matrix_free(crit);
+    gretl_matrix_free(R2);
+    gretl_matrix_free(B);
+    gretl_matrix_block_destroy(MB);
 
     return err;
 }
@@ -2015,6 +2206,10 @@ int gretl_lasso (gretl_matrix *X,
     xv = gretl_bundle_get_bool(bun, "xvalidate", 0);
     ccd = gretl_bundle_get_bool(bun, "use_ccd", 0);
     ridge = gretl_bundle_get_bool(bun, "ridge", 0);
+
+    if (ridge && !xv && !ccd) {
+	return svd_ridge(X, y, bun, prn);
+    }
 
     if (ridge && !ccd) {
 	ccd = 1;
