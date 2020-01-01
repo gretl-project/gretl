@@ -1,12 +1,14 @@
+set warnings off
 set verbose off
 clear
 
-# include "../extra.inp" --force
+include "../extra.inp" --force
 # This won't work with the package extra.gfn, as it uses private functions.
-# So you need to run extra.inp manually to have all the functions available.
+# So you need to run extra.inp manually to have all the functions available,
+# or even _better_: just run the shell script "run_tests.sh"
+
 
 string MISSCODE = "NaN"
-
 
 print "Start with bundle2json()"
 bundle bin = null
@@ -167,22 +169,61 @@ endif
 
 
 
+print "Start with splitfname()"
+string fn = "/what/on/earth/isthisfile.gdt"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "/what/on/earth" || S[2] != "isthisfile" || S[3] != "gdt"
+    stop
+endif
+
+print "Start with splitfname() + special chars"
+string fn = "../what/on_=65/earth/is_this-file.gdt"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "../what/on_=65/earth" || S[2] != "is_this-file" || S[3] != "gdt"
+    stop
+endif
+
+
+print "Start with splitfname() + special chars w/o file extension"
+string fn = "../what/on_=65/earth/is_this-file"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "../what/on_=65/earth" || S[2] != "is_this-file" || S[3] != ""
+    stop
+endif
+    
+print "Start with splitfname() + special chars w/o dir and file extension"
+string fn = "is_this-file=67?"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "" || S[2] != "is_this-file=67?" || S[3] != ""
+    stop
+endif
+
+print "Start with splitfname() + special chars w/o filename and file extension"
+string fn = "../what/on_=65/earth/"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "../what/on_=65/earth" || S[2] != "" || S[3] != ""
+    stop
+endif
+
+
+
+
 printf "\nInfo: All tests passed.\n"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
