@@ -1,12 +1,14 @@
+set warnings off
 set verbose off
 clear
 
-# include "../extra.inp" --force
+include "../extra.inp" --force
 # This won't work with the package extra.gfn, as it uses private functions.
-# So you need to run extra.inp manually to have all the functions available.
+# So you need to run extra.inp manually to have all the functions available,
+# or even _better_: just run the shell script "run_tests.sh"
+
 
 string MISSCODE = "NaN"
-
 
 print "Start with bundle2json()"
 bundle bin = null
