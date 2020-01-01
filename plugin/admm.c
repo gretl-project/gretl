@@ -1678,6 +1678,7 @@ static int ccd_do_fold (gretl_matrix *X,
 	    score = xv_score(X_out, y_out, b, u, crit_type);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
+	gretl_matrix_free(b);
     }
 
     return err;
