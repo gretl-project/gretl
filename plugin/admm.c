@@ -61,6 +61,7 @@ double admm_abstol;
 
 #define CCD_MAX_ITER 100000
 #define CCD_TOLER_DEFAULT 1.0e-7
+#define BIG_LAMBDA 9.9e35
 
 double ccd_toler;
 
@@ -1043,8 +1044,7 @@ static int ccd_lasso (gretl_matrix *X,
     gretl_matrix *crit = NULL;
     gretl_matrix *lfrac;
     double *Rsq = NULL;
-    double lmax, alpha = 1.0; /* lasso */
-    double big = 9.9e35;
+    double lmax, alpha;
     int maxit = CCD_MAX_ITER;
     int *nnz, *ia;
     int nlp = 0, lmu = 0;
@@ -1063,13 +1063,10 @@ static int ccd_lasso (gretl_matrix *X,
 	return err;
     }
 
-    if (ridge) {
-	alpha = 0.0;
-    }
-
     n = X->rows;
     k = X->cols;
     nlam = lfrac->rows;
+    alpha = ridge ? 0.0 : 1.0;
 
     MB = gretl_matrix_block_new(&xv, k, 1, &Xty, k, 1,
 				&lam, nlam, 1, NULL);
@@ -1090,7 +1087,7 @@ static int ccd_lasso (gretl_matrix *X,
 	lam->val[i] *= lmax;
     }
     if (alpha < 1.0) {
-	lam->val[0] = big;
+	lam->val[0] = BIG_LAMBDA;
     }
 
     nnz = malloc(nlam * sizeof *nnz);
@@ -1102,16 +1099,9 @@ static int ccd_lasso (gretl_matrix *X,
 
     if (!xvalid) {
 	R2 = gretl_matrix_alloc(nlam, 1);
-	if (R2 == NULL) {
+	crit = gretl_matrix_alloc(nlam, 1);
+	if (R2 == NULL || crit == NULL) {
 	    err = E_ALLOC;
-	}
-	if (1 /* alpha == 1.0 */) {
-	    crit = gretl_matrix_alloc(nlam, 1);
-	    if (crit == NULL) {
-		err = E_ALLOC;
-	    }
-	}
-	if (err) {
 	    goto bailout;
 	} else {
 	    Rsq = R2->val;
@@ -1275,7 +1265,7 @@ static int svd_ridge (gretl_matrix *X,
     gretl_matrix *R2 = NULL;
     gretl_matrix *crit = NULL;
     gretl_matrix *lfrac;
-    double lmax, big = 9.9e35;
+    double lmax;
     int nlam;
     int n, k, i;
     int err = 0;
@@ -1310,7 +1300,7 @@ static int svd_ridge (gretl_matrix *X,
     for (i=0; i<nlam; i++) {
 	lam->val[i] *= lmax;
     }
-    lam->val[0] = big;
+    lam->val[0] = BIG_LAMBDA;
 #else
     /* 1.0 = squared Frobenius norm */
     gretl_matrix_copy_values(lam, lfrac);
@@ -1620,7 +1610,8 @@ static int ccd_do_fold (gretl_matrix *X,
 			gretl_matrix *y_out,
 			const gretl_matrix *lam,
 			gretl_matrix *XVC,
-			int fold, int crit_type)
+			int fold, int crit_type,
+			double alpha)
 {
     static gretl_matrix_block *MB;
     static gretl_matrix *Xty, *xv;
@@ -1669,7 +1660,7 @@ static int ccd_do_fold (gretl_matrix *X,
     lmax = gretl_matrix_infinity_norm(Xty);
 #endif
 
-    err = ccd_iteration(1.0, X, Xty->val, nlam, lam->val,
+    err = ccd_iteration(alpha, X, Xty->val, nlam, lam->val,
 			ccd_toler, maxit, xv->val, &lmu, B,
 			ia, nnz, NULL, &nlp);
 #if 0
@@ -1919,10 +1910,11 @@ static int lasso_xv (gretl_matrix *X,
     gretl_matrix *lfrac;
     gretl_matrix *lam = NULL;
     gretl_matrix *XVC;
-    double lmax;
+    double lmax, alpha;
     int nlam, fsize, esize;
     int randfolds = 0;
     int crit_type = 0;
+    int ridge = 0;
     int verbose, ccd;
     int f, nf;
     int err;
@@ -1935,9 +1927,11 @@ static int lasso_xv (gretl_matrix *X,
 
     verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
     ccd = gretl_bundle_get_bool(bun, "use_ccd", 0);
+    ridge = gretl_bundle_get_bool(bun, "ridge", 0);
 
     fsize = X->rows / nf;
     esize = (nf - 1) * fsize;
+    alpha = ridge ? 0.0 : 1.0;
 
     if (verbose) {
 	pprintf(prn, "lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
@@ -1979,7 +1973,8 @@ static int lasso_xv (gretl_matrix *X,
     for (f=0; f<nf && !err; f++) {
 	prepare_xv_data(X, y, Xe, ye, Xf, yf, f);
 	if (ccd) {
-	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f, crit_type);
+	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
+			      crit_type, alpha);
 	} else {
 	    err = admm_do_fold(Xe, ye, Xf, yf, lfrac, XVC, lmax, rho,
 			       f, crit_type);
@@ -1988,7 +1983,7 @@ static int lasso_xv (gretl_matrix *X,
 
     /* send cleanup signal */
     if (ccd) {
-	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
     } else {
 	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
     }
@@ -2030,7 +2025,7 @@ static int real_lasso_xv_mpi (gretl_matrix *X,
     gretl_matrix *yf = NULL;
     gretl_matrix *lam = NULL;
     gretl_matrix *lfrac;
-    double lmax;
+    double lmax, alpha;
     int fsize, esize;
     int folds_per;
     int folds_rem;
@@ -2039,6 +2034,7 @@ static int real_lasso_xv_mpi (gretl_matrix *X,
     int crit_type = 0;
     int np, rankmax = 0;
     int ccd, verbose;
+    int ridge;
     int f, nf, r;
     int my_f = 0;
     int err = 0;
@@ -2055,12 +2051,14 @@ static int real_lasso_xv_mpi (gretl_matrix *X,
 
     verbose = gretl_bundle_get_int_deflt(bun, "verbosity", 1);
     ccd = gretl_bundle_get_bool(bun, "use_ccd", 0);
+    ridge = gretl_bundle_get_bool(bun, "ridge", 0);
 
     nlam = gretl_vector_get_length(lfrac);
     fsize = X->rows / nf;
     esize = (nf - 1) * fsize;
     folds_per = nf / np;
     folds_rem = nf % np;
+    alpha = ridge ? 0.0 : 1.0;
 
     /* matrix-space for per-fold data */
     XY = gretl_matrix_block_new(&Xe, esize, X->cols,
@@ -2124,7 +2122,8 @@ static int real_lasso_xv_mpi (gretl_matrix *X,
 		pprintf(prn, "rank %d: taking fold %d\n", rank, f+1);
 	    }
 	    if (ccd) {
-		err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, my_f++, crit_type);
+		err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, my_f++,
+				  crit_type, alpha);
 	    } else {
 		err = admm_do_fold(Xe, ye, Xf, yf, lfrac, XVC, lmax, rho,
 				   my_f++, crit_type);
@@ -2142,7 +2141,7 @@ static int real_lasso_xv_mpi (gretl_matrix *X,
 
     /* send cleanup signal, all processes */
     if (ccd) {
-	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
     } else {
 	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
     }
