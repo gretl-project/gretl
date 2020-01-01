@@ -169,22 +169,61 @@ endif
 
 
 
+print "Start with splitfname()"
+string fn = "/what/on/earth/isthisfile.gdt"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "/what/on/earth" || S[2] != "isthisfile" || S[3] != "gdt"
+    stop
+endif
+
+print "Start with splitfname() + special chars"
+string fn = "../what/on_=65/earth/is_this-file.gdt"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "../what/on_=65/earth" || S[2] != "is_this-file" || S[3] != "gdt"
+    stop
+endif
+
+
+print "Start with splitfname() + special chars w/o file extension"
+string fn = "../what/on_=65/earth/is_this-file"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "../what/on_=65/earth" || S[2] != "is_this-file" || S[3] != ""
+    stop
+endif
+    
+print "Start with splitfname() + special chars w/o dir and file extension"
+string fn = "is_this-file=67?"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "" || S[2] != "is_this-file=67?" || S[3] != ""
+    stop
+endif
+
+print "Start with splitfname() + special chars w/o filename and file extension"
+string fn = "../what/on_=65/earth/"
+strings S = splitfname(fn)
+if nelem(S) != 3
+    stop
+endif
+if S[1] != "../what/on_=65/earth" || S[2] != "" || S[3] != ""
+    stop
+endif
+
+
+
+
 printf "\nInfo: All tests passed.\n"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
