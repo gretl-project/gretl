@@ -1173,6 +1173,28 @@ static int ccd_lasso (gretl_matrix *X,
     return err;
 }
 
+static double effective_df (const gretl_matrix *X, double lam)
+{
+    gretl_matrix *sv = NULL;
+    double ret = NADBL;
+    int i, err;
+
+    err = gretl_matrix_SVD(X, NULL, &sv, NULL, 0);
+
+    if (!err) {
+	int k = gretl_vector_get_length(sv);
+	double sv2;
+
+	ret = 0.0;
+	for (i=0; i<k; i++) {
+	    sv2 = sv->val[i] * sv->val[i];
+	    ret += sv2 / (sv2 + lam);
+	}
+    }
+
+    return ret;
+}
+
 static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
 		       gretl_matrix *y, gretl_matrix *B,
 		       gretl_matrix *R2, int covmat)
