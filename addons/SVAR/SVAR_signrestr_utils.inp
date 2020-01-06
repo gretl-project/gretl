@@ -6,6 +6,7 @@
 ###
 
 function matrix correspondence(const matrix A)
+    # Tag: sign restriction apparatus
 
     # this function checks for a possible way to couple
     # shocks with observables, given the "candidate" matrix A
@@ -41,11 +42,11 @@ function matrix correspondence(const matrix A)
         matrix rest = {}
     endif
     
-    return {r, c, x} | rest # FIXME: can this work if rest = {} as above ??
+    return {r, c, x} | rest
 end function
 
 function matrix normalize(const matrix A)
-    
+    # Tag: sign restriction apparatus
     # this function is for normalizing the "candidate" matrix A
     
     matrix U = correspondence(A)
@@ -63,7 +64,8 @@ end function
 
 function matrix check_one_irf(matrices M, matrix spec,
                               int verbose[0])
-    # this function will return a row vector with elements
+    # Tag: sign restriction apparatus
+    # This function will return a row vector with elements
     # that are either:
     #  1 if the corresponding column satifies the bounds
     # -1 if column satifies the bounds after a sign change
@@ -102,8 +104,9 @@ function matrix check_one_irf(matrices M, matrix spec,
 end function
 
 function matrix check_irfs(matrices M, matrix A, int verbose[0])
+    # Tag: sign restriction apparatus
 
-    # here we examine the constraints on the IRFs we return a vector
+    # Here we examine the constraints on the IRFs we return a vector
     # indicating if all the constraints contained in the matrix A are
     # satisfied; each row of A contains
     #
@@ -135,7 +138,9 @@ function matrix check_irfs(matrices M, matrix A, int verbose[0])
 end function
 
 function scalar check_id(matrix id)
-    # here we check if the sign check restriction allow us to
+    # Tag: sign restriction apparatus
+
+    # Here we check if the sign check restriction allow us to
     # form a coherent set of IRFs for the problem at hand
     #
     # the input matrix is has r rows and c columns, where r is the
