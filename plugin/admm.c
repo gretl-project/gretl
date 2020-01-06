@@ -1656,10 +1656,6 @@ static int ccd_do_fold (gretl_matrix *X,
     /* scale data by sqrt(1/n) */
     ccd_scale(n, k, X, y->val, Xty->val, xv->val);
 
-#if 0 /* use common value? */
-    lmax = gretl_matrix_infinity_norm(Xty);
-#endif
-
     err = ccd_iteration(alpha, X, Xty->val, nlam, lam->val,
 			ccd_toler, maxit, xv->val, &lmu, B,
 			ia, nnz, NULL, &nlp);
@@ -1851,7 +1847,8 @@ static int get_crit_type (gretl_bundle *bun)
 static double get_xvalidation_lmax (gretl_matrix *X,
 				    gretl_matrix *y,
 				    int esize,
-				    int ccd)
+				    int ccd,
+				    double alpha)
 {
     gretl_matrix *Xty;
     double lmax;
@@ -1867,7 +1864,12 @@ static double get_xvalidation_lmax (gretl_matrix *X,
     lmax *= esize / (double) X->rows;
 
     if (ccd) {
-	lmax /= esize;
+	if (alpha < 1.0) {
+	    lmax /= max(alpha, 1.0e-3);
+	} else {
+	    /* ?? */
+	    lmax /= esize;
+	}
     }
 
     gretl_matrix_free(Xty);
@@ -1949,7 +1951,7 @@ static int lasso_xv (gretl_matrix *X,
     }
 
     nlam = gretl_vector_get_length(lfrac);
-    lmax = get_xvalidation_lmax(X, y, esize, ccd);
+    lmax = get_xvalidation_lmax(X, y, esize, ccd, alpha);
     if (verbose) {
 	pprintf(prn, "cross-validation lmax = %g\n\n", lmax);
 	gretl_flush(prn);
@@ -1961,6 +1963,9 @@ static int lasso_xv (gretl_matrix *X,
 	lam = gretl_matrix_copy(lfrac);
 	for (i=0; i<nlam; i++) {
 	    lam->val[i] *= lmax;
+	}
+	if (ridge) {
+	    lam->val[0] = BIG_LAMBDA;
 	}
     }
 
@@ -1974,6 +1979,7 @@ static int lasso_xv (gretl_matrix *X,
     for (f=0; f<nf && !err; f++) {
 	prepare_xv_data(X, y, Xe, ye, Xf, yf, f);
 	if (ccd) {
+	    fprintf(stderr, "lasso_xv: call ccd_do_fold, alpha = %g\n", alpha);
 	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
 			      crit_type, alpha);
 	} else {
@@ -2071,7 +2077,7 @@ static int real_lasso_xv_mpi (gretl_matrix *X,
     }
 
     if (rank == 0) {
-	lmax = get_xvalidation_lmax(X, y, esize, ccd);
+	lmax = get_xvalidation_lmax(X, y, esize, ccd, alpha);
     }
     gretl_mpi_bcast(&lmax, GRETL_TYPE_DOUBLE, 0);
 
