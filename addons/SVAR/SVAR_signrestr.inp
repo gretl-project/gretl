@@ -42,7 +42,7 @@ function void SVAR_SRfull(bundle *mod,
         mod.SRest = {}
     endif
 
-    loop i = 1 .. nelem(mod.snames) --quiet
+    loop i = 1..nelem(mod.snames) --quiet
         if sname == mod.snames[i]
             snum = i
             break
@@ -53,7 +53,7 @@ function void SVAR_SRfull(bundle *mod,
         printf "You don't have a shock named %s in your model\n", sname
     endif
 
-    loop i = 1 .. nelem(mod.Ynames) --quiet
+    loop i = 1..nelem(mod.Ynames) --quiet
         if yname == mod.Ynames[i]
             k = i
             break
@@ -123,32 +123,30 @@ end function
 function matrices BayesianDraw(const matrix iXX, const matrix B,
                                const matrix Sigma, scalar T)
 
-    scalar r = rows(B)
-    scalar c = cols(B)
-    Sigma_draw = iwishart(Sigma*T, T)
-    V = Sigma_draw ** iXX
-    K = cholesky(V)
-    B_draw = vec(B)
+    matrix Sigma_draw = iwishart(Sigma*T, T)
+    matrix V = Sigma_draw ** iXX
+    matrix K = cholesky(V)
+    matrix B_draw = vec(B)
 
-    # se = sqrt(diag(V))
-    # print B_draw se Sigma_draw iXX K
     B_draw += K * mnormal(rows(B_draw), 1)
-    B_draw = mshape(B_draw, r, c)
+    B_draw = mshape(B_draw, rows(B), cols(B))
 
-    ret = defarray(B_draw, Sigma_draw)
-    return ret
+    return defarray(B_draw, Sigma_draw)
 end function
+
+#-----------------------------------------------------------------
 
 function matrices gen_irfs(bundle b, scalar h, matrix to_cum)
 
     matrix B = b.B
-    k = b.detterms
+    k = b.detterms    # just a number?
 
-    scalar any_cumul = nelem(to_cum) > 0
+    # FIXME: This cumulation spec should be taken from the mod, no?
+    any_cumul = nelem(to_cum) > 0
 
-    scalar n = cols(B)
-    scalar p = (rows(B) - k) / n # VAR lags
-    comp = B[k+1:,]'
+    n = cols(B)
+    p = (rows(B) - k) / n # VAR lags
+    matrix comp = B[k+1:,]'
 
     if p > 1
         comp = comp | I(n*(p-1), n*p)
@@ -160,7 +158,7 @@ function matrices gen_irfs(bundle b, scalar h, matrix to_cum)
     matrix tmp = I(rows(comp))
     loop i = 2 .. h --quiet
         tmp = tmp * comp
-        irf_i = tmp[1:n,1:n] * K
+        matrix irf_i = tmp[1:n,1:n] * K
         if any_cumul
             irf_i[to_cum,] = irf_i[to_cum,] + ret[i-1][to_cum,]
         endif
@@ -169,6 +167,80 @@ function matrices gen_irfs(bundle b, scalar h, matrix to_cum)
 
     return ret
 end function
+
+# -------------------
+
+function void safetycheck1(const matrix Sigma, const matrix iXX, const matrix B)
+    hhh = 10
+    matrix V = Sigma ** iXX
+    chk = B[1:hhh,1] ~ sqrt(diag(V[1:hhh, 1:hhh]))
+    strings pnames = array(hhh)
+    loop i = 1..hhh -q
+        pnames[i] = sprintf("chk%d", i)
+    endloop
+    modprint chk pnames
+end function 
+
+# -------------------------------
+
+function scalar get_n_exotic(const bundle mod)
+    n_exotic = 0
+    if inbundle(mod, "exoticSR") 
+        n_exotic = nelem(mod.exoticSR.checks)
+    endif
+    return n_exotic
+end function
+
+# ----------------------------------
+
+function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES, 
+                         const matrix B,
+                         const matrix iXX )
+
+    if DO_BAYES
+        matrices Mats = BayesianDraw(iXX, B, mod.Sigma, b.df)
+        b.B = Mats[1]
+        b.Sigma = Mats[2]
+    endif
+    
+    matrix b.rot = qrdecomp(mnormal(mod.n, mod.n))
+
+end function 
+
+# -----------------------------------
+
+function matrices prepAis(const bundle mod, const matrix shocks)
+
+    nshocks = rows(shocks)
+    matrices Ais = array(nshocks)
+    loop i = 1..nshocks --quiet
+        matrix Ais[i] = selifr(mod.SRest, mod.SRest[,6] .= shocks[i])
+    endloop
+    return Ais 
+end function 
+
+# -----------------------------------
+
+function matrix get_id_mat (const bundle mod, const matrix shocks,
+                            int nshocks, 
+                            const matrices irfs, const matrices Ais,
+                            bool DO_NORM)
+
+    matrix id_matrix = zeros(nshocks, mod.n)
+    loop i = 1..nshocks --quiet
+        id_matrix[i,] = check_irfs(irfs, Ais[i])
+    endloop
+
+	if DO_NORM
+        # printf "Before normalization:\n%6.0f\n", id_matrix
+        id_matrix = normalize(id_matrix)
+        # printf "After normalization:\n%6.0f\n", id_matrix
+    endif
+
+    return id_matrix
+end function
+
+# --------------------------------------
 
 function bundles SVAR_setidIRF(bundle mod, scalar rep, bool DO_BAYES[0],
                              int maxiter[10000])
@@ -184,34 +256,19 @@ function bundles SVAR_setidIRF(bundle mod, scalar rep, bool DO_BAYES[0],
     #
 
     matrix B = mod.mu | mod.VARpar'
-    matrix Sigma = mod.Sigma
     scalar horizon = mod.horizon + 1 # original is 0-based
-    scalar p = mod.p
-    scalar T = mod.T
-    scalar n = mod.n
-    scalar df = T - nelem(B)
 
     DO_NORM = 1
 
-    if DO_BAYES
-        # this is only needed for sampling from the posterior
-        matrix Data = (mod.X ~ lags(mod.p,mod.Y,1))[p+1:,]
-        matrix iXX = invpd(Data'Data)
+    matrix iXX = {}
+    if DO_BAYES     # this is only needed for sampling from the posterior
+        matrix Data = (mod.X ~ lags(mod.p, mod.Y, 1))[mod.p + 1 : ,]
+        iXX = invpd(Data'Data)
     endif
 
-
     if 0
-        # print out a few parameters to make sure we don't
-        # screq up with lags, ordering etc
-
-        hhh = 10
-        matrix V = Sigma ** iXX
-        chk = B[1:hhh,1] ~ sqrt(diag(V[1:hhh, 1:hhh]))
-        strings pnames = array(hhh)
-        loop i = 1 .. hhh
-            pnames[i] = sprintf("chk%d", i)
-        endloop
-        modprint chk pnames
+        # print a few parameters so we don't screw up with lags etc.
+        safetycheck1(mod.Sigma, iXX, B)
     endif
 
     #
@@ -221,66 +278,33 @@ function bundles SVAR_setidIRF(bundle mod, scalar rep, bool DO_BAYES[0],
     bundles drawn = array(0)
     good = 0
     iter = 1
-    SRmat = mod.SRest
 
     # how many shocks are to be identified via sign restrictions?
-    matrix shocks = values(SRmat[,6])
-    scalar nshocks = rows(shocks)
+    matrix shocks = values(mod.SRest[,6])
+    nshocks = rows(shocks)
+    matrices Ais = prepAis(mod, shocks)
 
     # do we have exotic restrictions?
-    scalar has_exotic = inbundle(mod, "exoticSR")
+    n_exotic = get_n_exotic(mod)
 
-    if has_exotic
-        exotic = mod.exoticSR
-        scalar n_exotic = nelem(exotic.checks)
-        if n_exotic == 0
-            has_exotic = 0
-        endif
-    endif
+    # responses to be cumulated?
+    to_cum = mod.ncumul ? mod.cumul : {}
 
     #
     # the main loop
     #
 
-    bundle b = null
-    b.detterms = rows(mod.mu)
-    b.B = B
-    b.Sigma = Sigma
+    bundle b = defbundle("B",B, "Sigma",mod.Sigma, "detterms",rows(mod.mu), \
+               "df", mod.T - nelem(B))
 
     loop while good<rep && iter<=maxiter --quiet
-        if DO_BAYES
-            matrices Mats = BayesianDraw(iXX, B, Sigma, df)
-            b.B = Mats[1]
-            b.Sigma = Mats[2]
-        endif
 
-        b.rot = qrdecomp(mnormal(n,n))
-        b.detterms = rows(mod.mu)
-        to_cum = mod.ncumul ? mod.cumul : {}
-        irfs = gen_irfs(b, horizon, to_cum)
+        rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma 
+        matrices irfs = gen_irfs(b, horizon, to_cum)
+        matrix id_matrix = get_id_mat(mod, shocks, nshocks, irfs, Ais, DO_NORM)
 
-        # printf "iter %d\n", iter
-        # loop i = 1 .. 4 --quiet
-        #     eval irfs[i]
-        # endloop
-        # printf "---------------------------------------------------\n\n"
-
-        id_matrix = zeros(nshocks, n)
-        loop i = 1 .. nshocks --quiet
-            Ai = selifr(SRmat, SRmat[,6] .= shocks[i])
-            # print Ai
-            id_matrix[i,] = check_irfs(irfs, Ai)
-        endloop
-
-        if DO_NORM
-            # printf "Before normalization:\n%6.0f\n", id_matrix
-            id_matrix = normalize(id_matrix)
-            # printf "After normalization:\n%6.0f\n", id_matrix
-            chk = (rows(id_matrix) == nshocks) && check_id(id_matrix)
-        else
-            # printf "Before normalization:\n%6.0f\n", id_matrix
-            chk = check_id(id_matrix)
-        endif
+        chk = DO_NORM ? (rows(id_matrix) == nshocks) : 0 # this check 1st!
+        chk = chk && check_id(id_matrix)
 
         if chk
             # perform the "reflection-permutation" step
@@ -289,16 +313,16 @@ function bundles SVAR_setidIRF(bundle mod, scalar rep, bool DO_BAYES[0],
             endloop
 
             # --- now check for exotic restrictions if necessary -------
-            if has_exotic
+            if n_exotic
                 loop i = 1..n_exotic --quiet
-                    string exo_restrict = exotic.checks[i]
-                    scalar ini = exotic.spans[i,1]
-                    scalar fin = exotic.spans[i,2]
-                    scalar needs_model = exotic.super[i]
+                    string exo_restrict = mod.exoticSR.checks[i]
+                    scalar ini = mod.exoticSR.spans[i,1]
+                    scalar fin = mod.exoticSR.spans[i,2]
+                    scalar needs_model = mod.exoticSR.super[i]
 
                     out = 0
-                    loop t = ini .. fin --quiet
-                        matrix M = irfs[t]
+                    loop t = ini..fin --quiet
+                        matrix M = irfs[t] # hardcoded "M" for the API!
                         if needs_model
                             exocheck = feval(exo_restrict, M, mod)
                         else
@@ -393,32 +417,32 @@ function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
     # horizon columns
 
     # get dimensions
-    H = nelem(bs)
-    nv = rows(bs[1].Sigma)
+    H = nelem(bs)    # number of available (accepted) draws
+    nvXns = rows(bs[1].Sigma) * cols(bs[1].irfs[1])
     h = nelem(bs[1].irfs)
-    ns = cols(bs[1].irfs[1])
-    matrix A = zeros(H, ns * nv * h)
-
+    # ns = cols(bs[1].irfs[1])
+    matrix A = zeros(H, nvXns * h)
+    
     loop i = 1..H --quiet
-        sel = seq(1, ns*nv*h, h)
-       
-        bundle b = bs[i]
+        matrices irfs = bs[i].irfs
+        matrix sel = seq(1, nvXns * h, h)
+
         loop t = 1..h --quiet
             # compute the relevant IRFs
             # and store them in the appropriate column
-            A[i, sel] = vec(b.irfs[t])'
+            A[i, sel] = vec(irfs[t])'     # was: b.irfs
             sel += 1
         endloop
     endloop
 
-    matrix m    = meanc(A)	# point-wise means
-    matrix s    = sdc(A)
+    matrix m = meanc(A)	# point-wise means
+    matrix s = sdc(A)
 
     # output bundle (H: num of [accepted] replications) 
 	# (leave out ret.raw = A)
     bundle ret = defbundle("rep",H, "alpha",alpha, "biascorr",0)
-    matrix ret.irfSRmeans    = mshape(m, h, ns*nv)
-    matrix ret.irfSRserrs    = mshape(s, h, ns*nv)
+    matrix ret.irfSRmeans  = mshape(m, h, nvXns)
+    matrix ret.irfSRserrs  = mshape(s, h, nvXns)
 
     # point-wise pseudo confidence bands (ripped from SVAR_boot)
     q_alpha = 0.5 * (1 - alpha)
@@ -426,9 +450,9 @@ function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
     matrix hicb = quantile(A, 1 - q_alpha)
     matrix mdn  = quantile(A, 0.5)
 
-    matrix ret.lo_cb = mshape(locb, h, ns*nv)
-    matrix ret.hi_cb = mshape(hicb, h, ns*nv)
-    matrix ret.irfSRmeds  = mshape(mdn, h, ns*nv)
+    matrix ret.lo_cb     = mshape(locb, h, nvXns)
+    matrix ret.hi_cb     = mshape(hicb, h, nvXns)
+    matrix ret.irfSRmeds = mshape(mdn, h, nvXns)
 
     return ret
 end function
