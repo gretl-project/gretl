@@ -29,7 +29,7 @@ list X = p q
 list W = const
 scalar order = 1
 
-mod = SVAR_setup("plain", X, W, order, 0)
+bundle mod = SVAR_setup("plain", X, W, order, 0)
 err = SVAR_estimate(&mod,0) # this is just needed for the VAR parameters, really
 
 # set up the sign restictions
@@ -54,7 +54,7 @@ else
 endif
 
 # do the rotations (this is the computationally intensive part)
-moo = SVAR_setidIRF(mod, 100)
+bundles moo = SVAR_setidIRF(mod, 100)
 
 # check: these matrices should be the same if try_exotic is
 # 0 or 1

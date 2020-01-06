@@ -27,7 +27,7 @@ eval iG*iG'
 list W = const
 scalar order = 1
 
-mod = SVAR_setup("plain", X, W, order, 0)
+bundle mod = SVAR_setup("plain", X, W, order, 0)
 err = SVAR_estimate(&mod,0) # just needed for the VAR parameters, really
 
 # set up the sign restictions
@@ -46,7 +46,8 @@ SVAR_SRplain(&mod, "q", "Demand", "+")  # as well as quantity
 rep = 128
 
 # do the rotations (this is the computationally intensive part)
-moo = SVAR_setidIRF(mod, rep)
+bundles moo = SVAR_setidIRF(mod, rep)
+
 # draw the irfs
 
 SVAR_spagplot(moo, mod, 1, 1)

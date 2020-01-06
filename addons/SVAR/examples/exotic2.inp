@@ -29,7 +29,7 @@ list X = p q
 list W = const
 scalar order = 1
 
-mod = SVAR_setup("plain", X, W, order, 0)
+bundle mod = SVAR_setup("plain", X, W, order, 0)
 err = SVAR_estimate(&mod,0) # just needed for the VAR parameters, really
 
 # set up the sign restictions
@@ -51,7 +51,7 @@ exostring = "(-M[1,1]/M[2,1] > 0.667) && (-M[1,1]/M[2,1] < 1.5)"
 SVAR_SRexotic(&mod, exostring, 4)
 
 # do the rotations (this is the computationally intensive part)
-moo = SVAR_setidIRF(mod, 100, 0)
+bundles moo = SVAR_setidIRF(mod, 100, 0)
 
 # look at the IRFs as a check
 
