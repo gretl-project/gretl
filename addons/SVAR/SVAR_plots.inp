@@ -152,7 +152,8 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
         # do checks
         err = check_bounds(snum, 1, n)
         if err == 1
-            printf "Shock number %d out of bounds\n", abs(snum) # abs because of flipping
+            printf "Shock number %d out of bounds\n", abs(snum) 
+            # (abs because of flipping)
             return
         endif
 
@@ -177,18 +178,22 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
                 if obj.nboot == 0
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos)
                 else
-                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, null, &boot, bc)
+                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
+                                      null, &boot, bc)
                 endif
             else
                 matrix cumul = obj.cumul
                 if obj.nboot == 0
-                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul)
+                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
+                                      &cumul)
                 else
-                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul, &boot, bc)
+                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
+                                      &cumul, &boot, bc)
                 endif
             endif
 
-            if (outfilename == "display") || (sfrom == sto && vfrom == vto) # single plot, no indices
+            if (outfilename == "display") || (sfrom == sto && vfrom == vto) 
+                # (single plot, no indices)
                 tmpout = outfilename
             else
                 strings be = basename(outfilename)	# gives 2-elem array
@@ -297,7 +302,8 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
             return
         endif
 
-        string tmpout = (outfilename == "display") ? "display" : sprintf("%s_%d", outfilename, vnum)
+        string tmpout = (outfilename == "display") ? "display" : \
+                        sprintf("%s_%d", outfilename, vnum)
         string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, keypos)
         gnuplot --input="@tmpfile" --output="@tmpout"
 
@@ -342,7 +348,8 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0])
         setinfo tmpvar --graph-name="@gnam"
         tmp = tmpvar tmp	# put the line with the target var name first
 
-        string tmpout = (outfilename == "display") ? "display" : sprintf("%s_%d", outfilename, vnum)
+        string tmpout = (outfilename == "display") ? "display" : \
+                        sprintf("%s_%d", outfilename, vnum)
         plot tmp
             option time-series
             option single-yaxis
@@ -365,9 +372,6 @@ end function
 
 function void GUI_plot(bundle *b, int ptype[0:2:0] \
                        "Plot type" {"IRF", "FEVD", "Historical decomposition"})
-
-    scalar n = b.n
-    matrix tt = seq(0, b.horizon)'
 
     if ptype == 0
         IRFplot(&b, 0, 0) # all in one go

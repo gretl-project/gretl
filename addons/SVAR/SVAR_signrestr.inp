@@ -10,9 +10,9 @@
 ###
 
 function void SVAR_SRfull(bundle *mod,
-                          string sname, string yname,
+                          string yname, string sname,  
                           scalar lo[NA], scalar hi[NA],
-                          scalar ini[0], scalar fin[0])
+                          int ini[0::0], int fin[0::0])
 
     # this function will add to the appropriate element of
     # the bundle "mod" a set of sign restrictions relative
@@ -20,8 +20,8 @@ function void SVAR_SRfull(bundle *mod,
     # vector with the following elements; input values are:
     #
     # mod      : the VAR model bundle (in pointer form)
-    # sname    : a string with the shock name
     # yname    : a string with the name of the observable to examine
+    # sname    : a string with the shock name
     # lo, hi   : bounds (NA for +- infty)
     # ini, fin : IRF interval to check (0-based)
     #
@@ -29,19 +29,23 @@ function void SVAR_SRfull(bundle *mod,
     # impact prices with a negative sign on lags from 0 to 4, then
     # the function call should be
     #
-    # SVAR_SRfull(mod, 1, "p", NA, 0, 0, 4)
+    # SVAR_SRfull(mod, "p", 1, NA, 0, 0, 4)
     #
     # assuming the series for prices is called "p" and that we want
     # our monetary policy shock to come 1st in the ordering (useful for
     # models with sign restrictions on more than one shock)
+	
+    # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
-    scalar snum = 0
-    scalar k = 0
+    snum = 0
+    k = 0
 
     if !inbundle(mod, "SRest")
-        mod.SRest = {}
+        matrix mod.SRest = {}
     endif
 
+    # (this following loop is pretty clumsy - Artur has a function strpos
+    #  for this task in his string_utils package...)
     loop i = 1..nelem(mod.snames) --quiet
         if sname == mod.snames[i]
             snum = i
@@ -53,6 +57,7 @@ function void SVAR_SRfull(bundle *mod,
         printf "You don't have a shock named %s in your model\n", sname
     endif
 
+    # (same here for the clumsiness...)
     loop i = 1..nelem(mod.Ynames) --quiet
         if yname == mod.Ynames[i]
             k = i
@@ -75,6 +80,9 @@ function void SVAR_SRfull(bundle *mod,
         printf "Invalid bound specified! [%g : %g]\n", lo, hi
     endif
 
+	# Attention: Here the ini and fin inputs are transformed 
+    # to 1-based matrix indexing form, not keeping the actual 
+    # horizon meaning
     mod.SRest |= {k, lo, hi, ini+1, fin+1, snum}
 
 end function
@@ -83,26 +91,26 @@ function void SVAR_SRplain(bundle *mod,
                            string yname,
                            string sname,
                            string what,
-                           scalar length[0], scalar start[0])
+                           int length[0::0], int ini[0::0])
 
     # shorthand for sign restrictions
-
+    scalar hi, lo
     if what == "+"
-        scalar h = NA
-        scalar l = 0
+        hi = NA
+        lo = 0
     elif what == "-"
-        scalar h = 0
-        scalar l = NA
+        hi = 0
+        lo = NA
     else
         funcerr "invalid restriction"
     endif
 
-    SVAR_SRfull(&mod, sname, yname, l, h, start, start+length)
+    SVAR_SRfull(&mod, yname, sname, lo, hi, ini, ini+length)
 end function
 
 function void SVAR_SRexotic(bundle *mod, string chk,
-                            scalar length[0], scalar start[0],
-                            scalar needs_model[0])
+                            int length[0::0], int ini[0::0],
+                            bool needs_model[0])
 
     if !inbundle(mod, "exoticSR")
         strings checks = null
@@ -111,7 +119,8 @@ function void SVAR_SRexotic(bundle *mod, string chk,
     endif
 
     mod.exoticSR.checks += chk
-    mod.exoticSR.spans = mod.exoticSR.spans | { start + 1, start + length + 1 }
+    # the indexing convention here matches SRfull, +1
+    mod.exoticSR.spans = mod.exoticSR.spans | { ini + 1, ini + length + 1 }
     mod.exoticSR.super = mod.exoticSR.super | { needs_model }
 
 end function
@@ -121,7 +130,7 @@ end function
 ###
 
 function matrices BayesianDraw(const matrix iXX, const matrix B,
-                               const matrix Sigma, scalar T)
+                               const matrix Sigma, int T)
 
     matrix Sigma_draw = iwishart(Sigma*T, T)
     matrix V = Sigma_draw ** iXX
@@ -136,7 +145,11 @@ end function
 
 #-----------------------------------------------------------------
 
-function matrices gen_irfs(bundle b, scalar h, matrix to_cum)
+function matrices gen_irfs(bundle b, int h, matrix to_cum)
+
+    # FIXME: So is this meant for actual horizons 0..h-1, or 1..h ??
+    # -> Actually it seems to be 0..mod.horizons, so one more than 
+    # in the earlier SVAR code => need to adapt 
 
     matrix B = b.B
     k = b.detterms    # just a number?
@@ -242,8 +255,8 @@ end function
 
 # --------------------------------------
 
-function bundles SVAR_setidIRF(bundle mod, scalar rep, bool DO_BAYES[0],
-                             int maxiter[10000])
+function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
+                               int maxiter[10000])
 
     # This function draws a random rotations of the Cholesky model
     # until "rep" draws satisfying the sign restrictions have come up.
@@ -381,13 +394,13 @@ end function
 ###
 
 function void SVAR_spagplot(bundles bs, bundle mod, scalar Var, scalar Shk)
-    one_irf = bs[1].irfs
+    # one_irf = bs[1].irfs
     rep = nelem(bs)
     h = mod.horizon
 
-    IRFs = zeros(h + 1, rep) ~ seq(0, h)'
+    matrix IRFs = zeros(h + 1, rep) ~ seq(0, h)'
 
-    loop i = 1 .. rep --quiet
+    loop i = 1..rep --quiet
         IRFs[,i] = drill(bs[i].irfs, Var, Shk)
     endloop
 
