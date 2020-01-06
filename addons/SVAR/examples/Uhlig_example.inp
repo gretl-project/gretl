@@ -54,7 +54,7 @@ bundle IrfData = IRF_plotdata(moo, 0.75)
 k = 1
 loop foreach i X --quiet
     vname = "$i"
-    matrix grph = IrfData.ms[,k] ~ seq(0, mod.horizon)'
+    matrix grph = IrfData.irfSRmeans[,k] ~ seq(0, mod.horizon)'
     matrix band = IrfData.lo_cb[,k] ~ IrfData.hi_cb[,k]
     band = 0.5 * band * {1, 1; 1, -1}
 

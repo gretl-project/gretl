@@ -1,5 +1,5 @@
 Small reminder about the sign restriction function renaming:
-(Jan 1st, 2020)
+(Jan 6th, 2020)
 
 SignRest -> SVAR_SRplain
 
@@ -10,3 +10,9 @@ ExoticRest -> SVAR_SRexotic
 SpaghettiPlot -> SVAR_spagplot
 
 SResFull -> SVAR_SRfull
+
+...and bundle members:
+
+.ms -> .irfSRmeans 
+.ss -> .irfSRserrs
+.mdns -> .irfSRmeds

@@ -399,40 +399,36 @@ function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
     ns = cols(bs[1].irfs[1])
     matrix A = zeros(H, ns * nv * h)
 
-    loop i = 1 .. H --quiet
+    loop i = 1..H --quiet
         sel = seq(1, ns*nv*h, h)
-        #        sel = seq(1, ns*nv)
+       
         bundle b = bs[i]
-        loop t = 1 .. h --quiet
+        loop t = 1..h --quiet
             # compute the relevant IRFs
-            # print IRFt
-            # store them in the appropriate column
+            # and store them in the appropriate column
             A[i, sel] = vec(b.irfs[t])'
             sel += 1
         endloop
     endloop
 
-    matrix m    = meanc(A)
+    matrix m    = meanc(A)	# point-wise means
     matrix s    = sdc(A)
-    bundle ret = null
 
-    # ret.raw = A
-    matrix ret.ms    = mshape(m, h, ns*nv)
-    matrix ret.ss    = mshape(s, h, ns*nv)
+    # output bundle (H: num of [accepted] replications) 
+	# (leave out ret.raw = A)
+    bundle ret = defbundle("rep",H, "alpha",alpha, "biascorr",0)
+    matrix ret.irfSRmeans    = mshape(m, h, ns*nv)
+    matrix ret.irfSRserrs    = mshape(s, h, ns*nv)
 
-    # ripped from SVAR_boot
-
-    matrix locb = quantile(A, 1 - alpha)
-    matrix hicb = quantile(A, alpha)
+    # point-wise pseudo confidence bands (ripped from SVAR_boot)
+    q_alpha = 0.5 * (1 - alpha)
+    matrix locb = quantile(A, q_alpha)
+    matrix hicb = quantile(A, 1 - q_alpha)
     matrix mdn  = quantile(A, 0.5)
 
-    ret.rep   = H             # no of replications
-    ret.alpha = alpha           # alpha
-    ret.biascorr  = 0   # type of bias correction
     matrix ret.lo_cb = mshape(locb, h, ns*nv)
     matrix ret.hi_cb = mshape(hicb, h, ns*nv)
-    matrix ret.mdns  = mshape(mdn, h, ns*nv)
+    matrix ret.irfSRmeds  = mshape(mdn, h, ns*nv)
 
     return ret
 end function
-
