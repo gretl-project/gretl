@@ -17,7 +17,8 @@
  *
  */
 
-/* Code to solve the Lasso problem; two methods are implemented:
+/* Code for regularized least squares (LASSO and Ridge). Includes
+   these methods:
 
    ADMM: Based on Boyd et al, "Distributed Optimization and
    Statistical Learning via the Alternating Direction Method of
@@ -28,8 +29,7 @@
    employed by R's glmnet for the Gaussian case and the "covariance"
    algorithm.
 
-   With the default tolerances, CCD is faster but ADMM is more
-   accurate.
+   SVD for Ridge.
 */
 
 #include "libgretl.h"
