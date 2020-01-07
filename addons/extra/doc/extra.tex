@@ -5,6 +5,11 @@
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{fancyvrb}
+
+\DefineVerbatimEnvironment%
+{code}{Verbatim}
+{fontsize=\small, xleftmargin=1em}
 
 \newcommand{\noun}[1]{\textsc{#1}}
 %% Because html converters don't know tabularnewline
@@ -318,6 +323,17 @@ meaning is: 0: do nothing, leave the gaps; 1: NAs are replaced with
 previous observations; 2: NAs are replaced with a linear
 interpolation. Returns the filled series.
 
+The very existence of the "0" method for interpolation may look
+bizarre at first sight, but it may make sense to have in the context
+of batch processing, like in the following example (hopefully,
+self-explanatory):
+\begin{code}
+k = 1
+loop foreach i X
+   series z_$i = gap_filler($i, action[k++])
+endloop
+\end{code}
+
 Note that the function only replaces NAs between valid observations;
 therefore, if the origin series has missing values at the beginning or
 the end of the sample, they will be in the returned series too.
@@ -366,3 +382,8 @@ Sven Schreiber
 \end{itemize}
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
