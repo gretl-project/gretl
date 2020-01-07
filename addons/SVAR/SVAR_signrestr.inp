@@ -145,16 +145,18 @@ end function
 
 #-----------------------------------------------------------------
 
-function matrices gen_irfs(bundle b, int h, matrix to_cum)
+function matrices gen_irfs(bundle b, int numh, matrix to_cum)
 
-    # FIXME: So is this meant for actual horizons 0..h-1, or 1..h ??
-    # -> Actually it seems to be 0..mod.horizons, so one more than 
-    # in the earlier SVAR code => need to adapt 
+    # This calculates results for 0..mod.horizons, which is actually 
+    # like in the earlier SVAR code.
+    # So numh == mod.horizon + 1. 
+    # => FIXME the doc has been (up to 2020) slightly wrong in this regard
+    # (it claims h=mod.horizons rows in the IRFs matrix, one less than true) 
 
     matrix B = b.B
     k = b.detterms    # just a number?
 
-    # FIXME: This cumulation spec should be taken from the mod, no?
+    # TODO: This cumulation spec should be taken from the mod, no?
     any_cumul = nelem(to_cum) > 0
 
     n = cols(B)
@@ -166,10 +168,11 @@ function matrices gen_irfs(bundle b, int h, matrix to_cum)
     endif
 
     matrix K = cholesky(b.Sigma) * b.rot
-    matrices ret = array(h)
-    ret[1] = K
+    matrices ret = array(numh)
+    ret[1] = K	# impact effect
+
     matrix tmp = I(rows(comp))
-    loop i = 2 .. h --quiet
+    loop i = 2 .. numh --quiet
         tmp = tmp * comp
         matrix irf_i = tmp[1:n,1:n] * K
         if any_cumul
@@ -269,7 +272,7 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
     #
 
     matrix B = mod.mu | mod.VARpar'
-    scalar horizon = mod.horizon + 1 # original is 0-based
+    scalar numh = mod.horizon + 1
 
     DO_NORM = 1
 
@@ -313,7 +316,7 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
     loop while good<rep && iter<=maxiter --quiet
 
         rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma 
-        matrices irfs = gen_irfs(b, horizon, to_cum)
+        matrices irfs = gen_irfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, nshocks, irfs, Ais, DO_NORM)
 
         chk = DO_NORM ? (rows(id_matrix) == nshocks) : 0 # this check 1st!
@@ -329,12 +332,12 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
             if n_exotic
                 loop i = 1..n_exotic --quiet
                     string exo_restrict = mod.exoticSR.checks[i]
-                    scalar ini = mod.exoticSR.spans[i,1]
-                    scalar fin = mod.exoticSR.spans[i,2]
+                    scalar inip1 = mod.exoticSR.spans[i,1]
+                    scalar finp1 = mod.exoticSR.spans[i,2]
                     scalar needs_model = mod.exoticSR.super[i]
 
                     out = 0
-                    loop t = ini..fin --quiet
+                    loop t = inip1..finp1 --quiet
                         matrix M = irfs[t] # hardcoded "M" for the API!
                         if needs_model
                             exocheck = feval(exo_restrict, M, mod)
@@ -393,12 +396,16 @@ end function
 ### plotting functions
 ###
 
-function void SVAR_spagplot(bundles bs, bundle mod, scalar Var, scalar Shk)
-    # one_irf = bs[1].irfs
-    rep = nelem(bs)
-    h = mod.horizon
+function void SVAR_spagplot(bundles bs, bundle mod, int Var[1::1], int Shk[1::1])
+    
+    if Var > nelem(mod.Ynames) || Shk > nelem(mod.snames)
+        funcerr "Variable or shock index out of range"
+    endif
 
-    matrix IRFs = zeros(h + 1, rep) ~ seq(0, h)'
+    rep = nelem(bs)
+    numh = mod.horizon + 1
+
+    matrix IRFs = zeros(numh, rep) ~ seq(0, mod.horizon)'
 
     loop i = 1..rep --quiet
         IRFs[,i] = drill(bs[i].irfs, Var, Shk)
@@ -433,7 +440,7 @@ function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
     H = nelem(bs)    # number of available (accepted) draws
     nvXns = rows(bs[1].Sigma) * cols(bs[1].irfs[1])
     h = nelem(bs[1].irfs)
-    # ns = cols(bs[1].irfs[1])
+  
     matrix A = zeros(H, nvXns * h)
     
     loop i = 1..H --quiet
