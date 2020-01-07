@@ -10373,6 +10373,62 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
     return evals;
 }
 
+#if 0 /* not yet */
+
+static int tall_svd (const gretl_matrix X,
+		     gretl_matrix **pU,
+		     gretl_matrix **psv,
+		     gretl_matrix **pVt)
+{
+    gretl_matrix *XTX;
+    gretl_matrix *lam = NULL;
+    gretl_matrix *sv = NULL;
+    gretl_matrix *U = NULL;
+    gretl_matrix *VtU = NULL;
+    int vecs = pU != NULL || pVt != NULL;
+    int i, err = 0;
+
+    XTX = gretl_matrix_alloc(X->cols, X->cols);
+    lam = gretl_matrix_alloc(X->cols, 1);
+    if (XTX == NULL || lam == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      XTX, GRETL_MOD_NONE);
+
+    sv = gretl_symmetric_matrix_eigenvals(XTX, vecs, &err);
+    for (i=0; i<X->cols; i++) {
+	lam->val[i] = sqrt(sv->val[X->cols-i-1]);
+    }
+
+    //V = V[,seq(c,1)];
+    //U = X * (V ./ lam);
+
+    if (psv != NULL) {
+	*psv = lam;
+	lam = NULL;
+    }
+    if (pU != NULL) {
+	*pU = U;
+	U = NULL;
+    }
+    if (pVt != NULL) {
+	*pVt = V;
+	V = NULL;
+    }
+
+    gretl_matrix_free(U);
+    gretl_matrix_free(Vt);
+    gretl_matrix_free(lam);
+    gretl_matrix_free(XTX);
+
+    return err;
+}
+
+#endif
+
 static int
 real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		       gretl_vector **ps, gretl_matrix **pvt,
