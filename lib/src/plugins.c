@@ -94,7 +94,7 @@ enum {
     P_XML_GET,
     P_STATA_EXPORT,
     P_SVM,
-    P_ADMM
+    P_REGLS
 } plugin_codes;
 
 struct plugin_info {
@@ -155,7 +155,7 @@ struct plugin_info plugins[] = {
     { P_XML_GET,         "xml_get",         NULL },
     { P_STATA_EXPORT,    "stata_export",    NULL },
     { P_SVM,             "svm",             NULL },
-    { P_ADMM,            "admm",            NULL }
+    { P_REGLS,           "regls",           NULL }
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -302,9 +302,9 @@ struct plugin_function_info plugin_functions[] = {
     /* libsvm interface */
     { "gretl_svm_driver", P_SVM},
 
-    /* LASSO */
-    { "gretl_lasso",  P_ADMM},
-    { "lasso_xv_mpi", P_ADMM},
+    /* regularized least squares */
+    { "gretl_regls",  P_REGLS},
+    { "regls_xv_mpi", P_REGLS},
 
     /* sentinel */
     { NULL, 0 }

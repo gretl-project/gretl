@@ -11730,30 +11730,30 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = gretl_matrix_resample(l->v.m, draws, &p->err);
 	    }
 	}
-    } else if (f == HF_LASSO) {
+    } else if (f == HF_REGLS) {
 	post_process = 0;
 	if (null_node(l) && null_node(m) && null_node(r)) {
 	    /* doing automatic MPI: no args needed */
-	    int (*lassofunc) (PRN *);
+	    int (*regfunc) (PRN *);
 
-	    lassofunc = get_plugin_function("lasso_xv_mpi");
-	    if (lassofunc == NULL) {
+	    regfunc = get_plugin_function("regls_xv_mpi");
+	    if (regfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		p->err = lassofunc(p->prn);
+		p->err = regfunc(p->prn);
 	    }
 	} else if (l->t != MAT || m->t != MAT || r->t != BUNDLE) {
 	    /* otherwise three args needed */
 	    p->err = E_TYPES;
 	} else {
-	    int (*lassofunc) (const gretl_matrix *, const gretl_matrix *,
-			      gretl_bundle *, PRN *);
+	    int (*regfunc) (const gretl_matrix *, const gretl_matrix *,
+			    gretl_bundle *, PRN *);
 
-	    lassofunc = get_plugin_function("gretl_lasso");
-	    if (lassofunc == NULL) {
+	    regfunc = get_plugin_function("gretl_regls");
+	    if (regfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		p->err = lassofunc(l->v.m, m->v.m, r->v.b, p->prn);
+		p->err = regfunc(l->v.m, m->v.m, r->v.b, p->prn);
 	    }
 	}
 	if (!p->err) {
@@ -16436,7 +16436,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LRCOVAR:
     case F_BRENAME:
     case F_ISOWEEK:
-    case HF_LASSO:
+    case HF_REGLS:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
