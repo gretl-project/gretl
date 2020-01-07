@@ -1980,7 +1980,7 @@ static int lasso_xv (gretl_matrix *X,
     alpha = ridge ? 0.0 : 1.0;
 
     if (verbose) {
-	pprintf(prn, "lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
 		nf, fsize, randfolds, crit_string(crit_type));
 	gretl_flush(prn);
     }
@@ -2156,7 +2156,7 @@ static int real_lasso_xv_mpi (gretl_matrix *X,
 
     if (rank == 0) {
 	if (verbose) {
-	    pprintf(prn, "lasso_xv_mpi: nf=%d, fsize=%d, randfolds=%d, crit=%s\n\n",
+	    pprintf(prn, "regls_xv_mpi: nf=%d, fsize=%d, randfolds=%d, crit=%s\n\n",
 		    nf, fsize, randfolds, crit_string(crit_type));
 	    gretl_flush(prn);
 	}
@@ -2259,7 +2259,7 @@ static void prepare_admm_params (gretl_matrix *X,
     admm_abstol *= sqrt(X->cols);
 }
 
-int gretl_lasso (gretl_matrix *X,
+int gretl_regls (gretl_matrix *X,
 		 gretl_matrix *y,
 		 gretl_bundle *bun,
 		 PRN *prn)
@@ -2313,7 +2313,7 @@ int gretl_lasso (gretl_matrix *X,
    instances.
 */
 
-int lasso_xv_mpi (PRN *prn)
+int regls_xv_mpi (PRN *prn)
 {
     gretl_bundle *bun = NULL;
     gretl_matrix *X;
@@ -2325,11 +2325,11 @@ int lasso_xv_mpi (PRN *prn)
     rank = gretl_mpi_rank();
 
     /* read matrices deposited by parent process */
-    X = gretl_matrix_read_from_file("lasso_X.bin", 1, &err);
-    y = gretl_matrix_read_from_file("lasso_y.bin", 1, &err);
+    X = gretl_matrix_read_from_file("regls_X.bin", 1, &err);
+    y = gretl_matrix_read_from_file("regls_y.bin", 1, &err);
 
     if (!err) {
-	bun = gretl_bundle_read_from_file("lasso_bun.xml", 1, &err);
+	bun = gretl_bundle_read_from_file("regls_bun.xml", 1, &err);
     }
 
     if (!err) {
@@ -2345,7 +2345,7 @@ int lasso_xv_mpi (PRN *prn)
 	err = real_lasso_xv_mpi(X, y, bun, rho, prn);
 	if (!err && rank == 0) {
 	    /* write results, to be picked up by parent */
-	    gretl_bundle_write_to_file(bun, "lasso_XV_result.xml", 1);
+	    gretl_bundle_write_to_file(bun, "regls_XV_result.xml", 1);
 	}
     }
 
@@ -2364,13 +2364,13 @@ static int mpi_parent_action (gretl_matrix *X,
 {
     int err;
 
-    err = gretl_matrix_write_to_file(X, "lasso_X.bin", 1);
+    err = gretl_matrix_write_to_file(X, "regls_X.bin", 1);
     if (!err) {
-	err = gretl_matrix_write_to_file(y, "lasso_y.bin", 1);
+	err = gretl_matrix_write_to_file(y, "regls_y.bin", 1);
     }
 
     if (!err) {
-	err = gretl_bundle_write_to_file(bun, "lasso_bun.xml", 1);
+	err = gretl_bundle_write_to_file(bun, "regls_bun.xml", 1);
     }
 
     if (!err) {
@@ -2391,7 +2391,7 @@ static int mpi_parent_action (gretl_matrix *X,
 	/* retrieve results bundle written by gretlmpi */
 	gretl_bundle *res;
 
-	res = gretl_bundle_read_from_file("lasso_XV_result.xml", 1, &err);
+	res = gretl_bundle_read_from_file("regls_XV_result.xml", 1, &err);
 	if (!err) {
 	    gretl_bundles_swap_content(bun, res);
 	    gretl_bundle_destroy(res);
