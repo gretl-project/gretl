@@ -2379,7 +2379,7 @@ static int mpi_parent_action (gretl_matrix *X,
 	if (!err) {
 	    pputs(prn, "Invoking MPI...\n\n");
 	    gretl_flush(prn);
-	    foreign_append("_gretl_lasso()", MPI);
+	    foreign_append("_regls()", MPI);
 	    err = foreign_execute(NULL, OPT_L | OPT_S | OPT_Q, prn);
 	    if (err) {
 		fprintf(stderr, "mpi_parent: foreign exec error %d\n", err);
