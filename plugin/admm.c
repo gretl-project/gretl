@@ -785,6 +785,45 @@ static void ccd_print (const gretl_matrix *B,
     }
 }
 
+static double effective_df (const gretl_matrix *X, double lam)
+{
+    gretl_matrix *sv = NULL;
+    double ret = NADBL;
+    int i, err;
+
+    err = gretl_matrix_SVD(X, NULL, &sv, NULL, 0);
+
+    if (!err) {
+	int k = gretl_vector_get_length(sv);
+	double sv2;
+
+	ret = 0.0;
+	for (i=0; i<k; i++) {
+	    sv2 = sv->val[i] * sv->val[i];
+	    ret += sv2 / (sv2 + lam);
+	}
+	gretl_matrix_free(sv);
+    }
+
+    return ret;
+}
+
+static void xv_ridge_print (const gretl_matrix *lam,
+			    const gretl_matrix *X,
+			    PRN *prn)
+{
+    int j, nlam = lam->rows;
+    double edf;
+
+    pputc(prn, '\n');
+    pputs(prn, "      lambda     df\n");
+    for (j=0; j<nlam; j++) {
+	edf = effective_df(X, lam->val[j]);
+	pprintf(prn, "%12f  %.3f\n",
+		lam->val[j], edf);
+    }
+}
+
 /* end functions specific to CCD */
 
 /* calculate the lasso objective function */
@@ -1123,6 +1162,10 @@ static int ccd_lasso (gretl_matrix *X,
 	lam->val[0] = lfrac->val[0] * lmax;
     }
 
+    if (xvalid && verbose && ridge && nlam > 1) {
+	xv_ridge_print(lam, X, prn);
+    }
+
     if (!xvalid) {
 	ccd_get_crit(B, lam, R2, y, crit, alpha, k);
 	if (verbose) {
@@ -1171,28 +1214,6 @@ static int ccd_lasso (gretl_matrix *X,
     free(ia);
 
     return err;
-}
-
-static double effective_df (const gretl_matrix *X, double lam)
-{
-    gretl_matrix *sv = NULL;
-    double ret = NADBL;
-    int i, err;
-
-    err = gretl_matrix_SVD(X, NULL, &sv, NULL, 0);
-
-    if (!err) {
-	int k = gretl_vector_get_length(sv);
-	double sv2;
-
-	ret = 0.0;
-	for (i=0; i<k; i++) {
-	    sv2 = sv->val[i] * sv->val[i];
-	    ret += sv2 / (sv2 + lam);
-	}
-    }
-
-    return ret;
 }
 
 static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
@@ -2001,7 +2022,6 @@ static int lasso_xv (gretl_matrix *X,
     for (f=0; f<nf && !err; f++) {
 	prepare_xv_data(X, y, Xe, ye, Xf, yf, f);
 	if (ccd) {
-	    fprintf(stderr, "lasso_xv: call ccd_do_fold, alpha = %g\n", alpha);
 	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
 			      crit_type, alpha);
 	} else {
