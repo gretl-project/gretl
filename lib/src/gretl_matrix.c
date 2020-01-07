@@ -9864,77 +9864,7 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
     return err;
 }
 
-static gretl_matrix *
-gretl_symmetric_matrix_eigenvals2 (gretl_matrix *m,
-				   int eigenvecs,
-				   int *err)
-{
-    integer n, info, lwork, liwork;
-    gretl_matrix *evals = NULL;
-    double *work = NULL;
-    double *w = NULL;
-    integer *iwork = NULL;
-    char jobz = eigenvecs ? 'V' : 'N';
-    char uplo = 'U';
-
-    n = m->rows;
-
-    work = lapack_malloc(sizeof *work);
-    iwork = malloc(sizeof *iwork);
-    if (work == NULL || iwork == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    evals = gretl_column_vector_alloc(n);
-    if (evals == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    w = evals->val;
-
-    lwork = liwork = -1; /* find optimal workspace size */
-    dsyevd_(&jobz, &uplo, &n, m->val, &n, w, work,
-	    &lwork, iwork, &liwork, &info);
-
-    if (info != 0 || work[0] <= 0.0) {
-	*err = wspace_fail(info, work[0]);
-	goto bailout;
-    }
-
-    lwork = (integer) work[0];
-    liwork = iwork[0];
-    work = lapack_realloc(work, lwork * sizeof *work);
-    iwork = realloc(iwork, liwork * sizeof *iwork);
-    if (work == NULL || iwork == NULL) {
-	*err = E_ALLOC;
-    }
-
-    if (!*err) {
-	dsyevd_(&jobz, &uplo, &n, m->val, &n, w, work,
-		&lwork, iwork, &liwork, &info);
-	if (info != 0) {
-	    fprintf(stderr, "dsyevd: info = %d\n", info);
-	    *err = E_DATA;
-	}
-    }
-
- bailout:
-
-    lapack_free(work);
-    free(iwork);
-
-    if (*err && evals != NULL) {
-	gretl_matrix_free(evals);
-	evals = NULL;
-    }
-
-    return evals;
-}
-
-static gretl_matrix *
-gretl_symmetric_matrix_eigenvals3 (gretl_matrix *m,
+static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 				   int eigenvecs,
 				   int *err)
 {
@@ -10027,8 +9957,9 @@ gretl_symmetric_matrix_eigenvals3 (gretl_matrix *m,
     return evals;
 }
 
-static gretl_matrix *
-gretl_symmetric_matrix_eigenvals1 (gretl_matrix *m, int eigenvecs, int *err)
+static gretl_matrix *eigensym_standard (gretl_matrix *m,
+					int eigenvecs,
+					int *err)
 {
     integer n, info, lwork;
     gretl_matrix *evals = NULL;
@@ -10098,7 +10029,7 @@ gretl_symmetric_matrix_eigenvals1 (gretl_matrix *m, int eigenvecs, int *err)
  * Computes the eigenvalues of the real symmetric matrix @m.
  * If @eigenvecs is non-zero, also compute the orthonormal
  * eigenvectors of @m, which are stored in @m. Uses the lapack
- * function dsyev().
+ * function dsyevr(), or dsyev() for small matrices.
  *
  * Returns: n x 1 matrix containing the eigenvalues in ascending
  * order, or NULL on failure.
@@ -10121,25 +10052,15 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     }
 
     if (ev_ver == 0) {
-	char *s = getenv("GRETL_EV_VERSION");
+	char *s = getenv("GRETL_OLD_EV");
 
-	if (s == NULL) {
-	    ev_ver = 3;
-	} else if (!strcmp(s, "1")) {
-	    ev_ver = 1;
-	} else if (!strcmp(s, "2")) {
-	    ev_ver = 2;
-	} else {
-	    ev_ver = 3;
-	}
+	ev_ver = s != NULL ? 1 : 2;
     }
 
     if (ev_ver == 1) {
-	return gretl_symmetric_matrix_eigenvals1(m, eigenvecs, err);
-    } else if (ev_ver == 2) {
-	return gretl_symmetric_matrix_eigenvals2(m, eigenvecs, err);
+	return eigensym_standard(m, eigenvecs, err);
     } else {
-	return gretl_symmetric_matrix_eigenvals3(m, eigenvecs, err);
+	return eigensym_rrr(m, eigenvecs, err);
     }
 }
 
@@ -10373,66 +10294,106 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
     return evals;
 }
 
-#if 0 /* not yet */
+/* Compute SVD via eigen-decomposition for the case where
+   @X is "tall": more rows than columns.
+*/
 
-static int tall_svd (const gretl_matrix X,
+static int tall_SVD (const gretl_matrix *X,
 		     gretl_matrix **pU,
 		     gretl_matrix **psv,
 		     gretl_matrix **pVt)
 {
     gretl_matrix *XTX;
+    gretl_matrix *sv;
     gretl_matrix *lam = NULL;
-    gretl_matrix *sv = NULL;
     gretl_matrix *U = NULL;
-    gretl_matrix *VtU = NULL;
-    int vecs = pU != NULL || pVt != NULL;
-    int i, err = 0;
+    gretl_matrix *Vt = NULL;
+    gretl_matrix *Vl = NULL;
+    double lj, vij;
+    int vecs, c = X->cols;
+    int i, j, jj;
+    int err = 0;
 
-    XTX = gretl_matrix_alloc(X->cols, X->cols);
-    lam = gretl_matrix_alloc(X->cols, 1);
-    if (XTX == NULL || lam == NULL) {
+    XTX = gretl_matrix_alloc(c, c);
+    sv = gretl_matrix_alloc(1, c);
+    if (XTX == NULL || sv == NULL) {
 	return E_ALLOC;
     }
+
+    vecs = pU != NULL || pVt != NULL;
 
     gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 			      X, GRETL_MOD_NONE,
 			      XTX, GRETL_MOD_NONE);
 
-    sv = gretl_symmetric_matrix_eigenvals(XTX, vecs, &err);
-    for (i=0; i<X->cols; i++) {
-	lam->val[i] = sqrt(sv->val[X->cols-i-1]);
+    lam = gretl_symmetric_matrix_eigenvals(XTX, vecs, &err);
+    if (!err) {
+	for (i=0; i<c; i++) {
+	    lj = lam->val[c-i-1];
+	    sv->val[i] = lj < 0 ? 1.0e-16 : sqrt(lj);
+	}
     }
 
-    //V = V[,seq(c,1)];
-    //U = X * (V ./ lam);
+    if (!err && pVt != NULL) {
+	Vt = gretl_matrix_alloc(c, c);
+	if (Vt == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (j=0; j<c; j++) {
+		jj = c - j - 1;
+		for (i=0; i<c; i++) {
+		    vij = gretl_matrix_get(XTX, i, j);
+		    gretl_matrix_set(Vt, jj, i, vij);
+		}
+	    }
+	}
+    }
+
+    if (!err && pU != NULL) {
+	U = gretl_matrix_alloc(X->rows, c);
+	Vl = gretl_matrix_alloc(c, c);
+	if (U == NULL || Vl == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (j=0; j<c; j++) {
+		jj = c - j - 1;
+		for (i=0; i<c; i++) {
+		    vij = gretl_matrix_get(XTX, i, jj);
+		    gretl_matrix_set(Vl, i, j, vij / sv->val[j]);
+		}
+	    }
+	    gretl_matrix_multiply(X, Vl, U);
+	}
+    }
 
     if (psv != NULL) {
-	*psv = lam;
-	lam = NULL;
+	*psv = sv;
+	sv = NULL;
     }
     if (pU != NULL) {
 	*pU = U;
 	U = NULL;
     }
     if (pVt != NULL) {
-	*pVt = V;
-	V = NULL;
+	*pVt = Vt;
+	Vt = NULL;
     }
 
+    gretl_matrix_free(XTX);
+    gretl_matrix_free(sv);
+    gretl_matrix_free(lam);
     gretl_matrix_free(U);
     gretl_matrix_free(Vt);
-    gretl_matrix_free(lam);
-    gretl_matrix_free(XTX);
+    gretl_matrix_free(Vl);
 
     return err;
 }
 
-#endif
-
-static int
-real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
-		       gretl_vector **ps, gretl_matrix **pvt,
-		       int full, int dnc)
+static int real_gretl_matrix_SVD (const gretl_matrix *x,
+				  gretl_matrix **pu,
+				  gretl_vector **ps,
+				  gretl_matrix **pvt,
+				  int full, int dnc)
 {
     integer m, n, lda;
     integer ldu = 1, ldvt = 1;
@@ -10599,7 +10560,7 @@ real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
  * this flag matters only if @x is not square.
  *
  * Computes SVD factorization of a general matrix using one of the
- * the lapack dgesvd or dgesdd. A = U * diag(s) * Vt.
+ * the lapack functions dgesvd() or dgesdd(). A = U * diag(s) * Vt.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -10615,6 +10576,11 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 	return 0;
     } else if (gretl_is_null_matrix(x)) {
 	return E_DATA;
+    }
+
+    if (!full && x->rows > x->cols && getenv("GRETL_OLD_SVD") == NULL) {
+	/* FIXME conditionality? */
+	return tall_SVD(x, pu, ps, pvt);
     }
 
     k = MIN(x->rows, x->cols);
