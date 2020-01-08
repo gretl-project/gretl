@@ -1944,7 +1944,7 @@ static int get_xvalidation_details (gretl_bundle *bun,
     return err;
 }
 
-static int lasso_xv (gretl_matrix *X,
+static int regls_xv (gretl_matrix *X,
 		     gretl_matrix *y,
 		     gretl_bundle *bun,
 		     double rho,
@@ -2060,7 +2060,7 @@ static int lasso_xv (gretl_matrix *X,
 
 #ifdef HAVE_MPI
 
-static int real_lasso_xv_mpi (gretl_matrix *X,
+static int real_regls_xv_mpi (gretl_matrix *X,
 			      gretl_matrix *y,
 			      gretl_bundle *bun,
 			      double rho,
@@ -2289,15 +2289,19 @@ int gretl_regls (gretl_matrix *X,
 #ifdef HAVE_MPI
 	int no_mpi = gretl_bundle_get_bool(bun, "no_mpi", 0);
 
+	if (!no_mpi && ccd && ridge) {
+	    /* not worth it? */
+	    no_mpi = 1;
+	}
 	if (!no_mpi) {
 	    if (gretl_mpi_n_processes() > 1) {
-		return real_lasso_xv_mpi(X, y, bun, rho, prn);
+		return real_regls_xv_mpi(X, y, bun, rho, prn);
 	    } else if (auto_mpi_ok()) {
 		return mpi_parent_action(X, y, bun, rho, prn);
 	    }
 	}
 #endif
-	return lasso_xv(X, y, bun, rho, prn);
+	return regls_xv(X, y, bun, rho, prn);
     } else if (ccd) {
 	return ccd_lasso(X, y, bun, prn);
     } else {
@@ -2342,7 +2346,7 @@ int regls_xv_mpi (PRN *prn)
     }
 
     if (!err) {
-	err = real_lasso_xv_mpi(X, y, bun, rho, prn);
+	err = real_regls_xv_mpi(X, y, bun, rho, prn);
 	if (!err && rank == 0) {
 	    /* write results, to be picked up by parent */
 	    gretl_bundle_write_to_file(bun, "regls_XV_result.xml", 1);
