@@ -5,6 +5,11 @@
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{fancyvrb}
+
+\DefineVerbatimEnvironment%
+{code}{Verbatim}
+{fontsize=\small, xleftmargin=1em}
 
 \newcommand{\noun}[1]{\textsc{#1}}
 %% Because html converters don't know tabularnewline
@@ -184,7 +189,6 @@ skip the respective truncation.) Returns a col vector of values.
 
 \subsection{WSRcritical}
 
-
 \ArgRet{\texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
 (optional)}{matrix}
 
@@ -313,17 +317,16 @@ meaning is: 0: do nothing, leave the gaps; 1: NAs are replaced with
 previous observations; 2: NAs are replaced with a linear
 interpolation. Returns the filled series.
 
-The method choice defaults to 2 (linear interpolation) if omitted. The
-"0" method (do nothing) may seem useless; however, in the context of
-batch processing you could run something like
-
+The very existence of the "0" method for interpolation may look
+bizarre at first sight, but it may make sense to have in the context
+of batch processing, like in the following example (hopefully,
+self-explanatory):
 \begin{code}
 k = 1
 loop foreach i X
-    series z_$i = gap_filler($i, action[k++])
+   series z_$i = gap_filler($i, action[k++])
 endloop
 \end{code}
-
 
 Note that the function only replaces NAs between valid observations;
 therefore, if the origin series has missing values at the beginning or
