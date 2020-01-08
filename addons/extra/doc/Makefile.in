@@ -4,7 +4,7 @@ TEXDIR = $(topsrc)/doc/tex
 PKG = extra
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
 
-$(PKG).pdf: links.stamp $(PKG).tex
+$(PKG).pdf: links.stamp $(PKG).tex pkgdoc.tex
 	@pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
 
@@ -14,6 +14,9 @@ links.stamp: Makefile
 
 $(PKG).tex:
 	@if [ ! -f $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
+
+pkgdoc.tex:
+	@if [ ! -f pkgdoc.tex ] ; then ln -sf $(DOCDIR)/pkgdoc.tex . ; fi
 
 clean:
 	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf links.stamp
