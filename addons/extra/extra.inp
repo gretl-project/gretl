@@ -63,7 +63,7 @@ function series lin_int (series y)
 end function
 
 function series gap_filler (series x "Series to fill",
-                            int method[0:2:0] "Fill method" {"Don't", "Repetition", "Linear interpolation"})
+                            int method[0:2:2] "Fill method" {"Don't", "Repetition", "Linear interpolation"})
     string lbl = argname(x)
     if method == 0 # do nothing
         series ret = x

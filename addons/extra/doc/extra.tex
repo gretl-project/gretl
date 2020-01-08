@@ -11,12 +11,24 @@
 \providecommand{\tabularnewline}{\\}
 
 \usepackage{babel}
+
+\include{pkgdoc}
+
+\newcommand{\ArgRet}[2]{%
+  {\it Arguments}: {#1}%
+  \ifx&#2&%
+  \else
+  \par\smallskip\noindent {\it Return type}: \texttt{#2}
+  \fi%
+  \par\medskip\par%
+  }
+
 \begin{document}
 
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{December 2019, release 0.6, still growing... }
+\date{January 2020, release 0.6, still growing\ldots }
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -29,14 +41,14 @@ This package is intended for hansl scripting, not for gretl's GUI.
 (But of course other contributed function packages that make use of
 functions in extra.gfn can provide GUI access for themselves.)
 
-The usual one-time requirement is to do \texttt{pkg install extra.zip}
+The usual one-time requirement is to do \cmd{pkg install extra.zip}
 to get a copy on the local system (or install it via gretl's graphical
-mechanism), and then in the respective hansl script have a line \texttt{include
+mechanism), and then in the respective hansl script have a line \cmd{include
 extra.gfn}.
 
-Note that functions that are exact lookalikes of Matlab functions
-do not live here, but would go into the \texttt{matlab\_utilities}
-package.
+Note that functions that are exact lookalikes of \app{Matlab/Octave}
+functions do not live here, but would go into the
+\texttt{matlab\_utilities} package.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -44,22 +56,18 @@ package.
 
 \subsection{commute}
 
-Arguments: \texttt{matrix A, int m, int n} (optional), \texttt{bool
-post} (optional)
-
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{matrix A, int m, int n} (optional), \texttt{bool
+post} (optional)}{matrix}
 
 Returns $A$ premultiplied by $K_{mn}$ (the commutation matrix; more
-efficient than explicit multiplication). In particular, \texttt{commute(vec(B),
+efficient than explicit multiplication). In particular, \cmd{commute(vec(B),
 rows(B), cols(B))} gives $vec(B')$. The optional argument $n$ defaults to
 $m$ (giving $K_{mm}=K_{m}$). If the optional arg \texttt{post} is
 non-zero, then does post-multiplication ($A\times K_{mn}$). 
 
 \subsection{eliminate}
 
-Argument: \texttt{matrix vecA}
-
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{matrix vecA}}{matrix}
 
 Each column of the input vecA is assumed to come from the operation vec(A) 
 on a square matrix, thus rows(vecA) must be a square number.
@@ -70,9 +78,7 @@ treated separately as described above (and the results stacked side-by-side).
 
 \subsection{duplicate}
 
-Argument: \texttt{matrix vechA}
-
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{matrix vechA}}{matrix}
 
 The input is a vector assumed to come from an operation like vech(A).
 Returns vec(A), which is the result of pre-multiplying vech(A) with the 
@@ -81,10 +87,8 @@ treated separately as described above (and the results stacked side-by-side).
 
 \subsection{nearPSD}
 
-Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar epsilon}
-(optional) 
-
-\noindent Return type: \texttt{scalar}
+\ArgRet{\texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar epsilon}
+(optional)}{scalar}
 
 Forces the matrix $m$ into the positive semi-definite region. Algorithm
 ported from ``DomPazz'' in Stackoverflow,
@@ -95,28 +99,25 @@ value 0 or 1 indicates whether \texttt{m} was altered or not.
 
 \subsection{zeroifclose}
 
-Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
-(optional) 
-
-\noindent Return type: \texttt{scalar}
+\ArgRet{\texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
+(optional)}{scalar}
 
 Sets elements of \texttt{m} to zero if they are really close. The
 return value 0 or 1 indicates whether \texttt{m} was altered or not.
 
 \subsection{drill}
 
-Arguments: \texttt{matrices} array, \texttt{matrix rowspec} (optional), 
-  \texttt{matrix colspec} (optional)
-  
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{matrices} array, \texttt{matrix rowspec} (optional), 
+  \texttt{matrix colspec} (optional)}{matrix}
 
 This function "drills through" a matrix array and returns a matrix;
-for example, drill(x, 2, 3) returns a vector with the [2,3] elements
-of all matrices in the x array. Not specifiying one of rowspec, colspec
-or entering "0" means to select all rows or columns respectively. 
-(Of course at least one of rowspec, colspec must be specified.)
+for example, \cmd{drill(x, 2, 3)} returns a vector with the
+\texttt{[2,3]} elements of all matrices in the \texttt{x}
+array. Omitting one of rowspec, colspec or entering "0" means to
+select all rows or columns respectively.  (Of course at least one of
+rowspec, colspec must be specified.)
 
-Nota bene: all matrices in the array must be of the same dimensions.
+\emph{Nota bene}: all matrices in the array must be of the same dimensions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -124,13 +125,12 @@ Nota bene: all matrices in the array must be of the same dimensions.
 
 \subsection{scores2x2}
 
-Arguments: \texttt{matrix in, bool verbose} (optional)
-
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{matrix in, bool verbose} (optional)}{matrix}
 
 Computes some standard score measures for a $2\times 2$ contingency
 table of the form:
 
+\begin{center}
 \begin{tabular}{cccc}
 \toprule 
  &  & \multicolumn{2}{c}{Observed}\tabularnewline
@@ -140,35 +140,42 @@ table of the form:
  & 0 & m(iss) & z(eros)\tabularnewline
 \bottomrule
 \end{tabular}
+\end{center}
 
-and $n=h+f+m+z$ (total observations). Returns a column vector with
-the following elements:
-\begin{enumerate}
-\item POD / prob of detection = $h/(h+m)$
-\item POFD / prob of false detection = $f/(f+z)$ 
-\item HR / hit rate = $(h+z)/n$ 
-\item FAR / false alarm rate = $f/(h+f)$ 
-\item CSI / critical success index = $h/(h+f+m)$
-\item OR / odds ratio = $h*z/(f*m)$
-\item BIAS / bias score =$(h+f)/(h+m)$
-\item TSS / true skill stat =$POD-POFD$\\
-The TSS is also known as the Hanssen-Kuipers score, and is = $h/(h+m)-f/(f+z)$.
-\item HSS / Heidke skill score = $2*(h*z-f*m)/((h+m)*(m+z)+(h+f)*(f+z))$
-\item ETS / equitable threat score = $(h*z-f*m)/((f+m)*n+(h*z-f*m))$
-\item PRC / precision = $h/(h+f)$
-\item FSC / F-Score = $2*(PRC*POD)/(PRC+POD)$\\
-The F-Score can also be expressed as $2*h/(1+h+m)$.
-\end{enumerate}
-The input is always sanitized by taking the upper 2x2 part, using
-absolute values, and integer-ization. Warnings are issued if \texttt{verbose}
-is 1. 
+\noindent and $n=h+f+m+z$ (total observations). Returns a column vector with the
+elements listed in Table \ref{tab:scores2x2}. The input is always
+sanitized by taking the upper 2x2 part, using absolute values, and
+integer-ization. Warnings are issued if \texttt{verbose} is 1.
+
+
+\begin{table}[htbp]
+\begin{tabular}{rlp{0.35\textwidth}c}
+  \hline
+  \textbf{Number} &\textbf{Acronym} &  \textbf{Description} &\textbf{Formula} \\
+  \hline
+  1 & POD & prob of detection & $\frac{h}{h+m}$ \\
+2 & POFD & prob of false detection & $\frac{f}{f+z}$ \\
+3 & HR & hit rate & $\frac{h+z}{n}$ \\
+4 & FAR & false alarm rate & $\frac{f}{h+f}$ \\
+5 & CSI & critical success index & $\frac{h}{h+f+m}$\\
+6 & OR & odds ratio & $\frac{h \cdot z}{f \cdot m}$\\
+7 & BIAS & bias score & $\frac{h+f}{h+m}$\\ 
+8 & TSS & true skill stat ($POD-POFD$); also known as the
+          Hanssen-Kuipers score & $\frac{h}{h+m} -\frac{f}{f+z}$. \\
+9 & HSS & Heidke skill score & $2 \frac{h \cdot z - f \cdot m}{(h+m) \cdot (m+z)+(h+f) \cdot (f+z)}$ \\
+10 & ETS & equitable threat score & $\frac{h \cdot z-f \cdot m}{(f+m) \cdot n+(h \cdot z-f \cdot m)}$ \\
+11 & PRC & precision & $\frac{h}{h+f}$ \\
+12 & FSC & $F$-Score & $2 \frac{PRC \cdot POD}{PRC+POD} = 2 \frac{h}{1+h+m}$.\\
+  \hline
+\end{tabular}
+\caption{Elements returned by the \cmd{scores2x2} function}
+\label{tab:scores2x2}
+\end{table}
 
 \subsection{truncnorm}
 
-Arguments: \texttt{int n, scalar m, scalar sigma, scalar below, scalar
-above}
-
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{int n, scalar m, scalar sigma, scalar below, scalar
+above}}{matrix}
 
 Generates $n$ truncated normal random values. Specify mean \texttt{m}
 and std.\,dev. \texttt{sigma}, and the left/right truncation values
@@ -177,33 +184,31 @@ skip the respective truncation.) Returns a col vector of values.
 
 \subsection{WSRcritical}
 
-Arguments: \texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
-(optional)
 
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
+(optional)}{matrix}
+
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4). Tries to find the critical values
 (low/hi) where the two-sided area to the outside is as close as
 possible to the given \texttt{prob} (default: 0.05). (Note that
-``outside'' means including the critical
-values themselves in the exact/discrete case.) If we end up in the
-interior region not covered by the exact table (for \texttt{prob} far
-away from 0 and also from 1), we fall back to the normal
-approximation. Returned is col vector \{low; hi; epv\}, where epv is
-the actual probability mass (close to \texttt{prob} but not equal in
-general for small samples). 'low' and 'hi' can be non-integers in the
-normal approximation case. The normal approximation instead of the
-exact table values can be enforced with the \texttt{forcenorm}
-argument (default: zero, do not enforce).
+``outside'' means including the critical values themselves in the
+exact/discrete case.) If we end up in the interior region not covered
+by the exact table (for \texttt{prob} far away from 0 and also from
+1), we fall back to the normal approximation. The function returns a
+column vector \verb|{lo; hi; epv}|, where \texttt{epv} is the actual
+probability mass (close to \texttt{prob} but not equal in general for
+small samples). \texttt{lo} and \texttt{hi} can be non-integers in the normal
+approximation case. The normal approximation instead of the exact
+table values can be enforced with the \texttt{forcenorm} argument
+(default: zero, do not enforce).
 
-See also the sister function WSRpvalue.
+See also the sister function \cmd{WSRpvalue}.
 
 \subsection{WSRpvalue}
 
-Arguments: \texttt{int n, scalar W, bool forcenorm} (optional)
-
-\noindent Return type: \texttt{scalar}
+\ArgRet{\texttt{int n, scalar W, bool forcenorm} (optional)}{scalar}
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4), returns $P(X\geq W)$. In the interior
@@ -224,13 +229,11 @@ The normal approximation instead of the exact table values can be
 enforced with the \texttt{forcenorm} argument (default: zero, do not
 enforce).
 
-See also the sister function WSRcritical.
+See also the sister function \cmd{WSRcritical}.
 
 \subsection{powerset}
 
-Argument: \texttt{strings S}
-
-\noindent Return type: \texttt{strings} (array)
+\ArgRet{\texttt{strings S}}{}
 
 Computes the powerset of the input S, i.e. all possible combinations 
 of the string elements in S. (Including the empty set / 
@@ -240,9 +243,7 @@ array. Being a set, the ordering is not defined and arbitrary.
 
 \subsection{onemode}
 
-Argument: \texttt{matrix v}
-
-\noindent Return type: \texttt{matrix}
+\ArgRet{\texttt{matrix v}}{}
 
 Finds the mode of the empirical distribution of the input data. 
 When that is multi-modal the first mode is found (following the native
@@ -251,11 +252,9 @@ value and its absolute frequency.
 
 \subsection{bwritejson}
 
-Arguments: \texttt{bundle b, string fname, bool export} (optional), 
+\ArgRet{\texttt{bundle b, string fname, bool export} (optional), 
     \texttt{string *jsonresult} (pointer form, optional), 
-    \texttt{string misscode} (optional)
-
-\noindent Return type: \texttt{scalar}
+    \texttt{string misscode} (optional)}{scalar}
 
 Similar to the native function \texttt{bwrite}: Instead of an XML representation 
 of the input bundle this function produces a JSON serialized representation.
@@ -270,20 +269,18 @@ copied to the \texttt{jsonresult} string variable.
 Missing values are supported, but the JSON specification does not define them. The 
 default is to print "NaN" for any missing value (in a numerical object), but this can 
 be overridden with the string in the optional \texttt{misscode} argument.\footnote{Note 
-that round-tripping the result with gretl's native \texttt{jsonget} and \texttt{jsongetb} 
+that round-tripping the result with gretl's native \cmd{jsonget} and \cmd{jsongetb} 
 functions does not fully work, apparently due to a limitation of the underlying third-party
 library. However, this function is not meant for internal gretl usage, but for exporting data.
 For just storing gretl bundles use the native XML-based format produced by gretl's
-\texttt{bwrite}.}
+\cmd{bwrite}.}
 
 Returns 0 after successful completion, or the non-zero gretl error code if writing the 
 output file failed for some reason (in which case also a warning message is printed).
 
 \subsection{splitfname}
 
-Argument: \texttt{string fn}
-
-\noindent Return type: \texttt{strings} (array)
+\ArgRet{\texttt{string fn}}{strings (array)}
 
 The idea is to take a file name or full path and extract three components:
 \begin{enumerate}
@@ -299,7 +296,7 @@ Input string: "/what/on/earth/isthisfile.gdt"
 
 Output equivalent to: 
 
-\texttt{defarray("/what/on/earth", "isthisfile", "gdt")}
+\cmd{defarray("/what/on/earth", "isthisfile", "gdt")}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -307,9 +304,7 @@ Output equivalent to:
 
 \subsection{gap\_filler}
 
-Arguments: \texttt{series x, int method }(optional)\texttt{ }
-
-\noindent Return type: \texttt{series}
+\ArgRet{\texttt{series x, int method }(optional)}{series}
 
 Simple convenience function to crudely get rid of missing values
 interspersed between valid observations. Apart from the first argument
@@ -318,16 +313,26 @@ meaning is: 0: do nothing, leave the gaps; 1: NAs are replaced with
 previous observations; 2: NAs are replaced with a linear
 interpolation. Returns the filled series.
 
+The method choice defaults to 2 (linear interpolation) if omitted. The
+"0" method (do nothing) may seem useless; however, in the context of
+batch processing you could run something like
+
+\begin{code}
+k = 1
+loop foreach i X
+    series z_$i = gap_filler($i, action[k++])
+endloop
+\end{code}
+
+
 Note that the function only replaces NAs between valid observations;
 therefore, if the origin series has missing values at the beginning or
 the end of the sample, they will be in the returned series too.
 
 \subsection{winsor}
 
-Arguments: \texttt{series x, scalar p} (optional), \texttt{scalar
-phi} (optional) 
-
-\noindent Return type: \texttt{series}
+\ArgRet{\texttt{series x, scalar p} (optional), \texttt{scalar
+phi} (optional)}{series}
 
 Returns a trimmed (``winsorized'') version
 of the series, where outliers are replaced with implicit threshold
@@ -353,9 +358,9 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
-\item December 2019: 0.6, add drill, bwritejson, onemode, splitfname; 
-    finally remove the retired sepstr2arr (use native strsplit instead);
-    rearrange the documentation a little
+\item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
+  finally remove the retired sepstr2arr (use native strsplit instead);
+  slightly revise gap\_filler; rearrange the documentation a little
 \item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add powerset,
   eliminate, duplicate
 \item February 2018: 0.41, allow non-integer input in WSRpvalue
@@ -366,3 +371,8 @@ Sven Schreiber
 \end{itemize}
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
