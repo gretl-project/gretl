@@ -1726,6 +1726,7 @@ static int ccd_do_fold (gretl_matrix *X,
     static gretl_matrix *Xty, *xv;
     static gretl_matrix *B;
     static gretl_matrix *u;
+    static gretl_matrix *b;
     static int *nnz, *ia;
     int maxit = CCD_MAX_ITER;
     int nlp = 0, lmu = 0;
@@ -1753,7 +1754,7 @@ static int ccd_do_fold (gretl_matrix *X,
     if (MB == NULL) {
 	MB = gretl_matrix_block_new(&xv, k, 1, &Xty, k, 1,
 				    &B, k, nlam, &u, nout, 1,
-				    NULL);
+				    &b, k, 1, NULL);
 	nnz = malloc(nlam * sizeof *nnz);
 	ia = malloc(k * sizeof *ia);
 	if (MB == NULL || nnz == NULL || ia == NULL) {
@@ -1763,7 +1764,10 @@ static int ccd_do_fold (gretl_matrix *X,
     gretl_matrix_zero(B);
 
     /* scale data by sqrt(1/n) */
-    ccd_scale(n, k, X, y->val, NULL, NULL);
+    ccd_scale(n, k, X, y->val, Xty->val, xv->val);
+
+    //gretl_matrix_multiply_by_scalar(X_out, sqrt(1.0/X_out->rows));
+    //gretl_matrix_multiply_by_scalar(y_out, sqrt(1.0/y_out->rows));
 
     err = ccd_iteration(alpha, X, Xty->val, nlam, lam->val,
 			ccd_toler, maxit, xv->val, &lmu, B,
@@ -1774,7 +1778,6 @@ static int ccd_do_fold (gretl_matrix *X,
 
     if (!err) {
 	/* record out-of-sample criteria */
-	gretl_matrix *b = gretl_matrix_alloc(k, 1);
 	size_t bsize = k * sizeof(double);
 	double score;
 
@@ -1783,7 +1786,6 @@ static int ccd_do_fold (gretl_matrix *X,
 	    score = xv_score(X_out, y_out, b, u, crit_type);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
-	gretl_matrix_free(b);
     }
 
     return err;
@@ -2076,6 +2078,17 @@ static int get_xvalidation_details (gretl_bundle *bun,
     return err;
 }
 
+static void xv_cleanup (int ccd, int ridge)
+{
+    if (ccd) {
+	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
+    } else if (ridge) {
+	svd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+    } else {
+	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
+    }
+}
+
 /* unified cross validation function, employed when we're
    not doing MPI
 */
@@ -2118,6 +2131,7 @@ static int regls_xv (gretl_matrix *X,
     if (verbose) {
 	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
 		nf, fsize, randfolds, crit_string(crit_type));
+	pprintf(prn, " ccd=%d, ridge=%d\n", ccd, ridge);
 	gretl_flush(prn);
     }
 
@@ -2136,7 +2150,8 @@ static int regls_xv (gretl_matrix *X,
 	gretl_flush(prn);
     }
 
-    if (ccd) {
+    if (ccd || ridge) {
+	/* FIXME svd ridge? */
 	int i;
 
 	lam = gretl_matrix_copy(lfrac);
@@ -2168,14 +2183,8 @@ static int regls_xv (gretl_matrix *X,
 	}
     }
 
-    /* send cleanup signal */
-    if (ccd) {
-	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
-    } else if (ridge) {
-	svd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
-    } else {
-	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
-    }
+    /* send deallocation signal */
+    xv_cleanup(ccd, ridge);
 
     if (!err) {
 	PRN *myprn = verbose ? prn : NULL;
@@ -2185,6 +2194,8 @@ static int regls_xv (gretl_matrix *X,
 	    /* determine coefficient vector on full training set */
 	    if (ccd) {
 		err = ccd_regls(X, y, bun, myprn);
+	    } else if (ridge) {
+		err = svd_ridge(X, y, bun, myprn);
 	    } else {
 		err = admm_lasso(X, y, bun, rho, myprn);
 	    }
@@ -2285,7 +2296,8 @@ static int real_regls_xv_mpi (gretl_matrix *X,
 	XVC = gretl_zero_matrix_new(nlam, folds_per);
     }
 
-    if (ccd) {
+    if (ccd || ridge) {
+	/* FIXME svd ridge? */
 	int i;
 
 	lam = gretl_matrix_copy(lfrac);
@@ -2331,14 +2343,8 @@ static int real_regls_xv_mpi (gretl_matrix *X,
     /* reduce @XVC to root by column concatenation */
     gretl_matrix_mpi_reduce(XVC, &XVC, GRETL_MPI_HCAT, 0, OPT_NONE);
 
-    /* send cleanup signal, all processes */
-    if (ccd) {
-	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
-    } else if (ridge) {
-	svd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
-    } else {
-	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
-    }
+    /* send deallocation signal, all processes */
+    xv_cleanup(ccd, ridge);
 
     if (rank == 0 && !err) {
 	PRN *myprn = verbose ? prn : NULL;
@@ -2420,13 +2426,15 @@ int gretl_regls (gretl_matrix *X,
 	return svd_ridge(X, y, bun, prn);
     }
 
+#if 0 /* for now, experiment with svd ridge */
     if (ridge && !ccd) {
 	ccd = 1;
     }
+#endif
 
     if (ccd) {
 	prepare_ccd_param(bun);
-    } else {
+    } else if (!ridge) {
 	prepare_admm_params(X, bun, &rho);
     }
 
@@ -2468,7 +2476,8 @@ int regls_xv_mpi (PRN *prn)
     gretl_matrix *X;
     gretl_matrix *y;
     double rho = 8.0;
-    int ccd, rank;
+    int ccd, ridge;
+    int rank;
     int err = 0;
 
     rank = gretl_mpi_rank();
@@ -2483,9 +2492,10 @@ int regls_xv_mpi (PRN *prn)
 
     if (!err) {
 	ccd = gretl_bundle_get_bool(bun, "use_ccd", 0);
+	ridge = gretl_bundle_get_bool(bun, "ridge", 0);
 	if (ccd) {
 	    prepare_ccd_param(bun);
-	} else {
+	} else if (!ridge) {
 	    prepare_admm_params(X, bun, &rho);
 	}
     }
