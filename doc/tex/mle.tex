@@ -1208,7 +1208,12 @@ The example reported in script \ref{ex:mle-constr} is perhaps a little
 contrived, but useful to elucidate the technique. Suppose we wish to
 estimate mean and variance of an iid sample of Gaussian random
 variables, under the constraint that $V(x_i) = \sigma^2 = \exp[E(x_i)]
-= \exp(\mu)$. The Lagrangean in this case would be
+= \exp(\mu)$. Of course the unconstrained ML estimators $\hat{\mu} =
+\bar{X}$ and $\hat{\sigma}^2 = n^{-1} \sum_i (x_i - \bar{X})^2$
+are not guaranteed to satisfy the constraints (in fact, the
+probability that they do is 0). 
+
+The Lagrangean in this case would be
 \[
   \mathcal{L}(\theta) =
   K - \frac{n}{2} \log \sigma^2 - \frac{1}{2 \sigma^2} \sum_i (x_i -
@@ -1256,6 +1261,13 @@ nulldata 1000
 # generate artificial data from a N(1, e) distribution
 series x = 1 + normal() * exp(0.5)
 
+# show that the unconstrained estimates don't satisfy the restriction
+
+scalar muhat = mean(x)
+scalar s2hat = sst(x)/$nobs
+printf "unconstrained estimates:  mean = %g, variance = %g\n", muhat, s2hat
+printf "check:  vhat - exp(muhat) = %g\n\n", s2hat - exp(muhat)
+
 # now estimate under the constraint exp(mean) = variance
 
 psi = {1}
@@ -1270,6 +1282,13 @@ end mle
 # now map psi to the constrained parametrisation
 
 matrix par = h(psi)
+
+# show that now the constraint holds
+
+printf "check:  vhat - exp(muhat) = %g\n\n", par[2] - exp(par[1])
+
+# take care of the covariance matrix
+
 matrix vpar = qform(anJacob(psi)', $vcv)
 # alternatively, one could use the numerical Jacobian, as in
 # matrix vpar = qform(fdjac(psi, "h(psi)"), $vcv)
@@ -1286,6 +1305,9 @@ modprint cs "mean variance"
 Running the example script should produce the following output:
 
 \begin{code}
+unconstrained estimates:  mean = 1.00314, variance = 2.8903
+check:  vhat - exp(muhat) = 0.163481
+
 Model 1: ML, using observations 1-1000
 loglik = -0.5*log(2*$pi) - 0.5*log(s2) - 0.5*(x-m)^2/s2
 Standard errors based on Outer Products matrix
@@ -1297,6 +1319,7 @@ Standard errors based on Outer Products matrix
 Log-likelihood      -1949.972   Akaike criterion     3901.943
 Schwarz criterion    3906.851   Hannan-Quinn         3903.808
 
+check:  vhat - exp(muhat) = 0
 
              coefficient   std. error     z      p-value 
   -------------------------------------------------------
