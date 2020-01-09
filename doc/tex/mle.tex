@@ -1160,8 +1160,8 @@ end function
 
 In many cases, you may want to perform ML estimation of a model under
 some kind of constraint. Mathematically, this amounts to maximizing the
-log-likelihood $\LogLik(\theta)$ under some restriction; assume
-that such a restriction can be represented as $g(\theta) = 0$, where
+log-likelihood $\LogLik(\theta)$ under some restriction. Assume
+that the restriction can be represented as $g(\theta) = 0$, where
 the function $g(\cdot)$ is differentiable. On paper, the most
 straightforward way to accomplish this task is to set up a Lagrangean
 \[
@@ -1171,21 +1171,19 @@ and solve the first-order conditions that arise from differentiating
 the Lagrangean with respect to $\theta$ and $\lambda$.
 
 If an explicit solution can be found, then all is well; but in many
-circumstances, the resulting system of equations cannot be solved
-explicitly, so that numerical optimisation in necessary. In these
-cases, the approach above is not particularly useful; instead, a
-different strategy is much more convenient.
+cases the resulting system of equations cannot be solved explicitly,
+so that numerical optimisation in necessary. In such cases the
+approach above is not particularly useful; a different strategy is
+much more convenient.
 
-The idea is to find a function such that the vector $\theta$ is
-expressed via an alternative parametrization in such a way that
-$\theta$ becomes a (differentiable) function of a smaller set of
-parameters $\psi$. In other words, find a function $h(\cdot)$ such
-that any admissible value of $\theta$ can be writen as
-$\theta = h(\psi)$ and $g[h(\psi)] = 0$ for any value of
-$\psi$. Therefore, numerical maximization of the log-likelihood is
-simply a question of operating on $\LogLik^*(\psi) = \LogLik[h(\psi)]$
-and performing an ordinary unconstrained numerical optimization
-routine.
+The idea is to find an alternative parametrization---a means of
+expressing the vector $\theta$ as a (differentiable) function of a
+smaller set of parameters $\psi$. In other words, find a function
+$h(\cdot)$ such that any admissible value of $\theta$ can be written
+as $\theta = h(\psi)$ and $g[h(\psi)] = 0$ for any value of
+$\psi$. Then maximization of the log-likelihood is simply a question
+of operating on $\LogLik^*(\psi) = \LogLik[h(\psi)]$ using an ordinary
+unconstrained numerical optimization routine.
 
 Once the ML estimate $\hat{\psi}$ is available, it is easy to recover
 the corresponding constrained vector $\hat{\theta} =
