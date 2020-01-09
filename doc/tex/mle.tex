@@ -1155,6 +1155,158 @@ function void check(matrix b, series y, list X)
 end function
 \end{code}
 
+\section{Estimating constrained models}
+\label{sec:mle-constr}
+
+In many cases, you may want to perform ML estimation of a model under
+some kind of constraint. Mathematically, this amounts to maximizing the
+log-likelihood $\LogLik(\theta)$ under some restriction; assume
+that such a restriction can be represented as $g(\theta) = 0$, where
+the function $g(\cdot)$ is differentiable. On paper, the most
+straightforward way to accomplish this task is to set up a Lagrangean
+\[
+  \mathcal{L}(\theta) = \LogLik(\theta) + \lambda' g(\theta)
+\]
+and solve the first-order conditions that arise from differentiating
+the Lagrangean with respect to $\theta$ and $\lambda$.
+
+If an explicit solution can be found, then all is well; but in many
+circumstances, the resulting system of equations cannot be solved
+explicitly, so that numerical optimisation in necessary. In these
+cases, the approach above is not particularly useful; instead, a
+different strategy is much more convenient.
+
+The idea is to find a function such that the vector $\theta$ is
+expressed via an alternative parametrization in such a way that
+$\theta$ becomes a (differentiable) function of a smaller set of
+parameters $\psi$. In other words, find a function $h(\cdot)$ such
+that any admissible value of $\theta$ can be writen as
+$\theta = h(\psi)$ and $g[h(\psi)] = 0$ for any value of
+$\psi$. Therefore, numerical maximization of the log-likelihood is
+simply a question of operating on $\LogLik^*(\psi) = \LogLik[h(\psi)]$
+and performing an ordinary unconstrained numerical optimization
+routine.
+
+Once the ML estimate $\hat{\psi}$ is available, it is easy to recover
+the corresponding constrained vector $\hat{\theta} =
+h(\hat{\psi})$. Computing the covariance matrix involves an extra
+step, known as the \emph{delta method}: the asymptotic covariance
+matrix of $\hat{\theta}$ can be computed as
+
+\begin{equation}
+  \label{eq:mle-constvar}
+  V\left( \hat{\theta} \right) = J(\hat{\psi})' V\left( \hat{\psi}
+  \right) J(\hat{\psi})
+\end{equation}
+
+where $J$ is the Jacobian matrix, holding the partial derivatives of
+$h(\psi)$. It is recommended that the Jacobian matrix should be
+computed analytically whenever possible, but as a fallback strategy,
+numerical differentiation (available via the function \cmd{fdjac} ---
+see section \ref{sec:fdjac}) is a viable alternative. Note that the
+matrix produced by this method will be singular by construction.
+
+The example reported in script \ref{ex:mle-constr} is perhaps a little
+contrived, but useful to elucidate the technique. Suppose we wish to
+estimate mean and variance of an iid sample of Gaussian random
+variables, under the constraint that $V(x_i) = \sigma^2 = \exp[E(x_i)]
+= \exp(\mu)$. The Lagrangean in this case would be
+\[
+  \mathcal{L}(\theta) =
+  K - \frac{n}{2} \log \sigma^2 - \frac{1}{2 \sigma^2} \sum_i (x_i -
+  \mu)^2 + \lambda (e^\mu - \sigma^2)
+\]
+and finding an explicit solution by solving the first-order conditions
+is not at all easy. Fortunately, numerical optimization becomes
+straightforward by expressing the constrained parameters as
+\[
+  \theta = \left[ \mu, \sigma^2 \right]' = [\psi, \exp(\psi)]' =
+  h(\psi) ;
+\]
+after maximizing the log-likelihood, the covariance matrix for
+$\theta$ can be recovered by computing the Jacobian as
+\[
+  J(\psi) =
+  \left[ \begin{array}{cc}
+      \frac{d \mu}{d \psi} &
+           \frac{d \sigma^2}{d \psi} 
+  \end{array}\right] =          
+  \left[ \begin{array}{cc}
+      1 & \exp(\psi)
+  \end{array}\right]           
+\]
+and applying formula \eqref{eq:mle-constvar}.
+
+\begin{script}[htbp]
+  \caption{Example of ML estimation of a model under constraints}
+  \label{ex:mle-constr}
+  \begin{scodebit}
+set verbose off
+set seed 7120
+
+function matrix h(matrix psi)
+    ret = psi[1] | exp(psi[1])
+    return ret
+end function
+
+function matrix anJacob(matrix psi)
+    # the derivative of h
+    return 1 ~ exp(psi[1])
+end function
+
+nulldata 1000
+# generate artificial data from a N(1, e) distribution
+series x = 1 + normal() * exp(0.5)
+
+# now estimate under the constraint exp(mean) = variance
+
+psi = {1}
+
+mle loglik = -0.5*log(2*$pi) - 0.5*log(s2) - 0.5*(x-m)^2/s2
+    matrix par = h(psi)
+    scalar m = par[1]
+    scalar s2 = par[2]
+    params psi
+end mle
+
+# now map psi to the constrained parametrisation
+
+matrix par = h(psi)
+matrix vpar = qform(anJacob(psi)', $vcv)
+# alternatively, one could use the numerical Jacobian, as in
+# matrix vpar = qform(fdjac(psi, "h(psi)"), $vcv)
+
+# finally, print out the constrained parameters via "modprint"
+
+matrix cs = par ~ sqrt(diag(vpar))
+modprint cs "mean variance"
+    
+  \end{scodebit}
+%$
+\end{script}
+
+Running the example script should produce the following output:
+
+\begin{code}
+Model 1: ML, using observations 1-1000
+loglik = -0.5*log(2*$pi) - 0.5*log(s2) - 0.5*(x-m)^2/s2
+Standard errors based on Outer Products matrix
+
+             estimate   std. error     z      p-value 
+  ----------------------------------------------------
+  psi[1]     1.03763    0.0357311    29.04   2.07e-185 ***
+
+Log-likelihood      -1949.972   Akaike criterion     3901.943
+Schwarz criterion    3906.851   Hannan-Quinn         3903.808
+
+
+             coefficient   std. error     z      p-value 
+  -------------------------------------------------------
+  mean         1.03763     0.0357311    29.04   2.07e-185 ***
+  variance     2.82251     0.100851     27.99   2.35e-172 ***
+\end{code}
+%$
+
 \section{Handling non-convergence gracefully}
 \label{sec:mle-nonconv}
 
