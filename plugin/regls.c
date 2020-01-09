@@ -512,6 +512,20 @@ static double abs_sum (const gretl_vector *z)
     return ret;
 }
 
+static double vector_infnorm (const gretl_vector *z)
+{
+    const int n = gretl_vector_get_length(z);
+    double azi, ret = 0;
+    int i;
+
+    for (i=0; i<n; i++) {
+	azi = fabs(z->val[i]);
+	if (azi > ret) ret = azi;
+    }
+
+    return ret;
+}
+
 /* Cyclical Coordinate Descent (CCD) auxiliary functions */
 
 static int ccd_scale (int n, int k, gretl_matrix *x, double *y,
@@ -1152,7 +1166,7 @@ static int ccd_regls (gretl_matrix *X,
     ccd_scale(n, k, X, y->val, Xty->val, xv->val);
 
     gretl_matrix_copy_values(lam, lfrac);
-    lmax = gretl_matrix_infinity_norm(Xty);
+    lmax = vector_infnorm(Xty);
     if (alpha < 1.0) {
 	lmax /= max(alpha, 1.0e-3);
     }
@@ -1259,6 +1273,96 @@ static int ccd_regls (gretl_matrix *X,
     return err;
 }
 
+static gretl_matrix *svd_ridge_vcv (gretl_matrix *X,
+				    gretl_matrix *y,
+				    double lam,
+				    int *err)
+{
+    gretl_matrix_block *MB = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *Vt = NULL;
+    gretl_matrix *sv = NULL;
+    gretl_matrix *sve = NULL;
+    gretl_matrix *RI = NULL;
+    gretl_matrix *XTy = NULL;
+    gretl_matrix *Tmp = NULL;
+    gretl_matrix *Ve = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *u = NULL;
+    double vij, s2;
+    int n = X->rows;
+    int k = X->cols;
+    int i, j;
+
+    *err = gretl_matrix_SVD(X, NULL, &sv, &Vt, 0);
+
+    if (!*err) {
+	MB = gretl_matrix_block_new(&sve, 1, k, &b, k, 1,
+				    &u, n, 1, &RI, k, k,
+				    &XTy, k, 1, &Ve, k, k,
+				    &Tmp, k, k, NULL);
+	if (MB == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    if (!*err) {
+	V = gretl_matrix_alloc(k, k);
+	if (V == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    /* sve = 1 / (sv.^2 + lambda) */
+    for (i=0; i<k; i++) {
+	sve->val[i] = 1.0 / (sv->val[i] * sv->val[i] + lam);
+    }
+
+    /* Ve = Vt' .* sve */
+    for (j=0; j<k; j++) {
+	for (i=0; i<k; i++) {
+	    vij = gretl_matrix_get(Vt, j, i);
+	    gretl_matrix_set(Ve, i, j, vij * sve->val[j]);
+	}
+    }
+
+    /* RI = Ve * Vt */
+    gretl_matrix_multiply(Ve, Vt, RI);
+
+    /* XTy = X'y */
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      y, GRETL_MOD_NONE,
+			      XTy, GRETL_MOD_NONE);
+
+    /* b = RI * XTy */
+    gretl_matrix_multiply(RI, XTy, b);
+
+    /* u = X*b - y */
+    gretl_matrix_multiply(X, b, u);
+    gretl_matrix_subtract_from(u, y);
+
+    /* residual variance */
+    s2 = gretl_vector_dot_product(u, u, NULL) / n;
+
+    /* V = s2 * ridgeI * X'X * ridgeI */
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      Ve, GRETL_MOD_NONE);
+    gretl_matrix_multiply(RI, Ve, Tmp);
+    gretl_matrix_multiply(Tmp, RI, V);
+    gretl_matrix_multiply_by_scalar(V, s2);
+
+    gretl_matrix_print(V, "V, ridge");
+
+ bailout:
+
+    gretl_matrix_block_destroy(MB);
+
+    return V;
+}
+
 static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
 		       gretl_matrix *y, gretl_matrix *B,
 		       gretl_matrix *R2, int covmat)
@@ -1359,7 +1463,7 @@ static double ridge_scale (gretl_matrix *X,
     } else {
 	/* as per glmnet, scale data by sqrt(1/n) */
 	ccd_scale(X->rows, X->cols, X, y->val, Xty->val, NULL);
-	lmax = gretl_matrix_infinity_norm(Xty);
+	lmax = vector_infnorm(Xty);
 	lmax *= 1000;
 	gretl_matrix_copy_values(lam, lfrac);
 	for (i=0; i<nlam; i++) {
@@ -1369,7 +1473,7 @@ static double ridge_scale (gretl_matrix *X,
 	gretl_matrix_free(Xty);
     }
 #else
-    /* squared Frobenius norm = X->cols */
+    /* max = squared Frobenius norm = X->cols */
     lmax = X->cols;
     gretl_matrix_copy_values(lam, lfrac);
     for (i=0; i<nlam; i++) {
@@ -1476,6 +1580,7 @@ static int svd_ridge (gretl_matrix *X,
 	if (nlam == 1) {
 	    /* show a value comparable with ADMM? */
 	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax * n);
+	    // svd_ridge_vcv(X, y, lfrac->val[0] * lmax, &err);
 	}
     }
 
@@ -1551,7 +1656,7 @@ static int admm_lasso (const gretl_matrix *X,
 			      y, GRETL_MOD_NONE,
 			      Xty, GRETL_MOD_NONE);
 
-    lmax = gretl_matrix_infinity_norm(Xty);
+    lmax = vector_infnorm(Xty);
     pprintf(prn, "lambda-max = %g\n", lmax);
 
     if (!xvalid && nlam > 1) {
@@ -1690,7 +1795,7 @@ static int admm_do_fold (const gretl_matrix *X,
 			      y, GRETL_MOD_NONE,
 			      Xty, GRETL_MOD_NONE);
 #if 0 /* ?? */
-    lmax = gretl_matrix_infinity_norm(Xty);
+    lmax = vector_infnorm(Xty);
 #endif
 
     get_cholesky_factor(X, L, rho);
@@ -1855,6 +1960,17 @@ static int svd_do_fold (gretl_matrix *X,
     return err;
 }
 
+/* Note: @X and @y are the full data matrices; @Xe
+   and @ye will hold the estimation sample; and
+   @Xf and @yf will hold the "fold" for which
+   prediction is to be performed. We need to be
+   careful not to write values out of bounds in
+   case the two disjoint sub-samples do not
+   exhaust the full data (i.e. the full number
+   of observations is not divisible by the fold
+   size without remainder).
+*/
+
 static void prepare_xv_data (const gretl_matrix *X,
 			     const gretl_matrix *y,
 			     gretl_matrix *Xe,
@@ -1863,27 +1979,31 @@ static void prepare_xv_data (const gretl_matrix *X,
 			     gretl_matrix *yf,
 			     int f)
 {
-    int i, j, ke, ko;
+    int i, j, re, rf;
     double xij;
 
     for (j=0; j<X->cols; j++) {
-	ke = ko = 0;
+	re = rf = 0;
 	for (i=0; i<X->rows; i++) {
 	    xij = gretl_matrix_get(X, i, j);
 	    if (i/Xf->rows == f) {
 		/* "out of sample" range */
-		gretl_matrix_set(Xf, ko, j, xij);
-		if (j == 0) {
-		    yf->val[ko] = y->val[i];
+		if (rf < Xf->rows) {
+		    gretl_matrix_set(Xf, rf, j, xij);
+		    if (j == 0) {
+			yf->val[rf] = y->val[i];
+		    }
 		}
-		ko++;
+		rf++;
 	    } else {
 		/* estimation sample */
-		gretl_matrix_set(Xe, ke, j, xij);
-		if (j == 0) {
-		    ye->val[ke] = y->val[i];
+		if (re < Xe->rows) {
+		    gretl_matrix_set(Xe, re, j, xij);
+		    if (j == 0) {
+			ye->val[re] = y->val[i];
+		    }
 		}
-		ke++;
+		re++;
 	    }
 	}
     }
@@ -2033,16 +2153,18 @@ static double get_xvalidation_lmax (gretl_matrix *X,
     gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 			      y, GRETL_MOD_NONE,
 			      Xty, GRETL_MOD_NONE);
-    lmax = gretl_matrix_infinity_norm(Xty);
+    lmax = vector_infnorm(Xty);
 
+#if 0 /* lmax shouldn't really be sample-size dependent? */
     /* and scale it down for the folds */
     lmax *= esize / (double) X->rows;
+#endif
 
     if (ccd) {
 	if (alpha < 1.0) {
 	    lmax /= max(alpha, 1.0e-3);
 	} else {
-	    /* ?? */
+	    /* per observation ? */
 	    lmax /= esize;
 	}
     }
@@ -2129,7 +2251,7 @@ static int regls_xv (gretl_matrix *X,
     if (verbose) {
 	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
 		nf, fsize, randfolds, crit_string(crit_type));
-	pprintf(prn, " ccd=%d, ridge=%d\n", ccd, ridge);
+	pprintf(prn, " ridge=%d, ccd=%d\n", ridge, ccd);
 	gretl_flush(prn);
     }
 

@@ -3944,7 +3944,7 @@ double gretl_matrix_infinity_norm (const gretl_matrix *m)
 	if (rsum > rmax) {
 	    rmax = rsum;
 	}
-   }
+    }
 
     return rmax;
 }
