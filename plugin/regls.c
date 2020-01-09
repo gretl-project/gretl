@@ -1098,7 +1098,10 @@ static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
     return B;
 }
 
-/* main Cyclical Coordinate Descent driver */
+/* main Cyclical Coordinate Descent driver: we come here
+   either to get coefficient estimates right away, or after
+   cross validation
+*/
 
 static int ccd_regls (gretl_matrix *X,
 		      gretl_matrix *y,
@@ -1763,11 +1766,8 @@ static int ccd_do_fold (gretl_matrix *X,
     }
     gretl_matrix_zero(B);
 
-    /* scale data by sqrt(1/n) */
+    /* scale the estimation sample by sqrt(1/n) */
     ccd_scale(n, k, X, y->val, Xty->val, xv->val);
-
-    //gretl_matrix_multiply_by_scalar(X_out, sqrt(1.0/X_out->rows));
-    //gretl_matrix_multiply_by_scalar(y_out, sqrt(1.0/y_out->rows));
 
     err = ccd_iteration(alpha, X, Xty->val, nlam, lam->val,
 			ccd_toler, maxit, xv->val, &lmu, B,
@@ -1799,6 +1799,7 @@ static int svd_do_fold (gretl_matrix *X,
 			gretl_matrix *XVC,
 			int fold, int crit_type)
 {
+    static gretl_matrix_block *MB;
     static gretl_matrix *B;
     static gretl_matrix *u;
     static gretl_matrix *b;
@@ -1808,10 +1809,8 @@ static int svd_do_fold (gretl_matrix *X,
 
     if (X == NULL) {
 	/* cleanup signal */
-	gretl_matrix_free(B);
-	gretl_matrix_free(u);
-	gretl_matrix_free(b);
-	B = u = b = NULL;
+	gretl_matrix_block_destroy(MB);
+	MB = NULL;
 	return 0;
     }
 
@@ -1821,18 +1820,17 @@ static int svd_do_fold (gretl_matrix *X,
     n = X->rows;
     k = X->cols;
 
-    if (B == NULL) {
-	B = gretl_matrix_alloc(k, nlam);
-	u = gretl_matrix_alloc(nout, 1);
-	b = gretl_matrix_alloc(k, 1);
-	if (B == NULL || u == NULL || b == NULL) {
+    if (MB == NULL) {
+	MB = gretl_matrix_block_new(&B, k, nlam, &u, nout, 1,
+				    &b, k, 1, NULL);
+	if (MB == NULL) {
 	    return E_ALLOC;
 	}
     }
     gretl_matrix_zero(B);
 
 #if SVD_USE_CCD_SCALE
-    /* scale data by sqrt(1/n) */
+    /* scale the estimation sample by sqrt(1/n) */
     ccd_scale(n, k, X, y->val, NULL, NULL);
 #endif
 
@@ -2144,7 +2142,7 @@ static int regls_xv (gretl_matrix *X,
     }
 
     nlam = gretl_vector_get_length(lfrac);
-    lmax = get_xvalidation_lmax(X, y, esize, ccd, alpha);
+    lmax = get_xvalidation_lmax(X, y, esize, ccd || ridge, alpha);
     if (verbose) {
 	pprintf(prn, "cross-validation lmax = %g\n\n", lmax);
 	gretl_flush(prn);
