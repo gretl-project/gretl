@@ -361,8 +361,8 @@ struct str_table funcs[] = {
     { F_MLAG,     "mlag" },
     { F_QR,       "qrdecomp" },
     { F_EIGSYM,   "eigensym" },
-    { F_EIGGEN,   "eigengen" },
-    { F_EIGGEN2,  "eiggen2" },
+    { F_EIGGEN,   "eigengen" }, /* legacy */
+    { F_EIGEN,    "eigen" },
     { F_SCHUR,    "schur" },
     { F_EIGSOLVE, "eigsolve" },
     { F_NULLSPC,  "nullspace" },
@@ -565,6 +565,7 @@ struct str_table funcs[] = {
 };
 
 struct str_table func_alias[] = {
+    { F_EIGEN,    "eiggen2" },
     { F_NMMAX,    "NMmin" },
     { F_NRMAX,    "NRmin" },
     { F_BFGSMAX,  "BFGSmin" },

@@ -11260,7 +11260,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
 	    }
 	}
-    } else if (f == F_EIGGEN || f == F_EIGGEN2) {
+    } else if (f == F_EIGEN || f == F_EIGGEN) {
 	gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
 	gretl_matrix *v1 = NULL, *v2 = NULL;
 
@@ -11275,8 +11275,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
 	if (!p->err) {
-	    if (f == F_EIGGEN2) {
-		/* new eiggen2 */
+	    if (f == F_EIGEN) {
 		if (lm->is_complex) {
 		    A = gretl_zgeev(lm, v1, v2, &p->err);
 		} else {
@@ -16404,7 +16403,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MSHAPE:
     case F_SVD:
     case F_EIGGEN:
-    case F_EIGGEN2:
+    case F_EIGEN:
     case F_SCHUR:
     case F_TRIMR:
     case F_TOEPSOLV:

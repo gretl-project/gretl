@@ -457,7 +457,7 @@ enum {
     F_BKW,
     F_FZERO,
     F_EIGGEN,
-    F_EIGGEN2,
+    F_EIGEN,
     F_SCHUR,
     F_RESAMPLE,
     HF_REGLS,
@@ -573,13 +573,13 @@ enum {
 
 /* functions where the right-hand argument is actually a return
    location */
-#define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGGEN || \
+#define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGEN || \
                      s == F_MOLS || s == F_MPOLS || s == F_SVD || \
-		     s == F_EIGGEN2)
+		     s == F_EIGGEN)
 
 /* functions where the middle argument is actually a return
    location */
-#define m_return(s) (s == F_SVD || s == F_EIGGEN2)
+#define m_return(s) (s == F_SVD || s == F_EIGEN)
 
 #define reusable(p) (p->flags & (P_COMPILE | P_EXEC))
 
