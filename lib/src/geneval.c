@@ -9078,6 +9078,18 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 		p->err = apply_cmatrix_cfunc(ret->v.m, m, cfunc);
 	    }
 	}
+    } else if (f->t == F_REAL || f->t == F_IMAG) {
+	if (f->t == F_REAL) {
+	    size_t msize = m->rows * m->cols * sizeof(double);
+
+	    memcpy(ret->v.m->val, m->val, msize);
+	} else {
+	    int i, n = m->rows * m->cols;
+
+	    for (i=0; i<n; i++) {
+		ret->v.m->val[i] = 0;
+	    }
+	}
     } else {
 	double (*dfunc) (double) = f->v.ptr;
 	int i, n = m->rows * m->cols;
@@ -15672,10 +15684,12 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case F_CARG:
-    case F_CONJ:
     case F_REAL:
     case F_IMAG:
+	ret = apply_matrix_func(l, t, p);
+	break;
+    case F_CARG:
+    case F_CONJ:
     case F_CMOD:
 	if (complex_node(l)) {
 	    ret = apply_matrix_func(l, t, p);
