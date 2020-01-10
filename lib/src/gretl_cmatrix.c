@@ -1658,8 +1658,8 @@ gretl_matrix *gretl_cmatrix_add_sub (const gretl_matrix *A,
 */
 
 int apply_cmatrix_dfunc (gretl_matrix *targ,
-			const gretl_matrix *src,
-			double (*dfunc) (double complex))
+			 const gretl_matrix *src,
+			 double (*dfunc) (double complex))
 {
     int n = src->cols * src->rows;
     int i, err = 0;
