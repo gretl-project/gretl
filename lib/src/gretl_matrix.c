@@ -10057,7 +10057,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	ev_ver = s != NULL ? 1 : 2;
     }
 
-    if (ev_ver == 1) {
+    if (m->rows < 10 || ev_ver == 1) {
 	return eigensym_standard(m, eigenvecs, err);
     } else {
 	return eigensym_rrr(m, eigenvecs, err);
