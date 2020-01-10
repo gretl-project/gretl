@@ -29,8 +29,7 @@ list X = p q
 list W = const
 scalar order = 1
 
-bundle mod = SVAR_setup("plain", X, W, order, 0)
-err = SVAR_estimate(&mod,0) # just needed for the VAR parameters, really
+bundle mod = SVAR_setup("SR", X, W, order)
 
 # set up the sign restictions
 

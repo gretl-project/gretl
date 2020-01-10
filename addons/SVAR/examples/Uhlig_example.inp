@@ -28,7 +28,7 @@ scalar order = 12
 bundle mod = SVAR_setup("plain", X, Z, order, 0)
 mod.horizon = 60
 mod.snames[4] = "Monetary"
-err = SVAR_estimate(&mod,0) # just needed for the VAR parameters, really
+err = SVAR_estimate(&mod,0)
 
 # replicate page 395 (sort of)
 if 0
@@ -37,6 +37,11 @@ if 0
         IRFplot(&mod, 4, i)
     endloop
 endif
+
+# Switch to a sign restriction model, but re-using the 
+# reduced-form results from above
+
+mod.type = 10 # (10 is internal code for SR)
 
 # set up the sign restictions
 
