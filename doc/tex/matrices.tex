@@ -621,7 +621,7 @@ or more matrices; these are:
 \begin{center}
 \begin{tabular}{ll}
 \texttt{eigensym} & Eigen-analysis of symmetric matrix \\
-\texttt{eiggen2}  & Eigen-analysis of general matrix \\
+\texttt{eigen}    & Eigen-analysis of general matrix \\
 \texttt{mols}     & Matrix OLS \\
 \texttt{qrdecomp} & QR decomposition \\
 \texttt{svd}      & Singular value decomposition (SVD) 
@@ -668,7 +668,7 @@ In the first case \texttt{E} holds the eigenvalues of \texttt{M} and
 \texttt{V} holds the eigenvectors.  In the second, \texttt{E} holds
 the eigenvalues but the eigenvectors are not computed.
 
-The function \texttt{eiggen2} computes the eigenvalues, and optionally
+The function \texttt{eigen} computes the eigenvalues, and optionally
 the right and/or left eigenvectors, of a general $n \times n$
 matrix.\footnote{The ``legacy'' function \texttt{eigengen} used to be
   the way to do this prior to gretl 2019d.} Following the input matrix
@@ -678,20 +678,20 @@ this function should therefore conform to one of the following
 patterns.
 \begin{code}
 # get the eigenvalues only
-matrix E = eiggen2(M)
+matrix E = eigen(M)
 
 # get the right eigenvectors as well
 matrix V = {}
-matrix E = eiggen2(M, &V)
+matrix E = eigen(M, &V)
 
 # get both sets of eigenvectors
 matrix V = {}
 matrix W = {}
-matrix E = eiggen2(M, &V, &W)
+matrix E = eigen(M, &V, &W)
 
 # get the left eigenvectors but not the right
 matrix W = {}
-matrix E = eiggen2(M, null, &W)
+matrix E = eigen(M, null, &W)
 \end{code}
 
 The eigenvalues are returned directly in a complex $n$-vector. If the

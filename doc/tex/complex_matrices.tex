@@ -192,7 +192,7 @@ The functions that accept complex arguments are: \cmd{cholesky},
 that the input matrix be diagonalizable, and \cmd{cholesky} requires a
 positive definite Hermitian matrix.
 
-In addition the new functions \cmd{eiggen2} and \cmd{fft2} are
+In addition the new functions \cmd{eigen} and \cmd{fft2} are
 complex-supporting versions of \cmd{eigengen} and \cmd{fft},
 respectively (see section~\ref{sec:cmplx-compat} for details). And
 there are the complex-only functions \cmd{ctrans}, which gives the
@@ -410,7 +410,7 @@ new regime? The resolution on the two built-in functions is this:
   output. In the documentation they are marked as legacy functions,
   not for use in newly written hansl code.
 \item We have added new counterpart functions, \cmd{fft2} and
-  \cmd{eiggen2}. These accept either real or complex input and they
+  \cmd{eigen}. These accept either real or complex input and they
   produce new-style complex output in both cases.
 \end{itemize}
 
