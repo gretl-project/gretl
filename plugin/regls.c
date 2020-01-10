@@ -81,7 +81,9 @@ typedef struct regls_info_ {
     gretl_matrix *X;
     gretl_matrix *y;
     gretl_matrix *lfrac;
+    gretl_matrix *Xty;
     double rho;
+    double infnorm;
     int nlam;
     int n;
     int k;
@@ -110,7 +112,7 @@ static void prepare_ccd_param (regls_info *ri)
     }
 }
 
-static void prepare_lambda_scale (regls_info *ri)
+static void maybe_set_lambda_scale (regls_info *ri)
 {
     if (gretl_bundle_has_key(ri->b, "lambda_scale")) {
 	ri->lamscale = gretl_bundle_get_int(ri->b, "lambda_scale", NULL);
@@ -170,19 +172,54 @@ regls_info *regls_info_new (gretl_matrix *X,
     } else {
 	ri->n = ri->X->rows;
 	ri->k = ri->X->cols;
-	ri->nlam = ri->lfrac->rows;
+	ri->nlam = gretl_vector_get_length(ri->lfrac);
 	ri->rho = 8.0;
+	ri->infnorm = 0.0;
 	ri->lamscale = LAMSCALE_GLMNET;
+	ri->Xty = NULL;
 	if (ri->ccd) {
 	    prepare_ccd_param(ri);
 	} else if (ri->ridge) {
-	    prepare_lambda_scale(ri);
+	    maybe_set_lambda_scale(ri);
 	} else {
 	    prepare_admm_params(ri);
 	}
     }
 
     return ri;
+}
+
+static double vector_infnorm (const gretl_vector *z)
+{
+    const int n = gretl_vector_get_length(z);
+    double azi, ret = 0;
+    int i;
+
+    for (i=0; i<n; i++) {
+	azi = fabs(z->val[i]);
+	if (azi > ret) ret = azi;
+    }
+
+    return ret;
+}
+
+/* compute X'y and its infinity-norm for all training data */
+
+static int regls_set_Xty (regls_info *ri)
+{
+    int err = 0;
+
+    ri->Xty = gretl_matrix_alloc(ri->X->cols, 1);
+    if (ri->Xty == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
+				  ri->y, GRETL_MOD_NONE,
+				  ri->Xty, GRETL_MOD_NONE);
+	ri->infnorm = vector_infnorm(ri->Xty);
+    }
+
+    return err;
 }
 
 static const char *crit_string (int crit)
@@ -614,20 +651,6 @@ static double abs_sum (const gretl_vector *z)
 
     for (i=0; i<n; i++) {
 	ret += fabs(z->val[i]);
-    }
-
-    return ret;
-}
-
-static double vector_infnorm (const gretl_vector *z)
-{
-    const int n = gretl_vector_get_length(z);
-    double azi, ret = 0;
-    int i;
-
-    for (i=0; i<n; i++) {
-	azi = fabs(z->val[i]);
-	if (azi > ret) ret = azi;
     }
 
     return ret;
@@ -1185,47 +1208,68 @@ static int admm_iteration (const gretl_matrix *X,
     return err;
 }
 
-static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
-					int rows, int nlam,
-					int *jmin, int *jmax)
+static gretl_matrix *make_coeff_matrix (regls_info *ri,
+					int *jmin,
+					int *jmax)
 {
     gretl_matrix *B = NULL;
     int xv_single_b = 0;
+    int rows;
 
-    if (xvalid) {
+    if (ri->xvalid) {
 	/* do we want just the "best" coeff vector? */
-	xv_single_b = gretl_bundle_get_bool(bun, "single_b", 0);
+	xv_single_b = gretl_bundle_get_bool(ri->b, "single_b", 0);
     }
 
+    rows = ri->k + ri->stdize;
+
     if (xv_single_b) {
-	int use_1se = gretl_bundle_get_bool(bun, "use_1se", 0);
+	int use_1se = gretl_bundle_get_bool(ri->b, "use_1se", 0);
 	const char *ikey = use_1se ? "idx1se" : "idxmin";
 	int idx;
 
-	idx = gretl_bundle_get_int(bun, ikey, NULL);
+	idx = gretl_bundle_get_int(ri->b, ikey, NULL);
 	B = gretl_zero_matrix_new(rows, 1);
 	*jmin = idx - 1; /* zero-based */
 	*jmax = *jmin + 1;
     } else {
-	B = gretl_zero_matrix_new(rows, nlam);
+	B = gretl_zero_matrix_new(rows, ri->nlam);
 	*jmin = 0;
-	*jmax = nlam;
+	*jmax = ri->nlam;
     }
 
     if (B != NULL) {
-	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX, 0);
     }
 
     return B;
 }
 
-/* main Cyclical Coordinate Descent driver: we come here
-   either to get coefficient estimates right away, or after
-   cross validation
+static void ccd_make_lambda (regls_info *ri,
+			     gretl_matrix *lam,
+			     double *lmax,
+			     double alpha)
+{
+    int i;
+
+    gretl_matrix_copy_values(lam, ri->lfrac);
+    if (alpha < 1.0) {
+	*lmax /= max(alpha, 1.0e-3);
+    }
+    for (i=0; i<ri->nlam; i++) {
+	lam->val[i] *= *lmax;
+    }
+    if (alpha < 1.0 && ri->nlam > 1) {
+	lam->val[0] = BIG_LAMBDA;
+    }
+}
+
+/* Cyclical Coordinate Descent driver: we come here either
+   to get coefficient estimates right away, or after
+   cross validation. Handles both LASSO and Ridge.
 */
 
-static int ccd_regls (regls_info *ri,
-		      PRN *prn)
+static int ccd_regls (regls_info *ri, PRN *prn)
 {
     gretl_matrix_block *MB;
     gretl_matrix *Xty, *xv;
@@ -1237,11 +1281,11 @@ static int ccd_regls (regls_info *ri,
     double *Rsq = NULL;
     double lmax, alpha;
     int maxit = CCD_MAX_ITER;
-    int *nnz, *ia;
+    int *ia, *nnz;
     int nlp = 0, lmu = 0;
     int nlam = ri->nlam;
     int k = ri->k;
-    int i, err = 0;
+    int err = 0;
 
     alpha = ri->ridge ? 0.0 : 1.0;
 
@@ -1255,24 +1299,17 @@ static int ccd_regls (regls_info *ri,
     /* scale data by sqrt(1/n) */
     ccd_scale(ri->X, ri->y->val, Xty->val, xv->val);
 
-    gretl_matrix_copy_values(lam, ri->lfrac);
+    /* and compute lambda sequence */
     lmax = vector_infnorm(Xty);
-    if (alpha < 1.0) {
-	lmax /= max(alpha, 1.0e-3);
-    }
-    for (i=0; i<nlam; i++) {
-	lam->val[i] *= lmax;
-    }
-    if (alpha < 1.0) {
-	lam->val[0] = BIG_LAMBDA;
-    }
+    ccd_make_lambda(ri, lam, &lmax, alpha);
 
-    nnz = malloc(nlam * sizeof *nnz);
-    ia = malloc(k * sizeof *ia);
-    if (nnz == NULL || ia == NULL) {
+    /* integer workspace */
+    ia = malloc((k + nlam) * sizeof *ia);
+    if (ia == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
+    nnz = ia + k;
 
     if (!ri->xvalid) {
 	R2 = gretl_matrix_alloc(nlam, 1);
@@ -1343,7 +1380,7 @@ static int ccd_regls (regls_info *ri,
 	B = NULL;
 	gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
 	if (nlam == 1) {
-	    /* show a value comparable with ADMM */
+	    /* show a value comparable with ADMM (??) */
 	    gretl_bundle_set_scalar(ri->b, "lambda", ri->lfrac->val[0] * lmax * ri->n);
 	}
     }
@@ -1355,14 +1392,12 @@ static int ccd_regls (regls_info *ri,
     gretl_matrix_free(B);
     gretl_matrix_free(sv2);
     gretl_matrix_block_destroy(MB);
-    free(nnz);
     free(ia);
 
     return err;
 }
 
-static gretl_matrix *svd_ridge_vcv (gretl_matrix *X,
-				    gretl_matrix *y,
+static gretl_matrix *svd_ridge_vcv (regls_info *ri,
 				    double lam,
 				    int *err)
 {
@@ -1372,23 +1407,22 @@ static gretl_matrix *svd_ridge_vcv (gretl_matrix *X,
     gretl_matrix *sv = NULL;
     gretl_matrix *sve = NULL;
     gretl_matrix *RI = NULL;
-    gretl_matrix *XTy = NULL;
     gretl_matrix *Tmp = NULL;
     gretl_matrix *Ve = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *u = NULL;
     double vij, s2;
-    int n = X->rows;
-    int k = X->cols;
+    int n = ri->X->rows;
+    int k = ri->X->cols;
     int i, j;
 
-    *err = gretl_matrix_SVD(X, NULL, &sv, &Vt, 0);
+    *err = gretl_matrix_SVD(ri->X, NULL, &sv, &Vt, 0);
 
     if (!*err) {
 	MB = gretl_matrix_block_new(&sve, 1, k, &b, k, 1,
 				    &u, n, 1, &RI, k, k,
-				    &XTy, k, 1, &Ve, k, k,
-				    &Tmp, k, k, NULL);
+				    &Ve, k, k, &Tmp, k, k,
+				    NULL);
 	if (MB == NULL) {
 	    *err = E_ALLOC;
 	    goto bailout;
@@ -1419,24 +1453,19 @@ static gretl_matrix *svd_ridge_vcv (gretl_matrix *X,
     /* RI = Ve * Vt */
     gretl_matrix_multiply(Ve, Vt, RI);
 
-    /* XTy = X'y */
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      y, GRETL_MOD_NONE,
-			      XTy, GRETL_MOD_NONE);
-
-    /* b = RI * XTy */
-    gretl_matrix_multiply(RI, XTy, b);
+    /* b = RI * Xty */
+    gretl_matrix_multiply(RI, ri->Xty, b);
 
     /* u = X*b - y */
-    gretl_matrix_multiply(X, b, u);
-    gretl_matrix_subtract_from(u, y);
+    gretl_matrix_multiply(ri->X, b, u);
+    gretl_matrix_subtract_from(u, ri->y);
 
     /* residual variance */
     s2 = gretl_vector_dot_product(u, u, NULL) / n;
 
     /* V = s2 * ridgeI * X'X * ridgeI */
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      X, GRETL_MOD_NONE,
+    gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
+			      ri->X, GRETL_MOD_NONE,
 			      Ve, GRETL_MOD_NONE);
     gretl_matrix_multiply(RI, Ve, Tmp);
     gretl_matrix_multiply(Tmp, RI, V);
@@ -1527,6 +1556,8 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     return err;
 }
 
+/* called only from svd_ridge() */
+
 static double ridge_scale (regls_info *ri,
 			   gretl_matrix *lam)
 {
@@ -1597,7 +1628,7 @@ static int svd_ridge (regls_info *ri, PRN *prn)
 
     err = ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B, R2, 0);
 #if 0
-    fprintf(stderr, "svd ridge: err=%d\n", err);
+    fprintf(stderr, "svd ridge: err=%d, nlam=%d\n", err, ri->nlam);
 #endif
     if (err) {
 	goto bailout;
@@ -1641,10 +1672,11 @@ static int svd_ridge (regls_info *ri, PRN *prn)
 	    gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
 	}
 	if (ri->nlam == 1) {
+	    double lamval = ri->lfrac->val[0] * lmax;
 	    gretl_matrix *vcv;
 
 	    gretl_bundle_set_scalar(ri->b, "lambda", ri->lfrac->val[0] * lmax);
-	    vcv = svd_ridge_vcv(ri->X, ri->y, ri->lfrac->val[0] * lmax, &err);
+	    vcv = svd_ridge_vcv(ri, lamval, &err);
 	    if (vcv != NULL) {
 		gretl_bundle_donate_data(ri->b, "vcv", vcv, GRETL_TYPE_MATRIX, 0);
 	    }
@@ -1684,7 +1716,7 @@ static int admm_lasso (regls_info *ri, PRN *prn)
     int err = 0;
 
     gretl_vector *v, *u, *b, *r, *bprev, *bdiff;
-    gretl_vector *q, *Xty, *n1;
+    gretl_vector *q, *n1;
     gretl_matrix *L;
 
     ldim = n >= k ? k : n;
@@ -1692,18 +1724,13 @@ static int admm_lasso (regls_info *ri, PRN *prn)
 				&b, k, 1, &r, k, 1,
 				&bprev, k, 1, &bdiff, k, 1,
 				&q, k, 1, &n1, n, 1,
-				&Xty, k, 1, &L, ldim, ldim,
-				NULL);
+				&L, ldim, ldim, NULL);
     if (MB == NULL) {
 	return E_ALLOC;
     }
     gretl_matrix_block_zero(MB);
 
-    gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
-			      ri->y, GRETL_MOD_NONE,
-			      Xty, GRETL_MOD_NONE);
-
-    lmax = vector_infnorm(Xty);
+    lmax = ri->infnorm;
     pprintf(prn, "lambda-max = %g\n", lmax);
 
     if (!ri->xvalid && ri->nlam > 1) {
@@ -1721,7 +1748,7 @@ static int admm_lasso (regls_info *ri, PRN *prn)
 
     get_cholesky_factor(ri->X, L, rho);
 
-    B = make_coeff_matrix(ri->b, ri->xvalid, k + ri->stdize, ri->nlam, &jmin, &jmax);
+    B = make_coeff_matrix(ri, &jmin, &jmax);
     if (B == NULL) {
 	gretl_matrix_block_destroy(MB);
 	return E_ALLOC;
@@ -1739,8 +1766,9 @@ static int admm_lasso (regls_info *ri, PRN *prn)
 	int iters = 0;
 	int nnz = 0;
 
-	err = admm_iteration(ri->X, Xty, L, v, b, u, q, n1, r, bprev, bdiff,
-			     lambda, &rho, tune_rho, &iters);
+	err = admm_iteration(ri->X, ri->Xty, L, v, b, u, q, n1, r,
+			     bprev, bdiff, lambda, &rho, tune_rho,
+			     &iters);
 
 	if (!err) {
 	    for (i=0; i<k; i++) {
@@ -1836,12 +1864,10 @@ static int admm_do_fold (const gretl_matrix *X,
 	gretl_matrix_block_zero(MB);
     }
 
+    /* compute X'y for the estimation sample */
     gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 			      y, GRETL_MOD_NONE,
 			      Xty, GRETL_MOD_NONE);
-#if 0 /* ?? */
-    lmax = vector_infnorm(Xty);
-#endif
 
     get_cholesky_factor(X, L, rho);
 
@@ -1906,14 +1932,14 @@ static int ccd_do_fold (gretl_matrix *X,
 				    &B, k, nlam, &u, nout, 1,
 				    &b, k, 1, NULL);
 	ia = malloc((k + nlam) * sizeof *ia);
-	if (MB == NULL || nnz == NULL) {
+	if (MB == NULL || ia == NULL) {
 	    return E_ALLOC;
 	}
 	nnz = ia + k;
     }
     gretl_matrix_zero(B);
 
-    /* scale the estimation sample by sqrt(1/n) */
+    /* scale the estimation subset by sqrt(1/n) */
     ccd_scale(X, y->val, Xty->val, xv->val);
 
     err = ccd_iteration(alpha, X, Xty->val, nlam, lam->val,
@@ -2174,35 +2200,35 @@ static int get_crit_type (gretl_bundle *bun)
     return ret;
 }
 
+/* called by the cross-validation driver functions, regls_xv()
+   and real_regls_xv_mpi(), for all algorithms: ADMM, CCD,
+   SVD.
+*/
+
 static double get_xvalidation_lmax (regls_info *ri,
 				    int esize,
 				    double alpha)
 {
-    gretl_matrix *Xty;
-    double lmax;
-
-    /* determine the infnorm for all training data */
-    Xty = gretl_matrix_alloc(ri->X->cols, 1);
-    gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
-			      ri->y, GRETL_MOD_NONE,
-			      Xty, GRETL_MOD_NONE);
-    lmax = vector_infnorm(Xty);
+    double lmax = ri->infnorm;
 
 #if 0 /* lmax shouldn't really be sample-size dependent? */
-    /* and scale it down for the folds */
     lmax *= esize / (double) X->rows;
 #endif
 
-    if (ri->ccd || ri->ridge) {
+    if (ri->ccd) {
 	if (alpha < 1.0) {
 	    lmax /= max(alpha, 1.0e-3);
 	} else {
 	    /* per observation ? */
 	    lmax /= esize;
 	}
+    } else if (ri->ridge && ri->lamscale == LAMSCALE_GLMNET) {
+	if (alpha < 1.0) {
+	    lmax /= max(alpha, 1.0e-3);
+	}
+    } else if (ri->ridge && ri->lamscale == LAMSCALE_FROB) {
+	lmax = ri->X->cols; /* ?? */
     }
-
-    gretl_matrix_free(Xty);
 
     return lmax;
 }
@@ -2240,6 +2266,28 @@ static void xv_cleanup (regls_info *ri)
     }
 }
 
+static gretl_matrix *make_xv_lambda (regls_info *ri,
+				     double lmax,
+				     int *err)
+{
+    gretl_matrix *lam;
+    int i;
+
+    lam = gretl_matrix_copy(ri->lfrac);
+    if (lam == NULL) {
+	*err = E_ALLOC;
+    } else if (ri->lamscale != LAMSCALE_NONE) {
+	for (i=0; i<ri->nlam; i++) {
+	    lam->val[i] *= lmax;
+	}
+	if (ri->ridge && ri->lamscale == LAMSCALE_GLMNET) {
+	    lam->val[0] = BIG_LAMBDA;
+	}
+    }
+
+    return lam;
+}
+
 /* unified cross validation function, employed when we're
    not doing MPI
 */
@@ -2250,7 +2298,7 @@ static int regls_xv (regls_info *ri, PRN *prn)
     gretl_matrix *Xe, *Xf;
     gretl_matrix *ye, *yf;
     gretl_matrix *lam = NULL;
-    gretl_matrix *XVC;
+    gretl_matrix *XVC = NULL;
     double lmax, alpha;
     int fsize, esize;
     int randfolds = 0;
@@ -2263,7 +2311,7 @@ static int regls_xv (regls_info *ri, PRN *prn)
 	return err;
     }
 
-    fsize = ri->X->rows / nf;
+    fsize = ri->n / nf;
     esize = (nf - 1) * fsize;
     alpha = ri->ridge ? 0.0 : 1.0;
 
@@ -2289,24 +2337,20 @@ static int regls_xv (regls_info *ri, PRN *prn)
     }
 
     if (ri->ccd || ri->ridge) {
-	/* FIXME svd ridge? */
-	int i;
-
-	lam = gretl_matrix_copy(ri->lfrac);
-	for (i=0; i<ri->nlam; i++) {
-	    lam->val[i] *= lmax;
-	}
-	if (ri->ridge) {
-	    lam->val[0] = BIG_LAMBDA;
-	}
+	lam = make_xv_lambda(ri, lmax, &err);
     }
 
-    if (randfolds) {
+    if (!err && randfolds) {
 	/* scramble the row order of X and y */
 	randomize_rows(ri->X, ri->y);
     }
 
-    XVC = gretl_zero_matrix_new(ri->nlam, nf);
+    if (!err) {
+	XVC = gretl_zero_matrix_new(ri->nlam, nf);
+	if (XVC == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
     for (f=0; f<nf && !err; f++) {
 	prepare_xv_data(ri->X, ri->y, Xe, ye, Xf, yf, f);
@@ -2330,7 +2374,7 @@ static int regls_xv (regls_info *ri, PRN *prn)
 
 	err = post_xvalidation_task(ri, XVC, crit_type, myprn);
 	if (!err) {
-	    /* determine coefficient vector on full training set */
+	    /* determine coefficient vector(s) on full training set */
 	    if (ri->ccd) {
 		err = ccd_regls(ri, myprn);
 	    } else if (ri->ridge) {
@@ -2421,15 +2465,12 @@ static int real_regls_xv_mpi (regls_info *ri, PRN *prn)
     } else {
 	XVC = gretl_zero_matrix_new(ri->nlam, folds_per);
     }
+    if (XVC == NULL) {
+	err = E_ALLOC;
+    }
 
     if (ri->ccd || ri->ridge) {
-	/* FIXME svd ridge? */
-	int i;
-
-	lam = gretl_matrix_copy(ri->lfrac);
-	for (i=0; i<ri->nlam; i++) {
-	    lam->val[i] *= lmax;
-	}
+	lam = make_xv_lambda(ri, lmax, &err);
     }
 
     if (rank == 0) {
@@ -2495,13 +2536,30 @@ static int real_regls_xv_mpi (regls_info *ri, PRN *prn)
     return err;
 }
 
-#endif /* HAVE_MPI */
+static int xv_use_mpi (regls_info *ri)
+{
+    int no_mpi = gretl_bundle_get_bool(ri->b, "no_mpi", 0);
+    int ret = (no_mpi == 0);
+
+    /* It's not yet clear whether MPI is useful for the ridge case, or
+       for ccd in general. This may depend on the size of the data;
+       experimentation is needed!
+    */
+    if (ret && (ri->ccd || ri->ridge)) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+#endif /* HAVE_MPI or not */
 
 int gretl_regls (gretl_matrix *X,
 		 gretl_matrix *y,
 		 gretl_bundle *bun,
 		 PRN *prn)
 {
+    int (*regfunc) (regls_info *, PRN *) = NULL;
     regls_info *ri;
     int err = 0;
 
@@ -2510,38 +2568,34 @@ int gretl_regls (gretl_matrix *X,
 	return err;
     }
 
-    /* It's not yet clear whether MPI is useful for the ridge case, or
-       for ccd in general. This may depend on the size of the data;
-       experimentation is needed!
-    */
-
     if (ri->xvalid) {
 #ifdef HAVE_MPI
-	int no_mpi = gretl_bundle_get_bool(bun, "no_mpi", 0);
-
-	if (!no_mpi && (ri->ccd || ri->ridge)) {
-	    /* not worth it? */
-	    no_mpi = 1;
-	}
-	if (!no_mpi) {
+	if (xv_use_mpi(ri)) {
 	    if (gretl_mpi_n_processes() > 1) {
-		err = real_regls_xv_mpi(ri, prn);
+		regfunc = real_regls_xv_mpi;
 	    } else if (auto_mpi_ok()) {
-		err = mpi_parent_action(ri, prn);
+		regfunc = mpi_parent_action;
 	    }
-	    goto finish;
 	}
 #endif
-	err = regls_xv(ri, prn);
+	if (regfunc == NULL) {
+	    regfunc = regls_xv;
+	}
     } else if (ri->ccd) {
-	err = ccd_regls(ri, prn);
+	regfunc = ccd_regls;
     } else if (ri->ridge) {
-	err = svd_ridge(ri, prn);
+	regfunc = svd_ridge;
     } else {
-	err = admm_lasso(ri, prn);
+	regfunc = admm_lasso;
     }
 
- finish:
+    if (regfunc != mpi_parent_action) {
+	err = regls_set_Xty(ri);
+    }
+
+    if (!err) {
+	err = regfunc(ri, prn);
+    }
 
     free(ri);
 
