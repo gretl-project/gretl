@@ -2589,9 +2589,13 @@ int gretl_regls (gretl_matrix *X,
 	regfunc = admm_lasso;
     }
 
+#ifdef HAVE_MPI
     if (regfunc != mpi_parent_action) {
 	err = regls_set_Xty(ri);
     }
+#else
+    err = regls_set_Xty(ri);
+#endif
 
     if (!err) {
 	err = regfunc(ri, prn);
