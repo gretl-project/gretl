@@ -143,7 +143,8 @@ function matrices gen_irfs(bundle b, int numh, matrix to_cum)
     matrix B = b.B
     k = b.detterms    # just a number?
 
-    # TODO: This cumulation spec should be taken from the mod, no?
+    # On the outside, this cumulation spec is taken from the mod.
+    # (Empty matrix to_cum if doesn't apply.)
     any_cumul = nelem(to_cum) > 0
 
     n = cols(B)
@@ -291,7 +292,7 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
     n_exotic = get_n_exotic(mod)
 
     # responses to be cumulated?
-    to_cum = mod.ncumul ? mod.cumul : {}
+    matrix to_cum = mod.ncumul ? mod.cumul : {}
 
     #
     # the main loop
