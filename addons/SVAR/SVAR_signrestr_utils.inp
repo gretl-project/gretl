@@ -48,6 +48,8 @@ end function
 function matrix normalize(const matrix A)
     # Tag: sign restriction apparatus
     # this function is for normalizing the "candidate" matrix A
+    # (-- TODO: maybe rename this function, to avoid confusion
+    # with the normalize option in the SVAR model bundle!?)
     
     matrix U = correspondence(A)
     matrix ret = zeros(rows(A), cols(A))

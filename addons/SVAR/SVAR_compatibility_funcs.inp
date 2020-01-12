@@ -3,7 +3,25 @@
 # (either because they are in extra.zip, or other reasons)
 
 
-###########################
+###
+# A strpos variant is supposed to go into extra 0.7,
+# or perhaps will happen natively
+
+function matrix strpos_allin(strings S, string search_pattern)
+    # Function to determine the numerical position(s) of a 
+    # string in an array
+
+    matrix ret = {}
+    loop i=1..nelem(S) -q
+        if S[i] == search_pattern
+            ret |= i
+        endif
+    endloop
+    return ret 
+end function
+
+
+###
 # A very similar functionality is in splitfname in extra 0.6
 
 function strings basename(string fn)

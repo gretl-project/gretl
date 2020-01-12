@@ -1,6 +1,5 @@
-# include extra.gfn # for what was this needed apart from drill?
-
-# For now drill() comes from: include SVAR_compatibility_funcs.inp 
+# For now drill() and strpos_allin() come from: 
+# include SVAR_compatibility_funcs.inp 
 # And the following functions come from include SVAR_signrestr_utils.inp:
 #  correspondence, normalize, check_one_irf, check_irfs, check_id;
 
@@ -37,40 +36,27 @@ function void SVAR_SRfull(bundle *mod,
 	
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
-    snum = 0
-    k = 0
-
     if !inbundle(mod, "SRest")
         matrix mod.SRest = {}
     endif
 
-    # (this following loop is pretty clumsy - Artur has a function strpos
-    #  for this task in his string_utils package...)
-    loop i = 1..nelem(mod.snames) --quiet
-        if sname == mod.snames[i]
-            snum = i
-            break
-        endif
-    endloop
+    matrix snum = strpos_allin(mod.snames, sname)
 
-    if snum == 0
-        printf "You don't have a shock named %s in your model\n", sname
+    if nelem(snum) != 1 
+        printf "You don't have a shock named %s in your model.\n", sname
+        print " (or several ones)"
+        funcerr "Specify correct and unique shock names" 
     endif
 
-    # (same here for the clumsiness...)
-    loop i = 1..nelem(mod.Ynames) --quiet
-        if yname == mod.Ynames[i]
-            k = i
-            break
-        endif
-    endloop
-
-    if k == 0
-        printf "Variable %s in not in the model\n", sname
+    matrix k = strpos_allin(mod.Ynames, yname)
+    if nelem(k) != 1
+        printf "Variable %s is not in the model\n", yname
+        print " (or several ones with that name)"
+        funcerr "Specify correct and unique variable names" 
     endif
 
     if missing(lo) && missing(hi)
-        printf "No bounds specified!\n"
+        funcerr "No bounds specified!\n"
     endif
 
     lo = ok(lo) ? lo : -$huge
@@ -78,6 +64,7 @@ function void SVAR_SRfull(bundle *mod,
 
     if lo > hi
         printf "Invalid bound specified! [%g : %g]\n", lo, hi
+        funcerr "Provide valid interval"
     endif
 
 	# Attention: Here the ini and fin inputs are transformed 
@@ -93,7 +80,7 @@ function void SVAR_SRplain(bundle *mod,
                            string what,
                            int length[0::0], int ini[0::0])
 
-    # shorthand for sign restrictions
+    # shorthand for sign restrictions in narrow sense
     scalar hi, lo
     if what == "+"
         hi = NA
