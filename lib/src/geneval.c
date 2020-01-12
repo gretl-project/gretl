@@ -5553,7 +5553,7 @@ static NODE *scalar_isnan_node (NODE *n, parser *p)
 	double x = node_get_scalar(n, p);
 
 	if (!p->err) {
-	    ret->v.xval = isnan(x);
+	    ret->v.xval = isnan(x) != 0;
 	}
     }
 
@@ -5577,7 +5577,7 @@ static NODE *matrix_isnan_node (NODE *n, parser *p)
 		int i, n = m->rows * m->cols;
 
 		for (i=0; i<n; i++) {
-		    ret->v.m->val[i] = isnan(m->val[i]);
+		    ret->v.m->val[i] = isnan(m->val[i]) != 0;
 		}
 		gretl_matrix_set_complex(ret->v.m, m->is_complex);
 	    }
