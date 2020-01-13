@@ -12416,7 +12416,7 @@ static int check_array_element_type (NODE *n, GretlType *pt, int i)
     int ok = 0;
 
     if (t == GRETL_TYPE_MATRICES) {
-	ok = n->t == MAT;
+	ok = (n->t == MAT || n->t == NUM);
     } else if (t == GRETL_TYPE_STRINGS) {
 	ok = n->t == STR;
     } else if (t == GRETL_TYPE_BUNDLES) {
@@ -12430,7 +12430,7 @@ static int check_array_element_type (NODE *n, GretlType *pt, int i)
 	   to determine the array type.
 	*/
 	*pt = 0;
-	if (n->t == MAT) {
+	if (n->t == MAT || n->t == NUM) {
 	    *pt = GRETL_TYPE_MATRICES;
 	} else if (n->t == STR) {
 	    *pt = GRETL_TYPE_STRINGS;
@@ -13226,7 +13226,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 			gretl_array_set_type(A, gtype);
 			anon = 0;
 		    }
-		    ptr = node_get_ptr(e, t->t, p, &donate);
+		    if (e->t == NUM) {
+			ptr = gretl_matrix_from_scalar(e->v.xval);
+			donate = 1;
+		    } else {
+			ptr = node_get_ptr(e, t->t, p, &donate);
+		    }
 		    if (donate) {
 			/* copy not required */
 			p->err = gretl_array_append_object(A, ptr, 0);
