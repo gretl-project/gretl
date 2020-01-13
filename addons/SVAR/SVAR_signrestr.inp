@@ -1,4 +1,4 @@
-# For now drill() and strpos_allin() come from: 
+# For now drill(), strpos_allin() and drawnormwis() come from: 
 # include SVAR_compatibility_funcs.inp 
 # And the following functions come from include SVAR_signrestr_utils.inp:
 #  correspondence, normalize, check_one_irf, check_irfs, check_id;
@@ -112,23 +112,6 @@ function void SVAR_SRexotic(bundle *mod, string chk,
 
 end function
 
-###
-### other functions
-###
-
-function matrices BayesianDraw(const matrix iXX, const matrix B,
-                               const matrix Sigma, int T)
-
-    matrix Sigma_draw = iwishart(Sigma*T, T)
-    matrix V = Sigma_draw ** iXX
-    matrix K = cholesky(V)
-    matrix B_draw = vec(B)
-
-    B_draw += K * mnormal(rows(B_draw), 1)
-    B_draw = mshape(B_draw, rows(B), cols(B))
-
-    return defarray(B_draw, Sigma_draw)
-end function
 
 #-----------------------------------------------------------------
 
@@ -202,7 +185,7 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
                          const matrix iXX )
 
     if DO_BAYES
-        matrices Mats = BayesianDraw(iXX, B, mod.Sigma, b.df)
+        matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df)
         b.B = Mats[1]
         b.Sigma = Mats[2]
     endif
