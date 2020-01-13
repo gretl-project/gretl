@@ -4437,7 +4437,7 @@ static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
 	double x = l->t == NUM ? l->v.xval : 0;
 	double y = r->t == NUM ? r->v.xval : 0;
 
-	if (l->t == NUM && r->t == NUM) {
+	if (l->t == NUM && null_or_scalar(r)) {
 	    ret->v.m = gretl_cmatrix_from_scalar(x + y*I, &p->err);
 	} else {
 	    ret->v.m = gretl_cmatrix_build(Re, Im, x, y, &p->err);
@@ -16297,7 +16297,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_COMPLEX:
 	if ((l->t == MAT || l->t == NUM) &&
-	    (r->t == MAT || r->t == NUM)) {
+	    (r->t == MAT || null_or_scalar(r))) {
 	    ret = complex_matrix_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
