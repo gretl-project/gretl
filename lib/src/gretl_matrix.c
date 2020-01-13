@@ -50,6 +50,11 @@
 # endif
 #endif
 
+#ifdef OPENBLAS_BUILD
+extern int openblas_get_num_threads(void);
+extern void openblas_set_num_threads(int nt);
+#endif
+
 /**
  * SECTION:gretl_matrix
  * @short_description: construct and manipulate matrices
@@ -10038,6 +10043,7 @@ static gretl_matrix *eigensym_standard (gretl_matrix *m,
 gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 {
+    gretl_matrix *ret = NULL;
     static int ev_ver;
 
     *err = 0;
@@ -10047,17 +10053,9 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    if (!real_gretl_matrix_is_symmetric(m, 1)) {
-	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
-	*err = E_NONCONF;
-	return NULL;
-    }
-
-#if 0
-    setenv("OMP_NUM_THREADS", "1", 1);
-    char *ont = getenv("OMP_NUM_THREADS");
-    fprintf(stderr, "eig: OMP_NUM_THREADS %s\n", ont);
-    fprintf(stderr, "openblas num threads: %d\n", openblas_get_num_threads());
+#ifdef OPENBLAS_BUILD
+    int save_nt = openblas_get_num_threads();
+    openblas_set_num_threads(1);
 #endif
 
     if (ev_ver == 0) {
@@ -10067,10 +10065,18 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     }
 
     if (m->rows < 10 || ev_ver == 1) {
-	return eigensym_standard(m, eigenvecs, err);
+	ret = eigensym_standard(m, eigenvecs, err);
     } else {
-	return eigensym_rrr(m, eigenvecs, err);
+	ret = eigensym_rrr(m, eigenvecs, err);
     }
+
+#ifdef OPENBLAS_BUILD
+    if (save_nt > 1) {
+	openblas_set_num_threads(save_nt);
+    }
+#endif    
+
+    return ret;
 }
 
 static gretl_matrix *
