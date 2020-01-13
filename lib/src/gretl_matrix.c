@@ -10045,7 +10045,9 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
-    } else if (!real_gretl_matrix_is_symmetric(m, 1)) {
+    }
+
+    if (!real_gretl_matrix_is_symmetric(m, 1)) {
 	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
 	*err = E_NONCONF;
 	return NULL;
