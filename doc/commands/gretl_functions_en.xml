@@ -2544,7 +2544,7 @@
     <function name="complex" section="complex" output="cmatrix">
       <fnargs>
 	<fnarg type="scalar-or-matrix">A</fnarg>
-	<fnarg type="scalar-or-matrix">B</fnarg>
+	<fnarg optional="true" type="scalar-or-matrix">B</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2555,7 +2555,9 @@
 	  c="n"/> with a constant imaginary part&mdash;and similarly
 	  in the converse case but with a constant real part. If both
 	  arguments are matrices they must be of the same dimensions.
-	  <seelist><fncref targ="cswitch"/></seelist>
+	  If the second argument is omitted the imaginary part
+	  defaults to zero.  <seelist><fncref
+	  targ="cswitch"/></seelist>
 	</para>
       </description>
     </function>
@@ -5140,6 +5142,32 @@
 	</para>
 	<code>
 	  if strlen(strstr("cattle", "cat")) &gt; 0
+	</code>
+      </description>
+    </function>
+
+    <function name="instrings" section="strings" output="matrix">
+      <fnargs>
+	<fnarg type="strings">S</fnarg>
+	<fnarg type="string">test</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Checks the elements of the strings array
+	  <argname>S</argname> for equality with
+	  <argname>test</argname>. Returns a column vector of length
+	  equal to the number of matches, holding the positions of the
+	  matches within the array&mdash;or an empty matrix in case of
+	  no matches.
+	</para>
+	<para>
+	  Example:
+	</para>
+	<code>
+	  strings S = defarray("A", "B", "C", "B")
+	  eval instrings(S, "B")
+	  2
+	  4
 	</code>
       </description>
     </function>
