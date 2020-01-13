@@ -3543,7 +3543,7 @@
       </fnargs>
       <description>
 	<para>
-	  Works mostly as <fncref targ="eigengen"/> except that the
+	  Works mostly as <fncref targ="eigen"/> except that the
 	  argument <argname>A</argname> must be symmetric (in which
 	  case less calculation is required), and the eigenvalues are
 	  returned in ascending order. If you want to get the
