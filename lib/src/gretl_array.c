@@ -369,6 +369,48 @@ char *gretl_strings_array_flatten (gretl_array *A, int space, int *err)
     return s;
 }
 
+/* Return a column vector holding the position(s) in
+   the strings array @A at which the string @s is
+   matched -- or an empty matrix in case of no matches.
+*/
+
+gretl_matrix *gretl_strings_array_pos (gretl_array *A,
+				       const char *s,
+				       int *err)
+{
+    gretl_matrix *ret = NULL;
+    const char *si;
+    int i, np = 0;
+
+    for (i=0; i<A->n; i++) {
+	si = A->data[i] == NULL ? "" : A->data[i];
+	if (strcmp(si, s) == 0) {
+	    np++;
+	}
+    }
+
+    if (np == 0) {
+	ret = gretl_null_matrix_new();
+    } else {
+	ret = gretl_matrix_alloc(np, 1);
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else if (np > 0) {
+	int j = 0;
+
+	for (i=0; i<A->n; i++) {
+	    si = A->data[i] == NULL ? "" : A->data[i];
+	    if (strcmp(si, s) == 0) {
+		ret->val[j++] = i+1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 void *gretl_array_get_element (gretl_array *A, int i,
 			       GretlType *type,
 			       int *err)

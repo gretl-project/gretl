@@ -7842,12 +7842,21 @@ static NODE *array_sort_node (NODE *n, int f, parser *p)
     return ret;
 }
 
-static NODE *array_flatten_node (NODE *l, NODE *r, parser *p)
+static NODE *array_func_node (NODE *l, NODE *r, int f, parser *p)
 {
     GretlType t = gretl_array_get_type(l->v.a);
     NODE *ret = NULL;
 
-    if (t == GRETL_TYPE_MATRICES) {
+    if (f == F_INSTRINGS) {
+	if (t != GRETL_TYPE_STRINGS || r->t != STR) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		ret->v.m = gretl_strings_array_pos(l->v.a, r->v.str, &p->err);
+	    }
+	}
+    } else if (t == GRETL_TYPE_MATRICES) {
 	int vcat = node_get_bool(r, p, 0);
 
 	if (!p->err) {
@@ -16014,8 +16023,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_FLATTEN:
+    case F_INSTRINGS:
 	if (l->t == ARRAY) {
-	    ret = array_flatten_node(l, r, p);
+	    ret = array_func_node(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, ARRAY, l, p);
 	}

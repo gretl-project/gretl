@@ -337,6 +337,7 @@ struct str_table funcs[] = {
     { F_CDEMEAN,  "cdemean" },
     { F_CHOL,     "cholesky" },
     { F_PSDROOT,  "psdroot" },
+    { F_INSTRINGS, "instrings" },
     { F_INV,      "inv" },
     { F_INVPD,    "invpd" },
     { F_GINV,     "ginv" },

@@ -399,6 +399,7 @@ enum {
     F_STDIZE,
     F_CSWITCH,
     F_PSDROOT,
+    F_INSTRINGS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
