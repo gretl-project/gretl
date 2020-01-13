@@ -11,6 +11,7 @@ version 20210a, in progress
   protect packages written for gretl < 2019d
 - SVD: use faster divide-and-conquer lapack function
 - complex(): make the second argument optional
+- defarray(): treat scalar arguments as 1x1 matrices
 
 2019-12-22 version 2019d
 - Add support for complex matrices, with new functions
