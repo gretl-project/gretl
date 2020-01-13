@@ -10053,6 +10053,13 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
+#if 0
+    setenv("OMP_NUM_THREADS", "1", 1);
+    char *ont = getenv("OMP_NUM_THREADS");
+    fprintf(stderr, "eig: OMP_NUM_THREADS %s\n", ont);
+    fprintf(stderr, "openblas num threads: %d\n", openblas_get_num_threads());
+#endif
+
     if (ev_ver == 0) {
 	char *s = getenv("GRETL_OLD_EV");
 
