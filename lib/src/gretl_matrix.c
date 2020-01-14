@@ -10055,7 +10055,9 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
 #ifdef OPENBLAS_BUILD
     int save_nt = openblas_get_num_threads();
-    openblas_set_num_threads(1);
+    if (save_nt > 1) {
+	openblas_set_num_threads(1);
+    }
 #endif
 
     if (ev_ver == 0) {
