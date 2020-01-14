@@ -209,6 +209,10 @@ static int regls_set_Xty (regls_info *ri)
 {
     int err = 0;
 
+    if (ri->Xty != NULL) {
+	return 0;
+    }
+
     ri->Xty = gretl_matrix_alloc(ri->X->cols, 1);
     if (ri->Xty == NULL) {
 	err = E_ALLOC;
@@ -1746,12 +1750,21 @@ static int admm_lasso (regls_info *ri, PRN *prn)
 	}
     }
 
-    get_cholesky_factor(ri->X, L, rho);
+    if (ri->Xty == NULL) {
+	err = regls_set_Xty(ri);
+    }
 
-    B = make_coeff_matrix(ri, &jmin, &jmax);
-    if (B == NULL) {
+    if (!err) {
+	get_cholesky_factor(ri->X, L, rho);
+	B = make_coeff_matrix(ri, &jmin, &jmax);
+	if (B == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
 	gretl_matrix_block_destroy(MB);
-	return E_ALLOC;
+	return err;
     }
 
     if (!ri->xvalid && ri->verbose > 0 && ri->nlam > 1) {
