@@ -40,6 +40,16 @@ endif
 
 # Switch to a sign restriction model, but re-using the 
 # reduced-form results from above
+# (and also the first three Cholesky-based shocks ?!
+
+/*
+Above the shock #4 is labeled Monetary, and below some sign 
+restrictions are given for it, and no other shock. 
+However, in the original plotting further down the shock #1 was looked at --
+But this referred to the revised counting among the subset of 
+all shocks that are id-ed via SR! 
+(Should be OK now in SVAR_SRplot...) 
+*/
 
 mod.type = 10 # (10 is internal code for SR)
 
@@ -51,9 +61,14 @@ SVAR_SRplain(&mod, "cp", "Monetary", "-", 5)   # ditto
 SVAR_SRplain(&mod, "r", "Monetary", "+", 5)    # positive from 0 to 5
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(mod, 200, 1)
+bundles moo = SVAR_setidIRF(&mod, 200, 1)
 
 # draw the irfs (page 397)
+
+SVAR_SRplot(moo, mod, mod.Ynames, defarray("Monetary"), 0.75)
+
+/* redundant now:
+
 bundle IrfData = IRF_plotdata(moo, 0.75)
 
 k = 1
@@ -70,3 +85,4 @@ loop foreach i X --quiet
     end plot --output=display
     k++
 endloop
+*/

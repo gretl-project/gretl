@@ -52,7 +52,7 @@ else
 endif
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(mod, 100)
+bundles moo = SVAR_setidIRF(&mod, 100)
 
 # check: these matrices should be the same if try_exotic is
 # 0 or 1

@@ -40,14 +40,15 @@ SVAR_SRplain(&mod, "INFL", "Interest Rate", "-")
 SVAR_SRplain(&mod, "FF", "Interest Rate", "+")
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(mod, 256, 0, 5000)
+bundles moo = SVAR_setidIRF(&mod, 256, 0, 5000)
 
 # draw the irfs
 
 # try new wrapper code:
 SVAR_SRplot(moo, mod, mod.Ynames, mod.snames, 0.95) 
 
-/*
+/* redundant now:
+
 bundle IrfData = IRF_plotdata(moo, 0.975)
 
 k = 1

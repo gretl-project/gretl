@@ -97,9 +97,38 @@ function void SVAR_SRplain(bundle *mod,
     SVAR_SRfull(&mod, yname, sname, lo, hi, ini, ini+length)
 end function
 
-function void SVAR_SRexotic(bundle *mod, string chk,
+#####################################################################
+
+function void SVAR_SRexotic(bundle *mod, string chkstr,
                             int length[0::0], int ini[0::0],
                             bool needs_model[0])
+
+    /* Allows to specify more "exotic" restrictions than just an interval
+       for one IRF over some horizon. For example, a difference or ratio
+       of two IRFs. But the format is necessarily more free-floating here,
+       see the documentation.
+
+       chkstr: a string with a valid numerical evaluation of a some function 
+            of the IRFs at a given horizon tau. The IRF_tau matrix must be 
+            hardcoded as "M". Cross-horizon restrictions are impossible.
+
+       length: length of the horizon span over which the restriction should hold 
+       ini: first horizon after shock impact to consider
+       (the span is then from ini to ini+length, where impact timing is 0)
+
+       needs_model: If yes, this becomes a "super-exotic" restriction, 
+            because it needs more input than just the boundaries; for example
+            an estimated coefficient (or just the observed variables).
+
+    */
+    # TODO: Here a shock number is not specified / clear, because it is 
+    #       implicit in the chk string. But this messes up the count of 
+    #       the number of shocks which is id-ed with SR! 
+    
+
+    if $version < 20191 && needs_model # at least 2019b, because of feval
+        funcerr "Sorry, need at least gretl 2019b for (some) exotic restrictions"
+    endif 
 
     if !inbundle(mod, "exoticSR")
         strings checks = null
@@ -107,7 +136,7 @@ function void SVAR_SRexotic(bundle *mod, string chk,
           "super", {})
     endif
 
-    mod.exoticSR.checks += chk
+    mod.exoticSR.checks += chkstr
     # the indexing convention here matches SRfull, +1
     mod.exoticSR.spans = mod.exoticSR.spans | { ini + 1, ini + length + 1 }
     mod.exoticSR.super = mod.exoticSR.super | { needs_model }
@@ -160,7 +189,7 @@ end function
 
 # -------------------
 
-function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
+function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
                                int maxiter[10000])
 
     # This function draws a random rotations of the Cholesky model
@@ -198,8 +227,13 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
     iter = 1
 
     # how many shocks are to be identified via sign restrictions?
+    # (these just refer to "plain" or "full" restr, not "exotic" (?) [Sven])
     matrix shocks = values(mod.SRest[,6])
-    nshocks = rows(shocks)
+    
+    # Now extract those shocks that are actually covered by SR
+    # (again: do something about counting exotic restrictions)
+    strings mod.SRid_snames = getstrings_byindex(mod.snames, shocks)
+
     matrices Ais = prepAis(mod, shocks)
 
     # do we have exotic restrictions?
@@ -217,11 +251,12 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
 
     loop while good<rep && iter<=maxiter --quiet
 
+        # first just using non-exotic restrictions
         rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma 
         matrices irfs = gen_SRirfs(b, numh, to_cum)
-        matrix id_matrix = get_id_mat(mod, shocks, nshocks, irfs, Ais, DO_NORM)
+        matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM) # was nshocks
 
-        chk = DO_NORM ? (rows(id_matrix) == nshocks) : 0 # this check 1st!
+        chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st! (was nshocks)
         chk = chk && check_id(id_matrix)
 
         if chk
@@ -266,8 +301,9 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
 
             if chk
                 good++
-
                 b.irfs = irfs
+
+                # copy the results of accepted draw to output bundles array 
                 drawn += b
             endif
         else
@@ -299,6 +335,10 @@ end function
 ###
 
 function void SVAR_spagplot(bundles bs, bundle mod, int Var[1::1], int Shk[1::1])
+
+    # FIXME: Sven believes that if only a subset of shocks are id-ed via SR,
+    # then the full mod.snames is not the right name collection to look at 
+    # and to pick the names from (by index) 
     
     if Var > nelem(mod.Ynames) || Shk > nelem(mod.snames)
         funcerr "Variable or shock index out of range"
@@ -391,7 +431,12 @@ function void SVAR_SRplot(const bundles SR_IRFs "bundles from SVAR_setidIRF",
 
     # Omitting the strings array inputs means: do all.
 
-    bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)
+    if !inbundle(mod, "SRid_snames")
+        funcerr "No SR (sign restriction) specs found"
+        # TODO: This fails if _only_ exotic restrictions are used!
+    endif
+
+    bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)   
 
     # Which variables: 
     if !exists(whichvars)
@@ -406,7 +451,7 @@ function void SVAR_SRplot(const bundles SR_IRFs "bundles from SVAR_setidIRF",
     if !exists(whichshocks) 
         strings whichshocks = array(0)
     endif
-    matrix wshoix = names2indices(mod.snames, whichshocks)
+    matrix wshoix = names2indices(mod.SRid_snames, whichshocks)
     if !nelem(wshoix)
         funcerr "No matching shock names found"
     endif
@@ -430,7 +475,7 @@ function void SVAR_SRplot(const bundles SR_IRFs "bundles from SVAR_setidIRF",
             plot grph
                 options with-lines fit=none
                 options band=band,1 band-style=fill
-                printf "set title '%s shock -> %s'", mod.snames[j], \
+                printf "set title '%s shock -> %s'", mod.SRid_snames[j], \
                        mod.Ynames[i]
             end plot --output=display
         endloop

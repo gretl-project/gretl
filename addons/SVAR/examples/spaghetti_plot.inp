@@ -45,7 +45,7 @@ SVAR_SRplain(&mod, "q", "Demand", "+")  # as well as quantity
 rep = 128
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(mod, rep)
+bundles moo = SVAR_setidIRF(&mod, rep)
 
 # draw the irfs
 

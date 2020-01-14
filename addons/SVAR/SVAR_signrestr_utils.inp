@@ -4,6 +4,19 @@
 
 #############################
 
+function strings getstrings_byindex(const strings S, const matrix indices)
+    # collects the (in general non-contiguous) sub-array
+    # indexed by indices (imitate fancy indexing)
+    strings out = null
+    matrix m = vec(indices) 
+    loop i = 1..nelem(m) -q
+        out += S[m[i]]
+    endloop
+    return out
+end function
+
+# --------------------------------
+
 function matrix names2indices(strings fromwhich, strings names)
 
     matrix which = {}
@@ -74,10 +87,11 @@ end function
 # -----------------------------------
 
 function matrix get_id_mat (const bundle mod, const matrix shocks,
-                            int nshocks, 
                             const matrices irfs, const matrices Ais,
                             bool DO_NORM)
+    # (removed redundant nshocks arg)
 
+    nshocks = rows(shocks)
     matrix id_matrix = zeros(nshocks, mod.n)
     loop i = 1..nshocks --quiet
         id_matrix[i,] = check_irfs(irfs, Ais[i])
