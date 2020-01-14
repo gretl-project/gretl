@@ -40,8 +40,8 @@ function matrices drawnormwis(const matrix iXX, const matrix B,
 end function
 
 ###
-# A strpos variant is supposed to go into extra 0.7,
-# or perhaps will happen natively
+# In gretl 2020a there will be 'instrings' with the same 
+# functionality as this strpos_allin
 
 function matrix strpos_allin(strings S, string search_pattern)
     # Function to determine the numerical position(s) of a 
