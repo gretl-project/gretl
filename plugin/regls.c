@@ -162,7 +162,7 @@ regls_info *regls_info_new (gretl_matrix *X,
 	ri->xvalid =  gretl_bundle_get_int(b, "xvalidate", err);
 	ri->verbose = gretl_bundle_get_bool(b, "verbosity", 1);
 	ri->ridge =   gretl_bundle_get_bool(b, "ridge", 0);
-	ri->ccd =     gretl_bundle_get_bool(b, "use_ccd", 0);
+	ri->ccd =     gretl_bundle_get_bool(b, "ccd", 0);
 	ri->lfrac =   gretl_bundle_get_matrix(b, "lfrac", err);
     }
 
@@ -2329,9 +2329,9 @@ static int regls_xv (regls_info *ri, PRN *prn)
     alpha = ri->ridge ? 0.0 : 1.0;
 
     if (ri->verbose) {
-	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
-		nf, fsize, randfolds, crit_string(crit_type));
-	pprintf(prn, " ridge=%d, ccd=%d\n", ri->ridge, ri->ccd);
+	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s, "
+		"ridge=%d, ccd=%d\n", nf, fsize, randfolds,
+		crit_string(crit_type), ri->ridge, ri->ccd);
 	gretl_flush(prn);
     }
 
