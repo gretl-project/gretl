@@ -43,6 +43,11 @@ SVAR_SRplain(&mod, "FF", "Interest Rate", "+")
 bundles moo = SVAR_setidIRF(mod, 256, 0, 5000)
 
 # draw the irfs
+
+# try new wrapper code:
+SVAR_SRplot(moo, mod, mod.Ynames, mod.snames, 0.95) 
+
+/*
 bundle IrfData = IRF_plotdata(moo, 0.975)
 
 k = 1
@@ -60,3 +65,4 @@ loop j = 1..3 --quiet
         k++
     endloop
 endloop
+*/

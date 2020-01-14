@@ -10,7 +10,8 @@ public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     GUI_SVAR GUI_plot FEVDplot FEVDsave HDplot HDsave \
     SVAR_bundle_print \
     SVAR_SRplain SVAR_setidIRF IRF_plotdata \
-    SVAR_SRexotic SVAR_spagplot SVAR_SRfull
+    SVAR_SRexotic SVAR_spagplot SVAR_SRfull \
+    SVAR_SRplot
 
 gui-main = GUI_SVAR
 

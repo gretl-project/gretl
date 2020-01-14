@@ -42,6 +42,7 @@ end function
 ###
 # In gretl 2020a there will be 'instrings' with the same 
 # functionality as this strpos_allin
+# (I hope it also returns a column vector...!)
 
 function matrix strpos_allin(strings S, string search_pattern)
     # Function to determine the numerical position(s) of a 

@@ -117,10 +117,11 @@ end function
 
 #-----------------------------------------------------------------
 
-function matrices gen_irfs(bundle b, int numh, matrix to_cum)
+function matrices gen_SRirfs(bundle b, int numh, matrix to_cum)
 
     # This calculates results for 0..mod.horizons, which is actually 
     # like in the earlier SVAR code.
+    # TODO: Maybe merge this function with earlier ones from SVAR? 
     # So numh == mod.horizon + 1. 
     # => FIXME the doc has been (up to 2020) slightly wrong in this regard
     # (it claims h=mod.horizons rows in the IRFs matrix, one less than true) 
@@ -217,7 +218,7 @@ function bundles SVAR_setidIRF(bundle mod, int rep, bool DO_BAYES[0],
     loop while good<rep && iter<=maxiter --quiet
 
         rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma 
-        matrices irfs = gen_irfs(b, numh, to_cum)
+        matrices irfs = gen_SRirfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, nshocks, irfs, Ais, DO_NORM)
 
         chk = DO_NORM ? (rows(id_matrix) == nshocks) : 0 # this check 1st!
@@ -330,7 +331,7 @@ function void SVAR_spagplot(bundles bs, bundle mod, int Var[1::1], int Shk[1::1]
 end function
 
 
-function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
+function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
 
     # here we store the data for plotting the irfs in a matrix, conceptually
     # similar to the "bands" matrix we use in SVAR_boot, that is with H rows
@@ -361,12 +362,12 @@ function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
 
     # output bundle (H: num of [accepted] replications) 
 	# (leave out ret.raw = A)
-    bundle ret = defbundle("rep",H, "alpha",alpha, "biascorr",0)
+    bundle ret = defbundle("rep",H, "coveralpha",coveralpha, "biascorr",0)
     matrix ret.irfSRmeans  = mshape(m, h, nvXns)
     matrix ret.irfSRserrs  = mshape(s, h, nvXns)
 
     # point-wise pseudo confidence bands (ripped from SVAR_boot)
-    q_alpha = 0.5 * (1 - alpha)
+    q_alpha = 0.5 * (1 - coveralpha)
     matrix locb = quantile(A, q_alpha)
     matrix hicb = quantile(A, 1 - q_alpha)
     matrix mdn  = quantile(A, 0.5)
@@ -377,3 +378,63 @@ function bundle IRF_plotdata(bundles bs, scalar alpha[0.9])
 
     return ret
 end function
+
+function void SVAR_SRplot(const bundles SR_IRFs "bundles from SVAR_setidIRF",
+                          const bundle mod "the model bundle", 
+                          const strings whichvars[null] "which variables",
+                          const strings whichshocks[null] "which shocks",
+                          scalar coveralpha[0:1:0.9] "CI coverage",
+                          bool meanormed[0] "choose 1 for medians")
+
+    # TODO: make the function return the plot code as string 
+    # TODO: use the existing IRFgrph and IRFsave functions internally
+
+    # Omitting the strings array inputs means: do all.
+
+    bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)
+
+    # Which variables: 
+    if !exists(whichvars)
+        strings whichvars = array(0) # default induces "all"
+    endif
+    matrix wvarix = names2indices(mod.Ynames, whichvars)
+    if !nelem(wvarix)
+        funcerr "No matching variable names found"
+    endif
+
+	# Which shocks:
+    if !exists(whichshocks) 
+        strings whichshocks = array(0)
+    endif
+    matrix wshoix = names2indices(mod.snames, whichshocks)
+    if !nelem(wshoix)
+        funcerr "No matching shock names found"
+    endif
+
+    ## The actual plotting 
+    #  (this is where existing internal plotting functions could 
+    #   be reused)
+    loop metaj = 1..nelem(wshoix) -q # for the shocks
+        j = wshoix[metaj]
+
+        loop metai = 1..nelem(wvarix) -q # for the target variables
+            i = wvarix[metai]
+
+            # pick the right position in the matrix
+            k = (j-1) * nelem(mod.Ynames) + i 
+
+            matrix grph = IrfData.irfSRmeans[,k] ~ seq(0, mod.horizon)'
+            matrix band = IrfData.lo_cb[,k] ~ IrfData.hi_cb[,k]
+            band = 0.5 * band * {1, 1; 1, -1}
+
+            plot grph
+                options with-lines fit=none
+                options band=band,1 band-style=fill
+                printf "set title '%s shock -> %s'", mod.snames[j], \
+                       mod.Ynames[i]
+            end plot --output=display
+        endloop
+    endloop
+
+    # return the gnuplot plotting code here eventually
+end function 
