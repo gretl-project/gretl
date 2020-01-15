@@ -193,10 +193,13 @@ struct fnpkg_ {
 				 t == GRETL_TYPE_STRINGS ||		\
 				 t == GRETL_TYPE_MATRICES ||		\
 				 t == GRETL_TYPE_BUNDLES||		\
-				 t == GRETL_TYPE_LISTS ||		\
+				 t == GRETL_TYPE_LISTS ||               \
+				 t == GRETL_TYPE_ARRAYS ||		\
 				 t == GRETL_TYPE_STRINGS_REF ||		\
 				 t == GRETL_TYPE_MATRICES_REF ||	\
-				 t == GRETL_TYPE_BUNDLES_REF)
+	                         t == GRETL_TYPE_BUNDLES_REF ||         \
+	                         t == GRETL_TYPE_LISTS_REF ||           \
+				 t == GRETL_TYPE_ARRAYS_REF)
 
 enum {
     ARG_OPTIONAL = 1 << 0,
