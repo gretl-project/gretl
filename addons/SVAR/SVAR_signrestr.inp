@@ -69,6 +69,10 @@ function void SVAR_SRfull(bundle *mod,
         funcerr "Provide valid interval"
     endif
 
+	if mod.horizon <= fin 
+        mod.horizon = fin + 1 # to be on the safe side 
+    endif
+
 	# Attention: Here the ini and fin inputs are transformed 
     # to 1-based matrix indexing form, not keeping the actual 
     # horizon meaning
@@ -112,9 +116,11 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
             of the IRFs at a given horizon tau. The IRF_tau matrix must be 
             hardcoded as "M". Cross-horizon restrictions are impossible.
 
-       length: length of the horizon span over which the restriction should hold 
+       length: length of the horizon span over which the restriction should 
+               hold 
        ini: first horizon after shock impact to consider
-       (the span is then from ini to ini+length, where impact timing is 0)
+       (the span is then from ini to ini+length, where impact timing is 0;
+        so the default settings just concern the impact effect)
 
        needs_model: If yes, this becomes a "super-exotic" restriction, 
             because it needs more input than just the boundaries; for example
@@ -124,7 +130,6 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
     # TODO: Here a shock number is not specified / clear, because it is 
     #       implicit in the chk string. But this messes up the count of 
     #       the number of shocks which is id-ed with SR! 
-    
 
     if $version < 20191 && needs_model # at least 2019b, because of feval
         funcerr "Sorry, need at least gretl 2019b for (some) exotic restrictions"
@@ -136,9 +141,13 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
           "super", {})
     endif
 
+	finp1 = ini + length + 1 # the indexing convention here matches SRfull, +1
+    if mod.horizon <= finp1 
+        mod.horizon = finp1 + 1 # on the safe side 
+    endif
+
     mod.exoticSR.checks += chkstr
-    # the indexing convention here matches SRfull, +1
-    mod.exoticSR.spans = mod.exoticSR.spans | { ini + 1, ini + length + 1 }
+    mod.exoticSR.spans = mod.exoticSR.spans | { ini + 1, finp1 }
     mod.exoticSR.super = mod.exoticSR.super | { needs_model }
 
 end function
@@ -277,6 +286,8 @@ function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
                     loop t = inip1..finp1 --quiet
                         matrix M = irfs[t] # hardcoded "M" for the API!
                         if needs_model
+                            # FIXME This part looks very broken...!?
+                            # or very outdated...
                             exocheck = feval(exo_restrict, M, mod)
                         else
                             exocheck = @exo_restrict

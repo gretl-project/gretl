@@ -18,19 +18,21 @@ open KMdata.gdt --quiet --frompkg=SVAR
 # variables
 list X = prod KI rpo inventories
 
-scalar order = 24
-
-#set up the model
+# set up the model
 list Z = const seasonals(1)
-mod = SVAR_setup("SR", X, Z, order) 
+order = 24
+bundle mod = SVAR_setup("SR", X, Z, order) 
 SVAR_cumulate(&mod, 1)
 SVAR_cumulate(&mod, 4)
-mod.horizon = 1
+mod.horizon = 16
+
+numofaccept = 256
+coverage = 0.95
 
 ## set up the sign restictions
 mod.snames = defarray("Supply", "Demand", "Speculative Demand",)
 
-# these are the "dynamic" restriction and (impact? )sign restrictions.
+# these are the "dynamic" and impact sign restrictions.
 SVAR_SRplain(&mod, "prod", "Supply", "-", 12) 
 SVAR_SRplain(&mod, "KI",   "Supply", "-", 12)
 SVAR_SRplain(&mod, "rpo",  "Supply", "+", 12)
@@ -46,24 +48,44 @@ SVAR_SRplain(&mod, "rpo",  "Speculative Demand", "+")
 SVAR_SRplain(&mod, "inventories", "Speculative Demand","+")
 
 
-# exotic restrictions: supply elasticity  bounds
-# (hardcoded "M"!)
-exostring2 = "M[1,2] / M[3,2] >= 0"
-exostring3 = "M[1,3] / M[3,3] >= 0"
+## exotic restrictions: 
+/* Attention: 
+ The symbol "M" for the IRF matrix is hardcoded!
+ And if elements from the model bundle are needed, the name of 
+ that bundle must in this context also be "mod".
+ (By coincidence in this script it also happens to be "mod" in 
+  other contexts.) 
+ The horizon range for which these exotic restrictions should 
+ hold is specified explicitly or implicitly in the function 
+ call below.
+*/
+string exot2 = "M[1,2] / M[3,2] >= 0" # shock 2: Demand
+string exot3 = "M[1,3] / M[3,3] >= 0" # shock 3: Specul. Demand 
 
 
-# FIXME: Don't the following restrictions also imply "need_model" ??? (Sven)
-exostring1 = "mean(((exp((log(54389) + cum(mod.Y[,1])))* M[1,1] ./ 100) - M[4,1]) ./ (exp((log(54389)+cum(mod.Y[,1]))) - mean(mod.Y[,4])) ./ (M[3,1]./100))>=-0.8"
-# mean(mod.Y[,4])=4.4982 -from the summary statistics
-exostring11 = "mean(((exp((log(54389) + cum(mod.Y[,1])))* M[1,1] ./ 100) - M[4,1]) ./ (exp((log(54389)+cum(mod.Y[,1]))) - mean(mod.Y[,4])) ./ (M[3,1]./100)) <=0"
+# TODO: These super-exotic restrictions work with hardcoded "mod" 
+# and thus curently do _not_ need need_model = 1.
+# The whole need_model apparatus needs fixing.
 
-SVAR_SRexotic(&mod, exostring11, 0)
-SVAR_SRexotic(&mod, exostring1, 0)
-SVAR_SRexotic(&mod, exostring2, 0)
-SVAR_SRexotic(&mod, exostring3, 0)
+## Supply elasticity bounds
+# prepare
+string part1 = "mean( (exp((log(54389) + cum(mod.Y[,1]))) * M[1,1] ./ 100 - M[4,1]) "
+part1 ~= "  ./ (exp((log(54389) + cum(mod.Y[,1]))) - mean(mod.Y[,4]))"
+part1 ~= "  ./ (M[3,1]./100) ) "
+string exot1 = part1 ~ " >= -0.8" # shock 1: Supply
+
+# memo: mean(mod.Y[,4]) = 4.4982 - from the summary statistics
+
+string exot11 = part1 ~ " <= 0 "  # shock 1: Supply
+
+# apply exotic and super-exotic restrictions
+SVAR_SRexotic(&mod, exot11)
+SVAR_SRexotic(&mod, exot1)
+SVAR_SRexotic(&mod, exot2)
+SVAR_SRexotic(&mod, exot3)
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(&mod, 256, 0, 15000)
+bundles moo = SVAR_setidIRF(&mod, numofaccept, 0, 15000)
 
 # draw the irfs
-SVAR_SRplot(moo, mod, mod.Ynames, mod.snames, 0.95) 
+SVAR_SRplot(moo, mod, mod.Ynames, mod.snames, coverage) 
