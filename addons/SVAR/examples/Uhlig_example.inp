@@ -45,20 +45,16 @@ endif
 /*
 Above the shock #4 is labeled Monetary, and below some sign 
 restrictions are given for it, and no other shock. 
-However, in the original plotting further down the shock #1 was looked at --
-But this referred to the revised counting among the subset of 
-all shocks that are id-ed via SR! 
-(Should be OK now in SVAR_SRplot...) 
 */
 
 mod.type = 10 # (10 is internal code for SR)
 
 # set up the sign restictions
 
-SVAR_SRplain(&mod, "p", "Monetary", "-", 5)    # negative from 0 to 5
+SVAR_SRplain(&mod, "p",   "Monetary", "-", 5)    # negative from 0 to 5
 SVAR_SRplain(&mod, "nbr", "Monetary", "-", 5)  # ditto
-SVAR_SRplain(&mod, "cp", "Monetary", "-", 5)   # ditto
-SVAR_SRplain(&mod, "r", "Monetary", "+", 5)    # positive from 0 to 5
+SVAR_SRplain(&mod, "cp",  "Monetary", "-", 5)   # ditto
+SVAR_SRplain(&mod, "r",   "Monetary", "+", 5)    # positive from 0 to 5
 
 # do the rotations (this is the computationally intensive part)
 bundles moo = SVAR_setidIRF(&mod, 200, 1)
@@ -66,23 +62,3 @@ bundles moo = SVAR_setidIRF(&mod, 200, 1)
 # draw the irfs (page 397)
 
 SVAR_SRplot(moo, mod, mod.Ynames, defarray("Monetary"), 0.75)
-
-/* redundant now:
-
-bundle IrfData = IRF_plotdata(moo, 0.75)
-
-k = 1
-loop foreach i X --quiet
-    vname = "$i"
-    matrix grph = IrfData.irfSRmeans[,k] ~ seq(0, mod.horizon)'
-    matrix band = IrfData.lo_cb[,k] ~ IrfData.hi_cb[,k]
-    band = 0.5 * band * {1, 1; 1, -1}
-
-    plot grph
-        options with-lines fit=none
-        options band=band,1 band-style=fill
-        printf "set title '%s shock -> %s'", mod.snames[1], vname
-    end plot --output=display
-    k++
-endloop
-*/

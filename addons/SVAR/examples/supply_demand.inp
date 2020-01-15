@@ -48,25 +48,3 @@ bundles moo = SVAR_setidIRF(&mod, 1000)
 
 # draw the irfs (with default coverage 90%)
 SVAR_SRplot(moo, mod, mod.Ynames, defarray("Supply","Demand"))
-
-/* redundant now:
-
-bundle IrfData = IRF_plotdata(moo)
-
-k = 1
-loop s = 1..2 --quiet
-    loop foreach i X --quiet
-        vname = "$i"
-        matrix grph = IrfData.irfSRmeans[,k] ~ seq(0, mod.horizon)'
-        matrix band = IrfData.lo_cb[,k] ~ IrfData.hi_cb[,k]
-        band = 0.5 * band * {1, 1; 1, -1}
-
-        plot grph
-            options with-lines fit=none
-            options band=band,1 band-style=fill
-            printf "set title '%s shock -> %s'", mod.snames[s], vname
-        end plot --output=display
-        k++
-    endloop
-endloop
-*/
