@@ -46,6 +46,11 @@ int libgretl_mpi_init (int self, int np, int dcmt);
 int gretl_mpi_initialized (void);
 #endif
 
+#ifdef OPENBLAS_BUILD
+int openblas_get_num_threads(void);
+void openblas_set_num_threads(int nt);
+#endif
+
 int auto_mpi_ok (void);
 
 void libgretl_session_cleanup (int mode);

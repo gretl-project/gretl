@@ -50,11 +50,6 @@
 # endif
 #endif
 
-#ifdef OPENBLAS_BUILD
-extern int openblas_get_num_threads(void);
-extern void openblas_set_num_threads(int nt);
-#endif
-
 /**
  * SECTION:gretl_matrix
  * @short_description: construct and manipulate matrices
