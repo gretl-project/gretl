@@ -563,7 +563,7 @@ int gretl_n_physical_cores (void)
 int libset_use_openmp (guint64 n)
 {
 #if defined(_OPENMP)
-    if (state == NULL || !(state->flags & STATE_OPENMP_ON)) {
+    if (state == NULL || !(state->flags & STATE_OPENMP_ON) || omp_n_threads < 2) {
 	return 0;
     } else if (omp_mnk_min >= 0 && n >= (guint64) omp_mnk_min) {
 # if OMP_SHOW > 1
