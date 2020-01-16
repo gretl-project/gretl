@@ -2675,8 +2675,12 @@ static int mpi_parent_action (regls_info *ri, PRN *prn)
 	/* compose and execute MPI script */
 	err = foreign_start(MPI, NULL, OPT_NONE, prn);
 	if (!err) {
-	    pputs(prn, "Invoking MPI...\n\n");
-	    gretl_flush(prn);
+	    if (ri->verbose) {
+		pputs(prn, "Invoking MPI...\n\n");
+		gretl_flush(prn);
+	    } else {
+		fprintf(stderr, "doing MPI\n");
+	    }
 	    foreign_append("_regls()", MPI);
 	    err = foreign_execute(NULL, OPT_L | OPT_S | OPT_Q, prn);
 	    if (err) {
