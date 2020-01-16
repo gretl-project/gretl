@@ -586,6 +586,9 @@ static int set_omp_n_threads (int n)
     } else {
 	omp_n_threads = n;
 	omp_set_num_threads(n);
+# if defined(OPENBLAS_BUILD)
+	openblas_set_num_threads(n);
+# endif
     }
 #else
     gretl_warnmsg_set("set_omp_n_threads: OpenMP is not enabled");
