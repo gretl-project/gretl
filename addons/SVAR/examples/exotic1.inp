@@ -46,7 +46,7 @@ try_exotic = 1
 if try_exotic
     # the effect of the demand shock on quantity is given in the form
     # of an "exotic" restriction specification (just for illustration)
-    SVAR_SRexotic(&mod, "M[2,2] > 0")
+    SVAR_SRexotic(&mod, "M[2,2] > 0", defarray("Demand"))
 else
     SVAR_SRplain(&mod, "q", "Demand", "+") # demand shock effect on quantity is pos.
 endif

@@ -2287,9 +2287,6 @@ generating all the matrices used for plotting. This function takes an
 extra argument $\alpha$ for the quantiles (in the same way we do in
 \verb|SVAR_boot|).
 
-FIXME: we must integrate this with the IRF plotting functions we
-already have, somehow.
-
 \subsection{The \texttt{SVAR\_setidIRF} function}
 
 This is the function that explores the space of possible
@@ -2372,10 +2369,9 @@ iteration:
     return. 
 \end{enumerate}
 
-\subsection{Still to do (for set identification)}
+\subsection{Still to do later (for set identification)}
 
 \begin{itemize}
-\item proper statistics on accepted/rejected iterations
 \item VMAs and historical decomposition
 \item mixed identification (signs + zero restrictions on $C$)
 \end{itemize}
@@ -2834,8 +2830,6 @@ a warning will be printed.
 
 \section{Contents of the model bundle}
 
-FIXME: add new sign restriction stuff
-
 \label{sec:bundle_struct}
 
   \centering
@@ -2917,6 +2911,28 @@ FIXME: add new sign restriction stuff
     wild bootstraps (2: Normal, 3: Rademacher, 4: Mammen), 5 for moving blocks \\
     \texttt{movblocklen} & integer, changes the block length for the moving blocks bootstrap
       (otherwise: use 10\% of the sample length)
+     \end{tabular}
+     
+    \begin{tabular}{rp{0.8\textwidth}}
+    \hline
+    \multicolumn{2}{c}{\textbf{Set-identification (sign restrictions) -related}} \\
+    \hline 
+    \texttt{SRiter} & integer, number of draws actually done \\
+    \texttt{SRacc} & integer, number of accepted draws stored and used\\
+    \texttt{SRid\_snames} & strings array, names of those shocks that are subject 
+      to sign (and similar) restrictions, subset of \texttt{snames}\\
+    \texttt{SRest} & matrix, internal representation of the (non-exotic) set identification
+    restrictions; each row has: variable id number, lower bound, upper bound, starting
+   horizon, end horizon, shock id number  \\
+   \texttt{exoticSR} & bundle, holding internal representation of exotic (and in the future also 
+   super-exotic) restrictions; contains a strings array \texttt{checks} with the user-supplied
+   restriction expressions, a two-column matrix \texttt{spans} with starting and ending horizons
+   for the respective restriction, and a vector \texttt{super} holding indicators (zero or one) 
+   whether the restriction is super-exotic\footnote{see the documentation about this special feature,
+   when it is ready}\\
+   $\approx$ IRF & bundles or nested array, the IRFs from the accepted draws are actually currently 
+   \emph{not} inside the model bundle, see the \texttt{SVAR\_setidIRF} function. This and 
+   the datatype of the storage object are subject to change before version 2.0
   \end{tabular}
   
 \section{Changelog (after v1.2)}

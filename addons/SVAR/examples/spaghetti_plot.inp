@@ -49,7 +49,7 @@ bundles moo = SVAR_setidIRF(&mod, rep)
 
 # draw the irfs
 
-SVAR_spagplot(moo, mod, 1, 1)
-SVAR_spagplot(moo, mod, 1, 2)
-SVAR_spagplot(moo, mod, 2, 1)
-SVAR_spagplot(moo, mod, 2, 2)
+SVAR_spagplot(moo, mod, "p", "Supply") # 1, 1)
+SVAR_spagplot(moo, mod, "p", "Demand") # 1, 2)
+SVAR_spagplot(moo, mod, "q", "Supply") # 2, 1)
+SVAR_spagplot(moo, mod, "q", "Demand") # 2, 2)

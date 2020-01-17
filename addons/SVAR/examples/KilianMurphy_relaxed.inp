@@ -26,7 +26,7 @@ SVAR_cumulate(&mod, 1)
 SVAR_cumulate(&mod, 4)
 mod.horizon = 16
 
-numofaccept = 256
+numofaccept = 256 # takes long
 coverage = 0.95
 
 ## set up the sign restictions
@@ -65,7 +65,7 @@ string exot3 = "M[1,3] / M[3,3] >= 0" # shock 3: Specul. Demand
 
 # TODO: These super-exotic restrictions work with hardcoded "mod" 
 # and thus curently do _not_ need need_model = 1.
-# The whole need_model apparatus needs fixing.
+# The whole need_model documentation needs fixing.
 
 ## Supply elasticity bounds
 # prepare
@@ -79,10 +79,10 @@ string exot1 = part1 ~ " >= -0.8" # shock 1: Supply
 string exot11 = part1 ~ " <= 0 "  # shock 1: Supply
 
 # apply exotic and super-exotic restrictions
-SVAR_SRexotic(&mod, exot11)
-SVAR_SRexotic(&mod, exot1)
-SVAR_SRexotic(&mod, exot2)
-SVAR_SRexotic(&mod, exot3)
+SVAR_SRexotic(&mod, exot11, defarray("Supply"))
+SVAR_SRexotic(&mod, exot1,  defarray("Supply"))
+SVAR_SRexotic(&mod, exot2,  defarray("Demand"))
+SVAR_SRexotic(&mod, exot3,  defarray("Speculative Demand"))
 
 # do the rotations (this is the computationally intensive part)
 bundles moo = SVAR_setidIRF(&mod, numofaccept, 0, 15000)
