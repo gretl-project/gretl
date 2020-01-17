@@ -244,13 +244,17 @@ function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
 end function
 
 function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
-                               int maxiter[10000])
+                               scalar coveralpha[0:1:0.9], int maxiter[10000])
 
     # This function draws a random rotations of the Cholesky model
     # until "rep" draws satisfying the sign restrictions have come up.
     # If the DO_BAYES flag is on, the VAR parameters (including Sigma)
     # are resampled too; otherwise, they are kept fixed at the ols
     # estimates.
+
+	if !inbundle(mod, "SRest") && !inbundle(mod, "exoticSR")
+        funcerr "No set id restrictions found"
+    endif
 
     #
     # Recover VAR parameters from the model bundle
@@ -282,15 +286,18 @@ function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
 
     # which shocks are to be identified via sign restrictions?
     matrix shocks = values(mod.SRest[,6])
+    matrix allshocks = shocks
+
     # do we have exotic restrictions?
     n_exotic = get_n_exotic(mod)
     # add the ones from exotic restrictions
-    if n_exotic
-        shocks = values(shocks | mod.exoticSR.eshocks)
-    endif
+    matrix allshocks = n_exotic ? values(shocks | mod.exoticSR.eshocks) : shocks
+    # if n_exotic
+		# numexotsh = nelem(uniq(mod.exoticSR.eshocks)) # need not be equal to n_exotic
+    # endif
     
     # Now extract the corresponding shock names
-    strings mod.SRid_snames = getstrings_byindex(mod.snames, shocks)
+    strings mod.SRid_snames = getstrings_byindex(mod.snames, allshocks)
 
     matrices Ais = prepAis(mod, shocks)   
 
@@ -309,9 +316,9 @@ function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
         # first just using non-exotic restrictions
         rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma 
         matrices irfs = gen_SRirfs(b, numh, to_cum)
-        matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM) # was nshocks
+        matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM) 
 
-        chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st! (was nshocks)
+        chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st!
         chk = chk && check_id(id_matrix)
 
         if chk
@@ -338,9 +345,6 @@ function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
                 # copy the results of accepted draw to output bundles array 
                 drawn += b
             endif
-        else
-            # print id_matrix
-            # printf "No luck this time\n"
         endif
 
         factor = (DO_BAYES ? 10 : 50) * xmax(1,floor(sqrt(maxiter/1000)))
@@ -365,6 +369,16 @@ function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
     mod.SRiter = iter -1 
     mod.SRacc  = good
 
+	# integrate some summary results into the model bundle 
+    bundle IrfData = IRF_plotdata(drawn, coveralpha)
+
+    mod.SRcoveralpha = coveralpha  
+    matrix mod.SRirfmeans = IrfData.irfSRmeans
+    matrix mod.SRirfserrs = IrfData.irfSRserrs
+    matrix mod.SRlo_cb    = IrfData.lo_cb
+    matrix mod.SRhi_cb    = IrfData.hi_cb
+    matrix mod.SRirfmeds  = IrfData.irfSRmeds # medians
+
     return drawn
 end function
 
@@ -372,8 +386,8 @@ end function
 ### plotting functions
 ###
 
-function void SVAR_spagplot(bundles bs, bundle mod, string vname, string sname)
-          # int Var[1::1], int Shk[1::1])
+function void SVAR_spagplot(bundles bs, bundle mod, 
+                            string vname, string sname)
     
 	# check whether it's one of the SR-id'ed shocks
 	s_inSR = nelem(strpos_allin(mod.SRid_snames, sname)) ? 1 : 0
@@ -462,24 +476,25 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
     return ret
 end function
 
-function void SVAR_SRplot(const bundles SR_IRFs "bundles from SVAR_setidIRF",
-                          const bundle mod "the model bundle", 
+function void SVAR_SRplot(const bundle mod "the model bundle", 
                           const strings whichvars[null] "which variables",
                           const strings whichshocks[null] "which shocks",
-                          scalar coveralpha[0:1:0.9] "CI coverage",
                           bool meanormed[0] "choose 1 for medians")
 
     # TODO: make the function return the plot code as string 
-    # TODO: use the existing IRFgrph and IRFsave functions internally
+    # TODO: check if it makes sense to use the existing IRFgrph and 
+    #       IRFsave functions internally
+    #       (perhaps the code here is actually better (more modern))
 
     # Omitting the strings array inputs means: do all.
 
     if !inbundle(mod, "SRid_snames")
         funcerr "No SR (sign restriction) specs found"
-        # TODO: This fails if _only_ exotic restrictions are used!
+    elif !inbundle(mod, "SRirfmeans")
+        funcerr "No SR IRF results found - did you run SVAR_setidIRF?"
     endif
 
-    bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)   
+    # bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)   
 
     # Which variables: 
     if !exists(whichvars)
@@ -500,8 +515,6 @@ function void SVAR_SRplot(const bundles SR_IRFs "bundles from SVAR_setidIRF",
     endif
 
     ## The actual plotting 
-    #  (this is where existing internal plotting functions could 
-    #   be reused)
     loop metaj = 1..nelem(wshoix) -q # for the shocks
         j = wshoix[metaj]
 
@@ -511,8 +524,9 @@ function void SVAR_SRplot(const bundles SR_IRFs "bundles from SVAR_setidIRF",
             # pick the right position in the matrix
             k = (j-1) * nelem(mod.Ynames) + i 
 
-            matrix grph = IrfData.irfSRmeans[,k] ~ seq(0, mod.horizon)'
-            matrix band = IrfData.lo_cb[,k] ~ IrfData.hi_cb[,k]
+			matrix center = meanormed ? mod.SRirfmeds : mod.SRirfmeans
+            matrix grph = center[,k] ~ seq(0, mod.horizon)' # IrfData.irfSRmeans
+            matrix band = mod.SRlo_cb[,k] ~ mod.SRhi_cb[,k] # IrfData.lo_cb, IrfData.hi_cb
             band = 0.5 * band * {1, 1; 1, -1}
 
             plot grph

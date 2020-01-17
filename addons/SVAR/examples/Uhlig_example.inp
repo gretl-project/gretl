@@ -57,8 +57,8 @@ SVAR_SRplain(&mod, "cp",  "Monetary", "-", 5)   # ditto
 SVAR_SRplain(&mod, "r",   "Monetary", "+", 5)    # positive from 0 to 5
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(&mod, 200, 1)
+bundles moo = SVAR_setidIRF(&mod, 200, 1, 0.75) # coverage 75%
 
 # draw the irfs (page 397)
 
-SVAR_SRplot(moo, mod, mod.Ynames, defarray("Monetary"), 0.75)
+SVAR_SRplot(mod, mod.Ynames, defarray("Monetary"))

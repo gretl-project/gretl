@@ -85,7 +85,7 @@ SVAR_SRexotic(&mod, exot2,  defarray("Demand"))
 SVAR_SRexotic(&mod, exot3,  defarray("Speculative Demand"))
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(&mod, numofaccept, 0, 15000)
+bundles moo = SVAR_setidIRF(&mod, numofaccept, 0, coverage, 15000)
 
 # draw the irfs
-SVAR_SRplot(moo, mod, mod.Ynames, mod.snames, coverage) 
+SVAR_SRplot(mod, mod.Ynames, mod.snames) 

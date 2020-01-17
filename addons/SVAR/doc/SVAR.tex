@@ -2930,9 +2930,21 @@ a warning will be printed.
    for the respective restriction, and a vector \texttt{super} holding indicators (zero or one) 
    whether the restriction is super-exotic\footnote{see the documentation about this special feature,
    when it is ready}\\
-   $\approx$ IRF & bundles or nested array, the IRFs from the accepted draws are actually currently 
-   \emph{not} inside the model bundle, see the \texttt{SVAR\_setidIRF} function. This and 
-   the datatype of the storage object are subject to change before version 2.0
+   \texttt{SRcoveralpha} & scalar, chosen coverage of the confidence intervals (or credible sets)\\
+   \texttt{SRirfmeans} & matrix, holding the horizon-by-horizon pointwise means of 
+   the accepted IRF draws\\
+    \texttt{SRirfmeds} & matrix, holding the horizon-by-horizon pointwise medians of 
+   the accepted IRF draws\\
+   \texttt{SRirfserrs} & matrix, the horizon-by-horizon pointwise (pseudo) standard errors
+  of the accepted IRF draws\\
+  \texttt{SRlo\_cb} & matrix, the horizon-by-horizon pointwise lower bounds of the 
+  confidence intervals (or credible sets), quantile-based (not symmetric around the 
+  means or medians)\\
+  \texttt{SRhi\_cb} & matrix, ditto for the upper bounds\\
+   $\approx$ IRF & bundles or nested array, the IRFs from all accepted draws are actually 
+   \emph{not} inside the model bundle because of the large memory footprint. 
+   See the \texttt{SVAR\_setidIRF} function. The datatype of the storage object is
+   subject to change before version 2.0
   \end{tabular}
   
 \section{Changelog (after v1.2)}
