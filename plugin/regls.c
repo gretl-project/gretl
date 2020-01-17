@@ -890,7 +890,13 @@ static int ccd_get_crit (const gretl_matrix *B,
 	    }
 	}
 	SSR = nulldev * (1.0 - R2->val[j]);
-	gretl_vector_set(crit, j, 0.5 * SSR + lam->val[j] * bsum);
+	if (alpha == 1.0) {
+	    /* lasso */
+	    gretl_vector_set(crit, j, 0.5 * SSR + lam->val[j] * bsum);
+	} else {
+	    /* ridge */
+	    gretl_vector_set(crit, j, SSR + lam->val[j] * bsum);
+	}
     }
 
     return 0;
