@@ -179,10 +179,11 @@ regls_info *regls_info_new (gretl_matrix *X,
 	ri->Xty = NULL;
 	if (ri->ccd) {
 	    prepare_ccd_param(ri);
-	} else if (ri->ridge) {
-	    maybe_set_lambda_scale(ri);
-	} else {
+	} else if (!ri->ridge) {
 	    prepare_admm_params(ri);
+	}
+	if (ri->ridge) {
+	    maybe_set_lambda_scale(ri);
 	}
     }
 
@@ -869,12 +870,17 @@ static int ccd_get_crit (const gretl_matrix *B,
     int imin = B->rows > nx;
     int i, j;
 
+    // fprintf(stderr, "HERE B->rows %d, nx %d\n", B->rows, nx);
+
     if (B->rows == nx) {
 	/* no intercept */
 	nulldev = 0.0;
 	for (i=0; i<y->rows; i++) {
 	    nulldev += y->val[i] * y->val[i];
 	}
+    } else if (alpha < 1.0) {
+	/* for comparability with SVD */
+	nulldev = y->rows;
     }
 
     for (j=0; j<B->cols; j++) {
@@ -1259,6 +1265,12 @@ static void ccd_make_lambda (regls_info *ri,
     int i;
 
     gretl_matrix_copy_values(lam, ri->lfrac);
+    if (ri->lamscale == 0) {
+	for (i=0; i<ri->nlam; i++) {
+	    lam->val[i] /= ri->n;
+	}
+	return;
+    }
     if (alpha < 1.0) {
 	*lmax /= max(alpha, 1.0e-3);
     }
@@ -1302,6 +1314,10 @@ static int ccd_regls (regls_info *ri, PRN *prn)
 	return E_ALLOC;
     }
 
+    if (ri->ridge && ri->verbose) {
+	sv2 = sv_squared(ri->X);
+    }
+
     /* scale data by sqrt(1/n) */
     ccd_scale(ri->X, ri->y->val, Xty->val, xv->val);
 
@@ -1328,10 +1344,6 @@ static int ccd_regls (regls_info *ri, PRN *prn)
 	}
     }
 
-    if (ri->ridge && ri->verbose) {
-	sv2 = sv_squared(ri->X);
-    }
-
     err = ccd_iteration(alpha, ri->X, Xty->val, nlam, lam->val,
 			ccd_toler, maxit, xv->val, &lmu, B,
 			ia, nnz, Rsq, &nlp);
@@ -1342,7 +1354,10 @@ static int ccd_regls (regls_info *ri, PRN *prn)
 	goto bailout;
     }
 
-    if (alpha < 1.0) {
+    if (ri->lamscale == 0) {
+	gretl_matrix_multiply_by_scalar(ri->y, sqrt(ri->n));
+	gretl_matrix_copy_values(lam, ri->lfrac);
+    } else if (alpha < 1.0) {
 	/* not entirely truthful! */
 	lam->val[0] = ri->lfrac->val[0] * lmax;
     }
@@ -1615,6 +1630,10 @@ static int svd_ridge (regls_info *ri, PRN *prn)
 	return E_ALLOC;
     }
 
+    if (ri->verbose) {
+	sv2 = sv_squared(ri->X);
+    }
+
     if (ri->lamscale != LAMSCALE_NONE) {
 	lmax = ridge_scale(ri, lam);
     }
@@ -1626,10 +1645,6 @@ static int svd_ridge (regls_info *ri, PRN *prn)
 	    err = E_ALLOC;
 	    goto bailout;
 	}
-    }
-
-    if (ri->verbose) {
-	sv2 = sv_squared(ri->X);
     }
 
     err = ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B, R2, 0);
