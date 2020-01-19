@@ -1399,10 +1399,17 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     if (!err) {
 	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX, 0);
 	B = NULL;
-	gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
+	if (ri->lamscale > 0) {
+	    gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
+	}
 	if (nlam == 1) {
-	    /* show a value comparable with ADMM (??) */
-	    gretl_bundle_set_scalar(ri->b, "lambda", ri->lfrac->val[0] * lmax * ri->n);
+	    double lambda = ri->lfrac->val[0];
+
+	    if (ri->lamscale > 0) {
+		/* show a value comparable with ADMM (??) */
+		lambda *= lmax * ri->n;
+	    }
+	    gretl_bundle_set_scalar(ri->b, "lambda", lambda);
 	}
     }
 
