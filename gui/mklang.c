@@ -1,3 +1,8 @@
+/* Auxiliary code to output a gretl language-spec file for gtksourceview,
+   or (depending on the option supplied) a block of material for syntax
+   highlighting in emacs.
+*/
+
 #include <stdio.h>
 
 #include "libgretl.h"
@@ -7,7 +12,7 @@ const char *special_keyword[] = {
     "for",
     "foreach",
     "funcerr",
-    "return", 
+    "return",
     "while",
     "elif",
     "eval",
@@ -16,7 +21,7 @@ const char *special_keyword[] = {
     "liml",
     "fiml",
     "sur",
-    "params",    
+    "params",
     "deriv",
     "orthog",
     "weights",
@@ -27,7 +32,7 @@ const char *special_keyword[] = {
     "printf",
     "identity",
     "endog",
-    "instr",    
+    "instr",
     NULL
 };
 
@@ -132,7 +137,7 @@ char **make_var_name_list (int *pn)
 	}
 	if (*s == '$') s++;
 	S[m++] = gretl_strdup(s);
-    }    
+    }
 
     for (i=0; i<n4; i++) {
 	s = gretl_const_name(i);
@@ -141,7 +146,7 @@ char **make_var_name_list (int *pn)
 	}
 	if (*s == '$') s++;
 	S[m++] = gretl_strdup(s);
-    }    
+    }
 
     qsort(S, m, sizeof *S, mklang_strcmp);
 
@@ -166,7 +171,7 @@ void output_emacs_block (void)
 	    putchar(' ');
 	}
 	n++;
-    } 
+    }
     for (i=0; special_keyword[i] != NULL; i++) {
 	printf("\"%s\"", special_keyword[i]);
 	if (special_keyword[i+1] != NULL) {
@@ -177,7 +182,7 @@ void output_emacs_block (void)
 	    }
 	}
 	n++;
-    }	
+    }
     puts(")\n  \"Commands in gretl.\")\n");
 
     fputs("(defvar gretl-genr-functions\n '(", stdout);
@@ -225,12 +230,12 @@ void output_emacs_block (void)
 		fputs("\n   ", stdout);
 	    } else {
 		putchar(' ');
-	    }	    
+	    }
 	}
 	strings_array_free(strs, n);
     }
 
-    puts(")\n  \"Model- and dataset-related variables.\")\n");    
+    puts(")\n  \"Model- and dataset-related variables.\")\n");
 }
 
 static int compare_options (const void *a, const void *b)
@@ -242,9 +247,9 @@ static int compare_options (const void *a, const void *b)
     return ret == 0 ? ret : -ret;
 }
 
-#define TRY_FOREIGN 1
+#define DO_FOREIGN 1
 
-#if TRY_FOREIGN
+#if DO_FOREIGN
 
 static void output_octave_specials (void)
 {
@@ -294,7 +299,7 @@ static void output_octave_specials (void)
     puts("        <context ref=\"def:float\"/>");
     puts("        <context ref=\"def:hexadecimal\"/>");
     puts("      </include>");
-    puts("    </context>\n");   
+    puts("    </context>\n");
 }
 
 static void output_foreign_context (const char *id, const char *ctxt)
@@ -314,14 +319,14 @@ static void output_foreign_context (const char *id, const char *ctxt)
 
 #endif
 
-void output_lang2_file (void)
+void output_lang2_file (int all_foreign)
 {
     char **strs;
     int nopts;
     int i, n;
 
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    puts("<language id=\"gretl\" name=\"gretl\" version=\"2.0\" _section=\"Script\">");
+    puts("<language id=\"gretl\" name=\"hansl\" version=\"2.0\" _section=\"Script\">");
     puts("  <metadata>");
     puts("    <property name=\"mimetypes\">application/x-gretlscript</property>");
     puts("    <property name=\"globs\">*.inp</property>");
@@ -338,22 +343,26 @@ void output_lang2_file (void)
 
     puts("  <definitions>\n");
 
-#if TRY_FOREIGN
+#if DO_FOREIGN
     puts("    <define-regex id=\"R\">R|r</define-regex>");
-    puts("    <define-regex id=\"stata\">Stata|stata|STATA</define-regex>");
     puts("    <define-regex id=\"python\">Python|python</define-regex>");
-    puts("    <define-regex id=\"ox\">Ox|ox</define-regex>");
     puts("    <define-regex id=\"octave\">Octave|octave</define-regex>");
+    if (all_foreign) {
+	puts("    <define-regex id=\"stata\">Stata|stata|STATA</define-regex>");
+	puts("    <define-regex id=\"ox\">Ox|ox</define-regex>");
+    }
     puts("    <define-regex id=\"foreign-opt\">(\\s+--(?:quiet|send-data))?"
 	 "(\\s+--(?:send-data|quiet))?</define-regex>\n");
 
     output_foreign_context("R", "r:r");
-    output_foreign_context("stata", "stata:stata");
     output_foreign_context("python", "python:python");
-    output_foreign_context("ox", "cpp:cpp");
     output_foreign_context("octave", "gretl-octave");
-#endif    
-    
+    if (all_foreign) {
+	output_foreign_context("stata", "stata:stata");
+	output_foreign_context("ox", "cpp:cpp");
+    }
+#endif
+
     puts("    <context id=\"block-comment\" style-ref=\"comment\">");
     puts("      <start>/\\*</start>");
     puts("      <end>\\*/</end>");
@@ -362,11 +371,11 @@ void output_lang2_file (void)
     puts("        <context ref=\"def:line-continue\"/>");
     puts("      </include>");
     puts("    </context>\n");
-    
+
     /* gretl data types */
     puts("    <context id=\"gretl-types\" style-ref=\"data-type\">");
     for (i=0; gretl_data_types[i] != NULL; i++) {
-	printf("      <keyword>%s</keyword>\n", gretl_data_types[i]);  
+	printf("      <keyword>%s</keyword>\n", gretl_data_types[i]);
     }
     puts("    </context>\n");
 
@@ -400,7 +409,7 @@ void output_lang2_file (void)
 	puts("      <prefix>--</prefix>");
 	for (i=1; i<nopts; i++) {
 	    printf("      <keyword>%s</keyword>\n", strs[i]);
-	}    
+	}
 	puts("    </context>\n");
 	strings_array_free(strs, nopts);
     }
@@ -422,23 +431,25 @@ void output_lang2_file (void)
     }
     puts("    </context>\n");
 
-#if TRY_FOREIGN
+#if DO_FOREIGN
     /* octave special: prevent octave from eating "end foreign" */
     output_octave_specials();
-#endif    
-    
+#endif
+
     puts("    <context id=\"gretl\">");
     puts("      <include>");
     puts("        <context ref=\"def:shell-like-comment\"/>");
     puts("        <context ref=\"def:string\"/>");
     puts("        <context ref=\"block-comment\"/>");
-#if TRY_FOREIGN
+#if DO_FOREIGN
     puts("        <context ref=\"foreign-R\"/>");
-    puts("        <context ref=\"foreign-stata\"/>");
     puts("        <context ref=\"foreign-python\"/>");
-    puts("        <context ref=\"foreign-ox\"/>");
     puts("        <context ref=\"foreign-octave\"/>");
-#endif    
+    if (all_foreign) {
+	puts("        <context ref=\"foreign-stata\"/>");
+	puts("        <context ref=\"foreign-ox\"/>");
+    }
+#endif
     puts("        <context ref=\"gretl-types\"/>");
     puts("        <context ref=\"commands\"/>");
     puts("        <context ref=\"genr-functions\"/>");
@@ -453,10 +464,20 @@ void output_lang2_file (void)
 
 int main (int argc, char **argv)
 {
-    if (argc == 2 && !strcmp(argv[1], "--emacs")) {
-	output_emacs_block();
+    char *opt = NULL;
+
+    if (argc == 2) {
+	opt = argv[1];
+    }
+
+    if (opt != NULL) {
+	if (!strcmp(opt, "--emacs")) {
+	    output_emacs_block();
+	} else if (!strcmp(opt, "--gtksv")) {
+	    output_lang2_file(0);
+	}
     } else {
-	output_lang2_file();
+	output_lang2_file(1);
     }
 
     return 0;
