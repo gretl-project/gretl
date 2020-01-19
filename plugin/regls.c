@@ -928,12 +928,47 @@ static gretl_matrix *sv_squared (const gretl_matrix *X)
     return sv2;
 }
 
+static gchar *crit_print_format (const gretl_matrix *crit,
+				 int ridge)
+{
+    gchar *fmt = NULL;
+    double cmax = 0;
+    int j;
+
+    for (j=0; j<crit->rows; j++) {
+	if (crit->val[j] > cmax) {
+	    cmax = crit->val[j];
+	}
+    }
+
+    /* FIXME better handling for very large criterion values */
+
+    if (cmax < 1000) {
+	if (ridge) {
+	    fmt = g_strdup_printf("%%12f  %%6.2f    %%f   %%.4f\n");
+	} else {
+	    fmt = g_strdup_printf("%%12f  %%5d    %%f   %%.4f\n");
+	}
+    } else {
+	int fdig = 6 - floor(log10(cmax));
+
+	if (ridge) {
+	    fmt = g_strdup_printf("%%12f  %%6.2f    %%8.%df   %%.4f\n", fdig);
+	} else {
+	    fmt = g_strdup_printf("%%12f  %%5d    %%8.%df   %%.4f\n", fdig);
+	}
+    }
+
+    return fmt;
+}
+
 static void ccd_print (const gretl_matrix *B,
 		       const gretl_matrix *R2,
 		       const gretl_matrix *lam,
 		       const gretl_matrix *crit,
 		       int nx, PRN *prn)
 {
+    gchar *cfmt = NULL;
     double *bj;
     int k = B->rows;
     int nlam = B->cols;
@@ -947,6 +982,9 @@ static void ccd_print (const gretl_matrix *B,
 	/* as per R, more or less */
 	pputs(prn, "    df     R^2  lambda\n");
     }
+
+    cfmt = crit_print_format(crit, 0);
+
     for (j=0; j<nlam; j++) {
 	bj = B->val + j*k;
 	dfj = 0;
@@ -954,13 +992,14 @@ static void ccd_print (const gretl_matrix *B,
 	    dfj += fabs(bj[i]) > 0;
 	}
 	if (crit != NULL) {
-	    pprintf(prn, "%12f  %5d    %f   %.4f\n",
-		    lam->val[j], dfj, crit->val[j], R2->val[j]);
+	    pprintf(prn, cfmt, lam->val[j], dfj, crit->val[j], R2->val[j]);
 	} else {
 	    pprintf(prn, "%-2d  %2d  %.4f  %.4f\n", j+1, dfj, R2->val[j],
 		    lam->val[j]);
 	}
     }
+
+    g_free(cfmt);
 }
 
 static double effective_df (const gretl_matrix *sv2, double lam)
@@ -981,6 +1020,7 @@ static void ridge_print (const gretl_matrix *lam,
 			 const gretl_matrix *R2,
 			 PRN *prn)
 {
+    gchar *cfmt = NULL;
     double edf;
     int j;
 
@@ -988,11 +1028,13 @@ static void ridge_print (const gretl_matrix *lam,
     pprintf(prn, "  %s\n\n", _("criterion = ridge minimand"));
     pputs(prn, "      lambda      df   criterion      R^2\n");
 
+    cfmt = crit_print_format(crit, 1);
+
     for (j=0; j<lam->rows; j++) {
 	edf = effective_df(sv2, lam->val[j]);
-	pprintf(prn, "%12f  %6.2f    %f   %.4f\n",
-		lam->val[j], edf, crit->val[j], R2->val[j]);
+	pprintf(prn, cfmt, lam->val[j], edf, crit->val[j], R2->val[j]);
     }
+    g_free(cfmt);
 }
 
 static void xv_ridge_print (const gretl_matrix *lam,
