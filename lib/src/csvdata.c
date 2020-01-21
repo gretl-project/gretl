@@ -1821,7 +1821,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
     return maxlinelen;
 }
 
-#define nonspace_delim(d) (d != ',' && d != ';')
+#define nonspace_delim(d) (d != ',' && d != ';' && d != '\t')
 
 static int count_csv_fields (csvdata *c)
 {
@@ -1843,7 +1843,7 @@ static int count_csv_fields (csvdata *c)
 	s++;
 	/* Problem: (when) should a trailing delimiter be read as an
 	   implicit NA?  For now we'll so treat it if the delimiter
-	   is not white space.
+	   is not plain space.
 	*/
 	if (*s == '\0' && cbak == c->delim && nonspace_delim(c->delim)) {
 	    nf--;
