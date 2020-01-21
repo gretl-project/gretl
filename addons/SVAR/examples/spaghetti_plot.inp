@@ -45,11 +45,10 @@ SVAR_SRplain(&mod, "q", "Demand", "+")  # as well as quantity
 rep = 128
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(&mod, rep)
+SVAR_setidIRF(&mod, rep)
 
 # draw the irfs
-
-SVAR_spagplot(moo, mod, "p", "Supply") # 1, 1)
-SVAR_spagplot(moo, mod, "p", "Demand") # 1, 2)
-SVAR_spagplot(moo, mod, "q", "Supply") # 2, 1)
-SVAR_spagplot(moo, mod, "q", "Demand") # 2, 2)
+SVAR_spagplot(mod, "p", "Supply") # 1, 1)
+SVAR_spagplot(mod, "p", "Demand") # 1, 2)
+SVAR_spagplot(mod, "q", "Supply") # 2, 1)
+SVAR_spagplot(mod, "q", "Demand") # 2, 2)

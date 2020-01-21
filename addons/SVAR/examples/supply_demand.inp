@@ -27,7 +27,7 @@ eval iG*iG'
 list W = const
 scalar order = 1
 
-bundle mod = SVAR_setup("SR", X, W, order)
+bundle mod = SVAR_setup("SR", X, W, order, 0) # 0: don't store all accepted draws
 
 # set up the sign restictions
 
@@ -44,7 +44,7 @@ SVAR_SRplain(&mod, "q", "Demand", "+")  # as well as quantity
 
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(&mod, 1000) # (with default coverage 90%)
+SVAR_setidIRF(&mod, 1000) # (with default coverage 90%)
 
 # draw the irfs 
 SVAR_SRplot(mod, mod.Ynames, defarray("Supply","Demand"))

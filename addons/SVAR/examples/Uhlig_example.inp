@@ -25,7 +25,8 @@ list X = y p cp r nbr res
 list Z = const
 scalar order = 12
 
-bundle mod = SVAR_setup("plain", X, Z, order, 0)
+bundle mod = SVAR_setup("plain", X, Z, order) 
+
 mod.horizon = 60
 mod.snames[4] = "Monetary"
 err = SVAR_estimate(&mod,0)
@@ -57,8 +58,8 @@ SVAR_SRplain(&mod, "cp",  "Monetary", "-", 5)   # ditto
 SVAR_SRplain(&mod, "r",   "Monetary", "+", 5)    # positive from 0 to 5
 
 # do the rotations (this is the computationally intensive part)
+# (creating all bundles 'moo' is unnecessary in principle)
 bundles moo = SVAR_setidIRF(&mod, 200, 1, 0.75) # coverage 75%
 
 # draw the irfs (page 397)
-
 SVAR_SRplot(mod, mod.Ynames, defarray("Monetary"))

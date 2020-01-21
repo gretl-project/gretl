@@ -39,6 +39,9 @@ function void SVAR_SRfull(bundle *mod,
 	
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
+	if mod.type != 10
+        funcerr "Wrong model type for set identification restrictions"
+    endif
     if !inbundle(mod, "SRest")
         matrix mod.SRest = {}
     endif
@@ -81,8 +84,8 @@ function void SVAR_SRplain(bundle *mod,
                            string sname,
                            string what,
                            int length[0::0], int ini[0::0])
-
     # shorthand for sign restrictions in narrow sense
+    # (Model type is checked downstream in SVAR_SRfull)
     scalar hi, lo
     if what == "+"
         hi = NA
@@ -128,11 +131,10 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
             an estimated coefficient (or just the observed variables).
 
     */
-    # TODO: Here a shock number is not specified / clear, because it is 
-    #       implicit in the chk string. But this messes up the count of 
-    #       the number of shocks which is id-ed with SR! 
 
-    if $version < 20193
+    if mod.type != 10
+        funcerr "Wrong model type for set identification restrictions"
+    elif $version < 20193
         # (because of feval and funcerr() etc., and maybe nested arrays)
         funcerr "Sorry, need at least gretl 2019d for exotic restrictions"
     endif 
@@ -379,6 +381,14 @@ function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
     matrix mod.SRhi_cb    = IrfData.hi_cb
     matrix mod.SRirfmeds  = IrfData.irfSRmeds # medians
 
+	# also store everything in the main bundle if wanted
+    if inbundle(mod, storeSRirfs) && mod.storeSRirfs 
+        # (idiom possible because for SR we require recent gretl) 
+        mod.acc_draws = drawn 
+    endif
+    # TODO: add to doc: SVAR_setidIRF should not be called with assignment
+    # of return value when result is already saved into the bundle... 
+
     return drawn
 end function
 
@@ -386,9 +396,14 @@ end function
 ### plotting functions
 ###
 
-function void SVAR_spagplot(bundles bs, bundle mod, 
+function void SVAR_spagplot(const bundle mod, 
                             string vname, string sname)
-    
+    # FIXME: update signature documentation
+
+    if !inbundle(mod, "acc_draws")
+        funcerr "Need collection acc_draws as model bundle member"
+    endif 
+
 	# check whether it's one of the SR-id'ed shocks
 	s_inSR = nelem(strpos_allin(mod.SRid_snames, sname)) ? 1 : 0
     # get shock number
@@ -401,13 +416,13 @@ function void SVAR_spagplot(bundles bs, bundle mod,
         funcerr "Variable unknown"
     endif
 
-    rep = nelem(bs)
+    rep = nelem(mod.acc_draws)  # was bs
     numh = mod.horizon + 1
 
     matrix IRFs = zeros(numh, rep) ~ seq(0, mod.horizon)'
 
     loop i = 1..rep --quiet
-        IRFs[,i] = drill(bs[i].irfs, vnum[1], snum[1])
+        IRFs[,i] = drill(mod.acc_draws[i].irfs, vnum[1], snum[1])
     endloop
 
     plot IRFs

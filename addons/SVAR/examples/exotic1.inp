@@ -52,10 +52,10 @@ else
 endif
 
 # do the rotations (this is the computationally intensive part)
-bundles moo = SVAR_setidIRF(&mod, 100)
+SVAR_setidIRF(&mod, 100)
 
 # check: these matrices should be the same if try_exotic is
 # 0 or 1
 loop i = 1..10 --quiet
-    printf "%6.3f\n", moo[i].irfs[1]
+    printf "%6.3f\n", mod.acc_draws[i].irfs[1]
 endloop

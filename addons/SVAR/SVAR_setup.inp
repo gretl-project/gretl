@@ -152,7 +152,7 @@ function matrix set_default_dimensions(bundle *mod, list lY,
 end function
 
 function bundle SVAR_setup(string type_string, list lY, list lX[null],
-                           int varorder[1::1], bool checkident[1])
+                           int varorder[1::1], bool checkid_storeSRirfs[1])
 
     /*
        This creates a bundle holding the info on the SVAR; this will be
@@ -163,9 +163,22 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
        The scalar "step" keeps track of the stage we're at.
        (maybe not needed any more)
 
-       The arg 'checkident' is just copied into the model bundle. It still needs
-       to be processed later (presumably within SVAR_estimate).
+       The switch 'checkid_storeSRirf' is now "overloaded" with different
+       meanings, depending on the model type:
+       - For traditional types it takes the meaning of 'checkident'.
+         (Default 1 = yes, do it.)
+       - For set-identified (sign restriction) models checking the 
+         identification separately makes no sense, so here this becomes 
+         'storeSRirf', serving to decide whether the full IRF data of all 
+         accepted draws should be stored in the model bundle. This can 
+         inflate the bundle quite a bit, but in general shouldn't be a 
+         problem on modern computers.
+         (Default 1 = yes, store all IRF data.)
+
+       In both cases it is just copied into the model bundle and still needs
+       to be processed later (e.g. within SVAR_estimate).
     */
+    # FIXME: add storeSRirf to documentation
 
     # Drop collinear exogenous terms
     lX = dropcoll(lX)
@@ -270,7 +283,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
         ## Other settings for traditional SVARs
         
         /* Copy the id check choice */
-        ret.checkident = checkident
+        ret.checkident = checkid_storeSRirfs
 
         /* Bootstrap */
         ret.nboot = 0
@@ -286,7 +299,8 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
 		/* Since for sign restrictions the traditional estimation step doesn't apply,
            but we need the reduced-form coefficients, we already do it here auto-
            matically. */
-        ret.checkident = 0 # senseless for SR 
+        ret.storeSRirfs = checkid_storeSRirfs 
+        ret.checkident = 0 # needs to exist
         SVAR_estimate(&ret, 0)
     endif
 
