@@ -326,7 +326,7 @@ void output_lang2_file (int all_foreign)
     int i, n;
 
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-    puts("<language id=\"gretl\" name=\"hansl\" version=\"2.0\" _section=\"Script\">");
+    puts("<language id=\"gretl\" name=\"gretl\" version=\"2.0\" _section=\"Script\">");
     puts("  <metadata>");
     puts("    <property name=\"mimetypes\">application/x-gretlscript</property>");
     puts("    <property name=\"globs\">*.inp</property>");
