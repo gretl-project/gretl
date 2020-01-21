@@ -2746,11 +2746,17 @@ static int mpi_parent_action (regls_info *ri, PRN *prn)
 	err = foreign_start(MPI, NULL, OPT_NONE, prn);
 	if (!err) {
 	    int np = gretl_bundle_get_int(ri->b, "np", NULL);
-	    gretlopt mpi_opt = OPT_L | OPT_S | OPT_Q;
+	    int hpc = gretl_bundle_get_int(ri->b, "hpc", NULL);
+	    gretlopt mpi_opt = OPT_S | OPT_Q;
 
 	    if (np > 0) {
+		/* user-specified number of processes */
 		mpi_opt |= OPT_N;
 		set_optval_int(MPI, OPT_N, np);
+	    }
+	    if (hpc == 0) {
+		/* local machine only */
+		mpi_opt |= OPT_L;
 	    }
 	    if (ri->verbose) {
 		pputs(prn, "Invoking MPI...\n\n");
