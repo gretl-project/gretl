@@ -74,6 +74,8 @@ struct fmap {
     gchar *scriptpath;
 };
 
+static void write_R_io_file (FILE *fp, const char *ddir);
+
 static struct fmap foreign_map[] = {
      { LANG_OX,     "gretltmp.ox", "gretl_io.ox", NULL },
      { LANG_OCTAVE, "gretltmp.m",  "gretl_io.m", NULL },
@@ -1296,22 +1298,33 @@ static void write_stata_io_file (FILE *fp, const char *ddir)
     fputs("end\n", fp);
 }
 
-static int ensure_foreign_io_file (int lang)
+static int ensure_foreign_io_file (int lang, const char *fname)
 {
-    const char *iofile = get_io_filename(lang);
+    FILE *fp = NULL;
     int err = 0;
 
-    if (iofile == NULL) {
-	return E_DATA;
+    if (fname != NULL) {
+	fp = gretl_fopen(fname, "wb");
+    } else {
+	const char *iofile = get_io_filename(lang);
+
+	if (iofile == NULL) {
+	    return E_DATA;
+	}
+	if (dotfile_exists(iofile)) {
+	    /* already present */
+	    return 0;
+	} else {
+	    fp = write_open_dotfile(iofile);
+	}
     }
 
-    if (!dotfile_exists(iofile)) {
-	FILE *fp = write_open_dotfile(iofile);
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
 	const char *ddir = get_export_dotdir();
 
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	} else if (lang == LANG_PYTHON) {
+	if (lang == LANG_PYTHON) {
 	    write_python_io_file(fp, ddir);
 	} else if (lang == LANG_OCTAVE) {
 	    write_octave_io_file(fp, ddir);
@@ -1321,11 +1334,12 @@ static int ensure_foreign_io_file (int lang)
 	    write_ox_io_file(fp, ddir);
 	} else if (lang == LANG_STATA) {
 	    write_stata_io_file(fp, ddir);
+	} else if (lang == LANG_R) {
+	    /* used only under --io-funcs */
+	    write_R_io_file(fp, ddir);
 	}
 
-	if (fp != NULL) {
-	    fclose(fp);
-	}
+	fclose(fp);
     }
 
     return err;
@@ -1695,7 +1709,7 @@ static int put_dynare_script (const char *buf, FILE *fp)
 /**
  * write_gretl_foreign_script:
  * @buf: text buffer containing foreign code: Ox, Octave, Stata,
- * Python or Julia.
+ * Python or Julia; R is handled separately.
  * @lang: language identifier.
  * @opt: should contain %OPT_G for use from GUI.
  * @dset: pointer to dataset (or %NULL if no data are to be passed).
@@ -1715,7 +1729,7 @@ int write_gretl_foreign_script (const char *buf, int lang,
     FILE *fp = gretl_fopen(fname, "w");
     int err = 0;
 
-    ensure_foreign_io_file(lang);
+    ensure_foreign_io_file(lang, NULL);
 
     if (fp == NULL) {
 	err = E_FOPEN;
@@ -1901,7 +1915,7 @@ static int write_data_for_R (const DATASET *dset,
 
 /* define an R function for passing data back to gretl */
 
-static void write_R_io_funcs (FILE *fp)
+static void write_R_io_file (FILE *fp, const char *ddir)
 {
     const char *export_body =
 	"  objname <- as.character(substitute(x))\n"
@@ -1933,7 +1947,6 @@ static void write_R_io_funcs (FILE *fp)
 	"    cat(gretlmsg)\n"
 	"  }\n"
 	"}\n";
-    const char *ddir = get_export_dotdir();
 
     fprintf(fp, "gretl.dotdir <- \"%s\"\n", ddir);
 
@@ -1965,7 +1978,7 @@ static void put_R_startup_content (FILE *fp)
     fputs("if (vnum > 2.41) library(utils)\n", fp);
     fputs("library(stats)\n", fp);
     fputs("if (vnum <= 1.89) library(ts)\n", fp);
-    write_R_io_funcs(fp);
+    write_R_io_file(fp, get_export_dotdir());
 }
 
 /* Set up a gretl-specific R profile, and put notice of its existence
@@ -2959,6 +2972,25 @@ static int run_R_binary (const char *buf,
     return err;
 }
 
+static int write_foreign_io_file (int lang, PRN *prn)
+{
+    const char *fname;
+    int err = 0;
+
+    fname = get_optval_string(FOREIGN, OPT_I);
+    if (fname == NULL) {
+	err = E_ARGS;
+    } else {
+	fname = gretl_maybe_switch_dir(fname);
+	err = ensure_foreign_io_file(lang, fname);
+	if (!err && gretl_messages_on()) {
+	    pprintf(prn, "Wrote '%s'\n", fname);
+	}
+    }
+
+    return err;
+}
+
 /**
  * foreign_execute:
  * @dset: dataset struct.
@@ -2975,6 +3007,11 @@ int foreign_execute (const DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     int i, err = 0;
+
+    if (opt & OPT_I) {
+	/* just write IO file */
+	return write_foreign_io_file(foreign_lang, prn);
+    }
 
     if (foreign_lang == LANG_R) {
 	make_gretl_R_names();
