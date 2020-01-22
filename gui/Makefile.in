@@ -71,6 +71,9 @@ endif
 
 ifeq ($(pkg_build),no)
   SVDEF = -DSVPREFIX=\"$(GTKSOURCEVIEW_PREFIX)\"
+  sv2dir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-2.0/language-specs
+  sv3dir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-3.0/language-specs
+  sv4dir = $(GTKSOURCEVIEW_PREFIX)/share/gtksourceview-4/language-specs
 endif
 
 ifneq ($(strip $(GTK_PREFIX)),)
@@ -269,6 +272,9 @@ mknews: mknews.c
 gretl.lang: $(MKLANG)
 	$(MKLANG) > $@
 
+gretl-sys.lang: $(MKLANG)
+	$(MKLANG) --gtksv > $@
+
 NEWS: $(MKNEWS) $(topsrc)/ChangeLog
 	$(MKNEWS) $(topsrc)/ChangeLog > $@
 
@@ -305,6 +311,11 @@ install-lang: gretl.lang installdirs
 	$(INSTALL_DATA) $(topsrc)/gui/$$f $(DESTDIR)$(svdir)/$$f ; done
 	if [ x$(JULIA_LANG) != x ] ; then \
 	$(INSTALL_DATA) $(topsrc)/gui/$(JULIA_LANG) $(DESTDIR)$(svdir)/julia.lang ; fi
+
+install-lang-sys: gretl-sys.lang installdirs
+	$(INSTALL_DATA) gretl-sys.lang $(DESTDIR)$(sv2dir)/gretl.lang
+	$(INSTALL_DATA) gretl-sys.lang $(DESTDIR)$(sv3dir)/gretl.lang
+	$(INSTALL_DATA) gretl-sys.lang $(DESTDIR)$(sv4dir)/gretl.lang
 
 install-styles: installdirs
 	$(INSTALL_DATA) $(topsrc)/share/styles/build.xml $(DESTDIR)$(svdir)
