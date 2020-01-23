@@ -2781,7 +2781,8 @@ static int real_detect_blas (const char *s)
     }
 
     /* allow for the further possibility that a link from
-       libblas to openblas is heavily disguised
+       libblas to openblas is heavily disguised (e.g. debian,
+       under "alternatives")
     */
     if (found[0] == 'y' && linked_to_openblas()) {
 	strcpy(found, "nnyn");
