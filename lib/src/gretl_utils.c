@@ -2730,6 +2730,17 @@ int get_openblas_details (char **s1, char **s2)
     }
 }
 
+static int linked_to_openblas (void)
+{
+    void *p = dlopen(NULL, RTLD_NOW);
+
+    if (p != NULL && dlsym(p, "openblas_set_num_threads") != NULL) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static int real_detect_blas (const char *s)
 {
     char found[5] = "nnnn";
@@ -2767,6 +2778,13 @@ static int real_detect_blas (const char *s)
     */
     if (found[0] == 'y' && strcmp(found + 1, "nnn")) {
 	found[0] = 'n';
+    }
+
+    /* allow for the further possibility that a link from
+       libblas to openblas is heavily disguised
+    */
+    if (found[0] == 'y' && linked_to_openblas()) {
+	strcpy(found, "nnyn");
     }
 
     if (strcmp(found, "nnny") == 0) {
