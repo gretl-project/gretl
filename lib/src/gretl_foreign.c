@@ -2223,6 +2223,7 @@ SEXP VR_UnboundValue;
 /* renamed, pointerized versions of the R functions we need */
 
 static double *(*R_REAL) (SEXP);
+static int *(*R_INT) (SEXP);
 static const char *(*R_STRING) (SEXP);
 static SEXP *(*R_STRING_PTR) (SEXP);
 
@@ -2240,6 +2241,7 @@ static SEXP (*R_install) (const char *);
 static SEXP (*R_mkString) (const char *);
 
 static Rboolean (*R_isMatrix) (SEXP);
+static Rboolean (*R_isVector) (SEXP);
 static Rboolean (*R_isLogical) (SEXP);
 static Rboolean (*R_isInteger) (SEXP);
 static Rboolean (*R_isReal) (SEXP);
@@ -2297,6 +2299,7 @@ static int load_R_symbols (void)
 
     R_CDR           = dlget(Rhandle, "CDR", &err);
     R_REAL          = dlget(Rhandle, "REAL", &err);
+    R_INT           = dlget(Rhandle, "INTEGER", &err);
     R_STRING        = dlget(Rhandle, "R_CHAR", &err);
     R_STRING_PTR    = dlget(Rhandle, "STRING_PTR", &err);
     R_allocList     = dlget(Rhandle, "Rf_allocList", &err);
@@ -2308,6 +2311,7 @@ static int load_R_symbols (void)
     R_initEmbeddedR = dlget(Rhandle, "Rf_initEmbeddedR", &err);
     R_install       = dlget(Rhandle, "Rf_install", &err);
     R_isMatrix      = dlget(Rhandle, "Rf_isMatrix", &err);
+    R_isVector      = dlget(Rhandle, "Rf_isVector", &err);
     R_isLogical     = dlget(Rhandle, "Rf_isLogical", &err);
     R_isInteger     = dlget(Rhandle, "Rf_isInteger", &err);
     R_isReal        = dlget(Rhandle, "Rf_isReal", &err);
@@ -2743,7 +2747,7 @@ int gretl_R_get_call (const char *name, int argc)
 
 static int R_type_to_gretl_type (SEXP s)
 {
-    if (R_isMatrix(s)) {
+    if (R_isMatrix(s) || R_isVector(s)) {
 	return GRETL_TYPE_MATRIX;
     } else if (R_isLogical(s)) {
 	return GRETL_TYPE_BOOL;
@@ -2790,12 +2794,14 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	gretl_matrix *m = NULL;
 	int nr = 0, nc = 0;
 
-	if (!R_isReal(res)) {
+	if (!R_isReal(res) && !R_isInteger(res)) {
 	    gretl_errmsg_sprintf("%s: got 'matrix' result, but not of type real", name);
 	    err = E_TYPES;
 	} else {
 	    nr = R_nrows(res);
 	    nc = R_ncols(res);
+
+	    fprintf(stderr, "nr=%d, nc=%d\n", nr, nc);
 
 	    if (nr > 0 && nc > 0) {
 		m = gretl_matrix_alloc(nr, nc);
@@ -2816,7 +2822,11 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
 	    for (i=0; i<nr; i++) {
 		for (j=0; j<nc; j++) {
-		    gretl_matrix_set(m, i, j, R_REAL(res)[i + j * nr]);
+		    if (R_isReal(res)) {
+			gretl_matrix_set(m, i, j, R_REAL(res)[i + j * nr]);
+		    } else {
+			gretl_matrix_set(m, i, j, R_INT(res)[i + j * nr]);
+		    }
 		}
 	    }
 	}
