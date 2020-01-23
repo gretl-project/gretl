@@ -508,7 +508,12 @@ static char *session_file_make_path (char *path, const char *fname)
     if (g_path_is_absolute(fname)) {
 	strcpy(path, fname);
     } else {
+#if 1 /* modified 2020-01-23: build absolute path */
+	gretl_build_path(path, gretl_dotdir(), session.dirname,
+			 fname, NULL);
+#else
 	sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
+#endif
     }
 
 #if SESSION_DEBUG
@@ -1342,7 +1347,7 @@ static int set_session_dirname (const char *zdirname)
 static char *maybe_absolutize_tryfile (void)
 {
     char *fname = get_tryfile();
-    
+
     if (!g_path_is_absolute(fname)) {
 	gchar *cwd = g_get_current_dir();
 

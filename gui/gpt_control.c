@@ -4227,18 +4227,19 @@ static void show_all_labels (png_plot *plot)
 
 static void clear_labels (png_plot *plot)
 {
-    if (plot->spec->flags & GPT_PRINT_MARKERS) {
-	FILE *fp;
+    FILE *fp = NULL;
 
+    if (plot->spec->flags & GPT_PRINT_MARKERS) {
 	plot->spec->flags &= ~GPT_PRINT_MARKERS;
-	gnuplot_png_init(plot, &fp);
-	if (fp == NULL) {
-	    gui_errmsg(E_FOPEN);
-	    return;
-	}
-	plotspec_print(plot->spec, fp);
-	fclose(fp);
     }
+
+    gnuplot_png_init(plot, &fp);
+    if (fp == NULL) {
+	gui_errmsg(E_FOPEN);
+	return;
+    }
+    plotspec_print(plot->spec, fp);
+    fclose(fp);
 
     repaint_png(plot, PNG_REDISPLAY);
     plot->format &= ~PLOT_MARKERS_UP;
