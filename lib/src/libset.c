@@ -586,15 +586,31 @@ static int set_omp_n_threads (int n)
     } else {
 	omp_n_threads = n;
 	omp_set_num_threads(n);
-# if defined(OPENBLAS_BUILD)
-	openblas_set_num_threads(n);
-# endif
+	if (blas_is_openblas()) {
+	    blas_set_num_threads(n);
+	}
     }
 #else
     gretl_warnmsg_set("set_omp_n_threads: OpenMP is not enabled");
 #endif
 
     return 0;
+}
+
+void num_threads_init (int blas_type)
+{
+    int nc = gretl_n_physical_cores();
+
+#if defined(_OPENMP)
+    omp_n_threads = nc;
+    omp_set_num_threads(nc);
+#endif
+    if (blas_type == BLAS_OPENBLAS) {
+	blas_set_num_threads(nc);
+    }
+    if (blas_type > BLAS_NETLIB) {
+	set_blas_mnk_min(90000);
+    }
 }
 
 int get_omp_n_threads (void)

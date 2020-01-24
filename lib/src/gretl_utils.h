@@ -37,6 +37,15 @@ enum {
     SESSION_CLEAR_DATASET
 };
 
+enum {
+    BLAS_UNKNOWN,
+    BLAS_NETLIB,
+    BLAS_ATLAS,
+    BLAS_OPENBLAS,
+    BLAS_MKL,
+    BLAS_VECLIB
+};
+
 void libgretl_init (void);
 
 #ifdef HAVE_MPI
@@ -46,10 +55,11 @@ int libgretl_mpi_init (int self, int np, int dcmt);
 int gretl_mpi_initialized (void);
 #endif
 
-#ifdef OPENBLAS_BUILD
-int openblas_get_num_threads(void);
-void openblas_set_num_threads(int nt);
-#endif
+int blas_is_openblas (void);
+
+void blas_set_num_threads (int nt);
+
+int blas_get_num_threads (void);
 
 int auto_mpi_ok (void);
 

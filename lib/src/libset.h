@@ -127,6 +127,7 @@ int libset_use_openmp (guint64 n);
 int gretl_n_processors (void);
 int gretl_n_physical_cores (void);
 
+void num_threads_init (int blas_type);
 int get_omp_n_threads (void);
 
 /* GUI setter functions */

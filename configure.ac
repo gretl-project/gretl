@@ -485,9 +485,6 @@ case $host_os in
     AM_PATH_LAPACK(, have_lapack="yes")
   ;;
 esac
-if echo $LAPACK_LIBS | $GREP --quiet openblas ; then
-  AC_DEFINE(OPENBLAS_BUILD)
-fi
 
 dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then

@@ -56,7 +56,6 @@
 #include <errno.h>
 
 static void gretl_tests_cleanup (void);
-static int have_optimized_blas (void);
 
 /**
  * date_as_double:
@@ -2105,6 +2104,260 @@ double gretl_stopwatch (void)
 
 #endif /* !Windows */
 
+/* BLAS detection and analysis */
+
+static char OB_core[32];
+static char OB_parallel[12];
+
+static int blas_variant;
+
+static int parse_ldd_output (const char *s)
+{
+    char found[4] = {0};
+    char line[512];
+    int i = 0;
+    int ret = BLAS_UNKNOWN;
+
+    *line = '\0';
+
+    while (*s) {
+	if (*s == '\n') {
+	    /* got to the end of a line */
+	    line[i] = '\0';
+	    if (strstr(line, "Accelerate.frame")) {
+		found[3] = 1;
+	    } else if (strstr(line, "libmkl")) {
+		found[2] = 1;
+	    } else if (strstr(line, "atlas")) {
+		found[1] = 1;
+	    } else if (strstr(line, "libblas")) {
+		found[0] = 1;
+	    }
+	    *line = '\0';
+	    i = 0;
+	} else {
+	    line[i++] = *s;
+	}
+	s++;
+    }
+
+    if (found[3]) {
+	ret = BLAS_VECLIB;
+    } else if (found[2]) {
+	ret = BLAS_MKL;
+    } else if (found[1]) {
+	ret = BLAS_ATLAS;
+    } else if (found[0]) {
+	ret = BLAS_NETLIB;
+    } else {
+	fputs("detect blas: found no relevant libs!\n", stderr);
+    }
+
+    return ret;
+}
+
+#if !defined(WIN32)
+
+static int detect_blas_via_ldd (void)
+{
+    gchar *prog;
+    gchar *sout = NULL;
+    gchar *errout = NULL;
+    gint status = 0;
+    GError *gerr = NULL;
+    int variant = 0;
+
+#ifdef OS_OSX
+    gchar *argv[4];
+    prog = g_strdup("gretlcli"); /* ?? */
+    argv[0] = "otool";
+    argv[1] = "-L";
+    argv[2] = prog;
+    argv[3] = NULL;
+#else
+    gchar *argv[3];
+    prog = g_strdup(GRETL_PREFIX "/bin/gretlcli");
+    argv[0] = "ldd";
+    argv[1] = prog;
+    argv[2] = NULL;
+#endif
+
+    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+		 NULL, NULL, &sout, &errout,
+		 &status, &gerr);
+
+    if (gerr != NULL) {
+	fprintf(stderr, "%s\n", gerr->message);
+	g_error_free(gerr);
+    } else if (status != 0) {
+	fprintf(stderr, "%s exited with status %d\n", argv[0], status);
+    } else if (sout != NULL) {
+	variant = parse_ldd_output(sout);
+    } else {
+	fprintf(stderr, "%s: %s\n", argv[0], "Got no output");
+    }
+
+    g_free(sout);
+    g_free(errout);
+    g_free(prog);
+
+    return variant;
+}
+
+#endif /* neither Windows nor Mac */
+
+#ifndef WIN32
+# include <dlfcn.h>
+#endif
+
+static void register_openblas_details (void *handle)
+{
+    char *(*OB_get_corename) (void);
+    int (*OB_get_parallel) (void);
+
+#ifdef WIN32
+    OB_get_corename = (void *) GetProcAddress(handle, "openblas_get_corename");
+    OB_get_parallel = (void *) GetProcAddress(handle, "openblas_get_parallel");
+#else
+    OB_get_corename = dlsym(handle, "openblas_get_corename");
+    OB_get_parallel = dlsym(handle, "openblas_get_parallel");
+#endif
+
+    if (OB_get_corename != NULL) {
+	char *s = OB_get_corename();
+
+	if (s != NULL) {
+	    *OB_core = '\0';
+	    strncat(OB_core, s, 31);
+	}
+	fprintf(stderr, "openblas_get_corename() gave '%s'\n", s);
+    } else {
+	fprintf(stderr, "Couldn't find openblas_get_corename()\n");
+    }
+
+    if (OB_get_parallel != NULL) {
+	int p = OB_get_parallel();
+
+	if (p == 0) {
+	    strcpy(OB_parallel, "none");
+	} else if (p == 1) {
+	    strcpy(OB_parallel, "pthreads");
+	} else if (p == 2) {
+	    strcpy(OB_parallel, "OpenMP");
+	}
+	fprintf(stderr, "openblas_get_parallel() gave %d\n", p);
+    } else {
+	fprintf(stderr, "Couldn't find openblas_get_parallel()\n");
+    }
+}
+
+/* below: called in creating $sysinfo bundle */
+
+int get_openblas_details (char **s1, char **s2)
+{
+    if (*OB_core == '\0' || *OB_parallel == '\0') {
+	return 0;
+    } else {
+	*s1 = OB_core;
+	*s2 = OB_parallel;
+	return 1;
+    }
+}
+
+/* for $sysinfo bundle */
+
+const char *blas_variant_string (void)
+{
+    if (blas_variant == BLAS_NETLIB) {
+	return "netlib";
+    } else if (blas_variant == BLAS_ATLAS) {
+	return "atlas";
+    } else if (blas_variant == BLAS_OPENBLAS) {
+	return "openblas";
+    } else if (blas_variant == BLAS_MKL) {
+	return "mkl";
+    } else if (blas_variant == BLAS_VECLIB) {
+	return "veclib";
+    } else {
+	return "unknown";
+    }
+}
+
+/* for gretl_matrix.c, libset.c */
+
+int blas_is_openblas (void)
+{
+    return blas_variant == BLAS_OPENBLAS;
+}
+
+static void (*OB_set_num_threads) (int);
+static int (*OB_get_num_threads) (void);
+
+void blas_set_num_threads (int nt)
+{
+    if (OB_set_num_threads != NULL) {
+	OB_set_num_threads(nt);
+    }
+}
+
+int blas_get_num_threads (void)
+{
+    if (OB_get_num_threads != NULL) {
+	return OB_get_num_threads();
+    } else {
+	return 0;
+    }
+}
+
+#ifdef WIN32
+
+static void blas_init (void)
+{
+    HMODULE hmod = LoadLibrary("libopenblas.dll");
+
+    if (hmod != NULL) {
+	OB_set_num_threads = (void *) GetProcAddress(hmod, "openblas_set_num_threads");
+	OB_get_num_threads = (void *) GetProcAddress(hmod, "openblas_get_num_threads");
+	if (OB_set_num_threads != NULL) {
+	    blas_variant = BLAS_OPENBLAS;
+	    register_openblas_details(hmod);
+	}
+    }
+
+    if (blas_variant != BLAS_OPENBLAS) {
+	blas_variant = BLAS_NETLIB; /* ?? */
+    }
+}
+
+#else /* not WIN32 */
+
+static void blas_init (void)
+{
+    void *ptr = NULL;
+
+#if defined(OS_OSX) && defined(PKGBUILD)
+    blas_variant = BLAS_VECLIB;
+    return;
+#endif
+
+    ptr = dlopen(NULL, RTLD_NOW);
+
+    if (ptr != NULL) {
+	OB_set_num_threads = dlsym(ptr, "openblas_set_num_threads");
+	OB_get_num_threads = dlsym(ptr, "openblas_get_num_threads");
+	if (OB_set_num_threads != NULL) {
+	    blas_variant = BLAS_OPENBLAS;
+	    register_openblas_details(ptr);
+	}
+    }
+
+    if (blas_variant != BLAS_OPENBLAS) {
+	blas_variant = detect_blas_via_ldd();
+    }
+}
+
+#endif /* win32 or not */
+
 /* library init and cleanup functions */
 
 /**
@@ -2121,13 +2374,13 @@ void libgretl_init (void)
     gretl_rand_init();
     gretl_xml_init();
     gretl_stopwatch_init();
+    if (!gretl_in_tool_mode()) {
+	blas_init();
+	num_threads_init(blas_variant);
+    }
 #if HAVE_GMP
     mpf_set_default_prec(get_mp_bits());
 #endif
-
-    if (!gretl_in_tool_mode() && have_optimized_blas()) {
-	set_blas_mnk_min(90000);
-    }
 }
 
 #ifdef HAVE_MPI
@@ -2661,283 +2914,6 @@ int check_for_program (const char *prog)
 }
 
 #endif /* WIN32 or not */
-
-enum {
-    BLAS_UNKNOWN,
-    BLAS_NETLIB,
-    BLAS_ATLAS,
-    BLAS_OPENBLAS,
-    BLAS_MKL,
-    BLAS_VECLIB
-};
-
-#if !defined(OS_OSX)
-
-static char OB_core[32];
-static char OB_parallel[12];
-
-#endif
-
-#if !defined(WIN32) && !defined(OS_OSX)
-
-#include <dlfcn.h>
-
-static void register_openblas_details (void)
-{
-    static char *(*OB_get_corename) (void);
-    static int (*OB_get_parallel) (void);
-    static void *handle;
-
-    if (handle == NULL) {
-	handle = dlopen(NULL, RTLD_NOW);
-    }
-
-    if (handle != NULL) {
-	OB_get_corename = dlsym(handle, "openblas_get_corename");
-	OB_get_parallel = dlsym(handle, "openblas_get_parallel");
-    }
-
-    if (OB_get_corename != NULL) {
-	char *s = OB_get_corename();
-
-	if (s != NULL) {
-	    *OB_core = '\0';
-	    strncat(OB_core, s, 31);
-	}
-    }
-
-    if (OB_get_parallel != NULL) {
-	int p = OB_get_parallel();
-
-	if (p == 0) {
-	    strcpy(OB_parallel, "none");
-	} else if (p == 1) {
-	    strcpy(OB_parallel, "pthreads");
-	} else if (p == 2) {
-	    strcpy(OB_parallel, "OpenMP");
-	}
-    }
-}
-
-int get_openblas_details (char **s1, char **s2)
-{
-    if (*OB_core == '\0' || *OB_parallel == '\0') {
-	return 0;
-    } else {
-	*s1 = OB_core;
-	*s2 = OB_parallel;
-	return 1;
-    }
-}
-
-static int linked_to_openblas (void)
-{
-    void *p = dlopen(NULL, RTLD_NOW);
-
-    if (p != NULL && dlsym(p, "openblas_set_num_threads") != NULL) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-static int real_detect_blas (const char *s)
-{
-    char found[5] = "nnnn";
-    char line[512];
-    int i = 0;
-    int ret = BLAS_UNKNOWN;
-
-    *line = '\0';
-
-    while (*s) {
-	if (*s == '\n') {
-	    /* got to the end of a line */
-	    line[i] = '\0';
-	    if (strstr(line, "libmkl")) {
-		found[3] = 'y';
-	    } else if (strstr(line, "openblas") ||
-		strstr(line, "OpenBLAS")) {
-		found[2] = 'y';
-	    } else if (strstr(line, "atlas")) {
-		found[1] = 'y';
-	    } else if (strstr(line, "libblas")) {
-		found[0] = 'y';
-	    }
-	    *line = '\0';
-	    i = 0;
-	} else {
-	    line[i++] = *s;
-	}
-	s++;
-    }
-
-    /* allow for the possibility that we have a symlink
-       from libblas to one or other of the optimized
-       BLAS variants
-    */
-    if (found[0] == 'y' && strcmp(found + 1, "nnn")) {
-	found[0] = 'n';
-    }
-
-    /* allow for the further possibility that a link from
-       libblas to openblas is heavily disguised (e.g. debian,
-       under "alternatives")
-    */
-    if (found[0] == 'y' && linked_to_openblas()) {
-	strcpy(found, "nnyn");
-    }
-
-    if (strcmp(found, "nnny") == 0) {
-	ret = BLAS_MKL;
-    } else if (strcmp(found, "nnyn") == 0) {
-	ret = BLAS_OPENBLAS;
-    } else if (strcmp(found, "nynn") == 0) {
-	ret = BLAS_ATLAS;
-    } else if (strcmp(found, "ynnn") == 0) {
-	ret = BLAS_NETLIB;
-    } else if (strcmp(found, "nnnn") == 0) {
-	fputs("detect blas: found no relevant libs!\n", stderr);
-    } else {
-	fputs("detect blas: confused, found too many blas libs!\n", stderr);
-    }
-
-    if (ret == BLAS_OPENBLAS) {
-	register_openblas_details();
-    }
-
-    return ret;
-}
-
-static int detect_blas_variant (void)
-{
-    gchar *argv[3];
-    gchar *prog;
-    gchar *sout = NULL;
-    gchar *errout = NULL;
-    gint status = 0;
-    GError *gerr = NULL;
-    int variant = 0;
-
-    prog = g_strdup(GRETL_PREFIX "/bin/gretlcli");
-
-    argv[0] = "ldd";
-    argv[1] = prog;
-    argv[2] = NULL;
-
-    g_spawn_sync(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
-		 NULL, NULL, &sout, &errout,
-		 &status, &gerr);
-
-    if (gerr != NULL) {
-	fprintf(stderr, "%s\n", gerr->message);
-	g_error_free(gerr);
-    } else if (status != 0) {
-	fprintf(stderr, "%s exited with status %d\n", argv[0], status);
-    } else if (sout != NULL) {
-	variant = real_detect_blas(sout);
-    } else {
-	fprintf(stderr, "%s: %s\n", argv[0], "Got no output");
-    }
-
-    g_free(sout);
-    g_free(errout);
-    g_free(prog);
-
-    return variant;
-}
-
-#else
-
-# if defined(WIN32) && defined(OPENBLAS_BUILD)
-
-char *openblas_get_corename (void);
-int openblas_get_parallel (void);
-
-int get_openblas_details (char **s1, char **s2)
-{
-    char *s = openblas_get_corename();
-    int p = openblas_get_parallel();
-
-    if (s != NULL && p >= 0 && p <= 2) {
-	*OB_core = '\0';
-	strncat(OB_core, s, 31);
-	if (p == 0) {
-	    strcpy(OB_parallel, "none");
-	} else if (p == 1) {
-	    strcpy(OB_parallel, "pthreads");
-	} else {
-	    strcpy(OB_parallel, "OpenMP");
-	}
-	*s1 = OB_core;
-	*s2 = OB_parallel;
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-# else /* not *nix with OpenBLAS, nor Windows w OpenBLAS */
-
-int get_openblas_details (char **s1, char **s2)
-{
-    return 0;
-}
-
-# endif
-
-#endif /* *nix versus Windows versus Mac */
-
-static int blas_variant_code (void)
-{
-#if defined(WIN32)
-# ifdef OPENBLAS_BUILD
-    return BLAS_OPENBLAS;
-# else
-    return BLAS_NETLIB;
-# endif
-#elif defined(OS_OSX)
-    return BLAS_VECLIB;
-#else
-    /* not an own-packaged build: we have to check */
-    static int bver = -1;
-
-    if (bver < 0) {
-	bver = detect_blas_variant();
-    }
-
-    return bver;
-#endif
-}
-
-static int have_optimized_blas (void)
-{
-    int bvc = blas_variant_code();
-
-    return bvc == BLAS_OPENBLAS ||
-	bvc == BLAS_VECLIB ||
-	bvc == BLAS_MKL ||
-	bvc == BLAS_ATLAS;
-}
-
-const char *blas_variant_string (void)
-{
-    int bver = blas_variant_code();
-
-    if (bver == BLAS_NETLIB) {
-	return "netlib";
-    } else if (bver == BLAS_ATLAS) {
-	return "atlas";
-    } else if (bver == BLAS_OPENBLAS) {
-	return "openblas";
-    } else if (bver == BLAS_MKL) {
-	return "mkl";
-    } else if (bver == BLAS_VECLIB) {
-	return "veclib";
-    } else {
-	return "unknown";
-    }
-}
 
 #ifdef __MACH__
 # include <mach/mach_time.h>

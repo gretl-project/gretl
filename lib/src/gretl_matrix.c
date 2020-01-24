@@ -10040,6 +10040,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 {
     gretl_matrix *ret = NULL;
     static int ev_ver;
+    int save_nt = 0;
 
     *err = 0;
 
@@ -10048,12 +10049,12 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-#ifdef OPENBLAS_BUILD
-    int save_nt = openblas_get_num_threads();
-    if (save_nt > 1) {
-	openblas_set_num_threads(1);
+    if (blas_is_openblas()) {
+	save_nt = blas_get_num_threads();
+	if (save_nt > 1) {
+	    blas_set_num_threads(1);
+	}
     }
-#endif
 
     if (ev_ver == 0) {
 	char *s = getenv("GRETL_OLD_EV");
@@ -10067,11 +10068,9 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	ret = eigensym_rrr(m, eigenvecs, err);
     }
 
-#ifdef OPENBLAS_BUILD
-    if (save_nt > 1) {
-	openblas_set_num_threads(save_nt);
+    if (blas_is_openblas() && save_nt > 1) {
+	blas_set_num_threads(save_nt);
     }
-#endif    
 
     return ret;
 }
