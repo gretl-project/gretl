@@ -178,7 +178,6 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
        In both cases it is just copied into the model bundle and still needs
        to be processed later (e.g. within SVAR_estimate).
     */
-    # FIXME: add storeSRirf to documentation
 
     # Drop collinear exogenous terms
     lX = dropcoll(lX)

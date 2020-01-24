@@ -112,7 +112,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
        of two IRFs. But the format is necessarily more free-floating here,
        see the documentation.
        
-       chkstr: a string with a valid numerical evaluation of a some function 
+       chkstr: a string with a valid numerical evaluation of some function 
             of the IRFs at a given horizon tau. The IRF_tau matrix must be 
             hardcoded as "M". Cross-horizon restrictions are impossible.
 
@@ -172,10 +172,12 @@ function matrices gen_SRirfs(bundle b, int numh, matrix to_cum)
 
     # This calculates results for 0..mod.horizons, which is actually 
     # like in the earlier SVAR code.
-    # TODO: Maybe merge this function with earlier ones from SVAR? 
+    # TODO: Maybe merge this function with earlier ones from SVAR?
+    # 
     # So numh == mod.horizon + 1. 
-    # => FIXME the doc has been (up to 2020) slightly wrong in this regard
-    # (it claims h=mod.horizons rows in the IRFs matrix, one less than true) 
+    # (Memo: the doc has been (up to 2020) slightly wrong in this 
+    #  regard; it claimed h=mod.horizons rows in the IRFs matrix,
+    #  one less than true) 
 
     matrix B = b.B
     k = b.detterms    # just a number?
@@ -386,8 +388,6 @@ function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
         # (idiom possible because for SR we require recent gretl) 
         mod.acc_draws = drawn 
     endif
-    # TODO: add to doc: SVAR_setidIRF should not be called with assignment
-    # of return value when result is already saved into the bundle... 
 
     return drawn
 end function
@@ -398,7 +398,6 @@ end function
 
 function void SVAR_spagplot(const bundle mod, 
                             string vname, string sname)
-    # FIXME: update signature documentation
 
     if !inbundle(mod, "acc_draws")
         funcerr "Need collection acc_draws as model bundle member"
