@@ -60,9 +60,7 @@ else
   RPATH = $(DARWIN_RPATH)
 endif
 
-ifneq ($(win32_build),yes)
-  LIBDL = -ldl
-endif
+LIBDL = -ldl
 
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755

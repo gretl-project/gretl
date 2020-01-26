@@ -2206,22 +2206,15 @@ static int detect_blas_via_ldd (void)
 
 #endif /* neither Windows nor Mac */
 
-#ifndef WIN32
-# include <dlfcn.h>
-#endif
+#include <dlfcn.h>
 
 static void register_openblas_details (void *handle)
 {
     char *(*OB_get_corename) (void);
     int (*OB_get_parallel) (void);
 
-#ifdef WIN32
-    OB_get_corename = (void *) GetProcAddress(handle, "openblas_get_corename");
-    OB_get_parallel = (void *) GetProcAddress(handle, "openblas_get_parallel");
-#else
     OB_get_corename = dlsym(handle, "openblas_get_corename");
     OB_get_parallel = dlsym(handle, "openblas_get_parallel");
-#endif
 
     if (OB_get_corename != NULL) {
 	char *s = OB_get_corename();
@@ -2309,28 +2302,6 @@ int blas_get_num_threads (void)
     }
 }
 
-#ifdef WIN32
-
-static void blas_init (void)
-{
-    HMODULE hmod = LoadLibrary("libopenblas.dll");
-
-    if (hmod != NULL) {
-	OB_set_num_threads = (void *) GetProcAddress(hmod, "openblas_set_num_threads");
-	OB_get_num_threads = (void *) GetProcAddress(hmod, "openblas_get_num_threads");
-	if (OB_set_num_threads != NULL) {
-	    blas_variant = BLAS_OPENBLAS;
-	    register_openblas_details(hmod);
-	}
-    }
-
-    if (blas_variant != BLAS_OPENBLAS) {
-	blas_variant = BLAS_NETLIB; /* ?? */
-    }
-}
-
-#else /* not WIN32 */
-
 static void blas_init (void)
 {
     void *ptr = NULL;
@@ -2352,11 +2323,13 @@ static void blas_init (void)
     }
 
     if (blas_variant != BLAS_OPENBLAS) {
+#ifdef WIN32
+	blas_variant = BLAS_NETLIB; /* ?? */
+#else
 	blas_variant = detect_blas_via_ldd();
+#endif
     }
 }
-
-#endif /* win32 or not */
 
 /* library init and cleanup functions */
 
