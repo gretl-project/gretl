@@ -2223,7 +2223,6 @@ static void register_openblas_details (void *handle)
 	    *OB_core = '\0';
 	    strncat(OB_core, s, 31);
 	}
-	fprintf(stderr, "openblas_get_corename() gave '%s'\n", s);
     } else {
 	fprintf(stderr, "Couldn't find openblas_get_corename()\n");
     }
@@ -2238,7 +2237,6 @@ static void register_openblas_details (void *handle)
 	} else if (p == 2) {
 	    strcpy(OB_parallel, "OpenMP");
 	}
-	fprintf(stderr, "openblas_get_parallel() gave %d\n", p);
     } else {
 	fprintf(stderr, "Couldn't find openblas_get_parallel()\n");
     }
