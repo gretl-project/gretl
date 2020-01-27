@@ -13,11 +13,20 @@ AC_DEFUN([AM_PATH_LAPACK],
 AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
 
 if test x"${LAPACK_LIBS}" = x ; then
-   # No LAPACK_LIBS was supplied, check for openblas first
+   # No LAPACK_LIBS was supplied
    AC_MSG_CHECKING(for libopenblas or liblapack + libblas)
-   AC_CHECK_LIB(openblas,ddot_,LAPACK_LIBS="-lopenblas",LAPACK_LIBS="none")
+   # check for OpenMP openblas using OpenBLAS naming
+   AC_CHECK_LIB(openblas,ddot_,LAPACK_LIBS="-lopenblas_omp",LAPACK_LIBS="none")
    if test $LAPACK_LIBS = "none" ; then
-      # try falling back to liblapack plus libblas
+      # OpenMP OpenBLAS, Fedora naming
+      AC_CHECK_LIB(blas,ddot_,LAPACK_LIBS="-lopenblaso",LAPACK_LIBS="none")
+   fi
+   if test $LAPACK_LIBS = "none" ; then
+      # OpenBLAS at all?
+      AC_CHECK_LIB(blas,ddot_,LAPACK_LIBS="-lopenblas",LAPACK_LIBS="none")
+   fi
+   if test $LAPACK_LIBS = "none" ; then
+      # fall back to liblapack plus libblas
       AC_CHECK_LIB(blas,ddot_,LAPACK_LIBS="-llapack -lblas",LAPACK_LIBS="none")
    fi
    if test $LAPACK_LIBS = "none" ; then

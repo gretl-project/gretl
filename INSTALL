@@ -6,7 +6,7 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
   make install
 
 * You may want to do "./configure --help" first to see what options are
-  available.  
+  available.
 
 * By default the installation goes under /usr/local.  To install
   elsewhere use "./configure --prefix=/your/prefix".
@@ -16,8 +16,19 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
   files get installed to DESTDIR rather than to the standard system
   location.
 
+* Gretl requires that a LAPACK library is available. Two variants
+  should be auto-detected -- libopenblas, and liblapack plus
+  libblas -- provided the libraries are in a location searched by the
+  linker by default. In case of other configurations, such as ATLAS
+  or the Intel Math Kernel library (MKL) or openblas in a non-standard
+  location, you should provide an appropriate linker line in the
+  environment variable LAPACK_LIBS when calling the configure script.
+  For example, for openblas installed under /opt:
+
+  LAPACK_LIBS='-L/opt/openblas/lib -lopenblas' ./configure ...
+
 * On systems where GNU make is not the default you may need to use the
   "--with-gmake" option to ./configure.
-  
-See the Gretl User's Guide, Appendix C ("Building gretl") for further 
+
+See the Gretl User's Guide, Appendix C ("Building gretl") for further
 details [ http://gretl.sourceforge.net/#man ]
