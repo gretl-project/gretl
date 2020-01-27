@@ -464,7 +464,6 @@ fi
 dnl
 dnl Check for LAPACK
 dnl
-LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
   *arwin*)
     LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
