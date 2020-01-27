@@ -20948,7 +20948,6 @@ rm -f core conftest.err conftest.$ac_objext \
   fi
 fi
 
-LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
   *arwin*)
     LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
@@ -20964,9 +20963,10 @@ case $host_os in
 
 
 if test x"${LAPACK_LIBS}" = x ; then
-   # No LAPACK_LIBS was supplied, check for openblas first
+   # No LAPACK_LIBS was supplied
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libopenblas or liblapack + libblas" >&5
 $as_echo_n "checking for libopenblas or liblapack + libblas... " >&6; }
+   # check for OpenMP openblas using OpenBLAS naming
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lopenblas" >&5
 $as_echo_n "checking for ddot_ in -lopenblas... " >&6; }
 if ${ac_cv_lib_openblas_ddot_+:} false; then :
@@ -21004,13 +21004,103 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openblas_ddot_" >&5
 $as_echo "$ac_cv_lib_openblas_ddot_" >&6; }
 if test "x$ac_cv_lib_openblas_ddot_" = xyes; then :
-  LAPACK_LIBS="-lopenblas"
+  LAPACK_LIBS="-lopenblas_omp"
 else
   LAPACK_LIBS="none"
 fi
 
    if test $LAPACK_LIBS = "none" ; then
-      # try falling back to liblapack plus libblas
+      # OpenMP OpenBLAS, Fedora naming
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lblas" >&5
+$as_echo_n "checking for ddot_ in -lblas... " >&6; }
+if ${ac_cv_lib_blas_ddot_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ddot_ ();
+int
+main ()
+{
+return ddot_ ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_blas_ddot_=yes
+else
+  ac_cv_lib_blas_ddot_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blas_ddot_" >&5
+$as_echo "$ac_cv_lib_blas_ddot_" >&6; }
+if test "x$ac_cv_lib_blas_ddot_" = xyes; then :
+  LAPACK_LIBS="-lopenblaso"
+else
+  LAPACK_LIBS="none"
+fi
+
+   fi
+   if test $LAPACK_LIBS = "none" ; then
+      # OpenBLAS at all?
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lblas" >&5
+$as_echo_n "checking for ddot_ in -lblas... " >&6; }
+if ${ac_cv_lib_blas_ddot_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ddot_ ();
+int
+main ()
+{
+return ddot_ ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_blas_ddot_=yes
+else
+  ac_cv_lib_blas_ddot_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blas_ddot_" >&5
+$as_echo "$ac_cv_lib_blas_ddot_" >&6; }
+if test "x$ac_cv_lib_blas_ddot_" = xyes; then :
+  LAPACK_LIBS="-lopenblas"
+else
+  LAPACK_LIBS="none"
+fi
+
+   fi
+   if test $LAPACK_LIBS = "none" ; then
+      # fall back to liblapack plus libblas
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lblas" >&5
 $as_echo_n "checking for ddot_ in -lblas... " >&6; }
 if ${ac_cv_lib_blas_ddot_+:} false; then :
@@ -21152,9 +21242,10 @@ rm -f conf.lapacktest
 
 
 if test x"${LAPACK_LIBS}" = x ; then
-   # No LAPACK_LIBS was supplied, check for openblas first
+   # No LAPACK_LIBS was supplied
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libopenblas or liblapack + libblas" >&5
 $as_echo_n "checking for libopenblas or liblapack + libblas... " >&6; }
+   # check for OpenMP openblas using OpenBLAS naming
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lopenblas" >&5
 $as_echo_n "checking for ddot_ in -lopenblas... " >&6; }
 if ${ac_cv_lib_openblas_ddot_+:} false; then :
@@ -21192,13 +21283,103 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_openblas_ddot_" >&5
 $as_echo "$ac_cv_lib_openblas_ddot_" >&6; }
 if test "x$ac_cv_lib_openblas_ddot_" = xyes; then :
-  LAPACK_LIBS="-lopenblas"
+  LAPACK_LIBS="-lopenblas_omp"
 else
   LAPACK_LIBS="none"
 fi
 
    if test $LAPACK_LIBS = "none" ; then
-      # try falling back to liblapack plus libblas
+      # OpenMP OpenBLAS, Fedora naming
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lblas" >&5
+$as_echo_n "checking for ddot_ in -lblas... " >&6; }
+if ${ac_cv_lib_blas_ddot_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ddot_ ();
+int
+main ()
+{
+return ddot_ ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_blas_ddot_=yes
+else
+  ac_cv_lib_blas_ddot_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blas_ddot_" >&5
+$as_echo "$ac_cv_lib_blas_ddot_" >&6; }
+if test "x$ac_cv_lib_blas_ddot_" = xyes; then :
+  LAPACK_LIBS="-lopenblaso"
+else
+  LAPACK_LIBS="none"
+fi
+
+   fi
+   if test $LAPACK_LIBS = "none" ; then
+      # OpenBLAS at all?
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lblas" >&5
+$as_echo_n "checking for ddot_ in -lblas... " >&6; }
+if ${ac_cv_lib_blas_ddot_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lblas  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ddot_ ();
+int
+main ()
+{
+return ddot_ ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_blas_ddot_=yes
+else
+  ac_cv_lib_blas_ddot_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_blas_ddot_" >&5
+$as_echo "$ac_cv_lib_blas_ddot_" >&6; }
+if test "x$ac_cv_lib_blas_ddot_" = xyes; then :
+  LAPACK_LIBS="-lopenblas"
+else
+  LAPACK_LIBS="none"
+fi
+
+   fi
+   if test $LAPACK_LIBS = "none" ; then
+      # fall back to liblapack plus libblas
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ddot_ in -lblas" >&5
 $as_echo_n "checking for ddot_ in -lblas... " >&6; }
 if ${ac_cv_lib_blas_ddot_+:} false; then :
