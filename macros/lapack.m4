@@ -1,90 +1,63 @@
 # Configure paths for lapack
-# Allin Cottrell <cottrell@wfu.edu>, last updated September 2013
+# Allin Cottrell <cottrell@wfu.edu>, last updated January 2020
+#
+# This is designed to handle openblas (in a standard location) or
+# liblapack plus libblas (again, in a standard location). For
+# fancier setups, supply LAPACK_LIBS.
 
 dnl AM_PATH_LAPACK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for LAPACK, and define LAPACK_CFLAGS and LAPACK_LIBS.
+dnl Test for LAPACK, and define LAPACK_LIBS.
 dnl
 AC_DEFUN([AM_PATH_LAPACK],
-[dnl 
-AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is installed (optional)],
-            lapack_config_prefix="$withval", lapack_config_prefix="")
+[dnl
 AC_ARG_VAR([LAPACK_LIBS],[linker flags for lapack, overriding auto-detection])
 
-  if test x"${LAPACK_LIBS}" = x ; then 
-     AC_MSG_CHECKING(for libgfortran, libg2c or libf2c)
-     AC_CHECK_LIB(gfortran,_gfortran_abort,FLIB="-lgfortran",FLIB="none")
-     if test $FLIB = "none" ; then
-        AC_CHECK_LIB(g2c,c_sqrt,FLIB="-lg2c",FLIB="none")
-     fi
-     if test $FLIB = "none" ; then
-        AC_CHECK_LIB(f2c,c_sqrt,FLIB="-lf2c",FLIB="none")
-     fi
-     if test $FLIB = "none" ; then
-        echo "*** Couldn't find libgfortran, libg2c or libf2c"
-        FLIB=""
-     fi
-  fi
+if test x"${LAPACK_LIBS}" = x ; then
+   # No LAPACK_LIBS was supplied, check for openblas first
+   AC_MSG_CHECKING(for libopenblas or liblapack + libblas)
+   AC_CHECK_LIB(openblas,ddot_,LAPACK_LIBS="-lopenblas",LAPACK_LIBS="none")
+   if test $LAPACK_LIBS = "none" ; then
+      # try falling back to liblapack plus libblas
+      AC_CHECK_LIB(blas,ddot_,LAPACK_LIBS="-llapack -lblas",LAPACK_LIBS="none")
+   fi
+   if test $LAPACK_LIBS = "none" ; then
+      echo "*** Couldn't find libopenblas or libblas"
+      LAPACK_LIBS=""
+   fi
+else
+   AC_MSG_CHECKING(for lapack)
+fi
 
-  AC_MSG_CHECKING(for LAPACK)
-  if test x"${LAPACK_LIBS}" = x ; then
-     if test "x$lapack_config_prefix" = x ; then
-        LAPACK_LIBS="-llapack -lblas $FLIB"
-     else
-        LAPACK_LIBS="-L$lapack_config_prefix -llapack -lblas $FLIB"
-     fi
-  fi
+ac_save_LIBS="$LIBS"
+LIBS="$LAPACK_LIBS $LIBS"
 
-  ac_save_CFLAGS="$CFLAGS"
-  ac_save_LIBS="$LIBS"
-  CFLAGS="$LAPACK_CFLAGS $CFLAGS"
-  LIBS="$LAPACK_LIBS $LIBS"
-
-dnl
-dnl Check the installed LAPACK.
+dnl Check a LAPACK function in the specified or detected setup
 dnl
   rm -f conf.lapacktest
   AC_TRY_RUN([
 #include <stdlib.h>
-#include "gretl_f2c.h"
-#include "clapack_double.h"
-
-int main (void)
-{
-  integer ispec;
-  real zero = 0.0;
-  real one = 1.0;
-
-  ieeeck_(&ispec, &zero, &one);
+int dpotrf_(char *, int *, double *, int *, int *);
+int main (void) {
+  char uplo = 'L';
+  int one = 1;
+  int info = 0;
+  double x = 1;
+  dpotrf_(&uplo, &one, &x, &one, &info);
   system("touch conf.lapacktest");
   return 0;
 }
-],, no_lapack=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+],,no_lapack=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
 
 if test "x$no_lapack" = x ; then
-     AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])
-     rm -f conf.blastest
-     AC_TRY_RUN([
-     #include <stdlib.h>
-
-     int openblas_get_parallel(void);
-
-     int main (void)
-     {
-       if (openblas_get_parallel() != 1) {
-          exit(EXIT_FAILURE);
-       }
-       system("touch conf.blastest");
-       return 0;
-     }
-     ],blas_pthreads=yes,)
+  AC_MSG_RESULT(yes)
+  ifelse([$2], , :, [$2])
+else
+  AC_MSG_RESULT(no)
+  if test -f conf.lapacktest ; then
+    :
   else
-     AC_MSG_RESULT(no)
-     if test -f conf.lapacktest ; then
-       :
-     else
-       echo "*** Could not run LAPACK test program, checking why..."
-       AC_TRY_LINK([
+    echo "*** Could not run LAPACK test program, checking why..."
+    AC_TRY_LINK([
 #include <stdio.h>
 ],     [ return (1); ],
        [ echo "*** The test program compiled, but did not run. This usually means"
@@ -97,19 +70,13 @@ if test "x$no_lapack" = x ; then
        [ echo "*** The test program failed to compile or link. See config.log for the"
          echo "*** exact error that occured. This may mean LAPACK was incorrectly installed"
          echo "*** or that you have moved LAPACK since it was installed." ])
-         CFLAGS="$ac_save_CFLAGS"
          LIBS="$ac_save_LIBS"
-     fi
-     LAPACK_CFLAGS=""
+  fi
      LAPACK_LIBS=""
      ifelse([$3], , :, [$3])
-  fi
-  dnl finalize
-  CFLAGS="$ac_save_CFLAGS"
-  LIBS="$ac_save_LIBS"
-  AC_SUBST(LAPACK_CFLAGS)
-  AC_SUBST(LAPACK_LIBS)
-  AC_SUBST(FLIB)
-  rm -f conf.lapacktest
-  rm -f conf.blastest
+fi
+dnl finalize
+LIBS="$ac_save_LIBS"
+AC_SUBST(LAPACK_LIBS)
+rm -f conf.lapacktest
 ])
