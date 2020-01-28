@@ -1304,7 +1304,7 @@ print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	N_("Instruments")
     };
     const int *list;
-    char vname[16];
+    char vname[VNAMELEN];
     int tex = tex_format(prn);
     int i, j, imin, jmin, vi;
 
