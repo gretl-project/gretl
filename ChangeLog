@@ -1,4 +1,4 @@
-version 20210a, in progress
+version 2020a, in progress
 - Work on lasso back-end (not public yet)
 - New function instrings() to locate instances of a given
   string within an array of strings
