@@ -40,7 +40,7 @@ SVAR_SRplain(&mod, "INFL", "Interest Rate", "-")
 SVAR_SRplain(&mod, "FF",   "Interest Rate", "+")
 
 # do the rotations (this is the computationally intensive part)
-SVAR_setidIRF(&mod, 256, 0, 0.95, 5000)
+SVAR_SRdraw(&mod, 256, 0, 0.95, 5000)
 
 # draw the irfs
-SVAR_SRplot(mod, mod.Ynames, mod.snames) 
+SVAR_SRirf(mod, mod.Ynames, mod.snames) 

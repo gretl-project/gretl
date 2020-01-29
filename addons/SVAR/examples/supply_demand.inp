@@ -44,7 +44,7 @@ SVAR_SRplain(&mod, "q", "Demand", "+")  # as well as quantity
 
 
 # do the rotations (this is the computationally intensive part)
-SVAR_setidIRF(&mod, 1000) # (with default coverage 90%)
+SVAR_SRdraw(&mod, 1000) # (with default coverage 90%)
 
 # draw the irfs 
-SVAR_SRplot(mod, mod.Ynames, defarray("Supply","Demand"))
+SVAR_SRirf(mod, mod.Ynames, defarray("Supply","Demand"))

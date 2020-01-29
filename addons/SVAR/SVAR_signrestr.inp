@@ -247,7 +247,7 @@ function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
     return out 
 end function
 
-function bundles SVAR_setidIRF(bundle *mod, int rep, bool DO_BAYES[0],
+function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
                                scalar coveralpha[0:1:0.9], int maxiter[10000])
 
     # This function draws a random rotations of the Cholesky model
@@ -490,7 +490,7 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
     return ret
 end function
 
-function void SVAR_SRplot(const bundle mod "the model bundle", 
+function void SVAR_SRirf(const bundle mod "the model bundle", 
                           const strings whichvars[null] "which variables",
                           const strings whichshocks[null] "which shocks",
                           bool meanormed[0] "choose 1 for medians")
@@ -505,7 +505,7 @@ function void SVAR_SRplot(const bundle mod "the model bundle",
     if !inbundle(mod, "SRid_snames")
         funcerr "No SR (sign restriction) specs found"
     elif !inbundle(mod, "SRirfmeans")
-        funcerr "No SR IRF results found - did you run SVAR_setidIRF?"
+        funcerr "No SR IRF results found - did you run SVAR_SRdraw?"
     endif
 
     # bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)   

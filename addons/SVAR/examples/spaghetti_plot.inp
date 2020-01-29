@@ -45,7 +45,7 @@ SVAR_SRplain(&mod, "q", "Demand", "+")  # as well as quantity
 rep = 128
 
 # do the rotations (this is the computationally intensive part)
-SVAR_setidIRF(&mod, rep)
+SVAR_SRdraw(&mod, rep)
 
 # draw the irfs
 SVAR_spagplot(mod, "p", "Supply") # 1, 1)
