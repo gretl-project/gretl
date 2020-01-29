@@ -110,15 +110,15 @@ estimate Structural VARs, or SVARs for short.
 
 In the remainder of this guide, the emphasis will be put on the
 scripting interface, which is the recommended way of using the
-package. However, most, if not all, of its features are also
-accessible via the ``Structural VAR'' menu entry (go to \emph{Model
-  $>$ Time Series $>$ Multivariate}) and the corresponding menu-driven interface. The
+package. However, most of its features are also accessible via the
+``Structural VAR'' menu entry (go to \emph{Model $>$ Time Series $>$
+  Multivariate}) and the corresponding menu-driven interface. The
 impatient reader, who already has some understanding of what a SVAR is
 and is looking for a step-by-step guide on how to get her work done
 quickly via point-and click methods, can consult section \ref{sec:GUI}
 in the Appendix.
 
-In order to establish notation and define a few concepts, allow me to
+In order to establish notation and define a few concepts, allow us to
 inflict on you a 2-page crash course on SVARs.  In this
 context,\footnote{The adjective ``structural'' is possibly one of the
   most widely used and abused in econometrics. In other contexts, it
@@ -178,8 +178,8 @@ original proposal, and is sometimes called a ``recursive''
 identification scheme. It has a number of interesting properties,
 among which the fact that the ML estimator of $C$ is just the Cholesky
 decomposition of $\hat{\Sigma}$, the sample covariance matrix of VAR
-residuals. This is why many practitioners, including myself, often use
-the ``recursive model'' and ``Cholesky model'' phrases
+residuals. This is why many practitioners, including ourselves, often
+use the ``recursive model'' and ``Cholesky model'' phrases
 interchangeably.  This has been the most frequently used variant of a
 SVAR model, partly for its ease of interpretation, partly for its ease
 of estimation.\footnote{Some may say ``partly for the unimaginative
@@ -420,26 +420,16 @@ form as
 \]
 where $R = \left[ 0, 0, 1, 0 \right]$ and $d=0$.
 
-There are several ways to constrain a model: for a C model, the $R^* =
-[R | d ]$ matrix is stored as the bundle element \texttt{Rd1} and the
-number of its rows is kept as bundle element \texttt{nc1}. If you feel
-like building the matrix $R^*$ via \app{gretl}'s ordinary matrix
-functions, all you have to do is to fill up the bundle elements
-\texttt{Rd1} and \texttt{nc1} properly before calling
-\texttt{SVAR\_estimate()}.
-
-In most cases, however, you'll want to use the \texttt{SVAR\_restrict}
-function, which gives you a much more straightforward tool. A complete
-description can be found in appendix \ref{sec:syntax}; suffice it to
-say here that the result of the function
+There are several ways to constrain a model: the easiest way is to use
+the \texttt{SVAR\_restrict} function, which should be enough in most
+cases; for alternatives, jump to section \ref{sec:OtherConstraints}. A
+complete description of the the \texttt{SVAR\_restrict} function can
+be found in appendix \ref{sec:syntax}; suffice it to say here that the
+result of the function
 \begin{code}
   SVAR_restrict(&Mod, "C", 1, 2, 0)
 \end{code}
-is to ensure that $C_{1,2} = 0$ (see eq.~\ref{eq:cholesky}). The
-\texttt{SVAR\_restrict} function does nothing but add rows to
-$R^*$. The function also contains a check so that redundant or
-inconsistent restrictions will not be allowed.
-
+is to ensure that $C_{1,2} = 0$ (see eq.~\ref{eq:cholesky}). 
 
 The next step is estimation, which is accomplished via the
 \texttt{SVAR\_estimate} function, which just takes one argument, the
@@ -844,13 +834,64 @@ positive integer that sets a non-automatic choice for the block length of the
 bootstrap innovations; the automatic choice currently being 10\% of the 
 sample length.
 
-\subsection{A shortcut}
+\subsection{More general restrictions and a shortcut}
+\label{sec:OtherConstraints}
 
-In many cases, a triangular, Cholesky-style specification for the $C$
-matrix like the one analysed in this section is all that is
-needed. When many variables are involved, the setting of the $\frac{n
-  \times (n-1)}{2}$ restrictions via the \texttt{SVAR\_restrict}
-function could be quite boring, although easily done via a loop.
+The internal element of the model bundle which contains the
+constraints for a C model is a matrix called \texttt{Rd1} and the
+number of its rows is kept as bundle element \texttt{nc1}. This matrix
+contains the restrictions in a C model of the form
+\[
+  R \VEC C = d
+\]
+by stacking horizontally the $R$ matrix and the $d$ vector, so that a
+matrix $R^* = [R | d ]$ is stored as \texttt{Rd1}. The
+\texttt{SVAR\_restrict} function does nothing but add rows to
+$R^*$. The function also contains a check so that redundant or
+inconsistent restrictions will not be allowed.
+
+However, if you feel like building the matrix $R^*$ via \app{gretl}'s
+ordinary matrix functions, all you have to do is to fill up the bundle
+elements \texttt{Rd1} and \texttt{nc1} properly before calling
+\texttt{SVAR\_estimate()}.
+
+For example, take the example script contained in Table
+\ref{tab:simpleC-base} and suppose you want to identify your C-model
+via the (rather silly) constraint $c_{11} = c_{12}$. The equation
+above would specialise to
+\[
+  [1 \quad -1 \quad 0 \quad 0 ] \VEC C = 0
+\]
+an all you would have to do, in order to modify the script to that
+effect would be substituting the line
+\begin{code}
+SVAR_restrict(&Mod, "C", 1, 2, 0)
+\end{code}
+with
+\begin{code}
+Mod.Rd1 = {1, -1, 0, 0, 0}
+Mod.nc1 = 1
+\end{code}
+Estimating the resulting model would give you
+\begin{code}
+
+             coefficient   std. error     z      p-value 
+  -------------------------------------------------------
+  C[ 1; 1]    0.230119     0.0127062    18.11    2.62e-73 ***
+  C[ 2; 1]    0.230119     0.0127062    18.11    2.62e-73 ***
+  C[ 1; 2]   -0.0616835    0.0182892    -3.373   0.0007   ***
+  C[ 2; 2]    1.32947      0.0755748    17.59    2.87e-69 ***
+
+  Log-likelihood = -276.913
+\end{code}
+where the two first coefficients are equal, as required.
+
+That said, in many cases a triangular, Cholesky-style specification
+for the $C$ matrix like the one analysed in this section is all that
+is needed. When many variables are involved, the setting of the
+$\frac{n \times (n-1)}{2}$ restrictions via the
+\texttt{SVAR\_restrict} function could be quite boring, although
+easily done via a loop.
 
 For these cases, the \texttt{SVAR} package provides an alternative
 way: if you supply the \texttt{SVAR\_setup} function with the string
@@ -1405,10 +1446,6 @@ restrictions. Of course, all the subsequent steps (bootstrapping and
 IRF plotting) can be performed just like in the previous example if
 so desired.
 
-\section{AB models}
-\label{sec:ABmodels}
-\subsection{A simple example}
-
 \begin{table}[htbp]
   \begin{scode}
 set verbose off
@@ -1441,6 +1478,11 @@ IRFplot(&ISLM, 1, 2)
   \caption{Estimation of an AB model --- example from \cite{LKBook04}}
   \label{tab:ABmodel}
 \end{table}
+
+\section{AB models}
+\label{sec:ABmodels}
+\subsection{A simple example}
+
 AB models are more general than the C model, but more rarely used in
 practice. In order to exemplify the way in which they are handled in
 the \texttt{SVAR} package, we will replicate the example given in
