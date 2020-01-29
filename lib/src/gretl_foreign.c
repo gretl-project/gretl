@@ -2801,8 +2801,6 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	    nr = R_nrows(res);
 	    nc = R_ncols(res);
 
-	    fprintf(stderr, "nr=%d, nc=%d\n", nr, nc);
-
 	    if (nr > 0 && nc > 0) {
 		m = gretl_matrix_alloc(nr, nc);
 		if (m == NULL) {
