@@ -12,6 +12,7 @@ version 20210a, in progress
 - SVD: use faster divide-and-conquer lapack function
 - complex(): make the second argument optional
 - defarray(): treat scalar arguments as 1x1 matrices
+- arrays: allow as function paramters and return values
 - OpenBLAS speed-up: limit the number of threads to the
   number of physical cores on the host machine
 - Fix bug: possible buffer overrun on printing list of
