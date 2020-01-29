@@ -3,6 +3,15 @@
 */
 
 function string modelstring(int type)
+/*
+   The idea about the number 10 for sign restrictions is:
+   - First it's very different from the other types (haha)
+   - Secondly if later on we really support mixed models,
+   like some sign restrictions and some zero restrictions,
+   perhaps this could be expressed as the sum of the types.
+   (E.g. 12 == 2 + 10 would be zero restrictions on the C matrix
+   coupled with sign stuff.)
+    */
     string ret = ""
     if type == 1
         ret = "plain"
@@ -12,6 +21,9 @@ function string modelstring(int type)
         ret = "AB"
     elif type == 4
         ret = "SVEC"
+
+    elif type == 10
+        ret = "SR" # sign restrictions
     endif
 
     return ret
@@ -32,6 +44,9 @@ function scalar modeltype(string s)
         print "Please use 'SVEC' for cointegrated SVARs,"
         print "the code 'KPSW' is deprecated (but still works for now)."
         ret = 4
+
+    elif s2 == "SR"	# sign restrictions
+        ret = 10
     endif
 
     return ret
@@ -83,7 +98,7 @@ function scalar boottypecode(string btypestr)
     elif s == "wildm"
         ret = 4
     elif s == "mbb" || s == "moving blocks"
-		ret = 5
+        ret = 5
     endif
     return ret
 end function
@@ -137,7 +152,7 @@ function matrix set_default_dimensions(bundle *mod, list lY,
 end function
 
 function bundle SVAR_setup(string type_string, list lY, list lX[null],
-                           int varorder[1::1], bool checkident[1])
+                           int varorder[1::1], bool checkid_storeSRirfs[1])
 
     /*
        This creates a bundle holding the info on the SVAR; this will be
@@ -148,8 +163,20 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
        The scalar "step" keeps track of the stage we're at.
        (maybe not needed any more)
 
-       The arg 'checkident' is just copied into the model bundle. It still needs
-       to be processed later (presumably within SVAR_estimate).
+       The switch 'checkid_storeSRirf' is now "overloaded" with different
+       meanings, depending on the model type:
+       - For traditional types it takes the meaning of 'checkident'.
+         (Default 1 = yes, do it.)
+       - For set-identified (sign restriction) models checking the 
+         identification separately makes no sense, so here this becomes 
+         'storeSRirf', serving to decide whether the full IRF data of all 
+         accepted draws should be stored in the model bundle. This can 
+         inflate the bundle quite a bit, but in general shouldn't be a 
+         problem on modern computers.
+         (Default 1 = yes, store all IRF data.)
+
+       In both cases it is just copied into the model bundle and still needs
+       to be processed later (e.g. within SVAR_estimate).
     */
 
     # Drop collinear exogenous terms
@@ -185,7 +212,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     /* general info                                                          */
     /*-----------------------------------------------------------------------*/
 
-    /* type goes from 1 to 4 (plain, "C", "AB" or "SVEC") */
+    /* type goes from 1 to 4 (plain, "C", "AB" or "SVEC"), plus 10 ("SR") */
     ret.type = type
 
     /* the step we're at: 0 = no estimation done, 1 = VAR only, 2 = SVAR */
@@ -198,58 +225,8 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     matrix ret.X = (k>0) ? mreg[, n+1 : n+k] : {}
 
     # variable names
-    strings ret.Ynames = strsplit(strsub(varname(lY),","," ")) # note: string array
-    strings ret.Xnames = strsplit(strsub(varname(lX),","," ")) # needed?
-
-    /*
-       The constraint matrices.
-       "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
-       "Rd1l" contains long-run constraints on C (not supported in AB models);
-       "Rd0" contains short-run constraints on A in AB;
-
-       note that "Rd1l" and "Rd0" were both "aux" in previous versions.
-
-       Initially, they are empty. Except for the "plain" model, it's up to
-       the user to fill them up later, via SVAR_restrict() or by hand
-    */
-
-    matrix ret.Rd1 = (type==1) ? cholRd(n) : {}
-    matrix ret.Rd1l = {}
-
-    if type == 3
-        matrix ret.Rd0 = {}
-    else
-        matrix ret.fullRd = {}	# short- and long-run restrictions together later
-
-        if type == 4
-            /* SVEC model: cointegration stuff */
-            matrix ret.jalpha = {}
-            matrix ret.jbeta = {}
-            ret.jcase = 0
-        endif  
-    endif
-
-    # matrix for holding sign restrictions (for future use)
-    matrix ret.SRest = {}
-
-    /* Optimisation
-    */
-    ret.optmeth = 4 # default = scoring
-    # ret.simann  = 0 # unused
-
-    /* Information for cumulating/normalizing IRFs
-    */
-    ret.ncumul = 0
-    matrix ret.cumul = {}
-    ret.normalize = 0
-
-    /* Bootstrap
-    */
-    ret.nboot = 0
-    ret.boot_alpha = -1
-    matrix ret.bootdata = {}
-    ret.biascorr = 0
-    ret.boottype = 1  # standard resid resampl. (choice new 1.5)
+    strings ret.Ynames = strsplit(strsub(varname(lY), "," , " ")) # note: string array
+    strings ret.Xnames = strsplit(strsub(varname(lX), "," , " ")) # needed?
 
     /* Names for shocks */
     # per default, we borrow variable names, following tradition
@@ -259,8 +236,72 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     (This does not apply to the case of long-run restrictions.) */
     ret.calc_lr = 0
 
-    /* Copy the id check choice */
-    ret.checkident = checkident
+    /* Optimisation (not needed for SR, but is expected elsewhere...) */
+    ret.optmeth = 4 # default = scoring
+
+    /* Information for cumulating/normalizing IRFs */
+    ret.ncumul = 0
+    matrix ret.cumul = {}
+    ret.normalize = 0
+
+
+    /* ----------------------------------------------------------------
+        type-specific stuff
+       ----------------------------------------------------------------*/
+
+    if type != 10    # (traditional, no sign restrictions)
+
+        /*
+        The constraint matrices.
+        "Rd1" contains short-run constraints on B (and therefore C in non-AB models);
+        "Rd1l" contains long-run constraints on C (not supported in AB models);
+        "Rd0" contains short-run constraints on A in AB;
+
+        note that "Rd1l" and "Rd0" were both "aux" in previous versions.
+
+        Initially, they are empty. Except for the "plain" model, it's up to
+        the user to fill them up later, via SVAR_restrict() or by hand
+        */
+
+        matrix ret.Rd1 = (type==1) ? cholRd(n) : {}
+        matrix ret.Rd1l = {}
+
+        if type == 3
+            matrix ret.Rd0 = {}
+        else
+            matrix ret.fullRd = {}	# short- and long-run restrictions together later
+
+            if type == 4
+                /* SVEC model: cointegration stuff */
+                matrix ret.jalpha = {}
+                matrix ret.jbeta = {}
+                ret.jcase = 0
+            endif
+        endif
+
+        ## Other settings for traditional SVARs
+        
+        /* Copy the id check choice */
+        ret.checkident = checkid_storeSRirfs
+
+        /* Bootstrap */
+        ret.nboot = 0
+        ret.boot_alpha = -1
+        matrix ret.bootdata = {}
+        ret.biascorr = 0
+        ret.boottype = 1  # standard resid resampl. (choice new 1.5)
+
+    else #  10 (SR) 
+        # matrix for holding sign restrictions
+        matrix ret.SRest = {}
+
+		/* Since for sign restrictions the traditional estimation step doesn't apply,
+           but we need the reduced-form coefficients, we already do it here auto-
+           matically. */
+        ret.storeSRirfs = checkid_storeSRirfs 
+        ret.checkident = 0 # needs to exist
+        SVAR_estimate(&ret, 0)
+    endif
 
     return ret
 end function
@@ -295,7 +336,7 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
         print "Long-run restrictions only supported in C model."
         return 3	# (Which code to return here? <Sven>)
 
-        # check for bogus long-run constraint 
+        # check for bogus long-run constraint
     elif code == "lrC" && type == 4
         if c > n - b.crank
             print "Long-run constraints only make sense on permanent shocks."
@@ -303,6 +344,10 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
             # (p.29, section 7 of the doc)
             return 4
         endif
+
+    elif type == 10
+        print "Use specialized functions (SVAR_SRplain etc.) for sign restrictions."
+        return 5
     endif
 
     # if no input error, proceed with this:
@@ -400,6 +445,11 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
        While we're at it, we also label the structural shocks as
        "Perm_1", "Perm_2", "Trans_1", "Trans_2", etc.
     */
+
+    if SVARobj.type != 4 && verbose 
+        print "Putting cointegration information into a non-SVEC model --"
+        print " are you sure you know what you're doing?"
+    endif
 
     scalar n = SVARobj.n
 
@@ -527,11 +577,11 @@ function scalar SVAR_cumulate(bundle *b, int nv)
 
         # The following code was in doIRF but doesn't depend
         # on the data, so slightly inefficient for the bootstrap.
-        # Instead we introduce b.cumsel which can be reused later        
+        # Instead we introduce b.cumsel which can be reused later
         tmp = zeros(b.n, b.n)
         tmp[b.cumul,] = 1
         matrix b.cumsel = selifr(transp(seq(1, b.n * b.n)), vec(tmp))
-    endif   
+    endif
     return err
 end function
 

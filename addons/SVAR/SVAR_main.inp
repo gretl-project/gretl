@@ -42,6 +42,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     scalar obj.LL0 = VARloglik(obj.T, Sigma)
 
     if type == 1
+
         # plain model: just Cholesky decomposition
         matrix C = cholesky(Sigma)
         matrix param = vech(C')
@@ -104,6 +105,16 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
         matrices transfer
         matrix C = estAB(&param, Sigma, aRd, bRd, &vcv, &errcode, meth, \
           verbosity, &transfer)
+    
+    elif type == 10    # SR 
+	    # just enter some dummy stuff, only needed for compatibility right now
+        matrix C = cholesky(Sigma)
+        matrix obj.theta = vech(C')
+
+        # the covariance matrix for C (just dummy!)
+        matrix Ss = imp2exp(cholRd(n))
+        matrix obj.vcv = coeffVCV(Ss[, 1: cols(Ss)-1], &C)
+        matrix obj.C = C
 
     endif	# which type
 
@@ -113,7 +124,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     if errcode
         funcerr "Estimation failed"
 
-    else	# estimation ran fine
+    elif type != 10	# estimation ran fine, and we don't have a SR model 
 
         # Copy stuff into the bundle
         if type == 3

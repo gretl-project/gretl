@@ -1,0 +1,46 @@
+# Example script for sign restrictions in gretl's SVAR addon
+
+set verbose off
+set seed 909090
+
+include SVAR.gfn
+
+### ----------------------------------------------------
+### Ouliaris et al's example on the Cho_Moreno dataset
+### see https://www.eviews.com/StructVAR/structvar.html
+### ----------------------------------------------------
+
+# data handling (original file chomoreno.wf1)
+
+open chomoreno_fromeviewswf.gdt --quiet	--frompkg=SVAR
+
+# set up the model
+
+list X = GAP INFL FF
+list Z = const
+scalar order = 2
+
+bundle mod = SVAR_setup("SR", X, Z, order)
+mod.horizon = 32
+
+# set up the sign restictions
+
+mod.snames = defarray("Demand", "Cost Push", "Interest Rate")
+
+SVAR_SRplain(&mod, "GAP",  "Demand", "+")
+SVAR_SRplain(&mod, "INFL", "Demand", "+")
+SVAR_SRplain(&mod, "FF",   "Demand", "+")
+
+SVAR_SRplain(&mod, "GAP",  "Cost Push", "-")
+SVAR_SRplain(&mod, "INFL", "Cost Push", "+")
+SVAR_SRplain(&mod, "FF",   "Cost Push", "+")
+
+SVAR_SRplain(&mod, "GAP",  "Interest Rate", "-")
+SVAR_SRplain(&mod, "INFL", "Interest Rate", "-")
+SVAR_SRplain(&mod, "FF",   "Interest Rate", "+")
+
+# do the rotations (this is the computationally intensive part)
+SVAR_SRdraw(&mod, 256, 0, 0.95, 5000)
+
+# draw the irfs
+SVAR_SRirf(mod, mod.Ynames, mod.snames) 

@@ -1,5 +1,4 @@
-set echo off
-set messages off
+set verbose off
 
 string topsrc = "@top_srcdir@"
 string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
@@ -16,5 +15,8 @@ include @pkgdir/SVAR_boot.inp
 include @pkgdir/SVAR_setup.inp
 include @pkgdir/SVAR_main.inp
 include @pkgdir/SVAR_estim_backend.inp
+include @pkgdir/SVAR_signrestr.inp
+include @pkgdir/SVAR_signrestr_utils.inp
+include @pkgdir/SVAR_compatibility_funcs.inp
 
 makepkg SVAR.gfn --index --translations --quiet --dtd="@dtd"
