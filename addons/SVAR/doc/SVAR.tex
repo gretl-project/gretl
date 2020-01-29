@@ -2289,7 +2289,7 @@ through any number of calls to the functions \texttt{SVAR\_SRplain},
 
 
 \item Then the randomized drawing is performed by the function 
-\texttt{SVAR\_setidIRF}. This is the heavy number-crunching part. (But with the 
+\texttt{SVAR\_SRdraw}. This is the heavy number-crunching part. (But with the 
 computing power these days even that will typically not give you enough time to 
 get coffee!) At this stage one also chooses the desired coverage level of the error bands 
 (confidence intervals, credible sets, whatever) presumably to be plotted later.
@@ -2299,7 +2299,7 @@ get coffee!) At this stage one also chooses the desired coverage level of the er
  functions again documented in the appendix:
  \begin{itemize}
   \item Standard -- these plots resemble the traditional IRF graphs and are produced 
-    by the function \texttt{SVAR\_SRplot}. The centers of the
+    by the function \texttt{SVAR\_SRirf}. The centers of the
     IRF distributions as well as their lower and upper error bounds are calculated 
     separately for each horizon. It is a well-known criticism that the resulting plotted
     lines can be a combination of very different draws, possibly distorting the impression 
@@ -2315,7 +2315,7 @@ get coffee!) At this stage one also chooses the desired coverage level of the er
 \end{enumerate}
 
 
-\subsection{Some details of the numerical algorithm (in \texttt{SVAR\_setidIRF})}
+\subsection{Some details of the numerical algorithm (in \texttt{SVAR\_SRdraw})}
 
 We explore the space of possible
 rotations via $H$ random draws from the space of rotation matrices.
@@ -2332,7 +2332,7 @@ are computed, this can be done by either
 \end{enumerate}
 Let's call option 1 the ``frequentist'' option and option 2 the
 ``Bayesian'' option.  This choice corresponds to a Boolean flag which
-is the third argument to the \texttt{SVAR\_setidIRF} function: the
+is the third argument to the \texttt{SVAR\_SRdraw} function: the
 default, 0, is to skip the sampling from the posterior and just use
 the frequentist estimates.
 
@@ -2382,18 +2382,26 @@ iteration:
       one-to-one correspondence; if the sign restrictions are met,
       then we reshuffle the IRFs taking care of the structural shocks
       desired ordering and possible sign flips. 
-    \item At this point, the $M_i$ matrices should contain the IRFs in
+    \item At this point --if the draw is still considered good to go-- the 
+      $M_i$ matrices should contain the IRFs in
       the appropriate positions: $[M_k]_{i,j}$ contains the impact at
       $k$ steps of the $j$-th shock to the $i$-th observable, where
       the ordering of the observables is the one implicit in the imput
       list and the order of the shocks is the one given by the
       \texttt{snames} bundle element. Therefore, we can proceed with
       checking the exotic restrictions (if any).
-    \item Check exotic restrictions: FIXME tba
+    \item Checking the \emph{exotic} restrictions is done in a conceptually
+      simple way: Provided that the current draw has not failed any of the 
+      imposed restrictions up to this point, the derived impulse responses are 
+      internally relabeled as ``M" and each of the supplied exotic restriction 
+      expression is applied
+      verbatim to the IRF matrix $M$, separately for each of the specified horizons.
+    \item{} [tba: explain check of super-exotic restrictions]  
+      
     \end{enumerate}
   \item If all the restrictions are met, we accept the draw and store the
     results away as an element of the bundle array that we eventually
-    return. 
+    return. Otherwise the draw is discarded.
 \end{enumerate}
 
 \subsection{Still to do later (for set identification)}
@@ -2834,7 +2842,7 @@ implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_setidIRF(bundle *Smod, int rep, bool
+\begin{funcdoc}{SVAR\_SRdraw(bundle *Smod, int rep, bool
     DO\_BAYES[0], scalar coveralpha[0.9],\\
     int maxiter[10000])}
   
@@ -2977,12 +2985,12 @@ int length[0], int ini[0])}
   trailing argument \texttt{ini} is omitted, then the restriction must hold up to horizon \texttt{length}.
   \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRplot(bundle Smod, strings whichvars [optional], \\
+\begin{funcdoc}{SVAR\_SRirf(bundle Smod, strings whichvars [optional], \\
       strings whichshocks [optional], bool meanormed[0])}
 Relating to a set identified (sign restricted) model, does IRF plots based on all
 accepted draws. The empirical coverage level of the plotted confidence bands (or credible sets,
 if you like) must have been chosen previously at the stage of getting the draws (see 
-\texttt{SVAR\_setidIRF}).\footnote{%
+\texttt{SVAR\_SRdraw}).\footnote{%
 If you change your mind about the desired coverage level 
 but want to avoid re-running the computationally intensive drawing stage, the following hack 
 should work in theory: (1) Set the bundle element \texttt{Smod.SRcoveralpha} to the desired level.
