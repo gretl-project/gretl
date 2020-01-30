@@ -5,8 +5,6 @@
 #  correspondence, normalize, check_one_irf, check_irfs, check_id;
 #  safetycheck1, get_n_exotic, rot_redraw, prepAis, get_id_mat
 
-
-
 ###
 ### functions for setting the set constraints
 ###

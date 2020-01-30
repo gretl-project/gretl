@@ -845,24 +845,21 @@ contains the restrictions in a C model of the form
   R \VEC C = d
 \]
 by stacking horizontally the $R$ matrix and the $d$ vector, so that a
-matrix $R^* = [R | d ]$ is stored as \texttt{Rd1}. The
-\texttt{SVAR\_restrict} function does nothing but add rows to
-$R^*$. The function also contains a check so that redundant or
-inconsistent restrictions will not be allowed.
+matrix $R^* = [R | d ]$ is stored as \texttt{Rd1}. All the
+\texttt{SVAR\_restrict} function does is adding rows to $R^*$ and
+checking for redundant or inconsistent restrictions.
 
 However, if you feel like building the matrix $R^*$ via \app{gretl}'s
 ordinary matrix functions, all you have to do is to fill up the bundle
 elements \texttt{Rd1} and \texttt{nc1} properly before calling
-\texttt{SVAR\_estimate()}.
-
-For example, take the example script contained in Table
-\ref{tab:simpleC-base} and suppose you want to identify your C-model
-via the (rather silly) constraint $c_{11} = c_{12}$. The equation
-above would specialise to
+\texttt{SVAR\_estimate()}. As an example, take the script contained in
+Table \ref{tab:simpleC-base}, where we identify our C-model via the
+(rather silly) constraint $c_{11} = c_{12}$. The equation above would
+specialise to
 \[
   [1 \quad -1 \quad 0 \quad 0 ] \VEC C = 0
 \]
-an all you would have to do, in order to modify the script to that
+and all you would have to do in order to modify the script to that
 effect would be substituting the line
 \begin{code}
 SVAR_restrict(&Mod, "C", 1, 2, 0)
@@ -1065,7 +1062,7 @@ therefore thought of as the superimposition of separate contributions,
 given by each structural shock hitting the system at a given time. In
 practice, we'd think of each individual series in the system as
 \[
- y_{it} - d_{i,t} = M_{i,1}(L) u_{1,t} + \cdots + M_{i,n}(L) u_{n,t} 
+ y_{it} - d_{i,t} = M_{i,1}(L) \StS{1,t} + \cdots + M_{i,n}(L) \StS{n,t} 
 \]
 using representation \eqref{eq:svma}. 
 
@@ -1074,7 +1071,7 @@ equation is uncorrelated (by hypothesis) of all the other ones at all
 leads and lags. Therefore, the contribution of each shock to the
 visible path of the variable $y_{it}$ is distinct from the others. In
 a way, historical decomposition could be considered as a particular
-form of counterfactual analysis: each component $M_{i,j}(L) u_{j,t}$
+form of counterfactual analysis: each component $M_{i,j}(L) \StS{j,t}$
 shows what the history of $y_{i,t}$ would have been if the $j$-th
 shock had been the only one affecting the system.
 
@@ -1427,7 +1424,7 @@ somewhere between the \texttt{SVAR\_setup} and the
 \texttt{SVAR\_estimate} function. 
 The rest is unchanged, and below is the output.
 
-\pagebreak[4]
+%\pagebreak[4]
 
 \begin{code}
              coefficient   std. error     z       p-value 
@@ -2159,33 +2156,29 @@ the usage of sign restrictions and set identification in general. These are:
 
 At the risk of repeating some parts of earlier sections, here is some notation first:
 The reduced-form VAR is assumed to be
-\begin{eqnarray}
-  \label{eq:VAR}
-  y_t & = & \mu_t + \sum_{i=1}^p \Phi_i y_{t-1} + \varepsilon_t \\
-  \varepsilon_t & = & y_t - E(y_t |F_{t-1}) \\
-  E(\varepsilon_t \varepsilon_t') & = & \Sigma
-\end{eqnarray}
-where $n$ is the number of variables and $F_{t-1}$ is the information
-set at $t-1$. The structural model can be written as
 \[
-  A \varepsilon_t = B u_t .
+  y_t  =  \mu_t + \sum_{i=1}^p \Phi_i y_{t-1} + \PrE{t}, 
+\]
+where $\PrE{t} = y_t - E(y_t |F_{t-1})$ and
+$\Sigma \equiv E(\PrE{t} \PrE{t}')$; $F_{t-1}$ is the information set
+at $t-1$. The structural model can be written as
+\[
+  A \PrE{t} = B \StS{t} .
 \]
 The relationship between the VAR shocks and the structural ones is,
 therefore,
 \[
-\varepsilon_t = C u_t ,
+\PrE{t} = C \StS{t} ,
 \]
 where $C = A^{-1} B$, which entails $\Sigma = CC'$.
 
 In order to write down the VMA representation, we assume that the
-$\Phi(L)$ polynomial is invertible, so $y_t$ can be written as:
+$\Phi(L)$ polynomial is invertible, so $y_t$ can be written as
+$ y_t = m_t + \Theta(L) \PrE{t}$, where $\Theta(L) =
+\Phi(L)^{-1}$. Therefore, the structural VMA representation of the
+process is
 \[
-y_t = m_t + \Theta(L) \varepsilon_t,
-\]
-where $\Theta(L) = \Phi(L)^{-1}$. Therefore, the structural VMA
-representation of the process is
-\[
-y_t = m_t + M_0 u_t + M_1 u_{t-1} + \cdots
+y_t = m_t + M_0 \StS{t} + M_1 \StS{t-1} + \cdots
 \]
 where $M_i = \Theta_i C$; since $\Theta_0 = I$, $M_0$ is simply equal
 to $C$. As for $C$, it is assumed that it can be written as
@@ -2232,25 +2225,33 @@ a-priori idea of the impact of the $j$-th structural shock on the
 $i$-th variable. Of course, the ordering of the structural shocks is
 arbitrary, so the user is required to make a choice here (see below).
 
-\subsection{Sign restrictions (practicalities)}
+\subsubsection{Sign restrictions (practicalities)}
 
-After having initially set up the model bundle appropriately (see below), sign 
-restrictions in the narrow or plain sense are specified through the \texttt{SVAR\_SRplain}
-function, see the full documentation in the appendix.
+After having initially set up the model bundle appropriately (see
+below), sign restrictions in the narrow or plain sense are specified
+through the \texttt{SVAR\_SRplain} function.
 
-Internally each call to \texttt{SVAR\_SRplain} adds a row vector to the
-\texttt{SRest} matrix contained in the bundle referenced as the first
-argument; the restriction matrix is simply created by stacking these
-rows vertically.  For example,
+The full documentation is in the appendix, but the gist is: this
+function gives you a way to indicate the sign of the impact that of a
+certain shock is assumed to have on a certain variable, and optionally
+over which set of lags. Internally, each call to
+\texttt{SVAR\_SRplain} adds a row vector to the \texttt{SRest} matrix
+contained in the bundle referenced as the first argument; the
+restriction matrix is simply created by stacking these rows
+vertically.
+
+For example, a minimal call of the function would read
 \begin{code}
-SVAR_SRplain(&mod, "price", "monetary", "+")
+  SVAR_SRplain(&mod, "price", "monetary", "+")
 \end{code}
-means that the shock named \texttt{monetary} has a positive
-instantaneous impact on \texttt{price}; in other words,
+and it would mean that the shock named \texttt{monetary} has a
+positive instantaneous impact on \texttt{price}; in other words,
 $[M_0]_{ij} > 0$, where $i$ is the ordinal number of the variable
 \texttt{price} in the input list and $j$ is the ordinal number of the
 string \texttt{monetary} in the \texttt{snames} array inside the model
-bundle. Another example:
+bundle.
+
+As another example:
 \begin{code}
 SVAR_SRplain(&mod, "bar", "foo", "-", 3)
 \end{code}
@@ -2258,12 +2259,12 @@ means that the shock named \texttt{foo} has a negative impact on the
 observable variable \texttt{bar} over the horizon from 0 to
 3. Finally,
 \begin{code}
-SVAR_SRplain(&mod, "quantity", "supply", "+", 6, 6)
+SVAR_SRplain(&mod, "quantity", "supply", "+", 6, 4)
 \end{code}
 means that the shock named \texttt{supply} has a negative impact on the
-observable variable \texttt{quantity} over the horizon from 6 to 12.
+observable variable \texttt{quantity} over the horizon from 6 to 10.
 
-\subsection{Interval restrictions}
+\subsubsection{Interval restrictions}
 
 A plain sign restriction specifies an interval with upper or lower bound zero 
 into which the impulse response is supposed to fall. A generalization of this idea is to 
@@ -2276,7 +2277,7 @@ apply to a certain horizon, for example on impact; or just like sign restriction
 can be ``dynamic" and associated with a range of horizons. 
 
 
-\subsection{General (``exotic'') set restrictions}
+\subsubsection{General (``exotic'') set restrictions}
 
 General set restrictions are specified via the function
 \texttt{SVAR\_SRexotic}, which takes 2 mandatory arguments and 2 optional ones
