@@ -962,6 +962,12 @@ static gchar *crit_print_format (const gretl_matrix *crit,
     return fmt;
 }
 
+static void lambda_sequence_header (PRN *prn)
+{
+    pputc(prn, '\n');
+    pputs(prn, "      lambda     df   criterion      R^2\n");
+}
+
 static void ccd_print (const gretl_matrix *B,
 		       const gretl_matrix *R2,
 		       const gretl_matrix *lam,
@@ -974,12 +980,12 @@ static void ccd_print (const gretl_matrix *B,
     int nlam = B->cols;
     int i, j, dfj;
 
-    pputc(prn, '\n');
     if (crit != NULL) {
 	/* header for output showing penalized criterion */
-	pputs(prn, "      lambda     df   criterion      R^2\n");
+	lambda_sequence_header(prn);
     } else {
 	/* as per R, more or less */
+	pputc(prn, '\n');
 	pputs(prn, "    df     R^2  lambda\n");
     }
 
@@ -1324,6 +1330,17 @@ static void ccd_make_lambda (regls_info *ri,
     }
 }
 
+static void lasso_lambda_report (regls_info *ri, PRN *prn)
+{
+    pprintf(prn, "lambda-max = %g\n", ri->infnorm);
+    if (ri->nlam > 1) {
+	pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
+		ri->nlam, ri->lfrac->val[0]);
+    } else {
+	pprintf(prn, "using lambda-fraction %g\n", ri->lfrac->val[0]);
+    }
+}
+
 /* Cyclical Coordinate Descent driver: we come here either
    to get coefficient estimates right away, or after
    cross validation. Handles both LASSO and Ridge.
@@ -1384,6 +1401,10 @@ static int ccd_regls (regls_info *ri, PRN *prn)
 	} else {
 	    Rsq = R2->val;
 	}
+    }
+
+    if (!ri->ridge && !ri->xvalid && ri->verbose) {
+	lasso_lambda_report(ri, prn);
     }
 
     err = ccd_iteration(alpha, ri->X, Xty->val, nlam, lam->val,
@@ -1801,19 +1822,13 @@ static int admm_lasso (regls_info *ri, PRN *prn)
     gretl_matrix_block_zero(MB);
 
     lmax = ri->infnorm;
-    pprintf(prn, "lambda-max = %g\n", lmax);
 
     if (!ri->xvalid && ri->nlam > 1) {
 	crit = gretl_matrix_alloc(ri->nlam, 1);
     }
 
     if (!ri->xvalid && ri->verbose > 0) {
-	if (ri->nlam > 1) {
-	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
-		    ri->nlam, ri->lfrac->val[0]);
-	} else {
-	    pprintf(prn, "using lambda-fraction %g\n", ri->lfrac->val[0]);
-	}
+	lasso_lambda_report(ri, prn);
     }
 
     if (!err) {
@@ -1830,8 +1845,7 @@ static int admm_lasso (regls_info *ri, PRN *prn)
     }
 
     if (!ri->xvalid && ri->verbose > 0 && ri->nlam > 1) {
-	pputc(prn, '\n');
-	pprintf(prn, "      lambda     df   criterion      R^2\n");
+	lambda_sequence_header(prn);
     }
 
     for (j=jmin; j<jmax && !err; j++) {
