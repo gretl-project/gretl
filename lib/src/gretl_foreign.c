@@ -2659,20 +2659,19 @@ int get_R_function_by_name (const char *name)
     return ret;
 }
 
-/* gretl_R_function_add... : these functions are used in geneval.c
-   to convert from gretl types to R constructs for passing to R
-   functions
+/* R_function_add... : these functions are used to convert
+   from gretl types to R constructs for passing to R
+   functions. Theye are called (indirectly) from geneval.c
 */
 
-int gretl_R_function_add_scalar (double x)
+static int R_function_add_scalar (double x)
 {
-    current_arg = R_CDR(current_arg);
     R_SETCAR(current_arg, R_ScalarReal(x));
 
     return 0;
 }
 
-int gretl_R_function_add_string (const char *s)
+static int R_function_add_string (const char *s)
 {
     current_arg = R_CDR(current_arg);
     R_SETCAR(current_arg, R_mkString(s));
@@ -2680,7 +2679,7 @@ int gretl_R_function_add_string (const char *s)
     return 0;
 }
 
-int gretl_R_function_add_vector (const double *x, int t1, int t2)
+static int R_function_add_vector (const double *x, int t1, int t2)
 {
     SEXP res = R_allocVector(REALSXP, t2 - t1 + 1);
     int i;
@@ -2688,8 +2687,6 @@ int gretl_R_function_add_vector (const double *x, int t1, int t2)
     if (res == NULL) {
 	return E_ALLOC;
     }
-
-    current_arg = R_CDR(current_arg);
 
     for (i=t1; i<=t2; i++) {
     	R_REAL(res)[i-t1] = x[i];
@@ -2700,7 +2697,7 @@ int gretl_R_function_add_vector (const double *x, int t1, int t2)
     return 0;
 }
 
-int gretl_R_function_add_factor (const DATASET *dset, int v)
+static int R_function_add_factor (const DATASET *dset, int v)
 {
     SEXP res = R_allocVector(STRSXP, dset->t2 - dset->t1 + 1);
     const char *si;
@@ -2709,8 +2706,6 @@ int gretl_R_function_add_factor (const DATASET *dset, int v)
     if (res == NULL) {
 	return E_ALLOC;
     }
-
-    current_arg = R_CDR(current_arg);
 
     for (i=dset->t1; i<=dset->t2; i++) {
 	si = series_get_string_for_obs(dset, v, i);
@@ -2722,14 +2717,41 @@ int gretl_R_function_add_factor (const DATASET *dset, int v)
     return 0;
 }
 
-int gretl_R_function_add_matrix (const gretl_matrix *m)
+static int R_function_add_array (gretl_array *a)
+{
+    GretlType t = gretl_array_get_type(a);
+    int n = gretl_array_get_length(a);
+    const char *si;
+    SEXP res;
+    int i;
+
+    if (t != GRETL_TYPE_STRINGS) {
+	gretl_errmsg_set("Only strings arrays are accepted as R-function arguments");
+	return E_TYPES;
+    }
+
+    res = R_allocVector(STRSXP, n);
+    if (res == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n; i++) {
+	si = gretl_array_get_data(a, i);
+	R_STRING_PTR(res)[i] = R_mkChar(si);
+    }
+
+    R_SETCAR(current_arg, res);
+
+    return 0;
+}
+
+static int R_function_add_matrix (const gretl_matrix *m)
 {
     int nr = gretl_matrix_rows(m);
     int nc = gretl_matrix_cols(m);
     SEXP res;
     int i, j;
 
-    current_arg = R_CDR(current_arg);
     res = R_allocMatrix(REALSXP, nr, nc);
     if (res == NULL) {
 	return E_ALLOC;
@@ -2744,6 +2766,54 @@ int gretl_R_function_add_matrix (const gretl_matrix *m)
     R_SETCAR(current_arg, res);
 
     return 0;
+}
+
+/* public because called from geneval.c */
+
+int gretl_R_function_add_arg (void *ptr, GretlType type)
+{
+    int err;
+
+    current_arg = R_CDR(current_arg);
+
+    if (type == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = ptr;
+
+	err = R_function_add_matrix(m);
+    } else if (type == GRETL_TYPE_DOUBLE) {
+	double x = *(double *) ptr;
+
+	err = R_function_add_scalar(x);
+    } else if (type == GRETL_TYPE_ARRAY) {
+	gretl_array *a = ptr;
+
+	err = R_function_add_array(a);
+    } else if (type == GRETL_TYPE_STRING) {
+	const char *s = ptr;
+
+	err = R_function_add_string(s);
+    } else {
+	err = E_TYPES;
+    }
+
+    return err;
+}
+
+/* public because called from geneval.c */
+
+int gretl_R_function_add_series (double *x, const DATASET *dset, int v)
+{
+    int err;
+
+    current_arg = R_CDR(current_arg);
+
+    if (v > 0 && is_string_valued(dset, v)) {
+	err = R_function_add_factor(dset, v);
+    } else {
+	err = R_function_add_vector(x, dset->t1, dset->t2);
+    }
+
+    return err;
 }
 
 /* called from geneval.c only, and should be pre-checked */

@@ -9595,6 +9595,7 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
     /* evaluate the function arguments */
     for (i=0; i<argc && !p->err; i++) {
 	NODE *arg = eval(r->v.bn.n[i], p);
+	GretlType type;
 
 	if (arg == NULL) {
 	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i);
@@ -9602,7 +9603,6 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	    fprintf(stderr, "%s: node type %d: not OK\n", funname, arg->t);
 	    p->err = E_TYPES;
 	}
-
 	if (p->err) {
 	    break;
 	}
@@ -9610,28 +9610,19 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 #if EDEBUG
 	fprintf(stderr, "%s: arg[%d] is of type %d\n", funname, i, arg->t);
 #endif
+	type = gretl_type_from_gen_type(arg->t);
 
-	if (arg->t == NUM) {
-	    p->err = gretl_R_function_add_scalar(arg->v.xval);
-	} else if (0 && arg->t == SERIES) {
-	    gretl_matrix *m = tmp_matrix_from_series(arg, p);
-
-	    if (m != NULL) {
-		p->err = gretl_R_function_add_matrix(m);
-		gretl_matrix_free(m);
-	    }
-	} else if (arg->t == SERIES) {
+	if (type == GRETL_TYPE_SERIES) {
 	    /* revised 2020-02-01 */
-	    if (useries_node(arg) && is_string_valued(p->dset, arg->vnum)) {
-		p->err = gretl_R_function_add_factor(p->dset, arg->vnum);
-	    } else {
-		p->err = gretl_R_function_add_vector(arg->v.xvec, p->dset->t1,
-						     p->dset->t2);
-	    }
-	} else if (arg->t == MAT) {
-	    p->err = gretl_R_function_add_matrix(arg->v.m);
-	} else if (arg->t == STR) {
-	    p->err = gretl_R_function_add_string(arg->v.str);
+	    p->err = gretl_R_function_add_series(arg->v.xvec, p->dset, arg->vnum);
+	} else if (type == GRETL_TYPE_DOUBLE) {
+	    p->err = gretl_R_function_add_arg(&arg->v.xval, type);
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    p->err = gretl_R_function_add_arg(arg->v.m, type);
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    p->err = gretl_R_function_add_arg(arg->v.a, type);
+	} else if (type == GRETL_TYPE_STRING) {
+	    p->err = gretl_R_function_add_arg(arg->v.str, type);
 	} else {
 	    fprintf(stderr, "eval_Rfunc: argument not supported\n");
 	    p->err = E_TYPES;

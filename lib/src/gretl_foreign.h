@@ -68,15 +68,9 @@ int get_R_function_by_name (const char *name);
 
 int gretl_R_get_call (const char *name, int argc);
 
-int gretl_R_function_add_scalar (double x);
+int gretl_R_function_add_arg (void *ptr, GretlType type);
 
-int gretl_R_function_add_string (const char *s);
-
-int gretl_R_function_add_vector (const double *x, int t1, int t2);
-
-int gretl_R_function_add_factor (const DATASET *dset, int v);
-
-int gretl_R_function_add_matrix (const gretl_matrix *m);
+int gretl_R_function_add_series (double *x, const DATASET *dset, int v);
 
 int gretl_R_function_exec (const char *name, int *rtype, void **ret);
 
