@@ -9613,12 +9613,20 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
 	if (arg->t == NUM) {
 	    p->err = gretl_R_function_add_scalar(arg->v.xval);
-	} else if (arg->t == SERIES) {
+	} else if (0 && arg->t == SERIES) {
 	    gretl_matrix *m = tmp_matrix_from_series(arg, p);
 
 	    if (m != NULL) {
 		p->err = gretl_R_function_add_matrix(m);
 		gretl_matrix_free(m);
+	    }
+	} else if (arg->t == SERIES) {
+	    /* revised 2020-02-01 */
+	    if (useries_node(arg) && is_string_valued(p->dset, arg->vnum)) {
+		p->err = gretl_R_function_add_factor(p->dset, arg->vnum);
+	    } else {
+		p->err = gretl_R_function_add_vector(arg->v.xvec, p->dset->t1,
+						     p->dset->t2);
 	    }
 	} else if (arg->t == MAT) {
 	    p->err = gretl_R_function_add_matrix(arg->v.m);
@@ -9661,6 +9669,11 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 			free(ret->v.str);
 		    }
 		    ret->v.str = (char *) retp;
+		}
+	    } else if (rtype == GRETL_TYPE_ARRAY) {
+		ret = aux_array_node(p);
+		if (ret != NULL) {
+		    ret->v.a = (gretl_array *) retp;
 		}
 	    } else if (rtype == GRETL_TYPE_NONE) {
 		; /* OK? */

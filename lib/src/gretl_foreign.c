@@ -2239,6 +2239,7 @@ static SEXP (*R_ScalarReal) (double);
 static SEXP (*R_catch) (SEXP, SEXP, int *);
 static SEXP (*R_install) (const char *);
 static SEXP (*R_mkString) (const char *);
+static SEXP (*R_mkChar) (const char *);
 
 static Rboolean (*R_isMatrix) (SEXP);
 static Rboolean (*R_isVector) (SEXP);
@@ -2317,6 +2318,7 @@ static int load_R_symbols (void)
     R_isReal        = dlget(Rhandle, "Rf_isReal", &err);
     R_isString      = dlget(Rhandle, "Rf_isString", &err);
     R_mkString      = dlget(Rhandle, "Rf_mkString", &err);
+    R_mkChar        = dlget(Rhandle, "Rf_mkChar", &err);
     R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
@@ -2698,6 +2700,28 @@ int gretl_R_function_add_vector (const double *x, int t1, int t2)
     return 0;
 }
 
+int gretl_R_function_add_factor (const DATASET *dset, int v)
+{
+    SEXP res = R_allocVector(STRSXP, dset->t2 - dset->t1 + 1);
+    const char *si;
+    int i;
+
+    if (res == NULL) {
+	return E_ALLOC;
+    }
+
+    current_arg = R_CDR(current_arg);
+
+    for (i=dset->t1; i<=dset->t2; i++) {
+	si = series_get_string_for_obs(dset, v, i);
+	R_STRING_PTR(res)[i-dset->t1] = R_mkChar(si);
+    }
+
+    R_SETCAR(current_arg, res);
+
+    return 0;
+}
+
 int gretl_R_function_add_matrix (const gretl_matrix *m)
 {
     int nr = gretl_matrix_rows(m);
@@ -2745,21 +2769,42 @@ int gretl_R_get_call (const char *name, int argc)
     return 0;
 }
 
-static int R_type_to_gretl_type (SEXP s)
+static int numeric_ok (SEXP s)
 {
-    if (R_isMatrix(s) || R_isVector(s)) {
-	return GRETL_TYPE_MATRIX;
+    return R_isReal(s) || R_isInteger(s) || R_isLogical(s);
+}
+
+static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
+{
+    GretlType t = GRETL_TYPE_NONE;
+
+    if (R_isMatrix(s)) {
+	if (numeric_ok(s)) {
+	    t = GRETL_TYPE_MATRIX;
+	} else {
+	    gretl_errmsg_sprintf("%s: got 'matrix' result, but not numeric", name);
+	    *err = E_TYPES;
+	}
+    } else if (R_isVector(s)) {
+	if (numeric_ok(s)) {
+	    t = GRETL_TYPE_MATRIX;
+	} else if (R_isString(s)) {
+	    t = GRETL_TYPE_ARRAY;
+	} else {
+	    gretl_errmsg_sprintf("%s: got 'vector' result, but not numeric or string", name);
+	    *err = E_TYPES;
+	}
     } else if (R_isLogical(s)) {
-	return GRETL_TYPE_BOOL;
+	t = GRETL_TYPE_BOOL;
     } else if (R_isInteger(s)) {
-	return GRETL_TYPE_INT;
+	t = GRETL_TYPE_INT;
     } else if (R_isReal(s)) {
-	return GRETL_TYPE_DOUBLE;
+	t = GRETL_TYPE_DOUBLE;
     } else if (R_isString(s)) {
-	return GRETL_TYPE_STRING;
-    } else {
-	return GRETL_TYPE_NONE;
+	t = GRETL_TYPE_STRING;
     }
+
+    return t;
 }
 
 /* execute an R function and try to convert the value returned
@@ -2781,7 +2826,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	return E_EXTERNAL;
     }
 
-    *rtype = R_type_to_gretl_type(res);
+    *rtype = R_type_to_gretl_type(res, name, &err);
 
 #if FDEBUG
     printf("R return value: got type %d (%s)\n", *rtype,
@@ -2790,29 +2835,26 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     R_PrintValue(res);
 #endif
 
+    if (err) {
+	return err;
+    }
+
     if (*rtype == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = NULL;
-	int nr = 0, nc = 0;
+	int nr = R_nrows(res);
+	int nc = R_ncols(res);
 
-	if (!R_isReal(res) && !R_isInteger(res)) {
-	    gretl_errmsg_sprintf("%s: got 'matrix' result, but not of type real", name);
-	    err = E_TYPES;
-	} else {
-	    nr = R_nrows(res);
-	    nc = R_ncols(res);
-
-	    if (nr > 0 && nc > 0) {
-		m = gretl_matrix_alloc(nr, nc);
-		if (m == NULL) {
-		    err = E_ALLOC;
-		}
-	    } else if (nr == 0 && nc == 0) {
-		m = gretl_null_matrix_new();
-	    } else {
-		gretl_errmsg_sprintf("%s: invalid matrix dimensions, %d x %d",
-				     name, nr, nc);
-		err = E_DATA;
+	if (nr > 0 && nc > 0) {
+	    m = gretl_matrix_alloc(nr, nc);
+	    if (m == NULL) {
+		err = E_ALLOC;
 	    }
+	} else if (nr == 0 && nc == 0) {
+	    m = gretl_null_matrix_new();
+	} else {
+	    gretl_errmsg_sprintf("%s: invalid matrix dimensions, %d x %d",
+				 name, nr, nc);
+	    err = E_DATA;
 	}
 
 	if (m != NULL && nr > 0) {
@@ -2841,6 +2883,36 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	const char *s = R_STRING(*rsp);
 
 	*ret = gretl_strdup(s);
+	R_unprotect(1);
+    } else if (*rtype == GRETL_TYPE_ARRAY) {
+	/* should be array of strings */
+	gretl_array *a = NULL;
+	int nr = R_nrows(res);
+	int nc = R_ncols(res);
+
+	if (nr > 0 && nc > 0) {
+	    a = gretl_array_new(GRETL_TYPE_STRINGS, nr, &err);
+	} else if (nr == 0 && nc == 0) {
+	    a = gretl_array_new(GRETL_TYPE_STRINGS, 0, &err);
+	} else {
+	    gretl_errmsg_sprintf("%s: invalid array dimensions, %d x %d",
+				 name, nr, nc);
+	    err = E_DATA;
+	}
+	if (a != NULL && nr > 0) {
+	    const char *s;
+	    int i;
+
+	    for (i=0; i<nr && !err; i++) {
+		s = R_STRING(R_STRING_PTR(res)[i]);
+		err = gretl_array_set_string(a, i, (char *) s, 1);
+	    }
+	}
+	if (err) {
+	    gretl_array_destroy(a);
+	} else {
+	    *ret = a;
+	}
 	R_unprotect(1);
     } else if (*rtype != GRETL_TYPE_NONE) {
 	err = E_TYPES;
