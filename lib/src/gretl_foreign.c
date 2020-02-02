@@ -2914,20 +2914,18 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	int nr = R_nrows(res);
 	int nc = R_ncols(res);
 
-	if (nr > 0 && nc > 0) {
+	if (nr >= 0 && nc >= 0) {
 	    m = gretl_matrix_alloc(nr, nc);
 	    if (m == NULL) {
 		err = E_ALLOC;
 	    }
-	} else if (nr == 0 && nc == 0) {
-	    m = gretl_null_matrix_new();
 	} else {
 	    gretl_errmsg_sprintf("%s: invalid matrix dimensions, %d x %d",
 				 name, nr, nc);
 	    err = E_DATA;
 	}
 
-	if (m != NULL && nr > 0) {
+	if (m != NULL && nr > 0 && nc > 0) {
 	    int i, j;
 
 	    for (i=0; i<nr; i++) {
@@ -2958,15 +2956,12 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	/* should be array of strings */
 	gretl_array *a = NULL;
 	int nr = R_nrows(res);
-	int nc = R_ncols(res);
 
-	if (nr > 0 && nc > 0) {
+	if (nr >= 0) {
 	    a = gretl_array_new(GRETL_TYPE_STRINGS, nr, &err);
-	} else if (nr == 0 && nc == 0) {
-	    a = gretl_array_new(GRETL_TYPE_STRINGS, 0, &err);
 	} else {
-	    gretl_errmsg_sprintf("%s: invalid array dimensions, %d x %d",
-				 name, nr, nc);
+	    gretl_errmsg_sprintf("%s: invalid array length %d",
+				 name, nr);
 	    err = E_DATA;
 	}
 	if (a != NULL && nr > 0) {
