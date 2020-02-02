@@ -216,7 +216,7 @@ static int scratch_logfile_init (void)
 
     fname = gretl_print_get_tempfile_name(logprn);
 
-    if (fname == NULL) {
+    if (fname == NULL || *fname == '\0') {
 	gretl_print_destroy(logprn);
 	logprn = NULL;
 	return E_FOPEN; /* a bit vague */
