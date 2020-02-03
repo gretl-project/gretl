@@ -79,9 +79,13 @@ const char *SVAR_translations[] = {
     N_("bias correction (non-SVEC)"),
     N_("bootstrap iterations"),
     N_("bootstrap type"),
+    N_("choose 1 for medians"),
     N_("moving blocks"),
     N_("plain (Cholesky)"),
     N_("residual resampling"),
+    N_("the model bundle"),
+    N_("which shocks"),
+    N_("which variables"),
     N_("wild/Mammen"),
     N_("wild/Normal"),
     N_("wild/Rademacher")
