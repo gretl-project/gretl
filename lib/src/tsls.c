@@ -974,6 +974,7 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
 {
     int yno = reglist[1];
     double yh, sigma0 = pmod->sigma;
+    double utw, ess_w = 0;
     int i, t;
 
     pmod->ess = 0.0;
@@ -988,8 +989,9 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
 	}
 	pmod->yhat[t] = yh;
 	pmod->uhat[t] = dset->Z[yno][t] - yh;
-	if (0 && wtvar > 0) {
-	    pmod->uhat[t] *= sqrt(dset->Z[wtvar][t]);
+	if (wtvar > 0) {
+	    utw = pmod->uhat[t] * sqrt(dset->Z[wtvar][t]);
+	    ess_w += utw * utw;
 	}
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
@@ -1003,10 +1005,21 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
     }
 
     if (sigma0 > 0.0) {
-	double corr = pmod->sigma / sigma0;
+	double corrfac;
 
+	if (wtvar > 0) {
+	    int den = (opt & OPT_N)? pmod->nobs : pmod->dfd;
+	    double sigma = sqrt(ess_w / den);
+
+	    corrfac = sigma / sigma0;
+	    if (pmod->vcv == NULL) {
+		makevcv(pmod, sigma);
+	    }
+	} else {
+	    corrfac = pmod->sigma / sigma0;
+	}
 	for (i=0; i<pmod->ncoeff; i++) {
-	    pmod->sderr[i] *= corr;
+	    pmod->sderr[i] *= corrfac;
 	}
     }
 }
