@@ -769,12 +769,11 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
    of this matrix; return Q */
 
 static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
-			     int wtvar, const DATASET *dset,
-			     char *mask, int *err)
+			     const DATASET *dset, char *mask,
+			     int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
-    gretl_matrix *w = NULL;
     int rank, ndrop = 0;
     int *droplist = NULL;
     double test;
@@ -783,14 +782,6 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
     Q = gretl_matrix_data_subset_masked(instlist, dset,
 					dset->t1, dset->t2,
 					mask, err);
-    if (!*err && wtvar > 0) {
-	int wl[2] = {1, wtvar};
-
-	w = gretl_matrix_data_subset_masked(wl, dset,
-					    dset->t1, dset->t2,
-					    mask, err);
-    }
-
     if (*err) {
 	return NULL;
     }
@@ -804,26 +795,6 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
 			     k, Q->rows);
 	*err = E_DF;
 	goto bailout;
-    }
-
-    if (wtvar > 0) {
-	double wi, qij;
-
-	for (j=0; j<k && !*err; j++) {
-	    for (i=0; i<Q->rows && !*err; i++) {
-		wi = w->val[i];
-		if (na(wi) || wi < 0) {
-		    gretl_errmsg_sprintf("Invalid weight %g at obs %d\n", wi, i+1);
-		    *err = E_DATA;
-		} else {
-		    qij = gretl_matrix_get(Q, i, j);
-		    gretl_matrix_set(Q, i, j, qij * sqrt(wi));
-		}
-	    }
-	}
-	if (*err) {
-	   goto bailout;
-	}
     }
 
     R = gretl_matrix_alloc(k, k);
@@ -888,7 +859,6 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
  bailout:
 
     gretl_matrix_free(R);
-    gretl_matrix_free(w);
 
     if (*err) {
 	free(droplist);
@@ -901,12 +871,12 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
     return Q;
 }
 
-static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
+static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *r,
 			   DATASET *dset, int v0, int v1,
-			   int wtvar, const char *mask)
+			   const char *mask)
 {
     const double *x = dset->Z[v0];
-    double wxt, *xhat = dset->Z[v1];
+    double *xhat = dset->Z[v1];
     int k = gretl_matrix_cols(Q);
     int allzero = 1;
     int i, t, s = 0;
@@ -917,25 +887,19 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
 	    v0, v1, dset->t1, dset->t2, (void *) mask);
 #endif
 
-    /* form g = Q'x */
+    /* form r = Q'y */
     for (i=0; i<k; i++) {
-	g->val[i] = 0.0;
+	r->val[i] = 0.0;
 	s = 0;
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (mask != NULL && mask[t - dset->t1]) {
 		continue;
 	    }
-	    if (wtvar > 0) {
-		wxt = x[t] * sqrt(dset->Z[wtvar][t]);
-		g->val[i] += gretl_matrix_get(Q, s, i) * wxt;
-	    } else {
-		g->val[i] += gretl_matrix_get(Q, s, i) * x[t];
-	    }
-	    s++;
+	    r->val[i] += gretl_matrix_get(Q, s++, i) * x[t];
 	}
     }
 
-    /* form Qg = QQ'x */
+    /* form Qr = QQ'y */
     s = 0;
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (mask != NULL && mask[t - dset->t1]) {
@@ -944,10 +908,7 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
 	}
 	xhat[t] = 0.0;
 	for (i=0; i<k; i++) {
-	    xhat[t] += gretl_matrix_get(Q, s, i) * g->val[i];
-	}
-	if (wtvar > 0) {
-	    xhat[t] /= sqrt(dset->Z[wtvar][t]);
+	    xhat[t] += gretl_matrix_get(Q, s, i) * r->val[i];
 	}
 	if (xhat[t] != 0) {
 	    allzero = 0;
@@ -969,12 +930,11 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
 }
 
 static void tsls_residuals (MODEL *pmod, const int *reglist,
-			    int wtvar, const DATASET *dset,
+			    const DATASET *dset,
 			    gretlopt opt)
 {
     int yno = reglist[1];
     double yh, sigma0 = pmod->sigma;
-    double utw, ess_w = 0;
     int i, t;
 
     pmod->ess = 0.0;
@@ -989,10 +949,6 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
 	}
 	pmod->yhat[t] = yh;
 	pmod->uhat[t] = dset->Z[yno][t] - yh;
-	if (wtvar > 0) {
-	    utw = pmod->uhat[t] * sqrt(dset->Z[wtvar][t]);
-	    ess_w += utw * utw;
-	}
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
@@ -1005,21 +961,10 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
     }
 
     if (sigma0 > 0.0) {
-	double corrfac;
+	double corr = pmod->sigma / sigma0;
 
-	if (wtvar > 0) {
-	    int den = (opt & OPT_N)? pmod->nobs : pmod->dfd;
-	    double sigma = sqrt(ess_w / den);
-
-	    corrfac = sigma / sigma0;
-	    if (pmod->vcv == NULL) {
-		makevcv(pmod, sigma);
-	    }
-	} else {
-	    corrfac = pmod->sigma / sigma0;
-	}
 	for (i=0; i<pmod->ncoeff; i++) {
-	    pmod->sderr[i] *= corrfac;
+	    pmod->sderr[i] *= corr;
 	}
     }
 }
@@ -1442,37 +1387,13 @@ static int compute_first_stage_F (MODEL *pmod,
     return err;
 }
 
-static int *weighted_list (const int *list, int wtvar)
-{
-    int i, *ret = malloc((list[0] + 1) * sizeof *ret);
-
-    if (ret != NULL) {
-	ret[0] = list[0] + 1;
-	ret[1] = wtvar;
-	for (i=2; i<=ret[0]; i++) {
-	    ret[i] = list[i-1];
-	}
-    }
-
-    return ret;
-}
-
-static int tsls_adjust_sample (const int *list, int wtvar,
-			       DATASET *dset, char **pmask)
+static int tsls_adjust_sample (const int *list, DATASET *dset,
+			       char **pmask)
 {
     int i, t, t1min = dset->t1, t2max = dset->t2;
-    int *tmp = NULL;
     char *mask = NULL;
     int T, vi, missobs;
     int err = 0;
-
-    if (wtvar > 0) {
-	tmp = weighted_list(list, wtvar);
-	if (tmp == NULL) {
-	    return E_ALLOC;
-	}
-	list = tmp;
-    }
 
     /* advance start of sample range to skip missing obs? */
     for (t=t1min; t<t2max; t++) {
@@ -1558,8 +1479,6 @@ static int tsls_adjust_sample (const int *list, int wtvar,
 	    t1min, t2max, missobs, t2max - t1min + 1 - missobs);
 #endif
 
-    free(tmp);
-
     if (!err) {
 	dset->t1 = t1min;
 	dset->t2 = t2max;
@@ -1639,22 +1558,6 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     return err;
 }
 
-static int get_weightvar (const DATASET *dset, int *err)
-{
-    const char *vname = get_optval_string(IVREG, OPT_W);
-    int v = -1;
-
-    if (vname != NULL) {
-	v = current_series_index(dset, vname);
-    }
-
-    if (v <= 0) {
-	*err = E_INVARG;
-    }
-
-    return v;
-}
-
 /**
  * tsls:
  * @list: dependent variable plus list of regressors.
@@ -1676,7 +1579,7 @@ static int get_weightvar (const DATASET *dset, int *err)
 MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 {
     MODEL tsls;
-    gretl_matrix *Q = NULL, *g = NULL;
+    gretl_matrix *Q = NULL, *r = NULL;
     char *missmask = NULL;
     int orig_t1 = dset->t1, orig_t2 = dset->t2;
     int *reglist = NULL, *instlist = NULL;
@@ -1684,7 +1587,6 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     int *exolist = NULL, *endolist = NULL;
     int *idroplist = NULL;
     int addconst = 0;
-    int wtvar = 0;
     int nendo = 0, nreg = 0;
     int orig_nvar = dset->v;
     int sysest = (opt & OPT_E);
@@ -1698,15 +1600,8 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 
     /* initialize model in case we bail out early on error */
     gretl_model_init(&tsls, dset);
-    gretl_error_clear();
 
-    /* is weighting wanted? */
-    if (opt & OPT_W) {
-	wtvar = get_weightvar(dset, &tsls.errcode);
-	if (tsls.errcode) {
-	    return tsls;
-	}
-    }
+    gretl_error_clear();
 
     /* reglist: dependent var plus list of regressors
        instlist: list of instruments
@@ -1717,7 +1612,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
     /* adjust sample range for missing observations */
-    err = tsls_adjust_sample(list, wtvar, dset, &missmask);
+    err = tsls_adjust_sample(list, dset, &missmask);
 
     if (!err) {
 	/* allocate second stage regression list */
@@ -1772,7 +1667,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
     if (!err) {
-	Q = tsls_Q(instlist, &idroplist, wtvar, dset, missmask, &err);
+	Q = tsls_Q(instlist, &idroplist, dset, missmask, &err);
     }
 
     if (err) {
@@ -1799,8 +1694,8 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     if (nendo > 0) {
 	err = dataset_add_series(dset, nendo);
 	if (!err) {
-	    g = gretl_vector_alloc(Q->cols);
-	    if (g == NULL) {
+	    r = gretl_vector_alloc(Q->cols);
+	    if (r == NULL) {
 		err = E_ALLOC;
 	    }
 	}
@@ -1821,7 +1716,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	int v1 = orig_nvar + i;
 
 	/* form xhat_i = QQ'x_i */
-	err = tsls_form_xhat(Q, g, dset, v0, v1, wtvar, missmask);
+	err = tsls_form_xhat(Q, r, dset, v0, v1, missmask);
 	if (err) {
 	    goto bailout;
 	}
@@ -1835,14 +1730,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
     /* second-stage regression */
-    if (wtvar > 0) {
-	int *ws2list = weighted_list(s2list, wtvar);
-
-	tsls = lsq(ws2list, dset, WLS, (sysest)? OPT_Z : OPT_NONE);
-	free(ws2list);
-    } else {
-	tsls = lsq(s2list, dset, OLS, (sysest)? OPT_Z : OPT_NONE);
-    }
+    tsls = lsq(s2list, dset, OLS, (sysest)? OPT_Z : OPT_NONE);
     if (tsls.errcode) {
 	fprintf(stderr, "tsls, stage 2: tsls.errcode = %d\n", tsls.errcode);
 	goto bailout;
@@ -1889,7 +1777,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     if (nendo > 0) {
 	/* special: we need to use the original RHS vars to compute
 	   residuals and associated statistics */
-	tsls_residuals(&tsls, reglist, wtvar, dset, opt);
+	tsls_residuals(&tsls, reglist, dset, opt);
     }
 
     if (opt & OPT_C) {
@@ -1944,7 +1832,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
  bailout:
 
     gretl_matrix_free(Q);
-    gretl_matrix_free(g);
+    gretl_matrix_free(r);
     free(missmask);
 
     if (err && !tsls.errcode) {
