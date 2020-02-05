@@ -690,6 +690,9 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     /* record U-model info */
     URSS = hmod.ess;
     ku = hmod.ncoeff;
+#if HTDBG
+    pprintf(dbgprn, "URSS = %g (ku = %d)\n", URSS, ku);
+#endif
 
     /* add fitted values from unrestricted model to dataset */
     err = dataset_add_series(dset, 1);
@@ -739,7 +742,8 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	ModelTest *test = model_test_new(GRETL_TEST_IV_HAUSMAN);
 
 #if HTDBG
-	pprintf(dbgprn, "(RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
+	pprintf(dbgprn, "df = %d - %d = %d\n", ku, hmod.ncoeff, df);
+	pprintf(dbgprn, "DRSS = (RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
 	pprintf(dbgprn, "Htest = %g [%.4f]\n", HTest, chisq_cdf_comp(df, HTest));
 #endif
 
@@ -871,7 +875,7 @@ static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
     return Q;
 }
 
-static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *r,
+static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *g,
 			   DATASET *dset, int v0, int v1,
 			   const char *mask)
 {
@@ -887,19 +891,19 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *r,
 	    v0, v1, dset->t1, dset->t2, (void *) mask);
 #endif
 
-    /* form r = Q'y */
+    /* form g = Q'x */
     for (i=0; i<k; i++) {
-	r->val[i] = 0.0;
+	g->val[i] = 0.0;
 	s = 0;
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (mask != NULL && mask[t - dset->t1]) {
 		continue;
 	    }
-	    r->val[i] += gretl_matrix_get(Q, s++, i) * x[t];
+	    g->val[i] += gretl_matrix_get(Q, s++, i) * x[t];
 	}
     }
 
-    /* form Qr = QQ'y */
+    /* form \hat{x} = Qg = QQ'x */
     s = 0;
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (mask != NULL && mask[t - dset->t1]) {
@@ -908,7 +912,7 @@ static int tsls_form_xhat (gretl_matrix *Q, gretl_matrix *r,
 	}
 	xhat[t] = 0.0;
 	for (i=0; i<k; i++) {
-	    xhat[t] += gretl_matrix_get(Q, s, i) * r->val[i];
+	    xhat[t] += gretl_matrix_get(Q, s, i) * g->val[i];
 	}
 	if (xhat[t] != 0) {
 	    allzero = 0;
@@ -1579,7 +1583,7 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
 MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 {
     MODEL tsls;
-    gretl_matrix *Q = NULL, *r = NULL;
+    gretl_matrix *Q = NULL, *g = NULL;
     char *missmask = NULL;
     int orig_t1 = dset->t1, orig_t2 = dset->t2;
     int *reglist = NULL, *instlist = NULL;
@@ -1694,8 +1698,8 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     if (nendo > 0) {
 	err = dataset_add_series(dset, nendo);
 	if (!err) {
-	    r = gretl_vector_alloc(Q->cols);
-	    if (r == NULL) {
+	    g = gretl_vector_alloc(Q->cols);
+	    if (g == NULL) {
 		err = E_ALLOC;
 	    }
 	}
@@ -1716,7 +1720,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	int v1 = orig_nvar + i;
 
 	/* form xhat_i = QQ'x_i */
-	err = tsls_form_xhat(Q, r, dset, v0, v1, missmask);
+	err = tsls_form_xhat(Q, g, dset, v0, v1, missmask);
 	if (err) {
 	    goto bailout;
 	}
@@ -1832,7 +1836,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
  bailout:
 
     gretl_matrix_free(Q);
-    gretl_matrix_free(r);
+    gretl_matrix_free(g);
     free(missmask);
 
     if (err && !tsls.errcode) {
