@@ -4293,82 +4293,6 @@ static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
     src->info = NULL;
 }
 
-#if 0 /* not used at present: alternative to QR solve */
-
-static int SVD_solve (gretl_matrix *a, gretl_matrix *b,
-		      integer m, integer n, integer nrhs,
-		      integer ldb)
-{
-    integer info;
-    integer lda = m;
-    integer slen = min(m,n);
-    integer lwork = -1;
-    integer isize = 0;
-    integer rank = 0;
-    double rcond = -1;
-    integer *iwork;
-    double *work, *S;
-    int err = 0;
-
-    if (m > n && is_block_matrix(b)) {
-	matrix_block_error("svd solve");
-	return E_DATA;
-    }
-
-    work = lapack_malloc(sizeof *work);
-    if (work == NULL) {
-	return E_ALLOC;
-    }
-
-    dgelsd_(&m, &n, &nrhs, a->val, &lda, b->val, &ldb, work,
-	    &rcond, &rank, work, &lwork, &isize, &info);
-    if (info != 0) {
-	err = wspace_fail(info, work[0]);
-    } else {
-	lwork = (integer) work[0];
-    }
-
-    if (!err) {
-	work = lapack_realloc(work, (lwork + slen) * sizeof *work);
-	if (work == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	S = work + lwork;
-	iwork = malloc(isize * sizeof *iwork);
-	if (iwork == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    dgelsd_(&m, &n, &nrhs, a->val, &lda, b->val, &ldb, S,
-	    &rcond, &rank, work, &lwork, iwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "svd_solve: dgelsd gave info = %d\n",
-		(int) info);
-	err = E_DATA;
-    }
-
-    if (!err && m > n) {
-	gretl_matrix *c;
-
-	c = gretl_matrix_trim_rows(b, 0, m - n, &err);
-	if (!err) {
-	    matrix_grab_content(b, c);
-	    gretl_matrix_free(c);
-	}
-    }
-
-    lapack_free(work);
-    free(iwork);
-
-    return err;
-}
-
-#endif /* unused */
-
 /* least squares solution using QR, with column pivoting and
    detection of rank deficiency, using lapack dgelsy
 */
@@ -11922,8 +11846,13 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     /* workspace query */
-    dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, &liwork, &info);
+    if (vcv != NULL || s2 != NULL) {
+	dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &info);
+    } else {
+	dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &liwork, &info);
+    }
 
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
@@ -11939,8 +11868,13 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     /* get actual solution */
-    dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, iwork, &info);
+    if (vcv != NULL || s2 != NULL) {
+	dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &info);
+    } else {
+	dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, iwork, &info);
+    }
 
     if (info != 0) {
 	err = 1;
@@ -12059,8 +11993,13 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     }
 
     /* workspace query */
-    dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, &liwork, &info);
+    if (XTXi != NULL) {
+	dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &info);
+    } else {
+	dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &liwork, &info);
+    }
 
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
@@ -12076,8 +12015,13 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     }
 
     /* get actual solution */
-    dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-	    &rank, work, &lwork, iwork, &info);
+    if (XTXi != NULL) {
+	dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &info);
+    } else {
+	dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
+		&rank, work, &lwork, iwork, &info);
+    }
 
     if (info != 0) {
 	err = 1;
