@@ -1218,18 +1218,23 @@ void set_parsing_query (int s)
     parsing_query = s;
 }
 
-static char *get_quoted_string (parser *p)
+static char *get_quoted_string (parser *p, int prevsym)
 {
     char *s = NULL;
     int n;
+
+#if 0
+    fprintf(stderr, "get_quoted_string: sym = '%s', prevsym '%s'\n",
+	    getsymb(p->sym), getsymb(prevsym));
+#endif
 
     /* Should backslash be taken as literal or as
        escape character? Depends on the context,
        but in exactly what way?
     */
 
-    if (0 && parsing_query) {
-	/* this branch disabled 2019-12-27 */
+    if (prevsym != F_SPRINTF && parsing_query) {
+	/* this branch revised 2020-02-06 */
 	n = gretl_charpos('"', p->point);
     } else {
 	/* look for a matching (non-escaped) double-quote */
@@ -2018,6 +2023,8 @@ static void lex_try_utf8 (parser *p)
 
 void lex (parser *p)
 {
+    static int prevsyms[2];
+
 #if LDEBUG
     if (p->ch) {
 	fprintf(stderr, "lex: p->ch='%c', point='%c'\n", p->ch, *p->point);
@@ -2025,6 +2032,8 @@ void lex (parser *p)
 	fprintf(stderr, "lex: p->ch is NUL\n");
     }
 #endif
+    prevsyms[0] = prevsyms[1];
+    prevsyms[1] = p->sym;
 
     if (p->ch == 0) {
 	p->sym = EOT;
@@ -2295,7 +2304,7 @@ void lex (parser *p)
 		getword(p, 0);
 		return;
 	    } else if (p->ch == '"') {
-		p->idstr = get_quoted_string(p);
+		p->idstr = get_quoted_string(p, prevsyms[0]);
 		return;
 	    } else {
 		parser_print_input(p);
