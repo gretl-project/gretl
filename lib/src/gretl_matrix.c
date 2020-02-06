@@ -11680,7 +11680,6 @@ get_SVD_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
        reciprocals of the squares of the (positive) singular values,
        premultiplied by V and postmultiplied by V-transpose
     */
-
     for (i=0; i<m; i++) {
 	for (j=i; j<m; j++) {
 	    vij = 0.0;
@@ -11767,6 +11766,82 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
     }
 }
 
+#define PREFER_DGELSD 0
+
+static int svd_ols_work (gretl_matrix *A,
+			 gretl_matrix *B,
+                         double *s,
+			 int use_dc)
+{
+    double *work = NULL;
+    double rcond = 0.0;
+    integer m, n, nrhs;
+    integer lda, ldb;
+    integer lwork = -1;
+    integer liwork = 0;
+    integer rank;
+    integer info;
+    integer *iwork = NULL;
+    int err = 0;
+
+    work = lapack_malloc(sizeof *work);
+    if (work == NULL) {
+	return E_ALLOC;
+    }
+
+    lda = ldb = m = A->rows;
+    n = A->cols;
+    nrhs = B->cols;
+
+    /* workspace query */
+    if (use_dc) {
+	dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &liwork, &info);
+    } else {
+	dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &info);
+    }
+
+    if (info != 0 || work[0] <= 0.0) {
+	return wspace_fail(info, work[0]);
+    }
+
+    lwork = (integer) work[0];
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	return E_ALLOC;
+    }
+
+    if (use_dc) {
+	iwork = malloc(liwork * sizeof *iwork);
+	if (iwork == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    /* get actual solution */
+    if (use_dc) {
+	dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, iwork, &info);
+    } else {
+	dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+		&rank, work, &lwork, &info);
+    }
+
+    if (info != 0) {
+	err = 1;
+    } else if (rank < n) {
+	fprintf(stderr, "gretl_matrix_SVD_ols:\n"
+		" data matrix X (%d x %d) has column rank %d\n",
+		m, n, (int) rank);
+    }
+
+    lapack_free(work);
+    free(iwork);
+
+    return err;
+}
+
 /**
  * gretl_matrix_SVD_ols:
  * @y: dependent variable vector.
@@ -11792,18 +11867,8 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 {
     gretl_vector *A = NULL;
     gretl_matrix *B = NULL;
-    int T, k;
-    integer m, n;
-    integer nrhs = 1;
-    integer lda, ldb;
-    integer lwork = -1;
-    integer liwork = 0;
-    integer rank;
-    integer info;
-    double rcond = 0.0;
-    double *work = NULL;
-    integer *iwork = NULL;
     double *s = NULL;
+    int k, use_dc = 0;
     int err = 0;
 
     if (gretl_is_null_matrix(y) ||
@@ -11812,22 +11877,25 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 	return E_DATA;
     }
 
-    lda = ldb = m = T = X->rows;
-    n = k = X->cols;
+#if PREFER_DGELSD
+    if (vcv == NULL) {
+	/* we don't need the right singular vectors, and
+	   so can use the divide and conquer SVD variant
+	*/
+	use_dc = 1;
+    }
+#endif
+
+    k = X->cols;
 
     if (gretl_vector_get_length(b) != k) {
-	err = E_NONCONF;
-	goto bailout;
+	return E_NONCONF;
     }
 
-    A = gretl_matrix_copy(X);
-    if (A == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
+    A = gretl_matrix_copy_tmp(X);
+    B = gretl_matrix_copy_tmp(y);
 
-    B = gretl_matrix_copy(y);
-    if (B == NULL) {
+    if (A == NULL || B == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -11839,52 +11907,7 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 	goto bailout;
     }
 
-    work = lapack_malloc(sizeof *work);
-    if (work == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* workspace query */
-    if (vcv != NULL || s2 != NULL) {
-	dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-		&rank, work, &lwork, &info);
-    } else {
-	dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-		&rank, work, &lwork, &liwork, &info);
-    }
-
-    if (info != 0 || work[0] <= 0.0) {
-	err = wspace_fail(info, work[0]);
-	goto bailout;
-    }
-
-    lwork = (integer) work[0];
-    work = lapack_realloc(work, lwork * sizeof *work);
-    iwork = malloc(liwork * sizeof *iwork);
-    if (work == NULL || iwork == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* get actual solution */
-    if (vcv != NULL || s2 != NULL) {
-	dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-		&rank, work, &lwork, &info);
-    } else {
-	dgelsd_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
-		&rank, work, &lwork, iwork, &info);
-    }
-
-    if (info != 0) {
-	err = 1;
-    }
-
-    if (rank < k) {
-	fprintf(stderr, "gretl_matrix_SVD_ols:\n"
-		" dgelsd: data matrix X (%d x %d) has column rank %d\n",
-		X->rows, X->cols, (int) rank);
-    }
+    err = svd_ols_work(A, B, s, use_dc);
 
     if (!err) {
 	int i;
@@ -11900,12 +11923,10 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 	}
     }
 
-    bailout:
+ bailout:
 
     gretl_matrix_free(A);
     gretl_matrix_free(B);
-    lapack_free(work);
-    free(iwork);
     free(s);
 
     return err;
@@ -11936,16 +11957,8 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     int g, k, T;
     gretl_matrix *A = NULL;
     gretl_matrix *C = NULL;
-    integer m, n, nrhs;
-    integer lda, ldb;
-    integer lwork = -1;
-    integer liwork = 0;
-    integer rank;
-    integer info;
-    double rcond = -1.0;
-    double *work = NULL;
-    integer *iwork = NULL;
     double *s = NULL;
+    int use_dc = 0;
     int err = 0;
 
     if (gretl_is_null_matrix(Y) ||
@@ -11954,9 +11967,18 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	return E_DATA;
     }
 
-    nrhs = g = Y->cols;
-    n = k = X->cols;
-    lda = ldb = m = T = X->rows;
+#if PREFER_DGELSD
+    if (XTXi == NULL) {
+	/* we don't need the right singular vectors, and
+	   so can use the divide and conquer SVD variant
+	*/
+	use_dc = 1;
+    }
+#endif
+
+    g = Y->cols;
+    k = X->cols;
+    T = X->rows;
 
     if (B->rows != k || B->cols != g) {
 	err = E_NONCONF;
@@ -11968,13 +11990,10 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	err = E_DF;
     }
 
-    A = gretl_matrix_copy(X);
-    if (A == NULL) {
-	return E_ALLOC;
-    }
+    A = gretl_matrix_copy_tmp(X);
+    C = gretl_matrix_copy_tmp(Y);
 
-    C = gretl_matrix_copy(Y);
-    if (C == NULL) {
+    if (A == NULL || C == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -11986,55 +12005,10 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	goto bailout;
     }
 
-    work = lapack_malloc(sizeof *work);
-    if (work == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* workspace query */
-    if (XTXi != NULL) {
-	dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-		&rank, work, &lwork, &info);
-    } else {
-	dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-		&rank, work, &lwork, &liwork, &info);
-    }
-
-    if (info != 0 || work[0] <= 0.0) {
-	err = wspace_fail(info, work[0]);
-	goto bailout;
-    }
-
-    lwork = (integer) work[0];
-    work = lapack_realloc(work, lwork * sizeof *work);
-    iwork = malloc(liwork * sizeof *iwork);
-    if (work == NULL || iwork == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* get actual solution */
-    if (XTXi != NULL) {
-	dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-		&rank, work, &lwork, &info);
-    } else {
-	dgelsd_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
-		&rank, work, &lwork, iwork, &info);
-    }
-
-    if (info != 0) {
-	err = 1;
-    }
-
-    if (rank < k) {
-	fprintf(stderr, "gretl_matrix_multi_SVD_ols:\n"
-		" dgelss: data matrix X (%d x %d) has column rank %d\n",
-		T, k, (int) rank);
-    }
+    err = svd_ols_work(A, C, s, use_dc);
 
     if (!err) {
-	/* coeffs: extract the first k rows from C */
+	/* coeffs: extract the first k rows from @C */
 	double bij;
 	int i, j;
 
@@ -12066,12 +12040,10 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 	}
     }
 
-    bailout:
+ bailout:
 
     gretl_matrix_free(A);
     gretl_matrix_free(C);
-    lapack_free(work);
-    free(iwork);
     free(s);
 
     return err;
@@ -12796,17 +12768,11 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 
     if (X->rows != T) {
 	return E_NONCONF;
-    }
-
-    if (B->rows != k || B->cols != g) {
+    } else if (B->rows != k || B->cols != g) {
 	return E_NONCONF;
-    }
-
-    if (R->cols != nc || q->rows != nr || q->cols != 1) {
+    } else if (R->cols != nc || q->rows != nr || q->cols != 1) {
 	return E_NONCONF;
-    }
-
-    if (U != NULL && (U->rows != T || U->cols != g)) {
+    } else if (U != NULL && (U->rows != T || U->cols != g)) {
 	return E_NONCONF;
     }
 
