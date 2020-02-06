@@ -8651,7 +8651,7 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
 	}
     }
 
-    gretl_matrix_free(S);
+    gretl_matrix_free(s);
 
     return rank;
 }
