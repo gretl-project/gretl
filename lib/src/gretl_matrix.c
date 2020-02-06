@@ -8601,6 +8601,12 @@ static double svd_smin (const gretl_matrix *a, double smax)
     return dmax * macheps * smax;
 }
 
+static int real_gretl_matrix_SVD (const gretl_matrix *x,
+				  gretl_matrix **pu,
+				  gretl_vector **ps,
+				  gretl_matrix **pvt,
+				  int full);
+
 /**
  * gretl_matrix_rank:
  * @a: matrix to examine.
@@ -8613,7 +8619,7 @@ static double svd_smin (const gretl_matrix *a, double smax)
 
 int gretl_matrix_rank (const gretl_matrix *a, int *err)
 {
-    gretl_matrix *S = NULL;
+    gretl_matrix *s = NULL;
     int i, k, rank = 0;
 
     if (gretl_is_null_matrix(a)) {
@@ -8629,17 +8635,17 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
 	mod1 = a->rows > k ? GRETL_MOD_TRANSPOSE : 0;
 	mod2 = a->cols > k ? GRETL_MOD_TRANSPOSE : 0;
 	gretl_matrix_multiply_mod(a, mod1, a, mod2, b, 0);
-	*err = gretl_matrix_SVD(b, NULL, &S, NULL, 0);
+	*err = real_gretl_matrix_SVD(b, NULL, &s, NULL, 0);
 	gretl_matrix_free(b);
     } else {
-	*err = gretl_matrix_SVD(a, NULL, &S, NULL, 0);
+	*err = real_gretl_matrix_SVD(a, NULL, &s, NULL, 0);
     }
 
     if (!*err) {
-	double smin = svd_smin(a, S->val[0]);
+	double smin = svd_smin(a, s->val[0]);
 
 	for (i=0; i<k; i++) {
-	    if (S->val[i] > smin) {
+	    if (s->val[i] > smin) {
 		rank++;
 	    }
 	}
@@ -10328,7 +10334,7 @@ static int real_gretl_matrix_SVD (const gretl_matrix *x,
 				  gretl_matrix **pu,
 				  gretl_vector **ps,
 				  gretl_matrix **pvt,
-				  int full, int dnc)
+				  int full)
 {
     integer m, n, lda;
     integer ldu = 1, ldvt = 1;
@@ -10344,17 +10350,18 @@ static int real_gretl_matrix_SVD (const gretl_matrix *x,
     double xu, xvt;
     double *uval = &xu, *vtval = &xvt;
     double *work = NULL;
-    int k, err = 0;
-
-    lda = m = x->rows;
-    n = x->cols;
+    int k, dnc;
+    int err = 0;
 
     a = gretl_matrix_copy_tmp(x);
     if (a == NULL) {
 	return E_ALLOC;
     }
 
+    lda = m = x->rows;
+    n = x->cols;
     k = (m < n)? m : n;
+    dnc = k > 20;
 
     s = gretl_vector_alloc(k);
     if (s == NULL) {
@@ -10504,8 +10511,6 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		      gretl_vector **ps, gretl_matrix **pvt,
 		      int full)
 {
-    int k;
-
     if (pu == NULL && ps == NULL && pvt == NULL) {
 	/* no-op */
 	return 0;
@@ -10518,9 +10523,7 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 	return tall_SVD(x, pu, ps, pvt);
     }
 
-    k = MIN(x->rows, x->cols);
-
-    return real_gretl_matrix_SVD(x, pu, ps, pvt, full, k > 20);
+    return real_gretl_matrix_SVD(x, pu, ps, pvt, full);
 }
 
 /**
