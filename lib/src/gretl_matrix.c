@@ -10271,11 +10271,21 @@ static int tall_SVD (const gretl_matrix *X,
     if (!err) {
 	for (i=0; i<c; i++) {
 	    lj = lam->val[c-i-1];
-	    sv->val[i] = lj < 0 ? 1.0e-16 : sqrt(lj);
+	    if (lj < 0) {
+		err = E_SINGULAR;
+		break;
+	    }
+	    sv->val[i] = sqrt(lj);
 	}
     }
 
-    if (!err && pVt != NULL) {
+    if (err) {
+	gretl_matrix_free(XTX);
+	gretl_matrix_free(sv);
+	return err;
+    }
+
+    if (pVt != NULL) {
 	Vt = gretl_matrix_alloc(c, c);
 	if (Vt == NULL) {
 	    err = E_ALLOC;
@@ -10511,6 +10521,8 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		      gretl_vector **ps, gretl_matrix **pvt,
 		      int full)
 {
+    int err = 0;
+
     if (pu == NULL && ps == NULL && pvt == NULL) {
 	/* no-op */
 	return 0;
@@ -10518,9 +10530,19 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 	return E_DATA;
     }
 
-    if (!full && x->rows > x->cols && getenv("GRETL_OLD_SVD") == NULL) {
-	/* FIXME conditionality? */
-	return tall_SVD(x, pu, ps, pvt);
+    if (!full && x->rows > x->cols && getenv("GRETL_REAL_SVD") == NULL) {
+	/* The "tall" variant is very fast, but not at all
+	   accurate for near-singular matrices. If @x is
+	   too close to singular this wll be flagged by an
+	   error code of E_SINGULAR from tall_SVD(), in which
+	   case we'll proceed to try "real" SVD; any other
+	   error will be treated as fatal.
+	*/
+	err = tall_SVD(x, pu, ps, pvt);
+	if (err != E_SINGULAR) {
+	    /* either OK or fatal error */
+	    return err;
+	}
     }
 
     return real_gretl_matrix_SVD(x, pu, ps, pvt, full);
@@ -10596,10 +10618,10 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
 	return E_NONCONF;
     }
 
-    err = gretl_matrix_SVD(R0, &U0, NULL, NULL, 0);
+    err = real_gretl_matrix_SVD(R0, &U0, NULL, NULL, 0);
 
     if (!err) {
-	err = gretl_matrix_SVD(R1, &U1, &S1, &V1, 0);
+	err = real_gretl_matrix_SVD(R1, &U1, &S1, &V1, 0);
     }
 
     if (!err) {
@@ -10614,7 +10636,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     }
 
     if (!err) {
-	err = gretl_matrix_SVD(Z, &Uz, &Sz, NULL, 0);
+	err = real_gretl_matrix_SVD(Z, &Uz, &Sz, NULL, 0);
     }
 
     if (!err) {
@@ -10752,7 +10774,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
     }
 
     /* we'll need the full SVD here */
-    *err = gretl_matrix_SVD(M, NULL, &S, &V, 1);
+    *err = real_gretl_matrix_SVD(M, NULL, &S, &V, 1);
 
     if (!*err) {
 	char E = 'E';
@@ -12075,7 +12097,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 	return E_DATA;
     }
 
-    err = gretl_matrix_SVD(A, &U, &S, &VT, 0);
+    err = real_gretl_matrix_SVD(A, &U, &S, &VT, 0);
 
     if (!err) {
 	gretl_matrix *Vsel = NULL;
@@ -12170,7 +12192,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
     /* a = USV' ; a^{-1} = VWU' where W holds inverse of diag elements of S */
 
-    err = gretl_matrix_SVD(a, &u, &s, &vt, 0);
+    err = real_gretl_matrix_SVD(a, &u, &s, &vt, 0);
 
     if (!err) {
 	double smin = svd_smin(a, s->val[0]);
