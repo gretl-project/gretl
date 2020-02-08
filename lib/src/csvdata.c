@@ -4425,6 +4425,31 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
     return err;
 }
 
+#if 0 /* experimenting */
+
+static gint64 double_to_int64 (double x)
+{
+    char *s, tmp[24];
+    guint64 u64;
+    int mul;
+
+    sprintf(tmp, "%.12E", x);
+    gretl_delchar('.', tmp);
+    u64 = g_ascii_strtoull(tmp, &s, 10);
+    mul = pow(10, atoi(s + 1));
+    u64 *= mul;
+    return (gint64) u64;
+}
+
+#else
+
+static gint64 double_to_int64 (double x)
+{
+    return (gint64) trunc(x);
+}
+
+#endif
+
 /* get a 64-bit int key value from a double, checking for pathology */
 
 static gint64 dtoll (double x, int *err)
@@ -4433,7 +4458,7 @@ static gint64 dtoll (double x, int *err)
 	*err = E_DATA;
 	return -1;
     } else {
-	return (gint64) trunc(x);
+	return double_to_int64(x);
     }
 }
 
@@ -4450,7 +4475,7 @@ static gint64 dtoll_full (double x, int key, int row, int *err)
 	*err = E_DATA;
 	return -1;
     } else {
-	return (gint64) trunc(x);
+	return double_to_int64(x);
     }
 }
 
