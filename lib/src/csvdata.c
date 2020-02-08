@@ -4425,40 +4425,33 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
     return err;
 }
 
-#if 0 /* experimenting */
-
-static gint64 double_to_int64 (double x)
+static gint64 double_to_int64 (double x, int *err)
 {
-    char *s, tmp[24];
-    guint64 u64;
-    int mul;
+    double trx = trunc(x);
 
-    sprintf(tmp, "%.12E", x);
-    gretl_delchar('.', tmp);
-    u64 = g_ascii_strtoull(tmp, &s, 10);
-    mul = pow(10, atoi(s + 1));
-    u64 *= mul;
-    return (gint64) u64;
+    if (fabs(x - trx) > 1.0e-15) {
+	*err = E_DATA;
+	return -1;
+    } else {
+	return (gint64) trx;
+    }
 }
-
-#else
-
-static gint64 double_to_int64 (double x)
-{
-    return (gint64) trunc(x);
-}
-
-#endif
 
 /* get a 64-bit int key value from a double, checking for pathology */
 
 static gint64 dtoll (double x, int *err)
 {
     if (na(x) || fabs(x) >  G_MAXINT64) {
+	gretl_errmsg_sprintf("join: invalid inner key value %.16g\n", x);
 	*err = E_DATA;
 	return -1;
     } else {
-	return double_to_int64(x);
+	gint64 ret = double_to_int64(x, err);
+
+	if (*err) {
+	    gretl_errmsg_sprintf("join: invalid inner key value %.16g\n", x);
+	}
+	return ret;
     }
 }
 
@@ -4466,16 +4459,21 @@ static gint64 dtoll_full (double x, int key, int row, int *err)
 {
     if (na(x) || fabs(x) >  G_MAXINT64) {
 	if (key == 2) {
-	    gretl_errmsg_sprintf("%s: invalid secondary outer key value (%.12g) on row %d",
+	    gretl_errmsg_sprintf("%s: invalid secondary outer key value (%.16g) on row %d",
 				 "join", x, row);
 	} else {
-	    gretl_errmsg_sprintf("%s: invalid (primary) outer key value (%.12g) on row %d",
+	    gretl_errmsg_sprintf("%s: invalid (primary) outer key value (%.16g) on row %d",
 				 "join", x, row);
 	}
 	*err = E_DATA;
 	return -1;
     } else {
-	return double_to_int64(x);
+	gint64 ret = double_to_int64(x, err);
+
+	if (*err) {
+	    gretl_errmsg_sprintf("join: invalid inner key value %.16g\n", x);
+	}
+	return ret;
     }
 }
 
