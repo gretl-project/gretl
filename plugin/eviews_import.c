@@ -446,15 +446,18 @@ static int parse_wf1_header (FILE *fp, int ftype, DATASET *dset,
     if (!err) {
 	if (startper > 0) {
 	    int p10 = log(pd) / log(10.0);
+	    char tmp[32];
 
 	    if (p10 > 0) {
 		char fmt[24];
 
 		sprintf(fmt, "%%d:%%0%dd", p10 + 1);
-		sprintf(dset->stobs, fmt, startyr, startper);
+		sprintf(tmp, fmt, startyr, startper);
 	    } else {
-		sprintf(dset->stobs, "%d:%d", startyr, startper);
+		sprintf(tmp, "%d:%d", startyr, startper);
 	    }
+	    dset->stobs[0] = '\0';
+	    strncat(dset->stobs, tmp, OBSLEN-1);
 	} else {
 	    sprintf(dset->stobs, "%d", startyr);
 	}

@@ -26,7 +26,7 @@ enum {
     LATEX_OK,
     LATEX_EXEC_FAILED,
     LATEX_ERROR
-} tex_return_codes;
+};
 
 void print_window_content (gchar *fullbuf, gchar *selbuf, 
 			   const char *fname,

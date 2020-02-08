@@ -3442,6 +3442,7 @@ static void fill_cset_t (const DATASET *dset,
     double zsum = 0.0;
 
     t0 = *startday;
+    y = p = 0;
 
     /* how many daily obs do we have in this month? */
     for (t=t0; t<dset->n; t++) {

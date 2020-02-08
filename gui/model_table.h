@@ -24,7 +24,7 @@ enum {
     MODEL_ADD_FROM_MENU,
     MODEL_ADD_BY_DRAG,
     MODEL_ADD_BY_CMD
-} model_add_modes;
+};
 
 void clear_model_table (int on_exit, PRN *prn);
 

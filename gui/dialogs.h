@@ -28,7 +28,7 @@
 enum {
     GRETL_YES,
     GRETL_NO
-} buttons;
+} GretlButtons;
 
 #ifndef BUILDING_PLUGIN
 typedef struct dialog_t_ dialog_t;

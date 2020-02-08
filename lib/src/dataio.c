@@ -3669,7 +3669,7 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
 	} else {
 	    int dlen = strlen(dset->descrip);
 	    int nlen = strlen(note);
-	    char *tmp = realloc(dset->descrip, dlen + nlen + 3);
+	    char *tmp = realloc(dset->descrip, dlen + nlen + 5);
 
 	    if (tmp != NULL) {
 		dset->descrip = tmp;

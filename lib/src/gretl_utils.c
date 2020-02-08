@@ -29,6 +29,7 @@
 #include "gretl_xml.h"
 #include "forecast.h"
 #include "gretl_typemap.h"
+
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -45,7 +46,7 @@
 # include "gretl_mpi.h"
 #endif
 
-#ifdef USE_RLIB
+#if defined(HAVE_MPI) || defined(USE_RLIB)
 # include "gretl_foreign.h"
 #endif
 

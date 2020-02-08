@@ -1673,18 +1673,21 @@ static int add_rats_db_series_list (windata_t *vwin)
 
 static int add_pcgive_db_series_list (windata_t *vwin)
 {
-    char in7name[FILENAME_MAX];
-    FILE *fp;
+    gchar *in7name = NULL;
+    FILE *fp = NULL;
     dbwrapper *dw;
+    int err = 0;
 
-    *in7name = 0;
-    strncat(in7name, vwin->fname, FILENAME_MAX - 5);
-    strcat(in7name, ".in7");
-
+    in7name = g_strdup_printf("%s.in7", vwin->fname);
     fp = gretl_fopen(in7name, "r");
     if (fp == NULL) {
+	err = 1;
 	file_read_errbox(in7name);
-	return 1;
+    }
+
+    g_free(in7name);
+    if (err) {
+	return err;
     }
 
     /* extract catalog from PcGive file */

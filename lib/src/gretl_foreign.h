@@ -18,6 +18,7 @@
  */
 
 #ifndef GRETL_FOREIGN_H
+#define GRETL_FOREIGN_H
 
 typedef enum {
     LANG_R = 1,
@@ -60,7 +61,7 @@ void set_mpi_variant (const char *pref);
 
 int check_for_mpiexec (void);
 
-#endif
+#endif /* HAVE_MPI */
 
 #ifdef USE_RLIB
 
@@ -78,6 +79,6 @@ void gretl_R_reset_error (void);
 
 void gretl_R_cleanup (void);
 
-#endif
+#endif /* USE_RLIB */
 
 #endif /* GRETL_FOREIGN_H */
