@@ -18466,7 +18466,7 @@ static int gen_check_return_type (parser *p)
     } else if (p->targ == ARRAY) {
 	if (p->op == B_ASN) {
 	    /* plain assignment: array or null */
-	    if (r->t != ARRAY && r->t != EMPTY) {
+	    if (r->t != ARRAY && r->t != EMPTY && r->t != STR) {
 		err = E_TYPES;
 	    }
 	} else {
@@ -19032,6 +19032,22 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else if (r->t == EMPTY) {
 	    /* as in, e.g., "strings A = null" */
 	    p->err = assign_null_to_array(p);
+	} else if (r->t == STR) {
+	    /* allow forming strings array from single string */
+	    if (p->lh.gtype == GRETL_TYPE_STRINGS) {
+		GretlType atype = p->lh.gtype;
+		gretl_array *a;
+
+		a = gretl_array_new(atype, 1, &p->err);
+		if (!p->err) {
+		    p->err = gretl_array_set_string(a, 0, r->v.str, 1);
+		}
+		if (!p->err) {
+		    p->err = gen_add_or_replace(p, atype, a);
+		}
+	    } else {
+		p->err = E_TYPES;
+	    }
 	} else {
 	    /* full assignment of RHS array */
 	    GretlType atype = p->lh.gtype > 0 ? p->lh.gtype :
