@@ -440,7 +440,18 @@ is shown below:\footnote{For compatibility with other packages,
   figures will be slightly different from what you would obtain by
   running \texttt{var} and then \texttt{cholesky(\$sigma)}.} note
 that, as an added benefit, we get asymptotic standard errors for the
-estimated parameters (estimated via the information matrix).
+estimated parameters (estimated via the information
+matrix).\footnote{You may feel surprised by the fact that in our
+  example the $z$-statistics for two elements of the $C$ matrix are
+  exactly the same. This is no coincidence: in short, the reason why
+  this happens is that the parameter covariance matrix is computed
+  from the information matrix, which is a function of $C$ itself
+  \citep[see][for more details]{AG}. On the other hand, the test
+  shouldn't be taken literally, as under the null hypothesis
+  $C_{11} = 0$ or $C_{22} = 0$ the covariance matrix would become
+  singular, and all the relevant asymptotic theory would break
+  down. To be on the safe side, just take the $z$ values as
+  descriptive statistcs in these cases.}
 
 \begin{code}
 Unconstrained Sigma:
