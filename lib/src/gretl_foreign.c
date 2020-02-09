@@ -2765,8 +2765,6 @@ static int R_function_add_matrix (const gretl_matrix *m)
     return 0;
 }
 
-#define RTYPE_DEBUG 0
-
 /* public because called from geneval.c */
 
 int gretl_R_function_add_arg (void *ptr, GretlType type)
@@ -2843,6 +2841,8 @@ static int numeric_ok (SEXP s)
     return R_isReal(s) || R_isInteger(s) || R_isLogical(s);
 }
 
+#define RTYPE_DEBUG 0
+
 static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 {
     GretlType t = GRETL_TYPE_NONE;
@@ -2864,7 +2864,11 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 	if (numeric_ok(s)) {
 	    t = GRETL_TYPE_MATRIX;
 	} else if (R_isString(s)) {
-	    t = GRETL_TYPE_ARRAY;
+	    if (R_nrows(s) == 1) {
+		t = GRETL_TYPE_STRING;
+	    } else {
+		t = GRETL_TYPE_ARRAY;
+	    }
 	} else {
 	    gretl_errmsg_sprintf("%s: got 'vector' result, but not numeric or string", name);
 	    *err = E_TYPES;
