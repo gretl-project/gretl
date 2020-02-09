@@ -2667,15 +2667,12 @@ int get_R_function_by_name (const char *name)
 static int R_function_add_scalar (double x)
 {
     R_SETCAR(current_arg, R_ScalarReal(x));
-
     return 0;
 }
 
 static int R_function_add_string (const char *s)
 {
-    current_arg = R_CDR(current_arg);
     R_SETCAR(current_arg, R_mkString(s));
-
     return 0;
 }
 
@@ -2768,6 +2765,8 @@ static int R_function_add_matrix (const gretl_matrix *m)
     return 0;
 }
 
+#define RTYPE_DEBUG 0
+
 /* public because called from geneval.c */
 
 int gretl_R_function_add_arg (void *ptr, GretlType type)
@@ -2849,6 +2848,9 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
     GretlType t = GRETL_TYPE_NONE;
 
     if (R_isMatrix(s)) {
+#if RTYPE_DEBUG
+	fprintf(stderr, "R_type_to gretl: %s isMatrix\n", name);
+#endif
 	if (numeric_ok(s)) {
 	    t = GRETL_TYPE_MATRIX;
 	} else {
@@ -2856,6 +2858,9 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 	    *err = E_TYPES;
 	}
     } else if (R_isVector(s)) {
+#if RTYPE_DEBUG
+	fprintf(stderr, "R_type_to gretl: %s isVector\n", name);
+#endif
 	if (numeric_ok(s)) {
 	    t = GRETL_TYPE_MATRIX;
 	} else if (R_isString(s)) {
@@ -2871,6 +2876,9 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
     } else if (R_isReal(s)) {
 	t = GRETL_TYPE_DOUBLE;
     } else if (R_isString(s)) {
+#if RTYPE_DEBUG
+	fprintf(stderr, "R_type_to gretl: %s isString\n", name);
+#endif
 	t = GRETL_TYPE_STRING;
     }
 
