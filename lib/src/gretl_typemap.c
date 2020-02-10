@@ -326,6 +326,15 @@ int gretl_is_array_type (GretlType type)
 	type == GRETL_TYPE_ARRAYS;
 }
 
+int gretl_is_arrayable_type (GretlType type)
+{
+    return type == GRETL_TYPE_STRING ||
+	type == GRETL_TYPE_MATRIX ||
+	type == GRETL_TYPE_BUNDLE ||
+	type == GRETL_TYPE_LIST ||
+	type == GRETL_TYPE_ARRAY;
+}
+
 int gretl_is_scalar_type (GretlType type)
 {
     return type == GRETL_TYPE_BOOL ||

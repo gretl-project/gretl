@@ -1057,6 +1057,11 @@ static GretlType gretl_type_from_gen_type (int gen_t)
     return GRETL_TYPE_NONE;
 }
 
+static int gen_type_is_arrayable (int gen_t)
+{
+    return gretl_is_arrayable_type(gretl_type_from_gen_type(gen_t));
+}
+
 static NODE *maybe_rescue_undef_node (NODE *n, parser *p)
 {
     int v = current_series_index(p->dset, n->vname);
@@ -18383,9 +18388,6 @@ static int create_or_edit_list (parser *p)
     return p->err;
 }
 
-#define arrayable_type(t) (t == MAT || t == STR || t == BUNDLE || \
-			   t == LIST)
-
 #define ok_return_type(t) (t == NUM || t == SERIES || t == MAT ||	\
 			   t == LIST || t == DUM || t == EMPTY ||	\
                            t == STR || t == BUNDLE || t == ARRAY ||	\
@@ -18466,7 +18468,7 @@ static int gen_check_return_type (parser *p)
     } else if (p->targ == ARRAY) {
 	if (p->op == B_ASN) {
 	    /* plain assignment: array or null */
-	    if (r->t != ARRAY && r->t != EMPTY && r->t != STR) {
+	    if (!gen_type_is_arrayable(r->t) && r->t != EMPTY) {
 		err = E_TYPES;
 	    }
 	} else {
@@ -18475,7 +18477,7 @@ static int gen_check_return_type (parser *p)
 	       object which matches the content type on the left
 	       (but the matching check is deferred)
 	    */
-	    if (r->t != ARRAY && !arrayable_type(r->t)) {
+	    if (!gen_type_is_arrayable(r->t)) {
 		err = E_TYPES;
 	    }
 	}
@@ -19032,23 +19034,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else if (r->t == EMPTY) {
 	    /* as in, e.g., "strings A = null" */
 	    p->err = assign_null_to_array(p);
-	} else if (r->t == STR) {
-	    /* allow forming strings array from single string */
-	    if (p->lh.gtype == GRETL_TYPE_STRINGS) {
-		GretlType atype = p->lh.gtype;
-		gretl_array *a;
-
-		a = gretl_array_new(atype, 1, &p->err);
-		if (!p->err) {
-		    p->err = gretl_array_set_string(a, 0, r->v.str, 1);
-		}
-		if (!p->err) {
-		    p->err = gen_add_or_replace(p, atype, a);
-		}
-	    } else {
-		p->err = E_TYPES;
-	    }
-	} else {
+	} else if (r->t == ARRAY) {
 	    /* full assignment of RHS array */
 	    GretlType atype = p->lh.gtype > 0 ? p->lh.gtype :
 		gretl_array_get_type(r->v.a);
@@ -19061,13 +19047,29 @@ static int save_generated_var (parser *p, PRN *prn)
 		/* we need to make a copy */
 		a = gretl_array_copy(r->v.a, &p->err);
 	    }
-
 	    if (!p->err) {
 		p->err = gen_add_or_replace(p, atype, a);
 		if (!p->err && a == r->v.a) {
 		    /* avoid destroying the assigned array */
 		    r->v.a = NULL;
 		}
+	    }
+	} else {
+	    /* allow forming array from single element */
+	    GretlType rtype = gretl_type_from_gen_type(r->t);
+	    GretlType atype = p->lh.gtype;
+
+	    if (rtype == gretl_type_get_singular(atype)) {
+		gretl_array *a = gretl_array_new(atype, 1, &p->err);
+
+		if (!p->err) {
+		    p->err = gretl_array_set_element(a, 0, r->v.ptr, rtype, 1);
+		}
+		if (!p->err) {
+		    p->err = gen_add_or_replace(p, atype, a);
+		}
+	    } else {
+		p->err = E_TYPES;
 	    }
 	}
     }
