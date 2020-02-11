@@ -2491,7 +2491,7 @@ void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
 }
 
 /* get the key strings from @b in the form of a "raw" array
-   of Ctype char *
+   of C type char *
 */
 
 char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
@@ -2505,7 +2505,7 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
 	guint n;
 
 	if (keys != NULL && (n = g_list_length(keys)) > 0) {
-	    S = strings_array_new(n);
+	    S = strings_array_new(n + 1);
 	    if (S != NULL) {
 		GList *L = g_list_first(keys);
 		int i = 0;
@@ -2515,6 +2515,7 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
 		    L = g_list_next(L);
 		}
 		*ns = n;
+		S[i] = NULL; /* terminator */
 	    }
 	}
 	if (keys != NULL) {

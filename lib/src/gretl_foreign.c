@@ -2215,10 +2215,12 @@ static SEXP current_call;
 SEXP *PR_GlobalEnv;
 SEXP *PR_NilValue;
 SEXP *PR_UnboundValue;
+SEXP *PR_NamesSymbol;
 
 SEXP VR_GlobalEnv;
 SEXP VR_NilValue;
 SEXP VR_UnboundValue;
+SEXP VR_NamesSymbol;
 
 /* renamed, pointerized versions of the R functions we need */
 
@@ -2226,6 +2228,7 @@ static double *(*R_REAL) (SEXP);
 static int *(*R_INT) (SEXP);
 static const char *(*R_STRING) (SEXP);
 static SEXP *(*R_STRING_PTR) (SEXP);
+static SEXP (*R_STRING_ELT) (SEXP, int);
 
 static SEXP (*R_CDR) (SEXP);
 static SEXP (*R_allocList) (int);
@@ -2240,6 +2243,9 @@ static SEXP (*R_catch) (SEXP, SEXP, int *);
 static SEXP (*R_install) (const char *);
 static SEXP (*R_mkString) (const char *);
 static SEXP (*R_mkChar) (const char *);
+static SEXP (*R_mkNamed) (SEXPTYPE, const char **);
+static SEXP (*R_GetRowNames) (SEXP);
+static SEXP (*R_getAttrib) (SEXP, SEXP);
 
 static Rboolean (*R_isMatrix) (SEXP);
 static Rboolean (*R_isVector) (SEXP);
@@ -2252,6 +2258,7 @@ static int (*R_initEmbeddedR) (int, char **);
 static int (*R_ncols) (SEXP);
 static int (*R_nrows) (SEXP);
 static int (*R_TYPEOF) (SEXP);
+static int *(*R_LOGICAL) (SEXP);
 
 static void (*R_endEmbeddedR) (int);
 static void (*R_unprotect) (int);
@@ -2259,7 +2266,8 @@ static void (*R_PrintValue) (SEXP);
 static void (*R_SET_TYPEOF) (SEXP, int);
 static void (*R_SET_TAG) (SEXP, SEXP);
 
-static int *(*R_LOGICAL) (SEXP);
+static SEXP (*R_VECTOR_ELT) (SEXP, int);
+static void (*R_SET_VECTOR_ELT) (SEXP, int, SEXP);
 
 #ifdef WIN32
 static char *(*R_get_HOME) (void);
@@ -2303,6 +2311,7 @@ static int load_R_symbols (void)
     R_INT           = dlget(Rhandle, "INTEGER", &err);
     R_STRING        = dlget(Rhandle, "R_CHAR", &err);
     R_STRING_PTR    = dlget(Rhandle, "STRING_PTR", &err);
+    R_STRING_ELT    = dlget(Rhandle, "STRING_ELT", &err);
     R_allocList     = dlget(Rhandle, "Rf_allocList", &err);
     R_allocMatrix   = dlget(Rhandle, "Rf_allocMatrix", &err);
     R_allocVector   = dlget(Rhandle, "Rf_allocVector", &err);
@@ -2319,8 +2328,11 @@ static int load_R_symbols (void)
     R_isString      = dlget(Rhandle, "Rf_isString", &err);
     R_mkString      = dlget(Rhandle, "Rf_mkString", &err);
     R_mkChar        = dlget(Rhandle, "Rf_mkChar", &err);
+    R_mkNamed       = dlget(Rhandle, "Rf_mkNamed", &err);
     R_ncols         = dlget(Rhandle, "Rf_ncols", &err);
     R_nrows         = dlget(Rhandle, "Rf_nrows", &err);
+    R_GetRowNames   = dlget(Rhandle, "Rf_GetRowNames", &err);
+    R_getAttrib     = dlget(Rhandle, "Rf_getAttrib", &err);
     R_PrintValue    = dlget(Rhandle, "Rf_PrintValue", &err);
     R_protect       = dlget(Rhandle, "Rf_protect", &err);
     R_ScalarReal    = dlget(Rhandle, "Rf_ScalarReal", &err);
@@ -2331,6 +2343,8 @@ static int load_R_symbols (void)
     R_TYPEOF        = dlget(Rhandle, "TYPEOF", &err);
     R_SET_TAG       = dlget(Rhandle, "SET_TAG", &err);
     R_LOGICAL       = dlget(Rhandle, "LOGICAL", &err);
+    R_VECTOR_ELT    = dlget(Rhandle, "VECTOR_ELT", &err);
+    R_SET_VECTOR_ELT = dlget(Rhandle, "SET_VECTOR_ELT", &err);
 
 #ifdef WIN32
     R_get_HOME = dlget(Rhandle, "get_R_HOME", &err);
@@ -2340,6 +2354,7 @@ static int load_R_symbols (void)
 	PR_GlobalEnv    = (SEXP *) dlget(Rhandle, "R_GlobalEnv", &err);
 	PR_NilValue     = (SEXP *) dlget(Rhandle, "R_NilValue", &err);
 	PR_UnboundValue = (SEXP *) dlget(Rhandle, "R_UnboundValue", &err);
+	PR_NamesSymbol  = (SEXP *) dlget(Rhandle, "R_NamesSymbol", &err);
     }
 
     if (err) {
@@ -2501,6 +2516,7 @@ static int gretl_Rlib_init (void)
 	    VR_GlobalEnv = *PR_GlobalEnv;
 	    VR_NilValue = *PR_NilValue;
 	    VR_UnboundValue = *PR_UnboundValue;
+	    VR_NamesSymbol = *PR_NamesSymbol;
 	    Rinit = 1;
 	} else {
 	    close_plugin(Rhandle);
@@ -2714,55 +2730,137 @@ static int R_function_add_factor (const DATASET *dset, int v)
     return 0;
 }
 
-static int R_function_add_array (gretl_array *a)
+static SEXP make_R_array (gretl_array *a, int *err)
 {
     GretlType t = gretl_array_get_type(a);
     int n = gretl_array_get_length(a);
     const char *si;
-    SEXP res;
+    SEXP as;
     int i;
 
     if (t != GRETL_TYPE_STRINGS) {
 	gretl_errmsg_set("Only strings arrays are accepted as R-function arguments");
-	return E_TYPES;
+	*err = E_TYPES;
+	return NULL;
     }
 
-    res = R_allocVector(STRSXP, n);
-    if (res == NULL) {
-	return E_ALLOC;
+    as = R_allocVector(STRSXP, n);
+    if (as == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<n; i++) {
+	    si = gretl_array_get_data(a, i);
+	    R_STRING_PTR(as)[i] = R_mkChar(si);
+	}
     }
 
-    for (i=0; i<n; i++) {
-	si = gretl_array_get_data(a, i);
-	R_STRING_PTR(res)[i] = R_mkChar(si);
-    }
-
-    R_SETCAR(current_arg, res);
-
-    return 0;
+    return as;
 }
 
-static int R_function_add_matrix (const gretl_matrix *m)
+static SEXP make_R_matrix (const gretl_matrix *m, int *err)
 {
     int nr = gretl_matrix_rows(m);
     int nc = gretl_matrix_cols(m);
-    SEXP res;
+    SEXP ms;
     int i, j;
 
-    res = R_allocMatrix(REALSXP, nr, nc);
-    if (res == NULL) {
-	return E_ALLOC;
+    ms = R_allocMatrix(REALSXP, nr, nc);
+    if (ms == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		R_REAL(ms)[i + j * nr] = gretl_matrix_get(m, i, j);
+	    }
+	}
     }
 
-    for (i=0; i<nr; i++) {
-	for (j=0; j<nc; j++) {
-	    R_REAL(res)[i + j * nr] = gretl_matrix_get(m, i, j);
-    	}
+    return ms;
+}
+
+static SEXP make_R_bundle (gretl_bundle *b, int *err)
+{
+    GretlType type;
+    int size;
+    void *ptr;
+    char **keys;
+    SEXP res;
+    int i, n;
+
+    keys = gretl_bundle_get_keys_raw(b, &n);
+    if (keys == NULL) {
+	/* FIXME passing empty bundle? */
+	*err = E_DATA;
+	return NULL;
     }
 
-    R_SETCAR(current_arg, res);
+    keys[n] = ""; /* the termination wanted by R */
+    res = R_mkNamed(VECSXP, (const char **) keys);
 
-    return 0;
+    for (i=0; i<n && !*err; i++) {
+	ptr = gretl_bundle_get_data(b, keys[i], &type, &size, err);
+	if (*err) {
+	    break;
+	}
+	if (type == GRETL_TYPE_DOUBLE) {
+	    double x = *(double *) ptr;
+
+	    R_SET_VECTOR_ELT(res, i, R_ScalarReal(x));
+	} else if (type == GRETL_TYPE_STRING) {
+	    R_SET_VECTOR_ELT(res, i, R_mkString(ptr));
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    SEXP ms = make_R_matrix(ptr, err);
+
+	    if (!*err) {
+		R_SET_VECTOR_ELT(res, i, ms);
+	    }
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    SEXP as = make_R_array(ptr, err);
+
+	    if (!*err) {
+		R_SET_VECTOR_ELT(res, i, as);
+	    }
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    SEXP bs = make_R_bundle(ptr, err);
+
+	    if (!*err) {
+		R_SET_VECTOR_ELT(res, i, bs);
+	    }
+	} else {
+	    gretl_errmsg_sprintf("%s: not handled\n",
+				 gretl_type_get_name(type));
+	    *err = E_TYPES;
+	}
+    }
+
+    keys[n] = NULL;
+    strings_array_free(keys, n);
+
+    return res;
+}
+
+static int R_function_add_object (void *ptr, GretlType t)
+{
+    SEXP res = NULL;
+    int err = 0;
+
+    if (t == GRETL_TYPE_MATRIX) {
+	res = make_R_matrix(ptr, &err);
+    } else if (t == GRETL_TYPE_ARRAY) {
+	res = make_R_array(ptr, &err);
+    } else if (t == GRETL_TYPE_BUNDLE) {
+	res = make_R_bundle(ptr, &err);
+    } else {
+	gretl_errmsg_sprintf("%s: not handled as R-function argument\n",
+			     gretl_type_get_name(t));
+	err = E_TYPES;
+    }
+
+    if (!err) {
+	R_SETCAR(current_arg, res);
+    }
+
+    return err;
 }
 
 /* public because called from geneval.c */
@@ -2773,24 +2871,17 @@ int gretl_R_function_add_arg (void *ptr, GretlType type)
 
     current_arg = R_CDR(current_arg);
 
-    if (type == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = ptr;
-
-	err = R_function_add_matrix(m);
-    } else if (type == GRETL_TYPE_DOUBLE) {
+    if (type == GRETL_TYPE_DOUBLE) {
 	double x = *(double *) ptr;
 
 	err = R_function_add_scalar(x);
-    } else if (type == GRETL_TYPE_ARRAY) {
-	gretl_array *a = ptr;
-
-	err = R_function_add_array(a);
     } else if (type == GRETL_TYPE_STRING) {
 	const char *s = ptr;
 
 	err = R_function_add_string(s);
     } else {
-	err = E_TYPES;
+	/* matrix, array, bundle */
+	err = R_function_add_object(ptr, type);
     }
 
     return err;
@@ -2841,16 +2932,169 @@ static int numeric_ok (SEXP s)
     return R_isReal(s) || R_isInteger(s) || R_isLogical(s);
 }
 
-#define RTYPE_DEBUG 0
+#define R_NULL(p) (p == NULL || (SEXP) p == VR_NilValue)
+
+static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err);
+static void *object_from_R (SEXP res, const char *name, GretlType type,
+			    int *err);
+
+static gretl_matrix *matrix_from_R (SEXP s, const char *name,
+				    int *err)
+{
+    gretl_matrix *m = NULL;
+    int nr = R_nrows(s);
+    int nc = R_ncols(s);
+
+    if (nr >= 0 && nc >= 0) {
+	m = gretl_matrix_alloc(nr, nc);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    } else {
+	gretl_errmsg_sprintf("%s: invalid matrix dimensions, %d x %d",
+			     name, nr, nc);
+	*err = E_DATA;
+    }
+
+    if (m != NULL && nr > 0 && nc > 0) {
+	int i, j;
+
+	for (i=0; i<nr; i++) {
+	    for (j=0; j<nc; j++) {
+		if (R_isReal(s)) {
+		    gretl_matrix_set(m, i, j, R_REAL(s)[i + j * nr]);
+		} else {
+		    gretl_matrix_set(m, i, j, R_INT(s)[i + j * nr]);
+		}
+	    }
+	}
+    }
+
+    return m;
+}
+
+/* at present only arrays of strings are handled */
+
+static gretl_array *array_from_R (SEXP res, const char *name,
+				  int *err)
+{
+    gretl_array *a = NULL;
+    int nr = R_nrows(res);
+
+    if (nr >= 0) {
+	a = gretl_array_new(GRETL_TYPE_STRINGS, nr, err);
+    } else {
+	gretl_errmsg_sprintf("%s: invalid array length %d",
+			     name, nr);
+	*err = E_DATA;
+    }
+    if (a != NULL && nr > 0) {
+	const char *s;
+	int i;
+
+	for (i=0; i<nr && !*err; i++) {
+	    s = R_STRING(R_STRING_PTR(res)[i]);
+	    *err = gretl_array_set_string(a, i, (char *) s, 1);
+	}
+    }
+
+    return a;
+}
+
+static int vector_is_bundleable (SEXP s)
+{
+    SEXP si, names = R_getAttrib(s, VR_NamesSymbol);
+    const char *key;
+    GretlType gtype;
+    int i, k = R_nrows(s);
+    int err = 0;
+
+    if (R_NULL(names)) {
+	return 0;
+    }
+
+    for (i=0; i<k && !err; i++) {
+	si = R_VECTOR_ELT(s, i);
+	key = R_STRING(R_STRING_ELT(names, i));
+	if (R_NULL(key)) {
+	    err = E_TYPES;
+	    break;
+	}
+#if 0
+	int rt = R_TYPEOF(si);
+	fprintf(stderr, "element %d, R-type %d, key '%s'\n", i, rt, key);
+#endif
+	gtype = R_type_to_gretl_type(si, key, &err);
+	if (!err && gtype == GRETL_TYPE_NONE) {
+	    err = E_TYPES;
+	}
+    }
+
+    return err == 0;
+}
+
+static gretl_bundle *bundle_from_R (SEXP s, int *err)
+{
+    int i, k = R_nrows(s);
+    SEXP si, names = R_getAttrib(s, VR_NamesSymbol);
+    const char *key;
+    GretlType type;
+    void *ptr;
+    gretl_bundle *b;
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<k && !*err; i++) {
+	si = R_VECTOR_ELT(s, i);
+	key = R_STRING(R_STRING_ELT(names, i));
+	type = R_type_to_gretl_type(si, key, err);
+	if (!*err) {
+	    ptr = object_from_R(si, key, type, err);
+	}
+	if (!*err) {
+	    *err = gretl_bundle_set_data(b, key, ptr, type, 0);
+	}
+    }
+
+    if (*err) {
+	gretl_bundle_destroy(b);
+	b = NULL;
+    }
+
+    return b;
+}
+
+static void *object_from_R (SEXP res, const char *name,
+			    GretlType type, int *err)
+{
+    if (type == GRETL_TYPE_MATRIX) {
+	return matrix_from_R(res, name, err);
+    } else if (gretl_scalar_type(type)) {
+	return R_REAL(res);
+    } else if (type == GRETL_TYPE_STRING) {
+	SEXP *rsp = R_STRING_PTR(res);
+
+	return (void *) R_STRING(*rsp);
+    } else if (type == GRETL_TYPE_ARRAY) {
+	return array_from_R(res, name, err);
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	return bundle_from_R(res, err);
+    } else if (type != GRETL_TYPE_NONE) {
+	*err = E_TYPES;
+    }
+
+    return NULL;
+}
 
 static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 {
     GretlType t = GRETL_TYPE_NONE;
 
     if (R_isMatrix(s)) {
-#if RTYPE_DEBUG
-	fprintf(stderr, "R_type_to gretl: %s isMatrix\n", name);
-#endif
 	if (numeric_ok(s)) {
 	    t = GRETL_TYPE_MATRIX;
 	} else {
@@ -2858,9 +3102,6 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 	    *err = E_TYPES;
 	}
     } else if (R_isVector(s)) {
-#if RTYPE_DEBUG
-	fprintf(stderr, "R_type_to gretl: %s isVector\n", name);
-#endif
 	if (numeric_ok(s)) {
 	    t = GRETL_TYPE_MATRIX;
 	} else if (R_isString(s)) {
@@ -2869,8 +3110,9 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 	    } else {
 		t = GRETL_TYPE_ARRAY;
 	    }
+	} else if (vector_is_bundleable(s)) {
+	    t = GRETL_TYPE_BUNDLE;
 	} else {
-	    gretl_errmsg_sprintf("%s: got 'vector' result, but not numeric or string", name);
 	    *err = E_TYPES;
 	}
     } else if (R_isLogical(s)) {
@@ -2880,9 +3122,6 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
     } else if (R_isReal(s)) {
 	t = GRETL_TYPE_DOUBLE;
     } else if (R_isString(s)) {
-#if RTYPE_DEBUG
-	fprintf(stderr, "R_type_to gretl: %s isString\n", name);
-#endif
 	t = GRETL_TYPE_STRING;
     }
 
@@ -2895,6 +3134,7 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 
 int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 {
+    void *data = NULL;
     SEXP res;
     int err = 0;
 
@@ -2921,78 +3161,20 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 	return err;
     }
 
-    if (*rtype == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = NULL;
-	int nr = R_nrows(res);
-	int nc = R_ncols(res);
+    data = object_from_R(res, name, *rtype, &err);
 
-	if (nr >= 0 && nc >= 0) {
-	    m = gretl_matrix_alloc(nr, nc);
-	    if (m == NULL) {
-		err = E_ALLOC;
-	    }
+    if (!err) {
+	if (gretl_scalar_type(*rtype)) {
+	    double *dret = *ret;
+
+	    *dret = *(double *) data;
+	} else if (*rtype == GRETL_TYPE_STRING) {
+	    *ret = gretl_strdup(data);
 	} else {
-	    gretl_errmsg_sprintf("%s: invalid matrix dimensions, %d x %d",
-				 name, nr, nc);
-	    err = E_DATA;
-	}
-
-	if (m != NULL && nr > 0 && nc > 0) {
-	    int i, j;
-
-	    for (i=0; i<nr; i++) {
-		for (j=0; j<nc; j++) {
-		    if (R_isReal(res)) {
-			gretl_matrix_set(m, i, j, R_REAL(res)[i + j * nr]);
-		    } else {
-			gretl_matrix_set(m, i, j, R_INT(res)[i + j * nr]);
-		    }
-		}
-	    }
+	    /* matrix, array, bundle */
+	    *ret = data;
 	}
 	R_unprotect(1);
-	*ret = m;
-    } else if (gretl_scalar_type(*rtype)) {
-	double *realres = R_REAL(res);
-	double *dret = *ret;
-
-	*dret = *realres;
-    	R_unprotect(1);
-    } else if (*rtype == GRETL_TYPE_STRING) {
-	SEXP *rsp = R_STRING_PTR(res);
-	const char *s = R_STRING(*rsp);
-
-	*ret = gretl_strdup(s);
-	R_unprotect(1);
-    } else if (*rtype == GRETL_TYPE_ARRAY) {
-	/* should be array of strings */
-	gretl_array *a = NULL;
-	int nr = R_nrows(res);
-
-	if (nr >= 0) {
-	    a = gretl_array_new(GRETL_TYPE_STRINGS, nr, &err);
-	} else {
-	    gretl_errmsg_sprintf("%s: invalid array length %d",
-				 name, nr);
-	    err = E_DATA;
-	}
-	if (a != NULL && nr > 0) {
-	    const char *s;
-	    int i;
-
-	    for (i=0; i<nr && !err; i++) {
-		s = R_STRING(R_STRING_PTR(res)[i]);
-		err = gretl_array_set_string(a, i, (char *) s, 1);
-	    }
-	}
-	if (err) {
-	    gretl_array_destroy(a);
-	} else {
-	    *ret = a;
-	}
-	R_unprotect(1);
-    } else if (*rtype != GRETL_TYPE_NONE) {
-	err = E_TYPES;
     }
 
     return err;
