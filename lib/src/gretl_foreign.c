@@ -3001,17 +3001,26 @@ static gretl_array *array_from_R (SEXP res, const char *name,
     return a;
 }
 
-static int vector_is_bundleable (SEXP s)
+static int vector_can_be_bundle (SEXP s, const char *name)
 {
-    SEXP si, names = R_getAttrib(s, VR_NamesSymbol);
+    SEXP si, names;
     const char *key;
     GretlType gtype;
-    int i, k = R_nrows(s);
+    int i, k;
     int err = 0;
 
-    if (R_NULL(names)) {
+    if (R_TYPEOF(s) != VECSXP) {
+	gretl_errmsg_sprintf("%s: not generic vector, can't make into bundle", name);
 	return 0;
     }
+
+    names = R_getAttrib(s, VR_NamesSymbol);
+    if (R_NULL(names)) {
+	gretl_errmsg_sprintf("%s: R list has no tags, can't make into bundle", name);
+	return 0;
+    }
+
+    k = R_nrows(s);
 
     for (i=0; i<k && !err; i++) {
 	si = R_VECTOR_ELT(s, i);
@@ -3110,7 +3119,7 @@ static GretlType R_type_to_gretl_type (SEXP s, const char *name, int *err)
 	    } else {
 		t = GRETL_TYPE_ARRAY;
 	    }
-	} else if (vector_is_bundleable(s)) {
+	} else if (vector_can_be_bundle(s, name)) {
 	    t = GRETL_TYPE_BUNDLE;
 	} else {
 	    *err = E_TYPES;
