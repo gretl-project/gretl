@@ -3318,7 +3318,7 @@ print_iter_info (int iter, double crit, int type, int k,
     };
     const char *cstr = cstrs[type];
     double x;
-    int details = 1; /* make this conditional on libset */
+    int details = 1; /* make this conditional on libset? */
     int i;
 
     if (type == C_GMM) {
