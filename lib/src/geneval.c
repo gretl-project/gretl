@@ -9628,6 +9628,8 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	    p->err = gretl_R_function_add_arg(arg->v.a, type);
 	} else if (type == GRETL_TYPE_STRING) {
 	    p->err = gretl_R_function_add_arg(arg->v.str, type);
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    p->err = gretl_R_function_add_arg(arg->v.b, type);
 	} else {
 	    fprintf(stderr, "eval_Rfunc: argument not supported\n");
 	    p->err = E_TYPES;
@@ -9670,6 +9672,11 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 		ret = aux_array_node(p);
 		if (ret != NULL) {
 		    ret->v.a = (gretl_array *) retp;
+		}
+	    } else if (rtype == GRETL_TYPE_BUNDLE) {
+		ret = aux_bundle_node(p);
+		if (ret != NULL) {
+		    ret->v.b = (gretl_bundle *) retp;
 		}
 	    } else if (rtype == GRETL_TYPE_NONE) {
 		; /* OK? */
