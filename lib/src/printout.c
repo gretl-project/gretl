@@ -3318,8 +3318,11 @@ print_iter_info (int iter, double crit, int type, int k,
     };
     const char *cstr = cstrs[type];
     double x;
-    int details = 1; /* make this conditional on libset? */
+    int details;
+    int sldone = 0;
     int i;
+
+    details = libset_get_int(MAX_VERBOSE) == 2;
 
     if (type == C_GMM) {
 	crit = -crit;
@@ -3340,7 +3343,12 @@ print_iter_info (int iter, double crit, int type, int k,
     }
 
     if (sl > 0.0 && !na(sl)) {
-	pprintf(prn, _(" (steplength = %g)"), sl);
+	if (details || g == NULL) {
+	    pprintf(prn, _(" (steplength = %g)"), sl);
+	} else {
+	    pprintf(prn, _(" (step %g"), sl);
+	    sldone = 1;
+	}
     }
 
     if (details) {
@@ -3365,7 +3373,13 @@ print_iter_info (int iter, double crit, int type, int k,
 		print_iter_val(g[i], i, k, prn);
 	    }
 	}
-	pprintf(prn, " (%s %.2e)", _("norm"), sqrt(x/k));
+	if (details) {
+	    pprintf(prn, " (%s %.2e)", _("norm"), sqrt(x/k));
+	} else if (sldone) {
+	    pprintf(prn, ", %s %.2e)", _("norm"), sqrt(x/k));
+	} else {
+	    pprintf(prn, " (%s %.2e)", _("norm"), sqrt(x/k));
+	}
 	if (details || iter == -1) {
 	    pputc(prn, '\n');
 	}

@@ -74,7 +74,6 @@ typedef enum {
 #define USE_CWD          "use_cwd"
 #define USE_SVD          "svd"
 #define USE_QR           "force_qr"
-#define USE_FCP          "fcp"
 #define VECM_NORM        "vecm_norm"
 #define GRETL_OPTIM      "optimizer"
 #define ARMA_VCV         "arma_vcv"

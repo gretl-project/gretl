@@ -65,21 +65,19 @@ enum {
     STATE_FORCE_HC        = 1 << 8,  /* don't use HAC for time series */
     STATE_USE_LBFGS       = 1 << 9,  /* prefer LBFGS to BFGS? */
     STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
-    STATE_MAX_VERBOSE     = 1 << 11, /* verbose output from maximizer? */
-    STATE_USE_FCP         = 1 << 12, /* use FCP garch code */
-    STATE_WARN_ON         = 1 << 13, /* print numerical warning messages */
-    STATE_SKIP_MISSING    = 1 << 14, /* skip NAs when building matrix from series */
-    STATE_LOOPING         = 1 << 15, /* loop is in progress at this level */
-    STATE_LOOP_QUIET      = 1 << 16, /* loop commands should be quiet */
-    STATE_BFGS_RSTEP      = 1 << 17, /* use Richardson method in BFGS numerical
+    STATE_WARN_ON         = 1 << 11, /* print numerical warning messages */
+    STATE_SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
+    STATE_LOOPING         = 1 << 13, /* loop is in progress at this level */
+    STATE_LOOP_QUIET      = 1 << 14, /* loop commands should be quiet */
+    STATE_BFGS_RSTEP      = 1 << 15, /* use Richardson method in BFGS numerical
 					gradient */
-    STATE_DPDSTYLE_ON     = 1 << 18, /* emulate dpd in dynamic panel data models */
-    STATE_OPENMP_ON       = 1 << 19, /* using openmp */
-    STATE_ROBUST_Z        = 1 << 20, /* use z- not t-score with HCCM/HAC */
-    STATE_MWRITE_G        = 1 << 21, /* use %g format with mwrite() */
-    STATE_ECHO_SPACE      = 1 << 22, /* preserve vertical space in output */
-    STATE_STRSUB_ON       = 1 << 23, /* string substitution activated */
-    STATE_MPI_SMT         = 1 << 24  /* MPI: use hyperthreads by default */
+    STATE_DPDSTYLE_ON     = 1 << 16, /* emulate dpd in dynamic panel data models */
+    STATE_OPENMP_ON       = 1 << 17, /* using openmp */
+    STATE_ROBUST_Z        = 1 << 18, /* use z- not t-score with HCCM/HAC */
+    STATE_MWRITE_G        = 1 << 19, /* use %g format with mwrite() */
+    STATE_ECHO_SPACE      = 1 << 20, /* preserve vertical space in output */
+    STATE_STRSUB_ON       = 1 << 21, /* string substitution activated */
+    STATE_MPI_SMT         = 1 << 22  /* MPI: use hyperthreads by default */
 };
 
 /* for values that really want a non-negative integer */
@@ -107,6 +105,7 @@ struct set_vars_ {
     int vecm_norm;              /* VECM beta normalization */
     int optim;                  /* code for preferred optimizer */
     int bfgs_maxiter;           /* max iterations, BFGS */
+    int max_verbose;            /* optimizer verbosity level */
     int boot_iters;             /* max iterations, IRF bootstrap */
     double bfgs_toler;          /* convergence tolerance, BFGS */
     double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
@@ -148,7 +147,6 @@ struct set_vars_ {
                            !strcmp(s, WARNINGS) || \
                            !strcmp(s, FORCE_DECP) || \
 			   !strcmp(s, FORCE_HC) || \
-                           !strcmp(s, MAX_VERBOSE) || \
 			   !strcmp(s, USE_LBFGS) || \
 			   !strcmp(s, PCSE) || \
 			   !strcmp(s, PREWHITEN) || \
@@ -156,7 +154,6 @@ struct set_vars_ {
 			   !strcmp(s, USE_QR) || \
 			   !strcmp(s, SHELL_OK) || \
 			   !strcmp(s, USE_CWD) || \
-			   !strcmp(s, USE_FCP) || \
                            !strcmp(s, SKIP_MISSING) || \
 			   !strcmp(s, R_FUNCTIONS) || \
 			   !strcmp(s, R_LIB) || \
@@ -179,6 +176,7 @@ struct set_vars_ {
 			  !strcmp(s, FDJAC_EPS))
 
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
+		       !strcmp(s, MAX_VERBOSE) || \
 		       !strcmp(s, BOOT_ITERS) || \
 		       !strcmp(s, BFGS_VERBSKIP) || \
 		       !strcmp(s, OPTIM_STEPLEN) || \
@@ -297,6 +295,13 @@ static const char *optim_strs[] = {
     NULL
 };
 
+static const char *maxverb_strs[] = {
+    "off",
+    "on",
+    "full",
+    NULL
+};
+
 static const char *steplen_strs[] = {
     "power",
     "quadratic",
@@ -323,6 +328,8 @@ static const char **libset_option_strings (const char *s)
 	return vecm_norm_strs;
     } else if (!strcmp(s, GRETL_OPTIM)) {
 	return optim_strs;
+    } else if (!strcmp(s, MAX_VERBOSE)) {
+	return maxverb_strs;
     } else if (!strcmp(s, "csv_delim")) {
 	return csv_delim_args;
     } else if (!strcmp(s, OPTIM_STEPLEN)) {
@@ -380,6 +387,8 @@ static const char *libset_option_string (const char *s)
 	return optim_strs[state->optim];
     } else if (!strcmp(s, OPTIM_STEPLEN)) {
 	return steplen_strs[state->optim_steplen];
+    } else if (!strcmp(s, MAX_VERBOSE)) {
+	return maxverb_strs[state->max_verbose];
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	return wildboot_strs[state->wildboot_dist];
     } else {
@@ -449,6 +458,7 @@ static void state_vars_copy (set_vars *sv)
     sv->bfgs_maxgrad = state->bfgs_maxgrad;
     sv->bfgs_verbskip = state->bfgs_verbskip;
     sv->optim_steplen = state->optim_steplen;
+    sv->max_verbose = state->max_verbose;
     sv->bhhh_maxiter = state->bhhh_maxiter;
     sv->bhhh_toler = state->bhhh_toler;
     sv->boot_iters = state->boot_iters;
@@ -688,6 +698,7 @@ static void state_vars_init (set_vars *sv)
     sv->gmm_maxiter = 250;
     sv->vecm_norm = NORM_PHILLIPS;
     sv->optim = OPTIM_AUTO;
+    sv->max_verbose = 0;
     sv->initvals = NULL;
     sv->matmask = NULL;
 
@@ -1218,6 +1229,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, MAX_VERBOSE)) {
+	for (i=0; maxverb_strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, maxverb_strs[i])) {
+		state->max_verbose = i;
+		err = 0;
+		break;
+	    }
+	}
     } else if (!g_ascii_strcasecmp(key, WILDBOOT_DIST)) {
 	for (i=0; wildboot_strs[i] != NULL; i++) {
 	    if (!g_ascii_strcasecmp(val, wildboot_strs[i])) {
@@ -1503,6 +1522,7 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, VECM_NORM) || \
 			 !strcmp(s, GRETL_OPTIM) || \
 			 !strcmp(s, OPTIM_STEPLEN) || \
+			 !strcmp(s, MAX_VERBOSE) || \
 			 !strcmp(s, WILDBOOT_DIST))
 
 const char *intvar_code_string (const char *s)
@@ -1617,7 +1637,6 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     libset_print_bool(FORCE_DECP, prn, opt);
     libset_print_int(LOOP_MAXITER, prn, opt);
-    libset_print_bool(MAX_VERBOSE, prn, opt);
     libset_print_int(BFGS_VERBSKIP, prn, opt);
     libset_print_double(CONV_HUGE, prn, opt);
     libset_print_bool(MESSAGES, prn, opt);
@@ -1643,6 +1662,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_header(N_("Numerical methods"), prn, opt);
 
     libset_print_int(GRETL_OPTIM, prn, opt);
+    libset_print_int(MAX_VERBOSE, prn, opt);
     libset_print_int(BFGS_MAXITER, prn, opt);
     libset_print_double(BFGS_TOLER, prn, opt);
     libset_print_double(BFGS_MAXGRAD, prn, opt);
@@ -1658,7 +1678,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_double(NLS_TOLER, prn, opt);
     libset_print_bool(USE_SVD, prn, opt);
     libset_print_bool(USE_QR, prn, opt);
-    libset_print_bool(USE_FCP, prn, opt);
     libset_print_bool(DPDSTYLE, prn, opt);
     libset_print_double(NADARWAT_TRIM, prn, opt);
     libset_print_int(FDJAC_QUAL, prn, opt);
@@ -2091,6 +2110,8 @@ int libset_get_int (const char *key)
 
     if (!strcmp(key, BFGS_MAXITER)) {
 	return state->bfgs_maxiter;
+    } else if (!strcmp(key, MAX_VERBOSE)) {
+	return state->max_verbose;
     } else if (!strcmp(key, BOOT_ITERS)) {
 	return state->boot_iters;
     } else if (!strcmp(key, OPTIM_STEPLEN)) {
@@ -2284,10 +2305,6 @@ static int boolvar_get_flag (const char *s)
 	return STATE_FORCE_DECPOINT;
     } else if (!strcmp(s, USE_CWD)) {
 	return STATE_USE_CWD;
-    } else if (!strcmp(s, USE_FCP)) {
-	return STATE_USE_FCP;
-    } else if (!strcmp(s, MAX_VERBOSE)) {
-	return STATE_MAX_VERBOSE;
     } else if (!strcmp(s, SHELL_OK)) {
 	return STATE_SHELL_OK;
     } else if (!strcmp(s, FORCE_HC)) {
@@ -2362,11 +2379,6 @@ int libset_get_bool (const char *key)
 	return R_lib;
     } else if (!strcmp(key, USE_DCMT)) {
         return gretl_rand_get_dcmt();
-    }
-
-    if (!strcmp(key, MAX_VERBOSE) && gretl_debug > 1) {
-	/* strong debugging turns on max_verbose */
-	return 1;
     }
 
     if (check_for_state()) {
