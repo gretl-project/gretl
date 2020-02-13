@@ -202,8 +202,8 @@ enum {
 #define has_tconv_format(map) (map.fmt[TCONV_FMT] != NULL)
 #define is_tkey_variable(name, map) (strcmp(name, map.tname) == 0)
 
-static void timeconv_map_set (int ncols, char **colnames, char *tname,
-			      char **fmt)
+static void timeconv_map_set (int ncols, char **colnames,
+			      char *tname, char **fmt)
 {
     tconv_map.ncols = ncols;
     tconv_map.colnames = colnames;
