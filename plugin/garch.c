@@ -301,7 +301,7 @@ static void garch_print_init (const double *theta, int k,
    have been set via "set initvals") */
 
 static int garch_manual_init (double *theta, int k, int p, int q, 
-			      PRN *prn)
+			      gretlopt opt, PRN *prn)
 {
     int mlen = n_init_vals();
     int n = k + p + q + 1;
@@ -318,7 +318,7 @@ static int garch_manual_init (double *theta, int k, int p, int q,
     /* if we're _not_ using FCP, the following is handled 
        within the BFGS routine */
 
-    if (libset_get_bool("fcp")) {
+    if (opt & OPT_F) {
 	const gretl_matrix *m = get_init_vals();
 	int i;
 	
@@ -401,24 +401,22 @@ garch_driver (const int *list, double scale,
 	goto bailout;
     }
 
-    if (!garch_manual_init(theta, nc, p, q, prn)) {
-
+    if (!garch_manual_init(theta, nc, p, q, opt, prn)) {
 	/* initial coefficients from OLS */
 	for (i=0; i<nc; i++) {
 	    theta[i] = pmod->coeff[i];
 	}
-
 	/* initialize variance parameters */
 	for (i=0; i<p+q+1; i++) {
 	    theta[i+nc] = vparm[i];
 	}
-
 	if (opt & OPT_V) {
 	    garch_print_init(theta, nc, p, q, 0, prn);
 	}
     }
 
-    if ((opt & OPT_F) || libset_get_bool(USE_FCP)) {
+    if (opt & OPT_F) {
+	/* --fcp */
 	err = garch_estimate(y, (const double **) X,
 			     t1 + pad, t2 + pad, bign, nc, 
 			     p, q, theta, V, e, e2, h,
@@ -443,6 +441,9 @@ garch_driver (const int *list, double scale,
 	    gretl_model_set_int(pmod, "iters", fnc);
 	}
 	gretl_model_set_vcv_info(pmod, VCV_ML, vopt);
+	if (opt & OPT_F) {
+	    pmod->opt |= OPT_F;
+	}
     }
 
  bailout:
