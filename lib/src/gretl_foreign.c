@@ -2787,9 +2787,14 @@ static SEXP make_R_bundle (gretl_bundle *b, int *err)
     SEXP res;
     int i, n;
 
+    if (gretl_bundle_get_n_members(b) == 0) {
+	const char *nokeys[] = { "" };
+
+	return R_mkNamed(VECSXP, nokeys);
+    }
+
     keys = gretl_bundle_get_keys_raw(b, &n);
     if (keys == NULL) {
-	/* FIXME passing empty bundle? */
 	*err = E_DATA;
 	return NULL;
     }
@@ -3014,13 +3019,17 @@ static int vector_can_be_bundle (SEXP s, const char *name)
 	return 0;
     }
 
+    k = R_nrows(s);
+    if (k == 0) {
+	/* empty bundle, should be OK */
+	return 1;
+    }
+
     names = R_getAttrib(s, VR_NamesSymbol);
     if (R_NULL(names)) {
 	gretl_errmsg_sprintf("%s: R list has no tags, can't make into bundle", name);
 	return 0;
     }
-
-    k = R_nrows(s);
 
     for (i=0; i<k && !err; i++) {
 	si = R_VECTOR_ELT(s, i);

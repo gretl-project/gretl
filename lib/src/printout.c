@@ -3318,6 +3318,7 @@ print_iter_info (int iter, double crit, int type, int k,
     };
     const char *cstr = cstrs[type];
     double x;
+    int details = 1; /* make this conditional on libset? */
     int i;
 
     if (type == C_GMM) {
@@ -3329,7 +3330,7 @@ print_iter_info (int iter, double crit, int type, int k,
     if (iter < 0) {
 	pprintf(prn, "--- %s:\n", _("FINAL VALUES"));
     } else {
-	pprintf(prn, "%s %d: ", _("Iteration"), iter);
+	pprintf(prn, "%s %4d: ", _("Iteration"), iter);
     }
 
     if (na(crit) || na(-crit)) {
@@ -3342,27 +3343,36 @@ print_iter_info (int iter, double crit, int type, int k,
 	pprintf(prn, _(" (steplength = %g)"), sl);
     }
 
-    pputc(prn, '\n');
-
-    if (b != NULL) {
-	pputs(prn, _("Parameters: "));
-	for (i=0; i<k; i++) {
-	    print_iter_val(b[i], i, k, prn);
-	}
+    if (details) {
 	pputc(prn, '\n');
+	if (b != NULL) {
+	    pputs(prn, _("Parameters: "));
+	    for (i=0; i<k; i++) {
+		print_iter_val(b[i], i, k, prn);
+	    }
+	    pputc(prn, '\n');
+	}
     }
 
     if (g != NULL) {
-	pputs(prn, _("Gradients:  "));
+	if (details) {
+	    pputs(prn, _("Gradients:  "));
+	}
 	x = 0.0;
 	for (i=0; i<k; i++) {
 	    x += fabs(b[i] * g[i]);
-	    print_iter_val(g[i], i, k, prn);
+	    if (details) {
+		print_iter_val(g[i], i, k, prn);
+	    }
 	}
-	pprintf(prn, " (%s %.2e)\n", _("norm"), sqrt(x/k));
-	if (iter >= 0) {
+	pprintf(prn, " (%s %.2e)", _("norm"), sqrt(x/k));
+	if (details || iter == -1) {
 	    pputc(prn, '\n');
 	}
+    }
+
+    if (iter >= 0) {
+	pputc(prn, '\n');
     }
 }
 

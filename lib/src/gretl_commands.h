@@ -170,13 +170,6 @@ typedef enum {
     NC
 } GretlCmdIndex;
 
-#define NEEDS_TWO_VARS(c)  ((c) == AR || (c) == ARCH || (c) == COINT || \
-                            (c) == AR1 || (c) == CORR || (c) == HSK || \
-                            (c) == LOGIT || (c) == PROBIT || \
-                            (c) == SPEARMAN || (c) == OLS || \
-                            (c) == IVREG || (c) == WLS || \
-			    (c) == XTAB)
-
 #define TEXTSAVE_OK(c) (c == ADF || \
 	                c == BKW || \
                         c == CHOW || \

@@ -142,6 +142,7 @@ struct VCVInfo_ {
 			 c == NEGBIN ||	\
                          c == POISSON || \
                          c == PROBIT || \
+			 c == BIPROBIT || \
                          c == TOBIT)
 
 #define LIMDEP(c) (c == LOGIT || \
