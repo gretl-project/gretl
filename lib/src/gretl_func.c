@@ -5949,6 +5949,26 @@ const char *get_function_package_path_by_name (const char *pkgname)
     return NULL;
 }
 
+static int gfn_version_fail (const char *fname, PRN *prn)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+    int err = 0;
+
+    if (fp != NULL) {
+	char line[128];
+
+	if (fgets(line, sizeof line, fp) &&
+	    strchr(line, '<') == NULL &&
+	    strstr(line, "requires gretl") != NULL) {
+	    gretl_errmsg_set(gretl_strstrip(line));
+	    err = 1;
+	}
+	fclose(fp);
+    }
+
+    return err;
+}
+
 /* Retrieve summary info, sample script, or code listing for a
    function package, identified by its filename.  This is called
    (indirectly) from the GUI (see below for the actual callbacks).
@@ -5958,15 +5978,24 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 				int tabwidth, int task,
 				gretl_bundle *b)
 {
-    fnpkg *pkg;
+    fnpkg *pkg = NULL;
     int free_pkg = 0;
     int err = 0;
+
+#if PKG_DEBUG
+    fprintf(stderr, "real_print_gfn_data: fname='%s', task %d\n", fname, task);
+#endif
+
+    if (task == FUNCS_INFO && prn != NULL && strstr(fname, "dltmp.")) {
+	if (gfn_version_fail(fname, prn)) {
+	    return 1;
+	}
+    }
 
     pkg = get_loaded_pkg_by_filename(fname, NULL);
 
 #if PKG_DEBUG
-    fprintf(stderr, "real_print_gfn_data: fname='%s', pkg=%p\n",
-	    fname, (void *) pkg);
+    fprintf(stderr, "real_print_gfn_data: pkg=%p\n", (void *) pkg);
 #endif
 
     if (pkg == NULL) {
