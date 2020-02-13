@@ -2462,10 +2462,26 @@ static int converted_ok (const char *s, char *test, double x)
     }
 }
 
-static double csv_atof (csvdata *c, int i, const char *s)
+static char *csv_unquote (char *s)
+{
+    if (s[0] == '"') {
+	int i, n = strlen(s);
+
+	if (n > 1 && s[n-1] == '"') {
+	    for (i=0; i<n-2; i++) {
+		s[i] = s[i+1];
+	    }
+	    s[i] = '\0';
+	}
+    }
+    return s;
+}
+
+static double csv_atof (csvdata *c, int i)
 {
     char tmp[CSVSTRLEN], clean[CSVSTRLEN];
     double x = NON_NUMERIC;
+    const char *s = c->str;
     char *test;
 
     if (csv_scrub_thousep(c) && strchr(s, c->thousep) &&
@@ -2510,7 +2526,8 @@ static double csv_atof (csvdata *c, int i, const char *s)
     }
 
     /* fallback */
-    return eval_non_numeric(c, i, s);
+    /* revised 2020-02-13 to use csv_unquote */
+    return eval_non_numeric(c, i, csv_unquote(c->str));
 }
 
 static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
@@ -2540,7 +2557,8 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
     } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
 	c->dset->Z[i][t] = NADBL;
     } else {
-	c->dset->Z[i][t] = csv_atof(c, i, gretl_strstrip(c->str));
+	gretl_strstrip(c->str);
+	c->dset->Z[i][t] = csv_atof(c, i);
     }
 
     return err;
@@ -3147,7 +3165,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    if (csv_missval(c->str, i, t+1, missp, prn)) {
 		c->dset->Z[i][t] = NADBL;
 	    } else {
-		c->dset->Z[i][t] = csv_atof(c, i, c->str);
+		c->dset->Z[i][t] = csv_atof(c, i);
 		if (c->dset->Z[i][t] == NON_NUMERIC) {
 		    gretl_errmsg_sprintf(_("At row %d, column %d:\n"), t+1, k);
 		    gretl_errmsg_sprintf(_("'%s' -- no numeric conversion performed!"),
@@ -5452,15 +5470,15 @@ static void print_filter_vnames (jr_filter *f)
     if (f == NULL) return;
 
     if (f->vname1 != NULL) {
-	fprintf(stderr, "filter varname 1 (target %d): %s\n",
+	fprintf(stderr, "filter varname 1 (target %d, JOIN_F1): %s\n",
 		JOIN_F1, f->vname1);
     }
     if (f->vname2 != NULL) {
-	fprintf(stderr, "filter varname 2 (target %d): %s\n",
+	fprintf(stderr, "filter varname 2 (target %d, JOIN_F2): %s\n",
 		JOIN_F2, f->vname2);
     }
     if (f->vname3 != NULL) {
-	fprintf(stderr, "filter varname 3 (target %d): %s\n",
+	fprintf(stderr, "filter varname 3 (target %d, JOIN_F3): %s\n",
 		JOIN_F3, f->vname3);
     }
 }
@@ -5875,7 +5893,6 @@ static int process_tconvert_info (joinspec *jspec,
     }
 
     /* allocate and record the time-format info, if any */
-
     if (!err && list != NULL && (tconvfmt != NULL || tkeyfmt != NULL)) {
 	char const *tmp[2] = {tconvfmt, tkeyfmt};
 
