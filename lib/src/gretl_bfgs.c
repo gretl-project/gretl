@@ -2117,7 +2117,7 @@ double user_BFGS (gretl_matrix *b,
     }
 
     tol = libset_get_double(BFGS_TOLER);
-    verbose = libset_get_bool(MAX_VERBOSE);
+    verbose = libset_get_int(MAX_VERBOSE);
 
     if (verbose) {
 	opt |= OPT_V;
@@ -2193,7 +2193,7 @@ double user_NR (gretl_matrix *b,
 	return NADBL;
     }
 
-    if (libset_get_bool(MAX_VERBOSE)) {
+    if (libset_get_int(MAX_VERBOSE)) {
 	opt |= OPT_V;
     }
 
@@ -2261,7 +2261,7 @@ double deriv_free_optimize (MaxMethod method,
 	return NADBL;
     }
 
-    if (libset_get_bool(MAX_VERBOSE)) {
+    if (libset_get_int(MAX_VERBOSE)) {
 	opt = OPT_V;
 	u->prn = prn;
     }

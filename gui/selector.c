@@ -787,6 +787,9 @@ void selector_from_model (windata_t *vwin)
 	    garch_p = pmod->list[1];
 	    garch_q = pmod->list[2];
 	    garch_const = pmod->ifc;
+	    if (pmod->opt & OPT_F) {
+		model_opt |= OPT_F;
+	    }
 	} else if (pmod->ci == HECKIT) {
 	    retrieve_heckit_info(pmod, &gotinst);
 	} else if (COUNT_MODEL(pmod->ci)) {
@@ -4111,12 +4114,6 @@ static void compose_cmdlist (selector *sr)
 	    arma_x12 = (sr->opts & OPT_X)? 1 : 0;
 	} else 	if (sr->ci == GARCH) {
 	    garch_const = (sr->opts & OPT_N)? 0 : 1;
-	    if (sr->opts & OPT_F) {
-		sr->opts &= ~OPT_F;
-		libset_set_bool(USE_FCP, 1);
-	    } else {
-		libset_set_bool(USE_FCP, 0);
-	    }
 	} else if (sr->ci == LOGIT || sr->ci == PROBIT) {
 	    lp_pvals = (sr->opts & OPT_P)? 1 : 0;
 	} else if (sr->ci == DPANEL) {
@@ -6134,7 +6131,7 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label(_("Standardize the residuals"));
 	pack_switch(tmp, sr, (model_opt & OPT_Z), FALSE, OPT_Z, 0);
 	tmp = gtk_check_button_new_with_label(_("Use Fiorentini et al algorithm"));
-	pack_switch(tmp, sr, libset_get_bool(USE_FCP), FALSE, OPT_F, 0);
+	pack_switch(tmp, sr, (model_opt & OPT_F), FALSE, OPT_F, 0);
     } else if (sr->ci == MPOLS) {
 	hbox = mpols_bits_selector();
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
