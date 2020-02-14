@@ -12842,10 +12842,20 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>max_verbose</lit>: <lit>on</lit> or
-	  <lit>off</lit> (the default). Toggles verbose output for the
-	  <lit>BFGSmax</lit> and <lit>NRmax</lit> functions; see
-	  <guideref targ="chap:numerical"/> for details).
+	  <para><lit>max_verbose</lit>: <lit>on</lit>, <lit>off</lit>
+	  (the default) or <lit>full</lit>. Controls the verbosity of
+	  commands and functions that use numerical optimization
+	  methods.  The <lit>on</lit>/<lit>off</lit> choices only
+	  affect functions such as <fncref targ="BFGSmax"/> or <fncref
+	  targ="NRmax"/>, and the effect is to turn on or off the
+	  iteration printout, respectively. The <lit>full</lit>
+	  setting, instead, also affects commands that rely on
+	  numerical optimization (such as, for example, <cmdref
+	  targ="arima"/>, <cmdref targ="probit"/> or <cmdref
+	  targ="mle"/>), and triggers more detailed output, which
+	  includes the parameter values and their individual gradient
+	  for the objective function. See <guideref
+	  targ="chap:numerical"/> for details).
 	</para>
 	</li>
 	<li>
