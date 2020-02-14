@@ -45,7 +45,7 @@ function void doIRF(bundle *SVARobj)
         ret[, SVARobj.cumsel] = cum(ret[, SVARobj.cumsel]) # .cumsel was sel
     endif
 
-    SVARobj.IRFs = ret
+    matrix SVARobj.IRFs = ret
 end function
 
 ##############
@@ -53,12 +53,16 @@ end function
 function matrix FEVD(bundle *SVARobj)
     n = SVARobj.n
     h = SVARobj.horizon + 1
-    sIRF = SVARobj.IRFs
+
+    if !inbundle(SVARobj, "IRFs")
+        # Could be missing e.g. in set-id models
+        funcerr "Need .IRFs in model bundle"
+    endif
 
     matrix ret = zeros(h, n*n)
-    ctmp = cum(sIRF .* sIRF)
+    ctmp = cum(SVARobj.IRFs .* SVARobj.IRFs)
 
-    loop i=1..h --quiet
+    loop i = 1..h --quiet
         tmp = mshape(ctmp[i,],n,n)'
         ret[i,] = vec(tmp ./ sumc(tmp))'
     endloop
@@ -70,14 +74,28 @@ end function
 ### The function GetShock() isn't called anywhere, but it's public and
 ### meant to be used by the user.
 
-function series GetShock(bundle *SVARobj, int i)
-    series ret = NA
-    scalar n = SVARobj.n
+function series GetShock(bundle *SVARobj, int i[1::1])
+    /*
+    Produces the series corresponding to the historical shock 
+    realizations associated with the point estimates of the model
+    (and IRFs).
+    For set identification (sign restrictions) there is no point
+    estimate; however, in the future (TODO) we could support that 
+    the user picks one of the accepted draws and then the shock series 
+    is based on that particular model draw.
+    */
 
-    if (i <= n) && (i > 0)
-        scalar type = SVARobj.type
+    series ret = NA
+    type = SVARobj.type
+	if type > 4
+        funcerr "Only model types 1 through 4 supported"
+    endif 
+
+    if i <= SVARobj.n
+        
         if (type == 1) || (type == 2) || (type == 4)
-            matrix C = SVARobj.C  # was: SVARobj.S1
+            matrix C = SVARobj.C 
+
         elif type == 3
             if inbundle(SVARobj, "C")	# maybe not yet computed
                 matrix C = SVARobj.C
@@ -87,7 +105,7 @@ function series GetShock(bundle *SVARobj, int i)
         endif
 
         matrix iC = inv(C')
-        scalar extra = $nobs - rows(SVARobj.E)
+        extra = $nobs - rows(SVARobj.E)
         if extra > 0
             set warnings off
             matrix tmp = ones(extra,1) .* NA
@@ -95,12 +113,16 @@ function series GetShock(bundle *SVARobj, int i)
             matrix tmp = {}
         endif
         tmp |= SVARobj.E * iC[,i]
-        series ret = tmp
+        ret = tmp
 
         snames = SVARobj.snames # strings array?
         string vlab = snames[i]
 
         setinfo ret --description="@vlab"
+
+    else
+        printf "Chosen shock index: %d\n", i
+        funcerr "Shock index out of range"
     endif
 
     return ret
@@ -108,35 +130,35 @@ end function
 
 #######################
 
-function list SVAR_hd(bundle *Mod, int nv)
+function list SVAR_hd(bundle *Mod, int nv[1::1])
 
     list ret = null
     loop foreach i n p t1 t2 type --quiet
         scalar $i = Mod.$i
     endloop
 
-    if nv<0 && nv>n
-        printf "Hm. There are %d variables in the model. You asked for no. %d\n", n, nv
-        # (And yno doesn't exist?)
-        return ret
+    if type > 4
+        funcerr "Not implemented for set id (sign restrictions)" 
+    endif
+
+    if nv > n
+        printf "Hm. There are %d variables in the model. ", n 
+        printf "Chosen shock index: %d\n", nv
+        funcerr "Shock index out of range"
     endif
 
     # compute the exogenous part
-    if (type < 4)
-        # this is easy
+    if type < 4
         matrix m = Mod.X * Mod.mu
-    else
+
+    elif type == 4
         # here we have to take into account the "5 cases"
-        scalar dcase = Mod.jcase
-        scalar T    = Mod.T
+        dcase = Mod.jcase
+        T     = Mod.T
         matrix mreg = (dcase == 1) ? {} : ones(T,1)
         if dcase > 3
-            matrix mreg ~= seq(1,T)'
+            mreg ~= seq(1,T)'
         endif
-
-        # printf "%8.3f\n", mreg
-        # printf "%8.3f\n", Mod.X
-        # printf "%8.3f\n", Mod.mu
 
         matrix m = (mreg ~ Mod.X) * Mod.mu
     endif
@@ -165,8 +187,6 @@ function list SVAR_hd(bundle *Mod, int nv)
         Xdet = varsimul(VARpar, zeros(Mod.T-p,n), Mod.Y[1:p,])
     endif
 
-    # printf "nobs = %d, rows(Xdet) = %d\n", $nobs, rows(Xdet)
-
     ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
 
     # the structural shocks
@@ -176,7 +196,6 @@ function list SVAR_hd(bundle *Mod, int nv)
     loop i=1..n --quiet
         a = (seq(1,n) .= i)
         W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
-        #printf "U[$i]:\n%8.3f\n", W[1:10,]
         ret += genseries(sprintf("hd_%s_%s", yn,
 				 fixname(snames[i])), W[,nv])
     endloop

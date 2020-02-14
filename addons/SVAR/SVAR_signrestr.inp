@@ -294,9 +294,6 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     n_exotic = get_n_exotic(mod)
     # add the ones from exotic restrictions
     matrix allshocks = n_exotic ? values(shocks | mod.exoticSR.eshocks) : shocks
-    # if n_exotic
-		# numexotsh = nelem(uniq(mod.exoticSR.eshocks)) # need not be equal to n_exotic
-    # endif
     
     # Now extract the corresponding shock names
     strings mod.SRid_snames = getstrings_byindex(mod.snames, allshocks)

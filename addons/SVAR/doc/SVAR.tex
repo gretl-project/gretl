@@ -2896,39 +2896,6 @@ implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRdraw(bundle *Smod, int rep, bool
-    DO\_BAYES[0], scalar coveralpha[0.9],\\
-    int maxiter[10000])}
-  
-  Relating to a set identified (sign restricted) model, this function draws random 
-  rotations of the arbitrary baseline Cholesky model
-  until \texttt{rep} draws satisfying the sign restrictions have come up,
-  or until the \texttt{maxiter} limit is hit. Therefore the number of good 
-  draws can be anything between zero and \texttt{rep}.
-  If the DO\_BAYES flag is on, the VAR parameters (including Sigma)
-  are resampled too (using the standard Normal-Wishart prior); otherwise, 
-  they are kept fixed at the OLS estimates. 
-  
-  This is the heart of the set identification algorithm 
-  and will take a while to run. (The goal is to speed it up in the future, e.g. by 
-  parallelizing it on multicore machines.)
-  
-  \emph{Returns}: \texttt{array of bundles}, one for each accepted draws. 
-  By default you would \emph{not} need to produce or grab this object directly
-  because this array would be stored inside the main model bundle as member 
-  \texttt{acc\_draws} and then processed automatically. So only use it under 
-  special circumstances.
-
-Arguments:
-\begin{enumerate}
-\item pointer to the SVAR model bundle
-\item the number of (accepted) draws $H$ to aim for
-\item Boolean flag for the Bayesian option
-  (default = 0 $\to$ frequentist)
-\item Maximum number of attempted draws (default = 10000)
-\end{enumerate}
-\end{funcdoc}
-
 \begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder, 
   bool checkident[1])}
   Initialises a model: the function's output is a bundle. The function
@@ -2964,6 +2931,39 @@ Arguments:
  \end{enumerate}
 The plot will be displayed in interactive mode.
 (TODO: Allow directly saving the plot to a file.)
+\end{funcdoc}
+
+\begin{funcdoc}{SVAR\_SRdraw(bundle *Smod, int rep, bool
+    DO\_BAYES[0], scalar coveralpha[0.9],\\
+    int maxiter[10000])}
+  
+  Relating to a set identified (sign restricted) model, this function draws random 
+  rotations of the arbitrary baseline Cholesky model
+  until \texttt{rep} draws satisfying the sign restrictions have come up,
+  or until the \texttt{maxiter} limit is hit. Therefore the number of good 
+  draws can be anything between zero and \texttt{rep}.
+  If the DO\_BAYES flag is on, the VAR parameters (including Sigma)
+  are resampled too (using the standard Normal-Wishart prior); otherwise, 
+  they are kept fixed at the OLS estimates. 
+  
+  This is the heart of the set identification algorithm 
+  and will take a while to run. (The goal is to speed it up in the future, e.g. by 
+  parallelizing it on multicore machines.)
+  
+  \emph{Returns}: \texttt{array of bundles}, one for each accepted draws. 
+  By default you would \emph{not} need to produce or grab this object directly
+  because this array would be stored inside the main model bundle as member 
+  \texttt{acc\_draws} and then processed automatically. So only use it under 
+  special circumstances.
+
+Arguments:
+\begin{enumerate}
+\item pointer to the SVAR model bundle
+\item the number of (accepted) draws $H$ to aim for
+\item Boolean flag for the Bayesian option
+  (default = 0 $\to$ frequentist)
+\item Maximum number of attempted draws (default = 10000)
+\end{enumerate}
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_SRexotic(bundle *Smod, string chkstr, strings shocks, \\
@@ -3019,26 +3019,6 @@ The plot will be displayed in interactive mode.
   (be omitted), which would mean a restriction only associated with the impact effect.
   \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_SRplain(bundle *Smod, string yname, string sname, string what, \\
-int length[0], int ini[0])}
- Relating to a set identified (sign restricted) model, this function serves to impose standard 
- sign restrictions.
- 
- Arguments:
- \begin{enumerate}
- \item model bundle in pointerized form
- \item name of the target variable of the relevant IRF
- \item name of the shock of the relevant IRF
- \item either "+" or "-" to specify the wanted sign
- \item for how many (horizon) periods after \texttt{ini} the restriction should apply (default zero, 
-   just at the particular point given by \texttt{ini})
- \item starting horizon from which to evaluate the IRF (default zero is the very beginning / on impact)
- \end{enumerate}
-  Both \texttt{length, ini} could be left at their defaults 
-  (be omitted), which would mean a restriction only associated with the impact effect. If only the 
-  trailing argument \texttt{ini} is omitted, then the restriction must hold up to horizon \texttt{length}.
-  \end{funcdoc}
-
 \begin{funcdoc}{SVAR\_SRirf(bundle Smod, strings whichvars [optional], \\
       strings whichshocks [optional], bool meanormed[0])}
 Relating to a set identified (sign restricted) model, does IRF plots based on all
@@ -3066,6 +3046,26 @@ Arguments:
  \end{enumerate}
  It is not possible to exclude single variable-shock pairs, simply delete any unwanted plots afterwards. 
 \end{funcdoc}
+
+\begin{funcdoc}{SVAR\_SRplain(bundle *Smod, string yname, string sname, string what, \\
+int length[0], int ini[0])}
+ Relating to a set identified (sign restricted) model, this function serves to impose standard 
+ sign restrictions.
+ 
+ Arguments:
+ \begin{enumerate}
+ \item model bundle in pointerized form
+ \item name of the target variable of the relevant IRF
+ \item name of the shock of the relevant IRF
+ \item either "+" or "-" to specify the wanted sign
+ \item for how many (horizon) periods after \texttt{ini} the restriction should apply (default zero, 
+   just at the particular point given by \texttt{ini})
+ \item starting horizon from which to evaluate the IRF (default zero is the very beginning / on impact)
+ \end{enumerate}
+  Both \texttt{length, ini} could be left at their defaults 
+  (be omitted), which would mean a restriction only associated with the impact effect. If only the 
+  trailing argument \texttt{ini} is omitted, then the restriction must hold up to horizon \texttt{length}.
+  \end{funcdoc}
 
 
 %---------------------------------------------------------------------------------------------------
@@ -3193,7 +3193,7 @@ Arguments:
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{Version 1.90, January 2020}
+\subsection*{Version 1.90, February 2020}
 \begin{itemize}
 \item Add set-identified model estimation (a.k.a. sign restrictions).
 \end{itemize}
