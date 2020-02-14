@@ -72,8 +72,8 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
 
     if DO_BAYES
         matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df)
-        b.B = Mats[1]
-        b.Sigma = Mats[2]
+        matrix b.B = Mats[1]
+        matrix b.Sigma = Mats[2]
     endif
     
     matrix b.rot = qrdecomp(mnormal(mod.n, mod.n))

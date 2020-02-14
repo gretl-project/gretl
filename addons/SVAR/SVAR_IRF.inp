@@ -87,6 +87,8 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
 
     series ret = NA
     type = SVARobj.type
+
+    ## some error checks ##
 	if type > 4 && type != 10
         printf "Given type %d\n", type
         funcerr "Unknown model type"
@@ -109,6 +111,7 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
         funcerr "Shock index out of range"
     endif
 
+    ## get the C matrix (and then the inv) ##
     if (type == 1) || (type == 2) || (type == 4)
         matrix C = SVARobj.C 
 
@@ -120,10 +123,13 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
         endif
 
     elif type == 10 # set id 
-        matrix C = SVARobj.acc_draws[drawix].irfs[1] # impact effect is C
+        bundle pickdraw = SVARobj.acc_draws[drawix]
+        matrix C = pickdraw.irfs[1] # impact effect is C
     endif
 
     matrix iC = inv(C')
+
+    ## construct the wanted series ##
     extra = $nobs - rows(SVARobj.E)
     if extra > 0
         set warnings off
@@ -131,7 +137,17 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
     else
         matrix tmp = {}
     endif
-    tmp |= SVARobj.E * iC[,i]
+
+    if type == 10
+        if SVARobj.DO_BAYES # separate line to workaround older gretl limitation
+            # need to use the resids associated with re-drawn coefficients
+            matrix resids = SVARobj.Y[SVARobj.p + 1 : ,] - SVARobj.mreg * pickdraw.B
+        else
+            matrix resids = SVARobj.E
+        endif
+    endif
+
+    tmp |= resids * iC[,i]
     ret = tmp
 
     snames = SVARobj.snames # strings array?
