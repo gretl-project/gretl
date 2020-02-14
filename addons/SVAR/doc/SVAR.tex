@@ -2685,13 +2685,23 @@ and need not be harmonized).
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{GetShock(bundle *Smod, int i)}
-  Retrieves, as a series, the estimate of $i$-th structural shock of
+\begin{funcdoc}{GetShock(bundle *Smod, int i, int drawix[0])}
+  Returns a series for the current workfile, namely the estimate of the 
+  $i$-th structural shock of
   the system via equation \eqref{eq:PrE-StS-AB}, in which VAR
   residuals are used instead of the one-step-ahead prediction errors
-  $\PrE{t}$. If the bundle \texttt{Smod} contains a non-null string
-  \texttt{snames} with shock names, those are used in the description
+  $\PrE{t}$. The content of
+  \texttt{snames} with shock names is used in the description
   for the generated series.
+  
+  The \texttt{drawix} argument is only needed in the set identification 
+  (sign restriction) case and specifies from which of the accepted model draws 
+  the coefficients should be taken. This index can range from 1 to the number
+  of accepted draws. (The default 0 is meaningless and only serves
+  to make it possible to omit the argument for traditional SVAR models.) 
+  In order to work in this case the model must have been set up such that all
+  accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
+  default is yes.)
 \end{funcdoc}
 
 \begin{funcdoc}{HDplot(bundle *Smod, int vnum[0])}

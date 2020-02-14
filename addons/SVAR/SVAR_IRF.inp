@@ -74,56 +74,70 @@ end function
 ### The function GetShock() isn't called anywhere, but it's public and
 ### meant to be used by the user.
 
-function series GetShock(bundle *SVARobj, int i[1::1])
+function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
     /*
     Produces the series corresponding to the historical shock 
     realizations associated with the point estimates of the model
     (and IRFs).
     For set identification (sign restrictions) there is no point
-    estimate; however, in the future (TODO) we could support that 
+    estimate; however, we support that 
     the user picks one of the accepted draws and then the shock series 
     is based on that particular model draw.
     */
 
     series ret = NA
     type = SVARobj.type
-	if type > 4
-        funcerr "Only model types 1 through 4 supported"
-    endif 
+	if type > 4 && type != 10
+        printf "Given type %d\n", type
+        funcerr "Unknown model type"
 
-    if i <= SVARobj.n
-        
-        if (type == 1) || (type == 2) || (type == 4)
-            matrix C = SVARobj.C 
-
-        elif type == 3
-            if inbundle(SVARobj, "C")	# maybe not yet computed
-                matrix C = SVARobj.C
-            else
-                matrix C = SVARobj.S1 \ SVARobj.S2
-            endif
+    elif type == 10 
+        if !SVARobj.storeSRirfs
+            funcerr "Need accepted draws content (acc_draws) in set-id case"
+        elif drawix == 0
+            funcerr "Need to pick one particular draw (index)"
+        elif drawix > nelem(SVARobj.acc_draws)
+            printf "Only %d accepted draws exist\n", nelem(SVARobj.acc_draws) 
+            funcerr "Draw index out of range"
         endif
 
-        matrix iC = inv(C')
-        extra = $nobs - rows(SVARobj.E)
-        if extra > 0
-            set warnings off
-            matrix tmp = ones(extra,1) .* NA
-        else
-            matrix tmp = {}
-        endif
-        tmp |= SVARobj.E * iC[,i]
-        ret = tmp
+    elif drawix > 0
+        print "Warning: 'drawix' meaningless for standard SVAR, ignoring"
 
-        snames = SVARobj.snames # strings array?
-        string vlab = snames[i]
-
-        setinfo ret --description="@vlab"
-
-    else
+   elif i > SVARobj.n
         printf "Chosen shock index: %d\n", i
         funcerr "Shock index out of range"
     endif
+
+    if (type == 1) || (type == 2) || (type == 4)
+        matrix C = SVARobj.C 
+
+    elif type == 3
+        if inbundle(SVARobj, "C")	# maybe not yet computed
+            matrix C = SVARobj.C
+        else
+            matrix C = SVARobj.S1 \ SVARobj.S2
+        endif
+
+    elif type == 10 # set id 
+        matrix C = SVARobj.acc_draws[drawix].irfs[1] # impact effect is C
+    endif
+
+    matrix iC = inv(C')
+    extra = $nobs - rows(SVARobj.E)
+    if extra > 0
+        set warnings off
+        matrix tmp = ones(extra,1) .* NA
+    else
+        matrix tmp = {}
+    endif
+    tmp |= SVARobj.E * iC[,i]
+    ret = tmp
+
+    snames = SVARobj.snames # strings array?
+    string vlab = snames[i]
+
+    setinfo ret --description="@vlab"
 
     return ret
 end function
