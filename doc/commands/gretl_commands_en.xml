@@ -12842,20 +12842,22 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>max_verbose</lit>: <lit>on</lit>, <lit>off</lit>
-	  (the default) or <lit>full</lit>. Controls the verbosity of
+	  <para><lit>max_verbose</lit>: <lit>off</lit> (the default),
+	  <lit>on</lit> or <lit>full</lit>. Controls the verbosity of
 	  commands and functions that use numerical optimization
-	  methods.  The <lit>on</lit>/<lit>off</lit> choices only
-	  affect functions such as <fncref targ="BFGSmax"/> or <fncref
-	  targ="NRmax"/>, and the effect is to turn on or off the
-	  iteration printout, respectively. The <lit>full</lit>
-	  setting, instead, also affects commands that rely on
-	  numerical optimization (such as, for example, <cmdref
-	  targ="arima"/>, <cmdref targ="probit"/> or <cmdref
-	  targ="mle"/>), and triggers more detailed output, which
-	  includes the parameter values and their individual gradient
-	  for the objective function. See <guideref
-	  targ="chap:numerical"/> for details).
+	  methods.  The <lit>on</lit> choice applies only to functions
+	  (such as <fncref targ="BFGSmax"/> and <fncref
+	  targ="NRmax"/>) which work silently by default; the effect
+	  is to print basic iteration information. The <lit>full</lit>
+	  setting can be used to trigger more detailed output,
+	  including parameter values and their respective gradient for
+	  the objective function at each iteration. This choice
+	  applies both to functions of the above-mentioned sort and to
+	  commands that rely on numerical optimization such as <cmdref
+	  targ="arima"/>, <cmdref targ="probit"/> and <cmdref
+	  targ="mle"/>. In the case of commands the effect is to make
+	  their <opt>verbose</opt> option produce more detail. See
+	  also <guideref targ="chap:numerical"/>.
 	</para>
 	</li>
 	<li>
