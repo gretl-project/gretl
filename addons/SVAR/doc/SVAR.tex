@@ -3183,16 +3183,23 @@ int length[0], int ini[0])}
    whether the restriction is super-exotic\footnote{see the documentation about this special feature,
    when it is ready}\\
    \texttt{SRcoveralpha} & scalar, chosen coverage of the confidence intervals (or credible sets)\\
+   
    \texttt{SRirfmeans} & matrix, holding the horizon-by-horizon pointwise means of 
-   the accepted IRF draws\\
+   the accepted IRF draws; horizons in $h+1$ rows and the variable/shock combinations
+   in $n*numshocks$ columns\\
+   
     \texttt{SRirfmeds} & matrix, holding the horizon-by-horizon pointwise medians of 
-   the accepted IRF draws\\
+   the accepted IRF draws; dimensions see  \texttt{SRirfmeans}\\
+   
    \texttt{SRirfserrs} & matrix, the horizon-by-horizon pointwise (pseudo) standard errors
-  of the accepted IRF draws\\
+  of the accepted IRF draws;  dimensions see \texttt{SRirfmeans}\\
+  
   \texttt{SRlo\_cb} & matrix, the horizon-by-horizon pointwise lower bounds of the 
   confidence intervals (or credible sets), quantile-based (not symmetric around the 
-  means or medians)\\
+  means or medians); dimensions see  \texttt{SRirfmeans}\\
+  
   \texttt{SRhi\_cb} & matrix, ditto for the upper bounds\\
+  
    \texttt{storeSRirfs} & switch indicating whether the IRF outcomes from all accepted draws
      will be stored in the main model bundle (see also \texttt{acc\_draws})\\
    \texttt{acc\_draws} & array of bundles, collecting the outcomes and data of all accepted 

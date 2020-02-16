@@ -178,7 +178,7 @@ function matrices gen_SRirfs(bundle b, int numh, matrix to_cum)
     #  one less than true) 
 
     matrix B = b.B
-    k = b.detterms    # just a number?
+    k = b.exoterms    # just a number?
 
     # On the outside, this cumulation spec is taken from the mod.
     # (Empty matrix to_cum if doesn't apply.)
@@ -308,7 +308,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # the main loop
     #
 
-    bundle b = defbundle("B",B, "Sigma",mod.Sigma, "detterms",rows(mod.mu), \
+    bundle b = defbundle("B",B, "Sigma",mod.Sigma, "exoterms",rows(mod.mu), \
                "df", mod.T - nelem(B))
 
     loop while good<rep && iter<=maxiter --quiet
@@ -443,8 +443,10 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
 
     # here we store the data for plotting the irfs in a matrix, conceptually
     # similar to the "bands" matrix we use in SVAR_boot, that is with H rows
-    # (so that descriptive statistics are easy to compute) and ns * nv *
-    # horizon columns
+    # (=accepted draws, so that descriptive statistics are easy to compute) 
+    # and ns * nv * horizon columns
+    # (But the outputs will be reshaped after the H is aggregated out; 
+    #  with the horizon in rows and numvariables * numshocks columns.)
 
     # get dimensions
     H = nelem(bs)    # number of available (accepted) draws

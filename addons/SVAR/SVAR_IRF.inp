@@ -1,7 +1,7 @@
 function void doIRF(bundle *SVARobj)
 /*
    constructs the structural VMA representation. Note
-   that the companion matrix is never used explicitely;
+   that the companion matrix is never used explicitly;
 
    The output is not returned by the function, but rather
    put into the bundle under the "IRFs" key.
@@ -50,17 +50,43 @@ end function
 
 ##############
 
-function matrix FEVD(bundle *SVARobj)
+function matrix FEVD(bundle *SVARobj, int drawix[0::0])
+    # (drawix only needed/meant for the set id case (type 10))
+
     n = SVARobj.n
     h = SVARobj.horizon + 1
 
-    if !inbundle(SVARobj, "IRFs")
-        # Could be missing e.g. in set-id models
-        funcerr "Need .IRFs in model bundle"
+    if SVARobj.type == 10 
+        # In the set id case in each accepted draw the impulse
+        # responses are already stored as "irfs"; however, the format 
+        # there is an array of matrices. 
+
+        errchkSRhisto(&SVARobj, drawix)
+        bundle pickdraw = SVARobj.acc_draws[drawix]
+
+        if cols(pickdraw.irfs[1]) != n
+            funcerr "partial id not supported for FEVD"
+        elif h != nelem(pickdraw.irfs)
+            funcerr "horizon mismatch"
+        endif
+
+        if !inbundle(pickdraw, "IRFs") # maybe have already been added there
+            matrix IRFs = zeros(h, n*n)
+            loop ix = 1..h -q
+                IRFs[ix, ] = vec(pickdraw.irfs[ix])'
+            endloop
+            # copy to origin
+            matrix SVARobj.acc_draws[drawix].IRFs = IRFs
+        else 
+            matrix IRFs = pickdraw.IRFs
+        endif
+
+    else
+        matrix IRFs = SVARobj.IRFs
     endif
 
     matrix ret = zeros(h, n*n)
-    ctmp = cum(SVARobj.IRFs .* SVARobj.IRFs)
+    ctmp = cum(IRFs .* IRFs)
 
     loop i = 1..h --quiet
         tmp = mshape(ctmp[i,],n,n)'
@@ -83,10 +109,12 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
     estimate; however, we support that 
     the user picks one of the accepted draws and then the shock series 
     is based on that particular model draw.
+    # (drawix only needed/meant for the set id case (type 10))
     */
 
     series ret = NA
     type = SVARobj.type
+    matrix B10 = {}	# to be filled in type 10
 
     ## some error checks ##
 	if type > 4 && type != 10
@@ -94,14 +122,7 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
         funcerr "Unknown model type"
 
     elif type == 10 
-        if !SVARobj.storeSRirfs
-            funcerr "Need accepted draws content (acc_draws) in set-id case"
-        elif drawix == 0
-            funcerr "Need to pick one particular draw (index)"
-        elif drawix > nelem(SVARobj.acc_draws)
-            printf "Only %d accepted draws exist\n", nelem(SVARobj.acc_draws) 
-            funcerr "Draw index out of range"
-        endif
+        errchkSRhisto(&SVARobj, drawix)
 
     elif drawix > 0
         print "Warning: 'drawix' meaningless for standard SVAR, ignoring"
@@ -125,26 +146,19 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
     elif type == 10 # set id 
         bundle pickdraw = SVARobj.acc_draws[drawix]
         matrix C = pickdraw.irfs[1] # impact effect is C
+        B10 = pickdraw.B
     endif
 
     matrix iC = inv(C')
+	
+    matrix resids = muVARparE_mayberedr(SVARobj, B10)[3]
 
     ## construct the wanted series ##
-    extra = $nobs - rows(SVARobj.E)
+    extra = $nobs - rows(resids)
+    matrix tmp = {}
     if extra > 0
         set warnings off
-        matrix tmp = ones(extra,1) .* NA
-    else
-        matrix tmp = {}
-    endif
-
-    if type == 10
-        if SVARobj.DO_BAYES # separate line to workaround older gretl limitation
-            # need to use the resids associated with re-drawn coefficients
-            matrix resids = SVARobj.Y[SVARobj.p + 1 : ,] - SVARobj.mreg * pickdraw.B
-        else
-            matrix resids = SVARobj.E
-        endif
+        tmp = ones(extra,1) .* NA
     endif
 
     tmp |= resids * iC[,i]
@@ -160,15 +174,18 @@ end function
 
 #######################
 
-function list SVAR_hd(bundle *Mod, int nv[1::1])
+function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
+    # historical decomposition
+    # (drawix only needed/meant for the set id case (type 10))
 
     list ret = null
-    loop foreach i n p t1 t2 type --quiet
+    loop foreach i n p t1 t2 type T k --quiet
         scalar $i = Mod.$i
     endloop
+    matrix B10 = {} # to be filled for type 10
 
-    if type > 4
-        funcerr "Not implemented for set id (sign restrictions)" 
+    if type == 10 
+        errchkSRhisto(&Mod, drawix)
     endif
 
     if nv > n
@@ -177,6 +194,15 @@ function list SVAR_hd(bundle *Mod, int nv[1::1])
         funcerr "Shock index out of range"
     endif
 
+    # Prepare the set id case
+    if type == 10  
+        bundle pickdraw = Mod.acc_draws[drawix] 
+        matrix B10 = pickdraw.B  
+    endif
+
+    # The following might be redrawn in type10/Bayesian
+    matrices muVARparE = muVARparE_mayberedr(Mod, B10)
+
     # compute the exogenous part
     if type < 4
         matrix m = Mod.X * Mod.mu
@@ -184,25 +210,31 @@ function list SVAR_hd(bundle *Mod, int nv[1::1])
     elif type == 4
         # here we have to take into account the "5 cases"
         dcase = Mod.jcase
-        T     = Mod.T
+        # T     = Mod.T
         matrix mreg = (dcase == 1) ? {} : ones(T,1)
         if dcase > 3
             mreg ~= seq(1,T)'
         endif
 
         matrix m = (mreg ~ Mod.X) * Mod.mu
-    endif
 
-    matrix E = Mod.E
-    matrix VARpar = Mod.VARpar
+    elif type == 10
+        matrix m = Mod.X * muVARparE[1]
+    endif 
+
+    # grab the C matrix
     if (type == 1) || (type == 2) || (type == 4)
         matrix C = Mod.C
+
     elif type == 3
         if inbundle(Mod, "C")
             matrix C = Mod.C
         else
             matrix C = Mod.S1 \ Mod.S2
         endif
+
+    elif type == 10
+        matrix C = pickdraw.irfs[1] # impact effect is C
     endif
 
     matrix iC = inv(C)
@@ -212,18 +244,18 @@ function list SVAR_hd(bundle *Mod, int nv[1::1])
 
     smpl t1 t2
     if cols(m)>0
-        Xdet = varsimul(VARpar, m[p+1:,], Mod.Y[1:p,])
+        Xdet = varsimul(muVARparE[2], m[p+1:,], Mod.Y[1:p,]) # was VARpar
     else
-        Xdet = varsimul(VARpar, zeros(Mod.T-p,n), Mod.Y[1:p,])
+        Xdet = varsimul(muVARparE[2], zeros(T-p, n), Mod.Y[1:p,]) # was Mod.T
     endif
 
     ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
 
     # the structural shocks
-    matrix U = E * iC'
-    rotVARpar = iC * Mod.VARpar * (I(p) ** C)
+    matrix U = muVARparE[3] * iC' # was E
+    rotVARpar = iC * muVARparE[2] * (I(p) ** C)
 
-    loop i=1..n --quiet
+    loop i = 1..n --quiet
         a = (seq(1,n) .= i)
         W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
         ret += genseries(sprintf("hd_%s_%s", yn,

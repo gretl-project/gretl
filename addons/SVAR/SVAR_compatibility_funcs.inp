@@ -14,7 +14,7 @@ function matrices drawnormwis(const matrix iXX, const matrix B,
     #
     # iXX:  K x K matrix (X'X)^{-1} (same for all equations!)
     #       (in a VAR context gretl provides this as $xtxinv)
-    # B:    vector of purely data-based estimates (max-lik)
+    # B:    matrix of purely data-based estimates (max-lik)
     # Sigma: cross-equation covariance matrix of innovations
     # T:    number of observations
 
@@ -23,9 +23,9 @@ function matrices drawnormwis(const matrix iXX, const matrix B,
 
     # some checks 
     if K != rows(iXX)
-        funcerr "Coeff vector and data matrix dims don't match"
+        funcerr "Coeff and data matrix dims don't match"
     elif N != rows(Sigma)
-        funcerr "Coeff vector and Cov matrix dims don't match"
+        funcerr "Coeff and Cov matrix dims don't match"
     endif
 
     matrix Sigma_draw = iwishart(Sigma*T, T)
