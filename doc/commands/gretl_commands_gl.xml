@@ -8476,7 +8476,7 @@
       <para>
 	Este texto de axuda asume que se utiliza, por defecto, o maximizador
 	BFGS. Para obter máis información sobre o uso do método de Newton,
-	por favor consulta el <guideref targ="chap:mle"/>.
+	por favor consulta o <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Exemplo sinxelo: Supón que temos unha serie <lit>X</lit>
@@ -12842,10 +12842,22 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>max_verbose</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Conmuta o resultado máis cumprido para as funcións <lit>BFGSmax</lit>
-	  e <lit>NRmax</lit> (consulta o <guideref targ="chap:numerical"/> para
-	  obter máis detalles).
+	  <para><lit>max_verbose</lit>: <lit>off</lit> (por defecto),
+	  <lit>on</lit> ou <lit>full</lit>. Controla a verborrea das instrucións
+	  e das funcións que utilizan métodos de optimización numérica.
+	  A opción <lit>on</lit> só se aplica a funcións (tales como
+	  <fncref targ="BFGSmax"/> e <fncref targ="NRmax"/>) que funcionan
+	  por defecto con discreción; o seu efecto consiste en que se amosa
+	  información básica sobre as iteracións. Podes usar a opción
+	  <lit>full</lit> para provocar un resultado máis detallado, que
+	  inclúe os valores dos parámetros e o seu respectivo gradiente da
+	  función obxectivo, en cada iteración. Esta opción aplícase tanto
+	  ás funcións do tipo mencionado antes, como ás instrucións que se
+	  basean en optimización numérica como <cmdref targ="arima"/>,
+	  <cmdref targ="probit"/> e <cmdref targ="mle"/>. No caso das
+	  instrucións, o seu efecto consiste en facer que a súa opción
+	  <opt>verbose</opt> proporcione un maior detalle. Consulta
+	  tamén o <guideref targ="chap:numerical"/>.
 	</para>
 	</li>
 	<li>
@@ -13237,6 +13249,27 @@
 	  nomes <quote><lit>R.</lit></quote>). Consulta o
 	  <guideref targ="chap:gretlR"/> para obter máis detalles
 	  sobre este elemento e o anterior.
+	  </para>
+	</li>
+      </ilist>
+
+      <subhead>Miscelánea</subhead>
+
+      <ilist>
+	<li>
+	  <para><lit>mpi_use_smt</lit>: <lit>on</lit> ou ben <lit>off</lit>
+	  (por defecto). Este interruptor afecta ao número de procesos
+	  que se inician nun bloque <lit>mpi</lit> dentro dun guión. Se
+	  o interruptor está en <lit>off</lit>, a cantidade por defecto
+	  destes procesos é igual ao número de núcleos físicos da máquina
+	  local; se está en <lit>on</lit>, a cantidade por defecto destes
+	  procesos é igual ao número máximo de subprocesos, que cadrará
+	  co dobre do número de núcleos físicos cando estes podan soportar
+	  SMT (Multiproceso Simultáneo, tamén coñecido como Hiperproceso).
+	  Isto se aplica unicamente se o usuario non indica o número
+	  de procesos, ben de xeito directo ou ben de xeito indirecto
+	  (mediante a especificación dun ficheiro <lit>hosts</lit> para
+	  utilizar con MPI).
 	  </para>
 	</li>
       </ilist>

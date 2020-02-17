@@ -12842,10 +12842,22 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>max_verbose</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
-	  Conmuta el resultado más completo para las funciones <lit>BFGSmax</lit>
-	  y <lit>NRmax</lit> (consulta <guideref targ="chap:numerical"/> para
-	  obtener más detalles).
+	  <para><lit>max_verbose</lit>: <lit>off</lit> (por defecto),
+	  <lit>on</lit> o <lit>full</lit>. Controla la verborrea de las
+	  instrucciones y de las funciones que utilizan métodos de optimización
+	  numérica. La opción <lit>on</lit> solo se aplica a funciones (tales
+	  como <fncref targ="BFGSmax"/> y <fncref targ="NRmax"/>) que funcionan
+	  por defecto con discreción; su efecto consiste en que se muestra
+	  información básica sobre las iteraciones. Puedes usar la opción
+	  <lit>full</lit> para provocar un resultado más detallado, que
+	  incluye los valores de los parámetros y su respectivo gradiente de
+	  la función objetivo, en cada iteración. Esta opción se aplica tanto
+	  a las funciones del tipo mencionado antes, como a las instrucciones
+	  que se basan en optimización numérica como <cmdref targ="arima"/>,
+	  <cmdref targ="probit"/> y <cmdref targ="mle"/>. En el caso de las
+	  instrucciones, su efecto consiste en hacer que su opción
+	  <opt>verbose</opt> proporcione un mayor detalle. Consulta
+	  también <guideref targ="chap:numerical"/>.
 	</para>
 	</li>
 	<li>
@@ -13237,6 +13249,27 @@
 	  nombres <quote><lit>R.</lit></quote>). Consulta
 	  <guideref targ="chap:gretlR"/> para obtener más detalles
 	  sobre este elemento y el anterior.
+	  </para>
+	</li>
+      </ilist>
+
+      <subhead>Miscelánea</subhead>
+
+      <ilist>
+	<li>
+	  <para><lit>mpi_use_smt</lit>: <lit>on</lit> o bien <lit>off</lit>
+	  (por defecto). Este interruptor afecta al número de procesos que
+	  se inician en un bloque <lit>mpi</lit> dentro de un guion. Si el
+	  interruptor está en <lit>off</lit>, la cantidad por defecto de
+	  estos procesos es igual al número de núcleos físicos de la máquina
+	  local; si está en <lit>on</lit>, la cantidad por defecto de estos
+	  procesos es igual al número máximo de subprocesos, que coincidirá
+	  con el doble del número de núcleos físicos si estos pueden soportar
+	  SMT (Multiproceso Simultáneo, también denominado Hiperproceso).
+	  Esto se aplica únicamente si el usuario no indica el número de
+	  procesos, bien de forma directa o bien indirectamente (mediante
+	  la especificación de un archivo <lit>hosts</lit> para utilizar
+	  con MPI).
 	  </para>
 	</li>
       </ilist>
