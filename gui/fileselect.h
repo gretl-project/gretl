@@ -16,6 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+ 
+#ifndef FILESELECT_H
+#define FILESELECT_H
 
 typedef enum {
     FSEL_DATA_NONE = 0,
@@ -36,4 +39,4 @@ void file_selector_with_startdir (int action,
 				  const char *startdir,
 				  GtkWidget *parent);
 
-
+#endif /* FILESELECT_H */
