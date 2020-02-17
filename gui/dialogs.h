@@ -25,10 +25,7 @@
 #define GRETL_CANCEL (-1)
 #define canceled(r) (r == -1)
 
-enum {
-    GRETL_YES,
-    GRETL_NO
-} GretlButtons;
+enum { GRETL_YES, GRETL_NO };
 
 #ifndef BUILDING_PLUGIN
 typedef struct dialog_t_ dialog_t;
