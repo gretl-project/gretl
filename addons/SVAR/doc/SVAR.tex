@@ -2458,10 +2458,98 @@ iteration:
     return. Otherwise the draw is discarded.
 \end{enumerate}
 
+\subsection{Historical and forecast error variance decompositions}
+
+The set identification methods revolve around the IRF properties of the 
+admissible models, and several approaches to analyze and display the 
+impulse responses have been presented. What remains to be explained 
+is the usage of other usual types of analyses such as estimates of historical
+shock developments (historical decomposition, HD) and the relative contributions
+of the identified shocks to the dynamics of the endogenous variables (forecast
+error variance decomposition, FEVD).\footnote{Most of these require a fully
+identified model, i.e. where the number of identified shocks corresponds to
+the number of endogenous variables. This might be partly generalized in the
+future.}
+
+A well-known complication in the set identification context is that by its very 
+nature there exists no point estimate of the IRFs, but the standard HD and FEVD 
+require unique coefficients. On a technical level, any of the accepted model draws
+can be chosen and thus there are many possible HD and FEVD variants. Therefore
+the relevant functions \texttt{SVAR\_hd}, \texttt{FEVD}, and also \texttt{GetShock}
+(which stores the estimated historical shock realization as a gretl series into the
+workfile) take as an additional argument an integer as an index to pick a certain
+accepted model draw.
+
+For example, the \texttt{ChoMoreno.inp} example script shipped with the SVAR 
+addon produces 256 accepted draws and its model bundle has the name ``mod''.
+After it is run we can arbitrarily pick the, say, 112th accepted draw to produce the HD 
+for inflation -- which is the 2nd variable in the model -- as follows:
+
+\begin{code}
+list inflHD = SVAR_hd(&mod, 2, 112) 
+\end{code}
+
+In the same fashion we could extract the history of the demand shock (the 1st one)
+by writing
+
+\begin{code}
+series demandshock = GetShock(&mod, 1, 112) 
+\end{code}
+
+... or retrieve the FEVD numbers with this call:
+
+\begin{code}
+matrix allfevd = FEVD(&mod, 112) 
+\end{code}
+
+However, it should be very clear that these results are quite arbitrary, since the 112th 
+accepted draw will typically \emph{not} be representative of the entire model distribution.
+While it is beyond the scope of this user guide to provide a discussion of the possible ways to 
+find a suitable unique model among the many accepted draws, let us sketch how the user
+could use the existing apparatus in SVAR to pick a certain model. 
+
+For example, continuing with \texttt{ChoMoreno.inp}, say you are most interested in the 
+impulse response of inflation (2nd variable) to a demand shock (1st shock) not immediately, 
+but after one quarter. That is, you want to find that accepted model which has a 
+response of inflation to a demand impulse at lag 1 which is as close as 
+possible to the median response across all accepted draws. The median responses are already
+stored (by default) inside \texttt{SRirfmeds}, and since the impact effect is in row 1 we need the 
+2nd row of that matrix. With $nv=2$ and $ns=1$ (and of course $n=3$) the targeted number will 
+then be found in
+\texttt{mod.SRirfmeds[2, (ns-1)*n + nv]} or equivalently \texttt{mod.SRirfmeds[2, 2]}; this 
+number turns out to be $0.171304$.
+
+How can we retrieve the corresponding scalar outcomes across all accepted model draws? 
+Admittedly this requires some knowledge of the internal storage structure of the SVAR addon 
+(FIXME: which is why we need to wrap this into another function....), but here is the solution:
+
+\begin{code}
+matrix crosscollect = zeros(mod.SRacc, 1)  
+nv = 2
+ns = 1
+horiz = 1
+loop i=1..mod.SRacc -q
+	crosscollect[i] = mod.acc_draws[i].irfs[1 + horiz][nv,ns]
+endloop
+\end{code}
+
+Now we have all the relevant model results in a single column vector, and finding the model with 
+the result closest to the median target is then straightforward, using gretl's built-in \texttt{iminc} 
+function:
+
+\begin{code}
+drawindex = iminc(abs(crosscollect - mod.SRirfmeds[2,2] ))
+\end{code}
+
+We find that the representative model in this sense is the one with index 58; by construction 
+the associated impulse response value is very close to the median, namely $0.171297$. A user
+interested in a model with a typical inflation reaction to a demand shock at lag one would thus
+call the functions \texttt{SVAR\_hd}, \texttt{FEVD}, and \texttt{GetShock} with an index 
+argument 58 instead of the arbitrary 112.
+
 \subsection{Still to do later (for set identification)}
 
 \begin{itemize}
-\item VMAs and historical decomposition
 \item mixed identification (signs + zero restrictions on $C$)
 \end{itemize}
 
