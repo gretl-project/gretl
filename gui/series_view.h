@@ -56,5 +56,4 @@ int has_sortable_data (windata_t *vwin);
 
 int can_format_data (windata_t *vwin);
 
-#endif
-
+#endif /* SERIES_VIEW_H */

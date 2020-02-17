@@ -150,10 +150,6 @@ static char themepref[12] = "Adwaita";
 static char themepref[12] = "MS-Windows";
 #endif
 
-#if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
-char midiplayer[MAXSTR] = "timidity -ig";
-#endif
-
 /* model table display variables */
 static int modtab_colheads;
 static gboolean modtab_tstats;
@@ -257,10 +253,6 @@ RCVAR rc_vars[] = {
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
-#endif
-#if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
-    { "midiplayer", N_("Program to play MIDI files"), NULL, midiplayer,
-      USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "calculator", N_("Calculator"), NULL, calculator,
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
