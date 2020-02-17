@@ -4560,14 +4560,14 @@
 	</code>
 	<para>
 	  The optional <argname>dP</argname> argument can be used to
-	  retrieve the <by r="n" c="k"/> matrix of derivatives of the
-	  probabilities, where <math>k</math> equals 2<math>m</math> +
-	  <math>m</math>(<math>m</math> + 1)/2. The first
-	  <math>m</math> columns hold the derivatives with respect to
-	  the lower bounds, the next <math>m</math> those with respect
-	  to the upper bounds, and the remainder the derivatives with
-	  respect to the unique elements of the <math>C</math> matrix
-	  in <quote>vech</quote> order.
+	  retrieve the <by r="n" c="k"/> matrix of analytical
+	  derivatives of the probabilities, where <math>k</math>
+	  equals 2<math>m</math> + <math>m</math>(<math>m</math> +
+	  1)/2. The first <math>m</math> columns hold the derivatives
+	  with respect to the lower bounds, the next <math>m</math>
+	  those with respect to the upper bounds, and the remainder
+	  the derivatives with respect to the unique elements of the
+	  <math>C</math> matrix in <quote>vech</quote> order.
 	</para>
       </description>
     </function>

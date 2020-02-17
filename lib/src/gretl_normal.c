@@ -784,8 +784,9 @@ static double ghk_tj (const gretl_matrix *C,
     } else {
 	z = a->val[0] / den;
 	TA = normal_cdf(z);
-	dTA->val[0] = normal_pdf(z) / den;
-	dTA->val[2*m] = -normal_pdf(z) * z/den;
+	x = normal_pdf(z) / den;
+	dTA->val[0] = x;
+	dTA->val[2*m] = -x/den;
     }
 
     if (b->val[0] == huge) {
@@ -793,8 +794,9 @@ static double ghk_tj (const gretl_matrix *C,
     } else {
 	z = b->val[0] / den;
 	TB = normal_cdf(z);
-	dTB->val[m] = normal_pdf(z) / den;
-	dTB->val[2*m] = -normal_pdf(z) * z/den;
+	x = normal_pdf(z) / den;
+	dTB->val[m] = x;
+	dTB->val[2*m] = -x/den;
     }
 
     WT = TB - TA;
@@ -847,7 +849,7 @@ static double ghk_tj (const gretl_matrix *C,
 	    gretl_matrix_zero(dTA);
 	} else {	    
 	    if (x > 8.0) {
-#if GHK_DEBUG
+#if GHK_DEBUG > 1
 		fprintf(stderr, "x=%.3f, flipping!\n", x);
 #endif
 		flip = 1;
@@ -888,15 +890,19 @@ static double ghk_tj (const gretl_matrix *C,
 	}
 
 	if (na(TT->val[j])) {
+#if GHK_DEBUG
 	    fprintf(stderr, "TT is NA at j=%d (x=%g)\n", j, x);
 	    fprintf(stderr, " (TA=%.16g, TB=%.16g, u[j]=%g)\n", TA, TB, u[j]);
+#endif
 	    fx = 0.0;
 	} else {
 	    fx = normal_pdf(TT->val[j]);
 	}
 
 	if (fx < phi_min) {
+#if GHK_DEBUG
 	    fprintf(stderr, "uh-oh, phi=%g\n", fx);
+#endif
 	    gretl_matrix_zero(tmp);	    
 	} else {
 	    scaled_convex_combo(tmp, u[j], dTA, dTB, 1/fx);
