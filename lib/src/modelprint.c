@@ -3117,16 +3117,19 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	val[K_FST] = val[K_PVF] = NADBL;
     } else if (!na(pmod->fstt) && pmod->dfd > 0) {
 	/* format F-stat and get its p-value */
+	int nc = gretl_model_get_int(pmod, "n_clusters");
+	int dfd = nc > 1 ? nc - 1 : pmod->dfd;
+
 	if (tex) {
-	    sprintf(teststr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
+	    sprintf(teststr, "$F(%d, %d)$", pmod->dfn, dfd);
 	} else if ((pmod->ci == PANEL || pmod->ci == LOGISTIC) &&
 		   (pmod->opt & OPT_F)) {
-	    sprintf(teststr, A_("LSDV F(%d, %d)"), pmod->dfn, pmod->dfd);
+	    sprintf(teststr, A_("LSDV F(%d, %d)"), pmod->dfn, dfd);
 	} else {
-	    sprintf(teststr, "F(%d, %d)", pmod->dfn, pmod->dfd);
+	    sprintf(teststr, "F(%d, %d)", pmod->dfn, dfd);
 	}
 	key[K_FST] = teststr;
-	val[K_PVF] = snedecor_cdf_comp(pmod->dfn, pmod->dfd, pmod->fstt);
+	val[K_PVF] = snedecor_cdf_comp(pmod->dfn, dfd, pmod->fstt);
     } else if (!na(pmod->chisq)) {
 	/* alternative: chi-square and its p-value */
 	sprintf(teststr, "%s(%d)", A_("Chi-square"), pmod->dfn);
