@@ -1388,7 +1388,9 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
 	if (info != 0) {
 	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);
 	    err = 1;
-	} else if (rcond < RCOND_WARN && warn != NULL) {
+	} else if (0 && rcond < RCOND_WARN && warn != NULL) {
+	    /* 2020-02-19: not sure we want this! */
+	    fprintf(stderr, "QR_decomp_plus: rcond = %g\n", rcond);
 	    *warn = 1;
 	}
     }
