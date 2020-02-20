@@ -1897,7 +1897,11 @@ static int lib_join_data (ExecState *s,
     return err;
 }
 
-#define ALLOW_GUI_OPEN 1
+static int is_http (const char *s)
+{
+    return (strncmp(s, "http://", 7) == 0 ||
+	    strncmp(s, "https://", 8) == 0);
+}
 
 static int lib_open_append (ExecState *s,
 			    DATASET *dset,
@@ -1910,59 +1914,60 @@ static int lib_open_append (ExecState *s,
     int quiet = (opt & OPT_Q);
     int http = 0;
     int dbdata = 0;
-    int odbc = 0;
-    int ftype;
+    int ftype = -1;
+    int no_dset;
     int err = 0;
 
-    if (cmd->ci == JOIN && (dset == NULL || dset->v == 0)) {
+    no_dset = (dset == NULL || dset->v == 0);
+
+    if (cmd->ci == JOIN && no_dset) {
+	/* "join" is not applicable in the absence of
+	   a dataset */
 	return E_NODATA;
     }
 
-#if ALLOW_GUI_OPEN
-    if (cmd->ci == OPEN && gretl_function_depth() > 0) {
-	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
-			     gretl_command_word(cmd->ci));
-	return E_DATA;
-    }
-#else
-    if (cmd->ci == OPEN && (gretl_in_gui_mode() || gretl_function_depth() > 0)) {
-	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
-			     gretl_command_word(cmd->ci));
-	return E_DATA;
-    }
-#endif
+    /* initial detection of some variants */
 
-    if (cmd->ci != JOIN && (opt & OPT_O)) {
-	odbc = 1;
-    }
-
-    if (!strcmp(cmd->param, "dbnomics")) {
+    if (opt & OPT_W) {
+	/* --www: remote databases only, no other options
+	   applicable */
+	if (opt != OPT_W) {
+	    return E_BADOPT;
+	}
+	ftype = GRETL_NATIVE_DB_WWW;
 	dbdata = 1;
+	*newfile = '\0';
+	strncat(newfile, cmd->param, MAXLEN - 1);
+    } else if (cmd->ci != JOIN && (opt & OPT_O)) {
+	ftype = GRETL_ODBC;
+	dbdata = 1;
+    } else if (!strcmp(cmd->param, "dbnomics")) {
 	ftype = GRETL_DBNOMICS;
-	goto next_step;
+	dbdata = 1;
+    } else if (is_http(cmd->param)) {
+	http = 1;
     }
 
-    err = try_http(cmd->param, newfile, &http);
+    if (dbdata) {
+	if (gretl_function_depth() > 0 && no_dset) {
+	    return E_NODATA;
+	} else {
+	    goto next_step;
+	}
+    }
+
+    if (http) {
+	err = try_http(cmd->param, newfile, NULL);
+    } else {
+	err = get_full_filename(cmd->param, newfile, OPT_NONE);
+    }
+
     if (err) {
 	errmsg(err, prn);
 	return err;
     }
 
-    if (!http && !odbc) {
-	/* not using http or ODBC */
-	err = get_full_filename(cmd->param, newfile, (opt & OPT_W)?
-				OPT_W : OPT_NONE);
-	if (err) {
-	    errmsg(err, prn);
-	    return err;
-	}
-    }
-
-    if (opt & OPT_W) {
-	ftype = GRETL_NATIVE_DB_WWW;
-    } else if (odbc) {
-	ftype = GRETL_ODBC;
-    } else {
+    if (ftype < 0) {
 	ftype = detect_filetype(newfile, OPT_P);
     }
 
@@ -1981,12 +1986,24 @@ static int lib_open_append (ExecState *s,
 	if (err) {
 	    errmsg(err, prn);
 	}
-	return err;
+	return err; /* note: "join" handled */
     }
 
-    dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
-	      ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB ||
-	      ftype == GRETL_ODBC);
+    if (!dbdata) {
+	dbdata = (ftype == GRETL_NATIVE_DB ||
+		  ftype == GRETL_RATS_DB ||
+		  ftype == GRETL_PCGIVE_DB);
+    }
+
+    if (cmd->ci == OPEN && dbdata && no_dset) {
+	return E_NODATA;
+    }
+
+    if (cmd->ci == OPEN && !dbdata && gretl_function_depth() > 0) {
+	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
+			     gretl_command_word(cmd->ci));
+	return E_DATA;
+    }
 
     if (cmd->ci == OPEN && !dbdata) {
 	lib_clear_data(s, dset);
@@ -2059,19 +2076,11 @@ static int lib_open_append (ExecState *s,
 
 static int check_clear_data (void)
 {
-#if ALLOW_GUI_OPEN
     if (gretl_function_depth() > 0) {
 	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
 			     gretl_command_word(CLEAR));
 	return E_DATA;
     }
-#else
-    if (gretl_in_gui_mode() || gretl_function_depth() > 0) {
-	gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
-			     gretl_command_word(CLEAR));
-	return E_DATA;
-    }
-#endif
 
     return 0;
 }
