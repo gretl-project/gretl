@@ -1949,11 +1949,7 @@ static int lib_open_append (ExecState *s,
     }
 
     if (dbdata) {
-	if (gretl_function_depth() > 0 && no_dset) {
-	    return E_NODATA;
-	} else {
-	    goto next_step;
-	}
+	goto next_step;
     }
 
     if (http) {
@@ -1993,10 +1989,6 @@ static int lib_open_append (ExecState *s,
 	dbdata = (ftype == GRETL_NATIVE_DB ||
 		  ftype == GRETL_RATS_DB ||
 		  ftype == GRETL_PCGIVE_DB);
-    }
-
-    if (cmd->ci == OPEN && dbdata && no_dset) {
-	return E_NODATA;
     }
 
     if (cmd->ci == OPEN && !dbdata && gretl_function_depth() > 0) {
