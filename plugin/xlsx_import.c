@@ -666,7 +666,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		if (!strcmp(tmp, "s")) {
 		    /* string from string table */
 		    stringcell = 1;
-		} else if (!strcmp(tmp, "str")) {
+		} else if (!strcmp(tmp, "str") || !strcmp(tmp, "inlineStr")) {
 		    /* "inline" string literal? */
 		    stringcell = 2;
 		}
@@ -724,7 +724,9 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    } else if (!gotv) {
 		pprintf(myprn, ": (%s) no data value", cref);
 		if (gotf) {
-		    pprintf(myprn, "; formula = '%s'\n", formula);
+		    pprintf(myprn, ": formula = '%s'\n", formula);
+		} else if (stringcell) {
+		    pprintf(myprn, ": stringcell\n");
 		} else {
 		    pputc(myprn, '\n');
 		}
