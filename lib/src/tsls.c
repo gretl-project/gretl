@@ -475,6 +475,7 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 	j++;
 
 	if (s != T) {
+	    /* got the wrong number of residuals! */
 	    err = E_DATA;
 	}
 
@@ -525,7 +526,9 @@ static int tsls_loglik (MODEL *pmod,
 	if (err) {
 	    pmod->lnL = NADBL;
 	} else {
-	    /* Davidson and MacKinnon, ETM, p. 538 */
+	    /* Davidson and MacKinnon, ETM, p. 538, taking
+	       kappa = 1 for the just-identified case
+	    */
 	    pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
 	}
     }
