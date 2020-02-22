@@ -11961,7 +11961,7 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
  * gretl_matrix_multi_SVD_ols:
  * @y: T x g matrix of dependent variables.
  * @X: T x k matrix of independent variables.
- * @B: k x g matrix to hold coefficient estimates.
+ * @B: k x g matrix to hold coefficient estimates, or NULL.
  * @E: T x g matrix to hold the regression residuals, or NULL if these are
  * not needed.
  * @XTXi: location to receive (X'X)^{-1}, or NULL if this is not needed.
@@ -11983,12 +11983,12 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     gretl_matrix *A = NULL;
     gretl_matrix *C = NULL;
     double *s = NULL;
+    int free_B = 0;
     int use_dc = 0;
     int err = 0;
 
     if (gretl_is_null_matrix(Y) ||
-	gretl_is_null_matrix(X) ||
-	gretl_is_null_matrix(B)) {
+	gretl_is_null_matrix(X)) {
 	return E_DATA;
     }
 
@@ -12004,6 +12004,14 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     g = Y->cols;
     k = X->cols;
     T = X->rows;
+
+    if (B == NULL) {
+	B = gretl_matrix_alloc(k, g);
+	if (B == NULL) {
+	    return E_ALLOC;
+	}
+	free_B = 1;
+    }
 
     if (B->rows != k || B->cols != g) {
 	err = E_NONCONF;
@@ -12070,6 +12078,10 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     gretl_matrix_free(A);
     gretl_matrix_free(C);
     free(s);
+
+    if (free_B) {
+	gretl_matrix_free(B);
+    }
 
     return err;
 }
@@ -12385,7 +12397,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * gretl_matrix_multi_ols:
  * @y: T x g matrix of dependent variables.
  * @X: T x k matrix of independent variables.
- * @B: k x g matrix to hold coefficient estimates.
+ * @B: k x g matrix to hold coefficient estimates, or NULL.
  * @E: T x g matrix to hold the regression residuals, or NULL if these are
  * not needed.
  * @XTXi: location to receive (X'X)^{-1} on output, or NULL if this is not
@@ -12407,6 +12419,7 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 {
     gretl_matrix *XTX = NULL;
     int g, T, k;
+    int free_B = 0;
     int nasty = 0;
     int err = 0;
 
@@ -12415,14 +12428,22 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     }
 
     if (gretl_is_null_matrix(Y) ||
-	gretl_is_null_matrix(X) ||
-	gretl_is_null_matrix(B)) {
+	gretl_is_null_matrix(X)) {
 	return E_DATA;
     }
 
     g = Y->cols;
     T = X->rows;
     k = X->cols;
+
+    if (B == NULL) {
+	/* create a throw-away B */
+	B = gretl_matrix_alloc(k, g);
+	if (B == NULL) {
+	    return E_ALLOC;
+	}
+	free_B = 1;
+    }
 
     if (B->rows != k || B->cols != g) {
 	fprintf(stderr, "gretl_matrix_multi_ols: B is %d x %d, should be %d x %d\n",
@@ -12477,6 +12498,10 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 	*XTXi = XTX;
     } else {
 	gretl_matrix_free(XTX);
+    }
+
+    if (free_B) {
+	gretl_matrix_free(B);
     }
 
     return err;
