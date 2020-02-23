@@ -356,8 +356,6 @@ static const char *real_funcs_heading (const char *s)
     }
 }
 
-
-
 static GtkTreeStore *make_help_topics_tree (int role)
 {
     const char *fname;
@@ -2019,7 +2017,8 @@ enum {
     HANSL_PRIMER,
     PKGBOOK,
     GRETL_MPI,
-    GRETL_SVM
+    GRETL_SVM,
+    GRETL_DBN
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2153,7 +2152,6 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-svm-a4.pdf"
     };
     const char *fname;
-    FILE *fp;
     int gotit = 0;
     int err = 0;
 
@@ -2188,6 +2186,10 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
 	fname = gretl_x12_is_x13() ? "docX13AS.pdf" : "x12adocV03.pdf";
+    } else if (code == GRETL_DBN) {
+	sprintf(fullpath, "%sfunctions%cdbnomics%cdbnomics.pdf",
+		gretl_home(), SLASH, SLASH);
+	return 0; /* handled */
     } else {
 	return E_DATA;
     }
@@ -2197,18 +2199,16 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     /* is the file available in public dir? */
     sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
 
-    fp = gretl_fopen(fullpath, "r");
-    if (fp != NULL) {
-	fclose(fp);
+    err = gretl_test_fopen(fullpath, "r");
+    if (!err) {
 	gotit = 1;
     }
 
     if (!gotit && code == X12A_REF) {
 	get_x12a_doc_path(fullpath, fname);
 	if (*fullpath != '\0') {
-	    fp = gretl_fopen(fullpath, "r");
-	    if (fp != NULL) {
-		fclose(fp);
+	    err = gretl_test_fopen(fullpath, "r");
+	    if (!err) {
 		gotit = 1;
 	    }
 	}
@@ -2217,9 +2217,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     if (!gotit) {
 	/* or maybe in user's dotdir? */
 	sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
-	fp = gretl_fopen(fullpath, "r");
-	if (fp != NULL) {
-	    fclose(fp);
+	err = gretl_test_fopen(fullpath, "r");
+	if (!err) {
 	    gotit = 1;
 	}
     }
@@ -2286,6 +2285,8 @@ void display_pdf_help (GtkAction *action)
 	    code = GRETL_MPI;
 	} else if (!strcmp(aname, "gretlSVM")) {
 	    code = GRETL_SVM;
+	} else if (!strcmp(aname, "gretlDBN")) {
+	    code = GRETL_DBN;
 	}
     }
 

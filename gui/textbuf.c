@@ -1565,6 +1565,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("gretl + SVM");
     } else if (!strcmp(key, "SetSeed")) {
 	s = _("_Seed for random numbers");
+    } else if (!strcmp(key, "gretlDBN")) {
+	s = _("dbnomics for gretl");
     } else {
 	s = key;
     }
