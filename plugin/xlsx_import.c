@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define FULL_XML_HEADERS
@@ -116,7 +116,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     int i, n = 0;
     int err = 0;
 
-    err = gretl_xml_open_doc_root(xinfo->stringsfile, "sst", 
+    err = gretl_xml_open_doc_root(xinfo->stringsfile, "sst",
 				  &doc, &cur);
 
     if (err) {
@@ -151,7 +151,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 
     cur = cur->xmlChildrenNode;
 
-    /* The strings in an <sst> are mostly set up as 
+    /* The strings in an <sst> are mostly set up as
 
        <si><t>XXX</t></si>
        <si><t>YYY</t></si> ...
@@ -227,9 +227,9 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
     return err;
 }
 
-/* Given the string representation of the shared-string index for 
+/* Given the string representation of the shared-string index for
    a cell with a string value, look up the target string. If the
-   shared strings XML file has not yet been read, its reading is 
+   shared strings XML file has not yet been read, its reading is
    triggered.
 */
 
@@ -248,7 +248,7 @@ static const char *xlsx_string_value (const char *idx, xlsx_info *xinfo,
 
 	if (i >= 0 && i < xinfo->n_strings) {
 	    ret = xinfo->strings[i];
-	} 
+	}
     }
 
     return ret;
@@ -272,8 +272,8 @@ static int letter_val (char c)
    into 1-based row and column indices.
 */
 
-static int xlsx_cell_get_coordinates (const char *s, 
-				      int *row, 
+static int xlsx_cell_get_coordinates (const char *s,
+				      int *row,
 				      int *col)
 {
     char colref[8];
@@ -304,7 +304,7 @@ static int xlsx_cell_get_coordinates (const char *s,
 	}
 	i--;
     }
-	
+
     return err;
 }
 
@@ -328,21 +328,21 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
 	if (s != NULL) {
 	    strncat(xinfo->dset->varname[i], s, VNAMELEN - 1);
 	}
-	err = check_imported_varname(xinfo->dset->varname[i], 
+	err = check_imported_varname(xinfo->dset->varname[i],
 				     i, row, col, prn);
     }
 
     return err;
 }
 
-static void 
+static void
 xlsx_real_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 {
     *xinfo->dset->S[t] = '\0';
     gretl_utf8_strncat_trim(xinfo->dset->S[t], s, OBSLEN - 1);
 }
 
-static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col, 
+static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col,
 				int t, const char *s, PRN *prn)
 {
     int err = 0;
@@ -350,7 +350,7 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col,
     if (t == -1) {
 #if XDEBUG
 	fprintf(stderr, "xlsx_set_obs_string: t=-1, s='%s', skipping\n", s);
-#endif	
+#endif
 	return 0;
     }
 
@@ -366,7 +366,7 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col,
     } else {
 #if XDEBUG
 	fprintf(stderr, "xlsx_set_obs_string: t=%d, s='%s', setting\n", t, s);
-#endif	
+#endif
 	xlsx_real_set_obs_string(xinfo, t, s);
     }
 
@@ -391,9 +391,9 @@ static int xlsx_set_value (xlsx_info *xinfo, int i, int t, double x)
 #if XDEBUG
 	fprintf(stderr, "xlsx_set_value: i=%d, t=%d, x=%g, skipping\n",
 		i, t, x);
-#endif	
+#endif
 	return 0;
-    }    
+    }
 
     if (i < 1 || i >= xinfo->dset->v ||
 	t < 0 || t >= xinfo->dset->n) {
@@ -467,7 +467,7 @@ static int xlsx_var_index (xlsx_info *xinfo, int col)
     }
 
 #if XDEBUG > 2
-    fprintf(stderr, "xlsx_var_index: labels = %d, col = %d, i = %d\n", 
+    fprintf(stderr, "xlsx_var_index: labels = %d, col = %d, i = %d\n",
 	    (xinfo->flags & BOOK_OBS_LABELS)? 1 : 0, col, i);
 #endif
 
@@ -483,7 +483,7 @@ static int xlsx_obs_index (xlsx_info *xinfo, int row)
     }
 
 #if XDEBUG > 2
-    fprintf(stderr, "xlsx_obs_index: varnames = %d, row = %d, t = %d\n", 
+    fprintf(stderr, "xlsx_obs_index: varnames = %d, row = %d, t = %d\n",
 	    (xinfo->flags & BOOK_AUTO_VARNAMES)? 0 : 1, row, t);
 #endif
 
@@ -534,14 +534,14 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
    notion.
 */
 
-static void xlsx_maybe_handle_formula (xlsx_info *xinfo, 
+static void xlsx_maybe_handle_formula (xlsx_info *xinfo,
 				       const char *src,
 				       int i, int t)
 {
     if (i == -1 && t > 0 && (xinfo->flags & BOOK_OBS_LABELS)) {
 	char c, cref[8] = {0};
 	int k;
-	
+
 	if (sscanf(src, "%7[^+-]%c%d", cref, &c, &k) == 3) {
 	    int err, st = 0, col = 0;
 
@@ -550,7 +550,7 @@ static void xlsx_maybe_handle_formula (xlsx_info *xinfo,
 	    } else if (c != '+') {
 		/* we'll only only handle +/- */
 		return;
-	    } 
+	    }
 
 	    err = xlsx_cell_get_coordinates(cref, &st, &col);
 	    if (err || col != xinfo->xoffset + 1) {
@@ -561,7 +561,7 @@ static void xlsx_maybe_handle_formula (xlsx_info *xinfo,
 	    if (!(xinfo->flags & BOOK_AUTO_VARNAMES)) {
 		st--;
 	    }
-		
+
 	    if (st >= 0 && st < t) {
 		const char *s = xinfo->dset->S[st];
 
@@ -584,7 +584,7 @@ static void xlsx_set_dims (xlsx_info *xinfo, int r, int c)
 
     if (c > xinfo->maxcol) {
 	xinfo->maxcol = c;
-    } 
+    }
 }
 
 /* Read the cells in a given row: the basic info we want from
@@ -593,7 +593,7 @@ static void xlsx_set_dims (xlsx_info *xinfo, int r, int c)
    not a property but a sub-element "<v>...</v>".
 */
 
-static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn) 
+static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 {
     PRN *myprn = NULL;
     xmlNodePtr val;
@@ -642,7 +642,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		pprintf(myprn, ": couldn't find 'r' property\n");
 		err = E_DATA;
 		break;
-	    } 
+	    }
 
 	    err = xlsx_cell_get_coordinates(cref, &row, &col);
 	    if (err) {
@@ -726,7 +726,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 
 	    if (!err && xinfo->dset == NULL) {
 		/* on the first pass, check for obs column, varname status */
-		xlsx_check_top_left(xinfo, row, col, stringcell, 
+		xlsx_check_top_left(xinfo, row, col, stringcell,
 				    strval, xval);
 	    }
 
@@ -743,7 +743,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		}
 	    }
 
-	    if (!err && xinfo->dset != NULL && 
+	    if (!err && xinfo->dset != NULL &&
 		col > xinfo->xoffset &&
 		row > xinfo->yoffset) {
 		int i = xlsx_var_index(xinfo, col);
@@ -807,7 +807,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
     if (err) {
 	fprintf(stderr, "xlsx_read_row: returning %d\n", err);
     }
-	    
+
     return err;
 }
 
@@ -876,7 +876,7 @@ static int xlsx_non_numeric_check (xlsx_info *xinfo, PRN *prn)
 
 static int xlsx_read_worksheet (xlsx_info *xinfo,
 				const char *fname,
-				PRN *prn) 
+				PRN *prn)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr data_node = NULL;
@@ -885,7 +885,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
     int gotdata = 0;
     int err = 0;
 
-    sprintf(xinfo->sheetfile, "xl%c%s", SLASH, 
+    sprintf(xinfo->sheetfile, "xl%c%s", SLASH,
 	    xinfo->filenames[xinfo->selsheet]);
 
 #if XDEBUG
@@ -895,7 +895,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
 
     sprintf(xinfo->stringsfile, "xl%csharedStrings.xml", SLASH);
 
-    err = gretl_xml_open_doc_root(xinfo->sheetfile, "worksheet", 
+    err = gretl_xml_open_doc_root(xinfo->sheetfile, "worksheet",
 				  &doc, &cur);
 
     if (err) {
@@ -963,7 +963,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
 		    gretl_string_table_print(xinfo->st, xinfo->dset, fname, prn);
 		}
 	    }
-	}	
+	}
     }
 
     xmlFreeDoc(doc);
@@ -983,7 +983,7 @@ static int xlsx_sheet_has_data (const char *fname)
 
     fullname = g_strdup_printf("xl%c%s", SLASH, fname);
 
-    err = gretl_xml_open_doc_root(fullname, "worksheet", 
+    err = gretl_xml_open_doc_root(fullname, "worksheet",
 				  &doc, &cur);
     if (!err) {
 	cur = cur->xmlChildrenNode;
@@ -1020,7 +1020,7 @@ static int xlsx_workbook_get_sheetnames (xlsx_info *xinfo,
     int ns = 0, found = 0;
     int err;
 
-    err = gretl_xml_open_doc_root(fname, "workbook", 
+    err = gretl_xml_open_doc_root(fname, "workbook",
 				  &doc, &cur);
     if (!err) {
 	cur = cur->xmlChildrenNode;
@@ -1032,10 +1032,10 @@ static int xlsx_workbook_get_sheetnames (xlsx_info *xinfo,
 			ID = (char *) xmlGetProp(c1, (XUC) "id");
 			sheetname = (char *) xmlGetProp(c1, (XUC) "name");
 			if (ID != NULL && sheetname != NULL) {
-			    strings_array_add(&xinfo->sheetnames, 
+			    strings_array_add(&xinfo->sheetnames,
 					      &xinfo->n_sheets,
 					      sheetname);
-			    strings_array_add(&xinfo->filenames, 
+			    strings_array_add(&xinfo->filenames,
 					      &ns, ID);
 			}
 			free(ID);
@@ -1068,7 +1068,7 @@ static void xlsx_expunge_sheet (xlsx_info *xinfo, int i)
     xinfo->n_sheets -= 1;
 }
 
-static int xlsx_match_sheet_id (xlsx_info *xinfo, 
+static int xlsx_match_sheet_id (xlsx_info *xinfo,
 				const char *ID)
 {
     int i;
@@ -1131,13 +1131,13 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
 	}
 	xmlFreeDoc(doc);
     }
-    
+
     if (!err) {
 	int j = 0;
 
 	for (i=0; i<xinfo->n_sheets; i++) {
 	    if (checker[j++] == 0) {
-		fprintf(stderr, "dropping sheet '%s'\n", 
+		fprintf(stderr, "dropping sheet '%s'\n",
 			xinfo->sheetnames[i]);
 		xlsx_expunge_sheet(xinfo, i--);
 	    }
@@ -1149,7 +1149,7 @@ static int xlsx_verify_sheets (xlsx_info *xinfo, PRN *prn)
     return err;
 }
 
-static int xlsx_verify_specific_sheet (xlsx_info *xinfo, 
+static int xlsx_verify_specific_sheet (xlsx_info *xinfo,
 				       int idx, PRN *prn)
 {
     xmlDocPtr doc = NULL;
@@ -1205,12 +1205,12 @@ static int xlsx_verify_specific_sheet (xlsx_info *xinfo,
     return err;
 }
 
-static int xlsx_gather_sheet_names (xlsx_info *xinfo, 
+static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 				    const char *insheet,
-				    int *list, 
+				    int *list,
 				    PRN *prn)
 {
-    gchar *wb_name = g_strdup_printf("xl%cworkbook.xml", SLASH); 
+    gchar *wb_name = g_strdup_printf("xl%cworkbook.xml", SLASH);
     int i, err;
 
     err = xlsx_workbook_get_sheetnames(xinfo, wb_name);
@@ -1260,7 +1260,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo,
 		if (insheet_idx < 0 || insheet_idx >= xinfo->n_sheets) {
 		    /* no, it doesn't work */
 		    insheet_idx = -1;
-		} 
+		}
 	    }
 	    if (insheet_idx < 0) {
 		if (have_insheet_name) {
@@ -1316,7 +1316,7 @@ static void record_xlsx_params (xlsx_info *xinfo, int *list)
    record the offsets, if present.
 */
 
-static int set_xlsx_offsets_from_cli (xlsx_info *xinfo, 
+static int set_xlsx_offsets_from_cli (xlsx_info *xinfo,
 				      const int *list)
 {
     int err = 0;
@@ -1332,14 +1332,14 @@ static int set_xlsx_offsets_from_cli (xlsx_info *xinfo,
 	    xinfo->xoffset = xoff;
 	    xinfo->yoffset = yoff;
 	}
-    } 
+    }
 
     return err;
 }
 
 static int xlsx_sheet_dialog (xlsx_info *xinfo)
 {
-    wbook book;   
+    wbook book;
 
     xlsx_book_init(&book, xinfo, NULL);
 
@@ -1357,7 +1357,7 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo)
 #if XDEBUG
     fprintf(stderr, "xlsx_sheet_dialog: selected=%d, xoff=%d, yoff=%d\n",
 	    book.selected, book.col_offset, book.row_offset);
-#endif    
+#endif
 
     xinfo->xoffset = book.col_offset;
     xinfo->yoffset = book.row_offset;
@@ -1382,7 +1382,7 @@ static void xlsx_dates_check (DATASET *dset)
        Here we see if it might be reasonable to interpret the
        labels as representing MS dates (days since Dec 31, 1899).
 
-       For this purpose we'll require that all the obs labels are 
+       For this purpose we'll require that all the obs labels are
        integer strings, and that the gap between successive values
        should be constant, or variable to a degree that's consistent
        with a sane time-series frequency.
@@ -1442,7 +1442,7 @@ static void xlsx_dates_check (DATASET *dset)
 
 	delta_min = -delta_max;
 	delta_max = -tmp;
-	fprintf(stderr, " xlsx_dates_check: diffmin=%d, diffmax=%d\n", 
+	fprintf(stderr, " xlsx_dates_check: diffmin=%d, diffmax=%d\n",
 		delta_min, delta_max);
     }
 
@@ -1475,11 +1475,11 @@ static void xlsx_dates_check (DATASET *dset)
 	} else {
 	    /* unsupported frequency or nonsensical */
 #if DATE_DEBUG
-	    fprintf(stderr, " delta_min = %d, delta_max = %d (at obs %d), unsupported\n", 
+	    fprintf(stderr, " delta_min = %d, delta_max = %d (at obs %d), unsupported\n",
 		    delta_min, delta_max, t_delta_max);
 #endif
 	    maybe_dates = 0;
-	} 
+	}
     }
 
 #if DATE_DEBUG
@@ -1498,7 +1498,7 @@ static void xlsx_dates_check (DATASET *dset)
 }
 
 static int finalize_xlsx_import (DATASET *dset,
-				 xlsx_info *xinfo, 
+				 xlsx_info *xinfo,
 				 const char *fname,
 				 gretlopt opt,
 				 PRN *prn)
@@ -1534,7 +1534,7 @@ static int finalize_xlsx_import (DATASET *dset,
     if (!err) {
 	err = merge_or_replace_data(dset, &xinfo->dset,
 				    get_merge_opts(opt), prn);
-    } 
+    }
 
     if (!err && !merge) {
 	dataset_add_import_info(dset, fname, GRETL_XLSX);
@@ -1586,10 +1586,10 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		/* canceled */
 		err = -1;
 		goto bailout;
-	    } 
+	    }
 	} else {
 	    err = set_xlsx_offsets_from_cli(&xinfo, list);
-	} 
+	}
     }
 
     if (!err) {
@@ -1597,7 +1597,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
     }
 
     if (!err && xinfo.dset != NULL) {
-	err = finalize_xlsx_import(dset, &xinfo, fname, opt, prn); 
+	err = finalize_xlsx_import(dset, &xinfo, fname, opt, prn);
 	if (!err && gui) {
 	    record_xlsx_params(&xinfo, list);
 	}
