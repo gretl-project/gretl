@@ -571,6 +571,22 @@ static void gui_show_activity (void)
 
 #ifdef GRETL_OPEN_HANDLER
 
+static gchar *absolutize_path (const char *fname)
+{
+    gchar *ret;
+
+    if (*fname == '~' || g_path_is_absolute(fname)) {
+	ret = g_strdup(fname);
+    } else {
+	gchar *dirname = g_get_current_dir();
+
+	ret = g_build_filename(dirname, fname, NULL);
+	g_free(dirname);
+    }
+
+    return ret;
+}
+
 static gboolean maybe_hand_off (char *filearg, char *auxname)
 {
     long gpid = gretl_prior_instance();
@@ -585,11 +601,14 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	if (resp != GRETL_YES) {
 	    /* try hand-off to prior gretl instance */
 	    char *fname = filearg;
+	    gchar *abspath;
 
 	    if (*fname == '\0') {
 		fname = tryfile_is_set() ? tryfile : auxname;
 	    }
-	    ret = forward_open_request(gpid, fname);
+	    abspath = absolutize_path(fname);
+	    ret = forward_open_request(gpid, abspath);
+	    g_free(abspath);
 	}
     }
 
