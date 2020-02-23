@@ -705,6 +705,17 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		} else if (!gotf && !xmlStrcmp(val->name, (XUC) "f")) {
 		    formula = (char *) xmlNodeGetContent(val);
 		    gotf = 1;
+		} else if (!gotv && !xmlStrcmp(val->name, (XUC) "is")) {
+		    xmlNodePtr ist = val->xmlChildrenNode;
+
+		    if (ist != NULL && !xmlStrcmp(ist->name, (XUC) "t")) {
+			tmp = (char *) xmlNodeGetContent(ist);
+			if (tmp != NULL) {
+			    strval = gretl_strdup(tmp);
+			    free(tmp);
+			    gotv = 1;
+			}
+		    }
 		}
 		val = val->next;
 	    }
