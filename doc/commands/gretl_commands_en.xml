@@ -2508,6 +2508,10 @@
 	  <flag>--name</flag>
 	  <optparm>identifier</optparm>
 	  <effect>rename imported series</effect>
+	</option>
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>import from ODBC database</effect>
 	</option>	
       </options>
     </usage>
@@ -2517,21 +2521,28 @@
 	Reads the variables in <repl>varlist</repl> from a database
 	(gretl, dbnomics, RATS 4.0 or PcGive), which must have been
 	opened previously using the <cmdref targ="open"/> command.
+	The <lit>data</lit> command can also be used to import series
+	from an ODBC database; for details on that variant see
+	<guideref targ="chap:odbc"/>.
+      </para>
+      <para>
 	The data frequency and sample range may be established via the
 	<cmdref targ="setobs"/> and <cmdref targ="smpl"/> commands
-	prior to using this command. Here is a full example:</para>
+	prior to using this command. Here's an example:
+      </para>
       <code>
-	open macrodat.rat
-	setobs 4 1959:1
-	smpl ; 1999:4
-	data GDP_JP GDP_UK
+	open fedstl.bin
+	setobs 12 2000:01
+	smpl ; 2019:12
+	data unrate cpiaucsl
       </code>
       <para>
-	The commands above open a database named
-	<filename>macrodat.rat</filename>, establish a quarterly data set
-	starting in the first quarter of 1959 and ending in the fourth
-	quarter of 1999, and then import the series named
-	<lit>GDP_JP</lit> and <lit>GDP_UK</lit>.</para>
+	The commands above open the database named
+	<filename>fedstl.bin</filename> (which is supplied with
+	gretl), establish a monthly dataset starting in January
+	2000 and ending in December of 2019, and then import the
+	series named <lit>unrate</lit> (unemployment rate) and
+	<lit>cpiaucsl</lit> (all-items CPI).</para>
       <para>
 	If <lit>setobs</lit> and <lit>smpl</lit> are not specified in this
 	way, the data frequency and sample range are set using the first
@@ -2586,7 +2597,6 @@
 	is restricted to the case where a single series is specified
 	for importation.
       </para>
-
     </description>
 
     <gui-access>

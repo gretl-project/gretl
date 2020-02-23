@@ -12,7 +12,9 @@ In the following section we explain what is needed for ODBC support in
 gretl. We provide some background information on how ODBC works
 in section~\ref{sec:odbc-base}, and explain the details of getting
 gretl to retrieve data from a database in
-section~\ref{sec:odbc-syntax}.
+section~\ref{sec:odbc-syntax}. Section~\ref{sec:odbc-examples}
+provides some example of usage, and section~\ref{sec:odbc-conn} gives
+some details on the management of ODBC connections.
 
 \section{ODBC support}
 \label{sec:odbc-support}
@@ -253,7 +255,7 @@ data coming from the DBMS (it's a Wednesday), that entry is left blank
 in our series \texttt{y}.
 
 \section{Examples}
-\label{sec:examples}
+\label{sec:odbc-examples}
 
 \begin{table}[htbp]
   \centering
@@ -426,6 +428,23 @@ used. Printing out the variable \texttt{bar} thus produces
 \end{code}
 
 \end{script}
+
+\section{Connectivity details}
+\label{sec:odbc-conn}
+
+It may be helpful to supply some details on gretl's management of ODBC
+connections. First, when the \cmd{open} command is invoked with the
+\option{odbc} option, gretl checks to see if a connection to the
+specified DSN (Data Source Name) can be established via the ODBC
+function \texttt{SQLConnect}. If not, an error is flagged; if so, the
+connection is dropped (\texttt{SQLDisconnect}) but the DSN details are
+stored. The stored DSN then remains the implicit source for subsequent
+invocation of the \cmd{data} command, with the \option{odbc} option,
+until a countermanding \cmd{open} command is issued.
+
+Each time an OBDC-related \cmd{data} command is issued, gretl attempts
+to re-establish a connection to the given DSN; the connection is
+dropped once the data transfer is complete.
 
 %%% Local Variables:
 %%% mode: latex
