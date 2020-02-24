@@ -332,7 +332,7 @@ static int script_type (const char *fname)
 
 static void maybe_fix_dbname (char *dbname)
 {
-    FILE *fp = NULL;
+    int err;
 
     if (strstr(dbname, ".bin") == NULL &&
 	strstr(dbname, ".rat") == NULL &&
@@ -341,17 +341,14 @@ static void maybe_fix_dbname (char *dbname)
 	strcat(dbname, ".bin");
     }
 
-    fp = gretl_fopen(dbname, "rb");
+    err = gretl_test_fopen(dbname, "rb");
 
-    if (fp != NULL) {
-	fclose(fp);
-    } else if (!g_path_is_absolute(dbname)) {
+    if (err && !g_path_is_absolute(dbname)) {
 	gchar *tmp = g_build_filename(gretl_home(), "db",
 				      dbname, NULL);
 
-	fp = gretl_fopen(tmp, "rb");
-	if (fp != NULL) {
-	    fclose(fp);
+	err = gretl_test_fopen(tmp, "rb");
+	if (!err) {
 	    strcpy(dbname, tmp);
 	}
 	g_free(tmp);
