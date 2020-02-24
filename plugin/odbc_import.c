@@ -179,8 +179,6 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
 	fprintf(stderr, " odinfo->dsn = '%s'\n", odinfo->dsn);
 	fprintf(stderr, " odinfo->username = '%s'\n", odinfo->username);
 	*err = 1;
-    } else {
-	fprintf(stderr, "Connected to DSN '%s'\n", odinfo->dsn);
     }
 
  bailout:
