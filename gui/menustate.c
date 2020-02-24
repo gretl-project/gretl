@@ -950,7 +950,7 @@ void set_main_window_title (const char *name, gboolean modified)
 	} else {
 	    prog = g_strdup("gretl");
 	}
-	title = g_strdup_printf("%s: %s%s", prog, name, mod);
+	title = g_strdup_printf("%s: session %s%s", prog, name, mod);
 	g_free(prog);
     }
 
