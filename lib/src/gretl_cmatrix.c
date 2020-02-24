@@ -1716,7 +1716,7 @@ int apply_cmatrix_unary_op (gretl_matrix *targ,
 			    int op)
 {
     int i, n = src->cols * src->rows;
-    int err;
+    int err = 0;
 
     if (!cmatrix_validate(src, 0) || !cmatrix_validate(targ, 0)) {
 	return E_INVARG;
