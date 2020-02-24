@@ -95,6 +95,39 @@ function bundle HIP_setup(series y, list EXOG, list ENDOG[null], \
     return ret
 end function
 
+function scalar HIP_setoption(bundle *b, string opt, scalar value)
+
+    err = 0
+   
+    if opt=="verbose"
+        if (value < 0) || (value > 3)
+            err = 1
+        else
+            b["verbose"] = value
+        endif
+    elif opt=="vcvmeth"
+        if (value < 0) || (value > 2)
+            err = 2
+        else
+            b["vcvmeth"] = value
+        endif
+    else
+        err = 3
+    endif
+    
+    if err>0
+        printf "Warning in DPB_setoption\n"
+	if err < 3
+	    printf "Illegal value %s = %d\n", opt, value
+	else
+	    printf "%s unrecognised option\n", opt
+	endif
+    endif
+
+    return err
+end function
+
+
 /********************************************************
 
  After mle estimation, replaces the estimated parameters
@@ -245,39 +278,6 @@ function scalar HIP_estimate(bundle *b)
     endif
 
     return errcode
-end function
-
-
-function scalar HIP_setoption(bundle *b, string opt, scalar value)
-
-    err = 0
-   
-    if opt=="verbose"
-        if value>2
-            err = 1
-        else
-            b["verbose"] = value
-        endif
-    elif opt=="vcvmeth"
-        if value>2
-            err = 2
-        else
-            b["vcvmeth"] = value
-        endif
-    else
-        err = 3
-    endif
-    
-    if err>0
-        printf "Warning in DPB_setoption\n"
-	if err < 3
-	    printf "Illegal value %s = %d\n", opt, value
-	else
-	    printf "%s unrecognised option\n", opt
-	endif
-    endif
-
-    return err
 end function
 
 
