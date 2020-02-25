@@ -345,7 +345,7 @@ want. Alternatively, you can save the bundle as a model via the
 \emph{File $>$ Save to session as icon} menu entry. If you do, assuming
 that you called your bundle ``Bonham'' again, then it will show in the
 ``Icon view'' gretl window, together with other session elements you
-wamt to keep (see Figure \ref{fig:iconview}).
+want to keep (see Figure \ref{fig:iconview}).
 
 \subsection{Heteroskedastic probit}
 
@@ -381,19 +381,19 @@ instead we split its workload between four separate functions:
   parameters as the all-rounder \texttt{HIP} function seen
   above. Returns a bundle.
 \item[HIP\_setoption] Set some details of the estimation procedure; in
-  this case, we used it to compute standard erros out of the inverse
-  Hessian onstead of the OPG matrix, so as to match exactly the
+  this case, we used it to compute standard errors using the inverse
+  Hessian instead of the OPG matrix, so as to match exactly the
   figures reported in Greene's book.
 \item[HIP\_estimate] Estimates the model: takes as argument the bundle
   address, plus an optional scalar for the verbosity.
 \item[HIP\_printout] Prints out the results contained in the bundle.
 \end{description}
 
-This may be convenient, at times, because it gives you a finer control
-on ``what happens if''. For example, the Cragg--Donald statistics gets
-computed during the initialization of the bundle. You may want to
-decide whether to proceed with estimation or not depending on how
-strong your instruments are.
+This division of tasks may be convenient at times, because it gives
+you finer control over ``what happens if''. For example, the
+Cragg--Donald statistic gets computed during the initialization of the
+bundle and you may wish to decide whether to proceed with estimation
+or not depending on how strong your instruments are.
 
 The output, replicating table 17.7 in Greene's textbook, should look
 like this:
@@ -555,10 +555,9 @@ If this happens, here are some points to consider.
 
 \section{The boring stuff}
 
-
 For computational purposes, we reparametrize the model using the
 Cholesky decomposition $\RfVar^{-1} = CC'$. Moreover, by defining the
-quantities below it is possible to reparametrise the joint density in
+quantities below it is possible to reparametrize the joint density in
 a computationally convenient way:
 \begin{eqnarray*}
   \nu_i & = & \frac{1}{\sqrt{1- \ScCov' \ScCov}}
@@ -575,8 +574,8 @@ The estimable parameters are $\theta' = \left[\ProbitPar', \VarPar',
 \subsection{The loglikelihood}
 \label{sec:loglik}
 
-As usual in these models, we divide the loglikelihood for one
-observation in a marginal and a conditional component:
+As usual in such models, we divide the loglikelihood for each
+observation into a marginal and a conditional component:
 \begin{eqnarray*}
   \ell_i & = & \ell^m_i + \ell^c_i \\
   \ell^c_i & = & \ln P(\Depvar | \ExoInst, \CSReg, \RfDist) \\
@@ -603,8 +602,8 @@ zero.
 \label{sec:score}
 
 The analytical score will be derived in steps: first the marginal
-component, then the conditional component. Of course, the chain rule will
-be very useful.
+component, then the conditional component. Of course, the chain rule
+will be very useful.
 
 Note first that the marginal component only depends on $\vRfPar$
 (through $\ScRfDist$) and $\vechC$. Hence,
@@ -634,7 +633,7 @@ define $\mu(\nu_i)$ as
 \frac{\phi(\nu_i)}{\Phi(\nu_i)} - (1-\Depvar)\frac{\phi(\nu_i)}{1
   -\Phi(\nu_i)}
 \]
-which is the customary (signed) inverse Mill's ratio. Then,
+which is the customary (signed) inverse Mills ratio. Then,
 \begin{eqnarray*}
   \pder{\nu_i}{\ProbitPar} & = & \frac{1}{\CondSig \sqrt{1- \ScCov'
       \ScCov}} \Expla' \\
