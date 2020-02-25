@@ -72,6 +72,14 @@ struct xlsx_info_ {
 
 typedef struct xlsx_info_ xlsx_info;
 
+enum {
+    CELL_NONE,
+    CELL_NUMBER,
+    CELL_STRINGREF,
+    CELL_FORMULA,
+    CELL_ISTRING
+};
+
 static void xlsx_info_init (xlsx_info *xinfo)
 {
     xinfo->flags = BOOK_TOP_LEFT_EMPTY;
@@ -343,7 +351,9 @@ static void
 xlsx_real_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 {
     *xinfo->dset->S[t] = '\0';
-    gretl_utf8_strncat_trim(xinfo->dset->S[t], s, OBSLEN - 1);
+    if (s != NULL) {
+	gretl_utf8_strncat_trim(xinfo->dset->S[t], s, OBSLEN - 1);
+    }
 }
 
 static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col,
@@ -369,7 +379,7 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int row, int col,
 	err = E_DATA;
     } else {
 #if XDEBUG
-	fprintf(stderr, "xlsx_set_obs_string: t=%d, s='%s', setting\n", t, s);
+	fprintf(stderr, "xlsx_set_obs_string: t=%d, s='%s'\n", t, s);
 #endif
 	xlsx_real_set_obs_string(xinfo, t, s);
     }
@@ -495,8 +505,8 @@ static int xlsx_obs_index (xlsx_info *xinfo, int row)
 }
 
 static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
-				 int stringcell, const char *s,
-				 double x)
+				 const char *s, double x,
+				 PRN *myprn)
 {
     if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 1) {
 	/* We're in the top left cell of the reading area:
@@ -505,28 +515,33 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 	   be the first numerical value.
 	*/
 #if XDEBUG
-	fprintf(stderr, "xlsx_check_top_left: r=%d, c=%d, x=%g, stringcell=%d, "
-		"s='%s'\n", r, c, x, stringcell, s);
+	pprintf(myprn, "xlsx_check_top_left: r=%d, c=%d, x=%g, s='%s'\n",
+		r, c, x, s);
 #endif
 	if (!na(x)) {
 	    /* got a valid numerical value: that means we don't
 	       have variable names on the top row */
 	    xinfo->flags |= BOOK_AUTO_VARNAMES;
-	} else if (stringcell && import_obs_label(s)) {
+	} else if (import_obs_label(s)) {
 	    /* blank or "obs" or similar */
 	    xinfo->flags |= BOOK_OBS_LABELS;
 	    xinfo->obscol = c;
 	}
-	if (!na(x) || stringcell) {
+	if (!na(x) || s != NULL) {
 	    /* record the fact that the top-left corner is not empty */
 	    xinfo->flags &= ~BOOK_TOP_LEFT_EMPTY;
 	}
     } else if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 2) {
 	/* first row, second column */
+#if XDEBUG
+	pprintf(myprn, "xlsx_check_top_left: r=%d, c=%d, x=%g, s='%s'\n",
+		r, c, x, s);
+#endif
 	if (!na(x)) {
 	    /* got a number, not a varname */
 	    xinfo->flags |= BOOK_AUTO_VARNAMES;
 	} else {
+	    pprintf(myprn, "set namerow = %d\n", r);
 	    xinfo->namerow = r;
 	}
     }
@@ -591,6 +606,94 @@ static void xlsx_set_dims (xlsx_info *xinfo, int r, int c)
     }
 }
 
+static char *node_get_inline_string (xmlNodePtr val)
+{
+    xmlNodePtr ist = val->xmlChildrenNode;
+    char *ret = NULL;
+
+    if (ist != NULL && !xmlStrcmp(ist->name, (XUC) "t")) {
+	char *tmp = (char *) xmlNodeGetContent(ist);
+
+	if (tmp != NULL) {
+	    ret = gretl_strdup(tmp);
+	    free(tmp);
+	}
+    }
+
+    return ret;
+}
+
+static int has_formula_child (xmlNodePtr val)
+{
+    int ret = 0;
+
+    while (val) {
+	if (!xmlStrcmp(val->name, (XUC) "f")) {
+	    ret = 1;
+	    break;
+	}
+	val = val->next;
+    }
+
+    return ret;
+}
+
+static int get_cell_basics (xmlNodePtr cur,
+			    char **cref, int *celltype,
+			    int *row, int *col,
+			    PRN *prn)
+{
+    char *ctype = NULL;
+    int err = 0;
+
+    pputs(prn, " cell");
+
+    *cref = (char *) xmlGetProp(cur, (XUC) "r");
+    if (*cref == NULL) {
+	pprintf(prn, ": couldn't find 'r' property\n");
+	return E_DATA;
+    }
+
+    err = xlsx_cell_get_coordinates(*cref, row, col);
+    if (err) {
+	pprintf(prn, ": couldn't find coordinates\n");
+	return E_DATA;
+    }
+
+    ctype = (char *) xmlGetProp(cur, (XUC) "t");
+    if (ctype == NULL) {
+	/* default to numeric? */
+	ctype = gretl_strdup("n");
+    }
+
+    pprintf(prn, "(%d, %d; type %s)", *row, *col, ctype);
+
+    if (!strcmp(ctype, "n") || !strcmp(ctype, "b")) {
+	/* numeric of boolean (0/1) */
+	*celltype = CELL_NUMBER;
+    } else if (!strcmp(ctype, "d")) {
+	/* date: try numeric? */
+	*celltype = CELL_NUMBER;
+    } else if (!strcmp(ctype, "s")) {
+	/* reference to entry in string table */
+	*celltype = CELL_STRINGREF;
+    } else if (!strcmp(ctype, "str")) {
+	/* string representing a formula */
+	*celltype = CELL_FORMULA;
+    } else if (!strcmp(ctype, "inlineStr")) {
+	/* in-cell string literal (or maybe formula!) */
+	if (has_formula_child(cur->xmlChildrenNode)) {
+	    *celltype = CELL_FORMULA;
+	} else {
+	    *celltype = CELL_ISTRING;
+	}
+    }
+
+    free(ctype);
+
+    return err;
+}
+
 /* Read the cells in a given row: the basic info we want from
    each cell is its reference ("r"), e.g. "A2"; its type
    ("t"), e.g. "s", if present; and its value, which is
@@ -636,24 +739,13 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    char *formula = NULL;
 	    const char *strval = NULL;
 	    double xval = NADBL;
-	    int stringcell = 0;
+	    int celltype = CELL_NONE;
 	    int gotv = 0;
 	    int gotf = 0;
 
-	    pprintf(myprn, " cell");
-
-	    cref = (char *) xmlGetProp(cur, (XUC) "r");
-	    if (cref == NULL) {
-		pprintf(myprn, ": couldn't find 'r' property\n");
-		err = E_DATA;
-		break;
-	    }
-
-	    err = xlsx_cell_get_coordinates(cref, &row, &col);
+	    err = get_cell_basics(cur, &cref, &celltype, &row, &col, myprn);
 	    if (err) {
-		pprintf(myprn, ": couldn't find coordinates\n", row, col);
-	    } else {
-		pprintf(myprn, "(%d, %d)", row, col);
+		break;
 	    }
 
 	    if (0 /* row <= xinfo->yoffset || col <= xinfo->xoffset */) {
@@ -666,78 +758,55 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		goto skipit;
 	    }
 
-	    tmp = (char *) xmlGetProp(cur, (XUC) "t");
-	    if (tmp != NULL) {
-		if (!strcmp(tmp, "s")) {
-		    /* string from string table */
-		    stringcell = 1;
-		} else if (!strcmp(tmp, "str")) {
-		    /* string representing a formula */
-		    stringcell = 2;
-		} else if (0 && !strcmp(tmp, "inlineStr")) {
-		    /* in-cell string literal (problem!) */
-		    stringcell = 3;
-		}
-		free(tmp);
-	    }
-
 	    val = cur->xmlChildrenNode;
 
-	    /* find a value in the current row/cell */
+	    /* try to find a value in the current row/cell */
 
 	    while (val && !err && !gotv) {
 		if (!xmlStrcmp(val->name, (XUC) "v")) {
+		    /* value element */
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp != NULL) {
-			if (stringcell) {
-			    if (stringcell == 1) {
-				strval = xlsx_string_value(tmp, xinfo, prn);
-			    } else {
-				strval = gretl_strdup(tmp);
+			if (celltype == CELL_NUMBER) {
+			    pprintf(myprn, " value = %s\n", tmp);
+			    if (*tmp != '\0' && check_atof(tmp) == 0) {
+				xval = atof(tmp);
 			    }
+			} else if (celltype == CELL_STRINGREF) {
+			    /* look up string table */
+			    strval = xlsx_string_value(tmp, xinfo, prn);
 			    if (strval == NULL) {
 				pputs(myprn, " value = ?\n");
 				err = E_DATA;
 			    } else {
 				pprintf(myprn, " value = '%s'\n", strval);
 			    }
-			} else {
-			    pprintf(myprn, " value = %s\n", tmp);
-			    if (*tmp != '\0' && check_atof(tmp) == 0) {
-				xval = atof(tmp);
-			    }
 			}
 			free(tmp);
 			gotv = 1;
 		    }
-		} else if (!gotf && !xmlStrcmp(val->name, (XUC) "f")) {
+		} else if (celltype == CELL_FORMULA &&
+			   !xmlStrcmp(val->name, (XUC) "f")) {
+		    /* formula element */
 		    formula = (char *) xmlNodeGetContent(val);
-		    gotf = 1;
-		} else if (stringcell == 3 && !xmlStrcmp(val->name, (XUC) "is")) {
-		    /* not reached currently! (2020-02-24) */
-		    xmlNodePtr ist = val->xmlChildrenNode;
-
-		    if (ist != NULL && !xmlStrcmp(ist->name, (XUC) "t")) {
-			tmp = (char *) xmlNodeGetContent(ist);
-			if (tmp != NULL) {
-			    strval = gretl_strdup(tmp);
-			    pprintf(myprn, " value = '%s'\n", strval);
-			    free(tmp);
-			    gotv = 1;
-			}
+		    if (formula != NULL) {
+			gotf = 1;
+		    }
+		} else if (celltype == CELL_ISTRING &&
+			   !xmlStrcmp(val->name, (XUC) "is")) {
+		    /* string element */
+		    strval = node_get_inline_string(val);
+		    if (strval != NULL) {
+			gotv = 1;
 		    }
 		}
+		/* proceed to next child of given cell */
 		val = val->next;
-	    }
-
-	    if (gotf && formula == NULL) {
-		gotf = 0;
 	    }
 
 	    if (!err && xinfo->dset == NULL) {
 		/* on the first pass, check for obs column, varname status */
-		xlsx_check_top_left(xinfo, row, col, stringcell,
-				    strval, xval);
+		xlsx_check_top_left(xinfo, row, col, strval, xval, myprn);
 	    }
 
 	    if (err) {
@@ -756,17 +825,18 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		row > xinfo->yoffset) {
 		int i = xlsx_var_index(xinfo, col);
 		int t = xlsx_obs_index(xinfo, row);
+		int strcell = celltype == CELL_STRINGREF || celltype == CELL_ISTRING;
 
 		/* here we're on the second or possibly third pass,
 		   with a dataset allocated */
 
 		if (pass == 3) {
 		    if (i > 0 && t >= 0) {
-			if (stringcell && in_gretl_list(xinfo->codelist, i)) {
+			if (strcell && in_gretl_list(xinfo->codelist, i)) {
 			    xlsx_handle_stringval3(xinfo, i, t, strval, prn);
 			}
 		    }
-		} else if (stringcell && stringcell < 3) {
+		} else if (strcell) {
 		    if (row == xinfo->namerow) {
 			err = xlsx_set_varname(xinfo, i, strval, row, col, prn);
 		    } else if (col == xinfo->obscol) {
@@ -775,18 +845,19 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 			err = xlsx_handle_stringval(xinfo, i, t, strval,
 						    row, col, prn);
 		    }
-		    if (stringcell == 2) {
+		    if (celltype == CELL_ISTRING) {
 			/* finished with copy of string literal */
 			free((char *) strval);
 		    }
+		} else if (row == xinfo->namerow) {
+		   err = xlsx_set_varname(xinfo, i, strval, row, col, prn);
 		} else if (gotv) {
 		    err = xlsx_set_value(xinfo, i, t, xval);
 		} else if (gotf) {
 		    xlsx_maybe_handle_formula(xinfo, formula, i, t);
-		} else if (row == xinfo->namerow) {
-		    err = xlsx_set_varname(xinfo, i, NULL, row, col, prn);
 		}
-	    } else if (stringcell == 2 && strval != NULL) {
+	    } else if (celltype == CELL_ISTRING && strval != NULL) {
+		/* finished with copy of string literal */
 		free((char *) strval);
 	    }
 
