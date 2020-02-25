@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-12-09 16:42-0500\n"
-"PO-Revision-Date: 2020-02-25 11:31+0800\n"
+"PO-Revision-Date: 2020-02-25 14:27+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_TW\n"
@@ -1004,10 +1004,9 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   警告: 變數 %d 在觀察值位置 %d 處有遺漏值 (missing values)\n"
 
 #: lib/src/csvdata.c:2206
-#, fuzzy, c-format
-#| msgid "ERROR: variable %d (%s), observation %d, non-numeric value\n"
+#, c-format
 msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
-msgstr "錯誤: 變數 %d (%s), 樣本 %d, 並非數值\n"
+msgstr "變數 %d (%s): 非數值 =  %d (%.2f percent)\n"
 
 #: lib/src/csvdata.c:2213
 #, c-format
@@ -1214,16 +1213,12 @@ msgid "Data appended OK\n"
 msgstr "資料已新增成功\n"
 
 #: lib/src/csvdata.c:7111
-#, fuzzy
-#| msgid "Data appended OK\n"
 msgid "Data modified OK\n"
-msgstr "資料已新增成功\n"
+msgstr "資料已修改成功\n"
 
 #: lib/src/csvdata.c:7113
-#, fuzzy
-#| msgid "No changes were made"
 msgid "No changes were made to the dataset\n"
-msgstr "匯入資料過程正常"
+msgstr "資料並沒有任何變動\n"
 
 #: lib/src/dataio.c:109
 msgid "Varname exceeds the maximum of 31 characters"
@@ -1515,10 +1510,9 @@ msgid "dataset restore: dataset is not resampled\n"
 msgstr "資料檔並未被重新取樣 (resampled)\n"
 
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4241
-#, fuzzy, c-format
-#| msgid "No data found.\n"
+#, c-format
 msgid "%s: no data found"
-msgstr "未發現任何資料!\n"
+msgstr "%s: 未發現任何資料!"
 
 #: lib/src/dbread.c:405 lib/src/dbread.c:689
 msgid "Couldn't open database index file"
@@ -1730,9 +1724,8 @@ msgid "Cross-correlation function for %s and %s"
 msgstr " %s 和 %s 的交叉相關函數 (Cross-correlation function)"
 
 #: lib/src/describe.c:3898
-#, fuzzy
 msgid "  LAG      XCF"
-msgstr "落後期 %d\n"
+msgstr "  LAG      XCF"
 
 #: lib/src/describe.c:4210
 msgid "Residual periodogram"
@@ -1775,14 +1768,12 @@ msgid ""
 msgstr ""
 
 #: lib/src/describe.c:4290
-#, fuzzy
 msgid "Local Whittle Estimator"
-msgstr "從本機讀取(_l)"
+msgstr "Local Whittle Estimator"
 
 #: lib/src/describe.c:4291 lib/src/describe.c:4317
-#, fuzzy
 msgid "Estimated degree of integration"
-msgstr "估計機率密度圖(_d)"
+msgstr "估計的整合階次"
 
 #: lib/src/describe.c:4316
 msgid "GPH test"
@@ -1846,25 +1837,23 @@ msgid "Ex. kurtosis"
 msgstr "Ex. kurtosis"
 
 #: lib/src/describe.c:4712
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "5% percentile"
-msgstr "%g percent interval"
+msgstr "5% percentile"
 
 #: lib/src/describe.c:4714
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% percentile"
-msgstr "%g percent interval"
+msgstr "95% percentile"
 
 #: lib/src/describe.c:4715
-#, fuzzy
 msgid "Interquartile range"
-msgstr "設定子樣本範圍(_S)"
+msgstr "Interquartile range"
 
 #: lib/src/describe.c:4716 lib/src/describe.c:4934 lib/src/describe.c:5603
 #: gui/guiprint.c:723 gui/guiprint.c:1152
-#, fuzzy
 msgid "Missing obs."
-msgstr "新增樣本(_A)"
+msgstr "Missing obs."
 
 #: lib/src/describe.c:4718
 msgid "Within s.d."
@@ -2006,9 +1995,9 @@ msgid "equal"
 msgstr "虛無假設 H0: 母體變異數相等l\n"
 
 #: lib/src/describe.c:6335
-#, fuzzy, c-format
+#, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
-msgstr "虛無假設: 平均數之差 = %g\n"
+msgstr "   樣本間平均數之差 = %g - %g = %g\n"
 
 #: lib/src/describe.c:6337
 msgid "   Null hypothesis: The two population means are the same.\n"
@@ -8406,24 +8395,23 @@ msgid "License"
 msgstr "版權權明 (license)"
 
 #: gui/calculator.c:184
-#, fuzzy
 msgid "Gaussian sampling distribution"
-msgstr "畫樣本分配圖"
+msgstr "Gaussian 樣本分配"
 
 #: gui/calculator.c:186
-#, fuzzy, c-format
+#, c-format
 msgid "t(%d) sampling distribution"
-msgstr "畫樣本分配圖"
+msgstr "t(%d) 樣本分配"
 
 #: gui/calculator.c:188
-#, fuzzy, c-format
+#, c-format
 msgid "Chi-square(%d) sampling distribution"
-msgstr "畫樣本分配圖"
+msgstr "Chi-square(%d) 樣本分配"
 
 #: gui/calculator.c:191
-#, fuzzy, c-format
+#, c-format
 msgid "F(%d, %d) sampling distribution"
-msgstr "畫樣本分配圖"
+msgstr "F(%d, %d) 樣本分配"
 
 #: gui/calculator.c:204
 #, c-format
@@ -8446,19 +8434,19 @@ msgid "F(%d, %d)"
 msgstr "F(%d, %d)"
 
 #: gui/calculator.c:212
-#, fuzzy, c-format
+#, c-format
 msgid "Binomial(%d, %g)"
-msgstr "二項分配"
+msgstr "Binomial(%d, %g)"
 
 #: gui/calculator.c:214
-#, fuzzy, c-format
+#, c-format
 msgid "Poisson(%g)"
-msgstr "poisson 波氐分配"
+msgstr "Poisson(%g)"
 
 #: gui/calculator.c:216
-#, fuzzy, c-format
+#, c-format
 msgid "Weibull(%g, %g)"
-msgstr "%g%% 信賴區間 = %g to %g"
+msgstr "Weibull(%g, %g)"
 
 #: gui/calculator.c:411
 msgid "Standard errors"
@@ -8469,9 +8457,8 @@ msgid "Incomplete entry"
 msgstr "Incomplete entry"
 
 #: gui/calculator.c:1019 gui/dialogs.c:959
-#, fuzzy
 msgid "Invalid entry"
-msgstr "資料檔格式錯誤\n"
+msgstr "錯誤的輸入"
 
 #: gui/calculator.c:1071
 #, no-c-format
@@ -9048,14 +9035,12 @@ msgid "gretl: model tests"
 msgstr "gretl: 模型檢定"
 
 #: gui/callbacks.c:527 gui/selector.c:4251
-#, fuzzy
 msgid "Loess"
-msgstr "_Loess"
+msgstr "Loess"
 
 #: gui/callbacks.c:527 gui/library.c:4567 gui/selector.c:4253
-#, fuzzy
 msgid "Nadaraya-Watson"
-msgstr "_Nadaraya-Watson..."
+msgstr "Nadaraya-Watson"
 
 #: gui/callbacks.c:580 gui/callbacks.c:730 gui/selector.c:6980
 msgid "Enter formula for new variable"
@@ -9175,9 +9160,8 @@ msgid "current working directory"
 msgstr "目前工作子目錄"
 
 #: gui/callbacks.c:811
-#, fuzzy
 msgid "Open .gfn file"
-msgstr "建立 gfn 檔案"
+msgstr "開啟 .gfn 檔"
 
 #: gui/callbacks.c:811
 msgid "Start looking in:"
@@ -9203,14 +9187,14 @@ msgid ""
 msgstr ""
 
 #: gui/cmdstack.c:194
-#, fuzzy, c-format
+#, c-format
 msgid "# Log re-started %s\n"
-msgstr "取對數再一階差分(_L)"
+msgstr "# Log re-started %s\n"
 
 #: gui/cmdstack.c:232
-#, fuzzy, c-format
+#, c-format
 msgid "# Log started %s\n"
-msgstr "指令紀錄(_C)"
+msgstr "# Log started %s\n"
 
 #: gui/cmdstack.c:234
 msgid ""
@@ -9365,10 +9349,8 @@ msgid "DB.NOMICS search on '%s' in dataset %s/%s\n"
 msgstr ""
 
 #: gui/database.c:2116
-#, fuzzy
-#| msgid "No observations were found"
 msgid "No matches were found"
-msgstr "沒有發現任何樣本"
+msgstr "沒有發現任何資料"
 
 #: gui/database.c:2434
 msgid ""
@@ -9420,15 +9402,12 @@ msgid "showing series %d-%d of %d"
 msgstr ""
 
 #: gui/database.c:3477
-#, fuzzy
 msgid "No datasets were found"
-msgstr "無符合規則之數值資料"
+msgstr "找不到任何資料"
 
 #: gui/database.c:3572 gui/database.c:3601
-#, fuzzy
-#| msgid "No observations were found"
 msgid "No series were found"
-msgstr "沒有發現任何樣本"
+msgstr "找不到任何 series 變數 "
 
 #: gui/database.c:3720 gui/database.c:3843
 msgid "No function packages found"
@@ -10942,10 +10921,9 @@ msgid "Stata files (*.do)"
 msgstr "Stata 檔 (*.do)"
 
 #: gui/fileselect.c:936
-#, fuzzy
 #| msgid "Octave files (*.m)"
 msgid "Dynare files (*.mod)"
-msgstr "Octave 檔 (*.m)"
+msgstr "Dynare 檔 (*.mod)"
 
 #: gui/fileselect.c:946 gui/fileselect.c:950
 msgid "Gretl datafiles (*.gdt)"
@@ -11915,9 +11893,8 @@ msgid "Save to session as icon"
 msgstr "存入分析檔中為圖示 (icon)"
 
 #: gui/gpt_control.c:4284 gui/gpt_control.c:4373
-#, fuzzy
 msgid "Freeze data labels"
-msgstr "另存新檔(_a)"
+msgstr "凍結資料標籤"
 
 #: gui/gpt_control.c:4287 gui/gpt_control.c:4375
 msgid "Clear data labels"
@@ -12048,10 +12025,8 @@ msgid "Color %d"
 msgstr "第 %d 條線顏色: "
 
 #: gui/gpt_dialog.c:1485
-#, fuzzy
-#| msgid "Select color"
 msgid "Shade color"
-msgstr "選擇顏色"
+msgstr "陰影顏色"
 
 #: gui/gpt_dialog.c:1487 gui/gpt_dialog.c:1524
 msgid "Fill color"
@@ -12327,16 +12302,12 @@ msgid "graph page options"
 msgstr "繪圖選項"
 
 #: gui/gretl.c:122
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "You may supply the name of a data file on the command line"
 msgid ""
 "\n"
 "You may supply the name of a data or script file on the command line"
 msgstr ""
 "\n"
-"你必需在指令行中輸入資料檔的名稱"
+"你必需在指令行中輸入資料檔或指令檔的名稱"
 
 #: gui/gretl.c:126
 msgid "open a script file on startup"
@@ -12469,25 +12440,23 @@ msgstr "R 指令檔"
 
 #: gui/gretl.c:1632
 msgid "Octave script"
-msgstr "Octave 指令"
+msgstr "Octave 指令檔"
 
 #: gui/gretl.c:1633
-#, fuzzy
 msgid "Python script"
-msgstr "gretl: 編輯 Python script"
+msgstr "Python 指令檔"
 
 #: gui/gretl.c:1634
-#, fuzzy
 msgid "Julia program"
-msgstr "gretl: 編輯 Julia 程式"
+msgstr "Julia 指令檔"
 
 #: gui/gretl.c:1635
 msgid "Ox program"
-msgstr "Ox 程式"
+msgstr "Ox 指令檔"
 
 #: gui/gretl.c:1636
 msgid "Stata program"
-msgstr "Stata 程式"
+msgstr "Stata 指令檔"
 
 #: gui/gretl.c:1638
 msgid "_Session files"
@@ -12830,10 +12799,8 @@ msgid "_100-based indices of selected variables"
 msgstr "計算以_100 為開始的指數"
 
 #: gui/gretl.c:1749
-#, fuzzy
-#| msgid "_Squares of selected variables"
 msgid "_Standardize selected variables"
-msgstr "取平方(_S)"
+msgstr "將變數標準化(_S)"
 
 #: gui/gretl.c:1751
 msgid "_Index variable"
@@ -13152,10 +13119,9 @@ msgid "_Dynamic panel model"
 msgstr "動態 panel 模型(_D)"
 
 #: gui/gretl.c:1850
-#, fuzzy
 #| msgid "logistic"
 msgid "FE logistic"
-msgstr "logistic 分配"
+msgstr "FE logistic"
 
 #: gui/gretl.c:1851
 msgid "_Limited dependent variable"
@@ -13182,18 +13148,16 @@ msgid "_Probit"
 msgstr "_Probit"
 
 #: gui/gretl.c:1859
-#, fuzzy
 msgid "Bi_variate"
-msgstr "二應變數(_v)"
+msgstr "Bi_variate"
 
 #: gui/gretl.c:1860
 msgid "_Random effects"
 msgstr "隨機效果(_R)"
 
 #: gui/gretl.c:1861
-#, fuzzy
 msgid "To_bit"
-msgstr "To_bit..."
+msgstr "To_bit"
 
 #: gui/gretl.c:1862
 msgid "_Heckit"
@@ -13208,9 +13172,8 @@ msgid "_Duration data"
 msgstr "_Duration 資料模型..."
 
 #: gui/gretl.c:1865
-#, fuzzy
 msgid "Lo_gistic"
-msgstr "Logistic"
+msgstr "羅吉斯模型 Lo_gistic"
 
 #: gui/gretl.c:1866
 msgid "_Interval regression"
@@ -18185,14 +18148,12 @@ msgid "Seasonal dummies"
 msgstr "季節虛擬變數 (Seasonal dummies)"
 
 #: plugin/addons-i18n.c:77
-#, fuzzy
 msgid "Time trend"
-msgstr "新增時間趨勢變數(_T)"
+msgstr "時間趨勢"
 
 #: plugin/addons-i18n.c:78
-#, fuzzy
 msgid "VAR variables"
-msgstr "變數顯示順序(_S)"
+msgstr "VAR 變數"
 
 #: plugin/addons-i18n.c:79
 #, fuzzy
@@ -18305,9 +18266,8 @@ msgid "ARMA initialization"
 msgstr "ARMA initialization"
 
 #: plugin/arma.c:1374
-#, fuzzy
 msgid "user-specified values"
-msgstr "gretl: 臨界值"
+msgstr "使用者自行定義值"
 
 #: plugin/arma.c:1376
 msgid "Hannan-Rissanen method"
@@ -18319,25 +18279,21 @@ msgid "small MA values"
 msgstr "gretl: 臨界值"
 
 #: plugin/arma.c:1380
-#, fuzzy
 msgid "using nonlinear AR model"
-msgstr "/模型/非線性模型/非線性迴歸法(_N)"
+msgstr "使用非線性 AR 模型"
 
 #: plugin/arma.c:1382
-#, fuzzy
 msgid "using linear AR model"
-msgstr "非線性模型(_N)"
+msgstr "使用線性 AR 模型"
 
 #: plugin/arma_cml.c:701
-#, fuzzy
 #| msgid "Criterion"
 msgid "BHHH iteration"
-msgstr "Criterion"
+msgstr "BHHH 遞迴 (iteration)"
 
 #: plugin/arma_common.c:527
-#, fuzzy
 msgid "No usable data were found"
-msgstr "無符合規則之數值資料"
+msgstr "無可用之資料"
 
 #: plugin/arma_common.c:731 plugin/arma_common.c:812
 msgid "Error in arma command"
