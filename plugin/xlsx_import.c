@@ -633,7 +633,8 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    const char *strval = NULL;
 	    double xval = NADBL;
 	    int stringcell = 0;
-	    int gotv = 0, gotf = 0;
+	    int gotv = 0;
+	    int gotf = 0;
 
 	    pprintf(myprn, " cell");
 
@@ -666,9 +667,12 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		if (!strcmp(tmp, "s")) {
 		    /* string from string table */
 		    stringcell = 1;
-		} else if (!strcmp(tmp, "str") || !strcmp(tmp, "inlineStr")) {
-		    /* "inline" string literal? */
+		} else if (!strcmp(tmp, "str")) {
+		    /* string representing a formula */
 		    stringcell = 2;
+		} else if (0 && !strcmp(tmp, "inlineStr")) {
+		    /* in-cell string literal (problem!) */
+		    stringcell = 3;
 		}
 		free(tmp);
 	    }
@@ -705,13 +709,15 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		} else if (!gotf && !xmlStrcmp(val->name, (XUC) "f")) {
 		    formula = (char *) xmlNodeGetContent(val);
 		    gotf = 1;
-		} else if (!gotv && !xmlStrcmp(val->name, (XUC) "is")) {
+		} else if (stringcell == 3 && !xmlStrcmp(val->name, (XUC) "is")) {
+		    /* not reached currently! (2020-02-24) */
 		    xmlNodePtr ist = val->xmlChildrenNode;
 
 		    if (ist != NULL && !xmlStrcmp(ist->name, (XUC) "t")) {
 			tmp = (char *) xmlNodeGetContent(ist);
 			if (tmp != NULL) {
 			    strval = gretl_strdup(tmp);
+			    pprintf(myprn, " value = '%s'\n", strval);
 			    free(tmp);
 			    gotv = 1;
 			}
@@ -736,8 +742,6 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		pprintf(myprn, ": (%s) no data value", cref);
 		if (gotf) {
 		    pprintf(myprn, ": formula = '%s'\n", formula);
-		} else if (stringcell) {
-		    pprintf(myprn, ": stringcell\n");
 		} else {
 		    pputc(myprn, '\n');
 		}
@@ -758,7 +762,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 			    xlsx_handle_stringval3(xinfo, i, t, strval, prn);
 			}
 		    }
-		} else if (stringcell) {
+		} else if (stringcell && stringcell < 3) {
 		    if (row == xinfo->namerow) {
 			err = xlsx_set_varname(xinfo, i, strval, row, col, prn);
 		    } else if (col == xinfo->obscol) {
