@@ -5,12 +5,7 @@ nulldata 360
 setobs 12 1989:1
 
 strings ToDnld = defarray("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z",
-  "FED/G17_CAPUTL/B50001.S")
-
-# FIXME the second of the above is broken at present
-# check with:
-# https://api.db.nomics.world/v22/series/FED/G17_CAPUTL?limit=1000&offset=0&q=FED%2FG17_CAPUTL%2FCAPUTL.B50001.S&observations=1&align_periods=1&dimensions=%7B%7D
-#
+  "FED/G17_CAPUTL/CAPUTL.B50001.S")
 
 scalar N = nelem(ToDnld)
 

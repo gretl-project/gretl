@@ -255,7 +255,7 @@ function string build_parms(const string pcode, const string dcode,
         string mid = build_URL_mid(spec)
         head ~= sanitize_url(mid)
     endif
-    string tail = sprintf("limit=%d&offset=%d&format=json&observations=true&complete_missing_periods=true", limit, offset)
+    string tail = sprintf("limit=%d&offset=%d&format=json&observations=1&complete_missing_periods=1", limit, offset)
     return head ~ tail
 end function
 

@@ -166,7 +166,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     bundle ret
     ret.error = 0
     ret.has_data = 0
-    string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=true&complete_missing_periods=true"
+    string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1&complete_missing_periods=1"
     string json
     ret.error = dbn_get_json(parms, verbose, &json)
     if ret.error
@@ -226,7 +226,7 @@ end function
 function bundles dbnomics_get_dataset_dimensions(const string provider,
                                                  const string dset, bool verbose[0])
 
-    parms = sprintf("series/%s/%s?limit=0&offset=0&facets=true", provider, dset)
+    parms = sprintf("series/%s/%s?limit=0&offset=0&facets=1", provider, dset)
     string json
     err = dbn_get_json(parms, verbose, &json)
 
