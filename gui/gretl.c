@@ -572,7 +572,7 @@ static gchar *absolutize_path (const char *fname)
 {
     gchar *ret;
 
-    if (*fname == '~' || g_path_is_absolute(fname)) {
+    if (*fname == '\0' || *fname == '~' || g_path_is_absolute(fname)) {
 	ret = g_strdup(fname);
     } else {
 	gchar *dirname = g_get_current_dir();
