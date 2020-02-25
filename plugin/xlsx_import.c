@@ -1450,6 +1450,7 @@ static void xlsx_dates_check (DATASET *dset)
     int date_min = 0, date_max = 0;
     int d, delta_min = 0, delta_max = 0;
     int t_delta_max = 0;
+    int dzero_count = 0;
 
 #if DATE_DEBUG
     fprintf(stderr, "xlsx_dates_check: starting\n");
@@ -1492,7 +1493,9 @@ static void xlsx_dates_check (DATASET *dset)
 	    }
 	    d = atoi(dset->S[t]) - atoi(dset->S[t-1]);
 	    if (d == 0) {
-		fprintf(stderr, "dates? delta = 0 at obs %d\n", t+1);
+		if (++dzero_count < 20) {
+		    fprintf(stderr, "dates? delta = 0 at obs %d\n", t+1);
+		}
 	    }
 	    if (t == 1) {
 		delta_min = delta_max = d;
