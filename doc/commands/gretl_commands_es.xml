@@ -2509,28 +2509,40 @@
 	  <optparm>identificador</optparm>
 	  <effect>Renombra series importadas</effect>
 	</option>
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>Importa de una base de datos ODBC</effect>
+	</option>	
       </options>
     </usage>
 
     <description>
       <para>
-	Lee las variables de <repl>listavariables</repl> de una base de datos (Gretl, dbnomics,
- 	RATS 4.0 o PcGive) que debe abrirse previamente utilizando la instrucción
-	<cmdref targ="open"/>. Puedes establecer la frecuencia de los datos y el rango
-	de la muestra mediante las instrucciones <cmdref targ="setobs"/> y <cmdref targ="smpl"/>
-	antes de utilizar esta instrucción. Este es un ejemplo completo:
+	Lee las variables de <repl>listavariables</repl> de un archivo de base
+	de datos (propio de Gretl, RATS 4.0 o PcGive) que debe abrirse
+	previamente utilizando la instrucción <cmdref targ="open"/>. Puedes usar
+	la instrucción <lit>data</lit> para importar series de DB.NOMICS o de
+	una base de datos ODBC; para obtener detalles sobre estas variantes
+	consulta <mnu targ="gretlDBN">gretl + DB.NOMICS</mnu> o
+	<guideref targ="chap:odbc"/>, respectivamente.
+      </para>
+      <para>
+  Puedes establecer la frecuencia de los datos y el rango de la muestra
+  mediante las instrucciones <cmdref targ="setobs"/> y <cmdref targ="smpl"/>,
+	antes de utilizar esta instrucción. Este es un ejemplo:
 	    </para>
       <code>
-	open macrodat.rat
-	setobs 4 1959:1
-	smpl ; 1999:4
-	data GDP_JP GDP_UK
+	open fedstl.bin
+	setobs 12 2000:01
+	smpl ; 2019:12
+	data unrate cpiaucsl
       </code>
       <para>
-	Las instrucciones de arriba abren una base de datos llamada <filename>macrodat.rat</filename>,
-	determinan que los datos son de tipo trimestral, que comienzan en el primer
-	trimestre de 1959, que la muestra finaliza en el cuarto trimestre de 1999, y
-	luego se importan las series denominadas <lit>GDP_JP</lit> y <lit>GDP_UK</lit>.
+	Las instrucciones de arriba abren una base de datos (que se ofrece con
+	Gretl) llamada <filename>fedstl.bin</filename>, determinan que los
+	datos son mensuales, que empiezan en enero de 2000, que la muestra
+	finaliza en diciembre de 2019, y que se importan las series denominadas
+	<lit>unrate</lit> (tasa de desempleo) y <lit>cpiaucsl</lit> (IPC de todos).
 	    </para>
       <para>
 	Si no especificas <lit>setobs</lit> y <lit>smpl</lit> de este modo,
@@ -2586,7 +2598,6 @@
 	se restringe al caso en el que especificas una única serie a
 	importar.
       </para>
-
     </description>
 
     <gui-access>
@@ -7920,7 +7931,7 @@
       </para>
       <para>
 	Para obtener más detalles sobre todo esto, consulta la
-	<mnu targ="Pkgbook">Guía para paquetes de funciones</mnu>.
+	<mnu targ="Pkgbook">Guía para paquetes de funciones</mnu> de Gretl.
       </para>
     </description>
 
@@ -9734,30 +9745,45 @@
 	  <flag>--www</flag>
 	  <effect>Utiliza una base de datos del servidor de Gretl</effect>
 	</option>
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>Utiliza una base de datos ODBC</effect>
+	</option>
 	<optnote>Mira abajo para opciones adicionales especiales</optnote>
       </options>
       <examples>
         <example>open data4-1</example>
         <example>open voter.dta</example>
-	<example>open fedbog --www</example>
+        <example>open fedbog.bin --www</example>
+        <example>open dbnomics</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Abre un archivo de datos o una base de datos. Si ya hay abierto
-	un archivo de datos, este se substituye por lo que se va a abrir. Para
-	añadir datos al conjunto vigente, consulta <cmdref targ="append"/>
-	y (para tener mayor flexibilidad) <cmdref targ="join"/>.
+	Abre un archivo de datos o una base de datos (consulta
+	<guideref targ="chap:datafiles"/> para ver una explicación de esta
+	distinción). Las consecuencias son algo diferentes en los dos casos.
+	Cuando abres un <emphasis>archivo de datos</emphasis>, se lee todo su
+	contenido en el espacio de trabajo de Gretl, substituyendo la base de
+	datos vigente (si la hay). Para añadir datos al conjunto vigente, en
+	lugar de sustituirlo, consulta <cmdref targ="append"/> o (para tener
+	mayor flexibilidad) <cmdref targ="join"/>. Cuando abres una
+	<emphasis>base de datos</emphasis>, no se carga inmediatamente
+	ningún dato; más bien, se establece la fuente para llamadas posteriores
+	de la instrucción <cmdref targ="data"/>, que se utiliza para importar series
+	concretas. Para obtener más detalles respecto a las bases de datos,
+	consulta la sección titulada <quote>Abriendo una base de datos</quote>
+	más abajo.
       </para>
       <para>
-	Si no indicas una ruta completa, el programa busca en algunas rutas
-	destacadas para tratar de encontrar el archivo, de las que el directorio vigente
-	(<cmdref targ="workdir"/>) es la primera elección. Si no indicas
-	el sufijo en el nombre de archivo (como en el primer ejemplo de arriba),
-	Gretl asume que es un archivo de datos propio con sufijo
-	<lit>.gdt</lit>. Basándose en el nombre del archivo y varias reglas
-	heurísticas, Gretl tratará de detectar el formato del archivo de
+	Si no indicas <repl>nombrearchivo</repl> con una ruta completa, Gretl
+	busca en algunas rutas destacadas para tratar de encontrar el archivo, de
+	las que el directorio vigente (<cmdref targ="workdir"/>) es la primera
+	elección. Si no indicas el sufijo en el nombre de archivo (como en el
+	primer ejemplo de arriba), Gretl asume que es un archivo de datos propio
+	con sufijo <lit>.gdt</lit>. Basándose en el nombre del archivo y varias
+	reglas heurísticas, Gretl tratará de detectar el formato del archivo de
 	datos (propio, texto plano, CSV, MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
@@ -9778,24 +9804,13 @@
 	variables que tengas definidas en ese momento (que no sean series, pues
 	estas se eliminan obligatoriamente), utiliza la opción <opt>preserve</opt>.
       </para>
-      <subhead context="cli">Abriendo una base de datos</subhead>
-      <para>
-	También puedes utilizar la instrucción <lit>open</lit> para abrir una
-	base de datos (de Gretl, RATS 4.0 o PcGive) para leerla. En ese
-	caso, deberá ir seguida de la instrucción <cmdref targ="data"/>
-	para extraer series concretas de la base de datos. Cuando indicas
-	la opción <lit>www</lit>, el programa va a tratar de acceder a la
-	base de datos del nombre indicado en el servidor de Gretl (por
-	ejemplo, la base de datos de los tipos de interés de la Reserva
-	Federal del tercer ejemplo de arriba).
-      </para>
       <subhead context="cli">Archivos de hoja de cálculo</subhead>
       <para>
-	Al abrir un archivo de hoja de cálculo (Gnumeric, Open Document
-	o MS Excel), puedes facilitar tres parámetros adicionales después del
-	nombre del archivo. Primero, puedes escoger una hoja de cálculo
-	concreta dentro del archivo. Esto se hace, bien indicando el número
-	de hoja por medio de la sintaxis (&eg;, <opt>sheet=2</opt>), o
+	Al abrir un archivo de datos con formato de hoja de cálculo (Gnumeric,
+	Open Document o MS Excel), puedes facilitar tres parámetros adicionales
+	después del nombre del archivo. Primero, puedes escoger una hoja de
+	cálculo concreta dentro del archivo. Esto se hace, bien indicando el
+	número de hoja por medio de la sintaxis (&eg;, <opt>sheet=2</opt>), o
 	bien indicando el nombre de la hoja (si lo sabes) entre comillas, como
 	en <opt>sheet="MacroData"</opt> pues, por defecto, se va a leer
 	la primera hoja de cálculo del archivo. También puedes especificar
@@ -9857,9 +9872,31 @@
       <para>
 	Por defecto, cuando importas un archivo que contiene series con valores
 	en formato de cadena de texto, se abre una caja de texto mostrándote
-	el contenido del archivo <lit>string_table.txt</lit>, que consiste en
+	el contenido de <lit>string_table.txt</lit>, un archivo que contiene
 	la correspondencia entre las cadenas y su codificación numérica.
 	Puedes eliminar este proceder mediante la opción<opt>quiet</opt>.
+      </para>
+      <subhead context="cli">Abriendo una base de datos</subhead>
+      <para>
+	Como se comentó antes, puedes utilizar la instrucción <lit>open</lit>
+	para abrir un archivo con una base de datos, y a continuación leerlo con
+	la instrucción <cmdref targ="data"/>. Los tipos de archivos que se admiten
+	son las bases de datos propias de Gretl, RATS 4.0 y PcGive.
+      </para>
+      <para>
+	Además de la lectura de estos tipos de archivos en la máquina local,
+	se admiten otros tres casos más. Primero, cuando indicas la opción
+	<lit>www</lit>, Gretl va a tratar de acceder a una base de datos
+	propia de Gretl con el nombre que proporciones, en el servidor de
+	Gretl (por ejemplo, la base de datos <lit>fedbog.bin</lit> con los
+	tipos de interés de la Reserva Federal del tercer ejemplo que se
+	ha indicado más arriba). En segundo lugar, puedes usar la instrucción
+	<quote><lit>open dbnomics</lit></quote> para establecer que
+	DB.NOMICS sea el origen para leer bases de datos; sobre esto
+	consulta <mnu targ="gretlDBN">dbnomics for gretl</mnu>. En
+	tercer lugar, si indicas la opción <opt>odbc</opt>, Gretl va a
+	tratar de acceder a un banco de datos ODBC. Esta opción se explica
+	detalladamente en <guideref targ="chap:odbc"/>.
       </para>
     </description>
 
