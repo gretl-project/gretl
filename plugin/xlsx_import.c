@@ -44,6 +44,10 @@
 #define XDEBUG 0
 #define DATE_DEBUG 1
 
+/* possibly useful reference:
+   http://officeopenxml.com/SScontentOverview.php
+*/
+
 struct xlsx_info_ {
     BookFlag flags;
     int trydates;
