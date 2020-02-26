@@ -3332,8 +3332,14 @@ print_iter_info (int iter, double crit, int type, int k,
 
     if (iter < 0) {
 	pprintf(prn, "--- %s:\n", _("FINAL VALUES"));
-    } else {
+    } else if (details) {
 	pprintf(prn, "%s %4d: ", _("Iteration"), iter);
+    } else {
+	if (iter == 1) {
+	    gretl_print_ensure_vspace(prn);
+	    pprintf(prn, "--- %s\n", _("Iteration"));
+	}
+	pprintf(prn, "%4d: ", iter);
     }
 
     if (na(crit) || na(-crit)) {
