@@ -390,6 +390,7 @@ static int session_append_text (const char *tname, char *buf)
     session.texts = texts;
     session.texts[nt] = text;
     session.ntexts += 1;
+    mark_session_changed();
 
     return 0;
 }
