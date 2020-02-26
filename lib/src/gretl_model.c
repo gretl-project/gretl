@@ -2329,6 +2329,10 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 	    nx = pmod->ncoeff;
 	}
 	if (nx > 0) {
+	    if (nx > pmod->list[0] - 1) {
+		/* don't read off the end of pmod->list! */
+		nx = pmod->list[0] - 1;
+	    }
 	    list = gretl_list_new(nx);
 	    if (list != NULL) {
 		for (i=1; i<=list[0]; i++) {
