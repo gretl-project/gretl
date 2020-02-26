@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-12-09 16:42-0500\n"
-"PO-Revision-Date: 2020-02-25 14:27+0800\n"
+"PO-Revision-Date: 2020-02-27 00:16+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_CN\n"
@@ -162,11 +162,11 @@ msgstr "检定统计值"
 #: lib/src/adf_kpss.c:716 lib/src/adf_kpss.c:719 lib/src/adf_kpss.c:1498
 #: plugin/stats_tables.c:239
 msgid "Critical values"
-msgstr "临界值\t\t"
+msgstr "临界值"
 
 #: lib/src/adf_kpss.c:725
 msgid "1st-order autocorrelation coeff. for e"
-msgstr "1 阶自我相关系数 for e "
+msgstr "1 阶自我相关系数 for e"
 
 #: lib/src/adf_kpss.c:1067
 msgid "squared time trend variable"
@@ -198,9 +198,8 @@ msgid "%s is a constant"
 msgstr "%s 是一个常数"
 
 #: lib/src/adf_kpss.c:1645
-#, fuzzy
 msgid "Choi meta-tests:"
-msgstr "gretl: 无母数检定(_N)"
+msgstr "Choi meta-检定:"
 
 #: lib/src/adf_kpss.c:1646
 #, fuzzy
@@ -414,7 +413,7 @@ msgstr "Numerical summary with bootstrapped confidence interval for median"
 #: lib/src/boxplots.c:314
 #, c-format
 msgid "Numerical summary for %s"
-msgstr " %s 的数值法摘要"
+msgstr "%s 的数值法摘要"
 
 #: lib/src/boxplots.c:317 gui/gpt_control.c:4305 gui/gpt_control.c:4383
 msgid "Numerical summary"
@@ -471,7 +470,7 @@ msgstr "虚无假设 H0: 回归自变数  %s 之系数 = 0"
 #: lib/src/nonparam.c:1062 lib/src/nonparam.c:1214 lib/src/varprint.c:1251
 #: lib/src/varprint.c:1257 lib/src/varprint.c:1265
 msgid "Null hypothesis"
-msgstr "虚无假设 H0 "
+msgstr "虚无假设 H0"
 
 #: lib/src/compare.c:291
 msgid "no seasonal effects or trend"
@@ -500,7 +499,7 @@ msgstr "季节虚拟变数"
 #: lib/src/compare.c:359 lib/src/compare.c:367
 #, c-format
 msgid "Test on Model %d:"
-msgstr "对 Model %d 的检定: "
+msgstr "对 Model %d 的检定:"
 
 #: lib/src/compare.c:374 lib/src/vartest.c:1493
 msgid "Wald test"
@@ -674,12 +673,12 @@ msgid ""
 msgstr ""
 "Quandt 结构转变概似值比例检定 (LR test for structural break): 结构变转变点未"
 "知,\n"
-"样本数前后各减去 15%"
+"样本数前后各减去 15%。"
 
 #: lib/src/compare.c:2789
 #, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr " Wald test 最大值 = %g, 出现在样本位置 %s"
+msgstr "Wald test 最大值 = %g, 出现在样本位置 %s"
 
 #: lib/src/compare.c:2792
 #, c-format
@@ -767,9 +766,8 @@ msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' 表示其值超过 95% 信赖区间)"
 
 #: lib/src/compare.c:3656 lib/src/gretl_model.c:4113
-#, fuzzy
 msgid "Test of common factor restriction"
-msgstr "gretl: 无母数检定(_N)"
+msgstr "common factor 限制检定"
 
 #: lib/src/compare.c:3661 lib/src/gretl_restrict.c:2394
 #: lib/src/gretl_restrict.c:2998 lib/src/gretl_restrict.c:3006
@@ -953,7 +951,7 @@ msgstr "   一定不是 4 位数的年变数标记\n"
 #, c-format
 msgid ""
 "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
-msgstr " (%d) 是二进位 (binary) 资料 (line %d:%d): 这不是一个一般的文字档\n"
+msgstr "(%d) 是二进位 (binary) 资料 (line %d:%d): 这不是一个一般的文字档\n"
 
 #: lib/src/csvdata.c:1772 lib/src/dataio.c:2942
 msgid "Data file is empty\n"
@@ -1094,7 +1092,7 @@ msgstr "寻找列 (row) 资料之标记...\n"
 
 #: lib/src/csvdata.c:3403 lib/src/csvdata.c:3406 lib/src/dataio.c:2970
 msgid "parsing"
-msgstr "进行资料剖析 (parsing)..."
+msgstr "进行资料剖析 (parsing)"
 
 #: lib/src/csvdata.c:3554 lib/src/dataio.c:3176 lib/src/dataio.c:3247
 #: lib/src/dbread.c:1780
@@ -1268,12 +1266,12 @@ msgstr ""
 #: lib/src/dataio.c:198
 #, c-format
 msgid "Bad character '%c' in date string"
-msgstr "日期中有错误的字符: '%c'"
+msgstr "日期 '%c' 中有错误的字符"
 
 #: lib/src/dataio.c:200
 #, c-format
 msgid "Bad character %d in date string"
-msgstr "日期中有错误的字符: %d "
+msgstr "日期中有错误的字符: %d"
 
 #: lib/src/dataio.c:411 lib/src/dataio.c:416 lib/src/dataio.c:429
 #, c-format
@@ -1340,7 +1338,7 @@ msgstr "无资料注记可写入"
 #: lib/src/dataio.c:2934
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr " (%d) 是二进位 (binary) 资料: 这不是一个一般的文字档\n"
+msgstr "(%d) 是二进位 (binary) 资料: 这不是一个一般的文字档\n"
 
 #: lib/src/dataio.c:3025
 #, c-format
@@ -1364,7 +1362,7 @@ msgstr "无法辨识之资料型态"
 #: lib/src/dataio.c:3455 lib/src/dataio.c:3498
 #, c-format
 msgid "Extraneous character '%c' in data"
-msgstr "资料中有奇怪的字符: '%c' "
+msgstr "资料中有奇怪的字符: '%c'"
 
 #: lib/src/dataio.c:3457 lib/src/dataio.c:3500
 #, c-format
@@ -1374,7 +1372,7 @@ msgstr "资料中有奇怪的字符 (0x%x)"
 #: lib/src/dataio.c:3463 lib/src/dataio.c:3506
 #, c-format
 msgid "'%s' -- number out of range!"
-msgstr "'%s' -- 超过样本范围"
+msgstr "'%s' -- 超过样本范围!"
 
 #: lib/src/dataio.c:3659
 #, c-format
@@ -1422,7 +1420,7 @@ msgstr "仍有资料在使用中"
 #: lib/src/tokenize.c:3353 plugin/arbond.c:2700
 #, c-format
 msgid "variable %d duplicated in the command list."
-msgstr "变数 %d 重复定义在指令 (command list) 之中"
+msgstr "变数 %d 重复定义在指令 (command list) 之中."
 
 #: lib/src/dataset.c:2002 gui/gui_utils.c:5477
 msgid "dataset is subsampled"
@@ -1431,7 +1429,7 @@ msgstr "资料区间只有部份样本 (dataset is subsampled)"
 #: lib/src/dataset.c:2134 lib/src/dataset.c:2146 lib/src/graphing.c:8256
 #: lib/src/gretl_utils.c:1155 lib/src/gretl_utils.c:1244
 msgid "periods"
-msgstr "期数 "
+msgstr "期数"
 
 #: lib/src/dataset.c:2136
 msgid "quarters"
@@ -1486,7 +1484,7 @@ msgstr "变数 %s 代码不可变更"
 #: lib/src/dataset.c:3394
 #, c-format
 msgid "Target ID %d is not available"
-msgstr "无此目标 ID %d "
+msgstr "无此目标 ID %d"
 
 #: lib/src/dataset.c:3401
 #, c-format
@@ -1512,7 +1510,7 @@ msgstr "资料档并未被重新取样 (resampled)\n"
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4241
 #, c-format
 msgid "%s: no data found"
-msgstr "%s: 未发现任何资料!"
+msgstr "%s: 未发现任何资料"
 
 #: lib/src/dbread.c:405 lib/src/dbread.c:689
 msgid "Couldn't open database index file"
@@ -1529,7 +1527,7 @@ msgstr "无法剖析变数资讯"
 #: lib/src/dbread.c:585 lib/src/dbread.c:730
 #, c-format
 msgid "Series not found, '%s'"
-msgstr "变数 %s 找不到!"
+msgstr "变数 %s 找不到"
 
 #: lib/src/dbread.c:791 lib/src/dbread.c:1299 lib/src/dbread.c:1457
 msgid "This is not a valid RATS 4.0 database"
@@ -1554,7 +1552,7 @@ msgstr "无符合规则之资料变数"
 #: lib/src/gretl_restrict.c:1937 lib/src/gretl_restrict.c:1963
 #: lib/src/gretl_restrict.c:1986 lib/src/monte_carlo.c:1588 gui/gui_utils.c:833
 msgid "Out of memory!"
-msgstr "记忆体不足! "
+msgstr "记忆体不足!"
 
 #: lib/src/dbread.c:1745 lib/src/geneval.c:9780
 #: lib/src/gretl_string_table.c:1021 lib/src/gretl_www.c:1434
@@ -1564,7 +1562,7 @@ msgstr "Internet 存取并未支援"
 
 #: lib/src/dbread.c:1932 lib/src/subsample.c:2636
 msgid "Invalid null sample"
-msgstr "null sample 有问题"
+msgstr "Null sample 有问题"
 
 #: lib/src/dbread.c:2032 lib/src/gretl_errors.c:614
 #: lib/src/gretl_restrict.c:2605 lib/src/interact.c:1600 lib/src/options.c:1367
@@ -1591,7 +1589,7 @@ msgstr "资料的样本长度没有被定义"
 
 #: lib/src/dbread.c:2683
 msgid "Series imported OK"
-msgstr "资料已顺利加入!"
+msgstr "资料已顺利加入"
 
 #: lib/src/dbread.c:2932
 #, c-format
@@ -1609,7 +1607,7 @@ msgstr "%s: 不能处理这种转换"
 
 #: lib/src/dbread.c:4448 lib/src/dbread.c:4514 lib/src/dbread.c:4792
 msgid "Compacted dataset would be empty"
-msgstr "未成功转换资料 (可能少了某些样本资料)..."
+msgstr "未成功转换资料 (可能少了某些样本资料)"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
 #, c-format
@@ -2058,9 +2056,8 @@ msgid "Covariance matrix"
 msgstr "使用共变数矩阵"
 
 #: lib/src/describe.c:6557
-#, fuzzy
 msgid "Inverse of covariance matrix"
-msgstr "gretl: VAR 残差之共变数矩阵"
+msgstr "共变数矩阵之反矩阵"
 
 #: lib/src/describe.c:6573
 msgid "Mahalanobis distances from the centroid"
@@ -2082,23 +2079,20 @@ msgid "illegal negative value"
 msgstr "gretl: 查 P 值"
 
 #: lib/src/describe.c:6812
-#, fuzzy
 msgid "Lorenz curve"
-msgstr "filled curve"
+msgstr "Lorenz 曲线"
 
 #: lib/src/describe.c:6875 plugin/excel_import.c:1748
 msgid "Warning: there were missing values\n"
 msgstr "警告: 变数有遗漏值的问题\n"
 
 #: lib/src/describe.c:6880
-#, fuzzy
 msgid "Sample Gini coefficient"
-msgstr "gretl: 设定样本"
+msgstr "样本 Gini 系数"
 
 #: lib/src/describe.c:6881
-#, fuzzy
 msgid "Estimate of population value"
-msgstr "gretl: 查 P 值"
+msgstr "母体估计值"
 
 #: lib/src/describe.c:7363
 msgid "Shapiro-Wilk W"
@@ -2115,7 +2109,7 @@ msgstr "Lilliefors 检定"
 #: lib/src/describe.c:7429
 #, c-format
 msgid "Test for normality of %s:"
-msgstr " %s 变数之常态性 (normality) 检定"
+msgstr " %s 变数之常态性 (normality) 检定:"
 
 #: lib/src/discrete.c:1331 lib/src/geneval.c:11095 lib/src/gretl_list.c:1810
 #: lib/src/interact.c:2237
@@ -2124,19 +2118,19 @@ msgid "The variable '%s' is not discrete"
 msgstr "变数 '%s' 并未设定为不连续 (not discrete)"
 
 #: lib/src/discrete.c:1575
-#, fuzzy, c-format
+#, c-format
 msgid "Note: %s = %s%s at all observations\n"
-msgstr "增加样本(_A)"
+msgstr "注: 在所有的观察中 %s = %s%s \n"
 
 #: lib/src/discrete.c:1583 lib/src/discrete.c:1589
-#, fuzzy, c-format
+#, c-format
 msgid "Note: Prob(%s = %d | %s = %d) = 1\n"
-msgstr " Prob(x = %d) = %g\n"
+msgstr "注: Prob(%s = %d | %s = %d) = 1\n"
 
 #: lib/src/discrete.c:1595
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s\n"
-msgstr "资料错误"
+msgstr "移除 %s\n"
 
 #: lib/src/discrete.c:3068
 #, c-format
@@ -2272,14 +2266,13 @@ msgid "ITER             ESS           % CHANGE"
 msgstr ""
 
 #: lib/src/estimate.c:3590 lib/src/vartest.c:500
-#, fuzzy
 msgid "Test for ARCH of order"
-msgstr "ADF 检定落后阶次 (lag order):"
+msgstr "ADF 检定落后阶次 (lag order)"
 
 #: lib/src/estimate.c:3613 lib/src/modelprint.c:1985
-#, fuzzy, c-format
+#, c-format
 msgid "Test for ARCH of order %d"
-msgstr "ADF 检定落后阶次 (lag order):"
+msgstr "ADF 检定落后阶次 %d"
 
 #: lib/src/estimate.c:3692 lib/src/estimate.c:3836
 #, c-format
@@ -2306,7 +2299,7 @@ msgstr "'if' 没有确定其条件"
 #: lib/src/flow_control.c:144 lib/src/flow_control.c:306
 #, c-format
 msgid "Unmatched \"%s\""
-msgstr " \"%s\" 未成对出现"
+msgstr "\"%s\" 未成对出现"
 
 #: lib/src/forecast.c:1131 lib/src/forecast.c:3575
 msgid "predicted values"
@@ -2349,16 +2342,12 @@ msgid "Forecast plot not implemented for panel data"
 msgstr "'%s' : 尚不能用在变数集 (lists)"
 
 #: lib/src/geneval.c:1313
-#, fuzzy
-#| msgid "Internet access not supported"
 msgid "complex operands are not supported"
-msgstr "Internet 存取并未支援"
+msgstr "complex operands 并未支援"
 
 #: lib/src/geneval.c:1320
-#, fuzzy
-#| msgid "Internet access not supported"
 msgid "complex arguments are not supported"
-msgstr "Internet 存取并未支援"
+msgstr "complex arguments 并未支援"
 
 #: lib/src/geneval.c:1630
 #, c-format
@@ -2426,10 +2415,9 @@ msgid "Error triggered in function %s()"
 msgstr "函数执行错误"
 
 #: lib/src/geneval.c:8474
-#, fuzzy, c-format
-#| msgid "'%s': invalid observation index"
+#, c-format
 msgid "Invalid observation specifier \"%s\""
-msgstr "'%s':样本指标错误"
+msgstr "样本观察指标错误 \"%s\""
 
 #: lib/src/geneval.c:8558 lib/src/transforms.c:950 lib/src/transforms.c:1269
 msgid "The constant cannot be lagged"
@@ -2449,9 +2437,9 @@ msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
 #: lib/src/geneval.c:10032
-#, fuzzy, c-format
+#, c-format
 msgid "Expected %s but got %s"
-msgstr "栏位 field 错误 '%s'"
+msgstr "预期是 %s, 但却得到 %s"
 
 #: lib/src/geneval.c:10036
 #, fuzzy, c-format
@@ -2493,9 +2481,9 @@ msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': 错误的参数 for %s()\n"
 
 #: lib/src/geneval.c:14960
-#, fuzzy, c-format
+#, c-format
 msgid "The result for %s is not well defined"
-msgstr "符号 (symbol) '%s' 未定义\n"
+msgstr " %s 的结果并无适当的定义"
 
 #: lib/src/geneval.c:15159
 #, c-format
@@ -2604,24 +2592,24 @@ msgstr ""
 "请缩减样本大小."
 
 #: lib/src/genfuncs.c:2854
-#, fuzzy, c-format
+#, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
-msgstr "%s = 1 if %s = %d, 否则为 0 "
+msgstr "= 1 当 quarter = %d 时  , 否则 = 0"
 
 #: lib/src/genfuncs.c:2857
-#, fuzzy, c-format
+#, c-format
 msgid "= 1 if month = %d, 0 otherwise"
-msgstr "%s = 1 if %s = %d, 否则为 0 "
+msgstr "= 1 当 month = %d 时  , 否则 = 0"
 
 #: lib/src/genfuncs.c:2867
 #, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
-msgstr "%s = 1 若 period 是 %d 时; 否则 = 0 "
+msgstr "%s = 1 若 period 是 %d 时; 否则 = 0"
 
 #: lib/src/genfuncs.c:3216 lib/src/genfuncs.c:3247
 #, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
-msgstr "%s = 1 if %s = %d, 否则为 0 "
+msgstr "%s = 1 if %s = %d, 否则为 0"
 
 #: lib/src/genfuncs.c:3217 lib/src/varprint.c:137 lib/src/varprint.c:139
 #: lib/src/varprint.c:141
@@ -2731,9 +2719,9 @@ msgid "%s: no such object"
 msgstr "%s: 没有这种物件 (object)"
 
 #: lib/src/genlex.c:1141
-#, fuzzy, c-format
+#, c-format
 msgid "The symbol '%s' is undefined"
-msgstr "符号 (symbol) '%s' 未定义\n"
+msgstr "符号 (symbol) '%s' 未定义"
 
 #: lib/src/genlex.c:1151
 #, c-format
@@ -2755,9 +2743,8 @@ msgid "(for logical OR, use '||')\n"
 msgstr "(逻辑的 OR, 请用 '||' 符号)\n"
 
 #: lib/src/genlex.c:1175
-#, fuzzy
 msgid "Incomplete expression\n"
-msgstr "Incomplete entry"
+msgstr "Incomplete expression\n"
 
 #: lib/src/genlex.c:1180
 #, c-format
@@ -2882,7 +2869,7 @@ msgstr "参数太多"
 #: lib/src/gmm.c:131
 #, c-format
 msgid "Unknown variable '%s'"
-msgstr " '%s' 是未知的变数"
+msgstr "'%s' 是未知的变数"
 
 #: lib/src/gmm.c:676
 msgid "Orthogonality conditions must come before the weights matrix"
@@ -3001,7 +2988,7 @@ msgstr "'%s' 是 常数项"
 
 #: lib/src/graphing.c:4877
 msgid "Test statistic for normality"
-msgstr "常态性检定 (normality) "
+msgstr "常态性检定 (normality) 的统计量"
 
 #: lib/src/graphing.c:4903
 msgid "Test statistic for gamma"
@@ -3387,9 +3374,8 @@ msgid "This command is implemented only for OLS models"
 msgstr "此指令只适用于 OLS 模型"
 
 #: lib/src/gretl_errors.c:55
-#, fuzzy
 msgid "Invalid argument"
-msgstr "'%s': 错误的参数 for %s()\n"
+msgstr "参数错误"
 
 #: lib/src/gretl_errors.c:56
 #, fuzzy
@@ -3487,9 +3473,8 @@ msgid "External command failed"
 msgstr "无法执行外部指令 (External command failed)"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (65536 bytes) exceeded"
-msgstr "指令行长度不能超过 (%d 字符)!\n"
+msgstr "指令行长度超过 (65536字符)"
 
 #: lib/src/gretl_errors.c:80
 msgid "No dataset is in place"
@@ -3545,14 +3530,12 @@ msgid "generated non-finite values"
 msgstr "有 non-finite 值产生"
 
 #: lib/src/gretl_errors.c:228 lib/src/gretl_errors.c:231
-#, fuzzy
 msgid "In regard to function"
 msgstr "附属函数"
 
 #: lib/src/gretl_errors.c:229
-#, fuzzy
 msgid "package"
-msgstr "函数套件名称"
+msgstr "函数套件 package"
 
 #: lib/src/gretl_errors.c:258 lib/src/gretl_errors.c:264
 msgid "Warning"
@@ -3584,9 +3567,9 @@ msgid "Expected a function return type, found '%s'"
 msgstr "预期有 '%c' 但却发现 '%s'\n"
 
 #: lib/src/gretl_func.c:1622
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid return type for function"
-msgstr "函数所需之参数数目不正确"
+msgstr "%s: 错误的函数回传值型态"
 
 #: lib/src/gretl_func.c:2721 lib/src/gretl_utils.c:1910 lib/src/interact.c:1478
 #: gui/dialogs.c:5545 gui/fnsave.c:5291 plugin/tramo-x12a.c:833
@@ -3640,10 +3623,9 @@ msgid "Function names must start with a letter"
 msgstr "函数名称必须要以一个英文字母开头"
 
 #: lib/src/gretl_func.c:6382 lib/src/gretl_func.c:6385
-#, fuzzy, c-format
-#| msgid "'%s' is not a binary variable"
+#, c-format
 msgid "'%s' is the name of a variable"
-msgstr "'%s' 不是一个二元 (binary) 变数"
+msgstr "'%s' 是变数名称"
 
 #: lib/src/gretl_func.c:6430
 #, c-format
@@ -3660,9 +3642,9 @@ msgid "Unrecognized data type '%s'"
 msgstr "无法辨识之资料型态"
 
 #: lib/src/gretl_func.c:6749
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid parameter type"
-msgstr "%s: 引数型态错误 %s"
+msgstr "%s: 错误的参数型态"
 
 #: lib/src/gretl_func.c:6765
 #, fuzzy, c-format
@@ -3679,9 +3661,9 @@ msgid "Identifier exceeds the maximum of 31 characters"
 msgstr ""
 
 #: lib/src/gretl_func.c:7462
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected an integer but found %g"
-msgstr "%s: 应是整数阶次"
+msgstr "%s: 应是整数，但却是 %g"
 
 #: lib/src/gretl_func.c:7489
 #, fuzzy, c-format
@@ -3784,7 +3766,6 @@ msgid "_Open data"
 msgstr "开启资料档(_O)"
 
 #: lib/src/gretl_intl.c:104 lib/src/subsample.c:3089
-#, fuzzy
 msgid "annual"
 msgstr "年资料"
 
@@ -3866,9 +3847,8 @@ msgid "no structural break"
 msgstr "无结构转变 (no structural break)"
 
 #: lib/src/gretl_model.c:4060
-#, fuzzy
 msgid "no structural difference"
-msgstr "用一阶差分"
+msgstr "无结构差异"
 
 #: lib/src/gretl_model.c:4062
 msgid "CUSUM test for parameter stability"
@@ -3917,9 +3897,8 @@ msgstr ""
 "DF 检定 对变数 %s\n"
 
 #: lib/src/gretl_model.c:4081
-#, fuzzy
 msgid "specification is adequate"
-msgstr "残差是常态分配"
+msgstr "模型设定不适当"
 
 #: lib/src/gretl_model.c:4083
 msgid "Non-linearity test (squares)"
@@ -3955,9 +3934,8 @@ msgid "Test for differing group intercepts"
 msgstr ""
 
 #: lib/src/gretl_model.c:4102 lib/src/gretl_model.c:4129
-#, fuzzy
 msgid "The groups have a common intercept"
-msgstr "假设母体标准差相同"
+msgstr "群组有共同的常数项"
 
 #: lib/src/gretl_model.c:4104
 msgid "Breusch-Pagan test"
@@ -3968,24 +3946,20 @@ msgid "Variance of the unit-specific error = 0"
 msgstr ""
 
 #: lib/src/gretl_model.c:4107
-#, fuzzy
 msgid "Wald joint test on time dummies"
-msgstr "加上季节虚拟变数"
+msgstr "对虚拟变数的 Wald 联合检定"
 
 #: lib/src/gretl_model.c:4108
-#, fuzzy
 msgid "No time effects"
-msgstr "固定效果"
+msgstr "无时间效果"
 
 #: lib/src/gretl_model.c:4114
-#, fuzzy
 msgid "restriction is acceptable"
-msgstr "残差是常态分配"
+msgstr "限制是可接受的"
 
 #: lib/src/gretl_model.c:4116
-#, fuzzy
 msgid "Test of independence"
-msgstr "常态性检定(_N)"
+msgstr "独立性检定"
 
 #: lib/src/gretl_model.c:4117
 msgid "rho = 0"
@@ -4018,36 +3992,32 @@ msgid "No cross-sectional dependence"
 msgstr "横断面相依性(_C) "
 
 #: lib/src/gretl_model.c:4134
-#, fuzzy
 #| msgid "Godfrey (1994) test for autocorrelation up to order %d"
 msgid "Wooldridge test for autocorrelation in panel data"
-msgstr "Godfrey (1994) 自我相关检定至落后 %d 期"
+msgstr "panel 资料的 Wooldridge 检定"
 
 #: lib/src/gretl_model.c:4135
-#, fuzzy
 #| msgid "first-order autocorrelation"
 msgid "No first-order autocorrelation (rho = -0.5)"
-msgstr "落后 1 期自我相关"
+msgstr "没有一阶自我相关 (rho = -0.5)"
 
 #: lib/src/gretl_model.c:4142 lib/src/gretl_panel.c:4473
 msgid "Distribution free Wald test for heteroskedasticity"
 msgstr "异质变异检定"
 
 #: lib/src/gretl_model.c:4174
-#, fuzzy
 msgid "robust variant"
-msgstr "稳健估计法"
+msgstr "稳健的 variant"
 
 #: lib/src/gretl_model.c:4278
-#, fuzzy
 #| msgid "first-order autocorrelation"
 msgid "No first-order autocorrelation (rho = 0)"
-msgstr "落后 1 期自我相关"
+msgstr "没有一阶自我相关 (rho = 0)"
 
 #: lib/src/gretl_model.c:4345
-#, fuzzy, c-format
+#, c-format
 msgid "chi-square(%d) = %g at observation %s"
-msgstr "要选择的样本数 (最多 %d)"
+msgstr "卡方值(%d) = %g 在样本数 %s"
 
 #: lib/src/gretl_model.c:4378 lib/src/gretl_model.c:4385 gui/textbuf.c:1304
 msgid "failed"
@@ -4084,15 +4054,12 @@ msgid "Asymptotic test statistic"
 msgstr "渐进统计值 (asymptotic test statistic)"
 
 #: lib/src/gretl_model.c:4576
-#, fuzzy
 msgid "with asymptotic p-value"
-msgstr "渐进 p值"
+msgstr "用渐进 p值"
 
 #: lib/src/gretl_model.c:4577
-#, fuzzy
-#| msgid "with p-value"
 msgid "with bootstrap p-value"
-msgstr "with p-value"
+msgstr "用 bootstrap p值"
 
 #: lib/src/gretl_model.c:7023
 msgid "Can't retrieve uhat: data set has changed"
@@ -4164,9 +4131,8 @@ msgid "Error estimating fixed effects model\n"
 msgstr "估计固定效果时, 模型发生错误\n"
 
 #: lib/src/gretl_panel.c:2816
-#, fuzzy
 msgid "Inadequate data for panel estimation"
-msgstr "反复运算估计"
+msgstr "估计时追踪资料有误"
 
 #: lib/src/gretl_panel.c:2868
 msgid "Hausman test matrix is not positive definite!\n"
@@ -4224,9 +4190,9 @@ msgid "Hausman test matrix is not positive definite"
 msgstr "Hausman 检定矩阵并非正定 (is not positive definite)"
 
 #: lib/src/gretl_panel.c:3491 lib/src/options.c:1255 lib/src/options.c:1288
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid option argument"
-msgstr "%s: 引数型态错误 %s"
+msgstr "%s: 引数选项错误"
 
 #: lib/src/gretl_panel.c:3586
 #, fuzzy, c-format
@@ -4251,24 +4217,21 @@ msgid "iteration"
 msgstr ""
 
 #: lib/src/gretl_panel.c:4478
-#, fuzzy
 msgid "Pooled error variance"
-msgstr "非条件残差变异数"
+msgstr "Pooled 残差变异数"
 
 #: lib/src/gretl_panel.c:4569
 msgid "First differenced equation (dependent, d_y)"
 msgstr ""
 
 #: lib/src/gretl_panel.c:4570
-#, fuzzy
 #| msgid "Regression residuals (= observed - fitted %s)"
 msgid "Autoregression of residuals (dependent, uhat)"
-msgstr "Regression residuals (= observed - fitted %s)"
+msgstr "Autoregression of residuals (dependent, uhat)"
 
 #: lib/src/gretl_panel.c:4571
-#, fuzzy
 msgid "Auxiliary regression including lagged residual"
-msgstr "RESET 形式检定 (specification test) 之辅助回归 (Auxiliary regression)"
+msgstr "辅助回归含落后期残差"
 
 #: lib/src/gretl_panel.c:5253
 #, c-format
@@ -4325,9 +4288,9 @@ msgid "gretl_gui_fnref.en"
 msgstr "gretl: 函数参考说明"
 
 #: lib/src/gretl_paths.c:1634
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find package %s"
-msgstr "无法开启 %s"
+msgstr "无法找到套件 %s"
 
 #: lib/src/gretl_paths.c:1654
 #, fuzzy, c-format
@@ -4374,9 +4337,9 @@ msgid "Invalid restriction on beta"
 msgstr "资料档格式错误\n"
 
 #: lib/src/gretl_restrict.c:677
-#, fuzzy, c-format
+#, c-format
 msgid "Too many restrictions: the maximum number is %d"
-msgstr "限制式太多 (最大值是 %d)"
+msgstr "限制式太多： 最多是 %d"
 
 #: lib/src/gretl_restrict.c:681
 #, fuzzy, c-format
@@ -4384,10 +4347,10 @@ msgid "The R matrix must have %d columns"
 msgstr "modprint: 第一个矩阵的引数必须要有 2 行 (columns)"
 
 #: lib/src/gretl_restrict.c:817
-#, fuzzy, c-format
+#, c-format
 #| msgid "Please give a coefficient number"
 msgid "%s: couldn't interpret as coefficient number"
-msgstr "请输入系数的数目"
+msgstr "%s: 无法解释为系数数目"
 
 #: lib/src/gretl_restrict.c:925
 #, c-format
@@ -4448,9 +4411,8 @@ msgid "Standard error of the regression"
 msgstr "Standard error of the regression"
 
 #: lib/src/gretl_restrict.c:2379
-#, fuzzy
 msgid "Robust chi^2"
-msgstr "Robust F"
+msgstr "稳健 chi^2"
 
 #: lib/src/gretl_restrict.c:2512
 msgid ""
@@ -4466,9 +4428,8 @@ msgid "The symbol '%s' is undefined\n"
 msgstr "符号 (symbol) '%s' 未定义\n"
 
 #: lib/src/gretl_restrict.c:2935
-#, fuzzy
 msgid "Invalid input\n"
-msgstr "资料档格式错误\n"
+msgstr "输入格式错误\n"
 
 #: lib/src/gretl_restrict.c:2982
 #, fuzzy
@@ -4490,14 +4451,13 @@ msgid "variable %d: translating from strings to code numbers\n"
 msgstr "变数 %d: 从字串转译为 code 代码\n"
 
 #: lib/src/gretl_string_table.c:605
-#, fuzzy
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
 "发现一或多个非数值 (non-numeric) 变数.\n"
-"Gretl 无法处理这种变数。\n"
+"发现超过一种以上的非数字型变数。\n"
 "所以它们已使用下列之数字代码 (codes)\n"
 "\n"
 
@@ -4604,18 +4564,17 @@ msgid "File of the wrong type, root node not %s"
 msgstr "档案格式错误, root node not %s"
 
 #: lib/src/gretl_xml.c:1804 lib/src/gretl_xml.c:2306
-#, fuzzy, c-format
+#, c-format
 msgid "Writing %.0f Kbytes of data\n"
-msgstr "写入 %ld Kbytes 的资料\n"
+msgstr "写入 %.0f Kbytes 的资料\n"
 
 #: lib/src/gretl_xml.c:2684
 msgid "Failed to parse count of variables"
 msgstr "无法剖析 count of variables"
 
 #: lib/src/gretl_xml.c:2698 lib/src/gretl_xml.c:2716 lib/src/gretl_xml.c:2860
-#, fuzzy
 msgid "Got no variables"
-msgstr "取自然对数"
+msgstr "没有任何变数"
 
 #: lib/src/gretl_xml.c:2737
 #, c-format
@@ -4627,9 +4586,9 @@ msgid "Number of variables does not match declaration"
 msgstr "所宣告之变数数目不符"
 
 #: lib/src/gretl_xml.c:2992
-#, fuzzy, c-format
+#, c-format
 msgid "Data file contains %d subnormal values"
-msgstr "权数变数包含了负数"
+msgstr "资料档包含了 %d subnormal values"
 
 #: lib/src/gretl_xml.c:3051
 #, c-format
@@ -4735,9 +4694,8 @@ msgid "Couldn't read '%s'"
 msgstr "读取资讯档 %s\n"
 
 #: lib/src/gretl_zip.c:495 lib/src/gretl_zip.c:503
-#, fuzzy
 msgid "not found"
-msgstr "%s: column '%s' 未被发现"
+msgstr "未被发现"
 
 #: lib/src/interact.c:792
 msgid "is a 0/1 variable"
@@ -4752,16 +4710,13 @@ msgid "No series are defined\n"
 msgstr "尚未定义任何资料变数 (no series)\n"
 
 #: lib/src/interact.c:902
-#, fuzzy
-#| msgid "No series are defined\n"
 msgid "No series labels are defined\n"
-msgstr "尚未定义任何资料变数 (no series)\n"
+msgstr "尚未定义任何变数标籤\n"
 
 #: lib/src/interact.c:1004
-#, fuzzy, c-format
-#| msgid "%s: not a string variable"
+#, c-format
 msgid "'%s' : not a string variable"
-msgstr "%s: 并非字串变数 (string variable)"
+msgstr "%s: 并非字串变数"
 
 #: lib/src/interact.c:1101
 msgid "Output is not currently diverted to file\n"
@@ -4882,9 +4837,9 @@ msgid "kalman: required matrix %s is missing"
 msgstr "kalman: 缺少需要的矩阵 %s "
 
 #: lib/src/libglue.c:465
-#, fuzzy, c-format
+#, c-format
 msgid "modprint: expected %d names"
-msgstr "变数名称冲突"
+msgstr "modprint: 预期 %d 名称"
 
 #: lib/src/libglue.c:531
 msgid "modprint: the first matrix argument must have 2 columns"
@@ -4912,14 +4867,12 @@ msgid "Numerical methods"
 msgstr "数值法 (Numerical methods)"
 
 #: lib/src/libset.c:1648
-#, fuzzy
 msgid "Random number generation"
-msgstr "依变数ID排序(_I)"
+msgstr "产生随机变数"
 
 #: lib/src/libset.c:1661
-#, fuzzy
 msgid "Robust estimation"
-msgstr "稳健估计法 (_R)"
+msgstr "稳健估计法"
 
 #: lib/src/libset.c:1674 gui/datawiz.c:441 gui/datawiz.c:520
 #: gui/menustate.c:968 plugin/addons-i18n.c:30
@@ -4938,9 +4891,8 @@ msgstr " '%s' 是未知的变数"
 
 #: lib/src/matrix_extra.c:915 lib/src/matrix_extra.c:918
 #: lib/src/plotspec.c:1861 lib/src/plotspec.c:1877
-#, fuzzy
 msgid "Non-positive values encountered"
-msgstr "变数有遗漏值 (missing values) 的问题"
+msgstr "遇非正值 (non-positive values) 的问题"
 
 #: lib/src/matrix_extra.c:1524
 #, c-format
@@ -4952,14 +4904,14 @@ msgid "matrix is NULL"
 msgstr ""
 
 #: lib/src/matrix_extra.c:1532
-#, fuzzy, c-format
+#, c-format
 msgid "%s: matrix is empty (%d x %d)"
-msgstr "相关系数矩阵(_C)"
+msgstr "%s: 矩阵是空的 (%d x %d)"
 
 #: lib/src/matrix_extra.c:1535
-#, fuzzy, c-format
+#, c-format
 msgid "matrix is empty (%d x %d)"
-msgstr "相关系数矩阵(_C)"
+msgstr "矩阵是空的 (%d x %d)"
 
 #: lib/src/missing.c:576
 #, c-format
@@ -4981,7 +4933,6 @@ msgid "%s: Didn't find any matching observations\n"
 msgstr "%s: 没有找到任何对应之样本\n"
 
 #: lib/src/modelprint.c:185
-#, fuzzy
 msgid "Unconditional error variance"
 msgstr "非条件残差变异数"
 
@@ -5068,29 +5019,24 @@ msgstr ""
 "DF 检定 对变数 %s\n"
 
 #: lib/src/modelprint.c:433 lib/src/modelprint.c:440
-#, fuzzy
 msgid "Wald (joint) test"
-msgstr "基本假设检定(_T)"
+msgstr "Wald (联合) 检定"
 
 #: lib/src/modelprint.c:434 lib/src/modelprint.c:441
-#, fuzzy
 msgid "Wald (time dummies)"
-msgstr "加上季节虚拟变数"
+msgstr "Wald (时间虚拟变数)"
 
 #: lib/src/modelprint.c:435 lib/src/modelprint.c:442
-#, fuzzy
 msgid "J test"
-msgstr "%s 检定"
+msgstr "J 检定"
 
 #: lib/src/modelprint.c:436 lib/src/modelprint.c:443
-#, fuzzy
 msgid "Overdispersion test"
-msgstr "常态性检定(_N)"
+msgstr "Overdispersion 检定"
 
 #: lib/src/modelprint.c:439
-#, fuzzy
 msgid "Sargan test"
-msgstr "常态性检定(_N)"
+msgstr "Sargan 检定"
 
 #: lib/src/modelprint.c:514 lib/src/modelprint.c:517 lib/src/modelprint.c:525
 #: lib/src/modelprint.c:527 lib/src/printout.c:3315
@@ -5176,9 +5122,8 @@ msgstr ""
 "regression)"
 
 #: lib/src/modelprint.c:873
-#, fuzzy
 msgid "Auxiliary regression for added variables"
-msgstr "RESET 形式检定 (specification test) 之辅助回归 (Auxiliary regression)"
+msgstr "对新增变数的辅助回归"
 
 #: lib/src/modelprint.c:884
 msgid "Augmented regression for Chow test"
@@ -5203,14 +5148,12 @@ msgid "Augmented Dickey-Fuller regression"
 msgstr "ADF 检定回归式(Augmented Dickey-Fuller regression)"
 
 #: lib/src/modelprint.c:899
-#, fuzzy
 msgid "Dickey--Fuller regression"
-msgstr "ADF 检定回归式(Augmented Dickey-Fuller regression)"
+msgstr "Dickey--Fuller 回归 (Dickey--Fuller regression)"
 
 #: lib/src/modelprint.c:901
-#, fuzzy
 msgid "Dickey-Fuller regression"
-msgstr "ADF 检定回归式(Augmented Dickey-Fuller regression)"
+msgstr "DF 回归 (Dickey-Fuller regression)"
 
 #: lib/src/modelprint.c:904
 msgid "KPSS regression"
@@ -5225,9 +5168,8 @@ msgid "Groupwise heteroskedasticity"
 msgstr "群组异质变异 (Groupwise heteroskedasticity)"
 
 #: lib/src/modelprint.c:910
-#, fuzzy
 msgid "Augmented regression for common factor test"
-msgstr "加入虚拟变数之 Chow 结构转变检定回归 (Augmented regression) )"
+msgstr "共同因数检定 (common factor test) 附加回归"
 
 #: lib/src/modelprint.c:928 lib/src/system.c:95 lib/src/varprint.c:1057
 #: lib/src/varprint.c:1066 lib/src/varprint.c:1074 gui/selector.c:4177
@@ -5306,19 +5248,16 @@ msgid "Logistic"
 msgstr "Logistic"
 
 #: lib/src/modelprint.c:946 gui/selector.c:4231 plugin/addons-i18n.c:15
-#, fuzzy
 msgid "GARCH"
-msgstr "GARCH一般自我相关异质变异模型 (_G)"
+msgstr "GARCH"
 
 #: lib/src/modelprint.c:947
-#, fuzzy
 msgid "Interval estimates"
-msgstr "%g%% 信赖区间 = %g to %g"
+msgstr "信赖区间估计值"
 
 #: lib/src/modelprint.c:948
-#, fuzzy
 msgid "Dynamic panel"
-msgstr "Dynamic panel model"
+msgstr "动态 panel model"
 
 #: lib/src/modelprint.c:949 gui/selector.c:4199
 msgid "Bivariate probit"
@@ -5413,9 +5352,8 @@ msgid "1-step dynamic panel"
 msgstr "动态 panel 模型(_D)"
 
 #: lib/src/modelprint.c:1011 lib/src/modelprint.c:1015
-#, fuzzy
 msgid "2-step GMM"
-msgstr "2 步骤估计法"
+msgstr "2 步骤 GMM"
 
 #: lib/src/modelprint.c:1013 lib/src/modelprint.c:1017
 msgid "Iterated GMM"
@@ -5444,10 +5382,8 @@ msgid "Ordered Probit"
 msgstr "Ordered Probit"
 
 #: lib/src/modelprint.c:1039
-#, fuzzy
-#| msgid "Fixed-effects"
 msgid "Fixed-effects logistic"
-msgstr "固定效果"
+msgstr "固定效果 logistic"
 
 #: lib/src/modelprint.c:1045
 #, fuzzy
@@ -5459,9 +5395,8 @@ msgid "ML Heckit"
 msgstr "ML Heckit"
 
 #: lib/src/modelprint.c:1051
-#, fuzzy
 msgid "Quantile estimates"
-msgstr "分量回归估计值 with %g%% band"
+msgstr "分量回归估计值"
 
 #: lib/src/modelprint.c:1057 lib/src/system.c:94
 msgid "LIML"
@@ -5476,9 +5411,8 @@ msgid "Negative Binomial 1"
 msgstr "Negative Binomial 1"
 
 #: lib/src/modelprint.c:1069
-#, fuzzy
 msgid "Duration (exponential)"
-msgstr "_Hurst exponent"
+msgstr ""
 
 #: lib/src/modelprint.c:1071
 #, fuzzy
@@ -5525,9 +5459,8 @@ msgid ""
 msgstr ""
 
 #: lib/src/modelprint.c:1144
-#, fuzzy
 msgid "bias"
-msgstr "试抽样次数"
+msgstr "偏误"
 
 #: lib/src/modelprint.c:1144 gui/gpt_dialog.c:2901
 msgid "size"
@@ -5701,11 +5634,8 @@ msgid "With %g percent confidence intervals"
 msgstr ""
 
 #: lib/src/modelprint.c:1552
-#, fuzzy
 msgid "Robust (sandwich) standard errors"
-msgstr ""
-"异质变异-稳健标准误 (Heteroskedasticity-robust standard errors-Robust "
-"standard errors)"
+msgstr "稳健 (sandwich) 标准误"
 
 #: lib/src/modelprint.c:1554
 msgid "Asymptotic standard errors assuming IID errors"
@@ -5736,9 +5666,8 @@ msgid "Dependent variable"
 msgstr "应变数 (Dependent variable)"
 
 #: lib/src/modelprint.c:1775
-#, fuzzy
 msgid "Estimated using X-13-ARIMA"
-msgstr "用 X-12-ARIMA 套件"
+msgstr "用 X-13-ARIMA 套件"
 
 #: lib/src/modelprint.c:1777
 msgid "Estimated using X-12-ARIMA"
@@ -5758,9 +5687,8 @@ msgid "Estimated using least squares"
 msgstr "用最小平方法估计"
 
 #: lib/src/modelprint.c:1788
-#, fuzzy
 msgid "= MLE"
-msgstr "MLE"
+msgstr "= MLE"
 
 #: lib/src/modelprint.c:1794
 #, fuzzy, c-format
@@ -5768,9 +5696,8 @@ msgid "Estimated using AS %d"
 msgstr "用 X-12-ARIMA 套件"
 
 #: lib/src/modelprint.c:1796
-#, fuzzy
 msgid "Estimated using Kalman filter"
-msgstr "用最小平方法估计"
+msgstr "用 Kalman 滤波法估计"
 
 #: lib/src/modelprint.c:1807
 msgid "Estimated using BHHH method"
@@ -5869,9 +5796,9 @@ msgid "Missing or incomplete observations dropped"
 msgstr ""
 
 #: lib/src/modelprint.c:2080 plugin/panurc.c:576
-#, fuzzy, c-format
+#, c-format
 msgid "%s, using %d observations"
-msgstr "增加样本(_A)"
+msgstr "%s, 使用 %d 样本数"
 
 #: lib/src/modelprint.c:2088
 #, fuzzy
@@ -5986,9 +5913,8 @@ msgid "std. error"
 msgstr "std. error"
 
 #: lib/src/modelprint.c:2421
-#, fuzzy
 msgid "slope at mean"
-msgstr "全距-均数图()R)"
+msgstr "在平均值的斜率 slope at mean"
 
 #: lib/src/modelprint.c:2424 lib/src/modelprint.c:4733
 #, fuzzy
@@ -6074,14 +6000,13 @@ msgid "Statistics based on the transformed data"
 msgstr ""
 
 #: lib/src/modelprint.c:2659
-#, fuzzy, c-format
+#, c-format
 msgid "Log-likelihood for %s"
-msgstr "检查有无更新版(_u)"
+msgstr "Log-likelihood for %s"
 
 #: lib/src/modelprint.c:2975
-#, fuzzy
 msgid "Mean of dependent variable"
-msgstr "产生新变数(_n)"
+msgstr "Mean of dependent variable"
 
 #: lib/src/modelprint.c:2976
 #, fuzzy
@@ -6153,9 +6078,8 @@ msgstr "P-value(F)"
 #: lib/src/modelprint.c:3056 lib/src/system.c:4677 lib/src/system.c:4684
 #: lib/src/texprint.c:1099 lib/src/varprint.c:1093 lib/src/varprint.c:1102
 #: gui/library.c:6807 plugin/johansen.c:1596
-#, fuzzy
 msgid "Log-likelihood"
-msgstr "最大概似值(_LogL)"
+msgstr "Log-likelihood"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3058
@@ -10664,7 +10588,7 @@ msgstr "取 %s 的变动率"
 
 #: gui/dialogs.c:6346
 msgid "percent changes"
-msgstr ""
+msgstr "取变动率"
 
 #: gui/dialogs.c:6355 gui/dialogs.c:6456 gui/ssheet.c:999
 #, c-format
@@ -10690,12 +10614,12 @@ msgstr "年化 (annualized) 季资料"
 
 #: gui/dialogs.c:6407
 msgid "Calculate using logs"
-msgstr ""
+msgstr "用取对数再差分的方式计算"
 
 #: gui/dialogs.c:6444
 #, c-format
 msgid "100-based index of %s"
-msgstr ""
+msgstr "计算  %s 的指数 (基期=100)"
 
 #: gui/dialogs.c:6447
 msgid "100-based indices"
@@ -10703,7 +10627,7 @@ msgstr ""
 
 #: gui/dialogs.c:6480
 msgid "Base period:"
-msgstr ""
+msgstr "选择基期:"
 
 #: gui/dialogs.c:6582
 msgid "Unrestricted (U-MIDAS)"
@@ -11956,15 +11880,15 @@ msgstr "找不到可用的终端机 (terminal program)"
 
 #: gui/gpt_dialog.c:139
 msgid "linear: y = a + b*x"
-msgstr "linear: y = a + b*x"
+msgstr "线性: y = a + b*x"
 
 #: gui/gpt_dialog.c:140
 msgid "quadratic: y = a + b*x + c*x^2"
-msgstr ""
+msgstr "二次方曲线: y = a + b*x + c*x^2"
 
 #: gui/gpt_dialog.c:141
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
-msgstr ""
+msgstr "三次方曲线: y = a + b*x + c*x^2 + d*x^3"
 
 #: gui/gpt_dialog.c:142
 msgid "inverse: y = a + b*(1/x)"
@@ -12070,17 +11994,15 @@ msgstr "显示完整图外方框"
 
 #: gui/gpt_dialog.c:1895
 msgid "horizontal"
-msgstr ""
+msgstr "水平"
 
 #: gui/gpt_dialog.c:1896
-#, fuzzy
 msgid "vertical"
-msgstr "数学 (Mathematical)"
+msgstr "垂直"
 
 #: gui/gpt_dialog.c:1897
-#, fuzzy
 msgid "both"
-msgstr "其它线性模型(_l)"
+msgstr "两者皆要"
 
 #: gui/gpt_dialog.c:1904
 msgid "Show grid"
@@ -12138,7 +12060,7 @@ msgstr "型态:"
 
 #: gui/gpt_dialog.c:2839
 msgid "line"
-msgstr ""
+msgstr "线条样式"
 
 #: gui/gpt_dialog.c:2840
 msgid "line width"
@@ -12330,9 +12252,8 @@ msgid "force use of English"
 msgstr "强制使用英文"
 
 #: gui/gretl.c:136
-#, fuzzy
 msgid "force use of Basque"
-msgstr "用一阶差分"
+msgstr "强制使用 Basque"
 
 #: gui/gretl.c:138
 msgid "dump gretl configuration to file"
@@ -15079,38 +15000,34 @@ msgid "There are no extra observations to drop"
 msgstr "没有额外的样本可排除 (drop)"
 
 #: gui/library.c:6440
-#, fuzzy
 #| msgid "Standard deviation"
 msgid "Divide by sample standard deviation"
-msgstr "Standard deviation"
+msgstr "除以样本标准差"
 
 #: gui/library.c:6441
 msgid "Divide by standard deviation without df correction"
-msgstr ""
+msgstr "除以标准差(未经自由度调整)"
 
 #: gui/library.c:6442
-#, fuzzy
 #| msgid "Centered"
 msgid "Center only"
-msgstr "置中 (Centered)"
+msgstr "只将变数减平均值(不除以标准差)"
 
 #: gui/library.c:6448
-#, fuzzy, c-format
+#, c-format
 #| msgid "Standard deviation"
 msgid "Standardizing %s"
-msgstr "Standard deviation"
+msgstr "将 %s 标准化"
 
 #: gui/library.c:6451
-#, fuzzy
 #| msgid "Error adding variables"
 msgid "Standardizing variables"
-msgstr "新增变数错误"
+msgstr "变数标准化"
 
 #: gui/library.c:6454
-#, fuzzy
 #| msgid "gretl: create dummy variables"
 msgid "gretl: create standardized variables"
-msgstr "gretl: 建立虚拟变数 (dummy variables)"
+msgstr "gretl: 将变数标准化"
 
 #: gui/library.c:6491
 msgid "gretl: generate lags"
@@ -15131,9 +15048,9 @@ msgid "residual from VECM system, equation %d"
 msgstr ""
 
 #: gui/library.c:6719
-#, fuzzy, c-format
+#, c-format
 msgid "system residual, equation %d"
-msgstr "向量自我回归 (VAR system), 落后期数: %d"
+msgstr "系统残差, 方程序 %d"
 
 #: gui/library.c:6792
 msgid "T*R-squared"
@@ -15148,16 +15065,13 @@ msgid "Akaike Information Criterion"
 msgstr "Akaike Information Criterion"
 
 #: gui/library.c:6837
-#, fuzzy, c-format
-#| msgid ""
-#| "Enter new name\n"
-#| "(max. %d characters)"
+#, c-format
 msgid ""
 "Bundle from model %d\n"
 "Name (max. %d characters):"
 msgstr ""
-"输入新名称 \n"
-"(变数名称最长允许 %d 字符)"
+"来自模型  %d 的 Bundle  \n"
+"名称 (最长允许 %d 字符)："
 
 #: gui/library.c:6840
 msgid "add bundle"
@@ -15176,9 +15090,9 @@ msgid "standardized residual"
 msgstr "标准化残差"
 
 #: gui/library.c:7006
-#, fuzzy, c-format
+#, c-format
 msgid "predicted %s"
-msgstr "预测值"
+msgstr "预测 %s"
 
 #: gui/library.c:7337
 #, c-format
@@ -15210,14 +15124,12 @@ msgid "X-axis variable"
 msgstr "X 轴变数"
 
 #: gui/library.c:7880
-#, fuzzy
 msgid "Plot all data"
-msgstr "追踪资料"
+msgstr "划全部资料"
 
 #: gui/library.c:7881
-#, fuzzy
 msgid "Plot group means"
-msgstr "划在同一个图: group means"
+msgstr "划 group means"
 
 #: gui/library.c:7904
 msgid "on a single graph"
@@ -15232,7 +15144,7 @@ msgid "Plot the series"
 msgstr "划时间序列图"
 
 #: gui/library.c:7971
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no valid values in current sample"
 msgstr "%s: 无任何有效样本值"
 
@@ -15328,9 +15240,8 @@ msgid "Descending"
 msgstr "递减"
 
 #: gui/library.c:8801
-#, fuzzy
 msgid "Select sort key"
-msgstr "选择要绘图的变数"
+msgstr "选择要排序的变数"
 
 #: gui/library.c:8820
 msgid "resample dataset"
@@ -15369,10 +15280,8 @@ msgid "old style (compatible with gretl < 2018c)"
 msgstr ""
 
 #: gui/library.c:8938
-#, fuzzy
-#| msgid "Missing values encountered"
 msgid "Missing values should be stored:"
-msgstr "变数有遗漏值 (missing values) 的问题"
+msgstr "变数遗漏值 (missing values) 应该储存"
 
 #: gui/library.c:9371 gui/library.c:9509
 msgid "No commands to execute"
@@ -15458,15 +15367,15 @@ msgstr "将变数取一阶差分"
 
 #: gui/menustate.c:591
 msgid "Add percent change..."
-msgstr "将变数取变动率 (percent change)..."
+msgstr "将变数取变动率..."
 
 #: gui/menustate.c:592 gui/menustate.c:597
 msgid "Add index values..."
-msgstr ""
+msgstr "计算变数的指数"
 
 #: gui/menustate.c:593
 msgid "Dummify..."
-msgstr ""
+msgstr "以此变数产生虚拟变数"
 
 #: gui/menustate.c:594
 msgid "Add logs"
@@ -15478,7 +15387,7 @@ msgstr "将变数取一阶差分"
 
 #: gui/menustate.c:596
 msgid "Add percent changes..."
-msgstr ""
+msgstr "将变数取变动率..."
 
 #: gui/menustate.c:599 gui/menustate.c:614
 msgid "Define new variable..."
