@@ -67,7 +67,7 @@ static int write_dbn_csv (char **S, int T,
     fputs("obs dbnomics_data\n", fp);
     for (t=0; t<T; t++) {
 	i = (ds != NULL)? ds[t].t : t;
-	if (na(v->val[i])) {
+	if (i >= v->rows || na(v->val[i])) {
 	    fprintf(fp, "%s NA\n", S[i]);
 	} else {
 	    fprintf(fp, "%s %.12g\n", S[i], v->val[i]);
@@ -128,7 +128,7 @@ static int dbn_dset_from_csv (DATASET *dbset,
     FILE *fp;
     int T, err = 0;
 
-    fname = g_strdup_printf("%sdnomics_tmp.txt", gretl_dotdir());
+    fname = g_strdup_printf("%sdbnomics_tmp.txt", gretl_dotdir());
     fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
