@@ -5827,16 +5827,16 @@
 	  below.
 	</para>
 	<para>
-	  The return value is a bundle whose stucture basically
+	  The return value is a bundle whose structure basically
 	  mirrors that of the input: JSON objects become gretl bundles
-	  and JSON arrays become gretl arrays, each of which holds
-	  either strings or bundles. JSON <quote>value</quote> nodes
+	  and JSON arrays become gretl arrays, each of which can hold
+	  strings, bundles or arrays. JSON <quote>value</quote> nodes
 	  become either members of bundles or elements of arrays; in
 	  the latter case numerical values are converted to strings
-	  using <lit>sprintf</lit>.  Since gretl arrays cannot be
-	  nested, the input accepted by this function is somewhat more
-	  restrictive than the JSON specification, which permits
-	  nesting of arrays.
+	  using <lit>sprintf</lit>. Note that although the JSON
+	  specification allows arrays of mixed type these cannot be
+	  handled by <lit>jsongetb</lit> since gretl arrays must
+	  be of a single type.
 	</para>
 	<para>
 	  The <argname>path</argname> argument can be used to limit
