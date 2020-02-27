@@ -5276,9 +5276,10 @@ GtkWidget *make_bundle_save_menu (windata_t *vwin)
 		     G_CALLBACK(bundle_add_as_icon), vwin);
     item = gtk_action_create_menu_item(action);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    vwin_record_action(vwin, action);
 
     if (get_user_var_by_data(bundle)) {
-	gtk_widget_set_sensitive(item, FALSE);
+	gtk_action_set_sensitive(action, FALSE);
     }
 
     return menu;

@@ -1200,6 +1200,11 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     }
 }
 
+/* Called (via ui_utils.c) from toolbar.c, to implement
+   saving displayed bundle as icon; handles VIEW_BUNDLE
+   and also VIEW_DBNOMICS
+*/
+
 void bundle_add_as_icon (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -1217,20 +1222,12 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 
     if (!canceled(resp)) {
 	int err = user_var_add(vname, GRETL_TYPE_BUNDLE, bundle);
-	int flipit = 1;
 
 	if (err) {
 	    gui_errmsg(err);
 	} else {
 	    mark_session_changed();
-	    if (vwin->role != VIEW_DBNOMICS && close_on_add(action)) {
-		gtk_widget_destroy(vwin->main);
-		flipit = 0;
-	    }
-	}
-	if (flipit) {
-	    flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
-	    flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
+	    vwin_action_set_sensitive(vwin, "SaveAsIcon", FALSE);
 	}
     }
 }
@@ -2268,13 +2265,20 @@ static void open_matrix (gui_obj *obj)
     edit_user_matrix_by_name(name, iconview);
 }
 
+static int is_dbnomics_bundle (const gretl_bundle *b)
+{
+    const char *s = gretl_bundle_get_creator((gretl_bundle *) b);
+
+    return s != NULL && !strcmp(s, "dbnomics");
+}
+
 static void open_bundle (gui_obj *obj)
 {
     user_var *u = (user_var *) obj->data;
     const char *name = user_var_get_name(u);
     gretl_bundle *b = user_var_get_value(u);
     PRN *prn = NULL;
-    int done = 0;
+    int role, done = 0;
 
     if (maybe_raise_object_window(b)) {
 	return;
@@ -2289,13 +2293,16 @@ static void open_bundle (gui_obj *obj)
 	return;
     }
 
+    role = VIEW_BUNDLE;
     done = try_exec_bundle_print_function(b, prn);
 
     if (!done) {
 	gretl_bundle_print(b, prn);
+    } else if (is_dbnomics_bundle(b)) {
+	role = VIEW_DBNOMICS;
     }
 
-    view_buffer(prn, 80, 400, name, VIEW_BUNDLE, b);
+    view_buffer(prn, 80, 400, name, role, b);
 }
 
 static void open_gui_text (gui_obj *obj)
