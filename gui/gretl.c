@@ -378,6 +378,28 @@ static void real_nls_init (void)
 
 #elif defined(OS_OSX)
 
+#if 0
+
+#include <CoreFoundation/CoreFoundation.h>
+
+/* Use this to check what we get from setlocale() ? */
+
+static void osx_check_locale (void)
+{
+    CFLocaleRef cflocale = CFLocaleCopyCurrent();
+    CFStringRef locid;
+    const char *s;
+
+    locid = (CFStringRef) CFLocaleGetValue(cflocale, kCFLocaleIdentifier);
+    s = CFStringGetCStringPtr(locid, kCFStringEncodingASCII);
+    if (s != NULL) {
+	fprintf(stderr, "CFLocale gave '%s'\n", s);
+    }
+    CFRelease(cflocale);
+}
+
+#endif /* not yet */
+
 static void real_nls_init (void)
 {
     char *gretlhome = getenv("GRETL_HOME");
