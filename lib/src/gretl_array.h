@@ -65,6 +65,8 @@ GretlType gretl_array_get_content_type (gretl_array *A);
 
 int gretl_array_get_length (gretl_array *A);
 
+int gretl_array_get_next_index (gretl_array *A);
+
 int gretl_array_set_string (gretl_array *A, int i,
 			    char *s, int copy);
 
