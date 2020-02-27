@@ -1747,13 +1747,12 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_series_view(vwin->data);
 	} else if (help_role(vwin->role)) {
 	    g_free(vwin->data); /* help file text */
-	} else if (vwin->role == VIEW_BUNDLE) {
+	} else if (vwin->role == VIEW_BUNDLE ||
+		   vwin->role == VIEW_DBNOMICS) {
 	    if (!get_user_var_by_data(vwin->data)) {
 		gretl_bundle_destroy(vwin->data);
 	    }
 	} else if (vwin->role == LOESS || vwin->role == NADARWAT) {
-	    gretl_bundle_destroy(vwin->data);
-	} else if (vwin->role == VIEW_DBNOMICS) {
 	    gretl_bundle_destroy(vwin->data);
 	}
 
@@ -4911,7 +4910,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;
-	int resp, show = 0;
+	int resp, show = 1;
 
 	*vname = '\0';
 	strncat(vname, key, VNAMELEN - 1);

@@ -1024,7 +1024,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != EDIT_NOTES && f == NOTES_ITEM) {
 	return NULL;
-    } else if (r != VIEW_BUNDLE && f == BUNDLE_ITEM) {
+    } else if (r != VIEW_BUNDLE && r != VIEW_DBNOMICS && f == BUNDLE_ITEM) {
 	return NULL;
     } else if (f == HMAP_ITEM) {
 	if (r != CORR) {
@@ -1084,6 +1084,15 @@ static GtkWidget *tool_item_get_menu (GretlToolItem *item, windata_t *vwin)
 	    menu = make_bundle_content_menu(vwin);
 	} else if (item->flag == PLOT_ITEM) {
 	    menu = make_bundle_plot_menu(vwin);
+	} else if (item->flag == SAVE_ITEM) {
+	    menu = make_bundle_save_menu(vwin);
+	    if (menu != NULL) {
+		item->tip = N_("Save...");
+	    }
+	}
+    } else if (vwin->role == VIEW_DBNOMICS) {
+	if (item->flag == BUNDLE_ITEM) {
+	    menu = make_bundle_content_menu(vwin);
 	} else if (item->flag == SAVE_ITEM) {
 	    menu = make_bundle_save_menu(vwin);
 	    if (menu != NULL) {
@@ -1308,7 +1317,9 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	}
 
 	if (item->flag == SAVE_ITEM) {
-	    if (vwin->role != CONSOLE && vwin->role != VIEW_BUNDLE) {
+	    if (vwin->role != CONSOLE &&
+		vwin->role != VIEW_BUNDLE &&
+		vwin->role != VIEW_DBNOMICS) {
 		/* nothing to save just yet */
 		g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button);
 		gtk_widget_set_sensitive(button, FALSE);

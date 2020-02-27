@@ -1206,15 +1206,13 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
     gretl_bundle *bundle = vwin->data;
     char vname[VNAMELEN];
     gchar *blurb;
-    int *pshow, show = 0;
     int resp;
 
     sprintf(vname, "bundle%d", ++session_bundle_count);
     blurb = g_strdup_printf("Save bundle\nName (max. %d characters):",
 			    VNAMELEN - 1);
-    pshow = (iconlist == NULL)? &show : NULL;
     resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE,
-				    blurb, pshow, vwin->main);
+				    blurb, NULL, vwin->main);
     g_free(blurb);
 
     if (!canceled(resp)) {
@@ -1224,18 +1222,12 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    if (show) {
-		view_session();
-	    } else if (autoicon_on()) {
-		auto_view_session();
-	    }
 	    mark_session_changed();
-	    if (close_on_add(action)) {
+	    if (vwin->role != VIEW_DBNOMICS && close_on_add(action)) {
 		gtk_widget_destroy(vwin->main);
 		flipit = 0;
 	    }
 	}
-
 	if (flipit) {
 	    flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
 	    flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
