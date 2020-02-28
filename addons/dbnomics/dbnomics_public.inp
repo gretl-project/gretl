@@ -66,14 +66,12 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
       printf "bundle appears to contain no data\n"
    endif
    printf "\n"
-
 end function
 
 function void dbnomics_printer(const bundle *b, int print_data[0::0])
    # wrapper to satisfy the requirements for bundle-print role
    dbnomics_bundle_print(b, print_data)
 end function
-
 
 ### ------------------------------------------------------------------------
 
@@ -259,12 +257,19 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
       ret[i].values = bfi
       nv = nelem(bfi)
       ret[i].nvalues = nv
-      bundle tmp = vlabels[dci]
       # loop over the values in each dimension
-      loop j=1..nv --quiet
-         bundle vj = ret[i].values[j]
-         ret[i].values[j].label = tmp[vj.code]
-      endloop
+      if inbundle(vlabels, dci) == 5 # bundle
+         bundle btmp = vlabels[dci]
+         loop j=1..nv --quiet
+            bundle bvj = ret[i].values[j]
+            ret[i].values[j].label = btmp[bvj.code]
+         endloop
+      elif inbundle(vlabels, dci) == 6 # array
+         stmp = vlabels[dci]
+         loop j=1..nv --quiet
+            ret[i].values[j].label = stmp[j][2]
+         endloop
+      endif
    endloop
    if verbose && !err
       loop i=1..ndims --quiet
