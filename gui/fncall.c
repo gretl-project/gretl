@@ -727,7 +727,7 @@ static int do_make_list (selector *sr)
 	GtkWidget *entry = GTK_WIDGET(data);
 
 	cinfo = g_object_get_data(G_OBJECT(entry), "cinfo");
-	aux = gtk_widget_get_parent(entry);
+	aux = g_object_get_data(G_OBJECT(entry), "sel");
     }
 
     /* record initial status */
@@ -1593,6 +1593,7 @@ static int function_call_dialog (call_info *cinfo)
 	    add_table_cell(tbl, button, 2, 3, row);
 	    widget_set_int(entry, "argnum", i);
 	    g_object_set_data(G_OBJECT(button), "cinfo", cinfo);
+	    g_object_set_data(G_OBJECT(entry), "sel", sel);
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(launch_list_maker),
 			     entry);

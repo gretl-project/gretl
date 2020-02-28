@@ -2463,16 +2463,17 @@ static int delete_session_object (gui_obj *obj)
 
 static void maybe_delete_session_object (gui_obj *obj)
 {
-    int busy = 0;
+    windata_t *busyview = NULL;
+    GtkWidget *busywin = NULL;
 
     if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
 	char fullname[MAXLEN];
 
-	session_file_make_path(fullname, graph->fname);
-	if (get_window_for_plot(graph) ||
-	    get_editor_for_file(fullname)) {
-	    busy = 1;
+	busywin = get_window_for_plot(graph);
+	if (busywin == NULL) {
+	    session_file_make_path(fullname, graph->fname);
+	    busyview = get_editor_for_file(fullname);
 	}
     } else {
 	gpointer p = NULL;
@@ -2488,14 +2489,20 @@ static void maybe_delete_session_object (gui_obj *obj)
 	    p = obj->data;
 	}
 
-	if (obj->sort == GRETL_OBJ_MATRIX) {
-	    busy = (p != NULL && get_window_for_data(p) != NULL);
-	} else {
-	    busy = (p != NULL && get_viewer_for_data(p) != NULL);
+	if (p != NULL) {
+	    if (obj->sort == GRETL_OBJ_MATRIX) {
+		busywin = get_window_for_data(p);
+	    } else {
+		busyview = get_viewer_for_data(p);
+	    }
 	}
     }
 
-    if (busy) {
+    if (busywin != NULL || busyview != NULL) {
+	GtkWidget *targ =
+	    busywin != NULL ? busywin : vwin_toplevel(busyview);
+
+	gtk_window_present(GTK_WINDOW(targ));
 	warnbox_printf(_("%s: please close this object's window first"),
 		       obj->name);
     } else {
@@ -2507,25 +2514,6 @@ static void maybe_delete_session_object (gui_obj *obj)
 	g_free(msg);
     }
 }
-
-#if 0 /* FIXME? */
-static gui_obj *get_gui_obj_by_name_and_sort (const char *name,
-					      int sort)
-{
-    GList *mylist = g_list_first(iconlist);
-    gui_obj *obj = NULL;
-
-    while (mylist != NULL) {
-	obj = (gui_obj *) mylist->data;
-	if (!strcmp(name, obj->name) && obj->sort == sort) {
-	    return obj;
-	}
-	mylist = mylist->next;
-    }
-
-    return NULL;
-}
-#endif
 
 static gui_obj *get_gui_obj_by_data (void *targ)
 {
