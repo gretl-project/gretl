@@ -2467,10 +2467,11 @@ static void maybe_delete_session_object (gui_obj *obj)
 
     if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
-	char fullname[MAXLEN];
 
 	busywin = get_window_for_plot(graph);
 	if (busywin == NULL) {
+	    char fullname[MAXLEN];
+
 	    session_file_make_path(fullname, graph->fname);
 	    busywin = vwin_toplevel(get_editor_for_file(fullname));
 	}
