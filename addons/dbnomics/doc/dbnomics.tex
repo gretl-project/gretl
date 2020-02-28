@@ -34,6 +34,7 @@
 \maketitle
 
 \section{Introduction}
+\label{sec:intro}
 
 This package offers an interface to \DB\ for gretl. For
 anyone who hasn't yet caught on, \DB\  makes available, in
@@ -664,6 +665,29 @@ in Figure \ref{fig:db-access-3}.
   \caption{Search within a particular dataset}
   \label{fig:db-access-3}
 \end{figure}
+
+\clearpage
+
+\section{Change log}
+\label{sec:change-log}
+
+We show below a brief history of changes in the gretl \DB{}
+package. Details can be found at
+\url{https://sourceforge.net/p/gretl/git/ci/master/tree/addons/dbnomics/}.
+
+\begin{tabular}{llp{.6\textwidth}}
+  0.37 & 2020-02-27 & add \texttt{dbnomics\_printer} function \\
+  0.36 & 2020-01-25 & add the \texttt{commit\_missing\_periods} flag to our \DB{}
+                      requests to ensure we get a full data calendar \\
+  0.35 & 2019-07-01 & more work on handling nested JSON arrays \\
+  0.34 & 2019-06-26 & work around nested arrays in \DB{} ``dimensions'' info\\
+  0.33 & 2019-03-03 & another fix in light of API switch \\
+  0.32 & 2019-02-28 & fix minor breakage due to API switch\\
+  0.31 & 2019-01-17 & update \DB{} URL\\
+  0.3 & 2018-12-23 & switch to version 22 of \DB{} API\\
+  0.2 & 2018-11-28 & support downloading of multiple series bundles\\
+  0.1 & 2018-06-27 & initial entry as gretl addon
+\end{tabular}
 
 \end{document}
 
