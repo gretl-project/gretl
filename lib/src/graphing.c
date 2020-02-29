@@ -4049,6 +4049,31 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     return err;
 }
 
+/* Try to determine a suitable tic-increment for the automatic
+   x-axis in the "scatters" context". We don't want the
+   increment to be so small that the tic labels pile up on
+   each other.
+*/
+
+static int scatters_incr (int T, const DATASET *dset)
+{
+    int incr, ntics;
+
+    if (dset->pd == 1) {
+	incr = T / 6;
+    } else {
+	incr = T / (4 * dset->pd);
+    }
+
+    ntics = T / incr;
+    if (ntics > 10) {
+	ntics = 10;
+	incr = T / ntics;
+    }
+
+    return incr;
+}
+
 /**
  * multi_scatters:
  * @list: list of variables to plot, by ID number.
@@ -4085,7 +4110,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     if (pos == 0) {
 	/* plot against time or index */
-	obs = gretl_plotx(dset, OPT_NONE);
+	obs = gretl_plotx(dset, OPT_S);
 	if (obs == NULL) {
 	    return E_ALLOC;
 	}
@@ -4160,13 +4185,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 	int incr, T = dset->t2 - dset->t1 + 1;
 
 	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
-
-	if (dset->pd == 1) {
-	    incr = T / 6;
-	} else {
-	    incr = T / (4 * dset->pd);
-	}
-
+	incr = scatters_incr(T, dset);
 	if (incr > 0) {
 	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
 	}
@@ -4191,7 +4210,6 @@ int multi_scatters (const int *list, const DATASET *dset,
 		    (yvar)? dset->varname[yvar] :
 		    dset->varname[j]);
 	}
-
 	fputs("plot '-' using 1:2", fp);
 	if (flags & GPT_LINES) {
 	    fputs(" with lines", fp);
