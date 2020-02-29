@@ -623,7 +623,7 @@ double get_dec_date (const char *datestr)
     GDate date;
     int y, m, d, nf;
     int ydigits = 0;
-    double num, den;
+    double yrday, frac;
 
     nf = sscanf(datestr, YMD_READ_FMT, &y, &m, &d);
 
@@ -647,12 +647,12 @@ double get_dec_date (const char *datestr)
 	return NADBL;
     }
 
-    den = 365 + g_date_is_leap_year(y);
     g_date_clear(&date, 1);
     g_date_set_dmy(&date, d, m, y);
-    num = g_date_get_day_of_year(&date);
+    yrday = g_date_get_day_of_year(&date);
+    frac = yrday / (365 + g_date_is_leap_year(y));
 
-    return y + num / den;
+    return y + frac;
 }
 
 /**
