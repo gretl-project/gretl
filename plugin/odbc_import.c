@@ -233,8 +233,7 @@ static double strval_to_double (ODBC_info *odinfo, const char *s,
 {
     if (odinfo->gst != NULL) {
 	return gretl_string_table_index(odinfo->gst, s, c, 0, NULL);
-    }
-    if (numeric_string(s)) {
+    } else if (numeric_string(s)) {
 	return atof(s);
     } else {
 	gretl_errmsg_sprintf(_("Expected numeric data, found string:\n"

@@ -427,7 +427,7 @@ gretl_string_table_index (gretl_string_table *gst, const char *s,
 
     if (st != NULL) {
 	/* there's a table for this column already */
-	idx = series_table_get_index(st, tmp != NULL ? tmp: s);
+	idx = series_table_get_index(st, tmp != NULL ? tmp : s);
     } else if (addcol) {
 	/* no table for this column yet: start one now */
 	st = gretl_string_table_add_column(gst, col);
