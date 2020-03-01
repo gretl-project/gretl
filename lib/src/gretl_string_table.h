@@ -41,6 +41,9 @@ void gretl_string_table_add_extra (gretl_string_table *gst, PRN *prn);
 int gretl_string_table_reset_column_id (gretl_string_table *gst, 
 					int oldid, int newid);
 
+series_table *gretl_string_table_detach_col (gretl_string_table *gst,
+					     int col);
+
 series_table *series_table_new (char **strs, int n_strs);
 
 series_table *series_table_copy (series_table *st);
