@@ -20,6 +20,8 @@
 #ifndef DBREAD_H
 #define DBREAD_H
 
+#include "gretl_string_table.h"
+
 #define DB_DESCRIP_LEN 72  /* size of array to hold "# description" */
 
 typedef enum {
@@ -69,6 +71,7 @@ typedef struct ODBC_info_ {
     char coltypes[ODBC_OBSCOLS];
     double **X;
     char **S;
+    gretl_string_table *gst;
     int nrows;
     int obscols;
     int nvars;

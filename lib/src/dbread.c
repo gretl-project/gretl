@@ -1833,6 +1833,9 @@ static void ODBC_info_clear_read (void)
     strings_array_free(gretl_odinfo.S, gretl_odinfo.nrows);
     gretl_odinfo.S = NULL;
 
+    gretl_string_table_destroy(gretl_odinfo.gst);
+    gretl_odinfo.gst = NULL;
+
     for (i=0; i<ODBC_OBSCOLS; i++) {
 	gretl_odinfo.coltypes[i] = 0;
     }
@@ -2279,6 +2282,16 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    series_set_label(dset, v, label);
 	} else {
 	    vnew = 0;
+	}
+
+	if (vnew && gretl_odinfo.gst != NULL) {
+	    /* FIXME conditionality? */
+	    series_table *st;
+
+	    st = gretl_string_table_detach_col(gretl_odinfo.gst, i+1);
+	    if (st != NULL) {
+		series_attach_string_table(dset, v, st);
+	    }
 	}
 
 	if (gretl_odinfo.S != NULL) {
