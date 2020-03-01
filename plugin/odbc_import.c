@@ -121,6 +121,21 @@ static int expand_catchment (ODBC_info *odinfo, int *nrows)
     return err;
 }
 
+static const char *sql_status (SQLRETURN ret)
+{
+    if (ret == SQL_SUCCESS) {
+	return "SQL_SUCCESS";
+    } else if (ret == SQL_SUCCESS_WITH_INFO) {
+	return "SQL_SUCCESS_WITH_INFO";
+    } else if (ret == SQL_ERROR) {
+	return "SQL_ERROR";
+    } else if (ret == SQL_INVALID_HANDLE) {
+	return "SQL_INVALID_HANDLE";
+    } else {
+	return "??";
+    }
+}
+
 /* Try connecting to data source.  If @penv is NULL we're just checking
    that it can be opened OK, otherwise we return a connection.
 */
@@ -187,12 +202,15 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
 	/* either we bombed out, or we're just checking and the handles
 	   are not really wanted */
 	if (dbc != NULL) {
-	    SQLDisconnect(dbc);
-	    // SQLFreeHandle(SQL_HANDLE_ENV, dbc);
+	    ret = SQLDisconnect(dbc);
+	    fprintf(stderr, "SQLDisconnect(dbc): %s\n", sql_status(ret));
+	    ret = SQLFreeHandle(SQL_HANDLE_DBC, dbc);
+	    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_DBC, dbc): %s\n", sql_status(ret));
 	    dbc = NULL;
 	}
 	if (OD_env != NULL) {
-	    SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
+	    ret = SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
+	    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_ENV, OD_env): %s\n", sql_status(ret));
 	}
     } else {
 	*penv = OD_env;
@@ -448,7 +466,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     SQLHENV OD_env = NULL;    /* ODBC environment handle */
     SQLHDBC dbc = NULL;       /* connection handle */
     SQLHSTMT stmt = NULL;     /* statement handle */
-    long ret;                 /* return value from SQL functions */
+    SQLRETURN ret;            /* return value from SQL functions */
     unsigned char status[10]; /* SQL status */
     unsigned char msg[512];
     SQLINTEGER OD_err;
@@ -670,20 +688,17 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	strings_array_free(strvals, odinfo->nvars);
     }
 
-    if (0 && stmt != NULL) {
+    if (stmt != NULL) {
 	ret = SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-	/* fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_STMT): %d\n", (int) ret); */
+	fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_STMT): %s\n", sql_status(ret));
     }
 
     ret = SQLDisconnect(dbc);
-    /* fprintf(stderr, "SQLDisconnect: %d\n", (int) ret); */
-    dbc = OD_env = NULL;
-#if 0
+    fprintf(stderr, "SQLDisconnect: %s\n", sql_status(ret));
     ret = SQLFreeHandle(SQL_HANDLE_DBC, dbc);
-    /* fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_DBC): %d\n", (int) ret); */
+    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_DBC): %s\n", sql_status(ret));
     ret = SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
-    /* fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_ENV): %d\n", (int) ret); */
-#endif
+    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_ENV): %s\n", sql_status(ret));
 
     return err;
 }
