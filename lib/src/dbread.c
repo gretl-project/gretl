@@ -2299,30 +2299,36 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	}
 
 	if (v < 0) {
+	    /* a new series */
 	    v = vmin++;
 	    strcpy(dset->varname[v], vnames[i]);
 	    sprintf(label, "ODBC series %d", i + 1);
 	    series_set_label(dset, v, label);
 	} else {
+	    /* an existing series */
 	    vnew = 0;
+	    stl = series_get_string_table(dset, v);
 	}
 
 	if (in_string_table(gretl_odinfo.gst, i+1)) {
+	    /* the imported data are string-valued */
 	    if (vnew) {
 		gretl_string_table_reset_column_id(gretl_odinfo.gst, i+1, v);
+	    } else if (stl == NULL) {
+		gretl_errmsg_sprintf("%s: can't mix numeric and string data",
+				     dset->varname[v]);
+		err = E_TYPES;
 	    } else {
-		stl = series_get_string_table(dset, v);
-		if (stl == NULL) {
-		    gretl_errmsg_sprintf("%s: can't mix numeric and string data",
-					 dset->varname[v]);
-		    err = E_TYPES;
-		} else {
-		    str = gretl_string_table_detach_col(gretl_odinfo.gst, i+1);
-		}
+		str = gretl_string_table_detach_col(gretl_odinfo.gst, i+1);
 	    }
 	    if (!err && gretl_messages_on()) {
 		pprintf(prn, "%s: string-valued\n", dset->varname[v]);
 	    }
+	} else if (stl != NULL) {
+	    /* string-valued in dataset, numeric data from ODBC */
+	    gretl_errmsg_sprintf("%s: can't mix numeric and string data",
+				 dset->varname[v]);
+	    err = E_TYPES;
 	}
 
 	if (err) {
