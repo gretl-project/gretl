@@ -4699,7 +4699,7 @@ static int joiner_sort (joiner *jr)
 		    }
 		} else {
 		    /* arrange for qsort to move row to end */
-		    jr->rows[i].keyval = G_MAXINT64;
+		    jr->rows[i].keyval = G_MAXDOUBLE;
 		    matches--;
 		}
 	    }
