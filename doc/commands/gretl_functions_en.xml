@@ -11095,11 +11095,12 @@
       </fnargs>
       <description>
 	<para>
-	  If the series <argname>y</argname> is string-valued,
-	  returns an array containing all its distinct values,
-	  ordered by the associated numerical values starting
-	  at 1. If <argname>y</argname> is not string-valued an
-	  empty strings array is returned.
+	  If the series <argname>y</argname> is string-valued, returns
+	  an array containing all its distinct values (irrespective of
+	  the current setting of the sample range), ordered by the
+	  associated numerical values starting at 1. If
+	  <argname>y</argname> is not string-valued an empty strings
+	  array is returned.
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
