@@ -58,9 +58,6 @@
 # endif
 #endif /* ! _WIN32 */
 
-/* 2017-02-26: somewhat experimental, watch out for bad results! */
-#define USE_TIMEFMT 1
-
 /* length of buffer for "set term ..." */
 #define TERMLEN 256
 
@@ -3239,7 +3236,6 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	return 0;
     }
 
-#if USE_TIMEFMT
     if (!time_fit) {
 	if (dated_daily_data(dset) || dated_weekly_data(dset)) {
 	    if (timefmt_useable(dset)) {
@@ -3249,7 +3245,6 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	    }
 	}
     }
-#endif
 
     gi->x = gretl_plotx(dset, xopt);
     if (gi->x == NULL) {
@@ -4096,6 +4091,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     const double *x = NULL;
     const double *y = NULL;
     const double *obs = NULL;
+    gretlopt xopt = OPT_NONE;
     int rows, cols, tseries = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
@@ -4108,49 +4104,62 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     pos = gretl_list_separator_position(list);
 
+    /* copy or split the incoming list, as required */
+
     if (pos == 0) {
-	/* plot against time or index */
-	obs = gretl_plotx(dset, OPT_S);
-	if (obs == NULL) {
-	    return E_ALLOC;
-	}
 	plotlist = gretl_list_copy(list);
-	flags |= GPT_LINES;
-	if (dataset_is_time_series(dset)) {
-	    tseries = 1;
-	}
     } else if (pos > 2) {
 	/* plot several yvars against one xvar */
-	plotlist = gretl_list_new(pos - 1);
 	xvar = list[list[0]];
-	x = dset->Z[xvar];
+	plotlist = gretl_list_new(pos - 1);
     } else {
 	/* plot one yvar against several xvars */
-	plotlist = gretl_list_new(list[0] - pos);
 	yvar = list[1];
-	y = dset->Z[yvar];
+	plotlist = gretl_list_new(list[0] - pos);
     }
-
     if (plotlist == NULL) {
 	return E_ALLOC;
     }
 
     if (yvar) {
+	y = dset->Z[yvar];
 	for (i=1; i<=plotlist[0]; i++) {
 	    plotlist[i] = list[i + pos];
 	}
     } else if (xvar) {
+	x = dset->Z[xvar];
 	for (i=1; i<pos; i++) {
 	    plotlist[i] = list[i];
 	}
     }
 
-    /* max 16 plots */
+    /* max 16 plots! */
     if (plotlist[0] > 16) {
 	plotlist[0] = 16;
     }
 
     nplots = plotlist[0];
+
+    if (pos == 0) {
+	/* plotting against time or index */
+	xopt = OPT_S;
+#if 0 /* not yet! */
+	if (dated_daily_data(dset) || dated_weekly_data(dset)) {
+	    if (nplots < 2 && timefmt_useable(dset)) {
+		/* experimental */
+		xopt = OPT_T;
+	    }
+	}
+#endif
+	obs = gretl_plotx(dset, xopt);
+	if (obs == NULL) {
+	    return E_ALLOC;
+	}
+	flags |= GPT_LINES;
+	if (dataset_is_time_series(dset)) {
+	    tseries = 1;
+	}
+    }
 
     if (nplots > 1) {
 	get_multiplot_layout(nplots, tseries, &rows, &cols);
@@ -4193,6 +4202,10 @@ int multi_scatters (const int *list, const DATASET *dset,
 	/* avoid having points sticking to the axes */
 	fputs("set offsets graph 0.02, graph 0.02, graph 0.02, graph 0.02\n", fp);
 	fputs("set noxtics\nset noytics\n", fp);
+    }
+
+    if (xopt != OPT_NONE) {
+	fputs("set xzeroaxis\n", fp);
     }
 
     for (i=0; i<nplots; i++) {
