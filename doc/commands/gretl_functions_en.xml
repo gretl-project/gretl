@@ -11082,7 +11082,7 @@
           Example:
 	</para>
 	<code>
-          string s1 =  "Hello, Gretl!"
+          string s1 = "Hello, Gretl!"
           string s2 = strsub(s1, "Gretl", "Hansl")
           print s2
 	</code>
@@ -11126,17 +11126,13 @@
 	<code>
           string s1 = "Hello, Gretl!"
           string s2 = substr(s1, 8, 12)
-          string s3 = substr("Hello, Gretl!", 8, 12)
           print s2
-          print s3
 	</code>
 	<para>
           gives:
 	</para>
 	<code>
 	  ? print s2
-	  Gretl
-	  ? print s3
 	  Gretl
 	</code>
 	<para>
