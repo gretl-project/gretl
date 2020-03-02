@@ -2254,16 +2254,39 @@ static char **odbc_get_varnames (const char **line, int *err)
     return vnames;
 }
 
+static double s_tab_get (int i, int t, series_table *stl, series_table *str)
+{
+    const double *x = gretl_odinfo.X[i];
+    const char *sr;
+    double ret = NADBL;
+
+    /* get the string value for the imported obs */
+    sr = series_table_get_string(str, x[t]);
+    /* look up its index "on the left" */
+    ret = series_table_get_value(stl, sr);
+    if (na(ret)) {
+	/* not found: so try adding it to the LHS table */
+	series_table_add_string(stl, sr);
+	ret = series_table_get_value(stl, sr);
+    }
+
+    return ret;
+}
+
 static int odbc_transcribe_data (char **vnames, DATASET *dset,
-				 int vmin, int newvars)
+				 int vmin, int newvars,
+				 PRN *prn)
 {
     char label[MAXLABEL];
     int nv = gretl_odinfo.nvars;
     int n = gretl_odinfo.nrows;
     int nrepl = nv - newvars;
     int i, s, t, v;
+    int err = 0;
 
-    for (i=0; i<nv; i++) {
+    for (i=0; i<nv && !err; i++) {
+	series_table *str = NULL;
+	series_table *stl = NULL;
 	int vnew = 1; /* is this a new series? */
 	int obs_used = 0;
 
@@ -2284,14 +2307,26 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    vnew = 0;
 	}
 
-	if (vnew && gretl_odinfo.gst != NULL) {
-	    /* FIXME conditionality? */
-	    series_table *st;
-
-	    st = gretl_string_table_detach_col(gretl_odinfo.gst, i+1);
-	    if (st != NULL) {
-		series_attach_string_table(dset, v, st);
+	if (in_string_table(gretl_odinfo.gst, i+1)) {
+	    if (vnew) {
+		gretl_string_table_reset_column_id(gretl_odinfo.gst, i+1, v);
+	    } else {
+		stl = series_get_string_table(dset, v);
+		if (stl == NULL) {
+		    gretl_errmsg_sprintf("%s: can't mix numeric and string data",
+					 dset->varname[v]);
+		    err = E_TYPES;
+		} else {
+		    str = gretl_string_table_detach_col(gretl_odinfo.gst, i+1);
+		}
 	    }
+	    if (!err && gretl_messages_on()) {
+		pprintf(prn, "%s: string-valued\n", dset->varname[v]);
+	    }
+	}
+
+	if (err) {
+	    break;
 	}
 
 	if (gretl_odinfo.S != NULL) {
@@ -2303,8 +2338,12 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    }
 	    for (s=0; s<n; s++) {
 		t = dateton(gretl_odinfo.S[s], dset);
-		if (t >= 0 && t < dset->n) {
-		    dset->Z[v][t] = gretl_odinfo.X[i][s];
+		if (t >= dset->t1 && t <= dset->t2) {
+		    if (str != NULL) {
+			dset->Z[v][t] = s_tab_get(i, s, stl, str);
+		    } else {
+			dset->Z[v][t] = gretl_odinfo.X[i][s];
+		    }
 		    obs_used++;
 		} else {
 		    fprintf(stderr, "Rejecting obs '%s'\n", gretl_odinfo.S[s]);
@@ -2312,10 +2351,24 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    }
 	} else {
 	    /* no obs identifiers via ODBC */
-	    s = 0;
-	    for (t=0; t<dset->n; t++) {
+	    int ns = dset->t2 - dset->t1 + 1;
+
+	    if (n == ns) {
+		s = 0;
+	    } else if (n == dset->n) {
+		s = dset->t1;
+	    } else {
+		gretl_errmsg_sprintf("%s: don't know how to align the data!",
+				     dset->varname[v]);
+		err = E_DATA;
+	    }
+	    for (t=0; t<dset->n && !err; t++) {
 		if (t >= dset->t1 && t <= dset->t2 && s < n) {
-		    dset->Z[v][t] = gretl_odinfo.X[i][s++];
+		    if (str != NULL) {
+			dset->Z[v][t] = s_tab_get(i, s++, stl, str);
+		    } else {
+			dset->Z[v][t] = gretl_odinfo.X[i][s++];
+		    }
 		    obs_used++;
 		} else if (vnew) {
 		    dset->Z[v][t] = NADBL;
@@ -2323,13 +2376,21 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    }
 	}
 
-	if (vnew && obs_used == 0) {
-	    gretl_warnmsg_sprintf("ODBC import: '%s': no valid observations",
+	if (str != NULL) {
+	    series_table_destroy(str);
+	}
+
+	if (!err && vnew && obs_used == 0) {
+	    gretl_warnmsg_sprintf("ODBC import: '%s': no valid observations in sample range",
 				  vnames[i]);
 	}
     }
 
-    return 0;
+    if (gretl_odinfo.gst != NULL) {
+	gretl_string_table_save(gretl_odinfo.gst, dset);
+    }
+
+    return err;
 }
 
 static int odbc_count_new_vars (char **vnames, int nv,
@@ -2433,7 +2494,7 @@ static int odbc_get_series (const char *line, DATASET *dset,
 	}
 
 	if (!err) {
-	    odbc_transcribe_data(vnames, dset, vmin, newvars);
+	    err = odbc_transcribe_data(vnames, dset, vmin, newvars, prn);
 	}
     }
 

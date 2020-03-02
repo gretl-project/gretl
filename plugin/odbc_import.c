@@ -263,21 +263,23 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
     while (ret == SQL_SUCCESS && !err) {
 	j = k = p = v = 0;
 #if ODBC_DEBUG
-	fprintf(stderr, "SQLFetch, row %d bytes: ", t);
+	fprintf(stderr, "Fetch, row %d: ", t);
 #endif
 	for (i=0; i<totcols && !err; i++) {
+#if ODBC_DEBUG
+	    fprintf(stderr, "col %d: ", i);
+#endif
 	    if (i < odinfo->obscols) {
 		/* looking for obs identifier chunk(s) */
 		*obsbit = '\0';
 		if (colbytes[i] == SQL_NULL_DATA) {
 #if ODBC_DEBUG
-		    fprintf(stderr, " obs col %d: null data\n", i+1);
+		    fputs("null data", stderr);
 #endif
 		    continue; /* error? */
 		}
-		/* got a chunk */
 #if ODBC_DEBUG
-		fprintf(stderr, " col %d: %d bytes\n", i+1, (int) colbytes[i]);
+		fprintf(stderr, "%d bytes", (int) colbytes[i]);
 #endif
 		if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
 		    sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
@@ -294,30 +296,35 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 			strcat(odinfo->S[t], obsbit);
 		    }
 		}
-	    } else {
-		/* not an obs identifier columns */
-		if (i == odinfo->obscols && odinfo->S != NULL) {
-		    /* finished composing obs string, report it */
 #if ODBC_DEBUG
-		    fprintf(stderr, " obs = '%s'\n", odinfo->S[t]);
-#endif
+		if (i == odinfo->obscols - 1 && odinfo->S != NULL) {
+		    /* finished composing obs string, report it */
+		    fprintf(stderr, " (obs = '%s')", odinfo->S[t]);
 		}
+#endif
+	    } else {
 		/* now looking for actual data */
 		if (colbytes[i] == SQL_NULL_DATA) {
-		    fprintf(stderr, " data col %d: no data\n", v+1);
+		    fprintf(stderr, "no data");
 		    odinfo->X[v][t] = NADBL;
 		} else if (strvals != NULL && strvals[v] != NULL) {
 		    odinfo->X[v][t] = strval_to_double(odinfo, strvals[v],
 						       t+1, v+1, &err);
+#if ODBC_DEBUG
+		    fprintf(stderr, "string data value '%s' -> %g", strvals[v], odinfo->X[v][t]);
+#endif
 		} else {
 		    odinfo->X[v][t] = xt[v];
+#if ODBC_DEBUG
+		    fprintf(stderr, "data value %g", xt[v]);
+#endif
 		}
 		v++;
 	    }
 #if ODBC_DEBUG
-	    fprintf(stderr, "%d ", (int) colbytes[i]);
+	    if (i < totcols-1) fputs("; ", stderr);
 #endif
-	}
+	} /* end loop across columns */
 #if ODBC_DEBUG
 	fputc('\n', stderr);
 #endif
@@ -577,10 +584,11 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     }
 
     /* are we going to need a string table? */
+    j = 1;
     for (i=odinfo->obscols; i<ncols && !err; i++) {
 	dt = get_col_info(stmt, i+1, NULL, &err);
 	if (!err && IS_SQL_STRING_TYPE(dt)) {
-	    svlist = gretl_list_append_term(&svlist, i+1);
+	    svlist = gretl_list_append_term(&svlist, j++);
 	}
     }
     if (svlist != NULL) {

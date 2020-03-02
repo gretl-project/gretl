@@ -486,6 +486,15 @@ series_table *gretl_string_table_detach_col (gretl_string_table *gst,
     return st;
 }
 
+int in_string_table (gretl_string_table *gst, int id)
+{
+    if (gst != NULL) {
+	return in_gretl_list(gst->cols_list, id);
+    } else {
+	return 0;
+    }
+}
+
 /**
  * series_table_destroy:
  * @st: series string table.
@@ -533,10 +542,10 @@ void gretl_string_table_destroy (gretl_string_table *gst)
     free(gst);
 }
 
-/* Given a string table in which all the strings are just
+/* Given a series_table in which all the strings are just
    representations of integers, write the integer values
-   into the series and destroy the string table, while
-   marking the series as "coded."
+   into the series and destroy the table, while marking
+   the series as "coded."
 */
 
 static void series_commute_string_table (DATASET *dset, int i,
@@ -596,7 +605,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     /* first examine the string table for numeric codings */
     for (i=0; i<ncols; i++) {
 	st = gst->cols[i];
-	if (all_ints(st)) {
+	if (st == NULL || all_ints(st)) {
 	    n_strvars--;
 	}
     }
@@ -749,10 +758,13 @@ int gretl_string_table_save (gretl_string_table *gst, DATASET *dset)
     ncols = (gst->cols_list != NULL)? gst->cols_list[0] : 0;
 
     for (i=0; i<ncols; i++) {
-	vi = gst->cols_list[i+1];
 	st = gst->cols[i];
-	series_attach_string_table(dset, vi, st);
-	gst->cols[i] = NULL;
+	if (st != NULL) {
+	    vi = gst->cols_list[i+1];
+	    st = gst->cols[i];
+	    series_attach_string_table(dset, vi, st);
+	    gst->cols[i] = NULL;
+	}
     }
 
     return 0;
