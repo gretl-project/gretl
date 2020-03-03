@@ -323,9 +323,9 @@ double gnuplot_version (void)
 
 double gnuplot_version (void)
 {
-    /* As of 2015-02-18, the packages for Windows
-       include gnuplot 5.1 (CVS) */
-    return 5.1;
+    /* As of early 2020, the packages for Windows
+       include gnuplot 5.2 */
+    return 5.2;
 }
 
 #endif /* MS Windows or not */
@@ -4069,6 +4069,35 @@ static int scatters_incr (int T, const DATASET *dset)
     return incr;
 }
 
+static void do_calendar_xtics (const DATASET *dset,
+			       int ntics, FILE *fp)
+{
+    char label[OBSLEN];
+    GString *ticspec;
+    gchar *ticstr;
+    int nobs, incr;
+    int i, t;
+
+    nobs = sample_size(dset);
+    incr = round(nobs / (double) ntics);
+    t = dset->t1;
+
+    ticspec = g_string_new("set xtics (");
+    for (i=0; i<ntics; i++) {
+	ntodate(label, t, dset);
+	g_string_append_printf(ticspec, "\"%s\" %d", label, t);
+	if (i < ntics-1) {
+	    g_string_append(ticspec, ", ");
+	    t += incr;
+	}
+    }
+    g_string_append(ticspec, ") rotate by -45\n");
+
+    ticstr = g_string_free(ticspec, 0);
+    fputs(ticstr, fp);
+    g_free(ticstr);
+}
+
 /**
  * multi_scatters:
  * @list: list of variables to plot, by ID number.
@@ -4091,8 +4120,8 @@ int multi_scatters (const int *list, const DATASET *dset,
     const double *x = NULL;
     const double *y = NULL;
     const double *obs = NULL;
-    gretlopt xopt = OPT_NONE;
     int rows, cols, tseries = 0;
+    int use_calendar = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
@@ -4104,66 +4133,62 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     pos = gretl_list_separator_position(list);
 
-    /* copy or split the incoming list, as required */
-
     if (pos == 0) {
+	/* plot against time or index */
 	plotlist = gretl_list_copy(list);
+	flags |= GPT_LINES;
+	if (dataset_is_time_series(dset)) {
+	    tseries = 1;
+	    if (calendar_data(dset)) {
+		use_calendar = 1;
+	    }
+	}
+	if (!use_calendar) {
+	    obs = gretl_plotx(dset, OPT_S);
+	    if (obs == NULL) {
+		return E_ALLOC;
+	    }
+	}
     } else if (pos > 2) {
 	/* plot several yvars against one xvar */
-	xvar = list[list[0]];
 	plotlist = gretl_list_new(pos - 1);
+	xvar = list[list[0]];
+	x = dset->Z[xvar];
     } else {
 	/* plot one yvar against several xvars */
-	yvar = list[1];
 	plotlist = gretl_list_new(list[0] - pos);
+	yvar = list[1];
+	y = dset->Z[yvar];
     }
+
     if (plotlist == NULL) {
 	return E_ALLOC;
     }
 
     if (yvar) {
-	y = dset->Z[yvar];
 	for (i=1; i<=plotlist[0]; i++) {
 	    plotlist[i] = list[i + pos];
 	}
     } else if (xvar) {
-	x = dset->Z[xvar];
 	for (i=1; i<pos; i++) {
 	    plotlist[i] = list[i];
 	}
     }
 
-    /* max 16 plots! */
+    /* max 16 plots */
     if (plotlist[0] > 16) {
 	plotlist[0] = 16;
     }
 
     nplots = plotlist[0];
 
-    if (pos == 0) {
-	/* plotting against time or index */
-	xopt = OPT_S;
-#if 0 /* not yet! */
-	if (dated_daily_data(dset) || dated_weekly_data(dset)) {
-	    if (nplots < 2 && timefmt_useable(dset)) {
-		/* experimental */
-		xopt = OPT_T;
-	    }
-	}
-#endif
-	obs = gretl_plotx(dset, xopt);
-	if (obs == NULL) {
-	    return E_ALLOC;
-	}
-	flags |= GPT_LINES;
-	if (dataset_is_time_series(dset)) {
-	    tseries = 1;
-	}
-    }
-
     if (nplots > 1) {
 	get_multiplot_layout(nplots, tseries, &rows, &cols);
-	maybe_set_small_font(nplots);
+	if (use_calendar) {
+	    gp_small_font_size = nplots > 2 ? 6 : 0;
+	} else {
+	    maybe_set_small_font(nplots);
+	}
 	if (nplots > 12) {
 	    flags |= GPT_XXL;
 	} else if (nplots > 9) {
@@ -4188,7 +4213,12 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     gretl_push_c_numeric_locale();
 
-    if (obs != NULL) {
+    if (use_calendar) {
+	int ntics = 6;
+
+	fprintf(fp, "set xrange [%d:%d]\n", dset->t1, dset->t2);
+	do_calendar_xtics(dset, ntics, fp);
+    } else if (obs != NULL) {
 	double startdate = obs[dset->t1];
 	double enddate = obs[dset->t2];
 	int incr, T = dset->t2 - dset->t1 + 1;
@@ -4204,14 +4234,12 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fputs("set noxtics\nset noytics\n", fp);
     }
 
-    if (xopt != OPT_NONE) {
-	fputs("set xzeroaxis\n", fp);
-    }
+    fputs("set xzeroaxis\n", fp);
 
     for (i=0; i<nplots; i++) {
 	int j = plotlist[i+1];
 
-	if (obs != NULL) {
+	if (obs != NULL || use_calendar) {
 	    fputs("set noxlabel\n", fp);
 	    fputs("set noylabel\n", fp);
 	    fprintf(fp, "set title '%s'\n", series_get_graph_name(dset, j));
@@ -4230,7 +4258,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fputc('\n', fp);
 
 	for (t=dset->t1; t<=dset->t2; t++) {
-	    double xt = yvar ? dset->Z[j][t] : xvar ? x[t] : obs[t];
+	    double xt = yvar ? dset->Z[j][t] : xvar ? x[t] : obs ? obs[t] : t;
 	    double yt = yvar ? y[t] : dset->Z[j][t];
 
 	    write_gp_dataval(xt, fp, 0);
