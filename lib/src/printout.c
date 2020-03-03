@@ -3344,8 +3344,10 @@ print_iter_info (int iter, double crit, int type, int k,
 
     if (na(crit) || na(-crit)) {
 	pprintf(prn, "%s = NA", _(cstr));
-    } else {
+    } else if (details) {
 	pprintf(prn, "%s = %#.12g", _(cstr), crit);
+    } else {
+	pprintf(prn, "%s %#.12g", _(cstr), crit);
     }
 
     if (sl > 0.0 && !na(sl)) {
