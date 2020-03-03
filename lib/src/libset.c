@@ -558,6 +558,7 @@ int gretl_n_physical_cores (void)
 	    if (fgets(line, sizeof line, fp)) {
 		smt = atoi(line);
 	    }
+	    fclose(fp);
 	}
 	if (smt) {
 	    n_cores /= 2;
