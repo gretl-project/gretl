@@ -4069,33 +4069,22 @@ static int scatters_incr (int T, const DATASET *dset)
     return incr;
 }
 
-static void do_calendar_xtics (const DATASET *dset,
-			       int ntics, FILE *fp)
+static void scatters_set_timefmt (const DATASET *dset,
+				  const double *obs,
+				  FILE *fp)
 {
-    char label[OBSLEN];
-    GString *ticspec;
-    gchar *ticstr;
-    int nobs, incr;
-    int i, t;
+    double T = obs[dset->t2] - obs[dset->t1];
+    int ntics = 6;
 
-    nobs = sample_size(dset);
-    incr = round(nobs / (double) ntics);
-    t = dset->t1;
-
-    ticspec = g_string_new("set xtics (");
-    for (i=0; i<ntics; i++) {
-	ntodate(label, t, dset);
-	g_string_append_printf(ticspec, "\"%s\" %d", label, t);
-	if (i < ntics-1) {
-	    g_string_append(ticspec, ", ");
-	    t += incr;
-	}
+    fputs("set xdata time\n", fp);
+    fputs("set timefmt \"%s\"\n", fp);
+    if (single_year_sample(dset, dset->t1, dset->t2)) {
+	fputs("set format x \"%m-%d\"\n", fp);
+    } else {
+	fputs("set format x \"%Y-%m-%d\"\n", fp);
     }
-    g_string_append(ticspec, ") rotate by -45\n");
-
-    ticstr = g_string_free(ticspec, 0);
-    fputs(ticstr, fp);
-    g_free(ticstr);
+    fputs("set xtics rotate by -45\n", fp);
+    fprintf(fp, "set xtics %g\n", round(T/ntics));
 }
 
 /**
@@ -4121,7 +4110,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     const double *y = NULL;
     const double *obs = NULL;
     int rows, cols, tseries = 0;
-    int use_calendar = 0;
+    int use_timefmt = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
@@ -4140,14 +4129,12 @@ int multi_scatters (const int *list, const DATASET *dset,
 	if (dataset_is_time_series(dset)) {
 	    tseries = 1;
 	    if (calendar_data(dset)) {
-		use_calendar = 1;
+		use_timefmt = 1;
 	    }
 	}
-	if (!use_calendar) {
-	    obs = gretl_plotx(dset, OPT_S);
-	    if (obs == NULL) {
-		return E_ALLOC;
-	    }
+	obs = gretl_plotx(dset, use_timefmt ? OPT_T : OPT_S);
+	if (obs == NULL) {
+	    return E_ALLOC;
 	}
     } else if (pos > 2) {
 	/* plot several yvars against one xvar */
@@ -4184,7 +4171,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     if (nplots > 1) {
 	get_multiplot_layout(nplots, tseries, &rows, &cols);
-	if (use_calendar) {
+	if (use_timefmt) {
 	    gp_small_font_size = nplots > 2 ? 6 : 0;
 	} else {
 	    maybe_set_small_font(nplots);
@@ -4213,11 +4200,9 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     gretl_push_c_numeric_locale();
 
-    if (use_calendar) {
-	int ntics = 6;
-
-	fprintf(fp, "set xrange [%d:%d]\n", dset->t1, dset->t2);
-	do_calendar_xtics(dset, ntics, fp);
+    if (use_timefmt) {
+	fprintf(fp, "set xrange [%.12g:%.12g]\n", obs[dset->t1], obs[dset->t2]);
+	scatters_set_timefmt(dset, obs, fp);
     } else if (obs != NULL) {
 	double startdate = obs[dset->t1];
 	double enddate = obs[dset->t2];
@@ -4239,7 +4224,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     for (i=0; i<nplots; i++) {
 	int j = plotlist[i+1];
 
-	if (obs != NULL || use_calendar) {
+	if (obs != NULL) {
 	    fputs("set noxlabel\n", fp);
 	    fputs("set noylabel\n", fp);
 	    fprintf(fp, "set title '%s'\n", series_get_graph_name(dset, j));
@@ -4258,7 +4243,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fputc('\n', fp);
 
 	for (t=dset->t1; t<=dset->t2; t++) {
-	    double xt = yvar ? dset->Z[j][t] : xvar ? x[t] : obs ? obs[t] : t;
+	    double xt = yvar ? dset->Z[j][t] : xvar ? x[t] : obs[t];
 	    double yt = yvar ? y[t] : dset->Z[j][t];
 
 	    write_gp_dataval(xt, fp, 0);
