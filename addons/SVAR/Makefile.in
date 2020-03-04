@@ -39,21 +39,22 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_signrestr.inp \
 	SVAR_signrestr_utils.inp \
 	SVAR_compatibility_funcs.inp
+
+SPEC = SVAR.spec
 	
 all: $(PKG).gfn pdfdoc
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec
+$(PKG).gfn: symlinks $(INP) $(SPEC)
 	$(GRETLCLI) -t pkg.inp
-
-links.stamp: Makefile
-	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
-	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
-	@touch $@
 
 $(PKG).zip: $(PKG).gfn pdfdoc
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
-.PHONY : pdfdoc check install installdirs clean
+.PHONY : symlinks pdfdoc check install installdirs clean
+
+symlinks:
+	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
+	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 
 pdfdoc: $(PKG).gfn
 	$(MAKE) -C doc
@@ -72,6 +73,6 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 
 clean: 
-	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
 	@rm -f *.pdf test.out
 	@$(MAKE) -C doc clean
