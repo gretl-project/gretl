@@ -16,16 +16,11 @@
 </center>
 
 <p>
- First you need to determine if your Mac has an Intel or a PPC processor.
- Newer Macs (since 2006) all run Intel. If you have an older Mac and are not sure,
- click on the Apple icon at the top left of your screen and select "About this Mac". 
- In the window that appears you'll find the OS X version number and also the processor 
- type.
-</p>
-
-<p>
- If you have an intel Mac running OS X 10.6 (Snow Leopard) or higher, we recommend the
- "quartz" download below. Some users may prefer to use the X11 version of gretl.
+ If you have an intel Mac running OS X 10.6 (Snow Leopard) or higher you should use the
+ "quartz" download below. For versions of OS X prior to 10.6 you'll need one or other
+ of the "old" versions, depending on whether your Mac has an Intel or PPC processor
+ (if in doubt, check under "About this Mac", by clicking on the Apple icon at the top
+ left of your screen).
 </p>
 
 <p>
@@ -34,44 +29,40 @@
 
 <div id="menucontent">
  <ul class="menu">
-  <li><a href="mac-intel-quartz.html">Intel Mac, quartz (recommended)</a></li>
-  <li><a href="mac-intel-x11.html">Intel Mac, X11</a></li>
+  <li><a href="mac-intel-quartz.html">Intel Mac, quartz</a></li>
+  <li><a href="mac-intel-x11.html">Intel Mac (old)</a></li>
   <li><a href="mac-ppc.html">PPC Mac (old)</a></li>
  </ul>
 </div>
 
-<h2>Important</h2>
+<h2>Important note: installing on Catalina</h2>
 
 <p>
-  Some Mac users reported that trying to install gretl on recent OSX
-  versions could trigger a security alert.  If you downloaded gretl
+  Trying to install gretl on current OS X (as of this writing, Catalina)
+  is likely to trigger a security alert.  If you downloaded gretl
   from this website, you have nothing to worry about. Here's a to-do
   list to circumvent the problem:
-</è>
+</p>
 
 <ol type="1">
-  <li> Open System Preferences and navigate to &quot;Security &amp;
-  privacy&quot;. Select tab General.
-  </li>
+  <li><p>Open System Preferences and navigate to &quot;Security &amp;
+  privacy&quot;. Select the General tab. We'll come back to this window shortly.</p></li>
   
-  <li> Double click .pkg file. You get a message "gretl-quartz.pkg can't be opened because Apple
-    cannot check it ...". Click OK to close the window. </li>
+  <li><p>Double-click the gretl .pkg file. You'll get a message "gretl-quartz.pkg can't be opened because Apple
+    cannot check it ...". Click <b>OK</b> to close the window.</p></li>
 
   <img src="../images/osx-install-1.png">
 
-  <li>. In the tab mentioned in item 1 you will see a message with a button Open Anyway.
-    Click that button.</li>
+  <li><p>In the tab mentioned in item 1 you will see a message with a button <b>Open Anyway</b>:
+    click that button.</p></li>
   
   <img src="../images/osx-install-2.png">
 
-  <li> Double click the gretl pkg file again. Now you will get the same window as in item 1.
-    The window has two buttons: Open and Cancel. Click <b>Open</b> and Gretl will be installed.</li>
+  <li><p>Double'click the gretl pkg file again. Now you will get the same window as in item 1.
+    The window has two buttons: Open and Cancel. Click <b>Open</b> and gretl will be installed.</p></li>
 
   <img src="../images/osx-install-3.png">
-
-
 </ol>
-
 
 </body>
 </html>
