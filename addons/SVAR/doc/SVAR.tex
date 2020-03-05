@@ -2272,7 +2272,7 @@ observable variable \texttt{bar} over the horizon from 0 to
 \begin{code}
 SVAR_SRplain(&mod, "quantity", "supply", "+", 6, 4)
 \end{code}
-means that the shock named \texttt{supply} has a negative impact on the
+means that the shock named \texttt{supply} has a positive impact on the
 observable variable \texttt{quantity} over the horizon from 6 to 10.
 
 \subsubsection{Interval restrictions}
@@ -2312,7 +2312,7 @@ string boundscheck = "abs(M[1,1]) < 0.1"
 SVAR_SRexotic(&mod, boundscheck, 2)
 \end{code}
 
-If you want more restrictions, you just invoke the function more times
+If you want more restrictions, you just invoke the function several times
 with suitable strings as arguments.
 
 % (I think the following not suitable/needed for the public: [Sven])
@@ -2393,10 +2393,9 @@ the frequentist estimates.
 What happens inside this function? First, the relevant items from the
 model bundle are copied: this of course includes the VAR parameters
 and $\hat{\Sigma}$, but we'll also need $(X'X)^{-1}$ for the Bayesian
-option, when we draw from the posterior.
+option.
+Then, for each iteration:
 
-Then, for each
-iteration:
 \begin{enumerate}
 \item For the Bayesian option, first we draw from the posterior of the
   VAR parameters (this is where we need $(X'X)^{-1}$); in the
@@ -2440,7 +2439,7 @@ iteration:
       $M_i$ matrices should contain the IRFs in
       the appropriate positions: $[M_k]_{i,j}$ contains the impact at
       $k$ steps of the $j$-th shock to the $i$-th observable, where
-      the ordering of the observables is the one implicit in the imput
+      the ordering of the observables is the one implicit in the input
       list and the order of the shocks is the one given by the
       \texttt{snames} bundle element. Therefore, we can proceed with
       checking the exotic restrictions (if any).
@@ -2506,7 +2505,9 @@ However, it should be very clear that these results are quite arbitrary, since t
 accepted draw will typically \emph{not} be representative of the entire model distribution.
 While it is beyond the scope of this user guide to provide a discussion of the possible ways to 
 find a suitable unique model among the many accepted draws, let us sketch how the user
-could use the existing apparatus in SVAR to pick a certain model. 
+could employ the existing apparatus to pick a certain model. (Some convenience functions 
+are planned to be added to the \texttt{SVAR} addon package in the future to make this task more 
+user-friendly.)
 
 For example, continuing with \texttt{ChoMoreno.inp}, say you are most interested in the 
 impulse response of inflation (2nd variable) to a demand shock (1st shock) not immediately, 
@@ -2520,18 +2521,24 @@ then be found in
 number turns out to be $0.171304$.
 
 How can we retrieve the corresponding scalar outcomes across all accepted model draws? 
-Admittedly this requires some knowledge of the internal storage structure of the SVAR addon 
-(FIXME: which is why we need to wrap this into another function....), but here is the solution:
+Admittedly this requires some knowledge of the internal storage structure of the SVAR addon, 
+but here is the solution, using the stored number of available accepted draws \texttt{mod.SRacc}:
 
 \begin{code}
-matrix crosscollect = zeros(mod.SRacc, 1)  
+matrix crosscollect = zeros(mod.SRacc)  
 nv = 2
 ns = 1
 horiz = 1
-loop i=1..mod.SRacc -q
-	crosscollect[i] = mod.acc_draws[i].irfs[1 + horiz][nv,ns]
+loop i=1..mod.SRacc --quiet
+    crosscollect[i] = mod.acc_draws[i].irfs[1 + horiz][nv,ns]
 endloop
 \end{code}
+
+It should be clear that \texttt{SRacc} and \texttt{acc\_draws} are given names of the bundle 
+members determined by SVAR's storage structure and must be used exactly like this, and the 
+same holds for the nested array of matrices \texttt{irfs} which is in turn part of the array of 
+bundles \texttt{acc\_draws}. In contrast, \texttt{crosscollect}, \texttt{nv, ns}, and 
+\texttt{horiz} are of course arbitrary user-settable identifiers.
 
 Now we have all the relevant model results in a single column vector, and finding the model with 
 the result closest to the median target is then straightforward, using gretl's built-in \texttt{iminc} 
@@ -2545,7 +2552,7 @@ We find that the representative model in this sense is the one with index 58; by
 the associated impulse response value is very close to the median, namely $0.171297$. A user
 interested in a model with a typical inflation reaction to a demand shock at lag one would thus
 call the functions \texttt{SVAR\_hd}, \texttt{FEVD}, and \texttt{GetShock} with an index 
-argument 58 instead of the arbitrary 112.
+argument 58 instead of the arbitrary 112 above.
 
 \subsection{Still to do later (for set identification)}
 
@@ -3330,9 +3337,11 @@ int length[0], int ini[0])}
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{Version 1.90, February 2020}
+\subsection*{Version 1.90, March 2020}
 \begin{itemize}
-\item Add set-identified model estimation (a.k.a. sign restrictions).
+\item Major new feature: set-identified model estimation (a.k.a. sign restrictions; scripting
+interface only). 
+ 
 \end{itemize}
 
 \subsection*{Version 1.52, November 2019}
