@@ -35,7 +35,7 @@ SPEC = gig.spec
 
 all: $(PKG).gfn pdfdoc
 
-$(PKG).gfn: links.stamp $(INP) $(SPEC)
+$(PKG).gfn: symlinks $(INP) $(SPEC)
 	$(GRETLCLI) -t pkg.inp
 
 $(PKG).zip: $(PKG).gfn pdfdoc
