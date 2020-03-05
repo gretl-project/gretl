@@ -687,6 +687,7 @@ GTKSPINNER_LIBS
 GTKSPINNER_CFLAGS
 GTKMAC_LIBS
 GTKMAC_CFLAGS
+GRETLMAC
 GTK3_LIBS
 GTK3_CFLAGS
 GTK2_LIBS
@@ -22823,6 +22824,12 @@ fi
 
 fi
   fi
+  if test "$mac_native" = "yes" ; then
+     GRETLMAC="gretl"
+  else
+     GRETLMAC="Gretl"
+  fi
+
 fi
 
 if test "$mac_native" = "yes" ; then
