@@ -1,35 +1,35 @@
-\chapter{Data import via ODBC}
+\chapter{Gretl and ODBC}
 \label{chap:odbc}
 
-Since version 1.7.5, \app{gretl} provides a method for retrieving data
-from databases which support the Open Database Connectivity (ODBC)
-standard. Most users won't be interested in this, but there may be
-some for whom this feature matters a lot --- typically, those who work
-in an environment where huge data collections are accessible via a
-Data Base Management System (DBMS).
+Gretl provides a method for retrieving data from databases which
+support the Open Database Connectivity (ODBC) standard. Most users
+won't be interested in this, but there may be some for whom this
+feature matters a lot---typically, those who work in an environment
+where huge data collections are accessible via a Data Base Management
+System (DBMS).
 
 In the following section we explain what is needed for ODBC support in
-\app{gretl}. We provide some background information on how ODBC works
+gretl. We provide some background information on how ODBC works
 in section~\ref{sec:odbc-base}, and explain the details of getting
-\app{gretl} to retrieve data from a database in
-section~\ref{sec:odbc-syntax}.
+gretl to retrieve data from a database in
+section~\ref{sec:odbc-syntax}. Section~\ref{sec:odbc-examples}
+provides some example of usage, and section~\ref{sec:odbc-conn} gives
+some details on the management of ODBC connections.
 
 \section{ODBC support}
 \label{sec:odbc-support}
 
-The piece of software that bridges between \app{gretl} and the ODBC
-system is a dynamically loaded ``plugin''. This is included in the
-\app{gretl} packages for MS Windows and Mac OS X (on OS X support was
-added in \app{gretl} 1.9.0). On other unix-type platforms (notably
-Linux) you will have to build \app{gretl} from source to get ODBC
-support.  This is because the \app{gretl} plugin depends on
-having \app{unixODBC} installed, which we cannot assume to be the
-case on typical Linux systems. To enable the ODBC plugin when building 
-\app{gretl}, you must pass the option \verb|--with-odbc| to
-\app{gretl}'s \texttt{configure} script. In addition, if
-\app{unixODBC} is installed in a non-standard location you will have
-to specify its installation prefix using \verb|--with-ODBC-prefix|,
-as in (for example)
+The piece of software that bridges between gretl and the ODBC system
+is a dynamically loaded ``plugin''. This is included in the gretl
+packages for MS Windows and Mac OS X. On other unix-type platforms
+(notably Linux) you may have to build gretl from source to get ODBC
+support.  This is because the plugin depends on having \app{unixODBC}
+installed, which we cannot assume to be the case on typical Linux
+systems. To enable the ODBC plugin when building gretl, you must pass
+the option \verb|--with-odbc| to gretl's \texttt{configure} script. In
+addition, if \app{unixODBC} is installed in a non-standard location
+you will have to specify its installation prefix using
+\verb|--with-ODBC-prefix|, as in (for example)
 \begin{code}
   ./configure --with-odbc --with-ODBC-prefix=/opt/ODBC
 \end{code}
@@ -117,16 +117,16 @@ produces the subset of the original data shown in Table~\ref{tab:odbc-result}.
   \label{tab:odbc-result}
 \end{table}
 
-\app{Gretl} provides a mechanism for forwarding your query to the DBMS
+Gretl provides a mechanism for forwarding your query to the DBMS
 via ODBC and including the results in your currently open dataset.
 
 \section{Syntax}
 \label{sec:odbc-syntax}
 
-At present \app{gretl} does not offer a graphical interface for ODBC
-import; this must be done via the command line interface. The two
-commands used for fetching data via an ODBC connection are
-\texttt{open} and \texttt{data}.
+At present we do not offer a graphical interface for ODBC import; this
+must be done via the command line interface. The two commands used for
+fetching data via an ODBC connection are \texttt{open} and
+\texttt{data}.
 
 The \texttt{open} command is used for connecting to a DBMS: its syntax
 is
@@ -137,7 +137,7 @@ is
 \end{flushleft}
 The \texttt{user} and \texttt{password} items are optional; the effect
 of this command is to initiate an ODBC connection. It is assumed that
-the machine \app{gretl} runs on has a working ODBC client installed.
+the machine gretl runs on has a working ODBC client installed.
 
 In order to actually retrieve the data, the \texttt{data} command is
 used. Its syntax is:
@@ -154,10 +154,7 @@ where:
   cases when a ``rectangular'' organisation of the database cannot be
   assumed (more on this later);
 \item[\emph{query-string}] is a string containing the SQL statement
-  used to extract the data.\footnote{Prior to \app{gretl} 1.8.8, the
-    tag ``\texttt{query=}'' was not required (or accepted) before the query
-    string, and only one series could be imported at a time.  This
-    variant is still accepted for the sake of backward compatibility.}
+  used to extract the data.
 \end{description}
 %
 There should be no spaces around the equals signs in the
@@ -193,19 +190,19 @@ SQL query should contain an appropriate \texttt{ORDER BY} clause.
 
 The optional format string is used for those cases when there is no
 certainty that the data from the query will arrive in the same order
-as the \app{gretl} dataset. This may happen when missing values are
+as the gretl dataset. This may happen when missing values are
 interspersed within a column, or with data that do not have a natural
 ordering, e.g.\ cross-sectional data. In this case, the SQL statement
 should return a table with $m+k$ columns, where the first $m$
-columns are used to identify the observation or row in the \app{gretl}
+columns are used to identify the observation or row in the gretl
 dataset into which the actual data values in the final $k$ columns
 should be placed.  The \texttt{obs-format} string is used to translate
 the first $m$ fields into a string which matches the string
-\app{gretl} uses to identify observations in the currently open
+gretl uses to identify observations in the currently open
 dataset. Up to three columns can be used for this purpose ($m \leq
 3$).
 
-Note that the strings \app{gretl} uses to identify observations
+Note that the strings gretl uses to identify observations
 can be seen by printing any variable ``by observation'', as in
 %
 \begin{code}
@@ -228,7 +225,7 @@ as follows:
 
 In addition the format can include literal characters to be passed
 through, such as slashes or colons, to make the resulting string
-compatible with \app{gretl}'s observation identifiers.
+compatible with gretl's observation identifiers.
 
 For example, consider the following fictitious case: we have a
 5-days-per-week dataset, to which we want to add the stock index for
@@ -247,9 +244,9 @@ In this case, the following syntax could be used
 \end{code}
 %
 The column \texttt{VerdSE} holds the data to be fetched, which will go
-into the \app{gretl} series \texttt{y}. The first three columns are
+into the gretl series \texttt{y}. The first three columns are
 used to construct a string which identifies the day. Daily dates take
-the form \texttt{YYYY/MM/DD} in \app{gretl}.  If a row from the DBMS
+the form \texttt{YYYY/MM/DD} in gretl.  If a row from the DBMS
 produces the observation string \texttt{2008/04/01} this will match OK
 (it's a Tuesday), but \texttt{2008/04/05} will not match since it is a
 Saturday; the corresponding row will therefore be discarded.  On the
@@ -258,7 +255,7 @@ data coming from the DBMS (it's a Wednesday), that entry is left blank
 in our series \texttt{y}.
 
 \section{Examples}
-\label{sec:examples}
+\label{sec:odbc-examples}
 
 \begin{table}[htbp]
   \centering
@@ -392,7 +389,7 @@ print bar --byobs
 
 Listing \ref{ex:odbc-3} shows what happens if the rows in
 the outcome from the \texttt{SELECT} statement do not match the
-observations in the currently open \app{gretl} dataset. The query
+observations in the currently open gretl dataset. The query
 includes a condition which filters out all the data from the first
 quarter. The query result (invisible to the user) would be something
 like
@@ -410,7 +407,7 @@ like
 | 1972 |    3 |  4.6302000000 | 
 ...
 \end{code}
-Internally, \app{gretl} fills the variable \texttt{bar} with the
+Internally, gretl fills the variable \texttt{bar} with the
 corresponding value if it finds a match; otherwise, \texttt{NA} is
 used. Printing out the variable \texttt{bar} thus produces
 \begin{code}
@@ -432,6 +429,22 @@ used. Printing out the variable \texttt{bar} thus produces
 
 \end{script}
 
+\section{Connectivity details}
+\label{sec:odbc-conn}
+
+It may be helpful to supply some details on gretl's management of ODBC
+connections. First, when the \cmd{open} command is invoked with the
+\option{odbc} option, gretl checks to see if a connection to the
+specified DSN (Data Source Name) can be established via the ODBC
+function \texttt{SQLConnect}. If not, an error is flagged; if so, the
+connection is dropped (\texttt{SQLDisconnect}) but the DSN details are
+stored. The stored DSN then remains the implicit source for subsequent
+invocation of the \cmd{data} command, with the \option{odbc} option,
+until a countermanding \cmd{open} command is issued.
+
+Each time an OBDC-related \cmd{data} command is issued, gretl attempts
+to re-establish a connection to the given DSN; the connection is
+dropped once the data transfer is complete.
 
 %%% Local Variables:
 %%% mode: latex

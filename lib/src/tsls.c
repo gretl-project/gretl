@@ -417,71 +417,43 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
 
 /* fill the residuals matrix for tsls likelihood calculation */
 
-static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
-			  const int *reglist, const int *instlist,
-			  DATASET *dset)
+static int fill_E_matrix (gretl_matrix *E,
+			  const MODEL *pmod,
+			  const int *endolist,
+			  const int *reglist,
+			  const int *instlist,
+			  const char *missmask,
+			  const DATASET *dset)
 {
-    MODEL emod;
-    int *elist;
-    double uit;
-    int nx = instlist[0];
-    int i, vi, s, t, j = 0;
-    int T = E->rows;
-    int err = 0;
+    gretl_matrix *Y = NULL;
+    gretl_matrix *X = NULL;
+    int ny, *ylist;
+    int i, err = 0;
 
-    elist = gretl_list_new(nx + 1);
-    if (elist == NULL) {
-	return E_ALLOC;
+    ny = endolist[0] + 1;
+    ylist = gretl_list_new(ny);
+    ylist[1] = reglist[1];
+    for (i=2; i<=ny; i++) {
+	ylist[i] = endolist[i-1];
     }
 
-    for (i=2; i<=elist[0]; i++) {
-	elist[i] = instlist[i-1];
+    /* dependent variable plus endogenous regressors on LHS */
+    Y = gretl_matrix_data_subset_masked(ylist, dset, pmod->t1, pmod->t2,
+					missmask, &err);
+    if (!err) {
+	/* all instruments on RHS */
+	X = gretl_matrix_data_subset_masked(instlist, dset, pmod->t1, pmod->t2,
+					    missmask, &err);
     }
 
-    for (i=1; i<=reglist[0] && !err; i++) {
-	vi = reglist[i];
-
-	if (in_gretl_list(instlist, vi)) {
-	    continue;
-	}
-
-	elist[1] = vi;
-
-	if (model_has_missing_obs(pmod)) {
-	    set_reference_missmask_from_model(pmod);
-	}
-
-	/* regress the given endogenous var on all the instruments */
-	emod = lsq(elist, dset, OLS, OPT_A);
-	if ((err = emod.errcode)) {
-	    clear_model(&emod);
-	    break;
-	}
-
-	/* put residuals into appropriate column of E and
-	   increment the column: we should get exactly the same
-	   count of non-NA values as for the original model
-	*/
-	s = 0;
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    uit = emod.uhat[t];
-	    if (!na(uit)) {
-		if (s < T) {
-		    gretl_matrix_set(E, s, j, uit);
-		}
-		s++;
-	    }
-	}
-	j++;
-
-	if (s != T) {
-	    err = E_DATA;
-	}
-
-	clear_model(&emod);
+    if (!err) {
+	/* populate the residuals matrix, E */
+	err = gretl_matrix_multi_ols(Y, X, NULL, E, NULL);
     }
 
-    free(elist);
+    gretl_matrix_free(Y);
+    gretl_matrix_free(X);
+    free(ylist);
 
     return err;
 }
@@ -490,42 +462,44 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
    model */
 
 static int tsls_loglik (MODEL *pmod,
-			int nendo,
+			const int *endolist,
 			const int *reglist,
 			const int *instlist,
+			const char *missmask,
 			DATASET *dset)
 {
-    gretl_matrix *E, *W;
+    gretl_matrix *E, *S;
     int T = pmod->nobs;
-    int k = 1 + nendo;
+    int k = 1 + endolist[0];
     int err = 0;
 
     pmod->lnL = NADBL;
 
     E = gretl_matrix_alloc(T, k);
-    W = gretl_matrix_alloc(k, k);
+    S = gretl_matrix_alloc(k, k);
 
-    if (E == NULL || W == NULL) {
+    if (E == NULL || S == NULL) {
 	err = E_ALLOC;
-    }
-
-    if (!err) {
-	err = fill_E_matrix(E, pmod, reglist, instlist, dset);
+    } else {
+	err = fill_E_matrix(E, pmod, endolist, reglist, instlist,
+			    missmask, dset);
     }
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
 					E, GRETL_MOD_NONE,
-					W, GRETL_MOD_NONE);
+					S, GRETL_MOD_NONE);
     }
 
     if (!err) {
-	double ldet = gretl_matrix_log_determinant(W, &err);
+	double ldet = gretl_matrix_log_determinant(S, &err);
 
 	if (err) {
 	    pmod->lnL = NADBL;
 	} else {
-	    /* Davidson and MacKinnon, ETM, p. 538 */
+	    /* Davidson and MacKinnon, ETM, p. 538, taking
+	       kappa = 1 for the just-identified case
+	    */
 	    pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
 	}
     }
@@ -533,7 +507,7 @@ static int tsls_loglik (MODEL *pmod,
     mle_criteria(pmod, 0);
 
     gretl_matrix_free(E);
-    gretl_matrix_free(W);
+    gretl_matrix_free(S);
 
     return err;
 }
@@ -1810,7 +1784,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	if (OverIdRank > 0) {
 	    ivreg_sargan_test(&tsls, OverIdRank, instlist, dset);
 	} else if (nendo > 0) {
-	    tsls_loglik(&tsls, nendo, reglist, instlist, dset);
+	    tsls_loglik(&tsls, endolist, reglist, instlist, missmask, dset);
 	}
     }
 

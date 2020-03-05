@@ -4560,14 +4560,14 @@
 	</code>
 	<para>
 	  The optional <argname>dP</argname> argument can be used to
-	  retrieve the <by r="n" c="k"/> matrix of derivatives of the
-	  probabilities, where <math>k</math> equals 2<math>m</math> +
-	  <math>m</math>(<math>m</math> + 1)/2. The first
-	  <math>m</math> columns hold the derivatives with respect to
-	  the lower bounds, the next <math>m</math> those with respect
-	  to the upper bounds, and the remainder the derivatives with
-	  respect to the unique elements of the <math>C</math> matrix
-	  in <quote>vech</quote> order.
+	  retrieve the <by r="n" c="k"/> matrix of analytical
+	  derivatives of the probabilities, where <math>k</math>
+	  equals 2<math>m</math> + <math>m</math>(<math>m</math> +
+	  1)/2. The first <math>m</math> columns hold the derivatives
+	  with respect to the lower bounds, the next <math>m</math>
+	  those with respect to the upper bounds, and the remainder
+	  the derivatives with respect to the unique elements of the
+	  <math>C</math> matrix in <quote>vech</quote> order.
 	</para>
       </description>
     </function>
@@ -5827,16 +5827,16 @@
 	  below.
 	</para>
 	<para>
-	  The return value is a bundle whose stucture basically
+	  The return value is a bundle whose structure basically
 	  mirrors that of the input: JSON objects become gretl bundles
-	  and JSON arrays become gretl arrays, each of which holds
-	  either strings or bundles. JSON <quote>value</quote> nodes
+	  and JSON arrays become gretl arrays, each of which can hold
+	  strings, bundles or arrays. JSON <quote>value</quote> nodes
 	  become either members of bundles or elements of arrays; in
 	  the latter case numerical values are converted to strings
-	  using <lit>sprintf</lit>.  Since gretl arrays cannot be
-	  nested, the input accepted by this function is somewhat more
-	  restrictive than the JSON specification, which permits
-	  nesting of arrays.
+	  using <lit>sprintf</lit>. Note that although the JSON
+	  specification allows arrays of mixed type these cannot be
+	  handled by <lit>jsongetb</lit> since gretl arrays must
+	  be of a single type.
 	</para>
 	<para>
 	  The <argname>path</argname> argument can be used to limit
@@ -11082,7 +11082,7 @@
           Example:
 	</para>
 	<code>
-          string s1 =  "Hello, Gretl!"
+          string s1 = "Hello, Gretl!"
           string s2 = strsub(s1, "Gretl", "Hansl")
           print s2
 	</code>
@@ -11095,11 +11095,12 @@
       </fnargs>
       <description>
 	<para>
-	  If the series <argname>y</argname> is string-valued,
-	  returns an array containing all its distinct values,
-	  ordered by the associated numerical values starting
-	  at 1. If <argname>y</argname> is not string-valued an
-	  empty strings array is returned.
+	  If the series <argname>y</argname> is string-valued, returns
+	  an array containing all its distinct values (irrespective of
+	  the current setting of the sample range), ordered by the
+	  associated numerical values starting at 1. If
+	  <argname>y</argname> is not string-valued an empty strings
+	  array is returned.
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
@@ -11125,17 +11126,13 @@
 	<code>
           string s1 = "Hello, Gretl!"
           string s2 = substr(s1, 8, 12)
-          string s3 = substr("Hello, Gretl!", 8, 12)
           print s2
-          print s3
 	</code>
 	<para>
           gives:
 	</para>
 	<code>
 	  ? print s2
-	  Gretl
-	  ? print s3
 	  Gretl
 	</code>
 	<para>

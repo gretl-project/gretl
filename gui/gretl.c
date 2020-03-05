@@ -332,7 +332,7 @@ static int script_type (const char *fname)
 
 static void maybe_fix_dbname (char *dbname)
 {
-    FILE *fp = NULL;
+    int err;
 
     if (strstr(dbname, ".bin") == NULL &&
 	strstr(dbname, ".rat") == NULL &&
@@ -341,17 +341,14 @@ static void maybe_fix_dbname (char *dbname)
 	strcat(dbname, ".bin");
     }
 
-    fp = gretl_fopen(dbname, "rb");
+    err = gretl_test_fopen(dbname, "rb");
 
-    if (fp != NULL) {
-	fclose(fp);
-    } else if (!g_path_is_absolute(dbname)) {
+    if (err && !g_path_is_absolute(dbname)) {
 	gchar *tmp = g_build_filename(gretl_home(), "db",
 				      dbname, NULL);
 
-	fp = gretl_fopen(tmp, "rb");
-	if (fp != NULL) {
-	    fclose(fp);
+	err = gretl_test_fopen(tmp, "rb");
+	if (!err) {
 	    strcpy(dbname, tmp);
 	}
 	g_free(tmp);
@@ -380,6 +377,28 @@ static void real_nls_init (void)
 }
 
 #elif defined(OS_OSX)
+
+#if 0
+
+#include <CoreFoundation/CoreFoundation.h>
+
+/* Use this to check what we get from setlocale() ? */
+
+static void osx_check_locale (void)
+{
+    CFLocaleRef cflocale = CFLocaleCopyCurrent();
+    CFStringRef locid;
+    const char *s;
+
+    locid = (CFStringRef) CFLocaleGetValue(cflocale, kCFLocaleIdentifier);
+    s = CFStringGetCStringPtr(locid, kCFStringEncodingASCII);
+    if (s != NULL) {
+	fprintf(stderr, "CFLocale gave '%s'\n", s);
+    }
+    CFRelease(cflocale);
+}
+
+#endif /* not yet */
 
 static void real_nls_init (void)
 {
@@ -571,6 +590,22 @@ static void gui_show_activity (void)
 
 #ifdef GRETL_OPEN_HANDLER
 
+static gchar *absolutize_path (const char *fname)
+{
+    gchar *ret;
+
+    if (*fname == '\0' || *fname == '~' || g_path_is_absolute(fname)) {
+	ret = g_strdup(fname);
+    } else {
+	gchar *dirname = g_get_current_dir();
+
+	ret = g_build_filename(dirname, fname, NULL);
+	g_free(dirname);
+    }
+
+    return ret;
+}
+
 static gboolean maybe_hand_off (char *filearg, char *auxname)
 {
     long gpid = gretl_prior_instance();
@@ -585,11 +620,14 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	if (resp != GRETL_YES) {
 	    /* try hand-off to prior gretl instance */
 	    char *fname = filearg;
+	    gchar *abspath;
 
 	    if (*fname == '\0') {
 		fname = tryfile_is_set() ? tryfile : auxname;
 	    }
-	    ret = forward_open_request(gpid, fname);
+	    abspath = absolutize_path(fname);
+	    ret = forward_open_request(gpid, abspath);
+	    g_free(abspath);
 	}
     }
 
@@ -1911,6 +1949,7 @@ GtkActionEntry main_entries[] = {
     { "Pkgbook", GRETL_STOCK_PDF, N_("_Function package guide"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlMPI", GRETL_STOCK_PDF, N_("_gretl + MPI"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "gretlSVM", GRETL_STOCK_PDF, N_("_gretl + SVM"), NULL, NULL, G_CALLBACK(display_pdf_help) },
+    { "gretlDBN", GRETL_STOCK_PDF, N_("_gretl + DB.NOMICS"), NULL, NULL, G_CALLBACK(display_pdf_help) },
     { "UpdateCheck", GTK_STOCK_NETWORK, N_("Check for _updates"), NULL, NULL, G_CALLBACK(update_query) },
     { "SFAddons", NULL, N_("Check for _addons"), NULL, NULL, G_CALLBACK(show_files) },
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }

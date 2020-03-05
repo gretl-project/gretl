@@ -2508,6 +2508,10 @@
 	  <flag>--name</flag>
 	  <optparm>identifier</optparm>
 	  <effect>rename imported series</effect>
+	</option>
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>import from ODBC database</effect>
 	</option>	
       </options>
     </usage>
@@ -2515,23 +2519,31 @@
     <description>
       <para>
 	Reads the variables in <repl>varlist</repl> from a database
-	(gretl, dbnomics, RATS 4.0 or PcGive), which must have been
+	file (native gretl, RATS 4.0 or PcGive), which must have been
 	opened previously using the <cmdref targ="open"/> command.
+	The <lit>data</lit> command can also be used to import series
+	from DB.NOMICS or from an ODBC database; for details on those
+	variants see <mnu targ="gretlDBN">gretl + DB.NOMICS</mnu> or
+	<guideref targ="chap:odbc"/>, respectively.
+      </para>
+      <para>
 	The data frequency and sample range may be established via the
 	<cmdref targ="setobs"/> and <cmdref targ="smpl"/> commands
-	prior to using this command. Here is a full example:</para>
+	prior to using this command. Here's an example:
+      </para>
       <code>
-	open macrodat.rat
-	setobs 4 1959:1
-	smpl ; 1999:4
-	data GDP_JP GDP_UK
+	open fedstl.bin
+	setobs 12 2000:01
+	smpl ; 2019:12
+	data unrate cpiaucsl
       </code>
       <para>
-	The commands above open a database named
-	<filename>macrodat.rat</filename>, establish a quarterly data set
-	starting in the first quarter of 1959 and ending in the fourth
-	quarter of 1999, and then import the series named
-	<lit>GDP_JP</lit> and <lit>GDP_UK</lit>.</para>
+	The commands above open the database named
+	<filename>fedstl.bin</filename> (which is supplied with
+	gretl), establish a monthly dataset starting in January
+	2000 and ending in December of 2019, and then import the
+	series named <lit>unrate</lit> (unemployment rate) and
+	<lit>cpiaucsl</lit> (all-items CPI).</para>
       <para>
 	If <lit>setobs</lit> and <lit>smpl</lit> are not specified in this
 	way, the data frequency and sample range are set using the first
@@ -2586,7 +2598,6 @@
 	is restricted to the case where a single series is specified
 	for importation.
       </para>
-
     </description>
 
     <gui-access>
@@ -7919,8 +7930,8 @@
 	file is used.
       </para>
       <para>
-	For details on all of this, see <mnu targ="Pkgbook">the
-	Function Package Guide</mnu>.
+	For details on all of this, see the gretl <mnu
+	targ="Pkgbook">Function Package Guide</mnu>.
       </para>
     </description>
 
@@ -9734,31 +9745,46 @@
 	  <flag>--www</flag>
 	  <effect>use a database on the gretl server</effect>
 	</option>
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>use an ODBC database</effect>
+	</option>
 	<optnote>See below for additional specialized options</optnote>
       </options>
       <examples>
         <example>open data4-1</example>
         <example>open voter.dta</example>
-	<example>open fedbog --www</example>
+	<example>open fedbog.bin --www</example>
+	<example>open dbnomics</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Opens a data file or database.  If a data file is already
-	open, it is replaced by the newly opened one. To add data to
-	the current dataset, see <cmdref targ="append"/> and (for
-	greater flexibility) <cmdref targ="join"/>.
+	Opens a data file or database&mdash;see <guideref
+	targ="chap:datafiles"/> for an explanation of this
+	distinction. The effect is somewhat different in the two
+	cases. When a <emphasis>data file</emphasis> is opened, its
+	entire content is read into gretl's workspace, replacing the
+	current dataset (if any). To add data to the current dataset
+	instead of replacing, see <cmdref targ="append"/> or (for
+	greater flexibility) <cmdref targ="join"/>. When a
+	<emphasis>database</emphasis> is opened this does not
+	immediately load any data; rather, it sets the source for
+	subsequent invocations of the <cmdref targ="data"/> command,
+	which is used to import selected series. For specifics
+	regarding databases see the section headed <quote>Opening a
+	database</quote> below.
       </para>
       <para>
-	If a full path is not given, the program will search some
-	relevant paths to try to find the file, with <cmdref
-	targ="workdir"/> as a first choice. If no filename suffix is
-	given (as in the first example above), gretl assumes a native
-	datafile with suffix <lit>.gdt</lit>.  Based on the name of
-	the file and various heuristics, gretl will try to detect the
-	format of the data file (native, plain text, CSV, MS Excel,
-	Stata, SPSS, etc.).
+	If <repl>filename</repl> is not given as a full path, gretl
+	will search some relevant paths to try to find the file, with
+	<cmdref targ="workdir"/> as a first choice. If no filename
+	suffix is given (as in the first example above), gretl assumes
+	a native datafile with suffix <lit>.gdt</lit>.  Based on the
+	name of the file and various heuristics, gretl will try to
+	detect the format of the data file (native, plain text, CSV,
+	MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
 	If the <opt>frompkg</opt> option is used, gretl will look for
@@ -9778,29 +9804,18 @@
 	your currently defined variables (other than series, which are
 	necessarily cleared out), use the <opt>preserve</opt> option.
       </para>
-      <subhead context="cli">Opening a database</subhead>
-      <para>
-	The <lit>open</lit> command can also be used to open a
-	database (gretl, RATS 4.0 or PcGive) for reading.  In that
-	case it should be followed by the <cmdref targ="data"/>
-	command to extract particular series from the database.  If
-	the <lit>www</lit> option is given, the program will try to
-	access a database of the given name on the gretl server
-	&mdash; for instance the Federal Reserve interest rates
-	database in the third example above.
-      </para>
       <subhead context="cli">Spreadsheet files</subhead>
       <para>
-	When opening a spreadsheet file (Gnumeric, Open Document or MS
-	Excel), you may give up to three additional parameters
-	following the filename.  First, you can select a particular
-	worksheet within the file.  This is done either by giving its
-	(1-based) number, using the syntax, &eg;,
-	<opt>sheet=2</opt>, or, if you know the name of the sheet,
-	by giving the name in double quotes, as in
-	<opt>sheet="MacroData"</opt>. The default is to read the
-	first worksheet. You can also specify a column and/or row
-	offset into the worksheet via, &eg;,
+	When opening a data file in a spreadsheet format (Gnumeric,
+	Open Document or MS Excel), you may give up to three
+	additional parameters following the filename.  First, you can
+	select a particular worksheet within the file.  This is done
+	either by giving its (1-based) number, using the syntax, &eg;,
+	<opt>sheet=2</opt>, or, if you know the name of the sheet, by
+	giving the name in double quotes, as in
+	<opt>sheet="MacroData"</opt>. The default is to read the first
+	worksheet. You can also specify a column and/or row offset
+	into the worksheet via, &eg;,
       </para>
       <code>
 	--coloffset=3 --rowoffset=2
@@ -9856,10 +9871,32 @@
       <subhead context="gui">String-valued series</subhead>
       <para>
 	By default, when you import a file that contains string-valued
-	series, a text box will open showing you the contents of the
-	<lit>string_table.txt</lit> file, which contains the
+	series, a text box will open showing you the contents of
+	<lit>string_table.txt</lit>, a file which contains the
 	mapping between strings and their numeric coding. You can
 	suppress this behavior via the <opt>quiet</opt> option.
+      </para>
+      <subhead context="cli">Opening a database</subhead>
+      <para>
+	As mentioned above, the <lit>open</lit> command can be used to
+	open a database file for subsequent reading via the <cmdref
+	targ="data"/> command. Supported file-types are native gretl
+	databases, RATS 4.0 and PcGive.
+      </para>
+      <para>
+	Besides reading a file of one of these types on the local
+	machine, three further cases are supported. First, if the
+	<opt>www</opt> option is given, gretl will try to access a
+	native gretl database of the given name on the gretl
+	server&mdash;for instance the Federal Reserve interest rates
+	database <lit>fedbog.bin</lit> in the third example shown
+	above. Second, the command <quote><lit>open
+	dbnomics</lit></quote> can be used to set DB.NOMICS as the
+	source for database reads; on this see <mnu
+	targ="gretlDBN">dbnomics for gretl</mnu>.  Third, if the
+	<opt>odbc</opt> option is given gretl will try to access an
+	ODBC database. This option is explained at length in <guideref
+	targ="chap:odbc"/>.
       </para>
     </description>
 
@@ -12842,10 +12879,22 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>max_verbose</lit>: <lit>on</lit> or
-	  <lit>off</lit> (the default). Toggles verbose output for the
-	  <lit>BFGSmax</lit> and <lit>NRmax</lit> functions; see
-	  <guideref targ="chap:numerical"/> for details).
+	  <para><lit>max_verbose</lit>: <lit>off</lit> (the default),
+	  <lit>on</lit> or <lit>full</lit>. Controls the verbosity of
+	  commands and functions that use numerical optimization
+	  methods.  The <lit>on</lit> choice applies only to functions
+	  (such as <fncref targ="BFGSmax"/> and <fncref
+	  targ="NRmax"/>) which work silently by default; the effect
+	  is to print basic iteration information. The <lit>full</lit>
+	  setting can be used to trigger more detailed output,
+	  including parameter values and their respective gradient for
+	  the objective function at each iteration. This choice
+	  applies both to functions of the above-mentioned sort and to
+	  commands that rely on numerical optimization such as <cmdref
+	  targ="arima"/>, <cmdref targ="probit"/> and <cmdref
+	  targ="mle"/>. In the case of commands the effect is to make
+	  their <opt>verbose</opt> option produce more detail. See
+	  also <guideref targ="chap:numerical"/>.
 	</para>
 	</li>
 	<li>

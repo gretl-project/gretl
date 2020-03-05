@@ -124,10 +124,6 @@ extern char latex[MAXSTR];
 extern char viewdvi[MAXSTR];
 extern char Rcommand[MAXSTR];
 
-#if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
-extern char midiplayer[MAXSTR];
-#endif
-
 /* global GUI equipment */
 extern windata_t *mdata;
 extern GtkTargetEntry gretl_drag_targets[];

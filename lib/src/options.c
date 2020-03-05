@@ -652,6 +652,7 @@ struct gretl_option gretl_opts[] = {
     { VECM,     OPT_V, "verbose", 0 },
     { VECM,     OPT_S, "silent", 0 },
     { WLS,      OPT_R, "robust", 0 },
+    { WLS,      OPT_C, "cluster", 2 },
     { XCORRGM,  OPT_U, "plot", 2 },
     { XTAB,     OPT_C, "column", 0 },
     { XTAB,     OPT_X, "matrix", 2 },

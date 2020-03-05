@@ -116,6 +116,8 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
     return mask;
 }
 
+#define WALD_USE_LDIV 1
+
 /* Wald (chi-square and/or F) test for a set of zero restrictions on
    the parameters of a given model, based on the covariance matrix of
    the unrestricted model. Suitable for use where the original model
@@ -147,17 +149,34 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 	b = gretl_coeff_vector_from_model(pmod, mask, &err);
     }
 
+#if WALD_USE_LDIV
+    /* using "left division", avoid explicit inversion of @C */
+    if (!err) {
+	gretl_matrix *tmp, *mx;
+
+	mx = gretl_matrix_alloc(1,1);
+	tmp = gretl_matrix_divide(C, b, GRETL_MOD_NONE, &err);
+	if (tmp != NULL) {
+	    gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
+				      tmp, GRETL_MOD_NONE,
+				      mx, GRETL_MOD_NONE);
+	    wX = mx->val[0];
+	    gretl_matrix_free(tmp);
+	    gretl_matrix_free(mx);
+	}
+    }
+#else /* !WALD_USE_LDIV */
     if (!err) {
 	double rc = gretl_symmetric_matrix_rcond(C, &err);
 
-#if WDEBUG
+# if WDEBUG
 	gretl_matrix_print(C, "Wald VCV matrix");
 	gretl_matrix_print(b, "Wald coeff vector");
 	fprintf(stderr, "rcond of Wald VCV matrix = %g\n", rc);
-#endif
+# endif
 	if (!err) {
 	    if (rc < 1.0e-16) {
-		err = gretl_matrix_moore_penrose(C);
+		err = gretl_SVD_invert_matrix(C);
 	    } else {
 		err = gretl_invert_symmetric_matrix(C);
 	    }
@@ -165,17 +184,17 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 	if (err) {
 	    fprintf(stderr, "wald_test: couldn't invert C\n");
 	}
-#if WDEBUG
+# if WDEBUG
 	gretl_matrix_print(C, "VCV-inverse");
-#endif
+# endif
     }
-
     if (!err) {
 	wX = gretl_scalar_qform(b, C, &err);
     }
+#endif /* WALD_USE_LDIV or not */
 
 #if WDEBUG
-    fprintf(stderr, "wX (quad form) = %g\n", wX);
+    fprintf(stderr, "wX (quadratic form) = %g\n", wX);
 #endif
 
     if (!err) {

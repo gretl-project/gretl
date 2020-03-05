@@ -831,6 +831,29 @@ int gretl_array_get_length (gretl_array *A)
     return (A != NULL)? A->n : 0;
 }
 
+/* Return the 0-based index of the first empty slot
+   in @A, or -1 on failure (if @A is NULL or all its
+   slots are already filled).
+*/
+
+int gretl_array_get_next_index (gretl_array *A)
+{
+    int ret = -1;
+
+    if (A != NULL) {
+	int i;
+
+	for (i=0; i<A->n; i++) {
+	    if (A->data[i] == NULL) {
+		ret = i;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static int set_string (gretl_array *A, int i,
 		       char *s, int copy)
 {

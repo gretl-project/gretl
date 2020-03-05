@@ -1409,7 +1409,7 @@ int gretl_curl (const char *url, const char *header,
  * @fname: location for writing name of local file;
  * must be of at least %MAXLEN bytes.
  * @http: location to receive 1 if @s turns out to be
- * a URL using HTTP(S) protocol.
+ * a URL using HTTP(S) protocol, or NULL.
  *
  * Check the string @s, that may be a straight filename or may
  * be a URL. If it's a filename, just copy @s to @fname.
@@ -1427,7 +1427,7 @@ int try_http (const char *s, char *fname, int *http)
 	strncmp(s, "https://", 8) == 0) {
 #ifdef USE_CURL
 	err = retrieve_public_file(s, fname);
-	if (!err) {
+	if (!err && http != NULL) {
 	    *http = 1;
 	}
 #else

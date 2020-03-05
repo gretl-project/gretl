@@ -135,7 +135,7 @@
 
 \title{The HIP package}
 \author{Jack Lucchetti \and Claudia Pigini}
-\date{version 0.42}
+\date{version 0.5}
 \begin{document}
 
 \maketitle
@@ -242,25 +242,25 @@ which yields:
 
 \begin{code}
 Probit model with endogenous regressors
-ML, using observations 1-500
-Dependent Variable: y 
+ML, using observations 1-753
+Dependent Variable: LFP 
 Instrumented: other_inc
-Instruments: const, fem_educ, kids, male_educ 
+Instruments: const, WE, KL6, HE 
 Parameter covariance matrix: OPG
 
-              coefficient   std. error      z      p-value 
-  ---------------------------------------------------------
-  const        0.367208     0.460541      0.7973   0.4253  
-  fem_educ     0.211111     0.0290285     7.273    3.53e-13 ***
-  kids        -0.182093     0.0484024    -3.762    0.0002   ***
-  other_inc   -0.0542756    0.00608741   -8.916    4.83e-19 ***
+              coefficient   std. error     z      p-value 
+  --------------------------------------------------------
+  const       -1.20677      0.277614     -4.347   1.38e-05 ***
+  WE           0.179911     0.0297031     6.057   1.39e-09 ***
+  KL6         -0.646468     0.102047     -6.335   2.37e-10 ***
+  other_inc   -0.0332341    0.0156644    -2.122   0.0339   **
 
-Log-likelihood       -2368.2062  Akaike criterion    4756.4124
-Schwarz criterion     4798.5585  Hannan-Quinn        4772.9505
-Conditional ll      -252.045293  Cragg-Donald stat.    101.060
+Log-likelihood       -3325.8255  Akaike criterion    6671.6509
+Schwarz criterion     6717.8916  Hannan-Quinn        6689.4651
+Conditional ll      -465.248010  Cragg-Donald stat.     51.707
 
-Overall test (Wald) = 154.702 (3 df, p-value = 0.0000)
-Endogeneity test (Wald) = 6.84499 (1 df, p-value = 0.0089)
+Overall test (Wald) = 73.9702 (3 df, p-value = 0.0000)
+Endogeneity test (Wald) = 0.446846 (1 df, p-value = 0.5038)
 \end{code}
 
 In this case we used the function \texttt{HIP}, which takes as
@@ -303,7 +303,7 @@ test for $\ProbitPar = 0$ (apart from the intercept).
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[scale=0.5]{HIP-sshot1.png}
+  \includegraphics[scale=0.4]{HIP-sshot1.png}
   \caption{HIP GUI hook}
   \label{fig:HIP_window}
 \end{figure}
@@ -314,9 +314,23 @@ you'll find it among the other function packages installed on your box
   machine}). Double-click and edit the window that appears like in
 Figure \ref{fig:HIP_window}.
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.4]{HIP-sshot2.png}
+  \caption{HIP output}
+  \label{fig:HIP_output}
+\end{figure}
+
+\begin{figure}[hbtp]
+  \centering
+  \includegraphics[scale=0.4]{HIP-sshot3.png}
+  \caption{Icon view with a HIP bundle}
+  \label{fig:iconview}
+\end{figure}
+
 Note that in this case we changed the default value of ``Verbosity''
 from 1 to 2 and the default value of ``Covariance matrix estimation''
-from 0 to 1. 
+from ``OPG'' to ``Hessian''. 
 %
 % FIXME this does ot agree with Figures 1 and 2
 %
@@ -325,38 +339,24 @@ equation as well, and of using the Hessian instead of the OPG as the
 method for computing standard errors. All this is apparent in Figure
 \ref{fig:HIP_output}.
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[scale=0.5]{HIP-sshot2.png}
-  \caption{HIP output}
-  \label{fig:HIP_output}
-\end{figure}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[scale=0.5]{HIP-sshot3.png}
-  \caption{Icon view with a HIP bundle}
-  \label{fig:iconview}
-\end{figure}
-
 By using the \emph{Save} menu, you can choose the individual
 elements of the bundle to store away for later use if you
 want. Alternatively, you can save the bundle as a model via the
 \emph{File $>$ Save to session as icon} menu entry. If you do, assuming
 that you called your bundle ``Bonham'' again, then it will show in the
 ``Icon view'' gretl window, together with other session elements you
-wamt to keep (see Figure \ref{fig:iconview}).
+want to keep (see Figure \ref{fig:iconview}).
 
 \subsection{Heteroskedastic probit}
 
 Here, we'll replicate the example given in William Greene's textbook
-(5th edition), which also uses \citeauthor{Mroz87}'s dataset. The
+(7th edition), which also uses \citeauthor{Mroz87}'s dataset. The
 script goes like this:
 
 \begin{code}
 include HIP.gfn
 
-open mroz87.gdt -q
+open mroz87.gdt --quiet
 series WA2 = WA^2
 series KIDS = (KL6 + K618)>0
 income = FAMINC /10000
@@ -364,45 +364,76 @@ income = FAMINC /10000
 list X = const WA WA2 income KIDS WE
 list Z = income KIDS
 
-list endo = WE
-list inst = WMED WFED CIT
-
 Mitchell = HIP_setup(LFP, X, null, null, Z)
-
+HIP_setoption(&Mitchell, "vcvmeth", 1)
+ 
 set stopwatch
 HIP_estimate(&Mitchell)
 printf "Elapsed time = %g seconds\n", $stopwatch
 
-HIP_printout(&Mitchell, 2)
+HIP_printout(&Mitchell)
 \end{code}
 
 Note that in this case we did not use the \texttt{HIP} function, but
-instead we split its workload between three separate functions:
+instead we split its workload between four separate functions:
 \begin{description}
 \item[HIP\_setup] Sets up the model: basically, it has the same
   parameters as the all-rounder \texttt{HIP} function seen
   above. Returns a bundle.
+\item[HIP\_setoption] Set some details of the estimation procedure; in
+  this case, we used it to compute standard errors using the inverse
+  Hessian instead of the OPG matrix, so as to match exactly the
+  figures reported in Greene's book.
 \item[HIP\_estimate] Estimates the model: takes as argument the bundle
   address, plus an optional scalar for the verbosity.
 \item[HIP\_printout] Prints out the results contained in the bundle.
 \end{description}
 
-This may be convenient, at times, because it gives you a finer control
-on ``what happens if''. For example, the Cragg--Donald statistics gets
-computed during the initialization of the bundle. You may want to
-decide whether to proceed with estimation or not depending on how
-strong your instruments are.
+This division of tasks may be convenient at times, because it gives
+you finer control over ``what happens if''. For example, the
+Cragg--Donald statistic gets computed during the initialization of the
+bundle and you may wish to decide whether to proceed with estimation
+or not depending on how strong your instruments are.
 
-Of course, the same can be accomplished through the GUI. 
-%(\ldots blah blah \ldots)
+The output, replicating table 17.7 in Greene's textbook, should look
+like this:
+
+\begin{code}
+Heteroskedastic probit model 
+ML, using observations 1-753
+Dependent Variable: LFP 
+Parameter covariance matrix: Hessian
+
+             coefficient   std. error     z      p-value
+  ------------------------------------------------------
+  const      -6.02985      2.49810      -2.414   0.0158  **
+  WA          0.264291     0.118159      2.237   0.0253  **
+  WA2        -0.00362838   0.00143387   -2.530   0.0114  **
+  income      0.424441     0.221839      1.913   0.0557  *
+  KIDS       -0.879093     0.302753     -2.904   0.0037  ***
+  WE          0.140149     0.0518536     2.703   0.0069  ***
+
+Variance 
+
+             coefficient   std. error      z      p-value
+  -------------------------------------------------------
+  KIDS        -0.140752     0.323745    -0.4348   0.6637 
+  income       0.312918     0.122810     2.548    0.0108  **
+
+Log-likelihood        -487.6356  Akaike criterion     991.2712
+Schwarz criterion     1028.2637  Hannan-Quinn        1005.5225
+
+Overall test (Wald) = 14.5557 (5 df, p-value = 0.0124)
+Heteroskedasticity test (LR) = 6.42453 (2 df, p-value = 0.0403)
+Chesher and Irish normality test = 6.23055 (2 df, p-value = 0.0444)
+\end{code}
 
 \subsection{Let's get HIP. Heteroskedasticity and endogeneity at the
   same time.}
 
 The script goes:
 \begin{code}
-set echo off 
-set messages off
+set verbose off 
 include HIP.gfn
 
 open mroz87.gdt -q
@@ -422,7 +453,7 @@ coefficients. The output is as follows:
 \begin{code}
 Heteroskedastic probit model with endogenous regressors
 ML, using observations 1-753
-Dependent Variable: y 
+Dependent Variable: LFP 
 Instrumented: WE
 Instruments: const, WA, CIT, K618, WMED, WFED 
 Parameter covariance matrix: OPG
@@ -478,13 +509,10 @@ If this happens, here are some points to consider.
 \item Scaling of the data (especially $\Endog$) can be an issue; we do
   our best, but hey, give us a hand (for example, multiply or divide
   by 1000 depending of the original scale of the data).
-\item Weak instruments: in some cases, there's little that can be done;
-  see for example the artificially-generated dataset contained in the
-%
-% FIXME there's no weak.gdt in the current package
-%
-  example file \texttt{weak.gdt} in the examples directory. We do some
-  heuristics, but we're not omnipotent.
+\item Weak instruments: in some cases, there's little that can be
+  done; see for example the artificially-generated dataset contained
+  in the \texttt{MonteCarlo.inp} example script, contained in the
+  examples directory. We do some heuristics, but we're not omnipotent.
 \end{itemize}
 
 %\clearpage
@@ -527,10 +555,9 @@ If this happens, here are some points to consider.
 
 \section{The boring stuff}
 
-
 For computational purposes, we reparametrize the model using the
 Cholesky decomposition $\RfVar^{-1} = CC'$. Moreover, by defining the
-quantities below it is possible to reparametrise the joint density in
+quantities below it is possible to reparametrize the joint density in
 a computationally convenient way:
 \begin{eqnarray*}
   \nu_i & = & \frac{1}{\sqrt{1- \ScCov' \ScCov}}
@@ -547,8 +574,8 @@ The estimable parameters are $\theta' = \left[\ProbitPar', \VarPar',
 \subsection{The loglikelihood}
 \label{sec:loglik}
 
-As usual in these models, we divide the loglikelihood for one
-observation in a marginal and a conditional component:
+As usual in such models, we divide the loglikelihood for each
+observation into a marginal and a conditional component:
 \begin{eqnarray*}
   \ell_i & = & \ell^m_i + \ell^c_i \\
   \ell^c_i & = & \ln P(\Depvar | \ExoInst, \CSReg, \RfDist) \\
@@ -575,8 +602,8 @@ zero.
 \label{sec:score}
 
 The analytical score will be derived in steps: first the marginal
-component, then the conditional component. Of course, the chain rule will
-be very useful.
+component, then the conditional component. Of course, the chain rule
+will be very useful.
 
 Note first that the marginal component only depends on $\vRfPar$
 (through $\ScRfDist$) and $\vechC$. Hence,
@@ -606,7 +633,7 @@ define $\mu(\nu_i)$ as
 \frac{\phi(\nu_i)}{\Phi(\nu_i)} - (1-\Depvar)\frac{\phi(\nu_i)}{1
   -\Phi(\nu_i)}
 \]
-which is the customary (signed) inverse Mill's ratio. Then,
+which is the customary (signed) inverse Mills ratio. Then,
 \begin{eqnarray*}
   \pder{\nu_i}{\ProbitPar} & = & \frac{1}{\CondSig \sqrt{1- \ScCov'
       \ScCov}} \Expla' \\
@@ -656,57 +683,75 @@ be written as
 \subsection{Model setup}
 \label{sec:gig_setup}
 
-\smallskip
-\textbf{FIXME}: THIS IS OUTDATED AT THE MOMENT AND NEEDS TO BE FIXED.
-\smallskip
+\begin{funcdoc}{HIP\_setoption(bundle *b, string opt, scalar value)}
+  \begin{description}
+  \item[Return type]: \texttt{scalar}
+  \item[\texttt{b}]: pointer to a bundle containing the model to be
+    estimated, as created by \cmd{HIP\_setup}; 
+  \item[\texttt{opt}]: string, the option to set;
+  \item[\texttt{value}]: scalar, the option value
+  \end{description}
+
+  This function sets up an option for estimation of the model, so it
+  is typically used after \cmd{HIP\_setup} and before
+  \cmd{HIP\_estimate}. At present, the possible values for the
+  \texttt{opt} field are ``verbose'' (possible values: 0 to 3) and
+  ``vcvmeth'' (possible values: 0 to 2).
+
+  For ``verbose'', the meaning is: 0 = operate silently, 1 = standard
+  output (default choice), 2 = print the first stage too for IV
+  estimation and 3 = print out ML iterations.  For ``vcvmethod'', the
+  meaning is: 0 = OPG (default), 1 = Hessian, 2 = Sandwich-robust.
+\end{funcdoc}
 
 
-\begin{funcdoc}{HIP\_setup(series y, list EXOG, list ENDOG[null], \
-			  list ADDIN[null], list HETVAR[null], \
-			  int s[0:2:0])}
-\begin{enumerate}
-\item a series containing $y_i$, the dependent binary variable 
-\textbf{(required)}
-\item a list containing the exogenous variables $\Exog$ in $\ExoInst$
-in equation \eqref{eq:main} \textbf{(required)}
-\item a list containing the exogenous variables $\Endog$ in equations
-\eqref{eq:main}--\eqref{eq:RF}
-\item a list containing the additional instruments $\Inst$ in $\ExoInst$
-in equation \eqref{eq:RF}
-\item a list containing the variables $\CSReg$ of the skedastic function
-in equation \eqref{eq:main}
-\item a scalar, acting as an integer, for the choice of the covariance
-  matrix estimation method
-\end{enumerate}
+
+\begin{funcdoc}{HIP\_setup(series y, list EXOG, list ENDOG[null], list ADDIN[null], \\
+			  \rule{2cm}{0pt} list HETVAR[null])}
+\begin{description}
+  \item[Return type]: \texttt{bundle}
+  \item[\texttt{y}]: a series containing $y_i$, the dependent binary
+    variable; \textbf{(required)}
+  \item[\texttt{EXOG}]: a list containing the exogenous variables
+    $\Exog$ in $\ExoInst$ in equation \eqref{eq:main}; \textbf{(required)}
+  \item[\texttt{ENDOG}]: a list containing the exogenous variables
+    $\Endog$ in equations \eqref{eq:main}--\eqref{eq:RF}
+  \item[\texttt{ADDIN}] a list containing the additional instruments $\Inst$ in $\ExoInst$
+    in equation \eqref{eq:RF}
+  \item[\texttt{HETVAR}] a list containing the variables $\CSReg$ of
+    the skedastic function in equation \eqref{eq:main}
+  \end{description}
+
+  This function sets the model up so that it can be subsequently
+  estimated via \cmd{HIP\_estimate}.
 \end{funcdoc}
 
 \subsection{Estimation}
 \label{sec:syntax_estim}
 
 \begin{funcdoc}{HIP\_estimate(bundle *b)}
-General estimation function. % It returns a matrix with the estimation
-% results stored in packed form (see appendix \ref{sec:output_struct}).
-Its argument is:
-\begin{enumerate}
-\item the address of a model bundle created via \texttt{HIP\_setup}
-  \textbf{(required)}
-\end{enumerate}
+\begin{description}
+  \item[Return type]: \texttt{scalar}
+  \item[\texttt{b}]: a model bundle in pointer form, as created by
+    \cmd{HIP\_setup}.
+  \end{description}
+
+  General estimation function. It fills the bundle with the estimated
+  coefficients and many other quantities of interest.
 \end{funcdoc}
 
 \subsection{Output}
 \label{sec:syntax_output}
 
-Note: these functions assume that the bundle they refer to contain a
-model that has already been estimated. No checks are performed.
-
-\begin{funcdoc}{HIP\_printout(bundle *b, int verbose[0:1:3])}
-  Prints out a model. Its arguments are
-  \begin{enumerate}
-  \item the address of a model bundle filled via \texttt{HIP\_estimate}
-  \textbf{(required)}
-  \item a scalar, acting as a integer, to choose the verbosity:
-   0 = quiet, 1 = main equation, 2 = first stages, 3 = mle verbose. 
-\end{enumerate}
+\begin{funcdoc}{HIP\_printout(bundle *b}
+\begin{description}
+  \item[Return type]: none.
+  \item[\texttt{b}]: a model bundle in pointer form, as created by
+    \cmd{HIP\_setup} and filled up by \cmd{HIP\_estimate}.
+  \end{description}
+  Prints out a model. Note: this function assumes that the bundle it
+  refers to contains a model that has already been estimated. No
+  checks are performed.
 \end{funcdoc}
 
 \subsection{GUI wrapper}
@@ -720,6 +765,7 @@ checking the rank condition (if estimating instrumental variables
 probit), it calls:
   \begin{enumerate}
   \item \texttt{HIP\_setup}
+  \item \texttt{HIP\_setoption}
   \item \texttt{HIP\_estimate}
   \item \texttt{HIP\_printout}
 \end{enumerate}

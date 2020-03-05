@@ -516,6 +516,7 @@ real_gretl_matrix_data_subset (const int *list,
     }
 
     if (t1 < 0 && t2 < 0) {
+	/* use full dataset */
 	t1 = 0;
 	t2 = dset->n - 1;
 	T = Tmax = dset->n;
@@ -652,7 +653,8 @@ real_gretl_matrix_data_subset (const int *list,
 
 gretl_matrix *gretl_matrix_data_subset (const int *list,
 					const DATASET *dset,
-					int t1, int t2, int missop,
+					int t1, int t2,
+					int missop,
 					int *err)
 {
     return real_gretl_matrix_data_subset(list, dset, t1, t2, NULL,
@@ -681,7 +683,8 @@ gretl_matrix *gretl_matrix_data_subset (const int *list,
 gretl_matrix *
 gretl_matrix_data_subset_masked (const int *list,
 				 const DATASET *dset,
-				 int t1, int t2, const char *mask,
+				 int t1, int t2,
+				 const char *mask,
 				 int *err)
 {
     return real_gretl_matrix_data_subset(list, dset, t1, t2, mask,

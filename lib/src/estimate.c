@@ -398,7 +398,8 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
 
 /* calculation of WLS stats (in agreement with GNU R) */
 
-static void get_wls_stats (MODEL *pmod, const DATASET *dset)
+static void get_wls_stats (MODEL *pmod, const DATASET *dset,
+			   gretlopt opt)
 {
     int dumwt = gretl_model_get_int(pmod, "wt_dummy");
     int t, wobs = pmod->nobs, yno = pmod->list[1];
@@ -428,7 +429,9 @@ static void get_wls_stats (MODEL *pmod, const DATASET *dset)
 	x += dset->Z[pmod->nwt][t] * dy * dy;
     }
 
-    pmod->fstt = ((x - pmod->ess) * pmod->dfd) / (pmod->dfn * pmod->ess);
+    if (!(opt & OPT_R)) {
+	pmod->fstt = ((x - pmod->ess) * pmod->dfd) / (pmod->dfn * pmod->ess);
+    }
     pmod->rsq = (1 - (pmod->ess / x));
     pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
 }
@@ -1259,7 +1262,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
        ESS and sigma based on unweighted data
     */
     if (ci == WLS) {
-	get_wls_stats(&mdl, dset);
+	get_wls_stats(&mdl, dset, opt);
 	fix_wls_values(&mdl, dset);
     }
 

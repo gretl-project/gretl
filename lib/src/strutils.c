@@ -1383,7 +1383,7 @@ char *gretl_strstrip_copy (const char *str, int *err)
  * switch_ext:
  * @targ: the target or output string (must be pre-allocated).
  * @src: the source or input string.
- * @ext: the extension or suffix to attach.
+ * @ext: the extension or suffix to attach, without leading dot.
  *
  * For processing filenames: copies @src to @targ, minus any existing
  * filename extension, and adds to @targ the specified extension.

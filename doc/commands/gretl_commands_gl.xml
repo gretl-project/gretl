@@ -2509,28 +2509,40 @@
 	  <optparm>identificador</optparm>
 	  <effect>Renomea series importadas</effect>
 	</option>
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>Importa dun banco de datos ODBC</effect>
+	</option>	
       </options>
     </usage>
 
     <description>
       <para>
-	Le as variables de <repl>listavariables</repl> dun banco de datos (Gretl, dbnomics,
-	RATS 4.0 ou PcGive) que debe de abrirse previamente utilizando a instrución
-	<cmdref targ="open"/>. Podes establecer a frecuencia dos datos e o rango
-	da mostra mediante as instrucións <cmdref targ="setobs"/> e <cmdref targ="smpl"/>
-	antes de utilizar esta instrución. Este é un exemplo completo:
+	Le as variables de <repl>listavariables</repl> dun ficheiro de banco
+	de datos (propio de Gretl, RATS 4.0 ou PcGive) que debe de abrirse
+	previamente utilizando a instrución <cmdref targ="open"/>. Podes usar
+	a instrución <lit>data</lit> para importar series de DB.NOMICS ou dun
+	banco de datos ODBC; para obter detalles sobre estas variantes
+	consulta <mnu targ="gretlDBN">gretl + DB.NOMICS</mnu> ou
+	<guideref targ="chap:odbc"/>, respectivamente.
+      </para>
+      <para>
+  Podes establecer a frecuencia dos datos e o rango da mostra mediante
+  as instrucións <cmdref targ="setobs"/> e <cmdref targ="smpl"/>, antes
+  de utilizar esta instrución. Este é un exemplo:
 	    </para>
       <code>
-	open macrodat.rat
-	setobs 4 1959:1
-	smpl ; 1999:4
-	data GDP_JP GDP_UK
+	open fedstl.bin
+	setobs 12 2000:01
+	smpl ; 2019:12
+	data unrate cpiaucsl
       </code>
       <para>
-	As instrucións de arriba abren un banco de datos chamado <filename>macrodat.rat</filename>,
-	determinan que os datos son de tipo trimestral, que comezan no primeiro
-	trimestre de 1959, que a mostra finaliza no cuarto trimestre de 1999, e
-	logo se importan as series denominadas <lit>GDP_JP</lit> e <lit>GDP_UK</lit>.
+	As instrucións de arriba abren o banco de datos (que se ofrece con
+	Gretl) chamado <filename>fedstl.bin</filename>, determinan que os
+	datos son mensuais, que comezan en xaneiro de 2000, que a mostra
+	finaliza en decembro de 2019, e que se importan as series denominadas
+	<lit>unrate</lit> (taxa de desemprego) e <lit>cpiaucsl</lit> (IPC de todos).
 	    </para>
       <para>
 	Se non especificas <lit>setobs</lit> e <lit>smpl</lit> deste xeito,
@@ -2586,7 +2598,6 @@
 	restrínxese ao caso no que especificas unha única serie a
 	importar.
       </para>
-
     </description>
 
     <gui-access>
@@ -7920,7 +7931,7 @@
       </para>
       <para>
 	Para obter máis detalles sobre todo isto, consulta o
-	<mnu targ="Pkgbook">Manual de paquetes de funcións</mnu>.
+	<mnu targ="Pkgbook">Manual de paquetes de funcións</mnu> de Gretl.
       </para>
     </description>
 
@@ -8476,7 +8487,7 @@
       <para>
 	Este texto de axuda asume que se utiliza, por defecto, o maximizador
 	BFGS. Para obter máis información sobre o uso do método de Newton,
-	por favor consulta el <guideref targ="chap:mle"/>.
+	por favor consulta o <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Exemplo sinxelo: Supón que temos unha serie <lit>X</lit>
@@ -9734,28 +9745,43 @@
 	  <flag>--www</flag>
 	  <effect>Utiliza un banco de datos do servidor de Gretl</effect>
 	</option>
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>Utiliza un banco de datos ODBC</effect>
+	</option>
 	<optnote>Mira abaixo para opcións adicionais especiais</optnote>
       </options>
       <examples>
         <example>open data4-1</example>
         <example>open voter.dta</example>
-	<example>open fedbog --www</example>
+       	<example>open fedbog.bin --www</example>
+        <example>open dbnomics</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Abre un ficheiro de datos ou un banco de datos. Se xa hai aberto
-	un ficheiro de datos, este substitúese polo que se vai abrir. Para
-	engadir datos ao conxunto vixente, consulta <cmdref targ="append"/>
-	e (para ter maior flexibilidade) <cmdref targ="join"/>.
+	Abre un ficheiro de datos ou un banco de datos (consulta o
+	<guideref targ="chap:datafiles"/> para ver unha explicación desta
+	distinción). As consecuencias son algo diferentes nos dous casos.
+	Cando abres un <emphasis>ficheiro de datos</emphasis>,léese todo o
+	seu contido no espazo de traballo de Gretl, substituíndo o banco de
+	datos vixente (se hai algún). Para engadir datos ao conxunto vixente,
+	en troques de substituílo, consulta <cmdref targ="append"/> ou (para
+	ter maior flexibilidade) <cmdref targ="join"/>. Cando abres un
+	<emphasis>banco de datos</emphasis>, non se carga inmediatamente
+	ningún dato; mais ben, establécese a fonte para chamadas posteriores da
+	instrución <cmdref targ="data"/>, que se utiliza para importar series
+	concretas. Para obter máis detalles en relación aos bancos de datos,
+	consulta a sección titulada <quote>Abrindo un banco de datos</quote>
+	máis abaixo.
       </para>
       <para>
-	Se non indicas unha ruta completa, o programa busca nalgunhas rutas
-	destacadas para tratar de atopar o ficheiro, das que o cartafol vixente
-	(<cmdref targ="workdir"/>) é a primeira elección. Se non indicas
-	o sufixo no nome de ficheiro (como no primeiro exemplo de arriba),
-	Gretl asume que é un ficheiro de datos propio con sufixo
+	Se non indicas <repl>nomeficheiro</repl> cunha ruta completa, Gretl
+	procura nalgunhas rutas destacadas para tratar de atopar o ficheiro, das
+	que o cartafol vixente (<cmdref targ="workdir"/>) é a primeira elección.
+	Se non indicas o sufixo no nome de ficheiro (como no primeiro exemplo
+	de arriba), Gretl asume que é un ficheiro de datos propio con sufixo
 	<lit>.gdt</lit>. Baseándose no nome do ficheiro e varias regras
 	heurísticas, Gretl tratará de detectar o formato do ficheiro de
 	datos (propio, texto plano, CSV, MS Excel, Stata, SPSS, etc.).
@@ -9778,24 +9804,13 @@
 	variables que teñas definidas nese momento (as que non sexan series, pois
 	estas elimínanse obrigatoriamente), utiliza a opción <opt>preserve</opt>.
       </para>
-      <subhead context="cli">Abrindo un banco de datos</subhead>
-      <para>
-	Tamén podes utilizar a instrución <lit>open</lit> para abrir un
-	banco de datos (de Gretl, RATS 4.0 ou PcGive) para lelo. Nese
-	caso, deberá de ir seguida da instrución <cmdref targ="data"/>
-	para extraer series concretas do banco de datos. Cando indicas
-	a opción <lit>www</lit>, o programa vai tratar de acceder ao
-	banco de datos do nome indicado no servidor de Gretl (por
-	exemplo, o banco de datos dos tipos de interese da Reserva
-	Federal do terceiro exemplo de arriba).
-      </para>
       <subhead context="cli">Ficheiros de folla de cálculo</subhead>
       <para>
-	Ao abrir un ficheiro de folla de cálculo (Gnumeric, Open Document
-	ou MS Excel), podes facilitar tres parámetros adicionais despois do
-	nome do ficheiro. Primeiro, podes escoller unha folla de cálculo
-	concreta dentro do ficheiro. Isto faise, ben indicando o número
-	de folla por medio da sintaxe (&eg;, <opt>sheet=2</opt>), ou
+	Ao abrir un ficheiro de datos con formato de folla de cálculo (Gnumeric,
+	Open Document ou MS Excel), podes facilitar tres parámetros adicionais
+	despois do nome do ficheiro. Primeiro, podes escoller unha folla de
+	cálculo concreta dentro do ficheiro. Isto faise, ben indicando o
+	número de folla por medio da sintaxe (&eg;, <opt>sheet=2</opt>), ou
 	ben indicando o nome da folla (se o sabes) entre comiñas, como
 	en <opt>sheet="MacroData"</opt> pois, por defecto, vaise ler
 	a primeira folla de cálculo do ficheiro. Tamén podes especificar
@@ -9857,9 +9872,31 @@
       <para>
 	Por defecto, cando importas un ficheiro que contén series con valores
 	en formato de cadea de texto, ábrese unha caixa de texto amosándote
-	o contido do ficheiro <lit>string_table.txt</lit>, que consiste na
+	o contido de <lit>string_table.txt</lit>, un ficheiro que contén a
 	correspondencia entre as cadeas e a súa codificación numérica.
 	Podes eliminar este proceder mediante a opción<opt>quiet</opt>.
+      </para>
+      <subhead context="cli">Abrindo un banco de datos</subhead>
+      <para>
+	Como se comentou antes, podes utilizar a instrución <lit>open</lit>
+	para abrir un ficheiro cun banco de datos, e a continuación lelo coa
+	instrución <cmdref targ="data"/>. Os tipos de ficheiros que se admiten
+	son os bancos de datos propios de Gretl, RATS 4.0 e PcGive.
+      </para>
+      <para>
+	Ademais da lectura destas clases de ficheiros na máquina local,
+	se admiten outros tres casos máis. Primeiro, cando indicas a
+	opción <lit>www</lit>, Gretl vai tratar de acceder a un banco de
+	datos propio de Gretl co nome que proporciones, no servidor de
+	Gretl (por exemplo, o banco de datos <lit>fedbog.bin</lit> cos
+	tipos de interese da Reserva Federal do terceiro exemplo que se
+	indicou máis arriba). En segundo lugar, podes usar a instrución
+	<quote><lit>open dbnomics</lit></quote> para establecer que
+	DB.NOMICS sexa a orixe para ler bancos de datos; sobre isto
+	consulta <mnu targ="gretlDBN">dbnomics for gretl</mnu>. En
+	terceiro lugar, se indicas a opción <opt>odbc</opt>, Gretl vai
+	tratar de acceder a un banco de datos ODBC. Esta opción explícase
+	detalladamente no <guideref targ="chap:odbc"/>.
       </para>
     </description>
 
@@ -12842,10 +12879,22 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>max_verbose</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Conmuta o resultado máis cumprido para as funcións <lit>BFGSmax</lit>
-	  e <lit>NRmax</lit> (consulta o <guideref targ="chap:numerical"/> para
-	  obter máis detalles).
+	  <para><lit>max_verbose</lit>: <lit>off</lit> (por defecto),
+	  <lit>on</lit> ou <lit>full</lit>. Controla a verborrea das instrucións
+	  e das funcións que utilizan métodos de optimización numérica.
+	  A opción <lit>on</lit> só se aplica a funcións (tales como
+	  <fncref targ="BFGSmax"/> e <fncref targ="NRmax"/>) que funcionan
+	  por defecto con discreción; o seu efecto consiste en que se amosa
+	  información básica sobre as iteracións. Podes usar a opción
+	  <lit>full</lit> para provocar un resultado máis detallado, que
+	  inclúe os valores dos parámetros e o seu respectivo gradiente da
+	  función obxectivo, en cada iteración. Esta opción aplícase tanto
+	  ás funcións do tipo mencionado antes, como ás instrucións que se
+	  basean en optimización numérica como <cmdref targ="arima"/>,
+	  <cmdref targ="probit"/> e <cmdref targ="mle"/>. No caso das
+	  instrucións, o seu efecto consiste en facer que a súa opción
+	  <opt>verbose</opt> proporcione un maior detalle. Consulta
+	  tamén o <guideref targ="chap:numerical"/>.
 	</para>
 	</li>
 	<li>
@@ -13237,6 +13286,27 @@
 	  nomes <quote><lit>R.</lit></quote>). Consulta o
 	  <guideref targ="chap:gretlR"/> para obter máis detalles
 	  sobre este elemento e o anterior.
+	  </para>
+	</li>
+      </ilist>
+
+      <subhead>Miscelánea</subhead>
+
+      <ilist>
+	<li>
+	  <para><lit>mpi_use_smt</lit>: <lit>on</lit> ou ben <lit>off</lit>
+	  (por defecto). Este interruptor afecta ao número de procesos
+	  que se inician nun bloque <lit>mpi</lit> dentro dun guión. Se
+	  o interruptor está en <lit>off</lit>, a cantidade por defecto
+	  destes procesos é igual ao número de núcleos físicos da máquina
+	  local; se está en <lit>on</lit>, a cantidade por defecto destes
+	  procesos é igual ao número máximo de subprocesos, que cadrará
+	  co dobre do número de núcleos físicos cando estes podan soportar
+	  SMT (Multiproceso Simultáneo, tamén coñecido como Hiperproceso).
+	  Isto se aplica unicamente se o usuario non indica o número
+	  de procesos, ben de xeito directo ou ben de xeito indirecto
+	  (mediante a especificación dun ficheiro <lit>hosts</lit> para
+	  utilizar con MPI).
 	  </para>
 	</li>
       </ilist>

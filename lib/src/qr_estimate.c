@@ -1388,7 +1388,9 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
 	if (info != 0) {
 	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);
 	    err = 1;
-	} else if (rcond < RCOND_WARN && warn != NULL) {
+	} else if (0 && rcond < RCOND_WARN && warn != NULL) {
+	    /* 2020-02-19: not sure we want this! */
+	    fprintf(stderr, "QR_decomp_plus: rcond = %g\n", rcond);
 	    *warn = 1;
 	}
     }
@@ -1534,7 +1536,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     if (opt & OPT_R) {
 	pmod->opt |= OPT_R;
 	if (opt & OPT_C) {
-	    err = qr_make_cluster_vcv(pmod, OLS, dset, V, opt);
+	    err = qr_make_cluster_vcv(pmod, pmod->ci, dset, V, opt);
 	} else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
 	    err = qr_make_hac(pmod, dset, V);
 	} else {
@@ -1806,6 +1808,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     gretl_matrix *Xi = NULL;
     gretl_vector *eXi = NULL;
     const double *cZ;
+    const double *wgt = NULL;
     int n_c, M, N, k = pmod->ncoeff;
     int total_obs = 0;
     int i, j, v, t;
@@ -1827,6 +1830,10 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 	ei == NULL || Xi == NULL || eXi == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
+    }
+
+    if (pmod->nwt) {
+	wgt = dset->Z[pmod->nwt];
     }
 
     M = gretl_vector_get_length(cvals);
@@ -1852,7 +1859,11 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 		gretl_vector_set(ei, s, pmod->uhat[t]);
 		for (j=0; j<k; j++) {
 		    v = pmod->list[j+2];
-		    gretl_matrix_set(Xi, s, j, dset->Z[v][t]);
+		    if (wgt != NULL) {
+			gretl_matrix_set(Xi, s, j, dset->Z[v][t] * sqrt(wgt[t]));
+		    } else {
+			gretl_matrix_set(Xi, s, j, dset->Z[v][t]);
+		    }
 		}
 		s++;
 	    }
@@ -2007,7 +2018,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
     int cvar, n_c = 0;
     int err = 0;
 
-    if (pmod->ci != OLS && pmod->ci != IVREG) {
+    if (pmod->ci != OLS && pmod->ci != IVREG && pmod->ci != WLS) {
 	/* relax this? */
 	return E_NOTIMP;
     }

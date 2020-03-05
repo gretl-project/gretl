@@ -58,9 +58,6 @@
 # endif
 #endif /* ! _WIN32 */
 
-/* 2017-02-26: somewhat experimental, watch out for bad results! */
-#define USE_TIMEFMT 1
-
 /* length of buffer for "set term ..." */
 #define TERMLEN 256
 
@@ -326,9 +323,9 @@ double gnuplot_version (void)
 
 double gnuplot_version (void)
 {
-    /* As of 2015-02-18, the packages for Windows
-       include gnuplot 5.1 (CVS) */
-    return 5.1;
+    /* As of early 2020, the packages for Windows
+       include gnuplot 5.2 */
+    return 5.2;
 }
 
 #endif /* MS Windows or not */
@@ -3239,7 +3236,6 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	return 0;
     }
 
-#if USE_TIMEFMT
     if (!time_fit) {
 	if (dated_daily_data(dset) || dated_weekly_data(dset)) {
 	    if (timefmt_useable(dset)) {
@@ -3249,7 +3245,6 @@ static int maybe_add_plotx (gnuplot_info *gi, int time_fit,
 	    }
 	}
     }
-#endif
 
     gi->x = gretl_plotx(dset, xopt);
     if (gi->x == NULL) {
@@ -4049,6 +4044,49 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     return err;
 }
 
+/* Try to determine a suitable tic-increment for the automatic
+   x-axis in the "scatters" context". We don't want the
+   increment to be so small that the tic labels pile up on
+   each other.
+*/
+
+static int scatters_incr (int T, const DATASET *dset)
+{
+    int incr, ntics;
+
+    if (dset->pd == 1) {
+	incr = T / 6;
+    } else {
+	incr = T / (4 * dset->pd);
+    }
+
+    ntics = T / incr;
+    if (ntics > 10) {
+	ntics = 10;
+	incr = T / ntics;
+    }
+
+    return incr;
+}
+
+static void scatters_set_timefmt (const DATASET *dset,
+				  const double *obs,
+				  FILE *fp)
+{
+    double T = obs[dset->t2] - obs[dset->t1];
+    int ntics = 6;
+
+    fputs("set xdata time\n", fp);
+    fputs("set timefmt \"%s\"\n", fp);
+    if (single_year_sample(dset, dset->t1, dset->t2)) {
+	fputs("set format x \"%m-%d\"\n", fp);
+    } else {
+	fputs("set format x \"%Y-%m-%d\"\n", fp);
+    }
+    fputs("set xtics rotate by -45\n", fp);
+    fprintf(fp, "set xtics %g\n", round(T/ntics));
+}
+
 /**
  * multi_scatters:
  * @list: list of variables to plot, by ID number.
@@ -4072,6 +4110,7 @@ int multi_scatters (const int *list, const DATASET *dset,
     const double *y = NULL;
     const double *obs = NULL;
     int rows, cols, tseries = 0;
+    int use_timefmt = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
@@ -4085,14 +4124,17 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     if (pos == 0) {
 	/* plot against time or index */
-	obs = gretl_plotx(dset, OPT_NONE);
-	if (obs == NULL) {
-	    return E_ALLOC;
-	}
 	plotlist = gretl_list_copy(list);
 	flags |= GPT_LINES;
 	if (dataset_is_time_series(dset)) {
 	    tseries = 1;
+	    if (calendar_data(dset)) {
+		use_timefmt = 1;
+	    }
+	}
+	obs = gretl_plotx(dset, use_timefmt ? OPT_T : OPT_S);
+	if (obs == NULL) {
+	    return E_ALLOC;
 	}
     } else if (pos > 2) {
 	/* plot several yvars against one xvar */
@@ -4129,7 +4171,11 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     if (nplots > 1) {
 	get_multiplot_layout(nplots, tseries, &rows, &cols);
-	maybe_set_small_font(nplots);
+	if (use_timefmt) {
+	    gp_small_font_size = nplots > 2 ? 6 : 0;
+	} else {
+	    maybe_set_small_font(nplots);
+	}
 	if (nplots > 12) {
 	    flags |= GPT_XXL;
 	} else if (nplots > 9) {
@@ -4154,19 +4200,16 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     gretl_push_c_numeric_locale();
 
-    if (obs != NULL) {
+    if (use_timefmt) {
+	fprintf(fp, "set xrange [%.12g:%.12g]\n", obs[dset->t1], obs[dset->t2]);
+	scatters_set_timefmt(dset, obs, fp);
+    } else if (obs != NULL) {
 	double startdate = obs[dset->t1];
 	double enddate = obs[dset->t2];
 	int incr, T = dset->t2 - dset->t1 + 1;
 
 	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
-
-	if (dset->pd == 1) {
-	    incr = T / 6;
-	} else {
-	    incr = T / (4 * dset->pd);
-	}
-
+	incr = scatters_incr(T, dset);
 	if (incr > 0) {
 	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
 	}
@@ -4175,6 +4218,8 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fputs("set offsets graph 0.02, graph 0.02, graph 0.02, graph 0.02\n", fp);
 	fputs("set noxtics\nset noytics\n", fp);
     }
+
+    fputs("set xzeroaxis\n", fp);
 
     for (i=0; i<nplots; i++) {
 	int j = plotlist[i+1];
@@ -4191,7 +4236,6 @@ int multi_scatters (const int *list, const DATASET *dset,
 		    (yvar)? dset->varname[yvar] :
 		    dset->varname[j]);
 	}
-
 	fputs("plot '-' using 1:2", fp);
 	if (flags & GPT_LINES) {
 	    fputs(" with lines", fp);

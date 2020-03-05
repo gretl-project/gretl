@@ -26,22 +26,22 @@ vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
 
 INP = extra.inp
-EXAMP = extra_sample.inp
+SPEC = extra.spec
+SMPL = extra_sample.inp
 
 all: $(PKG).gfn pdfdoc
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(EXAMP)
+$(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp
-
-links.stamp: Makefile
-	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
-	@if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
-	@touch $@
 
 $(PKG).zip: $(PKG).gfn pdfdoc
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
-.PHONY : pdfdoc check install installdirs clean
+.PHONY : symlinks pdfdoc check install installdirs clean
+
+symlinks:
+	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
+	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
 
 pdfdoc: 
 	$(MAKE) -C doc
@@ -57,7 +57,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 
 clean: 
-	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
 	@rm -f test.out
 	@$(MAKE) -C doc clean
 

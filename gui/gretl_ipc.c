@@ -675,7 +675,7 @@ static int plausible_target (HWND hw)
 	    (wi.dwExStyle & WS_EX_ACCEPTFILES)) {
 	    s[0] = '\0';
 	    GetWindowTextA(hw, s, 63);
-	    if (!strcmp(s, "gretl")) {
+	    if (!strcmp(s, "gretl") || !strncmp(s, "gretl: session ", 15)) {
 		return 1;
 	    }
 	}
@@ -701,8 +701,12 @@ static HWND get_hwnd_for_pid (long gpid)
 	    break;
 	}
         GetWindowThreadProcessId(hw, &pid);
-        if ((long) pid == gpid && plausible_target(hw)) {
-	    ret = hw;
+	if ((long) pid == gpid) {
+	    /* PID matched */
+	    if (plausible_target(hw)) {
+		/* looks like main gretl window */
+		ret = hw;
+	    }
         }
     } while (ret == NULL);
 
@@ -724,6 +728,9 @@ gboolean forward_open_request (long gpid, const char *fname)
 	long mypid = (long) GetCurrentProcessId();
 
 	ok = write_request_file(gpid, fname);
+#if IPC_DEBUG
+	fprintf(stderr, "forward_open_request: mypid=%d, ok=%d\n", (int) mypid, ok);
+#endif
 	if (ok) {
 	    SendMessage(hw, WM_GRETL, 0xf0, mypid);
 	}

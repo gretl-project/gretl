@@ -1,5 +1,5 @@
 /*
-In this file we give an example of how HIP can be used
+In this script, we give an example of how HIP can be used
 for heavy computational jobs such as a Monte Carlo simulation.
 We investigate the properties of the ml estimate of \beta_2 for
 varying degrees of over-identification.
@@ -55,11 +55,16 @@ matrix K = cholesky(Omega)'
 iter = 0
 
 printf "Be patient; this might take a while.\n"
+flush
 
-
-loop Repli --quiet --progressive
+loop h = 1 .. Repli --quiet --progressive
     # build disturbances
 
+    if (h%10 == 0)
+	printf "experiment %d of %d\n", h, Repli
+	flush
+    endif
+    
     matrix E = mnormal($nobs, p+1) * K
     series epsilon = E[,1]
     loop for i=1..p --quiet

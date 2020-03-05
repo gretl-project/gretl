@@ -71,24 +71,32 @@ function void fix_dimensions_bundle (const string J, bundle *sd)
             b.dimension_label = key
         endif
         b.value = value
-	if typeof(dvl[key]) == 6 # array
-	    got_vlabel = 0
-	    loop j=1..nelem(dvl[key]) -q
-	        if typeof(dvl[key][j]) == 5 # bundle
-	            bundle sub = dvl[key][j]
-		    if inbundle(sub, value)
-		        b.value_label = sub[value]
-			got_vlabel = 1
-		        break
-		    endif
-		endif
-	    endloop
-	    if !got_vlabel
+        if typeof(dvl[key]) == 6 # array
+            got_vlabel = 0
+            loop j=1..nelem(dvl[key]) -q
+                if typeof(dvl[key][j]) == 5 # bundle
+                    bundle bsub = dvl[key][j]
+                    if inbundle(bsub, value)
+                        b.value_label = bsub[value]
+                        got_vlabel = 1
+                        break
+                    endif
+                elif typeof(dvl[key][j]) == 6 # array
+                    strings asub = dvl[key][j]
+                    if asub[1] == value
+                        b.value_label = asub[2]
+                        got_vlabel = 1
+                        break
+                    endif
+                endif
+            endloop
+            if !got_vlabel
                 b.value_label = "<unknown value label>"
-	    endif
-	else
-	    b.value_label = dvl[key][value]
-	endif
+            endif
+        else
+            # otherwise dvl[key] must be a bundle
+            b.value_label = dvl[key][value]
+        endif
         dims[key] = b
         if key == "REF_AREA"
             # add this key at top level
@@ -255,7 +263,7 @@ function string build_parms(const string pcode, const string dcode,
         string mid = build_URL_mid(spec)
         head ~= sanitize_url(mid)
     endif
-    string tail = sprintf("limit=%d&offset=%d&format=json&observations=true&complete_missing_periods=true", limit, offset)
+    string tail = sprintf("limit=%d&offset=%d&format=json&observations=1&complete_missing_periods=1", limit, offset)
     return head ~ tail
 end function
 

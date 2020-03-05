@@ -28,6 +28,7 @@
 #include "toolbar.h"
 #include "winstack.h"
 #include "database.h"
+#include "fncall.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -355,8 +356,6 @@ static const char *real_funcs_heading (const char *s)
 	return "??";
     }
 }
-
-
 
 static GtkTreeStore *make_help_topics_tree (int role)
 {
@@ -2019,7 +2018,8 @@ enum {
     HANSL_PRIMER,
     PKGBOOK,
     GRETL_MPI,
-    GRETL_SVM
+    GRETL_SVM,
+    GRETL_DBN
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2153,7 +2153,6 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-svm-a4.pdf"
     };
     const char *fname;
-    FILE *fp;
     int gotit = 0;
     int err = 0;
 
@@ -2188,51 +2187,68 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
 	fname = gretl_x12_is_x13() ? "docX13AS.pdf" : "x12adocV03.pdf";
+    } else if (code == GRETL_DBN) {
+	fname = "dbnomics.pdf";
+	sprintf(fullpath, "%sfunctions%cdbnomics%c%s",
+		gretl_home(), SLASH, SLASH, fname);
     } else {
 	return E_DATA;
     }
 
     fprintf(stderr, "pdf help: looking for %s\n", fname);
 
-    /* is the file available in public dir? */
-    sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
+    if (code != GRETL_DBN) {
+	/* is the file available in public dir? */
+	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
+    }
 
-    fp = gretl_fopen(fullpath, "r");
-    if (fp != NULL) {
-	fclose(fp);
+    err = gretl_test_fopen(fullpath, "r");
+    if (!err) {
 	gotit = 1;
     }
 
     if (!gotit && code == X12A_REF) {
 	get_x12a_doc_path(fullpath, fname);
 	if (*fullpath != '\0') {
-	    fp = gretl_fopen(fullpath, "r");
-	    if (fp != NULL) {
-		fclose(fp);
+	    err = gretl_test_fopen(fullpath, "r");
+	    if (!err) {
 		gotit = 1;
 	    }
 	}
     }
 
     if (!gotit) {
-	/* or maybe in user's dotdir? */
-	sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
-	fp = gretl_fopen(fullpath, "r");
-	if (fp != NULL) {
-	    fclose(fp);
+	/* try in the user's dotdir? */
+	if (code == GRETL_DBN) {
+	    sprintf(fullpath, "%sfunctions%cdbnomics%cdbnomics.pdf",
+		    gretl_dotdir(), SLASH, SLASH);
+	} else {
+	    sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
+	}
+	err = gretl_test_fopen(fullpath, "r");
+	if (!err) {
 	    gotit = 1;
 	}
     }
 
     if (!gotit) {
-	/* check for download location */
-	err = get_writable_doc_path(fullpath, fname);
+	if (code == GRETL_DBN) {
+	    /* try installing the dbnomics package */
+	    char *dlpath = NULL;
 
-	/* do actual download */
-	if (!err) {
-	    err = retrieve_manfile(fname, fullpath);
+	    err = download_addon("dbnomics", &dlpath);
+	    if (!err) {
+		/* .gfn -> .pdf */
+		switch_ext(fullpath, dlpath, "pdf");
+		free(dlpath);
+	    }
+	} else {
+	    /* try downloading the manual file */
+	    err = get_writable_doc_path(fullpath, fname);
+	    if (!err) {
+		err = retrieve_manfile(fname, fullpath);
+	    }
 	}
-
 	if (err) {
 	    const char *buf = gretl_errmsg_get();
 
@@ -2286,6 +2302,8 @@ void display_pdf_help (GtkAction *action)
 	    code = GRETL_MPI;
 	} else if (!strcmp(aname, "gretlSVM")) {
 	    code = GRETL_SVM;
+	} else if (!strcmp(aname, "gretlDBN")) {
+	    code = GRETL_DBN;
 	}
     }
 

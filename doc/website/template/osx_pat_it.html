@@ -14,125 +14,65 @@
 <h2>per Mac OS X</h2>
 </center>
 
-<h2>Passo 0</h2>
-
-<p>Nel corso della procedura seguente, alcuni passi dipendono dal tipo di Mac
-che è in uso. Se non si è sicuri a riguardo, basta fare clic sull'icona Apple
-nell'angolo superiore sinistro dello schermo e selezionare &quot;About this Mac&quot;.
-Apparirà una finestra che contiene il numero di versione di OS X e il tipo di
-processore, Intel o PowerPC (PPC).</p>
-
-<h2>Passo 1</h2>
-
-<p>Per usare gretl occorre installare il sistema X11 window. Nelle versioni recenti di OS X questo
-è già installato, ma se si sta usando una versione precedente può essere
-necessario dover installare X11.</p>
-
-<p>Per controllare se X11 è installato, basta aprire Finder e aprire <kbd>Applications</kbd>, 
-<kbd>Utilities</kbd>: se X11 è installato apparirà in fondo alla lista.</p>
-
-<h2>Passo 2</h2>
-
-<p>Gretl ha bisogno anche di alcune librerie di supporto, ossia GTK e librerie correlate.
-Se si usa OS X 10.6 (Snow Leopard) o successivo su un Mac Intel, installare GTK
-usando
-<a href="http://sourceforge.net/projects/gretl/files/osx/GTK+.framework.dmg/download">GTK+.framework.dmg</a>.
-Se si usa un Mac PowerPC, o una versione precedente di OS X, installare
-<a href="http://r.research.att.com/gtk2-framework.dmg">questa versione</a> di GTK
-(disponibile anche <a href="http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg">qui</a>).
+<p>
+ Per prima cosa, bisogna stabilire se il vostro Mac ha un processore
+ Interl o PPC.  Tutti i Mac recenti (dopo il 2006) hanno Intel. Se il
+ vostro modello è molto vecchio e non siete sicuri, cliccate
+ sull'icona Apple in alto a sinistra dello schermo e selezionate
+ "About this Mac". Apparirà una finestra col numero di versione di OS
+ X e il tipo di processore.
 </p>
- 
-<h2>Passo 3</h2> 
-
-<p>E ora gretl: scaricare e installare l'ultima versione rilasciata, oppure lo "snapshot" attuale.
-Quest'ultimo è più aggiornato: spesso contiene correzioni a bug, ma talvolta
-contiene nuovi bug. Per vedere le novità contenute nello snapshot, si può vedere
-il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").</p>
-
-<table cellpadding="4">
-<tr><td>&nbsp;</td><td><p><i>Intel Mac</i></p></td><td><p>O</p></td>
-<td><p><i>PPC Mac</i></p></td></tr>
-<tr>
-<td><p>ultima versione rilasciata (SHORTDATE)</p></td>
-<td><p>
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-intel.dmg.gz">gretl-VERSION-intel.dmg.gz</a>
-</p></td>
-<td>&nbsp;</td>
-<td><p>
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-ppc.dmg.gz">gretl-VERSION-ppc.dmg.gz</a>
-</p></td>
-</tr>
-
-<tr>
-<td><p>O snapshot attuale</p></td>
-<td><p>
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-intel.dmg.gz/download">gretl-intel.dmg.gz</a>
-</p></td>
-<td>&nbsp;</td>
-<td><p>
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-ppc.dmg.gz/download">gretl-ppc.dmg.gz</a>
-</p></td>
-</tr>
-</table>
-
-<p>Finito il download, fare doppio clic sul file <kbd>dmg.gz</kbd> per scompattarlo: si otterrà
-il file <kbd>dmg</kbd>; fare doppio clic su di esso per montare l'immagine
-disco. Aprire l'immagine con Finder e trascinare Gretl su Applications.
-<i>Attenzione</i>: se si sta aggiornando un'installazione esistente di gretl occorre per prima cosa aprire
-Applications in Finder e cancellare la vecchia voce Gretl.
-Fatto questo, è possibile rimuovere l'immagine disco e cancellare i file <kbd>dmg</kbd> e
-<kbd>dmg.gz</kbd>.
-</p>
-
-<p>L'immagine disco di gretl è documentata brevemente nel file
-<a href="./README.pdf">README.pdf</a>, che contiene suggerimenti da seguire nel caso
-si presentino problemi. Se gretl non funziona correttamente su OS X, è possibile fare
-il debug in questo modo: aprire una finestra di terminale X11, andare nella directory
-in cui è stato installato il pacchetto (es. <kbd>cd Gretl.app</kbd>),
-andare nella directory <kbd>Contents/Resources/bin</kbd> ed eseguire il comando</p>
-<pre>
-./gretl
-</pre>
-<p>Dovrebbero apparire alcune indicazioni utili per capire cosa c'?che non va.</p>
-
-<h2>Componenti aggiuntivi opzionali</h2>
-
-<p>E' possibile installare X-12-ARIMA e/o TRAMO/SEATS, programmi specializzati per l'analisi
-di serie storiche stagionali, nella versione compatibile con gretl.
-</p>
-
-<center>
-<table cellpadding="4">
-
-<tr>
-<td><p>X-12-ARIMA per Intel Mac</p></td>
-<td><p><a
-href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-intel.dmg/download">x12arima-intel.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>X-12-ARIMA per PowerPC Mac</p></td>
-<td><p><a
-href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-ppc.dmg/download">x12arima-ppc.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>TRAMO/SEATS per Intel Mac</p></td>
-<td><p><a 
-href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/download">tramo-seats-intel.dmg</a></p></td>
-</tr>
-
-<tr>
-<td><p>TRAMO/SEATS per PowerPC Mac</p></td>
-<td><p><a href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats.dmg/download">tramo-seats.dmg</a></p></td>
-</tr>
-
-</table>
-</center>
 
 <p>
-&nbsp;
+ Se avete in mac Intel con OS X 10.6 (Snow Leopard) o successive, vi
+ consigliamo la versione "quartz", a meno che per qualche motivo non
+ preferiate X11.
 </p>
+
+<p>
+ Selezionate uno dei tre link qui sotto.
+</p>
+
+<div id="menucontent">
+ <ul class="menu">
+  <li><a href="mac-intel-quartz.html">Intel Mac, quartz (consigliato)</a></li>
+  <li><a href="mac-intel-x11.html">Intel Mac, X11</a></li>
+  <li><a href="mac-ppc.html">PPC Mac (vecchi Mac)</a></li>
+ </ul>
+</div>
+
+<h2>Important</h2>
+
+<p>
+  Alcuni utenti Mac ci hanno fatto sapere che con versioni recenti di
+  OSX, l'istallazione di gretl non viene completata, a causa di
+  presunti problemi di sicurezza.  Se avete scaricato gretl da questo
+  sito, non c'&egrave; da preoccuparsi. Ecco come procedere:
+</è>
+
+<ol type="1">
+  <li> Aprite System Preferences e cercate &quot;Security &amp;
+  privacy&quot;. Selezionate il tab &quot;General&quot;.
+  </li>
+  
+  <li> fate doppio clic sul file .pkg. Apparirà un messaggio del tipo "gretl-quartz.pkg can't be opened because Apple
+    cannot check it ...". Cliccate OK per chiudere la finestra. </li>
+
+  <img src="../images/osx-install-1.png">
+
+  <li>. Nel tab descritto sopra Vedrete un messaggio con un bottone
+    "Apri comunque". Cliccatelo.</li>
+  
+  <img src="../images/osx-install-2.png">
+
+  <li> Fate di nuovo doppio clic sul file pkg. Dovrebbe apparire la
+    stessa finestra di prima, con due bottoni: Apri e
+    Cancella. Cliccate <b>Apri</b> dovrebbe andare tutto a posto.</li>
+
+  <img src="../images/osx-install-3.png">
+
+
+</ol>
 
 </body>
 </html>

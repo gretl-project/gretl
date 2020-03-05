@@ -62,7 +62,7 @@ function scalar Rosenbrock(const matrix param)
 end function
 
 matrix theta = {0, 0}
-set max_verbose 1
+set max_verbose on
 M = BFGSmax(&theta, Rosenbrock(theta))
 print theta
 \end{scode}
@@ -71,8 +71,9 @@ print theta
 The operation of BFGS can be adjusted using the \texttt{set} variables
 \verb+bfgs_maxiter+ and \verb+bfgs_toler+ (see
 Chapter~\ref{chap:mle}).  In addition you can provoke verbose output
-from the maximizer by assigning a positive value to
-\verb|max_verbose|, again via the \cmd{set} command.
+from the maximizer by setting \verb|max_verbose| to \texttt{on}, again
+via the \cmd{set} command (alternatively, you could have set it to
+\texttt{full} and get even richer output).
 
 The Rosenbrock function is often used as a test problem for
 optimization algorithms. It is also known as ``Rosenbrock's Valley''

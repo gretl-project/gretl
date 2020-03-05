@@ -3518,7 +3518,9 @@ typedef enum {
 
 static int plotvar_code (const DATASET *dset, gretlopt opt)
 {
-    if (!dataset_is_time_series(dset)) {
+    if ((opt & OPT_S) && calendar_data(dset)) {
+	return PLOTVAR_TIME;
+    } else if (!dataset_is_time_series(dset)) {
 	return PLOTVAR_INDEX;
     } else if (dset->pd == 1) {
 	return PLOTVAR_ANNUAL;
@@ -3564,8 +3566,10 @@ static int panel_plotvar_code (const DATASET *dset)
 /**
  * gretl_plotx:
  * @dset: data information struct.
- * @opt: can include OPT_P for panel time-series plot,
- * OPT_T to use gnuplot time (seconds of unix epoch).
+ * @opt: can include OPT_P for panel time-series plot;
+ * OPT_T to use gnuplot time (seconds of unix epoch);
+ * OPT_S to indicate that the context is the "scatters"
+ * command.
  *
  * Finds or creates a special dummy variable for use on the
  * x-axis in plotting; this will have the full length of the

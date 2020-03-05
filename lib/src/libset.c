@@ -558,6 +558,7 @@ int gretl_n_physical_cores (void)
 	    if (fgets(line, sizeof line, fp)) {
 		smt = atoi(line);
 	    }
+	    fclose(fp);
 	}
 	if (smt) {
 	    n_cores /= 2;
@@ -1236,6 +1237,10 @@ static int parse_libset_int_code (const char *key,
 		err = 0;
 		break;
 	    }
+	}
+	if (err && (strcmp(val, "0") == 0 || strcmp(val, "1") == 0)) {
+	    state->max_verbose = atoi(val);
+	    err = 0;
 	}
     } else if (!g_ascii_strcasecmp(key, WILDBOOT_DIST)) {
 	for (i=0; wildboot_strs[i] != NULL; i++) {

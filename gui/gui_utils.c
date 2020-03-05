@@ -1747,13 +1747,12 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_series_view(vwin->data);
 	} else if (help_role(vwin->role)) {
 	    g_free(vwin->data); /* help file text */
-	} else if (vwin->role == VIEW_BUNDLE) {
+	} else if (vwin->role == VIEW_BUNDLE ||
+		   vwin->role == VIEW_DBNOMICS) {
 	    if (!get_user_var_by_data(vwin->data)) {
 		gretl_bundle_destroy(vwin->data);
 	    }
 	} else if (vwin->role == LOESS || vwin->role == NADARWAT) {
-	    gretl_bundle_destroy(vwin->data);
-	} else if (vwin->role == VIEW_DBNOMICS) {
 	    gretl_bundle_destroy(vwin->data);
 	}
 
@@ -4911,7 +4910,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;
-	int resp, show = 0;
+	int resp, show = 1;
 
 	*vname = '\0';
 	strncat(vname, key, VNAMELEN - 1);
@@ -5277,9 +5276,10 @@ GtkWidget *make_bundle_save_menu (windata_t *vwin)
 		     G_CALLBACK(bundle_add_as_icon), vwin);
     item = gtk_action_create_menu_item(action);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    vwin_record_action(vwin, action);
 
     if (get_user_var_by_data(bundle)) {
-	gtk_widget_set_sensitive(item, FALSE);
+	gtk_action_set_sensitive(action, FALSE);
     }
 
     return menu;

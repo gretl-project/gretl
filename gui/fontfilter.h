@@ -38,4 +38,4 @@ int validate_font_family (PangoFontFamily *family,
 int validate_single_font (const PangoFontFamily *family,
 			  gint filter);
 
-#endif
+#endif /* GRETL_FONTFILTER_H */

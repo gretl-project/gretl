@@ -1,4 +1,8 @@
 version 2020a, in progress
+- Verbose output for numerical optimization: make the
+  default more basic but add a new "full" setting for the
+  set-variable "max_verbose"
+- "wls" command: support the --cluster option
 - Work on lasso back-end (not public yet)
 - New function instrings() to locate instances of a given
   string within an array of strings
@@ -7,16 +11,23 @@ version 2020a, in progress
 - feval(): handle functions that take no arguments
 - sprintf(): fix potential breakage when used within a
   ternary query statement
+- jsongetb(): support nested JSON arrays
 - Reorganization of time-series model menu: add code to
   protect packages written for gretl < 2019d
 - SVD: use faster divide-and-conquer lapack function
+  where applicable
 - complex(): make the second argument optional
 - defarray(): treat scalar arguments as 1x1 matrices
-- arrays: allow as function paramters and return values
+- arrays: allow as function parameters and return values
+- xlsx data importer: handle a wider variety of cases
 - OpenBLAS speed-up: limit the number of threads to the
   number of physical cores on the host machine
 - Fix bug: possible buffer overrun on printing list of
   instruments for IV regression
+- Fix bug: incorrect results when applying unary +/- to
+  complex matrices
+- MS windows packages: update OpenBLAS version
+- Numerous small GUI fixes and enhancements
 
 2019-12-22 version 2019d
 - Add support for complex matrices, with new functions

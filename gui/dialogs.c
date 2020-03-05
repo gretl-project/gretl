@@ -5576,28 +5576,8 @@ static void activate_show (GtkToggleButton *b, int *show)
     *show = button_is_active(b);
 }
 
-static int do_show_check (int *show, GretlType type)
-{
-    int ret = (show != NULL);
-
-    /* types that don't have a GUI representation */
-    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_ARRAY) {
-	return 0;
-    }
-
-    /* don't display the "show" checkbox if the relevant
-       window will be shown anyway: i.e. "autoicon" is
-       on and we're not saving a scalar (scalars have
-       their own window, not auto-shown when "autoicon"
-       is on)
-    */
-
-    if (ret && autoicon_on() && type != GRETL_TYPE_DOUBLE) {
-	ret = 0;
-    }
-
-    return ret;
-}
+/* don't do this for types lacking a GUI representation */
+#define do_show_check(t) (t != GRETL_TYPE_STRING && t != GRETL_TYPE_ARRAY)
 
 int object_name_entry_dialog (char *name, GretlType type,
 			      const char *labeltxt, int *show,
@@ -5631,7 +5611,7 @@ int object_name_entry_dialog (char *name, GretlType type,
     gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    if (do_show_check(show, type)) {
+    if (show != NULL && do_show_check(type)) {
 	const char *label = (type == GRETL_TYPE_DOUBLE)?
 	    N_("show scalars window") :
 	    N_("show icons window");
@@ -5640,6 +5620,7 @@ int object_name_entry_dialog (char *name, GretlType type,
 	tmp = gtk_check_button_new_with_label(_(label));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), *show);
 	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(activate_show), show);
     }

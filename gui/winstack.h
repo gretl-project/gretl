@@ -97,5 +97,11 @@ void gretl_viewer_set_title (windata_t *vwin, const char *title);
 
 void preset_viewer_flag (windata_flags f);
 
+void vwin_record_action (windata_t *vwin, GtkAction *action);
+
+void vwin_action_set_sensitive (windata_t *vwin,
+				const char *name,
+				gboolean s);
+
 #endif
 

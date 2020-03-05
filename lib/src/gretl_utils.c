@@ -2424,13 +2424,17 @@ static void dotdir_cleanup (void)
 
 	if (dir != NULL) {
 	    while ((fname = g_dir_read_name(dir)) != NULL) {
-		if (strcmp(fname, "..") &&
-		    strcmp(fname, ".") &&
-		    strcmp(fname, ".gretl2rc") &&
-		    strcmp(fname, "gretl.pid") &&
-		    strcmp(fname, "mail.dat") &&
-		    !gretl_isdir(fname)) {
-		    remove(fname);
+		if (gretl_isdir(fname)) {
+		    if (*fname == '.' && strlen(fname) > 3) {
+			/* failed auto-dot directory? */
+			gretl_deltree(fname);
+		    }
+		} else if (strcmp(fname, "..") &&
+			   strcmp(fname, ".") &&
+			   strcmp(fname, ".gretl2rc") &&
+			   strcmp(fname, "gretl.pid") &&
+			   strcmp(fname, "mail.dat")) {
+		    gretl_remove(fname);
 		}
 	    }
 	    g_dir_close(dir);

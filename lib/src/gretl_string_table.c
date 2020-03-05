@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -78,11 +78,11 @@ static gretl_string_table *gretl_string_table_alloc (void)
 
 /**
  * gretl_string_table_new:
- * @list: list of series IDs whose values are to be 
- * given a string representation, or NULL. 
- * 
- * These values in @list should correspond to the 0-based indices 
- * of the series in question within the dataset.  For example, 
+ * @list: list of series IDs whose values are to be
+ * given a string representation, or NULL.
+ *
+ * These values in @list should correspond to the 0-based indices
+ * of the series in question within the dataset.  For example,
  * if strings are to be recorded for variables 2, 5 and 10 the
  * @list argument would be {3, 2, 5, 10}. If NULL is passed for
  * @list the return value is an initialized, empty string table.
@@ -127,7 +127,7 @@ gretl_string_table *gretl_string_table_new (const int *list)
 		    }
 		    free(gst->cols);
 		}
-	    } 
+	    }
 	}
     }
 
@@ -140,7 +140,7 @@ gretl_string_table *gretl_string_table_new (const int *list)
     return gst;
 }
 
-static int series_table_get_index (const series_table *st, 
+static int series_table_get_index (const series_table *st,
 				   const char *s)
 {
     gpointer p = g_hash_table_lookup(st->ht, s);
@@ -158,7 +158,7 @@ static int series_table_get_index (const series_table *st,
  * @st: a gretl series table.
  * @s: the string to look up.
  *
- * Returns: the numerical value associated with @s in the 
+ * Returns: the numerical value associated with @s in the
  * given series table, or #NADBL in case there is no match.
  */
 
@@ -174,7 +174,7 @@ double series_table_get_value (series_table *st, const char *s)
  * @st: a gretl series table.
  * @val: the numerical value to look up.
  *
- * Returns: the string associated with @val in the 
+ * Returns: the string associated with @val in the
  * given series table, or NULL in case there is no match.
  */
 
@@ -200,7 +200,7 @@ const char *series_table_get_string (series_table *st, double val)
  *
  * Constructs a mapping from the integer codes in @st_from
  * to those in @st_to. For example, if the string "foo"
- * has code 3 in @st_from and code 12 in @st_to, then 
+ * has code 3 in @st_from and code 12 in @st_to, then
  * element 3 in the mapping array will have value 12.
  * For any strings in @st_from that are not matched
  * in @st_to, the associated element of the map is set
@@ -295,7 +295,7 @@ int series_table_add_string (series_table *st, const char *s)
 	n = -1;
     } else {
 	n = st->n_strs;
-	g_hash_table_insert(st->ht, (gpointer) st->strs[n-1], 
+	g_hash_table_insert(st->ht, (gpointer) st->strs[n-1],
 			    GINT_TO_POINTER(n));
     }
 
@@ -311,7 +311,7 @@ series_table *series_table_new (char **strs, int n_strs)
 	st->n_strs = n_strs;
 	st->strs = strs;
 	for (i=0; i<n_strs; i++) {
-	    g_hash_table_insert(st->ht, (gpointer) st->strs[i], 
+	    g_hash_table_insert(st->ht, (gpointer) st->strs[i],
 				GINT_TO_POINTER(i+1));
 	}
     }
@@ -338,7 +338,7 @@ series_table *series_table_copy (series_table *st)
 	    ret->n_strs = st->n_strs;
 	    ret->strs = S;
 	    for (i=0; i<ret->n_strs; i++) {
-		g_hash_table_insert(ret->ht, (gpointer) ret->strs[i], 
+		g_hash_table_insert(ret->ht, (gpointer) ret->strs[i],
 				    GINT_TO_POINTER(i+1));
 	    }
 	}
@@ -391,7 +391,7 @@ gretl_string_table_add_column (gretl_string_table *gst, int colnum)
  *
  * This function has two main uses: for lookup in the context of
  * a completed string table, or for constructing such a
- * table (with @addcol non-zero).  The returned index reflects 
+ * table (with @addcol non-zero).  The returned index reflects
  * any additions to the table that may be required (if column
  * @col does not already exist, or if string @s is not already
  * stored for column @col).
@@ -400,8 +400,8 @@ gretl_string_table_add_column (gretl_string_table *gst, int colnum)
  * @st that has index @col, if available, otherwise 0.
  */
 
-int 
-gretl_string_table_index (gretl_string_table *gst, const char *s, 
+int
+gretl_string_table_index (gretl_string_table *gst, const char *s,
 			  int col, int addcol, PRN *prn)
 {
     series_table *st = NULL;
@@ -427,7 +427,7 @@ gretl_string_table_index (gretl_string_table *gst, const char *s,
 
     if (st != NULL) {
 	/* there's a table for this column already */
-	idx = series_table_get_index(st, tmp != NULL ? tmp: s);
+	idx = series_table_get_index(st, tmp != NULL ? tmp : s);
     } else if (addcol) {
 	/* no table for this column yet: start one now */
 	st = gretl_string_table_add_column(gst, col);
@@ -447,12 +447,12 @@ gretl_string_table_index (gretl_string_table *gst, const char *s,
 }
 
 /* Used in the context of deletion of "empty" variables from
-   an imported dataset: the index of a given "column" in 
+   an imported dataset: the index of a given "column" in
    a string table is adjusted to match the new position of
-   the variable in question. 
+   the variable in question.
 */
 
-int gretl_string_table_reset_column_id (gretl_string_table *gst, 
+int gretl_string_table_reset_column_id (gretl_string_table *gst,
 					int oldid, int newid)
 {
     if (gst != NULL) {
@@ -467,6 +467,32 @@ int gretl_string_table_reset_column_id (gretl_string_table *gst,
     }
 
     return E_DATA;
+}
+
+series_table *gretl_string_table_detach_col (gretl_string_table *gst,
+					     int col)
+{
+    series_table *st = NULL;
+
+    if (gst != NULL) {
+	int pos = in_gretl_list(gst->cols_list, col);
+
+	if (pos > 0) {
+	    st = gst->cols[pos-1];
+	    gst->cols[pos-1] = NULL;
+	}
+    }
+
+    return st;
+}
+
+int in_string_table (gretl_string_table *gst, int id)
+{
+    if (gst != NULL) {
+	return in_gretl_list(gst->cols_list, id);
+    } else {
+	return 0;
+    }
 }
 
 /**
@@ -516,10 +542,10 @@ void gretl_string_table_destroy (gretl_string_table *gst)
     free(gst);
 }
 
-/* Given a string table in which all the strings are just
+/* Given a series_table in which all the strings are just
    representations of integers, write the integer values
-   into the series and destroy the string table, while
-   marking the series as "coded."
+   into the series and destroy the table, while marking
+   the series as "coded."
 */
 
 static void series_commute_string_table (DATASET *dset, int i,
@@ -579,7 +605,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     /* first examine the string table for numeric codings */
     for (i=0; i<ncols; i++) {
 	st = gst->cols[i];
-	if (all_ints(st)) {
+	if (st == NULL || all_ints(st)) {
 	    n_strvars--;
 	}
     }
@@ -609,7 +635,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 		    "labels were found, and are printed below.\n\n"), fp);
 	}
     }
-    
+
     for (i=0; i<ncols; i++) {
 	int vi = gst->cols_list[i+1];
 
@@ -651,7 +677,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
  * @gst: gretl string table.
  *
  * Checks that the "string values" in @gst are not in fact
- * undigested quasi-numerical values. We run this on 
+ * undigested quasi-numerical values. We run this on
  * imported "CSV" data to ensure we don't produce
  * misleading results.
  *
@@ -732,10 +758,13 @@ int gretl_string_table_save (gretl_string_table *gst, DATASET *dset)
     ncols = (gst->cols_list != NULL)? gst->cols_list[0] : 0;
 
     for (i=0; i<ncols; i++) {
-	vi = gst->cols_list[i+1];
 	st = gst->cols[i];
-	series_attach_string_table(dset, vi, st);
-	gst->cols[i] = NULL;
+	if (st != NULL) {
+	    vi = gst->cols_list[i+1];
+	    st = gst->cols[i];
+	    series_attach_string_table(dset, vi, st);
+	    gst->cols[i] = NULL;
+	}
     }
 
     return 0;
@@ -787,7 +816,7 @@ void builtin_strings_cleanup (void)
 
     for (i=0; i<n; i++) {
 	g_free(built_ins[i].s);
-    }    
+    }
 }
 
 /**
@@ -869,7 +898,7 @@ static gchar *recode_content (gchar *orig, const char *codeset,
 	tr = g_convert(orig, -1, "UTF-8", codeset,
 		       NULL, &wrote, &gerr);
     } else if (g_get_charset(&charset)) {
-	/* we're in a UTF-8 locale, so we know that 
+	/* we're in a UTF-8 locale, so we know that
 	   g_locale_to_utf8 won't do the job; so guess
 	   the content is iso-8859-something?
 	*/
@@ -902,7 +931,7 @@ static gchar *recode_content (gchar *orig, const char *codeset,
 static int shell_grab (const char *arg, char **sout)
 {
     int err = 0;
-    
+
     if (arg == NULL || *arg == '\0') {
 	return E_PARSE;
     }
@@ -947,7 +976,7 @@ char *gretl_backtick (const char *arg, int *err)
 	    *err = E_ALLOC;
 	}
     }
-    
+
     return val;
 }
 
@@ -981,7 +1010,7 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
 	ret = gretl_strdup(dset->S[t-1]);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
-	}	
+	}
     } else {
 	char datestr[OBSLEN] = {0};
 
@@ -990,7 +1019,7 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	}
-    } 
+    }
 
     return ret;
 }
@@ -1091,11 +1120,11 @@ static char *mod_strdup (const char *s)
 	strcpy(ret, s);
     } else {
 	int j = 0;
-	
+
 	for (i=0; i<n; i++) {
 	    if (s[i] == '\\' && (i == n - 1 || s[i+1] != '\\')) {
 		ret[j++] = '\\';
-	    } 
+	    }
 	    ret[j++] = s[i];
 	}
 	ret[j] = '\0';
@@ -1125,7 +1154,7 @@ static char *maybe_get_subst (char *name, int *n, int quoted,
 	if (quoted && strchr(ret, '\\')) {
 	    ret = mod_strdup(ret);
 	    *freeit = 1;
-	} 
+	}
     }
 
     return ret;

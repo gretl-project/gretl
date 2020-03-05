@@ -1572,3 +1572,20 @@ void vwin_free_toolbar_popups (windata_t *vwin)
 	g_list_free(plist);
     }
 }
+
+void vwin_record_action (windata_t *vwin, GtkAction *action)
+{
+    const gchar *name = gtk_action_get_name(action);
+
+    g_object_set_data(G_OBJECT(vwin->main), name, action);
+}
+
+void vwin_action_set_sensitive (windata_t *vwin, const char *name,
+				gboolean s)
+{
+    GtkAction *action = g_object_get_data(G_OBJECT(vwin->main), name);
+
+    if (action != NULL) {
+	gtk_action_set_sensitive(action, s);
+    }
+}

@@ -61,8 +61,9 @@ struct PRN_ {
     int savepos;       /* saved position in stream or buffer */
     GArray *fplist;    /* stack for use with output redirection */
     PrnFormat format;  /* plain, TeX, RTF */
-    char fixed;        /* non-zero for fixed-size buffer */
-    char gbuf;         /* non-zero for buffer obtained via GLib */
+    gint8 fixed;       /* non-zero for fixed-size buffer */
+    gint8 gbuf;        /* non-zero for buffer obtained via GLib */
+    guint8 nlcount;    /* count of trailing newlines */
     char delim;        /* CSV field delimiter */
     char *fname;       /* temp file name, or NULL */
 };
@@ -213,6 +214,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->format = GRETL_FORMAT_TXT;
     prn->fixed = 0;
     prn->gbuf = 0;
+    prn->nlcount = 0;
     prn->delim = ',';
     prn->fname = NULL;
 
@@ -1007,6 +1009,19 @@ static int pprintf_init (PRN *prn)
     return ret;
 }
 
+static int get_nl_count (const char *s)
+{
+    int i, n = strlen(s) - 1;
+    int nnl = 0;
+
+    for (i=n; i>=0; i--) {
+	if (s[i] == '\n') nnl++;
+	else break;
+    }
+
+    return nnl;
+}
+
 /**
  * pprintf:
  * @prn: gretl printing struct.
@@ -1029,6 +1044,10 @@ int pprintf (PRN *prn, const char *format, ...)
 
     if (prn == NULL || prn->fixed) {
 	return 0;
+    }
+
+    if (format != NULL && *format != '\0') {
+	prn->nlcount = get_nl_count(format);
     }
 
     if (prn->fp != NULL) {
@@ -1168,6 +1187,9 @@ int pputs (PRN *prn, const char *s)
     }
 
     slen = strlen(s);
+    if (slen > 0) {
+	prn->nlcount = get_nl_count(s);
+    }
 
     if (prn->fp != NULL) {
 	fputs(s, prn->fp);
@@ -1215,6 +1237,9 @@ int pputc (PRN *prn, int c)
 	return 0;
     }
 
+    if (c == '\n') prn->nlcount += 1;
+    else if (c != '\0') prn->nlcount = 0;
+
     if (prn->fp != NULL) {
 	fputc(c, prn->fp);
 	return 1;
@@ -1260,6 +1285,19 @@ void gretl_prn_newline (PRN *prn)
     } else if (rtf_format(prn)) {
 	pputs(prn, "\\par\n");
     } else {
+	pputc(prn, '\n');
+    }
+}
+
+/**
+ * gretl_print_ensure_vspace:
+ * @prn: gretl printing struct.
+ *
+ */
+
+void gretl_print_ensure_vspace (PRN *prn)
+{
+    if (prn != NULL && prn->nlcount < 2) {
 	pputc(prn, '\n');
     }
 }

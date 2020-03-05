@@ -2544,7 +2544,7 @@
     <function name="complex" section="complex" output="cmatrix">
       <fnargs>
 	<fnarg type="scalar-or-matrix">A</fnarg>
-	<fnarg type="scalar-or-matrix">B</fnarg>
+	<fnarg optional="true" type="scalar-or-matrix">B</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -2555,6 +2555,8 @@
 	  <by r="m" c="n"/> con una parte imaginaria constante (y de forma
 	  similar en el caso recíproco, pero con una parte real constante). Si
 	  ambos argumentos son matrices, deben tener las mismas dimensiones.
+	  Si omites el segundo argumento, la parte imaginaria se establece
+	  por defecto como cero.
 	  <seelist><fncref targ="cswitch"/></seelist>
 	</para>
       </description>
@@ -3426,6 +3428,43 @@
       </description>
     </function>
 
+    <function name="eigen" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;W</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula los autovalores (y opcionalmente los autovectores
+	  derechos y/o izquierdos) de la matriz <argname>A</argname> de
+	  dimensión <by r="n" c="n"/>, que puede ser real o compleja.
+	  Los autovalores se devuelven en un vector columna complejo.
+	</para>
+	<para>
+	  Si quieres recuperar los autovectores derechos (como en el caso de
+	  una matriz compleja de dimensión <by r="n" c="n"/>), indica el nombre
+	  de una matriz ya existente, precedido por <lit>&amp;</lit> para
+	  indicar la <quote>dirección</quote> de la matriz en cuestión, como
+	  segundo argumento. De otro modo, puedes omitir este argumento.
+	</para>
+	<para>
+	  Para recuperar los autovectores izquierdos (otra vez, como en una
+	  matriz compleja), indica la dirección de una matriz como tercer
+	  argumento. Ten en cuenta que, si quieres los autovectores izquierdos
+	  pero no los derechos, debes usar la palabra clave <lit>null</lit>
+	  como marcador para el segundo argumento.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="eigensym"/>
+            <fncref targ="eigsolve"/>
+            <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -3436,7 +3475,7 @@
 	  <emphasis>Esta es una función heredada, anterior al soporte
 	  original de Gretl para matrices complejas. No debes usarla en
 	  los guiones nuevos que escribas en lenguaje 'hansl'. Utiliza
-	  </emphasis> <fncref targ="eiggen2"/> <emphasis> en su lugar.</emphasis>
+	  </emphasis> <fncref targ="eigen"/> <emphasis> en su lugar.</emphasis>
 	</para>
 	<para>
 	  Calcula los autovalores y, opcionalmente, los autovectores de la matriz
@@ -3497,43 +3536,6 @@
       </description>
     </function>
 
-    <function name="eiggen2" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="smatrix">A</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;W</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Calcula los autovalores (y opcionalmente los autovectores
-	  derechos y/o izquierdos) de la matriz <argname>A</argname> de
-	  dimensión <by r="n" c="n"/>, que puede ser real o compleja.
-	  Los autovalores se devuelven en un vector columna complejo.
-	</para>
-	<para>
-	  Si quieres recuperar los autovectores derechos (como en el caso de
-	  una matriz compleja de dimensión <by r="n" c="n"/>), indica el nombre
-	  de una matriz ya existente, precedido por <lit>&amp;</lit> para
-	  indicar la <quote>dirección</quote> de la matriz en cuestión, como
-	  segundo argumento. De otro modo, puedes omitir este argumento.
-	</para>
-	<para>
-	  Para recuperar los autovectores izquierdos (otra vez, como en una
-	  matriz compleja), indica la dirección de una matriz como tercer
-	  argumento. Ten en cuenta que, si quieres los autovectores izquierdos
-	  pero no los derechos, debes usar la palabra clave <lit>null</lit>
-	  como marcador para el segundo argumento.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="eigensym"/>
-            <fncref targ="eigsolve"/>
-            <fncref targ="svd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="eigensym" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
@@ -3541,7 +3543,7 @@
       </fnargs>
       <description>
 	<para>
-	  Funciona del mismo modo que la función <fncref targ="eigengen"/>,
+	  Funciona del mismo modo que la función <fncref targ="eigen"/>,
 	  excepto que el argumento <argname>A</argname> debe ser simétrico
 	  (por lo que, en este caso, se pueden acortar los cálculos), y los
 	  autovalores se devuelven en orden ascendente. Si deseas obtener los
@@ -4558,14 +4560,14 @@
 	</code>
 	<para>
 	  El argumento opcional <argname>dP</argname> se usa para obtener la matriz
-	  <by r="n" c="k"/> de derivadas de las probabilidades, donde <math>k</math>
+	  <by r="n" c="k"/> de derivadas analíticas de las probabilidades, donde <math>k</math>
 	  equivale a 2<math>m</math> + <math>m</math>(<math>m</math> + 1)/2.
-	  Las primeras <math>m</math> columnas van a contener las derivadas con
-	  respecto a los límites inferiores; las <math>m</math> siguientes van a
-	  recoger las derivadas con respecto a los límites superiores; y las
-	  restantes columnas van a recoger las derivadas con respecto a los
-	  elementos singulares de la matriz <math>C</math>, en el orden que sigue la
-	  semivectorización <quote>vech</quote> de una matriz simétrica.
+	  Las primeras <math>m</math> columnas van a contener las derivadas
+	  con respecto a los límites inferiores; las <math>m</math> siguientes
+	  van a recoger las derivadas con respecto a los límites superiores;
+	  y las restantes columnas van a recoger las derivadas con respecto a
+	  los elementos singulares de la matriz <math>C</math>, en el orden que
+	  sigue la semivectorización <quote>vech</quote> de una matriz simétrica.
 	</para>
       </description>
     </function>
@@ -5140,6 +5142,32 @@
 	</para>
 	<code>
 	  if strlen(strstr("gatada", "gata")) &gt; 0
+	</code>
+      </description>
+    </function>
+
+    <function name="instrings" section="strings" output="matrix">
+      <fnargs>
+	<fnarg type="strings">S</fnarg>
+	<fnarg type="string">cotejo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Comprueba si los elementos del 'array' de cadenas de texto
+	  <argname>S</argname> son iguales a <argname>cotejo</argname>.
+	  Devuelve un vector columna de longitud igual al número de
+	  coincidencias que se producen, y que contiene la posición que
+	  ocupa cada coincidencia dentro del 'array' (o bien una matriz
+	  vacía en caso de no haber coincidencias).
+	</para>
+	<para>
+	  Ejemplo:
+	</para>
+	<code>
+	  strings S = defarray("A", "B", "C", "B")
+	  eval instrings(S, "B")
+	  2
+	  4
 	</code>
       </description>
     </function>

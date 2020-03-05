@@ -390,6 +390,7 @@ static int session_append_text (const char *tname, char *buf)
     session.texts = texts;
     session.texts[nt] = text;
     session.ntexts += 1;
+    mark_session_changed();
 
     return 0;
 }
@@ -1199,45 +1200,34 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     }
 }
 
+/* Called (via ui_utils.c) from toolbar.c, to implement
+   saving displayed bundle as icon; handles VIEW_BUNDLE
+   and also VIEW_DBNOMICS
+*/
+
 void bundle_add_as_icon (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     gretl_bundle *bundle = vwin->data;
     char vname[VNAMELEN];
     gchar *blurb;
-    int *pshow, show = 0;
     int resp;
 
     sprintf(vname, "bundle%d", ++session_bundle_count);
     blurb = g_strdup_printf("Save bundle\nName (max. %d characters):",
 			    VNAMELEN - 1);
-    pshow = (iconlist == NULL)? &show : NULL;
     resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE,
-				    blurb, pshow, vwin->main);
+				    blurb, NULL, vwin->main);
     g_free(blurb);
 
     if (!canceled(resp)) {
 	int err = user_var_add(vname, GRETL_TYPE_BUNDLE, bundle);
-	int flipit = 1;
 
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    if (show) {
-		view_session();
-	    } else if (autoicon_on()) {
-		auto_view_session();
-	    }
 	    mark_session_changed();
-	    if (close_on_add(action)) {
-		gtk_widget_destroy(vwin->main);
-		flipit = 0;
-	    }
-	}
-
-	if (flipit) {
-	    flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
-	    flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
+	    vwin_action_set_sensitive(vwin, "SaveAsIcon", FALSE);
 	}
     }
 }
@@ -2275,13 +2265,20 @@ static void open_matrix (gui_obj *obj)
     edit_user_matrix_by_name(name, iconview);
 }
 
+static int is_dbnomics_bundle (const gretl_bundle *b)
+{
+    const char *s = gretl_bundle_get_creator((gretl_bundle *) b);
+
+    return s != NULL && !strcmp(s, "dbnomics");
+}
+
 static void open_bundle (gui_obj *obj)
 {
     user_var *u = (user_var *) obj->data;
     const char *name = user_var_get_name(u);
     gretl_bundle *b = user_var_get_value(u);
     PRN *prn = NULL;
-    int done = 0;
+    int role, done = 0;
 
     if (maybe_raise_object_window(b)) {
 	return;
@@ -2296,13 +2293,16 @@ static void open_bundle (gui_obj *obj)
 	return;
     }
 
+    role = VIEW_BUNDLE;
     done = try_exec_bundle_print_function(b, prn);
 
     if (!done) {
 	gretl_bundle_print(b, prn);
+    } else if (is_dbnomics_bundle(b)) {
+	role = VIEW_DBNOMICS;
     }
 
-    view_buffer(prn, 80, 400, name, VIEW_BUNDLE, b);
+    view_buffer(prn, 80, 400, name, role, b);
 }
 
 static void open_gui_text (gui_obj *obj)
@@ -2463,16 +2463,17 @@ static int delete_session_object (gui_obj *obj)
 
 static void maybe_delete_session_object (gui_obj *obj)
 {
-    int busy = 0;
+    GtkWidget *busywin = NULL;
 
     if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
-	char fullname[MAXLEN];
 
-	session_file_make_path(fullname, graph->fname);
-	if (get_window_for_plot(graph) ||
-	    get_editor_for_file(fullname)) {
-	    busy = 1;
+	busywin = get_window_for_plot(graph);
+	if (busywin == NULL) {
+	    char fullname[MAXLEN];
+
+	    session_file_make_path(fullname, graph->fname);
+	    busywin = vwin_toplevel(get_editor_for_file(fullname));
 	}
     } else {
 	gpointer p = NULL;
@@ -2488,14 +2489,17 @@ static void maybe_delete_session_object (gui_obj *obj)
 	    p = obj->data;
 	}
 
-	if (obj->sort == GRETL_OBJ_MATRIX) {
-	    busy = (p != NULL && get_window_for_data(p) != NULL);
-	} else {
-	    busy = (p != NULL && get_viewer_for_data(p) != NULL);
+	if (p != NULL) {
+	    if (obj->sort == GRETL_OBJ_MATRIX) {
+		busywin = get_window_for_data(p);
+	    } else {
+		busywin = vwin_toplevel(get_viewer_for_data(p));
+	    }
 	}
     }
 
-    if (busy) {
+    if (busywin != NULL) {
+	gtk_window_present(GTK_WINDOW(busywin));
 	warnbox_printf(_("%s: please close this object's window first"),
 		       obj->name);
     } else {
@@ -2507,25 +2511,6 @@ static void maybe_delete_session_object (gui_obj *obj)
 	g_free(msg);
     }
 }
-
-#if 0 /* FIXME? */
-static gui_obj *get_gui_obj_by_name_and_sort (const char *name,
-					      int sort)
-{
-    GList *mylist = g_list_first(iconlist);
-    gui_obj *obj = NULL;
-
-    while (mylist != NULL) {
-	obj = (gui_obj *) mylist->data;
-	if (!strcmp(name, obj->name) && obj->sort == sort) {
-	    return obj;
-	}
-	mylist = mylist->next;
-    }
-
-    return NULL;
-}
-#endif
 
 static gui_obj *get_gui_obj_by_data (void *targ)
 {

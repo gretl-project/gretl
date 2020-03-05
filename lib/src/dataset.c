@@ -1087,6 +1087,12 @@ int dataset_drop_observations (DATASET *dset, int n)
 
     newn = dset->n - n;
 
+    if (newn == 0) {
+	free_Z(dset);
+	clear_datainfo(dset, CLEAR_FULL);
+	return 0;
+    }
+
     for (i=0; i<dset->v; i++) {
 	x = realloc(dset->Z[i], newn * sizeof *x);
 	if (x == NULL) {

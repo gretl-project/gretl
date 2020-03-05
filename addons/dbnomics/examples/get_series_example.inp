@@ -5,7 +5,7 @@ nulldata 360
 setobs 12 1989:1
 
 strings ToDnld = defarray("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z",
-  "FED/G17_CAPUTL/129.B50001.SA")
+  "FED/G17_CAPUTL/CAPUTL.B50001.S")
 
 scalar N = nelem(ToDnld)
 

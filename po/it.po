@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-12-09 16:42-0500\n"
-"PO-Revision-Date: 2019-12-14 00:23+0100\n"
+"PO-Revision-Date: 2020-02-25 08:26+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -17136,7 +17136,7 @@ msgid "gretl + SVM"
 msgstr "_gretl + SVM"
 
 #: gui/textbuf.c:1708
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't read %s"
 msgstr "Impossibile aprire '%s'"
 
@@ -17712,18 +17712,16 @@ msgid "Bootstrap replications"
 msgstr "Replicazioni bootstrap"
 
 #: plugin/addons-i18n.c:53
-#, fuzzy
 msgid "Bootstrap type"
-msgstr "test bootstrap"
+msgstr "Tipo di bootstrap"
 
 #: plugin/addons-i18n.c:54
 msgid "C-model"
 msgstr "Modello C"
 
 #: plugin/addons-i18n.c:55
-#, fuzzy
 msgid "CI coverage"
-msgstr "Leverage"
+msgstr "Copertura int. conf."
 
 #: plugin/addons-i18n.c:56
 msgid "Check identification"
@@ -17802,14 +17800,12 @@ msgid "VAR variables"
 msgstr "Variabili VAR"
 
 #: plugin/addons-i18n.c:79
-#, fuzzy
 msgid "bias correction (non-SVEC)"
-msgstr "Correzione per la distorsione"
+msgstr "Correzione per la distorsione (non-SVEC)"
 
 #: plugin/addons-i18n.c:80
-#, fuzzy
 msgid "bootstrap iterations"
-msgstr "Rapporto t bootstrap"
+msgstr "Iterazioni bootstrap"
 
 #: plugin/addons-i18n.c:81
 msgid "bootstrap type"
@@ -17824,9 +17820,8 @@ msgid "plain (Cholesky)"
 msgstr "triangolare (Cholesky)"
 
 #: plugin/addons-i18n.c:84
-#, fuzzy
 msgid "residual resampling"
-msgstr "Residui dall'equazione"
+msgstr "Ricampionamento residui"
 
 #: plugin/addons-i18n.c:85
 msgid "wild/Mammen"
@@ -18314,9 +18309,8 @@ msgid "Cross-validation criterion"
 msgstr "Criterio di cross-validazione"
 
 #: plugin/mailer.c:670
-#, fuzzy
 msgid "Really store password?"
-msgstr "Cancellare davvero %s?"
+msgstr "Memorizzare password?"
 
 #: plugin/mailer.c:706
 msgid "Use password once and forget it"
@@ -18377,19 +18371,16 @@ msgid "SMTP server:"
 msgstr "Server SMTP"
 
 #: plugin/mailer.c:933
-#, fuzzy
 msgid "Mail username:"
-msgstr "Nome utente:"
+msgstr "Nome utente mail:"
 
 #: plugin/mailer.c:943
-#, fuzzy
 msgid "Mail password:"
-msgstr "Password:"
+msgstr "Password di mail:"
 
 #: plugin/mailer.c:1084
-#, fuzzy
 msgid "Mail sent"
-msgstr "Impostazioni posta"
+msgstr "Mail inviata"
 
 #: plugin/mp_ols.c:179
 #, c-format

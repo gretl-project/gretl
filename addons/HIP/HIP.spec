@@ -1,10 +1,10 @@
 author = Riccardo "Jack" Lucchetti and Claudia Pigini
 email = r.lucchetti@univpm.it
 tags = C25 C26
-version = 0.42
-date = 2019-06-25
+version = 0.5
+date = 2020-02-25
 description = Heteroskedastic IV Probit
-public = HIP_setup HIP_estimate HIP_printout HIP
+public = HIP_setup HIP_estimate HIP_printout HIP_setoption HIP
 
 bundle-print = HIP_printout
 

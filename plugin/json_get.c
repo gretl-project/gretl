@@ -404,7 +404,7 @@ char *json_get_string (const char *data, const char *path,
 
 struct jbundle_ {
     gretl_bundle *b0;
-    gretl_bundle *curr;
+    gretl_bundle *bcurr;
     gchar ***a;
     int nlev;
     int level;
@@ -498,7 +498,8 @@ static int jb_make_pathbits (jbundle *jb, const char *path)
 
 static int jb_do_object (JsonReader *reader, jbundle *jb,
 			 gretl_array *a);
-static int jb_do_array (JsonReader *reader, jbundle *jb);
+static int jb_do_array (JsonReader *reader, jbundle *jb,
+			gretl_array *a);
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i);
 
@@ -548,7 +549,7 @@ static int is_wanted (jbundle *jb, JsonReader *reader)
 }
 
 /* Add a new bundle to the tree -- either as a named
-   member of the bundle jb->curr, or, if @a is non-NULL,
+   member of the bundle jb->bcurr, or, if @a is non-NULL,
    as an anonymous element in an array of bundles.
 */
 
@@ -567,7 +568,7 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 	    gretl_errmsg_set("JSON object member name is missing");
 	    err = E_DATA;
 	} else {
-	    err = gretl_bundle_donate_data(jb->curr, name, b,
+	    err = gretl_bundle_donate_data(jb->bcurr, name, b,
 					   GRETL_TYPE_BUNDLE, 0);
 	}
     }
@@ -575,77 +576,8 @@ static int jb_add_bundle (jbundle *jb, const char *name,
     if (err) {
 	gretl_bundle_destroy(b);
     } else {
-	jb->curr = b;
+	jb->bcurr = b;
     }
-
-    return err;
-}
-
-/* pre-check a nested array to see if it can be interpreted
-   as a {key, value} object in disguise */
-
-static int ok_nested_array (JsonReader *reader)
-{
-    int n = json_reader_count_elements(reader);
-
-    if (n != 2) {
-	return 0;
-    } else {
-	JsonNode *node;
-	int i, ok = 1;
-
-	for (i=0; i<n && ok; i++) {
-	    if (json_reader_read_element(reader, i) &&
-		json_reader_is_value(reader)) {
-		node = json_reader_get_value(reader);
-		if (json_node_get_value_type(node) != G_TYPE_STRING) {
-		    ok = 0;
-		}
-	    } else {
-		ok = 0;
-	    }
-	    json_reader_end_element(reader);
-	}
-	return ok;
-    }
-}
-
-/* Given a (nested) JSON array holding two strings, interpret the
-   strings as key and value, and convert to a bundle with a single
-   member.
-
-   This works around what I consider a design flaw in dbnomics:
-   the data structure really should be a JSON object. Note that
-   it will not work on arbitrary arrays; the array in question
-   must be pre-checked using ok_nested_array().
-*/
-
-static int jb_do_array_as_bundle (JsonReader *reader, jbundle *jb)
-{
-
-    char *key = NULL;
-    char *val = NULL;
-    int i, err = 0;
-
-    for (i=0; i<2; i++) {
-	json_reader_read_element(reader, i);
-	if (i == 0) {
-	    key = gretl_strdup(json_reader_get_string_value(reader));
-	} else {
-	    val = gretl_strdup(json_reader_get_string_value(reader));
-	}
-	json_reader_end_element(reader);
-    }
-
-    if (key != NULL && val != NULL) {
-#if JB_DEBUG
-	fprintf(stderr, "array_as_bundle: key='%s', val='%s'\n", key, val);
-#endif
-        err = gretl_bundle_set_string(jb->curr, key, val);
-    }
-
-    free(key);
-    free(val);
 
     return err;
 }
@@ -684,13 +616,13 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 
 	    jb->level += 1;
 	    if (is_wanted(jb, reader)) {
-		gretl_bundle *bsave = jb->curr;
+		gretl_bundle *bsave = jb->bcurr;
 
 		err = jb_add_bundle(jb, S[i], NULL, 0);
 		if (!err) {
 		    err = jb_do_object(reader, jb, NULL);
 		}
-		jb->curr = bsave;
+		jb->bcurr = bsave;
 	    }
 	    jb->level = lsave;
 	} else if (json_reader_is_array(reader)) {
@@ -698,7 +630,7 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 
 	    jb->level += 1;
 	    if (is_wanted(jb, reader)) {
-		err = jb_do_array(reader, jb);
+		err = jb_do_array(reader, jb, NULL);
 	    }
 	    jb->level = lsave;
 	} else if (json_reader_is_value(reader)) {
@@ -718,32 +650,33 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
     return err;
 }
 
-/* Switch the type of the array @a from strings to bundles,
-   but only if we haven't already added any strings.
+/* Switch the type of the array @a from its original value
+   to @targ, but only if we haven't already added elements
+   that make the type of @a immutable.
 */
 
 static int jb_transmute_array (gretl_array *a,
+			       GretlType targ,
 			       GretlType *pt)
 {
     int err;
 
-    err = gretl_array_set_type(a, GRETL_TYPE_BUNDLES);
+    err = gretl_array_set_type(a, targ);
     if (err) {
 	gretl_errmsg_set("JSON array: can't mix types");
     } else {
-	*pt = GRETL_TYPE_BUNDLES;
+	*pt = targ;
     }
 
     return err;
 }
 
-/* Process a JSON array node: we'll construct either an
-   array of strings or an array of bundles. Since gretl
-   arrays cannot be nested we're somewhat more restrictive
-   here than in the JSON spec.
+/* Process a JSON array node: we'll construct an array of
+   strings, bundles, or arrays.
 */
 
-static int jb_do_array (JsonReader *reader, jbundle *jb)
+static int jb_do_array (JsonReader *reader, jbundle *jb,
+			gretl_array *a0)
 {
     GretlType atype;
     const gchar *name;
@@ -759,16 +692,14 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 	    jb->level, name == NULL ? "NULL" : name, n);
 #endif
 
-    /* Arrays can be packed only into bundles, and that
-       requires a key, so it's a problem if an array
-       node doesn't have a name. Hopefully this should
-       occur only if the "root" node is itself an array.
+    /* Packing an array into a bundle requires a key, so
+       it's a problem if an array node doesn't have a name.
     */
     if (name == NULL || name[0] == '\0') {
 	name = "anon";
     }
 
-    /* we'll assume an array of strings by default */
+    /* assume an array of strings by default */
     atype = GRETL_TYPE_STRINGS;
     a = gretl_array_new(atype, n, &err);
 
@@ -780,8 +711,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 	    break;
 	}
 	if (json_reader_is_value(reader)) {
-	    if (atype == GRETL_TYPE_BUNDLES) {
-		/* we already switched to bundles! */
+	    if (atype != GRETL_TYPE_STRINGS) {
 		gretl_errmsg_set("JSON array: can't mix types");
 		err = E_DATA;
 	    } else {
@@ -790,10 +720,10 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 	} else if (json_reader_is_object(reader)) {
 	    if (atype != GRETL_TYPE_BUNDLES) {
 		/* try switching to bundles */
-		err = jb_transmute_array(a, &atype);
+		err = jb_transmute_array(a, GRETL_TYPE_BUNDLES, &atype);
 	    }
 	    if (!err) {
-		gretl_bundle *bsave = jb->curr;
+		gretl_bundle *bsave = jb->bcurr;
 
 		err = jb_add_bundle(jb, NULL, a, i);
 		if (!err) {
@@ -803,30 +733,19 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		    err = jb_do_object(reader, jb, a);
 		    jb->level = lsave;
 		}
-		jb->curr = bsave;
+		jb->bcurr = bsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
-	    if (!ok_nested_array(reader)) {
-		fprintf(stderr, "jsonget: skipping nested array at depth %d,"
-			" under '%s'\n", jb->level, name);
-	    } else {
-		if (atype != GRETL_TYPE_BUNDLES) {
-		    /* try switching to bundles */
-		    err = jb_transmute_array(a, &atype);
-		}
-		if (!err) {
-		    gretl_bundle *bsave = jb->curr;
+	    if (atype != GRETL_TYPE_ARRAYS) {
+		/* try switching to arrays */
+		err = jb_transmute_array(a, GRETL_TYPE_ARRAYS, &atype);
+	    }
+	    if (!err) {
+		int lsave = jb->level;
 
-		    err = jb_add_bundle(jb, NULL, a, i);
-		    if (!err) {
-			int lsave = jb->level;
-
-			jb->level += 1;
-			jb_do_array_as_bundle(reader, jb);
-			jb->level = lsave;
-		    }
-		    jb->curr = bsave;
-		}
+		jb->level += 1;
+		err = jb_do_array(reader, jb, a);
+		jb->level = lsave;
 	    }
 	} else {
 	    gretl_errmsg_set("JSON array: unrecognized type");
@@ -837,8 +756,23 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 
     if (err) {
 	gretl_array_destroy(a);
+    } else if (a0 != NULL) {
+	/* nesting arrays */
+	int idx = gretl_array_get_next_index(a0);
+
+	if (idx < 0) {
+	    gretl_array_destroy(a);
+	    err = E_DATA;
+	} else {
+#if JB_DEBUG
+	    fprintf(stderr, "nesting array, level %d, name %s\n",
+		    jb->level, name);
+#endif
+	    err = gretl_array_set_array(a0, idx, a, 0);
+	}
     } else {
-	err = gretl_bundle_donate_data(jb->curr, name, a,
+	/* sticking array into bundle */
+	err = gretl_bundle_donate_data(jb->bcurr, name, a,
 				       GRETL_TYPE_ARRAY, 0);
     }
 
@@ -882,7 +816,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    sprintf(tmp, "%d", k);
 	    gretl_array_set_string(a, i, tmp, 1);
 	} else {
-	    gretl_bundle_set_int(jb->curr, name, k);
+	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
     } else if (type == G_TYPE_DOUBLE) {
 	gdouble x = json_reader_get_double_value(reader);
@@ -891,7 +825,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    sprintf(tmp, "%.15g", x);
 	    gretl_array_set_string(a, i, tmp, 1);
 	} else {
-	    gretl_bundle_set_scalar(jb->curr, name, x);
+	    gretl_bundle_set_scalar(jb->bcurr, name, x);
 	}
     } else if (type == G_TYPE_STRING) {
 	const gchar *s = json_reader_get_string_value(reader);
@@ -899,7 +833,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	if (a != NULL) {
 	    gretl_array_set_string(a, i, (char *) s, 1);
 	} else {
-	    gretl_bundle_set_string(jb->curr, name, s);
+	    gretl_bundle_set_string(jb->bcurr, name, s);
 	}
     } else if (type == G_TYPE_BOOLEAN) {
 	int k = (int) json_reader_get_boolean_value(reader);
@@ -908,7 +842,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    sprintf(tmp, "%d", k);
 	    gretl_array_set_string(a, i, tmp, 1);
 	} else {
-	    gretl_bundle_set_int(jb->curr, name, k);
+	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
     } else if (type == 0) {
 	/* in array context: null object -> empty string */
@@ -965,7 +899,7 @@ gretl_bundle *json_get_bundle (const char *data,
 	}
     }
 
-    jb.curr = jb.b0 = gretl_bundle_new();
+    jb.bcurr = jb.b0 = gretl_bundle_new();
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
@@ -973,7 +907,7 @@ gretl_bundle *json_get_bundle (const char *data,
     if (json_reader_is_object(reader)) {
 	*err = jb_do_object(reader, &jb, NULL);
     } else if (json_reader_is_array(reader)) {
-	*err = jb_do_array(reader, &jb);
+	*err = jb_do_array(reader, &jb, NULL);
     } else if (json_reader_is_value(reader)) {
 	*err = jb_do_value(reader, &jb, NULL, 0);
     }

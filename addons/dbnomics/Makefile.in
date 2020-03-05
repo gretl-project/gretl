@@ -27,24 +27,23 @@ vpath %.spec $(PKGSRC)
 
 INP = dbnomics_public.inp \
       dbnomics_private.inp
-
-EXAMP = dbnomics_sample.inp
+SPEC = dbnomics.spec
+SMPL = dbnomics_sample.inp
 
 all: $(PKG).gfn pdfdoc
 
-$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(EXAMP)
+$(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp
-
-links.stamp: Makefile
-	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
-	@if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
-	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
-	@touch $@
 
 $(PKG).zip: $(PKG).gfn pdfdoc
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
-.PHONY : pdfdoc check install installdirs clean
+.PHONY : symlinks pdfdoc check install installdirs clean
+
+symlinks:
+	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
+	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
+	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -sf $(PKGSRC)/examples . ; fi
 
 pdfdoc: $(PKG).gfn
 	$(MAKE) -C doc
@@ -63,7 +62,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 
 clean: 
-	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
 	@rm -f *.gdt test.out
 	@$(MAKE) -C doc clean
 
