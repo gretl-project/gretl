@@ -178,7 +178,7 @@ function matrices gen_SRirfs(bundle b, int numh, matrix to_cum)
     #  one less than true) 
 
     matrix B = b.B
-    k = b.detterms    # just a number?
+    k = b.exoterms    # just a number?
 
     # On the outside, this cumulation spec is taken from the mod.
     # (Empty matrix to_cum if doesn't apply.)
@@ -271,6 +271,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     if DO_BAYES     # this is only needed for sampling from the posterior
         matrix Data = (mod.X ~ lags(mod.p, mod.Y, 1))[mod.p + 1 : ,]
         iXX = invpd(Data'Data)
+        matrix mod.mreg = Data # needed to re-calc the residuals E later
     endif
 
     if 0
@@ -294,9 +295,6 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     n_exotic = get_n_exotic(mod)
     # add the ones from exotic restrictions
     matrix allshocks = n_exotic ? values(shocks | mod.exoticSR.eshocks) : shocks
-    # if n_exotic
-		# numexotsh = nelem(uniq(mod.exoticSR.eshocks)) # need not be equal to n_exotic
-    # endif
     
     # Now extract the corresponding shock names
     strings mod.SRid_snames = getstrings_byindex(mod.snames, allshocks)
@@ -310,7 +308,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # the main loop
     #
 
-    bundle b = defbundle("B",B, "Sigma",mod.Sigma, "detterms",rows(mod.mu), \
+    bundle b = defbundle("B",B, "Sigma",mod.Sigma, "exoterms",rows(mod.mu), \
                "df", mod.T - nelem(B))
 
     loop while good<rep && iter<=maxiter --quiet
@@ -367,9 +365,10 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     endif
     printf " (acceptance ratio: %g)\n", good/(iter-1)
 
-	# copy iteration info into model 
-    mod.SRiter = iter -1 
+	# copy info into model 
+    mod.SRiter = iter - 1 
     mod.SRacc  = good
+    mod.DO_BAYES = DO_BAYES
 
 	# integrate some summary results into the model bundle 
     bundle IrfData = IRF_plotdata(drawn, coveralpha)
@@ -444,8 +443,10 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
 
     # here we store the data for plotting the irfs in a matrix, conceptually
     # similar to the "bands" matrix we use in SVAR_boot, that is with H rows
-    # (so that descriptive statistics are easy to compute) and ns * nv *
-    # horizon columns
+    # (=accepted draws, so that descriptive statistics are easy to compute) 
+    # and ns * nv * horizon columns
+    # (But the outputs will be reshaped after the H is aggregated out; 
+    #  with the horizon in rows and numvariables * numshocks columns.)
 
     # get dimensions
     H = nelem(bs)    # number of available (accepted) draws

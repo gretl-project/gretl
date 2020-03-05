@@ -4,6 +4,52 @@
 
 #############################
 
+function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null])
+    # Retrieves all the quantities that perhaps are redrawn 
+    # in the Bayesian set id case:
+    # - mu: exog. coeffs, B[1:k , ]
+    # - VARpar: autoregr. coeffs, B[k+1: ,]
+    # - E: residuals
+
+	redrawn = 0
+
+    if Smod.type == 10 
+        if Smod.DO_BAYES && !exists(Bofonedraw)
+            funcerr "Need redrawn matrix input for Bayesian set id case"
+        elif Smod.DO_BAYES
+            redrawn = 1
+        endif
+    endif  
+
+    if !redrawn
+        # old standard cases
+        matrix mu = Smod.mu
+        matrix VARpar = Smod.VARpar
+        matrix resids = Smod.E    # original residuals 
+
+    else
+        # need to use the resids associated with re-drawn coefficients
+        matrix mu = Bofonedraw[1 : Smod.k ,]
+        matrix VARpar = Bofonedraw[Smod.k + 1 : ,] 
+        matrix resids = Smod.Y[Smod.p + 1 : ,] - Smod.mreg * Bofonedraw
+    endif
+
+    return defarray(mu, VARpar, resids) 
+end function     
+
+function void errchkSRhisto(bundle *Smod, int drawix)
+
+    if !Smod.storeSRirfs
+        funcerr "Need accepted draws content (acc_draws) in set-id case"
+    elif drawix == 0
+        funcerr "Need to pick one particular draw (index)"
+    elif drawix > nelem(Smod.acc_draws)
+        printf "Only %d accepted draws exist\n", nelem(Smod.acc_draws) 
+        funcerr "Draw index out of range"
+    endif
+
+end function
+
 function void errmsgshockmatch(const matrix pos, string sname)
     if nelem(pos) != 1 
         printf "You don't have a shock named %s in your model.\n", sname
@@ -72,8 +118,8 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
 
     if DO_BAYES
         matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df)
-        b.B = Mats[1]
-        b.Sigma = Mats[2]
+        matrix b.B = Mats[1]
+        matrix b.Sigma = Mats[2]
     endif
     
     matrix b.rot = qrdecomp(mnormal(mod.n, mod.n))
