@@ -1,3 +1,7 @@
+2020b, in progress
+
+- Update gretl copyright notice
+
 2020-03-05 version 2020a
 - Verbose output for numerical optimization: make the
   default more basic but add a new "full" setting for the
