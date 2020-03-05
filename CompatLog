@@ -1,3 +1,9 @@
+2020-03-05 version 2020a
+
+Simplify iteration output from the --verbose flag for "mle"
+and similar commands. But the previous behavior can be
+obtained via "set max_verbose full".
+
 2019-12-22 version 2019d
 
 No known incompatible changes.

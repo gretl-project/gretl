@@ -1,8 +1,9 @@
-version 2020a, in progress
+2020-03-05 version 2020a
 - Verbose output for numerical optimization: make the
   default more basic but add a new "full" setting for the
   set-variable "max_verbose"
 - "wls" command: support the --cluster option
+- "scatters" command: improve handling of daily data
 - Work on lasso back-end (not public yet)
 - New function instrings() to locate instances of a given
   string within an array of strings
@@ -20,6 +21,7 @@ version 2020a, in progress
 - defarray(): treat scalar arguments as 1x1 matrices
 - arrays: allow as function parameters and return values
 - xlsx data importer: handle a wider variety of cases
+- ODBC data importation: handle string-valued series
 - OpenBLAS speed-up: limit the number of threads to the
   number of physical cores on the host machine
 - Fix bug: possible buffer overrun on printing list of
