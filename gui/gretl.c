@@ -70,7 +70,7 @@
 # include "build.h"
 #endif
 
-#if 0 /* defined(MAC_NATIVE) && defined(PKGBUILD) */
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
 # define ALT_MAC_STARTUP
 #endif
 

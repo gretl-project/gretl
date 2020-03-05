@@ -751,6 +751,12 @@ if test "$darwin_build" = "yes" ; then
      PKG_CHECK_EXISTS(gretl-mac-themes,
      AC_DEFINE(HAVE_MAC_THEMES),)
   fi
+  if test "$mac_native" = "yes" ; then
+     GRETLMAC="gretl"
+  else
+     GRETLMAC="Gretl"
+  fi
+  AC_SUBST(GRETLMAC)
 fi
 
 dnl
