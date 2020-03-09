@@ -337,43 +337,7 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
     	print "  perhaps try adding restrictions.)"
 	endif 
 
-    # type = b.type
-    # n = b.n
     n2 = b.n * b.n
-    # ret = 1
-
-    ##################
-    # The following moved into the new ident() version:
-    /*
-    if (type==1) || (type==2) || (type == 4) # plain, C-model or SVEC
-        matrix Rd = get_full_Rd(&b, 0)
-        matrix Ra = I(n2)
-        matrix da = vec(I(n))
-        if !nelem(Rd)
-            funcerr "No restrictions specified!"
-        endif
-
-        matrix Rb = Rd[,1:n2]
-        matrix db = Rd[,n2+1]
-
-        if type == 4    # special SVEC check
-            print " (The identification check for SVEC models is work in"
-            print "  progress. Be careful especially when loadings alpha"
-            print "  are restricted.)"
-            transshockcheck(b)  # based on Luetkepohl 2008
-        endif
-
-    elif type == 3 # AB - Model
-        matrix Ra = b.Rd0[,1:n2] # restrictions on A
-        matrix da = b.Rd0[,n2+1]
-        matrix Rb = b.Rd1[,1:n2] # restrictions on B
-        matrix db = b.Rd1[,n2+1]
-    endif
-    */
-    ######################
-    
-    # numRa = rows(Ra)              # (to compare sizes later)
-    # numRb = rows(Rb)
 
     if verbose        
         printf "\nConstraints in implicit form:\n"
@@ -396,22 +360,5 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
 
     ret = ident(&b, verbose) # was: &Ra, &da, &Rb, &db, verbose)
 
-    # made obsolete:
-    /*
-    if (type==1 || type==2 || type==4) && ret 
-        if numRb > rows(Rb) # some redundancies about C and/or long-run dropped
-           matrix b.cleanfullRd = Rb ~ db # store the non-redundant constraints  
-        endif 
-
-    elif type==3 && ret	# AB 
-        if numRa > rows(Ra)	# some redundancies about A were dropped 
-            b.Rd0 = Ra ~ da # update restrictions in model 
-        endif 
-        if numRb > rows(Rb) # same for B
-            b.Rd1 = Rb ~ db 
-        endif 
-    endif
-    */
     return ret
-
 end function

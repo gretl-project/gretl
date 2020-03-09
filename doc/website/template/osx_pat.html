@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> 
 <head>
-<title>gretl on OS X</title>
+<title>gretl on macOS</title>
 <LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
 <link rel="shortcut icon" href="http://gretl.sf.net/favicon.ico" type="image/x-icon">
 </head>
@@ -12,44 +12,92 @@
 
 <center>
 <h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
-<h2>for Mac OS X</h2>
+<h2>for macOS</h2>
 </center>
 
 <p>
- If you have an intel Mac running OS X 10.6 (Snow Leopard) or higher you should use the
- "Intel Mac, quartz" download below. For versions of OS X prior to 10.6 you'll need one or other
- of the "old" versions, depending on whether your Mac has an Intel or PPC processor
- (if in doubt, check under "About this Mac", by clicking on the Apple icon at the top
- left of your screen).
+ This page offers gretl for macOS 10.6 ("Snow Leopard", released 2009) or
+ higher. If you're running a version of OS X prior to 10.6 please see our 
+ <a href="mac-legacy.html">gretl for legacy Macs</a> page.
 </p>
 
-<p>
- When you're ready, select one of the links below.
+<h2>Getting gretl</h2> 
+
+<p>You have a choice of the latest "official" release or the current
+"snapshot".  The snapshot is more up to date: often it will contain
+bug-fixes but sometimes it will contain newly introduced bugs. To see
+what's new in the snapshot, take a look at the gretl
+<a href="../ChangeLog.html">Change log</a> (the "in progress" entry).</p>
+
+<table cellpadding="2">
+<tr>
+<td><p>latest release (SHORTDATE)</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/gretl/VERSION/gretl-VERSION-quartz.pkg/download">gretl-VERSION-quartz.pkg</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>OR current snapshot</p></td>
+<td><p>
+<a
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-quartz.pkg/download">gretl-quartz.pkg</a>
+</p></td>
+</tr>
+</table>
+
+<p><b>Tip</b>: If you're updating your gretl installation it may
+  be advisable to delete the old version of gretl before
+  installing the new one.</p>
+  
+<p>You may also be interested in the <a href="#optextra">optional extras</a>
+below.</p>
+
+<h2>Installing gretl</h2>
+
+<p>Here's the drill:</p>
+
+<ol>
+<li><p>
+Click to download either the latest release or the "snapshot" (above).  The
+selected gretl package file should appear in your Downloads after a short
+while, or it may be opened by the Mac Installer program right away.
+If the package is not opened automatically, minimize your browser window so
+you can see what's happening on your desktop, then double-click on the gretl
+file in Downloads to open the installer. Either way, you should then be
+walked through the installation process.
+</p></li>
+
+<li><p>
+Navigate to Applications in the Finder and you should now see a gretl
+icon there. Double-clicking should start gretl. On its first run gretl
+may take a while to start, as it scans the fonts available on your
+system. Assuming gretl starts OK, you can drag its icon from Applications
+onto the dock to get a quick-launcher.
+</p></li>
+
+<li><p>
+Clean up: the installer (<kbd>pkg</kbd>) file can
+be moved to the Trash once installation is completed.</p></li>
+</ol>
+
+<h2>Apple security issues</h2>
+
+<p>If you're downloading gretl from this site you can be confident that the
+installer contains no malware. However, Apple's security measures may block
+installing and/or running gretl. In that case what you have to do depends on
+whether you're running macOS 10.15 ("Catalina") or higher, or an earlier version.
 </p>
 
-<div id="menucontent">
- <ul class="menu">
-  <li><a href="mac-intel-quartz.html">Intel Mac, quartz</a></li>
-  <li><a href="mac-intel-x11.html">Intel Mac (old)</a></li>
-  <li><a href="mac-ppc.html">PPC Mac (old)</a></li>
- </ul>
-</div>
+<ul>
+<li>
+<p>If your macOS is <i>earlier than Catalina</i>, the discussion (with screenshots)
+at the
+<a href="http://rampagedev.wordpress.com/os-x-tweaks/app-cant-be-opened-because-it-was-not-downloaded-from-the-mac-app-store-fix-2/">rampagedev</a>
+blog should tell you what you need to know.</p>
+</li>
 
-<p>
-&nbsp;
-</p>
-
-<h2>Important note: installing on Catalina</h2>
-
-<p>This pertains to installation using the "Intel Mac, quartz" option
-above.</p>
-
-<p>
-  Trying to install gretl on current OS X (as of this writing, Catalina)
-  is likely to trigger a security alert.  If you downloaded gretl
-  from this website, you have nothing to worry about. Here's a to-do
-  list to circumvent the problem:
-</p>
+<li><p>If you're running <i>Catalina or higher</i>, here's a step-by-step HOWTO.</p>
 
 <ol type="1">
   <li><p>Open System Preferences and navigate to &quot;Security &amp;
@@ -70,6 +118,37 @@ above.</p>
 
   <img src="../images/osx-install-3.png">
 </ol>
+</li>
+</ul>
+
+<h2><a name="optextra">Optional extras</a></h2>
+
+<p>You may wish to install X-13-ARIMA-SEATS and/or TRAMO/SEATS. These are specialized programs for
+analysis of seasonal time series data, in versions compatible with gretl. But
+<i>please note</i>: the TRAMO/SEATS package below contains a 32-bit program
+which will not run on macOS Catalina or higher. We will provide a 64-bit
+version of TRAMO/SEATS if and when we can.
+</p>
+
+<table cellpadding="2">
+<tr>
+<td><p>X-13-ARIMA-SEATS for Intel Mac</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x13as/x13as-x86_64-darwin10.dmg/download">x13as-x86_64-darwin10.dmg</a></p></td>
+<td>64-bit</td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS for Intel Mac</p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/download">tramo-seats-intel.dmg</a></p></td>
+<td>32-bit</td>
+</tr>
+</table>
+
+<p>
+&nbsp;
+</p>
 
 </body>
 </html>

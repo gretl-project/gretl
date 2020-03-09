@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>gretl for legacy Macs</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
+</head>
+
+<body>
+
+<p>[<a href="http://gretl.sourceforge.net/index.html">gretl main page</a>]</p>
+
+<center>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>for legacy Macs (OS X prior to 10.6)</h2>
+</center>
+
+<h2>Step 0: Are you sure?</h2>
+
+<p>If you're running macOS 10.6 ("Snow Leopard") or higher you should be
+looking at our <a href="osx.html">current macOS page</a>.</p>
+
+<h2>Step 1: PPC or Intel?</h2>
+
+<p>To select your download(s) below, you need to know if your Mac has a PPC
+("PowerPC") or Intel processor.  If in doubt, check under "About this Mac",
+by clicking on the Apple icon at the top left of your screen.
+
+<h2>Step 2: Ensure you have X11</h2>
+
+<p>To run gretl you need to have the X11 window system installed on your Mac. This should be 
+automatic, but if you're using a truly ancient version you may have
+to go back to the installation DVD to install X11.</p>
+
+<p>How to tell if X11 is installed? Open the Finder and go to <kbd>Applications</kbd>. Under
+Applications, find the <kbd>Utilities</kbd> folder, open it and scan to the end: if X11 is installed
+it should appear there as an icon.</p>
+
+<h2>Step 3: Ensure you have GTK</h2>
+
+<p>Some additional libraries are needed to support gretl, namely GTK and friends. 
+you can install GTK using 
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/gtk2-framework.dmg">gtk2-framework.dmg</a>.
+This need only be done once. If you're updating an existing gretl
+installation, skip this step.
+</p>
+ 
+<h2>Step 4: Install gretl</h2> 
+
+<p>For gretl itself: grab and install either the latest release or the current "snapshot".
+The snapshot is more up to date: often it will contain bug-fixes but sometimes it will contain 
+newly introduced bugs. To see what's new in the snapshot, take a look at the gretl
+<a href="../ChangeLog.html">Change log</a> (the "in progress" entry).</p>
+
+<table cellpadding="2">
+<tr><td>&nbsp;</td><td>PPC Mac</td><td>Intel Mac</td></tr>
+<tr>
+<td><p>latest release (SHORTDATE)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-ppc.dmg">gretl-VERSION-ppc.dmg</a>
+</p></td>
+<td><p>
+<a
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-x11.dmg">gretl-VERSION-x11.dmg</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>OR current snapshot</p></td>
+<td><p>
+<a
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-ppc.dmg/download">gretl-ppc.dmg</a>
+</p></td>
+<td><p>
+<a
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-x11.dmg/download">gretl-x11.dmg</a>
+</p></td>
+</tr>
+</table>
+
+<p>After downloading, double-click on the gretl <kbd>dmg</kbd> file to mount the
+disk image. Open the disk image in the Finder and drag Gretl onto Applications.
+<i>But note</i>: if you're updating an existing installation of gretl you should
+first open Applications in the Finder and delete the old Gretl item.
+Once that's all done you can eject the disk image and delete the <kbd>dmg</kbd>
+file.
+</p>
+
+<h2>Trouble?</h2>
+
+<p>The gretl disk image is documented in 
+<a href="./README.pdf">README.pdf</a>, which contains some suggestions for 
+trouble-shooting.  Briefly, if you want to debug a non-functioning
+gretl on OS X, please try this: open an X11 terminal window; change directory
+(<kbd>cd</kbd>) to <kbd>Gretl.app</kbd> (where you installed the package); 
+change directory to <kbd>Contents/Resources/bin</kbd> and run the command</p>
+
+<pre>
+./gretl
+</pre>
+
+<p>This should give you some feedback on what is going wrong.</p>
+
+<h2>Optional extras</h2>
+
+<p>You may wish to install X-12-ARIMA and/or TRAMO/SEATS. These are specialized programs for
+analysis of seasonal time series data, in versions compatible with gretl.
+</p>
+
+<table cellpadding="2">
+
+<tr><td>&nbsp;</td><td>PPC Mac</td><td>Intel Mac</td></tr>
+<tr>
+<td><p>X-12-ARIMA</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-ppc.dmg/download">x12arima-ppc.dmg</a></p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x12a/x12arima-intel.dmg/download">x12arima-intel.dmg</a></p></td>
+</tr>
+
+<tr>
+<td><p>TRAMO/SEATS</p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats.dmg/download">tramo-seats.dmg</a></p></td>
+<td><p><a 
+href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/download">tramo-seats-intel.dmg</a></p></td>
+</tr>
+
+</table>
+
+<p>
+&nbsp;
+</p>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+ 

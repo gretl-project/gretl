@@ -7,20 +7,17 @@ FIG1 = db-access-1.png
 FIG2 = db-access-2.png
 FIG3 = db-access-3.png
 
-$(PKG).pdf: links.stamp $(PKG).tex $(FIG1) $(FIG2) $(FIG3)
+$(PKG).pdf: symlinks $(PKG).tex $(FIG1) $(FIG2) $(FIG3)
 	@pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
 
-links.stamp: Makefile
-	@if [ ! -f gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi
-	@if [ ! -f $(FIG1) ] ; then ln -sf $(DOCDIR)/$(FIG1) . ; fi
-	@if [ ! -f $(FIG2) ] ; then ln -sf $(DOCDIR)/$(FIG2) . ; fi
-	@if [ ! -f $(FIG3) ] ; then ln -sf $(DOCDIR)/$(FIG3) . ; fi
-	@touch $@
+.PHONY : symlinks clean
 
-$(PKG).tex:
-	@if [ ! -f $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
+symlinks:
+	@if [ ! -f gretl.sty ] || [ ../../../doc/gretl.sty -nt gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi
+	@for f in $(PKG).tex $(FIG1) $(FIG2) $(FIG3) ; do \
+	if [ ! -f $$f ] || [ $(DOCDIR)/$$f -nt $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
 
 clean:
-	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf links.stamp
+	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf
 

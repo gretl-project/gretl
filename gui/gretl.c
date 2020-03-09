@@ -70,6 +70,10 @@
 # include "build.h"
 #endif
 
+#if defined(MAC_NATIVE) && defined(PKGBUILD)
+# define ALT_MAC_STARTUP
+#endif
+
 /* update.c */
 extern int update_query (void);
 
@@ -424,7 +428,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-#else
+#else /* end OS X specific code */
 
 /* regular *nix treatment of NLS -- also applies
    for non-package MSYS2 build on Windows */
@@ -574,7 +578,7 @@ static void protect_against_ubuntu (void)
     }
 }
 
-#endif
+#endif /* end Linux-specific */
 
 /* callback from within potentially lengthy libgretl
    operations: try to avoid having the GUI become
@@ -634,7 +638,7 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
     return ret;
 }
 
-#endif
+#endif /* GRETL_OPEN_HANDLER */
 
 #ifdef G_OS_WIN32
 
@@ -696,7 +700,13 @@ static void alt_gtk_init (int *pargc,
     }
 }
 
-#endif
+#endif /* G_OS_WIN32 */
+
+#ifdef ALT_MAC_STARTUP
+
+#include "osx_env.c"
+
+#endif /* specific to Mac package */
 
 static int have_data (void)
 {
@@ -715,6 +725,8 @@ int main (int argc, char **argv)
 #if defined(G_OS_WIN32)
     /* this must come before NLS initialization */
     win32_set_gretldir(callname);
+#elif defined(ALT_MAC_STARTUP)
+    osx_setup_paths();
 #elif !defined(OS_OSX)
     /* Linux-specific */
     protect_against_ubuntu();

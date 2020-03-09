@@ -1,3 +1,11 @@
+#include <sys/param.h>
+#include <mach-o/dyld.h>
+
+/* Hopefully this function will provide an alternative to
+   starting gretl (quartz package) on macOS via a shell
+   script: get the environment set up via C code instead.
+*/
+
 void osx_setup_paths (void)
 {
     char *c, execpath[MAXPATHLEN + 1];
@@ -11,7 +19,6 @@ void osx_setup_paths (void)
 
     _NSGetExecutablePath(execpath, &pathsz);
 
-    // fprintf(stderr, "EXECPATH: %s\n", execpath);
     c = strrchr(execpath, '/');
     *c = '\0';
 
@@ -19,7 +26,6 @@ void osx_setup_paths (void)
     chdir(execpath);
 
     getcwd(respath, sizeof respath);
-    fprintf(stderr, "TOP: %s\n", respath);
 
     tmp = g_strdup_printf("%s/share/gretl/", respath);
     setenv("GRETL_HOME", tmp, 1);

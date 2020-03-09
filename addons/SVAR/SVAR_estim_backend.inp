@@ -121,8 +121,6 @@ function scalar vecm_est(bundle *SVARobj)
     # trim the first rows
     if rows(mreg)>0
         mreg = mreg[p+1:T,]
-        # printf "%d rows\n", rows(dep)
-        # printf "%8.3f\n", (dep[1:10,] ~ mreg[1:10,])
         matrix olspar = mols(dep, mreg, &E)
     else
         matrix olspar = {}
@@ -162,7 +160,6 @@ function scalar vecm_est(bundle *SVARobj)
     endif
 
     if k > 0
-        # matrix sel = nd + seq(1, k)
         mu = mu | olspar[nd + 1 : nd + k,] # was: mu ~ olspar[sel,]
     endif
 
@@ -174,16 +171,7 @@ function scalar vecm_est(bundle *SVARobj)
     if p > 1
         # the Gammas are always at the back:
         ini = rp - ng + 1
-        /* old code:
-           if ols_al
-           # the Gammas should be after the ECM terms
-           ini = nd + k + r + 1	# (k was missing)
-           else
-           # the Gammas should be right after the exogenous (was: deterministics)
-           ini = nd + k + 1	# (k was missing)
-           endif
-           fin = ini + (p-1) * n - 1
-        */
+
         matrix A = olspar[ini: ,] | zeros(n,n)	# was: ini:fin
         A += I(n) + Pi' | -olspar[ini: ,]
     else

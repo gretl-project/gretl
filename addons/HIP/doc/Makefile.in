@@ -8,25 +8,18 @@ FIGS = HIP-sshot1.png \
        HIP-sshot2.png \
        HIP-sshot3.png
 
-$(PKG).pdf: links.stamp $(PKG).bib $(PKG).tex $(FIGS)
+$(PKG).pdf: symlinks $(PKG).bib $(PKG).tex $(FIGS)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
 
-links.stamp: Makefile
-	@if [ ! -f gretl.bst ] ; then ln -sf $(TEXDIR)/gretl.bst . ; fi
-	@if [ ! -f gretlhds.sty ] ; then ln -sf $(TEXDIR)/gretlhds.sty . ; fi
-	@touch $@
+.PHONY : symlinks clean
 
-$(PKG).bib:
-	@if [ ! -f $(PKG).bib ] ; then ln -sf $(DOCDIR)/$(PKG).bib . ; fi
-
-$(PKG).tex:
-	@if [ ! -f $(PKG).tex ] ; then ln -sf $(DOCDIR)/$(PKG).tex . ; fi
-
-$(FIGS):
-	@for f in $(FIGS) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
+symlinks:
+	@for f in gretl.bst gretlhds.sty ; do \
+	if [ ! -f $$f ] || [ $(TEXDIR)/$$f -nt $$f ] ; then ln -sf $(TEXDIR)/$$f . ; fi ; done
+	@for f in $(PKG).bib $(PKG).tex $(FIGS) ; do \
+	if [ ! -f $$f ] || [ $(DOCDIR)/$$f -nt $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
 
 clean:
-	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf links.stamp
+	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf
 
