@@ -348,7 +348,9 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0])
         series tmpvar = sum(tmp)
         string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
         setinfo tmpvar --graph-name="@gnam"
-        tmp = tmpvar tmp	# put the line with the target var name first
+        tmp = tmp tmpvar	
+        # (put the line with the target var (stoch.comp) _last_
+        # such that the shock colors match those in FEVD
 
         string tmpout = (outfilename == "display") ? "display" : \
                         sprintf("%s_%d", outfilename, vnum)
