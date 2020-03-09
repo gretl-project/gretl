@@ -211,7 +211,7 @@ end function
 
 # -------------------
 
-# helper function for SVAR_setidIRF
+# helper function for SVAR_SRdraw
 function scalar exotic_inner_check(scalar *chk, int i, const bundle mod, 
                                    const matrices irfs)
     # (chk is a boolean, but gretl doesn't allow pointerized int or bool)
@@ -553,3 +553,70 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
 
     # return the gnuplot plotting code here eventually
 end function 
+
+##############################
+
+function scalar SRgetix(const bundle mod, 
+                            string vname, string sname, 
+                            int ini[0::0], int length[0::0],
+                            int disttarg[0:1:0] "measure to target" \
+                                 {"mean", "median"},
+                            string loss[null])
+    # Function to find the set-id accepted draw which best fits a
+    # a certain IRF center
+    # vname: e.g. "Y"
+    # sname: e.g. "supply" (naming must exist in the bundle)
+    # ini: horizon range start (0 = impact)
+    # length: horizon end is ini + length
+    # disttarg: which part of the per-horizon distribution should be 
+    # targeted;
+    # loss: how to evaluate deviations from the target; 
+    #      possible values: "abs", "quad" (default), ...
+
+	## implement defaults and error checks:
+    if !exists(loss)
+        string loss = "quad"
+    elif loss != "abs" && loss != "quad"
+        print "Warning, unrecognized loss, using 'quad'"
+        loss = "quad"
+    endif
+    if disttarg == 1
+        funcerr "disttarg must be smaller than 1"
+    endif
+    if ini + length > mod.horizon
+        funcerr "ini + length too large (increase horizon)"
+    endif 
+    if !inbundle(mod, "SRacc")
+        funcerr "No info on accepted draws found"
+    endif
+
+    scalar v_ix = names2indices(mod.Ynames, defarray(vname))
+    scalar s_ix = names2indices(mod.snames, defarray(sname))
+    startix = ini + 1	# offset for 1-based
+    finix = startix + length
+    matrix center = !disttarg ? mod.SRirfmeans : mod.SRirfmeds
+    # pick the right position in the matrix:
+    k = (s_ix - 1) * nelem(mod.Ynames) + v_ix 
+	center = center[,k]
+
+    best = $huge
+	bestdraw = 0
+	loop i = 1..mod.SRacc -q
+        matrix IRFvec = drill(mod.acc_draws[i].irfs, v_ix, s_ix)
+        matrix distance = (IRFvec - center)[startix : finix] 
+        if loss == "abs"
+            scalar objective = sum(abs(distance))
+        elif loss == "quad"
+            scalar objective = sum(distance.^2)
+        endif
+        if objective < best
+            best = objective
+            bestdraw = i 
+        endif
+    endloop
+
+	if !bestdraw
+        funcerr "shouldn't happen"
+    endif
+    return bestdraw
+end function
