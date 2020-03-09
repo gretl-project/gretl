@@ -22,27 +22,27 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
 
     # bc: bias correction choice
 
-    scalar flip = (snum < 0)
-    scalar snum = abs(snum)
-    scalar n = round(sqrt(cols(IRFmat)))
+    flip = (snum < 0)
+    snum = abs(snum)
+    n = round(sqrt(cols(IRFmat)))
 
+    # bootrep = exists(boot) ? boot.rep : 0 # doesn't work due to gretl bug+
+    bootrep = 0
     if exists(boot)
-        scalar bootrep = boot.rep
-        scalar alpha = boot.alpha
-    else
-        scalar bootrep = 0
+        bootrep = boot.rep
+        # scalar alpha = boot.alpha
     endif
 
     # anything to cumulate?
-    scalar cumulate = exists(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
+    cumulate = exists(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
 
-    scalar tmpfname = int(1000*muniform(1,1))
+    tmpfname = int(1000 * muniform(1,1))
     string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
       sprintf("@dotdir/irf%d.gp", tmpfname)
 
-    scalar k = (snum-1)*n + vnum
+    k = (snum-1) * n + vnum
 
-    scalar h = rows(IRFmat)
+    h = rows(IRFmat)
     matrix x = flip ? -IRFmat[,k]./scale : IRFmat[,k]./scale	# matrix?
     if bootrep > 0
         matrix hicb = flip ? -boot.lo_cb : boot.hi_cb	# matrix?
@@ -58,11 +58,12 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
         scalar maxy = maxc(x)
     endif
 
-    scalar miny = (miny>0) ? 0 : miny
-    scalar maxy = (maxy<0) ? 0 : maxy
+    miny = (miny>0) ? 0 : miny
+    maxy = (maxy<0) ? 0 : maxy
 
     set force_decpoint on
 
+    ## write the raw gnuplot code
     outfile "@tmpfile" --write
     printf "set yrange [%g:%g]\n", miny*1.05, maxy*1.05
     printf "set xrange [%g:%g]\n", 0, (h-1)*1.05
@@ -85,17 +86,18 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
 
     printf "\"\n"
 
+    if keypos == 0
+        printf "set key off\n"
+    elif keypos == 1
+        printf "set key outside\n"
+    elif keypos == 2
+        printf "set key below\n"
+    endif
+
     if bootrep > 0
-        if keypos == 0
-            printf "set key off\n"
-        elif keypos == 1
-            printf "set key outside\n"
-        elif keypos == 2
-            printf "set key below\n"
-        endif
         printf "set style fill solid 0.125\n"
         printf "plot '-' using 1:2:3 w filledcurve t "
-		printf "'Bstrap %d%% CI', \\\n", floor(100*alpha)
+		printf "'Bstrap %d%% CI', \\\n", floor(100 * boot.alpha)
         printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
         printf "'-' w l lw 2 lc -1 t 'IRF'\n"
         loop i=1..h -q
@@ -374,7 +376,7 @@ function void GUI_plot(bundle *b, int ptype[0:2:0] \
                        "Plot type" {"IRF", "FEVD", "Historical decomposition"})
 
     if ptype == 0
-        IRFplot(&b, 0, 0) # all in one go
+        IRFplot(&b, 0, 0, (b.nboot ? 2 : 0)) # all in one go / no key if no bands
 
     elif ptype == 1
         FEVDplot(&b, 0)

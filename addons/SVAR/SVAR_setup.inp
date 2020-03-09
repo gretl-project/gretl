@@ -522,7 +522,7 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
             printf "Unrestricted trend, "
         endif
 
-        printf "beta =\n%9.5f\n", jbeta
+        printf "beta =\n%11.5f\n", jbeta
 
         if free_a
             printf "alpha is unrestricted\n"

@@ -74,17 +74,6 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
         # try to set some "sensible" initial values
         matrix param = init_C(Sigma, fullRd)
 
-        /* isn't used, can probably be scrapped:
-        if obj.simann > 0
-            printf "before simann:\n%12.6f\n", param
-            matrix dat = vec(Sigma) ~ imp2exp(fullRd)
-            matrix parcpy = param
-            zzz = simann(parcpy, "loglik(&parcpy, &dat, -1)", obj.simann)
-            param = parcpy
-            printf "after simann:\n%12.6f\n", param
-        endif
-        */
-
         # do estimation; note that vcv is estimated inside "estC"
         matrix C = estC(&param, Sigma, fullRd, &vcv, &errcode, meth, verbosity)
 
