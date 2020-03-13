@@ -32,25 +32,29 @@ basta eseguire il file <kbd>exe</kbd>. Questa soluzione in genere è adatta per
 la maggior parte degli utenti.</p> 
 
 <p>Se non si hanno i permessi di amministrazione su Windows, scegliere un pacchetto zip
-dalla seconda colonna e scompattarlo in una cartella su cui si ha il
+dalla terza colonna e scompattarlo in una cartella su cui si ha il
 permesso di scrittura. <i>Nota</i>: occorre conservare la struttura di cartelle
 dell'archivio, altrimenti gretl non funzionerà. Nei programmi per scompattare i
 file, questa opzione si chiama talvolta "abilita cartelle". L'archivio è in una
 cartella chiamata <kbd>gretl</kbd>. Ad esempio, se si scompatta l'archivio in una
 cartella chiamata <kbd>c:\userdata</kbd>, il file eseguibile di gretl sarà in
-<kbd>c:\userdata\gretl\gretlw32.exe</kbd>. </p>
+<kbd>c:\userdata\gretl\gretl.exe</kbd>. </p>
 
 <p>Lo "snapshot" attuale di gretl è più aggiornato: spesso contiene correzioni a bug, ma talvolta
 contiene nuovi bug. Per vedere le novità contenute nello snapshot, si può vedere
 il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").</p>
 
 <table cellpadding="4">
-<tr><td>&nbsp;</td><td><p><i>autoinstallante</i></p></td><td><p>O</p></td>
+<tr><td>&nbsp;</td><td><p><i>autoinstallante (32-bit)</i></p></td>
+<td><p><i>autoinstallante (64-bit)</i></p></td><td><p>OR</p></td>
 <td><p><i>archivio zip (per non-amministratori)</i></p></td></tr>
 <tr>
 <td><p>ultima versione rilasciata (SHORTDATE)</p></td>
 <td><p>
 <a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
+</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-64.exe">gretl-VERSION-64.exe</a>
 </p></td>
 <td>&nbsp;</td>
 <td><p>
@@ -58,10 +62,14 @@ il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").<
 </p></td>
 </tr>
 
+
 <tr>
-<td><p>O snapshot attuale</p></td>
+<td><p>OPPURE snapshot attuale</p></td>
 <td><p>
 <a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>
+</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install-64.exe/download">gretl_install-64.exe</a>
 </p></td>
 <td>&nbsp;</td>
 <td><p>
@@ -71,11 +79,8 @@ il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").<
 </table>
 
 <p>Gli eseguibili sono stati cross-compilati su GNU/Linux usando <a
-href="http://www.mingw.org/">mingw32</a> e <a
-href="http://www.gtk.org/download/win32.php">GTK per
-Windows</a> di Tor Lillqvist. Il programma di installazione è di
+href="http://mingw-w64.org/">mingw-w64</a>. Il programma di installazione è di
 <a href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
-
 
 
 <h2>Componenti aggiuntivi che può essere utile installare:</h2>
@@ -84,7 +89,17 @@ Windows</a> di Tor Lillqvist. Il programma di installazione è di
 <table cellpadding="4">
 
 <tr>
-<td><p>X-12-ARIMA (destagionalizzazione, modelli ARIMA)</p></td>
+<td><p>X-13-ARIMA-SEATS (destagionalizzazione, modelli ARIMA)</p></td>
+<td><p><a
+href="http://sourceforge.net/projects/gretl/files/x13as/x13as_install.exe/download">x13as_install.exe</a>
+OPPURE (64-bit)
+<a
+href="http://sourceforge.net/projects/gretl/files/x13as/x13as_install-64.exe/download">x13as_install-64.exe</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>X-12-ARIMA (versione precedente del link sopra)</p></td>
 <td><p><a
 href="http://sourceforge.net/projects/gretl/files/x12a/x12a_install.exe/download">x12a_install.exe</a></p></td>
 </tr>
@@ -185,13 +200,10 @@ ad esempio in un laboratorio informatico.</p>
 
 <h2>Compilare gretl per Windows</h2>
 
-<p>Per compilare gretl per Windows, basta scaricare il pacchetto dei sorgenti
-di gretl (si veda <a href="http://sourceforge.net/projects/gretl/">qui</a> per
-la versione più recente) e dare un'occhiata alla directory <kbd>win32</kbd>.
-Il Makefile per la versione Windows è in realtà scritto per cross-compilare
-gretl su Linux, ma non dovrebbe essere difficile modificarlo per compilare il
-programma direttamente su Windows, in particolare se si usa il compilatore
-mingw32.</p>
+<p>Per compilare gretl per Windows, si veda
+<a href="http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/">qui</a> per
+una guida dettagliata e link ai file necessari. la procedura necessita
+di MSYS2 e Mingw-W64.</p>
 
 </body>
 </html>
