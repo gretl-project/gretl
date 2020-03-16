@@ -14176,7 +14176,8 @@ static NODE *get_series_stringvals (NODE *n, parser *p)
 	    int n_strs = 0;
 	    char **S;
 
-	    S = series_get_string_vals(p->dset, v, &n_strs);
+	    /* FIXME subsample? */
+	    S = series_get_string_vals(p->dset, v, &n_strs, 0);
 	    ret->v.a = gretl_array_from_strings(S, n_strs, 1,
 						&p->err);
 	} else {

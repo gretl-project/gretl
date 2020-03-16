@@ -552,7 +552,7 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr);
 double series_decode_string (const DATASET *dset, int i, const char *s);
 
 char **series_get_string_vals (const DATASET *dset, int i,
-			       int *n_strs);
+			       int *n_strs, int subsample);
 
 int steal_string_table (DATASET *l_dset, int lvar,
 			DATASET *r_dset, int rvar);

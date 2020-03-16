@@ -4392,13 +4392,40 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
  */
 
 char **series_get_string_vals (const DATASET *dset, int i,
-			       int *n_strs)
+			       int *n_strs, int subsample)
 {
     char **strs = NULL;
     int n = 0;
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
 	strs = series_table_get_strings(dset->varinfo[i]->st, &n);
+    }
+
+    if (strs != NULL && subsample && complex_subsampled()) {
+	static char **substrs = NULL;
+	gretl_matrix *valid;
+	int err = 0;
+
+	if (substrs != NULL) {
+	    free(substrs);
+	    substrs = NULL;
+	}
+	valid = gretl_matrix_values(dset->Z[i], dset->n, OPT_NONE, &err);
+	if (err) {
+	    strs = NULL;
+	    n = 0;
+	} else {
+	    int j, k, nv = valid->rows;
+
+	    substrs = strings_array_new(nv);
+	    for (j=0; j<nv; j++) {
+		k = gretl_vector_get(valid, j) - 1;
+		substrs[j] = strs[k];
+	    }
+	    strs = substrs;
+	    n = nv;
+	    gretl_matrix_free(valid);
+	}
     }
 
     if (n_strs != NULL) {
@@ -4732,7 +4759,7 @@ int panel_group_names_ok (const DATASET *dset, int maxlen)
 	int ns, v = current_series_index(dset, dset->pangrps);
 
 	if (v > 0 && v < dset->v) {
-	    char **S = series_get_string_vals(dset, v, &ns);
+	    char **S = series_get_string_vals(dset, v, &ns, 0);
 
 	    if (S != NULL && ns >= dset->n / dset->pd) {
 		ok = 1; /* provisional */
@@ -4759,7 +4786,7 @@ const char *panel_group_names_varname (const DATASET *dset)
 	int ns, v = current_series_index(dset, dset->pangrps);
 
 	if (v > 0 && v < dset->v) {
-	    char **S = series_get_string_vals(dset, v, &ns);
+	    char **S = series_get_string_vals(dset, v, &ns, 0);
 
 	    if (S != NULL) {
 		int ng = dset->n / dset->pd;
@@ -4795,7 +4822,7 @@ static int suitable_group_names_series (const DATASET *dset,
 	}
 	if (is_string_valued(dset, i)) {
 	    int ns = 0;
-	    char **S = series_get_string_vals(dset, i, &ns);
+	    char **S = series_get_string_vals(dset, i, &ns, 0);
 
 	    if (S != NULL && ns >= dset->n / dset->pd) {
 		const char *sbak = NULL;
@@ -4848,14 +4875,14 @@ char **get_panel_group_labels (const DATASET *dset, int maxlen)
 
     /* first see if we have valid group labels set explicitly */
     if (vpg > 0 && panel_group_names_ok(dset, maxlen)) {
-	S = series_get_string_vals(dset, vpg, NULL);
+	S = series_get_string_vals(dset, vpg, NULL, 0);
     }
 
     if (S == NULL) {
 	/* can we find a suitable string-valued series? */
 	altv = suitable_group_names_series(dset, maxlen, vpg);
 	if (altv > 0) {
-	    S = series_get_string_vals(dset, altv, NULL);
+	    S = series_get_string_vals(dset, altv, NULL, 1);
 	}
     }
 

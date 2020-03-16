@@ -4774,7 +4774,7 @@ static void joiner_print (joiner *jr)
     int i;
 
     if (jr->str_keys[0]) {
-	labels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL);
+	labels = series_get_string_vals(jr->l_dset, jr->l_keyno[1], NULL, 0);
     }
 
     fprintf(stderr, "\njoiner: n_rows = %d\n", jr->n_rows);

@@ -88,7 +88,7 @@ static void dta_value_labels_write (FILE *fp, const DATASET *dset,
     int len, maxlen = 0;
     int i, ns;
 
-    S = series_get_string_vals(dset, v, &ns);
+    S = series_get_string_vals(dset, v, &ns, 1); /* FIXME? */
 
     for (i=0; i<ns; i++) {
 	len = strlen(S[i]);

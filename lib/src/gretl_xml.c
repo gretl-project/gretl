@@ -2561,7 +2561,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	    if (!is_string_valued(dset, v)) {
 		continue;
 	    }
-	    strs = series_get_string_vals(dset, v, &n_strs);
+	    strs = series_get_string_vals(dset, v, &n_strs, 0);
 	    gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
 	    pprintf(prn, "<valstrings owner=\"%s\" count=\"%d\">", xmlbuf, n_strs);
 	    for (j=0; j<n_strs; j++) {
