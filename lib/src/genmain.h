@@ -178,13 +178,15 @@ int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 		    ModelDataIndex idx);
 
 double evaluate_scalar_genr (GENERATOR *genr, DATASET *dset,
-			     int *err);
+			     PRN *prn, int *err);
 
-double evaluate_if_cond (GENERATOR *genr, DATASET *dset, int *err);
+double evaluate_if_cond (GENERATOR *genr, DATASET *dset,
+			 PRN *prn, int *err);
 
 double generate_scalar (const char *s, DATASET *dset, int *err);
 
-double generate_boolean (const char *s, DATASET *dset, int *err);
+double generate_boolean (const char *s, DATASET *dset,
+			 PRN *prn, int *err);
 
 int generate_int (const char *s, DATASET *dset, int *err);
 

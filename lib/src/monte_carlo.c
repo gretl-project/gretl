@@ -314,7 +314,7 @@ static double controller_get_val (controller *clr,
     if (clr->uv != NULL) {
 	clr->val = uvar_get_scalar_value(clr->uv) * clr->vsign;
     } else if (clr->genr != NULL) {
-	clr->val = evaluate_scalar_genr(clr->genr, dset, err);
+	clr->val = evaluate_scalar_genr(clr->genr, dset, NULL, err);
     } else if (clr->vname[0] != '\0') {
 	if (clr->vname[0] == '$') {
 	    /* built-in scalar constant */
@@ -370,7 +370,7 @@ static double controller_get_val (controller *clr,
 				     OPT_P | OPT_N | OPT_A, NULL, err);
 	}
 	if (clr->genr != NULL) {
-	    clr->val = evaluate_scalar_genr(clr->genr, dset, err);
+	    clr->val = evaluate_scalar_genr(clr->genr, dset, NULL, err);
 	} else {
 	    /* fallback: or should we just flag an error? */
 	    *err = 0;
@@ -434,7 +434,7 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 	}
 
 	if (loop->test.genr != NULL) {
-	    x = evaluate_if_cond(loop->test.genr, dset, err);
+	    x = evaluate_if_cond(loop->test.genr, dset, NULL, err);
 	} else if (!*err) {
 	    x = generate_scalar(expr, dset, err);
 	}

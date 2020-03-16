@@ -81,7 +81,7 @@ static int inline_if (const char *s)
 */
 
 static int if_eval (int ci, const char *s, DATASET *dset,
-		    void *ptr, int *err)
+		    PRN *prn, void *ptr, int *err)
 {
     GENERATOR *ifgen = NULL;
     double val = NADBL;
@@ -111,12 +111,12 @@ static int if_eval (int ci, const char *s, DATASET *dset,
     }
 
     if (ifgen != NULL) {
-	val = evaluate_if_cond(ifgen, dset, err);
+	val = evaluate_if_cond(ifgen, dset, prn, err);
     } else if (s == NULL) {
 	*err = E_DATA;
     } else {
 	*err = 0;
-	val = generate_boolean(s, dset, err);
+	val = generate_boolean(s, dset, prn, err);
     }
 
 #if IFDEBUG
@@ -370,7 +370,7 @@ int flow_control (ExecState *s, DATASET *dset, void *ptr)
 	    err = set_if_state(SET_FALSE);
 	} else {
 	    /* actually evaluate the condition */
-	    ok = if_eval(ci, cmd->vstart, dset, ptr, &err);
+	    ok = if_eval(ci, cmd->vstart, dset, s->prn, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
@@ -381,7 +381,7 @@ int flow_control (ExecState *s, DATASET *dset, void *ptr)
 	err = set_if_state(SET_ELIF);
 	if (!err && get_if_state(IS_TRUE)) {
 	    set_if_state(UNINDENT);
-	    ok = if_eval(ci, cmd->vstart, dset, ptr, &err);
+	    ok = if_eval(ci, cmd->vstart, dset, s->prn, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }

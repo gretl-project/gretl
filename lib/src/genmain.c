@@ -826,7 +826,8 @@ int generate (const char *line, DATASET *dset,
 
 /* retrieve a scalar result directly */
 
-double generate_scalar (const char *s, DATASET *dset, int *err)
+static double generate_scalar_full (const char *s, DATASET *dset,
+				    PRN *prn, int *err)
 {
     parser p;
     double x = NADBL;
@@ -858,11 +859,16 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
     return x;
 }
 
+double generate_scalar (const char *s, DATASET *dset, int *err)
+{
+    return generate_scalar_full(s, dset, NULL, err);
+}
+
 /* retrieve a boolean result directly */
 
-double generate_boolean (const char *s, DATASET *dset, int *err)
+double generate_boolean (const char *s, DATASET *dset, PRN *prn, int *err)
 {
-    double x = generate_scalar(s, dset, err);
+    double x = generate_scalar_full(s, dset, prn, err);
 
     return *err ? x : (double) (x != 0.0);
 }
@@ -871,7 +877,7 @@ double generate_boolean (const char *s, DATASET *dset, int *err)
 
 int generate_int (const char *s, DATASET *dset, int *err)
 {
-    double x = generate_scalar(s, dset, err);
+    double x = generate_scalar_full(s, dset, NULL, err);
     int ret = -1;
 
     if (!*err) {
@@ -1153,7 +1159,8 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
     return p->err;
 }
 
-double evaluate_scalar_genr (parser *p, DATASET *dset, int *err)
+double evaluate_scalar_genr (parser *p, DATASET *dset,
+			     PRN *prn, int *err)
 {
     double x = NADBL;
 
@@ -1185,9 +1192,9 @@ double evaluate_scalar_genr (parser *p, DATASET *dset, int *err)
     return x;
 }
 
-double evaluate_if_cond (parser *p, DATASET *dset, int *err)
+double evaluate_if_cond (parser *p, DATASET *dset, PRN *prn, int *err)
 {
-    double x = evaluate_scalar_genr(p, dset, err);
+    double x = evaluate_scalar_genr(p, dset, prn, err);
 
     return *err ? x : (double) (x != 0.0);
 }
