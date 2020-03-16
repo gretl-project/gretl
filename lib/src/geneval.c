@@ -14165,19 +14165,19 @@ static NODE *gen_array_node (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *get_series_stringvals (NODE *n, parser *p)
+static NODE *get_series_stringvals (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_array_node(p);
 
     if (!p->err) {
-	int v = n->vnum;
+	int v = l->vnum;
 
 	if (is_string_valued(p->dset, v)) {
+	    int sub = node_get_bool(r, p, 0);
 	    int n_strs = 0;
 	    char **S;
 
-	    /* FIXME subsample? */
-	    S = series_get_string_vals(p->dset, v, &n_strs, 0);
+	    S = series_get_string_vals(p->dset, v, &n_strs, sub);
 	    ret->v.a = gretl_array_from_strings(S, n_strs, 1,
 						&p->err);
 	} else {
@@ -16875,7 +16875,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (!useries_node(l)) {
 	    node_type_error(t->t, 0, USERIES, l, p);
 	} else {
-	    ret = get_series_stringvals(l, p);
+	    ret = get_series_stringvals(l, r, p);
 	}
 	break;
     case F_STRINGIFY:

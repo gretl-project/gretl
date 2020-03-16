@@ -11092,15 +11092,22 @@
     <function name="strvals" section="strings" output="strings">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg optional="true" type="bool">subsample</fnarg>
       </fnargs>
       <description>
 	<para>
 	  If the series <argname>y</argname> is string-valued, returns
-	  an array containing all its distinct values (irrespective of
-	  the current setting of the sample range), ordered by the
-	  associated numerical values starting at 1. If
-	  <argname>y</argname> is not string-valued an empty strings
-	  array is returned.
+	  by default an array containing all its distinct values
+	  (irrespective of the current setting of the sample range),
+	  ordered by the associated numerical values starting at 1.
+	  In case the dataset is currently subsampled via a boolean
+	  condition, you can give a non-zero value for the optional
+	  second argument to obtain an array holding just the string
+	  values present in the subsample.
+	</para>
+	<para>
+	  If <argname>y</argname> is not string-valued an empty
+	  strings array is returned.
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>

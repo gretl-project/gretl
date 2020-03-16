@@ -278,7 +278,6 @@ enum {
     F_CURL,
     F_NLINES,
     F_ARRAY,
-    F_STRVALS,
     F_TRAMOLIN,
     F_CNUMBER,
     F_ECDF,
@@ -400,6 +399,7 @@ enum {
     F_CSWITCH,
     F_PSDROOT,
     F_INSTRINGS,
+    F_STRVALS,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
