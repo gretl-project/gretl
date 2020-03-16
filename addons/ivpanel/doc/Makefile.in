@@ -5,10 +5,13 @@ PKG = ivpanel
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
 
 FIG = ivpanel-gui.png
+SRCS = $(PKG).tex $(FIG) gretl.sty gretl.bst gretl.bib
 
-$(PKG).pdf: symlinks $(PKG).tex $(FIG)
+$(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
 
 .PHONY : symlinks clean
 

@@ -7,9 +7,13 @@ FIG1 = db-access-1.png
 FIG2 = db-access-2.png
 FIG3 = db-access-3.png
 
-$(PKG).pdf: symlinks $(PKG).tex $(FIG1) $(FIG2) $(FIG3)
+SRCS = $(PKG).tex $(FIG1) $(FIG2) $(FIG3) gretl.sty
+
+$(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
 
 .PHONY : symlinks clean
 

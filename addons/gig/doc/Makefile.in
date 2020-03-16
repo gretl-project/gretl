@@ -4,9 +4,13 @@ TEXDIR = $(topsrc)/doc/tex
 PKG = gig
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
 
-$(PKG).pdf: symlinks $(PKG).bib $(PKG).tex
+SRCS = $(PKG).bib $(PKG).tex gretl.bst gretlhds.sty graphs
+
+$(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
 
 .PHONY : symlinks clean
 

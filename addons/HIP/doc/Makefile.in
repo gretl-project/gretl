@@ -8,9 +8,13 @@ FIGS = HIP-sshot1.png \
        HIP-sshot2.png \
        HIP-sshot3.png
 
-$(PKG).pdf: symlinks $(PKG).bib $(PKG).tex $(FIGS)
+SRCS = $(PKG).bib $(PKG).tex $(FIGS) gretl.bst gretlhds.sty
+
+$(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
 
 .PHONY : symlinks clean
 

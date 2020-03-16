@@ -28,9 +28,13 @@ FIGS = 	awm-irfc.pdf \
 	simpleC_gretl.pdf \
 	TMPL.png
 
-$(PKG).pdf: symlinks $(PKG).bib $(PKG).tex $(FIGS)
+SRCS = $(PKG).bib $(PKG).tex $(FIGS) gretl.bst gretlhds.sty
+
+$(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
 
 .PHONY : symlinks clean
 

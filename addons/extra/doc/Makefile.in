@@ -3,10 +3,13 @@ TEXDIR = $(topsrc)/doc/tex
 
 PKG = extra
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
+SRCS = $(PKG).tex pkgdoc.tex gretl.sty
 
-$(PKG).pdf: symlinks $(PKG).tex pkgdoc.tex
+$(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
+
+$(SRCS): | symlinks
 
 .PHONY : symlinks clean
 
@@ -16,5 +19,5 @@ symlinks:
 	if [ ! -f $$f ] || [ $(DOCDIR)/$$f -nt $$f ] ; then ln -sf $(DOCDIR)/$$f . ; fi ; done
 
 clean:
-	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf links.stamp
+	@rm -f *.log *.aux *.bbl *.blg *.toc $(PKG).pdf
 
