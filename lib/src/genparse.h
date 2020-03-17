@@ -286,7 +286,6 @@ enum {
     F_CDUMIFY,
     F_GETKEYS,
     F_MCORR,
-    F_FUNCERR,
     F_ISCMPLX,
     F_CTRANS,
     F_MLOG,
@@ -400,6 +399,7 @@ enum {
     F_PSDROOT,
     F_INSTRINGS,
     F_STRVALS,
+    F_FUNCERR,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

@@ -4222,24 +4222,20 @@
 
     <function name="funcerr" section="data-utils" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="string">message</fnarg>
+	<fnarg type="bool">condition</fnarg>
+	<fnarg type="string">msg</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Applicable only in the context of a user-defined function.
-	  Causes execution of the current function to terminate with
-	  an error condition flagged.
+	  If <argname>condition</argname> evaluates as non-zero, it
+	  causes execution of the current function to terminate with
+	  an error condition flagged; the <argname>msg</argname>
+	  argument is then printed as part of the message shown to the
+	  caller of the function in question.
 	</para>
 	<para>
-	  If the optional <argname>message</argname> argument is
-	  provided it will be printed as part of the error message
-	  shown to the caller of the function. This gives function
-	  writers the chance to provide a more specific error message
-	  than would otherwise be shown.
-	</para>
-	<para>
-	  The return value from this function is purely nominal since
-	  invoking it necessarily creates an error condition.
+	  The return value from this function (1) is purely nominal.
 	</para>
       </description>
     </function>

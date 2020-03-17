@@ -7351,7 +7351,7 @@ static NODE *do_getenv (NODE *l, int f, parser *p)
     return ret;
 }
 
-static NODE *do_funcerr (NODE *n, parser *p)
+static NODE *do_funcerr (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
@@ -7360,16 +7360,27 @@ static NODE *do_funcerr (NODE *n, parser *p)
 	p->err = E_DATA;
     } else {
 	const char *funcname = NULL;
+	NODE *s = l;  /* backward compatibility */
+	int cond = 1; /* ditto */
 
 	current_function_info(&funcname, NULL);
-	if (n != NULL && n->t == STR) {
-	    gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
-				 funcname, n->v.str);
-	} else {
-	    gretl_errmsg_sprintf(_("Error triggered in function %s()"),
-				 funcname);
+
+	if (!null_node(r)) {
+	    /* the first arg should be a boolean condition,
+	       with a string on the second arg */
+	    cond = node_get_bool(l, p, -1);
+	    s = r;
 	}
-	p->err = E_FUNCERR;
+	if (cond && !p->err) {
+	    if (s != NULL && s->t == STR) {
+		gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+				     funcname, s->v.str);
+	    } else {
+		gretl_errmsg_sprintf(_("Error triggered in function %s()"),
+				     funcname);
+	    }
+	    p->err = E_FUNCERR;
+	}
     }
 
     if (ret != NULL) {
@@ -16729,7 +16740,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_FUNCERR:
-	ret = do_funcerr(l, p);
+	ret = do_funcerr(l, r, p);
 	break;
     case F_OBSLABEL:
 	if (l->t == NUM || l->t == MAT) {

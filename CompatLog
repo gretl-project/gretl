@@ -1,3 +1,10 @@
+version 2020b, in progress
+
+The function-form of "funcerr" has a revised signature: the
+first argument a boolean error flag and the second a message
+string. The prior signature (with a single, optional string
+argument) will be accepted until further notice.
+
 2020-03-05 version 2020a
 
 Simplify iteration output from the --verbose flag for "mle"
