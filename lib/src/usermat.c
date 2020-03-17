@@ -249,10 +249,11 @@ static int bad_sel_single (int k, int n)
 }
 
 /* convert a matrix subspec component into list of rows
-   or columns */
+   or columns: n is the maximal dimension of selectable items
+*/
 
-static int *mspec_make_list (int type, union msel *sel, int n,
-			     int *err)
+int *mspec_make_list (int type, union msel *sel, int n,
+		      int *err)
 {
     int *slice = NULL;
     int single_exclude = 0;

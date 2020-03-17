@@ -140,6 +140,10 @@ gretl_array *gretl_array_copy_range (gretl_array *A,
 				     int r1, int r2,
 				     int *err);
 
+gretl_array *gretl_array_copy_subspec (gretl_array *A,
+				       int *list,
+				       int *err);
+
 gretl_array *get_array_by_name (const char *name);
 
 gretl_array *get_strings_array_by_name (const char *name);

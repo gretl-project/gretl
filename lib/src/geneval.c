@@ -4906,6 +4906,18 @@ static NODE *array_element_node (gretl_array *a, int i,
     return ret;
 }
 
+static NODE *array_subspec_node (gretl_array *a, int *list,
+				 parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL) {
+	ret->v.a = gretl_array_copy_subspec(a, list, &p->err);
+    }
+
+    return ret;
+}
+
 static int check_range_spec (int range[], int n)
 {
     int err = 0;
@@ -4922,28 +4934,6 @@ static int check_range_spec (int range[], int n)
     }
 
     return err;
-}
-
-static NODE *array_range_node (gretl_array *a, int range[],
-			       parser *p)
-{
-    NODE *ret = NULL;
-
-    if (starting(p)) {
-	p->err = check_range_spec(range, gretl_array_get_length(a));
-	if (!p->err) {
-	    ret = aux_array_node(p);
-	    if (ret != NULL) {
-		ret->v.a = gretl_array_copy_range(a, range[0] - 1,
-						  range[1] - 1,
-						  &p->err);
-	    }
-	}
-    } else {
-	ret = aux_any_node(p);
-    }
-
-    return ret;
 }
 
 static NODE *list_range_node (int *list, int range[], parser *p)
@@ -5193,18 +5183,29 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	if (l->t == MAT && r->t == MSPEC) {
+	if (r == NULL || r->t != MSPEC) {
+	    p->err = E_TYPES;
+	} else if (l->t == MAT || matrix_element_node(l)) {
 	    return submatrix_node(l, r, p);
-	} else if (matrix_element_node(l) && r->t == MSPEC) {
-	    return submatrix_node(l, r, p);
-	} else if ((l->t == ARRAY || l->t == LIST || l->t == STR) &&
-		   r->t == MSPEC) {
+	} else if (l->t == ARRAY) {
+	    int n = gretl_array_get_length(l->v.a);
+	    matrix_subspec *spec = r->v.mspec;
+	    int *vlist = mspec_make_list(spec->ltype, &spec->lsel,
+					 n, &p->err);
+
+	    if (!p->err) {
+		if (vlist[0] == 1) {
+		    ret = array_element_node(l->v.a, vlist[1], p);
+		} else {
+		    ret = array_subspec_node(l->v.a, vlist, p);
+		}
+	    }
+	    free(vlist);
+	} else if (l->t == LIST || l->t == STR) {
 	    int i = test_for_single_range(r->v.mspec, p);
 
 	    if (!p->err && i > 0) {
-		if (l->t == ARRAY) {
-		    ret = array_element_node(l->v.a, i, p);
-		} else if (l->t == LIST) {
+		if (l->t == LIST) {
 		    ret = list_member_node(l->v.ivec, i, p);
 		} else {
 		    ret = string_range_node(l->v.str, i, i, p);
@@ -5214,15 +5215,13 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 
 		range[0] = r->v.mspec->lsel.range[0];
 		range[1] = r->v.mspec->lsel.range[1];
-		if (l->t == ARRAY) {
-		    ret = array_range_node(l->v.a, range, p);
-		} else if (l->t == LIST) {
+		if (l->t == LIST) {
 		    ret = list_range_node(l->v.ivec, range, p);
 		} else {
 		    ret = string_range_node(l->v.str, range[0], range[1], p);
 		}
 	    }
-	} else if (l->t == SERIES && r->t == MSPEC) {
+	} else if (l->t == SERIES) {
 	    int t = mspec_get_series_index(r->v.mspec, p);
 
 	    if (!p->err) {
@@ -5231,7 +5230,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 		    ret->v.xval = l->v.xvec[t-1];
 		}
 	    }
-	} else if (l->t == BUNDLE && r->t == MSPEC) {
+	} else if (l->t == BUNDLE) {
 	    /* the "mspec" must hold a single key string */
 	    const char *key = mspec_get_string(r->v.mspec, 0);
 	    GretlType type = GRETL_TYPE_NONE;

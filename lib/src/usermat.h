@@ -163,6 +163,9 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 				matrix_subspec *spec,
 				int *err);
 
+int *mspec_make_list (int type, union msel *sel, int n,
+		      int *err);
+
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m);
 
 const char *mspec_get_string (matrix_subspec *spec, int i);
@@ -183,5 +186,6 @@ int matrix_XTX_in_place (gretl_matrix *m);
 int gretl_matrix_set_part (gretl_matrix *targ,
 			   const gretl_matrix *src,
 			   double x, SelType sel);
+
 
 #endif /* USERMAT_H_ */
