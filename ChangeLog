@@ -4,6 +4,8 @@ version 2020b, in progress
   shell script
 - strvals(): support retrieval of string values for current
   subsample
+- "slicing" of arrays: allow use of selection vector
+- functions called via "if": show any printed output
 
 2020-03-05 version 2020a
 - Verbose output for numerical optimization: make the
