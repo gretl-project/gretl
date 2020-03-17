@@ -480,46 +480,6 @@ int gretl_array_set_data (gretl_array *A, int i, void *ptr)
     }
 }
 
-gretl_array *gretl_array_copy_range (gretl_array *A,
-				     int r1, int r2,
-				     int *err)
-{
-    gretl_array *C = NULL;
-
-    if (A == NULL) {
-	*err = E_DATA;
-    } else if (r1 < 0 || r1 >= A->n || r2 < r1 || r2 >= A->n) {
-	*err = E_INVARG;
-    } else {
-	C = gretl_array_new(A->type, r2 - r1 + 1, err);
-	if (!*err) {
-	    int i, j = 0;
-
-	    for (i=r1; i<=r2 && !*err; i++) {
-		if (A->data[i] != NULL) {
-		    if (A->type == GRETL_TYPE_STRINGS) {
-			C->data[j] = gretl_strdup(A->data[i]);
-		    } else if (A->type == GRETL_TYPE_MATRICES) {
-			C->data[j] = gretl_matrix_copy(A->data[i]);
-		    } else if (A->type == GRETL_TYPE_BUNDLES) {
-			C->data[j] = gretl_bundle_copy(A->data[i], err);
-		    } else if (A->type == GRETL_TYPE_ARRAYS) {
-			C->data[j] = gretl_array_copy(A->data[i], err);
-		    } else {
-			C->data[j] = gretl_list_copy(A->data[i]);
-		    }
-		    if (!*err && C->data[j] == NULL) {
-			*err = E_ALLOC;
-		    }
-		}
-		j++;
-	    }
-	}
-    }
-
-    return C;
-}
-
 static int check_list_bounds (int *list, int arrdim)
 {
     int i;

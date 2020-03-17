@@ -136,10 +136,6 @@ gretl_array *gretl_strings_sort (const gretl_array *A,
 int gretl_array_copy_as (const char *name, const char *copyname,
 			 GretlType copytype);
 
-gretl_array *gretl_array_copy_range (gretl_array *A,
-				     int r1, int r2,
-				     int *err);
-
 gretl_array *gretl_array_copy_subspec (gretl_array *A,
 				       int *list,
 				       int *err);
