@@ -2,6 +2,8 @@ version 2020b, in progress
 - Update gretl copyright notice
 - Revise macOS build: don't require initialization via
   shell script
+- strvals(): support retrieval of string values for current
+  subsample
 
 2020-03-05 version 2020a
 - Verbose output for numerical optimization: make the
