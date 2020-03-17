@@ -1688,10 +1688,14 @@ static void word_check_next_char (parser *p)
     }
 
     if (p->sym == UNDEF) {
+#if 1
+	return; /* suspend disbelief? */
+#else
 	if (p->idstr != NULL && p->idstr[0] != '\0') {
 	    undefined_symbol_error(p->idstr, p);
 	    return;
 	}
+#endif
     }
 
     if (p->ch == '(') {
