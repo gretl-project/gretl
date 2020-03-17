@@ -1689,7 +1689,9 @@ static void word_check_next_char (parser *p)
 
     if (p->sym == UNDEF) {
 #if 1
-	return; /* suspend disbelief? */
+	/* 2020-03-16: suspend disbelief, we might be in a branch
+	   of "cond ? x : y" that ends up not being taken */
+	return;
 #else
 	if (p->idstr != NULL && p->idstr[0] != '\0') {
 	    undefined_symbol_error(p->idstr, p);
