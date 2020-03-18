@@ -935,26 +935,10 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
     }
 }
 
-/**
- * dataset_add_observations:
- * @dset: pointer to dataset.
- * @n: number of observations to add.
- * @opt: use OPT_A to attempt to recognize and
- * automatically extend simple deterministic variables such
- * as a time trend and periodic dummy variables;
- * use OPT_D to drop any observation markers rather than
- * expanding the set of markers and padding it out with
- * dummy values.
- *
- * Extends all series in the dataset by the specified number of
- * extra observations.  The added values are initialized to
- * the missing value code, #NADBL, with the exception of
- * simple deterministic variables when OPT_A is given.
- *
- * Returns: 0 on success, non-zero code on error.
- */
+/* regular, not panel-time, version */
 
-int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
+static int real_dataset_add_observations (DATASET *dset, int n,
+					  gretlopt opt)
 {
     double *x;
     int oldn = dset->n;
@@ -1152,6 +1136,35 @@ static int panel_dataset_extend_time (DATASET *dset, int n)
     }
 
     return err;
+}
+
+/**
+ * dataset_add_observations:
+ * @dset: pointer to dataset.
+ * @n: number of observations to add.
+ * @opt: use OPT_A to attempt to recognize and
+ * automatically extend simple deterministic variables such
+ * as a time trend and periodic dummy variables;
+ * use OPT_D to drop any observation markers rather than
+ * expanding the set of markers and padding it out with
+ * dummy values; use OPT_T to extend in the time dimension
+ * in the case of panel data.
+ *
+ * Extends all series in the dataset by the specified number of
+ * extra observations.  The added values are initialized to
+ * the missing value code, #NADBL, with the exception of
+ * simple deterministic variables when OPT_A is given.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
+{
+    if (opt & OPT_T) {
+	return panel_dataset_extend_time(dset, n);
+    } else {
+	return real_dataset_add_observations(dset, n, opt);
+    }
 }
 
 static int real_insert_observation (int pos, DATASET *dset)

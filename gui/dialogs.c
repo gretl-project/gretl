@@ -3422,14 +3422,15 @@ static void set_add_obs (GtkButton *b, int *n_add)
     *n_add = spinner_get_int(spin);
 }
 
-int add_obs_dialog (const char *blurb, int addmin, GtkWidget *parent)
+int add_obs_dialog (const char *blurb, int addmin,
+		    gretlopt opt, GtkWidget *parent)
 {
     int step, panel = dataset_is_panel(dataset);
     GtkWidget *dlg, *vbox, *hbox;
     GtkWidget *spin, *tmp;
     int n_add = -1;
 
-    if (panel) {
+    if (panel && !(opt & OPT_T)) {
 	addmin = dataset->pd;
 	step = dataset->pd;
     } else {

@@ -1956,7 +1956,7 @@ int out_of_sample_info (int add_ok, int *t2)
     int err = 0;
 
     if (add_ok) {
-	int n = add_obs_dialog(_(can_add), 0, NULL);
+	int n = add_obs_dialog(_(can_add), 0, OPT_NONE, NULL);
 
 	if (n < 0) {
 	    err = 1;
@@ -6385,11 +6385,30 @@ void add_index (GtkAction *action)
 
 void do_add_obs (void)
 {
-    int n = add_obs_dialog(NULL, 1, NULL);
-    int err = 0;
+    gretlopt opt = OPT_A;
+    int n, err = 0;
+
+    if (dataset_is_panel(dataset)) {
+	const char *opts[] = {
+            _("in the cross-sectional dimension"),
+            _("in the time dimension")
+	};
+	int resp;
+
+	resp = radio_dialog(NULL, _("Add observations"),
+			    opts, 2, 0, 0, NULL);
+	if (resp == GRETL_CANCEL) {
+	    return;
+	}
+	if (resp == 1) {
+	    opt |= OPT_T;
+	}
+    }
+
+    n = add_obs_dialog(NULL, 1, opt, NULL);
 
     if (n > 0) {
-	err = dataset_add_observations(dataset, n, OPT_A);
+	err = dataset_add_observations(dataset, n, opt);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
