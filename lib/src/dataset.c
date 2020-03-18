@@ -4401,8 +4401,10 @@ char **series_get_string_vals (const DATASET *dset, int i,
 	strs = series_table_get_strings(dset->varinfo[i]->st, &n);
     }
 
-    if (strs != NULL && subsample && complex_subsampled()) {
+    if (strs != NULL && subsample && dataset_is_subsampled(dset)) {
 	static char **substrs = NULL;
+	const double *x = dset->Z[i] + dset->t1;
+	int T = dset->t2 - dset->t1 + 1;
 	gretl_matrix *valid;
 	int err = 0;
 
@@ -4410,7 +4412,7 @@ char **series_get_string_vals (const DATASET *dset, int i,
 	    free(substrs);
 	    substrs = NULL;
 	}
-	valid = gretl_matrix_values(dset->Z[i], dset->n, OPT_NONE, &err);
+	valid = gretl_matrix_values(x, T, OPT_NONE, &err);
 	if (err) {
 	    strs = NULL;
 	    n = 0;
