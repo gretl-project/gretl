@@ -1028,6 +1028,10 @@ static int panel_dataset_extend_time (DATASET *dset, int n)
     size_t usz, vsz;
     int err = 0;
 
+    if (!dataset_is_panel(dset)) {
+	return E_PDWRONG;
+    }
+
     if (dset_zcols_borrowed(dset)) {
 	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
 	return E_DATA;
