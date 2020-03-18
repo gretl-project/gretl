@@ -288,6 +288,32 @@ double ymd_basic_from_epoch_day (guint32 ed, int julian, int *err)
 }
 
 /**
+ * epoch_day_from_ymd_basic:
+ * @ymd: number that is supposed to represent YYYYMMDD.
+ *
+ * Returns: the epoch day number corresponding to @ymd, interpreted
+ * as YYYYMMDD (ISO 8601 "basic") if possible, or 0 on error.
+ */
+
+guint32 epoch_day_from_ymd_basic (double ymd)
+{
+    gchar tmp[9];
+    int y, m, d, n;
+
+    n = g_snprintf(tmp, 9, "%.0f", ymd);
+    if (n != 8) {
+	return 0;
+    }
+
+    y = floor(ymd / 10000);
+    ymd -= y * 10000;
+    m = floor(ymd / 100);
+    d = ymd - m * 100;
+
+    return epoch_day_from_ymd(y, m, d);
+}
+
+/**
  * weekday_from_epoch_day:
  * @ed: epoch day (ed >= 1).
  *

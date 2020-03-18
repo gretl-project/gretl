@@ -8830,7 +8830,7 @@ void gui_resample_data (void)
 	int err;
 
 	err = modify_dataset(dataset, DS_RESAMPLE, NULL, nstr,
-			     NULL);
+			     OPT_NONE, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	} else {

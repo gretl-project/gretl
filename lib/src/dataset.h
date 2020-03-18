@@ -442,7 +442,7 @@ int dataset_resample (DATASET *dset, int n, unsigned int seed);
 int dataset_op_from_string (const char *s);
 
 int modify_dataset (DATASET *dset, int op, const int *list, 
-		    const char *s, PRN *prn);
+		    const char *s, gretlopt opt, PRN *prn);
 
 int dataset_get_structure (const DATASET *dset);
 

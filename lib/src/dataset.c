@@ -1017,6 +1017,139 @@ int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
     return err;
 }
 
+static int panel_dataset_extend_time (DATASET *dset, int n)
+{
+    double *utmp, *vtmp;
+    char **S = NULL;
+    int newT, oldT = dset->pd;
+    int oldn = dset->n;
+    int n_units;
+    int i, j, s, t, bign;
+    size_t usz, vsz;
+    int err = 0;
+
+    if (dset_zcols_borrowed(dset)) {
+	fprintf(stderr, "*** Internal error: modifying borrowed data\n");
+	return E_DATA;
+    }
+
+    if (n <= 0) {
+	return 0;
+    }
+
+    n_units = oldn / oldT;
+    newT = oldT + n;
+    bign = n_units * newT;
+
+    usz = newT * sizeof *utmp;
+    vsz = bign * sizeof *vtmp;
+
+    utmp = malloc(usz);
+    if (utmp == NULL) {
+	return E_ALLOC;
+    }
+
+    if (dataset_has_markers(dset)) {
+	S = strings_array_new_with_length(bign, OBSLEN);
+	if (S == NULL) {
+	    free(utmp);
+	    return E_ALLOC;
+	}
+    }
+
+    for (i=0; i<dset->v; i++) {
+	int uconst = 1, utrend = 1, dtrend = 1;
+	double xbak = NADBL;
+	guint32 dt = 0, dbak = 0;
+	int ed_err;
+
+	vtmp = malloc(vsz);
+	if (vtmp == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+
+	s = 0;
+	for (j=0; j<n_units; j++) {
+	    for (t=0; t<oldT; t++) {
+		utmp[t] = dset->Z[i][s++];
+		if (dtrend) {
+		    dt = epoch_day_from_ymd_basic(utmp[t]);
+		}
+		if (t == 0) {
+		    xbak = utmp[t];
+		    dbak = dt;
+		} else {
+		    if (uconst && (utmp[t] != xbak)) {
+			uconst = 0;
+		    }
+		    if (utrend && (utmp[t] != xbak + 1)) {
+			utrend = 0;
+		    }
+		    if (dtrend && (dt != dbak + 1)) {
+			dtrend = 0;
+		    }
+		}
+		xbak = utmp[t];
+		dbak = dt;
+	    }
+	    for (t=oldT; t<newT; t++) {
+		if (i == 0) {
+		    utmp[t] = 1.0;
+		} else if (uconst) {
+		    utmp[t] = utmp[t-1];
+		} else if (utrend) {
+		    utmp[t] = utmp[t-1] + 1;
+		} else if (dtrend) {
+		    dt = epoch_day_from_ymd_basic(utmp[t-1]);
+		    utmp[t] = ymd_basic_from_epoch_day(dt+1, 0, &ed_err);
+		} else {
+		    utmp[t] = NADBL;
+		}
+	    }
+	    memcpy(vtmp + j*newT, utmp, usz);
+	}
+	free(dset->Z[i]);
+	dset->Z[i] = vtmp;
+    }
+
+    if (S != NULL) {
+	int k = 0;
+
+	s = 0;
+	for (j=0; j<n_units; j++) {
+	    for (t=0; t<newT; t++) {
+		if (t < oldT) {
+		    strcpy(S[k], dset->S[s++]);
+		} else {
+		    sprintf(S[k], "%d:%d", j+1, t+1);
+		}
+		k++;
+	    }
+	}
+	strings_array_free(dset->S, oldn);
+	dset->S = S;
+	S = NULL;
+    }
+
+    if (dset->t2 == dset->n - 1) {
+	dset->t2 = bign - 1;
+    }
+
+    dataset_set_nobs(dset, bign);
+    dset->pd = newT;
+    ntodate(dset->endobs, bign - 1, dset);
+
+ bailout:
+
+    free(utmp);
+    if (S != NULL) {
+	strings_array_free(S, bign);
+    }
+
+    return err;
+}
+
 static int real_insert_observation (int pos, DATASET *dset)
 {
     double *x;
@@ -3065,7 +3198,7 @@ const char *series_get_graph_name (const DATASET *dset, int i)
     return ret;
 }
 
-static int add_obs (int n, DATASET *dset, PRN *prn)
+static int add_obs (int n, DATASET *dset, gretlopt opt, PRN *prn)
 {
     int err = 0;
 
@@ -3074,6 +3207,13 @@ static int add_obs (int n, DATASET *dset, PRN *prn)
 	err = E_DATA;
     } else if (n <= 0) {
 	err = E_PARSE;
+    } else if (opt & OPT_T) {
+	/* extending panel time */
+	err = panel_dataset_extend_time(dset, n);
+	if (!err) {
+	    pprintf(prn, _("Panel time extended by %d observations"), n);
+	    pputc(prn, '\n');
+	}
     } else {
 	err = dataset_add_observations(dset, n, OPT_A);
 	if (!err) {
@@ -3430,7 +3570,7 @@ int renumber_series_with_checks (const int *list,
 */
 
 int modify_dataset (DATASET *dset, int op, const int *list,
-		    const char *param, PRN *prn)
+		    const char *param, gretlopt opt, PRN *prn)
 {
     static int resampled;
     int k = 0, err = 0;
@@ -3451,7 +3591,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 
     if (gretl_function_depth() > 0) {
 	if (op == DS_ADDOBS && !complex_subsampled() &&
-	    dset->t2 == dset->n - 1) {
+	    dset->t2 == dset->n - 1 && !(opt & OPT_T)) {
 	    /* experimental, 2015-07-28: allow "addobs" within a
 	       function provided the dataset is not subsampled
 	    */
@@ -3508,7 +3648,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     }
 
     if (op == DS_ADDOBS) {
-	err = add_obs(k, dset, prn);
+	err = add_obs(k, dset, opt, prn);
     } else if (op == DS_INSOBS) {
 	err = insert_obs(k, dset, prn);
     } else if (op == DS_COMPACT) {

@@ -95,7 +95,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { CORRGM,   "corrgm",   CI_LIST | CI_LLEN1 | CI_ORD2 },
     { CUSUM,    "cusum",    0 },
     { DATA,     "data",     CI_ADHOC }, /* special: needs whole line */
-    { DATAMOD,  "dataset",  CI_PARM1 | CI_LIST | CI_PARM2 | CI_NOOPT },
+    { DATAMOD,  "dataset",  CI_PARM1 | CI_LIST | CI_PARM2 },
     { DELEET,   "delete",   CI_PARM1 | CI_INFL }, /* or CI_LIST */
     { DIFF,     "diff",     CI_LIST },
     { DIFFTEST, "difftest", CI_LIST | CI_LLEN2 },
