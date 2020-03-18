@@ -7366,9 +7366,11 @@ static NODE *do_funcerr (NODE *l, NODE *r, parser *p)
 	current_function_info(&funcname, NULL);
 
 	if (!null_node(r)) {
-	    /* the first arg should be a boolean condition,
-	       with a string on the second arg */
-	    cond = node_get_bool(l, p, -1);
+	    /* The first arg should be a boolean condition
+	       (but we'll default to "true"), with a string
+	       on the second arg.
+	    */
+	    cond = node_get_bool(l, p, 1);
 	    s = r;
 	}
 	if (cond && !p->err) {
