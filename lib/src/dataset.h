@@ -570,7 +570,8 @@ const char *panel_group_names_varname (const DATASET *dset);
 
 int is_panel_group_names_series (const DATASET *dset, int v);
 
-char **get_panel_group_labels (const DATASET *dset, int maxlen);
+series_table *get_panel_group_table (const DATASET *dset,
+				     int maxlen, int *pv);
 
 int is_dataset_series (const DATASET *dset, const double *x);
 

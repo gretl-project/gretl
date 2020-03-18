@@ -4864,10 +4864,11 @@ static int suitable_group_names_series (const DATASET *dset,
    read-only.
 */
 
-char **get_panel_group_labels (const DATASET *dset, int maxlen)
+series_table *get_panel_group_table (const DATASET *dset,
+				     int maxlen, int *pv)
 {
-    char **S = NULL;
-    int altv, vpg = 0;
+    series_table *st = NULL;
+    int vpg = 0;
 
     if (dset->pangrps != NULL) {
 	vpg = current_series_index(dset, dset->pangrps);
@@ -4875,18 +4876,22 @@ char **get_panel_group_labels (const DATASET *dset, int maxlen)
 
     /* first see if we have valid group labels set explicitly */
     if (vpg > 0 && panel_group_names_ok(dset, maxlen)) {
-	S = series_get_string_vals(dset, vpg, NULL, 0);
+	st = dset->varinfo[vpg]->st;
     }
 
-    if (S == NULL) {
+    if (st == NULL) {
 	/* can we find a suitable string-valued series? */
-	altv = suitable_group_names_series(dset, maxlen, vpg);
+	int altv = suitable_group_names_series(dset, maxlen, vpg);
+
 	if (altv > 0) {
-	    S = series_get_string_vals(dset, altv, NULL, 1);
+	    vpg = altv;
+	    st = dset->varinfo[vpg]->st;
 	}
     }
 
-    return S;
+    *pv = (st != NULL)? vpg : 0;
+
+    return st;
 }
 
 int is_dataset_series (const DATASET *dset, const double *x)

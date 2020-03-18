@@ -6983,7 +6983,9 @@ static int panel_overlay_ts_plot (const int vnum,
     gchar *literal = NULL;
     gchar *title = NULL;
     const double *obs = NULL;
-    char **grpnames = NULL;
+    series_table *gst = NULL;
+    const char *sval;
+    int vg = 0;
     int nv, panel_labels = 0;
     int maxlen = 0;
     int single_series;
@@ -7024,8 +7026,8 @@ static int panel_overlay_ts_plot (const int vnum,
     }
 
     if (!single_series) {
-	grpnames = get_panel_group_labels(dset, maxlen);
-	if (grpnames == NULL && dset->S != NULL) {
+	gst = get_panel_group_table(dset, maxlen, &vg);
+	if (gst == NULL && dset->S != NULL) {
 	    /* maybe we have obs markers that are usable */
 	    panel_labels =
 		dataset_has_panel_labels(dset, maxlen, &use, &strip);
@@ -7038,10 +7040,14 @@ static int panel_overlay_ts_plot (const int vnum,
 	s = s0 + i * T;
 	if (single_series) {
 	    strcpy(gset->varname[i+1], dset->varname[vnum]);
-	} else if (grpnames != NULL) {
-	    const char *sval = grpnames[u0+i];
-
-	    strncat(gset->varname[i+1], sval, VNAMELEN-1);
+	} else if (gst != NULL) {
+	    /* look up the string for this unit/group */
+	    sval = series_table_get_string(gst, dset->Z[vg][s]);
+	    if (sval != NULL) {
+		strncat(gset->varname[i+1], sval, VNAMELEN-1);
+	    } else {
+		sprintf(gset->varname[i+1], "group %d", u0+i+1);
+	    }
 	} else if (panel_labels) {
 	    if (use > 0) {
 		strncat(gset->varname[i+1], dset->S[s], use);
@@ -7051,7 +7057,7 @@ static int panel_overlay_ts_plot (const int vnum,
 		strcpy(gset->varname[i+1], dset->S[s]);
 	    }
 	} else {
-	    sprintf(gset->varname[i+1], "%d", u0+i+1);
+	    sprintf(gset->varname[i+1], "group %d", u0+i+1);
 	}
 	for (t=0; t<T; t++) {
 	    gset->Z[i+1][t] = dset->Z[vnum][s++];
