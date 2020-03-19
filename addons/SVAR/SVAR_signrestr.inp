@@ -573,7 +573,7 @@ function scalar SRgetix(const bundle mod,
     # loss: how to evaluate deviations from the target; 
     #      possible values: "abs", "quad" (default), ...
 
-	## implement defaults and error checks:
+    ## implement defaults and error checks:
     if !exists(loss)
         string loss = "quad"
     elif loss != "abs" && loss != "quad"
@@ -597,11 +597,11 @@ function scalar SRgetix(const bundle mod,
     matrix center = !disttarg ? mod.SRirfmeans : mod.SRirfmeds
     # pick the right position in the matrix:
     k = (s_ix - 1) * nelem(mod.Ynames) + v_ix 
-	center = center[,k]
+    center = center[,k]
 
     best = $huge
-	bestdraw = 0
-	loop i = 1..mod.SRacc -q
+    bestdraw = 0
+    loop i = 1..mod.SRacc -q
         matrix IRFvec = drill(mod.acc_draws[i].irfs, v_ix, s_ix)
         matrix distance = (IRFvec - center)[startix : finix] 
         if loss == "abs"
@@ -615,7 +615,7 @@ function scalar SRgetix(const bundle mod,
         endif
     endloop
 
-	if !bestdraw
+    if !bestdraw
         funcerr "shouldn't happen"
     endif
     return bestdraw
