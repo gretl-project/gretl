@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "gretl_string_table.h"
 #include "version.h"
 
 /* for binary file ops */
@@ -47,6 +48,8 @@ enum {
 
 /* subtract this from epoch day to get Stata date */
 #define STATA_DAY_OFFSET 715523
+
+#define dta_113_string_type(t) (t > 0 && t < 245)
 
 typedef struct dta_113_hdr dta_hdr;
 typedef struct dta_113_value_label_table vltable;
@@ -88,7 +91,7 @@ static void dta_value_labels_write (FILE *fp, const DATASET *dset,
     int len, maxlen = 0;
     int i, ns;
 
-    S = series_get_string_vals(dset, v, &ns, 1);
+    S = series_get_string_vals(dset, v, &ns, 0);
 
     for (i=0; i<ns; i++) {
 	len = strlen(S[i]);
@@ -166,6 +169,20 @@ static void asciify_to_length (char *targ, const char *src, int len)
     }
 }
 
+static int write_stata_strval (const DATASET *dset, int v, int t,
+			       guint8 len, FILE *fp)
+{
+    char buf[244] = {0};
+    const char *s;
+
+    s = series_get_string_for_obs(dset, v, t);
+    if (s != NULL) {
+	asciify_to_length(buf, s, len);
+    }
+
+    return fwrite(buf, 1, len, fp);
+}
+
 /* Note: see https://www.stata.com/help.cgi?dta_113 for detail
    on the dta_113 format. Also see
    https://www.loc.gov/preservation/digital/formats/fdd/fdd000471.shtml
@@ -232,11 +249,37 @@ static int x_isint (int t1, int t2, const double *x)
     return ret;
 }
 
+static int get_string_type (const DATASET *dset, int v)
+{
+    series_table *st = series_get_string_table(dset, v);
+    int ret = 0;
+
+    if (st != NULL) {
+	int i, ni, ns;
+	char **S = series_table_get_strings(st, &ns);
+
+	for (i=0; i<ns; i++) {
+	    ni = strlen(S[i]);
+	    if (ni > ret) {
+		ret = ni;
+	    }
+	}
+	if (ret > 244) {
+	    ret = 244;
+	} else if (ret < 244) {
+	    ret++;
+	}
+    }
+
+    return ret;
+}
+
 static guint8 *make_types_array (const DATASET *dset,
 				 const int *list,
+				 int use_strtypes,
 				 int *nvars)
 {
-    guint8 *t;
+    guint8 st, *t;
 
     if (list != NULL) {
 	*nvars = list[0];
@@ -244,7 +287,7 @@ static guint8 *make_types_array (const DATASET *dset,
 	*nvars = dset->v - 1;
     }
 
-    t = malloc(*nvars);
+    t = calloc(*nvars, 1);
 
     if (t != NULL) {
 	const double *x;
@@ -253,23 +296,31 @@ static guint8 *make_types_array (const DATASET *dset,
 
 	for (i=1; i<dset->v; i++) {
 	    if (include_var(list, i)) {
-		x = dset->Z[i];
-		n_ok = gretl_minmax(dset->t1, dset->t2, x, &xmin, &xmax);
-		if (n_ok == 0) {
-		    /* all missing, hmm */
-		    t[j] = STATA_BYTE;
-		} else if (gretl_isdummy(dset->t1, dset->t2, x)) {
-		    t[j] = STATA_BYTE;
-		} else if (x_isint(dset->t1, dset->t2, x)) {
-		    if (xmin > -10000 && xmax < 10000) {
-			t[j] = STATA_INT;
-		    } else if (xmin > -200000000 && xmax < 200000000) {
-			t[j] = STATA_LONG;
+		if (use_strtypes && is_string_valued(dset, i)) {
+		    st = get_string_type(dset, i);
+		    if (st > 0) {
+			t[j] = st;
+		    }
+		}
+		if (t[j] == 0) {
+		    x = dset->Z[i];
+		    n_ok = gretl_minmax(dset->t1, dset->t2, x, &xmin, &xmax);
+		    if (n_ok == 0) {
+			/* all missing, hmm */
+			t[j] = STATA_BYTE;
+		    } else if (gretl_isdummy(dset->t1, dset->t2, x)) {
+			t[j] = STATA_BYTE;
+		    } else if (x_isint(dset->t1, dset->t2, x)) {
+			if (xmin > -10000 && xmax < 10000) {
+			    t[j] = STATA_INT;
+			} else if (xmin > -200000000 && xmax < 200000000) {
+			    t[j] = STATA_LONG;
+			} else {
+			    t[j] = STATA_DOUBLE;
+			}
 		    } else {
 			t[j] = STATA_DOUBLE;
 		    }
-		} else {
-		    t[j] = STATA_DOUBLE;
 		}
 		j++;
 	    }
@@ -376,6 +427,7 @@ int stata_export (const char *fname,
     char timevar[16];
     ssize_t w = 0;
     guint8 *types;
+    int use_strtypes;
     double xit;
     gint32 i32, t32 = 0;
     gint16 i16;
@@ -383,16 +435,19 @@ int stata_export (const char *fname,
     int missing;
     int add_time = 0;
     int i, j, t;
-    int strvars = 0;
+    int labeled = 0;
     int nv = 0;
     int err = 0;
+
+    /* experiment */
+    use_strtypes = 1;
 
     fp = gretl_fopen(fname, "wb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
-    types = make_types_array(dset, list, &nv);
+    types = make_types_array(dset, list, use_strtypes, &nv);
     if (types == NULL) {
 	fclose(fp);
 	return E_ALLOC;
@@ -460,7 +515,9 @@ int stata_export (const char *fname,
     }
     for (j=0; j<nv; j++) {
 	memset(buf, 0, 12);
-	if (types[j] == STATA_BYTE || types[j] == STATA_INT) {
+	if (dta_113_string_type(types[j])) {
+	    ; // sprintf(buf, "%%%ds", types[j]);
+	} else if (types[j] == STATA_BYTE || types[j] == STATA_INT) {
 	    strcpy(buf, "%8.0g");
 	} else if (types[j] == STATA_LONG) {
 	    strcpy(buf, "%12.0g");
@@ -468,6 +525,7 @@ int stata_export (const char *fname,
 	    strcpy(buf, "%9.0g");
 	}
 	w += fwrite(buf, 1, 12, fp);
+	fprintf(stderr, "wrote format %d, '%s'\n", j+1, buf);
     }
 
     /* lbllist */
@@ -478,9 +536,9 @@ int stata_export (const char *fname,
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    memset(buf, 0, 33);
-	    if (is_string_valued(dset, i)) {
+	    if (!use_strtypes && is_string_valued(dset, i)) {
 		sprintf(buf, "S%d", i);
-		strvars++;
+		labeled++;
 	    }
 	    w += fwrite(buf, 1, 33, fp);
 	}
@@ -524,7 +582,9 @@ int stata_export (const char *fname,
 	    if (include_var(list, i)) {
 		xit = dset->Z[i][t];
 		missing = na(xit);
-		if (types[j] == STATA_BYTE) {
+		if (dta_113_string_type(types[j])) {
+		    w += write_stata_strval(dset, i, t, types[j], fp);
+		} else if (types[j] == STATA_BYTE) {
 		    i8 = missing ? STATA_BYTE_NA : (guint8) xit;
 		    w += fwrite(&i8, sizeof i8, 1, fp);
 		} else if (types[j] == STATA_INT) {
@@ -542,8 +602,8 @@ int stata_export (const char *fname,
 	}
     }
 
-    /* Value labels */
-    if (strvars > 0) {
+    if (labeled > 0) {
+	/* write string values as value labels */
 	for (i=1; i<dset->v; i++) {
 	    if (include_var(list, i) && is_string_valued(dset, i)) {
 		dta_value_labels_write(fp, dset, i, &w);

@@ -1,16 +1,16 @@
 /*
    Reader for Stata .dta files, versions 5.0 to 13.
 
-   Originally based on stataread.c from the GNU R "foreign" package with the 
+   Originally based on stataread.c from the GNU R "foreign" package with the
    the following header:
 
-     (c) 1999, 2000, 2001, 2002 Thomas Lumley. 
+     (c) 1999, 2000, 2001, 2002 Thomas Lumley.
      2000 Saikat DebRoy
 
-     The format of Stata files is documented under 'file formats' 
+     The format of Stata files is documented under 'file formats'
      in the Stata manual.
 
-     This code currently does not make use of the print format information in 
+     This code currently does not make use of the print format information in
      a .dta file (except for dates). It cannot handle files with 'int'
      'float' or 'double' that differ from IEEE 4-byte integer, 4-byte
      real and 8-byte real respectively: it's not clear whether such files
@@ -64,7 +64,7 @@ static int fseek64 (FILE *fp, gint64 offset, int whence)
 	return -1;
     } else {
 	long loff = offset;
-	
+
 	return fseek(fp, loff, whence);
     }
 }
@@ -296,7 +296,7 @@ static int stata_read_int32 (FILE *fp, int naok, int *err)
 }
 
 static int stata_read_signed_byte (FILE *fp, int naok, int *err)
-{ 
+{
     signed char b;
     int ret;
 
@@ -315,7 +315,7 @@ static int stata_read_signed_byte (FILE *fp, int naok, int *err)
 }
 
 static int stata_read_byte (FILE *fp, int *err)
-{ 
+{
     unsigned char u;
 
     if (fread(&u, 1, 1, fp) != 1) {
@@ -332,7 +332,7 @@ static int stata_read_short (FILE *fp, int naok, int *err)
 {
     unsigned first, second;
     int s;
-	
+
     first = stata_read_byte(fp, err);
     second = stata_read_byte(fp, err);
 
@@ -342,7 +342,7 @@ static int stata_read_short (FILE *fp, int naok, int *err)
 	s = (second << 8) | first;
     }
 
-    if (s > STATA_INT_CUT) { 
+    if (s > STATA_INT_CUT) {
 	/* ?? */
 	s -= 65536;
     }
@@ -359,7 +359,7 @@ static guint16 stata_read_uint16 (FILE *fp, int *err)
     if (fread(&u, sizeof u, 1, fp) != 1) {
 	bin_error(err, "stata_read_uint16");
 	return NA_INT;
-    }    
+    }
 
     if (swapends) {
 	if (stata_endian == G_BIG_ENDIAN) {
@@ -415,7 +415,7 @@ static void stata_read_string (FILE *fp, int nc, char *buf, int *err)
     }
 }
 
-static int 
+static int
 stata_get_version_and_namelen (unsigned char u, int *vnamelen)
 {
     int err = 0;
@@ -436,22 +436,22 @@ stata_get_version_and_namelen (unsigned char u, int *vnamelen)
     case VERSION_7SE:
 	stata_version = 7;
 	stata_SE = 1;
-	*vnamelen = 32; 
+	*vnamelen = 32;
 	break;
     case VERSION_8:
 	stata_version = 8; /* versions >= 8 automatically use 'SE' format */
 	stata_SE = 1;
-	*vnamelen = 32; 
+	*vnamelen = 32;
 	break;
     case VERSION_10:
 	stata_version = 10;
 	stata_SE = 1;
-	*vnamelen = 32; 
+	*vnamelen = 32;
 	break;
     case VERSION_12:
 	stata_version = 12;
 	stata_SE = 1;
-	*vnamelen = 32; 
+	*vnamelen = 32;
 	break;
     default:
         err = 1;
@@ -489,7 +489,7 @@ static int stata_get_endianness (FILE *fp, int *err)
 #define stata_type_string(t) ((stata_SE && t <= 244) ||			\
 			      (stata_OLD && t >= STATA_STRINGOFFSET))
 
-static int check_old_variable_types (FILE *fp, int *types, 
+static int check_old_variable_types (FILE *fp, int *types,
 				     int nvar, int *nsv,
 				     PRN *prn)
 {
@@ -510,7 +510,7 @@ static int check_old_variable_types (FILE *fp, int *types,
 	} else if (stata_type_byte(u)) {
 	    pprintf(prn, "variable %d: byte type\n", i+1);
 	} else if (stata_type_string(u)) {
-	    pprintf(prn, "variable %d: string type\n", i+1);
+	    pprintf(prn, "variable %d: string type (%d)\n", i+1, (int) u);
 	    *nsv += 1;
 	} else {
 	    pputs(prn, _("unknown data type"));
@@ -522,7 +522,7 @@ static int check_old_variable_types (FILE *fp, int *types,
     return err;
 }
 
-static int check_new_variable_types (FILE *fp, int *types, 
+static int check_new_variable_types (FILE *fp, int *types,
 				     int nvar, int *nsv,
 				     PRN *prn)
 {
@@ -581,7 +581,7 @@ dta_make_string_table (int *types, int nvar, int ncols)
 		types[i] == STATA_13_STRL) {
 		list[j++] = i + 1;
 	    }
-	}	
+	}
     } else {
 	for (i=0; i<nvar && j<=list[0]; i++) {
 	    if (!stata_type_float(types[i]) &&
@@ -596,7 +596,7 @@ dta_make_string_table (int *types, int nvar, int ncols)
 
 #if STRDEBUG
     printlist(list, "dta_make_string_table");
-#endif    
+#endif
 
     st = gretl_string_table_new(list);
 
@@ -625,7 +625,7 @@ static gchar *recode_stata_string (const char *s)
 
 #if STRDEBUG
     fprintf(stderr, "recode_stata_string: '%s' ->\n '%s'\n", s, tr);
-#endif     
+#endif
 
     return tr;
 }
@@ -657,9 +657,9 @@ save_dataset_info (DATASET *dinfo, const char *label, const char *stamp)
 	if (tr != NULL) {
 	    strcat(dinfo->descrip, tr);
 	    strcat(dinfo->descrip, "\n");
-	} 
+	}
 	strcat(dinfo->descrip, stamp);
-    } 
+    }
 
     g_free(tr);
 }
@@ -678,7 +678,7 @@ static int try_fix_varname (char *name)
 	strncat(test, name, VNAMELEN - 2);
 	strcat(test, "1");
     }
-    
+
     err = check_varname(test);
     if (!err) {
 	fprintf(stderr, "Warning: illegal name '%s' changed to '%s'\n",
@@ -714,7 +714,7 @@ static int stata_daily_pd (DATASET *dset, int tv, int *complete)
        but also check for possible weekly, monthly
        or quarterly daily deltas
     */
-    
+
     for (t=1; t<T; t++) {
 	delta = (int) d[t] - (int) d[t-1];
 	if (delta <= 0) {
@@ -746,8 +746,8 @@ static int stata_daily_pd (DATASET *dset, int tv, int *complete)
 	    *complete = 1;
 	} else {
 	    /* heuristic for 5- or 6-day daily data: "most" of
-	       the deltas should be 1 day 
-	    */ 
+	       the deltas should be 1 day
+	    */
 	    if (dfreq[0] / (double) T > 0.6) {
 		if (dfreq[1] > dfreq[2]) {
 		    /* skipping one day per week, in general? */
@@ -775,7 +775,7 @@ static int stata_daily_pd (DATASET *dset, int tv, int *complete)
 	    sprintf(dset->stobs, "%d:%02d", yr, mo);
 	} else if (pd == 4) {
 	    int q = mo < 4 ? 1 : mo < 7 ? 2 : mo < 10 ? 3 : 4;
-	    
+
 	    sprintf(dset->stobs, "%d:%d", yr, q);
 	}
     }
@@ -826,18 +826,18 @@ static int set_time_info (DATASET *dset, int tv, int pd)
     if (pd == 12) {
 	int y = (t1 / 12) + 1960;
 	int m = t1 % 12 + 1;
-	
+
 	sprintf(dset->stobs, "%d:%02d", y, m);
     } else if (pd == 4) {
 	int y = (t1 / 4) + 1960;
 	int q = t1 % 4 + 1;
-	
+
 	sprintf(dset->stobs, "%d:%d", y, q);
     } else if (pd == 5) {
 	/* daily dates present, but may not really be daily */
 	int complete = 0;
 	int err = 0;
-	
+
 	pd = stata_daily_pd(dset, tv, &complete);
 
 	if (pd == 12 || pd == 4) {
@@ -863,7 +863,7 @@ static int set_time_info (DATASET *dset, int tv, int pd)
 	}
     } else {
 	int y = t1 + 1960;
-	
+
 	if (y > 2050) {
 	    ; /* Can't really be a starting year? */
 	} else {
@@ -901,7 +901,7 @@ static int dta_value_labels_setup (PRN **pprn, gretl_string_table **pst)
 
 #if STRDEBUG
     fprintf(stderr, "dta_value_labels_setup: err = %d\n", err);
-#endif    
+#endif
 
     return err;
 }
@@ -920,7 +920,7 @@ static int push_label_info (int **pv, char ***pS, int v, const char *lname)
     return err;
 }
 
-static int label_array_header (const int *list, char **names, 
+static int label_array_header (const int *list, char **names,
 			       const char *lname, const DATASET *dset,
 			       PRN *prn)
 {
@@ -938,7 +938,7 @@ static int label_array_header (const int *list, char **names,
     }
 
     if (n == 1) {
-	pprintf(prn, "\nValue -> label mappings for variable %d (%s)\n", 
+	pprintf(prn, "\nValue -> label mappings for variable %d (%s)\n",
 		v, dset->varname[v]);
     } else {
 	pprintf(prn, "\nValue -> label mappings for the following %d variables\n", n);
@@ -974,15 +974,15 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
 {
     PRN *st_prn;
     double *level = NULL;
-    char *txt = NULL; 
+    char *txt = NULL;
     int *off = NULL;
     char buf[130];
     int nlabels, totlen;
     int i, err = 0;
-    
+
     if (stata_13) {
 	int llen = stata_read_int32(fp, 0, &err);
-	
+
 	pprintf(vprn, "labels %d: value_label_table = %d bytes\n", j, llen);
     }
 
@@ -1003,7 +1003,7 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
     if (!err && *pst_prn == NULL) {
 	err = dta_value_labels_setup(pst_prn, pst);
     }
-    
+
     if (err) {
 	return err;
     }
@@ -1045,7 +1045,7 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
 
     for (i=0; i<nlabels && !err; i++) {
 	const char *vlabel = txt + off[i];
-	
+
 	pprintf(vprn, " label %d = '%s'\n", i, vlabel);
 	if (g_utf8_validate(vlabel, -1, NULL)) {
 	    pprintf(st_prn, "%10g -> '%s'\n", level[i], vlabel);
@@ -1072,7 +1072,7 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 				  DATASET *dset, int v, PRN *vprn)
 {
     int err = 0;
-    
+
     stata_read_string(fp, namelen + 1, buf, &err);
 
     if (!err) {
@@ -1097,7 +1097,7 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
 	    }
 	}
     }
-    
+
     if (!err) {
 	strncat(dset->varname[v], buf, VNAMELEN - 1);
     }
@@ -1136,9 +1136,9 @@ static int process_stata_varlabel (char *label, DATASET *dset,
 				   int v, PRN *vprn)
 {
     int err = 0;
-    
+
     pprintf(vprn, "variable %d: label = '%s'\n", v, label);
-    
+
     if (g_utf8_validate(label, -1, NULL)) {
 	if (stata_version > 13) {
 	    gretl_utf8_truncate_b(label, MAXLABEL-1);
@@ -1169,7 +1169,7 @@ static int stata_read_buffer (char *buf, int bufsize,
 {
     int n = bufsize - 1;
     int err = 0;
-    
+
     *buf = '\0';
 
     if (len > n) {
@@ -1182,7 +1182,7 @@ static int stata_read_buffer (char *buf, int bufsize,
 	    while (!g_utf8_validate(buf, -1, NULL)) {
 		buf[pos--] = '\0';
 	    }
-	}	
+	}
 	err = stata_seek(fp, len - n, SEEK_CUR);
     } else {
 	stata_read_string(fp, len, buf, &err);
@@ -1208,7 +1208,7 @@ static void process_string_value (char *buf, gretl_string_table *st,
     fprintf(stderr, "process_string_value: v=%d, t=%d, st=%p, buf='%s'\n",
 	    v, t, (void *) st, buf);
 #endif
-    
+
     if (st != NULL && strcmp(buf, ".")) {
 	int ix = 0;
 
@@ -1222,27 +1222,27 @@ static void process_string_value (char *buf, gretl_string_table *st,
 		g_free(tr);
 	    }
 	}
-	
+
 	if (ix > 0) {
 	    dset->Z[v][t] = ix;
 	    if (t == 0) {
 		series_set_discrete(dset, v, 1);
 	    }
-	}	
+	}
     }
 }
 
 static void maybe_fix_varlabel_pos (FILE *fp, dta_table *dtab)
 {
     /* we're at the end of value_label_names: maybe we have
-       variable labels up next? 
+       variable labels up next?
     */
     char test[32];
     int err = 0;
 
     stata_read_string(fp, 20, test, &err);
     test[20] = '\0';
-    
+
     if (!strcmp(test, "</value_label_names>")) {
 	/* so far so good */
 	stata_read_string(fp, 17, test, &err);
@@ -1291,7 +1291,7 @@ static int find_strl_value (char *buf, int bufsize,
 		    }
 		    break;
 		}
-	    }		
+	    }
 	}
     }
 
@@ -1303,7 +1303,7 @@ static int get_strl_data (char *buf, int bufsize,
 {
     char vobytes[8];
     int err = 0;
-    
+
     *buf = *vobytes = '\0';
     stata_read_string(fp, 8, vobytes, &err);
 
@@ -1312,13 +1312,13 @@ static int get_strl_data (char *buf, int bufsize,
 	guint16 v;
 #if WORDS_BIGENDIAN
 	char *targ = (char *) &o + 2;
-#else	
+#else
 	char *targ = (char *) &o;
 #endif
 
 	memcpy(&v, vobytes, 2);
 	memcpy(targ, vobytes + 2, 6);
-	
+
 	if (o > INT_MAX) {
 	    fprintf(stderr, "strL: obs reference too big!\n");
 	    err = E_DATA;
@@ -1334,7 +1334,7 @@ static int get_strl_data (char *buf, int bufsize,
 	    if (!err) {
 		/* get back in position */
 		err = stata_seek(fp, thispos, SEEK_SET);
-	    }	    
+	    }
 	}
     }
 
@@ -1360,7 +1360,7 @@ static void set_discreteness_from_types (DATASET *dset,
 	    if (!stata_type_float(t) && !stata_type_double(t) &&
 		!stata_type_long(t)) {
 		discrete = 1;
-	    }	    
+	    }
 	}
 	if (discrete) {
 	    series_set_discrete(dset, i, 1);
@@ -1371,7 +1371,7 @@ static void set_discreteness_from_types (DATASET *dset,
 /* main reader for dta format 117+ */
 
 static int read_dta_117_data (FILE *fp, DATASET *dset,
-			      gretl_string_table **pst, 
+			      gretl_string_table **pst,
 			      dta_table *dtab, PRN *prn,
 			      PRN *vprn)
 {
@@ -1379,7 +1379,8 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     int namelen = 32;
     int fmtlen = 49;
     int vlabellen = 81;
-    int nvar = dset->v - 1, nsv = 0;
+    int nvar = dset->v - 1;
+    int nsv = 0;
     int pd = 0, tvar = -1;
     char label[321]; /* dataset label */
     char aname[129]; /* variable names */
@@ -1429,9 +1430,9 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     if (*label != '\0') {
 	save_dataset_info(dset, label, c60);
     }
-  
+
     /** read variable descriptors **/
-    
+
     /* types */
 
     types = malloc(nvar * sizeof *types);
@@ -1444,7 +1445,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     if (!err) {
 	err = check_new_variable_types(fp, types, nvar, &nsv, vprn);
     }
-    
+
     if (err) {
 	free(types);
 	return err;
@@ -1481,8 +1482,8 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 
     err = stata_seek(fp, dtab->vallblnam_pos, SEEK_SET);
 
-    /* value-label names: the _names of label formats, 
-       which are themselves stored later in the file 
+    /* value-label names: the _names of label formats,
+       which are themselves stored later in the file
     */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
@@ -1511,7 +1512,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     if (err) {
 	free(types);
 	return err;
-    }    
+    }
 
     err = stata_seek(fp, dtab->data_pos, SEEK_SET);
 
@@ -1521,7 +1522,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 	    int ix, v = i + 1;
 	    int typ = types[i];
 
-	    dset->Z[v][t] = NADBL; 
+	    dset->Z[v][t] = NADBL;
 
 	    if (typ == STATA_13_FLOAT) {
 		dset->Z[v][t] = stata_read_float(fp, &err);
@@ -1541,13 +1542,13 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 		err = stata_read_buffer(buf, sizeof buf, typ, fp);
 		if (!err && *buf != '\0') {
 		    process_string_value(buf, *pst, dset, v, t, prn);
-		}		
+		}
 	    } else if (typ == STATA_13_STRL) {
 		/* arbitrarily long string! */
 		err = get_strl_data(buf, sizeof buf, dtab, fp);
 		if (!err && *buf != '\0') {
 		    process_string_value(buf, *pst, dset, v, t, prn);
-		}		
+		}
 	    }
 	}
     }
@@ -1564,7 +1565,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 
     if (!err && !st_err && lvars != NULL) {
 	PRN *st_prn = NULL;
-	
+
 	for (j=0; j<nvar && !st_err; j++) {
 	    /* check for closing "</value_labels>" */
 	    char test[16] = {0};
@@ -1612,14 +1613,15 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
 
 /* main reader for dta format <= 115 */
 
-static int read_dta_data (FILE *fp, DATASET *dset,
-			  gretl_string_table **pst, 
-			  int namelen, PRN *prn,
-			  PRN *vprn)
+static int read_old_dta_data (FILE *fp, DATASET *dset,
+			      gretl_string_table **pst,
+			      int namelen, PRN *prn,
+			      PRN *vprn)
 {
     int i, j, t, clen;
     int labellen, fmtlen;
-    int nvar = dset->v - 1, nsv = 0;
+    int nvar = dset->v - 1;
+    int nsv = 0;
     int soffset, pd = 0, tvar = -1;
     char label[81], c50[50], aname[33];
     int *types = NULL;
@@ -1640,15 +1642,15 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     pprintf(vprn, "dataset label: '%s'\n", label);
 
     /* timestamp: fixed length, NUL-terminated */
-    stata_read_string(fp, 18, c50, &err);  
+    stata_read_string(fp, 18, c50, &err);
     pprintf(vprn, "timestamp: '%s'\n", c50);
 
     if (*label != '\0' || *c50 != '\0') {
 	save_dataset_info(dset, label, c50);
     }
-  
+
     /** read variable descriptors **/
-    
+
     /* types */
 
     types = malloc(nvar * sizeof *types);
@@ -1677,17 +1679,17 @@ static int read_dta_data (FILE *fp, DATASET *dset,
     for (i=0; i<2*(nvar+1) && !err; i++) {
         stata_read_byte(fp, &err);
     }
-    
+
     /* format list (use it to extract time-series info?) */
     for (i=0; i<nvar && !err; i++){
         stata_read_string(fp, fmtlen, c50, &err);
-	if (!err && !stata_type_string(types[i])) {
+	if (!err) {
 	    process_stata_format(c50, i+1, &pd, &tvar, vprn);
 	}
     }
 
-    /* value-label names: the names of label formats, 
-       which are themselves stored later in the file 
+    /* value-label names: the names of label formats,
+       which are themselves stored later in the file
     */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
@@ -1702,7 +1704,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	stata_read_string(fp, labellen, label, &err);
 	if (*label != '\0') {
 	    process_stata_varlabel(label, dset, i+1, vprn);
-	}	
+	}
     }
 
     /* variable 'characteristics': not handled */
@@ -1736,7 +1738,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	for (i=0; i<nvar && !err; i++) {
 	    int ix, v = i + 1;
 
-	    dset->Z[v][t] = NADBL; 
+	    dset->Z[v][t] = NADBL;
 
 	    if (stata_type_float(types[i])) {
 		dset->Z[v][t] = stata_read_float(fp, &err);
@@ -1754,14 +1756,17 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 	    } else {
 		/* a string variable */
 		clen = types[i] - soffset;
+#if STRDEBUG > 1
+		fprintf(stderr, "string: clen = %d\n", clen);
+#endif
 		if (clen > 255) {
 		    /* release <= 115: the max is supposed to be 244 */
 		    clen = 255;
-		} 
+		}
 		stata_read_string(fp, clen, strbuf, &err);
 		strbuf[clen] = '\0';
-#if 0
-		fprintf(stderr, "Z[%d][%d] = '%s'\n", v, t, strbuf);
+#if STRDEBUG > 1
+		fprintf(stderr, "Z[%d][%d] -> '%s'\n", v, t, strbuf);
 #endif
 		if (!err && *strbuf != '\0') {
 		    process_string_value(strbuf, *pst, dset, v, t, prn);
@@ -1778,20 +1783,18 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 
     if (!err && !st_err && lvars != NULL && stata_version > 5) {
 	PRN *st_prn = NULL;
-	
+
 	for (j=0; j<nvar; j++) {
 	    /* first int not needed, use fread directly to trigger EOF */
 	    size_t k = fread((int *) aname, sizeof(int), 1, fp);
-	    
+
 	    if (k == 0 || feof(fp)) {
 		pprintf(vprn, "breaking on feof\n");
 		break;
 	    }
-
 	    st_err = process_value_labels(fp, dset, j, lvars, lnames,
 					  namelen, pst, &st_prn, vprn);
 	}
-
 	if (st_prn != NULL) {
 	    if (!st_err) {
 		gretl_string_table_add_extra(*pst, st_prn);
@@ -1802,7 +1805,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
 
     if (!err) {
 	set_discreteness_from_types(dset, types, 0);
-    }    
+    }
 
     free(types);
 
@@ -1841,7 +1844,7 @@ static int dtab_save_offset (dta_table *dtab, int i, goffset offset)
 
 	return err;
     }
-		
+
     if (i == 2) {
 	dtab->vtype_pos = offset + strlen("<variable_types>");
     } else if (i == 3) {
@@ -1872,7 +1875,7 @@ static int stata_get_nobs (FILE *fp, int *err)
 
     /* current gretl can't handle more than INT_MAX
        observations */
-    
+
     if (!*err && N > INT_MAX) {
 	*err = E_DATA;
     }
@@ -1880,7 +1883,7 @@ static int stata_get_nobs (FILE *fp, int *err)
     if (!*err) {
 	n = (int) N;
     }
-    
+
     return n;
 }
 
@@ -1942,7 +1945,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 
 #if HDR_DEBUG
     fprintf(stderr, "header step 1: err = %d\n", err);
-#endif    
+#endif
 
     if (!err) {
 	/* skip "</K><N>" */
@@ -1959,7 +1962,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 
 #if HDR_DEBUG
     fprintf(stderr, "header step 2: err = %d\n", err);
-#endif     
+#endif
 
     if (!err) {
 	/* skip "</N><label>" */
@@ -1982,7 +1985,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 
 #if HDR_DEBUG
     fprintf(stderr, "header step 3: err = %d\n", err);
-#endif      
+#endif
 
     if (!err) {
 	/* skip "</label><timestamp>" */
@@ -2000,7 +2003,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 
 #if HDR_DEBUG
     fprintf(stderr, "header step 4: err = %d\n", err);
-#endif     
+#endif
 
     if (!err) {
 	/* skip "</timestamp></header>" */
@@ -2028,7 +2031,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 
 #if HDR_DEBUG
     fprintf(stderr, "header step 5: err = %d\n", err);
-#endif     
+#endif
 
     if (!err && (dtab->nvar <= 0 || dtab->nobs < 0)) {
 	err = 1;
@@ -2037,21 +2040,21 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 #if HDR_DEBUG
     fprintf(stderr, "header step 6: err = %d (nvar = %d, nobs = %d)\n",
 	    err, dtab->nvar, dtab->nobs);
-#endif     
+#endif
 
     if (!err) {
 	stata_version = (dtab->version == 117)? 13 : 14;
 	stata_13 = 1;
     }
-    
+
     return err;
 }
 
 /* for dta versions < 117 */
 
-static int parse_dta_header (FILE *fp, int *namelen,
-			     int *nvar, int *nobs,
-			     PRN *prn, PRN *vprn)
+static int parse_old_dta_header (FILE *fp, int *namelen,
+				 int *nvar, int *nobs,
+				 PRN *prn, PRN *vprn)
 {
     unsigned char u;
     int err = 0;
@@ -2065,7 +2068,7 @@ static int parse_dta_header (FILE *fp, int *namelen,
     if (err) {
 	fputs("not a Stata version 5-12 .dta file\n", stderr);
 	return err;
-    } 
+    }
 
     pprintf(prn, "Stata file version %d\n", stata_version);
 
@@ -2127,7 +2130,7 @@ int dta_get_data (const char *fname, DATASET *dset,
 
     if (opt & OPT_Q) {
 	vprn = NULL;
-    }    
+    }
 
     if (new_style_dta_file(fp)) {
 	dtab = dta_table_new(&err);
@@ -2139,9 +2142,9 @@ int dta_get_data (const char *fname, DATASET *dset,
 	    nobs = dtab->nobs;
 	}
     } else {
-	err = parse_dta_header(fp, &namelen, &nvar, &nobs, prn, vprn);
+	err = parse_old_dta_header(fp, &namelen, &nvar, &nobs, prn, vprn);
     }
-    
+
     if (err) {
 	if (err != E_ALLOC && err != E_NOTYET) {
 	    pputs(prn, _("This file does not seem to be a valid Stata data file"));
@@ -2152,12 +2155,12 @@ int dta_get_data (const char *fname, DATASET *dset,
     }
 
     if (vprn != NULL) {
-	pprintf(vprn, "endianness: %s\n", (stata_endian == G_BIG_ENDIAN)? 
+	pprintf(vprn, "endianness: %s\n", (stata_endian == G_BIG_ENDIAN)?
 		"big" : "little");
 	pprintf(vprn, "number of variables = %d\n", nvar);
 	pprintf(vprn, "number of observations = %d\n", nobs);
 	pprintf(vprn, "length of varnames = %d\n", namelen);
-    }    
+    }
 
     newset = datainfo_new();
     if (newset == NULL) {
@@ -2186,17 +2189,17 @@ int dta_get_data (const char *fname, DATASET *dset,
 	    err = read_dta_117_data(fp, newset, &st, dtab, prn, vprn);
 	}
     } else {
-	err = read_dta_data(fp, newset, &st, namelen, prn, vprn);
+	err = read_old_dta_data(fp, newset, &st, namelen, prn, vprn);
     }
 
     if (err) {
 	destroy_dataset(newset);
 	if (st != NULL) {
 	    gretl_string_table_destroy(st);
-	}	
+	}
     } else {
 	int merge = (dset->Z != NULL);
-	
+
 	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
@@ -2207,7 +2210,7 @@ int dta_get_data (const char *fname, DATASET *dset,
 	}
 
 	err = merge_or_replace_data(dset, &newset, get_merge_opts(opt), prn);
-    
+
 	if (!err && !merge) {
 	    dataset_add_import_info(dset, fname, GRETL_DTA);
 	}
@@ -2217,4 +2220,4 @@ int dta_get_data (const char *fname, DATASET *dset,
     free(dtab);
 
     return err;
-}  
+}
