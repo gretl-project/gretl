@@ -8,6 +8,8 @@ version 2020b, in progress
 - functions called via "if": show any printed output
 - funcerr(): revise signature to boolean, optional string
   (see the updated help)
+- "dataset addobs": add --panel-time option to extend a
+  panel dataset in the time dimension
 
 2020-03-05 version 2020a
 - Verbose output for numerical optimization: make the
