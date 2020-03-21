@@ -142,7 +142,7 @@ static const char *sql_status (SQLRETURN ret)
 
 static SQLHDBC
 gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
-			   int *err)
+			   PRN *prn, int *err)
 {
     SQLHENV OD_env = NULL;    /* ODBC environment handle */
     SQLHDBC dbc = NULL;       /* connection handle */
@@ -191,9 +191,11 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
 	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status,
 		      &OD_err, msg, 512, &mlen);
 	gretl_errmsg_set((char *) msg);
-	fprintf(stderr, " odinfo->dsn = '%s'\n", odinfo->dsn);
-	fprintf(stderr, " odinfo->username = '%s'\n", odinfo->username);
+	pprintf(prn, " odinfo->dsn = '%s'\n", odinfo->dsn);
+	pprintf(prn, " odinfo->username = '%s'\n", odinfo->username);
 	*err = 1;
+    } else if (prn != NULL) {
+	pprintf(prn, "SQLConnect(dbc,...): %s\n", sql_status(ret));
     }
 
  bailout:
@@ -203,14 +205,14 @@ gretl_odbc_connect_to_dsn (ODBC_info *odinfo, SQLHENV *penv,
 	   are not really wanted */
 	if (dbc != NULL) {
 	    ret = SQLDisconnect(dbc);
-	    fprintf(stderr, "SQLDisconnect(dbc): %s\n", sql_status(ret));
+	    pprintf(prn, "SQLDisconnect(dbc): %s\n", sql_status(ret));
 	    ret = SQLFreeHandle(SQL_HANDLE_DBC, dbc);
-	    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_DBC, dbc): %s\n", sql_status(ret));
+	    pprintf(prn, "SQLFreeHandle(SQL_HANDLE_DBC, dbc): %s\n", sql_status(ret));
 	    dbc = NULL;
 	}
 	if (OD_env != NULL) {
 	    ret = SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
-	    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_ENV, OD_env): %s\n", sql_status(ret));
+	    pprintf(prn, "SQLFreeHandle(SQL_HANDLE_ENV, OD_env): %s\n", sql_status(ret));
 	}
     } else {
 	*penv = OD_env;
@@ -223,7 +225,7 @@ int gretl_odbc_check_dsn (ODBC_info *odinfo)
 {
     int err = 0;
 
-    gretl_odbc_connect_to_dsn(odinfo, NULL, &err);
+    gretl_odbc_connect_to_dsn(odinfo, NULL, NULL, &err);
 
     return err;
 }
@@ -244,17 +246,16 @@ static double strval_to_double (ODBC_info *odinfo, const char *s,
     }
 }
 
-#define ODBC_DEBUG 0
-
 static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 			   int totcols, SQLLEN *colbytes,
 			   long *grabint, double *grabx,
 			   char **grabstr, double *xt,
 			   int *nrows, int *obsgot,
-			   char **strvals)
+			   char **strvals, PRN *prn)
 {
     char obsbit[OBSLEN];
     SQLRETURN ret;
+    int verbose = (prn != NULL);
     int i, j, k, p, v;
     int t = 0, err = 0;
 
@@ -262,25 +263,25 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 
     while (ret == SQL_SUCCESS && !err) {
 	j = k = p = v = 0;
-#if ODBC_DEBUG
-	fprintf(stderr, "Fetch, row %d: ", t);
-#endif
+	if (verbose) {
+	    pprintf(prn, "Fetch, row %d: ", t);
+	}
 	for (i=0; i<totcols && !err; i++) {
-#if ODBC_DEBUG
-	    fprintf(stderr, "col %d: ", i);
-#endif
+	    if (verbose) {
+		pprintf(prn, "col %d: ", i);
+	    }
 	    if (i < odinfo->obscols) {
 		/* looking for obs identifier chunk(s) */
 		*obsbit = '\0';
 		if (colbytes[i] == SQL_NULL_DATA) {
-#if ODBC_DEBUG
-		    fputs("null data", stderr);
-#endif
+		    if (verbose) {
+			pputs(prn, "null data");
+		    }
 		    continue; /* error? */
 		}
-#if ODBC_DEBUG
-		fprintf(stderr, "%d bytes", (int) colbytes[i]);
-#endif
+		if (verbose) {
+		    pprintf(prn, "%d bytes", (int) colbytes[i]);
+		}
 		if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
 		    sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
 		} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING ||
@@ -296,39 +297,38 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 			strcat(odinfo->S[t], obsbit);
 		    }
 		}
-#if ODBC_DEBUG
-		if (i == odinfo->obscols - 1 && odinfo->S != NULL) {
+		if (verbose && i == odinfo->obscols - 1 && odinfo->S != NULL) {
 		    /* finished composing obs string, report it */
-		    fprintf(stderr, " (obs = '%s')", odinfo->S[t]);
+		    pprintf(prn, " (obs = '%s')", odinfo->S[t]);
 		}
-#endif
 	    } else {
 		/* now looking for actual data */
 		if (colbytes[i] == SQL_NULL_DATA) {
-		    fprintf(stderr, "no data");
+		    if (verbose) {
+			pputs(prn, "no data");
+		    }
 		    odinfo->X[v][t] = NADBL;
 		} else if (strvals != NULL && strvals[v] != NULL) {
 		    odinfo->X[v][t] = strval_to_double(odinfo, strvals[v],
 						       t+1, v+1, &err);
-#if ODBC_DEBUG
-		    fprintf(stderr, "string data value '%s' -> %g", strvals[v], odinfo->X[v][t]);
-#endif
+		    if (verbose) {
+			pprintf(prn, "string data value '%s' -> %g", strvals[v],
+				odinfo->X[v][t]);
+		    }
 		} else {
 		    odinfo->X[v][t] = xt[v];
-#if ODBC_DEBUG
-		    fprintf(stderr, "data value %g", xt[v]);
-#endif
+		    if (verbose) {
+			pprintf(prn, "data value %g", xt[v]);
+		    }
 		}
 		v++;
 	    }
-#if ODBC_DEBUG
-	    if (i < totcols-1) fputs("; ", stderr);
-#endif
+	    if (verbose && i < totcols-1) pputs(prn, "; ");
 	} /* end loop across columns */
-#if ODBC_DEBUG
-	fputc('\n', stderr);
-#endif
 
+	if (verbose) {
+	    pputc(prn, '\n');
+	}
 	t++;
 
 	/* try getting next row */
@@ -428,13 +428,24 @@ static const char *sql_datatype_name (SQLSMALLINT dt)
     return "invalid";
 }
 
+static const char *sql_nullable_name (SQLSMALLINT nv)
+{
+    if (nv == SQL_NO_NULLS) {
+	return "SQL_NO_NULLS";
+    } else if (nv == SQL_NULLABLE) {
+	return "SQL_NULLABLE";
+    } else {
+	return "invalid 'nullable' value!";
+    }
+}
+
 #define IS_SQL_STRING_TYPE(t) (t == SQL_CHAR || \
 			       t == SQL_VARCHAR || \
 			       t == SQL_WCHAR || \
 			       t == SQL_WVARCHAR)
 
 static SQLSMALLINT get_col_info (SQLHSTMT stmt, int colnum,
-				 int *len, int *err)
+				 int *len, PRN *prn, int *err)
 {
     SQLCHAR colname[128+1] = {0};
     SQLSMALLINT colname_len;
@@ -448,26 +459,28 @@ static SQLSMALLINT get_col_info (SQLHSTMT stmt, int colnum,
 			 colnum,           /* column number */
 			 colname,          /* where to put column name */
 			 sizeof(colname),  /* = 128+1 ... allow for nul */
-			 &colname_len,     /* where to put name length */
-			 &data_type,       /* where to put <data type> */
-			 &colsize,         /* where to put column size */
-			 &digits,          /* where to put scale/frac precision */
-			 &nullable);       /* where to put null/not-null flag */
+			 &colname_len,     /* location for name length */
+			 &data_type,       /* location for  <data type> */
+			 &colsize,         /* location for column size */
+			 &digits,          /* location for scale/frac precision */
+			 &nullable);       /* location for 'nullable' flag */
 
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLDescribeCol");
 	*err = E_DATA;
     } else if (len != NULL) {
-	fprintf(stderr, " col %d (%s): data_type %s, size %d, digits %d, nullable %d\n",
-		colnum, colname, sql_datatype_name(data_type), (int) colsize,
-		digits, nullable);
+	if (prn != NULL) {
+	    pprintf(prn, " col %d (%s): data_type %s, size %d, digits %d, %s\n",
+		    colnum, colname, sql_datatype_name(data_type), (int) colsize,
+		    digits, sql_nullable_name(nullable));
+	}
 	*len = (int) colsize;
     }
 
     return data_type;
 }
 
-int gretl_odbc_get_data (ODBC_info *odinfo)
+int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 {
     SQLHENV OD_env = NULL;    /* ODBC environment handle */
     SQLHDBC dbc = NULL;       /* connection handle */
@@ -488,10 +501,13 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     int totcols, nrows = 0, nstrs = 0;
     int i, j, k, p;
     int T = 0, err = 0;
+    PRN *prn;
 
     odinfo->X = NULL;
     odinfo->S = NULL;
     odinfo->nrows = 0;
+
+    prn = (opt & OPT_V)? inprn : NULL;
 
     /* columns used in composing obs identifier (if any) plus
        actual data columns */
@@ -515,7 +531,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	return err;
     }
 
-    dbc = gretl_odbc_connect_to_dsn(odinfo, &OD_env, &err);
+    dbc = gretl_odbc_connect_to_dsn(odinfo, &OD_env, prn, &err);
     if (err) {
 	free(xt);
 	free(colbytes);
@@ -556,7 +572,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     ret = SQLExecDirect(stmt, (SQLCHAR *) odinfo->query, SQL_NTS);
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLExecDirect");
-	fprintf(stderr, "failed query: '%s'\n", odinfo->query);
+	pprintf(prn, "failed query: '%s'\n", odinfo->query);
 	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, msg,
 		      100, &mlen);
 	gretl_errmsg_set((char *) msg);
@@ -571,7 +587,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	goto bailout;
     }
 
-    fprintf(stderr, "Number of columns = %d\n", (int) ncols);
+    pprintf(prn, "Number of columns = %d\n", (int) ncols);
     if (ncols != totcols) {
 	gretl_errmsg_sprintf("ODBC: expected %d columns but got %d",
 			     totcols, ncols);
@@ -586,7 +602,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     /* are we going to need a string table? */
     j = 1;
     for (i=odinfo->obscols; i<ncols && !err; i++) {
-	dt = get_col_info(stmt, i+1, NULL, &err);
+	dt = get_col_info(stmt, i+1, NULL, prn, &err);
 	if (!err && IS_SQL_STRING_TYPE(dt)) {
 	    svlist = gretl_list_append_term(&svlist, j++);
 	}
@@ -603,7 +619,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     for (i=0; i<ncols && !err; i++) {
 	int len = 0;
 
-	dt = get_col_info(stmt, i+1, &len, &err);
+	dt = get_col_info(stmt, i+1, &len, prn, &err);
 	if (!err && i >= odinfo->obscols) {
 	    /* bind data columns */
 	    colbytes[i] = 0;
@@ -612,7 +628,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 		char *sval = get_bind_target(&strvals, len, odinfo->nvars, j, &err);
 
 		if (!err) {
-		    fprintf(stderr, " binding data col %d to strvals[%d] (len = %d)\n",
+		    pprintf(prn, " binding data col %d to strvals[%d] (len = %d)\n",
 			    i+1, j, len);
 		    SQLBindCol(stmt, i+1, SQL_C_CHAR, sval, len, &colbytes[i]);
 		}
@@ -642,7 +658,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     */
 
     nrows = sqlnrows;
-    fprintf(stderr, "Number of Rows (from SQLRowCount) = %d\n", nrows);
+    pprintf(prn, "Number of rows (from SQLRowCount): %d\n", nrows);
 
     if (!err) {
 	if (nrows <= 0) {
@@ -665,7 +681,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 	/* get the actual data */
 	err = odbc_read_rows(odinfo, stmt, totcols, colbytes,
 			     grabint, grabx, grabstr, xt,
-			     &nrows, &T, strvals);
+			     &nrows, &T, strvals, prn);
     }
 
  bailout:
@@ -697,15 +713,15 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     if (stmt != NULL) {
 	ret = SQLFreeHandle(SQL_HANDLE_STMT, stmt);
-	fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_STMT): %s\n", sql_status(ret));
+	pprintf(prn, "SQLFreeHandle(SQL_HANDLE_STMT): %s\n", sql_status(ret));
     }
 
     ret = SQLDisconnect(dbc);
-    fprintf(stderr, "SQLDisconnect: %s\n", sql_status(ret));
+    pprintf(prn, "SQLDisconnect: %s\n", sql_status(ret));
     ret = SQLFreeHandle(SQL_HANDLE_DBC, dbc);
-    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_DBC): %s\n", sql_status(ret));
+    pprintf(prn, "SQLFreeHandle(SQL_HANDLE_DBC): %s\n", sql_status(ret));
     ret = SQLFreeHandle(SQL_HANDLE_ENV, OD_env);
-    fprintf(stderr, "SQLFreeHandle(SQL_HANDLE_ENV): %s\n", sql_status(ret));
+    pprintf(prn, "SQLFreeHandle(SQL_HANDLE_ENV): %s\n", sql_status(ret));
 
     return err;
 }

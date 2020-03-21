@@ -2420,9 +2420,9 @@ static int odbc_count_new_vars (char **vnames, int nv,
 /* data series [obs-format=format-string] [query=]query-string */
 
 static int odbc_get_series (const char *line, DATASET *dset,
-			    PRN *prn)
+			    gretlopt opt, PRN *prn)
 {
-    int (*get_data) (ODBC_info *);
+    int (*get_data) (ODBC_info *, gretlopt, PRN *);
     char **vnames = NULL;
     char *format = NULL;
     int err = 0;
@@ -2464,7 +2464,9 @@ static int odbc_get_series (const char *line, DATASET *dset,
     }
 
     if (!err) {
-	fprintf(stderr, "SQL query: '%s'\n", gretl_odinfo.query);
+	if (opt & OPT_V) {
+	    pprintf(prn, "SQL query: '%s'\n", gretl_odinfo.query);
+	}
 	gretl_error_clear();
 
 	get_data = get_plugin_function("gretl_odbc_get_data");
@@ -2472,7 +2474,7 @@ static int odbc_get_series (const char *line, DATASET *dset,
 	if (get_data == NULL) {
 	    err = 1;
 	} else {
-	    err = (*get_data) (&gretl_odinfo);
+	    err = (*get_data) (&gretl_odinfo, opt, prn);
 	}
     }
 
@@ -2662,7 +2664,7 @@ int db_get_series (const char *line, DATASET *dset,
     int err = 0;
 
     if (opt & OPT_O) {
-	return odbc_get_series(line, dset, prn);
+	return odbc_get_series(line, dset, opt, prn);
     }
 
     if (opt & OPT_N) {
