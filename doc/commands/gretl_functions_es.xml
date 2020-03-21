@@ -4222,24 +4222,20 @@
 
     <function name="funcerr" section="data-utils" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="string">mensaje</fnarg>
+	<fnarg type="bool">condicion</fnarg>
+	<fnarg type="string">mensaje</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Esta función solo es aplicable en el contexto de una función definida
-	  por el usuario. Implica que la ejecución de la función vigente acabe con
-	  la presentación de un mensaje condicionado a que se produzca un fallo.
+	  Esta función solo se aplica en el contexto de una función definida por
+	  el usuario. Si la <argname>condicion</argname> se valora como no nula,
+	  ello implica que la ejecución de la función vigente finalice con la
+	  presentación de un mensaje condicionado a que se produzca un fallo;
+	  entonces el argumento <argname>mensaje</argname> se presentará como
+	  parte del mensaje de fallo que se muestra al llamar a la función.
 	</para>
 	<para>
-	  Si indicas el argumento <argname>mensaje</argname> (opcional), este
-	  se va a presentar como parte del mensaje de fallo que se muestra al
-	  llamar a la función. Esto proporciona a los redactores de funciones,
-	  la oportunidad de indicar un mensaje de fallo más específico del
-	  que se podría mostrar de otro modo.
-	</para>
-	<para>
-	  El valor que se devuelve con esta función es simplemente nominal,
-	  pues al invocarla se crea inevitablemente una condición de fallo.
+	  El valor que se devuelve con esta función (1) es simplemente nominal.
 	</para>
       </description>
     </function>
@@ -5828,15 +5824,15 @@
 	</para>
 	<para>
 	  Lo que se devuelve es un 'bundle' cuya estructura básicamente
-	  refleja la de la entrada: los objetos JSON se convierten en 'bundles' de Gretl,
-	  y los 'arrays' JSON se convierten en 'arrays' de Gretl, cada uno de ellos
-	  conteniendo cadenas de texto o 'bundles'. Los nodos de <quote>valor</quote>
-	  JSON se convierten en componentes de 'bundles' o elementos de 'arrays';
-	  en el último caso, los valores numéricos se convierten en cadenas de texto
-	  utilizando <lit>sprintf</lit>. Ten en cuenta que, dado que no
-	  puedes anidar los 'arrays' de Gretl, el argumento que acepta
-	  esta función es un poco más restrictivo que la especificación JSON,
-	  pues esta admite anidar los 'arrays'.
+	  refleja la de la entrada: los objetos JSON se convierten en 'bundles'
+	  de Gretl, y los 'arrays' JSON se convierten en 'arrays' de Gretl; cada
+	  uno de ellos puede contener cadenas de texto, 'bundles' o 'arrays'.
+	  Los nodos de <quote>valor</quote> JSON se convierten en componentes
+	  de 'bundles' o elementos de 'arrays'; en el último caso, los valores
+	  numéricos se convierten en cadenas de texto utilizando <lit>sprintf</lit>.
+	  Ten en cuenta que, aunque la especificación JSON permite 'arrays' de
+	  tipo mixto, estos no se poden manejar mediante <lit>jsongetb</lit>
+	  puesto que los 'arrays' de Gretl deben ser de tipo único.
 	</para>
 	<para>
 	  Puedes usar el argumento <argname>ruta</argname> para limitar
@@ -11082,7 +11078,7 @@
           Ejemplo:
   </para>
   <code>
-          string s1 =  "Hola, Gretl!"
+          string s1 = "Hola, Gretl!"
           string s2 = strsub(s1, "Gretl", "Hansl")
           print s2
   </code>
@@ -11092,14 +11088,22 @@
     <function name="strvals" section="strings" output="strings">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg optional="true" type="bool">submuestra</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Cuando la serie <argname>y</argname> se compone de cadenas de texto que
-	  expresan valores, esta función devuelve un 'array' que contiene todos
-	  esos valores, ordenados numéricamente comenzando por el 1. Cuando
-	  <argname>y</argname> no se compone de cadenas de texto que expresan
-	  valores, se devuelve un 'array' de cadenas de texto vacías.
+	  Cuando la serie <argname>y</argname> se compone de cadenas de texto
+	  que expresan valores, esta función devuelve por defecto un 'array' que
+	  contiene todos esos valores (con independencia del rango muestral que
+	  esté vigente), ordenados numéricamente comenzando por el 1. Si está
+	  vigente una submuestra del conjunto de datos, puedes proporcionar
+	  un valor no nulo para el segundo argumento (opcional) y obtener así
+	  un 'array' que contenga solo las cadenas de texto presentes en la
+	  submuestra.
+	</para>
+	<para>
+	  Cuando <argname>y</argname> no se compone de cadenas de texto que
+	  expresan valores, se devuelve un 'array' de cadenas de texto vacías.
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
@@ -11125,17 +11129,13 @@
   <code>
           string s1 = "Hola, Gretl!"
           string s2 = substr(s1, 7, 11)
-          string s3 = substr("Hola, Gretl!", 7, 11)
           print s2
-          print s3
   </code>
   <para>
           proporciona:
   </para>
   <code>
     ? print s2
-    Gretl
-    ? print s3
     Gretl
   </code>
   <para>

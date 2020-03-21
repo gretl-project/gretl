@@ -2663,8 +2663,15 @@
         <argument>chave</argument>
 	      <argument>parámetros</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--panel-time</flag>
+	  <effect>Mira abaixo 'addobs'</effect>
+	</option>
+      </options>
       <examples>
         <example>dataset addobs 24</example>
+	<example>dataset addobs 2 --panel-time</example>
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
@@ -2691,13 +2698,17 @@
 	escollida por selección dos casos segundo algún criterio booleano.
       </para>
       <para>
-	<lit>addobs</lit>: Debe de estar seguido dun enteiro positivo. Engade o
-	número especificado de observacións adicionais ao final do conxunto de
-	datos de traballo. Isto está pensado principalmente co propósito de facer
-	predicións. Os valores da maioría das variables ao longo do rango engadido
-	vanse estipular como ausentes, pero certas variables determinísticas se
-	recoñecen e o seu contido esténdese ao rango engadido; en concreto, as
-	variables con tendencia linear simple e as variables ficticias periódicas.
+	<lit>addobs</lit>: Debe de estar seguido dun enteiro positivo, digamos
+	<math>n</math>. Engade as <math>n</math> observacións adicionais ao
+	final do conxunto de datos de traballo. Isto está pensado principalmente
+	co propósito de facer predicións. Os valores da maioría das variables
+	ao longo do rango engadido vanse estipular como ausentes, pero certas
+	variables determinísticas se recoñecen, e o seu contido esténdese ao
+	rango engadido; en concreto, as variables con tendencia linear simple
+	e as variables ficticias periódicas. Se o conxunto de datos ten a
+	estrutura dun panel, podes usar a opción <opt>panel-time</opt> para
+	alongar as series de tempo para cada unidade de sección cruzada (co
+	efecto, por defecto, de engadir <math>n</math> deses elementos).
       </para>
       <para>
 	<lit>insobs</lit>: Debe de estar seguido dun enteiro positivo (non

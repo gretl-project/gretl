@@ -2663,8 +2663,15 @@
         <argument>clave</argument>
 	      <argument>parámetros</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--panel-time</flag>
+	  <effect>Mira abajo 'addobs'</effect>
+	</option>
+      </options>
       <examples>
         <example>dataset addobs 24</example>
+	<example>dataset addobs 2 --panel-time</example>
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
@@ -2691,13 +2698,17 @@
 	escogida por selección de los casos según algún criterio booleano.
       </para>
       <para>
-	<lit>addobs</lit>: Debe estar seguido de un entero positivo. Añade el
-	número especificado de observaciones adicionales al final del conjunto de
-	datos de trabajo. Esto está pensado principalmente con el propósito de hacer
-	predicciones. Los valores de la mayoría de las variables a lo largo del rango añadido
-	se van a estipular como ausentes, pero ciertas variables determinísticas se
-	reconocen y su contenido se extiende al rango añadido; en concreto, las
-	variables con tendencia lineal simple y las variables ficticias periódicas.
+	<lit>addobs</lit>: Debe estar seguido de un entero positivo, digamos
+	<math>n</math>. Añade las <math>n</math> observaciones adicionales al
+	final del conjunto de datos de trabajo. Esto está pensado principalmente
+	con el propósito de hacer predicciones. Los valores de la mayoría de las
+	variables a lo largo del rango añadido se van a estipular como ausentes,
+	pero ciertas variables determinísticas se reconocen y su contenido se
+	extiende al rango añadido; en concreto, las variables con tendencia lineal
+	simple y las variables ficticias periódicas. Si el conjunto de datos tiene
+	la estructura de un panel, puedes usar la opción <opt>panel-time</opt>
+	para alargar las series de tiempo para cada unidad de sección cruzada 
+	(con el efecto, por defecto, de añadir <math>n</math> de esos elementos).
       </para>
       <para>
 	<lit>insobs</lit>: Debe estar seguido de un entero positivo (no

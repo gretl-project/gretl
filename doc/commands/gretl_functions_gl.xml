@@ -4222,24 +4222,20 @@
 
     <function name="funcerr" section="data-utils" output="scalar">
       <fnargs>
-	<fnarg optional="true" type="string">mensaxe</fnarg>
+	<fnarg type="bool">condicion</fnarg>
+	<fnarg type="string">mensaxe</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Esta función só se aplica no contexto dunha función definida polo
-	  usuario. Implica que a execución da función vixente remate coa
-	  presentación dunha mensaxe condicionada a que se produza un fallo.
+	  usuario. Se a <argname>condicion</argname> se valora como non nula,
+	  iso implica que a execución da función vixente remate coa presentación
+	  dunha mensaxe condicionada a que se produza un fallo; entón o
+	  argumento <argname>mensaxe</argname> vaise presentar como parte
+	  da mensaxe de fallo que se amosa ao chamar á función.
 	</para>
 	<para>
-	  Se indicas o argumento <argname>mensaxe</argname> (opcional),
-	  este vaise presentar como parte da mensaxe de fallo que se amosa
-	  ao chamar á función. Isto proporciona aos redactores de funcións, a
-	  oportunidade de indicar unha mensaxe de fallo máis específica da
-	  que se podería amosar doutro xeito.
-	</para>
-	<para>
-	  O valor que se devolve con esta función é simplemente nominal,
-	  pois ao invocala créase inevitablemente unha condición de fallo.
+	  O valor que se devolve con esta función (1) é simplemente nominal.
 	</para>
       </description>
     </function>
@@ -5829,14 +5825,14 @@
 	<para>
 	  O que se devolve é un feixe (bundle) cuxa estrutura basicamente
 	  reflicte a da entrada: os obxectos JSON tórnanse feixes de Gretl,
-	  e os arranxos JSON tórnanse arranxos de Gretl, cada un deles
-	  contendo cadeas de texto ou feixes. Os nodos de <quote>valor</quote>
-	  JSON tórnanse compoñentes de feixes ou elementos de arranxos;
-	  no último caso, os valores numéricos convértense en cadeas de texto
-	  utilizando <lit>sprintf</lit>. Cae na conta de que, dado que non
-	  podes aniñar os arranxos (arrays) de Gretl, o argumento que acepta
-	  esta función é un pouco máis restritivo que a especificación JSON,
-	  pois esta admite aniñar os arranxos.
+	  e os arranxos JSON tórnanse arranxos de Gretl; cada un deles
+	  pode conter cadeas de texto, feixes ou arranxos. Os nodos de
+	  <quote>valor</quote> JSON tórnanse compoñentes de feixes ou
+	  elementos de arranxos; no último caso, os valores numéricos se
+	  converten en cadeas de texto utilizando <lit>sprintf</lit>. Cae na
+	  conta de que, aínda que a especificación JSON permite arranxos de
+	  tipo mixto, estes non se poden manexar mediante <lit>jsongetb</lit>
+	  dado que os arranxos de Gretl deben ser de tipo único.
 	</para>
 	<para>
 	  Podes usar o argumento <argname>ruta</argname> para limitar
@@ -11082,7 +11078,7 @@
           Exemplo:
   </para>
   <code>
-          string s1 =  "Hola, Gretl!"
+          string s1 = "Hola, Gretl!"
           string s2 = strsub(s1, "Gretl", "Hansl")
           print s2
   </code>
@@ -11092,14 +11088,22 @@
     <function name="strvals" section="strings" output="strings">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg optional="true" type="bool">submostra</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Cando a serie <argname>y</argname> se compón de cadeas de texto que
-	  expresan valores, esta función devolve un arranxo que contén todos
-	  eses valores, ordenados numericamente comezando polo 1. Cando
-	  <argname>y</argname> non se compón de cadeas de texto que expresan
-	  valores, devólvese un arranxo de cadeas de texto baleiras.
+	  Cando a serie <argname>y</argname> se compón de cadeas de texto
+	  que expresan valores, esta función devolve por defecto un arranxo que
+	  contén todos eses valores (con independencia do rango mostral que
+	  estea vixente), ordenados numericamente comezando polo 1. Se está
+	  vixente unha submostra do conxunto de datos, podes proporcionar
+	  un valor non nulo para o segundo argumento (opcional) e obter deste
+	  xeito un arranxo que conteña só as cadeas de texto presentes na
+	  submostra.
+	</para>
+	<para>
+	  Cando <argname>y</argname> non se compón de cadeas de texto que
+	  expresan valores, devólvese un arranxo de cadeas de texto baleiras.
 	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
@@ -11125,17 +11129,13 @@
   <code>
           string s1 = "Hola, Gretl!"
           string s2 = substr(s1, 7, 11)
-          string s3 = substr("Hola, Gretl!", 7, 11)
           print s2
-          print s3
   </code>
   <para>
           proporciona:
   </para>
   <code>
     ? print s2
-    Gretl
-    ? print s3
     Gretl
   </code>
   <para>
