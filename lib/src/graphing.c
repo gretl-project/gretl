@@ -86,6 +86,7 @@ struct gnuplot_info_ {
     gretl_matrix *dvals;
     int *withlist;
     int band;
+    double ybase;
 };
 
 enum {
@@ -502,6 +503,20 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     if (opt & OPT_W) {
 	/* --font=<fontspec> */
 	maybe_record_font_choice(OPT_W);
+    }
+
+    if (opt & OPT_L) {
+	/* log y axis */
+	const char *sbase = get_optval_string(GNUPLOT, OPT_L);
+
+	gi->flags |= GPT_LOGY;
+	gi->ybase = 10;
+	if (sbase != NULL) {
+	    gi->ybase = atof(sbase);
+	    if (gi->ybase <= 0) {
+		gi->ybase = 10;
+	    }
+	}
     }
 
     if (opt & OPT_S) {
@@ -3777,6 +3792,10 @@ int gnuplot (const int *plotlist, const char *literal,
     print_axis_label('x', xlabel, fp);
     fputs("set xzeroaxis\n", fp);
     gnuplot_missval_string(fp);
+
+    if (gi.flags & GPT_LOGY) {
+	fprintf(fp, "set logscale y %g\n", gi.ybase);
+    }
 
     /* key: default to left top */
     strcpy(keystr, "set key left top\n");
