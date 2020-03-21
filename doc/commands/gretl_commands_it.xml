@@ -5359,6 +5359,11 @@
 	  <effect>forza l'uso di un solo asse delle ordinate</effect>
         </option>
         <option>
+	  <flag>--ylogscale</flag>
+	  <optparm optional="true">base</optparm>
+	  <effect>ordinate in scala logaritmica</effect>
+        </option>
+        <option>
 	  <flag>--dummy</flag>
 	  <effect>si veda sotto</effect>
         </option>
@@ -5438,6 +5443,19 @@
  	<repl>y</repl> rispetto a <repl>x</repl> colorando in modo
  	diverso i vari punti, a seconda che <repl>dumvar</repl> valga
  	1 o 0.
+      </para>
+      <para>
+	Usando l'opzione <opt>ylogscale</opt> si punò far sì che
+	l'asse delle ordinate sia logaritmico anziché
+	lineare. L'opzione accetta un parametro come base. Ad esempio,
+      </para>
+      <code>
+	gnuplot y x --ylogscale=2
+      </code>
+      <para>
+	produce un grafico in cui l'asse delle ordinate è espresso in
+	termini di potenze di 2. Se la base è omessa, si userà il
+	valore 10.
       </para>
       <subhead>Creare un grafico da dati in una matrice</subhead>
        <para>
