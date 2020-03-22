@@ -246,23 +246,50 @@ static double strval_to_double (ODBC_info *odinfo, const char *s,
     }
 }
 
-static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
-			   int totcols, SQLLEN *colbytes,
-			   long *grabint, double *grabx,
-			   char **grabstr, double *xt,
-			   int *nrows, int *obsgot,
-			   char **strvals, PRN *prn)
+static double date_to_double (ODBC_info *odinfo, DATE_STRUCT *dv,
+			      int r, int c, int *err)
+{
+    gint16 y = dv->year;
+    gint16 m = dv->month;
+    gint16 d = dv->day;
+
+    return 10000*y + 100*m + d;
+}
+
+static void obsbit_from_sql_date (char *targ, DATE_STRUCT *dv)
+{
+    gint16 y = dv->year;
+    gint16 m = dv->month;
+    gint16 d = dv->day;
+
+    sprintf(targ, "%04d-%02d-%02d", y, m, d);
+}
+
+static int odbc_read_rows (ODBC_info *odinfo,
+			   SQLHSTMT stmt,
+			   int totcols,
+			   SQLLEN *colbytes,
+			   long *grabint,
+			   double *grabx,
+			   char **grabstr,
+			   DATE_STRUCT *grabd,
+			   double *xt,
+			   DATE_STRUCT **dv,
+			   int *nrows,
+			   int *obsgot,
+			   char **strvals,
+			   PRN *prn)
 {
     char obsbit[OBSLEN];
     SQLRETURN ret;
     int verbose = (prn != NULL);
-    int i, j, k, p, v;
+    int i, j, k, p, q, v;
     int t = 0, err = 0;
 
     ret = SQLFetch(stmt);
 
     while (ret == SQL_SUCCESS && !err) {
-	j = k = p = v = 0;
+	j = k = p = q = v = 0;
 	if (verbose) {
 	    pprintf(prn, "Fetch, row %d: ", t);
 	}
@@ -284,9 +311,10 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 		}
 		if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
 		    sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
-		} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING ||
-			   odinfo->coltypes[i] == GRETL_TYPE_DATE) {
+		} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
 		    sprintf(obsbit, odinfo->fmts[i], grabstr[k++]);
+		} else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
+		    obsbit_from_sql_date(obsbit, &grabd[q++]);
 		} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
 		    sprintf(obsbit, odinfo->fmts[i], grabx[p++]);
 		}
@@ -299,7 +327,7 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 		}
 		if (verbose && i == odinfo->obscols - 1 && odinfo->S != NULL) {
 		    /* finished composing obs string, report it */
-		    pprintf(prn, " (obs = '%s')", odinfo->S[t]);
+		    pprintf(prn, " (obs='%s')", odinfo->S[t]);
 		}
 	    } else {
 		/* now looking for actual data */
@@ -315,6 +343,9 @@ static int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 			pprintf(prn, "string data value '%s' -> %g", strvals[v],
 				odinfo->X[v][t]);
 		    }
+		} else if (dv != NULL && dv[v] != NULL) {
+		    odinfo->X[v][t] = date_to_double(odinfo, dv[v],
+						     t+1, v+1, &err);
 		} else {
 		    odinfo->X[v][t] = xt[v];
 		    if (verbose) {
@@ -381,8 +412,8 @@ static char **allocate_string_grabbers (ODBC_info *odinfo,
    be created first.
 */
 
-static char *get_bind_target (char ***pS, int len, int nv,
-			      int j, int *err)
+static char *get_str_bind_target (char ***pS, int len, int nv,
+				  int j, int *err)
 {
     char *ret = NULL;
 
@@ -406,11 +437,39 @@ static char *get_bind_target (char ***pS, int len, int nv,
     return ret;
 }
 
-static const char *sql_datatype_name (SQLSMALLINT dt)
+static DATE_STRUCT *get_date_bind_target (DATE_STRUCT ***pds,
+					  int nv, int j,
+					  int *err)
+{
+    DATE_STRUCT *ret = NULL;
+
+    if (*pds == NULL) {
+	/* starting from scratch */
+	*pds = calloc(sizeof *pds, nv);
+	if (*pds == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*pds != NULL) {
+	(*pds)[j] = calloc(sizeof **pds, 1);
+	if ((*pds)[j] == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    ret = (*pds)[j];
+	}
+    }
+
+    return ret;
+}
+
+static gchar *sql_datatype_name (SQLSMALLINT dt, int *free_it)
 {
     switch (dt) {
     case SQL_UNKNOWN_TYPE:     return "SQL_UNKNOWN_TYPE";
     case SQL_CHAR:             return "SQL_CHAR";
+    case SQL_DATE:             return "SQL_DATE";
+    case SQL_TIMESTAMP:        return "SQL_TIMESTAMP";
     case SQL_NUMERIC:          return "SQL_NUMERIC";
     case SQL_DECIMAL:          return "SQL_DECIMAL";
     case SQL_INTEGER:          return "SQL_INTEGER";
@@ -418,26 +477,34 @@ static const char *sql_datatype_name (SQLSMALLINT dt)
     case SQL_FLOAT:            return "SQL_FLOAT";
     case SQL_REAL:             return "SQL_REAL";
     case SQL_DOUBLE:           return "SQL_DOUBLE";
-    case SQL_DATETIME:         return "SQL_DATETIME";
     case SQL_VARCHAR:          return "SQL_VARCHAR";
     case SQL_WCHAR:            return "SQL_WCHAR";
     case SQL_WVARCHAR:         return "SQL_WVARCHAR";
+    case SQL_TYPE_DATE:        return "SQL_DATE"; /* odbc bug ?? */
     }
 
-    fprintf(stderr, "sql_datatype_name: got dt = %d\n", dt);
-    return "invalid";
+    if (free_it != NULL) {
+	*free_it = 1;
+	return g_strdup_printf("%d (?)", (int) dt);
+    } else {
+	fprintf(stderr, "data type %d not recognized\n", dt);
+	return NULL;
+    }
 }
 
-static const char *sql_nullable_name (SQLSMALLINT nv)
+static gchar *sql_nullable_name (SQLSMALLINT nv, int *free_it)
 {
     if (nv == SQL_NO_NULLS) {
 	return "SQL_NO_NULLS";
     } else if (nv == SQL_NULLABLE) {
 	return "SQL_NULLABLE";
     } else {
-	return "invalid 'nullable' value!";
+	*free_it = 1;
+	return g_strdup_printf("nullable %d (?)", (int) nv);
     }
 }
+
+#define IS_SQL_DATE(t) (t == SQL_DATE || t == SQL_TYPE_DATE)
 
 #define IS_SQL_STRING_TYPE(t) (t == SQL_CHAR || \
 			       t == SQL_VARCHAR || \
@@ -468,11 +535,20 @@ static SQLSMALLINT get_col_info (SQLHSTMT stmt, int colnum,
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLDescribeCol");
 	*err = E_DATA;
+    } else if (sql_datatype_name(data_type, NULL) == NULL) {
+	gretl_errmsg_sprintf("col %d: unsupported data type %d", colnum,
+			     (int) data_type);
+	*err = E_DATA;
     } else if (len != NULL) {
 	if (prn != NULL) {
+	    int free1 = 0, free2 = 0;
+	    gchar *dname = sql_datatype_name(data_type, &free1);
+	    gchar *nname = sql_nullable_name(nullable, &free2);
+
 	    pprintf(prn, " col %d (%s): data_type %s, size %d, digits %d, %s\n",
-		    colnum, colname, sql_datatype_name(data_type), (int) colsize,
-		    digits, sql_nullable_name(nullable));
+		    colnum, colname, dname, (int) colsize, digits, nname);
+	    if (free1) g_free(dname);
+	    if (free2) g_free(nname);
 	}
 	*len = (int) colsize;
     }
@@ -495,17 +571,21 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
     SQLLEN sqlnrows;
     long grabint[ODBC_OBSCOLS];
     double grabx[ODBC_OBSCOLS];
+    DATE_STRUCT grabd[ODBC_OBSCOLS];
+    DATE_STRUCT **dv = NULL;
     char **grabstr = NULL;
     char **strvals = NULL;
     int *svlist = NULL;
-    int totcols, nrows = 0, nstrs = 0;
-    int i, j, k, p;
+    int totcols, nrows = 0;
+    int nstrs = 0;
+    int i, j, k, p, q;
     int T = 0, err = 0;
     PRN *prn;
 
     odinfo->X = NULL;
     odinfo->S = NULL;
     odinfo->nrows = 0;
+    status[0] = msg[0] = 0;
 
     prn = (opt & OPT_V)? inprn : NULL;
 
@@ -549,7 +629,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 	goto bailout;
     }
 
-    j = k = p = 0;
+    j = k = p = q = 0;
 
     /* bind auxiliary (obs) columns */
     for (i=0; i<odinfo->obscols; i++) {
@@ -561,7 +641,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 	    SQLBindCol(stmt, i+1, SQL_C_CHAR, grabstr[k++], ODBC_STRSZ,
 		       &colbytes[i]);
 	} else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
-	    SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, grabstr[k++], 10,
+	    SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, &grabd[q++], 10,
 		       &colbytes[i]);
 	} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
 	    SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], sizeof(double),
@@ -573,9 +653,11 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
     if (OD_error(ret)) {
 	gretl_errmsg_set("Error in SQLExecDirect");
 	pprintf(prn, "failed query: '%s'\n", odinfo->query);
-	SQLGetDiagRec(SQL_HANDLE_DBC, dbc, 1, status, &OD_err, msg,
+	SQLGetDiagRec(SQL_HANDLE_STMT, stmt, 1, status, &OD_err, msg,
 		      100, &mlen);
-	gretl_errmsg_set((char *) msg);
+	if (msg[0] != 0) {
+	    gretl_errmsg_set((char *) msg);
+	}
 	err = 1;
 	goto bailout;
     }
@@ -599,7 +681,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 	goto bailout;
     }
 
-    /* are we going to need a string table? */
+    /* Are we going to need a string table? */
     j = 1;
     for (i=odinfo->obscols; i<ncols && !err; i++) {
 	dt = get_col_info(stmt, i+1, NULL, prn, &err);
@@ -607,7 +689,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 	    svlist = gretl_list_append_term(&svlist, j++);
 	}
     }
-    if (svlist != NULL) {
+    if (!err && svlist != NULL) {
 	odinfo->gst = gretl_string_table_new(svlist);
 	if (odinfo->gst == NULL) {
 	    err = E_ALLOC;
@@ -625,12 +707,20 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 	    colbytes[i] = 0;
 	    j = i - odinfo->obscols;
 	    if (IS_SQL_STRING_TYPE(dt)) {
-		char *sval = get_bind_target(&strvals, len, odinfo->nvars, j, &err);
+		char *sval = get_str_bind_target(&strvals, len, odinfo->nvars, j, &err);
 
 		if (!err) {
 		    pprintf(prn, " binding data col %d to strvals[%d] (len = %d)\n",
 			    i+1, j, len);
 		    SQLBindCol(stmt, i+1, SQL_C_CHAR, sval, len, &colbytes[i]);
+		}
+	    } else if (IS_SQL_DATE(dt)) {
+		DATE_STRUCT *ds = get_date_bind_target(&dv, odinfo->nvars, j, &err);
+
+		if (!err) {
+		    pprintf(prn, " binding data col %d to dv[%d]\n", i+1, j);
+		    SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, ds, sizeof *ds,
+			       &colbytes[i]);
 		}
 	    } else {
 		/* should be numerical data */
@@ -680,8 +770,8 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
     if (!err) {
 	/* get the actual data */
 	err = odbc_read_rows(odinfo, stmt, totcols, colbytes,
-			     grabint, grabx, grabstr, xt,
-			     &nrows, &T, strvals, prn);
+			     grabint, grabx, grabstr, grabd,
+			     xt, dv, &nrows, &T, strvals, prn);
     }
 
  bailout:
@@ -709,6 +799,12 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
     strings_array_free(grabstr, nstrs);
     if (strvals != NULL) {
 	strings_array_free(strvals, odinfo->nvars);
+    }
+    if (dv != NULL) {
+	for (i=0; i<odinfo->nvars; i++) {
+	    free(dv[i]);
+	}
+	free(dv);
     }
 
     if (stmt != NULL) {

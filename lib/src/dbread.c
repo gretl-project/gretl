@@ -2273,6 +2273,38 @@ static double s_tab_get (int i, int t, series_table *stl, series_table *str)
     return ret;
 }
 
+static int m2q (int m)
+{
+    if (m == 1) return 1;
+    else if (m == 4) return 2;
+    else if (m == 7) return 3;
+    else if (m == 10) return 4;
+    else return -1;
+}
+
+static int try_iso_8601 (const char *s, DATASET *dset)
+{
+    int t = -1;
+
+    if (dataset_is_time_series(dset)) {
+	char obsstr[OBSLEN] = {0};
+	int y, m, d;
+
+	if (sscanf(s, "%d-%d-%d", &y, &m, &d) == 3) {
+	    if (dset->pd == 4 && d == 1) {
+		sprintf(obsstr, "%04d:%d", y, m2q(m));
+	    } else if (dset->pd == 12 && d == 1) {
+		sprintf(obsstr, "%04d:%02d", y, m);
+	    } else if (dset->pd == 1 && m == 1 && d == 1) {
+		sprintf(obsstr, "%04d", y);
+	    }
+	    t = dateton(obsstr, dset);
+	}
+    }
+
+    return t;
+}
+
 static int odbc_transcribe_data (char **vnames, DATASET *dset,
 				 int vmin, int newvars,
 				 PRN *prn)
@@ -2344,6 +2376,9 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    }
 	    for (s=0; s<n; s++) {
 		t = dateton(gretl_odinfo.S[s], dset);
+		if (t < 0) {
+		    t = try_iso_8601(gretl_odinfo.S[s], dset);
+		}
 		if (t >= dset->t1 && t <= dset->t2) {
 		    if (str != NULL) {
 			dset->Z[v][t] = s_tab_get(i, s, stl, str);
