@@ -240,17 +240,17 @@ In this case, the following syntax could be used
 %
 \begin{code}
   string QRY="SELECT year,month,day,VerdSE FROM AlmeaIndexes"
-  data y obs-format="%d/%d/%d" query=QRY --odbc
+  data y obs-format="%d-%d-%d" query=QRY --odbc
 \end{code}
 %
 The column \texttt{VerdSE} holds the data to be fetched, which will go
 into the gretl series \texttt{y}. The first three columns are
 used to construct a string which identifies the day. Daily dates take
-the form \texttt{YYYY/MM/DD} in gretl.  If a row from the DBMS
-produces the observation string \texttt{2008/04/01} this will match OK
-(it's a Tuesday), but \texttt{2008/04/05} will not match since it is a
+the form \texttt{YYYY-MM-DD} in gretl.  If a row from the DBMS
+produces the observation string \texttt{2008-04-01} this will match OK
+(it's a Tuesday), but \texttt{2008-04-05} will not match since it is a
 Saturday; the corresponding row will therefore be discarded.  On the
-other hand, since no string \texttt{2008/04/23} will be found in the
+other hand, since no string \texttt{2008-04-23} will be found in the
 data coming from the DBMS (it's a Wednesday), that entry is left blank
 in our series \texttt{y}.
 
