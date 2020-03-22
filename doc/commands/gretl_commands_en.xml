@@ -5270,6 +5270,11 @@
 	  <effect>force use of just one y-axis</effect>
         </option>
         <option>
+	  <flag>--ylogscale</flag>
+	  <optparm optional="true">base</optparm>
+	  <effect>use log scale for verical axis</effect>
+        </option>
+        <option>
 	  <flag>--dummy</flag>
 	  <effect>see below</effect>
         </option>
@@ -5349,6 +5354,18 @@
 	<repl>xvar</repl> with the points shown in different colors
 	depending on the value of <repl>dvar</repl> at the given
 	observation.
+      </para>
+      <para>
+	You can choose the scale for the y axis to be logarithmic
+	rather than linear by using the <opt>ylogscale</opt> option,
+	together with a base parameter. For example,
+      </para>
+      <code>
+	gnuplot y x --ylogscale=2
+      </code>
+      <para>
+	plots the data such that the vertical axis is expressed as
+	powers of 2. If the base is omitted, it defaults to 10.
       </para>
       <subhead>Taking data from a matrix</subhead>
       <para>
