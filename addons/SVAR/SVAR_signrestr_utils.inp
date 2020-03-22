@@ -117,7 +117,7 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
                          const matrix iXX )
 
     if DO_BAYES
-        matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.T) # was b.df
+        matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) # changed df at source
         matrix b.B = Mats[1]
         matrix b.Sigma = Mats[2]
     endif

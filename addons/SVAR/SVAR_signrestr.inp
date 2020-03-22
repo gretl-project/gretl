@@ -309,7 +309,8 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     #
 
     bundle b = defbundle("B",B, "Sigma",mod.Sigma, "exoterms",rows(mod.mu), \
-               "df", mod.T - nelem(B), "T", mod.T)
+               "df", mod.T - rows(B), \
+				"T", mod.T) # df was: mod.T - nelem(B)
 
     loop while good<rep && iter<=maxiter --quiet
 
