@@ -5272,7 +5272,7 @@
         <option>
 	  <flag>--ylogscale</flag>
 	  <optparm optional="true">base</optparm>
-	  <effect>use log scale for verical axis</effect>
+	  <effect>use log scale for vertical axis</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
@@ -10803,6 +10803,11 @@
         <option>
 	  <flag>--single-yaxis</flag>
 	  <effect>force use of just one y-axis</effect>
+        </option>
+        <option>
+	  <flag>--ylogscale</flag>
+	  <optparm optional="true">base</optparm>
+	  <effect>use log scale for vertical axis</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
