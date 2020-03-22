@@ -258,11 +258,15 @@ static double date_to_double (ODBC_info *odinfo, DATE_STRUCT *dv,
 
 static void obsbit_from_sql_date (char *targ, DATE_STRUCT *dv)
 {
-    gint16 y = dv->year;
-    gint16 m = dv->month;
-    gint16 d = dv->day;
+    guint16 y = dv->year;
+    guint16 m = dv->month;
+    guint16 d = dv->day;
 
-    sprintf(targ, "%04d-%02d-%02d", y, m, d);
+    if (y > 9999 || m > 12 || d > 31) {
+	*targ = '\0';
+    } else {
+	sprintf(targ, "%04d-%02d-%02d", (int) y, (int) m, (int) d);
+    }
 }
 
 static int odbc_read_rows (ODBC_info *odinfo,
