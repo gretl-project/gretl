@@ -11,7 +11,7 @@ public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     SVAR_bundle_print \
     SVAR_SRplain IRF_plotdata \
     SVAR_SRexotic SVAR_spagplot SVAR_SRfull \
-    SVAR_SRirf SVAR_SRdraw
+    SVAR_SRirf SVAR_SRdraw SRgetix
    # SVAR_setidIRF
 gui-main = GUI_SVAR
 

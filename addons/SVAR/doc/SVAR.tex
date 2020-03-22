@@ -2478,81 +2478,65 @@ the relevant functions \texttt{SVAR\_hd}, \texttt{FEVD}, and also \texttt{GetSho
 (which stores the estimated historical shock realization as a gretl series into the
 workfile) take as an additional argument an integer as an index to pick a certain
 accepted model draw.
-
 For example, the \texttt{ChoMoreno.inp} example script shipped with the SVAR 
 addon produces 256 accepted draws and its model bundle has the name ``mod''.
-After it is run we can arbitrarily pick the, say, 112th accepted draw to produce the HD 
-for inflation -- which is the 2nd variable in the model -- as follows:
+After it is run we could in principle pick arbitrarily any draw between 1 and 256.
 
-\begin{code}
-list inflHD = SVAR_hd(&mod, 2, 112) 
-\end{code}
+% 112th accepted draw to produce the HD 
+% for inflation -- which is the 2nd variable in the model -- as follows:
 
-In the same fashion we could extract the history of the demand shock (the 1st one)
-by writing
+% \begin{code}
+% list inflHD = SVAR_hd(&mod, 2, 112) 
+% \end{code}
 
-\begin{code}
-series demandshock = GetShock(&mod, 1, 112) 
-\end{code}
+% In the same fashion we could extract the history of the demand shock (the 1st one)
+% by writing
 
-... or retrieve the FEVD numbers with this call:
+% \begin{code}
+% series demandshock = GetShock(&mod, 1, 112) 
+% \end{code}
 
-\begin{code}
-matrix allfevd = FEVD(&mod, 112) 
-\end{code}
+% ... or retrieve the FEVD numbers with this call:
 
-However, it should be very clear that these results are quite arbitrary, since the 112th 
-accepted draw will typically \emph{not} be representative of the entire model distribution.
-While it is beyond the scope of this user guide to provide a discussion of the possible ways to 
-find a suitable unique model among the many accepted draws, let us sketch how the user
-could employ the existing apparatus to pick a certain model. (Some convenience functions 
-are planned to be added to the \texttt{SVAR} addon package in the future to make this task more 
-user-friendly.)
+% \begin{code}
+% matrix allfevd = FEVD(&mod, 112) 
+% \end{code}
+
+However, the aim is typically to use a draw which is somehow representative of the entire 
+model distribution.
+While it is beyond the scope of this user guide to provide a discussion of the possible conceptual 
+approaches to find a suitable unique model among the many accepted draws, the \texttt{SVAR}
+addon provides the \texttt{SRgetix} convenience function to help with this task.
 
 For example, continuing with \texttt{ChoMoreno.inp}, say you are most interested in the 
-impulse response of inflation (2nd variable) to a demand shock (1st shock) not immediately, 
-but after one quarter. That is, you want to find that accepted model which has a 
+impulse response of inflation (\texttt{INFL}, 2nd variable) to the shock \texttt{Demand} 
+(1st shock) not immediately, but after one quarter. 
+That is, you want to find that accepted model which has a 
 response of inflation to a demand impulse at lag 1 which is as close as 
-possible to the median response across all accepted draws. The median responses are already
-stored (by default) inside \texttt{SRirfmeds}, and since the impact effect is in row 1 we need the 
-2nd row of that matrix. With $nv=2$ and $ns=1$ (and of course $n=3$) the targeted number will 
-then be found in
-\texttt{mod.SRirfmeds[2, (ns-1)*n + nv]} or equivalently \texttt{mod.SRirfmeds[2, 2]}; this 
-number turns out to be $0.171304$.
+possible to the median response across all accepted draws. 
+The relevant call to find this model's index number would be:
 
-How can we retrieve the corresponding scalar outcomes across all accepted model draws? 
-Admittedly this requires some knowledge of the internal storage structure of the SVAR addon, 
-but here is the solution, using the stored number of available accepted draws \texttt{mod.SRacc}:
+ \begin{code}
+ whichdraw = SRgetix(mod, "INFL", "Demand", 1, , 1) 
+ \end{code}
 
-\begin{code}
-matrix crosscollect = zeros(mod.SRacc)  
-nv = 2
-ns = 1
-horiz = 1
-loop i=1..mod.SRacc --quiet
-    crosscollect[i] = mod.acc_draws[i].irfs[1 + horiz][nv,ns]
-endloop
-\end{code}
+The function is documented in the appendix, but note that the first scalar argument with value 1 
+chooses the starting IRF horizon where 0 would be equivalent to the contemporaneous impact,
+so here it is after one period. The following argument would determine
+how many of the following periods should be considered; here we do not want to consider anything 
+beyond the first lag, so we can leave it at the default value zero and hence do not need to specify 
+that argument. The trailing argument value 1 chooses the median as the target (0 would be 
+the mean).\footnote{The concrete targeted number turns out to be  $0.171304$. This could also 
+be found inside the bundle with $nv=2$ and $ns=1$ (and of course $n=3$) as
+\texttt{mod.SRirfmeds[2, (ns-1)*n + nv]} or equivalently \texttt{mod.SRirfmeds[2, 2]}.}
 
-It should be clear that \texttt{SRacc} and \texttt{acc\_draws} are given names of the bundle 
-members determined by SVAR's storage structure and must be used exactly like this, and the 
-same holds for the nested array of matrices \texttt{irfs} which is in turn part of the array of 
-bundles \texttt{acc\_draws}. In contrast, \texttt{crosscollect}, \texttt{nv, ns}, and 
-\texttt{horiz} are of course arbitrary user-settable identifiers.
+We find that the representative model in this particular sense is the one with index 58; 
+by construction the associated impulse response value is very close to the median, namely $0.171297$. 
+A user interested in a model with a typical inflation reaction to a demand shock at lag one could thus
+produce the desired decompositions by appending the above result \texttt{whichdraw} as a trailing 
+argument to the functions \texttt{SVAR\_hd}, \texttt{FEVD}, and \texttt{GetShock}.
 
-Now we have all the relevant model results in a single column vector, and finding the model with 
-the result closest to the median target is then straightforward, using gretl's built-in \texttt{iminc} 
-function:
-
-\begin{code}
-drawindex = iminc(abs(crosscollect - mod.SRirfmeds[2,2] ))
-\end{code}
-
-We find that the representative model in this sense is the one with index 58; by construction 
-the associated impulse response value is very close to the median, namely $0.171297$. A user
-interested in a model with a typical inflation reaction to a demand shock at lag one would thus
-call the functions \texttt{SVAR\_hd}, \texttt{FEVD}, and \texttt{GetShock} with an index 
-argument 58 instead of the arbitrary 112 above.
+FIXME: Make it possible to use HDplot, FEVDplot directly. (Perhaps store whichdraw in bundle?)
 
 \subsection{Still to do later (for set identification)}
 
@@ -2799,7 +2783,7 @@ and need not be harmonized).
   The \texttt{drawix} argument is only needed in the set identification 
   (sign restriction) case and specifies from which of the accepted model draws 
   the coefficients should be taken. This index can range from 1 to the number
-  of accepted draws. (The default 0 is meaningless and only serves
+  of accepted draws; see also \texttt{SRgetix}. (The default 0 is meaningless and only serves
   to make it possible to omit the argument for traditional SVAR models.) 
   In order to work in this case the model must have been set up such that all
   accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
@@ -2834,7 +2818,7 @@ and need not be harmonized).
    \noindent Arguments:
   
   \begin{enumerate}
-  \item A bundle holding the model
+  \item A bundle holding the model.
   \item The progressive number of the shock (may be negative, in which
     case the IRF is flipped).
   \item The progressive number of the variable.
@@ -2866,6 +2850,28 @@ and need not be harmonized).
   \item The location of the legend / key; 0=off, 1=outside/right (default), 2=below
   \end{enumerate}
 \end{funcdoc}
+
+\begin{funcdoc}{SRgetix (bundle Smod, string vname, string sname,
+    int ini[0::0], int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
+  \noindent Relating to a set identified (sign restricted) model, this function returns
+   the (scalar) index number among all accepted draws of that particular draw which has 
+   a certain impulse response closest to the central tendency of all draws. 
+   
+  \noindent Arguments:
+  \begin{enumerate}
+  \item A bundle holding the model.
+  \item The name of the target variable in the interesting IRF.
+  \item The name of the shock in the interesting IRF.
+  \item The first period/horizon at which the IRF should be compared. (Default 0, on impact)
+  \item The length of the horizon over which the IRF should be compared. (Default 0, only
+  for the single period given before)
+  \item A switch choosing whether to target the mean (0) or the median (1) of the IRF 
+  distribution. (Default 0)
+  \item The loss function name to evaluate deviations from the target. Possible values are
+  ``quad'' (default) and ``abs''.
+   \end{enumerate}  
+\end{funcdoc}
+
 
 \begin{funcdoc}{SVAR\_boot (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
     quiet[1],\\
@@ -3339,7 +3345,10 @@ int length[0], int ini[0])}
 
 \subsection*{Version 1.91, March/April... 2020}
 \begin{itemize}
-\item Minor plot legend fix for GUI usage.
+\item Minor plot legend fix for GUI usage; a fix of DoF calculation for Bayesian redrawing;
+catch the case of no accepted draws more gracefully (but probably still to do: fix bug
+with less than N shocks leading to 0 draws?)
+\item Introduce new convenience function SRgetix
 \end{itemize}
 
 \subsection*{Version 1.90, March 2020}
