@@ -466,10 +466,8 @@ static DATE_STRUCT *get_date_bind_target (DATE_STRUCT ***pds,
 static gchar *sql_datatype_name (SQLSMALLINT dt, int *free_it)
 {
     switch (dt) {
-    case SQL_UNKNOWN_TYPE:     return "SQL_UNKNOWN_TYPE";
     case SQL_CHAR:             return "SQL_CHAR";
     case SQL_DATE:             return "SQL_DATE";
-    case SQL_TIMESTAMP:        return "SQL_TIMESTAMP";
     case SQL_NUMERIC:          return "SQL_NUMERIC";
     case SQL_DECIMAL:          return "SQL_DECIMAL";
     case SQL_INTEGER:          return "SQL_INTEGER";
@@ -483,11 +481,13 @@ static gchar *sql_datatype_name (SQLSMALLINT dt, int *free_it)
     case SQL_TYPE_DATE:        return "SQL_DATE"; /* odbc bug ?? */
     }
 
+    /* note: as of 2020-03-22 we're not supporting SQL_TIMESTAMP */
+
     if (free_it != NULL) {
 	*free_it = 1;
 	return g_strdup_printf("%d (?)", (int) dt);
     } else {
-	fprintf(stderr, "data type %d not recognized\n", dt);
+	fprintf(stderr, "data type %d not recognized or not supported\n", dt);
 	return NULL;
     }
 }
