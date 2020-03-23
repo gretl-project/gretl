@@ -331,7 +331,7 @@ static int odbc_read_rows (ODBC_info *odinfo,
 		}
 		if (verbose && i == odinfo->obscols - 1 && odinfo->S != NULL) {
 		    /* finished composing obs string, report it */
-		    pprintf(prn, " (obs='%s')", odinfo->S[t]);
+		    pprintf(prn, " (obs '%s')", odinfo->S[t]);
 		}
 	    } else {
 		/* now looking for actual data */
@@ -342,9 +342,9 @@ static int odbc_read_rows (ODBC_info *odinfo,
 		    odinfo->X[v][t] = NADBL;
 		} else if (strvals != NULL && strvals[v] != NULL) {
 		    odinfo->X[v][t] = strval_to_double(odinfo, strvals[v],
-						       t+1, v+1, &err);
+						       t+1, v+1, &err); /* or ?? v+1 */
 		    if (verbose) {
-			pprintf(prn, "string data value '%s' -> %g", strvals[v],
+			pprintf(prn, "string '%s' -> %g", strvals[v],
 				odinfo->X[v][t]);
 		    }
 		} else if (dv != NULL && dv[v] != NULL) {
@@ -353,7 +353,7 @@ static int odbc_read_rows (ODBC_info *odinfo,
 		} else {
 		    odinfo->X[v][t] = xt[v];
 		    if (verbose) {
-			pprintf(prn, "data value %g", xt[v]);
+			pprintf(prn, "value %g", xt[v]);
 		    }
 		}
 		v++;
@@ -690,8 +690,10 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
     for (i=odinfo->obscols; i<ncols && !err; i++) {
 	dt = get_col_info(stmt, i+1, NULL, prn, &err);
 	if (!err && IS_SQL_STRING_TYPE(dt)) {
-	    svlist = gretl_list_append_term(&svlist, j++);
+	    pprintf(prn, "string table: adding ID %d\n", j);
+	    svlist = gretl_list_append_term(&svlist, j);
 	}
+	j++;
     }
     if (!err && svlist != NULL) {
 	odinfo->gst = gretl_string_table_new(svlist);
@@ -714,7 +716,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 		char *sval = get_str_bind_target(&strvals, len, odinfo->nvars, j, &err);
 
 		if (!err) {
-		    pprintf(prn, " binding data col %d to strvals[%d] (len = %d)\n",
+		    pprintf(prn, "  binding col %d to strvals[%d] (len = %d)\n",
 			    i+1, j, len);
 		    SQLBindCol(stmt, i+1, SQL_C_CHAR, sval, len, &colbytes[i]);
 		}
@@ -722,12 +724,13 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 		DATE_STRUCT *ds = get_date_bind_target(&dv, odinfo->nvars, j, &err);
 
 		if (!err) {
-		    pprintf(prn, " binding data col %d to dv[%d]\n", i+1, j);
+		    pprintf(prn, "  binding col %d to dv[%d]\n", i+1, j);
 		    SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, ds, sizeof *ds,
 			       &colbytes[i]);
 		}
 	    } else {
 		/* should be numerical data */
+		pprintf(prn, "  binding col %d to xt[%d]\n", i+1, j);
 		SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &xt[j], sizeof(double),
 			   &colbytes[i]);
 	    }

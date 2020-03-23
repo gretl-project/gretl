@@ -159,6 +159,8 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_LISTS_REF:    return "lists *";
     case GRETL_TYPE_ARRAYS_REF:   return "arrays *";
 
+    case GRETL_TYPE_DATE:         return "date"; /* ODBC special */
+
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
     case GRETL_TYPE_ANY:        return "any";

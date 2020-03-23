@@ -27,6 +27,7 @@
 #include "usermat.h"
 #include "dbread.h"
 #include "gretl_midas.h"
+#include "gretl_typemap.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -2144,8 +2145,10 @@ static int parse_odbc_format_chunk (char **ps, int i)
     *ps = p;
 
 #if 1
-    fprintf(stderr, "set coltype[%d] = %d, fmt='%s'\n", i,
-	    gretl_odinfo.coltypes[i], gretl_odinfo.fmts[i]);
+    fprintf(stderr, "set obs coltype[%d] = %d (%s), fmt='%s'\n", i,
+	    gretl_odinfo.coltypes[i],
+	    gretl_type_get_name(gretl_odinfo.coltypes[i]),
+	    gretl_odinfo.fmts[i]);
 #endif
 
     return err;
