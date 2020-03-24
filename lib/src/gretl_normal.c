@@ -132,8 +132,8 @@ double invmills (double x)
  *
  * The algorithm is from Drezner and Wesolowsky (1989), 'On the
  * Computation of the Bivariate Normal Integral', Journal of
- * Statist. Comput. Simul. 35 pp. 101-107, with major modifications
- * for double precision, and for |R| close to 1.
+ * Statistical Computation and Simulation, 35 pp. 101-107, with major
+ * modifications for double precision, and for |rho| close to 1.
  *
  * Returns: for (x, y) a bivariate standard Normal rv with correlation
  * coefficient @rho, the joint probability that (x < @limx) and (y < @limy),
@@ -150,7 +150,6 @@ static double genz04 (double rho, double limx, double limy)
     int i, lg, j;
 
     if (absrho < 0.3) {
-
 	w[0] = .1713244923791705;
 	w[1] = .3607615730481384;
 	w[2] = .4679139345726904;
@@ -161,7 +160,6 @@ static double genz04 (double rho, double limx, double limy)
 
 	lg = 3;
     } else if (absrho < 0.75) {
-
 	w[0] = .04717533638651177;
 	w[1] = .1069393259953183;
 	w[2] = .1600783285433464;
@@ -178,7 +176,6 @@ static double genz04 (double rho, double limx, double limy)
 
 	lg = 6;
     } else {
-
 	w[0] = .01761400713915212;
 	w[1] = .04060142980038694;
 	w[2] = .06267204833410906;
