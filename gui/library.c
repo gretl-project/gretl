@@ -10329,7 +10329,9 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case DATA:
 	err = db_get_series(cmd->param, dset, cmd->opt, prn);
-        if (!err) {
+	if (err) {
+	    errmsg(err, prn);
+        } else {
 	    clean_up_varlabels(dset);
 	    register_data(DATA_APPENDED);
 	    if (gretl_messages_on()) {

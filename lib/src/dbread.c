@@ -2430,7 +2430,13 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	}
     }
 
-    if (gretl_odinfo.gst != NULL) {
+    if (err) {
+	dataset_drop_last_variables(dset, newvars);
+	if (gretl_odinfo.gst != NULL) {
+	    gretl_string_table_destroy(gretl_odinfo.gst);
+	    gretl_odinfo.gst = NULL;
+	}
+    } else if (gretl_odinfo.gst != NULL) {
 	gretl_string_table_save(gretl_odinfo.gst, dset);
     }
 
@@ -2468,11 +2474,8 @@ static int odbc_get_series (const char *line, DATASET *dset,
     if (gretl_odinfo.dsn == NULL) {
 	gretl_errmsg_set(_("No database has been opened"));
 	return 1;
-    }
-
-    if (dset->n == 0) {
-	gretl_errmsg_set(_("No series length has been defined"));
-	return 1;
+    } else if (dset->n == 0) {
+	return E_NODATA;
     }
 
     /* get "series" field */

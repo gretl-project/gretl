@@ -342,7 +342,7 @@ static int odbc_read_rows (ODBC_info *odinfo,
 		    odinfo->X[v][t] = NADBL;
 		} else if (strvals != NULL && strvals[v] != NULL) {
 		    odinfo->X[v][t] = strval_to_double(odinfo, strvals[v],
-						       t+1, v+1, &err); /* or ?? v+1 */
+						       t+1, v+1, &err);
 		    if (verbose) {
 			pprintf(prn, "string '%s' -> %g", strvals[v],
 				odinfo->X[v][t]);
@@ -350,6 +350,9 @@ static int odbc_read_rows (ODBC_info *odinfo,
 		} else if (dv != NULL && dv[v] != NULL) {
 		    odinfo->X[v][t] = date_to_double(odinfo, dv[v],
 						     t+1, v+1, &err);
+		    if (verbose) {
+			pprintf(prn, "date -> %g", odinfo->X[v][t]);
+		    }
 		} else {
 		    odinfo->X[v][t] = xt[v];
 		    if (verbose) {
@@ -371,7 +374,7 @@ static int odbc_read_rows (ODBC_info *odinfo,
 	if (ret == SQL_SUCCESS && t >= *nrows) {
 	    err = expand_catchment(odinfo, nrows);
 	}
-    }
+    } /* end loop across rows */
 
     if (ret != SQL_SUCCESS && ret != SQL_NO_DATA && !err) {
 	err = E_DATA;
