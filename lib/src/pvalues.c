@@ -2938,7 +2938,6 @@ static double nct_cdf_inverse (double p, double c, double q)
     return x;
 }
 
-
 struct distmap {
     int code;
     char *s;
