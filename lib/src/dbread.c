@@ -2313,11 +2313,16 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 				 PRN *prn)
 {
     char label[MAXLABEL];
+    int *gstlist = NULL;
     int nv = gretl_odinfo.nvars;
     int n = gretl_odinfo.nrows;
     int nrepl = nv - newvars;
     int i, s, t, v;
     int err = 0;
+
+    if (gretl_odinfo.gst != NULL) {
+	gstlist = string_table_copy_list(gretl_odinfo.gst);
+    }
 
     for (i=0; i<nv && !err; i++) {
 	series_table *str = NULL;
@@ -2345,7 +2350,7 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    stl = series_get_string_table(dset, v);
 	}
 
-	if (in_string_table(gretl_odinfo.gst, i+1)) {
+	if (in_gretl_list(gstlist, i+1)) {
 	    /* the imported data are string-valued */
 	    if (vnew) {
 		gretl_string_table_reset_column_id(gretl_odinfo.gst, i+1, v);
@@ -2429,6 +2434,8 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 				  vnames[i]);
 	}
     }
+
+    free(gstlist);
 
     if (err) {
 	dataset_drop_last_variables(dset, newvars);

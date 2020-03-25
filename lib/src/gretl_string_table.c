@@ -495,6 +495,15 @@ int in_string_table (gretl_string_table *gst, int id)
     }
 }
 
+int *string_table_copy_list (gretl_string_table *gst)
+{
+    if (gst != NULL) {
+	return gretl_list_copy(gst->cols_list);
+    } else {
+	return NULL;
+    }
+}
+
 /**
  * series_table_destroy:
  * @st: series string table.
