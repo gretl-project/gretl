@@ -1,5 +1,6 @@
 topsrc = @top_srcdir@
 docsrc = $(topsrc)/doc
+texsrc = $(topsrc)/doc/tex
 tooldir = $(topsrc)/tools
 prefix = @prefix@
 datarootdir = @datarootdir@
@@ -35,63 +36,67 @@ ALTKBD = gretl-keys-a4.pdf
 A4 = $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTMIDASDOC) \
  $(ALTSVMDOC) $(ALTKBD)
 
-TEXSRC = cli.tex \
-	criteria.tex \
-	graphs.tex \
+GUIDETEX = gretl-guide.tex \
+	introduction.tex \
+	starting.tex \
 	modes.tex \
+	datafiles.tex \
+	sampling.tex \
+	graphs.tex \
+	join.tex \
+	realtime.tex \
+	genr.tex \
+	datatypes.tex \
+	discrete.tex \
+	looping.tex \
+	functions.tex \
 	persistent.tex \
 	string_series.tex \
-	sampling.tex \
-	trouble.tex \
-	looping.tex \
-	starting.tex \
-	discrete.tex \
-	appendices.tex \
 	matrices.tex \
 	complex_matrices.tex \
 	calendar.tex \
-	introduction.tex \
-	datafiles.tex \
-	join.tex \
+	cheatsheet.tex \
 	robust_vcv.tex \
 	panel.tex \
 	dpanel.tex \
-	genr.tex \
-	biblio.tex \
+	nls.tex \
 	mle.tex \
 	gmm.tex \
-	probit.tex \
-	nls.tex \
+	criteria.tex \
+	df.tex \
+	tsfilter.tex \
 	timeseries.tex \
-	forecast.tex \
+	var.tex \
 	vecm.tex \
+	system.tex \
+	forecast.tex \
 	kalman.tex \
-	functions.tex \
-	gretltex.tex \
-	cheatsheet.tex \
-	reftables.tex \
-	cmdref.tex \
-	funcref.tex \
-	comments.tex \
-	optarg.tex \
+	numerical.tex \
+	probit.tex \
 	quantreg.tex \
+	nonparam.tex \
 	odbc.tex \
+	gretltex.tex \
 	gretlR.tex \
 	gretlOx.tex \
 	gretlOctave.tex \
 	gretlStata.tex \
 	gretlPython.tex \
 	gretlJulia.tex \
-	datatypes.tex \
-	df.tex \
-	var.tex \
-	tsfilter.tex \
-	numerical.tex \
-	nonparam.tex \
-	system.tex \
-	operators.tex \
-	realtime.tex \
+	trouble.tex \
+	cli.tex \
+	appendices.tex
+
+REFTEX = gretl-ref.tex \
+	cmdref.tex \
 	optshort.tex \
+	funcref.tex \
+	operators.tex \
+	comments.tex \
+	optarg.tex \
+	reftables.tex
+
+HPTEX = hansl-primer.tex \
 	hp-hello.tex \
 	hp-matrices.tex \
 	hp-output.tex \
@@ -102,23 +107,25 @@ TEXSRC = cli.tex \
 	hp-dataset.tex \
 	hp-series.tex \
 	hp-estimate.tex \
-	hp-further.tex \
 	hp-reference.tex \
-	hp-greeks.tex \
-	pkgbook.tex \
-	midas-gretl.tex \
-	gretl-svm.tex
+	operators.tex \
+	hp-greeks.tex
 
-BIBSRC = gretl.bib gretl.bst
+PKGTEX = pkgbook.tex
+MPITEX = gretl-mpi.tex
+MIDASTEX = midas-gretl.tex
+SVMTEX = gretl-svm.tex
+KBDTEX = gretl-keys.tex
 
-STYSRC = $(docsrc)/gretl.sty.in
+BIBSRC = gretl.bib gretl.bst biblio.tex
+STYSRC = gretl.sty gretl-lite.sty
 
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
 all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD) \
 	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTKBD)
 
-$(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
+$(GUIDE): $(GUIDETEX) ../commands/textables date.tex $(STYSRC) $(BIBSRC) | figlink
 	pdflatex $<
 	bibtex gretl-guide
 	pdflatex $<
@@ -126,8 +133,8 @@ $(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref.tex links cmdtex functex textables topiclist \
-	date.tex $(STYSRC) $(BIBSRC)
+$(REF): $(REFTEX) ../commands/cmdtex ../commands/functex ../commands/textables \
+	../commands/topiclist date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
 	bibtex gretl-ref
 	pdflatex $<
@@ -135,143 +142,184 @@ $(REF): gretl-ref.tex links cmdtex functex textables topiclist \
 	pdflatex $<
 	pdflatex $<
 
-$(HANSL): hansl-primer.tex links date.tex $(STYSRC)
+$(HANSL): $(HPTEX) date.tex $(STYSRC) | figlink
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(PKGBOOK): pkgbook.tex links date.tex $(STYSRC)
+$(PKGBOOK): $(PKGTEX) date.tex $(STYSRC) | figlink
 	pdflatex $<
 	bibtex pkgbook
 	pdflatex $<
 	pdflatex $<
 
-$(MPIDOC): gretl-mpi.tex links date.tex $(STYSRC)
+$(MPIDOC): $(MPITEX) date.tex $(STYSRC) | figlink
 	pdflatex $<
 	pdflatex $<
 
-$(MIDASDOC): midas-gretl.tex links date.tex $(STYSRC)
+$(MIDASDOC): $(MIDASTEX) date.tex $(STYSRC) | figlink
 	pdflatex $<
 	bibtex midas-gretl
 	pdflatex $<
 	pdflatex $<
 
-$(SVMDOC): gretl-svm.tex links $(STYSRC)
+$(SVMDOC): $(SVMTEX) $(STYSRC) | figlink
 	pdflatex $<
 	bibtex gretl-svm
 	pdflatex $<
 	pdflatex $<
 
-$(KBD): gretl-keys.tex links $(STYSRC)
+$(KBD): $(KBDTEX) $(STYSRC)
 	pdflatex $<
 
-$(ALTGUIDE): gretl-guide-a4.tex links textables date.tex $(STYSRC) $(BIBSRC)
-	pdflatex $<
+$(ALTGUIDE): $(GUIDETEX) gretl-guide-a4.tex ../commands/textables date.tex $(STYSRC) $(BIBSRC)
+	pdflatex gretl-guide-a4
 	bibtex gretl-guide-a4
-	pdflatex $<
+	pdflatex gretl-guide-a4
 	bibtex gretl-guide-a4
-	pdflatex $<
-	pdflatex $<
+	pdflatex gretl-guide-a4
+	pdflatex gretl-guide-a4
 
-$(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist \
-	date.tex $(STYSRC) $(BIBSRC)
-	pdflatex $<
+$(ALTREF): $(REFTEX) gretl-ref-a4.tex ../commands/cmdtex ../commands/functex \
+	../commands/textables ../commands/topiclist date.tex $(STYSRC) $(BIBSRC)
+	pdflatex gretl-ref-a4
 	bibtex gretl-ref-a4
-	pdflatex $<
+	pdflatex gretl-ref-a4
 	bibtex gretl-ref-a4
-	pdflatex $<
-	pdflatex $<
+	pdflatex gretl-ref-a4
+	pdflatex gretl-ref-a4
 
-$(ALTHANSL): hansl-primer-a4.tex links date.tex $(STYSRC)
-	pdflatex $<
-	pdflatex $<
-	pdflatex $<
+$(ALTHANSL): $(HPTEX) hansl-primer-a4.tex date.tex $(STYSRC)
+	pdflatex hansl-primer-a4
+	pdflatex hansl-primer-a4
+	pdflatex hansl-primer-a4
 
-$(ALTPKGBOOK): pkgbook-a4.tex links date.tex $(STYSRC)
-	pdflatex $<
+$(ALTPKGBOOK): $(PKGTEX) pkgbook-a4.tex date.tex $(STYSRC)
+	pdflatex pkgbook-a4
 	bibtex pkgbook-a4
-	pdflatex $<
-	pdflatex $<
+	pdflatex pkgbook-a4
+	pdflatex pkgbook-a4
 
-$(ALTMPIDOC): gretl-mpi-a4.tex links date.tex $(STYSRC)
-	pdflatex $<
-	pdflatex $<
+$(ALTMPIDOC): $(MPITEX) gretl-mpi-a4.tex date.tex $(STYSRC)
+	pdflatex gretl-mpi-a4
+	pdflatex gretl-mpi-a4
 
-$(ALTMIDASDOC): midas-gretl-a4.tex links date.tex $(STYSRC)
-	pdflatex $<
+$(ALTMIDASDOC): $(MIDASTEX) midas-gretl-a4.tex date.tex $(STYSRC)
+	pdflatex midas-gretl-a4
 	bibtex midas-gretl-a4
-	pdflatex $<
-	pdflatex $<
+	pdflatex midas-gretl-a4
+	pdflatex midas-gretl-a4
 
-$(ALTSVMDOC): gretl-svm-a4.tex links $(STYSRC)
-	pdflatex $<
+$(ALTSVMDOC): $(SVMTEX) gretl-svm-a4.tex $(STYSRC)
+	pdflatex gretl-svm-a4
 	bibtex gretl-svm-a4
-	pdflatex $<
-	pdflatex $<
+	pdflatex gretl-svm-a4
+	pdflatex gretl-svm-a4
 
-$(ALTKBD): gretl-keys-a4.tex links $(STYSRC)
-	pdflatex $<
-
-gretl-guide.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
-
-gretl-ref.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
-
-hansl-primer.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
-
-gretl-mpi.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
-
-midas-gretl.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
-
-gretl-svm.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
-
-gretl-keys.tex:
-	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
+$(ALTKBD): $(KBDTEX) gretl-keys-a4.tex $(STYSRC)
+	pdflatex gretl-keys-a4
 
 letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD)
 
 a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTKBD)
 
-gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex ../commands/us2a4
+gretl-guide-a4.tex: $(texsrc)/gretl-guide.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex ../commands/us2a4
+gretl-ref-a4.tex: $(texsrc)/gretl-ref.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-hansl-primer-a4.tex: $(docsrc)/tex/hansl-primer.tex ../commands/us2a4
+hansl-primer-a4.tex: $(texsrc)/hansl-primer.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-pkgbook-a4.tex: $(docsrc)/tex/pkgbook.tex ../commands/us2a4
+pkgbook-a4.tex: $(texsrc)/pkgbook.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-gretl-mpi-a4.tex: $(docsrc)/tex/gretl-mpi.tex ../commands/us2a4
+gretl-mpi-a4.tex: $(texsrc)/gretl-mpi.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-midas-gretl-a4.tex: $(docsrc)/tex/midas-gretl.tex ../commands/us2a4
+midas-gretl-a4.tex: $(texsrc)/midas-gretl.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-gretl-svm-a4.tex: $(docsrc)/tex/gretl-svm.tex ../commands/us2a4
+gretl-svm-a4.tex: $(texsrc)/gretl-svm.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4
+gretl-keys-a4.tex: $(texsrc)/gretl-keys.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
-.PHONY : links cmdtex functex textables alt onepass refpass \
-	hanslpass pkgbookpass topiclist install clean
+$(GUIDETEX): | guidelink
 
-links:
-	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
-	rm -f gretl-lite.sty && ln -s ../gretl-lite.sty ./gretl-lite.sty
-	if [ ! -d figures ] ; then rm -f figures && ln -s $(docsrc)/figures ./figures ; fi
-	for f in $(TEXSRC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
-	for f in $(BIBSRC) ; do \
-	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
+$(REFTEX): | reflink
+
+$(HPTEX): | hplink
+
+$(PKGTEX): | pkglink
+
+$(KBDTEX): | kbdlink
+
+$(MPITEX): | mpilink
+
+$(MIDASTEX): | midaslink
+
+$(SVMTEX): | svmlink
+
+$(BIBSRC): | biblink
+
+$(STYSRC): | stylink
+
+../commands/us2a4:
+	$(MAKE) -C ../commands us2a4
+
+date.tex: $(ALLSRC)
+	LANG=en_US date "+%B, %Y" > $@
+
+.PHONY : guidelink reflink hplink pkglink biblink stylink kbdlink \
+	figlink mpilink midaslink svmlink onepass refpass bibpass \
+	install installdirs install-us install-a4 clean distclean
+
+guidelink:
+	@for f in $(GUIDETEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+reflink:
+	@for f in $(REFTEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+hplink:
+	@for f in $(HPTEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+pkglink:
+	@for f in $(PKGTEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+biblink:
+	@for f in $(BIBSRC) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+kbdlink:
+	@for f in $(KBDTEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+mpilink:
+	@for f in $(MPITEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+midaslink:
+	@for f in $(MIDASTEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+svmlink:
+	@for f in $(SVMTEX) ; do \
+	if [ ! -f $$f ] || [ $(texsrc)/$$f -nt $$f ] ; then ln -sf $(texsrc)/$$f . ; fi ; done
+
+stylink:
+	@for f in $(STYSRC) ; do \
+	if [ ! -f $$f ] || [ ../$$f -nt $$f ] ; then ln -sf ../$$f . ; fi ; done
+
+figlink:
+	@if [ ! -d figures ] || [ $(docsrc)/figures -nt figures ] ; then \
+	rm -rf figures && ln -s $(docsrc)/figures ./figures ; fi
 
 cmdtex:
 	$(MAKE) -C ../commands cmdtex
@@ -285,42 +333,25 @@ textables:
 functex:
 	$(MAKE) -C ../commands functex
 
-../commands/us2a4:
-	$(MAKE) -C ../commands us2a4
-
-date.tex: $(ALLSRC)
-	LANG=en_US date "+%B, %Y" > $@
-
-alt: gretl-guide-a4.pdf gretl-ref-a4.pdf
-
-onepass: gretl-guide.tex links textables
+onepass: $(GUIDETEX) ../commands/textables
 	pdflatex $<
 
-refpass: gretl-ref.tex links cmdtex textables functex topiclist
-	pdflatex $<
-
-hanslpass: hansl-primer.tex links
-	pdflatex $<
-
-pkgbookpass: pkgbook.tex links
-	pdflatex $<
-
-mpidocpass: gretl-mpi.tex links
+refpass: $(REFTEX) ../commands/cmdtex ../commands/textables ../commands/functex ../commands/topiclist
 	pdflatex $<
 
 bibpass: onepass refpass
 	bibtex gretl-guide
 	bibtex gretl-ref
 
-install: all installdirs
+install: all | installdirs
 	for f in *.pdf ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(docdir) ; done
 
-install-us: $(US) installdirs
+install-us: $(US) | installdirs
 	for f in $(US) ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(docdir) ; done
 
-install-a4: $(A4) installdirs
+install-a4: $(A4) | installdirs
 	for f in $(A4) ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(docdir) ; done
 
