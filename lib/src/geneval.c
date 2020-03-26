@@ -7351,7 +7351,9 @@ static NODE *do_getenv (NODE *l, int f, parser *p)
     return ret;
 }
 
-static NODE *do_funcerr (NODE *l, NODE *r, parser *p)
+/* do_funcerr() is a legacy thing: remove it when possible */
+
+static NODE *do_funcerr (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
@@ -7360,27 +7362,36 @@ static NODE *do_funcerr (NODE *l, NODE *r, parser *p)
 	p->err = E_DATA;
     } else {
 	const char *funcname = NULL;
-	NODE *s = l;  /* backward compatibility */
-	int cond = 1; /* ditto */
 
 	current_function_info(&funcname, NULL);
+	gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+			     funcname, n->v.str);
+	p->err = E_FUNCERR;
+    }
 
-	if (!null_node(r)) {
-	    /* The first arg should be a boolean condition
-	       (but we'll default to "true"), with a string
-	       on the second arg.
-	    */
-	    cond = node_get_bool(l, p, 1);
-	    s = r;
-	}
+    if (ret != NULL) {
+	ret->v.xval = 1;
+    }
+
+    return ret;
+}
+
+static NODE *do_errorif (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (gretl_function_depth() == 0) {
+	gretl_errmsg_set("errorif: no function is executing");
+	p->err = E_DATA;
+    } else {
+	int cond = node_get_bool(l, p, -1);
+
 	if (cond && !p->err) {
-	    if (s != NULL && s->t == STR) {
-		gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
-				     funcname, s->v.str);
-	    } else {
-		gretl_errmsg_sprintf(_("Error triggered in function %s()"),
-				     funcname);
-	    }
+	    const char *funcname = NULL;
+
+	    current_function_info(&funcname, NULL);
+	    gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+				 funcname, r->v.str);
 	    p->err = E_FUNCERR;
 	}
     }
@@ -16742,7 +16753,14 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_FUNCERR:
-	ret = do_funcerr(l, r, p);
+	ret = do_funcerr(l, p);
+	break;
+    case F_ERRORIF:
+	if (r->t != STR) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = do_errorif(l, r, p);
+	}
 	break;
     case F_OBSLABEL:
 	if (l->t == NUM || l->t == MAT) {

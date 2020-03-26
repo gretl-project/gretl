@@ -3644,6 +3644,26 @@
       </description>
     </function>
 
+    <function name="errorif" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bool">condition</fnarg>
+	<fnarg type="string">msg</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Applicable only in the context of a user-defined function.
+	  If <argname>condition</argname> evaluates as non-zero, it
+	  causes execution of the current function to terminate with
+	  an error condition flagged; the <argname>msg</argname>
+	  argument is then printed as part of the message shown to the
+	  caller of the function in question.
+	</para>
+	<para>
+	  The return value from this function (1) is purely nominal.
+	</para>
+      </description>
+    </function>
+
     <function name="exists" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">name</fnarg>
@@ -4216,26 +4236,6 @@
 	<para>
 	  A negative value of <argname>d</argname> can be given, in
 	  which case fractional integration is performed.
-	</para>
-      </description>
-    </function>
-
-    <function name="funcerr" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="bool">condition</fnarg>
-	<fnarg type="string">msg</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Applicable only in the context of a user-defined function.
-	  If <argname>condition</argname> evaluates as non-zero, it
-	  causes execution of the current function to terminate with
-	  an error condition flagged; the <argname>msg</argname>
-	  argument is then printed as part of the message shown to the
-	  caller of the function in question.
-	</para>
-	<para>
-	  The return value from this function (1) is purely nominal.
 	</para>
       </description>
     </function>

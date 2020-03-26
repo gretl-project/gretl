@@ -399,7 +399,8 @@ enum {
     F_PSDROOT,
     F_INSTRINGS,
     F_STRVALS,
-    F_FUNCERR,
+    F_FUNCERR, /* legacy */
+    F_ERRORIF,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

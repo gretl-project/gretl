@@ -8735,7 +8735,8 @@ static void set_func_error_message (int err, ufunc *u,
 	    gretl_errmsg_set(msg);
 	}
 
-	if (*line == '\0' || strncmp(line, "funcerr(", 8) == 0) {
+	if (*line == '\0' || strncmp(line, "funcerr(", 8) == 0 ||
+	    strncmp(line, "errorif(", 8) == 0) {
 	    showline = 0;
 	}
 
