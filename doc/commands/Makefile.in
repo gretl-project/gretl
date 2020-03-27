@@ -278,15 +278,35 @@ $(GRETLLIB):
 
 .PHONY: test xmlcheck
 
-# generate some reference tables automatically, to ensure
-# they remain in step with the actual code
-textables: tables matfuncs $(EN_FNSRC)
-	./tables --internals > ../tex/tabinternals.tex && \
-	./tables --functions > ../tex/tabfunctions.tex && \
-	./tables --loopcmds > ../tex/tabloopcmds.tex && \
-	./tables --nonloopcmds > ../tex/tabnonloopcmds.tex && \
-	LANG=en_US ./matfuncs $(EN_FNSRC) > ../tex/matfuncs.tex && \
-	touch $@
+# Rules for generated TeX files wanted in the ../tex directory
+
+../tex/tabinternals.tex: tables
+	./tables --internals > $@
+
+../tex/tabfunctions.tex: tables
+	./tables --functions > $@
+
+../tex/tabloopcmds.tex: tables
+	./tables --loopcmds > $@
+
+../tex/tabnonloopcmds.tex: tables
+	./tables --nonloopcmds > $@
+
+../tex/matfuncs.tex: matfuncs $(EN_FNSRC)
+	LANG=en_US ./matfuncs $(EN_FNSRC) > $@
+
+../tex/funcbody.tex: xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --tex $(EN_FNSRC) --lang=en --docdir=$(CMDSDIR) | \
+	./reflow > $@
+
+../tex/refbody.tex: xsltrans reflow $(EN_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --tex $(EN_SRC) --lang=en --docdir=$(CMDSDIR) | \
+	./reflow > $@
+
+../tex/cmdtopics.tex: topiclist $(EN_SRC)
+	LANG=en_US ./topiclist $(EN_SRC) > $@
+
+# FIXME other languages
 
 textables_it: tables matfuncs $(IT_FNSRC)
 	./tables --internals > ../tex_it/tabinternals.tex && \
@@ -320,10 +340,6 @@ textables_gl: tables matfuncs $(GL_FNSRC)
 	LANG=gl_ES ./matfuncs $(GL_FNSRC) > ../tex_gl/matfuncs.tex && \
 	touch $@
 
-functex: xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --tex $(EN_FNSRC) --lang=en --docdir=$(CMDSDIR) | \
-	./reflow > ../tex/funcbody.tex && touch $@
-
 functex_it: xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --tex $(IT_FNSRC) --lang=it --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_it/funcbody.tex && touch $@
@@ -340,10 +356,6 @@ functex_gl: xsltrans reflow $(GL_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREF
 	./xsltrans --funcs --tex $(GL_FNSRC) --lang=gl --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_gl/funcbody.tex && touch $@
 
-cmdtex: xsltrans reflow $(EN_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --tex $(EN_SRC) --lang=en --docdir=$(CMDSDIR) | \
-	./reflow > ../tex/refbody.tex && touch $@
-
 cmdtex_it: xsltrans reflow $(IT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --tex $(IT_SRC) --lang=it --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_it/refbody.tex && touch $@
@@ -359,9 +371,6 @@ cmdtex_pt: xsltrans reflow $(PT_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 cmdtex_gl: xsltrans reflow $(GL_SRC) $(CMDDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --tex $(GL_SRC) --lang=gl --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_gl/refbody.tex && touch $@
-
-topiclist_en: topiclist $(EN_SRC)
-	LANG=en_US ./topiclist $(EN_SRC) > ../tex/cmdtopics.tex && touch $@
 
 topiclist_it: topiclist $(IT_SRC)
 	LANG=it_IT ./topiclist $(IT_SRC) > ../tex_it/cmdtopics.tex && touch $@
@@ -425,7 +434,7 @@ docclean:
 
 clean: docclean
 	rm -f $(CPROGS) *.o
-	rm -f textables cmdtex* functex* topiclist_*
+	rm -f textables* cmdtex* functex* topiclist_*
 	rm -rf .libs
 
 distclean: clean

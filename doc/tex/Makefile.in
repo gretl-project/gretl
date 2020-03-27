@@ -120,12 +120,19 @@ KBDTEX = gretl-keys.tex
 BIBSRC = gretl.bib gretl.bst biblio.tex
 STYSRC = gretl.sty gretl-lite.sty
 
+# generated TeX files required by Guide
+GENTEX1 = tabnonloopcmds.tex matfuncs.tex
+
+# generated TeX files needed by Reference
+GENTEX2 = tabinternals.tex tabfunctions.tex tabloopcmds.tex \
+	funcbody.tex refbody.tex cmdtopics.tex
+
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
 all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD) \
 	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTKBD)
 
-$(GUIDE): $(GUIDETEX) ../commands/textables date.tex $(STYSRC) $(BIBSRC) | figlink
+$(GUIDE): $(GUIDETEX) $(GENTEX1) date.tex $(STYSRC) $(BIBSRC) | figlink
 	pdflatex $<
 	bibtex gretl-guide
 	pdflatex $<
@@ -133,8 +140,7 @@ $(GUIDE): $(GUIDETEX) ../commands/textables date.tex $(STYSRC) $(BIBSRC) | figli
 	pdflatex $<
 	pdflatex $<
 
-$(REF): $(REFTEX) ../commands/cmdtex ../commands/functex ../commands/textables \
-	../commands/topiclist date.tex $(STYSRC) $(BIBSRC)
+$(REF): $(REFTEX) $(GENTEX2) date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
 	bibtex gretl-ref
 	pdflatex $<
@@ -172,7 +178,7 @@ $(SVMDOC): $(SVMTEX) $(STYSRC) | figlink
 $(KBD): $(KBDTEX) $(STYSRC)
 	pdflatex $<
 
-$(ALTGUIDE): $(GUIDETEX) gretl-guide-a4.tex ../commands/textables date.tex $(STYSRC) $(BIBSRC)
+$(ALTGUIDE): $(GUIDETEX) gretl-guide-a4.tex $(GENTEX1) date.tex $(STYSRC) $(BIBSRC)
 	pdflatex gretl-guide-a4
 	bibtex gretl-guide-a4
 	pdflatex gretl-guide-a4
@@ -180,8 +186,7 @@ $(ALTGUIDE): $(GUIDETEX) gretl-guide-a4.tex ../commands/textables date.tex $(STY
 	pdflatex gretl-guide-a4
 	pdflatex gretl-guide-a4
 
-$(ALTREF): $(REFTEX) gretl-ref-a4.tex ../commands/cmdtex ../commands/functex \
-	../commands/textables ../commands/topiclist date.tex $(STYSRC) $(BIBSRC)
+$(ALTREF): $(REFTEX) gretl-ref-a4.tex $(GENTEX2) date.tex $(STYSRC) $(BIBSRC)
 	pdflatex gretl-ref-a4
 	bibtex gretl-ref-a4
 	pdflatex gretl-ref-a4
@@ -218,6 +223,30 @@ $(ALTSVMDOC): $(SVMTEX) gretl-svm-a4.tex $(STYSRC)
 
 $(ALTKBD): $(KBDTEX) gretl-keys-a4.tex $(STYSRC)
 	pdflatex gretl-keys-a4
+
+matfuncs.tex:
+	make -C ../commands ../tex/$@
+
+tabinternals.tex:
+	make -C ../commands ../tex/$@
+
+tabfunctions.tex:
+	make -C ../commands ../tex/$@
+
+tabloopcmds.tex:
+	make -C ../commands ../tex/$@
+
+tabnonloopcmds.tex:
+	make -C ../commands ../tex/$@
+
+funcbody.tex:
+	make -C ../commands ../tex/$@
+
+refbody.tex:
+	make -C ../commands ../tex/$@
+
+cmdtopics.tex:
+	make -C ../commands ../tex/$@
 
 letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD)
 
@@ -321,22 +350,10 @@ figlink:
 	@if [ ! -d figures ] || [ $(docsrc)/figures -nt figures ] ; then \
 	rm -rf figures && ln -s $(docsrc)/figures ./figures ; fi
 
-cmdtex:
-	$(MAKE) -C ../commands cmdtex
-
-topiclist:
-	$(MAKE) -C ../commands topiclist_en
-
-textables:
-	$(MAKE) -C ../commands textables
-
-functex:
-	$(MAKE) -C ../commands functex
-
-onepass: $(GUIDETEX) ../commands/textables
+onepass: $(GUIDETEX) $(GENTEX1)
 	pdflatex $<
 
-refpass: $(REFTEX) ../commands/cmdtex ../commands/textables ../commands/functex ../commands/topiclist
+refpass: $(REFTEX) $(GENTEX2)
 	pdflatex $<
 
 bibpass: onepass refpass
@@ -360,11 +377,7 @@ installdirs:
 
 clean:
 	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
-	rm -f refbody.tex funcbody.tex cmdtopics.tex *-a4.tex
-	rm -f ../commands/textables ../commands/topiclist_en 
-	rm -f ../commands/cmdtex ../commands/functex
-	rm -f date.tex matfuncs.tex tabfunctions.tex \
-	tabinternals.tex tabloopcmds.tex tabnonloopcmds.tex
+	rm -f $(GENTEX1) $(GENTEX2) *-a4.tex date.tex
 
 distclean: clean
 	rm -f Makefile
