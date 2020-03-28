@@ -25,16 +25,14 @@ GRETLINC = -I$(topsrc)/lib/src -I../..
 GRETLLIB = ../../lib/libgretl-1.0.la
 
 CMDSDIR = $(topsrc)/doc/commands
+TEXDIR = $(topsrc)/doc/tex
+SHAREDIR = $(topsrc)/share
 
 vpath %.c = $(CMDSDIR)
 vpath %.dtd = $(CMDSDIR)
 vpath %.xsl = $(CMDSDIR)
 
 LIBTOOL = ../../libtool
-
-CMDSDIR = $(topsrc)/doc/commands
-TEXDIR = $(topsrc)/doc/tex
-SHAREDIR = $(topsrc)/share
 
 CMDDTD = $(CMDSDIR)/gretl_commands.dtd
 EN_SRC = $(CMDSDIR)/gretl_commands_en.xml
@@ -64,23 +62,46 @@ XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
 EQNLIST = $(CMDSDIR)/eqn_list.xml
 EQNXSL = $(CMDSDIR)/equations.xsl
 
-EN_CMDREF_STAMP = $(SHAREDIR)/cmdref_en.stamp
-ES_CMDREF_STAMP = $(SHAREDIR)/cmdref_es.stamp
-IT_CMDREF_STAMP = $(SHAREDIR)/cmdref_it.stamp
-PT_CMDREF_STAMP = $(SHAREDIR)/cmdref_pt.stamp
-GL_CMDREF_STAMP = $(SHAREDIR)/cmdref_gl.stamp
-
-EN_FNREF_STAMP = $(SHAREDIR)/fnref_en.stamp
-ES_FNREF_STAMP = $(SHAREDIR)/fnref_es.stamp
-IT_FNREF_STAMP = $(SHAREDIR)/fnref_it.stamp
-PT_FNREF_STAMP = $(SHAREDIR)/fnref_pt.stamp
-GL_FNREF_STAMP = $(SHAREDIR)/fnref_gl.stamp
-
 CLI_CMDREF = gretl_cli_cmdref
 GUI_CMDREF = gretl_gui_cmdref
 GUI_HELP   = gretl_gui_help
 CLI_FNREF  = gretl_cli_fnref
 GUI_FNREF  = gretl_gui_fnref
+
+CLI_CMDREF_EN = $(SHAREDIR)/$(CLI_CMDREF).en
+GUI_CMDREF_EN = $(SHAREDIR)/$(CLI_CMDREF).en
+GUI_HELP_EN = $(SHAREDIR)/$(CLI_CMDREF).en
+CLI_FNREF_EN  = $(SHAREDIR)/$(CLI_FNREF).en
+GUI_FNREF_EN  = $(SHAREDIR)/$(GUI_FNREF).en
+HELPFILES_EN = $(CLI_CMDREF_EN) $(GUI_CMDREF_EN) $(GUI_HELP_EN) $(CLI_FNREF_EN) $(GUI_FNREF_EN)
+
+CLI_CMDREF_IT = $(SHAREDIR)/$(CLI_CMDREF).it
+GUI_CMDREF_IT = $(SHAREDIR)/$(CLI_CMDREF).it
+GUI_HELP_IT = $(SHAREDIR)/$(CLI_CMDREF).it
+CLI_FNREF_IT  = $(SHAREDIR)/$(CLI_FNREF).it
+GUI_FNREF_IT  = $(SHAREDIR)/$(GUI_FNREF).it
+HELPFILES_IT = $(CLI_CMDREF_IT) $(GUI_CMDREF_IT) $(GUI_HELP_IT) $(CLI_FNREF_IT) $(GUI_FNREF_IT)
+
+CLI_CMDREF_ES = $(SHAREDIR)/$(CLI_CMDREF).es
+GUI_CMDREF_ES = $(SHAREDIR)/$(CLI_CMDREF).es
+GUI_HELP_ES = $(SHAREDIR)/$(CLI_CMDREF).es
+CLI_FNREF_ES  = $(SHAREDIR)/$(CLI_FNREF).es
+GUI_FNREF_ES  = $(SHAREDIR)/$(GUI_FNREF).es
+HELPFILES_ES = $(CLI_CMDREF_ES) $(GUI_CMDREF_ES) $(GUI_HELP_ES) $(CLI_FNREF_ES) $(GUI_FNREF_ES)
+
+CLI_CMDREF_PT = $(SHAREDIR)/$(CLI_CMDREF).pt
+GUI_CMDREF_PT = $(SHAREDIR)/$(CLI_CMDREF).pt
+GUI_HELP_PT = $(SHAREDIR)/$(CLI_CMDREF).pt
+CLI_FNREF_PT  = $(SHAREDIR)/$(CLI_FNREF).pt
+GUI_FNREF_PT  = $(SHAREDIR)/$(GUI_FNREF).pt
+HELPFILES_PT = $(CLI_CMDREF_PT) $(GUI_CMDREF_PT) $(GUI_HELP_PT) $(CLI_FNREF_PT) $(GUI_FNREF_PT)
+
+CLI_CMDREF_GL = $(SHAREDIR)/$(CLI_CMDREF).gl
+GUI_CMDREF_GL = $(SHAREDIR)/$(CLI_CMDREF).gl
+GUI_HELP_GL = $(SHAREDIR)/$(CLI_CMDREF).gl
+CLI_FNREF_GL  = $(SHAREDIR)/$(CLI_FNREF).gl
+GUI_FNREF_GL  = $(SHAREDIR)/$(GUI_FNREF).gl
+HELPFILES_GL = $(CLI_CMDREF_GL) $(GUI_CMDREF_GL) $(GUI_HELP_GL) $(CLI_FNREF_GL) $(GUI_FNREF_GL)
 
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 HELPREFS = $(SHAREDIR)/gretlhelp.refs
@@ -160,96 +181,116 @@ figs: $(EQNLIST)
 	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $(FIGSTAMP)
 
 # English "online" help files
-$(EN_CMDREF_STAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(EN_SRC) > en1.tmp && \
-	./reflow < en1.tmp > $(SHAREDIR)/$(CLI_CMDREF).en && \
-	./xsltrans --cmds --pango $(EN_SRC) > en1.tmp && \
-	./reflow -m < en1.tmp > $(SHAREDIR)/$(GUI_CMDREF).en && \
-	./xsltrans --gui --pango $(EN_SRC) > en1.tmp && \
-	./reflow -m < en1.tmp > $(SHAREDIR)/$(GUI_HELP).en && \
-	touch $@ && rm -f en1.tmp
 
-# Spanish "online" help files
-$(ES_CMDREF_STAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --cmds --plain $(ES_SRC) > es1.tmp && \
-	./reflow < es1.tmp > $(SHAREDIR)/$(CLI_CMDREF).es && \
-	./xsltrans --cmds --pango $(ES_SRC) > es1.tmp && \
-	./reflow -m < es1.tmp > $(SHAREDIR)/$(GUI_CMDREF).es && \
-	./xsltrans --gui --pango $(ES_SRC) > es1.tmp && \
-	./reflow -m < es1.tmp > $(SHAREDIR)/$(GUI_HELP).es && \
-	touch $@ && rm -f es1.tmp
+$(CLI_CMDREF_EN): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --plain $(EN_SRC) > en1.tmp && \
+	./reflow < en1.tmp > $@ && rm -f en1.tmp
+
+$(GUI_CMDREF_EN): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --pango $(EN_SRC) > en2.tmp && \
+	./reflow -m < en2.tmp > $@ && rm -f en2.tmp
+
+$(GUI_HELP_EN): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --gui --pango $(EN_SRC) > en3.tmp && \
+	./reflow -m < en3.tmp > $@ && rm -f en3.tmp
+
+$(CLI_FNREF_EN): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(EN_FNSRC) > en4.tmp && \
+	./reflow < en4.tmp > $@ && rm -f en4.tmp
+
+$(GUI_FNREF_EN): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --pango $(EN_FNSRC) > en5.tmp && \
+	./reflow -m < en5.tmp > $@ && rm -f en5.tmp
 
 # Italian "online" help files
-$(IT_CMDREF_STAMP): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+
+$(CLI_CMDREF_IT): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --plain $(IT_SRC) > it1.tmp && \
-	./reflow < it1.tmp > $(SHAREDIR)/$(CLI_CMDREF).it && \
-	./xsltrans --cmds --pango $(IT_SRC) > it1.tmp && \
-	./reflow -m < it1.tmp > $(SHAREDIR)/$(GUI_CMDREF).it && \
-	./xsltrans --gui --pango $(IT_SRC) > it1.tmp && \
-	./reflow -m < it1.tmp > $(SHAREDIR)/$(GUI_HELP).it && \
-	touch $@ && rm -f it1.tmp
+	./reflow < it1.tmp > $@ && rm -f it1.tmp
+
+$(GUI_CMDREF_IT): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --pango $(IT_SRC) > it2.tmp && \
+	./reflow -m < it2.tmp > $@ && rm -f it2.tmp
+
+$(GUI_HELP_IT): xsltrans reflow $(IT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --gui --pango $(IT_SRC) > it3.tmp && \
+	./reflow -m < it3.tmp > $@ && rm -f it3.tmp
+
+$(CLI_FNREF_IT): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(IT_FNSRC) > it4.tmp && \
+	./reflow < it4.tmp > $@ && rm -f it4.tmp
+
+$(GUI_FNREF_IT): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --pango $(IT_FNSRC) > it5.tmp && \
+	./reflow -m < it5.tmp > $@ && rm -f it5.tmp
+
+# Spanish "online" help files
+
+$(CLI_CMDREF_ES): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --plain $(ES_SRC) > es1.tmp && \
+	./reflow < es1.tmp > $@ && rm -f es1.tmp
+
+$(GUI_CMDREF_ES): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --pango $(ES_SRC) > es2.tmp && \
+	./reflow -m < es2.tmp > $@ && rm -f es2.tmp
+
+$(GUI_HELP_ES): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --gui --pango $(ES_SRC) > es3.tmp && \
+	./reflow -m < es3.tmp > $@ && rm -f es3.tmp
+
+$(CLI_FNREF_ES): xsltrans reflow $(ES_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(ES_FNSRC) > es4.tmp && \
+	./reflow < es4.tmp > $@ && rm -f es4.tmp
+
+$(GUI_FNREF_ES): xsltrans reflow $(ES_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --pango $(ES_FNSRC) > es5.tmp && \
+	./reflow -m < es5.tmp > $@ && rm -f es5.tmp
 
 # Portuguese "online" help files
-$(PT_CMDREF_STAMP): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+
+$(CLI_CMDREF_PT): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --plain $(PT_SRC) > pt1.tmp && \
-	./reflow < pt1.tmp > $(SHAREDIR)/$(CLI_CMDREF).pt && \
-	./xsltrans --cmds --pango $(PT_SRC) > pt1.tmp && \
-	./reflow -m < pt1.tmp > $(SHAREDIR)/$(GUI_CMDREF).pt && \
-	./xsltrans --gui --pango $(PT_SRC) > pt1.tmp && \
-	./reflow -m < pt1.tmp > $(SHAREDIR)/$(GUI_HELP).pt && \
-	touch $@ && rm -f pt1.tmp
+	./reflow < pt1.tmp > $@ && rm -f pt1.tmp
+
+$(GUI_CMDREF_PT): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --pango $(PT_SRC) > pt2.tmp && \
+	./reflow -m < pt2.tmp > $@ && rm -f pt2.tmp
+
+$(GUI_HELP_PT): xsltrans reflow $(PT_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --gui --pango $(PT_SRC) > pt3.tmp && \
+	./reflow -m < pt3.tmp > $@ && rm -f pt3.tmp
+
+$(CLI_FNREF_PT): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(PT_FNSRC) > pt4.tmp && \
+	./reflow < pt4.tmp > $@ && rm -f pt4.tmp
+
+$(GUI_FNREF_PT): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --pango $(PT_FNSRC) > pt5.tmp && \
+	./reflow -m < pt5.tmp > $@ && rm -f pt5.tmp
 
 # Galego "online" help files
-$(GL_CMDREF_STAMP): xsltrans reflow $(GL_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+
+$(CLI_CMDREF_GL): xsltrans reflow $(GL_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --cmds --plain $(GL_SRC) > gl1.tmp && \
-	./reflow < gl1.tmp > $(SHAREDIR)/$(CLI_CMDREF).gl && \
-	./xsltrans --cmds --pango $(GL_SRC) > gl1.tmp && \
-	./reflow -m < gl1.tmp > $(SHAREDIR)/$(GUI_CMDREF).gl && \
-	./xsltrans --gui --pango $(GL_SRC) > gl1.tmp && \
-	./reflow -m < gl1.tmp > $(SHAREDIR)/$(GUI_HELP).gl && \
-	touch $@ && rm -f gl1.tmp
+	./reflow < gl1.tmp > $@ && rm -f gl1.tmp
 
-# English function reference files
-$(EN_FNREF_STAMP): xsltrans reflow $(EN_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(EN_FNSRC) > en2.tmp && \
-	./reflow < en2.tmp > $(SHAREDIR)/$(CLI_FNREF).en && \
-	./xsltrans --funcs --pango $(EN_FNSRC) > en2.tmp && \
-	./reflow -m < en2.tmp > $(SHAREDIR)/$(GUI_FNREF).en && \
-	touch $@ && rm -f en2.tmp
+$(GUI_CMDREF_GL): xsltrans reflow $(GL_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --cmds --pango $(GL_SRC) > gl2.tmp && \
+	./reflow -m < gl2.tmp > $@ && rm -f gl2.tmp
 
-# Italian function reference files
-$(IT_FNREF_STAMP): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(IT_FNSRC) > it2.tmp && \
-	./reflow < it2.tmp > $(SHAREDIR)/$(CLI_FNREF).it && \
-	./xsltrans --funcs --pango $(IT_FNSRC) > it2.tmp && \
-	./reflow -m < it2.tmp > $(SHAREDIR)/$(GUI_FNREF).it && \
-	touch $@ && rm -f it2.tmp
+$(GUI_HELP_GL): xsltrans reflow $(GL_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --gui --pango $(GL_SRC) > gl3.tmp && \
+	./reflow -m < gl3.tmp > $@ && rm -f gl3.tmp
 
-# Spanish function reference files
-$(ES_FNREF_STAMP): xsltrans reflow $(ES_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(ES_FNSRC) > es2.tmp && \
-	./reflow < es2.tmp > $(SHAREDIR)/$(CLI_FNREF).es && \
-	./xsltrans --funcs --pango $(ES_FNSRC) > es2.tmp && \
-	./reflow -m < es2.tmp > $(SHAREDIR)/$(GUI_FNREF).es && \
-	touch $@ && rm -f es2.tmp
+$(CLI_FNREF_GL): xsltrans reflow $(GL_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(GL_FNSRC) > gl4.tmp && \
+	./reflow < gl4.tmp > $@ && rm -f gl4.tmp
 
-# Portuguese function reference files
-$(PT_FNREF_STAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(PT_FNSRC) > pt2.tmp && \
-	./reflow < pt2.tmp > $(SHAREDIR)/$(CLI_FNREF).pt && \
-	./xsltrans --funcs --pango $(PT_FNSRC) > pt2.tmp && \
-	./reflow -m < pt2.tmp > $(SHAREDIR)/$(GUI_FNREF).pt && \
-	touch $@ && rm -f pt2.tmp
+$(GUI_FNREF_GL): xsltrans reflow $(GL_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --pango $(GL_FNSRC) > gl5.tmp && \
+	./reflow -m < gl5.tmp > $@ && rm -f gl5.tmp
 
-# Galego function reference files
-$(GL_FNREF_STAMP): xsltrans reflow $(GL_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
-	./xsltrans --funcs --plain $(GL_FNSRC) > gl2.tmp && \
-	./reflow < gl2.tmp > $(SHAREDIR)/$(CLI_FNREF).gl && \
-	./xsltrans --funcs --pango $(GL_FNSRC) > gl2.tmp && \
-	./reflow -m < gl2.tmp > $(SHAREDIR)/$(GUI_FNREF).gl && \
-	touch $@ && rm -f gl2.tmp
-
-# English HTML help files (experimental)
+# English HTML help files
 
 htmlhelp: cmdref.html funcref.html biblio.html
 
@@ -388,15 +429,15 @@ topiclist_gl: topiclist $(GL_SRC)
 test: skeleton.xml
 	xmllint --valid --noout $<
 
-help-en: $(CHAPREFS) $(EN_CMDREF_STAMP) $(EN_FNREF_STAMP)
+help-en: $(CHAPREFS) $(HELPFILES_EN)
 
-help-it: $(CHAPREFS) $(IT_CMDREF_STAMP) $(IT_FNREF_STAMP)
+help-it: $(CHAPREFS) $(HELPFILES_IT)
 
-help-pt: $(CHAPREFS) $(PT_CMDREF_STAMP) $(PT_FNREF_STAMP)
+help-pt: $(CHAPREFS) $(HELPFILES_PT)
 
-help-gl: $(CHAPREFS) $(GL_CMDREF_STAMP) $(GL_FNREF_STAMP)
+help-gl: $(CHAPREFS) $(HELPFILES_GL)
 
-help-es: $(CHAPREFS) $(ES_CMDREF_STAMP) $(ES_FNREF_STAMP)
+help-es: $(CHAPREFS) $(HELPFILES_ES)
 
 help-all: help-en help-it help-pt help-gl help-es $(HELPREFS)
 

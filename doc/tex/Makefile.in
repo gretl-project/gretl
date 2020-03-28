@@ -224,6 +224,8 @@ $(ALTSVMDOC): $(SVMTEX) gretl-svm-a4.tex $(STYSRC)
 $(ALTKBD): $(KBDTEX) gretl-keys-a4.tex $(STYSRC)
 	pdflatex gretl-keys-a4
 
+gretl-ref.bbl: $(REF)
+
 matfuncs.tex:
 	make -C ../commands ../tex/$@
 
