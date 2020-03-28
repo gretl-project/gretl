@@ -140,7 +140,7 @@ $(GUIDE): $(GUIDETEX) $(GENTEX1) date.tex $(STYSRC) $(BIBSRC) | figlink
 	pdflatex $<
 	pdflatex $<
 
-$(REF): $(REFTEX) $(GENTEX2) date.tex $(STYSRC) $(BIBSRC)
+$(REF): $(REFTEX) $(GENTEX2) date.tex $(STYSRC) $(BIBSRC) | figlink
 	pdflatex $<
 	bibtex gretl-ref
 	pdflatex $<
