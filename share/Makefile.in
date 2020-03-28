@@ -16,6 +16,7 @@ endif
 
 tooldir = $(topsrc)/tools
 sharesrc = $(topsrc)/share
+cmdsdir = ../doc/commands
 
 INSTALL_DATA = cp -fp
 
@@ -57,7 +58,7 @@ VPATH = $(sharesrc)
 all: $(query_make_help)
 
 help:
-	$(MAKE) -C ../doc/commands help-all
+	$(MAKE) -C $(cmdsdir) help-all
 
 .PHONY :
 
@@ -108,26 +109,18 @@ install_help: $(query_make_help)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/doc
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/helpfigs
 	for f in $(AUTO_HELPFILES) ; do \
-	if test -f $(sharesrc)/$$f ; then \
+	if test -f $(cmdsdir)/$$f ; then \
+	$(INSTALL_DATA) $(cmdsdir)/$$f $(DESTDIR)$(gretldir) ; \
+	elif test -f $(sharesrc)/$$f ; then \
 	$(INSTALL_DATA) $(sharesrc)/$$f $(DESTDIR)$(gretldir) ; fi ; done
 	for f in $(sharesrc)/texfigs/*.png ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(gretldir)/helpfigs ; done
 
 installdirs:
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir) 
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/ramanathan
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/greene
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/misc
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/nist
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/plotbars
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/data/gnuplot
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/ramanathan
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/greene
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/misc 
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
-	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
+	for d in data data/ramanathan data/greene data/misc data/nist data/plotbars \
+	data/gnuplot scripts scripts/ramanathan scripts/greene scripts/misc \
+	db functions ; do \
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/$$d ; done
 
 helpclean:
 	for f in $(AUTO_HELPFILES) ; do rm -f $(sharesrc)/$$f ; done
