@@ -182,8 +182,8 @@ biblio.html: bbl2txt ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl --html > $@
 
 # Bibliography file
-$(HELPREFS): bbl2txt $(HELPFILES_EN) ../tex/gretl-ref.bbl
-	./bbl2txt ../tex/gretl-ref.bbl > $@
+$(HELPREFS): ../tex/gretl-ref.bbl bbl2txt $(HELPFILES_EN)
+	./bbl2txt $< > $@
 
 # Guide chapter titles
 $(CHAPREFS): $(TEXDIR)/gretl-guide.tex chaprefs
