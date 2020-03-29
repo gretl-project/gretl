@@ -16,8 +16,14 @@ cd ${parent}/gretl-git && date > share/gretl.stamp
 # make the distribution archive
 cd $parent 
 echo "making archive..."
+# copy across pre-built helpfiles
+cp gretl-git/build/doc/commands/gretl_*ref.* gretl-git/share
+cp gretl-git/build/doc/commands/gretlhelp.refs gretl-git/share
 mv gretl-git ${versiondir}
 rm -f $tarfile
 tar cvJfX $tarfile tar_exclude ${versiondir}
 mv ${versiondir} gretl-git
+# remove pre-built helpfiles
+rm -f gretl-git/share/gretl_*ref.*
+rm -f gretl-git/share/gretlhelp.refs
 
