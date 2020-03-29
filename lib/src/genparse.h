@@ -463,6 +463,7 @@ enum {
     F_SCHUR,
     F_RESAMPLE,
     HF_REGLS,
+    HF_STACK,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

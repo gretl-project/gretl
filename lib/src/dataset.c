@@ -2667,111 +2667,6 @@ int dataset_drop_last_variables (DATASET *dset, int delvars)
     return err;
 }
 
-static void make_stack_label (char *label, char *s)
-{
-    char *p = strstr(s, "--");
-    int len = strlen(s);
-
-    if (p == NULL) {
-	if (len > MAXLABEL - 1) {
-	    strncat(label, s, MAXLABEL - 4);
-	    strcat(label, "...");
-	} else {
-	    strcat(label, s);
-	}
-    } else {
-	int llen = strlen(p);
-	char *q = strstr(p + 2, "--");
-	int sp = 1 + (q != NULL);
-
-	len++;
-	*p = '\0';
-
-	if (len + sp > MAXLABEL - 1) {
-	    strncat(label, s, MAXLABEL - 4 - (llen + sp));
-	    strcat(label, "...");
-	} else {
-	    strcat(label, s);
-	}
-	strcat(label, " -");
-	if (q == NULL) {
-	    strcat(label, p + 1);
-	} else {
-	    strncat(label, p + 1, q - p - 1);
-	    strcat(label, " ");
-	    strcat(label, q);
-	}
-    }
-}
-
-static int get_stack_param_val (const char *s, const DATASET *dset)
-{
-    int val = -1;
-
-    if (isdigit(*s)) {
-	val = atoi(s);
-    } else {
-	char vname[VNAMELEN];
-	int i, len = strcspn(s, " -");
-
-	if (len > VNAMELEN - 1) {
-	    len = VNAMELEN - 1;
-	}
-	*vname = '\0';
-	strncat(vname, s, len);
-	if (gretl_is_scalar(vname)) {
-	    val = gretl_scalar_get_value(vname, NULL);
-	} else {
-	    i = series_index(dset, vname);
-	    if (i < dset->v) {
-		val = (int) dset->Z[i][0];
-	    }
-	}
-    }
-
-    return val;
-}
-
-static int get_optional_offset (const char *s, const DATASET *dset,
-				int *err)
-{
-    const char *p = strstr(s, "--o");
-    int off = 0;
-
-    if (p != NULL) {
-	if (strncmp(p, "--offset=", 9)) {
-	    *err = E_PARSE;
-	} else {
-	    off = get_stack_param_val(p + 9, dset);
-	    if (off < 0 || off > dset->n - 1) {
-		*err = E_DATA;
-	    }
-	}
-    }
-
-    return off;
-}
-
-static int get_optional_length (const char *s, const DATASET *dset,
-				int *err)
-{
-    const char *p = strstr(s, "--l");
-    int len = 0;
-
-    if (p != NULL) {
-	if (strncmp(p, "--length=", 9)) {
-	    *err = E_PARSE;
-	} else {
-	    len = get_stack_param_val(p + 9, dset);
-	    if (len < 0 || len > dset->n) {
-		*err = E_DATA;
-	    }
-	}
-    }
-
-    return len;
-}
-
 /* Apparatus for stacking variables (e.g. in case of panel
    data that were read in "wrongly").
 */
@@ -2791,33 +2686,12 @@ static int missing_tail (const double *x, int n)
     return nmiss;
 }
 
-static int *list_to_array (const int *list, int *err)
-{
-    int nv = list[0];
-    int *arr = NULL;
-
-    if (nv <= 0) {
-	*err = E_DATA;
-    } else {
-	arr = malloc(nv * sizeof *arr);
-	if (arr == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    int i;
-
-	    for (i=0; i<nv; i++) {
-		arr[i] = list[i+1];
-	    }
-	}
-    }
-
-    return arr;
-}
-
 /**
  * dataset_stack_variables:
- * @vname: name for new variable, to be produced by stacking.
- * @line: instructions for stacking existing variables.
+ * @vname: name for stacked series.
+ * @list: list of series to be stacked.
+ * @length: number of observations to use per input series (or 0 for auto).
+ * @offset: offset at which to start drawing observations.
  * @dset: pointer to dataset.
  * @prn: printing apparatus.
  *
@@ -2826,185 +2700,54 @@ static int *list_to_array (const int *list, int *err)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int dataset_stack_variables (const char *vname, const char *line,
+int dataset_stack_variables (const char *vname, int *list,
+			     int length, int offset,
 			     DATASET *dset, PRN *prn)
 {
-    char vn1[VNAMELEN], vn2[VNAMELEN];
-    char format[16];
-    char *p, *s = NULL, *scpy = NULL;
-    int *vnum = NULL;
-    int *stacklist = NULL;
     double *bigx = NULL;
-    int i, v1 = 0, v2 = 0, nv = 0;
-    int done = 0;
-    int maxok, offset = 0;
-    int oldn, bign, genv;
-    int err = 0;
+    int nv, oldn, bign, genv;
+    int i, err = 0;
 
     if (dset == NULL || dset->n == 0) {
 	return E_NODATA;
+    } else if (list == NULL || list[0] <= 0) {
+	return E_INVARG;
+    } else if (length + offset > dset->n) {
+	return E_INVARG;
     }
-
-    /* copy full "stack(...)" spec for later reference */
-    scpy = gretl_strdup(line);
-    if (scpy == NULL) {
-	return E_ALLOC;
-    }
-
-    line += 6; /* skip "stack(" */
-    if (*line == ',') {
-	free(scpy);
-	return E_PARSE;
-    }
-
-    /* copy active portion of line (we use strtok below) */
-    s = gretl_strdup(line);
-    if (s == NULL) {
-	free(scpy);
-	return E_ALLOC;
-    }
-
-    p = strrchr(s, ')');
-    if (p == NULL) {
-	err = E_PARSE;
-	goto bailout;
-    }
-
-    /* end of active portion of line */
-    *p = '\0';
 
     genv = series_index(dset, vname);
-
-    /* do we have a named list? */
-    stacklist = get_list_by_name(s);
-    if (stacklist != NULL) {
-	nv = stacklist[0];
-	if (nv <= 0) {
-	    err = E_DATA;
-	    goto bailout;
-	}
-	vnum = list_to_array(stacklist, &err);
-	if (err) {
-	    goto bailout;
-	}
-	done = 1;
-    }
-
-    if (!done) {
-	/* do we have a range of vars? */
-	sprintf(format, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
-	if (sscanf(s, format, vn1, vn2) == 2) {
-	    if (isdigit(*vn1) && isdigit(*vn2)) {
-		v1 = atoi(vn1);
-		v2 = atoi(vn2);
-	    } else {
-		v1 = series_index(dset, vn1);
-		v2 = series_index(dset, vn2);
-	    }
-	    if (v1 >= 0 && v2 > v1 && v2 < dset->v) {
-		nv = v2 - v1 + 1;
-	    } else {
-		fputs("stack vars: range is invalid\n", stderr);
-		err = E_DATA;
-	    }
-	    done = 1;
-	}
-    }
-
-    if (!done && strchr(s, '*') != NULL) {
-	/* or perhaps a wildcard thing? */
-	int *list = generate_list(s, dset, &err);
-
-	if (!err) {
-	    nv = list[0];
-	    vnum = list_to_array(list, &err);
-	    free(list);
-	}
-	done = 1;
-    }
-
-    if (!done) {
-	/* or (special) a comma-separated list of vars? */
-	char *p = s;
-
-	while (*p) {
-	    if (*p == ',') nv++;
-	    p++;
-	}
-	nv++;
-
-	if (nv < 2) {
-	    return E_PARSE;
-	}
-
-	vnum = malloc(nv * sizeof *vnum);
-	if (vnum == NULL) {
-	    err = E_ALLOC;
-	}
-
-	for (i=0; i<nv && !err; i++) {
-	    p = strtok((i == 0)? s : NULL, ",");
-	    while (*p == ' ') p++;
-	    if (isdigit(*p)) {
-		v1 = atoi(p);
-	    } else {
-		v1 = series_index(dset, p);
-	    }
-	    if (v1 < 0 || v1 >= dset->v) {
-		err = E_UNKVAR;
-	    } else {
-		vnum[i] = v1;
-	    }
-	}
-    }
-
-    if (!err) {
-	/* get offset specified by user? */
-	offset = get_optional_offset(scpy, dset, &err);
-    }
-
-    if (!err) {
-	/* get length specified by user? */
-	maxok = get_optional_length(scpy, dset, &err);
-    }
+    nv = list[0];
 
 #if PDEBUG
-    fprintf(stderr, "offset = %d, maxok = %d\n", offset, maxok);
+    fprintf(stderr, "nv = %d, length = %d, offset = %d\n", nv, length, offset);
 #endif
 
-    if (!err && offset + maxok > dset->n) {
-	err = E_DATA;
-    }
-
-    if (err) {
-	goto bailout;
-    }
-
-    if (maxok > 0) {
-	bign = nv * maxok;
+    if (length > 0) {
+	bign = nv * length;
 	if (bign < dset->n) {
 	    bign = dset->n;
 	}
     } else {
 	/* calculate required series length */
-	maxok = 0;
+	length = 0;
 	for (i=0; i<nv; i++) {
-	    int j = (vnum == NULL)? i + v1 : vnum[i];
-	    int ok = dset->n - missing_tail(dset->Z[j], dset->n);
+	    int j = list[i+1];
+	    int ok = dset->n - missing_tail(dset->Z[j], dset->n); /* ?? */
 
-	    if (ok > maxok) {
-		maxok = ok;
+	    if (ok > length) {
+		length = ok;
 	    }
 	}
 
-	if (maxok * nv <= dset->n && dset->n % maxok == 0) {
+	if (length * nv <= dset->n && dset->n % length == 0) {
 	    /* suggests that at least one var has already been stacked */
 	    bign = dset->n;
-	    maxok -= offset;
+	    length -= offset;
 	} else {
-	    /* no stacking done: need to expand series length */
+	    /* no stacking done yet: need to expand series length */
 	    bign = nv * (dset->n - offset);
-	    maxok = 0;
+	    length = 0;
 	}
     }
 
@@ -3012,11 +2755,10 @@ int dataset_stack_variables (const char *vname, const char *line,
     fprintf(stderr, "bign = %d, allocating bigx (oldn = %d)\n", bign, dset->n);
 #endif
 
-    /* allocate stacked series */
+    /* allocate container for stacked data */
     bigx = malloc(bign * sizeof *bigx);
     if (bigx == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+	return E_ALLOC;
     }
 
     /* extend length of all series? */
@@ -3024,19 +2766,18 @@ int dataset_stack_variables (const char *vname, const char *line,
     if (bign > oldn) {
 	err = dataset_add_observations(dset, bign - oldn, OPT_NONE);
 	if (err) {
-	    free(bigx);
-	    goto bailout;
+	    return err;
 	}
     }
 
     /* construct stacked series */
     for (i=0; i<nv; i++) {
-	int j = (vnum == NULL)? i + v1 : vnum[i];
+	int j = list[i+1];
 	int t, bigt, tmax;
 
-	if (maxok > 0) {
-	    bigt = maxok * i;
-	    tmax = offset + maxok;
+	if (length > 0) {
+	    bigt = length * i;
+	    tmax = offset + length;
 	} else {
 	    bigt = oldn * i;
 	    tmax = oldn;
@@ -3061,10 +2802,6 @@ int dataset_stack_variables (const char *vname, const char *line,
     if (genv == dset->v) {
 	/* add as new variable */
 	err = dataset_add_allocated_series(dset, bigx);
-	if (err) {
-	    free(bigx);
-	    goto bailout;
-	}
     } else {
 	/* replace existing variable of same name */
 	free(dset->Z[genv]);
@@ -3074,24 +2811,14 @@ int dataset_stack_variables (const char *vname, const char *line,
 
     /* complete the details */
     if (!err) {
-	char *tmp = calloc(MAXLABEL, 1);
-
 	strcpy(dset->varname[genv], vname);
-	if (tmp != NULL) {
-	    make_stack_label(tmp, scpy);
-	    copy_label(&dset->varinfo[genv]->label, tmp);
-	    free(tmp);
-	}
+	/* FIXME make label for series? */
+	// make_stack_label(tmp, scpy);
+	// copy_label(&dset->varinfo[genv]->label, tmp);
 	pprintf(prn, "%s %s %s (ID %d)\n",
 		(genv == dset->v - 1)? _("Generated") : _("Replaced"),
 		_("series"), vname, genv);
     }
-
- bailout:
-
-    free(vnum);
-    free(s);
-    free(scpy);
 
     return err;
 }

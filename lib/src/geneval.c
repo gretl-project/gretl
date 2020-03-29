@@ -11819,6 +11819,32 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    ret = aux_scalar_node(p);
 	    ret->v.xval = 0;
 	}
+    } else if (f == HF_STACK) {
+	int length = 0, offset = 0;
+	int *list = NULL;
+
+	post_process = 0;
+	ret = aux_bundle_node(p);
+	if (!p->err) {
+	    ret->v.b = gretl_bundle_new();
+	    if (ret->v.b == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		list = node_get_list(l, p);
+		if (!null_node(m)) {
+		    length = node_get_int(m, p);
+		}
+		if (!null_node(r)) {
+		    offset = node_get_int(r, p);
+		}
+	    }
+	}
+	if (!p->err) {
+	    gretl_bundle_set_list(ret->v.b, "list", list);
+	    gretl_bundle_set_int(ret->v.b, "length", length);
+	    gretl_bundle_set_int(ret->v.b, "offset", offset);
+	}
+	free(list);
     }
 
     if (!p->err && post_process) {
@@ -16505,6 +16531,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BRENAME:
     case F_ISOWEEK:
     case HF_REGLS:
+    case HF_STACK:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

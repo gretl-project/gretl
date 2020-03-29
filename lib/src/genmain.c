@@ -35,6 +35,10 @@
 
 #define setting_obsval(p) (p->flags & P_OBSVAL)
 
+static gretl_bundle *generate_bundle (const char *s,
+				      DATASET *dset,
+				      int *err);
+
 static void write_scalar_message (const parser *p, PRN *prn)
 {
     double x = gretl_scalar_get_value(p->lh.name, NULL);
@@ -646,13 +650,59 @@ static int gen_special (const char *s, const char *line,
     return err;
 }
 
-/* try for something of the form "genr x = stack(...)",
-   a special for fixing up panel data */
-
-static int do_stack_vars (const char *s, char *vname, const char **rem)
+static int get_oldstyle_stack_args (const char *s, char **arg,
+				    char **opt1, char **opt2)
 {
+    const char *p1, *p2;
+    int len;
+
+    /* Let the marker for old-style uage be the presence of
+       one or more legacy option flags */
+
+    p1 = strstr(s, "--length=");
+    if (p1 != NULL) {
+	len = strcspn(p1 + 9, " \n");
+	*opt1 = gretl_strndup(p1 + 9, len);
+    }
+
+    p2 = strstr(s, "--offset=");
+    if (p2 != NULL) {
+	len = strcspn(p2 + 9, " \n");
+	*opt2 = gretl_strndup(p2 + 9, len);
+    }
+
+    if (p1 != NULL || p2 != NULL) {
+	len = strcspn(s, ")");
+	*arg = gretl_strndup(s, len);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+static int stack_vname_ok (char *vname, const char *s)
+{
+    char *test = vname;
+    int n = 0;
+
+    while (*s && *s != ' ' && *s != '=' && n < VNAMELEN-1) {
+	*vname++ = *s++;
+	n++;
+    }
+    *vname = '\0';
+
+    return n > 0 && check_varname(test) == 0;
+}
+
+/* try for something of the form "series x = stack(...)",
+   a special for manipulating panel data */
+
+static int do_stack_vars (const char *s, DATASET *dset,
+			  char *vname, int **plist,
+			  int *plength, int *poffset)
+{
+    gretl_bundle *b = NULL;
     const char *p;
-    int ret = 0;
 
     if (!strncmp(s, "genr ", 5)) {
 	s += 5;
@@ -666,21 +716,52 @@ static int do_stack_vars (const char *s, char *vname, const char **rem)
     if (p != NULL) {
 	p++;
 	while (*p == ' ') p++;
-	if (!strncmp(p, "stack(", 6)) {
-	    char *test = vname;
-	    int n = 0;
+	if (!strncmp(p, "stack(", 6) && stack_vname_ok(vname, s)) {
+	    char *arg = NULL, *opt1 = NULL, *opt2 = NULL;
+	    gchar *genstr = NULL;
+	    int err = 0;
 
-	    while (*s && *s != ' ' && *s != '=' && n < VNAMELEN-1) {
-		*vname++ = *s++;
-		n++;
+	    if (get_oldstyle_stack_args(p + 6, &arg, &opt1, &opt2)) {
+		GString *gs = g_string_new("_tack(");
+
+		gs = g_string_append(gs, arg);
+		free(arg);
+		if (opt1 != NULL) {
+		    gs = g_string_append_c(gs, ',');
+		    gs = g_string_append(gs, opt1);
+		    free(opt1);
+		}
+		if (opt2 != NULL) {
+		    gs = g_string_append_c(gs, ',');
+		    gs = g_string_append(gs, opt2);
+		    free(opt2);
+		}
+		gs = g_string_append_c(gs, ')');
+		genstr = g_string_free(gs, FALSE);
+	    } else {
+		/* new style */
+		genstr = g_strdup(p);
+		*genstr = '_'; /* stack -> _tack */
 	    }
-	    *vname = '\0';
-	    *rem = p;
-	    ret = n > 0 && check_varname(test) == 0;
+
+	    if (genstr != NULL) {
+		b = generate_bundle(genstr, dset, &err);
+		g_free(genstr);
+	    }
 	}
     }
 
-    return ret;
+    if (b != NULL) {
+	int *list = gretl_bundle_get_list(b, "list", NULL);
+
+	*plist = gretl_list_copy(list);
+	*plength = gretl_bundle_get_int(b, "length", NULL);
+	*poffset = gretl_bundle_get_int(b, "offset", NULL);
+	gretl_bundle_destroy(b);
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 static int is_genr_special (const char *s, char *spec, const char **rem)
@@ -728,8 +809,10 @@ int generate (const char *line, DATASET *dset,
 	      GretlType gtype, gretlopt opt,
 	      PRN *prn)
 {
-    char vname[VNAMELEN];
+    char vname[VNAMELEN] = {0};
     const char *subline = NULL;
+    int *list = NULL;
+    int len, offset;
     int oldv, flags = 0;
     int targtype = UNK;
     parser p;
@@ -792,8 +875,10 @@ int generate (const char *line, DATASET *dset,
 
     if (is_genr_special(line, vname, &subline)) {
 	return gen_special(vname, subline, dset, prn, &p);
-    } else if (do_stack_vars(line, vname, &subline)) {
-	return dataset_stack_variables(vname, subline, dset, prn);
+    } else if (do_stack_vars(line, dset, vname, &list, &len, &offset)) {
+	p.err = dataset_stack_variables(vname, list, len, offset, dset, prn);
+	free(list);
+	return p.err;
     }
 
     realgen(line, &p, dset, prn, flags, targtype);
@@ -1034,6 +1119,25 @@ int *generate_list (const char *s, DATASET *dset, int *err)
     if (!*err) {
 	ret = node_get_list(p.ret, &p);
 	*err = p.err;
+    }
+
+    gen_cleanup(&p);
+
+    return ret;
+}
+
+static gretl_bundle *generate_bundle (const char *s,
+				      DATASET *dset,
+				      int *err)
+{
+    gretl_bundle *ret = NULL;
+    parser p;
+
+    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, BUNDLE);
+
+    if (!*err) {
+	ret = p.ret->v.b;
+	p.ret->v.b = NULL;
     }
 
     gen_cleanup(&p);
