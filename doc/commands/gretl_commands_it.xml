@@ -2681,10 +2681,10 @@
 	sottocampione attuale. Con l'opzione <opt>no-align</opt>
 	questo requisito viene allentato: se le condizioni di cui
 	sopra non sono rispettate, i datri in ingresso sono
-	semplicemnte messi all'inizio del dataset, partendo dalla
+	semplicemente messi all'inizio del dataset, partendo dalla
 	prima riga. Se i dati in ingresso sono meno della dimensione
 	del campione, le righe in eccesso saranno riempite con NAs;
-	altrimenti, i dati in più verranno buttati via. per maggiori
+	altrimenti, i dati in più verranno buttati via. Per maggiori
 	dettagli sull'importazione via ODBC, si veda <guideref
 	targ="chap:odbc"/>.
       </para>
