@@ -72,7 +72,6 @@ HELPFILES_PT = $(ALL_HELPFILES:=.pt)
 HELPFILES_GL = $(ALL_HELPFILES:=.gl)
 
 FIGSTAMP = $(SHAREDIR)/fig.stamp
-HELPREFS = $(SHAREDIR)/gretlhelp.refs
 CHAPREFS = $(CMDSDIR)/chaprefs.xml
 
 GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
@@ -182,7 +181,7 @@ biblio.html: bbl2txt ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl --html > $@
 
 # Bibliography file
-$(HELPREFS): ../tex/gretl-ref.bbl bbl2txt $(HELPFILES_EN)
+gretlhelp.refs: ../tex/gretl-ref.bbl bbl2txt $(HELPFILES_EN)
 	./bbl2txt $< > $@
 
 # Guide chapter titles
@@ -317,7 +316,7 @@ help-gl: $(CHAPREFS) $(HELPFILES_GL)
 
 help-es: $(CHAPREFS) $(HELPFILES_ES)
 
-help-all: help-en help-it help-pt help-gl help-es $(HELPREFS)
+help-all: help-en help-it help-pt help-gl help-es gretlhelp.refs
 
 # Validate the commands "master" XML files against libgretl
 # By default we check the English-language files

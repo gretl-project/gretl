@@ -21,30 +21,30 @@ cmdsdir = ../doc/commands
 INSTALL_DATA = cp -fp
 
 AUTO_HELPFILES = \
-	gretl_gui_help.en \
-	gretl_gui_cmdref.en \
 	gretl_cli_cmdref.en \
-	gretl_gui_help.es \
-	gretl_gui_cmdref.es \
-	gretl_cli_cmdref.es \
-	gretl_gui_help.it \
-	gretl_gui_cmdref.it \
-	gretl_cli_cmdref.it \
-	gretl_gui_help.pt \
-	gretl_gui_cmdref.pt \
-	gretl_cli_cmdref.pt \
-	gretl_gui_help.gl \
-	gretl_gui_cmdref.gl \
-	gretl_cli_cmdref.gl \
+	gretl_gui_cmdref.en \
+	gretl_gui_help.en \
 	gretl_cli_fnref.en \
 	gretl_gui_fnref.en \
+	gretl_cli_cmdref.es \
+	gretl_gui_cmdref.es \
+	gretl_gui_help.es \
 	gretl_cli_fnref.es \
 	gretl_gui_fnref.es \
+	gretl_cli_cmdref.it \
+	gretl_gui_cmdref.it \
+	gretl_gui_help.it \
 	gretl_cli_fnref.it \
 	gretl_gui_fnref.it \
-        gretl_cli_fnref.pt \
+	gretl_cli_cmdref.pt \
+	gretl_gui_cmdref.pt \
+	gretl_gui_help.pt \
+	gretl_cli_fnref.pt \
 	gretl_gui_fnref.pt \
-        gretl_cli_fnref.gl \
+	gretl_cli_cmdref.gl \
+	gretl_gui_cmdref.gl \
+	gretl_gui_help.gl \
+	gretl_cli_fnref.gl \
 	gretl_gui_fnref.gl \
 	gretlhelp.refs
 
@@ -96,9 +96,8 @@ install_scripts:
 	$(INSTALL_DATA) $(sharesrc)/scripts/misc/ps_descriptions $(DESTDIR)$(gretldir)/scripts/misc
 
 install_functions:
-	$(INSTALL_DATA) $(sharesrc)/functions/gretlfunc.dtd $(DESTDIR)$(gretldir)/functions 
-	$(INSTALL_DATA) $(sharesrc)/functions/criteria.gfn $(DESTDIR)$(gretldir)/functions
-	$(INSTALL_DATA) $(sharesrc)/functions/packages.xml $(DESTDIR)$(gretldir)/functions 
+	for f in gretlfunc.dtd criteria.gfn packages.xml ; do \
+	$(INSTALL_DATA) $(sharesrc)/functions/$$f $(DESTDIR)$(gretldir)/functions ; done
 
 install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(prefix)/share/man/man1
@@ -123,9 +122,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/$$d ; done
 
 helpclean:
-	for f in $(AUTO_HELPFILES) ; do rm -f $(sharesrc)/$$f ; done
-	for f in $(sharesrc)/cmdref*.stamp ; do rm -f $$f ; done
-	for f in $(sharesrc)/fnref*.stamp ; do rm -f $$f ; done
+	for f in $(AUTO_HELPFILES) ; do rm -f $$f ; done
 
 clean: $(query_clean_help)
 	$(MAKE) -C bcih clean
