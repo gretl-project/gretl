@@ -11819,30 +11819,27 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    ret = aux_scalar_node(p);
 	    ret->v.xval = 0;
 	}
-    } else if (f == HF_STACK) {
+    } else if (f == F_STACK) {
 	int length = 0, offset = 0;
 	int *list = NULL;
 
 	post_process = 0;
-	ret = aux_bundle_node(p);
+	ret = aux_scalar_node(p);
+	list = node_get_list(l, p);
 	if (!p->err) {
-	    ret->v.b = gretl_bundle_new();
-	    if (ret->v.b == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		list = node_get_list(l, p);
-		if (!null_node(m)) {
-		    length = node_get_int(m, p);
-		}
-		if (!null_node(r)) {
-		    offset = node_get_int(r, p);
-		}
+	    if (!null_node(m)) {
+		length = node_get_int(m, p);
+	    }
+	    if (!null_node(r)) {
+		offset = node_get_int(r, p);
 	    }
 	}
 	if (!p->err) {
-	    gretl_bundle_set_list(ret->v.b, "list", list);
-	    gretl_bundle_set_int(ret->v.b, "length", length);
-	    gretl_bundle_set_int(ret->v.b, "offset", offset);
+	    p->err = dataset_stack_variables(p->lh.name, list, length, offset,
+					     p->dset, p->prn);
+	}
+	if (!p->err) {
+	    ret->v.xval = 0;
 	}
 	free(list);
     }
@@ -16530,8 +16527,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_LRCOVAR:
     case F_BRENAME:
     case F_ISOWEEK:
+    case F_STACK:
     case HF_REGLS:
-    case HF_STACK:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
@@ -19378,6 +19375,11 @@ void gen_cleanup (parser *p)
     if (p->lh.label != NULL) {
 	free(p->lh.label);
 	p->lh.label = NULL;
+    }
+
+    if (p->flags & P_ALTINP) {
+	free((char *) p->input);
+	p->input = NULL;
     }
 
     if (p->err && (p->flags & P_COMPILE)) {

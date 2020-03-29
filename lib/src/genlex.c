@@ -563,6 +563,7 @@ struct str_table funcs[] = {
     { F_CSWITCH,   "cswitch" },
     { F_RANDPERM,  "randperm" },
     { F_STDIZE,    "stdize" },
+    { F_STACK,     "stack" },
     { 0,           NULL }
 };
 
@@ -592,7 +593,6 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
-    { HF_STACK,    "_tack" },
     { 0,           NULL }
 };
 
@@ -1560,6 +1560,12 @@ static void look_up_word (const char *s, parser *p)
 	p->sym = function_lookup_with_alias(s, p);
 	if (p->sym == 0) {
 	    handle_lpnext(s, p, have_dset);
+	} else if (p->sym == F_STACK) {
+	    /* special! */
+	    if (strstr(p->point, "--length") || strstr(p->point, "--offset")) {
+		stack_update_parser_input(p);
+	    }
+	    p->flags |= P_STACK;
 	}
     }
 

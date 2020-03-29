@@ -462,8 +462,8 @@ enum {
     F_EIGEN,
     F_SCHUR,
     F_RESAMPLE,
+    F_STACK,
     HF_REGLS,
-    HF_STACK,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -656,7 +656,9 @@ enum parser_flags {
     P_MSAVE   = 1 << 22, /* trying for reuse of an aux matrix */
     P_OBSVAL  = 1 << 23, /* generating value of observation in series */
     P_ALIASED = 1 << 24, /* state: handling aliased object (temporary) */
-    P_AND     = 1 << 25  /* state: working on right-hand term of B_AND */
+    P_AND     = 1 << 25, /* state: working on right-hand term of B_AND */
+    P_STACK   = 1 << 26, /* executing stack() */
+    P_ALTINP  = 1 << 27  /* the input string has been substituted */
 };
 
 struct lhinfo {
@@ -760,6 +762,9 @@ int x_sectional_weighted_stat (double *x, const int *list,
 /* in geneval.c, used only internally */
 double dvar_get_scalar (int i, const DATASET *dset);
 int *node_get_list (NODE *n, parser *p);
+
+/* in genmain.c, used only internally */
+int stack_update_parser_input (parser *p);
 
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
