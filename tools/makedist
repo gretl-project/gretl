@@ -10,9 +10,6 @@ tarfile="${versiondir}.tar.xz"
 
 echo "making dist file for gretl $version using filename $tarfile"
 
-# make time stamp
-cd ${parent}/gretl-git && date > share/gretl.stamp
-
 # make the distribution archive
 cd $parent 
 echo "making archive..."
