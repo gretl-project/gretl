@@ -2582,6 +2582,14 @@
 	  <optparm>identificatore</optparm>
 	  <effect>rinomina le serie importate</effect>
 	</option>	
+	<option>
+	  <flag>--odbc</flag>
+	  <effect>importa via ODBC</effect>
+	</option>
+	<option>
+	  <flag>--no-align</flag>
+	  <effect>specifico per ODBC, vedi sotto</effect>
+	</option>	
       </options>
     </usage>
 
@@ -2656,11 +2664,29 @@
 	data cpi*
       </code>
       <para>
-   L'opzione <opt>name</opt> può essere utilizzata per impostare
-   un nome diverso dall'originale per le nuove serie storiche importate
-   nel dataset. Il parametro deve essere un valido idenficatore per gretl.
-   Questa opzione è circoscritta al caso in cui è stata specificata una singola
-   serie storica per l'importazione.
+	L'opzione <opt>name</opt> può essere utilizzata per impostare
+	un nome diverso dall'originale per le nuove serie storiche
+	importate nel dataset. Il parametro deve essere un
+	identificatore valido.  Questa opzione è circoscritta al caso
+	in cui è stata specificata una singola serie storica per
+	l'importazione.
+      </para>
+      <para>
+	L'opzione <opt>no-align</opt> produce effetti solo quando si
+	importano serie via ODBC. Per impostazione predefinita, la
+	query ODBC deve ritornare delle informazioni con cui gretl
+	possa piazzare i dati in ingresso nelle righe appropriate del
+	dataset&mdash; o per lo meno, che il numero di cifre in
+	entrata coincida con la lunghezza del dataset o del
+	sottocampione attuale. Con l'opzione <opt>no-align</opt>
+	questo requisito viene allentato: se le condizioni di cui
+	sopra non sono rispettate, i datri in ingresso sono
+	semplicemnte messi all'inizio del dataset, partendo dalla
+	prima riga. Se i dati in ingresso sono meno della dimensione
+	del campione, le righe in eccesso saranno riempite con NAs;
+	altrimenti, i dati in più verranno buttati via. per maggiori
+	dettagli sull'importazione via ODBC, si veda <guideref
+	targ="chap:odbc"/>.
       </para>
     </description>
     <gui-access>
