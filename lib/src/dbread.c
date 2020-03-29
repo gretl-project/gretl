@@ -2310,13 +2310,14 @@ static int try_iso_8601 (const char *s, DATASET *dset)
 
 static int odbc_transcribe_data (char **vnames, DATASET *dset,
 				 int vmin, int newvars,
-				 PRN *prn)
+				 gretlopt opt, PRN *prn)
 {
     char label[MAXLABEL];
     int *gstlist = NULL;
     int nv = gretl_odinfo.nvars;
     int n = gretl_odinfo.nrows;
     int nrepl = nv - newvars;
+    int simple_fill = (opt & OPT_F);
     int i, s, t, v;
     int err = 0;
 
@@ -2402,7 +2403,7 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    /* no obs identifiers via ODBC */
 	    int ns = dset->t2 - dset->t1 + 1;
 
-	    if (n == ns) {
+	    if (n == ns || simple_fill) {
 		s = 0;
 	    } else if (n == dset->n) {
 		s = dset->t1;
@@ -2550,7 +2551,7 @@ static int odbc_get_series (const char *line, DATASET *dset,
 	}
 
 	if (!err) {
-	    err = odbc_transcribe_data(vnames, dset, vmin, newvars, prn);
+	    err = odbc_transcribe_data(vnames, dset, vmin, newvars, opt, prn);
 	}
     }
 

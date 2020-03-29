@@ -196,6 +196,7 @@ struct gretl_option gretl_opts[] = {
     { DATA,     OPT_O, "odbc", 0 },
     { DATA,     OPT_N, "name", 2 },
     { DATA,     OPT_V, "verbose", 0 },
+    { DATA,     OPT_F, "no-align", 0 },
     { DATAMOD,  OPT_P, "preserve", 0 },
     { DATAMOD,  OPT_T, "panel-time", 0 },
     { DELEET,   OPT_D, "db", 0 },

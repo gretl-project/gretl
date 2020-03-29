@@ -2512,6 +2512,10 @@
 	<option>
 	  <flag>--odbc</flag>
 	  <effect>import from ODBC database</effect>
+	</option>
+	<option>
+	  <flag>--no-align</flag>
+	  <effect>ODBC-specific, see below</effect>
 	</option>	
       </options>
     </usage>
@@ -2597,6 +2601,21 @@
 	The parameter must be a valid gretl identifier. This option
 	is restricted to the case where a single series is specified
 	for importation.
+      </para>
+      <para>
+	The <opt>no-align</opt> option applies only to importation of
+	series via ODBC. By default we require that the ODBC query
+	returns information telling gretl on which rows of the dataset
+	to place the incoming data&mdash;or at least that the number
+	of incoming values matches either the length of the dataset or
+	the length of the current sample range. Setting the
+	<opt>no-align</opt> option relaxes this requirement: failing
+	the conditions just mentioned, incoming values are simply
+	placed consecutively starting at the first row of the
+	dataset. If there are fewer such values than rows in the
+	dataset the trailing rows are filled with NAs; if there are
+	more such values than rows the extra values are discarded. For
+	more on ODBC importation see <guideref targ="chap:odbc"/>.
       </para>
     </description>
 
