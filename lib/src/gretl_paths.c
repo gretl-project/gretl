@@ -3409,15 +3409,40 @@ FILE *gretl_read_user_file (const char *fname)
 int gretl_normalize_path (char *path)
 {
     char tmp[FILENAME_MAX];
+    char split[3] = "/";
+    char slash[2] = "/";
     char *pcpy, *pbit, *s = path;
     char **S, **P = NULL;
+#ifdef WIN32
+    int fs = 0, bs = 0;
+#endif
     int i, n;
     int err = 0;
 
-    if (*path == '\0' || strstr(path, SLASHSTR) == NULL) {
-	/* no-op */
+    if (*path == '\0') {
 	return 0;
     }
+
+#ifdef WIN32
+    while (*s) {
+	if (*s == '\\') bs++;
+	else if (*s == '/') fs++;
+	s++;
+    }
+    if (fs > 0 && bs > 0) {
+	strcpy(split, "\\/");
+	strcpy(slash, "/");
+    } else if (bs > 0) {
+	strcpy(split, "\\");
+	strcpy(slash, "\\");
+    } else if (fs == 0) {
+	return 0;
+    }
+#else
+    if (strstr(path, slash) == NULL) {
+	return 0;
+    }
+#endif
 
     if (*path == '.') {
 	/* absolutize the path first, if necessary */
@@ -3443,7 +3468,7 @@ int gretl_normalize_path (char *path)
 #ifdef WIN32
     /* may be ok for a filename to start with a double backslash */
     if (!strncmp(path, "\\\\", 2)) {
-	strcpy(tmp, SLASHSTR);
+	strcpy(tmp, slash);
 	s++;
     } else if (*path && path[1] == ':') {
 	strncat(tmp, path, 2);
@@ -3456,7 +3481,7 @@ int gretl_normalize_path (char *path)
        are just "." */
 
     n = 0;
-    while ((pbit = strtok(s, SLASHSTR)) != NULL && !err) {
+    while ((pbit = strtok(s, split)) != NULL && !err) {
 	if (strcmp(pbit, ".")) {
 	    S = realloc(P, (n+1) * sizeof *P);
 	    if (S == NULL) {
@@ -3466,7 +3491,7 @@ int gretl_normalize_path (char *path)
 		P[n++] = pbit;
 	    }
 	}
-	s = NULL; /* for next strtok call */
+	s = NULL; /* for subsequent strtok calls */
     }
 
     if (!err) {
@@ -3483,15 +3508,13 @@ int gretl_normalize_path (char *path)
 		}
 	    }
 	}
-
 	/* re-assemble the path */
 	for (i=0; i<n; i++) {
 	    if (P[i] != NULL && strcmp(P[i], "..")) {
-		strcat(tmp, SLASHSTR);
+		strcat(tmp, slash);
 		strcat(tmp, P[i]);
 	    }
 	}
-
 	strcpy(path, tmp);
     }
 
