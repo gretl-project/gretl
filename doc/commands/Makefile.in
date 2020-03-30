@@ -71,7 +71,6 @@ HELPFILES_ES = $(ALL_HELPFILES:=.es)
 HELPFILES_PT = $(ALL_HELPFILES:=.pt)
 HELPFILES_GL = $(ALL_HELPFILES:=.gl)
 
-FIGSTAMP = $(SHAREDIR)/fig.stamp
 CHAPREFS = $(CMDSDIR)/chaprefs.xml
 
 GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
@@ -146,9 +145,9 @@ $(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands_en.xml
 	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
 	rm -f eqn_list.new
 
-# we'll do the following manually: it's a bit hyperactive
+# we'll do the following manually only when needed: it's a bit hyperactive
 figs: $(EQNLIST)
-	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $(FIGSTAMP)
+	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs
 
 # Rules for "online" help files in various languages
 
