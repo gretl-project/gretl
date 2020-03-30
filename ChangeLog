@@ -2,14 +2,22 @@ version 2020b, in progress
 - Update gretl copyright notice
 - Revise macOS build: don't require initialization via
   shell script
+- "gnuplot" and "plot" commands: add a --ylogscale option
 - strvals(): support retrieval of string values for current
   subsample
+- ODBC importation: correct the handling of string-valued
+  series; add --verbose and --no-align options
+- "dataset addobs": add a --panel-time option
 - "slicing" of arrays: allow use of selection vector
-- functions called via "if": show any printed output
-- funcerr(): revise signature to boolean, optional string
-  (see the updated help)
+- Functions called via "if": show any printed output
 - "dataset addobs": add --panel-time option to extend a
   panel dataset in the time dimension
+- stack() function (see Guide chap. 4): replace option
+  flags with optional arguments
+- Revise handling of string-valued data in exportation to
+  Stata .dta format
+- Hide the recently added funcerr() function and replace
+  it with the new function errorif()
 
 2020-03-05 version 2020a
 - Verbose output for numerical optimization: make the
