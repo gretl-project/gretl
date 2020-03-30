@@ -471,55 +471,53 @@ variables, but in the first instance we ``pretend'' that they are.)
 
 \begin{code}
 open panel.txt
-series x1 = stack(v1..v5) --length=50
-series x2 = stack(v1..v5) --offset=50 --length=50
+series x1 = stack(v1..v5, 50)
+series x2 = stack(v1..v5, 50, 50)
 setobs 50 1:1 --stacked-cross-section
 store panel.gdt x1 x2
 \end{code}
 
-The second line illustrates the syntax of the \cmd{stack} function.
-The double dots within the parentheses indicate a range of variables
-to be stacked: here we want to stack all 5 columns (for all 5
-years).\footnote{You can also specify a list of series using
-  the wildcard `\texttt{*}'; for example \texttt{stack(v*)} would
-  stack all series whose names begin with `v'.} 
-The full data set contains 100 rows; in the stacking of variable
-\varname{x1} we wish to read only the first 50 rows from each column:
-we achieve this by adding \verb+--length=50+.  Note that if you want
-to stack a non-contiguous set of columns you can give a
-comma-separated list of variable names, as in
-%
-\begin{code}
-series x = stack(v1,v3,v5)
-\end{code}
-%
-or you can provide within the parentheses the name of a previously
-created list (see chapter~\ref{chap:lists-strings}).
+The second and third lines illustrate the syntax of the \cmd{stack}
+function, which takes up to three arguments.  The double dots in the
+first argument indicate a range of variables to be stacked: here we
+want to stack all 5 columns (for all 5 years). More generally, you can
+define a named list of series and pass that as the first argument to
+\texttt{stack} (see chapter~\ref{chap:lists-strings}). In this
+example we're supposing that the full data set contains 100 rows, and
+that in the stacking of variable \varname{x1} we wish to read only the
+first 50 rows from each column: we achieve this by adding \texttt{50}
+as a second (\texttt{length}) argument.
 
 On line 3 we do the stacking for variable \varname{x2}.  Again we want
 a \texttt{length} of 50 for the components of the stacked series, but
-this time we want gretl to start reading from the 50th row of the
-original data, and we specify \verb+--offset=50+.
-Line 4 imposes a panel interpretation on the data; finally, we save
-the data in gretl format, with the panel interpretation, discarding
-the original ``variables'' \varname{v1} through \varname{v5}.
+this time we want to start reading from the 50th row of the original
+data, and so we add a third \texttt{offset} argument of 50.  The
+signature of the stack function is shown below; the second and third
+arguments are optional, defaulting to ``automatic'' and 0
+respectively.
+\begin{code}
+series stack(list L, int length n, int offset k)
+\end{code}
+Line 4 then imposes a panel interpretation on the data. Finally, we
+save the stacked data to file, with the panel interpretation.
 
 The illustrative script above is appropriate when the number of
 variables to be processed is small.  When then are many variables in
-the data set it will be more efficient to use a loop to accomplish the
+the dataset it's more convenient to use a loop to accomplish the
 stacking, as shown in the following script.  The setup is presumed to
-be the same as in the previous section (50 units, 5 periods), but with
-20 variables rather than 2.
+be the same as in the previous case (50 units, 5 periods), but with 20
+variables rather than 2.
 
 \begin{code}
 open panel.txt
-loop i=1..20
-  scalar k = (i - 1) * 50
-  series x$i = stack(v1..v5) --offset=k --length=50
+list L = v1..v5 # predefine a list of series
+scalar length = 50
+loop i=1..20 --quiet
+  scalar offset = (i - 1) * length
+  series x$i = stack(L, length, offset)
 endloop
 setobs 50 1.01 --stacked-cross-section
-store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
-  x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+store panel.gdt x1..x20
 \end{code}
 
 \subsection{Panel data marker strings}
