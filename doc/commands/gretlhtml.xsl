@@ -527,7 +527,7 @@
   <xsl:text>&lt;/i&gt;</xsl:text>
 </xsl:template>
 
-<xsl:template match="emphasis">
+<xsl:template match="emphasis|i">
   <xsl:text>&lt;i&gt;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&lt;/i&gt;</xsl:text>

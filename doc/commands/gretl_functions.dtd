@@ -80,7 +80,7 @@
 <!ELEMENT other-access (#PCDATA)>
 
 <!ELEMENT para (#PCDATA | repl | program | math | equation |
-                lit | emphasis | book | quote | filename |
+                lit | emphasis | i | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
                 footnote | argname | sub | sup | cite | seelist | 
                 by | url | cmd | mnu)*>
@@ -124,7 +124,7 @@
    targ    CDATA #REQUIRED
 >
 
-<!ELEMENT cite (#PCDATA | book | emphasis)*>
+<!ELEMENT cite (#PCDATA | book | emphasis | i)*>
 <!ATTLIST cite
    key  CDATA #IMPLIED
    p (true | false) "false"
@@ -153,7 +153,7 @@
 
 <!ELEMENT table (row)+>
 <!ELEMENT row (cell)+>
-<!ELEMENT cell (#PCDATA | lit | repl | emphasis | 
+<!ELEMENT cell (#PCDATA | lit | repl | emphasis | i |
                 func | math | equation | book | quote)*>
 <!ATTLIST table
    lwidth   CDATA #IMPLIED
@@ -171,6 +171,7 @@
 <!ELEMENT program  (#PCDATA)>
 <!ELEMENT lit      (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
+<!ELEMENT i        (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
 <!ELEMENT url      (#PCDATA)>
 <!ELEMENT mnu      (#PCDATA)>

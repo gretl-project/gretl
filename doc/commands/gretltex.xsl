@@ -470,7 +470,7 @@
   <xsl:text>\\&#10;</xsl:text>
 </xsl:template>
 
-<xsl:template match="book|emphasis">
+<xsl:template match="book|emphasis|i">
   <xsl:text>\emph{</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>}</xsl:text>
