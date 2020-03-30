@@ -2973,7 +2973,7 @@
 	<para>
 	  Aquí temos un exemplo de como utilizar esta función: para baixar
 	  algúns datos da web da US Bureau of Labor Statistics, que require
-	  o envío dunha consulta JSON. Observa o uso de <fcnref targ="sprintf"/>
+	  o envío dunha consulta JSON. Observa o uso de <fncref targ="sprintf"/>
 	  para inserir comiñas nos datos <lit>POST</lit>.
 	</para>
 	<code>

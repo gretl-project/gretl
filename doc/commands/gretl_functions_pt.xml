@@ -10494,7 +10494,7 @@
 	  O argumento <argname>buf</argname> deve ser um buffer
 	  XML, que pode ser obtido de alguma página na internet
 	  via função <fncref targ="curl"/> (ou lida a partir de
-	  arquivo via função <fnref targ="readfile"/>), e o
+	  arquivo via função <fncref targ="readfile"/>), e o
 	  argumento <argname>path</argname> deve ser uma
 	  especificação única ou um vetor de especificações.
 	</para>

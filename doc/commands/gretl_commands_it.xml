@@ -2151,7 +2151,7 @@
       compattamento è già stato scelto per tutte le variabili, non
       viene presentata la scelta per il metodo di compattamento
       predefinito.
-	</para>
+      </para>
 
     </description>
   </command>
@@ -2308,16 +2308,16 @@
        <option>
 	  <flag>--bartlett</flag>
 	  <effect>usa gli errori standard di Bartlett</effect>
-        </option>	
+       </option>
        <option>
 	  <flag>--plot</flag>
 	  <optparm>modo o nome di file</optparm>
 	  <effect>si veda sotto</effect>
+       </option>
        <option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra il grafico</effect>
        </option>
-        </option>	  
       </options>
       <examples>
         <example>corrgm x 12</example>
@@ -3632,7 +3632,7 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra nulla</effect>
         </option>
-      </options>      
+      </options>
       <examples>
         <example>duration y 0 x1 x2</example>
 	<example>duration y 0 x1 x2 ; cens</example>
@@ -4999,16 +4999,17 @@
       </ilist>
 
       <para>
-	<emphasis>Nota</emphasis>: nella versione a riga di comando del programma,
-        i comandi <cmd>genr</cmd> che estraggono dati relativi al modello
-	si riferiscono sempre al modello stimato per ultimo. Questo vale anche
-        per la versione grafica del programma se si usa <cmd>genr</cmd> nel
-        <quote>terminale di gretl</quote> o si immette una formula usando
-        l'opzione <quote>Definisci nuova variabile</quote> nel menù Variabile
-        della finestra principale. Usando la versione grafica, però, è
-        possibile anche estrarre i dati da qualunque modello mostrato in una
-        finestra (anche se non è il modello più recente) usando il menù
-        <quote>Analisi</quote> nella finestra del modello.
+	<emphasis>Nota</emphasis>: nella versione a riga di comando
+	del programma, i comandi <cmd>genr</cmd> che estraggono dati
+	relativi al modello si riferiscono sempre al modello stimato
+	per ultimo. Questo vale anche per la versione grafica del
+	programma se si usa <cmd>genr</cmd> nel <quote>terminale di
+	gretl</quote> o si immette una formula usando l'opzione
+	<quote>Definisci nuova variabile</quote> nel menù Variabile
+	della finestra principale. Usando la versione grafica, però, è
+	possibile anche estrarre i dati da qualunque modello mostrato
+	in una finestra (anche se non è il modello più recente) usando
+	il menù <quote>Analisi</quote> nella finestra del modello.
       </para>
 
       <para>
@@ -9243,17 +9244,17 @@
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
-   <option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
-   </option>
-	 <examples>
+	</option>
+      </options>
+      <examples>
 	<demos>
 	  <demo>camtriv.inp</demo>
 	</demos>
       </examples>
-   </options>
-    </usage>  
+    </usage>
 
     <description>
       <para>

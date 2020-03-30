@@ -5430,8 +5430,9 @@
 	  Gli oggetti così creati possono poi essere usati con le
 	  funzioni dedicate <fncref targ="kfilter"/> per il
 	  filtraggio, <fncref targ="ksmooth"/> e <fncref
-	  targ="kdsmooth"/> per il lisciaggio (<i>smoothing</i>) e
-	  <fncref targ="ksimul"/> per effettuare simulazioni.
+	  targ="kdsmooth"/> per il lisciaggio
+	  (<emphasis>smoothing</emphasis>) e <fncref targ="ksimul"/>
+	  per effettuare simulazioni.
 	</para>
 	<para>
 	  La classe dei modelli gestibili è, in realtà, molto più
@@ -10174,7 +10175,7 @@
        </para>
        <para>
 	 Per maggiori dettagli, consultare la documentazione PDF:
-	 <mnu>Help:gretlSVM</mnu> (in inglese).
+	 <mnu targ="gretlSVM">gretl + SVM</mnu>.
        </para>
       </description>
     </function>
