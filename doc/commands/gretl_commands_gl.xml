@@ -2512,7 +2512,11 @@
 	<option>
 	  <flag>--odbc</flag>
 	  <effect>Importa dun banco de datos ODBC</effect>
-	</option>	
+	</option>
+	<option>
+	  <flag>--no-align</flag>
+	  <effect>Específico para ODBC, mira abaixo</effect>
+	</option>
       </options>
     </usage>
 
@@ -2523,7 +2527,7 @@
 	previamente utilizando a instrución <cmdref targ="open"/>. Podes usar
 	a instrución <lit>data</lit> para importar series de DB.NOMICS ou dun
 	banco de datos ODBC; para obter detalles sobre estas variantes
-	consulta <mnu targ="gretlDBN">gretl + DB.NOMICS</mnu> ou
+	consulta <mnu targ="gretlDBN">gretl + DB.NOMICS</mnu> ou o
 	<guideref targ="chap:odbc"/>, respectivamente.
       </para>
       <para>
@@ -2597,6 +2601,21 @@
 	O parámetro debe de ser un identificador válido de Gretl. Esta opción
 	restrínxese ao caso no que especificas unha única serie a
 	importar.
+      </para>
+      <para>
+	A opción <opt>no-align</opt> aplícase só para importar series mediante
+	ODBC. Por defecto, necesítase que a solicitude ODBC devolva información
+	que indique a Gretl en que filas do conxunto de datos situar os datos que
+	se reciben (ou que o número de valores que se reciben coincida, cando
+	menos, ben coa longura do conxunto de datos ou ben coa longura do
+	rango da mostra vixente). Determinando a opción <opt>no-align</opt>
+	reláxase este requisito: se non se cumpren estas condicións mencionadas,
+	os valores que se reciben sitúanse simplemente de xeito consecutivo,
+	comezando na primeira fila do conxunto de datos. Se o número deses
+	valores é menor que o de filas no conxunto de datos, as filas do final
+	énchense con NAs; se o número é maior que o de filas, se descartan
+	os valores extra. Para obter máis información sobre como importar con
+	ODBC, consulta o <guideref targ="chap:odbc"/>.
       </para>
     </description>
 
@@ -4536,8 +4555,8 @@
 	de fallo que se lle amosa a quen invoca a función.
       </para>
       <para>
-	Esta instrución tamén está dispoñible en forma de función (co mesmo
-	nome, <fncref targ="funcerr"/>).
+	Consulta tamén a función que está estreitamente vencellada,
+	<fncref targ="errorif"/>.
       </para>
     </description>
 
@@ -4854,7 +4873,7 @@
 	  <quote>help functions</quote>.
 	</refnote>
 	<refnote xref="true">
-	  Para ver unha listaxe de funcións e accesorios, consulta a
+	  Para ver unha listaxe de funcións e accesorios, consulta o
 	  <gfr targ="chap:funcref"/>.
 	</refnote>
       </para>
@@ -5270,6 +5289,11 @@
 	  <effect>Forza o uso dun único eixe de ordenadas</effect>
         </option>
         <option>
+	  <flag>--ylogscale</flag>
+	  <optparm optional="true">base</optparm>
+	  <effect>Utiliza a escala logarítmica para o eixe vertical</effect>
+        </option>
+        <option>
 	  <flag>--dummy</flag>
 	  <effect>Mira abaixo</effect>
         </option>
@@ -5349,6 +5373,18 @@
 	fronte a <repl>xvar</repl> cos puntos amosados con cores diferentes
 	dependendo do valor de <repl>varficticia</repl> na observación
 	indicada.
+      </para>
+      <para>
+	Podes escoller que a escala do eixe 'y' sexa logarítmica en troques
+	de linear, utilizando a opción <opt>ylogscale</opt>, xunto cun
+	parámetro de base. Por exemplo,
+      </para>
+      <code>
+	gnuplot y x --ylogscale=2
+      </code>
+      <para>
+	representa os datos de xeito que o eixe vertical se expresa con
+	potencias de 2. Se omites a base, por defecto, establécese igual a 10.
       </para>
       <subhead>Collendo datos dunha matriz</subhead>
       <para>
@@ -9043,7 +9079,7 @@
 	propósito de facer inferencias.
       </para>
       <para>
-	Para obter máis detalles sobre a estimación non paramétrica, consulta
+	Para obter máis detalles sobre a estimación non paramétrica, consulta o
 	<guideref targ="chap:nonparam"/>.
       </para>
      </description>
@@ -10786,6 +10822,11 @@
         <option>
 	  <flag>--single-yaxis</flag>
 	  <effect>Forza o uso dun único eixe de ordenadas</effect>
+        </option>
+        <option>
+	  <flag>--ylogscale</flag>
+	  <optparm optional="true">base</optparm>
+	  <effect>Utiliza a escala logarítmica para o eixe vertical</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>

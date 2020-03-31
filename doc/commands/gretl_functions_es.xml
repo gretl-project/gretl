@@ -2973,7 +2973,7 @@
 	<para>
 	  Aquí tenemos un ejemplo de cómo utilizar esta función: para bajar
 	  algunos datos de la web de la US Bureau of Labor Statistics, que requiere
-	  el envío de una consulta JSON. Observa el uso de <fcnref targ="sprintf"/>
+	  el envío de una consulta JSON. Observa el uso de <fncref targ="sprintf"/>
 	  para insertar comillas en los datos <lit>POST</lit>.
 	</para>
 	<code>
@@ -3644,6 +3644,26 @@
       </description>
     </function>
 
+    <function name="errorif" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bool">condicion</fnarg>
+	<fnarg type="string">mensaje</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función solo se aplica en el contexto de una función definida por
+	  el usuario. Si la <argname>condicion</argname> se valora como no nula,
+	  ello implica que la ejecución de la función vigente finalice con la
+	  presentación de un mensaje condicionado a que se produzca un fallo;
+	  entonces el argumento <argname>mensaje</argname> se presentará como
+	  parte del mensaje de fallo que se muestra al llamar a la función.
+	</para>
+	<para>
+	  El valor que se devuelve con esta función (1) es simplemente nominal.
+	</para>
+      </description>
+    </function>
+
     <function name="exists" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">nombre</fnarg>
@@ -4216,26 +4236,6 @@
 	<para>
 	  Puedes utilizar valores negativos para <argname>d</argname>, y en ese
 	  caso la función realiza la integración fraccionaria.
-	</para>
-      </description>
-    </function>
-
-    <function name="funcerr" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="bool">condicion</fnarg>
-	<fnarg type="string">mensaje</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Esta función solo se aplica en el contexto de una función definida por
-	  el usuario. Si la <argname>condicion</argname> se valora como no nula,
-	  ello implica que la ejecución de la función vigente finalice con la
-	  presentación de un mensaje condicionado a que se produzca un fallo;
-	  entonces el argumento <argname>mensaje</argname> se presentará como
-	  parte del mensaje de fallo que se muestra al llamar a la función.
-	</para>
-	<para>
-	  El valor que se devuelve con esta función (1) es simplemente nominal.
 	</para>
       </description>
     </function>

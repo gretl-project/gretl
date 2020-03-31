@@ -2512,7 +2512,11 @@
 	<option>
 	  <flag>--odbc</flag>
 	  <effect>Importa de una base de datos ODBC</effect>
-	</option>	
+	</option>
+	<option>
+	  <flag>--no-align</flag>
+	  <effect>Específico para ODBC, mira abajo</effect>
+	</option>
       </options>
     </usage>
 
@@ -2597,6 +2601,21 @@
 	El parámetro debe ser un identificador válido de Gretl. Esta opción
 	se restringe al caso en el que especificas una única serie a
 	importar.
+      </para>
+      <para>
+	La opción <opt>no-align</opt> se aplica solo para importar series mediante
+	ODBC. Por defecto, se necesita que la solicitud ODBC devuelva información
+	que indique a Gretl en qué filas del conjunto de datos situar los datos que
+	se reciben (o que el número de valores que se reciben coincida, al menos,
+	bien con la extensión del conjunto de datos o bien con la extensión del
+	rango de la muestra vigente). Determinando la opción <opt>no-align</opt>
+	se relaja este requisito: si no se cumplen estas condiciones mencionadas,
+	los valores que se reciben se colocan simplemente de forma consecutiva,
+	comenzando en la primera fila del conjunto de datos. Si el número de
+	esos valores es menor que el de filas en el conjunto de datos, las filas
+	del final se rellenan con NAs; si el número es mayor que el de filas, se
+	descartan los valores extra. Para obtener más información sobre cómo
+	importar con ODBC, consulta <guideref targ="chap:odbc"/>.
       </para>
     </description>
 
@@ -4536,8 +4555,8 @@
 	de fallo que se le muestra a quien invoca la función.
       </para>
       <para>
-	Esta instrucción también está disponible en forma de función (con el
-	mismo nombre, <fncref targ="funcerr"/>).
+	Consulta también la función estrechamente vinculada,
+	<fncref targ="errorif"/>.
       </para>
     </description>
 
@@ -5270,6 +5289,11 @@
 	  <effect>Fuerza el uso de un único eje de ordenadas</effect>
         </option>
         <option>
+	  <flag>--ylogscale</flag>
+	  <optparm optional="true">base</optparm>
+	  <effect>Utiliza la escala logarítmica para el eje vertical</effect>
+        </option>
+        <option>
 	  <flag>--dummy</flag>
 	  <effect>Mira abajo</effect>
         </option>
@@ -5349,6 +5373,18 @@
 	frente a <repl>xvar</repl> con los puntos mostrados con colores diferentes
 	dependiendo del valor de <repl>varficticia</repl> en la observación
 	indicada.
+      </para>
+      <para>
+	Puedes escoger que la escala del eje 'y' sea logarítmica en lugar
+	de lineal, utilizando la opción <opt>ylogscale</opt>, junto con un
+	parámetro de base. Por ejemplo,
+      </para>
+      <code>
+	gnuplot y x --ylogscale=2
+      </code>
+      <para>
+	representa los datos de forma que el eje vertical se expresa con
+	potencias de 2. Si omites la base, por defecto, se establece igual a 10.
       </para>
       <subhead>Cogiendo datos de una matriz</subhead>
       <para>
@@ -10786,6 +10822,11 @@
         <option>
 	  <flag>--single-yaxis</flag>
 	  <effect>Fuerza el uso de un único eje de ordenadas</effect>
+        </option>
+        <option>
+	  <flag>--ylogscale</flag>
+	  <optparm optional="true">base</optparm>
+	  <effect>Utiliza la escala logarítmica para el eje vertical</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>

@@ -1643,7 +1643,7 @@
 	  opcionais.
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta
+	  Para máis detalles e exemplos, consulta o
 	  <guideref targ="chap:numerical"/>.
 	  <seelist>
 	          <fncref targ="BFGScmax"/>
@@ -1715,7 +1715,7 @@
 	  opcionais.
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta
+	  Para máis detalles e exemplos, consulta o
 	  <guideref targ="chap:numerical"/>.
 	  <seelist>
 	          <fncref targ="BFGSmax"/>
@@ -2973,7 +2973,7 @@
 	<para>
 	  Aquí temos un exemplo de como utilizar esta función: para baixar
 	  algúns datos da web da US Bureau of Labor Statistics, que require
-	  o envío dunha consulta JSON. Observa o uso de <fncref targ="sprintf"/>
+	  o envío dunha consulta JSON. Observa o uso de <fcnref targ="sprintf"/>
 	  para inserir comiñas nos datos <lit>POST</lit>.
 	</para>
 	<code>
@@ -3644,6 +3644,26 @@
       </description>
     </function>
 
+    <function name="errorif" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bool">condicion</fnarg>
+	<fnarg type="string">mensaxe</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función só se aplica no contexto dunha función definida polo
+	  usuario. Se a <argname>condicion</argname> se valora como non nula,
+	  iso implica que a execución da función vixente remate coa presentación
+	  dunha mensaxe condicionada a que se produza un fallo; entón o
+	  argumento <argname>mensaxe</argname> vaise presentar como parte
+	  da mensaxe de fallo que se amosa ao chamar á función.
+	</para>
+	<para>
+	  O valor que se devolve con esta función (1) é simplemente nominal.
+	</para>
+      </description>
+    </function>
+
     <function name="exists" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">nome</fnarg>
@@ -4216,26 +4236,6 @@
 	<para>
 	  Podes utilizar valores negativos para <argname>d</argname>, e nese
 	  caso a función realiza a integración fraccionaria.
-	</para>
-      </description>
-    </function>
-
-    <function name="funcerr" section="data-utils" output="scalar">
-      <fnargs>
-	<fnarg type="bool">condicion</fnarg>
-	<fnarg type="string">mensaxe</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Esta función só se aplica no contexto dunha función definida polo
-	  usuario. Se a <argname>condicion</argname> se valora como non nula,
-	  iso implica que a execución da función vixente remate coa presentación
-	  dunha mensaxe condicionada a que se produza un fallo; entón o
-	  argumento <argname>mensaxe</argname> vaise presentar como parte
-	  da mensaxe de fallo que se amosa ao chamar á función.
-	</para>
-	<para>
-	  O valor que se devolve con esta función (1) é simplemente nominal.
 	</para>
       </description>
     </function>
@@ -6524,7 +6524,7 @@
 	  a instrución <cmdref targ="set"/>, tales como <lit>hac_kernel</lit>,
 	  <lit>hac_lag</lit>, ou <lit>hac_prewhiten</lit>. Consulta tamén
 	  a sección sobre datos de series de tempo e matrices de covarianzas
-	  HAC en <guideref targ="chap:robust_vcv"/>.
+	  HAC no <guideref targ="chap:robust_vcv"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -8159,7 +8159,7 @@
 	  <lit>NMmax</lit>baixo o alcume <lit>NMmin</lit>..
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta
+	  Para máis detalles e exemplos, consulta o
 	  <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="simann"/>
@@ -8340,7 +8340,7 @@
 	  unha aproximación numérica.
 	</para>
 	<para>
-	  Para máis detalles e exemplos, consulta
+	  Para máis detalles e exemplos, consulta o
 	  <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
@@ -10377,7 +10377,7 @@
 	  <argname>b</argname> contén o vector de parámetros asociado.
 	</para>
 	<para>
-	  Para obter máis detalles e un exemplo, consulta
+	  Para obter máis detalles e un exemplo, consulta o
 	  <guideref targ="chap:numerical"/>.
 	  <seelist>
             <fncref targ="BFGSmax"/>
