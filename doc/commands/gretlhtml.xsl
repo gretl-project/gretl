@@ -6,6 +6,7 @@
 
 <xsl:param name="hlp">cli</xsl:param>
 <xsl:param name="topic">cmds</xsl:param>
+<xsl:param name="refs">docref.xml</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="utf-8"/>
@@ -14,7 +15,7 @@
 	      select="document('hlp_l10n.xml')/internationalization"/>
 
 <xsl:variable name="docref"
-	      select="document('docref.xml')/refsets"/>
+	      select="document($refs)/refsets"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>

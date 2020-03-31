@@ -51,7 +51,9 @@ enum {
 
 #define UTF const xmlChar *
 
-char textemp[16];
+char textemp[32];
+char docdir[512];
+char refs[512];
 
 static void
 get_full_filename (char *targ, const char *dir, const char *fname)
@@ -92,6 +94,11 @@ static void build_params (char const **params, int content,
 	params[i++] = "\"pango\"";
     }
 
+    if (*refs != '\0') {
+	params[i++] = "refs";
+	params[i++] = refs;
+    }
+
     params[i] = NULL;
 }
 
@@ -117,7 +124,7 @@ int real_apply_xslt (xmlDocPtr doc,
 }
 
 int apply_xslt (xmlDocPtr doc, int content, int format,
-		const char *lang, const char *docdir)
+		const char *lang)
 {
     xsltStylesheetPtr style;
     char styname[FILENAME_MAX];
@@ -167,8 +174,7 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
     return lang;
 }
 
-int process_xml_file (const char *fname, int content,
-		      int format, const char *docdir)
+int process_xml_file (const char *fname, int content, int format)
 {
     const char *rootnode = "commandref";
     xmlDocPtr doc;
@@ -211,7 +217,7 @@ int process_xml_file (const char *fname, int content,
 	free(tmp);
     }
 
-    err = apply_xslt(doc, content, format, lang, docdir);
+    err = apply_xslt(doc, content, format, lang);
 
  bailout:
 
@@ -226,9 +232,7 @@ int process_xml_file (const char *fname, int content,
    file.
 */
 
-static int revise_xml_for_tex (const char *fname,
-			       int content,
-			       const char *docdir)
+static int revise_xml_for_tex (const char *fname, int content)
 {
     char ftmp[FILENAME_MAX];
     char line[1024];
@@ -298,18 +302,15 @@ static int revise_xml_for_tex (const char *fname,
     return 0;
 }
 
-static char *get_docdir (char *ddir, const char *fname)
+static void set_docdir (const char *fname)
 {
-    char *p;
+    char *p = strrchr(fname, '/');
 
-    p = strrchr(fname, '/');
-    if (p == NULL) return NULL;
-
-    strcpy(ddir, fname);
-    p = strrchr(ddir, '/');
-    *p = 0;
-
-    return ddir;
+    if (p != NULL) {
+	strcpy(docdir, fname);
+	p = strrchr(docdir, '/');
+	*p = '\0';
+    }
 }
 
 static void usage (void)
@@ -321,7 +322,6 @@ static void usage (void)
 int main (int argc, char **argv)
 {
     const char *fname = NULL;
-    char docdir[FILENAME_MAX];
     char lang[8];
     int content = 0;
     int format = 0;
@@ -331,7 +331,7 @@ int main (int argc, char **argv)
 	usage();
     }
 
-    *docdir = *lang = '\0';
+    *docdir = *lang = *refs = '\0';
 
     for (i=1; i<argc; i++) {
 	if (!strcmp(argv[i], "--plain")) {
@@ -353,6 +353,8 @@ int main (int argc, char **argv)
 	    content = CONTENT_GUI;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
+	} else if (!strncmp(argv[i], "--refs=", 7)) {
+	    sprintf(refs, "\"%s\"", argv[i] + 7);
 	} else if (!strncmp(argv[i], "--lang=", 7)) {
 	    strcpy(lang, argv[i] + 7);
 	} else {
@@ -365,7 +367,7 @@ int main (int argc, char **argv)
     }
 
     if (*docdir == '\0') {
-	get_docdir(docdir, fname);
+	set_docdir(fname);
     }
 
     if (format == FORMAT_TEX) {
@@ -376,13 +378,13 @@ int main (int argc, char **argv)
 	char c = (content == CONTENT_FUNCS)? 'f' : 'c';
 
 	sprintf(textemp, "%ctex_%s.xml", c, lang);
-	err = revise_xml_for_tex(fname, content, docdir);
+	err = revise_xml_for_tex(fname, content);
 	if (!err) {
-	    err = process_xml_file(textemp, content, format, docdir);
+	    err = process_xml_file(textemp, content, format);
 	}
 	remove(textemp);
     } else {
-	err = process_xml_file(fname, content, format, docdir);
+	err = process_xml_file(fname, content, format);
     }
 
     fprintf(stderr, "%s: input file '%s'; err = %d\n", argv[0], fname, err);

@@ -1,4 +1,5 @@
 topsrc = @top_srcdir@
+here = @abs_builddir@
 datarootdir = @datarootdir@
 
 CC = @CC@
@@ -71,7 +72,7 @@ HELPFILES_ES = $(ALL_HELPFILES:=.es)
 HELPFILES_PT = $(ALL_HELPFILES:=.pt)
 HELPFILES_GL = $(ALL_HELPFILES:=.gl)
 
-CHAPREFS = $(CMDSDIR)/chaprefs.xml
+CHAPREFS = $(here)/chaprefs.xml
 
 GRETLHDRS = $(topsrc)/lib/src/libgretl.h \
 	$(topsrc)/lib/src/gretl_commands.h \
@@ -152,29 +153,29 @@ figs: $(EQNLIST)
 # Rules for "online" help files in various languages
 
 gretl_cli_cmdref.% : gretl_commands_%.xml xsltrans reflow $(CMD_COMMON)
-	./xsltrans --cmds --plain $< | ./reflow > $@
+	./xsltrans --cmds --plain --refs=$(CHAPREFS) $< | ./reflow > $@
 
 gretl_gui_cmdref.% : gretl_commands_%.xml xsltrans reflow $(CMD_COMMON)
-	./xsltrans --cmds --pango $< | ./reflow -m > $@
+	./xsltrans --cmds --pango --refs=$(CHAPREFS) $< | ./reflow -m > $@
 
 gretl_gui_help.% : gretl_commands_%.xml xsltrans reflow $(CMD_COMMON)
-	./xsltrans --gui --pango $< | ./reflow -m > $@
+	./xsltrans --gui --pango --refs=$(CHAPREFS) $< | ./reflow -m > $@
 
 gretl_cli_fnref.% : gretl_functions_%.xml xsltrans reflow $(FNC_COMMON)
-	./xsltrans --funcs --plain $< | ./reflow > $@
+	./xsltrans --funcs --plain --refs=$(CHAPREFS) $< | ./reflow > $@
 
 gretl_gui_fnref.%: gretl_functions_%.xml xsltrans reflow $(FNC_COMMON)
-	./xsltrans --funcs --pango $< | ./reflow -m > $@
+	./xsltrans --funcs --pango --refs=$(CHAPREFS) $< | ./reflow -m > $@
 
 # English HTML help files
 
 htmlhelp: cmdref.html funcref.html biblio.html
 
 cmdref.html: $(EN_SRC) xsltrans reflow $(CMDDTD) $(HTMLXSL) $(XMLSTRS)
-	./xsltrans --cmds --html $< | ./reflow --html > $@
+	./xsltrans --cmds --html --refs=$(CHAPREFS) $< | ./reflow --html > $@
 
 funcref.html: $(EN_FNSRC) xsltrans reflow $(FNCDTD) $(HTMLXSL) $(XMLSTRS)
-	./xsltrans --funcs --html $< | ./reflow --html > $@
+	./xsltrans --funcs --html --refs=$(CHAPREFS) $< | ./reflow --html > $@
 
 biblio.html: bbl2txt ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl --html > $@

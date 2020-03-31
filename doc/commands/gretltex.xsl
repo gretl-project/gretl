@@ -2,6 +2,7 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="hlp">tex</xsl:param>
+<xsl:param name="refs">docref.xml</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="iso-8859-1"/>
@@ -10,7 +11,7 @@
 	      select="document('hlp_l10n.xml')/internationalization"/>
 
 <xsl:variable name="docref"
-	      select="document('docref.xml')/refsets"/>
+	      select="document($refs)/refsets"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>

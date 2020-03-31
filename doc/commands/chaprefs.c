@@ -62,7 +62,8 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }    
 
-    puts("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n");
+    puts("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
+    puts("<refsets>");
     puts("<refset id=\"guide-chapters\">");
 
     /* We search in gretl-guide.tex for \include{} lines
@@ -93,6 +94,7 @@ int main (int argc, char **argv)
     }
 
     puts("</refset>");
+    puts("</refsets>");
 
     fclose(fp);
 
