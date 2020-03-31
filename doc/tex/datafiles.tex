@@ -520,20 +520,49 @@ setobs 50 1.01 --stacked-cross-section
 store panel.gdt x1..x20
 \end{code}
 
+\subsection{Side-by-side time series}
+
+There's a second sort of data that you may wish to convert to gretl's
+panel format, namely side-by-side time series for a number of
+cross-sectional units. For example, a data file might contain separate
+GDP series of common length $T$ for each of $N$ countries. To turn
+these into a single stacked time series the \texttt{stack} function
+can again be used. An example follows, where we suppose the original
+data source is a comma-separated file named \texttt{GDP.csv},
+containing GDP data for countries from Austria (\texttt{GDP\_AT}) to
+Zimbabwe (\texttt{GDP\_ZW}) in consecutive columns.
+
+\begin{code}
+open GDP.csv
+scalar T = $nobs # the number of periods
+list L = GDP_AT..GDP_ZW
+series GDP = stack(L, T)
+setobs T 1:01 --stacked-time-series
+store panel.gdt GDP
+\end{code}
+
+The resulting data file, \texttt{panel.gdt}, will contain a single
+series of length $NT$ where $N$ is the number of countries and
+$T$ is the length of the original dataset. One could insert revised
+variants of lines 3 and 4 of the script if the original file contained
+additional side-by-side per-country series for investment, consumption
+or whatever.
+
 \subsection{Panel data marker strings}
 
 It can be helpful with panel data to have the observations identified
 by mnemonic markers.  A special function in the \texttt{genr} command
 is available for this purpose.
 
-In the example above, suppose all the states are identified by
-two-letter codes in the left-most column of the original datafile.
-When the stacking operation is performed, these codes will be stacked
-along with the data values.  If the first row is marked \texttt{AR}
-for Arkansas, then the marker \texttt{AR} will end up being shown on
-each row containing an observation for Arkansas.  That's all very
-well, but these markers don't tell us anything about the date of the
-observation.  To rectify this we could do:
+In the example under the heading ``Panel data arranged by variable''
+above, suppose all the states are identified by two-letter codes in
+the left-most column of the original datafile.  When the
+\texttt{stack} function is invoked as shown, these codes will be
+stacked along with the data values.  If the first row is marked
+\texttt{AR} for Arkansas, then the marker \texttt{AR} will end up
+being shown on each row containing an observation for Arkansas.
+That's all very well, but these markers don't tell us anything about
+the date of the observation.  To rectify this we could do:
 
 \begin{code}
 genr time
