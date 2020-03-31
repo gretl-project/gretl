@@ -1460,6 +1460,7 @@ static int parser_next_char (parser *p)
 	    if (!isspace(*s)) {
 		return *s;
 	    }
+	    s++;
 	}
 	return 0;
     }
