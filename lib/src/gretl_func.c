@@ -5085,6 +5085,7 @@ static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
 		fprintf(stderr, " trying for %s\n", dep);
 		pkgpath = gretl_function_package_get_path(dep, PKG_ALL);
 		if (pkgpath == NULL) {
+		    err = E_DATA;
 		    gretl_errmsg_sprintf("%s: dependency %s was not found",
 					 pkg->name, dep);
 		} else {
