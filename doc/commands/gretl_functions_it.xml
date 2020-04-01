@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="italian">
@@ -508,7 +508,29 @@
 	</code>
       </description>
     </function>    
+    
+  <function name="$mpirank" section="access" output="int">
+      <description>
+	<para>
+	  Se gretl è compilato con supporto MPI, e il programma è
+	  stato lanciato in modalità MPI, ritorna il
+	  <quote>rango</quote> a base 0 o l'ID del processo
+	  attuale. Altrimenti ritorna &minus;1.
+	</para>
+      </description>
+    </function>
 
+    <function name="$mpisize" section="access" output="int">
+      <description>
+	<para>
+	  Se gretl è compilato con supporto MPI, e il programma è
+	  stato lanciato in modalità MPI, ritorna il numero di
+	  processi MPi attualmente in svolgimento. Altrimenti ritorna
+	  0.
+	</para>
+      </description>
+    </function>
+    
     <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
@@ -625,7 +647,31 @@
     </para>
       </description>
     </function>
-
+    
+  <function name="$parnames" section="access" output="strings">
+      <description>
+	<para>
+	  Dopo la stima di un modello ad equazione singola, produce un
+	  vettore di stringhe contenente i nomi dei parametri del
+	  modello. il numero dei nomi è pari al numero di elementi
+	  nel vettore <fncref targ="$coeff"/> .
+	</para>
+	<para>
+	  Per modelli specificati con una lista di regressori il risultato
+	  sarà lo stesso di
+	</para>
+	<code>
+	  varnames($xlist)
+	</code>
+	<para>
+	  (vedi <fncref targ="varnames"/>), ma <lit>$parnames</lit> è
+	  è più generale, poiché funziona anche con modelli senza lista di
+	  regressori (<cmdref targ="nls"/>, <cmdref targ="mle"/>, <cmdref
+	  targ="gmm"/>).
+	</para>
+      </description>
+    </function>
+    
     <function name="$pd" section="access" output="int">
       <description>
     <para>
@@ -676,8 +722,22 @@
 	  base 1) dell'osservazione che massimizza la statistica test.
 	</para>
       </description>
-    </function>    
-
+    </function>   
+     
+  <function name="$result" section="access" output="matrix-or-bundle">
+      <description>
+	<para>
+	  Fornisce le informazioni immagazzinate da alcuni comandi che
+	  non hanno specifici accessori. Tali comandi includono
+	  <cmdref targ="corr"/>, <cmdref targ="freq"/>, <cmdref
+	  targ="summary"/>, <cmdref targ="xtab"/>, <cmdref
+	  targ="vif"/> and <cmdref targ="bkw"/> ; in questi casi il
+	  risultato è una matrice. In più <cmdref targ="pkg"/>, che
+	  opzionalmente registra come risultato un bundle.
+	</para>
+      </description>
+    </function>
+    
     <function name="$rho" section="access" output="scalar">
       <fnargs>
     <fnarg optional="true" type="scalar">n</fnarg>
@@ -929,7 +989,7 @@
     <function name="$T" section="access" output="int">
       <description>
     <para>
-      Numero di osservazioni usato nella stima dell'ultimo
+      Ritorna il numero di osservazioni usato nella stima dell'ultimo
       modello.
     </para>
       </description>
@@ -1720,6 +1780,41 @@
     </para>
       </description>
     </function>
+    
+   <function name="bkw" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">V</fnarg>
+	<fnarg optional="true" type="strings">parnames</fnarg>
+	<fnarg optional="true" type="bool">verbose</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola il test diagnostico BKW per la collinearità (vedi
+	  <cite key="belsley-etal80">Belsley, Kuh and Welsch
+	  (1980)</cite>) data la matrice covarianza delle stime dei
+	  parametri <argname>V</argname>. Il secondo argomento
+	  opzionale, che che può essere un vettore di stringhe o una
+	  stringa contenente nomi separati da virgole, è usato per
+	  etichettare le colonne che mostrano le proporzioni della
+	  varianza; il numero di nomi deve eguagliare la dimensione di
+	  <argname>V</argname>.  Dopo aver stimato un modello in
+	  gretl, gli accessori <fncref targ="$vcv"/> e <fncref
+	  targ="$parnames"/>. possono essere usati per generare
+	  oggetti appropriati per esseri usate come argomenti.
+	</para>
+	<para>
+	  Di default questa funzione producendo solamente la tabella
+	  BKW come matrice, ma se si inserisce un valore differente da
+	  0 come terzo argomento, insieme alla tabella vengono
+	  stampate a video alcune analisi.
+	</para>
+	<para>
+	  Esiste anche un comando che svolge gli stessi calcoli,
+	  <cmdref targ="bkw"/>, che automaticamente usa l'utimo
+	  modello stimato e non richiede alcun argomento.
+	</para>
+      </description>
+    </function>
 
     <function name="boxcox" section="filters" output="asinput">
       <fnargs>
@@ -1883,6 +1978,28 @@
       </description>
     </function>
 
+    <function name="carg" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Rirona una matrice reale <by r="m" c="n"/> contenente gli
+	  <quote>argomenti</quote> complessi di ogni elemento della
+	  matrice complessa <by r="m" c="n"/>
+	  <argname>C</argname>. L'argomento del numero complesso
+	  <math>z</math> = <math>x</math> + <math>yi</math> può essere
+	  calcolato anche come <lit>atan2(y, x)</lit>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="cmod"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2188,6 +2305,28 @@
       </description>
     </function>
 
+   <function name="cmod" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	   Ritorna una matrice reale <by r="m" c="n"/> contenente i
+	   valori assoluti (o <quote>moduli</quote>) di ogni elemento
+	   della matrice complessa <by r="m" c="n"/>
+	   <argname>C</argname>. Il modulo del numero complesso
+	   <math>z</math> = <math>x</math> + <math>yi</math> è uguale
+	   alla radice quadrata di <math>x</math><sup>2</sup> +
+	   <math>y</math><sup>2</sup>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
     <fnarg type="matrix">X</fnarg>
@@ -2340,6 +2479,79 @@
         <fncref targ="vech"/>
       </seelist>
     </para>
+      </description>
+    </function>
+
+  <function name="complex" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="scalar-or-matrix">A</fnarg>
+	<fnarg optional="true" type="scalar-or-matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna una matrice complessa, dove <argname>A</argname> è
+	  utilizzata per fornire la parte reale e <argname>B</argname>
+	  quella immaginaria. Se <argname>A</argname> è <by r="m"
+	  c="n"/> e <argname>B</argname> è uno scalare, il risultato è
+	  <by r="m" c="n"/> con parte immaginaria costante&mdash;e
+	  similmente nel caso opposto, ma con parte reale costante. Se
+	  entrambi gli argomenti sono matrici, esse devono essere
+	  della stessa dimensione.  Se il secondo argomento è omesso,
+	  la parte immaginaria è di default uguale a 0.
+	  <seelist><fncref targ="cswitch"/></seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="conj" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna una matrice complessa <by r="m" c="n"/> contenente i
+	  complessi coniugati di ogni elemento della matrice complessa
+	  <by r="m" c="n"/> <argname>C</argname>. Il coniugato di un
+	  numero complesso<math>z</math> = <math>x</math> +
+	  <math>yi</math> è uguale a <math>x</math> &minus;
+	  <math>yi</math>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	    <fncref targ="cmod"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
+    <function name="conv2d" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola la convoluzione bidimensionale delle matrici
+	  <argname>A</argname> and <argname>B</argname>. Se
+	  <argname>A</argname> è <by r="r" c="c"/> e
+	  <argname>B</argname> è <by r="m" c="n"/> la matrice prodotta
+	  avrà <math>r+m-1</math> righe e <math>c+n-1</math> colonne.
+	</para>
+	<para context="tex">
+	    La convoluzione bidimensionale delle matrici
+	    <argname>A</argname> e <argname>B</argname> è definita
+	    come: \[ C_{i,j} = \sum_{k=1}^r\sum_{l=1}^c A_{k,l}
+	    B_{i-k+1,j-l+1}, \] dove le somme includono solo quei
+	    valori di $k$ e $l$ per i quali i pedici di $B$ rientrano
+	    nei limiti.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="fft"/>
+            <fncref targ="filter"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -2548,6 +2760,66 @@
     </para>
       </description>
     </function>  
+
+    <function name="cswitch" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="scalar">mode</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Reinterpreta una matrice reale come contenente valori
+	  complessi o viceversa.  L'azione precisa dipende dalla
+	  <argname>modalità</argname> (che può avere valore 1,2,3 o 4)
+	  come di seguito illustrato:
+	</para>
+	<para>
+	  modalità 1: <argname>A</argname> deve essere una matrice reale 
+	  con un numero pari di colonne. Produce una matrice complessa con
+	  la metà delle colonne; le colonne dispari di
+	  <argname>A</argname> forniscono la parte reale e le colonne pari
+	  forniscono le parti immaginarie.
+	</para>
+	<para>
+	  modalità 2: Svolge l'operazione inversa rispetto alla
+	  modalità 1. <argname>A</argname> deve essere una matrice complessa
+	  e il risultato è una matrice reale con il doppio delle colonne di <argname>A</argname>.
+	</para>
+	<para>
+	  modalità 3: <argname>A</argname> deve essere una matrice
+	  reale con un numero pari di right. Produce una matrice
+	  complessa con la metà delle righe; le righe dispari di
+	  <argname>A</argname> forniscono la parte reale e le righe
+	  pari forniscono le parti immaginarie.
+	</para>
+	<para>
+	  modalità 4: Svolge l'operazione inversa rispetto alla
+	  modalità 3. <argname>A</argname> deve essere una matrice
+	  complessa e il risultato è una matrice reale con il doppio
+	  delle righe di <argname>A</argname>.
+	</para>
+	<para>
+	  <seelist><fncref targ="complex"/></seelist>
+	</para>
+      </description>
+    </function>
+    
+    <function name="ctrans" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Produce la matrice complessa <by r="n" c="m"/> contenente i
+	  coniugati trasposti della matrice complessa <by r="m"
+	  c="n"/> <argname>C</argname>. Anche l'operatore <lit>'</lit>
+	  (primo) svolge la trasposizione coniugata per le matrici
+	  complesse. La funzione <fncref targ="transp"/> può essere
+	  usata sulle matrici complesse ma opera una trasposizione
+	  <quote>diretta</quote> (non coniugata).
+	</para>
+      </description>
+    </function>
 
     <function name="cum" section="transforms" output="asinput">
       <fnargs>
@@ -3100,6 +3372,43 @@
       </description>
     </function>    
 
+  <function name="eigen" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;W</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola gli autovalori e, opzionalmente, gli autovettori destri
+	  e/o sinistri, della matrice <by r="n" c="n"/>
+	  <argname>A</argname>, che può essere reale o complessa. Gli
+	  autovalori sono ritornati come vettore colonna complesso.
+	</para>
+	<para>
+	  Se si desidera ottenere gli autovettori destri (nella forma di una
+	  matrice complessa <by r="n" c="n"/>), fornire il nome di
+	  una matrice esistente, preceduta da <lit>&amp;</lit> per indicare
+	  l'<quote>indirizzo</quote> della matrice in questione, come secondo
+	  argomento. Altrimenti questo argomento può essere omesso.
+	</para>
+	<para>
+	  Per ottenere gli autovettori sinistri (di nuovo, nella forma di una 
+	  matrice complessa), fornire l'indirizzo di una matrice come terzo argomento.
+	  Notare che se si desiderano gli autovettori sinistri e non quelli destri,
+	  occore inserire la parola chiave <lit>null</lit>
+	  al posto del secondo argomento.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="eigensym"/>
+            <fncref targ="eigsolve"/>
+            <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
     <fnarg type="smatrix">A</fnarg>
