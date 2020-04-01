@@ -30,6 +30,13 @@ mkdir -p ${TARGET}/lib/gtk-3.0/modules
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/printbackends
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/theming-engines
 
+# create Glib schema directory and copy files in
+mkdir -p ${TARGET}/share/glib-2.0/schemas
+for f in org.gtk.Settings.ColorChooser.gschema.xml \
+  org.gtk.Settings.FileChooser.gschema.xml gschemas.compiled ; do
+  cp ${SYSBASE}/share/glib-2.0/schemas/$f ${TARGET}/share/glib-2.0/schemas
+done
+
 # directories to hold GTK message catalogs
 LANGS=`cat ${SRCDIR}/po/LINGUAS | grep -v ^#`
 for lang in $LANGS ; do
