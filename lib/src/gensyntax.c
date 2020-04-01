@@ -1136,9 +1136,19 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	return;
     }
 
+    if (f == F_STACK) {
+	/* for stack(), the first arg should be a list */
+	p->flags |= P_LISTDEF;
+    }
+
     callargs = get_callargs(f);
     if (callargs == NULL || callargs[0] == 0) {
 	lex(p);
+    }
+
+    if (f == F_STACK) {
+	/* revert to regular parsing */
+	p->flags &= ~P_LISTDEF;
     }
 
     while (((k > 0 && i < k) || p->ch) && !p->err) {
