@@ -2687,25 +2687,24 @@ static int missing_tail (const double *x, int n)
 }
 
 /**
- * dataset_stack_variables:
- * @vname: name for stacked series.
+ * build_stacked_series:
+ * @pstack: location for returning stacked series.
  * @list: list of series to be stacked.
  * @length: number of observations to use per input series (or 0 for auto).
  * @offset: offset at which to start drawing observations.
  * @dset: pointer to dataset.
- * @prn: printing apparatus.
  *
  * Really for internal use. Don't worry about it.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int dataset_stack_variables (const char *vname, int *list,
-			     int length, int offset,
-			     DATASET *dset, PRN *prn)
+int build_stacked_series (double **pstack, int *list,
+			  int length, int offset,
+			  DATASET *dset)
 {
-    double *bigx = NULL;
-    int nv, oldn, bign, genv;
+    double *xstack = NULL;
+    int nv, oldn, bign;
     int i, err = 0;
 
     if (dset == NULL || dset->n == 0) {
@@ -2716,7 +2715,6 @@ int dataset_stack_variables (const char *vname, int *list,
 	return E_INVARG;
     }
 
-    genv = series_index(dset, vname);
     nv = list[0];
 
 #if PDEBUG
@@ -2752,12 +2750,12 @@ int dataset_stack_variables (const char *vname, int *list,
     }
 
 #if PDEBUG
-    fprintf(stderr, "bign = %d, allocating bigx (oldn = %d)\n", bign, dset->n);
+    fprintf(stderr, "bign = %d, allocating xstack (oldn = %d)\n", bign, dset->n);
 #endif
 
     /* allocate container for stacked data */
-    bigx = malloc(bign * sizeof *bigx);
-    if (bigx == NULL) {
+    xstack = malloc(bign * sizeof *xstack);
+    if (xstack == NULL) {
 	return E_ALLOC;
     }
 
@@ -2784,7 +2782,7 @@ int dataset_stack_variables (const char *vname, int *list,
 	}
 
 	for (t=offset; t<tmax; t++) {
-	    bigx[bigt] = dset->Z[j][t];
+	    xstack[bigt] = dset->Z[j][t];
 	    if (dset->S != NULL && bigt != t) {
 		strcpy(dset->S[bigt], dset->S[t]);
 	    }
@@ -2793,32 +2791,12 @@ int dataset_stack_variables (const char *vname, int *list,
 
 	if (i == nv - 1) {
 	    for (t=bigt; t<bign; t++) {
-		bigx[bigt++] = NADBL;
+		xstack[bigt++] = NADBL;
 	    }
 	}
     }
 
-    /* add stacked series to dataset */
-    if (genv == dset->v) {
-	/* add as new variable */
-	err = dataset_add_allocated_series(dset, bigx);
-    } else {
-	/* replace existing variable of same name */
-	free(dset->Z[genv]);
-	dset->Z[genv] = bigx;
-	gretl_varinfo_init(dset->varinfo[genv]);
-    }
-
-    /* complete the details */
-    if (!err) {
-	strcpy(dset->varname[genv], vname);
-	/* FIXME make label for series? */
-	// make_stack_label(tmp, scpy);
-	// copy_label(&dset->varinfo[genv]->label, tmp);
-	pprintf(prn, "%s %s %s (ID %d)\n",
-		(genv == dset->v - 1)? _("Generated") : _("Replaced"),
-		_("series"), vname, genv);
-    }
+    *pstack = xstack;
 
     return err;
 }

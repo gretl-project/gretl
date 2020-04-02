@@ -2393,9 +2393,30 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_series_node(p);
     const double *x = NULL, *y = NULL;
     double xt = 0, yt = 0;
+    int tmax = p->dset->t2;
 
     if (ret == NULL) {
 	return NULL;
+    }
+
+    if (p->dset->n > p->dset_n) {
+	/* can arise when stack() is in the tree ->
+	   dataset gets extended on the fly
+	*/
+	if (l->t == SERIES) {
+	    if (useries_node(l)) {
+		l->v.xvec = p->dset->Z[l->vnum];
+	    } else {
+		tmax = MIN(tmax, p->dset_n - 1);
+	    }
+	}
+	if (r->t == SERIES) {
+	    if (useries_node(r)) {
+		r->v.xvec = p->dset->Z[r->vnum];
+	    } else {
+		tmax = MIN(tmax, p->dset_n - 1);
+	    }
+	}
     }
 
     if (l->t == SERIES) {
@@ -2420,7 +2441,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 
     if (!p->err) {
 	int t1 = autoreg(p) ? p->obs : p->dset->t1;
-	int t2 = autoreg(p) ? p->obs : p->dset->t2;
+	int t2 = autoreg(p) ? p->obs : tmax;
 	int t;
 
 	for (t=t1; t<=t2; t++) {
@@ -11824,7 +11845,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	int *list = NULL;
 
 	post_process = 0;
-	ret = aux_scalar_node(p);
+	ret = aux_empty_series_node(p);
 	list = node_get_list(l, p);
 	if (!p->err) {
 	    if (!null_node(m)) {
@@ -11835,11 +11856,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
 	if (!p->err) {
-	    p->err = dataset_stack_variables(p->lh.name, list, length, offset,
-					     p->dset, p->prn);
-	}
-	if (!p->err) {
-	    ret->v.xval = 0;
+	    p->err = build_stacked_series(&ret->v.xvec, list, length, offset,
+					  p->dset);
 	}
 	free(list);
     }

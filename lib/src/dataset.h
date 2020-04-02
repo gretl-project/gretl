@@ -412,9 +412,9 @@ int renumber_series_with_checks (const int *list,
 
 int maybe_prune_dataset (DATASET **pdset, void *p);
 
-int dataset_stack_variables (const char *vname, int *list,
-			     int length, int offset,
-			     DATASET *dset, PRN *prn);
+int build_stacked_series (double **pstack, int *list,
+			  int length, int offset,
+			  DATASET *dset);
 
 int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt);
 

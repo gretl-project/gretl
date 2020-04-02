@@ -829,7 +829,7 @@ int generate (const char *line, DATASET *dset,
 
     realgen(line, &p, dset, prn, flags, targtype);
 
-    if (!p.err && targtype != EMPTY && !(p.flags & P_STACK)) {
+    if (!p.err && targtype != EMPTY) {
 	gen_save_or_print(&p, prn);
 	if (!p.err && !gen_silent(p.flags)) {
 	    gen_write_label(&p, oldv);
