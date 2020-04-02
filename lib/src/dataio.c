@@ -244,7 +244,7 @@ static int match_obs_marker (const char *s, const DATASET *dset)
     int t;
 
 #if DATES_DEBUG
-    fprintf(stderr, "dateton: checking marker strings\n");
+    fprintf(stderr, "dateton: checking '%s' against marker strings\n", s);
 #endif
 
     maybe_unquote_label(test, s);
@@ -253,17 +253,6 @@ static int match_obs_marker (const char *s, const DATASET *dset)
 	if (!strcmp(test, dset->S[t])) {
 	    /* handled */
 	    return t;
-	}
-    }
-
-    if (isalpha(*s)) {
-	/* try harder */
-	int k = strlen(test);
-
-	for (t=0; t<dset->n; t++) {
-	    if (!strncmp(test, dset->S[t], k)) {
-		return t;
-	    }
 	}
     }
 
