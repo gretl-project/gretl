@@ -97,7 +97,6 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	}
     } else if (targ == SERIES) {
 	if (vnum < oldv) {
-	    fprintf(stderr, "HERE!!!\n");
 	    pprintf(prn, _("Replaced series %s (ID %d)"), name, vnum);
 	} else {
 	    pprintf(prn, _("Generated series %s (ID %d)"), name, vnum);

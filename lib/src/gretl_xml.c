@@ -2295,7 +2295,6 @@ static int real_write_gdt (const char *fname, const int *inlist,
     }
 
     if (prn == NULL) {
-	fprintf(stderr, "HERE 2 NULL prn\n");
 	free(list);
 	return E_FOPEN;
     }
