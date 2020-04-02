@@ -3567,6 +3567,26 @@
     </para>
       </description>
     </function>
+    
+    <function name="errorif" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bool">condizione</fnarg>
+	<fnarg type="string">msg</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Applicabile solo nel contesto di una funzione creata dall'utente.
+	  Se la <argname>condizione</argname> è diversa da 0,
+	 termina l'esecuzione della funzione attuale, evidenziando la condizione
+	 di errore; l'argomento <argname>msg</argname>
+	  è poi stampato a video come parte del messaggio mostrato
+	  a chi utilizza la funzione in questione.
+	</para>
+	<para>
+	  Il valore (1) ritornato da questa funzone è puramente nominale.
+	</para>
+      </description>
+    </function>
 
     <function name="exists" section="data-utils" output="int">
       <fnargs>
@@ -3717,7 +3737,51 @@
     </para>
       </description>
     </function>
+    
+   <function name="feval" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="string">funcname</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Utile soprattutto per gli autori di funzioni. Il primo
+	  argomento è il nome di una funzione, e quelli restanti 
+	  sono gli argomenti passati alla funzione in questione. In pratica, 
+	  la funzione identificata da <argname>funcname</argname> viene trattata come essa stessa
+	  una variabile. Il valore ritornato è quello che la funzione <argname>funcname</argname>
+	  ritorna dati gli argomenti specificati.
+	</para>
+	<para>
+	  L'esempio seguente illustra alcuni possibili usi.
+	</para>
+	<code>
+	  function scalar utility (scalar c, scalar sigma)
+	      return (c^(1-sigma)-1)/(1-sigma)
+	  end function
 
+	  strings S = defarray("log", "utility")
+
+	  # chiama una funzione con un argomento
+	  x = feval(S[1], 2.5)
+	  # chiama una funzione definita dall'utente
+	  x = feval(S[2], 5, 0.5)
+	  # una funzione con due argomenti
+	  func = "zeros"
+	  m = feval(func, 5-2, sqrt(4))
+	  print m
+	  # una integrata a 3 argomenti
+	  x = feval("monthlen", 12, 1980, 5)
+	</code>
+	<para>
+	  C'è una lieve analogia tra <lit>feval</lit> e <fncref
+	  targ="genseries"/>: entrambe le funzioni rendono variabile un
+	  elemento sintattico che di solito è fisso, nel momento in cui
+	  lo script è compilato.
+	</para>
+      </description>
+    </function>
+    
      <function name="fevd" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
@@ -3776,6 +3840,12 @@
     <fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
+      <para>
+	  <emphasis>Questa è una vecchia funzione, scritta prima che gretl
+	  supportasse matrici complesse. Non dovrebbe essere usata in nuovi
+	  script hansl. Si usi invece</emphasis> <fncref targ="fft2"/>
+	  <emphasis>.</emphasis>
+	</para>
     <para>
       Trasformata discreta reale di Fourier. Se la matrice di input
       <argname>X</argname> ha <math>n</math> colonne, l'output
@@ -3793,6 +3863,28 @@
         <fncref targ="ffti"/>
       </seelist>
     </para>
+      </description>
+    </function>
+    
+    <function name="fft2" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Trasformata discreta di Fourier. La matrice di input
+	  <argname>X</argname> può essere reale o complessa. L'output è
+	  una matrice complessa della stessa dimensione di <argname>X</argname>.
+	</para>
+	<para>
+	  Qualora dovesse essere necessario calcolare la trasformata di Fourier di
+	  diversi vettori con lo stesso numero di elementi, risulta numericamente più
+	  efficiente raggruppare i vettori in una matrice invece di utilizzare
+	  <lit>fft2</lit> per ogni vettore separatamente.
+	  <seelist>
+            <fncref targ="ffti"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -3986,6 +4078,33 @@
       </description>
     </function>
 
+   <function name="flatten" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="matrices-or-strings">A</fnarg>
+	<fnarg optional="true" type="bool">alt</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Compatta un array di matrici in una singola matrice
+	  oppure un array di stringhe in una singola stringa.
+	</para>
+	<para>
+	  Nel caso matriciale, le matrici contenute in <argname>A</argname> sono,
+	  di default, concatenate orizzontalmente, ma se un valore diverso 
+    da zero è inserito in <argname>alt</argname> la
+    concatenazione è verticale. In entrambi i casi viene prodotto un errore.
+    qualora le matrici non siano conformabili per l'operazione.
+    Si veda <fncref targ="msplitby"/> per l'operazione inversa.
+	</para>
+	<para>
+	 Nel caso di un array di stringhe, esse sono contenute in
+	  <argname>A</argname>, e sono sistemate una per riga di default.
+	  Se un valore diverso da 0 è inserito in <argname>alt</argname> le 
+	  stringhe verranno separate da spazi anzichè da interruzioni di riga.
+	</para>
+      </description>
+    </function>
+
     <function name="floor" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">y</fnarg>
@@ -4029,6 +4148,69 @@
       caso si può parlare di integrazione frazionale anziché
       differenziazione.
     </para>
+      </description>
+    </function>
+
+  <function name="fzero" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">init</fnarg>
+	<fnarg optional="true" type="scalar">toler</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Tenta di trovare la radice di una funzione di una variabile
+    (tipicamente non lineare) <math>f</math>, cioè un valore dello
+    scalare <math>x</math> tale che
+	  <math>f</math>(<math>x</math>) = 0. L'argomento
+	  <argname>fcall</argname> dovrebbe chiamare
+	  la funzione in questione; <argname>fcall</argname> può includere
+	  un numero arbitrario di argomenti ma il primo 
+	  deve essere uno scalare che svolga la funzione di<math>x</math>.
+	  Qualora la funziona svolga il suo compito con successo, essa
+	  restituisce il valore della radice.
+	</para>
+	<para>
+	  Il metodo utilizzato è quello di <cite key="ridders79">Ridders
+	  (1979)</cite>. Esso necessita di un supporto iniziale
+	  &lbr;<math>x</math><sub>0</sub>,
+	  <math>x</math><sub>1</sub>&rbr; tale che entrambi i valori di
+	  <math>x</math> giacciano nel dominio della funzione e
+	 i corrispondenti valori della funzione siano di segno opposto.
+	 Sarà più probabile ottenere migliori risultati qualora l'utente
+	 inserisca, come secondo argomento, un vettore di cui componenti
+	 contenente gli estremi del supporto. Altrimenti, è possibile fornire un solo
+	 valore scalare e <lit>fzero</lit> tenterà di trovera un intervallo adeguato.
+	 Se il secondo argomento è omesso, <math>x</math><sub>0</sub>
+	 è inizializzato ad un piccolo valore positivo.
+	</para>
+	<para>
+	  L'argomento opzionale <argname>toler</argname> può essere utilizzato
+	  per definire la massima differenza assoluta accettabile di
+	  <math>f</math>(<math>x</math>) da 0; il valore di default è
+	  1.0e&minus;14.
+	</para>
+	<para>
+	  Di default questa funzione opera silenziosamente, ma è possibile visualizzare  
+	  le iterazioni attraverso il comando <quote><lit>set max_verbose on</lit></quote> prima
+    di chiamare <lit>fzero</lit>.
+	</para>
+	<para>
+	  Di seguito alcuni semplici esempi.
+	</para>
+	<code>
+	  #Si approssima pi trovando uno zero della 
+	  #funzione sin() nel supporto 2.8-3.2
+	  x = fzero(sin(x), {2.8, 3.2})
+	  printf "\nx = %.12f vs pi = %.12f\n\n", x, $pi
+
+	  # Si approssima la costante Omega partendo da x=0.5
+	  function scalar f(scalar x)
+	      return log(x) + x
+	  end function
+	  x = fzero(f(x), 0.5)
+	  printf "x = %.12f f(x) = %.15f\n", x, f(x)
+	</code>
       </description>
     </function>
 
@@ -4649,6 +4831,20 @@
     </para>
       </description>
     </function>
+    
+
+    <function name="Im" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna una matrice reale delle stesse dimensioni di
+	  <argname>C</argname>, contenente le parti immaginarie
+	  della matrice in input. Si veda anche <fncref targ="Re"/>.
+	</para>
+      </description>
+    </function>
 
     <function name="imaxc" section="stats" output="rvec">
       <fnargs>
@@ -4856,6 +5052,32 @@
       </description>
     </function>
     
+       <function name="instrings" section="strings" output="matrix">
+      <fnargs>
+	<fnarg type="strings">S</fnarg>
+	<fnarg type="string">test</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Controlla quali tra gli elementi dell'array di stringhe
+	  <argname>S</argname> siano uguali a
+	  <argname>test</argname>. Ritorna un vettore colonna di lunghezza 
+	  pari al numero di corrispondenze, contenente le posizioni
+	  delle corrispondenze all'interno dell'array, o una matrice vuota in caso 
+	  di assenza di corrispondenze.
+	</para>
+	<para>
+	 Esempio:
+	</para>
+	<code>
+	  strings S = defarray("A", "B", "C", "B")
+	  eval instrings(S, "B")
+	  2
+	  4
+	</code>
+      </description>
+    </function>
+
     <function name="int" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
