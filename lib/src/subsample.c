@@ -2339,7 +2339,7 @@ int restrict_sample (const char *param, const int *list,
 
     free(oldrestr);
 
-#if PANDEBUG || SUBDEBUG
+#if PANDEBUG
     panreport("restrict sample", dset);
 #endif
 
