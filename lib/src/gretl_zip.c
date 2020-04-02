@@ -326,7 +326,7 @@ static int gretl_plugin_unzip (const char *fname,
     }
 
 #if ZDEBUG
-    fprintf(stderr, "HERE: fname='%s,\npath='%s'\nzdirname=%p\n",
+    fprintf(stderr, "gretl_plugin_unzip: fname='%s,\npath='%s'\nzdirname=%p\n",
 	    fname, path, (void *) zdirname);
 #endif
 
