@@ -14118,6 +14118,76 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
   </command>
 
+  <command name="stdize" section="Transformations"
+    label="Standardize series">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>non effettua correzioni per gradi di libertà</effect>
+        </option>
+        <option>
+	  <flag>--center-only</flag>
+	  <effect>non divide per lo sqm</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description context="gui">
+      <para>
+	Per impostazione predefinita, quest'azione aggiunge al dataset
+	come nuove serie la versione standardizzata di quelle
+	originali, col prefisso <lit>s_</lit>. Ad esempio,
+	<lit>s_x</lit> viene formata sottraendo da 
+	<lit>x</lit> la sua media, dopodiché il risultato viene diviso
+	per il suo scarto quadratico medio (con una correzione per
+	gradi di libertà pari a 1). Tuttavia, è anche possibile usare
+	come divisore la deviazione standard senza correzione per
+	gradi di libertà (il cosiddetto stimatore ML).
+      </para>
+      <para>
+	Volendo, si possono costruire serie che sono soltanto centrate
+	(la media viene sottratta ma i dati non vengono scalati).  In
+	questo caso, il prefisso sarà <lit>c_</lit> anziché
+	<lit>s_</lit>.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	Per impostazione predefinita, questo comando aggiunge al
+	dataset come nuove serie la versione standardizzata di quelle
+	originali, col prefisso <lit>s_</lit>. Ad esempio, <cmd>stdize
+	x y</cmd> crea le nuove serie <lit>s_x</lit> e <lit>s_y</lit>,
+	<lit>s_x</lit> ognuna delle quali viene formata sottraendo la
+	rispettiva media, dopodiché il risultato viene diviso per il
+	suo scarto quadratico medio (con una correzione per gradi di
+	libertà pari a 1).
+      </para>
+      <para>
+	Con l'opzione <opt>no-df-corr</opt> non si ha la correzione
+	per gradi di libertà, e si usa il cosiddetto stimatore ML.
+	Con l'opzione <opt>center-only</opt> verranno prodotte serie
+	che sono soltanto centrate (la media viene sottratta ma i dati
+	non vengono scalati).  In questo caso, il prefisso sarà
+	<lit>c_</lit> anziché <lit>s_</lit>.
+      </para>
+      <para>
+	La funzione <fncref targ="stdize"/> produce lo stesso
+	risultato, ma la sua sintassi è un po' più flessibile.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Aggiungi/Standardizza le variabili selezionate</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="store" section="Dataset"
     label="Salvataggio dei dati">
 
