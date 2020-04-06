@@ -51,7 +51,7 @@ end function
 ##############
 
 function matrix FEVD(bundle *SVARobj, int drawix[0::0])
-    # (drawix only needed/meant for the set id case (type 10))
+    # (drawix only meant for the set id case (type 10))
 
     n = SVARobj.n
     h = SVARobj.horizon + 1
@@ -62,7 +62,10 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
         # there is an array of matrices. 
 
         errchkSRhisto(&SVARobj, drawix)
-        bundle pickdraw = SVARobj.acc_draws[drawix]
+        
+        # allow drawix to override the setting in the bundle
+        whichdraw = drawix ? drawix : SVARobj.bestdraw
+        bundle pickdraw = SVARobj.acc_draws[whichdraw]
 
         if cols(pickdraw.irfs[1]) != n
             funcerr "partial id not supported for FEVD"
@@ -71,17 +74,23 @@ function matrix FEVD(bundle *SVARobj, int drawix[0::0])
         endif
 
         if !inbundle(pickdraw, "IRFs") # maybe have already been added there
-            matrix IRFs = zeros(h, n*n)
-            loop ix = 1..h -q
-                IRFs[ix, ] = vec(pickdraw.irfs[ix])'
-            endloop
-            # copy to origin
-            matrix SVARobj.acc_draws[drawix].IRFs = IRFs
-        else 
-            matrix IRFs = pickdraw.IRFs
+            putIrf_to_accdraw(&SVARobj, whichdraw) 
+            
+            # matrix IRFs = zeros(h, n*n)
+            # loop ix = 1..h -q
+            #     IRFs[ix, ] = vec(pickdraw.irfs[ix])'
+            # endloop
+            ## copy to origin
+            # matrix SVARobj.acc_draws[whichdraw].IRFs = IRFs
+        # else 
+        #     matrix IRFs = pickdraw.IRFs
         endif
+        matrix IRFs = SVARobj.acc_draws[whichdraw].IRFs
 
-    else
+    else # standard non-SR model 
+        if drawix > 0
+            print "Warning: 'drawix' arg meaningless for standard SVAR, ignoring"
+        endif
         matrix IRFs = SVARobj.IRFs
     endif
 
@@ -109,7 +118,7 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
     estimate; however, we support that 
     the user picks one of the accepted draws and then the shock series 
     is based on that particular model draw.
-    # (drawix only needed/meant for the set id case (type 10))
+    # (drawix only meant for the set id case (type 10))
     */
 
     series ret = NA
@@ -123,13 +132,15 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
 
     elif type == 10 
         errchkSRhisto(&SVARobj, drawix)
+        # allow drawix to override the setting in the bundle
+        whichdraw = drawix ? drawix : SVARobj.bestdraw
 
-    elif drawix > 0
-        print "Warning: 'drawix' meaningless for standard SVAR, ignoring"
-
-   elif i > SVARobj.n
+    elif i > SVARobj.n
         printf "Chosen shock index: %d\n", i
         funcerr "Shock index out of range"
+        
+    elif drawix > 0
+        print "Warning: 'drawix' arg meaningless for standard SVAR, ignoring"
     endif
 
     ## get the C matrix (and then the inv) ##
@@ -144,7 +155,7 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
         endif
 
     elif type == 10 # set id 
-        bundle pickdraw = SVARobj.acc_draws[drawix]
+        bundle pickdraw = SVARobj.acc_draws[whichdraw]
         matrix C = pickdraw.irfs[1] # impact effect is C
         B10 = pickdraw.B
     endif
@@ -176,7 +187,7 @@ end function
 
 function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     # historical decomposition
-    # (drawix only needed/meant for the set id case (type 10))
+    # (drawix only meant for the set id case (type 10))
 
     list ret = null
     loop foreach i n p t1 t2 type T k --quiet
@@ -186,6 +197,8 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
 
     if type == 10 
         errchkSRhisto(&Mod, drawix)
+        # allow drawix to override the setting in the bundle
+        whichdraw = drawix ? drawix : Mod.bestdraw
     endif
 
     if nv > n
@@ -196,7 +209,7 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
 
     # Prepare the set id case
     if type == 10  
-        bundle pickdraw = Mod.acc_draws[drawix] 
+        bundle pickdraw = Mod.acc_draws[whichdraw] 
         matrix B10 = pickdraw.B  
     endif
 

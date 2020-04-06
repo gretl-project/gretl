@@ -294,6 +294,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     else #  10 (SR) 
         # matrix for holding sign restrictions
         matrix ret.SRest = {}
+        ret.bestdraw = 0	# initialize as undefined
 
 		/* Since for sign restrictions the traditional estimation step doesn't apply,
            but we need the reduced-form coefficients, we already do it here auto-

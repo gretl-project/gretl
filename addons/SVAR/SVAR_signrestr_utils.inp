@@ -4,6 +4,32 @@
 
 #############################
 
+function void putIrf_to_accdraw(bundle *SVARobj, int whichdraw[0::0] )
+    # Only for SR (type 10)
+    # to transfer the IRFs to the old format
+    
+    if SVARobj.type != 10
+        funcerr "this function only for SR type"
+    elif !inbundle(SVARobj, "acc_draws")
+        funcerr "need accepted draws (acc_draws)"
+    endif
+    
+    n = SVARobj.n
+    h = SVARobj.horizon + 1
+    bundle pickdraw = SVARobj.acc_draws[whichdraw]
+    
+    matrix IRFs = zeros(h, n*n)
+    loop ix = 1..h -q
+        IRFs[ix, ] = vec(pickdraw.irfs[ix])'
+    endloop
+    
+    # copy to origin
+    matrix SVARobj.acc_draws[whichdraw].IRFs = IRFs
+    
+end function 
+
+###########################
+
 function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null])
     # Retrieves all the quantities that perhaps are redrawn 
     # in the Bayesian set id case:
@@ -38,11 +64,14 @@ function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null]
 end function     
 
 function void errchkSRhisto(bundle *Smod, int drawix)
-
-    if !Smod.storeSRirfs
+    if !inbundle(Smod, "bestdraw")
+        funcerr "Model not properly initialized for SR type" 
+    elif !Smod.bestdraw && !drawix
+        funcerr "Need to pick one particular draw (run SRgetbest?)"    
+    
+    elif !Smod.storeSRirfs
         funcerr "Need accepted draws content (acc_draws) in set-id case"
-    elif drawix == 0
-        funcerr "Need to pick one particular draw (index)"
+    
     elif drawix > nelem(Smod.acc_draws)
         printf "Only %d accepted draws exist\n", nelem(Smod.acc_draws) 
         funcerr "Draw index out of range"

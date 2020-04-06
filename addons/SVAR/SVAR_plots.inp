@@ -18,10 +18,17 @@ end function
 function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
                         string sname, string vname, int keypos[0:2:1], \
                         matrix *cumul[null],  bundle *boot[null], \
-                        int bc[0:2:0])
+                        int bc[0:2:0], int whichdraw[0::0])
 
     # bc: bias correction choice
-
+    # FIXME: We should get rid of sname/vname args and get them automatically
+    # via snum/vnum
+    # (the number of args here is horrible...)
+    
+    if whichdraw && (exists(boot) || bc)
+        funcerr "cannot have SR/whichdraw and bootstrap options together"
+    endif
+    
     flip = (snum < 0)
     snum = abs(snum)
     n = round(sqrt(cols(IRFmat)))
@@ -30,7 +37,6 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
     bootrep = 0
     if exists(boot)
         bootrep = boot.rep
-        # scalar alpha = boot.alpha
     endif
 
     # anything to cumulate?
@@ -78,6 +84,8 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
         printf "; bias-correction = partial"
     elif bc == 2
         printf "; bias-correction = full"
+    elif whichdraw
+        printf " (draw %d)", whichdraw
     endif
 
     if cumulate > 0
@@ -127,14 +135,23 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function void IRFsave(string outfilename, bundle *obj, int snum,
-                      int vnum, int keypos[0:2:1])
+                      int vnum, int keypos[0:2:1], int drawix[0::0])
 
     # negative snum is allowed and means to flip the shock
 
     # copy and prepare some input
     string tmpfile, tmpout
     n = obj.n
-    matrix IRFmat  = obj.IRFs
+    
+    if obj.type == 10	# SR
+        errchkSRhisto(&obj, drawix)
+        whichdraw = drawix ? drawix : obj.bestdraw
+        putIrf_to_accdraw(&obj, whichdraw)     
+        matrix IRFmat = obj.acc_draws[whichdraw].IRFs
+    else
+        matrix IRFmat = obj.IRFs
+    endif
+    
     scale = 1	# possibly changed later
     if obj.normalize == 1
         matrix tmp = mshape(IRFmat[1,], n, n)
@@ -217,9 +234,9 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
 
 end function
 
-function void IRFplot(bundle *obj, int snum, int vnum, int keypos[0:2:1])
+function void IRFplot(bundle *obj, int snum, int vnum, int keypos[0:2:1], int drawix[0::0])
 
-    IRFsave("display", &obj, snum, vnum, keypos)
+    IRFsave("display", &obj, snum, vnum, keypos, drawix)
 
 end function
 
@@ -228,7 +245,15 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function string FEVDgrph(matrix FEVDmat, scalar v,
-                         string vname, strings snames, int keypos[0:2:1])
+                         string vname, strings snames, int keypos[0:2:1],
+                         string titletail[null])
+    
+    # Final arg 'titletail' is a hack originally meant to put the draw number 
+    # in the output in the SR case. (In principle it can be anything.)  
+    
+    if !exists(titletail)
+        string titletail = ""
+    endif                    
 
     n = round(sqrt(cols(FEVDmat)))
     h = rows(FEVDmat) - 1
@@ -257,7 +282,7 @@ function string FEVDgrph(matrix FEVDmat, scalar v,
     printf "set xrange [%g:%g]\n", 0, h
     printf "set xzeroaxis\n"
 
-    printf "set title \"FEVD for %s\"\n", vname
+    printf "set title \"FEVD for %s%s\"\n", vname, titletail
     printf "set style fill solid 0.25\n"
     printf "set style histogram rowstacked\n"
     printf "set style data histogram\n"
@@ -290,12 +315,19 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
-                       int keypos[0:2:1])
+                       int keypos[0:2:1], int drawix[0::0])
 
     scalar n = obj.n
     scalar vfrom vto
     is_vrange = range(vnum, n, &vfrom, &vto)
-    matrix Fmat = FEVD(&obj)
+    matrix Fmat = FEVD(&obj, drawix)
+    
+    # prepare title amendment in SR case
+    string titletail = "" 
+    if obj.type == 10 
+        whichdraw = drawix ? drawix : obj.bestdraw
+        titletail = sprintf(" (draw %d)", whichdraw)
+    endif
 
     loop vnum = vfrom..vto -q
         err = check_bounds(1, vnum, n)
@@ -306,15 +338,15 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
 
         string tmpout = (outfilename == "display") ? "display" : \
                         sprintf("%s_%d", outfilename, vnum)
-        string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, keypos)
+        string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, keypos, titletail)
         gnuplot --input="@tmpfile" --output="@tmpout"
 
     endloop
 end function
 
-function void FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1])
+function void FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1], int drawix[0::0])
 
-    FEVDsave("display", &obj, vnum, keypos)
+    FEVDsave("display", &obj, vnum, keypos, drawix)
 
 end function
 
@@ -322,7 +354,7 @@ end function
 /* --- HD public graphing functions ------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function void HDsave(string outfilename, bundle *obj, int vnum[0])
+function void HDsave(string outfilename, bundle *obj, int vnum[0], int drawix[0::0])
 
     # more fashionable (=Dynare-like) style
 
@@ -338,7 +370,12 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0])
             return
         endif
 
-        list tmp = SVAR_hd(&obj, vnum)
+        list tmp = SVAR_hd(&obj, vnum, drawix)
+        
+        # prepare extended plot title, only for SR
+        whichdraw = drawix ? drawix : obj.bestdraw	
+        string drawinfo = obj.type == 10 ? sprintf(" (draw %d)", whichdraw) : ""
+        
         tmp -= tmp[1] # take away deterministic component
         loop i=1..nelem(tmp) --quiet
             string sn = obj.snames[i]
@@ -359,14 +396,14 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0])
             option single-yaxis
             option with-boxes
             option with-lines=tmpvar
-            printf "set title \"HD for %s\"", obj.Ynames[vnum]
+            printf "set title \"HD for %s%s\"", obj.Ynames[vnum], drawinfo
         end plot --output="@tmpout"
     endloop
 end function
 
-function void HDplot(bundle *obj, int vnum[0])
+function void HDplot(bundle *obj, int vnum[0], int drawix[0::0])
 
-    HDsave("display", &obj, vnum)
+    HDsave("display", &obj, vnum, drawix)
 
 end function
 
