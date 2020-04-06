@@ -7927,6 +7927,8 @@
 	  <seelist>
             <fncref targ="mread"/>
 	  </seelist>
+	  And for writing a matrix to file as a dataset, see
+	  <cmdref targ="store"/>.
 	</para>
       </description>
     </function>

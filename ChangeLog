@@ -1,8 +1,10 @@
 version 2020b, in progress
 - Update gretl copyright notice
 - Revise macOS build: don't require initialization via
-  shell script
+  shell script, and link against 10.9 SDK
 - "gnuplot" and "plot" commands: add a --ylogscale option
+- "store" command: add --matrix option to save a matrix in
+  the form of a dataset
 - strvals(): support retrieval of string values for current
   subsample
 - ODBC importation: correct the handling of string-valued

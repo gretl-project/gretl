@@ -14228,6 +14228,11 @@
 	  <optparm>string</optparm>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>matrix-name</optparm>
+	  <effect>see below</effect>
+        </option>
       </options>
     </usage>
 
@@ -14343,6 +14348,23 @@
 	The <lit>store</lit> command behaves in a special manner in
 	the context of a <quote>progressive loop</quote>.  See
 	<guideref targ="chap:looping"/> for details.
+      </para>
+      <subhead>Writing a matrix as a dataset</subhead>
+      <para>
+	The <opt>matrix</opt> option requires a parameter, the name of
+	a (non-empty) matrix. The effect of <lit>store</lit> is then,
+	in effect, to turn the matrix into a dataset <quote>in the
+	background</quote> and write it to file as such. Matrix
+	columns become series; their names are taken from column-names
+	attached to the matrix, if any, or by default are assigned as
+	<lit>v1</lit>, <lit>v2</lit> and so on. If the matrix has row
+	names attached these are used as <quote>observation
+	markers</quote> in the dataset.
+      </para>
+      <para>
+	Note that matrices can be written to file in their own right,
+	see the <fncref targ="mwrite"/> function. But in some cases
+	it may be more useful to write them in dataset mode.
       </para>
     </description>
 

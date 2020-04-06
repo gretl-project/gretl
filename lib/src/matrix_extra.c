@@ -777,13 +777,74 @@ gretl_matrix_data_subset_special (const int *list,
     return X;
 }
 
+static void vname_from_colname (char *targ, const char *src,
+				int i)
+{
+    gchar *s, *p, *tmp = g_strdup(src);
+    int n, err = 0;
+
+    s = tmp;
+    /* skip any invalid leading bytes */
+    while (*s && !isalpha(*s)) {
+	s++;
+    }
+
+    n = strlen(s);
+    p = s;
+
+    if (n == 0) {
+	err = 1;
+    } else {
+	/* check for invalid embedded bytes */
+	while (*s) {
+	    if (*s == ' ') {
+		*s = '_';
+	    } else if (!isalnum(*s) && *s != ' ') {
+		err = 1;
+		break;
+	    }
+	    s++;
+	}
+    }
+
+    if (err) {
+	sprintf(targ, "v%d", i);
+    } else {
+	*targ = '\0';
+	strncat(targ, p, VNAMELEN-1);
+    }
+
+    g_free(tmp);
+}
+
+static void check_matrix_varnames (DATASET *dset)
+{
+    int i, j, err = 0;
+
+    for (i=1; i<dset->v; i++) {
+	for (j=1; j<i; j++) {
+	    if (!strcmp(dset->varname[i], dset->varname[j])) {
+		err = 1;
+		break;
+	    }
+	}
+    }
+
+    if (err) {
+	for (i=1; i<dset->v; i++) {
+	    sprintf(dset->varname[i], "v%d", i);
+	}
+    }
+}
+
 /**
  * gretl_dataset_from_matrix:
  * @m: source matrix.
  * @list: list of columns (1-based) to include, or NULL.
- * @opt: may include OPT_B to attempt "borrowing" of data,
- * OPT_N to use plain numbers as variable names, OPT_R to
- * experiment with handling row-names, if present.
+ * @opt: may include OPT_B to attempt "borrowing" of data;
+ * OPT_N to use plain numbers as variable names; OPT_R to
+ * use row-names as observation markers, if present; OPT_S
+ * when called from the "store" command.
  * @err: location to receive error code.
  *
  * Creates a gretl dataset from matrix @m, either using the
@@ -800,16 +861,17 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 				    int *err)
 {
     DATASET *dset = NULL;
-    gretlopt dsopt = OPT_NONE;
     const char **cnames = NULL;
     const char **rnames = NULL;
-    double x;
+    int use_rownames;
     int i, t, col, nv, T;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
+
+    use_rownames = opt & (OPT_R | OPT_S);
 
     T = m->rows;
     nv = m->cols;
@@ -827,10 +889,12 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
     }
 
     if (!*err) {
+	gretlopt dsopt = OPT_NONE;
+
 	if (opt & OPT_B) {
 	    dsopt |= OPT_B;
 	}
-	if (opt & OPT_R) {
+	if (use_rownames) {
 	    rnames = gretl_matrix_get_rownames(m);
 	    if (rnames != NULL) {
 		dsopt |= OPT_M;
@@ -849,23 +913,23 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
     cnames = gretl_matrix_get_colnames(m);
 
     for (i=1; i<=nv; i++) {
+	double *src;
+
 	col = (list != NULL)? list[i] - 1 : i - 1;
+	src = m->val + T * col;
 	if (opt & OPT_B) {
-	    dset->Z[i] = m->val + T * col;
+	    /* "borrowing" */
+	    dset->Z[i] = src;
 	} else {
-	    for (t=0; t<T; t++) {
-		x = gretl_matrix_get(m, t, col);
-		if (na(x)) {
-		    x = NADBL;
-		}
-		dset->Z[i][t] = x;
-	    }
+	    /* copying */
+	    memcpy(dset->Z[i], src, T * sizeof *src);
 	}
 	if (cnames != NULL) {
-	    dset->varname[i][0] = '\0';
-	    strncat(dset->varname[i], cnames[col], VNAMELEN-1);
+	    vname_from_colname(dset->varname[i], cnames[col], i);
 	} else if (opt & OPT_N) {
 	    sprintf(dset->varname[i], "%d", col + 1);
+	} else if (opt & OPT_R) {
+	    sprintf(dset->varname[i], "v%d", i);
 	} else {
 	    sprintf(dset->varname[i], "col%d", col + 1);
 	}
@@ -876,6 +940,11 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	    dset->S[t][0] = '\0';
 	    strncat(dset->S[t], rnames[t], OBSLEN-1);
 	}
+    }
+
+    if (cnames != NULL && (opt & OPT_S)) {
+	/* we must have valid varnames for "store" */
+	check_matrix_varnames(dset);
     }
 
     return dset;
@@ -896,7 +965,7 @@ int write_matrix_as_dataset (const char *fname,
 	return E_DATA;
     }
 
-    mdset = gretl_dataset_from_matrix(m, NULL, OPT_R, &err);
+    mdset = gretl_dataset_from_matrix(m, NULL, OPT_S, &err);
     if (!err) {
 	opt &= ~OPT_A;
 	err = write_data(fname, NULL, mdset, opt, prn);

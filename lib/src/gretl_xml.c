@@ -2024,21 +2024,9 @@ static int write_binary_data (const char *fname, const DATASET *dset,
 		v = (i == nvars + 1)? uv : tv;
 	    }
 	    s = 0;
-	    if (opt & OPT_O) {
-		/* --oldbinary */
-		double zvt;
-
-		for (t=dset->t1; t<=dset->t2 && !err; t++) {
-		    if (dset->Z[uv][t] != 0.0) {
-			zvt = dset->Z[v][t];
-			tmp[s++] = na(zvt) ? DBL_MAX : zvt;
-		    }
-		}
-	    } else {
-		for (t=dset->t1; t<=dset->t2 && !err; t++) {
-		    if (dset->Z[uv][t] != 0.0) {
-			tmp[s++] = dset->Z[v][t];
-		    }
+	    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+		if (dset->Z[uv][t] != 0.0) {
+		    tmp[s++] = dset->Z[v][t];
 		}
 	    }
 	    wrote = fwrite(tmp, sizeof(double), nrows, fp);
@@ -2050,24 +2038,6 @@ static int write_binary_data (const char *fname, const DATASET *dset,
 	free(tmp);
 	if (uv > 0) {
 	    dataset_drop_last_variables((DATASET *) dset, 2);
-	}
-    } else if (opt & OPT_O) {
-	/* --oldbinary: convert NAs to DBL_MAX */
-	const double *zv;
-	double zvt;
-	int t;
-
-	for (i=1; i<=nvars && !err; i++) {
-	    v = savenum(list, i);
-	    zv = dset->Z[v] + dset->t1;
-	    wrote = 0;
-	    for (t=0; t<T; t++) {
-		zvt = na(zv[t]) ? DBL_MAX : zv[t];
-		wrote += fwrite(&zvt, sizeof(double), 1, fp);
-	    }
-	    if (wrote != T) {
-		err = E_DATA;
-	    }
 	}
     } else {
 	for (i=1; i<=nvars && !err; i++) {
