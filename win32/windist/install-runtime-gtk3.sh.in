@@ -30,6 +30,11 @@ mkdir -p ${TARGET}/lib/gtk-3.0/modules
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/printbackends
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/theming-engines
 
+# enable Windows look and feel
+mkdir -p ${TARGET}/etc
+mkdir -p ${TARGET}/etc/gtk-3.0
+cp ${SRCDIR}/win32/windist/settings.ini ${TARGET}/etc/gtk-3.0/settings.ini
+
 # create Glib schema directory and copy files in
 mkdir -p ${TARGET}/share/glib-2.0/schemas
 for f in org.gtk.Settings.ColorChooser.gschema.xml \
