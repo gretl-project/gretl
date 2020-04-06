@@ -561,7 +561,7 @@ end function
 
 ##############################
 
-function scalar SRgetix(const bundle mod,
+function scalar SRgetbest(bundle *mod,
                         string vname, string sname,
                         int ini[0::0], int length[0::0],
                         int disttarg[0:1:0] "measure to target" \
@@ -581,10 +581,13 @@ function scalar SRgetix(const bundle mod,
     ## implement defaults and error checks:
     if !exists(loss)
         string loss = "quad"
-    elif loss != "abs" && loss != "quad"
+    elif tolower(loss) != "abs" && tolower(loss) != "quad"
         print "Warning, unrecognized loss, using 'quad'"
         loss = "quad"
+    else
+        loss = tolower(loss)
     endif
+
     if ini + length > mod.horizon
         funcerr "ini + length too large (increase horizon)"
     endif
@@ -620,5 +623,8 @@ function scalar SRgetix(const bundle mod,
     if !bestdraw
         funcerr "shouldn't happen"
     endif
+
+    # store for further use
+    mod.bestdraw = bestdraw
     return bestdraw
 end function
