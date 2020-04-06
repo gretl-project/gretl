@@ -3577,8 +3577,8 @@
 	<para>
 	  Applicabile solo nel contesto di una funzione creata dall'utente.
 	  Se la <argname>condizione</argname> è diversa da 0,
-	 termina l'esecuzione della funzione attuale, evidenziando la condizione
-	 di errore; l'argomento <argname>msg</argname>
+	  termina l'esecuzione della funzione attuale, evidenziando la condizione
+	  di errore; l'argomento <argname>msg</argname>
 	  è poi stampato a video come parte del messaggio mostrato
 	  a chi utilizza la funzione in questione.
 	</para>
@@ -5355,6 +5355,19 @@
       </description>
     </function>
 
+    <function name="iscomplex" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna 1 se<argname>name</argname> è il nome di una 
+	  matrice complessa, 0 se è il nome di una matrice reale, o
+	  <lit>NA</lit> altrimenti.
+	</para>
+      </description>
+    </function>
+
     <function name="isconst" section="data-utils" output="int">
       <fnargs>
     <fnarg type="series-or-vec">y</fnarg>
@@ -6963,6 +6976,21 @@
       </description>
     </function>    
 
+    
+   <function name="mlog" section="linalg" output="smatrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola il logaritmo matriciale di <argname>A</argname>.
+	  L'algoritmo utilizzato si basa sulla decomposizione spettrale,
+	  la quale richiede che<argname>A</argname>sia
+	  diagonalizzabile. Si veda anche <fncref targ="mexp"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
     <fnarg type="int">r</fnarg>
@@ -7105,6 +7133,212 @@
       <argname>control</argname> viene ignorato.
       </para>   
     </description>
+    </function>
+    
+    <function name="mpiallred" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="string">op</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Disponibile solo se gretl è in modalità MPI (si veda <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da tutti
+	  i processi. Questa funzione funziona come <fncref
+	  targ="mpireduce"/> ad eccezione del fatto che tutti i processi, non
+	  solamente il processo root, ottengono una copia dell'oggetto
+	  <quote>ridotto</quote> al posto dell'originale. E' quindi equivalente
+	  a <lit>mpireduce</lit> seguito da <fncref targ="mpibcast"/>, ma più efficiente.
+	</para>
+      </description>
+    </function>
+    
+   <function name="mpibarrier" section="mpi" output="int">
+     <description>
+       <para>
+	 Disponibile solo se gretl è in modalità MPI (si veda<mnu
+	 targ="gretlMPI">gretl + MPI</mnu>). Non richiede
+	 argomenti. Rafforza la sincronizzazione dei processi MPI: nessun
+	 processo può superare la barriera se non è stata raggiunta
+	 da tutti gli altri.
+       </para>
+       <code>
+	 # nessuno supera questo punto finchè tutti non sono qui
+	 mpibarrier()
+       </code>
+     </description>
+   </function>
+   
+   <function name="mpibcast" section="mpi" output="int">
+     <fnargs>
+       <fnarg type="objectref">&amp;object</fnarg>
+       <fnarg type="int" optional="true">root</fnarg>
+     </fnargs>
+     <description>
+       <para>
+	 Disponibile solo se gretl è in modalità MPI (si veda<mnu
+	 targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da 
+	 tutti i processi. Trasmette l'argomento <argname>object</argname>,
+	 che deve essere dato in forma di puntatore, a tutti i
+	 processi. L'oggetto in questione deve essere una matrice,
+	 un bundle, vettore o scalare, dichiarato in tutti i processi 
+	 precedentemente alla trasmissione. Nessun processo può
+	 proseguire oltre una chiamata a <lit>mpibcast</lit>finchè
+	 tutti i processi non l'abbiano eseguita correttamente.
+       </para>
+	<para>
+	  Di default <quote>root</quote>, la sorgente della trasmissione,
+	  è il processo MPI con rango 0, ma quasto può essere modificato
+	  tramite il secondo argomento (opzionale), il quale deve essere un intero
+	  compreso tra 0 e il numero dei processi MPI meno 1.
+	</para>
+	<para>
+	  Di seguito un semplice esempio. Se la funzione svolge il suo 
+	  compito con successo, ogni processo avrà una copia della 
+	  matrice<lit>X</lit> definita dal processo a rango 0.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	      X = mnormal(T, k)
+	  endif
+	  mpibcast(&amp;X)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpirecv" section="mpi" output="object">
+      <fnargs>
+	<fnarg type="int">src</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Disponibile solo se gretl è in modalità MPI (si veda<mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Si veda <fncref
+	  targ="mpisend"/>, con la quale <lit>mpirecv</lit> deve in ogni caso
+	  essere accoppiata, per una spiegazione. L'argomento <argname>src</argname>
+	  specifica il rango del processo dal quale
+	  l'oggetto deve essere ricevuto, all'interno dell'intervallo che va
+	  da 0 al numero dei procesi MPI meno 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpireduce" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">root</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Disponibile solo se gretl è in modalità MPI (si veda<mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da
+	  tutti i processi. questa funzione raccoglie oggetti (solo scalari o
+	  matrici) dal nome specifico,dati in forma di puntatore,
+	  da tutti i processi e li <quote>riduce</quote> in un singolo
+	  oggetto al nodo root.
+	</para>
+	<para>
+	  L'argomento <lit>op</lit> specifica l'operazione o metodo
+	  di riduzione. I metodi supportati per gli scalari sono
+	  <lit>sum</lit>, <lit>prod</lit> (prodotto), <lit>max</lit>
+	  e <lit>min</lit>. Per le matrici i metodi sono
+	  <lit>sum</lit>, <lit>prod</lit> (prodotto di Hadamard),
+	  <lit>hcat</lit> (concanetazione orizzontale) e
+	  <lit>vcat</lit> (concanetazione verticale).
+	</para>
+	<para>
+	  Di default <quote>root</quote>, il destinatario della riduzione,
+	  è il processo MPI con rango 0, ma questo può essere modificato
+	  tramite il terzo argomento (opzionale), il quale deve essere un intero
+	  compreso tra 0 e il numero dei processi MPI meno 1.
+	</para>
+	<para>
+	  Di seguito un esempio. Se la funzione svolge il suo compito con successo,
+	  il processo root avrà una matrice <lit>X</lit> che è la somma
+	  delle matrici	<lit>X</lit> di tutti i processi.
+	</para>
+	<code>
+	  matrix X
+	  X = mnormal(T, k)
+	  mpireduce(&amp;X, sum)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpiscatter" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="matrixref">&amp;M</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">root</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Disponibile solo quando retl è in modalità MPI (si veda <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da tutti
+	  i processi. Questa funzione distribuisce parti di una matrice nel 
+	  processo root di tutti i processi. La matrice deve
+	  essere dichiarata in tutti i processi prima della chiamat di
+	  <lit>mpiscatter</lit>, e deve essere data in forma di puntatore.
+	</para>
+	<para>
+	  L'argomento <lit>op</lit> deve essere <lit>byrows</lit>
+	  oppure <lit>bycols</lit>. Sia <math>q</math> il quoziente tra
+	  il numero di righe della matrice da dividere e il
+	  numero di processi. Nel caso <lit>byrows</lit> la root
+	  mandale prime <math>q</math> righe al processo 0, le successive
+	  <math>q</math> al processo 1, e così via. Se c'è un
+	  resto all divisione delle righe, esso è assegnato all'ultimo
+	  allocamento. Il caso <lit>bycols</lit> è analogo ma 
+	  la matrice si divide per colonne.
+	</para>
+	<para>
+	  Di seguito un esempio. Se ci sono 4 processi, ognuno
+	  (root incluso) riceverà una parte <by r="2500" c="10"/>
+	  dell'originale <lit>X</lit> così come era definita nel
+	  processo root. Se si vuole preservare l'intera matrice nel processo root
+	  è necessario crearne una copia prima d chiamare
+	  <lit>mpiscatter</lit>.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	      X = mnormal(10000, 10)
+	  endif
+	  mpiscatter(&amp;X, byrows)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpisend" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="object">object</fnarg>
+	<fnarg type="int">dest</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Disponibile solo quando retl è in modalità MPI (si veda <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Manda l'oggetto nominato
+	  (che deve essere una matrice, bundle, vettore o scalare) dal processo 
+	  corrente a quello identificato dall'intero
+	  <argname>dest</argname> (da 0 al numero di processi MPI
+	  meno 1).
+	</para>
+	<para>
+	  L chiamata di questa funzione deve essere sempre accoppiata con una chiamata a
+	  <fncref targ="mpirecv"/> nel processo <argname>dest</argname>,
+	  come nel seguente esempio che manda una matrice dal rango2 al rango 3.
+	</para>
+	<code>
+	  if $mpirank == 2
+	      matrix C = cholesky(A)
+	      mpisend(C, 3)
+	  elif $mpirank == 3
+	      matrix C = mpirecv(2)
+	  endif
+	</code>
+      </description>
     </function>
 
     <function name="mpols" section="stats" output="matrix">
@@ -7331,7 +7565,51 @@
       </description>
     </function>
 
-    <function name="muniform" section="matbuild" output="matrix">
+   <function name="msplitby" section="matshape" output="matrices">
+     <fnargs>
+       <fnarg type="matrix">X</fnarg>
+       <fnarg type="vector">v</fnarg>
+     </fnargs>
+     <description>
+       <para>
+	 Ritorna un array di matrici, il risultato della divisione verticale di 
+	 <argname>X</argname> sotto il controllo del vettore
+	 <argname>v</argname>. Questo vettore deve essere di lunghezza
+	 uguale alla dimensione delle righe di <argname>X</argname>, e
+	 dovrà contenere valori interi pari minimo ad 1 e un 
+	 massimo pari al numero di matrici nel vettore desiderato.
+	 Ogni elemento di <argname>v</argname> indica l'indice
+	 vettoriale della matrice al quale la corrispondente riga di
+	 <argname>X</argname> dovrà essere assegnata.
+       </para>
+       <para>
+	 Nel seguente esempio si divide una matrice <by r="3" c="3"/>
+	 in tre matrici: le prime due righe sono assegnate alla prima
+	 matrice; la seconda matrice è lasciata vuota; e la terza
+	 matrice riceve righa 3 di<argname>X</argname>.
+       </para>
+       <code>
+	 matrix X = {1,2,3; 4,5,6; 7,8,9}
+	 matrices M = msplitby(X, {1,1,3})
+	 print M
+       </code>
+       <para>
+	 La frase stampata recita:
+       </para>
+       <code>
+	 Vettore di marici, lunghezza 3
+	 [1] 2 x 3
+	 [2] null
+	 [3] 1 x 3
+       </code>
+       <para>
+	 Si <fncref targ="flatten"/> per l'operazione inversa.
+       </para>
+     </description>
+   </function>
+
+   
+   <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
     <fnarg type="int">r</fnarg>
     <fnarg type="int">c</fnarg>
@@ -9228,6 +9506,43 @@
       </description>
     </function>
 
+    
+    <function name="randperm" section="probdist" output="vector">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se è dato solo il primo argomento, ritorna un vettore riga
+	  contenente una permutazione casuale degli interi da 1 a
+	  <argname>n</argname>, senza ripetizione degli elementi. Se il
+	  secondo argomento non è omesso, deve essere un intero nell'intervallo da 1
+	  a <argname>n</argname>; in questo caso la funzione ritorna
+	  un vettore riga contenente
+	  <argname>k</argname> interi selezionati casualmente da 1 a
+	  <argname>n</argname> senza sostituzione.
+	</para>
+	<para>
+	  Se si desidera campionare <math>k</math> righe da una matrice
+	  <lit>X</lit> con <math>n</math> righe (senza sostituzione),
+	  ciò può essere ottenuto come mostrato di seguito:
+	</para>
+	<code>
+	  matrix S = X[randperm(n, k),]
+	</code>
+	<para>
+	  E se si desidera conservare l'ordine originale delle righe nel campione:
+	</para>
+	<code>
+	  matrix S = X[sort(randperm(n, k)),]
+	</code>
+	<para>
+	  Si veda <fncref targ="resample"/> per il campionamento con sostituzione.
+	</para>
+      </description>
+    </function>
+
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -9307,6 +9622,19 @@
       </description>
     </function>
 
+    <function name="Re" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna una matrice reale delle stesse dimensioni di
+	  <argname>C</argname>, contenente la parte reale
+	  della matrice. Si veda anche <fncref targ="Im"/>.
+	</para>
+      </description>
+    </function>
+    
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
@@ -9599,6 +9927,27 @@
 	    <fncref targ="vec"/>
 	    <fncref targ="vech"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="schur" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;Z</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;w</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esegue la decomposizione di Schur della matrice complessa
+	  <argname>A</argname>, ritornando una matrice complessa triangolare
+	  alta <math>T</math>. Se è inserito il secondo argomento ed
+	  esso non è <lit>null</lit> la funzione ritorna una matrice complessa
+	  <math>Z</math> contenente i vettori di Schur associati ad
+	  <math>A</math> e <math>T</math>, tale che <math>A</math>
+	  = <math>ZTZ</math><sup>H</sup>. Se è inserito un terzo
+	  argomento ritorna gli autovalori di <math>A</math> in un
+	  vettore colonna complesso.
 	</para>
       </description>
     </function>
@@ -10208,6 +10557,31 @@
     </para>
       </description>
     </function>
+    
+   <function name="stdize" section="stats" output="asinput">
+     <fnargs>
+       <fnarg type="series-list-or-mat">X</fnarg>
+       <fnarg type="int" optional="true">v</fnarg>
+     </fnargs>
+     <description>
+       <para>
+	 Di default ritorna una versione standardizzata della serie,
+	 lista o matrice: l'input è centrato e diviso dalla sua
+	 deviazione standard campionaria (con una correzione di
+	 gradi di liberta di 1). I risultati sono calcolati in colonna nel
+	 caso di una matrice.
+       </para>
+       <para>
+	 Il secondo argomento (opzionale) può essere utilizzato per
+	 influenzare il risultato.Un valore non negativo di <argname>v</argname>
+	 imposta la correzione di gradi di libertà usata  nella deviazione
+	 standard, cosicchè <argname>v</argname> = 0 dia lo stimatore di
+	 massima verosimiglianza. Come caso speciale, se
+	 <argname>v</argname> è uguale a &minus;1 è eseguita solo
+	 la centratura.
+       </para>
+     </description>
+   </function>
 
     <function name="strftime" section="strings" output="string">
       <fnargs>
