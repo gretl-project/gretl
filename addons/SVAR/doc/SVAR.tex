@@ -2538,7 +2538,19 @@ The \texttt{SRgetbest} function stores this index number 58 in the model bundle 
 \texttt{bestdraw}. The functions that require a unique model parametrization such as 
 \texttt{SVAR\_hd}, \texttt{FEVD}, \texttt{GetShock}, and \texttt{IRFplot}  
 will automatically use the associated draw (unless the user overrides it with her own choice as
-described above).
+described above). This carries over to the higher-level interface functions such that you could write 
+calls like the following as always:
+
+\begin{code}
+FEVDplot(&mod, 1)
+IRFplot(&mod, 1, 2)
+HDplot(&mod)
+\end{code}
+
+Since a single accepted draw by itself does not contain any information about the parameter uncertainty, 
+this kind of IRF plot only shows a single line without any intervals. For specially designed plots for the 
+set-identified situation please refer to the functions \texttt{SVAR\_SRirf} and \texttt{SVAR\_spagplot} 
+as explained above.
 
 \subsection{Still to do later (for set identification)}
 
@@ -2744,10 +2756,10 @@ and need not be harmonized).
   columns from $(k-1) n + 1$ to $k n$ (where $n$ is the number of
   variables in the VAR).
   
-  For the \texttt{drawix} argument see \texttt{GetShock}.
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDplot (bundle *Smod, int vnum[0], int keypos[0:2:1])}
+\begin{funcdoc}{FEVDplot (bundle *Smod, int vnum[0], int keypos[0:2:1], int drawix[0])}
   \noindent Plots on screen the Forecast Error Variance Decomposition for a
   variable. 
   
@@ -2757,9 +2769,11 @@ and need not be harmonized).
   \item The progressive number of the variable (0 means all).
   \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDsave (string outfilename, bundle *Smod, int vnum[0], int keypos[0:2:1])}
+\begin{funcdoc}{FEVDsave (string outfilename, bundle *Smod, int vnum[0], int keypos[0:2:1], int drawix[0])}
   \noindent Saves the Forecast Error Variance Decomposition for a variable to a
   graphic file, whose format is identified by its extension. 
   
@@ -2771,9 +2785,11 @@ and need not be harmonized).
   \item The progressive number of the variable (0 means all).
   \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{GetShock (bundle *Smod, int i, int drawix[0])}
+\begin{funcdoc}{GetShock (bundle *Smod, int i[1], int drawix[0])}
   \noindent Returns a series for the current workfile, namely the estimate of the 
   $i$-th structural shock of
   the system via equation \eqref{eq:PrE-StS-AB}, in which VAR
@@ -2782,17 +2798,17 @@ and need not be harmonized).
   \texttt{snames} with shock names is used in the description
   for the generated series.
   
-  The \texttt{drawix} argument is only needed in the set identification 
-  (sign restriction) case and specifies from which of the accepted model draws 
-  the coefficients should be taken. This index can range from 1 to the number
-  of accepted draws; see also \texttt{SRgetix}. (The default 0 is meaningless and only serves
-  to make it possible to omit the argument for traditional SVAR models.) 
-  In order to work in this case the model must have been set up such that all
+  The \texttt{drawix} argument is only meaningful in the set identification 
+  (sign restriction) case and overrides from which of the accepted model draws 
+  the coefficients should be taken. Normally this draw index should instead be determined 
+  with the help of the \texttt{SRgetbest} function and can be omitted here. 
+  This index can range from 1 to the number
+  of accepted draws. In order to work the SR type model must have been set up such that all
   accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
   default is yes.)
 \end{funcdoc}
 
-\begin{funcdoc}{HDplot (bundle *Smod, int vnum[0])}
+\begin{funcdoc}{HDplot (bundle *Smod, int vnum[0], int drawix[0])}
   \noindent Plots on screen the Historical Decomposition for a variable. 
   
    \noindent Arguments:
@@ -2800,9 +2816,11 @@ and need not be harmonized).
   \item A bundle holding the model.
   \item The progressive number of the variable (0 means all).
   \end{enumerate}
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{HDsave (string outfilename, bundle *Smod, int vnum[0])}
+\begin{funcdoc}{HDsave (string outfilename, bundle *Smod, int vnum[0], int drawix[0])}
     \noindent Saves the Historical Decomposition for a variable to a graphic file,
   whose format is identified by its extension. 
   
@@ -2812,9 +2830,11 @@ and need not be harmonized).
   \item A bundle holding the model (pointer form).
   \item The progressive number of the variable (0 means all).
   \end{enumerate}
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{IRFplot (bundle *Smod, int snum, int vnum, int keypos[0:2:1])}
+\begin{funcdoc}{IRFplot (bundle *Smod, int snum, int vnum, int keypos[0:2:1], int drawix[0])}
   \noindent Plots an impulse response function on screen. 
   
    \noindent Arguments:
@@ -2826,6 +2846,8 @@ and need not be harmonized).
   \item The progressive number of the variable.
   \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
+  
+   The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
 \begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
@@ -2837,7 +2859,8 @@ and need not be harmonized).
  enable certain kinds of unsupported hacks (see elsewhere).
 \end{funcdoc}
 
-\begin{funcdoc}{IRFsave (string outfilename, bundle *Smod, int snum, int vnum, int keypos[0:2:1])}
+\begin{funcdoc}{IRFsave (string outfilename, bundle *Smod, int snum, int vnum, 
+int keypos[0:2:1], int drawix[0])}
    \noindent Saves an impulse response function to a graphic file, whose format is
   identified by its extension. 
     
@@ -2851,6 +2874,8 @@ and need not be harmonized).
   \item The progressive number of the variable.
   \item The location of the legend / key; 0=off, 1=outside/right (default), 2=below
   \end{enumerate}
+  
+   The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
 \begin{funcdoc}{SRgetbest (bundle *Smod, string vname, string sname,
@@ -2906,7 +2931,7 @@ and need not be harmonized).
 
 \begin{funcdoc}{SVAR\_coint (bundle *Smod, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],\\
-			   bool verbose[0]), list rexo[null]}
+			   bool verbose[0]), list rexo[null])}
   \noindent Necessary for a SVEC model, adds the needed information 
   for subsequent estimation. 
   
@@ -2956,7 +2981,7 @@ and need not be harmonized).
   on. Finally, the one for the first deterministic component is called
   \texttt{hd\_foo\_det}.
   
-  For the \texttt{drawix} argument see \texttt{GetShock}.
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_ident (bundle *Smod, int verbose[0])}

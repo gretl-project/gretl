@@ -195,19 +195,20 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
             # produce plots
             if obj.ncumul == 0
                 if obj.nboot == 0
-                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos)
+                    tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
+                                      null, null, , whichdraw)
                 else
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
-                                      null, &boot, bc)
+                                      null, &boot, bc, whichdraw)
                 endif
             else
                 matrix cumul = obj.cumul
                 if obj.nboot == 0
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
-                                      &cumul)
+                                      &cumul, null, , whichdraw)
                 else
                     tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, \
-                                      &cumul, &boot, bc)
+                                      &cumul, &boot, bc, whichdraw)
                 endif
             endif
 
@@ -234,7 +235,8 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
 
 end function
 
-function void IRFplot(bundle *obj, int snum, int vnum, int keypos[0:2:1], int drawix[0::0])
+function void IRFplot(bundle *obj, int snum[1], int vnum[1], 
+                      int keypos[0:2:1], int drawix[0::0])
 
     IRFsave("display", &obj, snum, vnum, keypos, drawix)
 
@@ -338,13 +340,15 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
 
         string tmpout = (outfilename == "display") ? "display" : \
                         sprintf("%s_%d", outfilename, vnum)
-        string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, keypos, titletail)
+        string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, \
+                                  keypos, titletail)
         gnuplot --input="@tmpfile" --output="@tmpout"
 
     endloop
 end function
 
-function void FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1], int drawix[0::0])
+function void FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1], 
+                       int drawix[0::0])
 
     FEVDsave("display", &obj, vnum, keypos, drawix)
 
@@ -354,7 +358,8 @@ end function
 /* --- HD public graphing functions ------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function void HDsave(string outfilename, bundle *obj, int vnum[0], int drawix[0::0])
+function void HDsave(string outfilename, bundle *obj, int vnum[0], 
+                     int drawix[0::0])
 
     # more fashionable (=Dynare-like) style
 
