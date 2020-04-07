@@ -87,16 +87,6 @@ function void errmsgshockmatch(const matrix pos, string sname)
     endif
 end function 
 
-function strings getstrings_byindex(const strings S, const matrix indices)
-    # collects the (in general non-contiguous) sub-array
-    # indexed by indices (imitate fancy indexing)
-    strings out = null
-    matrix m = vec(indices) 
-    loop i = 1..nelem(m) -q
-        out += S[m[i]]
-    endloop
-    return out
-end function
 
 # --------------------------------
 
