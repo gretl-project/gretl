@@ -2182,6 +2182,10 @@ static double get_const_by_id (int id)
 	return mpi_size;
     } else if (id == CONST_N_PROC) {
 	return gretl_n_processors();
+    } else if (id == CONST_TRUE) {
+	return 1;
+    } else if (id == CONST_FALSE) {
+	return 0;
     } else {
 	return NADBL;
     }

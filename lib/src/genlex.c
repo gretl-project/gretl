@@ -70,6 +70,8 @@ struct str_table consts[] = {
     { CONST_MPI_RANK, "$mpirank" },
     { CONST_MPI_SIZE, "$mpisize" },
     { CONST_N_PROC,   "$nproc" },
+    { CONST_TRUE,     "TRUE" },
+    { CONST_FALSE,    "FALSE" },
     { 0,        NULL }
 };
 

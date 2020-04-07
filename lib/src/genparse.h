@@ -509,6 +509,8 @@ enum {
     CONST_MPI_RANK,
     CONST_MPI_SIZE,
     CONST_N_PROC,
+    CONST_TRUE,
+    CONST_FALSE,
     CONST_SYSINFO
 };
 
