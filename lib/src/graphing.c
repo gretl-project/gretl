@@ -4077,6 +4077,10 @@ static int scatters_incr (int T, const DATASET *dset)
 	incr = T / 6;
     } else {
 	incr = T / (4 * dset->pd);
+	/* safeguard */
+	if (incr == 0) {
+	    incr = 1;
+	}
     }
 
     ntics = T / incr;
