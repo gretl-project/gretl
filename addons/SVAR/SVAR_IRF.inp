@@ -129,18 +129,15 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
 	if type > 4 && type != 10
         printf "Given type %d\n", type
         funcerr "Unknown model type"
-
-    elif type == 10 
-        errchkSRhisto(&SVARobj, drawix)
-        # allow drawix to override the setting in the bundle
-        whichdraw = drawix ? drawix : SVARobj.bestdraw
-
+    
     elif i > SVARobj.n
         printf "Chosen shock index: %d\n", i
         funcerr "Shock index out of range"
         
-    elif drawix > 0
-        print "Warning: 'drawix' arg meaningless for standard SVAR, ignoring"
+    elif type != 10 && drawix > 0
+        print "Warning: 'drawix' arg meaningless for standard SVAR"
+    elif type == 10 
+        errchkSRhisto(&SVARobj, drawix)
     endif
 
     ## get the C matrix (and then the inv) ##
@@ -155,9 +152,15 @@ function series GetShock(bundle *SVARobj, int i[1::1], int drawix[0::0])
         endif
 
     elif type == 10 # set id 
+        # allow drawix to override the setting in the bundle
+        whichdraw = drawix ? drawix : SVARobj.bestdraw
         bundle pickdraw = SVARobj.acc_draws[whichdraw]
         matrix C = pickdraw.irfs[1] # impact effect is C
         B10 = pickdraw.B
+
+        if cols(C) < SVARobj.n
+            funcerr "partial id not supported for shock retrieval"
+        endif
     endif
 
     matrix iC = inv(C')
@@ -195,20 +198,18 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
     endloop
     matrix B10 = {} # to be filled for type 10
 
-    if type == 10 
-        errchkSRhisto(&Mod, drawix)
-        # allow drawix to override the setting in the bundle
-        whichdraw = drawix ? drawix : Mod.bestdraw
-    endif
-
     if nv > n
         printf "Hm. There are %d variables in the model. ", n 
         printf "Chosen shock index: %d\n", nv
         funcerr "Shock index out of range"
+        ## (further range check for SR partial id below) ##
     endif
-
+    
     # Prepare the set id case
-    if type == 10  
+    if type == 10 
+        errchkSRhisto(&Mod, drawix)
+        # allow drawix to override the setting in the bundle
+        whichdraw = drawix ? drawix : Mod.bestdraw
         bundle pickdraw = Mod.acc_draws[whichdraw] 
         matrix B10 = pickdraw.B  
     endif
@@ -248,6 +249,9 @@ function list SVAR_hd(bundle *Mod, int nv[1::1], int drawix[0::0])
 
     elif type == 10
         matrix C = pickdraw.irfs[1] # impact effect is C
+        if cols(C) < Mod.n
+            funcerr "partial id not supported for historical decomp"
+        endif
     endif
 
     matrix iC = inv(C)
