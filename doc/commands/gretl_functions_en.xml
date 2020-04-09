@@ -10806,6 +10806,40 @@
       </description>
     </function>
 
+    <function name="stack" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">offset</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Designed for manipulation of data into the stacked time
+	  series format required by gretl for panel data. The return
+	  value is a series obtained by stacking
+	  <quote>vertically</quote> <argname>n</argname> observations
+	  from each series in the list <argname>L</argname>. By
+	  default the first <argname>n</argname> observations are used
+	  (corresponding to <argname>offset</argname> = 0) but the
+	  starting point can be shifted by supplying a positive value
+	  for <argname>offset</argname>. If the resulting series is
+	  longer than the existing dataset, observations are added as
+	  needed.
+	</para>
+	<para>
+	  This function can handle the case where a data file holds
+	  side-by-side time series for a number of cross-sectional
+	  units, as well as the case where time runs horizontally
+	  and each row represents a cross-sectional unit.
+	</para>
+	<para>
+	  See the section titled <quote>Panel data specifics</quote>
+	  in <guideref targ="chap:datafiles"/> for details and
+	  examples of usage.
+	</para>
+      </description>
+    </function>
+
     <function name="stdize" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
