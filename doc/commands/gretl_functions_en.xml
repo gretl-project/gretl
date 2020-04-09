@@ -7188,8 +7188,8 @@
 
     <function name="monthlen" section="calendar" output="int">
       <fnargs>
-	<fnarg type="int">month</fnarg>
-	<fnarg type="int">year</fnarg>
+	<fnarg type="scalar-or-series">month</fnarg>
+	<fnarg type="scalar-or-series">year</fnarg>
 	<fnarg type="int">weeklen</fnarg>
       </fnargs>
       <description>
@@ -7200,6 +7200,16 @@
 	  gives the number of days in the week that should be counted
 	  (a value of 6 omits Sundays, and a value of 5 omits both
 	  Saturdays and Sundays).
+	</para>
+	<para>
+	  For example, if you have a monthly dataset open, the call
+	</para>
+	<code>
+	  series wd = monhlen($obsminor, $obsmajor, 5)
+	</code>
+	<para>
+	  will return a series containing the number of working days
+	  for each month in the sample.
 	</para>
       </description>
     </function>

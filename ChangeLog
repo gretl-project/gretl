@@ -16,6 +16,7 @@ version 2020b, in progress
   panel dataset in the time dimension
 - stack() function (see Guide chap. 4): replace option
   flags with optional arguments
+- monthlen(): allow for series arguments
 - Revise handling of string-valued data in exportation to
   Stata .dta format
 - Hide the recently added funcerr() function and replace

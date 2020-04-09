@@ -7103,8 +7103,8 @@
 
     <function name="monthlen" section="calendar" output="int">
       <fnargs>
-	<fnarg type="int">mese</fnarg>
-	<fnarg type="int">anno</fnarg>
+	<fnarg type="scalar-or-series">mese</fnarg>
+	<fnarg type="scalar-or-series">anno</fnarg>
 	<fnarg type="int">gioset</fnarg>
       </fnargs>
       <description>
@@ -7113,6 +7113,16 @@
 	  e anno; l'argomento <argname>gioset</argname> può essere
 	  5, 6 o 7, e indica il numero di giorni nella settimana da
 	  contare (il 6 omette le domeniche, il 5 anche i sabati).
+	</para>
+	<para>
+	  Ad esempio: se si ha un dataset mensile aperto, l'istruzione
+	</para>
+	<code>
+	  series wd = monhlen($obsminor, $obsmajor, 5)
+	</code>
+	<para>
+	  produrrà una serie contenente il numero di giorni lavorativi
+	  per ciascun mese nel campione.
 	</para>
       </description>
     </function>
