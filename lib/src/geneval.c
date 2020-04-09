@@ -11523,34 +11523,73 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    A = get_density_matrix(l, bws, ctrl, p);
 	}
     } else if (f == F_MONTHLEN) {
+	double *movec = NULL, *yrvec = NULL;
+	int wk, julian = 0;
+	int mo = 0, yr = 0;
+	int rettype = NUM;
+
 	post_process = 0;
-	if (!scalar_node(l)) {
-	    node_type_error(f, 1, NUM, l, p);
-	} else if (!scalar_node(m)) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if (!scalar_node(r)) {
-	    node_type_error(f, 3, NUM, r, p);
-	} else {
-	    int mo = node_get_int(l, p);
-	    int yr = node_get_int(m, p);
-	    int wk = node_get_int(r, p);
-
-	    if (p->err) {
-		; /* from node_get_int() */
-	    } else if (mo < 1 || mo > 12 ||
-		(wk != 5 && wk != 6 && wk != 7)) {
-		p->err = E_INVARG;
+	wk = node_get_int(r, p);
+	if (!p->err && wk != 5 && wk != 6 && wk != 7) {
+	    p->err = E_INVARG;
+	}
+	if (!p->err) {
+	    if (scalar_node(l)) {
+		mo = node_get_int(l, p);
+		if (!p->err && (mo < 1 || mo > 12)) {
+		    p->err = E_INVARG;
+		}
+	    } else if (l->t == SERIES) {
+		rettype = SERIES;
+		movec = l->v.xvec;
 	    } else {
-		reset_p_aux(p, save_aux);
-		ret = aux_scalar_node(p);
-		if (!p->err) {
-		    int julian = 0;
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err) {
+	    if (scalar_node(m)) {
+		yr = node_get_int(m, p);
+		if (yr < 0) {
+		    yr = -yr;
+		    julian = 1;
+		}
+	    } else if (m->t == SERIES) {
+		rettype = SERIES;
+		yrvec = m->v.xvec;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err && rettype == NUM) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		ret->v.xval = get_days_in_month(mo, yr, wk, julian);
+	    }
+	} else if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_series_node(p);
+	    if (ret != NULL) {
+		int t;
 
-		    if (yr < 0) {
-			yr = -yr;
-			julian = 1;
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    if (movec != NULL) {
+			mo = movec[t];
+			if (mo < 1 || mo > 12) {
+			    p->err = E_INVARG;
+			    break;
+			}
 		    }
-		    ret->v.xval = get_days_in_month(mo, yr, wk, julian);
+		    if (yrvec != NULL) {
+			yr = yrvec[t];
+			if (yr < 0) {
+			    yr = -yr;
+			    julian = 1;
+			} else {
+			    julian = 0;
+			}
+		    }
+		    ret->v.xvec[t] = get_days_in_month(mo, yr, wk, julian);
 		}
 	    }
 	}
