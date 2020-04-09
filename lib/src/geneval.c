@@ -11574,14 +11574,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 
 		for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		    if (movec != NULL) {
-			mo = movec[t];
-			if (mo < 1 || mo > 12) {
+			mo = gretl_int_from_double(movec[t], &p->err);
+			if (p->err || mo < 1 || mo > 12) {
 			    p->err = E_INVARG;
 			    break;
 			}
 		    }
 		    if (yrvec != NULL) {
-			yr = yrvec[t];
+			yr = gretl_int_from_double(yrvec[t], &p->err);
+			if (p->err) {
+			    break;
+			}
 			if (yr < 0) {
 			    yr = -yr;
 			    julian = 1;
