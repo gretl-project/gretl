@@ -2365,7 +2365,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	}
 	if (fp->type == GRETL_TYPE_BOOL) {
 	    if (!default_unset(fp) && !na(fp->deflt)) {
-		pprintf(prn, "[%g]", fp->deflt);
+		pprintf(prn, "[%g]", fp->deflt); /* FIXME? */
 	    }
 	} else if (gretl_scalar_type(fp->type)) {
 	    print_min_max_deflt(fp, prn);
@@ -6562,7 +6562,11 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	gretl_errmsg_set("'null' is not a valid default for scalars");
 	err = E_TYPES;
     } else if (param->type == GRETL_TYPE_BOOL) {
-	if (sscanf(p, "[%lf]", &param->deflt) != 1) {
+	if (!strcmp(p, "[TRUE]")) {
+	    param->deflt = 1;
+	} else if (!strcmp(p, "[FALSE]")) {
+	    param->deflt = 0;
+	} else if (sscanf(p, "[%lf]", &param->deflt) != 1) {
 	    err = E_PARSE;
 	}
     } else if (!strncmp(p, "[$xlist]", 8)) {
