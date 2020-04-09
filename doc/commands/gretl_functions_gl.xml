@@ -7188,8 +7188,8 @@
 
     <function name="monthlen" section="calendar" output="int">
       <fnargs>
-	<fnarg type="int">mes</fnarg>
-	<fnarg type="int">ano</fnarg>
+	<fnarg type="scalar-or-series">mes</fnarg>
+	<fnarg type="scalar-or-series">ano</fnarg>
 	<fnarg type="int">duracsemana</fnarg>
       </fnargs>
       <description>
@@ -7200,6 +7200,16 @@
 	  indicada por <argname>duracsemana</argname>. Este debe de ser igual
 	  a 5, 6 ou 7 (indicando o valor 6 que non se contan os domingos,
 	  e 5 que non se contan nin os sábados nin os domingos).
+	</para>
+	<para>
+	  Por exemplo, se tes aberto un conxunto de datos mensuais, a expresión
+	</para>
+	<code>
+	  series wd = monthlen($obsminor, $obsmajor, 5)
+	</code>
+	<para>
+	  devolverá unha serie que vai conter o número de días laborables
+	  de cada un dos meses da mostra.
 	</para>
       </description>
     </function>
@@ -7927,6 +7937,8 @@
 	  <seelist>
             <fncref targ="mread"/>
 	  </seelist>
+	  Para escribir unha matriz nun ficheiro, como conxunto de datos,
+	  consulta <cmdref targ="store"/>.
 	</para>
       </description>
     </function>

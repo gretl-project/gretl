@@ -7186,7 +7186,7 @@
       </description>
     </function>
 
-    <function name="monthlen" section="calendar" output="int">
+    <function name="monthlen" section="calendar" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">month</fnarg>
 	<fnarg type="scalar-or-series">year</fnarg>
@@ -7195,17 +7195,22 @@
       <description>
 	<para>
 	  Returns the number of (relevant) days in the specified month
-	  in the specified year, on the proleptic Gregorian calendar;
-	  <argname>weeklen</argname>, which must equal 5, 6 or 7,
-	  gives the number of days in the week that should be counted
-	  (a value of 6 omits Sundays, and a value of 5 omits both
-	  Saturdays and Sundays).
+	  in the specified year, on the proleptic Gregorian calendar.
+	  The <argname>weeklen</argname> argument, which must equal 5,
+	  6 or 7, gives the number of days in the week that should be
+	  counted (a value of 6 omits Sundays, and a value of 5 omits
+	  both Saturdays and Sundays).
+	</para>
+	<para>
+	  The return value is a scalar if both
+	  <argname>month</argname> and <argname>year</argname> are
+	  scalars, otherwise a series.
 	</para>
 	<para>
 	  For example, if you have a monthly dataset open, the call
 	</para>
 	<code>
-	  series wd = monhlen($obsminor, $obsmajor, 5)
+	  series wd = monthlen($obsminor, $obsmajor, 5)
 	</code>
 	<para>
 	  will return a series containing the number of working days

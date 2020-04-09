@@ -7101,7 +7101,7 @@
       </description>
     </function>
 
-    <function name="monthlen" section="calendar" output="int">
+    <function name="monthlen" section="calendar" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">mese</fnarg>
 	<fnarg type="scalar-or-series">anno</fnarg>
@@ -7118,7 +7118,7 @@
 	  Ad esempio: se si ha un dataset mensile aperto, l'istruzione
 	</para>
 	<code>
-	  series wd = monhlen($obsminor, $obsmajor, 5)
+	  series wd = monthlen($obsminor, $obsmajor, 5)
 	</code>
 	<para>
 	  produrrà una serie contenente il numero di giorni lavorativi

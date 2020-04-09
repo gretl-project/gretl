@@ -14228,6 +14228,11 @@
 	  <optparm>cadena</optparm>
 	  <effect>Mira abajo</effect>
         </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>nombrematriz</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
       </options>
     </usage>
 
@@ -14343,6 +14348,23 @@
 	La instrucción <lit>store</lit> se comporta de modo especial en el contexto de un
 	<quote>bucle progresivo</quote>. Consulta <guideref targ="chap:looping"/>
 	para obtener más detalles.
+      </para>
+      <subhead>Escribir una matriz como conjunto de datos</subhead>
+      <para>
+	La opción <opt>matriz</opt> necesita un parámetro: el nombre de una
+	matriz (que no esté vacía). Entonces la consecuencia de la instrucción
+	<lit>store</lit> es efectivamente convertir la matriz en un conjunto de
+	datos <quote>en segundo plano</quote>, y escribirlo como tal en un archivo.
+	Las columnas de la matriz pasan a ser series cuyos nombres se toman de
+	los nombres adyacentes a las columnas de la matriz (si los hay), o bien
+	se asignan por defecto como <lit>v1</lit>, <lit>v2</lit>, etc. Si la matriz
+	tiene nombres adyacentes a las filas, estos se utilizan en el conjunto
+	de datos como <quote>etiquetas de las observaciones</quote>.
+      </para>
+      <para>
+	Ten en cuenta que puedes escribir las matrices como tales en archivos,
+	consulta para ello la función <fncref targ="mwrite"/>. Pero a veces te
+	puede resultar más útil escribirlas en forma de conjuntos de datos.
       </para>
     </description>
 
