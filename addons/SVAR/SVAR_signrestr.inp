@@ -215,6 +215,13 @@ end function
 function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
                                    const matrices irfs)
     # (chk is a boolean, but gretl doesn't allow pointerized int or bool)
+    # TODO: Check whether this setup is really compatible with a situation
+    # where we have only partial identification from the "standard"
+    # (non-exotic) restrictions, but the exotic restrictions then refer
+    # to additional shocks not covered before. (Somehow I'm worrying 
+    # that the previous multiplication with the non-square id_matrix in the
+    # partial id case removes the needed irfs that would still have to be
+    # checked against the exotic restrictions. - Sven)
 
     string exo_restrict = mod.exoticSR.checks[i]
     scalar inip1 = mod.exoticSR.spans[i,1]

@@ -289,7 +289,8 @@ end function
 function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # Tag: sign restriction apparatus
 
-    # Here we examine the constraints on the IRFs we return a vector
+    # Here we examine the constraints on the IRFs 
+    # We return a vector
     # indicating if all the constraints contained in the matrix A are
     # satisfied; each row of A contains
     #
@@ -323,10 +324,10 @@ end function
 function scalar check_id(matrix id)
     # Tag: sign restriction apparatus
 
-    # Here we check if the sign check restriction allow us to
+    # Here we check if the sign restrictions allow us to
     # form a coherent set of IRFs for the problem at hand
     #
-    # the input matrix is has r rows and c columns, where r is the
+    # the input matrix has r rows and c columns, where r is the
     # number of shocks we want to identify and c is the number
     # of variables in the system; note that r can be smaller
     # than c for partially identified models; for example, in Uhlig
