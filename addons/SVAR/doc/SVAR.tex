@@ -2747,6 +2747,11 @@ following that that bundle is named \texttt{"Smod"} (although the internal
 name of the argument inside the local function scope is of course arbitrary 
 and need not be harmonized). 
 
+(The function signatures below are given as-is with the asterisk ``*'' denoting
+the pointer argument, but remember that in \emph{gretl}'s language \emph{hansl} 
+in a function call the pointer has to be 
+specified with an ampersand character as ``\&Smod''.)
+
 
 \begin{funcdoc}{FEVD (bundle *Smod, int drawix[0])}
   \noindent Returns an $h \times n^2$ matrix with  
@@ -2773,7 +2778,8 @@ and need not be harmonized).
   The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDsave (string outfilename, bundle *Smod, int vnum[0], int keypos[0:2:1], int drawix[0])}
+\begin{funcdoc}{FEVDsave (string outfilename, bundle *Smod, int vnum[0], int keypos[0:2:1], \\
+int drawix[0])}
   \noindent Saves the Forecast Error Variance Decomposition for a variable to a
   graphic file, whose format is identified by its extension. 
   
@@ -2790,22 +2796,10 @@ and need not be harmonized).
 \end{funcdoc}
 
 \begin{funcdoc}{GetShock (bundle *Smod, int i[1], int drawix[0])}
-  \noindent Returns a series for the current workfile, namely the estimate of the 
-  $i$-th structural shock of
-  the system via equation \eqref{eq:PrE-StS-AB}, in which VAR
-  residuals are used instead of the one-step-ahead prediction errors
-  $\PrE{t}$. The content of
-  \texttt{snames} with shock names is used in the description
-  for the generated series.
-  
-  The \texttt{drawix} argument is only meaningful in the set identification 
-  (sign restriction) case and overrides from which of the accepted model draws 
-  the coefficients should be taken. Normally this draw index should instead be determined 
-  with the help of the \texttt{SRgetbest} function and can be omitted here. 
-  This index can range from 1 to the number
-  of accepted draws. In order to work the SR type model must have been set up such that all
-  accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
-  default is yes.)
+  \noindent Equivalent to the recommended \texttt{SVAR\_getshock}, but with an alternative
+  interface: 
+  Instead of specifying the name of the shock of interest its position in the 
+  names of shocks array (\texttt{Smod.snames}) must be given in \texttt{i}.
 \end{funcdoc}
 
 \begin{funcdoc}{HDplot (bundle *Smod, int vnum[0], int drawix[0])}
@@ -2879,7 +2873,7 @@ int keypos[0:2:1], int drawix[0])}
 \end{funcdoc}
 
 \begin{funcdoc}{SRgetbest (bundle *Smod, string vname, string sname,
-    int ini[0::0], int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
+    int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
   \noindent Relating to a set identified (sign restricted) model, this function returns
    the (scalar) index number among all accepted draws of that particular draw which has 
    a certain impulse response (as specified by the user in this call) closest to the central 
@@ -2969,9 +2963,25 @@ int keypos[0:2:1], int drawix[0])}
   to 0).
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_hd (bundle *Smod, int nv, int drawix[0])}
+\begin{funcdoc}{SVAR\_getshock (bundle *Smod, string sname[null], int drawix[0])}
+  \noindent Returns a series for the current workfile, namely the estimate of the 
+  structural shock given in \texttt{sname} via equation \eqref{eq:PrE-StS-AB}, 
+  in which VAR residuals are used instead of the one-step-ahead prediction errors
+  $\PrE{t}$. If omitted, the default is to retrieve the first shock.
+  
+  The \texttt{drawix} argument is only meaningful in the set identification 
+  (sign restriction) case and overrides from which of the accepted model draws 
+  the coefficients should be taken. Normally this draw index should instead be determined 
+  with the help of the \texttt{SRgetbest} function and can be omitted here. 
+  This index can range from 1 to the number
+  of accepted draws. In order to work the SR type model must have been set up such that all
+  accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
+  default is yes.)
+\end{funcdoc}
+
+\begin{funcdoc}{SVAR\_HD (bundle *Smod, string vname[null], int drawix[0])}
   \noindent Returns a list of series with 
-  the ``historical decomposition'' of the \texttt{nv}-th variable,
+  the ``historical decomposition'' of the variable given in \texttt{vname},
   decomposing it into a deterministic component
   and $n$ stochastic components. The names of the resulting series are
   as follows: if the name of the decomposed variable is \texttt{foo},
@@ -2981,8 +2991,18 @@ int keypos[0:2:1], int drawix[0])}
   on. Finally, the one for the first deterministic component is called
   \texttt{hd\_foo\_det}.
   
-  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
+  If the \texttt{vname} argument is omitted, the default is to target the first variable.
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{SVAR\_getshock}.
 \end{funcdoc}
+
+\begin{funcdoc}{SVAR\_hd (bundle *Smod, int nv, int drawix[0])}
+\noindent Equivalent to the recommended \texttt{SVAR\_HD}, but with an alternative 
+interface: 
+Instead of specifying the name of the target variable its position in the 
+list of endogenous variables must be given in \texttt{nv}.
+\end{funcdoc}
+
 
 \begin{funcdoc}{SVAR\_ident (bundle *Smod, int verbose[0])}
   \noindent Returns a 0/1 scalar checking if a model is identified by applying (among other things) 
@@ -3380,6 +3400,8 @@ int length[0], int ini[0])}
 catch the case of no accepted draws more gracefully
 \item Introduce new convenience function SRgetbest to find the best draw according to 
 user-specified IRF criterion.
+\item New functions with alternative interface: SVAR\_HD (wrapper for SVAR\_hd) and 
+SVAR\_getshock (wrapper for GetShock).
 \end{itemize}
 
 \subsection*{Version 1.90, March 2020}
