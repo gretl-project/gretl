@@ -1,5 +1,5 @@
-# For now drill(), strpos_allin() and drawnormwis() come from: 
-# include SVAR_compatibility_funcs.inp 
+# For now drill(), strpos_allin() and drawnormwis() come from:
+# include SVAR_compatibility_funcs.inp
 #
 # And the following functions come from include SVAR_signrestr_utils.inp:
 #  correspondence, normalize, check_one_irf, check_irfs, check_id;
@@ -10,7 +10,7 @@
 ###
 
 function void SVAR_SRfull(bundle *mod,
-                          string yname, string sname,  
+                          string yname, string sname,
                           scalar lo[NA], scalar hi[NA],
                           int ini[0::0], int fin[0::0])
 
@@ -34,10 +34,10 @@ function void SVAR_SRfull(bundle *mod,
     # assuming the series for prices is called "p" and that we want
     # our monetary policy shock to come 1st in the ordering (useful for
     # models with sign restrictions on more than one shock)
-	
+
     # (Switched the yname/sname ordering to match SVAR_SRplain; Sven)
 
-	if mod.type != 10
+    if mod.type != 10
         funcerr "Wrong model type for set identification restrictions"
     endif
     if !inbundle(mod, "SRest")
@@ -51,7 +51,7 @@ function void SVAR_SRfull(bundle *mod,
     if nelem(k) != 1
         printf "Variable %s is not in the model\n", yname
         print " (or several ones with that name)"
-        funcerr "Specify correct and unique variable names" 
+        funcerr "Specify correct and unique variable names"
     endif
 
     if missing(lo) && missing(hi)
@@ -66,12 +66,12 @@ function void SVAR_SRfull(bundle *mod,
         funcerr "Provide valid interval"
     endif
 
-	if mod.horizon <= fin 
-        mod.horizon = fin + 1 # to be on the safe side 
+    if mod.horizon <= fin
+        mod.horizon = fin + 1 # to be on the safe side
     endif
 
-	# Attention: Here the ini and fin inputs are transformed 
-    # to 1-based matrix indexing form, not keeping the actual 
+    # Attention: Here the ini and fin inputs are transformed
+    # to 1-based matrix indexing form, not keeping the actual
     # horizon meaning
     mod.SRest |= {k, lo, hi, ini+1, fin+1, snum}
 
@@ -109,24 +109,24 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
        for one IRF over some horizon. For example, a difference or ratio
        of two IRFs. But the format is necessarily more free-floating here,
        see the documentation.
-       
-       chkstr: a string with a valid numerical evaluation of some function 
-            of the IRFs at a given horizon tau. The IRF_tau matrix must be 
-            hardcoded as "M". Cross-horizon restrictions are impossible.
 
-       length: length of the horizon span over which the restriction should 
-               hold 
+       chkstr: a string with a valid numerical evaluation of some function
+       of the IRFs at a given horizon tau. The IRF_tau matrix must be
+       hardcoded as "M". Cross-horizon restrictions are impossible.
+
+       length: length of the horizon span over which the restriction should
+       hold
        ini: first horizon after shock impact to consider
-            (the span is then from ini to ini+length, where impact timing is 0;
-             so the default settings just concern the impact effect)
+       (the span is then from ini to ini+length, where impact timing is 0;
+       so the default settings just concern the impact effect)
 
-       shocks: strings array with the names of the shocks that enter this 
-               restriction (it's the user's responsibility to get this right;
-               in the futur maybe we can verify or check this)
+       shocks: strings array with the names of the shocks that enter this
+       restriction (it's the user's responsibility to get this right;
+       in the futur maybe we can verify or check this)
 
-       needs_model: If yes, this becomes a "super-exotic" restriction, 
-            because it needs more input than just the boundaries; for example
-            an estimated coefficient (or just the observed variables).
+       needs_model: If yes, this becomes a "super-exotic" restriction,
+       because it needs more input than just the boundaries; for example
+       an estimated coefficient (or just the observed variables).
 
     */
 
@@ -135,7 +135,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
     elif $version < 20193
         # (because of feval and funcerr() etc., and maybe nested arrays)
         funcerr "Sorry, need at least gretl 2019d for exotic restrictions"
-    endif 
+    endif
 
     if !inbundle(mod, "exoticSR")
         strings checks = null
@@ -143,18 +143,18 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
           "super", {}, "eshocks", {})
     endif
 
-	# store the relevant shock numbers
-	loop s = 1..nelem(shocks) -q
+    # store the relevant shock numbers
+    loop s = 1..nelem(shocks) -q
         matrix snum = strpos_allin(mod.snames, shocks[s]) # can be several!
         if !nelem(snum)
-           funcerr("No shock named %s found\n", shocks[s])
+            funcerr("No shock named %s found\n", shocks[s])
         endif
         mod.exoticSR.eshocks |= snum
     endloop
 
-	finp1 = ini + length + 1 # the indexing convention here matches SRfull, +1
-    if mod.horizon <= finp1 
-        mod.horizon = finp1 + 1 # on the safe side 
+    finp1 = ini + length + 1 # the indexing convention here matches SRfull, +1
+    if mod.horizon <= finp1
+        mod.horizon = finp1 + 1 # on the safe side
     endif
 
     mod.exoticSR.checks += chkstr
@@ -168,14 +168,14 @@ end function
 
 function matrices gen_SRirfs(bundle b, int numh, matrix to_cum)
 
-    # This calculates results for 0..mod.horizons, which is actually 
+    # This calculates results for 0..mod.horizons, which is actually
     # like in the earlier SVAR code.
     # TODO: Maybe merge this function with earlier ones from SVAR?
-    # 
-    # So numh == mod.horizon + 1. 
-    # (Memo: the doc has been (up to 2020) slightly wrong in this 
+    #
+    # So numh == mod.horizon + 1.
+    # (Memo: the doc has been (up to 2020) slightly wrong in this
     #  regard; it claimed h=mod.horizons rows in the IRFs matrix,
-    #  one less than true) 
+    #  one less than true)
 
     matrix B = b.B
     k = b.exoterms    # just a number?
@@ -211,18 +211,25 @@ end function
 
 # -------------------
 
-# helper function for SVAR_setidIRF
-function scalar exotic_inner_check(scalar *chk, int i, const bundle mod, 
+# helper function for SVAR_SRdraw
+function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
                                    const matrices irfs)
     # (chk is a boolean, but gretl doesn't allow pointerized int or bool)
+    # TODO: Check whether this setup is really compatible with a situation
+    # where we have only partial identification from the "standard"
+    # (non-exotic) restrictions, but the exotic restrictions then refer
+    # to additional shocks not covered before. (Somehow I'm worrying 
+    # that the previous multiplication with the non-square id_matrix in the
+    # partial id case removes the needed irfs that would still have to be
+    # checked against the exotic restrictions. - Sven)
 
-	string exo_restrict = mod.exoticSR.checks[i]
+    string exo_restrict = mod.exoticSR.checks[i]
     scalar inip1 = mod.exoticSR.spans[i,1]
     scalar finp1 = mod.exoticSR.spans[i,2]
     scalar needs_model = mod.exoticSR.super[i]
 
     out = 0
-    loop t = inip1..finp1 --quiet 
+    loop t = inip1..finp1 --quiet
         matrix M = irfs[t] # hardcoded "M" for the API!
         if needs_model
             # FIXME This part looks very broken...!?
@@ -242,11 +249,11 @@ function scalar exotic_inner_check(scalar *chk, int i, const bundle mod,
             break
         endif
     endloop
-    return out 
+    return out
 end function
 
 function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
-                               scalar coveralpha[0:1:0.9], int maxiter[10000])
+                             scalar coveralpha[0:1:0.9], int maxiter[10000])
 
     # This function draws a random rotations of the Cholesky model
     # until "rep" draws satisfying the sign restrictions have come up.
@@ -254,7 +261,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     # are resampled too; otherwise, they are kept fixed at the ols
     # estimates.
 
-	if !inbundle(mod, "SRest") && !inbundle(mod, "exoticSR")
+    if !inbundle(mod, "SRest") && !inbundle(mod, "exoticSR")
         funcerr "No set id restrictions found"
     endif
 
@@ -295,11 +302,11 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     n_exotic = get_n_exotic(mod)
     # add the ones from exotic restrictions
     matrix allshocks = n_exotic ? values(shocks | mod.exoticSR.eshocks) : shocks
-    
+
     # Now extract the corresponding shock names
     strings mod.SRid_snames = getstrings_byindex(mod.snames, allshocks)
 
-    matrices Ais = prepAis(mod, shocks)   
+    matrices Ais = prepAis(mod, shocks)
 
     # responses to be cumulated?
     matrix to_cum = mod.ncumul ? mod.cumul : {}
@@ -309,14 +316,15 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     #
 
     bundle b = defbundle("B",B, "Sigma",mod.Sigma, "exoterms",rows(mod.mu), \
-               "df", mod.T - nelem(B))
+      "df", mod.T - rows(B), \
+      "T", mod.T) # df was: mod.T - nelem(B)
 
     loop while good<rep && iter<=maxiter --quiet
 
         # first just using non-exotic restrictions
-        rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma 
+        rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma
         matrices irfs = gen_SRirfs(b, numh, to_cum)
-        matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM) 
+        matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
 
         chk = DO_NORM ? (rows(id_matrix) == rows(shocks)) : 0 # this check 1st!
         chk = chk && check_id(id_matrix)
@@ -330,7 +338,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
             # --- now check for exotic restrictions if necessary -------
             if n_exotic
                 loop i = 1..n_exotic --quiet
-                 
+
                     out = exotic_inner_check(&chk, i, mod, irfs)
                     if out
                         break
@@ -342,7 +350,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
                 good++
                 b.irfs = irfs
 
-                # copy the results of accepted draw to output bundles array 
+                # copy the results of accepted draw to output bundles array
                 drawn += b
             endif
         endif
@@ -365,50 +373,54 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     endif
     printf " (acceptance ratio: %g)\n", good/(iter-1)
 
-	# copy info into model 
-    mod.SRiter = iter - 1 
+    # copy info into model
+    mod.SRiter = iter - 1
     mod.SRacc  = good
     mod.DO_BAYES = DO_BAYES
+    mod.SRcoveralpha = coveralpha
 
-	# integrate some summary results into the model bundle 
-    bundle IrfData = IRF_plotdata(drawn, coveralpha)
+    # integrate some summary results into the model bundle
+    if good
+        bundle IrfData = IRF_plotdata(drawn, coveralpha)    
+        matrix mod.SRirfmeans = IrfData.irfSRmeans
+        matrix mod.SRirfserrs = IrfData.irfSRserrs
+        matrix mod.SRlo_cb    = IrfData.lo_cb
+        matrix mod.SRhi_cb    = IrfData.hi_cb
+        matrix mod.SRirfmeds  = IrfData.irfSRmeds # medians
 
-    mod.SRcoveralpha = coveralpha  
-    matrix mod.SRirfmeans = IrfData.irfSRmeans
-    matrix mod.SRirfserrs = IrfData.irfSRserrs
-    matrix mod.SRlo_cb    = IrfData.lo_cb
-    matrix mod.SRhi_cb    = IrfData.hi_cb
-    matrix mod.SRirfmeds  = IrfData.irfSRmeds # medians
+        # also store everything in the main bundle if wanted
+        if inbundle(mod, storeSRirfs) && mod.storeSRirfs
+            # (idiom possible because for SR we require recent gretl)
+            mod.acc_draws = drawn
+        endif
 
-	# also store everything in the main bundle if wanted
-    if inbundle(mod, storeSRirfs) && mod.storeSRirfs 
-        # (idiom possible because for SR we require recent gretl) 
-        mod.acc_draws = drawn 
+	else
+		print "Warning: No accepted draws, plotting impossible"
     endif
 
-    return drawn
+    return drawn	# may be 0-element
 end function
 
 ###
 ### plotting functions
 ###
 
-function void SVAR_spagplot(const bundle mod, 
+function void SVAR_spagplot(const bundle mod,
                             string vname, string sname)
 
     if !inbundle(mod, "acc_draws")
         funcerr "Need collection acc_draws as model bundle member"
-    endif 
+    endif
 
-	# check whether it's one of the SR-id'ed shocks
-	s_inSR = nelem(strpos_allin(mod.SRid_snames, sname)) ? 1 : 0
+    # check whether it's one of the SR-id'ed shocks
+    s_inSR = nelem(strpos_allin(mod.SRid_snames, sname)) ? 1 : 0
     # get shock number
-    matrix snum = strpos_allin(mod.snames, sname) 
+    matrix snum = strpos_allin(mod.snames, sname)
     errmsgshockmatch(snum, sname)
-    # get var number 
+    # get var number
     matrix vnum = strpos_allin(mod.Ynames, vname)
     if !nelem(vnum)
-        printf "Regarding variable name %s:\n", vname 
+        printf "Regarding variable name %s:\n", vname
         funcerr "Variable unknown"
     endif
 
@@ -443,18 +455,18 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
 
     # here we store the data for plotting the irfs in a matrix, conceptually
     # similar to the "bands" matrix we use in SVAR_boot, that is with H rows
-    # (=accepted draws, so that descriptive statistics are easy to compute) 
+    # (=accepted draws, so that descriptive statistics are easy to compute)
     # and ns * nv * horizon columns
-    # (But the outputs will be reshaped after the H is aggregated out; 
+    # (But the outputs will be reshaped after the H is aggregated out;
     #  with the horizon in rows and numvariables * numshocks columns.)
 
     # get dimensions
     H = nelem(bs)    # number of available (accepted) draws
     nvXns = rows(bs[1].Sigma) * cols(bs[1].irfs[1])
     h = nelem(bs[1].irfs)
-  
+
     matrix A = zeros(H, nvXns * h)
-    
+
     loop i = 1..H --quiet
         matrices irfs = bs[i].irfs
         matrix sel = seq(1, nvXns * h, h)
@@ -470,8 +482,8 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
     matrix m = meanc(A)	# point-wise means
     matrix s = sdc(A)
 
-    # output bundle (H: num of [accepted] replications) 
-	# (leave out ret.raw = A)
+    # output bundle (H: num of [accepted] replications)
+    # (leave out ret.raw = A)
     bundle ret = defbundle("rep",H, "coveralpha",coveralpha, "biascorr",0)
     matrix ret.irfSRmeans  = mshape(m, h, nvXns)
     matrix ret.irfSRserrs  = mshape(s, h, nvXns)
@@ -489,13 +501,13 @@ function bundle IRF_plotdata(bundles bs, scalar coveralpha[0.9])
     return ret
 end function
 
-function void SVAR_SRirf(const bundle mod "the model bundle", 
-                          const strings whichvars[null] "which variables",
-                          const strings whichshocks[null] "which shocks",
-                          bool meanormed[0] "choose 1 for medians")
+function void SVAR_SRirf(const bundle mod "the model bundle",
+                         const strings whichvars[null] "which variables",
+                         const strings whichshocks[null] "which shocks",
+                         bool meanormed[0] "choose 1 for medians")
 
-    # TODO: make the function return the plot code as string 
-    # TODO: check if it makes sense to use the existing IRFgrph and 
+    # TODO: make the function return the plot code as string
+    # TODO: check if it makes sense to use the existing IRFgrph and
     #       IRFsave functions internally
     #       (perhaps the code here is actually better (more modern))
 
@@ -507,9 +519,9 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
         funcerr "No SR IRF results found - did you run SVAR_SRdraw?"
     endif
 
-    # bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)   
+    # bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)
 
-    # Which variables: 
+    # Which variables:
     if !exists(whichvars)
         strings whichvars = array(0) # default induces "all"
     endif
@@ -518,8 +530,8 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
         funcerr "No matching variable names found"
     endif
 
-	# Which shocks:
-    if !exists(whichshocks) 
+    # Which shocks:
+    if !exists(whichshocks)
         strings whichshocks = array(0)
     endif
     matrix wshoix = names2indices(mod.SRid_snames, whichshocks)
@@ -527,7 +539,7 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
         funcerr "No matching shock names found"
     endif
 
-    ## The actual plotting 
+    ## The actual plotting
     loop metaj = 1..nelem(wshoix) -q # for the shocks
         j = wshoix[metaj]
 
@@ -535,9 +547,9 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
             i = wvarix[metai]
 
             # pick the right position in the matrix
-            k = (j-1) * nelem(mod.Ynames) + i 
+            k = (j-1) * nelem(mod.Ynames) + i
 
-			matrix center = meanormed ? mod.SRirfmeds : mod.SRirfmeans
+            matrix center = meanormed ? mod.SRirfmeds : mod.SRirfmeans
             matrix grph = center[,k] ~ seq(0, mod.horizon)' # IrfData.irfSRmeans
             matrix band = mod.SRlo_cb[,k] ~ mod.SRhi_cb[,k] # IrfData.lo_cb, IrfData.hi_cb
             band = 0.5 * band * {1, 1; 1, -1}
@@ -546,10 +558,80 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
                 options with-lines fit=none
                 options band=band,1 band-style=fill
                 printf "set title '%s shock -> %s'", mod.SRid_snames[j], \
-                       mod.Ynames[i]
+                  mod.Ynames[i]
             end plot --output=display
         endloop
     endloop
 
     # return the gnuplot plotting code here eventually
-end function 
+end function
+
+##############################
+
+function scalar SRgetbest(bundle *mod,
+                        string vname, string sname,
+                        int ini[0::0], int length[0::0],
+                        int disttarg[0:1:0] "measure to target" \
+                        {"mean", "median"},
+                        string loss[null])
+    # Function to find the set-id accepted draw which best fits a
+    # a certain IRF center
+    # vname: e.g. "Y"
+    # sname: e.g. "supply" (naming must exist in the bundle)
+    # ini: horizon range start (0 = impact)
+    # length: horizon end is ini + length
+    # disttarg: which part of the per-horizon distribution should be
+    # targeted;
+    # loss: how to evaluate deviations from the target;
+    #      possible values: "abs", "quad" (default), ...
+
+    ## implement defaults and error checks:
+    if !exists(loss)
+        string loss = "quad"
+    elif tolower(loss) != "abs" && tolower(loss) != "quad"
+        print "Warning, unrecognized loss, using 'quad'"
+        loss = "quad"
+    else
+        loss = tolower(loss)
+    endif
+
+    if ini + length > mod.horizon
+        funcerr "ini + length too large (increase horizon)"
+    endif
+    if !inbundle(mod, "SRacc")
+        funcerr "No info on accepted draws found"
+    endif
+
+    scalar v_ix = names2indices(mod.Ynames, defarray(vname))
+    scalar s_ix = names2indices(mod.snames, defarray(sname))
+    startix = ini + 1	# offset for 1-based
+    finix = startix + length
+    matrix center = !disttarg ? mod.SRirfmeans : mod.SRirfmeds
+    # pick the right position in the matrix:
+    k = (s_ix - 1) * nelem(mod.Ynames) + v_ix
+    center = center[,k]
+
+    best = $huge
+    bestdraw = 0
+    loop i = 1..mod.SRacc -q
+        matrix IRFvec = drill(mod.acc_draws[i].irfs, v_ix, s_ix)
+        matrix distance = (IRFvec - center)[startix : finix]
+        if loss == "abs"
+            scalar objective = sum(abs(distance))
+        elif loss == "quad"
+            scalar objective = sum(distance.^2)
+        endif
+        if objective < best
+            best = objective
+            bestdraw = i
+        endif
+    endloop
+
+    if !bestdraw
+        funcerr "shouldn't happen"
+    endif
+
+    # store for further use
+    mod.bestdraw = bestdraw
+    return bestdraw
+end function

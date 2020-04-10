@@ -4,6 +4,32 @@
 
 #############################
 
+function void putIrf_to_accdraw(bundle *SVARobj, int whichdraw[0::0] )
+    # Only for SR (type 10)
+    # to transfer the IRFs to the old format
+    
+    if SVARobj.type != 10
+        funcerr "this function only for SR type"
+    elif !inbundle(SVARobj, "acc_draws")
+        funcerr "need accepted draws (acc_draws)"
+    endif
+    
+    n = SVARobj.n
+    h = SVARobj.horizon + 1
+    bundle pickdraw = SVARobj.acc_draws[whichdraw]
+    
+    matrix IRFs = zeros(h, n*n)
+    loop ix = 1..h -q
+        IRFs[ix, ] = vec(pickdraw.irfs[ix])'
+    endloop
+    
+    # copy to origin
+    matrix SVARobj.acc_draws[whichdraw].IRFs = IRFs
+    
+end function 
+
+###########################
+
 function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null])
     # Retrieves all the quantities that perhaps are redrawn 
     # in the Bayesian set id case:
@@ -38,11 +64,14 @@ function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null]
 end function     
 
 function void errchkSRhisto(bundle *Smod, int drawix)
-
-    if !Smod.storeSRirfs
+    if !inbundle(Smod, "bestdraw")
+        funcerr "Model not properly initialized for SR type" 
+    elif !Smod.bestdraw && !drawix
+        funcerr "Need to pick one particular draw (run SRgetbest?)"    
+    
+    elif !Smod.storeSRirfs
         funcerr "Need accepted draws content (acc_draws) in set-id case"
-    elif drawix == 0
-        funcerr "Need to pick one particular draw (index)"
+    
     elif drawix > nelem(Smod.acc_draws)
         printf "Only %d accepted draws exist\n", nelem(Smod.acc_draws) 
         funcerr "Draw index out of range"
@@ -58,16 +87,6 @@ function void errmsgshockmatch(const matrix pos, string sname)
     endif
 end function 
 
-function strings getstrings_byindex(const strings S, const matrix indices)
-    # collects the (in general non-contiguous) sub-array
-    # indexed by indices (imitate fancy indexing)
-    strings out = null
-    matrix m = vec(indices) 
-    loop i = 1..nelem(m) -q
-        out += S[m[i]]
-    endloop
-    return out
-end function
 
 # --------------------------------
 
@@ -117,7 +136,7 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
                          const matrix iXX )
 
     if DO_BAYES
-        matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df)
+        matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) # changed df at source
         matrix b.B = Mats[1]
         matrix b.Sigma = Mats[2]
     endif
@@ -270,7 +289,8 @@ end function
 function matrix check_irfs(matrices M, matrix A, int verbose[0])
     # Tag: sign restriction apparatus
 
-    # Here we examine the constraints on the IRFs we return a vector
+    # Here we examine the constraints on the IRFs 
+    # We return a vector
     # indicating if all the constraints contained in the matrix A are
     # satisfied; each row of A contains
     #
@@ -304,10 +324,10 @@ end function
 function scalar check_id(matrix id)
     # Tag: sign restriction apparatus
 
-    # Here we check if the sign check restriction allow us to
+    # Here we check if the sign restrictions allow us to
     # form a coherent set of IRFs for the problem at hand
     #
-    # the input matrix is has r rows and c columns, where r is the
+    # the input matrix has r rows and c columns, where r is the
     # number of shocks we want to identify and c is the number
     # of variables in the system; note that r can be smaller
     # than c for partially identified models; for example, in Uhlig

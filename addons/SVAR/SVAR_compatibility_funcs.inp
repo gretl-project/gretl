@@ -3,6 +3,22 @@
 # (either because they are in extra.zip, or other reasons)
 
 
+##################################
+# getstrings_byindex: gretl 2020b will have the built-in feature
+# to slice / fancy-index into an array with a vector
+
+function strings getstrings_byindex(const strings S, const matrix indices)
+    # collects the (in general non-contiguous) sub-array
+    # indexed by indices (imitate fancy indexing)
+    strings out = null
+    matrix m = vec(indices) 
+    loop i = 1..nelem(m) -q
+        out += S[m[i]]
+    endloop
+    return out
+end function
+
+
 ### drawnormwis() was called BayesianDraw
 ### It will go into extra 0.7 in some incarnation.
 

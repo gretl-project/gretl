@@ -2478,81 +2478,79 @@ the relevant functions \texttt{SVAR\_hd}, \texttt{FEVD}, and also \texttt{GetSho
 (which stores the estimated historical shock realization as a gretl series into the
 workfile) take as an additional argument an integer as an index to pick a certain
 accepted model draw.
-
 For example, the \texttt{ChoMoreno.inp} example script shipped with the SVAR 
 addon produces 256 accepted draws and its model bundle has the name ``mod''.
-After it is run we can arbitrarily pick the, say, 112th accepted draw to produce the HD 
-for inflation -- which is the 2nd variable in the model -- as follows:
+After it is run we could in principle pick arbitrarily any draw between 1 and 256.
 
-\begin{code}
-list inflHD = SVAR_hd(&mod, 2, 112) 
-\end{code}
+% 112th accepted draw to produce the HD 
+% for inflation -- which is the 2nd variable in the model -- as follows:
 
-In the same fashion we could extract the history of the demand shock (the 1st one)
-by writing
+% \begin{code}
+% list inflHD = SVAR_hd(&mod, 2, 112) 
+% \end{code}
 
-\begin{code}
-series demandshock = GetShock(&mod, 1, 112) 
-\end{code}
+% In the same fashion we could extract the history of the demand shock (the 1st one)
+% by writing
 
-... or retrieve the FEVD numbers with this call:
+% \begin{code}
+% series demandshock = GetShock(&mod, 1, 112) 
+% \end{code}
 
-\begin{code}
-matrix allfevd = FEVD(&mod, 112) 
-\end{code}
+% ... or retrieve the FEVD numbers with this call:
 
-However, it should be very clear that these results are quite arbitrary, since the 112th 
-accepted draw will typically \emph{not} be representative of the entire model distribution.
-While it is beyond the scope of this user guide to provide a discussion of the possible ways to 
-find a suitable unique model among the many accepted draws, let us sketch how the user
-could employ the existing apparatus to pick a certain model. (Some convenience functions 
-are planned to be added to the \texttt{SVAR} addon package in the future to make this task more 
-user-friendly.)
+% \begin{code}
+% matrix allfevd = FEVD(&mod, 112) 
+% \end{code}
+
+However, the aim is typically to use a draw which is somehow representative of the entire 
+model distribution. Thus the possibility of specifying a draw index manually is only offered for 
+more flexibility as a kind of override option. 
+
+While it is beyond the scope of this user guide to provide a discussion of the possible conceptual 
+approaches to find a suitable unique model among the many accepted draws, the \texttt{SVAR}
+addon provides the \texttt{SRgetbest} convenience function to help with this task.
 
 For example, continuing with \texttt{ChoMoreno.inp}, say you are most interested in the 
-impulse response of inflation (2nd variable) to a demand shock (1st shock) not immediately, 
-but after one quarter. That is, you want to find that accepted model which has a 
+impulse response of inflation (\texttt{INFL}, 2nd variable) to the shock \texttt{Demand} 
+(1st shock) not immediately, but after one quarter. 
+That is, you want to find that accepted model which has a 
 response of inflation to a demand impulse at lag 1 which is as close as 
-possible to the median response across all accepted draws. The median responses are already
-stored (by default) inside \texttt{SRirfmeds}, and since the impact effect is in row 1 we need the 
-2nd row of that matrix. With $nv=2$ and $ns=1$ (and of course $n=3$) the targeted number will 
-then be found in
-\texttt{mod.SRirfmeds[2, (ns-1)*n + nv]} or equivalently \texttt{mod.SRirfmeds[2, 2]}; this 
-number turns out to be $0.171304$.
+possible to the median response across all accepted draws. 
+The relevant call to find this model's index number would be:
 
-How can we retrieve the corresponding scalar outcomes across all accepted model draws? 
-Admittedly this requires some knowledge of the internal storage structure of the SVAR addon, 
-but here is the solution, using the stored number of available accepted draws \texttt{mod.SRacc}:
+ \begin{code}
+ SRgetbest(&mod, "INFL", "Demand", 1, , 1) 
+ \end{code}
 
-\begin{code}
-matrix crosscollect = zeros(mod.SRacc)  
-nv = 2
-ns = 1
-horiz = 1
-loop i=1..mod.SRacc --quiet
-    crosscollect[i] = mod.acc_draws[i].irfs[1 + horiz][nv,ns]
-endloop
-\end{code}
+The function is documented in the appendix, but note that the first scalar argument with value 1 
+chooses the starting IRF horizon where 0 would be equivalent to the contemporaneous impact,
+so here it is after one period. The following argument would determine
+how many of the following periods should be considered; here we do not want to consider anything 
+beyond the first lag, so we can leave it at the default value zero and hence do not need to specify 
+that argument. The trailing argument value 1 chooses the median as the target (0 would be 
+the mean).\footnote{The concrete targeted number turns out to be  $0.171304$. This could also 
+be found inside the bundle with $nv=2$ and $ns=1$ (and of course $n=3$) as
+\texttt{mod.SRirfmeds[2, (ns-1)*n + nv]} or equivalently \texttt{mod.SRirfmeds[2, 2]}.}
 
-It should be clear that \texttt{SRacc} and \texttt{acc\_draws} are given names of the bundle 
-members determined by SVAR's storage structure and must be used exactly like this, and the 
-same holds for the nested array of matrices \texttt{irfs} which is in turn part of the array of 
-bundles \texttt{acc\_draws}. In contrast, \texttt{crosscollect}, \texttt{nv, ns}, and 
-\texttt{horiz} are of course arbitrary user-settable identifiers.
-
-Now we have all the relevant model results in a single column vector, and finding the model with 
-the result closest to the median target is then straightforward, using gretl's built-in \texttt{iminc} 
-function:
+We find that the representative model in this particular sense is the one with index 58; 
+by construction the associated impulse response value is very close to the median, namely $0.171297$.
+The \texttt{SRgetbest} function stores this index number 58 in the model bundle under the key
+\texttt{bestdraw}. The functions that require a unique model parametrization such as 
+\texttt{SVAR\_hd}, \texttt{FEVD}, \texttt{GetShock}, and \texttt{IRFplot}  
+will automatically use the associated draw (unless the user overrides it with her own choice as
+described above). This carries over to the higher-level interface functions such that you could write 
+calls like the following as always:
 
 \begin{code}
-drawindex = iminc(abs(crosscollect - mod.SRirfmeds[2,2] ))
+FEVDplot(&mod, 1)
+IRFplot(&mod, 1, 2)
+HDplot(&mod)
 \end{code}
 
-We find that the representative model in this sense is the one with index 58; by construction 
-the associated impulse response value is very close to the median, namely $0.171297$. A user
-interested in a model with a typical inflation reaction to a demand shock at lag one would thus
-call the functions \texttt{SVAR\_hd}, \texttt{FEVD}, and \texttt{GetShock} with an index 
-argument 58 instead of the arbitrary 112 above.
+Since a single accepted draw by itself does not contain any information about the parameter uncertainty, 
+this kind of IRF plot only shows a single line without any intervals. For specially designed plots for the 
+set-identified situation please refer to the functions \texttt{SVAR\_SRirf} and \texttt{SVAR\_spagplot} 
+as explained above.
 
 \subsection{Still to do later (for set identification)}
 
@@ -2749,6 +2747,11 @@ following that that bundle is named \texttt{"Smod"} (although the internal
 name of the argument inside the local function scope is of course arbitrary 
 and need not be harmonized). 
 
+(The function signatures below are given as-is with the asterisk ``*'' denoting
+the pointer argument, but remember that in \emph{gretl}'s language \emph{hansl} 
+in a function call the pointer has to be 
+specified with an ampersand character as ``\&Smod''.)
+
 
 \begin{funcdoc}{FEVD (bundle *Smod, int drawix[0])}
   \noindent Returns an $h \times n^2$ matrix with  
@@ -2758,10 +2761,10 @@ and need not be harmonized).
   columns from $(k-1) n + 1$ to $k n$ (where $n$ is the number of
   variables in the VAR).
   
-  For the \texttt{drawix} argument see \texttt{GetShock}.
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDplot (bundle *Smod, int vnum[0], int keypos[0:2:1])}
+\begin{funcdoc}{FEVDplot (bundle *Smod, int vnum[0], int keypos[0:2:1], int drawix[0])}
   \noindent Plots on screen the Forecast Error Variance Decomposition for a
   variable. 
   
@@ -2771,9 +2774,12 @@ and need not be harmonized).
   \item The progressive number of the variable (0 means all).
   \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDsave (string outfilename, bundle *Smod, int vnum[0], int keypos[0:2:1])}
+\begin{funcdoc}{FEVDsave (string outfilename, bundle *Smod, int vnum[0], int keypos[0:2:1], \\
+int drawix[0])}
   \noindent Saves the Forecast Error Variance Decomposition for a variable to a
   graphic file, whose format is identified by its extension. 
   
@@ -2785,28 +2791,18 @@ and need not be harmonized).
   \item The progressive number of the variable (0 means all).
   \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
-\end{funcdoc}
-
-\begin{funcdoc}{GetShock (bundle *Smod, int i, int drawix[0])}
-  \noindent Returns a series for the current workfile, namely the estimate of the 
-  $i$-th structural shock of
-  the system via equation \eqref{eq:PrE-StS-AB}, in which VAR
-  residuals are used instead of the one-step-ahead prediction errors
-  $\PrE{t}$. The content of
-  \texttt{snames} with shock names is used in the description
-  for the generated series.
   
-  The \texttt{drawix} argument is only needed in the set identification 
-  (sign restriction) case and specifies from which of the accepted model draws 
-  the coefficients should be taken. This index can range from 1 to the number
-  of accepted draws. (The default 0 is meaningless and only serves
-  to make it possible to omit the argument for traditional SVAR models.) 
-  In order to work in this case the model must have been set up such that all
-  accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
-  default is yes.)
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{HDplot (bundle *Smod, int vnum[0])}
+\begin{funcdoc}{GetShock (bundle *Smod, int i[1], int drawix[0])}
+  \noindent Equivalent to the recommended \texttt{SVAR\_getshock}, but with an alternative
+  interface: 
+  Instead of specifying the name of the shock of interest its position in the 
+  names of shocks array (\texttt{Smod.snames}) must be given in \texttt{i}.
+\end{funcdoc}
+
+\begin{funcdoc}{HDplot (bundle *Smod, int vnum[0], int drawix[0])}
   \noindent Plots on screen the Historical Decomposition for a variable. 
   
    \noindent Arguments:
@@ -2814,9 +2810,11 @@ and need not be harmonized).
   \item A bundle holding the model.
   \item The progressive number of the variable (0 means all).
   \end{enumerate}
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{HDsave (string outfilename, bundle *Smod, int vnum[0])}
+\begin{funcdoc}{HDsave (string outfilename, bundle *Smod, int vnum[0], int drawix[0])}
     \noindent Saves the Historical Decomposition for a variable to a graphic file,
   whose format is identified by its extension. 
   
@@ -2826,20 +2824,24 @@ and need not be harmonized).
   \item A bundle holding the model (pointer form).
   \item The progressive number of the variable (0 means all).
   \end{enumerate}
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{IRFplot (bundle *Smod, int snum, int vnum, int keypos[0:2:1])}
+\begin{funcdoc}{IRFplot (bundle *Smod, int snum, int vnum, int keypos[0:2:1], int drawix[0])}
   \noindent Plots an impulse response function on screen. 
   
    \noindent Arguments:
   
   \begin{enumerate}
-  \item A bundle holding the model
+  \item A bundle holding the model.
   \item The progressive number of the shock (may be negative, in which
     case the IRF is flipped).
   \item The progressive number of the variable.
   \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
+  
+   The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
 \begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
@@ -2851,7 +2853,8 @@ and need not be harmonized).
  enable certain kinds of unsupported hacks (see elsewhere).
 \end{funcdoc}
 
-\begin{funcdoc}{IRFsave (string outfilename, bundle *Smod, int snum, int vnum, int keypos[0:2:1])}
+\begin{funcdoc}{IRFsave (string outfilename, bundle *Smod, int snum, int vnum, 
+int keypos[0:2:1], int drawix[0])}
    \noindent Saves an impulse response function to a graphic file, whose format is
   identified by its extension. 
     
@@ -2865,7 +2868,32 @@ and need not be harmonized).
   \item The progressive number of the variable.
   \item The location of the legend / key; 0=off, 1=outside/right (default), 2=below
   \end{enumerate}
+  
+   The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
+
+\begin{funcdoc}{SRgetbest (bundle *Smod, string vname, string sname,
+    int ini[0::0], \\ int length[0::0],  int disttarg[0:1:0],  string loss[null]) }
+  \noindent Relating to a set identified (sign restricted) model, this function returns
+   the (scalar) index number among all accepted draws of that particular draw which has 
+   a certain impulse response (as specified by the user in this call) closest to the central 
+   tendency of all draws. Also stores this number in the model bundle under ``bestdraw''. 
+   
+  \noindent Arguments:
+  \begin{enumerate}
+  \item A bundle holding the model (pointer form).
+  \item The name of the target variable in the interesting IRF.
+  \item The name of the shock in the interesting IRF.
+  \item The first period/horizon at which the IRF should be compared. (Default 0, on impact)
+  \item The length of the horizon over which the IRF should be compared. (Default 0, only
+  for the single period given before)
+  \item A switch choosing whether to target the mean (0) or the median (1) of the IRF 
+  distribution. (Default 0)
+  \item The loss function name to evaluate deviations from the target. Possible values are
+  ``quad'' (default) and ``abs''.
+   \end{enumerate}  
+\end{funcdoc}
+
 
 \begin{funcdoc}{SVAR\_boot (bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
     quiet[1],\\
@@ -2897,7 +2925,7 @@ and need not be harmonized).
 
 \begin{funcdoc}{SVAR\_coint (bundle *Smod, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],\\
-			   bool verbose[0]), list rexo[null]}
+			   bool verbose[0]), list rexo[null])}
   \noindent Necessary for a SVEC model, adds the needed information 
   for subsequent estimation. 
   
@@ -2935,9 +2963,25 @@ and need not be harmonized).
   to 0).
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_hd (bundle *Smod, int nv, int drawix[0])}
+\begin{funcdoc}{SVAR\_getshock (bundle *Smod, string sname[null], int drawix[0])}
+  \noindent Returns a series for the current workfile, namely the estimate of the 
+  structural shock given in \texttt{sname} via equation \eqref{eq:PrE-StS-AB}, 
+  in which VAR residuals are used instead of the one-step-ahead prediction errors
+  $\PrE{t}$. If omitted, the default is to retrieve the first shock.
+  
+  The \texttt{drawix} argument is only meaningful in the set identification 
+  (sign restriction) case and overrides from which of the accepted model draws 
+  the coefficients should be taken. Normally this draw index should instead be determined 
+  with the help of the \texttt{SRgetbest} function and can be omitted here. 
+  This index can range from 1 to the number
+  of accepted draws. In order to work the SR type model must have been set up such that all
+  accepted draws are stored in the model bundle. (See \texttt{SVAR\_setup},
+  default is yes.)
+\end{funcdoc}
+
+\begin{funcdoc}{SVAR\_HD (bundle *Smod, string vname[null], int drawix[0])}
   \noindent Returns a list of series with 
-  the ``historical decomposition'' of the \texttt{nv}-th variable,
+  the ``historical decomposition'' of the variable given in \texttt{vname},
   decomposing it into a deterministic component
   and $n$ stochastic components. The names of the resulting series are
   as follows: if the name of the decomposed variable is \texttt{foo},
@@ -2947,8 +2991,18 @@ and need not be harmonized).
   on. Finally, the one for the first deterministic component is called
   \texttt{hd\_foo\_det}.
   
-  For the \texttt{drawix} argument see \texttt{GetShock}.
+  If the \texttt{vname} argument is omitted, the default is to target the first variable.
+  
+  The \texttt{drawix} argument can typically be omitted, see \texttt{SVAR\_getshock}.
 \end{funcdoc}
+
+\begin{funcdoc}{SVAR\_hd (bundle *Smod, int nv, int drawix[0])}
+\noindent Equivalent to the recommended \texttt{SVAR\_HD}, but with an alternative 
+interface: 
+Instead of specifying the name of the target variable its position in the 
+list of endogenous variables must be given in \texttt{nv}.
+\end{funcdoc}
+
 
 \begin{funcdoc}{SVAR\_ident (bundle *Smod, int verbose[0])}
   \noindent Returns a 0/1 scalar checking if a model is identified by applying (among other things) 
@@ -3331,15 +3385,23 @@ int length[0], int ini[0])}
      will be stored in the main model bundle (see also \texttt{acc\_draws})\\
    \texttt{acc\_draws} & array of bundles, collecting the outcomes and data of all accepted 
    draws; this member is absent if suppressed at the setup stage. The data type and the 
-   stored representation of the draws is still experimental and subject to change.
+   stored representation of the draws is still experimental and subject to change.\\
+   
+   \texttt{bestdraw} & positive integer to index the best of all accepted draws in \texttt{acc\_draws} 
+   according to criteria specified in call to \texttt{SRgetbest}. Zero if undefined. 
   \end{tabular}
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{Version 1.91, March/April... 2020}
+\subsection*{Version 1.91, April 2020}
 \begin{itemize}
-\item Minor plot legend fix for GUI usage.
+\item Minor plot legend fix for GUI usage; a fix of DoF calculation for Bayesian redrawing;
+catch the case of no accepted draws more gracefully
+\item Introduce new convenience function SRgetbest to find the best draw according to 
+user-specified IRF criterion.
+\item New functions with alternative interface: SVAR\_HD (wrapper for SVAR\_hd) and 
+SVAR\_getshock (wrapper for GetShock).
 \end{itemize}
 
 \subsection*{Version 1.90, March 2020}
