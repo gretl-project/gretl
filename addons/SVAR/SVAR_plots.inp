@@ -142,10 +142,10 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     # copy and prepare some input
     string tmpfile, tmpout
     n = obj.n
-    
+    whichdraw = drawix ? drawix : obj.bestdraw
+
     if obj.type == 10	# SR
-        errchkSRhisto(&obj, drawix)
-        whichdraw = drawix ? drawix : obj.bestdraw
+        errchkSRhisto(&obj, drawix)        
         putIrf_to_accdraw(&obj, whichdraw)     
         matrix IRFmat = obj.acc_draws[whichdraw].IRFs
     else

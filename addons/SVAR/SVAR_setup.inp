@@ -244,6 +244,10 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     matrix ret.cumul = {}
     ret.normalize = 0
 
+    /* Other initializations */
+    ret.nboot = 0   # Bootstrap doesn't make sense for SR, but nboot must exist
+    ret.bestdraw = 0	# only for SR, but must exist, initialize as undefined
+    ret.checkident = 0  # needs to exist, override below
 
     /* ----------------------------------------------------------------
         type-specific stuff
@@ -285,7 +289,6 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
         ret.checkident = checkid_storeSRirfs
 
         /* Bootstrap */
-        ret.nboot = 0
         ret.boot_alpha = -1
         matrix ret.bootdata = {}
         ret.biascorr = 0
@@ -294,14 +297,11 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     else #  10 (SR) 
         # matrix for holding sign restrictions
         matrix ret.SRest = {}
-        ret.bestdraw = 0	# initialize as undefined
-        ret.nboot = 0       # Bootstrap doesn't make sense for SR, but nboot must exist  
-
+          
 		/* Since for sign restrictions the traditional estimation step doesn't apply,
            but we need the reduced-form coefficients, we already do it here auto-
            matically. */
         ret.storeSRirfs = checkid_storeSRirfs 
-        ret.checkident = 0 # needs to exist
         SVAR_estimate(&ret, 0)
     endif
 
