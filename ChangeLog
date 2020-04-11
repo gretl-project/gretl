@@ -1,14 +1,15 @@
-version 2020b, in progress
+2020-04-11 version 2020b
 - Update gretl copyright notice
 - Revise macOS build: don't require initialization via
   shell script, and link against version 10.9 of the SDK
 - "gnuplot" and "plot" commands: add a --ylogscale option
 - "store" command: add --matrix option to save a matrix in
   the form of a dataset
-- strvals(): support retrieval of string values for current
-  subsample
+- strvals(): support retrieval of subset of string values
+  for current sample range
 - ODBC importation: correct the handling of string-valued
-  series; add --verbose and --no-align options
+  series; add --verbose and --no-align options; ensure
+  appropriate error messages in GUI usage
 - "dataset addobs": add a --panel-time option
 - "slicing" of arrays: allow use of selection vector
 - Functions called via "if": show any printed output
@@ -21,6 +22,9 @@ version 2020b, in progress
   Stata .dta format
 - Hide the recently added funcerr() function and replace
   it with the new function errorif()
+- Streamline building of "online" help files
+- Fix for normalization of paths on MS Windows
+- Several minor bug-fixes
 
 2020-03-05 version 2020a
 - Verbose output for numerical optimization: make the

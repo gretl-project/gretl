@@ -1,4 +1,4 @@
-version 2020b, in progress
+2020-04-11 version 2020b
 
 The function-form of "funcerr" has been undocumented, in favor
 of the new errorif() function.
