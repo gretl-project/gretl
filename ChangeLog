@@ -1,7 +1,7 @@
 version 2020b, in progress
 - Update gretl copyright notice
 - Revise macOS build: don't require initialization via
-  shell script, and link against 10.9 SDK
+  shell script, and link against version 10.9 of the SDK
 - "gnuplot" and "plot" commands: add a --ylogscale option
 - "store" command: add --matrix option to save a matrix in
   the form of a dataset
