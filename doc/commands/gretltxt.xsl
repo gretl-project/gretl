@@ -5,7 +5,7 @@
   <!-- Stylesheet for gretlcli plain text "online" help -->
 
 <xsl:param name="hlp">cli</xsl:param>
-<xsl:param name="refs">docref.xml</xsl:param>
+<xsl:param name="refs">chaprefs.xml</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="utf-8"/>
