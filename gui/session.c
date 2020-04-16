@@ -1158,6 +1158,8 @@ void model_add_as_icon (GtkAction *action, gpointer p)
 	return;
     }
 
+    gretl_error_clear();
+
 #if SESSION_DEBUG
     fprintf(stderr, "model_add_as_icon: ptr = %p\n", ptr);
 #endif
