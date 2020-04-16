@@ -1881,6 +1881,12 @@ static void rcvar_set_double (RCVAR *rcvar, const char *sval, int *changed)
     }
 }
 
+static void restart_message (GtkWidget *parent)
+{
+    msgbox(_("This change will take effect when you restart gretl"),
+	   GTK_MESSAGE_INFO, parent);
+}
+
 /* register and react to changes from Preferences dialog */
 
 static void apply_changes (GtkWidget *widget, GtkWidget *parent)
@@ -1929,7 +1935,7 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
     }
 
     if (changed > 1) {
-	infobox(_("This change will take effect when you restart gretl"));
+	restart_message(parent);
     }
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
@@ -3113,7 +3119,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 
     if (dw != display_wdir) {
 	display_wdir = dw;
-	infobox(_("This change will take effect when you restart gretl"));
+	restart_message(wset->dialog);
     }
 
     if (!err) {
