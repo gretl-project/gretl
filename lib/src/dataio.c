@@ -2779,7 +2779,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	    } else {
 		err = save_var_labels_to_array(dset, lname);
 	    }
-	    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+	    if (!err && gretl_messages_on()) {
 		pprintf(prn, "Labels written OK\n");
 	    }
 	}
@@ -2790,7 +2790,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	} else {
 	    err = add_var_labels_from_array(dset, lname);
 	}
-	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+	if (!err && gretl_messages_on()) {
 	    pprintf(prn, "Labels loaded OK\n");
 	}
     }
@@ -2850,13 +2850,13 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
     } else if (opt & OPT_T) {
 	/* to-file */
 	err = save_obs_markers_to_file(dset, fname);
-	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+	if (!err && gretl_messages_on()) {
 	    pprintf(prn, "Markers written OK\n");
 	}
     } else if (opt & OPT_F) {
 	/* from-file */
 	err = add_obs_markers_from_file(dset, fname);
-	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+	if (!err && gretl_messages_on()) {
 	    pprintf(prn, "Markers loaded OK\n");
 	}
     } else if (opt & OPT_A) {

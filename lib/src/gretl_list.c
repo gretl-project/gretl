@@ -358,8 +358,7 @@ int remember_list (const int *list, const char *name, PRN *prn)
 	if (orig != NULL) {
 	    /* replace existing list of same name */
 	    user_var_replace_value(orig, lcpy, GRETL_TYPE_LIST);
-	    if (prn != NULL && gretl_messages_on() &&
-		!gretl_looping_quietly()) {
+	    if (prn != NULL && gretl_messages_on()) {
 		pprintf(prn, _("Replaced list '%s'\n"), name);
 	    }
 	} else {

@@ -923,8 +923,7 @@ void print_smpl (const DATASET *dset, int fulln,
 	return;
     }
 
-    if (!(opt & OPT_F) && (!gretl_messages_on() ||
-			   gretl_looping_quietly())) {
+    if (!(opt & OPT_F) && !gretl_messages_on()) {
 	/* hush */
 	return;
     }
@@ -2093,7 +2092,7 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 
 void maybe_list_series (const DATASET *dset, PRN *prn)
 {
-    if (gretl_messages_on() && !gretl_looping_quietly()) {
+    if (gretl_messages_on()) {
 	list_series(dset, OPT_NONE, prn);
     }
 }

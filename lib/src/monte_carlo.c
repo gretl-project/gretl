@@ -112,12 +112,11 @@ typedef struct {
 typedef enum {
     LOOP_PROGRESSIVE = 1 << 0,
     LOOP_VERBOSE     = 1 << 1,
-    LOOP_QUIET       = 1 << 2,
-    LOOP_DELVAR      = 1 << 3,
-    LOOP_ATTACHED    = 1 << 4,
-    LOOP_RENAMING    = 1 << 5,
-    LOOP_ERR_CAUGHT  = 1 << 6,
-    LOOP_CONDITIONAL = 1 << 7
+    LOOP_DELVAR      = 1 << 2,
+    LOOP_ATTACHED    = 1 << 3,
+    LOOP_RENAMING    = 1 << 4,
+    LOOP_ERR_CAUGHT  = 1 << 5,
+    LOOP_CONDITIONAL = 1 << 6
 } LoopFlags;
 
 struct controller_ {
@@ -209,8 +208,6 @@ struct LOOPSET_ {
 #define loop_set_progressive(l) (l->flags |= LOOP_PROGRESSIVE)
 #define loop_is_verbose(l)      (l->flags & LOOP_VERBOSE)
 #define loop_set_verbose(l)     (l->flags |= LOOP_VERBOSE)
-#define loop_is_quiet(l)        (l->flags & LOOP_QUIET)
-#define loop_set_quiet(l)       (l->flags |= LOOP_QUIET)
 #define loop_is_attached(l)     (l->flags & LOOP_ATTACHED)
 #define loop_set_attached(l)    (l->flags |= LOOP_ATTACHED)
 #define loop_is_renaming(l)     (l->flags & LOOP_RENAMING)
@@ -493,9 +490,6 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
     }
     if (opt & OPT_V) {
 	loop_set_verbose(loop);
-    }
-    if (opt & OPT_Q) {
-	loop_set_quiet(loop);
     }
 }
 
@@ -2828,12 +2822,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 #if HAVE_GMP
     int k = 0;
 #endif
-    int iters = loop->iter;
     int i, j = 0;
-
-    if (!loop_is_quiet(loop)) {
-	pprintf(prn, _("\nNumber of iterations: %d\n\n"), iters);
-    }
 
     for (i=0; i<loop->n_cmds; i++) {
 	gretlopt opt = loop->cmds[i].opt;
@@ -3068,22 +3057,6 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     }
 
     return err;
-}
-
-static void print_loop_progress (const LOOPSET *loop,
-				 const DATASET *dset,
-				 PRN *prn)
-{
-    int i = loop->init.val + loop->iter;
-
-    if (loop->type == INDEX_LOOP) {
-	pprintf(prn, "loop: %s = %d\n\n", loop->idxname, i);
-    } else if (loop->type == DATED_LOOP) {
-	char obs[OBSLEN];
-
-	ntodate(obs, i - 1, dset);
-	pprintf(prn, "loop: %s = %s\n\n", loop->idxname, obs);
-    }
 }
 
 static const LOOPSET *
@@ -3676,7 +3649,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     gui_mode = gretl_in_gui_mode();
     echo = gretl_echo_on();
     indent0 = gretl_if_state_record();
-    set_loop_on(loop_is_quiet(loop));
+    set_loop_on(loop_is_verbose(loop));
 #if HAVE_GMP
     progressive = loop_is_progressive(loop);
 #endif
@@ -3703,9 +3676,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 #if LOOP_DEBUG > 1
 	fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
-	if (echo && indexed_loop(loop) && !loop_is_quiet(loop)) {
-	    print_loop_progress(loop, dset, prn);
-	}
 	if (gui_mode && loop->iter % 10 == 0 && check_for_stop()) {
 	    /* the GUI user clicked the "Stop" button */
 	    abort_loop_execution(s);
@@ -3771,7 +3741,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
 	    if (genr_compiled(loop, j)) {
 		/* no parsing needed */
-		if (echo && !loop_is_quiet(loop)) {
+		if (echo && loop_is_verbose(loop)) {
 		    pprintf(prn, "? %s\n", showline);
 		}
 		err = execute_genr(loop->cmds[j].genr, dset, prn);
@@ -3874,7 +3844,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    if (indexed_loop(loop)) {
 			pputc(prn, '\n');
 		    }
-		} else if (!loop_is_quiet(loop)) {
+		} else if (loop_is_verbose(loop)) {
 		    gretl_echo_command(cmd, showline, prn);
 		}
 	    }

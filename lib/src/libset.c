@@ -68,7 +68,7 @@ enum {
     STATE_WARN_ON         = 1 << 11, /* print numerical warning messages */
     STATE_SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
     STATE_LOOPING         = 1 << 13, /* loop is in progress at this level */
-    STATE_LOOP_QUIET      = 1 << 14, /* loop commands should be quiet */
+    STATE_LOOP_VERBOSE    = 1 << 14, /* loop commands should be verbose */
     STATE_BFGS_RSTEP      = 1 << 15, /* use Richardson method in BFGS numerical
 					gradient */
     STATE_DPDSTYLE_ON     = 1 << 16, /* emulate dpd in dynamic panel data models */
@@ -439,7 +439,7 @@ static void state_vars_copy (set_vars *sv)
 #endif
     sv->flags = state->flags;
     /* We're not (yet) looping at the current level of execution (but
-       note that the STATE_LOOP_QUIET flag should be inherited).
+       note that the STATE_LOOP_VERBOSE flag should be inherited).
     */
     sv->flags &= ~STATE_LOOPING;
 
@@ -793,8 +793,17 @@ void set_gretl_messages (int e)
 
 int gretl_messages_on (void)
 {
-    if (check_for_state()) return 1;
-    return flag_to_bool(state, STATE_MSGS_ON);
+    if (check_for_state()) {
+	return 1;
+    } else {
+	int ret = flag_to_bool(state, STATE_MSGS_ON);
+
+	if (ret && (state->flags & STATE_LOOPING)) {
+	    ret = state->flags & STATE_LOOP_VERBOSE;
+	}
+
+	return ret;
+    }
 }
 
 int gretl_warnings_on (void)
@@ -1956,7 +1965,7 @@ int execute_set (const char *setobj, const char *setarg,
 	    err = libset_get_unsigned(setarg, &u);
 	    if (!err) {
 		gretl_rand_set_seed(u);
-		if (gretl_messages_on() && !gretl_looping_quietly()) {
+		if (gretl_messages_on()) {
 		    pprintf(prn,
 			    _("Pseudo-random number generator seeded with %u\n"), u);
 		}
@@ -2647,11 +2656,11 @@ void libset_cleanup (void)
    state of the program calling libgretl, they are not user-settable
 */
 
-void set_loop_on (int quiet)
+void set_loop_on (int verbose)
 {
     state->flags |= STATE_LOOPING;
-    if (quiet) {
-	state->flags |= STATE_LOOP_QUIET;
+    if (verbose) {
+	state->flags |= STATE_LOOP_VERBOSE;
     }
 }
 
@@ -2659,14 +2668,14 @@ void set_loop_off (void)
 {
     state->flags &= ~STATE_LOOPING;
 
-    /* If we're not currently governed by "loop quietness" at
-       caller level, turn such quietness off too
+    /* If we're not currently governed by "loop verbosity" at
+       caller level, turn such verbosity off too
     */
-    if (state->flags & STATE_LOOP_QUIET) {
+    if (state->flags & STATE_LOOP_VERBOSE) {
 	int i = n_states - 1;
 
-	if (i <= 0 || !(state_stack[i-1]->flags & STATE_LOOP_QUIET)) {
-	    state->flags ^= STATE_LOOP_QUIET;
+	if (i <= 0 || !(state_stack[i-1]->flags & STATE_LOOP_VERBOSE)) {
+	    state->flags ^= STATE_LOOP_VERBOSE;
 	}
     }
 }
@@ -2695,11 +2704,6 @@ int gretl_looping (void)
 int gretl_looping_currently (void)
 {
     return (state->flags & STATE_LOOPING)? 1 : 0;
-}
-
-int gretl_looping_quietly (void)
-{
-    return (state->flags & STATE_LOOP_QUIET)? 1 : 0;
 }
 
 static int iter_depth;

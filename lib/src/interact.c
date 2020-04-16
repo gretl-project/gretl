@@ -1249,7 +1249,7 @@ static int do_pca (int *list, DATASET *dset,
 	    err = call_pca_plugin(cmat, dset, opt, prn);
 	    if (!err && (opt & (OPT_O | OPT_A))) {
 		/* results saved as series */
-		if (gretl_messages_on() && !gretl_looping_quietly()) {
+		if (gretl_messages_on()) {
 		    pputs(prn, "Generated principal component series\n");
 		}
 	    }
