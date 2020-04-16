@@ -600,15 +600,36 @@ function scalar SRgetbest(bundle *mod,
     endif
     if !inbundle(mod, "SRacc")
         funcerr "No info on accepted draws found"
+    elif !inbundle(mod, "acc_draws")
+        funcerr "Model must be set up to store accepted draws in its bundle"
     endif
 
-    scalar v_ix = names2indices(mod.Ynames, defarray(vname))
-    scalar s_ix = names2indices(mod.snames, defarray(sname))
     startix = ini + 1	# offset for 1-based
     finix = startix + length
     matrix center = !disttarg ? mod.SRirfmeans : mod.SRirfmeds
+
     # pick the right position in the matrix:
+    # (taking into account partial identification, i.e.
+    #  less id'ed shocks than variables)
+    scalar v_ix = names2indices(mod.Ynames, defarray(vname))
+    scalar s_ix = names2indices(mod.SRid_snames, defarray(sname))
     k = (s_ix - 1) * nelem(mod.Ynames) + v_ix
+
+    ## debug:
+    /*
+    print s_ix
+    print v_ix
+    print k
+    eval cols(center)
+    eval nelem(mod.SRid_snames)
+    eval nelem(mod.snames)
+	print mod
+    matrices mm = mod.acc_draws[1].irfs
+	matrix mtemp = mm[1] 
+    eval rows(mtemp)
+    eval cols(mtemp)
+    */
+
     center = center[,k]
 
     best = $huge
