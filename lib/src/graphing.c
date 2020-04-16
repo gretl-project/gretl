@@ -270,13 +270,15 @@ int gnuplot_test_command (const char *cmd)
     return ret;
 }
 
-double gnuplot_version (void)
+static double gnuplot_version (int *msg_done)
 {
     static double vnum = 0.0;
 
     if (vnum == 0.0) {
+	GError *gerr = NULL;
 	gboolean ok;
 	gchar *sout = NULL;
+	gchar *serr = NULL;
 	gchar *argv[] = {
 	    NULL,
 	    NULL,
@@ -293,14 +295,13 @@ double gnuplot_version (void)
 	ok = g_spawn_sync (NULL,
 			   argv,
 			   NULL,
-			   G_SPAWN_SEARCH_PATH |
-			   G_SPAWN_STDERR_TO_DEV_NULL,
+			   G_SPAWN_SEARCH_PATH,
 			   NULL,
 			   NULL,
 			   &sout,
+			   &serr,
 			   NULL,
-			   NULL,
-			   NULL);
+			   &gerr);
 
 	if (ok && sout != NULL) {
 	    if (!strncmp(sout, "gnuplot ", 8)) {
@@ -313,8 +314,24 @@ double gnuplot_version (void)
 		    vnum += plev / 100.0;
 		}
 	    }
-	    g_free(sout);
 	}
+
+	if (vnum == 0) {
+	    if (gerr != NULL) {
+		/* We might see something like:
+		   Failed to execute child process <bad-path>
+		*/
+		gretl_errmsg_set(gerr->message);
+		g_error_free(gerr);
+		*msg_done = 1;
+	    } else if (serr != NULL && *serr != '\0') {
+		gretl_errmsg_set(serr);
+		*msg_done = 1;
+	    }
+	}
+
+	g_free(sout);
+	g_free(serr);
     }
 
     return vnum;
@@ -322,7 +339,7 @@ double gnuplot_version (void)
 
 #else /* MS Windows */
 
-double gnuplot_version (void)
+static double gnuplot_version (void)
 {
     /* As of early 2020, the packages for Windows
        include gnuplot 5.2 */
@@ -1713,15 +1730,18 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 static int gnuplot_too_old (void)
 {
     static double gpv;
+    int msg_done = 0;
     int ret = 0;
 
     if (gpv == 0.0) {
-	gpv = gnuplot_version();
+	gpv = gnuplot_version(&msg_done);
     }
 
     if (gpv == 0.0) {
-	/* couldn't get version number? */
-	gretl_errmsg_set("Gnuplot is broken or too old: must be >= version 5.0");
+	if (!msg_done) {
+	    gretl_errmsg_sprintf("'%s': gnuplot is broken or too old: must be >= version 5.0",
+				 gretl_gnuplot_path());
+	}
 	ret = 1;
     } else if (gpv < 5.0) {
 	gretl_errmsg_sprintf("Gnuplot %g is too old: must be >= version 5.0", gpv);

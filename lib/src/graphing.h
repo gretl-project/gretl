@@ -342,8 +342,6 @@ void date_from_gnuplot_time (char *targ, size_t tsize,
 double gnuplot_time_from_date (const char *s, 
 			       const char *fmt);
 
-double gnuplot_version (void);
-
 int gnuplot_has_wxt (void);
 
 #endif /* GRAPHING_H */

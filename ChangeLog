@@ -1,3 +1,6 @@
+version 2020c, in progress
+- Improve error message in case of invalid gnuplot path
+
 2020-04-11 version 2020b
 - Update gretl copyright notice
 - Revise macOS build: don't require initialization via
