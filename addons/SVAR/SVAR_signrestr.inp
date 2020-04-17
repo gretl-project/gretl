@@ -272,7 +272,7 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     matrix B = mod.mu | mod.VARpar'
     scalar numh = mod.horizon + 1
 
-    DO_NORM = 1
+    DO_NORM = 1 # used later, when we check if a draw has to be kept or not
 
     matrix iXX = {}
     if DO_BAYES     # this is only needed for sampling from the posterior
@@ -302,10 +302,13 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     n_exotic = get_n_exotic(mod)
     # add the ones from exotic restrictions
     matrix allshocks = n_exotic ? values(shocks | mod.exoticSR.eshocks) : shocks
+    scalar nSetIdShocks = rows(shocks)
 
     # Now extract the corresponding shock names
     strings mod.SRid_snames = getstrings_byindex(mod.snames, allshocks)
 
+    # this array contains as many elements as set-identified shocks
+    # basically, it's a per-shock split of the SRest bundle element
     matrices Ais = prepAis(mod, shocks)
 
     # responses to be cumulated?
@@ -322,7 +325,10 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
     loop while good<rep && iter<=maxiter --quiet
 
         # first just using non-exotic restrictions
-        rot_redraw(&b, mod, DO_BAYES, B, iXX) # b.rot, b.B, b.Sigma
+        
+        # generate the random rotation matrix and, optionally, resample
+        rot_redraw(&b, mod, DO_BAYES, B, iXX) 		# b.rot, b.B, b.Sigma
+        
         matrices irfs = gen_SRirfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
 
@@ -330,6 +336,11 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
         chk = chk && check_id(id_matrix)
 
         if chk
+            if mod.n == nSetIdShocks
+                # complete system
+                b.Q = b.rot * id_matrix'
+            endif
+             
             # perform the "reflection-permutation" step
             loop i = 1..nelem(irfs) --quiet
                 irfs[i] = irfs[i] * id_matrix'
