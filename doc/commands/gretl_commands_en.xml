@@ -7685,18 +7685,14 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>report details of genr commands</effect>
-	</option>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>do not report number of iterations performed</effect>
+	  <effect>echo commands and show confirmatory messages</effect>
 	</option>
       </options>
       <examples>
         <example>loop 1000</example>
 	<example>loop 1000 --progressive</example>
         <example>loop while essdiff &gt; .00001</example>
-        <example>loop i=1991..2000</example>
+        <example>loop i=1991..2000 --verbose</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i xlist</example>
 	<demos>
@@ -7730,6 +7726,11 @@
 	explained there. Not all gretl commands may be used within
 	a loop; the commands available in this context are also
 	set out there.
+      </para>
+      <para>
+	By default, execution of commands proceeds more quietly within
+	loops than in other contexts. If you want more feedback on
+	what's going on in a loop, give the <opt>verbose</opt> option.
       </para>
     </description>
 
