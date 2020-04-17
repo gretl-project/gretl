@@ -1,3 +1,9 @@
+version 2020c, in progress
+
+The -q or --quiet option for the "loop" command is now
+redundant; quiet operation has become the default. But the
+option is still accepted.
+
 2020-04-11 version 2020b
 
 The function-form of "funcerr" has been undocumented, in favor
