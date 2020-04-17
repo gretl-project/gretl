@@ -3847,7 +3847,8 @@ int gui_run_genr (const char *line, DATASET *dset,
     return generate(line, dset, gtype, opt, prn);
 }
 
-static int finish_genr (MODEL *pmod, dialog_t *dlg)
+static int finish_genr (MODEL *pmod, dialog_t *dlg,
+			int whole_range)
 {
     PRN *prn;
     const char *gbuf;
@@ -3861,7 +3862,19 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	set_genr_model(pmod, GRETL_OBJ_EQN);
     }
 
-    err = gui_run_genr(libline, dataset, OPT_NONE, prn);
+    if (whole_range) {
+	int save_t1 = dataset->t1;
+	int save_t2 = dataset->t2;
+
+	dataset->t1 = 0;
+	dataset->t2 = dataset->n - 1;
+	err = gui_run_genr(libline, dataset, OPT_NONE, prn);
+	dataset->t1 = save_t1;
+	dataset->t2 = save_t2;
+    } else {
+	err = gui_run_genr(libline, dataset, OPT_NONE, prn);
+    }
+
     unset_genr_model();
     gbuf = gretl_print_get_buffer(prn);
 
@@ -3993,7 +4006,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	       or error message is handled by finish_genr
 	    */
 	    lib_command_strcpy(realline);
-	    err = finish_genr(NULL, NULL);
+	    err = finish_genr(NULL, NULL, 0);
 	    *realline = '\0';
 	    continue; /* on to the next line */
 	}
@@ -5087,7 +5100,7 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 
     g_free(s);
 
-    err = finish_genr(NULL, dlg);
+    err = finish_genr(NULL, dlg, 0);
 
     if (edit && !err) {
 	mdata_select_last_var();
@@ -5115,7 +5128,7 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
 
     g_free(s);
 
-    err = finish_genr(NULL, dlg);
+    err = finish_genr(NULL, dlg, 0);
 
     if (!err && dataset->v > oldv) {
 	selector_register_genr(dataset->v - oldv, p);
@@ -5160,7 +5173,7 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 
     g_free(s);
 
-    err = finish_genr(NULL, dlg);
+    err = finish_genr(NULL, dlg, 0);
 
     if (!err) {
 	int newv = (scalargen)? n_user_scalars(): dataset->v;
@@ -5179,7 +5192,7 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg)
 
     if (s != NULL) {
 	lib_command_sprintf("%s", s);
-	finish_genr(pmod, dlg);
+	finish_genr(pmod, dlg, 0);
 	g_free(s);
     }
 }
@@ -5187,7 +5200,7 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg)
 void do_range_dummy_genr (const gchar *buf)
 {
     lib_command_strcpy(buf);
-    finish_genr(NULL, NULL);
+    finish_genr(NULL, NULL, 1);
 }
 
 static int real_do_setmiss (double missval, int varno)
