@@ -1880,6 +1880,29 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     }
 }
 
+static void bundle_header (const char *name,
+			   const char *creator,
+			   int empty, PRN *prn)
+{
+    if (name != NULL) {
+	if (empty) {
+	    pprintf(prn, "bundle %s: empty\n", name);
+	} else if (creator != NULL) {
+	    pprintf(prn, "bundle %s, created by %s:\n", name, creator);
+	} else {
+	    pprintf(prn, "bundle %s:\n", name);
+	}
+    } else {
+	if (empty) {
+	    pputs(prn, "bundle: empty\n");
+	} else if (creator != NULL) {
+	    pprintf(prn, "bundle created by %s:\n", creator);
+	} else {
+	    pputs(prn, "bundle:\n");
+	}
+    }
+}
+
 static int real_bundle_print (gretl_bundle *bundle, int indent,
 			      int tree, PRN *prn)
 {
@@ -1905,23 +1928,16 @@ static int real_bundle_print (gretl_bundle *bundle, int indent,
     } else {
 	int n_items = g_hash_table_size(bundle->ht);
 	user_var *u = get_user_var_by_data(bundle);
-	const char *name;
+	const char *name = NULL;
 
 	if (u != NULL) {
 	    name = user_var_get_name(u);
-	} else {
-	    name = "anonymous";
 	}
 
 	if (bundle->type == BUNDLE_PLAIN && n_items == 0) {
-	    pprintf(prn, "bundle %s: empty\n", name);
+	    bundle_header(name, NULL, 1, prn);
 	} else {
-	    if (bundle->creator != NULL) {
-		pprintf(prn, "bundle %s, created by %s:\n",
-			name, bundle->creator);
-	    } else {
-		pprintf(prn, "bundle %s:\n", name);
-	    }
+	    bundle_header(name, bundle->creator, 0, prn);
 	    if (bundle->type == BUNDLE_KALMAN) {
 		print_kalman_bundle_info(bundle->data, prn);
 		if (n_items > 0) {
