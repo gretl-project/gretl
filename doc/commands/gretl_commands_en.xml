@@ -7696,8 +7696,8 @@
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i xlist</example>
 	<demos>
-	<demo>armaloop.inp</demo>
-	<demo>keane.inp</demo>
+	  <demo>armaloop.inp</demo>
+	  <demo>keane.inp</demo>
 	</demos>
       </examples>
     </usage>
