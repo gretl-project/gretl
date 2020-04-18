@@ -7582,23 +7582,24 @@
 	graphic="logistic1"/>
      </para>
      <para context="cli">
-   La variabile dipendente dev'essere strettamente positiva.
-   Se è una frazione decimale, compresa tra 0 e 1, il valore
-   predefinito per <math>y</math><sup>*</sup> (il massimo
-   asintotico della variabile dipendente) è 1. Se la variabile
-   dipendente è una percentuale, compresa tra 0 e 100, il valore
-   predefinito di <math>y</math><sup>*</sup> è 100.
+       La variabile dipendente dev'essere strettamente positiva.  Se è
+       una frazione decimale, compresa tra 0 e 1, il valore
+       predefinito per <math>y</math><sup>*</sup> (il massimo
+       asintotico della variabile dipendente) è 1. Se la variabile
+       dipendente è una percentuale, compresa tra 0 e 100, il valore
+       predefinito di <math>y</math><sup>*</sup> è 100.
      </para>
      <para context="cli">
-   È possibile indicare un valore diverso per il massimo, usando
-   l'opzione <opt>ymax</opt>. Il valore fornito deve essere
-   maggiore di tutti i valori osservati della variabile
-   dipendente.
+       È possibile indicare un valore diverso per il massimo, usando
+       l'opzione <opt>ymax</opt>. Il valore fornito deve essere
+       maggiore di tutti i valori osservati della variabile
+       dipendente.
      </para>      
      <para context="gui">
-   Nella finestra di dialogo del comando, è possibile specificare
-   un valore diverso per il massimo. Il valore fornito deve essere
-   maggiore di tutti i valori osservati della variabile dipendente.
+       Nella finestra di dialogo del comando, è possibile specificare
+       un valore diverso per il massimo. Il valore fornito deve essere
+       maggiore di tutti i valori osservati della variabile
+       dipendente.
      </para>
      <para>
    I valori stimati e i residui della regressione sono
@@ -7710,33 +7711,34 @@
 	targ="chap:robust_vcv"/> per maggiori dettagli.
       </para>
       <para context="gui">
-   In modalità predefinita, gli errori standard sono calcolati
-   con l'inversa negativa dell'Hessiana.  Se si seleziona la
-   casella "Errori standard robusti", verranno calcolati gli
-   errori standard QML o quelli di Huber&ndash;White. In questo
-   caso, la matrice di covarianza stimata è un <quote>sandwich</quote>
-   dell'inversa dell'Hessiana stimata e del prodotto esterno del gradiente.
-   Per i dettagli, si veda Davidson e MacKinnon 2004, cap. 10. 
+	In modalità predefinita, gli errori standard sono calcolati
+	con l'inversa negativa dell'Hessiana.  Se si seleziona la
+	casella "Errori standard robusti", verranno calcolati gli
+	errori standard QML o quelli di Huber&ndash;White. In questo
+	caso, la matrice di covarianza stimata è un
+	<quote>sandwich</quote> dell'inversa dell'Hessiana stimata e
+	del prodotto esterno del gradiente.  Per i dettagli, si veda
+	Davidson e MacKinnon 2004, cap. 10.
      </para>
      <para>
-   Se la variabile dipendente non è binaria, ma è discreta, si
-   ottengono stime Logit ordinate. Tuttavia, se viene fornita
-   l'opzione <opt>multinomial</opt>, la variabile dipendente è
-   interpretata come non ordinale, e vengono prodotte stime Logit
-   Multinomiali. (In ambo i casi, verrà dato un errore se la
-   dipendente non è discreta.) Nel caso multinomiale, l'accessore
-   <fncref targ="$mnlprobs"/> sarà disponibile dopo la stima; esso
-   conterrà una matrice con le probabilità stimate dei possibili
-   valori della dipendente per ogni osservazione (osservazioni
-   per riga, valori per colonna).
+       Se la variabile dipendente non è binaria, ma è discreta, si
+       ottengono stime Logit ordinate. Tuttavia, se viene fornita
+       l'opzione <opt>multinomial</opt>, la variabile dipendente è
+       interpretata come non ordinale, e vengono prodotte stime Logit
+       Multinomiali. (In ambo i casi, verrà dato un errore se la
+       dipendente non è discreta.) Nel caso multinomiale, l'accessore
+       <fncref targ="$mnlprobs"/> sarà disponibile dopo la stima; esso
+       conterrà una matrice con le probabilità stimate dei possibili
+       valori della dipendente per ogni osservazione (osservazioni per
+       riga, valori per colonna).
       </para>
       <para>
 	Per condurre un'analisi delle proporzioni (dove la variabile
 	dipendente è la proporzione dei casi che hanno una certa
-   caratteristica in ogni osservazione, invece che una variabile
-   binaria che indica se la caratteristica è presente o no), non
-   bisogna usare il comando <cmd>logit</cmd>, ma occorre costruire
-   la variabile logit come
+	caratteristica in ogni osservazione, invece che una variabile
+	binaria che indica se la caratteristica è presente o no), non
+	bisogna usare il comando <cmd>logit</cmd>, ma occorre
+	costruire la variabile logit come
       </para>
       <code>
 	genr lgt_p = log(p/(1 - p))
@@ -7778,7 +7780,8 @@
 
   </command>
 
-  <command name="loop" section="Programming" label="Apre un ciclo di comandi" context="cli">
+  <command name="loop" section="Programming"
+	   label="Apre un ciclo di comandi" context="cli">
 
     <usage>
       <arguments>
@@ -7793,23 +7796,19 @@
           <flag>--verbose</flag>
           <effect>mostra i dettagli dei comandi genr</effect>
         </option>
-        <option>
-          <flag>--quiet</flag>
-          <effect>non mostra il numero di iterazioni eseguite</effect>
-        </option>
       </options>
       <examples>
         <example>loop 1000</example>
-	     <example>loop 1000 --progressive</example>
+	<example>loop 1000 --progressive</example>
         <example>loop while essdiff > .00001</example>
-        <example>loop i=1991..2000</example>
+        <example>loop i=1991..2000 --verbose</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
         <example>loop foreach i xlist</example>
-   <demos>
-	<demo>armaloop.inp</demo>
-	<demo>keane.inp</demo>
+	<demos>
+	  <demo>armaloop.inp</demo>
+	  <demo>keane.inp</demo>
 	</demos>
-	</examples>
+      </examples>
     </usage>
 
     <description>
@@ -7835,6 +7834,12 @@
         è destinata ad essere usata nelle simulazioni Monte Carlo) e per
         l'elenco dei comandi di gretl che possono essere usati all'interno di un
         loop.
+      </para>
+      <para>
+	Per impostazione predefinita, l'esecuzione dei comandi procede
+	con un output ridotto rispetto dentro un loop, rispetto ad
+	altri contesti. Per avere più informazioni su quel che succede
+	dentro il loop, si può usare l'opzione <opt>verbose</opt>.
       </para>
     </description>
 
