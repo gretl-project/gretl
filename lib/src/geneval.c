@@ -11894,12 +11894,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	ret = aux_empty_series_node(p);
 	list = node_get_list(l, p);
 	if (!p->err) {
-	    if (!null_node(m)) {
-		length = node_get_int(m, p);
-	    }
-	    if (!null_node(r)) {
-		offset = node_get_int(r, p);
-	    }
+	    length = node_get_int(m, p);
+	}
+	if (!p->err && !null_node(r)) {
+	    offset = node_get_int(r, p);
 	}
 	if (!p->err) {
 	    p->err = build_stacked_series(&ret->v.xvec, list, length, offset,

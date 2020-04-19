@@ -2667,30 +2667,11 @@ int dataset_drop_last_variables (DATASET *dset, int delvars)
     return err;
 }
 
-/* Apparatus for stacking variables (e.g. in case of panel
-   data that were read in "wrongly").
-*/
-
-static int missing_tail (const double *x, int n)
-{
-    int i, nmiss = 0;
-
-    for (i=n-1; i>=0; i--) {
-	if (na(x[i])) {
-	    nmiss++;
-	} else {
-	    break;
-	}
-    }
-
-    return nmiss;
-}
-
 /**
  * build_stacked_series:
  * @pstack: location for returning stacked series.
  * @list: list of series to be stacked.
- * @length: number of observations to use per input series (or 0 for auto).
+ * @length: number of observations to use per input series.
  * @offset: offset at which to start drawing observations.
  * @dset: pointer to dataset.
  *
@@ -2704,12 +2685,14 @@ int build_stacked_series (double **pstack, int *list,
 			  DATASET *dset)
 {
     double *xstack = NULL;
-    int nv, oldn, bign;
+    int nv, oldn, bign, tmax;
     int i, err = 0;
 
     if (dset == NULL || dset->n == 0) {
 	return E_NODATA;
     } else if (list == NULL || list[0] <= 0) {
+	return E_INVARG;
+    } else if (length <= 0) {
 	return E_INVARG;
     } else if (length + offset > dset->n) {
 	return E_INVARG;
@@ -2721,32 +2704,9 @@ int build_stacked_series (double **pstack, int *list,
     fprintf(stderr, "nv = %d, length = %d, offset = %d\n", nv, length, offset);
 #endif
 
-    if (length > 0) {
-	bign = nv * length;
-	if (bign < dset->n) {
-	    bign = dset->n;
-	}
-    } else {
-	/* calculate required series length */
-	length = 0;
-	for (i=0; i<nv; i++) {
-	    int j = list[i+1];
-	    int ok = dset->n - missing_tail(dset->Z[j], dset->n); /* ?? */
-
-	    if (ok > length) {
-		length = ok;
-	    }
-	}
-
-	if (length * nv <= dset->n && dset->n % length == 0) {
-	    /* suggests that at least one var has already been stacked */
-	    bign = dset->n;
-	    length -= offset;
-	} else {
-	    /* no stacking done yet: need to expand series length */
-	    bign = nv * (dset->n - offset);
-	    length = 0;
-	}
+    bign = nv * length;
+    if (bign < dset->n) {
+	bign = dset->n;
     }
 
 #if PDEBUG
@@ -2768,18 +2728,13 @@ int build_stacked_series (double **pstack, int *list,
 	}
     }
 
+    tmax = offset + length;
+
     /* construct stacked series */
     for (i=0; i<nv; i++) {
 	int j = list[i+1];
-	int t, bigt, tmax;
-
-	if (length > 0) {
-	    bigt = length * i;
-	    tmax = offset + length;
-	} else {
-	    bigt = oldn * i;
-	    tmax = oldn;
-	}
+	int bigt = length * i;
+	int t;
 
 	for (t=offset; t<tmax; t++) {
 	    xstack[bigt] = dset->Z[j][t];
@@ -2788,7 +2743,6 @@ int build_stacked_series (double **pstack, int *list,
 	    }
 	    bigt++;
 	}
-
 	if (i == nv - 1) {
 	    for (t=bigt; t<bign; t++) {
 		xstack[bigt++] = NADBL;

@@ -492,9 +492,8 @@ On line 3 we do the stacking for variable \varname{x2}.  Again we want
 a \texttt{length} of 50 for the components of the stacked series, but
 this time we want to start reading from the 50th row of the original
 data, and so we add a third \texttt{offset} argument of 50.  The
-signature of the stack function is shown below; the second and third
-arguments are optional, defaulting to ``automatic'' and 0
-respectively.
+signature of the stack function is shown below; the third argument is
+optional, defaulting to 0.
 \begin{code}
 series stack(list L, int length n, int offset k)
 \end{code}
