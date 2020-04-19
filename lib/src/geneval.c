@@ -9760,9 +9760,16 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	    l->vname, key);
 #endif
 
-    val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
-    if (p->err) {
-	return ret;
+    if (p->flags & P_OBJQRY) {
+	val = gretl_bundle_get_data(l->v.b, key, &type, &size, NULL);
+	if (val == NULL) {
+	    return newempty();
+	}
+    } else {
+	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
+	if (p->err) {
+	    return ret;
+	}
     }
 
     if (type == GRETL_TYPE_INT) {
@@ -15452,7 +15459,13 @@ static NODE *eval (NODE *t, parser *p)
     }
 
     if (t->L) {
-	l = eval(t->L, p);
+	if (t->t == F_EXISTS || t->t == F_TYPEOF) {
+	    p->flags |= P_OBJQRY;
+	    l = eval(t->L, p);
+	    p->flags ^= P_OBJQRY;
+	} else {
+	    l = eval(t->L, p);
+	}
 	if (l == NULL && !p->err) {
 	    p->err = 1;
 	}

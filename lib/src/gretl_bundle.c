@@ -466,7 +466,7 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * @type: location to receive data type, or NULL.
  * @size: location to receive size of data (= series
  * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
- * @err: location to receive error code.
+ * @err: location to receive error code, or NULL.
  *
  * Returns: the item pointer associated with @key in the
  * specified @bundle, or NULL if there is no such item.
