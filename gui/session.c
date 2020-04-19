@@ -2175,15 +2175,15 @@ static gchar *graph_str (SESSION_GRAPH *graph)
 	}
 
 	if (gottitle) {
-	    /* FIXME? encoding */
-	    buf = my_locale_to_utf8(title);
+	    buf = g_strdup(title);
 	} else if (gotxy == 2) {
-	    char *s = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
+	    buf = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
+	}
 
-	    if (s != NULL) {
-		buf = my_locale_to_utf8(s);
-		free(s);
-	    }
+	if (buf != NULL && !g_utf8_validate(buf, -1, NULL)) {
+	    /* let's give up! */
+	    g_free(buf);
+	    buf = NULL;
 	}
 
 	fclose(fp);
