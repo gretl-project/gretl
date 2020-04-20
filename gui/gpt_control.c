@@ -61,7 +61,8 @@ enum {
     PLOT_DONT_EDIT      = 1 << 7,
     PLOT_DONT_MOUSE     = 1 << 8,
     PLOT_POSITIONING    = 1 << 9,
-    PLOT_CURSOR_LABEL   = 1 << 10
+    PLOT_CURSOR_LABEL   = 1 << 10,
+    PLOT_TERM_HIDDEN    = 1 << 11
 } plot_status_flags;
 
 enum {
@@ -4118,19 +4119,20 @@ static void boxplot_show_summary (GPT_SPEC *spec)
     }
 }
 
-static void add_to_session_callback (GPT_SPEC *spec)
+static void add_to_session_callback (png_plot *plot)
 {
     char fullname[MAXLEN] = {0};
     int err, type;
 
-    type = (spec->code == PLOT_BOXPLOTS)? GRETL_OBJ_PLOT :
+    type = (plot->spec->code == PLOT_BOXPLOTS)? GRETL_OBJ_PLOT :
 	GRETL_OBJ_GRAPH;
 
-    err = gui_add_graph_to_session(spec->fname, fullname, type);
+    err = gui_add_graph_to_session(plot->spec->fname, fullname, type);
 
     if (!err) {
-	remove_png_term_from_plot(fullname, spec);
-	mark_plot_as_saved(spec);
+	remove_png_term_from_plot(fullname, plot->spec);
+	mark_plot_as_saved(plot->spec);
+	plot->status |= PLOT_TERM_HIDDEN;
     }
 }
 
@@ -4277,7 +4279,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	plot->spec->termtype = GP_TERM_EPS;
 	pdf_ps_dialog(plot->spec, plot->shell);
     } else if (!strcmp(item_string, _("Save to session as icon"))) {
-	add_to_session_callback(plot->spec);
+	add_to_session_callback(plot);
     } else if (plot_is_range_mean(plot) && !strcmp(item_string, _("Help"))) {
 	show_gui_help(RMPLOT);
     } else if (plot_is_hurst(plot) && !strcmp(item_string, _("Help"))) {
@@ -4554,6 +4556,27 @@ int redisplay_edited_plot (png_plot *plot)
     return render_pngfile(plot, PNG_REDISPLAY);
 }
 
+static gchar *recover_plot_header (char *line, FILE *fp)
+{
+    gchar *setterm = NULL;
+
+    while (fgets(line, MAXLEN-1, fp)) {
+	if (commented_term_line(line) && setterm == NULL) {
+	    gchar *dpath = gretl_make_dotpath("gretltmp.png");
+	    GString *gs = g_string_new(line + 2);
+
+	    gs = g_string_append(gs, "set encoding utf8\n");
+	    g_string_append_printf(gs, "set output \"%s\"\n", dpath);
+	    g_free(dpath);
+	    setterm = g_string_free(gs, FALSE);
+	} else if (!strncmp(line, "plot", 4)) {
+	    break;
+	}
+    }
+
+    return setterm;
+}
+
 /* preparation for redisplaying graph: here we handle the case where
    we're switching to a zoomed view (by use of a temporary gnuplot
    source file); then we get gnuplot to create a new PNG.
@@ -4561,49 +4584,64 @@ int redisplay_edited_plot (png_plot *plot)
 
 static int repaint_png (png_plot *plot, int view)
 {
-    char zoomname[MAXLEN];
+    gchar *altname = NULL;
     gchar *plotcmd = NULL;
+    int do_zoom = view == PNG_ZOOM;
     int err = 0;
 
-    if (view == PNG_ZOOM) {
-	FILE *fpin, *fpout;
+    if (do_zoom || (plot->status & PLOT_TERM_HIDDEN)) {
+	/* we'll have to rewrite the plot file */
+	gchar *setterm = NULL;
 	char line[MAXLEN];
+	FILE *fpin, *fpout;
+	int gotterm = 0;
 
 	fpin = gretl_fopen(plot->spec->fname, "r");
 	if (fpin == NULL) {
-	    return 1;
+	    return E_FOPEN;
+	}
+	if (plot->status & PLOT_TERM_HIDDEN) {
+	    setterm = recover_plot_header(line, fpin);
+	    rewind(fpin);
 	}
 
-	gretl_build_path(zoomname, gretl_dotdir(), "zoomplot.gp", NULL);
-	fpout = gretl_fopen(zoomname, "w");
+	altname = gretl_make_dotpath("altplot.gp");
+	fpout = gretl_fopen(altname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
-	    return 1;
+	    g_free(altname);
+	    return E_FOPEN;
 	}
 
-	/* write zoomed range into auxiliary gnuplot source file */
-
-	gretl_push_c_numeric_locale();
-	fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom_xmin,
-		plot->zoom_xmax);
-	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom_ymin,
-		plot->zoom_ymax);
-	gretl_pop_c_numeric_locale();
+	if (do_zoom) {
+	    /* write revised range into auxiliary gnuplot source file */
+	    gretl_push_c_numeric_locale();
+	    fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom_xmin,
+		    plot->zoom_xmax);
+	    fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom_ymin,
+		    plot->zoom_ymax);
+	    gretl_pop_c_numeric_locale();
+	}
 
 	while (fgets(line, MAXLEN-1, fpin)) {
-	    if (strncmp(line, "set xrange", 10) &&
-		strncmp(line, "set yrange", 10))
+	    if (setterm != NULL && !gotterm && commented_term_line(line)) {
+		fputs(setterm, fpout);
+		gotterm = 1;
+	    } else if (!do_zoom) {
 		fputs(line, fpout);
+	    } else if (strncmp(line, "set xrange", 10) &&
+		       strncmp(line, "set yrange", 10)) {
+		fputs(line, fpout);
+	    }
 	}
 
-	fclose(fpout);
 	fclose(fpin);
+	fclose(fpout);
 
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
 				  gretl_gnuplot_path(),
-				  zoomname);
+				  altname);
     } else {
-	/* PNG_UNZOOM, PNG_START or PNG_REDISPLAY */
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"",
 				  gretl_gnuplot_path(),
 				  plot->spec->fname);
@@ -4612,8 +4650,9 @@ static int repaint_png (png_plot *plot, int view)
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
 
-    if (view == PNG_ZOOM) {
-	gretl_remove(zoomname);
+    if (altname != NULL) {
+	gretl_remove(altname);
+	g_free(altname);
     }
 
     if (err) {
@@ -4795,7 +4834,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	break;
     case GDK_s:
     case GDK_S:
-	add_to_session_callback(plot->spec);
+	add_to_session_callback(plot);
 	break;
     case GDK_z:
     case GDK_Z:
