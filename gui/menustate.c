@@ -1082,7 +1082,7 @@ void set_sample_label (DATASET *dset)
 
 	    strcpy(tmp, " ");
 	    if (data_status & SESSION_DATA) {
-		sprintf(tmp + 1, "Imported %s", basename);
+		sprintf(tmp + 1, _("Imported %s"), basename);
 	    } else if (data_status & MODIFIED_DATA) {
 		sprintf(tmp + 1, "%s *", basename);
 	    } else {
