@@ -755,9 +755,15 @@ static int any_stat (int s)
 
 static int catch_bad_point (char *s)
 {
-    int c = s[strlen(s) - 1];
+    int len = strlen(s);
+    int c = s[len-1];
 
-    return (c == '.' || c == ',');
+    if (c == '.' || c == ',') {
+	s[len-1] = '\0';
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 static void print_equation_stats (int width0, int colwidth, PRN *prn,
@@ -871,8 +877,6 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 
     if (any_ll) {
 	/* print log-likelihoods */
-	char numstr[16];
-
 	if (tex) {
 	    pputs(prn, "$\\ell$");
 	} else if (rtf) {
@@ -893,28 +897,33 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 		    pputs(prn, "            ");
 		}
 	    } else {
+		gchar *numstr = NULL;
+
 		if (tex) {
 		    if (pmod->lnL > 0) {
-			sprintf(numstr, "%.*g", mt_figs, pmod->lnL);
+			numstr = g_strdup_printf("%#.*g", mt_figs, pmod->lnL);
 			catch_bad_point(numstr);
 			pprintf(prn, "& %s ", numstr);
 		    } else {
-			sprintf(numstr, "%.*g", mt_figs, -pmod->lnL);
+			numstr = g_strdup_printf("%#.*g", mt_figs, -pmod->lnL);
 			catch_bad_point(numstr);
 			pprintf(prn, "& $-$%s ", numstr);
 		    }
 		} else if (rtf) {
-		    sprintf(numstr, "%.*g", mt_figs, pmod->lnL);
+		    numstr = g_strdup_printf("%#.*g", mt_figs, pmod->lnL);
 		    catch_bad_point(numstr);
 		    pprintf(prn, "\\qc %s\\cell ", numstr);
 		} else {
-		    sprintf(numstr, "%#*.*g", colwidth, mt_figs, pmod->lnL);
+		    /* plain text */
+		    numstr = g_strdup_printf("%#*.*g", colwidth, mt_figs, pmod->lnL);
 		    if (catch_bad_point(numstr)) {
-			sprintf(numstr, "%#*.*g", colwidth + 1, mt_figs, pmod->lnL);
-			numstr[strlen(numstr) - 1] = '\0';
+			g_free(numstr);
+			numstr = g_strdup_printf("%#*.*g", colwidth + 1, mt_figs, pmod->lnL);
+			catch_bad_point(numstr);
 		    }
 		    pputs(prn, numstr);
 		}
+		g_free(numstr);
 	    }
 	}
 
