@@ -961,10 +961,10 @@ static int mtab_get_colwidth (void)
 		if (pmod->name != NULL) {
 		    len = strlen(pmod->name);
 		} else {
-		    char tmp[32];
+		    gchar *tmp = g_strdup_printf(_("Model %d"), pmod->ID);
 
-		    sprintf(tmp, _("Model %d"), pmod->ID);
 		    len = strlen(tmp);
+		    g_free(tmp);
 		}
 		if (len > maxlen) {
 		    maxlen = (len > 31)? 31 : len;
@@ -973,11 +973,13 @@ static int mtab_get_colwidth (void)
 	}
     }
 
-    if (maxlen < 11 && mt_figs < 4) {
+    if (maxlen < 11 && mt_figs > 0 && mt_figs < 4) {
 	cw -= 4 - mt_figs;
     }
 
-    return (cw < maxlen + 2)? maxlen + 2 : cw;
+    cw = (cw < maxlen + 2)? maxlen + 2 : cw;
+
+    return cw;
 }
 
 static void print_estimator_strings (int colwidth, PRN *prn)
