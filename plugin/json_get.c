@@ -664,6 +664,8 @@ static int jb_transmute_array (gretl_array *a,
     err = gretl_array_set_type(a, targ);
     if (err) {
 	gretl_errmsg_set("JSON array: can't mix types");
+	fprintf(stderr, "jb_transmute_array: array type was %s, trying to change to %s\n",
+		gretl_type_get_name(*pt), gretl_type_get_name(targ));
     } else {
 	*pt = targ;
     }
@@ -713,6 +715,8 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 	if (json_reader_is_value(reader)) {
 	    if (atype != GRETL_TYPE_STRINGS) {
 		gretl_errmsg_set("JSON array: can't mix types");
+		fprintf(stderr, "JSON array type %s, got 'value' member\n",
+			gretl_type_get_name(atype));
 		err = E_DATA;
 	    } else {
 		err = jb_do_value(reader, jb, a, i);
@@ -739,6 +743,18 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 	    if (atype != GRETL_TYPE_ARRAYS) {
 		/* try switching to arrays */
 		err = jb_transmute_array(a, GRETL_TYPE_ARRAYS, &atype);
+		if (err && atype == GRETL_TYPE_STRINGS) {
+		    /* 2020-04-21: we got an array @a whose first element
+		       was a string, followed by an array. This seems
+		       malformed and we'll try just skipping @a.
+		    */
+		    fprintf(stderr, "skipping malformed array\n");
+		    gretl_array_destroy(a);
+		    a = NULL;
+		    err = 0;
+		    gretl_error_clear();
+		    goto end_element;
+		}
 	    }
 	    if (!err) {
 		int lsave = jb->level;
@@ -751,12 +767,14 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 	    gretl_errmsg_set("JSON array: unrecognized type");
 	    err = E_DATA;
 	}
+
+    end_element:
 	json_reader_end_element(reader);
     }
 
     if (err) {
 	gretl_array_destroy(a);
-    } else if (a0 != NULL) {
+    } else if (a0 != NULL && a != NULL) {
 	/* nesting arrays */
 	int idx = gretl_array_get_next_index(a0);
 
@@ -770,7 +788,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 #endif
 	    err = gretl_array_set_array(a0, idx, a, 0);
 	}
-    } else {
+    } else if (a != NULL) {
 	/* sticking array into bundle */
 	err = gretl_bundle_donate_data(jb->bcurr, name, a,
 				       GRETL_TYPE_ARRAY, 0);
