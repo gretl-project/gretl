@@ -4349,14 +4349,16 @@
 	  list. The following will do the job:
 	</para>
 	<code>
+	  nulldata 10
 	  list Normals = null
-	  loop i=1..n --quiet
+	  scalar n = 3
+	  loop i = 1 .. n
 	      Normals += genseries(sprintf("norm%d", i), normal())
 	  endloop
 	</code>
 	<para>
 	  On completion <lit>Normals</lit> will contain the series
-	  <lit>norm1</lit>, <lit>norm2</lit> and so on.
+	  <lit>norm1</lit>, <lit>norm2</lit> and <lit>norm3</lit> .
 	</para>
 	<para>
 	  Those who find <lit>genseries</lit> useful may also like to

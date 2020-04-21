@@ -4284,14 +4284,20 @@
 	  lista:
 	</para>
 	<code>
+	  nulldata 10
 	  list Normals = null
-	  loop i=1..n --quiet
-	  Normals += genseries(sprintf("norm%d", i), normal())
+	  scalar n = 3
+	  loop i = 1 .. n
+	      Normals += genseries(sprintf("norm%d", i), normal())
 	  endloop
 	</code>
 	<para>
 	  Alla fine del ciclo, <lit>Normals</lit> conterrà le serie
-	  <lit>norm1</lit>, <lit>norm2</lit> e così via.
+	  <lit>norm1</lit>, <lit>norm2</lit> e <lit>norm3</lit>.
+	</para>
+	<para>
+	  Una funzione affine, che svolge un compito simile, è <fncref
+	  targ="feval"/>.
 	</para>
       </description>
     </function>
@@ -9952,7 +9958,7 @@
 	<code>
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
 	  rnameset(A, "Uno Due")
-	  string name = rnameget(A, 3)
+	  string name = rnameget(A, 2)
 	  print name
 	</code>
 	<para>
