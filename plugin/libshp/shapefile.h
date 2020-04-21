@@ -442,30 +442,16 @@ void SHPAPI_CALL
 
 SHPObject SHPAPI_CALL1(*)
       SHPReadObject( SHPHandle hSHP, int iShape );
-int SHPAPI_CALL
-      SHPWriteObject( SHPHandle hSHP, int iShape, SHPObject * psObject );
 
 void SHPAPI_CALL
       SHPDestroyObject( SHPObject * psObject );
 void SHPAPI_CALL
       SHPComputeExtents( SHPObject * psObject );
-SHPObject SHPAPI_CALL1(*)
-      SHPCreateObject( int nSHPType, int nShapeId, int nParts,
-                       const int * panPartStart, const int * panPartType,
-                       int nVertices,
-                       const double * padfX, const double * padfY,
-                       const double * padfZ, const double * padfM );
-SHPObject SHPAPI_CALL1(*)
-      SHPCreateSimpleObject( int nSHPType, int nVertices,
-                             const double * padfX,
-                             const double * padfY,
-                             const double * padfZ );
 
 int SHPAPI_CALL
       SHPRewindObject( SHPHandle hSHP, SHPObject * psObject );
 
 void SHPAPI_CALL SHPClose( SHPHandle hSHP );
-void SHPAPI_CALL SHPWriteHeader( SHPHandle hSHP );
 
 const char SHPAPI_CALL1(*)
       SHPTypeName( int nSHPType );
