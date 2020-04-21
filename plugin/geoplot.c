@@ -14,8 +14,7 @@ static int is_int_string (const char *s)
 }
 
 /* dbf2csv: Written by Allin Cottrell, 2020-04-13,
-   based on dbfdump by Frank Warmerdam. Requires libshp from
-   Warmedam's libshape-1.5.0.
+   based on dbfdump by Frank Warmerdam.
 
    Outputs the content of the .dbf component of a shapefile
    (metadata) as CSV.
@@ -158,8 +157,7 @@ static void mercatorize (double lat, double lon,
 }
 
 /* shp2dat: Written by Allin Cottrell, 2020-04-13,
-   based on shpdump by Frank Warmerdam. Requires libshp from
-   Warmedam's libshape-1.5.0.
+   based on shpdump by Frank Warmerdam.
 
    Outputs the content of the .shp component of a shapefile
    in a form suitable for use by gnuplot.
