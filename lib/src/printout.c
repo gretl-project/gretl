@@ -1537,9 +1537,9 @@ static int fit_resid_head (const FITRESID *fr,
 
 /* prints a heading with the names of the variables in @list */
 
-static void varheading (const int *list, int leader, int wid,
-			const DATASET *dset, char delim,
-			PRN *prn)
+static void varheading (const int *list, int leader,
+			const int *wid, const DATASET *dset,
+			char delim, PRN *prn)
 {
     int i, vi;
 
@@ -1567,7 +1567,7 @@ static void varheading (const int *list, int leader, int wid,
 	bufspace(leader, prn);
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    pprintf(prn, "%*s", wid, dset->varname[vi]);
+	    pprintf(prn, "%*s", wid[i], dset->varname[vi]);
 	}
 	pputs(prn, "\n\n");
     }
@@ -2257,52 +2257,24 @@ static int *get_pmax_array (const int *list, const DATASET *dset)
     return pmax;
 }
 
-/* revert to right-aligned for now -- try better spacing later? */
-
-#if 1
-
-static void bufprint_string (char *buf, const char *s, int width)
+static void bufprint_string (char *buf, const char *s,
+			     int width, PRN *prn)
 {
-    int i, n = width - g_utf8_strlen(s, -1);
+    int n = width - g_utf8_strlen(s, -1);
 
     *buf = '\0';
 
     if (n > 0) {
-	for (i=0; i<n; i++) {
-	    strcat(buf, " ");
-	}
-	strcat(buf, s);
-    } else {
-	strcat(buf, " ");
-	gretl_utf8_strncat(buf, s, width - 3);
-	strcat(buf, "..");
-    }
-
-#if 0
-    fprintf(stderr, "bufprint_string: '%s' ->\n '%s'\n", s, buf);
-#endif
-}
-
-#else
-
-static void bufprint_string (char *buf, const char *s, int width)
-{
-    int i, n = width - g_utf8_strlen(s, -1) - 1;
-
-    buf[0] = ' '; buf[1] = '\0';
-
-    if (n > 0) {
-	strcat(buf, s);
-	for (i=0; i<n; i++) {
-	    strcat(buf, " ");
-	}
+	bufspace(n, prn);
+	pputs(prn, s);
     } else {
 	gretl_utf8_strncat(buf, s, width - 3);
-	strcat(buf, "..");
+	n = width - g_utf8_strlen(buf, -1);
+	bufspace(n-1, prn);
+	pputs(prn, buf);
+	pputc(prn, '~');
     }
 }
-
-#endif
 
 static int get_print_range (int len, int *start, int *stop)
 {
@@ -2362,22 +2334,32 @@ static int get_print_range (int len, int *start, int *stop)
     return err;
 }
 
-static int column_width_from_list (const int *list, const DATASET *dset)
+static int *column_widths_from_list (const int *list,
+				     const DATASET *dset)
 {
-    int i, n, w = 13;
+    int *ret = gretl_list_new(list[0]);
+    int i, w, maxw = 0;
 
     for (i=1; i<=list[0]; i++) {
-	n = series_get_string_width(dset, list[i]);
-	if (n >= w) {
-	    w = n + 1;
+	w = 1 + series_get_string_width(dset, list[i]);
+	if (w > maxw) {
+	    if (list[0] > 1 && w > 32) {
+		w = 32;
+	    }
+	    maxw = w;
+	}
+	/* check this minimum? */
+	ret[i] = w < 13 ? 13 : w;
+    }
+
+    if (maxw <= 13) {
+	/* standardize on moderate width */
+	for (i=1; i<=list[0]; i++) {
+	    ret[i] = 13;
 	}
     }
 
-    if (list[0] > 1 && w > 32) {
-	w = 32;
-    }
-
-    return w;
+    return ret;
 }
 
 #define BMAX 5
@@ -2388,14 +2370,17 @@ static int print_by_obs (int *list, const DATASET *dset,
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
-    int i, j, j0, k, t, v, nrem;
-    int colwidth, obslen = 0;
+    int i, j, j0, k, t, nrem;
+    int *colwidths = NULL;
+    int obslen = 0;
     int start = 0, stop = 0;
     int tmin, tmax;
     int *pmax = NULL;
     char buf[128];
     int blist[BMAX+1];
+    int wlist[BMAX+1];
     int gprec = 6;
+    int vi, wi;
     double x;
     int err = 0;
 
@@ -2427,7 +2412,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 	obslen = max_obs_marker_length(dset);
     }
 
-    colwidth = column_width_from_list(list, dset);
+    colwidths = column_widths_from_list(list, dset);
 
     nrem = list[0];
     k = 1;
@@ -2435,14 +2420,17 @@ static int print_by_obs (int *list, const DATASET *dset,
     while (nrem > 0) {
 	/* fill the "block" list */
 	j0 = k;
-	blist[0] = 0;
+	wlist[0] = blist[0] = 0;
 	for (i=1; i<=BMAX && nrem>0; i++) {
-	    blist[i] = list[k++];
+	    blist[i] = list[k];
 	    blist[0] += 1;
+	    wlist[i] = colwidths[k];
+	    wlist[0] += 1;
+	    k++;
 	    nrem--;
 	}
 
-	varheading(blist, obslen, colwidth, dset, 0, prn);
+	varheading(blist, obslen, wlist, dset, 0, prn);
 
 	for (t=tmin; t<=tmax; t++) {
 	    if (screenvar && dset->Z[screenvar][t] == 0.0) {
@@ -2455,22 +2443,22 @@ static int print_by_obs (int *list, const DATASET *dset,
 		real_print_obs_marker(t, dset, obslen, 0, prn);
 	    }
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
-		v = blist[i];
-		if (!(opt & OPT_U) && is_string_valued(dset, v)) {
-		    const char *s = series_get_string_for_obs(dset, v, t);
+		vi = blist[i];
+		wi = wlist[i];
+		if (!(opt & OPT_U) && is_string_valued(dset, vi)) {
+		    const char *s = series_get_string_for_obs(dset, vi, t);
 
 		    if (s == NULL || *s == '\0') {
-			bufspace(colwidth, prn);
+			bufspace(wi, prn);
 		    } else {
-			bufprint_string(buf, s, colwidth);
-			pputs(prn, buf);
+			bufprint_string(buf, s, wi, prn);
 		    }
 		} else {
-		    x = dset->Z[v][t];
+		    x = dset->Z[vi][t];
 		    if (na(x)) {
-			bufspace(colwidth, prn);
+			bufspace(wi, prn);
 		    } else {
-			bufprintnum(buf, x, pmax[j-1], gprec, colwidth);
+			bufprintnum(buf, x, pmax[j-1], gprec, wi);
 			pputs(prn, buf);
 		    }
 		}
@@ -2482,6 +2470,7 @@ static int print_by_obs (int *list, const DATASET *dset,
     pputc(prn, '\n');
 
     free(pmax);
+    free(colwidths);
 
     return err;
 }
@@ -2796,10 +2785,10 @@ int print_data_in_columns (const int *list, const int *obsvec,
     int print_obs = 1;
     char delim = 0;
     int *pmax = NULL;
+    int *colwidths = NULL;
     double xx;
     char obs_string[OBSLEN];
     char buf[128];
-    int colwidth = 0;
     int ncols = 0, obslen = 0;
     int gprec = 6;
     int i, s, t, T;
@@ -2847,7 +2836,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
     } else if (rtf) {
 	ncols = list[0] + 1;
     } else {
-	colwidth = column_width_from_list(list, dset);
+	colwidths = column_widths_from_list(list, dset);
 	obslen = max_obs_marker_length(dset);
     }
 
@@ -2856,7 +2845,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	rtf_print_row_spec(ncols, RTF_HEADER, prn);
     }
 
-    varheading(list, obslen, colwidth, dset, delim, prn);
+    varheading(list, obslen, colwidths, dset, delim, prn);
 
     if (rtf) {
 	rtf_print_row_spec(ncols, RTF_TRAILER, prn);
@@ -2887,6 +2876,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
 	for (i=1; i<=list[0]; i++) {
 	    const char *strval = NULL;
+	    int wi = colwidths[i];
 
 	    if (is_string_valued(dset, list[i])) {
 		strval = series_get_string_for_obs(dset, list[i], t);
@@ -2900,15 +2890,14 @@ int print_data_in_columns (const int *list, const int *obsvec,
 		    } else if (rtf) {
 			pputs(prn, "\\qr \\cell ");
 		    } else {
-			bufspace(colwidth, prn);
+			bufspace(wi, prn);
 		    }
 		} else if (csv) {
 		    pprintf(prn, "\"%s\"", strval);
 		} else if (rtf) {
 		    pprintf(prn, "\\qr %s\\cell ", strval);
 		} else {
-		    bufprint_string(buf, strval, colwidth);
-		    pputs(prn, buf);
+		    bufprint_string(buf, strval, wi, prn);
 		}
 	    } else {
 		/* numerical value */
@@ -2919,14 +2908,14 @@ int print_data_in_columns (const int *list, const int *obsvec,
 		    } else if (rtf) {
 			pputs(prn, "\\qr NA\\cell ");
 		    } else {
-			bufspace(colwidth, prn);
+			bufspace(wi, prn);
 		    }
 		} else {
 		    if (rtf) {
 			bufprintnum(buf, xx, pmax[i-1], gprec, 0);
 			pprintf(prn, "\\qr %s\\cell ", buf);
 		    } else {
-			bufprintnum(buf, xx, pmax[i-1], gprec, colwidth);
+			bufprintnum(buf, xx, pmax[i-1], gprec, wi);
 			pputs(prn, buf);
 		    }
 		}
@@ -2949,9 +2938,8 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	pputc(prn, '\n');
     }
 
-    if (pmax != NULL) {
-	free(pmax);
-    }
+    free(pmax);
+    free(colwidths);
 
     return 0;
 }
