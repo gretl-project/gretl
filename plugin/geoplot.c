@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "libshp/shapefile.h"
+#include "shapefile.h"
 #include "libgretl.h"
 
 static int is_int_string (const char *s)

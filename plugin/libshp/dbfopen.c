@@ -197,16 +197,12 @@
  * Treat all blank numeric fields as null too.
  */
 
-#include "shapefil.h"
+#include "shapefile.h"
 
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-#ifdef USE_CPL
-#include "cpl_string.h"
-#else
 
 #if defined(WIN32) || defined(_WIN32)
 #    define STRCASECMP(a,b)         (stricmp(a,b))
@@ -225,12 +221,6 @@
 #  endif
 #endif
 
-#define CPLsprintf sprintf
-#define CPLsnprintf snprintf
-#endif
-
-SHP_CVSID("$Id: dbfopen.c,v 1.94 2018-08-16 15:39:07 erouault Exp $")
-
 #ifndef FALSE
 #  define FALSE		0
 #  define TRUE		1
@@ -243,12 +233,6 @@ SHP_CVSID("$Id: dbfopen.c,v 1.94 2018-08-16 15:39:07 erouault Exp $")
 
 /* See http://www.manmrk.net/tutorials/database/xbase/dbf.html */
 #define END_OF_FILE_CHARACTER    0x1A
-
-#ifdef USE_CPL
-CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
-#else
-#define CPL_IGNORE_RET_VAL_INT(x) x
-#endif
 
 #ifdef __cplusplus
 #define STATIC_CAST(type,x) static_cast<type>(x)

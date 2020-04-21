@@ -94,7 +94,8 @@ enum {
     P_XML_GET,
     P_STATA_EXPORT,
     P_SVM,
-    P_REGLS
+    P_REGLS,
+    P_GEOPLOT
 } plugin_codes;
 
 struct plugin_info {
@@ -155,7 +156,8 @@ struct plugin_info plugins[] = {
     { P_XML_GET,         "xml_get",         NULL },
     { P_STATA_EXPORT,    "stata_export",    NULL },
     { P_SVM,             "svm",             NULL },
-    { P_REGLS,           "regls",           NULL }
+    { P_REGLS,           "regls",           NULL },
+    { P_GEOPLOT,         "geoplot",         NULL },
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -305,6 +307,10 @@ struct plugin_function_info plugin_functions[] = {
     /* regularized least squares */
     { "gretl_regls",  P_REGLS},
     { "regls_xv_mpi", P_REGLS},
+
+    /* shapefile handling */
+    { "dbf2csv", P_GEOPLOT},
+    { "shp2dat", P_GEOPLOT},
 
     /* sentinel */
     { NULL, 0 }

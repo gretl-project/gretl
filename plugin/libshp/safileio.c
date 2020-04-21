@@ -65,7 +65,7 @@
  *
  */
 
-#include "shapefil.h"
+#include "shapefile.h"
 
 #include <math.h>
 #include <limits.h>

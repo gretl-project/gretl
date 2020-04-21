@@ -464,6 +464,8 @@ enum {
     F_RESAMPLE,
     F_STACK,
     HF_REGLS,
+    HF_DBF2CSV,
+    HF_SHP2DAT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

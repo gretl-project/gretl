@@ -137,13 +137,18 @@ SRCS = excel_import.c \
 	reprobit.c \
 	interpolate.c \
 	iso3166.c \
-	regls.c
+	regls.c \
+	geoplot.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
 	zipfile.c \
 	zipmain.c \
 	zipwork.c
+
+SHPSRC = dbfopen.c \
+	safileio.c \
+	shpopen.c
 
 PLUGINS = arbond.la \
 	arma.la \
@@ -177,7 +182,8 @@ PLUGINS = arbond.la \
 	panurc.la \
 	xml_get.la \
 	svm.la \
-	regls.la
+	regls.la \
+	geoplot.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -231,12 +237,17 @@ vpath %.cpp $(topsrc)/plugin/libsvm
 vpath %.h $(topsrc)/plugin/libsvm
 SVM_CFLAGS := -I$(topsrc)/plugin/libsvm
 
+SHPOBJ = $(SHPSRC:.c=.lo)
+vpath %.c $(topsrc)/plugin/libshp
+vpath %.h $(topsrc)/plugin/libshp
+SHP_CFLAGS := -I$(topsrc)/plugin/libshp
+
 URCDATA = $(topsrc)/plugin/data/urcdata.bin
 DWDATA = $(topsrc)/plugin/data/dwdata.gz
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(ODBC_CFLAGS) \
-	$(JSON_GLIB_CFLAGS) $(SVM_CFLAGS) $(GTK_HUSH) -I.
+	$(JSON_GLIB_CFLAGS) $(SVM_CFLAGS) $(SHP_CFLAGS) $(GTK_HUSH) -I.
 
 %.lo: %.c
 	$(CCECHO)
@@ -329,6 +340,9 @@ garch.la: garch.lo fcp.lo mod_garch.lo
 
 gretlzip.la: gretlzip.lo $(ZIPOBJ)
 	$(LINK) -o $@ $^ $(ZIP_LIBS) $(GRETLLIB)
+
+geoplot.la: geoplot.lo $(SHPOBJ)
+	$(LINK) -o $@ $^ $(GRETLLIB)
 
 odbc_import.la: odbc_import.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(ODBC_LIBS)

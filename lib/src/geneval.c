@@ -11911,6 +11911,44 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 					  p->dset);
 	}
 	free(list);
+    } else if (f == HF_DBF2CSV) {
+	int (*dbffunc) (const char *, const char *, int);
+	int header = 0;
+
+	if (l->t != STR || m->t != STR) {
+	    p->err = E_TYPES;
+	} else {
+	    header = node_get_bool(r, p, 0);
+	}
+	if (!p->err) {
+	    dbffunc = get_plugin_function("dbf2csv");
+	    if (dbffunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret = aux_scalar_node(p);
+		ret->v.xval = p->err = dbffunc(l->v.str, m->v.str, header);
+	    }
+	}
+    } else if (f == HF_SHP2DAT) {
+	int (*shpfunc) (const char *, const char *, const gretl_matrix *);
+	gretl_matrix *payload = NULL;
+
+	if (l->t != STR || m->t != STR) {
+	    p->err = E_TYPES;
+	} else if (r->t == MAT) {
+	    payload = r->v.m;
+	} else if (r->t != EMPTY) {
+	    p->err = E_TYPES;
+	}
+	if (!p->err) {
+	    shpfunc = get_plugin_function("shp2dat");
+	    if (shpfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret = aux_scalar_node(p);
+		ret->v.xval = p->err = shpfunc(l->v.str, m->v.str, payload);
+	    }
+	}
     }
 
     if (!p->err && post_process) {
@@ -16604,6 +16642,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISOWEEK:
     case F_STACK:
     case HF_REGLS:
+    case HF_DBF2CSV:
+    case HF_SHP2DAT:	
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
