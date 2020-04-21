@@ -392,22 +392,6 @@ static void	SwapWord( int length, void * wordP )
 }
 
 /************************************************************************/
-/*                             SfRealloc()                              */
-/*                                                                      */
-/*      A realloc cover function that will access a NULL pointer as     */
-/*      a valid input.                                                  */
-/************************************************************************/
-
-static void * SfRealloc( void * pMem, int nNewSize )
-
-{
-    if( pMem == SHPLIB_NULLPTR )
-        return malloc(nNewSize);
-    else
-        return realloc(pMem,nNewSize);
-}
-
-/************************************************************************/
 /*                              SHPOpen()                               */
 /************************************************************************/
 
@@ -1287,7 +1271,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
             }
         }
 
-        pabyRecNew = STATIC_CAST(uchar *, SfRealloc(psSHP->pabyRec,nNewBufSize));
+        pabyRecNew = STATIC_CAST(uchar *, realloc(psSHP->pabyRec,nNewBufSize));
         if (pabyRecNew == SHPLIB_NULLPTR)
         {
             snprintf( szErrorMsg, sizeof(szErrorMsg),
