@@ -247,66 +247,6 @@
 #endif
 
 /************************************************************************/
-/*                             SfRealloc()                              */
-/*                                                                      */
-/*      A realloc cover function that will access a NULL pointer as     */
-/*      a valid input.                                                  */
-/************************************************************************/
-
-static void * SfRealloc( void * pMem, int nNewSize )
-
-{
-    if( pMem == SHPLIB_NULLPTR )
-        return malloc(nNewSize);
-    else
-        return realloc(pMem,nNewSize);
-}
-
-/************************************************************************/
-/*                           DBFFlushRecord()                           */
-/*                                                                      */
-/*      Write out the current record if there is one.                   */
-/************************************************************************/
-
-static int DBFFlushRecord( DBFHandle psDBF )
-
-{
-    SAOffset	nRecordOffset;
-
-    if( psDBF->bCurrentRecordModified && psDBF->nCurrentRecord > -1 )
-    {
-	psDBF->bCurrentRecordModified = FALSE;
-
-	nRecordOffset =
-            psDBF->nRecordLength * STATIC_CAST(SAOffset, psDBF->nCurrentRecord)
-            + psDBF->nHeaderLength;
-
-	if( psDBF->sHooks.FSeek( psDBF->fp, nRecordOffset, 0 ) != 0
-            || psDBF->sHooks.FWrite( psDBF->pszCurrentRecord,
-                                     psDBF->nRecordLength,
-                                     1, psDBF->fp ) != 1 )
-        {
-            char szMessage[128];
-            snprintf( szMessage, sizeof(szMessage), "Failure writing DBF record %d.",
-                     psDBF->nCurrentRecord );
-            psDBF->sHooks.Error( szMessage );
-            return FALSE;
-        }
-
-        if( psDBF->nCurrentRecord == psDBF->nRecords - 1 )
-        {
-            if( psDBF->bWriteEndOfFileChar )
-            {
-                char ch = END_OF_FILE_CHARACTER;
-                psDBF->sHooks.FWrite( &ch, 1, 1, psDBF->fp );
-            }
-        }
-    }
-
-    return TRUE;
-}
-
-/************************************************************************/
 /*                           DBFLoadRecord()                            */
 /************************************************************************/
 
@@ -316,9 +256,6 @@ static int DBFLoadRecord( DBFHandle psDBF, int iRecord )
     if( psDBF->nCurrentRecord != iRecord )
     {
         SAOffset nRecordOffset;
-
-	if( !DBFFlushRecord( psDBF ) )
-            return FALSE;
 
 	nRecordOffset =
             psDBF->nRecordLength * STATIC_CAST(SAOffset,iRecord) + psDBF->nHeaderLength;
@@ -523,7 +460,7 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 /*  Read in Field Definitions                                           */
 /* -------------------------------------------------------------------- */
 
-    pabyBuf = STATIC_CAST(unsigned char *, SfRealloc(pabyBuf,nHeadLen));
+    pabyBuf = STATIC_CAST(unsigned char *, realloc(pabyBuf,nHeadLen));
     psDBF->pszHeader = REINTERPRET_CAST(char *, pabyBuf);
 
     psDBF->sHooks.FSeek( psDBF->fp, XBASE_FILEHDR_SZ, 0 );
@@ -1028,47 +965,6 @@ int SHPAPI_CALL DBFIsRecordDeleted( DBFHandle psDBF, int iShape )
 /*      '*' means deleted.                                              */
 /* -------------------------------------------------------------------- */
     return psDBF->pszCurrentRecord[0] == '*';
-}
-
-/************************************************************************/
-/*                        DBFMarkRecordDeleted()                        */
-/************************************************************************/
-
-int SHPAPI_CALL DBFMarkRecordDeleted( DBFHandle psDBF, int iShape,
-                                      int bIsDeleted )
-
-{
-    char chNewFlag;
-
-/* -------------------------------------------------------------------- */
-/*      Verify selection.                                               */
-/* -------------------------------------------------------------------- */
-    if( iShape < 0 || iShape >= psDBF->nRecords )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Is this an existing record, but different than the last one     */
-/*      we accessed?                                                    */
-/* -------------------------------------------------------------------- */
-    if( !DBFLoadRecord( psDBF, iShape ) )
-        return FALSE;
-
-/* -------------------------------------------------------------------- */
-/*      Assign value, marking record as dirty if it changes.            */
-/* -------------------------------------------------------------------- */
-    if( bIsDeleted )
-        chNewFlag = '*';
-    else
-        chNewFlag = ' ';
-
-    if( psDBF->pszCurrentRecord[0] != chNewFlag )
-    {
-        psDBF->bCurrentRecordModified = TRUE;
-        psDBF->bUpdated = TRUE;
-        psDBF->pszCurrentRecord[0] = chNewFlag;
-    }
-
-    return TRUE;
 }
 
 /************************************************************************/
