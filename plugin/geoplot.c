@@ -271,7 +271,7 @@ int shp2dat (const char *shpname,
         SHPDestroyObject(obj);
     }
 
-    fputs("\n", fp);
+    fputc('\n', fp);
     fclose(fp);
     SHPClose(SHP);
 
