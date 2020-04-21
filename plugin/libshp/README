@@ -1,0 +1,6 @@
+The files here are slimmed-down versions of some of the sources of
+Frank Warmerdam's shapelib, version 1.5.0, governed by the copyright
+information in the COPYRIGHT notice in this directory. We're including
+only what we need for reading shp/dbf pairs.
+
+Allin Cottrell (for gretl), April 2020
