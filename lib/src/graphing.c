@@ -270,13 +270,19 @@ int gnuplot_test_command (const char *cmd)
     return ret;
 }
 
+#if defined(OS_OSX) && defined(PKGBUILD)
+# define GP_RETRY 1
+#else
+# define GP_RETRY 0
+#endif
+
 static double gnuplot_version (int *msg_done)
 {
     static double vnum = 0.0;
 
     if (vnum == 0.0) {
-#if defined(OS_OSX) && defined(PKGBUILD)
-	int tries = 0;
+#if GP_RETRY
+	int retries = 0;
 #endif
 	GError *gerr = NULL;
 	gboolean ok;
@@ -292,12 +298,12 @@ static double gnuplot_version (int *msg_done)
 	    strcpy(gnuplot_path, gretl_gnuplot_path());
 	}
 
-#if defined(OS_OSX) && defined(PKGBUILD)
-    retry:
-#endif
 	argv[0] = gnuplot_path;
 	argv[1] = "--version";
 
+#if GP_RETRY
+    retry:
+#endif
 	ok = g_spawn_sync (NULL,
 			   argv,
 			   NULL,
@@ -322,8 +328,8 @@ static double gnuplot_version (int *msg_done)
 	    }
 	}
 
-#if defined(OS_OSX) && defined(PKGBUILD)
-	if (vnum == 0 && tries == 0) {
+#if GP_RETRY
+	if (vnum == 0 && retries == 0) {
 	    /* try substituting default value */
 	    if (gerr != NULL) {
 		g_error_free(gerr);
@@ -332,7 +338,7 @@ static double gnuplot_version (int *msg_done)
 	    g_free(sout); sout = NULL;
 	    g_free(serr); serr = NULL;
 	    sprintf(gnuplot_path, "%sgnuplot", gretl_bindir());
-	    tries = 1;
+	    retries = 1;
 	    goto retry;
 	}
 #endif
