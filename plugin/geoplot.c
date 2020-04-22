@@ -6,11 +6,16 @@
 #include "shapefile.h"
 #include "libgretl.h"
 
-static int is_int_string (const char *s)
+static void output_dbf_string (const char *s, FILE *fp)
 {
-    const char *d = "0123456789";
-
-    return strlen(s) == strspn(s, d);
+    fputc('"', fp);
+    while (*s) {
+	if (*s != 0x0d && *s != 0x0a) {
+	    fputc(*s, fp);
+	}
+	s++;
+    }
+    fputc('"', fp);
 }
 
 /* dbf2csv: Written by Allin Cottrell, 2020-04-13,
@@ -109,11 +114,7 @@ int dbf2csv (const char *dbfname,
 		switch (etype) {
 		case FTString:
 		    s = DBFReadStringAttribute(DBF, j, i);
-		    if (is_int_string(s)) {
-			fputs(s, fp);
-		    } else {
-			fprintf(fp, "\"%s\"", s);
-		    }
+		    output_dbf_string(s, fp);
 		    break;
 		case FTInteger:
 		    fprintf(fp, "%d", DBFReadIntegerAttribute(DBF, j, i));
