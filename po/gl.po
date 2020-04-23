@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-04-18 19:25-0400\n"
-"PO-Revision-Date: 2019-12-10 17:23+0100\n"
+"PO-Revision-Date: 2020-04-20 12:26+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -1468,9 +1468,9 @@ msgid "The data set is currently sub-sampled.\n"
 msgstr "O conxunto de datos ten agora o tamaño da mostra recortado.\n"
 
 #: lib/src/dataset.c:2936
-#, fuzzy, c-format
+#, c-format
 msgid "Panel time extended by %d observations"
-msgstr "O conxunto de datos estendeuse %d observacións"
+msgstr "A dimensión temporal do panel estendeuse %d observacións"
 
 #: lib/src/dataset.c:2942
 #, c-format
@@ -7064,9 +7064,9 @@ msgid " (steplength = %g)"
 msgstr " (lonxitude de paso = %g)"
 
 #: lib/src/printout.c:3356
-#, fuzzy, c-format
+#, c-format
 msgid " (step %g"
-msgstr " (lonxitude de paso = %g)"
+msgstr " (paso %g"
 
 #: lib/src/printout.c:3364 plugin/fcp.c:249
 msgid "Parameters: "
@@ -13015,9 +13015,8 @@ msgid "_gretl + SVM"
 msgstr "_Gretl + SVM"
 
 #: gui/gretl.c:1964
-#, fuzzy
 msgid "_gretl + DB.NOMICS"
-msgstr "_Gretl + MPI"
+msgstr "_Gretl + DB.NOMICS"
 
 #: gui/gretl.c:1965
 msgid "Check for _updates"
@@ -14794,13 +14793,12 @@ msgid "gretl: create dummy variables"
 msgstr "Gretl: Crear variables ficticias"
 
 #: gui/library.c:6406
-#, fuzzy
 msgid "in the cross-sectional dimension"
-msgstr "[Sen dependencia de seccións cruzadas]"
+msgstr "na dimensión atemporal"
 
 #: gui/library.c:6407
 msgid "in the time dimension"
-msgstr ""
+msgstr "na dimensión temporal"
 
 #: gui/library.c:6448
 #, c-format
@@ -17121,9 +17119,8 @@ msgid "gretl + SVM"
 msgstr "Gretl + SVM"
 
 #: gui/textbuf.c:1569
-#, fuzzy
 msgid "dbnomics for gretl"
-msgstr "Predición dinámica"
+msgstr "DBNOMICS para Gretl"
 
 #: gui/textbuf.c:1710
 #, c-format
@@ -17802,13 +17799,12 @@ msgid "bootstrap type"
 msgstr "Tipo de bootstrap"
 
 #: plugin/addons-i18n.c:82
-#, fuzzy
 msgid "choose 1 for medians"
-msgstr "Amosar o intervalo para a mediana"
+msgstr "Escolle 1 para as medianas"
 
 #: plugin/addons-i18n.c:84
 msgid "measure to target"
-msgstr ""
+msgstr "Medida do obxectivo"
 
 #: plugin/addons-i18n.c:86
 msgid "moving blocks"
@@ -17823,18 +17819,16 @@ msgid "residual resampling"
 msgstr "Remostraxe de erros"
 
 #: plugin/addons-i18n.c:89
-#, fuzzy
 msgid "the model bundle"
-msgstr "Modelo como _feixe"
+msgstr "O feixe do modelo"
 
 #: plugin/addons-i18n.c:90
 msgid "which shocks"
-msgstr ""
+msgstr "que impactos"
 
 #: plugin/addons-i18n.c:91
-#, fuzzy
 msgid "which variables"
-msgstr "Nova variable"
+msgstr "que variables"
 
 #: plugin/addons-i18n.c:92
 msgid "wild/Mammen"
@@ -18913,11 +18907,9 @@ msgstr "Decoración"
 #~ msgid "No series length has been defined"
 #~ msgstr "Non se definiu a longura das series"
 
-#, c-format
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "Fallo orixinado na función %s()"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"

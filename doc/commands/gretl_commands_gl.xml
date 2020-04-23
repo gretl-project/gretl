@@ -7685,23 +7685,19 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>Amosa os detalles das instrucións genr</effect>
-	</option>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>Non amosa o número de iteracións realizadas</effect>
+	  <effect>Reflicte as instrucións e amosa mensaxes confirmatorios</effect>
 	</option>
       </options>
       <examples>
         <example>loop 1000</example>
 	<example>loop 1000 --progressive</example>
         <example>loop while essdiff &gt; .00001</example>
-        <example>loop i=1991..2000</example>
+        <example>loop i=1991..2000 --verbose</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
-	<example>loop foreach i xlista</example>
+	<example>loop foreach i listaX</example>
 	<demos>
-	<demo>armaloop.inp</demo>
-	<demo>keane.inp</demo>
+	  <demo>armaloop.inp</demo>
+	  <demo>keane.inp</demo>
 	</demos>
       </examples>
     </usage>
@@ -7730,6 +7726,11 @@
 	Carlo). Non podes utilizar todas as instrucións de Gretl dentro dun
 	bucle; por iso as instrucións dispoñibles neste contexto tamén se
 	expoñen aí.
+      </para>
+      <para>
+	Por defecto, a execución de instrucións faise de xeito máis silandeiro
+	dentro de bucles ca noutros contextos. Se queres máis retroalimentación
+	co que estea a pasar nun bucle, indica a opción <opt>verbose</opt>.
       </para>
     </description>
 

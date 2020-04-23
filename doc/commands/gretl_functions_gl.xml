@@ -3601,8 +3601,8 @@
 	<para>
 	  Devolve un escalar ou unha serie, co número do día especificado polo
 	  ano, mes e día, nesa orde, na época actual. O número do día é igual
-	  a 1 para o día 1 de xaneiro do ano 1 despois de Cristo, no proléptico
-	  calendario Gregoriano, e a 733786 para a data 01-01-2010. Se algún
+	  a 1 para o día 1 de xaneiro do ano 1 despois de Cristo, no calendario
+	  Gregoriano proléptico, e a 733786 para a data 01-01-2010. Se algún
 	  dos argumentos é unha serie, o valor que se devolve tamén terá a
 	  forma dunha serie; noutro caso, devólvese un escalar.
 	</para>
@@ -4349,14 +4349,16 @@
 	  datos, e colocalas nunha lista. O seguinte código fai iso:
 	</para>
 	<code>
+	  nulldata 10
 	  list Normais = null
-	  loop i=1..n --quiet
+	  scalar n = 3
+	  loop i = 1 .. n
 	      Normais += genseries(sprintf("norm%d", i), normal())
 	  endloop
 	</code>
 	<para>
 	  Ao rematar a execución, a lista <lit>Normais</lit> vai conter as
-	  series <lit>norm1</lit>, <lit>norm2</lit> e así sucesivamente.
+	  series <lit>norm1</lit>, <lit>norm2</lit> e <lit>norm3</lit>.
 	</para>
 	<para>
 	  A aqueles que atopedes útil a función <lit>genseries</lit>, pode que
@@ -5658,7 +5660,7 @@
 	<para>
 	  O argumento <argname>ed</argname> interprétase como un día de
 	  época (que tomará o valor 1 para o primeiro día de xaneiro do ano 1
-	  despois de Cristo, no proléptico calendario Gregoriano). O valor que
+	  despois de Cristo, no calendario Gregoriano proléptico). O valor que
 	  se devolve por defecto é un número de 8 díxitos do mesmo tipo ca
 	  <argname>ed</argname>, ou unha serie composta por números desa
 	  clase. Séguese o padrón <lit>YYYYMMDD</lit> (formato ISO 8601
@@ -5885,7 +5887,7 @@
 	<para>
 	  O argumento <argname>ed</argname> interprétase como un día de
 	  época (que tomará o valor 1 para o primeiro día de xaneiro do ano 1
-	  despois de Cristo, no proléptico calendario Gregoriano). O valor que
+	  despois de Cristo, no calendario Gregoriano proléptico). O valor que
 	  se devolve por defecto é un número de 8 díxitos do mesmo tipo ca
 	  <argname>ed</argname>, ou unha serie composta por números desa
 	  clase. Séguese o padrón <lit>YYYYMMDD</lit> (formato ISO 8601
@@ -7186,7 +7188,7 @@
       </description>
     </function>
 
-    <function name="monthlen" section="calendar" output="int">
+    <function name="monthlen" section="calendar" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">mes</fnarg>
 	<fnarg type="scalar-or-series">ano</fnarg>
@@ -7194,12 +7196,17 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un número enteiro que expresa cantos días (relevantes) ten
-	  un mes dun ano (no proléptico calendario Gregoriano), especificados
-	  nos dous primeiros argumentos e considerando a duración de semana
-	  indicada por <argname>duracsemana</argname>. Este debe de ser igual
-	  a 5, 6 ou 7 (indicando o valor 6 que non se contan os domingos,
-	  e 5 que non se contan nin os sábados nin os domingos).
+	  Devolve un resultado (do mesmo tipo que o argumento) que expresa
+	  cantos días (relevantes) ten un mes dun ano (no calendario Gregoriano
+	  proléptico). O argumento <argname>duracsemana</argname>, que debe
+	  de ser igual a 5, 6 ou 7, indica o número de días da semana que se
+	  deben contar (co valor 6 non se contan os domingos, e con 5 non se
+	  contan nin os sábados nin os domingos).
+	</para>
+	<para>
+	  O valor que se devolva vai ser un escalar se son escalares tanto
+	  <argname>mes</argname> coma <argname>ano</argname>; noutro caso
+	  vai ser unha serie.
 	</para>
 	<para>
 	  Por exemplo, se tes aberto un conxunto de datos mensuais, a expresión
@@ -10797,6 +10804,40 @@
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="stack" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">desprazamento</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Deseñado para o manexo de datos no formato de series de tempo
+	  encasteladas, que necesita Gretl para datos de panel. O valor
+	  que se devolve é unha serie que se obtén encastelando de forma
+	  <quote>vertical</quote>, grupos de <argname>n</argname>
+	  observacións de cada serie da lista <argname>L</argname>. Por
+	  defecto, se usan as primeiras <argname>n</argname> observacións
+	  (iso se corresponde con <argname>desprazamento</argname> = 0),
+	  pero podes trasladar o punto de inicio indicando un valor positivo
+	  para <argname>desprazamento</argname>. Se a serie resultante fose
+	  máis longa que o conxunto de datos vixente, engádense tantas
+	  observacións como sexan necesarias.
+	</para>
+	<para>
+	  Con esta función podes manexar o caso dun ficheiro de datos que conteña
+	  series de tempo colocadas unhas a carón das outras, para un grupo de
+	  unidades de sección cruzada. E tamén cando se considera o tempo en
+	  sentido horizontal, e cada fila representa unha unidade atemporal.
+	</para>
+	<para>
+	  Consulta a sección titulada <quote>Panel data specifics</quote>
+	  no <guideref targ="chap:datafiles"/> para obter detalles e exemplos
+	  do seu uso.
 	</para>
       </description>
     </function>

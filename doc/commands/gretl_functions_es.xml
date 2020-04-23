@@ -3601,8 +3601,8 @@
 	<para>
 	  Devuelve un escalar o una serie, con el número del día especificado por el
 	  año, mes y día, en ese orden, en la época actual. El número del día es igual
-	  a 1 para el día 1 de enero del año 1 después de Cristo, en el proléptico
-	  calendario Gregoriano, y a 733786 para la fecha 01-01-2010. Si alguno de
+	  a 1 para el día 1 de enero del año 1 después de Cristo, en el calendario
+	  Gregoriano proléptico, y a 733786 para la fecha 01-01-2010. Si alguno de
 	  los argumentos es una serie, el valor que se devuelve también tendrá la
 	  forma de una serie; en caso contrario, se devuelve un escalar.
 	</para>
@@ -4349,14 +4349,16 @@
 	  datos, y colocarlas en una lista. El siguiente código hace eso:
 	</para>
 	<code>
+	  nulldata 10
 	  list Normales = null
-	  loop i=1..n --quiet
+	  scalar n = 3
+	  loop i = 1 .. n
 	      Normales += genseries(sprintf("norm%d", i), normal())
 	  endloop
 	</code>
 	<para>
 	  Al finalizar la ejecución, la lista <lit>Normales</lit> va a contener las
-	  series <lit>norm1</lit>, <lit>norm2</lit> y así sucesivamente.
+	  series <lit>norm1</lit>, <lit>norm2</lit> y <lit>norm3</lit>.
 	</para>
 	<para>
 	  A aquellos que encontréis útil la función <lit>genseries</lit>, quizás os
@@ -5658,7 +5660,7 @@
 	<para>
 	  El argumento <argname>ed</argname> se interpreta como un día de
 	  época (que tomará el valor 1 para el primer día de enero del año 1
-	  después de Cristo, en el proléptico calendario Gregoriano). El valor que
+	  después de Cristo, en el calendario Gregoriano proléptico). El valor que
 	  se devuelve por defecto es un número de 8 dígitos del mismo tipo que
 	  <argname>ed</argname>, o una serie compuesta por números de esa
 	  clase. Se sigue el patrón <lit>YYYYMMDD</lit> (formato ISO 8601
@@ -5885,7 +5887,7 @@
 	<para>
 	  El argumento <argname>ed</argname> se interpreta como un día de
 	  época (que tomará el valor 1 para el primer día de enero del año 1
-	  después de Cristo, en el proléptico calendario Gregoriano). El valor que
+	  después de Cristo, en el calendario Gregoriano proléptico). El valor que
 	  se devuelve por defecto es un número de 8 dígitos del mismo tipo que
 	  <argname>ed</argname>, o una serie compuesta por números de esa
 	  clase. Se sigue el patrón <lit>YYYYMMDD</lit> (formato ISO 8601
@@ -7186,7 +7188,7 @@
       </description>
     </function>
 
-    <function name="monthlen" section="calendar" output="int">
+    <function name="monthlen" section="calendar" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">mes</fnarg>
 	<fnarg type="scalar-or-series">año</fnarg>
@@ -7194,12 +7196,17 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve un número entero que expresa cuantos días (relevantes) tiene
-	  un mes de un año (en el proléptico calendario Gregoriano), especificados
-	  en los dos primeros argumentos y considerando la duración de semana
-	  indicada por <argname>duracsemana</argname>. Este debe ser igual
-	  a 5, 6 o 7 (indicando el valor 6 que no se cuentan los domingos,
-	  y 5 que no se cuentan ni los sábados ni los domingos).
+	  Devuelve un resultado (del mismo tipo que el argumento) que expresa
+	  cuántos días (relevantes) tiene un mes de un año (en el calendario
+	  Gregoriano proléptico). El argumento <argname>duracsemana</argname>,
+	  que debe ser igual a 5, 6 o 7, indica el número de días de la semana
+	  que se deben contar (con el valor 6 no se cuentan los domingos, y
+	  con 5 no se cuentan ni los sábados ni los domingos).
+	</para>
+	<para>
+	  El valor que se devuelva va a ser un escalar si son escalares tanto
+	  <argname>mes</argname> como <argname>año</argname>; en caso
+	  contrario será una serie.
 	</para>
 	<para>
 	  Por ejemplo, si tienes abierto un conjunto de datos mensuales, la expresión
@@ -10797,6 +10804,40 @@
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="stack" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">desplazamiento</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Diseñado para el manejo de datos con formato de series de tiempo
+	  apiladas, que necesita Gretl para datos de panel. El valor que se
+	  devuelve es una serie que se consigue apilando de forma
+	  <quote>vertical</quote>, grupos de <argname>n</argname>
+	  observaciones de cada serie de la lista <argname>L</argname>. Por
+	  defecto, se usan las primeras <argname>n</argname> observaciones
+	  (ello se corresponde con <argname>desplazamiento</argname> = 0),
+	  pero puedes trasladar el punto de inicio indicando un valor positivo
+	  para <argname>desplazamiento</argname>. Si la serie resultante
+	  fuese más larga que el conjunto de datos vigente, se añaden tantas
+	  observaciones como sean necesarias.
+	</para>
+	<para>
+	  Con esta función puedes manejar el caso de un archivo de datos que tiene
+	  series de tiempo colocadas unas al lado de otras, para un grupo de
+	  unidades de sección cruzada. Y también cuando se considera el tiempo
+	  en sentido horizontal, y cada fila representa una unidad atemporal.
+	</para>
+	<para>
+	  Consulta la sección titulada <quote>Panel data specifics</quote>
+	  en <guideref targ="chap:datafiles"/> para obtener detalles y ejemplos
+	  de su utilización.
 	</para>
       </description>
     </function>
