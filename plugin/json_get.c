@@ -878,7 +878,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 
 /*
   @data: JSON buffer.
-  @excludes: array of strings identifying JSON objects to exclude,
+  @path: array of strings identifying JSON objects to include,
   or NULL to retrieve all.
   @err: location to receive error code.
 

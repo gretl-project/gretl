@@ -5,6 +5,7 @@
 
 #include "shapefile.h"
 #include "libgretl.h"
+#include "gretl_typemap.h"
 
 static void output_dbf_string (const char *s, FILE *fp)
 {
@@ -287,12 +288,101 @@ static gchar *put_ext (gchar *fname, const char *ext)
     return fname;
 }
 
-enum { DBF, SHP, GEO };
+static int do_geojson (const char *fname,
+		       const char *csvname)
+{
+    GError *gerr = NULL;
+    gchar *JSON = NULL;
+    gsize len = 0;
+    gboolean ok;
+    int err = 0;
+
+    /* first draft, more error-reporting wanted */
+
+    ok = g_file_get_contents(fname, &JSON, &len, &gerr);
+
+    if (!ok) {
+	fprintf(stderr, "g_file_get_contents failed for '%s'\n", fname);
+	err = E_DATA;
+    } else {
+	gretl_bundle *(*jfunc) (const char *, const char *, int *);
+	FILE *fp = NULL;
+	void *ptr = NULL;
+	GretlType type;
+	gretl_bundle *jb, *pp, *fi;
+	gretl_array *features;
+	gretl_array *keys = NULL;
+	const char *key;
+	int nf = 0, nk = 0;
+	int i, j;
+
+	jfunc = get_plugin_function("json_get_bundle");
+	if (jfunc == NULL) {
+	    return E_DATA;
+	}
+	fp = gretl_fopen(csvname, "wb");
+	if (fp == NULL) {
+	    return E_FOPEN;
+	}
+	jb = jfunc(JSON, NULL, &err);
+	if (jb == NULL) {
+	    err = E_DATA;
+	}
+	if (!err) {
+	    features = gretl_bundle_get_array(jb, "features", &err);
+	}
+	if (!err) {
+	    nf = gretl_array_get_length(features);
+	    fi = gretl_array_get_element(features, 0, NULL, &err);
+	}
+	if (!err) {
+	    pp = gretl_bundle_get_bundle(fi, "properties", &err);
+	}
+	if (!err) {
+	    keys = gretl_bundle_get_keys(pp, &err);
+	}
+	if (!err) {
+	    nk = gretl_array_get_length(keys);
+	}
+	for (j=0; j<nk && !err; j++) {
+	    key = gretl_array_get_data(keys, j);
+	    fprintf(fp, "%s%c", key, j < nk-1 ? ',' : '\n');
+	}
+	for (i=0; i<nf && !err; i++) {
+	    fi = gretl_array_get_element(features, i, NULL, &err);
+	    pp = gretl_bundle_get_bundle(fi, "properties", &err);
+	    for (j=0; j<nk; j++) {
+		key = gretl_array_get_data(keys, j);
+		ptr = gretl_bundle_get_data(pp, key, &type, NULL, &err);
+		if (type == GRETL_TYPE_STRING) {
+		    fprintf(fp, "\"%s\"", (char *) ptr);
+		} else if (type == GRETL_TYPE_INT) {
+		    fprintf(fp, "%d", *(int *) ptr);
+		} else if (type == GRETL_TYPE_DOUBLE) {
+		    fprintf(fp, "%g", *(double *) ptr);
+		} else {
+		    fprintf(stderr, "Got property type %s\n", gretl_type_get_name(type));
+		    fprintf(fp, "\"\"");
+		}
+		fputc(j < nk-1 ? ',' : '\n', fp);
+	    }
+	}
+
+	gretl_array_destroy(keys);
+	fclose(fp);
+    }
+
+    g_free(JSON);
+
+    return err;
+}
 
 int map_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
+    enum { DBF, SHP, GEO };
     gchar *csvname = NULL;
+    gchar *base = NULL;
     int ftype;
     int err = 0;
 
@@ -304,26 +394,28 @@ int map_get_data (const char *fname, DATASET *dset,
 	ftype = GEO;
     }
 
+    base = g_path_get_basename(fname);
+    csvname = gretl_make_dotpath(base);
+    put_ext(csvname, ".csv");
+
     if (ftype == GEO) {
-	pputs(prn, "Not ready yet\n");
-	err = E_DATA;
+	err = do_geojson(fname, csvname);
     } else {
-	gchar *base = g_path_get_basename(fname);
 	gchar *dbfname = g_strdup(fname);
 
 	if (ftype == SHP) {
 	    put_ext(dbfname, ".dbf");
 	}
-	csvname = gretl_make_dotpath(base);
-	put_ext(csvname, ".csv");
 	err = dbf2csv(dbfname, csvname, OPT_NONE);
-	if (!err) {
-	    err = import_csv(csvname, dset, opt, prn);
-	}
-	g_free(csvname);
-	g_free(base);
 	g_free(dbfname);
     }
+
+    if (!err) {
+	err = import_csv(csvname, dset, opt, prn);
+    }
+
+    g_free(base);
+    g_free(csvname);
 
     return err;
 }
