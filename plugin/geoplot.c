@@ -279,29 +279,50 @@ int shp2dat (const char *shpname,
     return err;
 }
 
+static gchar *put_ext (gchar *fname, const char *ext)
+{
+    gchar *p = strrchr(fname, '.');
+
+    strcat(p, ext);
+    return fname;
+}
+
+enum { DBF, SHP, GEO };
+
 int map_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
     gchar *csvname = NULL;
+    int ftype;
     int err = 0;
 
     if (has_suffix(fname, ".dbf")) {
-	/* so far, we handle only the simplest case! */
-	gchar *tmp = g_path_get_basename(fname);
-	char *p;
+	ftype = DBF;
+    } else if (has_suffix(fname, ".shp")) {
+	ftype = SHP;
+    } else {
+	ftype = GEO;
+    }
 
-	csvname = gretl_make_dotpath(tmp);
-	p = strrchr(csvname, '.');
-	strncat(p, ".csv", 4);
-	g_free(tmp);
-	err = dbf2csv(fname, csvname, OPT_NONE);
+    if (ftype == GEO) {
+	pputs(prn, "Not ready yet\n");
+	err = E_DATA;
+    } else {
+	gchar *base = g_path_get_basename(fname);
+	gchar *dbfname = g_strdup(fname);
+
+	if (ftype == SHP) {
+	    put_ext(dbfname, ".dbf");
+	}
+	csvname = gretl_make_dotpath(base);
+	put_ext(csvname, ".csv");
+	err = dbf2csv(dbfname, csvname, OPT_NONE);
 	if (!err) {
 	    err = import_csv(csvname, dset, opt, prn);
 	}
 	g_free(csvname);
-    } else {
-	pputs(prn, "Not ready yet\n");
-	err = E_DATA;
+	g_free(base);
+	g_free(dbfname);
     }
 
     return err;
