@@ -46,6 +46,7 @@ typedef enum {
     GRETL_PCGIVE_DB,      /* PcGive bn7/in7 pair */
     GRETL_ODBC,           /* Open DataBase Connectivity */
     GRETL_DBNOMICS,       /* DB.NOMICS access */
+    GRETL_MAP,            /* shapefile or GeoJSON */
     GRETL_UNRECOGNIZED    /* none of the above */
 } GretlFileType;
 
@@ -64,7 +65,8 @@ typedef enum {
 			 f == GRETL_SAS ||	\
                          f == GRETL_JMULTI ||	\
                          f == GRETL_OCTAVE ||	\
-			 f == GRETL_WF1)
+			 f == GRETL_WF1 ||	\
+			 f == GRETL_MAP)
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
                             } while (0);

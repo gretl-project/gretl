@@ -751,6 +751,13 @@ static struct extmap data_ftype_map[] = {
     { GRETL_JMULTI,       ".dat" }
 };
 
+static const char *map_suffixes[] = {
+    ".json",
+    ".geojson",
+    ".dbf",
+    ".shp"
+};
+
 static const char *get_filename_extension (const char *fname)
 {
     const char *ext = strrchr(fname, '.');
@@ -783,6 +790,14 @@ static GretlFileType data_file_type_from_extension (const char *ext)
     if (!g_ascii_strcasecmp(ext, ".txt") ||
 	!g_ascii_strcasecmp(ext, ".asc")) {
 	return GRETL_CSV;
+    }
+
+    /* map metadata */
+    n = G_N_ELEMENTS(map_suffixes);
+    for (i=0; i<n; i++) {
+	if (!g_ascii_strcasecmp(ext, map_suffixes[i])) {
+	    return GRETL_MAP;
+	}
     }
 
     return GRETL_UNRECOGNIZED;
@@ -3184,6 +3199,8 @@ int import_other (const char *fname, GretlFileType ftype,
 	importer = get_plugin_function("xport_get_data");
     } else if (ftype == GRETL_JMULTI) {
 	importer = get_plugin_function("jmulti_get_data");
+    } else if (ftype == GRETL_MAP) {
+	importer = get_plugin_function("map_get_data");
     } else {
 	pprintf(prn, A_("Unrecognized data type"));
 	pputc(prn, '\n');
