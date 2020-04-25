@@ -181,6 +181,11 @@ void clear_datainfo (DATASET *dset, int code)
 	dset->padmask = NULL;
     }
 
+    if (dset->mapfile != NULL) {
+	free(dset->mapfile);
+	dset->mapfile = NULL;
+    }
+
     if (dset->pangrps != NULL) {
 	free(dset->pangrps);
 	dset->pangrps = NULL;
@@ -490,6 +495,7 @@ void datainfo_init (DATASET *dset)
     dset->submask = NULL;
     dset->restriction = NULL;
     dset->padmask = NULL;
+    dset->mapfile = NULL;
     dset->pangrps = NULL;
     dset->panel_pd = 0;
     dset->panel_sd0 = 0;
@@ -690,6 +696,8 @@ int start_new_Z (DATASET *dset, gretlopt opt)
     dset->submask = NULL;
     dset->restriction = NULL;
     dset->padmask = NULL;
+    dset->mapfile = NULL;
+
     if (!(opt & OPT_R)) {
 	dset->pangrps = NULL;
     }

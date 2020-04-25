@@ -315,6 +315,7 @@ typedef struct DATASET_ {
     char *submask;      /* subsampling mask */
     char *restriction;  /* record of sub-sampling restriction */
     char *padmask;      /* record of padding to re-balance panel data */
+    char *mapfile;      /* name of associated map (polygons) file, if any */
     unsigned int rseed; /* resampling seed */
     int auxiliary;      /* = 0 for regular dataset, 1 for aux dataset */
     char *pangrps;      /* panel-only: name of series holding group names */

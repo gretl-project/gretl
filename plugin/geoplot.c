@@ -7,6 +7,8 @@
 #include "libgretl.h"
 #include "gretl_typemap.h"
 
+enum { DBF, SHP, GEO };
+
 static void output_dbf_string (const char *s, FILE *fp)
 {
     fputc('"', fp);
@@ -280,16 +282,18 @@ int shp2dat (const char *shpname,
     return err;
 }
 
-static gchar *put_ext (gchar *fname, const char *ext)
+static char *put_ext (char *fname, const char *ext)
 {
-    gchar *p = strrchr(fname, '.');
+    char *p = strrchr(fname, '.');
 
+    *p = '\0';
     strcat(p, ext);
     return fname;
 }
 
 static int do_geojson (const char *fname,
-		       const char *csvname)
+		       const char *csvname,
+		       char **mapname)
 {
     GError *gerr = NULL;
     gchar *JSON = NULL;
@@ -386,19 +390,72 @@ static int do_geojson (const char *fname,
 
     g_free(JSON);
 
+    if (!err) {
+	*mapname = gretl_strdup(fname);
+    }
+
+    return err;
+}
+
+static int do_shapefile (const char *fname,
+			 const char *csvname,
+			 int ftype,
+			 char **mapname)
+{
+    char *dbfname = gretl_strdup(fname);
+    char *shpname = gretl_strdup(fname);
+    char *shxname = gretl_strdup(fname);
+    int err;
+
+    if (ftype == SHP) {
+	put_ext(dbfname, ".dbf");
+    } else if (ftype == DBF) {
+	put_ext(shpname, ".shp");
+    }
+    put_ext(shxname, ".shx");
+
+    if (gretl_stat(dbfname, NULL) != 0) {
+	gretl_errmsg_sprintf(_("Couldn't open '%s'"), dbfname);
+	err = E_FOPEN;
+	goto bailout;
+    }
+    if (gretl_stat(shpname, NULL) != 0) {
+	gretl_errmsg_sprintf(_("Couldn't open '%s'"), shpname);
+	err = E_FOPEN;
+	goto bailout;
+    }
+    if (gretl_stat(shxname, NULL) != 0) {
+	gretl_errmsg_sprintf(_("Couldn't open '%s'"), shxname);
+	err = E_FOPEN;
+	goto bailout;
+    }
+
+    err = dbf2csv(dbfname, csvname, OPT_NONE);
+
+    if (!err) {
+	*mapname = shpname;
+	shpname = NULL;
+    }
+
+ bailout:
+
+    free(dbfname);
+    free(shpname);
+    free(shxname);
+
     return err;
 }
 
 int map_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
-    enum { DBF, SHP, GEO };
     gchar *csvname = NULL;
     gchar *base = NULL;
+    char *mapname = NULL;
     int ftype;
     int err = 0;
 
-    /* FIXME: allow appending, or just "open"? */
+    /* FIXME: should appending be allowed, or just "open"? */
 
     if (has_suffix(fname, ".dbf")) {
 	ftype = DBF;
@@ -413,22 +470,19 @@ int map_get_data (const char *fname, DATASET *dset,
     put_ext(csvname, ".csv");
 
     if (ftype == GEO) {
-	err = do_geojson(fname, csvname);
+	err = do_geojson(fname, csvname, &mapname);
     } else {
-	gchar *dbfname = g_strdup(fname);
-
-	if (ftype == SHP) {
-	    put_ext(dbfname, ".dbf");
-	}
-	err = dbf2csv(dbfname, csvname, OPT_NONE);
-	g_free(dbfname);
+	err = do_shapefile(fname, csvname, ftype, &mapname);
     }
 
     if (!err) {
 	err = import_csv(csvname, dset, opt, prn);
+	if (!err) {
+	    dset->mapfile = mapname;
+	} else {
+	    free(mapname);
+	}
     }
-
-    /* FIXME: use dset->descrip to record map data location? */
 
     g_free(base);
     g_free(csvname);
