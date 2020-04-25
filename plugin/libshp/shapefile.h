@@ -2,7 +2,7 @@
 #define SHAPEFILE_H_INCLUDED
 
 /*
-   Ripped from shpfil.h in Frank Warmerdam's shapelib version 1.5.0
+   Based on shapefil.h in Frank Warmerdam's shapelib version 1.5.0
    and modified for use in gretl. Original copyright notice below.
 */
 
@@ -37,10 +37,6 @@
 
 #include <stdio.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Should the DBFReadStringAttribute() function
    strip leading and trailing white space?
 */
@@ -49,37 +45,36 @@ extern "C" {
 /************************************************************************/
 /*                             SHP Support.                             */
 /************************************************************************/
-typedef struct tagSHPObject SHPObject;
 
-typedef struct
+typedef struct SHPInfo_ *SHPHandle;
+
+typedef struct SHPObject_
 {
-    FILE *      fpSHP;
-    FILE *      fpSHX;
+    int    nSHPType;
+    int    nShapeId;  /* -1 is unknown/unassigned */
+    int    nParts;
+    int    *panPartStart;
+    int    *panPartType;
 
-    int         nShapeType;  /* SHPT_* */
+    int    nVertices;
+    double *padfX;
+    double *padfY;
+    double *padfZ;
+    double *padfM;
 
-    unsigned int nFileSize;  /* SHP file */
+    double dfXMin;
+    double dfYMin;
+    double dfZMin;
+    double dfMMin;
 
-    int         nRecords;
-    int         nMaxRecords;
-    unsigned int*panRecOffset;
-    unsigned int *panRecSize;
+    double dfXMax;
+    double dfYMax;
+    double dfZMax;
+    double dfMMax;
 
-    double      adBoundsMin[4];
-    double      adBoundsMax[4];
-
-    int         bUpdated;
-
-    unsigned char *pabyRec;
-    int         nBufSize;
-
-    int            bFastModeReadObject;
-    unsigned char *pabyObjectBuf;
-    int            nObjectBufSize;
-    SHPObject*     psCachedObject;
-} SHPInfo;
-
-typedef SHPInfo * SHPHandle;
+    int bMeasureIsUsed;
+    int bFastModeReadObject;
+} SHPObject;
 
 /* -------------------------------------------------------------------- */
 /*      Shape types (nSHPType)                                          */
@@ -111,110 +106,43 @@ typedef SHPInfo * SHPHandle;
 #define SHPP_FIRSTRING  4
 #define SHPP_RING       5
 
-/* -------------------------------------------------------------------- */
-/*      SHPObject - represents on shape (without attributes) read       */
-/*      from the .shp file.                                             */
-/* -------------------------------------------------------------------- */
-struct tagSHPObject
-{
-    int    nSHPType;
-    int    nShapeId;  /* -1 is unknown/unassigned */
-    int    nParts;
-    int    *panPartStart;
-    int    *panPartType;
+/* If pszAccess is read-only, the fpSHX field of the returned structure
+   will be NULL as it is not necessary to keep the SHX file open.
+*/
 
-    int    nVertices;
-    double *padfX;
-    double *padfY;
-    double *padfZ;
-    double *padfM;
+SHPHandle SHPOpen (const char *pszShapeFile, const char *pszAccess);
 
-    double dfXMin;
-    double dfYMin;
-    double dfZMin;
-    double dfMMin;
+/* If setting bFastMode = TRUE, the content of SHPReadObject() is owned
+   by the SHPHandle. So you cannot have 2 valid instances of SHPReadObject()
+   simultaneously. The SHPObject padfZ and padfM members may be NULL
+   depending on the geometry type.
+*/
 
-    double dfXMax;
-    double dfYMax;
-    double dfZMax;
-    double dfMMax;
+void SHPSetFastModeReadObject (SHPHandle hSHP, int bFastMode);
 
-    int bMeasureIsUsed;
-    int bFastModeReadObject;
-};
+SHPHandle SHPCreate (const char *pszShapeFile, int nShapeType);
 
-/* -------------------------------------------------------------------- */
-/*      SHP API Prototypes                                              */
-/* -------------------------------------------------------------------- */
-
-/* If pszAccess is read-only, the fpSHX field of the returned structure */
-/* will be NULL as it is not necessary to keep the SHX file open */
-SHPHandle SHPOpen(const char * pszShapeFile, const char * pszAccess);
-
-/* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by the SHPHandle. */
-/* So you cannot have 2 valid instances of SHPReadObject() simultaneously. */
-/* The SHPObject padfZ and padfM members may be NULL depending on the geometry */
-/* type. It is illegal to free at hand any of the pointer members of the SHPObject structure */
-void SHPSetFastModeReadObject(SHPHandle hSHP, int bFastMode);
-
-SHPHandle SHPCreate(const char *pszShapeFile, int nShapeType);
-
-void SHPGetInfo(SHPHandle hSHP, int *pnEntities, int *pnShapeType,
+void SHPGetInfo (SHPHandle hSHP, int *pnEntities, int *pnShapeType,
 		 double *padfMinBound, double *padfMaxBound);
 
-SHPObject *SHPReadObject(SHPHandle hSHP, int iShape);
+SHPObject *SHPReadObject (SHPHandle hSHP, int iShape);
 
-void SHPDestroyObject(SHPObject *psObject);
+void SHPDestroyObject (SHPObject *psObject);
 
-void SHPComputeExtents(SHPObject *psObject);
+void SHPComputeExtents (SHPObject *psObject);
 
-int SHPRewindObject(SHPHandle hSHP, SHPObject *psObject);
+int SHPRewindObject (SHPHandle hSHP, SHPObject *psObject);
 
-void SHPClose(SHPHandle hSHP);
+void SHPClose (SHPHandle hSHP);
 
-const char *SHPTypeName(int nSHPType);
-const char *SHPPartTypeName(int nPartType);
+const char *SHPTypeName (int nSHPType);
+const char *SHPPartTypeName (int nPartType);
 
 /************************************************************************/
-/*                             DBF Support.                             */
+/*                             DBF Support                              */
 /************************************************************************/
-typedef struct
-{
-    FILE *      fp;
-    int         nRecords;
-    int         nRecordLength; /* Must fit on uint16 */
-    int         nHeaderLength; /* File header length (32) + field
-                                  descriptor length + spare space.
-                                  Must fit on uint16 */
-    int         nFields;
-    int         *panFieldOffset;
-    int         *panFieldSize;
-    int         *panFieldDecimals;
-    char        *pachFieldType;
-    char        *pszHeader; /* Field descriptors */
-    int         nCurrentRecord;
-    int         bCurrentRecordModified;
-    char        *pszCurrentRecord;
-    int         nWorkFieldLength;
-    char        *pszWorkField;
-    int         bNoHeader;
-    int         bUpdated;
 
-    union
-    {
-        double      dfDoubleField;
-        int         nIntField;
-    } fieldValue;
-
-    int         iLanguageDriver;
-    char        *pszCodePage;
-    int         nUpdateYearSince1900; /* 0-255 */
-    int         nUpdateMonth; /* 1-12 */
-    int         nUpdateDay; /* 1-31 */
-    int         bWriteEndOfFileChar; /* defaults to TRUE */
-} DBFInfo;
-
-typedef DBFInfo * DBFHandle;
+typedef struct DBFInfo_ *DBFHandle;
 
 typedef enum {
   FTString,
@@ -225,40 +153,30 @@ typedef enum {
   FTInvalid
 } DBFFieldType;
 
-/* Field descriptor/header size */
-#define XBASE_FLDHDR_SZ         32
-/* Shapelib read up to 11 characters, even if only 10 should normally be used */
-#define XBASE_FLDNAME_LEN_READ  11
-/* Normally only 254 characters should be used. We tolerate 255 historically */
-#define XBASE_FLD_MAX_WIDTH     255
+DBFHandle DBFOpen (const char *pszDBFFile, const char *pszAccess);
 
-DBFHandle DBFOpen(const char *pszDBFFile, const char *pszAccess);
+int DBFGetFieldCount (DBFHandle psDBF);
+int DBFGetRecordCount (DBFHandle psDBF);
 
-int DBFGetFieldCount(DBFHandle psDBF);
-int DBFGetRecordCount(DBFHandle psDBF);
+DBFFieldType DBFGetFieldInfo (DBFHandle psDBF, int iField,
+			      char *pszFieldName, int *pnWidth,
+			      int *pnDecimals);
 
-DBFFieldType DBFGetFieldInfo(DBFHandle psDBF, int iField,
-			     char *pszFieldName, int *pnWidth, int *pnDecimals);
+int DBFGetFieldIndex (DBFHandle psDBF, const char *pszFieldName);
 
-int DBFGetFieldIndex(DBFHandle psDBF, const char *pszFieldName);
+int DBFReadIntegerAttribute (DBFHandle hDBF, int iShape, int iField);
+double DBFReadDoubleAttribute (DBFHandle hDBF, int iShape, int iField);
+const char *DBFReadStringAttribute (DBFHandle hDBF, int iShape, int iField);
+const char *DBFReadLogicalAttribute (DBFHandle hDBF, int iShape, int iField);
+int DBFIsAttributeNULL (DBFHandle hDBF, int iShape, int iField);
 
-int DBFReadIntegerAttribute(DBFHandle hDBF, int iShape, int iField);
-double DBFReadDoubleAttribute(DBFHandle hDBF, int iShape, int iField);
-const char *DBFReadStringAttribute(DBFHandle hDBF, int iShape, int iField);
-const char *DBFReadLogicalAttribute(DBFHandle hDBF, int iShape, int iField);
-int DBFIsAttributeNULL(DBFHandle hDBF, int iShape, int iField);
+int DBFIsRecordDeleted (DBFHandle psDBF, int iShape);
 
-int DBFIsRecordDeleted(DBFHandle psDBF, int iShape);
+void DBFClose (DBFHandle hDBF);
+char DBFGetNativeFieldType (DBFHandle hDBF, int iField);
 
-void DBFClose(DBFHandle hDBF);
-char DBFGetNativeFieldType(DBFHandle hDBF, int iField);
+const char *DBFGetCodePage (DBFHandle psDBF);
 
-const char *DBFGetCodePage(DBFHandle psDBF);
+void DBFSetWriteEndOfFileChar (DBFHandle psDBF, int bWriteFlag);
 
-void DBFSetWriteEndOfFileChar(DBFHandle psDBF, int bWriteFlag);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* ndef SHAPEFILE_H_INCLUDED */
+#endif /* SHAPEFILE_H_INCLUDED */

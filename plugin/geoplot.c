@@ -45,21 +45,21 @@ int dbf2csv (const char *dbfname,
 
     DBF = DBFOpen(dbfname, "rb");
     if (DBF == NULL) {
-	printf("DBFOpen(%s, \"r\") failed\n", dbfname);
+	gretl_errmsg_sprintf("DBFOpen(%s) failed", dbfname);
 	return E_FOPEN;
     }
 
     fcount = DBFGetFieldCount(DBF);
     if (fcount == 0) {
 	DBFClose(DBF);
-	printf("There are no fields in this table!\n");
+	gretl_errmsg_set("There are no fields in this DBF table!");
 	return E_DATA;
     }
 
     rcount = DBFGetRecordCount(DBF);
     if (rcount == 0) {
 	DBFClose(DBF);
-	printf("There are no records in this table!\n");
+	gretl_errmsg_set("There are no records in this DBF table!");
 	return E_DATA;
     }
 
