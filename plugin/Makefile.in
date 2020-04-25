@@ -146,9 +146,7 @@ ZIPSRC = zfileio.c \
 	zipmain.c \
 	zipwork.c
 
-SHPSRC = dbfopen.c \
-	safileio.c \
-	shpopen.c
+SHPSRC = dbfopen.c shpopen.c
 
 PLUGINS = arbond.la \
 	arma.la \

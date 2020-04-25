@@ -297,12 +297,15 @@ static int do_geojson (const char *fname,
     gboolean ok;
     int err = 0;
 
-    /* first draft, more error-reporting wanted */
-
     ok = g_file_get_contents(fname, &JSON, &len, &gerr);
 
     if (!ok) {
-	fprintf(stderr, "g_file_get_contents failed for '%s'\n", fname);
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    fprintf(stderr, "g_file_get_contents failed for '%s'\n", fname);
+	}
 	err = E_DATA;
     } else {
 	gretl_bundle *(*jfunc) (const char *, const char *, int *);
@@ -322,14 +325,19 @@ static int do_geojson (const char *fname,
 	}
 	fp = gretl_fopen(csvname, "wb");
 	if (fp == NULL) {
+	    gretl_errmsg_sprintf(_("Couldn't open %s for writing"), csvname);
 	    return E_FOPEN;
 	}
 	jb = jfunc(JSON, NULL, &err);
 	if (jb == NULL) {
+	    gretl_errmsg_sprintf(_("Couldn't find function %s"), "json_get_bundle");
 	    err = E_DATA;
 	}
 	if (!err) {
 	    features = gretl_bundle_get_array(jb, "features", &err);
+	    if (err) {
+		gretl_errmsg_sprintf(_("Couldn't read '%s'"), "features");
+	    }
 	}
 	if (!err) {
 	    nf = gretl_array_get_length(features);
@@ -351,9 +359,12 @@ static int do_geojson (const char *fname,
 	for (i=0; i<nf && !err; i++) {
 	    fi = gretl_array_get_element(features, i, NULL, &err);
 	    pp = gretl_bundle_get_bundle(fi, "properties", &err);
-	    for (j=0; j<nk; j++) {
+	    for (j=0; j<nk && !err; j++) {
 		key = gretl_array_get_data(keys, j);
 		ptr = gretl_bundle_get_data(pp, key, &type, NULL, &err);
+		if (err) {
+		    break;
+		}
 		if (type == GRETL_TYPE_STRING) {
 		    fprintf(fp, "\"%s\"", (char *) ptr);
 		} else if (type == GRETL_TYPE_INT) {
@@ -369,6 +380,7 @@ static int do_geojson (const char *fname,
 	}
 
 	gretl_array_destroy(keys);
+	gretl_bundle_destroy(jb);
 	fclose(fp);
     }
 
@@ -385,6 +397,8 @@ int map_get_data (const char *fname, DATASET *dset,
     gchar *base = NULL;
     int ftype;
     int err = 0;
+
+    /* FIXME: allow appending, or just "open"? */
 
     if (has_suffix(fname, ".dbf")) {
 	ftype = DBF;
@@ -413,6 +427,8 @@ int map_get_data (const char *fname, DATASET *dset,
     if (!err) {
 	err = import_csv(csvname, dset, opt, prn);
     }
+
+    /* FIXME: use dset->descrip to record map data location? */
 
     g_free(base);
     g_free(csvname);
