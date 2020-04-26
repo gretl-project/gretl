@@ -10373,6 +10373,20 @@
       </description>
     </function>
 
+    <function name="sgn" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the sign function of <argname>x</argname>; that is,
+	  0 if <argname>x</argname> is zero, 1 if <argname>x</argname> is
+	  positive, &minus;1 if <argname>x</argname> is negative, or
+	  <lit>NA</lit> if <argname>x</argname> is Not a Number.
+	</para>
+      </description>
+    </function>
+
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="matrixref">&amp;b</fnarg>
