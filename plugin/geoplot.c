@@ -317,7 +317,7 @@ static int do_geojson (const char *fname,
 	void *ptr = NULL;
 	GretlType type;
 	gretl_bundle *jb, *pp, *fi;
-	gretl_array *features;
+	gretl_array *features = NULL;
 	gretl_array *keys = NULL;
 	const char *key;
 	int nf = 0, nk = 0;
