@@ -2620,7 +2620,7 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 
 #define fn_no_complex(f) (f == F_QFORM || f == F_LSOLVE || \
 			  f == F_CMULT || f == F_CDIV || \
-			  f == F_CONV2D)
+			  f == F_CONV2D || f == F_SGN)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -5379,6 +5379,8 @@ static double real_apply_func (double x, int f, parser *p)
 	return y;
     case F_ABS:
 	return fabs(x);
+    case F_SGN:
+	return gretl_sgn(x);
     case F_CEIL:
 	return ceil(x);
     case F_FLOOR:
@@ -15827,6 +15829,7 @@ static NODE *eval (NODE *t, parser *p)
     case U_POS:
     case U_NOT:
     case F_ABS:
+    case F_SGN:
     case F_TOINT:
     case F_CEIL:
     case F_FLOOR:

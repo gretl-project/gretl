@@ -6043,6 +6043,19 @@ double gretl_round (double x)
     }
 }
 
+double gretl_sgn (double x)
+{
+    if (x == 0) {
+	return 0;
+    } else if (x > 0) {
+	return 1;
+    } else if (x < 0) {
+	return -1;
+    } else {
+	return NADBL;
+    }
+}
+
 #define neg_x_real_v_err(t) (t == 'J' || t == 'I')
 
 /* evaluates bessel function for scalar nu and x */
@@ -7732,3 +7745,4 @@ int fill_permutation_vector (gretl_vector *v, int n)
 
     return 0;
 }
+

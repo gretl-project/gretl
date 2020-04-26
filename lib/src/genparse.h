@@ -136,6 +136,7 @@ enum {
 enum {
     F1_MIN = 1 << 8,
     F_ABS,
+    F_SGN,
     F_CEIL,
     F_FLOOR,
     F_SIN,

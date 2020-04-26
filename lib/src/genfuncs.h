@@ -188,6 +188,8 @@ gretl_matrix *duration_func (const double *y, const double *cens,
 
 double gretl_round (double x);
 
+double gretl_sgn (double x);
+
 double gretl_bessel (char type, double v, double x, int *err);
 
 double gretl_npv (int t1, int t2, const double *x, double r,

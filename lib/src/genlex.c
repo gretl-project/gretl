@@ -235,6 +235,7 @@ struct str_table_ex ptrfuncs[] = {
     { F_DIGAMMA,  "digamma",  digamma },
     { F_INVMILLS, "invmills", invmills },
     { F_ROUND,    "round",    gretl_round },
+    { F_SGN,      "sgn",      gretl_sgn },
     { F_CNORM, "cnorm", normal_cdf },
     { F_DNORM, "dnorm", normal_pdf },
     { F_QNORM, "qnorm", normal_cdf_inverse },

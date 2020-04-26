@@ -1,6 +1,7 @@
 version 2020c, in progress
 - Improve error message in case of invalid gnuplot path
 - loop: make "quiet" operation the default
+- Add sgn() function
 
 2020-04-11 version 2020b
 - Update gretl copyright notice
