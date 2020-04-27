@@ -62,30 +62,52 @@ typedef unsigned char uchar;
 #define BigEndian 0
 #endif
 
+/* Shape types (nSHPType) */
+#define SHPT_NULL         0
+#define SHPT_POINT        1
+#define SHPT_ARC          3
+#define SHPT_POLYGON      5
+#define SHPT_MULTIPOINT   8
+#define SHPT_POINTZ      11
+#define SHPT_ARCZ        13
+#define SHPT_POLYGONZ    15
+#define SHPT_MULTIPOINTZ 18
+#define SHPT_POINTM      21
+#define SHPT_ARCM        23
+#define SHPT_POLYGONM    25
+#define SHPT_MULTIPOINTM 28
+#define SHPT_MULTIPATCH  31
+
+/* Part types: everything but SHPT_MULTIPATCH just uses SHPP_RING */
+#define SHPP_TRISTRIP   0
+#define SHPP_TRIFAN     1
+#define SHPP_OUTERRING  2
+#define SHPP_INNERRING  3
+#define SHPP_FIRSTRING  4
+#define SHPP_RING       5
+
 typedef struct SHPInfo_
 {
     FILE        *fpSHP;
     FILE        *fpSHX;
-    int         nShapeType;  /* SHPT_* */
+    int          nShapeType;  /* SHPT_* */
     unsigned int nFileSize;  /* SHP file */
 
     int           nRecords;
     int           nMaxRecords;
-    unsigned int *panRecOffset;
-    unsigned int *panRecSize;
+    unsigned int *RecOffset;
+    unsigned int *RecSize;
 
-    double      adBoundsMin[4];
-    double      adBoundsMax[4];
-
-    int         bUpdated;
+    double      BoundsMin[4];
+    double      BoundsMax[4];
 
     unsigned char *Rec;
     int           nBufSize;
 
     int            bFastModeReadObject;
-    unsigned char *pabyObjectBuf;
+    unsigned char *ObjectBuf;
     int            nObjectBufSize;
-    SHPObject*     psCachedObject;
+    SHPObject     *psCachedObject;
 } SHPInfo;
 
 /************************************************************************/
@@ -108,14 +130,14 @@ static void SwapWord (int length, void *wordP)
     }
 }
 
-static int SHPGetLenWithoutExtension(const char* pszBasename)
+static int SHPGetLenWithoutExtension (const char *Basename)
 {
-    int i, len = (int) strlen(pszBasename);
+    int i, len = (int) strlen(Basename);
 
     for (i = len-1;
-         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
+         i > 0 && Basename[i] != '/' && Basename[i] != '\\';
          i--) {
-        if (pszBasename[i] == '.') {
+        if (Basename[i] == '.') {
             return i;
         }
     }
@@ -127,9 +149,9 @@ static int SHPGetLenWithoutExtension(const char* pszBasename)
 /*      files or either file name.                                      */
 /************************************************************************/
 
-SHPHandle SHPOpen (const char *pszLayer, const char *pszAccess)
+SHPHandle SHPOpen (const char *Layer, const char *Access)
 {
-    char        *pszFullname;
+    char        *Fullname;
     SHPHandle   SHP;
     uchar       *buf;
     int         i;
@@ -138,51 +160,50 @@ SHPHandle SHPOpen (const char *pszLayer, const char *pszAccess)
     int         nLenWithoutExtension;
 
     SHP = calloc(sizeof(SHPInfo), 1);
-    SHP->bUpdated = FALSE;
 
-    nLenWithoutExtension = SHPGetLenWithoutExtension(pszLayer);
-    pszFullname = malloc(nLenWithoutExtension + 5);
-    memcpy(pszFullname, pszLayer, nLenWithoutExtension);
-    memcpy(pszFullname + nLenWithoutExtension, ".shp", 5);
-    SHP->fpSHP = gretl_fopen(pszFullname, pszAccess);
+    nLenWithoutExtension = SHPGetLenWithoutExtension(Layer);
+    Fullname = malloc(nLenWithoutExtension + 5);
+    memcpy(Fullname, Layer, nLenWithoutExtension);
+    memcpy(Fullname + nLenWithoutExtension, ".shp", 5);
+    SHP->fpSHP = gretl_fopen(Fullname, Access);
     if (SHP->fpSHP == NULL) {
-        memcpy(pszFullname + nLenWithoutExtension, ".SHP", 5);
-        SHP->fpSHP = gretl_fopen(pszFullname, pszAccess);
+        memcpy(Fullname + nLenWithoutExtension, ".SHP", 5);
+        SHP->fpSHP = gretl_fopen(Fullname, Access);
     }
 
     if (SHP->fpSHP == NULL) {
-	gretl_errmsg_sprintf("Unable to open %s.shp or %s.SHP.",
-			     pszFullname, pszFullname);
+	gretl_errmsg_sprintf("Unable to open %s.shp or %s.SHP",
+			     Fullname, Fullname);
         free(SHP);
-        free(pszFullname);
+        free(Fullname);
         return NULL;
     }
 
-    memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
-    SHP->fpSHX = gretl_fopen(pszFullname, pszAccess);
+    memcpy(Fullname + nLenWithoutExtension, ".shx", 5);
+    SHP->fpSHX = gretl_fopen(Fullname, Access);
     if (SHP->fpSHX == NULL) {
-        memcpy(pszFullname + nLenWithoutExtension, ".SHX", 5);
-        SHP->fpSHX = gretl_fopen(pszFullname, pszAccess);
+        memcpy(Fullname + nLenWithoutExtension, ".SHX", 5);
+        SHP->fpSHX = gretl_fopen(Fullname, Access);
     }
 
     if (SHP->fpSHX == NULL) {
-	pszFullname[nLenWithoutExtension] = 0;
+	Fullname[nLenWithoutExtension] = 0;
 	gretl_errmsg_sprintf("Unable to open %s.shx or %s.SHX",
-			     pszFullname, pszFullname);
+			     Fullname, Fullname);
         fclose(SHP->fpSHP);
         free(SHP);
-        free(pszFullname);
+        free(Fullname);
         return NULL;
     }
 
-    free(pszFullname);
+    free(Fullname);
 
     /* -------------------------------------------------------------------- */
     /*  Read the file size from the SHP file.                               */
     /* -------------------------------------------------------------------- */
     buf = malloc(100);
     if (fread(buf, 100, 1, SHP->fpSHP) != 1) {
-        gretl_errmsg_set(".shp file is unreadable, or corrupt.");
+        gretl_errmsg_set(".shp file is unreadable, or corrupt");
         fclose(SHP->fpSHP);
         fclose(SHP->fpSHX);
         free(buf);
@@ -206,12 +227,11 @@ SHPHandle SHPOpen (const char *pszLayer, const char *pszAccess)
         || buf[1] != 0
         || buf[2] != 0x27
         || (buf[3] != 0x0a && buf[3] != 0x0d)) {
-        gretl_errmsg_set(".shx file is unreadable, or corrupt.");
+        gretl_errmsg_set(".shx file is unreadable, or corrupt");
         fclose(SHP->fpSHP);
         fclose(SHP->fpSHX);
         free(buf);
         free(SHP);
-
         return NULL;
     }
 
@@ -250,37 +270,38 @@ SHPHandle SHPOpen (const char *pszLayer, const char *pszAccess)
     /* -------------------------------------------------------------------- */
     if (BigEndian) SwapWord(8, buf+36);
     memcpy(&dValue, buf+36, 8);
-    SHP->adBoundsMin[0] = dValue;
+    SHP->BoundsMin[0] = dValue;
 
     if (BigEndian) SwapWord(8, buf+44);
     memcpy(&dValue, buf+44, 8);
-    SHP->adBoundsMin[1] = dValue;
+    SHP->BoundsMin[1] = dValue;
 
     if (BigEndian) SwapWord(8, buf+52);
     memcpy(&dValue, buf+52, 8);
-    SHP->adBoundsMax[0] = dValue;
+    SHP->BoundsMax[0] = dValue;
 
     if (BigEndian) SwapWord(8, buf+60);
     memcpy(&dValue, buf+60, 8);
-    SHP->adBoundsMax[1] = dValue;
+    SHP->BoundsMax[1] = dValue;
 
     if (BigEndian) SwapWord(8, buf+68);     /* z */
     memcpy(&dValue, buf+68, 8);
-    SHP->adBoundsMin[2] = dValue;
+    SHP->BoundsMin[2] = dValue;
 
     if (BigEndian) SwapWord(8, buf+76);
     memcpy(&dValue, buf+76, 8);
-    SHP->adBoundsMax[2] = dValue;
+    SHP->BoundsMax[2] = dValue;
 
     if (BigEndian) SwapWord(8, buf+84);     /* z */
     memcpy(&dValue, buf+84, 8);
-    SHP->adBoundsMin[3] = dValue;
+    SHP->BoundsMin[3] = dValue;
 
     if (BigEndian) SwapWord(8, buf+92);
     memcpy(&dValue, buf+92, 8);
-    SHP->adBoundsMax[3] = dValue;
+    SHP->BoundsMax[3] = dValue;
 
     free(buf);
+    buf = NULL;
 
     /* -------------------------------------------------------------------- */
     /*  Read the .shx file to get the offsets to each record in             */
@@ -288,30 +309,32 @@ SHPHandle SHPOpen (const char *pszLayer, const char *pszAccess)
     /* -------------------------------------------------------------------- */
     SHP->nMaxRecords = SHP->nRecords;
 
-    SHP->panRecOffset = malloc(sizeof(unsigned int) * MAX(1,SHP->nMaxRecords));
-    SHP->panRecSize = malloc(sizeof(unsigned int) * MAX(1,SHP->nMaxRecords));
-    if (bLazySHXLoading)
-        buf = NULL;
-    else
-        buf = malloc(8 * MAX(1,SHP->nRecords));
+    SHP->RecOffset = malloc(sizeof(unsigned int) * MAX(1, SHP->nMaxRecords));
+    SHP->RecSize = malloc(sizeof(unsigned int) * MAX(1, SHP->nMaxRecords));
 
-    if (SHP->panRecOffset == NULL || SHP->panRecSize == NULL ||
+    if (bLazySHXLoading) {
+        buf = NULL;
+    } else {
+        buf = malloc(8 * MAX(1,SHP->nRecords));
+    }
+
+    if (SHP->RecOffset == NULL || SHP->RecSize == NULL ||
         (!bLazySHXLoading && buf == NULL)) {
 	gretl_errmsg_sprintf("Not enough memory to allocate %d records; "
 			     "broken SHP file?", SHP->nRecords);
         fclose(SHP->fpSHP);
         fclose(SHP->fpSHX);
-        if (SHP->panRecOffset) free(SHP->panRecOffset);
-        if (SHP->panRecSize) free(SHP->panRecSize);
+        if (SHP->RecOffset) free(SHP->RecOffset);
+        if (SHP->RecSize) free(SHP->RecSize);
         if (buf) free(buf);
         free(SHP);
         return NULL;
     }
 
     if (bLazySHXLoading) {
-        memset(SHP->panRecOffset, 0, sizeof(unsigned int) * MAX(1,SHP->nMaxRecords));
-        memset(SHP->panRecSize, 0, sizeof(unsigned int) * MAX(1,SHP->nMaxRecords));
-        free(buf); // sometimes make cppcheck happy, but
+        memset(SHP->RecOffset, 0, sizeof(unsigned int) * MAX(1, SHP->nMaxRecords));
+        memset(SHP->RecSize, 0, sizeof(unsigned int) * MAX(1, SHP->nMaxRecords));
+        free(buf);
         return SHP;
     }
 
@@ -320,20 +343,20 @@ SHPHandle SHPOpen (const char *pszLayer, const char *pszAccess)
 			     SHP->nRecords, strerror(errno));
         fclose(SHP->fpSHP);
         fclose(SHP->fpSHX);
-        free(SHP->panRecOffset);
-        free(SHP->panRecSize);
+        free(SHP->RecOffset);
+        free(SHP->RecSize);
         free(buf);
         free(SHP);
         return NULL;
     }
 
     /* In read-only mode, we can close the SHX now */
-    if (strcmp(pszAccess, "rb") == 0) {
+    if (strcmp(Access, "rb") == 0) {
         fclose(SHP->fpSHX);
         SHP->fpSHX = NULL;
     }
 
-    for (i = 0; i < SHP->nRecords; i++) {
+    for (i=0; i<SHP->nRecords; i++) {
         unsigned int nOffset, nLength;
 
         memcpy(&nOffset, buf + i * 8, 4);
@@ -354,8 +377,8 @@ SHPHandle SHPOpen (const char *pszLayer, const char *pszAccess)
             free(buf);
             return NULL;
         }
-        SHP->panRecOffset[i] = nOffset*2;
-        SHP->panRecSize[i] = nLength*2;
+        SHP->RecOffset[i] = nOffset*2;
+        SHP->RecSize[i] = nLength*2;
     }
 
     free(buf);
@@ -369,8 +392,8 @@ void SHPClose (SHPHandle SHP)
     if (SHP == NULL)
         return;
 
-    free(SHP->panRecOffset);
-    free(SHP->panRecSize);
+    free(SHP->RecOffset);
+    free(SHP->RecSize);
 
     if (SHP->fpSHX != NULL) {
         fclose(SHP->fpSHX);
@@ -380,8 +403,8 @@ void SHPClose (SHPHandle SHP)
     if (SHP->Rec != NULL) {
         free(SHP->Rec);
     }
-    if (SHP->pabyObjectBuf != NULL) {
-        free(SHP->pabyObjectBuf);
+    if (SHP->ObjectBuf != NULL) {
+        free(SHP->ObjectBuf);
     }
     if (SHP->psCachedObject != NULL) {
         free(SHP->psCachedObject);
@@ -390,38 +413,43 @@ void SHPClose (SHPHandle SHP)
     free(SHP);
 }
 
-void SHPSetFastModeReadObject (SHPHandle hSHP, int bFastMode)
+void SHPSetFastModeReadObject (SHPHandle SHP, int bFastMode)
 {
     if (bFastMode) {
-        if (hSHP->psCachedObject == NULL) {
-            hSHP->psCachedObject = calloc(1, sizeof(SHPObject));
-            assert(hSHP->psCachedObject != NULL);
+        if (SHP->psCachedObject == NULL) {
+            SHP->psCachedObject = calloc(1, sizeof(SHPObject));
+            assert(SHP->psCachedObject != NULL);
         }
     }
 
-    hSHP->bFastModeReadObject = bFastMode;
+    SHP->bFastModeReadObject = bFastMode;
 }
 
 void SHPGetInfo (SHPHandle SHP, int *pnEntities, int *pnShapeType,
-		 double *padfMinBound, double *padfMaxBound)
+		 double *MinBound, double *MaxBound)
 
 {
     int i;
 
-    if (SHP == NULL)
+    if (SHP == NULL) {
         return;
+    }
 
-    if (pnEntities != NULL)
+    if (pnEntities != NULL) {
         *pnEntities = SHP->nRecords;
+    }
 
-    if (pnShapeType != NULL)
+    if (pnShapeType != NULL) {
         *pnShapeType = SHP->nShapeType;
+    }
 
     for (i=0; i<4; i++) {
-        if (padfMinBound != NULL)
-            padfMinBound[i] = SHP->adBoundsMin[i];
-        if (padfMaxBound != NULL)
-            padfMaxBound[i] = SHP->adBoundsMax[i];
+        if (MinBound != NULL) {
+            MinBound[i] = SHP->BoundsMin[i];
+	}
+        if (MaxBound != NULL) {
+            MaxBound[i] = SHP->BoundsMax[i];
+	}
     }
 }
 
@@ -431,22 +459,22 @@ void SHPComputeExtents (SHPObject *psObject)
     int i;
 
     if (psObject->nVertices > 0) {
-        psObject->dfXMin = psObject->dfXMax = psObject->padfX[0];
-        psObject->dfYMin = psObject->dfYMax = psObject->padfY[0];
-        psObject->dfZMin = psObject->dfZMax = psObject->padfZ[0];
-        psObject->dfMMin = psObject->dfMMax = psObject->padfM[0];
+        psObject->XMin = psObject->XMax = psObject->fX[0];
+        psObject->YMin = psObject->YMax = psObject->fY[0];
+        psObject->ZMin = psObject->ZMax = psObject->fZ[0];
+        psObject->MMin = psObject->MMax = psObject->fM[0];
     }
 
     for (i=0; i<psObject->nVertices; i++) {
-        psObject->dfXMin = MIN(psObject->dfXMin, psObject->padfX[i]);
-        psObject->dfYMin = MIN(psObject->dfYMin, psObject->padfY[i]);
-        psObject->dfZMin = MIN(psObject->dfZMin, psObject->padfZ[i]);
-        psObject->dfMMin = MIN(psObject->dfMMin, psObject->padfM[i]);
+        psObject->XMin = MIN(psObject->XMin, psObject->fX[i]);
+        psObject->YMin = MIN(psObject->YMin, psObject->fY[i]);
+        psObject->ZMin = MIN(psObject->ZMin, psObject->fZ[i]);
+        psObject->MMin = MIN(psObject->MMin, psObject->fM[i]);
 
-        psObject->dfXMax = MAX(psObject->dfXMax, psObject->padfX[i]);
-        psObject->dfYMax = MAX(psObject->dfYMax, psObject->padfY[i]);
-        psObject->dfZMax = MAX(psObject->dfZMax, psObject->padfZ[i]);
-        psObject->dfMMax = MAX(psObject->dfMMax, psObject->padfM[i]);
+        psObject->XMax = MAX(psObject->XMax, psObject->fX[i]);
+        psObject->YMax = MAX(psObject->YMax, psObject->fY[i]);
+        psObject->ZMax = MAX(psObject->ZMax, psObject->fZ[i]);
+        psObject->MMax = MAX(psObject->MMax, psObject->fM[i]);
     }
 }
 
@@ -478,13 +506,13 @@ static unsigned char *SHPReallocObjectBufIfNecessary (SHPHandle SHP,
     }
 
     if (nObjectBufSize > SHP->nObjectBufSize) {
-        pBuffer = realloc(SHP->pabyObjectBuf, nObjectBufSize);
+        pBuffer = realloc(SHP->ObjectBuf, nObjectBufSize);
         if (pBuffer != NULL) {
-            SHP->pabyObjectBuf = pBuffer;
+            SHP->ObjectBuf = pBuffer;
             SHP->nObjectBufSize = nObjectBufSize;
         }
     } else {
-        pBuffer = SHP->pabyObjectBuf;
+        pBuffer = SHP->ObjectBuf;
     }
 
     return pBuffer;
@@ -501,7 +529,7 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 
 {
     int       nEntitySize, nRequiredSize;
-    SHPObject *psShape;
+    SHPObject *Shape;
     int       nSHPType;
     int       nBytesRead;
 
@@ -514,7 +542,7 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
     /* -------------------------------------------------------------------- */
     /*      Read offset/length from SHX loading if necessary.               */
     /* -------------------------------------------------------------------- */
-    if (SHP->panRecOffset[hEntity] == 0 && SHP->fpSHX != NULL) {
+    if (SHP->RecOffset[hEntity] == 0 && SHP->fpSHX != NULL) {
         unsigned int nOffset, nLength;
 
         if (fseek(SHP->fpSHX, 100 + 8 * hEntity, 0) != 0 ||
@@ -538,14 +566,14 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
             return NULL;
         }
 
-        SHP->panRecOffset[hEntity] = nOffset*2;
-        SHP->panRecSize[hEntity] = nLength*2;
+        SHP->RecOffset[hEntity] = nOffset*2;
+        SHP->RecSize[hEntity] = nLength*2;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Ensure our record buffer is large enough.                       */
     /* -------------------------------------------------------------------- */
-    nEntitySize = SHP->panRecSize[hEntity]+8;
+    nEntitySize = SHP->RecSize[hEntity]+8;
     if (nEntitySize > SHP->nBufSize) {
         uchar* RecNew;
         int nNewBufSize = nEntitySize;
@@ -569,14 +597,14 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
                     SHP->nFileSize = (unsigned int) nFileSize;
             }
 
-            if (SHP->panRecOffset[hEntity] >= SHP->nFileSize ||
+            if (SHP->RecOffset[hEntity] >= SHP->nFileSize ||
                 /* We should normally use nEntitySize instead of*/
-                /* SHP->panRecSize[hEntity] in the below test, but because of */
+                /* SHP->RecSize[hEntity] in the below test, but because of */
                 /* the case of non conformant .shx files detailed a bit below, */
                 /* let us be more tolerant */
-                SHP->panRecSize[hEntity] > SHP->nFileSize - SHP->panRecOffset[hEntity]) {
+                SHP->RecSize[hEntity] > SHP->nFileSize - SHP->RecOffset[hEntity]) {
 		gretl_errmsg_sprintf("Error reading object of size %d at offset %u from .shp file",
-				     nEntitySize, SHP->panRecOffset[hEntity]);
+				     nEntitySize, SHP->RecOffset[hEntity]);
                 return NULL;
             }
         }
@@ -601,9 +629,9 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 /* -------------------------------------------------------------------- */
 /*      Read the record.                                                */
 /* -------------------------------------------------------------------- */
-    if (fseek(SHP->fpSHP, SHP->panRecOffset[hEntity], 0) != 0) {
+    if (fseek(SHP->fpSHP, SHP->RecOffset[hEntity], 0) != 0) {
         gretl_errmsg_sprintf("Error reading object from .shp file at offset %u",
-			     SHP->panRecOffset[hEntity]);
+			     SHP->RecOffset[hEntity]);
 	return NULL;
     }
 
@@ -635,7 +663,7 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
         }
     } else if (nBytesRead != nEntitySize) {
         gretl_errmsg_sprintf("Error reading object of size %d at offset %u from .shp file",
-			     nEntitySize, SHP->panRecOffset[hEntity]);
+			     nEntitySize, SHP->RecOffset[hEntity]);
 	return NULL;
     }
 
@@ -658,27 +686,26 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 			     "SHPDestroyObject() should be called.");
             return NULL;
         }
-
-        psShape = SHP->psCachedObject;
-        memset(psShape, 0, sizeof(SHPObject));
+        Shape = SHP->psCachedObject;
+        memset(Shape, 0, sizeof(SHPObject));
     } else {
-        psShape = calloc(1,sizeof(SHPObject));
+        Shape = calloc(1,sizeof(SHPObject));
     }
 
-    psShape->nShapeId = hEntity;
-    psShape->nSHPType = nSHPType;
-    psShape->bMeasureIsUsed = FALSE;
-    psShape->bFastModeReadObject = SHP->bFastModeReadObject;
+    Shape->nShapeId = hEntity;
+    Shape->nSHPType = nSHPType;
+    Shape->bMeasureIsUsed = FALSE;
+    Shape->bFastModeReadObject = SHP->bFastModeReadObject;
 
     /* ------------------------------------------------------------------- */
     /*  Extract vertices for a Polygon or Arc.				   */
     /* ------------------------------------------------------------------- */
-    if (psShape->nSHPType == SHPT_POLYGON || psShape->nSHPType == SHPT_ARC
-        || psShape->nSHPType == SHPT_POLYGONZ
-        || psShape->nSHPType == SHPT_POLYGONM
-        || psShape->nSHPType == SHPT_ARCZ
-        || psShape->nSHPType == SHPT_ARCM
-        || psShape->nSHPType == SHPT_MULTIPATCH) {
+    if (Shape->nSHPType == SHPT_POLYGON || Shape->nSHPType == SHPT_ARC
+        || Shape->nSHPType == SHPT_POLYGONZ
+        || Shape->nSHPType == SHPT_POLYGONM
+        || Shape->nSHPType == SHPT_ARCZ
+        || Shape->nSHPType == SHPT_ARCM
+        || Shape->nSHPType == SHPT_MULTIPATCH) {
         guint32		nPoints, nParts;
         int    		i, nOffset;
         unsigned char*  pBuffer = NULL;
@@ -687,21 +714,21 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
         if (40 + 8 + 4 > nEntitySize) {
 	    gretl_errmsg_sprintf("Corrupted .shp file : shape %d : nEntitySize = %d",
 				 hEntity, nEntitySize);
-	    SHPDestroyObject(psShape);
+	    SHPDestroyObject(Shape);
             return NULL;
         }
 	/* -------------------------------------------------------------------- */
 	/*	Get the X/Y bounds.						*/
 	/* -------------------------------------------------------------------- */
-        memcpy(&(psShape->dfXMin), SHP->Rec + 8 +  4, 8);
-        memcpy(&(psShape->dfYMin), SHP->Rec + 8 + 12, 8);
-        memcpy(&(psShape->dfXMax), SHP->Rec + 8 + 20, 8);
-        memcpy(&(psShape->dfYMax), SHP->Rec + 8 + 28, 8);
+        memcpy(&(Shape->XMin), SHP->Rec + 8 +  4, 8);
+        memcpy(&(Shape->YMin), SHP->Rec + 8 + 12, 8);
+        memcpy(&(Shape->XMax), SHP->Rec + 8 + 20, 8);
+        memcpy(&(Shape->YMax), SHP->Rec + 8 + 28, 8);
 
-        if (BigEndian) SwapWord(8, &(psShape->dfXMin));
-        if (BigEndian) SwapWord(8, &(psShape->dfYMin));
-        if (BigEndian) SwapWord(8, &(psShape->dfXMax));
-        if (BigEndian) SwapWord(8, &(psShape->dfYMax));
+        if (BigEndian) SwapWord(8, &(Shape->XMin));
+        if (BigEndian) SwapWord(8, &(Shape->YMin));
+        if (BigEndian) SwapWord(8, &(Shape->XMax));
+        if (BigEndian) SwapWord(8, &(Shape->YMax));
 
 	/* -------------------------------------------------------------------- */
 	/*      Extract part/point count, and build vertex and part arrays      */
@@ -717,7 +744,7 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
         if (nPoints > 50 * 1000 * 1000 || nParts > 10 * 1000 * 1000) {
             gretl_errmsg_sprintf("Corrupted .shp file: shape %d, nPoints=%u, nParts=%u",
 				 hEntity, nPoints, nParts);
-            SHPDestroyObject(psShape);
+            SHPDestroyObject(Shape);
             return NULL;
         }
 
@@ -726,74 +753,74 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	   50 M * (16 + 8 + 8) = 1 600 MB
 	*/
         nRequiredSize = 44 + 8 + 4 * nParts + 16 * nPoints;
-        if (psShape->nSHPType == SHPT_POLYGONZ
-	    || psShape->nSHPType == SHPT_ARCZ
-	    || psShape->nSHPType == SHPT_MULTIPATCH) {
+        if (Shape->nSHPType == SHPT_POLYGONZ
+	    || Shape->nSHPType == SHPT_ARCZ
+	    || Shape->nSHPType == SHPT_MULTIPATCH) {
             nRequiredSize += 16 + 8 * nPoints;
         }
-        if (psShape->nSHPType == SHPT_MULTIPATCH) {
+        if (Shape->nSHPType == SHPT_MULTIPATCH) {
             nRequiredSize += 4 * nParts;
         }
         if (nRequiredSize > nEntitySize) {
 	    gretl_errmsg_sprintf("Corrupted .shp file: shape %d, nPoints=%u, nParts=%u, "
 				 "nEntitySize=%d", hEntity, nPoints, nParts, nEntitySize);
-            SHPDestroyObject(psShape);
+            SHPDestroyObject(Shape);
             return NULL;
         }
 
-        if (psShape->bFastModeReadObject) {
+        if (Shape->bFastModeReadObject) {
             int nObjectBufSize = 4 * sizeof(double) * nPoints + 2 * sizeof(int) * nParts;
 
             pBuffer = SHPReallocObjectBufIfNecessary(SHP, nObjectBufSize);
             ppBuffer = &pBuffer;
         }
 
-        psShape->nVertices = nPoints;
-        psShape->padfX = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
-        psShape->padfY = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
-        psShape->padfZ = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
-        psShape->padfM = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->nVertices = nPoints;
+        Shape->fX = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->fY = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->fZ = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->fM = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
 
-        psShape->nParts = nParts;
-        psShape->panPartStart = SHPAllocBuffer(ppBuffer, nParts * sizeof(int));
-        psShape->panPartType = SHPAllocBuffer(ppBuffer, nParts * sizeof(int));
+        Shape->nParts = nParts;
+        Shape->PartStart = SHPAllocBuffer(ppBuffer, nParts * sizeof(int));
+        Shape->PartType = SHPAllocBuffer(ppBuffer, nParts * sizeof(int));
 
-        if (psShape->padfX == NULL || psShape->padfY == NULL ||
-            psShape->padfZ == NULL || psShape->padfM == NULL ||
-            psShape->panPartStart == NULL || psShape->panPartType == NULL) {
+        if (Shape->fX == NULL || Shape->fY == NULL ||
+            Shape->fZ == NULL || Shape->fM == NULL ||
+            Shape->PartStart == NULL || Shape->PartType == NULL) {
             gretl_errmsg_sprintf("Not enough memory (nPoints=%u, nParts=%u) for shape %d; "
 				 "probably broken SHP file", nPoints, nParts, hEntity);
-            SHPDestroyObject(psShape);
+            SHPDestroyObject(Shape);
             return NULL;
         }
 
         for (i=0; (guint32) i < nParts; i++)
-            psShape->panPartType[i] = SHPP_RING;
+            Shape->PartType[i] = SHPP_RING;
 
 	/* -------------------------------------------------------------------- */
 	/*      Copy out the part array from the record.                        */
 	/* -------------------------------------------------------------------- */
-        memcpy(psShape->panPartStart, SHP->Rec + 44 + 8, 4 * nParts);
+        memcpy(Shape->PartStart, SHP->Rec + 44 + 8, 4 * nParts);
         for (i=0; (guint32) i < nParts; i++) {
-            if (BigEndian) SwapWord(4, psShape->panPartStart+i);
+            if (BigEndian) SwapWord(4, Shape->PartStart+i);
 
             /* We check that the offset is inside the vertex array */
-            if (psShape->panPartStart[i] < 0
-                || (psShape->panPartStart[i] >= psShape->nVertices
-                    && psShape->nVertices > 0)
-                || (psShape->panPartStart[i] > 0 && psShape->nVertices == 0)) {
-		gretl_errmsg_sprintf("Corrupted .shp file: shape %d: panPartStart[%d] = %d, "
-				     "nVertices = %d", hEntity, i, psShape->panPartStart[i],
-				     psShape->nVertices);
-                SHPDestroyObject(psShape);
+            if (Shape->PartStart[i] < 0
+                || (Shape->PartStart[i] >= Shape->nVertices
+                    && Shape->nVertices > 0)
+                || (Shape->PartStart[i] > 0 && Shape->nVertices == 0)) {
+		gretl_errmsg_sprintf("Corrupted .shp file: shape %d: PartStart[%d] = %d, "
+				     "nVertices = %d", hEntity, i, Shape->PartStart[i],
+				     Shape->nVertices);
+                SHPDestroyObject(Shape);
                 return NULL;
             }
-            if (i > 0 && psShape->panPartStart[i] <= psShape->panPartStart[i-1]) {
-		gretl_errmsg_sprintf("Corrupted .shp file: shape %d: panPartStart[%d] = %d, "
-				     "panPartStart[%d] = %d",
-				     hEntity, i, psShape->panPartStart[i], i - 1,
-				     psShape->panPartStart[i - 1]);
-                SHPDestroyObject(psShape);
+            if (i > 0 && Shape->PartStart[i] <= Shape->PartStart[i-1]) {
+		gretl_errmsg_sprintf("Corrupted .shp file: shape %d: PartStart[%d] = %d, "
+				     "PartStart[%d] = %d",
+				     hEntity, i, Shape->PartStart[i], i - 1,
+				     Shape->PartStart[i - 1]);
+                SHPDestroyObject(Shape);
                 return NULL;
             }
         }
@@ -803,10 +830,10 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	/* -------------------------------------------------------------------- */
 	/*      If this is a multipatch, we will also have parts types.         */
 	/* -------------------------------------------------------------------- */
-        if (psShape->nSHPType == SHPT_MULTIPATCH) {
-	    memcpy(psShape->panPartType, SHP->Rec + nOffset, 4*nParts);
+        if (Shape->nSHPType == SHPT_MULTIPATCH) {
+	    memcpy(Shape->PartType, SHP->Rec + nOffset, 4*nParts);
 	    for (i = 0; (guint32) i < nParts; i++) {
-                if (BigEndian) SwapWord(4, psShape->panPartType+i);
+                if (BigEndian) SwapWord(4, Shape->PartType+i);
             }
             nOffset += 4*nParts;
         }
@@ -815,16 +842,16 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	/*      Copy out the vertices from the record.                          */
 	/* -------------------------------------------------------------------- */
         for (i=0; (guint32) i < nPoints; i++) {
-            memcpy(psShape->padfX + i,
+            memcpy(Shape->fX + i,
                    SHP->Rec + nOffset + i * 16,
                    8);
 
-            memcpy(psShape->padfY + i,
+            memcpy(Shape->fY + i,
                    SHP->Rec + nOffset + i * 16 + 8,
                    8);
 
-            if (BigEndian) SwapWord(8, psShape->padfX + i);
-            if (BigEndian) SwapWord(8, psShape->padfY + i);
+            if (BigEndian) SwapWord(8, Shape->fX + i);
+            if (BigEndian) SwapWord(8, Shape->fY + i);
         }
 
         nOffset += 16*nPoints;
@@ -832,24 +859,24 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	/* -------------------------------------------------------------------- */
 	/*      If we have a Z coordinate, collect that now.                    */
 	/* -------------------------------------------------------------------- */
-        if (psShape->nSHPType == SHPT_POLYGONZ
-            || psShape->nSHPType == SHPT_ARCZ
-            || psShape->nSHPType == SHPT_MULTIPATCH) {
-            memcpy(&(psShape->dfZMin), SHP->Rec + nOffset, 8);
-            memcpy(&(psShape->dfZMax), SHP->Rec + nOffset + 8, 8);
+        if (Shape->nSHPType == SHPT_POLYGONZ
+            || Shape->nSHPType == SHPT_ARCZ
+            || Shape->nSHPType == SHPT_MULTIPATCH) {
+            memcpy(&(Shape->ZMin), SHP->Rec + nOffset, 8);
+            memcpy(&(Shape->ZMax), SHP->Rec + nOffset + 8, 8);
 
-            if (BigEndian) SwapWord(8, &(psShape->dfZMin));
-            if (BigEndian) SwapWord(8, &(psShape->dfZMax));
+            if (BigEndian) SwapWord(8, &(Shape->ZMin));
+            if (BigEndian) SwapWord(8, &(Shape->ZMax));
 
             for (i=0; (guint32) i < nPoints; i++) {
-                memcpy(psShape->padfZ + i,
+                memcpy(Shape->fZ + i,
 		       SHP->Rec + nOffset + 16 + i*8, 8);
-                if (BigEndian) SwapWord(8, psShape->padfZ + i);
+                if (BigEndian) SwapWord(8, Shape->fZ + i);
             }
 
             nOffset += 16 + 8*nPoints;
-        } else if (psShape->bFastModeReadObject) {
-            psShape->padfZ = NULL;
+        } else if (Shape->bFastModeReadObject) {
+            Shape->fZ = NULL;
         }
 
 	/* -------------------------------------------------------------------- */
@@ -859,29 +886,29 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	/*      (options), and the M shapes.                                    */
 	/* -------------------------------------------------------------------- */
         if (nEntitySize >= (int) (nOffset + 16 + 8*nPoints)) {
-            memcpy(&(psShape->dfMMin), SHP->Rec + nOffset, 8);
-            memcpy(&(psShape->dfMMax), SHP->Rec + nOffset + 8, 8);
+            memcpy(&(Shape->MMin), SHP->Rec + nOffset, 8);
+            memcpy(&(Shape->MMax), SHP->Rec + nOffset + 8, 8);
 
-            if (BigEndian) SwapWord(8, &(psShape->dfMMin));
-            if (BigEndian) SwapWord(8, &(psShape->dfMMax));
+            if (BigEndian) SwapWord(8, &(Shape->MMin));
+            if (BigEndian) SwapWord(8, &(Shape->MMax));
 
             for (i=0; (guint32) i < nPoints; i++) {
-                memcpy(psShape->padfM + i,
+                memcpy(Shape->fM + i,
 		       SHP->Rec + nOffset + 16 + i*8, 8);
-                if (BigEndian) SwapWord(8, psShape->padfM + i);
+                if (BigEndian) SwapWord(8, Shape->fM + i);
             }
-            psShape->bMeasureIsUsed = TRUE;
-        } else if (psShape->bFastModeReadObject) {
-            psShape->padfM = NULL;
+            Shape->bMeasureIsUsed = TRUE;
+        } else if (Shape->bFastModeReadObject) {
+            Shape->fM = NULL;
         }
     }
 
     /* -------------------------------------------------------------------- */
     /*  Extract vertices for a MultiPoint.                                  */
     /* -------------------------------------------------------------------- */
-    else if (psShape->nSHPType == SHPT_MULTIPOINT ||
-             psShape->nSHPType == SHPT_MULTIPOINTM ||
-             psShape->nSHPType == SHPT_MULTIPOINTZ) {
+    else if (Shape->nSHPType == SHPT_MULTIPOINT ||
+             Shape->nSHPType == SHPT_MULTIPOINTM ||
+             Shape->nSHPType == SHPT_MULTIPOINTZ) {
 	guint32		nPoints;
 	int    		i, nOffset;
 	unsigned char*  pBuffer = NULL;
@@ -890,7 +917,7 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	if (44 + 4 > nEntitySize) {
 	    gretl_errmsg_sprintf("Corrupted .shp file: shape %d: nEntitySize = %d",
 				 hEntity, nEntitySize);
-	    SHPDestroyObject(psShape);
+	    SHPDestroyObject(Shape);
 	    return NULL;
 	}
 	memcpy(&nPoints, SHP->Rec + 44, 4);
@@ -901,51 +928,51 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	if (nPoints > 50 * 1000 * 1000) {
 	    gretl_errmsg_sprintf("Corrupted .shp file: shape %d: nPoints = %u",
 				 hEntity, nPoints);
-	    SHPDestroyObject(psShape);
+	    SHPDestroyObject(Shape);
 	    return NULL;
 	}
 
 	nRequiredSize = 48 + nPoints * 16;
-	if (psShape->nSHPType == SHPT_MULTIPOINTZ) {
+	if (Shape->nSHPType == SHPT_MULTIPOINTZ) {
 	    nRequiredSize += 16 + nPoints * 8;
 	}
         if (nRequiredSize > nEntitySize) {
 	    gretl_errmsg_sprintf("Corrupted .shp file: shape %d: nPoints = %u, nEntitySize = %d",
 				 hEntity, nPoints, nEntitySize);
-            SHPDestroyObject(psShape);
+            SHPDestroyObject(Shape);
             return NULL;
         }
 
-        if (psShape->bFastModeReadObject) {
+        if (Shape->bFastModeReadObject) {
             int nObjectBufSize = 4 * sizeof(double) * nPoints;
 
             pBuffer = SHPReallocObjectBufIfNecessary(SHP, nObjectBufSize);
             ppBuffer = &pBuffer;
         }
 
-        psShape->nVertices = nPoints;
+        Shape->nVertices = nPoints;
 
-        psShape->padfX = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
-        psShape->padfY = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
-        psShape->padfZ = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
-        psShape->padfM = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->fX = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->fY = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->fZ = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
+        Shape->fM = SHPAllocBuffer(ppBuffer, sizeof(double) * nPoints);
 
-        if (psShape->padfX == NULL ||
-            psShape->padfY == NULL ||
-            psShape->padfZ == NULL ||
-            psShape->padfM == NULL) {
+        if (Shape->fX == NULL ||
+            Shape->fY == NULL ||
+            Shape->fZ == NULL ||
+            Shape->fM == NULL) {
 	    gretl_errmsg_sprintf("Not enough memory (nPoints=%u) for shape %d; "
                      "probably broken SHP file", nPoints, hEntity);
-            SHPDestroyObject(psShape);
+            SHPDestroyObject(Shape);
             return NULL;
         }
 
         for (i = 0; (guint32) i < nPoints; i++) {
-            memcpy(psShape->padfX+i, SHP->Rec + 48 + 16 * i, 8);
-            memcpy(psShape->padfY+i, SHP->Rec + 48 + 16 * i + 8, 8);
+            memcpy(Shape->fX+i, SHP->Rec + 48 + 16 * i, 8);
+            memcpy(Shape->fY+i, SHP->Rec + 48 + 16 * i + 8, 8);
 
-            if (BigEndian) SwapWord(8, psShape->padfX + i);
-            if (BigEndian) SwapWord(8, psShape->padfY + i);
+            if (BigEndian) SwapWord(8, Shape->fX + i);
+            if (BigEndian) SwapWord(8, Shape->fY + i);
         }
 
         nOffset = 48 + 16*nPoints;
@@ -953,35 +980,35 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	/* -------------------------------------------------------------------- */
 	/*	Get the X/Y bounds.						*/
 	/* -------------------------------------------------------------------- */
-        memcpy(&(psShape->dfXMin), SHP->Rec + 8 +  4, 8);
-        memcpy(&(psShape->dfYMin), SHP->Rec + 8 + 12, 8);
-        memcpy(&(psShape->dfXMax), SHP->Rec + 8 + 20, 8);
-        memcpy(&(psShape->dfYMax), SHP->Rec + 8 + 28, 8);
+        memcpy(&(Shape->XMin), SHP->Rec + 8 +  4, 8);
+        memcpy(&(Shape->YMin), SHP->Rec + 8 + 12, 8);
+        memcpy(&(Shape->XMax), SHP->Rec + 8 + 20, 8);
+        memcpy(&(Shape->YMax), SHP->Rec + 8 + 28, 8);
 
-        if (BigEndian) SwapWord(8, &(psShape->dfXMin));
-        if (BigEndian) SwapWord(8, &(psShape->dfYMin));
-        if (BigEndian) SwapWord(8, &(psShape->dfXMax));
-        if (BigEndian) SwapWord(8, &(psShape->dfYMax));
+        if (BigEndian) SwapWord(8, &(Shape->XMin));
+        if (BigEndian) SwapWord(8, &(Shape->YMin));
+        if (BigEndian) SwapWord(8, &(Shape->XMax));
+        if (BigEndian) SwapWord(8, &(Shape->YMax));
 
 	/* -------------------------------------------------------------------- */
 	/*      If we have a Z coordinate, collect that now.                    */
 	/* -------------------------------------------------------------------- */
-        if (psShape->nSHPType == SHPT_MULTIPOINTZ) {
-            memcpy(&(psShape->dfZMin), SHP->Rec + nOffset, 8);
-            memcpy(&(psShape->dfZMax), SHP->Rec + nOffset + 8, 8);
+        if (Shape->nSHPType == SHPT_MULTIPOINTZ) {
+            memcpy(&(Shape->ZMin), SHP->Rec + nOffset, 8);
+            memcpy(&(Shape->ZMax), SHP->Rec + nOffset + 8, 8);
 
-            if (BigEndian) SwapWord(8, &(psShape->dfZMin));
-            if (BigEndian) SwapWord(8, &(psShape->dfZMax));
+            if (BigEndian) SwapWord(8, &(Shape->ZMin));
+            if (BigEndian) SwapWord(8, &(Shape->ZMax));
 
             for (i = 0; (guint32) i < nPoints; i++) {
-		memcpy(psShape->padfZ + i,
+		memcpy(Shape->fZ + i,
 		       SHP->Rec + nOffset + 16 + i*8, 8);
-		if (BigEndian) SwapWord(8, psShape->padfZ + i);
+		if (BigEndian) SwapWord(8, Shape->fZ + i);
 	    }
 
             nOffset += 16 + 8*nPoints;
-        } else if (psShape->bFastModeReadObject) {
-            psShape->padfZ = NULL;
+        } else if (Shape->bFastModeReadObject) {
+            Shape->fZ = NULL;
 	}
 
 	/* -------------------------------------------------------------------- */
@@ -991,95 +1018,95 @@ SHPObject *SHPReadObject (SHPHandle SHP, int hEntity)
 	/*      (options), and the M shapes.                                    */
 	/* -------------------------------------------------------------------- */
         if (nEntitySize >= (int) (nOffset + 16 + 8*nPoints)) {
-            memcpy(&(psShape->dfMMin), SHP->Rec + nOffset, 8);
-            memcpy(&(psShape->dfMMax), SHP->Rec + nOffset + 8, 8);
+            memcpy(&(Shape->MMin), SHP->Rec + nOffset, 8);
+            memcpy(&(Shape->MMax), SHP->Rec + nOffset + 8, 8);
 
-            if (BigEndian) SwapWord(8, &(psShape->dfMMin));
-            if (BigEndian) SwapWord(8, &(psShape->dfMMax));
+            if (BigEndian) SwapWord(8, &(Shape->MMin));
+            if (BigEndian) SwapWord(8, &(Shape->MMax));
 
             for (i=0; i<nPoints; i++) {
-                memcpy(psShape->padfM + i,
+                memcpy(Shape->fM + i,
 		       SHP->Rec + nOffset + 16 + i*8, 8);
-                if (BigEndian) SwapWord(8, psShape->padfM + i);
+                if (BigEndian) SwapWord(8, Shape->fM + i);
             }
-            psShape->bMeasureIsUsed = TRUE;
-        } else if (psShape->bFastModeReadObject) {
-            psShape->padfM = NULL;
+            Shape->bMeasureIsUsed = TRUE;
+        } else if (Shape->bFastModeReadObject) {
+            Shape->fM = NULL;
 	}
     }
 
     /* -------------------------------------------------------------------- */
     /*      Extract vertices for a point.                                   */
     /* -------------------------------------------------------------------- */
-    else if (psShape->nSHPType == SHPT_POINT
-             || psShape->nSHPType == SHPT_POINTM
-             || psShape->nSHPType == SHPT_POINTZ) {
+    else if (Shape->nSHPType == SHPT_POINT
+             || Shape->nSHPType == SHPT_POINTM
+             || Shape->nSHPType == SHPT_POINTZ) {
         int nOffset;
 
-        psShape->nVertices = 1;
-        if (psShape->bFastModeReadObject) {
-            psShape->padfX = &(psShape->dfXMin);
-            psShape->padfY = &(psShape->dfYMin);
-            psShape->padfZ = &(psShape->dfZMin);
-            psShape->padfM = &(psShape->dfMMin);
-            psShape->padfZ[0] = 0.0;
-            psShape->padfM[0] = 0.0;
+        Shape->nVertices = 1;
+        if (Shape->bFastModeReadObject) {
+            Shape->fX = &(Shape->XMin);
+            Shape->fY = &(Shape->YMin);
+            Shape->fZ = &(Shape->ZMin);
+            Shape->fM = &(Shape->MMin);
+            Shape->fZ[0] = 0.0;
+            Shape->fM[0] = 0.0;
         } else {
-            psShape->padfX = calloc(1, sizeof(double));
-            psShape->padfY = calloc(1, sizeof(double));
-            psShape->padfZ = calloc(1, sizeof(double));
-            psShape->padfM = calloc(1, sizeof(double));
+            Shape->fX = calloc(1, sizeof(double));
+            Shape->fY = calloc(1, sizeof(double));
+            Shape->fZ = calloc(1, sizeof(double));
+            Shape->fM = calloc(1, sizeof(double));
         }
 
-        if (20 + 8 + ((psShape->nSHPType == SHPT_POINTZ) ? 8 : 0)> nEntitySize) {
+        if (20 + 8 + ((Shape->nSHPType == SHPT_POINTZ) ? 8 : 0)> nEntitySize) {
 	    gretl_errmsg_sprintf("Corrupted .shp file: shape %d: nEntitySize = %d",
 				 hEntity, nEntitySize);
-            SHPDestroyObject(psShape);
+            SHPDestroyObject(Shape);
             return NULL;
         }
-        memcpy(psShape->padfX, SHP->Rec + 12, 8);
-        memcpy(psShape->padfY, SHP->Rec + 20, 8);
+        memcpy(Shape->fX, SHP->Rec + 12, 8);
+        memcpy(Shape->fY, SHP->Rec + 20, 8);
 
-        if (BigEndian) SwapWord(8, psShape->padfX);
-        if (BigEndian) SwapWord(8, psShape->padfY);
+        if (BigEndian) SwapWord(8, Shape->fX);
+        if (BigEndian) SwapWord(8, Shape->fY);
 
         nOffset = 20 + 8;
 
 	/* -------------------------------------------------------------------- */
 	/*      If we have a Z coordinate, collect that now.                    */
 	/* -------------------------------------------------------------------- */
-        if (psShape->nSHPType == SHPT_POINTZ) {
-            memcpy(psShape->padfZ, SHP->Rec + nOffset, 8);
-            if (BigEndian) SwapWord(8, psShape->padfZ);
+        if (Shape->nSHPType == SHPT_POINTZ) {
+            memcpy(Shape->fZ, SHP->Rec + nOffset, 8);
+            if (BigEndian) SwapWord(8, Shape->fZ);
             nOffset += 8;
         }
 
 	/* -------------------------------------------------------------------- */
-	/*      If we have a M measure value, then read it now.  We assume      */
+	/*      If we have an M measure value, then read it now.  We assume     */
 	/*      that the measure can be present for any shape if the size is    */
 	/*      big enough, but really it will only occur for the Z shapes      */
 	/*      (options), and the M shapes.                                    */
 	/* -------------------------------------------------------------------- */
         if (nEntitySize >= nOffset + 8) {
-            memcpy(psShape->padfM, SHP->Rec + nOffset, 8);
-            if (BigEndian) SwapWord(8, psShape->padfM);
-            psShape->bMeasureIsUsed = TRUE;
+            memcpy(Shape->fM, SHP->Rec + nOffset, 8);
+            if (BigEndian) SwapWord(8, Shape->fM);
+            Shape->bMeasureIsUsed = TRUE;
         }
 
 	/* -------------------------------------------------------------------- */
 	/*      Since no extents are supplied in the record, we will apply      */
 	/*      them from the single vertex.                                    */
 	/* -------------------------------------------------------------------- */
-        psShape->dfXMin = psShape->dfXMax = psShape->padfX[0];
-        psShape->dfYMin = psShape->dfYMax = psShape->padfY[0];
-        psShape->dfZMin = psShape->dfZMax = psShape->padfZ[0];
-        psShape->dfMMin = psShape->dfMMax = psShape->padfM[0];
+        Shape->XMin = Shape->XMax = Shape->fX[0];
+        Shape->YMin = Shape->YMax = Shape->fY[0];
+        Shape->ZMin = Shape->ZMax = Shape->fZ[0];
+        Shape->MMin = Shape->MMax = Shape->fM[0];
     }
 
-    return psShape;
+    return Shape;
 }
 
-const char *SHPTypeName(int nSHPType)
+const char *SHPTypeName (int nSHPType)
 {
     switch (nSHPType) {
     case SHPT_NULL:
@@ -1135,206 +1162,29 @@ const char *SHPPartTypeName (int nPartType)
     }
 }
 
-void SHPDestroyObject (SHPObject * psShape)
-
+void SHPDestroyObject (SHPObject *Shape)
 {
-    if (psShape == NULL)
+    if (Shape == NULL)
         return;
 
-    if (psShape->bFastModeReadObject) {
-        psShape->bFastModeReadObject = FALSE;
+    if (Shape->bFastModeReadObject) {
+        Shape->bFastModeReadObject = FALSE;
         return;
     }
 
-    if (psShape->padfX != NULL)
-        free(psShape->padfX);
-    if (psShape->padfY != NULL)
-        free(psShape->padfY);
-    if (psShape->padfZ != NULL)
-        free(psShape->padfZ);
-    if (psShape->padfM != NULL)
-        free(psShape->padfM);
+    if (Shape->fX != NULL)
+        free(Shape->fX);
+    if (Shape->fY != NULL)
+        free(Shape->fY);
+    if (Shape->fZ != NULL)
+        free(Shape->fZ);
+    if (Shape->fM != NULL)
+        free(Shape->fM);
 
-    if (psShape->panPartStart != NULL)
-        free(psShape->panPartStart);
-    if (psShape->panPartType != NULL)
-        free(psShape->panPartType);
+    if (Shape->PartStart != NULL)
+        free(Shape->PartStart);
+    if (Shape->PartType != NULL)
+        free(Shape->PartType);
 
-    free(psShape);
-}
-
-static int SHPGetPartVertexCount(const SHPObject * psObject, int iPart)
-{
-    if (iPart == psObject->nParts-1)
-        return psObject->nVertices - psObject->panPartStart[iPart];
-    else
-        return psObject->panPartStart[iPart+1] - psObject->panPartStart[iPart];
-}
-
-static int SHPRewindIsInnerRing (const SHPObject * psObject,
-                                 int iOpRing)
-{
-    /* -------------------------------------------------------------------- */
-    /*      Determine if this ring is an inner ring or an outer ring        */
-    /*      relative to all the other rings.  For now we assume the         */
-    /*      first ring is outer and all others are inner, but eventually    */
-    /*      we need to fix this to handle multiple island polygons and      */
-    /*      unordered sets of rings.                                        */
-    /*                                                                      */
-    /* -------------------------------------------------------------------- */
-
-    /* Use point in the middle of segment to avoid testing
-     * common points of rings.
-     */
-    const int iOpRingStart = psObject->panPartStart[iOpRing];
-    double dfTestX = (psObject->padfX[iOpRingStart] +
-		      psObject->padfX[iOpRingStart + 1]) / 2;
-    double dfTestY = (psObject->padfY[iOpRingStart] +
-		      psObject->padfY[iOpRingStart + 1]) / 2;
-
-    int bInner = FALSE;
-    int iCheckRing;
-
-    for (iCheckRing = 0; iCheckRing < psObject->nParts; iCheckRing++) {
-        int nVertStartCheck, nVertCountCheck;
-        int iEdge;
-
-        if (iCheckRing == iOpRing)
-            continue;
-
-        nVertStartCheck = psObject->panPartStart[iCheckRing];
-        nVertCountCheck = SHPGetPartVertexCount(psObject, iCheckRing);
-
-        for (iEdge = 0; iEdge < nVertCountCheck; iEdge++) {
-            int iNext;
-
-            if (iEdge < nVertCountCheck-1)
-                iNext = iEdge+1;
-            else
-                iNext = 0;
-
-            /* Rule #1:
-             * Test whether the edge 'straddles' the horizontal ray from
-             * the test point (dfTestY,dfTestY)
-             * The rule #1 also excludes edges colinear with the ray.
-             */
-            if ((psObject->padfY[iEdge+nVertStartCheck] < dfTestY
-		 && dfTestY <= psObject->padfY[iNext+nVertStartCheck])
-		|| (psObject->padfY[iNext+nVertStartCheck] < dfTestY
-		    && dfTestY <= psObject->padfY[iEdge+nVertStartCheck])) {
-		    /* Rule #2:
-		     * Test if edge-ray intersection is on the right from the
-		     * test point (dfTestY,dfTestY)
-		     */
-		    double const intersect =
-			(psObject->padfX[iEdge+nVertStartCheck]
-			 + (dfTestY - psObject->padfY[iEdge+nVertStartCheck])
-			 / (psObject->padfY[iNext+nVertStartCheck] -
-                            psObject->padfY[iEdge+nVertStartCheck])
-			 * (psObject->padfX[iNext+nVertStartCheck] -
-                            psObject->padfX[iEdge+nVertStartCheck]));
-
-		    if (intersect  < dfTestX) {
-			bInner = !bInner;
-		    }
-		}
-        }
-    } /* for iCheckRing */
-
-    return bInner;
-}
-
-/************************************************************************/
-/*      Reset the winding of polygon objects to adhere to the           */
-/*      specification.                                                  */
-/************************************************************************/
-
-int SHPRewindObject (SHPHandle hSHP, SHPObject *psObject)
-{
-    int iOpRing, bAltered = 0;
-
-    /* -------------------------------------------------------------------- */
-    /*      Do nothing if this is not a polygon object.                     */
-    /* -------------------------------------------------------------------- */
-    if (psObject->nSHPType != SHPT_POLYGON
-        && psObject->nSHPType != SHPT_POLYGONZ
-        && psObject->nSHPType != SHPT_POLYGONM)
-        return 0;
-
-    if (psObject->nVertices == 0 || psObject->nParts == 0)
-        return 0;
-
-    /* -------------------------------------------------------------------- */
-    /*      Process each of the rings.                                      */
-    /* -------------------------------------------------------------------- */
-    for (iOpRing = 0; iOpRing < psObject->nParts; iOpRing++) {
-        int bInner, iVert, nVertCount, nVertStart;
-        double dfSum;
-
-        nVertStart = psObject->panPartStart[iOpRing];
-        nVertCount = SHPGetPartVertexCount(psObject, iOpRing);
-
-        if (nVertCount < 2)
-            continue;
-
-        bInner = SHPRewindIsInnerRing(psObject, iOpRing);
-
-	/* -------------------------------------------------------------------- */
-	/*      Determine the current order of this ring so we will know if     */
-	/*      it has to be reversed.                                          */
-	/* -------------------------------------------------------------------- */
-
-        dfSum = psObject->padfX[nVertStart] *
-	    (psObject->padfY[nVertStart+1] -
-	     psObject->padfY[nVertStart+nVertCount-1]);
-        for (iVert = nVertStart + 1; iVert < nVertStart+nVertCount-1; iVert++) {
-            dfSum += psObject->padfX[iVert] * (psObject->padfY[iVert+1] -
-                                               psObject->padfY[iVert-1]);
-        }
-
-        dfSum += psObject->padfX[iVert] * (psObject->padfY[nVertStart] -
-                                           psObject->padfY[iVert-1]);
-
-	/* -------------------------------------------------------------------- */
-	/*      Reverse if necessary.                                           */
-	/* -------------------------------------------------------------------- */
-        if ((dfSum < 0.0 && bInner) || (dfSum > 0.0 && !bInner)) {
-            int i;
-
-            bAltered++;
-            for (i = 0; i < nVertCount/2; i++) {
-                double dfSaved;
-
-                /* Swap X */
-                dfSaved = psObject->padfX[nVertStart+i];
-                psObject->padfX[nVertStart+i] =
-                    psObject->padfX[nVertStart+nVertCount-i-1];
-                psObject->padfX[nVertStart+nVertCount-i-1] = dfSaved;
-
-                /* Swap Y */
-                dfSaved = psObject->padfY[nVertStart+i];
-                psObject->padfY[nVertStart+i] =
-                    psObject->padfY[nVertStart+nVertCount-i-1];
-                psObject->padfY[nVertStart+nVertCount-i-1] = dfSaved;
-
-                /* Swap Z */
-                if (psObject->padfZ) {
-                    dfSaved = psObject->padfZ[nVertStart+i];
-                    psObject->padfZ[nVertStart+i] =
-                        psObject->padfZ[nVertStart+nVertCount-i-1];
-                    psObject->padfZ[nVertStart+nVertCount-i-1] = dfSaved;
-                }
-
-                /* Swap M */
-                if (psObject->padfM) {
-                    dfSaved = psObject->padfM[nVertStart+i];
-                    psObject->padfM[nVertStart+i] =
-                        psObject->padfM[nVertStart+nVertCount-i-1];
-                    psObject->padfM[nVertStart+nVertCount-i-1] = dfSaved;
-                }
-            }
-        }
-    }
-
-    return bAltered;
+    free(Shape);
 }

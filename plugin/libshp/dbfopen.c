@@ -40,10 +40,10 @@
 #include <string.h>
 
 #if defined(WIN32) || defined(_WIN32)
-#    define STRCASECMP(a,b)         (stricmp(a,b))
+# define STRCASECMP(a,b)         (stricmp(a,b))
 #  else
 #include <strings.h>
-#    define STRCASECMP(a,b)         (strcasecmp(a,b))
+# define STRCASECMP(a,b)         (strcasecmp(a,b))
 #endif
 
 #if defined(_MSC_VER)
@@ -68,43 +68,45 @@
 
 #define HEADER_RECORD_TERMINATOR 0x0D
 
+#define TRIM_DBF_WHITESPACE
+
 /* See http://www.manmrk.net/tutorials/database/xbase/dbf.html */
 #define END_OF_FILE_CHARACTER    0x1A
 
 typedef struct DBFInfo_
 {
-    FILE        *fp;
-    int         nRecords;
-    int         nRecordLength; /* Must fit on uint16 */
-    int         nHeaderLength; /* File header length (32) + field
+    FILE *fp;
+    int nRecords;
+    int nRecordLength; /* Must fit on uint16 */
+    int nHeaderLength; /* File header length (32) + field
                                   descriptor length + spare space.
                                   Must fit on uint16 */
-    int         nFields;
-    int         *panFieldOffset;
-    int         *panFieldSize;
-    int         *panFieldDecimals;
-    char        *pachFieldType;
-    char        *pszHeader; /* Field descriptors */
-    int         nCurrentRecord;
-    int         bCurrentRecordModified;
-    char        *pszCurrentRecord;
-    int         nWorkFieldLength;
-    char        *pszWorkField;
-    int         bNoHeader;
-    int         bUpdated;
+    int nFields;
+    int *FieldOffset;
+    int *FieldSize;
+    int *FieldDecimals;
+    char *FieldType;
+    char *Header; /* Field descriptors */
+    int  nCurrentRecord;
+    int  bCurrentRecordModified;
+    char *CurrentRecord;
+    int  nWorkFieldLength;
+    char *WorkField;
+    int  bNoHeader;
+    int  bUpdated;
 
     union
     {
-        double      dfDoubleField;
-        int         nIntField;
+        double DoubleField;
+        int    IntField;
     } fieldValue;
 
-    int         iLanguageDriver;
-    char        *pszCodePage;
-    int         nUpdateYearSince1900; /* 0-255 */
-    int         nUpdateMonth; /* 1-12 */
-    int         nUpdateDay; /* 1-31 */
-    int         bWriteEndOfFileChar; /* defaults to TRUE */
+    int  LanguageDriver;
+    char *CodePage;
+    int  nUpdateYearSince1900; /* 0-255 */
+    int  nUpdateMonth; /* 1-12 */
+    int  nUpdateDay; /* 1-31 */
+    int  bWriteEndOfFileChar; /* defaults to TRUE */
 } DBFInfo;
 
 static int DBFLoadRecord (DBFHandle DBF, int iRecord)
@@ -119,84 +121,82 @@ static int DBFLoadRecord (DBFHandle DBF, int iRecord)
 	    gretl_errmsg_sprintf("fseek(%ld) failed on DBF file.",
 				 (long) nRecordOffset);
 	    return FALSE;
-	}
-
-	if (fread(DBF->pszCurrentRecord,
-		  DBF->nRecordLength, 1, DBF->fp) != 1) {
+	} else if (fread(DBF->CurrentRecord,
+			 DBF->nRecordLength, 1, DBF->fp) != 1) {
 	    gretl_errmsg_sprintf("fread(%d) failed on DBF file.",
 				 DBF->nRecordLength);
 	    return FALSE;
+	} else {
+	    DBF->nCurrentRecord = iRecord;
 	}
-
-	DBF->nCurrentRecord = iRecord;
     }
 
     return TRUE;
 }
 
-static int DBFGetLenWithoutExtension(const char* pszBasename)
+static int DBFGetLenWithoutExtension(const char* Basename)
 {
-    int i, len = (int) strlen(pszBasename);
+    int i, len = (int) strlen(Basename);
 
     for (i = len-1;
-	 i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
+	 i > 0 && Basename[i] != '/' && Basename[i] != '\\';
 	 i--) {
-	if (pszBasename[i] == '.') {
+	if (Basename[i] == '.') {
 	    return i;
 	}
     }
     return len;
 }
 
-DBFHandle DBFOpen (const char *pszFilename, const char *pszAccess)
+DBFHandle DBFOpen (const char *Filename, const char *Access)
 {
     DBFHandle		DBF;
     FILE *		pfCPG;
     unsigned char	*buf;
     int			nFields, nHeadLen, iField;
-    char		*pszFullname;
+    char		*Fullname;
     int                 nBufSize = 500;
     int                 nLenWithoutExtension;
 
     /* -------------------------------------------------------------------- */
     /*      We only allow the access strings "rb" and "r+".                  */
     /* -------------------------------------------------------------------- */
-    if (strcmp(pszAccess,"r") != 0 && strcmp(pszAccess,"r+") != 0
-       && strcmp(pszAccess,"rb") != 0 && strcmp(pszAccess,"rb+") != 0
-       && strcmp(pszAccess,"r+b") != 0)
+    if (strcmp(Access,"r") != 0 && strcmp(Access,"r+") != 0
+       && strcmp(Access,"rb") != 0 && strcmp(Access,"rb+") != 0
+       && strcmp(Access,"r+b") != 0)
         return NULL;
 
-    if (strcmp(pszAccess,"r") == 0)
-        pszAccess = "rb";
+    if (strcmp(Access,"r") == 0)
+        Access = "rb";
 
-    if (strcmp(pszAccess,"r+") == 0)
-        pszAccess = "rb+";
+    if (strcmp(Access,"r+") == 0)
+        Access = "rb+";
 
     /* -------------------------------------------------------------------- */
     /*	Compute the base (layer) name.  If there is any extension	*/
     /*	on the passed in filename we will strip it off.			*/
     /* -------------------------------------------------------------------- */
-    nLenWithoutExtension = DBFGetLenWithoutExtension(pszFilename);
-    pszFullname = malloc(nLenWithoutExtension + 5);
-    memcpy(pszFullname, pszFilename, nLenWithoutExtension);
-    memcpy(pszFullname + nLenWithoutExtension, ".dbf", 5);
+    nLenWithoutExtension = DBFGetLenWithoutExtension(Filename);
+    Fullname = malloc(nLenWithoutExtension + 5);
+    memcpy(Fullname, Filename, nLenWithoutExtension);
+    memcpy(Fullname + nLenWithoutExtension, ".dbf", 5);
 
     DBF = calloc(1, sizeof(DBFInfo));
-    DBF->fp = gretl_fopen(pszFullname, pszAccess);
+    DBF->fp = gretl_fopen(Fullname, Access);
 
     if (DBF->fp == NULL) {
-	memcpy(pszFullname + nLenWithoutExtension, ".DBF", 5);
-	DBF->fp = gretl_fopen(pszFullname, pszAccess);
+	memcpy(Fullname + nLenWithoutExtension, ".DBF", 5);
+	DBF->fp = gretl_fopen(Fullname, Access);
     }
 
-    memcpy(pszFullname + nLenWithoutExtension, ".cpg", 5);
-    pfCPG = gretl_fopen(pszFullname, "r");
+    memcpy(Fullname + nLenWithoutExtension, ".cpg", 5);
+    pfCPG = gretl_fopen(Fullname, "r");
     if (pfCPG == NULL) {
-	memcpy(pszFullname + nLenWithoutExtension, ".CPG", 5);
-	pfCPG = gretl_fopen(pszFullname, "r");
+	memcpy(Fullname + nLenWithoutExtension, ".CPG", 5);
+	pfCPG = gretl_fopen(Fullname, "r");
     }
 
-    free(pszFullname);
+    free(Fullname);
 
     if (DBF->fp == NULL) {
 	free(DBF);
@@ -227,7 +227,7 @@ DBFHandle DBFOpen (const char *pszFilename, const char *pszAccess)
 
     DBF->nHeaderLength = nHeadLen = buf[8]|(buf[9]<<8);
     DBF->nRecordLength = buf[10]|(buf[11]<<8);
-    DBF->iLanguageDriver = buf[29];
+    DBF->LanguageDriver = buf[29];
 
     if (DBF->nRecordLength == 0 || nHeadLen < XBASE_FILEHDR_SZ) {
 	fclose(DBF->fp);
@@ -240,13 +240,13 @@ DBFHandle DBFOpen (const char *pszFilename, const char *pszAccess)
     DBF->nFields = nFields = (nHeadLen - XBASE_FILEHDR_SZ) / XBASE_FLDHDR_SZ;
 
     /* coverity[tainted_data] */
-    DBF->pszCurrentRecord = malloc(DBF->nRecordLength);
+    DBF->CurrentRecord = malloc(DBF->nRecordLength);
 
     /* -------------------------------------------------------------------- */
     /*  Figure out the code page from the LDID and CPG                      */
     /* -------------------------------------------------------------------- */
 
-    DBF->pszCodePage = NULL;
+    DBF->CodePage = NULL;
     if (pfCPG) {
 	size_t n;
 
@@ -255,16 +255,16 @@ DBFHandle DBFOpen (const char *pszFilename, const char *pszAccess)
 	    n = strcspn((char *) buf, "\n\r");
 	    if (n > 0) {
 		buf[n] = '\0';
-		DBF->pszCodePage = malloc(n + 1);
-		memcpy(DBF->pszCodePage, buf, n + 1);
+		DBF->CodePage = malloc(n + 1);
+		memcpy(DBF->CodePage, buf, n + 1);
 	    }
 	}
 	fclose(pfCPG);
     }
-    if (DBF->pszCodePage == NULL && buf[29] != 0) {
-	snprintf((char *) buf, nBufSize, "LDID/%d", DBF->iLanguageDriver);
-	DBF->pszCodePage = malloc(strlen((char *) buf) + 1);
-	strcpy(DBF->pszCodePage, (char *) buf);
+    if (DBF->CodePage == NULL && buf[29] != 0) {
+	snprintf((char *) buf, nBufSize, "LDID/%d", DBF->LanguageDriver);
+	DBF->CodePage = malloc(strlen((char *) buf) + 1);
+	strcpy(DBF->CodePage, (char *) buf);
     }
 
     /* -------------------------------------------------------------------- */
@@ -272,23 +272,23 @@ DBFHandle DBFOpen (const char *pszFilename, const char *pszAccess)
     /* -------------------------------------------------------------------- */
 
     buf = realloc(buf,nHeadLen);
-    DBF->pszHeader = (char *) buf;
+    DBF->Header = (char *) buf;
 
     fseek(DBF->fp, XBASE_FILEHDR_SZ, 0);
     if (fread(buf, nHeadLen-XBASE_FILEHDR_SZ, 1,
 	      DBF->fp) != 1) {
 	fclose(DBF->fp);
 	free(buf);
-	free(DBF->pszCurrentRecord);
-	free(DBF->pszCodePage);
+	free(DBF->CurrentRecord);
+	free(DBF->CodePage);
 	free(DBF);
 	return NULL;
     }
 
-    DBF->panFieldOffset = malloc(sizeof(int) * nFields);
-    DBF->panFieldSize = malloc(sizeof(int) * nFields);
-    DBF->panFieldDecimals = malloc(sizeof(int) * nFields);
-    DBF->pachFieldType = malloc(sizeof(char) * nFields);
+    DBF->FieldOffset = malloc(sizeof(int) * nFields);
+    DBF->FieldSize = malloc(sizeof(int) * nFields);
+    DBF->FieldDecimals = malloc(sizeof(int) * nFields);
+    DBF->FieldType = malloc(sizeof(char) * nFields);
 
     for (iField = 0; iField < nFields; iField++) {
 	unsigned char *FInfo;
@@ -300,35 +300,35 @@ DBFHandle DBFOpen (const char *pszFilename, const char *pszAccess)
 	}
 
 	if (FInfo[11] == 'N' || FInfo[11] == 'F') {
-	    DBF->panFieldSize[iField] = FInfo[16];
-	    DBF->panFieldDecimals[iField] = FInfo[17];
+	    DBF->FieldSize[iField] = FInfo[16];
+	    DBF->FieldDecimals[iField] = FInfo[17];
 	} else {
-	    DBF->panFieldSize[iField] = FInfo[16];
-	    DBF->panFieldDecimals[iField] = 0;
+	    DBF->FieldSize[iField] = FInfo[16];
+	    DBF->FieldDecimals[iField] = 0;
 
 	    /*
 	    ** The following seemed to be used sometimes to handle files with long
 	    ** string fields, but in other cases (such as bug 1202) the decimals field
 	    ** just seems to indicate some sort of preferred formatting, not very
 	    ** wide fields.  So I have disabled this code.  FrankW.
-	    DBF->panFieldSize[iField] = FInfo[16] + FInfo[17]*256;
-	    DBF->panFieldDecimals[iField] = 0;
+	    DBF->FieldSize[iField] = FInfo[16] + FInfo[17]*256;
+	    DBF->FieldDecimals[iField] = 0;
 	    */
 	}
 
-	DBF->pachFieldType[iField] = (char) FInfo[11];
+	DBF->FieldType[iField] = (char) FInfo[11];
 	if (iField == 0) {
-	    DBF->panFieldOffset[iField] = 1;
+	    DBF->FieldOffset[iField] = 1;
 	} else {
-	    DBF->panFieldOffset[iField] =
-		DBF->panFieldOffset[iField-1] + DBF->panFieldSize[iField-1];
+	    DBF->FieldOffset[iField] =
+		DBF->FieldOffset[iField-1] + DBF->FieldSize[iField-1];
 	}
     }
 
     /* Check that the total width of fields does not exceed the record width */
     if (DBF->nFields > 0 &&
-	DBF->panFieldOffset[DBF->nFields-1] +
-	DBF->panFieldSize[DBF->nFields-1] > DBF->nRecordLength) {
+	DBF->FieldOffset[DBF->nFields-1] +
+	DBF->FieldSize[DBF->nFields-1] > DBF->nRecordLength) {
 	DBFClose(DBF);
 	return NULL;
     }
@@ -345,19 +345,19 @@ void DBFClose (DBFHandle DBF)
 
     fclose(DBF->fp);
 
-    if (DBF->panFieldOffset != NULL) {
-	free(DBF->panFieldOffset);
-	free(DBF->panFieldSize);
-	free(DBF->panFieldDecimals);
-	free(DBF->pachFieldType);
+    if (DBF->FieldOffset != NULL) {
+	free(DBF->FieldOffset);
+	free(DBF->FieldSize);
+	free(DBF->FieldDecimals);
+	free(DBF->FieldType);
     }
 
-    if (DBF->pszWorkField != NULL)
-        free(DBF->pszWorkField);
+    if (DBF->WorkField != NULL)
+        free(DBF->WorkField);
 
-    free(DBF->pszHeader);
-    free(DBF->pszCurrentRecord);
-    free(DBF->pszCodePage);
+    free(DBF->Header);
+    free(DBF->CurrentRecord);
+    free(DBF->CodePage);
 
     free(DBF);
 }
@@ -383,41 +383,39 @@ static void *DBFReadAttribute (DBFHandle DBF, int hEntity, int iField,
     if (!DBFLoadRecord(DBF, hEntity))
         return NULL;
 
-    Rec = (unsigned char *) DBF->pszCurrentRecord;
+    Rec = (unsigned char *) DBF->CurrentRecord;
 
     /* -------------------------------------------------------------------- */
     /*      Ensure we have room to extract the target field.                */
     /* -------------------------------------------------------------------- */
-    if (DBF->panFieldSize[iField] >= DBF->nWorkFieldLength) {
-	DBF->nWorkFieldLength = DBF->panFieldSize[iField] + 100;
-	if (DBF->pszWorkField == NULL)
-	    DBF->pszWorkField = malloc(DBF->nWorkFieldLength);
-	else
-	    DBF->pszWorkField = realloc(DBF->pszWorkField,
-					DBF->nWorkFieldLength);
+    if (DBF->FieldSize[iField] >= DBF->nWorkFieldLength) {
+	DBF->nWorkFieldLength = DBF->FieldSize[iField] + 100;
+	if (DBF->WorkField == NULL) {
+	    DBF->WorkField = malloc(DBF->nWorkFieldLength);
+	} else {
+	    DBF->WorkField = realloc(DBF->WorkField,
+				     DBF->nWorkFieldLength);
+	}
     }
 
     /* -------------------------------------------------------------------- */
     /*	Extract the requested field.					*/
     /* -------------------------------------------------------------------- */
-    memcpy(DBF->pszWorkField,
-	   (const char *) Rec + DBF->panFieldOffset[iField],
-	   DBF->panFieldSize[iField]);
-    DBF->pszWorkField[DBF->panFieldSize[iField]] = '\0';
-
-    pReturnField = DBF->pszWorkField;
+    memcpy(DBF->WorkField,
+	   (const char *) Rec + DBF->FieldOffset[iField],
+	   DBF->FieldSize[iField]);
+    DBF->WorkField[DBF->FieldSize[iField]] = '\0';
+    pReturnField = DBF->WorkField;
 
     /* -------------------------------------------------------------------- */
     /*      Decode the field.                                               */
     /* -------------------------------------------------------------------- */
     if (chReqType == 'I') {
-	DBF->fieldValue.nIntField = atoi(DBF->pszWorkField);
-
-	pReturnField = &(DBF->fieldValue.nIntField);
+	DBF->fieldValue.IntField = atoi(DBF->WorkField);
+	pReturnField = &(DBF->fieldValue.IntField);
     } else if (chReqType == 'N') {
-	DBF->fieldValue.dfDoubleField = atof(DBF->pszWorkField);
-
-	pReturnField = &(DBF->fieldValue.dfDoubleField);
+	DBF->fieldValue.DoubleField = atof(DBF->WorkField);
+	pReturnField = &(DBF->fieldValue.DoubleField);
     }
 
     /* -------------------------------------------------------------------- */
@@ -427,15 +425,15 @@ static void *DBFReadAttribute (DBFHandle DBF, int hEntity, int iField,
     else {
 	char *pchSrc, *pchDst;
 
-	pchDst = pchSrc = DBF->pszWorkField;
-	while(*pchSrc == ' ')
+	pchDst = pchSrc = DBF->WorkField;
+	while (*pchSrc == ' ')
 	    pchSrc++;
 
-	while(*pchSrc != '\0')
+	while (*pchSrc != '\0')
 	    *(pchDst++) = *(pchSrc++);
 	*pchDst = '\0';
 
-	while(pchDst != DBF->pszWorkField && *(--pchDst) == ' ')
+	while (pchDst != DBF->WorkField && *(--pchDst) == ' ')
 	    *pchDst = '\0';
     }
 #endif
@@ -443,16 +441,12 @@ static void *DBFReadAttribute (DBFHandle DBF, int hEntity, int iField,
     return pReturnField;
 }
 
-int DBFReadIntegerAttribute(DBFHandle DBF, int iRecord, int iField)
+int DBFReadIntegerAttribute (DBFHandle DBF, int iRecord, int iField)
 {
     int	*pnValue;
 
     pnValue = (int *) DBFReadAttribute(DBF, iRecord, iField, 'I');
-
-    if (pnValue == NULL)
-        return 0;
-    else
-        return *pnValue;
+    return (pnValue == NULL)? 0 : *pnValue;
 }
 
 double DBFReadDoubleAttribute (DBFHandle DBF, int iRecord, int iField)
@@ -460,11 +454,7 @@ double DBFReadDoubleAttribute (DBFHandle DBF, int iRecord, int iField)
     double *pdValue;
 
     pdValue = (double *) DBFReadAttribute(DBF, iRecord, iField, 'N');
-
-    if (pdValue == NULL)
-        return 0.0;
-    else
-        return *pdValue ;
+    return (pdValue == NULL)? 0.0 : *pdValue;
 }
 
 const char *DBFReadStringAttribute (DBFHandle DBF, int iRecord, int iField)
@@ -477,12 +467,13 @@ const char *DBFReadLogicalAttribute (DBFHandle DBF, int iRecord, int iField)
     return (const char *) DBFReadAttribute(DBF, iRecord, iField, 'L') ;
 }
 
-static int DBFIsValueNULL (char chType, const char* pszValue)
+static int DBFIsValueNULL (char chType, const char* Value)
 {
     int i;
 
-    if (pszValue == NULL)
+    if (Value == NULL) {
         return TRUE;
+    }
 
     switch (chType) {
     case 'N':
@@ -492,36 +483,37 @@ static int DBFIsValueNULL (char chType, const char* pszValue)
 	** though according to the spec I think it should be all
 	** asterisks.
 	*/
-	if (pszValue[0] == '*')
+	if (Value[0] == '*')
 	    return TRUE;
 
-	for (i = 0; pszValue[i] != '\0'; i++) {
-	    if (pszValue[i] != ' ')
+	for (i = 0; Value[i] != '\0'; i++) {
+	    if (Value[i] != ' ') {
 		return FALSE;
+	    }
 	}
 	return TRUE;
     case 'D':
 	/* NULL date fields have value "00000000" */
-	return strncmp(pszValue,"00000000",8) == 0;
+	return strncmp(Value, "00000000", 8) == 0;
     case 'L':
 	/* NULL boolean fields have value "?" */
-	return pszValue[0] == '?';
+	return Value[0] == '?';
     default:
 	/* empty string fields are considered NULL */
-	return strlen(pszValue) == 0;
+	return strlen(Value) == 0;
     }
 }
 
 int DBFIsAttributeNULL (DBFHandle DBF, int iRecord, int iField)
 {
-    const char	*pszValue;
+    const char	*Value;
 
-    pszValue = DBFReadStringAttribute(DBF, iRecord, iField);
+    Value = DBFReadStringAttribute(DBF, iRecord, iField);
 
-    if (pszValue == NULL)
+    if (Value == NULL)
         return TRUE;
 
-    return DBFIsValueNULL(DBF->pachFieldType[iField], pszValue);
+    return DBFIsValueNULL(DBF->FieldType[iField], Value);
 }
 
 int DBFGetFieldCount (DBFHandle DBF)
@@ -538,42 +530,42 @@ int DBFGetRecordCount (DBFHandle DBF)
 /*                          DBFGetFieldInfo()                           */
 /*                                                                      */
 /*      Return any requested information about the field.               */
-/*      pszFieldName must be at least XBASE_FLDNAME_LEN_READ+1 (=12)    */
+/*      FieldName must be at least XBASE_FLDNAME_LEN_READ+1 (=12)    */
 /*      bytes long.                                                     */
 /************************************************************************/
 
 DBFFieldType
-DBFGetFieldInfo(DBFHandle DBF, int iField, char *pszFieldName,
-		int *pnWidth, int *pnDecimals)
+DBFGetFieldInfo (DBFHandle DBF, int iField, char *FieldName,
+		 int *pnWidth, int *pnDecimals)
 {
     if (iField < 0 || iField >= DBF->nFields)
         return(FTInvalid);
 
     if (pnWidth != NULL)
-        *pnWidth = DBF->panFieldSize[iField];
+        *pnWidth = DBF->FieldSize[iField];
 
     if (pnDecimals != NULL)
-        *pnDecimals = DBF->panFieldDecimals[iField];
+        *pnDecimals = DBF->FieldDecimals[iField];
 
-    if (pszFieldName != NULL) {
+    if (FieldName != NULL) {
 	int i;
 
-	strncpy(pszFieldName, (char *) DBF->pszHeader + iField*XBASE_FLDHDR_SZ,
+	strncpy(FieldName, (char *) DBF->Header + iField*XBASE_FLDHDR_SZ,
 		XBASE_FLDNAME_LEN_READ);
-	pszFieldName[XBASE_FLDNAME_LEN_READ] = '\0';
-	for (i = XBASE_FLDNAME_LEN_READ - 1; i > 0 && pszFieldName[i] == ' '; i--) {
-	    pszFieldName[i] = '\0';
+	FieldName[XBASE_FLDNAME_LEN_READ] = '\0';
+	for (i = XBASE_FLDNAME_LEN_READ - 1; i > 0 && FieldName[i] == ' '; i--) {
+	    FieldName[i] = '\0';
 	}
     }
 
-    if (DBF->pachFieldType[iField] == 'L') {
+    if (DBF->FieldType[iField] == 'L') {
 	return FTLogical;
-    } else if (DBF->pachFieldType[iField] == 'D') {
+    } else if (DBF->FieldType[iField] == 'D') {
 	return FTDate;
-    } else if (DBF->pachFieldType[iField] == 'N'
-	       || DBF->pachFieldType[iField] == 'F') {
-	if (DBF->panFieldDecimals[iField] > 0
-	    || DBF->panFieldSize[iField] >= 10) {
+    } else if (DBF->FieldType[iField] == 'N'
+	       || DBF->FieldType[iField] == 'F') {
+	if (DBF->FieldDecimals[iField] > 0
+	    || DBF->FieldSize[iField] >= 10) {
 	    return FTDouble;
 	} else {
 	    return FTInteger;
@@ -597,54 +589,41 @@ DBFGetFieldInfo(DBFHandle DBF, int iField, char *pszFieldName,
 char DBFGetNativeFieldType (DBFHandle DBF, int iField)
 {
     if (iField >=0 && iField < DBF->nFields)
-        return DBF->pachFieldType[iField];
+        return DBF->FieldType[iField];
 
     return  ' ';
 }
 
-int DBFGetFieldIndex (DBFHandle DBF, const char *pszFieldName)
+int DBFGetFieldIndex (DBFHandle DBF, const char *FieldName)
 {
     char name[XBASE_FLDNAME_LEN_READ+1];
     int i;
 
     for (i = 0; i < DBFGetFieldCount(DBF); i++) {
 	DBFGetFieldInfo(DBF, i, name, NULL, NULL);
-	if (!STRCASECMP(pszFieldName,name))
+	if (!STRCASECMP(FieldName,name))
 	    return(i);
     }
     return -1;
 }
 
-/************************************************************************/
-/*                         DBFIsRecordDeleted()                         */
-/*                                                                      */
-/*      Returns TRUE if the indicated record is deleted, otherwise      */
-/*      it returns FALSE.                                               */
-/************************************************************************/
-
 int DBFIsRecordDeleted (DBFHandle DBF, int iShape)
 {
-    /* -------------------------------------------------------------------- */
-    /*      Verify selection.                                               */
-    /* -------------------------------------------------------------------- */
+    /* Verify selection */
     if (iShape < 0 || iShape >= DBF->nRecords)
         return TRUE;
 
-    /* -------------------------------------------------------------------- */
-    /*	Have we read the record?					*/
-    /* -------------------------------------------------------------------- */
+    /* Have we read the record? */
     if (!DBFLoadRecord(DBF, iShape))
         return FALSE;
 
-    /* -------------------------------------------------------------------- */
-    /*      '*' means deleted.                                              */
-    /* -------------------------------------------------------------------- */
-    return DBF->pszCurrentRecord[0] == '*';
+    /* '*' means deleted */
+    return DBF->CurrentRecord[0] == '*';
 }
 
 const char *DBFGetCodePage (DBFHandle DBF)
 {
-    return DBF == NULL ? NULL : DBF->pszCodePage;
+    return DBF == NULL ? NULL : DBF->CodePage;
 }
 
 void DBFSetWriteEndOfFileChar (DBFHandle DBF, int bWriteFlag)
