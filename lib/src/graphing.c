@@ -1111,7 +1111,7 @@ static int adjust_filename (char *targ, const char *src,
 	    }
 	}
     } else {
-	/* OK, @src is assumed to be OK already */
+	/* @src is assumed to be OK already */
 	strcpy(targ, src);
     }
 

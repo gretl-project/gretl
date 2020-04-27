@@ -11917,6 +11917,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	int (*dbffunc) (const char *, const char *, int);
 	int header = 0;
 
+	post_process = 0;
 	if (l->t != STR || m->t != STR) {
 	    p->err = E_TYPES;
 	} else {
@@ -11932,9 +11933,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == HF_SHP2DAT) {
-	int (*shpfunc) (const char *, const char *, const gretl_matrix *);
+	gretl_matrix *(*shpfunc) (const char *, const char *, const gretl_matrix *);
 	gretl_matrix *payload = NULL;
 
+	post_process = 0;
 	if (l->t != STR || m->t != STR) {
 	    p->err = E_TYPES;
 	} else if (r->t == MAT) {
@@ -11947,8 +11949,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    if (shpfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		ret = aux_scalar_node(p);
-		ret->v.xval = p->err = shpfunc(l->v.str, m->v.str, payload);
+		ret = aux_matrix_node(p);
+		ret->v.m = shpfunc(l->v.str, m->v.str, payload);
+		if (ret->v.m == NULL) {
+		    p->err = E_DATA; /* FIXME? */
+		}
 	    }
 	}
     }

@@ -160,25 +160,155 @@ static void mercatorize (double lat, double lon,
     *py = -y;
 }
 
-/* shp2dat: Written by Allin Cottrell, 2020-04-13,
+static void record_extrema (double x, double y,
+			    double *fmin, double *fmax)
+{
+    if (x < fmin[0]) {
+	fmin[0] = x;
+    }
+    if (x > fmax[0]) {
+	fmax[0] = x;
+    }
+    if (y < fmin[1]) {
+	fmin[1] = y;
+    }
+    if (y > fmax[1]) {
+	fmax[1] = y;
+    }
+}
+
+static int skip_object (int i, const gretl_matrix *m, double *pz)
+{
+    if (m == NULL) {
+	return 0;
+    } else {
+	*pz = m->val[i];
+	return na(*pz);
+    }
+}
+
+#if 0 /* not yet */
+
+/* shp2bun: Written by Allin Cottrell, 2020-04-13,
    based on shpdump by Frank Warmerdam.
 
-   Outputs the content of the .shp component of a shapefile
-   in a form suitable for use by gnuplot.
+   Returns the the content of the .shp component of a shapefile
+   in the form of a gretl bundle.
 */
 
-int shp2dat (const char *shpname,
-	     const char *datname,
-	     const gretl_matrix *mat)
+gretl_bundle *shp2bun (const char *shpname,
+		       const gretl_matrix *mat)
 {
+    gretl_bundle *sb = NULL;
+    gretl_array *aa = NULL;
+    gretl_array *ai = NULL;
+    gretl_matrix *mi = NULL;
+    SHPHandle SHP;
+    int shapetype, n_entities, i, part;
+    double fmin[4], fmax[4];
+    int nskip = 0;
+    int err = 0;
+
+    SHP = SHPOpen(shpname, "rb");
+    if (SHP == NULL) {
+	return NULL;
+    }
+
+    SHPGetInfo(SHP, &n_entities, &shapetype, fmin, fmax);
+
+    if (mat != NULL) {
+	if (mat->rows != n_entities) {
+	    gretl_errmsg_sprintf("data vector: expected %d rows but got %d",
+				 n_entities, mat->rows);
+	    SHPClose(SHP);
+	    return NULL;
+	}
+	for (i=0; i<mat->rows; i++) {
+	    if (na(mat->val[i])) {
+		nskip++;
+		break;
+	    }
+	}
+	if (nskip > 0) {
+	    for (i=0; i<2; i++) {
+		fmin[i] = +1.0e6;
+		fmax[i] = -1.0e6;
+	    }
+	}
+    }
+
+    sb = gretl_bundle_new();
+    if (sb == NULL) {
+	return NULL;
+    }
+
+    SHPSetFastModeReadObject(SHP, TRUE);
+
+    for (i=0; i<n_entities && !err; i++) {
+        SHPObject *obj;
+	double x, y, z = 0;
+	int j;
+
+	if (skip_object(i, mat, &z)) {
+	    continue;
+	}
+
+	obj = SHPReadObject(SHP, i);
+
+        if (obj == NULL) {
+	    gretl_errmsg_sprintf("Unable to read shape %d", i+1);
+	    err = E_DATA;
+        } else if (obj->nParts > 0 && obj->PartStart[0] != 0) {
+            gretl_errmsg_sprintf("PartStart[0] = %d, not zero as expected",
+				 obj->PartStart[0]);
+	    err = E_DATA;
+        }
+
+        for (j=0, part=1; j<obj->nVertices && !err; j++) {
+	    if (part < obj->nParts && obj->PartStart[part] == j) {
+		part++;
+            }
+	    x = obj->fX[j];
+	    y = obj->fY[j];
+	    if (mat != NULL) {
+		fprintf(fp, "%.*g%c%.*g%c%.*g\n", prec, x, delim, prec, y, delim, prec, z);
+	    } else {
+		fprintf(fp, "%.*g%c%.*g\n", prec, x, delim, prec, y);
+	    }
+	    if (nskip > 0) {
+		record_extrema(x, y, fmin, fmax);
+	    }
+        }
+
+        SHPDestroyObject(obj);
+    }
+
+    SHPClose(SHP);
+
+    if (err) {
+	gretl_bundle_destroy(sb);
+	sb = NULL;
+    }
+
+    return sb;
+}
+
+#endif /* not yet */
+
+gretl_matrix *shp2dat (const char *shpname,
+		       const char *datname,
+		       const gretl_matrix *mat)
+{
+    gretl_matrix *bbox = NULL;
     SHPHandle SHP;
     FILE *fp;
     int n_shapetype, n_entities, i, part;
-    double adfmin[4], adfmax[4];
+    double fmin[4], fmax[4];
     int pxwidth = 0;
     int pxheight = 0;
     int mercator = 0;
     char delim = ' ';
+    int nskip = 0;
     int prec = 8;
     int err = 0;
 
@@ -202,69 +332,79 @@ int shp2dat (const char *shpname,
 
     SHP = SHPOpen(shpname, "rb");
     if (SHP == NULL) {
-        fprintf(stderr, "Unable to open:%s\n", shpname);
-	return E_FOPEN;
+	return NULL;
     }
 
-    SHPGetInfo(SHP, &n_entities, &n_shapetype, adfmin, adfmax);
+    SHPGetInfo(SHP, &n_entities, &n_shapetype, fmin, fmax);
 
     if (mat != NULL) {
 	if (mat->rows != n_entities) {
 	    fprintf(stderr, "data vector: expected %d rows but got %d\n",
 		    n_entities, mat->rows);
 	    SHPClose(SHP);
-	    return E_DATA;
+	    return NULL;
+	}
+	for (i=0; i<mat->rows; i++) {
+	    if (na(mat->val[i])) {
+		nskip++;
+		break;
+	    }
+	}
+	if (nskip > 0) {
+	    for (i=0; i<2; i++) {
+		fmin[i] = +1.0e6;
+		fmax[i] = -1.0e6;
+	    }
 	}
     }
 
     fp = gretl_fopen(datname, "wb");
     if (fp == NULL) {
 	SHPClose(SHP);
-	return E_FOPEN;
+	return NULL;
     }
 
+    SHPSetFastModeReadObject(SHP, TRUE);
+
     for (i=0; i<n_entities; i++) {
-        SHPObject *obj = SHPReadObject(SHP, i);
+        SHPObject *obj;
 	double x, y, z = 0;
 	int j;
 
-	if (mat != NULL) {
-	    z = gretl_matrix_get(mat, i, 0);
-	    if (na(z)) {
-		SHPDestroyObject(obj);
-		continue;
-	    }
+	if (skip_object(i, mat, &z)) {
+	    continue;
 	}
+
+	obj = SHPReadObject(SHP, i);
 
         if (obj == NULL) {
 	    fprintf(stderr, "Unable to read shape %d, terminating.\n", i);
 	    err = E_DATA;
-            break;
-        }
-
-        if (obj->nParts > 0 && obj->panPartStart[0] != 0) {
-            fprintf(stderr, "panPartStart[0] = %d, not zero as expected.\n",
-		    obj->panPartStart[0]);
+        } else if (obj->nParts > 0 && obj->PartStart[0] != 0) {
+            fprintf(stderr, "PartStart[0] = %d, not zero as expected.\n",
+		    obj->PartStart[0]);
 	    err = E_DATA;
-            break;
         }
 
-        for (j=0, part=1; j<obj->nVertices; j++) {
-	    if (part < obj->nParts && obj->panPartStart[part] == j) {
+        for (j=0, part=1; j<obj->nVertices && !err; j++) {
+	    if (part < obj->nParts && obj->PartStart[part] == j) {
 		part++;
 		fputc('\n', fp);
             }
 	    if (mercator) {
-		mercatorize(obj->padfY[j], obj->padfX[j],
+		mercatorize(obj->fY[j], obj->fX[j],
 			    pxwidth, pxheight, &x, &y);
 	    } else {
-		x = obj->padfX[j];
-		y = obj->padfY[j];
+		x = obj->fX[j];
+		y = obj->fY[j];
 	    }
 	    if (mat != NULL) {
 		fprintf(fp, "%.*g%c%.*g%c%.*g\n", prec, x, delim, prec, y, delim, prec, z);
 	    } else {
 		fprintf(fp, "%.*g%c%.*g\n", prec, x, delim, prec, y);
+	    }
+	    if (nskip > 0) {
+		record_extrema(x, y, fmin, fmax);
 	    }
         }
 
@@ -275,11 +415,21 @@ int shp2dat (const char *shpname,
         SHPDestroyObject(obj);
     }
 
+    if (!err) {
+	bbox = gretl_matrix_alloc(2, 2);
+	if (bbox != NULL) {
+	    gretl_matrix_set(bbox, 0, 0, fmin[0]);
+	    gretl_matrix_set(bbox, 0, 1, fmin[1]);
+	    gretl_matrix_set(bbox, 1, 0, fmax[0]);
+	    gretl_matrix_set(bbox, 1, 1, fmax[1]);
+	}
+    }
+
     fputc('\n', fp);
     fclose(fp);
     SHPClose(SHP);
 
-    return err;
+    return bbox;
 }
 
 static char *put_ext (char *fname, const char *ext)
@@ -367,6 +517,7 @@ static int do_geojson (const char *fname,
 		key = gretl_array_get_data(keys, j);
 		ptr = gretl_bundle_get_data(pp, key, &type, NULL, &err);
 		if (err) {
+		    fprintf(stderr, "error at feature %d, propkey %d\n", i, j);
 		    break;
 		}
 		if (type == GRETL_TYPE_STRING) {
@@ -479,13 +630,13 @@ int map_get_data (const char *fname, DATASET *dset,
 	err = import_csv(csvname, dset, opt, prn);
 	if (!err) {
 	    dset->mapfile = mapname;
-	} else {
-	    free(mapname);
+	    mapname = NULL;
 	}
     }
 
     g_free(base);
     g_free(csvname);
+    free(mapname);
 
     return err;
 }

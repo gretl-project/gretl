@@ -37,11 +37,6 @@
 
 #include <stdio.h>
 
-/* Should the DBFReadStringAttribute() function
-   strip leading and trailing white space?
-*/
-#define TRIM_DBF_WHITESPACE
-
 /************************************************************************/
 /*                             SHP Support.                             */
 /************************************************************************/
@@ -50,90 +45,56 @@ typedef struct SHPInfo_ *SHPHandle;
 
 typedef struct SHPObject_
 {
-    int    nSHPType;
-    int    nShapeId;  /* -1 is unknown/unassigned */
-    int    nParts;
-    int    *panPartStart;
-    int    *panPartType;
+    int nSHPType;
+    int nShapeId;  /* -1 is unknown/unassigned */
+    int nParts;
+    int *PartStart;
+    int *PartType;
 
-    int    nVertices;
-    double *padfX;
-    double *padfY;
-    double *padfZ;
-    double *padfM;
+    int nVertices;
+    double *fX;
+    double *fY;
+    double *fZ;
+    double *fM;
 
-    double dfXMin;
-    double dfYMin;
-    double dfZMin;
-    double dfMMin;
+    double XMin;
+    double YMin;
+    double ZMin;
+    double MMin;
 
-    double dfXMax;
-    double dfYMax;
-    double dfZMax;
-    double dfMMax;
+    double XMax;
+    double YMax;
+    double ZMax;
+    double MMax;
 
     int bMeasureIsUsed;
     int bFastModeReadObject;
 } SHPObject;
 
-/* -------------------------------------------------------------------- */
-/*      Shape types (nSHPType)                                          */
-/* -------------------------------------------------------------------- */
-#define SHPT_NULL         0
-#define SHPT_POINT        1
-#define SHPT_ARC          3
-#define SHPT_POLYGON      5
-#define SHPT_MULTIPOINT   8
-#define SHPT_POINTZ      11
-#define SHPT_ARCZ        13
-#define SHPT_POLYGONZ    15
-#define SHPT_MULTIPOINTZ 18
-#define SHPT_POINTM      21
-#define SHPT_ARCM        23
-#define SHPT_POLYGONM    25
-#define SHPT_MULTIPOINTM 28
-#define SHPT_MULTIPATCH  31
-
-/* -------------------------------------------------------------------- */
-/*      Part types - everything but SHPT_MULTIPATCH just uses           */
-/*      SHPP_RING.                                                      */
-/* -------------------------------------------------------------------- */
-
-#define SHPP_TRISTRIP   0
-#define SHPP_TRIFAN     1
-#define SHPP_OUTERRING  2
-#define SHPP_INNERRING  3
-#define SHPP_FIRSTRING  4
-#define SHPP_RING       5
-
-/* If pszAccess is read-only, the fpSHX field of the returned structure
+/* If Access is read-only, the fpSHX field of the returned structure
    will be NULL as it is not necessary to keep the SHX file open.
 */
-
-SHPHandle SHPOpen (const char *pszShapeFile, const char *pszAccess);
+SHPHandle SHPOpen (const char *ShapeFile, const char *Access);
 
 /* If setting bFastMode = TRUE, the content of SHPReadObject() is owned
-   by the SHPHandle. So you cannot have 2 valid instances of SHPReadObject()
-   simultaneously. The SHPObject padfZ and padfM members may be NULL
-   depending on the geometry type.
+   by the SHPHandle. So you cannot have more than 1 valid instance of
+   SHPReadObject() simultaneously. The SHPObject fZ and fM members
+   may be NULL depending on the geometry type.
 */
+void SHPSetFastModeReadObject (SHPHandle SHP, int bFastMode);
 
-void SHPSetFastModeReadObject (SHPHandle hSHP, int bFastMode);
+SHPHandle SHPCreate (const char *ShapeFile, int nShapeType);
 
-SHPHandle SHPCreate (const char *pszShapeFile, int nShapeType);
+void SHPGetInfo (SHPHandle SHP, int *pnEntities, int *pnShapeType,
+		 double *MinBound, double *MaxBound);
 
-void SHPGetInfo (SHPHandle hSHP, int *pnEntities, int *pnShapeType,
-		 double *padfMinBound, double *padfMaxBound);
-
-SHPObject *SHPReadObject (SHPHandle hSHP, int iShape);
+SHPObject *SHPReadObject (SHPHandle SHP, int iShape);
 
 void SHPDestroyObject (SHPObject *psObject);
 
 void SHPComputeExtents (SHPObject *psObject);
 
-int SHPRewindObject (SHPHandle hSHP, SHPObject *psObject);
-
-void SHPClose (SHPHandle hSHP);
+void SHPClose (SHPHandle SHP);
 
 const char *SHPTypeName (int nSHPType);
 const char *SHPPartTypeName (int nPartType);
@@ -153,30 +114,30 @@ typedef enum {
   FTInvalid
 } DBFFieldType;
 
-DBFHandle DBFOpen (const char *pszDBFFile, const char *pszAccess);
+DBFHandle DBFOpen (const char *DBFFile, const char *Access);
 
-int DBFGetFieldCount (DBFHandle psDBF);
-int DBFGetRecordCount (DBFHandle psDBF);
+int DBFGetFieldCount (DBFHandle DBF);
+int DBFGetRecordCount (DBFHandle DBF);
 
-DBFFieldType DBFGetFieldInfo (DBFHandle psDBF, int iField,
-			      char *pszFieldName, int *pnWidth,
+DBFFieldType DBFGetFieldInfo (DBFHandle DBF, int iField,
+			      char *FieldName, int *pnWidth,
 			      int *pnDecimals);
 
-int DBFGetFieldIndex (DBFHandle psDBF, const char *pszFieldName);
+int DBFGetFieldIndex (DBFHandle DBF, const char *FieldName);
 
-int DBFReadIntegerAttribute (DBFHandle hDBF, int iShape, int iField);
-double DBFReadDoubleAttribute (DBFHandle hDBF, int iShape, int iField);
-const char *DBFReadStringAttribute (DBFHandle hDBF, int iShape, int iField);
-const char *DBFReadLogicalAttribute (DBFHandle hDBF, int iShape, int iField);
-int DBFIsAttributeNULL (DBFHandle hDBF, int iShape, int iField);
+int DBFReadIntegerAttribute (DBFHandle DBF, int iShape, int iField);
+double DBFReadDoubleAttribute (DBFHandle DBF, int iShape, int iField);
+const char *DBFReadStringAttribute (DBFHandle DBF, int iShape, int iField);
+const char *DBFReadLogicalAttribute (DBFHandle DBF, int iShape, int iField);
+int DBFIsAttributeNULL (DBFHandle DBF, int iShape, int iField);
 
-int DBFIsRecordDeleted (DBFHandle psDBF, int iShape);
+int DBFIsRecordDeleted (DBFHandle DBF, int iShape);
 
-void DBFClose (DBFHandle hDBF);
-char DBFGetNativeFieldType (DBFHandle hDBF, int iField);
+void DBFClose (DBFHandle DBF);
+char DBFGetNativeFieldType (DBFHandle DBF, int iField);
 
-const char *DBFGetCodePage (DBFHandle psDBF);
+const char *DBFGetCodePage (DBFHandle DBF);
 
-void DBFSetWriteEndOfFileChar (DBFHandle psDBF, int bWriteFlag);
+void DBFSetWriteEndOfFileChar (DBFHandle DBF, int bWriteFlag);
 
 #endif /* SHAPEFILE_H_INCLUDED */
