@@ -1210,6 +1210,8 @@ int get_imported_data (char *fname, int ftype, int append)
 	misc_importer = gui_get_plugin_function("jmulti_get_data");
     } else if (ftype == GRETL_WF1) {
 	misc_importer = gui_get_plugin_function("wf1_get_data");
+    } else if (ftype == GRETL_MAP) {
+	misc_importer = gui_get_plugin_function("map_get_data");
     } else {
 	errbox(_("Unrecognized data type"));
 	err = 1;

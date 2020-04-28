@@ -2292,6 +2292,11 @@ const char *dataset_get_matrix_name (const DATASET *dset)
     }
 }
 
+const char *dataset_get_mapfile (const DATASET *dset)
+{
+    return dset == NULL ? NULL : dset->mapfile;
+}
+
 const char *dataset_period_label (const DATASET *dset)
 {
     if (dset == NULL) {
