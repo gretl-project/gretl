@@ -568,7 +568,7 @@ void fncall_destroy (fncall *call)
    function named @funcname from a function package
    named @pkgname. We first check if the specified package
    is already in memory; if not we try to find it in
-   th local filesystem, and load it into memory if
+   the local filesystem, and load it into memory if
    successful.
 
    If/once the package is in fact loaded we look up the

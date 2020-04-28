@@ -222,6 +222,7 @@ void time_series_menu_state (gboolean s)
     gboolean sx = extended_ts(dataset);
     gboolean panel = dataset_is_panel(dataset);
     gboolean realpan = multi_unit_panel_sample(dataset);
+    gboolean have_map = dataset_get_mapfile(dataset) != NULL;
     gboolean ur;
 
     if (mdata->ui == NULL) {
@@ -246,6 +247,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/View/MultiPlots/MultiTS", sx);
     flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx && !realpan);
     flip(mdata->ui, "/menubar/Variable/PanPlot", realpan);
+    flip(mdata->ui, "/menubar/View/GraphVars/MapOutlines", have_map);
 
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur);
