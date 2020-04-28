@@ -187,113 +187,17 @@ static int skip_object (int i, const gretl_matrix *m, double *pz)
     }
 }
 
-#if 0 /* not yet */
-
-/* shp2bun: Written by Allin Cottrell, 2020-04-13,
-   based on shpdump by Frank Warmerdam.
-
-   Returns the the content of the .shp component of a shapefile
-   in the form of a gretl bundle.
-*/
-
-gretl_bundle *shp2bun (const char *shpname,
-		       const gretl_matrix *mat)
+static int mat_is_payload (const gretl_matrix *mat)
 {
-    gretl_bundle *sb = NULL;
-    gretl_array *aa = NULL;
-    gretl_array *ai = NULL;
-    gretl_matrix *mi = NULL;
-    SHPHandle SHP;
-    int shapetype, n_entities, i, part;
-    double fmin[4], fmax[4];
-    int nskip = 0;
-    int err = 0;
+    int i;
 
-    SHP = SHPOpen(shpname, "rb");
-    if (SHP == NULL) {
-	return NULL;
-    }
-
-    SHPGetInfo(SHP, &n_entities, &shapetype, fmin, fmax);
-
-    if (mat != NULL) {
-	if (mat->rows != n_entities) {
-	    gretl_errmsg_sprintf("data vector: expected %d rows but got %d",
-				 n_entities, mat->rows);
-	    SHPClose(SHP);
-	    return NULL;
-	}
-	for (i=0; i<mat->rows; i++) {
-	    if (na(mat->val[i])) {
-		nskip++;
-		break;
-	    }
-	}
-	if (nskip > 0) {
-	    for (i=0; i<2; i++) {
-		fmin[i] = +1.0e6;
-		fmax[i] = -1.0e6;
-	    }
+    for (i=0; i<mat->rows; i++) {
+	if (!na(mat->val[i]) && mat->val[i] != 0) {
+	    return 1;
 	}
     }
-
-    sb = gretl_bundle_new();
-    if (sb == NULL) {
-	return NULL;
-    }
-
-    SHPSetFastModeReadObject(SHP, TRUE);
-
-    for (i=0; i<n_entities && !err; i++) {
-        SHPObject *obj;
-	double x, y, z = 0;
-	int j;
-
-	if (skip_object(i, mat, &z)) {
-	    continue;
-	}
-
-	obj = SHPReadObject(SHP, i);
-
-        if (obj == NULL) {
-	    gretl_errmsg_sprintf("Unable to read shape %d", i+1);
-	    err = E_DATA;
-        } else if (obj->nParts > 0 && obj->PartStart[0] != 0) {
-            gretl_errmsg_sprintf("PartStart[0] = %d, not zero as expected",
-				 obj->PartStart[0]);
-	    err = E_DATA;
-        }
-
-        for (j=0, part=1; j<obj->nVertices && !err; j++) {
-	    if (part < obj->nParts && obj->PartStart[part] == j) {
-		part++;
-            }
-	    x = obj->fX[j];
-	    y = obj->fY[j];
-	    if (mat != NULL) {
-		fprintf(fp, "%.*g%c%.*g%c%.*g\n", prec, x, delim, prec, y, delim, prec, z);
-	    } else {
-		fprintf(fp, "%.*g%c%.*g\n", prec, x, delim, prec, y);
-	    }
-	    if (nskip > 0) {
-		record_extrema(x, y, fmin, fmax);
-	    }
-        }
-
-        SHPDestroyObject(obj);
-    }
-
-    SHPClose(SHP);
-
-    if (err) {
-	gretl_bundle_destroy(sb);
-	sb = NULL;
-    }
-
-    return sb;
+    return 0;
 }
-
-#endif /* not yet */
 
 gretl_matrix *shp2dat (const char *shpname,
 		       const char *datname,
@@ -304,6 +208,7 @@ gretl_matrix *shp2dat (const char *shpname,
     FILE *fp;
     int n_shapetype, n_entities, i, part;
     double fmin[4], fmax[4];
+    int have_payload = 0;
     int pxwidth = 0;
     int pxheight = 0;
     int mercator = 0;
@@ -356,6 +261,9 @@ gretl_matrix *shp2dat (const char *shpname,
 		fmax[i] = -1.0e6;
 	    }
 	}
+	if (mat_is_payload(mat)) {
+	    have_payload = 1;
+	}
     }
 
     fp = gretl_fopen(datname, "wb");
@@ -398,7 +306,7 @@ gretl_matrix *shp2dat (const char *shpname,
 		x = obj->fX[j];
 		y = obj->fY[j];
 	    }
-	    if (mat != NULL) {
+	    if (have_payload) {
 		fprintf(fp, "%.*g%c%.*g%c%.*g\n", prec, x, delim, prec, y, delim, prec, z);
 	    } else {
 		fprintf(fp, "%.*g%c%.*g\n", prec, x, delim, prec, y);
