@@ -4592,6 +4592,77 @@ static void system_resid_mplot_call (GtkAction *action, gpointer p)
     gui_graph_handler(err);
 }
 
+static const char *VECM_matrix_name (int idx)
+{
+    if (idx == M_JALPHA) {
+	return "alpha";
+    } else if (idx == M_JBETA) {
+	return "beta";
+    } else if (idx == M_JVBETA) {
+	return "var(beta)";
+    } else {
+	/* not registered! */
+	return NULL;
+    }
+}
+
+static int get_VECM_matrix_idx (GtkAction *action)
+{
+    const gchar *aname = gtk_action_get_name(action);
+    int idx;
+
+    sscanf(aname, "matrix %d", &idx);
+    return idx;
+}
+
+static void VECM_add_matrix (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    gretl_matrix *m = NULL;
+    char vname[VNAMELEN];
+    const char *mname;
+    gchar *blurb = NULL;
+    int vecid = gretl_VECM_id(var);
+    int idx, resp, show = 1;
+    int err = 0;
+
+    idx = get_VECM_matrix_idx(action);
+    mname = VECM_matrix_name(idx);
+    if (mname == NULL) {
+	/* internal error! */
+	gui_errmsg(E_DATA);
+	return;
+    }
+
+    if (!strcmp(mname, "var(beta)")) {
+	sprintf(vname, "jvbeta_%d", vecid);
+    } else {
+	sprintf(vname, "j%s_%d", mname, vecid);
+    }
+    blurb = g_strdup_printf("%s (%s) from VECM %d\n"
+			    "Name (max. %d characters):",
+			    mname, gretl_type_get_name(GRETL_TYPE_MATRIX),
+			    vecid, VNAMELEN - 1);
+    resp = object_name_entry_dialog(vname, GRETL_TYPE_MATRIX, blurb,
+				    &show, vwin->main);
+    g_free(blurb);
+    if (resp < 0) {
+	/* canceled */
+	return;
+    }
+
+    m = gretl_VAR_get_matrix(var, idx, &err);
+    if (!err) {
+	err = user_var_add_or_replace(vname, GRETL_TYPE_MATRIX, m);
+    }
+    if (err) {
+	gui_errmsg(err);
+    } else if (show) {
+	view_session();
+    }
+}
+
 static void add_system_menu_items (windata_t *vwin, int ci)
 {
     GtkActionEntry item;
@@ -4846,13 +4917,24 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     }
 
     if (ci == VECM) {
-	/* save ECs items */
+	/* saving things specific to VECMs */
+	int mtypes[] = {M_JALPHA, M_JBETA, M_JVBETA};
+
+	/* save error correction terms as series */
 	for (i=0; i<jrank(var); i++) {
 	    sprintf(istr, "EC %d", i);
 	    sprintf(maj, "%s %d", _("EC term"), i+1);
 	    item.name = istr;
 	    item.label = maj;
 	    item.callback = G_CALLBACK(VECM_add_EC_data);
+	    vwin_menu_add_item(vwin, save, &item);
+	}
+	/* save relevant matrices */
+	for (i=0; i<G_N_ELEMENTS(mtypes); i++) {
+	    sprintf(istr, "matrix %d", mtypes[i]);
+	    item.name = istr;
+	    item.label = VECM_matrix_name(mtypes[i]);
+	    item.callback = G_CALLBACK(VECM_add_matrix);
 	    vwin_menu_add_item(vwin, save, &item);
 	}
     }
