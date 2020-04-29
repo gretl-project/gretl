@@ -1,3 +1,22 @@
+/*
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,7 +52,24 @@ static int skip_object (int i, const gretl_matrix *m, double *pz)
     }
 }
 
-gretl_matrix *ring2matrix (gretl_array *ring)
+static void record_extrema (double x, double y,
+			    double *fmin, double *gmax)
+{
+    if (x < fmin[0]) {
+	fmin[0] = x;
+    }
+    if (x > gmax[0]) {
+	gmax[0] = x;
+    }
+    if (y < fmin[1]) {
+	fmin[1] = y;
+    }
+    if (y > gmax[1]) {
+	gmax[1] = y;
+    }
+}
+
+static gretl_matrix *ring2matrix (gretl_array *ring)
 {
     int i, n = gretl_array_get_length(ring);
     gretl_matrix *ret = gretl_matrix_alloc(n, 2);
@@ -51,30 +87,13 @@ gretl_matrix *ring2matrix (gretl_array *ring)
     return ret;
 }
 
-static void col_xy_minmax (const gretl_matrix *m,
-			   double *xmin, double *xmax,
-			   double *ymin, double *ymax)
-{
-    double x, y;
-    int i;
-
-    for (i=0; i<m->rows; i++) {
-	x = gretl_matrix_get(m, i, 0);
-	y = gretl_matrix_get(m, i, 1);
-	if (x < *xmin) *xmin = x;
-	if (x > *xmax) *xmax = x;
-	if (y < *ymin) *ymin = y;
-	if (y > *ymax) *ymax = y;
-    }
-}
-
 gretl_matrix *geo2dat (gretl_array *features,
 		       const char *datname,
 		       const gretl_matrix *zvec)
 {
     gretl_array *AC;
     gretl_array *ACj, *ACjk;
-    gretl_matrix *X, *bbox;
+    gretl_matrix *X, *bbox = NULL;
     gretl_bundle *fi, *geom;
     double gmin[2] = {HUGE, HUGE};
     double gmax[2] = {-HUGE, -HUGE};
@@ -115,6 +134,7 @@ gretl_matrix *geo2dat (gretl_array *features,
                 mp = 1;
             } else {
                 gretl_errmsg_sprintf("can't handle geometry type '%s'", gtype);
+		err = E_DATA;
 		break;
 	    }
 	    AC = gretl_bundle_get_array(geom, "coordinates", NULL);
@@ -124,7 +144,6 @@ gretl_matrix *geo2dat (gretl_array *features,
                 for (j=0; j<nac; j++) {
 		    ACj = gretl_array_get_data(AC, j);
                     X = ring2matrix(ACj);
-		    col_xy_minmax(X, &gmin[0], &gmax[0], &gmin[1], &gmax[1]);
 		    for (k=0; k<X->rows; k++) {
 			x = gretl_matrix_get(X, k, 0);
 			y = gretl_matrix_get(X, k, 1);
@@ -133,9 +152,10 @@ gretl_matrix *geo2dat (gretl_array *features,
 			} else {
 			    fprintf(fp, "%.8g %.8g\n", x, y);
 			}
+			record_extrema(x, y, gmin, gmax);
 		    }
 		    gretl_matrix_free(X);
-                    if (j < nac-1) { /* separator */
+                    if (j < nac-1) {
                         fputc('\n', fp);
 		    }
 		}
@@ -144,11 +164,9 @@ gretl_matrix *geo2dat (gretl_array *features,
 		for (j=0; j<nac; j++) {
 		    ACj = gretl_array_get_data(AC, j);
 		    ncj = gretl_array_get_length(ACj);
-                    /* printf "# polygon %d, %d elements\n", j, ncj */
 		    for (k=0; k<ncj; k++) {
 			ACjk = gretl_array_get_data(ACj, k);
                         X = ring2matrix(ACjk);
-			col_xy_minmax(X, &gmin[0], &gmax[0], &gmin[1], &gmax[1]);
 			for (p=0; p<X->rows; p++) {
 			    x = gretl_matrix_get(X, p, 0);
 			    y = gretl_matrix_get(X, p, 1);
@@ -157,6 +175,7 @@ gretl_matrix *geo2dat (gretl_array *features,
 			    } else {
 				fprintf(fp, "%.8g %.8g\n", x, y);
 			    }
+			    record_extrema(x, y, gmin, gmax);
 			}
 			gretl_matrix_free(X);
                         if (k < ncj-1) {
@@ -341,23 +360,6 @@ static void mercatorize (double lat, double lon,
     *py = -y;
 }
 
-static void record_extrema (double x, double y,
-			    double *fmin, double *fmax)
-{
-    if (x < fmin[0]) {
-	fmin[0] = x;
-    }
-    if (x > fmax[0]) {
-	fmax[0] = x;
-    }
-    if (y < fmin[1]) {
-	fmin[1] = y;
-    }
-    if (y > fmax[1]) {
-	fmax[1] = y;
-    }
-}
-
 gretl_matrix *shp2dat (const char *shpname,
 		       const char *datname,
 		       const gretl_matrix *zvec)
@@ -366,7 +368,7 @@ gretl_matrix *shp2dat (const char *shpname,
     SHPHandle SHP;
     FILE *fp;
     int n_shapetype, n_entities, i, part;
-    double fmin[4], fmax[4];
+    double gmin[4], gmax[4];
     int have_payload = 0;
     int pxwidth = 0;
     int pxheight = 0;
@@ -399,7 +401,7 @@ gretl_matrix *shp2dat (const char *shpname,
 	return NULL;
     }
 
-    SHPGetInfo(SHP, &n_entities, &n_shapetype, fmin, fmax);
+    SHPGetInfo(SHP, &n_entities, &n_shapetype, gmin, gmax);
 
     if (zvec != NULL) {
 	if (zvec->rows != n_entities) {
@@ -416,8 +418,8 @@ gretl_matrix *shp2dat (const char *shpname,
 	}
 	if (nskip > 0) {
 	    for (i=0; i<2; i++) {
-		fmin[i] = HUGE;
-		fmax[i] = -HUGE;
+		gmin[i] = HUGE;
+		gmax[i] = -HUGE;
 	    }
 	}
 	if (matrix_is_payload(zvec)) {
@@ -471,7 +473,7 @@ gretl_matrix *shp2dat (const char *shpname,
 		fprintf(fp, "%.*g%c%.*g\n", prec, x, delim, prec, y);
 	    }
 	    if (nskip > 0) {
-		record_extrema(x, y, fmin, fmax);
+		record_extrema(x, y, gmin, gmax);
 	    }
         }
 
@@ -482,19 +484,19 @@ gretl_matrix *shp2dat (const char *shpname,
         SHPDestroyObject(obj);
     }
 
-    if (!err) {
-	bbox = gretl_matrix_alloc(2, 2);
-	if (bbox != NULL) {
-	    gretl_matrix_set(bbox, 0, 0, fmin[0]);
-	    gretl_matrix_set(bbox, 0, 1, fmin[1]);
-	    gretl_matrix_set(bbox, 1, 0, fmax[0]);
-	    gretl_matrix_set(bbox, 1, 1, fmax[1]);
-	}
-    }
-
     fputc('\n', fp);
     fclose(fp);
     SHPClose(SHP);
+
+    if (!err) {
+	bbox = gretl_matrix_alloc(2, 2);
+	if (bbox != NULL) {
+	    gretl_matrix_set(bbox, 0, 0, gmin[0]);
+	    gretl_matrix_set(bbox, 0, 1, gmin[1]);
+	    gretl_matrix_set(bbox, 1, 0, gmax[0]);
+	    gretl_matrix_set(bbox, 1, 1, gmax[1]);
+	}
+    }
 
     return bbox;
 }
