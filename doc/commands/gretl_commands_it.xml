@@ -6810,12 +6810,14 @@
 
     <description>
       <para>
-	Questo comando importa una serie di dati dal file di origine 
-	<repl>filename</repl> (che deve essere un file di dati testuale 
-	delimitato o un file di dati nativo di gretl) assegnandoli alla
-	variabile <repl>varname</repl>. Per maggiori dettagli, si veda
-	<guideref targ="chap:join"/>; in questa sede ci limitiamo a
-	ricordare brevemente le opzioni disponibili.
+	Questo comando importa una o più serie dal file di origine
+	<repl>filename</repl> (che deve essere un file di dati
+	testuale delimitato o un file di dati nativo di gretl)
+	assegnandoli alla variabile <repl>varname</repl>. Per maggiori
+	dettagli, si veda <guideref targ="chap:join"/>; in questa sede
+	ci limitiamo a ricordare brevemente le opzioni disponibili.
+	Vedi anche <cmdref targ="append"/> per alcune semplici
+	operazioni di unione di dataset.
       </para>
       <para>
 	L'opzione <opt>data</opt> può essere usata per specificare 
@@ -6846,9 +6848,21 @@
 	accoppiare al dataset e/o il formato in cui le date sono
 	rappresentate in quella colonna.
       </para>     
+      <subhead>Come importare più di una serie alla volta</subhead>
       <para>
-	V. anche <cmdref targ="append"/> per alcune semplici
-	operazioni di unione di dataset.
+	Il comando <cmd>join</cmd> può essere usato per importare più
+	di una serie alla volta. Questo si ha quando (a) l'argomento
+	<repl>varname</repl> è una lista di nomi separati da spazi,
+	anziché una stringa semplice, oppure (b) quando è il nome di
+	un array di stringhe, gli elementi del quale saranno i nomi
+	delle serie da importare.
+      </para>
+      <para>
+	Va detto che questo metodo ha alcune limitazioni: l'opzione
+	<opt>data</opt> non è disponibile, e bisogna accettare i nomi
+	delle variabili così come sono nel dataset
+	<repl>filename</repl>. Le altre opzioni verranno applicate
+	uniformemente a tutte le serie così importate.
       </para>
     </description>
   </command>

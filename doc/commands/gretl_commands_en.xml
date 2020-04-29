@@ -6720,12 +6720,13 @@
 
     <description>
       <para>
-	This command imports a data series from the source
+	This command imports one or more data series from the source
 	<repl>filename</repl> (which must be either a delimited text
 	data file or a <quote>native</quote> gretl data file) under
 	the name <repl>varname</repl>. For details please see
 	<guideref targ="chap:join"/>; here we just give a brief
-	summary of the available options.
+	summary of the available options.  See also <cmdref
+	targ="append"/> for simpler joining operations.
       </para>
       <para>
 	The <opt>data</opt> option can be used to specify the column
@@ -6755,9 +6756,21 @@
 	dataset and/or the format in which dates are represented in
 	that column.
       </para>
+      <subhead>Importing more than one series at once</subhead>
       <para>
-	See also <cmdref targ="append"/> for simpler joining
-	operations.
+	The <cmd>join</cmd> command can handle the importation of
+	several series at once. This happens when (a) the
+	<repl>varname</repl> argument is a space-separated list of
+	names rather than a single name, or (b) when it points to an
+	array of strings: the elements of this array should be the
+	names of the series to import.
+      </para>
+      <para>
+	This methods has some limitations, however: the
+	<opt>data</opt> option is not available. When importing
+	multiple series you are obliged to accept their
+	<quote>outer</quote> names. The other options apply uniformly
+	to all the series imported via a given command.
       </para>
     </description>
 

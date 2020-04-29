@@ -10244,6 +10244,21 @@
       </description>
     </function>    
 
+    <function name="sgn" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna il segno di <argname>x</argname>, ossia 
+	  0 se <argname>x</argname> è zero, 1 se <argname>x</argname> è
+	  positivo, &minus;1 se <argname>x</argname> è negativo, o
+	  <lit>NA</lit> se <argname>x</argname> è un non-numero (Not a
+	  Number).
+	</para>
+      </description>
+    </function>
+
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="vector">b</fnarg>
