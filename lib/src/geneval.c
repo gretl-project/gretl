@@ -11956,6 +11956,33 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	}
+    } else if (f == HF_GEO2DAT) {
+	gretl_matrix *(*geofunc) (const gretl_array *, const char *,
+				  const gretl_matrix *);
+	gretl_matrix *zvec = NULL;
+
+	post_process = 0;
+	if (l->t != ARRAY) {
+	    p->err = E_TYPES;
+	} else if (m->t != STR) {
+	    p->err = E_TYPES;
+	} else if (r->t == MAT) {
+	    zvec = r->v.m;
+	} else if (r->t != EMPTY) {
+	    p->err = E_TYPES;
+	}
+	if (!p->err) {
+	    geofunc = get_plugin_function("geo2dat");
+	    if (geofunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret = aux_matrix_node(p);
+		ret->v.m = geofunc(l->v.a, m->v.str, zvec);
+		if (ret->v.m == NULL) {
+		    p->err = E_DATA; /* FIXME? */
+		}
+	    }
+	}
     }
 
     if (!p->err && post_process) {
@@ -16651,7 +16678,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case HF_REGLS:
     case HF_DBF2CSV:
-    case HF_SHP2DAT:	
+    case HF_SHP2DAT:
+    case HF_GEO2DAT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

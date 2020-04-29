@@ -467,6 +467,7 @@ enum {
     HF_REGLS,
     HF_DBF2CSV,
     HF_SHP2DAT,
+    HF_GEO2DAT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

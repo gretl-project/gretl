@@ -9,6 +9,187 @@
 
 enum { DBF, SHP, GEO };
 
+#define HUGE 1.0e100
+
+static int matrix_is_payload (const gretl_matrix *mat)
+{
+    int i;
+
+    for (i=0; i<mat->rows; i++) {
+	if (!na(mat->val[i]) && mat->val[i] != 0) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+static int skip_object (int i, const gretl_matrix *m, double *pz)
+{
+    if (m == NULL) {
+	return 0;
+    } else {
+	*pz = m->val[i];
+	return na(*pz);
+    }
+}
+
+gretl_matrix *ring2matrix (gretl_array *ring)
+{
+    int i, n = gretl_array_get_length(ring);
+    gretl_matrix *ret = gretl_matrix_alloc(n, 2);
+    const char *sx, *sy;
+    gretl_array *ri;
+
+    for (i=0; i<n; i++) {
+	ri = gretl_array_get_data(ring, i);
+	sx = gretl_array_get_data(ri, 0);
+	sy = gretl_array_get_data(ri, 1);
+	gretl_matrix_set(ret, i, 0, atof(sx));
+	gretl_matrix_set(ret, i, 1, atof(sy));
+    }
+
+    return ret;
+}
+
+static void col_xy_minmax (const gretl_matrix *m,
+			   double *xmin, double *xmax,
+			   double *ymin, double *ymax)
+{
+    double x, y;
+    int i;
+
+    for (i=0; i<m->rows; i++) {
+	x = gretl_matrix_get(m, i, 0);
+	y = gretl_matrix_get(m, i, 1);
+	if (x < *xmin) *xmin = x;
+	if (x > *xmax) *xmax = x;
+	if (y < *ymin) *ymin = y;
+	if (y > *ymax) *ymax = y;
+    }
+}
+
+gretl_matrix *geo2dat (gretl_array *features,
+		       const char *datname,
+		       const gretl_matrix *zvec)
+{
+    gretl_array *AC;
+    gretl_array *ACj, *ACjk;
+    gretl_matrix *X, *bbox;
+    gretl_bundle *fi, *geom;
+    double gmin[2] = {HUGE, HUGE};
+    double gmax[2] = {-HUGE, -HUGE};
+    FILE *fp;
+    const char *gtype;
+    int have_payload = 0;
+    int nf, mp, nac, ncj;
+    int i, j, k, p;
+    int err = 0;
+
+    if (zvec != NULL) {
+	if (matrix_is_payload(zvec)) {
+	    have_payload = 1;
+	}
+    }
+
+    fp = gretl_fopen(datname, "wb");
+    if (fp == NULL) {
+	return NULL;
+    }
+
+    nf = gretl_array_get_length(features);
+
+    for (i=0; i<nf; i++) {
+	double x, y, z = 0;
+
+	if (skip_object(i, zvec, &z)) {
+	    continue;
+	}
+
+        if (!na(z)) {
+	    fi = gretl_array_get_data(features, i);
+	    geom = gretl_bundle_get_bundle(fi, "geometry", NULL);
+	    gtype = gretl_bundle_get_string(geom, "type", NULL);
+	    if (!strcmp(gtype, "Polygon")) {
+                mp = 0;
+	    } else if (!strcmp(gtype, "MultiPolygon")) {
+                mp = 1;
+            } else {
+                gretl_errmsg_sprintf("can't handle geometry type '%s'", gtype);
+		break;
+	    }
+	    AC = gretl_bundle_get_array(geom, "coordinates", NULL);
+            nac = gretl_array_get_length(AC);
+            if (mp == 0) {
+		/* got Polygon */
+                for (j=0; j<nac; j++) {
+		    ACj = gretl_array_get_data(AC, j);
+                    X = ring2matrix(ACj);
+		    col_xy_minmax(X, &gmin[0], &gmax[0], &gmin[1], &gmax[1]);
+		    for (k=0; k<X->rows; k++) {
+			x = gretl_matrix_get(X, k, 0);
+			y = gretl_matrix_get(X, k, 1);
+			if (have_payload) {
+                            fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			} else {
+			    fprintf(fp, "%.8g %.8g\n", x, y);
+			}
+		    }
+		    gretl_matrix_free(X);
+                    if (j < nac-1) { /* separator */
+                        fputc('\n', fp);
+		    }
+		}
+	    } else {
+		/* got MultiPolygon */
+		for (j=0; j<nac; j++) {
+		    ACj = gretl_array_get_data(AC, j);
+		    ncj = gretl_array_get_length(ACj);
+                    /* printf "# polygon %d, %d elements\n", j, ncj */
+		    for (k=0; k<ncj; k++) {
+			ACjk = gretl_array_get_data(ACj, k);
+                        X = ring2matrix(ACjk);
+			col_xy_minmax(X, &gmin[0], &gmax[0], &gmin[1], &gmax[1]);
+			for (p=0; p<X->rows; p++) {
+			    x = gretl_matrix_get(X, p, 0);
+			    y = gretl_matrix_get(X, p, 1);
+			    if (have_payload) {
+				fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			    } else {
+				fprintf(fp, "%.8g %.8g\n", x, y);
+			    }
+			}
+			gretl_matrix_free(X);
+                        if (k < ncj-1) {
+                            fputc('\n', fp);
+                        }
+		    }
+		    if (j < nac-1) {
+                        fputc('\n', fp);
+                    }
+                }
+            }
+            if (i < nf-1) {
+                fputs("\n\n", fp); /* end of entity block */
+            }
+        }
+    }
+
+    fputc('\n', fp);
+    fclose(fp);
+
+    if (!err) {
+	bbox = gretl_matrix_alloc(2, 2);
+	if (bbox != NULL) {
+	    gretl_matrix_set(bbox, 0, 0, gmin[0]);
+	    gretl_matrix_set(bbox, 0, 1, gmin[1]);
+	    gretl_matrix_set(bbox, 1, 0, gmax[0]);
+	    gretl_matrix_set(bbox, 1, 1, gmax[1]);
+	}
+    }
+
+    return bbox;
+}
+
 static void output_dbf_string (const char *s, FILE *fp)
 {
     fputc('"', fp);
@@ -177,31 +358,9 @@ static void record_extrema (double x, double y,
     }
 }
 
-static int skip_object (int i, const gretl_matrix *m, double *pz)
-{
-    if (m == NULL) {
-	return 0;
-    } else {
-	*pz = m->val[i];
-	return na(*pz);
-    }
-}
-
-static int mat_is_payload (const gretl_matrix *mat)
-{
-    int i;
-
-    for (i=0; i<mat->rows; i++) {
-	if (!na(mat->val[i]) && mat->val[i] != 0) {
-	    return 1;
-	}
-    }
-    return 0;
-}
-
 gretl_matrix *shp2dat (const char *shpname,
 		       const char *datname,
-		       const gretl_matrix *mat)
+		       const gretl_matrix *zvec)
 {
     gretl_matrix *bbox = NULL;
     SHPHandle SHP;
@@ -242,26 +401,26 @@ gretl_matrix *shp2dat (const char *shpname,
 
     SHPGetInfo(SHP, &n_entities, &n_shapetype, fmin, fmax);
 
-    if (mat != NULL) {
-	if (mat->rows != n_entities) {
+    if (zvec != NULL) {
+	if (zvec->rows != n_entities) {
 	    fprintf(stderr, "data vector: expected %d rows but got %d\n",
-		    n_entities, mat->rows);
+		    n_entities, zvec->rows);
 	    SHPClose(SHP);
 	    return NULL;
 	}
-	for (i=0; i<mat->rows; i++) {
-	    if (na(mat->val[i])) {
+	for (i=0; i<zvec->rows; i++) {
+	    if (na(zvec->val[i])) {
 		nskip++;
 		break;
 	    }
 	}
 	if (nskip > 0) {
 	    for (i=0; i<2; i++) {
-		fmin[i] = +1.0e6;
-		fmax[i] = -1.0e6;
+		fmin[i] = HUGE;
+		fmax[i] = -HUGE;
 	    }
 	}
-	if (mat_is_payload(mat)) {
+	if (matrix_is_payload(zvec)) {
 	    have_payload = 1;
 	}
     }
@@ -279,7 +438,7 @@ gretl_matrix *shp2dat (const char *shpname,
 	double x, y, z = 0;
 	int j;
 
-	if (skip_object(i, mat, &z)) {
+	if (skip_object(i, zvec, &z)) {
 	    continue;
 	}
 
