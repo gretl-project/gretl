@@ -190,94 +190,6 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
     return ret
 end function
 
-function matrix geojson_to_dat (const bundles features,
-				const matrix xvec[null],
-				bool xvec_is_payload[0])
-    scalar nf = nelem(features)
-    scalar have_x = 0
-    scalar have_payload = 0
-    
-    if exists(xvec)
-	have_x = 1
-	if xvec_is_payload
-	    have_payload = 1
-	endif
-    endif
-
-    matrix globalmin = {$huge, $huge}
-    matrix globalmax = {-$huge, -$huge}
-
-    loop i = 1 .. nf # features
-	scalar x = have_x ? xvec[i] : 0
-        if ok(x)
-            string gtype = features[i].geometry.type
-            scalar mp = -1
-            if gtype == "Polygon"
-                mp = 0
-            elif gtype == "MultiPolygon"
-                mp = 1
-            else
-                printf "can't handle geometry type '%s'", gtype
-		mp = -1
-            endif
-            arrays AC = features[i].geometry.coordinates
-            nac = nelem(AC)
-            # printf "# entity %d, %s (%d coordinates elements)\n", i, gtype, nac
-            if mp == 0 # got Polygon
-                loop j=1..nac
-                    matrix X = ring2matrix(AC[j])
-                    xy0 = minc(X)
-                    xy1 = maxc(X)
-                    globalmin = (xy0 .< globalmin) ? xy0 : globalmin
-                    globalmax = (xy1 .> globalmax) ? xy1 : globalmax
-                    loop k=1 .. rows(X)
-			if have_payload
-                            printf "%.8g %.8g %.8g\n", X[k,1], X[k,2], x
-			else
-			    printf "%.8g %.8g\n", X[k,1], X[k,2]
-			endif
-                    endloop
-                    if j < nac # separator
-                        printf "\n"
-                    endif
-                endloop
-            else # got MultiPolygon
-                loop j=1..nac
-                    ncj = nelem(AC[j])
-                    # printf "# polygon %d, %d elements\n", j, ncj
-                    loop k=1..ncj
-                        matrix X = ring2matrix(AC[j][k])
-                        xy0 = minc(X)
-                        xy1 = maxc(X)
-                        globalmin = (xy0 .< globalmin) ? xy0 : globalmin
-                        globalmax = (xy1 .> globalmax) ? xy1 : globalmax
-                        loop p=1 .. rows(X)
-			    if have_payload
-				printf "%.8g %.8g %.8g\n", X[p,1], X[p,2], x
-			    else
-				printf "%.8g %.8g\n", X[p,1], X[p,2]
-			    endif
-                        endloop
-                        if k < ncj # separator
-                            printf "\n"
-                        endif
-                    endloop
-                    if j < nac # separator
-                        printf "\n"
-                    endif
-                endloop
-            endif
-            if i < nf
-                printf "\n\n" # end of entity block
-            endif
-        endif
-    endloop
-
-    printf "\n"
-    return globalmin | globalmax
-
-end function
-
 function matrix stretch(matrix minmax, scalar by[0.05])
     matrix ret = {0,0}
     
@@ -442,7 +354,7 @@ function void geoplot(const string mapfile,
 		      const bundle options)
     matrix bbox = {}
     scalar shp = 0
-    if fname_suffix(mapfile) == "shp"
+    if tolower(fname_suffix(mapfile)) == "shp"
 	shp = 1
     else
 	bundles jb = geojson_get_features(mapfile)
@@ -462,6 +374,7 @@ function void geoplot(const string mapfile,
     else
 	string datfile = sprintf("@dotdir/geoplot_tmp.dat")
     endif
+
     if shp
 	if exists("xvec")
 	    bbox = _shp2dat(mapfile, datfile, xvec)
@@ -469,13 +382,11 @@ function void geoplot(const string mapfile,
 	    bbox = _shp2dat(mapfile, datfile)
 	endif
     else
-	outfile "@datfile" --quiet
 	if exists("xvec")
-	    bbox = geojson_to_dat(jb, xvec, have_payload)
+	    bbox = _geo2dat(jb, datfile, xvec)
 	else
-	    bbox = geojson_to_dat(jb)
+	    bbox = _geo2dat(jb, datfile)
 	endif
-	end outfile
     endif
 
     if inbundle(options, "plotfile") == 4
