@@ -46,7 +46,7 @@
 <!ELEMENT gretl-function (params?, return?, code)>
 <!ATTLIST gretl-function
    name CDATA #REQUIRED
-   type (void | scalar | series | matrix | list | string | bundle | strings | matrices | bundles | lists) 'void'
+   type (void | scalar | series | matrix | list | string | bundle | strings | matrices | bundles | lists | arrays) 'void'
    private (0|1) '0'
    plugin-wrapper (0|1) '0'
    no-print (0|1) '0'
@@ -98,7 +98,7 @@
    type (bool | boolean | int | obs | scalar | series | list |
          matrix | bundle | scalarref | seriesref | matrixref |
          bundleref | string | stringref | strings | matrices |
-	 bundles | lists | stringsref | matricesref | 
+	 bundles | lists | arrays | stringsref | matricesref | 
 	 bundlesref) 'series'
 >
 
@@ -106,7 +106,7 @@
 <!ATTLIST return
    name CDATA #REQUIRED
    type (scalar | series | matrix | list | string | bundle | 
-         strings | matrices | bundles) 'series'
+         strings | matrices | bundles | arrays) 'series'
 >
 
 <!ATTLIST sample-script
