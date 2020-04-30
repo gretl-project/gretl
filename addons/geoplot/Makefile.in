@@ -42,6 +42,7 @@ $(PKG).zip: $(PKG).gfn pdfdoc
 symlinks:
 	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
+	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -s $(PKGSRC)/examples . ; fi
 
 pdfdoc: 
 	$(MAKE) -C doc
@@ -52,9 +53,12 @@ check: $(PKG).gfn
 install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
+	for f in examples/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 
 clean: 
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip

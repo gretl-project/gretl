@@ -9,3 +9,4 @@ help = geoplot.pdf
 sample-script = geoplot_sample.inp
 min-version = 2020c
 data-requirement = no-data-ok
+data-files = examples
