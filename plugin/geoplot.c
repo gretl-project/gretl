@@ -30,6 +30,19 @@ enum { DBF, SHP, GEO };
 
 #define HUGE 1.0e100
 
+static char *get_fullpath (const char *fname)
+{
+    static char input_fname[MAXLEN];
+
+    strcpy(input_fname, fname);
+
+    if (!g_path_is_absolute(fname)) {
+	gretl_addpath(input_fname, 0);
+    }
+
+    return input_fname;
+}
+
 static int matrix_is_payload (const gretl_matrix *mat)
 {
     int i;
@@ -87,22 +100,64 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
     return ret;
 }
 
-gretl_matrix *geo2dat (gretl_array *features,
+static gretl_array *geojson_get_features (const char *fname,
+					  int *err)
+{
+    gretl_bundle *(*jfunc) (const char *, const char *, int *);
+    gretl_array *a = NULL;
+    GError *gerr = NULL;
+    gchar *JSON = NULL;
+    gsize len = 0;
+    gboolean ok;
+
+    ok = g_file_get_contents(fname, &JSON, &len, &gerr);
+
+    if (ok) {
+	gretl_bundle *b = NULL;
+	GretlType type = 0;
+
+	jfunc = get_plugin_function("json_get_bundle");
+	if (jfunc == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    b = jfunc(JSON, NULL, err);
+	    if (!*err) {
+		a = gretl_bundle_steal_data(b, "features", &type, NULL, err);
+	    }
+	}
+	gretl_bundle_destroy(b);
+	g_free(JSON);
+    } else if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return a;
+}
+
+gretl_matrix *geo2dat (const char *geoname,
 		       const char *datname,
 		       const gretl_matrix *zvec)
 {
-    gretl_array *AC;
+    gretl_array *features, *AC;
     gretl_array *ACj, *ACjk;
     gretl_matrix *X, *bbox = NULL;
     gretl_bundle *fi, *geom;
     double gmin[2] = {HUGE, HUGE};
     double gmax[2] = {-HUGE, -HUGE};
+    char *infile;
     FILE *fp;
     const char *gtype;
     int have_payload = 0;
     int nf, mp, nac, ncj;
     int i, j, k, p;
     int err = 0;
+
+    infile = get_fullpath(geoname);
+    features = geojson_get_features(infile, &err);
+    if (features == NULL) {
+	return NULL;
+    }
 
     if (zvec != NULL) {
 	if (matrix_is_payload(zvec)) {
@@ -112,6 +167,7 @@ gretl_matrix *geo2dat (gretl_array *features,
 
     fp = gretl_fopen(datname, "wb");
     if (fp == NULL) {
+	gretl_array_destroy(features);
 	return NULL;
     }
 
@@ -195,6 +251,8 @@ gretl_matrix *geo2dat (gretl_array *features,
 
     fputc('\n', fp);
     fclose(fp);
+
+    gretl_array_destroy(features);
 
     if (!err) {
 	bbox = gretl_matrix_alloc(2, 2);
@@ -366,6 +424,7 @@ gretl_matrix *shp2dat (const char *shpname,
 {
     gretl_matrix *bbox = NULL;
     SHPHandle SHP;
+    char *infile;
     FILE *fp;
     int n_shapetype, n_entities, i, part;
     double gmin[4], gmax[4];
@@ -396,7 +455,8 @@ gretl_matrix *shp2dat (const char *shpname,
     }
 #endif
 
-    SHP = SHPOpen(shpname, "rb");
+    infile = get_fullpath(shpname);
+    SHP = SHPOpen(infile, "rb");
     if (SHP == NULL) {
 	return NULL;
     }

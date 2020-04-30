@@ -11932,39 +11932,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		ret->v.xval = p->err = dbffunc(l->v.str, m->v.str, header);
 	    }
 	}
-    } else if (f == HF_SHP2DAT) {
-	gretl_matrix *(*shpfunc) (const char *, const char *, const gretl_matrix *);
-	gretl_matrix *payload = NULL;
-
-	post_process = 0;
-	if (l->t != STR || m->t != STR) {
-	    p->err = E_TYPES;
-	} else if (r->t == MAT) {
-	    payload = r->v.m;
-	} else if (r->t != EMPTY) {
-	    p->err = E_TYPES;
-	}
-	if (!p->err) {
-	    shpfunc = get_plugin_function("shp2dat");
-	    if (shpfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
-		ret = aux_matrix_node(p);
-		ret->v.m = shpfunc(l->v.str, m->v.str, payload);
-		if (ret->v.m == NULL) {
-		    p->err = E_DATA; /* FIXME? */
-		}
-	    }
-	}
-    } else if (f == HF_GEO2DAT) {
-	gretl_matrix *(*geofunc) (const gretl_array *, const char *,
+    } else if (f == HF_SHP2DAT || f == HF_GEO2DAT) {
+	gretl_matrix *(*mapfunc) (const char *, const char *,
 				  const gretl_matrix *);
 	gretl_matrix *zvec = NULL;
 
 	post_process = 0;
-	if (l->t != ARRAY) {
-	    p->err = E_TYPES;
-	} else if (m->t != STR) {
+	if (l->t != STR || m->t != STR) {
 	    p->err = E_TYPES;
 	} else if (r->t == MAT) {
 	    zvec = r->v.m;
@@ -11972,12 +11946,16 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    p->err = E_TYPES;
 	}
 	if (!p->err) {
-	    geofunc = get_plugin_function("geo2dat");
-	    if (geofunc == NULL) {
+	    if (f == HF_SHP2DAT) {
+		mapfunc = get_plugin_function("shp2dat");
+	    } else {
+		mapfunc = get_plugin_function("geo2dat");
+	    }
+	    if (mapfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
 		ret = aux_matrix_node(p);
-		ret->v.m = geofunc(l->v.a, m->v.str, zvec);
+		ret->v.m = mapfunc(l->v.str, m->v.str, zvec);
 		if (ret->v.m == NULL) {
 		    p->err = E_DATA; /* FIXME? */
 		}

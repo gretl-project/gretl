@@ -198,12 +198,6 @@ function matrix stretch(matrix minmax, scalar by[0.05])
 end function
 
 # private
-function bundles geojson_get_features(const string fname)
-    bundle map = jsongetb(readfile(fname))
-    return map.features
-end function
-
-# private
 function string fname_suffix (const string fname)
     string ret = ""
     loop for (i=strlen(fname); i>1; i--)
@@ -352,8 +346,6 @@ function void geoplot(const string mapfile,
     scalar shp = 0
     if tolower(fname_suffix(mapfile)) == "shp"
 	shp = 1
-    else
-	bundles jb = geojson_get_features(mapfile)
     endif
 
     if !exists(options)
@@ -383,9 +375,9 @@ function void geoplot(const string mapfile,
 	endif
     else
 	if exists("xvec")
-	    bbox = _geo2dat(jb, datfile, xvec)
+	    bbox = _geo2dat(mapfile, datfile, xvec)
 	else
-	    bbox = _geo2dat(jb, datfile)
+	    bbox = _geo2dat(mapfile, datfile)
 	endif
     endif
 
