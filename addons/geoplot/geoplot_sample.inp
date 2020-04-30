@@ -2,5 +2,5 @@ include geoplot.gfn
 
 string JSON = "us-states.geojson"
 
-open "@JSON" --from-pkg=geoplot
+open "@JSON" --frompkg=geoplot --preserve
 geoplot(JSON)
