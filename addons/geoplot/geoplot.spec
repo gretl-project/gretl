@@ -1,0 +1,11 @@
+author = Allin Cottrell and Riccardo "Jack" Lucchetti
+email = cottrell@wfu.edu
+tags = 
+version = 0.1
+date = 2020-04-29
+description = geospatial plotting
+public = 
+help = geoplot.pdf
+sample-script = 
+min-version = 2020c
+data-requirement = 

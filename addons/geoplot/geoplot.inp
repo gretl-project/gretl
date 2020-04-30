@@ -1,0 +1,500 @@
+function matrix get_bbox(const bundle jb)
+    matrix ret = {}
+    if inbundle(jb, "bbox")
+	if typeof(jb.bbox) == 3
+	    # a matrix
+	    ret = jb.bbox
+	else
+            n = sscanf(jb.bbox, "%m", ret)
+            ret = mshape(ret, 2, round(n/2))'
+	endif
+    endif
+    return ret
+end function
+
+function matrix ring2matrix(const arrays ring)
+    n = nelem(ring)
+    matrix ret = zeros(2,n)
+    m = {}
+    loop i = 1 .. n
+        sscanf(ring[i, 1:2], "%m", m)
+        ret[,i] = m
+    endloop
+    return ret'
+end function
+
+function scalar polygonArea(const matrix XY)
+    # taken from https://www.mathopenref.com/coordpolygonarea2.html
+    scalar area = 0  # Accumulates area
+    scalar numPoints = rows(XY)
+
+    loop i = 2 .. numPoints
+        a = XY[i-1,1] * XY[i, 2]
+        b = XY[i,1] * XY[i-1, 2]
+        area += (a-b)
+    endloop
+    return abs(area/2)
+end function
+
+function string describe_polygon_coords(const arrays coar, bool verbose)
+    ext_ring = coar[1]
+
+    ret = sprintf("Exterior ring: %5d points ", nelem(ext_ring))
+    area = polygonArea(ring2matrix(ext_ring))
+    ret = ret ~ sprintf("(area = %12.3f); ", area*1000)
+    if verbose > 1
+        if nelem(coar) == 1
+            ret = ret ~ "no interior rings"
+        else
+            ret = ret ~ sprintf("%d interior rings", nelem(coar) - 1)
+        endif
+    endif
+
+    return ret
+end function
+
+function bundle create_ids(const bundle f, scalar n)
+    bundle ret = null
+    loop foreach i f
+        key = "$i"
+        t = typeof(f.$i)
+        if t == 1
+            # numeric
+            matrix ret[key] = zeros(n, 1)
+        elif t == 4
+            # string
+            strings ret[key] = array(n)
+        endif
+    endloop
+    return ret
+end function
+
+function void fill_ids(const bundle f, bundle *ids, scalar featnum)
+
+    loop foreach i ids
+        key = "$i"
+        if inbundle(f, key)
+            ids[key][featnum] = f[key]
+        else
+            t = typeof(ids.$i)
+            if t == 3
+                ids[key][featnum] = NA
+            elif t == 6
+                ids[key][featnum] = ""
+            endif
+        endif
+    endloop
+end function
+
+function void print_properties(const bundle f)
+    n = nelem(f)
+    loop foreach i f
+        key = "$i"
+        t = typeof(f.$i)
+        printf "\t%20s: ", "$i"
+        if t == 1
+            printf "%g\n", f.$i
+        elif t == 4
+            printf "%s\n", f.$i
+        else
+            printf "type = %d???\n", t
+        endif
+    endloop
+end function
+
+function bundle describe_geojson (const bundle jb, int verbose[1])
+
+    # as per RFC 7496
+
+    bundle ret = null
+
+    matrix bbox = get_bbox(jb)
+    if rows(bbox) == 0
+        printf "No bounding box\n"
+    else
+        printf "%d-dimensional bounding box\n", rows(bbox)
+    endif
+    ndim = rows(bbox)
+    ret.bbox = bbox
+
+    bundles feat = jb.features
+    nf = nelem(feat)
+    printf "%d features\n", nf
+    ret.nf = nf
+
+    bundle ids = null
+
+    loop i = 1 .. nf
+        fi = feat[i]
+
+        if (i == 1)
+            ids = create_ids(fi.properties, nf)
+        endif
+
+        props = fi.properties
+        fill_ids(props, &ids, i)
+
+        if verbose
+            if inbundle(fi, "geometry")
+                ft = fi.geometry.type
+                printf "\n%4d: geometry type = %s, ", i, ft
+
+                if inbundle(fi, "id")
+                    if typeof(fi.id) == 1
+                        printf "id (numeric) = %g\n", fi.id
+                    elif typeof(fi.id) == 4
+                        printf "id (string) = %s\n", fi.id
+                    else
+                        printf "id present, but of unknown type\n"
+                    endif
+                else
+                    printf "no id\n"
+                endif
+
+		print_properties(props)
+
+                if ft == "Point"
+		    printf "\t [ "
+		    pc = fi.geometry.coordinates
+
+		    loop j = 1 .. nelem(pc)
+                        printf "%g", atof(pc[j])
+                        if j == nelem(pc)
+			    printf " ]"
+                        else
+			    printf ", "
+                        endif
+		    endloop
+		    printf "\n"
+                elif ft == "Polygon"
+		    printf "\t%s\n", describe_polygon_coords(fi.geometry.coordinates, verbose)
+                elif ft == "MultiPolygon"
+		    mcoords = feat[i].geometry.coordinates
+		    nmulti = nelem(mcoords)
+		    printf "\t%d Sub-polygons\n", nmulti
+		    if verbose > 1
+                        loop j = 1 .. nmulti
+			    printf "\t\t%s\n", describe_polygon_coords(mcoords[j], verbose - 1)
+                        endloop
+		    endif
+
+		endif
+            else
+                printf "\tNo geometry (???)\n"
+            endif
+        endif
+
+    endloop
+
+    ret.ids = ids
+    return ret
+end function
+
+function matrix geojson_to_dat (const bundles features,
+				const matrix xvec[null],
+				bool xvec_is_payload[0])
+    scalar nf = nelem(features)
+    scalar have_x = 0
+    scalar have_payload = 0
+    
+    if exists(xvec)
+	have_x = 1
+	if xvec_is_payload
+	    have_payload = 1
+	endif
+    endif
+
+    matrix globalmin = {$huge, $huge}
+    matrix globalmax = {-$huge, -$huge}
+
+    loop i = 1 .. nf # features
+	scalar x = have_x ? xvec[i] : 0
+        if ok(x)
+            string gtype = features[i].geometry.type
+            scalar mp = -1
+            if gtype == "Polygon"
+                mp = 0
+            elif gtype == "MultiPolygon"
+                mp = 1
+            else
+                printf "can't handle geometry type '%s'", gtype
+		mp = -1
+            endif
+            arrays AC = features[i].geometry.coordinates
+            nac = nelem(AC)
+            # printf "# entity %d, %s (%d coordinates elements)\n", i, gtype, nac
+            if mp == 0 # got Polygon
+                loop j=1..nac
+                    matrix X = ring2matrix(AC[j])
+                    xy0 = minc(X)
+                    xy1 = maxc(X)
+                    globalmin = (xy0 .< globalmin) ? xy0 : globalmin
+                    globalmax = (xy1 .> globalmax) ? xy1 : globalmax
+                    loop k=1 .. rows(X)
+			if have_payload
+                            printf "%.8g %.8g %.8g\n", X[k,1], X[k,2], x
+			else
+			    printf "%.8g %.8g\n", X[k,1], X[k,2]
+			endif
+                    endloop
+                    if j < nac # separator
+                        printf "\n"
+                    endif
+                endloop
+            else # got MultiPolygon
+                loop j=1..nac
+                    ncj = nelem(AC[j])
+                    # printf "# polygon %d, %d elements\n", j, ncj
+                    loop k=1..ncj
+                        matrix X = ring2matrix(AC[j][k])
+                        xy0 = minc(X)
+                        xy1 = maxc(X)
+                        globalmin = (xy0 .< globalmin) ? xy0 : globalmin
+                        globalmax = (xy1 .> globalmax) ? xy1 : globalmax
+                        loop p=1 .. rows(X)
+			    if have_payload
+				printf "%.8g %.8g %.8g\n", X[p,1], X[p,2], x
+			    else
+				printf "%.8g %.8g\n", X[p,1], X[p,2]
+			    endif
+                        endloop
+                        if k < ncj # separator
+                            printf "\n"
+                        endif
+                    endloop
+                    if j < nac # separator
+                        printf "\n"
+                    endif
+                endloop
+            endif
+            if i < nf
+                printf "\n\n" # end of entity block
+            endif
+        endif
+    endloop
+
+    printf "\n"
+    return globalmin | globalmax
+
+end function
+
+function matrix stretch(matrix minmax, scalar by[0.05])
+    matrix ret = {0,0}
+    
+    ret[1] = minmax[1] * (( minmax[1] < 0 ) ? 1+by : 1-by) 
+    ret[2] = minmax[2] * (( minmax[2] > 0 ) ? 1+by : 1-by) 
+
+    return ret
+end function
+
+# private
+function bundles geojson_get_features(const string fname)
+    bundle map = jsongetb(readfile(fname))
+    return map.features
+end function
+
+# private
+function string fname_suffix (const string fname)
+    string ret = ""
+    loop for (i=strlen(fname); i>1; i--)
+	if fname[i] == "."
+	    ret = fname + i
+	    break
+	endif
+    endloop
+    return ret    
+end function
+
+# private
+
+function scalar output_type(const string dest)
+    string suffix = tolower(fname_suffix)
+    strings supported = defarray("eps", "pdf", "png", "svg")
+    matrix found = instrings(supported, suffix)
+
+    if rows(found)
+	scalar ret = found[1]
+    else
+	scalar ret = 0
+    endif
+    return ret
+end function
+
+# private
+function string setterm(scalar type, scalar h, scalar w, string dest)
+    string ret = ""
+    if type == 0
+	ret = "set term wxt persist"
+    elif type == 1
+	ret = "set term epscairo"
+    elif type == 2
+	ret = "set term pdfcairo"
+    elif type == 3
+	ret = "set term svg"
+    endif
+
+    if ok(h)
+	ret = ret ~ sprintf(" size %d,%d", w, h)
+    endif
+
+    if type > 0
+	ret = sprintf("%s\nset output '%s'\n", ret, dest)
+    endif
+
+    return ret
+end function
+
+    
+# private
+function void prepare_gp_file(const string datfile,
+			       const matrix bbox,
+                               const matrix zrange[null],
+			       const bundle options)
+
+    scalar have_payload = 0
+    if exists(zrange)
+	have_payload = 1
+	zlim = stretch(zrange')
+    endif
+    xlim = stretch(bbox[,1], 0.02)
+    ylim = stretch(bbox[,2], 0.02)
+
+    if inbundle(options, "height") == 1 && options.height > 0
+	height = options.height
+        scalar ymid = meanr(ylim)
+        scalar wratio = cos(ymid * $pi/180) * (xlim[2] - xlim[1]) / (ylim[2] - ylim[1])
+	if have_payload
+	    # 1.05 is to compensate for the colorbox
+            width = floor(wratio * height * 1.05)
+	    printf "# width(1) = %d\n", width
+	else
+	    width = floor(wratio * height)
+	    printf "# width(2) = %d\n", width
+	endif
+	printf "set term wxt persist size %d,%d\n", width, height
+    else
+	printf "set term wxt persist\n"
+    endif
+
+    printf "unset key\n"
+
+    if have_payload
+	if inbundle(options, "setpal") == 4
+	    printf "%s\n", options.setpal
+	endif
+	printf "set cbrange [%g:%g]\n", zlim[1], zlim[2]
+    endif
+    printf "set xrange [%g:%g]\n", xlim[1], xlim[2]
+    printf "set yrange [%g:%g]\n", ylim[1], ylim[2]
+
+    if inbundle(options, "title") == 4
+	printf "set title \"%s\"\n", options.title
+    endif
+
+    if inbundle(options, "notics") == 1 && options.notics
+	printf "set noxtics\n"
+	printf "set noytics\n"
+    endif
+    
+    if inbundle(options, "logscale") == 1 && options.logscale
+	printf "set logscale cb\n"
+    endif
+    
+    if inbundle(options, "bordwidth") == 1
+	border_width = options.bordwidth
+    else
+	border_width = 1
+    endif
+
+    if inbundle(options, "inlined") == 1
+	inlined = options.inlined
+    else
+	inlined = 0
+    endif
+
+    if have_payload
+	string borderline = sprintf("lc \"white\" lw %d", border_width)
+    else
+	string borderline = sprintf("lc \"black\" lw %d", border_width)
+    endif
+    
+    if inlined
+	printf "$MapData << EOD\n"
+	datastr = readfile(datfile)
+	printf "%s\n", datastr
+	printf "EOD\n"
+	if have_payload
+	    printf "plot for [i=0:*] $MapData index i with filledcurves fc palette, \\\n"
+	    printf "  $MapData using 1:2 with lines %s\n", borderline
+	else
+	    printf "plot $MapData using 1:2 with lines %s\n", borderline
+	endif
+    elif have_payload
+	printf "plot for [i=0:*] '%s' index i with filledcurves fc palette, \\\n", datfile
+	printf " '%s' using 1:2 with lines %s\n", datfile, borderline
+    else
+	printf "plot '%s' using 1:2 with lines %s\n", datfile, borderline
+    endif
+end function
+
+function void geoplot(const string mapfile,
+		      const series payload[null],
+		      const bundle options)
+    matrix bbox = {}
+    scalar shp = 0
+    if fname_suffix(mapfile) == "shp"
+	shp = 1
+    else
+	bundles jb = geojson_get_features(mapfile)
+    endif
+
+    have_payload = exists(payload)
+    if have_payload
+	set skip_missing off
+	matrix xvec = {payload}
+    elif inbundle(options, "mask") == 3
+	matrix xvec = options.mask
+    endif
+
+    # write out the polygons data for gnuplot
+    if inbundle(options, "datfile") == 4
+	string datfile = options.datfile
+    else
+	string datfile = sprintf("@dotdir/geoplot_tmp.dat")
+    endif
+    if shp
+	if exists("xvec")
+	    bbox = _shp2dat(mapfile, datfile, xvec)
+	else
+	    bbox = _shp2dat(mapfile, datfile)
+	endif
+    else
+	outfile "@datfile" --quiet
+	if exists("xvec")
+	    bbox = geojson_to_dat(jb, xvec, have_payload)
+	else
+	    bbox = geojson_to_dat(jb)
+	endif
+	end outfile
+    endif
+
+    if inbundle(options, "plotfile") == 4
+	gpname = options.plotfile
+    else
+	gpname = "geoplot.gp"
+    endif
+
+    outfile "@gpname" --quiet
+    if have_payload
+	matrix zrange = {min(payload), max(payload)}
+	prepare_gp_file(datfile, bbox, zrange, options)
+    else
+	prepare_gp_file(datfile, bbox, null, options)
+    endif
+    end outfile
+
+    if inbundle(options, "show") == 1 && options.show
+	!gnuplot "@gpname"
+    endif
+
+end function
