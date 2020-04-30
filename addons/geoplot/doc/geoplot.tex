@@ -1,7 +1,14 @@
-\documentclass[a4paper]{article}
-\usepackage{geometry,graphicx}
-\usepackage{fancyvrb,gretl}
-\usepackage[colorlinks=true]{hyperref}
+\documentclass{article}
+\usepackage{doc,url,verbatim,fancyvrb}
+\usepackage{pifont}
+\usepackage[authoryear]{natbib}
+\usepackage[pdftex]{graphicx}
+\usepackage{gretl}
+\usepackage{hyperref}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
 
 \title{geoplot: cartography in gretl}
 \author{Allin Cottrell and Jack Luchetti}
@@ -10,28 +17,25 @@
 
 \maketitle
 
-As of version 2020b, gretl has no map-plotting capabilities; although
-it is possible to produce geographic maps going via R through the
-\texttt{foreign} interface, it's neither elegant nor enjoyable to do
-so. Moreover, the most commonly used R packages are characteristically
-obese and, in many cases, needlessly byzantine.
-
-Here's a proposal for implementing a native apparatus in gretl via gnuplot.
+\textbf{Warning}: As of this writing the \textsf{geoplot} package is
+in ``alpha'' mode (or at best ``beta''). You're welcome to try it, but
+expect some bugs, and do not bank on the user interface remaining
+unchanged.
 
 \section{Preliminaries}
 \label{sec:prelim}
 
-Given gretl's user base and vocation, it is safe to assume that all we
-will ever be interested in are thematic maps, that is geographic maps
-where different areas get different colors, according to some
-variable. Fancier maps are out of scope, at least for the
-moment. Therefore, from now on we'll simply refer to thematic maps as
-``maps'' and the geographical entities it contains as
+Given gretl's user base and vocation, we assume that people will be
+primarily interested in ``thematic'' maps, in which geographical areas
+get different colors according to some variable of interest (for
+example regions of a country are colored according to their
+unemployment rates). Fancier maps are out of scope for the
+present. From here on we'll simply refer to maps of this sort as
+``maps'' and the geographical entities they contain as
 ``regions''. Plotting a map typically involves drawing a number of
 polygons, filled with appropriate colors, to some device (the screen,
-or a file).\footnote{One possible exception to this rule is that we
-  may want to also draw colored lines, such as rivers or
-  roads. Probably doable, but not for now.}
+or a file).\footnote{One may want to draw colored lines, such as
+  rivers or roads. Probably doable, but not for now.}
 
 The essential ingredients for doing this are
 \begin{enumerate}
@@ -43,48 +47,44 @@ The essential ingredients for doing this are
 \subsection{The geometry}
 \label{sec:geometry}
 
-In this section, we will assume we have $n$ regions, indexed by
-$i$. Each region is geometrically represented as a collection of $k_i$
-polygons (think islands in an archipelago), indexed by $j$. Each
-polygon is defined by $h_{i,j}$ coordinates. Typically, each
-coordinate vector has 2 items (latitude-longitude).\footnote{In some
-  cases, you can have 3, altitude being the most obvious example, or
-  more.}  Note that, however aesthetically tempting it would be,
-representing the coordinates as a 3d-array (region, sub-region,
-coordinates) would be unwise, because in practice the number of
-coordinates defining each region can be very different from region to
-region (example: Michigan vs Colorado).
+Let's say we have $n$ regions, indexed by $i$. Each region $i$ is
+represented geometrically as a collection of $k_i$ polygons (think
+islands in an archipelago), indexed by $j$. Each polygon is defined by
+$h_{i,j}$ coordinates. Typically, each coordinate vector has two
+elements, latitude and longitude.\footnote{In some cases you may have
+  a third element---altitude being the most obvious candidate---or
+  more.  But we're not getting into that right now.}
 
-These data can be conceptualized as being composed of two entities for
-each region:
+The information on each region comprises two components:
 \begin{description}
-\item[The metadata]: here you get the region's id, as a string and/or
-  numerical codes. Often, metadata contain other information as well,
-  such as, for example, the region's area. You can see this as a
-  dataset with $n$ observations, and several variables, possibly
-  string-valued.
-\item[The polygon data] here you get a geometrical representation of a
-  region's shape on the map. In general, what you have is one or more
-  polygons, each represented by an array of XY-pairs. These could come
-  as latitude-longitude, but not necessarily. You can see this as an
-  array of arrays of 2-column matrices: the outer array is of size
-  $n$; the inner arrays contain $k_i$ matrices with 2 columns.
+\item[Metadata] At minimum this should include the region's
+  identifier(s), as a string and/or numerical codes. Other
+  information, such as land area, may also be included. You can see
+  this as a dataset with $n$ observations and several variables,
+  possibly string-valued.
+\item[Polygon data] A geometrical representation of a region's shape
+  on the map, in the form of one or more polygons, each represented by
+  an array of X--Y pairs, typically latitude and longitude. You can
+  see this as an array of arrays of 2-column matrices: the outer array
+  is of size $n$; the inner arrays each contain $k_i$ matrices, each
+  with two columns.
 \end{description}
 
-There are several formats used for storing the geometry information,
-and all of them are found on the Net. The page
+Several file formats can be used for storing the geometry information.
+The page
 \url{https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/nuts}
-contains a nice collection for European NUTS regions. At the moment,
-we support two:
+contains a nice collection for European NUTS regions (NUTS =
+Nomenclature of Territorial Units for Statistics).  The
+\textsf{geoplot} package supports two formats:
 \begin{enumerate}
-\item GeoJSON files; these are ordinary JSON files with a
+\item GeoJSON files: plain JSON files with a
   pre-specified internal structure, regulated by RFC 7496. Basically,
   an array of regions (or ``features'') with each element containing
   the metadata and the polygons, under the \texttt{properties} and
   \texttt{geometry} keys, respectively.  This is our preferred format.
-\item ESRI shapefiles, not as nice as JSON files, but very common in
-  the wild. These maps come as collections of several files, the
-  essential ones being:
+\item ESRI shapefiles: more of a ``legacy'' format, but still very
+  common in the wild. These maps come as collections of several files,
+  the essential ones being:
   \begin{itemize}
   \item an xBase file, with \texttt{dbf} extension, holding the
     metadata;
@@ -95,23 +95,21 @@ we support two:
   \end{itemize}
 \end{enumerate}
 
-In the future, we may also take a look at an evolution of GeoJSON
-called TopoJSON, but not a priority at the moment. Besides, converting
-from TopoJSON to GeoJSON seems to be quite easy.
-
+In the future we may take a look at an evolution of GeoJSON called
+TopoJSON, but that's not a priority at the moment.
 
 \subsection{The payload}
 \label{sec:payload}
 
-The data for coloring the polygons are what we call the
+The data for coloring the polygons constitute what we call the
 ``payload''. We assume that the user has the payload data as a gretl
-series: typically, but not necessarily, this means that the user has a
-datafile (in gdt or csv format) where each line is a region, like
-Table \ref{tab:payload}. Note the \texttt{id} column: it is assumed
-that the map metadata contain some information to establish a
-correspondence between it and the dataset the payload comes
-from. Ideally, it should be a numerical code, but a string-valued
-variable may also be acceptable in some cases.
+series; typically, but not necessarily, this means that the user has a
+datafile (in \texttt{gdt} or CSV format) where each line represented a
+region, as in Table~\ref{tab:payload}. Note the \texttt{id} column: it
+is assumed that the map metadata contain some information to establish
+a correspondence with the dataset containing the payload series.
+Ideally this should be a numerical code, but a string-valued variable
+is also be acceptable.
 
 
 \begin{table}[htbp]
@@ -140,12 +138,12 @@ variable may also be acceptable in some cases.
 \subsection{The software backend}
 \label{sec:software}
 
-Although one could conceivably use one of the many plotting libraries
-around, it is probably safest to use gnuplot, for several reasons,
-chiefly the fact that we already have a ``special relationship''. 
-The gnuplot way of drawing maps is by the Swiss-army knife \cmd{plot}
-command, with the \texttt{filledcurves} style. Details on the gnuplot
-syntax we're using are in section \ref{sec:gnuplot}.
+One could conceivably use any one of the many plotting libraries
+around, but the \textsf{geoplot} package uses \textsf{gnuplot}, which
+is already used for all other kinds of plot in gretl.  The gnuplot way
+of drawing maps is via the Swiss-army knife \cmd{plot} command, with
+the \texttt{filledcurves} style. Details on the gnuplot syntax we're
+using are in Appendix \ref{sec:gnuplot}.
 
 Given the geometry data and the payload, writing a gnuplot script for
 producing the map is relatively straightforward. The only possible
@@ -451,6 +449,7 @@ If the \cmd{geoplot} function is invoked without a payload, so to just
 draw the boundaries between regions, one can use the \texttt{mask} key
 of the options bundle to indicate which regions must be skipped.
 
+\clearpage
 \appendix
 
 \section{Representation of polygons in gnuplot}
