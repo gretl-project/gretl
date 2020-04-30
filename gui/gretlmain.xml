@@ -128,7 +128,7 @@
 	<menuitem action="GR_FBOX"/>
 	<menuitem action="GR_QQ"/>
 	<menuitem action="ThreeDPlot"/>
-	<menuitem action="MapOutlines"/>
+	<!-- <menuitem action="MapOutlines"/> -->
       </menu>
       <menu action="MultiPlots">
 	<menuitem action="MultiXY"/>
