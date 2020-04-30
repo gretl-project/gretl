@@ -404,7 +404,7 @@ function void geoplot(const string mapfile,
     endif
     end outfile
 
-    if inbundle(options, "show") == 1 && options.show
+    if !inbundle(options, "show") || options.show != 0
 	!gnuplot "@gpname"
     endif
 
