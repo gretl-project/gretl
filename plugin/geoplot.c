@@ -28,7 +28,7 @@
 
 enum { DBF, SHP, GEO };
 
-#define HUGE 1.0e100
+#define GEOHUGE 1.0e100
 
 static char *get_fullpath (char *fname)
 {
@@ -139,8 +139,8 @@ static gretl_matrix *geo2dat (const char *geoname,
     gretl_array *ACj, *ACjk;
     gretl_matrix *X, *bbox = NULL;
     gretl_bundle *fi, *geom;
-    double gmin[2] = {HUGE, HUGE};
-    double gmax[2] = {-HUGE, -HUGE};
+    double gmin[2] = {GEOHUGE, GEOHUGE};
+    double gmax[2] = {-GEOHUGE, -GEOHUGE};
     FILE *fp;
     const char *gtype;
     int have_payload = 0;
@@ -470,8 +470,8 @@ static gretl_matrix *shp2dat (const char *shpname,
 	}
 	if (nskip > 0) {
 	    for (i=0; i<2; i++) {
-		gmin[i] = HUGE;
-		gmax[i] = -HUGE;
+		gmin[i] = GEOHUGE;
+		gmax[i] = -GEOHUGE;
 	    }
 	}
 	if (matrix_is_payload(zvec)) {
