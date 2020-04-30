@@ -343,10 +343,6 @@ function void geoplot(const string mapfile,
 		      const series payload[null],
 		      const bundle options[null])
     matrix bbox = {}
-    scalar shp = 0
-    if tolower(fname_suffix(mapfile)) == "shp"
-	shp = 1
-    endif
 
     if !exists(options)
         bundle options = null
@@ -367,18 +363,10 @@ function void geoplot(const string mapfile,
 	string datfile = sprintf("@dotdir/geoplot_tmp.dat")
     endif
 
-    if shp
-	if exists("xvec")
-	    bbox = _shp2dat(mapfile, datfile, xvec)
-	else
-	    bbox = _shp2dat(mapfile, datfile)
-	endif
+    if exists("xvec")
+	bbox = _map2dat(mapfile, datfile, xvec)
     else
-	if exists("xvec")
-	    bbox = _geo2dat(mapfile, datfile, xvec)
-	else
-	    bbox = _geo2dat(mapfile, datfile)
-	endif
+	bbox = _map2dat(mapfile, datfile)
     endif
 
     if inbundle(options, "plotfile") == 4

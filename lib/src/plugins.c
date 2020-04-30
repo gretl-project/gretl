@@ -292,7 +292,6 @@ struct plugin_function_info plugin_functions[] = {
     /* parsing JSON data */
     { "json_get_string", P_JSON_GET},
     { "json_get_bundle", P_JSON_GET},
-    { "json_get_array",  P_JSON_GET},
     { "json_bundle_get_terminals", P_JSON_GET},
 
     /* parsing XML data */
@@ -310,8 +309,7 @@ struct plugin_function_info plugin_functions[] = {
 
     /* shapefile handling */
     { "dbf2csv", P_GEOPLOT},
-    { "shp2dat", P_GEOPLOT},
-    { "geo2dat", P_GEOPLOT},
+    { "map2dat", P_GEOPLOT},
     { "map_get_data", P_GEOPLOT},
 
     /* sentinel */

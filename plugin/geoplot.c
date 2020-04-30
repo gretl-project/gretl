@@ -30,17 +30,13 @@ enum { DBF, SHP, GEO };
 
 #define HUGE 1.0e100
 
-static char *get_fullpath (const char *fname)
+static char *get_fullpath (char *fname)
 {
-    static char input_fname[MAXLEN];
-
-    strcpy(input_fname, fname);
-
     if (!g_path_is_absolute(fname)) {
-	gretl_addpath(input_fname, 0);
+	gretl_addpath(fname, 0);
     }
 
-    return input_fname;
+    return fname;
 }
 
 static int matrix_is_payload (const gretl_matrix *mat)
@@ -135,9 +131,9 @@ static gretl_array *geojson_get_features (const char *fname,
     return a;
 }
 
-gretl_matrix *geo2dat (const char *geoname,
-		       const char *datname,
-		       const gretl_matrix *zvec)
+static gretl_matrix *geo2dat (const char *geoname,
+			      const char *datname,
+			      const gretl_matrix *zvec)
 {
     gretl_array *features, *AC;
     gretl_array *ACj, *ACjk;
@@ -145,7 +141,6 @@ gretl_matrix *geo2dat (const char *geoname,
     gretl_bundle *fi, *geom;
     double gmin[2] = {HUGE, HUGE};
     double gmax[2] = {-HUGE, -HUGE};
-    char *infile;
     FILE *fp;
     const char *gtype;
     int have_payload = 0;
@@ -153,8 +148,7 @@ gretl_matrix *geo2dat (const char *geoname,
     int i, j, k, p;
     int err = 0;
 
-    infile = get_fullpath(geoname);
-    features = geojson_get_features(infile, &err);
+    features = geojson_get_features(geoname, &err);
     if (features == NULL) {
 	return NULL;
     }
@@ -418,13 +412,12 @@ static void mercatorize (double lat, double lon,
     *py = -y;
 }
 
-gretl_matrix *shp2dat (const char *shpname,
-		       const char *datname,
-		       const gretl_matrix *zvec)
+static gretl_matrix *shp2dat (const char *shpname,
+			      const char *datname,
+			      const gretl_matrix *zvec)
 {
     gretl_matrix *bbox = NULL;
     SHPHandle SHP;
-    char *infile;
     FILE *fp;
     int n_shapetype, n_entities, i, part;
     double gmin[4], gmax[4];
@@ -455,8 +448,7 @@ gretl_matrix *shp2dat (const char *shpname,
     }
 #endif
 
-    infile = get_fullpath(shpname);
-    SHP = SHPOpen(infile, "rb");
+    SHP = SHPOpen(shpname, "rb");
     if (SHP == NULL) {
 	return NULL;
     }
@@ -724,6 +716,22 @@ static int do_shapefile (const char *fname,
     free(shxname);
 
     return err;
+}
+
+gretl_matrix *map2dat (const char *mapname,
+		       const char *datname,
+		       const gretl_matrix *zvec)
+{
+    char infile[MAXLEN];
+
+    strcpy(infile, mapname);
+    get_fullpath(infile);
+
+    if (has_suffix(mapname, ".shp")) {
+	return shp2dat(infile, datname, zvec);
+    } else {
+	return geo2dat(infile, datname, zvec);
+    }
 }
 
 int map_get_data (const char *fname, DATASET *dset,

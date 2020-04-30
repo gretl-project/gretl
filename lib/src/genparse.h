@@ -383,7 +383,6 @@ enum {
     F_COR,
     F_LRCOVAR,
     F_JSONGETB,
-    F_JSONGETA,
     F_FIXNAME,
     F_ATAN2,
     F_CCODE,
@@ -466,8 +465,7 @@ enum {
     F_STACK,
     HF_REGLS,
     HF_DBF2CSV,
-    HF_SHP2DAT,
-    HF_GEO2DAT,
+    HF_MAP2DAT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

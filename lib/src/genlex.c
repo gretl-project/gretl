@@ -511,7 +511,6 @@ struct str_table funcs[] = {
     { F_CURL,      "curl" },
     { F_JSONGET,   "jsonget" },
     { F_JSONGETB,  "jsongetb" },
-    { F_JSONGETA,  "jsongeta" },
     { F_XMLGET,    "xmlget" },
     { F_NLINES,    "nlines" },
     { F_KPSSCRIT,  "kpsscrit" },
@@ -597,8 +596,7 @@ struct str_table hidden_funcs[] = {
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
     { HF_DBF2CSV,  "_dbf2csv" },
-    { HF_SHP2DAT,  "_shp2dat" },
-    { HF_GEO2DAT,  "_geo2dat" },
+    { HF_MAP2DAT,  "_map2dat" },
     { 0,           NULL }
 };
 

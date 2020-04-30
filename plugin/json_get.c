@@ -954,56 +954,6 @@ gretl_bundle *json_get_bundle (const char *data,
     return ret;
 }
 
-static char *path_first (const char *path)
-{
-    const char *p = strchr(path, '/');
-    char *ret;
-
-    if (p == NULL) {
-	ret = g_strdup(path);
-    } else {
-	ret = g_strndup(path, p - path);
-    }
-
-    return ret;
-}
-
-/* public function, referenced in geneval.c (I think) */
-
-gretl_array *json_get_array (const char *data,
-			     const char *path,
-			     int *err)
-{
-    gretl_array *ret = NULL;
-    gretl_bundle *b;
-
-    b = json_get_bundle(data, path, err);
-
-    if (!*err) {
-	/* FIXME handling of path -> key */
-	gchar *key = path_first(path);
-	GretlType type = 0;
-	void *ptr;
-
-	ptr = gretl_bundle_steal_data(b, key, &type, NULL, err);
-	if (ptr == NULL) {
-	    gretl_errmsg_sprintf("json_get_array: got NULL for key '%s'",
-				 key);
-	    *err = E_DATA;
-	} else if (type != GRETL_TYPE_ARRAY) {
-	    gretl_errmsg_sprintf("json_get_array: got wrong type %s for key '%s'",
-				 gretl_type_get_name(type), key);
-	    *err = E_DATA;
-	} else {
-	    ret = ptr;
-	}
-	gretl_bundle_destroy(b);
-	g_free(key);
-    }
-
-    return ret;
-}
-
 static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
 {
     gretl_array *K, *ai;
