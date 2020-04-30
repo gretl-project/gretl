@@ -313,17 +313,18 @@ we use a \cmd{geoplot} function, whose signature is
 \begin{code}
 function void geoplot(const string mapfile,
 	const series payload[null],
-	const bundle options)
+	const bundle options[null])
 \end{code}
 where \texttt{mapfile} is the filename of the file containing the
 outlines, \texttt{payload} is the (optional) series with which to
-colorize the polygons, and \texttt{options} is a bundle to contain
-zero or more optional elements governing the appearance of the
-plot.\footnote{ We're using a bundle to allow an arbitrary number of options
-without over-burdening the signature of the function.} If The payload
-function is \texttt{null}, then only the boundaries between region
-will be drawn. This is useful if you want to have a look at what a
-geometry file looks like.
+colorize the polygons, and \texttt{options} is a bundle to contain one
+or more optional elements governing the appearance of the
+plot.\footnote{We're using a bundle to allow an arbitrary number of
+  options without over-burdening the signature of the function.} If
+The payload function is \texttt{null}, then only the boundaries
+between region will be drawn. This is useful if you want to have a
+see what a geometry file looks like. If the \texttt{options} is
+omitted all options are set to their default values.
 
 If the \cmd{geoplot} call in fact follows on the opening of a map
 metadata file in the same session, the mapfile argument may be
@@ -522,8 +523,8 @@ example, the \texttt{plotfile} key is useless when \texttt{show} equal
   of the generated gnuplot command file. Default: geoplot.gp in the
   user’s working directory.
 \item[\textbf{show}:] Boolean, specifying if the plot should be shown
-  on-screen right away. Default: false, the plot file is written but
-  we don’t call gnuplot to show it.
+  on-screen right away. Default: true. (Otherwise a gnuplot file is
+  written but not displayed.)
 \item[\textbf{height}:] scalar, giving the height of the plot (in
   pixels for PNG output, which is the only case handled so far). If
   this is given we try to figure out the width which gives a suitable
