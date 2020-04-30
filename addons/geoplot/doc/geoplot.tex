@@ -4,7 +4,7 @@
 \usepackage[colorlinks=true]{hyperref}
 
 \title{geoplot: cartography in gretl}
-\author{Allin Cottrell and Jack Luchetti}
+\author{Allin Cottrell and Jack Lucchetti}
 
 \begin{document}
 
@@ -222,7 +222,7 @@ graphical refinements, as dictated by the options inside the block.
 
 At the time of writing, we don't have yet everything implemented in
 libgretl, so in hansl we have to make do with alternative
-solutions. In the \texttt{mapfuncs.inp} script, we have a few hansl
+solutions. In the \texttt{geoplot.gfn} package, we have a few hansl
 functions for manipulating map data, that we can use for producing
 simple examples and prototyping the algorithms.
 
@@ -276,7 +276,7 @@ but France is a collection of polygons, because of Corsica.
 \begin{table}[htbp]
 \begin{scode}
 set verbose off
-include ../mapfuncs.inp
+include geoplot.gfn
 mapfile = "founders.geojson"
 open "@mapfile" --preserve
 
@@ -320,26 +320,26 @@ outlines, \texttt{payload} is the (optional) series with which to
 colorize the polygons, and \texttt{options} is a bundle to contain one
 or more optional elements governing the appearance of the
 plot.\footnote{We're using a bundle to allow an arbitrary number of
-  options without over-burdening the signature of the function.} If
-The payload function is \texttt{null}, then only the boundaries
-between region will be drawn. This is useful if you want to have a
-see what a geometry file looks like. If the \texttt{options} is
-omitted all options are set to their default values.
+  options without over-burdening the signature of the function.}
 
 If the \cmd{geoplot} call in fact follows on the opening of a map
 metadata file in the same session, the mapfile argument may be
 regarded as already implicit (it will be the very same file in the
 GeoJSON case, or an shp file with the same basename as a previously
 opened dbf file), but for now we're requiring that its path be
-given. The payload is optional because we want to allow the user to
-inspect the outlines without any colorization, in case that could be
-useful.
+given.
 
-The list of keys that are currently handled in the options bundle is
-listed in section \ref{sec:opts}. Here, we just use two: the
-``plotfile'' option is used to store the generated gnuplot script into
-the \texttt{GDPpc.gp} file; moreover, this file will contained the
-geometry data in ``inlined'' form.
+If the payload is \texttt{null} or omitted, then only the
+boundaries between region will be drawn, so the user can inspect the
+outlines without any colorization, in case that could be useful.  this
+is useful if you want to have a see what a geometry file looks like.
+
+If the \texttt{options} bundle is omitted all options are set to their
+default values. The list of keys that are currently handled in the
+options bundle is listed in section \ref{sec:opts}. Here, we just use
+two: the ``plotfile'' option is used to store the generated gnuplot
+script into the \texttt{GDPpc.gp} file; moreover, this file will
+contained the geometry data in ``inlined'' form.
 
 Running the script will produce a gnuplot file like the following:
 
@@ -384,7 +384,7 @@ when you \cmd{open} the former.
 \begin{table}[htbp]
   \begin{scode}
 set verbose on
-include ../mapfuncs.inp
+include geoplot.gfn
 
 open "us-states.geojson" --quiet
 
@@ -501,49 +501,58 @@ produces
   \includegraphics[width=0.8\textwidth]{squares}
 \end{center}
 
-Expand on palettes (\ldots)
+A nice way to customize the palette is by using the syntax \texttt{set
+palette defined} (see the gnuplot manual).
 
-\section{Currently supported options for the \texttt{geoplot} function}
+\section{Currently supported options for the \texttt{geoplot} function
+(in alphabetical order)}
 \label{sec:opts}
 
 Note that the options we have now don't form a fully coherent set: for
 example, the \texttt{plotfile} key is useless when \texttt{show} equal
 1, but we have time to optimize that.
+
 \begin{description}
-\item[\textbf{mask}:] a column vector of length equal to the number of
-  features in the map, with zeros in all places other than features to
-  be excluded, which should be represented by \texttt{NA}s. This is
-  very much a provisional formulation and should be improved. The mask
-  is referenced only if payload is not provided; it provides an
-  alternative means of sub-setting the features. Default: none.
-\item[\textbf{datfile}:] filename, allowing the user to direct
-  output of the representation of the polygon data for use with
-  gnuplot. Default: \texttt{geoplot\_tmp.dat} in the user’s “dotdir”.
-\item[\textbf{plotfile}:] filename, allowing the user to direct output
-  of the generated gnuplot command file. Default: geoplot.gp in the
-  user’s working directory.
-\item[\textbf{show}:] Boolean, specifying if the plot should be shown
-  on-screen right away. Default: true. (Otherwise a gnuplot file is
-  written but not displayed.)
+\item[\textbf{bordwidth}:] scalar, thickness of the line used for the
+  borders: Default: 1.
+\item[\textbf{datfile}:] filename, allowing the user to direct output
+  of the representation of the polygon data for use with
+  gnuplot. Default: \texttt{geoplot\_tmp.dat} in the user’s
+  \texttt{dotdir}.
 \item[\textbf{height}:] scalar, giving the height of the plot (in
   pixels for PNG output, which is the only case handled so far). If
   this is given we try to figure out the width which gives a suitable
   aspect ratio for the plot and write these dimensions into the plot
   file. Default: no dimensions written into the plot file; you get the
   whatever is the gnuplot default.
-\item[\textbf{setpal}:] string, giving a gnuplot set palette command,
-  to be injected into the plot file.  Default: the standard built-in
-  gnuplot palette (nothing extra is written into the plot file).
-\item[\textbf{title}:] string specifying a title for the
-  plot. Default: no title.
-\item[\textbf{notics}:] Boolean, for turning off the printing of x
-  (longitude) and y (latitude) tics. Default: tics are printed.
 \item[\textbf{inlined}:] Boolean, to have the polygon data included
   directly into the gnuplot file. Default: the data are read from a
   separate file (see datfile).
 \item[\textbf{logscale}:] Boolean, logscale for the payload. Default: false.
-\item[\textbf{bordwidth}:] scalar, thickness of the line used for the
-  borders: Default: 1.
+\item[\textbf{mask}:] a column vector of length equal to the number of
+  features in the map, with zeros in all places other than features to
+  be excluded, which should be represented by \texttt{NA}s. This is
+  very much a provisional formulation and should be improved. The mask
+  is referenced only if payload is not provided; it provides an
+  alternative means of sub-setting the features. Default: none.
+\item[\textbf{notics}:] Boolean, for turning off the printing of x
+  (longitude) and y (latitude) tics. Default: tics are printed.
+\item[\textbf{plotfile}:] filename, allowing the user to direct output
+  of the generated gnuplot command file. Default: geoplot.gp in the
+  user’s working directory.
+\item[\textbf{setpal}:] string, giving a gnuplot set palette command,
+  to be injected into the plot file. For example, the syntax
+  \begin{code}
+    options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"  
+  \end{code}
+  will give you a pleasent blue gradient.  Default: the standard
+  built-in gnuplot palette (nothing extra is written into the plot
+  file).
+\item[\textbf{show}:] Boolean, specifying if the plot should be shown
+  on-screen right away. Default: true. (Otherwise a gnuplot file is
+  written but not displayed.)
+\item[\textbf{title}:] string specifying a title for the
+  plot. Default: no title.
 \end{description}
 
 \end{document}
