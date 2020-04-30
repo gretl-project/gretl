@@ -70,7 +70,6 @@ function bundle create_ids(const bundle f, scalar n)
 end function
 
 function void fill_ids(const bundle f, bundle *ids, scalar featnum)
-
     loop foreach i ids
         key = "$i"
         if inbundle(f, key)
@@ -87,7 +86,6 @@ function void fill_ids(const bundle f, bundle *ids, scalar featnum)
 end function
 
 function void print_properties(const bundle f)
-    n = nelem(f)
     loop foreach i f
         key = "$i"
         t = typeof(f.$i)
@@ -218,7 +216,6 @@ function string fname_suffix (const string fname)
 end function
 
 # private
-
 function scalar output_type(const string dest)
     string suffix = tolower(fname_suffix)
     strings supported = defarray("eps", "pdf", "png", "svg")
@@ -255,7 +252,6 @@ function string setterm(scalar type, scalar h, scalar w, string dest)
 
     return ret
 end function
-
     
 # private
 function void prepare_gp_file(const string datfile,
@@ -351,13 +347,17 @@ end function
 
 function void geoplot(const string mapfile,
 		      const series payload[null],
-		      const bundle options)
+		      const bundle options[null])
     matrix bbox = {}
     scalar shp = 0
     if tolower(fname_suffix(mapfile)) == "shp"
 	shp = 1
     else
 	bundles jb = geojson_get_features(mapfile)
+    endif
+
+    if !exists(options)
+        bundle options = null
     endif
 
     have_payload = exists(payload)

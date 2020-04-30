@@ -1,0 +1,6 @@
+include geoplot.gfn
+
+string JSON = "us-states.geojson"
+
+open "@JSON" --from-pkg=geoplot
+geoplot(JSON)

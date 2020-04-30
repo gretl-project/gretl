@@ -6,6 +6,6 @@ date = 2020-04-29
 description = geospatial plotting
 public = geoplot describe_geojson
 help = geoplot.pdf
-sample-script = 
+sample-script = geoplot_sample.inp
 min-version = 2020c
 data-requirement = no-data-ok
