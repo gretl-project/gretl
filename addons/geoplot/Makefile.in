@@ -27,7 +27,7 @@ vpath %.spec $(PKGSRC)
 
 INP = geoplot.inp
 SPEC = geoplot.spec
-SMPL = XXXX
+SMPL = geoplot_sample.inp
 
 all: $(PKG).gfn pdfdoc
 
