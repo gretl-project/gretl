@@ -39,15 +39,18 @@ static char *get_fullpath (char *fname)
     return fname;
 }
 
-static int matrix_is_payload (const gretl_matrix *mat)
+static int matrix_is_payload (const gretl_matrix *m)
 {
-    int i;
+    if (m != NULL) {
+	int i;
 
-    for (i=0; i<mat->rows; i++) {
-	if (!na(mat->val[i]) && mat->val[i] != 0) {
-	    return 1;
+	for (i=0; i<m->rows; i++) {
+	    if (!na(m->val[i]) && m->val[i] != 0) {
+		return 1;
+	    }
 	}
     }
+
     return 0;
 }
 
@@ -131,9 +134,24 @@ static gretl_array *geojson_get_features (const char *fname,
     return a;
 }
 
+static gretl_matrix *make_bbox (double *gmin, double *gmax)
+{
+    gretl_matrix *bbox = gretl_matrix_alloc(2, 2);
+
+    if (bbox != NULL) {
+	gretl_matrix_set(bbox, 0, 0, gmin[0]);
+	gretl_matrix_set(bbox, 0, 1, gmin[1]);
+	gretl_matrix_set(bbox, 1, 0, gmax[0]);
+	gretl_matrix_set(bbox, 1, 1, gmax[1]);
+    }
+
+    return bbox;
+}
+
 static gretl_matrix *geo2dat (const char *geoname,
 			      const char *datname,
-			      const gretl_matrix *zvec)
+			      const gretl_matrix *zvec,
+			      int have_payload)
 {
     gretl_array *features, *AC;
     gretl_array *ACj, *ACjk;
@@ -143,7 +161,6 @@ static gretl_matrix *geo2dat (const char *geoname,
     double gmax[2] = {-GEOHUGE, -GEOHUGE};
     FILE *fp;
     const char *gtype;
-    int have_payload = 0;
     int nf, mp, nac, ncj;
     int i, j, k, p;
     int err = 0;
@@ -151,12 +168,6 @@ static gretl_matrix *geo2dat (const char *geoname,
     features = geojson_get_features(geoname, &err);
     if (features == NULL) {
 	return NULL;
-    }
-
-    if (zvec != NULL) {
-	if (matrix_is_payload(zvec)) {
-	    have_payload = 1;
-	}
     }
 
     fp = gretl_fopen(datname, "wb");
@@ -200,7 +211,7 @@ static gretl_matrix *geo2dat (const char *geoname,
 			if (have_payload) {
                             fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
 			} else {
-			    fprintf(fp, "%.8g %.8g\n", x, y);
+			    fprintf(fp, "%#.8g %#.8g\n", x, y);
 			}
 			record_extrema(x, y, gmin, gmax);
 		    }
@@ -223,7 +234,7 @@ static gretl_matrix *geo2dat (const char *geoname,
 			    if (have_payload) {
 				fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
 			    } else {
-				fprintf(fp, "%.8g %.8g\n", x, y);
+				fprintf(fp, "%#.8g %#.8g\n", x, y);
 			    }
 			    record_extrema(x, y, gmin, gmax);
 			}
@@ -245,17 +256,144 @@ static gretl_matrix *geo2dat (const char *geoname,
 
     fputc('\n', fp);
     fclose(fp);
-
     gretl_array_destroy(features);
 
     if (!err) {
-	bbox = gretl_matrix_alloc(2, 2);
-	if (bbox != NULL) {
-	    gretl_matrix_set(bbox, 0, 0, gmin[0]);
-	    gretl_matrix_set(bbox, 0, 1, gmin[1]);
-	    gretl_matrix_set(bbox, 1, 0, gmax[0]);
-	    gretl_matrix_set(bbox, 1, 1, gmax[1]);
+	bbox = make_bbox(gmin, gmax);
+    }
+
+    return bbox;
+}
+
+static int json_get_char (gchar **ps, int targ)
+{
+    gchar *s = *ps;
+    int ret = 0;
+
+    while (isspace(*s)) s++;
+    if (*s == targ) {
+	ret = 1;
+	s++;
+	while (isspace(*s)) s++;
+    }
+
+    *ps = s;
+
+    return ret;
+}
+
+static gretl_matrix *alt_geo2dat (const char *geoname,
+				  const char *datname,
+				  const gretl_matrix *zvec,
+				  int have_payload)
+{
+    GError *gerr = NULL;
+    gsize len = 0;
+    const char *targ = "\"coordinates\"";
+    double gmin[2] = {GEOHUGE, GEOHUGE};
+    double gmax[2] = {-GEOHUGE, -GEOHUGE};
+    gretl_matrix *bbox = NULL;
+    FILE *fp;
+    char *test;
+    int i, nlbr, nrbr;
+    gchar *JSON, *p, *s;
+    gboolean ok;
+    int err = 0;
+
+    ok = g_file_get_contents(geoname, &JSON, &len, &gerr);
+    if (!ok) {
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
 	}
+	return NULL;
+    }
+
+    fp = gretl_fopen(datname, "wb");
+    if (fp == NULL) {
+	g_free(JSON);
+	return NULL;
+    }
+
+    s = JSON;
+
+    for (i=0; !err; i++) {
+	double x, y, z = 0;
+
+	p = strstr(s, targ);
+	if (p == NULL) break;
+
+	if (skip_object(i, zvec, &z)) {
+	    s = p + 14;
+	    continue;
+	}
+
+	if (i > 0) {
+	    fputc('\n', fp);
+	}
+	p += 13;
+	if (!json_get_char(&p, ':')) {
+	    gretl_errmsg_set("geo2dat: expected ':'");
+	    err = E_DATA;
+	    break;
+	}
+	nlbr = 0;
+	while (json_get_char(&p, '[')) {
+	    nlbr++;
+	}
+	if (nlbr < 3 || nlbr > 4) {
+	    gretl_errmsg_sprintf("geo2dat: unexpected count of '[': %d", nlbr);
+	    err = E_DATA;
+	}
+	while (!err) {
+	    x = strtod(p, &test);
+	    if (json_get_char(&test, ',')) {
+		p = test;
+		y = strtod(p, &test);
+		if (!json_get_char(&test, ']')) {
+		    gretl_errmsg_sprintf("geo2dat: found '%c', expected ']'", *test);
+		    err = E_DATA;
+		    break;
+		}
+		nrbr = 1;
+		if (have_payload) {
+		    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+		} else {
+		    fprintf(fp, "%#.8g %#.8g\n", x, y);
+		}
+		record_extrema(x, y, gmin, gmax);
+		p = test;
+		while (json_get_char(&p, ']')) {
+		    nrbr++;
+		}
+		if (nrbr == nlbr) {
+		    /* reached the end of a feature */
+		    fputc('\n', fp);
+		    break;
+		} else if (nrbr > 1) {
+		    /* reached the end of a sub-feature */
+		    fputc('\n', fp);
+		}
+		json_get_char(&p, ',');
+		while (json_get_char(&p, '[')) {
+		    ;
+		}
+	    } else if (json_get_char(&test, '}')) {
+		break;
+	    } else {
+		gretl_errmsg_sprintf("geo2dat: unexpected char '%c'", *test);
+		err = E_DATA;
+		break;
+	    }
+	}
+	s = p;
+    }
+
+    fclose(fp);
+    g_free(JSON);
+
+    if (!err) {
+	bbox = make_bbox(gmin, gmax);
     }
 
     return bbox;
@@ -414,14 +552,14 @@ static void mercatorize (double lat, double lon,
 
 static gretl_matrix *shp2dat (const char *shpname,
 			      const char *datname,
-			      const gretl_matrix *zvec)
+			      const gretl_matrix *zvec,
+			      int have_payload)
 {
     gretl_matrix *bbox = NULL;
     SHPHandle SHP;
     FILE *fp;
     int n_shapetype, n_entities, i, part;
     double gmin[4], gmax[4];
-    int have_payload = 0;
     int pxwidth = 0;
     int pxheight = 0;
     int mercator = 0;
@@ -473,9 +611,6 @@ static gretl_matrix *shp2dat (const char *shpname,
 		gmin[i] = GEOHUGE;
 		gmax[i] = -GEOHUGE;
 	    }
-	}
-	if (matrix_is_payload(zvec)) {
-	    have_payload = 1;
 	}
     }
 
@@ -541,13 +676,7 @@ static gretl_matrix *shp2dat (const char *shpname,
     SHPClose(SHP);
 
     if (!err) {
-	bbox = gretl_matrix_alloc(2, 2);
-	if (bbox != NULL) {
-	    gretl_matrix_set(bbox, 0, 0, gmin[0]);
-	    gretl_matrix_set(bbox, 0, 1, gmin[1]);
-	    gretl_matrix_set(bbox, 1, 0, gmax[0]);
-	    gretl_matrix_set(bbox, 1, 1, gmax[1]);
-	}
+	bbox = make_bbox(gmin, gmax);
     }
 
     return bbox;
@@ -718,19 +847,28 @@ static int do_shapefile (const char *fname,
     return err;
 }
 
+#define ALT_GEO2DAT 0 /* more testing wanted */
+
 gretl_matrix *map2dat (const char *mapname,
 		       const char *datname,
 		       const gretl_matrix *zvec)
 {
     char infile[MAXLEN];
+    int have_payload;
 
     strcpy(infile, mapname);
     get_fullpath(infile);
 
+    have_payload = matrix_is_payload(zvec);
+
     if (has_suffix(mapname, ".shp")) {
-	return shp2dat(infile, datname, zvec);
+	return shp2dat(infile, datname, zvec, have_payload);
     } else {
-	return geo2dat(infile, datname, zvec);
+#if ALT_GEO2DAT
+	return alt_geo2dat(infile, datname, zvec, have_payload);
+#else
+	return geo2dat(infile, datname, zvec, have_payload);
+#endif
     }
 }
 
