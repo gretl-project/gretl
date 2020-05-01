@@ -25,6 +25,7 @@
 #include "shapefile.h"
 #include "libgretl.h"
 #include "gretl_typemap.h"
+#include "libset.h"
 
 enum { DBF, SHP, GEO };
 
@@ -282,10 +283,10 @@ static int json_get_char (gchar **ps, int targ)
     return ret;
 }
 
-static gretl_matrix *alt_geo2dat (const char *geoname,
-				  const char *datname,
-				  const gretl_matrix *zvec,
-				  int have_payload)
+static gretl_matrix *fast_geo2dat (const char *geoname,
+				   const char *datname,
+				   const gretl_matrix *zvec,
+				   int have_payload)
 {
     GError *gerr = NULL;
     gsize len = 0;
@@ -847,8 +848,6 @@ static int do_shapefile (const char *fname,
     return err;
 }
 
-#define ALT_GEO2DAT 0 /* more testing wanted */
-
 gretl_matrix *map2dat (const char *mapname,
 		       const char *datname,
 		       const gretl_matrix *zvec)
@@ -863,12 +862,10 @@ gretl_matrix *map2dat (const char *mapname,
 
     if (has_suffix(mapname, ".shp")) {
 	return shp2dat(infile, datname, zvec, have_payload);
+    } else if (libset_get_bool(GEOJSON_FAST)) {
+	return fast_geo2dat(infile, datname, zvec, have_payload);
     } else {
-#if ALT_GEO2DAT
-	return alt_geo2dat(infile, datname, zvec, have_payload);
-#else
 	return geo2dat(infile, datname, zvec, have_payload);
-#endif
     }
 }
 

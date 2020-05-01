@@ -163,6 +163,7 @@ struct set_vars_ {
 			   !strcmp(s, ROBUST_Z) || \
 			   !strcmp(s, MWRITE_G) || \
 			   !strcmp(s, STRSUB_ON) || \
+			   !strcmp(s, GEOJSON_FAST) || \
 			   !strcmp(s, MPI_USE_SMT) || \
 			   !strcmp(s, USE_OPENMP))
 
@@ -2381,6 +2382,8 @@ static void maybe_check_env (const char *s)
     }
 }
 
+static int geojson_fast; /* should be temporary! */
+
 int libset_get_bool (const char *key)
 {
     int flag, ret = 0;
@@ -2393,6 +2396,8 @@ int libset_get_bool (const char *key)
 	return R_lib;
     } else if (!strcmp(key, USE_DCMT)) {
         return gretl_rand_get_dcmt();
+    } else if (!strcmp(key, GEOJSON_FAST)) {
+	return geojson_fast;
     }
 
     if (check_for_state()) {
@@ -2494,6 +2499,9 @@ int libset_set_bool (const char *key, int val)
 	return check_R_setting(&R_lib, val, key);
     } else if (!strcmp(key, USE_DCMT)) {
 	return gretl_rand_set_dcmt(val);
+    } else if (!strcmp(key, GEOJSON_FAST)) {
+	geojson_fast = val;
+	return 0;
     }
 
     flag = boolvar_get_flag(key);
