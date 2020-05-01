@@ -372,7 +372,7 @@ static int printf_as_int (double x, int fc,
 			  PRN *prn)
 {
     if ((fc == 'u' || fc == 'x') && lflag) {
-	if (x < 0 || x > ULONG_MAX) {
+	if (x < 0 || x > (double) ULONG_MAX) {
 	    return E_INVARG;
 	}
 	if (wstar && pstar) {
@@ -384,7 +384,7 @@ static int printf_as_int (double x, int fc,
 	    pprintf(prn, fmt, (unsigned long) x);
 	}
     } else if (fc == 'u' || fc == 'x') {
-	if (x < 0 || x > UINT_MAX) {
+	if (x < 0 || x > (double) UINT_MAX) {
 	    return E_INVARG;
 	}
 	if (wstar && pstar) {
@@ -396,7 +396,7 @@ static int printf_as_int (double x, int fc,
 	    pprintf(prn, fmt, (unsigned) x);
 	}
     } else if (fc == 'd' && lflag) {
-	if (x < LONG_MIN || x > LONG_MAX) {
+	if (x < (double) LONG_MIN || x > (double) LONG_MAX) {
 	    return E_INVARG;
 	}
 	if (wstar && pstar) {
@@ -408,7 +408,7 @@ static int printf_as_int (double x, int fc,
 	    pprintf(prn, fmt, (long) x);
 	}
     } else {
-	if (x < INT_MIN || x > INT_MAX) {
+	if (x < (double) INT_MIN || x > (double) INT_MAX) {
 	    return E_INVARG;
 	}
 	if (wstar && pstar) {
