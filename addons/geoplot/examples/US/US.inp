@@ -1,0 +1,18 @@
+set verbose on
+include geoplot.gfn
+
+open "us-states.geojson" --quiet
+
+x = normal()
+opts = defbundle("plotfile", "us0.gp", "inlined", 1, "show", 1)
+
+opts.title = "USA (complete)"
+geoplot("us-states.geojson", x, opts)
+
+# now suppose you don't want Alaska and Hawaii
+
+series dum = (abbrev != "Alaska") && (abbrev != "Hawaii")
+x = dum ? x : NA
+opts.title = "USA (mainland)"
+opts.plotfile = "us1.gp"
+geoplot("us-states.geojson", x, opts)
