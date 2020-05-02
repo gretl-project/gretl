@@ -43,8 +43,6 @@ void edit_gfn_callback (void);
 
 void xcorrgm_callback (void);
 
-void outlines_callback (void);
-
 void cond_number_callback (void);
 
 void do_nistcheck (GtkAction *action);

@@ -847,34 +847,6 @@ void xcorrgm_callback (void)
     }
 }
 
-void outlines_callback (void)
-{
-    const char *mapfile = dataset_get_mapfile(dataset);
-    int err;
-
-    /* Note: a temporary hack!! */
-
-    if (mapfile != NULL) {
-	err = execute_script("mapfuncs.inp", NULL, NULL,
-			     SCRIPT_EXEC | INCLUDE_EXEC,
-			     mdata->main);
-	if (!err) {
-	    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-	    gchar *buf;
-
-	    buf = g_strdup_printf("geoplot(\"%s\")", mapfile);
-	    err = generate(buf, dataset, GRETL_TYPE_NONE, 0, prn);
-	    gretl_print_destroy(prn);
-	    g_free(buf);
-	}
-	if (err) {
-	    gui_errmsg(err);
-	}
-    } else {
-	errbox("No mapfile present");
-    }
-}
-
 void cond_number_callback (void)
 {
     gretl_matrix *X = NULL;

@@ -1397,7 +1397,6 @@ char *gretl_addon_get_path (const char *name)
     *path = '\0';
 
     dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
-
     gretl_push_c_numeric_locale();
 
     for (i=0; i<n_dirs; i++) {
@@ -1431,7 +1430,6 @@ char *gretl_addon_get_path (const char *name)
     }
 
     gretl_pop_c_numeric_locale();
-
     strings_array_free(dirs, n_dirs);
 
     return ret;

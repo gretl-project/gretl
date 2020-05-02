@@ -217,16 +217,12 @@ void iconview_menubar_state (gboolean s)
 			(d)->structure == SPECIAL_TIME_SERIES || \
 			(d)->structure == STACKED_TIME_SERIES)
 
-#define SHOW_GEOPLOT 0 /* not just yet*/
-
 void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(dataset);
     gboolean panel = dataset_is_panel(dataset);
     gboolean realpan = multi_unit_panel_sample(dataset);
-#if SHOW_GEOPLOT
     gboolean have_map = dataset_get_mapfile(dataset) != NULL;
-#endif
     gboolean ur;
 
     if (mdata->ui == NULL) {
@@ -251,9 +247,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/View/MultiPlots/MultiTS", sx);
     flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx && !realpan);
     flip(mdata->ui, "/menubar/Variable/PanPlot", realpan);
-#if SHOW_GEOPLOT
     flip(mdata->ui, "/menubar/View/GraphVars/MapOutlines", have_map);
-#endif
 
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur);

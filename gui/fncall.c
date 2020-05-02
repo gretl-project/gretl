@@ -4464,3 +4464,32 @@ void *dbnomics_probe_series (const char *prov,
 
     return A;
 }
+
+void map_outlines_callback (void)
+{
+    const char *mapfile = dataset_get_mapfile(dataset);
+
+    if (mapfile != NULL) {
+	char *pkgpath = gretl_addon_get_path("geoplot");
+	fncall *fc = NULL;
+	int err = 0;
+
+	if (pkgpath != NULL) {
+	    fc = get_pkg_function_call("geoplot", "geoplot", pkgpath);
+	}
+	if (fc == NULL) {
+	    dummy_call();
+	    return;
+	}
+	err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) mapfile);
+	if (!err) {
+	    err = gretl_function_exec(fc, GRETL_TYPE_VOID, NULL,
+				      NULL, NULL, NULL);
+	}
+	if (err) {
+	    gui_errmsg(err);
+	}
+    } else {
+	errbox("No mapfile present");
+    }
+}
