@@ -514,6 +514,7 @@ enum MenuIdx_ {
     MNU_STATS,
     MNU_TPLOT,
     MNU_PPLOT,
+    MNU_MPLOT,
     MNU_FDIST,
     MNU_BPLOT,
     MNU_CGRAM,
@@ -576,6 +577,7 @@ struct popup_entries main_pop_entries[] = {
     { MNU_STATS, N_("Summary statistics"), T_BOTH },
     { MNU_TPLOT, N_("Time series plot"), T_BOTH },
     { MNU_PPLOT, N_("Panel plot..."), T_SINGLE },
+    { MNU_MPLOT, N_("Plot map outlines"), T_BOTH },
     { MNU_FDIST, N_("Frequency distribution"), T_SINGLE },
     { MNU_BPLOT, N_("Boxplot"), T_SINGLE },
     { MNU_CGRAM, N_("Correlogram"), T_SINGLE, },
@@ -633,6 +635,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     case MNU_PPLOT:
 	do_graph_var(v);
 	break;
+    case MNU_MPLOT:
+	map_outlines_callback();
+	break;
     case MNU_FDIST:
 	do_freq_dist();
 	break;
@@ -687,6 +692,7 @@ GtkWidget *build_var_popup (int selvar)
     GtkWidget *menu, *item;
     int i, j, n = G_N_ELEMENTS(main_pop_entries);
     int real_panel = multi_unit_panel_sample(dataset);
+    int have_map = dataset_get_mapfile(dataset) != NULL;
     int nullbak = 0;
 
     menu = gtk_menu_new();
@@ -713,6 +719,10 @@ GtkWidget *build_var_popup (int selvar)
 	}
 	if (!real_panel && i == MNU_PPLOT) {
 	    /* don't offer panel plot */
+	    continue;
+	}
+	if (!have_map && i == MNU_MPLOT) {
+	    /* don't offer map outlines plot */
 	    continue;
 	}
 	if ((i == MNU_CGRAM || i == MNU_PGRAM || i == MNU_IDXV) &&
