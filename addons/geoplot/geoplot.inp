@@ -225,7 +225,11 @@ end function
 function string setterm(scalar type, scalar h, scalar w, string dest)
     string ret = ""
     if type == 0
-        ret = "set term wxt persist"
+        if $windows
+            ret = "set term windows persist"
+        else
+            ret = "set term wxt persist"
+        endif
     elif type == 1
         ret = "set term epscairo"
     elif type == 2
@@ -267,16 +271,15 @@ function void prepare_gp_file(const string datfile,
         if have_payload
             # 1.05 is to compensate for the colorbox
             width = floor(wratio * height * 1.05)
-            printf "# width(1) = %d\n", width
         else
             width = floor(wratio * height)
-            printf "# width(2) = %d\n", width
         endif
         printf "set term %s persist size %d,%d\n", term_default, width, height
     else
         printf "set term %s persist\n", term_default
     endif
 
+    printf "set encoding utf8\n"
     printf "unset key\n"
 
     if have_payload
