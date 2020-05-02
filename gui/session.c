@@ -160,6 +160,7 @@ static char *model_items[] = {
     N_("Rename"),
     N_("Delete")
 };
+#define ADD_TO_MTAB_IDX 1 /* position of "Add to model table" */
 
 static char *model_table_items[] = {
     N_("Display"),
@@ -183,10 +184,12 @@ static char *generic_items[] = {
 static char *graph_items[] = {
     N_("Display"),
     N_("Edit plot commands"),
+    N_("Add to graph page"),
     N_("Rename"),
     N_("Delete"),
     N_("Copy")
 };
+#define ADD_TO_GPAGE_IDX 2 /* position of "Add to graph page" */
 
 static char *dataset_items[] = {
     N_("Edit"),
@@ -239,6 +242,8 @@ static GtkWidget *info_popup;
 static GtkWidget *matrix_popup;
 static GtkWidget *bundle_popup;
 static GtkWidget *save_item;
+static GtkWidget *mtab_add_item;
+static GtkWidget *gpage_add_item;
 
 static GList *iconlist;
 static gui_obj *active_object;
@@ -3160,6 +3165,26 @@ static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key,
     return FALSE;
 }
 
+static void mtab_item_set_sensitivity (gui_obj *obj)
+{
+    SESSION_MODEL *model = obj->data;
+    int added = in_model_table(model->ptr);
+
+    if (mtab_add_item != NULL) {
+	gtk_widget_set_sensitive(mtab_add_item, !added);
+    }
+}
+
+static void gpage_item_set_sensitivity (gui_obj *obj)
+{
+    SESSION_GRAPH *graph = obj->data;
+    int added = in_graph_page(graph->fname);
+
+    if (gpage_add_item != NULL) {
+	gtk_widget_set_sensitive(gpage_add_item, !added);
+    }
+}
+
 static void object_popup_show (gui_obj *obj, GdkEventButton *event)
 {
     GtkWidget *w = NULL;
@@ -3169,6 +3194,7 @@ static void object_popup_show (gui_obj *obj, GdkEventButton *event)
     switch (obj->sort) {
     case GRETL_OBJ_EQN:
 	w = model_popup;
+	mtab_item_set_sensitivity(obj);
 	break;
     case GRETL_OBJ_MODTAB:
 	w = model_table_popup;
@@ -3183,6 +3209,7 @@ static void object_popup_show (gui_obj *obj, GdkEventButton *event)
 	break;
     case GRETL_OBJ_GRAPH:
     case GRETL_OBJ_PLOT:
+	gpage_item_set_sensitivity(obj);
 	w = graph_popup;
 	break;
     case GRETL_OBJ_DSET:
@@ -3468,6 +3495,14 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 		/* add flag so we can mark the session as modified
 		   if the plot file is changed */
 		vwin->flags |= VWIN_SESSION_GRAPH;
+	    }
+	}
+    } else if (!strcmp(item, _("Add to graph page"))) {
+	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
+	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
+
+	    if (!in_graph_page(graph->fname)) {
+		graph_page_add_file(graph->fname);
 	    }
 	}
     } else if (!strcmp(item, _("Rename"))) {
@@ -3761,7 +3796,11 @@ static GtkWidget *create_pop_item (GtkWidget *popup, char *str,
 
 static void session_build_popups (void)
 {
+    GtkWidget *item;
     size_t i, n;
+
+    mtab_add_item = NULL;
+    gpage_add_item = NULL;
 
     if (global_popup == NULL) {
 	global_popup = gtk_menu_new();
@@ -3776,8 +3815,11 @@ static void session_build_popups (void)
 	model_popup = gtk_menu_new();
 	n = G_N_ELEMENTS(model_items);
 	for (i=0; i<n; i++) {
-	    create_pop_item(model_popup, _(model_items[i]),
-			    object_popup_callback);
+	    item = create_pop_item(model_popup, _(model_items[i]),
+				   object_popup_callback);
+	    if (i == ADD_TO_MTAB_IDX) {
+		mtab_add_item = item;
+	    }
 	}
     }
 
@@ -3803,8 +3845,11 @@ static void session_build_popups (void)
 	graph_popup = gtk_menu_new();
 	n = G_N_ELEMENTS(graph_items);
 	for (i=0; i<n; i++) {
-	    create_pop_item(graph_popup, _(graph_items[i]),
-			    object_popup_callback);
+	    item = create_pop_item(graph_popup, _(graph_items[i]),
+				   object_popup_callback);
+	    if (i == ADD_TO_GPAGE_IDX) {
+		gpage_add_item = item;
+	    }
 	}
     }
 
