@@ -72,7 +72,10 @@ The information on each region comprises two components:
 
 Several file formats can be used for storing the geometry information.
 The page
-\url{https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/nuts}
+
+{\small
+\url{https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/nuts}}
+
 contains a nice collection for European NUTS regions (NUTS =
 Nomenclature of Territorial Units for Statistics).  The
 \textsf{geoplot} package supports two formats:
@@ -449,6 +452,57 @@ If the \cmd{geoplot} function is invoked without a payload, so to just
 draw the boundaries between regions, one can use the \texttt{mask} key
 of the options bundle to indicate which regions must be skipped.
 
+\section{Currently supported options for the \texttt{geoplot} function}
+\label{sec:opts}
+
+Note that the options we have now don't form a fully coherent set: for
+example, the \texttt{plotfile} key is useless when \texttt{show} equal
+1, but we have time to optimize that.
+
+\begin{description}
+\item[\textbf{bordwidth}:] scalar, thickness of the line used for the
+  borders: Default: 1.
+\item[\textbf{datfile}:] filename, allowing the user to direct output
+  of the representation of the polygon data for use with
+  gnuplot. Default: \texttt{geoplot\_tmp.dat} in the user’s
+  \texttt{dotdir}.
+\item[\textbf{height}:] scalar, giving the height of the plot (in
+  pixels for PNG output, which is the only case handled so far). If
+  this is given we try to figure out the width which gives a suitable
+  aspect ratio for the plot and write these dimensions into the plot
+  file. Default: 600.
+\item[\textbf{inlined}:] Boolean, to have the polygon data included
+  directly into the gnuplot file. Default: the data are read from a
+  separate file (see \textbf{datfile}).
+\item[\textbf{logscale}:] Boolean, logscale for the payload. Default: false.
+\item[\textbf{mask}:] a column vector of length equal to the number of
+  features in the map, with zeros in all places other than features to
+  be excluded, which should be represented by \texttt{NA}s. This is
+  very much a provisional formulation and should be improved. The mask
+  is referenced only if \texttt{payload} is not provided; it provides
+  an alternative means of subsetting the features. Default: none.
+\item[\textbf{tics}:] Boolean, for turning on the printing of x
+  (longitude) and y (latitude) tics. Default: tics are suppressed,
+  unless \texttt{geoplot()} is invoked without any payload or option
+  bundle.
+\item[\textbf{plotfile}:] filename, allowing the user to direct output
+  of the generated gnuplot command file. Default: \texttt{geoplot.gp}
+  in the user’s working directory.
+\item[\textbf{setpal}:] string, giving a gnuplot set palette command,
+  to be injected into the plot file. For example, the syntax
+  \begin{code}
+    options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"  
+  \end{code}
+  will give you a pleasent blue gradient.  Default: the standard
+  built-in gnuplot palette (nothing extra is written into the plot
+  file).
+\item[\textbf{show}:] Boolean, specifying if the plot should be shown
+  on-screen right away. Default: true. (Otherwise a gnuplot file is
+  written but not displayed.)
+\item[\textbf{title}:] string specifying a title for the
+  plot. Default: no title.
+\end{description}
+
 \clearpage
 \appendix
 
@@ -502,57 +556,6 @@ produces
 
 A nice way to customize the palette is by using the syntax \texttt{set
 palette defined} (see the gnuplot manual).
-
-\section{Currently supported options for the \texttt{geoplot} function
-(in alphabetical order)}
-\label{sec:opts}
-
-Note that the options we have now don't form a fully coherent set: for
-example, the \texttt{plotfile} key is useless when \texttt{show} equal
-1, but we have time to optimize that.
-
-\begin{description}
-\item[\textbf{bordwidth}:] scalar, thickness of the line used for the
-  borders: Default: 1.
-\item[\textbf{datfile}:] filename, allowing the user to direct output
-  of the representation of the polygon data for use with
-  gnuplot. Default: \texttt{geoplot\_tmp.dat} in the user’s
-  \texttt{dotdir}.
-\item[\textbf{height}:] scalar, giving the height of the plot (in
-  pixels for PNG output, which is the only case handled so far). If
-  this is given we try to figure out the width which gives a suitable
-  aspect ratio for the plot and write these dimensions into the plot
-  file. Default: no dimensions written into the plot file; you get the
-  whatever is the gnuplot default.
-\item[\textbf{inlined}:] Boolean, to have the polygon data included
-  directly into the gnuplot file. Default: the data are read from a
-  separate file (see datfile).
-\item[\textbf{logscale}:] Boolean, logscale for the payload. Default: false.
-\item[\textbf{mask}:] a column vector of length equal to the number of
-  features in the map, with zeros in all places other than features to
-  be excluded, which should be represented by \texttt{NA}s. This is
-  very much a provisional formulation and should be improved. The mask
-  is referenced only if payload is not provided; it provides an
-  alternative means of sub-setting the features. Default: none.
-\item[\textbf{notics}:] Boolean, for turning off the printing of x
-  (longitude) and y (latitude) tics. Default: tics are printed.
-\item[\textbf{plotfile}:] filename, allowing the user to direct output
-  of the generated gnuplot command file. Default: geoplot.gp in the
-  user’s working directory.
-\item[\textbf{setpal}:] string, giving a gnuplot set palette command,
-  to be injected into the plot file. For example, the syntax
-  \begin{code}
-    options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"  
-  \end{code}
-  will give you a pleasent blue gradient.  Default: the standard
-  built-in gnuplot palette (nothing extra is written into the plot
-  file).
-\item[\textbf{show}:] Boolean, specifying if the plot should be shown
-  on-screen right away. Default: true. (Otherwise a gnuplot file is
-  written but not displayed.)
-\item[\textbf{title}:] string specifying a title for the
-  plot. Default: no title.
-\end{description}
 
 \end{document}
 

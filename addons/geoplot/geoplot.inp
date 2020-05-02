@@ -1,13 +1,13 @@
 function matrix get_bbox(const bundle jb)
     matrix ret = {}
     if inbundle(jb, "bbox")
-	if typeof(jb.bbox) == 3
-	    # a matrix
-	    ret = jb.bbox
-	else
+        if typeof(jb.bbox) == 3
+            # a matrix
+            ret = jb.bbox
+        else
             n = sscanf(jb.bbox, "%m", ret)
             ret = mshape(ret, 2, round(n/2))'
-	endif
+        endif
     endif
     return ret
 end function
@@ -125,7 +125,7 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
     loop i = 1 .. nf
         fi = feat[i]
 
-        if (i == 1)
+        if i == 1
             ids = create_ids(fi.properties, nf)
         endif
 
@@ -149,39 +149,37 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
                     printf "no id\n"
                 endif
 
-		print_properties(props)
+                print_properties(props)
 
                 if ft == "Point"
-		    printf "\t [ "
-		    pc = fi.geometry.coordinates
+                    printf "\t [ "
+                    pc = fi.geometry.coordinates
 
-		    loop j = 1 .. nelem(pc)
+                    loop j = 1 .. nelem(pc)
                         printf "%g", atof(pc[j])
                         if j == nelem(pc)
-			    printf " ]"
+                            printf " ]"
                         else
-			    printf ", "
+                            printf ", "
                         endif
-		    endloop
-		    printf "\n"
+                    endloop
+                    printf "\n"
                 elif ft == "Polygon"
-		    printf "\t%s\n", describe_polygon_coords(fi.geometry.coordinates, verbose)
+                    printf "\t%s\n", describe_polygon_coords(fi.geometry.coordinates, verbose)
                 elif ft == "MultiPolygon"
-		    mcoords = feat[i].geometry.coordinates
-		    nmulti = nelem(mcoords)
-		    printf "\t%d Sub-polygons\n", nmulti
-		    if verbose > 1
+                    mcoords = feat[i].geometry.coordinates
+                    nmulti = nelem(mcoords)
+                    printf "\t%d Sub-polygons\n", nmulti
+                    if verbose > 1
                         loop j = 1 .. nmulti
-			    printf "\t\t%s\n", describe_polygon_coords(mcoords[j], verbose - 1)
+                            printf "\t\t%s\n", describe_polygon_coords(mcoords[j], verbose - 1)
                         endloop
-		    endif
-
-		endif
+                    endif
+                endif
             else
                 printf "\tNo geometry (???)\n"
             endif
         endif
-
     endloop
 
     ret.ids = ids
@@ -190,9 +188,9 @@ end function
 
 function matrix stretch(matrix minmax, scalar by[0.05])
     matrix ret = {0,0}
-    
-    ret[1] = minmax[1] * (( minmax[1] < 0 ) ? 1+by : 1-by) 
-    ret[2] = minmax[2] * (( minmax[2] > 0 ) ? 1+by : 1-by) 
+
+    ret[1] = minmax[1] * (( minmax[1] < 0 ) ? 1+by : 1-by)
+    ret[2] = minmax[2] * (( minmax[2] > 0 ) ? 1+by : 1-by)
 
     return ret
 end function
@@ -201,12 +199,12 @@ end function
 function string fname_suffix (const string fname)
     string ret = ""
     loop for (i=strlen(fname); i>1; i--)
-	if fname[i] == "."
-	    ret = fname + i
-	    break
-	endif
+        if fname[i] == "."
+            ret = fname + i
+            break
+        endif
     endloop
-    return ret    
+    return ret
 end function
 
 # private
@@ -216,9 +214,9 @@ function scalar output_type(const string dest)
     matrix found = instrings(supported, suffix)
 
     if rows(found)
-	scalar ret = found[1]
+        scalar ret = found[1]
     else
-	scalar ret = 0
+        scalar ret = 0
     endif
     return ret
 end function
@@ -227,165 +225,174 @@ end function
 function string setterm(scalar type, scalar h, scalar w, string dest)
     string ret = ""
     if type == 0
-	ret = "set term wxt persist"
+        ret = "set term wxt persist"
     elif type == 1
-	ret = "set term epscairo"
+        ret = "set term epscairo"
     elif type == 2
-	ret = "set term pdfcairo"
+        ret = "set term pdfcairo"
     elif type == 3
-	ret = "set term svg"
+        ret = "set term svg"
     endif
 
     if ok(h)
-	ret = ret ~ sprintf(" size %d,%d", w, h)
+        ret = ret ~ sprintf(" size %d,%d", w, h)
     endif
 
     if type > 0
-	ret = sprintf("%s\nset output '%s'\n", ret, dest)
+        ret = sprintf("%s\nset output '%s'\n", ret, dest)
     endif
 
     return ret
 end function
-    
+
 # private
 function void prepare_gp_file(const string datfile,
-			       const matrix bbox,
-                               const matrix zrange[null],
-			       const bundle options)
+                              const matrix bbox,
+                              const matrix zrange[null],
+                              const bundle options)
 
     scalar have_payload = 0
     if exists(zrange)
-	have_payload = 1
-	zlim = stretch(zrange')
+        have_payload = 1
+        zlim = stretch(zrange')
     endif
     xlim = stretch(bbox[,1], 0.02)
     ylim = stretch(bbox[,2], 0.02)
 
-    if inbundle(options, "height") == 1 && options.height > 0
-	height = options.height
+    height = inbundle(options, "height") == 1 ? options.height : 600
+    if height > 0
+        string term_default = $windows ? "windows" : "wxt"
         scalar ymid = meanr(ylim)
         scalar wratio = cos(ymid * $pi/180) * (xlim[2] - xlim[1]) / (ylim[2] - ylim[1])
-	if have_payload
-	    # 1.05 is to compensate for the colorbox
+        if have_payload
+            # 1.05 is to compensate for the colorbox
             width = floor(wratio * height * 1.05)
-	    printf "# width(1) = %d\n", width
-	else
-	    width = floor(wratio * height)
-	    printf "# width(2) = %d\n", width
-	endif
-	printf "set term wxt persist size %d,%d\n", width, height
+            printf "# width(1) = %d\n", width
+        else
+            width = floor(wratio * height)
+            printf "# width(2) = %d\n", width
+        endif
+        printf "set term %s persist size %d,%d\n", term_default, width, height
     else
-	printf "set term wxt persist\n"
+        printf "set term %s persist\n", term_default
     endif
 
     printf "unset key\n"
 
     if have_payload
-	if inbundle(options, "setpal") == 4
-	    printf "%s\n", options.setpal
-	endif
-	printf "set cbrange [%g:%g]\n", zlim[1], zlim[2]
+        if inbundle(options, "setpal") == 4
+            printf "%s\n", options.setpal
+        endif
+        printf "set cbrange [%g:%g]\n", zlim[1], zlim[2]
     endif
     printf "set xrange [%g:%g]\n", xlim[1], xlim[2]
     printf "set yrange [%g:%g]\n", ylim[1], ylim[2]
 
     if inbundle(options, "title") == 4
-	printf "set title \"%s\"\n", options.title
+        printf "set title \"%s\"\n", options.title
     endif
 
-    if inbundle(options, "notics") == 1 && options.notics
-	printf "set noxtics\n"
-	printf "set noytics\n"
+    notics = 1
+    if inbundle(options, "tics") == 1 && options.tics
+        notics = 0
     endif
-    
+    if notics
+        printf "set noxtics\n"
+        printf "set noytics\n"
+    endif
+
     if inbundle(options, "logscale") == 1 && options.logscale
-	printf "set logscale cb\n"
+        printf "set logscale cb\n"
     endif
-    
+
     if inbundle(options, "bordwidth") == 1
-	border_width = options.bordwidth
+        border_width = options.bordwidth
     else
-	border_width = 1
+        border_width = 1
     endif
 
     if inbundle(options, "inlined") == 1
-	inlined = options.inlined
+        inlined = options.inlined
     else
-	inlined = 0
+        inlined = 0
     endif
 
     if have_payload
-	string borderline = sprintf("lc \"white\" lw %d", border_width)
+        string borderline = sprintf("lc \"white\" lw %d", border_width)
     else
-	string borderline = sprintf("lc \"black\" lw %d", border_width)
+        string borderline = sprintf("lc \"black\" lw %d", border_width)
     endif
-    
+
     if inlined
-	printf "$MapData << EOD\n"
-	datastr = readfile(datfile)
-	printf "%s\n", datastr
-	printf "EOD\n"
-	if have_payload
-	    printf "plot for [i=0:*] $MapData index i with filledcurves fc palette, \\\n"
-	    printf "  $MapData using 1:2 with lines %s\n", borderline
-	else
-	    printf "plot $MapData using 1:2 with lines %s\n", borderline
-	endif
+        printf "$MapData << EOD\n"
+        datastr = readfile(datfile)
+        printf "%s\n", datastr
+        printf "EOD\n"
+        if have_payload
+            printf "plot for [i=0:*] $MapData index i with filledcurves fc palette, \\\n"
+            printf "  $MapData using 1:2 with lines %s\n", borderline
+        else
+            printf "plot $MapData using 1:2 with lines %s\n", borderline
+        endif
     elif have_payload
-	printf "plot for [i=0:*] '%s' index i with filledcurves fc palette, \\\n", datfile
-	printf " '%s' using 1:2 with lines %s\n", datfile, borderline
+        printf "plot for [i=0:*] '%s' index i with filledcurves fc palette, \\\n", datfile
+        printf " '%s' using 1:2 with lines %s\n", datfile, borderline
     else
-	printf "plot '%s' using 1:2 with lines %s\n", datfile, borderline
+        printf "plot '%s' using 1:2 with lines %s\n", datfile, borderline
     endif
 end function
 
 function void geoplot(const string mapfile,
-		      const series payload[null],
-		      const bundle options[null])
+                      const series payload[null],
+                      const bundle options[null])
     matrix bbox = {}
 
     if !exists(options)
         bundle options = null
+        if !exists(payload)
+            # we just got the @mapfile argument
+            options.tics = 1
+        endif
     endif
 
     have_payload = exists(payload)
     if have_payload
-	set skip_missing off
-	matrix xvec = {payload}
+        set skip_missing off
+        matrix xvec = {payload}
     elif inbundle(options, "mask") == 3
-	matrix xvec = options.mask
+        matrix xvec = options.mask
     endif
 
     # write out the polygons data for gnuplot
     if inbundle(options, "datfile") == 4
-	string datfile = options.datfile
+        string datfile = options.datfile
     else
-	string datfile = sprintf("@dotdir/geoplot_tmp.dat")
+        string datfile = sprintf("@dotdir/geoplot_tmp.dat")
     endif
 
     if exists("xvec")
-	bbox = _map2dat(mapfile, datfile, xvec)
+        bbox = _map2dat(mapfile, datfile, xvec)
     else
-	bbox = _map2dat(mapfile, datfile)
+        bbox = _map2dat(mapfile, datfile)
     endif
 
     if inbundle(options, "plotfile") == 4
-	gpname = options.plotfile
+        gpname = options.plotfile
     else
-	gpname = "geoplot.gp"
+        gpname = "geoplot.gp"
     endif
 
     outfile "@gpname" --quiet
-    if have_payload
-	matrix zrange = {min(payload), max(payload)}
-	prepare_gp_file(datfile, bbox, zrange, options)
-    else
-	prepare_gp_file(datfile, bbox, null, options)
-    endif
+        if have_payload
+            matrix zrange = {min(payload), max(payload)}
+            prepare_gp_file(datfile, bbox, zrange, options)
+        else
+            prepare_gp_file(datfile, bbox, null, options)
+        endif
     end outfile
 
     if !inbundle(options, "show") || options.show != 0
-	!gnuplot "@gpname"
+        !gnuplot "@gpname"
     endif
 
 end function
