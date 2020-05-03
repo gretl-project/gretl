@@ -25,10 +25,8 @@ mask = NA
 smpl full
 
 bundle options = null
-options.plotfile = "us_states_json.gp"
-options.datfile = "us_states_json.dat"
+options.plotfile = "us_states_json.plt"
 options.height = 500
-options.show = 1
 
 outlines_only = 1
 
@@ -41,7 +39,6 @@ else
    # show population levels in shades of blue
    options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"
    options.title = "US states, population (lower 48)"
-   options.notics = 1
    geoplot(JSON, population, options)
 endif
 

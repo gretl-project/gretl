@@ -11,8 +11,7 @@ population[1] = NA
 population[51] = NA
 
 bundle options = null
-options.plotfile = "us_states_shp.gp"
-options.datfile = "us_states_shp.dat"
+options.plotfile = "us_states_shp.plt"
 options.height = 500
 options.show = 1
 

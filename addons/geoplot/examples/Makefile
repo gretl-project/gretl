@@ -13,4 +13,4 @@ outlines:
 	gretlcli -t us_states_json.inp
 
 clean:
-	rm -f string_table.txt *.gp *.dat *~
+	rm -f string_table.txt *.plt *.dat *~

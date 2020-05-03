@@ -1,9 +1,10 @@
 \documentclass{article}
-\usepackage{doc,url,verbatim,fancyvrb}
+\usepackage{verbatim,fancyvrb}
 \usepackage{pifont}
-\usepackage[authoryear]{natbib}
+%\usepackage[authoryear]{natbib}
 \usepackage[pdftex]{graphicx}
 \usepackage{gretl}
+\usepackage[hyphens]{url}
 \usepackage{hyperref}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 
@@ -455,53 +456,95 @@ of the options bundle to indicate which regions must be skipped.
 \section{Currently supported options for the \texttt{geoplot} function}
 \label{sec:opts}
 
-Note that the options we have now don't form a fully coherent set: for
-example, the \texttt{plotfile} key is useless when \texttt{show} equal
-1, but we have time to optimize that.
+We first present all the recognized options in alphabetical
+order. Below the listing we give some further explanation of the usage
+of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 
 \begin{description}
-\item[\textbf{bordwidth}:] scalar, thickness of the line used for the
-  borders: Default: 1.
-\item[\textbf{datfile}:] filename, allowing the user to direct output
-  of the representation of the polygon data for use with
-  gnuplot. Default: \texttt{geoplot\_tmp.dat} in the user’s
-  \texttt{dotdir}.
-\item[\textbf{height}:] scalar, giving the height of the plot (in
+\item[\texttt{bordwidth}:] scalar, thickness of the line used for the
+  borders of the regions: Default: 1.
+\item[\texttt{height}:] scalar, giving the height of the plot (in
   pixels for PNG output, which is the only case handled so far). If
   this is given we try to figure out the width which gives a suitable
   aspect ratio for the plot and write these dimensions into the plot
   file. Default: 600.
-\item[\textbf{inlined}:] Boolean, to have the polygon data included
-  directly into the gnuplot file. Default: the data are read from a
-  separate file (see \textbf{datfile}).
-\item[\textbf{logscale}:] Boolean, logscale for the payload. Default: false.
-\item[\textbf{mask}:] a column vector of length equal to the number of
+\item[\texttt{inlined}:] Boolean, to have the polygon data included
+  directly into the gnuplot file. Default: false, the data are read
+  from a separate file.
+\item[\texttt{logscale}:] Boolean, use log scale for the
+  payload. Default: false.
+\item[\texttt{mask}:] a column vector of length equal to the number of
   features in the map, with zeros in all places other than features to
   be excluded, which should be represented by \texttt{NA}s. This is
   very much a provisional formulation and should be improved. The mask
   is referenced only if \texttt{payload} is not provided; it provides
   an alternative means of subsetting the features. Default: none.
-\item[\textbf{tics}:] Boolean, for turning on the printing of x
+\item[\texttt{tics}:] Boolean, for turning on the printing of x
   (longitude) and y (latitude) tics. Default: tics are suppressed,
   unless \texttt{geoplot()} is invoked without any payload or option
   bundle.
-\item[\textbf{plotfile}:] filename, allowing the user to direct output
-  of the generated gnuplot command file. Default: \texttt{geoplot.gp}
-  in the user’s working directory.
-\item[\textbf{setpal}:] string, giving a gnuplot set palette command,
+\item[\texttt{plotfile}:] filename, allowing the user to direct output
+  of the generated gnuplot command file. We recommend using the
+  extension ``\texttt{.plt}'' for such files. If \texttt{plotfile} is
+  given, but not as a full path, the file is written to the user's
+  working directory. By default the command file is written to the
+  user's ``dotdir'' (where it will be deleted on exit from gretl).
+\item[\texttt{setpal}:] string, giving a gnuplot set palette command,
   to be injected into the plot file. For example, the syntax
   \begin{code}
     options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"  
   \end{code}
-  will give you a pleasent blue gradient.  Default: the standard
+  will give you a pleasant blue gradient.  Default: the standard
   built-in gnuplot palette (nothing extra is written into the plot
   file).
-\item[\textbf{show}:] Boolean, specifying if the plot should be shown
-  on-screen right away. Default: true. (Otherwise a gnuplot file is
+\item[\texttt{show}:] Boolean, should the plot should be shown
+  on-screen right away? Default: true. (Otherwise a gnuplot file is
   written but not displayed.)
-\item[\textbf{title}:] string specifying a title for the
+\item[\texttt{title}:] string specifying a title for the
   plot. Default: no title.
 \end{description}
+
+As regards the output from \texttt{geoplot()} you have these basic
+options:
+\begin{itemize}
+\item Show the map on-screen then discard the file(s) that were used
+  to generate the image. This is the default if you do not specify
+  \texttt{plotfile} in the options bundle.
+\item Show the map on-screen and save the files(s) that generated it.
+  This happens if you specify \texttt{plotfile} and do not override
+  the default (true) value of \texttt{show}.
+\item Don't show anything on-screen, just write file(s) that can be
+  used to generate a map via gnuplot. You get this if you specify
+  \texttt{plotfile} and set \texttt{show} to 0.
+\end{itemize}
+
+Note that if you set \texttt{show} to 0 and do \textit{not} specify
+\texttt{plotfile} that is tantamount to saying ``Don't do anything!'',
+which is regarded as an error.
+
+A few more words on \texttt{inlined}: \textsf{geoplot} can pass the
+map coordinates to gnuplot either by writing them directly into the
+commands file (\texttt{inlined} = 1), or by writing them to a separate
+data file whose name is recorded in the commands file
+(\texttt{inlined} = 0).
+
+The advantage of having the data inlined is that, being all in one
+file, the information required to generate a map cannot easily become
+``unstuck''. The disadvantage is that the gnuplot command file is
+likely to be very large and perhaps not so easy to edit; besides the
+gnuplot commands it may contain many thousands of lines of coordinate
+data (which in general should \textit{not} be touched, on pain of
+breaking the map). At present we have \texttt{inlined} set to 0 by
+default but that may change; we recommend making an explicit choice
+via the options bundle.
+
+If you specify \texttt{plotfile} but not \texttt{inlined} you'll get
+two output files in your working directory: the specified command file
+plus a data file named by switching the extension of \texttt{plotfile}
+to ``\texttt{.dat}''. For example you might get \texttt{mygeo.plt} and
+\texttt{mygeo.dat}; with \texttt{inlined} = 1 you'd just get a big
+\texttt{mygeo.plt}.
+
 
 \clearpage
 \appendix
@@ -551,7 +594,7 @@ e
 \end{scriptsize}
 produces
 \begin{center}
-  \includegraphics[width=0.8\textwidth]{squares}
+  \includegraphics[width=0.6\textwidth]{squares}
 \end{center}
 
 A nice way to customize the palette is by using the syntax \texttt{set

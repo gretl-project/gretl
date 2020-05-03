@@ -36,7 +36,7 @@ function scalar polygonArea(const matrix XY)
     return abs(area/2)
 end function
 
-function string describe_polygon_coords(const arrays coar, bool verbose)
+function string describe_poly_coords(const arrays coar, bool verbose)
     ext_ring = coar[1]
 
     ret = sprintf("Exterior ring: %5d points ", nelem(ext_ring))
@@ -154,7 +154,6 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
                 if ft == "Point"
                     printf "\t [ "
                     pc = fi.geometry.coordinates
-
                     loop j = 1 .. nelem(pc)
                         printf "%g", atof(pc[j])
                         if j == nelem(pc)
@@ -165,14 +164,14 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
                     endloop
                     printf "\n"
                 elif ft == "Polygon"
-                    printf "\t%s\n", describe_polygon_coords(fi.geometry.coordinates, verbose)
+                    printf "\t%s\n", describe_poly_coords(fi.geometry.coordinates, verbose)
                 elif ft == "MultiPolygon"
                     mcoords = feat[i].geometry.coordinates
                     nmulti = nelem(mcoords)
                     printf "\t%d Sub-polygons\n", nmulti
                     if verbose > 1
                         loop j = 1 .. nmulti
-                            printf "\t\t%s\n", describe_polygon_coords(mcoords[j], verbose - 1)
+                            printf "\t\t%s\n", describe_poly_coords(mcoords[j], verbose - 1)
                         endloop
                     endif
                 endif
@@ -197,14 +196,22 @@ end function
 
 # private
 function string fname_suffix (const string fname)
-    string ret = ""
     loop for (i=strlen(fname); i>1; i--)
         if fname[i] == "."
-            ret = fname + i
-            break
+            return fname + i
         endif
     endloop
-    return ret
+    return ""
+end function
+
+# private
+function string switch_suffix (const string fname, string sfx)
+    loop for (i=strlen(fname); i>1; i--)
+        if fname[i] == "."
+            return sprintf("%s%s", substr(fname, 1, i-1), sfx)
+        endif
+    endloop
+    return sprintf("%s%s", fname, sfx)
 end function
 
 # private
@@ -349,6 +356,8 @@ function void geoplot(const string mapfile,
                       const series payload[null],
                       const bundle options[null])
     matrix bbox = {}
+    scalar show = 1
+    string plotfile = ""
 
     if !exists(options)
         bundle options = null
@@ -356,6 +365,18 @@ function void geoplot(const string mapfile,
             # we just got the @mapfile argument
             options.tics = 1
         endif
+    else
+	if inbundle(options, "show") == 1
+	    show = options.show
+	endif
+	if inbundle(options, "plotfile") == 4
+	    plotfile = options.plotfile
+	endif
+    endif
+
+    # catch the case of no output
+    if !show && plotfile == ""
+	funcerr "No output was specified"
     endif
 
     have_payload = exists(payload)
@@ -366,26 +387,22 @@ function void geoplot(const string mapfile,
         matrix xvec = options.mask
     endif
 
-    # write out the polygons data for gnuplot
-    if inbundle(options, "datfile") == 4
-        string datfile = options.datfile
+    # output filenames
+    if plotfile != ""
+        string datfile = switch_suffix(plotfile, ".dat")
     else
+        string plotfile = sprintf("@dotdir/geoplot_tmp.plt")
         string datfile = sprintf("@dotdir/geoplot_tmp.dat")
     endif
 
+    # write out the polygons data for gnuplot
     if exists("xvec")
         bbox = _map2dat(mapfile, datfile, xvec)
     else
         bbox = _map2dat(mapfile, datfile)
     endif
 
-    if inbundle(options, "plotfile") == 4
-        gpname = options.plotfile
-    else
-        gpname = "geoplot.gp"
-    endif
-
-    outfile "@gpname" --quiet
+    outfile "@plotfile" --quiet
         if have_payload
             matrix zrange = {min(payload), max(payload)}
             prepare_gp_file(datfile, bbox, zrange, options)
@@ -394,8 +411,8 @@ function void geoplot(const string mapfile,
         endif
     end outfile
 
-    if !inbundle(options, "show") || options.show != 0
-        !gnuplot "@gpname"
+    if show
+        !gnuplot "@plotfile"
     endif
 
 end function
