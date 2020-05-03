@@ -412,7 +412,7 @@ function void geoplot(const string mapfile,
     end outfile
 
     if show
-        !gnuplot "@plotfile"
+        !"@gnuplot" "@plotfile"
     endif
 
 end function
