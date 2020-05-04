@@ -469,7 +469,7 @@ int push_function_arg (fncall *fc, const char *name,
 }
 
 /**
- * push_function_arg:
+ * push_anon_function_arg:
  * @fc: pointer to function call.
  * @type: type of argument to add.
  * @value: pointer to value to add.
@@ -6400,7 +6400,7 @@ static int check_func_name (const char *name, ufunc **pfun,
     int i, err = 0;
 
 #if FN_DEBUG
-    fprintf(stderr, "check_func_name: '%s'\n", fname);
+    fprintf(stderr, "check_func_name: '%s'\n", name);
 #endif
 
     if (!isalpha((unsigned char) *name)) {
@@ -7670,7 +7670,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    if (arg->type == GRETL_TYPE_USERIES) {
 		/* an existing named series */
 		err = dataset_copy_series_as(dset, arg->val.idnum, fp->name);
-	    } else {
+	    } else if (arg->val.px != NULL) {
 		/* an on-the-fly constructed series */
 		err = dataset_add_series_as(dset, arg->val.px, fp->name);
 	    }
@@ -8188,8 +8188,8 @@ function_assign_returns (fncall *call, int rtype,
     int i, err = 0;
 
 #if UDEBUG
-    fprintf(stderr, "function_assign_returns: rtype = %d, call->retname = %s\n",
-	    rtype, call->retname);
+    fprintf(stderr, "function_assign_returns: rtype = %s, call->retname = %s\n",
+	    gretl_type_get_name(rtype), call->retname);
 #endif
 
     if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
@@ -8248,12 +8248,6 @@ function_assign_returns (fncall *call, int rtype,
 	if (needs_dataset(fp->type) && dset == NULL) {
 	    ierr = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
-#if 0
-	    if (arg->type == GRETL_TYPE_BUNDLE_REF) {
-		fprintf(stderr, "%s: bundle-ref, upname=%s\n",
-			u->name, arg->upname);
-	    }
-#endif
 	    if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
