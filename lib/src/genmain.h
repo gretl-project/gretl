@@ -51,6 +51,7 @@ typedef enum {
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
     R_NOW,        /* current date/time (matrix) */
     R_RESULT,     /* result of a "result-compatible" command */
+    R_PNGFONT,    /* name of font selected for plots */
     R_MAX
 } RetrievalIndex;
 

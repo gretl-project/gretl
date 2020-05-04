@@ -119,6 +119,7 @@ struct str_table dvars[] = {
     { R_HUGE,      "$huge" },
     { R_NOW,       "$now" },
     { R_RESULT,    "$result" },
+    { R_PNGFONT,   "$pngfont" },
     { R_INDEX,     "obs" },
     { 0,           NULL },
 };

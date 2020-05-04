@@ -14847,6 +14847,11 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	    if (ret != NULL) {
 		ret->v.m = dvar_get_matrix(idx, &p->err);
 	    }
+	} else if (idx == R_PNGFONT) {
+	    ret = aux_string_node(p);
+	    if (ret != NULL) {
+		ret->v.str = gretl_strdup(gretl_png_font());
+	    }
 	} else if (dvar_variant1(idx)) {
 	    GretlType type = get_last_test_type();
 
