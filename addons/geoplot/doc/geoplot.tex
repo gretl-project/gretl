@@ -489,14 +489,20 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   given, but not as a full path, the file is written to the user's
   working directory. By default the command file is written to the
   user's ``dotdir'' (where it will be deleted on exit from gretl).
-\item[\texttt{setpal}:] string, giving a gnuplot set palette command,
-  to be injected into the plot file. For example, the syntax
+\item[\texttt{setpal}:] string, giving either a \textsf{gnuplot}
+  \texttt{set palette} command or a predefined palette option, of
+  which there are currently just two, \texttt{blues} and
+  \texttt{oranges}. For example, the syntax
   \begin{code}
     options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"  
   \end{code}
-  will give you a pleasant blue gradient.  Default: the standard
-  built-in gnuplot palette (nothing extra is written into the plot
-  file).
+  will give you a pleasant blue gradient---which also happens to be
+  what you get by giving
+  \begin{code}
+    options.setpal = "blues"
+  \end{code}
+  If no such string is given you get the default built-in
+  \textsf{gnuplot} palette.
 \item[\texttt{show}:] Boolean, should the plot should be shown
   on-screen right away? Default: true. (Otherwise a gnuplot file is
   written but not displayed.)

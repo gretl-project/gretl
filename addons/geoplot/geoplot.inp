@@ -257,24 +257,39 @@ function string setterm(scalar type, scalar h, scalar w, string dest)
 end function
 
 # private
+function string palette_string (const string setpal)
+    if setpal == "blues"
+        return "set palette defined (0 '#D4E4F2', 1 'steelblue')"
+    elif setpal == "oranges"
+        return "set palette defined (0 '#E9D9B5', 1 'dark-orange')"
+    else
+        return setpal
+    endif
+end function
+
+# private
 function matrix prepare_gp_file(const string plotfile,
-				const string datfile,
-				const matrix bbox,
-				const matrix zrange[null],
-				const bundle options,
-				bool gui_usage)
+                                const string datfile,
+                                const matrix bbox,
+                                const matrix zrange[null],
+                                const bundle options,
+                                bool gui_usage)
 
     scalar have_payload = 0
     if exists(zrange)
         have_payload = 1
-        zlim = stretch(zrange')
+        if inbundle(options, "clamp_z") == 1 && options.clamp_z == 1
+            zlim = zrange'
+        else
+            zlim = stretch(zrange')
+        endif
     endif
     xlim = stretch(bbox[,1], 0.02)
     ylim = stretch(bbox[,2], 0.02)
 
     height = inbundle(options, "height") == 1 ? options.height : 600
     if gui_usage && height <= 0
-	height = 600
+        height = 600
     endif
 
     matrix dims = {}
@@ -289,13 +304,13 @@ function matrix prepare_gp_file(const string plotfile,
         else
             width = floor(wratio * height)
         endif
-	if gui_usage
-	    printf "set term pngcairo%s size %d,%d\n", $pngfont, width, height
-	    dims = {width, height}
-	    printf "set output \"%s/gretltmp.png\"\n", $dotdir
-	else
+        if gui_usage
+            printf "set term pngcairo%s size %d,%d\n", $pngfont, width, height
+            dims = {width, height}
+            printf "set output \"%s/gretltmp.png\"\n", $dotdir
+        else
             printf "set term %s persist size %d,%d\n", term_default, width, height
-	endif
+        endif
     else
         printf "set term %s persist\n", term_default
     endif
@@ -305,7 +320,7 @@ function matrix prepare_gp_file(const string plotfile,
 
     if have_payload
         if inbundle(options, "setpal") == 4
-            printf "%s\n", options.setpal
+            printf "%s\n", palette_string(options.setpal)
         endif
         printf "set cbrange [%g:%g]\n", zlim[1], zlim[2]
     endif
@@ -371,7 +386,7 @@ end function
 function void geoplot(const string mapfile,
                       const series payload[null],
                       const bundle options[null],
-		      bundle *outbun[null])
+                      bundle *outbun[null])
     matrix bbox = {}
     scalar show = 1
     string plotfile = ""
@@ -381,32 +396,32 @@ function void geoplot(const string mapfile,
         bundle options = null
         if !exists(payload)
             # we just got the @mapfile argument: apply tics
-	    # by default for the outlines only case
+            # by default for the outlines only case
             options.tics = 1
         endif
     else
-	if inbundle(options, "show") == 1
-	    show = options.show
-	endif
-	if inbundle(options, "plotfile") == 4
-	    plotfile = options.plotfile
-	endif
+        if inbundle(options, "show") == 1
+            show = options.show
+        endif
+        if inbundle(options, "plotfile") == 4
+            plotfile = options.plotfile
+        endif
     endif
 
     if exists(outbun)
-	# don't invoke gnuplot directly, and we need
-	# a plotfile to give back to the GUI
-	gui_usage = 1
-	show = 0
-	if plotfile == ""
-	    plotfile = sprintf("%s/geoplot_tmp.plt", $dotdir)
-	endif
-	outbun.plotfile = plotfile
+        # don't invoke gnuplot directly, and we need
+        # a plotfile to give back to the GUI
+        gui_usage = 1
+        show = 0
+        if plotfile == ""
+            plotfile = sprintf("%s/geoplot_tmp.plt", $dotdir)
+        endif
+        outbun.plotfile = plotfile
     endif
 
     # catch the case of no output
     if !show && plotfile == ""
-	funcerr "No output was specified"
+        funcerr "No output was specified"
     endif
 
     have_payload = exists(payload)
@@ -446,7 +461,7 @@ function void geoplot(const string mapfile,
     if show
         !"@gnuplot" "@plotfile"
     elif gui_usage
-	outbun.dims = dims
+        outbun.dims = dims
     endif
 
 end function
