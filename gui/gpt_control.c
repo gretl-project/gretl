@@ -4412,6 +4412,10 @@ static void build_plot_menu (png_plot *plot)
 	plot_items = regular_items;
     }
 
+    /* geoplot FIXME: for several menu items below: either
+       support them for geoplot or don't show them
+    */
+
     i = 0;
     while (plot_items[i]) {
 	int colorpop = 0;
@@ -4431,7 +4435,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (plot_is_saved(plot) &&
+	if ((plot_is_saved(plot) || plot->spec->code == PLOT_GEOMAP) &&
 	    !strcmp(plot_items[i], "Save to session as icon")) {
 	    i++;
 	    continue;
