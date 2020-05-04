@@ -335,11 +335,15 @@ static double gnuplot_version (int *msg_done)
 		g_error_free(gerr);
 		gerr = NULL;
 	    }
+	    fprintf(stderr, "gnuplot: failed on '%s'\n", gnuplot_path);
 	    g_free(sout); sout = NULL;
 	    g_free(serr); serr = NULL;
 	    sprintf(gnuplot_path, "%sgnuplot", gretl_bindir());
+	    fprintf(stderr, "gnuplot: retry with '%s'\n", gnuplot_path);
 	    retries = 1;
 	    goto retry;
+	} else if (vnum > 0 && retries == 1) {
+	    set_gretl_gnuplot_path(gnuplot_path);
 	}
 #endif
 

@@ -145,6 +145,8 @@ int get_package_data_path (const char *fname, char *fullname);
 
 void set_gretl_plugin_path (const char *path);
 
+void set_gretl_gnuplot_path (const char *path);
+
 const char *helpfile_path (int id, int cli, int en);
 
 int using_translated_helpfile (int id);

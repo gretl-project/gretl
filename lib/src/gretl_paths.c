@@ -2849,6 +2849,14 @@ void set_gretl_plugin_path (const char *path)
     }
 }
 
+void set_gretl_gnuplot_path (const char *path)
+{
+    if (path != NULL) {
+	*paths.gnuplot = '\0';
+	strncat(paths.gnuplot, path, MAXLEN - 2);
+    }
+}
+
 /* Called at start-up only: set the "hidden" working dir,
    which is not user-configurable.
 */
