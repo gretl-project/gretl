@@ -3148,7 +3148,7 @@ char *gretl_literal_replace (const char *orig,
  * gretl_substring:
  * @str: the string to operate on.
  * @first: 1-based index of initial character.
- * @last: 1-based index of final character.
+ * @last: 1-based index of final character, or -1 to go to the end.
  * @err: location to receive error code.
  *
  * Returns: a substring of @str, from @first to @last.
@@ -3159,13 +3159,17 @@ char *gretl_substring (const char *str, int first, int last, int *err)
     int len, ini, fin, sublen;
     char *ret;
 
+    len = g_utf8_strlen(str, -1);
+    if (last == -1) {
+	last = len;
+    }
+
     if (first <= 0 || last <= 0) {
 	gretl_errmsg_sprintf("Index value %d is out of bounds",
 			     first <= 0 ? first : last);
 	*err = E_DATA;
     }
 
-    len = g_utf8_strlen(str, -1);
     ini = (first < 1) ? 1 : ((first > len) ? len : first);
     fin = (last < 1) ? 1 : ((last > len) ? len : last);
     sublen = (fin >= ini) ? fin - ini + 1 : 0;

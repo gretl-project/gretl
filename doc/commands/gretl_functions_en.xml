@@ -11186,9 +11186,11 @@
       </fnargs>
       <description>
 	<para>
-	  Returns a substring of <argname>s</argname>, from the
+	  Returns the substring of <argname>s</argname> from the
 	  character with (1-based) index <argname>start</argname> to
-	  that with index <argname>end</argname>, inclusive.
+	  that with index <argname>end</argname>, inclusive, or from
+	  <argname>start</argname> to the end of <argname>s</argname>
+	  if <argname>end</argname> is &minus;1.
 	</para>
 	<para>
           For example, the code below
