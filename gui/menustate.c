@@ -836,7 +836,10 @@ static GtkWidget *build_regular_selection_popup (void)
 	    !dataset_is_time_series(dataset)) {
 	    continue;
 	}
-	if (!extended_ts(dataset) && i == MNU_TPLOT) {
+	if (i == MNU_TPLOT && !extended_ts(dataset)) {
+	    continue;
+	}
+	if (i == MNU_MPLOT && dataset->mapfile == NULL) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));
