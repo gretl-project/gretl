@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-04-18 19:25-0400\n"
-"PO-Revision-Date: 2019-04-24 21:07-0300\n"
+"PO-Revision-Date: 2020-05-04 13:10-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -602,7 +602,7 @@ msgstr " Descartando %-16s (p-valor %.3f)\n"
 #: lib/src/compare.c:1539
 #, c-format
 msgid "No coefficient has a p-value less than %g"
-msgstr ""
+msgstr "Nenhum coeficiente tem p-valor menor que %g"
 
 #: lib/src/compare.c:1903 lib/src/estimate.c:2760 lib/src/gretl_model.c:4168
 #: lib/src/gretl_model.c:4174 lib/src/modelprint.c:877 gui/library.c:3219
@@ -1222,14 +1222,12 @@ msgid "Data appended OK\n"
 msgstr "Dados acrescentados com sucesso\n"
 
 #: lib/src/csvdata.c:7132
-#, fuzzy
 msgid "Data modified OK\n"
-msgstr "Dados acrescentados com sucesso\n"
+msgstr "Dados modificados OK\n"
 
 #: lib/src/csvdata.c:7134
-#, fuzzy
 msgid "No changes were made to the dataset\n"
-msgstr "Não foram feitas alterações"
+msgstr "Não foram feitas alterações no conjunto de dados\n"
 
 #: lib/src/dataio.c:109
 msgid "Varname exceeds the maximum of 31 characters"
@@ -1475,9 +1473,9 @@ msgid "The data set is currently sub-sampled.\n"
 msgstr "O conjunto de dados encontra-se sub-amostrado.\n"
 
 #: lib/src/dataset.c:2936
-#, fuzzy, c-format
+#, c-format
 msgid "Panel time extended by %d observations"
-msgstr "Conjunto de dados estendido com %d observações"
+msgstr "Tempo do painel estendido com %d observações"
 
 #: lib/src/dataset.c:2942
 #, c-format
@@ -2333,15 +2331,16 @@ msgstr "previsão"
 #: lib/src/forecast.c:3024
 msgid "Specification includes time dummies: cannot forecast out of sample"
 msgstr ""
+"A especificação inclui dummies temporais: não é possíver prever fora da "
+"amostra"
 
 #: lib/src/forecast.c:3061
-#, fuzzy
 msgid "No out-of-sample observations are available"
-msgstr "Não existem dados adequados"
+msgstr "Não existem dados disponíveis fora da amostra"
 
 #: lib/src/forecast.c:3064
 msgid "The --out-of-sample option is only supported in the time dimension"
-msgstr ""
+msgstr "A opção --out-of-sample é suportada apenas na dimensão tempo"
 
 #: lib/src/forecast.c:3579 lib/src/genmain.c:100
 #, c-format
@@ -2354,19 +2353,16 @@ msgid "Generated series %s (ID %d)"
 msgstr "Gerou-se a série temporal %s (ID %d)"
 
 #: lib/src/forecast.c:3883
-#, fuzzy
 msgid "Forecast plot not implemented for panel data"
-msgstr "'%s' : não está implementado para listas"
+msgstr "Gráfico de previsão não está implementado para dados em painel"
 
 #: lib/src/geneval.c:1318
-#, fuzzy
 msgid "complex operands are not supported"
-msgstr "Acesso à internet não suportado"
+msgstr "operandos complexos não são suportados"
 
 #: lib/src/geneval.c:1325
-#, fuzzy
 msgid "complex arguments are not supported"
-msgstr "Acesso à internet não suportado"
+msgstr "argumentos complexos não são suportados"
 
 #: lib/src/geneval.c:1635
 #, c-format
@@ -2477,7 +2473,7 @@ msgstr "O operador '%s' não é válido neste contexto"
 
 #: lib/src/geneval.c:12055
 msgid "non-existent date"
-msgstr ""
+msgstr "data não existente"
 
 #: lib/src/geneval.c:13505
 msgid "Bandwidth must be non-negative"
@@ -2494,9 +2490,9 @@ msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': argumento inválido para %s()\n"
 
 #: lib/src/geneval.c:15163
-#, fuzzy, c-format
+#, c-format
 msgid "The result for %s is not well defined"
-msgstr "O símbolo '%s' não está definido"
+msgstr "O resultado para %s não está bem definido"
 
 #: lib/src/geneval.c:15362
 #, c-format
@@ -2714,14 +2710,13 @@ msgid "other"
 msgstr "outro"
 
 #: lib/src/genfuncs.c:7706
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid number of draws %d"
-msgstr "Número de casos %d inválido"
+msgstr "Número inválido de extrações %d"
 
 #: lib/src/genlex.c:757
-#, fuzzy
 msgid "obsolete function isnull(): please use !exists() instead"
-msgstr "uso obsoleto de \"pi\": favor usar \"$pi\""
+msgstr "função obsoleta isnull(): favor utilizar !exists() no lugar"
 
 #: lib/src/genlex.c:1146
 #, c-format
@@ -3067,9 +3062,8 @@ msgid "time"
 msgstr "tempo"
 
 #: lib/src/graphing.c:7331
-#, fuzzy
 msgid "This command needs panel data"
-msgstr "Este pacote requer dados em painel."
+msgstr "Este comando requer dados em painel"
 
 #: lib/src/graphing.c:7461
 #, c-format
@@ -3302,14 +3296,12 @@ msgid "%s: no data available"
 msgstr "%s: sem dados disponíveis"
 
 #: lib/src/gretl_cmatrix.c:1008
-#, fuzzy
 msgid "Matrix is singular"
-msgstr "Modelagem de matrizes"
+msgstr "Matriz é singular"
 
 #: lib/src/gretl_cmatrix.c:2678
-#, fuzzy
 msgid "Matrix is not Hermitian"
-msgstr "A matriz não é simétrica"
+msgstr "A matriz não é hermitiana"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3464,9 +3456,8 @@ msgid "External command failed"
 msgstr "O comando externo falhou"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (65536 bytes) exceeded"
-msgstr "O comprimento máximo da linha de comandos (16384 bytes) foi excedido"
+msgstr "O comprimento máximo da linha de comandos (65536 bytes) foi excedido"
 
 #: lib/src/gretl_errors.c:80
 msgid "No dataset is in place"
@@ -3502,11 +3493,11 @@ msgstr "'catch' não pode ser utilizado neste contexto"
 
 #: lib/src/gretl_errors.c:88
 msgid "complex arguments/operands not supported"
-msgstr ""
+msgstr "argumentos/operandos complexos não são suportados"
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
-msgstr ""
+msgstr "argumentos complexos/reais misturados não são suportados"
 
 #: lib/src/gretl_errors.c:97
 msgid "gradient is not close to zero"
@@ -3969,14 +3960,12 @@ msgid "No cross-sectional dependence"
 msgstr "Sem dependência de corte transversal"
 
 #: lib/src/gretl_model.c:4138
-#, fuzzy
 msgid "Wooldridge test for autocorrelation in panel data"
-msgstr "Teste de Godfrey (1994) para autocorrelação até a ordem %d"
+msgstr "Teste de Wooldridge para autocorrelação em dados em painel"
 
 #: lib/src/gretl_model.c:4139
-#, fuzzy
 msgid "No first-order autocorrelation (rho = -0.5)"
-msgstr "autocorrelação de primeira-ordem"
+msgstr "Sem autocorrelação de primeira-ordem (rô = -0,5)"
 
 #: lib/src/gretl_model.c:4146 lib/src/gretl_panel.c:4473
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -3987,9 +3976,8 @@ msgid "robust variant"
 msgstr "variante robusta"
 
 #: lib/src/gretl_model.c:4282
-#, fuzzy
 msgid "No first-order autocorrelation (rho = 0)"
-msgstr "autocorrelação de primeira-ordem"
+msgstr "Sem autocorrelação de primeira-ordem (rô = 0)"
 
 #: lib/src/gretl_model.c:4349
 #, c-format
@@ -4209,17 +4197,15 @@ msgstr "Variância agrupada do erro"
 
 #: lib/src/gretl_panel.c:4569
 msgid "First differenced equation (dependent, d_y)"
-msgstr ""
+msgstr "Equação em primeira diferença (dependente, d_y)"
 
 #: lib/src/gretl_panel.c:4570
-#, fuzzy
 msgid "Autoregression of residuals (dependent, uhat)"
-msgstr "Resíduos da regressão (= observados - ajustados %s)"
+msgstr "Autorregressão dos resíduos (dependente, erro estimado)"
 
 #: lib/src/gretl_panel.c:4571
-#, fuzzy
 msgid "Auxiliary regression including lagged residual"
-msgstr "Regressão auxiliar para variáveis adicionadas"
+msgstr "Regressão auxiliar utilizando o resíduo defasado"
 
 #: lib/src/gretl_panel.c:5253
 #, c-format
@@ -4331,9 +4317,9 @@ msgid "The R matrix must have %d columns"
 msgstr "A matriz R deve ter %d colunas"
 
 #: lib/src/gretl_restrict.c:817
-#, fuzzy, c-format
+#, c-format
 msgid "%s: couldn't interpret as coefficient number"
-msgstr "Forneça um número de coeficiente"
+msgstr "%s: não foi possível interpretar como sendo um número de coeficiente"
 
 #: lib/src/gretl_restrict.c:925
 #, c-format
@@ -4694,12 +4680,11 @@ msgid "No series are defined\n"
 msgstr "Não estão definidas séries\n"
 
 #: lib/src/interact.c:903
-#, fuzzy
 msgid "No series labels are defined\n"
-msgstr "Não estão definidas séries\n"
+msgstr "Não foram definidos rótulos de séries\n"
 
 #: lib/src/interact.c:1005
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' : not a string variable"
 msgstr "'%s: não é uma variável de texto"
 
@@ -4741,9 +4726,9 @@ msgid "No data information is available.\n"
 msgstr "Não existe informação sobre os dados.\n"
 
 #: lib/src/interact.c:1452 gui/library.c:162
-#, fuzzy, c-format
+#, c-format
 msgid "Maximum length of command line (%d bytes) exceeded"
-msgstr "Excedido o comprimento máximo da linha de comandos (%d bytes)\n"
+msgstr "Excedido o comprimento máximo da linha de comandos (%d bytes)"
 
 #: lib/src/interact.c:1546
 #, c-format
@@ -5338,9 +5323,8 @@ msgid "Ordered Probit"
 msgstr "Probit com ordem"
 
 #: lib/src/modelprint.c:1039
-#, fuzzy
 msgid "Fixed-effects logistic"
-msgstr "Efeitos-fixos"
+msgstr "Logístico com efeitos fixos"
 
 #: lib/src/modelprint.c:1045
 msgid "Two-step Heckit"
@@ -6279,10 +6263,8 @@ msgstr ""
 "É possível utilizar o comando \"set loop_maxiter\" para aumentar esse limite"
 
 #: lib/src/monte_carlo.c:1636
-#, fuzzy
 msgid "You can reset \"set loop_maxiter\" to increase the limit"
-msgstr ""
-"É possível utilizar o comando \"set loop_maxiter\" para aumentar esse limite"
+msgstr "É possível redefinir \"set loop_maxiter\" para aumentar o limite"
 
 #: lib/src/monte_carlo.c:2300
 msgid "progressive loop: model must be of constant size"
@@ -7045,9 +7027,9 @@ msgid "Forecast evaluation statistics"
 msgstr "Estatísticas de avaliação da previsão"
 
 #: lib/src/printout.c:2994
-#, fuzzy, c-format
+#, c-format
 msgid "using %d observations"
-msgstr "%s, usando %d observações"
+msgstr "usando %d observações"
 
 #: lib/src/printout.c:3096
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
@@ -7094,9 +7076,9 @@ msgid " (steplength = %g)"
 msgstr " (comprimento do passo = %g)"
 
 #: lib/src/printout.c:3356
-#, fuzzy, c-format
+#, c-format
 msgid " (step %g"
-msgstr " (comprimento do passo = %g)"
+msgstr " (passo %g"
 
 #: lib/src/printout.c:3364 plugin/fcp.c:249
 msgid "Parameters: "
@@ -7289,14 +7271,14 @@ msgstr ""
 "restrição permanente na amostra"
 
 #: lib/src/subsample.c:2477
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid starting observation"
-msgstr "'%s': índice de observação inválido"
+msgstr "'%s': observação inicial inválida"
 
 #: lib/src/subsample.c:2480
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid ending observation"
-msgstr "'%s': índice de observação inválido"
+msgstr "'%s': observação final inválida"
 
 #: lib/src/subsample.c:2607 lib/src/subsample.c:2620
 msgid "error in new starting obs"
@@ -7307,19 +7289,18 @@ msgid "error in new ending obs"
 msgstr "erro na nova observação final"
 
 #: lib/src/subsample.c:2675
-#, fuzzy, c-format
+#, c-format
 msgid "invalid first unit %d"
-msgstr "Elemento da lista inválido"
+msgstr "unidade inicial inválida %d"
 
 #: lib/src/subsample.c:2678
-#, fuzzy, c-format
+#, c-format
 msgid "invalid last unit %d"
-msgstr "Ordem de defasagem %d inválida"
+msgstr "unidade final inválida %d"
 
 #: lib/src/subsample.c:2681
-#, fuzzy
 msgid "invalid null sample"
-msgstr "Amostra nula inválida"
+msgstr "amostra nula inválida"
 
 #: lib/src/subsample.c:2777 lib/src/subsample.c:2783 lib/src/subsample.c:2805
 msgid "missing values"
@@ -7593,18 +7574,16 @@ msgid "Breusch--Pagan test for diagonal covariance matrix"
 msgstr "Teste Breusch--Pagan para matriz de covariância diagonal"
 
 #: lib/src/system.c:3646
-#, fuzzy
 msgid "Robust Breusch--Pagan test for diagonal covariance matrix"
-msgstr "Teste Breusch--Pagan para matriz de covariância diagonal"
+msgstr "Teste Breusch--Pagan robusto para matriz de covariância diagonal"
 
 #: lib/src/system.c:3647
 msgid "Breusch-Pagan test for diagonal covariance matrix"
 msgstr "Teste Breusch-Pagan para a diagonal da matriz de covariância"
 
 #: lib/src/system.c:3648
-#, fuzzy
 msgid "Robust Breusch-Pagan test for diagonal covariance matrix"
-msgstr "Teste Breusch-Pagan para a diagonal da matriz de covariância"
+msgstr "Teste Breusch-Pagan robusto para a diagonal da matriz de covariância"
 
 #: lib/src/system.c:4648 lib/src/system.c:4658 gui/dlgutils.c:1119
 msgid "Estimator"
@@ -7680,19 +7659,19 @@ msgid "= %s squared"
 msgstr "= %s quadrado"
 
 #: lib/src/transforms.c:209
-#, fuzzy, c-format
+#, c-format
 msgid "= centered %s"
-msgstr "Centrada"
+msgstr "= %s centrada"
 
 #: lib/src/transforms.c:211
-#, fuzzy, c-format
+#, c-format
 msgid "= standardized %s"
-msgstr "resíduo padronizado"
+msgstr "= %s padronizada"
 
 #: lib/src/transforms.c:214
-#, fuzzy, c-format
+#, c-format
 msgid "= resampled %s"
-msgstr "'%s' escalada"
+msgstr "= %s reamostrada"
 
 #: lib/src/transforms.c:216
 #, c-format
@@ -8122,7 +8101,7 @@ msgstr "Erro ao ler %s\n"
 
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
-msgstr ""
+msgstr "Terminado em erro\n"
 
 #: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:869
 msgid "Done\n"
@@ -9006,6 +8985,8 @@ msgid ""
 "X'X is singular to machine precision:\n"
 "it is of dimension %d but rank %d."
 msgstr ""
+"X'X é singular em precisão de máquina:\n"
+"tem dimensão %d mas tem posto %d."
 
 #: gui/cmdstack.c:194
 #, c-format
@@ -10712,9 +10693,8 @@ msgid "Stata files (*.do)"
 msgstr "Arquivos Stata (*.do)"
 
 #: gui/fileselect.c:936
-#, fuzzy
 msgid "Dynare files (*.mod)"
-msgstr "Arquivos Octave (*.m)"
+msgstr "Arquivos Dynare (*.mod)"
 
 #: gui/fileselect.c:946 gui/fileselect.c:950
 msgid "Gretl datafiles (*.gdt)"
@@ -11416,7 +11396,7 @@ msgstr ""
 
 #: gui/fnsave.c:2873
 msgid "Label"
-msgstr "Legenda"
+msgstr "Rótulo"
 
 #: gui/fnsave.c:3038
 msgid "To create a menu attachment, you must supply a label."
@@ -11809,9 +11789,8 @@ msgid "Color %d"
 msgstr "Cor %d"
 
 #: gui/gpt_dialog.c:1485
-#, fuzzy
 msgid "Shade color"
-msgstr "Selecionar cor"
+msgstr "Cor da sombra"
 
 #: gui/gpt_dialog.c:1487 gui/gpt_dialog.c:1524
 msgid "Fill color"
@@ -12581,9 +12560,8 @@ msgid "_100-based indices of selected variables"
 msgstr "Índices de base _100 das variáveis selecionadas"
 
 #: gui/gretl.c:1824
-#, fuzzy
 msgid "_Standardize selected variables"
-msgstr "Quadrado_s das variáveis selecionadas"
+msgstr "Padronizar variáveis _selecionadas"
 
 #: gui/gretl.c:1826
 msgid "_Index variable"
@@ -12834,9 +12812,8 @@ msgid "ANOVA"
 msgstr "ANOVA"
 
 #: gui/gretl.c:1907
-#, fuzzy
 msgid "_Univariate time series"
-msgstr "Séries temporais empilhadas"
+msgstr "Séries temporais _univariadas"
 
 #: gui/gretl.c:1908
 msgid "ARI_MA"
@@ -12848,7 +12825,7 @@ msgstr "_GARCH"
 
 #: gui/gretl.c:1911
 msgid "_AR errors (GLS)"
-msgstr "\"Erros _AR (GLS)"
+msgstr "Erros _AR (GLS)"
 
 #: gui/gretl.c:1912
 msgid "_AR(1)"
@@ -12859,9 +12836,8 @@ msgid "_AR (general)"
 msgstr "AR (geral)"
 
 #: gui/gretl.c:1914
-#, fuzzy
 msgid "_Multivariate time series"
-msgstr "_Multivariado"
+msgstr "Séries temporais _multivariadas"
 
 #: gui/gretl.c:1915
 msgid "_Vector Autoregression"
@@ -12904,9 +12880,8 @@ msgid "_Dynamic panel model"
 msgstr "Modelo de painel _dinâmico"
 
 #: gui/gretl.c:1925
-#, fuzzy
 msgid "FE logistic"
-msgstr "logística"
+msgstr "Logístico com efeitos fixos"
 
 #: gui/gretl.c:1926
 msgid "_Limited dependent variable"
@@ -12970,7 +12945,7 @@ msgstr "Estimação _robusta"
 
 #: gui/gretl.c:1943
 msgid "Least _Absolute Deviation"
-msgstr "Mínimo desvio absoluto (L_AD)"
+msgstr "Mínimo Desvio Absoluto (L_AD)"
 
 #: gui/gretl.c:1944
 msgid "_Quantile regression"
@@ -13037,9 +13012,8 @@ msgid "_gretl + SVM"
 msgstr "_Gretl + SVM"
 
 #: gui/gretl.c:1964
-#, fuzzy
 msgid "_gretl + DB.NOMICS"
-msgstr "_Gretl + MPI"
+msgstr "_Gretl + DB.NOMICS"
 
 #: gui/gretl.c:1965
 msgid "Check for _updates"
@@ -13457,7 +13431,7 @@ msgstr "_Autocorrelação"
 
 #: gui/gui_utils.c:265
 msgid "_Durbin-Watson p-value"
-msgstr "p-valor de _Durbin-Watson"
+msgstr "_Durbin-Watson"
 
 #: gui/gui_utils.c:266 gui/gui_utils.c:4632
 msgid "A_RCH"
@@ -13643,9 +13617,8 @@ msgid "gretl: edit Stata program"
 msgstr "gretl: editar programa Stata"
 
 #: gui/gui_utils.c:1818
-#, fuzzy
 msgid "gretl: edit Dynare script"
-msgstr "gretl: editar script R"
+msgstr "gretl: editar script Dynare"
 
 #: gui/gui_utils.c:1820
 msgid "gretl: edit package spec file"
@@ -13714,9 +13687,8 @@ msgid "Outcome probabilities"
 msgstr "Probabilidades de resultados"
 
 #: gui/gui_utils.c:2988
-#, fuzzy
 msgid "_Model as bundle"
-msgstr "Tabela de modelos"
+msgstr "_Modelo como pacote/bundle"
 
 #: gui/gui_utils.c:2990
 msgid "_Fitted values"
@@ -13980,7 +13952,7 @@ msgstr "_Salvar texto..."
 
 #: gui/gui_utils.c:5273
 msgid "Save bundle to session as _icon"
-msgstr "Salvar pacote (\"bundle\") para sessão como í_cone"
+msgstr "Salvar pacote/bundle para sessão como _icone"
 
 #: gui/gui_utils.c:5355
 msgid ""
@@ -14183,9 +14155,8 @@ msgid "Calendar"
 msgstr "Calendário"
 
 #: gui/helpfiles.c:352
-#, fuzzy
 msgid "Complex numbers"
-msgstr "Mostrar números de linhas"
+msgstr "Números complexos"
 
 #: gui/helpfiles.c:354 gui/settings.c:1405
 msgid "MPI"
@@ -14535,9 +14506,8 @@ msgid "No variables are selected"
 msgstr "Não foram selecionadas variáveis"
 
 #: gui/library.c:2404
-#, fuzzy
 msgid "gretl: sequential omit test"
-msgstr "gretl: teste de omissão de Wald"
+msgstr "gretl: teste de omissão sequencial"
 
 #: gui/library.c:2407 gui/library.c:2464 gui/library.c:2508
 msgid "gretl: Wald omit test"
@@ -14815,13 +14785,12 @@ msgid "gretl: create dummy variables"
 msgstr "gretl: criar variáveis dummy"
 
 #: gui/library.c:6406
-#, fuzzy
 msgid "in the cross-sectional dimension"
-msgstr "Sem dependência de corte transversal"
+msgstr "na dimensão de corte transversal"
 
 #: gui/library.c:6407
 msgid "in the time dimension"
-msgstr ""
+msgstr "na dimensão tempo"
 
 #: gui/library.c:6448
 #, c-format
@@ -14837,33 +14806,29 @@ msgid "There are no extra observations to drop"
 msgstr "Não há observações extras para descartar"
 
 #: gui/library.c:6472
-#, fuzzy
 msgid "Divide by sample standard deviation"
-msgstr "Desvio padrão"
+msgstr "Dividir pelo desvio padrão amostral"
 
 #: gui/library.c:6473
 msgid "Divide by standard deviation without df correction"
-msgstr ""
+msgstr "Dividir pelo desvio padrão sem correção de graus de liberdade"
 
 #: gui/library.c:6474
-#, fuzzy
 msgid "Center only"
-msgstr "Centrada"
+msgstr "Apenas centrar"
 
 #: gui/library.c:6480
-#, fuzzy, c-format
+#, c-format
 msgid "Standardizing %s"
-msgstr "Desvio padrão"
+msgstr "Padronizando %s"
 
 #: gui/library.c:6483
-#, fuzzy
 msgid "Standardizing variables"
-msgstr "Erro ao acrescentar variáveis"
+msgstr "Padronização de variáveis"
 
 #: gui/library.c:6486
-#, fuzzy
 msgid "gretl: create standardized variables"
-msgstr "gretl: criar variáveis dummy"
+msgstr "gretl: criar variáveis padronizadas"
 
 #: gui/library.c:6523
 msgid "gretl: generate lags"
@@ -14901,18 +14866,17 @@ msgid "Akaike Information Criterion"
 msgstr "Critério de Informação de Akaike"
 
 #: gui/library.c:6869
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Bundle from model %d\n"
 "Name (max. %d characters):"
 msgstr ""
-"Estatística do modelo %d\n"
-"%s (valor = %g)\n"
+"pacote/bundle do modelo %d\n"
 "Nome (máx. %d caracteres):"
 
 #: gui/library.c:6872
 msgid "add bundle"
-msgstr ""
+msgstr "adicionar pacote/bundle"
 
 #: gui/library.c:6876
 #, c-format
@@ -14995,7 +14959,7 @@ msgstr "%s: sem valores válidos"
 
 #: gui/library.c:8349
 msgid "There's a script already running"
-msgstr ""
+msgstr "Já existe um script sendo executado"
 
 #: gui/library.c:8511
 msgid "Non-interactive (just get output)"
@@ -15362,19 +15326,16 @@ msgid "Model %d"
 msgstr "Modelo %d"
 
 #: gui/model_table.c:1070
-#, fuzzy
 msgid "significant at the 10 percent level"
-msgstr "Não significativo ao nível de 10 por cento"
+msgstr "significativo ao nível de 10 por cento"
 
 #: gui/model_table.c:1071
-#, fuzzy
 msgid "significant at the 5 percent level"
-msgstr "Significativo ao nível de %d por cento "
+msgstr "significativo ao nível de 5 por cento"
 
 #: gui/model_table.c:1072
-#, fuzzy
 msgid "significant at the 1 percent level"
-msgstr "Não significativo ao nível de 10 por cento"
+msgstr "significativo ao nível de 1 por cento"
 
 #: gui/model_table.c:1084 gui/model_table.c:1193 gui/model_table.c:1290
 #, c-format
@@ -15559,9 +15520,8 @@ msgid "Random effects (binary) probit"
 msgstr "Probit com efeitos aleatórios (binário)"
 
 #: gui/selector.c:4200
-#, fuzzy
 msgid "Fixed effects logistic model"
-msgstr "Efeitos fixos"
+msgstr "Modelo logístico com efeitos fixos"
 
 #: gui/selector.c:4202
 msgid "Count data model"
@@ -16414,7 +16374,7 @@ msgstr "versus"
 
 #: gui/session.c:2290
 msgid "Bundle is empty"
-msgstr "Pacote (\"bundle\") está vazio"
+msgstr "Pacote/bundle está vazio"
 
 #: gui/session.c:2648 gui/session.c:2674
 #, c-format
@@ -16729,7 +16689,7 @@ msgstr "Número de espaços por tabulação"
 
 #: gui/settings.c:309
 msgid "\"Smart\" Tab and Enter"
-msgstr "Tab e Enter \\\"inteligentes\\\""
+msgstr "Tab e Enter \"inteligentes\""
 
 #: gui/settings.c:311
 msgid "Show line numbers"
@@ -17081,9 +17041,8 @@ msgid "Initial fill value:"
 msgstr "Valor para preenchimento inicial:"
 
 #: gui/ssheet.c:4057
-#, fuzzy
 msgid "complex matrix"
-msgstr "matriz modelo"
+msgstr "matriz complexa"
 
 #: gui/ssheet.c:4070
 #, c-format
@@ -17140,23 +17099,21 @@ msgid "processing...\n"
 msgstr "processando...\n"
 
 #: gui/textbuf.c:1563
-#, fuzzy
 msgid "gretl + MPI"
-msgstr "_Gretl + MPI"
+msgstr "Gretl + MPI"
 
 #: gui/textbuf.c:1565
 msgid "gretl + SVM"
 msgstr "Gretl + SVM"
 
 #: gui/textbuf.c:1569
-#, fuzzy
 msgid "dbnomics for gretl"
-msgstr "previsão dinâmica"
+msgstr "dbnomics para gretl"
 
 #: gui/textbuf.c:1710
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't read %s"
-msgstr "Não foi possível ler '%s'"
+msgstr "Não foi possível ler %s"
 
 #: gui/textbuf.c:2157
 msgid "Gretl Command Reference"
@@ -17297,7 +17254,7 @@ msgstr "﻿Abrir no editor de scripts"
 
 #: gui/toolbar.c:807
 msgid "Save bundle content..."
-msgstr "Salvar pacote (\"bundle\") c_omo ícone e sair"
+msgstr "Salvar pacote/bundle..."
 
 #: gui/toolbar.c:808
 msgid "Print..."
@@ -17729,18 +17686,16 @@ msgid "Bootstrap replications"
 msgstr "Replicações bootstrap"
 
 #: plugin/addons-i18n.c:53
-#, fuzzy
 msgid "Bootstrap type"
-msgstr "teste bootstrap"
+msgstr "Tipo de bootstrap"
 
 #: plugin/addons-i18n.c:54
 msgid "C-model"
 msgstr "modelo-C"
 
 #: plugin/addons-i18n.c:55
-#, fuzzy
 msgid "CI coverage"
-msgstr "alavancagem"
+msgstr "Cobertura Int. Conf."
 
 #: plugin/addons-i18n.c:56
 msgid "Check identification"
@@ -17819,68 +17774,61 @@ msgid "VAR variables"
 msgstr "Variáveis VAR"
 
 #: plugin/addons-i18n.c:79
-#, fuzzy
 msgid "bias correction (non-SVEC)"
-msgstr "Correção de viés"
+msgstr "correção de viés (não-SVEC)"
 
 #: plugin/addons-i18n.c:80
-#, fuzzy
 msgid "bootstrap iterations"
-msgstr "razão-t bootstrap"
+msgstr "iterações bootstrap"
 
 #: plugin/addons-i18n.c:81
-#, fuzzy
 msgid "bootstrap type"
-msgstr "teste bootstrap"
+msgstr "tipo de bootstrap"
 
 #: plugin/addons-i18n.c:82
-#, fuzzy
 msgid "choose 1 for medians"
-msgstr "Mostrar intervalo para a mediana"
+msgstr "escolha 1 para medianas"
 
 #: plugin/addons-i18n.c:84
+#, fuzzy
 msgid "measure to target"
-msgstr ""
+msgstr "medida do objetivo"
 
 #: plugin/addons-i18n.c:86
 msgid "moving blocks"
-msgstr ""
+msgstr "blocos móveis"
 
 #: plugin/addons-i18n.c:87
 msgid "plain (Cholesky)"
 msgstr "simples (Cholesky)"
 
 #: plugin/addons-i18n.c:88
-#, fuzzy
 msgid "residual resampling"
-msgstr "Resíduos da equação"
+msgstr "reamostragem residual"
 
 #: plugin/addons-i18n.c:89
-#, fuzzy
 msgid "the model bundle"
-msgstr "Tabela de modelos"
+msgstr "o pacote/bundle modelo"
 
 #: plugin/addons-i18n.c:90
 msgid "which shocks"
-msgstr ""
+msgstr "quais choques"
 
 #: plugin/addons-i18n.c:91
-#, fuzzy
 msgid "which variables"
-msgstr "Nova variável"
+msgstr "quais variáveis"
 
 #: plugin/addons-i18n.c:92
 msgid "wild/Mammen"
-msgstr ""
+msgstr "wild/Mammen"
 
 #: plugin/addons-i18n.c:93
-#, fuzzy
 msgid "wild/Normal"
-msgstr "Normal"
+msgstr "wild/Normal"
 
 #: plugin/addons-i18n.c:94
 msgid "wild/Rademacher"
-msgstr ""
+msgstr "wild/Rademacher"
 
 #: plugin/addons-i18n.c:98
 msgid "IV/Heteroskedastic"
@@ -18357,21 +18305,20 @@ msgid "Cross-validation criterion"
 msgstr "Critério de validação cruzada"
 
 #: plugin/mailer.c:670
-#, fuzzy
 msgid "Really store password?"
-msgstr "Deseja realmente apagar %s?"
+msgstr "Deseja realmente armazenar a senha?"
 
 #: plugin/mailer.c:706
 msgid "Use password once and forget it"
-msgstr ""
+msgstr "Use a senha apenas uma vez e a esqueça"
 
 #: plugin/mailer.c:707
 msgid "Store this password"
-msgstr ""
+msgstr "Armazenar essa senha"
 
 #: plugin/mailer.c:708
 msgid "A password is not required"
-msgstr ""
+msgstr "Não é necessário uma senha"
 
 #: plugin/mailer.c:788
 msgid "To:"
@@ -18379,7 +18326,7 @@ msgstr "Para:"
 
 #: plugin/mailer.c:789
 msgid "From:"
-msgstr ""
+msgstr "De:"
 
 #: plugin/mailer.c:790
 msgid "Subject:"
@@ -18420,19 +18367,16 @@ msgid "SMTP server:"
 msgstr "Servidor SMTP:"
 
 #: plugin/mailer.c:933
-#, fuzzy
 msgid "Mail username:"
-msgstr "Nome de Usuário:"
+msgstr "Nome de usuário do e-mail:"
 
 #: plugin/mailer.c:943
-#, fuzzy
 msgid "Mail password:"
-msgstr "Senha:"
+msgstr "Senha do e-mail:"
 
 #: plugin/mailer.c:1084
-#, fuzzy
 msgid "Mail sent"
-msgstr "Configuração de e-mail"
+msgstr "E-mail enviado"
 
 #: plugin/mp_ols.c:179
 #, c-format
@@ -18806,24 +18750,23 @@ msgstr "não foi detectada sazonalidade"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
-msgstr ""
+msgstr "Quantidade de índices de condição >= 30"
 
 #: plugin/vif.c:360
 msgid "Variance proportions >= 0.5 associated with cond >= 30"
-msgstr ""
+msgstr "Proporções de variância >= 0,5 associadas com cond >=30"
 
 #: plugin/vif.c:361
 msgid "Count of condition indices >= 10"
-msgstr ""
+msgstr "Quantidade de índices de condição >= 10"
 
 #: plugin/vif.c:362
 msgid "Variance proportions >= 0.5 associated with cond >= 10"
-msgstr ""
+msgstr "Proporções de variância >= 0,5 associadas com cond >=10"
 
 #: plugin/vif.c:363
-#, fuzzy
 msgid "No evidence of excessive collinearity"
-msgstr "Omitido devido a colinearidade exata:"
+msgstr "Não há evidência de colinearidade excessiva"
 
 #: plugin/vif.c:370
 msgid ""
@@ -18833,6 +18776,13 @@ msgid ""
 "variance is mostly associated with problematic cond values may themselves\n"
 "be considered problematic."
 msgstr ""
+"De acordo com BKW, cond >= 30 indica uma quase dependência linear \"forte\", "
+"e cond\n"
+"entre 10 e 30 indica que é \"moderadamente forte\". Estimativas de "
+"parâmetros cuja\n"
+"variância está principalmente associada a valores problemáticos de cond "
+"podem ser\n"
+"consideradas problemáticas."
 
 #: plugin/vif.c:421
 msgid "Belsley-Kuh-Welsch collinearity diagnostics"
@@ -18843,9 +18793,8 @@ msgid "variance proportions"
 msgstr "proporções de variância"
 
 #: plugin/vif.c:423
-#, fuzzy
 msgid "eigenvalues of inverse covariance matrix"
-msgstr "Inversa da matriz de covariância"
+msgstr "Autovalores inversa da matriz de covariância"
 
 #: plugin/vif.c:424
 msgid "condition index"
@@ -18948,11 +18897,10 @@ msgstr "Aparência"
 #~ msgid "No series length has been defined"
 #~ msgstr "Não foi definido o tamanho da série"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "Erro ao executar função"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"
