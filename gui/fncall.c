@@ -39,6 +39,7 @@
 #include "winstack.h"
 #include "treeutils.h"
 #include "gfn_arglists.h"
+#include "gpt_control.h"
 #include "fnsave.h"
 #include "fncall.h"
 
@@ -4471,7 +4472,9 @@ void map_outlines_callback (void)
 
     if (mapfile != NULL) {
 	char *pkgpath = gretl_addon_get_path("geoplot");
+	gretl_bundle *plotbun = NULL;
 	fncall *fc = NULL;
+	PRN *prn = NULL;
 	int err = 0;
 
 	if (pkgpath != NULL) {
@@ -4481,14 +4484,23 @@ void map_outlines_callback (void)
 	    dummy_call();
 	    return;
 	}
-	err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) mapfile);
+	plotbun = gretl_bundle_new();
+	err = push_function_args(fc, GRETL_TYPE_STRING, (void *) mapfile,
+				 GRETL_TYPE_NONE, NULL,
+				 GRETL_TYPE_NONE, NULL,
+				 GRETL_TYPE_BUNDLE_REF, plotbun, -1);
 	if (!err) {
-	    err = gretl_function_exec(fc, GRETL_TYPE_VOID, NULL,
-				      NULL, NULL, NULL);
+	    prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+	    err = gretl_function_exec(fc, GRETL_TYPE_VOID, dataset,
+				      NULL, NULL, prn);
 	}
 	if (err) {
 	    gui_errmsg(err);
+	} else {
+	    gnuplot_show_map(plotbun);
 	}
+	gretl_print_destroy(prn);
+	gretl_bundle_destroy(plotbun);
     } else {
 	errbox("No mapfile present");
     }

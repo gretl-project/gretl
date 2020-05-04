@@ -4124,6 +4124,11 @@ static void add_to_session_callback (png_plot *plot)
     char fullname[MAXLEN] = {0};
     int err, type;
 
+    if (plot->spec->code == PLOT_GEOMAP) {
+	/* disabled for now */
+	return;
+    }
+
     type = (plot->spec->code == PLOT_BOXPLOTS)? GRETL_OBJ_PLOT :
 	GRETL_OBJ_GRAPH;
 
@@ -4838,7 +4843,9 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	break;
     case GDK_z:
     case GDK_Z:
-	prepare_for_zoom(plot);
+	if (!plot_not_zoomable(plot)) {
+	    prepare_for_zoom(plot);
+	}
 	break;
 #ifdef G_OS_WIN32
     case GDK_c:
@@ -5209,6 +5216,145 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
+static int plot_add_shell (png_plot *plot, const char *name)
+{
+    GtkWidget *vbox;
+    GtkWidget *canvas_hbox;
+    GtkWidget *status_hbox;
+    gchar *title;
+
+    plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    g_object_ref(plot->shell);
+
+    if (name != NULL) {
+	title = g_strdup_printf("gretl: %s", name);
+    } else {
+	title = g_strdup(_("gretl: graph"));
+    }
+    gtk_window_set_title(GTK_WINDOW(plot->shell), title);
+    gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
+    g_signal_connect(G_OBJECT(plot->shell), "destroy",
+		     G_CALLBACK(destroy_png_plot), plot);
+    g_free(title);
+
+    vbox = gtk_vbox_new(FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
+
+    /* box to hold canvas */
+    canvas_hbox = gtk_hbox_new(FALSE, 1);
+    gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
+
+    /* eventbox and hbox for status area  */
+    plot->statusarea = gtk_event_box_new();
+    gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
+    status_hbox = gtk_hbox_new(FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
+
+    /* Create drawing-area widget */
+    plot->canvas = gtk_drawing_area_new();
+    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas),
+				plot->pixel_width, plot->pixel_height);
+    gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
+                           | GDK_LEAVE_NOTIFY_MASK
+                           | GDK_BUTTON_PRESS_MASK
+                           | GDK_BUTTON_RELEASE_MASK
+                           | GDK_POINTER_MOTION_MASK
+                           | GDK_POINTER_MOTION_HINT_MASK);
+    gtk_widget_set_can_focus(plot->canvas, TRUE);
+    g_signal_connect(G_OBJECT(plot->canvas), "button-press-event",
+		     G_CALLBACK(plot_button_press), plot);
+    g_signal_connect(G_OBJECT(plot->canvas), "button-release-event",
+		     G_CALLBACK(plot_button_release), plot);
+    gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
+
+    if (plot_show_cursor_label(plot)) {
+	/* cursor label (graph position indicator) */
+	GtkWidget *frame = gtk_frame_new(NULL);
+
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+	plot->cursor_label = gtk_label_new(" ");
+	gtk_widget_set_size_request(plot->cursor_label, 160, -1);
+	gtk_container_add(GTK_CONTAINER(frame), plot->cursor_label);
+	gtk_box_pack_start(GTK_BOX(status_hbox), frame, FALSE, FALSE, 0);
+    }
+
+    /* the statusbar */
+    plot->statusbar = gtk_statusbar_new();
+    gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
+    add_graph_toolbar(status_hbox, plot);
+#if GTK_MAJOR_VERSION < 3
+    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
+#endif
+    plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
+					     "plot_message");
+
+    /* more on canvas and window */
+    if (plot_has_xrange(plot)) {
+	g_signal_connect(G_OBJECT(plot->canvas), "motion-notify-event",
+			 G_CALLBACK(plot_motion_callback), plot);
+    }
+    gtk_widget_realize(plot->canvas);
+    plot->window = gtk_widget_get_window(plot->canvas);
+#if GTK_MAJOR_VERSION < 3
+    gdk_window_set_back_pixmap(plot->window, NULL, FALSE);
+#endif
+
+    /* finish setup of plot->shell */
+    g_object_set_data(G_OBJECT(plot->shell), "plot-filename",
+		      plot->spec->fname);
+    window_list_add(plot->shell, GNUPLOT);
+    g_signal_connect(G_OBJECT(plot->shell), "key-press-event",
+		     G_CALLBACK(plot_key_handler), plot);
+    gtk_widget_show_all(plot->shell);
+
+#if GTK_MAJOR_VERSION >= 3
+    g_signal_connect(G_OBJECT(plot->canvas), "draw",
+		     G_CALLBACK(plot_draw), plot);
+#else
+    plot->pixmap = gdk_pixmap_new(plot->window,
+				  plot->pixel_width,
+				  plot->pixel_height,
+				  -1);
+    g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
+		     G_CALLBACK(plot_expose), plot);
+#endif
+
+    return 0;
+}
+
+static void plot_handle_specials (png_plot *plot)
+{
+    if (plot->spec->code == PLOT_PERIODOGRAM) {
+	/* the x2 axis gets broken, and also the x axis if it's
+	   in degrees or radians, on zooming
+	*/
+	plot->status |= PLOT_DONT_ZOOM;
+    } else if (plot->spec->code == PLOT_ROOTS ||
+	plot->spec->code == PLOT_QQ) {
+	plot->pixel_width = plot->pixel_height = GP_SQ_SIZE;
+    }
+
+    if (plot->spec->flags & GPT_LETTERBOX) {
+	plot->pixel_width = GP_LB_WIDTH;
+	plot->pixel_height = GP_LB_HEIGHT;
+    } else if (plot->spec->flags & GPT_XXL) {
+	plot->pixel_width = GP_XXL_WIDTH;
+	plot->pixel_height = GP_XXL_HEIGHT;
+    } else if (plot->spec->flags & GPT_XL) {
+	plot->pixel_width = GP_XL_WIDTH;
+	plot->pixel_height = GP_XL_HEIGHT;
+    } else if (plot->spec->flags & GPT_XW) {
+	plot->pixel_width = GP_XW_WIDTH;
+	plot->pixel_height = GP_HEIGHT;
+    }
+
+    if (plot->spec->scale != 1.0) {
+	plot_get_scaled_dimensions(&plot->pixel_width,
+				   &plot->pixel_height,
+				   plot->spec->scale);
+    }
+}
+
 /* note: @fname is the name of the file containing the
    plot commands.
 */
@@ -5217,10 +5363,6 @@ static int gnuplot_show_png (const char *fname,
 			     const char *name,
 			     void *session_ptr)
 {
-    GtkWidget *vbox;
-    GtkWidget *canvas_hbox;
-    GtkWidget *status_hbox = NULL;
-    gchar *title = NULL;
     png_plot *plot;
     int err = 0;
 
@@ -5279,35 +5421,7 @@ static int gnuplot_show_png (const char *fname,
 	set_plot_format_flags(plot);
     }
 
-    if (plot->spec->code == PLOT_PERIODOGRAM) {
-	/* the x2 axis gets broken, and also the x axis if it's
-	   in degrees or radians, on zooming
-	*/
-	plot->status |= PLOT_DONT_ZOOM;
-    } else if (plot->spec->code == PLOT_ROOTS ||
-	plot->spec->code == PLOT_QQ) {
-	plot->pixel_width = plot->pixel_height = GP_SQ_SIZE;
-    }
-
-    if (plot->spec->flags & GPT_LETTERBOX) {
-	plot->pixel_width = GP_LB_WIDTH;
-	plot->pixel_height = GP_LB_HEIGHT;
-    } else if (plot->spec->flags & GPT_XXL) {
-	plot->pixel_width = GP_XXL_WIDTH;
-	plot->pixel_height = GP_XXL_HEIGHT;
-    } else if (plot->spec->flags & GPT_XL) {
-	plot->pixel_width = GP_XL_WIDTH;
-	plot->pixel_height = GP_XL_HEIGHT;
-    } else if (plot->spec->flags & GPT_XW) {
-	plot->pixel_width = GP_XW_WIDTH;
-	plot->pixel_height = GP_HEIGHT;
-    }
-
-    if (plot->spec->scale != 1.0) {
-	plot_get_scaled_dimensions(&plot->pixel_width,
-				   &plot->pixel_height,
-				   plot->spec->scale);
-    }
+    plot_handle_specials(plot);
 
     if (!plot->err) {
 	int range_err = get_plot_ranges(plot, plot->spec->code);
@@ -5326,117 +5440,7 @@ static int gnuplot_show_png (const char *fname,
 	}
     }
 
-    plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-    /* note need for corresponding unref */
-    g_object_ref(plot->shell);
-
-    if (name != NULL) {
-	title = g_strdup_printf("gretl: %s", name);
-    } else {
-	title = g_strdup(_("gretl: graph"));
-    }
-
-    gtk_window_set_title(GTK_WINDOW(plot->shell), title);
-    gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
-    g_signal_connect(G_OBJECT(plot->shell), "destroy",
-		     G_CALLBACK(destroy_png_plot), plot);
-    g_free(title);
-
-    vbox = gtk_vbox_new(FALSE, 2);
-    gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
-
-    /* box to hold canvas */
-    canvas_hbox = gtk_hbox_new(FALSE, 1);
-    gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
-
-    /* eventbox and hbox for status area  */
-    plot->statusarea = gtk_event_box_new();
-    gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
-    status_hbox = gtk_hbox_new(FALSE, 2);
-    gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
-
-    /* Create drawing-area widget */
-    plot->canvas = gtk_drawing_area_new();
-    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas),
-				plot->pixel_width, plot->pixel_height);
-    gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
-                           | GDK_LEAVE_NOTIFY_MASK
-                           | GDK_BUTTON_PRESS_MASK
-                           | GDK_BUTTON_RELEASE_MASK
-                           | GDK_POINTER_MOTION_MASK
-                           | GDK_POINTER_MOTION_HINT_MASK);
-    gtk_widget_set_can_focus(plot->canvas, TRUE);
-    g_signal_connect(G_OBJECT(plot->canvas), "button-press-event",
-		     G_CALLBACK(plot_button_press), plot);
-    g_signal_connect(G_OBJECT(plot->canvas), "button-release-event",
-		     G_CALLBACK(plot_button_release), plot);
-    gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
-
-    if (plot_show_cursor_label(plot)) {
-	/* cursor label (graph position indicator) */
-	GtkWidget *frame = gtk_frame_new(NULL);
-
-	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
-	plot->cursor_label = gtk_label_new(" ");
-	gtk_widget_set_size_request(plot->cursor_label, 160, -1);
-	gtk_container_add(GTK_CONTAINER(frame), plot->cursor_label);
-	gtk_box_pack_start(GTK_BOX(status_hbox), frame, FALSE, FALSE, 0);
-    }
-
-    /* the statusbar */
-    plot->statusbar = gtk_statusbar_new();
-    gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
-    add_graph_toolbar(status_hbox, plot);
-
-#if GTK_MAJOR_VERSION < 3
-    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
-#endif
-
-    plot->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(plot->statusbar),
-					     "plot_message");
-#if 0
-    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar),
-		       plot->cid, _(" Right-click on graph for menu"));
-#endif
-
-    if (plot_has_xrange(plot)) {
-	g_signal_connect(G_OBJECT(plot->canvas), "motion-notify-event",
-			 G_CALLBACK(plot_motion_callback), plot);
-    }
-
-    gtk_widget_realize(plot->canvas);
-    plot->window = gtk_widget_get_window(plot->canvas);
-
-#if GTK_MAJOR_VERSION < 3
-    gdk_window_set_back_pixmap(plot->window, NULL, FALSE);
-#endif
-
-    /* finish setup of plot->shell */
-    g_object_set_data(G_OBJECT(plot->shell), "plot-filename",
-		      plot->spec->fname);
-    window_list_add(plot->shell, GNUPLOT);
-    g_signal_connect(G_OBJECT(plot->shell), "key-press-event",
-		     G_CALLBACK(plot_key_handler), plot);
-    gtk_widget_show_all(plot->shell);
-
-#if 0
-    /* set the focus to the canvas area */
-    gtk_widget_grab_focus(plot->canvas);
-#endif
-
-#if GTK_MAJOR_VERSION >= 3
-    g_signal_connect(G_OBJECT(plot->canvas), "draw",
-		     G_CALLBACK(plot_draw), plot);
-#else
-    plot->pixmap = gdk_pixmap_new(plot->window,
-				  plot->pixel_width,
-				  plot->pixel_height,
-				  -1);
-    g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
-		     G_CALLBACK(plot_expose), plot);
-#endif
-
+    plot_add_shell(plot, name);
     err = render_pngfile(plot, PNG_START);
 
     if (err) {
@@ -5447,6 +5451,76 @@ static int gnuplot_show_png (const char *fname,
 	    g_object_set_data(G_OBJECT(plot->shell),
 			      "session-ptr", session_ptr);
 	}
+    }
+
+    return err;
+}
+
+int gnuplot_show_map (gretl_bundle *b)
+{
+    const char *fname = NULL;
+    const gretl_matrix *dims = NULL;
+    png_plot *plot;
+    int err = 0;
+
+    gretl_error_clear();
+
+    fname = gretl_bundle_get_string(b, "plotfile", &err);
+    if (!err) {
+	dims = gretl_bundle_get_matrix(b, "dims", &err);
+    }
+    if (err) {
+	gui_errmsg(err);
+	return err;
+    }
+
+    gretl_error_clear();
+
+    plot = png_plot_new();
+    if (plot == NULL) {
+	return E_ALLOC;
+    }
+
+    plot->spec = plotspec_new();
+    if (plot->spec == NULL) {
+	free(plot);
+	return E_ALLOC;
+    }
+
+    strcpy(plot->spec->fname, fname);
+    plot->spec->ptr = plot;
+
+    err = gretl_test_fopen(plot->spec->fname, "rb");
+    if (err) {
+	gretl_errmsg_sprintf(_("Couldn't read '%s'"), plot->spec->fname);
+	err = E_FOPEN;
+    } else {
+	gchar *buf;
+
+	buf = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(),
+			      plot->spec->fname);
+	err = gretl_spawn(buf);
+	g_free(buf);
+    }
+
+    if (err) {
+	plotspec_destroy(plot->spec);
+	free(plot);
+	return err;
+    }
+
+    plot->spec->code = PLOT_GEOMAP;
+    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+    plot->pixel_width = dims->val[0];
+    plot->pixel_height = dims->val[1];
+
+    plot_add_shell(plot, "map");
+    err = render_pngfile(plot, PNG_START);
+
+    if (err) {
+	gtk_widget_destroy(plot->shell);
+    } else {
+	g_object_set_data(G_OBJECT(plot->shell), "object", plot);
     }
 
     return err;

@@ -257,10 +257,12 @@ function string setterm(scalar type, scalar h, scalar w, string dest)
 end function
 
 # private
-function void prepare_gp_file(const string datfile,
-                              const matrix bbox,
-                              const matrix zrange[null],
-                              const bundle options)
+function matrix prepare_gp_file(const string plotfile,
+				const string datfile,
+				const matrix bbox,
+				const matrix zrange[null],
+				const bundle options,
+				bool gui_usage)
 
     scalar have_payload = 0
     if exists(zrange)
@@ -271,6 +273,12 @@ function void prepare_gp_file(const string datfile,
     ylim = stretch(bbox[,2], 0.02)
 
     height = inbundle(options, "height") == 1 ? options.height : 600
+    if gui_usage && height <= 0
+	height = 600
+    endif
+
+    matrix dims = {}
+
     if height > 0
         string term_default = $windows ? "windows" : "wxt"
         scalar ymid = meanr(ylim)
@@ -281,7 +289,13 @@ function void prepare_gp_file(const string datfile,
         else
             width = floor(wratio * height)
         endif
-        printf "set term %s persist size %d,%d\n", term_default, width, height
+	if gui_usage
+	    printf "set term pngcairo size %d,%d\n", width, height
+	    dims = {width, height}
+	    printf "set output \"%s/gretltmp.png\"\n", $dotdir
+	else
+            printf "set term %s persist size %d,%d\n", term_default, width, height
+	endif
     else
         printf "set term %s persist\n", term_default
     endif
@@ -350,19 +364,24 @@ function void prepare_gp_file(const string datfile,
     else
         printf "plot '%s' using 1:2 with lines %s\n", datfile, borderline
     endif
+
+    return dims
 end function
 
 function void geoplot(const string mapfile,
                       const series payload[null],
-                      const bundle options[null])
+                      const bundle options[null],
+		      bundle *outbun[null])
     matrix bbox = {}
     scalar show = 1
     string plotfile = ""
+    gui_usage = 0
 
     if !exists(options)
         bundle options = null
         if !exists(payload)
-            # we just got the @mapfile argument
+            # we just got the @mapfile argument: apply tics
+	    # by default for the outlines only case
             options.tics = 1
         endif
     else
@@ -372,6 +391,17 @@ function void geoplot(const string mapfile,
 	if inbundle(options, "plotfile") == 4
 	    plotfile = options.plotfile
 	endif
+    endif
+
+    if exists(outbun)
+	# don't invoke gnuplot directly, and we need
+	# a plotfile to give back to the GUI
+	gui_usage = 1
+	show = 0
+	if plotfile == ""
+	    plotfile = sprintf("%s/geoplot_tmp.plt", $dotdir)
+	endif
+	outbun.plotfile = plotfile
     endif
 
     # catch the case of no output
@@ -391,8 +421,8 @@ function void geoplot(const string mapfile,
     if plotfile != ""
         string datfile = switch_suffix(plotfile, ".dat")
     else
-        string plotfile = sprintf("@dotdir/geoplot_tmp.plt")
-        string datfile = sprintf("@dotdir/geoplot_tmp.dat")
+        string plotfile = sprintf("%s/geoplot_tmp.plt", $dotdir)
+        string datfile = sprintf("%s/geoplot_tmp.dat", $dotdir)
     endif
 
     # write out the polygons data for gnuplot
@@ -402,17 +432,21 @@ function void geoplot(const string mapfile,
         bbox = _map2dat(mapfile, datfile)
     endif
 
+    matrix dims = {}
+
     outfile "@plotfile" --quiet
         if have_payload
             matrix zrange = {min(payload), max(payload)}
-            prepare_gp_file(datfile, bbox, zrange, options)
+            dims = prepare_gp_file(plotfile, datfile, bbox, zrange, options, gui_usage)
         else
-            prepare_gp_file(datfile, bbox, null, options)
+            dims = prepare_gp_file(plotfile, datfile, bbox, null, options, gui_usage)
         endif
     end outfile
 
     if show
         !"@gnuplot" "@plotfile"
+    elif gui_usage
+	outbun.dims = dims
     endif
 
 end function

@@ -77,6 +77,8 @@ void launch_gnuplot_interactive (void);
 
 void gnuplot_view_3d (const char *plotfile);
 
+int gnuplot_show_map (gretl_bundle *b);
+
 int dump_plot_buffer (const char *buf, const char *fname,
 		      int addpause);
 
