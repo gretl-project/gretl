@@ -170,6 +170,8 @@ const char *gretl_gnuplot_term_line (TermType ttype,
 
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec);
 
+char *gretl_png_font_string (void);
+
 const char *gp_justification_string (int j);
 
 int split_graph_fontspec (const char *s, char *name, int *psz);

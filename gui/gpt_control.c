@@ -155,7 +155,7 @@ static int repaint_png (png_plot *plot, int view);
 static int zoom_replaces_plot (png_plot *plot);
 static void prepare_for_zoom (png_plot *plot);
 static int get_plot_ranges (png_plot *plot, PlotType ptype);
-static void graph_display_pdf (GPT_SPEC *spec);
+static void graph_display_pdf (png_plot *plot);
 static void plot_do_rescale (png_plot *plot, int mod);
 #ifdef G_OS_WIN32
 static void win32_process_graph (GPT_SPEC *spec, int dest);
@@ -244,6 +244,14 @@ double plot_get_ymin (png_plot *plot)
     return (plot != NULL)? plot->ymin : -1;
 }
 
+void plot_get_pixel_dims (png_plot *plot,
+			  double *pw,
+			  double *ph)
+{
+    *pw = plot->pixel_width;
+    *ph = plot->pixel_height;
+}
+
 /* apparatus for graph toolbar */
 
 static void graph_enlarge_callback (GtkWidget *w, png_plot *plot)
@@ -277,11 +285,6 @@ static GretlToolItem plotbar_items[] = {
     { N_("Menu"),        GRETL_STOCK_MENU,    G_CALLBACK(graph_popup_callback), 0 },
     { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 },
     { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_shrink_callback), 0 },
-#if 0
-    { N_("Copy"),        GTK_STOCK_COPY,      G_CALLBACK(graph_copy_callback), 0 },
-    { N_("Display PDF"), GRETL_STOCK_PDF,     G_CALLBACK(show_pdf_callback), 0 },
-    { N_("Edit"),        GTK_STOCK_EDIT,      G_CALLBACK(graph_edit_callback), 0 },
-#endif
     { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
 };
 
@@ -688,13 +691,13 @@ static int revise_plot_file (GPT_SPEC *spec,
     int mono = (spec->flags & GPT_MONO);
     int err = 0;
 
-    fpin = gretl_fopen(spec->fname, "r");
+    fpin = gretl_fopen(spec->fname, "rb");
     if (fpin == NULL) {
 	file_read_errbox(spec->fname);
 	return 1;
     }
 
-    fpout = gretl_fopen(inpname, "w");
+    fpout = gretl_fopen(inpname, "wb");
     if (fpout == NULL) {
 	fclose(fpin);
 	file_write_errbox(inpname);
@@ -750,11 +753,30 @@ void save_graph_to_file (gpointer data, const char *fname)
     }
 }
 
+static gchar *map_pdf_termstr (png_plot *plot)
+{
+    double w = plot->pixel_width;
+    double h = plot->pixel_height;
+    double hr = h / w;
+
+    if (hr > 8.5 / 5.5) {
+	/* tall and skinny */
+	h = 8.5;
+	w = h / hr;
+    } else {
+	w = 5.5;
+	h = w * hr;
+    }
+
+    return g_strdup_printf("set term pdfcairo font \"sans,12\" size %g,%g", w, h);
+}
+
 #define GRETL_PDF_TMP "gretltmp.pdf"
 #define GRETL_EPS_TMP "gretltmp.eps"
 
-static void graph_display_pdf (GPT_SPEC *spec)
+static void graph_display_pdf (png_plot *plot)
 {
+    GPT_SPEC *spec = plot->spec;
     char pdfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
     gchar *plotcmd;
@@ -764,7 +786,14 @@ static void graph_display_pdf (GPT_SPEC *spec)
     gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     gretl_build_path(pdfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
 
-    err = revise_plot_file(spec, plttmp, pdfname, NULL);
+    if (spec->code == PLOT_GEOMAP) {
+	gchar *termstr = map_pdf_termstr(plot);
+
+	err = revise_plot_file(spec, plttmp, pdfname, termstr);
+	g_free(termstr);
+    } else {
+	err = revise_plot_file(spec, plttmp, pdfname, NULL);
+    }
     if (err) {
 	return;
     }
@@ -4303,7 +4332,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Replace full view"))) {
 	zoom_replaces_plot(plot);
     } else if (!strcmp(item_string, _("Display PDF"))) {
-	graph_display_pdf(plot->spec);
+	graph_display_pdf(plot);
     } else if (!strcmp(item_string, _("OLS estimates"))) {
 	if (plot->spec != NULL) {
 	    do_graph_model(plot->spec->reglist, plot->spec->fit);
@@ -5463,6 +5492,7 @@ static int gnuplot_show_png (const char *fname,
 int gnuplot_show_map (gretl_bundle *b)
 {
     const char *fname = NULL;
+    const char *mapname = NULL;
     const gretl_matrix *dims = NULL;
     png_plot *plot;
     int err = 0;
@@ -5518,7 +5548,8 @@ int gnuplot_show_map (gretl_bundle *b)
     plot->pixel_width = dims->val[0];
     plot->pixel_height = dims->val[1];
 
-    plot_add_shell(plot, "map");
+    mapname = gretl_bundle_get_string(b, "mapname", NULL);
+    plot_add_shell(plot, mapname != NULL ? mapname : "map");
     err = render_pngfile(plot, PNG_START);
 
     if (err) {

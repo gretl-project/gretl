@@ -11793,7 +11793,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    post_process = 0;
 	    reset_p_aux(p, save_aux);
 	    ret = aux_string_node(p);
-
 	    if (ret != NULL) {
 		int ini = node_get_int(m, p);
 		int fin = node_get_int(r, p);
@@ -14850,7 +14849,7 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	} else if (idx == R_PNGFONT) {
 	    ret = aux_string_node(p);
 	    if (ret != NULL) {
-		ret->v.str = gretl_strdup(gretl_png_font());
+		ret->v.str = gretl_png_font_string();
 	    }
 	} else if (dvar_variant1(idx)) {
 	    GretlType type = get_last_test_type();

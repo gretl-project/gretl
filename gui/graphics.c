@@ -50,12 +50,34 @@ struct pdf_ps_saver {
     GtkWidget *combo;
 };
 
+static void map_pdf_ps_dims (png_plot *plot,
+			     double *pw, double *ph)
+{
+    double hr;
+
+    plot_get_pixel_dims(plot, pw, ph);
+    hr = *ph / *pw;
+
+    if (hr > 8.5 / 5.5) {
+	/* tall and skinny */
+	*ph = 8.5;
+	*pw = *ph / hr;
+    } else {
+	*pw = 5.5;
+	*ph = *pw * hr;
+    }
+}
+
 static void set_pdf_ps_dims (struct pdf_ps_saver *s, GPT_SPEC *spec)
 {
+    png_plot *plot = (png_plot *) spec->ptr;
     PlotType ptype = spec->code;
     double w = pwidth, h = pheight;
 
-    if (spec->flags & GPT_LETTERBOX) {
+    if (spec->code == PLOT_GEOMAP && plot != NULL) {
+	map_pdf_ps_dims(plot, &w, &h);
+	s->stdsize = 0;
+    } else if (spec->flags & GPT_LETTERBOX) {
 	/* for time series */
 	w = (5.0 * GP_LB_WIDTH) / GP_WIDTH;
 	h = (3.5 * GP_LB_HEIGHT) / GP_HEIGHT;

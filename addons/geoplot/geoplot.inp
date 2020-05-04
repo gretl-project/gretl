@@ -290,7 +290,7 @@ function matrix prepare_gp_file(const string plotfile,
             width = floor(wratio * height)
         endif
 	if gui_usage
-	    printf "set term pngcairo size %d,%d\n", width, height
+	    printf "set term pngcairo%s size %d,%d\n", $pngfont, width, height
 	    dims = {width, height}
 	    printf "set output \"%s/gretltmp.png\"\n", $dotdir
 	else

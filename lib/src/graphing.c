@@ -969,6 +969,24 @@ int split_graph_fontspec (const char *s, char *name, int *psz)
     return nf;
 }
 
+char *gretl_png_font_string (void)
+{
+    const char *s = gretl_png_font();
+    char fstr[256];
+    char name[128];
+    int nf, ptsize = 0;
+
+    fstr[0] = '\0';
+    nf = split_graph_fontspec(s, name, &ptsize);
+    if (nf == 2) {
+	sprintf(fstr, " font \"%s,%d\"", name, ptsize);
+    } else if (nf == 1) {
+	sprintf(fstr, " font \"%s\"", name);
+    }
+
+    return gretl_strdup(fstr);
+}
+
 static void maybe_set_small_font (int nplots)
 {
     gp_small_font_size = (nplots > 4)? 6 : 0;

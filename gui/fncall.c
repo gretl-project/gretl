@@ -4497,7 +4497,11 @@ void map_outlines_callback (void)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
+	    gchar *mapname = g_path_get_basename(mapfile);
+
+	    gretl_bundle_set_string(plotbun, "mapname", mapname);
 	    gnuplot_show_map(plotbun);
+	    g_free(mapname);
 	}
 	gretl_print_destroy(prn);
 	gretl_bundle_destroy(plotbun);

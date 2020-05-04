@@ -53,6 +53,10 @@ double plot_get_xmin (png_plot *plot);
 
 double plot_get_ymin (png_plot *plot);
 
+void plot_get_pixel_dims (png_plot *plot,
+			  double *pw,
+			  double *ph);
+
 int plot_get_coordinates (png_plot *plot,
 			  double *xmin,
 			  double *xmax,
