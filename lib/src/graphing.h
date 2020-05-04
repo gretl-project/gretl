@@ -123,6 +123,7 @@ typedef enum {
     PLOT_3D,
     PLOT_BAND,
     PLOT_HEATMAP,
+    PLOT_GEOMAP,
     PLOT_TYPE_MAX
 } PlotType;
 
