@@ -2330,10 +2330,16 @@ static int real_write_gdt (const char *fname, const int *inlist,
     if (binary) {
 	write_binary_order(prn);
     }
-
     if (dset->rseed > 0) {
 	/* record resampling info */
-	pprintf(prn, "rseed=\"%u\"", dset->rseed);
+	pprintf(prn, " rseed=\"%u\"", dset->rseed);
+    }
+    if (dset->mapfile != NULL) {
+	/* record map link */
+	uerr = gretl_xml_encode_to_buf(xmlbuf, dset->mapfile, sizeof xmlbuf);
+	if (uerr == 0) {
+	    pprintf(prn, " mapfile=\"%s\"", xmlbuf);
+	}
     }
 
     pputs(prn, ">\n");
@@ -3831,6 +3837,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 
     /* optional */
     gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &tmpset->rseed);
+
+    /* optional */
+    gretl_xml_get_prop_as_string(cur, "mapfile", &tmpset->mapfile);
 
     /* set some required datainfo parameters */
 
