@@ -394,9 +394,10 @@ static GtkWidget *hboxit (GtkWidget *w, GtkWidget *vbox)
 
 static void csv_na_callback (GtkComboBox *box, gpointer p)
 {
-    char *s = combo_box_get_active_text(box);
+    gchar *s = combo_box_get_active_text(box);
 
     set_csv_na_write_string(s);
+    g_free(s);
 }
 
 static GtkWidget *csv_na_combo (void)
@@ -415,7 +416,6 @@ static GtkWidget *csv_na_combo (void)
 
     combo = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-
     for (i=0; i<n; i++) {
 	combo_box_append_text(combo, na_strs[i]);
 	if (!strcmp(setna, na_strs[i])) {
@@ -6727,6 +6727,107 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent)
     } else {
 	gretl_dialog_keep_above(dialog);
     }
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}
+
+/* geoplot GUI helper functions */
+
+struct geoplot_info {
+    int *retval;
+    gretl_bundle **opts;
+    int *payload_id;
+    GtkWidget *payload_combo;
+    GtkWidget *palette_combo;
+    GtkWidget *dlg;
+};
+
+static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
+{
+    gchar *payload, *palette;
+
+    payload = combo_box_get_active_text(gi->payload_combo);
+    palette = combo_box_get_active_text(gi->palette_combo);
+
+    if (payload != NULL && strcmp(payload, "none")) {
+	*gi->payload_id = current_series_index(dataset, payload);
+	if (strcmp(palette, "default")) {
+	    *gi->opts = gretl_bundle_new();
+	    gretl_bundle_set_string(*gi->opts, "setpal", palette);
+	}
+    }
+
+    g_free(payload);
+    g_free(palette);
+
+    *gi->retval = 0;
+    gtk_widget_destroy(gi->dlg);
+}
+
+static void sensitize_palette (GtkComboBox *combo, GtkWidget *targ)
+{
+    gchar *s = combo_box_get_active_text(combo);
+
+    gtk_widget_set_sensitive(targ, strcmp(s, "none"));
+}
+
+int map_options_dialog (GList *plist, gretl_bundle **pb,
+			int *payload_id)
+{
+    struct geoplot_info gi = {0};
+    GtkWidget *dialog, *combo;
+    GtkWidget *vbox, *hbox, *tmp;
+    int ret = GRETL_CANCEL;
+
+    if (maybe_raise_dialog()) {
+	return ret;
+    }
+
+    dialog = gretl_dialog_new("gretl: display map", NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    gi.retval = &ret;
+    gi.opts = pb;
+    gi.payload_id = payload_id;
+    gi.dlg = dialog;
+
+    /* want a payload? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("payload:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gi.payload_combo = combo = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    set_combo_box_strings_from_list(combo, plist);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* palette? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("palette:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gi.palette_combo = combo = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    combo_box_append_text(combo, "default");
+    combo_box_append_text(combo, "blues");
+    combo_box_append_text(combo, "oranges");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_set_sensitive(combo, FALSE);
+
+    /* inter-connect selectors */
+    g_signal_connect(G_OBJECT(gi.payload_combo), "changed",
+		     G_CALLBACK(sensitize_palette), gi.palette_combo);
+
+    /* buttons */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(geoplot_callback), &gi);
+    gtk_widget_grab_default(tmp);
+    gretl_dialog_keep_above(dialog);
 
     gtk_widget_show_all(dialog);
 

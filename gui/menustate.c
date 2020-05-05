@@ -247,7 +247,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/View/MultiPlots/MultiTS", sx);
     flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx && !realpan);
     flip(mdata->ui, "/menubar/Variable/PanPlot", realpan);
-    flip(mdata->ui, "/menubar/View/GraphVars/MapOutlines", have_map);
+    flip(mdata->ui, "/menubar/View/GraphVars/MapPlot", have_map);
 
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur);
@@ -577,7 +577,7 @@ struct popup_entries main_pop_entries[] = {
     { MNU_STATS, N_("Summary statistics"), T_BOTH },
     { MNU_TPLOT, N_("Time series plot"), T_BOTH },
     { MNU_PPLOT, N_("Panel plot..."), T_SINGLE },
-    { MNU_MPLOT, N_("Plot map outlines"), T_BOTH },
+    { MNU_MPLOT, N_("Display map"), T_BOTH },
     { MNU_FDIST, N_("Frequency distribution"), T_SINGLE },
     { MNU_BPLOT, N_("Boxplot"), T_SINGLE },
     { MNU_CGRAM, N_("Correlogram"), T_SINGLE, },
@@ -636,7 +636,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	do_graph_var(v);
 	break;
     case MNU_MPLOT:
-	map_outlines_callback();
+	map_plot_callback();
 	break;
     case MNU_FDIST:
 	do_freq_dist();
@@ -722,7 +722,7 @@ GtkWidget *build_var_popup (int selvar)
 	    continue;
 	}
 	if (!have_map && i == MNU_MPLOT) {
-	    /* don't offer map outlines plot */
+	    /* don't offer map plot */
 	    continue;
 	}
 	if ((i == MNU_CGRAM || i == MNU_PGRAM || i == MNU_IDXV) &&

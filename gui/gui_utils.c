@@ -1134,7 +1134,8 @@ static void finalize_data_open (const char *fname, int ftype,
     }
 
     if (import && !dataset_is_time_series(dataset) &&
-	!dataset_is_panel(dataset) && mdata != NULL) {
+	!dataset_is_panel(dataset) && ftype != GRETL_MAP &&
+	mdata != NULL) {
 	int resp;
 
 	resp = yes_no_dialog(_("gretl: open data"),

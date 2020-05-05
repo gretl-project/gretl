@@ -160,6 +160,7 @@ enum file_ops {
     OPEN_GFN,
     OPEN_SPEC,
     OPEN_ANY,
+    OPEN_MAP,
     UPLOAD_PKG,
     END_OPEN,        /* marker for end of file open section */
     AUTO_SAVE_DATA,

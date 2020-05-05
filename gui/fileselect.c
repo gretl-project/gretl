@@ -830,6 +830,8 @@ static struct filter_info data_filters[] = {
     { N_("SPSS files (*.sav)"), "*.sav" },
     { N_("SAS xport files (*.xpt)"), "*.xpt" },
     { N_("JMulTi files (*.dat)"), "*.dat" },
+    { N_("Shapefiles (*.shp)"), "*.shp" },
+    { N_("GeoJSON files (*.geojson, *.json)"), "*.geojson" },
     { N_("all files (*.*)"), "*" }
 };
 
@@ -846,6 +848,8 @@ static GtkFileFilter *filesel_add_data_filter (GtkWidget *filesel,
     gtk_file_filter_add_pattern(filt, data_filters[i].pat);
     if (i == 0) {
 	gtk_file_filter_add_pattern(filt, "*.gdtb");
+    } else if (i == 13) {
+	gtk_file_filter_add_pattern(filt, "*.json");
     } else {
 	maybe_upcase_filter_pattern(filt, data_filters[i].pat);
     }

@@ -4466,13 +4466,40 @@ void *dbnomics_probe_series (const char *prov,
     return A;
 }
 
-void map_outlines_callback (void)
+/* geomap related functions */
+
+static GList *plausible_payload_list (void)
+{
+    GList *list = NULL;
+    int i;
+
+    for (i=dataset->v-1; i>0; i--) {
+	if (!is_string_valued(dataset, i) &&
+	    !gretl_isconst(dataset->t1, dataset->t2, dataset->Z[i])) {
+	    list = g_list_append(list, (gpointer) dataset->varname[i]);
+	}
+    }
+
+    if (list != NULL) {
+	list = g_list_prepend(list, (gpointer) "none");
+    }
+
+    return list;
+}
+
+void map_plot_callback (void)
 {
     const char *mapfile = dataset_get_mapfile(dataset);
 
     if (mapfile != NULL) {
 	char *pkgpath = gretl_addon_get_path("geoplot");
-	gretl_bundle *plotbun = NULL;
+	GretlType stype = GRETL_TYPE_NONE;
+	GretlType btype = GRETL_TYPE_NONE;
+	void *sptr = NULL, *bptr = NULL;
+	gretl_bundle *infobun = NULL;
+	gretl_bundle *opts = NULL;
+	GList *payload_list = NULL;
+	int payload_id = 0;
 	fncall *fc = NULL;
 	PRN *prn = NULL;
 	int err = 0;
@@ -4484,11 +4511,27 @@ void map_outlines_callback (void)
 	    dummy_call();
 	    return;
 	}
-	plotbun = gretl_bundle_new();
+	payload_list = plausible_payload_list();
+	if (payload_list != NULL) {
+	    int resp;
+
+	    resp = map_options_dialog(payload_list, &opts, &payload_id);
+	    if (resp == GRETL_CANCEL) {
+		return;
+	    }
+	    if (payload_id > 0) {
+		stype = GRETL_TYPE_USERIES;
+		sptr = &payload_id;
+	    }
+	    if (opts != NULL) {
+		btype = GRETL_TYPE_BUNDLE;
+		bptr = opts;
+	    }
+	}
+	infobun = gretl_bundle_new();
 	err = push_function_args(fc, GRETL_TYPE_STRING, (void *) mapfile,
-				 GRETL_TYPE_NONE, NULL,
-				 GRETL_TYPE_NONE, NULL,
-				 GRETL_TYPE_BUNDLE_REF, plotbun, -1);
+				 stype, sptr, btype, bptr,
+				 GRETL_TYPE_BUNDLE_REF, infobun, -1);
 	if (!err) {
 	    prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	    err = gretl_function_exec(fc, GRETL_TYPE_VOID, dataset,
@@ -4499,12 +4542,14 @@ void map_outlines_callback (void)
 	} else {
 	    gchar *mapname = g_path_get_basename(mapfile);
 
-	    gretl_bundle_set_string(plotbun, "mapname", mapname);
-	    gnuplot_show_map(plotbun);
+	    gretl_bundle_set_string(infobun, "mapname", mapname);
+	    gnuplot_show_map(infobun);
 	    g_free(mapname);
 	}
 	gretl_print_destroy(prn);
-	gretl_bundle_destroy(plotbun);
+	g_list_free(payload_list);
+	gretl_bundle_destroy(infobun);
+	gretl_bundle_destroy(opts);
     } else {
 	errbox("No mapfile present");
     }
