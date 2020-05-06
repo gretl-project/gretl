@@ -4524,6 +4524,9 @@ void map_plot_callback (void)
 	    }
 	    g_list_free(payload_list);
 	}
+	if (payload == NULL) {
+	    gretl_bundle_set_int(opts, "tics", 1);
+	}
 	err = mapfunc(mapfile, payload, opts);
 	if (err) {
 	    gui_errmsg(err);

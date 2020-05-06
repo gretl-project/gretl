@@ -1427,7 +1427,7 @@ static double logit (double x)
 
 #if LPDEBUG
     if (x > 40 || x < -40) {
-	fprintf(stderr, "x = %g, logit(x) = %g\n", x, l);
+	fprintf(stderr, "x = %g, logit(x) = %.16f\n", x, l);
     }
 #endif
 
@@ -2548,8 +2548,6 @@ static double binary_loglik (const double *theta, void *ptr)
     double e, ndx, p, ll = 0.0;
     int yt, i, t;
 
-    errno = 0;
-
     for (i=0; i<bin->k; i++) {
 	bin->b->val[i] = theta[i];
     }
@@ -2561,7 +2559,7 @@ static double binary_loglik (const double *theta, void *ptr)
 	return NADBL;
     }
 
-    for (t=0; t<bin->T && !errno; t++) {
+    for (t=0; t<bin->T; t++) {
 	yt = bin->y[t];
 	ndx = gretl_vector_get(bin->Xb, t);
 	if (bin->ci == PROBIT) {
@@ -2573,9 +2571,7 @@ static double binary_loglik (const double *theta, void *ptr)
 	ll += log(p);
     }
 
-    if (errno != 0) {
-	ll = NADBL;
-    }
+    errno = 0;
 
     return ll;
 }
@@ -2588,13 +2584,11 @@ static int binary_score (double *theta, double *s, int k,
     int t, j, yt;
     int err = 0;
 
-    errno = 0;
-
     for (j=0; j<bin->k; j++) {
 	s[j] = 0.0;
     }
 
-    for (t=0; t<bin->T && !errno; t++) {
+    for (t=0; t<bin->T; t++) {
 	yt = bin->y[t];
 	ndx = gretl_vector_get(bin->Xb, t);
 	if (bin->ci == PROBIT) {
@@ -2607,9 +2601,7 @@ static int binary_score (double *theta, double *s, int k,
 	}
     }
 
-    if (errno != 0) {
-	err = E_NAN;
-    }
+    errno = 0;
 
     return err;
 }
@@ -2950,7 +2942,7 @@ void binary_model_hatvars (MODEL *pmod,
     }
 
     for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
-	double ndxt;
+	double ndxt, endxt;
 	int yt;
 
 	if (model_missing(pmod, t)) {
@@ -2966,7 +2958,13 @@ void binary_model_hatvars (MODEL *pmod,
 	}
 
 	if (pmod->ci == LOGIT) {
-	    F = exp(ndxt) / (1.0 + exp(ndxt));
+	    endxt = exp(ndxt);
+	    if (errno == ERANGE) {
+		F = (ndxt > 0)? 1 : 0;
+		errno = 0;
+	    } else {
+		F = endxt / (1.0 + endxt);
+	    }
 	    pmod->yhat[t] = F;
 	    pmod->uhat[t] = yt - pmod->yhat[t];
 	} else {
@@ -3157,7 +3155,6 @@ static MODEL binary_model (int ci, const int *inlist,
 				     C_LOGLIK, binary_loglik,
 				     binary_score, binary_hessian, bin,
 				     max_opt, vprn);
-
     if (bin->pp_err) {
 	/* trash any existing error message */
 	gretl_error_clear();
