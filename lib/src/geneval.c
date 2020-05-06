@@ -11945,6 +11945,45 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	}
+    } else if (f == F_GEOPLOT) {
+	int (*mapfunc) (const char *, gretl_matrix *, gretl_bundle *);
+	gretl_matrix *payload = NULL;
+	gretl_bundle *opts = NULL;
+	int free_payload = 0;
+
+	post_process = 0;
+	if (l->t != STR) {
+	    p->err = E_TYPES;
+	} else if (r->t == BUNDLE) {
+	    opts = r->v.b;
+	} else if (r->t != EMPTY) {
+	    p->err = E_TYPES;
+	}
+	if (!p->err && m->t != EMPTY) {
+	    if (m->t == MAT) {
+		payload = m->v.m;
+	    } else if (m->t == SERIES) {
+		payload = gretl_vector_from_series(m->v.xvec, p->dset->t1,
+						   p->dset->t2);
+		if (payload == NULL) {
+		    p->err = E_ALLOC;
+		} else {
+		    free_payload = 1;
+		}
+	    }
+	}
+	if (!p->err) {
+	    mapfunc = get_plugin_function("geoplot2");
+	    if (mapfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret = aux_scalar_node(p);
+		p->err = ret->v.xval = mapfunc(l->v.str, payload, opts);
+	    }
+	    if (free_payload) {
+		gretl_matrix_free(payload);
+	    }
+	}
     }
 
     if (!p->err && post_process) {
@@ -16646,6 +16685,7 @@ static NODE *eval (NODE *t, parser *p)
     case HF_REGLS:
     case HF_DBF2CSV:
     case HF_MAP2DAT:
+    case F_GEOPLOT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

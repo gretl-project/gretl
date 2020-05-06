@@ -463,6 +463,7 @@ enum {
     F_SCHUR,
     F_RESAMPLE,
     F_STACK,
+    F_GEOPLOT,
     HF_REGLS,
     HF_DBF2CSV,
     HF_MAP2DAT,

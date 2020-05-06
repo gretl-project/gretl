@@ -160,7 +160,7 @@ static gretl_matrix *geo2dat (const char *geoname,
     gretl_bundle *fi, *geom;
     double gmin[2] = {GEOHUGE, GEOHUGE};
     double gmax[2] = {-GEOHUGE, -GEOHUGE};
-    FILE *fp;
+    FILE *fp = NULL;
     const char *gtype;
     int nf, mp, nac, ncj;
     int i, j, k, p;
@@ -171,13 +171,23 @@ static gretl_matrix *geo2dat (const char *geoname,
 	return NULL;
     }
 
-    fp = gretl_fopen(datname, "wb");
-    if (fp == NULL) {
+    nf = gretl_array_get_length(features);
+    if (zvec != NULL && zvec->rows != nf) {
+	gretl_errmsg_sprintf("Invalid payload: should have %d rows", nf);
+	err = E_INVARG;
+    }
+
+    if (!err) {
+	fp = gretl_fopen(datname, "wb");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	}
+    }
+
+    if (err) {
 	gretl_array_destroy(features);
 	return NULL;
     }
-
-    nf = gretl_array_get_length(features);
 
     for (i=0; i<nf; i++) {
 	double x, y, z = 0;
@@ -858,6 +868,11 @@ gretl_matrix *map2dat (const char *mapname,
     strcpy(infile, mapname);
     get_fullpath(infile);
 
+    if (zvec != NULL && zvec->cols > 1) {
+	gretl_errmsg_set("Invalid payload");
+	return NULL;
+    }
+
     have_payload = matrix_is_payload(zvec);
 
     if (has_suffix(mapname, ".shp")) {
@@ -912,3 +927,118 @@ int map_get_data (const char *fname, DATASET *dset,
 
     return err;
 }
+
+#if 1 /* experiment, 2020-05-05 */
+
+static gretl_matrix *vector_minmax (const gretl_matrix *z)
+{
+    gretl_matrix *ret = gretl_matrix_alloc(1, 2);
+    double zi;
+    int i;
+
+    ret->val[0] = +GEOHUGE;
+    ret->val[1] = -GEOHUGE;
+
+    for (i=0; i<z->rows; i++) {
+	zi = z->val[i];
+	if (!na(zi)) {
+	    if (zi < ret->val[0]) {
+		ret->val[0] = zi;
+	    }
+	    if (zi > ret->val[1]) {
+		ret->val[1] = zi;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* temporary hack!! (see graphing.c) */
+
+int write_map_gp_file (const char *plotfile,
+		       const char *datfile,
+		       const gretl_matrix *bbox,
+		       const gretl_matrix *zrange,
+		       gretl_bundle *opts,
+		       int show);
+
+/* end hack */
+
+int geoplot2 (const char *mapfile,
+	      gretl_matrix *payload,
+	      gretl_bundle *opts)
+{
+    const gretl_matrix *zvec = NULL;
+    gretl_matrix *bbox = NULL;
+    gchar *plotfile = NULL;
+    gchar *datfile = NULL;
+    int have_payload = 0;
+    int show = 1;
+    int err = 0;
+
+    if (opts != NULL) {
+	if (gretl_bundle_has_key(opts, "show")) {
+	    show = gretl_bundle_get_int(opts, "show", &err);
+	}
+	if (gretl_bundle_has_key(opts, "plotfile")) {
+	    const char *s;
+
+	    s = gretl_bundle_get_string(opts, "plotfile", &err);
+	    if (s != NULL) {
+		plotfile = g_strdup(s);
+	    }
+	}
+	if (err) {
+	    goto bailout;
+	}
+    }
+
+    /* catch the case of no output */
+    if (!show && plotfile == NULL) {
+        gretl_errmsg_set("geoplot: no output was specified");
+	err = E_ARGS;
+	goto bailout;
+    }
+
+    if (payload != NULL) {
+	have_payload = 1;
+        zvec = payload;
+    } else if (gretl_bundle_has_key(opts, "mask")) {
+	zvec = gretl_bundle_get_matrix(opts, "mask", &err);
+    }
+
+    if (!err) {
+	/* output filenames */
+	if (plotfile != NULL) {
+	    datfile = g_strdup(plotfile);
+	    put_ext(datfile, ".dat");
+	} else {
+	    datfile = gretl_make_dotpath("geoplot_tmp.dat");
+	}
+	/* write out the polygons data for gnuplot */
+	bbox = map2dat(mapfile, datfile, zvec);
+	if (bbox == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix *zrange = NULL;
+
+	if (have_payload) {
+	    zrange = vector_minmax(payload);
+	}
+	err = write_map_gp_file(plotfile, datfile, bbox, zrange, opts, show);
+	gretl_matrix_free(zrange);
+    }
+
+ bailout:
+
+    g_free(plotfile);
+    g_free(datfile);
+
+    return err;
+}
+
+#endif

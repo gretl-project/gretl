@@ -311,6 +311,7 @@ struct plugin_function_info plugin_functions[] = {
     { "dbf2csv", P_GEOPLOT},
     { "map2dat", P_GEOPLOT},
     { "map_get_data", P_GEOPLOT},
+    { "geoplot2", P_GEOPLOT},
 
     /* sentinel */
     { NULL, 0 }
