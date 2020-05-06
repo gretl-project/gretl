@@ -215,7 +215,7 @@ int midas_term_dialog (const char *name, int m,
 
 int dbnomics_dialog (char **dbcode, GtkWidget *parent);
 
-int map_options_dialog (GList *plist, gretl_bundle **pb,
+int map_options_dialog (GList *plist, gretl_bundle *b,
 			int *payload_id);
 
 #endif /* DIALOGS_H */

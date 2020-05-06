@@ -6737,7 +6737,7 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent)
 
 struct geoplot_info {
     int *retval;
-    gretl_bundle **opts;
+    gretl_bundle *bundle;
     int *payload_id;
     GtkWidget *payload_combo;
     GtkWidget *palette_combo;
@@ -6754,8 +6754,7 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     if (payload != NULL && strcmp(payload, "none")) {
 	*gi->payload_id = current_series_index(dataset, payload);
 	if (strcmp(palette, "default")) {
-	    *gi->opts = gretl_bundle_new();
-	    gretl_bundle_set_string(*gi->opts, "setpal", palette);
+	    gretl_bundle_set_string(gi->bundle, "setpal", palette);
 	}
     }
 
@@ -6773,7 +6772,7 @@ static void sensitize_palette (GtkComboBox *combo, GtkWidget *targ)
     gtk_widget_set_sensitive(targ, strcmp(s, "none"));
 }
 
-int map_options_dialog (GList *plist, gretl_bundle **pb,
+int map_options_dialog (GList *plist, gretl_bundle *b,
 			int *payload_id)
 {
     struct geoplot_info gi = {0};
@@ -6789,7 +6788,7 @@ int map_options_dialog (GList *plist, gretl_bundle **pb,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     gi.retval = &ret;
-    gi.opts = pb;
+    gi.bundle = b;
     gi.payload_id = payload_id;
     gi.dlg = dialog;
 
