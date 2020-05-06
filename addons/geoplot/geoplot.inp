@@ -383,10 +383,10 @@ function matrix prepare_gp_file(const string plotfile,
     return dims
 end function
 
-function void geoplot(const string mapfile,
-                      const series payload[null],
-                      const bundle options[null],
-                      bundle *outbun[null])
+function void geoplot0(const string mapfile,
+                       const series payload[null],
+                       const bundle options[null],
+                       bundle *outbun[null])
     matrix bbox = {}
     scalar show = 1
     string plotfile = ""

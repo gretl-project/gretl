@@ -11973,7 +11973,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
 	if (!p->err) {
-	    mapfunc = get_plugin_function("geoplot2");
+	    mapfunc = get_plugin_function("geoplot");
 	    if (mapfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {

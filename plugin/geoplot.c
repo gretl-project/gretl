@@ -55,13 +55,15 @@ static int matrix_is_payload (const gretl_matrix *m)
     return 0;
 }
 
-static int skip_object (int i, const gretl_matrix *m, double *pz)
+static int skip_object (int i, const gretl_matrix *z, double *pzi)
 {
-    if (m == NULL) {
+    if (z == NULL) {
 	return 0;
+    } else if (i >= z->rows) {
+	return 1;
     } else {
-	*pz = m->val[i];
-	return na(*pz);
+	*pzi = z->val[i];
+	return na(*pzi);
     }
 }
 
@@ -928,8 +930,6 @@ int map_get_data (const char *fname, DATASET *dset,
     return err;
 }
 
-#if 1 /* experiment, 2020-05-05 */
-
 static gretl_matrix *vector_minmax (const gretl_matrix *z)
 {
     gretl_matrix *ret = gretl_matrix_alloc(1, 2);
@@ -965,9 +965,9 @@ int write_map_gp_file (const char *plotfile,
 
 /* end hack */
 
-int geoplot2 (const char *mapfile,
-	      gretl_matrix *payload,
-	      gretl_bundle *opts)
+int geoplot (const char *mapfile,
+	     gretl_matrix *payload,
+	     gretl_bundle *opts)
 {
     const gretl_matrix *zvec = NULL;
     gretl_matrix *bbox = NULL;
@@ -1040,5 +1040,3 @@ int geoplot2 (const char *mapfile,
 
     return err;
 }
-
-#endif

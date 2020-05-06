@@ -567,7 +567,7 @@ struct str_table funcs[] = {
     { F_RANDPERM,  "randperm" },
     { F_STDIZE,    "stdize" },
     { F_STACK,     "stack" },
-    { F_GEOPLOT,   "geoplot2" },
+    { F_GEOPLOT,   "geoplot" },
     { 0,           NULL }
 };
 

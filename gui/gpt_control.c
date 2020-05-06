@@ -1266,7 +1266,8 @@ static int get_gpt_marker (const char *line, char *label,
 		      p == PLOT_ELLIPSE || \
 		      p == PLOT_RQ_TAU || \
 		      p == PLOT_3D || \
-		      p == PLOT_HEATMAP)
+		      p == PLOT_HEATMAP || \
+		      p == PLOT_GEOMAP)
 
 /* graphs where we don't attempt to find data coordinates */
 
@@ -1279,7 +1280,8 @@ static int get_gpt_marker (const char *line, char *label,
                         p == PLOT_BI_GRAPH || \
 			p == PLOT_STACKED_BAR || \
 			p == PLOT_BAR || \
-			p == PLOT_3D)
+			p == PLOT_3D || \
+			p == PLOT_GEOMAP)
 
 #define gp_missing(s) (s[0] == '?' || !strcmp(s, "NaN"))
 
@@ -2182,12 +2184,13 @@ static void plotspec_destroy_markers (GPT_SPEC *spec)
    are definitions of time-series vertical bars.
 */
 
-static void get_plot_nobs (GPT_SPEC *spec,
+static void get_plot_nobs (png_plot *plot,
 			   const char *buf,
 			   int *do_markers,
 			   long *barpos,
 			   long *datapos)
 {
+    GPT_SPEC *spec = plot->spec;
     int n = 0, started = -1;
     int startmin = 1;
     long auxpos = 0;
@@ -2203,6 +2206,15 @@ static void get_plot_nobs (GPT_SPEC *spec,
 	if (*line == '#' && spec->code == PLOT_REGULAR) {
 	    tailstrip(line);
 	    spec->code = plot_type_from_string(line);
+	    if (spec->code == PLOT_GEOMAP) {
+		int w, h;
+
+		if (sscanf(line + 9, "%d %d", &w, &h) == 2) {
+		    plot->pixel_width = w;
+		    plot->pixel_height = h;
+		}
+		break;
+	    }
 	}
 
 	if (sscanf(line, "# n_bars = %d", &spec->nbars) == 1) {
@@ -2997,8 +3009,9 @@ static void plot_get_ols_info (const char *line,
    of plot that are not fully handled.
 */
 
-static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
+static int read_plotspec_from_file (png_plot *plot)
 {
+    GPT_SPEC *spec = plot->spec;
     linestyle styles[MAX_STYLES];
     int do_markers = 0;
     int auto_linewidth = 0;
@@ -3040,7 +3053,11 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 
     /* get the number of data-points, plot type, and check for
        observation markers and time-series bars */
-    get_plot_nobs(spec, buf, &do_markers, &barpos, &datapos);
+    get_plot_nobs(plot, buf, &do_markers, &barpos, &datapos);
+
+    if (spec->code == PLOT_GEOMAP) {
+	goto bailout;
+    }
 
     if (spec->nobs == 0 && plot_needs_obs(spec->code)) {
 	/* failed reading plot data */
@@ -3094,7 +3111,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    ignore = 1;
 	} else if (!strncmp(gpline, "# timeseries", 12)) {
 	    if (sscanf(gpline, "# timeseries %d", &spec->pd)) {
-		*plot_pd = spec->pd;
+		plot->pd = spec->pd;
 	    }
 	    spec->flags |= GPT_TS;
 	    if (strstr(gpline, "letterbox")) {
@@ -3102,7 +3119,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    }
 	} else if (!strncmp(gpline, "# multiple timeseries", 21)) {
 	    if (sscanf(gpline, "# multiple timeseries %d", &spec->pd)) {
-		*plot_pd = spec->pd;
+		plot->pd = spec->pd;
 	    }
 	    spec->flags |= GPT_TS;
 	} else if (!strncmp(gpline, "# scale = ", 10)) {
@@ -5435,7 +5452,7 @@ static int gnuplot_show_png (const char *fname,
        terms of simply displaying the graph -- unless we get
        E_FOPEN.
     */
-    plot->err = read_plotspec_from_file(plot->spec, &plot->pd);
+    plot->err = read_plotspec_from_file(plot);
 
     if (plot->err == E_FOPEN) {
 	plotspec_destroy(plot->spec);

@@ -130,7 +130,7 @@ static void SwapWord (int length, void *wordP)
     }
 }
 
-static int SHPGetLenWithoutExtension (const char *Basename)
+static int SHPGetBaselen (const char *Basename)
 {
     int i, len = (int) strlen(Basename);
 
@@ -142,6 +142,27 @@ static int SHPGetLenWithoutExtension (const char *Basename)
         }
     }
     return len;
+}
+
+static FILE *SHPOpenFile (char *Fullname, const char *Access,
+			  int baselen, const char *ext1,
+			  const char *ext2)
+{
+    FILE *fp = NULL;
+
+    memcpy(Fullname + baselen, ext1, 5);
+    fp = gretl_fopen(Fullname, Access);
+    if (fp == NULL) {
+        memcpy(Fullname + baselen, ext2, 5);
+        fp = gretl_fopen(Fullname, Access);
+    }
+    if (fp == NULL) {
+	Fullname[baselen] = '\0';
+	gretl_errmsg_sprintf(_("Couldn't open %s%s or %s%s"),
+			     Fullname, ext1, Fullname, ext2);
+    }
+
+    return fp;
 }
 
 /************************************************************************/
@@ -157,46 +178,36 @@ SHPHandle SHPOpen (const char *Layer, const char *Access)
     int         i;
     double      dValue;
     int         bLazySHXLoading = FALSE;
-    int         nLenWithoutExtension;
+    int         baselen;
+    int         err = 0;
 
     SHP = calloc(sizeof(SHPInfo), 1);
 
-    nLenWithoutExtension = SHPGetLenWithoutExtension(Layer);
-    Fullname = malloc(nLenWithoutExtension + 5);
-    memcpy(Fullname, Layer, nLenWithoutExtension);
-    memcpy(Fullname + nLenWithoutExtension, ".shp", 5);
-    SHP->fpSHP = gretl_fopen(Fullname, Access);
+    baselen = SHPGetBaselen(Layer);
+    Fullname = malloc(baselen + 5);
+    memcpy(Fullname, Layer, baselen);
+
+    SHP->fpSHP = SHPOpenFile(Fullname, Access,
+			     baselen, ".shp", ".SHP");
     if (SHP->fpSHP == NULL) {
-        memcpy(Fullname + nLenWithoutExtension, ".SHP", 5);
-        SHP->fpSHP = gretl_fopen(Fullname, Access);
+	err = E_FOPEN;
     }
 
-    if (SHP->fpSHP == NULL) {
-	gretl_errmsg_sprintf("Unable to open %s.shp or %s.SHP",
-			     Fullname, Fullname);
-        free(SHP);
-        free(Fullname);
-        return NULL;
-    }
-
-    memcpy(Fullname + nLenWithoutExtension, ".shx", 5);
-    SHP->fpSHX = gretl_fopen(Fullname, Access);
-    if (SHP->fpSHX == NULL) {
-        memcpy(Fullname + nLenWithoutExtension, ".SHX", 5);
-        SHP->fpSHX = gretl_fopen(Fullname, Access);
-    }
-
-    if (SHP->fpSHX == NULL) {
-	Fullname[nLenWithoutExtension] = 0;
-	gretl_errmsg_sprintf("Unable to open %s.shx or %s.SHX",
-			     Fullname, Fullname);
-        fclose(SHP->fpSHP);
-        free(SHP);
-        free(Fullname);
-        return NULL;
+    if (!err) {
+	SHP->fpSHX = SHPOpenFile(Fullname, Access,
+				 baselen, ".shx", ".SHX");
+	if (SHP->fpSHX == NULL) {
+	    fclose(SHP->fpSHP);
+	    err = E_FOPEN;
+	}
     }
 
     free(Fullname);
+
+    if (err) {
+	free(SHP);
+	return NULL;
+    }
 
     /* -------------------------------------------------------------------- */
     /*  Read the file size from the SHP file.                               */

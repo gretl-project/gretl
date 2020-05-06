@@ -4500,7 +4500,7 @@ void map_plot_callback (void)
 	int payload_id = 0;
 	int err = 0;
 
-	mapfunc = get_plugin_function("geoplot2");
+	mapfunc = get_plugin_function("geoplot");
 	if (mapfunc == NULL) {
 	    gui_errmsg(E_FOPEN);
 	    return;

@@ -1590,6 +1590,11 @@ int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp)
 {
     int i, ret = 0;
 
+    if (ptype == PLOT_GEOMAP) {
+	/* handled specially */
+	return 0;
+    }
+
     for (i=1; i<PLOT_TYPE_MAX; i++) {
 	if (ptype == ptinfo[i].ptype) {
 	    if (flags & GPT_XL) {
@@ -9304,29 +9309,25 @@ static const char *map_palette_string (const char *setpal)
 
 static int inline_map_data (const char *datfile, FILE *fp)
 {
-    gchar *datastr = NULL;
-    GError *gerr = NULL;
-    gsize len = 0;
-    gboolean ok;
-    int err = 0;
+    char buf[8192];
+    FILE *fsrc;
+    size_t n;
 
-    ok = g_file_get_contents((gchar *) datfile, &datastr, &len, NULL);
-
-    if (!ok) {
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	}
-	err = E_FOPEN;
-    } else {
-	fputs("$MapData << EOD\n", fp);
-	fputs(datastr, fp);
-	fputs("EOD\n", fp);
-	g_free(datastr);
-	gretl_remove(datfile); /* not wanted any more */
+    fsrc = gretl_fopen(datfile, "rb");
+    if (fsrc == NULL) {
+	gretl_errmsg_sprintf(_("Couldn't open %s"), datfile);
+	return E_FOPEN;
     }
 
-    return err;
+    fputs("$MapData << EOD\n", fp);
+    while ((n = fread(buf, 1, sizeof buf, fsrc)) > 0) {
+	fwrite(buf, 1, n, fp);
+    }
+    fputs("EOD\n", fp);
+
+    gretl_remove(datfile); /* not needed any more */
+
+    return 0;
 }
 
 static gretl_matrix *geoplot_dimensions (double *xlim,
@@ -9396,7 +9397,9 @@ int write_map_gp_file (const char *plotfile,
     if (show) {
 	set_optval_string(GNUPLOT, OPT_U, "display");
     }
+
     fp = open_plot_input_file(PLOT_GEOMAP, 0, &err);
+    fprintf(fp, "# geoplot %g %g\n", dims->val[0], dims->val[1]);
 
     fputs("unset key\n", fp);
 
