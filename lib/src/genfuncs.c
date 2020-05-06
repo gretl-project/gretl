@@ -6253,17 +6253,12 @@ double logistic_cdf (double x)
     emx = exp(-x);
 
     if (errno) {
+	ret = (x > 0) ? 1.0 : 0.0;
 	errno = 0;
-	return NADBL;
+    } else {
+	ret = 1.0 / (1.0 + emx);
     }
-
-    ret = 1.0 / (1.0 + emx);
-
-    if (errno) {
-	ret = NADBL;
-	errno = 0;
-    }
-
+    
     return ret;
 }
 
