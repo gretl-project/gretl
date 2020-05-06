@@ -4045,7 +4045,8 @@ void function_state_init (CMD *cmd, ExecState *state, int *indent0)
     *indent0 = gretl_if_state_record();
 }
 
-void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback,
+void gretl_exec_state_set_callback (ExecState *s,
+				    EXEC_CALLBACK callback,
 				    gretlopt opt)
 {
     s->callback = callback;
