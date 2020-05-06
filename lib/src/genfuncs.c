@@ -6251,17 +6251,11 @@ double logistic_cdf (double x)
     errno = 0;
 
     emx = exp(-x);
-
-    if (errno) {
+    if (errno == ERANGE) {
+	ret = (x > 0)? 1 : 0;
 	errno = 0;
-	return NADBL;
-    }
-
-    ret = 1.0 / (1.0 + emx);
-
-    if (errno) {
-	ret = NADBL;
-	errno = 0;
+    } else {
+	ret = 1.0 / (1.0 + emx);
     }
 
     return ret;
@@ -7745,4 +7739,3 @@ int fill_permutation_vector (gretl_vector *v, int n)
 
     return 0;
 }
-

@@ -1676,7 +1676,7 @@ static mnl_info *mnl_info_new (int n, int k, int T)
 static double mn_logit_loglik (const double *theta, void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
-    double x, xti, ll = 0.0;
+    double x, xti, exti, ll = 0.0;
     int yt, i, t;
 
     errno = 0;
@@ -1687,22 +1687,21 @@ static double mn_logit_loglik (const double *theta, void *ptr)
 
     gretl_matrix_multiply(mnl->X, mnl->b, mnl->Xb);
 
-    for (t=0; t<mnl->T && !errno; t++) {
+    /* 2020-05-06: errno was ref'd below */
+
+    for (t=0; t<mnl->T; t++) {
 	x = 1.0;
 	for (i=0; i<mnl->n; i++) {
 	    /* sum row i of exp(Xb) */
-	    xti = exp(gretl_matrix_get(mnl->Xb, t, i));
-	    x += xti;
+	    xti = gretl_matrix_get(mnl->Xb, t, i);
+	    exti = exp(xti); /* errno check? */
+	    x += exti;
 	}
 	ll -= log(x);
 	yt = gretl_vector_get(mnl->y, t);
 	if (yt > 0) {
 	    ll += gretl_matrix_get(mnl->Xb, t, yt-1);
 	}
-    }
-
-    if (errno != 0) {
-	ll = NADBL;
     }
 
     return ll;
@@ -1712,7 +1711,7 @@ static int mn_logit_score (double *theta, double *s, int npar,
 			   BFGS_CRIT_FUNC ll, void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
-    double x, xti, pti, p, g;
+    double x, xti, exti, pti, p, g;
     int i, j, k, t, yt;
     int err = 0;
 
@@ -1726,12 +1725,13 @@ static int mn_logit_score (double *theta, double *s, int npar,
 	x = 1.0;
 	for (i=0; i<mnl->n; i++) {
 	    /* sum row i of exp(Xb) */
-	    xti = exp(gretl_matrix_get(mnl->Xb, t, i));
-	    x += xti;
-	    gretl_matrix_set(mnl->P, t, i, xti);
+	    xti = gretl_matrix_get(mnl->Xb, t, i);
+	    exti = exp(xti); /* errno check */
+	    x += exti;
+	    gretl_matrix_set(mnl->P, t, i, exti);
 	}
 
-	if (!errno) {
+	if (!errno) { /* conditionality? */
 	    yt = gretl_vector_get(mnl->y, t);
 	    k = 0;
 	    for (i=0; i<mnl->n; i++) {
@@ -1747,6 +1747,7 @@ static int mn_logit_score (double *theta, double *s, int npar,
     }
 
     if (errno != 0) {
+	/* ?? */
 	err = E_NAN;
     }
 
@@ -2559,19 +2560,19 @@ static double binary_loglik (const double *theta, void *ptr)
 	return NADBL;
     }
 
+    errno = 0;
+
     for (t=0; t<bin->T; t++) {
 	yt = bin->y[t];
 	ndx = gretl_vector_get(bin->Xb, t);
 	if (bin->ci == PROBIT) {
 	    p = yt ? normal_cdf(ndx) : normal_cdf(-ndx);
 	} else {
-	    e = logit(ndx);
+	    e = logit(ndx); /* errno check? */
 	    p = yt ? e : 1-e;
 	}
 	ll += log(p);
     }
-
-    errno = 0;
 
     return ll;
 }
@@ -2668,6 +2669,8 @@ static gretl_matrix *binary_score_matrix (bin_info *bin, int *err)
 	*err = E_ALLOC;
 	return NULL;
     }
+
+    /* errno checking? */
 
     for (t=0; t<bin->T && !errno; t++) {
 	yt = bin->y[t];
@@ -2940,6 +2943,8 @@ void binary_model_hatvars (MODEL *pmod,
 	    }
 	}
     }
+
+    errno = 0;
 
     for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
 	double ndxt, endxt;

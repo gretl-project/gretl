@@ -5319,6 +5319,12 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+/* Note: many standard and a few non-standard math functions
+   are not included in the switch below, because pointers to
+   the functions are saved, obviating the need for repeated
+   lookup. See the @ptrfuncs mechanism in genlex.c.
+*/
+
 static double real_apply_func (double x, int f, parser *p)
 {
     double y;
@@ -5362,102 +5368,6 @@ static double real_apply_func (double x, int f, parser *p)
 	*/
     case F_LOG: /* in case it's aliased */
 	return log(x);
-#if 0
-    case F_CNORM:
-	return normal_cdf(x);
-    case F_DNORM:
-	return normal_pdf(x);
-    case F_QNORM:
-	return normal_cdf_inverse(x);
-    case F_LOGISTIC:
-	return logistic_cdf(x);
-    case F_INVMILLS:
-	y = invmills(x);
-	if (na(y)) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_ABS:
-	return fabs(x);
-    case F_SGN:
-	return gretl_sgn(x);
-    case F_CEIL:
-	return ceil(x);
-    case F_FLOOR:
-	return floor(x);
-    case F_ROUND:
-	return gretl_round(x);
-    case F_SIN:
-	return sin(x);
-    case F_COS:
-	return cos(x);
-    case F_TAN:
-	return tan(x);
-    case F_ASIN:
-	return asin(x);
-    case F_ACOS:
-	return acos(x);
-    case F_ATAN:
-	return atan(x);
-    case F_SINH:
-	return sinh(x);
-    case F_COSH:
-	return cosh(x);
-    case F_TANH:
-	return tanh(x);
-    case F_ASINH:
-	return asinh(x);
-    case F_ACOSH:
-	return acosh(x);
-    case F_ATANH:
-	return atanh(x);
-    case F_GAMMA:
-	y = gammafun(x);
-	if (na(y)) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_LNGAMMA:
-	y = lngamma(x);
-	if (na(y)) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_DIGAMMA:
-	y = digamma(x);
-	if (na(y)) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_SQRT:
-	y = sqrt(x);
-	if (errno) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_LOG10:
-	y = log10(x);
-	if (errno) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_LOG2:
-	y = log2(x);
-	if (errno) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_EXP:
-	y = exp(x);
-	if (errno) {
-	    if (x < 0 && y == 0) {
-		; /* we'll let this pass */
-	    } else {
-		eval_warning(p, f, errno);
-	    }
-	}
-	return y;
-#endif /* excluded because function pointers saved */
     default:
 	return 0.0;
     }
