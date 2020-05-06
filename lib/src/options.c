@@ -1126,7 +1126,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
     int val_set = 0;
     stored_opt *so;
 
-    if (!checked && option_parm_status(ci, opt) == OPT_NO_PARM)  {
+    if (!checked && ci > 0 && option_parm_status(ci, opt) == OPT_NO_PARM)  {
 	return E_DATA;
     }
 
