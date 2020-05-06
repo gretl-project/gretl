@@ -6257,7 +6257,7 @@ double logistic_cdf (double x)
     } else {
 	ret = 1.0 / (1.0 + emx);
     }
-
+    
     return ret;
 }
 
