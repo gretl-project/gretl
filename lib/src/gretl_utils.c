@@ -1902,8 +1902,8 @@ int gretl_copy_file (const char *src, const char *dest)
     size_t n;
 
     if (!strcmp(src, dest)) {
-	gretl_errmsg_set("Source and destination files are the same");
-	return E_FOPEN;
+	/* @src and @dest are the same: no-op */
+	return 0;
     }
 
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
