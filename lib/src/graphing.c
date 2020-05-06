@@ -148,6 +148,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_3D,             "3-D plot" },
     { PLOT_BAND,           "band plot" },
     { PLOT_HEATMAP,        "heatmap" },
+    { PLOT_GEOMAP,         "geoplot" },
     { PLOT_TYPE_MAX,       NULL }
 };
 
@@ -1089,7 +1090,7 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
-    } else if (ptype != PLOT_HEATMAP) {
+    } else if (ptype != PLOT_HEATMAP && ptype != PLOT_GEOMAP) {
 	for (i=0; i<BOXCOLOR; i++) {
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
@@ -1302,12 +1303,35 @@ void plot_get_scaled_dimensions (int *width, int *height, double scale)
     if (*height % 2) *height += 1;
 }
 
+static int special_width;
+static int special_height;
+
+static void set_special_dims (gint16 width, gint16 height)
+{
+    special_width = width;
+    special_height = height;
+}
+
+static void clear_special_dims (void)
+{
+    special_width = special_height = 0;
+}
+
+static int special_dims_set (void)
+{
+    return special_width > 0 && special_height > 0;
+}
+
 static void write_png_size_string (char *s, PlotType ptype,
 				   GptFlags flags, double scale)
 {
     int w = GP_WIDTH, h = GP_HEIGHT;
 
-    if (flags & GPT_LETTERBOX) {
+    if (special_dims_set()) {
+	w = special_width;
+	h = special_height;
+	clear_special_dims();
+    } else if (flags & GPT_LETTERBOX) {
 	/* time series plots */
 	w = GP_LB_WIDTH;
 	h = GP_LB_HEIGHT;
@@ -1333,8 +1357,39 @@ static void write_png_size_string (char *s, PlotType ptype,
     }
 
     *s = '\0';
-
     sprintf(s, " size %d,%d", w, h);
+}
+
+/* platform-specific on-screen term string */
+
+static char *var_term_line (char *term_line, int ptype)
+{
+    char varterm[8];
+
+#ifdef WIN32
+    strcpy(varterm, "windows");
+#else
+    if (gnuplot_has_wxt()) {
+	strcpy(varterm, "wxt");
+    } else if (gnuplot_has_qt()) {
+	strcpy(varterm, "qt");
+    } else {
+	strcpy(varterm, "x11");
+    }
+#endif
+    char font_string[140];
+    char size_string[16];
+
+    *font_string = *size_string = '\0';
+    write_png_font_string(font_string, "", ptype, NULL, 1.0);
+    write_png_size_string(size_string, ptype, 0, 1.0);
+
+    sprintf(term_line, "set term %s%s%s noenhanced",
+	    varterm, font_string, size_string);
+
+    append_gp_encoding(term_line);
+
+    return term_line;
 }
 
 static char *real_png_term_line (char *term_line,
@@ -1424,6 +1479,8 @@ const char *gretl_gnuplot_term_line (TermType ttype,
 	append_gp_encoding(term_line);
     } else if (ttype == GP_TERM_TEX) {
 	gretl_tex_term_line(term_line, ptype, flags);
+    } else if (ttype == GP_TERM_VAR) {
+	var_term_line(term_line, ptype);
     }
 
     return term_line;
@@ -1742,11 +1799,11 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
     if (gui) {
 	/* the filename should be unique */
 	sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
-	fp = gretl_mktemp(fname, "w");
+	fp = gretl_mktemp(fname, "wb");
     } else {
 	/* gretlcli: no need for uniqueness */
 	sprintf(fname, "%sgpttmp.plt", gretl_dotdir());
-	fp = gretl_fopen(fname, "w");
+	fp = gretl_fopen(fname, "wb");
     }
 
     if (fp == NULL) {
@@ -1764,6 +1821,9 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 		gretl_pop_c_numeric_locale();
 	    }
 	    write_plot_output_line(NULL, fp);
+	} else if (ptype == PLOT_GEOMAP) {
+	    fprintf(fp, "%s\n", gretl_gnuplot_term_line(GP_TERM_VAR, ptype,
+							flags, NULL));
 	} else {
 	    fputs("set termoption noenhanced\n", fp);
 	}
@@ -1918,7 +1978,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 
 #if GP_DEBUG
     fprintf(stderr, "optname = '%s', interactive = %d\n",
-	    optname, interactive);
+	    optname == NULL ? "null" : optname, interactive);
 #endif
 
     if (interactive) {
@@ -1928,7 +1988,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
     }
 
 #if GP_DEBUG
-    fprintf(stderr, "open_gp_stream_full: '%s'\n", gretl_plotfile());
+    fprintf(stderr, "open_plot_input_file: '%s'\n", gretl_plotfile());
 #endif
 
     return fp;
@@ -9217,4 +9277,210 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
     }
 
     return x;
+}
+
+/* geoplot functions */
+
+static void stretch_limits (double *targ, const gretl_matrix *minmax,
+			    int col, double by)
+{
+    double mmv0 = gretl_matrix_get(minmax, 0, col);
+    double mmv1 = gretl_matrix_get(minmax, 1, col);
+
+    targ[0] = mmv0 * ((mmv1 < 0) ? 1+by : 1-by);
+    targ[1] = mmv1 * ((mmv1 > 0) ? 1+by : 1-by);
+}
+
+static const char *map_palette_string (const char *setpal)
+{
+    if (!strcmp(setpal, "blues")) {
+        return "set palette defined (0 '#D4E4F2', 1 'steelblue')";
+    } else if (!strcmp(setpal, "oranges")) {
+        return "set palette defined (0 '#E9D9B5', 1 'dark-orange')";
+    } else {
+        return setpal;
+    }
+}
+
+static int inline_map_data (const char *datfile, FILE *fp)
+{
+    gchar *datastr = NULL;
+    GError *gerr = NULL;
+    gsize len = 0;
+    gboolean ok;
+    int err = 0;
+
+    ok = g_file_get_contents((gchar *) datfile, &datastr, &len, NULL);
+
+    if (!ok) {
+	if (gerr != NULL) {
+	    gretl_errmsg_set(gerr->message);
+	    g_error_free(gerr);
+	}
+	err = E_FOPEN;
+    } else {
+	fputs("$MapData << EOD\n", fp);
+	fputs(datastr, fp);
+	fputs("EOD\n", fp);
+	g_free(datastr);
+	gretl_remove(datfile); /* not wanted any more */
+    }
+
+    return err;
+}
+
+static gretl_matrix *geoplot_dimensions (double *xlim,
+					 double *ylim,
+					 int height,
+					 int have_payload)
+{
+    gretl_matrix *ret = gretl_matrix_alloc(1, 2);
+    double ymid = (ylim[0] + ylim[1]) / 2;
+    double xyr = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0]);
+    double wratio = cos(ymid * M_PI/180) * xyr;
+    int width;
+
+    if (have_payload) {
+	/* 1.05 is to compensate for the colorbox */
+	width = floor(wratio * height * 1.05);
+    } else {
+	width = floor(wratio * height);
+    }
+
+    set_special_dims(width, height);
+
+    ret->val[0] = width;
+    ret->val[1] = height;
+    return ret;
+}
+
+int write_map_gp_file (const char *plotfile,
+		       const char *datfile,
+		       const gretl_matrix *bbox,
+		       const gretl_matrix *zrange,
+		       gretl_bundle *opts,
+		       int show)
+{
+    double xlim[2], ylim[2], zlim[2];
+    gretl_matrix *dims = NULL;
+    const char *sval;
+    FILE *fp = NULL;
+    gchar *datasrc = NULL;
+    double border_width = 1.0;
+    int have_payload = 0;
+    int height = 600;
+    int notics = 1;
+    int err = 0;
+
+    if (zrange != NULL) {
+        have_payload = 1;
+	stretch_limits(zlim, zrange, 0, 0.05); /* ?? */
+    } else if (opts == NULL) {
+	/* the simple outlines case */
+	notics = 0;
+    }
+
+    stretch_limits(xlim, bbox, 0, 0.02);
+    stretch_limits(ylim, bbox, 1, 0.02);
+
+    if (gretl_bundle_has_key(opts, "height")) {
+	height = gretl_bundle_get_scalar(opts, "height", &err);
+	if (show && height <= 0) {
+	    height = 600;
+	}
+    }
+
+    if (height > 0) {
+	dims = geoplot_dimensions(xlim, ylim, height, have_payload);
+    }
+    if (show) {
+	set_optval_string(GNUPLOT, OPT_U, "display");
+    }
+    fp = open_plot_input_file(PLOT_GEOMAP, 0, &err);
+
+    fputs("unset key\n", fp);
+
+    if (have_payload) {
+        if (gretl_bundle_has_key(opts, "setpal")) {
+	    sval = gretl_bundle_get_string(opts, "setpal", &err);
+	    if (!err) {
+		fprintf(fp, "%s\n", map_palette_string(sval));
+	    }
+        }
+        fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
+    }
+    fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
+    fprintf(fp, "set yrange [%g:%g]\n", ylim[0], ylim[1]);
+
+    if (gretl_bundle_has_key(opts, "title")) {
+	sval = gretl_bundle_get_string(opts, "title", NULL);
+	if (sval != NULL) {
+	    fprintf(fp, "set title \"%s\"\n", sval);
+	}
+    }
+
+    if (gretl_bundle_get_int(opts, "tics", NULL)) {
+	notics = 0;
+    }
+    if (notics) {
+        fputs("set noxtics\n", fp);
+        fputs("set noytics\n", fp);
+    }
+
+    if (gretl_bundle_get_int(opts, "logscale", NULL)) {
+	fputs("set logscale cb\n", fp);
+    }
+
+    if (gretl_bundle_has_key(opts, "bordwidth")) {
+	double bw = gretl_bundle_get_scalar(opts, "bordwidth", &err);
+
+	if (!err && bw >= 0) {
+	    /* FIXME bw == 0 */
+	    border_width = bw;
+	}
+    }
+
+    if (gretl_bundle_get_int(opts, "inlined", NULL)) {
+	err = inline_map_data(datfile, fp);
+	if (!err) {
+	    datasrc = g_strdup("$MapData");
+	}
+    } else {
+	datasrc = g_strdup_printf("'%s'", datfile);
+    }
+
+    if (!err) {
+	gchar *bline;
+
+	if (have_payload) {
+	    bline = g_strdup_printf("lc 'white' lw %g", border_width);
+	    fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n", datasrc);
+	    fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
+	} else if (!err) {
+	    bline = g_strdup_printf("lc 'black' lw %g", border_width);
+	    fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
+	}
+	g_free(bline);
+    }
+
+    g_free(datasrc);
+
+    err = finalize_plot_input_file(fp);
+    if (!err) {
+	if (show && gretl_in_gui_mode()) {
+	    if (gretl_bundle_get_int(opts, "gui_auto", NULL)) {
+		gretl_bundle_set_string(opts, "plotfile", gretl_plotfile());
+		gretl_bundle_set_matrix(opts, "dims", dims);
+	    } else {
+		manufacture_gui_callback(GNUPLOT);
+	    }
+	}
+	if (plotfile != NULL) {
+	    gretl_copy_file(gretl_plotfile(), plotfile);
+	}
+    }
+
+    gretl_matrix_free(dims);
+
+    return err;
 }

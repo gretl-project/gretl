@@ -148,7 +148,8 @@ typedef enum {
     GP_TERM_TEX,
     GP_TERM_EMF,
     GP_TERM_SVG,
-    GP_TERM_PLT
+    GP_TERM_PLT,
+    GP_TERM_VAR
 } TermType;
 
 #define maybe_big_multiplot(c) (c == PLOT_MULTI_IRF || \
