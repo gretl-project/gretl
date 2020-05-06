@@ -1602,6 +1602,10 @@ static char *classifier_check (int *list, const DATASET *dset,
 	}
     }
 
+#if LPDEBUG
+    fprintf(stderr, "classifier check: mask = %p\n", (void *) mask);
+#endif
+
     return mask;
 }
 
