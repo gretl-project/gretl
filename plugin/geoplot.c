@@ -954,7 +954,9 @@ static gretl_matrix *vector_minmax (const gretl_matrix *z)
     return ret;
 }
 
-/* temporary hack!! (see graphing.c) */
+/* Temporary hack! (see graphing.c). This signature
+   should go into graphing.h once it's stabilized.
+*/
 
 int write_map_gp_file (const char *plotfile,
 		       const char *datfile,
