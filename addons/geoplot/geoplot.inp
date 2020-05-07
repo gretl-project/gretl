@@ -17,7 +17,12 @@ function matrix ring2matrix(const arrays ring)
     matrix ret = zeros(2,n)
     m = {}
     loop i = 1 .. n
-        sscanf(ring[i, 1:2], "%m", m)
+        ri = ring[i]
+        if typeof(ri[1]) == 1
+            m = {ri[1:2]}
+        else
+            sscanf(ri[1:2], "%m", m)
+        endif
         ret[,i] = m
     endloop
     return ret'
