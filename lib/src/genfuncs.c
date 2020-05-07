@@ -6252,7 +6252,7 @@ double logistic_cdf (double x)
 
     emx = exp(-x);
     if (errno == ERANGE) {
-	ret = (x > 0)? 1 : 0;
+	ret = (x > 0)? 1.0 : 0.0;
 	errno = 0;
     } else {
 	ret = 1.0 / (1.0 + emx);
