@@ -177,12 +177,6 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
     } else if (n < 0) {
 	*err = E_DATA;
 	return NULL;
-    } else if (0 && type == GRETL_TYPE_ANY && n > 0) {
-	/* an array of unspecified type must be
-	   empty in the first instance
-	*/
-	*err = E_TYPES;
-	return NULL;
     }
 
     A = malloc(sizeof *A);
@@ -471,6 +465,10 @@ void *gretl_array_get_element (gretl_array *A, int i,
 
     return ret;
 }
+
+/* Note: no type-checking, the caller is supposed to
+   be on the ball. Use with caution.
+*/
 
 void *gretl_array_get_data (gretl_array *A, int i)
 {
@@ -855,9 +853,13 @@ int gretl_array_set_type (gretl_array *A, GretlType type)
 	       type != GRETL_TYPE_ARRAYS &&
 	       type != GRETL_TYPE_SCALARS) {
 	err = E_TYPES;
+    } else if (type == A->type) {
+	/* no-op */
+	return 0;
     } else if (A->n > 0) {
 	/* we can (re-)set the type only if no data have
-	   been entered already */
+	   been entered already
+	*/
 	int i;
 
 	for (i=0; i<A->n; i++) {
@@ -929,6 +931,10 @@ static int set_string (gretl_array *A, int i,
 
     return err;
 }
+
+/* The static set_*() functions assume that error-checking
+   has already been done.
+*/
 
 static int set_matrix (gretl_array *A, int i,
 		       gretl_matrix *m, int copy)
@@ -1079,6 +1085,8 @@ int gretl_array_append_string (gretl_array *A,
 
     return err;
 }
+
+/* respond to A += x */
 
 static int gretl_array_append_scalar (gretl_array *A,
 				      double x)
@@ -1280,6 +1288,8 @@ int gretl_array_append_list (gretl_array *A,
 
     return err;
 }
+
+/* respond to A[i] = x */
 
 int gretl_array_set_scalar (gretl_array *A, int i,
 			    double x)
@@ -1707,7 +1717,6 @@ int gretl_array_print_range (gretl_array *A, int imin, int imax, PRN *prn)
     return 0;
 }
 
-
 /* Called from gretl_bundle.c when serializing a bundle
    which contains one or more arrays.
 */
@@ -1740,6 +1749,7 @@ void gretl_array_serialize (gretl_array *A, PRN *prn)
 	} else if (type == GRETL_TYPE_LIST) {
 	    gretl_xml_put_tagged_list("list", ptr, prn);
 	}
+	/* note: GRETL_TYPE_SCALARS not handled */
     }
 
     pputs(prn, "</gretl-array>\n");
@@ -1780,6 +1790,7 @@ static int deserialize_array_elements (gretl_array *A,
 	} else if (A->type == GRETL_TYPE_LISTS) {
 	    A->data[i] = gretl_xml_get_list(cur, doc, &err);
 	} else {
+	    /* note: GRETL_TYPE_SCALARS not handled */
 	    err = E_TYPES;
 	}
 	i++;
