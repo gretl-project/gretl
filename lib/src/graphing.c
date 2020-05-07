@@ -1303,10 +1303,10 @@ void plot_get_scaled_dimensions (int *width, int *height, double scale)
     if (*height % 2) *height += 1;
 }
 
-static int special_width;
-static int special_height;
+static float special_width;
+static float special_height;
 
-static void set_special_dims (gint16 width, gint16 height)
+void set_special_plot_size (float width, float height)
 {
     special_width = width;
     special_height = height;
@@ -1328,8 +1328,8 @@ static void write_png_size_string (char *s, PlotType ptype,
     int w = GP_WIDTH, h = GP_HEIGHT;
 
     if (special_dims_set()) {
-	w = special_width;
-	h = special_height;
+	w = (int) special_width;
+	h = (int) special_height;
 	clear_special_dims();
     } else if (flags & GPT_LETTERBOX) {
 	/* time series plots */
@@ -9348,7 +9348,7 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 	width = floor(wratio * height);
     }
 
-    set_special_dims(width, height);
+    set_special_plot_size(width, height);
 
     ret->val[0] = width;
     ret->val[1] = height;

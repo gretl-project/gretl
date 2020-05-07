@@ -205,6 +205,8 @@ int write_plot_bounding_box_request (FILE *fp);
 
 void set_effective_plot_ci (int ci);
 
+void set_special_plot_size (float width, float height);
+
 PlotType plot_type_from_string (const char *str);
 
 void plot_get_scaled_dimensions (int *width, int *height, double scale);
