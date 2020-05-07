@@ -147,6 +147,7 @@ PUBLIC_HDRS = \
 	gretl_prn.h \
 	gretl_restrict.h \
 	gretl_string_table.h \
+	gretl_typemap.h \
 	gretl_untar.h \
 	gretl_utils.h \
 	gretl_win32.h \
