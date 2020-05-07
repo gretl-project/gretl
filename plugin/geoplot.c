@@ -93,10 +93,15 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 
     for (i=0; i<n; i++) {
 	ri = gretl_array_get_data(ring, i);
-	sx = gretl_array_get_data(ri, 0);
-	sy = gretl_array_get_data(ri, 1);
-	gretl_matrix_set(ret, i, 0, atof(sx));
-	gretl_matrix_set(ret, i, 1, atof(sy));
+	if (gretl_array_get_content_type(ri) == GRETL_TYPE_DOUBLE) {
+	    gretl_matrix_set(ret, i, 0, gretl_array_get_scalar(ri, 0));
+	    gretl_matrix_set(ret, i, 1, gretl_array_get_scalar(ri, 1));
+	} else {
+	    sx = gretl_array_get_data(ri, 0);
+	    sy = gretl_array_get_data(ri, 1);
+	    gretl_matrix_set(ret, i, 0, atof(sx));
+	    gretl_matrix_set(ret, i, 1, atof(sy));
+	}
     }
 
     return ret;

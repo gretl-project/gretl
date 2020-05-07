@@ -14013,7 +14013,7 @@ static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
 }
 
 #define ok_matdef_sym(s) (s == NUM || s == SERIES || s == EMPTY || \
-                          s == DUM || s == LIST)
+                          s == DUM || s == LIST || s == ARRAY)
 
 /* composing a matrix from scalars, series or lists */
 
@@ -14026,7 +14026,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
     int k = nn->v.bn.n_nodes;
     int nnum = 0, nvec = 0;
     int dum = 0, nsep = 0;
-    int nlist = 0;
+    int nlist = 0, arr = 0;
     int seppos = -1;
     int i;
 
@@ -14063,14 +14063,16 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	    dum++;
 	} else if (n->t == LIST) {
 	    nlist++;
+	} else if (n->t == ARRAY) {
+	    arr++;
 	} else if (n->t == EMPTY) {
 	    if (nsep == 0) {
 		seppos = i;
 	    }
 	    nsep++;
 	}
-	if (dum && k != 1) {
-	    /* dummy must be singleton node */
+	if ((dum || arr) && k != 1) {
+	    /* dummy, array must be singleton nodes */
 	    p->err = E_TYPES;
 	} else if ((nvec || nlist) && nnum) {
 	    /* can't mix series/lists with scalars */
@@ -14100,6 +14102,9 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 		pprintf(p->prn, "Wrong sort of dummy var\n");
 		p->err = E_TYPES;
 	    }
+	} else if (arr) {
+	    n = g_ptr_array_index(a, 0);
+	    M = matrix_from_gretl_array(n->v.a, &p->err);
 	} else {
 	    /* empty matrix def */
 	    M = gretl_null_matrix_new();

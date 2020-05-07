@@ -167,4 +167,7 @@ gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
 				     int leadcols, int maxcols,
 				     int *err);
 
+gretl_matrix *matrix_from_gretl_array (gretl_array *A,
+				       int *err);
+
 #endif /* GRETL_ARRAY_H_ */

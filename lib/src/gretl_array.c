@@ -1789,10 +1789,8 @@ static int deserialize_array_elements (gretl_array *A,
 	    A->data[i] = gretl_array_deserialize(cur, doc, &err);
 	} else if (A->type == GRETL_TYPE_LISTS) {
 	    A->data[i] = gretl_xml_get_list(cur, doc, &err);
-	} else {
-	    /* note: GRETL_TYPE_SCALARS not handled */
-	    err = E_TYPES;
 	}
+	/* note: arrays of scalars not handled */
 	i++;
 	cur = cur->next;
     }
@@ -1949,4 +1947,37 @@ gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
     }
 
     return a;
+}
+
+gretl_matrix *matrix_from_gretl_array (gretl_array *A, int *err)
+{
+    if (A == NULL) {
+	*err = E_INVARG;
+	return NULL;
+    } else if (A->type != GRETL_TYPE_SCALARS) {
+	*err = E_TYPES;
+	return NULL;
+    } else {
+	gretl_matrix *m;
+	int i;
+
+	if (A->n == 0) {
+	    m = gretl_null_matrix_new();
+	} else {
+	    m = gretl_matrix_alloc(A->n, 1);
+	}
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<A->n; i++) {
+		if (A->data[i] == NULL) {
+		    m->val[i] = NADBL;
+		} else {
+		    m->val[i] = *(double *) A->data[i];
+		}
+	    }
+	}
+
+	return m;
+    }
 }
