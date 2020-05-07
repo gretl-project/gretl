@@ -39,7 +39,8 @@ static struct type_map gretl_type_map[] = {
     { GRETL_TYPE_LIST,     0,
       GRETL_TYPE_LISTS,    GRETL_TYPE_LISTS_REF},
     { GRETL_TYPE_SERIES,   GRETL_TYPE_SERIES_REF, 0, 0},
-    { GRETL_TYPE_DOUBLE,   GRETL_TYPE_SCALAR_REF, 0, 0}
+    { GRETL_TYPE_DOUBLE,   GRETL_TYPE_SCALAR_REF,
+      GRETL_TYPE_SCALARS,  GRETL_TYPE_SCALARS_REF}
 };
 
 GretlType gretl_type_get_plural (GretlType type)
@@ -152,12 +153,14 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_BUNDLES:      return "bundles";
     case GRETL_TYPE_LISTS:        return "lists";
     case GRETL_TYPE_ARRAYS:       return "arrays";
+    case GRETL_TYPE_SCALARS:      return "scalars";
 
     case GRETL_TYPE_STRINGS_REF:  return "strings *";
     case GRETL_TYPE_MATRICES_REF: return "matrices *";
     case GRETL_TYPE_BUNDLES_REF:  return "bundles *";
     case GRETL_TYPE_LISTS_REF:    return "lists *";
     case GRETL_TYPE_ARRAYS_REF:   return "arrays *";
+    case GRETL_TYPE_SCALARS_REF:  return "scalars *";
 
     case GRETL_TYPE_DATE:         return "date"; /* ODBC special */
 
@@ -189,7 +192,14 @@ GretlType gretl_type_from_string (const char *s)
 	}
     } else if (!strncmp(s, "scalar", 6)) {
 	p = s + 6;
-	if (*p == '\0') {
+	if (*p == 's') {
+	    p++;
+	    if (*p == '\0') {
+		return GRETL_TYPE_SCALARS;
+	    } else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+		return GRETL_TYPE_SCALARS_REF;
+	    }
+	} else if (*p == '\0') {
 	    return GRETL_TYPE_DOUBLE;
 	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
 	    return GRETL_TYPE_SCALAR_REF;
@@ -284,6 +294,7 @@ static const struct lookup gentypes[] = {
     { "bundles",  GRETL_TYPE_BUNDLES },
     { "lists",    GRETL_TYPE_LISTS },
     { "arrays",   GRETL_TYPE_ARRAYS },
+    { "scalars",  GRETL_TYPE_SCALARS }
 };
 
 GretlType gretl_get_gen_type (const char *s)
@@ -325,7 +336,8 @@ int gretl_is_array_type (GretlType type)
 	type == GRETL_TYPE_MATRICES ||
 	type == GRETL_TYPE_BUNDLES ||
 	type == GRETL_TYPE_LISTS ||
-	type == GRETL_TYPE_ARRAYS;
+	type == GRETL_TYPE_ARRAYS ||
+	type == GRETL_TYPE_SCALARS;
 }
 
 int gretl_is_arrayable_type (GretlType type)
@@ -334,7 +346,8 @@ int gretl_is_arrayable_type (GretlType type)
 	type == GRETL_TYPE_MATRIX ||
 	type == GRETL_TYPE_BUNDLE ||
 	type == GRETL_TYPE_LIST ||
-	type == GRETL_TYPE_ARRAY;
+	type == GRETL_TYPE_ARRAY ||
+	type == GRETL_TYPE_DOUBLE;
 }
 
 int gretl_is_scalar_type (GretlType type)

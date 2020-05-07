@@ -42,7 +42,7 @@
 
 #ifndef GLIB_LT_2_26
 # define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_26
-# define GLIB_VERSION_MAX_ALLOWED GLIB_VERSION_2_50
+# define GLIB_VERSION_MAX_ALLOWED (GLIB_VERSION_CUR_STABLE)
 #endif
 #include <glib.h>
 
@@ -144,11 +144,13 @@ typedef enum {
     GRETL_TYPE_BUNDLES,
     GRETL_TYPE_LISTS,
     GRETL_TYPE_ARRAYS,
+    GRETL_TYPE_SCALARS,
     GRETL_TYPE_STRINGS_REF,
     GRETL_TYPE_MATRICES_REF,
     GRETL_TYPE_BUNDLES_REF,
     GRETL_TYPE_LISTS_REF,
     GRETL_TYPE_ARRAYS_REF,
+    GRETL_TYPE_SCALARS_REF,
     GRETL_TYPE_VOID,
     GRETL_TYPE_ANY
 } GretlType;
@@ -168,13 +170,15 @@ typedef enum {
 			   t == GRETL_TYPE_MATRICES_REF || \
 			   t == GRETL_TYPE_BUNDLES_REF || \
 			   t == GRETL_TYPE_LISTS_REF || \
-			   t == GRETL_TYPE_ARRAYS_REF)
+			   t == GRETL_TYPE_ARRAYS_REF || \
+			   t == GRETL_TYPE_SCALARS_REF)
 
 #define gretl_array_type(t) (t == GRETL_TYPE_STRINGS ||  \
 			     t == GRETL_TYPE_MATRICES || \
 			     t == GRETL_TYPE_BUNDLES || \
 			     t == GRETL_TYPE_LISTS || \
-			     t == GRETL_TYPE_ARRAYS)
+			     t == GRETL_TYPE_ARRAYS || \
+			     t == GRETL_TYPE_SCALARS)
 
 enum ts_codes {
     CROSS_SECTION,

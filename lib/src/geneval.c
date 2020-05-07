@@ -4907,6 +4907,11 @@ static NODE *array_element_node (gretl_array *a, int i,
 	    if (ret != NULL) {
 		ret->v.a = data;
 	    }
+	} else if (type == GRETL_TYPE_DOUBLE) {
+	    ret = aux_scalar_node(p);
+	    if (ret != NULL) {
+		ret->v.xval = *(double *) data;
+	    }
 	} else if (type == GRETL_TYPE_LIST) {
 	    /* last revised 2018-08-04 */
 	    p->err = stored_list_check((const int *) data, p->dset);
@@ -12537,6 +12542,8 @@ static int check_array_element_type (NODE *n, GretlType *pt, int i)
 	ok = n->t == BUNDLE;
     } else if (t == GRETL_TYPE_LISTS) {
 	ok = n->t == LIST;
+    } else if (t == GRETL_TYPE_SCALARS) {
+	ok = n->t == NUM; /* FIXME */
     } else if (i == 0 && t == GRETL_TYPE_ANY) {
 	/* The array type is not yet determinate: this is OK
 	   only when we're looking at the first element: if
@@ -13341,8 +13348,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 			anon = 0;
 		    }
 		    if (e->t == NUM) {
-			ptr = gretl_matrix_from_scalar(e->v.xval);
-			donate = 1;
+			if (gtype == GRETL_TYPE_SCALARS) {
+			    ptr = &e->v.xval;
+			} else {
+			    ptr = gretl_matrix_from_scalar(e->v.xval);
+			    donate = 1;
+			}
 		    } else {
 			ptr = node_get_ptr(e, t->t, p, &donate);
 		    }

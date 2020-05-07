@@ -32,6 +32,10 @@
 	                 t == G_TYPE_BOOLEAN || \
 			 t == G_TYPE_INT64)
 
+#define numeric_type(t) (t == G_TYPE_DOUBLE || t == G_TYPE_INT64)
+
+int numarrays = 1;
+
 #define non_empty_array(a) (a != NULL && json_array_get_length(a) > 0)
 #define null_node(n) (n == NULL || json_node_is_null(n))
 
@@ -702,7 +706,11 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
     }
 
     /* assume an array of strings by default */
-    atype = GRETL_TYPE_STRINGS;
+    if (numarrays) {
+	atype = GRETL_TYPE_ANY;
+    } else {
+	atype = GRETL_TYPE_STRINGS;
+    }
     a = gretl_array_new(atype, n, &err);
 
     for (i=0; i<n && !err; i++) {
@@ -713,13 +721,21 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 	    break;
 	}
 	if (json_reader_is_value(reader)) {
-	    if (atype != GRETL_TYPE_STRINGS) {
-		gretl_errmsg_set("JSON array: can't mix types");
-		fprintf(stderr, "JSON array type %s, got 'value' member\n",
-			gretl_type_get_name(atype));
-		err = E_DATA;
-	    } else {
+	    if (numarrays) {
 		err = jb_do_value(reader, jb, a, i);
+		if (!err) {
+		    atype = gretl_array_get_type(a);
+		}
+	    } else {
+		/* not numarrays */
+		if (atype != GRETL_TYPE_STRINGS) {
+		    gretl_errmsg_set("JSON array: can't mix types");
+		    fprintf(stderr, "JSON array type %s, got 'value' member\n",
+			    gretl_type_get_name(atype));
+		    err = E_DATA;
+		} else {
+		    err = jb_do_value(reader, jb, a, i);
+		}
 	    }
 	} else if (json_reader_is_object(reader)) {
 	    if (atype != GRETL_TYPE_BUNDLES) {
@@ -818,13 +834,6 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    name, typename, type);
 #endif
 
-#if 0 /* def'd out 2020-04-26: convert null to empty string */
-    if (a == NULL && type == 0) {
-	/* bundle member: skip null nodes */
-	return 0;
-    }
-#endif
-
     if (a == NULL && (name == NULL || name[0] == '\0')) {
 	name = "anon";
     }
@@ -833,8 +842,12 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	int k = (int) json_reader_get_int_value(reader);
 
 	if (a != NULL) {
-	    sprintf(tmp, "%d", k);
-	    gretl_array_set_string(a, i, tmp, 1);
+	    if (numarrays) {
+		err = gretl_array_set_scalar(a, i, k);
+	    } else {
+		sprintf(tmp, "%d", k);
+		err = gretl_array_set_string(a, i, tmp, 1);
+	    }
 	} else {
 	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
@@ -842,8 +855,12 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	gdouble x = json_reader_get_double_value(reader);
 
 	if (a != NULL) {
-	    sprintf(tmp, "%.15g", x);
-	    gretl_array_set_string(a, i, tmp, 1);
+	    if (numarrays) {
+		err = gretl_array_set_scalar(a, i, x);
+	    } else {
+		sprintf(tmp, "%.15g", x);
+		err = gretl_array_set_string(a, i, tmp, 1);
+	    }
 	} else {
 	    gretl_bundle_set_scalar(jb->bcurr, name, x);
 	}
@@ -851,7 +868,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	const gchar *s = json_reader_get_string_value(reader);
 
 	if (a != NULL) {
-	    gretl_array_set_string(a, i, (char *) s, 1);
+	    err = gretl_array_set_string(a, i, (char *) s, 1);
 	} else {
 	    gretl_bundle_set_string(jb->bcurr, name, s);
 	}
@@ -859,15 +876,19 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	int k = (int) json_reader_get_boolean_value(reader);
 
 	if (a != NULL) {
-	    sprintf(tmp, "%d", k);
-	    gretl_array_set_string(a, i, tmp, 1);
+	    if (numarrays) {
+		err = gretl_array_set_scalar(a, i, k);
+	    } else {
+		sprintf(tmp, "%d", k);
+		err = gretl_array_set_string(a, i, tmp, 1);
+	    }
 	} else {
 	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
     } else if (type == 0) {
 	/* try null object -> empty string */
 	if (a != NULL) {
-	    gretl_array_set_string(a, i, "", 1);
+	    err = gretl_array_set_string(a, i, "", 1);
 	} else {
 	    gretl_bundle_set_string(jb->bcurr, name, "");
 	}
@@ -922,6 +943,8 @@ gretl_bundle *json_get_bundle (const char *data,
 	    return NULL;
 	}
     }
+
+    numarrays = (getenv("NUMARRAYS") != NULL);
 
     jb.bcurr = jb.b0 = gretl_bundle_new();
 
