@@ -34,8 +34,6 @@
 
 #define numeric_type(t) (t == G_TYPE_DOUBLE || t == G_TYPE_INT64)
 
-int numarrays = 1;
-
 #define non_empty_array(a) (a != NULL && json_array_get_length(a) > 0)
 #define null_node(n) (n == NULL || json_node_is_null(n))
 
@@ -412,6 +410,7 @@ struct jbundle_ {
     gchar ***a;
     int nlev;
     int level;
+    int array2mat;
 };
 
 typedef struct jbundle_ jbundle;
@@ -586,7 +585,171 @@ static int jb_add_bundle (jbundle *jb, const char *name,
     return err;
 }
 
-/* Process a JSON object node: it becomes a gretl bundle */
+static double get_matrix_element (JsonReader *reader, int *err)
+{
+    JsonNode *node = json_reader_get_value(reader);
+    GType type = json_node_get_value_type(node);
+    double x = NADBL;
+
+    if (json_node_is_null(node)) {
+	; /* NA? */
+    } else if (numeric_type(type)) {
+	x = json_reader_get_double_value(reader);
+    } else if (type == G_TYPE_STRING) {
+	const gchar *s = json_node_get_string(node);
+
+	if (strcmp(s, ".") && strcmp(s, "NA")) {
+	    ; /* NA? */
+	}
+    } else {
+	*err = E_TYPES;
+    }
+
+    return x;
+}
+
+static int jb_add_matrix (JsonReader *reader,
+			  jbundle *jb,
+			  const char *key,
+			  gretl_array *a, int ai)
+{
+    const char *keys[] = {"rows", "cols"};
+    int i, rc[2];
+    int err = 0;
+
+    for (i=0; i<2 && !err; i++) {
+	if (!json_reader_read_member(reader, keys[i])) {
+	    gretl_errmsg_sprintf("JSON matrix: couldn't read '%s'", keys[i]);
+	    err = E_DATA;
+	} else {
+	    rc[i] = (int) json_reader_get_int_value(reader);
+	}
+	json_reader_end_member(reader);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    if (!json_reader_read_member(reader, "data") ||
+	!json_reader_is_array(reader)) {
+	gretl_errmsg_set("JSON matrix: couldn't find 'data' array");
+	err = E_DATA;
+    } else {
+	int n = json_reader_count_elements(reader);
+	gretl_matrix *m = NULL;
+
+	if (n != rc[0] * rc[1]) {
+	    gretl_errmsg_set("JSON matrix: 'data' array wrongly sized");
+	    err = E_DATA;
+	} else {
+	    m = gretl_matrix_alloc(rc[0], rc[1]);
+	    if (m == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (m != NULL) {
+	    for (i=0; i<n && !err; i++) {
+		if (!json_reader_read_element(reader, i)) {
+		    err = E_DATA;
+		} else {
+		    m->val[i] = get_matrix_element(reader, &err);
+		}
+		json_reader_end_element(reader);
+	    }
+	    if (!err) {
+		if (a != NULL) {
+		    err = gretl_array_set_matrix(a, ai, m, 0);
+		} else {
+		    err = gretl_bundle_donate_data(jb->bcurr, key, m,
+						   GRETL_TYPE_MATRIX, 0);
+		}
+	    } else {
+		gretl_matrix_free(m);
+	    }
+	}
+    }
+    json_reader_end_member(reader);
+
+    return err;
+}
+
+static int add_array_as_matrix (JsonReader *reader,
+				jbundle *jb,
+				const char *key,
+				gretl_array *a, int ai)
+{
+    int i, n = json_reader_count_elements(reader);
+    gretl_matrix *m = NULL;
+    int err = 0;
+
+    m = gretl_matrix_alloc(n, 1);
+    if (m == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n && !err; i++) {
+	if (!json_reader_read_element(reader, i) ||
+	    !json_reader_is_value(reader)) {
+	    err = E_DATA;
+	} else {
+	    m->val[i] = get_matrix_element(reader, &err);
+	}
+	json_reader_end_element(reader);
+    }
+
+    if (!err) {
+	if (a != NULL) {
+	    err = gretl_array_set_matrix(a, ai, m, 0);
+	} else {
+	    err = gretl_bundle_donate_data(jb->bcurr, key, m,
+					   GRETL_TYPE_MATRIX, 0);
+	}
+    } else {
+	gretl_matrix_free(m);
+    }
+
+    return err;
+}
+
+static int object_is_matrix (JsonReader *reader)
+{
+    int n = json_reader_count_members(reader);
+    int ret = 0;
+
+    if (n == 4) {
+	if (json_reader_read_member(reader, "type")) {
+	    const gchar *typestr = json_reader_get_string_value(reader);
+
+	    if (!strcmp(typestr, "gretl_matrix")) {
+		fprintf(stderr, "Got gretl_matrix\n");
+		ret = 1;
+	    }
+	}
+	json_reader_end_member(reader);
+    }
+
+    return ret;
+}
+
+static int array_is_matrix (JsonReader *reader)
+{
+    int ret = 0;
+
+    if (json_reader_read_element(reader, 0)) {
+	if (json_reader_is_value(reader)) {
+	    JsonNode *node = json_reader_get_value(reader);
+	    GType type = json_node_get_value_type(node);
+
+	    ret = numeric_type(type);
+	}
+    }
+    json_reader_end_element(reader);
+
+    return ret;
+}
+
+/* Process JSON object -> gretl bundle */
 
 static int jb_do_object (JsonReader *reader, jbundle *jb,
 			 gretl_array *a)
@@ -606,7 +769,7 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 	fprintf(stderr, "level %d: got object (array element), %d member(s)\n",
 		jb->level, n);
     }
-# if 0
+# if JB_DEBUG > 1
     for (i=0; i<n; i++) {
 	fprintf(stderr, "  %s\n", S[i]);
     }
@@ -616,27 +779,35 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
     for (i=0; i<n && !err; i++) {
 	json_reader_read_member(reader, S[i]);
 	if (json_reader_is_object(reader)) {
-	    int lsave = jb->level;
+	    if (object_is_matrix(reader)) {
+		err = jb_add_matrix(reader, jb, S[i], NULL, 0);
+	    } else {
+		int lsave = jb->level;
 
-	    jb->level += 1;
-	    if (is_wanted(jb, reader)) {
-		gretl_bundle *bsave = jb->bcurr;
+		jb->level += 1;
+		if (is_wanted(jb, reader)) {
+		    gretl_bundle *bsave = jb->bcurr;
 
-		err = jb_add_bundle(jb, S[i], NULL, 0);
-		if (!err) {
-		    err = jb_do_object(reader, jb, NULL);
+		    err = jb_add_bundle(jb, S[i], NULL, 0);
+		    if (!err) {
+			err = jb_do_object(reader, jb, NULL);
+		    }
+		    jb->bcurr = bsave;
 		}
-		jb->bcurr = bsave;
+		jb->level = lsave;
 	    }
-	    jb->level = lsave;
 	} else if (json_reader_is_array(reader)) {
-	    int lsave = jb->level;
+	    if (jb->array2mat && array_is_matrix(reader)) {
+		err = add_array_as_matrix(reader, jb, S[i], NULL, 0);
+	    } else {
+		int lsave = jb->level;
 
-	    jb->level += 1;
-	    if (is_wanted(jb, reader)) {
-		err = jb_do_array(reader, jb, NULL);
+		jb->level += 1;
+		if (is_wanted(jb, reader)) {
+		    err = jb_do_array(reader, jb, NULL);
+		}
+		jb->level = lsave;
 	    }
-	    jb->level = lsave;
 	} else if (json_reader_is_value(reader)) {
 	    int lsave = jb->level;
 
@@ -687,7 +858,6 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
     GretlType atype;
     const gchar *name;
     gretl_array *a;
-    gboolean ok;
     int i, n, err = 0;
 
     n = json_reader_count_elements(reader);
@@ -705,79 +875,69 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 	name = "anon";
     }
 
-    /* assume an array of strings by default */
-    if (numarrays) {
-	atype = GRETL_TYPE_ANY;
-    } else {
-	atype = GRETL_TYPE_STRINGS;
-    }
+    atype = GRETL_TYPE_ANY;
     a = gretl_array_new(atype, n, &err);
 
     for (i=0; i<n && !err; i++) {
-	ok = json_reader_read_element(reader, i);
-	if (!ok) {
+	if (!json_reader_read_element(reader, i)) {
 	    gretl_errmsg_set("JSON array: couldn't read element");
 	    err = E_DATA;
 	    break;
 	}
 	if (json_reader_is_value(reader)) {
-	    if (numarrays) {
-		err = jb_do_value(reader, jb, a, i);
-		if (!err) {
-		    atype = gretl_array_get_type(a);
-		}
-	    } else {
-		/* not numarrays */
-		if (atype != GRETL_TYPE_STRINGS) {
-		    gretl_errmsg_set("JSON array: can't mix types");
-		    fprintf(stderr, "JSON array type %s, got 'value' member\n",
-			    gretl_type_get_name(atype));
-		    err = E_DATA;
-		} else {
-		    err = jb_do_value(reader, jb, a, i);
-		}
+	    err = jb_do_value(reader, jb, a, i);
+	    if (!err) {
+		atype = gretl_array_get_type(a);
 	    }
 	} else if (json_reader_is_object(reader)) {
-	    if (atype != GRETL_TYPE_BUNDLES) {
-		/* try switching to bundles */
-		err = jb_transmute_array(a, GRETL_TYPE_BUNDLES, &atype);
-	    }
-	    if (!err) {
-		gretl_bundle *bsave = jb->bcurr;
+	    if (object_is_matrix(reader)) {
+		err = jb_add_matrix(reader, jb, NULL, a, i);
+	    } else {
+		if (atype != GRETL_TYPE_BUNDLES) {
+		    /* try switching to bundles */
+		    err = jb_transmute_array(a, GRETL_TYPE_BUNDLES, &atype);
+		}
+		if (!err) {
+		    gretl_bundle *bsave = jb->bcurr;
 
-		err = jb_add_bundle(jb, NULL, a, i);
+		    err = jb_add_bundle(jb, NULL, a, i);
+		    if (!err) {
+			int lsave = jb->level;
+
+			jb->level += 1;
+			err = jb_do_object(reader, jb, a);
+			jb->level = lsave;
+		    }
+		    jb->bcurr = bsave;
+		}
+	    }
+	} else if (json_reader_is_array(reader)) {
+	    if (jb->array2mat && array_is_matrix(reader)) {
+		err = add_array_as_matrix(reader, jb, NULL, a, i);
+	    } else {
+		if (atype != GRETL_TYPE_ARRAYS) {
+		    /* try switching to arrays */
+		    err = jb_transmute_array(a, GRETL_TYPE_ARRAYS, &atype);
+		    if (err && atype == GRETL_TYPE_STRINGS) {
+			/* 2020-04-21: we got an array @a whose first element
+			   was a string, followed by an array. This seems
+			   malformed and we'll try just skipping @a.
+			*/
+			fprintf(stderr, "skipping malformed array\n");
+			gretl_array_destroy(a);
+			a = NULL;
+			err = 0;
+			gretl_error_clear();
+			goto end_element;
+		    }
+		}
 		if (!err) {
 		    int lsave = jb->level;
 
 		    jb->level += 1;
-		    err = jb_do_object(reader, jb, a);
+		    err = jb_do_array(reader, jb, a);
 		    jb->level = lsave;
 		}
-		jb->bcurr = bsave;
-	    }
-	} else if (json_reader_is_array(reader)) {
-	    if (atype != GRETL_TYPE_ARRAYS) {
-		/* try switching to arrays */
-		err = jb_transmute_array(a, GRETL_TYPE_ARRAYS, &atype);
-		if (err && atype == GRETL_TYPE_STRINGS) {
-		    /* 2020-04-21: we got an array @a whose first element
-		       was a string, followed by an array. This seems
-		       malformed and we'll try just skipping @a.
-		    */
-		    fprintf(stderr, "skipping malformed array\n");
-		    gretl_array_destroy(a);
-		    a = NULL;
-		    err = 0;
-		    gretl_error_clear();
-		    goto end_element;
-		}
-	    }
-	    if (!err) {
-		int lsave = jb->level;
-
-		jb->level += 1;
-		err = jb_do_array(reader, jb, a);
-		jb->level = lsave;
 	    }
 	} else {
 	    gretl_errmsg_set("JSON array: unrecognized type");
@@ -842,12 +1002,8 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	int k = (int) json_reader_get_int_value(reader);
 
 	if (a != NULL) {
-	    if (numarrays) {
-		err = gretl_array_set_scalar(a, i, k);
-	    } else {
-		sprintf(tmp, "%d", k);
-		err = gretl_array_set_string(a, i, tmp, 1);
-	    }
+	    sprintf(tmp, "%d", k);
+	    err = gretl_array_set_string(a, i, tmp, 1);
 	} else {
 	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
@@ -855,12 +1011,8 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	gdouble x = json_reader_get_double_value(reader);
 
 	if (a != NULL) {
-	    if (numarrays) {
-		err = gretl_array_set_scalar(a, i, x);
-	    } else {
-		sprintf(tmp, "%.15g", x);
-		err = gretl_array_set_string(a, i, tmp, 1);
-	    }
+	    sprintf(tmp, "%.15g", x);
+	    err = gretl_array_set_string(a, i, tmp, 1);
 	} else {
 	    gretl_bundle_set_scalar(jb->bcurr, name, x);
 	}
@@ -876,12 +1028,8 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	int k = (int) json_reader_get_boolean_value(reader);
 
 	if (a != NULL) {
-	    if (numarrays) {
-		err = gretl_array_set_scalar(a, i, k);
-	    } else {
-		sprintf(tmp, "%d", k);
-		err = gretl_array_set_string(a, i, tmp, 1);
-	    }
+	    sprintf(tmp, "%d", k);
+	    err = gretl_array_set_string(a, i, tmp, 1);
 	} else {
 	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
@@ -944,9 +1092,8 @@ gretl_bundle *json_get_bundle (const char *data,
 	}
     }
 
-    numarrays = (getenv("NUMARRAYS") != NULL);
-
     jb.bcurr = jb.b0 = gretl_bundle_new();
+    jb.array2mat = (getenv("ARRAY2MAT") != NULL);
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
@@ -1104,8 +1251,6 @@ static void gretl_array_to_json (gretl_array *a,
 	    json_builder_end_array(jb);
 	} else if (type == GRETL_TYPE_MATRICES) {
 	    matrix_to_json(data, jb);
-	} else if (type == GRETL_TYPE_SCALARS) {
-	    json_builder_add_double_value(jb, *(double *) data);
 	}
     }
 }
@@ -1120,6 +1265,8 @@ static void matrix_to_json_as_vec (gretl_matrix *m,
 
     json_builder_begin_object(jb);
 
+    json_builder_set_member_name(jb, "type");
+    json_builder_add_string_value(jb, "gretl_matrix");
     json_builder_set_member_name(jb, "rows");
     json_builder_add_int_value(jb, m->rows);
     json_builder_set_member_name(jb, "cols");
