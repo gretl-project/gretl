@@ -1,5 +1,4 @@
 set verbose on
-include geoplot.gfn
 
 open "us-states.geojson" --quiet
 

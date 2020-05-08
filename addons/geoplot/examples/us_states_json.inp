@@ -1,5 +1,3 @@
-include geoplot.gfn
-
 string JSON = "us-states.geojson"
 
 open @JSON -q -p

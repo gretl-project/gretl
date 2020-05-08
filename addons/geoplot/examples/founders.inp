@@ -1,5 +1,5 @@
 set verbose off
-include geoplot.gfn
+
 mapfile = "founders.geojson"
 open "@mapfile" --preserve
 
