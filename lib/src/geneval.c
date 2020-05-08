@@ -12542,8 +12542,6 @@ static int check_array_element_type (NODE *n, GretlType *pt, int i)
 	ok = n->t == BUNDLE;
     } else if (t == GRETL_TYPE_LISTS) {
 	ok = n->t == LIST;
-    } else if (t == GRETL_TYPE_SCALARS) {
-	ok = n->t == NUM; /* FIXME */
     } else if (i == 0 && t == GRETL_TYPE_ANY) {
 	/* The array type is not yet determinate: this is OK
 	   only when we're looking at the first element: if
@@ -13348,12 +13346,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 			anon = 0;
 		    }
 		    if (e->t == NUM) {
-			if (gtype == GRETL_TYPE_SCALARS) {
-			    ptr = &e->v.xval;
-			} else {
-			    ptr = gretl_matrix_from_scalar(e->v.xval);
-			    donate = 1;
-			}
+			ptr = gretl_matrix_from_scalar(e->v.xval);
+			donate = 1;
 		    } else {
 			ptr = node_get_ptr(e, t->t, p, &donate);
 		    }
@@ -14026,7 +14020,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
     int k = nn->v.bn.n_nodes;
     int nnum = 0, nvec = 0;
     int dum = 0, nsep = 0;
-    int nlist = 0, arr = 0;
+    int nlist = 0;
     int seppos = -1;
     int i;
 
@@ -14063,15 +14057,13 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 	    dum++;
 	} else if (n->t == LIST) {
 	    nlist++;
-	} else if (n->t == ARRAY) {
-	    arr++;
 	} else if (n->t == EMPTY) {
 	    if (nsep == 0) {
 		seppos = i;
 	    }
 	    nsep++;
 	}
-	if ((dum || arr) && k != 1) {
+	if (dum && k != 1) {
 	    /* dummy, array must be singleton nodes */
 	    p->err = E_TYPES;
 	} else if ((nvec || nlist) && nnum) {
@@ -14102,9 +14094,6 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 		pprintf(p->prn, "Wrong sort of dummy var\n");
 		p->err = E_TYPES;
 	    }
-	} else if (arr) {
-	    n = g_ptr_array_index(a, 0);
-	    M = matrix_from_gretl_array(n->v.a, &p->err);
 	} else {
 	    /* empty matrix def */
 	    M = gretl_null_matrix_new();

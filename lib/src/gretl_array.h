@@ -43,8 +43,6 @@ int gretl_array_set_element (gretl_array *A, int i,
 
 void *gretl_array_get_data (gretl_array *A, int i);
 
-double gretl_array_get_scalar (gretl_array *A, int i);
-
 int gretl_array_set_data (gretl_array *A, int i, void *ptr);
 
 int gretl_array_set_type (gretl_array *A, GretlType type);
@@ -99,9 +97,6 @@ int gretl_array_set_array (gretl_array *A, int i,
 int gretl_array_append_array (gretl_array *A,
 			      gretl_array *a,
 			      int copy);
-
-int gretl_array_set_scalar (gretl_array *A, int i,
-			    double x);
 
 gretl_bundle *gretl_array_get_bundle (gretl_array *A,
 				      int i);
@@ -166,8 +161,5 @@ gretl_array *gretl_array_deserialize (void *p1, void *p2,
 gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
 				     int leadcols, int maxcols,
 				     int *err);
-
-gretl_matrix *matrix_from_gretl_array (gretl_array *A,
-				       int *err);
 
 #endif /* GRETL_ARRAY_H_ */

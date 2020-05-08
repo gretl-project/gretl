@@ -46,8 +46,7 @@ static void gretl_array_destroy_data (gretl_array *A)
 
     if (A->data != NULL) {
 	if (A->type == GRETL_TYPE_STRINGS ||
-	    A->type == GRETL_TYPE_LISTS ||
-	    A->type == GRETL_TYPE_SCALARS) {
+	    A->type == GRETL_TYPE_LISTS) {
 	    /* a simple "free" will do */
 	    for (i=0; i<A->n; i++) {
 		free(A->data[i]);
@@ -170,7 +169,6 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
 	type != GRETL_TYPE_BUNDLES &&
 	type != GRETL_TYPE_LISTS &&
 	type != GRETL_TYPE_ARRAYS &&
-	type != GRETL_TYPE_SCALARS &&
 	type != GRETL_TYPE_ANY) {
 	*err = E_TYPES;
 	return NULL;
@@ -445,13 +443,6 @@ void *gretl_array_get_element (gretl_array *A, int i,
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_array_new(GRETL_TYPE_ANY, 0, err);
 	    }
-	} else if (A->type == GRETL_TYPE_SCALARS) {
-	    if (A->data[i] == NULL) {
-		A->data[i] = malloc(sizeof(double));
-		if (A->data[i] != NULL) {
-		    *(double *) A->data[i] = NADBL;
-		}
-	    }
 	} else if (A->type == GRETL_TYPE_LISTS) {
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_list_new(0);
@@ -479,25 +470,10 @@ void *gretl_array_get_data (gretl_array *A, int i)
     }
 }
 
-double gretl_array_get_scalar (gretl_array *A, int i)
-{
-    if (A == NULL || i < 0 || i >= A->n) {
-	return NADBL;
-    } else if (A->type != GRETL_TYPE_SCALARS) {
-	return NADBL;
-    } else if (A->data[i] == NULL) {
-	return NADBL;
-    } else {
-	return *(double *) A->data[i];
-    }
-}
-
 int gretl_array_set_data (gretl_array *A, int i, void *ptr)
 {
     if (A == NULL || i < 0 || i >= A->n) {
 	return E_DATA;
-    } else if (A->type == GRETL_TYPE_SCALARS) {
-	return E_TYPES;
     } else {
 	A->data[i] = ptr;
 	return 0;
@@ -515,19 +491,6 @@ static int check_list_bounds (int *list, int arrdim)
     }
 
     return 1;
-}
-
-static void *copy_arrayed_scalar (double *px, int *err)
-{
-    void *ret = malloc(sizeof *px);
-
-    if (ret == NULL) {
-	*err = E_ALLOC;
-    } else {
-	*(double *) ret = *px;
-    }
-
-    return ret;
 }
 
 gretl_array *gretl_array_copy_subspec (gretl_array *A,
@@ -556,8 +519,6 @@ gretl_array *gretl_array_copy_subspec (gretl_array *A,
 		    C->data[i] = gretl_bundle_copy(A->data[k], err);
 		} else if (A->type == GRETL_TYPE_ARRAYS) {
 		    C->data[i] = gretl_array_copy(A->data[k], err);
-		} else if (A->type == GRETL_TYPE_SCALARS) {
-		    C->data[i] = copy_arrayed_scalar(A->data[k], err);
 		} else if (A->type == GRETL_TYPE_LISTS) {
 		    C->data[i] = gretl_list_copy(A->data[k]);
 		}
@@ -850,8 +811,7 @@ int gretl_array_set_type (gretl_array *A, GretlType type)
 	       type != GRETL_TYPE_MATRICES &&
 	       type != GRETL_TYPE_BUNDLES &&
 	       type != GRETL_TYPE_LISTS &&
-	       type != GRETL_TYPE_ARRAYS &&
-	       type != GRETL_TYPE_SCALARS) {
+	       type != GRETL_TYPE_ARRAYS) {
 	err = E_TYPES;
     } else if (type == A->type) {
 	/* no-op */
@@ -998,25 +958,6 @@ static int set_list (gretl_array *A, int i,
     return err;
 }
 
-static int set_scalar (gretl_array *A, int i,
-		       double x)
-{
-    int err = 0;
-
-    if (A->data[i] == NULL) {
-	A->data[i] = malloc(sizeof x);
-	if (A->data[i] == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	*(double *) A->data[i] = x;
-    }
-
-    return err;
-}
-
 static int set_type_error (gretl_array *A,
 			   GretlType required)
 {
@@ -1080,34 +1021,6 @@ int gretl_array_append_string (gretl_array *A,
 	err = array_extend_content(A, 1);
 	if (!err) {
 	    err = set_string(A, A->n - 1, s, copy);
-	}
-    }
-
-    return err;
-}
-
-/* respond to A += x */
-
-static int gretl_array_append_scalar (gretl_array *A,
-				      double x)
-{
-    int err = 0;
-
-    if (A == NULL) {
-	err = E_DATA;
-    } else if (set_type_error(A, GRETL_TYPE_SCALARS)) {
-	err = E_TYPES;
-    } else {
-	err = array_extend_content(A, 1);
-	if (!err) {
-	    int i = A->n - 1;
-
-	    A->data[i] = malloc(sizeof x);
-	    if (A->data[i] == NULL) {
-		err = E_ALLOC;
-	    } else {
-		*(double *) A->data[i] = x;
-	    }
 	}
     }
 
@@ -1289,27 +1202,6 @@ int gretl_array_append_list (gretl_array *A,
     return err;
 }
 
-/* respond to A[i] = x */
-
-int gretl_array_set_scalar (gretl_array *A, int i,
-			    double x)
-{
-    int err = 0;
-
-    if (A == NULL) {
-	err = E_DATA;
-    } else if (set_type_error(A, GRETL_TYPE_SCALARS)) {
-	err = E_TYPES;
-    } else if (i < 0 || i >= A->n) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
-	err = E_DATA;
-    } else {
-	err = set_scalar(A, i, x);
-    }
-
-    return err;
-}
-
 int gretl_array_set_element (gretl_array *A, int i,
 			     void *ptr, GretlType type,
 			     int copy)
@@ -1326,12 +1218,6 @@ int gretl_array_set_element (gretl_array *A, int i,
 	err = gretl_array_set_list(A, i, ptr, copy);
     } else if (type == GRETL_TYPE_ARRAY) {
 	err = gretl_array_set_array(A, i, ptr, copy);
-    } else if (type == GRETL_TYPE_DOUBLE) {
-	if (ptr != NULL) {
-	    err = gretl_array_set_scalar(A, i, *(double *) ptr);
-	} else {
-	    err = E_DATA;
-	}
     }
 
     return err;
@@ -1357,8 +1243,6 @@ int gretl_array_append_object (gretl_array *A,
 	gretl_array_append_list(A, ptr, copy);
     } else if (A->type == GRETL_TYPE_ARRAYS) {
 	gretl_array_append_array(A, ptr, copy);
-    } else if (A->type == GRETL_TYPE_SCALARS) {
-	gretl_array_append_scalar(A, *(double *) ptr);
     }
 
     return err;
@@ -1383,11 +1267,6 @@ gretl_array_copy_content (gretl_array *Acpy, const gretl_array *A,
 		Acpy->data[j] = gretl_array_copy(A->data[i], &err);
 	    } else if (A->type == GRETL_TYPE_LISTS) {
 		Acpy->data[j] = gretl_list_copy(A->data[i]);
-	    } else if (A->type == GRETL_TYPE_SCALARS) {
-		Acpy->data[j] = malloc(sizeof(double));
-		if (Acpy->data[j] != NULL) {
-		    *(double *) Acpy->data[j] = *(double *) A->data[i];
-		}
 	    } else {
 		err = E_TYPES;
 	    }
@@ -1676,10 +1555,6 @@ static void print_array_elements (gretl_array *A,
 	    const int *list = A->data[i];
 
 	    gretl_list_print(list, NULL, prn);
-	} else if (A->type == GRETL_TYPE_SCALARS) {
-	    double x = *(double *) A->data[i];
-
-	    pprintf(prn, "%#g\n", x);
 	}
     }
 
@@ -1749,7 +1624,6 @@ void gretl_array_serialize (gretl_array *A, PRN *prn)
 	} else if (type == GRETL_TYPE_LIST) {
 	    gretl_xml_put_tagged_list("list", ptr, prn);
 	}
-	/* note: GRETL_TYPE_SCALARS not handled */
     }
 
     pputs(prn, "</gretl-array>\n");
@@ -1947,37 +1821,4 @@ gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
     }
 
     return a;
-}
-
-gretl_matrix *matrix_from_gretl_array (gretl_array *A, int *err)
-{
-    if (A == NULL) {
-	*err = E_INVARG;
-	return NULL;
-    } else if (A->type != GRETL_TYPE_SCALARS) {
-	*err = E_TYPES;
-	return NULL;
-    } else {
-	gretl_matrix *m;
-	int i;
-
-	if (A->n == 0) {
-	    m = gretl_null_matrix_new();
-	} else {
-	    m = gretl_matrix_alloc(A->n, 1);
-	}
-	if (m == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    for (i=0; i<A->n; i++) {
-		if (A->data[i] == NULL) {
-		    m->val[i] = NADBL;
-		} else {
-		    m->val[i] = *(double *) A->data[i];
-		}
-	    }
-	}
-
-	return m;
-    }
 }
