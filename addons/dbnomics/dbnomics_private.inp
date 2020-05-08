@@ -139,10 +139,11 @@ function void process_series_bundle (string json, bundle *b)
         if t1 > 1
             b.period = b.period[t1:t2]
         endif
+        havemat = typeof(b.value) == 3
         matrix vals = zeros(T, 1)
         j = 1
         loop t=t1..t2 -q
-            vals[j] = atof(b.value[t])
+            vals[j] = havemat ? b.value[t] : atof(b.value[t])
             j++
         endloop
         b.value = vals
@@ -163,6 +164,18 @@ function string sanitize_url(const string s)
     ret = strsub(ret, "}", "%7D")
     ret = strsub(ret, "[", "%5B")
     ret = strsub(ret, "]", "%5D")
+    return ret
+end function
+
+function string desanitize_url(const string s)
+    ret = strsub(s, "%20", " ")
+    ret = strsub(ret, "%22", sprintf("\""))
+    ret = strsub(ret, "%2C", ",")
+    ret = strsub(ret, "%3A", ":")
+    ret = strsub(ret, "%7B", "{")
+    ret = strsub(ret, "%7D", "}")
+    ret = strsub(ret, "%5B", "[")
+    ret = strsub(ret, "%5D", "]")
     return ret
 end function
 
@@ -330,6 +343,7 @@ function scalar dbn_get_json_from_URL (const string URL, string *json, string *m
         json = req.output
         dbg = ngetenv("DBNOMICS_DEBUG")
         if ok(dbg) && dbg > 0
+            printf "%s\n", desanitize_url(URL)
             outfile dbn_debug.json --quiet
                 json
             end outfile

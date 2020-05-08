@@ -219,7 +219,9 @@ function bundles dbnomics_get_multiple(const string provider,
    string parms = build_parms(provider, dset, limit, offset, spec)
    string json
    err = dbn_get_json(parms, 0, &json)
-   if !err
+   if err
+      printf "dbnomics_get_multiple: got error from dbn_get_json\n"
+   else
       ret = multiple_from_json(json, 0)
    endif
    return ret

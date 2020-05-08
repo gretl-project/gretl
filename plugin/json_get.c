@@ -875,13 +875,14 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 	name = "anon";
     }
 
-    atype = GRETL_TYPE_ANY;
+    atype = GRETL_TYPE_ANY; /* generic default */
     a = gretl_array_new(atype, n, &err);
 
     for (i=0; i<n && !err; i++) {
 	if (!json_reader_read_element(reader, i)) {
 	    gretl_errmsg_set("JSON array: couldn't read element");
 	    err = E_DATA;
+	    json_reader_end_element(reader);
 	    break;
 	}
 	if (json_reader_is_value(reader)) {

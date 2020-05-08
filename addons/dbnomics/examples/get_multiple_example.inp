@@ -25,26 +25,29 @@ bundle spec = null
 spec["weo-country"] = defarray("FRA", "DEU", "ITA")
 spec["weo-subject"] = defarray("LP", "LE")
 
-### now we get the series
+### now we try to get the series
 
 bs = dbnomics_get_multiple(provider, database, 20, 0, spec)
 
-list X = null
+if nelem(bs) == 0
+  printf "Got no responses to dbnomics request\n"
+else
+    list X = null
 
-loop i = 1..nelem(bs) --quiet
-    sn = fixname(bs[i].series_code, 1)
-    sdes = bs[i].dataset_name
-    sdes = sdes ~ ": " ~ bs[i].series_name
-    if inbundle(bs[i], "unit")
-        sdes = sdes ~ " " ~ bs[i].unit
-    endif
-    series tmp = NA
-    x$i = dbnomics_bundle_get_data(bs[i], &tmp)
-    X += genseries(sn, tmp)
-    setinfo @sn --description="@sdes"
-endloop
-delete tmp
-
-labels
-summary X
+    loop i = 1..nelem(bs) --quiet
+        sn = fixname(bs[i].series_code, 1)
+        sdes = bs[i].dataset_name
+        sdes = sdes ~ ": " ~ bs[i].series_name
+        if inbundle(bs[i], "unit")
+            sdes = sdes ~ " " ~ bs[i].unit
+        endif
+        series tmp = NA
+        x$i = dbnomics_bundle_get_data(bs[i], &tmp)
+        X += genseries(sn, tmp)
+        setinfo @sn --description="@sdes"
+    endloop
+    delete tmp
+    labels
+    summary X
+endif
 

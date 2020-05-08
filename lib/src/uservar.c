@@ -83,6 +83,7 @@ static user_var *user_var_new (const char *name, int type,
 
     if (type == GRETL_TYPE_NONE) {
 	*err = E_DATA;
+	fputs("user_var_new: type = GRETL_TYPE_NONE\n", stderr);
 	return NULL;
     }
 
@@ -133,7 +134,7 @@ static user_var *user_var_new (const char *name, int type,
 	    } else {
 		u->ptr = value;
 	    }
-	} else if (gretl_array_type(type)) {
+	} else if (gretl_array_type(type) || type == GRETL_TYPE_ANY) {
 	    if (value == NULL) {
 		u->ptr = gretl_array_new(type, 0, err);
 	    } else {
@@ -141,6 +142,8 @@ static user_var *user_var_new (const char *name, int type,
 	    }
 	    u->type = GRETL_TYPE_ARRAY;
 	} else {
+	    fprintf(stderr, "user_var_new error, type=%d (%s)\n", type,
+		    gretl_type_get_name(type));
 	    *err = E_DATA;
 	}
     }
