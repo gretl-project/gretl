@@ -88,15 +88,18 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 {
     int i, n = gretl_array_get_length(ring);
     gretl_matrix *ret = gretl_matrix_alloc(n, 2);
+    GretlType rtype = gretl_array_get_type(ring);
     const char *sx, *sy;
+    gretl_matrix *mi;
     gretl_array *ri;
 
     for (i=0; i<n; i++) {
-	ri = gretl_array_get_data(ring, i);
-	if (gretl_array_get_content_type(ri) == GRETL_TYPE_DOUBLE) {
-	    gretl_matrix_set(ret, i, 0, gretl_array_get_scalar(ri, 0));
-	    gretl_matrix_set(ret, i, 1, gretl_array_get_scalar(ri, 1));
+	if (rtype == GRETL_TYPE_MATRICES) {
+	    mi = gretl_array_get_data(ring, i);
+	    gretl_matrix_set(ret, i, 0, mi->val[0]);
+	    gretl_matrix_set(ret, i, 1, mi->val[1]);
 	} else {
+	    ri = gretl_array_get_data(ring, i);
 	    sx = gretl_array_get_data(ri, 0);
 	    sy = gretl_array_get_data(ri, 1);
 	    gretl_matrix_set(ret, i, 0, atof(sx));
