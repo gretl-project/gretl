@@ -289,10 +289,11 @@ struct plugin_function_info plugin_functions[] = {
     /* panel unit roots/cointegration */
     { "real_levin_lin", P_PANURC},
 
-    /* parsing JSON data */
+    /* parsing or writing JSON data */
     { "json_get_string", P_JSON_GET},
     { "json_get_bundle", P_JSON_GET},
     { "json_bundle_get_terminals", P_JSON_GET},
+    { "bundle_to_json", P_JSON_GET},
 
     /* parsing XML data */
     { "xml_get", P_XML_GET},

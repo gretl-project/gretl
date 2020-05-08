@@ -2343,12 +2343,26 @@ gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2,
     return b;
 }
 
+static int call_bundle_to_json (gretl_bundle *b,
+				const char *fname)
+{
+    int (*jfunc) (gretl_bundle *, const char *, gretlopt);
+
+    jfunc = get_plugin_function("bundle_to_json");
+    if (jfunc == NULL) {
+	return E_FOPEN;
+    } else {
+	/* FIXME handling of options */
+	return jfunc(b, fname, OPT_NONE);
+    }
+}
+
 int gretl_bundle_write_to_file (gretl_bundle *b,
 				const char *fname,
 				int to_dotdir)
 {
     char fullname[FILENAME_MAX];
-    PRN *prn;
+    PRN *prn = NULL;
     int err = 0;
 
     if (to_dotdir) {
@@ -2356,6 +2370,10 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     } else {
 	strcpy(fullname, fname);
 	gretl_maybe_switch_dir(fullname);
+    }
+
+    if (has_suffix(fname, ".json") || has_suffix(fname, ".geojson")) {
+	return call_bundle_to_json(b, fullname);
     }
 
     if (has_suffix(fname, ".gz")) {
@@ -2398,6 +2416,34 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
     return buf;
 }
 
+static gretl_bundle *read_json_bundle (const char *fname,
+				       int *err)
+{
+    gretl_bundle *(*jfunc) (const char *, const char *, int *);
+    gretl_bundle *b = NULL;
+    GError *gerr = NULL;
+    gchar *JSON = NULL;
+    gsize len = 0;
+    gboolean ok;
+
+    ok = g_file_get_contents(fname, &JSON, &len, &gerr);
+
+    if (ok) {
+	jfunc = get_plugin_function("json_get_bundle");
+	if (jfunc == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    b = jfunc(JSON, NULL, err);
+	}
+	g_free(JSON);
+    } else if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return b;
+}
+
 gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 					   int from_dotdir,
 					   int *err)
@@ -2414,13 +2460,16 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 	gretl_maybe_prepend_dir(fullname);
     }
 
-    *err = gretl_xml_open_doc_root(fullname, "gretl-bundle", &doc, &cur);
-
-    if (!*err) {
-	gretl_push_c_numeric_locale();
-	b = gretl_bundle_deserialize(cur, doc, err);
-	gretl_pop_c_numeric_locale();
-	xmlFreeDoc(doc);
+    if (has_suffix(fname, ".json") || has_suffix(fname, ".geojson")) {
+	b = read_json_bundle(fullname, err);
+    } else {
+	*err = gretl_xml_open_doc_root(fullname, "gretl-bundle", &doc, &cur);
+	if (!*err) {
+	    gretl_push_c_numeric_locale();
+	    b = gretl_bundle_deserialize(cur, doc, err);
+	    gretl_pop_c_numeric_locale();
+	    xmlFreeDoc(doc);
+	}
     }
 
     if (*err && b != NULL) {
