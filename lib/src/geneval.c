@@ -7588,7 +7588,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		}
 	    }
 	} else if (f == F_JSONGETB) {
-	    gretl_bundle *(*jfunc) (const char *, const char *, int *) = NULL;
+	    gretl_bundle *(*jfunc) (const char *, const char *, int *);
 	    const char *path = null_node(r) ? NULL: r->v.str;
 
 	    jfunc = get_plugin_function("json_get_bundle");
