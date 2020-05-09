@@ -18,12 +18,18 @@ function matrix ring2matrix(const arrays ring)
     m = {}
     loop i = 1 .. n
         ri = ring[i]
-        if typeof(ri) == 3
-            m = ri[1:2]
-        else
-            sscanf(ri[1:2], "%m", m)
-        endif
+        sscanf(ri[1:2], "%m", m)
         ret[,i] = m
+    endloop
+    return ret'
+end function
+
+function matrix ring2matrix2(const matrices ring)
+    n = nelem(ring)
+    matrix ret = zeros(2,n)
+    loop i = 1 .. n
+        ri = ring[i]
+        ret[,i] = ri[1:2]
     endloop
     return ret'
 end function
@@ -43,9 +49,13 @@ end function
 
 function string describe_poly_coords(const arrays coar, bool verbose)
     ext_ring = coar[1]
-
     ret = sprintf("Exterior ring: %5d points ", nelem(ext_ring))
-    area = polygonArea(ring2matrix(ext_ring))
+    if typeof(ext_ring[1]) == 3
+        rm = ring2matrix2(ext_ring)
+    else
+        rm = ring2matrix(ext_ring)
+    endif
+    scalar area = polygonArea(rm)
     ret = ret ~ sprintf("(area = %12.3f); ", area*1000)
     if verbose > 1
         if nelem(coar) == 1
