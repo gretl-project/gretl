@@ -1418,7 +1418,7 @@ int bundle_to_json (gretl_bundle *b, const char *fname,
 	}
     }
 
-    json_node_unref(jn);
+    json_node_free(jn);
     g_object_unref(jgen);
     g_object_unref(jb);
 
