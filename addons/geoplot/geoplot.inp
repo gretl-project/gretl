@@ -34,12 +34,11 @@ function matrix ring2matrix2(const matrices ring)
     return ret'
 end function
 
-function scalar polygonArea(const matrix XY)
+function scalar polygon_area(const matrix XY)
     # taken from https://www.mathopenref.com/coordpolygonarea2.html
     scalar area = 0  # Accumulates area
-    scalar numPoints = rows(XY)
 
-    loop i = 2 .. numPoints
+    loop i = 2 .. rows(XY)
         a = XY[i-1,1] * XY[i, 2]
         b = XY[i,1] * XY[i-1, 2]
         area += (a-b)
@@ -47,7 +46,24 @@ function scalar polygonArea(const matrix XY)
     return abs(area/2)
 end function
 
-function string describe_poly_coords(const arrays coar, bool verbose)
+function void polygon_extents(const matrix XY, matrix *minmax)
+    loop i = 1 .. rows(XY)
+        if XY[i,1] < minmax[1,1]
+            minmax[1,1] = XY[i,1]
+        endif
+        if XY[i,1] > minmax[1,2]
+            minmax[1,2] = XY[i,1]
+        endif
+        if XY[i,2] < minmax[2,1]
+            minmax[2,1] = XY[i,2]
+        endif
+        if XY[i,2] > minmax[1,2]
+            minmax[2,2] = XY[2,2]
+        endif
+    endloop
+end function
+
+function string describe_poly_coords(const arrays coar, matrix *extents[null], int verbose)
     ext_ring = coar[1]
     ret = sprintf("Exterior ring: %5d points ", nelem(ext_ring))
     if typeof(ext_ring[1]) == 3
@@ -55,16 +71,18 @@ function string describe_poly_coords(const arrays coar, bool verbose)
     else
         rm = ring2matrix(ext_ring)
     endif
-    scalar area = polygonArea(rm)
-    ret = ret ~ sprintf("(area = %12.3f); ", area*1000)
+    scalar area = polygon_area(rm)
+    ret = ret ~ sprintf("(area = %12.3f)", area*1000)
     if verbose > 1
         if nelem(coar) == 1
-            ret = ret ~ "no interior rings"
+            ret = ret ~ "; no interior rings"
         else
-            ret = ret ~ sprintf("%d interior rings", nelem(coar) - 1)
+            ret = ret ~ sprintf("; %d interior rings", nelem(coar) - 1)
         endif
     endif
-
+    if exists(extents)
+        polygon_extents(rm, &extents)
+    endif
     return ret
 end function
 
@@ -165,6 +183,7 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
                 endif
 
                 print_properties(props)
+                matrix extents = {$huge, -$huge; $huge, -$huge}
 
                 if ft == "Point"
                     printf "\t [ "
@@ -179,15 +198,19 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
                     endloop
                     printf "\n"
                 elif ft == "Polygon"
-                    printf "\t%s\n", describe_poly_coords(fi.geometry.coordinates, verbose)
+                    printf "\t%s\n", describe_poly_coords(fi.geometry.coordinates, &extents, verbose)
+                    printf "\tExtents: X = {%g,%g}; Y = {%g,%g}\n", extents[1,1], extents[1,2],
+                      extents[2,1], extents[2,2]
                 elif ft == "MultiPolygon"
                     mcoords = feat[i].geometry.coordinates
                     nmulti = nelem(mcoords)
                     printf "\t%d Sub-polygons\n", nmulti
                     if verbose > 1
                         loop j = 1 .. nmulti
-                            printf "\t\t%s\n", describe_poly_coords(mcoords[j], verbose - 1)
+                            printf "\t\t%s\n", describe_poly_coords(mcoords[j], &extents, verbose - 1)
                         endloop
+                        printf "\tExtents: X %g to %g; Y %g to %g\n", extents[1,1], extents[1,2],
+                          extents[2,1], extents[2,2]
                     endif
                 endif
             else
