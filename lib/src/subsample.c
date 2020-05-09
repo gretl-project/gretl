@@ -713,6 +713,7 @@ static int restore_full_easy (DATASET *dset, ExecState *state)
 	/* not inside a function */
 	t1min = 0;
 	t2max = dset->n - 1;
+	dataset_clear_sample_record(dset);
     } else {
 	/* don't go outside the bounds set on entry to
 	   a function */
@@ -1976,14 +1977,6 @@ static int set_contiguous_sample (const int *list,
     return err;
 }
 
-static void destroy_restriction_string (DATASET *dset)
-{
-    if (dset->restriction != NULL) {
-	free(dset->restriction);
-	dset->restriction = NULL;
-    }
-}
-
 /* Make a string representing the sample restriction. This is
    for reporting purposes. Note that in some cases the
    incoming @restr string may be NULL, for instance if the
@@ -1996,7 +1989,7 @@ static int make_restriction_string (DATASET *dset, char *old,
     char *s = NULL;
     int n = 0, err = 0;
 
-    destroy_restriction_string(dset);
+    dataset_clear_sample_record(dset);
 
     if (old != NULL) {
 	n = strlen(old);
@@ -2312,6 +2305,7 @@ int restrict_sample (const char *param, const int *list,
 		*/
 		dset->t1 = t1;
 		dset->t2 = t2;
+		/* but record mask? */
 	    } else {
 		err = restrict_sample_from_mask(mask, dset, opt);
 	    }
@@ -2328,7 +2322,7 @@ int restrict_sample (const char *param, const int *list,
 
     if (!err) {
 	if (permanent) {
-	    destroy_restriction_string(dset);
+	    dataset_clear_sample_record(dset);
 	} else {
 	    make_restriction_string(dset, oldrestr, param, mode);
 	}
@@ -2392,8 +2386,7 @@ int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
 
     free(dset->submask);
     dset->submask = NULL;
-    free(dset->restriction);
-    dset->restriction = NULL;
+    dataset_clear_sample_record(dset);
 
     if (fullset->varname == dset->varname) {
 	fullset->varname = NULL;
@@ -3166,6 +3159,9 @@ void print_sample_status (const DATASET *dset, PRN *prn)
 	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Range"),
 		dset->stobs, dset->endobs, dset->n);
 	print_sample_obs(dset, prn);
+	if (dset->restriction != NULL) {
+	    pprintf(prn, "(%s: %s)\n", _("restriction"), dset->restriction);
+	}
     }
 }
 

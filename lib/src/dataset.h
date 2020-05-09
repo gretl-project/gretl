@@ -459,6 +459,8 @@ int check_dataset_is_changed (void);
 
 void set_dataset_is_changed (void);
 
+void dataset_clear_sample_record (DATASET *dset);
+
 int dataset_set_time_series (DATASET *dset, int pd, 
 			     int yr0, int minor0);
 

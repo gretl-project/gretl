@@ -3593,6 +3593,14 @@ int dataset_set_time_series (DATASET *dset, int pd,
     return err;
 }
 
+void dataset_clear_sample_record (DATASET *dset)
+{
+    if (dset->restriction != NULL) {
+	free(dset->restriction);
+	dset->restriction = NULL;
+    }
+}
+
 /**
  * series_is_discrete:
  * @dset: pointer to dataset.
