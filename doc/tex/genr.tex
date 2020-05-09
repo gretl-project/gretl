@@ -140,28 +140,19 @@ see below); \cmd{arch} (test for ARCH); \cmd{chow} (Chow test for a
 structural break); \cmd{coeffsum} (test for the sum of specified
 coefficients); \cmd{cusum} (the Harvey--Collier $t$-statistic);
 \cmd{kpss} (KPSS stationarity test, no p-value available);
-\cmd{lmtest} (see below); \cmd{meantest} (test for difference of
+\cmd{modtest} (see below); \cmd{meantest} (test for difference of
 means); \cmd{omit} (joint test for the significance of variables
 omitted from a model); \cmd{reset} (Ramsey's RESET); \cmd{restrict}
 (general linear restriction); \cmd{runs} (runs test for randomness);
-\cmd{testuhat} (test for normality of residual); and \cmd{vartest}
-(test for difference of variances). In most cases both a \dollar{test}
-and a \dollar{pvalue} are stored; the exception is the KPSS test, for
-which a p-value is not currently available.
+and \cmd{vartest} (test for difference of variances). In most cases
+both a \dollar{test} and a \dollar{pvalue} are stored; the exception
+is the KPSS test, for which a p-value is not currently available.
     
 An important point to notice about this mechanism is that the internal
 variables \dollar{test} and \dollar{pvalue} are over-written each time
 one of the tests listed above is performed.  If you want to reference
 these values, you must do so at the correct point in the sequence of
 \app{gretl} commands.  
-
-A related point is that some of the test commands generate, by
-default, more than one test statistic and p-value; in these cases only
-the last values are stored. To get proper control over the retrieval
-of values via \dollar{test} and \dollar{pvalue} you should formulate
-the test command in such a way that the result is unambiguous.  This
-comment applies in particular to the \cmd{adf} and \cmd{lmtest}
-commands.
 
 \begin{itemize}
 \item By default, the \cmd{adf} command generates three variants of
@@ -172,12 +163,10 @@ commands.
   can control the variant that is recorded by using one of the flags
   \option{nc}, \option{c}, \option{ct} or \option{ctt} with
   \verb+adf+.
-\item By default, the \cmd{lmtest} command (which must follow an OLS
-  regression) performs several diagnostic tests on the regression in
-  question.  To control what is recorded in \dollar{test} and
-  \dollar{pvalue} you should limit the test using one of the flags
-  \option{logs}, \option{autocorr}, \option{squares} or
-  \option{white}.
+\item The \cmd{modtest} command (which must follow an estimation
+  command) offers several diagnostic tests; the particular test
+  performed depends on the option flag provided. Please see the \GCR\
+  and chapter~\ref{chap:var} of this \textit{Guide} for details.
 \end{itemize}
 
 \section{The discrete Fourier transform}
