@@ -63,9 +63,14 @@ function void polygon_extents(const matrix XY, matrix *minmax)
     endloop
 end function
 
-function string describe_poly_coords(const arrays coar, matrix *extents[null], int verbose)
+function string describe_poly_coords(const arrays coar, matrix *extents[null],
+                                     int verbose, int i)
     ext_ring = coar[1]
-    ret = sprintf("Exterior ring: %5d points ", nelem(ext_ring))
+    if i > 0
+        ret = sprintf("Exterior ring[%d]: %5d points ", i, nelem(ext_ring))
+    else
+        ret = sprintf("Exterior ring: %5d points ", nelem(ext_ring))
+    endif
     if typeof(ext_ring[1]) == 3
         rm = ring2matrix2(ext_ring)
     else
@@ -198,7 +203,7 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
                     endloop
                     printf "\n"
                 elif ft == "Polygon"
-                    printf "\t%s\n", describe_poly_coords(fi.geometry.coordinates, &extents, verbose)
+                    printf "\t%s\n", describe_poly_coords(fi.geometry.coordinates, &extents, verbose, 0)
                     printf "\tExtents: X = {%g,%g}; Y = {%g,%g}\n", extents[1,1], extents[1,2],
                       extents[2,1], extents[2,2]
                 elif ft == "MultiPolygon"
@@ -207,9 +212,9 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
                     printf "\t%d Sub-polygons\n", nmulti
                     if verbose > 1
                         loop j = 1 .. nmulti
-                            printf "\t\t%s\n", describe_poly_coords(mcoords[j], &extents, verbose - 1)
+                            printf "\t%s\n", describe_poly_coords(mcoords[j], &extents, verbose-1, j)
                         endloop
-                        printf "\tExtents: X %g to %g; Y %g to %g\n", extents[1,1], extents[1,2],
+                        printf "\tExtents: X = {%g,%g}; Y = {%g,%g}\n", extents[1,1], extents[1,2],
                           extents[2,1], extents[2,2]
                     endif
                 endif
