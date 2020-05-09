@@ -116,22 +116,24 @@ function void process_series_bundle (string json, bundle *b)
     b.frequency = bundle_get_frequency(b)
     t1 = 1
     t2 = nelem(b.period)
-    # trim leading NAs
-    loop j=1..t2 -q
-        if b.value[j] == "" || b.value[j] == "NA"
-            t1++
-        else
-            break
-        endif
-    endloop
-    # trim trailing NAs
-    loop for (j=t2; j>=t1; j--) -q
-        if b.value[j] == "" || b.value[j] == "NA"
-            t2--
-        else
-            break
-        endif
-    endloop
+    if typeof(b.value) == 6 # array
+        # trim leading NAs
+        loop j=1..t2 -q
+            if b.value[j] == "" || b.value[j] == "NA"
+                t1++
+            else
+                break
+            endif
+        endloop
+        # trim trailing NAs
+        loop for (j=t2; j>=t1; j--) -q
+            if b.value[j] == "" || b.value[j] == "NA"
+                t2--
+            else
+                break
+            endif
+        endloop
+    endif
     T = t2 - t1 + 1
     b.T = T
     b.has_data = T > 0
