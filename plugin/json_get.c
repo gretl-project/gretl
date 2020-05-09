@@ -592,7 +592,7 @@ static double get_matrix_element (JsonReader *reader, int *err)
     double x = NADBL;
 
     if (json_node_is_null(node)) {
-	; /* NA? */
+	; /* OK: NA? */
     } else if (numeric_type(type)) {
 	x = json_reader_get_double_value(reader);
     } else if (type == G_TYPE_STRING) {
@@ -1094,7 +1094,14 @@ gretl_bundle *json_get_bundle (const char *data,
     }
 
     jb.bcurr = jb.b0 = gretl_bundle_new();
-    jb.array2mat = (getenv("ARRAY2MAT") != NULL);
+
+    if (getenv("JSONGETB_OLD") != NULL) {
+	/* old-style: numeric array -> strings */
+	jb.array2mat = 0;
+    } else {
+	/* new-style: numeric array -> matrix */
+	jb.array2mat = 1;
+    }
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
