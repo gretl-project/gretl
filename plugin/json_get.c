@@ -1287,15 +1287,18 @@ static void matrix_to_json_as_vec (gretl_matrix *m,
 static void matrix_to_json_via_array (gretl_matrix *m,
 				      JsonBuilder *jb)
 {
-    double mij;
-    int i, j;
+    int i, j, vlen = gretl_vector_get_length(m);
 
     json_builder_begin_array(jb);
 
-    for (i=0; i<m->rows; i++) {
-	if (m->cols == 1) {
+    if (vlen > 0) {
+	for (i=0; i<vlen; i++) {
 	    json_builder_add_double_value(jb, m->val[i]);
-	} else {
+	}
+    } else {
+	double mij;
+
+	for (i=0; i<m->rows; i++) {
 	    json_builder_begin_array(jb);
 	    for (j=0; j<m->cols; j++) {
 		mij = gretl_matrix_get(m, i, j);

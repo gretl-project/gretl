@@ -2344,7 +2344,8 @@ gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2,
 }
 
 static int call_bundle_to_json (gretl_bundle *b,
-				const char *fname)
+				const char *fname,
+				int control)
 {
     int (*jfunc) (gretl_bundle *, const char *, gretlopt);
 
@@ -2352,20 +2353,27 @@ static int call_bundle_to_json (gretl_bundle *b,
     if (jfunc == NULL) {
 	return E_FOPEN;
     } else {
-	/* FIXME handling of options */
-	return jfunc(b, fname, OPT_NONE);
+	gretlopt opt = OPT_NONE;
+
+	if (control & 2) {
+	    opt |= OPT_A;
+	}
+	if (control & 4) {
+	    opt |= OPT_P;
+	}
+	return jfunc(b, fname, opt);
     }
 }
 
 int gretl_bundle_write_to_file (gretl_bundle *b,
 				const char *fname,
-				int to_dotdir)
+				int control)
 {
     char fullname[FILENAME_MAX];
     PRN *prn = NULL;
     int err = 0;
 
-    if (to_dotdir) {
+    if (control & 1) {
 	gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
     } else {
 	strcpy(fullname, fname);
@@ -2373,7 +2381,7 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     }
 
     if (has_suffix(fname, ".json") || has_suffix(fname, ".geojson")) {
-	return call_bundle_to_json(b, fullname);
+	return call_bundle_to_json(b, fullname, control);
     }
 
     if (has_suffix(fname, ".gz")) {

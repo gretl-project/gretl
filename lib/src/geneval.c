@@ -3492,16 +3492,14 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 
     if (starting(p)) {
 	const char *s = m->v.str;
-	int export = 0;
+	int control = 0;
 
 	if (!null_node(r)) {
-	    export = (r->v.xval != 0);
+	    control = (int) r->v.xval;
 	}
-
 	ret = aux_scalar_node(p);
-
 	if (ret != NULL) {
-	    ret->v.xval = gretl_bundle_write_to_file(l->v.b, s, export);
+	    ret->v.xval = gretl_bundle_write_to_file(l->v.b, s, control);
 	}
     } else {
 	ret = aux_scalar_node(p);
