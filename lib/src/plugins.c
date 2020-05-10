@@ -309,10 +309,9 @@ struct plugin_function_info plugin_functions[] = {
     { "regls_xv_mpi", P_REGLS},
 
     /* shapefile handling */
-    { "dbf2csv",    P_GEOPLOT},
-    { "map2dat",    P_GEOPLOT},
+    { "dbf2csv",      P_GEOPLOT},
     { "map_get_data", P_GEOPLOT},
-    { "shp_get_coords", P_GEOPLOT},
+    { "shp_get_bundle", P_GEOPLOT},
     { "geoplot", P_GEOPLOT},
 
     /* sentinel */
@@ -567,7 +566,7 @@ void *get_packaged_C_function (const char *pkgname,
    open at program termination. So you can define this
    as non-zero temporarily.
 */
-#define KEEP_PLUGINS_OPEN 0
+#define KEEP_PLUGINS_OPEN 1
 
 /**
  * close_plugin:

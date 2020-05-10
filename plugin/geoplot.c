@@ -40,6 +40,15 @@ static char *get_fullpath (char *fname)
     return fname;
 }
 
+static char *put_ext (char *fname, const char *ext)
+{
+    char *p = strrchr(fname, '.');
+
+    *p = '\0';
+    strcat(p, ext);
+    return fname;
+}
+
 static int matrix_is_payload (const gretl_matrix *m)
 {
     if (m != NULL) {
@@ -98,12 +107,14 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 	    mi = gretl_array_get_data(ring, i);
 	    gretl_matrix_set(ret, i, 0, mi->val[0]);
 	    gretl_matrix_set(ret, i, 1, mi->val[1]);
-	} else {
+	} else if (rtype == GRETL_TYPE_STRINGS) {
 	    ri = gretl_array_get_data(ring, i);
 	    sx = gretl_array_get_data(ri, 0);
 	    sy = gretl_array_get_data(ri, 1);
 	    gretl_matrix_set(ret, i, 0, atof(sx));
 	    gretl_matrix_set(ret, i, 1, atof(sy));
+	} else {
+	    fprintf(stderr, "ring2matrix: i=%d of %d, rtype=%d\n", i, n, rtype);
 	}
     }
 
@@ -432,6 +443,103 @@ static void output_dbf_string (const char *s, FILE *fp)
     fputc('"', fp);
 }
 
+DBFHandle open_dbf (const char *dbfname,
+		    int *fcount, int *rcount,
+		    int *err)
+{
+    DBFHandle DBF = DBFOpen(dbfname, "rb");
+
+    if (DBF == NULL) {
+	gretl_errmsg_sprintf("DBFOpen(%s) failed", dbfname);
+	*err = E_FOPEN;
+    } else {
+	*fcount = DBFGetFieldCount(DBF);
+	if (*fcount == 0) {
+	    gretl_errmsg_set("There are no fields in this DBF table!");
+	    *err = E_DATA;
+	} else {
+	    *rcount = DBFGetRecordCount(DBF);
+	    if (*rcount == 0) {
+		gretl_errmsg_set("There are no records in this DBF table!");
+		*err = E_DATA;
+	    }
+	}
+	if (*err) {
+	    DBFClose(DBF);
+	}
+    }
+
+    return DBF;
+}
+
+/* Fill out "properties" bundles within @b with info from
+   DBF file */
+
+int dbf_get_properties (gretl_array *ff, const char *dbfname)
+{
+    DBFHandle DBF;
+    int width, decimals;
+    int n, fcount, rcount;
+    DBFFieldType etype;
+    char title[32];
+    int i, j;
+    int err = 0;
+
+    DBF = open_dbf(dbfname, &fcount, &rcount, &err);
+    if (err) {
+	return E_FOPEN;
+    }
+
+    n = gretl_array_get_length(ff);
+    if (rcount != n) {
+	gretl_errmsg_sprintf("Number of DBF records (%d) doesn't match "
+			     "number of SHP entities (%d)", rcount, n);
+	DBFClose(DBF);
+	return E_DATA;
+    }
+
+    for (j=0; j<rcount && !err; j++) {
+	/* access feature bundle */
+	gretl_bundle *bf = gretl_array_get_data(ff, j);
+	/* create properties bundle */
+	gretl_bundle *pj = gretl_bundle_new();
+
+	if (pj == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+
+	for (i=0; i<fcount; i++) {
+            etype = DBFGetFieldInfo(DBF, i, title, &width, &decimals);
+	    if (etype == FTInvalid) {
+		continue;
+	    }
+	    if (DBFIsAttributeNULL(DBF, j, i)) {
+		; /* do what? */
+	    } else if (etype == FTString) {
+		const char *s = DBFReadStringAttribute(DBF, j, i);
+
+		gretl_bundle_set_string(pj, title, s);
+	    } else if (etype == FTInteger) {
+		int k = DBFReadIntegerAttribute(DBF, j, i);
+
+		gretl_bundle_set_int(pj, title, k);
+	    } else if (etype == FTDouble) {
+		double x = DBFReadDoubleAttribute(DBF, j, i);
+
+		gretl_bundle_set_scalar(pj, title, x);
+	    }
+	}
+
+	gretl_bundle_donate_data(bf, "properties", pj,
+				 GRETL_TYPE_BUNDLE, 0);
+    }
+
+    DBFClose(DBF);
+
+    return err;
+}
+
 /* dbf2csv: Written by Allin Cottrell, 2020-04-13,
    based on dbfdump by Frank Warmerdam.
 
@@ -451,29 +559,15 @@ int dbf2csv (const char *dbfname,
     int header = 0;
     char title[32];
     int i, j;
+    int err = 0;
 
     if (opt & OPT_H) {
 	header = 1;
     }
 
-    DBF = DBFOpen(dbfname, "rb");
-    if (DBF == NULL) {
-	gretl_errmsg_sprintf("DBFOpen(%s) failed", dbfname);
-	return E_FOPEN;
-    }
-
-    fcount = DBFGetFieldCount(DBF);
-    if (fcount == 0) {
-	DBFClose(DBF);
-	gretl_errmsg_set("There are no fields in this DBF table!");
-	return E_DATA;
-    }
-
-    rcount = DBFGetRecordCount(DBF);
-    if (rcount == 0) {
-	DBFClose(DBF);
-	gretl_errmsg_set("There are no records in this DBF table!");
-	return E_DATA;
+    DBF = open_dbf(dbfname, &fcount, &rcount, &err);
+    if (err) {
+	return err;
     }
 
     fp = gretl_fopen(csvname, "wb");
@@ -499,7 +593,7 @@ int dbf2csv (const char *dbfname,
             else if (etype == FTInvalid)
                 typename = "Invalid";
 
-            fprintf(fp, "# Field %d: Type=%c/%s, Title=`%s', Width=%d, Decimals=%d\n",
+            fprintf(fp, "# Field %d: Type=%c/%s, Title='%s', Width=%d, Decimals=%d\n",
 		    i, native_type, typename, title, width, decimals);
         }
 	fprintf(fp, "# Number of records in table: %d\n", rcount);
@@ -558,18 +652,27 @@ int dbf2csv (const char *dbfname,
     return 0;
 }
 
-gretl_bundle *shp_get_coords (const char *shpname, int *err)
+gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 {
     gretl_bundle *ret = NULL;
-    gretl_array *mm = NULL;
+    gretl_array *ff = NULL;
     SHPHandle SHP;
     double gmin[4], gmax[4];
+    char *dbfname;
     int n_shapetype, n_entities;
-    int i, j, k, part;
+    int i, j, k, p;
+
+    dbfname = gretl_strdup(shpname);
+    put_ext(dbfname, ".dbf");
+    *err = gretl_test_fopen(dbfname, "rb");
+    if (*err) {
+	return NULL;
+    }
 
     SHP = SHPOpen(shpname, "rb");
     if (SHP == NULL) {
 	*err = E_FOPEN;
+	free(dbfname);
 	return NULL;
     }
 
@@ -577,6 +680,7 @@ gretl_bundle *shp_get_coords (const char *shpname, int *err)
     if (ret == NULL) {
 	*err = E_ALLOC;
 	SHPClose(SHP);
+	free(dbfname);
 	return NULL;
     }
 
@@ -584,10 +688,14 @@ gretl_bundle *shp_get_coords (const char *shpname, int *err)
     SHPSetFastModeReadObject(SHP, TRUE);
 
     fprintf(stderr, "shp: n_entities = %d\n", n_entities);
+    gretl_bundle_set_string(ret, "type", "FeatureCollection");
 
-    mm = gretl_array_new(GRETL_TYPE_ARRAYS, n_entities, err);
+    /* array for "feature" bundles */
+    ff = gretl_array_new(GRETL_TYPE_BUNDLES, n_entities, err);
 
     for (i=0; i<n_entities && !*err; i++) {
+	gretl_bundle *bfi = NULL;
+	gretl_bundle *bgi = NULL;
 	gretl_array *mi = NULL;
 	gretl_matrix *xy = NULL;
         SHPObject *obj;
@@ -607,8 +715,8 @@ gretl_bundle *shp_get_coords (const char *shpname, int *err)
 		i+1, obj->nVertices, obj->nParts);
 
 	if (obj->nParts > 1) {
-	    for (part=1; part < obj->nParts && !*err; part++) {
-		if (obj->PartStart[part] <= obj->PartStart[part-1]) {
+	    for (p=1; p < obj->nParts && !*err; p++) {
+		if (obj->PartStart[p] <= obj->PartStart[p-1]) {
 		    fprintf(stderr, "parts not in order!\n");
 		    *err = E_DATA;
 		}
@@ -616,23 +724,35 @@ gretl_bundle *shp_get_coords (const char *shpname, int *err)
 	}
 
 	if (!*err) {
-	    mi = gretl_array_new(GRETL_TYPE_MATRICES, obj->nParts, err);
-	    if (mi == NULL) {
+	    bfi = gretl_bundle_new(); /* features[i] */
+	    bgi = gretl_bundle_new(); /* geometry */
+	    if (bfi == NULL || bgi == NULL) {
 		*err = E_ALLOC;
 	    }
 	}
 
-	for (part=0, j=0; part < obj->nParts && !*err; part++) {
+	if (!*err) {
+	    mi = gretl_array_new(GRETL_TYPE_MATRICES, obj->nParts, err);
+	    if (!*err) {
+		if (obj->nParts > 1) {
+		    /* Seems like SHP doesn't have something corrreponding
+		       directly to GeoJSON MultiPolygon ??
+		    */
+		    gretl_bundle_set_string(bgi, "type", "Polygon");
+		} else {
+		    gretl_bundle_set_string(bgi, "type", "Polygon");
+		}
+	    }
+	}
+
+	for (p=0, j=0; p < obj->nParts && !*err; p++) {
 	    int rows;
 
-	    if (part == obj->nParts - 1) {
-		rows = obj->nVertices - obj->PartStart[part];
+	    if (p == obj->nParts - 1) {
+		rows = obj->nVertices - obj->PartStart[p];
 	    } else {
-		rows = obj->PartStart[part+1] - obj->PartStart[part];
+		rows = obj->PartStart[p+1] - obj->PartStart[p];
 	    }
-#if 0
-	    fprintf(stderr, " part %d is of length %d\n", part, rows);
-#endif
 	    xy = gretl_matrix_alloc(rows, 2);
 	    if (xy == NULL) {
 		*err = E_ALLOC;
@@ -646,14 +766,23 @@ gretl_bundle *shp_get_coords (const char *shpname, int *err)
 		    gretl_matrix_set(xy, k, 1, obj->fY[j]);
 		    j++;
 		}
-		gretl_array_set_data(mi, part, xy);
+		/* stack matrix into array */
+		gretl_array_set_data(mi, p, xy);
 	    }
 	}
 	fprintf(stderr, " got %d x,y pairs\n", j);
 
 	if (!*err) {
-	    gretl_array_set_data(mm, i, mi);
+	    /* attach array of coordinates matrices under geometry */
+	    gretl_bundle_donate_data(bgi, "coordinates", mi, GRETL_TYPE_ARRAY, 0);
+	    /* attach geometry bundle under feature[i] */
+	    gretl_bundle_donate_data(bfi, "geometry", bgi, GRETL_TYPE_BUNDLE, 0);
+	    gretl_bundle_set_string(bfi, "type", "Feature");
+	    /* and attach feature[i] to features array */
+	    gretl_array_set_data(ff, i, bfi);
 	} else {
+	    gretl_bundle_destroy(bfi);
+	    gretl_bundle_destroy(bgi);
 	    gretl_array_destroy(mi);
 	}
 
@@ -663,17 +792,26 @@ gretl_bundle *shp_get_coords (const char *shpname, int *err)
     SHPClose(SHP);
 
     if (!*err) {
+	*err = dbf_get_properties(ff, dbfname);
+    }
+    free(dbfname);
+
+    if (!*err) {
 	gretl_matrix *bbox;
 
-	gretl_bundle_donate_data(ret, "coordinates", mm,
+	gretl_bundle_donate_data(ret, "features", ff,
 				 GRETL_TYPE_ARRAY, 0);
+#if 1
 	bbox = make_bbox(gmin, gmax);
 	if (bbox != NULL) {
 	    gretl_bundle_donate_data(ret, "bbox", bbox,
 				     GRETL_TYPE_MATRIX, 0);
 	}
+#endif
     } else {
-	gretl_array_destroy(mm);
+	gretl_array_destroy(ff);
+	gretl_bundle_destroy(ret);
+	ret = NULL;
     }
 
     return ret;
@@ -833,15 +971,6 @@ static gretl_matrix *shp2dat (const char *shpname,
     return bbox;
 }
 
-static char *put_ext (char *fname, const char *ext)
-{
-    char *p = strrchr(fname, '.');
-
-    *p = '\0';
-    strcat(p, ext);
-    return fname;
-}
-
 static int do_geojson (const char *fname,
 		       const char *csvname,
 		       char **mapname)
@@ -998,9 +1127,9 @@ static int do_shapefile (const char *fname,
     return err;
 }
 
-gretl_matrix *map2dat (const char *mapname,
-		       const char *datname,
-		       const gretl_matrix *zvec)
+static gretl_matrix *map2dat (const char *mapname,
+			      const char *datname,
+			      const gretl_matrix *zvec)
 {
     char infile[MAXLEN];
     int have_payload;
@@ -1017,7 +1146,8 @@ gretl_matrix *map2dat (const char *mapname,
 
     if (has_suffix(mapname, ".shp")) {
 	return shp2dat(infile, datname, zvec, have_payload);
-    } else if (libset_get_bool(GEOJSON_FAST)) {
+    } else if (0 /* libset_get_bool(GEOJSON_FAST) */) {
+	/* FIXME revisit this */
 	return fast_geo2dat(infile, datname, zvec, have_payload);
     } else {
 	return geo2dat(infile, datname, zvec, have_payload);
@@ -1171,6 +1301,7 @@ int geoplot (const char *mapfile,
 	}
 	err = write_map_gp_file(plotfile, datfile, bbox, zrange, opts, show);
 	gretl_matrix_free(zrange);
+	gretl_matrix_free(bbox);
     }
 
  bailout:

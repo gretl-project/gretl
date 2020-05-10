@@ -598,8 +598,6 @@ struct str_table hidden_funcs[] = {
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
     { HF_DBF2CSV,  "_dbf2csv" },
-    { HF_MAP2DAT,  "_map2dat" },
-    { HF_SHP2BUN,  "_shp2bun" },
     { 0,           NULL }
 };
 

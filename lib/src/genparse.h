@@ -292,7 +292,6 @@ enum {
     F_MLOG,
     F_BARRIER,
     HF_JBTERMS,
-    HF_SHP2BUN,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
     F_ARGNAME,
@@ -467,7 +466,6 @@ enum {
     F_GEOPLOT,
     HF_REGLS,
     HF_DBF2CSV,
-    HF_MAP2DAT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

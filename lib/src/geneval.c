@@ -7516,7 +7516,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	const char *sl = l->v.str;
 	const char *sr = NULL;
 
-	if (f == F_JSONGETB || f == HF_SHP2BUN) {
+	if (f == F_JSONGETB) {
 	    ; /* checks done below */
 	} else if (f == F_XMLGET && r->t == ARRAY) {
 	    if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
@@ -7528,7 +7528,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
 	if (!p->err) {
 	    ret = (f == F_INSTRING)? aux_scalar_node(p) :
-		(f == F_JSONGETB || f == HF_SHP2BUN)? aux_bundle_node(p) :
+		(f == F_JSONGETB)? aux_bundle_node(p) :
 		aux_string_node(p);
 	}
 
@@ -7599,15 +7599,6 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		p->err = E_FOPEN;
 	    } else {
 		ret->v.b = jfunc(l->v.str, path, &p->err);
-	    }
-	} else if (f == HF_SHP2BUN) {
-	    gretl_bundle *(*bfunc) (const char *, int *);
-
-	    bfunc = get_plugin_function("shp_get_coords");
-	    if (bfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
-		ret->v.b = bfunc(l->v.str, &p->err);
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
@@ -11843,31 +11834,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    } else {
 		ret = aux_scalar_node(p);
 		ret->v.xval = p->err = dbffunc(l->v.str, m->v.str, header);
-	    }
-	}
-    } else if (f == HF_MAP2DAT) {
-	gretl_matrix *(*mapfunc) (const char *, const char *,
-				  const gretl_matrix *);
-	gretl_matrix *zvec = NULL;
-
-	post_process = 0;
-	if (l->t != STR || m->t != STR) {
-	    p->err = E_TYPES;
-	} else if (r->t == MAT) {
-	    zvec = r->v.m;
-	} else if (r->t != EMPTY) {
-	    p->err = E_TYPES;
-	}
-	if (!p->err) {
-	    mapfunc = get_plugin_function("map2dat");
-	    if (mapfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
-		ret = aux_matrix_node(p);
-		ret->v.m = mapfunc(l->v.str, m->v.str, zvec);
-		if (ret->v.m == NULL) {
-		    p->err = E_DATA; /* FIXME? */
-		}
 	    }
 	}
     } else if (f == F_GEOPLOT) {
@@ -16609,7 +16575,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case HF_REGLS:
     case HF_DBF2CSV:
-    case HF_MAP2DAT:
     case F_GEOPLOT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
@@ -16916,7 +16881,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_JSONGETB:
-    case HF_SHP2BUN:
 	if (l->t == STR && null_or_string(r)) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {

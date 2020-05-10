@@ -2452,6 +2452,22 @@ static gretl_bundle *read_json_bundle (const char *fname,
     return b;
 }
 
+static gretl_bundle *read_shapefile_bundle (const char *fname,
+					    int *err)
+{
+    gretl_bundle *(*bfunc) (const char *, int *);
+    gretl_bundle *b = NULL;
+
+    bfunc = get_plugin_function("shp_get_bundle");
+    if (bfunc == NULL) {
+	*err = E_FOPEN;
+    } else {
+	b = bfunc(fname, err);
+    }
+
+    return b;
+}
+
 gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 					   int from_dotdir,
 					   int *err)
@@ -2470,6 +2486,8 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
 
     if (has_suffix(fname, ".json") || has_suffix(fname, ".geojson")) {
 	b = read_json_bundle(fullname, err);
+    } else if (has_suffix(fname, ".shp")) {
+	b = read_shapefile_bundle(fullname, err);
     } else {
 	*err = gretl_xml_open_doc_root(fullname, "gretl-bundle", &doc, &cur);
 	if (!*err) {

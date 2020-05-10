@@ -140,7 +140,7 @@ end function
 
 function bundle describe_geojson (const bundle jb, int verbose[1])
 
-    # as per RFC 7496
+    # as per RFC 7946, "The GeoJSON Format"
 
     bundle ret = null
 
