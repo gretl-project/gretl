@@ -722,7 +722,6 @@ static int object_is_matrix (JsonReader *reader)
 	    const gchar *typestr = json_reader_get_string_value(reader);
 
 	    if (!strcmp(typestr, "gretl_matrix")) {
-		fprintf(stderr, "Got gretl_matrix\n");
 		ret = 1;
 	    }
 	}
@@ -734,17 +733,39 @@ static int object_is_matrix (JsonReader *reader)
 
 static int array_is_matrix (JsonReader *reader)
 {
+    int i, n = json_reader_count_elements(reader);
+    int cant_be = 0;
     int ret = 0;
 
-    if (json_reader_read_element(reader, 0)) {
-	if (json_reader_is_value(reader)) {
-	    JsonNode *node = json_reader_get_value(reader);
-	    GType type = json_node_get_value_type(node);
+    for (i=0; i<n && !cant_be && !ret; i++) {
+	if (json_reader_read_element(reader, i)) {
+	    if (json_reader_is_value(reader)) {
+		JsonNode *node = json_reader_get_value(reader);
+		GType type = json_node_get_value_type(node);
 
-	    ret = numeric_type(type);
+		if (numeric_type(type)) {
+		    ret = 1;
+		} else if (json_node_is_null(node)) {
+		    ; /* could be? */
+		} else if (type == G_TYPE_STRING) {
+		    const char *s = json_node_get_string(node);
+
+		    if (!strcmp(s, ".") || !strcmp(s, "NA")) {
+			; /* could be? */
+		    } else {
+			cant_be = 1;
+		    }
+		} else {
+		    cant_be = 1;
+		}
+	    } else {
+		cant_be = 1;
+	    }
+	} else {
+	    cant_be = 1;
 	}
+	json_reader_end_element(reader);
     }
-    json_reader_end_element(reader);
 
     return ret;
 }
