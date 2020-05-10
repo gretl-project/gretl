@@ -558,6 +558,127 @@ int dbf2csv (const char *dbfname,
     return 0;
 }
 
+gretl_bundle *shp_get_coords (const char *shpname, int *err)
+{
+    gretl_bundle *ret = NULL;
+    gretl_array *mm = NULL;
+    SHPHandle SHP;
+    double gmin[4], gmax[4];
+    int n_shapetype, n_entities;
+    int i, j, k, part;
+
+    SHP = SHPOpen(shpname, "rb");
+    if (SHP == NULL) {
+	*err = E_FOPEN;
+	return NULL;
+    }
+
+    ret = gretl_bundle_new();
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	SHPClose(SHP);
+	return NULL;
+    }
+
+    SHPGetInfo(SHP, &n_entities, &n_shapetype, gmin, gmax);
+    SHPSetFastModeReadObject(SHP, TRUE);
+
+    fprintf(stderr, "shp: n_entities = %d\n", n_entities);
+
+    mm = gretl_array_new(GRETL_TYPE_ARRAYS, n_entities, err);
+
+    for (i=0; i<n_entities && !*err; i++) {
+	gretl_array *mi = NULL;
+	gretl_matrix *xy = NULL;
+        SHPObject *obj;
+
+	obj = SHPReadObject(SHP, i);
+
+        if (obj == NULL) {
+	    fprintf(stderr, "Unable to read shape %d, terminating.\n", i);
+	    *err = E_DATA;
+        } else if (obj->nParts > 0 && obj->PartStart[0] != 0) {
+            fprintf(stderr, "PartStart[0] = %d, not zero as expected.\n",
+		    obj->PartStart[0]);
+	    *err = E_DATA;
+        }
+
+	fprintf(stderr, "*** entity %d: %d vertices in %d part(s) ***\n",
+		i+1, obj->nVertices, obj->nParts);
+
+	if (obj->nParts > 1) {
+	    for (part=1; part < obj->nParts && !*err; part++) {
+		if (obj->PartStart[part] <= obj->PartStart[part-1]) {
+		    fprintf(stderr, "parts not in order!\n");
+		    *err = E_DATA;
+		}
+	    }
+	}
+
+	if (!*err) {
+	    mi = gretl_array_new(GRETL_TYPE_MATRICES, obj->nParts, err);
+	    if (mi == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+
+	for (part=0, j=0; part < obj->nParts && !*err; part++) {
+	    int rows;
+
+	    if (part == obj->nParts - 1) {
+		rows = obj->nVertices - obj->PartStart[part];
+	    } else {
+		rows = obj->PartStart[part+1] - obj->PartStart[part];
+	    }
+#if 0
+	    fprintf(stderr, " part %d is of length %d\n", part, rows);
+#endif
+	    xy = gretl_matrix_alloc(rows, 2);
+	    if (xy == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (k=0; k<rows && !*err; k++) {
+		    if (j >= obj->nVertices) {
+			fprintf(stderr, "reading off the end of shp array!\n");
+			break;
+		    }
+		    gretl_matrix_set(xy, k, 0, obj->fX[j]);
+		    gretl_matrix_set(xy, k, 1, obj->fY[j]);
+		    j++;
+		}
+		gretl_array_set_data(mi, part, xy);
+	    }
+	}
+	fprintf(stderr, " got %d x,y pairs\n", j);
+
+	if (!*err) {
+	    gretl_array_set_data(mm, i, mi);
+	} else {
+	    gretl_array_destroy(mi);
+	}
+
+        SHPDestroyObject(obj);
+    }
+
+    SHPClose(SHP);
+
+    if (!*err) {
+	gretl_matrix *bbox;
+
+	gretl_bundle_donate_data(ret, "coordinates", mm,
+				 GRETL_TYPE_ARRAY, 0);
+	bbox = make_bbox(gmin, gmax);
+	if (bbox != NULL) {
+	    gretl_bundle_donate_data(ret, "bbox", bbox,
+				     GRETL_TYPE_MATRIX, 0);
+	}
+    } else {
+	gretl_array_destroy(mm);
+    }
+
+    return ret;
+}
+
 static void mercatorize (double lat, double lon,
 			 int width, int height,
 			 double *px, double *py)
@@ -643,7 +764,7 @@ static gretl_matrix *shp2dat (const char *shpname,
 
     SHPSetFastModeReadObject(SHP, TRUE);
 
-    for (i=0; i<n_entities; i++) {
+    for (i=0; i<n_entities && !err; i++) {
         SHPObject *obj;
 	double x, y, z = 0;
 	int j;
@@ -662,6 +783,13 @@ static gretl_matrix *shp2dat (const char *shpname,
 		    obj->PartStart[0]);
 	    err = E_DATA;
         }
+
+	if (err) {
+	    if (obj != NULL) {
+		SHPDestroyObject(obj);
+	    }
+	    break;
+	}
 
         for (j=0, part=1; j<obj->nVertices && !err; j++) {
 	    if (part < obj->nParts && obj->PartStart[part] == j) {
@@ -696,7 +824,9 @@ static gretl_matrix *shp2dat (const char *shpname,
     fclose(fp);
     SHPClose(SHP);
 
-    if (!err) {
+    if (err) {
+	gretl_remove(datname);
+    } else {
 	bbox = make_bbox(gmin, gmax);
     }
 

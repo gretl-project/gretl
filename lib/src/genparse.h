@@ -292,6 +292,7 @@ enum {
     F_MLOG,
     F_BARRIER,
     HF_JBTERMS,
+    HF_SHP2BUN,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
     F_ARGNAME,

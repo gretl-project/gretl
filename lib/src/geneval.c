@@ -7513,9 +7513,10 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     NODE *ret = NULL;
 
     if (starting(p)) {
-	const char *sr, *sl = l->v.str;
+	const char *sl = l->v.str;
+	const char *sr = NULL;
 
-	if (f == F_JSONGETB) {
+	if (f == F_JSONGETB || f == HF_SHP2BUN) {
 	    ; /* checks done below */
 	} else if (f == F_XMLGET && r->t == ARRAY) {
 	    if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
@@ -7527,7 +7528,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
 	if (!p->err) {
 	    ret = (f == F_INSTRING)? aux_scalar_node(p) :
-		(f == F_JSONGETB)? aux_bundle_node(p) :
+		(f == F_JSONGETB || f == HF_SHP2BUN)? aux_bundle_node(p) :
 		aux_string_node(p);
 	}
 
@@ -7535,7 +7536,9 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	    return NULL;
 	}
 
-	sr = r->v.str;
+	if (r != NULL && r->t == STR) {
+	    sr = r->v.str;
+	}
 
 	if (f == F_STRSTR || f == F_INSTRING) {
 	    char *sret, *tmp = gretl_strdup(sr);
@@ -7596,6 +7599,15 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		p->err = E_FOPEN;
 	    } else {
 		ret->v.b = jfunc(l->v.str, path, &p->err);
+	    }
+	} else if (f == HF_SHP2BUN) {
+	    gretl_bundle *(*bfunc) (const char *, int *);
+
+	    bfunc = get_plugin_function("shp_get_coords");
+	    if (bfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret->v.b = bfunc(l->v.str, &p->err);
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
@@ -16904,6 +16916,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_JSONGETB:
+    case HF_SHP2BUN:
 	if (l->t == STR && null_or_string(r)) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {
