@@ -114,7 +114,8 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 	    gretl_matrix_set(ret, i, 0, atof(sx));
 	    gretl_matrix_set(ret, i, 1, atof(sy));
 	} else {
-	    fprintf(stderr, "ring2matrix: i=%d of %d, rtype=%d\n", i, n, rtype);
+	    fprintf(stderr, "ring2matrix: i=%d of %d, rtype=%d!\n",
+		    i, n, rtype);
 	}
     }
 
@@ -472,8 +473,9 @@ DBFHandle open_dbf (const char *dbfname,
     return DBF;
 }
 
-/* Fill out "properties" bundles within @b with info from
-   DBF file */
+/* fill out "properties" bundles within @b with info from
+   DBF file
+*/
 
 int dbf_get_properties (gretl_array *ff, const char *dbfname)
 {
@@ -652,6 +654,8 @@ int dbf2csv (const char *dbfname,
     return 0;
 }
 
+#define SHP_DEBUG 0
+
 gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 {
     gretl_bundle *ret = NULL;
@@ -687,7 +691,9 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
     SHPGetInfo(SHP, &n_entities, &n_shapetype, gmin, gmax);
     SHPSetFastModeReadObject(SHP, TRUE);
 
+#if SHP_DEBUG
     fprintf(stderr, "shp: n_entities = %d\n", n_entities);
+#endif
     gretl_bundle_set_string(ret, "type", "FeatureCollection");
 
     /* array for "feature" bundles */
@@ -711,13 +717,15 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 	    *err = E_DATA;
         }
 
+#if SHP_DEBUG
 	fprintf(stderr, "*** entity %d: %d vertices in %d part(s) ***\n",
 		i+1, obj->nVertices, obj->nParts);
+#endif
 
 	if (obj->nParts > 1) {
 	    for (p=1; p < obj->nParts && !*err; p++) {
 		if (obj->PartStart[p] <= obj->PartStart[p-1]) {
-		    fprintf(stderr, "parts not in order!\n");
+		    gretl_errmsg_set("SHP parts are not in order!");
 		    *err = E_DATA;
 		}
 	    }
@@ -725,7 +733,7 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 
 	if (!*err) {
 	    bfi = gretl_bundle_new(); /* features[i] */
-	    bgi = gretl_bundle_new(); /* geometry */
+	    bgi = gretl_bundle_new(); /* geometry for features[i] */
 	    if (bfi == NULL || bgi == NULL) {
 		*err = E_ALLOC;
 	    }
@@ -734,14 +742,11 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 	if (!*err) {
 	    mi = gretl_array_new(GRETL_TYPE_MATRICES, obj->nParts, err);
 	    if (!*err) {
-		if (obj->nParts > 1) {
-		    /* Seems like SHP doesn't have something corrreponding
-		       directly to GeoJSON MultiPolygon ??
-		    */
-		    gretl_bundle_set_string(bgi, "type", "Polygon");
-		} else {
-		    gretl_bundle_set_string(bgi, "type", "Polygon");
-		}
+		/* Note 2020-05-10: even when an SHP entity has more
+		   than one "part", this does not seem to map onto the
+		   GeoJSON "MultiPolygon" type.
+		*/
+		gretl_bundle_set_string(bgi, "type", "Polygon");
 	    }
 	}
 
@@ -759,21 +764,24 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 	    } else {
 		for (k=0; k<rows && !*err; k++) {
 		    if (j >= obj->nVertices) {
-			fprintf(stderr, "reading off the end of shp array!\n");
+			gretl_errmsg_set("Reading off the end of shp array!");
+			err = E_DATA;
 			break;
 		    }
 		    gretl_matrix_set(xy, k, 0, obj->fX[j]);
 		    gretl_matrix_set(xy, k, 1, obj->fY[j]);
 		    j++;
 		}
-		/* stack matrix into array */
+		/* push matrix onto array */
 		gretl_array_set_data(mi, p, xy);
 	    }
 	}
+#if SHP_DEBUG
 	fprintf(stderr, " got %d x,y pairs\n", j);
+#endif
 
 	if (!*err) {
-	    /* attach array of coordinates matrices under geometry */
+	    /* attach array of coordinate matrices under geometry */
 	    gretl_bundle_donate_data(bgi, "coordinates", mi, GRETL_TYPE_ARRAY, 0);
 	    /* attach geometry bundle under feature[i] */
 	    gretl_bundle_donate_data(bfi, "geometry", bgi, GRETL_TYPE_BUNDLE, 0);
@@ -801,13 +809,11 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 
 	gretl_bundle_donate_data(ret, "features", ff,
 				 GRETL_TYPE_ARRAY, 0);
-#if 1
 	bbox = make_bbox(gmin, gmax);
 	if (bbox != NULL) {
 	    gretl_bundle_donate_data(ret, "bbox", bbox,
 				     GRETL_TYPE_MATRIX, 0);
 	}
-#endif
     } else {
 	gretl_array_destroy(ff);
 	gretl_bundle_destroy(ret);
