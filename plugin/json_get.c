@@ -1255,6 +1255,9 @@ static void matrix_to_json (void *data,
 			    int size,
 			    JsonBuilder *jb);
 
+static void list_to_json (void *data,
+			  JsonBuilder *jb);
+
 static void gretl_array_to_json (gretl_array *a,
 				 JsonBuilder *jb)
 {
@@ -1283,6 +1286,8 @@ static void gretl_array_to_json (gretl_array *a,
 	    json_builder_end_array(jb);
 	} else if (type == GRETL_TYPE_MATRICES) {
 	    matrix_to_json(data, GRETL_TYPE_MATRIX, 0, jb);
+	} else if (type == GRETL_TYPE_LISTS) {
+	    list_to_json(data, jb);
 	}
     }
 }
