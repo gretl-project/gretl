@@ -158,7 +158,7 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype);
 static void graph_display_pdf (png_plot *plot);
 static void plot_do_rescale (png_plot *plot, int mod);
 #ifdef G_OS_WIN32
-static void win32_process_graph (GPT_SPEC *spec, int dest);
+static void win32_process_graph (png_plot *plot, int dest);
 #else
 static void set_plot_for_copy (png_plot *plot);
 #endif
@@ -638,7 +638,9 @@ int gp_term_code (gpointer p, int action)
     GPT_SPEC *spec;
 
     if (action == SAVE_GNUPLOT) {
-	spec = (GPT_SPEC *) p;
+	png_plot *plot = (png_plot *) p;
+
+	spec = plot->spec;
     } else {
 	/* EPS/PDF saver */
 	spec = graph_saver_get_plotspec(p);
@@ -731,11 +733,16 @@ static int revise_plot_file (GPT_SPEC *spec,
 
 void save_graph_to_file (gpointer data, const char *fname)
 {
-    GPT_SPEC *spec = (GPT_SPEC *) data;
+    png_plot *plot = (png_plot *) data;
+    GPT_SPEC *spec = plot->spec;
     char pltname[FILENAME_MAX];
     int err = 0;
 
     sprintf(pltname, "%sgptout.tmp", gretl_dotdir());
+
+    if (spec->code == PLOT_GEOMAP) {
+	set_special_plot_size(plot->pixel_width, plot->pixel_height);
+    }
     err = revise_plot_file(spec, pltname, fname, NULL);
 
     if (!err) {
@@ -1084,8 +1091,9 @@ void run_gnuplot_script (gchar *buf)
    or printing an EMF, on MS Windows
 */
 
-static void win32_process_graph (GPT_SPEC *spec, int dest)
+static void win32_process_graph (png_plot *plot, int dest)
 {
+    GPT_SPEC *spec = plot->spec;
     char emfname[FILENAME_MAX];
     char plttmp[FILENAME_MAX];
     gchar *plotcmd;
@@ -1094,6 +1102,10 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     spec->termtype = GP_TERM_EMF;
     gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     gretl_build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
+
+    if (plot->code == PLOT_GEOMAP) {
+	set_special_plot_size(plot->pixel_width, plot->pixel_height);
+    }
 
     err = revise_plot_file(spec, plttmp, emfname, NULL);
     if (err) {
@@ -1120,7 +1132,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
 
 #else /* ! MS Windows */
 
-static GPT_SPEC *copyspec;
+static png_plot *copyplot;
 static gboolean cb_image_mono;
 
 /* Here we're just posting the information that an image
@@ -1130,8 +1142,8 @@ static gboolean cb_image_mono;
 
 static void set_plot_for_copy (png_plot *plot)
 {
-    copyspec = plot->spec;
-    cb_image_mono = copyspec->flags & GPT_MONO ? 1 : 0;
+    copyplot = plot;
+    cb_image_mono = plot->spec->flags & GPT_MONO ? 1 : 0;
     flag_image_available();
 }
 
@@ -1142,7 +1154,7 @@ static void set_plot_for_copy (png_plot *plot)
 
 int write_plot_for_copy (int target)
 {
-    GPT_SPEC *spec = copyspec;
+    GPT_SPEC *spec = copyplot->spec;
     char outname[FILENAME_MAX];
     char inpname[FILENAME_MAX];
     GptFlags saveflags;
@@ -1158,6 +1170,8 @@ int write_plot_for_copy (int target)
     saveflags = spec->flags;
     saveterm = spec->termtype;
     savescale = spec->scale;
+
+    /* FIXME dimensions for PLOT_GEOMAP */
 
     if (target == TARGET_SVG) {
 	spec->termtype = GP_TERM_SVG;
@@ -4070,10 +4084,10 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
     if (!strcmp(menu_string, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
 	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC,
-				  plot->spec, plot->shell);
+				  plot, plot->shell);
     } else if (!strcmp(menu_string, _("Copy to clipboard"))) {
 #ifdef G_OS_WIN32
-	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
+	win32_process_graph(plot, WIN32_TO_CLIPBOARD);
 #else
 	set_plot_for_copy(plot);
 #endif
@@ -4081,7 +4095,7 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 
 #ifdef G_OS_WIN32
     else if (!strcmp(menu_string, _("Print"))) {
-	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
+	win32_process_graph(plot, WIN32_TO_PRINTER);
     }
 #endif
 
@@ -4322,7 +4336,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Save as PNG..."))) {
 	plot->spec->termtype = GP_TERM_PNG;
         file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC,
-				  plot->spec, plot->shell);
+				  plot, plot->shell);
     } else if (!strcmp(item_string, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
 	pdf_ps_dialog(plot->spec, plot->shell);
@@ -4899,7 +4913,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	break;
 #ifdef G_OS_WIN32
     case GDK_c:
-	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
+	win32_process_graph(plot, WIN32_TO_CLIPBOARD);
 	break;
 #endif
     default:
@@ -5086,8 +5100,8 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 #endif
 
 #ifndef G_OS_WIN32
-    if (copyspec == plot->spec) {
-	copyspec = NULL;
+    if (copyplot == plot) {
+	copyplot = NULL;
     }
 #endif
 

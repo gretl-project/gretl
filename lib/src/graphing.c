@@ -1352,12 +1352,12 @@ void set_special_plot_size (float width, float height)
     special_height = height;
 }
 
-static void clear_special_dims (void)
+static void clear_special_size (void)
 {
     special_width = special_height = 0;
 }
 
-static int special_dims_set (void)
+static int special_size_set (void)
 {
     return special_width > 0 && special_height > 0;
 }
@@ -1367,10 +1367,10 @@ static void write_png_size_string (char *s, PlotType ptype,
 {
     int w = GP_WIDTH, h = GP_HEIGHT;
 
-    if (special_dims_set()) {
+    if (special_size_set()) {
 	w = (int) special_width;
 	h = (int) special_height;
-	clear_special_dims();
+	clear_special_size();
     } else if (flags & GPT_LETTERBOX) {
 	/* time series plots */
 	w = GP_LB_WIDTH;
@@ -1582,15 +1582,28 @@ static char *gretl_emf_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags)
 {
+    gchar *size_string = NULL;
     char font_string[140];
 
     *font_string = '\0';
     write_emf_font_string(font_string);
 
+    if (special_size_set()) {
+	size_string = g_strdup_printf("size %d,%d ",
+				      (int) special_width,
+				      (int) special_height);
+	clear_special_size();
+    }
+
     if (flags & GPT_MONO) {
 	strcat(term_line, "set term emf dash noenhanced ");
     } else {
 	strcat(term_line, "set term emf color noenhanced ");
+    }
+
+    if (size_string != NULL) {
+	strcat(term_line, size_string);
+	g_free(size_string);
     }
 
     if (*font_string != '\0') {
