@@ -566,7 +566,7 @@ void *get_packaged_C_function (const char *pkgname,
    open at program termination. So you can define this
    as non-zero temporarily.
 */
-#define KEEP_PLUGINS_OPEN 1
+#define KEEP_PLUGINS_OPEN 0
 
 /**
  * close_plugin:
