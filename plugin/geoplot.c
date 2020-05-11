@@ -765,7 +765,7 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 		for (k=0; k<rows && !*err; k++) {
 		    if (j >= obj->nVertices) {
 			gretl_errmsg_set("Reading off the end of shp array!");
-			err = E_DATA;
+			*err = E_DATA;
 			break;
 		    }
 		    gretl_matrix_set(xy, k, 0, obj->fX[j]);
