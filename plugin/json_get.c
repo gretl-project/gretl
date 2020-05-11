@@ -721,7 +721,8 @@ static int object_is_matrix (JsonReader *reader)
 	if (json_reader_read_member(reader, "type")) {
 	    const gchar *typestr = json_reader_get_string_value(reader);
 
-	    if (!strcmp(typestr, "gretl_matrix")) {
+	    if (!strcmp(typestr, "gretl_matrix") ||
+		!strcmp(typestr, "gretl_series")) {
 		ret = 1;
 	    }
 	}
@@ -1249,7 +1250,9 @@ static void bundled_item_to_json (gpointer keyp,
 				  gpointer value,
 				  gpointer p);
 
-static void matrix_to_json (gretl_matrix *m,
+static void matrix_to_json (void *data,
+			    GretlType type,
+			    int size,
 			    JsonBuilder *jb);
 
 static void gretl_array_to_json (gretl_array *a,
@@ -1279,7 +1282,7 @@ static void gretl_array_to_json (gretl_array *a,
 	    gretl_array_to_json(data, jb);
 	    json_builder_end_array(jb);
 	} else if (type == GRETL_TYPE_MATRICES) {
-	    matrix_to_json(data, jb);
+	    matrix_to_json(data, GRETL_TYPE_MATRIX, 0, jb);
 	}
     }
 }
@@ -1287,23 +1290,45 @@ static void gretl_array_to_json (gretl_array *a,
 /* write matrix @m as a JSON object, including the
    matrix data in vec form */
 
-static void matrix_to_json_as_vec (gretl_matrix *m,
+static void matrix_to_json_as_vec (void *data,
+				   GretlType type,
+				   int size,
 				   JsonBuilder *jb)
 {
-    int i, n = m->rows * m->cols;
+    gretl_matrix *m = NULL;
+    double *val;
+    int i, n;
+
+    if (type == GRETL_TYPE_SERIES) {
+	n = size;
+	val = (double *) data;
+    } else {
+	m = data;
+	n = m->rows * m->cols;
+	val = m->val;
+    }
 
     json_builder_begin_object(jb);
-
     json_builder_set_member_name(jb, "type");
-    json_builder_add_string_value(jb, "gretl_matrix");
-    json_builder_set_member_name(jb, "rows");
-    json_builder_add_int_value(jb, m->rows);
-    json_builder_set_member_name(jb, "cols");
-    json_builder_add_int_value(jb, m->cols);
+    if (type == GRETL_TYPE_SERIES) {
+	json_builder_add_string_value(jb, "gretl_series");
+	json_builder_set_member_name(jb, "size");
+	json_builder_add_int_value(jb, size);
+    } else {
+	json_builder_add_string_value(jb, "gretl_matrix");
+	json_builder_set_member_name(jb, "rows");
+	json_builder_add_int_value(jb, m->rows);
+	json_builder_set_member_name(jb, "cols");
+	json_builder_add_int_value(jb, m->cols);
+    }
     json_builder_set_member_name(jb, "data");
     json_builder_begin_array(jb);
     for (i=0; i<n; i++) {
-	json_builder_add_double_value(jb, m->val[i]);
+	if (na(val[i])) {
+	    json_builder_add_string_value(jb, "NA");
+	} else {
+	    json_builder_add_double_value(jb, val[i]);
+	}
     }
     json_builder_end_array(jb);
 
@@ -1312,16 +1337,29 @@ static void matrix_to_json_as_vec (gretl_matrix *m,
 
 /* write matrix @m as a JSON array, or array of arrays */
 
-static void matrix_to_json_via_array (gretl_matrix *m,
+static void matrix_to_json_via_array (void *data,
+				      GretlType type,
+				      int size,
 				      JsonBuilder *jb)
 {
-    int i, j, vlen = gretl_vector_get_length(m);
+    gretl_matrix *m = NULL;
+    double *val;
+    int i, j, len;
+
+    if (type == GRETL_TYPE_SERIES) {
+	len = size;
+	val = data;
+    } else {
+	m = data;
+	len = gretl_vector_get_length(m);
+	val = m->val;
+    }
 
     json_builder_begin_array(jb);
 
-    if (vlen > 0) {
-	for (i=0; i<vlen; i++) {
-	    json_builder_add_double_value(jb, m->val[i]);
+    if (len > 0) {
+	for (i=0; i<len; i++) {
+	    json_builder_add_double_value(jb, val[i]);
 	}
     } else {
 	double mij;
@@ -1339,14 +1377,34 @@ static void matrix_to_json_via_array (gretl_matrix *m,
     json_builder_end_array(jb);
 }
 
-static void matrix_to_json (gretl_matrix *m,
+static void matrix_to_json (void *data,
+			    GretlType type,
+			    int size,
 			    JsonBuilder *jb)
 {
     if (mat2arr) {
-	matrix_to_json_via_array(m, jb);
+	matrix_to_json_via_array(data, type, size, jb);
     } else {
-	matrix_to_json_as_vec(m, jb);
+	matrix_to_json_as_vec(data, type, size, jb);
     }
+}
+
+static void list_to_json (void *data,
+			  JsonBuilder *jb)
+{
+    int *list = data;
+    int i;
+
+    json_builder_begin_object(jb);
+    json_builder_set_member_name(jb, "type");
+    json_builder_add_string_value(jb, "gretl_list");
+    json_builder_set_member_name(jb, "data");
+    json_builder_begin_array(jb);
+    for (i=0; i<=list[0]; i++) {
+	json_builder_add_int_value(jb, list[i]);
+    }
+    json_builder_end_array(jb);
+    json_builder_end_object(jb);
 }
 
 static void bundled_item_to_json (gpointer keyp,
@@ -1357,10 +1415,11 @@ static void bundled_item_to_json (gpointer keyp,
     bundled_item *item = value;
     GretlType type;
     JsonBuilder *jb = p;
+    int size;
     void *data;
 
     json_builder_set_member_name(jb, key);
-    data = bundled_item_get_data(item, &type, NULL);
+    data = bundled_item_get_data(item, &type, &size);
 
 #if JB_DEBUG
     fprintf(stderr, "*** bundled item '%s', type %s ***\n",
@@ -1375,8 +1434,9 @@ static void bundled_item_to_json (gpointer keyp,
     } else if (type == GRETL_TYPE_INT) {
 	int k = *(int *) data;
 	json_builder_add_int_value(jb, k);
-    } else if (type == GRETL_TYPE_MATRIX) {
-	matrix_to_json(data, jb);
+    } else if (type == GRETL_TYPE_MATRIX ||
+	       type == GRETL_TYPE_SERIES) {
+	matrix_to_json(data, type, size, jb);
     } else if (type == GRETL_TYPE_BUNDLE) {
 	GHashTable *ht = gretl_bundle_get_content(data);
 
@@ -1387,6 +1447,8 @@ static void bundled_item_to_json (gpointer keyp,
 	json_builder_begin_array(jb);
 	gretl_array_to_json(data, jb);
 	json_builder_end_array(jb);
+    } else if (type == GRETL_TYPE_LIST) {
+	list_to_json(data, jb);
     }
 }
 
