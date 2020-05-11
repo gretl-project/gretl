@@ -1065,6 +1065,35 @@ static void write_other_font_string (char *fstr, int stdsize)
     }
 }
 
+#define TRY_GPSTY 0
+
+#if TRY_GPSTY
+
+static char gp_style[32];
+
+static gchar *maybe_get_gp_style (void)
+{
+    gchar *sty = NULL;
+
+    /* cheating! */
+    strcpy(gp_style, "dark2.gpsty");
+
+    if (gp_style[0] != '\0') {
+	gchar *filename;
+
+	filename = g_build_filename(gretl_home(), "data",
+				    "gnuplot", gp_style, NULL);
+	g_file_get_contents(filename, &sty, NULL, NULL);
+	fprintf(stderr, "filename: '%s'\n", filename);
+	fprintf(stderr, "content: '%s'\n", sty);
+	g_free(filename);
+    }
+
+    return sty;
+}
+
+#endif
+
 void write_plot_line_styles (int ptype, FILE *fp)
 {
     char cstr[12];
@@ -1090,7 +1119,18 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
-    } else if (ptype != PLOT_HEATMAP && ptype != PLOT_GEOMAP) {
+    } else if (ptype == PLOT_HEATMAP || ptype == PLOT_GEOMAP) {
+	; /* these are handled specially */
+    } else {
+	/* the primary default case */
+#if TRY_GPSTY
+	gchar *sty = maybe_get_gp_style();
+
+	if (sty != NULL) {
+	    fputs(sty, fp);
+	    return;
+	}
+#endif
 	for (i=0; i<BOXCOLOR; i++) {
 	    print_rgb_hash(cstr, &user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
