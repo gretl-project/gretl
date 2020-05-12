@@ -9647,7 +9647,7 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
     return ret;
 }
 
-#endif
+#endif /* USE_RLIB */
 
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
