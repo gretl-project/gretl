@@ -585,6 +585,12 @@ static int jb_add_bundle (jbundle *jb, const char *name,
     return err;
 }
 
+/* Retrieve a numeric value for placement in a matrix
+   (or series). It's not totally clear what we should
+   recognize as NAs -- for now we're accepting a null
+   value and a short list of string values.
+*/
+
 static double get_matrix_element (JsonReader *reader, int *err)
 {
     JsonNode *node = json_reader_get_value(reader);
@@ -612,21 +618,39 @@ static double get_matrix_element (JsonReader *reader, int *err)
     return x;
 }
 
+/* Add a gretl matrix to the current bundle (if @a is NULL)
+   or array (if @a is non-NULL). This also handles the
+   case of a gretl series, but only if the target is a
+   bundle.
+*/
+
 static int jb_add_matrix (JsonReader *reader,
+			  GretlType type,
 			  jbundle *jb,
 			  const char *key,
 			  gretl_array *a, int ai)
 {
-    const char *keys[] = {"rows", "cols"};
-    int i, rc[2];
+    const char *keys[] = {"size", "rows", "cols"};
+    int imin = 1, imax = 3;
+    int i, sz[3] = {0};
     int err = 0;
 
-    for (i=0; i<2 && !err; i++) {
+    if (type == GRETL_TYPE_SERIES) {
+	if (a != NULL) {
+	    /* can't add series to gretl array */
+	    return E_TYPES;
+	} else {
+	    imin = 0;
+	    imax = 1;
+	}
+    }
+
+    for (i=imin; i<imax && !err; i++) {
 	if (!json_reader_read_member(reader, keys[i])) {
 	    gretl_errmsg_sprintf("JSON matrix: couldn't read '%s'", keys[i]);
 	    err = E_DATA;
 	} else {
-	    rc[i] = (int) json_reader_get_int_value(reader);
+	    sz[i] = (int) json_reader_get_int_value(reader);
 	}
 	json_reader_end_member(reader);
     }
@@ -637,39 +661,50 @@ static int jb_add_matrix (JsonReader *reader,
 
     if (!json_reader_read_member(reader, "data") ||
 	!json_reader_is_array(reader)) {
-	gretl_errmsg_set("JSON matrix: couldn't find 'data' array");
+	gretl_errmsg_set("matrix: couldn't find 'data' array");
 	err = E_DATA;
     } else {
-	int n = json_reader_count_elements(reader);
+	int nelem = json_reader_count_elements(reader);
+	int n = (type == GRETL_TYPE_SERIES)? sz[0] : sz[1] * sz[2];
 	gretl_matrix *m = NULL;
+	double *val = NULL;
+	void *ptr = NULL;
 
-	if (n != rc[0] * rc[1]) {
+	if (nelem != n) {
 	    gretl_errmsg_set("JSON matrix: 'data' array wrongly sized");
 	    err = E_DATA;
+	} else if (type == GRETL_TYPE_SERIES) {
+	    val = malloc(n * sizeof *val);
+	    ptr = val;
 	} else {
-	    m = gretl_matrix_alloc(rc[0], rc[1]);
-	    if (m == NULL) {
-		err = E_ALLOC;
+	    m = gretl_matrix_alloc(sz[1], sz[2]);
+	    if (m != NULL) {
+		val = m->val;
+		ptr = m;
 	    }
 	}
-	if (m != NULL) {
+	if (ptr == NULL) {
+	    err = E_ALLOC;
+	} else {
 	    for (i=0; i<n && !err; i++) {
 		if (!json_reader_read_element(reader, i)) {
 		    err = E_DATA;
 		} else {
-		    m->val[i] = get_matrix_element(reader, &err);
+		    val[i] = get_matrix_element(reader, &err);
 		}
 		json_reader_end_element(reader);
 	    }
 	    if (!err) {
 		if (a != NULL) {
-		    err = gretl_array_set_matrix(a, ai, m, 0);
+		    err = gretl_array_set_matrix(a, ai, ptr, 0);
 		} else {
-		    err = gretl_bundle_donate_data(jb->bcurr, key, m,
-						   GRETL_TYPE_MATRIX, 0);
+		    err = gretl_bundle_donate_data(jb->bcurr, key, ptr,
+						   type, sz[0]);
 		}
-	    } else {
+	    } else if (m != NULL) {
 		gretl_matrix_free(m);
+	    } else {
+		free(val);
 	    }
 	}
     }
@@ -677,6 +712,53 @@ static int jb_add_matrix (JsonReader *reader,
 
     return err;
 }
+
+/* Add a gretl list to the current bundle (if @a is NULL)
+   or array (if @a is non-NULL).
+*/
+
+static int jb_add_list (JsonReader *reader,
+			jbundle *jb,
+			const char *key,
+			gretl_array *a, int ai)
+{
+    int err = 0;
+
+    if (!json_reader_read_member(reader, "data") ||
+	!json_reader_is_array(reader)) {
+	gretl_errmsg_set("list: couldn't find 'data' array");
+	err = E_DATA;
+    } else {
+	int i, n = json_reader_count_elements(reader);
+	int *list = malloc(n * sizeof *list);
+
+	if (list != NULL) {
+	    for (i=0; i<n; i++) {
+		if (!json_reader_read_element(reader, i)) {
+		    err = E_DATA;
+		} else {
+		    list[i] = (int) json_reader_get_int_value(reader);
+		}
+		json_reader_end_element(reader);
+	    }
+	    if (a != NULL) {
+		err = gretl_array_set_list(a, ai, list, 0);
+	    } else {
+		err = gretl_bundle_donate_data(jb->bcurr, key, list,
+					       GRETL_TYPE_LIST, 0);
+	    }
+	}
+    }
+    json_reader_end_member(reader);
+
+    return err;
+}
+
+/* add_array_as_matrix(): we come here if we have NOT
+   found a special "gretl_matrix" object but we reckon
+   the JSON array in question is probably numeric and
+   should be made into a matrix.
+*/
 
 static int add_array_as_matrix (JsonReader *reader,
 				jbundle *jb,
@@ -716,25 +798,35 @@ static int add_array_as_matrix (JsonReader *reader,
     return err;
 }
 
-static int object_is_matrix (JsonReader *reader)
+/* Determine if a JSON object is a gretl special:
+   a matrix, series or list. This keys off the
+   "type" string in the object.
+*/
+
+static int is_gretl_object (JsonReader *reader,
+			    GretlType *type)
 {
-    int n = json_reader_count_members(reader);
-    int ret = 0;
+    *type = 0;
 
-    if (n == 4) {
-	if (json_reader_read_member(reader, "type")) {
-	    const gchar *typestr = json_reader_get_string_value(reader);
+    if (json_reader_read_member(reader, "type")) {
+	const gchar *typestr = json_reader_get_string_value(reader);
 
-	    if (!strcmp(typestr, "gretl_matrix") ||
-		!strcmp(typestr, "gretl_series")) {
-		ret = 1;
-	    }
+	if (!strcmp(typestr, "gretl_matrix")) {
+	    *type = GRETL_TYPE_MATRIX;
+	} else if (!strcmp(typestr, "gretl_series")) {
+	    *type = GRETL_TYPE_SERIES;
+	} else if (!strcmp(typestr, "gretl_list")) {
+	    *type = GRETL_TYPE_LIST;
 	}
-	json_reader_end_member(reader);
     }
+    json_reader_end_member(reader);
 
-    return ret;
+    return *type;
 }
+
+/* Try to determine if a JSON array is numeric, and
+   therefore should be turned into a gretl matrix.
+*/
 
 static int array_is_matrix (JsonReader *reader)
 {
@@ -807,8 +899,14 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
     for (i=0; i<n && !err; i++) {
 	json_reader_read_member(reader, S[i]);
 	if (json_reader_is_object(reader)) {
-	    if (object_is_matrix(reader)) {
-		err = jb_add_matrix(reader, jb, S[i], NULL, 0);
+	    GretlType otype;
+
+	    if (is_gretl_object(reader, &otype)) {
+		if (otype == GRETL_TYPE_LIST) {
+		    err = jb_add_list(reader, jb, S[i], NULL, 0);
+		} else {
+		    err = jb_add_matrix(reader, otype, jb, S[i], NULL, 0);
+		}
 	    } else {
 		int lsave = jb->level;
 
@@ -919,8 +1017,14 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 		atype = gretl_array_get_type(a);
 	    }
 	} else if (json_reader_is_object(reader)) {
-	    if (object_is_matrix(reader)) {
-		err = jb_add_matrix(reader, jb, NULL, a, i);
+	    GretlType otype;
+
+	    if (is_gretl_object(reader, &otype)) {
+		if (otype == GRETL_TYPE_LIST) {
+		    err = jb_add_list(reader, jb, NULL, a, i);
+		} else {
+		    err = jb_add_matrix(reader, otype, jb, NULL, a, i);
+		}
 	    } else {
 		if (atype != GRETL_TYPE_BUNDLES) {
 		    /* try switching to bundles */
@@ -1002,8 +1106,9 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
     return err;
 }
 
-/* Process a JSON value node: we convert all array values
-   to strings */
+/* Process a JSON value node: in this context we convert
+   all array values to strings.
+*/
 
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i)
@@ -1441,9 +1546,11 @@ static void bundled_item_to_json (gpointer keyp,
 	json_builder_add_string_value(jb, data);
     } else if (type == GRETL_TYPE_DOUBLE) {
 	double x = *(double *) data;
+
 	json_builder_add_double_value(jb, x);
     } else if (type == GRETL_TYPE_INT) {
 	int k = *(int *) data;
+
 	json_builder_add_int_value(jb, k);
     } else if (type == GRETL_TYPE_MATRIX ||
 	       type == GRETL_TYPE_SERIES) {
