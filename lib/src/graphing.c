@@ -1233,11 +1233,38 @@ static int do_plot_bounding_box (void)
     return err;
 }
 
+/* apparatus for plots at custom sizes (e.g. maps) */
+
+static float special_width;
+static float special_height;
+
+void set_special_plot_size (float width, float height)
+{
+    special_width = width;
+    special_height = height;
+}
+
+static void clear_special_size (void)
+{
+    special_width = special_height = 0;
+}
+
+static int special_size_is_set (void)
+{
+    return special_width > 0 && special_height > 0;
+}
+
+/* end special size apparatus */
+
 static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
 {
     double w = 0, h = 0;
 
-    if (flags & GPT_LETTERBOX) {
+    if (special_size_is_set()) {
+	w = (5.0 * special_width) / GP_WIDTH;
+	h = (3.5 * special_height) / GP_HEIGHT;
+	clear_special_size();
+    } else if (flags & GPT_LETTERBOX) {
 	/* for time series */
 	w = (5.0 * GP_LB_WIDTH) / GP_WIDTH;
 	h = (3.5 * GP_LB_HEIGHT) / GP_HEIGHT;
@@ -1343,31 +1370,12 @@ void plot_get_scaled_dimensions (int *width, int *height, double scale)
     if (*height % 2) *height += 1;
 }
 
-static float special_width;
-static float special_height;
-
-void set_special_plot_size (float width, float height)
-{
-    special_width = width;
-    special_height = height;
-}
-
-static void clear_special_size (void)
-{
-    special_width = special_height = 0;
-}
-
-static int special_size_set (void)
-{
-    return special_width > 0 && special_height > 0;
-}
-
 static void write_png_size_string (char *s, PlotType ptype,
 				   GptFlags flags, double scale)
 {
     int w = GP_WIDTH, h = GP_HEIGHT;
 
-    if (special_size_set()) {
+    if (special_size_is_set()) {
 	w = (int) special_width;
 	h = (int) special_height;
 	clear_special_size();
@@ -1588,7 +1596,7 @@ static char *gretl_emf_term_line (char *term_line,
     *font_string = '\0';
     write_emf_font_string(font_string);
 
-    if (special_size_set()) {
+    if (special_size_is_set()) {
 	size_string = g_strdup_printf("size %d,%d ",
 				      (int) special_width,
 				      (int) special_height);
@@ -9409,6 +9417,7 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 }
 
 int write_map_gp_file (const char *plotfile,
+		       int plotfile_is_image,
 		       const char *datfile,
 		       const gretl_matrix *bbox,
 		       const gretl_matrix *zrange,
@@ -9449,6 +9458,8 @@ int write_map_gp_file (const char *plotfile,
     }
     if (show) {
 	set_optval_string(GNUPLOT, OPT_U, "display");
+    } else if (plotfile_is_image) {
+	set_optval_string(GNUPLOT, OPT_U, plotfile);
     }
 
     fp = open_plot_input_file(PLOT_GEOMAP, 0, &err);
@@ -9531,7 +9542,7 @@ int write_map_gp_file (const char *plotfile,
 		manufacture_gui_callback(GNUPLOT);
 	    }
 	}
-	if (plotfile != NULL) {
+	if (plotfile != NULL && !plotfile_is_image) {
 	    gretl_copy_file(gretl_plotfile(), plotfile);
 	}
     }

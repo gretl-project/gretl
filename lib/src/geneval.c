@@ -11861,6 +11861,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		} else {
 		    free_payload = 1;
 		}
+	    } else {
+		p->err = E_TYPES;
 	    }
 	}
 	if (!p->err) {

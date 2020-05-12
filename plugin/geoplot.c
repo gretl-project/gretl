@@ -1266,7 +1266,8 @@ static gretl_matrix *vector_minmax (const gretl_matrix *z)
    should go into graphing.h once it's stabilized.
 */
 
-int write_map_gp_file (const char *plotfile,
+int write_map_gp_file (const char *gptfile,
+		       int plotfile_is_image,
 		       const char *datfile,
 		       const gretl_matrix *bbox,
 		       const gretl_matrix *zrange,
@@ -1274,6 +1275,20 @@ int write_map_gp_file (const char *plotfile,
 		       int show);
 
 /* end hack */
+
+static int is_image_filename (const char *s)
+{
+    if (has_suffix(s, ".pdf") ||
+	has_suffix(s, ".eps") ||
+	has_suffix(s, ".png") ||
+	has_suffix(s, ".svg") ||
+	has_suffix(s, ".emf")) {
+	return 1;
+    } else {
+	/* should really be .gp or .plt? */
+	return 0;
+    }
+}
 
 int geoplot (const char *mapfile,
 	     gretl_matrix *payload,
@@ -1284,6 +1299,7 @@ int geoplot (const char *mapfile,
     gchar *plotfile = NULL;
     gchar *datfile = NULL;
     int have_payload = 0;
+    int plotfile_is_image = 0;
     int show = 1;
     int err = 0;
 
@@ -1297,6 +1313,10 @@ int geoplot (const char *mapfile,
 	    s = gretl_bundle_get_string(opts, "plotfile", &err);
 	    if (s != NULL) {
 		plotfile = g_strdup(s);
+		if (is_image_filename(plotfile)) {
+		    plotfile_is_image = 1;
+		    show = 0;
+		}
 	    }
 	}
 	if (err) {
@@ -1320,7 +1340,7 @@ int geoplot (const char *mapfile,
 
     if (!err) {
 	/* output filenames */
-	if (plotfile != NULL) {
+	if (plotfile != NULL && !plotfile_is_image) {
 	    datfile = g_strdup(plotfile);
 	    put_ext(datfile, ".dat");
 	} else {
@@ -1339,7 +1359,8 @@ int geoplot (const char *mapfile,
 	if (have_payload) {
 	    zrange = vector_minmax(payload);
 	}
-	err = write_map_gp_file(plotfile, datfile, bbox, zrange, opts, show);
+	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
+				bbox, zrange, opts, show);
 	gretl_matrix_free(zrange);
 	gretl_matrix_free(bbox);
     }
