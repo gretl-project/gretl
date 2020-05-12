@@ -598,8 +598,12 @@ static double get_matrix_element (JsonReader *reader, int *err)
     } else if (type == G_TYPE_STRING) {
 	const gchar *s = json_node_get_string(node);
 
-	if (strcmp(s, ".") && strcmp(s, "NA")) {
-	    ; /* NA? */
+	if (!strcmp(s, ".") ||
+	    !strcmp(s, "NA") ||
+	    !strcmp(s, "nan")) {
+	    ; /* OK: NA? */
+	} else {
+	    *err = E_TYPES;
 	}
     } else {
 	*err = E_TYPES;
@@ -751,7 +755,9 @@ static int array_is_matrix (JsonReader *reader)
 		} else if (type == G_TYPE_STRING) {
 		    const char *s = json_node_get_string(node);
 
-		    if (!strcmp(s, ".") || !strcmp(s, "NA")) {
+		    if (!strcmp(s, ".") ||
+			!strcmp(s, "NA") ||
+			!strcmp(s, "nan")) {
 			; /* could be? */
 		    } else {
 			cant_be = 1;
