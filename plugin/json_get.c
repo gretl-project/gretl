@@ -733,15 +733,21 @@ static int jb_add_list (JsonReader *reader,
 	int *list = malloc(n * sizeof *list);
 
 	if (list != NULL) {
-	    for (i=0; i<n; i++) {
+	    for (i=0; i<n && !err; i++) {
 		if (!json_reader_read_element(reader, i)) {
 		    err = E_DATA;
 		} else {
 		    list[i] = (int) json_reader_get_int_value(reader);
+		    if (i == 0 && list[i] != n - 1) {
+			gretl_errmsg_set("malformed gretl_list");
+			err = E_DATA;
+		    }
 		}
 		json_reader_end_element(reader);
 	    }
-	    if (a != NULL) {
+	    if (err) {
+		free(list);
+	    } else if (a != NULL) {
 		err = gretl_array_set_list(a, ai, list, 0);
 	    } else {
 		err = gretl_bundle_donate_data(jb->bcurr, key, list,
