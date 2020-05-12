@@ -1,0 +1,12 @@
+# gpstyle dark2
+set linetype 1 pt 6  lc rgb "#1B9E77" # dark teal
+set linetype 2 pt 7  lc rgb "#D95F02" # dark orange
+set linetype 3 pt 11 lc rgb "#7570B3" # dark lilac
+set linetype 4 pt 13 lc rgb "#E7298A" # dark magenta
+set linetype 5 pt 4  lc rgb "#66A61E" # dark lime green
+set linetype 6 pt 3  lc rgb "#E6AB02" # dark banana
+set linetype 7 pt 5  lc rgb "#A6761D" # dark tan
+set linetype 8 pt 2  lc rgb "#666666" # dark gray
+set style line 11 lc rgb "#808080" lt 1
+set border 3 back ls 11
+set tics nomirror

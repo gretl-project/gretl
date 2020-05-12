@@ -1,0 +1,12 @@
+# gpstyle iwanthue
+set linetype 1 lc rgb "#b8533c"
+set linetype 2 lc rgb "#46c19a"
+set linetype 3 lc rgb "#5d3686"
+set linetype 4 lc rgb "#6ca24d"
+set linetype 5 lc rgb "#c26abb"
+set linetype 6 lc rgb "#bc9b3c"
+set linetype 7 lc rgb "#6c7ed7"
+set linetype 8 lc rgb "#b94a73"
+set style line 11 lc rgb "#808080" lt 1
+set border 3 back ls 11
+set tics nomirror
