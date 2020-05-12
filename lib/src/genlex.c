@@ -597,7 +597,7 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
-    { HF_DBF2CSV,  "_dbf2csv" },
+    { HF_MAP2CSV,  "_map2csv" },
     { 0,           NULL }
 };
 

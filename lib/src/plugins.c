@@ -309,9 +309,9 @@ struct plugin_function_info plugin_functions[] = {
     { "regls_xv_mpi", P_REGLS},
 
     /* shapefile handling */
-    { "dbf2csv",      P_GEOPLOT},
-    { "map_get_data", P_GEOPLOT},
-    { "shp_get_bundle", P_GEOPLOT},
+    { "map_to_csv",      P_GEOPLOT},
+    { "map_get_data",    P_GEOPLOT},
+    { "shp_get_bundle",  P_GEOPLOT},
     { "geoplot", P_GEOPLOT},
 
     /* sentinel */

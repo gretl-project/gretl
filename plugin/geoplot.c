@@ -17,6 +17,8 @@
  *
  */
 
+/* Handling of ESRI shapfiles and GeoJSON files for gretl */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,10 +33,23 @@ enum { DBF, SHP, GEO };
 
 #define GEOHUGE 1.0e100
 
-static char *get_fullpath (char *fname)
+static char *get_full_read_path (char *fname)
 {
     if (!g_path_is_absolute(fname)) {
 	gretl_addpath(fname, 0);
+    }
+
+    return fname;
+}
+
+static char *get_full_write_path (char *fname)
+{
+    if (!g_path_is_absolute(fname)) {
+	gchar *tmp = g_strdup(fname);
+
+	*fname = '\0';
+	gretl_build_path(fname, (char *) gretl_workdir(), tmp, NULL);
+	g_free(tmp);
     }
 
     return fname;
@@ -170,6 +185,12 @@ static gretl_matrix *make_bbox (double *gmin, double *gmax)
 
     return bbox;
 }
+
+/* Writes the coordinates content of the GeoJSON file
+   identified by @geoname to the gnuplot-compatible
+   plain text data file @datname. Returns the bounding
+   box for the set of coordinates.
+*/
 
 static gretl_matrix *geo2dat (const char *geoname,
 			      const char *datname,
@@ -314,6 +335,10 @@ static int json_get_char (gchar **ps, int targ)
 
     return ret;
 }
+
+/* fast version of geo2dat() -- see above -- which does
+   not rely on full JSON parsing.
+*/
 
 static gretl_matrix *fast_geo2dat (const char *geoname,
 				   const char *datname,
@@ -473,8 +498,8 @@ DBFHandle open_dbf (const char *dbfname,
     return DBF;
 }
 
-/* fill out "properties" bundles within @b with info from
-   DBF file
+/* Fill out "properties" bundles within array @ff with info
+   from a DBF file.
 */
 
 int dbf_get_properties (gretl_array *ff, const char *dbfname)
@@ -542,30 +567,22 @@ int dbf_get_properties (gretl_array *ff, const char *dbfname)
     return err;
 }
 
-/* dbf2csv: Written by Allin Cottrell, 2020-04-13,
-   based on dbfdump by Frank Warmerdam.
-
+/* dbf2csv, adapted from dbfdump by Frank Warmerdam.
    Outputs the content of the .dbf component of a shapefile
    (metadata) as CSV.
 */
 
-int dbf2csv (const char *dbfname,
-	     const char *csvname,
-	     gretlopt opt)
+static int dbf2csv (const char *dbfname,
+		    const char *csvname)
 {
     DBFHandle DBF;
     FILE *fp;
     int width, decimals;
     int fcount, rcount;
     DBFFieldType etype;
-    int header = 0;
     char title[32];
     int i, j;
     int err = 0;
-
-    if (opt & OPT_H) {
-	header = 1;
-    }
 
     DBF = open_dbf(dbfname, &fcount, &rcount, &err);
     if (err) {
@@ -576,29 +593,6 @@ int dbf2csv (const char *dbfname,
     if (fp == NULL) {
 	DBFClose(DBF);
 	return E_FOPEN;
-    }
-
-    if (header) {
-        for (i=0; i<fcount; i++) {
-            const char *typename = NULL;
-            char native_type;
-
-            native_type = DBFGetNativeFieldType(DBF, i);
-
-            etype = DBFGetFieldInfo(DBF, i, title, &width, &decimals);
-            if (etype == FTString)
-                typename = "String";
-            else if (etype == FTInteger)
-                typename = "Integer";
-            else if (etype == FTDouble)
-                typename = "Double";
-            else if (etype == FTInvalid)
-                typename = "Invalid";
-
-            fprintf(fp, "# Field %d: Type=%c/%s, Title='%s', Width=%d, Decimals=%d\n",
-		    i, native_type, typename, title, width, decimals);
-        }
-	fprintf(fp, "# Number of records in table: %d\n", rcount);
     }
 
     /* print column headings */
@@ -836,6 +830,12 @@ static void mercatorize (double lat, double lon,
     *py = -y;
 }
 
+/* Writes the coordinates content of the shapefile
+   identified by @shpname to the gnuplot-compatible
+   plain text data file @datname. Returns the bounding
+   box for the set of coordinates.
+*/
+
 static gretl_matrix *shp2dat (const char *shpname,
 			      const char *datname,
 			      const gretl_matrix *zvec,
@@ -977,9 +977,11 @@ static gretl_matrix *shp2dat (const char *shpname,
     return bbox;
 }
 
-static int do_geojson (const char *fname,
-		       const char *csvname,
-		       char **mapname)
+/* Write metadata from GeoJSON file @fname to @csvname */
+
+static int geojson_to_csv (const char *fname,
+			   const char *csvname,
+			   char **mapname)
 {
     GError *gerr = NULL;
     gchar *JSON = NULL;
@@ -1077,17 +1079,19 @@ static int do_geojson (const char *fname,
 
     g_free(JSON);
 
-    if (!err) {
+    if (!err && mapname != NULL) {
 	*mapname = gretl_strdup(fname);
     }
 
     return err;
 }
 
-static int do_shapefile (const char *fname,
-			 const char *csvname,
-			 int ftype,
-			 char **mapname)
+/* Write metadata from shapefile @fname to @csvname */
+
+static int shapefile_to_csv (const char *fname,
+			     const char *csvname,
+			     int ftype,
+			     char **mapname)
 {
     char *dbfname = gretl_strdup(fname);
     char *shpname = gretl_strdup(fname);
@@ -1117,9 +1121,9 @@ static int do_shapefile (const char *fname,
 	goto bailout;
     }
 
-    err = dbf2csv(dbfname, csvname, OPT_NONE);
+    err = dbf2csv(dbfname, csvname);
 
-    if (!err) {
+    if (!err && mapname != NULL) {
 	*mapname = shpname;
 	shpname = NULL;
     }
@@ -1133,6 +1137,10 @@ static int do_shapefile (const char *fname,
     return err;
 }
 
+/* Driver for extracting coordinates data from either
+   a shapefile or a GeoJSON file.
+*/
+
 static gretl_matrix *map2dat (const char *mapname,
 			      const char *datname,
 			      const gretl_matrix *zvec)
@@ -1141,7 +1149,7 @@ static gretl_matrix *map2dat (const char *mapname,
     int have_payload;
 
     strcpy(infile, mapname);
-    get_fullpath(infile);
+    get_full_read_path(infile);
 
     if (zvec != NULL && zvec->cols > 1) {
 	gretl_errmsg_set("Invalid payload");
@@ -1160,16 +1168,11 @@ static gretl_matrix *map2dat (const char *mapname,
     }
 }
 
-int map_get_data (const char *fname, DATASET *dset,
-		  gretlopt opt, PRN *prn)
+static int real_map_to_csv (const char *fname,
+			    const char *csvname,
+			    char **mapname)
 {
-    gchar *csvname = NULL;
-    gchar *base = NULL;
-    char *mapname = NULL;
     int ftype;
-    int err = 0;
-
-    /* FIXME: should appending be allowed, or just "open"? */
 
     if (has_suffix(fname, ".dbf")) {
 	ftype = DBF;
@@ -1179,15 +1182,46 @@ int map_get_data (const char *fname, DATASET *dset,
 	ftype = GEO;
     }
 
+    if (ftype == GEO) {
+	return geojson_to_csv(fname, csvname, mapname);
+    } else {
+	return shapefile_to_csv(fname, csvname, ftype, mapname);
+    }
+}
+
+/* supports the libgretl "hidden function" _map2csv() */
+
+int map_to_csv (const char *fname, const char *csvname)
+{
+    char infile[MAXLEN];
+    char outfile[MAXLEN];
+
+    strcpy(infile, fname);
+    get_full_read_path(infile);
+
+    strcpy(outfile, csvname);
+    get_full_write_path(outfile);
+
+    return real_map_to_csv(infile, outfile, NULL);
+}
+
+/* Get metadata from map file for importation to
+   gretl dataset.
+*/
+
+int map_get_data (const char *fname, DATASET *dset,
+		  gretlopt opt, PRN *prn)
+{
+    gchar *csvname = NULL;
+    gchar *base = NULL;
+    char *mapname = NULL;
+    int err = 0;
+
     base = g_path_get_basename(fname);
     csvname = gretl_make_dotpath(base);
     put_ext(csvname, ".csv");
 
-    if (ftype == GEO) {
-	err = do_geojson(fname, csvname, &mapname);
-    } else {
-	err = do_shapefile(fname, csvname, ftype, &mapname);
-    }
+    err = real_map_to_csv(fname, csvname, &mapname);
 
     if (!err) {
 	err = import_csv(csvname, dset, opt, prn);

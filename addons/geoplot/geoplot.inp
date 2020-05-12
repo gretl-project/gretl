@@ -228,5 +228,6 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
     return ret
 end function
 
-
-
+function scalar map_to_csv (const string mapname, const string csvname)
+    return _map2csv(mapname, csvname)
+end function
