@@ -71,7 +71,7 @@ struct gretlRGB_ {
 typedef struct GPT_SPEC_ GPT_SPEC;
 
 #define MAXTITLE 128
-#define N_GP_COLORS 8 /* six lines plus "box" and "shade" */
+#define N_GP_COLORS 10 /* eight lines plus "box" and "shade" */
 #define BOXCOLOR (N_GP_COLORS - 2)
 #define SHADECOLOR (N_GP_COLORS - 1)
 
@@ -206,6 +206,8 @@ int write_plot_bounding_box_request (FILE *fp);
 void set_effective_plot_ci (int ci);
 
 void set_special_plot_size (float width, float height);
+
+int set_plotstyle (const char *style);
 
 PlotType plot_type_from_string (const char *str);
 

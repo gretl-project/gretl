@@ -1993,6 +1993,7 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 {
     char *p, key[16] = {0};
     char val[MAXLEN] = {0};
+    char *extra = NULL;
     int lt_pos = 0;
     int err = 0;
 
@@ -2150,6 +2151,10 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 	strncat(spec->ytics, val, sizeof(spec->ytics) - 1);
     } else if (!strcmp(key, "border")) {
 	spec->border = atoi(val);
+	if ((extra = strstr(val, "lc rgb \"")) != NULL) {
+	    spec->border_lc[0] = '\0';
+	    strncat(spec->border_lc, extra + 8, 7);
+	}
     } else if (!strcmp(key, "bmargin")) {
 	spec->bmargin = atoi(val);
     } else if (!strcmp(key, "boxwidth")) {

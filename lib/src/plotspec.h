@@ -157,6 +157,7 @@ struct GPT_SPEC_ {
     int n_lines;               /* number of lines */
     int samples;               /* number of samples for parametric plots */
     int border;                /* gnuplot border code */
+    char border_lc[8];         /* border line color */
     int bmargin;               /* bottom margin */
     float boxwidth;            /* when using box style for frequency plots */
     GPT_LINE *lines;           /* details on individual lines */

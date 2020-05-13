@@ -835,7 +835,7 @@ static int gnuplot_has_tikz (void)
 
 #endif /* !WIN32 or WIN32 */
 
-/* apparatus for handling plot colors */
+/* apparatus for handling plot colors (legacy) */
 
 static const gretlRGB default_color[N_GP_COLORS] = {
     { 0xff, 0x00, 0x00 },
@@ -844,6 +844,8 @@ static const gretlRGB default_color[N_GP_COLORS] = {
     { 0xbf, 0x25, 0xb2 },
     { 0x8f, 0xaa, 0xb3 },
     { 0xff, 0xa5, 0x00 },
+    { 0xe5, 0x1e, 0x10 },
+    { 0x00, 0x00, 0x00 },
     { 0x5f, 0x6b, 0x84 }, /* box fill */
     { 0xdd, 0xdd, 0xdd }, /* shade fill */
 };
@@ -855,6 +857,8 @@ static gretlRGB user_color[N_GP_COLORS] = {
     { 0xbf, 0x25, 0xb2 },
     { 0x8f, 0xaa, 0xb3 },
     { 0xff, 0xa5, 0x00 },
+    { 0xe5, 0x1e, 0x10 },
+    { 0x00, 0x00, 0x00 },
     { 0x5f, 0x6b, 0x84 },
     { 0xdd, 0xdd, 0xdd }
 };
@@ -1065,31 +1069,47 @@ static void write_other_font_string (char *fstr, int stdsize)
     }
 }
 
-#define TRY_GPSTY 0
+#define TRY_GPSTY 0 /* not just yet */
 
 #if TRY_GPSTY
 
 static char gp_style[32];
 
-static gchar *maybe_get_gp_style (void)
-{
-    gchar *sty = NULL;
+/* callback for libset.c */
 
-    /* cheating! */
-    strcpy(gp_style, "dark2.gpsty");
+int set_plotstyle (const char *style)
+{
+    if (!strcmp(style, "default")) {
+	gp_style[0] = '\0';
+	return 0;
+    } else if (!strcmp(style, "dark2") ||
+	       !strcmp(style, "iwanthue")) {
+	sprintf(gp_style, "%s.gpsty", style);
+	return 0;
+    } else {
+	return E_INVARG;
+    }
+}
+
+static int maybe_inject_gp_style (FILE *fp)
+{
+    int ret = 0;
 
     if (gp_style[0] != '\0') {
 	gchar *filename;
+	gchar *sty;
 
 	filename = g_build_filename(gretl_home(), "data",
 				    "gnuplot", gp_style, NULL);
-	g_file_get_contents(filename, &sty, NULL, NULL);
-	fprintf(stderr, "filename: '%s'\n", filename);
-	fprintf(stderr, "content: '%s'\n", sty);
+	if (g_file_get_contents(filename, &sty, NULL, NULL)) {
+	    fputs(sty, fp);
+	    g_free(sty);
+	    ret = 1;
+	}
 	g_free(filename);
     }
 
-    return sty;
+    return ret;
 }
 
 #endif
@@ -1124,10 +1144,9 @@ void write_plot_line_styles (int ptype, FILE *fp)
     } else {
 	/* the primary default case */
 #if TRY_GPSTY
-	gchar *sty = maybe_get_gp_style();
+	int done = maybe_inject_gp_style(fp);
 
-	if (sty != NULL) {
-	    fputs(sty, fp);
+	if (done) {
 	    return;
 	}
 #endif

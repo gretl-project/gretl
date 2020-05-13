@@ -120,7 +120,7 @@ static int tabbed_models = 0;
 static int display_wdir = 1;
 static int wdir_tooltip = 1;
 static int script_output_policy;
-char gpcolors[64];
+char gpcolors[80];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
 static char author_mail[32];

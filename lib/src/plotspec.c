@@ -116,6 +116,7 @@ GPT_SPEC *plotspec_new (void)
     spec->boxwidth = 0;
     spec->samples = 0;
     spec->border = GP_BORDER_DEFAULT;
+    spec->border_lc[0] = '\0';
     spec->bmargin = 0;
 
     spec->termtype = GP_TERM_NONE;
@@ -1393,6 +1394,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	/* suppressing all or part of border */
 	if (spec->border == 0) {
 	    fputs("unset border\n", fp);
+	} else if (spec->border_lc[0] != '\0') {
+	    fprintf(fp, "set border %d lc rgb \"%s\"\n",
+		    spec->border, spec->border_lc);
 	} else {
 	    fprintf(fp, "set border %d\n", spec->border);
 	}
