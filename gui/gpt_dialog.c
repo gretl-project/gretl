@@ -178,10 +178,6 @@ static GtkWidget *get_image_for_color (gretlRGB color)
     char colstr[8] = {0};
     int i;
 
-    if (color == NULL) {
-	return NULL;
-    }
-
     if (xpm == NULL) {
 	xpm = strings_array_new_with_length(XPMROWS, XPMCOLS);
 	if (xpm == NULL) {
@@ -251,7 +247,7 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     /* update the "image" widget */
     image = g_object_get_data(G_OBJECT(color_button), "image");
     gtk_widget_destroy(image);
-    image = get_image_for_color(&rgb);
+    image = get_image_for_color(rgb);
     gtk_widget_show(image);
     gtk_container_add(GTK_CONTAINER(color_button), image);
     g_object_set_data(G_OBJECT(color_button), "image", image);
@@ -296,10 +292,6 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
 	gretlRGB rgb;
 
 	rgb = (i == BOXINT)? get_boxcolor() : get_graph_color(i);
-	if (rgb == NULL) {
-	    fprintf(stderr, "graph_color_selector: got NULL rgb\n");
-	    return;
-	}
 	print_rgb_hash(colstr, rgb);
     }
 
@@ -411,14 +403,14 @@ static void apply_line_color (GtkWidget *cb,
 			      GPT_SPEC *spec,
 			      int i)
 {
-    gretlRGB rgb = 0;
+    gretlRGB *prgb = NULL;
 
     if (cb != NULL && gtk_widget_is_sensitive(cb)) {
-	rgb = g_object_get_data(G_OBJECT(cb), "rgb");
+	prgb = g_object_get_data(G_OBJECT(cb), "rgb");
     }
 
-    if (rgb != NULL && i >= 0 && i < spec->n_lines) {
-	print_rgb_hash(spec->lines[i].rgb, rgb);
+    if (prgb != NULL && i >= 0 && i < spec->n_lines) {
+	print_rgb_hash(spec->lines[i].rgb, *prgb);
     }
 }
 
