@@ -1101,7 +1101,7 @@ static void win32_process_graph (png_plot *plot, int dest)
     gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     gretl_build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
 
-    if (plot->code == PLOT_GEOMAP) {
+    if (spec->code == PLOT_GEOMAP) {
 	set_special_plot_size(plot->pixel_width, plot->pixel_height);
     }
 
