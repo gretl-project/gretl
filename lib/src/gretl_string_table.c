@@ -183,7 +183,7 @@ const char *series_table_get_string (series_table *st, double val)
     const char *ret = NULL;
 
     if (!na(val)) {
-	int k = val;
+	int k = (int) lrint(val);
 
 	if (k > 0 && k <= st->n_strs) {
 	    ret = st->strs[k-1];
