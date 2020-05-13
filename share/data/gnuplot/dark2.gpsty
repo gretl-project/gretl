@@ -7,6 +7,5 @@ set linetype 5 pt 4  lc rgb "#66A61E" # dark lime green
 set linetype 6 pt 3  lc rgb "#E6AB02" # dark banana
 set linetype 7 pt 5  lc rgb "#A6761D" # dark tan
 set linetype 8 pt 2  lc rgb "#666666" # dark gray
-set style line 11 lc rgb "#808080" lt 1
-set border 3 back ls 11
+set border 3 back lc rgb "#808080"
 set tics nomirror

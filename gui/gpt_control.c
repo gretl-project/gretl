@@ -195,8 +195,6 @@ struct linestyle_ {
     int pt;     /* point type */
 };
 
-#define MAX_STYLES N_GP_COLORS
-
 static int get_png_bounds_info (png_bounds *bounds);
 
 #define PLOTSPEC_DETAILS_IN_MEMORY(s) (s->lines != NULL)
@@ -1930,7 +1928,7 @@ static int parse_linetype (const char *s, linestyle *styles)
 
     n = sscanf(s, " %d", &i);
 
-    if (n != 1 || i <= 0 || i > MAX_STYLES) {
+    if (n != 1 || i <= 0 || i > N_GP_LINETYPES) {
 	/* get out on error */
 	return 1;
     } else {
@@ -3031,7 +3029,7 @@ static void plot_get_ols_info (const char *line,
 static int read_plotspec_from_file (png_plot *plot)
 {
     GPT_SPEC *spec = plot->spec;
-    linestyle styles[MAX_STYLES];
+    linestyle styles[N_GP_LINETYPES];
     int do_markers = 0;
     int auto_linewidth = 0;
     int reglist[4] = {0};
@@ -3109,7 +3107,7 @@ static int read_plotspec_from_file (png_plot *plot)
 	check_for_plot_size(spec, buf);
     }
 
-    for (i=0; i<MAX_STYLES; i++) {
+    for (i=0; i<N_GP_LINETYPES; i++) {
 	linestyle_init(&styles[i]);
     }
 
@@ -3289,7 +3287,7 @@ static int read_plotspec_from_file (png_plot *plot)
 	if (uservec != NULL && in_gretl_list(uservec, i)) {
 	    line->flags |= GP_LINE_USER;
 	}
-	if (idx > 0 && idx < MAX_STYLES) {
+	if (idx > 0 && idx < N_GP_LINETYPES) {
 	    int j = idx - 1;
 
 	    if (line->rgb[0] == '\0') {

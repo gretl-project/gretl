@@ -1031,7 +1031,7 @@ static void print_linestyle (const GPT_SPEC *spec,
 
     if (!done) {
 	/* hmm, should we be doing this? */
-	const gretlRGB *color = get_graph_color(targ);
+	gretlRGB color = get_graph_color(targ);
 	char cstr[8];
 
 	print_rgb_hash(cstr, color);
@@ -1045,14 +1045,14 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
     int i;
 
     if (frequency_plot_code(spec->code)) {
-	const gretlRGB *color = get_graph_color(BOXCOLOR);
+	gretlRGB color = get_boxcolor();
 
 	print_rgb_hash(cstr, color);
 	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
 	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
     } else if (spec->code == PLOT_RQ_TAU) {
 	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
-	for (i=1; i<BOXCOLOR; i++) {
+	for (i=1; i<N_GP_LINETYPES; i++) {
 	    print_linestyle(spec, i, i, fp);
 	}
     } else if (spec->code == PLOT_BOXPLOTS) {
@@ -1068,7 +1068,7 @@ static void write_styles_from_plotspec (const GPT_SPEC *spec, FILE *fp)
 	if (spec->lines[0].style == GP_STYLE_FILLEDCURVE) {
 	    offset = 1;
 	}
-	for (i=0; i<BOXCOLOR; i++) {
+	for (i=0; i<N_GP_LINETYPES; i++) {
 	    print_linestyle(spec, i, i + offset, fp);
 	}
     }
@@ -2162,7 +2162,7 @@ static void print_bars_header (GPT_SPEC *spec, FILE *fp)
     char cstr[8];
     int i;
 
-    print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
+    print_rgb_hash(cstr, get_shadecolor());
 
     if (spec->heredata) {
 	int j = 0;
@@ -2184,7 +2184,7 @@ static void print_filledcurve_color (FILE *fp)
 {
     char cstr[8];
 
-    print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
+    print_rgb_hash(cstr, get_shadecolor());
     fprintf(fp, "lc rgb \"%s\" ", cstr);
 }
 

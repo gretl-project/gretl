@@ -60,20 +60,12 @@ typedef enum {
 /* an extra "command" for use with GUI callback */
 #define GP_ASYNC (NC+1)
 
-typedef struct gretlRGB_ gretlRGB;
-
-struct gretlRGB_ {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-};
+typedef guint32 gretlRGB;
 
 typedef struct GPT_SPEC_ GPT_SPEC;
 
 #define MAXTITLE 128
-#define N_GP_COLORS 10 /* eight lines plus "box" and "shade" */
-#define BOXCOLOR (N_GP_COLORS - 2)
-#define SHADECOLOR (N_GP_COLORS - 1)
+#define N_GP_LINETYPES 8
 
 #define GP_WIDTH      640
 #define GP_HEIGHT     480
@@ -324,19 +316,25 @@ int print_gnuplot_literal_lines (const char *s, int ci,
 
 int is_auto_fit_string (const char *s);
 
-void set_graph_palette (int i, gretlRGB color);
-
-void set_graph_palette_from_string (int i, const char *cstr);
+void set_graph_color_from_string (int i, const char *cstr);
 
 void graph_palette_reset (int i);
 
-void print_rgb_hash (char *s, const gretlRGB *color);
+void print_rgb_hash (char *s, gretlRGB color);
 
-void gretl_rgb_get (gretlRGB *color, const char *s);
+gretlRGB gretl_rgb_get (const char *s);
 
 void print_palette_string (char *s);
 
-const gretlRGB *get_graph_color (int i);
+gretlRGB get_graph_color (int i);
+
+gretlRGB get_boxcolor (void);
+
+gretlRGB get_shadecolor (void);
+
+void set_boxcolor (gretlRGB color);
+
+void set_shadecolor (gretlRGB color);
 
 int parse_gnuplot_color (const char *s, char *targ);
 

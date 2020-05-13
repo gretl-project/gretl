@@ -7,6 +7,5 @@ set linetype 5 lc rgb "#c26abb"
 set linetype 6 lc rgb "#bc9b3c"
 set linetype 7 lc rgb "#6c7ed7"
 set linetype 8 lc rgb "#b94a73"
-set style line 11 lc rgb "#808080" lt 1
-set border 3 back ls 11
+set border 3 back lc rgb "#808080"
 set tics nomirror

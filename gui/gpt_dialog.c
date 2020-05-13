@@ -59,6 +59,8 @@ struct gpt_range_t {
 #define MAX_AXES 3
 #define NTITLES  4
 
+#define BOXINT 99
+
 /* apparatus for handling the case where plot components are
    added or removed via the gui dialog, but these changes are
    discarded (the user doesn't click "OK" or "Apply")
@@ -168,7 +170,7 @@ static int line_get_point_type (GPT_LINE *line, int i);
 
 #define scale_round(v) ((v) * 255.0 / 65535.0)
 
-static GtkWidget *get_image_for_color (const gretlRGB *color)
+static GtkWidget *get_image_for_color (gretlRGB color)
 {
     static char **xpm = NULL;
     GdkPixbuf *icon;
@@ -212,41 +214,38 @@ static GtkWidget *get_image_for_color (const gretlRGB *color)
     return image;
 }
 
+/* ad hoc color selection for line in particular plot */
+
 static void color_select_callback (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
     GtkWidget *color_button, *image;
     GdkColor gcolor;
-    gpointer data;
+    guint8 r, g, b;
     gretlRGB rgb;
-    gint i;
+
+    fprintf(stderr, "HERE color_select_callback\n");
 
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
 
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
-    rgb.r = (unsigned char) (scale_round(gcolor.red));
-    rgb.g = (unsigned char) (scale_round(gcolor.green));
-    rgb.b = (unsigned char) (scale_round(gcolor.blue));
+    r = (unsigned char) (scale_round(gcolor.red));
+    g = (unsigned char) (scale_round(gcolor.green));
+    b = (unsigned char) (scale_round(gcolor.blue));
+    rgb = (r << 16) | (g << 8) | b;
 
-    i = widget_get_int(w, "colornum");
-    data = g_object_get_data(G_OBJECT(color_button), "plotspec");
-
-    if (data != NULL) {
-	/* ad hoc color selection for line in particular plot */
+    if (widget_get_int(w, "boxcolor")) {
+	fprintf(stderr, "HERE set_boxcolor()\n");
+	set_boxcolor(rgb);
+    } else {
 	gretlRGB *prgb = malloc(sizeof *prgb);
 
 	if (prgb != NULL) {
-	    prgb->r = rgb.r;
-	    prgb->g = rgb.g;
-	    prgb->b = rgb.b;
+	    *prgb = rgb;
 	    g_object_set_data_full(G_OBJECT(color_button), "rgb",
 				   prgb, free);
 	}
-    } else {
-	/* user-setting of plot palette */
-	set_graph_palette(i, rgb);
-	update_persistent_graph_colors();
     }
 
     /* update the "image" widget */
@@ -265,16 +264,16 @@ static void color_cancel (GtkWidget *button, GtkWidget *w)
     gtk_widget_destroy(w);
 }
 
-/* reset color patch button after selecting the option to
+/* reset boxcolor patch button after selecting the option to
    restore the default plot colors */
 
-static void color_patch_button_reset (GtkWidget *button, int cnum)
+static void boxcolor_patch_button_reset (GtkWidget *button)
 {
     GtkWidget *image;
 
     image = g_object_get_data(G_OBJECT(button), "image");
     gtk_widget_destroy(image);
-    image = get_image_for_color(get_graph_color(cnum));
+    image = get_image_for_color(get_boxcolor());
     gtk_widget_show(image);
     gtk_container_add(GTK_CONTAINER(button), image);
     g_object_set_data(G_OBJECT(button), "image", image);
@@ -294,8 +293,9 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
     if (spec != NULL && spec->lines[i].rgb[0] != '\0') {
 	strcpy(colstr, spec->lines[i].rgb);
     } else {
-	const gretlRGB *rgb = get_graph_color(i);
+	gretlRGB rgb;
 
+	rgb = (i == BOXINT)? get_boxcolor() : get_graph_color(i);
 	if (rgb == NULL) {
 	    fprintf(stderr, "graph_color_selector: got NULL rgb\n");
 	    return;
@@ -306,8 +306,11 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
     gdk_color_parse(colstr, &gcolor);
 
     cdlg = gtk_color_selection_dialog_new(_("gretl: graph color selection"));
-    widget_set_int(cdlg, "colornum", i);
     g_object_set_data(G_OBJECT(cdlg), "color_button", w);
+    if (i == BOXINT) {
+	/* flag for special treatment in color_select_callback */
+	widget_set_int(cdlg, "boxcolor", 1);
+    }
 
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(cdlg));
     gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
@@ -323,11 +326,11 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
     gtk_window_set_modal(GTK_WINDOW(cdlg), TRUE);
 }
 
-static GtkWidget *color_patch_button (int i)
+static GtkWidget *boxcolor_patch_button (void)
 {
     GtkWidget *image, *button;
 
-    image = get_image_for_color(get_graph_color(i));
+    image = get_image_for_color(get_boxcolor());
 
     if (image == NULL) {
 	button = gtk_button_new_with_label(_("Select color"));
@@ -337,7 +340,7 @@ static GtkWidget *color_patch_button (int i)
 	g_object_set_data(G_OBJECT(button), "image", image);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(graph_color_selector),
-			 GINT_TO_POINTER(i));
+			 GINT_TO_POINTER(BOXINT));
     }
 
     return button;
@@ -379,10 +382,10 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
 	/* we have a specific color for this line */
 	gretlRGB color;
 
-	gretl_rgb_get(&color, spec->lines[i].rgb);
-	image = get_image_for_color(&color);
+	color = gretl_rgb_get(spec->lines[i].rgb);
+	image = get_image_for_color(color);
     } else if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
-	image = get_image_for_color(get_graph_color(SHADECOLOR));
+	image = get_image_for_color(get_shadecolor());
     } else {
 	j = style_from_line_number(spec, i);
 	if (j < 0) {
@@ -404,10 +407,11 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
     return button;
 }
 
-static void apply_line_color (GtkWidget *cb, GPT_SPEC *spec,
+static void apply_line_color (GtkWidget *cb,
+			      GPT_SPEC *spec,
 			      int i)
 {
-    gretlRGB *rgb = NULL;
+    gretlRGB rgb = 0;
 
     if (cb != NULL && gtk_widget_is_sensitive(cb)) {
 	rgb = g_object_get_data(G_OBJECT(cb), "rgb");
@@ -416,8 +420,6 @@ static void apply_line_color (GtkWidget *cb, GPT_SPEC *spec,
     if (rgb != NULL && i >= 0 && i < spec->n_lines) {
 	print_rgb_hash(spec->lines[i].rgb, rgb);
     }
-
-    /* should we also update the "palette"? */
 }
 
 /* end graph color selection apparatus */
@@ -1410,37 +1412,14 @@ static void toggle_axis_selection (GtkWidget *w, plot_editor *ed)
     }
 }
 
-/* re-establish the default plot colors and reset the
-   color selection buttons accordingly */
-
-static void colors_default_callback (GtkWidget *w, GtkWidget *book)
-{
-    GtkWidget *button;
-    gchar *id;
-    int i;
-
-    for (i=0; i<N_GP_COLORS; i++) {
-	id = g_strdup_printf("color-button%d", i);
-	button = g_object_get_data(G_OBJECT(book), id);
-	if (button != NULL) {
-	    graph_palette_reset(i);
-	    color_patch_button_reset(button, i);
-	}
-	g_free(id);
-    }
-
-    /* record current values in settings.c */
-    update_persistent_graph_colors();
-}
-
 /* specific to BOXCOLOR selection: return this particular
    value to its default */
 
 static void boxcolor_default_callback (GtkWidget *w,
 				       GtkWidget *button)
 {
-    graph_palette_reset(BOXCOLOR);
-    color_patch_button_reset(button, BOXCOLOR);
+    graph_palette_reset(0);
+    boxcolor_patch_button_reset(button);
     update_persistent_graph_colors();
 }
 
@@ -1464,50 +1443,6 @@ static GtkWidget *color_reset_button (GtkWidget *tbl, int row)
     return button;
 }
 
-static void add_color_selectors (GtkWidget *tbl, GtkWidget *notebook)
-{
-    int c_rows = N_GP_COLORS / 2;
-    GtkWidget *label, *button, *hbox;
-    int i, j, c, idx, row = 1;
-    char str[32];
-
-    for (i=0; i<c_rows; i++) {
-	for (j=0; j<2; j++) {
-	    if (i < 3) {
-		idx = (j == 1)? i + 3 : i;
-	    } else {
-		idx = BOXCOLOR + j;
-	    }
-	    hbox = gtk_hbox_new(FALSE, 2);
-	    if (i < 3) {
-		sprintf(str, _("Color %d"), idx + 1);
-	    } else if (j == 1) {
-		strcpy(str, _("Shade color"));
-	    } else {
-		strcpy(str, _("Fill color"));
-	    }
-	    c = 2 * j;
-	    label = gtk_label_new(str);
-	    gtk_widget_show(label);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), label, c, c+1,
-				      row, row+1);
-	    button = color_patch_button(idx);
-	    sprintf(str, "color-button%d", idx);
-	    g_object_set_data(G_OBJECT(notebook), str, button);
-	    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-	    gtk_widget_show_all(hbox);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, c+1, c+2,
-				      row, row+1);
-	}
-	row++;
-    }
-
-    button = color_reset_button(tbl, row);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(colors_default_callback),
-		     notebook);
-}
-
 static void add_boxcolor_selector (GtkWidget *tbl, int cols,
 				   int *rows, GtkWidget *notebook)
 {
@@ -1523,7 +1458,7 @@ static void add_boxcolor_selector (GtkWidget *tbl, int cols,
     hbox = gtk_hbox_new(FALSE, 2);
     label = gtk_label_new(_("Fill color"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    button = color_patch_button(BOXCOLOR);
+    button = boxcolor_patch_button();
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 1,
 			      row, row + 1);
@@ -2706,7 +2641,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	hbox = NULL;
 	line_controls_init(ed, i);
 
-	if (i >= 6 || frequency_plot_code(spec->code)) {
+	if (i >= 8 || frequency_plot_code(spec->code)) {
 	    dash_type_ok = 0; /* ? */
 	    color_sel_ok = 0;
 	}
@@ -3431,23 +3366,6 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
     }
 }
 
-static void gpt_tab_palette (GtkWidget *notebook)
-{
-    GtkWidget *vbox, *label, *table;
-    int rows = 2 + N_GP_COLORS / 2;
-
-    vbox = gp_page_vbox(notebook, _("Palette"));
-    table = gp_dialog_table(rows, 4, vbox);
-
-    label = gtk_label_new(_("These colors will be used unless overridden\n"
-			    "by graph-specific choices\n"));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 4, 0, 1, 0, 0, 0, 0);
-    gtk_widget_show(label);
-
-    add_color_selectors(table, notebook);
-    gtk_widget_show(table);
-}
-
 static void plot_editor_destroy (plot_editor *ed)
 {
     if (restore_lines(ed)) {
@@ -3769,10 +3687,6 @@ GtkWidget *plot_add_editor (png_plot *plot)
     if (plot_is_mouseable(plot)) {
 	gpt_tab_labels(editor, spec, 0);
 	gpt_tab_arrows(editor, spec, 0);
-    }
-
-    if (!frequency_plot_code(spec->code)) {
-	gpt_tab_palette(notebook);
     }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));

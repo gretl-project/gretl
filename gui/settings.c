@@ -120,7 +120,7 @@ static int tabbed_models = 0;
 static int display_wdir = 1;
 static int wdir_tooltip = 1;
 static int script_output_policy;
-char gpcolors[80];
+char gpcolors[18];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
 static char author_mail[32];
@@ -302,7 +302,7 @@ RCVAR rc_vars[] = {
       INVISET, sizeof scriptpage, TAB_NONE, NULL },
     { "Png_font", N_("PNG graph font"), NULL, paths.pngfont,
       INVISET, sizeof paths.pngfont, TAB_NONE, NULL },
-    { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors,
+    { "Gp_extra_colors", N_("Gnuplot extra colors"), NULL, gpcolors,
       INVISET, sizeof gpcolors, TAB_NONE, NULL },
     { "tabwidth", N_("Number of spaces per tab"), NULL, &tabwidth,
       INTSET | SPINSET, 0, TAB_EDITOR, NULL },
@@ -1762,34 +1762,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 static void set_gp_colors (void)
 {
     const char *s = gpcolors;
-    char cstr[N_GP_COLORS][8];
-    int i, nc = 0;
+    char cstr[2][8];
 
-    for (i=0; i<N_GP_COLORS; i++) {
-	if (sscanf(s, "%7s", cstr[i]) == 1) {
-	    nc++;
-	    s += 7;
-	    if (*s == ' ') {
-		s++;
-	    } else {
-		break;
-	    }
-	} else {
-	    *cstr[i] = '\0';
-	    break;
-	}
-    }
+    *cstr[0] = *cstr[1] = '\0';
 
-    if (nc == 4) {
-	/* old-style */
-	for (i=0; i<3; i++) {
-	    set_graph_palette_from_string(i, cstr[i]);
-	}
-	set_graph_palette_from_string(BOXCOLOR, cstr[3]);
-    } else {
-	for (i=0; i<nc; i++) {
-	    set_graph_palette_from_string(i, cstr[i]);
-	}
+    if (sscanf(s, "%7s %7s", cstr[0], cstr[1]) == 2) {
+	set_graph_color_from_string(0, cstr[0]);
+	set_graph_color_from_string(1, cstr[1]);
     }
 }
 

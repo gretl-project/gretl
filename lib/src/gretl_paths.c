@@ -3566,37 +3566,15 @@ int slash_terminate (char *path)
     return 0;
 }
 
-static void rc_set_gp_colors (const char *gpcolors)
+static void rc_set_gp_extra_colors (const char *s)
 {
-    const char *s = gpcolors;
-    char cstr[N_GP_COLORS][8];
-    int i, nc = 0;
+    char cstr[2][8];
 
-    for (i=0; i<N_GP_COLORS; i++) {
-	if (sscanf(s, "%7s", cstr[i]) == 1) {
-	    nc++;
-	    s += 7;
-	    if (*s == ' ') {
-		s++;
-	    } else {
-		break;
-	    }
-	} else {
-	    *cstr[i] = '\0';
-	    break;
-	}
-    }
+    *cstr[0] = *cstr[1] = '\0';
 
-    if (nc == 4) {
-	/* old-style */
-	for (i=0; i<3; i++) {
-	    set_graph_palette_from_string(i, cstr[i]);
-	}
-	set_graph_palette_from_string(BOXCOLOR, cstr[3]);
-    } else {
-	for (i=0; i<nc; i++) {
-	    set_graph_palette_from_string(i, cstr[i]);
-	}
+    if (sscanf(s, "%7s %7s", cstr[0], cstr[1]) == 2) {
+	set_graph_color_from_string(0, cstr[0]);
+	set_graph_color_from_string(1, cstr[1]);
     }
 }
 
@@ -3707,8 +3685,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 #endif
 	} else if (!strcmp(key, "Png_font")) {
 	    strncat(cpaths->pngfont, val, 128 - 1);
-	} else if (!strcmp(key, "Gp_colors")) {
-	    rc_set_gp_colors(val);
+	} else if (!strcmp(key, "Gp_extra_colors")) {
+	    rc_set_gp_extra_colors(val);
 	} else if (!strcmp(key, "HC_xsect")) {
 	    set_xsect_hccme(val);
 	} else if (!strcmp(key, "HC_tseri")) {

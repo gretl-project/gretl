@@ -835,96 +835,83 @@ static int gnuplot_has_tikz (void)
 
 #endif /* !WIN32 or WIN32 */
 
-/* apparatus for handling plot colors (legacy) */
-
-static const gretlRGB default_color[N_GP_COLORS] = {
-    { 0xff, 0x00, 0x00 },
-    { 0x00, 0x00, 0xff },
-    { 0x00, 0xcc, 0x00 }, /* full-intensity green is not easily legible */
-    { 0xbf, 0x25, 0xb2 },
-    { 0x8f, 0xaa, 0xb3 },
-    { 0xff, 0xa5, 0x00 },
-    { 0xe5, 0x1e, 0x10 },
-    { 0x00, 0x00, 0x00 },
-    { 0x5f, 0x6b, 0x84 }, /* box fill */
-    { 0xdd, 0xdd, 0xdd }, /* shade fill */
+static gretlRGB user_color[N_GP_LINETYPES] = {
+    0xff0000,
+    0x0000ff,
+    0x00cc00,
+    0xbf25b2,
+    0x8faab3,
+    0xffa500,
+    0xe51e10,
+    0x000000
 };
 
-static gretlRGB user_color[N_GP_COLORS] = {
-    { 0xff, 0x00, 0x00 },
-    { 0x00, 0x00, 0xff },
-    { 0x00, 0xcc, 0x00 },
-    { 0xbf, 0x25, 0xb2 },
-    { 0x8f, 0xaa, 0xb3 },
-    { 0xff, 0xa5, 0x00 },
-    { 0xe5, 0x1e, 0x10 },
-    { 0x00, 0x00, 0x00 },
-    { 0x5f, 0x6b, 0x84 },
-    { 0xdd, 0xdd, 0xdd }
+/* apparatus for handling plot "extra" colors */
+
+static gretlRGB extra_color[2] = {
+    0x5f6b84,
+    0xdddddd
 };
 
-void print_rgb_hash (char *s, const gretlRGB *color)
+static gretlRGB user_extra_color[2] = {
+    0x5f6b84,
+    0xdddddd
+};
+
+gretlRGB get_boxcolor (void)
 {
-    sprintf(s, "#%02x%02x%02x", color->r, color->g, color->b);
+    return user_extra_color[0];
 }
 
-void gretl_rgb_get (gretlRGB *color, const char *s)
+void set_boxcolor (gretlRGB color) {
+    user_extra_color[0] = color;
+}
+
+gretlRGB get_shadecolor (void)
 {
-    int n, r, g, b;
+    return user_extra_color[1];
+}
 
-    n = sscanf(s, "#%2x%2x%2x", &r, &g, &b);
+void set_shadecolor (gretlRGB color) {
+    user_extra_color[1] = color;
+}
 
-    if (n == 3) {
-	color->r = r;
-	color->g = g;
-	color->b = b;
-    } else {
-	color->r = color->g = color->b = 0;
+void print_rgb_hash (char *s, gretlRGB color)
+{
+    sprintf(s, "#%06X", color);
+}
+
+gretlRGB gretl_rgb_get (const char *s)
+{
+    gretlRGB x = 0;
+
+    if (sscanf(s, "#%x", &x) != 1) {
+	x = 0;
     }
+
+    return x;
 }
 
 void print_palette_string (char *s)
 {
-    char colstr[8];
-    int i;
-
-    *s = '\0';
-
-    for (i=0; i<N_GP_COLORS; i++) {
-	sprintf(colstr, "x%02x%02x%02x", user_color[i].r, user_color[i].g,
-		user_color[i].b);
-	strcat(s, colstr);
-	if (i < N_GP_COLORS - 1) {
-	    strcat(s, " ");
-	}
-    }
+    sprintf(s, "x%06X x%06X", user_extra_color[0],
+	    user_extra_color[0]);
 }
 
-const gretlRGB *get_graph_color (int i)
+gretlRGB get_graph_color (int i)
 {
-    return (i >= 0 && i < N_GP_COLORS)? &user_color[i] : NULL;
+    return (i >= 0 && i < N_GP_LINETYPES)? user_color[i] : 0;
 }
 
-void set_graph_palette (int i, gretlRGB color)
-{
-    if (i >= 0 && i < N_GP_COLORS) {
-	user_color[i] = color;
-    } else {
-	fprintf(stderr, "Out of bounds color index %d\n", i);
-    }
-}
-
-void set_graph_palette_from_string (int i, const char *s)
+void set_graph_color_from_string (int i, const char *s)
 {
     int err = 0;
 
-    if (i >= 0 && i < N_GP_COLORS) {
-	unsigned int x[3];
+    if (i >= 0 && i < 2) {
+	gretlRGB x;
 
-	if (sscanf(s + 1, "%02x%02x%02x", &x[0], &x[1], &x[2]) == 3) {
-	    user_color[i].r = x[0];
-	    user_color[i].g = x[1];
-	    user_color[i].b = x[2];
+	if (sscanf(s + 1, "%06x", &x) == 1) {
+	    user_extra_color[i] = x;
 	} else {
 	    err = 1;
 	}
@@ -940,8 +927,8 @@ void set_graph_palette_from_string (int i, const char *s)
 
 void graph_palette_reset (int i)
 {
-    if (i >= 0 && i < N_GP_COLORS) {
-	user_color[i] = default_color[i];
+    if (i >= 0 && i < 2) {
+	user_extra_color[i] = extra_color[i];
     }
 }
 
@@ -1070,49 +1057,105 @@ static void write_other_font_string (char *fstr, int stdsize)
 }
 
 static char gp_style[32];
+static gchar *alt_sty;
+
+static const char *default_sty =
+    "# gpstyle default\n"
+    "set linetype 1 pt 1 lc rgb \"#FF0000\"\n"  /* red */
+    "set linetype 2 pt 2 lc rgb \"#0000FF\"\n"  /* blue */
+    "set linetype 3 pt 3 lc rgb \"#00CC00\"\n"  /* non-standard green */
+    "set linetype 4 pt 4 lc rgb \"#BF25B2\"\n"  /* purple */
+    "set linetype 5 pt 5 lc rgb \"#8FAAB3\"\n"  /* gray-blue */
+    "set linetype 6 pt 6 lc rgb \"#FFA500\"\n"  /* yellow-orange */
+    "set linetype 7 pt 7 lc rgb \"#E51E10\"\n"  /* unnamed red */
+    "set linetype 8 pt 8 lc rgb \"#000000\"\n"; /* black */
+
+static int transcribe_style (const char *s)
+{
+    const char *p = s;
+    gretlRGB rgb;
+    int i, got;
+
+    for (i=0; i<N_GP_LINETYPES; i++) {
+	p = strstr(p, " lc rgb ");
+	got = 0;
+	if (p != NULL) {
+	    p += 8;
+	    p += strspn(p, " ");
+	    if (sscanf(p+1, "#%x", &rgb) == 1) {
+		user_color[i] = rgb;
+		got = 1;
+		p += 8;
+	    }
+	}
+	if (!got) {
+	    break;
+	}
+    }
+
+    return i < N_GP_LINETYPES ? E_DATA : 0;
+}
+
+static int set_alt_sty (void)
+{
+    gchar *try = NULL;
+    gchar *fname;
+    int err = 0;
+
+    fname = g_build_filename(gretl_home(), "data",
+			     "gnuplot", gp_style, NULL);
+
+    if (g_file_get_contents(fname, &try, NULL, NULL)) {
+	err = transcribe_style(try);
+	if (err) {
+	    set_plotstyle("default");
+	} else {
+	    g_free(alt_sty);
+	    alt_sty = try;
+	}
+    } else {
+	err = E_INVARG;
+    }
+
+    g_free(fname);
+
+    return err;
+}
 
 /* callback for libset.c */
 
 int set_plotstyle (const char *style)
 {
-    if (!strcmp(style, "default")) {
+    if (!strcmp(style, gp_style) ||
+	(!strcmp(style, "default") && *gp_style == '\0')) {
+	return 0; /* no-op */
+    } else if (!strcmp(style, "default")) {
+	/* replace alt with default */
+	g_free(alt_sty);
+	alt_sty = NULL;
 	gp_style[0] = '\0';
-	return 0;
-    } else if (!strcmp(style, "dark2") ||
-	       !strcmp(style, "iwanthue")) {
-	sprintf(gp_style, "%s.gpsty", style);
+	transcribe_style(default_sty);
 	return 0;
     } else {
-	return E_INVARG;
+	sprintf(gp_style, "%s.gpsty", style);
+	return set_alt_sty();
     }
 }
 
-#define TRY_GPSTY 0 /* not just yet */
-
-#if TRY_GPSTY
-
-static int maybe_inject_gp_style (FILE *fp)
+static void inject_gp_style (int offset, FILE *fp)
 {
-    int ret = 0;
+    const char *sty = alt_sty != NULL ? alt_sty : default_sty;
+    const char *sub = NULL;
 
-    if (gp_style[0] != '\0') {
-	gchar *filename;
-	gchar *sty;
+    if (offset > 0) {
+	char targ[32];
 
-	filename = g_build_filename(gretl_home(), "data",
-				    "gnuplot", gp_style, NULL);
-	if (g_file_get_contents(filename, &sty, NULL, NULL)) {
-	    fputs(sty, fp);
-	    g_free(sty);
-	    ret = 1;
-	}
-	g_free(filename);
+	sprintf(targ, "set linetype %d", offset + 1);
+	sub = strstr(sty, targ);
     }
 
-    return ret;
+    fputs(sub != NULL ? sub : sty, fp);
 }
-
-#endif
 
 void write_plot_line_styles (int ptype, FILE *fp)
 {
@@ -1121,39 +1164,26 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
     if (ptype == PLOT_3D) {
 	for (i=0; i<2; i++) {
-	    print_rgb_hash(cstr, &user_color[i]);
+	    print_rgb_hash(cstr, user_color[i]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
     } else if (ptype == PLOT_BOXPLOTS) {
 	for (i=0; i<2; i++) {
-	    print_rgb_hash(cstr, &user_color[i+1]);
+	    print_rgb_hash(cstr, user_color[i+1]);
 	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
 	}
     } else if (frequency_plot_code(ptype)) {
-	print_rgb_hash(cstr, &user_color[BOXCOLOR]);
+	print_rgb_hash(cstr, get_boxcolor());
 	fprintf(fp, "set linetype 1 lc rgb \"%s\"\n", cstr);
 	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
     } else if (ptype == PLOT_RQ_TAU) {
 	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
-	for (i=1; i<BOXCOLOR; i++) {
-	    print_rgb_hash(cstr, &user_color[i]);
-	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
-	}
+	inject_gp_style(1, fp);
     } else if (ptype == PLOT_HEATMAP || ptype == PLOT_GEOMAP) {
 	; /* these are handled specially */
     } else {
 	/* the primary default case */
-#if TRY_GPSTY
-	int done = maybe_inject_gp_style(fp);
-
-	if (done) {
-	    return;
-	}
-#endif
-	for (i=0; i<BOXCOLOR; i++) {
-	    print_rgb_hash(cstr, &user_color[i]);
-	    fprintf(fp, "set linetype %d lc rgb \"%s\"\n", i+1, cstr);
-	}
+	inject_gp_style(0, fp);
     }
 }
 
@@ -5582,7 +5612,7 @@ static void print_filledcurve_line (const char *title,
 	*cstr = '\0';
 	strncat(cstr, rgb, 9);
     } else {
-	print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
+	print_rgb_hash(cstr, get_shadecolor());
     }
 
     if (title == NULL) {
@@ -5605,7 +5635,7 @@ static void print_pm_filledcurve_line (double factor,
 	*cstr = '\0';
 	strncat(cstr, rgb, 9);
     } else {
-	print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
+	print_rgb_hash(cstr, get_shadecolor());
     }
 
     if (title == NULL) {
