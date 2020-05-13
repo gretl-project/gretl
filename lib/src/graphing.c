@@ -1056,8 +1056,10 @@ static void write_other_font_string (char *fstr, int stdsize)
     }
 }
 
-static char gp_style[32];
-static gchar *alt_sty;
+/* gnuplot styles apparatus */
+
+static char gp_style[32]; /* basename of style file */
+static gchar *alt_sty;    /* content of style file */
 
 static const char *default_sty =
     "# gpstyle default\n"
@@ -1069,6 +1071,10 @@ static const char *default_sty =
     "set linetype 6 pt 6 lc rgb \"#FFA500\"\n"  /* yellow-orange */
     "set linetype 7 pt 7 lc rgb \"#E51E10\"\n"  /* unnamed red */
     "set linetype 8 pt 8 lc rgb \"#000000\"\n"; /* black */
+
+/* Read 8 line colors out of @s and transcribe to the
+   @user_colors array. Fail if we can't get all 8.
+*/
 
 static int transcribe_style (const char *s)
 {
@@ -1096,7 +1102,11 @@ static int transcribe_style (const char *s)
     return i < N_GP_LINETYPES ? E_DATA : 0;
 }
 
-static int set_alt_sty (void)
+/* Given a style-name (provisionally copied to @gp_style),
+   try to find its file and check it for conformance.
+*/
+
+static int try_set_alt_sty (void)
 {
     gchar *try = NULL;
     gchar *fname;
@@ -1108,12 +1118,15 @@ static int set_alt_sty (void)
     if (g_file_get_contents(fname, &try, NULL, NULL)) {
 	err = transcribe_style(try);
 	if (err) {
+	    /* failed to conform to spec */
 	    set_plotstyle("default");
 	} else {
+	    /* OK, put the style in place */
 	    g_free(alt_sty);
 	    alt_sty = try;
 	}
     } else {
+	/* couldn't find the file */
 	err = E_INVARG;
     }
 
@@ -1122,7 +1135,7 @@ static int set_alt_sty (void)
     return err;
 }
 
-/* callback for libset.c */
+/* callback from libset.c, in response to "set plot_style <name>" */
 
 int set_plotstyle (const char *style)
 {
@@ -1137,10 +1150,16 @@ int set_plotstyle (const char *style)
 	transcribe_style(default_sty);
 	return 0;
     } else {
+	/* try replacing current with what's requested */
 	sprintf(gp_style, "%s.gpsty", style);
-	return set_alt_sty();
+	return try_set_alt_sty();
     }
 }
+
+/* Write the content of either the default, or an alternative,
+   gnuplot style into @fp. The @offset argument allows for
+   skipping one or more leading linetype definitions.
+*/
 
 static void inject_gp_style (int offset, FILE *fp)
 {
@@ -1186,6 +1205,8 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	inject_gp_style(0, fp);
     }
 }
+
+/* end gnuplot styles apparatus */
 
 #ifdef WIN32
 
