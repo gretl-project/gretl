@@ -8054,19 +8054,45 @@ static NODE *strptime_node (NODE *l, NODE *r, parser *p)
 
 static NODE *atof_node (NODE *l, parser *p)
 {
-    NODE *ret = aux_scalar_node(p);
+    NODE *ret = NULL;
+    char *endptr = NULL;
 
-    if (ret != NULL && starting(p)) {
-	char *endptr = NULL;
+    errno = 0;
 
-	errno = 0;
-	gretl_push_c_numeric_locale();
-	ret->v.xval = strtod(l->v.str, &endptr);
-	if (errno || endptr == l->v.str) {
-	    errno = 0;
-	    ret->v.xval = NADBL;
+    if (l->t == STR) {
+	ret = aux_scalar_node(p);
+	if (ret != NULL && starting(p)) {
+	    gretl_push_c_numeric_locale();
+	    ret->v.xval = strtod(l->v.str, &endptr);
+	    if (errno || endptr == l->v.str) {
+		errno = 0;
+		ret->v.xval = NADBL;
+	    }
+	    gretl_pop_c_numeric_locale();
 	}
-	gretl_pop_c_numeric_locale();
+    } else if (l->t == SERIES) {
+	int v = l->vnum;
+
+	if (!is_string_valued(p->dset, v)) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_series_node(p);
+	}
+	if (ret != NULL && starting(p)) {
+	    const char *st;
+	    int t;
+
+	    gretl_push_c_numeric_locale();
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		st = series_get_string_for_obs(p->dset, v, t);
+		ret->v.xvec[t] = strtod(st, &endptr);
+		if (errno || endptr == st) {
+		    errno = 0;
+		    ret->v.xvec[t] = NADBL;
+		}
+	    }
+	    gretl_pop_c_numeric_locale();
+	}
     }
 
     return ret;
@@ -16939,7 +16965,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_ATOF:
-	if (l->t == STR) {
+	if (l->t == STR || l->t == SERIES) {
 	    ret = atof_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);

@@ -1069,10 +1069,6 @@ static void write_other_font_string (char *fstr, int stdsize)
     }
 }
 
-#define TRY_GPSTY 0 /* not just yet */
-
-#if TRY_GPSTY
-
 static char gp_style[32];
 
 /* callback for libset.c */
@@ -1090,6 +1086,10 @@ int set_plotstyle (const char *style)
 	return E_INVARG;
     }
 }
+
+#define TRY_GPSTY 0 /* not just yet */
+
+#if TRY_GPSTY
 
 static int maybe_inject_gp_style (FILE *fp)
 {
