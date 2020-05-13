@@ -2129,7 +2129,8 @@ int non_numeric_check (DATASET *dset, int **plist,
     int err = 0;
 
 #if CDEBUG > 1
-    fprintf(stderr, "non_numeric_check: testing %d series\n", dset->v - 1);
+    fprintf(stderr, "non_numeric_check: testing %d series, pst = %p\n",
+	    dset->v - 1, (void *) pst);
 #endif
 
     if (pst == NULL) {
@@ -4097,7 +4098,6 @@ int csv_open_needs_matrix (gretlopt opt)
 }
 
 typedef double keynum;
-#define KEYNUM_FMT "%g"
 
 /* below: apparatus to implement the "join" command */
 
@@ -4781,14 +4781,16 @@ static void joiner_print (joiner *jr)
     for (i=0; i<jr->n_rows; i++) {
 	row = &jr->rows[i];
 	if (row->n_keys > 1) {
-	    fprintf(stderr, " row %d: keyvals=(%" KEYNUM_FMT ",%" KEYNUM_FMT ")\n",
+	    fprintf(stderr, " row %d: keyvals=(%g,%g)\n",
 		    i, row->keyval, row->keyval2);
 	} else {
+	    int k = lrint(row->keyval) - 1;
+
 	    if (jr->str_keys[0] && row->keyval >= 0) {
-		fprintf(stderr, " row %d: keyval=%" KEYNUM_FMT "(%s)\n",
-			i, row->keyval, labels[row->keyval - 1]);
+		fprintf(stderr, " row %d: keyval=%g (%s)\n",
+			i, row->keyval, labels[k]);
 	    } else {
-		fprintf(stderr, " row %d: keyval=%" KEYNUM_FMT "\n",
+		fprintf(stderr, " row %d: keyval=%g\n",
 			i, row->keyval);
 	    }
 	}
@@ -4797,7 +4799,7 @@ static void joiner_print (joiner *jr)
     if (jr->keys != NULL) {
 	fprintf(stderr, " for primary key: n_unique = %d\n", jr->n_unique);
 	for (i=0; i<jr->n_unique; i++) {
-	    fprintf(stderr,"  key value %" KEYNUM_FMT ": count = %d\n",
+	    fprintf(stderr,"  key value %g: count = %d\n",
 		    jr->keys[i], jr->key_freq[i]);
 	}
     }
@@ -4926,9 +4928,9 @@ static double aggr_value (joiner *jr,
 
 #if AGGDEBUG
     if (pos < 0) {
-	fprintf(stderr, " key1 = " KEYNUM_FMT ": no match\n", key1);
+	fprintf(stderr, " key1 = %g: no match\n", key1);
     } else {
-	fprintf(stderr, " key1 = " KEYNUM_FMT ": matched at position %d\n", key1, pos);
+	fprintf(stderr, " key1 = %g: matched at position %d\n", key1, pos);
     }
 #endif
 
@@ -5288,11 +5290,11 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 			   &nomatch, &err);
 #if AGGDEBUG
 	    if (na(z)) {
-		fprintf(stderr, " aggr_value: got NA (keys=" KEYNUM_FMT
-			"," KEYNUM_FMT ", err=%d)\n", key, key2, err);
+		fprintf(stderr, " aggr_value: got NA (keys=%g,%g, err=%d)\n",
+			key, key2, err);
 	    } else {
-		fprintf(stderr, " aggr_value: got %.12g (keys=" KEYNUM_FMT
-			"," KEYNUM_FMT ", err=%d)\n", z, key, key2, err);
+		fprintf(stderr, " aggr_value: got %.12g (keys=%g,%g, err=%d)\n",
+			z, key, key2, err);
 	    }
 #endif
 	    if (!err && strcheck && !na(z)) {
