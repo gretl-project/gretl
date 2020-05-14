@@ -64,31 +64,37 @@ static char *put_ext (char *fname, const char *ext)
     return fname;
 }
 
-static int matrix_is_payload (const gretl_matrix *m)
+static int vec_length_error (const char *which, int n,
+			     int n_wanted)
 {
-    if (m != NULL) {
-	int i;
+    gretl_errmsg_sprintf("%s: expected %d rows but got %d",
+			 which, n_wanted, n);
+    return E_DATA;
+}
 
-	for (i=0; i<m->rows; i++) {
-	    if (!na(m->val[i]) && m->val[i] != 0) {
-		return 1;
-	    }
+static int skip_object (int i, const gretl_matrix *z,
+			const gretl_matrix *m,
+			double *pzi)
+{
+    int ret = 0;
+
+    if ((z != NULL && i >= z->rows) ||
+	(m != NULL && i >= m->rows)) {
+	/* safety first! */
+	ret = 1;
+    } else {
+	if (z != NULL) {
+	    /* skip on payload value is missing */
+	    *pzi = z->val[i];
+	    ret = na(*pzi);
+	}
+	if (!ret && m != NULL && m->val[i] == 1) {
+	    /* or skip on entity masked out */
+	    ret = 1;
 	}
     }
 
-    return 0;
-}
-
-static int skip_object (int i, const gretl_matrix *z, double *pzi)
-{
-    if (z == NULL) {
-	return 0;
-    } else if (i >= z->rows) {
-	return 1;
-    } else {
-	*pzi = z->val[i];
-	return na(*pzi);
-    }
+    return ret;
 }
 
 static void record_extrema (double x, double y,
@@ -195,7 +201,7 @@ static gretl_matrix *make_bbox (double *gmin, double *gmax)
 static gretl_matrix *geo2dat (const char *geoname,
 			      const char *datname,
 			      const gretl_matrix *zvec,
-			      int have_payload)
+			      const gretl_matrix *mask)
 {
     gretl_array *features, *AC;
     gretl_array *ACj, *ACjk;
@@ -216,8 +222,9 @@ static gretl_matrix *geo2dat (const char *geoname,
 
     nf = gretl_array_get_length(features);
     if (zvec != NULL && zvec->rows != nf) {
-	gretl_errmsg_sprintf("Invalid payload: should have %d rows", nf);
-	err = E_INVARG;
+	err = vec_length_error("payload", zvec->rows, nf);
+    } else if (mask != NULL && mask->rows != nf) {
+	err = vec_length_error("mask", mask->rows, nf);
     }
 
     if (!err) {
@@ -235,77 +242,75 @@ static gretl_matrix *geo2dat (const char *geoname,
     for (i=0; i<nf; i++) {
 	double x, y, z = 0;
 
-	if (skip_object(i, zvec, &z)) {
+	if (skip_object(i, zvec, mask, &z)) {
 	    continue;
 	}
 
-        if (!na(z)) {
-	    fi = gretl_array_get_data(features, i);
-	    geom = gretl_bundle_get_bundle(fi, "geometry", NULL);
-	    gtype = gretl_bundle_get_string(geom, "type", NULL);
-	    if (!strcmp(gtype, "Polygon")) {
-                mp = 0;
-	    } else if (!strcmp(gtype, "MultiPolygon")) {
-                mp = 1;
-            } else {
-                gretl_errmsg_sprintf("can't handle geometry type '%s'", gtype);
-		err = E_DATA;
-		break;
+	fi = gretl_array_get_data(features, i);
+	geom = gretl_bundle_get_bundle(fi, "geometry", NULL);
+	gtype = gretl_bundle_get_string(geom, "type", NULL);
+	if (!strcmp(gtype, "Polygon")) {
+	    mp = 0;
+	} else if (!strcmp(gtype, "MultiPolygon")) {
+	    mp = 1;
+	} else {
+	    gretl_errmsg_sprintf("can't handle geometry type '%s'", gtype);
+	    err = E_DATA;
+	    break;
+	}
+	AC = gretl_bundle_get_array(geom, "coordinates", NULL);
+	nac = gretl_array_get_length(AC);
+	if (mp == 0) {
+	    /* got Polygon */
+	    for (j=0; j<nac; j++) {
+		ACj = gretl_array_get_data(AC, j);
+		X = ring2matrix(ACj);
+		for (k=0; k<X->rows; k++) {
+		    x = gretl_matrix_get(X, k, 0);
+		    y = gretl_matrix_get(X, k, 1);
+		    if (zvec != NULL) {
+			fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+		    } else {
+			fprintf(fp, "%#.8g %#.8g\n", x, y);
+		    }
+		    record_extrema(x, y, gmin, gmax);
+		}
+		gretl_matrix_free(X);
+		if (j < nac-1) {
+		    fputc('\n', fp);
+		}
 	    }
-	    AC = gretl_bundle_get_array(geom, "coordinates", NULL);
-            nac = gretl_array_get_length(AC);
-            if (mp == 0) {
-		/* got Polygon */
-                for (j=0; j<nac; j++) {
-		    ACj = gretl_array_get_data(AC, j);
-                    X = ring2matrix(ACj);
-		    for (k=0; k<X->rows; k++) {
-			x = gretl_matrix_get(X, k, 0);
-			y = gretl_matrix_get(X, k, 1);
-			if (have_payload) {
-                            fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+	} else {
+	    /* got MultiPolygon */
+	    for (j=0; j<nac; j++) {
+		ACj = gretl_array_get_data(AC, j);
+		ncj = gretl_array_get_length(ACj);
+		for (k=0; k<ncj; k++) {
+		    ACjk = gretl_array_get_data(ACj, k);
+		    X = ring2matrix(ACjk);
+		    for (p=0; p<X->rows; p++) {
+			x = gretl_matrix_get(X, p, 0);
+			y = gretl_matrix_get(X, p, 1);
+			if (zvec != NULL) {
+			    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
 			} else {
 			    fprintf(fp, "%#.8g %#.8g\n", x, y);
 			}
 			record_extrema(x, y, gmin, gmax);
 		    }
 		    gretl_matrix_free(X);
-                    if (j < nac-1) {
-                        fputc('\n', fp);
+		    if (k < ncj-1) {
+			fputc('\n', fp);
 		    }
 		}
-	    } else {
-		/* got MultiPolygon */
-		for (j=0; j<nac; j++) {
-		    ACj = gretl_array_get_data(AC, j);
-		    ncj = gretl_array_get_length(ACj);
-		    for (k=0; k<ncj; k++) {
-			ACjk = gretl_array_get_data(ACj, k);
-                        X = ring2matrix(ACjk);
-			for (p=0; p<X->rows; p++) {
-			    x = gretl_matrix_get(X, p, 0);
-			    y = gretl_matrix_get(X, p, 1);
-			    if (have_payload) {
-				fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
-			    } else {
-				fprintf(fp, "%#.8g %#.8g\n", x, y);
-			    }
-			    record_extrema(x, y, gmin, gmax);
-			}
-			gretl_matrix_free(X);
-                        if (k < ncj-1) {
-                            fputc('\n', fp);
-                        }
-		    }
-		    if (j < nac-1) {
-                        fputc('\n', fp);
-                    }
-                }
-            }
-            if (i < nf-1) {
-                fputs("\n\n", fp); /* end of entity block */
-            }
-        }
+		if (j < nac-1) {
+		    fputc('\n', fp);
+		}
+	    }
+	}
+	if (i < nf-1) {
+	    fputs("\n\n", fp); /* end of entity block */
+	}
     }
 
     fputc('\n', fp);
@@ -343,7 +348,7 @@ static int json_get_char (gchar **ps, int targ)
 static gretl_matrix *fast_geo2dat (const char *geoname,
 				   const char *datname,
 				   const gretl_matrix *zvec,
-				   int have_payload)
+				   const gretl_matrix *mask)
 {
     GError *gerr = NULL;
     gsize len = 0;
@@ -381,7 +386,7 @@ static gretl_matrix *fast_geo2dat (const char *geoname,
 	p = strstr(s, targ);
 	if (p == NULL) break;
 
-	if (skip_object(i, zvec, &z)) {
+	if (skip_object(i, zvec, mask, &z)) {
 	    s = p + 14;
 	    continue;
 	}
@@ -414,7 +419,7 @@ static gretl_matrix *fast_geo2dat (const char *geoname,
 		    break;
 		}
 		nrbr = 1;
-		if (have_payload) {
+		if (zvec != NULL) {
 		    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
 		} else {
 		    fprintf(fp, "%#.8g %#.8g\n", x, y);
@@ -839,7 +844,7 @@ static void mercatorize (double lat, double lon,
 static gretl_matrix *shp2dat (const char *shpname,
 			      const char *datname,
 			      const gretl_matrix *zvec,
-			      int have_payload)
+			      const gretl_matrix *mask)
 {
     gretl_matrix *bbox = NULL;
     SHPHandle SHP;
@@ -879,15 +884,19 @@ static gretl_matrix *shp2dat (const char *shpname,
 
     SHPGetInfo(SHP, &n_entities, &n_shapetype, gmin, gmax);
 
-    if (zvec != NULL) {
-	if (zvec->rows != n_entities) {
-	    fprintf(stderr, "data vector: expected %d rows but got %d\n",
-		    n_entities, zvec->rows);
+    if (zvec != NULL || mask != NULL) {
+	if (zvec != NULL && zvec->rows != n_entities) {
+	    err = vec_length_error("payload", zvec->rows, n_entities);
+	} else if (mask != NULL && mask->rows != n_entities) {
+	    err = vec_length_error("mask", mask->rows, n_entities);
+	}
+	if (err) {
 	    SHPClose(SHP);
 	    return NULL;
 	}
-	for (i=0; i<zvec->rows; i++) {
-	    if (na(zvec->val[i])) {
+	for (i=0; i<n_entities; i++) {
+	    if ((zvec != NULL && na(zvec->val[i])) ||
+		(mask != NULL && mask->val[i] == 1)) {
 		nskip++;
 		break;
 	    }
@@ -913,7 +922,7 @@ static gretl_matrix *shp2dat (const char *shpname,
 	double x, y, z = 0;
 	int j;
 
-	if (skip_object(i, zvec, &z)) {
+	if (skip_object(i, zvec, mask, &z)) {
 	    continue;
 	}
 
@@ -947,7 +956,7 @@ static gretl_matrix *shp2dat (const char *shpname,
 		x = obj->fX[j];
 		y = obj->fY[j];
 	    }
-	    if (have_payload) {
+	    if (zvec != NULL) {
 		fprintf(fp, "%.*g%c%.*g%c%.*g\n", prec, x, delim, prec, y, delim, prec, z);
 	    } else {
 		fprintf(fp, "%.*g%c%.*g\n", prec, x, delim, prec, y);
@@ -1143,10 +1152,10 @@ static int shapefile_to_csv (const char *fname,
 
 static gretl_matrix *map2dat (const char *mapname,
 			      const char *datname,
-			      const gretl_matrix *zvec)
+			      const gretl_matrix *zvec,
+			      const gretl_matrix *mask)
 {
     char infile[MAXLEN];
-    int have_payload;
 
     strcpy(infile, mapname);
     get_full_read_path(infile);
@@ -1155,16 +1164,18 @@ static gretl_matrix *map2dat (const char *mapname,
 	gretl_errmsg_set("Invalid payload");
 	return NULL;
     }
-
-    have_payload = matrix_is_payload(zvec);
+    if (mask != NULL && mask->cols > 1) {
+	gretl_errmsg_set("Invalid mask");
+	return NULL;
+    }
 
     if (has_suffix(mapname, ".shp")) {
-	return shp2dat(infile, datname, zvec, have_payload);
+	return shp2dat(infile, datname, zvec, mask);
     } else if (0 /* libset_get_bool(GEOJSON_FAST) */) {
 	/* FIXME revisit this */
-	return fast_geo2dat(infile, datname, zvec, have_payload);
+	return fast_geo2dat(infile, datname, zvec, mask);
     } else {
-	return geo2dat(infile, datname, zvec, have_payload);
+	return geo2dat(infile, datname, zvec, mask);
     }
 }
 
@@ -1294,11 +1305,10 @@ int geoplot (const char *mapfile,
 	     gretl_matrix *payload,
 	     gretl_bundle *opts)
 {
-    const gretl_matrix *zvec = NULL;
+    const gretl_matrix *mask = NULL;
     gretl_matrix *bbox = NULL;
     gchar *plotfile = NULL;
     gchar *datfile = NULL;
-    int have_payload = 0;
     int plotfile_is_image = 0;
     int show = 1;
     int err = 0;
@@ -1331,11 +1341,8 @@ int geoplot (const char *mapfile,
 	goto bailout;
     }
 
-    if (payload != NULL) {
-	have_payload = 1;
-        zvec = payload;
-    } else if (gretl_bundle_has_key(opts, "mask")) {
-	zvec = gretl_bundle_get_matrix(opts, "mask", &err);
+    if (gretl_bundle_has_key(opts, "mask")) {
+	mask = gretl_bundle_get_matrix(opts, "mask", &err);
     }
 
     if (!err) {
@@ -1347,7 +1354,7 @@ int geoplot (const char *mapfile,
 	    datfile = gretl_make_dotpath("geoplot_tmp.dat");
 	}
 	/* write out the polygons data for gnuplot */
-	bbox = map2dat(mapfile, datfile, zvec);
+	bbox = map2dat(mapfile, datfile, payload, mask);
 	if (bbox == NULL) {
 	    err = E_DATA;
 	}
@@ -1356,7 +1363,7 @@ int geoplot (const char *mapfile,
     if (!err) {
 	gretl_matrix *zrange = NULL;
 
-	if (have_payload) {
+	if (payload != NULL) {
 	    zrange = vector_minmax(payload);
 	}
 	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,

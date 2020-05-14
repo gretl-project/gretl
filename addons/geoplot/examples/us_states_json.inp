@@ -6,22 +6,16 @@ join statepop.gdt population --ikey=postal --okey=Code
 print -o name postal population
 
 # cut out Hawaii and Alaska
-series mask = 0
-smpl postal=="HI" || postal=="AK" --restrict
-population = NA
-mask = NA
-smpl full
+series mask = postal=="HI" || postal=="AK"
 
 bundle options = null
 options.plotfile = "us_states_json.plt"
+options.mask = {mask}
 options.height = 500
 
 outlines_only = 1
 
 if outlines_only
-   # cut out Hawaii and Alaska via mask
-   set skip_missing off
-   options.mask = {mask}
    geoplot(JSON, null, options)
 else
    # show population levels in shades of blue

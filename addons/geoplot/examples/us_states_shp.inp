@@ -3,27 +3,24 @@ string SHP = "states.shp"
 
 open @DBF -q -p
 join statepop.gdt population --ikey=STATE_FIPS --okey=FIPS
-print -o STATE_NAME STATE_FIPS population
-# cut out Hawaii and Alaska
-population[1] = NA
-population[51] = NA
+
+# cut out Hawaii and Alaska?
+series mask = STATE_ABBR == "AK" || STATE_ABBR == "HI"
+print -o STATE_NAME population mask
 
 bundle options = null
 options.plotfile = "us_states_shp.plt"
+options.mask = {mask}
 options.height = 500
 options.show = 1
 
-outlines_only = 0
+outlines_only = 1
 
 if outlines_only
-   # cut out Hawaii and Alaska via mask
-   options.mask = zeros($nobs, 1)
-   options.mask[1] = NA
-   options.mask[51] = NA
    geoplot(SHP, null, options)
 else
    # show population levels in shades of blue
-   options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"
+   options.setpal = "blues"
    options.title = "US states, population (lower 48)"
    options.notics = 1
    geoplot(SHP, population, options)
