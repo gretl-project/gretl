@@ -1556,19 +1556,17 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 	ret = gtk_dialog_run(GTK_DIALOG(dlg));
 	gtk_widget_destroy(dlg);
 
-#if 1
 	if (ret != 1 && ed->active_bars >= 0) {
 	    /* not opening a file: revert to default selection */
 	    gtk_combo_box_set_active(box, ed->active_bars);
 	}
-#endif
 
 	if (ret == 1) {
 	    /* open */
 	    file_selector_with_parent(OPEN_BARS, FSEL_DATA_MISC,
 				      ed, ed->dialog);
 	} else if (ret == 2) {
-	    /* loot at the example file */
+	    /* look at the example file */
 	    const char *fname = default_bars_filename();
 
 	    view_file(fname, 0, 0, 60, 420, VIEW_FILE);
