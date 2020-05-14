@@ -237,7 +237,7 @@ RCVAR rc_vars[] = {
 #endif
     { "graph_scale", N_("Default graph scale"), NULL, &graph_scale,
       LISTSET | FLOATSET, 0, TAB_MAIN, NULL },
-    { "graph_theme", N_("Graph theme"), NULL, &graph_theme,
+    { "graph_theme", N_("Graph theme"), NULL, graph_theme,
       LISTSET, sizeof graph_theme, TAB_MAIN, NULL },
 #if !defined(G_OS_WIN32) || !defined(PKGBUILD)
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot,
@@ -1376,6 +1376,24 @@ static void table_attach_fixed (GtkTable *table,
 		     0, 0, 0, 0);
 }
 
+static void themes_page (GtkButton *button, gpointer p)
+{
+    if (browser_open("http://ricardo.ecn.wfu.edu/pub/gretl/plots/")) {
+	errbox("Failed to open URL");
+    }
+}
+
+static void add_themes_examples_button (GtkWidget *hbox)
+{
+    GtkWidget *b;
+
+    b = gtk_button_new_with_label(_("Examples"));
+    gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
+    gtk_widget_show(b);
+    g_signal_connect(G_OBJECT(b), "clicked",
+		     G_CALLBACK(themes_page), NULL);
+}
+
 static void make_prefs_tab (GtkWidget *notebook, int tab)
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
@@ -1610,6 +1628,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	} else if (rc->flags & LISTSET) {
 	    int langs = rc->var == langpref;
+	    int gtheme = rc->var == graph_theme;
 	    int j, active = 0;
 
 	    l_len++;
@@ -1631,6 +1650,9 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 
 		gtk_box_pack_start(GTK_BOX(hbox), rc->widget, FALSE, FALSE, 5);
+		if (gtheme) {
+		    add_themes_examples_button(hbox);
+		}
 		gtk_table_attach(GTK_TABLE(l_table), hbox,
 				 1, 2, l_len - 1, l_len,
 				 GTK_EXPAND | GTK_FILL, 0, 0, 0);
@@ -2121,7 +2143,6 @@ static int common_read_rc_setup (void)
     libset_set_bool(ROBUST_Z, robust_z);
     set_gp_colors();
     set_gp_scale();
-    set_gp_theme();
 
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
@@ -2137,6 +2158,7 @@ static int common_read_rc_setup (void)
 
     gretl_www_init(paths.dbhost, http_proxy, use_proxy);
     set_tex_use_pdf(latex);
+    set_gp_theme();
 
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
     maybe_fix_viewpdf();

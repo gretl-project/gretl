@@ -1108,6 +1108,8 @@ static int transcribe_style (const char *s)
 
 static int try_set_alt_sty (void)
 {
+    GError *gerr = NULL;
+    gsize len = 0;
     gchar *try = NULL;
     gchar *fname;
     int err = 0;
@@ -1115,10 +1117,11 @@ static int try_set_alt_sty (void)
     fname = g_build_filename(gretl_home(), "data",
 			     "gnuplot", gp_style, NULL);
 
-    if (g_file_get_contents(fname, &try, NULL, NULL)) {
+    if (g_file_get_contents(fname, &try, &len, &gerr)) {
 	err = transcribe_style(try);
 	if (err) {
 	    /* failed to conform to spec */
+	    fprintf(stderr, "%s failed spec check\n", gp_style);
 	    set_plotstyle("default");
 	} else {
 	    /* OK, put the style in place */
@@ -1127,7 +1130,11 @@ static int try_set_alt_sty (void)
 	}
     } else {
 	/* couldn't find the file */
-	err = E_INVARG;
+	if (gerr != NULL) {
+	    fprintf(stderr, "%s\n", gerr->message);
+	    g_error_free(gerr);
+	}
+	err = E_FOPEN;
     }
 
     g_free(fname);

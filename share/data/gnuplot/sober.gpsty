@@ -1,0 +1,9 @@
+# gpstyle sober
+set linetype 1 pt 6  lc rgb "#000000"
+set linetype 2 pt 7  lc rgb "#329393"
+set linetype 3 pt 11 lc rgb "#6986CE"
+set linetype 4 pt 13 lc rgb "#B51010"
+set linetype 5 pt 4  lc rgb "#CFC358"
+set linetype 6 pt 3  lc rgb "#71A76C"
+set linetype 7 pt 5  lc rgb "#9643A6"
+set linetype 8 pt 8  lc rgb "#CA7A22"
