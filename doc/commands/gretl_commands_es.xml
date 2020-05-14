@@ -6720,12 +6720,13 @@
 
     <description>
       <para>
-	Esta instrucción incorpora una serie con el nombre <repl>nombrevar</repl>
-	con datos, desde el origen <repl>nombrearchivo</repl> (que debe ser
-	bien un archivo de datos con el texto delimitado, o bien un archivo
-	de datos <quote>propio</quote> de Gretl). Para obtener más detalles,
-	consulta <guideref targ="chap:join"/> pues aquí damos solo un breve
-	resumen de las opciones disponibles.
+	Esta instrucción incorpora una o más series desde el origen
+	<repl>nombrearchivo</repl> (que debe ser bien un archivo de datos con
+	el texto delimitado, o bien un archivo de datos <quote>propio</quote>
+	de Gretl), con el nombre <repl>nombrevar</repl>. Para obtener más
+	detalles, consulta <guideref targ="chap:join"/> pues aquí damos solo
+	un breve resumen de las opciones disponibles. Consulta también
+	<cmdref targ="append"/> para operaciones de anexión más simples.
       </para>
       <para>
 	Puedes utilizar la opción <opt>data</opt> para especificar el
@@ -6755,9 +6756,21 @@
 	a ser emparejadas con el conjunto de datos, y/o bien el formato en el que
 	las fechas se representan en esa columna.
       </para>
+      <subhead>Incorporación de más de una serie al mismo tiempo</subhead>
       <para>
-	Consulta también <cmdref targ="append"/> para las operaciones más
-	sencillas de anexión.
+	Con la instrucción <cmd>join</cmd> puedes manejar la incorporación
+	de varias series al mismo tiempo. Esto sucede si el argumento
+	<repl>nombrevar</repl>: (a) consiste en una lista de nombres separados
+	por espacios, en lugar de un único nombre; o (b) apunta a un 'array'
+	de cadenas de texto, cuyos elementos deben ser los nombres de las
+	series que se pretende incorporar.
+      </para>
+      <para>
+	Sin embargo, este método tiene alguna limitación como el hecho de que la
+	opción <opt>data</opt> en este caso no está disponible. Y cuando incorporas
+	múltiples series, estás obligado a aceptar los nombres <quote>externos</quote>
+	que ya tienen. Las demás opciones se aplican de modo uniforme a todas
+	las series que se incorporan mediante una instrucción concreta.
       </para>
     </description>
 

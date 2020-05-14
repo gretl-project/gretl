@@ -3395,7 +3395,7 @@
 	<code>
 	  scalar e = easterday(2014)
 	  scalar m = floor(e)
-	  scalar d = 100*(e-m)
+	  scalar d = round(100*(e-m))
 	</code>
       </description>
     </function>
@@ -10373,6 +10373,20 @@
       </description>
     </function>
 
+    <function name="sgn" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve a función signo de <argname>x</argname>; é dicir,
+	  0 se <argname>x</argname> é cero, 1 se <argname>x</argname> é
+	  positivo, &minus;1 se <argname>x</argname> é negativo, ou
+	  <lit>NA</lit> se <argname>x</argname> é Non Numérico.
+	</para>
+      </description>
+    </function>
+
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="matrixref">&amp;b</fnarg>
@@ -11172,9 +11186,11 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve unha subcadea do argumento <argname>s</argname>, comezando no
-	  carácter indicado polo enteiro positivo de <argname>inicio</argname>, e
-	  rematando no indicado polo de <argname>fin</argname>, ambos incluídos.
+	  Devolve a subcadea do argumento <argname>s</argname>, comezando no
+	  carácter indicado polo enteiro positivo de <argname>inicio</argname>,
+	  e rematando no indicado polo de <argname>fin</argname>, ambos
+	  incluídos; ou desde <argname>inicio</argname> ata o remate de
+	  <argname>s</argname> se <argname>fin</argname> é igual a &minus;1.
 	</para>
   <para>
           Por exemplo, o código de abaixo

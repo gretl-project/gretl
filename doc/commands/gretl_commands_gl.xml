@@ -6720,12 +6720,13 @@
 
     <description>
       <para>
-	Esta instrución incorpora unha serie co nome <repl>nomevar</repl>
-	con datos, desde a orixe <repl>nomeficheiro</repl> (que debe de ser
-	ben un ficheiro de datos co texto delimitado, ou ben un ficheiro
-	de datos <quote>propio</quote> de Gretl). Para obter máis detalles,
+	Esta instrución incorpora unha ou máis series desde a orixe
+	<repl>nomeficheiro</repl> (que debe de ser ben un ficheiro de datos
+	co texto delimitado, ou ben un ficheiro de datos <quote>propio</quote>
+	de Gretl), co nome <repl>nomevar</repl>. Para obter máis detalles,
 	consulta o <guideref targ="chap:join"/> pois aquí damos só un breve
-	resumo das opcións dispoñibles.
+	resumo das opcións dispoñibles. Consulta tamén <cmdref targ="append"/>
+	para operacións de anexión máis simples.
       </para>
       <para>
 	Podes utilizar a opción <opt>data</opt> para especificar o
@@ -6755,9 +6756,21 @@
 	ser emparelladas co conxunto de datos, e/ou ben o formato no que
 	as datas se representan nesa columna.
       </para>
+      <subhead>Incorporación de máis dunha serie á vez</subhead>
       <para>
-	Consulta tamén <cmdref targ="append"/> para as operacións máis
-	sinxelas de anexión.
+	Coa instrución <cmd>join</cmd> podes manexar a incorporación
+	de varias series ao mesmo tempo. Isto acontece se o argumento
+	<repl>nomevar</repl>: (a) consiste nunha lista de nomes separados
+	por espazos, en troques dun único nome; ou (b) apunta a un arranxo
+	de cadeas de texto, cuxos elementos deben ser os nomes das series
+	que se quere incorporar.
+      </para>
+      <para>
+	Porén, este método ten algunha limitación como o feito de que a opción
+	<opt>data</opt> neste caso non está dispoñible. E cando incorporas
+	múltiples series, estás obrigado a aceptar os nomes <quote>externos</quote>
+	que xa teñen. As demais opcións se aplican de xeito uniforme a todas
+	as series que se incorporan mediante unha instrución concreta.
       </para>
     </description>
 
