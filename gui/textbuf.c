@@ -3652,6 +3652,51 @@ const char **get_sourceview_style_ids (int *n)
     return (const char **) ids;
 }
 
+const char **get_graph_theme_ids (int *n)
+{
+    static char **S = NULL;
+    static int n_found;
+
+    if (S != NULL) {
+	*n = n_found;
+    } else {
+	gchar *path;
+	GDir *dir;
+
+	*n = 0;
+	path = g_build_filename(gretl_home(), "data", "gnuplot", NULL);
+	dir = gretl_opendir(path);
+
+	S = strings_array_new(1);
+	S[0] = gretl_strdup("default");
+	*n = 1;
+
+	if (dir != NULL) {
+	    const gchar *fname;
+	    gchar *tmp, *p;
+	    int err = 0;
+
+	    while (!err && (fname = g_dir_read_name(dir))) {
+		if (!strncmp(fname, "default.", 8)) {
+		    continue;
+		}
+		if (has_suffix(fname, ".gpsty")) {
+		    tmp = g_strdup(fname);
+		    p = strstr(tmp, ".gpsty");
+		    *p = '\0';
+		    err = strings_array_add(&S, n, tmp);
+		    g_free(tmp);
+		}
+	    }
+	    g_dir_close(dir);
+	}
+	n_found = *n;
+	g_free(path);
+    }
+
+    return (const char **) S;
+}
+
 static void call_prefs_dialog (GtkWidget *w, windata_t *vwin)
 {
     preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));

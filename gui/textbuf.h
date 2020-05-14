@@ -130,6 +130,8 @@ void sourceview_print (windata_t *vwin);
 
 const char **get_sourceview_style_ids (int *n);
 
+const char **get_graph_theme_ids (int *n);
+
 void update_script_editor_options (windata_t *vwin);
 
 void viewer_split_pane (windata_t *vwin, int vertical);

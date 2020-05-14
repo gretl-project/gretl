@@ -120,11 +120,12 @@ static int tabbed_models = 0;
 static int display_wdir = 1;
 static int wdir_tooltip = 1;
 static int script_output_policy;
-char gpcolors[18];
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
 static char author_mail[32];
 static char sview_style[32] = "classic";
+static char graph_theme[24] = "default";
+static char gpcolors[18];
 
 static int hc_by_default;
 static char langpref[32];
@@ -236,6 +237,8 @@ RCVAR rc_vars[] = {
 #endif
     { "graph_scale", N_("Default graph scale"), NULL, &graph_scale,
       LISTSET | FLOATSET, 0, TAB_MAIN, NULL },
+    { "graph_theme", N_("Graph theme"), NULL, &graph_theme,
+      LISTSET, sizeof graph_theme, TAB_MAIN, NULL },
 #if !defined(G_OS_WIN32) || !defined(PKGBUILD)
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot,
       MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
@@ -1246,6 +1249,8 @@ static const char **get_list_setting_strings (void *var, int *n)
 	*n = sizeof manpref_strs / sizeof manpref_strs[0];
     } else if (var == sview_style) {
 	strs = get_sourceview_style_ids(n);
+    } else if (var == graph_theme) {
+	strs = get_graph_theme_ids(n);
     }
 
 #ifdef HAVE_MPI
@@ -1777,6 +1782,11 @@ static void set_gp_scale (void)
     gnuplot_png_set_default_scale(graph_scale);
 }
 
+static void set_gp_theme (void)
+{
+    set_plotstyle(graph_theme);
+}
+
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 
 static void maybe_revise_tramo_x12a_status (void)
@@ -1930,8 +1940,9 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
 	use_proxy = 0;
     }
 
-    /* update scale factor for PNG plots */
+    /* update graphing info */
     gnuplot_png_set_default_scale(graph_scale);
+    set_plotstyle(graph_theme);
 
     write_rc(); /* note: calls gretl_update_paths */
 
@@ -2110,6 +2121,7 @@ static int common_read_rc_setup (void)
     libset_set_bool(ROBUST_Z, robust_z);
     set_gp_colors();
     set_gp_scale();
+    set_gp_theme();
 
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
