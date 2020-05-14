@@ -1,0 +1,9 @@
+# gpstyle altpoints
+set linetype 1 pt 6  lc rgb "#E11616"
+set linetype 2 pt 7  lc rgb "#0000FF"
+set linetype 3 pt 11 lc rgb "#1B9E77"
+set linetype 4 pt 13 lc rgb "#BF25B2"
+set linetype 5 pt 4  lc rgb "#8FAAB3"
+set linetype 6 pt 3  lc rgb "#FFA500"
+set linetype 7 pt 5  lc rgb "#E51E10"
+set linetype 8 pt 8  lc rgb "#000000"
