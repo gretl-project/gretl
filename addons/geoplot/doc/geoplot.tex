@@ -23,28 +23,40 @@ in ``alpha'' mode (or at best ``beta''). You're welcome to try it, but
 expect some bugs, and do not bank on the user interface remaining
 unchanged.
 
+That said, section~\ref{sec:prelim} below covers some preliminaries
+which we hope will help the reader to understand what's going
+on. Section~\ref{sec:workflow} describes the basic workflow for
+producing a map image via gretl. Section~\ref{sec:example} then
+provides a simple worked example and section~\ref{sec:pairing}
+addresses a potential stumbling block. Section~\ref{sec:opts} goes
+over the current options to the core \texttt{geoplot} function in
+detail; section~\ref{sec:expert} explains some ``expert'' refinements;
+and section~\ref{sec:future} gives our current thinking on possible
+future directions for maps in gretl.
+
 \section{Preliminaries}
 \label{sec:prelim}
 
 Given gretl's user base and vocation, we assume that people will be
-primarily interested in ``thematic'' maps, in which geographical areas
+primarily interested in ``thematic maps'', in which geographical areas
 get different colors according to some variable of interest (for
 example regions of a country are colored according to their
 unemployment rates). Fancier maps are out of scope for the
 present. From here on we'll simply refer to maps of this sort as
-``maps'' and the geographical entities they contain as
+``maps'' and the geographical entities they contain (which may be
+countries, states, counties, l\"ander or whatever) as
 ``regions''. Plotting a map typically involves drawing a number of
 polygons, filled with appropriate colors, to some device (the screen,
 or a file).\footnote{One may want to draw colored lines, such as
-  rivers or roads. Probably doable, but not for now.}
+  rivers or roads: not for now.}
 
 The essential ingredients for doing this are
 \begin{enumerate}
    \item A geometrical description of the regions.
    \item The data for coloring the polygons.
-   \item Appropriate software for producing the map. 
+   \item Appropriate software for producing the map.
 \end{enumerate}
-   
+
 \subsection{The geometry}
 \label{sec:geometry}
 
@@ -56,79 +68,74 @@ elements, latitude and longitude.\footnote{In some cases you may have
   a third element---altitude being the most obvious candidate---or
   more.  But we're not getting into that right now.}
 
-The information on each region comprises two components:
+The information on each region has two components:
 \begin{description}
 \item[Metadata] At minimum this should include the region's
-  identifier(s), as a string and/or numerical codes. Other
-  information, such as land area, may also be included. You can see
-  this as a dataset with $n$ observations and several variables,
-  possibly string-valued.
-\item[Polygon data] A geometrical representation of a region's shape
-  on the map, in the form of one or more polygons, each represented by
-  an array of X--Y pairs, typically latitude and longitude. You can
-  see this as an array of arrays of 2-column matrices: the outer array
-  is of size $n$; the inner arrays each contain $k_i$ matrices, each
-  with two columns.
+  identifier(s), as strings and/or numerical codes. Other information,
+  such as land area, may also be included. You can think of this as a
+  dataset with $n$ observations and several variables, possibly
+  string-valued.
+\item[Polygons] A representation of the region's shape on the map, in
+  the form of one or more polygons, each taking the form of an array
+  of X--Y pairs, typically latitude and longitude. You can think of
+  this as an array of arrays of 2-column matrices: the outer array is
+  of size $n$; inner array $i$ contains $k_i$ matrices, each with two
+  columns.
 \end{description}
 
-Several file formats can be used for storing the geometry information.
-The page
-
-{\small
-\url{https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/nuts}}
-
-contains a nice collection for European NUTS regions (NUTS =
-Nomenclature of Territorial Units for Statistics).  The
-\textsf{geoplot} package supports two formats:
-\begin{enumerate}
-\item GeoJSON files: plain JSON files with a
-  pre-specified internal structure, regulated by RFC 7496. Basically,
-  an array of regions (or ``features'') with each element containing
-  the metadata and the polygons, under the \texttt{properties} and
-  \texttt{geometry} keys, respectively.  This is our preferred format.
+Several file formats can be used for storing the geometry
+information.\footnote{The site
+\url{https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units/nuts}
+offers a nice collection for European NUTS regions (NUTS =
+Nomenclature of Territorial Units for Statistics).}
+Gretl supports what are probably the two most common formats:
+\begin{itemize}
+\item GeoJSON files: plain JSON files with a pre-specified internal
+  structure, regulated by RFC 7946. Basically, an array of regions (or
+  ``features'') with each element containing the metadata and the
+  polygons, under the \texttt{properties} and \texttt{geometry} keys,
+  respectively.  This is our preferred format.\footnote{In the future
+    we may take a look at an evolution of GeoJSON called TopoJSON, but
+    that's not a priority at the moment.}
 \item ESRI shapefiles: more of a ``legacy'' format, but still very
   common in the wild. These maps come as collections of several files,
-  the essential ones being:
-  \begin{itemize}
-  \item an xBase file, with \texttt{dbf} extension, holding the
-    metadata;
-  \item the shapefile proper, with a \texttt{shp} extension, holding the
-    polygons;
-  \item an index file, with a \texttt{shx} extension, used to speed up
-    operations when you read the data.
-  \end{itemize}
-\end{enumerate}
+  usually zipped together. The essential components are an
+  \textsf{xBase} file, with \texttt{dbf} extension, holding the
+  metadata; the shapefile proper, with extension \texttt{shp}, holding
+  the polygons; and an index file, with extension \texttt{shx}, used
+  to speed up operations when reading the data.
+\end{itemize}
 
-In the future we may take a look at an evolution of GeoJSON called
-TopoJSON, but that's not a priority at the moment.
-
-\subsection{The payload}
+\subsection{The payload data}
 \label{sec:payload}
 
-The data for coloring the polygons constitute what we call the
-``payload''. We assume that the user has the payload data as a gretl
-series; typically, but not necessarily, this means that the user has a
-datafile (in \texttt{gdt} or CSV format) where each line represented a
-region, as in Table~\ref{tab:payload}. Note the \texttt{id} column: it
-is assumed that the map metadata contain some information to establish
-a correspondence with the dataset containing the payload series.
-Ideally this should be a numerical code, but a string-valued variable
-is also be acceptable.
-
+By ``payload'' we mean the data used for coloring the regions.  We
+assume that the payload is available as a gretl series. This typically
+means that the user has a data file (in native \texttt{gdt} format or
+some other format gretl can read) in which each line represents a
+region, as illustrated in Table~\ref{tab:payload}. Note in particular
+the \texttt{id} column.  We assume that the map metadata contain
+sufficient information to establish a correspondence with the dataset
+containing the payload: either a numerical code or a suitable
+string-valued variable.  One thing one quickly learns in exploring a
+variety of \texttt{geojson} and \texttt{shp} files is that there's no
+telling how the regions will be ordered; one \textit{cannot} assume
+that they occur in what one might think of as ``standard'' order
+(e.g.\ alphabetical order for US states).
 
 \begin{table}[htbp]
 \begin{center}
 \begin{tabular}{lrrr}
   \hline
-  \textbf{id}	& \textbf{State}& \textbf{Pop2019} & \textbf{Pop2010} \\
+  \texttt{id}	& \texttt{State}& \texttt{Pop2019} & \texttt{Pop2010} \\
   \hline
-  1	& Alabama	& 4903185	& 4779736  \\ 
-  2     & Alaska	& 731545	& 710231   \\ 
-  101   & American Samoa	& 55641	& 55519	  \\ 
-  3	& Arizona	& 6278717	& 6392017  \\ 
-  4	& Arkansas	& 3017825	& 2915918  \\ 
-  5	& California	& 39512223	& 37254523 \\ 
-  6	& Colorado	& 5758736	& 5029196  \\ 
+  1	& Alabama	& 4903185	& 4779736  \\
+  2     & Alaska	& 731545	& 710231   \\
+  101   & American Samoa	& 55641	& 55519	  \\
+  3	& Arizona	& 6278717	& 6392017  \\
+  4	& Arkansas	& 3017825	& 2915918  \\
+  5	& California	& 39512223	& 37254523 \\
+  6	& Colorado	& 5758736	& 5029196  \\
   7	& Connecticut	& 3565287	& 3574097  \\
                 & \vdots & \\
   \hline
@@ -142,101 +149,91 @@ is also be acceptable.
 \subsection{The software backend}
 \label{sec:software}
 
-One could conceivably use any one of the many plotting libraries
-around, but the \textsf{geoplot} package uses \textsf{gnuplot}, which
-is already used for all other kinds of plot in gretl.  The gnuplot way
-of drawing maps is via the Swiss-army knife \cmd{plot} command, with
-the \texttt{filledcurves} style. Details on the gnuplot syntax we're
-using are in Appendix \ref{sec:gnuplot}.
+In principle one could represent maps using any one of the many
+plotting libraries around, but gretl uses \textsf{gnuplot}, which we
+already use for all other kinds of plot. Details on the
+\textsf{gnuplot} commands we use can be found in
+Appendix~\ref{sec:gnuplot}.
 
-Given the geometry data and the payload, writing a gnuplot script for
-producing the map is relatively straightforward. The only possible
-problem could be its size for maps with lots of regions.
+Given the geometry data and the payload, writing a \textsf{gnuplot}
+script for producing the map is straightforward. And in most cases
+\textsf{gnuplot} can produce a plot in short order. You might have to
+wait a little if there are many regions, of complex shapes,
+represented in high precision in the source map file.
 
 \section{The workflow}
 \label{sec:workflow}
 
-Given the above, we could organize the workflow for having a map
-plotted in gretl as follows:
+Typical workflow for producing a thematic map in gretl is likely to be
+as follows.
 
 \begin{enumerate}
-\item you \cmd{open} the map-datafile into an ordinary dataset; this
-  will read the metadata so \dollar{nobs} will be equal to $n$.
-\item you create the payload series via append/join/whatever;
-\item you decide on the details of your map (color scale, possibly
-  add points/lines, send it to a png file or view it, etc), with
-  sensible defaults;
-\item finally, you create the map. 
+\item You \cmd{open} the map-datafile as a gretl dataset; this reads
+  in the metadata so gretl's \dollar{nobs} will be equal to the number
+  of regions, $n$.
+\item You add the payload data, via the \texttt{append} or
+  \texttt{join} commands or in some other way.
+\item You decide on some details of your map (appearance, format,
+  etc.), with sensible defaults being available.
+\item Finally, you create the map.
 \end{enumerate}
 
-Point 1 is handled by using the existing "open" command on the
-map-datafile (a GeoJSON file or a dbf file for the ESRI
-format).\footnote{It would be desirable to be able to \cmd{store}
-  GeoJSON files too, but we'd need a fast and efficient way to write
-  JSON files. At this time, Artur's function in the \texttt{extra}
-  package is not fit for the purpose because we need to store arrays
-  of arrays.} In principle, we could read the the geometry data at
-this point and store them in RAM, but (at least for now) we don't, to
-avoid filling up the RAM with lots of polygons. Instead, we read the
-metadata \emph{only} and the link with the geometry data is provided
-by storing the location of the geometry file internally; possibly, we
-could provide an accessor (\dollar{mapdata}?)  to let the user know if
-necessary.\footnote{Internally, this will most likely be handled by
-  using CSV as an intermediate format, but all this will be completely
-  transparent to the end user.} If we change our mind about this, the
-\dollar{mapdata} accessor will probably point to a structure with the
-geometry data: the internal representation of the geometry we have now
-when we read from the GeoJSON format is an array of bundles, one per
-region.
+Point 1 is handled by using the existing \texttt{open} command on the
+map-datafile. The filename extensions recognized for this purpose are
+\texttt{json} or \texttt{geojson} for GeoJSON files, \texttt{dbf} or
+\texttt{shp} for ESRI shapefiles.\footnote{In principle we could read
+  the polygons at this point and store them in RAM, but for now we
+  don't. We just read in the metadata, but store the path to the
+  associated geometry file internally; we could provide an accessor
+  for this path (\dollar{mapdata}?) but we're not doing that yet. A
+  possible future development is to make all the map information
+  (metadata and polygons) available as a gretl bundle under a suitable
+  accessor.} Point 2 is also handled by existing gretl commands.
 
-For point 2 we need no additional work. As for points 3) and 4), a
-possibility is a "command-block" approach, where these two actions are
-coalesced into a "geoplot" block, similar in syntax to the existing
-\cmd{plot} command.
+As for points 3 and 4, these are currently handled by the new
+(built-in) \texttt{geoplot} function.\footnote{At some point
+  production of maps may be supported by a gretl command, either in
+  its own right or as a variant of the existing \texttt{plot}
+  command.} This function has this signature:
+\begin{code}
+function void geoplot(const string mapfile,
+	              const series payload[null],
+	              const bundle options[null])
+\end{code}
+Here \texttt{mapfile} is the (required) name of the file containing
+the polygons, \texttt{payload} is the (optional) series with which to
+colorize the polygons, and \texttt{options} is an (optional) bundle to
+contain one or more elements governing the appearance or destination
+of the plot.
 
-\begin{scode}
-  open lad.json 
-  series x = normal() 
-  geomap x 
-     options <whatever> 
-  end geomap --output=display
-\end{scode}
+[MOVE? If the \cmd{geoplot} call follows on the opening of a map metadata
+file in the same session, the \texttt{mapfile} argument may be
+regarded as already implicit (it will be the very same file in the
+GeoJSON case, or an shp file with the same basename as a previously
+opened dbf file), but for now we're requiring that its path be given.]
 
-Note that \cmd{geomap} would read from the ``hidden'' geometry
-file. In principle, we may gain some additional flexibility by reading
-the geometry into a bundle array at point 1, but while it's
-straightforward to get such an object from JSON, it's not so easy
-(though clearly feasible) to construct one from a .shp file. Besides,
-most users will just want to add a data series, pick some options for
-how the map should look, and generate a map-image.  And for that we
-don't need to hold a heavyweight object (all those polygons) in
-memory.
+[MOVE? If the \texttt{payload} argument is given as \texttt{null} or omitted
+then the map is drawn ``as is'', without any colorization. This can be
+useful if you just want to see what a geometry file looks like.]
 
-Some expert users might want to mess with the bundle
-representation of the full map data as such, but an expert function to
-retrieve it could be added.
-
-The \cmd{geomap} command would take care of (a) reading in the
-geometry file (the GeoJSON file again, pairing the polygon data with
-the payload series (there may be a few problems here: see section
-\ref{sec:pairing}) and shipping the result to gnuplot, possibly with
-graphical refinements, as dictated by the options inside the block.
-
-At the time of writing, we don't have yet everything implemented in
-libgretl, so in hansl we have to make do with alternative
-solutions. In the \texttt{geoplot.gfn} package, we have a few hansl
-functions for manipulating map data, that we can use for producing
-simple examples and prototyping the algorithms.
+If the \texttt{options} bundle is omitted all options are set to their
+default values. The keys that are currently handled in the options
+bundle are listed (along with their default values) in section
+\ref{sec:opts}.
 
 \section{An example}
 \label{sec:example}
 
-For this example, we'll produce a map with the GDP per capita of the
-6 founder countries of the EU and use 3 files: \texttt{founders.inp},
-\texttt{founders.csv} and \texttt{founders.geojson}. This has the
-advantage that the necessary files are small enough to be inspected by
-hand if necessary.  The contents of the \texttt{founders.csv} file,
-that contains the eventual payload, are
+For this example we'll produce a map showing GDP per capita of the six
+founder countries of the EU, using three files: script
+\texttt{founders.inp}, data file \texttt{founders.csv} and map
+\texttt{founders.geojson}. In this case the required files are small
+enough to be readily inspected by hand.  The content of
+\texttt{founders.csv}, which holds what will be the payload, is shown
+in Table~\ref{tab:founders-csv}.
+
+\begin{table}[p]
+ \hrulefill
 \begin{code}
 Name,code,pop,area,gdp
 Belgium,BE,11365834,30528,534230
@@ -246,6 +243,11 @@ Italy,IT,61219113,301338,2147744
 Luxembourg,LU,589370,2586.4,65683
 Netherlands,NL,17220721,41543,880716
 \end{code}
+\hrulefill
+\caption{Content of \texttt{founders.csv}}
+\label{tab:founders-csv}
+\end{table}
+
 \begin{table}[htbp]
   \hrulefill
   \begin{scriptsize}
@@ -268,35 +270,32 @@ Netherlands,NL,17220721,41543,880716
 \hrulefill
 \caption{Excerpt of \texttt{founders.geojson}}
 \label{tab:json-xrpt}
-
 \end{table}
-The JSON file is too large to be shown here in full, but it's small
-enough that any text editor will do; Table \ref{tab:json-xrpt}
-contains a significant excerpt. Note that Belgium is a single polygon,
-but France is a collection of polygons, because of Corsica.
+
+The JSON file is too big to show here in full but small enough to
+examine in any text editor.\footnote{Even Microsoft's
+  \texttt{Notepad}!} Table~\ref{tab:json-xrpt} contains a
+representative excerpt. Note that while Belgium is a single polygon
+France is an array of polygons (``\texttt{MultiPolygon}''), because of
+Corsica.
 
 \begin{table}[htbp]
 \begin{scode}
-set verbose off
-include geoplot.gfn
-mapfile = "founders.geojson"
-open "@mapfile" --preserve
+open founders.geojson --preserve
 
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
 
-opts = defbundle("plotfile", "GDPpc.gp", "inlined", 1)
-geoplot(mapfile, gdppc, opts)
+opts = defbundle("plotfile", "GDPpc.plt", "inlined", 1)
+geoplot("founders.geojson", gdppc, opts)
 \end{scode}
 \caption{The ``founders'' script}
 \label{tab:founders-script}
 \end{table}
 
-The \texttt{founders.inp} script is in Table
-\ref{tab:founders-script}; the only reason why we use the
-\option{preserve} option when we \cmd{open} the GeoJSON file is to
-keep track of the string with the filename, but this will go
-eventually; this is what we get after opening the json file:
+The \texttt{founders.inp} script is in
+Table~\ref{tab:founders-script}. This is what we get after opening the
+\texttt{geojson} file in gretl:
 \begin{code}
      CNTR_NAME    ISO3_CODE      CNTR_ID    NAME_ENGL          FID
 
@@ -310,38 +309,12 @@ eventually; this is what we get after opening the json file:
 
 Next, we perform the \cmd{join} with \texttt{FID} (from the JSON file)
 as the inner key and \texttt{code} (from the CSV file) as the outer
-key. Finally, since we don't have the \cmd{geomap} block yet, for now
-we use a \cmd{geoplot} function, whose signature is
-\begin{code}
-function void geoplot(const string mapfile,
-	const series payload[null],
-	const bundle options[null])
-\end{code}
-where \texttt{mapfile} is the filename of the file containing the
-outlines, \texttt{payload} is the (optional) series with which to
-colorize the polygons, and \texttt{options} is a bundle to contain one
-or more optional elements governing the appearance of the
-plot.\footnote{We're using a bundle to allow an arbitrary number of
-  options without over-burdening the signature of the function.}
-
-If the \cmd{geoplot} call in fact follows on the opening of a map
-metadata file in the same session, the mapfile argument may be
-regarded as already implicit (it will be the very same file in the
-GeoJSON case, or an shp file with the same basename as a previously
-opened dbf file), but for now we're requiring that its path be
-given.
-
-If the payload is \texttt{null} or omitted, then only the
-boundaries between region will be drawn, so the user can inspect the
-outlines without any colorization, in case that could be useful.  this
-is useful if you want to have a see what a geometry file looks like.
-
-If the \texttt{options} bundle is omitted all options are set to their
-default values. The list of keys that are currently handled in the
-options bundle is listed in section \ref{sec:opts}. Here, we just use
-two: the ``plotfile'' option is used to store the generated gnuplot
-script into the \texttt{GDPpc.gp} file; moreover, this file will
-contained the geometry data in ``inlined'' form.
+key. Finally, we call the \cmd{geoplot} function to create an
+on-screen map. We specify the \texttt{mapfile} to use and the
+\texttt{payload} to colorize. Via the \texttt{options} argument we add
+a couple of points: the gnuplot input file should be saved under the
+name \texttt{GDPpc.gp}, and the geometry data should be ``inlined'' in
+this file, making it self-contained.
 
 Running the script will produce a gnuplot file like the following:
 
@@ -362,11 +335,10 @@ $MapData << EOD
 38.59809 31.50169 51.142806
 38.59737 31.60855 51.142806
 
-
 EOD
 plot for [i=0:*] $MapData index i with filledcurves fc palette, \
   $MapData using 1:2 with lines lc "white" lw 1
-  
+
 \end{code}
 %$
 
@@ -376,87 +348,76 @@ and feeding the above into gnuplot will yield  this map:
   \includegraphics[scale=0.5]{GDPpc.png}
 \end{center}
 
-\subsection{The pairing problem}
+\section{The pairing problem}
 \label{sec:pairing}
 
-The strategy outlined above implies a possible problem, arising from
-the decoupling of the metadata and the geometry data that takes place
-when you \cmd{open} the former.
+There's a potential problem with the strategy outlined above: possible
+decoupling of the metadata loaded via \cmd{open} and the geometry data
+loaded via the \texttt{geoplot} function.
 
-\begin{table}[htbp]
+Production of a correct map requires 1:1 correspondence between the
+regions represented in the current dataset and those in the geometry
+file. This correspondence may be broken by sorting or subampling of
+the dataset; in either case observation $i$ in the dataset will no
+longer match up with region $i$ in the geometry file. Sorting would be
+an unlikely (not to say silly) operation in this context but
+subsampling is important, because in some cases one wants to produce a
+map that shows only a subset of the available regions. A typical case
+is the USA, where you often want to leave out Hawaii, and maybe Alaska
+too.
+
+The solution we have at present for subsampling is illustrated in
+Table~\ref{tab:USA}: we create a dummy ``mask'' series, with value 1
+for the observations (regions) we wish to exclude, 0 otherwise, and
+pass it (in matrix form) to the \texttt{geoplot} function via the
+\texttt{options} bundle. Figure~\ref{fig:USA} shows the results with
+and without exclusion of Alaska and Hawaii.\footnote{Given the role
+  of this example we don't bother adding a real payload, but just
+  simulate data using the \texttt{normal} function.}
+
+\begin{table}[p]
   \begin{scode}
-set verbose on
-include geoplot.gfn
-
 open "us-states.geojson" --quiet
-
 x = normal()
-opts = defbundle("plotfile", "us0.gp", "inlined", 1, "show", 1)
+opts = defbundle("plotfile", "us0.gp", "inlined", 1)
 
+# Show the map of the entire USA
 opts.title = "USA (complete)"
 geoplot("us-states.geojson", x, opts)
 
-# now suppose you don't want Alaska and Hawaii
-
-series dum = (abbrev != "Alaska") && (abbrev != "Hawaii")
-x = dum ? x : NA
+# Now suppose you don't want Alaska and Hawaii
+series mask = (postal == "AK" || postal == "HI")
 opts.title = "USA (mainland)"
 opts.plotfile = "us1.gp"
+opts.mask = {mask}
 geoplot("us-states.geojson", x, opts)
   \end{scode}
   \caption{US maps (complete vs mainland)}
   \label{tab:USA}
 \end{table}
 
-In order to proceed with the creation of the map, it is tacitly
-assumed that a 1:1 correspondence between the $n$ regions one has in
-the currently open dataset and those in the geometry file can be
-established.
-
-\begin{figure}[htbp]
+\begin{figure}[p]
   \begin{center}
   \includegraphics[height=180pt]{us0.png}
 
-  \includegraphics[height=180pt]{us1.png}  
+  \includegraphics[height=180pt]{us1.png}
 \end{center}
 \caption{Output of script \ref{tab:USA}: full US vs mainland only.}
 \label{fig:USA}
 \end{figure}
 
-Two possibilities (are there any more?) when this correspondence may
-be broken are: (i) sorting and (ii) subsampling. In both cases,
-observation $i$ in the currently open dataset wouldn't correspond with
-the $i$-the region in the geometry datafile. Sorting is a relatively
-unusual operation, but subsampling is arguably very important, because
-in many cases one wants to produce maps that show only a subset of the
-available regions. A typical case is the USA, where you often want to
-leave out Hawaii, and possibly Alaska too.
+A related but different problem arises when the map data and the
+payload come from different sources, as they usually will. In this
+case, there may be a problem of \texttt{join}ing the regions correctly
+if discrepancies arise between the inner and outer keys. But this
+problem is not specific to the mapping apparatus, it's a more general
+issue concerning the matching of data from different sources, and we
+need not be concerned with it here.
 
-The solution we have for the moment for subsampling is to ``fake''
-subsampling by stuffing \texttt{NA}s into the payload: see for example
-the \texttt{US.inp} script shown in table
-\ref{tab:USA},\footnote{Given the nature of the example, we don't pick
-  up the payload from a file, but just generate it via
-  \texttt{normal()}.}  that produces the maps shown in Figure
-\ref{fig:USA}. This works, but feels like a bit of a hack and we'll
-have to think of a way to handle this more gracefully.
-
-A related, but different problem arises when the map data and the
-payload come from different sources. In this case, there may be a
-problem of \texttt{join}ing the regions correctly if discrepancies
-arise between the inner and outer keys. But this is not a problem of
-the mapping apparatus, bit rather a more general issue on matching
-data from different sources, and we need not be concerned with it
-here.
-
-If the \cmd{geoplot} function is invoked without a payload, so to just
-draw the boundaries between regions, one can use the \texttt{mask} key
-of the options bundle to indicate which regions must be skipped.
-
-\section{Currently supported options for the \texttt{geoplot} function}
+\section{Options for the \texttt{geoplot} function}
 \label{sec:opts}
 
-We first present all the recognized options in alphabetical
+We first present all the currently supported options in alphabetical
 order. Below the listing we give some further explanation of the usage
 of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 
@@ -494,7 +455,7 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   which there are currently just two, \texttt{blues} and
   \texttt{oranges}. For example, the syntax
   \begin{code}
-    options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"  
+    options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"
   \end{code}
   will give you a pleasant blue gradient---which also happens to be
   what you get by giving
@@ -551,6 +512,22 @@ to ``\texttt{.dat}''. For example you might get \texttt{mygeo.plt} and
 \texttt{mygeo.dat}; with \texttt{inlined} = 1 you'd just get a big
 \texttt{mygeo.plt}.
 
+\section{``Expert'' refinements}
+\label{sec:expert}
+
+To be written. Talk about opening GeoJSON or shp files as gretl
+bundles, editing in various ways, and saving as GeoJSON. (New
+functionality of bread()/bwrite().)
+
+\section{Future directions?}
+\label{sec:future}
+
+To be written. Talk about a possible ``command block'' version of
+geoplot. Maybe automatic opening of polygons as a bundle when you open
+the map metadata. Maybe have smpl handle sub-sampling of regions
+without requiring the user to pass a mask. Adding other features to
+maps (region names, cities, rivers)? TopoJSON?
+
 
 \clearpage
 \appendix
@@ -578,24 +555,24 @@ The internal coloring of each polygon can be set by using the
 \begin{code}
 unset key
 plot for [i=0:*] '-' index i with filledcurves fillcolor palette
-	0 0 2.5 
+	0 0 2.5
 	0 1 2.5
 	1 1 2.5
 	1 0 2.5
 
-	2 1 3.5 
+	2 1 3.5
 	2 2 3.5
 	3 2 3.5
 	3 1 3.5
 
-	4 0 3 
+	4 0 3
 	4 1 3
 	5 1 3
 	5 0 3
 
 e
 e
-e        
+e
 \end{code}
 \end{scriptsize}
 produces
