@@ -1,17 +1,15 @@
-set verbose on
-
 open "us-states.geojson" --quiet
+x = normal() # fake up some data!
+opts = defbundle("plotfile", "us0.plt", "inlined", 1)
 
-x = normal()
-opts = defbundle("plotfile", "us0.plt", "inlined", 1, "show", 1)
-
+# show the entire USA
 opts.title = "USA (complete)"
-geoplot("us-states.geojson", x, opts)
+geoplot($mapfile, x, opts)
 
-# now suppose you don't want Alaska and Hawaii
-
-series dum = (abbrev != "Alaska") && (abbrev != "Hawaii")
-x = dum ? x : NA
+# skip Alaska and Hawaii
+series mask = (postal == "AK" || postal == "HI")
 opts.title = "USA (mainland)"
 opts.plotfile = "us1.plt"
-geoplot("us-states.geojson", x, opts)
+opts.mask = {mask}
+geoplot($mapfile, x, opts)
+

@@ -10,6 +10,7 @@
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
+\setlength{\abovecaptionskip}{0pt}
 
 \title{geoplot: cartography in gretl}
 \author{Allin Cottrell and Jack Lucchetti}
@@ -38,7 +39,7 @@ future directions for maps in gretl.
 \label{sec:prelim}
 
 Given gretl's user base and vocation, we assume that people will be
-primarily interested in ``thematic maps'', in which geographical areas
+primarily interested in ``thematic'' maps, in which geographical areas
 get different colors according to some variable of interest (for
 example regions of a country are colored according to their
 unemployment rates). Fancier maps are out of scope for the
@@ -60,7 +61,7 @@ The essential ingredients for doing this are
 \subsection{The geometry}
 \label{sec:geometry}
 
-Let's say we have $n$ regions, indexed by $i$. Each region $i$ is
+Let's say we have $n$ regions, indexed by $i$. Region $i$ is
 represented geometrically as a collection of $k_i$ polygons (think
 islands in an archipelago), indexed by $j$. Each polygon is defined by
 $h_{i,j}$ coordinates. Typically, each coordinate vector has two
@@ -101,8 +102,8 @@ Gretl supports what are probably the two most common formats:
   common in the wild. These maps come as collections of several files,
   usually zipped together. The essential components are an
   \textsf{xBase} file, with \texttt{dbf} extension, holding the
-  metadata; the shapefile proper, with extension \texttt{shp}, holding
-  the polygons; and an index file, with extension \texttt{shx}, used
+  metadata; the shapefile proper with extension \texttt{shp}, holding
+  the polygons; and an index file with extension \texttt{shx}, used
   to speed up operations when reading the data.
 \end{itemize}
 
@@ -114,21 +115,21 @@ assume that the payload is available as a gretl series. This typically
 means that the user has a data file (in native \texttt{gdt} format or
 some other format gretl can read) in which each line represents a
 region, as illustrated in Table~\ref{tab:payload}. Note in particular
-the \texttt{id} column.  We assume that the map metadata contain
-sufficient information to establish a correspondence with the dataset
-containing the payload: either a numerical code or a suitable
-string-valued variable.  One thing one quickly learns in exploring a
-variety of \texttt{geojson} and \texttt{shp} files is that there's no
-telling how the regions will be ordered; one \textit{cannot} assume
-that they occur in what one might think of as ``standard'' order
-(e.g.\ alphabetical order for US states).
+the ``id'' column.  We assume that the map metadata contain sufficient
+information to establish a correspondence with the dataset containing
+the payload: either a numerical code or a suitable string-valued
+variable.  One thing one quickly learns in exploring a variety of
+\texttt{geojson} and \texttt{shp} files is that there's no telling how
+the regions will be ordered; one \textit{cannot} assume that they
+occur in what one might think of as ``standard'' order (e.g.\
+alphabetical order for US states).
 
 \begin{table}[htbp]
 \begin{center}
-\begin{tabular}{lrrr}
-  \hline
-  \texttt{id}	& \texttt{State}& \texttt{Pop2019} & \texttt{Pop2010} \\
-  \hline
+\begin{tabular}{llrr}
+  %\hline
+  id	& State & Pop2019 & Pop2010 \\
+  \hline \\ [-1.75ex]
   1	& Alabama	& 4903185	& 4779736  \\
   2     & Alaska	& 731545	& 710231   \\
   101   & American Samoa	& 55641	& 55519	  \\
@@ -138,10 +139,10 @@ that they occur in what one might think of as ``standard'' order
   6	& Colorado	& 5758736	& 5029196  \\
   7	& Connecticut	& 3565287	& 3574097  \\
                 & \vdots & \\
-  \hline
+  %\hline
 \end{tabular}
 \end{center}
-\caption{Typical format for the payload data}
+\caption{Typical format for a payload dataset}
 \label{tab:payload}
 \end{table}
 
@@ -230,11 +231,10 @@ founder countries of the EU, using three files: script
 \texttt{founders.geojson}. In this case the required files are small
 enough to be readily inspected by hand.  The content of
 \texttt{founders.csv}, which holds what will be the payload, is shown
-in Table~\ref{tab:founders-csv}.
+in Listing~\ref{tab:founders-csv}.
 
-\begin{table}[p]
- \hrulefill
-\begin{code}
+\begin{script}[htbp]
+\begin{scode}
 Name,code,pop,area,gdp
 Belgium,BE,11365834,30528,534230
 France,FR,67024633,632833,2833687
@@ -242,16 +242,13 @@ Germany,DE,82437641,357386,3874437
 Italy,IT,61219113,301338,2147744
 Luxembourg,LU,589370,2586.4,65683
 Netherlands,NL,17220721,41543,880716
-\end{code}
-\hrulefill
+\end{scode}
 \caption{Content of \texttt{founders.csv}}
 \label{tab:founders-csv}
-\end{table}
+\end{script}
 
-\begin{table}[htbp]
-  \hrulefill
-  \begin{scriptsize}
-  \begin{code}
+\begin{script}[htbp]
+  \begin{scode}
 {"type": "FeatureCollection", "features": [
  {"geometry": {"type": "Polygon", "coordinates": [[[40.40360,
      30.79039], [40.59686, 30.49366], [40.65087, 30.29746], ... ]]},
@@ -265,38 +262,39 @@ Netherlands,NL,17220721,41543,880716
      "ISO3_CODE": "FRA", "CNTR_ID": "FR", "NAME_ENGL": "France",
      "FID": "FR"}, "id": "FR"},
   ...
-\end{code}
-  \end{scriptsize}
-\hrulefill
+\end{scode}
 \caption{Excerpt of \texttt{founders.geojson}}
 \label{tab:json-xrpt}
-\end{table}
+\end{script}
 
 The JSON file is too big to show here in full but small enough to
 examine in any text editor.\footnote{Even Microsoft's
-  \texttt{Notepad}!} Table~\ref{tab:json-xrpt} contains a
+  \texttt{Notepad}!} Listing~\ref{tab:json-xrpt} contains a
 representative excerpt. Note that while Belgium is a single polygon
 France is an array of polygons (``\texttt{MultiPolygon}''), because of
 Corsica.
 
-\begin{table}[htbp]
+\begin{script}[htbp]
 \begin{scode}
-open founders.geojson --preserve
+open founders.geojson
 
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
 
 opts = defbundle("plotfile", "GDPpc.plt", "inlined", 1)
-geoplot("founders.geojson", gdppc, opts)
+geoplot($mapfile, gdppc, opts)
 \end{scode}
-\caption{The ``founders'' script}
+  %$
+\caption{Content of \texttt{founders.inp}}
 \label{tab:founders-script}
-\end{table}
+\end{script}
 
-The \texttt{founders.inp} script is in
-Table~\ref{tab:founders-script}. This is what we get after opening the
-\texttt{geojson} file in gretl:
-\begin{code}
+The \texttt{founders.inp} script is shown in
+Listing~\ref{tab:founders-script}, and what we get after opening the
+\texttt{geojson} file in gretl is in Listing~\ref{tab:founders-meta}.
+
+\begin{script}[htbp]
+\begin{scode}
      CNTR_NAME    ISO3_CODE      CNTR_ID    NAME_ENGL          FID
 
 1     Belgique          BEL           BE      Belgium           BE
@@ -305,16 +303,19 @@ Table~\ref{tab:founders-script}. This is what we get after opening the
 4       Italia          ITA           IT        Italy           IT
 5    Luxemburg          LUX           LU   Luxembourg           LU
 6    Nederland          NLD           NL  Netherlands           NL
-\end{code}
+\end{scode}
+\caption{The ``founders'' metadata}
+\label{tab:founders-meta}  
+\end{script}
 
 Next, we perform the \cmd{join} with \texttt{FID} (from the JSON file)
 as the inner key and \texttt{code} (from the CSV file) as the outer
 key. Finally, we call the \cmd{geoplot} function to create an
 on-screen map. We specify the \texttt{mapfile} to use and the
 \texttt{payload} to colorize. Via the \texttt{options} argument we add
-a couple of points: the gnuplot input file should be saved under the
-name \texttt{GDPpc.gp}, and the geometry data should be ``inlined'' in
-this file, making it self-contained.
+a couple of points: the \textsf{gnuplot} input file should be saved
+under the name \texttt{GDPpc.plt}, and the geometry data should be
+``inlined'' in this file, making it self-contained.
 
 Running the script will produce a gnuplot file like the following:
 
@@ -338,15 +339,20 @@ $MapData << EOD
 EOD
 plot for [i=0:*] $MapData index i with filledcurves fc palette, \
   $MapData using 1:2 with lines lc "white" lw 1
-
 \end{code}
 %$
 
-and feeding the above into gnuplot will yield  this map:
+and feeding the above into \textsf{gnuplot} yields the map shown in
+Figure~\ref{fig:founders}.
 
-\begin{center}
-  \includegraphics[scale=0.5]{GDPpc.png}
+\begin{figure}[htbp]
+  \begin{center}
+  \includegraphics[scale=0.9]{GDPpc.pdf}
 \end{center}
+\caption{Output of script \texttt{founders.inp}}
+\label{fig:founders}
+\end{figure}
+
 
 \section{The pairing problem}
 \label{sec:pairing}
@@ -367,7 +373,7 @@ is the USA, where you often want to leave out Hawaii, and maybe Alaska
 too.
 
 The solution we have at present for subsampling is illustrated in
-Table~\ref{tab:USA}: we create a dummy ``mask'' series, with value 1
+Listing~\ref{tab:USA}: we create a dummy ``mask'' series, with value 1
 for the observations (regions) we wish to exclude, 0 otherwise, and
 pass it (in matrix form) to the \texttt{geoplot} function via the
 \texttt{options} bundle. Figure~\ref{fig:USA} shows the results with
@@ -375,34 +381,34 @@ and without exclusion of Alaska and Hawaii.\footnote{Given the role
   of this example we don't bother adding a real payload, but just
   simulate data using the \texttt{normal} function.}
 
-\begin{table}[p]
+\begin{script}[p]
   \begin{scode}
 open "us-states.geojson" --quiet
-x = normal()
-opts = defbundle("plotfile", "us0.gp", "inlined", 1)
+x = normal() # fake up some data!
+opts = defbundle("plotfile", "us0.plt", "inlined", 1)
 
-# Show the map of the entire USA
+# show the entire USA
 opts.title = "USA (complete)"
-geoplot("us-states.geojson", x, opts)
+geoplot($mapfile, x, opts)
 
-# Now suppose you don't want Alaska and Hawaii
+# skip Alaska and Hawaii
 series mask = (postal == "AK" || postal == "HI")
 opts.title = "USA (mainland)"
-opts.plotfile = "us1.gp"
+opts.plotfile = "us1.plt"
 opts.mask = {mask}
-geoplot("us-states.geojson", x, opts)
+geoplot($mapfile, x, opts)
   \end{scode}
   \caption{US maps (complete vs mainland)}
   \label{tab:USA}
-\end{table}
+\end{script}
 
 \begin{figure}[p]
   \begin{center}
-  \includegraphics[height=180pt]{us0.png}
+  \includegraphics[scale=0.9]{us0.pdf}
 
-  \includegraphics[height=180pt]{us1.png}
+  \includegraphics[scale=0.9]{us1.pdf}
 \end{center}
-\caption{Output of script \ref{tab:USA}: full US vs mainland only.}
+\caption{Output of Listing \ref{tab:USA}}
 \label{fig:USA}
 \end{figure}
 

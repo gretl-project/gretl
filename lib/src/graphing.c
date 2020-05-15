@@ -9506,7 +9506,7 @@ int write_map_gp_file (const char *plotfile,
     const char *sval;
     FILE *fp = NULL;
     gchar *datasrc = NULL;
-    double border_width = 1.0;
+    double linewidth = 1.0;
     int have_payload = 0;
     int height = 600;
     int notics = 1;
@@ -9575,12 +9575,19 @@ int write_map_gp_file (const char *plotfile,
 	fputs("set logscale cb\n", fp);
     }
 
-    if (gretl_bundle_has_key(opts, "bordwidth")) {
-	double bw = gretl_bundle_get_scalar(opts, "bordwidth", &err);
+    if (gretl_bundle_get_int(opts, "noborder", NULL)) {
+	fputs("unset border\n", fp);
+    }
 
-	if (!err && bw >= 0) {
-	    /* FIXME bw == 0 */
-	    border_width = bw;
+    if (gretl_bundle_has_key(opts, "linewidth")) {
+	double lw = gretl_bundle_get_scalar(opts, "linewidth", &err);
+
+	if (!err && lw >= 0) {
+	    if (have_payload) {
+		linewidth = lw;
+	    } else if (lw >= 0.5) {
+		linewidth = lw;
+	    }
 	}
     }
 
@@ -9594,14 +9601,18 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (!err) {
-	gchar *bline;
+	gchar *bline = NULL;
 
 	if (have_payload) {
-	    bline = g_strdup_printf("lc 'white' lw %g", border_width);
-	    fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n", datasrc);
-	    fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
+	    if (linewidth == 0) {
+		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n", datasrc);
+	    } else {
+		bline = g_strdup_printf("lc 'white' lw %g", linewidth);
+		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n", datasrc);
+		fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
+	    }
 	} else if (!err) {
-	    bline = g_strdup_printf("lc 'black' lw %g", border_width);
+	    bline = g_strdup_printf("lc 'black' lw %g", linewidth);
 	    fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
 	}
 	g_free(bline);
