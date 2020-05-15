@@ -2974,6 +2974,7 @@ static void set_up_matrix (gretl_matrix *m, double *val,
     m->val = val;
     m->rows = rows;
     m->cols = cols;
+    m->is_complex = 0;
     m->info = NULL;
 }
 
