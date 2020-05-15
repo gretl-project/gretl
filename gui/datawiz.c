@@ -1352,7 +1352,7 @@ static void maybe_add_missobs_purger (GtkWidget *vbox, gretlopt *flags)
 	GtkWidget *chk;
 
 	chk = gretl_option_check_button(_("purge missing observations"),
-					flags, DW_DROPMISS);
+					flags, (gretlopt) DW_DROPMISS);
 	gtk_box_pack_start(GTK_BOX(hbox), chk, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	if (active) {
@@ -1654,7 +1654,7 @@ static void add_editing_option (GtkWidget *vbox, gretlopt *flags)
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	b = gretl_option_check_button(_("start entering data values"),
-				      flags, DW_SSHEET);
+				      flags, (gretlopt) DW_SSHEET);
 	gtk_box_pack_start(GTK_BOX(hbox), b, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	g_object_set_data(G_OBJECT(vbox), "edbutton", b);
