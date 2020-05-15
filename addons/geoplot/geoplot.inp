@@ -231,3 +231,30 @@ end function
 function scalar map_to_csv (const string mapname, const string csvname)
     return _map2csv(mapname, csvname)
 end function
+
+function arrays translate_coords (const arrays coords,
+                                  matrix shift,
+                                  matrix center[null],
+                                  matrix scale[null])
+    if exists(center)
+        center = vec(center)
+    else
+        center = {0; 0}
+    endif
+    if exists(scale)
+        scale = vec(scale)
+    else
+        scale = {1; 1}
+    endif
+    shift = vec(shift)
+    ret = coords
+    loop i=1..nelem(ret)
+        loop j=1..nelem(ret[i])
+            loop k=1..nelem(ret[i][j])
+                ctmp = scale .* (ret[i][j][k] - center)
+                ret[i][j][k] = ctmp + center + shift
+            endloop
+        endloop
+    endloop
+    return ret
+end function
