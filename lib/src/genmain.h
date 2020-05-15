@@ -52,6 +52,7 @@ typedef enum {
     R_NOW,        /* current date/time (matrix) */
     R_RESULT,     /* result of a "result-compatible" command */
     R_PNGFONT,    /* name of font selected for plots */
+    R_MAPFILE,    /* name of current map file, if any */
     R_MAX
 } RetrievalIndex;
 

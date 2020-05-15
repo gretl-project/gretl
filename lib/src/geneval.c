@@ -14809,6 +14809,15 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	    if (ret != NULL) {
 		ret->v.str = gretl_png_font_string();
 	    }
+	} else if (idx == R_MAPFILE) {
+	    ret = aux_string_node(p);
+	    if (ret != NULL) {
+		if (p->dset == NULL || p->dset->mapfile == NULL) {
+		    ret->v.str = gretl_strdup("");
+		} else {
+		    ret->v.str = gretl_strdup(p->dset->mapfile);
+		}
+	    }
 	} else if (dvar_variant1(idx)) {
 	    GretlType type = get_last_test_type();
 
