@@ -1597,6 +1597,7 @@ static JsonBuilder *real_bundle_to_json (gretl_bundle *b)
 int bundle_to_json (gretl_bundle *b, const char *fname,
 		    gretlopt opt)
 {
+    const char *btype;
     JsonBuilder *jb;
     JsonNode *jn;
     JsonGenerator *jgen;
@@ -1604,7 +1605,17 @@ int bundle_to_json (gretl_bundle *b, const char *fname,
     gboolean ok;
     int err = 0;
 
-    mat2arr = (opt & OPT_A)? 1 : 0;
+    mat2arr = 0;
+
+    btype = gretl_bundle_get_string(b, "type", NULL);
+    if (btype != NULL && !strcmp(btype, "FeatureCollection")) {
+	/* GeoJSON bundle */
+	mat2arr = 1;
+    }
+
+    if (!mat2arr && (opt & OPT_A)) {
+	mat2arr = 1;
+    }
 
     jb = real_bundle_to_json(b);
     if (jb == NULL) {
