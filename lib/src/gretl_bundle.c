@@ -1110,7 +1110,7 @@ unsigned int gretl_bundle_get_unsigned (gretl_bundle *bundle,
  * @err: location to receive error code.
  *
  * Returns: the string value associated with @key in the
- * specified @bundle, if any; otherwise #NADBL.
+ * specified @bundle, if any; otherwise NULL.
  */
 
 const char *gretl_bundle_get_string (gretl_bundle *bundle,
