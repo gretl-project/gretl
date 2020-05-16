@@ -11,7 +11,7 @@ bootstrapping of test statistics and iterative estimation procedures.
 The general form of a loop is:
 
 \begin{code}
-loop control-expression [ --progressive | --verbose | --quiet ]
+loop control-expression [ --progressive | --verbose ]
    loop body
 endloop
 \end{code}
@@ -35,9 +35,7 @@ Table~\ref{tab:nonloopcmds}.
 By default, the \cmd{genr} command operates quietly in the context of
 a loop (without printing information on the variable generated).  To
 force the printing of feedback from \cmd{genr} you may specify the
-\option{verbose} option to \cmd{loop}.  The \option{quiet} option
-suppresses the usual printout of the number of iterations performed,
-which may be desirable when loops are nested.
+\option{verbose} option to \cmd{loop}.
 
 The \option{progressive} option to \cmd{loop} modifies the behavior of
 the commands \cmd{print} and \cmd{store}, and certain estimation
@@ -215,7 +213,7 @@ all bundle members (in no particular order). For a bundle \texttt{b},
 the command ``\texttt{print b}'' gives a fairly terse account of the
 bundle's membership; for a full account you can do:
 \begin{code}
-loop foreach i b --quiet
+loop foreach i b
    print "$i:"
    eval b["$i"]
 endloop
@@ -436,7 +434,7 @@ series de_m = e
 
 scalar crit = 1
 
-loop while crit > 1.0e-9 --quiet
+loop while crit > 1.0e-9
    # one-step forecast errors
    e = y - c - a*y(-1) - m*e(-1)  
 

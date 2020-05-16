@@ -628,7 +628,7 @@ writing a temporary file:
 \begin{code}
 join SHIW/allb1.csv njobs --ikey=NQUEST,NORD --data=ORETOT --aggr=count
 series WHRS = 0
-loop i=1..max(njobs) -q
+loop i=1..max(njobs)
   join SHIW/allb1.csv htmp --ikey=NQUEST,NORD --data=ORETOT --aggr="seq:$i"
   join SHIW/allb1.csv mtmp --ikey=NQUEST,NORD --data=MESILAV --aggr="seq:$i"
   WHRS += misszero(htmp) * 52 * misszero(mtmp)/12 
@@ -1135,7 +1135,7 @@ slightly different set of country strings.
 \begin{code}
 string cstrs = "France Germany Italy United_Kingdom"
 setobs country cstrs --panel-groups
-loop foreach i @cstrs --quiet
+loop foreach i @cstrs
   smpl country=="$i" --restrict --replace
   join side_by_side.csv GDP --data=$i \
   --ikey=quarter --okey=Period \

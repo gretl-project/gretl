@@ -2987,7 +2987,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line) --quiet
+	      loop while getline(s, line)
 	          printf "%s\n", line
 	      endloop
 	  endif

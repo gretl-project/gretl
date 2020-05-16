@@ -395,8 +395,8 @@ colnames(GC, LST)
 rownames(GC, LST)
 
 matrix idx = seq(1,p) + 1
-loop i = 1..k -q
-  loop j = 1..k -q
+loop i = 1..k
+  loop j = 1..k
     GC[i,j] = qform(theta[idx]', invpd(V[idx,idx]))
     idx += (j==k)? p+1 : p
   endloop

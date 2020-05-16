@@ -244,7 +244,7 @@ scalar a_1 = 57
 scalar a_2 = 85
 scalar a_3 = 13
 
-loop i=1..3 --quiet
+loop i=1..3
     print i a_$i
 endloop
 \end{code}
@@ -387,11 +387,9 @@ However, if you replace the condition \texttt{x!=0.01} with
 \subsection{Loop options}
 
 Two options can be given to the \cmd{loop} statement. One is
-\option{quiet}. This has simply the effect of suppressing certain
-lines of output that gretl prints by default to signal progress and
-completion of the loop; it has no other effect and the semantics of
-the loop contents remain unchanged. This option is commonly used in
-complex scripts.
+\option{verbose}. This has simply the effect of printing extra output
+to trace progress of the loop; it has no other effect and the
+semantics of the loop contents remain unchanged.
 
 The \option{progressive} option is mostly used as a quick and
 efficient way to set up simulation studies. When this option is given,
@@ -413,7 +411,7 @@ above, using \cmd{break} to jump out of the loop when the job is done.
 \begin{code}
 scalar x = 256
 scalar y = 1
-loop while 1 --quiet
+loop while 1
     d = y*y - x
     if abs(d) < 1.0e-7
         break

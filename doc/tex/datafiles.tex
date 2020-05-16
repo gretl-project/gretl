@@ -511,7 +511,7 @@ variables rather than 2.
 open panel.txt
 list L = v1..v5 # predefine a list of series
 scalar length = 50
-loop i=1..20 --quiet
+loop i=1..20
   scalar offset = (i - 1) * length
   series x$i = stack(L, length, offset)
 endloop

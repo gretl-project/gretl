@@ -478,7 +478,7 @@ panel n const w k ys --fixed-effects
 
 depvar = n - pmean(n) + mean(n)
 list indepvars = const
-loop foreach i w k ys --quiet
+loop foreach i w k ys
   x_$i = $i - pmean($i) + mean($i)
   indepvars += x_$i
 endloop

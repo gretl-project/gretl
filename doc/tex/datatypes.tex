@@ -589,14 +589,14 @@ types, and it is possible to pass arrays as function arguments in
 the array types. Here is a trivial example for strings:
 \begin{code}
 function void printstrings (strings *S)
-  loop i=1..nelem(S) -q
+  loop i=1..nelem(S)
     printf "element %d: '%s'\n", i, S[i]
   endloop
 end function
 
 function strings mkstrs (int n)
   strings S = array(n)
-  loop i=1..n -q
+  loop i=1..n
     S[i] = sprintf("member %d", i)
   endloop
   return S
@@ -624,7 +624,7 @@ you can add extra dimensions by nesting. For example, the code below
 creates an array holding $n$ arrays of $m$ bundles.
 \begin{code}
 arrays BB = array(n)
-loop i=1..n -q
+loop i=1..n
     bundles BB[i] = array(m)
 endloop
 \end{code}

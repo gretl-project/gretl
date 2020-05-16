@@ -200,7 +200,7 @@ series endpoint = (year % 4 == 0)
 series id = $unit
 
 # compute averages
-loop foreach i X --quiet
+loop foreach i X
     series $i = movavg($i, 4)
 endloop
 
@@ -665,7 +665,7 @@ series h2 = diag(qform(mX, iXX))
 series h3 = sumr(mX .* (mX*iXX))
 # method 4
 series h4 = NA
-loop i=1..$nobs --quiet
+loop i=1..$nobs
     matrix x = mX[i,]'
     h4[i] = x'iXX*x
 endloop
@@ -860,9 +860,9 @@ list L1 = a b c
 list L2 = x y z
 
 k1 = 1
-loop foreach i L1 --quiet
+loop foreach i L1
     k2 = 1
-    loop foreach j L2 --quiet
+    loop foreach j L2
         if k1 == k2
             ols $i 0 $j
         endif

@@ -1067,7 +1067,7 @@ function void normalize_list (matrix *x)
 
   if (x[1] != 0)
      scalar k = cols(x)
-     loop for (i=2; i<=k; i++) --quiet
+     loop for (i=2; i<=k; i++)
         if (x[i] == 0)
             x[i] == x[1]
             x[1] == 0

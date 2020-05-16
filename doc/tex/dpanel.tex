@@ -726,7 +726,7 @@ linv = log(s)
 lngd = log(ngd)
 
 # take out time means
-loop i=1..8 --quiet
+loop i=1..8
   smpl (time == i) --restrict --replace
   ly -= mean(ly)
   linv -= mean(linv)

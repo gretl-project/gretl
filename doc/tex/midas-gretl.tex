@@ -1106,7 +1106,7 @@ function list high_freq_list (const matrix x, int compfac, string vname)
      funcerr "Invalid x matrix"
   endif
   matrix m = mreverse(mshape(x, compfac, T))'
-  loop i=1..compfac --quiet
+  loop i=1..compfac
     scalar k = compfac + 1 - i
     ret += genseries(sprintf("%s%d", vname, k), m[,i])
   endloop

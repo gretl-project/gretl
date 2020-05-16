@@ -2958,8 +2958,8 @@
 	  if err == 0
 	  s = req.output
 	  string line
-	  loop while getline(s, line) --quiet
-	  printf "%s\n", line
+	  loop while getline(s, line)
+	      printf "%s\n", line
 	  endloop
 	  endif
 	</code>
@@ -4414,7 +4414,7 @@
 	  string line
 	  scalar i = 1
 	  loop while getline(s, line)
-          printf "line %d = '%s'\n", i++, line
+              printf "line %d = '%s'\n", i++, line
           endloop
 	</code>
 	<para>

@@ -780,7 +780,7 @@ if $mpirank > 0
 else
   printf "root, my matrix\n%#13.7g\n", X
   scalar n = $mpisize - 1
-  loop i=1..n -q
+  loop i=1..n
     Xi = mpirecv(i)
     printf "matrix from rank %d\n%#13.7g\n", i, Xi
   endloop
@@ -1008,7 +1008,7 @@ function matrix worker_task (const matrix X, const matrix b,
   matrix Bj = zeros(iters, cols(X))		      
   matrix U = mnormal(rows(X), iters)
   matrix y0 = X*b
-  loop i=1..iters -q
+  loop i=1..iters
     yi = y0 + U[,i]  
     Bj[i,] = mols(yi, X)'
   endloop
@@ -1019,7 +1019,7 @@ function void B_stats (const matrix B)
   matrix means = meanc(B)
   matrix sds = sdc(B)
   printf "Bootstrap coeff means and std errors:\n\n"
-  loop i=1..cols(B) -q
+  loop i=1..cols(B)
     printf "%2d % f (%f)\n", i-1, means[i], sds[i]
   endloop
 end function

@@ -109,7 +109,7 @@ function series kf_filt (series y,
   matrix pt_t = p0
   matrix at = zeros(m,T)
   # printf "\n...Filtering...\n"
-  loop i=1..T --quiet
+  loop i=1..T
     # Prediction equations
     # eq. (2.2a)
     matrix at_t = bT*at_t
@@ -158,7 +158,7 @@ function series kf_smooth (matrix pstar,
   scalar T = cols(at)
   #printf "\n...Smoothing...\n"
   scalar T1=T-1
-  loop i=1..T1 --quiet
+  loop i=1..T1
     scalar j=T-i
     matrix pstar_t = mshape(pstar[,j],m,m)
     # eq. (2.9a)

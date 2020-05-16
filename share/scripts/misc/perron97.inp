@@ -20,7 +20,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
    scalar Tbmin = startyr + maxlag + 2
    scalar Tbmax = max(time) - 3
 
-   loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
+   loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1)
 
       if verbose > 1
          printf "Trying break in %s:\n", obslabel(Tb)
@@ -31,7 +31,7 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
       scalar kstar = 0
 
       # Try trimming the list of lags
-      loop for (k=maxlag; k>0; k-=1) --quiet
+      loop for (k=maxlag; k>0; k-=1)
          ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
 
          # test significance of the last lag

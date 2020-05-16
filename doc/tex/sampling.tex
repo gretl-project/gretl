@@ -357,7 +357,7 @@ scalar ybar = mean(y)
 scalar replics = 10000
 scalar tcount = 0
 series ysim
-loop replics --quiet
+loop replics
   # generate simulated y by resampling
   ysim = ybar + resample(ui)
   ols ysim 0 x

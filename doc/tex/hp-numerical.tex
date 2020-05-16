@@ -241,7 +241,7 @@ end function
 a = 3.5
 b = 2.5
 
-loop for (x=0; x<=1; x+=0.1) --quiet
+loop for (x=0; x<=1; x+=0.1)
     printf "x = %3.1f; beta(x) = %7.5f, ", x, beta(x, a, b)
     A = ad_beta(x, a, b)
     N = nd_beta(x, a, b)

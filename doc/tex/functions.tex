@@ -511,13 +511,13 @@ X = zeros(2000,2000)
 scalar r
 
 set stopwatch
-loop 500 -q
+loop 500
   r = rowcount1(X)
 endloop
 e1 = $stopwatch
 
 set stopwatch
-loop 500 -q
+loop 500
   r = rowcount2(&X)
 endloop
 e2 = $stopwatch
@@ -736,7 +736,7 @@ descriptive labels for variables generated in a function.
 \begin{code}
 function list make_cubes (list xlist)
    list cubes = null
-   loop foreach i xlist --quiet
+   loop foreach i xlist
       series $i3 = (xlist.$i)^3
       setinfo $i3 -d "cube of $i"
       list cubes += $i3

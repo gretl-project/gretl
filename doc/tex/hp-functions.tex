@@ -277,7 +277,7 @@ function void smileys(int times[0::1], bool frown[0])
         string s = ":-)"
     endif
     
-    loop times --quiet
+    loop times
         printf "%s ", s
     endloop
     
@@ -317,7 +317,7 @@ function scalar factorial(scalar n)
     endif
 end function
 
-loop i=0..6 --quiet
+loop i=0..6
     printf "%d! = %d\n", i, factorial(i)
 endloop
 \end{code}

@@ -955,7 +955,7 @@ restrict
 end restrict
 ts_y = 2*(ll0 - $rlnl)
 
-loop foreach i m p l s y --quiet
+loop foreach i m p l s y
   printf "Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 endloop
 \end{scodebit}

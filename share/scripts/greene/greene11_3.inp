@@ -9,7 +9,7 @@ scalar beta = $coeff(Y)
 scalar gamma = 1
 
 # iterate OLS till the error sum of squares converges
-loop while essdiff > .00001 --quiet
+loop while essdiff > .00001
    # form the linearized variables
    series C0 = C + gamma * beta * Y^gamma * log(Y)
    series x1 = Y^gamma

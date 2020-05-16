@@ -6,7 +6,7 @@ function series mlogitlogprobs(series y, matrix X, matrix theta)
   matrix tmp = X*b
   series ret = -ln(1 + sumr(exp(tmp)))
 
-  loop i=1..n --quiet
+  loop i=1..n
     series x = tmp[,i]
     ret += (y==i) ? x : 0 
   endloop
