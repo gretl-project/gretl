@@ -31,9 +31,10 @@ producing a map image via gretl. Section~\ref{sec:example} then
 provides a simple worked example and section~\ref{sec:pairing}
 addresses a potential stumbling block. Section~\ref{sec:opts} goes
 over the current options to the core \texttt{geoplot} function in
-detail; section~\ref{sec:expert} explains some ``expert'' refinements;
-and section~\ref{sec:future} gives our current thinking on possible
-future directions for maps in gretl.
+detail; section~\ref{sec:gui} tells you what's available via gretl's
+graphical interface; section~\ref{sec:expert} explains some ``expert''
+refinements; and section~\ref{sec:future} gives our current thinking
+on possible future directions for maps in gretl.
 
 \section{Preliminaries}
 \label{sec:prelim}
@@ -449,8 +450,8 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 \item[\texttt{noborder}:] boolean, suppress printing of a rectangular
   border around the map. Default: false, or in other words a border is
   printed. (FIXME maybe reverse this?)
-\item[\texttt{tics}:] boolean, for turning on the printing of x
-  (longitude) and y (latitude) tics. Default: tics are suppressed,
+\item[\texttt{tics}:] boolean, for turning on the printing of X
+  (longitude) and Y (latitude) tics. Default: tics are suppressed,
   unless \texttt{geoplot()} is invoked without any payload or option
   bundle.
 \item[\texttt{plotfile}:] filename, allowing the user to direct
@@ -489,7 +490,7 @@ It may be helpful to run through various scenarios for use of
   \texttt{plotfile} (or set it to \texttt{null}) and accept the
   default of \texttt{show} = 1.\label{just-see}
 \item You want to see the map on-screen but also save the plot command
-  file that generated it (maybe you want to edit the commends or pass
+  file that generated it (maybe you want to edit the commands or pass
   them to \textsf{gnuplot} independently of gretl). Then specify
   \texttt{plotfile} with a \texttt{plt} extension.\label{see-and-save}
 \item As in case 2 but you don't care to see the map on-screen:
@@ -506,48 +507,105 @@ which is regarded as an error.
 
 \subsection{Inlined data or not?}
 
-A few more words on the \texttt{inlined} option may be in order. As
+A further comment on the \texttt{inlined} option may be in order. As
 mentioned above, \texttt{geoplot} can pass the map coordinates to
 \textsf{gnuplot} either by writing them directly into the plot command
 file (\texttt{inlined} = 1), or by writing them to a separate data
 file whose name is recorded in the commands file (\texttt{inlined} =
 0).
 
-From the user's point of view, this distinction is relevant only if
-you want to save the plot commands file (that is,
-scenario~\ref{just-see} or \ref{see-and-save} above.  in that context,
-the advantage of having the data inlined is that, being all in one
-file, the information required to generate a map cannot easily become
-``unstuck''. The disadvantage is that the commands file may be very
-large, and perhaps not so easy to edit; besides the actual
+From the user's point of view, this distinction makes a difference
+only if you're saving the plot commands file (as in
+scenario~\ref{just-see} or \ref{see-and-save} above).  in that
+context, the advantage of having the data inlined is that, being all
+in one file, the information required to generate a map cannot easily
+become ``unstuck''. The disadvantage is that the commands file may be
+very large, and perhaps not so easy to edit; besides the actual
 \textsf{gnuplot} commands it may contain many thousands of lines of
-coordinate data (which in general should \textit{not} be touched, on
+coordinate data (which in general \textit{should not be touched}, on
 pain of breaking the map). At present we have \texttt{inlined} set to
 0 by default but that may change; we recommend making an explicit
-choice via the options bundle.
+choice via the \texttt{options} bundle.
 
 Note, if you specify \texttt{plotfile} as a \textsf{gnuplot} command
 file, but not \texttt{inlined}, you'll get two output files: the
 specified \texttt{plt} file plus a data file named by switching the
-extension of \texttt{plotfile} to ``\texttt{.dat}''. For example you
-might get \texttt{mygeo.plt} and \texttt{mygeo.dat}, while with
-\texttt{inlined} = 1 you'd just get a big \texttt{mygeo.plt}.
+extension to \texttt{dat}. For example you might get
+\texttt{mygeo.plt} and \texttt{mygeo.dat}, while with \texttt{inlined}
+= 1 you'd just get a big \texttt{mygeo.plt}.
+
+\section{Maps via the GUI}
+\label{sec:gui}
+
+To this point we have referred exclusively to executing commands and
+calling functions. You can, of course, execute commands and call
+functions in the GUI program via script or via the gretl console, but
+what about point-and-click? Well, there is a certain amount you can do
+in that way.
+
+First, you can open a shapefile or GeoJSON file using the menu item
+\textsf{/File/Open data/User file}. In the bottom right-hand corner of
+the ``open file'' dialog, use the pull-down list to select
+``Shapefiles'' or ``GeoJSON files''. You can also drag-and-drop such
+files onto the main gretl window to the same effect.
+
+Once map metadata are loaded in this way, the option \textsf{Display
+  map} becomes available via the context (``right-click'') menu in the
+main window, and also under \textsf{/View/Graph specified vars}. If
+the current dataset contains one or more series that seem to gretl to
+be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
+  employed for this purpose is not terribly clever.} invoking
+\textsf{Display map} will produce a dialog box that allows you to
+select one, in which case you'll get a choice of color palette to
+represent it. Otherwise you just get an on-screen view of the map
+polygons.
+
+So far, that's it. We may at some point expand the \textsf{Display
+  map} dialog to offer more of the choices available via the
+\texttt{options} argument to the \texttt{geoplot} function. (TODO:
+even if we don't load up this dialog with lots of options we should at
+least add a \textsf{Help} button which gives a brief account of how to
+exploit more options via scripting.)
 
 \section{``Expert'' refinements}
 \label{sec:expert}
 
-To be written. Talk about opening GeoJSON or shp files as gretl
-bundles, editing in various ways, and saving as GeoJSON. (New
-functionality of bread()/bwrite().)
+To recap, we have explained how map metadata can be brought in via the
+\texttt{open} command (or via the GUI); how to add ``payload'' data;
+and how to generate a map using the \texttt{geoplot} function. So far
+so good, but that leaves open some questions that might occur to
+``expert'' users.  Can I open a map file, add a payload series, and
+save a map file that includes the payload? And in relation to a map of
+the USA (for example), is there a way to include Alaska and Hawaii,
+but ``tuck them underneath'' the continental US, like I see in some
+graphics on the web?
+
+Short answer: Yes. You can import a GeoJSON file (or shapefile) as a
+gretl ``bundle'', using the \texttt{bread} function; make changes to
+the bundle, then save it as GeoJSON using \texttt{bwrite}.
+
+First let's look at the relatively simple case of putting a payload
+series into a map file...
+
+[example]
+
+Now let's take the more advanced case of shifting one or more
+geographically dispersed region of a given country into a compact
+map...
+
+[example]
 
 \section{Future directions?}
 \label{sec:future}
 
-To be written. Talk about a possible ``command block'' version of
+We've alluded at various points above to possible extensions of
+gretl's mapping apparatus. We'll go into a but more detail here.
+
+[To be written. Talk about a possible ``command block'' version of
 geoplot. Maybe automatic opening of polygons as a bundle when you open
-the map metadata. Maybe have smpl handle sub-sampling of regions
-without requiring the user to pass a mask. Adding other features to
-maps (region names, cities, rivers)? TopoJSON?
+the map metadata. Maybe have \texttt{smpl} handle sub-sampling of
+regions without requiring the user to pass a mask. Adding other
+features to maps (region names, cities, rivers)? TopoJSON?]
 
 
 \clearpage
@@ -557,7 +615,7 @@ maps (region names, cities, rivers)? TopoJSON?
 \label{sec:gnuplot}
 
 The
-following \texttt{gnuplot} code
+following \textsf{gnuplot} code
 \begin{code}
   unset key
   plot '-' using 1:2:3 with filledcurves fillcolor "blue"
@@ -566,43 +624,40 @@ following \texttt{gnuplot} code
   1 0 0
   e
 \end{code}
-produces an equilateral triangle: \includegraphics[height=2cm]{triangle.png}
+produces an equilateral triangle: \includegraphics[height=2cm]{triangle.pdf}
 
 \medskip
 
-The internal coloring of each polygon can be set by using the
-\texttt{fillcolor palette} syntax. For example,
-\begin{scriptsize}
+The internal coloring of polygons can be set using ``\texttt{fillcolor
+  palette}''. For example,
 \begin{code}
 unset key
-plot for [i=0:*] '-' index i with filledcurves fillcolor palette
-	0 0 2.5
-	0 1 2.5
-	1 1 2.5
-	1 0 2.5
+$coords << EOD
+0 0 2.5
+0 1 2.5
+1 1 2.5
+1 0 2.5
 
-	2 1 3.5
-	2 2 3.5
-	3 2 3.5
-	3 1 3.5
+2 1 3.5
+2 2 3.5
+3 2 3.5
+3 1 3.5
 
-	4 0 3
-	4 1 3
-	5 1 3
-	5 0 3
-
-e
-e
-e
+4 0 3
+4 1 3
+5 1 3
+5 0 3
+EOD
+plot for [i=0:*] $coords index i with filledcurves fillcolor palette
 \end{code}
-\end{scriptsize}
-produces
+(where the third column of the data indexes into the palette) produces
 \begin{center}
   \includegraphics[width=0.6\textwidth]{squares}
 \end{center}
 
-A nice way to customize the palette is by using the syntax \texttt{set
-palette defined} (see the gnuplot manual).
+A nice way to customize the palette is via ``\texttt{set
+  palette defined}'' (see the \textsf{gnuplot} manual; also see
+section~\ref{sec:opts} above).
 
 \end{document}
 
