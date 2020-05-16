@@ -140,7 +140,7 @@ char *copy_subsample_mask (const char *src, int *err)
     return ret;
 }
 
-char *copy_datainfo_submask (const DATASET *dset, int *err)
+char *copy_dataset_submask (const DATASET *dset, int *err)
 {
     char *mask = NULL;
 
@@ -172,7 +172,7 @@ int write_model_submask (const MODEL *pmod, PRN *prn)
     return ret;
 }
 
-int write_datainfo_submask (const DATASET *dset, PRN *prn)
+int write_dataset_submask (const DATASET *dset, PRN *prn)
 {
     int ret = 0;
 

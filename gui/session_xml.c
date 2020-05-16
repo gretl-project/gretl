@@ -669,7 +669,7 @@ static int write_session_xml (const char *datname)
 
     if (data_status) {
 	pprintf(prn, " <sample t1=\"%d\" t2=\"%d\"/>\n", dataset->t1, dataset->t2);
-	write_datainfo_submask(dataset, prn);
+	write_dataset_submask(dataset, prn);
     }
 
     nmodels = session.nmodels;

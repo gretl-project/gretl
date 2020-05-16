@@ -4493,18 +4493,11 @@ void map_plot_callback (void)
     const char *mapfile = dataset_get_mapfile(dataset);
 
     if (mapfile != NULL) {
-	int (*mapfunc) (const char *, gretl_matrix *, gretl_bundle *);
 	gretl_bundle *opts = NULL;
 	GList *payload_list = NULL;
-	gretl_matrix *payload = NULL;
 	int payload_id = 0;
+	double *plx = NULL;
 	int err = 0;
-
-	mapfunc = get_plugin_function("geoplot");
-	if (mapfunc == NULL) {
-	    gui_errmsg(E_FOPEN);
-	    return;
-	}
 
 	opts = gretl_bundle_new();
 	gretl_bundle_set_int(opts, "gui_auto", 1);
@@ -4517,17 +4510,14 @@ void map_plot_callback (void)
 	    if (resp == GRETL_CANCEL) {
 		return;
 	    }
-	    if (payload_id > 0) {
-		payload =
-		    gretl_vector_from_series(dataset->Z[payload_id],
-					     dataset->t1, dataset->t2);
-	    }
 	    g_list_free(payload_list);
 	}
-	if (payload == NULL) {
+	if (payload_id == 0) {
 	    gretl_bundle_set_int(opts, "tics", 1);
+	} else {
+	    plx = dataset->Z[payload_id];
 	}
-	err = mapfunc(mapfile, payload, opts);
+	err = geoplot_driver(mapfile, NULL, plx, dataset, opts);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -4538,7 +4528,6 @@ void map_plot_callback (void)
             g_free(mapname);
 	}
 	gretl_bundle_destroy(opts);
-	gretl_matrix_free(payload);
     } else {
 	errbox("No mapfile present");
     }

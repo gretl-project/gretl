@@ -9169,7 +9169,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 			      model, prn);
 	if (dset != NULL) {
 	    if (dset->submask != NULL) {
-		state.submask = copy_datainfo_submask(dset, &err);
+		state.submask = copy_dataset_submask(dset, &err);
 	    }
 	    state.padded = dset->padmask != NULL;
 	}

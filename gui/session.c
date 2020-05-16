@@ -1812,7 +1812,7 @@ static int real_save_session_dataset (const char *dname)
     /* we need to retrieve and save the full version of the dataset */
 
     if (complex_subsampled()) {
-	mask = copy_datainfo_submask(dataset, &err);
+	mask = copy_dataset_submask(dataset, &err);
 	if (!err && dataset_is_resampled(dataset)) {
 	    /* can't happen? */
 	    mask = NULL;

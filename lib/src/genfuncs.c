@@ -6257,7 +6257,7 @@ double logistic_cdf (double x)
     } else {
 	ret = 1.0 / (1.0 + emx);
     }
-    
+
     return ret;
 }
 
@@ -7738,4 +7738,164 @@ int fill_permutation_vector (gretl_vector *v, int n)
     free(pool);
 
     return 0;
+}
+
+/* Given a gretl series @src under sub-sampling, construct a version
+   that is of the full length of the unrestricted dataset, with NAs
+   inserted in out-of-sample positions.
+*/
+
+static gretl_matrix *full_length_vector (const double *src,
+					 const DATASET *dset,
+					 int *err)
+{
+    gretl_matrix *vf = NULL;
+    int len;
+
+    if (dset->submask == RESAMPLED ||
+	(complex_subsampled() && dset->submask == NULL)) {
+	/* can't do this! */
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (complex_subsampled()) {
+	len = get_full_length_n();
+	vf = gretl_zero_matrix_new(len, 1);
+    } else if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
+	len = dset->n;
+	vf = gretl_zero_matrix_new(len, 1);
+    } else {
+	/* nothing needed */
+	return NULL;
+    }
+
+    if (vf == NULL) {
+	*err = E_ALLOC;
+    } else if (complex_subsampled()) {
+	int exclude, t, rt = 0;
+	int i = 0;
+
+	for (t=0; t<len; t++) {
+	    if (dset->submask[t] == 0) {
+		exclude = 1;
+	    } else {
+		exclude = (rt < dset->t1 || rt > dset->t2);
+		rt++;
+	    }
+	    if (src != NULL) {
+		vf->val[t] = exclude ? NADBL : src[i++];
+	    } else {
+		vf->val[t] = exclude ? 1 : 0;
+	    }
+	}
+    } else {
+	int t, i = 0;
+
+	for (t=0; t<dset->n; t++) {
+	    if (t < dset->t1 || t > dset->t2) {
+		vf->val[t] = src == NULL ? 1 : NADBL;
+	    } else if (src != NULL) {
+		vf->val[t] = src == NULL? 0 : src[i++];
+	    }
+	}
+    }
+
+    return vf;
+}
+
+static int dset_subsampled (const DATASET *dset)
+{
+    return dset != NULL && (dset->t1 > 0 ||
+			    dset->t2 < dset->n-1 ||
+			    complex_subsampled());
+}
+
+#define GEO_DEBUG 1
+
+int geoplot_driver (const char *fname,
+		    const gretl_matrix *plm,
+		    const double *plx,
+		    const DATASET *dset,
+		    void *ptr)
+{
+    gretl_bundle *opts = ptr;
+    gretl_matrix *payload = NULL;
+    int free_payload = 0;
+    int free_opts = 0;
+    int delmask = 0;
+    int subsampled;
+    int err = 0;
+
+    subsampled = dset_subsampled(dset);
+
+    if (plx != NULL) {
+	/* payload is a series at source */
+	if (subsampled) {
+	    payload = full_length_vector(plx + dset->t1, dset, &err);
+	} else {
+	    payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
+	}
+	if (payload == NULL && !err) {
+	    err = E_ALLOC;
+	}
+	free_payload = 1;
+    } else if (plm == NULL && subsampled) {
+	if (gretl_bundle_has_key(opts, "mask")) {
+	    ; /* let's not mess with it */
+	} else {
+	    gretl_matrix *mask = full_length_vector(NULL, dset, &err);
+
+	    if (!err) {
+		if (opts == NULL) {
+		    opts = gretl_bundle_new();
+		    if (opts == NULL) {
+			err = E_ALLOC;
+		    }
+		    free_opts = 1;
+		} else {
+		    delmask = 1;
+		}
+		if (opts != NULL) {
+		    gretl_bundle_donate_data(opts, "mask", mask,
+					     GRETL_TYPE_MATRIX, 0);
+		}
+	    }
+#if GEO_DEBUG
+	    if (mask != NULL) {
+		gretl_matrix_print(mask, "geoplot_driver: mask");
+	    }
+#endif
+	}
+    } else {
+	payload = (gretl_matrix *) plm;
+    }
+
+#if GEO_DEBUG
+    if (payload != NULL) {
+	gretl_matrix_print(payload, "geoplot_driver: payload");
+    }
+#endif
+
+    if (!err) {
+	int (*mapfunc) (const char *, gretl_matrix *, gretl_bundle *);
+
+	mapfunc = get_plugin_function("geoplot");
+	if (mapfunc == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    err = mapfunc(fname, payload, opts);
+	}
+    }
+
+    if (free_payload) {
+	gretl_matrix_free(payload);
+    }
+    if (free_opts) {
+	gretl_bundle_destroy(opts);
+    } else if (delmask) {
+	gretl_bundle_delete_data(opts, "mask");
+    }
+
+    return err;
 }
