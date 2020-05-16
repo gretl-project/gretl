@@ -1836,6 +1836,7 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
     subset->varname = dset->varname;
     subset->varinfo = dset->varinfo;
     subset->descrip = dset->descrip;
+    subset->mapfile = dset->mapfile;
 
     /* set up case markers? */
     if (dset->markers) {
