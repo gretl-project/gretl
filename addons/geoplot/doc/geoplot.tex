@@ -96,9 +96,7 @@ Gretl supports what are probably the two most common formats:
   structure, regulated by RFC 7946. Basically, an array of regions (or
   ``features'') with each element containing the metadata and the
   polygons, under the \texttt{properties} and \texttt{geometry} keys,
-  respectively.  This is our preferred format.\footnote{In the future
-    we may take a look at an evolution of GeoJSON called TopoJSON, but
-    that's not a priority at the moment.}
+  respectively.  This is our preferred format.
 \item ESRI shapefiles: more of a ``legacy'' format, but still very
   common in the wild. These maps come as collections of several files,
   usually zipped together. The essential components are an
@@ -318,7 +316,8 @@ a couple of points: the \textsf{gnuplot} input file should be saved
 under the name \texttt{GDPpc.plt}, and the geometry data should be
 ``inlined'' in this file, making it self-contained.
 
-Running the script will produce a gnuplot file like the following:
+Running the script will produce a \textsf{gnuplot} file resembling the
+following:
 
 \begin{code}
 set term wxt persist
@@ -511,18 +510,18 @@ A further comment on the \texttt{inlined} option may be in order. As
 mentioned above, \texttt{geoplot} can pass the map coordinates to
 \textsf{gnuplot} either by writing them directly into the plot command
 file (\texttt{inlined} = 1), or by writing them to a separate data
-file whose name is recorded in the commands file (\texttt{inlined} =
+file whose name is recorded in the command file (\texttt{inlined} =
 0).
 
 From the user's point of view, this distinction makes a difference
-only if you're saving the plot commands file (as in
-scenario~\ref{just-see} or \ref{see-and-save} above).  in that
+only if you're saving the plot command file (as in
+scenario~\ref{just-see} or \ref{see-and-save} above).  In that
 context, the advantage of having the data inlined is that, being all
 in one file, the information required to generate a map cannot easily
-become ``unstuck''. The disadvantage is that the commands file may be
+become ``unstuck''. The disadvantage is that the command file may be
 very large, and perhaps not so easy to edit; besides the actual
 \textsf{gnuplot} commands it may contain many thousands of lines of
-coordinate data (which in general \textit{should not be touched}, on
+coordinates data (which in general \textit{should not be touched}, on
 pain of breaking the map). At present we have \texttt{inlined} set to
 0 by default but that may change; we recommend making an explicit
 choice via the \texttt{options} bundle.
@@ -557,8 +556,13 @@ be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
   employed for this purpose is not terribly clever.} invoking
 \textsf{Display map} will produce a dialog box that allows you to
 select one, in which case you'll get a choice of color palette to
-represent it. Otherwise you just get an on-screen view of the map
-polygons.
+represent it. Otherwise you just get to view the map polygons.
+
+Further, the window shown in response to \textsf{Display map} offers a
+right-click menu that allows saving the map in PDF, EPS, PNG or EMF
+format, or copying it to the clipboard. However, at this point the
+option of saving the plot ``as an icon'', present for other sorts of
+plots, is not available for maps.
 
 So far, that's it. We may at some point expand the \textsf{Display
   map} dialog to offer more of the choices available via the
@@ -575,37 +579,104 @@ To recap, we have explained how map metadata can be brought in via the
 and how to generate a map using the \texttt{geoplot} function. So far
 so good, but that leaves open some questions that might occur to
 ``expert'' users.  Can I open a map file, add a payload series, and
-save a map file that includes the payload? And in relation to a map of
-the USA (for example), is there a way to include Alaska and Hawaii,
-but ``tuck them underneath'' the continental US, like I see in some
-graphics on the web?
+save a modified version of the map file including the payload? And
+in relation to a map of the USA (for example), is there a way to
+include Alaska and Hawaii, but ``tuck them underneath'' the
+continental US, like I see in some graphics on the web?
 
 Short answer: Yes. You can import a GeoJSON file (or shapefile) as a
 gretl ``bundle'', using the \texttt{bread} function; make changes to
 the bundle, then save it as GeoJSON using \texttt{bwrite}.
 
-First let's look at the relatively simple case of putting a payload
-series into a map file...
+To get control over this it's necessary to understand the structure of
+the bundle that \texttt{bread} produces when given map input. This
+mimics the structure of a GeoJSON file (even if the input comes from a
+shapefile), as shown in Listing~\ref{tab:geojson}; the labeling of
+elements is as per GeoJSON, with gretl types in parentheses.
 
-[example]
+\begin{script}[htbp]
+\begin{scode}
+FeatureCollection (bundle)
+  features (array of n bundles)
+    features[i] (bundle)
+      features[i].properties (bundle)
+      features[i].geometry   (bundle)
+        features[i].geometry.type (string)
+        features[i].geometry.coordinates (array)
+\end{scode}
+  \caption{Structure of map data, gretl types in parentheses}
+  \label{tab:geojson}
+\end{script}
 
-Now let's take the more advanced case of shifting one or more
-geographically dispersed region of a given country into a compact
-map...
+\subsection{Injecting payload data}
+\label{sec:inject}
 
-[example]
+With this in mind, let's look at the relatively simple case of
+injecting a payload series into a map file. Listing~\ref{tab:add-gdp}
+revisits the EU founders map discussed in section~\ref{sec:example}.
+As before, we start by opening the metadata and ``joining'' the GDP
+per capita data. But now we open the GeoJSON as a bundle, and for each
+\texttt{feature} (country) we augment its \texttt{properties} bundle
+with the corresponding value of the \texttt{gdppc} series (under the
+key ``\texttt{gdppc}''). Finally, we write the modified data to file.
+
+\begin{script}[htbp]
+\begin{scode}
+open founders.geojson --quiet
+join founders.csv gdp pop --ikey=FID --okey=code
+series gdppc = 1000*gdp/pop
+
+# open full GeoJSON as bundle
+bundle b = bread("founders.geojson")
+
+# add GDP per capita to metadata
+nf = nelem(b.features)
+loop i=1..nf
+   b.features[i].properties.gdppc = gdppc[i]
+endloop
+
+# save modified geojson file
+bwrite(b, "founders_mod.json")
+\end{scode}
+  \caption{Adding payload data to a map file:
+    \texttt{founders\_mod.inp}}
+  \label{tab:add-gdp}
+\end{script}
+
+\subsection{Rearranging regions}
+\label{sec:rearrange}
+
+We now consider the more challenging case of rearranging
+geographically dispersed regions of a given country into a compact
+map\dots{}
+
+[example to be added]
 
 \section{Future directions?}
 \label{sec:future}
 
 We've alluded at various points above to possible extensions of
-gretl's mapping apparatus. We'll go into a but more detail here.
+gretl's mapping apparatus. Here we collect various ideas---no
+promises, though!
 
-[To be written. Talk about a possible ``command block'' version of
-geoplot. Maybe automatic opening of polygons as a bundle when you open
-the map metadata. Maybe have \texttt{smpl} handle sub-sampling of
-regions without requiring the user to pass a mask. Adding other
-features to maps (region names, cities, rivers)? TopoJSON?]
+\begin{itemize}
+\item The \texttt{geoplot} function could be complemented with a
+  ``command block'' variant, on the pattern of the existing gretl
+  \texttt{plot} block. Some users might find this sort of interface
+  more comprehensible and convenient.
+\item As an alternative to having the user provide a \texttt{mask}
+  (see section~\ref{sec:opts}) to limit the regions to be included in
+  a map, we could arrange for gretl's \texttt{smpl} command (or its
+  GUI counterpart) to govern the selection of regions transparently.
+\item We could provide a more fully featured graphical interface for
+  selection of options that inflect the appearance of maps.
+\item Besides just colorizing map polygons, we might add support
+  for showing geographical features such cities, roads or rivers.
+  And/or labeling of regions.
+\item An ambitious project for the longer term could be adding support
+  for TopoJSON, an extension of GeoJSON that encodes topology. See
+  \url{https://github.com/topojson/topojson}.
+\end{itemize}
 
 
 \clearpage
