@@ -275,7 +275,7 @@ Corsica.
 
 \begin{script}[htbp]
 \begin{scode}
-open founders.geojson
+open founders.geojson --frompkg=geoplot
 
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
@@ -372,18 +372,16 @@ map that shows only a subset of the available regions. A typical case
 is the USA, where you often want to leave out Hawaii, and maybe Alaska
 too.
 
-The solution we have at present for subsampling is illustrated in
-Listing~\ref{tab:USA}: we create a dummy ``mask'' series, with value 1
-for the observations (regions) we wish to exclude, 0 otherwise, and
-pass it (in matrix form) to the \texttt{geoplot} function via the
-\texttt{options} bundle. Figure~\ref{fig:USA} shows the results with
-and without exclusion of Alaska and Hawaii.\footnote{Given the role
-  of this example we don't bother adding a real payload, but just
+The solution for subsampling is straightforward, as illustrated in
+Listing~\ref{tab:USA}: just use the \texttt{smpl} command to cut out
+the unwanted regions. Figure~\ref{fig:USA} shows the results with and
+without exclusion of Alaska and Hawaii.\footnote{Given the role of
+  this example we don't bother adding a real payload, but just
   simulate data using the \texttt{normal} function.}
 
 \begin{script}[p]
   \begin{scode}
-open "us-states.geojson" --quiet
+open us-states.geojson --quiet --frompkg=geoplot
 x = normal() # fake up some data!
 opts = defbundle("plotfile", "us0.plt", "inlined", 1)
 
@@ -392,10 +390,9 @@ opts.title = "USA (complete)"
 geoplot($mapfile, x, opts)
 
 # skip Alaska and Hawaii
-series mask = (postal == "AK" || postal == "HI")
+smpl postal != "AK" && postal != "HI" --restrict
 opts.title = "USA (mainland)"
 opts.plotfile = "us1.plt"
-opts.mask = {mask}
 geoplot($mapfile, x, opts)
   \end{scode}
   \caption{US maps (complete vs mainland)}
@@ -443,9 +440,6 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   1.0.
 \item[\texttt{logscale}:] boolean, use log scale for the
   payload. Default: false.
-\item[\texttt{mask}:] a column vector of length equal to the number of
-  features in the map, with 1s in places corresponding to features to
-  be excluded, zeros otherwise. Default: none.
 \item[\texttt{noborder}:] boolean, suppress printing of a rectangular
   border around the map. Default: false, or in other words a border is
   printed. (FIXME maybe reverse this?)
@@ -622,12 +616,12 @@ key ``\texttt{gdppc}''). Finally, we write the modified data to file.
 
 \begin{script}[htbp]
 \begin{scode}
-open founders.geojson --quiet
+open founders.geojson --quiet --frompkg=geoplot
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
 
 # open full GeoJSON as bundle
-bundle b = bread("founders.geojson")
+bundle b = bread($mapfile)
 
 # add GDP per capita to metadata
 nf = nelem(b.features)
@@ -664,10 +658,6 @@ promises, though!
   ``command block'' variant, on the pattern of the existing gretl
   \texttt{plot} block. Some users might find this sort of interface
   more comprehensible and convenient.
-\item As an alternative to having the user provide a \texttt{mask}
-  (see section~\ref{sec:opts}) to limit the regions to be included in
-  a map, we could arrange for gretl's \texttt{smpl} command (or its
-  GUI counterpart) to govern the selection of regions transparently.
 \item We could provide a more fully featured graphical interface for
   selection of options that inflect the appearance of maps.
 \item Besides just colorizing map polygons, we might add support

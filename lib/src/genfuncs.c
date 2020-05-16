@@ -7811,7 +7811,7 @@ static int dset_subsampled (const DATASET *dset)
 			    complex_subsampled());
 }
 
-#define GEO_DEBUG 1
+#define GEO_DEBUG 0
 
 int geoplot_driver (const char *fname,
 		    const gretl_matrix *plm,

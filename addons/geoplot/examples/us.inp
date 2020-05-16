@@ -1,4 +1,4 @@
-open "us-states.geojson" --quiet
+open us-states.geojson --quiet --frompkg=geoplot
 x = normal() # fake up some data!
 opts = defbundle("plotfile", "us0.plt", "inlined", 1)
 
@@ -7,9 +7,8 @@ opts.title = "USA (complete)"
 geoplot($mapfile, x, opts)
 
 # skip Alaska and Hawaii
-series mask = (postal == "AK" || postal == "HI")
+smpl postal != "AK" && postal != "HI" --restrict
 opts.title = "USA (mainland)"
 opts.plotfile = "us1.plt"
-opts.mask = {mask}
 geoplot($mapfile, x, opts)
 

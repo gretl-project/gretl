@@ -1,4 +1,4 @@
-open founders.geojson
+open founders.geojson --frompkg=geoplot
 
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
