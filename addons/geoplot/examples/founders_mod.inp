@@ -1,0 +1,15 @@
+open founders.geojson -q
+join founders.csv gdp pop --ikey=FID --okey=code
+series gdppc = 1000*gdp/pop
+
+# open full GeoJSON as bundle
+bundle b = bread("founders.geojson")
+
+# add gdppc per country to metadata
+nf = nelem(b.features)
+loop i=1..nf
+   b.features[i].properties.gdppc = gdppc[i]
+endloop
+
+# save modified geojson file
+bwrite(b, "founders_mod.json")
