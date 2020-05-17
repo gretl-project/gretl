@@ -1273,20 +1273,6 @@ static gretl_matrix *vector_minmax (const gretl_matrix *z)
     return ret;
 }
 
-/* Temporary hack! (see graphing.c). This signature
-   should go into graphing.h once it's stabilized.
-*/
-
-int write_map_gp_file (const char *gptfile,
-		       int plotfile_is_image,
-		       const char *datfile,
-		       const gretl_matrix *bbox,
-		       const gretl_matrix *zrange,
-		       gretl_bundle *opts,
-		       int show);
-
-/* end hack */
-
 static int is_image_filename (const char *s)
 {
     if (has_suffix(s, ".pdf") ||

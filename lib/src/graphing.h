@@ -350,5 +350,13 @@ double gnuplot_time_from_date (const char *s,
 
 int gnuplot_has_wxt (void);
 
+int write_map_gp_file (const char *plotfile,
+		       int plotfile_is_image,
+		       const char *datfile,
+		       const gretl_matrix *bbox,
+		       const gretl_matrix *zrange,
+		       gretl_bundle *opts,
+		       int show);
+
 #endif /* GRAPHING_H */
 

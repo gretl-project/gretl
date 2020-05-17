@@ -9504,6 +9504,8 @@ static void fputs_literal (const char *s, FILE *fp)
     g_free(tmp);
 }
 
+/* called from the geoplot plugin to finalize a map */
+
 int write_map_gp_file (const char *plotfile,
 		       int plotfile_is_image,
 		       const char *datfile,
@@ -9598,7 +9600,7 @@ int write_map_gp_file (const char *plotfile,
 
     if ((sval = gretl_bundle_get_string(opts, "literal", NULL))) {
 	fputs_literal(sval, fp);
-    }    
+    }
 
     if (gretl_bundle_has_key(opts, "linewidth")) {
 	double lw = gretl_bundle_get_scalar(opts, "linewidth", &err);
