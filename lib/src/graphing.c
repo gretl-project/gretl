@@ -9440,6 +9440,8 @@ static const char *map_palette_string (const char *setpal)
         return "set palette defined (0 '#D4E4F2', 1 'steelblue')";
     } else if (!strcmp(setpal, "oranges")) {
         return "set palette defined (0 '#E9D9B5', 1 'dark-orange')";
+    } else if (!strcmp(setpal, "green-to-red")) {
+	return "set palette defined (0 '#58996E', 1 '#E1D99A', 2 '#C0414C')";
     } else {
         return setpal;
     }
@@ -9493,6 +9495,15 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
     return ret;
 }
 
+static void fputs_literal (const char *s, FILE *fp)
+{
+    gchar *tmp = g_strdup(s);
+
+    fputs(g_strchomp(tmp), fp);
+    fputc('\n', fp);
+    g_free(tmp);
+}
+
 int write_map_gp_file (const char *plotfile,
 		       int plotfile_is_image,
 		       const char *datfile,
@@ -9509,6 +9520,7 @@ int write_map_gp_file (const char *plotfile,
     double linewidth = 1.0;
     int have_payload = 0;
     int height = 600;
+    int border = 0;
     int notics = 1;
     int err = 0;
 
@@ -9517,6 +9529,7 @@ int write_map_gp_file (const char *plotfile,
 	stretch_limits(zlim, zrange, 0, 0.05); /* ?? */
     } else if (opts == NULL) {
 	/* the simple outlines case */
+	border = 1;
 	notics = 0;
     }
 
@@ -9575,9 +9588,17 @@ int write_map_gp_file (const char *plotfile,
 	fputs("set logscale cb\n", fp);
     }
 
-    if (gretl_bundle_get_int(opts, "noborder", NULL)) {
+    if (gretl_bundle_has_key(opts, "border")) {
+	border = gretl_bundle_get_int(opts, "border", NULL);
+    }
+
+    if (border == 0) {
 	fputs("unset border\n", fp);
     }
+
+    if ((sval = gretl_bundle_get_string(opts, "literal", NULL))) {
+	fputs_literal(sval, fp);
+    }    
 
     if (gretl_bundle_has_key(opts, "linewidth")) {
 	double lw = gretl_bundle_get_scalar(opts, "linewidth", &err);
@@ -9605,10 +9626,12 @@ int write_map_gp_file (const char *plotfile,
 
 	if (have_payload) {
 	    if (linewidth == 0) {
-		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n", datasrc);
+		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n",
+			datasrc);
 	    } else {
 		bline = g_strdup_printf("lc 'white' lw %g", linewidth);
-		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n", datasrc);
+		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n",
+			datasrc);
 		fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
 	    }
 	} else if (!err) {

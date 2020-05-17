@@ -19,10 +19,14 @@
 
 \maketitle
 
-\textbf{Warning}: As of this writing the \textsf{geoplot} package is
-in ``alpha'' mode (or at best ``beta''). You're welcome to try it, but
-expect some bugs, and do not bank on the user interface remaining
-unchanged.
+\textbf{Notice}: As of this writing the \textsf{geoplot} package is
+work in progress. You are welcome to try it but expect some bugs and
+do not bank on the user interface remaining unchanged. We should also
+mention a non-temporary peculiarity of \textsf{geoplot}. We have found
+it preferable to implement its core functionality via built-in
+functions, coded in C. For basic usage, therefore, it's not necessary
+to load the package explicitly via ``\texttt{include geoplot.gfn}'',
+as one would usually expect.
 
 That said, section~\ref{sec:prelim} below covers some preliminaries
 which we hope will help the reader to understand what's going
@@ -184,17 +188,11 @@ map-datafile. The filename extensions recognized for this purpose are
 \texttt{shp} for ESRI shapefiles.\footnote{In principle we could read
   the polygons at this point and store them in RAM, but for now we
   don't. We just read in the metadata, but store the path to the
-  associated geometry file internally; we could provide an accessor
-  for this path (\dollar{mapdata}?) but we're not doing that yet. A
-  possible future development is to make all the map information
-  (metadata and polygons) available as a gretl bundle under a suitable
-  accessor.} Point 2 is also handled by existing gretl commands.
+  associated geometry file internally.} Point 2 is also handled by
+existing gretl commands.
 
-As for points 3 and 4, these are currently handled by the new
-(built-in) \texttt{geoplot} function.\footnote{At some point
-  production of maps may be supported by a gretl command, either in
-  its own right or as a variant of the existing \texttt{plot}
-  command.} This function has this signature:
+As for points 3 and 4, these are handled by the new (built-in)
+\texttt{geoplot} function, which has the following signature.
 \begin{code}
 function void geoplot(const string mapfile,
 	              const series payload[null],
@@ -354,36 +352,92 @@ Figure~\ref{fig:founders}.
 \end{figure}
 
 
-\section{The pairing problem}
+\section{Alignment problems}
 \label{sec:pairing}
 
-There's a potential problem with the strategy outlined above: possible
-decoupling of the metadata loaded via \cmd{open} and the geometry data
-loaded via the \texttt{geoplot} function.
+In order to produce a correct map it is essential that everything be
+aligned properly: the map metadata, the payload series, and the
+geometries of the regions. ``Region $i$'' must have the same referent
+in all three contexts.
 
-Production of a correct map requires 1:1 correspondence between the
-regions represented in the current dataset and those in the geometry
-file. This correspondence may be broken by sorting or subampling of
-the dataset; in either case observation $i$ in the dataset will no
-longer match up with region $i$ in the geometry file. Sorting would be
-an unlikely (not to say silly) operation in this context but
-subsampling is important, because in some cases one wants to produce a
-map that shows only a subset of the available regions. A typical case
-is the USA, where you often want to leave out Hawaii, and maybe Alaska
-too.
+If the source map (GeoJSON or shapefile) is not broken we can assume
+that the original metadata and the geometries are indeed aligned
+correctly. But problems may arise (a) in aligning the payload and (b)
+if one wishes to exclude some regions from the map. We discuss these
+issues in turn.
 
-The solution for subsampling is straightforward, as illustrated in
-Listing~\ref{tab:USA}: just use the \texttt{smpl} command to cut out
-the unwanted regions. Figure~\ref{fig:USA} shows the results with and
-without exclusion of Alaska and Hawaii.\footnote{Given the role of
-  this example we don't bother adding a real payload, but just
-  simulate data using the \texttt{normal} function.}
+\subsection{Aligning the payload}
+
+In the somewhat unlikely case that the payload you wish to plot is
+already included in the map metadata, no problem. But when the map
+data and the payload come from different sources it may be tricky to
+get them aligned properly. This problem is not specific to the mapping
+apparatus---it's a more general issue concerning the matching of data
+from different sources, addressed at length in the chapter titled
+``Joining data sources'' in the \GUG{}---but it may be helpful to
+offer a few comments here.
+
+As mentioned above, the relevant tools provided by gretl are
+\texttt{append} and \texttt{join}. A simple \texttt{append} will work
+only if the regions appear in the same order in the map and payload
+datasets. It should be easy enough to see if this is the case, if the
+number of regions is fairly small and each dataset contains readily
+understood identifiers. Otherwise---that is, the orders clearly differ
+or it's hard to tell---it will be necessary to use \texttt{join}.
+
+Look back at Listing~\ref{tab:founders-script}. In that case the map
+and payload datasets contained the same set of two-letter identifiers
+for the countries---albeit under different names, \texttt{FID} and
+\texttt{code}---so \texttt{join} using the \option{ikey} and
+\option{okey} options worked fine. In some cases, however, the
+respective identifiers may not match up. For example, region names are
+in English in one dataset and Italian in the other. Then you'll have
+to exercise your intelligence, but one idea is to create an
+intermediate ``Rosetta stone'' file, maybe as CSV, giving the mapping
+between the two identifiers, as in:
+\begin{code}
+# rosetta.csv
+ID_en,ID_it
+Apulia,Puglia
+Sardinia,Sardegna
+...
+\end{code}
+Then you can use \texttt{join} on the Rosetta file to add to the map
+dataset the required identifier that's initially lacking.
+
+\subsection{Sub-sampling}
+
+In some cases one may wish to leave out certain outlying regions. For
+example, it's quite common to produce thematic maps of the USA that
+omit Hawaii, and perhaps Alaska. A related case is where the payload
+value is missing (\texttt{NA}) for one or more regions.
+
+In principle such cases threaten to break the required alignment of
+payload and geometry, but in fact the \texttt{geomap} function handles
+them, as follows.
+\begin{itemize}
+\item If the payload is \texttt{NA} for a given region, its geometry
+  is automatically omitted from the map.
+\item If the map dataset is sub-sampled, geometries corresponding
+  to excluded observations are omitted.
+\end{itemize}
+
+The sub-sampling case is illustrated in Listing~\ref{tab:USA}: we use
+the \texttt{smpl} command to cut out unwanted
+regions. Figure~\ref{fig:USA} shows the results with and without
+exclusion of Alaska and Hawaii.\footnote{Given the role of this
+  example we don't bother adding a real payload, but just simulate
+  data using the \texttt{normal} function.}
+
+(\textbf{TODO}: In the case of missing payload values, we should
+probably give the option of \textit{not} omitting the region, but
+giving it a specific color representing ``missing data''.)
 
 \begin{script}[p]
   \begin{scode}
 open us-states.geojson --quiet --frompkg=geoplot
 x = normal() # fake up some data!
-opts = defbundle("plotfile", "us0.plt", "inlined", 1)
+opts = defbundle("plotfile", "us0.plt", "setpal", "blues")
 
 # show the entire USA
 opts.title = "USA (complete)"
@@ -409,14 +463,6 @@ geoplot($mapfile, x, opts)
 \label{fig:USA}
 \end{figure}
 
-A related but different problem arises when the map data and the
-payload come from different sources, as they usually will. In this
-case, there may be a problem of \texttt{join}ing the regions correctly
-if discrepancies arise between the inner and outer keys. But this
-problem is not specific to the mapping apparatus, it's a more general
-issue concerning the matching of data from different sources, and we
-need not be concerned with it here.
-
 \section{Options for the \texttt{geoplot} function}
 \label{sec:opts}
 
@@ -425,6 +471,8 @@ order. Below the listing we give some further explanation of the usage
 of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 
 \begin{description}
+\item[\texttt{border}:] boolean, show a rectangular border around the
+  map. Default: true. (FIXME maybe reverse the default?)
 \item[\texttt{height}:] scalar, giving the height of the plot in
   pixels. Default: 600. Even if the desired output is a vector graphic
   (PDF or EPS) rather than a bitmap (see \texttt{plotfile} below),
@@ -438,15 +486,10 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   representing the borders of the regions. Setting this to 0
   suppresses those lines (unless no payload is supplied). Default:
   1.0.
+\item[\texttt{literal}:] string containing \textsf{gnuplot} commands,
+  for insertion before the actual \texttt{plot} command.
 \item[\texttt{logscale}:] boolean, use log scale for the
   payload. Default: false.
-\item[\texttt{noborder}:] boolean, suppress printing of a rectangular
-  border around the map. Default: false, or in other words a border is
-  printed. (FIXME maybe reverse this?)
-\item[\texttt{tics}:] boolean, for turning on the printing of X
-  (longitude) and Y (latitude) tics. Default: tics are suppressed,
-  unless \texttt{geoplot()} is invoked without any payload or option
-  bundle.
 \item[\texttt{plotfile}:] filename, allowing the user to direct
   output, either to a specified \textsf{gnuplot} command file or to a
   graphic file. If a command file is preferred the extension should be
@@ -456,12 +499,12 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   path, the file is written to the user's working directory.
 \item[\texttt{setpal}:] string, giving either a \textsf{gnuplot}
   \texttt{set palette} command or a predefined palette option, of
-  which there are currently just two, \texttt{blues} and
-  \texttt{oranges}. For example, the syntax
+  which there are currently three: \texttt{blues}, \texttt{oranges}
+  and \texttt{green-to-red}. For example, the syntax
   \begin{code}
     options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"
   \end{code}
-  will give you a pleasant blue gradient---which also happens to be
+  will give you a pleasing blue gradient---which also happens to be
   what you get by giving
   \begin{code}
     options.setpal = "blues"
@@ -471,12 +514,15 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 \item[\texttt{show}:] boolean, should the plot should be shown
   on-screen right away? Default: true. (Otherwise a file of some sort
   is written but not displayed---see \texttt{plotfile} above.)
+\item[\texttt{tics}:] boolean, for turning on the printing of X
+  (longitude) and Y (latitude) tics. Default: tics are suppressed,
+  unless \texttt{geoplot} is invoked without any payload.
 \item[\texttt{title}:] string specifying a title for the
   plot. Default: no title.
 \end{description}
 
-It may be helpful to run through various scenarios for use of
-\texttt{geoplot} with an eye to usage of the options.
+It may be helpful to run through various \texttt{geoplot} scenarios
+with an eye to usage of the options.
 
 \begin{enumerate}
 \item You just want to see the map on-screen. Then don't give
@@ -486,8 +532,8 @@ It may be helpful to run through various scenarios for use of
   file that generated it (maybe you want to edit the commands or pass
   them to \textsf{gnuplot} independently of gretl). Then specify
   \texttt{plotfile} with a \texttt{plt} extension.\label{see-and-save}
-\item As in case 2 but you don't care to see the map on-screen:
-  just add \texttt{show} = 0.
+\item As in case 2 but you don't care to see the map on-screen: add
+  \texttt{show} = 0.
 \item You want to generate a graphic file (maybe for inclusion in a
   document or web page). Then give \texttt{plotfile} with one of the
   recognized graphic format extensions. In this case \texttt{show} is
@@ -500,8 +546,7 @@ which is regarded as an error.
 
 \subsection{Inlined data or not?}
 
-A further comment on the \texttt{inlined} option may be in order. As
-mentioned above, \texttt{geoplot} can pass the map coordinates to
+As mentioned above, \texttt{geoplot} can pass the map coordinates to
 \textsf{gnuplot} either by writing them directly into the plot command
 file (\texttt{inlined} = 1), or by writing them to a separate data
 file whose name is recorded in the command file (\texttt{inlined} =
@@ -520,10 +565,10 @@ pain of breaking the map). At present we have \texttt{inlined} set to
 0 by default but that may change; we recommend making an explicit
 choice via the \texttt{options} bundle.
 
-Note, if you specify \texttt{plotfile} as a \textsf{gnuplot} command
-file, but not \texttt{inlined}, you'll get two output files: the
-specified \texttt{plt} file plus a data file named by switching the
-extension to \texttt{dat}. For example you might get
+Note that if you specify \texttt{plotfile} as a \textsf{gnuplot}
+command file, but not \texttt{inlined}, you'll get two output files:
+the specified \texttt{plt} file plus a data file named by switching
+the extension to \texttt{dat}. For example you might get
 \texttt{mygeo.plt} and \texttt{mygeo.dat}, while with \texttt{inlined}
 = 1 you'd just get a big \texttt{mygeo.plt}.
 
@@ -550,20 +595,20 @@ be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
   employed for this purpose is not terribly clever.} invoking
 \textsf{Display map} will produce a dialog box that allows you to
 select one, in which case you'll get a choice of color palette to
-represent it. Otherwise you just get to view the map polygons.
+represent it. Otherwise you just get to view the map outlines.
 
-Further, the window shown in response to \textsf{Display map} offers a
-right-click menu that allows saving the map in PDF, EPS, PNG or EMF
-format, or copying it to the clipboard. However, at this point the
-option of saving the plot ``as an icon'', present for other sorts of
-plots, is not available for maps.
+Further, the window shown by \textsf{Display map} offers a right-click
+menu that allows saving the map (as PDF, EPS, PNG or EMF) or copying
+it to the clipboard. However, at this point the option of saving the
+plot ``as an icon'', present for other sorts of plots, is not
+available for maps.
 
 So far, that's it. We may at some point expand the \textsf{Display
   map} dialog to offer more of the choices available via the
-\texttt{options} argument to the \texttt{geoplot} function. (TODO:
-even if we don't load up this dialog with lots of options we should at
-least add a \textsf{Help} button which gives a brief account of how to
-exploit more options via scripting.)
+\texttt{options} argument to the \texttt{geoplot}
+function. (\textbf{TODO}: even if we don't load up this dialog with
+lots of options we should at least add a \textsf{Help} button which
+gives a brief account of how to exploit more options via scripting.)
 
 \section{``Expert'' refinements}
 \label{sec:expert}
@@ -572,11 +617,11 @@ To recap, we have explained how map metadata can be brought in via the
 \texttt{open} command (or via the GUI); how to add ``payload'' data;
 and how to generate a map using the \texttt{geoplot} function. So far
 so good, but that leaves open some questions that might occur to
-``expert'' users.  Can I open a map file, add a payload series, and
-save a modified version of the map file including the payload? And
-in relation to a map of the USA (for example), is there a way to
-include Alaska and Hawaii, but ``tuck them underneath'' the
-continental US, like I see in some graphics on the web?
+ambitious users.  Can I open a map file, add a payload series, and
+save a modified version of the map file including the payload? And in
+relation to a map of the USA (for example), is there a way to include
+Alaska and Hawaii, but ``tuck them underneath'' the continental US,
+like I see in some graphics on the web?
 
 Short answer: Yes. You can import a GeoJSON file (or shapefile) as a
 gretl ``bundle'', using the \texttt{bread} function; make changes to
@@ -586,7 +631,7 @@ To get control over this it's necessary to understand the structure of
 the bundle that \texttt{bread} produces when given map input. This
 mimics the structure of a GeoJSON file (even if the input comes from a
 shapefile), as shown in Listing~\ref{tab:geojson}; the labeling of
-elements is as per GeoJSON, with gretl types in parentheses.
+elements is as in GeoJSON, with gretl types in parentheses.
 
 \begin{script}[htbp]
 \begin{scode}
@@ -614,7 +659,7 @@ per capita data. But now we open the GeoJSON as a bundle, and for each
 with the corresponding value of the \texttt{gdppc} series (under the
 key ``\texttt{gdppc}''). Finally, we write the modified data to file.
 
-\begin{script}[htbp]
+\begin{script}[p]
 \begin{scode}
 open founders.geojson --quiet --frompkg=geoplot
 join founders.csv gdp pop --ikey=FID --okey=code
@@ -623,9 +668,8 @@ series gdppc = 1000*gdp/pop
 # open full GeoJSON as bundle
 bundle b = bread($mapfile)
 
-# add GDP per capita to metadata
-nf = nelem(b.features)
-loop i=1..nf
+# add GDP per capita to properties
+loop i=1..nelem(b.features)
    b.features[i].properties.gdppc = gdppc[i]
 endloop
 
@@ -640,18 +684,96 @@ bwrite(b, "founders_mod.json")
 \subsection{Rearranging regions}
 \label{sec:rearrange}
 
-We now consider the more challenging case of rearranging
-geographically dispersed regions of a given country into a compact
-map\dots{}
+We now consider the case of rearranging regions of a given country (or
+more generally, \texttt{features} within a given
+\texttt{FeatureCollection}). Here we use the function
+\texttt{geoplot\_translate\_feature}, which requires inclusion of
+\texttt{geoplot.gfn} since it's not built in. Its signature is
+\begin{code}
+void geoplot_translate_feature(bundle *b, int f,
+                               matrix shift,
+                               matrix center[null],
+                               matrix scale[null])
+\end{code}
+You pass in a map bundle obtained via \texttt{bread} (in pointer
+form), the sequential index of the feature to translate, and a
+2-vector \texttt{shift} giving displacement in the X and Y
+directions. If in addition you want to rescale the feature you pass
+two more 2-vectors: \texttt{center} holds the coordinates of its
+centroid and \texttt{scale} the scale factors to apply in the two
+directions.
 
-[example to be added]
+An example script is shown in Listing~\ref{tab:translate} and its
+result in Figure~\ref{fig:usmod}. We obtain the second argument to
+pass to the translator by inspection of the map dataset: Alaska is
+feature 48 and Hawaii feature 5. In this case we decide to move Alaska
+34$^{\circ}$ East and 35$^{\circ}$ South and shrink it substantially.
+Getting the effect one wants is likely to take some trial and error,
+but two \textsf{geoplot} features can be helpful.
+
+\begin{script}[p]
+\begin{scode}
+include geoplot.gfn
+open us-states.geojson --quiet
+join statepop.gdt population --ikey=postal --okey=Code
+
+bundle b = bread($mapfile)
+
+# Shrink Alaska and place underneath lower 48
+matrix shift = {34, -35}
+matrix center = {-150.885, 62.5503}
+matrix scale = {0.3, 0.35}
+geoplot_translate_feature(&b, 48, shift, center, scale)
+
+# Shift Hawaii alongside Alaska
+shift = {51, 5}
+geoplot_translate_feature(&b, 5, shift)
+
+# save modified geojson file
+bwrite(b, "us_modified.json")
+\end{scode}
+  \caption{Moving Alaska and Hawaii}
+  \label{tab:translate}
+\end{script}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics{usmod.pdf}
+  \caption{Alaska and Hawaii moved}
+  \label{fig:usmod}
+\end{figure}
+
+First, if you plot just the map outlines (no payload) then you should
+see the X and Y values on the axes, giving you at least a rough idea
+of the shifts you might want. Second, \textsf{geoplot} contains the
+function \texttt{geoplot\_describe\_json} which gives you a good deal
+of relevant information. This signature of this function is
+\begin{code}
+bundle geoplot_describe_json (const bundle jb, int verbose[1])
+\end{code}
+You pass a map bundle and a verbosity level, as in
+\begin{code}
+include geoplot.gfn
+bundle us = bread("us-states.geojson")
+describe_geojson(us, 3)
+\end{code}
+On searching the \texttt{verbose} = 3 output for Alaska one finds
+(here's a small snippet):
+\begin{code}
+  48: geometry type = MultiPolygon, no id
+        ...
+        name: Alaska
+        ...
+        Extents: X = {-171.791,-129.98}; Y = {54.4042,70.6964}
+\end{code}
+The \texttt{Extents} data enable you to figure out plausible
+values for the \texttt{center} of a feature.
 
 \section{Future directions?}
 \label{sec:future}
 
 We've alluded at various points above to possible extensions of
-gretl's mapping apparatus. Here we collect various ideas---no
-promises, though!
+\textsf{geoplot}. Here we collect various ideas---no promises, though!
 
 \begin{itemize}
 \item The \texttt{geoplot} function could be complemented with a
@@ -667,6 +789,33 @@ promises, though!
   for TopoJSON, an extension of GeoJSON that encodes topology. See
   \url{https://github.com/topojson/topojson}.
 \end{itemize}
+
+\section*{Coda}
+
+In the foregoing we have mostly kept things simple with toy
+examples. In concluding, we'll show off with a ``real'' example:
+Figure~\ref{fig:ita-covid} shows the distribution of COVID-19 cases
+per capita across Italian provinces as of 2020-04-27. The appearance
+of this plot was tuned using the following option settings:
+\begin{code}
+string cmds = sprintf("set colorbox user origin 0.9,0.45 size 0.03,0.4\n")
+cmds ~= sprintf("set xrange [6.4:20.5]")
+bundle opts = null
+opts.plotfile = "covid.pdf"
+opts.logscale = 1
+opts.linewidth = 0.4
+opts.setpal = "green-to-red"
+opts.literal = cmds
+opts.height = 900
+\end{code}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics{covid.pdf}
+  \caption{COVID-19 cases per capita by province as of
+    2020-04-27, log scale}
+  \label{fig:ita-covid}
+\end{figure}
 
 
 \clearpage

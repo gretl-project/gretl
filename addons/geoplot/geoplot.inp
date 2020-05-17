@@ -138,7 +138,8 @@ function void print_properties(const bundle f)
     endloop
 end function
 
-function bundle describe_geojson (const bundle jb, int verbose[1])
+# public
+function bundle geoplot_describe_json (const bundle jb, int verbose[1])
 
     # as per RFC 7946, "The GeoJSON Format"
 
@@ -228,33 +229,42 @@ function bundle describe_geojson (const bundle jb, int verbose[1])
     return ret
 end function
 
+# public
 function scalar map_to_csv (const string mapname, const string csvname)
     return _map2csv(mapname, csvname)
 end function
 
-function arrays translate_coords (const arrays coords,
-                                  matrix shift,
-                                  matrix center[null],
-                                  matrix scale[null])
+# public
+function void geoplot_translate_feature(bundle *b, int f,
+                                        matrix shift,
+                                        matrix center[null],
+                                        matrix scale[null])
     if exists(center)
         center = vec(center)
     else
-        center = {0; 0}
+        center = {0;0}
     endif
     if exists(scale)
         scale = vec(scale)
     else
-        scale = {1; 1}
+        scale = {1;1}
     endif
     shift = vec(shift)
-    ret = coords
-    loop i=1..nelem(ret)
-        loop j=1..nelem(ret[i])
-            loop k=1..nelem(ret[i][j])
-                ctmp = scale .* (ret[i][j][k] - center)
-                ret[i][j][k] = ctmp + center + shift
-            endloop
+    scalar single = b.features[f].geometry.type == "Polygon"
+    arrays mod = b.features[f].geometry.coordinates
+    loop i=1..nelem(mod)
+        loop j=1..nelem(mod[i])
+            if single
+                ctmp = scale .* (mod[i][j] - center)
+                mod[i][j] = ctmp + center + shift
+            else
+                loop k=1..nelem(mod[i][j])
+                    ctmp = scale .* (mod[i][j][k] - center)
+                    mod[i][j][k] = ctmp + center + shift
+                endloop
+            endif
         endloop
     endloop
-    return ret
+    b.features[f].geometry.coordinates = mod
 end function
+

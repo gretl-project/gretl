@@ -6811,6 +6811,7 @@ int map_options_dialog (GList *plist, gretl_bundle *b,
     combo_box_append_text(combo, "default");
     combo_box_append_text(combo, "blues");
     combo_box_append_text(combo, "oranges");
+    combo_box_append_text(combo, "green-to-red");
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_set_sensitive(combo, FALSE);
