@@ -9522,7 +9522,7 @@ int write_map_gp_file (const char *plotfile,
     double linewidth = 1.0;
     int have_payload = 0;
     int height = 600;
-    int border = 0;
+    int border = 1;
     int notics = 1;
     int err = 0;
 
@@ -9591,6 +9591,7 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (gretl_bundle_has_key(opts, "border")) {
+	/* allow override of default */
 	border = gretl_bundle_get_int(opts, "border", NULL);
     }
 
