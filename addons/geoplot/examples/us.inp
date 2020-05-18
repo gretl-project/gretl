@@ -1,6 +1,6 @@
 open us-states.geojson --quiet --frompkg=geoplot
 x = normal() # fake up some data!
-opts = defbundle("plotfile", "us0.plt", "inlined", 1)
+opts = defbundle("plotfile", "us0.plt", "setpal", "blues")
 
 # show the entire USA
 opts.title = "USA (complete)"

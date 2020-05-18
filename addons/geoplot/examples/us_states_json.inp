@@ -1,25 +1,22 @@
-string JSON = "us-states.geojson"
-
-open @JSON -q -p
+open us-states.geojson --quiet --frompkg=geoplot
 
 join statepop.gdt population --ikey=postal --okey=Code
 print -o name postal population
 
 # cut out Hawaii and Alaska
-series mask = postal=="HI" || postal=="AK"
+smpl postal != "HI" && postal != "AK" --restrict
 
 bundle options = null
 options.plotfile = "us_states_json.plt"
-options.mask = {mask}
 options.height = 500
 
 outlines_only = 1
 
 if outlines_only
-   geoplot(JSON, null, options)
+   geoplot($mapfile, null, options)
 else
    # show population levels in shades of blue
    options.setpal = "blues"
    options.title = "US states, population (lower 48)"
-   geoplot(JSON, population, options)
+   geoplot($mapfile, population, options)
 endif

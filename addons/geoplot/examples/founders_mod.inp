@@ -1,13 +1,12 @@
-open founders.geojson -q
+open founders.geojson --quiet --frompkg=geoplot
 join founders.csv gdp pop --ikey=FID --okey=code
 series gdppc = 1000*gdp/pop
 
 # open full GeoJSON as bundle
 bundle b = bread("founders.geojson")
 
-# add gdppc per country to metadata
-nf = nelem(b.features)
-loop i=1..nf
+# add gdppc per country to properties
+loop i=1..nelem(b.features)
    b.features[i].properties.gdppc = gdppc[i]
 endloop
 
