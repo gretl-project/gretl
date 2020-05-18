@@ -622,6 +622,10 @@ static void real_add_files_to_menus (int ftype)
     }
 }
 
+/* Apparatus for inspecting scripts or datafiles supplied by
+   installed packages, via the main window menus.
+*/
+
 static void open_examples_dir (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -662,10 +666,6 @@ static void add_packaged_files_to_menu (char **dnames, int n,
 	g_free(alabel);
     }
 }
-
-/* Apparatus for inspecting scripts or datafiles supplied by
-   installed packages, via the main window menus.
-*/
 
 static void catalog_packaged_files (void)
 {
