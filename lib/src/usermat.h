@@ -20,7 +20,7 @@
 #ifndef USERMAT_H_
 #define USERMAT_H_
 
-#define MSEL_MAX -999
+#define MSEL_MAX INT_MIN
 
 typedef enum {
     SEL_NULL,    /* nothing supplied */
