@@ -86,6 +86,7 @@ static struct extmap action_map[] = {
     { SAVE_TEX,          ".tex" },
     { SAVE_RTF,          ".rtf" },
     { SAVE_TEXT,         ".txt" },
+    { SAVE_HELP_TEXT,    ".txt" },
     { OPEN_SCRIPT,       ".inp" },
     { OPEN_SESSION,      ".gretl" },
     { OPEN_RATS_DB,      ".rat" },

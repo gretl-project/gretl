@@ -4369,6 +4369,7 @@ static void set_max_text_width (windata_t *vwin,
 }
 
 #define HDEBUG 0
+#define HELP_WRAP 1
 
 void create_text (windata_t *vwin, int hsize, int vsize,
 		  int nlines, gboolean editable)
@@ -4383,7 +4384,9 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 
     if (help_role(role) || role == VIEW_PKG_INFO ||
 	role == VIEW_BIBITEM || role == VIEW_CODEBOOK ||
+#if HELP_WRAP
 	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP ||
+#endif
 	role == VIEW_DBNOMICS || role == IMPORT ||
 	role == VIEW_DBSEARCH) {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);

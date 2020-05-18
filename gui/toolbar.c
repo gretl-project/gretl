@@ -266,6 +266,9 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	u = SAVE_SPEC_FILE;
     } else if (vwin->role == VIEW_FILE) {
 	u = SAVE_TEXT;
+    } else if (vwin->role == EDIT_PKG_HELP ||
+	       vwin->role == EDIT_PKG_GHLP) {
+	u = SAVE_HELP_TEXT;
     } else {
 	dummy_call();
 	return;
@@ -864,8 +867,6 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 	               r != EDIT_NOTES && \
 	               r != EDIT_PKG_CODE && \
 		       r != EDIT_PKG_SAMPLE && \
-		       r != EDIT_PKG_HELP && \
-		       r != EDIT_PKG_GHLP && \
 		       r != CONSOLE && \
 		       r != VIEW_BUNDLE && \
 		       r != VIEW_DBNOMICS)
