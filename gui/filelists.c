@@ -22,6 +22,8 @@
 #include "menustate.h"
 #include "toolbar.h"
 #include "fnsave.h"
+#include "fncall.h"
+#include "fileselect.h"
 #include "libset.h"
 
 #ifdef G_OS_WIN32
@@ -620,9 +622,124 @@ static void real_add_files_to_menus (int ftype)
     }
 }
 
+static void open_examples_dir (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+    int script, fs_action;
+    char pkgname[32];
+    gchar *path;
+
+    sscanf(s, "%s %d", pkgname, &script);
+    fs_action = script ? OPEN_SCRIPT : OPEN_DATA;
+    path = g_build_filename(gretl_home(), "functions",
+			    pkgname, "examples", NULL);
+    file_selector_with_startdir(fs_action, path, mdata->main);
+
+    g_free(path);
+}
+
+static void add_packaged_files_to_menu (char **dnames, int n,
+					int hansl)
+{
+    GtkActionEntry entry;
+    const gchar *mpath[] = {
+	"/menubar/File/OpenDataMenu/PkgDataMenu",
+	"/menubar/File/ScriptFiles/PkgScriptMenu"
+    };
+    gchar *aname, *alabel;
+    int i;
+
+    action_entry_init(&entry);
+    entry.callback = G_CALLBACK(open_examples_dir);
+
+    for (i=0; i<n; i++) {
+	aname = g_strdup_printf("%s %d", dnames[i], hansl);
+	alabel = g_strdup_printf("%s...", dnames[i]);
+	entry.name = aname;
+	entry.label = alabel;
+	vwin_menu_add_item_unique(mdata, aname, mpath[hansl], &entry);
+	g_free(aname);
+	g_free(alabel);
+    }
+}
+
+/* Apparatus for inspecting scripts or datafiles supplied by
+   installed packages, via the main window menus.
+*/
+
+static void catalog_packaged_files (void)
+{
+    char **datadirs = NULL;
+    char **hansldirs = NULL;
+    gchar *savedir = NULL;
+    GDir *topdir, *dir;
+    gchar *path, *epath;
+    const char *dname;
+    const char *fname;
+    int got_data, got_hansl;
+    int nd = 0, nh = 0;
+
+    path = g_strdup_printf("%sfunctions", gretl_home());
+    topdir = gretl_opendir(path);
+
+    savedir = g_get_current_dir();
+
+    if (topdir == NULL || gretl_chdir(path) != 0) {
+	g_free(path);
+	return;
+    }
+
+    while ((dname = g_dir_read_name(topdir))) {
+	if (!is_official_addon(dname) ||
+	    !g_file_test(dname, G_FILE_TEST_IS_DIR)) {
+	    continue;
+	}
+	got_data = got_hansl = 0;
+	epath = g_build_filename(dname, "examples", NULL);
+	if (g_file_test(epath, G_FILE_TEST_IS_DIR)) {
+	    dir = gretl_opendir(epath);
+	    if (dir != NULL) {
+		while ((fname = g_dir_read_name(dir))) {
+		    if (!got_data && (has_suffix(fname, ".gdt") ||
+				      has_suffix(fname, ".gdtb"))) {
+			strings_array_add(&datadirs, &nd, dname);
+			got_data = 1;
+		    } else if (!got_hansl && has_suffix(fname, ".inp")) {
+			strings_array_add(&hansldirs, &nh, dname);
+			got_hansl = 1;
+		    }
+		    if (got_data && got_hansl) {
+			break;
+		    }
+		}
+		g_dir_close(dir);
+	    }
+	}
+	g_free(epath);
+    }
+
+    if (savedir != NULL) {
+	gretl_chdir(savedir);
+	g_free(savedir);
+    }
+
+    g_dir_close(topdir);
+    g_free(path);
+
+    if (nd > 0) {
+	add_packaged_files_to_menu(datadirs, nd, 0);
+	strings_array_free(datadirs, nd);
+    }
+    if (nh > 0) {
+	add_packaged_files_to_menu(hansldirs, nh, 1);
+	strings_array_free(hansldirs, nh);
+    }
+}
+
 void add_files_to_menus (void)
 {
     real_add_files_to_menus(NFILELISTS);
+    catalog_packaged_files();
 }
 
 GList *get_working_dir_list (void)

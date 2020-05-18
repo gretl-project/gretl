@@ -74,6 +74,8 @@ void get_registered_pkg_info (int i, char **name, char **path,
 
 int query_addons (void);
 
+int is_official_addon (const char *pkgname);
+
 int download_addon (const char *pkgname, char **local_path);
 
 char *installed_addon_status_string (const char *path,

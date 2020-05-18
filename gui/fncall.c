@@ -3067,7 +3067,7 @@ int package_is_available_for_menu (const gchar *pkgname,
     return ret;
 }
 
-static int official_addon (const char *pkgname)
+int is_official_addon (const char *pkgname)
 {
     /* All of the following are available in zip format
        from sourceforge */
@@ -3076,7 +3076,8 @@ static int official_addon (const char *pkgname)
 	!strcmp(pkgname, "HIP") ||
 	!strcmp(pkgname, "ivpanel") ||
 	!strcmp(pkgname, "dbnomics") ||
-	!strcmp(pkgname, "extra")) {
+	!strcmp(pkgname, "extra") ||
+	!strcmp(pkgname, "geoplot")) {
 	return 1;
     } else {
 	return 0;
@@ -3105,7 +3106,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	    gretl_function_package_get_path(pkgname, gpi_ptype(gpi));
     }
 
-    if (gpi->filepath == NULL && official_addon(pkgname)) {
+    if (gpi->filepath == NULL && is_official_addon(pkgname)) {
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
 				       "up to date.\nWould you like to try "
 				       "downloading it now?"), pkgname);
