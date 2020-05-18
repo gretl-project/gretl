@@ -1916,9 +1916,8 @@ int strings_array_donate (char ***pS, int *n, char *p)
  * @pS: pointer to strings array.
  * @n: location of present number of strings in array.
  * @p: string to test for addition to array.
- * @pos: location to receive the position of @p
- * int the array (whether already matched or newly
- * added), or NULL.
+ * @pos: location to receive the position of @p in the
+ * array (whether already matched or newly added), or NULL.
  *
  * If the array does not already include a copy of @p,
  * allocates storage for an extra member of @pS and adds a
