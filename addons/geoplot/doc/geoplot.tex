@@ -389,12 +389,12 @@ Look back at Listing~\ref{tab:founders-script}. In that case the map
 and payload datasets contained the same set of two-letter identifiers
 for the countries---albeit under different names, \texttt{FID} and
 \texttt{code}---so \texttt{join} using the \option{ikey} and
-\option{okey} options worked fine. In some cases, however, the
-respective identifiers may not match up. For example, region names are
-in English in one dataset and in the corrsponding official language in
-the other. Then you'll have to exercise your intelligence, but one
-idea is to create an intermediate ``Rosetta stone'' file, maybe as
-CSV, giving the mapping between the two identifiers, as in:
+\option{okey} options worked fine. In a different case, however, the
+respective identifiers may not match up. For example, region names
+might be in English in one dataset and in, say, Italian in the
+other. Then you'll have to exercise your intelligence, but one idea is
+to create an intermediate ``Rosetta stone'' file, maybe as CSV, giving
+the mapping between the two identifiers, as in:
 \begin{code}
 # rosetta.csv
 ID_en,ID_it
