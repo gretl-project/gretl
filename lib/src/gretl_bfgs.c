@@ -2968,16 +2968,6 @@ int newton_raphson_max (double *b, int n, int maxit,
     return err;
 }
 
-static void set_up_matrix (gretl_matrix *m, double *val,
-			   int rows, int cols)
-{
-    m->val = val;
-    m->rows = rows;
-    m->cols = cols;
-    m->is_complex = 0;
-    m->info = NULL;
-}
-
 static double simann_call (BFGS_CRIT_FUNC cfunc,
 			   double *b, void *data,
 			   int minimize)
@@ -3029,7 +3019,7 @@ int gretl_simann (double *theta, int n, int maxit,
     /* maximize by default, but minimize if OPT_I is given */
     minimize = (opt & OPT_I)? 1 : 0;
 
-    set_up_matrix(&b, theta, n, 1);
+    gretl_matrix_init_full(&b, n, 1, theta);
 
     b0 = gretl_matrix_copy(&b);
     b1 = gretl_matrix_copy(&b);

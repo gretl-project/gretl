@@ -802,7 +802,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     return 0;
 }
 
-/*
+/**
  * gretl_matrix_init_full:
  * @m: matrix to be initialized.
  * @rows: number of rows.
@@ -815,9 +815,9 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
  * @val is compatible with the @rows and @cols specification.
  */
 
-static void gretl_matrix_init_full (gretl_matrix *m,
-				    int rows, int cols,
-				    double *val)
+void gretl_matrix_init_full (gretl_matrix *m,
+			     int rows, int cols,
+			     double *val)
 {
     m->rows = rows;
     m->cols = cols;
