@@ -796,12 +796,12 @@ We've alluded at various points above to possible extensions of
 In the foregoing we have mostly kept things simple with toy
 examples. In concluding, we'll show off with a ``real'' example:
 Figure~\ref{fig:ita-covid} shows the distribution of COVID cases
-across Italian provinces as of 2020-04-27. The appearance of this plot
+across Italian provinces as of 2020-05-15. The appearance of this plot
 was tuned using the following option settings:
 \begin{code}
 string cmds = sprintf("set colorbox user origin 0.9,0.45 size 0.03,0.4\n")
 cmds ~= sprintf("set xrange [6.4:20.5]")
-bundle opts = defbundle(plotfile, "covid.pdf")
+bundle opts = defbundle("plotfile", "covid.pdf")
 opts.logscale = 1
 opts.border = 0
 opts.linewidth = 0.4
@@ -824,7 +824,7 @@ examining a plot with no payload, showing the values on the axes.
   \centering
   \includegraphics{covid.pdf}
   \caption{COVID-19 cases per 10\,000 by province as of
-    2020-04-27, log scale}
+    2020-05-15, log scale}
   \label{fig:ita-covid}
 \end{figure}
 
