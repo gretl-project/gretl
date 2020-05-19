@@ -9485,6 +9485,8 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 	/* Quick and dirty check: the coordinates are not
 	   given as degrees of latitude and longitude.
 	*/
+	fprintf(stderr, "alt coordinates: X %g to %g, Y %g to %g\n",
+		xlim[0], xlim[1], ylim[0], ylim[1]);
 	*latlong = 0;
     } else {
 	/* We'll calculate a width-to-height ratio which varies
@@ -9554,8 +9556,8 @@ int write_map_gp_file (const char *plotfile,
 	notics = 0;
     }
 
-    stretch_limits(xlim, bbox, 0, 0.02);
-    stretch_limits(ylim, bbox, 1, 0.02);
+    stretch_limits(xlim, bbox, 0, 0.05);
+    stretch_limits(ylim, bbox, 1, 0.05);
 
     if (gretl_bundle_has_key(opts, "height")) {
 	height = gretl_bundle_get_scalar(opts, "height", &err);
