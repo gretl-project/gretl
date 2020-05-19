@@ -9428,14 +9428,19 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 
 /* geoplot functions */
 
+/* stretch_limits: allow a little extra space in the X and Y
+   dimensions so that the map doesn't entirely fill the plot
+   area.
+*/
+
 static void stretch_limits (double *targ, const gretl_matrix *minmax,
 			    int col, double by)
 {
     double mmv0 = gretl_matrix_get(minmax, 0, col);
     double mmv1 = gretl_matrix_get(minmax, 1, col);
 
-    targ[0] = mmv0 * ((mmv1 < 0) ? 1+by : 1-by);
-    targ[1] = mmv1 * ((mmv1 > 0) ? 1+by : 1-by);
+    targ[0] = mmv0 * (mmv0 < 0 ? 1+by : 1-by);
+    targ[1] = mmv1 * (mmv1 > 0 ? 1+by : 1-by);
 }
 
 static const char *map_palette_string (const char *setpal)
