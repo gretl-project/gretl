@@ -1554,9 +1554,13 @@ static char *gretl_png_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags)
 {
-    double s = default_png_scale;
+    if (ptype == PLOT_GEOMAP) {
+	return real_png_term_line(term_line, ptype, flags, NULL, 1.0);
+    } else {
+	double s = default_png_scale;
 
-    return real_png_term_line(term_line, ptype, flags, NULL, s);
+	return real_png_term_line(term_line, ptype, flags, NULL, s);
+    }
 }
 
 /**
@@ -9556,8 +9560,8 @@ int write_map_gp_file (const char *plotfile,
 	notics = 0;
     }
 
-    stretch_limits(xlim, bbox, 0, 0.05);
-    stretch_limits(ylim, bbox, 1, 0.05);
+    stretch_limits(xlim, bbox, 0, 0.02);
+    stretch_limits(ylim, bbox, 1, 0.02);
 
     if (gretl_bundle_has_key(opts, "height")) {
 	height = gretl_bundle_get_scalar(opts, "height", &err);
@@ -9601,6 +9605,7 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (gretl_bundle_get_int(opts, "tics", NULL)) {
+	latlong = 1;
 	notics = 0;
     }
     if (notics || latlong == 0) {
