@@ -822,6 +822,15 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
     return ret;
 }
 
+#if 0
+
+/* It's possible we might want to use this in some
+   form: conversion from latitude and longitude to
+   Mercator coordinates, indirectly returned via
+   *px and *py, for an image that's intended to be
+   @width x @height pixels.
+*/
+
 static void mercatorize (double lat, double lon,
 			 int width, int height,
 			 double *px, double *py)
@@ -834,6 +843,8 @@ static void mercatorize (double lat, double lon,
     *px = x;
     *py = -y;
 }
+
+#endif
 
 /* Writes the coordinates content of the shapefile
    identified by @shpname to the gnuplot-compatible
@@ -851,31 +862,9 @@ static gretl_matrix *shp2dat (const char *shpname,
     FILE *fp;
     int n_shapetype, n_entities, i, part;
     double gmin[4], gmax[4];
-    int pxwidth = 0;
-    int pxheight = 0;
-    int mercator = 0;
-    char delim = ' ';
     int nskip = 0;
     int prec = 8;
     int err = 0;
-
-#if 0 /* not yet */
-    /* extra args?? mercvec, prec, opt */
-    if (opt & OPT_M) {
-	mercator = 1;
-    }
-
-    if (prec == 0) {
-	prec = 8;
-    }
-
-    if (mercvec != NULL) {
-	/* FIXME */
-	mercator = 1;
-	pxwidth = mercvec->val[0];
-	pxheight = mercvec->val[1];
-    }
-#endif
 
     SHP = SHPOpen(shpname, "rb");
     if (SHP == NULL) {
@@ -949,17 +938,13 @@ static gretl_matrix *shp2dat (const char *shpname,
 		part++;
 		fputc('\n', fp);
             }
-	    if (mercator) {
-		mercatorize(obj->fY[j], obj->fX[j],
-			    pxwidth, pxheight, &x, &y);
-	    } else {
-		x = obj->fX[j];
-		y = obj->fY[j];
-	    }
+	    /* mercatorize() could be called here */
+	    x = obj->fX[j];
+	    y = obj->fY[j];
 	    if (zvec != NULL) {
-		fprintf(fp, "%.*g%c%.*g%c%.*g\n", prec, x, delim, prec, y, delim, prec, z);
+		fprintf(fp, "%.*g %.*g %.*g\n", prec, x, prec, y, prec, z);
 	    } else {
-		fprintf(fp, "%.*g%c%.*g\n", prec, x, delim, prec, y);
+		fprintf(fp, "%.*g %.*g\n", prec, x, prec, y);
 	    }
 	    if (nskip > 0) {
 		record_extrema(x, y, gmin, gmax);

@@ -9481,6 +9481,13 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
     double wratio = cos(ymid * M_PI/180) * xyr;
     int width;
 
+    /* We're calculating a width-to-height ratio which varies
+       inversely with the (mid-point of) latitude so that we don't
+       don't get severe stretching in the x dimension when showing
+       an area far from the equator. In effect this is a cheap
+       and cheerful variant of Mercator.
+    */
+
     if (have_payload) {
 	/* 1.05 is to compensate for the colorbox */
 	width = floor(wratio * height * 1.05);
