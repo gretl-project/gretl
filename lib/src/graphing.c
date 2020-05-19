@@ -9473,20 +9473,31 @@ static int inline_map_data (const char *datfile, FILE *fp)
 static gretl_matrix *geoplot_dimensions (double *xlim,
 					 double *ylim,
 					 int height,
-					 int have_payload)
+					 int have_payload,
+					 int *latlong)
 {
     gretl_matrix *ret = gretl_matrix_alloc(1, 2);
-    double ymid = (ylim[0] + ylim[1]) / 2;
     double xyr = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0]);
-    double wratio = cos(ymid * M_PI/180) * xyr;
+    double wratio = xyr;
     int width;
 
-    /* We're calculating a width-to-height ratio which varies
-       inversely with the (mid-point of) latitude so that we don't
-       don't get severe stretching in the x dimension when showing
-       an area far from the equator. In effect this is a cheap
-       and cheerful variant of Mercator.
-    */
+    if (ylim[1] > 90 || ylim[0] < -90 ||
+	xlim[1] > 180 || xlim[0] < -180) {
+	/* Quick and dirty check: the coordinates are not
+	   given as degrees of latitude and longitude
+	*/
+	*latlong = 0;
+    } else {
+	/* We'll calculate a width-to-height ratio which varies
+	   inversely with the (mid-point of) latitude so that we don't
+	   don't get severe stretching in the x dimension when showing
+	   an area far from the equator. In effect this is a cheap and
+	   cheerful version of Mercator.
+	*/
+	double ymid = (ylim[0] + ylim[1]) / 2;
+
+	wratio *= cos(ymid * M_PI/180);
+    }
 
     if (have_payload) {
 	/* 1.05 is to compensate for the colorbox */
@@ -9499,6 +9510,7 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 
     ret->val[0] = width;
     ret->val[1] = height;
+
     return ret;
 }
 
@@ -9528,6 +9540,7 @@ int write_map_gp_file (const char *plotfile,
     gchar *datasrc = NULL;
     double linewidth = 1.0;
     int have_payload = 0;
+    int latlong = 1;
     int height = 600;
     int border = 1;
     int notics = 1;
@@ -9553,7 +9566,8 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (height > 0) {
-	dims = geoplot_dimensions(xlim, ylim, height, have_payload);
+	dims = geoplot_dimensions(xlim, ylim, height, have_payload,
+				  &latlong);
     }
     if (show) {
 	set_optval_string(GNUPLOT, OPT_U, "display");
@@ -9588,7 +9602,7 @@ int write_map_gp_file (const char *plotfile,
     if (gretl_bundle_get_int(opts, "tics", NULL)) {
 	notics = 0;
     }
-    if (notics) {
+    if (notics || latlong == 0) {
         fputs("set noxtics\n", fp);
         fputs("set noytics\n", fp);
     }
