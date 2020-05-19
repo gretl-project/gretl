@@ -9478,13 +9478,12 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 {
     gretl_matrix *ret = gretl_matrix_alloc(1, 2);
     double xyr = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0]);
-    double wratio = xyr;
     int width;
 
     if (ylim[1] > 90 || ylim[0] < -90 ||
 	xlim[1] > 180 || xlim[0] < -180) {
 	/* Quick and dirty check: the coordinates are not
-	   given as degrees of latitude and longitude
+	   given as degrees of latitude and longitude.
 	*/
 	*latlong = 0;
     } else {
@@ -9496,14 +9495,14 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 	*/
 	double ymid = (ylim[0] + ylim[1]) / 2;
 
-	wratio *= cos(ymid * M_PI/180);
+	xyr *= cos(ymid * M_PI/180);
     }
 
     if (have_payload) {
 	/* 1.05 is to compensate for the colorbox */
-	width = floor(wratio * height * 1.05);
+	width = floor(xyr * height * 1.05);
     } else {
-	width = floor(wratio * height);
+	width = floor(xyr * height);
     }
 
     set_special_plot_size(width, height);
