@@ -31,6 +31,15 @@
 
 enum { DBF, SHP, GEO };
 
+enum {
+    PRJ0,      /* geoplot default: quasi-Mercator */
+    WGS84,     /* null projection */
+    EPSG3857,  /* "proper" Mercator */
+    EPSG2163   /* US National Atlas Equal Area */
+};
+
+static int proj;
+
 #define GEOHUGE 1.0e100
 
 static char *get_full_read_path (char *fname)
@@ -141,6 +150,50 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
     }
 
     return ret;
+}
+
+/* See https://source.opennews.org/articles/choosing-right-map-projection/
+   and "Map Projections -- A Working Manual", U.S. Geological Survey
+   Professional Paper 1395, John P. Snyder, 1987.
+*/
+
+#define d2r (M_PI / 180.0)
+#define Radius 1000.0
+#define sphi_2163 (sin(45.0 * d2r))
+#define cphi_2163 (cos(45.0 * d2r))
+#define lam_2163 (-100.0 * d2r)
+
+/* EPSG:2163, U.S. National Atlas Equal Area */
+
+static void EPSG_2163 (double *px, double *py)
+{
+    double lat = *py, lon = *px;
+    double phi = lat * d2r;
+    double sphi = sin(phi);
+    double cphi = cos(phi);
+    double lam = lon * d2r;
+    double ldiff = lam - lam_2163;
+    double cldiff = cos(ldiff);
+    double k;
+
+    k = Radius * sqrt(2 / (1 + sphi_2163*sphi + cphi_2163*cphi*cldiff));
+
+    *px = k * cphi * sin(ldiff);
+    *py = k * (cphi_2163*sphi - sphi_2163*cphi*cldiff);
+}
+
+/* EPSG:3857
+   x = R * (lam - lam0)
+   y = R * ln tan (pi/4 + phi/2)
+*/
+
+static void mercator (double *px, double *py)
+{
+    double lat = *py, lon = *px;
+    double phi = lat * d2r;
+
+    *px = Radius * lon * d2r;
+    *py = Radius * log(tan(G_PI_4 + 0.5*phi));
 }
 
 static int crs_is_nonstandard (gretl_bundle *crs)
@@ -303,6 +356,11 @@ static gretl_matrix *geo2dat (const char *geoname,
 		for (k=0; k<X->rows; k++) {
 		    x = gretl_matrix_get(X, k, 0);
 		    y = gretl_matrix_get(X, k, 1);
+		    if (proj == EPSG3857) {
+			mercator(&x, &y);
+		    } else if (proj == EPSG2163) {
+			EPSG_2163(&x, &y);
+		    }
 		    if (zvec != NULL) {
 			fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
 		    } else {
@@ -326,6 +384,11 @@ static gretl_matrix *geo2dat (const char *geoname,
 		    for (p=0; p<X->rows; p++) {
 			x = gretl_matrix_get(X, p, 0);
 			y = gretl_matrix_get(X, p, 1);
+			if (proj == EPSG3857) {
+			    mercator(&x, &y);
+			} else if (proj == EPSG2163) {
+			    EPSG_2163(&x, &y);
+			}
 			if (zvec != NULL) {
 			    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
 			} else {
@@ -454,6 +517,11 @@ static gretl_matrix *fast_geo2dat (const char *geoname,
 		    break;
 		}
 		nrbr = 1;
+		if (proj == EPSG3857) {
+		    mercator(&x, &y);
+		} else if (proj == EPSG2163) {
+		    EPSG_2163(&x, &y);
+		}
 		if (zvec != NULL) {
 		    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
 		} else {
@@ -857,30 +925,6 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
     return ret;
 }
 
-#if 0
-
-/* It's possible we might want to use this in some
-   form: conversion from latitude and longitude to
-   Mercator coordinates, indirectly returned via
-   *px and *py, for an image that's intended to be
-   @width x @height pixels.
-*/
-
-static void mercatorize (double lat, double lon,
-			 int width, int height,
-			 double *px, double *py)
-{
-    double x = (lon + 180) * (width / 360.0);
-    double rad = lat * M_PI/180.0;
-    double merc = log(tan(M_PI/4.0 + rad/2.0));
-    double y = height/2.0 - height*merc/(2*M_PI);
-
-    *px = x;
-    *py = -y;
-}
-
-#endif
-
 /* Writes the coordinates content of the shapefile
    identified by @shpname to the gnuplot-compatible
    plain text data file @datname. Returns the bounding
@@ -897,6 +941,7 @@ static gretl_matrix *shp2dat (const char *shpname,
     FILE *fp;
     int n_shapetype, n_entities, i, part;
     double gmin[4], gmax[4];
+    int get_extrema = 0;
     int nskip = 0;
     int prec = 8;
     int err = 0;
@@ -925,12 +970,14 @@ static gretl_matrix *shp2dat (const char *shpname,
 		break;
 	    }
 	}
-	if (nskip > 0) {
-	    for (i=0; i<2; i++) {
-		gmin[i] = GEOHUGE;
-		gmax[i] = -GEOHUGE;
-	    }
+    }
+
+    if (nskip > 0 || proj > WGS84) {
+	for (i=0; i<2; i++) {
+	    gmin[i] = GEOHUGE;
+	    gmax[i] = -GEOHUGE;
 	}
+	get_extrema = 1;
     }
 
     fp = gretl_fopen(datname, "wb");
@@ -973,15 +1020,19 @@ static gretl_matrix *shp2dat (const char *shpname,
 		part++;
 		fputc('\n', fp);
             }
-	    /* mercatorize() could be called here */
 	    x = obj->fX[j];
 	    y = obj->fY[j];
+	    if (proj == EPSG3857) {
+		mercator(&x, &y);
+	    } else if (proj == EPSG2163) {
+		EPSG_2163(&x, &y);
+	    }
 	    if (zvec != NULL) {
 		fprintf(fp, "%.*g %.*g %.*g\n", prec, x, prec, y, prec, z);
 	    } else {
 		fprintf(fp, "%.*g %.*g\n", prec, x, prec, y);
 	    }
-	    if (nskip > 0) {
+	    if (get_extrema) {
 		record_extrema(x, y, gmin, gmax);
 	    }
         }
@@ -1271,6 +1322,21 @@ int map_get_data (const char *fname, DATASET *dset,
     return err;
 }
 
+static void set_projection (const char *s)
+{
+    if (!strcmp(s, "Mercator") || !strcmp(s, "mercator")
+	!strcmp(s, "EPSG3857")) {
+	proj = EPSG3857;
+    } else if (!strcmp(s, "WGS84") || !strcmp(s, "EPSG4326")) {
+	proj = WGS84;
+    } else if (!strcmp(s, "EPSG2163")) {
+	proj = EPSG2163;
+    } else {
+	fprintf(stderr, "set_projection: '%s'?\n", s);
+	proj = PRJ0;
+    }
+}
+
 static gretl_matrix *vector_minmax (const gretl_matrix *z)
 {
     gretl_matrix *ret = gretl_matrix_alloc(1, 2);
@@ -1317,6 +1383,7 @@ int geoplot (const char *mapfile,
     gretl_matrix *bbox = NULL;
     gchar *plotfile = NULL;
     gchar *datfile = NULL;
+    const char *sval;
     int plotfile_is_image = 0;
     int non_standard = 0;
     int show = 1;
@@ -1327,11 +1394,9 @@ int geoplot (const char *mapfile,
 	    show = gretl_bundle_get_int(opts, "show", &err);
 	}
 	if (gretl_bundle_has_key(opts, "plotfile")) {
-	    const char *s;
-
-	    s = gretl_bundle_get_string(opts, "plotfile", &err);
-	    if (s != NULL) {
-		plotfile = g_strdup(s);
+	    sval = gretl_bundle_get_string(opts, "plotfile", &err);
+	    if (sval != NULL) {
+		plotfile = g_strdup(sval);
 		if (is_image_filename(plotfile)) {
 		    plotfile_is_image = 1;
 		    show = 0;
@@ -1350,8 +1415,15 @@ int geoplot (const char *mapfile,
 	goto bailout;
     }
 
+    /* do we have a sub-sampling mask? */
     if (gretl_bundle_has_key(opts, "mask")) {
 	mask = gretl_bundle_get_matrix(opts, "mask", &err);
+    }
+
+    /* specific projection wanted? */
+    sval = gretl_bundle_get_string(opts, "projection", NULL);
+    if (sval != NULL) {
+	set_projection(sval);
     }
 
     if (!err) {
@@ -1374,6 +1446,9 @@ int geoplot (const char *mapfile,
 
 	if (payload != NULL) {
 	    zrange = vector_minmax(payload);
+	}
+	if (proj > 0) {
+	    non_standard = 1;
 	}
 	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
 				bbox, zrange, opts, non_standard, show);

@@ -9490,8 +9490,8 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
     int width;
 
     if (*non_standard == 0) {
-	if (ylim[1] > 90 || ylim[0] < -90 ||
-	    xlim[1] > 180 || xlim[0] < -180) {
+	if (fabs(ylim[0]) > 90 || fabs(ylim[1]) > 90 ||
+	    fabs(xlim[0]) > 180 || fabs(xlim[1]) > 180) {
 	    /* Quick and dirty check in the absence of prior
 	       information that the X, Y data are not in degrees
 	       of latitude and longitude.
@@ -9512,6 +9512,8 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 	double ymid = (ylim[0] + ylim[1]) / 2;
 
 	xyr *= cos(ymid * M_PI/180);
+    } else {
+	fprintf(stderr, "non-default projection\n");
     }
 
     if (have_payload) {

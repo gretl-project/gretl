@@ -12,6 +12,15 @@
 \setlength{\parskip}{1ex}
 \setlength{\abovecaptionskip}{0pt}
 
+\newcommand{\startappendices}{%
+\newcounter{appcount}
+\setcounter{appcount}{0}
+ \renewcommand{\thesection}{Appendix \Alph{appcount}}}
+
+\newcommand{\myappendix}[1]{%
+\addtocounter{appcount}{1}
+\section{#1}}
+
 \title{geoplot: cartography in gretl}
 \author{Allin Cottrell and Jack Lucchetti}
 
@@ -830,9 +839,9 @@ examining a plot with no payload, showing the values on the axes.
 
 
 \clearpage
-\appendix
+\startappendices
 
-\section{Representation of polygons in gnuplot}
+\myappendix{Representation of polygons in gnuplot}
 \label{sec:gnuplot}
 
 The
@@ -879,6 +888,90 @@ plot for [i=0:*] $coords index i with filledcurves fillcolor palette
 A nice way to customize the palette is via ``\texttt{set
   palette defined}'' (see the \textsf{gnuplot} manual; also see
 section~\ref{sec:opts} above).
+
+\clearpage
+\myappendix{Projections}
+
+\textsf{Geoplot} assumes (mostly, but see below) that incoming map
+coordinates are given as degrees of latitude (Y) and longtitude
+(X). This is mandated by RFC 7946, which has governed GeoJSON since
+2016; it also appears to be the most common case for ESRI shapefiles.
+
+Everyone knows that the Earth is not actually a sphere, but let's
+assume it is for simplicity. Then a degree of latitude is always the
+same length on the ground: 1/360 of the planet's circumference. But
+the length of a degree of longitude varies, from 1/360 of Earth's
+circumference at the equator to zero at the poles. So imagine that we
+pass the X--Y pairs to our plotting engine on the assumption that ``a
+degree'' is always the same size: the result will be more or less OK
+close to the equator but at higher or lower latitudes features will be
+seriously stretched horizontally (or squashed vertically) relative to
+what we're used to seeing. To avoid this effect some sort of
+projection is required.
+
+By default geoplot uses what we might call a ``quasi-Mercator''
+projection. In most cases this should produce maps that look quite
+acceptable and it has the advantage of simplicity. All we do is take
+the height of the plot as specified by the user (or a default of 600
+pixels) and figure out what the width should be to make a degree of
+longitude the same size as a degree of latitude at the mid-point
+latitude. However, we offer three options, as follows:
+\begin{itemize}
+\item Standard Mercator (\textsf{EPSG:3857})
+\item ``Null'' projection (\textsf{EPSG:4326})
+\item U.S. National Atlas Equal Area (\textsf{EPSG:2163})
+\end{itemize}
+
+Figure~\ref{fig:proj} compares the available projections for the
+contiguous United States. In this case the default \textsf{geoplot}
+projection and standard Mercator are practically
+indistinguishable. \textsf{EPSG:4326}, which treats degrees as
+everywhere the same size, exhibits the horizontal stretching mentioned
+above. \textsf{EPSG:2163} gives the impression of looking at the USA
+on a section of the globe.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tabular}{cc}
+    \includegraphics[scale=0.9]{prj0.pdf} &
+     \includegraphics[scale=0.9]{mercator.pdf} \\[-6pt]
+    \small{Default} & \small{Mercator} \\
+    \includegraphics[scale=0.9]{epsg4326.pdf} &
+      \includegraphics[scale=0.9]{epsg2163.pdf} \\[-6pt]
+    \small{EPSG:4326} & \small{EPSG:2163}
+  \end{tabular}
+  \vspace{1ex}
+  \caption{Comparison of projections}
+  \label{fig:proj}
+\end{figure}
+
+To select one of the alternatives, you add a string to the
+\texttt{options} bundle passed to the \texttt{geoplot} function under
+the key \texttt{projection}: for Mercator, ``Mercator''; for
+\textsf{EPSG:4326}, ``EPSG4326''; for \textsf{EPSG:2163},
+``EPSG2163''. Please note that \textsf{EPSG:2163} is specially tuned
+for the USA, and will produce weird-looking or non-existent results
+for other parts of the world.
+
+\subsection*{Non-standard coordinates}
+
+In certain map files---maybe GeoJSON predating RFC 7946, and perhaps
+some shapefiles---the X--Y coordinates are not in the expected form of
+degrees of latitude and longitude. In that case they probably already
+encode some sort of projection, and so should not be ``re-projected''.
+For GeoJSON files, \textsf{geoplot} makes an attempt to determine
+whether a non-standard coordinate system is used, as was allowed under
+the obsolete GeoJSON 2008 specification. In that case we automatically
+cancel projection; we also do this if the X or Y values are out of
+bounds for representing degrees (that is, |X| > 180 or |Y| > 90).
+
+Failing such automatic detection, one can try specifying
+\textsf{EPSG:4326} to get the X and Y units to be treated as equal in
+size, in effect cancelling projection, as in
+\begin{code}
+bundle options
+options.projection = "EPSG4326"
+\end{code}
 
 \end{document}
 
