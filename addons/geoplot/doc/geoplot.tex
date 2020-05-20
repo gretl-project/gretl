@@ -311,7 +311,7 @@ Listing~\ref{tab:founders-script}, and what we get after opening the
 6    Nederland          NLD           NL  Netherlands           NL
 \end{scode}
 \caption{The ``founders'' metadata}
-\label{tab:founders-meta}  
+\label{tab:founders-meta}
 \end{script}
 
 Next, we perform the \cmd{join} with \texttt{FID} (from the JSON file)
@@ -915,12 +915,17 @@ acceptable and it has the advantage of simplicity. All we do is take
 the height of the plot as specified by the user (or a default of 600
 pixels) and figure out what the width should be to make a degree of
 longitude the same size as a degree of latitude at the mid-point
-latitude. However, we offer three options, as follows:
-\begin{itemize}
-\item Standard Mercator (\textsf{EPSG:3857})
-\item ``Null'' projection (\textsf{EPSG:4326})
-\item U.S. National Atlas Equal Area (\textsf{EPSG:2163})
-\end{itemize}
+latitude. However, we offer four options, as follows:
+\begin{center}
+  \begin{tabular}{cll}
+    EPSG id & description & option string \\[4pt]
+  \textsf{3857} & standard Mercator & \verb|"Mercator"| \\
+  \textsf{4326} & ``null'' projection & \verb|"EPSG4326"| \\
+  \textsf{2163} & U.S. National Atlas Equal Area &
+     \verb|"EPSG2163"| \\
+  \textsf{3035} & Europe Equal Area & \verb|"EPSG3035"|
+\end{tabular}
+\end{center}
 
 Figure~\ref{fig:proj} compares the available projections for the
 contiguous United States. In this case the default \textsf{geoplot}
@@ -945,13 +950,13 @@ on a section of the globe.
   \label{fig:proj}
 \end{figure}
 
-To select one of the alternatives, you add a string to the
-\texttt{options} bundle passed to the \texttt{geoplot} function under
-the key \texttt{projection}: for Mercator, ``Mercator''; for
-\textsf{EPSG:4326}, ``EPSG4326''; for \textsf{EPSG:2163},
-``EPSG2163''. Please note that \textsf{EPSG:2163} is specially tuned
-for the USA, and will produce weird-looking or non-existent results
-for other parts of the world.
+To select one of the alternatives, you add the appropriate string to
+the \texttt{options} bundle passed to the \texttt{geoplot} function
+under the key \texttt{projection}. Please note that \textsf{EPSG:2163}
+is specially tuned for the USA, and will produce weird-looking or
+non-existent results for other parts of the world. \textsf{EPSG:3035}
+is similarly tuned for Europe. They are both so-called Lambert
+Azimuthal Equal Area projections.
 
 \subsection*{Non-standard coordinates}
 
@@ -972,6 +977,13 @@ size, in effect cancelling projection, as in
 bundle options
 options.projection = "EPSG4326"
 \end{code}
+
+There are many websites presenting information on coordinate systems
+and map projections. Two of the most useful ones, in our experience,
+are:
+
+For reference material: \url{https://spatialreference.org/} \\
+For explanation: \url{https://source.opennews.org/articles/choosing-right-map-projection/}
 
 \end{document}
 

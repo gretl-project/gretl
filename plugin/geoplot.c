@@ -162,11 +162,11 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 #define Radius 1000.0
 
 static const double sphivec[] = {
-    sin(45.0 * d2r), sin(52.0 * d2r)		      
+    sin(45.0 * d2r), sin(52.0 * d2r)
 };
 
 static const double cphivec[] = {
-    cos(45.0 * d2r), cos(52.0 * d2r)		      
+    cos(45.0 * d2r), cos(52.0 * d2r)
 };
 
 static const double lam0[] = {
@@ -189,17 +189,17 @@ static void lambert_azimuthal (double *px, double *py)
     double k;
 
     int i = proj == EPSG3035 ? 1 : 0;
-    
+
     sphi0 = sphivec[i];
     cphi0 = cphivec[i];
     ldiff = lam - lam0[i];
     cldiff = cos(ldiff);
-    k = Radius * sqrt(2 / (1 + sphi0*sphi + cphi0*cphi*cldiff));
+    k = Radius * sqrt(2.0 / (1 + sphi0*sphi + cphi0*cphi*cldiff));
     *px = k * cphi * sin(ldiff);
     *py = k * (cphi0*sphi - sphi0*cphi*cldiff);
 }
 
-/* EPSG:3857
+/* EPSG:3857 (Mercator)
    x = R * (lam - lam0)
    y = R * ln tan (pi/4 + phi/2)
 */
