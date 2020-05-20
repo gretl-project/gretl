@@ -35,7 +35,8 @@ enum {
     PRJ0,      /* geoplot default: quasi-Mercator */
     WGS84,     /* null projection */
     EPSG3857,  /* "proper" Mercator */
-    EPSG2163   /* US National Atlas Equal Area */
+    EPSG2163,  /* US National Atlas Equal Area */
+    EPSG3035,  /* Europe Equal Area */
 };
 
 static int proj;
@@ -159,27 +160,43 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 
 #define d2r (M_PI / 180.0)
 #define Radius 1000.0
-#define sphi_2163 (sin(45.0 * d2r))
-#define cphi_2163 (cos(45.0 * d2r))
-#define lam_2163 (-100.0 * d2r)
 
-/* EPSG:2163, U.S. National Atlas Equal Area */
+static const double sphivec[] = {
+    sin(45.0 * d2r), sin(52.0 * d2r)		      
+};
 
-static void EPSG_2163 (double *px, double *py)
+static const double cphivec[] = {
+    cos(45.0 * d2r), cos(52.0 * d2r)		      
+};
+
+static const double lam0[] = {
+    -100.0 * d2r, 10.0 * d2r
+};
+
+/* EPSG:2163, U.S. National Atlas Equal Area,
+   and EPSG:3035, Single CRS for all Europe
+*/
+
+static void lambert_azimuthal (double *px, double *py)
 {
     double lat = *py, lon = *px;
     double phi = lat * d2r;
     double sphi = sin(phi);
     double cphi = cos(phi);
     double lam = lon * d2r;
-    double ldiff = lam - lam_2163;
-    double cldiff = cos(ldiff);
+    double ldiff, cldiff;
+    double sphi0, cphi0;
     double k;
 
-    k = Radius * sqrt(2 / (1 + sphi_2163*sphi + cphi_2163*cphi*cldiff));
-
+    int i = proj == EPSG3035 ? 1 : 0;
+    
+    sphi0 = sphivec[i];
+    cphi0 = cphivec[i];
+    ldiff = lam - lam0[i];
+    cldiff = cos(ldiff);
+    k = Radius * sqrt(2 / (1 + sphi0*sphi + cphi0*cphi*cldiff));
     *px = k * cphi * sin(ldiff);
-    *py = k * (cphi_2163*sphi - sphi_2163*cphi*cldiff);
+    *py = k * (cphi0*sphi - sphi0*cphi*cldiff);
 }
 
 /* EPSG:3857
@@ -358,8 +375,8 @@ static gretl_matrix *geo2dat (const char *geoname,
 		    y = gretl_matrix_get(X, k, 1);
 		    if (proj == EPSG3857) {
 			mercator(&x, &y);
-		    } else if (proj == EPSG2163) {
-			EPSG_2163(&x, &y);
+		    } else if (proj >= EPSG2163) {
+			lambert_azimuthal(&x, &y);
 		    }
 		    if (zvec != NULL) {
 			fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
@@ -386,8 +403,8 @@ static gretl_matrix *geo2dat (const char *geoname,
 			y = gretl_matrix_get(X, p, 1);
 			if (proj == EPSG3857) {
 			    mercator(&x, &y);
-			} else if (proj == EPSG2163) {
-			    EPSG_2163(&x, &y);
+			} else if (proj >= EPSG2163) {
+			    lambert_azimuthal(&x, &y);
 			}
 			if (zvec != NULL) {
 			    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
@@ -519,8 +536,8 @@ static gretl_matrix *fast_geo2dat (const char *geoname,
 		nrbr = 1;
 		if (proj == EPSG3857) {
 		    mercator(&x, &y);
-		} else if (proj == EPSG2163) {
-		    EPSG_2163(&x, &y);
+		} else if (proj >= EPSG2163) {
+		    lambert_azimuthal(&x, &y);
 		}
 		if (zvec != NULL) {
 		    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
@@ -1024,8 +1041,8 @@ static gretl_matrix *shp2dat (const char *shpname,
 	    y = obj->fY[j];
 	    if (proj == EPSG3857) {
 		mercator(&x, &y);
-	    } else if (proj == EPSG2163) {
-		EPSG_2163(&x, &y);
+	    } else if (proj >= EPSG2163) {
+		lambert_azimuthal(&x, &y);
 	    }
 	    if (zvec != NULL) {
 		fprintf(fp, "%.*g %.*g %.*g\n", prec, x, prec, y, prec, z);
@@ -1324,13 +1341,15 @@ int map_get_data (const char *fname, DATASET *dset,
 
 static void set_projection (const char *s)
 {
-    if (!strcmp(s, "Mercator") || !strcmp(s, "mercator")
+    if (!strcmp(s, "Mercator") || !strcmp(s, "mercator") ||
 	!strcmp(s, "EPSG3857")) {
 	proj = EPSG3857;
     } else if (!strcmp(s, "WGS84") || !strcmp(s, "EPSG4326")) {
 	proj = WGS84;
     } else if (!strcmp(s, "EPSG2163")) {
 	proj = EPSG2163;
+    } else if (!strcmp(s, "EPSG3035")) {
+	proj = EPSG3035;
     } else {
 	fprintf(stderr, "set_projection: '%s'?\n", s);
 	proj = PRJ0;
