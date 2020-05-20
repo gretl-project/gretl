@@ -1692,6 +1692,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlinelen = 0;
     int max_ldquo = 0, max_lsquo = 0;
+    int min_ldquo = 0, min_lsquo = 0;
     int ldquo = 0, lsquo = 0;
     int ndquo = 0, nsquo = 0;
     int crlf = 0, lines = 0;
@@ -1725,9 +1726,13 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    lines++;
 	    if (ldquo > max_ldquo) {
 		max_ldquo = ldquo;
+	    } else if (ldquo > 0 && ldquo < max_ldquo) {
+		min_ldquo = ldquo;
 	    }
 	    if (lsquo > max_lsquo) {
 		max_lsquo = lsquo;
+	    } else if (lsquo > 0 && lsquo < max_lsquo) {
+		min_lsquo = lsquo;
 	    }
 	    ldquo = lsquo = 0;
 	    continue;
@@ -1787,12 +1792,20 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 		    nsquo, max_lsquo);
 	}
 	if (max_ldquo > 0 && max_ldquo % 2 == 0) {
-	    /* double-quote is a candidate */
-	    cands[0] = 1;
+	    /* double-quote is a candidate? */
+	    if (min_ldquo > 0 && min_ldquo % 2) {
+		; /* nope */
+	    } else {
+		cands[0] = 1;
+	    }
 	}
 	if (max_lsquo > 0 && max_lsquo % 2 == 0) {
-	    /* single-quote is a candidate */
-	    cands[1] = 1;
+	    /* single-quote is a candidate? */
+	    if (min_lsquo > 0 && min_lsquo % 2) {
+		; /* nope */
+	    } else {
+		cands[1] = 1;
+	    }
 	}
 	if (cands[0] && cands[1]) {
 	    /* hmm, rule one out: prefer the more numerous */
