@@ -143,7 +143,34 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
     return ret;
 }
 
+static int crs_is_nonstandard (gretl_bundle *crs)
+{
+    gretl_bundle *props;
+    const char *crsname;
+    int err = 0;
+    int ret = 0;
+
+    props = gretl_bundle_get_bundle(crs, "properties", &err);
+    if (!err) {
+	crsname = gretl_bundle_get_string(props, "name", &err);
+    }
+    if (!err) {
+	const char *s = strstr(crsname, "crs:");
+
+	if (s != NULL) {
+	    /* RFC 7946: anything but OGC::CRS84 is non-conforming */
+	    if (strcmp(s + 4, "OGC::CRS84")) {
+		fprintf(stderr, "Got non-standard crs %s\n", s+4);
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static gretl_array *geojson_get_features (const char *fname,
+					  int *non_standard,
 					  int *err)
 {
     gretl_bundle *(*jfunc) (const char *, const char *, int *);
@@ -157,6 +184,7 @@ static gretl_array *geojson_get_features (const char *fname,
 
     if (ok) {
 	gretl_bundle *b = NULL;
+	gretl_bundle *c = NULL;
 	GretlType type = 0;
 
 	jfunc = get_plugin_function("json_get_bundle");
@@ -166,6 +194,12 @@ static gretl_array *geojson_get_features (const char *fname,
 	    b = jfunc(JSON, NULL, err);
 	    if (!*err) {
 		a = gretl_bundle_steal_data(b, "features", &type, NULL, err);
+	    }
+	    if (!*err && gretl_bundle_has_key(b, "crs")) {
+		c = gretl_bundle_get_data(b, "crs", &type, NULL, err);
+		if (!*err && type == GRETL_TYPE_BUNDLE) {
+		    *non_standard = crs_is_nonstandard(c);
+		}
 	    }
 	}
 	gretl_bundle_destroy(b);
@@ -201,7 +235,8 @@ static gretl_matrix *make_bbox (double *gmin, double *gmax)
 static gretl_matrix *geo2dat (const char *geoname,
 			      const char *datname,
 			      const gretl_matrix *zvec,
-			      const gretl_matrix *mask)
+			      const gretl_matrix *mask,
+			      int *non_standard)
 {
     gretl_array *features, *AC;
     gretl_array *ACj, *ACjk;
@@ -215,7 +250,7 @@ static gretl_matrix *geo2dat (const char *geoname,
     int i, j, k, p;
     int err = 0;
 
-    features = geojson_get_features(geoname, &err);
+    features = geojson_get_features(geoname, non_standard, &err);
     if (features == NULL) {
 	return NULL;
     }
@@ -1138,7 +1173,8 @@ static int shapefile_to_csv (const char *fname,
 static gretl_matrix *map2dat (const char *mapname,
 			      const char *datname,
 			      const gretl_matrix *zvec,
-			      const gretl_matrix *mask)
+			      const gretl_matrix *mask,
+			      int *non_standard)
 {
     char infile[MAXLEN];
 
@@ -1160,7 +1196,8 @@ static gretl_matrix *map2dat (const char *mapname,
 	/* FIXME revisit this */
 	return fast_geo2dat(infile, datname, zvec, mask);
     } else {
-	return geo2dat(infile, datname, zvec, mask);
+	return geo2dat(infile, datname, zvec, mask,
+		       non_standard);
     }
 }
 
@@ -1281,6 +1318,7 @@ int geoplot (const char *mapfile,
     gchar *plotfile = NULL;
     gchar *datfile = NULL;
     int plotfile_is_image = 0;
+    int non_standard = 0;
     int show = 1;
     int err = 0;
 
@@ -1325,7 +1363,7 @@ int geoplot (const char *mapfile,
 	    datfile = gretl_make_dotpath("geoplot_tmp.dat");
 	}
 	/* write out the polygons data for gnuplot */
-	bbox = map2dat(mapfile, datfile, payload, mask);
+	bbox = map2dat(mapfile, datfile, payload, mask, &non_standard);
 	if (bbox == NULL) {
 	    err = E_DATA;
 	}
@@ -1338,7 +1376,7 @@ int geoplot (const char *mapfile,
 	    zrange = vector_minmax(payload);
 	}
 	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
-				bbox, zrange, opts, show);
+				bbox, zrange, opts, non_standard, show);
 	gretl_matrix_free(zrange);
 	gretl_matrix_free(bbox);
     }

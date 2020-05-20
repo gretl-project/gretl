@@ -9428,7 +9428,7 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 
 /* geoplot functions */
 
-/* stretch_limits: allow a little extra space in the X and Y
+/* stretch_limits(): allow a little extra space in the X and Y
    dimensions so that the map doesn't entirely fill the plot
    area.
 */
@@ -9483,21 +9483,26 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
 					 double *ylim,
 					 int height,
 					 int have_payload,
-					 int *latlong)
+					 int *non_standard)
 {
     gretl_matrix *ret = gretl_matrix_alloc(1, 2);
     double xyr = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0]);
     int width;
 
-    if (ylim[1] > 90 || ylim[0] < -90 ||
-	xlim[1] > 180 || xlim[0] < -180) {
-	/* Quick and dirty check: the coordinates are not
-	   given as degrees of latitude and longitude.
-	*/
-	fprintf(stderr, "alt coordinates: X %g to %g, Y %g to %g\n",
-		xlim[0], xlim[1], ylim[0], ylim[1]);
-	*latlong = 0;
-    } else {
+    if (*non_standard == 0) {
+	if (ylim[1] > 90 || ylim[0] < -90 ||
+	    xlim[1] > 180 || xlim[0] < -180) {
+	    /* Quick and dirty check in the absence of prior
+	       information that the X, Y data are not in degrees
+	       of latitude and longitude.
+	    */
+	    fprintf(stderr, "alt coordinates: X %g to %g, Y %g to %g\n",
+		    xlim[0], xlim[1], ylim[0], ylim[1]);
+	    *non_standard = 1;
+	}
+    }
+
+    if (*non_standard == 0) {
 	/* We'll calculate a width-to-height ratio which varies
 	   inversely with the (mid-point of) latitude so that we don't
 	   don't get severe stretching in the x dimension when showing
@@ -9541,6 +9546,7 @@ int write_map_gp_file (const char *plotfile,
 		       const gretl_matrix *bbox,
 		       const gretl_matrix *zrange,
 		       gretl_bundle *opts,
+		       int non_standard,
 		       int show)
 {
     double xlim[2], ylim[2], zlim[2];
@@ -9550,7 +9556,6 @@ int write_map_gp_file (const char *plotfile,
     gchar *datasrc = NULL;
     double linewidth = 1.0;
     int have_payload = 0;
-    int latlong = 1;
     int height = 600;
     int border = 1;
     int notics = 1;
@@ -9577,7 +9582,7 @@ int write_map_gp_file (const char *plotfile,
 
     if (height > 0) {
 	dims = geoplot_dimensions(xlim, ylim, height, have_payload,
-				  &latlong);
+				  &non_standard);
     }
     if (show) {
 	set_optval_string(GNUPLOT, OPT_U, "display");
@@ -9610,10 +9615,9 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (gretl_bundle_get_int(opts, "tics", NULL)) {
-	latlong = 1;
 	notics = 0;
     }
-    if (notics || latlong == 0) {
+    if (notics || non_standard) {
         fputs("set noxtics\n", fp);
         fputs("set noytics\n", fp);
     }

@@ -356,6 +356,7 @@ int write_map_gp_file (const char *plotfile,
 		       const gretl_matrix *bbox,
 		       const gretl_matrix *zrange,
 		       gretl_bundle *opts,
+		       int non_standard,
 		       int show);
 
 #endif /* GRAPHING_H */
