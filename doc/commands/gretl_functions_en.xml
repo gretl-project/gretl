@@ -804,6 +804,18 @@
       </description>
     </function>
 
+    <function name="$seed" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the value with which gretl's random number generator
+	  was seeded. If you set the seed yourself there's no need to
+	  use this accessor, but it may be of interest if the seed was
+	  set automatically (based on the time that execution of the
+	  program started).
+	</para>
+      </description>
+    </function>
+
     <function name="$sigma" section="access" output="scalar-or-matrix">
       <description>
 	<para>
