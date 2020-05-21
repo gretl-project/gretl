@@ -389,10 +389,10 @@ offer a few comments here.
 As mentioned above, the relevant tools provided by gretl are
 \texttt{append} and \texttt{join}. A simple \texttt{append} will work
 only if the regions appear in the same order in the map and payload
-datasets. It should be easy enough to see if this is the case, if the
-number of regions is fairly small and each dataset contains readily
-understood identifiers. Otherwise---that is, the orders clearly differ
-or it's hard to tell---it will be necessary to use \texttt{join}.
+datasets. This is fairly easily checked if the number of regions is
+small and each dataset contains readily comparable
+identifiers. Otherwise---if the orders clearly differ or it's hard to
+tell---it will be necessary to use \texttt{join}.
 
 Look back at Listing~\ref{tab:founders-script}. In that case the map
 and payload datasets contained the same set of two-letter identifiers
@@ -458,7 +458,7 @@ opts.title = "USA (mainland)"
 opts.plotfile = "us1.plt"
 geoplot($mapfile, x, opts)
   \end{scode}
-  \caption{US maps (complete vs mainland)}
+  \caption{US maps, complete vs contiguous states}
   \label{tab:USA}
 \end{script}
 
@@ -506,6 +506,7 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   following extensions: \texttt{png}, \texttt{pdf}, \texttt{eps} or
   \texttt{svg}.  If \texttt{plotfile} is given, but not as a full
   path, the file is written to the user's working directory.
+\item[\texttt{projection}:] string, see~\ref{app:proj}.
 \item[\texttt{setpal}:] string, giving either a \textsf{gnuplot}
   \texttt{set palette} command or a predefined palette option, of
   which there are currently three: \texttt{blues}, \texttt{oranges}
@@ -891,6 +892,7 @@ section~\ref{sec:opts} above).
 
 \clearpage
 \myappendix{Projections}
+\label{app:proj}
 
 \textsf{Geoplot} assumes (mostly, but see below) that incoming map
 coordinates are given as degrees of latitude (Y) and longtitude
@@ -915,7 +917,7 @@ acceptable and it has the advantage of simplicity. All we do is take
 the height of the plot as specified by the user (or a default of 600
 pixels) and figure out what the width should be to make a degree of
 longitude the same size as a degree of latitude at the mid-point
-latitude. However, we offer four options, as follows:
+latitude. However, we offer four alternatives, as follows:
 \begin{center}
   \begin{tabular}{cll}
     EPSG id & description & option string \\[4pt]
@@ -978,12 +980,13 @@ bundle options
 options.projection = "EPSG4326"
 \end{code}
 
-There are many websites presenting information on coordinate systems
-and map projections. Two of the most useful ones, in our experience,
-are:
+For anyone wishing to follow up on this sort of thing, there are many
+websites presenting information on coordinate systems and
+projections. Two of the most useful ones, in our experience, are:
 
-For reference material: \url{https://spatialreference.org/} \\
-For explanation: \url{https://source.opennews.org/articles/choosing-right-map-projection/}
+Reference materials: \url{https://spatialreference.org/}
+
+Explanation: \url{https://source.opennews.org/articles/choosing-right-map-projection/}
 
 \end{document}
 
