@@ -668,8 +668,11 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 
 	if (win->role == TEXTBOOK_DATA) {
 	    /* data files */
-	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"",
-		       fname, descrip, data) == 3) {
+	    int nf;
+
+	    nf = sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"",
+			fname, descrip, data);
+	    if (nf == 3) {
 		err = validate_desc_strings(fname, descrip, data);
 		if (!err) {
 		    datacols = 3;
@@ -679,8 +682,7 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 				       1, descrip,
 				       2, data, -1);
 		}
-	    } else if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\"",
-			      fname, descrip) == 2) {
+	    } else if (nf == 2) {
 		err = validate_desc_strings(fname, descrip, NULL);
 		if (!err) {
 		    gtk_list_store_append(store, &iter);
@@ -3043,6 +3045,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
     case TEXTBOOK_DATA:
 	titles = data_titles;
 	cols = 3;
+	full_width = 600;
 	break;
     case NATIVE_DB:
 	titles = db_titles;
