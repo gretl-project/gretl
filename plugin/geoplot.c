@@ -160,17 +160,23 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 
 #define d2r (M_PI / 180.0)
 #define Radius 1000.0
+#define s45 sin(45.0 * d2r)
+#define s52 sin(52.0 * d2r)
+#define c45 cos(45.0 * d2r)
+#define c52 cos(52.0 * d2r)
+#define lm100 (-100.0 * d2r)
+#define l10 (10.0 * d2r)
 
 static const double sphivec[] = {
-    sin(45.0 * d2r), sin(52.0 * d2r)
+    s45, s52
 };
 
 static const double cphivec[] = {
-    cos(45.0 * d2r), cos(52.0 * d2r)
+    c45, c52
 };
 
 static const double lam0[] = {
-    -100.0 * d2r, 10.0 * d2r
+    lm100, l10
 };
 
 /* EPSG:2163, U.S. National Atlas Equal Area,
