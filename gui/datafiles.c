@@ -648,6 +648,7 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     char line[MAXLEN];
     char *index;
     FILE *fp;
+    int datacols = 2;
     int err = 0;
 
     index = full_path(collection->path, collection->descfile);
@@ -666,8 +667,20 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 	if (*line == '#') continue;
 
 	if (win->role == TEXTBOOK_DATA) {
-	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\"",
-		       fname, descrip) == 2) {
+	    /* data files */
+	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"",
+		       fname, descrip, data) == 3) {
+		err = validate_desc_strings(fname, descrip, data);
+		if (!err) {
+		    datacols = 3;
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter,
+				       0, strip_extension(fname),
+				       1, descrip,
+				       2, data, -1);
+		}
+	    } else if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\"",
+			      fname, descrip) == 2) {
 		err = validate_desc_strings(fname, descrip, NULL);
 		if (!err) {
 		    gtk_list_store_append(store, &iter);
@@ -693,6 +706,16 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     }
 
     fclose(fp);
+
+    if (!err && win->role == TEXTBOOK_DATA && datacols == 2) {
+	/* dataset windows can have either 2 or 3 columns */
+	GtkTreeViewColumn *col;
+
+	col = gtk_tree_view_get_column(GTK_TREE_VIEW(win->listbox), 2);
+	if (col != NULL) {
+	    gtk_tree_view_column_set_visible(col, FALSE);
+	}
+    }
 
     if (!err) {
 	/* select the first row */
@@ -2913,7 +2936,8 @@ static GtkWidget *files_vbox (windata_t *vwin)
 {
     const char *data_titles[] = {
 	N_("File"),
-	N_("Summary")
+	N_("Summary"),
+	N_("Type")
     };
     const char *remote_data_titles[] = {
 	N_("File"),
@@ -3009,13 +3033,17 @@ static GtkWidget *files_vbox (windata_t *vwin)
     };
     const char **titles = data_titles;
     GType *types = types_2;
-    int full_width = 500, file_height = 260;
+    int full_width = 580, file_height = 300;
     int hidden_cols = 0;
     int use_tree = 0;
     GtkWidget *vbox;
     int cols = 2;
 
     switch (vwin->role) {
+    case TEXTBOOK_DATA:
+	titles = data_titles;
+	cols = 3;
+	break;
     case NATIVE_DB:
 	titles = db_titles;
 	cols = 3;
@@ -3024,23 +3052,19 @@ static GtkWidget *files_vbox (windata_t *vwin)
     case REMOTE_DB:
 	titles = remote_db_titles;
 	cols = 3;
-	full_width = 580;
 	use_tree = 1;
 	break;
     case DBNOMICS_TOP:
 	titles = dbnomics_top_titles;
 	full_width = 650;
-	file_height = 300;
 	break;
     case DBNOMICS_DB:
 	titles = dbnomics_db_titles;
 	full_width = 650;
-	file_height = 300;
 	break;
     case DBNOMICS_SERIES:
 	titles = dbnomics_series_titles;
 	full_width = 600;
-	file_height = 300;
 	break;
     case REMOTE_DATA_PKGS:
 	titles = remote_data_titles;
@@ -3051,7 +3075,6 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = ps_titles;
 	cols = 3;
 	full_width = 560;
-	file_height = 300;
 	break;
     case FUNC_FILES:
 	titles = func_titles;
