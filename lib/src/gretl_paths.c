@@ -82,7 +82,8 @@ struct INTERNAL_PATHS {
 
 static struct INTERNAL_PATHS paths;
 
-static gchar *gretl_script_dir;
+/* recorder for directories from which scripts were loaded */
+static GList *script_dirs;
 
 static int force_en_cmdref;
 static int force_en_fnref;
@@ -1661,6 +1662,27 @@ int get_package_data_path (const char *fname, char *fullname)
     return err;
 }
 
+#define SCRIPT_DIRS_DEBUG 0
+
+#if SCRIPT_DIRS_DEBUG
+
+static void print_script_dirs (void)
+{
+    GList *L = g_list_first(script_dirs);
+
+    if (L != NULL) {
+	int i = 0;
+
+	while (L != NULL) {
+	    fprintf(stderr, "script_dir %d: '%s'\n", ++i, (char *) L->data);
+	    L = L->next;
+	}
+	fputc('\n', stderr);
+    }
+}
+
+#endif
+
 /**
  * gretl_addpath:
  * @fname: on input, the initially given file name; on output
@@ -1684,6 +1706,7 @@ char *gretl_addpath (char *fname, int script)
 {
     char orig[MAXLEN];
     char *test;
+    int found = 0;
     int err;
 
 #if SEARCH_DEBUG
@@ -1708,24 +1731,36 @@ char *gretl_addpath (char *fname, int script)
     /* try workdir first */
     gretl_build_path(fname, paths.workdir, orig, NULL);
     err = gretl_test_fopen(fname, "r");
-
     if (!err) {
+	/* got it */
 	return fname;
-    } else {
-	const char *gpath = gretl_script_dir;
-	char trydir[MAXLEN];
+    }
 
-	strcpy(fname, orig);
+    if (script_dirs != NULL) {
+	GList *dirs = g_list_last(script_dirs);
+	int flags = script ? 0 : ADD_GDT;
+	const char *gpath;
 
-	if (gpath != NULL && *gpath != '\0') {
-	    /* try looking where the last-opened script was found */
-	    int flags = script ? 0 : ADD_GDT;
-
+#if SCRIPT_DIRS_DEBUG
+	print_script_dirs();
+#endif
+	while (dirs != NULL && !found) {
+	    strcpy(fname, orig);
+	    gpath = dirs->data;
 	    test = search_dir(fname, gpath, flags);
 	    if (test != NULL) {
-		return fname;
+		found = 1;
 	    }
+	    dirs = dirs->prev;
 	}
+	if (found) {
+	    return fname;
+	}
+    }
+
+    if (!found) {
+	char trydir[MAXLEN];
+	const char *gpath;
 
 	strcpy(fname, orig);
 
@@ -1999,8 +2034,8 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 
     if (test != NULL && (opt & OPT_S)) {
 	/* If @test is non-NULL that means we actually found
-	   the file somewhere, so if it's a script we'll set
-	   @gretl_script_dir based on the filename.
+	   the file somewhere, so if it's a script we'll
+	   record the directory in which it was found.
 	*/
 	gretl_set_script_dir(fullname);
     }
@@ -2543,10 +2578,36 @@ const char *gretl_mpiexec (void)
     return paths.mpiexec;
 }
 
+static gint pathcomp (gconstpointer a,
+		      gconstpointer b)
+{
+    return strcmp((const char *) a, (const char *) b);
+}
+
 void gretl_set_script_dir (const char *s)
 {
-    g_free(gretl_script_dir);
-    gretl_script_dir = g_path_get_dirname(s);
+    gchar *add = g_path_get_dirname(s);
+    GList *L = g_list_find_custom(script_dirs, add, pathcomp);
+
+    if (L != NULL) {
+	/* this directory is already in the list */
+	if (L->next != NULL) {
+	    /* delete intervening record */
+	    g_free(L->next->data);
+	    script_dirs = g_list_delete_link(script_dirs, L->next);
+	}
+	g_free(add);
+    } else {
+	script_dirs = g_list_append(script_dirs, add);
+    }
+}
+
+void gretl_script_dirs_cleanup (void)
+{
+    if (script_dirs != NULL) {
+	g_list_free_full(script_dirs, g_free);
+	script_dirs = NULL;
+    }
 }
 
 const char *gretl_png_font (void)

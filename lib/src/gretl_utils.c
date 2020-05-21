@@ -2507,6 +2507,7 @@ void libgretl_cleanup (void)
     gretl_R_cleanup();
 #endif
 
+    gretl_script_dirs_cleanup();
     gretl_xml_cleanup();
 }
 

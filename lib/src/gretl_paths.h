@@ -215,6 +215,8 @@ const char *gretl_function_package_path (void);
 
 void gretl_set_script_dir (const char *s);
 
+void gretl_script_dirs_cleanup (void);
+
 char *gretl_prepend_homedir (const char *fname, int *err);
 
 void set_gretl_png_font (const char *s);
