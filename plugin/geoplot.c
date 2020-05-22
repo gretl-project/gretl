@@ -1351,6 +1351,46 @@ int map_get_data (const char *fname, DATASET *dset,
     return err;
 }
 
+/* turn a numeric property into a column vector */
+
+static gretl_matrix *payload_from_prop (gretl_bundle *b,
+					const char *key,
+					int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_array *f;
+    int i;
+
+    f = gretl_bundle_get_array(b, "features", err);
+    if (f != NULL) {
+	if (gretl_array_get_type(f) != GRETL_TYPE_BUNDLES) {
+	    *err = E_TYPES;
+	}
+    }
+
+    if (!*err) {
+	gretl_bundle *fi = gretl_array_get_data(f, 0);
+	int n = gretl_array_get_length(f);
+	gretl_bundle *prop;
+
+	ret = gretl_matrix_alloc(n, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+	for (i=0; i<n && !*err; i++) {
+	    fi = gretl_array_get_data(f, i);
+	    prop = gretl_bundle_get_bundle(fi, "properties", err);
+	    ret->val[i] = gretl_bundle_get_scalar(prop, key, err);
+	}
+	if (*err && ret != NULL) {
+	    gretl_matrix_free(ret);
+	    ret = NULL;
+	}
+    }
+
+    return ret;
+}
+
 static void set_projection (const char *s)
 {
     if (!strcmp(s, "Mercator") || !strcmp(s, "mercator") ||
@@ -1418,6 +1458,7 @@ int geoplot (const char *mapfile,
     const char *sval;
     int plotfile_is_image = 0;
     int non_standard = 0;
+    int free_payload = 0;
     int show = 1;
     int err = 0;
 
@@ -1433,6 +1474,14 @@ int geoplot (const char *mapfile,
 		    plotfile_is_image = 1;
 		    show = 0;
 		}
+	    }
+	}
+	if (!err && map != NULL && payload == NULL &&
+	    gretl_bundle_has_key(opts, "payload")) {
+	    sval = gretl_bundle_get_string(opts, "payload", &err);
+	    if (sval != NULL) {
+		payload = payload_from_prop(map, sval, &err);
+		free_payload = 1;
 	    }
 	}
 	if (err) {
@@ -1492,6 +1541,9 @@ int geoplot (const char *mapfile,
 
     g_free(plotfile);
     g_free(datfile);
+    if (free_payload) {
+	gretl_matrix_free(payload);
+    }
 
     return err;
 }

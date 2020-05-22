@@ -857,7 +857,7 @@ int *gretl_bundle_get_list (gretl_bundle *bundle,
  * gretl_bundle_get_scalar:
  * @bundle: bundle to access.
  * @key: name of key to access.
- * @err: location to receive error code.
+ * @err: location to receive error code, or NULL.
  *
  * Returns: the scalar value associated with @key in the
  * specified @bundle, if any; otherwise #NADBL.
@@ -873,11 +873,13 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
     int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL &&
-	type != GRETL_TYPE_DOUBLE &&
-	type != GRETL_TYPE_INT &&
-	type != GRETL_TYPE_UNSIGNED &&
-	type != GRETL_TYPE_MATRIX) {
+
+    if (ptr == NULL) {
+	myerr = E_DATA;
+    } else if (type != GRETL_TYPE_DOUBLE &&
+	       type != GRETL_TYPE_INT &&
+	       type != GRETL_TYPE_UNSIGNED &&
+	       type != GRETL_TYPE_MATRIX) {
 	myerr = E_TYPES;
     }
 
