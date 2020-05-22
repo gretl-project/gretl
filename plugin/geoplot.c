@@ -167,17 +167,9 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 #define lm100 (-100.0 * d2r)
 #define l10 (10.0 * d2r)
 
-static const double sphivec[] = {
-    s45, s52
-};
-
-static const double cphivec[] = {
-    c45, c52
-};
-
-static const double lam0[] = {
-    lm100, l10
-};
+static double sphivec[2];
+static double cphivec[2];
+static double lam0[2];
 
 /* EPSG:2163, U.S. National Atlas Equal Area,
    and EPSG:3035, Single CRS for all Europe
@@ -185,6 +177,7 @@ static const double lam0[] = {
 
 static void lambert_azimuthal (double *px, double *py)
 {
+    static int filled;
     double lat = *py, lon = *px;
     double phi = lat * d2r;
     double sphi = sin(phi);
@@ -193,8 +186,14 @@ static void lambert_azimuthal (double *px, double *py)
     double ldiff, cldiff;
     double sphi0, cphi0;
     double k;
-
     int i = proj == EPSG3035 ? 1 : 0;
+
+    if (!filled) {
+	sphivec[0] = s45; sphivec[1] = s52;
+	cphivec[0] = c45; cphivec[1] = c52;
+	lam0[0] = lm100; lam0[1] = l10;
+	filled = 1;
+    }
 
     sphi0 = sphivec[i];
     cphi0 = cphivec[i];
