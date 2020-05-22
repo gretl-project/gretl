@@ -52,19 +52,6 @@ static char *get_full_read_path (char *fname)
     return fname;
 }
 
-static char *get_full_write_path (char *fname)
-{
-    if (!g_path_is_absolute(fname)) {
-	gchar *tmp = g_strdup(fname);
-
-	*fname = '\0';
-	gretl_build_path(fname, (char *) gretl_workdir(), tmp, NULL);
-	g_free(tmp);
-    }
-
-    return fname;
-}
-
 static char *put_ext (char *fname, const char *ext)
 {
     char *p = strrchr(fname, '.');
@@ -1292,22 +1279,6 @@ static int real_map_to_csv (const char *fname,
     } else {
 	return shapefile_to_csv(fname, csvname, ftype, mapname);
     }
-}
-
-/* supports the libgretl "hidden function" _map2csv() */
-
-int map_to_csv (const char *fname, const char *csvname)
-{
-    char infile[MAXLEN];
-    char outfile[MAXLEN];
-
-    strcpy(infile, fname);
-    get_full_read_path(infile);
-
-    strcpy(outfile, csvname);
-    get_full_write_path(outfile);
-
-    return real_map_to_csv(infile, outfile, NULL);
 }
 
 /* Get metadata from map file for importation to

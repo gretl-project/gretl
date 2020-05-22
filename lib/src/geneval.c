@@ -11843,25 +11843,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 					  p->dset);
 	}
 	free(list);
-    } else if (f == HF_MAP2CSV) {
-	int (*mapfunc) (const char *, const char *, int);
-	int header = 0;
-
-	post_process = 0;
-	if (l->t != STR || m->t != STR) {
-	    p->err = E_TYPES;
-	} else {
-	    header = node_get_bool(r, p, 0);
-	}
-	if (!p->err) {
-	    mapfunc = get_plugin_function("map_to_csv");
-	    if (mapfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
-		ret = aux_scalar_node(p);
-		ret->v.xval = p->err = mapfunc(l->v.str, m->v.str, header);
-	    }
-	}
     } else if (f == F_GEOPLOT) {
 	gretl_matrix *plm = NULL;
 	double *plx = NULL;
@@ -16597,7 +16578,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISOWEEK:
     case F_STACK:
     case HF_REGLS:
-    case HF_MAP2CSV:
     case F_GEOPLOT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {

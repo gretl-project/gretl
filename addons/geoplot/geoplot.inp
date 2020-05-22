@@ -230,11 +230,6 @@ function bundle geoplot_describe_json (const bundle jb, int verbose[1])
 end function
 
 # public
-function scalar map_to_csv (const string mapname, const string csvname)
-    return _map2csv(mapname, csvname)
-end function
-
-# public
 function void geoplot_translate_feature(bundle *b, int f,
                                         matrix shift,
                                         matrix center[null],
@@ -268,55 +263,14 @@ function void geoplot_translate_feature(bundle *b, int f,
     b.features[f].geometry.coordinates = mod
 end function
 
-function void lambert (matrix *xy, scalar *sphi0,
-                       scalar *cphi0, scalar *lam0)
-    # See "Map Projections -- A Working Manual"
-    # U.S. Geological Survey Professional Paper 1395
-    # John P. Snyder, 1987
-    scalar phi = xy[2]
-    scalar lam = xy[1]
-    sphi = sin(phi)
-    cphi = cos(phi)
-    cldiff = cos(lam - lam0)
-    fac = sqrt(2 / (1 + sphi0*sphi + cphi0*cphi*cldiff))
-    xy[1] = fac * cphi * sin(lam - lam0)
-    xy[2] = fac * (cphi0*sphi - sphi0*cphi*cldiff)
-end function
-
 # public
-function void latlong_to_EPSG2163 (bundle *b)
-    # Project from latitude, longitude to
-    # EPSG:2163 US National Atlas Equal Area,
-    # false center at 45 N, 100 W.
-    # See https://spatialreference.org/ref/epsg/2163/html/
-    # Note: specially tuned for the continental USA
-
-    scalar d2r = $pi / 180
-    scalar phi0 = 45 * d2r
-    scalar lam0 = -100 * d2r
-    scalar R = 1000 # radius
-    scalar sphi0 = sin(phi0)
-    scalar cphi0 = cos(phi0)
-    matrix xy = {}
-
-    loop f=1..nelem(b.features)
-        scalar single = b.features[f].geometry.type == "Polygon"
-        arrays mod = b.features[f].geometry.coordinates
-        loop i=1..nelem(mod)
-            loop j=1..nelem(mod[i])
-                if single
-                    xy = d2r * mod[i][j]
-                    lambert(&xy, &sphi0, &cphi0, &lam0)
-                    mod[i][j] = R * xy
-                else
-                    loop k=1..nelem(mod[i][j])
-                        xy = d2r * mod[i][j][k]
-                        lambert(&xy, &sphi0, &cphi0, &lam0)
-                        mod[i][j][k] = R * xy
-                    endloop
-                endif
-            endloop
+function void geoplot_set_properties (bundle *b, list L)
+    strings keys = varnames(L)
+    loop i=1..nelem(b.features)
+        bundle bpi = null
+        loop foreach j L
+            bpi[keys[j]] = L.$j[i]
         endloop
-        b.features[f].geometry.coordinates = mod
+        b.features[i].properties = bpi
     endloop
 end function

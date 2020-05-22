@@ -21,6 +21,10 @@
 \addtocounter{appcount}{1}
 \section{#1}}
 
+\newenvironment{funcdoc}
+{\noindent\hrulefill\\[-10pt]}
+{\medskip}
+
 \title{geoplot: cartography in gretl}
 \author{Allin Cottrell and Jack Lucchetti}
 
@@ -985,7 +989,65 @@ projections. Two of the most useful ones, in our experience, are:
 
 Reference materials: \url{https://spatialreference.org/}
 
-Explanation: \url{https://source.opennews.org/articles/choosing-right-map-projection/}
+Explanation:
+\url{https://source.opennews.org/articles/choosing-right-map-projection/}
+
+\clearpage
+\myappendix{Specialized functions}
+\label{app:special}
+
+The functions shown below are implemented in hansl and included in the
+\textsf{geoplot} addon; to use them you must first do
+\begin{verbatim}
+include geoplot.gfn
+\end{verbatim}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundle geoplot_describe_json (const bundle jb, int verbose[1])
+\end{verbatim}
+  Provides a systematic description of the GeoJSON bundle \texttt{jb},
+  the amount of detail depending on the \texttt{verbose} setting,
+  which has a maximum of 3. By assigning the return value one can
+  obtain a bundle containing the information but for some purposes the
+  printed output may suffice. See section~\ref{sec:rearrange}.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+void geoplot_set_properties (bundle *b, list L)
+\end{verbatim}
+  Rewrites the \texttt{properties} within the bundle representation of
+  a map, \texttt{b}, to include all and only the series referenced in
+  the list \texttt{L}. Provides a means of adding ``payload'' data
+  (see section~\ref{sec:payload}) and also pruning unwanted metadata.
+  In the example below, \texttt{us-states.geojson} originally contains
+  40 items of metadata per state, most of them unlikely to be of
+  interest.
+\begin{code}
+# example
+open us-states.geojson --quiet --frompkg=geoplot
+join statepop.gdt population --ikey=postal --okey=Code
+
+# select only the properties we actually want
+list L = name postal population
+bundle b = bread($mapfile)
+geoplot_set_properties(&b, L)
+bwrite(b, "us_pruned.json")
+\end{code}
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+function void geoplot_translate_feature (bundle *b, int f,
+                                         matrix shift,
+                                         matrix center[null],
+                                         matrix scale[null])
+\end{verbatim}
+  Shifts the feature with sequential index \texttt{f}, optionally
+  rescaling it. See~\ref{sec:rearrange} for an example and
+  explanation.
+\end{funcdoc}
 
 \end{document}
 
