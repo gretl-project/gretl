@@ -709,9 +709,9 @@ You pass in a map bundle obtained via \texttt{bread} (in pointer
 form), the sequential index of the feature to translate, and a
 2-vector \texttt{shift} giving displacement in the X and Y
 directions. If in addition you want to rescale the feature you pass
-two more 2-vectors: \texttt{center} holds the coordinates of its
-centroid and \texttt{scale} the scale factors to apply in the two
-directions.
+two more 2-vectors: \texttt{center} holds the coordinates of the
+feature's centroid and \texttt{scale} the scale factors to apply in
+the two directions.
 
 An example script is shown in Listing~\ref{tab:translate} and the
 result of plotting the modifed GeoJSON file in
@@ -725,9 +725,8 @@ effect one wants is likely to take some trial and error, but two
 \begin{script}[p]
 \begin{scode}
 include geoplot.gfn
-open us-states.geojson --quiet
-join statepop.gdt population --ikey=postal --okey=Code
 
+open us-states.geojson --quiet --frompkg=geoplot
 bundle b = bread($mapfile)
 
 # Shrink Alaska and place underneath the "lower 48"

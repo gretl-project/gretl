@@ -1,0 +1,17 @@
+include geoplot.gfn
+
+open us-states.geojson --quiet --frompkg=geoplot
+bundle b = bread($mapfile)
+
+# Shrink Alaska and place underneath the "lower 48"
+matrix shift = {34, -35}
+matrix center = {-150.885, 62.5503}
+matrix scale = {0.3, 0.35}
+geoplot_translate_feature(&b, 48, shift, center, scale)
+
+# Shift Hawaii alongside Alaska
+shift = {51, 5}
+geoplot_translate_feature(&b, 5, shift)
+
+# save modified geojson file
+bwrite(b, "us_modified.json")
