@@ -2,6 +2,21 @@ version 2020c, in progress
 - Improve error message in case of invalid gnuplot path
 - loop: make "quiet" operation the default
 - Add sgn() function
+- bwrite() and bwrite() functions: support JSON as well as
+  XML for representing bundles
+- Path-searching for inputs: improve the mechanism for
+  storing likely locations based on the opening of scripts
+- Packaged datasets: show type and size in the GUI, as well
+  as a brief description
+- GUI data access: add convenience menu items for accessing
+  files supplied by "addons" such as SVAR
+- Add new "geoplot" addon (produce thematic maps)
+- atof() function: allow giving a string-valued series as
+  argument
+- Fix bug: failure of negative matrix index (exclusion)
+  when a value of -999 was given
+- Enhancement of included grunfeld dataset
+- Provide a choice of plotting styles or themes
 
 2020-04-11 version 2020b
 - Update gretl copyright notice
