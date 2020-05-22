@@ -167,16 +167,15 @@ static gretl_matrix *ring2matrix (gretl_array *ring)
 #define lm100 (-100.0 * d2r)
 #define l10 (10.0 * d2r)
 
-static double sphivec[2];
-static double cphivec[2];
-static double lam0[2];
-
 /* EPSG:2163, U.S. National Atlas Equal Area,
    and EPSG:3035, Single CRS for all Europe
 */
 
 static void lambert_azimuthal (double *px, double *py)
 {
+    static double sphivec[2];
+    static double cphivec[2];
+    static double lam0[2];
     static int filled;
     double lat = *py, lon = *px;
     double phi = lat * d2r;
