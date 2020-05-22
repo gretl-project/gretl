@@ -254,9 +254,10 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 int fill_permutation_vector (gretl_vector *v, int n);
 
 int geoplot_driver (const char *fname,
+		    void *mapptr,
 		    const gretl_matrix *m,
 		    const double *x,
 		    const DATASET *dset,
-		    void *ptr);
+		    void *optptr);
 
 #endif /* GENFUNCS_H */

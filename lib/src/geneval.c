@@ -11844,17 +11844,26 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
 	free(list);
     } else if (f == F_GEOPLOT) {
+	const char *mapfile = NULL;
+	gretl_bundle *mapbun = NULL;
 	gretl_matrix *plm = NULL;
 	double *plx = NULL;
 	gretl_bundle *opts = NULL;
 
 	post_process = 0;
-	if (l->t != STR) {
+	if (l->t == STR) {
+	    mapfile = l->v.str;
+	}else if (l->t == BUNDLE) {
+	    mapbun = l->v.b;
+	} else {
 	    p->err = E_TYPES;
-	} else if (r->t == BUNDLE) {
-	    opts = r->v.b;
-	} else if (r->t != EMPTY) {
-	    p->err = E_TYPES;
+	}
+	if (!p->err) {
+	    if (r->t == BUNDLE) {
+		opts = r->v.b;
+	    } else if (r->t != EMPTY) {
+		p->err = E_TYPES;
+	    }
 	}
 	if (!p->err && m->t != EMPTY) {
 	    if (m->t == MAT) {
@@ -11867,7 +11876,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
 	if (!p->err) {
 	    ret = aux_scalar_node(p);
-	    p->err = ret->v.xval = geoplot_driver(l->v.str, plm, plx,
+	    p->err = ret->v.xval = geoplot_driver(mapfile, mapbun, plm, plx,
 						  p->dset, opts);
 	}
     }

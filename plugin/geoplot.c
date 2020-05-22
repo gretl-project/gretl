@@ -273,6 +273,27 @@ static gretl_array *geojson_get_features (const char *fname,
     return a;
 }
 
+static gretl_array *features_from_bundle (gretl_bundle *b,
+					  int *non_standard,
+					  int *err)
+{
+    gretl_array *a = NULL;
+
+    a = gretl_bundle_get_array(b, "features", err);
+
+    if (!*err && gretl_bundle_has_key(b, "crs")) {
+	gretl_bundle *c = NULL;
+	GretlType type = 0;
+
+	c = gretl_bundle_get_data(b, "crs", &type, NULL, err);
+	if (!*err && type == GRETL_TYPE_BUNDLE) {
+	    *non_standard = crs_is_nonstandard(c);
+	}
+    }
+
+    return a;
+}
+
 static gretl_matrix *make_bbox (double *gmin, double *gmax)
 {
     gretl_matrix *bbox = gretl_matrix_alloc(2, 2);
@@ -293,14 +314,13 @@ static gretl_matrix *make_bbox (double *gmin, double *gmax)
    box for the set of coordinates.
 */
 
-static gretl_matrix *geo2dat (const char *geoname,
+static gretl_matrix *geo2dat (gretl_array *features,
 			      const char *datname,
 			      const gretl_matrix *zvec,
 			      const gretl_matrix *mask,
 			      int *non_standard)
 {
-    gretl_array *features, *AC;
-    gretl_array *ACj, *ACjk;
+    gretl_array *AC, *ACj, *ACjk;
     gretl_matrix *X, *bbox = NULL;
     gretl_bundle *fi, *geom;
     double gmin[2] = {GEOHUGE, GEOHUGE};
@@ -310,11 +330,6 @@ static gretl_matrix *geo2dat (const char *geoname,
     int nf, mp, nac, ncj;
     int i, j, k, p;
     int err = 0;
-
-    features = geojson_get_features(geoname, non_standard, &err);
-    if (features == NULL) {
-	return NULL;
-    }
 
     nf = gretl_array_get_length(features);
     if (zvec != NULL && zvec->rows != nf) {
@@ -331,7 +346,6 @@ static gretl_matrix *geo2dat (const char *geoname,
     }
 
     if (err) {
-	gretl_array_destroy(features);
 	return NULL;
     }
 
@@ -421,7 +435,6 @@ static gretl_matrix *geo2dat (const char *geoname,
 
     fputc('\n', fp);
     fclose(fp);
-    gretl_array_destroy(features);
 
     if (!err) {
 	bbox = make_bbox(gmin, gmax);
@@ -1230,15 +1243,21 @@ static int shapefile_to_csv (const char *fname,
 */
 
 static gretl_matrix *map2dat (const char *mapname,
+			      gretl_bundle *map,
 			      const char *datname,
 			      const gretl_matrix *zvec,
 			      const gretl_matrix *mask,
 			      int *non_standard)
 {
+    gretl_matrix *ret = NULL;
     char infile[MAXLEN];
 
-    strcpy(infile, mapname);
-    get_full_read_path(infile);
+    if (mapname != NULL) {
+	strcpy(infile, mapname);
+	get_full_read_path(infile);
+    } else {
+	infile[0] = '\0';
+    }
 
     if (zvec != NULL && zvec->cols > 1) {
 	gretl_errmsg_set("Invalid payload");
@@ -1249,15 +1268,33 @@ static gretl_matrix *map2dat (const char *mapname,
 	return NULL;
     }
 
-    if (has_suffix(mapname, ".shp")) {
-	return shp2dat(infile, datname, zvec, mask);
-    } else if (0 /* libset_get_bool(GEOJSON_FAST) */) {
+    if (has_suffix(infile, ".shp")) {
+	ret = shp2dat(infile, datname, zvec, mask);
+    } else if (*infile && libset_get_bool(GEOJSON_FAST)) {
 	/* FIXME revisit this */
-	return fast_geo2dat(infile, datname, zvec, mask);
+	ret = fast_geo2dat(infile, datname, zvec, mask);
     } else {
-	return geo2dat(infile, datname, zvec, mask,
-		       non_standard);
+	/* Regular GeoJSON procedure, either reading from
+	   @infile or working from pre-loaded @map bundle.
+	*/
+	gretl_array *features;
+	int err = 0;
+
+	if (map != NULL) {
+	    features = features_from_bundle(map, non_standard, &err);
+	} else {
+	    features = geojson_get_features(infile, non_standard, &err);
+	}
+	if (features != NULL) {
+	    ret = geo2dat(features, datname, zvec, mask,
+			  non_standard);
+	    if (map == NULL) {
+		gretl_array_destroy(features);
+	    }
+	}
     }
+
+    return ret;
 }
 
 static int real_map_to_csv (const char *fname,
@@ -1370,6 +1407,7 @@ static int is_image_filename (const char *s)
 }
 
 int geoplot (const char *mapfile,
+	     gretl_bundle *map,
 	     gretl_matrix *payload,
 	     gretl_bundle *opts)
 {
@@ -1429,7 +1467,7 @@ int geoplot (const char *mapfile,
 	    datfile = gretl_make_dotpath("geoplot_tmp.dat");
 	}
 	/* write out the polygons data for gnuplot */
-	bbox = map2dat(mapfile, datfile, payload, mask, &non_standard);
+	bbox = map2dat(mapfile, map, datfile, payload, mask, &non_standard);
 	if (bbox == NULL) {
 	    err = E_DATA;
 	}

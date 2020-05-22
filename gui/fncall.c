@@ -4518,7 +4518,7 @@ void map_plot_callback (void)
 	} else {
 	    plx = dataset->Z[payload_id];
 	}
-	err = geoplot_driver(mapfile, NULL, plx, dataset, opts);
+	err = geoplot_driver(mapfile, NULL, NULL, plx, dataset, opts);
 	if (err) {
 	    gui_errmsg(err);
 	} else {

@@ -7814,18 +7814,27 @@ static int dset_subsampled (const DATASET *dset)
 #define GEO_DEBUG 0
 
 int geoplot_driver (const char *fname,
+		    void *mapptr,
 		    const gretl_matrix *plm,
 		    const double *plx,
 		    const DATASET *dset,
-		    void *ptr)
+		    void *optptr)
 {
-    gretl_bundle *opts = ptr;
+    gretl_bundle *opts = optptr;
+    gretl_bundle *map = mapptr;
     gretl_matrix *payload = NULL;
     int free_payload = 0;
     int free_opts = 0;
     int delmask = 0;
     int subsampled;
     int err = 0;
+
+    if ((fname != NULL && mapptr != NULL) ||
+	(fname == NULL && mapptr == NULL)) {
+	fprintf(stderr, "geoplot_driver: must have filename or map bundle "
+		"but not both\n");
+	return E_DATA;
+    }
 
     subsampled = dset_subsampled(dset);
 
@@ -7878,13 +7887,14 @@ int geoplot_driver (const char *fname,
 #endif
 
     if (!err) {
-	int (*mapfunc) (const char *, gretl_matrix *, gretl_bundle *);
+	int (*mapfunc) (const char *, gretl_bundle *,
+			gretl_matrix *, gretl_bundle *);
 
 	mapfunc = get_plugin_function("geoplot");
 	if (mapfunc == NULL) {
 	    err = E_FOPEN;
 	} else {
-	    err = mapfunc(fname, payload, opts);
+	    err = mapfunc(fname, map, payload, opts);
 	}
     }
 
