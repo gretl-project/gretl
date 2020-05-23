@@ -40,11 +40,18 @@ extern "C" {
 #undef ONLY64
 #endif
 
+/* AC, 2020-05-23: hush warnings from gcc 10 */
+#define gen_rand_array_inline 0
+
 /*----------------
   STATIC FUNCTIONS
   ----------------*/
 inline static int idxof(int i);
+#if gen_rand_array_inline
 inline static void gen_rand_array(sfmt_t * sfmt, w128_t *array, int size);
+#else
+static void gen_rand_array(sfmt_t * sfmt, w128_t *array, int size);
+#endif
 inline static uint32_t func1(uint32_t x);
 inline static uint32_t func2(uint32_t x);
 static void period_certification(sfmt_t * sfmt);
@@ -90,7 +97,11 @@ inline static int idxof(int i) {
  * @param array an 128-bit array to be filled by pseudorandom numbers.
  * @param size number of 128-bit pseudorandom numbers to be generated.
  */
+#if gen_rand_array_inline
 inline static void gen_rand_array(sfmt_t * sfmt, w128_t *array, int size) {
+#else
+static void gen_rand_array(sfmt_t * sfmt, w128_t *array, int size) {
+#endif
     int i, j;
     w128_t *r1, *r2;
 
