@@ -97,6 +97,7 @@ enum {
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 #define plot_is_hurst(p)        (p->spec->code == PLOT_HURST)
 #define plot_is_roots(p)        (p->spec->code == PLOT_ROOTS)
+#define plot_is_geomap(p)       (p->spec->code == PLOT_GEOMAP)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
 
@@ -738,7 +739,7 @@ void save_graph_to_file (gpointer data, const char *fname)
 
     sprintf(pltname, "%sgptout.tmp", gretl_dotdir());
 
-    if (spec->code == PLOT_GEOMAP) {
+    if (plot_is_geomap(plot)) {
 	set_special_plot_size(plot->pixel_width, plot->pixel_height);
     }
     err = revise_plot_file(spec, pltname, fname, NULL);
@@ -791,7 +792,7 @@ static void graph_display_pdf (png_plot *plot)
     gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     gretl_build_path(pdfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
 
-    if (spec->code == PLOT_GEOMAP) {
+    if (plot_is_geomap(plot)) {
 	gchar *termstr = map_pdf_termstr(plot);
 
 	err = revise_plot_file(spec, plttmp, pdfname, termstr);
@@ -1101,7 +1102,7 @@ static void win32_process_graph (png_plot *plot, int dest)
     gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     gretl_build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
 
-    if (spec->code == PLOT_GEOMAP) {
+    if (plot_is_geomap(plot)) {
 	set_special_plot_size(plot->pixel_width, plot->pixel_height);
     }
 
@@ -4187,11 +4188,6 @@ static void add_to_session_callback (png_plot *plot)
     char fullname[MAXLEN] = {0};
     int err, type;
 
-    if (plot->spec->code == PLOT_GEOMAP) {
-	/* disabled for now */
-	return;
-    }
-
     type = (plot->spec->code == PLOT_BOXPLOTS)? GRETL_OBJ_PLOT :
 	GRETL_OBJ_GRAPH;
 
@@ -4498,7 +4494,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if ((plot_is_saved(plot) || plot->spec->code == PLOT_GEOMAP) &&
+	if ((plot_is_saved(plot) || plot_is_geomap(plot)) &&
 	    !strcmp(plot_items[i], "Save to session as icon")) {
 	    i++;
 	    continue;

@@ -9658,8 +9658,16 @@ int write_map_gp_file (const char *plotfile,
 	if (!err) {
 	    datasrc = g_strdup("$MapData");
 	}
+    } else if (gretl_bundle_get_int(opts, "gui_auto", NULL)) {
+	gchar *tmp = g_strdup_printf("%s.dat", gretl_plotfile());
+
+	gretl_copy_file(datfile, tmp);
+	gretl_remove(datfile);
+	fputs("datafile = sprintf(\"%s.dat\", ARG0)\n", fp);
+	datasrc = g_strdup("datafile");
+	g_free(tmp);
     } else {
-	datasrc = g_strdup_printf("'%s'", datfile);
+	datasrc = g_strdup_printf("\"%s\"", datfile);
     }
 
     if (!err) {

@@ -120,6 +120,7 @@ struct SESSION_GRAPH_ {
     char name[MAXSAVENAME];
     char fname[MAXLEN];
     GretlObjType type;
+    int has_datafile;
 };
 
 struct gui_obj_ {
@@ -447,6 +448,7 @@ static SESSION_GRAPH *session_append_graph (const char *grname,
     }
 
     graph->type = type;
+    graph->has_datafile = 0;
 
     graphs = myrealloc(session.graphs, (ng + 1) * sizeof *graphs);
 
@@ -856,6 +858,26 @@ static void make_graph_name (char *shortname, char *graphname)
     }
 }
 
+static int maybe_move_plot_datafile (const char *orig,
+				     const char *revised,
+				     int *has_datafile)
+{
+    gchar *tmp1 = g_strdup_printf("%s.dat", orig);
+    int err = 0;
+
+    if (gretl_test_fopen(tmp1, "r") == 0) {
+	gchar *tmp2 = g_strdup_printf("%s.dat", revised);
+
+	err = gretl_rename(tmp1, tmp2);
+	g_free(tmp2);
+	*has_datafile = 1;
+    }
+
+    g_free(tmp1);
+
+    return err;
+}
+
 /* Callback for "add to session as icon" on a graph displayed
    as PNG -- see gpt_control.c. Note that there is code in
    gpt_control designed to ensure that this option is not
@@ -867,6 +889,7 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
 {
     char shortname[MAXSAVENAME];
     char graphname[MAXSAVENAME];
+    int has_datafile = 0;
     int err = 0;
 
     if (type != GRETL_OBJ_PLOT && (dataset == NULL || dataset->Z == NULL)) {
@@ -894,20 +917,25 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
 	make_graph_name(shortname, graphname);
 	session_file_make_path(fullname, shortname);
 
-	/* copy temporary plot file to permanent */
+	/* copy temporary plot file to session directory */
 	err = copyfile(fname, fullname);
 	if (!err) {
 	    /* remove the original and transcribe the new
 	       name to @fname */
+	    maybe_move_plot_datafile(fname, fullname, &has_datafile);
 	    gretl_remove(fname);
 	    strcpy(fname, fullname); /* was @shortname */
 	}
     }
 
     if (!err) {
-	err = real_add_graph_to_session(shortname, graphname, type, NULL);
+	SESSION_GRAPH *grf = NULL;
+
+	err = real_add_graph_to_session(shortname, graphname, type, &grf);
 	if (err == ADD_OBJECT_FAIL) {
 	    err = 1;
+	} else if (has_datafile) {
+	    grf->has_datafile = 1;
 	}
     }
 
