@@ -862,7 +862,7 @@ static double generate_scalar_full (const char *s, DATASET *dset,
     parser p;
     double x = NADBL;
 
-    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, NUM);
+    *err = realgen(s, &p, dset, prn, P_PRIV | P_ANON, NUM);
 
     if (!*err) {
 	if (p.ret->t == MAT) {
@@ -894,7 +894,9 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
     return generate_scalar_full(s, dset, NULL, err);
 }
 
-/* retrieve a boolean result directly */
+/* retrieve a boolean result directly: called only from
+   flow_control.c
+*/
 
 double generate_boolean (const char *s, DATASET *dset, PRN *prn, int *err)
 {
