@@ -1386,6 +1386,10 @@ static NODE *powterm (parser *p, NODE *l)
 	    t->R = get_final_string_arg(p, t, sym, 1);
 	}
     } else if (sym == BMEMB) {
+	if (p->data == NULL) {
+	    p->err = E_PARSE;
+	    return NULL;
+	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, BUNDLE);
