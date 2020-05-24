@@ -14917,7 +14917,7 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	const char *str;
+	const char *str = NULL;
 	NODE *l = t->L;
 	NODE *r = t->R;
 
@@ -14931,26 +14931,13 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
 		str = e->v.str;
 	    } else {
 		p->err = E_TYPES;
-		free(ret);
-		return NULL;
 	    }
 	}
-
-	ret->v.xval = gretl_model_get_data_element(pmod, l->v.idnum, str,
-						   p->dset, &p->err);
-
-	if (na(ret->v.xval) && r->t == STR) {
-	    const char *s = get_string_by_name(r->v.str);
-
-	    if (s != NULL) {
-		p->err = 0;
-		ret->v.xval = gretl_model_get_data_element(pmod, l->v.idnum, s,
-							   p->dset, &p->err);
-	    }
+	if (!p->err) {
+	    ret->v.xval = gretl_model_get_data_element(pmod, l->v.idnum, str,
+						       p->dset, &p->err);
 	}
-
-	if (na(ret->v.xval) && r->t == STR) {
-	    p->err = E_INVARG;
+	if (p->err && r->t == STR) {
 	    pprintf(p->prn, _("'%s': invalid argument for %s()\n"),
 		    r->v.str, mvarname(l->v.idnum));
 	}
