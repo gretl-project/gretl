@@ -1,8 +1,7 @@
 include geoplot.gfn
 
-string JSON = "us-states.geojson"
-open "@JSON" --frompkg=geoplot --preserve --quiet
-map = jsongetb(readfile($mapfile))
+open us-states.geojson --frompkg=geoplot --quiet
+map = bread($mapfile)
 
 # no matches
 geoplot_seek_feature(map, "nowhere")
