@@ -76,7 +76,7 @@ static int getoct (char *p, int width)
 {
     int result = 0;
     char c;
-  
+
     while (width--) {
 	c = *p++;
 	if (c == ' ')
@@ -113,7 +113,7 @@ static int makedir (char *path)
 
     while (1) {
 	char hold;
-      
+
 	while (*p && *p != '\\' && *p != '/') {
 	    p++;
 	}
@@ -137,34 +137,31 @@ static int makedir (char *path)
 static int untar (gzFile in)
 {
     union tar_buffer buffer;
-    int len;
-    int err;
     int getheader = 1;
-    int remaining = 0;
+    int len, remaining = 0;
     FILE *outfile = NULL;
     char fname[BLOCKSIZE];
     time_t tartime = (time_t) 0;
-  
-    while (1) {
+    int err = 0;
+
+    while (!err) {
 	len = gzread(in, &buffer, BLOCKSIZE);
 
 	if (len < 0) {
 	    gretl_errmsg_set(gzerror(in, &err));
-	    return 1;
+	    return E_FOPEN;
+	} else if (len != BLOCKSIZE) {
+	    gretl_errmsg_set("gzread: incomplete block read");
+	    return E_DATA;
 	}
 
-	if (len != BLOCKSIZE) {
-	    gretl_errmsg_set("gzread: incomplete block read");
-	    return 1;
-	}
-      
 	if (getheader == 1) {
 	    if (len == 0 || buffer.header.name[0] == '\0') {
 		break;
 	    }
 	    tartime = (time_t) getoct(buffer.header.mtime, 12);
 	    strcpy(fname, buffer.header.name);
-	  
+
 	    switch (buffer.header.typeflag) {
 	    case DIRTYPE:
 		makedir(fname);
@@ -184,9 +181,12 @@ static int untar (gzFile in)
 			    outfile = gretl_fopen(fname, "wb");
 			}
 		    }
-		    fprintf(stderr, "%s %s\n",
-			    (outfile)? "Extracting" : "Couldn't create",
-			    fname);
+		    if (outfile != NULL) {
+			fprintf(stderr, "Extracting %s\n", fname);
+		    } else {
+			fprintf(stderr, "Couldn't create %s\n", fname);
+			err = E_FOPEN;
+		    }
 		} else {
 		    outfile = NULL;
 		}
@@ -199,10 +199,11 @@ static int untar (gzFile in)
 
 	    if (outfile != NULL) {
 		if (fwrite(&buffer, 1, bytes, outfile) != bytes) {
-		    fprintf(stderr, "error writing %s skipping...\n", 
-			    fname);
+		    fprintf(stderr, "error writing to %s\n", fname);
 		    fclose(outfile);
-		    unlink(fname);
+		    gretl_remove(fname);
+		    err = E_DATA;
+		    break;
 		}
 	    }
 	    remaining -= bytes;
@@ -219,8 +220,8 @@ static int untar (gzFile in)
 	    }
 	}
     }
-  
-    return 0;
+
+    return err;
 }
 
 int gretl_untar (const char *fname)
