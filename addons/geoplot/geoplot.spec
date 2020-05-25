@@ -5,7 +5,7 @@ version = 0.1
 date = 2020-05-22
 description = geospatial plotting
 public = geoplot_describe_json geoplot_translate_feature \
- geoplot_set_properties
+ geoplot_set_properties geoplot_seek_feature
 help = geoplot.pdf
 sample-script = geoplot_sample.inp
 min-version = 2020c
