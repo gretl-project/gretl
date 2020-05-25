@@ -2553,7 +2553,7 @@ static int package_check_dependencies (const char *fname,
 #ifdef OS_OSX
 # define DO_BINPKG 1
 #else
-# define DO_BINPKG 1
+# define DO_BINPKG 0
 #endif
 
 #if DO_BINPKG
