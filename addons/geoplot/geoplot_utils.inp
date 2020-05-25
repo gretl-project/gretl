@@ -1,0 +1,243 @@
+function matrix get_bbox(const bundle jb)
+    matrix ret = {}
+    if inbundle(jb, "bbox")
+        if typeof(jb.bbox) == 3
+            # a matrix
+            ret = jb.bbox
+        else
+            n = sscanf(jb.bbox, "%m", ret)
+            ret = mshape(ret, 2, round(n/2))'
+        endif
+    endif
+    return ret
+end function
+
+function matrix ring2matrix(const arrays ring)
+    n = nelem(ring)
+    matrix ret = zeros(2,n)
+    m = {}
+    loop i = 1 .. n
+        ri = ring[i]
+        sscanf(ri[1:2], "%m", m)
+        ret[,i] = m
+    endloop
+    return ret'
+end function
+
+function matrix ring2matrix2(const matrices ring)
+    n = nelem(ring)
+    matrix ret = zeros(2,n)
+    loop i = 1 .. n
+        ri = ring[i]
+        ret[,i] = ri[1:2]
+    endloop
+    return ret'
+end function
+
+function scalar polygon_area(const matrix XY)
+    # taken from https://www.mathopenref.com/coordpolygonarea2.html
+    scalar area = 0  # Accumulates area
+
+    loop i = 2 .. rows(XY)
+        a = XY[i-1,1] * XY[i, 2]
+        b = XY[i,1] * XY[i-1, 2]
+        area += (a-b)
+    endloop
+    return abs(area/2)
+end function
+
+function void polygon_extents(const matrix XY, matrix *minmax)
+    loop i = 1 .. rows(XY)
+        if XY[i,1] < minmax[1,1]
+            minmax[1,1] = XY[i,1]
+        endif
+        if XY[i,1] > minmax[1,2]
+            minmax[1,2] = XY[i,1]
+        endif
+        if XY[i,2] < minmax[2,1]
+            minmax[2,1] = XY[i,2]
+        endif
+        if XY[i,2] > minmax[1,2]
+            minmax[2,2] = XY[2,2]
+        endif
+    endloop
+end function
+
+function string describe_poly_coords(const arrays coar, matrix *extents[null],
+                                     int verbose, int i)
+    ext_ring = coar[1]
+    if i > 0
+        ret = sprintf("Exterior ring[%d]: %5d points ", i, nelem(ext_ring))
+    else
+        ret = sprintf("Exterior ring: %5d points ", nelem(ext_ring))
+    endif
+    if typeof(ext_ring[1]) == 3
+        rm = ring2matrix2(ext_ring)
+    else
+        rm = ring2matrix(ext_ring)
+    endif
+    scalar area = polygon_area(rm)
+    ret = ret ~ sprintf("(area = %12.3f)", area*1000)
+    if verbose > 1
+        if nelem(coar) == 1
+            ret = ret ~ "; no interior rings"
+        else
+            ret = ret ~ sprintf("; %d interior rings", nelem(coar) - 1)
+        endif
+    endif
+    if exists(extents)
+        polygon_extents(rm, &extents)
+    endif
+    return ret
+end function
+
+function bundle create_ids(const bundle f, scalar n)
+    bundle ret = null
+    loop foreach i f
+        key = "$i"
+        t = typeof(f.$i)
+        if t == 1
+            # numeric
+            matrix ret[key] = zeros(n, 1)
+        elif t == 4
+            # string
+            strings ret[key] = array(n)
+        endif
+    endloop
+    return ret
+end function
+
+function void fill_ids(const bundle f, bundle *ids, scalar featnum)
+    loop foreach i ids
+        key = "$i"
+        if inbundle(f, key)
+            ids[key][featnum] = f[key]
+        else
+            t = typeof(ids.$i)
+            if t == 3
+                ids[key][featnum] = NA
+            elif t == 6
+                ids[key][featnum] = ""
+            endif
+        endif
+    endloop
+end function
+
+function matrix describe_feature(const bundle feat, scalar index, scalar verbose)
+    if inbundle(feat, "geometry")
+        ft = feat.geometry.type
+	if index == 0
+            printf "\ngeometry type = %s, ", ft
+	else
+            printf "\n%4d: geometry type = %s, ", index, ft
+	endif
+	
+        if inbundle(feat, "id")
+            if typeof(feat.id) == 1
+                printf "id (numeric) = %g\n", feat.id
+            elif typeof(feat.id) == 4
+                printf "id (string) = %s\n", feat.id
+            else
+                printf "id present, but of unknown type\n"
+            endif
+        else
+            printf "no id\n"
+        endif
+
+        print_properties(feat.properties)
+	
+        matrix extents = {$huge, -$huge; $huge, -$huge}
+
+        if ft == "Point"
+            printf "\t [ "
+            pc = feat.geometry.coordinates
+            loop j = 1 .. nelem(pc)
+                printf "%g", atof(pc[j])
+                if j == nelem(pc)
+                    printf " ]"
+                else
+                    printf ", "
+                endif
+            endloop
+            printf "\n"
+        elif ft == "Polygon"
+            printf "\t%s\n", describe_poly_coords(feat.geometry.coordinates, &extents, verbose, 0)
+            printf "\tExtents: X = {%g,%g}; Y = {%g,%g}\n", extents[1,1], extents[1,2],
+            extents[2,1], extents[2,2]
+        elif ft == "MultiPolygon"
+            mcoords = feat.geometry.coordinates
+            nmulti = nelem(mcoords)
+            printf "\t%d Sub-polygons\n", nmulti
+            if verbose > 1
+                loop j = 1 .. nmulti
+                    printf "\t%s\n", describe_poly_coords(mcoords[j], &extents, verbose-1, j)
+                endloop
+                printf "\tExtents: X = {%g,%g}; Y = {%g,%g}\n", extents[1,1], extents[1,2],
+                extents[2,1], extents[2,2]
+            endif
+        endif
+    else
+        printf "\tNo geometry (???)\n"
+    endif
+
+    return extents
+end function
+
+function void print_properties(const bundle f)
+    skeys = sort(getkeys(f))
+    
+    loop i = 1 .. nelem(skeys)
+        key = skeys[i]
+        t = typeof(f[key])
+        printf "\t%20s: ", key
+        if t == 1
+            printf "%g\n", f[key]
+        elif t == 4
+            printf "%s\n", f[key]
+        else
+            printf "type = %d???\n", t
+        endif
+    endloop
+end function
+
+function void polyplot(const matrices coords, string title, matrix extents)
+    npoly = nelem(coords)
+    
+    ratio = (extents[2,2] - extents[2,1]) / (extents[1,2] - extents[1,1]) 
+    
+    outfile "@dotdir/temp.plt" --write
+    printf "set term wxt persist\n"
+    printf "unset border\n"
+    printf "set grid back\n"
+    printf "set size ratio %g\n", ratio
+
+    printf "set title \"%s\"\n", title
+    printf "unset key\n$coords << EOD\n"
+    loop i = 1 .. npoly
+        printf "%8.3f\n", coords[i]
+    endloop
+    printf "EOD\nplot for [i=0:*] $coords index i lc black with lines\n"
+end outfile
+!gnuplot "@dotdir/temp.plt"
+end function
+
+function void plot_feature(const bundle b, scalar i, string title, matrix extents)
+    bundle geo = b.features[i].geometry
+    string type = geo.type
+    matrices coord = geo.coordinates
+    scalar nc = nelem(coord)
+    # printf "%4d: %s (%d)\n", i, type, nc
+    if type == "Polygon"
+        matrix X = ring2matrix2(coord[1])
+        matrices aX = defarray(X)
+    elif type == "MultiPolygon"
+        nc = nelem(coord)
+        matrices aX = array(nc)
+        loop j = 1 .. nc
+            matrix aX[j] = ring2matrix2(coord[j][1])
+        endloop
+    endif
+
+    polyplot(aX, title, extents)
+end function
+
