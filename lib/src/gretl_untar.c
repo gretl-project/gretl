@@ -147,7 +147,7 @@ static int untar (gzFile in)
     int len, remaining = 0;
     FILE *outfile = NULL;
     char fname[BLOCKSIZE];
-    int tarmode;
+    int tarmode = 0;
     time_t tartime = (time_t) 0;
     int err = 0;
 
