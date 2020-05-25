@@ -2550,6 +2550,50 @@ static int package_check_dependencies (const char *fname,
     return err;
 }
 
+#ifdef OS_OSX /* experimental! */
+
+#include "gretl_untar.h"
+
+static int handle_tgz (const char *pkgname)
+{
+    const char *p = strrchr(pkgname, '/');
+    gchar *fname, *fullname;
+    int err;
+
+    fname = g_strdup(p + 1);
+    fullname = gretl_make_dotpath(fname);
+
+    err = retrieve_public_file(pkgname, fullname);
+
+    if (!err) {
+	gchar *topdir = g_strdup(gretl_bindir());
+	char *s = strstr(topdir, "/bin/");
+
+	if (s == NULL) {
+	    err = E_DATA;
+	} else {
+	    *s = '\0';
+	    fprintf(stderr, "topdir: '%s'\n", topdir);
+	    err = gretl_chdir(topdir);
+	    if (err) {
+		fprintf(stderr, "chdir error\n");
+	    } else {
+		err = gretl_untar(fullname);
+		fprintf(stderr, "untar: err = %d\n", err);
+	    }
+	}
+	g_free(topdir);
+	gretl_remove(fullname);
+    }
+
+    g_free(fullname);
+    g_free(fname);
+
+    return err;
+}
+
+#endif
+
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
 				     ExecState *s,
@@ -2577,6 +2621,12 @@ static int install_function_package (const char *pkgname,
 	!strncmp(pkgname, "https://", 8)) {
 	http = 1;
     }
+
+#ifdef OS_OSX
+    if (http && strstr(pkgname, ".tar.gz")) {
+	return handle_tgz(pkgname);
+    }
+#endif
 
     if (strstr(pkgname, ".gfn")) {
 	filetype = 1;
@@ -2611,7 +2661,6 @@ static int install_function_package (const char *pkgname,
 	    if (p != NULL) {
 		fname = gretl_strdup(p + 1);
 	    }
-
 	}
     }
 
