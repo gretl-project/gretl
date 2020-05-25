@@ -2065,6 +2065,7 @@ void sync_path_from_lib (const char *path_id)
     if (!strcmp(path_id, "tramo")) {
 	strcpy(paths.tramo, gretl_tramo());
 	write_rc(OPT_N);
+	restart_message(mdata->main);
     } else {
 	fprintf(stderr, "sync_path_from_lib: '%s' ??\n", path_id);
     }
