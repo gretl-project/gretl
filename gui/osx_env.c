@@ -68,4 +68,17 @@ void osx_setup_paths (void)
     if (rhome == NULL) {
 	setenv("R_HOME", "/Library/Frameworks/R.framework/Resources", 1);
     }
+
+    /* Add ourselves to PATH? */
+    if (1) {
+	char *path0 = getenv("PATH");
+
+	if (path0 != NULL && *path0 != '\0') {
+	    tmp = g_strdup_printf("%s:%s/bin", path0, respath);
+	} else {
+	    tmp = g_strdup_printf("%s/bin", respath);
+	}
+	setenv("PATH", tmp, 1);
+	g_free(tmp);
+    }
 }
