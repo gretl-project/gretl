@@ -344,7 +344,7 @@ static double gnuplot_version (int *msg_done)
 	    retries = 1;
 	    goto retry;
 	} else if (vnum > 0 && retries == 1) {
-	    set_gretl_gnuplot_path(gnuplot_path);
+	    gretl_set_path_by_name("gnuplot", gnuplot_path);
 	}
 #endif
 
@@ -1907,7 +1907,7 @@ static FILE *gp_set_up_batch (char *fname,
     if (fp == NULL) {
 	*err = E_FOPEN;
     } else {
-	set_gretl_plotfile(fname);
+	gretl_set_path_by_name("plotfile", fname);
 	if (*gnuplot_outname != '\0') {
 	    /* write terminal/style/output lines */
 	    print_term_string(fmt, ptype, flags, fp);
@@ -1956,7 +1956,7 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
     if (fp == NULL) {
 	*err = E_FOPEN;
     } else {
-	set_gretl_plotfile(fname);
+	gretl_set_path_by_name("plotfile", fname);
 	if (gui) {
 	    /* set up for PNG output */
 	    fprintf(fp, "%s\n", gretl_gnuplot_term_line(GP_TERM_PNG, ptype,
@@ -2272,7 +2272,7 @@ static int gnuplot_make_graph (void)
 	} else {
 	    /* remove the temporary input file */
 	    remove(fname);
-	    set_gretl_plotfile(gnuplot_outname);
+	    gretl_set_path_by_name("plotfile", gnuplot_outname);
 	    graph_file_written = 1;
 	}
     }
@@ -4825,7 +4825,7 @@ static FILE *get_3d_input_file (int *err)
     if (fp == NULL) {
 	*err = E_FOPEN;
     } else {
-	set_gretl_plotfile(fname);
+	gretl_set_path_by_name("plotfile", fname);
     }
 
     return fp;

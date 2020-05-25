@@ -134,6 +134,8 @@ int gretl_set_paths (ConfigPaths *paths);
 
 int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
 
+int gretl_set_path_by_name (const char *name, const char *path);
+
 char **get_plausible_search_dirs (SearchType stype, int *n_dirs);
 
 char *gretl_function_package_get_path (const char *name,
@@ -144,8 +146,6 @@ char *gretl_addon_get_path (const char *name);
 int get_package_data_path (const char *fname, char *fullname);
 
 void set_gretl_plugin_path (const char *path);
-
-void set_gretl_gnuplot_path (const char *path);
 
 const char *helpfile_path (int id, int cli, int en);
 
@@ -165,8 +165,6 @@ const char *maybe_get_default_workdir (void);
 
 gchar *gretl_make_dotpath (const char *basename);
 
-int set_gretl_work_dir (const char *path);
-
 const char *gretl_maybe_switch_dir (const char *fname);
 
 char *gretl_maybe_prepend_dir (char *fname);
@@ -174,8 +172,6 @@ char *gretl_maybe_prepend_dir (char *fname);
 const char *gretl_gnuplot_path (void);
 
 const char *gretl_plotfile (void);
-
-char *set_gretl_plotfile (const char *fname);
 
 void report_plot_written (PRN *prn);
 

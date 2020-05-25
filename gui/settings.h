@@ -69,7 +69,9 @@ void set_script_output_policy (int p, windata_t *vwin);
 
 int get_script_output_policy (void);
 
-int write_rc (void);
+int write_rc (gretlopt opt);
+
+void sync_path_from_lib (const char *path_id);
 
 void dump_rc (void);
 

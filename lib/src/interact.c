@@ -2550,23 +2550,30 @@ static int package_check_dependencies (const char *fname,
     return err;
 }
 
-#ifdef OS_OSX /* experimental! */
+#ifdef OS_OSX
+# define DO_BINPKG 1
+#else
+# define DO_BINPKG 1
+#endif
+
+#if DO_BINPKG
 
 #include "gretl_untar.h"
 
-static int handle_tgz (const char *pkgname)
+static int handle_tgz (const char *fname,
+		       ExecState *s,
+		       PRN *prn)
 {
-    const char *p = strrchr(pkgname, '/');
-    gchar *fname, *fullname;
+    const char *path_id = NULL;
+    gchar *uri, *fullname;
     int err;
 
-    fname = g_strdup(p + 1);
     fullname = gretl_make_dotpath(fname);
-
-    err = retrieve_public_file(pkgname, fullname);
+    uri = g_strdup_printf("http://ricardo.ecn.wfu.edu/pub/gretl/%s", fname);
+    err = retrieve_public_file(uri, fullname);
 
     if (!err) {
-	gchar *s, *topdir;
+	gchar *s, *topdir = NULL;
 	int try = 0;
 
     try_again:
@@ -2592,22 +2599,44 @@ static int handle_tgz (const char *pkgname)
 		fprintf(stderr, "untar %d: err = %d\n", try, err);
 	    }
 	}
-	g_free(topdir);
+
 	if (err && try == 0) {
+	    g_free(topdir);
 	    err = 0;
 	    try = 1;
 	    goto try_again;
 	}
+	if (!err) {
+	    if (strstr(fname, "tramo") != NULL) {
+		path_id = "tramo";
+		s = g_strdup_printf("%s/bin/tramo", topdir);
+		gretl_set_path_by_name("tramo", s);
+		g_free(s);
+	    }
+	}
 	gretl_remove(fullname);
+	g_free(topdir);
+    }
+
+    if (!err && gretl_messages_on()) {
+	pprintf(prn, "Installed %s\n", fname);
+    }
+
+    if (!err && s != NULL && path_id != NULL && gui_callback != NULL) {
+	gretl_bundle *b = gretl_bundle_new();
+
+	gretl_bundle_set_string(b, "path_id", path_id);
+	gretl_bundle_set_int(b, "binpkg", 1);
+	gui_callback(s, b, GRETL_OBJ_BUNDLE);
     }
 
     g_free(fullname);
-    g_free(fname);
+    g_free(uri);
 
     return err;
 }
 
-#endif
+#endif /* DO_BINPKG */
 
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
@@ -2621,6 +2650,12 @@ static int install_function_package (const char *pkgname,
     int addon = 0;
     int http = 0;
     int err = 0;
+
+#if DO_BINPKG
+    if (!local && strstr(pkgname, ".tar.gz")) {
+	return handle_tgz(pkgname, s, prn);
+    }
+#endif
 
     if (!local && package_is_addon(pkgname)) {
 	addon = 1;
@@ -2636,12 +2671,6 @@ static int install_function_package (const char *pkgname,
 	!strncmp(pkgname, "https://", 8)) {
 	http = 1;
     }
-
-#ifdef OS_OSX
-    if (http && strstr(pkgname, ".tar.gz")) {
-	return handle_tgz(pkgname);
-    }
-#endif
 
     if (strstr(pkgname, ".gfn")) {
 	filetype = 1;

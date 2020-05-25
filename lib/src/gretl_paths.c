@@ -2410,7 +2410,7 @@ static int validate_writedir (const char *dirname)
     return err;
 }
 
-int set_gretl_work_dir (const char *path)
+static int set_gretl_workdir (const char *path)
 {
     GDir *test;
     int err = 0;
@@ -2440,14 +2440,6 @@ const char *gretl_gnuplot_path (void)
 
 const char *gretl_plotfile (void)
 {
-    return paths.plotfile;
-}
-
-char *set_gretl_plotfile (const char *fname)
-{
-    *paths.plotfile = 0;
-    strncat(paths.plotfile, fname, MAXLEN - 1);
-
     return paths.plotfile;
 }
 
@@ -2910,12 +2902,40 @@ void set_gretl_plugin_path (const char *path)
     }
 }
 
-void set_gretl_gnuplot_path (const char *path)
+int gretl_set_path_by_name (const char *name, const char *path)
 {
-    if (path != NULL) {
-	*paths.gnuplot = '\0';
-	strncat(paths.gnuplot, path, MAXLEN - 2);
+    char *targ = NULL;
+    int builtin = 0;
+
+    if (name == NULL || path == NULL) {
+	return 1;
+    } else if (!strcmp(name, "workdir")) {
+	return set_gretl_workdir(path);
+    } else if (!strcmp(name, "gnuplot")) {
+	targ = paths.gnuplot;
+    } else if (!strcmp(name, "plotfile")) {
+	targ = paths.plotfile;
+    } else if (!strcmp(name, "tramo")) {
+	targ = paths.tramo;
+	builtin = 1;
+    } else if (!strcmp(name, "x12a")) {
+	targ = paths.x12a;
+	builtin = 1;
+    } else {
+	fprintf(stderr, "gretl_set_path_by_name: target '%s' not recognized\n",
+		name);
+	return 1;
     }
+
+    if (targ != NULL) {
+	*targ = '\0';
+	strncat(targ, path, MAXLEN - 2);
+	if (builtin) {
+	    gretl_insert_builtin_string(name, targ);
+	}
+    }
+
+    return 0;
 }
 
 /* Called at start-up only: set the "hidden" working dir,

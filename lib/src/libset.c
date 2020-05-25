@@ -1472,7 +1472,7 @@ static int set_workdir (const char *s)
 	if (!err && workdir_callback != NULL) {
 	    err = (*workdir_callback)(workdir);
 	} else if (!err) {
-	    err = set_gretl_work_dir(workdir);
+	    err = gretl_set_path_by_name("workdir", workdir);
 	}
     }
 

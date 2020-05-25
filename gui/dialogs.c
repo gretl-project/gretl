@@ -336,7 +336,7 @@ gboolean exit_check (void)
 	}
     }
 
-    write_rc();
+    write_rc(OPT_NONE);
 
     return FALSE;
 }

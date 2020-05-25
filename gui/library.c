@@ -9681,18 +9681,26 @@ static void set_pkgview_parent (GtkWidget *w)
 
 static void handle_gui_pkg_install (gretl_bundle *b)
 {
-    const char *filename;
-    const char *pkgname;
-    int zipfile;
     int err = 0;
 
-    filename = gretl_bundle_get_string(b, "filename", &err);
-    pkgname = gretl_bundle_get_string(b, "pkgname", &err);
-    zipfile = gretl_bundle_get_int(b, "zipfile", &err);
+    if (gretl_bundle_get_int(b, "binpkg", NULL) > 0) {
+	const char *id = gretl_bundle_get_string(b, "path_id", &err);
 
-    if (!err) {
-	maybe_update_pkgview(filename, pkgname, zipfile,
-			     pkgview_parent);
+	if (!err) {
+	    sync_path_from_lib(id);
+	}
+    } else {
+	const char *filename;
+	const char *pkgname;
+	int zipfile = 0;
+
+	filename = gretl_bundle_get_string(b, "filename", &err);
+	pkgname = gretl_bundle_get_string(b, "pkgname", &err);
+	zipfile = gretl_bundle_get_int(b, "zipfile", &err);
+	if (!err) {
+	    maybe_update_pkgview(filename, pkgname, zipfile,
+				 pkgview_parent);
+	}
     }
 
     gretl_bundle_destroy(b);

@@ -738,7 +738,7 @@ void set_gretl_startdir (void)
 	}
 
 	if (startdir != NULL) {
-	    int err = set_gretl_work_dir(startdir);
+	    int err = gretl_set_path_by_name("workdir", startdir);
 
 	    if (err) {
 		fprintf(stderr, "%s\n", gretl_errmsg_get());
@@ -1966,7 +1966,7 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
     gnuplot_png_set_default_scale(graph_scale);
     set_plotstyle(graph_theme);
 
-    write_rc(); /* note: calls gretl_update_paths */
+    write_rc(OPT_NONE); /* note: calls gretl_update_paths */
 
     /* register these settings for the current session using
        the "libset" apparatus
@@ -2003,7 +2003,7 @@ static void boolvar_to_str (void *b, char *s)
 
 /* non-static because also called from dialogs.c on exit */
 
-int write_rc (void)
+int write_rc (gretlopt opt)
 {
     RCVAR *rcvar;
     FILE *fp;
@@ -2053,9 +2053,21 @@ int write_rc (void)
     rc_save_file_lists(fp);
     fclose(fp);
 
-    gretl_update_paths(&paths, update_paths_opt);
+    if (!(opt & OPT_N)) {
+	gretl_update_paths(&paths, update_paths_opt);
+    }
 
     return 0;
+}
+
+void sync_path_from_lib (const char *path_id)
+{
+    if (!strcmp(path_id, "tramo")) {
+	strcpy(paths.tramo, gretl_tramo());
+	write_rc(OPT_N);
+    } else {
+	fprintf(stderr, "sync_path_from_lib: '%s' ??\n", path_id);
+    }
 }
 
 static void str_to_boolvar (const char *s, void *b)
@@ -2547,10 +2559,10 @@ static void windows_font_selector (GtkAction *action)
     if (*fontname != '\0') {
 	if (which == FIXED_FONT_SELECTION) {
 	    set_fixed_font(fontname, 1);
-	    write_rc();
+	    write_rc(OPT_NONE);
 	} else {
 	    set_app_font(fontname, 1);
-	    write_rc();
+	    write_rc(OPT_NONE);
 	}
     }
 }
@@ -2606,7 +2618,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontChooser *fc)
 	} else {
 	    set_app_font(fontname, 1);
 	}
-	write_rc();
+	write_rc(OPT_NONE);
     }
 
     g_free(fontname);
@@ -2625,7 +2637,7 @@ static void font_selection_reset (GtkWidget *w, GtkFontChooser *fc)
     } else {
 	set_app_font(system_appfont, 1);
     }
-    write_rc();
+    write_rc(OPT_NONE);
 
     gretl_font_filter_cleanup();
     gtk_widget_destroy(GTK_WIDGET(fc));
@@ -2720,7 +2732,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontselHackDialog *fs)
 	} else if (filter == FONT_HACK_LATIN) {
 	    set_app_font(fontname, 1);
 	}
-	write_rc();
+	write_rc(OPT_NONE);
     }
 
     g_free(fontname);
@@ -2738,7 +2750,7 @@ static void font_selection_reset (GtkWidget *w, GtkFontselHackDialog *fs)
     } else if (filter == FONT_HACK_LATIN) {
 	set_app_font(system_appfont, 1);
     }
-    write_rc();
+    write_rc(OPT_NONE);
 
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
@@ -2877,7 +2889,7 @@ void font_scale_selector (GtkAction *action)
     } else if (resp == FSCALE_DEFAULT) {
 	set_fixed_font(default_fixedfont, 1);
 	set_app_font(system_appfont, 1);
-	write_rc();
+	write_rc(OPT_NONE);
     } else if (fscale > 0) {
 	impose_font_scale(fscale, remember);
 	tmpfontscale = fscale;
@@ -2947,7 +2959,7 @@ void dump_rc (void)
 
 int gui_set_working_dir (char *dirname)
 {
-    int err = set_gretl_work_dir(dirname);
+    int err = gretl_set_path_by_name("workdir", dirname);
 
     if (err) {
 	gui_errmsg(err);
@@ -3115,7 +3127,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	g_free(str);
     }
 
-    err = set_gretl_work_dir(tmp);
+    err = gretl_set_path_by_name("workdir", tmp);
 
     if (err) {
 	gui_errmsg(err);
