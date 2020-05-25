@@ -2566,23 +2566,38 @@ static int handle_tgz (const char *pkgname)
     err = retrieve_public_file(pkgname, fullname);
 
     if (!err) {
-	gchar *topdir = g_strdup(gretl_bindir());
-	char *s = strstr(topdir, "/bin/");
+	gchar *s, *topdir;
+	int try = 0;
+
+    try_again:
+
+	if (try == 0) {
+	    topdir = g_strdup(gretl_bindir());
+	    s = strstr(topdir, "/bin/");
+	} else {
+	    topdir = g_strdup(gretl_function_package_path());
+	    s = strstr(topdir, "/functions");
+	}
 
 	if (s == NULL) {
 	    err = E_DATA;
 	} else {
 	    *s = '\0';
-	    fprintf(stderr, "topdir: '%s'\n", topdir);
+	    fprintf(stderr, "topdir %d: '%s'\n", try, topdir);
 	    err = gretl_chdir(topdir);
 	    if (err) {
-		fprintf(stderr, "chdir error\n");
+		fprintf(stderr, "chdir %d error\n", try);
 	    } else {
 		err = gretl_untar(fullname);
-		fprintf(stderr, "untar: err = %d\n", err);
+		fprintf(stderr, "untar %d: err = %d\n", try, err);
 	    }
 	}
 	g_free(topdir);
+	if (err && try == 0) {
+	    err = 0;
+	    try = 1;
+	    goto try_again;
+	}
 	gretl_remove(fullname);
     }
 
