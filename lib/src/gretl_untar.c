@@ -70,6 +70,12 @@ union tar_buffer {
     struct tar_header header;
 };
 
+struct attr_item {
+    char *fname;
+    int mode;
+    time_t time;
+};
+
 /* helper functions */
 
 static int getoct (char *p, int width)
@@ -141,6 +147,7 @@ static int untar (gzFile in)
     int len, remaining = 0;
     FILE *outfile = NULL;
     char fname[BLOCKSIZE];
+    int tarmode;
     time_t tartime = (time_t) 0;
     int err = 0;
 
@@ -159,6 +166,7 @@ static int untar (gzFile in)
 	    if (len == 0 || buffer.header.name[0] == '\0') {
 		break;
 	    }
+	    tarmode = getoct(buffer.header.mode, 8);
 	    tartime = (time_t) getoct(buffer.header.mtime, 12);
 	    strcpy(fname, buffer.header.name);
 
@@ -216,6 +224,7 @@ static int untar (gzFile in)
 		    fclose(outfile);
 		    outfile = NULL;
 		    utime(fname, &settime);
+		    chmod(fname, tarmode);
 		}
 	    }
 	}
