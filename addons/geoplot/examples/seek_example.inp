@@ -1,0 +1,13 @@
+include geoplot.gfn
+
+string JSON = "us-states.geojson"
+open "@JSON" --frompkg=geoplot --preserve --quiet
+map = jsongetb(readfile($mapfile))
+
+# no matches
+geoplot_seek_feature(map, "nowhere")
+# two matches
+geoplot_seek_feature(map, "CAROLINA")
+# one match
+geoplot_seek_feature(map, "Florida")
+
