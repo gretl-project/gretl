@@ -9711,3 +9711,91 @@ int write_map_gp_file (const char *plotfile,
 
     return err;
 }
+
+/* Transcribe geoplot map file from @src to @dest, allowing for
+   the possibility that data contained in a separate datafile
+   have to be inlined. If @datname is NULL it is assumed that
+   the datafile will be named as @src, with ".dat" appended.
+*/
+
+int transcribe_geoplot_file (const char *src,
+			     const char *dest,
+			     const char *datname)
+{
+    FILE *f1 = NULL, *f2 = NULL;
+    const char *mapdata = "$MapData";
+    char buf[8196];
+    int integrate = -1;
+    int n, err = 0;
+
+    f1 = gretl_fopen(src, "rb");
+    f2 = gretl_fopen(dest, "wb");
+
+    if (f1 == NULL || f2 == NULL) {
+	err = E_FOPEN;
+	goto bailout;
+    }
+
+    while (integrate < 0 && fgets(buf, sizeof buf, f1)) {
+	if (strstr(buf, mapdata)) {
+	    integrate = 0;
+	} else if (!strncmp(buf, "datafile =", 10)) {
+	    integrate = 1;
+	} else {
+	    fputs(buf, f2);
+	}
+    }
+
+    if (integrate == 1) {
+	/* open the datafile and inject its content */
+	gchar *s, *dattmp = NULL;
+	FILE *fdat = NULL;
+	int i;
+
+	if (datname != NULL) {
+	    fdat = gretl_fopen(datname, "rb");
+	} else {
+	    dattmp = g_strdup_printf("%s.dat", src);
+	    fdat = gretl_fopen(dattmp, "rb");
+	    g_free(dattmp);
+	}
+
+	if (fdat == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    /* inject data */
+	    fprintf(f2, "%s << EOD\n", mapdata);
+	    while ((n = fread(buf, 1, sizeof buf, fdat)) > 0) {
+		fwrite(buf, 1, n, f2);
+	    }
+	    fputs("EOD\n", f2);
+	    fclose(fdat);
+	    buf[0] = '\0';
+
+	    /* and transcribe the remainder of @src */
+	    while (fgets(buf, sizeof buf, f1)) {
+		if ((s = strstr(buf, "datafile")) != NULL) {
+		    for (i=0; i<8; i++) {
+			s[i] = mapdata[i];
+		    }
+		}
+		fputs(buf, f2);
+	    }
+	}
+    } else if (integrate == 0) {
+	/* integration not needed */
+	while ((n = fread(buf, 1, sizeof buf, f1)) > 0) {
+	    fwrite(buf, 1, n, f2);
+	}
+    } else {
+	/* ?? */
+	err = E_DATA;
+    }
+
+ bailout:
+
+    if (f1 != NULL) fclose(f1);
+    if (f2 != NULL) fclose(f2);
+
+    return err;
+}

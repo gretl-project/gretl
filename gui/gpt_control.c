@@ -4494,7 +4494,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if ((plot_is_saved(plot) || plot_is_geomap(plot)) &&
+	if (plot_is_saved(plot) &&
 	    !strcmp(plot_items[i], "Save to session as icon")) {
 	    i++;
 	    continue;

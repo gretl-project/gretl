@@ -236,6 +236,7 @@ static void script_window_update (windata_t *vwin,
     if (vwin->role == EDIT_GP) {
 	/* plot file no longer under session control */
 	vwin->flags &= ~VWIN_SESSION_GRAPH;
+	vwin->data = NULL;
     }
 
     mark_vwin_content_saved(vwin);
@@ -262,6 +263,42 @@ gchar *pre_trim_buffer (gchar *s)
     return ret;
 }
 
+static void handle_geoplot_save (const char *buf,
+				 const char *fname,
+				 windata_t *vwin)
+{
+    gchar *grfpath = session_graph_get_filename(vwin->data);
+    gchar *tmpname, *datname;
+    GError *gerr = NULL;
+    gboolean ok;
+    int err = 0;
+
+    datname = g_strdup_printf("%s.dat", grfpath);
+    tmpname = gretl_make_dotpath("geoplot_save.tmp");
+
+    /* write @buf into a temporary file */
+    ok = g_file_set_contents(tmpname, buf, -1, &gerr);
+
+    if (!ok) {
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    gui_errmsg(E_FOPEN);
+	}
+    } else {
+	err = transcribe_geoplot_file(tmpname, fname, datname);
+	if (err) {
+	    gui_errmsg(err);
+	}
+	gretl_remove(tmpname);
+    }
+
+    g_free(grfpath);
+    g_free(tmpname);
+    g_free(datname);
+}
+
 static void
 save_editable_content (int action, const char *fname, windata_t *vwin)
 {
@@ -270,6 +307,12 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 
     if (buf == NULL) {
 	errbox("Couldn't retrieve buffer");
+	return;
+    }
+
+    if (vwin->flags & VWIN_SESSION_GRAPH && vwin->data != NULL) {
+	handle_geoplot_save(buf, fname, vwin);
+	g_free(buf);
 	return;
     }
 

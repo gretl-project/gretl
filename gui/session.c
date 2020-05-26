@@ -3517,12 +3517,19 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	    }
 	    if (!err) {
 		title = object_get_window_title(obj);
+		if (graph->has_datafile) {
+		    set_viewer_no_exec(TRUE);
+		}
 		vwin = view_file_with_title(fullname, 1, 0, 78, 400,
 					    EDIT_GP, title);
 		g_free(title);
 		/* add flag so we can mark the session as modified
 		   if the plot file is changed */
 		vwin->flags |= VWIN_SESSION_GRAPH;
+		if (graph->has_datafile) {
+		    set_viewer_no_exec(FALSE);
+		    vwin->data = graph;
+		}
 	    }
 	}
     } else if (!strcmp(item, _("Add to graph page"))) {
@@ -4140,6 +4147,19 @@ static void open_gui_graph (gui_obj *obj)
 void display_session_graph_by_data (void *p)
 {
     real_open_session_graph((SESSION_GRAPH *) p);
+}
+
+gchar *session_graph_get_filename (void *p)
+{
+    if (p != NULL) {
+	SESSION_GRAPH *graph = p;
+	char tmp[MAXLEN];
+
+	session_file_make_path(tmp, graph->fname);
+	return g_strdup(tmp);
+    } else {
+	return NULL;
+    }
 }
 
 static int is_idempotent (const gretl_matrix *m,

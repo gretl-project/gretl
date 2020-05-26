@@ -133,6 +133,8 @@ void disable_graph_page (void);
 
 void display_session_graph_by_data (void *p);
 
+gchar *session_graph_get_filename (void *p);
+
 void view_matrix_properties (const gretl_matrix *m, const char *name);
 
 void session_notes_callback (GtkWidget *w, gpointer p);

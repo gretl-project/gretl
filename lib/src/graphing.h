@@ -359,5 +359,9 @@ int write_map_gp_file (const char *plotfile,
 		       int non_standard,
 		       int show);
 
+int transcribe_geoplot_file (const char *src,
+			     const char *dest,
+			     const char *datname);
+
 #endif /* GRAPHING_H */
 
