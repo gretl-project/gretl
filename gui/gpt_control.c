@@ -438,6 +438,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     FILE *fsrc, *ftmp;
     char temp[MAXLEN], fline[MAXLEN];
     GptFlags flags = 0;
+    int ix = 0, iy = 0;
     int err = 0;
 
     sprintf(temp, "%sgpttmp", gretl_dotdir());
@@ -473,6 +474,8 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		flags = GPT_XXL;
 	    } else if (strstr(fline, "extra-wide")) {
 		flags = GPT_XW;
+	    } else if (sscanf(fline, "# geoplot %d %d", &ix, &iy) == 2) {
+		; /* OK */
 	    } else if (!strncmp(fline, "set style line", 14) ||
 		       !strncmp(fline, "set linetype", 12)) {
 		add_line_styles = 0;
@@ -495,6 +498,9 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	} else {
 	    const char *tline;
 
+	    if (ix > 0 && iy > 0) {
+		set_special_plot_size(ix, iy);
+	    }
 	    if (spec != NULL) {
 		tline = get_png_line_for_plotspec(spec);
 	    } else {

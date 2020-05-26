@@ -79,7 +79,6 @@ static void normalize_graph_filename (char *fname, int gnum)
 static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
-    int inpage = 0;
     int gnum = 0;
     int errs = 0;
 
@@ -126,8 +125,13 @@ static int restore_session_graphs (xmlNodePtr node)
 	}
 
 	if (!err) {
+	    int inpage, has_datafile;
+
 	    if (gretl_xml_get_prop_as_int(cur, "inpage", &inpage)) {
 		graph_page_add_file((const char *) fname); /* FIXME path? */
+	    }
+	    if (gretl_xml_get_prop_as_int(cur, "has_datafile", &has_datafile)) {
+		sg->has_datafile = 1;
 	    }
 	}
 
@@ -791,10 +795,12 @@ static int write_session_xml (const char *datname)
 	    free(xmlname);
 	}
 	if (in_graph_page(session.graphs[i]->fname)) {
-	    pputs(prn, " inpage=\"1\"/>\n");
-	} else {
-	    pputs(prn, "/>\n");
+	    pputs(prn, " inpage=\"1\"");
 	}
+	if (session.graphs[i]->has_datafile) {
+	    pputs(prn, " has_datafile=\"1\"");
+	}
+	pputs(prn, "/>\n");
     }
     pputs(prn, " </graphs>\n");
 

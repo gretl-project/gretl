@@ -1489,21 +1489,21 @@ static void write_png_size_string (char *s, PlotType ptype,
 
 static char *var_term_line (char *term_line, int ptype)
 {
-    char varterm[8];
-
-#ifdef WIN32
-    strcpy(varterm, "windows");
-#else
-    if (gnuplot_has_wxt()) {
-	strcpy(varterm, "wxt");
-    } else if (gnuplot_has_qt()) {
-	strcpy(varterm, "qt");
-    } else {
-	strcpy(varterm, "x11");
-    }
-#endif
     char font_string[140];
     char size_string[16];
+    const char *varterm;
+
+#ifdef WIN32
+    varterm = "windows";
+#else
+    if (gnuplot_has_wxt()) {
+	varterm = "wxt";
+    } else if (gnuplot_has_qt()) {
+	varterm = "qt";
+    } else {
+	varterm = "x11";
+    }
+#endif
 
     *font_string = *size_string = '\0';
     write_png_font_string(font_string, "", ptype, NULL, 1.0);
