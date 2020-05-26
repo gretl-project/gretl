@@ -191,6 +191,7 @@ static char *graph_items[] = {
     N_("Copy")
 };
 #define ADD_TO_GPAGE_IDX 2 /* position of "Add to graph page" */
+#define GRAPH_COPY_IDX 5 /* position of "Copy" */
 
 static char *dataset_items[] = {
     N_("Edit"),
@@ -245,6 +246,7 @@ static GtkWidget *bundle_popup;
 static GtkWidget *save_item;
 static GtkWidget *mtab_add_item;
 static GtkWidget *gpage_add_item;
+static GtkWidget *graph_copy_item;
 
 static GList *iconlist;
 static gui_obj *active_object;
@@ -2425,13 +2427,20 @@ static int real_delete_text_from_session (SESSION_TEXT *junk)
     return 0;
 }
 
-static void remove_session_graph_file (const char *gfname)
+static void remove_session_graph_file (SESSION_GRAPH *graph)
 {
     char fname[MAXLEN];
 
     gretl_chdir(gretl_dotdir());
-    session_file_make_path(fname, gfname);
+    session_file_make_path(fname, graph->fname);
     gretl_remove(fname);
+
+    if (graph->has_datafile) {
+	gchar *datfile = g_strdup_printf("%s.dat", fname);
+
+	gretl_remove(datfile);
+	g_free(datfile);
+    }
 }
 
 static int real_delete_graph_from_session (SESSION_GRAPH *junk)
@@ -2439,7 +2448,7 @@ static int real_delete_graph_from_session (SESSION_GRAPH *junk)
     int ng = session.ngraphs;
 
     if (ng == 1) {
-	remove_session_graph_file(session.graphs[0]->fname);
+	remove_session_graph_file(session.graphs[0]);
 	free(session.graphs[0]);
 	free(session.graphs);
 	session.graphs = NULL;
@@ -2449,7 +2458,7 @@ static int real_delete_graph_from_session (SESSION_GRAPH *junk)
 
 	for (i=0; i<ng && !done; i++) {
 	    if (!strcmp(session.graphs[i]->name, junk->name)) {
-		remove_session_graph_file(session.graphs[i]->fname);
+		remove_session_graph_file(session.graphs[i]);
 		free(session.graphs[i]);
 		for (j=i; j<ng-1; j++) {
 		    session.graphs[j] = session.graphs[j+1];
@@ -3213,6 +3222,16 @@ static void gpage_item_set_sensitivity (gui_obj *obj)
     }
 }
 
+static void copy_item_set_sensitivity (gui_obj *obj)
+{
+    SESSION_GRAPH *graph = obj->data;
+
+    if (graph_copy_item != NULL) {
+	gtk_widget_set_sensitive(graph_copy_item, !graph->has_datafile);
+    }
+}
+
+
 static void object_popup_show (gui_obj *obj, GdkEventButton *event)
 {
     GtkWidget *w = NULL;
@@ -3238,6 +3257,7 @@ static void object_popup_show (gui_obj *obj, GdkEventButton *event)
     case GRETL_OBJ_GRAPH:
     case GRETL_OBJ_PLOT:
 	gpage_item_set_sensitivity(obj);
+	copy_item_set_sensitivity(obj);
 	w = graph_popup;
 	break;
     case GRETL_OBJ_DSET:
@@ -3836,6 +3856,7 @@ static void session_build_popups (void)
 
     mtab_add_item = NULL;
     gpage_add_item = NULL;
+    graph_copy_item = NULL;
 
     if (global_popup == NULL) {
 	global_popup = gtk_menu_new();
@@ -3884,6 +3905,8 @@ static void session_build_popups (void)
 				   object_popup_callback);
 	    if (i == ADD_TO_GPAGE_IDX) {
 		gpage_add_item = item;
+	    } else if (i == GRAPH_COPY_IDX) {
+		graph_copy_item = item;
 	    }
 	}
     }
