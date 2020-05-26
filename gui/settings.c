@@ -2066,6 +2066,10 @@ void sync_path_from_lib (const char *path_id)
 	strcpy(paths.tramo, gretl_tramo());
 	write_rc(OPT_N);
 	restart_message(mdata->main);
+    } else if (!strcmp(path_id, "x12a")) {
+	strcpy(paths.x12a, gretl_x12_arima());
+	write_rc(OPT_N);
+	restart_message(mdata->main);
     } else {
 	fprintf(stderr, "sync_path_from_lib: '%s' ??\n", path_id);
     }

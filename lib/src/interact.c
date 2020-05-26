@@ -2550,6 +2550,11 @@ static int package_check_dependencies (const char *fname,
     return err;
 }
 
+/* For now DO_BINPGK (that is, handle binary packages -- x13as and
+   tramo-seats -- via the "pkg" command) is specific to macOS. It
+   could in principle be extended to other OSes.
+*/
+
 #ifdef OS_OSX
 # define DO_BINPKG 1
 #else
@@ -2569,6 +2574,7 @@ static int handle_tgz (const char *fname,
     int err;
 
     fullname = gretl_make_dotpath(fname);
+    /* using WFU server for now, could be moved to sourceforge */
     uri = g_strdup_printf("http://ricardo.ecn.wfu.edu/pub/gretl/%s", fname);
     err = retrieve_public_file(uri, fullname);
 
@@ -2610,7 +2616,12 @@ static int handle_tgz (const char *fname,
 	    if (strstr(fname, "tramo") != NULL) {
 		path_id = "tramo";
 		s = g_strdup_printf("%s/bin/tramo", topdir);
-		gretl_set_path_by_name("tramo", s);
+		gretl_set_path_by_name(path_id, s);
+		g_free(s);
+	    } else if (strstr(fname, "x13as") != NULL) {
+		path_id = "x12a";
+		s = g_strdup_printf("%s/bin/x13as", topdir);
+		gretl_set_path_by_name(path_id, s);
 		g_free(s);
 	    }
 	}
