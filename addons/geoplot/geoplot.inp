@@ -132,3 +132,17 @@ function matrix geoplot_seek_feature(const bundle b, string name, bool do_plot[1
 
     return found
 end function
+
+
+function void geoplot_simplify(bundle *b, 
+			       scalar param[0.1:1:0.75])
+    
+    feat = b.features
+    set stopwatch
+    loop i = 1 .. nelem(feat)
+        feat[i] = simplify_feature(feat[i], param)
+    endloop
+    printf "Simplification took %g seconds\n", $stopwatch
+    flush
+    b.features = feat
+end function
