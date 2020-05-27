@@ -29,6 +29,8 @@
 #include "gretl_typemap.h"
 #include "libset.h"
 
+#define GEODEBUG 1
+
 enum { DBF, SHP, GEO };
 
 enum {
@@ -1090,7 +1092,15 @@ static int geojson_to_csv (const char *fname,
     gboolean ok;
     int err = 0;
 
+#if GEODEBUG
+    fprintf(stderr, "geojson_to_csv: starting\n");
+#endif
+
     ok = g_file_get_contents(fname, &JSON, &len, &gerr);
+
+#if GEODEBUG
+    fprintf(stderr, " g_file_get_contents: ok = %d\n", ok);
+#endif
 
     if (!ok) {
 	if (gerr != NULL) {
@@ -1121,17 +1131,19 @@ static int geojson_to_csv (const char *fname,
 	    gretl_errmsg_sprintf(_("Couldn't open %s for writing"), csvname);
 	    return E_FOPEN;
 	}
+#if GEODEBUG
+	fprintf(stderr, " calling json_get_bundle()\n");
+#endif
 	jb = jfunc(JSON, NULL, &err);
-	if (jb == NULL) {
-	    gretl_errmsg_sprintf(_("Couldn't find function %s"), "json_get_bundle");
-	    err = E_DATA;
-	}
 	if (!err) {
 	    features = gretl_bundle_get_array(jb, "features", &err);
 	    if (err) {
 		gretl_errmsg_sprintf(_("Couldn't read '%s'"), "features");
 	    }
 	}
+#if GEODEBUG
+	fprintf(stderr, " after json_get_bundle, err = %d\n", err);
+#endif
 	if (!err) {
 	    nf = gretl_array_get_length(features);
 	    fi = gretl_array_get_element(features, 0, NULL, &err);
@@ -1172,7 +1184,9 @@ static int geojson_to_csv (const char *fname,
 		fputc(j < nk-1 ? ',' : '\n', fp);
 	    }
 	}
-
+#if GEODEBUG
+	fprintf(stderr, " after getting properties, err = %d\n", err);
+#endif
 	gretl_array_destroy(keys);
 	gretl_bundle_destroy(jb);
 	fclose(fp);
@@ -1310,6 +1324,10 @@ static int real_map_to_csv (const char *fname,
     } else {
 	ftype = GEO;
     }
+
+#if GEODEBUG
+    fprintf(stderr, "real_map_to_csv...\n");
+#endif
 
     if (ftype == GEO) {
 	return geojson_to_csv(fname, csvname, mapname);
