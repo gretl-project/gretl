@@ -1248,6 +1248,7 @@ gretl_bundle *json_get_bundle (const char *data,
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
+    do_gretl_objects = 0;
 
     if (json_reader_is_object(reader)) {
 	if (json_reader_read_member(reader, "type")) {
