@@ -804,6 +804,8 @@ static int add_array_as_matrix (JsonReader *reader,
     return err;
 }
 
+static int do_gretl_objects;
+
 /* Determine if a JSON object is a gretl special:
    a matrix, series or list. This keys off the
    "type" string in the object.
@@ -815,14 +817,16 @@ static int is_gretl_object (JsonReader *reader,
     *type = 0;
 
     if (json_reader_read_member(reader, "type")) {
-	const gchar *typestr = json_reader_get_string_value(reader);
+	const gchar *s = json_reader_get_string_value(reader);
 
-	if (!strcmp(typestr, "gretl_matrix")) {
-	    *type = GRETL_TYPE_MATRIX;
-	} else if (!strcmp(typestr, "gretl_series")) {
-	    *type = GRETL_TYPE_SERIES;
-	} else if (!strcmp(typestr, "gretl_list")) {
-	    *type = GRETL_TYPE_LIST;
+	if (s != NULL) {
+	    if (!strcmp(s, "gretl_matrix")) {
+		*type = GRETL_TYPE_MATRIX;
+	    } else if (!strcmp(s, "gretl_series")) {
+		*type = GRETL_TYPE_SERIES;
+	    } else if (!strcmp(s, "gretl_list")) {
+		*type = GRETL_TYPE_LIST;
+	    }
 	}
     }
     json_reader_end_member(reader);
@@ -905,9 +909,9 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
     for (i=0; i<n && !err; i++) {
 	json_reader_read_member(reader, S[i]);
 	if (json_reader_is_object(reader)) {
-	    GretlType otype;
+	    GretlType otype = 0;
 
-	    if (is_gretl_object(reader, &otype)) {
+	    if (do_gretl_objects && is_gretl_object(reader, &otype)) {
 		if (otype == GRETL_TYPE_LIST) {
 		    err = jb_add_list(reader, jb, S[i], NULL, 0);
 		} else {
@@ -1023,9 +1027,9 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
 		atype = gretl_array_get_type(a);
 	    }
 	} else if (json_reader_is_object(reader)) {
-	    GretlType otype;
+	    GretlType otype = 0;
 
-	    if (is_gretl_object(reader, &otype)) {
+	    if (do_gretl_objects && is_gretl_object(reader, &otype)) {
 		if (otype == GRETL_TYPE_LIST) {
 		    err = jb_add_list(reader, jb, NULL, a, i);
 		} else {
@@ -1246,6 +1250,14 @@ gretl_bundle *json_get_bundle (const char *data,
     gretl_push_c_numeric_locale();
 
     if (json_reader_is_object(reader)) {
+	if (json_reader_read_member(reader, "type")) {
+	    const gchar *s = json_reader_get_string_value(reader);
+
+	    if (s != NULL && !strcmp(s, "gretl_bundle")) {
+		do_gretl_objects = 1;
+	    }
+	}
+	json_reader_end_member(reader);
 	*err = jb_do_object(reader, &jb, NULL);
     } else if (json_reader_is_array(reader)) {
 	*err = jb_do_array(reader, &jb, NULL);
@@ -1611,6 +1623,9 @@ int bundle_to_json (gretl_bundle *b, const char *fname,
     if (btype != NULL && !strcmp(btype, "FeatureCollection")) {
 	/* GeoJSON bundle */
 	mat2arr = 1;
+    } else if (btype == NULL) {
+	/* AC 2020-05-27: not sure about this */
+	gretl_bundle_set_string(b, "type", "gretl_bundle");
     }
 
     if (!mat2arr && (opt & OPT_A)) {
