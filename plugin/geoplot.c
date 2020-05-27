@@ -29,7 +29,7 @@
 #include "gretl_typemap.h"
 #include "libset.h"
 
-#define GEODEBUG 1
+#define GEODEBUG 0
 
 enum { DBF, SHP, GEO };
 
