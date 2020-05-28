@@ -266,7 +266,6 @@ end function
 ### helpers for geoplot_simplify
 ###
 
-
 function matrix tri_areas(const matrix x)
     scalar n = rows(x)
     matrix y = zeros(n-2, 1)
@@ -277,7 +276,7 @@ function matrix tri_areas(const matrix x)
     return y
 end function
 
-function matrix vasvalingam(const matrix poly, scalar nout)
+function matrix visvalingam(const matrix poly, scalar nout)
     # https://bost.ocks.org/mike/simplify/
     scalar nin = rows(poly)
 
@@ -336,7 +335,7 @@ function matrices simplify_ring(const matrices ring, scalar alpha[0.5])
 
     h = round(6 + (n-6)^alpha)
     m0 = ring2matrix2(ring)
-    m1 = vasvalingam(m0, h)
+    m1 = visvalingam(m0, h)
     return matrix2ring(m1)
 end function
 
