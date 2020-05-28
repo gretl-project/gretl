@@ -1924,6 +1924,8 @@ static FILE *gp_set_up_batch (char *fname,
     return fp;
 }
 
+static char *iact_gpfile;
+
 /* Set-up for an "interactive" plot: we open a file in the user's
    dotdir into which gnuplot commands will be written.  If we're
    running the GUI program this command file will eventually be used
@@ -1943,7 +1945,11 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
     int gui = gretl_in_gui_mode();
     FILE *fp = NULL;
 
-    if (gui) {
+    if (iact_gpfile != NULL) {
+	fname = iact_gpfile;
+	fp = gretl_fopen(fname, "wb");
+	iact_gpfile = NULL;
+    } else if (gui) {
 	/* the filename should be unique */
 	sprintf(fname, "%sgpttmp.XXXXXX", gretl_dotdir());
 	fp = gretl_mktemp(fname, "wb");
@@ -2202,10 +2208,12 @@ int graph_written_to_file (void)
     return graph_file_written;
 }
 
-static void remove_old_png (char *buf)
+static void remove_old_png (void)
 {
-    sprintf(buf, "%sgretltmp.png", gretl_dotdir());
-    remove(buf);
+    gchar *tmp = gretl_make_dotpath("gretltmp.png");
+
+    gretl_remove(tmp);
+    g_free(tmp);
 }
 
 /*
@@ -2238,7 +2246,7 @@ static int gnuplot_make_graph (void)
     } else if (fmt == GP_TERM_NONE && gui) {
 	do_plot_bounding_box();
 	/* ensure we don't get stale output */
-	remove_old_png(buf);
+	remove_old_png();
     }
 
 #ifdef WIN32
@@ -2271,7 +2279,7 @@ static int gnuplot_make_graph (void)
 	    fprintf(stderr, "err = %d: bad file is '%s'\n", err, fname);
 	} else {
 	    /* remove the temporary input file */
-	    remove(fname);
+	    gretl_remove(fname);
 	    gretl_set_path_by_name("plotfile", gnuplot_outname);
 	    graph_file_written = 1;
 	}
@@ -9558,6 +9566,7 @@ int write_map_gp_file (const char *plotfile,
     gchar *datasrc = NULL;
     double linewidth = 1.0;
     int have_payload = 0;
+    int use_arg0 = 0;
     int height = 600;
     int border = 1;
     int notics = 1;
@@ -9588,6 +9597,9 @@ int write_map_gp_file (const char *plotfile,
     }
     if (show) {
 	set_optval_string(GNUPLOT, OPT_U, "display");
+	if (plotfile != NULL) {
+	    iact_gpfile = (char *) plotfile;
+	}
     } else if (plotfile_is_image) {
 	set_optval_string(GNUPLOT, OPT_U, plotfile);
     }
@@ -9658,16 +9670,32 @@ int write_map_gp_file (const char *plotfile,
 	if (!err) {
 	    datasrc = g_strdup("$MapData");
 	}
+    } else if (plotfile_is_image) {
+	/* plotfile and datfile are both disposable, no need
+	   to bother about name-matching
+	*/
+	datasrc = g_strdup_printf("\"%s\"", datfile);
+    } else if (plotfile != NULL) {
+	/* the names of plotfile and datfile will already be
+	   correctly aligned
+	*/
+	use_arg0 = 1;
     } else if (gretl_bundle_get_int(opts, "gui_auto", NULL)) {
+	/* move the datafile to match the plotfile */
 	gchar *tmp = g_strdup_printf("%s.dat", gretl_plotfile());
 
 	gretl_copy_file(datfile, tmp);
 	gretl_remove(datfile);
+	g_free(tmp);
+	use_arg0 = 1;
+    } else {
+	/* redundant? */
+	datasrc = g_strdup_printf("\"%s\"", datfile);
+    }
+
+    if (use_arg0) {
 	fputs("datafile = sprintf(\"%s.dat\", ARG0)\n", fp);
 	datasrc = g_strdup("datafile");
-	g_free(tmp);
-    } else {
-	datasrc = g_strdup_printf("\"%s\"", datfile);
     }
 
     if (!err) {
@@ -9701,9 +9729,6 @@ int write_map_gp_file (const char *plotfile,
 	    } else {
 		manufacture_gui_callback(GNUPLOT);
 	    }
-	}
-	if (plotfile != NULL && !plotfile_is_image) {
-	    gretl_copy_file(gretl_plotfile(), plotfile);
 	}
     }
 

@@ -5094,9 +5094,11 @@ static int render_pngfile (png_plot *plot, int view)
 
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
-    /* delete temporary plot source file? */
     if (!plot_is_saved(plot)) {
-	gretl_remove(plot->spec->fname);
+	/* delete temporary plot source file? */
+	if (strstr(plot->spec->fname, gretl_dotdir())) {
+	    gretl_remove(plot->spec->fname);
+	}
     }
 
 #if GPDEBUG

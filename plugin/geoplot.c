@@ -45,6 +45,20 @@ static int proj;
 
 #define GEOHUGE 1.0e100
 
+#ifdef WIN32
+
+static void geoplot_reslash (char *fname)
+{
+    char *s = fname;
+
+    while (*s) {
+	if (*s == '\\') *s = '/';
+	s++;
+    }
+}
+
+#endif
+
 static char *get_full_read_path (char *fname)
 {
     if (!g_path_is_absolute(fname)) {
@@ -52,6 +66,23 @@ static char *get_full_read_path (char *fname)
     }
 
     return fname;
+}
+
+static gchar *ensure_full_write_path (const char *fname)
+{
+    gchar *ret;
+
+    if (g_path_is_absolute(fname)) {
+	ret = g_strdup(fname);
+    } else {
+	ret = g_build_filename(gretl_workdir(), fname, NULL);
+    }
+
+#ifdef WIN32
+    geoplot_reslash(ret);
+#endif
+
+    return ret;
 }
 
 static char *put_ext (char *fname, const char *ext)
@@ -1300,8 +1331,7 @@ static gretl_matrix *map2dat (const char *mapname,
 	    features = geojson_get_features(infile, non_standard, &err);
 	}
 	if (features != NULL) {
-	    ret = geo2dat(features, datname, zvec, mask,
-			  non_standard);
+	    ret = geo2dat(features, datname, zvec, mask, non_standard);
 	    if (map == NULL) {
 		gretl_array_destroy(features);
 	    }
@@ -1487,7 +1517,8 @@ int geoplot (const char *mapfile,
 	if (gretl_bundle_has_key(opts, "plotfile")) {
 	    sval = gretl_bundle_get_string(opts, "plotfile", &err);
 	    if (sval != NULL) {
-		plotfile = g_strdup(sval);
+		/* note: respect workdir as default output path */
+		plotfile = ensure_full_write_path(sval);
 		if (is_image_filename(plotfile)) {
 		    plotfile_is_image = 1;
 		    show = 0;
@@ -1528,11 +1559,13 @@ int geoplot (const char *mapfile,
     if (!err) {
 	/* output filenames */
 	if (plotfile != NULL && !plotfile_is_image) {
-	    datfile = g_strdup(plotfile);
-	    put_ext(datfile, ".dat");
+	    datfile = g_strdup_printf("%s.dat", plotfile);
 	} else {
 	    datfile = gretl_make_dotpath("geoplot_tmp.dat");
 	}
+#ifdef WIN32
+	geoplot_reslash(datfile);
+#endif
 	/* write out the polygons data for gnuplot */
 	bbox = map2dat(mapfile, map, datfile, payload, mask, &non_standard);
 	if (bbox == NULL) {

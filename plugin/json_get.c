@@ -37,6 +37,19 @@
 #define non_empty_array(a) (a != NULL && json_array_get_length(a) > 0)
 #define null_node(n) (n == NULL || json_node_is_null(n))
 
+#if JSON_MAJOR_VERSION < 1
+static GType jnode_get_value_type (JsonNode *node)
+{
+    if (node == NULL) {
+	return G_TYPE_INVALID;
+    } else {
+	return json_node_get_value_type(node);
+    }
+}
+#else
+# define jnode_get_value_type(n) json_node_get_value_type(n);
+#endif
+
 /* We don't want to leak memory allocated for @node, but it
    should not be freed directly if it's the root node of
    @parser.
@@ -161,7 +174,7 @@ static int output_json_node_value (JsonNode *node,
 	return E_DATA;
     }
 
-    type = json_node_get_value_type(node);
+    type = jnode_get_value_type(node);
 
 #if 0
     fprintf(stderr, "jsonget: node type %s\n", g_type_name(type));
@@ -284,7 +297,7 @@ static int real_json_get (JsonNode *match,
 	    err = allow_empty ? 0 : E_DATA;
 	    goto bailout;
 	} else {
-	    ntype = json_node_get_value_type(node);
+	    ntype = jnode_get_value_type(node);
 	}
 
 	if (node != NULL && !handled_type(ntype)) {
@@ -594,7 +607,7 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 static double get_matrix_element (JsonReader *reader, int *err)
 {
     JsonNode *node = json_reader_get_value(reader);
-    GType type = json_node_get_value_type(node);
+    GType type = jnode_get_value_type(node);
     double x = NADBL;
 
     if (json_node_is_null(node)) {
@@ -848,7 +861,7 @@ static int array_is_matrix (JsonReader *reader)
 	if (json_reader_read_element(reader, i)) {
 	    if (json_reader_is_value(reader)) {
 		JsonNode *node = json_reader_get_value(reader);
-		GType type = json_node_get_value_type(node);
+		GType type = jnode_get_value_type(node);
 
 		if (numeric_type(type)) {
 		    ret = 1;
@@ -1130,7 +1143,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
     int err = 0;
 
     name = json_reader_get_member_name(reader);
-    type = json_node_get_value_type(node);
+    type = jnode_get_value_type(node);
     typename = g_type_name(type);
 
 #if JB_DEBUG
