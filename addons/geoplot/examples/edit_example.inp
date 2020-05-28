@@ -1,7 +1,10 @@
 include geoplot.gfn
 
 open us-states.geojson --quiet --frompkg=geoplot
+bundle opts = null
+opts.title = "Original"
 bundle b = bread($mapfile)
+geoplot(b, null, opts)
 
 # Shrink Alaska and place underneath the "lower 48"
 matrix shift = {34, -35}
@@ -13,5 +16,10 @@ geoplot_translate_feature(&b, 48, shift, center, scale)
 shift = {51, 5}
 geoplot_translate_feature(&b, 5, shift)
 
+# apply Vasvalingam transformation to make the file more compact
+geoplot_simplify(&b, 0.9)
+
 # save modified geojson file
 bwrite(b, "us_modified.json")
+opts.title = "Modified"
+geoplot(b, null, opts)
