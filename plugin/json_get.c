@@ -27,6 +27,8 @@
 #include <glib-object.h>
 #include <json-glib/json-glib.h>
 
+#define JB_DEBUG 0
+
 #define handled_type(t) (t == G_TYPE_STRING || \
 			 t == G_TYPE_DOUBLE || \
 	                 t == G_TYPE_BOOLEAN || \
@@ -414,8 +416,6 @@ char *json_get_string (const char *data, const char *path,
 }
 
 /* start code subserving json_get_bundle() */
-
-#define JB_DEBUG 0
 
 struct jbundle_ {
     gretl_bundle *b0;
@@ -898,7 +898,8 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 			 gretl_array *a)
 {
     gchar **S = NULL;
-    int i, n, err = 0;
+    int i, n;
+    int err = 0;
 
     n = json_reader_count_members(reader);
     S = json_reader_list_members(reader);
@@ -920,7 +921,12 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 #endif
 
     for (i=0; i<n && !err; i++) {
-	json_reader_read_member(reader, S[i]);
+	if (!json_reader_read_member(reader, S[i])) {
+	    gretl_errmsg_sprintf("JSON object: couldn't read element '%s'", S[i]);
+	    err = E_DATA;
+	    json_reader_end_member(reader);
+	    break;
+	}
 	if (json_reader_is_object(reader)) {
 	    GretlType otype = 0;
 
@@ -965,6 +971,8 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
 		err = jb_do_value(reader, jb, NULL, 0);
 	    }
 	    jb->level = lsave;
+	} else {
+	    fprintf(stderr, "JSON object: weird unhandled case!\n");
 	}
 	json_reader_end_member(reader);
     }
@@ -1190,7 +1198,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	} else {
 	    gretl_bundle_set_int(jb->bcurr, name, k);
 	}
-    } else if (type == 0) {
+    } else if (type == 0 || type == G_TYPE_INVALID) {
 	/* try null object -> empty string */
 	if (a != NULL) {
 	    err = gretl_array_set_string(a, i, "", 1);
@@ -1380,10 +1388,8 @@ gretl_array *json_bundle_get_terminals (gretl_bundle *b, int *err)
 
 /* Below: writing a bundle to JSON */
 
-#define JB_DEBUG 0
-
 #if JB_DEBUG
-# include <gretl/gretl_typemap.h>
+# include "gretl_typemap.h"
 #endif
 
 /* matrix output format switch */
