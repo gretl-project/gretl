@@ -307,7 +307,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	ival = gtk_combo_box_get_active(GTK_COMBO_BOX(vset->compaction_menu));
 	if (ival != orig) {
 	    series_set_compact_method(dataset, v, ival);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dataset, 1);
 	}
     }
 
@@ -343,7 +343,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	} else if (vset->changed[VSET_VARNAME] || vset->changed[VSET_LABEL]) {
 	    show_varinfo_changes(v);
 	}
-	if (check_dataset_is_changed()) {
+	if (check_dataset_is_changed(dataset)) {
 	    mark_dataset_as_modified();
 	}
     }

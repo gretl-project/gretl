@@ -4976,7 +4976,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 	gui_errmsg(err);
     } else {
 	/* update variable listing in main window if needed */
-	if (check_dataset_is_changed()) {
+	if (check_dataset_is_changed(dataset)) {
 	    mark_dataset_as_modified();
 	    populate_varlist();
 	}
@@ -9719,10 +9719,9 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     if (ci == FLUSH) {
 	handle_flush_callback(s->cmd->opt);
     } else if (ci == JOIN) {
-	if (dataset->modflag) {
+	if (check_dataset_is_changed(dataset)) {
 	    mark_dataset_as_modified();
 	    populate_varlist();
-	    dataset->modflag = 0;
 	}
     } else if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type, s->cmd->opt);

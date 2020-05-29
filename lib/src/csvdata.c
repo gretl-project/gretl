@@ -7138,7 +7138,7 @@ int gretl_join_data (const char *fname,
 	dataset_drop_last_variables(dset, dset->v - orig_v);
     } else {
 	if (add_v || modified) {
-	    dset->modflag = 1;
+	    set_dataset_is_changed(dset, 1);
 	}
 	if (gretl_messages_on()) {
 	    if (add_v) {

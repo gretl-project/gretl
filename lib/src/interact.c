@@ -1970,7 +1970,7 @@ static int lib_open_append (ExecState *s,
     if (cmd->ci == JOIN) {
 	if (ftype == GRETL_CSV || ftype == GRETL_XML_DATA ||
 	    ftype == GRETL_BINARY_DATA) {
-	    dset->modflag = 0;
+	    set_dataset_is_changed(dset, 0);
 	    if (ftype != GRETL_CSV) {
 		opt |= OPT_G;
 	    }
@@ -3202,7 +3202,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = list_diffgenr(listcpy, cmd->ci, dset);
 	if (!err) {
 	    maybe_list_series(dset, prn);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
 	break;
 
@@ -3210,7 +3210,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = list_orthdev(listcpy, dset);
 	if (!err) {
 	    maybe_list_series(dset, prn);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
 	break;
 
@@ -3218,7 +3218,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = list_dumgenr(&listcpy, dset, cmd->opt);
 	if (!err) {
 	    maybe_list_series(dset, prn);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
 	break;
 
@@ -3227,7 +3227,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 			   dset, 0, cmd->opt);
 	if (!err) {
 	    maybe_list_series(dset, prn);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
 	break;
 
@@ -3235,7 +3235,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = list_loggenr(listcpy, dset);
 	if (!err) {
 	    maybe_list_series(dset, prn);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
 	break;
 
@@ -3243,7 +3243,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = list_stdgenr(listcpy, dset, cmd->opt);
 	if (!err) {
 	    maybe_list_series(dset, prn);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
 	break;
 
@@ -3251,7 +3251,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = list_xpxgenr(&listcpy, dset, cmd->opt);
 	if (!err) {
 	    maybe_list_series(dset, prn);
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
 	break;
 

@@ -10882,7 +10882,7 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     if (p->err == 0) {
 	/* made a change to an element of a series */
 	p->flags |= P_OBSVAL;
-	set_dataset_is_changed();
+	set_dataset_is_changed(p->dset, 1);
     }
 
     return p->err;
@@ -18502,9 +18502,12 @@ static int create_or_edit_list (parser *p)
 	}
     }
 
+#if 0
     if (!p->err) {
-	set_dataset_is_changed();
+	/* 2020-05-29: is this right, for list? */
+	set_dataset_is_changed(p->dset, 1);
     }
+#endif
 
     free(list);
 
@@ -19095,7 +19098,7 @@ static int save_generated_var (parser *p, PRN *prn)
 #endif
 	if (!p->err) {
 	    /* (probably) changed or added a series */
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(p->dset, 1);
 	}
     } else if (p->targ == MAT) {
 	/* we're writing a matrix */

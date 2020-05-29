@@ -455,9 +455,9 @@ int multi_unit_panel_sample (const DATASET *dset);
 
 int dataset_purge_missing_rows (DATASET *dset);
 
-int check_dataset_is_changed (void);
+int check_dataset_is_changed (DATASET *dset);
 
-void set_dataset_is_changed (void);
+void set_dataset_is_changed (DATASET *dset, int s);
 
 void dataset_clear_sample_record (DATASET *dset);
 

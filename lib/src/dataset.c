@@ -48,35 +48,34 @@ struct VARINFO_ {
 
 static int pad_daily_data (DATASET *dset, int pd, PRN *prn);
 
-static int dataset_changed;
-
 /**
  * check_dataset_is_changed:
+ * @dset: dataset to check.
  *
- * Returns: 1 if the current dataset has been modified since
- * the last call to this function, or since the library was
- * initialized if this function has not yet been called;
- * otherwise 0.
+ * Returns: 1 if @dset has been modified since
+ * the last call to this function.
  */
 
-int check_dataset_is_changed (void)
+int check_dataset_is_changed (DATASET *dset)
 {
-    int ret = dataset_changed;
+    int ret = dset->modflag;
 
-    dataset_changed = 0;
+    dset->modflag = 0;
     return ret;
 }
 
 /**
  * set_dataset_is_changed:
+ * @dset: dataset.
+ * @s: 1 or 0.
  *
- * Sets the internal "dataset changed" flag to 1
+ * Sets the internal boolean "changed" flag to @s.
  */
 
-void set_dataset_is_changed (void)
+void set_dataset_is_changed (DATASET *dset, int s)
 {
-    if (gretl_function_depth() == 0) {
-	dataset_changed = 1;
+    if (dset != NULL && gretl_function_depth() == 0) {
+	dset->modflag = s;
     }
 }
 
@@ -1766,7 +1765,7 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
     if (!err && strcmp(dset->varname[v], name)) {
 	dset->varname[v][0] = '\0';
 	strncat(dset->varname[v], name, VNAMELEN-1);
-	set_dataset_is_changed();
+	set_dataset_is_changed(dset, 1);
     }
 
     return err;
@@ -1815,7 +1814,7 @@ int dataset_replace_series (DATASET *dset, int v,
 	}
     }
 
-    set_dataset_is_changed();
+    set_dataset_is_changed(dset, 1);
 
     return 0;
 }
@@ -1861,7 +1860,7 @@ int dataset_replace_series_data (DATASET *dset, int v,
 	dset->Z[v][t] = x[s++];
     }
 
-    set_dataset_is_changed();
+    set_dataset_is_changed(dset, 1);
 
     return 0;
 }
@@ -2103,7 +2102,7 @@ int dataset_drop_listed_variables (int *list,
     if (free_dlist) {
 	free(dlist);
     } else if (dset->v != oldv) {
-	set_dataset_is_changed();
+	set_dataset_is_changed(dset, 1);
     }
 
     return err;
@@ -2202,7 +2201,7 @@ int dataset_renumber_variable (int v_old, int v_new,
     strcpy(dset->varname[v_new], vname);
     dset->varinfo[v_new] = vinfo;
 
-    set_dataset_is_changed();
+    set_dataset_is_changed(dset, 1);
 
     return 0;
 }
@@ -2834,10 +2833,10 @@ void series_set_discrete (DATASET *dset, int i, int s)
 
 	if (s && !(flags & VAR_DISCRETE)) {
 	    dset->varinfo[i]->flags |= VAR_DISCRETE;
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	} else if (!s && (flags & VAR_DISCRETE)) {
 	    dset->varinfo[i]->flags &= ~VAR_DISCRETE;
-	    set_dataset_is_changed();
+	    set_dataset_is_changed(dset, 1);
 	}
     }
 }
@@ -2849,7 +2848,7 @@ int series_record_label (DATASET *dset, int i,
 
     if (labels_differ(targ, s)) {
 	copy_label(&dset->varinfo[i]->label, s);
-	set_dataset_is_changed();
+	set_dataset_is_changed(dset, 1);
     }
 
     return 0;
@@ -2863,7 +2862,7 @@ int series_record_display_name (DATASET *dset, int i,
     if (strcmp(targ, s)) {
 	*targ = '\0';
 	strncat(targ, s, MAXDISP - 1);
-	set_dataset_is_changed();
+	set_dataset_is_changed(dset, 1);
     }
 
     return 0;

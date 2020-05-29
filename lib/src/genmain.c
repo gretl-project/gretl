@@ -639,7 +639,7 @@ static int gen_special (const char *s, const char *line,
     }
 
     if (dset->v > orig_v) {
-	set_dataset_is_changed();
+	set_dataset_is_changed(dset, 1);
 	genr_last_type = GRETL_TYPE_SERIES;
     }
 
@@ -839,6 +839,9 @@ int generate (const char *line, DATASET *dset,
     }
 
     genr_last_type = genr_get_output_type(&p);
+    if (genr_last_type == GRETL_TYPE_SERIES) {
+	set_dataset_is_changed(dset, 1);
+    }
 
     if (p.err == 1) {
 	/* a fairly good guess? */

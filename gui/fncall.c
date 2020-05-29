@@ -1990,7 +1990,6 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     gretl_bundle *bundle = NULL;
     int grab_bundle = 0;
     int show = 1;
-    int orig_v = dataset->v;
     int err = 0;
 
     funname = user_function_name_by_index(cinfo->iface);
@@ -2140,7 +2139,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	gui_errmsg(err);
     }
 
-    if (dataset->v != orig_v) {
+    if (check_dataset_is_changed(dataset)) {
 	mark_dataset_as_modified();
 	populate_varlist();
     }

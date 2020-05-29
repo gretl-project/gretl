@@ -363,7 +363,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
     console_scroll_to_end(cview, buf, &iter);
 
     /* update variable listing in main window if needed */
-    if (check_dataset_is_changed()) {
+    if (check_dataset_is_changed(dataset)) {
 	mark_dataset_as_modified();
 	populate_varlist();
     }
