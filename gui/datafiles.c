@@ -45,6 +45,9 @@
 #include <unistd.h>
 #include <errno.h>
 
+#define ADDONS_DATA_SEARCH (USER_SEARCH + 1)
+#define ADDONS_SCRIPT_SEARCH (USER_SEARCH + 2)
+
 static GtkWidget *files_vbox (windata_t *vwin);
 static GtkWidget *files_notebook (windata_t *vwin, int role);
 static int populate_notebook_filelists (windata_t *vwin,
@@ -439,7 +442,7 @@ static int seek_file_collections (const char *basedir,
 	path = g_strdup_printf("%sscripts", basedir);
     } else {
 	/* USER_SEARCH */
-	path = gretl_strdup(basedir);
+	path = g_strdup(basedir);
 	trim_slash(path);
     }
 
@@ -515,7 +518,52 @@ static void print_collections (int role)
 
     reset_files_stack(role);
 }
-#endif
+#endif /* COLL_DEBUG */
+
+#define APPEND_ADDONS 0 /*experiment */
+
+#if APPEND_ADDONS
+
+static int append_addons_collections (void)
+{
+    gchar *fname;
+    FILE *fp;
+    int err = 0;
+
+    fname = g_build_filename(gretl_home(), "functions", "addons.txt", NULL);
+    fp = gretl_fopen(fname, "rb");
+
+    if (fp != NULL) {
+	char addon[32];
+
+	while (fgets(addon, sizeof addon, fp)) {
+	    gchar *dname;
+
+	    g_strchomp(addon);
+	    dname = g_build_filename(gretl_home(), "functions",
+				     addon, "examples",
+				     "descriptions", NULL);
+	    if (gretl_test_fopen(dname, "r") == 0) {
+		file_collection *coll;
+		gchar *p = strrchr(dname, SLASH);
+
+		*p = '\0';
+		coll = file_collection_new(dname, "descriptions", &err);
+		if (coll != NULL) {
+		    err = push_collection(coll);
+		}
+	    }
+	    g_free(dname);
+	}
+	fclose(fp);
+    }
+
+    g_free(fname);
+
+    return err;
+}
+
+#endif /* APPEND_ADDONS */
 
 static int build_file_collections (int role)
 {
@@ -551,6 +599,10 @@ static int build_file_collections (int role)
 	    nd += seek_file_collections(wd, DATA_SEARCH, &derr[2]);
 	    ns += seek_file_collections(wd, SCRIPT_SEARCH, &serr[2]);
 	}
+
+#if APPEND_ADDONS
+	append_addons_collections();
+#endif
 
 	for (i=0; i<3; i++) {
 	    /* help to diagnose any errors? */
