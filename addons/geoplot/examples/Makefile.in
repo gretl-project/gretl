@@ -31,5 +31,5 @@ symlinks:
 	if [ ! -f $$f ] || [ $$src -nt $$f ] ; then ln -sf $$src . ; fi ; done
 
 clean:
-	rm -f string_table.txt *.plt *.dat *~
+	rm -f string_table.txt *.plt *.dat us_modified.json *~
 

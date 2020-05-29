@@ -42,7 +42,7 @@ $(PKG).zip: $(PKG).gfn pdfdoc
 symlinks:
 	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
 	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
-	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -s $(PKGSRC)/examples . ; fi
+	$(MAKE) -C examples symlinks
 
 pdfdoc: 
 	$(MAKE) -C doc
@@ -65,4 +65,5 @@ clean:
 	@rm -f *.plt *.dat string_table.txt
 	@rm -f test.out
 	@$(MAKE) -C doc clean
+	@$(MAKE) -C examples clean
 
