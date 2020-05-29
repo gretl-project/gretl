@@ -3412,12 +3412,14 @@ static int ends_condition (LOOPSET *loop, int j)
 
 static int do_compile_conditional (LOOPSET *loop, int j)
 {
+    int ret = 0;
+
     if ((loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF) &&
 	loop_cmd_nodol(loop, j) && loop_cmd_nosub(loop, j)) {
-	return 1;
-    } else {
-	return 0;
+	ret = 1;
     }
+
+    return ret;
 }
 
 #if HAVE_GMP
