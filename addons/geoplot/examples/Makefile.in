@@ -1,3 +1,6 @@
+topsrc = @top_srcdir@
+EXDIR = $(topsrc)/addons/geoplot/examples
+
 all: founders usa blue outlines edit seek 
 
 founders: founders.inp founders.geojson founders.csv
@@ -16,9 +19,17 @@ seek:
 	gretlcli -t seek_example.inp 
 
 edit:
-	gretlcli -t edit_example.inp 
+	gretlcli -t edit_example.inp
+
+all: | symlinks
+
+.PHONY : symlinks clean
+
+symlinks:
+	@for src in $(EXDIR)/*.* ; do \
+	f=`basename @src` ; \
+	if [ ! -f $$f ] || [ $$src -nt $$f ] ; then ln -sf $$src . ; fi ; done
 
 clean:
-	rm -f string_table.txt
-	rm -f *.plt *.dat *~
+	rm -f string_table.txt *.plt *.dat *~
 
