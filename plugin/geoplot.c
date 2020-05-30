@@ -1313,6 +1313,8 @@ static gretl_matrix *map2dat (const char *mapname,
 	return NULL;
     }
 
+    gretl_push_c_numeric_locale();
+
     if (has_suffix(infile, ".shp")) {
 	ret = shp2dat(infile, datname, zvec, mask);
     } else if (*infile && libset_get_bool(GEOJSON_FAST)) {
@@ -1338,6 +1340,8 @@ static gretl_matrix *map2dat (const char *mapname,
 	}
     }
 
+    gretl_pop_c_numeric_locale();
+
     return ret;
 }
 
@@ -1346,6 +1350,7 @@ static int real_map_to_csv (const char *fname,
 			    char **mapname)
 {
     int ftype;
+    int ret;
 
     if (has_suffix(fname, ".dbf")) {
 	ftype = DBF;
@@ -1359,11 +1364,17 @@ static int real_map_to_csv (const char *fname,
     fprintf(stderr, "real_map_to_csv...\n");
 #endif
 
+    gretl_push_c_numeric_locale();
+
     if (ftype == GEO) {
-	return geojson_to_csv(fname, csvname, mapname);
+	ret = geojson_to_csv(fname, csvname, mapname);
     } else {
-	return shapefile_to_csv(fname, csvname, ftype, mapname);
+	ret = shapefile_to_csv(fname, csvname, ftype, mapname);
     }
+
+    gretl_pop_c_numeric_locale();
+
+    return ret;
 }
 
 /* Get metadata from map file for importation to

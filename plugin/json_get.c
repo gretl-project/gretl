@@ -1214,6 +1214,19 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
     return err;
 }
 
+static void maybe_enable_gretl_objects (JsonReader *reader)
+{
+    if (json_reader_read_member(reader, "type")) {
+	const gchar *s = json_reader_get_string_value(reader);
+
+	if (s != NULL && !strcmp(s, "gretl_bundle")) {
+	    /* enable search for "gretl_matrix", etc. */
+	    do_gretl_objects = 1;
+	}
+    }
+    json_reader_end_member(reader);
+}
+
 /* end code subserving json_get_bundle() */
 
 /*
@@ -1247,6 +1260,9 @@ gretl_bundle *json_get_bundle (const char *data,
 	return NULL;
     }
 
+    /* disable this special feature by default */
+    do_gretl_objects = 0;
+
     if (path != NULL) {
 	if (*path == '/') {
 	    path++;
@@ -1269,17 +1285,9 @@ gretl_bundle *json_get_bundle (const char *data,
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
-    do_gretl_objects = 0;
 
     if (json_reader_is_object(reader)) {
-	if (json_reader_read_member(reader, "type")) {
-	    const gchar *s = json_reader_get_string_value(reader);
-
-	    if (s != NULL && !strcmp(s, "gretl_bundle")) {
-		do_gretl_objects = 1;
-	    }
-	}
-	json_reader_end_member(reader);
+	maybe_enable_gretl_objects(reader);
 	*err = jb_do_object(reader, &jb, NULL);
     } else if (json_reader_is_array(reader)) {
 	*err = jb_do_array(reader, &jb, NULL);
