@@ -45,9 +45,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define ADDONS_DATA_SEARCH (USER_SEARCH + 1)
-#define ADDONS_SCRIPT_SEARCH (USER_SEARCH + 2)
-
 static GtkWidget *files_vbox (windata_t *vwin);
 static GtkWidget *files_notebook (windata_t *vwin, int role);
 static int populate_notebook_filelists (windata_t *vwin,
@@ -61,25 +58,14 @@ struct _file_collection {
     char *path;
     char *descfile;
     char *title;
-    int which;
+    int type;
     GtkWidget *listbox;
 };
 
 enum {
-    STACK_PUSH,
-    STACK_POP_DATA,
-    STACK_POP_PS,
-    STACK_RESET_DATA,
-    STACK_RESET_PS,
-    STACK_SORT_DATA,
-    STACK_SORT_PS,
-    STACK_DESTROY
-};
-
-enum {
-    COLL_NONE,
     COLL_DATA,
-    COLL_PS
+    COLL_PS,
+    COLL_MAX
 };
 
 enum {
@@ -98,6 +84,30 @@ enum {
 	                  c == DBNOMICS_SERIES)
 
 #define DBNOMICS_ACTION(c) (c == DBNOMICS_DB || c == DBNOMICS_SERIES)
+
+static GList *collections[4];
+
+static int role_to_index (int role)
+{
+    if (role == TEXTBOOK_DATA) {
+	return COLL_DATA;
+    } else if (role == PS_FILES) {
+	return COLL_PS;
+    } else {
+	return -1;
+    }
+}
+
+static GList *collections_for_role (int role)
+{
+    int i = role_to_index(role);
+
+    if (i >= 0 && collections[i] != NULL) {
+	return g_list_first(collections[i]);
+    } else {
+	return NULL;
+    }
+}
 
 static void
 read_fn_files_in_dir (GDir *dir, const char *path,
@@ -153,7 +163,7 @@ static int is_oldstyle_collection (file_collection *coll, int *err)
 	    if (coll->title == NULL) {
 		*err = E_ALLOC;
 	    } else {
-		coll->which = COLL_DATA;
+		coll->type = COLL_DATA;
 	    }
 	    return 1;
 	}
@@ -165,7 +175,7 @@ static int is_oldstyle_collection (file_collection *coll, int *err)
 	if (coll->title == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    coll->which = COLL_PS;
+	    coll->type = COLL_PS;
 	}
 	return 1;
     }
@@ -183,7 +193,7 @@ static int get_title_from_descfile (file_collection *coll)
     int err = 0;
 
     test = full_path(coll->path, coll->descfile);
-    fp = gretl_fopen(test, "r");
+    fp = gretl_fopen(test, "rb");
 
     if (fp != NULL && fgets(line, sizeof line, fp) != NULL) {
 	gretl_strstrip(line);
@@ -221,7 +231,7 @@ static file_collection *file_collection_new (const char *path,
 	return NULL;
     }
 
-    coll->which = COLL_NONE;
+    coll->type = -1;
     coll->title = NULL;
     coll->path = gretl_strdup(path);
     coll->descfile = gretl_strdup(descfile);
@@ -233,9 +243,9 @@ static file_collection *file_collection_new (const char *path,
 
 	if (!*err && !os) {
 	    if (strstr(coll->descfile, "ps_")) {
-		coll->which = COLL_PS;
+		coll->type = COLL_PS;
 	    } else {
-		coll->which = COLL_DATA;
+		coll->type = COLL_DATA;
 	    }
 	    *err = get_title_from_descfile(coll);
 	}
@@ -251,8 +261,8 @@ static file_collection *file_collection_new (const char *path,
 
 static int compare_colls (const void *a, const void *b)
 {
-    const file_collection *ca = *(const file_collection **) a;
-    const file_collection *cb = *(const file_collection **) b;
+    const file_collection *ca = a;
+    const file_collection *cb = b;
 
     if (!strcmp(ca->title, "Gretl")) {
 	return -1;
@@ -263,109 +273,37 @@ static int compare_colls (const void *a, const void *b)
     }
 }
 
-static void collection_stack_sort (file_collection **colls, int n)
+static void push_collection (file_collection *collection)
 {
-    if (n >= 2) {
-	qsort(colls, n, sizeof *colls, compare_colls);
-    }
-}
+    int i = collection->type;
 
-static file_collection *collection_stack (file_collection *coll, int op)
-{
-    static file_collection **datacoll;
-    static file_collection **pscoll;
-    static int n_data;
-    static int n_data_popped;
-    static int n_ps;
-    static int n_ps_popped;
-    file_collection *ret = NULL;
-    int j;
-
-    if (op == STACK_PUSH && coll != NULL) {
-	void *tmp;
-
-	if (coll->which == COLL_DATA) {
-	    tmp = realloc(datacoll, (n_data + 1) * sizeof *datacoll);
-	    if (tmp != NULL) {
-		datacoll = tmp;
-		datacoll[n_data++] = coll;
-		ret = coll;
-	    }
-	} else if (coll->which == COLL_PS) {
-	    tmp = realloc(pscoll, (n_ps + 1) * sizeof *pscoll);
-	    if (tmp != NULL) {
-		pscoll = tmp;
-		pscoll[n_ps++] = coll;
-		ret = coll;
-	    }
-	}
-    } else if (op == STACK_POP_DATA && n_data_popped < n_data) {
-	ret = datacoll[n_data_popped++];
-    } else if (op == STACK_POP_PS && n_ps_popped < n_ps) {
-	ret = pscoll[n_ps_popped++];
-    } else if (op == STACK_RESET_DATA) {
-	n_data_popped = 0;
-    } else if (op == STACK_RESET_PS) {
-	n_ps_popped = 0;
-    } else if (op == STACK_SORT_DATA) {
-	collection_stack_sort(datacoll, n_data);
-    } else if (op == STACK_SORT_PS) {
-	collection_stack_sort(pscoll, n_ps);
-    } else if (op == STACK_DESTROY) {
-        for (j=0; j<n_data; j++) {
-	    free_file_collection(datacoll[j]);
-	}
-        free(datacoll);
-        datacoll = NULL;
-        n_data = 0;
-        n_data_popped = 0;
-
-        for (j=0; j<n_ps; j++) {
-	    free_file_collection(pscoll[j]);
-	}
-        free(pscoll);
-        pscoll = NULL;
-        n_ps = 0;
-        n_ps_popped = 0;
-    }
-
-    return ret;
-}
-
-static int push_collection (file_collection *collection)
-{
-    return (collection_stack(collection, STACK_PUSH) == NULL);
-}
-
-static file_collection *pop_file_collection (int role)
-{
-    if (role == TEXTBOOK_DATA) {
-	return collection_stack(NULL, STACK_POP_DATA);
-    } else {
-	return collection_stack(NULL, STACK_POP_PS);
-    }
+    collections[i] = g_list_append(collections[i], collection);
 }
 
 void destroy_file_collections (void)
 {
-    collection_stack(NULL, STACK_DESTROY);
-}
+    GList *L;
+    int i;
 
-static void reset_files_stack (int role)
-{
-    if (role == TEXTBOOK_DATA) {
-	collection_stack(NULL, STACK_RESET_DATA);
-    } else {
-	collection_stack(NULL, STACK_RESET_PS);
+    for (i=0; i<COLL_MAX; i++) {
+	if (collections[i] != NULL) {
+	    L = g_list_first(collections[i]);
+	    while (L) {
+		free_file_collection(L->data);
+		L = L->next;
+	    }
+	    g_list_free(collections[i]);
+	    collections[i] = NULL;
+	}
     }
 }
 
 static void sort_files_stack (int role)
 {
-    if (role == TEXTBOOK_DATA) {
-	collection_stack(NULL, STACK_SORT_DATA);
-    } else {
-	collection_stack(NULL, STACK_SORT_PS);
+    int i = role_to_index(role);
+
+    if (i >= 0 && collections[i] != NULL) {
+	collections[i] = g_list_sort(collections[i], compare_colls);
     }
 }
 
@@ -392,12 +330,8 @@ static int get_file_collections_from_dir (const char *path, GDir *dir,
 	    if (!strcmp(dname + len - 12, "descriptions")) {
 		coll = file_collection_new(path, dname, err);
 		if (coll != NULL) {
-		    *err = push_collection(coll);
-		    if (*err) {
-			fprintf(stderr, "push_collection failed\n");
-		    } else {
-			n++;
-		    }
+		    push_collection(coll);
+		    n++;
 		}
 	    }
 	}
@@ -493,6 +427,7 @@ static int seek_file_collections (const char *basedir,
 }
 
 #if COLL_DEBUG
+
 static void print_collection (const file_collection *coll)
 {
     fprintf(stderr, "path = '%s'\n", coll->path);
@@ -504,7 +439,8 @@ static void print_collection (const file_collection *coll)
 
 static void print_collections (int role)
 {
-    file_collection *coll;
+    GList *L;
+    int i;
 
     if (role == TEXTBOOK_DATA) {
 	fputs("\n*** Data collections:\n", stderr);
@@ -512,58 +448,16 @@ static void print_collections (int role)
 	fputs("\n*** Script collections:\n", stderr);
     }
 
-    while ((coll = pop_file_collection(role))) {
-	print_collection(coll);
-    }
-
-    reset_files_stack(role);
-}
-#endif /* COLL_DEBUG */
-
-#define APPEND_ADDONS 0 /*experiment */
-
-#if APPEND_ADDONS
-
-static int append_addons_collections (void)
-{
-    gchar *fname;
-    FILE *fp;
-    int err = 0;
-
-    fname = g_build_filename(gretl_home(), "functions", "addons.txt", NULL);
-    fp = gretl_fopen(fname, "rb");
-
-    if (fp != NULL) {
-	char addon[32];
-
-	while (fgets(addon, sizeof addon, fp)) {
-	    gchar *dname;
-
-	    g_strchomp(addon);
-	    dname = g_build_filename(gretl_home(), "functions",
-				     addon, "examples",
-				     "descriptions", NULL);
-	    if (gretl_test_fopen(dname, "r") == 0) {
-		file_collection *coll;
-		gchar *p = strrchr(dname, SLASH);
-
-		*p = '\0';
-		coll = file_collection_new(dname, "descriptions", &err);
-		if (coll != NULL) {
-		    err = push_collection(coll);
-		}
-	    }
-	    g_free(dname);
+    for (i=0; i<COLL_MAX; i++) {
+	L = g_list_first(collections[i]);
+	while (L) {
+	    print_collection(L->data);
+	    L = L->next;
 	}
-	fclose(fp);
     }
-
-    g_free(fname);
-
-    return err;
 }
 
-#endif /* APPEND_ADDONS */
+#endif /* COLL_DEBUG */
 
 static int build_file_collections (int role)
 {
@@ -599,10 +493,6 @@ static int build_file_collections (int role)
 	    nd += seek_file_collections(wd, DATA_SEARCH, &derr[2]);
 	    ns += seek_file_collections(wd, SCRIPT_SEARCH, &serr[2]);
 	}
-
-#if APPEND_ADDONS
-	append_addons_collections();
-#endif
 
 	for (i=0; i<3; i++) {
 	    /* help to diagnose any errors? */
@@ -700,7 +590,7 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     char line[MAXLEN];
     char *index;
     FILE *fp;
-    int datacols = 2;
+    int datacols = 0;
     int err = 0;
 
     index = full_path(collection->path, collection->descfile);
@@ -715,54 +605,41 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 
     while (fgets(line, sizeof line, fp) && !err) {
 	char fname[24], descrip[80], data[64];
+	int nf;
 
 	if (*line == '#') continue;
 
-	if (win->role == TEXTBOOK_DATA) {
-	    /* data files */
-	    int nf;
+	nf = sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"",
+		    fname, descrip, data);
 
-	    nf = sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"",
-			fname, descrip, data);
-	    if (nf == 3) {
-		err = validate_desc_strings(fname, descrip, data);
-		if (!err) {
-		    datacols = 3;
-		    gtk_list_store_append(store, &iter);
-		    gtk_list_store_set(store, &iter,
-				       0, strip_extension(fname),
-				       1, descrip,
-				       2, data, -1);
-		}
-	    } else if (nf == 2) {
-		err = validate_desc_strings(fname, descrip, NULL);
-		if (!err) {
-		    gtk_list_store_append(store, &iter);
-		    gtk_list_store_set(store, &iter,
-				       0, strip_extension(fname),
-				       1, descrip, -1);
-		}
+	if (nf == 3) {
+	    err = validate_desc_strings(fname, descrip, data);
+	    if (!err) {
+		datacols = 3;
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter,
+				   0, strip_extension(fname),
+				   1, descrip,
+				   2, data, -1);
+	    }
+	} else if (nf == 2) {
+	    err = validate_desc_strings(fname, descrip, NULL);
+	    if (!err) {
+		datacols = 2;
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter,
+				   0, strip_extension(fname),
+				   1, descrip, -1);
 	    }
 	} else {
-	    /* script files */
-	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"",
-		       fname, descrip, data) == 3) {
-		err = validate_desc_strings(fname, descrip, data);
-		if (!err) {
-		    gtk_list_store_append(store, &iter);
-		    gtk_list_store_set(store, &iter,
-				       0, strip_extension(fname),
-				       1, descrip,
-				       2, data, -1);
-		}
-	    }
+	    ; /* ?? */
 	}
     }
 
     fclose(fp);
 
-    if (!err && win->role == TEXTBOOK_DATA && datacols == 2) {
-	/* dataset windows can have either 2 or 3 columns */
+    if (!err && datacols == 2) {
+	/* these windows can have either 2 or 3 columns */
 	GtkTreeViewColumn *col;
 
 	col = gtk_tree_view_get_column(GTK_TREE_VIEW(win->listbox), 2);
@@ -2180,6 +2057,8 @@ void listbox_select_first (windata_t *vwin)
     gtk_widget_grab_focus(vwin->listbox);
 }
 
+#define notebook_needed(r) (r==TEXTBOOK_DATA || r==PS_FILES)
+
 void display_files (int role, const gchar *path)
 {
     GtkWidget *filebox;
@@ -2240,7 +2119,7 @@ void display_files (int role, const gchar *path)
 
     make_files_toolbar(vwin);
 
-    if (role == TEXTBOOK_DATA || role == PS_FILES) {
+    if (notebook_needed(role)) {
 	/* we'll need more than one tab */
 	filebox = files_notebook(vwin, role);
     } else {
@@ -2257,14 +2136,16 @@ void display_files (int role, const gchar *path)
 
     if (role == TEXTBOOK_DATA) {
 	file_collection *collection;
+	GList *L = collections_for_role(role);
 
 	build_datafiles_popup(vwin);
-	while ((collection = pop_file_collection(role))) {
+	while (L) {
+	    collection = L->data;
 	    g_signal_connect(G_OBJECT(collection->listbox), "button-press-event",
 			     G_CALLBACK(popup_menu_handler),
 			     vwin->popup);
+	    L = L->next;
 	}
-	reset_files_stack(role);
     } else if (role == FUNC_FILES || role == REMOTE_FUNC_FILES ||
 	       role == REMOTE_ADDONS || role == PKG_REGISTRY) {
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
@@ -2300,7 +2181,7 @@ void display_files (int role, const gchar *path)
     }
 
     /* put stuff into list box(es) */
-    if (role == TEXTBOOK_DATA || role == PS_FILES) {
+    if (notebook_needed(role)) {
 	err = populate_notebook_filelists(vwin, filebox, role);
     } else if (role == FUNC_FILES) {
 	err = populate_filelist(vwin, NULL);
@@ -3197,16 +3078,12 @@ static void switch_files_page (GtkNotebook *notebook,
 
 static GtkWidget *files_notebook (windata_t *vwin, int role)
 {
+    GList *L = NULL;
     file_collection *collection;
     GtkWidget *notebook;
     GtkWidget *page;
     GtkWidget *label;
     int err = 0;
-
-    if (role != TEXTBOOK_DATA && role != PS_FILES) {
-	/* we shouldn't be here! */
-	return NULL;
-    }
 
     /* assemble the info we'll need */
     err = build_file_collections(role);
@@ -3215,10 +3092,16 @@ static GtkWidget *files_notebook (windata_t *vwin, int role)
 	return NULL;
     }
 
+    L = collections_for_role(role);
+    if (L == NULL) {
+	return NULL;
+    }
+
     notebook = gtk_notebook_new();
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
 
-    while ((collection = pop_file_collection(role))) {
+    while (L) {
+	collection = L->data;
 	page = files_vbox(vwin);
 	label = gtk_label_new(collection->title);
 	gtk_widget_show(label);
@@ -3229,9 +3112,8 @@ static GtkWidget *files_notebook (windata_t *vwin, int role)
 	g_object_set_data(G_OBJECT(page), "listbox", collection->listbox);
 	g_signal_connect(G_OBJECT(collection->listbox), "key-press-event",
 			 G_CALLBACK(enter_opens_file), vwin);
+	L = L->next;
     }
-
-    reset_files_stack(role);
 
     g_signal_connect(G_OBJECT(notebook), "switch-page",
 		     G_CALLBACK(switch_files_page),
@@ -3256,26 +3138,34 @@ static int populate_notebook_filelists (windata_t *vwin,
 {
     file_collection *collection;
     file_collection *selected = NULL;
-    const char *title;
+    const char *page = NULL;
+    GList *L = NULL;
     int found = 0;
     int pgnum = 0;
 
-    if (role == TEXTBOOK_DATA) {
-	title = get_datapage();
-    } else {
-	title = get_scriptpage();
+    L = collections_for_role(role);
+    if (L == NULL) {
+	return 1;
     }
 
-    reset_files_stack(role);
+    if (role == TEXTBOOK_DATA) {
+	page = get_datapage();
+    } else if (role == PS_FILES) {
+	page = get_scriptpage();
+    }
 
-    while ((collection = pop_file_collection(role))) {
+    selected = L->data;
+
+    while (L) {
+	collection = L->data;
 	vwin->listbox = collection->listbox;
 	populate_filelist(vwin, collection);
-	if (*title != '\0' && !strcmp(collection->title, title)) {
+	if (page != NULL && !strcmp(collection->title, page)) {
 	    selected = collection;
 	    pgnum = found;
 	}
 	found++;
+	L = L->next;
     }
 
     if (found == 0) {
@@ -3283,13 +3173,6 @@ static int populate_notebook_filelists (windata_t *vwin,
 	fprintf(stderr, "populate_notebook_filelists: found = 0!\n");
 	return 1;
     }
-
-    if (selected == NULL) {
-	reset_files_stack(role);
-	selected = pop_file_collection(role);
-    }
-
-    reset_files_stack(role);
 
     vwin->listbox = selected->listbox;
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), pgnum);

@@ -1,3 +1,8 @@
+* Data files: 
+
+  IBM.gdt:  daily IBM stock price, T = 12328
+  msft.gdt: daily Microsoft stock price, T = 4819
+
 * The following example scripts can be run non-interactively,
   without any third-party dependencies, and should complete
   successfully

@@ -4,9 +4,6 @@
       <menu action="OpenDataMenu">
 	<menuitem action="OpenData"/>
 	<menuitem action="DisplayDataFiles"/>
-	<menu action="PkgDataMenu">
-	  <placeholder name="PkgDataFiles"/>
-	</menu>
 	<separator/>
 	<placeholder name="RecentData"/>
       </menu>
@@ -23,9 +20,6 @@
       <menu action="ScriptFiles">
 	<menuitem action="OpenScript"/>
 	<menuitem action="DisplayScripts"/>
-	<menu action="PkgScriptMenu">
-	  <placeholder name="PkgScripts"/>
-	</menu>
 	<separator/>
 	<menu action="NewScript">
 	  <menuitem action="GretlScript"/>
@@ -67,6 +61,9 @@
 	<menuitem action="EditSpec"/>
 	<separator/>
 	<placeholder name="RecentGfns"/>
+      </menu>
+      <menu action="AddonResources">
+	<placeholder name="AddonsFiles"/>
       </menu>
       <separator/>
       <menuitem action="Quit"/>

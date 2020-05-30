@@ -1688,7 +1688,6 @@ GtkActionEntry main_entries[] = {
     { "OpenDataMenu", NULL, N_("_Open data"), NULL, NULL, NULL },
     { "OpenData",     GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
     { "DisplayDataFiles", GTK_STOCK_OPEN, N_("_Sample file..."), "", NULL, G_CALLBACK(show_files) },
-    { "PkgDataMenu", NULL, N_("_From addon"), NULL, NULL, NULL },
     { "AppendData", NULL, N_("_Append data..."), NULL, NULL, G_CALLBACK(open_data) },
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), NULL, NULL, G_CALLBACK(auto_store) },
     { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as..."), NULL, NULL, G_CALLBACK(fsave_callback) },
@@ -1701,7 +1700,6 @@ GtkActionEntry main_entries[] = {
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
     { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script_callback) },
     { "DisplayScripts", GTK_STOCK_OPEN, N_("_Practice file..."), "", NULL, G_CALLBACK(show_files) },
-    { "PkgScriptMenu", NULL, N_("_From addon"), NULL, NULL, NULL },
     { "NewScript", GTK_STOCK_NEW, N_("_New script"), "", NULL, NULL },
     { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },
@@ -1735,6 +1733,7 @@ GtkActionEntry main_entries[] = {
     { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
     { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
     { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
+    { "AddonResources", NULL, N_("_Resource from addon"), NULL, NULL, NULL },
 
     { "Quit", GTK_STOCK_QUIT, NULL, NULL, NULL,  G_CALLBACK(menu_exit_check)},
 

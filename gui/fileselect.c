@@ -623,11 +623,19 @@ file_selector_process_result (const char *in_fname, int action,
     }
 
     if (action == OPEN_ANY) {
+	/* designed for browsing an addon's "examples" directory */
 	if (has_suffix(fname, ".inp")) {
 	    action = OPEN_SCRIPT;
 	} else if (has_suffix(fname, ".gdt") ||
-		   has_suffix(fname, ".gdtb")) {
+		   has_suffix(fname, ".gdtb") ||
+		   has_suffix(fname, ".csv") ||
+		   has_suffix(fname, ".json") ||
+		   has_suffix(fname, ".geojson") ||
+		   has_suffix(fname, ".shp")) {
 	    action = OPEN_DATA;
+	} else if (strstr(fname, "README") || has_suffix(fname, ".txt")) {
+	    view_file(fname, 0, 0, 78, 370, VIEW_FILE);
+	    return;
 	} else {
 	    os_open_other(fname);
 	    return;
@@ -994,10 +1002,10 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
 	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
     } else if (action == OPEN_ANY) {
+	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
 	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
 	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
 	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
-	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
     } else if (action == UPLOAD_PKG) {
 	filesel_add_filter(filesel, N_("plain function packages (*.gfn)"), "*.gfn");
 	filesel_add_filter(filesel, N_("zipped function packages (*.zip)"), "*.zip");
