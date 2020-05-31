@@ -499,13 +499,6 @@ int process_templates (char *verstr)
 	{ "index_pat.html",           "index.html" },
 	{ "win32_pat.html",           "win32/index.html" },
 	{ "osx_pat.html",             "osx.html" },
-#if 0
-	{ "mac-quartz_pat.html",      "mac-intel-quartz.html" },
-	{ "mac-intel_pat.html",       "mac-intel-x11.html" },
-	{ "mac-ppc_pat.html",         "mac-ppc.html" },
-#else
-	{ "mac-legacy_pat.html",      "mac-legacy.html" },
-#endif
 	{ "gretl_espanol_pat.html",   "es.html" },
 	{ "win32_pat_es.html",        "win32/index_es.html", },
 	{ "osx_pat_es.html",          "osx_es.html" },
