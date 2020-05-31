@@ -30,7 +30,6 @@ version 2020c, in progress
 - ODBC importation: correct the handling of string-valued
   series; add --verbose and --no-align options; ensure
   appropriate error messages in GUI usage
-- "dataset addobs": add a --panel-time option
 - "slicing" of arrays: allow use of selection vector
 - Functions called via "if": show any printed output
 - "dataset addobs": add --panel-time option to extend a
