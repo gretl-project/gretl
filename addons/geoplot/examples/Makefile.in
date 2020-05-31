@@ -27,8 +27,9 @@ all: | symlinks
 
 symlinks:
 	@for src in $(EXDIR)/*.* ; do \
-	f=`basename @src` ; \
-	if [ ! -f $$f ] || [ $$src -nt $$f ] ; then ln -sf $$src . ; fi ; done
+	f=`basename $$src` ; \
+	if [[ ! $$f =~ \.in$$ ]] && ([ ! -f $$f ] || [ $$src -nt $$f ]) ; then \
+	ln -sf $$src . ; fi ; done
 
 clean:
 	rm -f string_table.txt *.plt *.dat us_modified.json *~
