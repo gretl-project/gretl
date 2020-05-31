@@ -85,7 +85,7 @@ enum {
 
 #define DBNOMICS_ACTION(c) (c == DBNOMICS_DB || c == DBNOMICS_SERIES)
 
-static GList *collections[4];
+static GList *collections[COLL_MAX];
 
 static int role_to_index (int role)
 {
