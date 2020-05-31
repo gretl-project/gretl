@@ -698,6 +698,27 @@
       </description>
     </function>
 
+    <function name="$pkgdir" section="access" output="string">
+      <description>
+	<para>
+	  A special facility for use by authors of function
+	  packages. Returns an empty string unless a packaged function
+	  is executing, in which case it returns the full (platform
+	  dependent) path under which the package is installed. For
+	  instance the return value might be
+	</para>
+	<code>
+	  /usr/share/gretl/functions/foo
+	</code>
+	<para>
+	  if that's the directory in which <lit>foo.gfn</lit> is
+	  located. This enables package writers to access resources
+	  such as matrix files that they have included in their
+	  package.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
       <description>
 	<para>

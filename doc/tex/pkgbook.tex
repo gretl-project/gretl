@@ -958,7 +958,8 @@ extra content: you'll want to add a line like
 data-files = somedata.gdt
 \end{code}
 where we assume that the file \texttt{somedata.gdt} file exists and is
-in the \texttt{mypkg} directory.
+in the \texttt{mypkg} directory. See section~\ref{sec:spec-extra} for
+more details.
 
 Creating the zip file can be done ``by hand'' if the command-line
 \textsf{zip} program is available (or substitute \textsf{pkzip} if
@@ -2724,12 +2725,18 @@ GUI package editor they appear under the tabs \textsf{Data files} and
 
 \begin{description}
 
-\item \texttt{data-files} (optional): Specifies extra files that
-  should be included in the package. Use of this option implies that
-  the package should take the form of a zipfile. See
-  chapter~\ref{chap:zipfile} for details.
+\item \texttt{data-files} (optional): Specifies an extra file or
+  subdirectory that should be included in the package. Use of this
+  option implies that the package should take the form of a
+  zipfile. If just one extra file is to be included you may give its
+  name as the parameter to \texttt{data-files} (as in the example
+  below); if several extra files are to be packaged, put them into a
+  subdirectory and give its name as parameter. See
+  chapter~\ref{chap:zipfile} for examples, and in particular
+  section~\ref{sec:HIP} for the special meaning of including a
+  subdirectory named \texttt{examples}.
 
-  \ttusage{data-files = special.gdt extradir}
+  \ttusage{data-files = special.gdt}
 
 \item \texttt{depends} (optional): Specifies one or more packages upon
   which the given package depends. This information should be added if
@@ -2914,6 +2921,7 @@ matrix C = mread(matname)
 \end{code}
 
 \section{Example: \textsf{HIP}}
+\label{sec:HIP}
 
 Our final illustration is the \textsf{HIP} package (which now has
 official ``addon'' status), written by Jack Lucchetti and Claudia

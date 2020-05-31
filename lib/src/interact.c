@@ -1941,6 +1941,10 @@ static int lib_open_append (ExecState *s,
     } else if (cmd->ci != JOIN && (opt & OPT_O)) {
 	ftype = GRETL_ODBC;
 	dbdata = 1;
+    } else if (cmd->ci == OPEN && (opt & OPT_K)) {
+	/* --frompkg=whatever */
+	err = get_package_data_path(cmd->param, newfile);
+	goto pkgdata;
     } else if (!strcmp(cmd->param, "dbnomics")) {
 	ftype = GRETL_DBNOMICS;
 	dbdata = 1;
@@ -1957,6 +1961,8 @@ static int lib_open_append (ExecState *s,
     } else {
 	err = get_full_filename(cmd->param, newfile, OPT_NONE);
     }
+
+ pkgdata:
 
     if (err) {
 	errmsg(err, prn);
