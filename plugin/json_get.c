@@ -1449,6 +1449,15 @@ static void gretl_array_to_json (gretl_array *a,
     }
 }
 
+static void jb_add_double (JsonBuilder *jb, double x)
+{
+    if (na(x)) {
+	json_builder_add_string_value(jb, "NA");
+    } else {
+	json_builder_add_double_value(jb, x);
+    }
+}
+
 /* write matrix @m as a JSON object, including the
    matrix data in vec form */
 
@@ -1486,11 +1495,7 @@ static void matrix_to_json_as_vec (void *data,
     json_builder_set_member_name(jb, "data");
     json_builder_begin_array(jb);
     for (i=0; i<n; i++) {
-	if (na(val[i])) {
-	    json_builder_add_string_value(jb, "NA");
-	} else {
-	    json_builder_add_double_value(jb, val[i]);
-	}
+	jb_add_double(jb, val[i]);
     }
     json_builder_end_array(jb);
 
@@ -1521,7 +1526,7 @@ static void matrix_to_json_via_array (void *data,
 
     if (len > 0) {
 	for (i=0; i<len; i++) {
-	    json_builder_add_double_value(jb, val[i]);
+	    jb_add_double(jb, val[i]);
 	}
     } else {
 	double mij;
@@ -1530,7 +1535,7 @@ static void matrix_to_json_via_array (void *data,
 	    json_builder_begin_array(jb);
 	    for (j=0; j<m->cols; j++) {
 		mij = gretl_matrix_get(m, i, j);
-		json_builder_add_double_value(jb, mij);
+		jb_add_double(jb, mij);
 	    }
 	    json_builder_end_array(jb);
 	}
@@ -1593,7 +1598,7 @@ static void bundled_item_to_json (gpointer keyp,
     } else if (type == GRETL_TYPE_DOUBLE) {
 	double x = *(double *) data;
 
-	json_builder_add_double_value(jb, x);
+	jb_add_double(jb, x);
     } else if (type == GRETL_TYPE_INT) {
 	int k = *(int *) data;
 
@@ -1648,10 +1653,14 @@ int bundle_to_json (gretl_bundle *b, const char *fname,
     mat2arr = 0;
 
     btype = gretl_bundle_get_string(b, "type", NULL);
-    if (btype != NULL && !strcmp(btype, "FeatureCollection")) {
-	/* GeoJSON bundle */
-	mat2arr = 1;
-    } else if (btype == NULL) {
+    if (btype != NULL) {
+	if (!strcmp(btype, "FeatureCollection")) {
+	    /* GeoJSON bundle */
+	    mat2arr = 1;
+	} else if (!strcmp(btype, "plain_json")) {
+	    mat2arr = 1;
+	}
+    } else {
 	/* AC 2020-05-27: not sure about this */
 	gretl_bundle_set_string(b, "type", "gretl_bundle");
     }
