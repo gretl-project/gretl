@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-04-18 19:25-0400\n"
-"PO-Revision-Date: 2020-05-04 13:10-0300\n"
+"PO-Revision-Date: 2020-06-02 13:26-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.3.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -8184,10 +8184,10 @@ msgstr "compilado em"
 #: gui/about.c:194 gui/about.c:196
 msgid "translator_credits"
 msgstr ""
-"Raquel Guimarães\n"
-"Henrique Andrade <henrique.andrade@ufrgs.br>\n"
-"Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 29 de outubro de 2015."
+"Traduzido por\n"
+"Hélio Guilherme <helio_guilherme@hotmail.com>,\n"
+"Henrique Andrade <henrique.andrade@ufrgs.br> e\n"
+"Raquel Guimarães."
 
 #: gui/about.c:205
 msgid "News"
@@ -17790,7 +17790,6 @@ msgid "choose 1 for medians"
 msgstr "escolha 1 para medianas"
 
 #: plugin/addons-i18n.c:84
-#, fuzzy
 msgid "measure to target"
 msgstr "medida do objetivo"
 
