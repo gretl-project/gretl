@@ -799,7 +799,7 @@ static void vname_from_colname (char *targ, const char *src,
 	while (*s) {
 	    if (*s == ' ') {
 		*s = '_';
-	    } else if (!isalnum(*s) && *s != ' ') {
+	    } else if (!isalnum(*s) && *s != '_') {
 		err = 1;
 		break;
 	    }
