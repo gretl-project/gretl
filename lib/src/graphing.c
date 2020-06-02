@@ -9591,6 +9591,8 @@ int write_map_gp_file (const char *plotfile,
 	}
     }
 
+    gretl_push_c_numeric_locale();
+
     if (height > 0) {
 	dims = geoplot_dimensions(xlim, ylim, height, have_payload,
 				  &non_standard);
@@ -9731,6 +9733,8 @@ int write_map_gp_file (const char *plotfile,
 	    }
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 
     gretl_matrix_free(dims);
 
