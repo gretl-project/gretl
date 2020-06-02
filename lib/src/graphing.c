@@ -9482,6 +9482,7 @@ static int inline_map_data (const char *datfile, FILE *fp)
     }
     fputs("EOD\n", fp);
 
+    fclose(fsrc);
     gretl_remove(datfile); /* not needed any more */
 
     return 0;
