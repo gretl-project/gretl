@@ -281,7 +281,7 @@ void gretl_xml_put_unsigned (const char *tag, unsigned int u, PRN *prn)
  * @x: value to put (as attribute)
  * @fp: file to which to write.
  *
- * Writes to @fp a string of the form "\%s=\%.16g" if the value of
+ * Writes to @fp a string of the form "\%s=\%.17g" if the value of
  * @x is valid, otherwise "\%s=NA".
  */
 
@@ -290,7 +290,7 @@ void gretl_xml_put_double (const char *tag, double x, PRN *prn)
     if (na(x)) {
 	pprintf(prn, "%s=\"NA\" ", tag);
     } else {
-	pprintf(prn, "%s=\"%.16g\" ", tag, x);
+	pprintf(prn, "%s=\"%.17g\" ", tag, x);
     }
 }
 
@@ -313,7 +313,7 @@ void gretl_xml_put_double_array (const char *tag, double *x, int n,
 	if (na(x[i])) {
 	    pputs(prn, "NA ");
 	} else {
-	    pprintf(prn, "%.16g ", x[i]);
+	    pprintf(prn, "%.17g ", x[i]);
 	}
     }
     pprintf(prn, "</%s>\n", tag);
@@ -595,7 +595,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 		continue;
 	    }
 #endif
-	    pprintf(prn, "%.16g ", x);
+	    pprintf(prn, "%.17g ", x);
 	}
 	pputs(prn, "\n");
     }
@@ -618,7 +618,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 
 void gretl_finite_scalar_serialize (double x, const char *name, PRN *prn)
 {
-    pprintf(prn, "<scalar name=\"%s\" value=\"%.16g\"/>\n", name, x);
+    pprintf(prn, "<scalar name=\"%s\" value=\"%.17g\"/>\n", name, x);
 }
 
 /**
