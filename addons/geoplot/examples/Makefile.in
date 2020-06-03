@@ -28,7 +28,7 @@ all: | symlinks
 symlinks:
 	@for src in $(EXDIR)/*.* ; do \
 	f=`basename $$src` ; \
-	if [[ ! $$f =~ \.in$$ ]] && ([ ! -f $$f ] || [ $$src -nt $$f ]) ; then \
+	if ([ ! -f $$f ] || [ $$src -nt $$f ]) && ! [[ $$f =~ \.in$$ ]] ; then \
 	ln -sf $$src . ; fi ; done
 
 clean:
