@@ -698,6 +698,27 @@
       </description>
     </function>
 
+    <function name="$pkgdir" section="access" output="string">
+      <description>
+	<para>
+	  Utilidad especial para ser utilizada por los autores de paquetes de
+	  función. Devuelve una cadena de texto vacía excepto que se esté
+	  ejecutando una función empaquetada, en cuyo caso devuelve la ruta
+	  completa (dependiendo de la plataforma) a donde está instalado el
+	  paquete. Por ejemplo, el valor devuelto podría ser...
+	</para>
+	<code>
+	  /usr/share/gretl/functions/foo
+	</code>
+	<para>
+	  en caso de que este fuese el directorio en el que está localizado
+	  <lit>foo.gfn</lit>. Esto permite que el autor de un paquete de
+	  función pueda acceder a recursos tales como archivos de matrices
+	  que tenga incluidos en su paquete.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
       <description>
 	<para>
@@ -800,6 +821,18 @@
 	  de libertad y la probabilidad asociada al valor del estadístico. Si el
 	  modelo está exactamente identificado, el estadístico no se puede
 	  calcular y tratar de hacerlo provoca un fallo.
+	</para>
+      </description>
+    </function>
+
+    <function name="$seed" section="access" output="scalar">
+      <description>
+	<para>
+	  Devuelve un escalar con el valor de la semilla del generador de
+	  números aleatorios de Gretl. Si estableces la semilla por ti mismo,
+	  este accesor no es necesario; pero puede resultar interesante
+	  cuando la semilla se establece automáticamente (basándose
+	  en el momento en que empezó la ejecución del programa).
 	</para>
       </description>
     </function>
@@ -1846,17 +1879,17 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve la lectura de un <quote>bundle</quote> a partir
-	  de un archivo de texto. La cadena de texto debe contener el nombre del
-	  archivo del cual se lee el 'bundle'. Si ese nombre tiene la extensión
-	  <quote><lit>.gz</lit></quote>, se asume que se aplicó la compresión
-	  gzip cuando se guardó ese archivo.
+	  Devuelve la lectura de un <quote>bundle</quote> desde un archivo
+	  especificado por el argumento <argname>nombrearchivo</argname>. Por
+	  defecto, se asume que el bundle está representado en XML; y que se le
+	  aplicó la compresión gzip si <argname>nombrearchivo</argname> tiene
+	  extensión <lit>.gz</lit>. Pero si la extensión es <lit>.json</lit> o
+	  <lit>.geojson</lit>, se asume que el contenido es de tipo JSON.
 	</para>
 	<para>
-	  El archivo en cuestión debe ser un archivo XML definido
-	  apropiadamente: debe contener un elemento <lit>gretl-bundle</lit>, que
-	  se use para almacenar cero o más elementos <lit>bundled-item</lit>.
-	  Por ejemplo:
+	  En el caso XML, el archivo debe contener un elemento
+	  <lit>gretl-bundle</lit>, que se use para almacenar cero o
+	  más elementos <lit>bundled-item</lit>. Por ejemplo:
 	</para>
 	<code>
 	  &lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -1866,23 +1899,23 @@
 	  &lt;/gretl-bundle&gt;
 	</code>
 	<para>
-	  Como cabría esperar, estos archivos los genera automáticamente la
-	  función asociada <fncref targ="bwrite"/>.
+	  Como cabría esperar, los archivos que se leen de forma adecuada por
+	  medio de <lit>bread</lit> se generan mediante la función asociada
+	  <fncref targ="bwrite"/>.
 	</para>
 	<para>
-	  Si el nombre del archivo no contiene la especificación completa de la
-	  ruta al directorio que lo contiene, entonces va a buscarse en varias
-	  localizaciones <quote>probables</quote>, comenzando en lo establecido
-	  como <cmdref targ="workdir"/> vigente. Ahora bien, cuando se
-	  proporciona un valor no nulo para el argumento opcional
-	  <argname>importar</argname>, el archivo va a buscarse en el directorio
-	  <quote>punto</quote> del usuario. En este caso, el argumento
-	  <argname>nombrearchivo</argname> deberá ser un nombre simple de archivo,
-	  sin la inclusión de la ruta al directorio.
+	  Si el nombre del archivo no contiene la especificación completa de la ruta
+	  al directorio donde está, entonces va a buscarse en varias localizaciones
+	  <quote>probables</quote>, comenzando por lo establecido como
+	  <cmdref targ="workdir"/> vigente. Ahora bien, cuando se proporciona un
+	  valor no nulo para el argumento opcional <argname>importar</argname>,
+	  el archivo va a buscarse en el directorio <quote>punto</quote> del
+	  usuario. En este caso, el argumento <argname>nombrearchivo</argname>
+	  deberá ser un nombre simple de archivo, sin la inclusión de la ruta al directorio.
 	</para>
 	<para>
-	  Si ocurre algún fallo (por ejemplo que el archivo esté mal formateado
-	  o sea inaccesible), se devuelve el fallo por medio del acceso
+	  Si ocurre algún fallo (por ejemplo,si el archivo está mal formateado
+	  o es inaccesible), se devuelve el fallo por medio del accesor
 	  <fncref targ="$error"/>.
 	</para>
 	<para>
@@ -1974,28 +2007,28 @@
       </fnargs>
       <description>
 	<para>
-	  Escribe el <quote>bundle</quote> <argname>B</argname> en un
-	  archivo XML con nombre <argname>nombrearchivo</argname>. Si ya existe un
-	  archivo denominado <argname>nombrearchivo</argname>, va a sobrescribirse.
-	  Para una descripción concisa de su formato, consulta
-	  <fncref targ="bread"/>. Esta función devuelve el valor 0 en caso de que
-	  concluya con éxito; si ocurren fallos, tales como la imposibilidad
-	  de sobrescribir el archivo, la función devuelve un valor no nulo.
+	  Escribe el 'bundle' <argname>B</argname> en un archivo, serializado
+	  en XML; o como JSON, si <argname>nombrearchivo</argname> tiene extensión
+	  <lit>.json</lit> o <lit>.geojson</lit>. Consulta <fncref targ="bread"/>
+	  para obtener una descripción del formato cuando se usa XML. Si ya existe
+	  un archivo denominado <argname>nombrearchivo</argname>, este va a
+	  sobrescribirse. Esta función devuelve el valor 0 en caso de que concluya
+	  con éxito; si ocurren fallos, tales como la imposibilidad de sobrescribir
+	  el archivo, la función devuelve un valor no nulo.
 	</para>
 	<para>
 	  El archivo de salida se guarda en el directorio <cmdref targ="workdir"/>
-	  vigente, excepto que la cadena <argname>nombrearchivo</argname> contenga la ruta
-	  completa con el directorio en el que va a guardarse. Ahora bien, cuando se indica
-	  un valor no nulo para el argumento <argname>exportar</argname>,
-	  el archivo de salida se va a guardar en el directorio <quote>punto</quote>
-	  del usuario. En este caso, el argumento <argname>nombrearchivo</argname> deberá
-	  ser un nombre simple de archivo, sin la inclusión de la ruta al
-	  directorio.
+	  vigente, excepto que <argname>nombrearchivo</argname> contenga la ruta
+	  completa con el directorio en el que va a guardarse. Ahora bien, cuando
+	  se indica un valor no nulo para el argumento <argname>exportar</argname>,
+	  el archivo se va a guardar en el directorio <quote>punto</quote> del usuario.
+	  En este caso, el argumento <argname>nombrearchivo</argname> deberá
+	  ser un nombre simple de archivo, sin la inclusión de la ruta al directorio.
 	</para>
 	<para>
-	  Por defecto, el archivo XML se guarda sin comprimir, pero si
-	  <argname>nombrearchivo</argname> contiene la extensión <lit>.gz</lit> entonces
-	  se aplica la compresión gzip.
+	  Dispones de la opción de compresión gzip, pero únicamente en
+	  caso de que el resultado sea de tipo XML. Esto se va a aplicar si
+	  <argname>nombrearchivo</argname> tiene la extensión <lit>.gz</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -2987,7 +3020,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line) --quiet
+	      loop while getline(s, line)
 	          printf "%s\n", line
 	      endloop
 	  endif

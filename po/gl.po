@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-02 15:41-0400\n"
-"PO-Revision-Date: 2020-04-20 12:26+0200\n"
+"PO-Revision-Date: 2020-06-02 21:52+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.3.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -10663,13 +10663,12 @@ msgid "JMulTi files (*.dat)"
 msgstr "Ficheiros JMulTi files (*.dat)"
 
 #: gui/fileselect.c:885
-#, fuzzy
 msgid "Shapefiles (*.shp)"
-msgstr "Ficheiros CSV (*.csv)"
+msgstr "Ficheiros Shapefile (*.shp)"
 
 #: gui/fileselect.c:886
 msgid "GeoJSON files (*.geojson, *.json)"
-msgstr ""
+msgstr "Ficheiros GeoJSON (*.geojson, *.json)"
 
 #: gui/fileselect.c:887 gui/fileselect.c:999 gui/fileselect.c:1005
 msgid "all files (*.*)"
@@ -12267,9 +12266,8 @@ msgid "Edit spec file..."
 msgstr "Editar _ficheiro específico..."
 
 #: gui/gretl.c:1736
-#, fuzzy
 msgid "_Resource from addon"
-msgstr "_Restablecer o rango completo"
+msgstr "_Recurso desde un engadido"
 
 #: gui/gretl.c:1741
 msgid "_Tools"
@@ -12476,9 +12474,8 @@ msgid "_3D plot..."
 msgstr "Gráfica en _3D..."
 
 #: gui/gretl.c:1800
-#, fuzzy
 msgid "_Display map"
-msgstr "_Amosar valores"
+msgstr "_Amosar o mapa"
 
 #: gui/gretl.c:1801
 msgid "_Multiple graphs"
@@ -15135,9 +15132,8 @@ msgid "Panel plot..."
 msgstr "Gráfica de panel..."
 
 #: gui/menustate.c:580
-#, fuzzy
 msgid "Display map"
-msgstr "Amosar"
+msgstr "Amosar o mapa"
 
 #: gui/menustate.c:581
 msgid "Frequency distribution"
@@ -15248,9 +15244,9 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: Rango completo %s - %s"
 
 #: gui/menustate.c:1100
-#, fuzzy, c-format
+#, c-format
 msgid "Imported %s"
-msgstr "Importar"
+msgstr "%s importado"
 
 #: gui/menustate.c:1109
 msgid " Unsaved data "
@@ -16322,9 +16318,8 @@ msgid "Edit plot commands"
 msgstr "Editar as ordes de gráfica"
 
 #: gui/session.c:188 gui/session.c:3555
-#, fuzzy
 msgid "Add to graph page"
-msgstr "Páxina de gráfica"
+msgstr "Engadir á páxina gráfica"
 
 #: gui/session.c:191 gui/session.c:218 gui/session.c:3448 gui/session.c:3596
 #: gui/textutil.c:490 gui/toolbar.c:817
@@ -16605,9 +16600,8 @@ msgid "Default graph scale"
 msgstr "Escala gráfica por defecto"
 
 #: gui/settings.c:240
-#, fuzzy
 msgid "Graph theme"
-msgstr "Páxina de gráfica"
+msgstr "Tema de gráfica"
 
 #: gui/settings.c:243
 msgid "Command to launch gnuplot"
@@ -16706,9 +16700,8 @@ msgid "PNG graph font"
 msgstr "Tipo de letra para a gráfica PNG"
 
 #: gui/settings.c:308
-#, fuzzy
 msgid "Gnuplot extra colors"
-msgstr "Cores de Gnuplot"
+msgstr "Cores extra de Gnuplot"
 
 #: gui/settings.c:310
 msgid "Number of spaces per tab"
@@ -16797,9 +16790,8 @@ msgid "Portuguese"
 msgstr "Portugués"
 
 #: gui/settings.c:1390
-#, fuzzy
 msgid "Examples"
-msgstr "M_ostra"
+msgstr "Exemplos"
 
 #: gui/settings.c:1417 plugin/tramo_options.c:371
 msgid "General"

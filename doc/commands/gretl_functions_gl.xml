@@ -698,6 +698,27 @@
       </description>
     </function>
 
+    <function name="$pkgdir" section="access" output="string">
+      <description>
+	<para>
+	  Utilidade especial para que utilicen os autores de paquetes de función.
+	  Devolve unha cadea de texto baleira agás que se estea executando
+	  unha función empaquetada, en cuxo caso devolve a ruta completa
+	  (dependendo da plataforma) a onde está instalado o paquete. Por
+	  exemplo, o valor devolto podería ser...
+	</para>
+	<code>
+	  /usr/share/gretl/functions/foo
+	</code>
+	<para>
+	  no caso de que este sexa o cartafol no que estea localizado
+	  <lit>foo.gfn</lit>. Isto permite que o autor dun paquete de función
+	  poda acceder a recursos tales como ficheiros de matrices, que teña
+	  incluídos no seu paquete.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
       <description>
 	<para>
@@ -800,6 +821,18 @@
 	  de liberdade e a probabilidade asociada ao valor do estatístico. Se o
 	  modelo está exactamente identificado, o estatístico non se pode
 	  calcular e tratar de facelo provoca un fallo.
+	</para>
+      </description>
+    </function>
+
+    <function name="$seed" section="access" output="scalar">
+      <description>
+	<para>
+	  Devolve un escalar co valor da semente do xerador de números
+	  aleatorios de Gretl. Se estableces a semente por ti mesmo, non
+	  tes necesidade deste accesorio; pero pode resultar interesante
+	  cando a semente se establece automaticamente (baseándose no
+	  momento no que comezou a execución do programa).
 	</para>
       </description>
     </function>
@@ -1846,17 +1879,17 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve a lectura dun feixe (<quote>bundle</quote>) a partir
-	  dun ficheiro de texto. A cadea de texto debe de conter o nome do
-	  ficheiro do cal se le o feixe. Se ese nome ten a extensión
-	  <quote><lit>.gz</lit></quote>, asúmese que se aplicou a compresión
-	  gzip cando se gardou ese ficheiro.
+	  Devolve a lectura dun feixe (bundle) desde un ficheiro especificado
+	  polo argumento <argname>nomeficheiro</argname>. Por defecto, asúmese
+	  que o feixe está representado en XML; e que se lle aplicou a compresión
+	  gzip se <argname>nomeficheiro</argname> ten extensión <lit>.gz</lit>.
+	  Pero se a extensión é <lit>.json</lit> ou <lit>.geojson</lit>, asúmese
+	  que o contido é de tipo JSON.
 	</para>
 	<para>
-	  O ficheiro en cuestión debe de ser un ficheiro XML definido
-	  apropiadamente: debe de conter un elemento <lit>gretl-bundle</lit>, que
-	  se use para almacenar cero ou máis elementos <lit>bundled-item</lit>.
-	  Por exemplo:
+	  No caso XML, o ficheiro debe de conter un elemento
+	  <lit>gretl-bundle</lit>, que se use para almacenar cero ou
+	  máis elementos <lit>bundled-item</lit>. Por exemplo:
 	</para>
 	<code>
 	  &lt;?xml version="1.0" encoding="UTF-8"?&gt;
@@ -1866,23 +1899,23 @@
 	  &lt;/gretl-bundle&gt;
 	</code>
 	<para>
-	  Como cabería agardar, estes ficheiros os xera automaticamente a
-	  función asociada <fncref targ="bwrite"/>.
+	  Como cabería agardar, os ficheiros que se len axeitadamente por
+	  medio de <lit>bread</lit> xéranse mediante a función asociada
+	  <fncref targ="bwrite"/>.
 	</para>
 	<para>
-	  Se o nome do ficheiro non contén a especificación completa do
-	  camiño ao cartafol que o contén, entón vai procurarse en varias
-	  localizacións <quote>probables</quote>, comezando no establecido
-	  como <cmdref targ="workdir"/> vigente. Agora ben, cando se
-	  proporciona un valor non nulo para o argumento opcional
-	  <argname>importar</argname>, o ficheiro vai procurarse no cartafol
-	  <quote>punto</quote> do usuario. Neste caso o argumento
+	  Se o nome do ficheiro non contén a especificación completa do camiño
+	  ao cartafol onde está, entón vai procurarse en varias localizacións
+	  <quote>probables</quote>, comezando no <cmdref targ="workdir"/> vixente.
+	  Porén, cando se proporciona un valor non nulo para o argumento
+	  opcional <argname>importar</argname>, o ficheiro vai procurarse no
+	  cartafol <quote>punto</quote> do usuario. Neste caso, o argumento
 	  <argname>nomeficheiro</argname> deberá ser un nome simple de ficheiro,
 	  sen a inclusión do camiño ao cartafol.
 	</para>
 	<para>
-	  Se ocorre algún fallo (por exemplo que o ficheiro estea mal formatado
-	  ou sexa inaccesible), devólvese o fallo por medio do accesorio
+	  Se ocorre algún fallo (por exemplo, se o ficheiro está mal formatado
+	  ou é inaccesible), devólvese o fallo por medio do accesorio
 	  <fncref targ="$error"/>.
 	</para>
 	<para>
@@ -1974,28 +2007,28 @@
       </fnargs>
       <description>
 	<para>
-	  Escribe o feixe (<quote>bundle</quote>) <argname>B</argname> nun
-	  ficheiro XML con nome <argname>nomeficheiro</argname>. Se xa existe un
+	  Escribe o feixe (bundle) <argname>B</argname> nun ficheiro, serializado
+	  en XML; ou como JSON, se <argname>nomeficheiro</argname> ten extensión
+	  <lit>.json</lit> ou <lit>.geojson</lit>. Consulta <fncref targ="bread"/>
+	  para ter unha descrición do formato cando se usa XML. Se xa existe un
 	  ficheiro denominado <argname>nomeficheiro</argname>, vaise sobrescribir.
-	  Para unha descrición concisa do seu formato, consulta
-	  <fncref targ="bread"/>. Esta función devolve o valor 0 no caso de que
-	  conclúa con éxito; se ocorren fallos, tales como a imposibilidade
-	  de sobrescribir o ficheiro, a función devolve un valor non nulo.
+	  Esta función devolve o valor 0 no caso de que conclúa con éxito; se
+	  ocorren fallos, tales como a imposibilidade de sobrescribir o ficheiro,
+	  a función devolve un valor non nulo.
 	</para>
 	<para>
 	  O ficheiro de saída gárdase no cartafol <cmdref targ="workdir"/>
-	  vixente, agás que a cadea <argname>nomeficheiro</argname> conteña o camiño
+	  vixente, agás que <argname>nomeficheiro</argname> conteña o camiño
 	  completo co cartafol no que vai ser gardado. Agora ben, cando se indica
 	  un valor non nulo para o argumento <argname>exportar</argname>,
-	  o ficheiro de saída vaise gardar no cartafol <quote>punto</quote>
-	  do usuario. Neste caso, o argumento <argname>nomeficheiro</argname> deberá
-	  de ser un nome simple de ficheiro, sen a inclusión do camiño ao
-	  cartafol.
+	  o ficheiro vaise gardar no cartafol <quote>punto</quote> do usuario.
+	  Neste caso, o argumento <argname>nomeficheiro</argname> deberá
+	  de ser un nome simple de ficheiro, sen a inclusión do camiño ao cartafol.
 	</para>
 	<para>
-	  Por defecto, o ficheiro XML gárdase sen comprimir, mais se
-	  <argname>nomeficheiro</argname> contén a extensión <lit>.gz</lit> entón
-	  aplícase a compresión gzip.
+	  Dispós da opción de compresión gzip, pero unicamente no caso
+	  de que o resultado sexa de tipo XML. Isto vaise aplicar se
+	  <argname>nomeficheiro</argname> ten a extensión <lit>.gz</lit>.
 	</para>
 	<para>
 	  <seelist>
@@ -2987,7 +3020,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line) --quiet
+	      loop while getline(s, line)
 	          printf "%s\n", line
 	      endloop
 	  endif
