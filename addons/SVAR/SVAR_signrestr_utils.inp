@@ -87,25 +87,6 @@ function void errmsgshockmatch(const matrix pos, string sname)
     endif
 end function 
 
-
-# --------------------------------
-
-function matrix names2indices(strings fromwhich, strings names)
-
-    matrix which = {}
-    if !nelem(names) # default, all
-        which = seq(1, nelem(fromwhich))
-
-    else
-        loop n = 1..nelem(names) -q
-            which |= strpos_allin(fromwhich, names[n]) 
-        endloop 
-        which = values(which)
-    endif
-    return which # may still be empty
-end function 
-        
-
 # ------------------------------
 
 function void safetycheck1(const matrix Sigma, const matrix iXX, const matrix B)
