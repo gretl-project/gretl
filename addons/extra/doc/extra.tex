@@ -33,7 +33,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{January 2020, release 0.6, still growing\ldots }
+\date{June 2020, release 0.7, still growing\ldots }
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -260,6 +260,10 @@ value and its absolute frequency.
     \texttt{string *jsonresult} (pointer form, optional), 
     \texttt{string misscode} (optional)}{scalar}
 
+-- Attention: Writing a bundle to JSON is possible with the native function \cmd{bwrite} 
+starting in gretl 2020c. The present function is only kept for older gretl versions and will be 
+removed from this extra package eventually. Please adapt your scripts. --
+
 Similar to the native function \texttt{bwrite}: Instead of an XML representation 
 of the input bundle this function produces a JSON serialized representation.
 So far supported bundle member types are string, scalar, series (will be saved as a
@@ -301,6 +305,14 @@ Input string: "/what/on/earth/isthisfile.gdt"
 Output equivalent to: 
 
 \cmd{defarray("/what/on/earth", "isthisfile", "gdt")}
+
+\subsection{multi\_instrings}
+
+\ArgRet{\texttt{strings lookinhere}, \texttt{strings tofind}}{matrix}
+
+Returns in a column vector the positions (indices) in `lookinhere' where any of the 
+strings from `tofind' occur. If there are duplicates in `tofind' then the output 
+may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterwards if needed. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -351,7 +363,7 @@ determines only the lower frequency and \texttt{phi} the upper.
  Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
-splitfname:
+splitfname, multi\_instrings:
 Sven Schreiber 
 
 \item winsor: Sven Schreiber, original code JoshuaHe
@@ -361,6 +373,8 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
+\item June 2020: (start on) 0.7, add multi\_instrings, add deprecation warning to 
+bwritejson
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
   finally remove the retired sepstr2arr (use native strsplit instead);
   slightly revise gap\_filler; rearrange the documentation a little

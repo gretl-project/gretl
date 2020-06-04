@@ -1,5 +1,47 @@
 # extra_string.inp for string-related functions
 
+
+## multi_instrings
+# was inherited from SVAR where it was called names2indices.
+# However, this returns the raw unsorted indices (possibly
+# with multiple occurrences).
+# Another difference: When the second argument is an empty array,
+  # then an empty matrix is returned (used to be the opposite, a vector
+  # with _all_ indices). 
+  # (Adding a "null" default for the 2nd argument and then returning 
+  # all the indices seems unnecessary, because a user then could always
+  # do seq(1,nelem(lookinhere))' instead.)
+
+function matrix multi_instrings(strings lookinhere, strings tofind)
+    # Returns the positions (indices) in 'lookinhere' where any of the 
+    # strings from 'tofind' occur.
+    # If there are duplicates in 'tofind' then the output may also 
+    # contain duplicate indices. Use uniq() or values() afterwards 
+    # if needed. 
+    
+    if $version < 20200
+        funcerr "Sorry, this function needs at least gretl 2020a."
+        # (because of instrings)
+    endif
+    
+    matrix which = {}
+    
+    # The case !nelem(tofind) used to be (in SVAR) some sort of default 
+    # and returned all indices instead of none
+    # (don't remember why) 
+    # which = seq(1, nelem(lookinhere))
+
+    if nelem(tofind)
+        loop n = 1..nelem(tofind) -q
+            which |= instrings(lookinhere, tofind[n]) 
+        endloop 
+        # which = values(which) # this was done in the old names2indices
+    endif
+    return which # may still be empty
+end function 
+
+####################
+
 function strings powerset (strings S)
     # Computes the powerset of the input S,
     # i.e. all possible cominations of the
