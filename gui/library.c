@@ -9995,7 +9995,19 @@ static int script_open_append (ExecState *s, DATASET *dset,
     }
 
     if (!got_type) {
-	ftype = detect_filetype(myfile, OPT_P);
+	if (has_suffix(myfile, ".gretl") && gretl_is_pkzip_file(myfile)) {
+	    /* a session file, not a datafile? */
+	    if (cmd->ci == APPEND) {
+		gui_errmsg(E_DATA);
+		return E_DATA;
+	    } else {
+		set_tryfile(myfile);
+		verify_open_session();
+		return 0;
+	    }
+	} else {
+	    ftype = detect_filetype(myfile, OPT_P);
+	}
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
