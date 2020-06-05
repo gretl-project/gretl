@@ -1291,6 +1291,8 @@ int write_plot_bounding_box_request (FILE *fp)
 	  "GPVAL_TERM_YMIN, GPVAL_TERM_YMAX\n", fp);
     fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
 	  "GPVAL_Y_MIN, GPVAL_Y_MAX\n", fp);
+    fputs("print \"term_size: \", GPVAL_TERM_XSIZE, "
+	  "GPVAL_TERM_YSIZE, GPVAL_TERM_SCALE\n", fp);
 
     return 0;
 }
@@ -9711,26 +9713,23 @@ int write_map_gp_file (const char *plotfile,
 	    datasrc = g_strdup("$MapData");
 	}
     } else if (plotfile_is_image) {
-	/* plotfile and datfile are both disposable, no need
-	   to bother about name-matching
+	/* @plotfile and @datfile are both disposable, no need
+	   to bother about name alignment
 	*/
 	datasrc = g_strdup_printf("\"%s\"", datfile);
     } else if (plotfile != NULL) {
-	/* the names of plotfile and datfile will already be
+	/* the names of @plotfile and @datfile will already be
 	   correctly aligned
 	*/
 	use_arg0 = 1;
-    } else if (gretl_bundle_get_int(opts, "gui_auto", NULL)) {
-	/* move the datafile to match the plotfile */
+    } else {
+	/* rename @datfile to match the auto-named plot file */
 	gchar *tmp = g_strdup_printf("%s.dat", gretl_plotfile());
 
 	gretl_copy_file(datfile, tmp);
 	gretl_remove(datfile);
 	g_free(tmp);
 	use_arg0 = 1;
-    } else {
-	/* redundant? */
-	datasrc = g_strdup_printf("\"%s\"", datfile);
     }
 
     if (use_arg0) {
