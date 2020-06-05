@@ -9634,7 +9634,7 @@ int write_map_gp_file (const char *plotfile,
     if (gretl_bundle_get_int(opts, "tics", NULL)) {
 	notics = 0;
     }
-    if (notics || non_standard) {
+    if (notics) {
         fputs("set noxtics\n", fp);
         fputs("set noytics\n", fp);
     }
