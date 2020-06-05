@@ -9549,6 +9549,49 @@ static void fputs_literal (const char *s, FILE *fp)
     g_free(tmp);
 }
 
+static void handle_palette (gretl_bundle *opts,
+			    const double *zlim,
+			    FILE *fp)
+{
+    const char *pal = NULL;
+    const gretl_matrix *m;
+
+    pal = gretl_bundle_get_string(opts, "palette", NULL);
+    if (pal == NULL) {
+	/* get rid of this */
+	pal = gretl_bundle_get_string(opts, "setpal", NULL);
+    }
+    if (pal != NULL) {
+	fprintf(fp, "%s\n", map_palette_string(pal));
+    }
+
+    m = gretl_bundle_get_matrix(opts, "cbrange", NULL);
+    if (m != NULL && gretl_vector_get_length(m) == 2) {
+	zlim = m->val;
+    }
+    fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
+}
+
+static void handle_xy_ranges (gretl_bundle *opts,
+			      const double *xlim,
+			      const double *ylim,
+			      FILE *fp)
+{
+    const gretl_matrix *m;
+
+    m = gretl_bundle_get_matrix(opts, "xrange", NULL);
+    if (m != NULL && gretl_vector_get_length(m) == 2) {
+	xlim = m->val;
+    }
+    fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
+
+    m = gretl_bundle_get_matrix(opts, "yrange", NULL);
+    if (m != NULL && gretl_vector_get_length(m) == 2) {
+	ylim = m->val;
+    }
+    fprintf(fp, "set yrange [%g:%g]\n", ylim[0], ylim[1]);
+}
+
 /* called from the geoplot plugin to finalize a map */
 
 int write_map_gp_file (const char *plotfile,
@@ -9613,16 +9656,10 @@ int write_map_gp_file (const char *plotfile,
     fputs("unset key\n", fp);
 
     if (have_payload) {
-        if (gretl_bundle_has_key(opts, "setpal")) {
-	    sval = gretl_bundle_get_string(opts, "setpal", &err);
-	    if (!err) {
-		fprintf(fp, "%s\n", map_palette_string(sval));
-	    }
-        }
-        fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
+	handle_palette(opts, zlim, fp);
     }
-    fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
-    fprintf(fp, "set yrange [%g:%g]\n", ylim[0], ylim[1]);
+
+    handle_xy_ranges(opts, xlim, ylim, fp);
 
     if (gretl_bundle_has_key(opts, "title")) {
 	sval = gretl_bundle_get_string(opts, "title", NULL);
