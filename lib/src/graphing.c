@@ -9607,6 +9607,7 @@ int write_map_gp_file (const char *plotfile,
 {
     double xlim[2], ylim[2], zlim[2];
     gretl_matrix *dims = NULL;
+    const char *optlc = NULL;
     const char *sval;
     FILE *fp = NULL;
     gchar *datasrc = NULL;
@@ -9706,6 +9707,12 @@ int write_map_gp_file (const char *plotfile,
 	    }
 	}
     }
+    if (gretl_bundle_has_key(opts, "linecolor")) {
+	sval = gretl_bundle_get_string(opts, "linecolor", &err);
+	if (!err) {
+	    optlc = sval;
+	}
+    }
 
     if (gretl_bundle_get_int(opts, "inlined", NULL)) {
 	err = inline_map_data(datfile, fp);
@@ -9739,19 +9746,22 @@ int write_map_gp_file (const char *plotfile,
 
     if (!err) {
 	gchar *bline = NULL;
+	const char *lc;
 
 	if (have_payload) {
 	    if (linewidth == 0) {
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n",
 			datasrc);
 	    } else {
-		bline = g_strdup_printf("lc 'white' lw %g", linewidth);
+		lc = (optlc == NULL)? "white" : optlc;
+		bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n",
 			datasrc);
 		fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
 	    }
 	} else if (!err) {
-	    bline = g_strdup_printf("lc 'black' lw %g", linewidth);
+	    lc = (optlc == NULL)? "black" : optlc;
+	    bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 	    fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
 	}
 	g_free(bline);
