@@ -106,6 +106,10 @@ string strtemp = ""
 eval bwritejson(bin, , , &strtemp)
 print strtemp
 
+print "---- multi_instrings -----"  ## 
+strings AA = defarray("an","apple","and","an","egg")
+strings BB = defarray("an","dog","egg")
+eval multi_instrings(AA, BB)
 
 ######## Examples that require a dataset ############
 

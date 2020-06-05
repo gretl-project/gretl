@@ -182,3 +182,30 @@ function matrix drill(const matrices x,
     return ret
 end function
  
+# --------------------------------
+
+##
+## names2indices will go into extra 0.7 under the name 'multi_instrings'.
+# However, the values() transformation will be skipped there.
+# So to replace names2indices() use values(multi_instrings()).
+#
+# Also - passing an empty 'names' array will return an empty result
+# in multi_instrings instead of the entire sequence of indices here, 
+# so watch out.
+## 
+
+function matrix names2indices(strings fromwhich, strings names)
+
+    matrix which = {}
+    if !nelem(names) # default, all
+        which = seq(1, nelem(fromwhich))
+
+    else
+        loop n = 1..nelem(names) -q
+            which |= strpos_allin(fromwhich, names[n]) 
+        endloop 
+        which = values(which)
+    endif
+    return which # may still be empty
+end function 
+        
