@@ -785,6 +785,8 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	plot_from_selection(GR_PLOT);
     } else if (i == MNU_SCATR)  {
 	plot_from_selection(GR_XY);
+    } else if (i == MNU_MPLOT) {
+	map_plot_callback();
     } else if (i == MNU_EDIT)  {
  	show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (i == MNU_CLIPB) {
