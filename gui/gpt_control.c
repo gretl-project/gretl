@@ -185,6 +185,8 @@ struct png_bounds_t {
     double xmax;
     double ymin;
     double ymax;
+    int width;
+    int height;
 };
 
 typedef struct linestyle_ linestyle;
@@ -407,7 +409,8 @@ static int set_print_line (const char *s)
 {
     return (!strncmp(s, "set print ", 10) ||
 	    !strncmp(s, "print \"pixe", 11) ||
-	    !strncmp(s, "print \"data", 11));
+	    !strncmp(s, "print \"data", 11) ||
+	    !strncmp(s, "print \"term", 11));
 }
 
 enum {
@@ -1299,8 +1302,7 @@ static int get_gpt_marker (const char *line, char *label,
                         p == PLOT_BI_GRAPH || \
 			p == PLOT_STACKED_BAR || \
 			p == PLOT_BAR || \
-			p == PLOT_3D || \
-			p == PLOT_GEOMAP)
+			p == PLOT_3D)
 
 #define gp_missing(s) (s[0] == '?' || !strcmp(s, "NaN"))
 
@@ -3080,6 +3082,7 @@ static int read_plotspec_from_file (png_plot *plot)
     get_plot_nobs(plot, buf, &do_markers, &barpos, &datapos);
 
     if (spec->code == PLOT_GEOMAP) {
+	/* FIXME */
 	goto bailout;
     }
 
@@ -4972,6 +4975,34 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     return pbuf;
 }
 
+static void record_coordinate_info (png_plot *plot, png_bounds *b)
+{
+    if (b->height > 0) {
+	plot->pixel_height = b->height;
+    }
+    if (b->width > 0) {
+	plot->pixel_width = b->width;
+    }
+    plot->status |= PLOT_PNG_COORDS;
+    plot->pixel_xmin = b->xleft;
+    plot->pixel_xmax = b->xright;
+    plot->pixel_ymin = plot->pixel_height - b->ytop;
+    plot->pixel_ymax = plot->pixel_height - b->ybot;
+    plot->xmin = b->xmin;
+    plot->xmax = b->xmax;
+    plot->ymin = b->ymin;
+    plot->ymax = b->ymax;
+
+#if POINTS_DEBUG
+    fprintf(stderr, "get_png_bounds_info():\n"
+	    " xmin=%d xmax=%d ymin=%d ymax=%d\n",
+	    plot->pixel_xmin, plot->pixel_xmax,
+	    plot->pixel_ymin, plot->pixel_ymax);
+    fprintf(stderr, "using px_height %d, px_width %d\n",
+	    plot->pixel_height, plot->pixel_width);
+#endif
+}
+
 static int resize_png_plot (png_plot *plot, int width, int height)
 {
     png_bounds b;
@@ -4994,19 +5025,13 @@ static int resize_png_plot (png_plot *plot, int width, int height)
 	return 0;
     }
 
-    /* try revising the gnuplot bounds info? */
+    b.width = width;
+    b.height = height;
 
+    /* try revising the gnuplot bounds info? */
     if (plot_has_png_coords(plot) &&
 	get_png_bounds_info(&b) == GRETL_PNG_OK) {
-	plot->status |= PLOT_PNG_COORDS;
-	plot->pixel_xmin = b.xleft;
-	plot->pixel_xmax = b.xright;
-	plot->pixel_ymin = plot->pixel_height - b.ytop;
-	plot->pixel_ymax = plot->pixel_height - b.ybot;
-	plot->xmin = b.xmin;
-	plot->xmax = b.xmax;
-	plot->ymin = b.ymin;
-	plot->ymax = b.ymax;
+	record_coordinate_info(plot, &b);
     } else {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
     }
@@ -5183,24 +5208,8 @@ static int get_plot_ranges (png_plot *plot, PlotType ptype)
        auxiliary file (or maybe PNG file)
     */
     if (get_png_bounds_info(&b) == GRETL_PNG_OK) {
-	plot->status |= PLOT_PNG_COORDS;
+	record_coordinate_info(plot, &b);
 	got_x = got_y = 1;
-	plot->pixel_xmin = b.xleft;
-	plot->pixel_xmax = b.xright;
-	plot->pixel_ymin = plot->pixel_height - b.ytop;
-	plot->pixel_ymax = plot->pixel_height - b.ybot;
-	plot->xmin = b.xmin;
-	plot->xmax = b.xmax;
-	plot->ymin = b.ymin;
-	plot->ymax = b.ymax;
-# if POINTS_DEBUG
-	fprintf(stderr, "get_png_bounds_info():\n"
-		" xmin=%d xmax=%d ymin=%d ymax=%d\n",
-		plot->pixel_xmin, plot->pixel_xmax,
-		plot->pixel_ymin, plot->pixel_ymax);
-	fprintf(stderr, "using px_height %d, px_width %d\n",
-		plot->pixel_height, plot->pixel_width);
-# endif
     }
 
     /* If got_x = 0 at this point, we didn't get an x-range out of
@@ -5527,19 +5536,20 @@ static int gnuplot_show_png (const char *fname,
     return err;
 }
 
-int gnuplot_show_map (gretl_bundle *b)
+int gnuplot_show_map (gretl_bundle *mb)
 {
     const char *fname = NULL;
     const char *mapname = NULL;
     const gretl_matrix *dims = NULL;
     png_plot *plot;
+    png_bounds b;
     int err = 0;
 
     gretl_error_clear();
 
-    fname = gretl_bundle_get_string(b, "plotfile", &err);
+    fname = gretl_bundle_get_string(mb, "plotfile", &err);
     if (!err) {
-	dims = gretl_bundle_get_matrix(b, "dims", &err);
+	dims = gretl_bundle_get_matrix(mb, "dims", &err);
     }
     if (err) {
 	gui_errmsg(err);
@@ -5582,11 +5592,25 @@ int gnuplot_show_map (gretl_bundle *b)
     }
 
     plot->spec->code = PLOT_GEOMAP;
-    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM);
     plot->pixel_width = dims->val[0];
     plot->pixel_height = dims->val[1];
 
-    mapname = gretl_bundle_get_string(b, "mapname", NULL);
+    fprintf(stderr, "via bundle: pixwidth %d, pixheight %d\n",
+	    plot->pixel_width, plot->pixel_height);
+
+    if (get_png_bounds_info(&b) == GRETL_PNG_OK) {
+	record_coordinate_info(plot, &b);
+	plot->status |= PLOT_CURSOR_LABEL;
+	plot->status |= PLOT_PNG_COORDS;
+	plot->status |= PLOT_HAS_XRANGE;
+	plot->status |= PLOT_HAS_YRANGE;
+	fprintf(stderr, "via png bounds: %d, %d\n", plot->pixel_width, plot->pixel_height);
+    } else {
+	plot->status |= PLOT_DONT_MOUSE;
+    }
+
+    mapname = gretl_bundle_get_string(mb, "mapname", NULL);
     plot_add_shell(plot, mapname != NULL ? mapname : "map");
     err = render_pngfile(plot, PNG_START);
 
@@ -5680,9 +5704,10 @@ static int get_png_plot_bounds (const char *str, png_bounds *bounds)
 
 static int get_png_data_bounds (char *str, png_bounds *bounds)
 {
-    char *p = str;
     int ret = GRETL_PNG_OK;
+    char *p = str;
 
+    /* ensure decimal dot */
     while (*p) {
 	if (*p == ',') *p = '.';
 	p++;
@@ -5715,6 +5740,28 @@ static int get_png_data_bounds (char *str, png_bounds *bounds)
     return ret;
 }
 
+static int get_png_size (char *str, png_bounds *bounds)
+{
+    int ret = GRETL_PNG_OK;
+    int pw, ph, sc;
+
+    bounds->width = bounds->height = 0;
+
+    if (sscanf(str, "term_size: %d %d %d", &pw, &ph, &sc) != 3 ||
+	pw <= 0 || ph <= 0 || sc <= 0) {
+	ret = GRETL_PNG_BAD_COMMENTS;
+    } else {
+	fprintf(stderr, "Got: size %d x %d (scale %d)\n", pw, ph, sc);
+	pw /= sc; ph /= sc;
+	if (pw % 2) pw++;
+	if (ph % 2) ph++;
+	bounds->width = pw;
+	bounds->height = ph;
+    }
+
+    return ret;
+}
+
 static int get_png_bounds_info (png_bounds *bounds)
 {
     FILE *fp;
@@ -5723,31 +5770,44 @@ static int get_png_bounds_info (png_bounds *bounds)
     int ret = GRETL_PNG_OK;
 
     gretl_build_path(bbname, gretl_dotdir(), "gretltmp.png.bounds", NULL);
-    fp = gretl_fopen(bbname, "r");
+    fp = gretl_fopen(bbname, "rb");
 
     if (fp == NULL) {
 	fprintf(stderr, "couldn't open %s\n", bbname);
 	return GRETL_PNG_NO_COMMENTS;
     }
 
+    /* bounding box of plot */
     if (fgets(line, sizeof line, fp) == NULL) {
+	fprintf(stderr, "bounds file: couldn't get plot dims\n");
 	plot_ret = GRETL_PNG_NO_COMMENTS;
     } else {
 	plot_ret = get_png_plot_bounds(line, bounds);
     }
 
+    /* data ranges */
     if (fgets(line, sizeof line, fp) == NULL) {
+	fprintf(stderr, "bounds file: couldn't get data dims\n");
 	data_ret = GRETL_PNG_NO_COMMENTS;
     } else {
 	data_ret = get_png_data_bounds(line, bounds);
     }
 
+    /* overall size of plot */
+    if (fgets(line, sizeof line, fp) == NULL) {
+	fprintf(stderr, "bounds file: couldn't get size info\n");
+    } else {
+	get_png_size(line, bounds);
+    }
+
     if (plot_ret == GRETL_PNG_NO_COORDS && data_ret == GRETL_PNG_NO_COORDS) {
 	/* comments were present and correct, but all zero */
+	fprintf(stderr, "bounds file: no actual coordinates\n");
 	ret = GRETL_PNG_NO_COORDS;
     } else if (plot_ret != GRETL_PNG_OK || data_ret != GRETL_PNG_OK) {
 	/* one or both set of coordinates bad or missing */
 	if (plot_ret >= 0 || data_ret >= 0) {
+	    fprintf(stderr, "bounds file: bad data\n");
 	    ret = GRETL_PNG_BAD_COMMENTS;
 	} else {
 	    ret = GRETL_PNG_NO_COMMENTS;
