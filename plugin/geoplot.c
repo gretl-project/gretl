@@ -252,8 +252,11 @@ static int crs_is_nonstandard (gretl_bundle *crs)
 	const char *s = strstr(crsname, "crs:");
 
 	if (s != NULL) {
-	    /* RFC 7946: anything but OGC::CRS84 is non-conforming */
-	    if (strcmp(s + 4, "OGC::CRS84")) {
+	    /* RFC 7946: anything but OGC::CRS84 is non-conforming,
+	       but EPSG::4326 is equivalent.
+	    */
+	    if (strcmp(s + 4, "OGC::CRS84") &&
+		strcmp(s + 4, "EPSG::4326")) {
 		fprintf(stderr, "Got non-standard crs %s\n", s+4);
 		ret = 1;
 	    }
