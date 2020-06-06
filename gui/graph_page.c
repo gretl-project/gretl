@@ -389,7 +389,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     FILE *fp, *fq;
     int err = 0;
 
-    fp = gretl_fopen(gfname, "r");
+    fp = gretl_fopen(gfname, "rb");
     if (fp == NULL) {
 	file_read_errbox(gfname);
 	return E_FOPEN;
@@ -397,7 +397,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     fname = gpage_fname(".plt", 0);
 
-    fq = gretl_fopen(fname, "w");
+    fq = gretl_fopen(fname, "wb");
     if (fq == NULL) {
 	file_write_errbox(fname);
 	fclose(fp);
@@ -436,7 +436,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     fprintf(fq, "set output '%s'\n", fname);
 
     if (!err) {
-	filter_gnuplot_file(gpage.mono, fp, fq);
+	filter_gnuplot_file(gpage.mono, gfname, fp, fq);
     }
 
     fclose(fp);

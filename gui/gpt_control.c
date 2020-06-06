@@ -657,7 +657,26 @@ int gp_term_code (gpointer p, int action)
     return spec->termtype;
 }
 
-void filter_gnuplot_file (int mono, FILE *fpin, FILE *fpout)
+static void emit_alt_datafile_line (const char *inpname,
+				    FILE *fp)
+{
+    gchar *tmp = g_strdup_printf("%s.dat", inpname);
+
+#ifdef G_OS_WIN32
+    gchar *s = tmp;
+
+    while (*s) {
+	if (*s == '\\') *s = '/';
+	s++;
+    }
+#endif
+
+    fprintf(fp, "datafile = \"%s\"\n", tmp);
+    g_free(tmp);
+}
+
+void filter_gnuplot_file (int mono, const char *inpname,
+			  FILE *fpin, FILE *fpout)
 {
     char pline[512];
 
@@ -669,6 +688,12 @@ void filter_gnuplot_file (int mono, FILE *fpin, FILE *fpout)
 	if (!strncmp(pline, "set term", 8) ||
 	    !strncmp(pline, "set enco", 8) ||
 	    !strncmp(pline, "set outp", 8)) {
+	    continue;
+	}
+
+	if (!strncmp(pline, "datafile = sprintf", 17)) {
+	    /* geomap special */
+	    emit_alt_datafile_line(inpname, fpout);
 	    continue;
 	}
 
@@ -731,7 +756,7 @@ static int revise_plot_file (GPT_SPEC *spec,
 	write_plot_output_line(outname, fpout);
     }
 
-    filter_gnuplot_file(mono, fpin, fpout);
+    filter_gnuplot_file(mono, spec->fname, fpin, fpout);
 
     fclose(fpin);
     fclose(fpout);
