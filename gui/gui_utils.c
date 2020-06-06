@@ -1582,7 +1582,7 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	/* "auto-save" of session graph file */
 	gchar *text = textview_get_text(vwin->text);
 
-	dump_plot_buffer(text, vwin->fname, 0);
+	dump_plot_buffer(text, vwin->fname, 0, NULL);
 	g_free(text);
 	mark_vwin_content_saved(vwin);
 	mark_session_changed();

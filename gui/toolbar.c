@@ -910,14 +910,6 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define split_v_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT)
 
-/* hack to handle geoplot maps */
-static gboolean viewer_no_exec;
-
-void set_viewer_no_exec (gboolean s)
-{
-    viewer_no_exec = s;
-}
-
 /* Screen out unwanted menu items depending on the context; also
    adjust the callbacks associated with some items based on
    context.
@@ -971,10 +963,6 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	    return NULL;
 	}
     } else if (f == COPY_SCRIPT_ITEM) {
-	return NULL;
-    }
-
-    if (f == EXEC_ITEM && viewer_no_exec) {
 	return NULL;
     }
 

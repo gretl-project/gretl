@@ -65,6 +65,4 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
 
 void vwin_add_tmpbar (windata_t *vwin);
 
-void set_viewer_no_exec (gboolean s);
-
 #endif /* TOOLBAR_H */

@@ -76,7 +76,7 @@ void save_graph_to_file (gpointer p, const char *fname);
 void filter_gnuplot_file (int mono, const char *inpname,
 			  FILE *fpin, FILE *fpout);
 
-void run_gnuplot_script (gchar *buf);
+void run_gnuplot_script (gchar *buf, windata_t *vwin);
 
 void launch_gnuplot_interactive (void);
 
@@ -85,7 +85,7 @@ void gnuplot_view_3d (const char *plotfile);
 int gnuplot_show_map (gretl_bundle *b);
 
 int dump_plot_buffer (const char *buf, const char *fname,
-		      int addpause);
+		      int addpause, const char *src);
 
 int get_graph_scale (int i, double *s);
 

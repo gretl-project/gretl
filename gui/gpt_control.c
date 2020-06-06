@@ -965,7 +965,8 @@ static int is_term_line (const char *s, int *batch)
 
 static void pre_test_plot_buffer (const char *buf,
 				  int *addpause,
-				  int *putterm)
+				  int *putterm,
+				  int *dim)
 {
     char bufline[512];
     int batch = 0;
@@ -978,11 +979,34 @@ static void pre_test_plot_buffer (const char *buf,
 	    if (*addpause && batch) {
 		*addpause = 0;
 	    }
+	} else if (!strncmp(bufline, "# geoplot", 9)) {
+	    int w, h;
+
+	    if (sscanf(bufline + 10, "%d %d", &w, &h) == 2) {
+		dim[0] = w; dim[1] = h;
+	    }
 	} else if (*addpause && strstr(bufline, "pause ")) {
 	    *addpause = 0;
 	}
     }
 
+    bufgets_finalize(buf);
+}
+
+static void geoplot_dump_revise (const char *buf,
+				 const char *src,
+				 FILE *fp)
+{
+    char bufline[512];
+
+    bufgets_init(buf);
+    while (bufgets(bufline, sizeof bufline, buf)) {
+	if (!strncmp(bufline, "datafile = sp", 13)) {
+	    emit_alt_datafile_line(src, fp);
+	} else {
+	    fputs(bufline, fp);
+	}
+    }
     bufgets_finalize(buf);
 }
 
@@ -996,9 +1020,10 @@ static void pre_test_plot_buffer (const char *buf,
 */
 
 int dump_plot_buffer (const char *buf, const char *fname,
-		      int addpause)
+		      int addpause, const char *src)
 {
     FILE *fp = gretl_fopen(fname, "wb");
+    int dim[2] = {0};
     int putterm = addpause;
     int wxt_ok = 0;
 
@@ -1009,13 +1034,22 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
     if (addpause) {
 	wxt_ok = gnuplot_has_wxt();
-	pre_test_plot_buffer(buf, &addpause, &putterm);
+	pre_test_plot_buffer(buf, &addpause, &putterm, dim);
 	if (putterm && wxt_ok) {
-	    fputs("set term wxt size 640,420 noenhanced\n", fp);
+	    if (dim[0] > 0 && dim[1] > 0) {
+		fprintf(fp, "set term wxt size %d,%d noenhanced\n",
+			dim[0], dim[1]);
+	    } else {
+		fputs("set term wxt size 640,420 noenhanced\n", fp);
+	    }
 	}
     }
 
-    fputs(buf, fp);
+    if (src != NULL && strstr(buf, "datafile = sp")) {
+	geoplot_dump_revise(buf, src, fp);
+    } else {
+	fputs(buf, fp);
+    }
 
     if (addpause) {
 	fputs("pause mouse close\n", fp);
@@ -1103,19 +1137,25 @@ static int real_send_to_gp (const char *fname, int persist)
    commands: send script in @buf to gnuplot itself
 */
 
-void run_gnuplot_script (gchar *buf)
+void run_gnuplot_script (gchar *buf, windata_t *vwin)
 {
+    gchar *src = NULL;
     gchar *tmpfile;
     int err;
 
-    tmpfile = g_strdup_printf("%sshowtmp.gp", gretl_dotdir());
-    err = dump_plot_buffer(buf, tmpfile, 1);
+    if (vwin != NULL && vwin->data != NULL) {
+	src = session_graph_get_filename(vwin->data);
+    }
+
+    tmpfile = gretl_make_dotpath("showtmp.gp");
+    err = dump_plot_buffer(buf, tmpfile, 1, src);
 
     if (!err) {
 	err = real_send_to_gp(tmpfile, 1);
     }
 
     g_free(tmpfile);
+    g_free(src);
 }
 
 #ifdef G_OS_WIN32
@@ -5896,7 +5936,7 @@ static void mac_do_gp_script (const char *plotfile)
     gsize sz = 0;
 
     if (g_file_get_contents(plotfile, &buf, &sz, NULL)) {
-	run_gnuplot_script(buf);
+	run_gnuplot_script(buf, NULL);
 	g_free(buf);
     }
 }

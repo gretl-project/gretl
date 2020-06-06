@@ -3537,9 +3537,6 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	    }
 	    if (!err) {
 		title = object_get_window_title(obj);
-		if (graph->has_datafile) {
-		    set_viewer_no_exec(TRUE);
-		}
 		vwin = view_file_with_title(fullname, 1, 0, 78, 400,
 					    EDIT_GP, title);
 		g_free(title);
@@ -3547,7 +3544,6 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 		   if the plot file is changed */
 		vwin->flags |= VWIN_SESSION_GRAPH;
 		if (graph->has_datafile) {
-		    set_viewer_no_exec(FALSE);
 		    vwin->data = graph;
 		}
 	    }
