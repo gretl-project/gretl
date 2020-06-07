@@ -208,13 +208,15 @@ void win32_cli_read_rc (char *callname)
 {
     ConfigPaths cpaths = {0};
     char dbproxy[64] = {0};
+    gchar *gptheme = NULL;
     int use_proxy = 0;
     FILE *fp;
 
     /* try for a per-user rc file first */
     fp = cli_rcfile_open();
     if (fp != NULL) {
-	get_gretl_config_from_file(fp, &cpaths, dbproxy, &use_proxy);
+	get_gretl_config_from_file(fp, &cpaths, dbproxy,
+				   &use_proxy, &gptheme);
 	fclose(fp);
     }
 
@@ -223,7 +225,8 @@ void win32_cli_read_rc (char *callname)
     */
     fp = cli_gretlnet_open(callname);
     if (fp != NULL) {
-	get_gretl_config_from_file(fp, &cpaths, dbproxy, &use_proxy);
+	get_gretl_config_from_file(fp, &cpaths, dbproxy,
+				   &use_proxy, &gptheme);
 	fclose(fp);
     }
 
@@ -248,6 +251,11 @@ void win32_cli_read_rc (char *callname)
 
     gretl_set_paths(&cpaths);
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
+
+    if (gptheme != NULL) {
+	set_plotstyle(gptheme);
+	g_free(gptheme);
+    }
 }
 
 void win_show_last_error (void)

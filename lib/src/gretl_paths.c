@@ -3700,7 +3700,8 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
 /* called only on behalf of gretlcli (for all platforms) */
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
-				 char *dbproxy, int *use_proxy)
+				 char *dbproxy, int *use_proxy,
+				 gchar **gptheme)
 {
     char line[MAXLEN], key[32], val[MAXLEN];
 
@@ -3786,6 +3787,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	    set_panel_hccme(val);
 	} else if (!strcmp(key, "HC_garch")) {
 	    set_garch_robust_vcv(val);
+	} else if (!strcmp(key, "graph_theme")) {
+	    *gptheme = g_strdup(val);
 	}
     }
 
@@ -3827,6 +3830,7 @@ int cli_read_rc (void)
     ConfigPaths cpaths = {0};
     char rcfile[FILENAME_MAX];
     char dbproxy[PROXLEN] = {0};
+    gchar *gptheme = NULL;
     int use_proxy = 0;
     FILE *fp;
     int err = 0;
@@ -3837,7 +3841,8 @@ int cli_read_rc (void)
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	get_gretl_config_from_file(fp, &cpaths, dbproxy, &use_proxy);
+	get_gretl_config_from_file(fp, &cpaths, dbproxy,
+				   &use_proxy, &gptheme);
 	fclose(fp);
     }
 
@@ -3845,6 +3850,11 @@ int cli_read_rc (void)
 	gretl_set_paths(&cpaths);
     } else {
 	err = gretl_set_paths(&cpaths);
+    }
+
+    if (gptheme != NULL) {
+	set_plotstyle(gptheme);
+	g_free(gptheme);
     }
 
 #ifdef USE_CURL

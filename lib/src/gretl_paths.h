@@ -218,7 +218,8 @@ char *gretl_prepend_homedir (const char *fname, int *err);
 void set_gretl_png_font (const char *s);
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
-				 char *dbproxy, int *use_proxy);
+				 char *dbproxy, int *use_proxy,
+				 gchar **gptheme);
 
 int gretl_path_compose (char *targ, int len,
 			const char *s1,
