@@ -2467,8 +2467,8 @@
 	  <argname>s</argname> è una lista, i nomi sono copiati da quelli
 	  delle variabili; la lista deve avere tanti elementi quante sono
 	  le colonne di <argname>M</argname>. Se <argname>S</argname> è un
-	  array di stringhe, deve contenere <math>k</math> elementi; se
-	  invece è una sola stringa, deve contenere <math>k</math>
+	  array di stringhe, deve contenere <math>n</math> elementi; se
+	  invece è una sola stringa, deve contenere <math>n</math>
 	  sub-stringhe separate da spazi.
 	</para>
 	<para>
@@ -9981,20 +9981,20 @@
 	  <argname>s</argname> è una lista, i nomi sono copiati da quelli
 	  delle variabili; la lista deve avere tanti elementi quante sono
 	  le righe di <argname>M</argname>. Se <argname>S</argname> è un
-	  array di stringhe, deve contenere <math>k</math> elementi; se
-	  invece è una sola stringa, deve contenere <math>k</math>
+	  array di stringhe, deve contenere <math>m</math> elementi; se
+	  invece è una sola stringa, deve contenere <math>m</math>
 	  sub-stringhe separate da spazi.
 	</para>
 	<para>
 	  Restituisce 0 se la funzione è andata a buon fine, non-zero
-	  altrimenti. Si veda anche <fncref targ="colnames"/>.
+	  altrimenti. Si veda anche <fncref targ="cnameset"/>.
 	</para>
 	<para>
 	  Esempio:
 	</para>
 	<code>
 	  matrix M = {1,2;2,1;4,1} 
-	  rownames(M, "Row1 Row2 Row3")
+	  rnameset(M, "Row1 Row2 Row3")
 	  print M      
 	</code>
       </description>
