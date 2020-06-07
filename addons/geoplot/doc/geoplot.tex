@@ -495,6 +495,9 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 \item[\texttt{inlined}:] boolean, to have the polygon data written
   directly into the \textsf{gnuplot} file. Default: false, the data
   are read from a separate file.
+\item[\texttt{linecolor}:] string, naming the color in which to draw
+  the borders of the regions. By default this is white if a payload is
+  plotted, black if only outlines are shown.
 \item[\texttt{linewidth}:] scalar, giving the width of the lines
   representing the borders of the regions. Setting this to 0
   suppresses those lines (unless no payload is supplied). Default:
@@ -507,21 +510,22 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   output, either to a specified \textsf{gnuplot} command file or to a
   graphic file. If a command file is wanted the extension should be
   \texttt{plt}. If a graphic file is wanted you should give one of the
-  following extensions: \texttt{png}, \texttt{pdf}, \texttt{eps} or
-  \texttt{svg}.  If \texttt{plotfile} is given, but not as a full
-  path, the file is written to the user's working directory.
+  following extensions: \texttt{png}, \texttt{pdf}, \texttt{eps},
+  \texttt{emf} or \texttt{svg}.  If \texttt{plotfile} is given, but
+  not as a full path, the file is written to the user's working
+  directory.
 \item[\texttt{projection}:] string, see~\ref{app:proj}.
-\item[\texttt{setpal}:] string, giving either a \textsf{gnuplot}
-  \texttt{set palette} command or a predefined palette option, of
-  which there are currently three: \texttt{blues}, \texttt{oranges}
-  and \texttt{green-to-red}. For example, the syntax
+\item[\texttt{palette}:] string, giving either a \textsf{gnuplot}
+  \texttt{set palette} command or a predefined option, of which there
+  are currently three: \texttt{blues}, \texttt{oranges} and
+  \texttt{green-to-red}. For example, the syntax
   \begin{code}
-    options.setpal = "set palette defined (0 '#D4E4F2', 1 'steelblue')"
+    options.palette = "set palette defined (0 '#D4E4F2', 1 'steelblue')"
   \end{code}
   will give you a pleasing blue gradient---which also happens to be
   what you get by giving
   \begin{code}
-    options.setpal = "blues"
+    options.palette = "blues"
   \end{code}
   If no such string is given you get the default built-in
   \textsf{gnuplot} palette.
@@ -1045,6 +1049,55 @@ function void geoplot_translate_feature (bundle *b, int f,
   Shifts the feature with sequential index \texttt{f}, optionally
   rescaling it. See~\ref{sec:rearrange} for an example and
   explanation.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+function matrix geoplot_seek_feature(const bundle b,
+                                     string name,
+                                     bool do_plot[1])
+\end{verbatim}
+  Searches the map bundle \texttt{b} for features matching
+  \texttt{name} (on a case-insensitive basis). If one or more matches
+  are found their 1-based indices are returned in a row vector.  If a
+  single match is found metadata for the feature are printed and if
+  \texttt{do\_plot} is not set to zero a plot of the feature is
+  shown.
+\begin{code}
+include geoplot.gfn
+open us-states.geojson --frompkg=geoplot --quiet
+map = bread($mapfile)
+# no matches
+geoplot_seek_feature(map, "nowhere")
+# two matches
+geoplot_seek_feature(map, "CAROLINA")
+# one match, plot shown
+geoplot_seek_feature(map, "Florida")
+\end{code}
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+function void geoplot_simplify(bundle *b,
+                               scalar preserve[0.1:1:0.75])
+\end{verbatim}
+  Simplifies the polygons in the map bundle \texttt{b} using
+  Visvalingam's algorithm. This may be useful if for a certain
+  geography of interest the only map file readily available is at a
+  higher resolution than you need. Smaller values of the
+  \texttt{preserve} parameter preserve less detail or in other words
+  simplify the map more radically; the default value of 0.75 may be
+  considered conservative if you start with a very detailed map.
+\begin{code}
+include geoplot.gfn
+open highres.geojson --quiet
+bundle map = bread($mapfile)
+geoplot_simplify(&map, 0.5)
+bwrite(map, "simplified.geojson")
+open simplified.geojson --quiet
+# see if the level of detail is OK
+geoplot($mapfile)
+\end{code}
 \end{funcdoc}
 
 \end{document}

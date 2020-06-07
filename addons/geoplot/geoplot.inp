@@ -86,7 +86,9 @@ function void geoplot_set_properties (bundle *b, list L)
     endloop
 end function
 
-function matrix geoplot_seek_feature(const bundle b, string name, bool do_plot[1])
+function matrix geoplot_seek_feature(const bundle b,
+                                     string name,
+                                     bool do_plot[1])
 
     bundles feat = b.features
     nf = nelem(feat)
@@ -108,7 +110,6 @@ function matrix geoplot_seek_feature(const bundle b, string name, bool do_plot[1
             endif
         endloop
     endloop
-
 
     if nfound == 0
         printf "\"%s\" not found\n", name
@@ -135,7 +136,7 @@ end function
 
 
 function void geoplot_simplify(bundle *b, 
-			       scalar param[0.1:1:0.75])
+                               scalar preserve[0.1:1:0.75])
     
     feat = b.features
     set stopwatch
