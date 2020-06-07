@@ -390,6 +390,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 		c = atoi(tmp);
 		i = c - sheet->col_offset;
 		free(tmp);
+		tmp = NULL;
 	    }
 
 	    /* what row are we on? */
@@ -398,6 +399,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet,
 		r = atoi(tmp);
 		t = r - sheet->row_offset;
 		free(tmp);
+		tmp = NULL;
 	    }
 
 	    if (i < 0 || t < 0) {

@@ -1279,18 +1279,16 @@ int genr_get_output_varnum (const parser *p)
 
 gretl_matrix *genr_get_output_matrix (parser *p)
 {
-    if (p->targ == MAT) {
-	return p->lh.mret;
-    } else {
-	/* matrix under bundle or array? */
-	gretl_matrix *m = p->lh.mret;
+    gretl_matrix *m = p->lh.mret;
 
-	/* in case the type changes */
+    if (p->targ != MAT) {
+	/* matrix under bundle or array?
+	   nullify pointer in case the type changes
+	*/
 	p->lh.mret = NULL;
-	return m;
     }
 
-    return NULL;
+    return m;
 }
 
 double genr_get_output_scalar (const parser *p)

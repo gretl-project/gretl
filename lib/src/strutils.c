@@ -1844,7 +1844,7 @@ int strings_array_prepend_uniq (char ***pS, int *n, const char *p)
     } else if (pos > 0) {
 	/* already present, not first */
 	s0 = S[pos];
-	for (i=pos; i>0; i++) {
+	for (i=pos; i>0; i--) {
 	    S[i] = S[i-1];
 	}
 	S[0] = s0;

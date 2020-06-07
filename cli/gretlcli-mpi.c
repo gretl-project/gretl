@@ -134,16 +134,17 @@ static void mpi_exit (int err)
 static void usage (int err)
 {
     printf("gretlmpi %s\n", GRETL_VERSION);
-    printf(_("This program should be run under mpiexec, and requires "
-	     "the name of a\nscript file as argument.\n"));
-    printf(_("Options:\n"
-	     " -h or --help        Print this info and exit.\n"
-	     " -v or --version     Print version info and exit.\n"
-             " -q or --quiet       Don't print logo on start-up.\n"
-	     " -e or --english     Force use of English rather than translation.\n"
-	     " -s or --single-rng  Use a single RNG, not one per process.\n"));
-    printf(" --scriptopt=<value> sets a scalar value, accessible to a script\n"
-	   " under the name \"scriptopt\"\n\n");
+    fputs(_("This program should be run under mpiexec, and requires "
+	    "the name of a\nscript file as argument.\n"), stdout);
+    fputs(_("Options:\n"
+	    " -h or --help        Print this info and exit.\n"
+	    " -v or --version     Print version info and exit.\n"
+	    " -q or --quiet       Don't print logo on start-up.\n"
+	    " -e or --english     Force use of English rather than translation.\n"
+	    " -s or --single-rng  Use a single RNG, not one per process.\n"),
+	  stdout);
+    fputs(" --scriptopt=<value> sets a scalar value, accessible to a script\n"
+	  " under the name \"scriptopt\"\n\n", stdout);
     mpi_exit(err);
 }
 

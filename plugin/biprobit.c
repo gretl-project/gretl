@@ -446,7 +446,7 @@ static int bp_container_fill (bp_container *bp, MODEL *olsmod,
 	bp->score = gretl_matrix_alloc(bp->nobs, bp->npar);
 	bp->sscore = gretl_vector_alloc(bp->npar);
 
-	if (bp->fitted1 == NULL || bp->fitted1 == NULL ||
+	if (bp->fitted1 == NULL || bp->fitted2 == NULL ||
 	    bp->score == NULL || bp->sscore == NULL) {
 	    err = E_ALLOC;
 	}
