@@ -100,6 +100,28 @@ double digamma (double x)
 }
 
 /**
+ * hypergeo:
+ * @a: argument.
+ * @b: argument.
+ * @c: argument.
+ * @x: absolute value must be less than 1.0.
+ *
+ * Returns: the Gauss hypergeometric function 2F1 of
+ * the given arguments.
+ */
+
+double hypergeo (double a, double b, double c, double x)
+{
+    double ret = hyp2f1(a, b, c, x);
+
+    if (get_cephes_errno()) {
+	ret = NADBL;
+    }
+
+    return ret;
+}
+
+/**
  * binomial_cdf:
  * @p: probability of success on each trial.
  * @n: number of trials.

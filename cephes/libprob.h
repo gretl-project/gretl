@@ -161,6 +161,9 @@ double psi (double x);
 /* Evaluate roots of polynomial */
 int polrt (double *xcof, double *cof, int m, cmplx *root);
 
+/* Gauss hypergeometric function 2F1 */
+double hyp2f1 (double a, double b, double c, double x);
+
 /* Accessor for cephes error code */
 int get_cephes_errno (void);
 

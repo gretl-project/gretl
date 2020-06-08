@@ -41,7 +41,6 @@
 #include "gretl_foreign.h"
 #include "var.h"
 
-#include "../../cephes/cephes.h" /* for hyp2f1 */
 #include <time.h> /* for the $now accessor */
 
 #ifdef USE_CURL
@@ -13536,7 +13535,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    if (xi < -1.0 || xi >= 1.0) {
 			y = NADBL;
 		    } else {
-			y = hyp2f1(a[0], a[1], a[2], xi);
+			y = hypergeo(a[0], a[1], a[2], xi);
 		    }
 		    ret->v.m->val[i] = y;
 		}
