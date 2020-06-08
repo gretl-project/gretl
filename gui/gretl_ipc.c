@@ -244,7 +244,7 @@ static int prune_pid_file (const char *pidfile, FILE *f1,
     int err = 0;
 
     sprintf(newfile, "%sgretlpid.tmp", gretl_dotdir());
-    f2 = gretl_fopen(newfile, "w");
+    f2 = gretl_fopen(newfile, "wb");
 
     if (f2 == NULL) {
 	err = E_FOPEN;
@@ -294,11 +294,11 @@ int write_pid_to_file (void)
 
     dotdir = gretl_dotdir();
     sprintf(pidfile, "%sgretl.pid", dotdir);
-    f1 = gretl_fopen(pidfile, "r");
+    f1 = gretl_fopen(pidfile, "rb");
 
     if (f1 == NULL) {
 	/* no pid file, starting from scratch */
-	f1 = gretl_fopen(pidfile, "w");
+	f1 = gretl_fopen(pidfile, "wb");
 	if (f1 == NULL) {
 	    err = E_FOPEN;
 	} else {
@@ -314,7 +314,7 @@ int write_pid_to_file (void)
 	int m, n = 0;
 
 	sprintf(newfile, "%sgretlpid.tmp", dotdir);
-	f2 = gretl_fopen(newfile, "w");
+	f2 = gretl_fopen(newfile, "wb");
 
 	if (f2 == NULL) {
 	    err = E_FOPEN;
@@ -367,7 +367,7 @@ void delete_pid_from_file (void)
     dotdir = gretl_dotdir();
     sprintf(pidfile, "%sgretl.pid", dotdir);
 
-    f1 = gretl_fopen(pidfile, "r");
+    f1 = gretl_fopen(pidfile, "rb");
     if (f1 == NULL) {
 	err = E_FOPEN;
     } else {
@@ -378,7 +378,7 @@ void delete_pid_from_file (void)
 	int nleft = 0;
 
 	sprintf(newfile, "%sgretlpid.tmp", dotdir);
-	f2 = gretl_fopen(newfile, "w");
+	f2 = gretl_fopen(newfile, "wb");
 
 	if (f2 == NULL) {
 	    err = E_FOPEN;
@@ -444,7 +444,7 @@ long gretl_prior_instance (void)
 # endif
 
     sprintf(pidfile, "%sgretl.pid", gretl_dotdir());
-    fp = gretl_fopen(pidfile, "r");
+    fp = gretl_fopen(pidfile, "rb");
 
 #if IPC_DEBUG
     fprintf(stderr, "*** gretl_prior_instance: pidfile='%s', fp=%p\n",
@@ -514,7 +514,7 @@ static void process_handoff_message (void)
 #endif
 
     sprintf(fname, "%sopen-%ld", gretl_dotdir(), mypid);
-    fp = gretl_fopen(fname, "r");
+    fp = gretl_fopen(fname, "rb");
 
 #if IPC_DEBUG
     fprintf(stderr, "*** process_handoff_message\n"
@@ -550,7 +550,7 @@ static gboolean write_request_file (long gpid, const char *fname)
     FILE *fp;
 
     sprintf(tmpname, "%sopen-%ld", gretl_dotdir(), gpid);
-    fp = gretl_fopen(tmpname, "w");
+    fp = gretl_fopen(tmpname, "wb");
 
     if (fp == NULL) {
 	return FALSE;

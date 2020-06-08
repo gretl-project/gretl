@@ -2414,6 +2414,26 @@ int gretl_mpi_initialized (void)
 
 #endif
 
+static int other_gretl_running (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "rb");
+    int ret = 0;
+
+    if (fp != NULL) {
+	long lv[4];
+	int np;
+
+	np = fscanf(fp, "%ld %ld %ld %ld", &lv[0],
+		    &lv[1], &lv[2], &lv[3]);
+	if (np > 2) {
+	    ret = 1;
+	}
+	fclose(fp);
+    }
+
+    return ret;
+}
+
 static void dotdir_cleanup (void)
 {
     int err = gretl_chdir(gretl_dotdir());
@@ -2421,20 +2441,30 @@ static void dotdir_cleanup (void)
     if (!err) {
 	GDir *dir = gretl_opendir(".");
 	const gchar *fname;
+	int skipit = 0;
 
 	if (dir != NULL) {
 	    while ((fname = g_dir_read_name(dir)) != NULL) {
-		if (gretl_isdir(fname)) {
-		    if (*fname == '.' && strlen(fname) > 3) {
-			/* failed auto-dot directory? */
-			gretl_deltree(fname);
+		if (!strcmp(fname, "gretl.pid")) {
+		    skipit = other_gretl_running(fname);
+		    break;
+		}
+	    }
+	    if (!skipit) {
+		g_dir_rewind(dir);
+		while ((fname = g_dir_read_name(dir)) != NULL) {
+		    if (gretl_isdir(fname)) {
+			if (*fname == '.' && strlen(fname) > 3) {
+			    /* failed auto-dot directory? */
+			    gretl_deltree(fname);
+			}
+		    } else if (strcmp(fname, "..") &&
+			       strcmp(fname, ".") &&
+			       strcmp(fname, ".gretl2rc") &&
+			       strcmp(fname, "gretl.pid") &&
+			       strcmp(fname, "mail.dat")) {
+			gretl_remove(fname);
 		    }
-		} else if (strcmp(fname, "..") &&
-			   strcmp(fname, ".") &&
-			   strcmp(fname, ".gretl2rc") &&
-			   strcmp(fname, "gretl.pid") &&
-			   strcmp(fname, "mail.dat")) {
-		    gretl_remove(fname);
 		}
 	    }
 	    g_dir_close(dir);
