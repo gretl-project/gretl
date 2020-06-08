@@ -253,10 +253,15 @@ static int crs_is_nonstandard (gretl_bundle *crs)
 
 	if (s != NULL) {
 	    /* RFC 7946: anything but OGC::CRS84 is non-conforming,
-	       but EPSG::4326 is equivalent.
+	       but EPSG::4326 is equivalent. An OGC string may have
+	       a version number between the two colons (and maybe
+	       EPSG too?).
 	    */
-	    if (strcmp(s + 4, "OGC::CRS84") &&
-		strcmp(s + 4, "EPSG::4326")) {
+	    if (strstr(s + 4, "OGC:") && strstr(s + 8, ":CRS84")) {
+		;
+	    } else if (strstr(s + 4, "EPSG:") && strstr(s + 9, ":4326")) {
+		;
+	    } else {
 		fprintf(stderr, "Got non-standard crs %s\n", s+4);
 		ret = 1;
 	    }

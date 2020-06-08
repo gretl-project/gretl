@@ -9501,7 +9501,7 @@ static gretl_matrix *geoplot_dimensions (double *xlim,
     int width;
 
     if (*non_standard == 0) {
-	if (fabs(ylim[0]) > 90 || fabs(ylim[1]) > 90 ||
+	if (fabs(ylim[0]) > 180 || fabs(ylim[1]) > 180 ||
 	    fabs(xlim[0]) > 360 || fabs(xlim[1]) > 360) {
 	    /* Quick and dirty check in the absence of prior
 	       information that the X, Y data are not in degrees
