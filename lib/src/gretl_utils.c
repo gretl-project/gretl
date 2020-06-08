@@ -2420,6 +2420,12 @@ static int other_gretl_running (const char *fname)
     int ret = 0;
 
     if (fp != NULL) {
+	/* Each entry in gretl.pid will contain two
+	   integers: PID and sequence number. So if
+	   we can read more than two values that must
+	   mean there's more than one gretl process
+	   running.
+	*/
 	long lv[4];
 	int np;
 
