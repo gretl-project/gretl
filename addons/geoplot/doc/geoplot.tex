@@ -763,7 +763,7 @@ First, if you plot just the map outlines (no payload) then you should
 see the X and Y values on the axes, giving you at least a rough idea
 of the shifts you might want. Second, \textsf{geoplot} contains the
 function \texttt{geoplot\_describe\_json} which gives you a good deal
-of relevant information. This signature of this function is
+of relevant information. The signature of this function is
 \begin{code}
 bundle geoplot_describe_json (const bundle jb, int verbose[1])
 \end{code}
@@ -975,7 +975,7 @@ For GeoJSON files, \textsf{geoplot} makes an attempt to determine
 whether a non-standard coordinate system is used, as was allowed under
 the obsolete GeoJSON 2008 specification. In that case we automatically
 cancel projection; we also do this if the X or Y values are out of
-bounds for representing degrees (that is, |X| > 180 or |Y| > 90).
+bounds for representing degrees (that is, |X| > 360 or |Y| > 180).
 
 Failing such automatic detection, one can try specifying
 \textsf{EPSG:4326} to get the X and Y units to be treated as equal in
@@ -1047,7 +1047,7 @@ function void geoplot_translate_feature (bundle *b, int f,
                                          matrix scale[null])
 \end{verbatim}
   Shifts the feature with sequential index \texttt{f}, optionally
-  rescaling it. See~\ref{sec:rearrange} for an example and
+  rescaling it. See section~\ref{sec:rearrange} for an example and
   explanation.
 \end{funcdoc}
 
