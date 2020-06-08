@@ -1,4 +1,4 @@
-/*                                                      hyp2f1.c
+/* hyp2f1.c
  *
  *      Gauss hypergeometric function   F
  *                                     2 1
@@ -58,14 +58,21 @@
  * A "singularity" message is printed on overflow or
  * in cases not addressed (such as x < -1).
  */
-
-/*                                                      hyp2f1  */
-
 
 /*
  * Cephes Math Library Release 2.8:  June, 2000
  * Copyright 1984, 1987, 1992, 2000 by Stephen L. Moshier
  */
+
+/* This variant of cephes hyp2f1.c is a lightly revised version of
+   that found at
+   https://pulvinar.cin.ucsf.edu/ipnotebooks/build/scipy/scipy/special/cephes/
+   dated 2013-06-12 and downloaded 2020-06-08. We would give credit
+   to the author if its authorship were apparent. It extends the
+   original cephes version to handle certain awkward cases involving
+   negative integer values that are not properly handled in the
+   original: for example, hyp2f1(3, -2, 4, 0.99).
+*/
 
 #include "mconf.h"
 
