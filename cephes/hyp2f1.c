@@ -67,7 +67,6 @@
  * Copyright 1984, 1987, 1992, 2000 by Stephen L. Moshier
  */
 
-#include <stdlib.h>
 #include "mconf.h"
 
 #define EPS 1.0e-13
@@ -358,7 +357,7 @@ static double hyt2f1 (double a, double b, double c, double x,
 		if (t > 10000) { /* should never happen */
 		    mtherr("hyp2f1", CEPHES_UNKNOWN);
 		    *loss = 1.0;
-		    return 0.0/0.0;
+		    return NAN;
 		}
 	    } while (y == 0 || fabs(q / y) > EPS);
 
@@ -503,7 +502,7 @@ static double hyp2f1ra (double a, double b, double c, double x,
     *loss = 0;
 
     if (da == 0) {
-	return 0.0/0.0;
+	return NAN;
     }
 
     if (da < 0) {
