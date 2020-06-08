@@ -159,9 +159,9 @@ double hyp2f1 (double a, double b, double c, double x)
 	q = hyp2f1(b, 1 - c + b, 1 - a + b, 1.0 / x);
 	p *= pow(-x, -a);
 	q *= pow(-x, -b);
-	t1 = gamma(c);
-	s = t1 * gamma(b - a) / (gamma(b) * gamma(c - a));
-	y = t1 * gamma(a - b) / (gamma(a) * gamma(c - b));
+	t1 = cephes_gamma(c);
+	s = t1 * cephes_gamma(b - a) / (cephes_gamma(b) * cephes_gamma(c - a));
+	y = t1 * cephes_gamma(a - b) / (cephes_gamma(a) * cephes_gamma(c - b));
 	return s * p + y * q;
     } else if (x < -1.0) {
 	if (fabs(a) < fabs(b)) {
@@ -199,7 +199,7 @@ double hyp2f1 (double a, double b, double c, double x)
 	    }
 	    if (d <= 0.0)
 		goto hypdiv;
-	    y = gamma(c) * gamma(d) / (gamma(p) * gamma(r));
+	    y = cephes_gamma(c) * cephes_gamma(d) / (cephes_gamma(p) * cephes_gamma(r));
 	    goto hypdon;
 	}
 	if (d <= -1.0)
@@ -305,9 +305,9 @@ static double hyt2f1 (double a, double b, double c, double x,
 		goto done;
 	    /* If power series fails, then apply AMS55 #15.3.6 */
 	    q = hys2f1(a, b, 1.0 - d, s, &err);
-	    q *= gamma(d) / (gamma(c - a) * gamma(c - b));
+	    q *= cephes_gamma(d) / (cephes_gamma(c - a) * cephes_gamma(c - b));
 	    r = pow(s, d) * hys2f1(c - a, c - b, d + 1.0, s, &err1);
-	    r *= gamma(-d) / (gamma(a) * gamma(b));
+	    r *= cephes_gamma(-d) / (cephes_gamma(a) * cephes_gamma(b));
 	    y = q + r;
 
 	    q = fabs(q);	/* estimate cancellation error */
@@ -316,7 +316,7 @@ static double hyt2f1 (double a, double b, double c, double x,
 		r = q;
 	    err += err1 + (MACHEP * r) / y;
 
-	    y *= gamma(c);
+	    y *= cephes_gamma(c);
 	    goto done;
 	} else {
 	    /* Psi function expansion, AMS55 #15.3.10, #15.3.11, #15.3.12
@@ -342,9 +342,9 @@ static double hyt2f1 (double a, double b, double c, double x,
 
 	    /* sum for t = 0 */
 	    y = psi(1.0) + psi(1.0 + e) - psi(a + d1) - psi(b + d1) - ax;
-	    y /= gamma(e + 1.0);
+	    y /= cephes_gamma(e + 1.0);
 
-	    p = (a + d1) * (b + d1) * s / gamma(e + 2.0); /* Poch for t=1 */
+	    p = (a + d1) * (b + d1) * s / cephes_gamma(e + 2.0); /* Poch for t=1 */
 	    t = 1.0;
 	    do {
 		r = psi(1.0 + t) + psi(1.0 + t + e) - psi(a + t + d1)
@@ -362,7 +362,7 @@ static double hyt2f1 (double a, double b, double c, double x,
 	    } while (y == 0 || fabs(q / y) > EPS);
 
 	    if (id == 0.0) {
-		y *= gamma(c) / (gamma(a) * gamma(b));
+		y *= cephes_gamma(c) / (cephes_gamma(a) * cephes_gamma(b));
 		goto psidon;
 	    }
 
@@ -381,10 +381,10 @@ static double hyt2f1 (double a, double b, double c, double x,
 		y1 += p;
 	    }
 	nosum:
-	    p = gamma(c);
-	    y1 *= gamma(e) * p / (gamma(a + d1) * gamma(b + d1));
+	    p = cephes_gamma(c);
+	    y1 *= cephes_gamma(e) * p / (cephes_gamma(a + d1) * cephes_gamma(b + d1));
 
-	    y *= p / (gamma(a + d2) * gamma(b + d2));
+	    y *= p / (cephes_gamma(a + d2) * cephes_gamma(b + d2));
 	    if ((aid & 1) != 0)
 		y = -y;
 
