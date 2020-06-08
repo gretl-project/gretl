@@ -134,7 +134,7 @@ double hyp2f1 (double a, double b, double c, double x)
     if (flag) /* function is a polynomial */
 	goto hypok;
 
-    if (ax > 1.0) /* series diverges	*/
+    if (ax > 1.0) /* series diverges */
 	goto hypdiv;
 
     p = c - a;
@@ -207,7 +207,7 @@ double hyp2f1 (double a, double b, double c, double x)
  hypdon:
     if (err > ETHRESH) {
 	mtherr("hyp2f1", CEPHES_PLOSS);
-	/*	printf("Estimated err = %.2e\n", err); */
+	/* printf("Estimated err = %.2e\n", err); */
     }
     return y;
 
@@ -224,15 +224,27 @@ double hyp2f1 (double a, double b, double c, double x)
     return MAXNUM;
 }
 
+/* hack added by AC, 2020-06-08 */
+
+static double argfuzz (double x)
+{
+    if (x < 0 && x == floor(x)) {
+	return x - EPS;
+    } else {
+	return x;
+    }
+}
+
 /* Apply transformations for |x| near 1
  * then call the power series
  */
 
-static double hyt2f1 (double a, double b, double c, double x, 
+static double hyt2f1 (double a, double b, double c, double x,
 		      double *loss)
 {
     double p, q, r, s, t, y, d, err, err1;
     double ax, id, d1, d2, e, y1;
+    double cg1, cg2;
     int i, aid;
 
     err = 0.0;
@@ -256,7 +268,7 @@ static double hyt2f1 (double a, double b, double c, double x,
 	    if (err < ETHRESH)
 		goto done;
 	    /* If power series fails, then apply AMS55 #15.3.6 */
-	    q = hys2f1(a, b, 1.0-d, s, &err);	
+	    q = hys2f1(a, b, 1.0-d, s, &err);
 	    q *= cephes_gamma(d) /(cephes_gamma(c-a) * cephes_gamma(c-b));
 	    r = pow(s,d) * hys2f1(c-a, c-b, d+1.0, s, &err1);
 	    r *= cephes_gamma(-d)/(cephes_gamma(a) * cephes_gamma(b));
@@ -290,7 +302,7 @@ static double hyt2f1 (double a, double b, double c, double x,
 	    y = psi(1.0) + psi(1.0+e) - psi(a+d1) - psi(b+d1) - ax;
 	    y /= cephes_gamma(e+1.0);
 
-	    p = (a+d1) * (b+d1) * s / cephes_gamma(e+2.0);	/* Poch for t=1 */
+	    p = (a+d1) * (b+d1) * s / cephes_gamma(e+2.0); /* Poch for t=1 */
 	    t = 1.0;
 	    do {
 		r = psi(1.0+t) + psi(1.0+t+e) - psi(a+t+d1)
@@ -301,7 +313,6 @@ static double hyt2f1 (double a, double b, double c, double x,
 		p *= (b+t+d1) / (t+1.0+e);
 		t += 1.0;
 	    } while (fabs(q/y) > EPS);
-
 
 	    if (id == 0.0) {
 		y *= cephes_gamma(c)/(cephes_gamma(a)*cephes_gamma(b));
@@ -315,7 +326,7 @@ static double hyt2f1 (double a, double b, double c, double x,
 
 	    t = 0.0;
 	    p = 1.0;
-	    for(i=1; i<aid; i++) {
+	    for (i=1; i<aid; i++) {
 		r = 1.0-e+t;
 		p *= s * (a+t+d2) * (b+t+d2) / r;
 		t += 1.0;
@@ -325,8 +336,10 @@ static double hyt2f1 (double a, double b, double c, double x,
 	nosum:
 	    p = cephes_gamma(c);
 	    y1 *= cephes_gamma(e) * p / (cephes_gamma(a+d1) * cephes_gamma(b+d1));
+	    cg1 = argfuzz(a+d2);
+	    cg2 = argfuzz(b+d2);
+	    y *= p / (cephes_gamma(cg1) * cephes_gamma(cg2));
 
-	    y *= p / (cephes_gamma(a+d2) * cephes_gamma(b+d2));
 	    if ((aid & 1) != 0)
 		y = -y;
 
@@ -353,7 +366,7 @@ static double hyt2f1 (double a, double b, double c, double x,
 
 /* Defining power series expansion of Gauss hypergeometric function */
 
-static double hys2f1 (double a, double b, double c, double x, 
+static double hys2f1 (double a, double b, double c, double x,
 		      double *loss)
 {
     double f, g, h, k, m, s, u, umax;
