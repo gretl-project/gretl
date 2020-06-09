@@ -79,8 +79,8 @@ typedef struct DBFInfo_
     int nRecords;
     int nRecordLength; /* Must fit on uint16 */
     int nHeaderLength; /* File header length (32) + field
-                                  descriptor length + spare space.
-                                  Must fit on uint16 */
+                          descriptor length + spare space.
+                          Must fit on uint16 */
     int nFields;
     int *FieldOffset;
     int *FieldSize;
@@ -150,20 +150,20 @@ static int DBFGetLenWithoutExtension(const char* Basename)
 
 DBFHandle DBFOpen (const char *Filename, const char *Access)
 {
-    DBFHandle		DBF;
-    FILE *		pfCPG;
-    unsigned char	*buf;
-    int			nFields, nHeadLen, iField;
-    char		*Fullname;
-    int                 nBufSize = 500;
-    int                 nLenWithoutExtension;
+    DBFHandle DBF;
+    FILE *pfCPG;
+    unsigned char *buf;
+    int nFields, nHeadLen, iField;
+    char *Fullname;
+    int nBufSize = 500;
+    int nLenWithoutExtension;
 
     /* -------------------------------------------------------------------- */
     /*      We only allow the access strings "rb" and "r+".                  */
     /* -------------------------------------------------------------------- */
     if (strcmp(Access,"r") != 0 && strcmp(Access,"r+") != 0
-       && strcmp(Access,"rb") != 0 && strcmp(Access,"rb+") != 0
-       && strcmp(Access,"r+b") != 0)
+	&& strcmp(Access,"rb") != 0 && strcmp(Access,"rb+") != 0
+	&& strcmp(Access,"r+b") != 0)
         return NULL;
 
     if (strcmp(Access,"r") == 0)

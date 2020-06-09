@@ -556,6 +556,10 @@ int version_history (char *fname, gretl_version *versions)
     int year, mon, day;
 
     clog = fopen(fname, "r");
+    if (clog == NULL) {
+	fprintf(stderr, "Couldn't open '%s' for reading\n", fname);
+	return 0;
+    }
 
     while (fgets(line, MYLEN, clog)) {
 	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n",

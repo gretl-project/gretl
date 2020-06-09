@@ -1801,6 +1801,8 @@ static int libset_query_settings (const char *s, PRN *prn)
 		get_gretl_digits());
     } else if (!strcmp(s, "stopwatch")) {
 	err = 0;
+    } else if (!strcmp(s, "verbose")) {
+	err = 0;
     } else {
 	err = 1;
     }
