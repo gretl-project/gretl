@@ -201,7 +201,8 @@ double logistic_cdf (double x);
 
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int f, int *err);
+			      int f, int det,
+			      int *err);
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 

@@ -421,7 +421,6 @@ enum {
     F_KDENSITY,
     F_SETNOTE,
     F_BWFILT,
-    F_CHOWLIN,
     F_VARSIMUL,
     F_STRSUB,
     F_REGSUB,
@@ -494,6 +493,7 @@ enum {
     F_IRF,
     F_NADARWAT,
     F_FEVAL,
+    F_CHOWLIN,
     F_HYP2F1,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */

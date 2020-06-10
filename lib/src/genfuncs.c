@@ -6271,6 +6271,7 @@ double logistic_cdf (double x)
  * @f: the expansion factor: 3 for quarterly to monthly or
  * 4 for annual to quarterly. Only these factors are
  * supported.
+ * @det: = 1 for linear trend, 2 for quadratic.
  * @err: location to receive error code.
  *
  * Interpolate, from annual to quarterly or quarterly to monthly,
@@ -6288,14 +6289,15 @@ double logistic_cdf (double x)
 
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int f, int *err)
+			      int f, int det,
+			      int *err)
 {
     gretl_matrix *(*chowlin) (const gretl_matrix *,
 			      const gretl_matrix *,
-			      int, int *);
+			      int, int, int *);
     gretl_matrix *ret = NULL;
 
-    if (f != 3 && f != 4) {
+    if ((f != 3 && f != 4) || (det != 1 && det != 2)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -6315,7 +6317,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     if (chowlin == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*chowlin) (Y, X, f, err);
+	ret = (*chowlin) (Y, X, f, det, err);
     }
 
     return ret;
