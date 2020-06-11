@@ -61,7 +61,7 @@ static double chow_lin_callback (double a, void *p)
 
     resid = r - cl->targ;
 
-#if CL_DEBUG > 1
+#if CL_DEBUG
     fprintf(stderr, "chow_lin_callback: target %g, a %g residual %g\n",
 	    cl->targ, a, resid);
 #endif
@@ -248,7 +248,7 @@ static double acf_1 (const double *u, int T)
 gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 				    const gretl_matrix *X,
 				    int xfac, int det,
-				    int *err)
+				    PRN *prn, int *err)
 {
     gretl_matrix_block *B;
     gretl_matrix *CX, *b, *u, *W, *Z;
@@ -298,7 +298,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     /* regressors: constant and linear or quadratic trend,
        plus anything the user has added */
     fill_CX(CX, xfac, det, X);
-#if CL_DEBUG
+#if CL_DEBUG > 1
     gretl_matrix_print(CX, "CX");
 #endif
 
@@ -339,7 +339,10 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 
 		*err = gretl_fzero(bracket, 1.0e-12,
 				   chow_lin_callback, &cl,
-				   &a, OPT_NONE, NULL);
+				   &a, OPT_NONE, prn);
+#if CL_DEBUG
+		fprintf(stderr, "gretl_fzero: err = %d\n", *err);
+#endif
 	    }
 	}
 

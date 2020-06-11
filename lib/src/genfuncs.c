@@ -6290,11 +6290,11 @@ double logistic_cdf (double x)
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, int det,
-			      int *err)
+			      PRN *prn, int *err)
 {
     gretl_matrix *(*chowlin) (const gretl_matrix *,
 			      const gretl_matrix *,
-			      int, int, int *);
+			      int, int, PRN *, int *);
     gretl_matrix *ret = NULL;
 
     if ((f != 3 && f != 4) || (det < 0 && det > 3)) {
@@ -6317,7 +6317,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     if (chowlin == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*chowlin) (Y, X, f, det, err);
+	ret = (*chowlin) (Y, X, f, det, prn, err);
     }
 
     return ret;

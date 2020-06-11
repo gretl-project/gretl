@@ -13601,7 +13601,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    ret->v.m = matrix_chowlin(Y, X, fac, det, &p->err);
+	    ret->v.m = matrix_chowlin(Y, X, fac, det, p->prn, &p->err);
 	}
     }
 
