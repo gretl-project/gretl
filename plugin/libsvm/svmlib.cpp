@@ -3046,7 +3046,9 @@ svm_model *svm_load_model(const char *model_file_name)
 	model->sv_coef[i] = Malloc(double, l);
     model->SV = Malloc(svm_node*, l);
     svm_node *x_space = NULL;
-    if (l > 0) x_space = Malloc(svm_node, elements);
+    if (l > 0) {
+	x_space = Malloc(svm_node, elements);
+    }
 
     int j = 0;
     for (i=0; i<l; i++) {

@@ -11629,18 +11629,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (tmp != NULL) {
 	    l->v.m = tmp;
 	}
-    } else if (f == F_CHOWLIN) {
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
-	} else if (m->t != NUM) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != MAT && r->t != EMPTY) {
-	    node_type_error(f, 3, MAT, r, p);
-	} else {
-	    const gretl_matrix *X = (r->t == MAT)? r->v.m : NULL;
-
-	    A = matrix_chowlin(l->v.m, X, m->v.xval, &p->err);
-	}
     } else if (f == F_MLAG) {
 	gretl_matrix *m1 = node_get_real_matrix(l, p, 0, 1);
 	gretl_matrix *m2 = node_get_real_matrix(m, p, 1, 2);
@@ -13590,6 +13578,45 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    ret->v.m->val[i] = y;
 		}
 	    }
+	}
+    } else if (t->t == F_CHOWLIN) {
+	gretl_matrix *Y = NULL;
+	gretl_matrix *X = NULL;
+	int fac = 0, det = 2;
+
+	if (k < 2 || k > 4) {
+	    n_args_error(k, 4, t->t, p);
+	}
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (i == 0) {
+		if (e->t == MAT) {
+		    Y = e->v.m;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else if (i == 1) {
+		fac = node_get_int(e, p);
+	    } else if (i == 2) {
+		if (scalar_node(e)) {
+		    det = node_get_int(e, p);
+		} else if (k == 3 && e->t == MAT) {
+		    X = e->v.m;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else if (e->t == MAT) {
+		X = e->v.m;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    ret->v.m = matrix_chowlin(Y, X, fac, det, &p->err);
 	}
     }
 
@@ -16622,7 +16649,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_KDENSITY:
     case F_SETNOTE:
     case F_BWFILT:
-    case F_CHOWLIN:
     case F_VARSIMUL:
     case F_STRSUB:
     case F_REGSUB:
@@ -16702,6 +16728,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_IRF:
     case F_NADARWAT:
     case F_FEVAL:
+    case F_CHOWLIN:
     case F_HYP2F1:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */

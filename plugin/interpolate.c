@@ -26,36 +26,43 @@
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
 
+#define CL_DEBUG 0
+
 struct chowlin {
     int n;
     double targ;
 };
 
 /* Callback for BFGS, as we adjust the coefficient @a so the
-   theoretically derived ratio of polynomials in a matches the
+   theoretically derived ratio of polynomials in @a matches the
    empirical first-order autocorrelation of the OLS residuals
-   (cl->targ).
+   (cl->targ). Return the negative of the squared residual.
 */
 
 static double chow_lin_callback (const double *pa, void *p)
 {
     struct chowlin *cl = (struct chowlin *) p;
     double a = *pa;
-    double num, den, val;
+    double num, den, res;
 
     if (cl->n == 3) {
 	num = a + 2*a*a + 3*pow(a, 3) + 2*pow(a, 4) + pow(a, 5);
 	den = 3 + 4*a + 2*a*a;
     } else {
-	/* n = 4 */
+	/* n = 4: requires cl->targ > 0 */
 	num = a + 2*a*a + 3*pow(a, 3) + 4*pow(a, 4) + 3*pow(a, 5)
 	    + 2*pow(a, 6) + pow(a, 7);
 	den = 4 + 6*a + 4*a*a + 2*pow(a, 3);
     }
 
-    val = num/den - cl->targ;
+    res = num/den - cl->targ;
 
-    return -val * val;
+#if CL_DEBUG > 1
+    fprintf(stderr, "chow_lin_callback: target %g, a %g residual %g\n",
+	    cl->targ, a, res);
+#endif
+
+    return -res * res;
 }
 
 static double csum (int n, double a, int k)
@@ -74,7 +81,7 @@ static double csum (int n, double a, int k)
 /* Generate W = CVC' without storing the full C or V matrices.  C is
    the selection matrix that transforms from higher frequency to lower
    frequency by summation; V is the autocovariance matrix for AR(1)
-   disturbances with autoregressive coefficient a; n is the expansion
+   disturbances with autoregressive coefficient @a; @n is the expansion
    factor.
 */
 
@@ -114,13 +121,18 @@ static void mult_VC (gretl_matrix *yx, gretl_matrix *u,
     }
 }
 
-/* Regressor matrix: by default we put in constant plus
-   quadratic trend, summed appropriately based on @n.
-   If the user has supplied high-frequency covariates,
-   in @X, we compress them from column 3 onward.
+/* Regressor matrix: by default we put in constant plus linear trend
+   (det = 1) or quadratic trend (det = 2), summed appropriately based
+   on @n.
+
+   If the user has supplied high-frequency covariates in @X, we
+   compress them from column 2 or 3 onward.
+
+   Note: this version of the implicit C matrix assumes what Chow and
+   Lin call "distribution", which is appropriate for flow variables.
 */
 
-static void make_CX (gretl_matrix *CX, int n,
+static void fill_CX (gretl_matrix *CX, int n, int det,
 		     const gretl_matrix *X)
 {
     double xt1, xt2;
@@ -132,19 +144,22 @@ static void make_CX (gretl_matrix *CX, int n,
 	xt1 = xt2 = 0.0;
 	for (i=0; i<n; i++) {
 	    xt1 += k;
-	    xt2 += k * k;
+	    if (det == 2) {
+		xt2 += k * k;
+	    }
 	    k++;
 	}
 	gretl_matrix_set(CX, t, 1, xt1);
-	gretl_matrix_set(CX, t, 2, xt2);
-
+	if (det == 2) {
+	    gretl_matrix_set(CX, t, 2, xt2);
+	}
 	if (X != NULL) {
 	    for (j=0; j<X->cols; j++) {
 		xt1 = 0.0;
 		for (i=0; i<n; i++) {
 		    xt1 += gretl_matrix_get(X, s + i, j);
 		}
-		gretl_matrix_set(CX, t, 3+j, xt1);
+		gretl_matrix_set(CX, t, det+1+j, xt1);
 	    }
 	    s += n;
 	}
@@ -152,16 +167,19 @@ static void make_CX (gretl_matrix *CX, int n,
 }
 
 static void make_Xx_beta (gretl_vector *y, const double *b,
-			  const gretl_matrix *X)
+			  const gretl_matrix *X, int det)
 {
     int i, j, t;
 
     for (i=0; i<y->rows; i++) {
 	t = i + 1;
-	y->val[i] = b[0] + b[1]*t + b[2]*t*t;
+	y->val[i] = b[0] + b[1]*t;
+	if (det == 2) {
+	    y->val[i] += b[2]*t*t;
+	}
 	if (X != NULL) {
 	    for (j=0; j<X->cols; j++) {
-		y->val[i] += b[3+j] * gretl_matrix_get(X, i, j);
+		y->val[i] += b[det+1+j] * gretl_matrix_get(X, i, j);
 	    }
 	}
     }
@@ -193,10 +211,11 @@ static double acf_1 (const double *u, int T)
  * @Y: T x k: holds the original data to be expanded.
  * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
- * regressors, namely, constant plus quadratic trend.
+ * regressors, namely, constant plus linear or quadratic trend.
  * @xfac: the expansion factor: 3 for quarterly to monthly
  * or 4 for annual to quarterly. Only these factors are
  * supported.
+ * @det: 1 for linear, 2 for quadratic trend.
  * @err: location to receive error code.
  *
  * Interpolate, from annual to quarterly or quarterly to monthly,
@@ -214,7 +233,8 @@ static double acf_1 (const double *u, int T)
 
 gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 				    const gretl_matrix *X,
-				    int xfac, int *err)
+				    int xfac, int det,
+				    int *err)
 {
     gretl_matrix_block *B;
     gretl_matrix *CX, *b, *u, *W, *Z;
@@ -222,19 +242,26 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     gretl_matrix *Yx = NULL;
     gretl_matrix *y, *yx;
     gretl_matrix my, myx;
-    int nx = 3;
-    int ny = Y->cols;
+    int nx, ny = Y->cols;
     int T = Y->rows;
     int Tx = T * xfac;
     int i;
 
-    gretl_matrix_init(&my);
-    gretl_matrix_init(&myx);
+#if 1 /* temporary! */
+    if (getenv("CHOWLIN_NO_QUAD") != NULL) {
+	det = 1;
+    }
+#endif
 
     /* Note: checks to the effect that xfac = 3 or 4, and,
        if X is non-NULL, that X->rows = xfac * Y->rows,
        should have already been performed.
     */
+
+    gretl_matrix_init(&my);
+    gretl_matrix_init(&myx);
+
+    nx = (det == 2)? 3 : 2;
     if (X != NULL) {
 	nx += X->cols;
     }
@@ -260,9 +287,12 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	return NULL;
     }
 
-    /* regressors: constant and quadratic trend, plus
-       anything the user has added */
-    make_CX(CX, xfac, X);
+    /* regressors: constant and linear or quadratic trend,
+       plus anything the user has added */
+    fill_CX(CX, xfac, det, X);
+#if CL_DEBUG
+    gretl_matrix_print(CX, "CX");
+#endif
 
     y = &my;
     yx = &myx;
@@ -286,8 +316,12 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 
 	if (!*err) {
 	    a = acf_1(u->val, T);
-	    if (a == 0.0) {
-		make_Xx_beta(yx, b->val, X);
+#if CL_DEBUG
+	    fprintf(stderr, "initial acf_1 = %g\n", a);
+#endif
+	    if (a <= 0.0) {
+		/* don't act on negative @a */
+		make_Xx_beta(yx, b->val, X, det);
 		gretl_matrix_multiply_by_scalar(yx, xfac);
 		/* nothing more to do, this iteration */
 		continue;
@@ -298,7 +332,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 		cl.n = xfac;
 		cl.targ = a;
 		a = 0.0;
-		*err = BFGS_max(&a, 1, 50, 1.0e-12, &c1, &c2,
+		*err = BFGS_max(&a, 1, 100, 1.0e-12, &c1, &c2,
 				chow_lin_callback, C_OTHER, NULL,
 				&cl, NULL, OPT_NONE, NULL);
 	    }
@@ -324,7 +358,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	    gretl_matrix_multiply(Tmp2, y, b);
 
 	    /* X(expanded) * \hat{\beta} */
-	    make_Xx_beta(yx, b->val, X);
+	    make_Xx_beta(yx, b->val, X, det);
 
 	    /* GLS residuals */
 	    gretl_matrix_copy_values(u, y);
