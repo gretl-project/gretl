@@ -5401,8 +5401,35 @@ static void node_set_double (NODE *n, int i, double x, parser *p)
     }
 }
 
-static NODE *atan2_node (NODE *l, NODE *r, parser *p)
+static double bincoeff(double n, double k, int *err)
 {
+    if ((n < k) || (k < 0)) {
+	*err = E_INVARG;
+	return NADBL;
+    }
+    
+    /* catch special cases first */
+    double ret;
+    if ((n == k) || (k == 0)) {
+	ret = 1.0;
+    } else if (((n - k) == 1) || (k == 1)) {
+	ret = n;
+    } else {
+	ret = lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1);
+	ret = exp(ret);
+    }
+
+    return ret;
+}
+
+static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, parser *p)
+{
+    /*
+      This function handles cases like atan2, where we have two 
+      possibly heterogeneous arguments (scalar, series, matrix) 
+      and the objective is to return a sensibly sized object.
+     */
+    
     NODE *ret = NULL;
     int rettype = 0;
     int nmin, nmax;
@@ -5443,17 +5470,40 @@ static NODE *atan2_node (NODE *l, NODE *r, parser *p)
 	ret = aux_series_node(p);
     }
 
+    int err = 0;
+    
     if (ret != NULL && !p->err) {
-	double y, x;
-	int i;
+	if (f == F_ATAN2) {
+	    double y, x;
+	    int i;
 
-	for (i=0; i<nmax; i++) {
-	    y = node_get_double(l, i, p);
-	    x = node_get_double(r, i, p);
-	    node_set_double(ret, i, atan2(y, x), p);
+	    for (i=0; i<nmax; i++) {
+		y = node_get_double(l, i, p);
+		x = node_get_double(r, i, p);
+		node_set_double(ret, i, atan2(y, x), p);
+	    }
+	} else if (f == F_BINCOEFF) {
+	    double n, k, x;
+	    int i;
+	
+	    for (i=0; i<nmax; i++) {
+		n = node_get_double(l, i, p);
+		k = node_get_double(r, i, p);
+		x = bincoeff(n, k, &err);
+		if (!err) {
+		    node_set_double(ret, i, x, p);
+		} else {
+		    break;
+		}
+	    }
 	}
     }
 
+    if (err) {
+	p->err = err;
+	return NULL;
+    }
+    
     return ret;
 }
 
@@ -15835,9 +15885,10 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_ATAN2:
+    case F_BINCOEFF:
 	if ((l->t == NUM || l->t == MAT || l->t == SERIES) &&
 	    (r->t == NUM || r->t == MAT || r->t == SERIES)) {
-	    ret = atan2_node(l, r, p);
+	    ret = flexible_2arg_node(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
