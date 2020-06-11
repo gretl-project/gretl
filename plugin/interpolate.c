@@ -144,18 +144,22 @@ static void fill_CX (gretl_matrix *CX, int n, int det,
     int t, s = 0;
 
     for (t=0; t<CX->rows; t++) {
-	gretl_matrix_set(CX, t, 0, n);
-	xt1 = xt2 = 0.0;
-	for (i=0; i<n; i++) {
-	    xt1 += k;
-	    if (det == 2) {
-		xt2 += k * k;
+	if (det > 0) {
+	    gretl_matrix_set(CX, t, 0, n);
+	    if (det > 1) {
+		xt1 = xt2 = 0.0;
+		for (i=0; i<n; i++) {
+		    xt1 += k;
+		    if (det > 2) {
+			xt2 += k * k;
+		    }
+		    k++;
+		}
+		gretl_matrix_set(CX, t, 1, xt1);
+		if (det > 2) {
+		    gretl_matrix_set(CX, t, 2, xt2);
+		}
 	    }
-	    k++;
-	}
-	gretl_matrix_set(CX, t, 1, xt1);
-	if (det == 2) {
-	    gretl_matrix_set(CX, t, 2, xt2);
 	}
 	if (X != NULL) {
 	    for (j=0; j<X->cols; j++) {
@@ -163,7 +167,7 @@ static void fill_CX (gretl_matrix *CX, int n, int det,
 		for (i=0; i<n; i++) {
 		    xt1 += gretl_matrix_get(X, s + i, j);
 		}
-		gretl_matrix_set(CX, t, det+1+j, xt1);
+		gretl_matrix_set(CX, t, det+j, xt1);
 	    }
 	    s += n;
 	}
@@ -176,14 +180,19 @@ static void make_Xx_beta (gretl_vector *y, const double *b,
     int i, j, t;
 
     for (i=0; i<y->rows; i++) {
-	t = i + 1;
-	y->val[i] = b[0] + b[1]*t;
-	if (det == 2) {
-	    y->val[i] += b[2]*t*t;
+	if (det > 0) {
+	    y->val[i] = b[0];
+	    if (det > 1) {
+		t = i + 1;
+		y->val[i] += b[1]*t;
+		if (det > 2) {
+		    y->val[i] += b[2]*t*t;
+		}
+	    }
 	}
 	if (X != NULL) {
 	    for (j=0; j<X->cols; j++) {
-		y->val[i] += b[det+1+j] * gretl_matrix_get(X, i, j);
+		y->val[i] += b[det+j] * gretl_matrix_get(X, i, j);
 	    }
 	}
     }
@@ -219,7 +228,8 @@ static double acf_1 (const double *u, int T)
  * @xfac: the expansion factor: 3 for quarterly to monthly
  * or 4 for annual to quarterly. Only these factors are
  * supported.
- * @det: 1 for linear, 2 for quadratic trend.
+ * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
+ * quadratic trend.
  * @err: location to receive error code.
  *
  * Interpolate, from annual to quarterly or quarterly to monthly,
@@ -259,7 +269,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     gretl_matrix_init(&my);
     gretl_matrix_init(&myx);
 
-    nx = (det == 2)? 3 : 2;
+    nx = det;
     if (X != NULL) {
 	nx += X->cols;
     }

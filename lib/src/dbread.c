@@ -1601,7 +1601,7 @@ static double *interpolate_db_series (const double *src,
     gretl_matrix *yx;
     gretl_matrix *y;
     double *ret = NULL;
-    int det = 2; /* FIXME */
+    int det = 3; /* FIXME */
     int t;
 
     y = gretl_column_vector_alloc(oldn);
@@ -5013,7 +5013,7 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 
     if (!*err) {
 	int f = newpd / dset->pd;
-	int det = 2; /* FIXME */
+	int det = 3; /* FIXME */
 
 	Y1 = matrix_chowlin(Y0, NULL, f, det, err);
 	gretl_matrix_free(Y0);
