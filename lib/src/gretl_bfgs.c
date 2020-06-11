@@ -39,10 +39,6 @@ static int gretl_gss (double *b, int n, double tol,
 		      BFGS_CRIT_FUNC cfunc, void *data,
 		      gretlopt opt, PRN *prn);
 
-static int gretl_fzero (double *theta, double tol,
-			ZFUNC zfunc, void *data, double *px,
-			gretlopt opt, PRN *prn);
-
 void BFGS_defaults (int *maxit, double *tol, int ci)
 {
     *maxit = libset_get_int(BFGS_MAXITER);
@@ -3582,9 +3578,9 @@ static double find_x1 (double x0, double y0, double *py1,
     return na(*py1) ? NADBL : x1;
 }
 
-static int gretl_fzero (double *bracket, double tol,
-			ZFUNC zfunc, void *data, double *px,
-			gretlopt opt, PRN *prn)
+int gretl_fzero (double *bracket, double tol,
+		 ZFUNC zfunc, void *data, double *px,
+		 gretlopt opt, PRN *prn)
 {
     int MAXITER = 80;
     double ytol = 1.0e-14;

@@ -123,6 +123,10 @@ int gretl_amoeba (double *theta, int n, int maxit,
 		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn);
 
+int gretl_fzero (double *bracket, double tol,
+		 ZFUNC zfunc, void *data, double *px,
+		 gretlopt opt, PRN *prn);
+
 void BFGS_defaults (int *maxit, double *tol, int ci);
 
 int optimizer_get_matrix_name (const char *fncall, char *name);

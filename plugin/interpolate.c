@@ -33,36 +33,40 @@ struct chowlin {
     double targ;
 };
 
-/* Callback for BFGS, as we adjust the coefficient @a so the
+/* Callback for fzero(), as we adjust the coefficient @a so the
    theoretically derived ratio of polynomials in @a matches the
    empirical first-order autocorrelation of the OLS residuals
    (cl->targ). Return the negative of the squared residual.
 */
 
-static double chow_lin_callback (const double *pa, void *p)
+static double chow_lin_callback (double a, void *p)
 {
     struct chowlin *cl = (struct chowlin *) p;
-    double a = *pa;
-    double num, den, res;
+    double r, num, den, resid;
 
-    if (cl->n == 3) {
-	num = a + 2*a*a + 3*pow(a, 3) + 2*pow(a, 4) + pow(a, 5);
-	den = 3 + 4*a + 2*a*a;
+    if (a == 0) {
+	r = 0;
     } else {
-	/* n = 4: requires cl->targ > 0 */
-	num = a + 2*a*a + 3*pow(a, 3) + 4*pow(a, 4) + 3*pow(a, 5)
-	    + 2*pow(a, 6) + pow(a, 7);
-	den = 4 + 6*a + 4*a*a + 2*pow(a, 3);
+	if (cl->n == 3) {
+	    num = a + 2*a*a + 3*pow(a, 3) + 2*pow(a, 4) + pow(a, 5);
+	    den = 3 + 4*a + 2*a*a;
+	} else {
+	    /* n = 4: requires cl->targ > 0 */
+	    num = a + 2*a*a + 3*pow(a, 3) + 4*pow(a, 4) + 3*pow(a, 5)
+		+ 2*pow(a, 6) + pow(a, 7);
+	    den = 4 + 6*a + 4*a*a + 2*pow(a, 3);
+	}
+	r = num/den;
     }
 
-    res = num/den - cl->targ;
+    resid = r - cl->targ;
 
 #if CL_DEBUG > 1
     fprintf(stderr, "chow_lin_callback: target %g, a %g residual %g\n",
-	    cl->targ, a, res);
+	    cl->targ, a, resid);
 #endif
 
-    return -res * res;
+    return resid;
 }
 
 static double csum (int n, double a, int k)
@@ -247,12 +251,6 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     int Tx = T * xfac;
     int i;
 
-#if 1 /* temporary! */
-    if (getenv("CHOWLIN_NO_QUAD") != NULL) {
-	det = 1;
-    }
-#endif
-
     /* Note: checks to the effect that xfac = 3 or 4, and,
        if X is non-NULL, that X->rows = xfac * Y->rows,
        should have already been performed.
@@ -320,21 +318,18 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	    fprintf(stderr, "initial acf_1 = %g\n", a);
 #endif
 	    if (a <= 0.0) {
-		/* don't act on negative @a */
+		/* don't pursue negative @a */
 		make_Xx_beta(yx, b->val, X, det);
 		gretl_matrix_multiply_by_scalar(yx, xfac);
 		/* nothing more to do, this iteration */
 		continue;
 	    } else {
-		struct chowlin cl;
-		int c1 = 0, c2 = 0;
+		double bracket[] = {0, 0.99};
+		struct chowlin cl = {xfac, a};
 
-		cl.n = xfac;
-		cl.targ = a;
-		a = 0.0;
-		*err = BFGS_max(&a, 1, 100, 1.0e-12, &c1, &c2,
-				chow_lin_callback, C_OTHER, NULL,
-				&cl, NULL, OPT_NONE, NULL);
+		*err = gretl_fzero(bracket, 1.0e-12,
+				   chow_lin_callback, &cl,
+				   &a, OPT_NONE, NULL);
 	    }
 	}
 
