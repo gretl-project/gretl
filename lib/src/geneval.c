@@ -5403,16 +5403,17 @@ static void node_set_double (NODE *n, int i, double x, parser *p)
 
 static double bincoeff(double n, double k, int *err)
 {
+    double ret;
+
     if ((n < k) || (k < 0)) {
 	*err = E_INVARG;
 	return NADBL;
     }
-    
+
     /* catch special cases first */
-    double ret;
-    if ((n == k) || (k == 0)) {
+    if (n == k || k == 0) {
 	ret = 1.0;
-    } else if (((n - k) == 1) || (k == 1)) {
+    } else if ((n - k) == 1|| k == 1) {
 	ret = n;
     } else {
 	ret = lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1);
@@ -5422,14 +5423,13 @@ static double bincoeff(double n, double k, int *err)
     return ret;
 }
 
+/* flexible_2arg_node() handles cases like atan2, where we have two
+   possibly heterogeneous arguments (scalar, series, matrix) and the
+   objective is to return a sensibly sized object.
+*/
+
 static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, parser *p)
 {
-    /*
-      This function handles cases like atan2, where we have two 
-      possibly heterogeneous arguments (scalar, series, matrix) 
-      and the objective is to return a sensibly sized object.
-     */
-    
     NODE *ret = NULL;
     int rettype = 0;
     int nmin, nmax;
@@ -5470,40 +5470,25 @@ static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, parser *p)
 	ret = aux_series_node(p);
     }
 
-    int err = 0;
-    
     if (ret != NULL && !p->err) {
-	if (f == F_ATAN2) {
-	    double y, x;
-	    int i;
+	double x1, x2, y = NADBL;
+	int i;
 
-	    for (i=0; i<nmax; i++) {
-		y = node_get_double(l, i, p);
-		x = node_get_double(r, i, p);
-		node_set_double(ret, i, atan2(y, x), p);
-	    }
-	} else if (f == F_BINCOEFF) {
-	    double n, k, x;
-	    int i;
-	
-	    for (i=0; i<nmax; i++) {
-		n = node_get_double(l, i, p);
-		k = node_get_double(r, i, p);
-		x = bincoeff(n, k, &err);
-		if (!err) {
-		    node_set_double(ret, i, x, p);
-		} else {
+	for (i=0; i<nmax; i++) {
+	    x1 = node_get_double(l, i, p);
+	    x2 = node_get_double(r, i, p);
+	    if (f == F_ATAN2) {
+		y = atan2(x1, x2);
+	    } else if (f == F_BINCOEFF) {
+		y = bincoeff(x1, x2, &p->err);
+		if (p->err) {
 		    break;
 		}
 	    }
+	    node_set_double(ret, i, y, p);
 	}
     }
 
-    if (err) {
-	p->err = err;
-	return NULL;
-    }
-    
     return ret;
 }
 
@@ -13582,7 +13567,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_CHOWLIN) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
-	int fac = 0, det = 2;
+	int fac = 0, det = 3;
 
 	if (k < 2 || k > 4) {
 	    n_args_error(k, 4, t->t, p);
