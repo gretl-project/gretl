@@ -469,8 +469,9 @@ static gretl_matrix *geo2dat (gretl_array *features,
 		}
 	    }
 	}
+	fputs("# end of entity\n", fp);
 	if (i < nf-1) {
-	    fputs("\n\n", fp); /* end of entity block */
+	    fputs("\n", fp); /* end of entity block */
 	}
     }
 
