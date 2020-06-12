@@ -110,6 +110,10 @@ value 0 or 1 indicates whether \texttt{m} was altered or not.
 Sets elements of \texttt{m} to zero if they are really close. The
 return value 0 or 1 indicates whether \texttt{m} was altered or not.
 
+The default value for the threshold has been \texttt{1e-12} since extra 
+version 0.7. In some applications smaller (in absolute value) but mathematically
+truly non-zero results may occur, in which case a smaller threshold can be chosen.  
+
 \subsection{drill}
 
 \ArgRet{\texttt{matrices} array, \texttt{matrix rowspec} (optional), 
@@ -374,7 +378,7 @@ Sven Schreiber
 \section{Changelog }
 \begin{itemize}
 \item June 2020: (start on) 0.7, add multi\_instrings, add deprecation warning to 
-bwritejson
+bwritejson, efficiency improvement for zeroifclose
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
   finally remove the retired sepstr2arr (use native strsplit instead);
   slightly revise gap\_filler; rearrange the documentation a little
