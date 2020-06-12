@@ -141,7 +141,7 @@ function void geoplot_simplify(bundle *b,
     feat = b.features
     set stopwatch
     loop i = 1 .. nelem(feat)
-        feat[i] = simplify_feature(feat[i], param)
+        feat[i] = simplify_feature(feat[i], preserve)
     endloop
     printf "Simplification took %g seconds\n", $stopwatch
     flush
