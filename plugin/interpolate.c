@@ -47,6 +47,29 @@ static double chow_lin_callback (double a, void *p)
     if (a == 0) {
 	r = 0;
     } else {
+	/* Calculate the ratio of immediate off-diagonal
+	   element of CVC' to diagonal element. Avoid use
+	   of pow() since all we require are successive
+	   integer powers of @a.
+	*/
+	double apow = a;
+	int n = cl->n;
+	int np = 2 * n;
+	int i, coef = 1;
+
+	num = 0.0;
+	for (i=0; i<np-1; i++) {
+	    num += coef * apow;
+	    apow *= a;
+	    coef += (i < n-1)? 1 : -1;
+	}
+	den = n;
+	apow = a;
+	for (i=1; i<n; i++) {
+	    den += 2*(n-i) * apow;
+	    apow *= a;
+	}
+#if 0 /* retained for comparison for now */
 	if (cl->n == 3) {
 	    num = a + 2*a*a + 3*pow(a, 3) + 2*pow(a, 4) + pow(a, 5);
 	    den = 3 + 4*a + 2*a*a;
@@ -56,6 +79,7 @@ static double chow_lin_callback (double a, void *p)
 		+ 2*pow(a, 6) + pow(a, 7);
 	    den = 4 + 6*a + 4*a*a + 2*pow(a, 3);
 	}
+#endif
 	r = num/den;
     }
 
