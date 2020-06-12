@@ -9574,24 +9574,39 @@ static void handle_palette (gretl_bundle *opts,
     fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
 }
 
-static void handle_xy_ranges (gretl_bundle *opts,
-			      const double *xlim,
-			      const double *ylim,
-			      FILE *fp)
+static void set_plot_limits (gretl_bundle *opts,
+			     const gretl_matrix *bbox,
+			     double *xlim, double *ylim)
 {
-    const gretl_matrix *m;
+    const gretl_matrix *mx, *my;
 
-    m = gretl_bundle_get_matrix(opts, "xrange", NULL);
-    if (m != NULL && gretl_vector_get_length(m) == 2) {
-	xlim = m->val;
+    mx = gretl_bundle_get_matrix(opts, "mxt__", NULL);
+    my = gretl_bundle_get_matrix(opts, "myt__", NULL);
+    if (mx != NULL && my != NULL) {
+	xlim[0] = mx->val[0];
+	xlim[1] = mx->val[1];
+	ylim[0] = my->val[0];
+	ylim[1] = my->val[1];
+	gretl_bundle_delete_data(opts, "mxt__");
+	gretl_bundle_delete_data(opts, "myt__");
+	return;
     }
-    fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
 
-    m = gretl_bundle_get_matrix(opts, "yrange", NULL);
-    if (m != NULL && gretl_vector_get_length(m) == 2) {
-	ylim = m->val;
+    mx = gretl_bundle_get_matrix(opts, "xrange", NULL);
+    if (mx != NULL && gretl_vector_get_length(mx) == 2) {
+	xlim[0] = mx->val[0];
+	xlim[1] = mx->val[1];
+    } else {
+	stretch_limits(xlim, bbox, 0, 0.02);
     }
-    fprintf(fp, "set yrange [%g:%g]\n", ylim[0], ylim[1]);
+
+    my = gretl_bundle_get_matrix(opts, "yrange", NULL);
+    if (my != NULL && gretl_vector_get_length(my) == 2) {
+	ylim[0] = my->val[0];
+	ylim[1] = my->val[1];
+    } else {
+	stretch_limits(ylim, bbox, 1, 0.02);
+    }
 }
 
 /* called from the geoplot plugin to finalize a map */
@@ -9628,8 +9643,12 @@ int write_map_gp_file (const char *plotfile,
 	notics = 0;
     }
 
-    stretch_limits(xlim, bbox, 0, 0.02);
-    stretch_limits(ylim, bbox, 1, 0.02);
+    if (opts != NULL) {
+	set_plot_limits(opts, bbox, xlim, ylim);
+    } else {
+	stretch_limits(xlim, bbox, 0, 0.02);
+	stretch_limits(ylim, bbox, 1, 0.02);
+    }
 
     if (gretl_bundle_has_key(opts, "height")) {
 	height = gretl_bundle_get_scalar(opts, "height", &err);
@@ -9662,7 +9681,8 @@ int write_map_gp_file (const char *plotfile,
 	handle_palette(opts, zlim, fp);
     }
 
-    handle_xy_ranges(opts, xlim, ylim, fp);
+    fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
+    fprintf(fp, "set yrange [%g:%g]\n", ylim[0], ylim[1]);
 
     if (gretl_bundle_has_key(opts, "title")) {
 	sval = gretl_bundle_get_string(opts, "title", NULL);

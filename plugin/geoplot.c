@@ -1459,8 +1459,51 @@ static gretl_matrix *payload_from_prop (gretl_bundle *b,
     return ret;
 }
 
-static void set_projection (const char *s)
+#define TR_RANGES 0
+
+#if TR_RANGES
+
+static int transform_ranges (gretl_bundle *opts, int proj)
 {
+    const gretl_matrix *mx, *my;
+    int err = 0;
+
+    mx = gretl_bundle_get_matrix(opts, "xrange", NULL);
+    my = gretl_bundle_get_matrix(opts, "yrange", NULL);
+
+    if (mx != NULL && my != NULL) {
+	if (gretl_vector_get_length(mx) == 2 &&
+	    gretl_vector_get_length(my) == 2) {
+	    gretl_matrix *mxt = gretl_matrix_copy(mx);
+	    gretl_matrix *myt = gretl_matrix_copy(my);
+
+	    if (proj == EPSG3857) {
+		mercator(&mxt->val[0], &myt->val[0]);
+		mercator(&mxt->val[1], &myt->val[1]);
+	    } else {
+		lambert_azimuthal(&mxt->val[0], &myt->val[0]);
+		lambert_azimuthal(&mxt->val[1], &myt->val[1]);
+	    }
+	    gretl_bundle_donate_data(opts, "mxt__", mxt,
+				     GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(opts, "myt__", myt,
+				     GRETL_TYPE_MATRIX, 0);
+	} else {
+	    err = E_DATA;
+	}
+    } else if (mx != NULL || my != NULL) {
+	err = E_ARGS;
+    }
+
+    return err;
+}
+
+#endif
+
+static int set_projection (gretl_bundle *opts, const char *s)
+{
+    int err = 0;
+
     if (!strcmp(s, "Mercator") || !strcmp(s, "mercator") ||
 	!strcmp(s, "EPSG3857")) {
 	proj = EPSG3857;
@@ -1473,7 +1516,16 @@ static void set_projection (const char *s)
     } else {
 	fprintf(stderr, "set_projection: '%s'?\n", s);
 	proj = PRJ0;
+	err = E_DATA;
     }
+
+#if TR_RANGES
+    if (proj >= EPSG3857 && opts != NULL) {
+	err = transform_ranges(opts, proj);
+    }
+#endif
+
+    return err;
 }
 
 static gretl_matrix *vector_minmax (const gretl_matrix *z)
@@ -1573,7 +1625,7 @@ int geoplot (const char *mapfile,
     /* specific projection wanted? */
     sval = gretl_bundle_get_string(opts, "projection", NULL);
     if (sval != NULL) {
-	set_projection(sval);
+	err = set_projection(opts, sval);
     }
 
     if (!err) {
