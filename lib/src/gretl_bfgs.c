@@ -3588,7 +3588,6 @@ int gretl_fzero (double *bracket, double tol,
     double y, y0, y1, y2;
     double x, x0, x1, x2;
     double dx, d0, d1;
-    int converged = 0;
     int i, err = 0;
 
     x0 = bracket[0];
@@ -3645,7 +3644,6 @@ int gretl_fzero (double *bracket, double tol,
 	    pprintf(prn, "Iter %2d: f(%#.9g) = %g\n", i+1, x, y);
 	}
         if (dx < xtol || fabs(y) < ytol) {
-	    converged = 1;
             break;
 	}
         if (sgn(y2) != sgn(y)) {
@@ -3662,7 +3660,7 @@ int gretl_fzero (double *bracket, double tol,
         }
     }
 
-    if (!err && !converged) {
+    if (!err && fabs(y) > ytol) {
 	x = NADBL;
 	err = E_NOCONV;
     }
