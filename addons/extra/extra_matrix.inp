@@ -39,17 +39,16 @@ function scalar nearPSD (matrix *m,
 end function
 
 function scalar zeroifclose (matrix *m,
-                             scalar thresh[0::1e-50])
+                             scalar thresh[0::1e-12])
     # Sets elements to zero if they are really close.
     # The return value 0 or 1 indicates whether m was altered or not.
     # (an older version copied and returned the matrix)
-    matrix indicator = (abs(m) .< thresh)
-    m = indicator ? 0 : m
-    if sum(indicator)
-        return 1
-    else
-        return 0
+    matrix indicator = (abs(m) .< thresh)   
+    ret = sum(indicator) > 0
+    if ret
+        m = indicator ? 0 : m
     endif
+    return ret
 end function
 
 function matrix commute (const matrix A,
