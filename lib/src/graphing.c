@@ -9582,6 +9582,7 @@ static void set_plot_limits (gretl_bundle *opts,
 
     mx = gretl_bundle_get_matrix(opts, "mxt__", NULL);
     my = gretl_bundle_get_matrix(opts, "myt__", NULL);
+
     if (mx != NULL && my != NULL) {
 	xlim[0] = mx->val[0];
 	xlim[1] = mx->val[1];

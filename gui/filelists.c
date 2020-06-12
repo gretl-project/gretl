@@ -628,11 +628,11 @@ static void real_add_files_to_menus (int ftype)
 
 static void open_examples_dir (GtkAction *action)
 {
-    const gchar *pkgname = gtk_action_get_name(action);
+    const gchar *aname = gtk_action_get_name(action);
     gchar *path;
 
     path = g_build_filename(gretl_home(), "functions",
-			    pkgname, "examples", NULL);
+			    aname + 4, "examples", NULL);
     file_selector_with_startdir(OPEN_ANY, path, mdata->main);
     g_free(path);
 }
@@ -641,17 +641,19 @@ static void add_packaged_files_to_menu (char **dnames, int n)
 {
     GtkActionEntry entry;
     const gchar *mpath = "/menubar/File/AddonResources";
-    gchar *alabel;
+    gchar *aname, *alabel;
     int i;
 
     action_entry_init(&entry);
     entry.callback = G_CALLBACK(open_examples_dir);
 
     for (i=0; i<n; i++) {
+	aname = g_strdup_printf("res.%s", dnames[i]);
 	alabel = g_strdup_printf("%s...", dnames[i]);
-	entry.name = dnames[i];
+	entry.name = aname;
 	entry.label = alabel;
-	vwin_menu_add_item_unique(mdata, dnames[i], mpath, &entry);
+	vwin_menu_add_item_unique(mdata, aname, mpath, &entry);
+	g_free(aname);
 	g_free(alabel);
     }
 }
