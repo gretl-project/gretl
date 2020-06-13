@@ -204,8 +204,7 @@ static int real_spearman_rho (const double *x, const double *y, int n,
 			      int *pm)
 {
     double *rx = NULL, *ry = NULL;
-    double sd, sr;
-    int i, m, ties = 0;
+    int m, ties = 0;
     int err = 0;
 
     *rho = *zval = NADBL;
@@ -219,22 +218,8 @@ static int real_spearman_rho (const double *x, const double *y, int n,
 	return err;
     }
 
-    if (ties == 0) {
-	/* calculate rho and z-score, no ties */
-	sd = 0.0;
-	for (i=0; i<m; i++) {
-	    sd += (rx[i] - ry[i]) * (rx[i] - ry[i]);
-	}
-	sr = 1.0 - 6.0 * sd / (m * (m * m - 1));
-	sd = sqrt(1.0 / (m - 1.0));
-
-	*rho = sr;
-	*zval = sr / sd;
-    } else {
-	/* use Pearson in case of ties */
-	sr = gretl_corr(0, m - 1, rx, ry, NULL);
-	*rho = sr;
-    }
+    /* Pearson correlation in ranks */
+    *rho = gretl_corr(0, m - 1, rx, ry, NULL);
 
     /* save the ranks, if wanted */
     if (rxout != NULL && ry != NULL) {
@@ -333,7 +318,7 @@ int spearman_rho (const int *list, const DATASET *dset,
     int T = dset->t2 - dset->t1 + 1;
     double *rx = NULL, *ry = NULL;
     const double *x, *y;
-    double rho, zval;
+    double zval, rho = 0;
     int vx, vy, m;
     int err;
 
