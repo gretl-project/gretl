@@ -1644,6 +1644,36 @@
       </description>
     </function>
 
+    <function name="bincoeff" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">n</fnarg>
+	<fnarg type="anyfloat">k</fnarg>
+      </fnargs>
+      <description>
+    <para>
+	  The binomial coefficient refers to the number of ways to choose
+	  <argname>k</argname> items from <argname>n</argname> items without repetition and without order.
+	</para>
+	<para>
+	  Returns the binomial coefficient value which is the coefficient of
+	  the <argname>k</argname>th term in the polynomial expansion of the
+	  binomial power <equation status="inline" ascii="(1+x)^n" tex="$(1+x)^n$"/>.
+	  When <argname>k</argname> &gt; <argname>n</argname> or
+	  <argname>k</argname> &lt; 0, NA is returned.
+	</para>
+	<para>
+	  If the two arguments differ in type, the type of the result
+	  is the <quote>higher</quote> of the two, where the ordering
+	  is matrix &gt; series &gt; scalar. For example, if
+	  <argname>n</argname> is a scalar and <argname>k</argname> an
+	  <math>r</math>-vector (or vice versa) the result is an
+	  <math>r</math>-vector. Note that matrix arguments must be
+	  vectors, and if neither argument is a scalar the two
+	  arguments must be of the same length.
+	</para>
+      </description>
+    </function>
+
     <function name="BFGSmax" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="matrixref">&amp;b</fnarg>

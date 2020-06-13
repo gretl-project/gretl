@@ -17,6 +17,7 @@ version 2020c, in progress
   when a value of -999 was given
 - Enhancement of included grunfeld dataset
 - Provide a choice of plotting styles or themes
+- Add new function, bincoeff()
 
 2020-04-11 version 2020b
 - Update gretl copyright notice
