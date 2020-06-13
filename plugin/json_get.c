@@ -646,6 +646,7 @@ static int jb_add_matrix (JsonReader *reader,
     const char *keys[] = {"size", "rows", "cols"};
     int imin = 1, imax = 3;
     int i, sz[3] = {0};
+    int is_complex = 0;
     int err = 0;
 
     if (type == GRETL_TYPE_SERIES) {
@@ -672,6 +673,13 @@ static int jb_add_matrix (JsonReader *reader,
 	return err;
     }
 
+    if (type == GRETL_TYPE_MATRIX) {
+	if (json_reader_read_member(reader, "complex")) {
+	    is_complex = json_reader_get_int_value(reader);
+	}
+	json_reader_end_member(reader);
+    }
+
     if (!json_reader_read_member(reader, "data") ||
 	!json_reader_is_array(reader)) {
 	gretl_errmsg_set("matrix: couldn't find 'data' array");
@@ -683,6 +691,10 @@ static int jb_add_matrix (JsonReader *reader,
 	double *val = NULL;
 	void *ptr = NULL;
 
+	if (is_complex) {
+	    n *= 2;
+	}
+
 	if (nelem != n) {
 	    gretl_errmsg_set("JSON matrix: 'data' array wrongly sized");
 	    err = E_DATA;
@@ -690,7 +702,11 @@ static int jb_add_matrix (JsonReader *reader,
 	    val = malloc(n * sizeof *val);
 	    ptr = val;
 	} else {
-	    m = gretl_matrix_alloc(sz[1], sz[2]);
+	    if (is_complex) {
+		m = gretl_cmatrix_new(sz[1], sz[2]);
+	    } else {
+		m = gretl_matrix_alloc(sz[1], sz[2]);
+	    }
 	    if (m != NULL) {
 		val = m->val;
 		ptr = m;
@@ -1491,6 +1507,11 @@ static void matrix_to_json_as_vec (void *data,
 	json_builder_add_int_value(jb, m->rows);
 	json_builder_set_member_name(jb, "cols");
 	json_builder_add_int_value(jb, m->cols);
+	if (m->is_complex) {
+	    json_builder_set_member_name(jb, "complex");
+	    json_builder_add_int_value(jb, 1);
+	    n *= 2;
+	}
     }
     json_builder_set_member_name(jb, "data");
     json_builder_begin_array(jb);
