@@ -9619,6 +9619,7 @@ int write_map_gp_file (const char *plotfile,
 		       const gretl_matrix *zrange,
 		       gretl_bundle *opts,
 		       int non_standard,
+		       int n_missing,
 		       int show)
 {
     double xlim[2], ylim[2], zlim[2];
@@ -9735,6 +9736,8 @@ int write_map_gp_file (const char *plotfile,
 	}
     }
 
+    gnuplot_missval_string(fp);
+
     if (gretl_bundle_get_int(opts, "inlined", NULL)) {
 	err = inline_map_data(datfile, fp);
 	if (!err) {
@@ -9774,14 +9777,14 @@ int write_map_gp_file (const char *plotfile,
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n",
 			datasrc);
 	    } else {
-		lc = (optlc == NULL)? "white" : optlc;
+		lc = (optlc != NULL)? optlc : n_missing ? "gray" : "white";
 		bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n",
 			datasrc);
 		fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
 	    }
 	} else if (!err) {
-	    lc = (optlc == NULL)? "black" : optlc;
+	    lc = (optlc != NULL)? optlc : "black";
 	    bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 	    fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
 	}

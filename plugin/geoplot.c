@@ -42,6 +42,8 @@ enum {
 };
 
 static int proj;
+static int keep_missing;
+static int n_missing;
 
 #define GEOHUGE 1.0e100
 
@@ -114,9 +116,15 @@ static int skip_object (int i, const gretl_matrix *z,
 	ret = 1;
     } else {
 	if (z != NULL) {
-	    /* skip on payload value is missing */
 	    *pzi = z->val[i];
-	    ret = na(*pzi);
+	    if (na(*pzi)) {
+		/* skip on missing payload value? */
+		if (keep_missing) {
+		    n_missing++;
+		} else {
+		    ret = 1;
+		}
+	    }
 	}
 	if (!ret && m != NULL && m->val[i] == 1) {
 	    /* or skip on entity masked out */
@@ -425,7 +433,11 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			lambert_azimuthal(&x, &y);
 		    }
 		    if (zvec != NULL) {
-			fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			if (na(z)) {
+			    fprintf(fp, "%.8g %.8g ?\n", x, y);
+			} else {
+			    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			}
 		    } else {
 			fprintf(fp, "%#.8g %#.8g\n", x, y);
 		    }
@@ -453,7 +465,11 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			    lambert_azimuthal(&x, &y);
 			}
 			if (zvec != NULL) {
-			    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			    if (na(z)) {
+				fprintf(fp, "%.8g %.8g ?\n", x, y);
+			    } else {
+				fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			    }
 			} else {
 			    fprintf(fp, "%#.8g %#.8g\n", x, y);
 			}
@@ -586,7 +602,11 @@ static gretl_matrix *fast_geo2dat (const char *geoname,
 		    lambert_azimuthal(&x, &y);
 		}
 		if (zvec != NULL) {
-		    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+		    if (na(z)) {
+			fprintf(fp, "%.8g %.8g ?\n", x, y);
+		    } else {
+			fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+		    }
 		} else {
 		    fprintf(fp, "%#.8g %#.8g\n", x, y);
 		}
@@ -795,7 +815,7 @@ static int dbf2csv (const char *dbfname,
 		    fprintf(fp, "%d", DBFReadIntegerAttribute(DBF, j, i));
 		    break;
 		case FTDouble:
-		    fprintf(fp, "%.8g", DBFReadDoubleAttribute(DBF, j, i));
+		    fprintf(fp, "%.15g", DBFReadDoubleAttribute(DBF, j, i));
 		    break;
 		default:
 		    break;
@@ -1091,7 +1111,11 @@ static gretl_matrix *shp2dat (const char *shpname,
 		lambert_azimuthal(&x, &y);
 	    }
 	    if (zvec != NULL) {
-		fprintf(fp, "%.*g %.*g %.*g\n", prec, x, prec, y, prec, z);
+		if (na(z)) {
+		    fprintf(fp, "%.*g %.*g ?\n", prec, x, prec, y);
+		} else {
+		    fprintf(fp, "%.*g %.*g %.*g\n", prec, x, prec, y, prec, z);
+		}
 	    } else {
 		fprintf(fp, "%.*g %.*g\n", prec, x, prec, y);
 	    }
@@ -1459,7 +1483,7 @@ static gretl_matrix *payload_from_prop (gretl_bundle *b,
     return ret;
 }
 
-#define TR_RANGES 0
+#define TR_RANGES 1
 
 #if TR_RANGES
 
@@ -1477,13 +1501,8 @@ static int transform_ranges (gretl_bundle *opts, int proj)
 	    gretl_matrix *mxt = gretl_matrix_copy(mx);
 	    gretl_matrix *myt = gretl_matrix_copy(my);
 
-	    if (proj == EPSG3857) {
-		mercator(&mxt->val[0], &myt->val[0]);
-		mercator(&mxt->val[1], &myt->val[1]);
-	    } else {
-		lambert_azimuthal(&mxt->val[0], &myt->val[0]);
-		lambert_azimuthal(&mxt->val[1], &myt->val[1]);
-	    }
+	    mercator(&mxt->val[0], &myt->val[0]);
+	    mercator(&mxt->val[1], &myt->val[1]);
 	    gretl_bundle_donate_data(opts, "mxt__", mxt,
 				     GRETL_TYPE_MATRIX, 0);
 	    gretl_bundle_donate_data(opts, "myt__", myt,
@@ -1520,7 +1539,7 @@ static int set_projection (gretl_bundle *opts, const char *s)
     }
 
 #if TR_RANGES
-    if (proj >= EPSG3857 && opts != NULL) {
+    if (proj == EPSG3857 && opts != NULL) {
 	err = transform_ranges(opts, proj);
     }
 #endif
@@ -1582,6 +1601,10 @@ int geoplot (const char *mapfile,
     int show = 1;
     int err = 0;
 
+    proj = PRJ0;
+    keep_missing = 0;
+    n_missing = 0;
+
     if (opts != NULL) {
 	if (gretl_bundle_has_key(opts, "show")) {
 	    show = gretl_bundle_get_int(opts, "show", &err);
@@ -1596,6 +1619,9 @@ int geoplot (const char *mapfile,
 		    show = 0;
 		}
 	    }
+	}
+	if (gretl_bundle_has_key(opts, "keep_NAs")) {
+	    keep_missing = gretl_bundle_get_int(opts, "keep_NAs", &err);
 	}
 	if (!err && map != NULL && payload == NULL &&
 	    gretl_bundle_has_key(opts, "payload")) {
@@ -1655,7 +1681,8 @@ int geoplot (const char *mapfile,
 	    non_standard = 1;
 	}
 	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
-				bbox, zrange, opts, non_standard, show);
+				bbox, zrange, opts, non_standard,
+				n_missing, show);
 	gretl_matrix_free(zrange);
 	gretl_matrix_free(bbox);
     }
