@@ -41,9 +41,16 @@ enum {
     EPSG3035,  /* Europe Equal Area */
 };
 
-static int proj;
-static int keep_missing;
-static int n_missing;
+enum {
+    NA_SKIP,     /* exclude regions with missing payload */
+    NA_OUTLINE,  /* show outlines of such areas */
+    NA_FILL      /* give such regions a specific fill color */
+};
+
+int proj;         /* projection to be used */
+int na_treatment; /* how to handle payload NAs */
+int n_missing;    /* number of payload NAs */
+double zna;       /* value to represent payload NA under NA_FILL */
 
 #define GEOHUGE 1.0e100
 
@@ -119,10 +126,10 @@ static int skip_object (int i, const gretl_matrix *z,
 	    *pzi = z->val[i];
 	    if (na(*pzi)) {
 		/* skip on missing payload value? */
-		if (keep_missing) {
-		    n_missing++;
-		} else {
+		if (na_treatment == NA_SKIP) {
 		    ret = 1;
+		} else {
+		    n_missing++;
 		}
 	    }
 	}
@@ -357,6 +364,20 @@ static gretl_matrix *make_bbox (double *gmin, double *gmax)
     return bbox;
 }
 
+static inline void print_xyz (double x, double y, double z,
+			      FILE *fp)
+{
+    if (na(z)) {
+	if (na_treatment == NA_OUTLINE) {
+	    fprintf(fp, "%.8g %.8g ?\n", x, y);
+	} else {
+	    fprintf(fp, "%.8g %.8g %.8g\n", x, y, zna);
+	}
+    } else {
+	fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+    }
+}
+
 /* Writes the coordinates content of the GeoJSON file
    identified by @geoname to the gnuplot-compatible
    plain text data file @datname. Returns the bounding
@@ -433,11 +454,7 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			lambert_azimuthal(&x, &y);
 		    }
 		    if (zvec != NULL) {
-			if (na(z)) {
-			    fprintf(fp, "%.8g %.8g ?\n", x, y);
-			} else {
-			    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
-			}
+			print_xyz(x, y, z, fp);
 		    } else {
 			fprintf(fp, "%#.8g %#.8g\n", x, y);
 		    }
@@ -465,11 +482,7 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			    lambert_azimuthal(&x, &y);
 			}
 			if (zvec != NULL) {
-			    if (na(z)) {
-				fprintf(fp, "%.8g %.8g ?\n", x, y);
-			    } else {
-				fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
-			    }
+			    print_xyz(x, y, z, fp);
 			} else {
 			    fprintf(fp, "%#.8g %#.8g\n", x, y);
 			}
@@ -602,11 +615,7 @@ static gretl_matrix *fast_geo2dat (const char *geoname,
 		    lambert_azimuthal(&x, &y);
 		}
 		if (zvec != NULL) {
-		    if (na(z)) {
-			fprintf(fp, "%.8g %.8g ?\n", x, y);
-		    } else {
-			fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
-		    }
+		    print_xyz(x, y, z, fp);
 		} else {
 		    fprintf(fp, "%#.8g %#.8g\n", x, y);
 		}
@@ -1111,11 +1120,7 @@ static gretl_matrix *shp2dat (const char *shpname,
 		lambert_azimuthal(&x, &y);
 	    }
 	    if (zvec != NULL) {
-		if (na(z)) {
-		    fprintf(fp, "%.*g %.*g ?\n", prec, x, prec, y);
-		} else {
-		    fprintf(fp, "%.*g %.*g %.*g\n", prec, x, prec, y, prec, z);
-		}
+		print_xyz(x, y, z, fp);
 	    } else {
 		fprintf(fp, "%.*g %.*g\n", prec, x, prec, y);
 	    }
@@ -1585,6 +1590,26 @@ static int is_image_filename (const char *s)
     }
 }
 
+static int get_na_treatment (gretl_bundle *opts)
+{
+    const char *s;
+    int err = 0;
+
+    s = gretl_bundle_get_string(opts, "missing", &err);
+
+    if (!err) {
+	if (!strcmp(s, "skip")) {
+	    na_treatment = NA_SKIP;
+	} else if (!strcmp(s, "outline")) {
+	    na_treatment = NA_OUTLINE;
+	} else {
+	    na_treatment = NA_FILL;
+	}
+    }
+
+    return err;
+}
+
 int geoplot (const char *mapfile,
 	     gretl_bundle *map,
 	     gretl_matrix *payload,
@@ -1592,6 +1617,7 @@ int geoplot (const char *mapfile,
 {
     const gretl_matrix *mask = NULL;
     gretl_matrix *bbox = NULL;
+    gretl_matrix *zrange = NULL;
     gchar *plotfile = NULL;
     gchar *datfile = NULL;
     const char *sval;
@@ -1602,8 +1628,9 @@ int geoplot (const char *mapfile,
     int err = 0;
 
     proj = PRJ0;
-    keep_missing = 0;
+    na_treatment = NA_OUTLINE;
     n_missing = 0;
+    zna = 0;
 
     if (opts != NULL) {
 	if (gretl_bundle_has_key(opts, "show")) {
@@ -1620,8 +1647,8 @@ int geoplot (const char *mapfile,
 		}
 	    }
 	}
-	if (gretl_bundle_has_key(opts, "keep_NAs")) {
-	    keep_missing = gretl_bundle_get_int(opts, "keep_NAs", &err);
+	if (gretl_bundle_has_key(opts, "missing")) {
+	    err = get_na_treatment(opts);
 	}
 	if (!err && map != NULL && payload == NULL &&
 	    gretl_bundle_has_key(opts, "payload")) {
@@ -1641,6 +1668,20 @@ int geoplot (const char *mapfile,
         gretl_errmsg_set("geoplot: no output was specified");
 	err = E_ARGS;
 	goto bailout;
+    }
+
+    /* if we have a payload, find its range */
+    if (payload != NULL) {
+	zrange = vector_minmax(payload);
+	if (zrange != NULL && na_treatment == NA_FILL) {
+	    /* determine a suitable value to represent
+	       a missing payload value, in case the user
+	       chooses NA_FILL treatment.
+	    */
+	    double zmin = zrange->val[0];
+
+	    zna = (zmin >= 0)? -1.0 : 2 * zmin;
+	}
     }
 
     /* do we have a sub-sampling mask? */
@@ -1672,19 +1713,16 @@ int geoplot (const char *mapfile,
     }
 
     if (!err) {
-	gretl_matrix *zrange = NULL;
-
-	if (payload != NULL) {
-	    zrange = vector_minmax(payload);
-	}
 	if (proj > 0) {
 	    non_standard = 1;
+	}
+	if (n_missing > 0 && na_treatment == NA_FILL) {
+	    /* hack! */
+	    n_missing = -n_missing;
 	}
 	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
 				bbox, zrange, opts, non_standard,
 				n_missing, show);
-	gretl_matrix_free(zrange);
-	gretl_matrix_free(bbox);
     }
 
  bailout:
@@ -1694,6 +1732,8 @@ int geoplot (const char *mapfile,
     if (free_payload) {
 	gretl_matrix_free(payload);
     }
+    gretl_matrix_free(zrange);
+    gretl_matrix_free(bbox);
 
     return err;
 }
