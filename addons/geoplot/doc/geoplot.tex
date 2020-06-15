@@ -12,10 +12,12 @@
 \setlength{\parskip}{1ex}
 \setlength{\abovecaptionskip}{0pt}
 
+\renewcommand{\deg}{$^{\circ}$}
+
 \newcommand{\startappendices}{%
 \newcounter{appcount}
 \setcounter{appcount}{0}
- \renewcommand{\thesection}{Appendix \Alph{appcount}}}
+\renewcommand{\thesection}{Appendix \Alph{appcount}}}
 
 \newcommand{\myappendix}[1]{%
 \addtocounter{appcount}{1}
@@ -419,32 +421,21 @@ Then you can use \texttt{join} on the Rosetta file to add to the map
 dataset the required identifier that's initially lacking.
 
 \subsection{Sub-sampling}
+\label{sec:sub-sample}
 
 In some cases one may wish to leave out certain outlying regions. For
 example, it's quite common to produce thematic maps of the USA that
-omit Hawaii, and perhaps Alaska. A related case is where the payload
-value is missing (\texttt{NA}) for one or more regions.
+omit Hawaii, and perhaps Alaska. In principle leaving out regions
+threatens to break the required alignment of payload and geometry, but
+this is handled: if you sub-sample the map dataset using the
+\texttt{smpl} command, \texttt{geoplot} automatically drops the
+associated polygons from the plot.
 
-In principle such cases threaten to break the required alignment of
-payload and geometry, but in fact the \texttt{geomap} function handles
-them, as follows.
-\begin{itemize}
-\item If the payload is \texttt{NA} for a given region, its geometry
-  is automatically omitted from the map.
-\item If the map dataset is sub-sampled, geometries corresponding
-  to excluded observations are omitted.
-\end{itemize}
-
-The sub-sampling case is illustrated in Listing~\ref{tab:USA}: we use
-the \texttt{smpl} command to cut out unwanted
-regions. Figure~\ref{fig:USA} shows the results with and without
-exclusion of Alaska and Hawaii.\footnote{Given the role of this
-  example we don't bother adding a real payload, but just simulate
-  data using the \texttt{normal} function.}
-
-(\textbf{TODO}: In the case of missing payload values, we should
-probably give the option of \textit{not} omitting the region, but
-giving it a specific color representing ``missing data''.)
+This is illustrated in Listing~\ref{tab:USA}. Figure~\ref{fig:USA}
+shows the results with and without exclusion of Alaska and
+Hawaii.\footnote{Given the role of this example we don't bother adding
+  a real payload, but just simulate data using the \texttt{normal}
+  function.}
 
 \begin{script}[p]
   \begin{scode}
@@ -475,6 +466,12 @@ geoplot($mapfile, x, opts)
 \caption{Output of Listing \ref{tab:USA}}
 \label{fig:USA}
 \end{figure}
+
+A related case is where the payload value is missing (\texttt{NA}) for
+one or more regions. Here you have a choice: by default, regions whose
+payload is \texttt{NA} are omitted, but if you pass a non-zero value
+under the key \texttt{keep\_NAs} in the options bundle the outlines of
+such regions are shown.
 
 \section{Options for the \texttt{geoplot} function}
 \label{sec:opts}
@@ -723,8 +720,8 @@ An example script is shown in Listing~\ref{tab:translate} and the
 result of plotting the modifed GeoJSON file in
 Figure~\ref{fig:usmod}. We obtain the second argument to pass to the
 translator by inspection of the map dataset: Alaska is feature 48 and
-Hawaii feature 5. In this case we decide to move Alaska 34$^{\circ}$
-East and 35$^{\circ}$ South and shrink it substantially.  Getting the
+Hawaii feature 5. In this case we decide to move Alaska 34\deg\
+East and 35\deg\ South and shrink it substantially.  Getting the
 effect one wants is likely to take some trial and error, but two
 \textsf{geoplot} features can be helpful.
 
@@ -984,6 +981,43 @@ size, in effect cancelling projection, as in
 bundle options
 options.projection = "EPSG4326"
 \end{code}
+
+\subsection*{Limiting the area shown}
+
+Section~\ref{sec:sub-sample} explains how to exclude certain features
+from a map using the \texttt{smpl} command. In some cases, however,
+one may wish to limit what is shown in a different way, by specifying
+ranges for latitude and longitude. This can be done by supplying
+2-vectors in the \texttt{geoplot} options bundle under the keys
+\texttt{xrange} (longitude) and \texttt{yrange} (latitude). For
+example, to plot just the area from 40\deg\ to 60\deg\ North and
+10\deg\ to 30\deg\ East you can do
+\begin{code}
+options.yrange = {40,60}
+options.xrange = {10,30}
+\end{code}
+Specifying such ranges in degrees works fine if you are using the
+default \texttt{geoplot} projection, Mercator or \textsf{EPSG:4326}.
+But it doesn't work for azimuthal projections, where neither meridians
+nor parallels are straight lines. Rather, you should first plot the
+entire map using the projection you want, with axis tics turned on to
+show the linearized coordinates. Then specify the ranges in terms of
+these values. For example, here's how one might restrict a US map to
+the contiguous states via ranges:
+\begin{code}
+open us-states.geojson --frompkg=geoplot
+bundle opts
+opts.projection = "EPSG2163" # azimuthal
+opts.tics = 1
+# take a look-see
+geoplot($mapfile, null, opts)
+# suitable ranges, by inspection
+opts.xrange = {-330,410}
+opts.yrange = {-350,130}
+geoplot($mapfile, null, opts)
+\end{code}
+
+\subsection*{Further reading}
 
 For anyone wishing to follow up on this sort of thing, there are many
 websites presenting information on coordinate systems and

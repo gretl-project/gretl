@@ -41,7 +41,16 @@ enum {
     EPSG3035,  /* Europe Equal Area */
 };
 
-static int proj;
+enum {
+    NA_SKIP,     /* exclude regions with missing payload */
+    NA_OUTLINE,  /* show outlines of such areas */
+    NA_FILL      /* give such regions a specific fill color */
+};
+
+int proj;         /* projection to be used */
+int na_treatment; /* how to handle payload NAs */
+int n_missing;    /* number of payload NAs */
+double zna;       /* value to represent payload NA under NA_FILL */
 
 #define GEOHUGE 1.0e100
 
@@ -114,9 +123,15 @@ static int skip_object (int i, const gretl_matrix *z,
 	ret = 1;
     } else {
 	if (z != NULL) {
-	    /* skip on payload value is missing */
 	    *pzi = z->val[i];
-	    ret = na(*pzi);
+	    if (na(*pzi)) {
+		/* skip on missing payload value? */
+		if (na_treatment == NA_SKIP) {
+		    ret = 1;
+		} else {
+		    n_missing++;
+		}
+	    }
 	}
 	if (!ret && m != NULL && m->val[i] == 1) {
 	    /* or skip on entity masked out */
@@ -349,6 +364,20 @@ static gretl_matrix *make_bbox (double *gmin, double *gmax)
     return bbox;
 }
 
+static inline void print_xyz (double x, double y, double z,
+			      FILE *fp)
+{
+    if (na(z)) {
+	if (na_treatment == NA_OUTLINE) {
+	    fprintf(fp, "%.8g %.8g ?\n", x, y);
+	} else {
+	    fprintf(fp, "%.8g %.8g %.8g\n", x, y, zna);
+	}
+    } else {
+	fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+    }
+}
+
 /* Writes the coordinates content of the GeoJSON file
    identified by @geoname to the gnuplot-compatible
    plain text data file @datname. Returns the bounding
@@ -425,7 +454,7 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			lambert_azimuthal(&x, &y);
 		    }
 		    if (zvec != NULL) {
-			fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			print_xyz(x, y, z, fp);
 		    } else {
 			fprintf(fp, "%#.8g %#.8g\n", x, y);
 		    }
@@ -453,7 +482,7 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			    lambert_azimuthal(&x, &y);
 			}
 			if (zvec != NULL) {
-			    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+			    print_xyz(x, y, z, fp);
 			} else {
 			    fprintf(fp, "%#.8g %#.8g\n", x, y);
 			}
@@ -586,7 +615,7 @@ static gretl_matrix *fast_geo2dat (const char *geoname,
 		    lambert_azimuthal(&x, &y);
 		}
 		if (zvec != NULL) {
-		    fprintf(fp, "%.8g %.8g %.8g\n", x, y, z);
+		    print_xyz(x, y, z, fp);
 		} else {
 		    fprintf(fp, "%#.8g %#.8g\n", x, y);
 		}
@@ -795,7 +824,7 @@ static int dbf2csv (const char *dbfname,
 		    fprintf(fp, "%d", DBFReadIntegerAttribute(DBF, j, i));
 		    break;
 		case FTDouble:
-		    fprintf(fp, "%.8g", DBFReadDoubleAttribute(DBF, j, i));
+		    fprintf(fp, "%.15g", DBFReadDoubleAttribute(DBF, j, i));
 		    break;
 		default:
 		    break;
@@ -1091,7 +1120,7 @@ static gretl_matrix *shp2dat (const char *shpname,
 		lambert_azimuthal(&x, &y);
 	    }
 	    if (zvec != NULL) {
-		fprintf(fp, "%.*g %.*g %.*g\n", prec, x, prec, y, prec, z);
+		print_xyz(x, y, z, fp);
 	    } else {
 		fprintf(fp, "%.*g %.*g\n", prec, x, prec, y);
 	    }
@@ -1459,7 +1488,7 @@ static gretl_matrix *payload_from_prop (gretl_bundle *b,
     return ret;
 }
 
-#define TR_RANGES 0
+#define TR_RANGES 1
 
 #if TR_RANGES
 
@@ -1477,13 +1506,8 @@ static int transform_ranges (gretl_bundle *opts, int proj)
 	    gretl_matrix *mxt = gretl_matrix_copy(mx);
 	    gretl_matrix *myt = gretl_matrix_copy(my);
 
-	    if (proj == EPSG3857) {
-		mercator(&mxt->val[0], &myt->val[0]);
-		mercator(&mxt->val[1], &myt->val[1]);
-	    } else {
-		lambert_azimuthal(&mxt->val[0], &myt->val[0]);
-		lambert_azimuthal(&mxt->val[1], &myt->val[1]);
-	    }
+	    mercator(&mxt->val[0], &myt->val[0]);
+	    mercator(&mxt->val[1], &myt->val[1]);
 	    gretl_bundle_donate_data(opts, "mxt__", mxt,
 				     GRETL_TYPE_MATRIX, 0);
 	    gretl_bundle_donate_data(opts, "myt__", myt,
@@ -1520,7 +1544,7 @@ static int set_projection (gretl_bundle *opts, const char *s)
     }
 
 #if TR_RANGES
-    if (proj >= EPSG3857 && opts != NULL) {
+    if (proj == EPSG3857 && opts != NULL) {
 	err = transform_ranges(opts, proj);
     }
 #endif
@@ -1552,6 +1576,46 @@ static gretl_matrix *vector_minmax (const gretl_matrix *z)
     return ret;
 }
 
+static gretl_matrix *get_zrange (gretl_matrix *payload,
+				 gretl_bundle *opts,
+				 int *err)
+{
+    gretl_matrix *zrange = vector_minmax(payload);
+    gretl_matrix *cbr = NULL;
+
+    if (gretl_bundle_has_key(opts, "cbrange")) {
+	cbr = gretl_bundle_get_matrix(opts, "cbrange", err);
+	if (!*err && gretl_vector_get_length(cbr) != 2) {
+	    *err = E_INVARG;
+	}
+	if (!*err && ((cbr->val[0] > zrange->val[0]) ||
+		      (cbr->val[1] < zrange->val[1]))) {
+	    gretl_errmsg_set("The supplied cbrange fails to "
+			     "accommodate the data");
+	    *err = E_DATA;
+	}
+	if (!*err) {
+	    /* @cbr can extend, but not truncate, the z-range
+	       relative to the current payload
+	    */
+	    zrange->val[0] = MIN(zrange->val[0], cbr->val[0]);
+	    zrange->val[1] = MAX(zrange->val[1], cbr->val[1]);
+	}
+    }
+
+    if (!*err && na_treatment == NA_FILL) {
+	/* determine a suitable value to represent
+	   a missing payload value, in case the user
+	   chooses NA_FILL treatment.
+	*/
+	double zmin = zrange->val[0];
+
+	zna = (zmin >= 0)? -1.0 : 2 * zmin;
+    }
+
+    return zrange;
+}
+
 static int is_image_filename (const char *s)
 {
     if (has_suffix(s, ".pdf") ||
@@ -1566,6 +1630,26 @@ static int is_image_filename (const char *s)
     }
 }
 
+static int get_na_treatment (gretl_bundle *opts)
+{
+    const char *s;
+    int err = 0;
+
+    s = gretl_bundle_get_string(opts, "missing", &err);
+
+    if (!err) {
+	if (!strcmp(s, "skip")) {
+	    na_treatment = NA_SKIP;
+	} else if (!strcmp(s, "outline")) {
+	    na_treatment = NA_OUTLINE;
+	} else {
+	    na_treatment = NA_FILL;
+	}
+    }
+
+    return err;
+}
+
 int geoplot (const char *mapfile,
 	     gretl_bundle *map,
 	     gretl_matrix *payload,
@@ -1573,6 +1657,7 @@ int geoplot (const char *mapfile,
 {
     const gretl_matrix *mask = NULL;
     gretl_matrix *bbox = NULL;
+    gretl_matrix *zrange = NULL;
     gchar *plotfile = NULL;
     gchar *datfile = NULL;
     const char *sval;
@@ -1581,6 +1666,11 @@ int geoplot (const char *mapfile,
     int free_payload = 0;
     int show = 1;
     int err = 0;
+
+    proj = PRJ0;
+    na_treatment = NA_OUTLINE;
+    n_missing = 0;
+    zna = 0;
 
     if (opts != NULL) {
 	if (gretl_bundle_has_key(opts, "show")) {
@@ -1596,6 +1686,9 @@ int geoplot (const char *mapfile,
 		    show = 0;
 		}
 	    }
+	}
+	if (gretl_bundle_has_key(opts, "missing")) {
+	    err = get_na_treatment(opts);
 	}
 	if (!err && map != NULL && payload == NULL &&
 	    gretl_bundle_has_key(opts, "payload")) {
@@ -1617,15 +1710,22 @@ int geoplot (const char *mapfile,
 	goto bailout;
     }
 
+    /* if we have a payload, find its range */
+    if (payload != NULL) {
+	zrange = get_zrange(payload, opts, &err);
+    }
+
     /* do we have a sub-sampling mask? */
-    if (gretl_bundle_has_key(opts, "mask")) {
+    if (!err && gretl_bundle_has_key(opts, "mask")) {
 	mask = gretl_bundle_get_matrix(opts, "mask", &err);
     }
 
-    /* specific projection wanted? */
-    sval = gretl_bundle_get_string(opts, "projection", NULL);
-    if (sval != NULL) {
-	err = set_projection(opts, sval);
+    if (!err) {
+	/* specific projection wanted? */
+	sval = gretl_bundle_get_string(opts, "projection", NULL);
+	if (sval != NULL) {
+	    err = set_projection(opts, sval);
+	}
     }
 
     if (!err) {
@@ -1646,18 +1746,16 @@ int geoplot (const char *mapfile,
     }
 
     if (!err) {
-	gretl_matrix *zrange = NULL;
-
-	if (payload != NULL) {
-	    zrange = vector_minmax(payload);
-	}
 	if (proj > 0) {
 	    non_standard = 1;
 	}
+	if (n_missing > 0 && na_treatment == NA_FILL) {
+	    /* hack! */
+	    n_missing = -n_missing;
+	}
 	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
-				bbox, zrange, opts, non_standard, show);
-	gretl_matrix_free(zrange);
-	gretl_matrix_free(bbox);
+				bbox, zrange, opts, non_standard,
+				n_missing, show);
     }
 
  bailout:
@@ -1667,6 +1765,8 @@ int geoplot (const char *mapfile,
     if (free_payload) {
 	gretl_matrix_free(payload);
     }
+    gretl_matrix_free(zrange);
+    gretl_matrix_free(bbox);
 
     return err;
 }

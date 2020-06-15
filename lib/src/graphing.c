@@ -9453,19 +9453,6 @@ static void stretch_limits (double *targ, const gretl_matrix *minmax,
     targ[1] = mmv1 * (mmv1 > 0 ? 1+by : 1-by);
 }
 
-static const char *map_palette_string (const char *setpal)
-{
-    if (!strcmp(setpal, "blues")) {
-        return "set palette defined (0 '#D4E4F2', 1 'steelblue')";
-    } else if (!strcmp(setpal, "oranges")) {
-        return "set palette defined (0 '#E9D9B5', 1 'dark-orange')";
-    } else if (!strcmp(setpal, "green-to-red")) {
-	return "set palette defined (0 '#58996E', 1 '#E1D99A', 2 '#C0414C')";
-    } else {
-        return setpal;
-    }
-}
-
 static int inline_map_data (const char *datfile, FILE *fp)
 {
     char buf[8192];
@@ -9551,26 +9538,79 @@ static void fputs_literal (const char *s, FILE *fp)
     g_free(tmp);
 }
 
+static void simple_print_palette (const char *p, FILE *fp)
+{
+    if (!strcmp(p, "blues")) {
+        fputs("set palette defined (0 '#D4E4F2', 1 'steelblue')\n", fp);
+    } else if (!strcmp(p, "oranges")) {
+        fputs("set palette defined (0 '#E9D9B5', 1 'dark-orange')\n", fp);
+    } else if (!strcmp(p, "green-to-red")) {
+	fputs("set palette defined (0 '#58996E', 1 '#E1D99A', 2 '#C0414C')\n", fp);
+    } else {
+	fprintf(fp, "%s\n", p);
+    }
+}
+
+/*
+  An example that actually works (where plmin and plmax should correspond
+  to zlim[0] and zlim[1]):
+
+  fmt = "set palette defined (%.8g 'gray', %.8g '#E9D9B5', %.8g 'dark-orange')"
+  b.palette = sprintf(fmt, plmin - 0.002, plmin - 0.001, plmax)
+*/
+
+static void tricky_print_palette (const char *p,
+				  const double *zlim,
+				  FILE *fp)
+{
+    const char *colors[3][3] = {
+        { "#D4E4F2", "steelblue", NULL },
+        { "#E9D9B5", "dark-orange", NULL },
+        { "#58996E", "#E1D99A", "#C0414C" }
+    };
+    int i = 0;
+
+    if (!strcmp(p, "blues")) {
+	i = 0;
+    } else if (!strcmp(p, "oranges")) {
+	i = 1;
+    } else if (!strcmp(p, "green-to-red")) {
+	i = 2;
+    }
+
+    fprintf(fp, "set palette defined (%.8g 'gray', ", zlim[0] - 0.002);
+    fprintf(fp, "%.8g '%s', ", zlim[0] - 0.001, colors[i][0]);
+    if (i < 2) {
+	fprintf(fp, "%.8g '%s')\n", zlim[1], colors[i][1]);
+    } else {
+	fprintf(fp, "%.8g '%s', %.8g '%s')\n", (zlim[1] - zlim[0]) / 2,
+		colors[i][1], zlim[1], colors[i][2]);
+    }
+
+    /* for this to work, cbrange has to be set using zlim */
+    fprintf(fp, "set cbrange [%.8g:%.8g]\n", zlim[0] - .001, zlim[1]);
+}
+
 static void handle_palette (gretl_bundle *opts,
-			    const double *zlim,
+			    const gretl_matrix *zrange,
+                            int n_missfill,
 			    FILE *fp)
 {
-    const char *pal = NULL;
-    const gretl_matrix *m;
+    const double *zlim = zrange->val;
+    const char *p;
 
-    pal = gretl_bundle_get_string(opts, "palette", NULL);
-    if (pal == NULL) {
-	/* get rid of this */
-	pal = gretl_bundle_get_string(opts, "setpal", NULL);
-    }
-    if (pal != NULL) {
-	fprintf(fp, "%s\n", map_palette_string(pal));
+    p = gretl_bundle_get_string(opts, "palette", NULL);
+
+    if (p != NULL) {
+	if (n_missfill == 0) {
+	    simple_print_palette(p, fp);
+	} else {
+	    tricky_print_palette(p, zlim, fp);
+	    /* cbrange handled */
+	    return;
+	}
     }
 
-    m = gretl_bundle_get_matrix(opts, "cbrange", NULL);
-    if (m != NULL && gretl_vector_get_length(m) == 2) {
-	zlim = m->val;
-    }
     fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
 }
 
@@ -9619,9 +9659,10 @@ int write_map_gp_file (const char *plotfile,
 		       const gretl_matrix *zrange,
 		       gretl_bundle *opts,
 		       int non_standard,
+		       int n_missing,
 		       int show)
 {
-    double xlim[2], ylim[2], zlim[2];
+    double xlim[2], ylim[2];
     gretl_matrix *dims = NULL;
     const char *optlc = NULL;
     const char *sval;
@@ -9633,11 +9674,19 @@ int write_map_gp_file (const char *plotfile,
     int height = 600;
     int border = 1;
     int notics = 1;
+    int n_outline = 0;
+    int n_missfill = 0;
     int err = 0;
+
+    if (n_missing > 0) {
+	n_outline = n_missing;
+    } else if (n_missing < 0) {
+	/* OK, this is a hack! */
+	n_missfill = -n_missing;
+    }
 
     if (zrange != NULL) {
         have_payload = 1;
-	stretch_limits(zlim, zrange, 0, 0.05); /* ?? */
     } else if (opts == NULL) {
 	/* the simple outlines case */
 	border = 1;
@@ -9679,7 +9728,7 @@ int write_map_gp_file (const char *plotfile,
     fputs("unset key\n", fp);
 
     if (have_payload) {
-	handle_palette(opts, zlim, fp);
+	handle_palette(opts, zrange, n_missfill, fp);
     }
 
     fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
@@ -9735,6 +9784,8 @@ int write_map_gp_file (const char *plotfile,
 	}
     }
 
+    gnuplot_missval_string(fp);
+
     if (gretl_bundle_get_int(opts, "inlined", NULL)) {
 	err = inline_map_data(datfile, fp);
 	if (!err) {
@@ -9774,14 +9825,14 @@ int write_map_gp_file (const char *plotfile,
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n",
 			datasrc);
 	    } else {
-		lc = (optlc == NULL)? "white" : optlc;
+		lc = (optlc != NULL)? optlc : n_outline ? "gray" : "white"; /* ? */
 		bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n",
 			datasrc);
 		fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
 	    }
 	} else if (!err) {
-	    lc = (optlc == NULL)? "black" : optlc;
+	    lc = (optlc != NULL)? optlc : "black";
 	    bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 	    fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
 	}
