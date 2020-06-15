@@ -1738,6 +1738,53 @@
       </description>
     </function>
 
+    <function name="bincoeff" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">n</fnarg>
+	<fnarg type="anyfloat">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola il coefficiente binomiale, ossia il numero di modi
+	  in cui <argname>k</argname> elementi possono essere presi
+	  senza ripetizione da <argname>n</argname> scelte possibili,
+	  indipendentemente dal loro ordinamento. Questo numero è
+	  anche uguale al <argname>(k+1)</argname>-esimo coefficiente
+	  nella espansione polinomiale di <equation status="inline"
+	  ascii="(1+x)^n" tex="$(1+x)^n$"/>.
+	</para>
+	<para context="tex">
+	  Per argomenti interi, il risulatato è $n!/k!(n-k)!$, ma la
+	  funzione accetta anche argomenti reali, e la formula si
+	  generalizza a $\frac{\Gamma(n+1)}{\Gamma(k+1)
+	  \Gamma(n-k+1)}$.
+	</para>
+	<para context="notex">
+	  Per argomenti interi, il risulatato è
+	  <math>n!/k!(n-k)!</math>, ma la funzione accetta anche
+	  argomenti reali, e la formula si generalizza a <math>
+	  Γ(n+1)/( Γ(k+1) Γ(n-k+1) )</math>
+	</para>
+	<para>
+	  Quando <argname>k</argname> &gt; <argname>n</argname> oppure
+	  <argname>k</argname> &lt; 0, la funzione restituisce NA.
+	</para>
+	<para>
+	  Se i due argomenti sono di tipo diverso, il risultato è del
+	  tipo <quote>più alto</quote>dei due, dove l'ordinamento è
+	  matrice &gt; serie &gt; scalare. Ad esempio, se
+	  <argname>n</argname> è uno scalare e <argname>k</argname> un
+	  vettore di <math>r</math> elementi (o viceversa), il
+	  risultato è anch'esso un vettore. Si noti che gli argomenti
+	  matriciali debbono essere vettori, e che se nessuno dei due
+	  è uno scalare devono avere la stessa dimensione.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="gammafun"/> e <fncref targ="lngamma"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -4247,6 +4294,9 @@
 	<para>
 	  Restituisce la funzione gamma di <argname>x</argname>. 
 	</para>
+	<para>
+	  Vedi anche <fncref targ="bincoeff"/> e <fncref targ="lngamma"/>.
+	</para>
       </description>
     </function>
 
@@ -6304,6 +6354,9 @@
       <description>
 	<para>
 	  Logaritmo della funzione gamma di <argname>x</argname>.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="bincoeff"/> e <fncref targ="gammafun"/>.
 	</para>
       </description>
     </function>
