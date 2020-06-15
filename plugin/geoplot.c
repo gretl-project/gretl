@@ -41,16 +41,10 @@ enum {
     EPSG3035,  /* Europe Equal Area */
 };
 
-enum {
-    NA_SKIP,     /* exclude regions with missing payload */
-    NA_OUTLINE,  /* show outlines of such areas */
-    NA_FILL      /* give such regions a specific fill color */
-};
-
-int proj;         /* projection to be used */
-int na_treatment; /* how to handle payload NAs */
-int n_missing;    /* number of payload NAs */
-double zna;       /* value to represent payload NA under NA_FILL */
+int proj;       /* projection to be used */
+int na_action;  /* how to handle payload NAs */
+int n_missing;  /* number of payload NAs */
+double zna;     /* value to represent payload NA under NA_FILL */
 
 #define GEOHUGE 1.0e100
 
@@ -126,7 +120,7 @@ static int skip_object (int i, const gretl_matrix *z,
 	    *pzi = z->val[i];
 	    if (na(*pzi)) {
 		/* skip on missing payload value? */
-		if (na_treatment == NA_SKIP) {
+		if (na_action == NA_SKIP) {
 		    ret = 1;
 		} else {
 		    n_missing++;
@@ -368,7 +362,7 @@ static inline void print_xyz (double x, double y, double z,
 			      FILE *fp)
 {
     if (na(z)) {
-	if (na_treatment == NA_OUTLINE) {
+	if (na_action == NA_OUTLINE) {
 	    fprintf(fp, "%.8g %.8g ?\n", x, y);
 	} else {
 	    fprintf(fp, "%.8g %.8g %.8g\n", x, y, zna);
@@ -1503,14 +1497,18 @@ static int transform_ranges (gretl_bundle *opts, int proj)
     if (mx != NULL && my != NULL) {
 	if (gretl_vector_get_length(mx) == 2 &&
 	    gretl_vector_get_length(my) == 2) {
-	    gretl_matrix *mxt = gretl_matrix_copy(mx);
-	    gretl_matrix *myt = gretl_matrix_copy(my);
+	    gretl_matrix *mxy = gretl_matrix_alloc(2,2);
 
-	    mercator(&mxt->val[0], &myt->val[0]);
-	    mercator(&mxt->val[1], &myt->val[1]);
-	    gretl_bundle_donate_data(opts, "mxt__", mxt,
-				     GRETL_TYPE_MATRIX, 0);
-	    gretl_bundle_donate_data(opts, "myt__", myt,
+	    /* x in first column, y in second */
+	    mxy->val[0] = mx->val[0];
+	    mxy->val[1] = mx->val[1];
+	    mxy->val[2] = my->val[0];
+	    mxy->val[3] = my->val[1];
+
+	    mercator(&mxy->val[0], &mxy->val[2]);
+	    mercator(&mxy->val[1], &mxy->val[3]);
+
+	    gretl_bundle_donate_data(opts, "mxy__", mxy,
 				     GRETL_TYPE_MATRIX, 0);
 	} else {
 	    err = E_DATA;
@@ -1603,7 +1601,7 @@ static gretl_matrix *get_zrange (gretl_matrix *payload,
 	}
     }
 
-    if (!*err && na_treatment == NA_FILL) {
+    if (!*err && na_action == NA_FILL) {
 	/* determine a suitable value to represent
 	   a missing payload value, in case the user
 	   chooses NA_FILL treatment.
@@ -1630,7 +1628,7 @@ static int is_image_filename (const char *s)
     }
 }
 
-static int get_na_treatment (gretl_bundle *opts)
+static int get_na_action (gretl_bundle *opts)
 {
     const char *s;
     int err = 0;
@@ -1639,11 +1637,11 @@ static int get_na_treatment (gretl_bundle *opts)
 
     if (!err) {
 	if (!strcmp(s, "skip")) {
-	    na_treatment = NA_SKIP;
+	    na_action = NA_SKIP;
 	} else if (!strcmp(s, "outline")) {
-	    na_treatment = NA_OUTLINE;
+	    na_action = NA_OUTLINE;
 	} else {
-	    na_treatment = NA_FILL;
+	    na_action = NA_FILL;
 	}
     }
 
@@ -1668,7 +1666,7 @@ int geoplot (const char *mapfile,
     int err = 0;
 
     proj = PRJ0;
-    na_treatment = NA_OUTLINE;
+    na_action = NA_OUTLINE;
     n_missing = 0;
     zna = 0;
 
@@ -1688,7 +1686,7 @@ int geoplot (const char *mapfile,
 	    }
 	}
 	if (gretl_bundle_has_key(opts, "missing")) {
-	    err = get_na_treatment(opts);
+	    err = get_na_action(opts);
 	}
 	if (!err && map != NULL && payload == NULL &&
 	    gretl_bundle_has_key(opts, "payload")) {
@@ -1749,13 +1747,12 @@ int geoplot (const char *mapfile,
 	if (proj > 0) {
 	    non_standard = 1;
 	}
-	if (n_missing > 0 && na_treatment == NA_FILL) {
-	    /* hack! */
-	    n_missing = -n_missing;
+	if (n_missing == 0) {
+	    na_action = 0;
 	}
 	err = write_map_gp_file(plotfile, plotfile_is_image, datfile,
 				bbox, zrange, opts, non_standard,
-				n_missing, show);
+				na_action, show);
     }
 
  bailout:

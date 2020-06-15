@@ -9551,14 +9551,6 @@ static void simple_print_palette (const char *p, FILE *fp)
     }
 }
 
-/*
-  An example that actually works (where plmin and plmax should correspond
-  to zlim[0] and zlim[1]):
-
-  fmt = "set palette defined (%.8g 'gray', %.8g '#E9D9B5', %.8g 'dark-orange')"
-  b.palette = sprintf(fmt, plmin - 0.002, plmin - 0.001, plmax)
-*/
-
 static void tricky_print_palette (const char *p,
 				  const double *zlim,
 				  FILE *fp)
@@ -9578,6 +9570,8 @@ static void tricky_print_palette (const char *p,
 	i = 2;
     }
 
+    /* FIXME: allow specification of NA fill color? */
+
     fprintf(fp, "set palette defined (%.8g 'gray', ", zlim[0] - 0.002);
     fprintf(fp, "%.8g '%s', ", zlim[0] - 0.001, colors[i][0]);
     if (i < 2) {
@@ -9593,7 +9587,7 @@ static void tricky_print_palette (const char *p,
 
 static void handle_palette (gretl_bundle *opts,
 			    const gretl_matrix *zrange,
-                            int n_missfill,
+                            int na_action,
 			    FILE *fp)
 {
     const double *zlim = zrange->val;
@@ -9602,12 +9596,12 @@ static void handle_palette (gretl_bundle *opts,
     p = gretl_bundle_get_string(opts, "palette", NULL);
 
     if (p != NULL) {
-	if (n_missfill == 0) {
-	    simple_print_palette(p, fp);
-	} else {
+	if (na_action == NA_FILL) {
 	    tricky_print_palette(p, zlim, fp);
 	    /* cbrange handled */
 	    return;
+	} else {
+	    simple_print_palette(p, fp);
 	}
     }
 
@@ -9618,18 +9612,15 @@ static void set_plot_limits (gretl_bundle *opts,
 			     const gretl_matrix *bbox,
 			     double *xlim, double *ylim)
 {
-    const gretl_matrix *mx, *my;
+    const gretl_matrix *mxy, *mx, *my;
 
-    mx = gretl_bundle_get_matrix(opts, "mxt__", NULL);
-    my = gretl_bundle_get_matrix(opts, "myt__", NULL);
-
-    if (mx != NULL && my != NULL) {
-	xlim[0] = mx->val[0];
-	xlim[1] = mx->val[1];
-	ylim[0] = my->val[0];
-	ylim[1] = my->val[1];
-	gretl_bundle_delete_data(opts, "mxt__");
-	gretl_bundle_delete_data(opts, "myt__");
+    mxy = gretl_bundle_get_matrix(opts, "mxy__", NULL);
+    if (mxy != NULL) {
+	xlim[0] = mxy->val[0];
+	xlim[1] = mxy->val[1];
+	ylim[0] = mxy->val[2];
+	ylim[1] = mxy->val[3];
+	gretl_bundle_delete_data(opts, "mxy__");
 	return;
     }
 
@@ -9650,6 +9641,21 @@ static void set_plot_limits (gretl_bundle *opts,
     }
 }
 
+static const char *map_linecolor (const char *optlc,
+				  int have_payload,
+				  int na_action)
+{
+    if (optlc != NULL) {
+	/* respect the user's choice */
+	return optlc;
+    } else if (have_payload) {
+	return (na_action == NA_OUTLINE)? "gray" : "white";
+    } else {
+	/* outlines only */
+	return "black";
+    }
+}
+
 /* called from the geoplot plugin to finalize a map */
 
 int write_map_gp_file (const char *plotfile,
@@ -9659,7 +9665,7 @@ int write_map_gp_file (const char *plotfile,
 		       const gretl_matrix *zrange,
 		       gretl_bundle *opts,
 		       int non_standard,
-		       int n_missing,
+		       int na_action,
 		       int show)
 {
     double xlim[2], ylim[2];
@@ -9674,16 +9680,7 @@ int write_map_gp_file (const char *plotfile,
     int height = 600;
     int border = 1;
     int notics = 1;
-    int n_outline = 0;
-    int n_missfill = 0;
     int err = 0;
-
-    if (n_missing > 0) {
-	n_outline = n_missing;
-    } else if (n_missing < 0) {
-	/* OK, this is a hack! */
-	n_missfill = -n_missing;
-    }
 
     if (zrange != NULL) {
         have_payload = 1;
@@ -9728,7 +9725,7 @@ int write_map_gp_file (const char *plotfile,
     fputs("unset key\n", fp);
 
     if (have_payload) {
-	handle_palette(opts, zrange, n_missfill, fp);
+	handle_palette(opts, zrange, na_action, fp);
     }
 
     fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);
@@ -9817,22 +9814,20 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (!err) {
+	const char *lc = map_linecolor(optlc, have_payload, na_action);
 	gchar *bline = NULL;
-	const char *lc;
 
 	if (have_payload) {
 	    if (linewidth == 0) {
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette\n",
 			datasrc);
 	    } else {
-		lc = (optlc != NULL)? optlc : n_outline ? "gray" : "white"; /* ? */
 		bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 		fprintf(fp, "plot for [i=0:*] %s index i with filledcurves fc palette, \\\n",
 			datasrc);
 		fprintf(fp, "  %s using 1:2 with lines %s\n", datasrc, bline);
 	    }
-	} else if (!err) {
-	    lc = (optlc != NULL)? optlc : "black";
+	} else {
 	    bline = g_strdup_printf("lc '%s' lw %g", lc, linewidth);
 	    fprintf(fp, "plot %s using 1:2 with lines %s\n", datasrc, bline);
 	}

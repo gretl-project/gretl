@@ -144,6 +144,12 @@ typedef enum {
     GP_TERM_VAR
 } TermType;
 
+typedef enum {
+    NA_SKIP,     /* exclude regions with missing payload */
+    NA_OUTLINE,  /* show outlines of such areas */
+    NA_FILL      /* give such regions a specific fill color */
+} NaAction;
+
 #define maybe_big_multiplot(c) (c == PLOT_MULTI_IRF || \
 				c == PLOT_MULTI_SCATTER || \
 				c == PLOT_PANEL)
@@ -357,7 +363,7 @@ int write_map_gp_file (const char *plotfile,
 		       const gretl_matrix *zrange,
 		       gretl_bundle *opts,
 		       int non_standard,
-		       int n_missing,
+		       int na_action,
 		       int show);
 
 int transcribe_geoplot_file (const char *src,
