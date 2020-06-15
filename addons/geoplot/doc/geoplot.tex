@@ -471,7 +471,7 @@ A related case is where the payload value is missing (\texttt{NA}) for
 one or more regions. Here you have a choice. By default, regions whose
 payload is \texttt{NA} are shown in outline, not colored, but either
 of two alternatives can be selected by passing a string under the key
-\texttt{missing} in the options bundle: if the value is \verb|"skip"|
+\texttt{missvals} in the options bundle: if the value is \verb|"skip"|
 the affected regions are omitted; if it's \verb|"fill"| they are
 colored gray. (The value \verb|"outline"| may be given, confirming the
 default.)
@@ -506,7 +506,7 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   for insertion before the actual \texttt{plot} command.
 \item[\texttt{logscale}:] boolean, use log scale for the
   payload. Default: false.
-\item[\texttt{missing}:] string, see section~\ref{sec:sub-sample}.
+\item[\texttt{missvals}:] string, see section~\ref{sec:sub-sample}.
 \item[\texttt{plotfile}:] filename, allowing the user to direct
   output, either to a specified \textsf{gnuplot} command file or to a
   graphic file. If a command file is wanted the extension should be

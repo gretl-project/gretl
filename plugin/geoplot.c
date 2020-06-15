@@ -1633,7 +1633,7 @@ static int get_na_action (gretl_bundle *opts)
     const char *s;
     int err = 0;
 
-    s = gretl_bundle_get_string(opts, "missing", &err);
+    s = gretl_bundle_get_string(opts, "missvals", &err);
 
     if (!err) {
 	if (!strcmp(s, "skip")) {
@@ -1685,7 +1685,7 @@ int geoplot (const char *mapfile,
 		}
 	    }
 	}
-	if (gretl_bundle_has_key(opts, "missing")) {
+	if (gretl_bundle_has_key(opts, "missvals")) {
 	    err = get_na_action(opts);
 	}
 	if (!err && map != NULL && payload == NULL &&
