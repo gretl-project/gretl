@@ -1780,25 +1780,27 @@
 	  in which <argname>k</argname> items can be chosen from
 	  <argname>n</argname> items without repetition, irrespective
 	  of ordering. This is also equal to the coefficient of the
-	  <argname>(k+1)</argname>-th term in the polynomial expansion of
+	  (<math>k</math>+1)-th term in the polynomial expansion of
 	  the binomial power <equation status="inline" ascii="(1+x)^n"
 	  tex="$(1+x)^n$"/>.
 	</para>
 	<para context="tex">
-	  For integer arguments, the result is
-	  $n!/k!(n-k)!$, but the function also accetps
+	  For integer arguments the result is
+	  $n!/k!(n-k)!$ but the function also accepts
 	  noninteger arguments, and the formula above generalizes to
 	  $\frac{\Gamma(n+1)}{\Gamma(k+1) \Gamma(n-k+1)}$.
 	</para>
 	<para context="notex">
-	  For integer arguments, the result is
-	  <math>n!/k!(n-k)!</math>, but the function also accetps
-	  noninteger arguments, and the formula above generalises to
-	  <math> Γ(n+1)/( Γ(k+1) Γ(n-k+1) )</math>
+	  For integer arguments the result is
+	  <math>n!/k!(n-k)!</math> but the function also accepts
+	  noninteger arguments, and the formula above
+	  generalizes to Γ(<math>n</math>+1)/(Γ(<math>k</math>+1)
+	  &times; Γ(<math>n-k</math>+1)).
 	</para>
 	<para>
 	  When <argname>k</argname> &gt; <argname>n</argname> or
-	  <argname>k</argname> &lt; 0, NA is returned.
+	  <argname>k</argname> &lt; 0 no valid answer exists and NA is
+	  returned.
 	</para>
 	<para>
 	  If the two arguments differ in type, the type of the result

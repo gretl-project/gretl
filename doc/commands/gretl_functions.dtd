@@ -17,6 +17,7 @@
 <!ENTITY minus  "&#8211;">
 <!ENTITY le     "&#8804;">
 <!ENTITY ge     "&#8805;">
+<!ENTITY times  "&#0215;">
 <!ENTITY par    "">
 <!ENTITY eg     "e.g.">
 <!ENTITY ie     "i.e.">
