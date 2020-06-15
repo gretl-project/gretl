@@ -1780,11 +1780,9 @@
 	  in which <argname>k</argname> items can be chosen from
 	  <argname>n</argname> items without repetition, irrespective
 	  of ordering. This is also equal to the coefficient of the
-	  <argname>k</argname>th term in the polynomial expansion of
+	  <argname>(k+1)</argname>-th term in the polynomial expansion of
 	  the binomial power <equation status="inline" ascii="(1+x)^n"
 	  tex="$(1+x)^n$"/>.
-	</para>
-	<para>
 	</para>
 	<para context="tex">
 	  For integer arguments, the result is
@@ -1796,7 +1794,7 @@
 	  For integer arguments, the result is
 	  <math>n!/k!(n-k)!</math>, but the function also accetps
 	  noninteger arguments, and the formula above generalises to
-	  <math> Gamma(n+1)/( Gamma(k+1) Gamma(n-k+1) )</math>
+	  <math> Γ(n+1)/( Γ(k+1) Γ(n-k+1) )</math>
 	</para>
 	<para>
 	  When <argname>k</argname> &gt; <argname>n</argname> or
@@ -1811,6 +1809,9 @@
 	  <math>r</math>-vector. Note that matrix arguments must be
 	  vectors, and if neither argument is a scalar the two
 	  arguments must be of the same length.
+	</para>
+	<para>
+	  See also <fncref targ="gammafun"/> and <fncref targ="lngamma"/>.
 	</para>
       </description>
     </function>
@@ -4392,6 +4393,9 @@
 	<para>
 	  Returns the gamma function of <argname>x</argname>.
 	</para>
+	<para>
+	  See also <fncref targ="bincoeff"/> and <fncref targ="lngamma"/>.
+	</para>
       </description>
     </function>
 
@@ -6452,6 +6456,9 @@
       <description>
 	<para>
 	  Returns the log of the gamma function of <argname>x</argname>.
+	</para>
+	<para>
+	  See also <fncref targ="bincoeff"/> and <fncref targ="gammafun"/>.
 	</para>
       </description>
     </function>
