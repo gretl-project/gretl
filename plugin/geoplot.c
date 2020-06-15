@@ -1124,7 +1124,7 @@ static gretl_matrix *shp2dat (const char *shpname,
         }
 
 	if (i < n_entities - 1) {
-	    fputs("\n\n", fp);
+	    fputs("# end of entity\n\n", fp);
 	}
 
         SHPDestroyObject(obj);
