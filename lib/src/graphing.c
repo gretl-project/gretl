@@ -9553,7 +9553,7 @@ static void simple_print_palette (const char *p, FILE *fp)
 
 /*
   An example that actually works (where plmin and plmax should correspond
-  to zlim[0] and zlim[1], I think):
+  to zlim[0] and zlim[1]):
 
   fmt = "set palette defined (%.8g 'gray', %.8g '#E9D9B5', %.8g 'dark-orange')"
   b.palette = sprintf(fmt, plmin - 0.002, plmin - 0.001, plmax)
@@ -9587,32 +9587,30 @@ static void tricky_print_palette (const char *p,
 		colors[i][1], zlim[1], colors[i][2]);
     }
 
-    /* for this to work, cbrange has to be set using zlim?  */
+    /* for this to work, cbrange has to be set using zlim */
     fprintf(fp, "set cbrange [%.8g:%.8g]\n", zlim[0] - .001, zlim[1]);
 }
 
 static void handle_palette (gretl_bundle *opts,
-			    const double *zlim,
+			    const gretl_matrix *zrange,
                             int n_missfill,
 			    FILE *fp)
 {
-    const gretl_matrix *m;
+    const double *zlim = zrange->val;
     const char *p;
 
     p = gretl_bundle_get_string(opts, "palette", NULL);
+
     if (p != NULL) {
 	if (n_missfill == 0) {
 	    simple_print_palette(p, fp);
 	} else {
 	    tricky_print_palette(p, zlim, fp);
-	    return; /* FIXME? */
+	    /* cbrange handled */
+	    return;
 	}
     }
 
-    m = gretl_bundle_get_matrix(opts, "cbrange", NULL);
-    if (m != NULL && gretl_vector_get_length(m) == 2) {
-	zlim = m->val;
-    }
     fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
 }
 
@@ -9664,7 +9662,7 @@ int write_map_gp_file (const char *plotfile,
 		       int n_missing,
 		       int show)
 {
-    double xlim[2], ylim[2], zlim[2];
+    double xlim[2], ylim[2];
     gretl_matrix *dims = NULL;
     const char *optlc = NULL;
     const char *sval;
@@ -9689,9 +9687,6 @@ int write_map_gp_file (const char *plotfile,
 
     if (zrange != NULL) {
         have_payload = 1;
-	// stretch_limits(zlim, zrange, 0, 0.05); /* ?? */
-	zlim[0] = zrange->val[0];
-	zlim[1] = zrange->val[1];
     } else if (opts == NULL) {
 	/* the simple outlines case */
 	border = 1;
@@ -9733,7 +9728,7 @@ int write_map_gp_file (const char *plotfile,
     fputs("unset key\n", fp);
 
     if (have_payload) {
-	handle_palette(opts, zlim, n_missfill, fp);
+	handle_palette(opts, zrange, n_missfill, fp);
     }
 
     fprintf(fp, "set xrange [%g:%g]\n", xlim[0], xlim[1]);

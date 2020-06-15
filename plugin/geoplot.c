@@ -1576,6 +1576,46 @@ static gretl_matrix *vector_minmax (const gretl_matrix *z)
     return ret;
 }
 
+static gretl_matrix *get_zrange (gretl_matrix *payload,
+				 gretl_bundle *opts,
+				 int *err)
+{
+    gretl_matrix *zrange = vector_minmax(payload);
+    gretl_matrix *cbr = NULL;
+
+    if (gretl_bundle_has_key(opts, "cbrange")) {
+	cbr = gretl_bundle_get_matrix(opts, "cbrange", err);
+	if (!*err && gretl_vector_get_length(cbr) != 2) {
+	    *err = E_INVARG;
+	}
+	if (!*err && ((cbr->val[0] > zrange->val[0]) ||
+		      (cbr->val[1] < zrange->val[1]))) {
+	    gretl_errmsg_set("The supplied cbrange fails to "
+			     "accommodate the data");
+	    *err = E_DATA;
+	}
+	if (!*err) {
+	    /* @cbr can extend, but not truncate, the z-range
+	       relative to the current payload
+	    */
+	    zrange->val[0] = MIN(zrange->val[0], cbr->val[0]);
+	    zrange->val[1] = MAX(zrange->val[1], cbr->val[1]);
+	}
+    }
+
+    if (!*err && na_treatment == NA_FILL) {
+	/* determine a suitable value to represent
+	   a missing payload value, in case the user
+	   chooses NA_FILL treatment.
+	*/
+	double zmin = zrange->val[0];
+
+	zna = (zmin >= 0)? -1.0 : 2 * zmin;
+    }
+
+    return zrange;
+}
+
 static int is_image_filename (const char *s)
 {
     if (has_suffix(s, ".pdf") ||
@@ -1672,27 +1712,20 @@ int geoplot (const char *mapfile,
 
     /* if we have a payload, find its range */
     if (payload != NULL) {
-	zrange = vector_minmax(payload);
-	if (zrange != NULL && na_treatment == NA_FILL) {
-	    /* determine a suitable value to represent
-	       a missing payload value, in case the user
-	       chooses NA_FILL treatment.
-	    */
-	    double zmin = zrange->val[0];
-
-	    zna = (zmin >= 0)? -1.0 : 2 * zmin;
-	}
+	zrange = get_zrange(payload, opts, &err);
     }
 
     /* do we have a sub-sampling mask? */
-    if (gretl_bundle_has_key(opts, "mask")) {
+    if (!err && gretl_bundle_has_key(opts, "mask")) {
 	mask = gretl_bundle_get_matrix(opts, "mask", &err);
     }
 
-    /* specific projection wanted? */
-    sval = gretl_bundle_get_string(opts, "projection", NULL);
-    if (sval != NULL) {
-	err = set_projection(opts, sval);
+    if (!err) {
+	/* specific projection wanted? */
+	sval = gretl_bundle_get_string(opts, "projection", NULL);
+	if (sval != NULL) {
+	    err = set_projection(opts, sval);
+	}
     }
 
     if (!err) {
