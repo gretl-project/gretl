@@ -9556,9 +9556,9 @@ static void tricky_print_palette (const char *p,
 				  FILE *fp)
 {
     const char *colors[3][3] = {
-        { "#D4E4F2", "steelblue", NULL },
-        { "#E9D9B5", "dark-orange", NULL },
-        { "#58996E", "#E1D99A", "#C0414C" }
+        { "#D4E4F2", "steelblue", NULL },   /* "blues" */
+        { "#E9D9B5", "dark-orange", NULL }, /* "oranges" */
+        { "#58996E", "#E1D99A", "#C0414C" } /* "green-to-red" */
     };
     int i = 0;
 

@@ -118,7 +118,10 @@ static int skip_object (int i, const gretl_matrix *z,
     } else {
 	if (z != NULL) {
 	    *pzi = z->val[i];
-	    if (na(*pzi)) {
+	    if (*pzi == DBL_MAX) {
+		/* out-of-sample flag */
+		ret = 1;
+	    } else if (na(*pzi)) {
 		/* skip on missing payload value? */
 		if (na_action == NA_SKIP) {
 		    ret = 1;
@@ -1561,7 +1564,7 @@ static gretl_matrix *vector_minmax (const gretl_matrix *z)
 
     for (i=0; i<z->rows; i++) {
 	zi = z->val[i];
-	if (!na(zi)) {
+	if (!na(zi) && zi != DBL_MAX) {
 	    if (zi < ret->val[0]) {
 		ret->val[0] = zi;
 	    }

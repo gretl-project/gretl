@@ -6268,9 +6268,8 @@ double logistic_cdf (double x)
  * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
  * regressors, namely, constant plus quadratic trend.
- * @f: the expansion factor: 3 for quarterly to monthly or
- * 4 for annual to quarterly. Only these factors are
- * supported.
+ * @f: the expansion factor: 3 for quarterly to monthly,
+ * 4 for annual to quarterly, or 12 for annual to monthly.
  * @det: = 0 for none, 1 for constant, 2 for linear trend, 3 for quadratic.
  * @err: location to receive error code.
  *
@@ -6297,7 +6296,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      int, int, PRN *, int *);
     gretl_matrix *ret = NULL;
 
-    if ((f != 3 && f != 4) || (det < 0 && det > 3)) {
+    if ((f != 3 && f != 4 && f != 12) || (det < 0 && det > 3)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -7743,8 +7742,10 @@ int fill_permutation_vector (gretl_vector *v, int n)
 }
 
 /* Given a gretl series @src under sub-sampling, construct a version
-   that is of the full length of the unrestricted dataset, with NAs
-   inserted in out-of-sample positions.
+   that is of the full length of the unrestricted dataset, with DBL_MAX
+   inserted in out-of-sample positions (we use DBL_MAX to avoid
+   collision with missing values). But if @src is NULL (no payload)
+   we can simply use 1s to mark out-of-sample observations.
 */
 
 static gretl_matrix *full_length_vector (const double *src,
@@ -7786,7 +7787,7 @@ static gretl_matrix *full_length_vector (const double *src,
 		rt++;
 	    }
 	    if (src != NULL) {
-		vf->val[t] = exclude ? NADBL : src[i++];
+		vf->val[t] = exclude ? DBL_MAX : src[i++];
 	    } else {
 		vf->val[t] = exclude ? 1 : 0;
 	    }
@@ -7796,7 +7797,7 @@ static gretl_matrix *full_length_vector (const double *src,
 
 	for (t=0; t<dset->n; t++) {
 	    if (t < dset->t1 || t > dset->t2) {
-		vf->val[t] = src == NULL ? 1 : NADBL;
+		vf->val[t] = src == NULL ? 1 : DBL_MAX;
 	    } else if (src != NULL) {
 		vf->val[t] = src == NULL? 0 : src[i++];
 	    }
