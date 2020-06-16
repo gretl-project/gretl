@@ -1763,7 +1763,7 @@
 	  Per argomenti interi, il risulatato è
 	  <math>n!/k!(n-k)!</math>, ma la funzione accetta anche
 	  argomenti reali, e la formula si generalizza a <math>
-	  Γ(n+1)/( Γ(k+1) Γ(n-k+1) )</math>
+	  Γ(n+1)/( Γ(k+1) &times; Γ(n-k+1) )</math>
 	</para>
 	<para>
 	  Quando <argname>k</argname> &gt; <argname>n</argname> oppure
