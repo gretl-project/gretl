@@ -249,9 +249,8 @@ static double acf_1 (const double *u, int T)
  * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
  * regressors, namely, constant plus linear or quadratic trend.
- * @xfac: the expansion factor: 3 for quarterly to monthly
- * or 4 for annual to quarterly. Only these factors are
- * supported.
+ * @xfac: the expansion factor: 3 for quarterly to monthly,
+ * 4 for annual to quarterly, or 12 for annual to monthly.
  * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
  * quadratic trend.
  * @err: location to receive error code.
@@ -285,7 +284,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     int Tx = T * xfac;
     int i;
 
-    /* Note: checks to the effect that xfac = 3 or 4, and,
+    /* Note: checks to the effect that xfac = 3, 4 or 12 and,
        if X is non-NULL, that X->rows = xfac * Y->rows,
        should have already been performed.
     */
