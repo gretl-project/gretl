@@ -673,7 +673,17 @@ static int print_arg (const char **pfmt, const char **pargs,
     } else if (got_scalar) {
 	/* printing a (non-missing) scalar value */
 	if (!isnan(x) && !isinf(x)) {
-	    x *= (1 + 0x1p-52);
+	    char *s;
+
+	    if (pstar && prec >= 15) {
+		; /* don't mess with it */
+	    } else if ((s = strchr(fmt, '.')) && isdigit(*(s+1))) {
+		if (atoi(s+1) < 15) {
+		    x *= (1 + 0x1p-52);
+		}
+	    } else {
+		x *= (1 + 0x1p-52);
+	    }
 	}
 	if (wstar && pstar) {
 	    pprintf(prn, fmt, wid, prec, x);
