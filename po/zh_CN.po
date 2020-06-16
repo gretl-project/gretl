@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-02 15:41-0400\n"
+"POT-Creation-Date: 2020-06-16 19:33-0400\n"
 "PO-Revision-Date: 2020-02-27 00:16+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
@@ -192,7 +192,7 @@ msgstr "错误的选项"
 
 #: lib/src/adf_kpss.c:1271 lib/src/adf_kpss.c:2048 lib/src/boxplots.c:874
 #: lib/src/describe.c:1671 lib/src/describe.c:3307 lib/src/describe.c:3861
-#: lib/src/describe.c:4432 lib/src/graphing.c:8921
+#: lib/src/describe.c:4432 lib/src/graphing.c:8923
 #, c-format
 msgid "%s is a constant"
 msgstr "%s 是一个常数"
@@ -231,7 +231,7 @@ msgstr "H0: 所有的变数皆有单根 (all groups have unit root)"
 #: lib/src/adf_kpss.c:1826 lib/src/compare.c:2753 lib/src/compare.c:2787
 #: lib/src/estimate.c:3980 lib/src/estimate.c:4034 lib/src/estimate.c:4191
 #: lib/src/genfuncs.c:2496 lib/src/genfuncs.c:4441 lib/src/genfuncs.c:4658
-#: lib/src/gretl_func.c:8877 lib/src/pvalues.c:2057
+#: lib/src/gretl_func.c:8877 lib/src/pvalues.c:2079
 msgid "Couldn't load plugin function\n"
 msgstr "无法载入 plugin 函数\n"
 
@@ -415,7 +415,7 @@ msgstr "Numerical summary with bootstrapped confidence interval for median"
 msgid "Numerical summary for %s"
 msgstr "%s 的数值法摘要"
 
-#: lib/src/boxplots.c:317 gui/gpt_control.c:4378 gui/gpt_control.c:4456
+#: lib/src/boxplots.c:317 gui/gpt_control.c:4446 gui/gpt_control.c:4524
 msgid "Numerical summary"
 msgstr "叙述统计"
 
@@ -450,7 +450,7 @@ msgstr "你必需选填入 2 个变数, 其中第2个必需是不连续 (discret
 msgid "Distribution of %s by %s"
 msgstr "%s 的分配 by %s"
 
-#: lib/src/boxplots.c:906 lib/src/graphing.c:2376
+#: lib/src/boxplots.c:906 lib/src/graphing.c:2378
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr "Regression residuals (= observed - fitted %s)"
@@ -468,7 +468,7 @@ msgstr "虚无假设 H0: 回归自变数  %s 之系数 = 0"
 #: lib/src/compare.c:309 lib/src/compare.c:312 lib/src/compare.c:315
 #: lib/src/describe.c:6420 lib/src/gretl_model.c:4308
 #: lib/src/gretl_model.c:4311 lib/src/gretl_model.c:4318
-#: lib/src/nonparam.c:1062 lib/src/nonparam.c:1214 lib/src/varprint.c:1251
+#: lib/src/nonparam.c:1047 lib/src/nonparam.c:1199 lib/src/varprint.c:1251
 #: lib/src/varprint.c:1257 lib/src/varprint.c:1265
 msgid "Null hypothesis"
 msgstr "虚无假设 H0"
@@ -510,7 +510,7 @@ msgstr "Wald test"
 #: lib/src/compare.c:423 lib/src/compare.c:1013 lib/src/compare.c:2277
 #: lib/src/compare.c:2424 lib/src/compare.c:2430 lib/src/compare.c:3096
 #: lib/src/describe.c:1602 lib/src/estimate.c:2768 lib/src/estimate.c:3597
-#: lib/src/graphing.c:5069 lib/src/gretl_model.c:4374
+#: lib/src/graphing.c:5071 lib/src/gretl_model.c:4374
 #: lib/src/gretl_model.c:4388 lib/src/gretl_model.c:4391
 #: lib/src/gretl_model.c:4423 lib/src/gretl_panel.c:4474
 #: lib/src/modelprint.c:202 lib/src/modelprint.c:381 lib/src/modelprint.c:385
@@ -518,8 +518,8 @@ msgstr "Wald test"
 #: lib/src/modelprint.c:502 lib/src/modelprint.c:2590 lib/src/modelprint.c:2595
 #: lib/src/modelprint.c:2617 lib/src/modelprint.c:2622
 #: lib/src/modelprint.c:3135 lib/src/modelprint.c:5409
-#: lib/src/modelprint.c:5432 lib/src/printout.c:332 lib/src/pvalues.c:3026
-#: lib/src/pvalues.c:3758 lib/src/system.c:1240 lib/src/system.c:1314
+#: lib/src/modelprint.c:5432 lib/src/printout.c:332 lib/src/pvalues.c:3048
+#: lib/src/pvalues.c:3780 lib/src/system.c:1240 lib/src/system.c:1314
 #: lib/src/system.c:3545 lib/src/system.c:3567 lib/src/system.c:3639
 #: lib/src/system.c:3667 lib/src/system.c:4778 lib/src/varprint.c:853
 #: lib/src/varprint.c:857 lib/src/varprint.c:1260 lib/src/varprint.c:1268
@@ -554,8 +554,8 @@ msgstr "Adding variables improved %d of %d information criteria.\n"
 msgid "Omitting variables improved %d of %d information criteria.\n"
 msgstr "Omitting variables improved %d of %d information criteria.\n"
 
-#: lib/src/compare.c:953 lib/src/compare.c:2361 lib/src/graphing.c:4111
-#: lib/src/graphing.c:4123 lib/src/graphing.c:4209 lib/src/graphing.c:6881
+#: lib/src/compare.c:953 lib/src/compare.c:2361 lib/src/graphing.c:4113
+#: lib/src/graphing.c:4125 lib/src/graphing.c:4211 lib/src/graphing.c:6883
 #: lib/src/printout.c:1530 gui/guiprint.c:1570 gui/guiprint.c:1630
 #: gui/library.c:6971 plugin/leverage.c:306
 msgid "residual"
@@ -1096,7 +1096,7 @@ msgid "parsing"
 msgstr "进行资料剖析 (parsing)"
 
 #: lib/src/csvdata.c:3586 lib/src/dataio.c:3180 lib/src/dataio.c:3253
-#: lib/src/dbread.c:1781
+#: lib/src/dbread.c:1782
 #, c-format
 msgid "Couldn't open %s\n"
 msgstr "无法开启 %s 档\n"
@@ -1151,7 +1151,7 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:3842 plugin/excel_import.c:1827
-#: plugin/gnumeric_import.c:703 plugin/ods_import.c:1294
+#: plugin/gnumeric_import.c:705 plugin/ods_import.c:1294
 #: plugin/xlsx_import.c:1040
 msgid "Failed to interpret the data as numeric\n"
 msgstr "无法解译资料为数值\n"
@@ -1207,7 +1207,7 @@ msgid "Outer dataset: read %d columns and %d rows\n"
 msgstr "Outer dataset: read %d columns and %d rows\n"
 
 #: lib/src/csvdata.c:7145 lib/src/dataio.c:2280 gui/gui_utils.c:1357
-#: gui/join-gui.c:920
+#: gui/join-gui.c:921
 msgid "Data appended OK\n"
 msgstr "资料已新增成功\n"
 
@@ -1223,7 +1223,7 @@ msgstr "资料并没有任何变动\n"
 msgid "Varname exceeds the maximum of 31 characters"
 msgstr "变数名称超过最多 31 字符的限制"
 
-#: lib/src/dataio.c:120 lib/src/geneval.c:18644 lib/src/geneval.c:18647
+#: lib/src/dataio.c:120 lib/src/geneval.c:18706 lib/src/geneval.c:18709
 #, c-format
 msgid "'%s' shadows a function of the same name"
 msgstr ""
@@ -1312,7 +1312,7 @@ msgstr "新增: 不知如何去对齐新资料 (align the new series)!"
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
 #: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:169 gui/gretl.c:307
+#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "记忆体不足\n"
 
@@ -1389,8 +1389,8 @@ msgstr "已从 %s, 汇入资料 %s\n"
 msgid "auto-generated constant"
 msgstr "由 gretl 自动产生之常数 (auto-generated constant)"
 
-#: lib/src/dataset.c:1557 gui/gui_utils.c:6128 gui/toolbar.c:1457
-#: gui/toolbar.c:1466
+#: lib/src/dataset.c:1557 gui/gui_utils.c:6128 gui/toolbar.c:1445
+#: gui/toolbar.c:1454
 msgid "Please open a data file first"
 msgstr "请先开启资料档"
 
@@ -1427,7 +1427,7 @@ msgstr "变数 %d 重复定义在指令 (command list) 之中."
 msgid "dataset is subsampled"
 msgstr "资料区间只有部份样本 (dataset is subsampled)"
 
-#: lib/src/dataset.c:2297 lib/src/dataset.c:2309 lib/src/graphing.c:8613
+#: lib/src/dataset.c:2297 lib/src/dataset.c:2309 lib/src/graphing.c:8615
 #: lib/src/gretl_utils.c:1155 lib/src/gretl_utils.c:1244
 msgid "periods"
 msgstr "期数"
@@ -1542,46 +1542,46 @@ msgid "No valid series found"
 msgstr "无符合规则之资料变数"
 
 #: lib/src/dbread.c:1254 lib/src/dbread.c:1308 lib/src/dbread.c:1323
-#: lib/src/dbread.c:2620 lib/src/gretl_errors.c:50
+#: lib/src/dbread.c:2621 lib/src/gretl_errors.c:50
 #: lib/src/gretl_restrict.c:1937 lib/src/gretl_restrict.c:1963
 #: lib/src/gretl_restrict.c:1986 lib/src/monte_carlo.c:1582 gui/gui_utils.c:833
 msgid "Out of memory!"
 msgstr "记忆体不足!"
 
-#: lib/src/dbread.c:1746 lib/src/geneval.c:9868
+#: lib/src/dbread.c:1747 lib/src/geneval.c:9902
 #: lib/src/gretl_string_table.c:1059 lib/src/gretl_www.c:1434
 #: lib/src/interact.c:2818
 msgid "Internet access not supported"
 msgstr "Internet 存取并未支援"
 
-#: lib/src/dbread.c:1936 lib/src/subsample.c:2630
+#: lib/src/dbread.c:1937 lib/src/subsample.c:2630
 msgid "Invalid null sample"
 msgstr "Null sample 有问题"
 
-#: lib/src/dbread.c:2036 lib/src/gretl_errors.c:614
+#: lib/src/dbread.c:2037 lib/src/gretl_errors.c:614
 #: lib/src/gretl_restrict.c:2605 lib/src/interact.c:1601 lib/src/options.c:1374
 #: lib/src/options.c:1385
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "栏位 '%s' 是不合法的指令"
 
-#: lib/src/dbread.c:2194
+#: lib/src/dbread.c:2195
 msgid "Expected an SQL query string"
 msgstr "预期要有一个  SQL query 查询字串"
 
-#: lib/src/dbread.c:2224 plugin/tramo-x12a.c:375
+#: lib/src/dbread.c:2225 plugin/tramo-x12a.c:375
 msgid "Expected a valid variable name"
 msgstr "预期要有一个合法的变数名称"
 
-#: lib/src/dbread.c:2483 lib/src/dbread.c:2734 lib/src/dbread.c:2873
+#: lib/src/dbread.c:2484 lib/src/dbread.c:2735 lib/src/dbread.c:2874
 msgid "No database has been opened"
 msgstr "没有资料库被开启"
 
-#: lib/src/dbread.c:2814
+#: lib/src/dbread.c:2815
 msgid "Series imported OK"
 msgstr "资料已顺利加入"
 
-#: lib/src/dbread.c:3063
+#: lib/src/dbread.c:3064
 #, c-format
 msgid ""
 "%s: observation range does not overlap\n"
@@ -1590,12 +1590,12 @@ msgstr ""
 "%s: 要汇入资料之样本期间\n"
 "与目前工作之资料档不符"
 
-#: lib/src/dbread.c:3108
+#: lib/src/dbread.c:3109
 #, c-format
 msgid "%s: can't handle conversion"
 msgstr "%s: 不能处理这种转换"
 
-#: lib/src/dbread.c:4581 lib/src/dbread.c:4647 lib/src/dbread.c:4925
+#: lib/src/dbread.c:4582 lib/src/dbread.c:4648 lib/src/dbread.c:4926
 msgid "Compacted dataset would be empty"
 msgstr "未成功转换资料 (可能少了某些样本资料)"
 
@@ -1646,7 +1646,7 @@ msgid "dropping %s: not a discrete variable\n"
 msgstr ""
 
 #: lib/src/describe.c:3108 lib/src/describe.c:3293 lib/src/describe.c:3841
-#: lib/src/geneval.c:8576 lib/src/transforms.c:900 lib/src/transforms.c:1499
+#: lib/src/geneval.c:8610 lib/src/transforms.c:900 lib/src/transforms.c:1499
 #: lib/src/var.c:688
 #, c-format
 msgid "Invalid lag order %d"
@@ -1657,7 +1657,7 @@ msgid "Correlogram"
 msgstr "自我相关图"
 
 #: lib/src/describe.c:3194 lib/src/describe.c:3606 lib/src/describe.c:3651
-#: lib/src/graphing.c:8500
+#: lib/src/graphing.c:8502
 msgid "lag"
 msgstr "落后期 (lag)"
 
@@ -1934,8 +1934,8 @@ msgstr "corr: 至少需要两个非常数之引数"
 msgid "undefined"
 msgstr "undefined"
 
-#: lib/src/describe.c:6093 lib/src/nonparam.c:374 lib/src/nonparam.c:380
-#: lib/src/nonparam.c:659
+#: lib/src/describe.c:6093 lib/src/nonparam.c:359 lib/src/nonparam.c:365
+#: lib/src/nonparam.c:644
 msgid ""
 "Under the null hypothesis of no correlation:\n"
 " "
@@ -1943,7 +1943,7 @@ msgstr ""
 "在无相关 (no correlation) 的虚无假设下 :\n"
 " "
 
-#: lib/src/describe.c:6094 lib/src/nonparam.c:381
+#: lib/src/describe.c:6094 lib/src/nonparam.c:366
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr ""
@@ -2101,7 +2101,7 @@ msgstr "Lilliefors 检定"
 msgid "Test for normality of %s:"
 msgstr " %s 变数之常态性 (normality) 检定:"
 
-#: lib/src/discrete.c:1331 lib/src/geneval.c:11183 lib/src/gretl_list.c:1809
+#: lib/src/discrete.c:1331 lib/src/geneval.c:11217 lib/src/gretl_list.c:1809
 #: lib/src/interact.c:2245
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2329,34 +2329,34 @@ msgstr "已产生变数 %s (变数代码 %d)"
 msgid "Forecast plot not implemented for panel data"
 msgstr "'%s' : 尚不能用在变数集 (lists)"
 
-#: lib/src/geneval.c:1318
+#: lib/src/geneval.c:1317
 msgid "complex operands are not supported"
 msgstr "complex operands 并未支援"
 
-#: lib/src/geneval.c:1325
+#: lib/src/geneval.c:1324
 msgid "complex arguments are not supported"
 msgstr "complex arguments 并未支援"
 
-#: lib/src/geneval.c:1635
+#: lib/src/geneval.c:1634
 #, c-format
 msgid "arg %d is missing or of invalid type"
 msgstr ""
 
-#: lib/src/geneval.c:2230 lib/src/geneval.c:2237 lib/src/gretl_foreign.c:213
+#: lib/src/geneval.c:2229 lib/src/geneval.c:2236 lib/src/gretl_foreign.c:213
 msgid "MPI is not supported in this gretl build"
 msgstr "MPI 在此系统中不被支援"
 
-#: lib/src/geneval.c:2356 lib/src/gretl_func.c:6651 lib/src/gretl_win32.c:1850
+#: lib/src/geneval.c:2355 lib/src/gretl_func.c:6651 lib/src/gretl_win32.c:1858
 #: lib/src/matrix_extra.c:1234
 #, c-format
 msgid "got invalid field '%s'"
 msgstr "栏位 field 错误 '%s'"
 
-#: lib/src/geneval.c:2751 lib/src/geneval.c:4043
+#: lib/src/geneval.c:2750 lib/src/geneval.c:4042
 msgid "Matrix is not symmetric"
 msgstr "矩阵并非对称"
 
-#: lib/src/geneval.c:3226 lib/src/geneval.c:9351
+#: lib/src/geneval.c:3225 lib/src/geneval.c:9385
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2365,9 +2365,9 @@ msgstr ""
 "所给的参数数目有 %d 个，并不符合\n"
 "函数 %s 所需要的 %d 个参数之数目"
 
-#: lib/src/geneval.c:4679 lib/src/geneval.c:4693 lib/src/geneval.c:4883
-#: lib/src/geneval.c:4954 lib/src/geneval.c:5022 lib/src/geneval.c:8544
-#: lib/src/geneval.c:10555 lib/src/geneval.c:10703 lib/src/geneval.c:10774
+#: lib/src/geneval.c:4678 lib/src/geneval.c:4692 lib/src/geneval.c:4882
+#: lib/src/geneval.c:4953 lib/src/geneval.c:5021 lib/src/geneval.c:8578
+#: lib/src/geneval.c:10589 lib/src/geneval.c:10737 lib/src/geneval.c:10808
 #: lib/src/gretl_array.c:998 lib/src/gretl_array.c:1043
 #: lib/src/gretl_array.c:1088 lib/src/gretl_array.c:1109
 #: lib/src/gretl_array.c:1173 lib/src/gretl_cmatrix.c:2450
@@ -2378,16 +2378,16 @@ msgstr ""
 msgid "Index value %d is out of bounds"
 msgstr "Index value %d 超出范围 (out of bounds)"
 
-#: lib/src/geneval.c:5027 lib/src/geneval.c:6207
+#: lib/src/geneval.c:5026 lib/src/geneval.c:6241
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "变数代码 %d 超过范围"
 
-#: lib/src/geneval.c:5203 lib/src/gensyntax.c:400
+#: lib/src/geneval.c:5202 lib/src/gensyntax.c:400
 msgid "Wrong type of operand for unary '&'"
 msgstr ""
 
-#: lib/src/geneval.c:7307 lib/src/geneval.c:7333 lib/src/gretl_func.c:8719
+#: lib/src/geneval.c:7341 lib/src/geneval.c:7367 lib/src/gretl_func.c:8719
 #, c-format
 msgid ""
 "Error message from %s():\n"
@@ -2396,168 +2396,168 @@ msgstr ""
 "来自 %s() 的错误讯息:\n"
 " %s"
 
-#: lib/src/geneval.c:8532
+#: lib/src/geneval.c:8566
 #, c-format
 msgid "Invalid observation specifier \"%s\""
 msgstr "样本观察指标错误 \"%s\""
 
-#: lib/src/geneval.c:8616 lib/src/transforms.c:903 lib/src/transforms.c:1222
+#: lib/src/geneval.c:8650 lib/src/transforms.c:903 lib/src/transforms.c:1222
 msgid "The constant cannot be lagged"
 msgstr ""
 
-#: lib/src/geneval.c:9137
+#: lib/src/geneval.c:9171
 msgid "Matrix specification is not coherent"
 msgstr ""
 
-#: lib/src/geneval.c:9340
+#: lib/src/geneval.c:9374
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "矩阵 %s 并不是一个 contingency table"
 
-#: lib/src/geneval.c:9366
+#: lib/src/geneval.c:9400
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10120
+#: lib/src/geneval.c:10154
 #, c-format
 msgid "Expected %s but got %s"
 msgstr "预期是 %s, 但却得到 %s"
 
-#: lib/src/geneval.c:10124
+#: lib/src/geneval.c:10158
 #, fuzzy, c-format
 msgid "Specified type %s does not match array type %s"
 msgstr "资料长度与资料档不符"
 
-#: lib/src/geneval.c:10685 lib/src/geneval.c:10753 lib/src/geneval.c:17734
-#: lib/src/geneval.c:17742
+#: lib/src/geneval.c:10719 lib/src/geneval.c:10787 lib/src/geneval.c:17796
+#: lib/src/geneval.c:17804
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : 尚不能用在此变数形态 (type)"
 
-#: lib/src/geneval.c:10722
+#: lib/src/geneval.c:10756
 #, fuzzy
 msgid "Invalid list element"
 msgstr "变数集名称 (list)"
 
-#: lib/src/geneval.c:10911
+#: lib/src/geneval.c:10945
 #, fuzzy, c-format
 msgid "The operator '%s' is not valid in this context"
 msgstr "'%s' 指令在此不适用"
 
-#: lib/src/geneval.c:12028
+#: lib/src/geneval.c:12050
 msgid "non-existent date"
 msgstr ""
 
-#: lib/src/geneval.c:13478
+#: lib/src/geneval.c:13500
 msgid "Bandwidth must be non-negative"
 msgstr ""
 
-#: lib/src/geneval.c:14231
+#: lib/src/geneval.c:14292
 #, fuzzy
 msgid "array: no type was specified"
 msgstr "%s: 未设定任何参数"
 
-#: lib/src/geneval.c:14941
+#: lib/src/geneval.c:15002
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': 错误的参数 for %s()\n"
 
-#: lib/src/geneval.c:15153
+#: lib/src/geneval.c:15214
 #, c-format
 msgid "The result for %s is not well defined"
 msgstr " %s 的结果并无适当的定义"
 
-#: lib/src/geneval.c:15352
+#: lib/src/geneval.c:15413
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: 参数数目不足"
 
-#: lib/src/geneval.c:15354
+#: lib/src/geneval.c:15415
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: 引数型态错误 %s"
 
-#: lib/src/geneval.c:15357
+#: lib/src/geneval.c:15418
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: 引数 %d: 型态错误 %s"
 
-#: lib/src/geneval.c:15367
+#: lib/src/geneval.c:15428
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: 运算域应该是 %s"
 
-#: lib/src/geneval.c:15370
+#: lib/src/geneval.c:15431
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: 运算域 %d 应该是 %s"
 
-#: lib/src/geneval.c:15375
+#: lib/src/geneval.c:15436
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: 参数应该是 %s"
 
-#: lib/src/geneval.c:15378
+#: lib/src/geneval.c:15439
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: 参数 %d 应该是 %s"
 
-#: lib/src/geneval.c:15384
+#: lib/src/geneval.c:15445
 #, c-format
 msgid ", is %s"
 msgstr ", is %s"
 
-#: lib/src/geneval.c:17562
+#: lib/src/geneval.c:17624
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "变数名称 %s... 太长 (变数名称最长允许 %d 字完)\n"
 
-#: lib/src/geneval.c:17606
+#: lib/src/geneval.c:17668
 #, fuzzy, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "产生新变数(_n)"
 
-#: lib/src/geneval.c:17610
+#: lib/src/geneval.c:17672
 #, fuzzy, c-format
 msgid "A variable of type %s is not acceptable in context"
 msgstr "产生新变数(_n)"
 
-#: lib/src/geneval.c:17623
+#: lib/src/geneval.c:17685
 #, c-format
 msgid "Incompatible types in assignment: %s %s %s"
 msgstr ""
 
-#: lib/src/geneval.c:17718
+#: lib/src/geneval.c:17780
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s' : 尚不能用在矩阵运算"
 
-#: lib/src/geneval.c:17722
+#: lib/src/geneval.c:17784
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s' : 尚不能用在变数集 (lists)"
 
-#: lib/src/geneval.c:17726
+#: lib/src/geneval.c:17788
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : 尚不能用在字串 (strings)"
 
-#: lib/src/geneval.c:17730
+#: lib/src/geneval.c:17792
 #, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : 尚不能用在矩阵运算"
 
-#: lib/src/geneval.c:17738
+#: lib/src/geneval.c:17800
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : only defined for matrices"
 
-#: lib/src/geneval.c:18831 lib/src/geneval.c:18914 lib/src/geneval.c:18918
+#: lib/src/geneval.c:18893 lib/src/geneval.c:18976 lib/src/geneval.c:18980
 #, fuzzy
 msgid "Invalid left-hand side expression"
 msgstr "Incomplete entry"
 
-#: lib/src/geneval.c:19528
+#: lib/src/geneval.c:19590
 msgid "Bare declarations are not allowed here"
 msgstr ""
 
@@ -2669,93 +2669,94 @@ msgstr "变数或矩阵宣告错误 (invalid declaration)"
 msgid "List has %d members, but length of vector b is %d"
 msgstr "List 变数集有 %d 个变数成员, 但向量 b 的长度是 %d"
 
-#: lib/src/genfuncs.c:6329
+#: lib/src/genfuncs.c:6330
 msgid "model-related"
 msgstr "model-related"
 
-#: lib/src/genfuncs.c:6382 lib/src/gretl_func.c:5165 lib/src/plotspec.c:327
+#: lib/src/genfuncs.c:6383 lib/src/gretl_func.c:5165 lib/src/plotspec.c:327
 #: lib/src/plotspec.c:346 lib/src/uservar.c:1533 lib/src/uservar.c:2437
 #: gui/fnsave.c:2360 gui/fnsave.c:2890 gui/gpt_dialog.c:140
-#: gui/gui_utils.c:3408
+#: gui/gui_utils.c:3408 gui/join-gui.c:221 gui/join-gui.c:224
+#: gui/join-gui.c:455 gui/join-gui.c:816
 msgid "none"
 msgstr "无"
 
-#: lib/src/genfuncs.c:6385
+#: lib/src/genfuncs.c:6386
 #, fuzzy
 msgid "other"
 msgstr "其它 (Other)"
 
-#: lib/src/genfuncs.c:7713
+#: lib/src/genfuncs.c:7714
 #, fuzzy, c-format
 msgid "Invalid number of draws %d"
 msgstr "不合规则者有 %d 个"
 
-#: lib/src/genlex.c:760
+#: lib/src/genlex.c:762
 msgid "obsolete function isnull(): please use !exists() instead"
 msgstr ""
 
-#: lib/src/genlex.c:1149
+#: lib/src/genlex.c:1151
 #, c-format
 msgid "%s: no such object"
 msgstr "%s: 没有这种物件 (object)"
 
-#: lib/src/genlex.c:1151
+#: lib/src/genlex.c:1153
 #, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "符号 (symbol) '%s' 未定义"
 
-#: lib/src/genlex.c:1161
+#: lib/src/genlex.c:1163
 #, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s': 未给定参数"
 
-#: lib/src/genlex.c:1175 lib/src/tokenize.c:671 lib/src/tokenize.c:2342
+#: lib/src/genlex.c:1177 lib/src/tokenize.c:671 lib/src/tokenize.c:2342
 #: lib/src/tokenize.c:3245
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "符号 '%c' 不能用在此处\n"
 
-#: lib/src/genlex.c:1177
+#: lib/src/genlex.c:1179
 msgid "(for logical AND, use '&&')\n"
 msgstr "(逻辑的 AND, 请用 '&&' 符号)\n"
 
-#: lib/src/genlex.c:1179
+#: lib/src/genlex.c:1181
 msgid "(for logical OR, use '||')\n"
 msgstr "(逻辑的 OR, 请用 '||' 符号)\n"
 
-#: lib/src/genlex.c:1185
+#: lib/src/genlex.c:1187
 msgid "Incomplete expression\n"
 msgstr "Incomplete expression\n"
 
-#: lib/src/genlex.c:1190
+#: lib/src/genlex.c:1192
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "符号 '%s' 在此并不符合规则\n"
 
-#: lib/src/genlex.c:1260 lib/src/genlex.c:1339 lib/src/gensyntax.c:266
+#: lib/src/genlex.c:1262 lib/src/genlex.c:1341 lib/src/gensyntax.c:266
 #: lib/src/tokenize.c:3483 lib/src/tokenize.c:3501
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "'%c' 应成对出现\n"
 
-#: lib/src/genlex.c:1336
+#: lib/src/genlex.c:1338
 msgid "Empty observation []\n"
 msgstr "空的样本 []\n"
 
-#: lib/src/genlex.c:1629
+#: lib/src/genlex.c:1631
 msgid "obsolete use of \"pi\": please use \"$pi\" instead"
 msgstr ""
 
-#: lib/src/genlex.c:2032 lib/src/genlex.c:2334
+#: lib/src/genlex.c:2034 lib/src/genlex.c:2336
 #, c-format
 msgid "Unexpected byte 0x%x\n"
 msgstr ""
 
-#: lib/src/genlex.c:2153
+#: lib/src/genlex.c:2155
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
 msgstr ""
 
-#: lib/src/genlex.c:2332
+#: lib/src/genlex.c:2334
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "错误的字符 '%c'\n"
@@ -2892,305 +2893,305 @@ msgstr ""
 "你必需选择 3 个变数, 其中最后 1 个必需是不连续变数 (discrete 即其值只能是整"
 "数)"
 
-#: lib/src/graphing.c:2360 gui/gpt_dialog.c:581
+#: lib/src/graphing.c:2362 gui/gpt_dialog.c:581
 #, fuzzy, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s versus %s (with quadratic fit)"
 
-#: lib/src/graphing.c:2363 gui/gpt_dialog.c:590
+#: lib/src/graphing.c:2365 gui/gpt_dialog.c:590
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr ""
 
-#: lib/src/graphing.c:2366 gui/gpt_dialog.c:584
+#: lib/src/graphing.c:2368 gui/gpt_dialog.c:584
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s versus %s (with quadratic fit)"
 
-#: lib/src/graphing.c:2369 gui/gpt_dialog.c:587
+#: lib/src/graphing.c:2371 gui/gpt_dialog.c:587
 #, c-format
 msgid "%s versus %s (with cubic fit)"
 msgstr "%s versus %s (with cubic fit)"
 
-#: lib/src/graphing.c:2381 lib/src/graphing.c:2385
+#: lib/src/graphing.c:2383 lib/src/graphing.c:2387
 #, c-format
 msgid "Actual and fitted %s"
 msgstr "Actual and fitted %s"
 
-#: lib/src/graphing.c:2387
+#: lib/src/graphing.c:2389
 #, c-format
 msgid "Actual and fitted %s versus %s"
 msgstr ""
 
-#: lib/src/graphing.c:2628 gui/gpt_dialog.c:593
+#: lib/src/graphing.c:2630 gui/gpt_dialog.c:593
 #, fuzzy, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%s versus %s (with cubic fit)"
 
-#: lib/src/graphing.c:2644 lib/src/plotspec.c:1651
+#: lib/src/graphing.c:2646 lib/src/plotspec.c:1651
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr ""
 
-#: lib/src/graphing.c:3813
+#: lib/src/graphing.c:3815
 msgid "time series by group"
 msgstr "time series by group"
 
-#: lib/src/graphing.c:4198 lib/src/graphing.c:6428 lib/src/plotspec.c:734
+#: lib/src/graphing.c:4200 lib/src/graphing.c:6430 lib/src/plotspec.c:734
 #: lib/src/plotspec.c:1557 gui/gpt_dialog.c:967 gui/gpt_dialog.c:1387
 #: gui/gpt_dialog.c:2851
 msgid "right"
 msgstr "右"
 
-#: lib/src/graphing.c:4198 lib/src/graphing.c:6428 lib/src/plotspec.c:730
+#: lib/src/graphing.c:4200 lib/src/graphing.c:6430 lib/src/plotspec.c:730
 #: lib/src/plotspec.c:736 lib/src/plotspec.c:1555 gui/gpt_dialog.c:1382
 #: gui/gpt_dialog.c:2850
 msgid "left"
 msgstr "左"
 
-#: lib/src/graphing.c:4232 lib/src/graphing.c:4242
+#: lib/src/graphing.c:4234 lib/src/graphing.c:4244
 msgid "actual"
 msgstr "actual"
 
-#: lib/src/graphing.c:4233 lib/src/graphing.c:4243 lib/src/printout.c:1526
+#: lib/src/graphing.c:4235 lib/src/graphing.c:4245 lib/src/printout.c:1526
 #: gui/guiprint.c:924 gui/guiprint.c:1570 gui/guiprint.c:1630
 #: gui/library.c:4722
 msgid "fitted"
 msgstr "fitted"
 
-#: lib/src/graphing.c:4335
+#: lib/src/graphing.c:4337
 msgid "actual = predicted"
 msgstr "actual = predicted"
 
-#: lib/src/graphing.c:5171
+#: lib/src/graphing.c:5173
 #, c-format
 msgid "'%s' is a constant"
 msgstr "'%s' 是 常数项"
 
-#: lib/src/graphing.c:5228
+#: lib/src/graphing.c:5230
 msgid "Test statistic for normality"
 msgstr "常态性检定 (normality) 的统计量"
 
-#: lib/src/graphing.c:5254
+#: lib/src/graphing.c:5256
 msgid "Test statistic for gamma"
 msgstr "gamma 检定值"
 
-#: lib/src/graphing.c:5300 plugin/addons-i18n.c:10
+#: lib/src/graphing.c:5302 plugin/addons-i18n.c:10
 msgid "Density"
 msgstr "Density"
 
-#: lib/src/graphing.c:5302
+#: lib/src/graphing.c:5304
 msgid "Relative frequency"
 msgstr "相对机率 (Relative frequency)"
 
-#: lib/src/graphing.c:5327 lib/src/graphing.c:5334
+#: lib/src/graphing.c:5329 lib/src/graphing.c:5336
 #, fuzzy
 msgid "relative frequency"
 msgstr "相对机率 (Relative frequency)"
 
-#: lib/src/graphing.c:5395 gui/menustate.c:586
+#: lib/src/graphing.c:5397 gui/menustate.c:586
 msgid "Correlation matrix"
 msgstr "相关系数矩阵"
 
-#: lib/src/graphing.c:5787 lib/src/graphing.c:6684
+#: lib/src/graphing.c:5789 lib/src/graphing.c:6686
 #, c-format
 msgid "%g percent interval"
 msgstr "%g percent interval"
 
-#: lib/src/graphing.c:5800 lib/src/graphing.c:5807 lib/src/printout.c:1526
+#: lib/src/graphing.c:5802 lib/src/graphing.c:5809 lib/src/printout.c:1526
 msgid "forecast"
 msgstr "forecast"
 
-#: lib/src/graphing.c:6682
+#: lib/src/graphing.c:6684
 #, c-format
 msgid "%g%% interval for mean"
 msgstr "平均数的 %g%% 信赖区间"
 
-#: lib/src/graphing.c:6786
+#: lib/src/graphing.c:6788
 #, c-format
 msgid "Coefficient on %s"
 msgstr "Coefficient on %s"
 
-#: lib/src/graphing.c:6810
+#: lib/src/graphing.c:6812
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "分量回归估计值 with %g%% band"
 
-#: lib/src/graphing.c:6818
+#: lib/src/graphing.c:6820
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr "OLS estimate with %g%% band"
 
-#: lib/src/graphing.c:6881
+#: lib/src/graphing.c:6883
 #, fuzzy
 msgid "+- sqrt(h(t))"
 msgstr "t分配"
 
-#: lib/src/graphing.c:7036
+#: lib/src/graphing.c:7038
 #, fuzzy, c-format
 msgid "mean %s"
 msgstr "平均数"
 
-#: lib/src/graphing.c:7116
+#: lib/src/graphing.c:7118
 msgid "Group means"
 msgstr "群组均数"
 
-#: lib/src/graphing.c:7504
+#: lib/src/graphing.c:7506
 msgid "time"
 msgstr "time"
 
-#: lib/src/graphing.c:7595
+#: lib/src/graphing.c:7597
 #, fuzzy
 msgid "This command needs panel data"
 msgstr "此套件需要追踪资料 (panel data)"
 
-#: lib/src/graphing.c:7725
+#: lib/src/graphing.c:7727
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr ""
 
-#: lib/src/graphing.c:7730
+#: lib/src/graphing.c:7732
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr ""
 
-#: lib/src/graphing.c:7745
+#: lib/src/graphing.c:7747
 #, c-format
 msgid "%g percent confidence band"
 msgstr "信赖区间为 %g"
 
-#: lib/src/graphing.c:7750 lib/src/graphing.c:7753
+#: lib/src/graphing.c:7752 lib/src/graphing.c:7755
 msgid "point estimate"
 msgstr "点估计 (point estimate)"
 
-#: lib/src/graphing.c:7754
+#: lib/src/graphing.c:7756
 #, c-format
 msgid "%g and %g quantiles"
 msgstr "%g 和 %g 分位数"
 
-#: lib/src/graphing.c:7856
+#: lib/src/graphing.c:7858
 #, fuzzy, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "残差的样本变异数-共变数矩阵"
 
-#: lib/src/graphing.c:8085
+#: lib/src/graphing.c:8087
 msgid "VAR residuals"
 msgstr "向量自我回归之残差 (VAR residuals)"
 
-#: lib/src/graphing.c:8087 gui/gui_utils.c:3679
+#: lib/src/graphing.c:8089 gui/gui_utils.c:3679
 msgid "System residuals"
 msgstr "System 残差"
 
-#: lib/src/graphing.c:8163
+#: lib/src/graphing.c:8165
 msgid "EC terms"
 msgstr ""
 
-#: lib/src/graphing.c:8165 gui/gui_utils.c:4927
+#: lib/src/graphing.c:8167 gui/gui_utils.c:4927
 msgid "EC term"
 msgstr ""
 
-#: lib/src/graphing.c:8312
+#: lib/src/graphing.c:8314
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr ""
 
-#: lib/src/graphing.c:8396
+#: lib/src/graphing.c:8398
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr ""
 
-#: lib/src/graphing.c:8483
+#: lib/src/graphing.c:8485
 #, fuzzy, no-c-format
 msgid "95% interval"
 msgstr "(90% 区间)"
 
-#: lib/src/graphing.c:8509
+#: lib/src/graphing.c:8511
 msgid "Residual ACF"
 msgstr "残差「自我相关函数」 (Residual ACF)"
 
-#: lib/src/graphing.c:8511
+#: lib/src/graphing.c:8513
 #, fuzzy
 msgid "ACF for"
 msgstr "残差「自我相关函数」 (Residual ACF)"
 
-#: lib/src/graphing.c:8545
+#: lib/src/graphing.c:8547
 msgid "Residual PACF"
 msgstr "残差「偏自我相关函数」(Residual PACF)"
 
-#: lib/src/graphing.c:8547
+#: lib/src/graphing.c:8549
 #, fuzzy
 msgid "PACF for"
 msgstr "残差「偏自我相关函数」(Residual PACF)"
 
-#: lib/src/graphing.c:8624
+#: lib/src/graphing.c:8626
 msgid "radians"
 msgstr "弧度"
 
-#: lib/src/graphing.c:8626
+#: lib/src/graphing.c:8628
 msgid "degrees"
 msgstr "度数"
 
-#: lib/src/graphing.c:8628
+#: lib/src/graphing.c:8630
 #, fuzzy
 msgid "scaled frequency"
 msgstr "频率分配表(_F)"
 
-#: lib/src/graphing.c:8638
+#: lib/src/graphing.c:8640
 #, fuzzy
 msgid "Residual spectrum"
 msgstr "残差自我相关函数"
 
-#: lib/src/graphing.c:8640
+#: lib/src/graphing.c:8642
 #, fuzzy, c-format
 msgid "Spectrum of %s"
 msgstr "频谱图"
 
-#: lib/src/graphing.c:8646
+#: lib/src/graphing.c:8648
 #, fuzzy, c-format
 msgid "Bartlett window, length %d"
 msgstr "/资料/更新显示"
 
-#: lib/src/graphing.c:8652 lib/src/graphing.c:8758 gui/dialogs.c:4860
+#: lib/src/graphing.c:8654 lib/src/graphing.c:8760 gui/dialogs.c:4860
 msgid "log scale"
 msgstr "对数尺度"
 
-#: lib/src/graphing.c:8757
+#: lib/src/graphing.c:8759
 #, fuzzy
 msgid "Sample periodogram vs ARMA Spectrum"
 msgstr "样本周期图"
 
-#: lib/src/graphing.c:8759
+#: lib/src/graphing.c:8761
 #, fuzzy
 msgid "spectrum"
 msgstr "残差自我相关函数"
 
-#: lib/src/graphing.c:8760 gui/library.c:6020
+#: lib/src/graphing.c:8762 gui/library.c:6020
 msgid "periodogram"
 msgstr "周期图 (periodogram)"
 
-#: lib/src/graphing.c:8863 gui/library.c:896 gui/library.c:2922
+#: lib/src/graphing.c:8865 gui/library.c:896 gui/library.c:2922
 msgid "Q-Q plot"
 msgstr "分量散布图 (Q-Q plot)"
 
-#: lib/src/graphing.c:8956
+#: lib/src/graphing.c:8958
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "%s 的 Q-Q 图"
 
-#: lib/src/graphing.c:8959
+#: lib/src/graphing.c:8961
 #, fuzzy
 msgid "Normal quantiles"
 msgstr "标准常态"
 
-#: lib/src/graphing.c:9279 lib/src/graphing.c:9282
+#: lib/src/graphing.c:9281 lib/src/graphing.c:9284
 #, fuzzy, c-format
 msgid "adjusted %s"
 msgstr "季节调整后: %s"
 
-#: lib/src/graphing.c:9345 plugin/range-mean.c:112
+#: lib/src/graphing.c:9347 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "with least squares fit"
 
-#: lib/src/graphing.c:9475 lib/src/gretl_func.c:2724 lib/src/gretl_utils.c:1910
+#: lib/src/graphing.c:9464 lib/src/gretl_func.c:2724 lib/src/gretl_utils.c:1910
 #: lib/src/interact.c:1479 gui/dialogs.c:5546 gui/fnsave.c:5291
 #: plugin/tramo-x12a.c:833
 #, c-format
@@ -3202,11 +3203,11 @@ msgstr "无法开启 %s"
 msgid "Array of %s, length %d\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:528 lib/src/gretl_bfgs.c:569
+#: lib/src/gretl_bfgs.c:524 lib/src/gretl_bfgs.c:565
 msgid "Failed to compute numerical Hessian"
 msgstr "无法计算 Hessian 数值"
 
-#: lib/src/gretl_bfgs.c:814
+#: lib/src/gretl_bfgs.c:810
 msgid ""
 "\n"
 "\n"
@@ -3216,55 +3217,55 @@ msgstr ""
 "\n"
 "*** 使用者自行定义之启始值:\n"
 
-#: lib/src/gretl_bfgs.c:1137
+#: lib/src/gretl_bfgs.c:1133
 msgid "BFGS: initial value of objective function is not finite"
 msgstr "BFGS: 目标函数之起始值并非有限值 (not finite)"
 
-#: lib/src/gretl_bfgs.c:1339
+#: lib/src/gretl_bfgs.c:1335
 #, fuzzy, c-format
 msgid "Reached the maximum iterations (%d)"
 msgstr "已达所设定之最多反复计算次数, %d"
 
-#: lib/src/gretl_bfgs.c:1342
+#: lib/src/gretl_bfgs.c:1338
 #, fuzzy, c-format
 msgid "Norm of gradient %g exceeds maximum of %g"
 msgstr "norm of gradient = %g"
 
-#: lib/src/gretl_bfgs.c:1358
+#: lib/src/gretl_bfgs.c:1354
 #, c-format
 msgid "norm of gradient = %g"
 msgstr "norm of gradient = %g"
 
-#: lib/src/gretl_bfgs.c:2145 lib/src/modelprint.c:3330
+#: lib/src/gretl_bfgs.c:2141 lib/src/modelprint.c:3330
 #, c-format
 msgid "Function evaluations: %d\n"
 msgstr "Function evaluations: %d\n"
 
-#: lib/src/gretl_bfgs.c:2146 lib/src/modelprint.c:3331
+#: lib/src/gretl_bfgs.c:2142 lib/src/modelprint.c:3331
 #, c-format
 msgid "Evaluations of gradient: %d\n"
 msgstr "Evaluations of gradient: %d\n"
 
-#: lib/src/gretl_bfgs.c:2569
+#: lib/src/gretl_bfgs.c:2565
 #, c-format
 msgid "Gradient within tolerance (%g)\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:2573
+#: lib/src/gretl_bfgs.c:2569
 #, c-format
 msgid "Successive criterion values within tolerance (%g)\n"
 msgstr ""
 
-#: lib/src/gretl_bfgs.c:2578
+#: lib/src/gretl_bfgs.c:2574
 #, c-format
 msgid "Warning: couldn't improve criterion (gradient = %g)\n"
 msgstr "警告: 无法改善 criterion (gradient = %g)\n"
 
-#: lib/src/gretl_bfgs.c:2581
+#: lib/src/gretl_bfgs.c:2577
 msgid "Warning: couldn't improve criterion\n"
 msgstr "警告: 无法改善 criterion\n"
 
-#: lib/src/gretl_bfgs.c:2839
+#: lib/src/gretl_bfgs.c:2835
 msgid "Initial value of objective function is not finite"
 msgstr "目标函数之起始值 (initial value) 并非有限值 (not finite)"
 
@@ -4447,7 +4448,7 @@ msgid ""
 " %s\n"
 msgstr ""
 
-#: lib/src/gretl_string_table.c:949 lib/src/gretl_win32.c:845
+#: lib/src/gretl_string_table.c:949 lib/src/gretl_win32.c:853
 #: lib/src/interact.c:450
 msgid "The shell command is not activated."
 msgstr "Shell 指令无法启动"
@@ -4655,7 +4656,7 @@ msgstr "没有发现任何样本"
 msgid "'%s': malformed gdt file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5567
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
 #, fuzzy, c-format
 msgid "Couldn't read '%s'"
 msgstr "读取资讯档 %s\n"
@@ -4741,8 +4742,8 @@ msgstr "Inner key 找不到"
 msgid "The \"%s\" command cannot be used in this context"
 msgstr " \"%s\" 这个指令不适用在此处"
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:663
-#: gui/library.c:10058
+#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
 msgstr "读取资讯档 %s\n"
@@ -4778,12 +4779,12 @@ msgstr "store: 并未给定档案名称\n"
 msgid "Couldn't format model\n"
 msgstr "无法 format model\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:901
-#: gui/library.c:10461
+#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "在此 script 侦测到无限回圈\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:540
+#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: 指令无法使用\n"
@@ -4810,7 +4811,7 @@ msgstr "modprint: 预期 %d 名称"
 msgid "modprint: the first matrix argument must have 2 columns"
 msgstr "modprint: 第一个矩阵的引数必须要有 2 行 (columns)"
 
-#: lib/src/libset.c:1274 lib/src/libset.c:1856
+#: lib/src/libset.c:1274 lib/src/libset.c:1858
 #, c-format
 msgid "%s: invalid value '%s'"
 msgstr "%s: 不正确的值 '%s'"
@@ -4840,16 +4841,16 @@ msgid "Robust estimation"
 msgstr "稳健估计法"
 
 #: lib/src/libset.c:1727 gui/datawiz.c:441 gui/datawiz.c:520
-#: gui/menustate.c:983 plugin/addons-i18n.c:30
+#: gui/menustate.c:985 plugin/addons-i18n.c:30
 msgid "Time series"
 msgstr "Time series 时间序列"
 
-#: lib/src/libset.c:1973
+#: lib/src/libset.c:1975
 #, c-format
 msgid "Pseudo-random number generator seeded with %u\n"
 msgstr ""
 
-#: lib/src/libset.c:1999
+#: lib/src/libset.c:2001
 #, fuzzy, c-format
 msgid "set: unknown variable '%s'"
 msgstr " '%s' 是未知的变数"
@@ -6539,64 +6540,64 @@ msgstr "Using analytical derivatives\n"
 msgid "Tolerance = %g\n"
 msgstr "容许值 (Tolerance) = %g\n"
 
-#: lib/src/nonparam.c:301 lib/src/nonparam.c:302
+#: lib/src/nonparam.c:286 lib/src/nonparam.c:287
 #, fuzzy
 msgid "rank"
 msgstr "不正确的 MPI 阶次 (rank) %d"
 
-#: lib/src/nonparam.c:341 lib/src/nonparam.c:625 lib/src/nonparam.c:1345
+#: lib/src/nonparam.c:326 lib/src/nonparam.c:610 lib/src/nonparam.c:1330
 msgid "This command requires two variables\n"
 msgstr "这个指令需要 2 个变数\n"
 
-#: lib/src/nonparam.c:359 lib/src/nonparam.c:656
+#: lib/src/nonparam.c:344 lib/src/nonparam.c:641
 #, fuzzy, c-format
 msgid ""
 "\n"
 "For the variables '%s' and '%s'\n"
 msgstr " %s 的实际值 及 预测值"
 
-#: lib/src/nonparam.c:363
+#: lib/src/nonparam.c:348
 msgid "Spearman's rank correlation is undefined\n"
 msgstr "Spearman's 等级相关 (rank correlation) 无法定义 (undefined)\n"
 
-#: lib/src/nonparam.c:367
+#: lib/src/nonparam.c:352
 #, c-format
 msgid "Spearman's rank correlation coefficient (rho) = %.8f\n"
 msgstr "Spearman's 等级相关系数 (rank correlation coefficient) (rho) = %.8f\n"
 
-#: lib/src/nonparam.c:375 lib/src/nonparam.c:660
+#: lib/src/nonparam.c:360 lib/src/nonparam.c:645
 #, c-format
 msgid "z-score = %g, with two-tailed p-value %.4f\n"
 msgstr "z-score = %g, with 双尾 p-值 %.4f\n"
 
-#: lib/src/nonparam.c:387
+#: lib/src/nonparam.c:372
 #, c-format
 msgid "significant at the %g%% level (two-tailed)\n"
 msgstr "在 %g%% 水准下显着 (双尾)\n"
 
-#: lib/src/nonparam.c:391
+#: lib/src/nonparam.c:376
 #, no-c-format
 msgid "not significant at the 10% level\n"
 msgstr "在 10% 的水准下不显着\n"
 
-#: lib/src/nonparam.c:394
+#: lib/src/nonparam.c:379
 msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr "样本太少, 以致无法计算常态分配下的 p-值\n"
 
-#: lib/src/nonparam.c:658 gui/calculator.c:2629
+#: lib/src/nonparam.c:643 gui/calculator.c:2629
 msgid "Kendall's tau"
 msgstr "Kendall's tau"
 
-#: lib/src/nonparam.c:910
+#: lib/src/nonparam.c:895
 msgid "Runs test (first difference)"
 msgstr "随机性检定 (连检定, runs test)(一阶差分)"
 
-#: lib/src/nonparam.c:912
+#: lib/src/nonparam.c:897
 msgid "Runs test (level)"
 msgstr "随机性检定 (连检定, runs test)"
 
-#: lib/src/nonparam.c:915
+#: lib/src/nonparam.c:900
 #, c-format
 msgid ""
 "\n"
@@ -6605,13 +6606,13 @@ msgstr ""
 "\n"
 "变数 '%s' 的连数 (number of runs) (R)  = %d\n"
 
-#: lib/src/nonparam.c:919
+#: lib/src/nonparam.c:904
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
 msgstr ""
 "此检定量 (test statistic) 无法计算: 请试试将此变数 - 中位数之后, 再进行检"
 "定?\n"
 
-#: lib/src/nonparam.c:923
+#: lib/src/nonparam.c:908
 #, c-format
 msgid ""
 "Under the null hypothesis of independence and equal probability of positive\n"
@@ -6620,89 +6621,89 @@ msgstr ""
 "在独立与出现正负值机率相同的虚无假设下\n"
 "R 服从常态分配 N(%g, %g)\n"
 
-#: lib/src/nonparam.c:927
+#: lib/src/nonparam.c:912
 #, c-format
 msgid "Under the null hypothesis of independence, R follows N(%g, %g)\n"
 msgstr "在独立 (随机性) 的虚无假设下, R 服从常态分配 N(%g, %g)\n"
 
-#: lib/src/nonparam.c:930
+#: lib/src/nonparam.c:915
 #, c-format
 msgid "z-score = %g, with two-tailed p-value %g\n"
 msgstr "z-score = %g, 双尾 p-值: %g\n"
 
-#: lib/src/nonparam.c:959
+#: lib/src/nonparam.c:944
 msgid "Two-tailed p-value"
 msgstr "双尾 P 值"
 
-#: lib/src/nonparam.c:969
+#: lib/src/nonparam.c:954
 #, c-format
 msgid "Test for difference between %s and %s"
 msgstr "%s 和 %s 两者无差异之检定"
 
-#: lib/src/nonparam.c:1061
+#: lib/src/nonparam.c:1046
 msgid "Wilcoxon Signed-Rank Test"
 msgstr "Wilcoxon 符号等级检定 (Wilcoxon signed rank test)"
 
-#: lib/src/nonparam.c:1063
+#: lib/src/nonparam.c:1048
 msgid "the median difference is zero"
 msgstr "中位数无差异 (the median difference is zero)"
 
-#: lib/src/nonparam.c:1093
+#: lib/src/nonparam.c:1078
 msgid "zero differences"
 msgstr "已删去无差异的样本数 (zero differences)"
 
-#: lib/src/nonparam.c:1094
+#: lib/src/nonparam.c:1079
 msgid "non-zero ties"
 msgstr "非零且差异值相同之样本种类 (non-zero ties)"
 
-#: lib/src/nonparam.c:1096
+#: lib/src/nonparam.c:1081
 msgid "Fail to reject H0"
 msgstr ""
 
-#: lib/src/nonparam.c:1106
+#: lib/src/nonparam.c:1091
 msgid "Expected value"
 msgstr "期望值"
 
-#: lib/src/nonparam.c:1107
+#: lib/src/nonparam.c:1092
 msgid "Variance"
 msgstr "变异数 "
 
-#: lib/src/nonparam.c:1127 lib/src/nonparam.c:1259
+#: lib/src/nonparam.c:1112 lib/src/nonparam.c:1244
 msgid "Sample too small for statistical significance"
 msgstr "样本太少, 无法计算统计显着性"
 
-#: lib/src/nonparam.c:1213
+#: lib/src/nonparam.c:1198
 msgid "Wilcoxon Rank-Sum Test"
 msgstr "Wilcoxon 等级和检定 (rank sum test)"
 
-#: lib/src/nonparam.c:1215
+#: lib/src/nonparam.c:1200
 msgid "the two medians are equal"
 msgstr "两母体中位数相同"
 
-#: lib/src/nonparam.c:1235
+#: lib/src/nonparam.c:1220
 msgid "sum of ranks, sample 1"
 msgstr "等级和 (sum of ranks), 样本 1"
 
-#: lib/src/nonparam.c:1301
+#: lib/src/nonparam.c:1286
 msgid "Sign Test"
 msgstr "符号检定 (Sign test)"
 
-#: lib/src/nonparam.c:1302
+#: lib/src/nonparam.c:1287
 #, c-format
 msgid "Number of differences: n = %d\n"
 msgstr "有差异的样本数: n = %d\n"
 
-#: lib/src/nonparam.c:1304
+#: lib/src/nonparam.c:1289
 #, c-format
 msgid "Number of cases with %s > %s: w = %d (%.2f%%)\n"
 msgstr ""
 
-#: lib/src/nonparam.c:1308
+#: lib/src/nonparam.c:1293
 #, c-format
 msgid "Under the null hypothesis of no difference, W follows B(%d, %.1f)\n"
 msgstr "在无差异的虚无假设下, W 服从二项分配 B(%d, %.1f) \n"
 
-#: lib/src/nonparam.c:1310 lib/src/nonparam.c:1312 gui/calculator.c:2054
+#: lib/src/nonparam.c:1295 lib/src/nonparam.c:1297 gui/calculator.c:2054
 msgid "Prob"
 msgstr "机率 Prob"
 
@@ -7154,73 +7155,73 @@ msgstr "Gradients:  "
 msgid "norm"
 msgstr "标准常态"
 
-#: lib/src/printscan.c:761 lib/src/printscan.c:851
+#: lib/src/printscan.c:771 lib/src/printscan.c:861
 #, c-format
 msgid "unprocessed argument(s): '%s'"
 msgstr ""
 
-#: lib/src/printscan.c:1043
+#: lib/src/printscan.c:1053
 #, c-format
 msgid "%s: not a string variable"
 msgstr "%s: 并非字串变数 (string variable)"
 
-#: lib/src/pvalues.c:3020 gui/calculator.c:1208
+#: lib/src/pvalues.c:3042 gui/calculator.c:1208
 msgid "Standard normal distribution"
 msgstr "标准常态分配 (Standard normal distribution)"
 
-#: lib/src/pvalues.c:3046 gui/calculator.c:1215
+#: lib/src/pvalues.c:3068 gui/calculator.c:1215
 #, c-format
 msgid "right-tail probability = %g"
 msgstr "右尾机率 (right-tail probability)= %g"
 
-#: lib/src/pvalues.c:3048 gui/calculator.c:1217
+#: lib/src/pvalues.c:3070 gui/calculator.c:1217
 #, fuzzy, c-format
 msgid "complementary probability = %g"
 msgstr "右尾机率"
 
-#: lib/src/pvalues.c:3051 gui/calculator.c:1220
+#: lib/src/pvalues.c:3073 gui/calculator.c:1220
 #, c-format
 msgid "two-tailed probability = %g"
 msgstr "双尾机率 (two-tailed probability) = %g"
 
-#: lib/src/pvalues.c:3054 gui/calculator.c:1223
+#: lib/src/pvalues.c:3076 gui/calculator.c:1223
 #, c-format
 msgid "Critical value = %g"
 msgstr "临界值(Critical value) = %g"
 
-#: lib/src/pvalues.c:3693
+#: lib/src/pvalues.c:3715
 #, c-format
 msgid "area to the right of %g: NA\n"
 msgstr "%g 的右尾机率: NA\n"
 
-#: lib/src/pvalues.c:3700
+#: lib/src/pvalues.c:3722
 #, c-format
 msgid "area to the right of %g =~ %g\n"
 msgstr "%g 的右尾机率  =~ %g\n"
 
-#: lib/src/pvalues.c:3702
+#: lib/src/pvalues.c:3724
 #, c-format
 msgid "area to the right of %g = %g\n"
 msgstr "%g 的右尾机率 = %g\n"
 
-#: lib/src/pvalues.c:3728
+#: lib/src/pvalues.c:3750
 msgid "Standard normal"
 msgstr "标准常态 (Standard normal)"
 
-#: lib/src/pvalues.c:3732 lib/src/pvalues.c:3737 lib/src/pvalues.c:3747
-#: lib/src/pvalues.c:3752
+#: lib/src/pvalues.c:3754 lib/src/pvalues.c:3759 lib/src/pvalues.c:3769
+#: lib/src/pvalues.c:3774
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
 msgstr "(双尾机率 = %g; complement = %g)\n"
 
-#: lib/src/pvalues.c:3736 lib/src/pvalues.c:3751 lib/src/pvalues.c:3762
-#: lib/src/pvalues.c:3770 lib/src/pvalues.c:3814 lib/src/pvalues.c:3823
-#: lib/src/pvalues.c:3831 lib/src/pvalues.c:3839
+#: lib/src/pvalues.c:3758 lib/src/pvalues.c:3773 lib/src/pvalues.c:3784
+#: lib/src/pvalues.c:3792 lib/src/pvalues.c:3836 lib/src/pvalues.c:3845
+#: lib/src/pvalues.c:3853 lib/src/pvalues.c:3861
 #, c-format
 msgid "(to the left: %g)\n"
 msgstr "(左尾机率: %g)\n"
 
-#: lib/src/pvalues.c:3774
+#: lib/src/pvalues.c:3796
 #, c-format
 msgid ""
 "Gamma (shape %g, scale %g, mean %g, variance %g):\n"
@@ -7229,7 +7230,7 @@ msgstr ""
 "Gamma (平均数 %g, 变异数 %g, shape %g, scale %g):\n"
 " 右尾机率 of %g = %g\n"
 
-#: lib/src/pvalues.c:3782
+#: lib/src/pvalues.c:3804
 #, c-format
 msgid ""
 "Binomial (p = %g, n = %d):\n"
@@ -7238,38 +7239,38 @@ msgstr ""
 "二项分配 (Binomial) (机率 Prob = %g, 试抽样次数 = %d):\n"
 " Prob(x > %d) = %g\n"
 
-#: lib/src/pvalues.c:3787 lib/src/pvalues.c:3801
+#: lib/src/pvalues.c:3809 lib/src/pvalues.c:3823
 #, c-format
 msgid " Prob(x <= %d) = %g\n"
 msgstr " Prob(x <= %d) = %g\n"
 
-#: lib/src/pvalues.c:3788 lib/src/pvalues.c:3791 lib/src/pvalues.c:3802
-#: lib/src/pvalues.c:3805
+#: lib/src/pvalues.c:3810 lib/src/pvalues.c:3813 lib/src/pvalues.c:3824
+#: lib/src/pvalues.c:3827
 #, c-format
 msgid " Prob(x = %d) = %g\n"
 msgstr " Prob(x = %d) = %g\n"
 
-#: lib/src/pvalues.c:3796
+#: lib/src/pvalues.c:3818
 #, fuzzy, c-format
 msgid "Poisson (mean = %g): "
 msgstr "样本均数"
 
-#: lib/src/pvalues.c:3810
+#: lib/src/pvalues.c:3832
 #, c-format
 msgid "Exponential (scale = %g): "
 msgstr ""
 
-#: lib/src/pvalues.c:3818
+#: lib/src/pvalues.c:3840
 #, fuzzy, c-format
 msgid "Weibull (shape = %g, scale = %g): "
 msgstr "weibull 分配"
 
-#: lib/src/pvalues.c:3827
+#: lib/src/pvalues.c:3849
 #, c-format
 msgid "GED (shape = %g): "
 msgstr ""
 
-#: lib/src/pvalues.c:3835
+#: lib/src/pvalues.c:3857
 #, fuzzy, c-format
 msgid "Laplace (mean = %g, scale = %g): "
 msgstr "weibull 分配"
@@ -8174,8 +8175,8 @@ msgstr "请输入档案名称, 以储存结果 (按 enter 可离开): "
 msgid "writing session output to %s%s\n"
 msgstr "储存分析档(_a)"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:697
-#: cli/gretlcli-mpi.c:909 gui/library.c:10112 gui/library.c:10137
+#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
+#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
 #, fuzzy, c-format
 msgid "Error reading %s\n"
 msgstr "资料错误"
@@ -8184,7 +8185,7 @@ msgstr "资料错误"
 msgid "Terminated on error\n"
 msgstr ""
 
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:869
+#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
 msgid "Done\n"
 msgstr "已完成\n"
 
@@ -8193,37 +8194,35 @@ msgstr "已完成\n"
 msgid "commands saved as %s\n"
 msgstr "另存新档(_a)"
 
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:788 gui/library.c:10317
+#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr "指令 '%s' 已被略过; 因为在系统方程序中不适用\n"
 
-#: cli/gretlcli.c:1238 gui/library.c:10325
+#: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 "请输入在回圈 (loop) 之中要执行的指令, 否则请输入 'endloop' 以跳出回圈\n"
 
-#: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10390
+#: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "注意: 变数代码在删除变数后, 已重新设定"
 
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:848 gui/library.c:10420
+#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
 msgid "Data series length count missing or invalid\n"
 msgstr "资料长度不正确 (missing or invalid)\n"
 
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:927
+#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
 msgid "Dataset cleared\n"
 msgstr "资料档已清除\n"
 
 #: cli/gretlcli-mpi.c:137
-#, c-format
 msgid ""
 "This program should be run under mpiexec, and requires the name of a\n"
 "script file as argument.\n"
 msgstr ""
 
 #: cli/gretlcli-mpi.c:139
-#, c-format
 msgid ""
 "Options:\n"
 " -h or --help        Print this info and exit.\n"
@@ -8233,7 +8232,7 @@ msgid ""
 " -s or --single-rng  Use a single RNG, not one per process.\n"
 msgstr ""
 
-#: cli/gretlcli-mpi.c:154
+#: cli/gretlcli-mpi.c:155
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8897,7 +8896,7 @@ msgstr "gretl: VAR 落后期选择"
 
 #: gui/callbacks.c:504 gui/callbacks.c:518 gui/callbacks.c:521
 #: gui/callbacks.c:523 gui/callbacks.c:665 gui/callbacks.c:674
-#: gui/library.c:7941 gui/toolbar.c:1453
+#: gui/library.c:7941 gui/toolbar.c:1441
 msgid "gretl: define graph"
 msgstr "gretl: 定义图形"
 
@@ -9171,7 +9170,7 @@ msgstr "汇入资料 "
 
 #: gui/database.c:1110 gui/database.c:1133 gui/menustate.c:591
 #: gui/session.c:162 gui/session.c:182 gui/session.c:190 gui/session.c:217
-#: gui/session.c:224 gui/session.c:3446 gui/session.c:3462 gui/session.c:3565
+#: gui/session.c:224 gui/session.c:3446 gui/session.c:3462 gui/session.c:3561
 #: gui/ssheet.c:2715
 msgid "Delete"
 msgstr "删除"
@@ -9373,9 +9372,9 @@ msgstr ""
 msgid "Add to menu"
 msgstr "加入选单"
 
-#: gui/datafiles.c:1496 gui/datafiles.c:1719 gui/gpt_control.c:4353
-#: gui/gpt_control.c:4355 gui/gpt_control.c:4459 gui/session.c:169
-#: gui/session.c:176 gui/session.c:3586 gui/toolbar.c:842 gui/toolbar.c:843
+#: gui/datafiles.c:1496 gui/datafiles.c:1719 gui/gpt_control.c:4421
+#: gui/gpt_control.c:4423 gui/gpt_control.c:4527 gui/session.c:169
+#: gui/session.c:176 gui/session.c:3582 gui/toolbar.c:842 gui/toolbar.c:843
 #: gui/toolbar.c:844
 msgid "Help"
 msgstr "说明"
@@ -9541,7 +9540,7 @@ msgid "File"
 msgstr "档案"
 
 #: gui/datafiles.c:2874 gui/datafiles.c:2913 gui/datafiles.c:2920
-#: gui/session.c:3762
+#: gui/session.c:3758
 msgid "Summary"
 msgstr "摘要 (summary)"
 
@@ -9602,7 +9601,7 @@ msgstr "作者"
 msgid "Window"
 msgstr "视窗"
 
-#: gui/datafiles.c:2932 gui/gpt_control.c:284
+#: gui/datafiles.c:2932 gui/gpt_control.c:286
 msgid "Menu"
 msgstr "选单"
 
@@ -9658,39 +9657,39 @@ msgstr "gretl: 变数名称"
 msgid "No changes were made"
 msgstr "汇入资料过程正常"
 
-#: gui/datawiz.c:411 gui/dialogs.c:3681 gui/menustate.c:987
+#: gui/datawiz.c:411 gui/dialogs.c:3681 gui/menustate.c:989
 msgid "Annual"
 msgstr "年资料"
 
-#: gui/datawiz.c:412 gui/dialogs.c:3680 gui/dialogs.c:6357 gui/menustate.c:989
+#: gui/datawiz.c:412 gui/dialogs.c:3680 gui/dialogs.c:6357 gui/menustate.c:991
 msgid "Quarterly"
 msgstr "季资料"
 
-#: gui/datawiz.c:413 gui/dialogs.c:3687 gui/dialogs.c:6362 gui/menustate.c:991
+#: gui/datawiz.c:413 gui/dialogs.c:3687 gui/dialogs.c:6362 gui/menustate.c:993
 msgid "Monthly"
 msgstr "月资料"
 
-#: gui/datawiz.c:414 gui/dialogs.c:3686 gui/menustate.c:995
+#: gui/datawiz.c:414 gui/dialogs.c:3686 gui/menustate.c:997
 msgid "Weekly"
 msgstr "周资料"
 
-#: gui/datawiz.c:415 gui/dialogs.c:3694 gui/menustate.c:997
+#: gui/datawiz.c:415 gui/dialogs.c:3694 gui/menustate.c:999
 msgid "Daily (5 days)"
 msgstr "Daily 日资料 (5 days)"
 
-#: gui/datawiz.c:416 gui/dialogs.c:3695 gui/menustate.c:999
+#: gui/datawiz.c:416 gui/dialogs.c:3695 gui/menustate.c:1001
 msgid "Daily (6 days)"
 msgstr "Daily 日资料 (6 days)"
 
-#: gui/datawiz.c:417 gui/dialogs.c:3693 gui/menustate.c:1001
+#: gui/datawiz.c:417 gui/dialogs.c:3693 gui/menustate.c:1003
 msgid "Daily (7 days)"
 msgstr "Daily 日资料 (7 days)"
 
-#: gui/datawiz.c:418 gui/menustate.c:993
+#: gui/datawiz.c:418 gui/menustate.c:995
 msgid "Hourly"
 msgstr "Hourly 时资料"
 
-#: gui/datawiz.c:419 gui/menustate.c:1003
+#: gui/datawiz.c:419 gui/menustate.c:1005
 msgid "Decennial"
 msgstr "Decennial 10年资料"
 
@@ -9718,7 +9717,7 @@ msgstr "非标准之资料频率"
 msgid "Cross-sectional"
 msgstr "Cross-sectional 横断面资料"
 
-#: gui/datawiz.c:521 gui/menustate.c:1008
+#: gui/datawiz.c:521 gui/menustate.c:1010
 msgid "Panel"
 msgstr "Panel 追踪资料"
 
@@ -11558,7 +11557,7 @@ msgstr "编辑此函数"
 msgid "Extra properties"
 msgstr "额外性质 (extra properties)"
 
-#: gui/fnsave.c:3930 gui/toolbar.c:1103 gui/toolbar.c:1112
+#: gui/fnsave.c:3930 gui/toolbar.c:1091 gui/toolbar.c:1100
 msgid "Save..."
 msgstr "储存为..."
 
@@ -11660,158 +11659,158 @@ msgstr "gretl: 自订函数套件 (function packages)"
 msgid "build gfn file"
 msgstr "建立 gfn 档案"
 
-#: gui/gpt_control.c:285
+#: gui/gpt_control.c:287
 msgid "Bigger"
 msgstr "放大"
 
-#: gui/gpt_control.c:286 gui/helpfiles.c:79
+#: gui/gpt_control.c:288 gui/helpfiles.c:79
 msgid "Smaller"
 msgstr "缩小"
 
-#: gui/gpt_control.c:287 gui/session.c:154 gui/session.c:3404
+#: gui/gpt_control.c:289 gui/session.c:154 gui/session.c:3404
 #: gui/winstack.c:1351
 msgid "Windows"
 msgstr "切换视窗"
 
-#: gui/gpt_control.c:372
+#: gui/gpt_control.c:374
 msgid " Click to set position"
 msgstr "用鼠标点选设定位置"
 
-#: gui/gpt_control.c:1057
+#: gui/gpt_control.c:1119
 msgid "gnuplot command failed"
 msgstr "gnuplot 指令失败"
 
-#: gui/gpt_control.c:1128 gui/gpt_control.c:1219
+#: gui/gpt_control.c:1196 gui/gpt_control.c:1287
 msgid "Gnuplot error creating graph"
 msgstr "Gnuplot 绘图发生错误"
 
-#: gui/gpt_control.c:3173 gui/gpt_control.c:3184
+#: gui/gpt_control.c:3241 gui/gpt_control.c:3252
 msgid "Plot file is corrupted"
 msgstr "Plot 图档毁损"
 
-#: gui/gpt_control.c:3960
+#: gui/gpt_control.c:4028
 msgid "Couldn't access graph info"
 msgstr "无法存取绘图资讯"
 
-#: gui/gpt_control.c:4090 gui/gpt_control.c:4400 gui/graphics.c:262
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
 #: gui/graph_page.c:698
 msgid "monochrome"
 msgstr "黑白"
 
-#: gui/gpt_control.c:4094 gui/gpt_control.c:4436 gui/gpt_control.c:4442
+#: gui/gpt_control.c:4162 gui/gpt_control.c:4504 gui/gpt_control.c:4510
 msgid "Save as Windows metafile (EMF)..."
 msgstr "另存为 Windows metafile (EMF) 档..."
 
-#: gui/gpt_control.c:4098 gui/gpt_control.c:4444 gui/menustate.c:590
+#: gui/gpt_control.c:4166 gui/gpt_control.c:4512 gui/menustate.c:590
 msgid "Copy to clipboard"
 msgstr "复制至记忆体中"
 
-#: gui/gpt_control.c:4107 gui/gpt_control.c:4451
+#: gui/gpt_control.c:4175 gui/gpt_control.c:4519
 msgid "Print"
 msgstr "打印"
 
-#: gui/gpt_control.c:4132
+#: gui/gpt_control.c:4200
 msgid "roots (real, imaginary, modulus, frequency)"
 msgstr ""
 
-#: gui/gpt_control.c:4166
+#: gui/gpt_control.c:4234
 #, fuzzy
 msgid "roots"
 msgstr "向量自我回归之残差"
 
-#: gui/gpt_control.c:4188
+#: gui/gpt_control.c:4256
 msgid "gretl: boxplot data"
 msgstr "gretl: 箱形图资料"
 
-#: gui/gpt_control.c:4328
+#: gui/gpt_control.c:4396
 msgid " Drag to define zoom rectangle"
 msgstr " Drag to define zoom rectangle"
 
-#: gui/gpt_control.c:4339 gui/gpt_control.c:4434
+#: gui/gpt_control.c:4407 gui/gpt_control.c:4502
 msgid "Add another curve..."
 msgstr "新增曲线..."
 
-#: gui/gpt_control.c:4341 gui/gpt_control.c:4438
+#: gui/gpt_control.c:4409 gui/gpt_control.c:4506
 msgid "Save as PNG..."
 msgstr "另存为 PNG 档..."
 
-#: gui/gpt_control.c:4345 gui/gpt_control.c:4440
+#: gui/gpt_control.c:4413 gui/gpt_control.c:4508
 msgid "Save as PDF..."
 msgstr "另存为 PDF 档..."
 
-#: gui/gpt_control.c:4348 gui/gpt_control.c:4439
+#: gui/gpt_control.c:4416 gui/gpt_control.c:4507
 msgid "Save as postscript (EPS)..."
 msgstr "另存为 postscript (EPS) 档..."
 
-#: gui/gpt_control.c:4351 gui/gpt_control.c:4445 gui/toolbar.c:233
+#: gui/gpt_control.c:4419 gui/gpt_control.c:4513 gui/toolbar.c:233
 msgid "Save to session as icon"
 msgstr "存入分析档中为图示 (icon)"
 
-#: gui/gpt_control.c:4357 gui/gpt_control.c:4446
+#: gui/gpt_control.c:4425 gui/gpt_control.c:4514
 msgid "Freeze data labels"
 msgstr "冻结资料标籤"
 
-#: gui/gpt_control.c:4360 gui/gpt_control.c:4448
+#: gui/gpt_control.c:4428 gui/gpt_control.c:4516
 msgid "Clear data labels"
 msgstr "清除所有资料标籤"
 
-#: gui/gpt_control.c:4362 gui/gpt_control.c:4447
+#: gui/gpt_control.c:4430 gui/gpt_control.c:4515
 msgid "All data labels"
 msgstr "显示所有资料标籤"
 
-#: gui/gpt_control.c:4364 gui/gpt_control.c:4449
+#: gui/gpt_control.c:4432 gui/gpt_control.c:4517
 msgid "Zoom..."
 msgstr "放大 (选择一区域)..."
 
-#: gui/gpt_control.c:4366 gui/gpt_control.c:4464
+#: gui/gpt_control.c:4434 gui/gpt_control.c:4532
 msgid "Restore full view"
 msgstr "恢复为全貌检示"
 
-#: gui/gpt_control.c:4368 gui/gpt_control.c:4465
+#: gui/gpt_control.c:4436 gui/gpt_control.c:4533
 msgid "Replace full view"
 msgstr "取代为全貌检示"
 
-#: gui/gpt_control.c:4370 gui/gpt_control.c:4453
+#: gui/gpt_control.c:4438 gui/gpt_control.c:4521
 msgid "Display PDF"
 msgstr "显示 PDF 档"
 
-#: gui/gpt_control.c:4372 gui/gpt_control.c:4454
+#: gui/gpt_control.c:4440 gui/gpt_control.c:4522
 msgid "OLS estimates"
 msgstr "OLS estimates"
 
-#: gui/gpt_control.c:4376 gui/gpt_control.c:4455
+#: gui/gpt_control.c:4444 gui/gpt_control.c:4523
 #, fuzzy
 msgid "Numerical values"
 msgstr "显示变数值(_D)"
 
-#: gui/gpt_control.c:4380 gui/gpt_control.c:4457 gui/session.c:197
+#: gui/gpt_control.c:4448 gui/gpt_control.c:4525 gui/session.c:197
 #: gui/session.c:203 gui/session.c:213 gui/session.c:3432 gui/session.c:3471
 #: gui/session.c:3484
 msgid "Edit"
 msgstr "编辑"
 
-#: gui/gpt_control.c:4382 gui/gpt_control.c:4458
+#: gui/gpt_control.c:4450 gui/gpt_control.c:4526
 msgid "Font"
 msgstr "字形"
 
-#: gui/gpt_control.c:4384 gui/gpt_control.c:4460 gui/gpt_control.c:4466
+#: gui/gpt_control.c:4452 gui/gpt_control.c:4528 gui/gpt_control.c:4534
 #: gui/gui_utils.c:2020
 msgid "Close"
 msgstr "关闭"
 
-#: gui/gpt_control.c:4399 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
 msgid "color"
 msgstr "彩色"
 
-#: gui/gpt_control.c:5041
+#: gui/gpt_control.c:5131
 msgid "Malformed PNG file for graph"
 msgstr "PNG 图档有问题"
 
-#: gui/gpt_control.c:5303
+#: gui/gpt_control.c:5377
 msgid "gretl: graph"
 msgstr "gretl: 绘图"
 
-#: gui/gpt_control.c:5799
+#: gui/gpt_control.c:5924
 msgid "Couldn't find a usable terminal program"
 msgstr "找不到可用的终端机 (terminal program)"
 
@@ -12203,7 +12202,7 @@ msgstr "变数名称"
 msgid "Descriptive label"
 msgstr "变数附注说明"
 
-#: gui/gretl.c:1569 gui/menustate.c:939
+#: gui/gretl.c:1569 gui/menustate.c:941
 msgid " No datafile loaded "
 msgstr "尚未载入资料档"
 
@@ -14335,13 +14334,48 @@ msgstr "只寻找变数名称 (注意英文大小写是不相同的)"
 msgid "Failed to download file"
 msgstr "无法下载档案"
 
-#: gui/join-gui.c:465
+#: gui/join-gui.c:214
+#, fuzzy
+msgid "same as above"
+msgstr "另存为 TeX 档..."
+
+#: gui/join-gui.c:218 gui/join-gui.c:446
+msgid "same as inner"
+msgstr ""
+
+#: gui/join-gui.c:294
+#, fuzzy, c-format
+msgid "Import data from %s"
+msgstr "汇入资料 "
+
+#: gui/join-gui.c:318 gui/join-gui.c:326
+#, fuzzy
+msgid "gretl: join data"
+msgstr "gretl: 开启资料档"
+
+#: gui/join-gui.c:422
+#, fuzzy
+msgid "import series"
+msgstr "列出变数"
+
+#: gui/join-gui.c:422
+#, fuzzy
+msgid "named as"
+msgstr "变数名称"
+
+#: gui/join-gui.c:466
 msgid "show details of importation"
 msgstr "显示汇入之详细内容"
 
-#: gui/join-gui.c:781
+#: gui/join-gui.c:782
 msgid "The 'seq' aggregator requires an integer parameter, as in seq:1"
 msgstr ""
+
+#: gui/join-gui.c:807 gui/join-gui.c:808 gui/join-gui.c:810 gui/join-gui.c:811
+#: gui/join-gui.c:813 gui/join-gui.c:814
+#, fuzzy
+msgid "same as"
+msgstr "另存为"
 
 #: gui/library.c:499 gui/library.c:506 gui/library.c:6299 gui/library.c:6582
 msgid "Error adding variables"
@@ -15228,12 +15262,12 @@ msgstr ""
 msgid "Unterminated comment in script"
 msgstr ""
 
-#: gui/library.c:10371
+#: gui/library.c:10383
 #, fuzzy
 msgid "No series were deleted"
 msgstr "没有变数被删除"
 
-#: gui/library.c:10434
+#: gui/library.c:10446
 msgid "Script done\n"
 msgstr "Script done\n"
 
@@ -15353,36 +15387,36 @@ msgstr "主成份分析法"
 msgid "Delete components"
 msgstr "主成份分析法"
 
-#: gui/menustate.c:1005
+#: gui/menustate.c:1007
 msgid "Unknown"
 msgstr "Unknown"
 
-#: gui/menustate.c:1010
+#: gui/menustate.c:1012
 msgid "Undated"
 msgstr "无特定日期"
 
-#: gui/menustate.c:1043
+#: gui/menustate.c:1045
 #, c-format
 msgid "Undated: Full range n = %d; current sample n = %d"
 msgstr "不定日期资料: 全部样本数 n = %d; 目前使用之样本数 n = %d"
 
-#: gui/menustate.c:1052 gui/menustate.c:1062 gui/menustate.c:1066
-#: gui/menustate.c:1079
+#: gui/menustate.c:1054 gui/menustate.c:1064 gui/menustate.c:1068
+#: gui/menustate.c:1081
 #, c-format
 msgid "%s; sample %s - %s"
 msgstr "%s; 目前使用样本 %s - %s"
 
-#: gui/menustate.c:1072
+#: gui/menustate.c:1074
 #, c-format
 msgid "%s: Full range %s - %s"
 msgstr "%s: 全部样本 %s - %s"
 
-#: gui/menustate.c:1100
+#: gui/menustate.c:1102
 #, fuzzy, c-format
 msgid "Imported %s"
 msgstr "汇入资料 "
 
-#: gui/menustate.c:1109
+#: gui/menustate.c:1111
 msgid " Unsaved data "
 msgstr " 未储存的资料"
 
@@ -15537,7 +15571,7 @@ msgstr "无任何 model"
 msgid "%s replaced\n"
 msgstr "%s 已被替换\n"
 
-#: gui/selector.c:555 gui/toolbar.c:1464
+#: gui/selector.c:555 gui/toolbar.c:1452
 msgid "gretl: specify model"
 msgstr "gretl: 设定模型"
 
@@ -16470,7 +16504,7 @@ msgstr "gretl: 资料格式"
 msgid "Select data format"
 msgstr "选择数字显示格式"
 
-#: gui/session.c:151 gui/session.c:3390 gui/session.c:3842
+#: gui/session.c:151 gui/session.c:3390 gui/session.c:3838
 msgid "Save session"
 msgstr "储存分析档"
 
@@ -16487,20 +16521,20 @@ msgstr "新增为矩阵..."
 msgid "Close window"
 msgstr "关闭视窗"
 
-#: gui/session.c:160 gui/session.c:3574
+#: gui/session.c:160 gui/session.c:3570
 msgid "Add to model table"
 msgstr "新增至模型比较表 (model table)"
 
 #: gui/session.c:161 gui/session.c:181 gui/session.c:189 gui/session.c:216
-#: gui/session.c:223 gui/session.c:3444 gui/session.c:3460 gui/session.c:3563
+#: gui/session.c:223 gui/session.c:3444 gui/session.c:3460 gui/session.c:3559
 msgid "Rename"
 msgstr "更名"
 
-#: gui/session.c:168 gui/session.c:175 gui/session.c:3580
+#: gui/session.c:168 gui/session.c:175 gui/session.c:3576
 msgid "Clear"
 msgstr "清除"
 
-#: gui/session.c:174 gui/session.c:3592
+#: gui/session.c:174 gui/session.c:3588
 msgid "Save as TeX..."
 msgstr "另存为 TeX 档..."
 
@@ -16508,12 +16542,12 @@ msgstr "另存为 TeX 档..."
 msgid "Edit plot commands"
 msgstr "编辑 GNU plot 指令 "
 
-#: gui/session.c:188 gui/session.c:3555
+#: gui/session.c:188 gui/session.c:3551
 #, fuzzy
 msgid "Add to graph page"
 msgstr "绘图区"
 
-#: gui/session.c:191 gui/session.c:218 gui/session.c:3448 gui/session.c:3596
+#: gui/session.c:191 gui/session.c:218 gui/session.c:3448 gui/session.c:3592
 #: gui/textutil.c:490 gui/toolbar.c:817
 msgid "Copy"
 msgstr "复制"
@@ -16611,129 +16645,129 @@ msgstr "复制物件"
 msgid "gretl: rename object"
 msgstr "gretl: 更名"
 
-#: gui/session.c:3747
+#: gui/session.c:3743
 msgid "Data set"
 msgstr "资料变数(Data set)"
 
-#: gui/session.c:3750
+#: gui/session.c:3746
 msgid "Scalars"
 msgstr "数值变数 (Scalars)"
 
-#: gui/session.c:3753
+#: gui/session.c:3749
 msgid "Data info"
 msgstr "资料说明(Data info)"
 
-#: gui/session.c:3756
+#: gui/session.c:3752
 msgid "Notes"
 msgstr "附注说明"
 
-#: gui/session.c:3759
+#: gui/session.c:3755
 msgid "Correlations"
 msgstr "相关系数"
 
-#: gui/session.c:3765
+#: gui/session.c:3761
 msgid "Model table"
 msgstr "模型比较表(model table)"
 
-#: gui/session.c:3768
+#: gui/session.c:3764
 msgid "Graph page"
 msgstr "绘图区"
 
-#: gui/session.c:4000 gui/winstack.c:543
+#: gui/session.c:3996 gui/winstack.c:543
 msgid "icon view"
 msgstr "分析档图示(icon view)"
 
-#: gui/session.c:4243
+#: gui/session.c:4239
 #, c-format
 msgid "Properties of matrix %s"
 msgstr "矩阵  %s 之性质"
 
-#: gui/session.c:4247 gui/session.c:4256
+#: gui/session.c:4243 gui/session.c:4252
 #, fuzzy, c-format
 msgid "Null matrix, %d x %d\n"
 msgstr "权重矩阵 (weight matrix) 的行列数错误: 应该是 %d x %d"
 
-#: gui/session.c:4250
+#: gui/session.c:4246
 #, fuzzy, c-format
 msgid "Scalar matrix, value %g\n"
 msgstr "gretl: 查 P 值"
 
-#: gui/session.c:4253
+#: gui/session.c:4249
 #, fuzzy, c-format
 msgid "Identity matrix, order %d\n"
 msgstr "共变数矩阵的反矩阵"
 
-#: gui/session.c:4260
+#: gui/session.c:4256
 msgid "Rows"
 msgstr ""
 
-#: gui/session.c:4261
+#: gui/session.c:4257
 #, fuzzy
 msgid "Columns"
 msgstr "   栏 (column) 的数目 = %d\n"
 
-#: gui/session.c:4262 plugin/johansen.c:1607 plugin/johansen.c:1627
+#: gui/session.c:4258 plugin/johansen.c:1607 plugin/johansen.c:1627
 #: plugin/johansen.c:1653
 #, fuzzy
 msgid "Rank"
 msgstr "不正确的 MPI 阶次 (rank) %d"
 
-#: gui/session.c:4267
+#: gui/session.c:4263
 #, fuzzy
 msgid "Square"
 msgstr "Chi-square(%d)"
 
-#: gui/session.c:4271
+#: gui/session.c:4267
 msgid "Diagonal"
 msgstr ""
 
-#: gui/session.c:4273
+#: gui/session.c:4269
 msgid "Lower triangular"
 msgstr ""
 
-#: gui/session.c:4275
+#: gui/session.c:4271
 msgid "Upper triangular"
 msgstr ""
 
-#: gui/session.c:4277
+#: gui/session.c:4273
 msgid "Symmetric"
 msgstr "对称 (symmetric)"
 
-#: gui/session.c:4282
+#: gui/session.c:4278
 msgid "Positive definite"
 msgstr "正确定 (Positive definite)"
 
-#: gui/session.c:4284
+#: gui/session.c:4280
 #, fuzzy
 msgid "Not positive definite"
 msgstr "正确定 (Positive definite)"
 
-#: gui/session.c:4298
+#: gui/session.c:4294
 msgid "Idempotent"
 msgstr "Idempotent"
 
-#: gui/session.c:4300
+#: gui/session.c:4296
 #, fuzzy
 msgid "Not idempotent"
 msgstr "Idempotent"
 
-#: gui/session.c:4306
+#: gui/session.c:4302
 msgid "1-norm"
 msgstr ""
 
-#: gui/session.c:4307
+#: gui/session.c:4303
 msgid "Infinity-norm"
 msgstr ""
 
-#: gui/session.c:4312
+#: gui/session.c:4308
 msgid "Trace"
 msgstr "Trace"
 
-#: gui/session.c:4321
+#: gui/session.c:4317
 msgid "Determinant"
 msgstr "矩阵行列式 (determinant)"
 
-#: gui/session.c:4329
+#: gui/session.c:4325
 msgid "Eigenvalues"
 msgstr "Eigenvalues"
 
@@ -17587,59 +17621,59 @@ msgstr "指令辅助说明"
 msgid "Digits..."
 msgstr "落后期..."
 
-#: gui/toolbar.c:1079
+#: gui/toolbar.c:1067
 msgid "_Save forecast..."
 msgstr "储存预测 (_S)..."
 
-#: gui/toolbar.c:1080
+#: gui/toolbar.c:1068
 msgid "Save standard errors..."
 msgstr "储存标准误..."
 
-#: gui/toolbar.c:1274
+#: gui/toolbar.c:1262
 msgid "New tab"
 msgstr "新增分页"
 
-#: gui/toolbar.c:1483
+#: gui/toolbar.c:1471
 msgid "launch calculator"
 msgstr "开启计算机"
 
-#: gui/toolbar.c:1484
+#: gui/toolbar.c:1472
 msgid "new script"
 msgstr "开新指令档"
 
-#: gui/toolbar.c:1485
+#: gui/toolbar.c:1473
 msgid "open gretl console"
 msgstr "开启指令视窗 (console)"
 
-#: gui/toolbar.c:1486
+#: gui/toolbar.c:1474
 msgid "session icon view"
 msgstr "分析档图示(session icon view)"
 
-#: gui/toolbar.c:1487
+#: gui/toolbar.c:1475
 msgid "function packages"
 msgstr "自订函数套件"
 
-#: gui/toolbar.c:1488
+#: gui/toolbar.c:1476
 msgid "command reference"
 msgstr "指令参考说明"
 
-#: gui/toolbar.c:1489
+#: gui/toolbar.c:1477
 msgid "X-Y graph"
 msgstr "X-Y 图"
 
-#: gui/toolbar.c:1490
+#: gui/toolbar.c:1478
 msgid "OLS model"
 msgstr "OLS 模型"
 
-#: gui/toolbar.c:1491
+#: gui/toolbar.c:1479
 msgid "databases"
 msgstr "资料库"
 
-#: gui/toolbar.c:1492
+#: gui/toolbar.c:1480
 msgid "open dataset"
 msgstr "开启示范资料档"
 
-#: gui/toolbar.c:1523
+#: gui/toolbar.c:1511
 msgid "Stop"
 msgstr "停止执行"
 
@@ -18208,15 +18242,15 @@ msgstr "%s: 未发现 BOF record"
 msgid "No data found.\n"
 msgstr "未发现任何资料!\n"
 
-#: plugin/excel_import.c:1650 plugin/gnumeric_import.c:650
+#: plugin/excel_import.c:1650 plugin/gnumeric_import.c:652
 msgid "Failed to get workbook info"
 msgstr "无法取得 workbook 资讯"
 
-#: plugin/excel_import.c:1653 plugin/gnumeric_import.c:658
+#: plugin/excel_import.c:1653 plugin/gnumeric_import.c:660
 msgid "No worksheets found"
 msgstr "没有发现任何工作表 (worksheets)"
 
-#: plugin/excel_import.c:1669 plugin/gnumeric_import.c:674
+#: plugin/excel_import.c:1669 plugin/gnumeric_import.c:676
 #: plugin/ods_import.c:1174 plugin/xlsx_import.c:1348 plugin/xlsx_import.c:1408
 msgid "Invalid argument for worksheet import"
 msgstr "工作表资料汇入参数有误"
@@ -18329,7 +18363,7 @@ msgstr "GARCH: p > 0 and q = 0: the model is unidentified"
 msgid "GARCH: p + q must not exceed %d"
 msgstr "GARCH: p + q 必需大于 %d"
 
-#: plugin/gnumeric_import.c:413
+#: plugin/gnumeric_import.c:415
 #, c-format
 msgid ""
 "Couldn't get value for col %d, row %d.\n"
@@ -19323,10 +19357,6 @@ msgstr "增加样本(_A)"
 #, fuzzy
 #~ msgid "Save as comma-separated"
 #~ msgstr "用逗号当区隔符号"
-
-#, fuzzy
-#~ msgid "Save as LaTeX"
-#~ msgstr "另存为 TeX 档..."
 
 #, fuzzy
 #~ msgid "Save as RTF"
