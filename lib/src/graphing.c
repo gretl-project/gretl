@@ -9560,9 +9560,11 @@ static void tricky_print_palette (const char *p,
         { "#E9D9B5", "dark-orange", NULL }, /* "oranges" */
         { "#58996E", "#E1D99A", "#C0414C" } /* "green-to-red" */
     };
-    int i = 0;
+    int i = 3;
 
-    if (!strcmp(p, "blues")) {
+    if (p == NULL) {
+	i = 3;
+    } else if (!strcmp(p, "blues")) {
 	i = 0;
     } else if (!strcmp(p, "oranges")) {
 	i = 1;
@@ -9570,15 +9572,32 @@ static void tricky_print_palette (const char *p,
 	i = 2;
     }
 
-    /* FIXME: allow specification of NA fill color? */
+    /* FIXME: maybe allow specification of NA fill color? */
 
     fprintf(fp, "set palette defined (%.8g 'gray', ", zlim[0] - 0.002);
-    fprintf(fp, "%.8g '%s', ", zlim[0] - 0.001, colors[i][0]);
-    if (i < 2) {
-	fprintf(fp, "%.8g '%s')\n", zlim[1], colors[i][1]);
+
+    if (i == 3) {
+	const char *hc[] = {
+            "#000000", "#7202F3", "#A11096",
+            "#C63700", "#E48300", "#FFFF00"
+	};
+	double step = (zlim[1] - zlim[0] + 0.001) / 5;
+	double z = zlim[0] - 0.001;
+	int j;
+
+	for (j=0; j<6; j++) {
+	    fprintf(fp, "%.8g '%s'", z, hc[j]);
+	    fputs(j == 1 ? ", \\\n" : j < 5 ? ", " : ")\n", fp);
+	    z += step;
+	}
     } else {
-	fprintf(fp, "%.8g '%s', %.8g '%s')\n", (zlim[1] - zlim[0]) / 2,
-		colors[i][1], zlim[1], colors[i][2]);
+	fprintf(fp, "%.8g '%s', ", zlim[0] - 0.001, colors[i][0]);
+	if (i < 2) {
+	    fprintf(fp, "%.8g '%s')\n", zlim[1], colors[i][1]);
+	} else {
+	    fprintf(fp, "%.8g '%s', %.8g '%s')\n", (zlim[1] - zlim[0]) / 2,
+		    colors[i][1], zlim[1], colors[i][2]);
+	}
     }
 
     /* for this to work, cbrange has to be set using zlim */
@@ -9595,14 +9614,12 @@ static void handle_palette (gretl_bundle *opts,
 
     p = gretl_bundle_get_string(opts, "palette", NULL);
 
-    if (p != NULL) {
-	if (na_action == NA_FILL) {
-	    tricky_print_palette(p, zlim, fp);
-	    /* cbrange handled */
-	    return;
-	} else {
-	    simple_print_palette(p, fp);
-	}
+    if (na_action == NA_FILL) {
+	tricky_print_palette(p, zlim, fp);
+	/* cbrange handled */
+	return;
+    } else if (p != NULL) {
+	simple_print_palette(p, fp);
     }
 
     fprintf(fp, "set cbrange [%g:%g]\n", zlim[0], zlim[1]);
