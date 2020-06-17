@@ -811,7 +811,7 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     ikey2 = join_entry_text(jinfo->ikey[1], _("same as"));
 
     okey1 = join_entry_text(jinfo->okey[0], _("same as"));
-    okey2 = join_entry_text(jinfo->okey[1], _("same as"))
+    okey2 = join_entry_text(jinfo->okey[1], _("same as"));
 
     filter = join_entry_text(jinfo->filter, _("none"));
 
