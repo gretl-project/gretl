@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 2018a\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 19:33-0400\n"
+"POT-Creation-Date: 2020-06-17 09:06+0200\n"
 "PO-Revision-Date: 2019-01-21 19:34-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.umk.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -1315,8 +1315,8 @@ msgid "append: don't know how to align the new series!"
 msgstr "Dołączanie: nie wiem jak dopasować nowy szereg!"
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
-#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
+#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "Brak pamięci!\n"
 
@@ -1604,6 +1604,7 @@ msgid "Compacted dataset would be empty"
 msgstr "Agregowany zbiór danych będzie pusty. Wykonanie przerwano."
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
+#: plugin/geoplot.c:1197
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Nie można otworzyć pliku %s do zapisania"
@@ -2855,6 +2856,14 @@ msgstr "Periodyczne zmienne 0-1 wygenerowane.\n"
 msgid "Panel dummy variables generated.\n"
 msgstr "Panelowe zmienne 0-1 wygenerowane.\n"
 
+#: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
+msgid "complex arguments/operands not supported"
+msgstr ""
+
+#: lib/src/genmpi.c:148 lib/src/genmpi.c:370
+msgid "The MPI library is not loaded"
+msgstr "Biblioteka MPT nie jest załadowana"
+
 #: lib/src/gensyntax.c:249
 #, c-format
 msgid "Expected '%c' but formula ended\n"
@@ -3499,10 +3508,6 @@ msgstr "Wykonanie przerwane na żądanie"
 #: lib/src/gretl_errors.c:87
 msgid "'catch' cannot be used in this context"
 msgstr "'catch' nie może być użyte w tym kontekście"
-
-#: lib/src/gretl_errors.c:88
-msgid "complex arguments/operands not supported"
-msgstr ""
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
@@ -4651,7 +4656,7 @@ msgstr "Nie znaleziono żadnych obserwacji"
 msgid "'%s': malformed gdt file"
 msgstr "'%s': zniekształcony plik gdt"
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
 #, c-format
 msgid "Couldn't read '%s'"
 msgstr "Niemożliwe czytanie pliku '%s'"
@@ -4738,7 +4743,7 @@ msgstr "Błędna wewnętrzna nazwa"
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "polecenie \"%s\" jest błędny w tym kontekście"
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: lib/src/interact.c:2047 cli/gretlcli-mpi.c:664 cli/gretlcli.c:1022
 #: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
@@ -4776,12 +4781,12 @@ msgstr "brak nazwy pliku dla polecenia 'store'\n"
 msgid "Couldn't format model\n"
 msgstr "Niewłaściwy format modelu\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: lib/src/interact.c:3817 cli/gretlcli-mpi.c:902 cli/gretlcli.c:1350
 #: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "Wykryto nieskończoną pętlę w skrypcie\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
+#: lib/src/interact.c:3858 cli/gretlcli-mpi.c:541 cli/gretlcli.c:887
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: niedostępne polecenie\n"
@@ -7984,6 +7989,62 @@ msgstr "polecenia '%s' nie można cofnąć"
 msgid "Freed %s\n"
 msgstr "Uwolniono (freed) %s\n"
 
+#: cli/gretlcli-mpi.c:137
+msgid ""
+"This program should be run under mpiexec, and requires the name of a\n"
+"script file as argument.\n"
+msgstr ""
+"Ten program powinien być prowadzony pod mpiexec\n"
+"i wymaga nazwy pliku skryptu jako argumentu.\n"
+
+#: cli/gretlcli-mpi.c:139
+msgid ""
+"Options:\n"
+" -h or --help        Print this info and exit.\n"
+" -v or --version     Print version info and exit.\n"
+" -q or --quiet       Don't print logo on start-up.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+msgstr ""
+"Options:\n"
+" -h or --help        Pokazuje parametry i kończy pracę.\n"
+" -v or --version     Pokazuje wersję i kończy pracę.\n"
+" -q or --quiet       Nie pokazuje logo przy starcie.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+
+#: cli/gretlcli-mpi.c:155
+#, c-format
+msgid ""
+"\n"
+"gretlmpi: error executing script: halting\n"
+msgstr ""
+"\n"
+"gretlmpi: Błąd skryptu; przerwano wykonanie zadania\n"
+
+#: cli/gretlcli-mpi.c:698 cli/gretlcli-mpi.c:910 cli/gretlcli.c:1091
+#: cli/gretlcli.c:1358 gui/library.c:10124 gui/library.c:10149
+#, c-format
+msgid "Error reading %s\n"
+msgstr "Błąd wczytania %s\n"
+
+#: cli/gretlcli-mpi.c:789 cli/gretlcli.c:1229 gui/library.c:10329
+#, c-format
+msgid "Command '%s' ignored; not valid within equation system\n"
+msgstr "Polecenie '%s' zostało zignorowane, nieprawidłowy system równań\n"
+
+#: cli/gretlcli-mpi.c:849 cli/gretlcli.c:1303 gui/library.c:10432
+msgid "Data series length count missing or invalid\n"
+msgstr "Brak lub błędna liczba oznaczająca długość serii\n"
+
+#: cli/gretlcli-mpi.c:870 cli/gretlcli.c:1111
+msgid "Done\n"
+msgstr "Wykonano\n"
+
+#: cli/gretlcli-mpi.c:928 cli/gretlcli.c:1380
+msgid "Dataset cleared\n"
+msgstr "Dane zostały wyczyszczone\n"
+
 #: cli/gretlcli.c:158
 #, c-format
 msgid ""
@@ -8083,29 +8144,14 @@ msgstr "Wprowadź nazwę pliku wyników (enter to koniec): "
 msgid "writing session output to %s%s\n"
 msgstr "zapisywanie wyników sesji do %s%s\n"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
-#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
-#, c-format
-msgid "Error reading %s\n"
-msgstr "Błąd wczytania %s\n"
-
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
 msgstr ""
-
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
-msgid "Done\n"
-msgstr "Wykonano\n"
 
 #: cli/gretlcli.c:1122
 #, c-format
 msgid "commands saved as %s\n"
 msgstr "polecenia zapisano jako %s\n"
-
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
-#, c-format
-msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr "Polecenie '%s' zostało zignorowane, nieprawidłowy system równań\n"
 
 #: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
@@ -8114,47 +8160,6 @@ msgstr "Wprowadź polecenia dla pętli. Polecenie 'endloop' kończy pętlę\n"
 #: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "Uwaga: zmienne zostały przenumerowane"
-
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
-msgid "Data series length count missing or invalid\n"
-msgstr "Brak lub błędna liczba oznaczająca długość serii\n"
-
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
-msgid "Dataset cleared\n"
-msgstr "Dane zostały wyczyszczone\n"
-
-#: cli/gretlcli-mpi.c:137
-msgid ""
-"This program should be run under mpiexec, and requires the name of a\n"
-"script file as argument.\n"
-msgstr ""
-"Ten program powinien być prowadzony pod mpiexec\n"
-"i wymaga nazwy pliku skryptu jako argumentu.\n"
-
-#: cli/gretlcli-mpi.c:139
-msgid ""
-"Options:\n"
-" -h or --help        Print this info and exit.\n"
-" -v or --version     Print version info and exit.\n"
-" -q or --quiet       Don't print logo on start-up.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-msgstr ""
-"Options:\n"
-" -h or --help        Pokazuje parametry i kończy pracę.\n"
-" -v or --version     Pokazuje wersję i kończy pracę.\n"
-" -q or --quiet       Nie pokazuje logo przy starcie.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-
-#: cli/gretlcli-mpi.c:155
-#, c-format
-msgid ""
-"\n"
-"gretlmpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlmpi: Błąd skryptu; przerwano wykonanie zadania\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9383,7 +9388,7 @@ msgstr "Lista baz danych"
 msgid "All packages"
 msgstr "Wszystkie pakiety"
 
-#: gui/datafiles.c:1900
+#: gui/datafiles.c:1900 gui/join-gui.c:451
 msgid "filter"
 msgstr "Filtr"
 
@@ -11581,8 +11586,8 @@ msgstr "Plik wykresu jest uszkodzony"
 msgid "Couldn't access graph info"
 msgstr "Niemożliwy dostęp do opisu wykresu"
 
-#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
-#: gui/graph_page.c:698
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graph_page.c:698
+#: gui/graphics.c:262
 msgid "monochrome"
 msgstr "czarno-biały"
 
@@ -11685,7 +11690,7 @@ msgstr "Nazwa czcionki"
 msgid "Close"
 msgstr "Zamknij"
 
-#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr "kolorowy"
 
@@ -11977,6 +11982,22 @@ msgstr "Tytuł osi"
 msgid "gretl plot controls"
 msgstr "gretl edycja opcji wykresu"
 
+#: gui/graph_page.c:288
+msgid "The graph page is full"
+msgstr "Tabela wykresów jest pełna"
+
+#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
+msgid "Failed to process TeX file"
+msgstr "Błąd w tworzeniu pliku TeX"
+
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
+msgid "The graph page is empty"
+msgstr "Tabela wykresów jest pusta"
+
+#: gui/graph_page.c:709
+msgid "graph page options"
+msgstr "opcje strony wykresów"
+
 #: gui/graphics.c:197
 msgid "height"
 msgstr "wysokość"
@@ -12008,22 +12029,6 @@ msgstr "Wymiary wykresu"
 #: gui/graphics.c:402
 msgid "Preview"
 msgstr "Podgląd"
-
-#: gui/graph_page.c:288
-msgid "The graph page is full"
-msgstr "Tabela wykresów jest pełna"
-
-#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
-msgid "Failed to process TeX file"
-msgstr "Błąd w tworzeniu pliku TeX"
-
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
-msgid "The graph page is empty"
-msgstr "Tabela wykresów jest pusta"
-
-#: gui/graph_page.c:709
-msgid "graph page options"
-msgstr "opcje strony wykresów"
 
 #: gui/gretl.c:126
 msgid ""
@@ -13077,197 +13082,6 @@ msgstr "_Podgląd:"
 msgid "Font Selection"
 msgstr "Wybór czcionki"
 
-#: gui/guiprint.c:73 gui/guiprint.c:75
-msgid "gretl output"
-msgstr "Wyniki gretla"
-
-#: gui/guiprint.c:73
-msgid "for"
-msgstr "dla"
-
-#: gui/guiprint.c:224
-#, c-format
-msgid "%s, page %d"
-msgstr "%s, strona %d"
-
-#: gui/guiprint.c:422
-#, c-format
-msgid "%s page %d of %d"
-msgstr "%s strona %d z %d"
-
-#: gui/guiprint.c:602 gui/guiprint.c:650
-#, c-format
-msgid "Summary Statistics, using the observations %s - %s"
-msgstr "Statystyki opisowe, dla obserwacji z próby %s - %s"
-
-#: gui/guiprint.c:656 gui/guiprint.c:1069
-#, c-format
-msgid "for the variable %s (%d valid observations)"
-msgstr "dla zmiennej %s (%d prawidłowych obserwacji)"
-
-#: gui/guiprint.c:723
-msgid "5% Perc."
-msgstr "Percentyl 5%"
-
-#: gui/guiprint.c:723
-msgid "95% Perc."
-msgstr "Percentyl 95%"
-
-#: gui/guiprint.c:880
-msgid "t-ratios in parentheses"
-msgstr "Statystyka-t w nawiasach"
-
-#: gui/guiprint.c:1011 gui/guiprint.c:1062
-#, c-format
-msgid "Summary Statistics, using the observations %s--%s"
-msgstr "Statystyki opisowe dla obserwacji z próby %s--%s"
-
-#: gui/guiprint.c:1120
-msgid "Std.\\ Dev."
-msgstr "Odch.\\ stand."
-
-#: gui/guiprint.c:1120
-msgid "Ex.\\ kurtosis"
-msgstr "Ex.\\ kurtoza"
-
-#: gui/guiprint.c:1148
-#, no-c-format
-msgid "5\\% perc."
-msgstr "Percentyl 5\\%"
-
-#: gui/guiprint.c:1150
-#, no-c-format
-msgid "95\\% perc."
-msgstr "Percentyl 95\\%"
-
-#: gui/guiprint.c:1151
-msgid "IQ Range"
-msgstr "Zakres Q3-Q1"
-
-#: gui/guiprint.c:1253
-#, c-format
-msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "Współczynniki korelacji liniowej dla obserwacji z próby %s-%s"
-
-#: gui/guiprint.c:1264 gui/guiprint.c:1358
-msgid "Coefficient covariance matrix"
-msgstr "Macierz współczynników kowariancji"
-
-#: gui/guiprint.c:1346
-#, c-format
-msgid "Correlation coefficients, using the observations %s--%s"
-msgstr "Współczynniki korelacji liniowej dla obserwacji z próby %s--%s"
-
-#: gui/guiprint.c:1353
-#, c-format
-msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr ""
-"Wartość krytyczna wsp. korelacji = %.4f, dla 5\\%% dwustronnego obszaru "
-"krytycznego i n = %d"
-
-#: gui/guiprint.c:1444
-msgid "Mean Squared Error"
-msgstr "Błąd średniokwadratowy            MSE ="
-
-#: gui/guiprint.c:1449
-msgid "Theil's $U$"
-msgstr "Współczynnik Theila $I$"
-
-#: gui/guiprint.c:1450
-msgid "Bias proportion, $U^M$"
-msgstr "Obciążoność predykcji, $I1^2$"
-
-#: gui/guiprint.c:1451
-msgid "Regression proportion, $U^R$"
-msgstr "Niedostateczna elastyczność predykcji, $I2^2$"
-
-#: gui/guiprint.c:1452
-msgid "Disturbance proportion, $U^D$"
-msgstr "Niezgodność kierunku predykcji, $I3^2$"
-
-#: gui/guiprint.c:1509 gui/guiprint.c:1527
-msgid "Model estimation range:"
-msgstr "Zakres estymowanego modelu:"
-
-#: gui/guiprint.c:1512 gui/guiprint.c:1530
-#, c-format
-msgid "Standard error of residuals = %g"
-msgstr "Błąd standardowy reszt = %g"
-
-#: gui/guiprint.c:1599
-msgid ""
-"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
-"\n"
-msgstr ""
-"\\textit{Note}: * oznacza reszty przekraczające 2.5 razy błąd standardowy "
-"reszt\n"
-"\n"
-
-#: gui/guiprint.c:1660
-msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr ""
-"Objaśnienie: * oznacza reszty przekraczające 2.5 razy błąd standardowy reszt"
-
-#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
-#: gui/guiprint.c:1867
-msgid "Obs"
-msgstr "Obs"
-
-#: gui/guiprint.c:1740
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
-"\n"
-msgstr ""
-"Dla %g\\%% przedziału ufności, $z(%g) = %.2f$\n"
-"\n"
-
-#: gui/guiprint.c:1744
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
-"\n"
-msgstr ""
-"Dla %g\\%% przedziału ufności, $t(%d, %g) = %.3f$\n"
-"\n"
-
-#: gui/guiprint.c:1764
-#, c-format
-msgid "%g\\%% interval"
-msgstr "%g\\%% przedział ufności"
-
-#: gui/guiprint.c:1848
-#, c-format
-msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Dla %g%% przedziału ufności, z(%g) = %.2fn"
-
-#: gui/guiprint.c:1852
-#, c-format
-msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Dla %g%% przedziału ufności, t(%d, %g) = %.3f"
-
-#: gui/guiprint.c:1857
-#, c-format
-msgid "%g%% interval"
-msgstr "%g%% przedział"
-
-#: gui/guiprint.c:1956 gui/guiprint.c:2005
-#, c-format
-msgid "%g\\%% confidence interval"
-msgstr "%g\\%% przedział ufności"
-
-#: gui/guiprint.c:2046
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
-msgstr ""
-"Nie można wykorzystywać tych samych znaków dla rozdzielenia kolumn i miejsc "
-"dziesiętnych"
-
-#: gui/guiprint.c:2225
-msgid "No scalar variables are currently defined"
-msgstr "Brak zdefiniowanych skalarów w bieżącej sesji"
-
 #: gui/gui_utils.c:212
 msgid "equation"
 msgstr "Równanie"
@@ -14045,6 +13859,197 @@ msgstr "data frame"
 msgid "Send data as"
 msgstr "Wyślij dane jako"
 
+#: gui/guiprint.c:73 gui/guiprint.c:75
+msgid "gretl output"
+msgstr "Wyniki gretla"
+
+#: gui/guiprint.c:73
+msgid "for"
+msgstr "dla"
+
+#: gui/guiprint.c:224
+#, c-format
+msgid "%s, page %d"
+msgstr "%s, strona %d"
+
+#: gui/guiprint.c:422
+#, c-format
+msgid "%s page %d of %d"
+msgstr "%s strona %d z %d"
+
+#: gui/guiprint.c:602 gui/guiprint.c:650
+#, c-format
+msgid "Summary Statistics, using the observations %s - %s"
+msgstr "Statystyki opisowe, dla obserwacji z próby %s - %s"
+
+#: gui/guiprint.c:656 gui/guiprint.c:1069
+#, c-format
+msgid "for the variable %s (%d valid observations)"
+msgstr "dla zmiennej %s (%d prawidłowych obserwacji)"
+
+#: gui/guiprint.c:723
+msgid "5% Perc."
+msgstr "Percentyl 5%"
+
+#: gui/guiprint.c:723
+msgid "95% Perc."
+msgstr "Percentyl 95%"
+
+#: gui/guiprint.c:880
+msgid "t-ratios in parentheses"
+msgstr "Statystyka-t w nawiasach"
+
+#: gui/guiprint.c:1011 gui/guiprint.c:1062
+#, c-format
+msgid "Summary Statistics, using the observations %s--%s"
+msgstr "Statystyki opisowe dla obserwacji z próby %s--%s"
+
+#: gui/guiprint.c:1120
+msgid "Std.\\ Dev."
+msgstr "Odch.\\ stand."
+
+#: gui/guiprint.c:1120
+msgid "Ex.\\ kurtosis"
+msgstr "Ex.\\ kurtoza"
+
+#: gui/guiprint.c:1148
+#, no-c-format
+msgid "5\\% perc."
+msgstr "Percentyl 5\\%"
+
+#: gui/guiprint.c:1150
+#, no-c-format
+msgid "95\\% perc."
+msgstr "Percentyl 95\\%"
+
+#: gui/guiprint.c:1151
+msgid "IQ Range"
+msgstr "Zakres Q3-Q1"
+
+#: gui/guiprint.c:1253
+#, c-format
+msgid "Correlation coefficients, using the observations %s - %s"
+msgstr "Współczynniki korelacji liniowej dla obserwacji z próby %s-%s"
+
+#: gui/guiprint.c:1264 gui/guiprint.c:1358
+msgid "Coefficient covariance matrix"
+msgstr "Macierz współczynników kowariancji"
+
+#: gui/guiprint.c:1346
+#, c-format
+msgid "Correlation coefficients, using the observations %s--%s"
+msgstr "Współczynniki korelacji liniowej dla obserwacji z próby %s--%s"
+
+#: gui/guiprint.c:1353
+#, c-format
+msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
+msgstr ""
+"Wartość krytyczna wsp. korelacji = %.4f, dla 5\\%% dwustronnego obszaru "
+"krytycznego i n = %d"
+
+#: gui/guiprint.c:1444
+msgid "Mean Squared Error"
+msgstr "Błąd średniokwadratowy            MSE ="
+
+#: gui/guiprint.c:1449
+msgid "Theil's $U$"
+msgstr "Współczynnik Theila $I$"
+
+#: gui/guiprint.c:1450
+msgid "Bias proportion, $U^M$"
+msgstr "Obciążoność predykcji, $I1^2$"
+
+#: gui/guiprint.c:1451
+msgid "Regression proportion, $U^R$"
+msgstr "Niedostateczna elastyczność predykcji, $I2^2$"
+
+#: gui/guiprint.c:1452
+msgid "Disturbance proportion, $U^D$"
+msgstr "Niezgodność kierunku predykcji, $I3^2$"
+
+#: gui/guiprint.c:1509 gui/guiprint.c:1527
+msgid "Model estimation range:"
+msgstr "Zakres estymowanego modelu:"
+
+#: gui/guiprint.c:1512 gui/guiprint.c:1530
+#, c-format
+msgid "Standard error of residuals = %g"
+msgstr "Błąd standardowy reszt = %g"
+
+#: gui/guiprint.c:1599
+msgid ""
+"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
+"\n"
+msgstr ""
+"\\textit{Note}: * oznacza reszty przekraczające 2.5 razy błąd standardowy "
+"reszt\n"
+"\n"
+
+#: gui/guiprint.c:1660
+msgid "Note: * denotes a residual in excess of 2.5 standard errors"
+msgstr ""
+"Objaśnienie: * oznacza reszty przekraczające 2.5 razy błąd standardowy reszt"
+
+#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
+#: gui/guiprint.c:1867
+msgid "Obs"
+msgstr "Obs"
+
+#: gui/guiprint.c:1740
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
+"\n"
+msgstr ""
+"Dla %g\\%% przedziału ufności, $z(%g) = %.2f$\n"
+"\n"
+
+#: gui/guiprint.c:1744
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
+"\n"
+msgstr ""
+"Dla %g\\%% przedziału ufności, $t(%d, %g) = %.3f$\n"
+"\n"
+
+#: gui/guiprint.c:1764
+#, c-format
+msgid "%g\\%% interval"
+msgstr "%g\\%% przedział ufności"
+
+#: gui/guiprint.c:1848
+#, c-format
+msgid "For %g%% confidence intervals, z(%g) = %.2f"
+msgstr "Dla %g%% przedziału ufności, z(%g) = %.2fn"
+
+#: gui/guiprint.c:1852
+#, c-format
+msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
+msgstr "Dla %g%% przedziału ufności, t(%d, %g) = %.3f"
+
+#: gui/guiprint.c:1857
+#, c-format
+msgid "%g%% interval"
+msgstr "%g%% przedział"
+
+#: gui/guiprint.c:1956 gui/guiprint.c:2005
+#, c-format
+msgid "%g\\%% confidence interval"
+msgstr "%g\\%% przedział ufności"
+
+#: gui/guiprint.c:2046
+msgid ""
+"You can't use the same character for the column delimiter and the decimal "
+"point"
+msgstr ""
+"Nie można wykorzystywać tych samych znaków dla rozdzielenia kolumn i miejsc "
+"dziesiętnych"
+
+#: gui/guiprint.c:2225
+msgid "No scalar variables are currently defined"
+msgstr "Brak zdefiniowanych skalarów w bieżącej sesji"
+
 #: gui/helpfiles.c:78
 msgid "Larger"
 msgstr "Większy"
@@ -14233,6 +14238,20 @@ msgstr "Lista zmiennych"
 #, fuzzy
 msgid "named as"
 msgstr "Nazwa zmiennej"
+
+#: gui/join-gui.c:436
+msgid "inner key"
+msgstr ""
+
+#: gui/join-gui.c:438
+#, fuzzy
+msgid "outer key"
+msgstr "Cluster by"
+
+#: gui/join-gui.c:459
+#, fuzzy
+msgid "aggregation"
+msgstr "separacja reszt przez zm. 0-1"
 
 #: gui/join-gui.c:466
 msgid "show details of importation"
@@ -17114,7 +17133,8 @@ msgstr "Poczatkowa wartość wypełnienia:"
 msgid "complex matrix"
 msgstr "Nowa macierz"
 
-#: gui/ssheet.c:4070
+#: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
+#: plugin/geoplot.c:1300
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "Niemożliwe otwarcie pliku '%s'"
@@ -18604,6 +18624,15 @@ msgstr "nachylenie prostej dla przedziałów wg. średniej = %g\n"
 msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "H0: kierunek-nachylenie prostej = 0; wartość p = %g\n"
 
+#: plugin/regls.c:1033
+#, fuzzy
+msgid "df = effective number of free parameters"
+msgstr "Rank of Jacobian = %d, liczba free parameters = %d\n"
+
+#: plugin/regls.c:1034
+msgid "criterion = ridge minimand"
+msgstr ""
+
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
 msgstr "To nie jest prawidłowy zbiór danych SAS xport"
@@ -18640,6 +18669,100 @@ msgstr "część dolna"
 msgid "upper tail"
 msgstr "część górna"
 
+#: plugin/tramo-x12a.c:67
+#, c-format
+msgid "seasonally adjusted %s"
+msgstr "Składnik wyrównany sezonowo %s"
+
+#: plugin/tramo-x12a.c:68
+#, c-format
+msgid "trend/cycle for %s"
+msgstr "Składnik trend/cykle dla %s"
+
+#: plugin/tramo-x12a.c:69
+#, c-format
+msgid "irregular component of %s"
+msgstr "Składnik przypadkowy dla %s"
+
+#: plugin/tramo-x12a.c:70
+#, c-format
+msgid "linearized %s"
+msgstr "linearyzowana %s"
+
+#: plugin/tramo-x12a.c:224 plugin/tramo_options.c:422
+msgid "Seasonally adjusted series"
+msgstr "składnik wyrównany sezonowo"
+
+#: plugin/tramo-x12a.c:225 plugin/tramo_options.c:423
+msgid "Trend/cycle"
+msgstr "składnik trendowy/cykliczny"
+
+#: plugin/tramo-x12a.c:226 plugin/tramo_options.c:424
+msgid "Irregular"
+msgstr "składnik przypadkowy"
+
+#: plugin/tramo-x12a.c:239
+msgid "X-12-ARIMA options"
+msgstr "Opcje dla X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
+msgid "Detect and correct for outliers"
+msgstr "Wykrywanie i korekta odstających danych"
+
+#: plugin/tramo-x12a.c:248
+msgid "Correct for trading days effect"
+msgstr "Korekta efektu liczby dni roboczych"
+
+#: plugin/tramo-x12a.c:257 plugin/tramo_options.c:535
+msgid "Log transformation"
+msgstr "Transformacja logarytmiczna"
+
+#: plugin/tramo-x12a.c:264 plugin/tramo_options.c:543
+msgid "No log transformation"
+msgstr "Bez transformacji logarytmicznej"
+
+#: plugin/tramo-x12a.c:271 plugin/tramo_options.c:551
+#: plugin/tramo_options.c:668 plugin/tramo_options.c:728
+msgid "Automatic"
+msgstr "Automatycznie"
+
+#: plugin/tramo-x12a.c:284
+msgid "Save data"
+msgstr "Zapisywanie danych"
+
+#: plugin/tramo-x12a.c:322 plugin/tramo_options.c:514
+msgid "Generate graph"
+msgstr "Generuj wykres"
+
+#: plugin/tramo-x12a.c:328
+msgid "Show full output"
+msgstr "Pokaż pełne wyniki"
+
+#: plugin/tramo-x12a.c:337
+msgid "Execute X-12-ARIMA directly"
+msgstr "Bezpośrednie wykonanie X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:341
+msgid "Make X-12-ARIMA command file"
+msgstr "Wykorzystaj X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
+msgid "irregular"
+msgstr "przypadkowe"
+
+#: plugin/tramo-x12a.c:632
+msgid "trend/cycle"
+msgstr "trend/cykle"
+
+#: plugin/tramo-x12a.c:649
+msgid "adjusted"
+msgstr "wyrównany sezonowo"
+
+#: plugin/tramo-x12a.c:942
+#, fuzzy
+msgid "no seasonality was detected"
+msgstr "Niesezonowy efekt"
+
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
 msgstr "Model szeregu czasowego z sezonowym dostosowaniem"
@@ -18651,18 +18774,6 @@ msgstr "Model szeregu czasowego"
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
 msgstr "Standardowa automatyczna analiza"
-
-#: plugin/tramo_options.c:422 plugin/tramo-x12a.c:224
-msgid "Seasonally adjusted series"
-msgstr "składnik wyrównany sezonowo"
-
-#: plugin/tramo_options.c:423 plugin/tramo-x12a.c:225
-msgid "Trend/cycle"
-msgstr "składnik trendowy/cykliczny"
-
-#: plugin/tramo_options.c:424 plugin/tramo-x12a.c:226
-msgid "Irregular"
-msgstr "składnik przypadkowy"
 
 #: plugin/tramo_options.c:425
 msgid "Linearized series"
@@ -18688,23 +18799,6 @@ msgstr "Skrócone wyniki"
 msgid "Save to data set:"
 msgstr "Zapisz do bazy danych:"
 
-#: plugin/tramo_options.c:514 plugin/tramo-x12a.c:322
-msgid "Generate graph"
-msgstr "Generuj wykres"
-
-#: plugin/tramo_options.c:535 plugin/tramo-x12a.c:257
-msgid "Log transformation"
-msgstr "Transformacja logarytmiczna"
-
-#: plugin/tramo_options.c:543 plugin/tramo-x12a.c:264
-msgid "No log transformation"
-msgstr "Bez transformacji logarytmicznej"
-
-#: plugin/tramo_options.c:551 plugin/tramo_options.c:668
-#: plugin/tramo_options.c:728 plugin/tramo-x12a.c:271
-msgid "Automatic"
-msgstr "Automatycznie"
-
 #: plugin/tramo_options.c:572
 msgid "Mean correction"
 msgstr "Korekta przez średnią"
@@ -18716,10 +18810,6 @@ msgstr "Bez korekty przez średnią"
 #: plugin/tramo_options.c:605
 msgid "Outliers"
 msgstr "Odstające"
-
-#: plugin/tramo_options.c:608 plugin/tramo-x12a.c:242
-msgid "Detect and correct for outliers"
-msgstr "Wykrywanie i korekta odstających danych"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
@@ -18764,67 +18854,6 @@ msgstr "Niesezonowa MA:"
 #: plugin/tramo_options.c:777
 msgid "Seasonal MA terms:"
 msgstr "Sezonowa MA:"
-
-#: plugin/tramo-x12a.c:67
-#, c-format
-msgid "seasonally adjusted %s"
-msgstr "Składnik wyrównany sezonowo %s"
-
-#: plugin/tramo-x12a.c:68
-#, c-format
-msgid "trend/cycle for %s"
-msgstr "Składnik trend/cykle dla %s"
-
-#: plugin/tramo-x12a.c:69
-#, c-format
-msgid "irregular component of %s"
-msgstr "Składnik przypadkowy dla %s"
-
-#: plugin/tramo-x12a.c:70
-#, c-format
-msgid "linearized %s"
-msgstr "linearyzowana %s"
-
-#: plugin/tramo-x12a.c:239
-msgid "X-12-ARIMA options"
-msgstr "Opcje dla X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:248
-msgid "Correct for trading days effect"
-msgstr "Korekta efektu liczby dni roboczych"
-
-#: plugin/tramo-x12a.c:284
-msgid "Save data"
-msgstr "Zapisywanie danych"
-
-#: plugin/tramo-x12a.c:328
-msgid "Show full output"
-msgstr "Pokaż pełne wyniki"
-
-#: plugin/tramo-x12a.c:337
-msgid "Execute X-12-ARIMA directly"
-msgstr "Bezpośrednie wykonanie X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:341
-msgid "Make X-12-ARIMA command file"
-msgstr "Wykorzystaj X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
-msgid "irregular"
-msgstr "przypadkowe"
-
-#: plugin/tramo-x12a.c:632
-msgid "trend/cycle"
-msgstr "trend/cykle"
-
-#: plugin/tramo-x12a.c:649
-msgid "adjusted"
-msgstr "wyrównany sezonowo"
-
-#: plugin/tramo-x12a.c:942
-#, fuzzy
-msgid "no seasonality was detected"
-msgstr "Niesezonowy efekt"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -18963,7 +18992,6 @@ msgstr "Decoration"
 #~ msgid " Right-click on graph for menu"
 #~ msgstr "  Kliknij na wykres prawym przypiskiem myszy a uzyskasz menu"
 
-#, c-format
 #~ msgid "Color %d"
 #~ msgstr "Kolor %d"
 
@@ -18993,11 +19021,10 @@ msgstr "Decoration"
 #~ msgid "No series length has been defined"
 #~ msgstr "Niezdefiniowana długość serii"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "Błąd skryptu: wykonanie przerwano"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"
@@ -19009,9 +19036,6 @@ msgstr "Decoration"
 
 #~ msgid "Program to play MIDI files"
 #~ msgstr "Program odtwarzacza MIDI"
-
-#~ msgid "The MPI library is not loaded"
-#~ msgstr "Biblioteka MPT nie jest załadowana"
 
 #~ msgid "%s: not a valid parameter name"
 #~ msgstr "%s: nie jest prawidłową nazwą parametru"

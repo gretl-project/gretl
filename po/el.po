@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 19:33-0400\n"
+"POT-Creation-Date: 2020-06-17 09:06+0200\n"
 "PO-Revision-Date: 2019-01-21 19:18-0500\n"
 "Last-Translator: Ioannis Venetis <ivenetis@upatras.gr>\n"
 "Language-Team: Greek\n"
@@ -1327,8 +1327,8 @@ msgid "append: don't know how to align the new series!"
 msgstr "προσάρτηση: αδυναμία ευθυγράμμισης νέων σειρών!"
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
-#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
+#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "Ανεπαρκής μνήμη!\n"
 
@@ -1619,6 +1619,7 @@ msgid "Compacted dataset would be empty"
 msgstr "Το συμπιεσμένο σύνολο δεδομένων θα είναι άδειο"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
+#: plugin/geoplot.c:1197
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Δεν ήταν δυνατό το άνοιγμα του %s για εγγραφή"
@@ -2875,6 +2876,14 @@ msgstr "Περιοδικές ψευδομεταβλητές δημιουργήθ
 msgid "Panel dummy variables generated.\n"
 msgstr "Panel ψευδομεταβλητές δημιουργήθηκαν.\n"
 
+#: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
+msgid "complex arguments/operands not supported"
+msgstr ""
+
+#: lib/src/genmpi.c:148 lib/src/genmpi.c:370
+msgid "The MPI library is not loaded"
+msgstr "Η βιβλιοθήκη MPI δεν φορτώθηκε"
+
 #: lib/src/gensyntax.c:249
 #, c-format
 msgid "Expected '%c' but formula ended\n"
@@ -3517,10 +3526,6 @@ msgstr "Εκτέλεση εγκαταλείφθηκε μετά από αίτημ
 #: lib/src/gretl_errors.c:87
 msgid "'catch' cannot be used in this context"
 msgstr "η εντολή catch είναι άκυρη στο συγκεκριμένο πλαίσιο"
-
-#: lib/src/gretl_errors.c:88
-msgid "complex arguments/operands not supported"
-msgstr ""
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
@@ -4678,7 +4683,7 @@ msgstr "Δεν βρέθηκαν παρατηρήσεις"
 msgid "'%s': malformed gdt file"
 msgstr "'%s': προβληματικό gdt αρχείο"
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
 #, c-format
 msgid "Couldn't read '%s'"
 msgstr "Αδυναμία ανάγνωσης του '%s'"
@@ -4767,7 +4772,7 @@ msgstr "Το εσωτερικό κλειδί (inner key) λείπει "
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "Η εντολή \"%s\" δεν μπορεί να χρησιμοποιηθεί στο συγκεκριμένο πλαίσιο"
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: lib/src/interact.c:2047 cli/gretlcli-mpi.c:664 cli/gretlcli.c:1022
 #: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
@@ -4804,12 +4809,12 @@ msgstr "αποθήκευση (store): δεν δόθηκε όνομα αρχεί�
 msgid "Couldn't format model\n"
 msgstr "Αδυναμία μορφοποίησης υποδείγματος\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: lib/src/interact.c:3817 cli/gretlcli-mpi.c:902 cli/gretlcli.c:1350
 #: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "Βρόγχος χωρίς τέλος (Infinite loop) εντοπίστηκε στο script\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
+#: lib/src/interact.c:3858 cli/gretlcli-mpi.c:541 cli/gretlcli.c:887
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: μη- διαθέσιμη εντολή\n"
@@ -8024,6 +8029,64 @@ msgstr "άγνωστη εντολή '%s'"
 msgid "Freed %s\n"
 msgstr "Ελευθερώθηκε %s\n"
 
+#: cli/gretlcli-mpi.c:137
+msgid ""
+"This program should be run under mpiexec, and requires the name of a\n"
+"script file as argument.\n"
+msgstr ""
+"Αυτό το πρόγραμμα πρέπει να εκτελείται με mpiexec, και απαιτεί το όνομα "
+"ενός\n"
+"script αρχείου ως όρισμα.\n"
+
+#: cli/gretlcli-mpi.c:139
+msgid ""
+"Options:\n"
+" -h or --help        Print this info and exit.\n"
+" -v or --version     Print version info and exit.\n"
+" -q or --quiet       Don't print logo on start-up.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+msgstr ""
+"Επιλογές:\n"
+"-h ή --help        Εκτυπώστε αυτές τις πληροφορίες και έξοδος.\n"
+"-v ή --version     Εκτύπωση πληροφοριών έκδοσης και έξοδος.\n"
+"-q ή --quiet       Μην εκτυπώσετε το λογότυπο κατά την εκκίνηση.\n"
+"-e ή --english     Επιβολή χρήσης Αγγλικής αντί για μετάφραση.\n"
+"-s ή --single-rng  Χρησιμοποιήστε ένα μόνο RNG, όχι ένα για κάθε "
+"διαδικασία.\n"
+
+#: cli/gretlcli-mpi.c:155
+#, c-format
+msgid ""
+"\n"
+"gretlmpi: error executing script: halting\n"
+msgstr ""
+"\n"
+"gretlmpi: σφάλμα κατά την εκτέλεση του script: τερματισμός\n"
+
+#: cli/gretlcli-mpi.c:698 cli/gretlcli-mpi.c:910 cli/gretlcli.c:1091
+#: cli/gretlcli.c:1358 gui/library.c:10124 gui/library.c:10149
+#, c-format
+msgid "Error reading %s\n"
+msgstr "Σφάλμα στην ανάγνωση του %s\n"
+
+#: cli/gretlcli-mpi.c:789 cli/gretlcli.c:1229 gui/library.c:10329
+#, c-format
+msgid "Command '%s' ignored; not valid within equation system\n"
+msgstr "Εντολή '%s' αγνοήθηκε, άκυρη μέσα σε σύστημα εξισώσεων\n"
+
+#: cli/gretlcli-mpi.c:849 cli/gretlcli.c:1303 gui/library.c:10432
+msgid "Data series length count missing or invalid\n"
+msgstr "Η μέτρηση του μήκους της σειράς λείπει ή είναι μη-έγκυρη\n"
+
+#: cli/gretlcli-mpi.c:870 cli/gretlcli.c:1111
+msgid "Done\n"
+msgstr "Ολοκληρώθηκε\n"
+
+#: cli/gretlcli-mpi.c:928 cli/gretlcli.c:1380
+msgid "Dataset cleared\n"
+msgstr "Σύνολο δεδομένων εκκαθαρίστηκε\n"
+
 #: cli/gretlcli.c:158
 #, c-format
 msgid ""
@@ -8125,29 +8188,14 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr "εγγραφή αποτελέσματος συνεδρίας στο %s%s\n"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
-#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
-#, c-format
-msgid "Error reading %s\n"
-msgstr "Σφάλμα στην ανάγνωση του %s\n"
-
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
 msgstr ""
-
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
-msgid "Done\n"
-msgstr "Ολοκληρώθηκε\n"
 
 #: cli/gretlcli.c:1122
 #, c-format
 msgid "commands saved as %s\n"
 msgstr "Οι εντολές αποθηκεύτηκαν ως %s\n"
-
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
-#, c-format
-msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr "Εντολή '%s' αγνοήθηκε, άκυρη μέσα σε σύστημα εξισώσεων\n"
 
 #: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
@@ -8156,49 +8204,6 @@ msgstr "Εισάγετε εντολές για βρόγχο.  Πληκτρολο
 #: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "Σημείωση: οι μεταβλητές αριθμήθηκαν ξανά"
-
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
-msgid "Data series length count missing or invalid\n"
-msgstr "Η μέτρηση του μήκους της σειράς λείπει ή είναι μη-έγκυρη\n"
-
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
-msgid "Dataset cleared\n"
-msgstr "Σύνολο δεδομένων εκκαθαρίστηκε\n"
-
-#: cli/gretlcli-mpi.c:137
-msgid ""
-"This program should be run under mpiexec, and requires the name of a\n"
-"script file as argument.\n"
-msgstr ""
-"Αυτό το πρόγραμμα πρέπει να εκτελείται με mpiexec, και απαιτεί το όνομα "
-"ενός\n"
-"script αρχείου ως όρισμα.\n"
-
-#: cli/gretlcli-mpi.c:139
-msgid ""
-"Options:\n"
-" -h or --help        Print this info and exit.\n"
-" -v or --version     Print version info and exit.\n"
-" -q or --quiet       Don't print logo on start-up.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-msgstr ""
-"Επιλογές:\n"
-"-h ή --help        Εκτυπώστε αυτές τις πληροφορίες και έξοδος.\n"
-"-v ή --version     Εκτύπωση πληροφοριών έκδοσης και έξοδος.\n"
-"-q ή --quiet       Μην εκτυπώσετε το λογότυπο κατά την εκκίνηση.\n"
-"-e ή --english     Επιβολή χρήσης Αγγλικής αντί για μετάφραση.\n"
-"-s ή --single-rng  Χρησιμοποιήστε ένα μόνο RNG, όχι ένα για κάθε "
-"διαδικασία.\n"
-
-#: cli/gretlcli-mpi.c:155
-#, c-format
-msgid ""
-"\n"
-"gretlmpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlmpi: σφάλμα κατά την εκτέλεση του script: τερματισμός\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9435,7 +9440,7 @@ msgstr "Κατάλογος βάσεων δεδομένων"
 msgid "All packages"
 msgstr "Όλα τα πακέτα"
 
-#: gui/datafiles.c:1900
+#: gui/datafiles.c:1900 gui/join-gui.c:451
 msgid "filter"
 msgstr "Φίλτρο"
 
@@ -11641,8 +11646,8 @@ msgstr "Προβληματικό αρχείο γραφήματος (corrupted)"
 msgid "Couldn't access graph info"
 msgstr "Αδυναμία πρόσβασης στις πληροφορίες του γραφήματος"
 
-#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
-#: gui/graph_page.c:698
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graph_page.c:698
+#: gui/graphics.c:262
 msgid "monochrome"
 msgstr "μονόχρωμο"
 
@@ -11745,7 +11750,7 @@ msgstr "Γραμματοσειρά"
 msgid "Close"
 msgstr "Κλείσιμο"
 
-#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr "έγχρωμο"
 
@@ -12041,6 +12046,22 @@ msgstr "Τίτλος άξονα"
 msgid "gretl plot controls"
 msgstr "gretl ρυθμίσεις γραφήματος"
 
+#: gui/graph_page.c:288
+msgid "The graph page is full"
+msgstr "Η σελίδα γραφήματος είναι πλήρης"
+
+#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
+msgid "Failed to process TeX file"
+msgstr "Αποτυχία επεξεργασίας TEX αρχείου"
+
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
+msgid "The graph page is empty"
+msgstr "Η σελίδα γραφήματος είναι κενή"
+
+#: gui/graph_page.c:709
+msgid "graph page options"
+msgstr "ρυθμίσεις σελίδας γραφήματος"
+
 #: gui/graphics.c:197
 msgid "height"
 msgstr "ύψος"
@@ -12072,22 +12093,6 @@ msgstr "Διαστάσεις γραφήματος:"
 #: gui/graphics.c:402
 msgid "Preview"
 msgstr "Προεπισκόπηση"
-
-#: gui/graph_page.c:288
-msgid "The graph page is full"
-msgstr "Η σελίδα γραφήματος είναι πλήρης"
-
-#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
-msgid "Failed to process TeX file"
-msgstr "Αποτυχία επεξεργασίας TEX αρχείου"
-
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
-msgid "The graph page is empty"
-msgstr "Η σελίδα γραφήματος είναι κενή"
-
-#: gui/graph_page.c:709
-msgid "graph page options"
-msgstr "ρυθμίσεις σελίδας γραφήματος"
 
 #: gui/gretl.c:126
 #, fuzzy
@@ -13147,195 +13152,6 @@ msgstr "Προεπισκόπηση:"
 msgid "Font Selection"
 msgstr "Επιλογή γραμματοσειράς"
 
-#: gui/guiprint.c:73 gui/guiprint.c:75
-msgid "gretl output"
-msgstr "gretl έξοδος"
-
-#: gui/guiprint.c:73
-msgid "for"
-msgstr "για (for)"
-
-#: gui/guiprint.c:224
-#, c-format
-msgid "%s, page %d"
-msgstr "%s, σελίδα %d"
-
-#: gui/guiprint.c:422
-#, c-format
-msgid "%s page %d of %d"
-msgstr "%s σελίδα %d από %d"
-
-#: gui/guiprint.c:602 gui/guiprint.c:650
-#, c-format
-msgid "Summary Statistics, using the observations %s - %s"
-msgstr "Περιληπτικά στατιστικά, χρήση παρατηρήσεων %s - %s"
-
-#: gui/guiprint.c:656 gui/guiprint.c:1069
-#, c-format
-msgid "for the variable %s (%d valid observations)"
-msgstr "για τη μεταβλ. %s (%d έγκυρες παρατηρ.)"
-
-#: gui/guiprint.c:723
-msgid "5% Perc."
-msgstr "5% Εκατοστ."
-
-#: gui/guiprint.c:723
-msgid "95% Perc."
-msgstr "95% Εκατοστ."
-
-#: gui/guiprint.c:880
-msgid "t-ratios in parentheses"
-msgstr "t-στατιστικές σε παρενθέσεις"
-
-#: gui/guiprint.c:1011 gui/guiprint.c:1062
-#, c-format
-msgid "Summary Statistics, using the observations %s--%s"
-msgstr "Περιληπτικά στατιστικά, χρησιμοποιώντας τις παρατηρήσεις %s - %s"
-
-#: gui/guiprint.c:1120
-msgid "Std.\\ Dev."
-msgstr "Τυπ.\\ Αποκλ."
-
-#: gui/guiprint.c:1120
-msgid "Ex.\\ kurtosis"
-msgstr "Περ.\\ κύρτωση"
-
-#: gui/guiprint.c:1148
-#, no-c-format
-msgid "5\\% perc."
-msgstr "5\\% Εκατοστ."
-
-#: gui/guiprint.c:1150
-#, no-c-format
-msgid "95\\% perc."
-msgstr "95\\% Εκατοστ."
-
-#: gui/guiprint.c:1151
-msgid "IQ Range"
-msgstr "IQ Εύρος"
-
-#: gui/guiprint.c:1253
-#, c-format
-msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "Συντελεστές συσχέτισης, χρησιμοποιώντας τις παρατηρήσεις %s - %s"
-
-#: gui/guiprint.c:1264 gui/guiprint.c:1358
-msgid "Coefficient covariance matrix"
-msgstr "Μήτρα συνδιακυμάνσεων συντελεστών"
-
-#: gui/guiprint.c:1346
-#, c-format
-msgid "Correlation coefficients, using the observations %s--%s"
-msgstr "Συντελεστές συσχέτισης, για τις παρατηρήσεις %s--%s"
-
-#: gui/guiprint.c:1353
-#, c-format
-msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "5\\%% κρίσιμη τιμή (δίπλευρη) = %.4f για n = %d"
-
-#: gui/guiprint.c:1444
-msgid "Mean Squared Error"
-msgstr "Μέσο τετραγωνικό σφάλμα"
-
-#: gui/guiprint.c:1449
-msgid "Theil's $U$"
-msgstr "Theil's $U$"
-
-#: gui/guiprint.c:1450
-msgid "Bias proportion, $U^M$"
-msgstr "Αναλογία μεροληψίας, $U^M$"
-
-#: gui/guiprint.c:1451
-msgid "Regression proportion, $U^R$"
-msgstr "Αναλογία παλινδρόμησης, $U^R$"
-
-#: gui/guiprint.c:1452
-msgid "Disturbance proportion, $U^D$"
-msgstr "Αναλογία διαταράξεων, $U^D$"
-
-#: gui/guiprint.c:1509 gui/guiprint.c:1527
-msgid "Model estimation range:"
-msgstr "Εύρος εκτίμησης υποδείγματος:"
-
-#: gui/guiprint.c:1512 gui/guiprint.c:1530
-#, c-format
-msgid "Standard error of residuals = %g"
-msgstr "Τυπικό σφάλμα καταλοίπων = %g"
-
-#: gui/guiprint.c:1599
-msgid ""
-"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
-"\n"
-msgstr ""
-"\\textit{Σημείωση}: * υποδηλώνει κατάλοιπο πάνω από 2.5 φορές το τυπ. "
-"σφαλμ.\n"
-"\n"
-
-#: gui/guiprint.c:1660
-msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr ""
-"Σημείωση: * υποδηλώνει κατάλοιπο που ξεπερνά 2.5 φορές το τυπικό σφάλμα"
-
-#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
-#: gui/guiprint.c:1867
-msgid "Obs"
-msgstr "Παρατηρήσεις"
-
-#: gui/guiprint.c:1740
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
-"\n"
-msgstr ""
-"Για %g\\%% διαστήματα εμπιστοσύνης, $z(%g) = %.2f$\n"
-"\n"
-
-#: gui/guiprint.c:1744
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
-"\n"
-msgstr ""
-"Για %g\\%% διαστήματα εμπιστοσύνης, $t(%d, %g) = %.3f$\n"
-"\n"
-
-#: gui/guiprint.c:1764
-#, c-format
-msgid "%g\\%% interval"
-msgstr "%g\\%% διάστημα"
-
-#: gui/guiprint.c:1848
-#, c-format
-msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Για %g%% διαστήματα εμπιστοσύνης, z(%g) = %.2f"
-
-#: gui/guiprint.c:1852
-#, c-format
-msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Για %g%% διαστήματα εμπιστοσύνης, t(%d, %g) = %.3f"
-
-#: gui/guiprint.c:1857
-#, c-format
-msgid "%g%% interval"
-msgstr "%g%% διάστημα"
-
-#: gui/guiprint.c:1956 gui/guiprint.c:2005
-#, c-format
-msgid "%g\\%% confidence interval"
-msgstr "διάστημα εμπιστοσύνης %g\\%%"
-
-#: gui/guiprint.c:2046
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
-msgstr ""
-"Δεν μπορείτε να χρησιμοποιήσετε τον ίδιο χαρακτήρα για τον διαχωρισμό στηλών "
-"και συμβολισμό δεκαδικών αριθμών"
-
-#: gui/guiprint.c:2225
-msgid "No scalar variables are currently defined"
-msgstr "Δεν έχουν οριστεί βαθμωτές μεταβλητές"
-
 #: gui/gui_utils.c:212
 msgid "equation"
 msgstr "εξίσωση"
@@ -14116,6 +13932,195 @@ msgstr "κλίμακα δεδομένων"
 msgid "Send data as"
 msgstr "Αποθήκευση δεδομένων _ως..."
 
+#: gui/guiprint.c:73 gui/guiprint.c:75
+msgid "gretl output"
+msgstr "gretl έξοδος"
+
+#: gui/guiprint.c:73
+msgid "for"
+msgstr "για (for)"
+
+#: gui/guiprint.c:224
+#, c-format
+msgid "%s, page %d"
+msgstr "%s, σελίδα %d"
+
+#: gui/guiprint.c:422
+#, c-format
+msgid "%s page %d of %d"
+msgstr "%s σελίδα %d από %d"
+
+#: gui/guiprint.c:602 gui/guiprint.c:650
+#, c-format
+msgid "Summary Statistics, using the observations %s - %s"
+msgstr "Περιληπτικά στατιστικά, χρήση παρατηρήσεων %s - %s"
+
+#: gui/guiprint.c:656 gui/guiprint.c:1069
+#, c-format
+msgid "for the variable %s (%d valid observations)"
+msgstr "για τη μεταβλ. %s (%d έγκυρες παρατηρ.)"
+
+#: gui/guiprint.c:723
+msgid "5% Perc."
+msgstr "5% Εκατοστ."
+
+#: gui/guiprint.c:723
+msgid "95% Perc."
+msgstr "95% Εκατοστ."
+
+#: gui/guiprint.c:880
+msgid "t-ratios in parentheses"
+msgstr "t-στατιστικές σε παρενθέσεις"
+
+#: gui/guiprint.c:1011 gui/guiprint.c:1062
+#, c-format
+msgid "Summary Statistics, using the observations %s--%s"
+msgstr "Περιληπτικά στατιστικά, χρησιμοποιώντας τις παρατηρήσεις %s - %s"
+
+#: gui/guiprint.c:1120
+msgid "Std.\\ Dev."
+msgstr "Τυπ.\\ Αποκλ."
+
+#: gui/guiprint.c:1120
+msgid "Ex.\\ kurtosis"
+msgstr "Περ.\\ κύρτωση"
+
+#: gui/guiprint.c:1148
+#, no-c-format
+msgid "5\\% perc."
+msgstr "5\\% Εκατοστ."
+
+#: gui/guiprint.c:1150
+#, no-c-format
+msgid "95\\% perc."
+msgstr "95\\% Εκατοστ."
+
+#: gui/guiprint.c:1151
+msgid "IQ Range"
+msgstr "IQ Εύρος"
+
+#: gui/guiprint.c:1253
+#, c-format
+msgid "Correlation coefficients, using the observations %s - %s"
+msgstr "Συντελεστές συσχέτισης, χρησιμοποιώντας τις παρατηρήσεις %s - %s"
+
+#: gui/guiprint.c:1264 gui/guiprint.c:1358
+msgid "Coefficient covariance matrix"
+msgstr "Μήτρα συνδιακυμάνσεων συντελεστών"
+
+#: gui/guiprint.c:1346
+#, c-format
+msgid "Correlation coefficients, using the observations %s--%s"
+msgstr "Συντελεστές συσχέτισης, για τις παρατηρήσεις %s--%s"
+
+#: gui/guiprint.c:1353
+#, c-format
+msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
+msgstr "5\\%% κρίσιμη τιμή (δίπλευρη) = %.4f για n = %d"
+
+#: gui/guiprint.c:1444
+msgid "Mean Squared Error"
+msgstr "Μέσο τετραγωνικό σφάλμα"
+
+#: gui/guiprint.c:1449
+msgid "Theil's $U$"
+msgstr "Theil's $U$"
+
+#: gui/guiprint.c:1450
+msgid "Bias proportion, $U^M$"
+msgstr "Αναλογία μεροληψίας, $U^M$"
+
+#: gui/guiprint.c:1451
+msgid "Regression proportion, $U^R$"
+msgstr "Αναλογία παλινδρόμησης, $U^R$"
+
+#: gui/guiprint.c:1452
+msgid "Disturbance proportion, $U^D$"
+msgstr "Αναλογία διαταράξεων, $U^D$"
+
+#: gui/guiprint.c:1509 gui/guiprint.c:1527
+msgid "Model estimation range:"
+msgstr "Εύρος εκτίμησης υποδείγματος:"
+
+#: gui/guiprint.c:1512 gui/guiprint.c:1530
+#, c-format
+msgid "Standard error of residuals = %g"
+msgstr "Τυπικό σφάλμα καταλοίπων = %g"
+
+#: gui/guiprint.c:1599
+msgid ""
+"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
+"\n"
+msgstr ""
+"\\textit{Σημείωση}: * υποδηλώνει κατάλοιπο πάνω από 2.5 φορές το τυπ. "
+"σφαλμ.\n"
+"\n"
+
+#: gui/guiprint.c:1660
+msgid "Note: * denotes a residual in excess of 2.5 standard errors"
+msgstr ""
+"Σημείωση: * υποδηλώνει κατάλοιπο που ξεπερνά 2.5 φορές το τυπικό σφάλμα"
+
+#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
+#: gui/guiprint.c:1867
+msgid "Obs"
+msgstr "Παρατηρήσεις"
+
+#: gui/guiprint.c:1740
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
+"\n"
+msgstr ""
+"Για %g\\%% διαστήματα εμπιστοσύνης, $z(%g) = %.2f$\n"
+"\n"
+
+#: gui/guiprint.c:1744
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
+"\n"
+msgstr ""
+"Για %g\\%% διαστήματα εμπιστοσύνης, $t(%d, %g) = %.3f$\n"
+"\n"
+
+#: gui/guiprint.c:1764
+#, c-format
+msgid "%g\\%% interval"
+msgstr "%g\\%% διάστημα"
+
+#: gui/guiprint.c:1848
+#, c-format
+msgid "For %g%% confidence intervals, z(%g) = %.2f"
+msgstr "Για %g%% διαστήματα εμπιστοσύνης, z(%g) = %.2f"
+
+#: gui/guiprint.c:1852
+#, c-format
+msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
+msgstr "Για %g%% διαστήματα εμπιστοσύνης, t(%d, %g) = %.3f"
+
+#: gui/guiprint.c:1857
+#, c-format
+msgid "%g%% interval"
+msgstr "%g%% διάστημα"
+
+#: gui/guiprint.c:1956 gui/guiprint.c:2005
+#, c-format
+msgid "%g\\%% confidence interval"
+msgstr "διάστημα εμπιστοσύνης %g\\%%"
+
+#: gui/guiprint.c:2046
+msgid ""
+"You can't use the same character for the column delimiter and the decimal "
+"point"
+msgstr ""
+"Δεν μπορείτε να χρησιμοποιήσετε τον ίδιο χαρακτήρα για τον διαχωρισμό στηλών "
+"και συμβολισμό δεκαδικών αριθμών"
+
+#: gui/guiprint.c:2225
+msgid "No scalar variables are currently defined"
+msgstr "Δεν έχουν οριστεί βαθμωτές μεταβλητές"
+
 #: gui/helpfiles.c:78
 msgid "Larger"
 msgstr "Μεγαλύτερο"
@@ -14308,6 +14313,20 @@ msgstr "Λίστα χρονοσειρών"
 #, fuzzy
 msgid "named as"
 msgstr "όνομα"
+
+#: gui/join-gui.c:436
+msgid "inner key"
+msgstr ""
+
+#: gui/join-gui.c:438
+#, fuzzy
+msgid "outer key"
+msgstr "Ομαδοποίηση ανά"
+
+#: gui/join-gui.c:459
+#, fuzzy
+msgid "aggregation"
+msgstr "Διαχωρισμός"
 
 #: gui/join-gui.c:466
 msgid "show details of importation"
@@ -17198,7 +17217,8 @@ msgstr "Αρχική τιμή κελιών μήτρας:"
 msgid "complex matrix"
 msgstr "Έγινε αντικατάσταση στη μήτρα %s"
 
-#: gui/ssheet.c:4070
+#: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
+#: plugin/geoplot.c:1300
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "Αδυναμία ανοίγματος του '%s'"
@@ -18694,6 +18714,15 @@ msgstr "κλίση εύρους έναντι μέσου = %g\n"
 msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "p-τιμή για H0: κλίση = 0 είναι %g\n"
 
+#: plugin/regls.c:1033
+#, fuzzy
+msgid "df = effective number of free parameters"
+msgstr "Βαθμός Ιακωβιανής = %d, αριθμός ελεύθερων παραμέτρων = %d\n"
+
+#: plugin/regls.c:1034
+msgid "criterion = ridge minimand"
+msgstr ""
+
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
 msgstr "Το παρόν αρχείο δεν φαίνεται να είναι έγκυρο xport αρχείο SAS"
@@ -18730,6 +18759,100 @@ msgstr "Αριστερή (κάτω) κατάληξη"
 msgid "upper tail"
 msgstr "δεξιά (άνω) κατάληξη"
 
+#: plugin/tramo-x12a.c:67
+#, c-format
+msgid "seasonally adjusted %s"
+msgstr "προσαρμοσμένα για εποχικότητα %s"
+
+#: plugin/tramo-x12a.c:68
+#, c-format
+msgid "trend/cycle for %s"
+msgstr "τάση/κύκλος για %s"
+
+#: plugin/tramo-x12a.c:69
+#, c-format
+msgid "irregular component of %s"
+msgstr "τυχαία συνιστώσα της %s"
+
+#: plugin/tramo-x12a.c:70
+#, c-format
+msgid "linearized %s"
+msgstr "γραμμικοποιημένη %s"
+
+#: plugin/tramo-x12a.c:224 plugin/tramo_options.c:422
+msgid "Seasonally adjusted series"
+msgstr "Προσαρμοσμένη (εποχ.) σειρά"
+
+#: plugin/tramo-x12a.c:225 plugin/tramo_options.c:423
+msgid "Trend/cycle"
+msgstr "Τάση/κύκλος"
+
+#: plugin/tramo-x12a.c:226 plugin/tramo_options.c:424
+msgid "Irregular"
+msgstr "Ακανόνιστο"
+
+#: plugin/tramo-x12a.c:239
+msgid "X-12-ARIMA options"
+msgstr "X-12-ARIMA επιλογές"
+
+#: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
+msgid "Detect and correct for outliers"
+msgstr "Ανίχνευση και διόρθωση ακραίων τιμών"
+
+#: plugin/tramo-x12a.c:248
+msgid "Correct for trading days effect"
+msgstr "Διόρθωση για εποχικά αποτελέσματα ημερών συναλλαγής"
+
+#: plugin/tramo-x12a.c:257 plugin/tramo_options.c:535
+msgid "Log transformation"
+msgstr "Λογαριθμικός μετασχηματισμός"
+
+#: plugin/tramo-x12a.c:264 plugin/tramo_options.c:543
+msgid "No log transformation"
+msgstr "Μη-λογαριθμικός μετασχηματισμός"
+
+#: plugin/tramo-x12a.c:271 plugin/tramo_options.c:551
+#: plugin/tramo_options.c:668 plugin/tramo_options.c:728
+msgid "Automatic"
+msgstr "Αυτόματο"
+
+#: plugin/tramo-x12a.c:284
+msgid "Save data"
+msgstr "Αποθήκευση δεδομένων"
+
+#: plugin/tramo-x12a.c:322 plugin/tramo_options.c:514
+msgid "Generate graph"
+msgstr "Δημιουργία γραφήματος"
+
+#: plugin/tramo-x12a.c:328
+msgid "Show full output"
+msgstr "Προβολή πλήρους αποτελέσματος"
+
+#: plugin/tramo-x12a.c:337
+msgid "Execute X-12-ARIMA directly"
+msgstr "Απευθείας εκτέλεση του X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:341
+msgid "Make X-12-ARIMA command file"
+msgstr "Δημιουργία αρχείου εντολών X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
+msgid "irregular"
+msgstr "τυχαίο"
+
+#: plugin/tramo-x12a.c:632
+msgid "trend/cycle"
+msgstr "τάση/κύκλος"
+
+#: plugin/tramo-x12a.c:649
+msgid "adjusted"
+msgstr "προσαρμοσμένα"
+
+#: plugin/tramo-x12a.c:942
+#, fuzzy
+msgid "no seasonality was detected"
+msgstr "δεν υπάρχουν εποχικές επιδράσεις"
+
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
 msgstr "Υπόδειγμα χρονοσειρών με εποχική διόρθωση"
@@ -18741,18 +18864,6 @@ msgstr "Υπόδειγμα χρονοσειρών μόνο"
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
 msgstr "Τυπική αυτοματοποιημένη ανάλυση"
-
-#: plugin/tramo_options.c:422 plugin/tramo-x12a.c:224
-msgid "Seasonally adjusted series"
-msgstr "Προσαρμοσμένη (εποχ.) σειρά"
-
-#: plugin/tramo_options.c:423 plugin/tramo-x12a.c:225
-msgid "Trend/cycle"
-msgstr "Τάση/κύκλος"
-
-#: plugin/tramo_options.c:424 plugin/tramo-x12a.c:226
-msgid "Irregular"
-msgstr "Ακανόνιστο"
 
 #: plugin/tramo_options.c:425
 msgid "Linearized series"
@@ -18778,23 +18889,6 @@ msgstr "Ελαχιστοποιημένη έξοδος αποτελεσμάτων
 msgid "Save to data set:"
 msgstr "Αποθήκευση στο σύνολο δεδομένων:"
 
-#: plugin/tramo_options.c:514 plugin/tramo-x12a.c:322
-msgid "Generate graph"
-msgstr "Δημιουργία γραφήματος"
-
-#: plugin/tramo_options.c:535 plugin/tramo-x12a.c:257
-msgid "Log transformation"
-msgstr "Λογαριθμικός μετασχηματισμός"
-
-#: plugin/tramo_options.c:543 plugin/tramo-x12a.c:264
-msgid "No log transformation"
-msgstr "Μη-λογαριθμικός μετασχηματισμός"
-
-#: plugin/tramo_options.c:551 plugin/tramo_options.c:668
-#: plugin/tramo_options.c:728 plugin/tramo-x12a.c:271
-msgid "Automatic"
-msgstr "Αυτόματο"
-
 #: plugin/tramo_options.c:572
 msgid "Mean correction"
 msgstr "Διόρθωση μέσου"
@@ -18806,10 +18900,6 @@ msgstr "Μη-διόρθωση μέου"
 #: plugin/tramo_options.c:605
 msgid "Outliers"
 msgstr "Ακραίες τιμές"
-
-#: plugin/tramo_options.c:608 plugin/tramo-x12a.c:242
-msgid "Detect and correct for outliers"
-msgstr "Ανίχνευση και διόρθωση ακραίων τιμών"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
@@ -18854,67 +18944,6 @@ msgstr "Μη-εποχικοί MA όροι:"
 #: plugin/tramo_options.c:777
 msgid "Seasonal MA terms:"
 msgstr "Εποχικοί MA όροι"
-
-#: plugin/tramo-x12a.c:67
-#, c-format
-msgid "seasonally adjusted %s"
-msgstr "προσαρμοσμένα για εποχικότητα %s"
-
-#: plugin/tramo-x12a.c:68
-#, c-format
-msgid "trend/cycle for %s"
-msgstr "τάση/κύκλος για %s"
-
-#: plugin/tramo-x12a.c:69
-#, c-format
-msgid "irregular component of %s"
-msgstr "τυχαία συνιστώσα της %s"
-
-#: plugin/tramo-x12a.c:70
-#, c-format
-msgid "linearized %s"
-msgstr "γραμμικοποιημένη %s"
-
-#: plugin/tramo-x12a.c:239
-msgid "X-12-ARIMA options"
-msgstr "X-12-ARIMA επιλογές"
-
-#: plugin/tramo-x12a.c:248
-msgid "Correct for trading days effect"
-msgstr "Διόρθωση για εποχικά αποτελέσματα ημερών συναλλαγής"
-
-#: plugin/tramo-x12a.c:284
-msgid "Save data"
-msgstr "Αποθήκευση δεδομένων"
-
-#: plugin/tramo-x12a.c:328
-msgid "Show full output"
-msgstr "Προβολή πλήρους αποτελέσματος"
-
-#: plugin/tramo-x12a.c:337
-msgid "Execute X-12-ARIMA directly"
-msgstr "Απευθείας εκτέλεση του X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:341
-msgid "Make X-12-ARIMA command file"
-msgstr "Δημιουργία αρχείου εντολών X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
-msgid "irregular"
-msgstr "τυχαίο"
-
-#: plugin/tramo-x12a.c:632
-msgid "trend/cycle"
-msgstr "τάση/κύκλος"
-
-#: plugin/tramo-x12a.c:649
-msgid "adjusted"
-msgstr "προσαρμοσμένα"
-
-#: plugin/tramo-x12a.c:942
-#, fuzzy
-msgid "no seasonality was detected"
-msgstr "δεν υπάρχουν εποχικές επιδράσεις"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -19051,7 +19080,6 @@ msgstr "Διάκοσμος"
 #~ msgid " Right-click on graph for menu"
 #~ msgstr "Δεξί-κλίκ στο γράφημα για μενού"
 
-#, c-format
 #~ msgid "Color %d"
 #~ msgstr "Χρώμα %d"
 
@@ -19081,11 +19109,10 @@ msgstr "Διάκοσμος"
 #~ msgid "No series length has been defined"
 #~ msgstr "Το μέγεθος της σειράς δεν έχει καθοριστεί"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "Σφάλμα κατά την εκτέλεση της συνάρτησης"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"
@@ -19097,9 +19124,6 @@ msgstr "Διάκοσμος"
 
 #~ msgid "Program to play MIDI files"
 #~ msgstr "Πρόγραμμα για αναπαραγωγή MIDI αρχείων"
-
-#~ msgid "The MPI library is not loaded"
-#~ msgstr "Η βιβλιοθήκη MPI δεν φορτώθηκε"
 
 #~ msgid "%s: not a valid parameter name"
 #~ msgstr "%s: άκυρη ονομασία παραμέτρου"

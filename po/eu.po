@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 19:33-0400\n"
+"POT-Creation-Date: 2020-06-17 09:06+0200\n"
 "PO-Revision-Date: 2019-01-21 19:19-0500\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>\n"
 "Language-Team: \n"
@@ -1320,8 +1320,8 @@ msgid "append: don't know how to align the new series!"
 msgstr ""
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
-#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
+#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "Memoriaz kanpo!\n"
 
@@ -1610,6 +1610,7 @@ msgid "Compacted dataset would be empty"
 msgstr "Trinkotutako datu-multzoa hutsik egon daiteke"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
+#: plugin/geoplot.c:1197
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Ezin da %s ireki idazteko"
@@ -2858,6 +2859,15 @@ msgstr "Aldizkako fikzio-aldagaia eraikita.\n"
 msgid "Panel dummy variables generated.\n"
 msgstr "Taula-datuen fikziozko aldagaiak eraikita.\n"
 
+#: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
+msgid "complex arguments/operands not supported"
+msgstr ""
+
+#: lib/src/genmpi.c:148 lib/src/genmpi.c:370
+#, fuzzy
+msgid "The MPI library is not loaded"
+msgstr "ID %d ez dago eskuragarri"
+
 #: lib/src/gensyntax.c:249
 #, c-format
 msgid "Expected '%c' but formula ended\n"
@@ -3509,10 +3519,6 @@ msgstr "Exekuzioa abortuta eskaeragatik"
 #, fuzzy
 msgid "'catch' cannot be used in this context"
 msgstr "\"%s\" komandoa ezin da erabili testuinguru honetan "
-
-#: lib/src/gretl_errors.c:88
-msgid "complex arguments/operands not supported"
-msgstr ""
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
@@ -4696,7 +4702,7 @@ msgstr "Behaketarik ez da aurkitu"
 msgid "'%s': malformed gdt file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
 #, fuzzy, c-format
 msgid "Couldn't read '%s'"
 msgstr " '%s' ezin da ireki"
@@ -4786,7 +4792,7 @@ msgstr "Barneko giltza galduta"
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "\"%s\" komandoa ezin da erabili testuinguru honetan "
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: lib/src/interact.c:2047 cli/gretlcli-mpi.c:664 cli/gretlcli.c:1022
 #: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
@@ -4823,12 +4829,12 @@ msgstr "biltegiratu: fitxategi izenik ez\n"
 msgid "Couldn't format model\n"
 msgstr "Eredua ezin da zehaztu\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: lib/src/interact.c:3817 cli/gretlcli-mpi.c:902 cli/gretlcli.c:1350
 #: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "Gidoian begizta infinitua antzeman da\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
+#: lib/src/interact.c:3858 cli/gretlcli-mpi.c:541 cli/gretlcli.c:887
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: komandoa eskuragarri ez\n"
@@ -8042,6 +8048,55 @@ msgstr "'%s'  komandoa ez da ezagutzen"
 msgid "Freed %s\n"
 msgstr "Askatuta %s\n"
 
+#: cli/gretlcli-mpi.c:137
+msgid ""
+"This program should be run under mpiexec, and requires the name of a\n"
+"script file as argument.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:139
+msgid ""
+"Options:\n"
+" -h or --help        Print this info and exit.\n"
+" -v or --version     Print version info and exit.\n"
+" -q or --quiet       Don't print logo on start-up.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:155
+#, fuzzy, c-format
+msgid ""
+"\n"
+"gretlmpi: error executing script: halting\n"
+msgstr ""
+"\n"
+"gretlcli: gidoia exekutatzean errorea: gelditzen\n"
+
+#: cli/gretlcli-mpi.c:698 cli/gretlcli-mpi.c:910 cli/gretlcli.c:1091
+#: cli/gretlcli.c:1358 gui/library.c:10124 gui/library.c:10149
+#, c-format
+msgid "Error reading %s\n"
+msgstr "%s irakurtzean huts egin du\n"
+
+#: cli/gretlcli-mpi.c:789 cli/gretlcli.c:1229 gui/library.c:10329
+#, c-format
+msgid "Command '%s' ignored; not valid within equation system\n"
+msgstr ""
+"'%s' komandoa kontuan ez da hartu, ez da baliagarria ekuazio sisteman\n"
+
+#: cli/gretlcli-mpi.c:849 cli/gretlcli.c:1303 gui/library.c:10432
+msgid "Data series length count missing or invalid\n"
+msgstr "Datuen serien luzera faltako edo baliagabeko balioa da\n"
+
+#: cli/gretlcli-mpi.c:870 cli/gretlcli.c:1111
+msgid "Done\n"
+msgstr "Eginda\n"
+
+#: cli/gretlcli-mpi.c:928 cli/gretlcli.c:1380
+msgid "Dataset cleared\n"
+msgstr "Datu-multzoa garbituta\n"
+
 #: cli/gretlcli.c:158
 #, fuzzy, c-format
 msgid ""
@@ -8135,30 +8190,14 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr "saioaren irteera %s%s -ra idazten\n"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
-#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
-#, c-format
-msgid "Error reading %s\n"
-msgstr "%s irakurtzean huts egin du\n"
-
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
 msgstr ""
-
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
-msgid "Done\n"
-msgstr "Eginda\n"
 
 #: cli/gretlcli.c:1122
 #, c-format
 msgid "commands saved as %s\n"
 msgstr "komandoak '%s' bezala gordeta\n"
-
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
-#, c-format
-msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr ""
-"'%s' komandoa kontuan ez da hartu, ez da baliagarria ekuazio sisteman\n"
 
 #: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
@@ -8167,39 +8206,6 @@ msgstr "Sartu komandoak begiztarentzat. Idatzi 'endloop' kanporatzeko\n"
 #: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "Oharterazi: aldagaiak berzenbatuak izan dira"
-
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
-msgid "Data series length count missing or invalid\n"
-msgstr "Datuen serien luzera faltako edo baliagabeko balioa da\n"
-
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
-msgid "Dataset cleared\n"
-msgstr "Datu-multzoa garbituta\n"
-
-#: cli/gretlcli-mpi.c:137
-msgid ""
-"This program should be run under mpiexec, and requires the name of a\n"
-"script file as argument.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:139
-msgid ""
-"Options:\n"
-" -h or --help        Print this info and exit.\n"
-" -v or --version     Print version info and exit.\n"
-" -q or --quiet       Don't print logo on start-up.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:155
-#, fuzzy, c-format
-msgid ""
-"\n"
-"gretlmpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlcli: gidoia exekutatzean errorea: gelditzen\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9449,7 +9455,7 @@ msgstr "gretl datu-basea"
 msgid "All packages"
 msgstr "orri guztiak"
 
-#: gui/datafiles.c:1900
+#: gui/datafiles.c:1900 gui/join-gui.c:451
 #, fuzzy
 msgid "filter"
 msgstr "Irazkia"
@@ -11697,8 +11703,8 @@ msgstr "Grafiko fitxategia hondatuta"
 msgid "Couldn't access graph info"
 msgstr "Ez dago sarbiderik grafikoaren informazioan"
 
-#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
-#: gui/graph_page.c:698
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graph_page.c:698
+#: gui/graphics.c:262
 msgid "monochrome"
 msgstr "zuri-beltza"
 
@@ -11801,7 +11807,7 @@ msgstr "Iturria"
 msgid "Close"
 msgstr "Itxi"
 
-#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr "kolorez"
 
@@ -12098,6 +12104,22 @@ msgstr "Ardatzen izenburua"
 msgid "gretl plot controls"
 msgstr "gretleko grafikoen kontrolatzaileak"
 
+#: gui/graph_page.c:288
+msgid "The graph page is full"
+msgstr "Grafiko orria beterik dago"
+
+#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
+msgid "Failed to process TeX file"
+msgstr "Tex fitxategia prozesatzerakoan huts egin du"
+
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
+msgid "The graph page is empty"
+msgstr "Grafiko orria hutsik dago"
+
+#: gui/graph_page.c:709
+msgid "graph page options"
+msgstr "grafikoen aukera-orria"
+
 #: gui/graphics.c:197
 msgid "height"
 msgstr "altuera"
@@ -12129,22 +12151,6 @@ msgstr "Grafikoaren tamaina:"
 #: gui/graphics.c:402
 msgid "Preview"
 msgstr "Aurreikuspena"
-
-#: gui/graph_page.c:288
-msgid "The graph page is full"
-msgstr "Grafiko orria beterik dago"
-
-#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
-msgid "Failed to process TeX file"
-msgstr "Tex fitxategia prozesatzerakoan huts egin du"
-
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
-msgid "The graph page is empty"
-msgstr "Grafiko orria hutsik dago"
-
-#: gui/graph_page.c:709
-msgid "graph page options"
-msgstr "grafikoen aukera-orria"
 
 #: gui/gretl.c:126
 #, fuzzy
@@ -13251,194 +13257,6 @@ msgstr "_Aurretikoa:"
 msgid "Font Selection"
 msgstr "Iturriaren aukeraketa"
 
-#: gui/guiprint.c:73 gui/guiprint.c:75
-msgid "gretl output"
-msgstr "gretl irteera"
-
-#: gui/guiprint.c:73
-msgid "for"
-msgstr " -rentzat"
-
-#: gui/guiprint.c:224
-#, c-format
-msgid "%s, page %d"
-msgstr "%s, %d orria"
-
-#: gui/guiprint.c:422
-#, c-format
-msgid "%s page %d of %d"
-msgstr "%s orria %d of %d"
-
-#: gui/guiprint.c:602 gui/guiprint.c:650
-#, c-format
-msgid "Summary Statistics, using the observations %s - %s"
-msgstr "Estatistikoen laburpena,  %s - %s behaketak erabiliz"
-
-#: gui/guiprint.c:656 gui/guiprint.c:1069
-#, c-format
-msgid "for the variable %s (%d valid observations)"
-msgstr "%s aldagaiarentzat (%d behaketa baliagarriak)"
-
-#: gui/guiprint.c:723
-msgid "5% Perc."
-msgstr "%5eko perz."
-
-#: gui/guiprint.c:723
-msgid "95% Perc."
-msgstr "%95eko perz."
-
-#: gui/guiprint.c:880
-msgid "t-ratios in parentheses"
-msgstr "t-estatistikoak parentesi artean"
-
-#: gui/guiprint.c:1011 gui/guiprint.c:1062
-#, c-format
-msgid "Summary Statistics, using the observations %s--%s"
-msgstr "Estatistikoen laburpena,  %s - %s behaketak erabiliz"
-
-#: gui/guiprint.c:1120
-msgid "Std.\\ Dev."
-msgstr "Desb.\\ Tip."
-
-#: gui/guiprint.c:1120
-msgid "Ex.\\ kurtosis"
-msgstr "Kurtosi sob.\\"
-
-#: gui/guiprint.c:1148
-#, no-c-format
-msgid "5\\% perc."
-msgstr "\\% 5perz."
-
-#: gui/guiprint.c:1150
-#, no-c-format
-msgid "95\\% perc."
-msgstr "\\%95 perz."
-
-#: gui/guiprint.c:1151
-msgid "IQ Range"
-msgstr "IQ ibiltarte"
-
-#: gui/guiprint.c:1253
-#, c-format
-msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "Korrelazio koefizienteak,   %s - %s behaketekin"
-
-#: gui/guiprint.c:1264 gui/guiprint.c:1358
-msgid "Coefficient covariance matrix"
-msgstr "Koefizienteen kobariantza matrizea"
-
-#: gui/guiprint.c:1346
-#, c-format
-msgid "Correlation coefficients, using the observations %s--%s"
-msgstr "Koefizienteen korrelazioa,   %s--%s behaketekin"
-
-#: gui/guiprint.c:1353
-#, c-format
-msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "\\%% 5 esangura maila (alde-bikoa) = %.4f eta n = %d"
-
-#: gui/guiprint.c:1444
-msgid "Mean Squared Error"
-msgstr "Batezbesteko Errore Koadratikoa"
-
-#: gui/guiprint.c:1449
-msgid "Theil's $U$"
-msgstr "Theil-ren $U$"
-
-#: gui/guiprint.c:1450
-msgid "Bias proportion, $U^M$"
-msgstr "Alborapen proportion, $U^M$"
-
-#: gui/guiprint.c:1451
-msgid "Regression proportion, $U^R$"
-msgstr "Erregresioaren proportzioa, $U^R$"
-
-#: gui/guiprint.c:1452
-msgid "Disturbance proportion, $U^D$"
-msgstr "Perturbazio-proportzioa, $U^D$"
-
-#: gui/guiprint.c:1509 gui/guiprint.c:1527
-msgid "Model estimation range:"
-msgstr "Estimazio ereduaren ibiltartea:"
-
-#: gui/guiprint.c:1512 gui/guiprint.c:1530
-#, c-format
-msgid "Standard error of residuals = %g"
-msgstr "Perturbazioen desbideratze estimatua = %g"
-
-#: gui/guiprint.c:1599
-msgid ""
-"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
-"\n"
-msgstr ""
-"\\textit{Oharra}:* ikurrak desbideratze tipikoak 2.5a gainditzen duen "
-"hondarra adierazten du\n"
-"\n"
-
-#: gui/guiprint.c:1660
-msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr ""
-"Oharra:* ikurrak desbideratze tipikoak 2.5a gainditzen duen hondarra "
-"adierazten du"
-
-#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
-#: gui/guiprint.c:1867
-msgid "Obs"
-msgstr "Behaketa"
-
-#: gui/guiprint.c:1740
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
-"\n"
-msgstr "\\%%%g -eko konfiantza-tarteentzat, $z(%g) = %.2f$\n"
-
-#: gui/guiprint.c:1744
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
-"\n"
-msgstr ""
-"\\%%%g -eko konfiantza-tarteentzat, $t(%d, %g) = %.3f$\n"
-"\n"
-
-#: gui/guiprint.c:1764
-#, c-format
-msgid "%g\\%% interval"
-msgstr "%g\\%% tartea"
-
-#: gui/guiprint.c:1848
-#, c-format
-msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "%%%g -eko konfiantza-tarteentzat, z(%g) = %.2f"
-
-#: gui/guiprint.c:1852
-#, c-format
-msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "%%%g -eko konfiantza-tarteentzat,  t(%d, %g) = %.3f"
-
-#: gui/guiprint.c:1857
-#, c-format
-msgid "%g%% interval"
-msgstr "%g%% tartea"
-
-#: gui/guiprint.c:1956 gui/guiprint.c:2005
-#, c-format
-msgid "%g\\%% confidence interval"
-msgstr "%g\\%% konfiantza-tartea"
-
-#: gui/guiprint.c:2046
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
-msgstr ""
-"Ezin duzu karektere berdina erabili  zutabe bereizle eta hamarrekoen "
-"puntuarentzat"
-
-#: gui/guiprint.c:2225
-msgid "No scalar variables are currently defined"
-msgstr "Eskalar aldagaiak definitu gabe oraingoz"
-
 #: gui/gui_utils.c:212
 msgid "equation"
 msgstr "ekuazioa"
@@ -14235,6 +14053,194 @@ msgstr "eskala"
 msgid "Send data as"
 msgstr "Gorde datuak _honela..."
 
+#: gui/guiprint.c:73 gui/guiprint.c:75
+msgid "gretl output"
+msgstr "gretl irteera"
+
+#: gui/guiprint.c:73
+msgid "for"
+msgstr " -rentzat"
+
+#: gui/guiprint.c:224
+#, c-format
+msgid "%s, page %d"
+msgstr "%s, %d orria"
+
+#: gui/guiprint.c:422
+#, c-format
+msgid "%s page %d of %d"
+msgstr "%s orria %d of %d"
+
+#: gui/guiprint.c:602 gui/guiprint.c:650
+#, c-format
+msgid "Summary Statistics, using the observations %s - %s"
+msgstr "Estatistikoen laburpena,  %s - %s behaketak erabiliz"
+
+#: gui/guiprint.c:656 gui/guiprint.c:1069
+#, c-format
+msgid "for the variable %s (%d valid observations)"
+msgstr "%s aldagaiarentzat (%d behaketa baliagarriak)"
+
+#: gui/guiprint.c:723
+msgid "5% Perc."
+msgstr "%5eko perz."
+
+#: gui/guiprint.c:723
+msgid "95% Perc."
+msgstr "%95eko perz."
+
+#: gui/guiprint.c:880
+msgid "t-ratios in parentheses"
+msgstr "t-estatistikoak parentesi artean"
+
+#: gui/guiprint.c:1011 gui/guiprint.c:1062
+#, c-format
+msgid "Summary Statistics, using the observations %s--%s"
+msgstr "Estatistikoen laburpena,  %s - %s behaketak erabiliz"
+
+#: gui/guiprint.c:1120
+msgid "Std.\\ Dev."
+msgstr "Desb.\\ Tip."
+
+#: gui/guiprint.c:1120
+msgid "Ex.\\ kurtosis"
+msgstr "Kurtosi sob.\\"
+
+#: gui/guiprint.c:1148
+#, no-c-format
+msgid "5\\% perc."
+msgstr "\\% 5perz."
+
+#: gui/guiprint.c:1150
+#, no-c-format
+msgid "95\\% perc."
+msgstr "\\%95 perz."
+
+#: gui/guiprint.c:1151
+msgid "IQ Range"
+msgstr "IQ ibiltarte"
+
+#: gui/guiprint.c:1253
+#, c-format
+msgid "Correlation coefficients, using the observations %s - %s"
+msgstr "Korrelazio koefizienteak,   %s - %s behaketekin"
+
+#: gui/guiprint.c:1264 gui/guiprint.c:1358
+msgid "Coefficient covariance matrix"
+msgstr "Koefizienteen kobariantza matrizea"
+
+#: gui/guiprint.c:1346
+#, c-format
+msgid "Correlation coefficients, using the observations %s--%s"
+msgstr "Koefizienteen korrelazioa,   %s--%s behaketekin"
+
+#: gui/guiprint.c:1353
+#, c-format
+msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
+msgstr "\\%% 5 esangura maila (alde-bikoa) = %.4f eta n = %d"
+
+#: gui/guiprint.c:1444
+msgid "Mean Squared Error"
+msgstr "Batezbesteko Errore Koadratikoa"
+
+#: gui/guiprint.c:1449
+msgid "Theil's $U$"
+msgstr "Theil-ren $U$"
+
+#: gui/guiprint.c:1450
+msgid "Bias proportion, $U^M$"
+msgstr "Alborapen proportion, $U^M$"
+
+#: gui/guiprint.c:1451
+msgid "Regression proportion, $U^R$"
+msgstr "Erregresioaren proportzioa, $U^R$"
+
+#: gui/guiprint.c:1452
+msgid "Disturbance proportion, $U^D$"
+msgstr "Perturbazio-proportzioa, $U^D$"
+
+#: gui/guiprint.c:1509 gui/guiprint.c:1527
+msgid "Model estimation range:"
+msgstr "Estimazio ereduaren ibiltartea:"
+
+#: gui/guiprint.c:1512 gui/guiprint.c:1530
+#, c-format
+msgid "Standard error of residuals = %g"
+msgstr "Perturbazioen desbideratze estimatua = %g"
+
+#: gui/guiprint.c:1599
+msgid ""
+"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
+"\n"
+msgstr ""
+"\\textit{Oharra}:* ikurrak desbideratze tipikoak 2.5a gainditzen duen "
+"hondarra adierazten du\n"
+"\n"
+
+#: gui/guiprint.c:1660
+msgid "Note: * denotes a residual in excess of 2.5 standard errors"
+msgstr ""
+"Oharra:* ikurrak desbideratze tipikoak 2.5a gainditzen duen hondarra "
+"adierazten du"
+
+#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
+#: gui/guiprint.c:1867
+msgid "Obs"
+msgstr "Behaketa"
+
+#: gui/guiprint.c:1740
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
+"\n"
+msgstr "\\%%%g -eko konfiantza-tarteentzat, $z(%g) = %.2f$\n"
+
+#: gui/guiprint.c:1744
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
+"\n"
+msgstr ""
+"\\%%%g -eko konfiantza-tarteentzat, $t(%d, %g) = %.3f$\n"
+"\n"
+
+#: gui/guiprint.c:1764
+#, c-format
+msgid "%g\\%% interval"
+msgstr "%g\\%% tartea"
+
+#: gui/guiprint.c:1848
+#, c-format
+msgid "For %g%% confidence intervals, z(%g) = %.2f"
+msgstr "%%%g -eko konfiantza-tarteentzat, z(%g) = %.2f"
+
+#: gui/guiprint.c:1852
+#, c-format
+msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
+msgstr "%%%g -eko konfiantza-tarteentzat,  t(%d, %g) = %.3f"
+
+#: gui/guiprint.c:1857
+#, c-format
+msgid "%g%% interval"
+msgstr "%g%% tartea"
+
+#: gui/guiprint.c:1956 gui/guiprint.c:2005
+#, c-format
+msgid "%g\\%% confidence interval"
+msgstr "%g\\%% konfiantza-tartea"
+
+#: gui/guiprint.c:2046
+msgid ""
+"You can't use the same character for the column delimiter and the decimal "
+"point"
+msgstr ""
+"Ezin duzu karektere berdina erabili  zutabe bereizle eta hamarrekoen "
+"puntuarentzat"
+
+#: gui/guiprint.c:2225
+msgid "No scalar variables are currently defined"
+msgstr "Eskalar aldagaiak definitu gabe oraingoz"
+
 #: gui/helpfiles.c:78
 msgid "Larger"
 msgstr "Handiagoa"
@@ -14428,6 +14434,20 @@ msgstr "Zerrendatu serieak"
 #, fuzzy
 msgid "named as"
 msgstr "izena"
+
+#: gui/join-gui.c:436
+msgid "inner key"
+msgstr ""
+
+#: gui/join-gui.c:438
+#, fuzzy
+msgid "outer key"
+msgstr "Klusterra honen arabera"
+
+#: gui/join-gui.c:459
+#, fuzzy
+msgid "aggregation"
+msgstr "Bereizmena"
 
 #: gui/join-gui.c:466
 #, fuzzy
@@ -17349,7 +17369,8 @@ msgstr "Hasierako betetze-balio:"
 msgid "complex matrix"
 msgstr "txantiloi-matrizea "
 
-#: gui/ssheet.c:4070
+#: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
+#: plugin/geoplot.c:1300
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr " '%s' ezin da ireki"
@@ -18869,6 +18890,15 @@ msgstr "heinaren malda batezbestekoaren aurka = %g\n"
 msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "p-balioa H0: malda = 0 hipotesiarentzat  %g da\n"
 
+#: plugin/regls.c:1033
+#, fuzzy
+msgid "df = effective number of free parameters"
+msgstr "Jacobianaren heina = %d, parametro askeen kopurua = %d\n"
+
+#: plugin/regls.c:1034
+msgid "criterion = ridge minimand"
+msgstr ""
+
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
 msgstr "Datu-fitxategia ez dirudi SAS exportatzeko baliagarria"
@@ -18905,6 +18935,100 @@ msgstr "behe aldea"
 msgid "upper tail"
 msgstr "goi aldea"
 
+#: plugin/tramo-x12a.c:67
+#, c-format
+msgid "seasonally adjusted %s"
+msgstr "aldizkakotasunarekiko doituta %s"
+
+#: plugin/tramo-x12a.c:68
+#, c-format
+msgid "trend/cycle for %s"
+msgstr "joera/zikloa %s -rentzat"
+
+#: plugin/tramo-x12a.c:69
+#, c-format
+msgid "irregular component of %s"
+msgstr "%s -ren osagai irregularra"
+
+#: plugin/tramo-x12a.c:70
+#, fuzzy, c-format
+msgid "linearized %s"
+msgstr "iteratua %s"
+
+#: plugin/tramo-x12a.c:224 plugin/tramo_options.c:422
+msgid "Seasonally adjusted series"
+msgstr "Aldizkakotasunarekiko doitutako serieak"
+
+#: plugin/tramo-x12a.c:225 plugin/tramo_options.c:423
+msgid "Trend/cycle"
+msgstr "Joera/zikloa"
+
+#: plugin/tramo-x12a.c:226 plugin/tramo_options.c:424
+msgid "Irregular"
+msgstr "Irregularra"
+
+#: plugin/tramo-x12a.c:239
+msgid "X-12-ARIMA options"
+msgstr "X-12-ARIMA aukerak"
+
+#: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
+msgid "Detect and correct for outliers"
+msgstr "Ezohikoak hauteman eta zuzendu"
+
+#: plugin/tramo-x12a.c:248
+msgid "Correct for trading days effect"
+msgstr "Zuzendu merkatal-egunen eragina"
+
+#: plugin/tramo-x12a.c:257 plugin/tramo_options.c:535
+msgid "Log transformation"
+msgstr "Log eraldakuntza"
+
+#: plugin/tramo-x12a.c:264 plugin/tramo_options.c:543
+msgid "No log transformation"
+msgstr "Log eraldakuntzarik ez"
+
+#: plugin/tramo-x12a.c:271 plugin/tramo_options.c:551
+#: plugin/tramo_options.c:668 plugin/tramo_options.c:728
+msgid "Automatic"
+msgstr "Automatikoa"
+
+#: plugin/tramo-x12a.c:284
+msgid "Save data"
+msgstr "Gorde datuak"
+
+#: plugin/tramo-x12a.c:322 plugin/tramo_options.c:514
+msgid "Generate graph"
+msgstr "Grafikoa sortu"
+
+#: plugin/tramo-x12a.c:328
+msgid "Show full output"
+msgstr "Erakutsi irteera osoa"
+
+#: plugin/tramo-x12a.c:337
+msgid "Execute X-12-ARIMA directly"
+msgstr "Exekutatu X-12-ARIMA zuzenean"
+
+#: plugin/tramo-x12a.c:341
+msgid "Make X-12-ARIMA command file"
+msgstr "Egin X-!\"-ARIMA komando-fitxategia"
+
+#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
+msgid "irregular"
+msgstr "irregularra"
+
+#: plugin/tramo-x12a.c:632
+msgid "trend/cycle"
+msgstr "joera/zikloa"
+
+#: plugin/tramo-x12a.c:649
+msgid "adjusted"
+msgstr "estimatuta"
+
+#: plugin/tramo-x12a.c:942
+#, fuzzy
+msgid "no seasonality was detected"
+msgstr "urtaro eraginik ez"
+
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
 msgstr "Denbora-seriezko eredua gehi aldizkakotasun doikuntza"
@@ -18916,18 +19040,6 @@ msgstr "Denbora-serieko eredua bakarrik"
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
 msgstr "Ohiko analisi automatikoa"
-
-#: plugin/tramo_options.c:422 plugin/tramo-x12a.c:224
-msgid "Seasonally adjusted series"
-msgstr "Aldizkakotasunarekiko doitutako serieak"
-
-#: plugin/tramo_options.c:423 plugin/tramo-x12a.c:225
-msgid "Trend/cycle"
-msgstr "Joera/zikloa"
-
-#: plugin/tramo_options.c:424 plugin/tramo-x12a.c:226
-msgid "Irregular"
-msgstr "Irregularra"
 
 #: plugin/tramo_options.c:425
 #, fuzzy
@@ -18954,23 +19066,6 @@ msgstr "Irteera laburtua"
 msgid "Save to data set:"
 msgstr "Gorde datu-multzora:"
 
-#: plugin/tramo_options.c:514 plugin/tramo-x12a.c:322
-msgid "Generate graph"
-msgstr "Grafikoa sortu"
-
-#: plugin/tramo_options.c:535 plugin/tramo-x12a.c:257
-msgid "Log transformation"
-msgstr "Log eraldakuntza"
-
-#: plugin/tramo_options.c:543 plugin/tramo-x12a.c:264
-msgid "No log transformation"
-msgstr "Log eraldakuntzarik ez"
-
-#: plugin/tramo_options.c:551 plugin/tramo_options.c:668
-#: plugin/tramo_options.c:728 plugin/tramo-x12a.c:271
-msgid "Automatic"
-msgstr "Automatikoa"
-
 #: plugin/tramo_options.c:572
 msgid "Mean correction"
 msgstr "Batezbestekoaren zuzenketa"
@@ -18982,10 +19077,6 @@ msgstr "Batezbestekoaren zuzenketarik ez"
 #: plugin/tramo_options.c:605
 msgid "Outliers"
 msgstr "Ezohikoak"
-
-#: plugin/tramo_options.c:608 plugin/tramo-x12a.c:242
-msgid "Detect and correct for outliers"
-msgstr "Ezohikoak hauteman eta zuzendu"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
@@ -19030,67 +19121,6 @@ msgstr "Aldizkakotasun gabeko MA osagaiak:"
 #: plugin/tramo_options.c:777
 msgid "Seasonal MA terms:"
 msgstr "Aldizkako MA osagaiak:"
-
-#: plugin/tramo-x12a.c:67
-#, c-format
-msgid "seasonally adjusted %s"
-msgstr "aldizkakotasunarekiko doituta %s"
-
-#: plugin/tramo-x12a.c:68
-#, c-format
-msgid "trend/cycle for %s"
-msgstr "joera/zikloa %s -rentzat"
-
-#: plugin/tramo-x12a.c:69
-#, c-format
-msgid "irregular component of %s"
-msgstr "%s -ren osagai irregularra"
-
-#: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
-msgid "linearized %s"
-msgstr "iteratua %s"
-
-#: plugin/tramo-x12a.c:239
-msgid "X-12-ARIMA options"
-msgstr "X-12-ARIMA aukerak"
-
-#: plugin/tramo-x12a.c:248
-msgid "Correct for trading days effect"
-msgstr "Zuzendu merkatal-egunen eragina"
-
-#: plugin/tramo-x12a.c:284
-msgid "Save data"
-msgstr "Gorde datuak"
-
-#: plugin/tramo-x12a.c:328
-msgid "Show full output"
-msgstr "Erakutsi irteera osoa"
-
-#: plugin/tramo-x12a.c:337
-msgid "Execute X-12-ARIMA directly"
-msgstr "Exekutatu X-12-ARIMA zuzenean"
-
-#: plugin/tramo-x12a.c:341
-msgid "Make X-12-ARIMA command file"
-msgstr "Egin X-!\"-ARIMA komando-fitxategia"
-
-#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
-msgid "irregular"
-msgstr "irregularra"
-
-#: plugin/tramo-x12a.c:632
-msgid "trend/cycle"
-msgstr "joera/zikloa"
-
-#: plugin/tramo-x12a.c:649
-msgid "adjusted"
-msgstr "estimatuta"
-
-#: plugin/tramo-x12a.c:942
-#, fuzzy
-msgid "no seasonality was detected"
-msgstr "urtaro eraginik ez"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -19230,7 +19260,6 @@ msgstr "Iraupena"
 #~ msgid " Right-click on graph for menu"
 #~ msgstr "Eskumako klika grafikoaren menua azaltzeko"
 
-#, c-format
 #~ msgid "Color %d"
 #~ msgstr "%d kolorea"
 
@@ -19260,11 +19289,10 @@ msgstr "Iraupena"
 #~ msgid "No series length has been defined"
 #~ msgstr "Serien luzera definitu gabe"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "Errorea funtzioa exekutatzean"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"
@@ -19321,10 +19349,6 @@ msgstr "Iraupena"
 
 #~ msgid "stopped after %d iterations\n"
 #~ msgstr "geldituta %d iterazio ondoren\n"
-
-#, fuzzy
-#~ msgid "Package %s is not loaded"
-#~ msgstr "ID %d ez dago eskuragarri"
 
 #~ msgid "No valid loop condition was given."
 #~ msgstr "Begizta murrizketa baliodunik ez"

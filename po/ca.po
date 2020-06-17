@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 19:33-0400\n"
+"POT-Creation-Date: 2020-06-17 09:06+0200\n"
 "PO-Revision-Date: 2019-01-21 19:15-0500\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
@@ -1333,8 +1333,8 @@ msgid "append: don't know how to align the new series!"
 msgstr ""
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
-#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
+#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "Manca memoria!\n"
 
@@ -1624,6 +1624,7 @@ msgid "Compacted dataset would be empty"
 msgstr "El conjunt de dades compactat estaria buit"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
+#: plugin/geoplot.c:1197
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "No s'ha pogut obrir %s per a escriptura"
@@ -2877,6 +2878,15 @@ msgstr "Variables fictícies periòdiques generades.\n"
 msgid "Panel dummy variables generated.\n"
 msgstr "S'han generat les variables fictícies de panell.\n"
 
+#: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
+msgid "complex arguments/operands not supported"
+msgstr ""
+
+#: lib/src/genmpi.c:148 lib/src/genmpi.c:370
+#, fuzzy
+msgid "The MPI library is not loaded"
+msgstr "L'objetiu ID %d no està disponible"
+
 #: lib/src/gensyntax.c:249
 #, c-format
 msgid "Expected '%c' but formula ended\n"
@@ -3538,10 +3548,6 @@ msgstr "S'ha avortat l'execució a petició de l'usuari"
 #, fuzzy
 msgid "'catch' cannot be used in this context"
 msgstr "La instrucció '%s' no es pot emprar en aquest context"
-
-#: lib/src/gretl_errors.c:88
-msgid "complex arguments/operands not supported"
-msgstr ""
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
@@ -4740,7 +4746,7 @@ msgstr "No s'han trobat observacions"
 msgid "'%s': malformed gdt file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
 #, fuzzy, c-format
 msgid "Couldn't read '%s'"
 msgstr "No s'ha pogut obrir '%s'"
@@ -4831,7 +4837,7 @@ msgstr "Falta la clau interna"
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "La instrucció '%s' no es pot emprar en aquest context"
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: lib/src/interact.c:2047 cli/gretlcli-mpi.c:664 cli/gretlcli.c:1022
 #: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
@@ -4868,12 +4874,12 @@ msgstr "store: no s'ha proporcionat nom de fitxer\n"
 msgid "Couldn't format model\n"
 msgstr "No s'ha pogut formatejar el model\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: lib/src/interact.c:3817 cli/gretlcli-mpi.c:902 cli/gretlcli.c:1350
 #: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "S'ha detectat un bucle infinit a l'script\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
+#: lib/src/interact.c:3858 cli/gretlcli-mpi.c:541 cli/gretlcli.c:887
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: instrucció no disponible\n"
@@ -8106,6 +8112,54 @@ msgstr "instrucció '%s' no reconeguda"
 msgid "Freed %s\n"
 msgstr "Alliberat %s\n"
 
+#: cli/gretlcli-mpi.c:137
+msgid ""
+"This program should be run under mpiexec, and requires the name of a\n"
+"script file as argument.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:139
+msgid ""
+"Options:\n"
+" -h or --help        Print this info and exit.\n"
+" -v or --version     Print version info and exit.\n"
+" -q or --quiet       Don't print logo on start-up.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:155
+#, fuzzy, c-format
+msgid ""
+"\n"
+"gretlmpi: error executing script: halting\n"
+msgstr ""
+"\n"
+"gretlcli: error executant script: aturant\n"
+
+#: cli/gretlcli-mpi.c:698 cli/gretlcli-mpi.c:910 cli/gretlcli.c:1091
+#: cli/gretlcli.c:1358 gui/library.c:10124 gui/library.c:10149
+#, c-format
+msgid "Error reading %s\n"
+msgstr "Error en llegir %s\n"
+
+#: cli/gretlcli-mpi.c:789 cli/gretlcli.c:1229 gui/library.c:10329
+#, c-format
+msgid "Command '%s' ignored; not valid within equation system\n"
+msgstr "Intrucció '%s' ignorada; no és vàlida en un sistema de equacions\n"
+
+#: cli/gretlcli-mpi.c:849 cli/gretlcli.c:1303 gui/library.c:10432
+msgid "Data series length count missing or invalid\n"
+msgstr "Mida de la sèrie de dades perduda o invàlida\n"
+
+#: cli/gretlcli-mpi.c:870 cli/gretlcli.c:1111
+msgid "Done\n"
+msgstr "Fet\n"
+
+#: cli/gretlcli-mpi.c:928 cli/gretlcli.c:1380
+msgid "Dataset cleared\n"
+msgstr "S'ha buidat el conjunt de dades\n"
+
 #: cli/gretlcli.c:158
 #, fuzzy, c-format
 msgid ""
@@ -8199,29 +8253,14 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr "escrivint els resultats de sessió a %s%s\n"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
-#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
-#, c-format
-msgid "Error reading %s\n"
-msgstr "Error en llegir %s\n"
-
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
 msgstr ""
-
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
-msgid "Done\n"
-msgstr "Fet\n"
 
 #: cli/gretlcli.c:1122
 #, c-format
 msgid "commands saved as %s\n"
 msgstr "instruccions guardades com %s\n"
-
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
-#, c-format
-msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr "Intrucció '%s' ignorada; no és vàlida en un sistema de equacions\n"
 
 #: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
@@ -8230,39 +8269,6 @@ msgstr "Introdueixi instruccions per al bucle. Teclegi 'endloop' per sortir\n"
 #: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "Pregui nota: s'han renumerat les variables"
-
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
-msgid "Data series length count missing or invalid\n"
-msgstr "Mida de la sèrie de dades perduda o invàlida\n"
-
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
-msgid "Dataset cleared\n"
-msgstr "S'ha buidat el conjunt de dades\n"
-
-#: cli/gretlcli-mpi.c:137
-msgid ""
-"This program should be run under mpiexec, and requires the name of a\n"
-"script file as argument.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:139
-msgid ""
-"Options:\n"
-" -h or --help        Print this info and exit.\n"
-" -v or --version     Print version info and exit.\n"
-" -q or --quiet       Don't print logo on start-up.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:155
-#, fuzzy, c-format
-msgid ""
-"\n"
-"gretlmpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlcli: error executant script: aturant\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9509,7 +9515,7 @@ msgstr "base de dades de gretl"
 msgid "All packages"
 msgstr "totes les pàgines"
 
-#: gui/datafiles.c:1900
+#: gui/datafiles.c:1900 gui/join-gui.c:451
 #, fuzzy
 msgid "filter"
 msgstr "Filtre"
@@ -11765,8 +11771,8 @@ msgstr "El fitxer de gràfic està danyat"
 msgid "Couldn't access graph info"
 msgstr "No s'ha pogut accedir a la informació del gràfic"
 
-#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
-#: gui/graph_page.c:698
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graph_page.c:698
+#: gui/graphics.c:262
 msgid "monochrome"
 msgstr "monocrom"
 
@@ -11869,7 +11875,7 @@ msgstr "Font"
 msgid "Close"
 msgstr "Tancar"
 
-#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr "color"
 
@@ -12166,6 +12172,22 @@ msgstr "Títol de l'eix"
 msgid "gretl plot controls"
 msgstr "controladors de gràfic gretl"
 
+#: gui/graph_page.c:288
+msgid "The graph page is full"
+msgstr "La pàgina de gràfics està plena"
+
+#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
+msgid "Failed to process TeX file"
+msgstr "Error en processar el fitxer TeX"
+
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
+msgid "The graph page is empty"
+msgstr "La pàgina de gràfics està buida"
+
+#: gui/graph_page.c:709
+msgid "graph page options"
+msgstr "opcions de la pàgina de gràfics"
+
 #: gui/graphics.c:197
 msgid "height"
 msgstr "altura"
@@ -12197,22 +12219,6 @@ msgstr "Dimensions del gràfic:"
 #: gui/graphics.c:402
 msgid "Preview"
 msgstr "Vista prèvia"
-
-#: gui/graph_page.c:288
-msgid "The graph page is full"
-msgstr "La pàgina de gràfics està plena"
-
-#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
-msgid "Failed to process TeX file"
-msgstr "Error en processar el fitxer TeX"
-
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
-msgid "The graph page is empty"
-msgstr "La pàgina de gràfics està buida"
-
-#: gui/graph_page.c:709
-msgid "graph page options"
-msgstr "opcions de la pàgina de gràfics"
 
 #: gui/gretl.c:126
 #, fuzzy
@@ -13321,193 +13327,6 @@ msgstr "Vista _prèvia:"
 msgid "Font Selection"
 msgstr "Selecció de font"
 
-#: gui/guiprint.c:73 gui/guiprint.c:75
-msgid "gretl output"
-msgstr "resultat gretl"
-
-#: gui/guiprint.c:73
-msgid "for"
-msgstr "per a"
-
-#: gui/guiprint.c:224
-#, c-format
-msgid "%s, page %d"
-msgstr "%s, pàgina %d"
-
-#: gui/guiprint.c:422
-#, c-format
-msgid "%s page %d of %d"
-msgstr "%s pàgina %d de %d"
-
-#: gui/guiprint.c:602 gui/guiprint.c:650
-#, c-format
-msgid "Summary Statistics, using the observations %s - %s"
-msgstr "Estadístics principals, usant les observacions %s - %s"
-
-#: gui/guiprint.c:656 gui/guiprint.c:1069
-#, c-format
-msgid "for the variable %s (%d valid observations)"
-msgstr "per a la variable %s (%d observacions vàlides)"
-
-#: gui/guiprint.c:723
-msgid "5% Perc."
-msgstr "Porc. 5%"
-
-#: gui/guiprint.c:723
-msgid "95% Perc."
-msgstr "Porc. 95% "
-
-#: gui/guiprint.c:880
-msgid "t-ratios in parentheses"
-msgstr "t-ràtios entre parèntesi"
-
-#: gui/guiprint.c:1011 gui/guiprint.c:1062
-#, c-format
-msgid "Summary Statistics, using the observations %s--%s"
-msgstr "Estadístics principals, usant les observacions %s -- %s"
-
-#: gui/guiprint.c:1120
-msgid "Std.\\ Dev."
-msgstr "Desv.\\ Típ."
-
-#: gui/guiprint.c:1120
-msgid "Ex.\\ kurtosis"
-msgstr "Exc. de curtosi"
-
-#: gui/guiprint.c:1148
-#, no-c-format
-msgid "5\\% perc."
-msgstr "porc. 5\\%"
-
-#: gui/guiprint.c:1150
-#, no-c-format
-msgid "95\\% perc."
-msgstr "porc. 95\\% "
-
-#: gui/guiprint.c:1151
-msgid "IQ Range"
-msgstr "Recorregut IQ"
-
-#: gui/guiprint.c:1253
-#, c-format
-msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "Coeficients de correlació, usant les observacions %s - %s"
-
-#: gui/guiprint.c:1264 gui/guiprint.c:1358
-msgid "Coefficient covariance matrix"
-msgstr "Matriu de covariàncies dels coeficients"
-
-#: gui/guiprint.c:1346
-#, c-format
-msgid "Correlation coefficients, using the observations %s--%s"
-msgstr "Coeficients de correlació, usant les observacions %s -- %s"
-
-#: gui/guiprint.c:1353
-#, c-format
-msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "valor crític al 5\\%% (a dues cues) = %.4f per a n = %d"
-
-#: gui/guiprint.c:1444
-msgid "Mean Squared Error"
-msgstr "Error quadràtic mig"
-
-#: gui/guiprint.c:1449
-msgid "Theil's $U$"
-msgstr "$U$ de Theil"
-
-#: gui/guiprint.c:1450
-msgid "Bias proportion, $U^M$"
-msgstr "Proporció de biaix, $U^M$"
-
-#: gui/guiprint.c:1451
-msgid "Regression proportion, $U^R$"
-msgstr "Proporció de la regressió, $U^R$"
-
-#: gui/guiprint.c:1452
-msgid "Disturbance proportion, $U^D$"
-msgstr "Proporció de la pertorbació, $U^D$"
-
-#: gui/guiprint.c:1509 gui/guiprint.c:1527
-msgid "Model estimation range:"
-msgstr "Recorregut d'estimació del model:"
-
-#: gui/guiprint.c:1512 gui/guiprint.c:1530
-#, c-format
-msgid "Standard error of residuals = %g"
-msgstr "Desviació típica dels residus = %g"
-
-#: gui/guiprint.c:1599
-msgid ""
-"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
-"\n"
-msgstr ""
-"\\textit{Nota}: * denota un residu superior a 2.5 desviacions típiques\n"
-"\n"
-
-#: gui/guiprint.c:1660
-msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "Nota: * denota un residu superior a 2.5 desviacions típiques"
-
-#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
-#: gui/guiprint.c:1867
-msgid "Obs"
-msgstr "Observacions"
-
-#: gui/guiprint.c:1740
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
-"\n"
-msgstr ""
-"Per a intervals de confiança %g\\%%, $z(%g) = %.2f$\n"
-"\n"
-
-#: gui/guiprint.c:1744
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
-"\n"
-msgstr ""
-"Per a intervals de confiança %g\\%%, $t(%d, .%g) = %.3f$\n"
-"\n"
-
-#: gui/guiprint.c:1764
-#, c-format
-msgid "%g\\%% interval"
-msgstr "Interval de %g\\%% "
-
-#: gui/guiprint.c:1848
-#, c-format
-msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Per a intervals de confiança %g%%, z(%g) = %.2f"
-
-#: gui/guiprint.c:1852
-#, c-format
-msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Per a intervals de confiança %g%%, t(%d, %g) = %.3f"
-
-#: gui/guiprint.c:1857
-#, c-format
-msgid "%g%% interval"
-msgstr "Interval de %g%%"
-
-#: gui/guiprint.c:1956 gui/guiprint.c:2005
-#, c-format
-msgid "%g\\%% confidence interval"
-msgstr "Interval de confiança %g\\%% "
-
-#: gui/guiprint.c:2046
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
-msgstr ""
-"No es pot emprar el mateix caràcter com a delimitador de columnes i com a "
-"punt decimal"
-
-#: gui/guiprint.c:2225
-msgid "No scalar variables are currently defined"
-msgstr "En aquest moment no hi ha definida cap variable escalar"
-
 #: gui/gui_utils.c:212
 msgid "equation"
 msgstr "Equació"
@@ -14304,6 +14123,193 @@ msgstr "escala"
 msgid "Send data as"
 msgstr "G_uardar dades com..."
 
+#: gui/guiprint.c:73 gui/guiprint.c:75
+msgid "gretl output"
+msgstr "resultat gretl"
+
+#: gui/guiprint.c:73
+msgid "for"
+msgstr "per a"
+
+#: gui/guiprint.c:224
+#, c-format
+msgid "%s, page %d"
+msgstr "%s, pàgina %d"
+
+#: gui/guiprint.c:422
+#, c-format
+msgid "%s page %d of %d"
+msgstr "%s pàgina %d de %d"
+
+#: gui/guiprint.c:602 gui/guiprint.c:650
+#, c-format
+msgid "Summary Statistics, using the observations %s - %s"
+msgstr "Estadístics principals, usant les observacions %s - %s"
+
+#: gui/guiprint.c:656 gui/guiprint.c:1069
+#, c-format
+msgid "for the variable %s (%d valid observations)"
+msgstr "per a la variable %s (%d observacions vàlides)"
+
+#: gui/guiprint.c:723
+msgid "5% Perc."
+msgstr "Porc. 5%"
+
+#: gui/guiprint.c:723
+msgid "95% Perc."
+msgstr "Porc. 95% "
+
+#: gui/guiprint.c:880
+msgid "t-ratios in parentheses"
+msgstr "t-ràtios entre parèntesi"
+
+#: gui/guiprint.c:1011 gui/guiprint.c:1062
+#, c-format
+msgid "Summary Statistics, using the observations %s--%s"
+msgstr "Estadístics principals, usant les observacions %s -- %s"
+
+#: gui/guiprint.c:1120
+msgid "Std.\\ Dev."
+msgstr "Desv.\\ Típ."
+
+#: gui/guiprint.c:1120
+msgid "Ex.\\ kurtosis"
+msgstr "Exc. de curtosi"
+
+#: gui/guiprint.c:1148
+#, no-c-format
+msgid "5\\% perc."
+msgstr "porc. 5\\%"
+
+#: gui/guiprint.c:1150
+#, no-c-format
+msgid "95\\% perc."
+msgstr "porc. 95\\% "
+
+#: gui/guiprint.c:1151
+msgid "IQ Range"
+msgstr "Recorregut IQ"
+
+#: gui/guiprint.c:1253
+#, c-format
+msgid "Correlation coefficients, using the observations %s - %s"
+msgstr "Coeficients de correlació, usant les observacions %s - %s"
+
+#: gui/guiprint.c:1264 gui/guiprint.c:1358
+msgid "Coefficient covariance matrix"
+msgstr "Matriu de covariàncies dels coeficients"
+
+#: gui/guiprint.c:1346
+#, c-format
+msgid "Correlation coefficients, using the observations %s--%s"
+msgstr "Coeficients de correlació, usant les observacions %s -- %s"
+
+#: gui/guiprint.c:1353
+#, c-format
+msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
+msgstr "valor crític al 5\\%% (a dues cues) = %.4f per a n = %d"
+
+#: gui/guiprint.c:1444
+msgid "Mean Squared Error"
+msgstr "Error quadràtic mig"
+
+#: gui/guiprint.c:1449
+msgid "Theil's $U$"
+msgstr "$U$ de Theil"
+
+#: gui/guiprint.c:1450
+msgid "Bias proportion, $U^M$"
+msgstr "Proporció de biaix, $U^M$"
+
+#: gui/guiprint.c:1451
+msgid "Regression proportion, $U^R$"
+msgstr "Proporció de la regressió, $U^R$"
+
+#: gui/guiprint.c:1452
+msgid "Disturbance proportion, $U^D$"
+msgstr "Proporció de la pertorbació, $U^D$"
+
+#: gui/guiprint.c:1509 gui/guiprint.c:1527
+msgid "Model estimation range:"
+msgstr "Recorregut d'estimació del model:"
+
+#: gui/guiprint.c:1512 gui/guiprint.c:1530
+#, c-format
+msgid "Standard error of residuals = %g"
+msgstr "Desviació típica dels residus = %g"
+
+#: gui/guiprint.c:1599
+msgid ""
+"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
+"\n"
+msgstr ""
+"\\textit{Nota}: * denota un residu superior a 2.5 desviacions típiques\n"
+"\n"
+
+#: gui/guiprint.c:1660
+msgid "Note: * denotes a residual in excess of 2.5 standard errors"
+msgstr "Nota: * denota un residu superior a 2.5 desviacions típiques"
+
+#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
+#: gui/guiprint.c:1867
+msgid "Obs"
+msgstr "Observacions"
+
+#: gui/guiprint.c:1740
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
+"\n"
+msgstr ""
+"Per a intervals de confiança %g\\%%, $z(%g) = %.2f$\n"
+"\n"
+
+#: gui/guiprint.c:1744
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
+"\n"
+msgstr ""
+"Per a intervals de confiança %g\\%%, $t(%d, .%g) = %.3f$\n"
+"\n"
+
+#: gui/guiprint.c:1764
+#, c-format
+msgid "%g\\%% interval"
+msgstr "Interval de %g\\%% "
+
+#: gui/guiprint.c:1848
+#, c-format
+msgid "For %g%% confidence intervals, z(%g) = %.2f"
+msgstr "Per a intervals de confiança %g%%, z(%g) = %.2f"
+
+#: gui/guiprint.c:1852
+#, c-format
+msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
+msgstr "Per a intervals de confiança %g%%, t(%d, %g) = %.3f"
+
+#: gui/guiprint.c:1857
+#, c-format
+msgid "%g%% interval"
+msgstr "Interval de %g%%"
+
+#: gui/guiprint.c:1956 gui/guiprint.c:2005
+#, c-format
+msgid "%g\\%% confidence interval"
+msgstr "Interval de confiança %g\\%% "
+
+#: gui/guiprint.c:2046
+msgid ""
+"You can't use the same character for the column delimiter and the decimal "
+"point"
+msgstr ""
+"No es pot emprar el mateix caràcter com a delimitador de columnes i com a "
+"punt decimal"
+
+#: gui/guiprint.c:2225
+msgid "No scalar variables are currently defined"
+msgstr "En aquest moment no hi ha definida cap variable escalar"
+
 #: gui/helpfiles.c:78
 msgid "Larger"
 msgstr "Més gran"
@@ -14497,6 +14503,20 @@ msgstr "Llistar les sèries"
 #, fuzzy
 msgid "named as"
 msgstr "nom"
+
+#: gui/join-gui.c:436
+msgid "inner key"
+msgstr ""
+
+#: gui/join-gui.c:438
+#, fuzzy
+msgid "outer key"
+msgstr "Agrupació por"
+
+#: gui/join-gui.c:459
+#, fuzzy
+msgid "aggregation"
+msgstr "Separació"
 
 #: gui/join-gui.c:466
 #, fuzzy
@@ -17428,7 +17448,8 @@ msgstr "Valor de farciment inicial:"
 msgid "complex matrix"
 msgstr "matriu de plantilla"
 
-#: gui/ssheet.c:4070
+#: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
+#: plugin/geoplot.c:1300
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "No s'ha pogut obrir '%s'"
@@ -18948,6 +18969,15 @@ msgstr "pendent de 'recorregut' respecte a 'mitjana' = %g\n"
 msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "el valor p per a H0: pendent = 0 és %g\n"
 
+#: plugin/regls.c:1033
+#, fuzzy
+msgid "df = effective number of free parameters"
+msgstr "Rang del Jacobià = %d, nombre de paràmetres lliures = %d\n"
+
+#: plugin/regls.c:1034
+msgid "criterion = ridge minimand"
+msgstr ""
+
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
 msgstr "Aquest no sembla ser un fitxer xport de SAS vàlid"
@@ -18984,6 +19014,100 @@ msgstr "cua inferior"
 msgid "upper tail"
 msgstr "cua superior"
 
+#: plugin/tramo-x12a.c:67
+#, c-format
+msgid "seasonally adjusted %s"
+msgstr "%s corregida d'estacionalitat"
+
+#: plugin/tramo-x12a.c:68
+#, c-format
+msgid "trend/cycle for %s"
+msgstr "tendència/cicle de %s"
+
+#: plugin/tramo-x12a.c:69
+#, c-format
+msgid "irregular component of %s"
+msgstr "componente irregular de %s"
+
+#: plugin/tramo-x12a.c:70
+#, fuzzy, c-format
+msgid "linearized %s"
+msgstr "%s iterat"
+
+#: plugin/tramo-x12a.c:224 plugin/tramo_options.c:422
+msgid "Seasonally adjusted series"
+msgstr "Sèrie corregida d'estacionalitat"
+
+#: plugin/tramo-x12a.c:225 plugin/tramo_options.c:423
+msgid "Trend/cycle"
+msgstr "Tendència/cicle"
+
+#: plugin/tramo-x12a.c:226 plugin/tramo_options.c:424
+msgid "Irregular"
+msgstr "Irregular"
+
+#: plugin/tramo-x12a.c:239
+msgid "X-12-ARIMA options"
+msgstr "Opcions de X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
+msgid "Detect and correct for outliers"
+msgstr "Detectar i corregir outliers"
+
+#: plugin/tramo-x12a.c:248
+msgid "Correct for trading days effect"
+msgstr "Corregir l'efecte dels dies de comerç"
+
+#: plugin/tramo-x12a.c:257 plugin/tramo_options.c:535
+msgid "Log transformation"
+msgstr "Transformació logarítmica"
+
+#: plugin/tramo-x12a.c:264 plugin/tramo_options.c:543
+msgid "No log transformation"
+msgstr "No fer transformació logarítmica"
+
+#: plugin/tramo-x12a.c:271 plugin/tramo_options.c:551
+#: plugin/tramo_options.c:668 plugin/tramo_options.c:728
+msgid "Automatic"
+msgstr "Automàtic"
+
+#: plugin/tramo-x12a.c:284
+msgid "Save data"
+msgstr "Guardar les dades"
+
+#: plugin/tramo-x12a.c:322 plugin/tramo_options.c:514
+msgid "Generate graph"
+msgstr "Generar gràfic"
+
+#: plugin/tramo-x12a.c:328
+msgid "Show full output"
+msgstr "Mostrar tots els resultats"
+
+#: plugin/tramo-x12a.c:337
+msgid "Execute X-12-ARIMA directly"
+msgstr "Executar X-12-ARIMA directament"
+
+#: plugin/tramo-x12a.c:341
+msgid "Make X-12-ARIMA command file"
+msgstr "Preparar un arxiu d'instruccions de X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
+msgid "irregular"
+msgstr "irregular"
+
+#: plugin/tramo-x12a.c:632
+msgid "trend/cycle"
+msgstr "tendència/cicle"
+
+#: plugin/tramo-x12a.c:649
+msgid "adjusted"
+msgstr "corregida"
+
+#: plugin/tramo-x12a.c:942
+#, fuzzy
+msgid "no seasonality was detected"
+msgstr "sense efectes estacionals"
+
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
 msgstr "Model de sèries temporals + correcció estacional"
@@ -18995,18 +19119,6 @@ msgstr "Només model de sèries temporales"
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
 msgstr "Anàlisi automàtica estàndard"
-
-#: plugin/tramo_options.c:422 plugin/tramo-x12a.c:224
-msgid "Seasonally adjusted series"
-msgstr "Sèrie corregida d'estacionalitat"
-
-#: plugin/tramo_options.c:423 plugin/tramo-x12a.c:225
-msgid "Trend/cycle"
-msgstr "Tendència/cicle"
-
-#: plugin/tramo_options.c:424 plugin/tramo-x12a.c:226
-msgid "Irregular"
-msgstr "Irregular"
 
 #: plugin/tramo_options.c:425
 #, fuzzy
@@ -19033,23 +19145,6 @@ msgstr "Resultats reduïts"
 msgid "Save to data set:"
 msgstr "Guardar en el conjunt de dades:"
 
-#: plugin/tramo_options.c:514 plugin/tramo-x12a.c:322
-msgid "Generate graph"
-msgstr "Generar gràfic"
-
-#: plugin/tramo_options.c:535 plugin/tramo-x12a.c:257
-msgid "Log transformation"
-msgstr "Transformació logarítmica"
-
-#: plugin/tramo_options.c:543 plugin/tramo-x12a.c:264
-msgid "No log transformation"
-msgstr "No fer transformació logarítmica"
-
-#: plugin/tramo_options.c:551 plugin/tramo_options.c:668
-#: plugin/tramo_options.c:728 plugin/tramo-x12a.c:271
-msgid "Automatic"
-msgstr "Automàtic"
-
 #: plugin/tramo_options.c:572
 msgid "Mean correction"
 msgstr "Correcció de la mitjana"
@@ -19061,10 +19156,6 @@ msgstr "No fer correcció de la mitjana"
 #: plugin/tramo_options.c:605
 msgid "Outliers"
 msgstr "Outliers"
-
-#: plugin/tramo_options.c:608 plugin/tramo-x12a.c:242
-msgid "Detect and correct for outliers"
-msgstr "Detectar i corregir outliers"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
@@ -19109,67 +19200,6 @@ msgstr "Ordre MA no estacional:"
 #: plugin/tramo_options.c:777
 msgid "Seasonal MA terms:"
 msgstr "Ordre MA estacional:"
-
-#: plugin/tramo-x12a.c:67
-#, c-format
-msgid "seasonally adjusted %s"
-msgstr "%s corregida d'estacionalitat"
-
-#: plugin/tramo-x12a.c:68
-#, c-format
-msgid "trend/cycle for %s"
-msgstr "tendència/cicle de %s"
-
-#: plugin/tramo-x12a.c:69
-#, c-format
-msgid "irregular component of %s"
-msgstr "componente irregular de %s"
-
-#: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
-msgid "linearized %s"
-msgstr "%s iterat"
-
-#: plugin/tramo-x12a.c:239
-msgid "X-12-ARIMA options"
-msgstr "Opcions de X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:248
-msgid "Correct for trading days effect"
-msgstr "Corregir l'efecte dels dies de comerç"
-
-#: plugin/tramo-x12a.c:284
-msgid "Save data"
-msgstr "Guardar les dades"
-
-#: plugin/tramo-x12a.c:328
-msgid "Show full output"
-msgstr "Mostrar tots els resultats"
-
-#: plugin/tramo-x12a.c:337
-msgid "Execute X-12-ARIMA directly"
-msgstr "Executar X-12-ARIMA directament"
-
-#: plugin/tramo-x12a.c:341
-msgid "Make X-12-ARIMA command file"
-msgstr "Preparar un arxiu d'instruccions de X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
-msgid "irregular"
-msgstr "irregular"
-
-#: plugin/tramo-x12a.c:632
-msgid "trend/cycle"
-msgstr "tendència/cicle"
-
-#: plugin/tramo-x12a.c:649
-msgid "adjusted"
-msgstr "corregida"
-
-#: plugin/tramo-x12a.c:942
-#, fuzzy
-msgid "no seasonality was detected"
-msgstr "sense efectes estacionals"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -19309,7 +19339,6 @@ msgstr "Duració"
 #~ msgid " Right-click on graph for menu"
 #~ msgstr "Premi el botó dret del ratolí en el gràfic per verure un menú"
 
-#, c-format
 #~ msgid "Color %d"
 #~ msgstr "Color %d"
 
@@ -19339,11 +19368,10 @@ msgstr "Duració"
 #~ msgid "No series length has been defined"
 #~ msgstr "No s'ha definit una llargada per a les sèries"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "Error en executar una funció"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"
@@ -19400,10 +19428,6 @@ msgstr "Duració"
 
 #~ msgid "stopped after %d iterations\n"
 #~ msgstr "aturat després de %d iteracions\n"
-
-#, fuzzy
-#~ msgid "Package %s is not loaded"
-#~ msgstr "L'objetiu ID %d no està disponible"
 
 #~ msgid "No valid loop condition was given."
 #~ msgstr "No s'ha donat una condició de bucle vàlida."
