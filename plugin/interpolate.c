@@ -222,8 +222,13 @@ static void make_Xx_beta (gretl_vector *y, const double *b,
     }
 }
 
-/* first-order autocorrelation of residuals */
+/* first-order autocorrelation of residuals: see also
+   rhohat() in estimate.c.
+*/
 
+#define DM 1 /* Davidson and McKinnon */
+
+#if DM
 static double acf_1 (const double *u, int T)
 {
     double num = 0, den = 0;
@@ -242,6 +247,24 @@ static double acf_1 (const double *u, int T)
 
     return num / den;
 }
+#else
+static double acf_1 (const double *u, int T)
+{
+    double num = 0, den = 0;
+    int t;
+
+    for (t=1; t<T; t++) {
+	num += u[t] * u[t-1];
+	den += u[t-1] * u[t-1];
+    }
+
+    if (num < 1.0e-9) {
+	return 0;
+    }
+
+    return num / den;
+}
+#endif
 
 /**
  * chow_lin_interpolate:
@@ -304,6 +327,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	return NULL;
     }
 
+    /* set of low-frequency matrices */
     B = gretl_matrix_block_new(&CX, T, nx,
 			       &W, T, T,
 			       &b, nx, 1,
@@ -342,7 +366,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	    yx->val = Yx->val + i * Tx;
 	}
 
-	/* initial OLS */
+	/* initial low-frequency OLS */
 	*err = gretl_matrix_ols(y, CX, b, NULL, u, NULL);
 
 	if (!*err) {
@@ -364,7 +388,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 				   chow_lin_callback, &cl,
 				   &a, OPT_NONE, prn);
 #if CL_DEBUG
-		fprintf(stderr, "gretl_fzero: err = %d\n", *err);
+		fprintf(stderr, "gretl_fzero: err=%d, a=%g\n", *err, a);
 #endif
 	    }
 	}
