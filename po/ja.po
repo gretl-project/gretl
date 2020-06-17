@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl revision 1.405\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 19:33-0400\n"
+"POT-Creation-Date: 2020-06-17 09:06+0200\n"
 "PO-Revision-Date: 2019-01-21 19:37-0500\n"
 "Last-Translator: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
 "Language-Team: Shintaro Nakagawa <shintaro@center.konan-u.ac.jp>\n"
@@ -1291,8 +1291,8 @@ msgid "append: don't know how to align the new series!"
 msgstr "append: 新しい系列をどのように並べるか分かりません!"
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
-#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
+#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "メモリーが足りません!\n"
 
@@ -1580,6 +1580,7 @@ msgid "Compacted dataset would be empty"
 msgstr "期種変換されたデータセットは、おそらく空です"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
+#: plugin/geoplot.c:1197
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "%sを書き込み用に開くことが出来ません"
@@ -2804,6 +2805,14 @@ msgstr "周期的ダミー変数を生成しました\n"
 msgid "Panel dummy variables generated.\n"
 msgstr "パネル・ダミー変数を生成しました\n"
 
+#: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
+msgid "complex arguments/operands not supported"
+msgstr ""
+
+#: lib/src/genmpi.c:148 lib/src/genmpi.c:370
+msgid "The MPI library is not loaded"
+msgstr "MPIライブラリが読み込まれていません"
+
 #: lib/src/gensyntax.c:249
 #, c-format
 msgid "Expected '%c' but formula ended\n"
@@ -3451,10 +3460,6 @@ msgstr "要求により実行は中止されました"
 #: lib/src/gretl_errors.c:87
 msgid "'catch' cannot be used in this context"
 msgstr "'catch'コマンドはこの文脈では利用できません"
-
-#: lib/src/gretl_errors.c:88
-msgid "complex arguments/operands not supported"
-msgstr ""
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
@@ -4602,7 +4607,7 @@ msgstr "観測値は、見つかりませんでした"
 msgid "'%s': malformed gdt file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
 #, c-format
 msgid "Couldn't read '%s'"
 msgstr "'%s'を読み込めません"
@@ -4689,7 +4694,7 @@ msgstr "内部キーがありません"
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "\"%s\"コマンドは、この文脈では利用できません"
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: lib/src/interact.c:2047 cli/gretlcli-mpi.c:664 cli/gretlcli.c:1022
 #: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
@@ -4726,12 +4731,12 @@ msgstr "store: ファイル名が与えられていません\n"
 msgid "Couldn't format model\n"
 msgstr "モデルを初期化できませんでした\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: lib/src/interact.c:3817 cli/gretlcli-mpi.c:902 cli/gretlcli.c:1350
 #: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "スクリプトに無限ループが見つかりました\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
+#: lib/src/interact.c:3858 cli/gretlcli-mpi.c:541 cli/gretlcli.c:887
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: コマンドは利用できません\n"
@@ -7895,6 +7900,55 @@ msgstr "コマンド '%s' は、認識されませんでした"
 msgid "Freed %s\n"
 msgstr "%sを、解放しました\n"
 
+#: cli/gretlcli-mpi.c:137
+msgid ""
+"This program should be run under mpiexec, and requires the name of a\n"
+"script file as argument.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:139
+msgid ""
+"Options:\n"
+" -h or --help        Print this info and exit.\n"
+" -v or --version     Print version info and exit.\n"
+" -q or --quiet       Don't print logo on start-up.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:155
+#, c-format
+msgid ""
+"\n"
+"gretlmpi: error executing script: halting\n"
+msgstr ""
+"\n"
+"gretlmpi: スクリプト実行中のエラー: 停止中\n"
+
+#: cli/gretlcli-mpi.c:698 cli/gretlcli-mpi.c:910 cli/gretlcli.c:1091
+#: cli/gretlcli.c:1358 gui/library.c:10124 gui/library.c:10149
+#, c-format
+msgid "Error reading %s\n"
+msgstr "%sの読み込み中にエラーが発生しました\n"
+
+#: cli/gretlcli-mpi.c:789 cli/gretlcli.c:1229 gui/library.c:10329
+#, c-format
+msgid "Command '%s' ignored; not valid within equation system\n"
+msgstr ""
+"コマンド '%s' は、無視されました: 連立方程式の中では有効ではありません\n"
+
+#: cli/gretlcli-mpi.c:849 cli/gretlcli.c:1303 gui/library.c:10432
+msgid "Data series length count missing or invalid\n"
+msgstr "データ系列の長さのカウントが存在しないか有効ではありません\n"
+
+#: cli/gretlcli-mpi.c:870 cli/gretlcli.c:1111
+msgid "Done\n"
+msgstr "実行しました\n"
+
+#: cli/gretlcli-mpi.c:928 cli/gretlcli.c:1380
+msgid "Dataset cleared\n"
+msgstr "データセットは消去されました\n"
+
 #: cli/gretlcli.c:158
 #, c-format
 msgid ""
@@ -7974,30 +8028,14 @@ msgstr "出力をストアするファイル名をタイプして下さい(enter
 msgid "writing session output to %s%s\n"
 msgstr "セッションのアウトプットを  %s%s に書き込んでいます\n"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
-#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
-#, c-format
-msgid "Error reading %s\n"
-msgstr "%sの読み込み中にエラーが発生しました\n"
-
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
 msgstr ""
-
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
-msgid "Done\n"
-msgstr "実行しました\n"
 
 #: cli/gretlcli.c:1122
 #, c-format
 msgid "commands saved as %s\n"
 msgstr "コマンドは %s として保存しました\n"
-
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
-#, c-format
-msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr ""
-"コマンド '%s' は、無視されました: 連立方程式の中では有効ではありません\n"
 
 #: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
@@ -8008,39 +8046,6 @@ msgstr ""
 #: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "注意：変数は番号付けし直されました"
-
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
-msgid "Data series length count missing or invalid\n"
-msgstr "データ系列の長さのカウントが存在しないか有効ではありません\n"
-
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
-msgid "Dataset cleared\n"
-msgstr "データセットは消去されました\n"
-
-#: cli/gretlcli-mpi.c:137
-msgid ""
-"This program should be run under mpiexec, and requires the name of a\n"
-"script file as argument.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:139
-msgid ""
-"Options:\n"
-" -h or --help        Print this info and exit.\n"
-" -v or --version     Print version info and exit.\n"
-" -q or --quiet       Don't print logo on start-up.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:155
-#, c-format
-msgid ""
-"\n"
-"gretlmpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlmpi: スクリプト実行中のエラー: 停止中\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9263,7 +9268,7 @@ msgstr "データベースのリスト"
 msgid "All packages"
 msgstr "全てのパッケージ"
 
-#: gui/datafiles.c:1900
+#: gui/datafiles.c:1900 gui/join-gui.c:451
 msgid "filter"
 msgstr "フィルタ"
 
@@ -11448,8 +11453,8 @@ msgstr "プロットファイルは破損しています"
 msgid "Couldn't access graph info"
 msgstr "グラフ情報にアクセスできませんでした"
 
-#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
-#: gui/graph_page.c:698
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graph_page.c:698
+#: gui/graphics.c:262
 msgid "monochrome"
 msgstr "白黒"
 
@@ -11552,7 +11557,7 @@ msgstr "フォント"
 msgid "Close"
 msgstr "閉じる"
 
-#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr "カラー"
 
@@ -11847,6 +11852,22 @@ msgstr "軸のタイトル"
 msgid "gretl plot controls"
 msgstr "gretlプロット設定"
 
+#: gui/graph_page.c:288
+msgid "The graph page is full"
+msgstr "グラフ・ページは一杯です"
+
+#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
+msgid "Failed to process TeX file"
+msgstr "TeXファイルの処理に失敗しました"
+
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
+msgid "The graph page is empty"
+msgstr "グラフ・ページは空です"
+
+#: gui/graph_page.c:709
+msgid "graph page options"
+msgstr "グラフ・ページ・オプション"
+
 #: gui/graphics.c:197
 msgid "height"
 msgstr "高さ"
@@ -11878,22 +11899,6 @@ msgstr "プロットのサイズ:"
 #: gui/graphics.c:402
 msgid "Preview"
 msgstr "プレビュー"
-
-#: gui/graph_page.c:288
-msgid "The graph page is full"
-msgstr "グラフ・ページは一杯です"
-
-#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
-msgid "Failed to process TeX file"
-msgstr "TeXファイルの処理に失敗しました"
-
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
-msgid "The graph page is empty"
-msgstr "グラフ・ページは空です"
-
-#: gui/graph_page.c:709
-msgid "graph page options"
-msgstr "グラフ・ページ・オプション"
 
 #: gui/gretl.c:126
 #, fuzzy
@@ -12949,187 +12954,6 @@ msgstr "プレビュー(_P):"
 msgid "Font Selection"
 msgstr "フォント選択"
 
-#: gui/guiprint.c:73 gui/guiprint.c:75
-msgid "gretl output"
-msgstr "gretl出力"
-
-#: gui/guiprint.c:73
-msgid "for"
-msgstr ""
-
-#: gui/guiprint.c:224
-#, c-format
-msgid "%s, page %d"
-msgstr "%s, ページ %d"
-
-#: gui/guiprint.c:422
-#, c-format
-msgid "%s page %d of %d"
-msgstr ""
-
-#: gui/guiprint.c:602 gui/guiprint.c:650
-#, c-format
-msgid "Summary Statistics, using the observations %s - %s"
-msgstr "基本統計量　使用した観測: %s - %s"
-
-#: gui/guiprint.c:656 gui/guiprint.c:1069
-#, c-format
-msgid "for the variable %s (%d valid observations)"
-msgstr "対象となる変数: %s (有効観測数: %d)"
-
-#: gui/guiprint.c:723
-msgid "5% Perc."
-msgstr ""
-
-#: gui/guiprint.c:723
-msgid "95% Perc."
-msgstr ""
-
-#: gui/guiprint.c:880
-msgid "t-ratios in parentheses"
-msgstr "括弧内は、t値"
-
-#: gui/guiprint.c:1011 gui/guiprint.c:1062
-#, c-format
-msgid "Summary Statistics, using the observations %s--%s"
-msgstr "基本統計量　使用した観測: %s--%s"
-
-#: gui/guiprint.c:1120
-msgid "Std.\\ Dev."
-msgstr ""
-
-#: gui/guiprint.c:1120
-msgid "Ex.\\ kurtosis"
-msgstr ""
-
-#: gui/guiprint.c:1148
-#, no-c-format
-msgid "5\\% perc."
-msgstr ""
-
-#: gui/guiprint.c:1150
-#, no-c-format
-msgid "95\\% perc."
-msgstr ""
-
-#: gui/guiprint.c:1151
-msgid "IQ Range"
-msgstr ""
-
-#: gui/guiprint.c:1253
-#, c-format
-msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "相関係数, 使用した観測 %s - %s"
-
-#: gui/guiprint.c:1264 gui/guiprint.c:1358
-msgid "Coefficient covariance matrix"
-msgstr ""
-
-#: gui/guiprint.c:1346
-#, c-format
-msgid "Correlation coefficients, using the observations %s--%s"
-msgstr "相関係数, 使用した観測 %s--%s"
-
-#: gui/guiprint.c:1353
-#, c-format
-msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "5\\%% 臨界値 (両側) = %.4f 但し n = %d"
-
-#: gui/guiprint.c:1444
-msgid "Mean Squared Error"
-msgstr ""
-
-#: gui/guiprint.c:1449
-msgid "Theil's $U$"
-msgstr ""
-
-#: gui/guiprint.c:1450
-msgid "Bias proportion, $U^M$"
-msgstr ""
-
-#: gui/guiprint.c:1451
-msgid "Regression proportion, $U^R$"
-msgstr ""
-
-#: gui/guiprint.c:1452
-msgid "Disturbance proportion, $U^D$"
-msgstr ""
-
-#: gui/guiprint.c:1509 gui/guiprint.c:1527
-msgid "Model estimation range:"
-msgstr "モデル推定範囲:"
-
-#: gui/guiprint.c:1512 gui/guiprint.c:1530
-#, c-format
-msgid "Standard error of residuals = %g"
-msgstr ""
-
-#: gui/guiprint.c:1599
-msgid ""
-"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
-"\n"
-msgstr ""
-"注意: *は2.5標準誤差を超過した残差を表す\n"
-"\n"
-
-#: gui/guiprint.c:1660
-msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "注: *は2.5標準誤差を超える残差を表す"
-
-#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
-#: gui/guiprint.c:1867
-msgid "Obs"
-msgstr ""
-
-#: gui/guiprint.c:1740
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
-"\n"
-msgstr ""
-
-#: gui/guiprint.c:1744
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
-"\n"
-msgstr ""
-
-#: gui/guiprint.c:1764
-#, c-format
-msgid "%g\\%% interval"
-msgstr "%g\\%% 区間"
-
-#: gui/guiprint.c:1848
-#, c-format
-msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr ""
-
-#: gui/guiprint.c:1852
-#, c-format
-msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr ""
-
-#: gui/guiprint.c:1857
-#, c-format
-msgid "%g%% interval"
-msgstr "%g%% 区間"
-
-#: gui/guiprint.c:1956 gui/guiprint.c:2005
-#, c-format
-msgid "%g\\%% confidence interval"
-msgstr "%g\\%% 信頼区間"
-
-#: gui/guiprint.c:2046
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
-msgstr "列区切り記号と小数点記号に、同じ文字を使うことは出来ません"
-
-#: gui/guiprint.c:2225
-msgid "No scalar variables are currently defined"
-msgstr "現在、スカラー変数が定義されていません"
-
 #: gui/gui_utils.c:212
 msgid "equation"
 msgstr "方程式"
@@ -13911,6 +13735,187 @@ msgstr "データスケール"
 msgid "Send data as"
 msgstr "名前を付けてデータを送る"
 
+#: gui/guiprint.c:73 gui/guiprint.c:75
+msgid "gretl output"
+msgstr "gretl出力"
+
+#: gui/guiprint.c:73
+msgid "for"
+msgstr ""
+
+#: gui/guiprint.c:224
+#, c-format
+msgid "%s, page %d"
+msgstr "%s, ページ %d"
+
+#: gui/guiprint.c:422
+#, c-format
+msgid "%s page %d of %d"
+msgstr ""
+
+#: gui/guiprint.c:602 gui/guiprint.c:650
+#, c-format
+msgid "Summary Statistics, using the observations %s - %s"
+msgstr "基本統計量　使用した観測: %s - %s"
+
+#: gui/guiprint.c:656 gui/guiprint.c:1069
+#, c-format
+msgid "for the variable %s (%d valid observations)"
+msgstr "対象となる変数: %s (有効観測数: %d)"
+
+#: gui/guiprint.c:723
+msgid "5% Perc."
+msgstr ""
+
+#: gui/guiprint.c:723
+msgid "95% Perc."
+msgstr ""
+
+#: gui/guiprint.c:880
+msgid "t-ratios in parentheses"
+msgstr "括弧内は、t値"
+
+#: gui/guiprint.c:1011 gui/guiprint.c:1062
+#, c-format
+msgid "Summary Statistics, using the observations %s--%s"
+msgstr "基本統計量　使用した観測: %s--%s"
+
+#: gui/guiprint.c:1120
+msgid "Std.\\ Dev."
+msgstr ""
+
+#: gui/guiprint.c:1120
+msgid "Ex.\\ kurtosis"
+msgstr ""
+
+#: gui/guiprint.c:1148
+#, no-c-format
+msgid "5\\% perc."
+msgstr ""
+
+#: gui/guiprint.c:1150
+#, no-c-format
+msgid "95\\% perc."
+msgstr ""
+
+#: gui/guiprint.c:1151
+msgid "IQ Range"
+msgstr ""
+
+#: gui/guiprint.c:1253
+#, c-format
+msgid "Correlation coefficients, using the observations %s - %s"
+msgstr "相関係数, 使用した観測 %s - %s"
+
+#: gui/guiprint.c:1264 gui/guiprint.c:1358
+msgid "Coefficient covariance matrix"
+msgstr ""
+
+#: gui/guiprint.c:1346
+#, c-format
+msgid "Correlation coefficients, using the observations %s--%s"
+msgstr "相関係数, 使用した観測 %s--%s"
+
+#: gui/guiprint.c:1353
+#, c-format
+msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
+msgstr "5\\%% 臨界値 (両側) = %.4f 但し n = %d"
+
+#: gui/guiprint.c:1444
+msgid "Mean Squared Error"
+msgstr ""
+
+#: gui/guiprint.c:1449
+msgid "Theil's $U$"
+msgstr ""
+
+#: gui/guiprint.c:1450
+msgid "Bias proportion, $U^M$"
+msgstr ""
+
+#: gui/guiprint.c:1451
+msgid "Regression proportion, $U^R$"
+msgstr ""
+
+#: gui/guiprint.c:1452
+msgid "Disturbance proportion, $U^D$"
+msgstr ""
+
+#: gui/guiprint.c:1509 gui/guiprint.c:1527
+msgid "Model estimation range:"
+msgstr "モデル推定範囲:"
+
+#: gui/guiprint.c:1512 gui/guiprint.c:1530
+#, c-format
+msgid "Standard error of residuals = %g"
+msgstr ""
+
+#: gui/guiprint.c:1599
+msgid ""
+"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
+"\n"
+msgstr ""
+"注意: *は2.5標準誤差を超過した残差を表す\n"
+"\n"
+
+#: gui/guiprint.c:1660
+msgid "Note: * denotes a residual in excess of 2.5 standard errors"
+msgstr "注: *は2.5標準誤差を超える残差を表す"
+
+#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
+#: gui/guiprint.c:1867
+msgid "Obs"
+msgstr ""
+
+#: gui/guiprint.c:1740
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
+"\n"
+msgstr ""
+
+#: gui/guiprint.c:1744
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
+"\n"
+msgstr ""
+
+#: gui/guiprint.c:1764
+#, c-format
+msgid "%g\\%% interval"
+msgstr "%g\\%% 区間"
+
+#: gui/guiprint.c:1848
+#, c-format
+msgid "For %g%% confidence intervals, z(%g) = %.2f"
+msgstr ""
+
+#: gui/guiprint.c:1852
+#, c-format
+msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
+msgstr ""
+
+#: gui/guiprint.c:1857
+#, c-format
+msgid "%g%% interval"
+msgstr "%g%% 区間"
+
+#: gui/guiprint.c:1956 gui/guiprint.c:2005
+#, c-format
+msgid "%g\\%% confidence interval"
+msgstr "%g\\%% 信頼区間"
+
+#: gui/guiprint.c:2046
+msgid ""
+"You can't use the same character for the column delimiter and the decimal "
+"point"
+msgstr "列区切り記号と小数点記号に、同じ文字を使うことは出来ません"
+
+#: gui/guiprint.c:2225
+msgid "No scalar variables are currently defined"
+msgstr "現在、スカラー変数が定義されていません"
+
 #: gui/helpfiles.c:78
 msgid "Larger"
 msgstr "拡大"
@@ -14104,6 +14109,20 @@ msgstr "系列リスト"
 #, fuzzy
 msgid "named as"
 msgstr "名称"
+
+#: gui/join-gui.c:436
+msgid "inner key"
+msgstr ""
+
+#: gui/join-gui.c:438
+#, fuzzy
+msgid "outer key"
+msgstr "クラスター変数"
+
+#: gui/join-gui.c:459
+#, fuzzy
+msgid "aggregation"
+msgstr "相関"
 
 #: gui/join-gui.c:466
 msgid "show details of importation"
@@ -16971,7 +16990,8 @@ msgstr "各成分の初期値:"
 msgid "complex matrix"
 msgstr "行列の新規作成"
 
-#: gui/ssheet.c:4070
+#: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
+#: plugin/geoplot.c:1300
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "'%s'を開けません"
@@ -18464,6 +18484,15 @@ msgstr "回帰直線の傾き(レンジ/平均) = %g\n"
 msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "帰無仮説「傾き=0」のp値: %g\n"
 
+#: plugin/regls.c:1033
+#, fuzzy
+msgid "df = effective number of free parameters"
+msgstr "ケース（case）の数"
+
+#: plugin/regls.c:1034
+msgid "criterion = ridge minimand"
+msgstr ""
+
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
 msgstr "このファイルは、有効なSAS xporファイルではないようです"
@@ -18500,6 +18529,100 @@ msgstr ""
 msgid "upper tail"
 msgstr ""
 
+#: plugin/tramo-x12a.c:67
+#, c-format
+msgid "seasonally adjusted %s"
+msgstr "季節調整済み %s"
+
+#: plugin/tramo-x12a.c:68
+#, c-format
+msgid "trend/cycle for %s"
+msgstr "%sに関する トレンド/循環"
+
+#: plugin/tramo-x12a.c:69
+#, c-format
+msgid "irregular component of %s"
+msgstr ""
+
+#: plugin/tramo-x12a.c:70
+#, c-format
+msgid "linearized %s"
+msgstr "線形化された %s"
+
+#: plugin/tramo-x12a.c:224 plugin/tramo_options.c:422
+msgid "Seasonally adjusted series"
+msgstr "季節調整済み系列"
+
+#: plugin/tramo-x12a.c:225 plugin/tramo_options.c:423
+msgid "Trend/cycle"
+msgstr "トレンド/循環"
+
+#: plugin/tramo-x12a.c:226 plugin/tramo_options.c:424
+msgid "Irregular"
+msgstr "不規則変動"
+
+#: plugin/tramo-x12a.c:239
+msgid "X-12-ARIMA options"
+msgstr "X-12-ARIMAオプション"
+
+#: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
+msgid "Detect and correct for outliers"
+msgstr "異常値(外れ値)を発見し修正する"
+
+#: plugin/tramo-x12a.c:248
+msgid "Correct for trading days effect"
+msgstr "曜日効果を修正する"
+
+#: plugin/tramo-x12a.c:257 plugin/tramo_options.c:535
+msgid "Log transformation"
+msgstr "対数変換"
+
+#: plugin/tramo-x12a.c:264 plugin/tramo_options.c:543
+msgid "No log transformation"
+msgstr "対数変換なし"
+
+#: plugin/tramo-x12a.c:271 plugin/tramo_options.c:551
+#: plugin/tramo_options.c:668 plugin/tramo_options.c:728
+msgid "Automatic"
+msgstr "自動"
+
+#: plugin/tramo-x12a.c:284
+msgid "Save data"
+msgstr "データを保存"
+
+#: plugin/tramo-x12a.c:322 plugin/tramo_options.c:514
+msgid "Generate graph"
+msgstr "グラフを作成する"
+
+#: plugin/tramo-x12a.c:328
+msgid "Show full output"
+msgstr "全てのアウトプットを表示"
+
+#: plugin/tramo-x12a.c:337
+msgid "Execute X-12-ARIMA directly"
+msgstr "X-12-ARIMAを直接実行する"
+
+#: plugin/tramo-x12a.c:341
+msgid "Make X-12-ARIMA command file"
+msgstr "X-12-ARIMAコマンドファイルを作成する"
+
+#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
+msgid "irregular"
+msgstr ""
+
+#: plugin/tramo-x12a.c:632
+msgid "trend/cycle"
+msgstr "トレンド/循環"
+
+#: plugin/tramo-x12a.c:649
+msgid "adjusted"
+msgstr "調整済み"
+
+#: plugin/tramo-x12a.c:942
+#, fuzzy
+msgid "no seasonality was detected"
+msgstr "季節調整済み %s"
+
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
 msgstr "時系列モデル＋季節調整"
@@ -18511,18 +18634,6 @@ msgstr "時系列モデルのみ"
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
 msgstr "標準自動分析"
-
-#: plugin/tramo_options.c:422 plugin/tramo-x12a.c:224
-msgid "Seasonally adjusted series"
-msgstr "季節調整済み系列"
-
-#: plugin/tramo_options.c:423 plugin/tramo-x12a.c:225
-msgid "Trend/cycle"
-msgstr "トレンド/循環"
-
-#: plugin/tramo_options.c:424 plugin/tramo-x12a.c:226
-msgid "Irregular"
-msgstr "不規則変動"
 
 #: plugin/tramo_options.c:425
 msgid "Linearized series"
@@ -18548,23 +18659,6 @@ msgstr "省略された出力"
 msgid "Save to data set:"
 msgstr "データセットに保存:"
 
-#: plugin/tramo_options.c:514 plugin/tramo-x12a.c:322
-msgid "Generate graph"
-msgstr "グラフを作成する"
-
-#: plugin/tramo_options.c:535 plugin/tramo-x12a.c:257
-msgid "Log transformation"
-msgstr "対数変換"
-
-#: plugin/tramo_options.c:543 plugin/tramo-x12a.c:264
-msgid "No log transformation"
-msgstr "対数変換なし"
-
-#: plugin/tramo_options.c:551 plugin/tramo_options.c:668
-#: plugin/tramo_options.c:728 plugin/tramo-x12a.c:271
-msgid "Automatic"
-msgstr "自動"
-
 #: plugin/tramo_options.c:572
 msgid "Mean correction"
 msgstr ""
@@ -18576,10 +18670,6 @@ msgstr ""
 #: plugin/tramo_options.c:605
 msgid "Outliers"
 msgstr "異常値(外れ値)"
-
-#: plugin/tramo_options.c:608 plugin/tramo-x12a.c:242
-msgid "Detect and correct for outliers"
-msgstr "異常値(外れ値)を発見し修正する"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
@@ -18624,67 +18714,6 @@ msgstr "非季節移動平均(MA)項:"
 #: plugin/tramo_options.c:777
 msgid "Seasonal MA terms:"
 msgstr "季節移動平均(MA)項:"
-
-#: plugin/tramo-x12a.c:67
-#, c-format
-msgid "seasonally adjusted %s"
-msgstr "季節調整済み %s"
-
-#: plugin/tramo-x12a.c:68
-#, c-format
-msgid "trend/cycle for %s"
-msgstr "%sに関する トレンド/循環"
-
-#: plugin/tramo-x12a.c:69
-#, c-format
-msgid "irregular component of %s"
-msgstr ""
-
-#: plugin/tramo-x12a.c:70
-#, c-format
-msgid "linearized %s"
-msgstr "線形化された %s"
-
-#: plugin/tramo-x12a.c:239
-msgid "X-12-ARIMA options"
-msgstr "X-12-ARIMAオプション"
-
-#: plugin/tramo-x12a.c:248
-msgid "Correct for trading days effect"
-msgstr "曜日効果を修正する"
-
-#: plugin/tramo-x12a.c:284
-msgid "Save data"
-msgstr "データを保存"
-
-#: plugin/tramo-x12a.c:328
-msgid "Show full output"
-msgstr "全てのアウトプットを表示"
-
-#: plugin/tramo-x12a.c:337
-msgid "Execute X-12-ARIMA directly"
-msgstr "X-12-ARIMAを直接実行する"
-
-#: plugin/tramo-x12a.c:341
-msgid "Make X-12-ARIMA command file"
-msgstr "X-12-ARIMAコマンドファイルを作成する"
-
-#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
-msgid "irregular"
-msgstr ""
-
-#: plugin/tramo-x12a.c:632
-msgid "trend/cycle"
-msgstr "トレンド/循環"
-
-#: plugin/tramo-x12a.c:649
-msgid "adjusted"
-msgstr "調整済み"
-
-#: plugin/tramo-x12a.c:942
-#, fuzzy
-msgid "no seasonality was detected"
-msgstr "季節調整済み %s"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -18824,7 +18853,6 @@ msgstr "説明"
 #~ msgid " Right-click on graph for menu"
 #~ msgstr "グラフ上で右クリックするとメニューが開きます"
 
-#, c-format
 #~ msgid "Color %d"
 #~ msgstr "色　%d"
 
@@ -18848,11 +18876,10 @@ msgstr "説明"
 #~ msgid "No series length has been defined"
 #~ msgstr "系列の長さが定義されていません"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "関数の実行中にエラーが発生しました"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"
@@ -18864,9 +18891,6 @@ msgstr "説明"
 
 #~ msgid "Program to play MIDI files"
 #~ msgstr "MIDIファイルを演奏するためのプログラム"
-
-#~ msgid "The MPI library is not loaded"
-#~ msgstr "MPIライブラリが読み込まれていません"
 
 #~ msgid "%s: not a valid parameter name"
 #~ msgstr "%s: 有効なパラメータ名ではありません"

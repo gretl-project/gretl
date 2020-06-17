@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 19:33-0400\n"
+"POT-Creation-Date: 2020-06-17 09:06+0200\n"
 "PO-Revision-Date: 2020-02-27 00:16+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
@@ -1311,8 +1311,8 @@ msgid "append: don't know how to align the new series!"
 msgstr "新增: 不知如何去对齐新资料 (align the new series)!"
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
-#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
+#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "记忆体不足\n"
 
@@ -1600,6 +1600,7 @@ msgid "Compacted dataset would be empty"
 msgstr "未成功转换资料 (可能少了某些样本资料)"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
+#: plugin/geoplot.c:1197
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "无法开启并写入 %s  "
@@ -2834,6 +2835,14 @@ msgstr "已产生周期虚拟变数.\n"
 msgid "Panel dummy variables generated.\n"
 msgstr "追踪资料虚拟变数 (panel dummy) 已经产生\n"
 
+#: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
+msgid "complex arguments/operands not supported"
+msgstr ""
+
+#: lib/src/genmpi.c:148 lib/src/genmpi.c:370
+msgid "The MPI library is not loaded"
+msgstr "没找到 MPI library "
+
 #: lib/src/gensyntax.c:249
 #, c-format
 msgid "Expected '%c' but formula ended\n"
@@ -3490,10 +3499,6 @@ msgstr "执行被使用者中断"
 #: lib/src/gretl_errors.c:87
 msgid "'catch' cannot be used in this context"
 msgstr "'catch' 这个指令不适用在此处"
-
-#: lib/src/gretl_errors.c:88
-msgid "complex arguments/operands not supported"
-msgstr ""
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
@@ -4656,7 +4661,7 @@ msgstr "没有发现任何样本"
 msgid "'%s': malformed gdt file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
 #, fuzzy, c-format
 msgid "Couldn't read '%s'"
 msgstr "读取资讯档 %s\n"
@@ -4742,7 +4747,7 @@ msgstr "Inner key 找不到"
 msgid "The \"%s\" command cannot be used in this context"
 msgstr " \"%s\" 这个指令不适用在此处"
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: lib/src/interact.c:2047 cli/gretlcli-mpi.c:664 cli/gretlcli.c:1022
 #: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
@@ -4779,12 +4784,12 @@ msgstr "store: 并未给定档案名称\n"
 msgid "Couldn't format model\n"
 msgstr "无法 format model\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: lib/src/interact.c:3817 cli/gretlcli-mpi.c:902 cli/gretlcli.c:1350
 #: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "在此 script 侦测到无限回圈\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
+#: lib/src/interact.c:3858 cli/gretlcli-mpi.c:541 cli/gretlcli.c:887
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: 指令无法使用\n"
@@ -8082,6 +8087,54 @@ msgstr "'%s' 并不是有效的 gretl 指令"
 msgid "Freed %s\n"
 msgstr ""
 
+#: cli/gretlcli-mpi.c:137
+msgid ""
+"This program should be run under mpiexec, and requires the name of a\n"
+"script file as argument.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:139
+msgid ""
+"Options:\n"
+" -h or --help        Print this info and exit.\n"
+" -v or --version     Print version info and exit.\n"
+" -q or --quiet       Don't print logo on start-up.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:155
+#, fuzzy, c-format
+msgid ""
+"\n"
+"gretlmpi: error executing script: halting\n"
+msgstr ""
+"\n"
+"gretlcli: 指令档执行有误: 已经停止执行 (halting)\n"
+
+#: cli/gretlcli-mpi.c:698 cli/gretlcli-mpi.c:910 cli/gretlcli.c:1091
+#: cli/gretlcli.c:1358 gui/library.c:10124 gui/library.c:10149
+#, fuzzy, c-format
+msgid "Error reading %s\n"
+msgstr "资料错误"
+
+#: cli/gretlcli-mpi.c:789 cli/gretlcli.c:1229 gui/library.c:10329
+#, c-format
+msgid "Command '%s' ignored; not valid within equation system\n"
+msgstr "指令 '%s' 已被略过; 因为在系统方程序中不适用\n"
+
+#: cli/gretlcli-mpi.c:849 cli/gretlcli.c:1303 gui/library.c:10432
+msgid "Data series length count missing or invalid\n"
+msgstr "资料长度不正确 (missing or invalid)\n"
+
+#: cli/gretlcli-mpi.c:870 cli/gretlcli.c:1111
+msgid "Done\n"
+msgstr "已完成\n"
+
+#: cli/gretlcli-mpi.c:928 cli/gretlcli.c:1380
+msgid "Dataset cleared\n"
+msgstr "资料档已清除\n"
+
 #: cli/gretlcli.c:158
 #, c-format
 msgid ""
@@ -8175,29 +8228,14 @@ msgstr "请输入档案名称, 以储存结果 (按 enter 可离开): "
 msgid "writing session output to %s%s\n"
 msgstr "储存分析档(_a)"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
-#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
-#, fuzzy, c-format
-msgid "Error reading %s\n"
-msgstr "资料错误"
-
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
 msgstr ""
-
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
-msgid "Done\n"
-msgstr "已完成\n"
 
 #: cli/gretlcli.c:1122
 #, fuzzy, c-format
 msgid "commands saved as %s\n"
 msgstr "另存新档(_a)"
-
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
-#, c-format
-msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr "指令 '%s' 已被略过; 因为在系统方程序中不适用\n"
 
 #: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
@@ -8207,39 +8245,6 @@ msgstr ""
 #: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "注意: 变数代码在删除变数后, 已重新设定"
-
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
-msgid "Data series length count missing or invalid\n"
-msgstr "资料长度不正确 (missing or invalid)\n"
-
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
-msgid "Dataset cleared\n"
-msgstr "资料档已清除\n"
-
-#: cli/gretlcli-mpi.c:137
-msgid ""
-"This program should be run under mpiexec, and requires the name of a\n"
-"script file as argument.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:139
-msgid ""
-"Options:\n"
-" -h or --help        Print this info and exit.\n"
-" -v or --version     Print version info and exit.\n"
-" -q or --quiet       Don't print logo on start-up.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:155
-#, fuzzy, c-format
-msgid ""
-"\n"
-"gretlmpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlcli: 指令档执行有误: 已经停止执行 (halting)\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9470,7 +9475,7 @@ msgstr "列示资料库"
 msgid "All packages"
 msgstr "全部自订函数套件"
 
-#: gui/datafiles.c:1900
+#: gui/datafiles.c:1900 gui/join-gui.c:451
 msgid "filter"
 msgstr "筛选器 (Filter)"
 
@@ -11692,8 +11697,8 @@ msgstr "Plot 图档毁损"
 msgid "Couldn't access graph info"
 msgstr "无法存取绘图资讯"
 
-#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
-#: gui/graph_page.c:698
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graph_page.c:698
+#: gui/graphics.c:262
 msgid "monochrome"
 msgstr "黑白"
 
@@ -11798,7 +11803,7 @@ msgstr "字形"
 msgid "Close"
 msgstr "关闭"
 
-#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr "彩色"
 
@@ -12090,6 +12095,22 @@ msgstr "轴之变数名称"
 msgid "gretl plot controls"
 msgstr "gretl 绘图设定"
 
+#: gui/graph_page.c:288
+msgid "The graph page is full"
+msgstr "绘图区已满"
+
+#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
+msgid "Failed to process TeX file"
+msgstr "无法处理 TeX 档"
+
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
+msgid "The graph page is empty"
+msgstr "绘图区是空的"
+
+#: gui/graph_page.c:709
+msgid "graph page options"
+msgstr "绘图选项"
+
 #: gui/graphics.c:197
 msgid "height"
 msgstr "高度"
@@ -12121,22 +12142,6 @@ msgstr "绘图 dimensions:"
 #: gui/graphics.c:402
 msgid "Preview"
 msgstr "预览 (preview)"
-
-#: gui/graph_page.c:288
-msgid "The graph page is full"
-msgstr "绘图区已满"
-
-#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
-msgid "Failed to process TeX file"
-msgstr "无法处理 TeX 档"
-
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
-msgid "The graph page is empty"
-msgstr "绘图区是空的"
-
-#: gui/graph_page.c:709
-msgid "graph page options"
-msgstr "绘图选项"
 
 #: gui/gretl.c:126
 msgid ""
@@ -13187,190 +13192,6 @@ msgstr "预览(_P)"
 msgid "Font Selection"
 msgstr "字形选择"
 
-#: gui/guiprint.c:73 gui/guiprint.c:75
-msgid "gretl output"
-msgstr "gretl 输出之结果"
-
-#: gui/guiprint.c:73
-msgid "for"
-msgstr "for"
-
-#: gui/guiprint.c:224
-#, c-format
-msgid "%s, page %d"
-msgstr "%s, 第 %d 页"
-
-#: gui/guiprint.c:422
-#, c-format
-msgid "%s page %d of %d"
-msgstr "%s page %d of %d"
-
-#: gui/guiprint.c:602 gui/guiprint.c:650
-#, c-format
-msgid "Summary Statistics, using the observations %s - %s"
-msgstr "叙述统计, 所使用的样本为 %s - %s"
-
-#: gui/guiprint.c:656 gui/guiprint.c:1069
-#, c-format
-msgid "for the variable %s (%d valid observations)"
-msgstr "变数： %s (有效样本数  %d)"
-
-#: gui/guiprint.c:723
-msgid "5% Perc."
-msgstr ""
-
-#: gui/guiprint.c:723
-msgid "95% Perc."
-msgstr ""
-
-#: gui/guiprint.c:880
-msgid "t-ratios in parentheses"
-msgstr "小括号中的数字是 t-值"
-
-#: gui/guiprint.c:1011 gui/guiprint.c:1062
-#, c-format
-msgid "Summary Statistics, using the observations %s--%s"
-msgstr "叙述统计, 所使用的样本为 %s - %s"
-
-#: gui/guiprint.c:1120
-msgid "Std.\\ Dev."
-msgstr "Std.\\ Dev."
-
-#: gui/guiprint.c:1120
-msgid "Ex.\\ kurtosis"
-msgstr "Ex.\\ kurtosis"
-
-#: gui/guiprint.c:1148
-#, no-c-format
-msgid "5\\% perc."
-msgstr ""
-
-#: gui/guiprint.c:1150
-#, no-c-format
-msgid "95\\% perc."
-msgstr ""
-
-#: gui/guiprint.c:1151
-#, fuzzy
-msgid "IQ Range"
-msgstr "设定子样本范围(_S)"
-
-#: gui/guiprint.c:1253
-#, c-format
-msgid "Correlation coefficients, using the observations %s - %s"
-msgstr ""
-
-#: gui/guiprint.c:1264 gui/guiprint.c:1358
-msgid "Coefficient covariance matrix"
-msgstr "系数共变数矩阵"
-
-#: gui/guiprint.c:1346
-#, c-format
-msgid "Correlation coefficients, using the observations %s--%s"
-msgstr ""
-
-#: gui/guiprint.c:1353
-#, c-format
-msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr ""
-
-#: gui/guiprint.c:1444
-msgid "Mean Squared Error"
-msgstr "Mean Squared Error"
-
-#: gui/guiprint.c:1449
-msgid "Theil's $U$"
-msgstr "Theil's $U$"
-
-#: gui/guiprint.c:1450
-msgid "Bias proportion, $U^M$"
-msgstr "Bias proportion, $U^M$"
-
-#: gui/guiprint.c:1451
-msgid "Regression proportion, $U^R$"
-msgstr "Regression proportion, $U^R$"
-
-#: gui/guiprint.c:1452
-msgid "Disturbance proportion, $U^D$"
-msgstr "Disturbance proportion, $U^D$"
-
-#: gui/guiprint.c:1509 gui/guiprint.c:1527
-#, fuzzy
-msgid "Model estimation range:"
-msgstr "模型估计所用之样本范围: %s - %s"
-
-#: gui/guiprint.c:1512 gui/guiprint.c:1530
-#, fuzzy, c-format
-msgid "Standard error of residuals = %g"
-msgstr "平均数之标准误 (standard error) = %g\n"
-
-#: gui/guiprint.c:1599
-msgid ""
-"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
-"\n"
-msgstr ""
-
-#: gui/guiprint.c:1660
-msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "Note: * 表示残差超过 2.5 倍的标准误 "
-
-#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
-#: gui/guiprint.c:1867
-#, fuzzy
-msgid "Obs"
-msgstr ""
-" ':' 符号不可以出现在这种资料频率的开始样本中 (allowed in starting obs with "
-"frequency 1)"
-
-#: gui/guiprint.c:1740
-#, fuzzy, c-format
-msgid ""
-"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
-"\n"
-msgstr "%g%% 信赖区间 = %g to %g"
-
-#: gui/guiprint.c:1744
-#, fuzzy, c-format
-msgid ""
-"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
-"\n"
-msgstr "%g%% 信赖区间 = %g to %g"
-
-#: gui/guiprint.c:1764
-#, c-format
-msgid "%g\\%% interval"
-msgstr "%g%% 信赖区间"
-
-#: gui/guiprint.c:1848
-#, fuzzy, c-format
-msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr " For %g%% confidence intervals, z(%g) = %.2f\n"
-
-#: gui/guiprint.c:1852
-#, fuzzy, c-format
-msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
-
-#: gui/guiprint.c:1857
-#, c-format
-msgid "%g%% interval"
-msgstr "%g%% 信赖区间 "
-
-#: gui/guiprint.c:1956 gui/guiprint.c:2005
-#, c-format
-msgid "%g\\%% confidence interval"
-msgstr "%g\\%% 信赖区间 "
-
-#: gui/guiprint.c:2046
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
-msgstr "不能使用和栏「分隔符号」相同的符号当做小数点符号"
-
-#: gui/guiprint.c:2225
-msgid "No scalar variables are currently defined"
-msgstr "目前没有定义任何数值变数"
-
 #: gui/gui_utils.c:212
 #, fuzzy
 msgid "equation"
@@ -14169,6 +13990,190 @@ msgstr ""
 msgid "Send data as"
 msgstr ""
 
+#: gui/guiprint.c:73 gui/guiprint.c:75
+msgid "gretl output"
+msgstr "gretl 输出之结果"
+
+#: gui/guiprint.c:73
+msgid "for"
+msgstr "for"
+
+#: gui/guiprint.c:224
+#, c-format
+msgid "%s, page %d"
+msgstr "%s, 第 %d 页"
+
+#: gui/guiprint.c:422
+#, c-format
+msgid "%s page %d of %d"
+msgstr "%s page %d of %d"
+
+#: gui/guiprint.c:602 gui/guiprint.c:650
+#, c-format
+msgid "Summary Statistics, using the observations %s - %s"
+msgstr "叙述统计, 所使用的样本为 %s - %s"
+
+#: gui/guiprint.c:656 gui/guiprint.c:1069
+#, c-format
+msgid "for the variable %s (%d valid observations)"
+msgstr "变数： %s (有效样本数  %d)"
+
+#: gui/guiprint.c:723
+msgid "5% Perc."
+msgstr ""
+
+#: gui/guiprint.c:723
+msgid "95% Perc."
+msgstr ""
+
+#: gui/guiprint.c:880
+msgid "t-ratios in parentheses"
+msgstr "小括号中的数字是 t-值"
+
+#: gui/guiprint.c:1011 gui/guiprint.c:1062
+#, c-format
+msgid "Summary Statistics, using the observations %s--%s"
+msgstr "叙述统计, 所使用的样本为 %s - %s"
+
+#: gui/guiprint.c:1120
+msgid "Std.\\ Dev."
+msgstr "Std.\\ Dev."
+
+#: gui/guiprint.c:1120
+msgid "Ex.\\ kurtosis"
+msgstr "Ex.\\ kurtosis"
+
+#: gui/guiprint.c:1148
+#, no-c-format
+msgid "5\\% perc."
+msgstr ""
+
+#: gui/guiprint.c:1150
+#, no-c-format
+msgid "95\\% perc."
+msgstr ""
+
+#: gui/guiprint.c:1151
+#, fuzzy
+msgid "IQ Range"
+msgstr "设定子样本范围(_S)"
+
+#: gui/guiprint.c:1253
+#, c-format
+msgid "Correlation coefficients, using the observations %s - %s"
+msgstr ""
+
+#: gui/guiprint.c:1264 gui/guiprint.c:1358
+msgid "Coefficient covariance matrix"
+msgstr "系数共变数矩阵"
+
+#: gui/guiprint.c:1346
+#, c-format
+msgid "Correlation coefficients, using the observations %s--%s"
+msgstr ""
+
+#: gui/guiprint.c:1353
+#, c-format
+msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
+msgstr ""
+
+#: gui/guiprint.c:1444
+msgid "Mean Squared Error"
+msgstr "Mean Squared Error"
+
+#: gui/guiprint.c:1449
+msgid "Theil's $U$"
+msgstr "Theil's $U$"
+
+#: gui/guiprint.c:1450
+msgid "Bias proportion, $U^M$"
+msgstr "Bias proportion, $U^M$"
+
+#: gui/guiprint.c:1451
+msgid "Regression proportion, $U^R$"
+msgstr "Regression proportion, $U^R$"
+
+#: gui/guiprint.c:1452
+msgid "Disturbance proportion, $U^D$"
+msgstr "Disturbance proportion, $U^D$"
+
+#: gui/guiprint.c:1509 gui/guiprint.c:1527
+#, fuzzy
+msgid "Model estimation range:"
+msgstr "模型估计所用之样本范围: %s - %s"
+
+#: gui/guiprint.c:1512 gui/guiprint.c:1530
+#, fuzzy, c-format
+msgid "Standard error of residuals = %g"
+msgstr "平均数之标准误 (standard error) = %g\n"
+
+#: gui/guiprint.c:1599
+msgid ""
+"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
+"\n"
+msgstr ""
+
+#: gui/guiprint.c:1660
+msgid "Note: * denotes a residual in excess of 2.5 standard errors"
+msgstr "Note: * 表示残差超过 2.5 倍的标准误 "
+
+#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
+#: gui/guiprint.c:1867
+#, fuzzy
+msgid "Obs"
+msgstr ""
+" ':' 符号不可以出现在这种资料频率的开始样本中 (allowed in starting obs with "
+"frequency 1)"
+
+#: gui/guiprint.c:1740
+#, fuzzy, c-format
+msgid ""
+"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
+"\n"
+msgstr "%g%% 信赖区间 = %g to %g"
+
+#: gui/guiprint.c:1744
+#, fuzzy, c-format
+msgid ""
+"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
+"\n"
+msgstr "%g%% 信赖区间 = %g to %g"
+
+#: gui/guiprint.c:1764
+#, c-format
+msgid "%g\\%% interval"
+msgstr "%g%% 信赖区间"
+
+#: gui/guiprint.c:1848
+#, fuzzy, c-format
+msgid "For %g%% confidence intervals, z(%g) = %.2f"
+msgstr " For %g%% confidence intervals, z(%g) = %.2f\n"
+
+#: gui/guiprint.c:1852
+#, fuzzy, c-format
+msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
+msgstr " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
+
+#: gui/guiprint.c:1857
+#, c-format
+msgid "%g%% interval"
+msgstr "%g%% 信赖区间 "
+
+#: gui/guiprint.c:1956 gui/guiprint.c:2005
+#, c-format
+msgid "%g\\%% confidence interval"
+msgstr "%g\\%% 信赖区间 "
+
+#: gui/guiprint.c:2046
+msgid ""
+"You can't use the same character for the column delimiter and the decimal "
+"point"
+msgstr "不能使用和栏「分隔符号」相同的符号当做小数点符号"
+
+#: gui/guiprint.c:2225
+msgid "No scalar variables are currently defined"
+msgstr "目前没有定义任何数值变数"
+
 #: gui/helpfiles.c:78
 msgid "Larger"
 msgstr "放大"
@@ -14362,6 +14367,20 @@ msgstr "列出变数"
 #, fuzzy
 msgid "named as"
 msgstr "变数名称"
+
+#: gui/join-gui.c:436
+msgid "inner key"
+msgstr ""
+
+#: gui/join-gui.c:438
+#, fuzzy
+msgid "outer key"
+msgstr "Cluster by"
+
+#: gui/join-gui.c:459
+#, fuzzy
+msgid "aggregation"
+msgstr "相关性检定"
 
 #: gui/join-gui.c:466
 msgid "show details of importation"
@@ -17301,7 +17320,8 @@ msgstr "填入数值:"
 msgid "complex matrix"
 msgstr "新矩阵"
 
-#: gui/ssheet.c:4070
+#: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
+#: plugin/geoplot.c:1300
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "无法开启 '%s'"
@@ -18825,6 +18845,15 @@ msgstr "组距对均数之斜率 slope = %g\n"
 msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "虚无假设 H0: 斜率 = 0 之 p-值 = %g\n"
 
+#: plugin/regls.c:1033
+#, fuzzy
+msgid "df = effective number of free parameters"
+msgstr "重新抽样数"
+
+#: plugin/regls.c:1034
+msgid "criterion = ridge minimand"
+msgstr ""
+
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
 msgstr "此档的内容似乎不是有效的 SAS xport 资料档格式"
@@ -18863,6 +18892,101 @@ msgstr "右尾机率"
 msgid "upper tail"
 msgstr "右尾机率"
 
+#: plugin/tramo-x12a.c:67
+#, c-format
+msgid "seasonally adjusted %s"
+msgstr "季节调整后: %s"
+
+#: plugin/tramo-x12a.c:68
+#, c-format
+msgid "trend/cycle for %s"
+msgstr "%s 的趋势或循环值"
+
+#: plugin/tramo-x12a.c:69
+#, c-format
+msgid "irregular component of %s"
+msgstr "%s 的不规则成份"
+
+#: plugin/tramo-x12a.c:70
+#, fuzzy, c-format
+msgid "linearized %s"
+msgstr "线性刻度"
+
+#: plugin/tramo-x12a.c:224 plugin/tramo_options.c:422
+msgid "Seasonally adjusted series"
+msgstr "季节调整后之变数"
+
+#: plugin/tramo-x12a.c:225 plugin/tramo_options.c:423
+msgid "Trend/cycle"
+msgstr "趋势或循环因数之变数 (Trend/cycle)"
+
+#: plugin/tramo-x12a.c:226 plugin/tramo_options.c:424
+msgid "Irregular"
+msgstr "不规则成份变数 (irregular)"
+
+#: plugin/tramo-x12a.c:239
+#, fuzzy
+msgid "X-12-ARIMA options"
+msgstr "_X-12-ARIMA analysis"
+
+#: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
+msgid "Detect and correct for outliers"
+msgstr "侦测与修正异常值 (outliers)"
+
+#: plugin/tramo-x12a.c:248
+msgid "Correct for trading days effect"
+msgstr ""
+
+#: plugin/tramo-x12a.c:257 plugin/tramo_options.c:535
+msgid "Log transformation"
+msgstr "对数转换 (Log transformation)"
+
+#: plugin/tramo-x12a.c:264 plugin/tramo_options.c:543
+msgid "No log transformation"
+msgstr "不进行对数转换 (No Log transformation)"
+
+#: plugin/tramo-x12a.c:271 plugin/tramo_options.c:551
+#: plugin/tramo_options.c:668 plugin/tramo_options.c:728
+msgid "Automatic"
+msgstr "自动"
+
+#: plugin/tramo-x12a.c:284
+msgid "Save data"
+msgstr "储存资料"
+
+#: plugin/tramo-x12a.c:322 plugin/tramo_options.c:514
+msgid "Generate graph"
+msgstr "变数绘图"
+
+#: plugin/tramo-x12a.c:328
+msgid "Show full output"
+msgstr "显示全部结果"
+
+#: plugin/tramo-x12a.c:337
+msgid "Execute X-12-ARIMA directly"
+msgstr "直接执行 X-12-ARIMA "
+
+#: plugin/tramo-x12a.c:341
+msgid "Make X-12-ARIMA command file"
+msgstr ""
+
+#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
+msgid "irregular"
+msgstr "不规则成份变数 (irregular)"
+
+#: plugin/tramo-x12a.c:632
+msgid "trend/cycle"
+msgstr "趋势或循环值"
+
+#: plugin/tramo-x12a.c:649
+msgid "adjusted"
+msgstr "调整后"
+
+#: plugin/tramo-x12a.c:942
+#, fuzzy
+msgid "no seasonality was detected"
+msgstr "无季节效果"
+
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
 msgstr "时间序列模型 + 季节调整 (seasonal adjustment)"
@@ -18874,18 +18998,6 @@ msgstr "只使用时间序列模型 (Time-series model only)"
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
 msgstr "采用标准之自动分析 (Standard automatic analysis)"
-
-#: plugin/tramo_options.c:422 plugin/tramo-x12a.c:224
-msgid "Seasonally adjusted series"
-msgstr "季节调整后之变数"
-
-#: plugin/tramo_options.c:423 plugin/tramo-x12a.c:225
-msgid "Trend/cycle"
-msgstr "趋势或循环因数之变数 (Trend/cycle)"
-
-#: plugin/tramo_options.c:424 plugin/tramo-x12a.c:226
-msgid "Irregular"
-msgstr "不规则成份变数 (irregular)"
 
 #: plugin/tramo_options.c:425
 msgid "Linearized series"
@@ -18911,23 +19023,6 @@ msgstr "精简结果 (Reduced output)"
 msgid "Save to data set:"
 msgstr "储存分析后之变数:"
 
-#: plugin/tramo_options.c:514 plugin/tramo-x12a.c:322
-msgid "Generate graph"
-msgstr "变数绘图"
-
-#: plugin/tramo_options.c:535 plugin/tramo-x12a.c:257
-msgid "Log transformation"
-msgstr "对数转换 (Log transformation)"
-
-#: plugin/tramo_options.c:543 plugin/tramo-x12a.c:264
-msgid "No log transformation"
-msgstr "不进行对数转换 (No Log transformation)"
-
-#: plugin/tramo_options.c:551 plugin/tramo_options.c:668
-#: plugin/tramo_options.c:728 plugin/tramo-x12a.c:271
-msgid "Automatic"
-msgstr "自动"
-
 #: plugin/tramo_options.c:572
 msgid "Mean correction"
 msgstr "均数修正 (mean correction)"
@@ -18939,10 +19034,6 @@ msgstr "不进行均数修正 (no mean correction)"
 #: plugin/tramo_options.c:605
 msgid "Outliers"
 msgstr "异常值"
-
-#: plugin/tramo_options.c:608 plugin/tramo-x12a.c:242
-msgid "Detect and correct for outliers"
-msgstr "侦测与修正异常值 (outliers)"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
@@ -18987,68 +19078,6 @@ msgstr ""
 #: plugin/tramo_options.c:777
 msgid "Seasonal MA terms:"
 msgstr "季节 MA 项:"
-
-#: plugin/tramo-x12a.c:67
-#, c-format
-msgid "seasonally adjusted %s"
-msgstr "季节调整后: %s"
-
-#: plugin/tramo-x12a.c:68
-#, c-format
-msgid "trend/cycle for %s"
-msgstr "%s 的趋势或循环值"
-
-#: plugin/tramo-x12a.c:69
-#, c-format
-msgid "irregular component of %s"
-msgstr "%s 的不规则成份"
-
-#: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
-msgid "linearized %s"
-msgstr "线性刻度"
-
-#: plugin/tramo-x12a.c:239
-#, fuzzy
-msgid "X-12-ARIMA options"
-msgstr "_X-12-ARIMA analysis"
-
-#: plugin/tramo-x12a.c:248
-msgid "Correct for trading days effect"
-msgstr ""
-
-#: plugin/tramo-x12a.c:284
-msgid "Save data"
-msgstr "储存资料"
-
-#: plugin/tramo-x12a.c:328
-msgid "Show full output"
-msgstr "显示全部结果"
-
-#: plugin/tramo-x12a.c:337
-msgid "Execute X-12-ARIMA directly"
-msgstr "直接执行 X-12-ARIMA "
-
-#: plugin/tramo-x12a.c:341
-msgid "Make X-12-ARIMA command file"
-msgstr ""
-
-#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
-msgid "irregular"
-msgstr "不规则成份变数 (irregular)"
-
-#: plugin/tramo-x12a.c:632
-msgid "trend/cycle"
-msgstr "趋势或循环值"
-
-#: plugin/tramo-x12a.c:649
-msgid "adjusted"
-msgstr "调整后"
-
-#: plugin/tramo-x12a.c:942
-#, fuzzy
-msgid "no seasonality was detected"
-msgstr "无季节效果"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -19188,7 +19217,6 @@ msgstr "增加样本(_A)"
 #~ msgid " Right-click on graph for menu"
 #~ msgstr " 在图上按鼠标键会出现选单"
 
-#, c-format
 #~ msgid "Color %d"
 #~ msgstr "第 %d 条线颜色: "
 
@@ -19217,7 +19245,7 @@ msgstr "增加样本(_A)"
 #~ msgid "No series length has been defined"
 #~ msgstr "资料的样本长度没有被定义"
 
-#, fuzzy, c-format
+#, fuzzy
 #~| msgid "Error executing function"
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "函数执行错误"
@@ -19230,9 +19258,6 @@ msgstr "增加样本(_A)"
 
 #~ msgid "%s: using default compaction method: averaging"
 #~ msgstr "%s: 使用预设简化方法: 取平均"
-
-#~ msgid "The MPI library is not loaded"
-#~ msgstr "没找到 MPI library "
 
 #~ msgid "'%s' may not be used as a variable name"
 #~ msgstr "'%s' 不能用来当做变数名称..."

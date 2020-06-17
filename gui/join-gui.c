@@ -433,9 +433,9 @@ static void joiner_add_controls (join_info *jinfo)
     }
 
     /* key labels */
-    w = gtk_label_new("inner key");
+    w = gtk_label_new(_("inner key"));
     joiner_table_insert(jinfo, w, 2, 3, 2, 3);
-    w = gtk_label_new("outer key");
+    w = gtk_label_new(_("outer key"));
     joiner_table_insert(jinfo, w, 3, 4, 2, 3);
 
     for (i=0; i<2; i++) {
@@ -448,7 +448,7 @@ static void joiner_add_controls (join_info *jinfo)
     }
 
     /* filter */
-    w = gtk_label_new("filter");
+    w = gtk_label_new(_("filter"));
     gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
     joiner_table_insert(jinfo, w, 2, 3, 5, 6);
     jinfo->filter = joiner_entry_box();
@@ -456,7 +456,7 @@ static void joiner_add_controls (join_info *jinfo)
     joiner_table_insert(jinfo, jinfo->filter, 3, 4, 5, 6);
 
     /* aggregation */
-    w = gtk_label_new("aggregation");
+    w = gtk_label_new(_("aggregation"));
     gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
     joiner_table_insert(jinfo, w, 2, 3, 6, 7);
     jinfo->aggr = aggregation_combo();

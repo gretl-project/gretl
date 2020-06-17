@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-16 19:33-0400\n"
+"POT-Creation-Date: 2020-06-17 09:06+0200\n"
 "PO-Revision-Date: 2019-01-21 19:16-0500\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -1327,8 +1327,8 @@ msgid "append: don't know how to align the new series!"
 msgstr ""
 
 #: lib/src/dataio.c:1812 lib/src/dataio.c:2185 lib/src/dataio.c:2197
-#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli.c:228
-#: cli/gretlcli-mpi.c:170 gui/gretl.c:307
+#: lib/src/dataio.c:3055 lib/src/dataio.c:3064 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228 gui/gretl.c:307
 msgid "Out of memory!\n"
 msgstr "Nedostatek paměti!\n"
 
@@ -1622,6 +1622,7 @@ msgid "Compacted dataset would be empty"
 msgstr "Kompaktovaný datový soubor by byl prázdný"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
+#: plugin/geoplot.c:1197
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Nebylo možné otevřít %s pro zápis"
@@ -2874,6 +2875,15 @@ msgstr "Byly vygenerovány periodické indikátorové proměnné.\n"
 msgid "Panel dummy variables generated.\n"
 msgstr "Byly vygenerovány panelové indikátorové proměnné.\n"
 
+#: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
+msgid "complex arguments/operands not supported"
+msgstr ""
+
+#: lib/src/genmpi.c:148 lib/src/genmpi.c:370
+#, fuzzy
+msgid "The MPI library is not loaded"
+msgstr "Cíl ID %d není k dispozici"
+
 #: lib/src/gensyntax.c:249
 #, c-format
 msgid "Expected '%c' but formula ended\n"
@@ -3525,10 +3535,6 @@ msgstr "Přerušeno na žádost"
 #, fuzzy
 msgid "'catch' cannot be used in this context"
 msgstr "příkaz '%s' je v tomto kontextu neplatný"
-
-#: lib/src/gretl_errors.c:88
-msgid "complex arguments/operands not supported"
-msgstr ""
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
@@ -4715,7 +4721,7 @@ msgstr "Nebyla nalezena žádná pozorování"
 msgid "'%s': malformed gdt file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642
+#: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
 #, fuzzy, c-format
 msgid "Couldn't read '%s'"
 msgstr "Nebylo možné otevřít '%s'"
@@ -4806,7 +4812,7 @@ msgstr "Chybí jméno proměnné"
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "příkaz '%s' je v tomto kontextu neplatný"
 
-#: lib/src/interact.c:2047 cli/gretlcli.c:1022 cli/gretlcli-mpi.c:664
+#: lib/src/interact.c:2047 cli/gretlcli-mpi.c:664 cli/gretlcli.c:1022
 #: gui/library.c:10070
 #, c-format
 msgid "Read datafile %s\n"
@@ -4843,12 +4849,12 @@ msgstr "uložit: nebylo zadáno jméno souboru\n"
 msgid "Couldn't format model\n"
 msgstr "Nepodařilo se formátovat model\n"
 
-#: lib/src/interact.c:3817 cli/gretlcli.c:1350 cli/gretlcli-mpi.c:902
+#: lib/src/interact.c:3817 cli/gretlcli-mpi.c:902 cli/gretlcli.c:1350
 #: gui/library.c:10473
 msgid "Infinite loop detected in script\n"
 msgstr "Ve skriptu byl detekován nekonečný cyklus\n"
 
-#: lib/src/interact.c:3858 cli/gretlcli.c:887 cli/gretlcli-mpi.c:541
+#: lib/src/interact.c:3858 cli/gretlcli-mpi.c:541 cli/gretlcli.c:887
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: příkaz není k dispozici\n"
@@ -8065,6 +8071,54 @@ msgstr "příkaz '%s' nebyl rozpoznán"
 msgid "Freed %s\n"
 msgstr "Freed %s\n"
 
+#: cli/gretlcli-mpi.c:137
+msgid ""
+"This program should be run under mpiexec, and requires the name of a\n"
+"script file as argument.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:139
+msgid ""
+"Options:\n"
+" -h or --help        Print this info and exit.\n"
+" -v or --version     Print version info and exit.\n"
+" -q or --quiet       Don't print logo on start-up.\n"
+" -e or --english     Force use of English rather than translation.\n"
+" -s or --single-rng  Use a single RNG, not one per process.\n"
+msgstr ""
+
+#: cli/gretlcli-mpi.c:155
+#, fuzzy, c-format
+msgid ""
+"\n"
+"gretlmpi: error executing script: halting\n"
+msgstr ""
+"\n"
+"gretlcli: chyba při vykonání skriptu: čekám\n"
+
+#: cli/gretlcli-mpi.c:698 cli/gretlcli-mpi.c:910 cli/gretlcli.c:1091
+#: cli/gretlcli.c:1358 gui/library.c:10124 gui/library.c:10149
+#, c-format
+msgid "Error reading %s\n"
+msgstr "Chyba při čtení %s\n"
+
+#: cli/gretlcli-mpi.c:789 cli/gretlcli.c:1229 gui/library.c:10329
+#, c-format
+msgid "Command '%s' ignored; not valid within equation system\n"
+msgstr "Příkaz '%s' byl ignorován; není platný v rámci systému rovnic\n"
+
+#: cli/gretlcli-mpi.c:849 cli/gretlcli.c:1303 gui/library.c:10432
+msgid "Data series length count missing or invalid\n"
+msgstr "Chybějící nebo neplatná délka časové řady\n"
+
+#: cli/gretlcli-mpi.c:870 cli/gretlcli.c:1111
+msgid "Done\n"
+msgstr "Hotovo\n"
+
+#: cli/gretlcli-mpi.c:928 cli/gretlcli.c:1380
+msgid "Dataset cleared\n"
+msgstr "Soubor dat byl smazán\n"
+
 #: cli/gretlcli.c:158
 #, fuzzy, c-format
 msgid ""
@@ -8155,29 +8209,14 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr "zapisuji výstup relace do %s%s\n"
 
-#: cli/gretlcli.c:1091 cli/gretlcli.c:1358 cli/gretlcli-mpi.c:698
-#: cli/gretlcli-mpi.c:910 gui/library.c:10124 gui/library.c:10149
-#, c-format
-msgid "Error reading %s\n"
-msgstr "Chyba při čtení %s\n"
-
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
 msgstr ""
-
-#: cli/gretlcli.c:1111 cli/gretlcli-mpi.c:870
-msgid "Done\n"
-msgstr "Hotovo\n"
 
 #: cli/gretlcli.c:1122
 #, c-format
 msgid "commands saved as %s\n"
 msgstr "příkazy uloženy jako %s\n"
-
-#: cli/gretlcli.c:1229 cli/gretlcli-mpi.c:789 gui/library.c:10329
-#, c-format
-msgid "Command '%s' ignored; not valid within equation system\n"
-msgstr "Příkaz '%s' byl ignorován; není platný v rámci systému rovnic\n"
 
 #: cli/gretlcli.c:1238 gui/library.c:10337
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
@@ -8186,39 +8225,6 @@ msgstr "Zadejte příkazy pro cyklus. Napište 'endloop' pro vystoupení z cyklu
 #: cli/gretlcli.c:1281 gui/library.c:7433 gui/library.c:10402
 msgid "Take note: variables have been renumbered"
 msgstr "Upozornění: proměnné byly přečíslovány"
-
-#: cli/gretlcli.c:1303 cli/gretlcli-mpi.c:849 gui/library.c:10432
-msgid "Data series length count missing or invalid\n"
-msgstr "Chybějící nebo neplatná délka časové řady\n"
-
-#: cli/gretlcli.c:1380 cli/gretlcli-mpi.c:928
-msgid "Dataset cleared\n"
-msgstr "Soubor dat byl smazán\n"
-
-#: cli/gretlcli-mpi.c:137
-msgid ""
-"This program should be run under mpiexec, and requires the name of a\n"
-"script file as argument.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:139
-msgid ""
-"Options:\n"
-" -h or --help        Print this info and exit.\n"
-" -v or --version     Print version info and exit.\n"
-" -q or --quiet       Don't print logo on start-up.\n"
-" -e or --english     Force use of English rather than translation.\n"
-" -s or --single-rng  Use a single RNG, not one per process.\n"
-msgstr ""
-
-#: cli/gretlcli-mpi.c:155
-#, fuzzy, c-format
-msgid ""
-"\n"
-"gretlmpi: error executing script: halting\n"
-msgstr ""
-"\n"
-"gretlcli: chyba při vykonání skriptu: čekám\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -9465,7 +9471,7 @@ msgstr "databáze gretlu"
 msgid "All packages"
 msgstr "všechny stránky"
 
-#: gui/datafiles.c:1900
+#: gui/datafiles.c:1900 gui/join-gui.c:451
 #, fuzzy
 msgid "filter"
 msgstr "Filtr"
@@ -11728,8 +11734,8 @@ msgstr "Grafický soubor je poškozen"
 msgid "Couldn't access graph info"
 msgstr "Nebylo možné získat informace o grafu"
 
-#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graphics.c:262
-#: gui/graph_page.c:698
+#: gui/gpt_control.c:4158 gui/gpt_control.c:4468 gui/graph_page.c:698
+#: gui/graphics.c:262
 msgid "monochrome"
 msgstr "černobílý"
 
@@ -11832,7 +11838,7 @@ msgstr "Font"
 msgid "Close"
 msgstr "Zavřít"
 
-#: gui/gpt_control.c:4467 gui/graphics.c:258 gui/graph_page.c:697
+#: gui/gpt_control.c:4467 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr "barva"
 
@@ -12129,6 +12135,22 @@ msgstr "Název osy"
 msgid "gretl plot controls"
 msgstr "ovladače obrázků gretlu"
 
+#: gui/graph_page.c:288
+msgid "The graph page is full"
+msgstr "Tato stránka grafu je plná"
+
+#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
+msgid "Failed to process TeX file"
+msgstr "Nepodařilo se zpracovat TeXovský soubor"
+
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
+msgid "The graph page is empty"
+msgstr "Tato stránka grafu je prázdná"
+
+#: gui/graph_page.c:709
+msgid "graph page options"
+msgstr "možnosti stránky grafu"
+
 #: gui/graphics.c:197
 msgid "height"
 msgstr "výška"
@@ -12160,22 +12182,6 @@ msgstr "Ukázat dimenze:"
 #: gui/graphics.c:402
 msgid "Preview"
 msgstr "Náhled"
-
-#: gui/graph_page.c:288
-msgid "The graph page is full"
-msgstr "Tato stránka grafu je plná"
-
-#: gui/graph_page.c:504 gui/guiprint.c:2413 gui/guiprint.c:2527
-msgid "Failed to process TeX file"
-msgstr "Nepodařilo se zpracovat TeXovský soubor"
-
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3294
-msgid "The graph page is empty"
-msgstr "Tato stránka grafu je prázdná"
-
-#: gui/graph_page.c:709
-msgid "graph page options"
-msgstr "možnosti stránky grafu"
 
 #: gui/gretl.c:126
 #, fuzzy
@@ -13287,193 +13293,6 @@ msgstr "_Náhled:"
 msgid "Font Selection"
 msgstr "Výběr Fontu"
 
-#: gui/guiprint.c:73 gui/guiprint.c:75
-msgid "gretl output"
-msgstr "gretl output"
-
-#: gui/guiprint.c:73
-msgid "for"
-msgstr "pro"
-
-#: gui/guiprint.c:224
-#, c-format
-msgid "%s, page %d"
-msgstr "%s, strana %d"
-
-#: gui/guiprint.c:422
-#, c-format
-msgid "%s page %d of %d"
-msgstr "%s strana %d z %d"
-
-#: gui/guiprint.c:602 gui/guiprint.c:650
-#, c-format
-msgid "Summary Statistics, using the observations %s - %s"
-msgstr "Popisná statistika, za použití pozorování %s - %s"
-
-#: gui/guiprint.c:656 gui/guiprint.c:1069
-#, c-format
-msgid "for the variable %s (%d valid observations)"
-msgstr "pro proměnnou %s (%d platných pozorování)"
-
-#: gui/guiprint.c:723
-msgid "5% Perc."
-msgstr ""
-
-#: gui/guiprint.c:723
-msgid "95% Perc."
-msgstr ""
-
-#: gui/guiprint.c:880
-msgid "t-ratios in parentheses"
-msgstr "t-podíly v závorce"
-
-#: gui/guiprint.c:1011 gui/guiprint.c:1062
-#, c-format
-msgid "Summary Statistics, using the observations %s--%s"
-msgstr "Popisná statistika, za použití pozorování %s--%s"
-
-#: gui/guiprint.c:1120
-msgid "Std.\\ Dev."
-msgstr "Směr.\\ odch."
-
-#: gui/guiprint.c:1120
-msgid "Ex.\\ kurtosis"
-msgstr "Stand.\\ špičatost"
-
-#: gui/guiprint.c:1148
-#, no-c-format
-msgid "5\\% perc."
-msgstr ""
-
-#: gui/guiprint.c:1150
-#, no-c-format
-msgid "95\\% perc."
-msgstr ""
-
-#: gui/guiprint.c:1151
-#, fuzzy
-msgid "IQ Range"
-msgstr "Rozsah"
-
-#: gui/guiprint.c:1253
-#, c-format
-msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "Korelační koeficienty, za použití pozorování %s - %s"
-
-#: gui/guiprint.c:1264 gui/guiprint.c:1358
-msgid "Coefficient covariance matrix"
-msgstr "Kovarianční matice koeficientů"
-
-#: gui/guiprint.c:1346
-#, c-format
-msgid "Correlation coefficients, using the observations %s--%s"
-msgstr "Korelační koeficienty, za použití pozorování %s--%s"
-
-#: gui/guiprint.c:1353
-#, c-format
-msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "5\\%% kritická hodnota (oboustranná) = %.4f pro n = %d"
-
-#: gui/guiprint.c:1444
-msgid "Mean Squared Error"
-msgstr "Střední kvadratická chyba"
-
-#: gui/guiprint.c:1449
-msgid "Theil's $U$"
-msgstr "Theilovo $U$"
-
-#: gui/guiprint.c:1450
-msgid "Bias proportion, $U^M$"
-msgstr "Zastopení vychýlení, $U^M$"
-
-#: gui/guiprint.c:1451
-msgid "Regression proportion, $U^R$"
-msgstr "Zastoupení v regresi, $U^R$"
-
-#: gui/guiprint.c:1452
-msgid "Disturbance proportion, $U^D$"
-msgstr "Zastoupení disturbancí, $U^D$"
-
-#: gui/guiprint.c:1509 gui/guiprint.c:1527
-msgid "Model estimation range:"
-msgstr "Rozsah odhadu modelu:"
-
-#: gui/guiprint.c:1512 gui/guiprint.c:1530
-#, c-format
-msgid "Standard error of residuals = %g"
-msgstr "Směrodatná chyba reziduí = %g"
-
-#: gui/guiprint.c:1599
-msgid ""
-"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
-"\n"
-msgstr ""
-"\\textit{Poznámka}: * označuje reziduum překračující 2.5 násobek standardní "
-"chyby\n"
-
-#: gui/guiprint.c:1660
-msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr ""
-"Poznámka: * označuje reziduum překračující 2.5 násobek standardní chyby"
-
-#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
-#: gui/guiprint.c:1867
-msgid "Obs"
-msgstr "Pozorování"
-
-#: gui/guiprint.c:1740
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
-"\n"
-msgstr ""
-"Pro %g\\%% konfidenční intervaly, $z(%g) = %.2f$\n"
-"\n"
-
-#: gui/guiprint.c:1744
-#, c-format
-msgid ""
-"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
-"\n"
-msgstr ""
-"Pro %g\\%% konfidenční intervaly, $t(%d, %g) = %.3f$\n"
-"\n"
-
-#: gui/guiprint.c:1764
-#, c-format
-msgid "%g\\%% interval"
-msgstr "%g\\%% interval"
-
-#: gui/guiprint.c:1848
-#, c-format
-msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Pro %g%% konfidenční intervaly, z(%g) = %.2f"
-
-#: gui/guiprint.c:1852
-#, c-format
-msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Pro %g%% konfidenční intervaly, t(%d, %g) = %.3f"
-
-#: gui/guiprint.c:1857
-#, c-format
-msgid "%g%% interval"
-msgstr "%g%% interval"
-
-#: gui/guiprint.c:1956 gui/guiprint.c:2005
-#, c-format
-msgid "%g\\%% confidence interval"
-msgstr "%g\\%% konfidenční interval"
-
-#: gui/guiprint.c:2046
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
-msgstr "Nelze použít stejný znak pro oddělovač sloupců a pro desetinnou čárku"
-
-#: gui/guiprint.c:2225
-msgid "No scalar variables are currently defined"
-msgstr "Žádné skalární veličiny nejsou nyní definovány"
-
 #: gui/gui_utils.c:212
 msgid "equation"
 msgstr "rovnice"
@@ -14280,6 +14099,193 @@ msgstr "měřítko"
 msgid "Send data as"
 msgstr "Uložit data _jako..."
 
+#: gui/guiprint.c:73 gui/guiprint.c:75
+msgid "gretl output"
+msgstr "gretl output"
+
+#: gui/guiprint.c:73
+msgid "for"
+msgstr "pro"
+
+#: gui/guiprint.c:224
+#, c-format
+msgid "%s, page %d"
+msgstr "%s, strana %d"
+
+#: gui/guiprint.c:422
+#, c-format
+msgid "%s page %d of %d"
+msgstr "%s strana %d z %d"
+
+#: gui/guiprint.c:602 gui/guiprint.c:650
+#, c-format
+msgid "Summary Statistics, using the observations %s - %s"
+msgstr "Popisná statistika, za použití pozorování %s - %s"
+
+#: gui/guiprint.c:656 gui/guiprint.c:1069
+#, c-format
+msgid "for the variable %s (%d valid observations)"
+msgstr "pro proměnnou %s (%d platných pozorování)"
+
+#: gui/guiprint.c:723
+msgid "5% Perc."
+msgstr ""
+
+#: gui/guiprint.c:723
+msgid "95% Perc."
+msgstr ""
+
+#: gui/guiprint.c:880
+msgid "t-ratios in parentheses"
+msgstr "t-podíly v závorce"
+
+#: gui/guiprint.c:1011 gui/guiprint.c:1062
+#, c-format
+msgid "Summary Statistics, using the observations %s--%s"
+msgstr "Popisná statistika, za použití pozorování %s--%s"
+
+#: gui/guiprint.c:1120
+msgid "Std.\\ Dev."
+msgstr "Směr.\\ odch."
+
+#: gui/guiprint.c:1120
+msgid "Ex.\\ kurtosis"
+msgstr "Stand.\\ špičatost"
+
+#: gui/guiprint.c:1148
+#, no-c-format
+msgid "5\\% perc."
+msgstr ""
+
+#: gui/guiprint.c:1150
+#, no-c-format
+msgid "95\\% perc."
+msgstr ""
+
+#: gui/guiprint.c:1151
+#, fuzzy
+msgid "IQ Range"
+msgstr "Rozsah"
+
+#: gui/guiprint.c:1253
+#, c-format
+msgid "Correlation coefficients, using the observations %s - %s"
+msgstr "Korelační koeficienty, za použití pozorování %s - %s"
+
+#: gui/guiprint.c:1264 gui/guiprint.c:1358
+msgid "Coefficient covariance matrix"
+msgstr "Kovarianční matice koeficientů"
+
+#: gui/guiprint.c:1346
+#, c-format
+msgid "Correlation coefficients, using the observations %s--%s"
+msgstr "Korelační koeficienty, za použití pozorování %s--%s"
+
+#: gui/guiprint.c:1353
+#, c-format
+msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
+msgstr "5\\%% kritická hodnota (oboustranná) = %.4f pro n = %d"
+
+#: gui/guiprint.c:1444
+msgid "Mean Squared Error"
+msgstr "Střední kvadratická chyba"
+
+#: gui/guiprint.c:1449
+msgid "Theil's $U$"
+msgstr "Theilovo $U$"
+
+#: gui/guiprint.c:1450
+msgid "Bias proportion, $U^M$"
+msgstr "Zastopení vychýlení, $U^M$"
+
+#: gui/guiprint.c:1451
+msgid "Regression proportion, $U^R$"
+msgstr "Zastoupení v regresi, $U^R$"
+
+#: gui/guiprint.c:1452
+msgid "Disturbance proportion, $U^D$"
+msgstr "Zastoupení disturbancí, $U^D$"
+
+#: gui/guiprint.c:1509 gui/guiprint.c:1527
+msgid "Model estimation range:"
+msgstr "Rozsah odhadu modelu:"
+
+#: gui/guiprint.c:1512 gui/guiprint.c:1530
+#, c-format
+msgid "Standard error of residuals = %g"
+msgstr "Směrodatná chyba reziduí = %g"
+
+#: gui/guiprint.c:1599
+msgid ""
+"\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
+"\n"
+msgstr ""
+"\\textit{Poznámka}: * označuje reziduum překračující 2.5 násobek standardní "
+"chyby\n"
+
+#: gui/guiprint.c:1660
+msgid "Note: * denotes a residual in excess of 2.5 standard errors"
+msgstr ""
+"Poznámka: * označuje reziduum překračující 2.5 násobek standardní chyby"
+
+#: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
+#: gui/guiprint.c:1867
+msgid "Obs"
+msgstr "Pozorování"
+
+#: gui/guiprint.c:1740
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
+"\n"
+msgstr ""
+"Pro %g\\%% konfidenční intervaly, $z(%g) = %.2f$\n"
+"\n"
+
+#: gui/guiprint.c:1744
+#, c-format
+msgid ""
+"For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
+"\n"
+msgstr ""
+"Pro %g\\%% konfidenční intervaly, $t(%d, %g) = %.3f$\n"
+"\n"
+
+#: gui/guiprint.c:1764
+#, c-format
+msgid "%g\\%% interval"
+msgstr "%g\\%% interval"
+
+#: gui/guiprint.c:1848
+#, c-format
+msgid "For %g%% confidence intervals, z(%g) = %.2f"
+msgstr "Pro %g%% konfidenční intervaly, z(%g) = %.2f"
+
+#: gui/guiprint.c:1852
+#, c-format
+msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
+msgstr "Pro %g%% konfidenční intervaly, t(%d, %g) = %.3f"
+
+#: gui/guiprint.c:1857
+#, c-format
+msgid "%g%% interval"
+msgstr "%g%% interval"
+
+#: gui/guiprint.c:1956 gui/guiprint.c:2005
+#, c-format
+msgid "%g\\%% confidence interval"
+msgstr "%g\\%% konfidenční interval"
+
+#: gui/guiprint.c:2046
+msgid ""
+"You can't use the same character for the column delimiter and the decimal "
+"point"
+msgstr "Nelze použít stejný znak pro oddělovač sloupců a pro desetinnou čárku"
+
+#: gui/guiprint.c:2225
+msgid "No scalar variables are currently defined"
+msgstr "Žádné skalární veličiny nejsou nyní definovány"
+
 #: gui/helpfiles.c:78
 msgid "Larger"
 msgstr "Větší"
@@ -14473,6 +14479,19 @@ msgstr "Vypsat řady"
 #, fuzzy
 msgid "named as"
 msgstr "jméno"
+
+#: gui/join-gui.c:436
+msgid "inner key"
+msgstr ""
+
+#: gui/join-gui.c:438
+msgid "outer key"
+msgstr ""
+
+#: gui/join-gui.c:459
+#, fuzzy
+msgid "aggregation"
+msgstr "Separace"
 
 #: gui/join-gui.c:466
 #, fuzzy
@@ -17414,7 +17433,8 @@ msgstr "Počáteční vyplněná hodnota:"
 msgid "complex matrix"
 msgstr "Nahrazená matice %s"
 
-#: gui/ssheet.c:4070
+#: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
+#: plugin/geoplot.c:1300
 #, c-format
 msgid "Couldn't open '%s'"
 msgstr "Nebylo možné otevřít '%s'"
@@ -18937,6 +18957,15 @@ msgstr "směrnice středního rozpětí = %g\n"
 msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "p-value pro H0: směrnice = 0 je %g\n"
 
+#: plugin/regls.c:1033
+#, fuzzy
+msgid "df = effective number of free parameters"
+msgstr "Řád Jakobiánu = %d, počet volných parametrů = %d\n"
+
+#: plugin/regls.c:1034
+msgid "criterion = ridge minimand"
+msgstr ""
+
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
 msgstr "Zdá se, že tento soubor není platný SAS xport soubor"
@@ -18973,6 +19002,100 @@ msgstr "dolní chvost"
 msgid "upper tail"
 msgstr "horní chvost"
 
+#: plugin/tramo-x12a.c:67
+#, c-format
+msgid "seasonally adjusted %s"
+msgstr "sezónně adjustované %s"
+
+#: plugin/tramo-x12a.c:68
+#, c-format
+msgid "trend/cycle for %s"
+msgstr "trend/cyklus pro %s"
+
+#: plugin/tramo-x12a.c:69
+#, c-format
+msgid "irregular component of %s"
+msgstr "nepravidelná komponenta %s"
+
+#: plugin/tramo-x12a.c:70
+#, fuzzy, c-format
+msgid "linearized %s"
+msgstr "iterované %s"
+
+#: plugin/tramo-x12a.c:224 plugin/tramo_options.c:422
+msgid "Seasonally adjusted series"
+msgstr "Sezónně adjustované řady"
+
+#: plugin/tramo-x12a.c:225 plugin/tramo_options.c:423
+msgid "Trend/cycle"
+msgstr "Trend/cyklus"
+
+#: plugin/tramo-x12a.c:226 plugin/tramo_options.c:424
+msgid "Irregular"
+msgstr "Nepravidelné"
+
+#: plugin/tramo-x12a.c:239
+msgid "X-12-ARIMA options"
+msgstr "X-12-ARIMA možnosti"
+
+#: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
+msgid "Detect and correct for outliers"
+msgstr "Detekovat a opravit outliery"
+
+#: plugin/tramo-x12a.c:248
+msgid "Correct for trading days effect"
+msgstr "Opravit pro jev obchodních dní"
+
+#: plugin/tramo-x12a.c:257 plugin/tramo_options.c:535
+msgid "Log transformation"
+msgstr "Logaritmická transformace"
+
+#: plugin/tramo-x12a.c:264 plugin/tramo_options.c:543
+msgid "No log transformation"
+msgstr "Bez logaritmické transformace"
+
+#: plugin/tramo-x12a.c:271 plugin/tramo_options.c:551
+#: plugin/tramo_options.c:668 plugin/tramo_options.c:728
+msgid "Automatic"
+msgstr "Automatické"
+
+#: plugin/tramo-x12a.c:284
+msgid "Save data"
+msgstr "Uložit data"
+
+#: plugin/tramo-x12a.c:322 plugin/tramo_options.c:514
+msgid "Generate graph"
+msgstr "Vytvořit graf"
+
+#: plugin/tramo-x12a.c:328
+msgid "Show full output"
+msgstr "Ukázat celý výstup"
+
+#: plugin/tramo-x12a.c:337
+msgid "Execute X-12-ARIMA directly"
+msgstr "Vykonat rovnou X-12-ARIMA"
+
+#: plugin/tramo-x12a.c:341
+msgid "Make X-12-ARIMA command file"
+msgstr "Vytvořit soubor X-12-ARIMA příkazů"
+
+#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
+msgid "irregular"
+msgstr "nepravidelný"
+
+#: plugin/tramo-x12a.c:632
+msgid "trend/cycle"
+msgstr "trend/cyklus"
+
+#: plugin/tramo-x12a.c:649
+msgid "adjusted"
+msgstr "adjustované"
+
+#: plugin/tramo-x12a.c:942
+#, fuzzy
+msgid "no seasonality was detected"
+msgstr "Nesezónní diference:"
+
 #: plugin/tramo_options.c:367
 msgid "Time-series model plus seasonal adjustment"
 msgstr "Model časové řady se sezónním adjustováním"
@@ -18984,18 +19107,6 @@ msgstr "Model pouze pro časové řady"
 #: plugin/tramo_options.c:374
 msgid "Standard automatic analysis"
 msgstr "Standardní automatická analýza"
-
-#: plugin/tramo_options.c:422 plugin/tramo-x12a.c:224
-msgid "Seasonally adjusted series"
-msgstr "Sezónně adjustované řady"
-
-#: plugin/tramo_options.c:423 plugin/tramo-x12a.c:225
-msgid "Trend/cycle"
-msgstr "Trend/cyklus"
-
-#: plugin/tramo_options.c:424 plugin/tramo-x12a.c:226
-msgid "Irregular"
-msgstr "Nepravidelné"
 
 #: plugin/tramo_options.c:425
 #, fuzzy
@@ -19022,23 +19133,6 @@ msgstr "Redukovaný výstup"
 msgid "Save to data set:"
 msgstr "Uložit do souboru dat"
 
-#: plugin/tramo_options.c:514 plugin/tramo-x12a.c:322
-msgid "Generate graph"
-msgstr "Vytvořit graf"
-
-#: plugin/tramo_options.c:535 plugin/tramo-x12a.c:257
-msgid "Log transformation"
-msgstr "Logaritmická transformace"
-
-#: plugin/tramo_options.c:543 plugin/tramo-x12a.c:264
-msgid "No log transformation"
-msgstr "Bez logaritmické transformace"
-
-#: plugin/tramo_options.c:551 plugin/tramo_options.c:668
-#: plugin/tramo_options.c:728 plugin/tramo-x12a.c:271
-msgid "Automatic"
-msgstr "Automatické"
-
 #: plugin/tramo_options.c:572
 msgid "Mean correction"
 msgstr "Korekce střední hodnoty"
@@ -19050,10 +19144,6 @@ msgstr "Bez korekce střední hodnoty"
 #: plugin/tramo_options.c:605
 msgid "Outliers"
 msgstr "Outliery"
-
-#: plugin/tramo_options.c:608 plugin/tramo-x12a.c:242
-msgid "Detect and correct for outliers"
-msgstr "Detekovat a opravit outliery"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
@@ -19098,67 +19188,6 @@ msgstr "Nesezónní MA členy:"
 #: plugin/tramo_options.c:777
 msgid "Seasonal MA terms:"
 msgstr "Sezónní MA členy:"
-
-#: plugin/tramo-x12a.c:67
-#, c-format
-msgid "seasonally adjusted %s"
-msgstr "sezónně adjustované %s"
-
-#: plugin/tramo-x12a.c:68
-#, c-format
-msgid "trend/cycle for %s"
-msgstr "trend/cyklus pro %s"
-
-#: plugin/tramo-x12a.c:69
-#, c-format
-msgid "irregular component of %s"
-msgstr "nepravidelná komponenta %s"
-
-#: plugin/tramo-x12a.c:70
-#, fuzzy, c-format
-msgid "linearized %s"
-msgstr "iterované %s"
-
-#: plugin/tramo-x12a.c:239
-msgid "X-12-ARIMA options"
-msgstr "X-12-ARIMA možnosti"
-
-#: plugin/tramo-x12a.c:248
-msgid "Correct for trading days effect"
-msgstr "Opravit pro jev obchodních dní"
-
-#: plugin/tramo-x12a.c:284
-msgid "Save data"
-msgstr "Uložit data"
-
-#: plugin/tramo-x12a.c:328
-msgid "Show full output"
-msgstr "Ukázat celý výstup"
-
-#: plugin/tramo-x12a.c:337
-msgid "Execute X-12-ARIMA directly"
-msgstr "Vykonat rovnou X-12-ARIMA"
-
-#: plugin/tramo-x12a.c:341
-msgid "Make X-12-ARIMA command file"
-msgstr "Vytvořit soubor X-12-ARIMA příkazů"
-
-#: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
-msgid "irregular"
-msgstr "nepravidelný"
-
-#: plugin/tramo-x12a.c:632
-msgid "trend/cycle"
-msgstr "trend/cyklus"
-
-#: plugin/tramo-x12a.c:649
-msgid "adjusted"
-msgstr "adjustované"
-
-#: plugin/tramo-x12a.c:942
-#, fuzzy
-msgid "no seasonality was detected"
-msgstr "Nesezónní diference:"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
@@ -19296,7 +19325,6 @@ msgstr "Trvání"
 #~ msgid " Right-click on graph for menu"
 #~ msgstr " Klikněte pravým tlačítkem na graf pro menu"
 
-#, c-format
 #~ msgid "Color %d"
 #~ msgstr "Barva %d"
 
@@ -19326,11 +19354,10 @@ msgstr "Trvání"
 #~ msgid "No series length has been defined"
 #~ msgstr "Nebyla definována žádná délka řady"
 
-#, fuzzy, c-format
+#, fuzzy
 #~ msgid "Error triggered in function %s()"
 #~ msgstr "Chyba při vykonávání funkce"
 
-#, c-format
 #~ msgid ""
 #~ "\n"
 #~ "Number of iterations: %d\n"
@@ -19387,10 +19414,6 @@ msgstr "Trvání"
 
 #~ msgid "stopped after %d iterations\n"
 #~ msgstr "zastaveno po %d iteracích\n"
-
-#, fuzzy
-#~ msgid "Package %s is not loaded"
-#~ msgstr "Cíl ID %d není k dispozici"
 
 #~ msgid "No valid loop condition was given."
 #~ msgstr "Nebyly zadány žádné platné podmínky cyklu."

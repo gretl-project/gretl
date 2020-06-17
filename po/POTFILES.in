@@ -20,6 +20,7 @@ lib/src/geneval.c
 lib/src/genfuncs.c
 lib/src/genlex.c
 lib/src/genmain.c
+lib/src/genmpi.c
 lib/src/gensyntax.c
 lib/src/gmm.c
 lib/src/graphing.c
@@ -65,6 +66,7 @@ lib/src/matrix_simd.c
 lib/src/missing.c
 lib/src/modelprint.c
 lib/src/monte_carlo.c
+lib/src/mspec_debug.c
 lib/src/nls.c
 lib/src/nonparam.c
 lib/src/objstack.c
@@ -90,8 +92,8 @@ lib/src/varprint.c
 lib/src/vartest.c
 cli/cli_object.c
 cli/complete.c
-cli/gretlcli.c
 cli/gretlcli-mpi.c
+cli/gretlcli.c
 gui/about.c
 gui/calculator.c
 gui/callbacks.c
@@ -112,15 +114,15 @@ gui/fontfilter.c
 gui/gfn_arglists.c
 gui/gpt_control.c
 gui/gpt_dialog.c
-gui/graphics.c
 gui/graph_page.c
+gui/graphics.c
 gui/gretl.c
 gui/gretl_ipc.c
 gui/gretlwin32.c
 gui/gtkfontselhack.c
-gui/guiprint.c
 gui/gui_recode.c
 gui/gui_utils.c
+gui/guiprint.c
 gui/helpfiles.c
 gui/join-gui.c
 gui/lagpref.c
@@ -131,6 +133,7 @@ gui/mknews.c
 gui/model_table.c
 gui/objectsave.c
 gui/obsbutton.c
+gui/osx_env.c
 gui/selector.c
 gui/series_view.c
 gui/session.c
@@ -166,12 +169,14 @@ plugin/fcp.c
 plugin/fiml.c
 plugin/fractals.c
 plugin/garch.c
+plugin/geoplot.c
 plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/heckit.c
 plugin/import_common.c
 plugin/interpolate.c
 plugin/interval.c
+plugin/iso3166.c
 plugin/jalpha.c
 plugin/jmulti_import.c
 plugin/johansen.c
@@ -191,6 +196,7 @@ plugin/poisson.c
 plugin/progress_bar.c
 plugin/quantreg.c
 plugin/range-mean.c
+plugin/regls.c
 plugin/reprobit.c
 plugin/sas_import.c
 plugin/spss_import.c
@@ -199,8 +205,8 @@ plugin/stata_import.c
 plugin/stats_tables.c
 plugin/svm.c
 plugin/sysest.c
-plugin/tramo_options.c
 plugin/tramo-x12a.c
+plugin/tramo_options.c
 plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c
