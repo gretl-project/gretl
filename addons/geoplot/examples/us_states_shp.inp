@@ -15,7 +15,7 @@ if outlines_only
    geoplot($mapfile, null, options)
 else
    # show population levels in shades of blue
-   options.setpal = "blues"
+   options.palette = "blues"
    options.title = "US states, population (lower 48)"
    geoplot($mapfile, population, options)
 endif
