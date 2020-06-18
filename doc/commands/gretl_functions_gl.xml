@@ -1769,6 +1769,55 @@
       </description>
     </function>
 
+    <function name="bincoeff" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">n</fnarg>
+	<fnarg type="anyfloat">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve un resultado (do tipo do argumento) co coeficiente binomial.
+	  Este indica o número de xeitos nos que <argname>k</argname> elementos
+	  se poden escoller (sen repetición) de entre <argname>n</argname>
+	  elementos, independentemente de como estean ordenados. Isto tamén
+	  equivale ao coeficiente do elemento (<math>k</math>+1)-ésimo
+	  na expansión polinómica da potencia dun binomio
+	  <equation status="inline" ascii="(1+x)^n" tex="$(1+x)^n$"/>.
+	</para>
+	<para context="tex">
+	  Para argumentos enteiros o resultado é $n!/k!(n-k)!$.
+	  Pero a función tamén acepta argumentos non enteiros, e
+	  a fórmula de arriba xeneralízase como
+	  $\frac{\Gamma(n+1)}{\Gamma(k+1) \Gamma(n-k+1)}$.
+	</para>
+	<para context="notex">
+	  Para argumentos enteiros o resultado é <math>n!/k!(n-k)!</math>.
+	  Pero esta función tamén acepta argumentos non enteiros,
+	  e nese caso a fórmula de arriba
+	  se xeneraliza como
+	   Γ(<math>n</math>+1)/(Γ(<math>k</math>+1) &times; Γ(<math>n-k</math>+1)).
+	</para>
+	<para>
+	  Cando <argname>k</argname> &gt; <argname>n</argname> ou
+	  <argname>k</argname> &lt; 0, non hai unha resposta válida
+	  polo que se devolve NA.
+	</para>
+	<para>
+	  Se os dous argumentos son de diferente tipo, o resultado será
+	  do tipo do <quote>maior</quote> dos dous (sendo o criterio de
+	  ordenación matriz &gt; serie &gt; escalar). Por exemplo, se
+	  <argname>n</argname> é un escalar, e <argname>k</argname> é un
+	  vector de dimensión <math>r</math> (ou viceversa), o resultado
+	  é un vector de dimensión <math>r</math>. Ten en conta que os
+	  argumentos matriciais deberán ser vectores. Tamén que, se ningún
+	  argumento é un escalar, os dous deberán ser da mesma longura.
+	</para>
+	<para>
+	  Consulta tamén <fncref targ="gammafun"/> e <fncref targ="lngamma"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -4346,6 +4395,9 @@
 	<para>
 	  Devolve un resultado (do tipo do argumento) co valor da función Gamma de <argname>x</argname>.
 	</para>
+	<para>
+	  Consulta tamén <fncref targ="bincoeff"/> e <fncref targ="lngamma"/>.
+	</para>
       </description>
     </function>
 
@@ -6406,6 +6458,9 @@
       <description>
 	<para>
 	  Devolve un resultado (do tipo do argumento) co logaritmo da función Gamma de <argname>x</argname>.
+	</para>
+	<para>
+	  Consulta tamén <fncref targ="bincoeff"/> e <fncref targ="gammafun"/>.
 	</para>
       </description>
     </function>

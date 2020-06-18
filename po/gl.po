@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-17 09:06+0200\n"
-"PO-Revision-Date: 2020-06-02 21:52+0200\n"
+"PO-Revision-Date: 2020-06-17 11:59+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -14217,47 +14217,41 @@ msgid "Failed to download file"
 msgstr "Fallo ao descargar un ficheiro"
 
 #: gui/join-gui.c:214
-#, fuzzy
 msgid "same as above"
-msgstr "Gardar como LaTeX"
+msgstr "Igual que anterior"
 
 #: gui/join-gui.c:218 gui/join-gui.c:446
 msgid "same as inner"
-msgstr ""
+msgstr "Igual que interna"
 
 #: gui/join-gui.c:294
-#, fuzzy, c-format
+#, c-format
 msgid "Import data from %s"
-msgstr "%s importado"
+msgstr "Importar datos dende %s"
 
 #: gui/join-gui.c:318 gui/join-gui.c:326
-#, fuzzy
 msgid "gretl: join data"
-msgstr "Gretl: Abrir datos"
+msgstr "Gretl: Xuntar datos"
 
 #: gui/join-gui.c:422
-#, fuzzy
 msgid "import series"
-msgstr "Listar as series"
+msgstr "Importar series"
 
 #: gui/join-gui.c:422
-#, fuzzy
 msgid "named as"
-msgstr "Nome"
+msgstr "Nomeada como"
 
 #: gui/join-gui.c:436
 msgid "inner key"
-msgstr ""
+msgstr "Chave interna"
 
 #: gui/join-gui.c:438
-#, fuzzy
 msgid "outer key"
-msgstr "Agrupación por"
+msgstr "Chave externa"
 
 #: gui/join-gui.c:459
-#, fuzzy
 msgid "aggregation"
-msgstr "Separación"
+msgstr "Agregación"
 
 #: gui/join-gui.c:466
 msgid "show details of importation"
@@ -14269,9 +14263,8 @@ msgstr "O agregador 'seq' necesita un parámetro enteiro, como en seq:1"
 
 #: gui/join-gui.c:807 gui/join-gui.c:808 gui/join-gui.c:810 gui/join-gui.c:811
 #: gui/join-gui.c:813 gui/join-gui.c:814
-#, fuzzy
 msgid "same as"
-msgstr "Gardar como"
+msgstr "Igual que"
 
 #: gui/library.c:499 gui/library.c:506 gui/library.c:6299 gui/library.c:6582
 msgid "Error adding variables"
@@ -18606,13 +18599,12 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "O valor p para H0:[Pendente=0] é %g\n"
 
 #: plugin/regls.c:1033
-#, fuzzy
 msgid "df = effective number of free parameters"
-msgstr "Rango do Jacobiano = %d; Nº de parámetros libres = %d\n"
+msgstr "df = número efectivo de parámetros libres"
 
 #: plugin/regls.c:1034
 msgid "criterion = ridge minimand"
-msgstr ""
+msgstr "Criterio = obxectivo crista a minimizar"
 
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
