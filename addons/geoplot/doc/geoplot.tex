@@ -441,7 +441,7 @@ Hawaii.\footnote{Given the role of this example we don't bother adding
   \begin{scode}
 open us-states.geojson --quiet --frompkg=geoplot
 x = normal() # fake up some data!
-opts = defbundle("plotfile", "us0.plt", "setpal", "blues")
+opts = defbundle("plotfile", "us0.plt", "palette", "blues")
 
 # show the entire USA
 opts.title = "USA (complete)"
@@ -821,7 +821,7 @@ bundle opts = defbundle("plotfile", "covid.pdf")
 opts.logscale = 1
 opts.border = 0
 opts.linewidth = 0.4
-opts.setpal = "green-to-red"
+opts.palette = "green-to-red"
 opts.literal = cmds
 opts.height = 900
 \end{code}
