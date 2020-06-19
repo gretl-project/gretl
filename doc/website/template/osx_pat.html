@@ -130,31 +130,16 @@ blog should tell you what you need to know.</p>
 </li>
 </ul>
 
-
-<h2><a name="optextra">Optional extras</a></h2>
+<h2>Optional extras</h2>
 
 <p>You may wish to install X-13-ARIMA-SEATS and/or TRAMO/SEATS. These are specialized programs for
-analysis of seasonal time series data, in versions compatible with gretl. But
-<i>please note</i>: the TRAMO/SEATS package below contains a 32-bit program
-which will not run on macOS Catalina or higher. We will provide a 64-bit
-version of TRAMO/SEATS if and when we can.
-</p>
-
-<table cellpadding="2">
-<tr>
-<td><p>X-13-ARIMA-SEATS for Intel Mac</p></td>
-<td><p><a
-href="http://sourceforge.net/projects/gretl/files/x13as/x13as-x86_64-darwin10.dmg/download">x13as-x86_64-darwin10.dmg</a></p></td>
-<td>64-bit</td>
-</tr>
-
-<tr>
-<td><p>TRAMO/SEATS for Intel Mac</p></td>
-<td><p><a 
-href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/download">tramo-seats-intel.dmg</a></p></td>
-<td>32-bit</td>
-</tr>
-</table>
+analysis of seasonal time series data, in 64-bit macOS versions compatible with gretl. They
+can be installed via the "gretl console" in the GUI program; just type the
+following commands, respectively:</p>
+<pre>
+pkg install x13as-mac64.tar.gz
+pkg install tramo-seats-mac64.tar.gz
+</pre>
 
 <p>
 &nbsp;
@@ -162,14 +147,3 @@ href="http://sourceforge.net/projects/gretl/files/tramo/tramo-seats-intel.dmg/do
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
- 
