@@ -27,6 +27,7 @@
 #include "gretl_bfgs.h"
 
 #define CL_DEBUG 0
+#define AR1_MLE 1
 
 struct chowlin {
     int n;
@@ -36,7 +37,7 @@ struct chowlin {
 /* Callback for fzero(), as we adjust the coefficient @a so the
    theoretically derived ratio of polynomials in @a matches the
    empirical first-order autocorrelation of the OLS residuals
-   (cl->targ). Return the negative of the squared residual.
+   (cl->targ). Return the residual.
 */
 
 static double chow_lin_callback (double a, void *p)
@@ -92,6 +93,93 @@ static double chow_lin_callback (double a, void *p)
 
     return resid;
 }
+
+#if AR1_MLE
+
+typedef struct ar1data_ {
+    const gretl_matrix *y;
+    const gretl_matrix *X;
+} ar1data;
+
+/* BFGS callback for ar1_mle(); see Davidson and MacKinnon,
+   ETM, pp. 435-6.
+*/
+
+static double ar1_loglik (const double *theta, void *data)
+{
+    ar1data *a = data;
+    int n = a->y->rows, k = a->X->cols;
+    double r = theta[0];
+    double s = theta[1];
+    const double *b = theta + 2;
+    double onemr2 = 1.0 - r*r;
+    double inv2s2 = 1.0 / (2*s*s);
+    double ll1 = -0.5*n*LN_2_PI - n*log(s) + 0.5*log(onemr2);
+    double u, yf2, Xb1, Xb = 0;
+    int i, t;
+
+    /* the first observation */
+    for (i=0; i<k; i++) {
+	Xb += gretl_matrix_get(a->X, 0, i) * b[i];
+    }
+    u = a->y->val[0] - Xb;
+    yf2 = onemr2 * u * u;
+
+    /* subsequent observations */
+    for (t=1; t<n; t++) {
+	Xb1 = Xb;
+	Xb = 0;
+	for (i=0; i<k; i++) {
+	    Xb += gretl_matrix_get(a->X, t, i) * b[i];
+	}
+	u = a->y->val[t] - r*a->y->val[t-1] - Xb + r*Xb1;
+	yf2 += u * u;
+    }
+
+    return ll1 - inv2s2 * yf2;
+}
+
+static int ar1_mle (const gretl_matrix *y,
+		    const gretl_matrix *X,
+		    const gretl_matrix *b,
+		    double s, double *rho)
+{
+    struct ar1data_ a = {y, X};
+    double *theta;
+    int fc = 0, gc = 0;
+    int i, nt, err;
+
+    nt = X->cols + 2;
+    theta = malloc(nt * sizeof *theta);
+    if (theta == NULL) {
+	return E_ALLOC;
+    }
+
+    theta[0] = *rho;
+    theta[1] = s;
+    for (i=0; i<X->cols; i++) {
+	theta[i+2] = b->val[i];
+    }
+
+    err = BFGS_max(theta, nt, 100, NADBL,
+		   &fc, &gc, ar1_loglik, C_LOGLIK,
+		   NULL, &a, NULL, OPT_NONE, NULL);
+
+    if (err) {
+	fprintf(stderr, "ar1_mle: BFGS_max gave err = %d\n", err);
+    } else {
+#if CL_DEBUG
+	fprintf(stderr, "ar1_mle, rho %g -> %g\n", *rho, theta[0]);
+#endif
+	*rho = theta[0];
+    }
+
+    free(theta);
+
+    return err;
+}
+
+#endif /* AR1_MLE */
 
 static double csum (int n, double a, int k)
 {
@@ -149,12 +237,12 @@ static void mult_VC (gretl_matrix *yx, gretl_matrix *u,
     }
 }
 
-/* Regressor matrix: by default we put in constant plus linear trend
-   (det = 1) or quadratic trend (det = 2), summed appropriately based
-   on @n.
+/* Regressor matrix: we put in constant (if det > 0) plus linear trend
+   (if det > 1) and squared trend (if det = 3), summed appropriately
+   based on @n.
 
    If the user has supplied high-frequency covariates in @X, we
-   compress them from column 2 or 3 onward.
+   compress them from column @det onward.
 
    Note: this version of the implicit C matrix assumes what Chow and
    Lin call "distribution", which is appropriate for flow variables.
@@ -226,18 +314,18 @@ static void make_Xx_beta (gretl_vector *y, const double *b,
    rhohat() in estimate.c.
 */
 
-#define DM 1 /* Davidson and McKinnon */
-
-#if DM
-static double acf_1 (const double *u, int T)
+static double acf_1 (const gretl_matrix *y,
+		     const gretl_matrix *X,
+		     const gretl_matrix *b,
+		     const gretl_matrix *u)
 {
-    double num = 0, den = 0;
+    double rho, num = 0, den = 0;
     int t;
 
-    for (t=0; t<T; t++) {
-	den += u[t] * u[t];
+    for (t=0; t<u->rows; t++) {
+	den += u->val[t] * u->val[t];
 	if (t > 0) {
-	    num += u[t] * u[t-1];
+	    num += u->val[t] * u->val[t-1];
 	}
     }
 
@@ -245,26 +333,15 @@ static double acf_1 (const double *u, int T)
 	return 0;
     }
 
-    return num / den;
-}
-#else
-static double acf_1 (const double *u, int T)
-{
-    double num = 0, den = 0;
-    int t;
+    rho = num / den;
 
-    for (t=1; t<T; t++) {
-	num += u[t] * u[t-1];
-	den += u[t-1] * u[t-1];
-    }
-
-    if (num < 1.0e-9) {
-	return 0;
-    }
-
-    return num / den;
-}
+#if AR1_MLE
+    /* improve the estimate of @rho via ML? */
+    ar1_mle(y, X, b, sqrt(den / u->rows), &rho);
 #endif
+
+    return rho;
+}
 
 /**
  * chow_lin_interpolate:
@@ -312,13 +389,19 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
        should have already been performed.
     */
 
-    gretl_matrix_init(&my);
-    gretl_matrix_init(&myx);
-
     nx = det;
     if (X != NULL) {
 	nx += X->cols;
     }
+
+    if (nx == 0) {
+	/* nothing to work with! */
+	*err = E_ARGS;
+	return NULL;
+    }
+
+    gretl_matrix_init(&my);
+    gretl_matrix_init(&myx);
 
     /* the return value */
     Yx = gretl_zero_matrix_new(Tx, ny);
@@ -327,7 +410,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	return NULL;
     }
 
-    /* set of low-frequency matrices */
+    /* block of low-frequency matrices */
     B = gretl_matrix_block_new(&CX, T, nx,
 			       &W, T, T,
 			       &b, nx, 1,
@@ -342,8 +425,9 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	return NULL;
     }
 
-    /* regressors: constant and linear or quadratic trend,
-       plus anything the user has added */
+    /* regressors: deterministic terms (as wanted), plus
+       anything the user has added
+    */
     fill_CX(CX, xfac, det, X);
 #if CL_DEBUG > 1
     gretl_matrix_print(CX, "CX");
@@ -370,7 +454,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	*err = gretl_matrix_ols(y, CX, b, NULL, u, NULL);
 
 	if (!*err) {
-	    a = acf_1(u->val, T);
+	    a = acf_1(y, CX, b, u);
 #if CL_DEBUG
 	    fprintf(stderr, "initial acf_1 = %g\n", a);
 #endif
@@ -381,7 +465,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 		/* nothing more to do, this iteration */
 		continue;
 	    } else {
-		double bracket[] = {0, 0.99};
+		double bracket[] = {0, 0.9999};
 		struct chowlin cl = {xfac, a};
 
 		*err = gretl_fzero(bracket, 1.0e-12,
