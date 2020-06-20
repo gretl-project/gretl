@@ -623,7 +623,7 @@ static void real_add_files_to_menus (int ftype)
 }
 
 /* Apparatus for inspecting scripts or datafiles supplied by
-   installed packages, via the main window menus.
+   installed Addons, via the main window menus.
 */
 
 static void open_examples_dir (GtkAction *action)
@@ -637,7 +637,7 @@ static void open_examples_dir (GtkAction *action)
     g_free(path);
 }
 
-static void add_packaged_files_to_menu (char **dnames, int n)
+static void add_addons_resources_to_menu (char **dnames, int n)
 {
     GtkActionEntry entry;
     const gchar *mpath = "/menubar/File/AddonResources";
@@ -658,7 +658,7 @@ static void add_packaged_files_to_menu (char **dnames, int n)
     }
 }
 
-static void catalog_packaged_files (void)
+static void catalog_addons_files (void)
 {
     char **datadirs = NULL;
     gchar *savedir = NULL;
@@ -698,7 +698,7 @@ static void catalog_packaged_files (void)
     g_free(path);
 
     if (nd > 0) {
-	add_packaged_files_to_menu(datadirs, nd);
+	add_addons_resources_to_menu(datadirs, nd);
 	strings_array_free(datadirs, nd);
     }
 }
@@ -706,7 +706,7 @@ static void catalog_packaged_files (void)
 void add_files_to_menus (void)
 {
     real_add_files_to_menus(NFILELISTS);
-    catalog_packaged_files();
+    catalog_addons_files();
 }
 
 GList *get_working_dir_list (void)
