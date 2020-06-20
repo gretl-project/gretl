@@ -1295,7 +1295,9 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		ilast = gcount;
 	    }
 	} else if (sumgrad == 0.0) {
+#if 0
 	    fprintf(stderr, "gradient is exactly zero!\n");
+#endif
 	    break;
 	} else {
 	    /* heading in the wrong direction */

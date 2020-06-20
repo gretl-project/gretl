@@ -144,6 +144,13 @@ static int ar1_mle (const gretl_matrix *y,
 		    const gretl_matrix *b,
 		    double s, double *rho)
 {
+#if 0 /* debugging */
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    gretlopt opt = OPT_V;
+#else
+    PRN *prn = NULL;
+    gretlopt opt = OPT_NONE;
+#endif
     struct ar1data_ a = {y, X};
     double *theta;
     int fc = 0, gc = 0;
@@ -161,12 +168,13 @@ static int ar1_mle (const gretl_matrix *y,
 	theta[i+2] = b->val[i];
     }
 
-    err = BFGS_max(theta, nt, 100, NADBL,
+    err = BFGS_max(theta, nt, 300, 1.0e-10,
 		   &fc, &gc, ar1_loglik, C_LOGLIK,
-		   NULL, &a, NULL, OPT_NONE, NULL);
+		   NULL, &a, NULL, opt, prn);
 
     if (err) {
-	fprintf(stderr, "ar1_mle: BFGS_max gave err = %d\n", err);
+	fprintf(stderr, "ar1_mle: BFGS_max gave err=%d (incoming rho %g)\n",
+		err, *rho);
     } else {
 #if CL_DEBUG
 	fprintf(stderr, "ar1_mle, rho %g -> %g\n", *rho, theta[0]);
@@ -175,6 +183,7 @@ static int ar1_mle (const gretl_matrix *y,
     }
 
     free(theta);
+    gretl_print_destroy(prn);
 
     return err;
 }
