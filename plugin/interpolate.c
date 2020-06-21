@@ -361,7 +361,7 @@ static double acf_1 (const gretl_matrix *y,
 }
 
 /**
- * chow_lin_interpolate:
+ * chow_lin_disagg:
  * @Y: T x k: holds the original data to be expanded.
  * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
@@ -385,10 +385,10 @@ static double acf_1 (const gretl_matrix *y,
  * NULL on failure.
  */
 
-gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
-				    const gretl_matrix *X,
-				    int xfac, int det,
-				    PRN *prn, int *err)
+static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y,
+				      const gretl_matrix *X,
+				      int xfac, int det,
+				      PRN *prn, int *err)
 {
     gretl_matrix_block *B;
     gretl_matrix *CX, *b, *u, *W, *Z;
@@ -535,4 +535,116 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     gretl_matrix_block_destroy(B);
 
     return Yx;
+}
+
+/* The method of F. T. Denton, "Adjustment of Monthly or Quarterly
+   Series to Annual Totals: An Approach Based on Quadratic
+   Minimization", Journal of the American Statistical Association
+   Vol. 66, No. 333 (March 1971), pp. 99-102, proportional first
+   difference variant, as modified by P. A. Cholette, "Adjusting
+   Sub-annual Series to Yearly Benchmarks," Survey Methodology,
+   Vol. 10, 1984, pp. 35­49.
+
+   The solution method is based on Tommaso Di Fonzo and Marco Marini,
+   "On the Extrapolation with the Denton Proportional Benchmarking
+   Method", IMF Working Paper WP/12/169, 2012.
+*/
+
+static gretl_matrix *denton_pfd (const gretl_vector *y0,
+				 const gretl_vector *p,
+				 int s, int *err)
+{
+    gretl_matrix *M;
+    gretl_vector *zy0;
+    gretl_matrix *ret;
+    double mij;
+    int N = y0->rows;
+    int sN = p->rows;
+    int sNN = sN + N;
+    int i, j, k = 0;
+    int offset;
+
+    /* we need one big matrix, @M */
+    M = gretl_zero_matrix_new(sNN, sNN);
+    zy0 = gretl_zero_matrix_new(sNN, 1);
+    ret = gretl_zero_matrix_new(sNN, 1);
+
+    if (M == NULL || zy0 == NULL || ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* In @M, create (D'D ~ diag(p)*J') | (J*diag(p) ~ 0);
+       see di Fonzo and Marini, equation (4)
+    */
+    for (i=0; i<sN; i++) {
+	/* upper left portion, D'D */
+	gretl_matrix_set(M, i, i, (i == 0 || i == sN-1)? 1 : 2);
+	if (i > 0) {
+	    gretl_matrix_set(M, i, i-1, -1);
+	}
+	if (i < sN-1) {
+	    gretl_matrix_set(M, i, i+1, -1);
+	}
+    }
+    k = offset = 0;
+    for (i=sN; i<sNN; i++) {
+	/* bottom and right portions, using @p */
+	for (j=offset; j<offset+s; j++) {
+	    gretl_matrix_set(M, i, j, p->val[k]);
+	    gretl_matrix_set(M, j, i, p->val[k]);
+	    k++;
+	}
+	offset += s;
+    }
+    // gretl_matrix_print(M, "M");
+
+    *err = gretl_invert_symmetric_indef_matrix(M);
+    // fprintf(stderr, "invert: got err = %d\n", *err);
+
+    if (!*err) {
+	/* premultiply M-inverse by (diag(p) ~ 0) | (0 ~ I) */
+	for (i=0; i<sN; i++) {
+	    for (j=0; j<sNN; j++) {
+		mij = gretl_matrix_get(M, i, j);
+		gretl_matrix_set(M, i, j, mij * p->val[i]);
+	    }
+	}
+	// gretl_matrix_print(M, "final M");
+	k = 0;
+	for (i=sN; i<sNN; i++) {
+	    zy0->val[i] = y0->val[k++];
+	}
+	gretl_matrix_multiply(M, zy0, ret);
+	gretl_matrix_reuse(ret, sN, 1);
+    }
+
+    gretl_matrix_free(M);
+    gretl_matrix_free(zy0);
+
+    return ret;
+}
+
+gretl_matrix *time_disaggregate (const gretl_matrix *Y,
+				 const gretl_matrix *X,
+				 int xfac, int det,
+				 int method, PRN *prn,
+				 int *err)
+{
+    if (method == 0) {
+	/* Chow-Lin */
+	return chow_lin_disagg(Y, X, xfac, det, prn, err);
+    } else if (method == 1) {
+	/* Modified Denton, proportional first differences */
+	if (gretl_vector_get_length(Y) == 0 ||
+	    gretl_vector_get_length(X) == 0) {
+	    *err = E_INVARG;
+	    return NULL;
+	}
+	return denton_pfd(Y, X, xfac, err);
+    } else {
+	/* no other options at present */
+	*err = E_INVARG;
+	return NULL;
+    }
 }

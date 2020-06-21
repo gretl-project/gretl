@@ -279,7 +279,7 @@ struct plugin_function_info plugin_functions[] = {
     { "duration_estimate", P_DURATION},
 
     /* data interpolation */
-    { "chow_lin_interpolate", P_INTERPOLATE},
+    { "time_disaggregate", P_INTERPOLATE},
 
     /* ISO 3166 country codes */
     { "iso_country", P_ISO3166},

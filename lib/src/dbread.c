@@ -1614,7 +1614,7 @@ static double *interpolate_db_series (const double *src,
 	y->val[t] = src[t];
     }
 
-    yx = matrix_chowlin(y, NULL, mult, det, NULL, err);
+    yx = matrix_tdisagg(y, NULL, mult, det, 0, NULL, err);
     gretl_matrix_free(y);
 
     if (!*err) {
@@ -5015,7 +5015,7 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 	int f = newpd / dset->pd;
 	int det = 3; /* FIXME */
 
-	Y1 = matrix_chowlin(Y0, NULL, f, det, NULL, err);
+	Y1 = matrix_tdisagg(Y0, NULL, f, det, 0, NULL, err);
 	gretl_matrix_free(Y0);
     }
 

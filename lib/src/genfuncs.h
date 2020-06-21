@@ -199,9 +199,9 @@ double gretl_irr (const double *x, int n, int pd, int *err);
 
 double logistic_cdf (double x);
 
-gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
+gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int f, int det,
+			      int f, int det, int method,
 			      PRN *prn, int *err);
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);

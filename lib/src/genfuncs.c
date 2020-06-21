@@ -6262,7 +6262,7 @@ double logistic_cdf (double x)
 }
 
 /**
- * matrix_chowlin:
+ * matrix_tdisagg:
  * @Y: T x k: holds the original data to be expanded, series
  * in columns.
  * @X: (optionally) holds covariates of Y at the higher frequency:
@@ -6271,14 +6271,15 @@ double logistic_cdf (double x)
  * @f: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly, or 12 for annual to monthly.
  * @det: = 0 for none, 1 for constant, 2 for linear trend, 3 for quadratic.
+ * @method: 0 = Chow-Lin, 1 = Modified Denton.
  * @err: location to receive error code.
  *
- * Interpolate, from annual to quarterly or quarterly to monthly,
- * via the Chow-Lin method. See Gregory C. Chow and An-loh Lin,
- * "Best Linear Unbiased Interpolation, Distribution, and
- * Extrapolation of Time Series by Related Series", The
- * Review of Economics and Statistics, Vol. 53, No. 4
- * (November 1971) pp. 372-375.
+ * Interpolate, from annual to quarterly or quarterly to monthly, by
+ * default via the Chow-Lin method. See Gregory C. Chow and An-loh
+ * Lin, "Best Linear Unbiased Interpolation, Distribution, and
+ * Extrapolation of Time Series by Related Series", The Review of
+ * Economics and Statistics, Vol. 53, No. 4 (November 1971)
+ * pp. 372-375.
  *
  * If @X is provided, it must have T * @f rows.
  *
@@ -6286,14 +6287,16 @@ double logistic_cdf (double x)
  * NULL on failure.
  */
 
-gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
+gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, int det,
-			      PRN *prn, int *err)
+			      int method, PRN *prn,
+			      int *err)
 {
-    gretl_matrix *(*chowlin) (const gretl_matrix *,
+    gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
-			      int, int, PRN *, int *);
+			      int, int, int,
+			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
     if ((f != 3 && f != 4 && f != 12) || (det < 0 && det > 3)) {
@@ -6311,12 +6314,12 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 	}
     }
 
-    chowlin = get_plugin_function("chow_lin_interpolate");
+    tdisagg = get_plugin_function("time_disaggregate");
 
-    if (chowlin == NULL) {
+    if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*chowlin) (Y, X, f, det, prn, err);
+	ret = (*tdisagg) (Y, X, f, det, method, prn, err);
     }
 
     return ret;

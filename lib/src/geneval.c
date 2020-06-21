@@ -13564,12 +13564,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    }
 	}
-    } else if (t->t == F_CHOWLIN) {
+    } else if (t->t == F_CHOWLIN || t->t == HF_TDISAGG) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
 	int fac = 0, det = 3;
+	int method = 0;
 
-	if (k < 2 || k > 4) {
+	if (k < 2 || k > 5) {
 	    n_args_error(k, 4, t->t, p);
 	}
 	for (i=0; i<k && !p->err; i++) {
@@ -13590,8 +13591,18 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else {
 		    p->err = E_TYPES;
 		}
-	    } else if (e->t == MAT) {
-		X = e->v.m;
+	    } else if (i == 3) {
+		if (e->t == MAT) {
+		    X = e->v.m;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else if (e->t == STR) {
+		if (!strcmp(e->v.str, "denton")) {
+		    method = 1;
+		} else if (strcmp(e->v.str, "chow-lin")) {
+		    p->err = E_INVARG;
+		}
 	    } else {
 		p->err = E_TYPES;
 	    }
@@ -13601,7 +13612,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    ret->v.m = matrix_chowlin(Y, X, fac, det, p->prn, &p->err);
+	    ret->v.m = matrix_tdisagg(Y, X, fac, det, method,
+				      p->prn, &p->err);
 	}
     }
 
@@ -16714,6 +16726,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NADARWAT:
     case F_FEVAL:
     case F_CHOWLIN:
+    case HF_TDISAGG:
     case F_HYP2F1:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
