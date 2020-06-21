@@ -555,7 +555,6 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 				 int s, int *err)
 {
     gretl_matrix *M;
-    gretl_vector *zy0;
     gretl_matrix *ret;
     double mij;
     int N = y0->rows;
@@ -566,10 +565,9 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 
     /* we need one big matrix, @M */
     M = gretl_zero_matrix_new(sNN, sNN);
-    zy0 = gretl_zero_matrix_new(sNN, 1);
-    ret = gretl_zero_matrix_new(sNN, 1);
+    ret = gretl_matrix_alloc(sN, 1);
 
-    if (M == NULL || zy0 == NULL || ret == NULL) {
+    if (M == NULL || ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
@@ -597,30 +595,29 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 	}
 	offset += s;
     }
-    // gretl_matrix_print(M, "M");
 
     *err = gretl_invert_symmetric_indef_matrix(M);
-    // fprintf(stderr, "invert: got err = %d\n", *err);
 
-    if (!*err) {
-	/* premultiply M-inverse by (diag(p) ~ 0) | (0 ~ I) */
-	for (i=0; i<sN; i++) {
-	    for (j=0; j<sNN; j++) {
-		mij = gretl_matrix_get(M, i, j);
-		gretl_matrix_set(M, i, j, mij * p->val[i]);
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    } else {
+	gretl_matrix *tmp = gretl_matrix_alloc(sN, N);
+
+	/* extract the relevant portion of M-inverse and
+	   premultiply by (diag(p) ~ 0) | (0 ~ I)
+	*/
+	for (j=0; j<N; j++) {
+	    for (i=0; i<sN; i++) {
+		mij = gretl_matrix_get(M, i, j+sN);
+		gretl_matrix_set(tmp, i, j, mij * p->val[i]);
 	    }
 	}
-	// gretl_matrix_print(M, "final M");
-	k = 0;
-	for (i=sN; i<sNN; i++) {
-	    zy0->val[i] = y0->val[k++];
-	}
-	gretl_matrix_multiply(M, zy0, ret);
-	gretl_matrix_reuse(ret, sN, 1);
+	gretl_matrix_multiply(tmp, y0, ret);
+	gretl_matrix_free(tmp);
     }
 
     gretl_matrix_free(M);
-    gretl_matrix_free(zy0);
 
     return ret;
 }
