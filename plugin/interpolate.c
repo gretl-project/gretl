@@ -173,13 +173,16 @@ static int ar1_mle (const gretl_matrix *y,
 		   NULL, &a, NULL, opt, prn);
 
     if (err) {
-	fprintf(stderr, "ar1_mle: BFGS_max gave err=%d (incoming rho %g, final %g)\n",
-		err, *rho, theta[0]);
 	if (err == E_NOCONV) {
 	    /* try taking the final value regardless?? */
-	    *rho = theta[0];
+	    err = 0;
+	} else {
+	    fprintf(stderr, "ar1_mle: BFGS_max gave err=%d (incoming rho %g, final %g)\n",
+		    err, *rho, theta[0]);
 	}
-    } else {
+    }
+
+    if (!err) {
 #if 1 || CL_DEBUG
 	/* let's show this for now */
 	fprintf(stderr, "ar1_mle, rho %g -> %g\n", *rho, theta[0]);
