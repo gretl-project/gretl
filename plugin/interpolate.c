@@ -543,7 +543,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y,
    Vol. 66, No. 333 (March 1971), pp. 99-102, proportional first
    difference variant, as modified by P. A. Cholette, "Adjusting
    Sub-annual Series to Yearly Benchmarks," Survey Methodology,
-   Vol. 10, 1984, pp. 35­49.
+   Vol. 10, 1984, pp. 35-49.
 
    The solution method is based on Tommaso Di Fonzo and Marco Marini,
    "On the Extrapolation with the Denton Proportional Benchmarking
