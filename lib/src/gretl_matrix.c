@@ -90,6 +90,10 @@ struct gretl_matrix_block_ {
 
 #define no_metadata(m) (m->info == NULL || is_block_matrix(m))
 
+static int real_invert_symmetric_matrix (gretl_matrix *a,
+					 int checked,
+					 int verbose);
+
 static inline void *mval_malloc (size_t sz)
 {
 #if 0 /* ifdef USE_SIMD */
@@ -8887,7 +8891,7 @@ int gretl_invert_matrix (gretl_matrix *a)
     } else if (s == GRETL_MATRIX_DIAGONAL) {
 	err = gretl_invert_diagonal_matrix(a);
     } else if (s == GRETL_MATRIX_SYMMETRIC) {
-	err = gretl_invert_symmetric_matrix(a);
+	err = real_invert_symmetric_matrix(a, 1, 0);
 	if (err) {
 	    err = gretl_invert_symmetric_indef_matrix(a);
 	}
@@ -9019,18 +9023,9 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     return err;
 }
 
-/**
- * gretl_invert_symmetric_matrix:
- * @a: matrix to invert.
- *
- * Computes the inverse of a symmetric positive definite matrix
- * using Cholesky factorization.  On exit @a is overwritten with
- * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
-
-int gretl_invert_symmetric_matrix (gretl_matrix *a)
+static int real_invert_symmetric_matrix (gretl_matrix *a,
+					 int checked,
+					 int verbose)
 {
     integer n, info;
     double *aval = NULL;
@@ -9043,7 +9038,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     }
 
     if (a->cols != a->rows) {
-	fputs("gretl_invert_symmetric_matrix: input is not square\n",
+	fputs("real_invert_symmetric_matrix: input is not square\n",
 	      stderr);
 	return E_NONCONF;
     }
@@ -9055,8 +9050,8 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	return 0;
     }
 
-    if (!real_gretl_matrix_is_symmetric(a, 1)) {
-	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
+    if (!checked && !real_gretl_matrix_is_symmetric(a, 1)) {
+	fputs("real_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
 	return E_NOTPD;
     }
 
@@ -9072,16 +9067,19 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &n, &info);
 
     if (info != 0) {
-	fprintf(stderr, "gretl_invert_symmetric_matrix: "
-		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	err = (info > 0)? E_NOTPD : E_DATA;
+	if (err == E_DATA || verbose) {
+	    fprintf(stderr, "real_invert_symmetric_matrix: "
+		    "dpotrf failed with info = %d (n = %d)\n",
+		    (int) info, (int) n);
+	}
     }
 
     if (!err) {
 	dpotri_(&uplo, &n, a->val, &n, &info);
 	if (info != 0) {
 	    err = E_NOTPD;
-	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+	    fprintf(stderr, "real_invert_symmetric_matrix:\n"
 		    " dpotri failed with info = %d\n", (int) info);
 	} else {
 	    gretl_matrix_mirror(a, uplo);
@@ -9100,48 +9098,20 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     return err;
 }
 
-int real_gretl_invpd (gretl_matrix *a, int verbose)
+/**
+ * gretl_invert_symmetric_matrix:
+ * @a: matrix to invert.
+ *
+ * Computes the inverse of a symmetric positive definite matrix
+ * using Cholesky factorization.  On exit @a is overwritten with
+ * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invert_symmetric_matrix (gretl_matrix *a)
 {
-    integer n, info;
-    char uplo = 'L';
-    int err = 0;
-
-    if (a->cols != a->rows) {
-	fputs("gretl_invert_symmetric_matrix: input is not square\n",
-	      stderr);
-	return E_NONCONF;
-    }
-
-    n = a->cols;
-
-    if (n == 1) {
-	a->val[0] = 1.0 / a->val[0];
-	return 0;
-    }
-
-    dpotrf_(&uplo, &n, a->val, &n, &info);
-
-    if (info != 0) {
-	if (verbose) {
-	    fprintf(stderr, "real_gretl_invpd: "
-		    "dpotrf failed with info = %d (n = %d)\n",
-		    (int) info, (int) n);
-	}
-	err = info > 0 ? E_NOTPD : E_DATA;
-    }
-
-    if (!err) {
-	dpotri_(&uplo, &n, a->val, &n, &info);
-	if (info != 0) {
-	    err = E_SINGULAR;
-	    fprintf(stderr, "real_gretl_invpd:\n"
-		    " dpotri failed with info = %d\n", (int) info);
-	} else {
-	    gretl_matrix_mirror(a, uplo);
-	}
-    }
-
-    return err;
+    return real_invert_symmetric_matrix(a, 0, 1);
 }
 
 /**
@@ -9159,27 +9129,44 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
 
 int gretl_invpd (gretl_matrix *a)
 {
-    return real_gretl_invpd(a, 1);
-}
+    integer n, info;
+    char uplo = 'L';
+    int err = 0;
 
-/**
- * gretl_maybe_invpd:
- * @a: matrix to invert.
- *
- * Attempts to compute the inverse of a matrix which may be
- * positive definite.  On exit @a is overwritten with
- * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
- * Little checking is done, for speed: we assume the caller
- * knows what he's doing.  Unlike gretl_invpd() this function
- * does not dump error messages to %stderr in case the matrix
- * is not in fact positive definite.
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
+    if (a->cols != a->rows) {
+	fputs("gretl_invpd: input is not square\n",
+	      stderr);
+	return E_NONCONF;
+    }
 
-int gretl_maybe_invpd (gretl_matrix *a)
-{
-    return real_gretl_invpd(a, 0);
+    n = a->cols;
+
+    if (n == 1) {
+	a->val[0] = 1.0 / a->val[0];
+	return 0;
+    }
+
+    dpotrf_(&uplo, &n, a->val, &n, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_invpd: "
+		"dpotrf failed with info = %d (n = %d)\n",
+		(int) info, (int) n);
+	err = info > 0 ? E_NOTPD : E_DATA;
+    }
+
+    if (!err) {
+	dpotri_(&uplo, &n, a->val, &n, &info);
+	if (info != 0) {
+	    err = E_SINGULAR;
+	    fprintf(stderr, "gretl_invpd:\n"
+		    " dpotri failed with info = %d\n", (int) info);
+	} else {
+	    gretl_matrix_mirror(a, uplo);
+	}
+    }
+
+    return err;
 }
 
 /**
