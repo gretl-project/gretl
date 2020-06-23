@@ -29,6 +29,13 @@
 #define CL_DEBUG 0
 #define AR1_MLE 1
 
+enum {
+    AGG_AVG,
+    AGG_SUM,
+    AGG_SOP,
+    AGG_EOP
+};
+
 struct chowlin {
     int n;
     double targ;
@@ -211,11 +218,10 @@ static double csum (int n, double a, int k)
     return s;
 }
 
-/* Generate W = CVC' without storing the full C or V matrices.  C is
-   the selection matrix that transforms from higher frequency to lower
-   frequency by summation; V is the autocovariance matrix for AR(1)
-   disturbances with autoregressive coefficient @a; @n is the expansion
-   factor.
+/* Generate W = CVC' without storing the full C or V matrices. C is
+   the matrix that transforms from higher to lower frequency by
+   summation; V is the autocovariance matrix for AR(1) disturbances
+   with autoregressive coefficient @a; @n is the expansion factor.
 */
 
 static void make_CVC (gretl_matrix *W, int n, double a)
@@ -235,6 +241,31 @@ static void make_CVC (gretl_matrix *W, int n, double a)
 	}
     }
 }
+
+#if 0 /* not yet */
+
+/* Variant of make_CVC() in which C is the selection matrix for
+   interpolation, selecting either the first or the last sub-period.
+*/
+
+static void make_CVC2 (gretl_matrix *W, int n, double a, int agg)
+{
+    double wij;
+    int i, j, s;
+
+    s = (agg == AGG_SOP)? 0 : 1;
+
+    for (i=0; i<W->rows; i++) {
+	gretl_matrix_set(W, i, i, 1.0);
+	for (j=0; j<i; j++) {
+	    wij = pow(a, abs(n*(j+s) - n*(i+s)));
+	    gretl_matrix_set(W, i, j, wij);
+	    gretl_matrix_set(W, j, i, wij);
+	}
+    }
+}
+
+#endif
 
 /* Multiply VC' into u and increment yx by the result;
    again, without storing V or C'.
@@ -303,6 +334,39 @@ static void fill_CX (gretl_matrix *CX, int n, int det,
     }
 }
 
+/* Variant of fill_CX() in which C is a selection matrix,
+   for interpolation in the strict sense (stock variables).
+*/
+
+static void fill_CX2 (gretl_matrix *CX, int n, int det,
+		      const gretl_matrix *X, int agg)
+{
+    double xt;
+    int j, s, t;
+
+    gretl_matrix_zero(CX);
+    s = (agg == AGG_SOP)? 0 : n-1;
+
+    for (t=0; t<CX->rows; t++) {
+	if (det > 0) {
+	    gretl_matrix_set(CX, t, 0, 1);
+	    if (det > 1) {
+		gretl_matrix_set(CX, t, 1, s);
+		if (det > 2) {
+		    gretl_matrix_set(CX, t, 2, s*s);
+		}
+	    }
+	}
+	if (X != NULL) {
+	    for (j=0; j<X->cols; j++) {
+		xt = gretl_matrix_get(X, s, j);
+		gretl_matrix_set(CX, t, det+j, xt);
+	    }
+	}
+	s += n;
+    }
+}
+
 static void make_Xx_beta (gretl_vector *y, const double *b,
 			  const gretl_matrix *X, int det)
 {
@@ -363,21 +427,20 @@ static double acf_1 (const gretl_matrix *y,
 /**
  * chow_lin_disagg:
  * @Y: T x k: holds the original data to be expanded.
- * @X: (optionally) holds covariates of Y at the higher frequency:
- * if these are supplied they supplement the default set of
- * regressors, namely, constant plus linear or quadratic trend.
+ * @X: (optionally) holds covariates of @Y at the higher frequency;
+ * if these are supplied they supplement the deterministic
+ * terms (if any) as signalled by @det.
  * @xfac: the expansion factor: 3 for quarterly to monthly,
- * 4 for annual to quarterly, or 12 for annual to monthly.
+ * 4 for annual to quarterly or 12 for annual to monthly.
  * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
  * quadratic trend.
  * @err: location to receive error code.
  *
- * Interpolate, from annual to quarterly or quarterly to monthly,
- * via the Chow-Lin method. See Gregory C. Chow and An-loh Lin,
- * "Best Linear Unbiased Interpolation, Distribution, and
- * Extrapolation of Time Series by Related Series", The
- * Review of Economics and Statistics, Vol. 53, No. 4
- * (November 1971) pp. 372-375.
+ * Distribute or interpolate via the method of Chow and Lin. See
+ * See Gregory C. Chow and An-loh Lin, "Best Linear Unbiased
+ * Interpolation, Distribution, and Extrapolation of Time Series
+ * by Related Series", Review of Economics and Statistics, Vol. 53,
+ * No. 4 (November 1971) pp. 372-375.
  *
  * If @X is given it must have T * @xfac rows.
  *
@@ -396,6 +459,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y,
     gretl_matrix *Yx = NULL;
     gretl_matrix *y, *yx;
     gretl_matrix my, myx;
+    int agg = AGG_AVG;
     int nx, ny = Y->cols;
     int T = Y->rows;
     int Tx = T * xfac;
@@ -445,7 +509,11 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y,
     /* regressors: deterministic terms (as wanted), plus
        anything the user has added
     */
-    fill_CX(CX, xfac, det, X);
+    if (agg >= AGG_SOP) {
+	fill_CX2(CX, xfac, det, X, agg);
+    } else {
+	fill_CX(CX, xfac, det, X);
+    }
 #if CL_DEBUG > 1
     gretl_matrix_print(CX, "CX");
 #endif
@@ -556,7 +624,7 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 {
     gretl_matrix *M;
     gretl_matrix *ret;
-    double mij;
+    gretl_matrix *tmp;
     int N = y0->rows;
     int sN = p->rows;
     int sNN = sN + N;
@@ -565,9 +633,10 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 
     /* we need one big matrix, @M */
     M = gretl_zero_matrix_new(sNN, sNN);
+    tmp = gretl_matrix_alloc(sN, N);
     ret = gretl_matrix_alloc(sN, 1);
 
-    if (M == NULL || ret == NULL) {
+    if (M == NULL || tmp == NULL || ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
@@ -602,11 +671,11 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 	gretl_matrix_free(ret);
 	ret = NULL;
     } else {
-	gretl_matrix *tmp = gretl_matrix_alloc(sN, N);
-
 	/* extract the relevant portion of M-inverse and
 	   premultiply by (diag(p) ~ 0) | (0 ~ I)
 	*/
+	double mij;
+
 	for (j=0; j<N; j++) {
 	    for (i=0; i<sN; i++) {
 		mij = gretl_matrix_get(M, i, j+sN);
@@ -614,10 +683,10 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 	    }
 	}
 	gretl_matrix_multiply(tmp, y0, ret);
-	gretl_matrix_free(tmp);
     }
 
     gretl_matrix_free(M);
+    gretl_matrix_free(tmp);
 
     return ret;
 }
