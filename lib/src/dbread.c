@@ -1601,7 +1601,7 @@ static double *interpolate_db_series (const double *src,
     gretl_matrix *yx;
     gretl_matrix *y;
     double *ret = NULL;
-    int det = 3; /* FIXME */
+    int det = 2; /* FIXME */
     int t;
 
     y = gretl_column_vector_alloc(oldn);
@@ -1614,7 +1614,7 @@ static double *interpolate_db_series (const double *src,
 	y->val[t] = src[t];
     }
 
-    yx = matrix_tdisagg(y, NULL, mult, det, 0, NULL, err);
+    yx = matrix_tdisagg(y, NULL, mult, det, 0, 0, NULL, err);
     gretl_matrix_free(y);
 
     if (!*err) {
@@ -5013,9 +5013,9 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 
     if (!*err) {
 	int f = newpd / dset->pd;
-	int det = 3; /* FIXME */
+	int det = 2; /* FIXME */
 
-	Y1 = matrix_tdisagg(Y0, NULL, f, det, 0, NULL, err);
+	Y1 = matrix_tdisagg(Y0, NULL, f, det, 0, 0, NULL, err);
 	gretl_matrix_free(Y0);
     }
 
