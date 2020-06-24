@@ -77,17 +77,6 @@ static double chow_lin_callback (double a, void *p)
 	    den += 2*(n-i) * apow;
 	    apow *= a;
 	}
-#if 0 /* retained for comparison for now */
-	if (cl->n == 3) {
-	    num = a + 2*a*a + 3*pow(a, 3) + 2*pow(a, 4) + pow(a, 5);
-	    den = 3 + 4*a + 2*a*a;
-	} else {
-	    /* n = 4: requires cl->targ > 0 */
-	    num = a + 2*a*a + 3*pow(a, 3) + 4*pow(a, 4) + 3*pow(a, 5)
-		+ 2*pow(a, 6) + pow(a, 7);
-	    den = 4 + 6*a + 4*a*a + 2*pow(a, 3);
-	}
-#endif
 	r = num/den;
     }
 
@@ -242,8 +231,6 @@ static void make_CVC (gretl_matrix *W, int n, double a)
     }
 }
 
-#if 0 /* not yet */
-
 /* Variant of make_CVC() in which C is the selection matrix for
    interpolation, selecting either the first or the last sub-period.
 */
@@ -264,8 +251,6 @@ static void make_CVC2 (gretl_matrix *W, int n, double a, int agg)
 	}
     }
 }
-
-#endif
 
 /* Multiply VC' into u and increment yx by the result;
    again, without storing V or C'.
@@ -563,7 +548,11 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y,
 	}
 
 	if (!*err) {
-	    make_CVC(W, xfac, a);
+	    if (agg >= AGG_SOP) {
+		make_CVC2(W, xfac, a, agg);
+	    } else {
+		make_CVC(W, xfac, a);
+	    }
 	    *err = gretl_invert_symmetric_matrix(W);
 	}
 
@@ -596,6 +585,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y,
 	    mult_VC(yx, Tmp1, xfac, a);
 	    gretl_matrix_reuse(Tmp1, nx, T);
 
+	    /* FIXME make this conditional */
 	    gretl_matrix_multiply_by_scalar(yx, xfac);
 	}
     }
