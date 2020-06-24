@@ -210,10 +210,10 @@ static double csum (int n, double a, int k)
 /* Generate W = CVC' without storing the full C or V matrices. C is
    the matrix that transforms from higher to lower frequency by
    summation; V is the autocovariance matrix for AR(1) disturbances
-   with autoregressive coefficient @a; @n is the expansion factor.
+   with autoregressive coefficient @a; @s is the expansion factor.
 */
 
-static void make_CVC (gretl_matrix *W, int n, double a)
+static void make_CVC (gretl_matrix *W, int s, double a)
 {
     double wij;
     int i, j, k, m;
@@ -222,8 +222,8 @@ static void make_CVC (gretl_matrix *W, int n, double a)
 	m = 0;
 	for (j=i; j<W->cols; j++) {
 	    wij = 0.0;
-	    for (k=0; k<n; k++) {
-		wij += csum(n, a, m--);
+	    for (k=0; k<s; k++) {
+		wij += csum(s, a, m--);
 	    }
 	    gretl_matrix_set(W, i, j, wij);
 	    gretl_matrix_set(W, j, i, wij);
@@ -235,17 +235,17 @@ static void make_CVC (gretl_matrix *W, int n, double a)
    interpolation, selecting either the first or the last sub-period.
 */
 
-static void make_CVC2 (gretl_matrix *W, int n, double a, int agg)
+static void make_CVC2 (gretl_matrix *W, int s, double a, int agg)
 {
     double wij;
-    int i, j, s;
+    int i, j, k;
 
-    s = (agg == AGG_SOP)? 0 : 1;
+    k = (agg == AGG_SOP)? 0 : 1;
 
     for (i=0; i<W->rows; i++) {
 	gretl_matrix_set(W, i, i, 1.0);
 	for (j=0; j<i; j++) {
-	    wij = pow(a, abs(n*(j+s) - n*(i+s)));
+	    wij = pow(a, abs(s*(j+k) - s*(i+k)));
 	    gretl_matrix_set(W, i, j, wij);
 	    gretl_matrix_set(W, j, i, wij);
 	}
@@ -257,36 +257,25 @@ static void make_CVC2 (gretl_matrix *W, int n, double a, int agg)
 */
 
 static void mult_VC (gretl_matrix *y, gretl_matrix *u,
-		     int s, double a)
+		     int s, double a, int agg)
 {
     int sN = y->rows;
     int N = u->rows;
-    int i, j;
+    int i, j, vj;
 
-    for (i=0; i<sN; i++) {
-	for (j=0; j<N; j++) {
-	    y->val[i] += u->val[j] * csum(s, a, j * s - i);
+    if (agg >= AGG_SOP) {
+	for (i=0; i<sN; i++) {
+	    vj = agg == AGG_SOP ? 0 : s-1;
+	    for (j=0; j<N; j++) {
+		y->val[i] += u->val[j] * pow(a, abs(i - vj));
+		vj += s;
+	    }
 	}
-    }
-}
-
-/* Variant of mult_VC() for start- or end-of-period
-   aggregation
-*/
-
-static void mult_VC2 (gretl_matrix *y, gretl_matrix *u,
-		      int s, double a, int agg)
-{
-    int sN = y->rows;
-    int N = u->rows;
-    int i, j, vj, p;
-
-    for (i=0; i<sN; i++) {
-	vj = agg == AGG_SOP ? 0 : s-1;
-	for (j=0; j<N; j++) {
-	    p = abs(i - vj);
-	    y->val[i] += u->val[j] * pow(a, p);
-	    vj += s;
+    } else {
+	for (i=0; i<sN; i++) {
+	    for (j=0; j<N; j++) {
+		y->val[i] += u->val[j] * csum(s, a, j * s - i);
+	    }
 	}
     }
 }
@@ -302,19 +291,19 @@ static void mult_VC2 (gretl_matrix *y, gretl_matrix *u,
    Lin call "distribution", which is appropriate for flow variables.
 */
 
-static void fill_CX (gretl_matrix *CX, int n, int det,
+static void fill_CX (gretl_matrix *CX, int s, int det,
 		     const gretl_matrix *X)
 {
     double xt1, xt2;
     int i, j, k = 1;
-    int t, s = 0;
+    int t, r = 0;
 
     for (t=0; t<CX->rows; t++) {
 	if (det > 0) {
-	    gretl_matrix_set(CX, t, 0, n);
+	    gretl_matrix_set(CX, t, 0, s);
 	    if (det > 1) {
 		xt1 = xt2 = 0.0;
-		for (i=0; i<n; i++) {
+		for (i=0; i<s; i++) {
 		    xt1 += k;
 		    if (det > 2) {
 			xt2 += k * k;
@@ -330,12 +319,12 @@ static void fill_CX (gretl_matrix *CX, int n, int det,
 	if (X != NULL) {
 	    for (j=0; j<X->cols; j++) {
 		xt1 = 0.0;
-		for (i=0; i<n; i++) {
-		    xt1 += gretl_matrix_get(X, s + i, j);
+		for (i=0; i<s; i++) {
+		    xt1 += gretl_matrix_get(X, r + i, j);
 		}
 		gretl_matrix_set(CX, t, det+j, xt1);
 	    }
-	    s += n;
+	    r += s;
 	}
     }
 }
@@ -348,16 +337,16 @@ static void fill_CX2 (gretl_matrix *CX, int s, int det,
 		      const gretl_matrix *X, int agg)
 {
     double xkj;
-    int i, j, k, t;
+    int i, j, r, t;
 
     gretl_matrix_zero(CX);
-    k = (agg == AGG_SOP)? 0 : s-1;
+    r = (agg == AGG_SOP)? 0 : s-1;
 
     for (i=0; i<CX->rows; i++) {
 	if (det > 0) {
 	    gretl_matrix_set(CX, i, 0, 1);
 	    if (det > 1) {
-		t = k + 1;
+		t = r + 1;
 		gretl_matrix_set(CX, i, 1, t);
 		if (det > 2) {
 		    gretl_matrix_set(CX, i, 2, t*t);
@@ -366,11 +355,11 @@ static void fill_CX2 (gretl_matrix *CX, int s, int det,
 	}
 	if (X != NULL) {
 	    for (j=0; j<X->cols; j++) {
-		xkj = gretl_matrix_get(X, k, j);
+		xkj = gretl_matrix_get(X, r, j);
 		gretl_matrix_set(CX, i, det+j, xkj);
 	    }
 	}
-	k += s;
+	r += s;
     }
 }
 
@@ -431,6 +420,25 @@ static double acf_1 (const gretl_matrix *y,
     return rho;
 }
 
+static void show_GLS_results (const gretl_matrix *b,
+			      double a, int det,
+			      PRN *prn)
+{
+    const char *dnames[] = {"const", "trend", "trend^2"};
+    int i;
+
+    pputs(prn, "\nGLS coefficients:\n");
+    for (i=0; i<b->rows; i++) {
+	if (i < det) {
+	    pprintf(prn, " %-8s", dnames[i]);
+	} else {
+	    pprintf(prn, " %c%-7d", 'X', i-det+1);
+	}
+	pprintf(prn, "%#g\n", b->val[i]);
+    }
+    pprintf(prn, " %-8s%#g\n", "rho", a);
+}
+
 /**
  * chow_lin_disagg:
  * @Y0: N x k: holds the original data to be expanded.
@@ -463,25 +471,18 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 {
     gretl_matrix_block *B;
     gretl_matrix *CX, *b, *u, *W, *Z;
-    gretl_matrix *Tmp1, *Tmp2;
-    gretl_matrix *Y = NULL;
+    gretl_matrix *Y, *Tmp1, *Tmp2;
     gretl_matrix *y0, *y;
     gretl_matrix my0, my;
-    int nx, ny = Y0->cols;
+    int ny = Y0->cols;
+    int nx = det;
     int N = Y0->rows;
     int sN = s * N;
     int i;
 
-    /* Note: checks to the effect that s = 3, 4 or 12 and,
-       if X is non-NULL, that X->rows = s * Y->rows,
-       should have already been performed.
-    */
-
-    nx = det;
     if (X != NULL) {
 	nx += X->cols;
     }
-
     if (nx == 0) {
 	/* nothing to work with! */
 	*err = E_ARGS;
@@ -531,7 +532,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     y0->cols = 1;
     y0->val = Y0->val;
 
-    /* for return, y vector length sN */
+    /* y vector for return, length sN */
     y = &my;
     y->rows = sN;
     y->cols = 1;
@@ -541,19 +542,13 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	double a = 0.0;
 
 	if (i > 0) {
-	    /* pick up the current columns */
+	    /* pick up the current columns for reading and writing */
 	    y0->val = Y0->val + i * N;
 	    y->val = Y->val + i * sN;
 	}
 
 	/* initial low-frequency OLS */
 	*err = gretl_matrix_ols(y0, CX, b, NULL, u, NULL);
-
-	if (0 && agg >= AGG_SOP) {
-	    /* TEMPORARY */
-	    a = 0.5;
-	    goto skip;
-	}
 
 	if (!*err) {
 	    a = acf_1(y0, CX, b, u);
@@ -569,6 +564,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 		/* nothing more to do, this iteration */
 		continue;
 	    } else if (agg >= AGG_SOP) {
+		/* nice and simple */
 		a = pow(a, 1.0/s);
 	    } else {
 		double bracket[] = {0, 0.9999};
@@ -582,8 +578,6 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 #endif
 	    }
 	}
-
-    skip:
 
 	if (!*err) {
 	    if (agg >= AGG_SOP) {
@@ -620,12 +614,12 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    /* yx = Xx*beta + V*C'*W*u */
 	    gretl_matrix_reuse(Tmp1, N, 1);
 	    gretl_matrix_multiply(W, u, Tmp1);
-	    if (agg >= AGG_SOP) {
-		mult_VC2(y, Tmp1, s, a, agg);
-	    } else {
-		mult_VC(y, Tmp1, s, a);
-	    }
+	    mult_VC(y, Tmp1, s, a, agg);
 	    gretl_matrix_reuse(Tmp1, nx, N);
+
+	    if (1) {
+		show_GLS_results(b, a, det, prn);
+	    }
 
 	    if (agg == AGG_AVG) {
 		gretl_matrix_multiply_by_scalar(y, s);
