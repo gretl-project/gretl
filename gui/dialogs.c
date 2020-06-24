@@ -6754,7 +6754,7 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     if (payload != NULL && strcmp(payload, "none")) {
 	*gi->payload_id = current_series_index(dataset, payload);
 	if (strcmp(palette, "default")) {
-	    gretl_bundle_set_string(gi->bundle, "setpal", palette);
+	    gretl_bundle_set_string(gi->bundle, "palette", palette);
 	}
     }
 
