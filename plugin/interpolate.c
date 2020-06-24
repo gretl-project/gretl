@@ -30,10 +30,10 @@
 #define AR1_MLE 1
 
 enum {
-    AGG_AVG,
-    AGG_SUM,
-    AGG_SOP,
-    AGG_EOP
+    AGG_AVG, /* average */
+    AGG_SUM, /* sum */
+    AGG_SOP, /* start of period */
+    AGG_EOP  /* end of period */
 };
 
 struct chowlin {
