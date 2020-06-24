@@ -13567,10 +13567,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_CHOWLIN || t->t == HF_TDISAGG) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
-	int fac = 0, det = 3;
+	int fac = 0, det = 2;
 	int method = 0;
+	int agg = 0;
 
-	if (k < 2 || k > 5) {
+	/* FIXME interface! */
+
+	if (k < 2 || k > 6) {
 	    n_args_error(k, 4, t->t, p);
 	}
 	for (i=0; i<k && !p->err; i++) {
@@ -13594,13 +13597,29 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 3) {
 		if (e->t == MAT) {
 		    X = e->v.m;
+		} else if (!null_node(e)) {
+		    p->err = E_TYPES;
+		}
+	    } else if (i == 4) {
+		if (e->t == STR) {
+		    if (!strcmp(e->v.str, "denton")) {
+			method = 1;
+		    } else if (strcmp(e->v.str, "chow-lin")) {
+			p->err = E_INVARG;
+		    }
 		} else {
 		    p->err = E_TYPES;
 		}
 	    } else if (e->t == STR) {
-		if (!strcmp(e->v.str, "denton")) {
-		    method = 1;
-		} else if (strcmp(e->v.str, "chow-lin")) {
+		if (!strcmp(e->v.str, "avg")) {
+		    agg = 0;
+		} else if (!strcmp(e->v.str, "sum")) {
+		    agg = 1;
+		} else if (!strcmp(e->v.str, "sop")) {
+		    agg = 2;
+		} else if (!strcmp(e->v.str, "eop")) {
+		    agg = 3;
+		} else {
 		    p->err = E_INVARG;
 		}
 	    } else {
@@ -13613,7 +13632,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 	if (!p->err) {
 	    ret->v.m = matrix_tdisagg(Y, X, fac, det, method,
-				      p->prn, &p->err);
+				      agg, p->prn, &p->err);
 	}
     }
 

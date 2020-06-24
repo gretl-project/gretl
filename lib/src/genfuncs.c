@@ -6263,15 +6263,16 @@ double logistic_cdf (double x)
 
 /**
  * matrix_tdisagg:
- * @Y: T x k: holds the original data to be expanded, series
+ * @Y: N x k: holds the original data to be expanded, series
  * in columns.
  * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
  * regressors, namely, constant plus quadratic trend.
- * @f: the expansion factor: 3 for quarterly to monthly,
+ * @s: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly, or 12 for annual to monthly.
  * @det: = 0 for none, 1 for constant, 2 for linear trend, 3 for quadratic.
  * @method: 0 = Chow-Lin, 1 = Modified Denton.
+ * @agg: aggregation-type code.
  * @err: location to receive error code.
  *
  * Interpolate, from annual to quarterly or quarterly to monthly, by
@@ -6281,7 +6282,7 @@ double logistic_cdf (double x)
  * Economics and Statistics, Vol. 53, No. 4 (November 1971)
  * pp. 372-375.
  *
- * If @X is provided, it must have T * @f rows.
+ * If @X is provided, it must have @s * N rows.
  *
  * Returns: matrix containing the expanded series, or
  * NULL on failure.
@@ -6289,23 +6290,23 @@ double logistic_cdf (double x)
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int f, int det,
-			      int method, PRN *prn,
+			      int s, int det, int method,
+			      int agg, PRN *prn,
 			      int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
-			      int, int, int,
+			      int, int, int, int,
 			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
-    if ((f != 3 && f != 4 && f != 12) || (det < 0 && det > 3)) {
+    if ((s != 3 && s != 4 && s != 12) || (det < 0 && det > 3)) {
 	*err = E_INVARG;
 	return NULL;
     }
 
     if (X != NULL) {
-	if (X->rows / Y->rows != f) {
+	if (X->rows / Y->rows != s) {
 	    *err = E_INVARG;
 	    return NULL;
 	} else if (X->is_complex) {
@@ -6319,7 +6320,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, f, det, method, prn, err);
+	ret = (*tdisagg) (Y, X, s, det, method, agg, prn, err);
     }
 
     return ret;
