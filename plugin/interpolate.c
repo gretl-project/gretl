@@ -266,7 +266,7 @@ static void mult_VC (gretl_matrix *y, gretl_matrix *wu,
 
 /* Regressor matrix: we put in constant (if det > 0) plus linear trend
    (if det > 1) and squared trend (if det = 3), summed appropriately
-   based on @n.
+   based on @s.
 
    If the user has supplied high-frequency covariates in @X, we
    compress them from column @det onward.
@@ -440,7 +440,7 @@ static void show_GLS_results (const gretl_matrix *b,
  * by Related Series", Review of Economics and Statistics, Vol. 53,
  * No. 4 (November 1971) pp. 372-375.
  *
- * If @X is given it must have T * @xfac rows.
+ * If @X is given it must have @s * N rows.
  *
  * Returns: matrix containing the expanded series, or
  * NULL on failure.
