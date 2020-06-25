@@ -176,91 +176,148 @@ static int ar1_mle (const gretl_matrix *y,
     return err;
 }
 
-static double csum (int n, double a, int k)
-{
-    double s = 0.0;
-    int i;
+/* Produce W = CVC' without storing C */
 
-    for (i=0; i<n; i++) {
-	s += pow(a, abs(k));
-	k++;
-    }
-
-    return s;
-}
-
-/* Generate W = CVC' without storing the full C or V matrices. C is
-   the matrix that transforms from higher to lower frequency by
-   summation; V is the autocovariance matrix for AR(1) disturbances
-   with autoregressive coefficient @a; @s is the expansion factor.
-*/
-
-static void make_CVC (gretl_matrix *W, int s, double a)
+static void make_CVC (gretl_matrix *W, const gretl_matrix *VC,
+		      int s, int agg)
 {
     double wij;
-    int i, j, k, m;
-
-    for (i=0; i<W->rows; i++) {
-	m = 0;
-	for (j=i; j<W->cols; j++) {
-	    wij = 0.0;
-	    for (k=0; k<s; k++) {
-		wij += csum(s, a, m--);
-	    }
-	    gretl_matrix_set(W, i, j, wij);
-	    gretl_matrix_set(W, j, i, wij);
-	}
-    }
-}
-
-/* Variant of make_CVC() in which C is the selection matrix for
-   interpolation, selecting either the first or the last sub-period.
-*/
-
-static void make_CVC2 (gretl_matrix *W, int s, double a, int agg)
-{
-    double wij;
-    int i, j, k;
-
-    k = (agg == AGG_SOP)? 0 : 1;
-
-    for (i=0; i<W->rows; i++) {
-	gretl_matrix_set(W, i, i, 1.0);
-	for (j=0; j<i; j++) {
-	    wij = pow(a, abs(s*(j+k) - s*(i+k)));
-	    gretl_matrix_set(W, i, j, wij);
-	    gretl_matrix_set(W, j, i, wij);
-	}
-    }
-}
-
-/* Multiply VC' into W*u and increment y by the result;
-   again, without storing V or C'. FIXME we need a
-   modified version of this for extrapolation. See Chow
-   and Lin 1971, p. 375.
-*/
-
-static void mult_VC (gretl_matrix *y, gretl_matrix *wu,
-		     int s, double a, int agg)
-{
-    int sN = y->rows;
-    int N = wu->rows;
-    int i, j, vj;
+    int N = W->rows;
+    int i, j, k, ii;
 
     if (agg >= AGG_SOP) {
-	for (i=0; i<sN; i++) {
-	    vj = agg == AGG_SOP ? 0 : s-1;
-	    for (j=0; j<N; j++) {
-		y->val[i] += wu->val[j] * pow(a, abs(i - vj));
-		vj += s;
+	/* select rows of VC */
+	for (j=0; j<N; j++) {
+	    ii = agg == AGG_SOP ? 0 : s-1;
+	    for (i=0; i<N; i++) {
+		wij = gretl_matrix_get(VC, ii, j);
+		gretl_matrix_set(W, i, j, wij);
+		gretl_matrix_set(W, j, i, wij);
+		ii += s;
 	    }
 	}
     } else {
-	for (i=0; i<sN; i++) {
-	    for (j=0; j<N; j++) {
-		y->val[i] += wu->val[j] * csum(s, a, j * s - i);
+	/* cumulate rows of VC */
+	for (j=0; j<N; j++) {
+	    ii = 0;
+	    for (i=0; i<N; i++) {
+		wij = 0.0;
+		for (k=0; k<s; k++) {
+		    wij += gretl_matrix_get(VC, ii++, j);
+		}
+		gretl_matrix_set(W, i, j, wij);
+		gretl_matrix_set(W, j, i, wij);
 	    }
 	}
+    }
+}
+
+/* Build VC' without storing V or C as such */
+
+static void make_VC (gretl_matrix *VC, int N,
+		     int s, double a, int agg)
+{
+    int sN = s*N;
+    int i, j, k;
+
+    if (agg >= AGG_SOP) {
+	k = agg == AGG_SOP ? 0 : s-1;
+	for (j=0; j<N; j++) {
+	    for (i=0; i<sN; i++) {
+		gretl_matrix_set(VC, i, j, pow(a, abs(k-i)));
+	    }
+	    k += s;
+	}
+    } else {
+	double vij;
+	int kk = 0;
+
+	for (j=0; j<N; j++) {
+	    for (i=0; i<sN; i++) {
+		vij = 0;
+		for (k=0; k<s; k++) {
+		    vij += pow(a, abs(kk+k-i));
+		}
+		gretl_matrix_set(VC, i, j, vij);
+	    }
+	    kk += s;
+	}
+    }
+}
+
+/* Make the counterpart to VC' that's required for extrapolation;
+   see p. 375 in Chow and Lin 1971.
+*/
+
+static void make_EVC (gretl_matrix *EVC, int s,
+		      double a, int agg)
+{
+    double vij;
+    int m = EVC->rows;
+    int N = EVC->cols;
+    int sN = s * N;
+    int i, j, k, p;
+
+    if (agg >= AGG_SOP) {
+	p = agg == AGG_SOP ? sN : s*(N-1)+1;
+	for (j=0; j<N; j++) {
+	    vij = pow(a, p);
+	    for (i=0; i<m; i++) {
+		gretl_matrix_set(EVC, i, j, vij);
+		vij *= a;
+	    }
+	    p -= s;
+	}
+    } else {
+	p = sN;
+	for (j=0; j<N; j++) {
+	    vij = 0;
+	    for (k=0; k<s; k++) {
+		vij += pow(a, p-k);
+	    }
+	    for (i=0; i<m; i++) {
+		gretl_matrix_set(EVC, i, j, vij);
+		vij *= a;
+	    }
+	    p -= s;
+	}
+    }
+}
+
+/* Multiply VC' into W*u and increment y by the result */
+
+static void multiply_by_VC (gretl_matrix *y,
+			    const gretl_matrix *VC,
+			    const gretl_matrix *wu,
+			    int s, int m, double a,
+			    int agg)
+{
+    gretl_matrix *EVC = NULL;
+    gretl_matrix ext = {0};
+    int sN = y->rows;
+
+    if (m > 0) {
+	/* we have some extrapolation to do */
+	sN -= m;
+	gretl_matrix_reuse(y, sN, 1);
+	gretl_matrix_init(&ext);
+	ext.rows = m;
+	ext.cols = 1;
+	ext.val = y->val + sN;
+	EVC = gretl_matrix_alloc(m, sN/s);
+    }
+
+    gretl_matrix_multiply_mod(VC, GRETL_MOD_NONE,
+			      wu, GRETL_MOD_NONE,
+			      y, GRETL_MOD_CUMULATE);
+
+    if (m > 0) {
+	make_EVC(EVC, s, a, agg);
+	gretl_matrix_multiply_mod(EVC, GRETL_MOD_NONE,
+				  wu, GRETL_MOD_NONE,
+				  &ext, GRETL_MOD_CUMULATE);
+	gretl_matrix_reuse(y, sN+m, 1);
+	gretl_matrix_free(EVC);
     }
 }
 
@@ -452,18 +509,22 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      PRN *prn, int *err)
 {
     gretl_matrix_block *B;
-    gretl_matrix *CX, *b, *u, *W, *Z;
+    gretl_matrix *CX, *b, *u, *Z;
     gretl_matrix *Y, *Tmp1, *Tmp2;
+    gretl_matrix *VC, *W;
     gretl_matrix *y0, *y;
     gretl_matrix my0, my;
     int ny = Y0->cols;
     int nx = det;
     int N = Y0->rows;
     int sN = s * N;
+    int m = 0;
     int i;
 
     if (X != NULL) {
 	nx += X->cols;
+	/* m: "extra" observations */
+	m = X->rows - sN;
     }
     if (nx == 0) {
 	/* nothing to work with! */
@@ -475,14 +536,14 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     gretl_matrix_init(&my);
 
     /* the return value */
-    Y = gretl_zero_matrix_new(sN, ny);
+    Y = gretl_zero_matrix_new(sN + m, ny);
     if (Y == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    /* block of low-frequency matrices */
     B = gretl_matrix_block_new(&CX, N, nx,
+			       &VC, sN, N,
 			       &W, N, N,
 			       &b, nx, 1,
 			       &u, N, 1,
@@ -516,7 +577,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
     /* y vector for return, length sN */
     y = &my;
-    y->rows = sN;
+    y->rows = sN + m;
     y->cols = 1;
     y->val = Y->val;
 
@@ -526,7 +587,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	if (i > 0) {
 	    /* pick up the current columns for reading and writing */
 	    y0->val = Y0->val + i * N;
-	    y->val = Y->val + i * sN;
+	    y->val = Y->val + i * (sN + m);
 	}
 
 	/* initial low-frequency OLS */
@@ -559,11 +620,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	}
 
 	if (!*err) {
-	    if (agg >= AGG_SOP) {
-		make_CVC2(W, s, a, agg);
-	    } else {
-		make_CVC(W, s, a);
-	    }
+	    make_VC(VC, N, s, a, agg);
+	    make_CVC(W, VC, s, agg);
 	    *err = gretl_invert_symmetric_matrix(W);
 	}
 
@@ -593,7 +651,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    /* yx = X*beta + V*C'*W*u */
 	    gretl_matrix_reuse(Tmp1, N, 1);
 	    gretl_matrix_multiply(W, u, Tmp1);
-	    mult_VC(y, Tmp1, s, a, agg);
+	    multiply_by_VC(y, VC, Tmp1, s, m, a, agg);
 	    gretl_matrix_reuse(Tmp1, nx, N);
 
 	    if (1) {
@@ -708,8 +766,10 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 	return chow_lin_disagg(Y0, X, s, det, agg, prn, err);
     } else if (method == 1) {
 	/* Modified Denton, proportional first differences */
-	if (gretl_vector_get_length(Y0) == 0 ||
-	    gretl_vector_get_length(X) == 0) {
+	int ylen = gretl_vector_get_length(Y0);
+	int xlen = gretl_vector_get_length(X);
+
+	if (ylen == 0 || xlen == 0 || xlen != s * ylen) {
 	    *err = E_INVARG;
 	    return NULL;
 	}
