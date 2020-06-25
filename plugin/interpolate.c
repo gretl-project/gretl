@@ -16,18 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Note: at present this plugin only offers Chow-Lin interpolation.
-   At some point we may want to add interpolation using the Kalman
-   filter or some other more sophisticated variant(s).
-*/
-
 #include "libgretl.h"
 #include "version.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
 
 #define CL_DEBUG 0
-#define AR1_MLE 1
 
 enum {
     AGG_AVG, /* average */
@@ -90,8 +84,6 @@ static double chow_lin_callback (double a, void *p)
     return resid;
 }
 
-#if AR1_MLE
-
 typedef struct ar1data_ {
     const gretl_matrix *y;
     const gretl_matrix *X;
@@ -140,13 +132,6 @@ static int ar1_mle (const gretl_matrix *y,
 		    const gretl_matrix *b,
 		    double s, double *rho)
 {
-#if 0 /* debugging */
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-    gretlopt opt = OPT_V;
-#else
-    PRN *prn = NULL;
-    gretlopt opt = OPT_NONE;
-#endif
     struct ar1data_ a = {y, X};
     double *theta;
     int fc = 0, gc = 0;
@@ -166,33 +151,30 @@ static int ar1_mle (const gretl_matrix *y,
 
     err = BFGS_max(theta, nt, 300, 1.0e-10,
 		   &fc, &gc, ar1_loglik, C_LOGLIK,
-		   NULL, &a, NULL, opt, prn);
+		   NULL, &a, NULL, OPT_NONE, NULL);
 
     if (err) {
 	if (err == E_NOCONV) {
-	    /* try taking the final value regardless?? */
+	    /* try taking the final value regardless */
 	    err = 0;
 	} else {
-	    fprintf(stderr, "ar1_mle: BFGS_max gave err=%d (incoming rho %g, final %g)\n",
+	    fprintf(stderr, "ar1_mle: BFGS_max gave err=%d "
+		    "(incoming rho %g, final %g)\n",
 		    err, *rho, theta[0]);
 	}
     }
 
     if (!err) {
-#if 1 || CL_DEBUG
-	/* let's show this for now */
+#if CL_DEBUG
 	fprintf(stderr, "ar1_mle, rho %g -> %g\n", *rho, theta[0]);
 #endif
 	*rho = theta[0];
     }
 
     free(theta);
-    gretl_print_destroy(prn);
 
     return err;
 }
-
-#endif /* AR1_MLE */
 
 static double csum (int n, double a, int k)
 {
@@ -252,29 +234,31 @@ static void make_CVC2 (gretl_matrix *W, int s, double a, int agg)
     }
 }
 
-/* Multiply VC' into u and increment y by the result;
-   again, without storing V or C'.
+/* Multiply VC' into W*u and increment y by the result;
+   again, without storing V or C'. FIXME we need a
+   modified version of this for extrapolation. See Chow
+   and Lin 1971, p. 375.
 */
 
-static void mult_VC (gretl_matrix *y, gretl_matrix *u,
+static void mult_VC (gretl_matrix *y, gretl_matrix *wu,
 		     int s, double a, int agg)
 {
     int sN = y->rows;
-    int N = u->rows;
+    int N = wu->rows;
     int i, j, vj;
 
     if (agg >= AGG_SOP) {
 	for (i=0; i<sN; i++) {
 	    vj = agg == AGG_SOP ? 0 : s-1;
 	    for (j=0; j<N; j++) {
-		y->val[i] += u->val[j] * pow(a, abs(i - vj));
+		y->val[i] += wu->val[j] * pow(a, abs(i - vj));
 		vj += s;
 	    }
 	}
     } else {
 	for (i=0; i<sN; i++) {
 	    for (j=0; j<N; j++) {
-		y->val[i] += u->val[j] * csum(s, a, j * s - i);
+		y->val[i] += wu->val[j] * csum(s, a, j * s - i);
 	    }
 	}
     }
@@ -412,10 +396,8 @@ static double acf_1 (const gretl_matrix *y,
 
     rho = num / den;
 
-#if AR1_MLE
-    /* improve the estimate of @rho via ML? */
+    /* improve the initial estimate of @rho via ML */
     ar1_mle(y, X, b, sqrt(den / u->rows), &rho);
-#endif
 
     return rho;
 }
@@ -552,9 +534,6 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 	if (!*err) {
 	    a = acf_1(y0, CX, b, u);
-#if CL_DEBUG
-	    fprintf(stderr, "initial acf_1 = %g\n", a);
-#endif
 	    if (a <= 0.0) {
 		/* don't pursue negative @a */
 		make_X_beta(y, b->val, X, det);
@@ -611,7 +590,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      b, GRETL_MOD_NONE,
 				      u, GRETL_MOD_DECREMENT);
 
-	    /* yx = Xx*beta + V*C'*W*u */
+	    /* yx = X*beta + V*C'*W*u */
 	    gretl_matrix_reuse(Tmp1, N, 1);
 	    gretl_matrix_multiply(W, u, Tmp1);
 	    mult_VC(y, Tmp1, s, a, agg);
