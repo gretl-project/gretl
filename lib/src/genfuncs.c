@@ -6265,9 +6265,7 @@ double logistic_cdf (double x)
  * matrix_tdisagg:
  * @Y: N x k: holds the original data to be expanded, series
  * in columns.
- * @X: (optionally) holds covariates of Y at the higher frequency:
- * if these are supplied they supplement the default set of
- * regressors, namely, constant plus quadratic trend.
+ * @X: (optionally) holds covariates of Y at the higher frequency.
  * @s: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly, or 12 for annual to monthly.
  * @det: = 0 for none, 1 for constant, 2 for linear trend, 3 for quadratic.
@@ -6281,8 +6279,6 @@ double logistic_cdf (double x)
  * Extrapolation of Time Series by Related Series", The Review of
  * Economics and Statistics, Vol. 53, No. 4 (November 1971)
  * pp. 372-375.
- *
- * If @X is provided, it must have @s * N rows.
  *
  * Returns: matrix containing the expanded series, or
  * NULL on failure.
@@ -6306,7 +6302,9 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     }
 
     if (X != NULL) {
-	if (X->rows / Y->rows != s) {
+	double xs = X->rows / (double) Y->rows;
+
+	if (xs < s) {
 	    *err = E_INVARG;
 	    return NULL;
 	} else if (X->is_complex) {
