@@ -12645,6 +12645,34 @@ static int bundle_pointer_arg0 (NODE *t)
     return 0;
 }
 
+static int get_tdisagg_method (const char *s, int *err)
+{
+    if (!strcmp(s, "denton")) {
+	return 1;
+    } else if (!strcmp(s, "chow-lin")) {
+	return 0;
+    } else {
+	*err = E_INVARG;
+	return -1;
+    }
+}
+
+static int get_aggregation_type (const char *s, int *err)
+{
+    if (!strcmp(s, "avg")) {
+	return 0;
+    } else if (!strcmp(s, "sum")) {
+	return 1;
+    } else if (!strcmp(s, "sop")) {
+	return 2;
+    } else if (!strcmp(s, "eop")) {
+	return 3;
+    } else {
+	*err = E_INVARG;
+	return -1;
+    }
+}
+
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
@@ -13564,64 +13592,94 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    }
 	}
-    } else if (t->t == F_CHOWLIN || t->t == HF_TDISAGG) {
+    } else if (t->t == F_CHOWLIN) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
-	int fac = 0, det = 2;
-	int method = 0;
-	int agg = 0;
+	int fac = 0, agg = 0;
 
-	/* FIXME interface! */
-
-	if (k < 2 || k > 6) {
+	if (k < 2 || k > 4) {
 	    n_args_error(k, 4, t->t, p);
 	}
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
 	    if (i == 0) {
+		/* Y matrix */
 		if (e->t == MAT) {
 		    Y = e->v.m;
 		} else {
 		    p->err = E_TYPES;
 		}
 	    } else if (i == 1) {
+		/* expansion factor */
 		fac = node_get_int(e, p);
 	    } else if (i == 2) {
-		if (scalar_node(e)) {
-		    det = node_get_int(e, p);
-		} else if (k == 3 && e->t == MAT) {
-		    X = e->v.m;
-		} else {
-		    p->err = E_TYPES;
-		}
-	    } else if (i == 3) {
+		/* optional X matrix  */
 		if (e->t == MAT) {
 		    X = e->v.m;
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
 		}
-	    } else if (i == 4) {
-		if (e->t == STR) {
-		    if (!strcmp(e->v.str, "denton")) {
-			method = 1;
-		    } else if (strcmp(e->v.str, "chow-lin")) {
-			p->err = E_INVARG;
-		    }
+	    } else if (i == 3) {
+		/* optional aggregation type */
+		agg = node_get_int(e, p);
+	    }
+	}
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    ret->v.m = matrix_chowlin(Y, X, fac, agg, &p->err);
+	}
+    } else if (t->t == HF_TDISAGG) {
+	gretl_matrix *Y = NULL;
+	gretl_matrix *X = NULL;
+	double rho = NADBL;
+	int fac = 0, det = -1;
+	int method = 0;
+	int agg = 0;
+
+	/* FIXME interface! */
+
+	if (k < 2 || k > 7) {
+	    n_args_error(k, 4, t->t, p);
+	}
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (i == 0) {
+		/* Y matrix */
+		if (e->t == MAT) {
+		    Y = e->v.m;
 		} else {
 		    p->err = E_TYPES;
 		}
-	    } else if (e->t == STR) {
-		if (!strcmp(e->v.str, "avg")) {
-		    agg = 0;
-		} else if (!strcmp(e->v.str, "sum")) {
-		    agg = 1;
-		} else if (!strcmp(e->v.str, "sop")) {
-		    agg = 2;
-		} else if (!strcmp(e->v.str, "eop")) {
-		    agg = 3;
-		} else {
-		    p->err = E_INVARG;
+	    } else if (i == 1) {
+		/* expansion factor */
+		fac = node_get_int(e, p);
+	    } else if (i == 2) {
+		/* deterministics code */
+		det = node_get_int(e, p);
+	    } else if (i == 3) {
+		/* optional X matrix  */
+		if (e->t == MAT) {
+		    X = e->v.m;
+		} else if (!null_node(e)) {
+		    p->err = E_TYPES;
 		}
+	    } else if (i == 4 || i == 5) {
+		/* two string args */
+		if (e->t == STR) {
+		    if (i == 4) {
+			method = get_tdisagg_method(e->v.str, &p->err);
+		    } else {
+			agg = get_aggregation_type(e->v.str, &p->err);
+		    }
+		} else if (!null_node(e)) {
+		    p->err = E_TYPES;
+		}
+	    } else if (e->t == NUM) {
+		/* fixed rho */
+		rho = e->v.xval;
 	    } else {
 		p->err = E_TYPES;
 	    }
@@ -13632,7 +13690,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 	if (!p->err) {
 	    ret->v.m = matrix_tdisagg(Y, X, fac, det, method,
-				      agg, p->prn, &p->err);
+				      agg, rho, p->prn, &p->err);
 	}
     }
 

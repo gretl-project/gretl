@@ -6287,13 +6287,13 @@ double logistic_cdf (double x)
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int s, int det, int method,
-			      int agg, PRN *prn,
-			      int *err)
+			      int agg, double rho,
+			      PRN *prn, int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
 			      int, int, int, int,
-			      PRN *, int *);
+			      double, PRN *, int *);
     gretl_matrix *ret = NULL;
 
     if ((s != 3 && s != 4 && s != 12) || (det < 0 && det > 3)) {
@@ -6318,7 +6318,43 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, det, method, agg, prn, err);
+	ret = (*tdisagg) (Y, X, s, det, method, agg, rho, prn, err);
+    }
+
+    return ret;
+}
+
+gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
+			      const gretl_matrix *X,
+			      int s, int agg, int *err)
+{
+    gretl_matrix *(*tdisagg) (const gretl_matrix *,
+			      const gretl_matrix *,
+			      int, int, int, int,
+			      double, PRN *, int *);
+    gretl_matrix *ret = NULL;
+
+    if (s != 3 && s != 4 && s != 12) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (X != NULL) {
+	if (X->rows != s * Y->rows) {
+	    *err = E_INVARG;
+	    return NULL;
+	} else if (X->is_complex) {
+	    *err = E_CMPLX;
+	    return NULL;
+	}
+    }
+
+    tdisagg = get_plugin_function("time_disaggregate");
+
+    if (tdisagg == NULL) {
+	*err = E_FOPEN;
+    } else {
+	ret = (*tdisagg) (Y, X, s, -1, 0, agg, NADBL, NULL, err);
     }
 
     return ret;

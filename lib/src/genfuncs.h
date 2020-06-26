@@ -202,8 +202,12 @@ double logistic_cdf (double x);
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, int det, int method,
-			      int agg, PRN *prn,
-			      int *err);
+			      int agg, double rho,
+			      PRN *prn, int *err);
+
+gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
+			      const gretl_matrix *X,
+			      int s, int agg, int *err);
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 

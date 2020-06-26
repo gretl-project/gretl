@@ -20,6 +20,7 @@
 #include "version.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
+#include "libset.h"
 
 #define CL_DEBUG 0
 
@@ -506,7 +507,8 @@ static void show_GLS_results (const gretl_matrix *b,
 static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      const gretl_matrix *X,
 				      int s, int det, int agg,
-				      PRN *prn, int *err)
+				      double rho, PRN *prn,
+				      int *err)
 {
     gretl_matrix_block *B;
     gretl_matrix *CX, *b, *u, *Z;
@@ -590,8 +592,23 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    y->val = Y->val + i * (sN + m);
 	}
 
-	/* initial low-frequency OLS */
-	*err = gretl_matrix_ols(y0, CX, b, NULL, u, NULL);
+	if (!na(rho)) {
+	    /* the caller specified a rho value */
+	    a = rho;
+	    if (a == 0.0) {
+		*err = gretl_matrix_ols(y0, CX, b, NULL, NULL, NULL);
+		make_X_beta(y, b->val, X, det);
+		if (agg == AGG_AVG) {
+		    gretl_matrix_multiply_by_scalar(y, s);
+		}
+		continue;
+	    } else {
+		goto GLS;
+	    }
+	} else {
+	    /* initial low-frequency OLS */
+	    *err = gretl_matrix_ols(y0, CX, b, NULL, u, NULL);
+	}
 
 	if (!*err) {
 	    a = acf_1(y0, CX, b, u);
@@ -618,6 +635,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 #endif
 	    }
 	}
+
+    GLS:
 
 	if (!*err) {
 	    make_VC(VC, N, s, a, agg);
@@ -654,7 +673,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    multiply_by_VC(y, VC, Tmp1, s, m, a, agg);
 	    gretl_matrix_reuse(Tmp1, nx, N);
 
-	    if (1) {
+	    if (prn != NULL && gretl_messages_on()) {
 		show_GLS_results(b, a, det, prn);
 	    }
 
@@ -771,25 +790,42 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
 				 int s, int det, int method,
-				 int agg, PRN *prn,
-				 int *err)
+				 int agg, double rho,
+				 PRN *prn, int *err)
 {
+    gretl_matrix *ret = NULL;
+
     if (method == 0) {
 	/* Chow-Lin */
-	return chow_lin_disagg(Y0, X, s, det, agg, prn, err);
+	if (det < 0) {
+	    det = X == NULL ? 2 : 1;
+	}
+	ret = chow_lin_disagg(Y0, X, s, det, agg, rho, prn, err);
     } else if (method == 1) {
 	/* Modified Denton, proportional first differences */
 	int ylen = gretl_vector_get_length(Y0);
-	int xlen = gretl_vector_get_length(X);
+	gretl_matrix *X0 = NULL;
 
-	if (ylen == 0 || xlen == 0 || xlen != s * ylen) {
-	    *err = E_INVARG;
-	    return NULL;
+	if (X == NULL) {
+	    /* as per R, tempdisagg, use a constant if
+	       X is not provided */
+	    X0 = gretl_unit_matrix_new(s * ylen, 1);
+	    X = X0;
+	} else {
+	    int xlen = gretl_vector_get_length(X);
+
+	    if (ylen == 0 || xlen == 0 || xlen != s * ylen) {
+		*err = E_INVARG;
+	    }
 	}
-	return denton_pfd(Y0, X, s, agg, err);
+	if (!*err) {
+	    ret = denton_pfd(Y0, X, s, agg, err);
+	    gretl_matrix_free(X0);
+	}
     } else {
-	/* no other options at present */
+	/* no other choices at present */
 	*err = E_INVARG;
-	return NULL;
     }
+
+    return ret;
 }
