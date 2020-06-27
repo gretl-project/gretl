@@ -344,10 +344,8 @@ xmlcheck:
 	cd $(CMDSDIR) && ./checkxml.sh
 
 docclean:
-	rm -f $(EN_CMDREF_STAMP) $(ES_CMDREF_STAMP)
-	rm -f $(IT_CMDREF_STAMP) $(PT_CMDREF_STAMP) $(GL_CMDREF_STAMP)
-	rm -f $(EN_FNREF_STAMP) $(ES_FNREF_STAMP)
-	rm -f $(IT_FNREF_STAMP) $(PT_FNREF_STAMP) $(GL_FNREF_STAMP)
+	rm -rf $(HELPFILES_EN) $(HELPFILES_IT) $(HELPFILES_ES)
+	rm -rf $(HELPFILES_PT) $(HELPFILES_GL)
 	rm -f *.txt *.tmp
 
 clean: docclean
