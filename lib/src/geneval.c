@@ -12647,10 +12647,12 @@ static int bundle_pointer_arg0 (NODE *t)
 
 static int get_tdisagg_method (const char *s, int *err)
 {
-    if (!strcmp(s, "denton")) {
-	return 1;
-    } else if (!strcmp(s, "chow-lin")) {
+    if (!strcmp(s, "chow-lin")) {
 	return 0;
+    } else if (!strcmp(s, "chow-lin-mle")) {
+	return 1;
+    } else if (!strcmp(s, "denton")) {
+	return 2;
     } else {
 	*err = E_INVARG;
 	return -1;

@@ -31,6 +31,12 @@ enum {
     AGG_EOP  /* end of period */
 };
 
+enum {
+    R_ACF1,  /* "traditional" Chow-Lin */
+    R_MLE,   /* GLS + MLE (Bournay-Laroque) */
+    R_FIXED, /* pre-specified by user */
+};
+
 struct chowlin {
     int n;
     double targ;
@@ -322,6 +328,89 @@ static void multiply_by_VC (gretl_matrix *y,
     }
 }
 
+struct gls_info {
+    const gretl_matrix *y0;
+    gretl_matrix *CX;
+    gretl_matrix *VC;
+    gretl_matrix *W;
+    gretl_matrix *Z;
+    gretl_matrix *Tmp1;
+    gretl_matrix *Tmp2;
+    gretl_matrix *b;
+    gretl_matrix *u;
+    int s, det, agg;
+    int rho_method;
+    double lnl;
+};
+
+static double cl_gls_loglik (const double *rho, void *data)
+{
+    struct gls_info *G = data;
+    gretl_matrix *Wcpy;
+    double a, ldet, SSR;
+    int N = G->y0->rows;
+    int err = 0;
+
+    a = G->rho_method == R_MLE ? tanh(*rho) : *rho;
+
+    make_VC(G->VC, N, G->s, a, G->agg);
+    make_CVC(G->W, G->VC, G->s, G->agg);
+    Wcpy = gretl_matrix_copy(G->W);
+    err = gretl_invert_symmetric_matrix(G->W);
+
+    if (!err) {
+	gretl_matrix_qform(G->CX, GRETL_MOD_TRANSPOSE,
+			   G->W, G->Z, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(G->Z);
+    }
+
+    if (!err) {
+	/* GLS coefficients */
+	gretl_matrix_multiply_mod(G->Z, GRETL_MOD_NONE,
+				  G->CX, GRETL_MOD_TRANSPOSE,
+				  G->Tmp1, GRETL_MOD_NONE);
+	gretl_matrix_multiply(G->Tmp1, G->W, G->Tmp2);
+	gretl_matrix_multiply(G->Tmp2, G->y0, G->b);
+
+	/* GLS residuals */
+	gretl_matrix_copy_values(G->u, G->y0);
+	gretl_matrix_multiply_mod(G->CX, GRETL_MOD_NONE,
+				  G->b, GRETL_MOD_NONE,
+				  G->u, GRETL_MOD_DECREMENT);
+
+	ldet = gretl_matrix_log_determinant(Wcpy, &err);
+    }
+
+    if (!err) {
+	SSR = gretl_scalar_qform(G->u, G->W, &err);
+	if (!err) {
+	    G->lnl = -0.5*N - 0.5*N*LN_2_PI -N*log(SSR/N)/2 - ldet/2;
+	}
+    }
+
+    gretl_matrix_free(Wcpy);
+
+    if (err) {
+	G->lnl = NADBL;
+    }
+
+    return G->lnl;
+}
+
+static double cl_gls_max (double *a, struct gls_info *G,
+			  int *err)
+{
+    int fc = 0, gc = 0;
+    double arho = 1.0;
+
+    *err = BFGS_max(&arho, 1, 300, 1.0e-12,
+		    &fc, &gc, cl_gls_loglik, C_LOGLIK,
+		    NULL, G, NULL, OPT_NONE, NULL);
+
+    *a = tanh(arho);
+    return G->lnl;
+}
+
 /* Regressor matrix: we put in constant (if det > 0) plus linear trend
    (if det > 1) and squared trend (if det = 3), summed appropriately
    based on @s.
@@ -507,15 +596,15 @@ static void show_GLS_results (const gretl_matrix *b,
 static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      const gretl_matrix *X,
 				      int s, int det, int agg,
-				      double rho, PRN *prn,
-				      int *err)
+				      int method, double rho,
+				      PRN *prn, int *err)
 {
+    struct gls_info *G;
     gretl_matrix_block *B;
-    gretl_matrix *CX, *b, *u, *Z;
-    gretl_matrix *Y, *Tmp1, *Tmp2;
-    gretl_matrix *VC, *W;
+    gretl_matrix *Y;
     gretl_matrix *y0, *y;
     gretl_matrix my0, my;
+    int rho_method = method;
     int ny = Y0->cols;
     int nx = det;
     int N = Y0->rows;
@@ -544,31 +633,43 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	return NULL;
     }
 
-    B = gretl_matrix_block_new(&CX, N, nx,
-			       &VC, sN, N,
-			       &W, N, N,
-			       &b, nx, 1,
-			       &u, N, 1,
-			       &Z, nx, nx,
-			       &Tmp1, nx, N,
-			       &Tmp2, nx, N,
-			       NULL);
-    if (B == NULL) {
+    G = calloc(1, sizeof *G);
+    if (G == NULL) {
 	*err = E_ALLOC;
 	gretl_matrix_free(Y);
 	return NULL;
     }
 
+    B = gretl_matrix_block_new(&G->CX, N, nx,
+			       &G->VC, sN, N,
+			       &G->W, N, N,
+			       &G->b, nx, 1,
+			       &G->u, N, 1,
+			       &G->Z, nx, nx,
+			       &G->Tmp1, nx, N,
+			       &G->Tmp2, nx, N,
+			       NULL);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	gretl_matrix_free(Y);
+	free(G);
+	return NULL;
+    }
+
+    if (!na(rho)) {
+	rho_method = R_FIXED;
+    }
+
     /* regressors: deterministic terms (as wanted), plus
-       anything the user has added
+       anything else the user has added
     */
     if (agg >= AGG_SOP) {
-	fill_CX2(CX, s, det, X, agg);
+	fill_CX2(G->CX, s, det, X, agg);
     } else {
-	fill_CX(CX, s, det, X);
+	fill_CX(G->CX, s, det, X);
     }
 #if CL_DEBUG > 1
-    gretl_matrix_print(CX, "CX");
+    gretl_matrix_print(G->CX, "CX");
 #endif
 
     /* original y0 vector, length N */
@@ -583,8 +684,15 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     y->cols = 1;
     y->val = Y->val;
 
+    /* hook up various non-malloc'd things */
+    G->y0 = y0;
+    G->s = s;
+    G->det = det;
+    G->agg = agg;
+    G->rho_method = rho_method;
+
     for (i=0; i<ny; i++) {
-	double a = 0.0;
+	double a = rho_method == R_FIXED ? rho : 0.0;
 
 	if (i > 0) {
 	    /* pick up the current columns for reading and writing */
@@ -592,36 +700,30 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    y->val = Y->val + i * (sN + m);
 	}
 
-	if (!na(rho)) {
+	if (rho_method == R_FIXED) {
 	    /* the caller specified a rho value */
-	    a = rho;
-	    if (a == 0.0) {
-		*err = gretl_matrix_ols(y0, CX, b, NULL, NULL, NULL);
-		make_X_beta(y, b->val, X, det);
+	    if (a <= 0.0) {
+		*err = gretl_matrix_ols(y0, G->CX, G->b, NULL, NULL, NULL);
+		make_X_beta(y, G->b->val, X, det);
 		if (agg == AGG_AVG) {
 		    gretl_matrix_multiply_by_scalar(y, s);
 		}
 		continue;
-	    } else {
-		goto GLS;
 	    }
-	} else {
-	    /* initial low-frequency OLS */
-	    *err = gretl_matrix_ols(y0, CX, b, NULL, u, NULL);
+	} else if (rho_method == R_ACF1) {
+	    *err = gretl_matrix_ols(y0, G->CX, G->b, NULL, G->u, NULL);
 	}
 
-	if (!*err) {
-	    a = acf_1(y0, CX, b, u);
+	if (!*err && rho_method == R_ACF1) {
+	    a = acf_1(y0, G->CX, G->b, G->u);
 	    if (a <= 0.0) {
 		/* don't pursue negative @a */
-		make_X_beta(y, b->val, X, det);
+		make_X_beta(y, G->b->val, X, det);
 		if (agg == AGG_AVG) {
 		    gretl_matrix_multiply_by_scalar(y, s);
 		}
-		/* nothing more to do, this iteration */
 		continue;
 	    } else if (agg >= AGG_SOP) {
-		/* nice and simple */
 		a = pow(a, 1.0/s);
 	    } else {
 		double bracket[] = {0, 0.9999};
@@ -636,45 +738,25 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    }
 	}
 
-    GLS:
-
 	if (!*err) {
-	    make_VC(VC, N, s, a, agg);
-	    make_CVC(W, VC, s, agg);
-	    *err = gretl_invert_symmetric_matrix(W);
+	    if (rho_method == R_MLE) {
+		cl_gls_max(&a, G, err);
+	    } else {
+		cl_gls_loglik(&a, G);
+	    }
+	    fprintf(stderr, "a = %.9g -> lnl = %.9g\n", a, G->lnl);
 	}
 
 	if (!*err) {
-	    gretl_matrix_qform(CX, GRETL_MOD_TRANSPOSE,
-			       W, Z, GRETL_MOD_NONE);
-	    *err = gretl_invert_symmetric_matrix(Z);
-	}
-
-	if (!*err) {
-	    /* GLS \hat{\beta} */
-	    gretl_matrix_multiply_mod(Z, GRETL_MOD_NONE,
-				      CX, GRETL_MOD_TRANSPOSE,
-				      Tmp1, GRETL_MOD_NONE);
-	    gretl_matrix_multiply(Tmp1, W, Tmp2);
-	    gretl_matrix_multiply(Tmp2, y0, b);
-
-	    /* X * \hat{\beta} */
-	    make_X_beta(y, b->val, X, det);
-
-	    /* GLS residuals */
-	    gretl_matrix_copy_values(u, y0);
-	    gretl_matrix_multiply_mod(CX, GRETL_MOD_NONE,
-				      b, GRETL_MOD_NONE,
-				      u, GRETL_MOD_DECREMENT);
-
-	    /* yx = X*beta + V*C'*W*u */
-	    gretl_matrix_reuse(Tmp1, N, 1);
-	    gretl_matrix_multiply(W, u, Tmp1);
-	    multiply_by_VC(y, VC, Tmp1, s, m, a, agg);
-	    gretl_matrix_reuse(Tmp1, nx, N);
+	    /* y = X*beta + V*C'*W*u */
+	    make_X_beta(y, G->b->val, X, det);
+	    gretl_matrix_reuse(G->Tmp1, N, 1);
+	    gretl_matrix_multiply(G->W, G->u, G->Tmp1);
+	    multiply_by_VC(y, G->VC, G->Tmp1, s, m, a, agg);
+	    gretl_matrix_reuse(G->Tmp1, nx, N);
 
 	    if (prn != NULL && gretl_messages_on()) {
-		show_GLS_results(b, a, det, prn);
+		show_GLS_results(G->b, a, det, prn);
 	    }
 
 	    if (agg == AGG_AVG) {
@@ -684,6 +766,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     }
 
     gretl_matrix_block_destroy(B);
+    free(G);
 
     return Y;
 }
@@ -795,13 +878,13 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 {
     gretl_matrix *ret = NULL;
 
-    if (method == 0) {
-	/* Chow-Lin */
+    if (method == 0 || method == 1) {
+	/* Chow-Lin variants */
 	if (det < 0) {
 	    det = X == NULL ? 2 : 1;
 	}
-	ret = chow_lin_disagg(Y0, X, s, det, agg, rho, prn, err);
-    } else if (method == 1) {
+	ret = chow_lin_disagg(Y0, X, s, det, agg, method, rho, prn, err);
+    } else if (method == 2) {
 	/* Modified Denton, proportional first differences */
 	int ylen = gretl_vector_get_length(Y0);
 	gretl_matrix *X0 = NULL;
