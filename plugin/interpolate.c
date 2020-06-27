@@ -398,14 +398,14 @@ static double cl_gls_loglik (const double *rho, void *data)
 }
 
 static double cl_gls_max (double *a, struct gls_info *G,
-			  int *err)
+			  PRN *prn, int *err)
 {
     int fc = 0, gc = 0;
     double arho = 1.0;
 
     *err = BFGS_max(&arho, 1, 300, 1.0e-12,
 		    &fc, &gc, cl_gls_loglik, C_LOGLIK,
-		    NULL, G, NULL, OPT_NONE, NULL);
+		    NULL, G, NULL, OPT_NONE, prn);
 
     *a = tanh(arho);
     return G->lnl;
@@ -549,7 +549,7 @@ static double acf_1 (const gretl_matrix *y,
     return rho;
 }
 
-static void show_GLS_results (const gretl_matrix *b,
+static void show_GLS_results (const struct gls_info *G,
 			      double a, int det,
 			      PRN *prn)
 {
@@ -557,15 +557,16 @@ static void show_GLS_results (const gretl_matrix *b,
     int i;
 
     pputs(prn, "\nGLS coefficients:\n");
-    for (i=0; i<b->rows; i++) {
+    for (i=0; i<G->b->rows; i++) {
 	if (i < det) {
 	    pprintf(prn, " %-8s", dnames[i]);
 	} else {
 	    pprintf(prn, " %c%-7d", 'X', i-det+1);
 	}
-	pprintf(prn, "%#g\n", b->val[i]);
+	pprintf(prn, "%#g\n", G->b->val[i]);
     }
     pprintf(prn, " %-8s%#g\n", "rho", a);
+    pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
 }
 
 /**
@@ -678,7 +679,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     y0->cols = 1;
     y0->val = Y0->val;
 
-    /* y vector for return, length sN */
+    /* y vector for return, length sN + m */
     y = &my;
     y->rows = sN + m;
     y->cols = 1;
@@ -740,11 +741,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 	if (!*err) {
 	    if (rho_method == R_MLE) {
-		cl_gls_max(&a, G, err);
+		cl_gls_max(&a, G, prn, err);
 	    } else {
 		cl_gls_loglik(&a, G);
 	    }
-	    fprintf(stderr, "a = %.9g -> lnl = %.9g\n", a, G->lnl);
 	}
 
 	if (!*err) {
@@ -756,7 +756,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    gretl_matrix_reuse(G->Tmp1, nx, N);
 
 	    if (prn != NULL && gretl_messages_on()) {
-		show_GLS_results(G->b, a, det, prn);
+		show_GLS_results(G, a, det, prn);
 	    }
 
 	    if (agg == AGG_AVG) {
