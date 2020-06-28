@@ -34,6 +34,7 @@ enum {
 enum {
     R_ACF1,  /* "traditional" Chow-Lin */
     R_MLE,   /* GLS + MLE (Bournay-Laroque) */
+    R_SSR,   /* using GLS criterion */
     R_FIXED, /* pre-specified by user */
 };
 
@@ -339,22 +340,32 @@ struct gls_info {
     gretl_matrix *b;
     gretl_matrix *u;
     int s, det, agg;
-    int rho_method;
+    int method;
     double lnl;
 };
 
-static double cl_gls_loglik (const double *rho, void *data)
+/* Carry out enough of the Chow-Lin GLS calculations to permit
+   computation of a figure of merit (loglikelihood or sum of squared
+   GLS residuals), conditional on rho.  This is used if we already
+   have a "final" rho value greater than zero, or if we're trying to
+   find optimal rho via GLS.
+*/
+
+static double cl_gls_calc (const double *rho, void *data)
 {
     struct gls_info *G = data;
     gretl_matrix *Wcpy;
-    double a, ldet, SSR;
+    double a = *rho;
+    double ldet, crit;
+    double SSR = NADBL;
     int N = G->y0->rows;
     int err = 0;
 
-    a = G->rho_method == R_MLE ? tanh(*rho) : *rho;
-
     make_VC(G->VC, N, G->s, a, G->agg);
     make_CVC(G->W, G->VC, G->s, G->agg);
+    if (G->method == R_SSR) {
+	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
+    }
     Wcpy = gretl_matrix_copy(G->W);
     err = gretl_invert_symmetric_matrix(G->W);
 
@@ -391,24 +402,42 @@ static double cl_gls_loglik (const double *rho, void *data)
     gretl_matrix_free(Wcpy);
 
     if (err) {
-	G->lnl = NADBL;
+	crit = G->lnl = NADBL;
+    } else {
+	crit = G->method == R_SSR ? -SSR : G->lnl;
     }
 
-    return G->lnl;
+    return crit;
 }
 
-static double cl_gls_max (double *a, struct gls_info *G,
-			  PRN *prn, int *err)
+/* Driver for optimization of rho via GLS, either on the criterion
+   of likelihood or the straight GLS criterion.  In line with other
+   implementations we place an upper bound on rho short of 1.0.
+*/
+
+static int cl_gls_max (double *a, struct gls_info *G,
+		       PRN *prn)
 {
-    int fc = 0, gc = 0;
-    double arho = 1.0;
+    double theta[] = {0.5, 0, 0.999};
+    int err, iters = 0;
 
-    *err = BFGS_max(&arho, 1, 300, 1.0e-12,
-		    &fc, &gc, cl_gls_loglik, C_LOGLIK,
-		    NULL, G, NULL, OPT_NONE, prn);
+    err = gretl_gss(theta, 1.0e-12, &iters, cl_gls_calc,
+		    G, OPT_NONE, prn);
 
-    *a = tanh(arho);
-    return G->lnl;
+#if CL_DEBUG
+    fprintf(stderr, "cl_gls_max: err=%d, iters %d\n", err, iters);
+#endif
+
+    if (!err) {
+	double r = theta[0];
+
+	*a = r;
+	if (G->method == R_SSR) {
+	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
+	}
+    }
+
+    return err;
 }
 
 /* Regressor matrix: we put in constant (if det > 0) plus linear trend
@@ -549,6 +578,61 @@ static double acf_1 (const gretl_matrix *y,
     return rho;
 }
 
+/* We come here if (a) the caller has specified a fixed rho
+   of zero, or (b) we're doing the "traditional" Chow-Lin
+   thing of estimating low-frequency rho from an initial
+   OLS regression and converting to high-frequency.
+*/
+
+static int cl_ols (struct gls_info *G,
+		   const gretl_matrix *y0,
+		   const gretl_matrix *X,
+		   gretl_matrix *y,
+		   double *rho,
+		   PRN *prn)
+{
+    gretl_matrix *u;
+    double a = 0;
+    int err;
+
+    u = G->method == R_FIXED ? NULL : G->u;
+    err = gretl_matrix_ols(y0, G->CX, G->b, NULL, u, NULL);
+    if (err) {
+	return err;
+    }
+
+    if (G->method == R_ACF1) {
+	a = acf_1(y0, G->CX, G->b, G->u);
+	if (a <= 0.0) {
+	    a = 0; /* don't pursue negative @a */
+	} else if (G->agg >= AGG_SOP) {
+	    a = pow(a, 1.0/G->s);
+	} else {
+	    double bracket[] = {0, 0.9999};
+	    struct chowlin cl = {G->s, a};
+
+	    err = gretl_fzero(bracket, 1.0e-12,
+			      chow_lin_callback, &cl,
+			      &a, OPT_NONE, prn);
+#if CL_DEBUG
+	    fprintf(stderr, "gretl_fzero: err=%d, a=%g\n", err, a);
+#endif
+	}
+    }
+
+    if (a == 0) {
+	/* GLS isn't needed */
+	make_X_beta(y, G->b->val, X, G->det);
+	if (G->agg == AGG_AVG) {
+	    gretl_matrix_multiply_by_scalar(y, G->s);
+	}
+    }
+
+    *rho = a;
+
+    return err;
+}
+
 static void show_GLS_results (const struct gls_info *G,
 			      double a, int det,
 			      PRN *prn)
@@ -565,7 +649,7 @@ static void show_GLS_results (const struct gls_info *G,
 	}
 	pprintf(prn, "%#g\n", G->b->val[i]);
     }
-    pprintf(prn, " %-8s%#g\n", "rho", a);
+    pprintf(prn, " %-8s%#.8g\n", "rho", a);
     pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
 }
 
@@ -598,20 +682,19 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      const gretl_matrix *X,
 				      int s, int det, int agg,
 				      int method, double rho,
-				      PRN *prn, int *err)
+				      PRN *prn, int *perr)
 {
-    struct gls_info *G;
+    struct gls_info G = {0};
     gretl_matrix_block *B;
     gretl_matrix *Y;
     gretl_matrix *y0, *y;
     gretl_matrix my0, my;
-    int rho_method = method;
     int ny = Y0->cols;
     int nx = det;
     int N = Y0->rows;
     int sN = s * N;
     int m = 0;
-    int i;
+    int i, err = 0;
 
     if (X != NULL) {
 	nx += X->cols;
@@ -620,80 +703,72 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     }
     if (nx == 0) {
 	/* nothing to work with! */
-	*err = E_ARGS;
+	*perr = E_ARGS;
 	return NULL;
     }
-
-    gretl_matrix_init(&my0);
-    gretl_matrix_init(&my);
 
     /* the return value */
     Y = gretl_zero_matrix_new(sN + m, ny);
     if (Y == NULL) {
-	*err = E_ALLOC;
+	*perr = E_ALLOC;
 	return NULL;
     }
 
-    G = calloc(1, sizeof *G);
-    if (G == NULL) {
-	*err = E_ALLOC;
-	gretl_matrix_free(Y);
-	return NULL;
-    }
-
-    B = gretl_matrix_block_new(&G->CX, N, nx,
-			       &G->VC, sN, N,
-			       &G->W, N, N,
-			       &G->b, nx, 1,
-			       &G->u, N, 1,
-			       &G->Z, nx, nx,
-			       &G->Tmp1, nx, N,
-			       &G->Tmp2, nx, N,
+    /* workspace */
+    B = gretl_matrix_block_new(&G.CX, N, nx,
+			       &G.VC, sN, N,
+			       &G.W, N, N,
+			       &G.b, nx, 1,
+			       &G.u, N, 1,
+			       &G.Z, nx, nx,
+			       &G.Tmp1, nx, N,
+			       &G.Tmp2, nx, N,
 			       NULL);
     if (B == NULL) {
-	*err = E_ALLOC;
+	*perr = E_ALLOC;
 	gretl_matrix_free(Y);
-	free(G);
 	return NULL;
     }
 
     if (!na(rho)) {
-	rho_method = R_FIXED;
+	method = R_FIXED;
     }
 
     /* regressors: deterministic terms (as wanted), plus
        anything else the user has added
     */
     if (agg >= AGG_SOP) {
-	fill_CX2(G->CX, s, det, X, agg);
+	fill_CX2(G.CX, s, det, X, agg);
     } else {
-	fill_CX(G->CX, s, det, X);
+	fill_CX(G.CX, s, det, X);
     }
 #if CL_DEBUG > 1
-    gretl_matrix_print(G->CX, "CX");
+    gretl_matrix_print(G.CX, "CX");
 #endif
 
     /* original y0 vector, length N */
+    gretl_matrix_init(&my0);
     y0 = &my0;
     y0->rows = N;
     y0->cols = 1;
     y0->val = Y0->val;
 
     /* y vector for return, length sN + m */
+    gretl_matrix_init(&my);
     y = &my;
     y->rows = sN + m;
     y->cols = 1;
     y->val = Y->val;
 
     /* hook up various non-malloc'd things */
-    G->y0 = y0;
-    G->s = s;
-    G->det = det;
-    G->agg = agg;
-    G->rho_method = rho_method;
+    G.y0 = y0;
+    G.s = s;
+    G.det = det;
+    G.agg = agg;
+    G.method = method;
 
-    for (i=0; i<ny; i++) {
-	double a = rho_method == R_FIXED ? rho : 0.0;
+    for (i=0; i<ny && !err; i++) {
+	double a = method == R_FIXED ? rho : 0.0;
 
 	if (i > 0) {
 	    /* pick up the current columns for reading and writing */
@@ -701,62 +776,32 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    y->val = Y->val + i * (sN + m);
 	}
 
-	if (rho_method == R_FIXED) {
-	    /* the caller specified a rho value */
-	    if (a <= 0.0) {
-		*err = gretl_matrix_ols(y0, G->CX, G->b, NULL, NULL, NULL);
-		make_X_beta(y, G->b->val, X, det);
-		if (agg == AGG_AVG) {
-		    gretl_matrix_multiply_by_scalar(y, s);
-		}
+	if (method == R_ACF1 || (method == R_FIXED && a <= 0)) {
+	    err = cl_ols(&G, y0, X, y, &a, prn);
+	    if (a == 0) {
+		/* this iteration is handled */
 		continue;
 	    }
-	} else if (rho_method == R_ACF1) {
-	    *err = gretl_matrix_ols(y0, G->CX, G->b, NULL, G->u, NULL);
 	}
 
-	if (!*err && rho_method == R_ACF1) {
-	    a = acf_1(y0, G->CX, G->b, G->u);
-	    if (a <= 0.0) {
-		/* don't pursue negative @a */
-		make_X_beta(y, G->b->val, X, det);
-		if (agg == AGG_AVG) {
-		    gretl_matrix_multiply_by_scalar(y, s);
-		}
-		continue;
-	    } else if (agg >= AGG_SOP) {
-		a = pow(a, 1.0/s);
+	if (!err) {
+	    if (method == R_MLE || method == R_SSR) {
+		err = cl_gls_max(&a, &G, prn);
 	    } else {
-		double bracket[] = {0, 0.9999};
-		struct chowlin cl = {s, a};
-
-		*err = gretl_fzero(bracket, 1.0e-12,
-				   chow_lin_callback, &cl,
-				   &a, OPT_NONE, prn);
-#if CL_DEBUG
-		fprintf(stderr, "gretl_fzero: err=%d, a=%g\n", *err, a);
-#endif
+		cl_gls_calc(&a, &G);
 	    }
 	}
 
-	if (!*err) {
-	    if (rho_method == R_MLE) {
-		cl_gls_max(&a, G, prn, err);
-	    } else {
-		cl_gls_loglik(&a, G);
-	    }
-	}
-
-	if (!*err) {
+	if (!err) {
 	    /* y = X*beta + V*C'*W*u */
-	    make_X_beta(y, G->b->val, X, det);
-	    gretl_matrix_reuse(G->Tmp1, N, 1);
-	    gretl_matrix_multiply(G->W, G->u, G->Tmp1);
-	    multiply_by_VC(y, G->VC, G->Tmp1, s, m, a, agg);
-	    gretl_matrix_reuse(G->Tmp1, nx, N);
+	    make_X_beta(y, G.b->val, X, det);
+	    gretl_matrix_reuse(G.Tmp1, N, 1);
+	    gretl_matrix_multiply(G.W, G.u, G.Tmp1);
+	    multiply_by_VC(y, G.VC, G.Tmp1, s, m, a, agg);
+	    gretl_matrix_reuse(G.Tmp1, nx, N);
 
 	    if (prn != NULL && gretl_messages_on()) {
-		show_GLS_results(G, a, det, prn);
+		show_GLS_results(&G, a, det, prn);
 	    }
 
 	    if (agg == AGG_AVG) {
@@ -765,8 +810,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	}
     }
 
+    *perr = err;
     gretl_matrix_block_destroy(B);
-    free(G);
 
     return Y;
 }
@@ -878,13 +923,13 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 {
     gretl_matrix *ret = NULL;
 
-    if (method == 0 || method == 1) {
+    if (method < 3) {
 	/* Chow-Lin variants */
 	if (det < 0) {
 	    det = X == NULL ? 2 : 1;
 	}
 	ret = chow_lin_disagg(Y0, X, s, det, agg, method, rho, prn, err);
-    } else if (method == 2) {
+    } else if (method == 3) {
 	/* Modified Denton, proportional first differences */
 	int ylen = gretl_vector_get_length(Y0);
 	gretl_matrix *X0 = NULL;
