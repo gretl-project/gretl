@@ -35,10 +35,6 @@
 
 #define BFGS_MAXITER_DEFAULT 600
 
-static int gretl_gss (double *b, int n, double tol,
-		      BFGS_CRIT_FUNC cfunc, void *data,
-		      gretlopt opt, PRN *prn);
-
 void BFGS_defaults (int *maxit, double *tol, int ci)
 {
     *maxit = libset_get_int(BFGS_MAXITER);
@@ -2277,7 +2273,9 @@ double deriv_free_optimize (MaxMethod method,
 			    user_get_criterion, u,
 			    opt, prn);
     } else if (method == GSS_MAX) {
-	*err = gretl_gss(b->val, u->ncoeff, tol,
+	int iters = 0;
+
+	*err = gretl_gss(b->val, tol, &iters,
 			 user_get_criterion, u,
 			 opt, prn);
     } else if (method == ROOT_FIND) {
@@ -3474,9 +3472,9 @@ int gretl_amoeba (double *theta, int n, int maxit,
     return err;
 }
 
-static int gretl_gss (double *theta, int n, double tol,
-		      BFGS_CRIT_FUNC cfunc, void *data,
-		      gretlopt opt, PRN *prn)
+int gretl_gss (double *theta, double tol, int *ic,
+	       BFGS_CRIT_FUNC cfunc, void *data,
+	       gretlopt opt, PRN *prn)
 {
     double gr = (sqrt(5.0) + 1) / 2.0;
     double a = theta[1];
@@ -3515,6 +3513,10 @@ static int gretl_gss (double *theta, int n, double tol,
 	c = b - (b - a) / gr;
 	d = a + (b - a) / gr;
 	iter++;
+    }
+
+    if (ic != NULL) {
+	*ic = iter;
     }
 
     if (!err) {
