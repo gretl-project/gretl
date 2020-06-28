@@ -12651,8 +12651,10 @@ static int get_tdisagg_method (const char *s, int *err)
 	return 0;
     } else if (!strcmp(s, "chow-lin-mle")) {
 	return 1;
-    } else if (!strcmp(s, "denton")) {
+    } else if (!strcmp(s, "chow-lin-ssr")) {
 	return 2;
+    } else if (!strcmp(s, "denton")) {
+	return 3;
     } else {
 	*err = E_INVARG;
 	return -1;
