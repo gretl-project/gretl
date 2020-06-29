@@ -661,9 +661,11 @@ static void show_GLS_results (const struct gls_info *G,
  * terms (if any) as signalled by @det.
  * @s: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly or 12 for annual to monthly.
+ * @agg: aggregation type.
  * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
  * quadratic trend.
- * @agg: aggregation type.
+ * @rho: fixed rho value, if wanted.
+ * @prn: printing struct pointer.
  * @err: location to receive error code.
  *
  * Distribute or interpolate via the method of Chow and Lin. See
@@ -680,8 +682,8 @@ static void show_GLS_results (const struct gls_info *G,
 
 static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      const gretl_matrix *X,
-				      int s, int det, int agg,
-				      int method, double rho,
+				      int s, int agg, int method,
+				      int det, double rho,
 				      PRN *prn, int *perr)
 {
     struct gls_info G = {0};
@@ -1005,7 +1007,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 	if (det < 0) {
 	    det = X == NULL ? 2 : 1;
 	}
-	ret = chow_lin_disagg(Y0, X, s, det, agg, method, rho, prn, err);
+	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho, prn, err);
     } else if (method == 3) {
 	/* Modified Denton, proportional first differences */
 	int ylen = gretl_vector_get_length(Y0);
