@@ -23,6 +23,7 @@
 #include "libset.h"
 
 #define CL_DEBUG 0
+#define LIMIT_R_SSR 1
 
 enum {
     AGG_SUM, /* sum */
@@ -361,6 +362,16 @@ static double cl_gls_calc (const double *rho, void *data)
     int N = G->y0->rows;
     int err = 0;
 
+#if LIMIT_R_SSR
+    if (G->method == R_MLE) {
+	a = logistic_cdf(*rho);
+    }
+#else
+    if (G->method == R_MLE || G->method == R_SSR) {
+	a = logistic_cdf(*rho);
+    }
+#endif
+
     make_VC(G->VC, N, G->s, a, G->agg);
     make_CVC(G->W, G->VC, G->s, G->agg);
     if (G->method == R_SSR) {
@@ -404,7 +415,7 @@ static double cl_gls_calc (const double *rho, void *data)
     if (err) {
 	crit = G->lnl = NADBL;
     } else {
-	crit = G->method == R_SSR ? -SSR : G->lnl;
+	crit = G->method == R_SSR ? SSR : G->lnl;
     }
 
     return crit;
@@ -418,21 +429,50 @@ static double cl_gls_calc (const double *rho, void *data)
 static int cl_gls_max (double *a, struct gls_info *G,
 		       PRN *prn)
 {
-    double theta[] = {0.5, 0, 0.999};
-    int err, iters = 0;
+    double r = *a > 0 ? *a : 0.5;
+    int fc = 0, gc = 0;
+    int err;
 
-    err = gretl_gss(theta, 1.0e-12, &iters, cl_gls_calc,
-		    G, OPT_NONE, prn);
+#if LIMIT_R_SSR
+    /* prevent R__SSR from pushing @r above 0.999 */
+    if (G->method == R_SSR) {
+	gretl_matrix bounds;
+	double bvals[] = {1, 0, 0.999};
 
-#if CL_DEBUG
-    fprintf(stderr, "cl_gls_max: err=%d, iters %d\n", err, iters);
+	gretl_matrix_init_full(&bounds, 1, 3, bvals);
+	err = LBFGS_max(&r, 1, 200, 1.0e-12,
+			&fc, &gc, cl_gls_calc, C_SSR,
+			NULL, NULL, G, &bounds, OPT_V, prn);
+
+    } else {
+	/* G->method == R_MLE */
+	double lrho = -log(1/r - 1);
+
+	err = BFGS_max(&lrho, 1, 200, 1.0e-12,
+		       &fc, &gc, cl_gls_calc, C_LOGLIK,
+		       NULL, G, NULL, OPT_V, prn);
+	if (!err) {
+	    r = logistic_cdf(lrho);
+	}
+    }
+#else
+    /* treat R_SSR and R_MLE symmetrically */
+    int crit = G->method == R_SSR ? C_SSR : C_LOGLIK;
+    gretlopt opt = G->method == R_SSR ? (OPT_V | OPT_I) : OPT_V;
+    double lrho = -log(1/r - 1);
+
+    err = BFGS_max(&lrho, 1, 200, 1.0e-12,
+		   &fc, &gc, cl_gls_calc, crit,
+		   NULL, G, NULL, opt, prn);
+    if (!err) {
+	r = logistic_cdf(lrho);
+    }
 #endif
 
     if (!err) {
-	double r = theta[0];
-
 	*a = r;
 	if (G->method == R_SSR) {
+	    /* restore original W for subsequent calculations */
 	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
 	}
     }
@@ -551,18 +591,17 @@ static void make_X_beta (gretl_vector *y, const double *b,
    rhohat() in estimate.c.
 */
 
-static double acf_1 (const gretl_matrix *y,
-		     const gretl_matrix *X,
-		     const gretl_matrix *b,
-		     const gretl_matrix *u)
+static double acf_1 (const gretl_matrix *y0,
+		     struct gls_info *G)
 {
     double rho, num = 0, den = 0;
-    int t;
+    double *u = G->u->val;
+    int t, T = G->u->rows;
 
-    for (t=0; t<u->rows; t++) {
-	den += u->val[t] * u->val[t];
+    for (t=0; t<T; t++) {
+	den += u[t] * u[t];
 	if (t > 0) {
-	    num += u->val[t] * u->val[t-1];
+	    num += u[t] * u[t-1];
 	}
     }
 
@@ -573,15 +612,14 @@ static double acf_1 (const gretl_matrix *y,
     rho = num / den;
 
     /* improve the initial estimate of @rho via ML */
-    ar1_mle(y, X, b, sqrt(den / u->rows), &rho);
+    ar1_mle(y0, G->CX, G->b, sqrt(den / T), &rho);
 
     return rho;
 }
 
 /* We come here if (a) the caller has specified a fixed rho
-   of zero, or (b) we're doing the "traditional" Chow-Lin
-   thing of estimating low-frequency rho from an initial
-   OLS regression and converting to high-frequency.
+   of zero, or (b) we're estimating low-frequency rho from
+   an initial OLS regression and converting to high-frequency.
 */
 
 static int cl_ols (struct gls_info *G,
@@ -601,14 +639,14 @@ static int cl_ols (struct gls_info *G,
 	return err;
     }
 
-    if (G->method == R_ACF1) {
-	a = acf_1(y0, G->CX, G->b, G->u);
+    if (G->method != R_FIXED) {
+	a = acf_1(y0, G);
 	if (a <= 0.0) {
 	    a = 0; /* don't pursue negative @a */
 	} else if (G->agg >= AGG_EOP) {
 	    a = pow(a, 1.0/G->s);
 	} else {
-	    double bracket[] = {0, 0.9999};
+	    double bracket[] = {0, 0.999};
 	    struct chowlin cl = {G->s, a};
 
 	    err = gretl_fzero(bracket, 1.0e-12,
@@ -621,7 +659,7 @@ static int cl_ols (struct gls_info *G,
     }
 
     if (a == 0) {
-	/* GLS isn't needed */
+	/* no autocorrelation: GLS isn't needed */
 	make_X_beta(y, G->b->val, X, G->det);
 	if (G->agg == AGG_AVG) {
 	    gretl_matrix_multiply_by_scalar(y, G->s);
@@ -649,7 +687,7 @@ static void show_GLS_results (const struct gls_info *G,
 	}
 	pprintf(prn, "%#g\n", G->b->val[i]);
     }
-    pprintf(prn, " %-8s%#.8g\n", "rho", a);
+    pprintf(prn, " %-8s%#.12g\n", "rho", a);
     pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
 }
 
@@ -662,6 +700,7 @@ static void show_GLS_results (const struct gls_info *G,
  * @s: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly or 12 for annual to monthly.
  * @agg: aggregation type.
+ * @method: method for estimating rho.
  * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
  * quadratic trend.
  * @rho: fixed rho value, if wanted.
@@ -674,7 +713,7 @@ static void show_GLS_results (const struct gls_info *G,
  * by Related Series", Review of Economics and Statistics, Vol. 53,
  * No. 4 (November 1971) pp. 372-375.
  *
- * If @X is given it must have @s * N rows.
+ * If @X is given it must have at least @s * N rows.
  *
  * Returns: matrix containing the expanded series, or
  * NULL on failure.
@@ -734,6 +773,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
     if (!na(rho)) {
 	method = R_FIXED;
+	/* don't mess with negative rho */
+	rho = rho < 0 ? 0 : rho;
     }
 
     /* regressors: deterministic terms (as wanted), plus
@@ -748,19 +789,9 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     gretl_matrix_print(G.CX, "CX");
 #endif
 
-    /* original y0 vector, length N */
-    gretl_matrix_init(&my0);
-    y0 = &my0;
-    y0->rows = N;
-    y0->cols = 1;
-    y0->val = Y0->val;
-
-    /* y vector for return, length sN + m */
-    gretl_matrix_init(&my);
-    y = &my;
-    y->rows = sN + m;
-    y->cols = 1;
-    y->val = Y->val;
+    /* convenience pointers to columns of Y0, Y */
+    y0 = gretl_matrix_init_full(&my0, N, 1, Y0->val);
+    y = gretl_matrix_init_full(&my, sN + m, 1, Y->val);
 
     /* hook up various non-malloc'd things */
     G.y0 = y0;
@@ -778,7 +809,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    y->val = Y->val + i * (sN + m);
 	}
 
-	if (method == R_ACF1 || (method == R_FIXED && a <= 0)) {
+	if (method != R_FIXED || a == 0) {
+	    /* take a first stab at estimation of @a */
 	    err = cl_ols(&G, y0, X, y, &a, prn);
 	    if (a == 0) {
 		/* this iteration is handled */
@@ -788,8 +820,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 	if (!err) {
 	    if (method == R_MLE || method == R_SSR) {
+		/* pursue further optimization of @a */
 		err = cl_gls_max(&a, &G, prn);
 	    } else {
+		/* just calculate with the current @a */
 		cl_gls_calc(&a, &G);
 	    }
 	}
