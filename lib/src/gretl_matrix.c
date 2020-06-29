@@ -819,9 +819,9 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
  * @val is compatible with the @rows and @cols specification.
  */
 
-void gretl_matrix_init_full (gretl_matrix *m,
-			     int rows, int cols,
-			     double *val)
+gretl_matrix *gretl_matrix_init_full (gretl_matrix *m,
+				      int rows, int cols,
+				      double *val)
 {
     m->rows = rows;
     m->cols = cols;
@@ -829,6 +829,7 @@ void gretl_matrix_init_full (gretl_matrix *m,
     m->info = NULL;
     m->is_complex = 0;
     m->z = NULL;
+    return m;
 }
 
 /**
@@ -838,13 +839,14 @@ void gretl_matrix_init_full (gretl_matrix *m,
  * Initializes @m to be zero by zero with NULL data.
  */
 
-void gretl_matrix_init (gretl_matrix *m)
+gretl_matrix *gretl_matrix_init (gretl_matrix *m)
 {
     m->rows = m->cols = 0;
     m->val = NULL;
     m->info = NULL;
     m->is_complex = 0;
     m->z = NULL;
+    return m;
 }
 
 /**
