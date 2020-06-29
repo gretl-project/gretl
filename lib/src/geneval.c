@@ -12663,13 +12663,13 @@ static int get_tdisagg_method (const char *s, int *err)
 
 static int get_aggregation_type (const char *s, int *err)
 {
-    if (!strcmp(s, "avg")) {
+    if (!strcmp(s, "sum")) {
 	return 0;
-    } else if (!strcmp(s, "sum")) {
+    } else if (!strcmp(s, "avg")) {
 	return 1;
-    } else if (!strcmp(s, "sop")) {
+    } else if (!strcmp(s, "last")) {
 	return 2;
-    } else if (!strcmp(s, "eop")) {
+    } else if (!strcmp(s, "first")) {
 	return 3;
     } else {
 	*err = E_INVARG;
@@ -13658,26 +13658,33 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    p->err = E_TYPES;
 		}
 	    } else if (i == 1) {
-		/* expansion factor */
-		fac = node_get_int(e, p);
-	    } else if (i == 2) {
-		/* deterministics code */
-		det = node_get_int(e, p);
-	    } else if (i == 3) {
-		/* optional X matrix  */
+		/* X matrix  */
 		if (e->t == MAT) {
 		    X = e->v.m;
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
 		}
-	    } else if (i == 4 || i == 5) {
-		/* two string args */
+	    } else if (i == 2) {
+		/* expansion factor */
+		fac = node_get_int(e, p);
+	    } else if (i == 3) {
+		/* aggregation type */
 		if (e->t == STR) {
-		    if (i == 4) {
-			method = get_tdisagg_method(e->v.str, &p->err);
-		    } else {
-			agg = get_aggregation_type(e->v.str, &p->err);
-		    }
+		    agg = get_aggregation_type(e->v.str, &p->err);
+		} else if (!null_node(e)) {
+		    p->err = E_TYPES;
+		}
+	    } else if (i == 4) {
+		/* method */
+		if (e->t == STR) {
+		    method = get_tdisagg_method(e->v.str, &p->err);
+		} else if (!null_node(e)) {
+		    p->err = E_TYPES;
+		}
+	    } else if (i == 5) {
+		/* deterministics code? */
+		if (e->t == NUM) {
+		    det = node_get_int(e, p);
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
 		}

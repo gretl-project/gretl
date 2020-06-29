@@ -25,10 +25,10 @@
 #define CL_DEBUG 0
 
 enum {
-    AGG_AVG, /* average */
     AGG_SUM, /* sum */
-    AGG_SOP, /* start of period */
-    AGG_EOP  /* end of period */
+    AGG_AVG, /* average */
+    AGG_EOP, /* end of period */
+    AGG_SOP  /* start of period */
 };
 
 enum {
@@ -193,7 +193,7 @@ static void make_CVC (gretl_matrix *W, const gretl_matrix *VC,
     int N = W->rows;
     int i, j, k, ii;
 
-    if (agg >= AGG_SOP) {
+    if (agg >= AGG_EOP) {
 	/* select rows of VC */
 	for (j=0; j<N; j++) {
 	    ii = agg == AGG_SOP ? 0 : s-1;
@@ -228,7 +228,7 @@ static void make_VC (gretl_matrix *VC, int N,
     int sN = s*N;
     int i, j, k;
 
-    if (agg >= AGG_SOP) {
+    if (agg >= AGG_EOP) {
 	k = agg == AGG_SOP ? 0 : s-1;
 	for (j=0; j<N; j++) {
 	    for (i=0; i<sN; i++) {
@@ -266,7 +266,7 @@ static void make_EVC (gretl_matrix *EVC, int s,
     int sN = s * N;
     int i, j, k, p;
 
-    if (agg >= AGG_SOP) {
+    if (agg >= AGG_EOP) {
 	p = agg == AGG_SOP ? sN : s*(N-1)+1;
 	for (j=0; j<N; j++) {
 	    vij = pow(a, p);
@@ -605,7 +605,7 @@ static int cl_ols (struct gls_info *G,
 	a = acf_1(y0, G->CX, G->b, G->u);
 	if (a <= 0.0) {
 	    a = 0; /* don't pursue negative @a */
-	} else if (G->agg >= AGG_SOP) {
+	} else if (G->agg >= AGG_EOP) {
 	    a = pow(a, 1.0/G->s);
 	} else {
 	    double bracket[] = {0, 0.9999};
@@ -737,7 +737,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     /* regressors: deterministic terms (as wanted), plus
        anything else the user has added
     */
-    if (agg >= AGG_SOP) {
+    if (agg >= AGG_EOP) {
 	fill_CX2(G.CX, s, det, X, agg);
     } else {
 	fill_CX(G.CX, s, det, X);
@@ -871,7 +871,7 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
     /* the bottom and right portions, using @p */
     k = offset = (agg == AGG_EOP)? s-1 : 0;
     for (i=sN; i<sNN; i++) {
-	if (agg >= AGG_SOP) {
+	if (agg >= AGG_EOP) {
 	    gretl_matrix_set(M, i, offset, p->val[k]);
 	    gretl_matrix_set(M, offset, i, p->val[k]);
 	    k += s;
