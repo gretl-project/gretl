@@ -13700,8 +13700,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    ret->v.m = matrix_tdisagg(Y, X, fac, det, method,
-				      agg, rho, p->prn, &p->err);
+	    ret->v.m = matrix_tdisagg(Y, X, fac, agg, method,
+				      det, rho, p->prn, &p->err);
 	}
     }
 

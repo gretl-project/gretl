@@ -6286,8 +6286,8 @@ double logistic_cdf (double x)
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, int det, int method,
-			      int agg, double rho,
+			      int s, int agg, int method,
+			      int det, double rho,
 			      PRN *prn, int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
@@ -6318,7 +6318,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, det, method, agg, rho, prn, err);
+	ret = (*tdisagg) (Y, X, s, agg, method, det, rho, prn, err);
     }
 
     return ret;
@@ -6354,7 +6354,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, -1, 0, agg, NADBL, NULL, err);
+	ret = (*tdisagg) (Y, X, s, agg, 0, -1, NADBL, NULL, err);
     }
 
     return ret;

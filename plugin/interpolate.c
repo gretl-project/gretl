@@ -915,10 +915,87 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
     return y;
 }
 
+#if 0 /* not yet */
+
+static int get_aggregation_type (const char *s, int *err)
+{
+    if (!strcmp(s, "sum")) {
+	return 0;
+    } else if (!strcmp(s, "avg")) {
+	return 1;
+    } else if (!strcmp(s, "last")) {
+	return 2;
+    } else if (!strcmp(s, "first")) {
+	return 3;
+    } else {
+	*err = E_INVARG;
+	return -1;
+    }
+}
+
+static int get_tdisagg_method (const char *s, int *err)
+{
+    if (!strcmp(s, "chow-lin")) {
+	return 0;
+    } else if (!strcmp(s, "chow-lin-mle")) {
+	return 1;
+    } else if (!strcmp(s, "chow-lin-ssr")) {
+	return 2;
+    } else if (!strcmp(s, "denton")) {
+	return 3;
+    } else {
+	*err = E_INVARG;
+	return -1;
+    }
+}
+
+static int tdisagg_get_options (const gretl_bundle *b)
+{
+    double rho;
+    const char *str;
+    int s, agg, method, det;
+    int err = 0;
+
+    if (gretl_bundle_has_key(b, "s")) {
+	s = gretl_bundle_get_int(b, "s", &err);
+	if (!err && s != 3 && s != 4 && s != 12) {
+	    err = E_INVARG;
+	}
+    }
+    if (!err && gretl_bundle_has_key(b, "agg")) {
+	str = gretl_bundle_get_string(b, "agg", &err);
+	if (!err) {
+	    agg = get_aggregation_type(str, &err);
+	}
+    }
+    if (!err && gretl_bundle_has_key(b, "method")) {
+	str = gretl_bundle_get_string(b, "method", &err);
+	if (!err) {
+	    method = get_tdisagg_method(str, &err);
+	}
+    }
+    if (!err && gretl_bundle_has_key(b, "det")) {
+	det = gretl_bundle_get_int(b, "det", &err);
+	if (!err && (det < 0 || det > 3)) {
+	    err = E_INVARG;
+	}
+    }
+    if (!err && gretl_bundle_has_key(b, "rho")) {
+	rho = gretl_bundle_get_scalar(b, "rho", &err);
+	if (!err && (rho <= -1.0 || rho >= 1.0)) {
+	    err = E_INVARG;
+	}
+    }
+
+    return err;
+}
+
+#endif /* not yet */
+
 gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
-				 int s, int det, int method,
-				 int agg, double rho,
+				 int s, int agg, int method,
+				 int det, double rho,
 				 PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
