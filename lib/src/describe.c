@@ -4258,10 +4258,12 @@ static int finalize_fractint (const double *x,
 			      PRN *prn)
 {
     struct fractint_test ft;
-    int GPH_only = (opt & OPT_G);
+    int do_GPH = opt & (OPT_G | OPT_A);
+    int do_LWE = !(opt & OPT_G);
     int do_print = !(opt & OPT_Q);
     int T = t2 - t1 + 1;
     int m, err = 0;
+    gretl_matrix *result = NULL;
 
     /* order for test */
     if (width <= 0) {
@@ -4274,15 +4276,24 @@ static int finalize_fractint (const double *x,
 	pprintf(prn, "\n%s, T = %d\n\n", vname, T);
     }
 
+    if (do_GPH && do_LWE) {
+	result = gretl_matrix_alloc(2, 2);
+    } else {
+	result = gretl_matrix_alloc(1, 2);
+    }
+
     /* do LWE if wanted */
 
-    if (!GPH_only) {
+    if (do_LWE) {
 	err = fract_int_LWE(x, m, t1, t2, &ft);
 	if (!err) {
 	    double z = ft.d / ft.se;
 	    double pv = normal_pvalue_2(z);
 
 	    record_test_result(z, pv);
+	    gretl_matrix_set(result, 0, 0, ft.d);
+	    gretl_matrix_set(result, 0, 1, ft.se);
+
 	    if (do_print) {
 		pprintf(prn, "%s (m = %d)\n"
 			"  %s = %g (%g)\n"
@@ -4297,15 +4308,19 @@ static int finalize_fractint (const double *x,
 
     /* do GPH if wanted */
 
-    if (!err && (opt & (OPT_A | OPT_G))) {
+    if (!err && do_GPH) {
 	/* --all or --gph */
 	err = fract_int_GPH(T, m, dens, &ft);
-	if (!err && (GPH_only || do_print)) {
+	int row = do_LWE ? 1 : 0;
+	gretl_matrix_set(result, row, 0, ft.d);
+	gretl_matrix_set(result, row, 1, ft.se);
+
+	if (!err && (!do_LWE || do_print)) {
 	    double tval = ft.d / ft.se;
 	    int df = m - 2;
 	    double pv = student_pvalue_2(df, tval);
 
-	    if (GPH_only) {
+	    if (!do_LWE) {
 		record_test_result(tval, pv);
 	    }
 
@@ -4319,6 +4334,18 @@ static int finalize_fractint (const double *x,
 			_("with p-value"), pv);
 	    }
 	}
+    }
+
+    if (err) {
+	gretl_matrix_free(result);
+    } else {
+	char **colnames = NULL;
+	colnames = strings_array_new(2);
+	colnames[0] = gretl_strdup("d");
+	colnames[1] = gretl_strdup("se");
+
+	gretl_matrix_set_colnames(result, colnames);
+	set_last_result_data(result, GRETL_TYPE_MATRIX);
     }
 
     return err;
