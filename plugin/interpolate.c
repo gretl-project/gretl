@@ -430,6 +430,7 @@ static double cl_gls_calc (const double *rho, void *data)
 static int cl_gls_max (double *a, struct gls_info *G,
 		       PRN *prn)
 {
+    gretlopt opt = OPT_NONE; /* or OPT_V */
     double r = *a > 0 ? *a : 0.5;
     int fc = 0, gc = 0;
     int err;
@@ -443,7 +444,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	gretl_matrix_init_full(&bounds, 1, 3, bvals);
 	err = LBFGS_max(&r, 1, 200, 1.0e-12,
 			&fc, &gc, cl_gls_calc, C_SSR,
-			NULL, NULL, G, &bounds, OPT_V, prn);
+			NULL, NULL, G, &bounds, opt, prn);
 
     } else {
 	/* G->method == R_MLE */
@@ -451,7 +452,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 
 	err = BFGS_max(&lrho, 1, 200, 1.0e-12,
 		       &fc, &gc, cl_gls_calc, C_LOGLIK,
-		       NULL, G, NULL, OPT_V, prn);
+		       NULL, G, NULL, opt, prn);
 	if (!err) {
 	    r = logistic_cdf(lrho);
 	}
@@ -459,7 +460,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 #else
     /* treat R_SSR and R_MLE symmetrically */
     int crit = G->method == R_SSR ? C_SSR : C_LOGLIK;
-    gretlopt opt = G->method == R_SSR ? (OPT_V | OPT_I) : OPT_V;
+    gretlopt opt = G->method == R_SSR ? (opt | OPT_I) : opt;
     double lrho = -log(1/r - 1);
 
     err = BFGS_max(&lrho, 1, 200, 1.0e-12,
