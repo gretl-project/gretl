@@ -3945,6 +3945,8 @@ static int fract_int_GPH (int T, int m, const double *xvec,
     double x, w;
     int t, err = 0;
 
+    ft->d = ft->se = NADBL;
+
     y = gretl_column_vector_alloc(m);
     X = gretl_unit_matrix_new(m, 2);
     b = gretl_column_vector_alloc(2);
@@ -4258,12 +4260,12 @@ static int finalize_fractint (const double *x,
 			      PRN *prn)
 {
     struct fractint_test ft;
+    gretl_matrix *result = NULL;
     int do_GPH = opt & (OPT_G | OPT_A);
     int do_LWE = !(opt & OPT_G);
     int do_print = !(opt & OPT_Q);
     int T = t2 - t1 + 1;
     int m, err = 0;
-    gretl_matrix *result = NULL;
 
     /* order for test */
     if (width <= 0) {
@@ -4282,9 +4284,8 @@ static int finalize_fractint (const double *x,
 	result = gretl_matrix_alloc(1, 2);
     }
 
-    /* do LWE if wanted */
-
     if (do_LWE) {
+	/* do Local Whittle if wanted */
 	err = fract_int_LWE(x, m, t1, t2, &ft);
 	if (!err) {
 	    double z = ft.d / ft.se;
@@ -4306,12 +4307,11 @@ static int finalize_fractint (const double *x,
 	}
     }
 
-    /* do GPH if wanted */
-
     if (!err && do_GPH) {
-	/* --all or --gph */
-	err = fract_int_GPH(T, m, dens, &ft);
+	/* do GPH if wanted (options --all or --gph) */
 	int row = do_LWE ? 1 : 0;
+
+	err = fract_int_GPH(T, m, dens, &ft);
 	gretl_matrix_set(result, row, 0, ft.d);
 	gretl_matrix_set(result, row, 1, ft.se);
 
@@ -4323,7 +4323,6 @@ static int finalize_fractint (const double *x,
 	    if (!do_LWE) {
 		record_test_result(tval, pv);
 	    }
-
 	    if (do_print) {
 		pprintf(prn, "%s (m = %d)\n"
 			"  %s = %g (%g)\n"
@@ -4339,11 +4338,10 @@ static int finalize_fractint (const double *x,
     if (err) {
 	gretl_matrix_free(result);
     } else {
-	char **colnames = NULL;
-	colnames = strings_array_new(2);
+	char **colnames = strings_array_new(2);
+
 	colnames[0] = gretl_strdup("d");
 	colnames[1] = gretl_strdup("se");
-
 	gretl_matrix_set_colnames(result, colnames);
 	set_last_result_data(result, GRETL_TYPE_MATRIX);
     }
