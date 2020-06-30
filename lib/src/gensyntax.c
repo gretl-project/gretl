@@ -1224,6 +1224,55 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 #endif
 }
 
+/* get 1 or more comma-separated pairs of the form key=value */
+
+static void get_args_args (NODE *t, parser *p, int *next)
+{
+    NODE *child;
+    const char *src;
+    int n, i = 0;
+
+#if SDEBUG
+    fprintf(stderr, "get_args_args: ch='%c', point='%s'\n",
+	    p->ch, p->point);
+#endif
+
+    while (p->ch && !p->err) {
+	/* first get an unquoted key */
+	n = 0;
+	src = p->point -1;
+	while (p->ch != ' ' && p->ch != '=') {
+	    parser_getc(p);
+	    n++;
+	}
+	p->idstr = gretl_strndup(src, n);
+	while (p->ch == ' ') parser_getc(p);
+	if (p->ch != '=') {
+	    expected_symbol_error('=', p);
+	    break;
+	}
+	child = newstr(p->idstr);
+	attach_child(t, child, -1, i++, p);
+	/* then get some parseable value */
+	parser_getc(p);
+	while (p->ch == ' ') parser_getc(p);
+	lex(p);
+	child = expr(p);
+	if (!p->err) {
+	    attach_child(t, child, -1, i++, p);
+	}
+	if (p->sym == P_COM) {
+	    parser_getc(p);
+	} else if (p->sym == G_RPR) {
+	    lex(p);
+	    break;
+	} else {
+	    gretl_errmsg_set(_("Expected ',' or ')'"));
+	    p->err = E_PARSE;
+	}
+    }
+}
+
 static NODE *powterm (parser *p, NODE *l)
 {
     /* watch out for unary operators */
@@ -1453,6 +1502,15 @@ static NODE *powterm (parser *p, NODE *l)
 	    t->R = newbn(FARGS);
 	    if (t != NULL) {
 		get_args(t->R, p, sym, -1, opt, &next);
+	    }
+	}
+    } else if (sym == F_DEFARGS) {
+	t = newb1(sym, NULL);
+	if (t != NULL) {
+	    lex(p);
+	    t->L = newbn(FARGS);
+	    if (t != NULL) {
+		get_args_args(t->L, p, &next);
 	    }
 	}
     } else if (funcn_symb(sym)) {

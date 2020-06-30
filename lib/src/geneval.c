@@ -12590,7 +12590,7 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
     /* default to copying the node's data */
     *donate = 0;
 
-    if (f == F_DEFBUNDLE) {
+    if (f == F_DEFBUNDLE || f == F_DEFARGS) {
 	/* specific to bundles */
 	if (t == ARRAY) {
 	    ptr = n->v.a;
@@ -13404,7 +13404,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.a = A;
 	    }
 	}
-    } else if (t->t == F_DEFBUNDLE) {
+    } else if (t->t == F_DEFBUNDLE || t->t == F_DEFARGS) {
 	gretl_bundle *b = NULL;
 	GretlType gtype;
 	char *key = NULL;
@@ -13638,6 +13638,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == HF_TDISAGG) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
+	gretl_bundle *b = NULL;
 	double rho = NADBL;
 	int fac = 0, det = -1;
 	int method = 0;
@@ -13667,6 +13668,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 2) {
 		/* expansion factor */
 		fac = node_get_int(e, p);
+	    } else if (i == 3 && k == 4 && e->t == BUNDLE) {
+		b = e->v.b;
+		break;
 	    } else if (i == 3) {
 		/* aggregation type */
 		if (e->t == STR) {
@@ -13700,7 +13704,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    ret->v.m = matrix_tdisagg(Y, X, fac, agg, method,
+	    ret->v.m = matrix_tdisagg(Y, X, fac, b, agg, method,
 				      det, rho, p->prn, &p->err);
 	}
     }
@@ -16810,6 +16814,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFARRAY:
     case F_DEFBUNDLE:
     case F_DEFLIST:
+    case F_DEFARGS:
     case F_IRF:
     case F_NADARWAT:
     case F_FEVAL:
