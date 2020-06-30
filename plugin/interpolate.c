@@ -434,7 +434,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
     int err;
 
 #if LIMIT_R_SSR
-    /* prevent R__SSR from pushing @r above 0.999 */
+    /* prevent R_SSR from pushing @r above 0.999 */
     if (G->method == R_SSR) {
 	gretl_matrix bounds;
 	double bvals[] = {1, 0, 0.999};
@@ -951,8 +951,6 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
     return y;
 }
 
-#if 0 /* not yet */
-
 static int get_aggregation_type (const char *s, int *err)
 {
     if (!strcmp(s, "sum")) {
@@ -985,20 +983,18 @@ static int get_tdisagg_method (const char *s, int *err)
     }
 }
 
-static int tdisagg_get_options (const gretl_bundle *b)
+static int tdisagg_get_options (gretl_bundle *b,
+				int *pagg, int *pmeth,
+				int *pdet, double *pr)
 {
-    double rho;
+    double rho = NADBL;
     const char *str;
-    int s, agg, method, det;
+    int agg = 0;
+    int method = 0;
+    int det = -1;
     int err = 0;
 
-    if (gretl_bundle_has_key(b, "s")) {
-	s = gretl_bundle_get_int(b, "s", &err);
-	if (!err && s != 3 && s != 4 && s != 12) {
-	    err = E_INVARG;
-	}
-    }
-    if (!err && gretl_bundle_has_key(b, "agg")) {
+    if (gretl_bundle_has_key(b, "agg")) {
 	str = gretl_bundle_get_string(b, "agg", &err);
 	if (!err) {
 	    agg = get_aggregation_type(str, &err);
@@ -1023,18 +1019,31 @@ static int tdisagg_get_options (const gretl_bundle *b)
 	}
     }
 
+    if (!err) {
+	*pagg = agg;
+	*pmeth = method;
+	*pdet = det;
+	*pr = rho;
+    }
+
     return err;
 }
 
-#endif /* not yet */
-
 gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
-				 int s, int agg, int method,
+				 int s, gretl_bundle *b,
+				 int agg, int method,
 				 int det, double rho,
 				 PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
+
+    if (b != NULL) {
+	*err = tdisagg_get_options(b, &agg, &method, &det, &rho);
+	if (*err) {
+	    return NULL;
+	}
+    }
 
     if (method < 3) {
 	/* Chow-Lin variants */
