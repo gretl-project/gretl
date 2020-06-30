@@ -729,11 +729,12 @@
 	<para>
 	  Fornisce le informazioni immagazzinate da alcuni comandi che
 	  non hanno specifici accessori. Tali comandi includono
-	  <cmdref targ="corr"/>, <cmdref targ="freq"/>, <cmdref
-	  targ="summary"/>, <cmdref targ="xtab"/>, <cmdref
-	  targ="vif"/> and <cmdref targ="bkw"/> ; in questi casi il
-	  risultato è una matrice. In più <cmdref targ="pkg"/>, che
-	  opzionalmente registra come risultato un bundle.
+	  <cmdref targ="corr"/>, <cmdref targ="fractint"/>, <cmdref
+	  targ="freq"/>, <cmdref targ="summary"/>, <cmdref
+	  targ="xtab"/>, <cmdref targ="vif"/> and <cmdref targ="bkw"/>
+	  ; in questi casi il risultato è una matrice. In più <cmdref
+	  targ="pkg"/>, che opzionalmente registra come risultato un
+	  bundle.
 	</para>
       </description>
     </function>

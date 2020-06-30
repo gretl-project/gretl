@@ -4443,6 +4443,12 @@
 	<math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
+	Gli ordini di integrazione stimati e i loro errori standard
+	sono disponibili con l'accessore <fncref targ="$result"/>. Con
+	l'opzione <opt>all</opt>, lo stimatore Local Whittle è nella
+	prima riga e il GPH nella seconda.
+      </para>
+      <para>
 	I risultati possono essere recuperati usando gli accessori
 	<fncref targ="$test"/> e <fncref targ="$pvalue"/>. Questi valori sono
 	basati sullo stimatore locale di Whittle a meno che non sia

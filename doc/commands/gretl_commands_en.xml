@@ -4363,10 +4363,17 @@
 	<math>T</math>/2 and <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	The results can be retrieved using the accessors <fncref
-	targ="$test"/> and <fncref targ="$pvalue"/>. These values are
-	based on the Local Whittle Estimator unless the
-	<opt>gph</opt> option is given.
+	The estimated fractional integration orders and their standard
+	errors are available via the <fncref targ="$result"/>
+	accessor. With the <opt>all</opt> option, the Local Whittle
+	estimate will be in the first row and the GPH estimate in the
+	second one.
+      </para>
+      <para>
+	The results of the test can be retrieved using the
+	accessors <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/>. These values are based on the Local Whittle
+	Estimator unless the <opt>gph</opt> option is given.
       </para>
     </description>
 
