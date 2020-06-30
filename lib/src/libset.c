@@ -2673,6 +2673,7 @@ void set_loop_on (int verbose)
     state->flags |= STATE_LOOPING;
     if (verbose) {
 	state->flags |= STATE_LOOP_VERBOSE;
+	set_gretl_messages(1);
     }
 }
 

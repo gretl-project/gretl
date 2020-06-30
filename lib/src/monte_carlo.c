@@ -3627,6 +3627,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     int indent0;
     int gui_mode, echo;
     int show_activity = 0;
+    int prev_messages;
 #if HAVE_GMP
     int progressive;
 #endif
@@ -3650,6 +3651,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
     gui_mode = gretl_in_gui_mode();
     echo = gretl_echo_on();
+    prev_messages = gretl_messages_on();
     indent0 = gretl_if_state_record();
     set_loop_on(loop_is_verbose(loop));
 #if HAVE_GMP
@@ -4002,6 +4004,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     if (err) {
 	err = process_command_error(s, err);
     }
+
+    set_gretl_messages(prev_messages);
 
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
