@@ -24,6 +24,7 @@
 
 #define CL_DEBUG 0
 #define LIMIT_R_SSR 1
+#define RHOMAX 0.999
 
 enum {
     AGG_SUM, /* sum */
@@ -437,7 +438,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
     /* prevent R__SSR from pushing @r above 0.999 */
     if (G->method == R_SSR) {
 	gretl_matrix bounds;
-	double bvals[] = {1, 0, 0.999};
+	double bvals[] = {1, 0, RHOMAX};
 
 	gretl_matrix_init_full(&bounds, 1, 3, bvals);
 	err = LBFGS_max(&r, 1, 200, 1.0e-12,
@@ -646,7 +647,7 @@ static int cl_ols (struct gls_info *G,
 	} else if (G->agg >= AGG_EOP) {
 	    a = pow(a, 1.0/G->s);
 	} else {
-	    double bracket[] = {0, 0.999};
+	    double bracket[] = {0, RHOMAX};
 	    struct chowlin cl = {G->s, a};
 
 	    err = gretl_fzero(bracket, 1.0e-12,
