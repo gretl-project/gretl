@@ -525,7 +525,7 @@ struct str_table funcs[] = {
     { F_DEFARRAY,  "defarray" },
     { F_DEFBUNDLE, "defbundle" },
     { F_DEFLIST,   "deflist" },
-    { F_DEFARGS,   "args" },
+    { F_DEFARGS,   "_" },
     { F_KSETUP,    "ksetup" },
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },
