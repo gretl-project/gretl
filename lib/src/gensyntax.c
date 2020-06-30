@@ -1239,6 +1239,7 @@ static void get_args_args (NODE *t, parser *p, int *next)
 
     while (p->ch && !p->err) {
 	/* first get an unquoted key */
+	while (p->ch == ' ') parser_getc(p);
 	n = 0;
 	src = p->point -1;
 	while (p->ch != ' ' && p->ch != '=') {
