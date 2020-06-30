@@ -6268,6 +6268,7 @@ double logistic_cdf (double x)
  * @X: (optionally) holds covariates of Y at the higher frequency.
  * @s: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly, or 12 for annual to monthly.
+ * @b: bundle containing remaining optional arguments.
  * @det: = 0 for none, 1 for constant, 2 for linear trend, 3 for quadratic.
  * @method: 0 = Chow-Lin, 1 = Modified Denton.
  * @agg: aggregation-type code.
@@ -6286,14 +6287,16 @@ double logistic_cdf (double x)
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, int agg, int method,
+			      int s, void *b,
+			      int agg, int method,
 			      int det, double rho,
 			      PRN *prn, int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
-			      int, int, int, int,
-			      double, PRN *, int *);
+			      int, gretl_bundle *,
+			      int, int, int, double,
+			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
     if ((s != 3 && s != 4 && s != 12) || (det < 0 && det > 3)) {
@@ -6318,7 +6321,8 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, agg, method, det, rho, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, agg, method, det,
+			  rho, prn, err);
     }
 
     return ret;
@@ -6330,8 +6334,9 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
-			      int, int, int, int,
-			      double, PRN *, int *);
+			      int, gretl_bundle *,
+			      int, int, int, double,
+			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
     if (s != 3 && s != 4 && s != 12) {
@@ -6354,7 +6359,8 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, agg, 0, -1, NADBL, NULL, err);
+	ret = (*tdisagg) (Y, X, s, NULL, agg, 0, -1,
+			  NADBL, NULL, err);
     }
 
     return ret;

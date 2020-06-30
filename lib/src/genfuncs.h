@@ -201,7 +201,8 @@ double logistic_cdf (double x);
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int f, int agg, int method,
+			      int f, void *b,
+			      int agg, int method,
 			      int det, double rho,
 			      PRN *prn, int *err);
 
