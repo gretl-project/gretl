@@ -436,7 +436,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
     int err;
 
 #if LIMIT_R_SSR
-    /* prevent R_SSR from pushing @r above 0.999 */
+    /* prevent R_SSR from pushing @r above RHOMAX */
     if (G->method == R_SSR) {
 	gretl_matrix bounds;
 	double bvals[] = {1, 0, RHOMAX};
@@ -450,7 +450,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	/* G->method == R_MLE */
 	double lrho = -log(1/r - 1);
 
-	err = BFGS_max(&lrho, 1, 200, 1.0e-12,
+	err = BFGS_max(&lrho, 1, 200, 1.0e-14,
 		       &fc, &gc, cl_gls_calc, C_LOGLIK,
 		       NULL, G, NULL, opt, prn);
 	if (!err) {
