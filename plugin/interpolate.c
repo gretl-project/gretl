@@ -36,7 +36,7 @@ enum {
 enum {
     R_ACF1,  /* "traditional" Chow-Lin */
     R_MLE,   /* GLS + MLE (Bournay-Laroque) */
-    R_SSR,   /* using GLS criterion */
+    R_SSR,   /* use GLS criterion (Barbone et al) */
     R_FIXED, /* pre-specified by user */
 };
 
