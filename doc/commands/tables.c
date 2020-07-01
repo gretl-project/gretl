@@ -113,6 +113,8 @@ void sort_and_print_tabular (char **S, int n, int cols)
     print_tabtop(cols);
 
     for (i=0; i<n; i++) {
+	/* FIXME: at some point, we may want to allow for 
+	   underscores, that will need to be escaped */
 	printf("\\texttt{%s}", S[i]);
 	print_tabsep(cols, &t);
     }
