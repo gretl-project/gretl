@@ -1505,7 +1505,7 @@ static NODE *powterm (parser *p, NODE *l)
 		get_args(t->R, p, sym, -1, opt, &next);
 	    }
 	}
-    } else if (sym == F_DEFARGS) {
+    } else if (sym == HF_DEFARGS) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);

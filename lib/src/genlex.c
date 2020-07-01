@@ -525,7 +525,6 @@ struct str_table funcs[] = {
     { F_DEFARRAY,  "defarray" },
     { F_DEFBUNDLE, "defbundle" },
     { F_DEFLIST,   "deflist" },
-    { F_DEFARGS,   "_" },
     { F_KSETUP,    "ksetup" },
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },
@@ -601,6 +600,7 @@ struct str_table hidden_funcs[] = {
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
     { HF_TDISAGG,  "_tdisagg" },
+    { HF_DEFARGS,   "_" },
     { 0,           NULL }
 };
 

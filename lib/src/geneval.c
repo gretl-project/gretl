@@ -12590,7 +12590,7 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
     /* default to copying the node's data */
     *donate = 0;
 
-    if (f == F_DEFBUNDLE || f == F_DEFARGS) {
+    if (f == F_DEFBUNDLE || f == HF_DEFARGS) {
 	/* specific to bundles */
 	if (t == ARRAY) {
 	    ptr = n->v.a;
@@ -13404,7 +13404,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.a = A;
 	    }
 	}
-    } else if (t->t == F_DEFBUNDLE || t->t == F_DEFARGS) {
+    } else if (t->t == F_DEFBUNDLE || t->t == HF_DEFARGS) {
 	gretl_bundle *b = NULL;
 	GretlType gtype;
 	char *key = NULL;
@@ -16814,14 +16814,14 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFARRAY:
     case F_DEFBUNDLE:
     case F_DEFLIST:
-    case F_DEFARGS:
     case F_IRF:
     case F_NADARWAT:
     case F_FEVAL:
     case F_CHOWLIN:
-    case HF_TDISAGG:
     case F_HYP2F1:
+    case HF_TDISAGG:
     case HF_CLOGFI:
+    case HF_DEFARGS:
 	/* built-in functions taking more than three args */
 	if (t->t == F_FEVAL) {
 	    ret = eval_feval(t, p);
