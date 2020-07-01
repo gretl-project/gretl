@@ -23,7 +23,7 @@ int push_string_on_array (char ***arr, const char *s, int i)
     if (S == NULL) {
 	return 1;
     }
-    
+
     S[i] = gretl_strdup(s);
     if (S[i] == NULL) {
 	return 1;
@@ -70,7 +70,7 @@ void sort_and_print_text (char **S, int n)
 {
     int i;
 
-    qsort(S, n, sizeof *S, sort_strings);    
+    qsort(S, n, sizeof *S, sort_strings);
 
     for (i=0; i<n; i++) {
 	printf("\\texttt{%s}", S[i]);
@@ -100,8 +100,31 @@ void print_text_unsorted (char **S, int n)
     strings_array_free(S, n);
 }
 
+/* Allow for the possibility that a function name
+   contains an underscore */
+
+char *tex_escape (char *targ, const char *src)
+{
+    char *ret = targ;
+
+    while (*src) {
+	if (*src == '_') {
+	    *targ++ = '\\';
+	    *targ++ = '_';
+	} else {
+	    *targ++ = *src;
+	}
+	src++;
+    }
+
+    *targ = '\0';
+
+    return ret;
+}
+
 void sort_and_print_tabular (char **S, int n, int cols)
 {
+    char tmp[32];
     int i, t = 0;
 
     qsort(S, n, sizeof *S, sort_strings);
@@ -111,14 +134,10 @@ void sort_and_print_tabular (char **S, int n, int cols)
     }
 
     print_tabtop(cols);
-
     for (i=0; i<n; i++) {
-	/* FIXME: at some point, we may want to allow for 
-	   underscores, that will need to be escaped */
-	printf("\\texttt{%s}", S[i]);
+	printf("\\texttt{%s}", tex_escape(tmp, S[i]));
 	print_tabsep(cols, &t);
     }
-
     print_tabfoot(cols, t);
 
     strings_array_free(S, n);
@@ -137,7 +156,7 @@ void print_internals (void)
 
     if (!err) {
 	print_text_unsorted(S, n);
-    }    
+    }
 }
 
 void print_func_words (void)
@@ -149,11 +168,11 @@ void print_func_words (void)
 
     for (i=0; i<n && !err; i++) {
 	err = push_string_on_array(&S, gen_func_name(i), i);
-    }  
+    }
 
     if (!err) {
 	sort_and_print_tabular(S, n, 8);
-    }    
+    }
 }
 
 int print_loop_commands (void)
@@ -200,7 +219,7 @@ enum {
     FUNCTIONS,
     LOOPCMDS,
     NONLOOPCMDS,
-};    
+};
 
 int ok_opt (const char *str)
 {
@@ -218,7 +237,7 @@ int ok_opt (const char *str)
 	    return i+1;
 	}
     }
-    
+
     return 0;
 }
 
