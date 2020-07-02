@@ -6269,9 +6269,6 @@ double logistic_cdf (double x)
  * @s: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly, or 12 for annual to monthly.
  * @b: bundle containing remaining optional arguments.
- * @det: = 0 for none, 1 for constant, 2 for linear trend, 3 for quadratic.
- * @method: 0 = Chow-Lin, 1 = Modified Denton.
- * @agg: aggregation-type code.
  * @err: location to receive error code.
  *
  * Interpolate, from annual to quarterly or quarterly to monthly, by
@@ -6288,8 +6285,6 @@ double logistic_cdf (double x)
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int s, void *b,
-			      int agg, int method,
-			      int det, double rho,
 			      PRN *prn, int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
@@ -6299,7 +6294,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
-    if (s <= 1 || (det < 0 && det > 3)) {
+    if (s <= 1) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -6321,8 +6316,8 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, b, agg, method, det,
-			  rho, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, 0, 0, -1,
+			  NADBL, prn, err);
     }
 
     return ret;

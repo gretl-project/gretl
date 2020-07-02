@@ -89,7 +89,7 @@ gretl_vector_from_array (const double *x, int n, GretlMatrixMod mod)
  *
  * Returns: a newly allocated gretl_vector containing the values
  * of the given data series for the given range, or NULL on failure.
- * Any missing values in the input array are turned into NaNs in
+ * Any missing values in the input array are preserved as NaNs in
  * the output.
  */
 
