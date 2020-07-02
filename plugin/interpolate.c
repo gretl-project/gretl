@@ -60,6 +60,7 @@ struct gls_info {
     int s, det, agg;
     int method;
     double lnl;
+    double SSR;
 };
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
@@ -168,7 +169,12 @@ static void show_regression_results (const struct gls_info *G,
 	pprintf(prn, "%#g\n", G->b->val[i]);
     }
     pprintf(prn, " %-8s%.12g\n", "rho", a);
-    pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
+    if (!na(G->lnl)) {
+	pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
+    }
+    if (!na(G->SSR)) {
+	pprintf(prn, " SSR = %.8g\n", G->SSR);
+    }
 }
 
 static int ar1_mle (struct gls_info *G, double s, double *rho)
@@ -421,7 +427,7 @@ static double cl_gls_calc (const double *rho, void *data)
     }
 
     if (!err) {
-	SSR = gretl_scalar_qform(G->u, G->W, &err);
+	G->SSR = SSR = gretl_scalar_qform(G->u, G->W, &err);
 	if (!err) {
 	    G->lnl = -0.5*N - 0.5*N*LN_2_PI -N*log(SSR/N)/2 - ldet/2;
 	}
@@ -802,6 +808,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.det = det;
     G.agg = agg;
     G.method = method;
+    G.lnl = G.SSR = NADBL;
 
     for (i=0; i<ny && !err; i++) {
 	double a = method == R_FIXED ? rho : 0.0;
