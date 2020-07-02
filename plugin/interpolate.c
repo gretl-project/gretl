@@ -446,10 +446,14 @@ static double cl_gls_calc (const double *rho, void *data)
 static int cl_gls_max (double *a, struct gls_info *G,
 		       PRN *prn)
 {
-    gretlopt opt = OPT_NONE; /* or OPT_V */
+    gretlopt opt = OPT_NONE;
     double r = *a > 0 ? *a : 0.5;
     int fc = 0, gc = 0;
     int err;
+
+    if (libset_get_int(MAX_VERBOSE)) {
+	opt = OPT_V;
+    }
 
 #if LIMIT_R_SSR
     /* prevent R_SSR from pushing @r above RHOMAX */
