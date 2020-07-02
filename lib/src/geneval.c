@@ -12627,6 +12627,20 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
     return ptr;
 }
 
+static int tdisagg_check_pds (DATASET *dset, int yconv, int xconv)
+{
+    int pdlo = 0, pdhi = 0;
+    
+    if (!yconv) {
+	pdlo = dset->pd;
+    }
+    if (!xconv) {
+	pdhi = dset->pd;
+    }
+
+    return 0;
+}
+
 /* given an FARGS node, detect if the first argument
    is a pointer to bundle */
 
@@ -13610,8 +13624,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	gretl_matrix *X = NULL;
 	gretl_bundle *b = NULL;
 	int fac = 0;
-	int free_y = 0;
-	int free_x = 0;
+	int yconv = 0;
+	int xconv = 0;
 
 	if (k < 3 || k > 4) {
 	    n_args_error(k, 4, t->t, p);
@@ -13627,7 +13641,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    if (Y == NULL) {
 			p->err = E_ALLOC;
 		    }
-		    free_y = 1;
+		    yconv = 1;
 		} else {
 		    p->err = E_TYPES;
 		}
@@ -13640,12 +13654,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    if (X == NULL) {
 			p->err = E_ALLOC;
 		    }
-		    free_x = 1;
+		    xconv = 1;
 		} else if (e->t == LIST) {
 		    /* HF_LIST?? */
 		    X = gretl_matrix_data_subset(e->v.ivec, p->dset, t1, t2,
 						 M_MISSING_ERROR, &p->err);
-		    free_x = 1;
+		    xconv = 1;
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
 		}
@@ -13659,16 +13673,19 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
 	if (!p->err) {
+	    p->err = tdisagg_check_pds(p->dset, yconv, xconv);
+	}
+	if (!p->err) {
 	    reset_p_aux(p, save_aux);
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
 	    ret->v.m = matrix_tdisagg(Y, X, fac, b, p->prn, &p->err);
 	}
-	if (free_y) {
+	if (yconv) {
 	    gretl_matrix_free(Y);
 	}
-	if (free_x) {
+	if (xconv) {
 	    gretl_matrix_free(X);
 	}
     }
