@@ -57,6 +57,7 @@ struct gls_info {
     gretl_matrix *Tmp2;
     gretl_matrix *b;
     gretl_matrix *u;
+    gretl_matrix *Wcpy;
     int s, det, agg;
     int method;
     double lnl;
@@ -169,11 +170,11 @@ static void show_regression_results (const struct gls_info *G,
 	pprintf(prn, "%#g\n", G->b->val[i]);
     }
     pprintf(prn, " %-8s%.12g\n", "rho", a);
+    if (G->method == R_SSR && !na(G->SSR)) {
+	pprintf(prn, " SSR = %.8g\n", G->SSR);
+    }
     if (!na(G->lnl)) {
 	pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
-    }
-    if (!na(G->SSR)) {
-	pprintf(prn, " SSR = %.8g\n", G->SSR);
     }
 }
 
@@ -378,7 +379,6 @@ static void multiply_by_VC (gretl_matrix *y,
 static double cl_gls_calc (const double *rho, void *data)
 {
     struct gls_info *G = data;
-    gretl_matrix *Wcpy;
     double a = *rho;
     double ldet, crit;
     double SSR = NADBL;
@@ -400,7 +400,11 @@ static double cl_gls_calc (const double *rho, void *data)
     if (G->method == R_SSR) {
 	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
     }
-    Wcpy = gretl_matrix_copy(G->W);
+    if (G->Wcpy == NULL) {
+	G->Wcpy = gretl_matrix_copy(G->W);
+    } else {
+	gretl_matrix_copy_values(G->Wcpy, G->W);
+    }
     err = gretl_invert_symmetric_matrix(G->W);
 
     if (!err) {
@@ -423,7 +427,7 @@ static double cl_gls_calc (const double *rho, void *data)
 				  G->b, GRETL_MOD_NONE,
 				  G->u, GRETL_MOD_DECREMENT);
 
-	ldet = gretl_matrix_log_determinant(Wcpy, &err);
+	ldet = gretl_matrix_log_determinant(G->Wcpy, &err);
     }
 
     if (!err) {
@@ -432,8 +436,6 @@ static double cl_gls_calc (const double *rho, void *data)
 	    G->lnl = -0.5*N - 0.5*N*LN_2_PI -N*log(SSR/N)/2 - ldet/2;
 	}
     }
-
-    gretl_matrix_free(Wcpy);
 
     if (err) {
 	crit = G->lnl = NADBL;
@@ -809,6 +811,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.agg = agg;
     G.method = method;
     G.lnl = G.SSR = NADBL;
+    G.Wcpy = NULL;
 
     for (i=0; i<ny && !err; i++) {
 	double a = method == R_FIXED ? rho : 0.0;
@@ -858,6 +861,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
     *perr = err;
     gretl_matrix_block_destroy(B);
+    gretl_matrix_free(G.Wcpy);
 
     return Y;
 }
