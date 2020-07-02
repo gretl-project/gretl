@@ -314,7 +314,10 @@
 	<emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
 	tests are based on <cite key="mackinnon96">MacKinnon
 	(1996)</cite>.  The relevant code is included by kind
-	permission of the author.  In the case of the test with linear
+	permission of the author. (Finite-sample values are only given
+	in the case of a non-augmented test. For a positive lag order
+	the asymptotic values are used.)
+	In the case of the test with linear
 	trend using GLS these <emphasis>P</emphasis>-values are not
 	applicable; critical values from Table 1 in <cite
 	key="ERS96">Elliott, Rothenberg and Stock (1996)</cite> are
