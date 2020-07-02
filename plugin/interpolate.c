@@ -22,7 +22,7 @@
 #include "gretl_bfgs.h"
 #include "libset.h"
 
-#define CL_DEBUG 1
+#define CL_DEBUG 0
 #define LIMIT_R_SSR 1
 #define RHOMAX 0.999
 
