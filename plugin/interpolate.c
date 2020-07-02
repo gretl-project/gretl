@@ -26,6 +26,7 @@
 #define LIMIT_R_SSR 1
 #define RHOMAX 0.999
 
+/* aggregation types */
 enum {
     AGG_SUM, /* sum */
     AGG_AVG, /* average */
@@ -33,6 +34,7 @@ enum {
     AGG_SOP  /* start of period */
 };
 
+/* rho estimation methods */
 enum {
     R_ACF1,  /* "traditional" Chow-Lin */
     R_MLE,   /* GLS + MLE (Bournay-Laroque) */
@@ -43,6 +45,21 @@ enum {
 struct chowlin {
     int n;
     double targ;
+};
+
+struct gls_info {
+    const gretl_matrix *y0;
+    gretl_matrix *CX;
+    gretl_matrix *VC;
+    gretl_matrix *W;
+    gretl_matrix *Z;
+    gretl_matrix *Tmp1;
+    gretl_matrix *Tmp2;
+    gretl_matrix *b;
+    gretl_matrix *u;
+    int s, det, agg;
+    int method;
+    double lnl;
 };
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
@@ -94,22 +111,18 @@ static double chow_lin_callback (double a, void *p)
     return resid;
 }
 
-typedef struct ar1data_ {
-    const gretl_matrix *y;
-    const gretl_matrix *X;
-} ar1data;
-
 /* BFGS callback for ar1_mle(); see Davidson and MacKinnon,
    ETM, pp. 435-6.
 */
 
 static double ar1_loglik (const double *theta, void *data)
 {
-    ar1data *a = data;
-    int n = a->y->rows, k = a->X->cols;
+    struct gls_info *G = data;
+    int n = G->y0->rows, k = G->CX->cols;
     double r = theta[0];
     double s = theta[1];
     const double *b = theta + 2;
+    const double *y = G->y0->val;
     double onemr2 = 1.0 - r*r;
     double inv2s2 = 1.0 / (2*s*s);
     double ll1 = -0.5*n*LN_2_PI - n*log(s) + 0.5*log(onemr2);
@@ -118,9 +131,9 @@ static double ar1_loglik (const double *theta, void *data)
 
     /* the first observation */
     for (i=0; i<k; i++) {
-	Xb += gretl_matrix_get(a->X, 0, i) * b[i];
+	Xb += gretl_matrix_get(G->CX, 0, i) * b[i];
     }
-    u = a->y->val[0] - Xb;
+    u = y[0] - Xb;
     yf2 = onemr2 * u * u;
 
     /* subsequent observations */
@@ -128,26 +141,44 @@ static double ar1_loglik (const double *theta, void *data)
 	Xb1 = Xb;
 	Xb = 0;
 	for (i=0; i<k; i++) {
-	    Xb += gretl_matrix_get(a->X, t, i) * b[i];
+	    Xb += gretl_matrix_get(G->CX, t, i) * b[i];
 	}
-	u = a->y->val[t] - r*a->y->val[t-1] - Xb + r*Xb1;
+	u = y[t] - r*y[t-1] - Xb + r*Xb1;
 	yf2 += u * u;
     }
 
     return ll1 - inv2s2 * yf2;
 }
 
-static int ar1_mle (const gretl_matrix *y,
-		    const gretl_matrix *X,
-		    const gretl_matrix *b,
-		    double s, double *rho)
+static void show_regression_results (const struct gls_info *G,
+				     double a, int gls,
+				     PRN *prn)
 {
-    struct ar1data_ a = {y, X};
+    const char *enames[] = {"OLS", "GLS"};
+    const char *dnames[] = {"const", "trend", "trend^2"};
+    int i;
+
+    pprintf(prn, "\n%s coefficients:\n", enames[gls]);
+    for (i=0; i<G->b->rows; i++) {
+	if (i < G->det) {
+	    pprintf(prn, " %-8s", dnames[i]);
+	} else {
+	    pprintf(prn, " %c%-7d", 'X', i - G->det + 1);
+	}
+	pprintf(prn, "%#g\n", G->b->val[i]);
+    }
+    pprintf(prn, " %-8s%.12g\n", "rho", a);
+    pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
+}
+
+static int ar1_mle (struct gls_info *G, double s, double *rho)
+{
     double *theta;
     int fc = 0, gc = 0;
+    int k = G->CX->cols;
     int i, nt, err;
 
-    nt = X->cols + 2;
+    nt = k + 2;
     theta = malloc(nt * sizeof *theta);
     if (theta == NULL) {
 	return E_ALLOC;
@@ -155,13 +186,13 @@ static int ar1_mle (const gretl_matrix *y,
 
     theta[0] = *rho;
     theta[1] = s;
-    for (i=0; i<X->cols; i++) {
-	theta[i+2] = b->val[i];
+    for (i=0; i<k; i++) {
+	theta[i+2] = G->b->val[i];
     }
 
     err = BFGS_max(theta, nt, 300, 1.0e-10,
 		   &fc, &gc, ar1_loglik, C_LOGLIK,
-		   NULL, &a, NULL, OPT_NONE, NULL);
+		   NULL, G, NULL, OPT_NONE, NULL);
 
     if (err) {
 	if (err == E_NOCONV) {
@@ -330,21 +361,6 @@ static void multiply_by_VC (gretl_matrix *y,
 	gretl_matrix_free(EVC);
     }
 }
-
-struct gls_info {
-    const gretl_matrix *y0;
-    gretl_matrix *CX;
-    gretl_matrix *VC;
-    gretl_matrix *W;
-    gretl_matrix *Z;
-    gretl_matrix *Tmp1;
-    gretl_matrix *Tmp2;
-    gretl_matrix *b;
-    gretl_matrix *u;
-    int s, det, agg;
-    int method;
-    double lnl;
-};
 
 /* Carry out enough of the Chow-Lin GLS calculations to permit
    computation of a figure of merit (loglikelihood or sum of squared
@@ -593,8 +609,7 @@ static void make_X_beta (gretl_vector *y, const double *b,
    rhohat() in estimate.c.
 */
 
-static double acf_1 (const gretl_matrix *y0,
-		     struct gls_info *G)
+static double acf_1 (struct gls_info *G)
 {
     double rho, num = 0, den = 0;
     double *u = G->u->val;
@@ -614,7 +629,7 @@ static double acf_1 (const gretl_matrix *y0,
     rho = num / den;
 
     /* improve the initial estimate of @rho via ML */
-    ar1_mle(y0, G->CX, G->b, sqrt(den / T), &rho);
+    ar1_mle(G, sqrt(den / T), &rho);
 
     return rho;
 }
@@ -625,7 +640,6 @@ static double acf_1 (const gretl_matrix *y0,
 */
 
 static int cl_ols (struct gls_info *G,
-		   const gretl_matrix *y0,
 		   const gretl_matrix *X,
 		   gretl_matrix *y,
 		   double *rho,
@@ -636,13 +650,13 @@ static int cl_ols (struct gls_info *G,
     int err;
 
     u = G->method == R_FIXED ? NULL : G->u;
-    err = gretl_matrix_ols(y0, G->CX, G->b, NULL, u, NULL);
+    err = gretl_matrix_ols(G->y0, G->CX, G->b, NULL, u, NULL);
     if (err) {
 	return err;
     }
 
     if (G->method != R_FIXED) {
-	a = acf_1(y0, G);
+	a = acf_1(G);
 	if (a <= 0.0) {
 	    a = 0; /* don't pursue negative @a */
 	} else if (G->agg >= AGG_EOP) {
@@ -666,31 +680,14 @@ static int cl_ols (struct gls_info *G,
 	if (G->agg == AGG_AVG) {
 	    gretl_matrix_multiply_by_scalar(y, G->s);
 	}
+	if (prn != NULL && gretl_messages_on()) {
+	    show_regression_results(G, a, 0, prn);
+	}
     }
 
     *rho = a;
 
     return err;
-}
-
-static void show_GLS_results (const struct gls_info *G,
-			      double a, int det,
-			      PRN *prn)
-{
-    const char *dnames[] = {"const", "trend", "trend^2"};
-    int i;
-
-    pputs(prn, "\nGLS coefficients:\n");
-    for (i=0; i<G->b->rows; i++) {
-	if (i < det) {
-	    pprintf(prn, " %-8s", dnames[i]);
-	} else {
-	    pprintf(prn, " %c%-7d", 'X', i-det+1);
-	}
-	pprintf(prn, "%#g\n", G->b->val[i]);
-    }
-    pprintf(prn, " %-8s%#.12g\n", "rho", a);
-    pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
 }
 
 /**
@@ -813,7 +810,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 	if (method != R_FIXED || a == 0) {
 	    /* take a first stab at estimation of @a */
-	    err = cl_ols(&G, y0, X, y, &a, prn);
+	    err = cl_ols(&G, X, y, &a, prn);
 	    if (a == 0) {
 		/* this iteration is handled */
 		continue;
@@ -839,7 +836,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    gretl_matrix_reuse(G.Tmp1, nx, N);
 
 	    if (prn != NULL && gretl_messages_on()) {
-		show_GLS_results(&G, a, det, prn);
+		show_regression_results(&G, a, 1, prn);
 	    }
 
 	    if (agg == AGG_AVG) {
