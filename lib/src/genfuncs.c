@@ -6299,7 +6299,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
-    if ((s != 3 && s != 4 && s != 12) || (det < 0 && det > 3)) {
+    if (s <= 1 || (det < 0 && det > 3)) {
 	*err = E_INVARG;
 	return NULL;
     }
