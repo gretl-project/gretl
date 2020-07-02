@@ -22,7 +22,7 @@
 #include "gretl_bfgs.h"
 #include "libset.h"
 
-#define CL_DEBUG 0
+#define CL_DEBUG 1
 #define LIMIT_R_SSR 1
 #define RHOMAX 0.999
 
@@ -204,6 +204,8 @@ static int ar1_mle (struct gls_info *G, double s, double *rho)
     if (err) {
 	if (err == E_NOCONV) {
 	    /* try taking the final value regardless */
+	    fprintf(stderr, "ar1_mle: BFGS_max gave E_NOCONV, "
+		    "continuing anyway\n");
 	    err = 0;
 	} else {
 	    fprintf(stderr, "ar1_mle: BFGS_max gave err=%d "
@@ -216,7 +218,7 @@ static int ar1_mle (struct gls_info *G, double s, double *rho)
 #if CL_DEBUG
 	fprintf(stderr, "ar1_mle, rho %g -> %g\n", *rho, theta[0]);
 #endif
-	*rho = theta[0];
+	*rho = theta[0] > 0.999 ? 0.999 : theta[0];
     }
 
     free(theta);
@@ -499,6 +501,11 @@ static int cl_gls_max (double *a, struct gls_info *G,
     }
 #endif
 
+#if CL_DEBUG
+    fprintf(stderr, "cl_gls_max: method = %d, err = %d\n",
+	    G->method, err);
+#endif
+
     if (!err) {
 	*a = r;
 	if (G->method == R_SSR) {
@@ -640,6 +647,10 @@ static double acf_1 (struct gls_info *G)
 
     rho = num / den;
 
+#if CL_DEBUG
+    fprintf(stderr, "initial rho from OLS residuals: %g\n", rho);
+#endif
+
     /* improve the initial estimate of @rho via ML */
     ar1_mle(G, sqrt(den / T), &rho);
 
@@ -673,6 +684,8 @@ static int cl_ols (struct gls_info *G,
 	    a = 0; /* don't pursue negative @a */
 	} else if (G->agg >= AGG_EOP) {
 	    a = pow(a, 1.0/G->s);
+	} else if (a >= RHOMAX) {
+	    ; /* leave it be! */
 	} else {
 	    double bracket[] = {0, RHOMAX};
 	    struct chowlin cl = {G->s, a};

@@ -12627,20 +12627,6 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
     return ptr;
 }
 
-static int tdisagg_check_pds (DATASET *dset, int yconv, int xconv)
-{
-    int pdlo = 0, pdhi = 0;
-    
-    if (!yconv) {
-	pdlo = dset->pd;
-    }
-    if (!xconv) {
-	pdhi = dset->pd;
-    }
-
-    return 0;
-}
-
 /* given an FARGS node, detect if the first argument
    is a pointer to bundle */
 
@@ -12655,6 +12641,29 @@ static int bundle_pointer_arg0 (NODE *t)
 	    return 1;
 	}
     }
+
+    return 0;
+}
+
+/* strip out repetition of high-frequency values in y vector */
+
+static int tdisagg_compress (gretl_matrix **py, int s)
+{
+    gretl_matrix *y, *y0 = *py;
+    int i, t, n = y0->rows / s;
+
+    y = gretl_matrix_alloc(n, 1);
+    if (y == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0, i=0; t<n; t++) {
+	y->val[t] = y0->val[i];
+	i += s;
+    }
+
+    gretl_matrix_free(y0);
+    *py = y;
 
     return 0;
 }
@@ -13672,8 +13681,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-	if (!p->err) {
-	    p->err = tdisagg_check_pds(p->dset, yconv, xconv);
+	if (xconv && yconv) {
+	    p->err = tdisagg_compress(&Y, fac);
 	}
 	if (!p->err) {
 	    reset_p_aux(p, save_aux);
