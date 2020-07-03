@@ -439,7 +439,8 @@ static double cl_gls_calc (const double *rho, void *data)
 	G->SSR = SSR = gretl_scalar_qform(G->u, G->W, &err);
 	if (!err) {
 	    G->s2 = SSR / N;
-	    G->lnl = -0.5*N - 0.5*N*LN_2_PI -N*log(G->s2)/2 - ldet/2;
+	    G->lnl = -0.5*N - 0.5*N*LN_2_PI - N*log(G->s2)/2 - ldet/2;
+	    G->s2 = SSR / (N - G->CX->cols);
 	}
     }
 
@@ -510,7 +511,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	    G->method, err);
 #endif
 
-    if (1) {
+    if (!err) {
 	/* experimental */
 	int i;
 	for (i=0; i<G->Z->cols; i++) {
@@ -767,6 +768,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     gretl_matrix *Y;
     gretl_matrix *y0, *y;
     gretl_matrix my0, my;
+    int rho_given = 0;
     int ny = Y0->cols;
     int nx = det;
     int N = Y0->rows;
@@ -809,9 +811,12 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     }
 
     if (!na(rho)) {
-	method = R_FIXED;
+	if (method == R_ACF1) {
+	    method = R_FIXED;
+	}
 	/* don't mess with negative rho */
 	rho = rho < 0 ? 0 : rho;
+	rho_given = 1;
     }
 
     /* regressors: deterministic terms (as wanted), plus
@@ -840,7 +845,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.Wcpy = NULL;
 
     for (i=0; i<ny && !err; i++) {
-	double a = method == R_FIXED ? rho : 0.0;
+	double a = rho_given ? rho : 0.0;
 
 	if (i > 0) {
 	    /* pick up the current columns for reading and writing */
@@ -848,8 +853,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    y->val = Y->val + i * (sN + m);
 	}
 
-	if (method != R_FIXED || a == 0) {
-	    /* take a first stab at estimation of @a */
+	if (!rho_given || a == 0) {
 	    err = cl_ols(&G, X, y, &a, prn);
 	    if (a == 0) {
 		/* this iteration is handled */
@@ -1031,7 +1035,7 @@ static int tdisagg_get_options (gretl_bundle *b,
     const char *str;
     int agg = 0;
     int method = 0;
-    int det = -1;
+    int det = 1;
     int err = 0;
 
     if (gretl_bundle_has_key(b, "agg")) {
@@ -1088,7 +1092,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
     if (method < 3) {
 	/* Chow-Lin variants */
 	if (det < 0) {
-	    det = X == NULL ? 2 : 1;
+	    det = 1;
 	}
 	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho, prn, err);
     } else if (method == 3) {
