@@ -61,6 +61,7 @@ struct gls_info {
     gretl_matrix *se;
     int s, det, agg;
     int method;
+    int netvcv;
     double lnl;
     double SSR;
     double s2;
@@ -407,7 +408,7 @@ static double cl_gls_calc (const double *rho, void *data)
 
     make_VC(G->VC, N, G->s, a, G->agg);
     make_CVC(G->W, G->VC, G->s, G->agg);
-    if (1 || G->method == R_SSR) {
+    if (G->netvcv) {
 	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
     }
     if (G->Wcpy == NULL) {
@@ -445,7 +446,7 @@ static double cl_gls_calc (const double *rho, void *data)
 	if (!err) {
 	    G->s2 = SSR / N;
 	    G->lnl = -0.5*N - 0.5*N*LN_2_PI - N*log(G->s2)/2 - ldet/2;
-	    /* for R-compatibility */
+	    /* df adjustment, for R-compatibility */
 	    G->s2 = SSR / (N - G->CX->cols);
 	}
     }
@@ -475,6 +476,9 @@ static int cl_gls_max (double *a, struct gls_info *G,
     if (libset_get_int(MAX_VERBOSE)) {
 	opt = OPT_V;
     }
+
+    /* this can be made conditional on G->method == R_GSS */
+    G->netvcv = 1;
 
 #if LIMIT_R_SSR
     /* prevent R_SSR from pushing @r above RHOMAX */
@@ -529,7 +533,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 
     if (!err) {
 	*a = r;
-	if (1 || G->method == R_SSR) {
+	if (G->netvcv) {
 	    /* restore original W for subsequent calculations */
 	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
 	}
@@ -871,6 +875,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.det = det;
     G.agg = agg;
     G.method = method;
+    G.netvcv = 0;
     G.lnl = G.SSR = G.s2 = NADBL;
     G.Wcpy = G.se = NULL;
 
