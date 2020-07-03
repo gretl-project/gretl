@@ -6256,7 +6256,7 @@ static int write_rectangles (gnuplot_info *gi,
     if (bar_on) {
 	/* terminate an unfinished bar */
 	sprintf(endobs, "%g", gi->x[t2]);
-	fprintf(fp, "set rectangle from %s, graph 0 to %s, graph 1 back "
+	fprintf(fp, "set object rectangle from %s, graph 0 to %s, graph 1 back "
 		"fillstyle solid 0.5 noborder fc rgb \"%s\"\n",
 		stobs, endobs, rgb);
     }
