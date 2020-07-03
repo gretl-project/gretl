@@ -62,6 +62,7 @@ struct gls_info {
     int method;
     double lnl;
     double SSR;
+    double s2;
 };
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
@@ -171,7 +172,7 @@ static void show_regression_results (const struct gls_info *G,
     }
     pprintf(prn, " %-8s%.12g\n", "rho", a);
     if (G->method == R_SSR && !na(G->SSR)) {
-	pprintf(prn, " SSR = %.8g\n", G->SSR);
+	pprintf(prn, " %-8s%.12g\n", "SSR", G->SSR);
     }
     if (!na(G->lnl)) {
 	pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
@@ -204,8 +205,10 @@ static int ar1_mle (struct gls_info *G, double s, double *rho)
     if (err) {
 	if (err == E_NOCONV) {
 	    /* try taking the final value regardless */
+#if CL_DEBUG
 	    fprintf(stderr, "ar1_mle: BFGS_max gave E_NOCONV, "
 		    "continuing anyway\n");
+#endif
 	    err = 0;
 	} else {
 	    fprintf(stderr, "ar1_mle: BFGS_max gave err=%d "
@@ -399,7 +402,7 @@ static double cl_gls_calc (const double *rho, void *data)
 
     make_VC(G->VC, N, G->s, a, G->agg);
     make_CVC(G->W, G->VC, G->s, G->agg);
-    if (G->method == R_SSR) {
+    if (1 || G->method == R_SSR) {
 	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
     }
     if (G->Wcpy == NULL) {
@@ -435,7 +438,8 @@ static double cl_gls_calc (const double *rho, void *data)
     if (!err) {
 	G->SSR = SSR = gretl_scalar_qform(G->u, G->W, &err);
 	if (!err) {
-	    G->lnl = -0.5*N - 0.5*N*LN_2_PI -N*log(SSR/N)/2 - ldet/2;
+	    G->s2 = SSR / N;
+	    G->lnl = -0.5*N - 0.5*N*LN_2_PI -N*log(G->s2)/2 - ldet/2;
 	}
     }
 
@@ -506,9 +510,18 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	    G->method, err);
 #endif
 
+    if (1) {
+	/* experimental */
+	int i;
+	for (i=0; i<G->Z->cols; i++) {
+	    fprintf(stderr, "GLS se[%d] = %g\n", i+1,
+		    sqrt(G->s2 * gretl_matrix_get(G->Z, i, i)));
+	}
+    }
+
     if (!err) {
 	*a = r;
-	if (G->method == R_SSR) {
+	if (1 || G->method == R_SSR) {
 	    /* restore original W for subsequent calculations */
 	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
 	}
@@ -823,7 +836,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.det = det;
     G.agg = agg;
     G.method = method;
-    G.lnl = G.SSR = NADBL;
+    G.lnl = G.SSR = G.s2 = NADBL;
     G.Wcpy = NULL;
 
     for (i=0; i<ny && !err; i++) {
