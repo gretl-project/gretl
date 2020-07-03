@@ -525,7 +525,9 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	/* record standard errors of GLS coeffs */
 	int i, k = G->Z->cols;
 
-	G->se = gretl_matrix_alloc(k, 1);
+	if (G->se == NULL) {
+	    G->se = gretl_matrix_alloc(k, 1);
+	}
 	for (i=0; i<k; i++) {
 	    G->se->val[i] = sqrt(G->s2 * gretl_matrix_get(G->Z, i, i));
 	}
@@ -534,7 +536,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
     if (!err) {
 	*a = r;
 	if (G->netvcv) {
-	    /* restore original W for subsequent calculations */
+	    /* restore full W for subsequent calculations */
 	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
 	}
     }
