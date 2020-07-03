@@ -13632,11 +13632,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
 	gretl_bundle *b = NULL;
+	gretl_bundle *r = NULL;
 	int fac = 0;
 	int yconv = 0;
 	int xconv = 0;
 
-	if (k < 3 || k > 4) {
+	if (k < 3 || k > 5) {
 	    n_args_error(k, 4, t->t, p);
 	}
 	for (i=0; i<k && !p->err; i++) {
@@ -13675,9 +13676,17 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 2) {
 		/* integer expansion factor */
 		fac = node_get_int(e, p);
+	    } else if (i == 3) {
+		/* optional options bundle */
+		if (e->t == BUNDLE) {
+		    b = e->v.b;
+		} else if (!null_node(e)) {
+		    p->err = E_TYPES;
+		}
 	    } else if (e->t == BUNDLE) {
-		b = e->v.b;
-	    } else {
+		/* optional retrieval bundle */
+		r = e->v.b;
+	    } else if (!null_node(e)) {
 		p->err = E_TYPES;
 	    }
 	}
@@ -13689,7 +13698,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    ret->v.m = matrix_tdisagg(Y, X, fac, b, p->prn, &p->err);
+	    ret->v.m = matrix_tdisagg(Y, X, fac, b, r, p->prn, &p->err);
 	}
 	if (yconv) {
 	    gretl_matrix_free(Y);

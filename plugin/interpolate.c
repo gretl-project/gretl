@@ -58,6 +58,7 @@ struct gls_info {
     gretl_matrix *b;
     gretl_matrix *u;
     gretl_matrix *Wcpy;
+    gretl_matrix *se;
     int s, det, agg;
     int method;
     double lnl;
@@ -168,14 +169,18 @@ static void show_regression_results (const struct gls_info *G,
 	} else {
 	    pprintf(prn, " %c%-7d", 'X', i - G->det + 1);
 	}
-	pprintf(prn, "%#g\n", G->b->val[i]);
+	pprintf(prn, "%#g", G->b->val[i]);
+	if (G->se != NULL) {
+	    pprintf(prn, " (%#g)", G->se->val[i]);
+	}
+	pputc(prn, '\n');
     }
-    pprintf(prn, " %-8s%.12g\n", "rho", a);
-    if (G->method == R_SSR && !na(G->SSR)) {
-	pprintf(prn, " %-8s%.12g\n", "SSR", G->SSR);
+    pprintf(prn, " %-8s%#.8g\n", "rho", a);
+    if (!na(G->SSR)) {
+	pprintf(prn, " %-8s%#.8g\n", "SSR", G->SSR);
     }
     if (!na(G->lnl)) {
-	pprintf(prn, " loglikelihood = %.8g\n", G->lnl);
+	pprintf(prn, " loglikelihood %.8g\n", G->lnl);
     }
 }
 
@@ -440,6 +445,7 @@ static double cl_gls_calc (const double *rho, void *data)
 	if (!err) {
 	    G->s2 = SSR / N;
 	    G->lnl = -0.5*N - 0.5*N*LN_2_PI - N*log(G->s2)/2 - ldet/2;
+	    /* for R-compatibility */
 	    G->s2 = SSR / (N - G->CX->cols);
 	}
     }
@@ -512,11 +518,12 @@ static int cl_gls_max (double *a, struct gls_info *G,
 #endif
 
     if (!err) {
-	/* experimental */
-	int i;
-	for (i=0; i<G->Z->cols; i++) {
-	    fprintf(stderr, "GLS se[%d] = %g\n", i+1,
-		    sqrt(G->s2 * gretl_matrix_get(G->Z, i, i)));
+	/* record standard errors of GLS coeffs */
+	int i, k = G->Z->cols;
+
+	G->se = gretl_matrix_alloc(k, 1);
+	for (i=0; i<k; i++) {
+	    G->se->val[i] = sqrt(G->s2 * gretl_matrix_get(G->Z, i, i));
 	}
     }
 
@@ -729,6 +736,27 @@ static int cl_ols (struct gls_info *G,
     return err;
 }
 
+static int fill_chowlin_bundle (struct gls_info *G,
+				double a,
+				gretl_bundle *b)
+{
+    gretl_matrix *m;
+
+    gretl_bundle_set_scalar(b, "rho", a);
+    gretl_bundle_set_scalar(b, "lnl", G->lnl);
+    if (!na(G->SSR)) {
+	gretl_bundle_set_scalar(b, "SSR", G->SSR);
+    }
+    m = gretl_matrix_copy(G->b);
+    gretl_bundle_donate_data(b, "coeff", m, GRETL_TYPE_MATRIX, 0);
+    if (G->se != NULL) {
+	gretl_bundle_donate_data(b, "stderr", G->se, GRETL_TYPE_MATRIX, 0);
+	G->se = NULL;
+    }
+
+    return 0;
+}
+
 /**
  * chow_lin_disagg:
  * @Y0: N x k: holds the original data to be expanded.
@@ -761,6 +789,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      const gretl_matrix *X,
 				      int s, int agg, int method,
 				      int det, double rho,
+				      gretl_bundle *res,
 				      PRN *prn, int *perr)
 {
     struct gls_info G = {0};
@@ -768,6 +797,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     gretl_matrix *Y;
     gretl_matrix *y0, *y;
     gretl_matrix my0, my;
+    double a = 0;
     int rho_given = 0;
     int ny = Y0->cols;
     int nx = det;
@@ -842,10 +872,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.agg = agg;
     G.method = method;
     G.lnl = G.SSR = G.s2 = NADBL;
-    G.Wcpy = NULL;
+    G.Wcpy = G.se = NULL;
 
     for (i=0; i<ny && !err; i++) {
-	double a = rho_given ? rho : 0.0;
+	a = rho_given ? rho : 0.0;
 
 	if (i > 0) {
 	    /* pick up the current columns for reading and writing */
@@ -889,9 +919,14 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	}
     }
 
+    if (!err && ny == 1 && res != NULL) {
+	fill_chowlin_bundle(&G, a, res);
+    }
+
     *perr = err;
     gretl_matrix_block_destroy(B);
     gretl_matrix_free(G.Wcpy);
+    gretl_matrix_free(G.se);
 
     return Y;
 }
@@ -995,6 +1030,51 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
     return y;
 }
 
+static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
+				   const gretl_matrix *X,
+				   int s, int agg, int method,
+				   int det, double rho,
+				   gretl_bundle *r,
+				   PRN *prn, int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (method < 3) {
+	/* Chow-Lin variants */
+	if (det < 0) {
+	    det = 1;
+	}
+	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho,
+			      r, prn, err);
+    } else if (method == 3) {
+	/* Modified Denton, proportional first differences */
+	int ylen = gretl_vector_get_length(Y0);
+	gretl_matrix *X0 = NULL;
+
+	if (X == NULL) {
+	    /* as per R, tempdisagg, use a constant if
+	       X is not provided */
+	    X0 = gretl_unit_matrix_new(s * ylen, 1);
+	    X = X0;
+	} else {
+	    int xlen = gretl_vector_get_length(X);
+
+	    if (ylen == 0 || xlen == 0 || xlen != s * ylen) {
+		*err = E_INVARG;
+	    }
+	}
+	if (!*err) {
+	    ret = denton_pfd(Y0, X, s, agg, err);
+	    gretl_matrix_free(X0);
+	}
+    } else {
+	/* no other choices at present */
+	*err = E_INVARG;
+    }
+
+    return ret;
+}
+
 static int get_aggregation_type (const char *s, int *err)
 {
     if (!strcmp(s, "sum")) {
@@ -1076,11 +1156,11 @@ static int tdisagg_get_options (gretl_bundle *b,
 gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
 				 int s, gretl_bundle *b,
-				 int agg, int method,
-				 int det, double rho,
+				 gretl_bundle *r,
 				 PRN *prn, int *err)
 {
-    gretl_matrix *ret = NULL;
+    int agg = 0, method = 0, det = 1;
+    double rho = NADBL;
 
     if (b != NULL) {
 	*err = tdisagg_get_options(b, &agg, &method, &det, &rho);
@@ -1089,37 +1169,17 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 	}
     }
 
-    if (method < 3) {
-	/* Chow-Lin variants */
-	if (det < 0) {
-	    det = 1;
-	}
-	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho, prn, err);
-    } else if (method == 3) {
-	/* Modified Denton, proportional first differences */
-	int ylen = gretl_vector_get_length(Y0);
-	gretl_matrix *X0 = NULL;
+    return real_tdisagg(Y0, X, s, agg, method, det, rho,
+			r, prn, err);
+}
 
-	if (X == NULL) {
-	    /* as per R, tempdisagg, use a constant if
-	       X is not provided */
-	    X0 = gretl_unit_matrix_new(s * ylen, 1);
-	    X = X0;
-	} else {
-	    int xlen = gretl_vector_get_length(X);
+gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
+			     const gretl_matrix *X,
+			     int s, int agg, int *err)
+{
+    int method = 0, det = 1;
+    double rho = NADBL;
 
-	    if (ylen == 0 || xlen == 0 || xlen != s * ylen) {
-		*err = E_INVARG;
-	    }
-	}
-	if (!*err) {
-	    ret = denton_pfd(Y0, X, s, agg, err);
-	    gretl_matrix_free(X0);
-	}
-    } else {
-	/* no other choices at present */
-	*err = E_INVARG;
-    }
-
-    return ret;
+    return real_tdisagg(Y0, X, s, agg, method, det, rho,
+			NULL, NULL, err);
 }

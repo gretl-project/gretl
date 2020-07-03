@@ -280,6 +280,7 @@ struct plugin_function_info plugin_functions[] = {
 
     /* data interpolation */
     { "time_disaggregate", P_INTERPOLATE},
+    { "tdisagg_basic", P_INTERPOLATE},
 
     /* ISO 3166 country codes */
     { "iso_country", P_ISO3166},

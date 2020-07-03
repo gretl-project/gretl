@@ -6268,7 +6268,8 @@ double logistic_cdf (double x)
  * @X: (optionally) holds covariates of Y at the higher frequency.
  * @s: the expansion factor: 3 for quarterly to monthly,
  * 4 for annual to quarterly, or 12 for annual to monthly.
- * @b: bundle containing remaining optional arguments.
+ * @b: bundle containing optional arguments, or NULL.
+ * @r: bundle for retrieving details, or NULL.
  * @err: location to receive error code.
  *
  * Interpolate, from annual to quarterly or quarterly to monthly, by
@@ -6284,13 +6285,13 @@ double logistic_cdf (double x)
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, void *b,
+			      int s, void *b, void *r,
 			      PRN *prn, int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
 			      int, gretl_bundle *,
-			      int, int, int, double,
+			      gretl_bundle *,
 			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
@@ -6316,8 +6317,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, b, 0, 0, -1,
-			  NADBL, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, r, prn, err);
     }
 
     return ret;
@@ -6327,11 +6327,9 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int s, int agg, int *err)
 {
-    gretl_matrix *(*tdisagg) (const gretl_matrix *,
+    gretl_matrix *(*tdbasic) (const gretl_matrix *,
 			      const gretl_matrix *,
-			      int, gretl_bundle *,
-			      int, int, int, double,
-			      PRN *, int *);
+			      int, int, int *);
     gretl_matrix *ret = NULL;
 
     if (s != 3 && s != 4 && s != 12) {
@@ -6349,13 +6347,12 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 	}
     }
 
-    tdisagg = get_plugin_function("time_disaggregate");
+    tdbasic = get_plugin_function("tdisagg_basic");
 
-    if (tdisagg == NULL) {
+    if (tdbasic == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, NULL, agg, 0, -1,
-			  NADBL, NULL, err);
+	ret = (*tdbasic) (Y, X, s, agg, err);
     }
 
     return ret;
