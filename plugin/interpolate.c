@@ -24,6 +24,7 @@
 
 #define CL_DEBUG 0
 #define LIMIT_R_SSR 1
+#define SSR_LOGISTIC 1
 #define RHOMAX 0.999
 
 /* aggregation types */
@@ -396,7 +397,7 @@ static double cl_gls_calc (const double *rho, void *data)
     int N = G->y0->rows;
     int err = 0;
 
-#if LIMIT_R_SSR
+#if LIMIT_R_SSR && !SSR_LOGISTIC
     if (G->method == R_MLE) {
 	a = logistic_cdf(*rho);
     }
@@ -484,15 +485,26 @@ static int cl_gls_max (double *a, struct gls_info *G,
     /* prevent R_SSR from pushing @r above RHOMAX */
     if (G->method == R_SSR) {
 	gretl_matrix bounds;
+#if SSR_LOGISTIC
+	double bvals[] = {1, -10, 6.9};
+	double lrho = -log(1/r - 1);
+	double *rptr = &lrho;
+#else
 	double bvals[] = {1, 0, RHOMAX};
+	double *rptr = &r;
+#endif
 
 	gretl_matrix_init_full(&bounds, 1, 3, bvals);
-	err = LBFGS_max(&r, 1, 200, 1.0e-12,
+	err = LBFGS_max(rptr, 1, 200, 1.0e-12,
 			&fc, &gc, cl_gls_calc, C_SSR,
 			NULL, NULL, G, &bounds, opt, prn);
-
+#if SSR_LOGISTIC
+	if (!err) {
+	    r = logistic_cdf(lrho);
+	}
+#endif
     } else {
-	/* G->method == R_MLE */
+	/* G->method = R_MLE */
 	double lrho = -log(1/r - 1);
 
 	err = BFGS_max(&lrho, 1, 200, 1.0e-14,
