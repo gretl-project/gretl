@@ -1915,11 +1915,6 @@ FreqDist *get_freq (int varno, const DATASET *dset,
     x = dset->Z[varno];
     freq_dist_stat(freq, x, opt, params);
 
-    if ((opt & OPT_S) && !(opt & OPT_G)) {
-	/* silent operation, no plot */
-	return freq;
-    }
-
     if (freq_add_arrays(freq, nbins)) {
 	*err = E_ALLOC;
 	goto bailout;
