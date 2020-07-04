@@ -1526,6 +1526,10 @@ void vwin_add_tmpbar (windata_t *vwin)
 
 	g_object_ref(G_OBJECT(vwin->mbar));
 	gtk_container_remove(GTK_CONTAINER(hbox), vwin->mbar);
+	if (vwin->finder != NULL) {
+	    g_object_ref(G_OBJECT(vwin->finder));
+	    gtk_container_remove(GTK_CONTAINER(hbox), vwin->finder);
+	}
 	if (winlist != NULL) {
 	    g_object_ref(G_OBJECT(winlist));
 	    gtk_container_remove(GTK_CONTAINER(hbox), winlist);

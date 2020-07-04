@@ -1043,7 +1043,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	}
 
 	if (!err) {
-	    /* y = X*beta + V*C'*W*u */
+	    /* final series: y = X*beta + V*C'*W*u */
 	    make_X_beta(y, G.b->val, X, det);
 	    gretl_matrix_reuse(G.Tmp1, N, 1);
 	    gretl_matrix_multiply(G.W, G.u, G.Tmp1);

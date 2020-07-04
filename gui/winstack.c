@@ -1476,6 +1476,10 @@ void vwin_reinstate_toolbar (windata_t *vwin)
 	    gtk_box_pack_end(GTK_BOX(hbox), winlist, FALSE, FALSE, 0);
 	    g_object_unref(G_OBJECT(winlist));
 	}
+	if (vwin->finder != NULL) {
+	    gtk_box_pack_end(GTK_BOX(hbox), vwin->finder, FALSE, FALSE, 5);
+	    g_object_unref(G_OBJECT(vwin->finder));
+	}
 	gtk_widget_show_all(hbox);
     }
 }
