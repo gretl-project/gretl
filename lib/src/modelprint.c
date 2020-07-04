@@ -121,7 +121,9 @@ static int char_len (const char *s)
 
 static void plain_print_double (char *s, int d, double x, PRN *prn)
 {
-    if (x < 0 && gretl_print_has_minus(prn)) {
+    if (na(x)) {
+	strcpy(s, "NA");
+    } else if (x < 0 && gretl_print_has_minus(prn)) {
 	char tmp[32];
 
 	*s = '\0';
@@ -172,7 +174,11 @@ static void print_model_stats_table (const double *stats,
 	    tex_rl_double(stats[i], tmp2);
 	    pprintf(prn, "%s & %s \\\\\n", tmp1, tmp2);
 	} else if (rtf_format(prn)) {
-	    pprintf(prn, RTFTAB "%s = %g\n", names[i], stats[i]);
+	    if (na(stats[i])) {
+		pprintf(prn, RTFTAB "%s = NA\n", names[i]);
+	    } else {
+		pprintf(prn, RTFTAB "%s = %g\n", names[i], stats[i]);
+	    }
 	} else if (csv_format(prn)) {
 	    pprintf(prn, "\"%s\"%c%.15g\n", names[i], prn_delim(prn), stats[i]);
 	}

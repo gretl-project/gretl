@@ -43,6 +43,13 @@ enum {
     R_FIXED, /* pre-specified by user */
 };
 
+typedef enum {
+    CL_SAVE_SE = 1 << 0,
+    CL_NETVCV  = 1 << 1,
+    CL_VERBOSE = 1 << 2,
+    CL_SHOWMAX = 1 << 3,
+} CLflags;
+
 struct chowlin {
     int n;
     double targ;
@@ -62,8 +69,7 @@ struct gls_info {
     gretl_matrix *se;
     int s, det, agg;
     int method;
-    int netvcv;
-    int verbose;
+    CLflags flags;
     double lnl;
     double SSR;
     double s2;
@@ -164,68 +170,48 @@ static void show_regression_results (const struct gls_info *G,
     const char *enames[] = {"OLS", "GLS"};
     const char *dnames[] = {"const", "trend", "trend^2"};
     const char *snames[] = {"rho", "SSR", "lnl"};
+    char tmp[16];
     int i, k = G->b->rows;
+    int df = G->CX->rows - G->CX->cols;
+    int err = 0, p = 0, n = k + 3;
 
-    if (G->se != NULL) {
-	/* not yet the case for OLS */
-	int err = 0, p = 0, n = k + 3;
-	char tmp[16];
-	gretl_matrix *cs = gretl_matrix_alloc(k, 2);
-	gretl_matrix *adds = gretl_matrix_alloc(1, 3);
-	gretl_array *names = gretl_array_new(GRETL_TYPE_STRINGS, n, &err);
-	int df = G->W->rows - G->CX->cols;
+    gretl_matrix *cs = gretl_matrix_alloc(k, 2);
+    gretl_matrix *adds = gretl_matrix_alloc(1, 3);
+    gretl_array *names = gretl_array_new(GRETL_TYPE_STRINGS, n, &err);
 
-	if (cs == NULL || adds == NULL || names == NULL) {
-	    return;
-	}
+    if (cs == NULL || adds == NULL || names == NULL) {
+	return;
+    }
 
-	for (i=0; i<k; i++) {
-	    gretl_matrix_set(cs, i, 0, G->b->val[i]);
+    for (i=0; i<k; i++) {
+	gretl_matrix_set(cs, i, 0, G->b->val[i]);
+	if (G->se != NULL) {
 	    gretl_matrix_set(cs, i, 1, G->se->val[i]);
-	}
-	adds->val[0] = a;
-	adds->val[1] = G->SSR;
-	adds->val[2] = G->lnl;
-
-	for (i=0; i<n; i++) {
-	    if (i < G->det) {
-		gretl_array_set_data(names, i, gretl_strdup(dnames[i]));
-	    } else if (i < k) {
-		sprintf(tmp, "X%d", i - G->det + 1);
-		gretl_array_set_data(names, i, gretl_strdup(tmp));
-	    } else {
-		gretl_array_set_data(names, i, gretl_strdup(snames[p++]));
-	    }
-	}
-
-	pprintf(prn, "  %s estimates:\n", enames[gls]);
-	print_model_from_matrices(cs, adds, names, df, OPT_I, prn);
-
-	gretl_matrix_free(cs);
-	gretl_matrix_free(adds);
-	gretl_array_destroy(names);
-    } else {
-	pprintf(prn, "\n%s coefficients:\n", enames[gls]);
-	for (i=0; i<k; i++) {
-	    if (i < G->det) {
-		pprintf(prn, " %-8s", dnames[i]);
-	    } else {
-		pprintf(prn, " %c%-7d", 'X', i - G->det + 1);
-	    }
-	    pprintf(prn, "%#g", G->b->val[i]);
-	    if (G->se != NULL) {
-		pprintf(prn, " (%#g)", G->se->val[i]);
-	    }
-	    pputc(prn, '\n');
-	}
-	pprintf(prn, " %-8s%#.8g\n", "rho", a);
-	if (!na(G->SSR)) {
-	    pprintf(prn, " %-8s%#.8g\n", "SSR", G->SSR);
-	}
-	if (!na(G->lnl)) {
-	    pprintf(prn, " %-8s%#.8g\n", "lnl", G->lnl);
+	} else {
+	    gretl_matrix_set(cs, i, 1, NADBL);
 	}
     }
+    adds->val[0] = a;
+    adds->val[1] = G->SSR;
+    adds->val[2] = G->lnl;
+
+    for (i=0; i<n; i++) {
+	if (i < G->det) {
+	    gretl_array_set_data(names, i, gretl_strdup(dnames[i]));
+	} else if (i < k) {
+	    sprintf(tmp, "X%d", i - G->det + 1);
+	    gretl_array_set_data(names, i, gretl_strdup(tmp));
+	} else {
+	    gretl_array_set_data(names, i, gretl_strdup(snames[p++]));
+	}
+    }
+
+    pprintf(prn, "  %s estimates:\n", enames[gls]);
+    print_model_from_matrices(cs, adds, names, df, OPT_I, prn);
+
+    gretl_matrix_free(cs);
+    gretl_matrix_free(adds);
+    gretl_array_destroy(names);
 }
 
 static int ar1_mle (struct gls_info *G, double s, double *rho)
@@ -451,7 +437,7 @@ static double cl_gls_calc (const double *rho, void *data)
 
     make_VC(G->VC, N, G->s, a, G->agg);
     make_CVC(G->W, G->VC, G->s, G->agg);
-    if (G->netvcv) {
+    if (G->flags & CL_NETVCV) {
 	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
     }
     if (G->Wcpy == NULL) {
@@ -516,12 +502,12 @@ static int cl_gls_max (double *a, struct gls_info *G,
     int fc = 0, gc = 0;
     int err;
 
-    if (G->verbose > 1) {
+    if (G->flags & CL_SHOWMAX) {
 	opt = OPT_V;
     }
 
     /* this can be made conditional on G->method == R_GSS */
-    G->netvcv = 1;
+    G->flags |= CL_NETVCV;
 
 #if LIMIT_R_SSR
     /* prevent R_SSR from pushing @r above RHOMAX */
@@ -575,7 +561,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	    G->method, err);
 #endif
 
-    if (!err) {
+    if (!err && (G->flags & CL_SAVE_SE)) {
 	/* record standard errors of GLS coeffs */
 	int i, k = G->Z->cols;
 
@@ -589,7 +575,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 
     if (!err) {
 	*a = r;
-	if (G->netvcv) {
+	if (G->flags & CL_NETVCV) {
 	    /* restore full W for subsequent calculations */
 	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
 	}
@@ -738,6 +724,42 @@ static double acf_1 (struct gls_info *G)
     return rho;
 }
 
+static int prepare_OLS_stats (struct gls_info *G)
+{
+    int k = G->CX->cols;
+    int n = G->CX->rows;
+    int err = 0;
+
+    G->se = gretl_matrix_alloc(k, 1);
+    if (G->se == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_multiply_mod(G->CX, GRETL_MOD_TRANSPOSE,
+			      G->CX, GRETL_MOD_NONE,
+			      G->Z, GRETL_MOD_NONE);
+    err = gretl_invert_symmetric_matrix(G->Z);
+
+    if (!err) {
+	const double *u = G->u->val;
+	double s2, zii, n2 = 0.5*n;
+	int i;
+
+	G->SSR = 0.0;
+	for (i=0; i<n; i++) {
+	    G->SSR += u[i] * u[i];
+	}
+	s2 = G->SSR / (n - k);
+	for (i=0; i<k; i++) {
+	    zii = gretl_matrix_get(G->Z, i, i);
+	    G->se->val[i] = sqrt(s2 * zii);
+	}
+	G->lnl = -n2 * (1 + LN_2_PI - log(n)) - n2 * log(G->SSR);
+    }
+
+    return err;
+}
+
 /* We come here if (a) the caller has specified a fixed rho
    of zero, or (b) we're estimating low-frequency rho from
    an initial OLS regression and converting to high-frequency.
@@ -749,12 +771,10 @@ static int cl_ols (struct gls_info *G,
 		   double *rho,
 		   PRN *prn)
 {
-    gretl_matrix *u;
     double a = 0;
     int err;
 
-    u = G->method == R_FIXED ? NULL : G->u;
-    err = gretl_matrix_ols(G->y0, G->CX, G->b, NULL, u, NULL);
+    err = gretl_matrix_ols(G->y0, G->CX, G->b, NULL, G->u, NULL);
     if (err) {
 	return err;
     }
@@ -786,7 +806,10 @@ static int cl_ols (struct gls_info *G,
 	if (G->agg == AGG_AVG) {
 	    gretl_matrix_multiply_by_scalar(y, G->s);
 	}
-	if (prn != NULL && G->verbose) {
+	if (G->flags & CL_SAVE_SE) {
+	    prepare_OLS_stats(G);
+	}
+	if (prn != NULL && (G->flags & CL_VERBOSE)) {
 	    show_regression_results(G, a, 0, prn);
 	}
     }
@@ -936,10 +959,19 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.det = det;
     G.agg = agg;
     G.method = method;
-    G.netvcv = 0;
-    G.verbose = verbose;
+    G.flags = 0;
     G.lnl = G.SSR = G.s2 = NADBL;
     G.Wcpy = G.se = NULL;
+
+    /* set some state flags */
+    if (verbose) {
+	G.flags = (CL_VERBOSE | CL_SAVE_SE);
+	if (verbose > 1) {
+	    G.flags |= CL_SHOWMAX;
+	}
+    } else if (res != NULL) {
+	G.flags |= CL_SAVE_SE;
+    }
 
     for (i=0; i<ny && !err; i++) {
 	a = rho_given ? rho : 0.0;
@@ -976,7 +1008,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    multiply_by_VC(y, G.VC, G.Tmp1, s, m, a, agg);
 	    gretl_matrix_reuse(G.Tmp1, nx, N);
 
-	    if (prn != NULL && G.verbose) {
+	    if (prn != NULL && verbose) {
 		show_regression_results(&G, a, 1, prn);
 	    }
 
