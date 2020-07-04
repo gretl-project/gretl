@@ -75,6 +75,10 @@ struct gls_info {
     double s2;
 };
 
+static const char *method_names[] = {
+    "chow-lin", "chow-lin-mle", "chow-lin-ssr", "denton"
+};
+
 /* Callback for fzero(), as we adjust the coefficient @a so the
    theoretically derived ratio of polynomials in @a matches the
    empirical first-order autocorrelation of the OLS residuals
@@ -167,7 +171,6 @@ static void show_regression_results (const struct gls_info *G,
 				     double a, int gls,
 				     PRN *prn)
 {
-    const char *enames[] = {"OLS", "GLS"};
     const char *dnames[] = {"const", "trend", "trend^2"};
     const char *snames[] = {"rho", "SSR", "lnl"};
     char tmp[16];
@@ -206,7 +209,17 @@ static void show_regression_results (const struct gls_info *G,
 	}
     }
 
-    pprintf(prn, "  %s estimates:\n", enames[gls]);
+    if (G->method == R_MLE || G->method == R_SSR) {
+	pprintf(prn, "  %s", _("Iterated GLS estimates"));
+	pprintf(prn, " (%s):\n", method_names[G->method]);
+    } else if (a == 0) {
+	pprintf(prn, "  %s:\n", _("OLS estimates"));
+    } else {
+	pprintf(prn, "  %s", _("GLS estimates"));
+	pprintf(prn, " (%s):\n", (G->method == R_FIXED)?
+		"fixed rho" : "chow-lin");
+    }
+
     print_model_from_matrices(cs, adds, names, df, OPT_I, prn);
 
     gretl_matrix_free(cs);
@@ -489,6 +502,40 @@ static double cl_gls_calc (const double *rho, void *data)
     return crit;
 }
 
+/* record standard errors of GLS coeffs */
+
+static void add_gls_se (struct gls_info *G)
+{
+    int i, k = G->Z->cols;
+
+    if (G->se == NULL) {
+	G->se = gretl_matrix_alloc(k, 1);
+    }
+    for (i=0; i<k; i++) {
+	G->se->val[i] = sqrt(G->s2 * gretl_matrix_get(G->Z, i, i));
+    }
+}
+
+static int cl_gls_one (double *a, struct gls_info *G)
+{
+    double crit = cl_gls_calc(a, G);
+    int err = 0;
+
+    if (na(crit)) {
+	err = E_NOCONV; /* FIXME? */
+    } else if (G->flags & CL_SAVE_SE) {
+	add_gls_se(G);
+    }
+
+    if (G->flags & CL_NETVCV) {
+	/* restore full W for subsequent calculations */
+	double r = *a;
+	gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
+    }
+
+    return err;
+}
+
 /* Driver for optimization of rho via GLS, either on the criterion
    of likelihood or the straight GLS criterion.  In line with other
    implementations we place an upper bound on rho short of 1.0.
@@ -505,9 +552,6 @@ static int cl_gls_max (double *a, struct gls_info *G,
     if (G->flags & CL_SHOWMAX) {
 	opt = OPT_V;
     }
-
-    /* this can be made conditional on G->method == R_GSS */
-    G->flags |= CL_NETVCV;
 
 #if LIMIT_R_SSR
     /* prevent R_SSR from pushing @r above RHOMAX */
@@ -562,15 +606,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 #endif
 
     if (!err && (G->flags & CL_SAVE_SE)) {
-	/* record standard errors of GLS coeffs */
-	int i, k = G->Z->cols;
-
-	if (G->se == NULL) {
-	    G->se = gretl_matrix_alloc(k, 1);
-	}
-	for (i=0; i<k; i++) {
-	    G->se->val[i] = sqrt(G->s2 * gretl_matrix_get(G->Z, i, i));
-	}
+	add_gls_se(G);
     }
 
     if (!err) {
@@ -825,6 +861,12 @@ static int fill_chowlin_bundle (struct gls_info *G,
 {
     gretl_matrix *m;
 
+    if (G->method == R_FIXED) {
+	gretl_bundle_set_string(b, "method", "fixed rho");
+    } else {
+	gretl_bundle_set_string(b, "method",
+				method_names[G->method]);
+    }
     gretl_bundle_set_scalar(b, "rho", a);
     gretl_bundle_set_scalar(b, "lnl", G->lnl);
     if (!na(G->SSR)) {
@@ -959,13 +1001,13 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.det = det;
     G.agg = agg;
     G.method = method;
-    G.flags = 0;
+    G.flags = CL_NETVCV;
     G.lnl = G.SSR = G.s2 = NADBL;
     G.Wcpy = G.se = NULL;
 
     /* set some state flags */
     if (verbose) {
-	G.flags = (CL_VERBOSE | CL_SAVE_SE);
+	G.flags |= (CL_VERBOSE | CL_SAVE_SE);
 	if (verbose > 1) {
 	    G.flags |= CL_SHOWMAX;
 	}
@@ -996,7 +1038,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 		err = cl_gls_max(&a, &G, prn);
 	    } else {
 		/* just calculate with the current @a */
-		cl_gls_calc(&a, &G);
+		err = cl_gls_one(&a, &G);
 	    }
 	}
 
@@ -1193,18 +1235,15 @@ static int get_aggregation_type (const char *s, int *err)
 
 static int get_tdisagg_method (const char *s, int *err)
 {
-    if (!strcmp(s, "chow-lin")) {
-	return 0;
-    } else if (!strcmp(s, "chow-lin-mle")) {
-	return 1;
-    } else if (!strcmp(s, "chow-lin-ssr")) {
-	return 2;
-    } else if (!strcmp(s, "denton")) {
-	return 3;
-    } else {
-	*err = E_INVARG;
-	return -1;
+    int i;
+
+    for (i=0; i<4; i++) {
+	if (!strcmp(s, method_names[i])) {
+	    return i;
+	}
     }
+    *err = E_INVARG;
+    return -1;
 }
 
 static int tdisagg_get_options (gretl_bundle *b,
