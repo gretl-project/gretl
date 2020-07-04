@@ -4591,7 +4591,7 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
     if (j >= 0) {
 	pprintf(prn, "%s:\n", _(heads[j]));
     }
-    print_model_from_matrices(cse, NULL, S, pmod->dfd, prn);
+    print_model_from_matrices(cse, NULL, S, pmod->dfd, OPT_NONE, prn);
     pprintf(prn, "  n = %d, R-squared = %.4f\n\n", pmod->nobs, pmod->rsq);
 
     gretl_matrix_free(cse);

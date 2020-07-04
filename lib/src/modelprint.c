@@ -137,8 +137,10 @@ static void plain_print_double (char *s, int d, double x, PRN *prn)
 
 static void print_model_stats_table (const double *stats,
 				     const char **names,
-				     int ns, PRN *prn)
+				     int ns, gretlopt opt,
+				     PRN *prn)
 {
+    int oneline = opt & OPT_I;
     char tmp1[32], tmp2[32];
     int i, d;
 
@@ -154,7 +156,17 @@ static void print_model_stats_table (const double *stats,
     for (i=0; i<ns; i++) {
 	if (plain_format(prn)) {
 	    plain_print_double(tmp1, d, stats[i], prn);
-	    pprintf(prn, "  %s = %s\n", names[i], tmp1);
+	    if (oneline && ns > 1) {
+		if (i == 0) {
+		    pprintf(prn, "  %s = %s", names[i], tmp1);
+		} else if (i == ns-1) {
+		    pprintf(prn, ", %s = %s\n", names[i], tmp1);
+		} else {
+		    pprintf(prn, ", %s = %s", names[i], tmp1);;
+		}
+	    } else {
+		pprintf(prn, "  %s = %s\n", names[i], tmp1);
+	    }
 	} else if (tex_format(prn)) {
 	    tex_escape_special(tmp1, names[i]);
 	    tex_rl_double(stats[i], tmp2);
@@ -5558,6 +5570,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
  * @adds: matrix containing an additional p statistics, or NULL.
  * @names: array of strings containing all required names.
  * @df: degrees of freedom, or 0 for asymptotic.
+ * @opt: may contain OPT_I fpr printing the extra state inline.
  * @prn: gretl printer.
  *
  * Prints to @prn the coefficient table and optional additional statistics
@@ -5572,8 +5585,8 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 
 int print_model_from_matrices (const gretl_matrix *cs,
 			       const gretl_matrix *adds,
-			       gretl_array *names,
-			       int df, PRN *prn)
+			       gretl_array *names, int df,
+			       gretlopt opt, PRN *prn)
 {
     int k = gretl_matrix_rows(cs);
     int p = gretl_vector_get_length(adds);
@@ -5602,7 +5615,7 @@ int print_model_from_matrices (const gretl_matrix *cs,
 
     if (p > 0) {
 	print_model_stats_table(adds->val, (const char **) S + k,
-				p, prn);
+				p, opt, prn);
     }
 
     if (plain_format(prn)) {

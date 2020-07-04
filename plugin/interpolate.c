@@ -63,6 +63,7 @@ struct gls_info {
     int s, det, agg;
     int method;
     int netvcv;
+    int verbose;
     double lnl;
     double SSR;
     double s2;
@@ -162,27 +163,68 @@ static void show_regression_results (const struct gls_info *G,
 {
     const char *enames[] = {"OLS", "GLS"};
     const char *dnames[] = {"const", "trend", "trend^2"};
-    int i;
+    const char *snames[] = {"rho", "SSR", "lnl"};
+    int i, k = G->b->rows;
 
-    pprintf(prn, "\n%s coefficients:\n", enames[gls]);
-    for (i=0; i<G->b->rows; i++) {
-	if (i < G->det) {
-	    pprintf(prn, " %-8s", dnames[i]);
-	} else {
-	    pprintf(prn, " %c%-7d", 'X', i - G->det + 1);
+    if (G->se != NULL) {
+	/* not yet the case for OLS */
+	int err = 0, p = 0, n = k + 3;
+	char tmp[16];
+	gretl_matrix *cs = gretl_matrix_alloc(k, 2);
+	gretl_matrix *adds = gretl_matrix_alloc(1, 3);
+	gretl_array *names = gretl_array_new(GRETL_TYPE_STRINGS, n, &err);
+	int df = G->W->rows - G->CX->cols;
+
+	if (cs == NULL || adds == NULL || names == NULL) {
+	    return;
 	}
-	pprintf(prn, "%#g", G->b->val[i]);
-	if (G->se != NULL) {
-	    pprintf(prn, " (%#g)", G->se->val[i]);
+
+	for (i=0; i<k; i++) {
+	    gretl_matrix_set(cs, i, 0, G->b->val[i]);
+	    gretl_matrix_set(cs, i, 1, G->se->val[i]);
 	}
-	pputc(prn, '\n');
-    }
-    pprintf(prn, " %-8s%#.8g\n", "rho", a);
-    if (!na(G->SSR)) {
-	pprintf(prn, " %-8s%#.8g\n", "SSR", G->SSR);
-    }
-    if (!na(G->lnl)) {
-	pprintf(prn, " loglikelihood %.8g\n", G->lnl);
+	adds->val[0] = a;
+	adds->val[1] = G->SSR;
+	adds->val[2] = G->lnl;
+
+	for (i=0; i<n; i++) {
+	    if (i < G->det) {
+		gretl_array_set_data(names, i, gretl_strdup(dnames[i]));
+	    } else if (i < k) {
+		sprintf(tmp, "X%d", i - G->det + 1);
+		gretl_array_set_data(names, i, gretl_strdup(tmp));
+	    } else {
+		gretl_array_set_data(names, i, gretl_strdup(snames[p++]));
+	    }
+	}
+
+	pprintf(prn, "  %s estimates:\n", enames[gls]);
+	print_model_from_matrices(cs, adds, names, df, OPT_I, prn);
+
+	gretl_matrix_free(cs);
+	gretl_matrix_free(adds);
+	gretl_array_destroy(names);
+    } else {
+	pprintf(prn, "\n%s coefficients:\n", enames[gls]);
+	for (i=0; i<k; i++) {
+	    if (i < G->det) {
+		pprintf(prn, " %-8s", dnames[i]);
+	    } else {
+		pprintf(prn, " %c%-7d", 'X', i - G->det + 1);
+	    }
+	    pprintf(prn, "%#g", G->b->val[i]);
+	    if (G->se != NULL) {
+		pprintf(prn, " (%#g)", G->se->val[i]);
+	    }
+	    pputc(prn, '\n');
+	}
+	pprintf(prn, " %-8s%#.8g\n", "rho", a);
+	if (!na(G->SSR)) {
+	    pprintf(prn, " %-8s%#.8g\n", "SSR", G->SSR);
+	}
+	if (!na(G->lnl)) {
+	    pprintf(prn, " %-8s%#.8g\n", "lnl", G->lnl);
+	}
     }
 }
 
@@ -474,7 +516,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
     int fc = 0, gc = 0;
     int err;
 
-    if (libset_get_int(MAX_VERBOSE)) {
+    if (G->verbose > 1) {
 	opt = OPT_V;
     }
 
@@ -485,24 +527,24 @@ static int cl_gls_max (double *a, struct gls_info *G,
     /* prevent R_SSR from pushing @r above RHOMAX */
     if (G->method == R_SSR) {
 	gretl_matrix bounds;
-#if SSR_LOGISTIC
-	double bvals[] = {1, -10, 6.9};
+# if SSR_LOGISTIC
+	double bvals[] = {1, -10, -log(1.0/RHOMAX - 1)};
 	double lrho = -log(1/r - 1);
 	double *rptr = &lrho;
-#else
+# else
 	double bvals[] = {1, 0, RHOMAX};
 	double *rptr = &r;
-#endif
+# endif
 
 	gretl_matrix_init_full(&bounds, 1, 3, bvals);
 	err = LBFGS_max(rptr, 1, 200, 1.0e-12,
 			&fc, &gc, cl_gls_calc, C_SSR,
 			NULL, NULL, G, &bounds, opt, prn);
-#if SSR_LOGISTIC
+# if SSR_LOGISTIC
 	if (!err) {
 	    r = logistic_cdf(lrho);
 	}
-#endif
+# endif
     } else {
 	/* G->method = R_MLE */
 	double lrho = -log(1/r - 1);
@@ -744,7 +786,7 @@ static int cl_ols (struct gls_info *G,
 	if (G->agg == AGG_AVG) {
 	    gretl_matrix_multiply_by_scalar(y, G->s);
 	}
-	if (prn != NULL && gretl_messages_on()) {
+	if (prn != NULL && G->verbose) {
 	    show_regression_results(G, a, 0, prn);
 	}
     }
@@ -808,7 +850,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      int s, int agg, int method,
 				      int det, double rho,
 				      gretl_bundle *res,
-				      PRN *prn, int *perr)
+				      int verbose, PRN *prn,
+				      int *perr)
 {
     struct gls_info G = {0};
     gretl_matrix_block *B;
@@ -867,6 +910,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	rho_given = 1;
     }
 
+    if (verbose == 0 && gretl_messages_on()) {
+	verbose = 1;
+    }
+
     /* regressors: deterministic terms (as wanted), plus
        anything else the user has added
     */
@@ -890,6 +937,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.agg = agg;
     G.method = method;
     G.netvcv = 0;
+    G.verbose = verbose;
     G.lnl = G.SSR = G.s2 = NADBL;
     G.Wcpy = G.se = NULL;
 
@@ -928,7 +976,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    multiply_by_VC(y, G.VC, G.Tmp1, s, m, a, agg);
 	    gretl_matrix_reuse(G.Tmp1, nx, N);
 
-	    if (prn != NULL && gretl_messages_on()) {
+	    if (prn != NULL && G.verbose) {
 		show_regression_results(&G, a, 1, prn);
 	    }
 
@@ -1054,7 +1102,8 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 				   int s, int agg, int method,
 				   int det, double rho,
 				   gretl_bundle *r,
-				   PRN *prn, int *err)
+				   int verbose, PRN *prn,
+				   int *err)
 {
     gretl_matrix *ret = NULL;
 
@@ -1064,7 +1113,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	    det = 1;
 	}
 	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho,
-			      r, prn, err);
+			      r, verbose, prn, err);
     } else if (method == 3) {
 	/* Modified Denton, proportional first differences */
 	int ylen = gretl_vector_get_length(Y0);
@@ -1128,13 +1177,15 @@ static int get_tdisagg_method (const char *s, int *err)
 
 static int tdisagg_get_options (gretl_bundle *b,
 				int *pagg, int *pmeth,
-				int *pdet, double *pr)
+				int *pdet, double *pr,
+				int *pverb)
 {
     double rho = NADBL;
     const char *str;
     int agg = 0;
     int method = 0;
     int det = 1;
+    int verbose = 0;
     int err = 0;
 
     if (gretl_bundle_has_key(b, "agg")) {
@@ -1161,12 +1212,16 @@ static int tdisagg_get_options (gretl_bundle *b,
 	    err = E_INVARG;
 	}
     }
+    if (!err && gretl_bundle_has_key(b, "verbose")) {
+	verbose = gretl_bundle_get_int(b, "verbose", NULL);
+    }
 
     if (!err) {
 	*pagg = agg;
 	*pmeth = method;
 	*pdet = det;
 	*pr = rho;
+	*pverb = verbose;
     }
 
     return err;
@@ -1179,17 +1234,19 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 PRN *prn, int *err)
 {
     int agg = 0, method = 0, det = 1;
+    int verbose = 0;
     double rho = NADBL;
 
     if (b != NULL) {
-	*err = tdisagg_get_options(b, &agg, &method, &det, &rho);
+	*err = tdisagg_get_options(b, &agg, &method, &det,
+				   &rho, &verbose);
 	if (*err) {
 	    return NULL;
 	}
     }
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			r, prn, err);
+			r, verbose, prn, err);
 }
 
 gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
@@ -1200,5 +1257,5 @@ gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
     double rho = NADBL;
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			NULL, NULL, err);
+			NULL, 0, NULL, err);
 }
