@@ -40,7 +40,8 @@ enum {
     R_ACF1,  /* "traditional" Chow-Lin */
     R_MLE,   /* GLS + MLE (Bournay-Laroque) */
     R_SSR,   /* use GLS criterion (Barbone et al) */
-    R_FIXED, /* pre-specified by user */
+    R_UROOT, /* Fernandez */
+    R_FIXED  /* pre-specified by user */
 };
 
 typedef enum {
@@ -76,7 +77,8 @@ struct gls_info {
 };
 
 static const char *method_names[] = {
-    "chow-lin", "chow-lin-mle", "chow-lin-ssr", "denton"
+    "chow-lin", "chow-lin-mle", "chow-lin-ssr",
+    "fernandez", "denton"
 };
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
@@ -213,7 +215,12 @@ static void show_regression_results (const struct gls_info *G,
 	pprintf(prn, "  %s", _("Iterated GLS estimates"));
 	pprintf(prn, " (%s):\n", method_names[G->method]);
     } else if (a == 0) {
-	pprintf(prn, "  %s:\n", _("OLS estimates"));
+	if (G->method == R_UROOT) {
+	    pprintf(prn, "  %s", _("GLS estimates"));
+	    pprintf(prn, " (%s):\n", method_names[G->method]);
+	} else {
+	    pprintf(prn, "  %s:\n", _("OLS estimates"));
+	}
     } else {
 	pprintf(prn, "  %s", _("GLS estimates"));
 	pprintf(prn, " (%s):\n", (G->method == R_FIXED)?
@@ -346,6 +353,51 @@ static void make_VC (gretl_matrix *VC, int N,
     }
 }
 
+/* The counterpart of make_VC() when using Fernandez */
+
+static void make_VDD (gretl_matrix *VC, int N,
+		      int s, int agg)
+{
+    double vij, *vj, *cval;
+    int sN = s*N;
+    size_t colsz = sN * sizeof *vj;
+    int i, j, k;
+
+    vj = malloc(colsz);
+    gretl_matrix_zero(VC);
+
+    /* (1) construct C */
+    k = (agg == AGG_EOP)? s-1 : 0;
+    for (j=0; j<N; j++) {
+	if (agg >= AGG_EOP) {
+	    gretl_matrix_set(VC, k, j, 1);
+	} else {
+	    for (i=0; i<s; i++) {
+		gretl_matrix_set(VC, i+k, j, 1);
+	    }
+	}
+	k += s;
+    }
+
+    /* (2) premultiply by inv(D'D) */
+    for (k=0; k<2; k++) {
+	cval = VC->val;
+	for (j=0; j<N; j++) {
+	    memcpy(vj, cval, colsz);
+	    vij = vj[sN-1];
+	    for (i=0; i<sN; i++) {
+		gretl_matrix_set(VC, i, j, vij);
+		if (i < sN-1) {
+		    vij += vj[sN-i-2];
+		}
+	    }
+	    cval += sN;
+	}
+    }
+
+    free(vj);
+}
+
 /* Make the counterpart to VC' that's required for extrapolation;
    see p. 375 in Chow and Lin 1971.
 */
@@ -388,34 +440,35 @@ static void make_EVC (gretl_matrix *EVC, int s,
 /* Multiply VC' into W*u and increment y by the result */
 
 static void multiply_by_VC (gretl_matrix *y,
-			    const gretl_matrix *VC,
-			    const gretl_matrix *wu,
-			    int s, int m, double a,
-			    int agg)
+			    struct gls_info *G,
+			    int m, double a)
 {
+    gretl_matrix *Wu = G->Tmp1;
     gretl_matrix *EVC = NULL;
     gretl_matrix ext = {0};
     int sN = y->rows;
 
-    if (m > 0) {
-	/* we have some extrapolation to do */
+    if (G->method != R_UROOT && m > 0) {
+	/* we need a different covariance matrix for
+	   extrapolation
+	*/
 	sN -= m;
 	gretl_matrix_reuse(y, sN, 1);
 	gretl_matrix_init(&ext);
 	ext.rows = m;
 	ext.cols = 1;
 	ext.val = y->val + sN;
-	EVC = gretl_matrix_alloc(m, sN/s);
+	EVC = gretl_matrix_alloc(m, sN / G->s);
     }
 
-    gretl_matrix_multiply_mod(VC, GRETL_MOD_NONE,
-			      wu, GRETL_MOD_NONE,
+    gretl_matrix_multiply_mod(G->VC, GRETL_MOD_NONE,
+			      Wu, GRETL_MOD_NONE,
 			      y, GRETL_MOD_CUMULATE);
 
-    if (m > 0) {
-	make_EVC(EVC, s, a, agg);
+    if (EVC != NULL) {
+	make_EVC(EVC, G->s, a, G->agg);
 	gretl_matrix_multiply_mod(EVC, GRETL_MOD_NONE,
-				  wu, GRETL_MOD_NONE,
+				  Wu, GRETL_MOD_NONE,
 				  &ext, GRETL_MOD_CUMULATE);
 	gretl_matrix_reuse(y, sN+m, 1);
 	gretl_matrix_free(EVC);
@@ -438,17 +491,21 @@ static double cl_gls_calc (const double *rho, void *data)
     int N = G->y0->rows;
     int err = 0;
 
+    if (G->method == R_UROOT) {
+	make_VDD(G->VC, N, G->s, G->agg);
+    } else {
 #if LIMIT_R_SSR && !SSR_LOGISTIC
-    if (G->method == R_MLE) {
-	a = logistic_cdf(*rho);
-    }
+	if (G->method == R_MLE) {
+	    a = logistic_cdf(*rho);
+	}
 #else
-    if (G->method == R_MLE || G->method == R_SSR) {
-	a = logistic_cdf(*rho);
-    }
+	if (G->method == R_MLE || G->method == R_SSR) {
+	    a = logistic_cdf(*rho);
+	}
 #endif
+	make_VC(G->VC, N, G->s, a, G->agg);
+    }
 
-    make_VC(G->VC, N, G->s, a, G->agg);
     make_CVC(G->W, G->VC, G->s, G->agg);
     if (G->flags & CL_NETVCV) {
 	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
@@ -1001,7 +1058,6 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     G.det = det;
     G.agg = agg;
     G.method = method;
-    G.flags = CL_NETVCV;
     G.lnl = G.SSR = G.s2 = NADBL;
     G.Wcpy = G.se = NULL;
 
@@ -1014,6 +1070,9 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     } else if (res != NULL) {
 	G.flags |= CL_SAVE_SE;
     }
+    if (method != R_UROOT) {
+	G.flags |= CL_NETVCV;
+    }
 
     for (i=0; i<ny && !err; i++) {
 	a = rho_given ? rho : 0.0;
@@ -1024,7 +1083,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    y->val = Y->val + i * (sN + m);
 	}
 
-	if (!rho_given || a == 0) {
+	if (method != R_UROOT && (a == 0 || !rho_given)) {
 	    err = cl_ols(&G, X, y, &a, prn);
 	    if (a == 0) {
 		/* this iteration is handled */
@@ -1047,7 +1106,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    make_X_beta(y, G.b->val, X, det);
 	    gretl_matrix_reuse(G.Tmp1, N, 1);
 	    gretl_matrix_multiply(G.W, G.u, G.Tmp1);
-	    multiply_by_VC(y, G.VC, G.Tmp1, s, m, a, agg);
+	    multiply_by_VC(y, &G, m, a);
 	    gretl_matrix_reuse(G.Tmp1, nx, N);
 
 	    if (prn != NULL && verbose) {
@@ -1181,14 +1240,14 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 {
     gretl_matrix *ret = NULL;
 
-    if (method < 3) {
+    if (method < 4) {
 	/* Chow-Lin variants */
 	if (det < 0) {
 	    det = 1;
 	}
 	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho,
 			      r, verbose, prn, err);
-    } else if (method == 3) {
+    } else if (method == 4) {
 	/* Modified Denton, proportional first differences */
 	int ylen = gretl_vector_get_length(Y0);
 	gretl_matrix *X0 = NULL;
@@ -1315,6 +1374,10 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 	    return NULL;
 	}
     }
+
+#if CL_DEBUG
+    fprintf(stderr, "time_disaggregate: method = %d\n", method);
+#endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
 			r, verbose, prn, err);
