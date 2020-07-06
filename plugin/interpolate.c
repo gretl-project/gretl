@@ -386,7 +386,7 @@ static void make_DDC (gretl_matrix *VC, int s, int agg)
 	    memcpy(vj, cval, colsz);
 	    vij = vj[rows-1];
 	    for (i=0; i<rows; i++) {
-		gretl_matrix_set(VC, i, j, vij);
+		cval[i] = vij;
 		if (i < rows-1) {
 		    vij += vj[rows-i-2];
 		}
