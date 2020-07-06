@@ -1,0 +1,748 @@
+\chapter{MIDAS models}
+\label{chap:MIDAS}
+
+The acronym MIDAS stands for ``Mixed Data Sampling''; MIDAS models can
+essentially be described as models where one or more independent
+variables are observed at a higher frequency than the dependent
+variable and possibly an ad-hoc parsimonious parametrization is
+adopted. See \citealp{ghysels04}; \citealp{ghysels15};
+\citealp{armesto10} for a fuller introduction. Naturally, these models
+require easy handling of multiple-frequency data. The way this is done
+in \app{gretl} is explained in Chapter \ref{chap:mixed-frequency}; in
+this chapter, we concentrate on the numerical aspects of estimation.
+
+\section{Parsimonious parameterizations}
+\label{sec:hparams}
+
+The simplest MIDAS regression specification---known as ``unrestricted
+MIDAS'' or U-MIDAS---simply includes $p$ lags of a high-frequency
+regressor, each with its own parameter to be estimated (which can be
+done via OLS). A typical case can be written as
+\begin{equation}
+  \label{eq:UMIDAS}
+  y_t = \beta_0 + \alpha y_{t-1} + \sum_{i=0}^k \delta_i x_{\tau-i} + \varepsilon_t, 
+\end{equation}
+where $\tau$ represents ``high-frequency time.'' and generalizations
+should be obvious.
+
+Estimation of \eqref{eq:UMIDAS} can easily be accomplished via
+OLS. However, it is more common to enforce parsimony by making the
+individual coefficients on lagged high-frequency terms a function of a
+relatively small number of hyperparameters, as in
+\begin{equation}
+  \label{eq:MIDAS}
+  y_t = \beta_0 + \alpha y_{t-1} + \gamma W(x_{\tau}, x_{\tau-1},\dots,
+  x_{\tau-k}; \theta) + \varepsilon_t
+\end{equation}
+where $W(\cdot)$ is a weighting function associated with a given MIDAS
+specification, $\theta$ is a vector of hyperparameters.
+
+This presents a couple of computational questions: how to calculate
+the per-lag coefficients given the values of the hyperparameters, and
+how best to estimate the value of the hyperparameters?  Hansl is
+functional enough to allow a savvy user to address these questions
+from scratch, but of course it's helpful to have some built-in
+high-level functionality. At present \app{gretl} can handle natively
+four commonly used parameterizations: normalized exponential Almon,
+normalized beta (with or without a zero last coefficient) and plain
+(non-normalized) Almon polynomial. The Almon variants take one or more
+parameters (two being a common choice), and the beta takes either two
+or three parameters. Full details on the forms taken by the $W(\cdot)$
+function are provided in section \ref{sec:midas-param}.
+
+All variants are handled by the functions \texttt{mweights} and
+\texttt{mgradient}. These functions work as follows.
+\begin{itemize}
+\item \texttt{mweights} takes three arguments: the number of lags
+  required ($p$), the $k$-vector of hyperparameters ($\theta$), and an
+  integer code or string indicating the method (see
+  Table~\ref{tab:midas-parm}). It returns a $p$-vector containing the
+  coefficients.
+\item \texttt{mgradient} takes three arguments, just like
+  \texttt{mweights}. However, this function returns a $p \times k$
+  matrix holding the (analytical) gradient of the $p$ coefficients or
+  weights with respect to the $k$ elements of $\theta$.
+\end{itemize}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lcl}
+    \textit{Parameterization} & 
+      \textit{code} & \textit{string} \\[4pt]
+    Normalized exponential Almon & 1 & \verb|"nealmon"| \\
+    Normalized beta, zero last lag & 2 & \verb|"beta0"| \\
+    Normalized beta, non-zero last lag & 3 & \verb|"betan"| \\
+    Almon polynomial & 4 & \verb|"almonp"| \\
+  \end{tabular}
+  \caption{MIDAS parameterizations}
+  \label{tab:midas-parm}
+\end{table}
+In the case of the non-normalized Almon polynomial the $\gamma$
+coefficient is identically 1.0 and is omitted.
+
+An additional function is provided for convenience: it is named
+\texttt{mlincomb} and it combines \texttt{mweights} with the
+long-standing \texttt{lincomb} function, which takes a list (of
+series) argument followed by a vector of coefficients and produces a
+series result, namely a linear combination of the elements of the
+list. If we have a suitable list \texttt{X} available, we can
+do, for example,
+\begin{code}
+series foo = mlincomb(X, theta, "beta0")
+\end{code}
+This is equivalent to
+\begin{code}
+series foo = lincomb(X, mweights(nelem(X), theta, "beta0"))
+\end{code}
+but saves a little typing and some CPU cycles.
+
+\section{Estimating MIDAS models}
+\label{sec:estimation}
+
+\app{Gretl} offers a dedicated command, \texttt{midasreg}, for estimation of
+MIDAS models. (There's a corresponding item, \textsf{MIDAS}, under the
+\textsf{Time series} section of the \textsf{Model} menu in the \app{gretl}
+GUI.) We begin by discussing that, then move on to possibilities for
+defining your own estimator.
+
+The syntax of \texttt{midasreg} looks like this:
+
+\texttt{midasreg \textsl{depvar} \textsl{xlist} ;
+\textsl{midas-terms} [ \textsl{options} ]}
+
+The \texttt{\textsl{depvar}} slot takes the name (or series ID number)
+of the dependent variable, and \texttt{\textsl{xlist}} is the list of
+regressors that are observed at the same frequency as the dependent
+variable; this list may contain lags of the dependent variable. The
+\texttt{\textsl{midas-terms}} slot accepts one or more specification(s)
+for high-frequency terms. Each of these specifications must conform to
+one or other of the following patterns:
+
+\begin{tabular}{ll}
+1 & \texttt{mds(\textsl{mlist}, \textsl{minlag}, 
+   \textsl{maxlag}, \textsl{type}, \textsl{theta})} \\
+2 & \texttt{mdsl(\textsl{llist}, \textsl{type}, \textsl{theta})}
+\end{tabular}
+
+In case 1 \texttt{\textsl{mlist}} must be a \textbf{MIDAS list}, as
+defined above, which contains a full set of per-period series (but no
+lags). Lags will be generated automatically, governed by the
+\texttt{\textsl{minlag}} and \texttt{\textsl{maxlag}} (integer)
+arguments, which may be given as numerical values or the names of
+predefined scalar variables. The integer (or string)
+\texttt{\textsl{type}} argument represents the type of
+parameterization; in addition to the values 1 to 4 defined in
+Table~\ref{tab:midas-parm} a value of 0 (or the string
+\verb|"umidas"|) indicates unrestricted MIDAS.
+
+In case 2 \texttt{\textsl{llist}} is assumed to be a list that
+already contains the required set of high-frequency lags---as may be
+obtained via the \texttt{hflags} function described in
+section~\ref{sec:hflags}---hence \texttt{\textsl{minlag}} and
+\texttt{\textsl{maxlag}} are not wanted.
+
+The final \texttt{\textsl{theta}} argument is optional in most cases
+(implying an automatic initialization of the hyperparameters). If this
+argument is given it must take one of the following forms:
+\begin{enumerate}
+\item The name of a matrix (vector) holding initial values for the
+  hyperparameters, or a simple expression which defines a matrix
+  using scalars, such as \texttt{\{1, 5\}}.
+\item The keyword \texttt{null}, indicating that an automatic
+  initialization should be used (as happens when this argument is
+  omitted).
+\item An integer value (in numerical form), indicating how many
+  hyperparameters should be used (which again calls for
+  automatic initialization).
+\end{enumerate}
+The third of these forms is required if you want automatic
+initialization in the Almon polynomial case, since we need to know how
+many terms you wish to include. (In the normalized exponential Almon
+case we default to the usual two hyperparameters if
+\texttt{\textsl{theta}} is omitted or given as \texttt{null}.)
+
+The \texttt{midasreg} syntax allows the user to specify multiple
+high-frequency predictors, if wanted: these can have different lag
+specifications, different parameterizations and/or different
+frequencies.
+
+The options accepted by \texttt{midasreg} include \option{quiet}
+(suppress printed output), \option{verbose} (show detail of
+iterations, if applicable) and \option{robust} (use a HAC estimator of
+the Newey--West type in computing standard errors).  Two additional
+specialized options are described below.
+
+\subsection{Examples of usage}
+
+Suppose we have a dependent variable named \texttt{dy} and a MIDAS
+list named \texttt{dX}, and we wish to run a MIDAS regression using
+one lag of the dependent variable and high-frequency lags 1 to 10 of
+the series in \texttt{dX}. The following will produce U-MIDAS
+estimates:
+%
+\begin{code}
+midasreg dy const dy(-1) ; mds(dX, 1, 10, 0)
+\end{code}
+%
+The next lines will produce estimates for the normalized exponential
+Almon parameterization with two coefficients, both initialized to
+zero:
+%
+\begin{code}
+midasreg dy const dy(-1) ; mds(dX, 1, 10, "nealmon", {0,0})
+\end{code}
+%
+In the examples above, the required lags will be added to the dataset
+automatically then deleted after use. If you are estimating several
+models using a single set of MIDAS lags it is more efficient to create
+the lags once and use the \texttt{mdsl} specifier.  For example, the
+following estimates three variant parameterizations (exponential
+Almon, beta with zero last lag, and beta with non-zero last lag) on
+the same data:
+\begin{code}
+list dXL = hflags(1, 10, dX)
+midasreg dy 0 dy(-1) ; mdsl(dXL, "nealmon", {0,0})
+midasreg dy 0 dy(-1) ; mdsl(dXL, "beta0", {1,5})
+midasreg dy 0 dy(-1) ; mdsl(dXL, "betan", {1,1,0})
+\end{code}
+
+Any additional MIDAS terms should be separated by spaces, as in
+\begin{code}
+midasreg dy const dy(-1) ; mds(dX,1,9,1,theta1) mds(Z,1,6,3,theta2)
+\end{code}
+
+\subsection{Replication exercise}
+
+We give a substantive illustration of \texttt{midasreg} in
+Listing~\ref{lst:midasreg-ghysels}. This replicates the first
+practical example discussed by Ghysels in the user's guide titled
+\textit{MIDAS Matlab Toolbox},\footnote{See \cite{ghysels15}. This
+  document announces itself as Version 2.0 of the guide and is dated
+  November 1, 2015. The example we're looking at appears on pages
+  24--26; the associated \textsf{Matlab} code can be found in the
+  program \texttt{appADLMIDAS1.m}.}
+The dependent variable is the quarterly log-difference of
+real GDP, named \texttt{dy} in our script. The independent variables
+are the first lag of \texttt{dy} and monthly lags 3 to 11 of the
+monthly log-difference of non-farm payroll employment (named
+\texttt{dXL} in our script). Therefore, in this case equation
+\eqref{eq:MIDAS} becomes
+\[
+  y_t = \alpha + \beta y_{t-1} + \gamma W(x_{\tau-3}, x_{\tau-4},\dots,
+  x_{\tau-11}; \theta) + \varepsilon_t
+\]
+and in the U-MIDAS case the model comes down to
+\[
+  y_t = \alpha + \beta y_{t-1} + \sum_{i=1}^9 \delta_i x_{\tau-i-2}
+  + \varepsilon_t
+\]
+
+The script exercises all five of the parameterizations mentioned
+above,\footnote{The \textsf{Matlab} program includes an additional
+  parameterization not supported by \app{gretl}, namely a
+  step-function.}  and in each case the results of 9
+pseudo-out-of-sample forecasts are recorded so that their Root Mean
+Square Errors can be compared.
+
+\begin{script}[p]
+  \caption{Script to replicate results given by Ghysels}
+  \label{lst:midasreg-ghysels}
+\begin{scode}
+set verbose off
+open gdp_midas.gdt --quiet
+
+# form the dependent variable
+series dy = 100 * ldiff(qgdp)
+# form list of high-frequency lagged log differences
+list X = payems*
+list dXL = hflags(3, 11, hfldiff(X, 100))
+# initialize matrix to collect forecasts
+matrix FC = {}
+
+# estimation sample
+smpl 1985:1 2009:1
+
+print "=== unrestricted MIDAS (umidas) ==="
+midasreg dy 0 dy(-1) ; mdsl(dXL, 0)
+fcast --out-of-sample --static --quiet
+FC ~= $fcast
+
+print "=== normalized beta with zero last lag (beta0) ==="
+midasreg dy 0 dy(-1) ; mdsl(dXL, 2, {1,5})
+fcast --out-of-sample --static --quiet
+FC ~= $fcast
+
+print "=== normalized beta, non-zero last lag (betan) ==="
+midasreg dy 0 dy(-1) ; mdsl(dXL, 3, {1,1,0})
+fcast --out-of-sample --static --quiet
+FC ~= $fcast
+
+print "=== normalized exponential Almon (nealmon) ==="
+midasreg dy 0 dy(-1) ; mdsl(dXL, 1, {0,0})
+fcast --out-of-sample --static --quiet
+FC ~= $fcast
+
+print "=== Almon polynomial (almonp) ==="
+midasreg dy 0 dy(-1) ; mdsl(dXL, 4, 4)
+fcast --out-of-sample --static --quiet
+FC ~= $fcast
+
+smpl 2009:2 2011:2
+matrix my = {dy}
+print "Forecast RMSEs:"
+printf "  umidas  %.4f\n", fcstats(my, FC[,1])[2]
+printf "  beta0   %.4f\n", fcstats(my, FC[,2])[2]
+printf "  betan   %.4f\n", fcstats(my, FC[,3])[2]
+printf "  nealmon %.4f\n", fcstats(my, FC[,4])[2]
+printf "  almonp  %.4f\n", fcstats(my, FC[,5])[2]
+\end{scode}
+\end{script}
+%$
+
+\begin{script}[p]
+  \caption{Replication of Ghysels' results, partial output}
+  \label{ghysels-out}
+\begin{scode}
+=== normalized beta, non-zero last lag (betan) ===
+Model 3: MIDAS (NLS), using observations 1985:1-2009:1 (T = 97)
+Using L-BFGS-B with conditional OLS
+Dependent variable: dy
+
+              estimate    std. error   t-ratio   p-value 
+  -------------------------------------------------------
+  const       0.748578    0.146404      5.113    1.74e-06 ***
+  dy_1        0.248055    0.118903      2.086    0.0398   **
+
+        MIDAS list dXL, high-frequency lags 3 to 11
+   
+  HF_slope    1.72167     0.582076      2.958    0.0039   ***
+  Beta1       0.998501    0.0269479    37.05     1.10e-56 ***
+  Beta2       2.95148     2.93404       1.006    0.3171  
+  Beta3      -0.0743143   0.0271273    -2.739    0.0074   ***
+
+Sum squared resid    28.78262   S.E. of regression   0.562399
+R-squared            0.356376   Adjusted R-squared   0.321012
+Log-likelihood      -78.71248   Akaike criterion     169.4250
+Schwarz criterion    184.8732   Hannan-Quinn         175.6715
+
+=== Almon polynomial (almonp) ===
+Model 5: MIDAS (NLS), using observations 1985:1-2009:1 (T = 97)
+Using Levenberg-Marquardt algorithm
+Dependent variable: dy
+
+              estimate    std. error   t-ratio   p-value 
+  -------------------------------------------------------
+  const       0.741403    0.146433      5.063    2.14e-06 ***
+  dy_1        0.255099    0.119139      2.141    0.0349   **
+
+        MIDAS list dXL, high-frequency lags 3 to 11
+
+  Almon0      1.06035     1.53491       0.6908   0.4914  
+  Almon1      0.193615    1.30812       0.1480   0.8827  
+  Almon2     -0.140466    0.299446     -0.4691   0.6401  
+  Almon3      0.0116034   0.0198686     0.5840   0.5607  
+
+Sum squared resid    28.66623   S.E. of regression   0.561261
+R-squared            0.358979   Adjusted R-squared   0.323758
+Log-likelihood      -78.51596   Akaike criterion     169.0319
+Schwarz criterion    184.4802   Hannan-Quinn         175.2784
+
+Forecast RMSEs:
+  umidas  0.5424
+  beta0   0.5650
+  betan   0.5210
+  nealmon 0.5642
+  almonp  0.5329
+\end{scode}
+\end{script}
+
+The data file used in the replication, \texttt{gdp\_midas.gdt}, was
+contructed as described in section~\ref{sec:data-merge} (and as noted
+there, it is included in the current \app{gretl} package). Part of the
+output from the replication script is shown in
+Listing~\ref{ghysels-out}. The $\gamma$ coefficient is labeled
+\texttt{HF\_slope} in the \app{gretl} output.
+
+For reference, output from \textsf{Matlab} (version R2016a for Linux)
+is available at
+\url{http://gretl.sourceforge.net/midas/matlab_output.txt}. For the
+most part (in respect of regression coefficients and auxiliary
+statistics such as $R^2$ and forecast RMSEs), \app{gretl}'s output agrees
+with that of \textsf{Matlab} to the extent that one can reasonably
+expect on nonlinear problems---that is, to at least 4 significant
+digits in all but a few instances.\footnote{Nonlinear results, even
+  for a given software package, are subject to slight variation
+  depending on the compiler used and the exact versions of supporting
+  numerical libraries.}  Standard errors are not quite so close across
+the two programs, particularly for the hyperparameters of the beta and
+exponential Almon functions. We show these in Table~\ref{tab:stderrs}.
+
+\begin{table}[hbtp]
+  \centering
+  \begin{tabular}{rcccccc}
+ & \multicolumn{2}{c}{2-param beta \qquad} & 
+  \multicolumn{2}{c}{3-param beta \qquad} &
+  \multicolumn{2}{c}{Exp Almon \qquad} \\[4pt]
+ & \textsf{Matlab} & \textsf{gretl} & 
+   \textsf{Matlab} & \textsf{gretl} &
+   \textsf{Matlab} & \textsf{gretl} \\
+const    & 0.135 & 0.140 & 0.143 & 0.146 & 0.135 & 0.140 \\
+dy(-1)   & 0.116 & 0.118 & 0.116 & 0.119 & 0.116 & 0.119 \\
+HF slope & 0.559 & 0.575 & 0.566 & 0.582 & 0.562 & 0.575 \\
+$\theta_1$ & 0.067 & 0.106 & 0.022 & 0.027 & 2.695 & 6.263 \\
+$\theta_2$ & 9.662 & 17.140 & 1.884 & 2.934 & 0.586 & 1.655 \\
+$\theta_3$ &        &	     & 0.022 & 0.027 \\
+\end{tabular}
+  \caption{Comparison of standard errors from MIDAS regressions}
+  \label{tab:stderrs}
+\end{table}
+
+Differences of this order are not unexpected, however, when different
+methods are used to calculate the covariance matrix for a nonlinear
+regression. The \textsf{Matlab} standard errors are based on a
+numerical approximation to the Hessian at convergence, while those
+produced by \app{gretl} are based on a Gauss--Newton Regression, as
+discussed and recommended in \citet[chapter 6]{davidson-mackinnon04}.
+
+\subsection{Underlying methods}
+
+The \texttt{midasreg} command calls one of several possible estimation
+methods in the background, depending on the MIDAS specification(s). As
+shown in Listing~\ref{ghysels-out}, this is flagged in a line of
+output immediately preceding the ``\texttt{Dependent variable}'' line.
+If the only specification type is U-MIDAS, the method is
+OLS. Otherwise it is one of three variants of Nonlinear Least Squares.
+\begin{itemize}
+\item Levenberg--Marquardt. This is the back-end for \app{gretl}'s
+  \texttt{nls} command.
+\item L-BFGS-B with conditional OLS. L-BFGS is a ``limited memory''
+  version of the BFGS optimizer and the trailing ``-B'' means that it
+  supports bounds on the parameters, which is useful for reasons given
+  below.
+\item Golden Section search with conditional OLS. This is a line
+  search method, used only when there is a just a single
+  hyperparameter to estimate.
+\end{itemize}
+
+Levenberg--Marquardt is the default NLS method, but if the MIDAS
+specifications include any of the beta variants or normalized
+exponential Almon we switch to L-BFGS-B, \textit{unless} the user
+gives the \option{levenberg} option. The ability to set bounds on the
+hyperparameters via L-BFGS-B is helpful, first because the beta
+parameters (other than the third one, if applicable) must be
+non-negative but also because one is liable to run into numerical
+problems (in calculating the weights and/or gradient) if their values
+become too extreme. For example, we have found it useful to place
+bounds of $-2$ and $+2$ on the exponential Almon parameters.
+
+Here's what we mean by ``conditional OLS'' in the context of L-BFGS-B
+and line search: the search algorithm itself is only responsible for
+optimizing the MIDAS hyperparameters, and when the algorithm calls for
+calculation of the sum of squared residuals given a certain
+hyperparameter vector we optimize the remaining parameters
+(coefficients on base-frequency regressors, slopes with respect to
+MIDAS terms) via OLS.
+
+
+\subsection{Other specialized options}
+
+We mentioned above the standard options that are supported by the
+\texttt{midasreg} command, plus the \option{levenberg} option; here we
+explain two additional options, \option{clamp-beta} and
+\option{breaktest}.
+
+First, a case can be made for a variant of the normalized beta
+parameterization that is even more parsimonious than those discussed
+above: we take as a basis the two-parameter case (which implies a zero
+coefficient on the last lag) and ``clamp'' the first parameter,
+$\theta_1$, at 1.0; the second parameter is then optimized, subject to
+the constraint $\theta_2 \ge 1.0$. This variant allows for a wide
+range of patterns of declining weights while arguably avoiding
+over-fitting of the weighting function to the estimation sample.
+Although it is bound to fit somewhat less well than the more general
+beta specifications in-sample it may be more effective in
+out-of-sample forecasting \citep{ghysels-qian16}. This is supported
+under \texttt{midasreg} as follows: you specify the two-parameter beta
+option (\textsl{type} = 2, see section~\ref{sec:hparams}) but add the
+option flag \option{clamp-beta}. At present this option is valid only
+if the regression contains a single MIDAS specification.
+
+Second, the \option{breaktest} option can be used to carry out the
+Quandt Likelihood Ratio (QLR) test for a structural break at the stage
+of running the final Gauss--Newton regression (to check for
+convergence and calculate the covariance matrix of the parameter
+estimates).  This can be a useful aid to diagnosis, since
+non-homogeneity of the data over the estimation period can lead to
+numerical problems in nonlinear estimation, besides compromising the
+forecasting capacity of the resulting equation. For example, when this
+option is given with the command to estimate the ``\texttt{BetaNZ}''
+model shown in Listing~\ref{ghysels-out}, the following result is
+appended to the standard output:
+%
+\begin{code}
+QLR test for structural break -
+  Null hypothesis: no structural break
+  Test statistic: chi-square(6) = 35.1745 at observation 2005:2
+  with asymptotic p-value = 0.000127727
+\end{code}
+%
+Despite the strong evidence for a structural break, in this case the
+nonlinear estimator appears to converge successfully, but one might
+wonder if a shorter estimation period could provide better
+out-of-sample forecasts.
+
+\subsection{Defining your own MIDAS estimator}
+
+As explained above, the \texttt{midasreg} command is in effect a
+``wrapper'' for various underlying methods. Some users may wish to
+undo the wrapping. (This would be required if you wish to introduce
+any nonlinearity other than that associated with the stock MIDAS
+parameterizations, or to define your own MIDAS parameterization).
+
+Anyone with ambitions in this direction will presumably be quite
+familiar with the commands and functions available in hansl, \app{gretl}'s
+scripting language, so we will not say much here beyond presenting a
+couple of examples. First we show how the \texttt{nls} command can be
+used, along with the MIDAS-related functions described in
+section~\ref{sec:hparams}, to estimate a model with the exponential
+Almon specification.
+%
+\begin{code}
+open gdp_midas.gdt --quiet
+series dy = 100 * ldiff(qgdp)
+series dy1 = dy(-1)
+list X = payems*
+list dXL = hflags(3, 11, hfldiff(X, 100))
+
+smpl 1985:1 2009:1
+
+# initialization via OLS
+series mdX = mean(dXL)
+ols dy 0 dy1 mdX --quiet
+matrix b = $coeff | {0,0}'
+scalar p = nelem(dXL)
+
+# convenience matrix for computing gradient
+matrix mdXL = {dXL}
+
+# normalized exponential Almon via nls
+nls dy = b[1] + b[2]*dy1 + b[3]*mdx
+  series mdx = mlincomb(dXL, b[4:], 1)
+  matrix grad = mgradient(p, b[4:], 1)
+  deriv b = {const, dy1, mdx} ~ (b[3] * mdXL * grad)
+  param_names "const dy(-1) HF_slope Almon1 Almon2"
+end nls
+\end{code}
+%$
+
+Listing~\ref{lst:manual-beta1} presents a more ambitious example: we
+use \texttt{GSSmin} (Golden Section minimizer) to estimate a MIDAS
+model with the ``one-parameter beta'' specification (that is, the
+two-parameter beta with $\theta_1$ clamped at 1). Note that while the
+function named \texttt{beta1\_SSR} is specialized to the given
+parameterization, \texttt{midas\_GNR} is a fairly general means of
+calculating the Gauss--Newton regression for an ADL(1) MIDAS
+model, and it could be generalized further without much difficulty.
+
+\begin{script}[p]
+  \caption{Manual MIDAS: one-parameter beta specification}
+  \label{lst:manual-beta1}
+\begin{scode}
+set verbose off
+
+function scalar beta1_SSR (scalar th2, const series y,
+                           const series x, list L)
+  matrix theta = {1, th2}
+  series mdx = mlincomb(L, theta, 2)
+  # run OLS conditional on theta
+  ols y 0 x mdx --quiet
+  return $ess
+end function
+
+function matrix midas_GNR (const matrix theta, const series y,
+                           const series x, list L, int type)
+  # Gauss-Newton regression
+  series mdx = mlincomb(L, theta, type)
+  ols y 0 x mdx --quiet
+  matrix b = $coeff
+  matrix u = {$uhat}
+  matrix mgrad = mgradient(nelem(L), theta, type)
+  matrix M = {const, x, mdx} ~ (b[3] * {L} * mgrad)
+  matrix V
+  set svd on # in case of strong collinearity
+  mols(u, M, null, &V)
+  return (b | theta) ~ sqrt(diag(V))
+end function
+
+/* main */
+
+open gdp_midas.gdt --quiet
+
+series dy = 100 * ldiff(qgdp)
+series dy1 = dy(-1)
+list dX = ld_payem*
+list dXL = hflags(3, 11, dX)
+
+# estimation sample
+smpl 1985:1 2009:1
+
+matrix b = {0, 1.01, 100}
+# use Golden Section minimizer
+SSR = GSSmin(b, beta1_SSR(b[1], dy, dy1, dXL), 1.0e-6)
+printf "SSR (GSS) = %.15g\n", SSR
+matrix theta = {1, b[1]}' # column vector needed
+matrix bse = midas_GNR(theta, dy, dy1, dXL, 2)
+bse[4,2] = $nan # mask std error of clamped coefficient
+modprint bse "const dy(-1) HF_slope Beta1 Beta2"
+\end{scode}
+\end{script}
+
+At times, it may be useful to plot the ``gross'' coefficients on the
+lags of the high-frequency series in a MIDAS regression---that is, the
+normalized weights multiplied by the \texttt{HF\_slope}
+coefficient. After estimation of a MIDAS model in the \app{gretl} GUI
+this is available via the item \textsf{MIDAS coefficients} under the
+\textsf{Graphs} menu in the model window. It is also easily generated
+via script, since the \dollar{model} bundle that becomes available
+following the \texttt{midasreg} command contains a matrix,
+\texttt{midas\_coeffs}, holding these coefficients. So the following
+is sufficient to display the plot:
+%
+\begin{code}
+matrix m = $model.midas_coeffs
+gnuplot --matrix=m --with-lp --fit=none --output=display \
+  { set title "MIDAS coefficients"; set ylabel ''; }
+\end{code}
+% $
+
+Caveat: this feature is at present available only for models with a
+single MIDAS specification.
+
+\section{Parameterization functions}
+\label{sec:midas-param}
+
+Here we give some more detail of the MIDAS parameterizations supported
+by gretl.
+
+\vspace{1ex}
+
+In general the normalized coefficient or weight $i$ ($i=1,\ldots,p$)
+is given by
+\begin{equation}
+\label{eq:MIDASgeneral}
+  w_i = \frac{f(i,\theta)}
+  {\sum_{k=1}^pf(k,\theta)}
+\end{equation}
+such that the coefficients sum to unity.
+
+In the \textbf{normalized exponential Almon} case with $m$ parameters
+the function $f(\cdot)$ is
+\begin{equation}
+f(i,\theta) = \exp\left(\sum_{j=1}^m \theta_j i^j\right)
+\end{equation}
+So in the usual two-parameter case we have
+\[
+w_i =
+  \frac{\exp\left(\theta_1 i + \theta_2 i^2\right)}
+  {\sum_{k=1}^p \exp\left(\theta_1 k + \theta_2 k^2\right)}
+\]
+and equal weighting is obtained when $\theta_1 = \theta_2 = 0$.
+
+\vspace{1ex}
+
+In the standard, two-parameter \textbf{normalized beta} case we have
+\begin{equation}
+\label{eq:fbeta}
+  f(i, \theta) = (i^-/p^-)^{\theta_1-1} \cdot (1-i^-/p^-)^{\theta_2-1}
+\end{equation}
+where $p^- = p-1$, and $i^- = i-1$ except at the end-points, $i=1$ and
+$i=p$, where we add and subtract, respectively, machine epsilon to
+avoid numerical problems.  This formulation constrains the coefficient
+on the last lag to be zero---provided that the weights are declining
+at higher lags, a condition that is ensured if $\theta_2$ is greater
+than $\theta_1$ by a sufficient margin. The special case of
+$\theta_1 = \theta_2 = 1$ yields equal weights at all lags. A third
+parameter can be used to allow a non-zero final weight, even in the
+case of declining weights.  Let $w_i$ denote the normalized weight
+obtained by using (\ref{eq:fbeta}) in (\ref{eq:MIDASgeneral}). Then the
+modified variant with additional parameter $\theta_3$ can be written
+as
+\[
+w^{(3)}_i = \frac{w_i + \theta_3}{1 + p\theta_3}
+\]
+That is, we add $\theta_3$ to each weight then renormalize so that the
+$w^{(3)}_i$ values again sum to unity.
+
+In Eric Ghysels' Matlab code the two beta variants are labeled
+``normalized beta density with a zero last lag'' and ``normalized beta
+density with a non-zero last lag'' respectively.  Note that while the
+two basic beta parameters must be positive, the third additive
+parameter may be positive, negative or zero.
+
+\vspace{1ex}
+
+In the case of the plain \textbf{Almon polynomial} of order $m$,
+coefficient $i$ is given by
+\[
+w_i = \sum_{j=1}^m \theta_j i^{j-1}
+\]
+Note that no normalization is applied in this case, so no additional
+coefficient should be placed before the MIDAS lags term in the context
+of a regression.
+
+\subsection*{Analytical gradients}
+
+Here we set out the expressions for the analytical gradients produced
+by the \texttt{mgradient} function, and also used internally by the
+\texttt{midasreg} command. In these expressions $f(i,\theta)$ should
+be understood as referring back to the specific forms noted above
+for the exponential Almon and beta distributions. The summation
+$\sum_k$ should be understood as running from 1 to $p$.
+
+For the normalized exponential Almon case, the gradient is
+\begin{align*}
+\frac{dw_i}{d\theta_j} &= 
+\frac{f(i, \theta) i^j}{\sum_kf(k, \theta)} - 
+\frac{f(i, \theta)}{\left[\sum_kf(k, \theta)\right]^2}
+\, \sum_k\left[f(k, \theta) k^j\right] \\[4pt]
+ &= w_i \left(i^j - 
+\frac{\sum_k\left[f(k,\theta)k^j\right]}{\sum_k f(k, \theta)}\right)
+\end{align*}
+
+For the two-parameter normalized beta case it is
+\begin{align*}
+\frac{dw_i}{d\theta_1} &=
+\frac{f(i,\theta) \log(i^-/p^-)}{\sum_k f(k, \theta)} -
+\frac{f(i,\theta)}{\left[\sum_k f(k,\theta)\right]^2}
+\sum_k\left[f(k,\theta) \log(k^-/p^-)\right] \\[4pt]
+&= w_i \left(\log(i^-/p^-) - 
+\frac{\sum_k\left[f(k,\theta) \log(k^-/p^-)\right]}{\sum_k 
+ f(k,\theta)}\right) \\[8pt]
+\frac{dw_i}{d\theta_2} &=
+\frac{f(i,\theta) \log(1 - i^-/p^-)}{\sum_k f(k, \theta)} -
+\frac{f(i,\theta)}{\left[\sum_k f(k,\theta)\right]^2}
+\sum_k\left[f(k,\theta) \log(1 - k^-/p^-)\right] \\[4pt]
+&= w_i \left(\log(1 - i^-/p^-) - 
+\frac{\sum_k\left[f(k,\theta) \log(1 - k^-/p^-)\right]}{\sum_k 
+ f(k,\theta)}\right)
+\end{align*}
+
+And for the three-parameter beta, we have
+\begin{align*}
+\frac{dw^{(3)}_i}{d\theta_1} &= 
+  \frac{1}{1+p\theta_3} \, \frac{dw_i}{d\theta_1} \\
+\frac{dw^{(3)}_i}{d\theta_2} &= 
+  \frac{1}{1+p\theta_3} \, \frac{dw_i}{d\theta_2} \\
+\frac{dw^{(3)}_i}{d\theta_3} &=
+\frac{1}{1+p\theta_3} - \frac{p(w_i + \theta_3)}{(1+p\theta_3)^2}
+\end{align*}
+
+For the (non-normalized) Almon polynomial the gradient is simply
+\[
+\frac{dw_i}{d\theta_j} = i^{j-1}
+\]
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End:
