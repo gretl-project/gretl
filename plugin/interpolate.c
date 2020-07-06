@@ -355,12 +355,12 @@ static void make_VC (gretl_matrix *VC, int N,
 
 /* The counterpart of make_VC() when using Fernandez */
 
-static void make_DDC (gretl_matrix *VC, int N,
-		      int s, int agg)
+static void make_DDC (gretl_matrix *VC, int s, int agg)
 {
     double vij, *vj, *cval;
-    int sN = s*N;
-    size_t colsz = sN * sizeof *vj;
+    int N = VC->cols;
+    int rows = VC->rows;
+    size_t colsz = rows * sizeof *vj;
     int i, j, k;
 
     vj = malloc(colsz);
@@ -384,14 +384,14 @@ static void make_DDC (gretl_matrix *VC, int N,
 	cval = VC->val;
 	for (j=0; j<N; j++) {
 	    memcpy(vj, cval, colsz);
-	    vij = vj[sN-1];
-	    for (i=0; i<sN; i++) {
+	    vij = vj[rows-1];
+	    for (i=0; i<rows; i++) {
 		gretl_matrix_set(VC, i, j, vij);
-		if (i < sN-1) {
-		    vij += vj[sN-i-2];
+		if (i < rows-1) {
+		    vij += vj[rows-i-2];
 		}
 	    }
-	    cval += sN;
+	    cval += rows;
 	}
     }
 
@@ -437,6 +437,22 @@ static void make_EVC (gretl_matrix *EVC, int s,
     }
 }
 
+/* version of make_EVC() for use with fernandez */
+
+static void make_EDDC (gretl_matrix *EVC,
+		       gretl_matrix *VC)
+{
+    double vij;
+    int i, j;
+
+    for (j=0; j<EVC->cols; j++) {
+	vij = gretl_matrix_get(VC, VC->rows-1, j);
+	for (i=0; i<EVC->rows; i++) {
+	    gretl_matrix_set(EVC, i, j, vij);
+	}
+    }
+}
+
 /* Multiply VC' into W*u and increment y by the result */
 
 static void multiply_by_VC (gretl_matrix *y,
@@ -446,9 +462,9 @@ static void multiply_by_VC (gretl_matrix *y,
     gretl_matrix *Wu = G->Tmp1;
     gretl_matrix *EVC = NULL;
     gretl_matrix ext = {0};
-    int sN = y->rows;
+    int i, sN = y->rows;
 
-    if (G->method != R_UROOT && m > 0) {
+    if (m > 0) {
 	/* we need a different covariance matrix for
 	   extrapolation
 	*/
@@ -466,12 +482,21 @@ static void multiply_by_VC (gretl_matrix *y,
 			      y, GRETL_MOD_CUMULATE);
 
     if (EVC != NULL) {
-	make_EVC(EVC, G->s, a, G->agg);
+	if (G->method == R_UROOT) {
+	    make_EDDC(EVC, G->VC);
+	} else {
+	    make_EVC(EVC, G->s, a, G->agg);
+	}
 	gretl_matrix_multiply_mod(EVC, GRETL_MOD_NONE,
 				  Wu, GRETL_MOD_NONE,
 				  &ext, GRETL_MOD_CUMULATE);
 	gretl_matrix_reuse(y, sN+m, 1);
 	gretl_matrix_free(EVC);
+    } else if (m > 0) {
+	/* fallback */
+	for (i=0; i<m; i++) {
+	    y->val[sN+i] = NADBL;
+	}
     }
 }
 
@@ -492,7 +517,7 @@ static double cl_gls_calc (const double *rho, void *data)
     int err = 0;
 
     if (G->method == R_UROOT) {
-	make_DDC(G->VC, N, G->s, G->agg);
+	make_DDC(G->VC, G->s, G->agg);
     } else {
 #if LIMIT_R_SSR && !SSR_LOGISTIC
 	if (G->method == R_MLE) {
@@ -999,6 +1024,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	*perr = E_ARGS;
 	return NULL;
     }
+
+#if CL_DEBUG
+    fprintf(stderr, "chow_lin_disagg; N=%d, s=%d, m=%d\n", N, s, m);
+#endif
 
     /* the return value */
     Y = gretl_zero_matrix_new(sN + m, ny);
