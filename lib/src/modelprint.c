@@ -144,6 +144,7 @@ static void print_model_stats_table (const double *stats,
 {
     int oneline = opt & OPT_I;
     char tmp1[32], tmp2[32];
+    char delim;
     int i, d;
 
     if (plain_format(prn)) {
@@ -154,6 +155,7 @@ static void print_model_stats_table (const double *stats,
     }
 
     d = get_gretl_digits();
+    delim = (get_local_decpoint() == ',')? ';' : ',';
 
     for (i=0; i<ns; i++) {
 	if (plain_format(prn)) {
@@ -162,9 +164,9 @@ static void print_model_stats_table (const double *stats,
 		if (i == 0) {
 		    pprintf(prn, "  %s = %s", names[i], tmp1);
 		} else if (i == ns-1) {
-		    pprintf(prn, ", %s = %s\n", names[i], tmp1);
+		    pprintf(prn, "%c %s = %s\n", delim, names[i], tmp1);
 		} else {
-		    pprintf(prn, ", %s = %s", names[i], tmp1);;
+		    pprintf(prn, "%c %s = %s", delim, names[i], tmp1);;
 		}
 	    } else {
 		pprintf(prn, "  %s = %s\n", names[i], tmp1);
