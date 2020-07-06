@@ -144,6 +144,7 @@ static void print_model_stats_table (const double *stats,
 {
     int oneline = opt & OPT_I;
     char tmp1[32], tmp2[32];
+    char pt = get_local_decpoint();
     char delim;
     int i, d;
 
@@ -151,11 +152,11 @@ static void print_model_stats_table (const double *stats,
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
 	pputs(prn, "\\medskip\n\n");
-	pputs(prn, "\\begin{tabular}{lr@{.}l}\n");
+	pprintf(prn, "\\begin{tabular}{lr@{%c}l}\n", pt);
     }
 
     d = get_gretl_digits();
-    delim = (get_local_decpoint() == ',')? ';' : ',';
+    delim = (pt == ',')? ';' : ',';
 
     for (i=0; i<ns; i++) {
 	if (plain_format(prn)) {
