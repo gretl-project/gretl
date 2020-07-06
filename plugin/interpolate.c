@@ -355,7 +355,7 @@ static void make_VC (gretl_matrix *VC, int N,
 
 /* The counterpart of make_VC() when using Fernandez */
 
-static void make_VDD (gretl_matrix *VC, int N,
+static void make_DDC (gretl_matrix *VC, int N,
 		      int s, int agg)
 {
     double vij, *vj, *cval;
@@ -492,7 +492,7 @@ static double cl_gls_calc (const double *rho, void *data)
     int err = 0;
 
     if (G->method == R_UROOT) {
-	make_VDD(G->VC, N, G->s, G->agg);
+	make_DDC(G->VC, N, G->s, G->agg);
     } else {
 #if LIMIT_R_SSR && !SSR_LOGISTIC
 	if (G->method == R_MLE) {
