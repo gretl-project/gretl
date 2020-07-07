@@ -178,6 +178,7 @@ static void show_regression_results (const struct gls_info *G,
     char tmp[16];
     int i, k = G->b->rows;
     int df = G->CX->rows - G->CX->cols;
+    int T = G->CX->rows;
     int err = 0, p = 0, n = k + 3;
 
     gretl_matrix *cs = gretl_matrix_alloc(k, 2);
@@ -213,18 +214,18 @@ static void show_regression_results (const struct gls_info *G,
 
     if (G->method == R_MLE || G->method == R_SSR) {
 	pprintf(prn, "  %s", _("Iterated GLS estimates"));
-	pprintf(prn, " (%s):\n", method_names[G->method]);
+	pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
     } else if (a == 0) {
 	if (G->method == R_UROOT) {
 	    pprintf(prn, "  %s", _("GLS estimates"));
-	    pprintf(prn, " (%s):\n", method_names[G->method]);
+	    pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
 	} else {
-	    pprintf(prn, "  %s:\n", _("OLS estimates"));
+	    pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
 	}
     } else {
 	pprintf(prn, "  %s", _("GLS estimates"));
-	pprintf(prn, " (%s):\n", (G->method == R_FIXED)?
-		"fixed rho" : "chow-lin");
+	pprintf(prn, " (%s) T = %d:\n", (G->method == R_FIXED)?
+		"fixed rho" : "chow-lin", T);
     }
 
     print_model_from_matrices(cs, adds, names, df, OPT_I, prn);
@@ -353,9 +354,12 @@ static void make_VC (gretl_matrix *VC, int N,
     }
 }
 
-/* The counterpart of make_VC() when using Fernandez */
+/* The counterpart of make_VC() above, when using Fernandez
+   or when rho = 0.
+*/
 
-static void make_DDC (gretl_matrix *VC, int s, int agg)
+static void make_alt_VC (gretl_matrix *VC, int s, int agg,
+			 int method)
 {
     double vij, *vj, *cval;
     int N = VC->cols;
@@ -366,7 +370,7 @@ static void make_DDC (gretl_matrix *VC, int s, int agg)
     vj = malloc(colsz);
     gretl_matrix_zero(VC);
 
-    /* (1) construct C */
+    /* (1) construct C' */
     k = (agg == AGG_EOP)? s-1 : 0;
     for (j=0; j<N; j++) {
 	if (agg >= AGG_EOP) {
@@ -379,19 +383,21 @@ static void make_DDC (gretl_matrix *VC, int s, int agg)
 	k += s;
     }
 
-    /* (2) premultiply by inv(D'D) */
-    for (k=0; k<2; k++) {
-	cval = VC->val;
-	for (j=0; j<N; j++) {
-	    memcpy(vj, cval, colsz);
-	    vij = vj[rows-1];
-	    for (i=0; i<rows; i++) {
-		cval[i] = vij;
-		if (i < rows-1) {
-		    vij += vj[rows-i-2];
+    if (method == R_UROOT) {
+	/* (2) premultiply by inv(D'D) */
+	for (k=0; k<2; k++) {
+	    cval = VC->val;
+	    for (j=0; j<N; j++) {
+		memcpy(vj, cval, colsz);
+		vij = vj[rows-1];
+		for (i=0; i<rows; i++) {
+		    cval[i] = vij;
+		    if (i < rows-1) {
+			vij += vj[rows-i-2];
+		    }
 		}
+		cval += rows;
 	    }
-	    cval += rows;
 	}
     }
 
@@ -517,7 +523,7 @@ static double cl_gls_calc (const double *rho, void *data)
     int err = 0;
 
     if (G->method == R_UROOT) {
-	make_DDC(G->VC, G->s, G->agg);
+	make_alt_VC(G->VC, G->s, G->agg, G->method);
     } else {
 #if LIMIT_R_SSR && !SSR_LOGISTIC
 	if (G->method == R_MLE) {
@@ -886,7 +892,7 @@ static int prepare_OLS_stats (struct gls_info *G)
 static int cl_ols (struct gls_info *G,
 		   const gretl_matrix *X,
 		   gretl_matrix *y,
-		   double *rho,
+		   int m, double *rho,
 		   PRN *prn)
 {
     double a = 0;
@@ -920,7 +926,21 @@ static int cl_ols (struct gls_info *G,
 
     if (a == 0) {
 	/* no autocorrelation: GLS isn't needed */
+	int N = G->u->rows;
+	int nx = G->b->rows;
+
+	/* y = X\hat{\beta}_{OLS} */
 	make_X_beta(y, G->b->val, X, G->det);
+
+	/* add C'(CC')^{-1} * \hat{u}_{OLS} */
+	make_alt_VC(G->VC, G->s, G->agg, R_ACF1);
+	make_CVC(G->W, G->VC, G->s, G->agg);
+	gretl_invert_symmetric_matrix(G->W);
+	gretl_matrix_reuse(G->Tmp1, N, 1);
+	gretl_matrix_multiply(G->W, G->u, G->Tmp1);
+	multiply_by_VC(y, G, m, 0);
+	gretl_matrix_reuse(G->Tmp1, nx, N);
+
 	if (G->agg == AGG_AVG) {
 	    gretl_matrix_multiply_by_scalar(y, G->s);
 	}
@@ -1113,7 +1133,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	}
 
 	if (method != R_UROOT && (a == 0 || !rho_given)) {
-	    err = cl_ols(&G, X, y, &a, prn);
+	    err = cl_ols(&G, X, y, m, &a, prn);
 	    if (a == 0) {
 		/* this iteration is handled */
 		continue;
