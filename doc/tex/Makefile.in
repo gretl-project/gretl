@@ -55,6 +55,7 @@ GUIDETEX = gretl-guide.tex \
 	matrices.tex \
 	complex_matrices.tex \
 	calendar.tex \
+	mixfreq.tex \
 	cheatsheet.tex \
 	robust_vcv.tex \
 	panel.tex \
@@ -75,6 +76,7 @@ GUIDETEX = gretl-guide.tex \
 	probit.tex \
 	quantreg.tex \
 	nonparam.tex \
+	midas.tex \
 	odbc.tex \
 	gretltex.tex \
 	gretlR.tex \
