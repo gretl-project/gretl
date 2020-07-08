@@ -44,6 +44,10 @@ DATASET *midas_aux_dataset (const int *list,
 			    const DATASET *dset,
 			    int *err);
 
+gretl_matrix *midas_list_to_vector (const int *list,
+				    const DATASET *dset,
+				    int *err);
+
 int midas_forecast_setup (const MODEL *pmod,
 			  DATASET *dset,
 			  ForecastMethod method,

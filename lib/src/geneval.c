@@ -39,6 +39,7 @@
 #include "gretl_btree.h"
 #include "qr_estimate.h"
 #include "gretl_foreign.h"
+#include "gretl_midas.h"
 #include "var.h"
 
 #include <time.h> /* for the $now accessor */
@@ -13666,10 +13667,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    }
 		    xconv = 1;
 		} else if (e->t == LIST) {
-		    /* HF_LIST?? */
-		    X = gretl_matrix_data_subset(e->v.ivec, p->dset, t1, t2,
-						 M_MISSING_ERROR, &p->err);
-		    xconv = 1;
+		    if (gretl_is_midas_list(e->v.ivec, p->dset)) {
+			X = midas_list_to_vector(e->v.ivec, p->dset, &p->err);
+			xconv = 2;
+		    } else {
+			X = gretl_matrix_data_subset(e->v.ivec, p->dset, t1, t2,
+						     M_MISSING_ERROR, &p->err);
+			xconv = 1;
+		    }
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
 		}
@@ -13690,7 +13695,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-	if (xconv && yconv) {
+	if (xconv == 1 && yconv) {
 	    p->err = tdisagg_compress(&Y, fac);
 	}
 	if (!p->err) {

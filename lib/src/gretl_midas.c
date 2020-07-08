@@ -244,35 +244,9 @@ static int quarter_to_month (int qtr, int ndays, int day)
     return qtr * 3 - 2 + (day - 1) / (ndays/3);
 }
 
-/* Construct an auxiliary dataset in which the data from
-   a MIDAS list are represented at their "native"
-   frequency. We use this for pretty-printing a high
-   frequency series.
-*/
-
-DATASET *midas_aux_dataset (const int *list,
-			    const DATASET *dset,
-			    int *err)
+static int get_midas_pd (int pd, int m, int *err)
 {
-    DATASET *mset = NULL;
-    gretlopt opt = 0;
-    int mpd, pd = dset->pd;
-    int T, m = list[0];
-    int yr, mon;
-    int daily = 0;
-
-    if (m < 3 || gretl_list_has_separator(list)) {
-	*err = E_INVARG;
-    } else if (!dataset_is_time_series(dset)) {
-	*err = E_INVARG;
-    } else if (pd != 1 && pd != 4 && pd != 12) {
-	/* host dataset should be annual, quarterly or monthly */
-	*err = E_PDWRONG;
-    }
-
-    if (*err) {
-	return NULL;
-    }
+    int mpd = 0;
 
     if (pd == 1) {
 	/* annual: midas series should be quarterly or monthly */
@@ -305,6 +279,39 @@ DATASET *midas_aux_dataset (const int *list,
 	} else {
 	    *err = E_INVARG;
 	}
+    }
+
+    return mpd;
+}
+
+/* Construct an auxiliary dataset in which the data from
+   a MIDAS list are represented at their "native"
+   frequency. We use this for pretty-printing a high
+   frequency series.
+*/
+
+DATASET *midas_aux_dataset (const int *list,
+			    const DATASET *dset,
+			    int *err)
+{
+    DATASET *mset = NULL;
+    gretlopt opt = 0;
+    int mpd, pd = dset->pd;
+    int T, m = list[0];
+    int yr, mon;
+    int daily = 0;
+
+    if (m < 3 || gretl_list_has_separator(list)) {
+	*err = E_INVARG;
+    } else if (!dataset_is_time_series(dset)) {
+	*err = E_INVARG;
+    } else if (pd != 1 && pd != 4 && pd != 12) {
+	/* host dataset should be annual, quarterly or monthly */
+	*err = E_PDWRONG;
+    }
+
+    if (!*err) {
+	mpd = get_midas_pd(pd, m, err);
     }
 
     if (*err) {
@@ -402,6 +409,54 @@ DATASET *midas_aux_dataset (const int *list,
     return mset;
 }
 
+gretl_matrix *midas_list_to_vector (const int *list,
+				    const DATASET *dset,
+				    int *err)
+{
+    gretl_matrix *mvec;
+    int mpd, pd = dset->pd;
+    int T, m = list[0];
+
+    if (m < 3 || gretl_list_has_separator(list)) {
+	*err = E_INVARG;
+    } else if (!dataset_is_time_series(dset)) {
+	*err = E_INVARG;
+    } else if (pd != 1 && pd != 4) {
+	/* host dataset should be annual or quarterly */
+	*err = E_PDWRONG;
+    }
+
+    if (!*err) {
+	mpd = get_midas_pd(pd, m, err);
+	if (!*err && mpd != 3 && mpd != 4 && mpd != 12) {
+	    *err = E_INVARG;
+	}
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+    T = sample_size(dset) * m;
+    mvec = gretl_matrix_alloc(T, 1);
+
+    if (mvec == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int i, vi, t, s = 0;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    /* read data right-to-left! */
+	    for (i=m; i>0; i--) {
+		vi = list[i];
+		mvec->val[s++] = dset->Z[vi][t];
+	    }
+	}
+    }
+
+    return mvec;
+}
+
 static gretl_matrix *make_auto_theta (char *mstr, int i,
 				      int ptype, int k,
 				      int m1, int m2,
@@ -463,6 +518,8 @@ static gretl_matrix *make_auto_theta (char *mstr, int i,
 
     return theta;
 }
+
+
 
 static int lag_info_from_prelag_list (midas_term *mt,
 				      const int *list,
