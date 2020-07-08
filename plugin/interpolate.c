@@ -1147,6 +1147,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	    } else {
 		/* just calculate with the current @a */
 		err = cl_gls_one(&a, &G);
+		/* adjust @a for reporting when doing Fernández */
+		if (method == R_UROOT) {
+		    a = 1;
+		}
 	    }
 	}
 
