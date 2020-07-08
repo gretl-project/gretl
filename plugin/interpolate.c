@@ -1345,7 +1345,7 @@ static int get_tdisagg_method (const char *s, int *err)
 {
     int i;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<5; i++) {
 	if (!strcmp(s, method_names[i])) {
 	    return i;
 	}
