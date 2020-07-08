@@ -167,7 +167,7 @@ giving $\hat{\theta} = \frac{\hat{V}}{\bar{X}}$ and $\hat{p} =
 $x_i$), but it's instructive to see how the \cmd{gmm} command will
 solve this system of equations numerically.
 
-We feed \app{gretl} the necessary ingredients for GMM estimation
+We feed gretl the necessary ingredients for GMM estimation
 in a command block, starting with \texttt{gmm} and ending with
 \texttt{end gmm}. Three elements are compulsory within a \texttt{gmm}
 block:
@@ -210,7 +210,7 @@ the ``moment condition'' form required by the \cmd{gmm} command. We
 need to transform them and arrive at something looking like $E(e_{j,i}
 z_{j,i}) = 0$, with $j=1 \ldots 2$. Therefore, we need two
 corresponding observable variables $e_1$ and $e_2$ with corresponding
-instruments $z_1$ and $z_2$ and tell \app{gretl} that $\hat{E}(e_j
+instruments $z_1$ and $z_2$ and tell gretl that $\hat{E}(e_j
 z_j) = 0$ must be satisfied (where we used the $\hat{E}(\cdot)$
 notation to indicate sample moments).
 

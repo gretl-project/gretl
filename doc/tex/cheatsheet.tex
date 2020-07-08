@@ -29,7 +29,7 @@ expected.
 
 \emph{Problem:} You want to generate via \cmd{nulldata} a panel
 dataset and specify in advance the number of units and the time length
-of your series via two scalar variables. 
+of your series via two scalar variables.
 
 \emph{Solution:}
 \begin{code}
@@ -171,7 +171,7 @@ frequency by averaging. This is commonly done in empirical growth
 economics, where annual data are turned into 3- or 4- or 5-year
 averages \citep[see for example][]{Islam1995}.
 
-\emph{Solution:} In a panel dataset, \app{gretl} functions that deal
+\emph{Solution:} In a panel dataset, gretl functions that deal
 with time are aware of the panel structure, so they will automatically
 ``do the right thing''. Therefore, all you have to do is use the
 \cmd{movavg()} function for computing moving averages and then just
@@ -195,8 +195,8 @@ print year X -o
 ### now re-cast as 4-year averages
 ###
 # a dummy for endpoints
-series endpoint = (year % 4 == 0) 
-# id variable 
+series endpoint = (year % 4 == 0)
+# id variable
 series id = $unit
 
 # compute averages
@@ -380,7 +380,7 @@ ensue. Try the year 2015, for example.
 
 \emph{Problem:} You want to perform a 1-to-1 recode on a variable. For
 example, consider tennis points: you may have a variable $x$ holding
-values 1 to 3 and you want to recode it to 15, 30, 40. 
+values 1 to 3 and you want to recode it to 15, 30, 40.
 
 \emph{Solution 1:}
 \begin{code}
@@ -402,7 +402,7 @@ using \cmd{replace} can also be remarkably compact. Note that
 \cmd{replace} also performs $n$-to-1 (``surjective'') replacements,
 such as
 \begin{code}
-series x = replace{z, {2, 3, 5, 11, 22, 33}, 1)  
+series x = replace{z, {2, 3, 5, 11, 22, 33}, 1)
 \end{code}
 which would turn all entries equal to 2, 3, 5, 11, 22 or 33 to 1 and
 leave the other ones unchanged.
@@ -508,7 +508,7 @@ series y = alpha * y(-1) + e + theta * e(-1)
 this purpose so in most cases you'll want to take advantage of its
 speed and flexibility. That said, in some cases you may want to
 generate the series in a manner which is more transparent (maybe for
-teaching purposes). 
+teaching purposes).
 
 In the second solution, the statement \cmd{series y = 0} is necessary
 because the next statement evaluates \texttt{y} recursively, so
@@ -543,12 +543,12 @@ would probably lead to more convoluted constructs.
 
 \emph{Problem:} Generate $y_t$ via the following rule:
 \[
-  y_t = \left\{ 
-    \begin{array}{ll} 
-      x_t & \mathrm{for} \quad d_t > a \\ 
-      z_t & \mathrm{for} \quad d_t \le a 
+  y_t = \left\{
+    \begin{array}{ll}
+      x_t & \mathrm{for} \quad d_t > a \\
+      z_t & \mathrm{for} \quad d_t \le a
     \end{array}
-    \right. 
+    \right.
 \]
 
 \emph{Solution:}
@@ -558,9 +558,9 @@ series y = (d > a) ? x : z
 
 \emph{Comment:} There are several alternatives to the one presented
 above. One is a brute force solution using loops. Another one, more
-efficient but still suboptimal, would be 
+efficient but still suboptimal, would be
 \begin{code}
-series y = (d>a)*x + (d<=a)*z  
+series y = (d>a)*x + (d<=a)*z
 \end{code}
 However, the ternary conditional assignment operator is not only the
 most efficient way to accomplish what we want, it is also remarkably
@@ -613,9 +613,9 @@ list print B
 returns
 \begin{code}
 ? list print A
-x y const z 
+x y const z
 ? list print B
-const x y 
+const x y
 \end{code}
 
 Besides: it has been brought to our attention that some mischievous
@@ -638,14 +638,14 @@ values.
 ``Hat'' values are can be thought of as the diagonal of the projection
 matrix $P_X$, or more explicitly as
 \[
-h_i = \mathbf{x}_i' (X'X)^{-1} \mathbf{x}_i 
+h_i = \mathbf{x}_i' (X'X)^{-1} \mathbf{x}_i
 \]
 where $X$ is the matrix of regressors and $\mathbf{x}_i'$ is its
 $i$-th row.
 
 The reader is invited to study the code below, which offers four
 different solutions to the problem:
- 
+
 \begin{code}
 open data4-1.gdt --quiet
 list X = const sqft bedrms baths
@@ -694,7 +694,7 @@ Solution 3 is more clever, and relies on the fact that, if you
 define $Z = X\cdot(X'X)^{-1}$, then $h_i$ could also
 be written as
 \[
- h_i = \mathbf{x}_i' \mathbf{z}_i = \sum_{i=1}^k x_{ik} z_{i_k} 
+ h_i = \mathbf{x}_i' \mathbf{z}_i = \sum_{i=1}^k x_{ik} z_{i_k}
 \]
 which is in turn equivalent to the sum of the elements of the $i$-th
 row of $X \odot Z$, where $\odot$ is the element-by-element
@@ -712,7 +712,7 @@ slower that solution 3.
 \subsection{Moving functions for time series}
 \label{sec:movfun}
 
-\emph{Problem:} \app{Gretl} provides native functions for moving
+\emph{Problem:} gretl provides native functions for moving
 averages, but I need a to compute a different statistic on a sliding
 data window. Is there a way to do this without using loops?
 
@@ -747,7 +747,7 @@ figure \ref{fig:movfun}.
 
 \emph{Problem:} I'd like to generate a bunch of normal random variates
 whose covariance matrix is exactly equal to a given matrix
-$\Sigma$. How can I do this in \app{gretl}?
+$\Sigma$. How can I do this in gretl?
 
 \emph{Solution:} The Cholesky decomposition is your friend. If you
 want to generate data with a given \emph{population} covariance
@@ -765,8 +765,8 @@ eval mcov(X)
 should give you
 \begin{code}
 ? eval mcov(X)
-      2.0016       1.0157 
-      1.0157       1.0306 
+      2.0016       1.0157
+      1.0157       1.0306
 \end{code}
 
 If, instead, you want your simulated data to have a given \emph{sample}
@@ -812,10 +812,10 @@ list dZ = null
 loop foreach i Z
   series d$i = d * $i
   list dZ = dZ d$i
-endloop 
+endloop
 
 ols y X Z d dZ
-\end{code} 
+\end{code}
 %$
 
 \emph{Comment:} It's amazing what string substitution can do for
@@ -880,7 +880,7 @@ names can help. For example, if
   list Lx = x1 x2 x3
   list Ly = y1 y2 y3
 \end{code}
-then we could just loop over the integers---quite intuitive and certainly 
+then we could just loop over the integers---quite intuitive and certainly
 more elegant:
 \begin{code}
   loop i=1..3
@@ -923,16 +923,16 @@ The following code snippet performs all the necessary calculations:
 p = {1; 0.5}
 q = {1; 0.3; -0.8}
 r = conv2d(p, q)
-print r  
+print r
 \end{code}
 Runnning the above produces
 \begin{code}
 r (4 x 1)
 
-      1 
-    0.8 
-  -0.65 
-   -0.4 
+      1
+    0.8
+  -0.65
+   -0.4
 \end{code}
 which is indeed the desired result. Note that the same computation
 could also be performed via the \cmd{filter} function, at the price of
@@ -984,9 +984,9 @@ list revX print
 will produce
 \begin{code}
 ? list X print
-D1 D872 EEN_DIS GCD 
+D1 D872 EEN_DIS GCD
 ? list revX print
-GCD EEN_DIS D872 D1 
+GCD EEN_DIS D872 D1
 \end{code}
 
 \subsection{Plotting an asymmetric confidence interval}
@@ -1011,7 +1011,7 @@ gnuplot x --band=mid,dev --time-series --with-lines --output=display
 
 \emph{Problem:} ``I'd like to compute the so-called \emph{leave-one-out
 cross-validation criterion} for my regression. Is there a command in
-\app{gretl}?''
+gretl?''
 
 If you have a sample with $n$ observations, the ``leave-one-out''
 cross-validation criterion can be mechanically computed by running $n$
@@ -1019,7 +1019,7 @@ regressions in which one observation at a time is omitted and all the
 other ones are used to forecast its value. The sum of the $n$ squared
 forecast errors is the statistic we want. Fortunately, there is no
 need to do so. It is possible to prove that the same statistic can be
-computed as 
+computed as
 \[
 CV = \sum_{i=1}^n [\hat{u}_{i}/(1-h_{i})]^2,
 \]
@@ -1080,7 +1080,7 @@ If this gives a non-zero return value you know that \texttt{m}
 contains at least one non-finite element.
 
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
-%%% End: 
+%%% End:

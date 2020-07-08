@@ -34,7 +34,7 @@ These two formulations are basically equivalent, in that they both
 create an empty bundle. The difference is that the second variant may
 be reused---if a bundle named \texttt{foo} already exists the effect
 is to empty it---while the first may only be used once in a given
-\app{gretl} session; it is an error to declare a variable that already
+gretl session; it is an error to declare a variable that already
 exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
@@ -45,7 +45,7 @@ this is to join the key to the bundle name with a dot, as in
 \end{code}
 which adds an object called \texttt{m} (presumably a matrix) to bundle
 \texttt{foo} under the key \texttt{matrix1}. The key must satisfy the
-rules for a \app{gretl} variable name (31 characters maximum, starting
+rules for a gretl variable name (31 characters maximum, starting
 with a letter and composed of just letters, numbers or underscore)
 
 An alternative way to achieve the same effect is to give the key as a

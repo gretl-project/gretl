@@ -250,7 +250,7 @@ When working with scripts, you may want to have a graph shown onto
 your display or saved into a file. In fact, if in your usual workflow
 you find yourself creating similar graphs over and over again, you
 might want to consider the option of writing a script which automates
-this process for you. \app{Gretl} gives you two main tools for doing
+this process for you. gretl gives you two main tools for doing
 this: one is a command called \cmd{gnuplot}, whose main use is to
 create standard plot quickly. The other one is the \cmd{plot} command
 block, which has a more elaborate syntax but offers you more control
@@ -275,7 +275,7 @@ horizontal axis. In general, the arguments to the \cmd{gnuplot}
 command is a list of series, the last of which goes on the x-axis,
 while all the other ones go onto the y-axis. By default, the
 \cmd{gnuplot} command gives you a scatterplot. If you just have one
-variable on the y-axis, then \app{gretl} will also draw a the OLS
+variable on the y-axis, then gretl will also draw a the OLS
 interpolation, if the fit is good enough.\footnote{The technical
   condition for this is that the two-tailed $p$-value for the slope
   coefficient should be under 10\%.}
@@ -552,7 +552,7 @@ examine the distribution of a variable conditional on the value of
 some discrete factor.
 
 As an example, we'll use one of the datasets supplied with
-\app{gretl}, that is \cmd{rac3d}, which contains an example taken from
+gretl, that is \cmd{rac3d}, which contains an example taken from
 \cite{cameron-trivedi13} on the health conditions of 5190 people. The
 script below compares the unconditional (marginal) distribution of the
 number of illnesses in the past 2 weeks with the distribution of the

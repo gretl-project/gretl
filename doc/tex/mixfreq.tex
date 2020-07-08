@@ -4,23 +4,24 @@
 \section{Basics}
 \label{sec:mixed-basics}
 
-In some cases, one may want to handle data that are sampled at
-different frequencies. The typical example is GDP, which is usually
-available quarterly, and industrial production, often available
-monthly. The most common context when this feature is required is
-specification and estimation of MIDAS models (see Chapter
-\ref{chap:MIDAS}), but other cases are possible.
+In some cases one may want to handle data that are observed at
+different frequencies, a facility known as ``MIDAS'' (Mixed Data
+Sampling). A common pairing includes GDP, usually available quarterly,
+and industrial production, often available monthly. The most common
+context when this feature is required is specification and estimation
+of MIDAS models (see Chapter \ref{chap:MIDAS}), but other cases are
+possible.
 
-Since a \app{gretl} dataset formally handles only a single data
-frequency, we have adopted a relatively straightforward solution: a
-higher frequency series $x_H$ is represented by a set of $m$ series,
-each holding the value of $x_H$ in a sub-period of the ``base''
-(lower-frequency) period (where $m$ is the ratio of the higher
-frequency to the lower).
+A gretl dataset formally handles only a single data frequency, but we
+have adopted a straightforward means of representing nested
+frequencies: a higher frequency series $x_H$ is represented by a set
+of $m$ series, each holding the value of $x_H$ in a sub-period of the
+``base'' (lower-frequency) period (where $m$ is the ratio of the
+higher frequency to the lower).
 
 This is most easily understood by means of an example. Suppose our
 base frequency is quarterly and we wish to include a monthly series in
-the analysis. Then a relevant fragment of the \app{gretl} dataset might look
+the analysis. Then a relevant fragment of the gretl dataset might look
 as shown in Table~\ref{tab:mdata}. Here, \texttt{gdpc96} is a
 quarterly series while \texttt{indpro} is monthly, so $m=12/4=3$ and
 the per-month values of \texttt{indpro} are identified by the suffix
@@ -65,8 +66,8 @@ monthly   & daily
 \end{center}
 
 The examples below mostly pertain to the case of quarterly plus
-monthly data. Section \ref{sec:midas-daily} has details on our
-handling of daily data.
+monthly data. Section \ref{sec:midas-daily} has details on handling of
+daily data.
 
 A mixed-frequency dataset can be created in either of two ways: by
 selective importation of series from a database, or by creating two
@@ -76,7 +77,7 @@ datasets of different frequencies then merging them.
 \label{sec:db-import}
 
 Here's a simple example, in which we draw from the \texttt{fedstl} (St
-Louis Fed) database which is supplied in the \app{gretl} distribution:
+Louis Fed) database which is supplied in the gretl distribution:
 \begin{code}
 clear
 open fedstl.bin
@@ -104,7 +105,7 @@ a MIDAS-style file named \texttt{gdp\_midas.gdt} is shown in
 Listing~\ref{lst:ghysels-data}.
 
 \begin{script}[htbp]
-  \caption{Building a \app{gretl} MIDAS dataset via merger}
+  \caption{Building a gretl MIDAS dataset via merger}
   \label{lst:ghysels-data}
 \begin{scode}
 # sheet 2 contains monthly employment data
@@ -128,22 +129,22 @@ store gdp_midas.gdt
 \end{script}
 
 Note that both series are simply named \texttt{VALUE} in the source
-file, so we use \app{gretl}'s \texttt{rename} command to set distinct and
+file, so we use gretl's \texttt{rename} command to set distinct and
 meaningful names. The heavy lifting is done here by the line
 %
 \begin{code}
 dataset compact 4 spread
 \end{code}
 %
-which tells \app{gretl} to compact an entire dataset (in this case, as it
+which tells gretl to compact an entire dataset (in this case, as it
 happens, just containing one series) to quarterly frequency using the
 ``spread'' method. Once this is done, it is straightforward to
 \texttt{append} the compacted data to the quarterly GDP dataset.
 
 We will put this dataset to use in subsequent sections. Note that it
-is provided in the \app{gretl} package (\texttt{gdp\_midas}, which you can
+is provided in the gretl package (\texttt{gdp\_midas}, which you can
 find under the \textsf{Gretl} tab in the practice datafiles window
-in the \app{gretl} GUI).
+in the gretl GUI).
 
 \section{The notion of a ``MIDAS list''}
 \label{sec:midas-list}
@@ -175,13 +176,13 @@ list INDPRO = indpro_m*
 \end{code}
 
 Having created such a list, one can use the \texttt{setinfo} command
-to tell \app{gretl} that it's a \textit{bona fide} MIDAS list:
+to tell gretl that it's a \textit{bona fide} MIDAS list:
 %
 \begin{code}
 setinfo INDPRO --midas
 \end{code}
 %
-This will spare you some warnings that \app{gretl} would otherwise emit when
+This will spare you some warnings that gretl would otherwise emit when
 you call some of the functions described below. This step should not
 be necessary, however, if the series in question are the product of a
 \texttt{compact} operation with the \texttt{spread} parameter.
@@ -192,7 +193,7 @@ The layout of high-frequency data shown in Table~\ref{tab:mdata} is
 convenient for running regressions, but not very convenient for
 inspecting and checking such data. We therefore provide some methods
 for displaying MIDAS data at their ``natural''
-frequency. Figure~\ref{fig:data-menu} shows the \app{gretl} main window with
+frequency. Figure~\ref{fig:data-menu} shows the gretl main window with
 the \texttt{gdp\_midas} dataset loaded, along with the menu that pops
 up if you right-click with the \texttt{payems} series highlighted.
 The items ``Display values'' and ``Time series plot'' show the data
@@ -227,7 +228,7 @@ a monthly time-series plot. (See section~\ref{sec:hfplot} for more on
 A basic requirement of MIDAS is the creation of lists of
 high-frequency lags for use on the right-hand side of a regression
 specification. This is possible, but not very convenient, using the
-long-standing behavior of \app{gretl}'s \texttt{lags} function; it is made
+long-standing behavior of gretl's \texttt{lags} function; it is made
 easier by a dedicated variant of that function described below.
 
 For illustration we'll consider an example presented in Ghysels'
@@ -254,9 +255,9 @@ the terms we want are (reading left-to-right by row):
 }
 \end{center}
 
-We could construct such a list in \app{gretl} using the following
+We could construct such a list in gretl using the following
 standard syntax. (Note that the third argument of 1 to
-\texttt{lags} below tells \app{gretl} that we want the terms ordered ``by
+\texttt{lags} below tells gretl that we want the terms ordered ``by
 lag'' rather than ``by variable''; this is required to respect the
 order of the terms shown above.)
 \begin{code}
@@ -331,7 +332,7 @@ is the first one to take you ``back in time'' relative to the start
 of the current quarter, namely to the last month of the prior
 quarter.
 
-In \app{gretl} we have chosen to employ the first of these
+In gretl we have chosen to employ the first of these
 conventions. So lag 1 points to the most recent sub-period in the
 previous base-frequency period, lag 0 points to the first sub-period
 in the current period, and lag $-1$ to the second sub-period within
@@ -359,7 +360,7 @@ low-frequency period (e.g.\ the first two months of the quarter).
 When working with non-stationary data one may wish to take first
 differences, and in the MIDAS context that probably means
 high-frequency differences of the high-frequency data. Note that the
-ordinary \app{gretl} functions \texttt{diff} and \texttt{ldiff} will
+ordinary gretl functions \texttt{diff} and \texttt{ldiff} will
 \textit{not} do what is wanted for series such as \texttt{indpro}, as
 shown in Table~\ref{tab:mdata}: these functions will give per-month
 \textit{quarterly} differences of the data (month 3 of the current
@@ -411,7 +412,7 @@ The required argument is a MIDAS list, as defined above. Optionally,
 one or more lower-frequency series (\textsl{lflist}) can be added to
 the plot following a semicolon. Supported options are
 \option{with-lines}, \option{time-series} and \option{output}. These
-have the same effects as with the \app{gretl}'s \texttt{gnuplot} command.
+have the same effects as with the gretl's \texttt{gnuplot} command.
 
 An example based on Figure 1 in \cite{armesto10} is shown in
 Listing~\ref{lst:armesto} and Figure~\ref{fig:armesto}.

@@ -8,7 +8,7 @@ The \cmd{genr} command provides a flexible means of defining new
 variables.  It is documented in the \GCR.  This chapter offers a more
 expansive discussion of some of the special functions available via
 \verb+genr+ and some of the finer points of the command.
-    
+
 \section{Long-run variance}
 \label{sec:lrvar}
 
@@ -33,7 +33,7 @@ are the so-called \emph{Bartlett weights}, defined as $w_i = 1 -
 $\hat{\omega}^2(k)/T$ yields a consistent estimator of the variance of
 $\bar{X}$.
 
-\app{Gretl} implements this estimator by means of the function
+gretl implements this estimator by means of the function
 \texttt{lrvar()}. This function takes one required argument, namely
 the series whose long-run variance is to be estimated, followed by two
 optional arguments. The first of these can be used to supply a value
@@ -67,13 +67,13 @@ is the integral of the variable's density from its lower limit
 p-value (at least the one-tailed, right-hand p-value as returned by
 the \cmd{pvalue} function) is the complementary probability, the
 integral from $x$ to the upper limit of the distribution, typically
-$+\infty$.  
+$+\infty$.
 
 In principle, therefore, there is no need for two distinct functions:
 given a CDF value $p_0$ you could easily find the corresponding
 p-value as $1-p_0$ (or vice versa).  In practice, with
 finite-precision computer arithmetic, the two functions are not
-redundant.  This requires a little explanation.  In \app{gretl}, as in
+redundant.  This requires a little explanation.  In gretl, as in
 most statistical programs, floating point numbers are represented as
 ``doubles'' --- double-precision values that typically have a storage
 size of eight bytes or 64 bits.  Since there are only so many bits
@@ -84,7 +84,7 @@ represent numbers over the range (roughly) $\pm 1.7977 \times
 
 Suppose you're interested in the left tail of the $\chi^2$ distribution
 with 50 degrees of freedom: you'd like to know the CDF value for $x =
-0.9$.  Take a look at the following interactive session: 
+0.9$.  Take a look at the following interactive session:
 \begin{code}
 ? scalar p1 = cdf(X, 50, 0.9)
 Generated scalar p1 = 8.94977e-35
@@ -147,12 +147,12 @@ omitted from a model); \cmd{reset} (Ramsey's RESET); \cmd{restrict}
 and \cmd{vartest} (test for difference of variances). In most cases
 both a \dollar{test} and a \dollar{pvalue} are stored; the exception
 is the KPSS test, for which a p-value is not currently available.
-    
+
 An important point to notice about this mechanism is that the internal
 variables \dollar{test} and \dollar{pvalue} are over-written each time
 one of the tests listed above is performed.  If you want to reference
 these values, you must do so at the correct point in the sequence of
-\app{gretl} commands.  
+gretl commands.
 
 \begin{itemize}
 \item By default, the \cmd{adf} command generates three variants of
@@ -178,7 +178,7 @@ $n$-dimensional vector whose $k$-th element is $x_k = a_k + i b_k$,
 then the output of the discrete Fourier transform is a vector
 $\mathbf{f} = \mathcal{F}(\mathbf{x})$ whose $k$-th element is
 \[
-  f_k = \sum_{j=0}^{n-1} e^{-i \omega(j,k) } x_j 
+  f_k = \sum_{j=0}^{n-1} e^{-i \omega(j,k) } x_j
 \]
 where $\omega(j,k) = 2 \pi i \frac{j k}{n}$. Since the transformation
 is invertible, the vector $\mathbf{x}$ can be recovered from
@@ -202,16 +202,16 @@ then
 That is, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
 \mathcal{F}(\mathbf{y})_k$.
 
-For computing the Fourier transform, \app{gretl} uses the external
+For computing the Fourier transform, gretl uses the external
 library \texttt{fftw3}: see \cite{frigo05}. This guarantees
 extreme speed and accuracy. In fact, the CPU time needed to perform
 the transform is $O(n \log n)$ for any $n$. This is why the array of
 numerical techniques employed in \texttt{fftw3} is commonly known as
 the \emph{Fast} Fourier Transform.
 
-\app{Gretl} provides two matrix functions\footnote{See chapter
+gretl provides two matrix functions\footnote{See chapter
   \ref{chap:matrices}.} for performing the Fourier transform and its
-inverse: \texttt{fft} and \texttt{ffti}. In fact, \app{gretl}'s
+inverse: \texttt{fft} and \texttt{ffti}. In fact, gretl's
 implementation of the Fourier transform is somewhat more specialized:
 the input to the \texttt{fft} function is understood to be real.
 Conversely, \texttt{ffti} takes a complex argument and delivers a real
@@ -225,13 +225,13 @@ matrix x2 = ffti(f)
 \end{code}
 yields
 \[
-  x_1 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+  x_1 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right]
   \qquad
-  f = \left[ \begin{array}{rr} 
-      6 & 0 \\ -1.5 & 0.866 \\ -1.5 & -0.866 
-   \end{array} \right] 
+  f = \left[ \begin{array}{rr}
+      6 & 0 \\ -1.5 & 0.866 \\ -1.5 & -0.866
+   \end{array} \right]
   \qquad
-  x_2 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right] 
+  x_2 = \left[ \begin{array}{c} 1 \\ 2 \\ 3 \end{array} \right]
 \]
 where the first column of \emph{f} holds the real part and the second
 holds the complex part. In general, if the input to \texttt{fft} has
@@ -249,7 +249,7 @@ As an example, consider the multiplication of two polynomials:
   c(x) = a(x) \cdot b(x) & = & 1 + 0.8 x - 0.65 x^2 - 0.4 x^3
 \end{eqnarray*}
 The coefficients of the polynomial $c(x)$ are the convolution of the
-coefficients of $a(x)$ and $b(x)$; the following \app{gretl} code fragment
+coefficients of $a(x)$ and $b(x)$; the following gretl code fragment
 illustrates how to compute the coefficients of $c(x)$:
 \begin{code}
 # define the two polynomials
@@ -258,7 +258,7 @@ b = { 1, 0.3, -0.8, 0 }'
 # perform the transforms
 fa = fft(a)
 fb = fft(b)
-# complex-multiply the two transforms 
+# complex-multiply the two transforms
 fc = cmult(fa, fb)
 # compute the coefficients of c via the inverse transform
 c = ffti(fc)
@@ -275,7 +275,7 @@ a = { 1 ; 0.5; 0 ; 0 }
 b = { 1 ; 0.3 ; -0.8 ; 0 }
 # perform the transforms jointly
 f = fft(a ~ b)
-# complex-multiply the two transforms 
+# complex-multiply the two transforms
 fc = cmult(f[,1:2], f[,3:4])
 # compute the coefficients of c via the inverse transform
 c = ffti(fc)
@@ -304,14 +304,13 @@ S = S[2:($nobs/2)+1]/scale
 omega = seq(1,($nobs/2))' .* (2*$pi/$nobs)
 omega = omega ~ S
 # compare the built-in command
-pergm x  
+pergm x
 print omega
 \end{scode}
 \end{script}
 
 
-%%% Local Variables: 
+%%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
-%%% End: 
-
+%%% End:

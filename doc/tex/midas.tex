@@ -1,14 +1,14 @@
 \chapter{MIDAS models}
 \label{chap:MIDAS}
 
-The acronym MIDAS stands for ``Mixed Data Sampling''; MIDAS models can
+The acronym MIDAS stands for ``Mixed Data Sampling''. MIDAS models can
 essentially be described as models where one or more independent
 variables are observed at a higher frequency than the dependent
-variable and possibly an ad-hoc parsimonious parametrization is
+variable, and possibly an ad-hoc parsimonious parameterization is
 adopted. See \citealp{ghysels04}; \citealp{ghysels15};
 \citealp{armesto10} for a fuller introduction. Naturally, these models
 require easy handling of multiple-frequency data. The way this is done
-in \app{gretl} is explained in Chapter \ref{chap:mixed-frequency}; in
+in gretl is explained in Chapter \ref{chap:mixed-frequency}; in
 this chapter, we concentrate on the numerical aspects of estimation.
 
 \section{Parsimonious parameterizations}
@@ -22,8 +22,9 @@ done via OLS). A typical case can be written as
   \label{eq:UMIDAS}
   y_t = \beta_0 + \alpha y_{t-1} + \sum_{i=0}^k \delta_i x_{\tau-i} + \varepsilon_t, 
 \end{equation}
-where $\tau$ represents ``high-frequency time.'' and generalizations
-should be obvious.
+where $\tau$ represents ``high-frequency time''. Obvious
+generalizations of this specification include a higher AR order for
+$y$ and inclusion of additional high-frequency regressors.
 
 Estimation of \eqref{eq:UMIDAS} can easily be accomplished via
 OLS. However, it is more common to enforce parsimony by making the
@@ -42,8 +43,8 @@ the per-lag coefficients given the values of the hyperparameters, and
 how best to estimate the value of the hyperparameters?  Hansl is
 functional enough to allow a savvy user to address these questions
 from scratch, but of course it's helpful to have some built-in
-high-level functionality. At present \app{gretl} can handle natively
-four commonly used parameterizations: normalized exponential Almon,
+high-level functionality. At present gretl can handle natively four
+commonly used parameterizations: normalized exponential Almon,
 normalized beta (with or without a zero last coefficient) and plain
 (non-normalized) Almon polynomial. The Almon variants take one or more
 parameters (two being a common choice), and the beta takes either two
@@ -99,9 +100,9 @@ but saves a little typing and some CPU cycles.
 \section{Estimating MIDAS models}
 \label{sec:estimation}
 
-\app{Gretl} offers a dedicated command, \texttt{midasreg}, for estimation of
+Gretl offers a dedicated command, \texttt{midasreg}, for estimation of
 MIDAS models. (There's a corresponding item, \textsf{MIDAS}, under the
-\textsf{Time series} section of the \textsf{Model} menu in the \app{gretl}
+\textsf{Time series} section of the \textsf{Model} menu in the gretl
 GUI.) We begin by discussing that, then move on to possibilities for
 defining your own estimator.
 
@@ -239,7 +240,7 @@ and in the U-MIDAS case the model comes down to
 
 The script exercises all five of the parameterizations mentioned
 above,\footnote{The \textsf{Matlab} program includes an additional
-  parameterization not supported by \app{gretl}, namely a
+  parameterization not supported by gretl, namely a
   step-function.}  and in each case the results of 9
 pseudo-out-of-sample forecasts are recorded so that their Root Mean
 Square Errors can be compared.
@@ -358,16 +359,16 @@ Forecast RMSEs:
 
 The data file used in the replication, \texttt{gdp\_midas.gdt}, was
 contructed as described in section~\ref{sec:data-merge} (and as noted
-there, it is included in the current \app{gretl} package). Part of the
+there, it is included in the current gretl package). Part of the
 output from the replication script is shown in
 Listing~\ref{ghysels-out}. The $\gamma$ coefficient is labeled
-\texttt{HF\_slope} in the \app{gretl} output.
+\texttt{HF\_slope} in the gretl output.
 
 For reference, output from \textsf{Matlab} (version R2016a for Linux)
 is available at
 \url{http://gretl.sourceforge.net/midas/matlab_output.txt}. For the
 most part (in respect of regression coefficients and auxiliary
-statistics such as $R^2$ and forecast RMSEs), \app{gretl}'s output agrees
+statistics such as $R^2$ and forecast RMSEs), gretl's output agrees
 with that of \textsf{Matlab} to the extent that one can reasonably
 expect on nonlinear problems---that is, to at least 4 significant
 digits in all but a few instances.\footnote{Nonlinear results, even
@@ -401,7 +402,7 @@ Differences of this order are not unexpected, however, when different
 methods are used to calculate the covariance matrix for a nonlinear
 regression. The \textsf{Matlab} standard errors are based on a
 numerical approximation to the Hessian at convergence, while those
-produced by \app{gretl} are based on a Gauss--Newton Regression, as
+produced by gretl are based on a Gauss--Newton Regression, as
 discussed and recommended in \citet[chapter 6]{davidson-mackinnon04}.
 
 \subsection{Underlying methods}
@@ -413,7 +414,7 @@ output immediately preceding the ``\texttt{Dependent variable}'' line.
 If the only specification type is U-MIDAS, the method is
 OLS. Otherwise it is one of three variants of Nonlinear Least Squares.
 \begin{itemize}
-\item Levenberg--Marquardt. This is the back-end for \app{gretl}'s
+\item Levenberg--Marquardt. This is the back-end for gretl's
   \texttt{nls} command.
 \item L-BFGS-B with conditional OLS. L-BFGS is a ``limited memory''
   version of the BFGS optimizer and the trailing ``-B'' means that it
@@ -500,7 +501,7 @@ any nonlinearity other than that associated with the stock MIDAS
 parameterizations, or to define your own MIDAS parameterization).
 
 Anyone with ambitions in this direction will presumably be quite
-familiar with the commands and functions available in hansl, \app{gretl}'s
+familiar with the commands and functions available in hansl, gretl's
 scripting language, so we will not say much here beyond presenting a
 couple of examples. First we show how the \texttt{nls} command can be
 used, along with the MIDAS-related functions described in
@@ -600,8 +601,8 @@ modprint bse "const dy(-1) HF_slope Beta1 Beta2"
 At times, it may be useful to plot the ``gross'' coefficients on the
 lags of the high-frequency series in a MIDAS regression---that is, the
 normalized weights multiplied by the \texttt{HF\_slope}
-coefficient. After estimation of a MIDAS model in the \app{gretl} GUI
-this is available via the item \textsf{MIDAS coefficients} under the
+coefficient. After estimation of a MIDAS model in the gretl GUI this
+is available via the item \textsf{MIDAS coefficients} under the
 \textsf{Graphs} menu in the model window. It is also easily generated
 via script, since the \dollar{model} bundle that becomes available
 following the \texttt{midasreg} command contains a matrix,

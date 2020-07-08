@@ -558,7 +558,7 @@ The technique known as Gauss--Hermite quadrature is simply a way of
 approximating the above integral via a sum of carefully chosen
 terms:\footnote{Some have suggested using a more refined method called
   \emph{adaptive} Gauss-Hermite quadrature; this is not implemented in
-  \app{gretl}.}
+  gretl.}
 \[
 \LogLik_i \simeq \sum_{k=1}^{m} (\LogLik_i | \alpha_i = n_k ) w_k
 \]
@@ -571,7 +571,7 @@ described in chapter \ref{chap:mle}. Here, however, the calculations
 were hard-coded in C for maximal speed and efficiency.
 
 Experience shows that a reasonable compromise can be achieved in most
-cases by choosing $m$ in the order of 20 or so; \app{gretl} uses 32 as
+cases by choosing $m$ in the order of 20 or so; gretl uses 32 as
 a default value, but this can be changed via the \option{quadpoints}
 option, as in
 \begin{code}
@@ -635,7 +635,7 @@ for example,
 \begin{code}
 tobit depvar indvars --llimit=10
 \end{code}
-would tell \app{gretl} that the left bound $a$ is set to 10.
+would tell gretl that the left bound $a$ is set to 10.
 
 \section{Interval regression}
 \label{sec:intreg}

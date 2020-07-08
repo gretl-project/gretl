@@ -5,7 +5,7 @@ Several functions are available to aid in the construction of
 special-purpose estimators: their purpose is to find numerically
 approximate solutions to problems that in principle could be solved
 analytically, but in practice cannot be, for one reason or another. In
-this chapter, we illustrate the tools that \app{gretl} offers for
+this chapter, we illustrate the tools that gretl offers for
 optimization of functions, differentiation and integration.
 
 \section{Derivative-based optimization methods}
@@ -301,7 +301,7 @@ Suppose you have a function $f(x)$ of a scalar argument, that is known
 to have a unique maximum. The golden section method is rather effective
 at finding it quickly without making use of derivatives (see
 \cite{pressetal2007}, section 10.2 for a thorough description). The
-\app{gretl} function implementing this method is called \cmd{GSSmax}.
+gretl function implementing this method is called \cmd{GSSmax}.
 
 The idea is, roughly, to take an interval $[x_0, x_1]$ (also known as
 the ``bracket'') that should contain the maximizing value. Once
@@ -732,7 +732,7 @@ dg (4 x 4)
 In principle, you can use the \cmd{fdjac} function repeatedly to
 evaluate higher-order derivatives. However, you should be aware that
 you may encounter rather serious numerical issues. For this reason,
-\app{gretl} provides a function, similar to \cmd{fdjac}, for computing
+gretl provides a function, similar to \cmd{fdjac}, for computing
 a Hessian directly, called \cmd{numhess}.
 
 An example follows:
@@ -774,7 +774,7 @@ that \texttt{H0} is not even symmetric, as it should be).
 \section{Numerical integration}
 \label{sec:numint}
 
-The main tool that \app{gretl} offers in this area is integration via
+The main tool that gretl offers in this area is integration via
 Gaussian quadrature. In practice, the evaluation of an integral of the
 kind
 \begin{equation}
