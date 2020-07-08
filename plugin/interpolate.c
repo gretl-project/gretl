@@ -832,11 +832,11 @@ static double acf_1 (struct gls_info *G)
 	}
     }
 
-    if (num < 1.0e-9) {
+    rho = num / den;
+
+    if (rho < 1.0e-6) {
 	return 0;
     }
-
-    rho = num / den;
 
 #if CL_DEBUG
     fprintf(stderr, "initial rho from OLS residuals: %g\n", rho);
