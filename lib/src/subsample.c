@@ -2276,6 +2276,17 @@ int restrict_sample (const char *param, const int *list,
 				    oldmask, &mask, prn);
     }
 
+    if (err && state != NULL && state->submask != NULL) {
+	/* Should we try to restore the status quo ante on error?
+	   Too tricky, I think -- best to cancel the 'catch' flag
+	   if it's present.
+	*/
+	if (state->cmd->flags & CMD_CATCH) {
+	    state->cmd->flags ^= CMD_CATCH;
+	    gretl_errmsg_append("Sorry, cannot 'catch' this error", err);
+	}
+    }
+
     if (!err && n_models > 0) {
 	err = check_models_for_subsample(mask, n_dropped);
     }
