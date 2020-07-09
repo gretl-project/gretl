@@ -78,7 +78,7 @@ struct gls_info {
 
 static const char *method_names[] = {
     "chow-lin", "chow-lin-mle", "chow-lin-ssr",
-    "fernandez", "denton"
+    "fernandez", "denton", NULL
 };
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
@@ -1347,7 +1347,7 @@ static int get_tdisagg_method (const char *s, int *err)
 {
     int i;
 
-    for (i=0; i<5; i++) {
+    for (i=0; method_names[i] != NULL; i++) {
 	if (!strcmp(s, method_names[i])) {
 	    return i;
 	}
