@@ -1203,6 +1203,9 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
     gretl_matrix *M;
     gretl_matrix *y;
     gretl_matrix *tmp;
+    gretl_matrix *DDp = NULL;
+    double pk, mij;
+    int afd = 0; /* not enabled yet! */
     int N = y0->rows;
     int sN = s * N;
     int m = p->rows - sN;
@@ -1213,16 +1216,31 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 
     /* we need one big matrix, @M */
     M = gretl_zero_matrix_new(dim, dim);
-    tmp = gretl_matrix_alloc(sNm, N);
+    /* plus some workspace */
+    if (afd) {
+	tmp = gretl_matrix_alloc(dim, 1);
+    } else {
+	tmp = gretl_matrix_alloc(sNm, N);
+    }
+    /* and the return vector */
     y = gretl_matrix_alloc(sNm, 1);
 
     if (M == NULL || tmp == NULL || y == NULL) {
 	*err = E_ALLOC;
-	return NULL;
+	goto bailout;
+    }
+
+    if (afd) {
+	DDp = gretl_zero_matrix_new(dim, 1);
+	if (DDp == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
     }
 
     /* In @M, create (D'D ~ diag(p)*J') | (J*diag(p) ~ 0);
-       see di Fonzo and Marini, equation (4)
+       see di Fonzo and Marini, equation (4), or in the
+       afd case, (D'D ~ J') | (J ~ 0).
     */
 
     /* the upper left portion, D'D */
@@ -1236,17 +1254,19 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 	}
     }
 
-    /* the bottom and right portions, using @p */
+    /* the bottom and right portions, using @p (or not) */
     k = offset = (agg == AGG_EOP)? s-1 : 0;
     for (i=sNm; i<dim; i++) {
 	if (agg >= AGG_EOP) {
-	    gretl_matrix_set(M, i, offset, p->val[k]);
-	    gretl_matrix_set(M, offset, i, p->val[k]);
+	    pk = afd ? 1 : p->val[k];
+	    gretl_matrix_set(M, i, offset, pk);
+	    gretl_matrix_set(M, offset, i, pk);
 	    k += s;
 	} else {
 	    for (j=offset; j<offset+s; j++) {
-		gretl_matrix_set(M, i, j, p->val[k]);
-		gretl_matrix_set(M, j, i, p->val[k]);
+		pk = afd ? 1 : p->val[k];
+		gretl_matrix_set(M, i, j, pk);
+		gretl_matrix_set(M, j, i, pk);
 		k++;
 	    }
 	}
@@ -1255,15 +1275,21 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 
     *err = gretl_invert_symmetric_indef_matrix(M);
 
-    if (*err) {
-	gretl_matrix_free(y);
-	y = NULL;
-    } else {
+    if (!*err && afd) {
+	/* form (D'Dp | y0) */
+	DDp->val[0] = p->val[0] - p->val[1];
+	for (i=1; i<sNm-1; i++) {
+	    DDp->val[i] = 2 * p->val[i] - p->val[i-1] - p->val[i+1];
+	}
+	DDp->val[sNm-1] = p->val[sNm-1] - p->val[sNm-2];
+	memcpy(DDp->val + sNm, y0->val, N * sizeof(double));
+	/* Multiply M into (D'Dp | y0) */
+	gretl_matrix_multiply(M, DDp, tmp);
+	memcpy(y->val, tmp->val, sNm * sizeof (double));
+    } else if (!*err) {
 	/* extract the relevant portion of M-inverse and
 	   premultiply by (diag(p) ~ 0) | (0 ~ I)
 	*/
-	double mij;
-
 	for (j=0; j<N; j++) {
 	    for (i=0; i<sNm; i++) {
 		mij = gretl_matrix_get(M, i, j+sNm);
@@ -1277,8 +1303,16 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 	gretl_matrix_multiply_by_scalar(y, s);
     }
 
+ bailout:
+
     gretl_matrix_free(M);
     gretl_matrix_free(tmp);
+    gretl_matrix_free(DDp);
+
+    if (*err) {
+	gretl_matrix_free(y);
+	y = NULL;
+    }
 
     return y;
 }
