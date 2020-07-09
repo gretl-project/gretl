@@ -1204,15 +1204,17 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
     gretl_matrix *y;
     gretl_matrix *tmp;
     int N = y0->rows;
-    int sN = p->rows;
-    int sNN = sN + N;
+    int sN = s * N;
+    int m = p->rows - sN;
+    int sNm = sN + m;
+    int dim = sNm + N;
     int i, j, k = 0;
     int offset;
 
     /* we need one big matrix, @M */
-    M = gretl_zero_matrix_new(sNN, sNN);
-    tmp = gretl_matrix_alloc(sN, N);
-    y = gretl_matrix_alloc(sN, 1);
+    M = gretl_zero_matrix_new(dim, dim);
+    tmp = gretl_matrix_alloc(sNm, N);
+    y = gretl_matrix_alloc(sNm, 1);
 
     if (M == NULL || tmp == NULL || y == NULL) {
 	*err = E_ALLOC;
@@ -1224,19 +1226,19 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
     */
 
     /* the upper left portion, D'D */
-    for (i=0; i<sN; i++) {
-	gretl_matrix_set(M, i, i, (i == 0 || i == sN-1)? 1 : 2);
+    for (i=0; i<sNm; i++) {
+	gretl_matrix_set(M, i, i, (i == 0 || i == sNm-1)? 1 : 2);
 	if (i > 0) {
 	    gretl_matrix_set(M, i, i-1, -1);
 	}
-	if (i < sN-1) {
+	if (i < sNm-1) {
 	    gretl_matrix_set(M, i, i+1, -1);
 	}
     }
 
     /* the bottom and right portions, using @p */
     k = offset = (agg == AGG_EOP)? s-1 : 0;
-    for (i=sN; i<sNN; i++) {
+    for (i=sNm; i<dim; i++) {
 	if (agg >= AGG_EOP) {
 	    gretl_matrix_set(M, i, offset, p->val[k]);
 	    gretl_matrix_set(M, offset, i, p->val[k]);
@@ -1263,8 +1265,8 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 	double mij;
 
 	for (j=0; j<N; j++) {
-	    for (i=0; i<sN; i++) {
-		mij = gretl_matrix_get(M, i, j+sN);
+	    for (i=0; i<sNm; i++) {
+		mij = gretl_matrix_get(M, i, j+sNm);
 		gretl_matrix_set(tmp, i, j, mij * p->val[i]);
 	    }
 	}
@@ -1311,7 +1313,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	} else {
 	    int xlen = gretl_vector_get_length(X);
 
-	    if (ylen == 0 || xlen == 0 || xlen != s * ylen) {
+	    if (ylen == 0 || xlen == 0 || xlen < s * ylen) {
 		*err = E_INVARG;
 	    }
 	}
