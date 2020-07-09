@@ -125,3 +125,11 @@ print "---- winsor -----"  #
 series winDM = winsor(ldiff(LRM))
 series winDM_asy = winsor(ldiff(LRM), 0.01, 0.8)
 print winDM_asy
+
+print "---- correspondence -----"  ## 
+
+x = $obsminor == 4
+C = seasonals(1,1)
+
+printf "correspondence(x, S4) = %d\n", correspondence(x, S4)
+

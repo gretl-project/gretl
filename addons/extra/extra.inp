@@ -322,6 +322,33 @@ end function
 
 #######################
 
+function scalar correspondence(series x, series y)
+    # This function takes two series and establishes if there's a 
+    # 1-to-1 relationship between them, in which case it returns 2.
+    # If there's a 1-to-n relationship, it returns 1. If there's
+    # no relationship, it returns 0.
+
+    # recode values so as to ensure we only get integer values
+    matrix v = values(y)
+    y = replace(y, v, seq(1,rows(v)))
+    matrix v = values(x)
+    x = replace(x, v, seq(1,rows(v)))
+    
+    matrix H = mxtab(x, y) .> 0
+    is_a_function = maxr(sumc(H)) == 1
+    is_1_to_1 = maxc(sumr(H)) == 1
+
+    if is_a_function
+        ret = is_1_to_1 ? 2 : 1
+    else
+        ret = 0
+    endif
+    return ret
+
+end function 
+
+#######################
+
 function string mrow2json (const matrix m, string misscode)
     # Helper function to convert a matrix row to json-format array string.
     # Below we check for integer values to potentially

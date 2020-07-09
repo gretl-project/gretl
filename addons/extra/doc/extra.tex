@@ -322,6 +322,23 @@ may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterward
 
 \section{Functions requiring a dataset}
 
+\subsection{correspondence}
+
+\ArgRet{\texttt{series x, series y}}{scalar}
+
+This function takes two series and establishes if there's a 1-to-1
+relationship between them, in which case it returns 2.  If there's a
+1-to-n relationship, it returns 1. If there's no relationship, it
+returns 0. One of the possible use cases is to check whether two
+discrete series encode the same variable. For example, the code:
+\begin{code}
+  open grunfeld.gdt
+  c = correspondence($unit, firm)
+\end{code}
+% $
+sets \texttt{c} to 2, indicating that the variable \texttt{firm} is in
+fact the panel cross-sectional identifier.
+
 \subsection{gap\_filler}
 
 \ArgRet{\texttt{series x, int method }(optional)}{series}
@@ -363,8 +380,8 @@ determines only the lower frequency and \texttt{phi} the upper.
 
 \section{Authors}
 \begin{itemize}
-\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset, drill:
- Jack Lucchetti
+\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset,
+  drill, correspondence: Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
 splitfname, multi\_instrings:
