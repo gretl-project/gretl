@@ -78,7 +78,7 @@ struct gls_info {
 
 static const char *method_names[] = {
     "chow-lin", "chow-lin-mle", "chow-lin-ssr",
-    "fernandez", "denton", NULL
+    "fernandez", "denton", "denton-additive", NULL
 };
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
@@ -1185,27 +1185,27 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 /* The method of F. T. Denton, "Adjustment of Monthly or Quarterly
    Series to Annual Totals: An Approach Based on Quadratic
    Minimization", Journal of the American Statistical Association
-   Vol. 66, No. 333 (March 1971), pp. 99-102, proportional first
-   difference variant, as modified by P. A. Cholette, "Adjusting
-   Sub-annual Series to Yearly Benchmarks," Survey Methodology,
-   Vol. 10, 1984, pp. 35-49.
+   Vol. 66, No. 333 (March 1971), pp. 99-102, first difference
+   variant, as modified by P. A. Cholette, "Adjusting Sub-annual
+   Series to Yearly Benchmarks," Survey Methodology, Vol. 10, 1984,
+   pp. 35-49.
 
-   The solution method is based on Tommaso Di Fonzo and Marco Marini,
-   "On the Extrapolation with the Denton Proportional Benchmarking
-   Method", IMF Working Paper WP/12/169, 2012.
+   In the proportional case the solution method is based on Tommaso Di
+   Fonzo and Marco Marini, "On the Extrapolation with the Denton
+   Proportional Benchmarking Method", IMF Working Paper WP/12/169,
+   2012. In the additive case, hmm, not sure yet.
 */
 
-static gretl_matrix *denton_pfd (const gretl_vector *y0,
-				 const gretl_vector *p,
-				 int s, int agg,
-				 int *err)
+static gretl_matrix *denton_fd (const gretl_vector *y0,
+				const gretl_vector *p,
+				int s, int agg,
+				int afd, int *err)
 {
     gretl_matrix *M;
     gretl_matrix *y;
     gretl_matrix *tmp;
     gretl_matrix *DDp = NULL;
     double pk, mij;
-    int afd = 0; /* not enabled yet! */
     int N = y0->rows;
     int sN = s * N;
     int m = p->rows - sN;
@@ -1334,8 +1334,8 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	}
 	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho,
 			      r, verbose, prn, err);
-    } else if (method == 4) {
-	/* Modified Denton, proportional first differences */
+    } else if (method < 6) {
+	/* Modified Denton, first differences */
 	int ylen = gretl_vector_get_length(Y0);
 	gretl_matrix *X0 = NULL;
 
@@ -1352,7 +1352,9 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	    }
 	}
 	if (!*err) {
-	    ret = denton_pfd(Y0, X, s, agg, err);
+	    int afd = (method == 5);
+
+	    ret = denton_fd(Y0, X, s, agg, afd, err);
 	    gretl_matrix_free(X0);
 	}
     } else {
