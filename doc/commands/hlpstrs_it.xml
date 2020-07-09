@@ -61,7 +61,7 @@
  <gentext key="matrices-or-strings" text="array di matrici o stringhe"/>
  <gentext key="string-or-strings"  text="stringa o array di stringhe"/>
  <gentext key="strings-or-list"  text="array di stringhe o lista"/>
- <gentext key="series-vec-or-strings"    text="serie, vettore o array di stringhe"/> 
+ <gentext key="series-vec-or-strings"    text="serie, vettore o array di stringhe"/>
  <gentext key="char"          text="carattere"/>
  <gentext key="coeffname"     text="nome del coefficiente"/>
  <gentext key="sslist"        text="scalare, serie o lista"/>
@@ -72,6 +72,6 @@
  <gentext key="seebelow"      text="vedi sotto"/>
  <gentext key="varargs"       text="vedi sotto"/>
  <gentext key="chapter"       text="il capitolo"/>
- <gentext key="applies-to"    text="Si applica a"/> 
- 
+ <gentext key="applies-to"    text="Si applica a"/>
+ <gentext key="none"          text="nessuna"/>
 </localization>

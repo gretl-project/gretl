@@ -73,5 +73,5 @@
  <gentext key="varargs"       text="ver abaixo"/>
  <gentext key="chapter"       text="Capítulo"/>
  <gentext key="applies-to"    text="Aplica-se a"/> 
- 
+ <gentext key="none"          text="nada"/>
 </localization>

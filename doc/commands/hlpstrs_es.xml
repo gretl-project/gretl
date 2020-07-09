@@ -11,7 +11,7 @@
  <gentext key="example"       text="Ejemplo:    "/>
  <gentext key="output"        text="Resultado:     "/>
  <gentext key="guidebook"     text="El manual de gretl"/>
- <gentext key="funcchap"     text="Referencia de funciones de gretl"/> 
+ <gentext key="funcchap"     text="Referencia de funciones de gretl"/>
  <gentext key="menupath"      text="Menú gráfico: "/>
  <gentext key="otheraccess"   text="Otro acceso:  "/>
  <gentext key="scriptcommand" text="Instrucción de guión: "/>
@@ -32,7 +32,7 @@
  <gentext key="list-or-mat"    text="lista o matriz"/>
  <gentext key="matrix-or-bundle" text="matriz o bundle"/>
  <gentext key="asinput"       text="mismo tipo que introducido"/>
- <gentext key="bundle"        text="bundle"/> 
+ <gentext key="bundle"        text="bundle"/>
  <gentext key="scalar"        text="escalar"/>
  <gentext key="pscalar"       text="escalar entre 0 y 1"/>
  <gentext key="int"           text="entero"/>
@@ -61,7 +61,7 @@
  <gentext key="matrices-or-strings" text="array de matrices o cadenas"/>
  <gentext key="string-or-strings"  text="cadena o array de cadenas"/>
  <gentext key="strings-or-list"  text="array de cadenas o lista"/>
- <gentext key="series-vec-or-strings"    text="serie, vector o array de cadenas"/> 
+ <gentext key="series-vec-or-strings"    text="serie, vector o array de cadenas"/>
  <gentext key="char"          text="carácter"/>
  <gentext key="coeffname"     text="nombre de coeficiente"/>
  <gentext key="sslist"        text="escalar, serie o lista"/>
@@ -70,8 +70,9 @@
  <gentext key="optional"      text="opcional"/>
  <gentext key="conditional"   text="condicional"/>
  <gentext key="seebelow"      text="mira más abajo"/>
- <gentext key="varargs"       text="mira más abajo"/>  
- <gentext key="chapter"       text="Capítulo"/> 
- <gentext key="applies-to"    text="Se aplica a"/> 
- 
+ <gentext key="varargs"       text="mira más abajo"/>
+ <gentext key="chapter"       text="Capítulo"/>
+ <gentext key="applies-to"    text="Se aplica a"/>
+ <gentext key="none"          text="nada"/>
+
 </localization>
