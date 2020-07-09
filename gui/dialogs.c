@@ -6741,12 +6741,15 @@ struct geoplot_info {
     int *payload_id;
     GtkWidget *payload_combo;
     GtkWidget *palette_combo;
+    GtkWidget *border_check;
+    GtkWidget *height_spin;
     GtkWidget *dlg;
 };
 
 static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
 {
     gchar *payload, *palette;
+    int border, height;
 
     payload = combo_box_get_active_text(gi->payload_combo);
     palette = combo_box_get_active_text(gi->palette_combo);
@@ -6757,6 +6760,12 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
 	    gretl_bundle_set_string(gi->bundle, "palette", palette);
 	}
     }
+
+    border = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gi->border_check));
+    height = gtk_spin_button_get_value(GTK_SPIN_BUTTON(gi->height_spin));
+
+    gretl_bundle_set_int(gi->bundle, "border", border);
+    gretl_bundle_set_int(gi->bundle, "height", height);
 
     g_free(payload);
     g_free(palette);
@@ -6772,12 +6781,14 @@ static void sensitize_palette (GtkComboBox *combo, GtkWidget *targ)
     gtk_widget_set_sensitive(targ, strcmp(s, "none"));
 }
 
-int map_options_dialog (GList *plist, gretl_bundle *b,
+int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 			int *payload_id)
 {
     struct geoplot_info gi = {0};
     GtkWidget *dialog, *combo;
     GtkWidget *vbox, *hbox, *tmp;
+    GtkWidget *bc, *hs;
+    int hcode = MAPHELP;
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -6799,7 +6810,7 @@ int map_options_dialog (GList *plist, gretl_bundle *b,
     gi.payload_combo = combo = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     set_combo_box_strings_from_list(combo, plist);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), selpos);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* palette? */
@@ -6814,7 +6825,25 @@ int map_options_dialog (GList *plist, gretl_bundle *b,
     combo_box_append_text(combo, "green-to-red");
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_set_sensitive(combo, FALSE);
+    gtk_widget_set_sensitive(combo, selpos ? 1 : 0);
+
+    /* border? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    bc = gtk_check_button_new_with_label("Draw border round plot");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bc), TRUE);
+    gi.border_check = bc;
+    gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* height in pixels? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("height in pixels:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    hs = gtk_spin_button_new_with_range(300, 1000, 50);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(hs), 600);
+    gi.height_spin = hs;
+    gtk_box_pack_start(GTK_BOX(hbox), hs, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* inter-connect selectors */
     g_signal_connect(G_OBJECT(gi.payload_combo), "changed",
@@ -6827,7 +6856,11 @@ int map_options_dialog (GList *plist, gretl_bundle *b,
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(geoplot_callback), &gi);
     gtk_widget_grab_default(tmp);
-    gretl_dialog_keep_above(dialog);
+    if (hcode) {
+	context_help_button(hbox, hcode);
+    } else {
+	gretl_dialog_keep_above(dialog);
+    }
 
     gtk_widget_show_all(dialog);
 

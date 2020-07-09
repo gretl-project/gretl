@@ -4469,15 +4469,19 @@ void *dbnomics_probe_series (const char *prov,
 
 /* geomap related functions */
 
-static GList *plausible_payload_list (void)
+static GList *plausible_payload_list (int v, int *selpos)
 {
     GList *list = NULL;
-    int i;
+    int i, j = 1;
 
     for (i=dataset->v-1; i>0; i--) {
 	if (!is_string_valued(dataset, i) &&
 	    !gretl_isconst(dataset->t1, dataset->t2, dataset->Z[i])) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
+	    if (i == v) {
+		*selpos = j;
+	    }
+	    j++;
 	}
     }
 
@@ -4488,25 +4492,29 @@ static GList *plausible_payload_list (void)
     return list;
 }
 
-void map_plot_callback (void)
+void map_plot_callback (int v)
 {
     const char *mapfile = dataset_get_mapfile(dataset);
 
-    if (mapfile != NULL) {
+    if (mapfile == NULL) {
+	errbox(_("No mapfile is present"));
+    } else {
 	gretl_bundle *opts = NULL;
 	GList *payload_list = NULL;
 	int payload_id = 0;
 	double *plx = NULL;
+	int selpos = 0;
 	int err = 0;
 
 	opts = gretl_bundle_new();
 	gretl_bundle_set_int(opts, "gui_auto", 1);
-	payload_list = plausible_payload_list();
+	payload_list = plausible_payload_list(v, &selpos);
 
 	if (payload_list != NULL) {
 	    int resp;
 
-	    resp = map_options_dialog(payload_list, opts, &payload_id);
+	    resp = map_options_dialog(payload_list, selpos,
+				      opts, &payload_id);
 	    if (resp == GRETL_CANCEL) {
 		return;
 	    }
@@ -4528,7 +4536,5 @@ void map_plot_callback (void)
             g_free(mapname);
 	}
 	gretl_bundle_destroy(opts);
-    } else {
-	errbox("No mapfile present");
     }
 }

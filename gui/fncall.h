@@ -98,6 +98,6 @@ void *dbnomics_probe_series (const char *prov,
 			     int limit, int offset,
 			     int *err);
 
-void map_plot_callback (void);
+void map_plot_callback (int v);
 
 #endif /* FNCALL_H */

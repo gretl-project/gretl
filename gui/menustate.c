@@ -636,7 +636,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	do_graph_var(v);
 	break;
     case MNU_MPLOT:
-	map_plot_callback();
+	map_plot_callback(v);
 	break;
     case MNU_FDIST:
 	do_freq_dist();
@@ -786,7 +786,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     } else if (i == MNU_SCATR)  {
 	plot_from_selection(GR_XY);
     } else if (i == MNU_MPLOT) {
-	map_plot_callback();
+	map_plot_callback(0);
     } else if (i == MNU_EDIT)  {
  	show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (i == MNU_CLIPB) {
