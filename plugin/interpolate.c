@@ -212,16 +212,14 @@ static void show_regression_results (const struct gls_info *G,
 	}
     }
 
-    if (G->method == R_MLE || G->method == R_SSR) {
+    if (G->method == R_UROOT) {
+	pprintf(prn, "  %s", _("GLS estimates"));
+	pprintf(prn, " (fernandez) T = %d:\n", T);
+    } else if (G->method == R_MLE || G->method == R_SSR) {
 	pprintf(prn, "  %s", _("Iterated GLS estimates"));
 	pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
     } else if (a == 0) {
-	if (G->method == R_UROOT) {
-	    pprintf(prn, "  %s", _("GLS estimates"));
-	    pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
-	} else {
-	    pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
-	}
+	pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
     } else {
 	pprintf(prn, "  %s", _("GLS estimates"));
 	pprintf(prn, " (%s) T = %d:\n", (G->method == R_FIXED)?
