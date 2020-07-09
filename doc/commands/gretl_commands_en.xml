@@ -8012,6 +8012,17 @@
 
   </command>
 
+  <command name="maps" section="Utilities" label="Drawing maps" context="gui">
+    <description>
+      <para>
+	This dialog allows you to create a map, based on a previously
+	loaded map file (ESRI shapefile or GeoJSON file). You have a
+	fairly limited set of options here, but you can exploit a lot
+	more options by using the <fncref targ="geoplot"/> function.
+      </para>
+    </description>
+  </command>
+
   <command name="markers" section="Dataset" label="Observation markers" context="cli">
 
     <usage>

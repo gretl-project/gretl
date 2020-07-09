@@ -1460,11 +1460,11 @@
 	  The basic <quote>constructor</quote> function for a new
 	  array variable. In using this function you must specify a
 	  type (in plural form) for the array: <lit>strings</lit>,
-	  <lit>matrices</lit>, <lit>bundles</lit> or <lit>lists</lit>.
-	  The return value is an array of the specified type with
-	  <argname>n</argname> elements, each of which is initialized
-	  as <quote>empty</quote> (&eg; zero-length string, null
-	  matrix). Examples of usage:
+	  <lit>matrices</lit>, <lit>bundles</lit>, <lit>lists</lit> or
+	  <lit>arrays</lit>.  The return value is an array of the
+	  specified type with <argname>n</argname> elements, each of
+	  which is initialized as <quote>empty</quote> (&eg;
+	  zero-length string, null matrix). Examples of usage:
 	</para>
 	<code>
 	  strings S = array(5)
@@ -4448,6 +4448,20 @@
 	<para>
 	  Those who find <lit>genseries</lit> useful may also like to
 	  explore <fncref targ="feval"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="geoplot" section="data-utils" output="none">
+      <fnargs>
+	<fnarg type="string">mapfile</fnarg>
+	<fnarg optional="true" type="series">payload</fnarg>
+	<fnarg optional="true" type="bundle">options</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Right now this is just a placeholder, but that should be
+	  fixed before long!
 	</para>
       </description>
     </function>
