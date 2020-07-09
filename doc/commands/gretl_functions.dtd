@@ -48,8 +48,8 @@
             transforms | access | calendar | midas | complex | mpi) "math"
    output  (scalar | series | matrix | smatrix | vector | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int | object |
-            scalar-or-matrix | matrix-or-bundle | bundle | cmatrix |
-	    strings | matrices | string-or-strings | list-or-mat) "series"
+            scalar-or-matrix | matrix-or-bundle | bundle | cmatrix | none |
+            strings | matrices | string-or-strings | list-or-mat) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
