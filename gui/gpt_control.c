@@ -5816,8 +5816,8 @@ static int get_png_size (char *str, png_bounds *bounds)
 	pw <= 0 || ph <= 0 || sc <= 0) {
 	ret = GRETL_PNG_BAD_COMMENTS;
     } else {
-	fprintf(stderr, "Got: size %d x %d (scale %d)\n", pw, ph, sc);
 	pw /= sc; ph /= sc;
+	fprintf(stderr, "Got size: %d x %d\n", pw, ph);
 	if (pw % 2) pw++;
 	if (ph % 2) ph++;
 	bounds->width = pw;
