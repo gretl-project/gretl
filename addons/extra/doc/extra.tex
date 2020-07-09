@@ -33,7 +33,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{June 2020, release 0.7, still growing\ldots }
+\date{July 2020, release 0.7, still growing\ldots }
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -324,12 +324,16 @@ may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterward
 
 \subsection{correspondence}
 
-\ArgRet{\texttt{series x, series y}}{scalar}
+\ArgRet{\texttt{series a, series b}}{scalar}
 
 This function takes two series and establishes if there's a 1-to-1
 relationship between them, in which case it returns 2.  If there's a
-1-to-n relationship, it returns 1. If there's no relationship, it
-returns 0. One of the possible use cases is to check whether two
+1-to-n relationship such that \texttt{a} could be interpreted as a (mathematical)
+function of \texttt{b}, it returns 1. If there's no relationship -- for example several
+different values of series \texttt{a} appear together with some value of \texttt{b} -- it
+returns 0. 
+
+One of the possible use cases is to check whether two
 discrete series encode the same variable. For example, the code:
 \begin{code}
   open grunfeld.gdt
@@ -394,7 +398,7 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
-\item June 2020: (start on) 0.7, add multi\_instrings, add deprecation warning to 
+\item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to 
 bwritejson, efficiency improvement for zeroifclose
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
   finally remove the retired sepstr2arr (use native strsplit instead);
