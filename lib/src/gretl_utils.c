@@ -2468,6 +2468,7 @@ static void dotdir_cleanup (void)
 			       strcmp(fname, ".") &&
 			       strcmp(fname, ".gretl2rc") &&
 			       strcmp(fname, "gretl.pid") &&
+			       strcmp(fname, "addons.idx") &&
 			       strcmp(fname, "mail.dat")) {
 			gretl_remove(fname);
 		    }

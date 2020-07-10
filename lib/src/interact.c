@@ -45,6 +45,7 @@
 #include "csvdata.h"
 #include "gretl_zip.h"
 #include "matrix_extra.h"
+#include "addons_utils.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -1312,6 +1313,8 @@ static int do_pkg_command (const char *action,
 	err = uninstall_function_package(pkgname, OPT_P, prn);
     } else if (!strcmp(action, "query")) {
 	query_package(pkgname, opt, prn);
+    } else if (!strcmp(action, "index") && !strcmp(pkgname, "addons")) {
+	update_addons_index();
     } else {
 	gretl_errmsg_sprintf("pkg: unknown action '%s'", action);
 	err = E_PARSE;
