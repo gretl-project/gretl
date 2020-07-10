@@ -5817,9 +5817,11 @@ static int get_png_size (char *str, png_bounds *bounds)
 	ret = GRETL_PNG_BAD_COMMENTS;
     } else {
 	pw /= sc; ph /= sc;
-	fprintf(stderr, "Got size: %d x %d\n", pw, ph);
 	if (pw % 2) pw++;
 	if (ph % 2) ph++;
+#if 0
+	fprintf(stderr, "Got size: %d x %d\n", pw, ph);
+#endif
 	bounds->width = pw;
 	bounds->height = ph;
     }
