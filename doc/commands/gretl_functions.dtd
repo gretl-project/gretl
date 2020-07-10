@@ -84,7 +84,7 @@
                 lit | emphasis | i | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
                 footnote | argname | sub | sup | cite | seelist | 
-                by | url | cmd | mnu)*>
+                by | url | cmd | mnu | doc)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
 >
@@ -183,6 +183,7 @@
 <!ELEMENT math     (#PCDATA)>
 <!ELEMENT sub      (#PCDATA)>
 <!ELEMENT sup      (#PCDATA)>
+<!ELEMENT doc      (#PCDATA)>
 
 <!ATTLIST repl
    quote (true | false) "false"

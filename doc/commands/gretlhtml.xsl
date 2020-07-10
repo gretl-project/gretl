@@ -593,6 +593,12 @@
   <xsl:text>&lt;/i&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="doc">
+  <xsl:text>&lt;tt&gt;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&lt;/tt&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="cite">
   <xsl:text>&lt;a href="./biblio.html#</xsl:text>
   <xsl:value-of select="@key"/>

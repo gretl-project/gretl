@@ -476,6 +476,18 @@
       </description>
     </function>
 
+    <function name="$mapfile" section="access" output="string">
+      <description>
+	<para>
+	  If data from a GeoJSON file or ESRI shapefile have been
+	  loaded, returns the name of the file that should be opened
+	  to obtain the map polygons, otherwise returns an empty
+	  string.  This is designed for use with the <fncref
+	  targ="geoplot"/> function.
+	</para>
+      </description>
+    </function>
+
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
@@ -4460,8 +4472,19 @@
       </fnargs>
       <description>
 	<para>
-	  Right now this is just a placeholder, but that should be
-	  fixed before long!
+	  Calls for production of a map, when suitable map data are
+	  present. In most cases the <argname>mapfile</argname>
+	  argument should be given as <fncref label="\$mapfile"
+	  targ="dmapfile"/>, an accessor that retrieves the name of
+	  the relevant GeoJSON file or ESRI shapefile. The optional
+	  <argname>payload</argname> argument is used to give the name
+	  of a series with which to colorize the regions of the
+	  map. And the final argument enables you to set numerous
+	  options.
+	</para>
+	<para>
+	  See the geoplot documentation, <doc>geoplot.pdf</doc>,
+	  for full details and examples.
 	</para>
       </description>
     </function>
