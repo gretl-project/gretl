@@ -1283,8 +1283,9 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
 	}
 	DDp->val[sNm-1] = p->val[sNm-1] - p->val[sNm-2];
 	memcpy(DDp->val + sNm, y0->val, N * sizeof(double));
-	/* Multiply M into (D'Dp | y0) */
+	/* multiply M into (D'Dp | y0) */
 	gretl_matrix_multiply(M, DDp, tmp);
+	/* and extract the portion we want */
 	memcpy(y->val, tmp->val, sNm * sizeof (double));
     } else if (!*err) {
 	/* extract the relevant portion of M-inverse and
