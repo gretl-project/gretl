@@ -30,6 +30,8 @@
 #include "selector.h"
 #include "gpt_control.h"
 #include "tabwin.h"
+#include "build.h"
+#include "addons_utils.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -2018,6 +2020,8 @@ int write_rc (gretlopt opt)
     }
 
     fprintf(fp, "# gretl config file\n");
+    fputs("# build date\n", fp);
+    fprintf(fp, "build_date = %s\n", BUILD_DATE);
 
     for (i=0; rc_vars[i].var != NULL; i++) {
 	rcvar = &rc_vars[i];
@@ -2493,6 +2497,8 @@ static int read_gretlrc (void)
 		if (*linevar != '\0') {
 		    if (!strcmp(key, "userdir")) {
 			find_and_set_rc_var("workdir", linevar);
+		    } else if (!strcmp(key, "build_date")) {
+			maybe_update_addons_index(linevar);
 		    } else {
 			find_and_set_rc_var(key, linevar);
 		    }

@@ -1612,6 +1612,8 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	strncat(tagname, text, TAGLEN-1);
 	if (p != NULL) {
 	    show = g_strdup(p + 1);
+	} else {
+	    show = g_strdup(text); /* OK? */
 	}
     } else if (page == BIB_PAGE) {
 	char *p = strrchr(text, ';');
@@ -1880,7 +1882,12 @@ static void open_pdf_file (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &name, NULL);
 
     if (name != NULL) {
-	gretl_show_pdf(name, NULL);
+	if (strchr(name, '/') == NULL && strchr(name, '\\') == NULL) {
+	    /* no path provided: documentation for addon? */
+	    dummy_call();
+	} else {
+	    gretl_show_pdf(name, NULL);
+	}
 	g_free(name);
     }
 }

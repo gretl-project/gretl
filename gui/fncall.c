@@ -30,6 +30,7 @@
 #include "gretl_typemap.h"
 #include "matrix_extra.h"
 #include "gretl_zip.h"
+#include "addons_utils.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -2786,15 +2787,18 @@ int download_addon (const char *pkgname, char **local_path)
 	}
 	if (err) {
 	    gui_errmsg(err);
-	} else if (local_path != NULL) {
-	    /* return local path to gfn file */
-	    gchar *tmp;
+	} else {
+	    update_addons_index();
+	    if (local_path != NULL) {
+		/* fill local path to gfn file */
+		gchar *tmp;
 
-	    tmp = g_build_filename(path, pkgname, pkgname, NULL);
-	    *local_path = calloc(strlen(tmp) + 5, 1);
-	    sprintf(*local_path, "%s.gfn", tmp);
-	    g_free(tmp);
-	    fprintf(stderr, "local_path: '%s'\n", *local_path);
+		tmp = g_build_filename(path, pkgname, pkgname, NULL);
+		*local_path = calloc(strlen(tmp) + 5, 1);
+		sprintf(*local_path, "%s.gfn", tmp);
+		g_free(tmp);
+		fprintf(stderr, "local_path: '%s'\n", *local_path);
+	    }
 	}
 	g_free(fullname);
     }
@@ -3066,23 +3070,6 @@ int package_is_available_for_menu (const gchar *pkgname,
     return ret;
 }
 
-int is_official_addon (const char *pkgname)
-{
-    /* All of the following are available in zip format
-       from sourceforge */
-    if (!strcmp(pkgname, "SVAR") ||
-	!strcmp(pkgname, "gig") ||
-	!strcmp(pkgname, "HIP") ||
-	!strcmp(pkgname, "ivpanel") ||
-	!strcmp(pkgname, "dbnomics") ||
-	!strcmp(pkgname, "extra") ||
-	!strcmp(pkgname, "geoplot")) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 /* Callback for a menu item representing a function package whose
    name is attached to @action. We first see if we can find the full
    path to the corresponding gfn file; if so we initiate a GUI call to
@@ -3105,7 +3092,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	    gretl_function_package_get_path(pkgname, gpi_ptype(gpi));
     }
 
-    if (gpi->filepath == NULL && is_official_addon(pkgname)) {
+    if (gpi->filepath == NULL && is_gretl_addon(pkgname)) {
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
 				       "up to date.\nWould you like to try "
 				       "downloading it now?"), pkgname);
