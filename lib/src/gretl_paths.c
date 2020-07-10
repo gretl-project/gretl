@@ -22,6 +22,7 @@
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 #include "texprint.h"
+#include "addons_utils.h"
 
 #if defined(USE_RLIB) || defined(HAVE_MPI)
 # include "gretl_foreign.h"
@@ -3789,6 +3790,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	    set_garch_robust_vcv(val);
 	} else if (!strcmp(key, "graph_theme")) {
 	    *gptheme = g_strdup(val);
+	} else if (!strcmp(key, "build_date")) {
+	    maybe_update_addons_index(val);
 	}
     }
 
