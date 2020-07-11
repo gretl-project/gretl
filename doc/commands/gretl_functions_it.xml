@@ -7663,7 +7663,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7676,6 +7676,16 @@
 	  ripetuti ciclicamente; in caso contrario, se 
 	  <argname>X</argname> ha più elementi ne vengono usati solo i 
 	  primi <math>k</math>.
+	</para>
+	<para>
+	  Se l'argomento <argname>c</argname> viene omesso, il default
+	  è 1 se <argname>X</argname> è <by r="1" c="1"/>; in caso
+	  contrario, <argname>c</argname> sarà uguale a
+	  <math>N</math>/<argname>r</argname>, dove <math>N</math> è
+	  il numero totale di elementi in <argname>X</argname>. In
+	  quest'ultimo caso, la funzione produce un errore se
+	  <math>N</math> non è un multiplo intero di
+	  <argname>r</argname>.
 	</para>
 	<para>
 	  <seelist>
