@@ -4479,12 +4479,13 @@
 	  that retrieves the name of the relevant GeoJSON file or ESRI
 	  shapefile. The optional <argname>payload</argname> argument
 	  is used to give the name of a series with which to colorize
-	  the regions of the map. And the final argument enables you
-	  to set numerous options.
+	  the regions of the map. And the final bundle argument
+	  enables you to set numerous options.
 	</para>
 	<para>
-	  See the geoplot documentation, <doc>geoplot.pdf</doc>,
-	  for full details and examples.
+	  See the geoplot documentation, <doc>geoplot.pdf</doc>, for
+	  full details and examples. This explains all the settings
+	  configurable via the <argname>options</argname> argument.
 	</para>
       </description>
     </function>

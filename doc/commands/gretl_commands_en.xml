@@ -1743,7 +1743,7 @@
 	<option>
 	  <flag>--seasonals</flag>
 	  <effect>include seasonal dummy variables</effect>
-	</option>	
+	</option>
 	<option>
 	  <flag>--skip-df</flag>
 	  <effect>no DF tests on individual variables</effect>
@@ -2519,7 +2519,7 @@
 	<option>
 	  <flag>--no-align</flag>
 	  <effect>ODBC-specific, see below</effect>
-	</option>	
+	</option>
       </options>
     </usage>
 
@@ -2876,7 +2876,7 @@
 	dataset).
       </para>
     </description>
-  </command>  
+  </command>
 
   <command name="debug" section="Programming" context="cli"
     label="Debugging">
@@ -2926,7 +2926,7 @@
 	<option>
 	  <flag>--force</flag>
 	  <effect>see below</effect>
-	</option>	
+	</option>
       </options>
     </usage>
 
@@ -8015,10 +8015,52 @@
   <command name="maps" section="Utilities" label="Drawing maps" context="gui">
     <description>
       <para>
-	This dialog allows you to create a map, based on a previously
-	loaded map file (ESRI shapefile or GeoJSON file). You have a
-	fairly limited set of options here, but you can exploit a lot
-	more options by using the <fncref targ="geoplot"/> function.
+	This dialog allows you to create a map, based on previously
+	loaded geographical data (in the form of a GeoJSON file or
+	ESRI shapefile). The options are as follows.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    payload: this is the series (if any) by which regions of
+	    the map should be colored. In the absence of a
+	    <quote>payload</quote> only the map outlines will be
+	    shown. If the current dataset contains one or more series
+	    that look like possible candidates (on a simple heuristic)
+	    they will be shown in the drop-down selector.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    palette: this enables selection of the set of colors for
+	    representing the payload, and so is relevant only if a
+	    payload is selected.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    border: should a rectangular border be drawn around the
+	    map? By default, yes, but you can remove it.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    log scale: in case a payload is selected, should it be
+	    represented on a log scale? By default, no.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    height: this controls the size of the map image. Given the
+	    height, the width is calculated based on the longitude
+	    range of the map.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Please note, you can gain a <i>lot</i> more control over the
+	details of the map by calling the <fncref targ="geoplot"/>
+	function.
       </para>
     </description>
   </command>
@@ -10806,7 +10848,7 @@
     <gui-access>
       <menu-path>/File/Function packages/On server</menu-path>
     </gui-access>
-  </command>  
+  </command>
 
   <command name="pkg-depends" section="Programming"
 	   label="Dependencies" context="gui">
@@ -11567,7 +11609,7 @@
     <demos>
 	  <demo>mrw.inp</demo>
 	  <demo>restrict.inp</demo>
-	</demos>  
+	</demos>
 	</examples>
     </usage>
 
@@ -14488,7 +14530,7 @@
       <para>
 	The table of statistics produced by <lit>summary</lit> can be
 	retrieved in matrix form via the <fncref targ="$result"/>
-	accessor. 
+	accessor.
       </para>
     </description>
 
@@ -15645,12 +15687,12 @@
       </para>
 
 	  <para context="cli">
-	For weighted least squares estimation applied to panel data and 
-	based on the unit specific error variances please see the 
-	<cmdref targ="panel"/> command with the <lit>--unit-weights</lit> 
-	option.  
+	For weighted least squares estimation applied to panel data and
+	based on the unit specific error variances please see the
+	<cmdref targ="panel"/> command with the <lit>--unit-weights</lit>
+	option.
 	  </para>
-	  
+
       <para context="gui">
 	Let "wtvar" denote the variable selected in the "Weight variable"
 	box.  An OLS regression is run, where the dependent variable is
@@ -15932,7 +15974,7 @@
 	column totals and having a probability less than or equal to that
 	of the observed table.
       </para>
-      
+
       <subhead>The bivariate case</subhead>
       <para>
 	In the simple case of a bivariate cross-tabulation the
