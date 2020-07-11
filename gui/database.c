@@ -28,6 +28,7 @@
 #include "gretl_untar.h"
 #include "gretl_zip.h"
 #include "gretl_string_table.h"
+#include "addons_utils.h"
 #include "csvdata.h"
 #include "menustate.h"
 #include "treeutils.h"
@@ -3723,7 +3724,8 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     return err;
 }
 
-static int get_addon_info (xmlNodePtr node, xmlDocPtr doc, char **S)
+static int get_remote_addon_info (xmlNodePtr node, xmlDocPtr doc,
+				  char **S, const char *minvstr)
 {
     xmlNodePtr cur = node->xmlChildrenNode;
     int err = 0;
@@ -3736,17 +3738,17 @@ static int get_addon_info (xmlNodePtr node, xmlDocPtr doc, char **S)
 	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &S[4]);
 	}
-
 	cur = cur->next;
     }
 
     if (S[1] == NULL || S[2] == NULL || S[4] == NULL) {
 	err = E_DATA;
     } else {
-	char *path = gretl_function_package_get_path(S[0], PKG_SUBDIR);
+	char *path = gretl_addon_get_path(S[0]);
+	int minver = gretl_version_number(minvstr);
 
 	if (path != NULL) {
-	    S[3] = installed_addon_status_string(path, S[1]);
+	    S[3] = installed_addon_status_string(path, S[1], minver);
 	    free(path);
 	} else {
 	    S[3] = gretl_strdup(_("Not installed"));
@@ -3791,6 +3793,7 @@ gint populate_remote_addons_list (windata_t *vwin)
 	GtkListStore *store;
 	GtkTreeIter iter;
 	char *S[5] = { NULL };
+	char *minvstr = NULL;
 	int i;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model
@@ -3802,10 +3805,11 @@ gint populate_remote_addons_list (windata_t *vwin)
 	while (node != NULL && !err) {
 	    if (!xmlStrcmp(node->name, (XUC) "gretl-addon")) {
 		gretl_xml_get_prop_as_string(node, "name", &S[0]);
+		gretl_xml_get_prop_as_string(node, "minver", &minvstr);
 		if (S[0] == NULL) {
 		    err = E_DATA;
 		} else {
-		    err = get_addon_info(node, doc, S);
+		    err = get_remote_addon_info(node, doc, S, minvstr);
 		    if (!err) {
 			gtk_list_store_append(store, &iter);
 			gtk_list_store_set(store, &iter,

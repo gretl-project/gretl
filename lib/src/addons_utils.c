@@ -32,16 +32,27 @@ static const char *addon_names[] = {
 };
 
 /* Determine if @pkgname is the name of an addon:
-   @pkgname should be given without suffix.
+   @pkgname may be given with or without the ".gfn"
+   suffix.
 */
 
 int is_gretl_addon (const char *pkgname)
 {
     int i;
 
-    for (i=0; addon_names[i] != NULL; i++) {
-	if (!strcmp(pkgname, addon_names[i])) {
-	    return 1;
+    if (has_suffix(pkgname, ".gfn")) {
+	int n = strlen(pkgname) - 4;
+
+	for (i=0; addon_names[i] != NULL; i++) {
+	    if (!strncmp(pkgname, addon_names[i], n)) {
+		return 1;
+	    }
+	}
+    } else {
+	for (i=0; addon_names[i] != NULL; i++) {
+	    if (!strcmp(pkgname, addon_names[i])) {
+		return 1;
+	    }
 	}
     }
 
@@ -54,7 +65,7 @@ const char **get_addon_names (int *n)
 {
     if (n != NULL) {
 	int i;
-	
+
 	*n = 0;
 	for (i=0; addon_names[i] != NULL; i++) {
 	    *n = *n + 1;
@@ -193,7 +204,7 @@ int maybe_update_addons_index (const char *prev_build)
     return 0;
 }
 
-char *get_addon_path (const char *addon)
+char *gretl_addon_get_path (const char *addon)
 {
     gchar *idxname = gretl_make_dotpath("addons.idx");
     FILE *fp = gretl_fopen(idxname, "rb");
@@ -235,7 +246,7 @@ char *get_addon_path (const char *addon)
 char *get_addon_examples_dir (const char *addon)
 {
     char epath[MAXLEN];
-    char *s, *path = get_addon_path(addon);
+    char *s, *path = gretl_addon_get_path(addon);
     char *ret = NULL;
 
     if (path != NULL) {

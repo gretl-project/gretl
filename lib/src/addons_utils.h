@@ -27,7 +27,7 @@ int update_addons_index (void);
 
 int maybe_update_addons_index (const char *prev_build);
 
-char *get_addon_path (const char *addon);
+char *gretl_addon_get_path (const char *addon);
 
 char *get_addon_examples_dir (const char *addon);
 

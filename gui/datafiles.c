@@ -40,6 +40,7 @@
 
 #include "gretl_xml.h"
 #include "gretl_func.h"
+#include "addons_utils.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1213,23 +1214,17 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 	int done = 0;
 
 	if (status != NULL) {
-	    char *path = gretl_function_package_get_path(pkgname, PKG_SUBDIR);
-	    gchar *ver = NULL, *date = NULL;
-	    fnpkg *pkg = NULL;
-	    int err = 0;
+	    char *path = gretl_addon_get_path(pkgname);
+	    char *ver = NULL, *date = NULL;
 
 	    if (path != NULL && !strcmp(status, _("Not up to date"))) {
-		/* FIXME just get header here? */
-		pkg = get_function_package_by_filename(path, &err);
-		err = function_package_get_properties(pkg, "version", &ver,
-						      "date", &date,
-						      NULL);
-		if (!err) {
+		ver = get_addon_version(path, &date);
+		if (ver != NULL && data != NULL) {
 		    localver = g_strdup_printf("Installed version is %s (%s)",
 					       ver, date);
-		    g_free(ver);
-		    g_free(date);
 		}
+		free(ver);
+		free(date);
 	    } else if (path != NULL && !strcmp(status, _("Up to date")) &&
 		       display_function_package_data(pkgname, path, VIEW_PKG_INFO)) {
 		done = 1;

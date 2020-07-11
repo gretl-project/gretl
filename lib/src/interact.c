@@ -2677,7 +2677,7 @@ static int install_function_package (const char *pkgname,
     }
 #endif
 
-    if (!local && package_is_addon(pkgname)) {
+    if (!local && is_gretl_addon(pkgname)) {
 	addon = 1;
 	filetype = 2;
 	if (strchr(pkgname, '.') == NULL) {

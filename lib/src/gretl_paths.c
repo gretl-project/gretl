@@ -1383,60 +1383,6 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 # define NAME_MAX 255
 #endif
 
-/* Search relevant paths for an addon, trying to ensure we
-   pick up the most recent version in case there are any
-   duplicates.
-*/
-
-char *gretl_addon_get_path (const char *name)
-{
-    char *ret = NULL;
-    char path[FILENAME_MAX];
-    double version, maxver = 0;
-    char **dirs;
-    int i, n_dirs, err;
-
-    *path = '\0';
-
-    dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<n_dirs; i++) {
-	const char *fndir = dirs[i];
-	const char *dname;
-	GDir *dir;
-	int found = 0;
-
-	if ((dir = gretl_opendir(fndir)) == NULL) {
-	    continue;
-	}
-
-	while ((dname = g_dir_read_name(dir)) != NULL && !found) {
-	    if (!strcmp(dname, name)) {
-		gretl_build_path(path, fndir, dname, dname, NULL);
-		strcat(path, ".gfn");
-		err = gretl_test_fopen(path, "r");
-		if (!err) {
-		    version = gfn_file_get_version(path);
-		    if (!na(version) && version > maxver) {
-			maxver = version;
-			free(ret);
-			ret = gretl_strdup(path);
-		    }
-		}
-		found = 1;
-	    }
-	}
-
-	g_dir_close(dir);
-    }
-
-    gretl_pop_c_numeric_locale();
-    strings_array_free(dirs, n_dirs);
-
-    return ret;
-}
-
 /**
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
@@ -1462,12 +1408,10 @@ char *gretl_function_package_get_path (const char *name,
     int err, found = 0;
     int i, n_dirs;
 
-    if (type == PKG_ALL && package_is_addon(name)) {
-	type = PKG_SUBDIR;
-    }
-
-    if (type == PKG_SUBDIR) {
-	return gretl_addon_get_path(name);
+    if (type == PKG_ALL || type == PKG_SUBDIR) {
+	if (is_gretl_addon(name)) {
+	    return gretl_addon_get_path(name);
+	}
     }
 
     *path = '\0';

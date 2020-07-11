@@ -4139,50 +4139,43 @@ int gui_function_pkg_query_register (const char *fname,
 }
 
 char *installed_addon_status_string (const char *path,
-				     const char *svstr)
+				     const char *svstr,
+				     int minver)
 {
-    fnpkg *pkg;
-    int err = 0;
+    char *ivstr = NULL;
     char *ret = NULL;
 
-    pkg = get_function_package_by_filename(path, &err);
+    /* @ivstr = installed package version string
+       @svstr = package version string from server
+       @minver = gretl version required for pkg on server
+    */
 
-    if (pkg != NULL) {
+    ivstr = get_addon_version(path, NULL);
+
+    if (ivstr != NULL) {
+	double svnum = dot_atof(svstr);
+	double ivnum = dot_atof(ivstr);
 	int current = 0;
 	int update_ok = 0;
 	char reqstr[8] = {0};
-	gchar *ivstr = NULL;
-	int minver = 0;
 
-	/* @ivstr = installed package version string
-	   @svstr = package version string from server
-	*/
-	err = function_package_get_properties(pkg,
-					      "version", &ivstr,
-					      "min-version", &minver,
-					      NULL);
-	if (!err) {
-	    double svnum = dot_atof(svstr);
-	    double ivnum = dot_atof(ivstr);
+	current = ivnum >= svnum;
 
-	    current = ivnum >= svnum;
-	    g_free(ivstr);
-
-	    if (!current) {
-		/* Not current, but can the addon be updated?  It may
-		   be that the running instance of gretl is too old.
-		*/
-		update_ok = package_version_ok(minver, reqstr);
-	    }
-
-	    if (current) {
-		ret = gretl_strdup(_("Up to date"));
-	    } else if (update_ok) {
-		ret = gretl_strdup(_("Not up to date"));
-	    } else if (*reqstr != '\0') {
-		ret = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
-	    }
+	if (!current) {
+	    /* Not current, but can the addon be updated?  It may
+	       be that the running instance of gretl is too old.
+	    */
+	    update_ok = package_version_ok(minver, reqstr);
 	}
+
+	if (current) {
+	    ret = gretl_strdup(_("Up to date"));
+	} else if (update_ok) {
+	    ret = gretl_strdup(_("Not up to date"));
+	} else if (*reqstr != '\0') {
+	    ret = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
+	}
+	free(ivstr);
     }
 
     if (ret == NULL) {

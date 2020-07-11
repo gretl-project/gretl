@@ -2772,34 +2772,6 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     return 0;
 }
 
-int package_is_addon (const char *name)
-{
-    char *myname = NULL;
-    int ret = 0;
-
-    if (strchr(name, '.') != NULL) {
-	char *p;
-
-	myname = gretl_strdup(name);
-	p = strchr(myname, '.');
-	*p = '\0';
-	name = myname;
-    }
-
-    if (!strcmp(name, "gig") ||
-	!strcmp(name, "SVAR") ||
-	!strcmp(name, "HIP") ||
-	!strcmp(name, "ivpanel") ||
-	!strcmp(name, "dbnomics") ||
-	!strcmp(name, "extra")) {
-	ret = 1;
-    }
-
-    free(myname);
-
-    return ret;
-}
-
 static int package_write_index (fnpkg *pkg, PRN *inprn)
 {
     PRN *prn;
