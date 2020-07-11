@@ -24,7 +24,7 @@
 #include "build.h"
 #include "gretl_xml.h"
 
-/* Note: here's the canonical listing of gretl addons */
+/* Note: here's the canonical listing of gretl addons. */
 
 static const char *addon_names[] = {
     "SVAR", "gig", "HIP", "ivpanel",
@@ -59,7 +59,10 @@ int is_gretl_addon (const char *pkgname)
     return 0;
 }
 
-/* Return a NULL-terminated array of addons names. */
+/* Return a NULL-terminated array of addons names;
+   optionally, if @n is non-NULL, supply the number
+   of addons.
+*/
 
 const char **get_addon_names (int *n)
 {
@@ -136,6 +139,21 @@ static char *get_user_path (char *targ, const char *pgkname,
 #endif
 }
 
+/* Build a plain text index of the installed addons, holding name,
+   version and full path, one addon per line. We allow for the fact
+   that a given addon might exist both in the "system" location and in
+   the user's personal filespace.  (This may happen if a user lacking
+   write-permission for the system location installs or updates an
+   addon.) In the case of such duplicates we determine which version
+   is newer and enter its details in the index file.
+
+   This update routine is called automatically when (a) a user
+   installs an addon (FIXME: is this true for all ways an addon can be
+   installed?) or (b) gretl figures out that it has been updated (new
+   release or snapshot). It can also be called explicitly by the user,
+   via the command "pkg index addons".
+*/
+
 int update_addons_index (void)
 {
     gchar *idxname = gretl_make_dotpath("addons.idx");
@@ -155,19 +173,30 @@ int update_addons_index (void)
     }
 
     for (i=0; addon_names[i] != NULL; i++) {
+	/* construct the gfn name */
 	sprintf(gfnname, "%s.gfn", addon_names[i]);
+
+	/* build the "system" path for the addon */
 	gretl_build_path(syspath, gretl_home(), "functions",
 			 addon_names[i], gfnname, NULL);
+	/* and try to get its version */
 	pkgver1 = get_addon_version(syspath, NULL);
 	v1 = (pkgver1 != NULL)? dot_atof(pkgver1) : 0;
+
+	/* build expected "userspace" path for the addon */
 	get_user_path(usrpath, addon_names[i], gfnname);
+	/* and try to get its version */
 	pkgver2 = get_addon_version(usrpath, NULL);
 	v2 = (pkgver2 != NULL)? dot_atof(pkgver2) : 0;
+
 	if (v1 > v2) {
+	    /* system version is newer (or the only one) */
 	    fprintf(fp, "%s %s %s\n", addon_names[i], pkgver1, syspath);
 	} else if (v2 > 0) {
+	    /* user version is newer (or the only one) */
 	    fprintf(fp, "%s %s %s\n", addon_names[i], pkgver2, usrpath);
 	}
+	/* else: the addon in question is not installed */
 	free(pkgver1);
 	free(pkgver2);
     }
@@ -177,6 +206,12 @@ int update_addons_index (void)
 
     return 0;
 }
+
+/* Determine whether gretl has been updated since it was
+   last run. We do this by comparing the build_date string
+   in the program itself with that previously saved in the
+   gretl config file.
+*/
 
 static int gretl_is_updated (const char *prev_build)
 {
@@ -203,6 +238,12 @@ int maybe_update_addons_index (const char *prev_build)
     }
     return 0;
 }
+
+/* Get the full path to the .gfn file for a given
+   addon. We first try for this via the simple plain
+   text index file addons.idx. If that's not found
+   we construct the index from scratch.
+*/
 
 char *gretl_addon_get_path (const char *addon)
 {
@@ -243,6 +284,11 @@ char *gretl_addon_get_path (const char *addon)
     return ret;
 }
 
+/* Retrieve the path to an addon's "examples" sub-dir.
+   Note that it's not required that every addon has
+   such (though maybe it should be?).
+*/
+
 char *get_addon_examples_dir (const char *addon)
 {
     char epath[MAXLEN];
@@ -264,12 +310,18 @@ char *get_addon_examples_dir (const char *addon)
     return ret;
 }
 
+/* Retrieve the path to an addon's PDF documentation,
+   which is required of every addon. We accept the
+   @addon argument with or without the ".pdf" suffix.
+*/
+
 char *get_addon_pdf_path (const char *addon)
 {
-    char *s, *path;
+    char *s, *path = NULL;
     char *ret = NULL;
 
     if (has_suffix(addon, ".pdf")) {
+	/* strip off the suffix */
 	gchar *tmp = g_strndup(addon, strlen(addon) - 4);
 
 	path = gretl_addon_get_path(tmp);
@@ -279,13 +331,19 @@ char *get_addon_pdf_path (const char *addon)
     }
 
     if (path != NULL && has_suffix(path, ".gfn")) {
+	/* should be the case */
 	s = strrchr(path, '.');
 	*s = '\0';
 	strcpy(s, ".pdf");
-	ret = path;
-    } else {
-	free(path);
     }
+
+    if (path != NULL && gretl_stat(path, NULL) == 0) {
+	/* success */
+	ret = path;
+	path = NULL;
+    }
+
+    free(path);
 
     return ret;
 }
