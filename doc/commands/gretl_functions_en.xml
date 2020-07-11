@@ -7823,7 +7823,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7835,6 +7835,15 @@
 	  elements are repeated cyclically; otherwise, if
 	  <argname>X</argname> has more elements, only the first
 	  <math>k</math> are used.
+	</para>
+	<para>
+	  If the third argument is omitted, <argname>c</argname>
+	  defaults to 1 if <argname>X</argname> is <by r="1" c="1"/>
+	  otherwise to <math>N</math>/<argname>r</argname> where
+	  <math>N</math> is the total number of elements in
+	  <argname>X</argname>. However, if <math>N</math> is not an
+	  integer multiple of <argname>r</argname> an error is
+	  flagged.
 	</para>
 	<para>
 	  <seelist>
