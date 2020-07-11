@@ -1255,9 +1255,14 @@ int get_imported_data (char *fname, int ftype, int append)
 		delete_from_filelist(FILE_LIST_DATA, fname);
 	    }
 	} else {
+	    /* Do we want to be showing this? There's no error
+	       but it might look sort of scary!
+	    */
+#if 0 /* masked out 2020-07-11 */
 	    if (buf != NULL && *buf != '\0') {
 		infobox(buf);
 	    }
+#endif
 	    finalize_data_open(fname, ftype, 1, append, plist);
 	}
     }
