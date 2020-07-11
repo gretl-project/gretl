@@ -10729,6 +10729,10 @@
 	  <flag>--quiet</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
@@ -10743,8 +10747,8 @@
 	This command provides a means of installing, unloading,
 	querying or deleting gretl function packages. The
 	<repl>action</repl> argument must be one of
-	<lit>install</lit>, <lit>query</lit>, <lit>unload</lit> or
-	<lit>remove</lit>.
+	<lit>install</lit>, <lit>query</lit>, <lit>unload</lit>,
+	<lit>remove</lit> or <lit>index</lit>.
       </para>
       <para>
 	<lit>install</lit>: In the most basic form, with no option
@@ -10783,6 +10787,20 @@
 	<lit>unload</lit> and in addition deletes the file(s)
 	associated with the package from disk.
       </para>
+      <para>
+	<lit>index</lit>: is a special case in which
+	<repl>pkgname</repl> must be replaced by the keyword
+	<quote><lit>addons</lit></quote>: the effect is to update the
+	index of the standard packages known as addons. Such updating
+	is performed automatically from time to time but in some cases
+	a manual update may be useful. In this case the
+	<opt>verbose</opt> flag produces a printout of where gretl has
+	searched and what it has found. To be clear, here's the way to
+	get full indexing output:
+      </para>
+      <code>
+	pkg index addons --verbose
+      </code>
     </description>
 
     <gui-access>

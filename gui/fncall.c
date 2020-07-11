@@ -2788,7 +2788,7 @@ int download_addon (const char *pkgname, char **local_path)
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    update_addons_index();
+	    update_addons_index(NULL);
 	    if (local_path != NULL) {
 		/* fill local path to gfn file */
 		gchar *tmp;

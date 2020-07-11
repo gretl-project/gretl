@@ -1314,7 +1314,7 @@ static int do_pkg_command (const char *action,
     } else if (!strcmp(action, "query")) {
 	query_package(pkgname, opt, prn);
     } else if (!strcmp(action, "index") && !strcmp(pkgname, "addons")) {
-	update_addons_index();
+	update_addons_index((opt & OPT_V)? prn : NULL);
     } else {
 	gretl_errmsg_sprintf("pkg: unknown action '%s'", action);
 	err = E_PARSE;

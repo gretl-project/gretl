@@ -508,6 +508,7 @@ struct gretl_option gretl_opts[] = {
     { PERGM,    OPT_D, "degrees", 0 },
     { PERGM,    OPT_U, "plot", 2 },
     { PKG,      OPT_L, "local", 0 },
+    { PKG,      OPT_V, "verbose", 0 },
     { PLOT,     OPT_C, "control", 0 },
     { PLOT,     OPT_O, "with-lines", 1 },
     { PLOT,     OPT_F, "fit", 2 },

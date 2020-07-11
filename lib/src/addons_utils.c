@@ -152,9 +152,12 @@ static char *get_user_path (char *targ, const char *pgkname,
    installed?) or (b) gretl figures out that it has been updated (new
    release or snapshot). It can also be called explicitly by the user,
    via the command "pkg index addons".
+
+   if @prn is non-NULL verbose output will be printed, otherwise the
+   function operates silently.
 */
 
-int update_addons_index (void)
+int update_addons_index (PRN *prn)
 {
     gchar *idxname = gretl_make_dotpath("addons.idx");
     char *pkgver1 = NULL;
@@ -162,6 +165,7 @@ int update_addons_index (void)
     char syspath[MAXLEN];
     char usrpath[MAXLEN];
     char gfnname[64];
+    int verbose = (prn != NULL);
     double v1, v2;
     FILE *fp;
     int i;
@@ -173,6 +177,9 @@ int update_addons_index (void)
     }
 
     for (i=0; addon_names[i] != NULL; i++) {
+	if (verbose) {
+	    pprintf(prn, "check for %s\n", addon_names[i]);
+	}
 	/* construct the gfn name */
 	sprintf(gfnname, "%s.gfn", addon_names[i]);
 
@@ -182,12 +189,27 @@ int update_addons_index (void)
 	/* and try to get its version */
 	pkgver1 = get_addon_version(syspath, NULL);
 	v1 = (pkgver1 != NULL)? dot_atof(pkgver1) : 0;
-
+	if (verbose) {
+	    pprintf(prn, " try '%s'\n", syspath);
+	    if (v1 > 0) {
+		pprintf(prn, "  found version %s\n", pkgver1);
+	    } else {
+		pputs(prn, "  not found\n");
+	    }
+	}
 	/* build expected "userspace" path for the addon */
 	get_user_path(usrpath, addon_names[i], gfnname);
 	/* and try to get its version */
 	pkgver2 = get_addon_version(usrpath, NULL);
 	v2 = (pkgver2 != NULL)? dot_atof(pkgver2) : 0;
+	if (verbose) {
+	    pprintf(prn, " try '%s'\n", usrpath);
+	    if (v2 > 0) {
+		pprintf(prn, "  found version %s\n", pkgver2);
+	    } else {
+		pputs(prn, "  not found\n");
+	    }
+	}
 
 	if (v1 > v2) {
 	    /* system version is newer (or the only one) */
@@ -196,7 +218,10 @@ int update_addons_index (void)
 	    /* user version is newer (or the only one) */
 	    fprintf(fp, "%s %s %s\n", addon_names[i], pkgver2, usrpath);
 	}
-	/* else: the addon in question is not installed */
+	if (verbose && (v1 > 0 || v2 > 0)) {
+	    pprintf(prn, " indexed version %s\n", v1 > v2 ?
+		    pkgver1 : pkgver2);
+	}
 	free(pkgver1);
 	free(pkgver2);
     }
@@ -234,7 +259,7 @@ static int gretl_is_updated (const char *prev_build)
 int maybe_update_addons_index (const char *prev_build)
 {
     if (gretl_is_updated(prev_build)) {
-	return update_addons_index();
+	return update_addons_index(NULL);
     }
     return 0;
 }
@@ -252,7 +277,7 @@ char *gretl_addon_get_path (const char *addon)
     char *ret = NULL;
 
     if (fp == NULL) {
-	update_addons_index();
+	update_addons_index(NULL);
 	fp = gretl_fopen(idxname, "rb");
     }
 

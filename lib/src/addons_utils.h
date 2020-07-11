@@ -23,7 +23,7 @@ const char **get_addon_names (int *n);
 
 char *get_addon_version (const char *fname, char **date);
 
-int update_addons_index (void);
+int update_addons_index (PRN *prn);
 
 int maybe_update_addons_index (const char *prev_build);
 

@@ -6791,7 +6791,6 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     GtkWidget *dialog, *combo;
     GtkWidget *vbox, *hbox, *tmp;
     GtkWidget *bc, *ls, *hs;
-    int hcode = MAPHELP;
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -6867,11 +6866,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(geoplot_callback), &gi);
     gtk_widget_grab_default(tmp);
-    if (hcode) {
-	context_help_button(hbox, hcode);
-    } else {
-	gretl_dialog_keep_above(dialog);
-    }
+    context_help_button(hbox, MAPHELP);
 
     gtk_widget_show_all(dialog);
 
