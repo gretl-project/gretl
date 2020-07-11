@@ -898,6 +898,9 @@ static int cl_ols (struct gls_info *G,
 
     err = gretl_matrix_ols(G->y0, G->CX, G->b, NULL, G->u, NULL);
     if (err) {
+#if CL_DEBUG
+	fprintf(stderr, "cl_ols: error %d from initial regression\n", err);
+#endif
 	return err;
     }
 
@@ -1045,6 +1048,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 #if CL_DEBUG
     fprintf(stderr, "chow_lin_disagg; N=%d, s=%d, m=%d\n", N, s, m);
+    fprintf(stderr, "Y0 is %d x %d\n",Y0->rows, Y0->cols);
+    if (X != NULL) {
+	fprintf(stderr, "X is %d x %d\n", X->rows, X->cols);
+    }
 #endif
 
     /* the return value */

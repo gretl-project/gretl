@@ -12651,7 +12651,18 @@ static int bundle_pointer_arg0 (NODE *t)
 static int tdisagg_compress (gretl_matrix **py, int s)
 {
     gretl_matrix *y, *y0 = *py;
-    int i, t, n = y0->rows / s;
+    int i, t, n, n0 = y0->rows;
+
+    /* trim any trailing NAs in y0 */
+    for (t=n0-1; t>=0; t--) {
+	if (na(y0->val[t])) {
+	    n0--;
+	} else {
+	    break;
+	}
+    }
+
+    n = n0 / s;
 
     y = gretl_matrix_alloc(n, 1);
     if (y == NULL) {
