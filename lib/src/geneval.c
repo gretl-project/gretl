@@ -11256,12 +11256,23 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (!scalar_node(m)) {
 	    node_type_error(f, 2, NUM, m, p);
-	} else if (!scalar_node(r)) {
+	} else if (!null_node(r) && !scalar_node(r)) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    int k1 = node_get_int(m, p);
-	    int k2 = node_get_int(r, p);
+	    int n, k2, k1 = node_get_int(m, p);
 
+	    if (scalar_node(r)) {
+		k2 = node_get_int(r, p);
+	    } else if (l->t == NUM) {
+		k2 = 1;
+	    } else {
+		n = l->v.m->rows * l->v.m->cols;
+		if (n % k1 == 0) {
+		    k2 = n / k1;
+		} else {
+		    p->err = E_INVARG;
+		}
+	    }
 	    if (!p->err) {
 		if (l->t == NUM) {
 		    A = mshape_scalar(l->v.xval, k1, k2, &p->err);
