@@ -6742,6 +6742,7 @@ struct geoplot_info {
     GtkWidget *payload_combo;
     GtkWidget *palette_combo;
     GtkWidget *border_check;
+    GtkWidget *logscale_check;
     GtkWidget *height_spin;
     GtkWidget *dlg;
 };
@@ -6749,7 +6750,7 @@ struct geoplot_info {
 static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
 {
     gchar *payload, *palette;
-    int border, height;
+    int border, logscale, height;
 
     payload = combo_box_get_active_text(gi->payload_combo);
     palette = combo_box_get_active_text(gi->palette_combo);
@@ -6762,9 +6763,11 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     }
 
     border = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gi->border_check));
+    logscale = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gi->logscale_check));
     height = gtk_spin_button_get_value(GTK_SPIN_BUTTON(gi->height_spin));
 
     gretl_bundle_set_int(gi->bundle, "border", border);
+    gretl_bundle_set_int(gi->bundle, "logscale", logscale);
     gretl_bundle_set_int(gi->bundle, "height", height);
 
     g_free(payload);
@@ -6787,7 +6790,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     struct geoplot_info gi = {0};
     GtkWidget *dialog, *combo;
     GtkWidget *vbox, *hbox, *tmp;
-    GtkWidget *bc, *hs;
+    GtkWidget *bc, *ls, *hs;
     int hcode = MAPHELP;
     int ret = GRETL_CANCEL;
 
@@ -6833,6 +6836,14 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bc), TRUE);
     gi.border_check = bc;
     gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* logscale? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    ls = gtk_check_button_new_with_label("Log scale");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ls), FALSE);
+    gi.logscale_check = ls;
+    gtk_box_pack_start(GTK_BOX(hbox), ls, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* height in pixels? */
