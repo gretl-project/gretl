@@ -8039,14 +8039,14 @@
 	</li>
 	<li>
 	  <para>
-	    border: should a rectangular border be drawn around the
-	    map? By default, yes, but you can remove it.
+	    log scale: in case a payload is selected, should it be
+	    represented on a log scale? By default, no.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    log scale: in case a payload is selected, should it be
-	    represented on a log scale? By default, no.
+	    border: should a rectangular border be drawn around the
+	    map? By default, yes, but you can remove it.
 	  </para>
 	</li>
 	<li>

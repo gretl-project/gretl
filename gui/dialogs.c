@@ -6777,11 +6777,14 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     gtk_widget_destroy(gi->dlg);
 }
 
-static void sensitize_palette (GtkComboBox *combo, GtkWidget *targ)
+static void sensitize_map_controls (GtkComboBox *combo,
+				    struct geoplot_info *gi)
 {
     gchar *s = combo_box_get_active_text(combo);
+    int active = strcmp(s, "none");
 
-    gtk_widget_set_sensitive(targ, strcmp(s, "none"));
+    gtk_widget_set_sensitive(gi->palette_combo, active);
+    gtk_widget_set_sensitive(gi->logscale_check, active);
 }
 
 int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
@@ -6829,20 +6832,21 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_set_sensitive(combo, selpos ? 1 : 0);
 
-    /* border? */
-    hbox = gtk_hbox_new(FALSE, 5);
-    bc = gtk_check_button_new_with_label("Draw border round plot");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bc), TRUE);
-    gi.border_check = bc;
-    gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-
     /* logscale? */
     hbox = gtk_hbox_new(FALSE, 5);
     ls = gtk_check_button_new_with_label("Log scale");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ls), FALSE);
     gi.logscale_check = ls;
     gtk_box_pack_start(GTK_BOX(hbox), ls, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_set_sensitive(ls, selpos ? 1 : 0);
+
+    /* border? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    bc = gtk_check_button_new_with_label("Draw border round plot");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bc), TRUE);
+    gi.border_check = bc;
+    gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* height in pixels? */
@@ -6857,7 +6861,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* inter-connect selectors */
     g_signal_connect(G_OBJECT(gi.payload_combo), "changed",
-		     G_CALLBACK(sensitize_palette), gi.palette_combo);
+		     G_CALLBACK(sensitize_map_controls), &gi);
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
