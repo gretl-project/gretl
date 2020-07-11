@@ -4472,15 +4472,15 @@
       </fnargs>
       <description>
 	<para>
-	  Calls for production of a map, when suitable map data are
-	  present. In most cases the <argname>mapfile</argname>
-	  argument should be given as <fncref label="\$mapfile"
-	  targ="dmapfile"/>, an accessor that retrieves the name of
-	  the relevant GeoJSON file or ESRI shapefile. The optional
-	  <argname>payload</argname> argument is used to give the name
-	  of a series with which to colorize the regions of the
-	  map. And the final argument enables you to set numerous
-	  options.
+	  Calls for production of a map, when suitable geographical
+	  data are present. In most cases the
+	  <argname>mapfile</argname> argument should be given as
+	  <fncref label="\$mapfile" targ="dmapfile"/>, an accessor
+	  that retrieves the name of the relevant GeoJSON file or ESRI
+	  shapefile. The optional <argname>payload</argname> argument
+	  is used to give the name of a series with which to colorize
+	  the regions of the map. And the final argument enables you
+	  to set numerous options.
 	</para>
 	<para>
 	  See the geoplot documentation, <doc>geoplot.pdf</doc>,

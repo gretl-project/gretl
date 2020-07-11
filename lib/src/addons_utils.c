@@ -263,3 +263,29 @@ char *get_addon_examples_dir (const char *addon)
 
     return ret;
 }
+
+char *get_addon_pdf_path (const char *addon)
+{
+    char *s, *path;
+    char *ret = NULL;
+
+    if (has_suffix(addon, ".pdf")) {
+	gchar *tmp = g_strndup(addon, strlen(addon) - 4);
+
+	path = gretl_addon_get_path(tmp);
+	g_free(tmp);
+    } else {
+	path = gretl_addon_get_path(addon);
+    }
+
+    if (path != NULL && has_suffix(path, ".gfn")) {
+	s = strrchr(path, '.');
+	*s = '\0';
+	strcpy(s, ".pdf");
+	ret = path;
+    } else {
+	free(path);
+    }
+
+    return ret;
+}

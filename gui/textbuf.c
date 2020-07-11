@@ -26,6 +26,7 @@
 #include "guiprint.h"
 #include "gui_recode.h"
 #include "gretl_func.h"
+#include "addons_utils.h"
 #include "datafiles.h"
 #include "database.h"
 #include "fncall.h"
@@ -1883,8 +1884,12 @@ static void open_pdf_file (GtkTextTag *tag)
 
     if (name != NULL) {
 	if (strchr(name, '/') == NULL && strchr(name, '\\') == NULL) {
-	    /* no path provided: documentation for addon? */
-	    dummy_call();
+	    char *path = get_addon_pdf_path(name);
+
+	    if (path != NULL) {
+		gretl_show_pdf(path, NULL);
+		free(path);
+	    }
 	} else {
 	    gretl_show_pdf(name, NULL);
 	}
