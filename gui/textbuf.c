@@ -1883,15 +1883,24 @@ static void open_pdf_file (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &name, NULL);
 
     if (name != NULL) {
+	int warn = 0;
+
 	if (strchr(name, '/') == NULL && strchr(name, '\\') == NULL) {
 	    char *path = get_addon_pdf_path(name);
 
 	    if (path != NULL) {
 		gretl_show_pdf(path, NULL);
 		free(path);
+	    } else {
+		warn = 1;
 	    }
-	} else {
+	} else if (gretl_stat(name, NULL) == 0) {
 	    gretl_show_pdf(name, NULL);
+	} else {
+	    warn = 1;
+	}
+	if (warn) {
+	    warnbox_printf(_("Couldn't open %s"), name);
 	}
 	g_free(name);
     }
