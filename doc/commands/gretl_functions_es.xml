@@ -476,6 +476,18 @@
       </description>
     </function>
 
+    <function name="$mapfile" section="access" output="string">
+      <description>
+	<para>
+	  Devuelve una cadena de texto con el nombre del archivo que se debe
+	  abrir para obtener los polígonos del mapa, cuando anteriormente se
+	  han cargado datos de un archivo GeoJSON o de un archivo ESRI de forma;
+	  en caso contrario, devuelve una cadena vacía. Esto está diseñado
+	  para ser utilizado con la función <fncref targ="geoplot"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
@@ -758,11 +770,11 @@
 	<para>
 	  Proporciona información reservada, a continuación de algunas
 	  instrucciones que no tienen accesorios específicos. Las instrucciones
-	  en cuestión incluyen <cmdref targ="corr"/>, <cmdref targ="freq"/>,
-	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>, <cmdref targ="vif"/>
-	  y <cmdref targ="bkw"/> (en cuyos casos, el resultado es una matriz),
-	  además de <cmdref targ="pkg"/> (en cuyo caso, se guarda opcionalmente
-	  un 'bundle').
+	  en cuestión incluyen <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
+	  <cmdref targ="freq"/>, <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
+	  <cmdref targ="vif"/> y <cmdref targ="bkw"/> (en cuyos casos, el
+	  resultado es una matriz), además de <cmdref targ="pkg"/> (en cuyo caso,
+	  se guarda opcionalmente un 'bundle').
 	</para>
       </description>
     </function>
@@ -1458,13 +1470,13 @@
       <description>
 	<para>
 	  Esta es la función <quote>generadora</quote> básica de una nueva variable
-	  de tipo <quote>array</quote>. Al usar esta función es
-	  necesario que especifiques un tipo (en forma plural) para el 'array':
-	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit> o
-	  <lit>lists</lit>. Devuelve un 'array' del tipo especificado con
-	  <argname>n</argname> elementos <quote>vacíos</quote> (por ejemplo,
-	  una cadena de texto (<quote>string</quote>) vacía o una matriz
-	  nula). Ejemplos de utilización:
+	  de tipo <quote>array</quote>. Al usar esta función es necesario que
+	  especifiques un tipo (en forma plural) para el 'array':
+	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit>,
+	  <lit>lists</lit> o <lit>arrays</lit>. Devuelve un 'array' del tipo
+	  especificado con <argname>n</argname> elementos <quote>vacíos</quote>
+	  (por ejemplo, una cadena de texto (<quote>string</quote>) vacía o
+	  una matriz nula). Ejemplos de utilización:
 	</para>
 	<code>
 	  strings S = array(5)
@@ -4448,6 +4460,32 @@
 	<para>
 	  A aquellos que encontréis útil la función <lit>genseries</lit>, quizás os
 	  interese explorar la función <fncref targ="feval"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="geoplot" section="data-utils" output="none">
+      <fnargs>
+	<fnarg type="string">archivomap</fnarg>
+	<fnarg optional="true" type="series">carga</fnarg>
+	<fnarg optional="true" type="bundle">opciones</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solicita la producción de un mapa, cuando se dispone de datos
+	  geográficos adecuados. En la mayoría de los casos el argumento
+	  <argname>mapfile</argname> debe proporcionarse como
+	  <fncref label="\$mapfile" targ="dmapfile"/>, lo que indica un accesor
+	  con el que se va a recuperar el nombre del archivo que sea relevante,
+	  de tipo GeoJSON o de tipo ESRI de forma. El argumento opcional
+	  <argname>carga</argname> se usa para indicar el nombre de una serie
+	  con la que se colorean las regiones del mapa. Y el argumento final de
+	  tipo "bundle" te permite que puedas establecer numerosas opciones.
+	</para>
+	<para>
+	  Puedes consultar <doc>geoplot.pdf</doc> con la documentación sobre la función,
+	  para obtener detalles y ejemplos completos. Ahí se explican todos los ajustes
+	  que se pueden configurar mediante el argumento <argname>opciones</argname>.
 	</para>
       </description>
     </function>
@@ -7786,18 +7824,27 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Reordena los elementos de la matriz <argname>X</argname> en una nueva matriz
 	  que tiene <argname>r</argname> filas y <argname>c</argname> columnas. Los
-	  elementos se leen y se guardan comenzando por el de las primeras columna y fila
+	  elementos se leen y se guardan comenzando por el de la primera columna y primera fila
 	  de <argname>X</argname>, y siguiendo con los de las siguientes filas hasta acabar
 	  con los de esa columna; y luego con las demás columnas. Si <argname>X</argname>
 	  tiene menos elementos que <math>k</math>= <math>rc</math>, estos se van a
 	  repetir de forma cíclica. En otro caso, si <argname>X</argname> tiene
 	  más elementos, solo se utilizan los primeros <math>k</math> elementos.
+	</para>
+	<para>
+	  Si omites e tercer argumento, por defecto <argname>c</argname> se
+	  establece igual a 1 si <argname>X</argname> es <by r="1" c="1"/>;
+	  en otro caso, se establece igual a <math>N</math>/<argname>r</argname>
+	  donde <math>N</math> representa el número total de elementos que
+	  hay en <argname>X</argname>. Sin embargo, cuando <math>N</math>
+	  no es un múltiplo entero de <argname>r</argname> se presenta un
+	  error.
 	</para>
 	<para>
 	  <seelist>

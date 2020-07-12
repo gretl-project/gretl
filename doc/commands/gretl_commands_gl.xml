@@ -311,13 +311,16 @@
       </para>
 
       <para>
-	Os valores <emphasis>P</emphasis> para as probas de Dickey&ndash;Fuller
-	están baseados en <cite key="mackinnon96">MacKinnon (1996)</cite>;
-	e o código relevante inclúese co amable permiso do propio autor.
+	As probabilidades asociadas <emphasis>P</emphasis> para as probas
+	de Dickey&ndash;Fuller están baseadas en
+	<cite key="mackinnon96">MacKinnon (1996)</cite>; e o código relevante
+	inclúese co amable permiso do propio autor. (No caso de tratarse da
+	proba non aumentada, se proporcionan os valores para mostra finita.
+	Para un nivel de retardo positivo se utilizan os valores asintóticos.)
 	No caso da proba coa tendencia linear utilizando MCX (GLS),
 	estes valores <emphasis>P</emphasis> non son aplicables;
-	por iso, no seu lugar amósanse os puntos críticos
-	da Táboa 1 que hai en
+	por iso, no seu lugar amósanse os puntos críticos da Táboa 1 que hai
+	en
 	<cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>.
       </para>
 
@@ -4363,9 +4366,16 @@
 	entre <math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	Podes recuperar os resultados utilizando os accesorios <fncref targ="$test"/>
-	e <fncref targ="$pvalue"/>. Estes valores baséanse no Estimador Local
-	Whittle agás cando indicas a opción
+	As ordes estimadas de integración fraccional e as desviacións
+	padrón correspondentes están dispoñibles mediante o accesorio
+	<fncref targ="$result"/>. Coa opción <opt>all</opt>, atoparás a
+	estimación Local Whittle na primeira fila e a estimación GPH na
+	segunda.
+      </para>
+      <para>
+	Podes recuperar os resultados da proba utilizando os accesorios
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>. Estes valores
+	baséanse no Estimador Local Whittle agás cando indicas a opción
 	<opt>gph</opt>.
       </para>
     </description>
@@ -8002,6 +8012,59 @@
 
   </command>
 
+  <command name="maps" section="Utilities" label="Debuxar mapas" context="gui">
+    <description>
+      <para>
+	Esta instrución te permite crear un mapa, baseado en datos xeográficos
+	descargados previamente (en formato dun ficheiro GeoJSON ou dun
+	ficheiro ESRI de forma). As opcións son as seguintes.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    payload: A carga que, en caso de existir, representa a serie a
+	    partir da que se deberán colorear as rexións do mapa. A falta
+	    desa carga só se amosarán os trazos do mapa. Se o conxunto de
+	    datos vixente contén unha ou máis series que semellan posibles
+	    candidatas (en base a unha heurística sinxela), estas vanse
+	    amosar nun selector despregable.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    palette: A paleta que permite a escolla do conxunto de cores
+	    que se usan para representar a carga, e que en consecuencia
+	    só resulta relevante cando se selecciona unha carga.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    log scale: No caso de seleccionar unha carga, se debería
+	    representar esta en escala logarítmica? Por defecto, non.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    border: Debera debuxarse un borde rectangular arredor do mapa?
+	    Por defecto, si; pero podes eliminar isto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    height: Isto indica altura, e permite controlar o tamaño da imaxe
+	    do mapa. Dada a altura, o ancho calcúlase en base ao rango de
+	    lonxitude do mapa.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Cae na conta de que podes gañar un control <i>moito</i> maior
+	sobre os detalles do mapa, por medio da invocación á función
+	<fncref targ="geoplot"/>.
+      </para>
+    </description>
+  </command>
+
   <command name="markers" section="Dataset" label="Marcadores de observación" context="cli">
 
     <usage>
@@ -10708,6 +10771,10 @@
 	  <flag>--quiet</flag>
 	  <effect>Mira abaixo</effect>
         </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
@@ -10719,10 +10786,10 @@
 
     <description>
       <para>
-	Esta instrución proporciona un xeito de instalar, consultar,
-	descargar, ou eliminar paquetes de funciones de Gretl. O argumento
+	Esta instrución proporciona un xeito de instalar, consultar, descargar,
+	eliminar ou indexar paquetes de funcións de Gretl. O argumento
 	<repl>acción</repl> debe de ser algún de entre <lit>install</lit>,
-	<lit>query</lit>, <lit>unload</lit> ou <lit>remove</lit>,
+	<lit>query</lit>, <lit>unload</lit>, <lit>remove</lit> ou <lit>index</lit>,
 	respectivamente.
       </para>
       <para>
@@ -10762,6 +10829,20 @@
 	e, ademais, elimina do disco o(s) ficheiro(s) asociado(s) co
 	paquete indicado.
       </para>
+      <para>
+	<lit>index</lit>: É un caso especial no que <repl>nomepaquete</repl>
+	debe substituírse pola palabra chave <quote><lit>addons</lit></quote>:
+	a consecuencia disto é que se actualiza o índice dos paquetes estándar
+	que se coñecen como <quote>Engadidos</quote> (ou Complementos). Esa
+	actualización faise automaticamente de cando en vez, pero nalgúns casos
+	pode resultar útil unha actualización manual. Neste caso, a opción
+	<opt>verbose</opt> provoca un resultado impreso sobre onde fixo Gretl
+	a procura, e o que atopou. Sendo claros, aquí tes o xeito de acadar
+	un resultado co índice completo:
+      </para>
+      <code>
+	pkg index addons --verbose
+      </code>
     </description>
 	
     <gui-access>
@@ -15611,7 +15692,7 @@
 	consulta a instrución <cmdref targ="panel"/> xunto coa opción
 	<lit>--unit-weights</lit>.
 	  </para>
-	  
+
       <para context="gui">
 	Sexa 'varponder' a variable escollida no cadriño 'Variable de ponderacións'.
 	Execútase unha regresión MCO, onde a variable dependente é o produto
@@ -15893,7 +15974,7 @@
 	os totais de filas e columnas indicados, e que teñan unha probabilidade
 	menor ou igual á da táboa observada.
       </para>
-      
+
       <subhead>O caso bivariante</subhead>
       <para>
 	No sinxelo caso dunha tabulación cruzada bivariante, podes utilizar
