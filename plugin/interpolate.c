@@ -23,9 +23,9 @@
 #include "libset.h"
 
 #define CL_DEBUG 0
-#define LIMIT_R_SSR 1
 #define SSR_LOGISTIC 1
 #define RHOMAX 0.999
+#define FORCE_ITERATION 1
 
 /* aggregation types */
 enum {
@@ -49,6 +49,7 @@ typedef enum {
     CL_NETVCV  = 1 << 1,
     CL_VERBOSE = 1 << 2,
     CL_SHOWMAX = 1 << 3,
+    CL_TRUNC   = 1 << 4
 } CLflags;
 
 struct chowlin {
@@ -80,6 +81,18 @@ static const char *method_names[] = {
     "chow-lin", "chow-lin-mle", "chow-lin-ssr",
     "fernandez", "denton", "denton-additive", NULL
 };
+
+#if FORCE_ITERATION
+static int force_iteration (int m)
+{
+    return m == R_MLE || m == R_SSR;
+}
+#else
+static int force_iteration (int m)
+{
+    return 0;
+}
+#endif
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
    theoretically derived ratio of polynomials in @a matches the
@@ -218,6 +231,9 @@ static void show_regression_results (const struct gls_info *G,
     } else if (G->method == R_MLE || G->method == R_SSR) {
 	pprintf(prn, "  %s", _("Iterated GLS estimates"));
 	pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
+	if (G->flags & CL_TRUNC) {
+	    pprintf(prn, "  %s\n", _("rho truncated to zero"));
+	}
     } else if (a == 0) {
 	pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
     } else {
@@ -233,7 +249,8 @@ static void show_regression_results (const struct gls_info *G,
     gretl_array_destroy(names);
 }
 
-static int ar1_mle (struct gls_info *G, double s, double *rho)
+static int ar1_mle (struct gls_info *G, double s, double *rho,
+		    PRN *prn)
 {
     double *theta;
     int fc = 0, gc = 0;
@@ -272,10 +289,10 @@ static int ar1_mle (struct gls_info *G, double s, double *rho)
     }
 
     if (!err) {
-#if CL_DEBUG
-	fprintf(stderr, "ar1_mle, rho %g -> %g\n", *rho, theta[0]);
-#endif
 	*rho = theta[0] > 0.999 ? 0.999 : theta[0];
+	if (G->flags & CL_SHOWMAX) {
+	    pprintf(prn, "  rho as revised via ML: %g\n", *rho);
+	}
     }
 
     free(theta);
@@ -523,20 +540,22 @@ static double cl_gls_calc (const double *rho, void *data)
     if (G->method == R_UROOT) {
 	make_alt_VC(G->VC, G->s, G->agg, G->method);
     } else {
-#if LIMIT_R_SSR && !SSR_LOGISTIC
-	if (G->method == R_MLE) {
-	    a = logistic_cdf(*rho);
-	}
+	if (!(G->flags & CL_TRUNC)) {
+#if SSR_LOGISTIC
+	    if (G->method == R_MLE || G->method == R_SSR) {
+		a = logistic_cdf(*rho);
+	    }
 #else
-	if (G->method == R_MLE || G->method == R_SSR) {
-	    a = logistic_cdf(*rho);
-	}
+	    if (G->method == R_MLE) {
+		a = logistic_cdf(*rho);
+	    }
 #endif
+	}
 	make_VC(G->VC, N, G->s, a, G->agg);
     }
 
     make_CVC(G->W, G->VC, G->s, G->agg);
-    if (G->flags & CL_NETVCV) {
+    if ((G->flags & CL_NETVCV) && a > 0) {
 	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
     }
     if (G->Wcpy == NULL) {
@@ -627,8 +646,7 @@ static int cl_gls_one (double *a, struct gls_info *G)
    implementations we place an upper bound on rho short of 1.0.
 */
 
-static int cl_gls_max (double *a, struct gls_info *G,
-		       PRN *prn)
+static int cl_gls_max (double *a, struct gls_info *G, PRN *prn)
 {
     gretlopt opt = OPT_NONE;
     double r = *a > 0 ? *a : 0.5;
@@ -639,28 +657,27 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	opt = OPT_V;
     }
 
-#if LIMIT_R_SSR
     /* prevent R_SSR from pushing @r above RHOMAX */
     if (G->method == R_SSR) {
 	gretl_matrix bounds;
-# if SSR_LOGISTIC
-	double bvals[] = {1, -10, -log(1.0/RHOMAX - 1)};
+#if SSR_LOGISTIC
+	double bvals[] = {1, -20, -log(1.0/RHOMAX - 1)};
 	double lrho = -log(1/r - 1);
 	double *rptr = &lrho;
-# else
+#else
 	double bvals[] = {1, 0, RHOMAX};
 	double *rptr = &r;
-# endif
+#endif
 
 	gretl_matrix_init_full(&bounds, 1, 3, bvals);
 	err = LBFGS_max(rptr, 1, 200, 1.0e-12,
 			&fc, &gc, cl_gls_calc, C_SSR,
 			NULL, NULL, G, &bounds, opt, prn);
-# if SSR_LOGISTIC
+#if SSR_LOGISTIC
 	if (!err) {
 	    r = logistic_cdf(lrho);
 	}
-# endif
+#endif
     } else {
 	/* G->method = R_MLE */
 	double lrho = -log(1/r - 1);
@@ -670,25 +687,18 @@ static int cl_gls_max (double *a, struct gls_info *G,
 		       NULL, G, NULL, opt, prn);
 	if (!err) {
 	    r = logistic_cdf(lrho);
+	} else if (err == E_NOCONV && lrho < -6) {
+	    fprintf(stderr, "R_MLE: stopped at lrho = %g\n", lrho);
+	    err = 0;
+	    r = 0;
+	    G->flags |= CL_TRUNC;
+	    cl_gls_calc(&r, G);
 	}
     }
-#else
-    /* treat R_SSR and R_MLE symmetrically */
-    int crit = G->method == R_SSR ? C_SSR : C_LOGLIK;
-    gretlopt opt = G->method == R_SSR ? (opt | OPT_I) : opt;
-    double lrho = -log(1/r - 1);
-
-    err = BFGS_max(&lrho, 1, 200, 1.0e-12,
-		   &fc, &gc, cl_gls_calc, crit,
-		   NULL, G, NULL, opt, prn);
-    if (!err) {
-	r = logistic_cdf(lrho);
-    }
-#endif
 
 #if CL_DEBUG
-    fprintf(stderr, "cl_gls_max: method = %d, err = %d\n",
-	    G->method, err);
+    fprintf(stderr, "cl_gls_max: method = %s, err = %d\n",
+	    method_names[G->method], err);
 #endif
 
     if (!err && (G->flags & CL_SAVE_SE)) {
@@ -697,7 +707,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 
     if (!err) {
 	*a = r;
-	if (G->flags & CL_NETVCV) {
+	if ((G->flags & CL_NETVCV) && r > 0) {
 	    /* restore full W for subsequent calculations */
 	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
 	}
@@ -817,7 +827,7 @@ static void make_X_beta (gretl_vector *y, const double *b,
    rhohat() in estimate.c.
 */
 
-static double acf_1 (struct gls_info *G)
+static double acf_1 (struct gls_info *G, PRN *prn)
 {
     double rho, num = 0, den = 0;
     double *u = G->u->val;
@@ -832,16 +842,17 @@ static double acf_1 (struct gls_info *G)
 
     rho = num / den;
 
-    if (rho < 1.0e-6) {
-	return 0;
+    if (G->flags & CL_SHOWMAX) {
+	pprintf(prn, "  Initial rho from OLS residuals: %g\n", rho);
     }
 
-#if CL_DEBUG
-    fprintf(stderr, "initial rho from OLS residuals: %g\n", rho);
-#endif
-
-    /* improve the initial estimate of @rho via ML */
-    ar1_mle(G, sqrt(den / T), &rho);
+    if (rho < 1.0e-6) {
+	/* truncate */
+	rho = 0;
+    } else {
+	/* improve the initial estimate of @rho via ML */
+	ar1_mle(G, sqrt(den / T), &rho, prn);
+    }
 
     return rho;
 }
@@ -877,6 +888,9 @@ static int prepare_OLS_stats (struct gls_info *G)
 	    G->se->val[i] = sqrt(s2 * zii);
 	}
 	G->lnl = -n2 * (1 + LN_2_PI - log(n)) - n2 * log(G->SSR);
+	if (G->agg == AGG_SUM) {
+	    G->SSR /= G->s;
+	}
     }
 
     return err;
@@ -905,7 +919,7 @@ static int cl_ols (struct gls_info *G,
     }
 
     if (G->method != R_FIXED) {
-	a = acf_1(G);
+	a = acf_1(G, prn);
 	if (a <= 0.0) {
 	    a = 0; /* don't pursue negative @a */
 	} else if (G->agg >= AGG_EOP) {
@@ -925,7 +939,7 @@ static int cl_ols (struct gls_info *G,
 	}
     }
 
-    if (a == 0) {
+    if (a == 0 && !force_iteration(G->method)) {
 	/* no autocorrelation: GLS isn't needed */
 	int N = G->u->rows;
 	int nx = G->b->rows;
@@ -1139,7 +1153,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 	if (method != R_UROOT && (a == 0 || !rho_given)) {
 	    err = cl_ols(&G, X, y, m, &a, prn);
-	    if (a == 0) {
+	    if (a == 0 && !force_iteration(method)) {
 		/* this iteration is handled */
 		continue;
 	    }
@@ -1473,7 +1487,8 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
     }
 
 #if CL_DEBUG
-    fprintf(stderr, "time_disaggregate: method = %d\n", method);
+    fprintf(stderr, "time_disaggregate: method = %s\n",
+	    method_names[method]);
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
