@@ -8126,6 +8126,60 @@
 
   </command>
 
+  <command name="maps" section="Utilities" label="Drawing maps" context="gui">
+    <description>
+      <para>
+	Questa finestra di dialogo permette di creare una mappa sulla
+	base di dati geografici pre-caricati (un file GeoJSON o uno
+	shapefile ESRI). Le opzioni sono le seguenti:.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    payload: questa è l'eventuale serie in base alla
+	    quale la mappa verrà colorata. senza un
+	    <quote>contenuto</quote> verranno mostrati solo i
+	    confini. Se il dataset attualmente aperto contiene una o
+	    più serie che sembrano adatte allo scopo (sulla base di
+	    semplici regole euristiche), queste verranno mostrate nel
+	    selettore a tendina.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    palette: questo elemento permette di scegliere fra diverse
+	    tavolozze di colori, cosicché è rilevante solo se è stata
+	    selezionata una serie contenuto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    log scale: Se esite una serie contenuto, va rappresentata
+	    in scala logaritmica? Di default, no.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    border: si vuole disegnare un bordo rettangolare intorno
+	    alla mappa? Di default, sì, ma lo si può rimuovere.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    height: questo parametro controlla l'altezza
+	    dell'immagine. Data quest'ultima, la larghezza viene
+	    calcolata in base all'ampiezza in longitudine della mappa.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Si noti che si usando la funzione <fncref targ="geoplot"/> da
+	script ci sono <i>molte</i> più possibilità di personalizzare
+	l'aspetto e il contenuto della mappa.
+      </para>
+    </description>
+  </command>
+
   <command name="markers" section="Dataset" label="Aggiunta di marcatori" context="cli">
 
     <usage>
