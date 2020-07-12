@@ -79,7 +79,7 @@ struct gls_info {
 
 static const char *method_names[] = {
     "chow-lin", "chow-lin-mle", "chow-lin-ssr",
-    "fernandez", "denton", "denton-additive", NULL
+    "fernandez", "denton-pfd", "denton-afd", NULL
 };
 
 #if FORCE_ITERATION
@@ -1424,6 +1424,14 @@ static int get_tdisagg_method (const char *s, int *err)
 	    return i;
 	}
     }
+
+    /* backward compat for the moment */
+    if (!strcmp(s, "denton")) {
+	return R_UROOT + 1;
+    } else if (!strcmp(s, "denton-additive")) {
+	return R_UROOT + 2;
+    }
+
     *err = E_INVARG;
     return -1;
 }
