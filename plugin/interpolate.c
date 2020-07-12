@@ -1525,3 +1525,41 @@ gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
 			NULL, 0, NULL, err);
 }
+
+#if 0 /* not yet! */
+
+static void td_plot (const gretl_matrix *Y0,
+		     const gretl_matrix *y,
+		     int s)
+{
+    gretl_matrix *YY;
+    char *literal = NULL;
+    gretlopt opt;
+    int i, k, T = Y0->rows;
+    int sT = s * T;
+    int t, sTm = Y->rows;
+
+    YY = gretl_matrix_alloc(sTm, 2);
+    if (YY == NULL) {
+	return;
+    }
+
+    for (i=0, t=0; i<T; i++) {
+	for (k=0; k<s; k++) {
+	    gretl_matrix_set(YY, t++, 0, Y0->val[i]);
+	}
+    }
+
+    for (t=0; t<sTm; t++) {
+	if (t >= sT) {
+	    gretl_matrix_set(YY, t, 0, NADBL);
+	}
+	gretl_matrix_set(YY, t, 1, y->val[t]);
+    }
+
+    matrix_plot(YY, NULL, literal, opt);
+
+    gretl_matrix_free(YY);
+}
+
+#endif
