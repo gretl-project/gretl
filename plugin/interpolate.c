@@ -541,6 +541,10 @@ static double cl_gls_calc (const double *rho, void *data)
 	make_alt_VC(G->VC, G->s, G->agg, G->method);
     } else {
 	if (!(G->flags & CL_TRUNC)) {
+	    /* if we're on a second pass after truncation
+	       to zero, @rho will not be given in
+	       logistic form
+	    */
 #if SSR_LOGISTIC
 	    if (G->method == R_MLE || G->method == R_SSR) {
 		a = logistic_cdf(*rho);
@@ -688,9 +692,11 @@ static int cl_gls_max (double *a, struct gls_info *G, PRN *prn)
 	if (!err) {
 	    r = logistic_cdf(lrho);
 	} else if (err == E_NOCONV && lrho < -6) {
+	    /* looks like we're butting up against 0 */
 	    fprintf(stderr, "R_MLE: stopped at lrho = %g\n", lrho);
 	    err = 0;
 	    r = 0;
+	    /* recalculate with rho = 0 */
 	    G->flags |= CL_TRUNC;
 	    cl_gls_calc(&r, G);
 	}
