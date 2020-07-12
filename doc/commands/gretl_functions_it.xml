@@ -7534,7 +7534,7 @@
 	  <argname>nomefile</argname>. Questa funzione è
 	  principalmente dedicata a leggere file con un formato
 	  specifico, descritto sotto, ma può anche essere usata per
-	  generici file di testo con delimitatori.  Per quetso secondo
+	  generici file di testo con delimitatori.  Per questo secondo
 	  caso, si veda sotto a <quote>File di testo delimitati</quote>.
 	</para>
 	<para>
