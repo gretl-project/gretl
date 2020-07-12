@@ -1224,7 +1224,9 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
    In the proportional case the solution method is based on Tommaso Di
    Fonzo and Marco Marini, "On the Extrapolation with the Denton
    Proportional Benchmarking Method", IMF Working Paper WP/12/169,
-   2012. In the additive case, hmm, not sure yet.
+   2012. In the additive case, we employ the "soluzione generale" on
+   page 3 of Di Fonzi's 2003 working paper, "Benchmarking de serie
+   storiche economiche. Nota tecnica ed estenioni".
 */
 
 static gretl_matrix *denton_fd (const gretl_vector *y0,
