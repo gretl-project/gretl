@@ -661,8 +661,8 @@ static int cl_gls_max (double *a, struct gls_info *G, PRN *prn)
 	opt = OPT_V;
     }
 
-    /* prevent R_SSR from pushing @r above RHOMAX */
     if (G->method == R_SSR) {
+	/* prevent R_SSR from pushing @r above RHOMAX */
 	gretl_matrix bounds;
 #if SSR_LOGISTIC
 	double bvals[] = {1, -20, -log(1.0/RHOMAX - 1)};
@@ -967,6 +967,10 @@ static int cl_ols (struct gls_info *G,
 	}
 	if (G->flags & CL_SAVE_SE) {
 	    prepare_OLS_stats(G);
+	}
+	if (G->method == R_MLE || G->method == R_SSR) {
+	    /* don't lie about the method we actually used */
+	    G->method = R_ACF1;
 	}
 	if (prn != NULL && (G->flags & CL_VERBOSE)) {
 	    show_regression_results(G, a, 0, prn);
