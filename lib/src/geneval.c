@@ -8976,12 +8976,12 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
     return ret;
 }
 
-static NODE *do_panel_shrink (NODE *l, parser *p)
+static NODE *do_panel_shrink (NODE *l, parser *p, int noskip)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.m = panel_shrink(l->v.xvec, p->dset, &p->err);
+	ret->v.m = panel_shrink(l->v.xvec, noskip, p->dset, &p->err);
     }
 
     return ret;
@@ -16305,7 +16305,16 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_PSHRINK:
 	if (l->t == SERIES) {
-	    ret = do_panel_shrink(l, p);
+	    int noskip;
+	    if (r->t == EMPTY) {
+		noskip = 0;
+	    } else if (r->t == NUM) {
+		noskip = node_get_int(r, p);
+	    } else {
+		node_type_error(t->t, 1, NUM, r, p);
+	    }
+
+	    ret = do_panel_shrink(l, p, noskip);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
 	}

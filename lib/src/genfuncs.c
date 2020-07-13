@@ -1510,19 +1510,20 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 /**
  * panel_shrink:
  * @x: panel-data source series.
+ * @noskip: keep NAs in output.
  * @dset: pointer to dataset.
  * @err: location to receive error code.
  *
  * Constructs a column vector holding the first non-missing
  * observation of @x for each panel unit within the current
- * sample range. If a unit has no valid observations it is
- * skipped.
+ * sample range. If noskip is 0, a unit with no valid 
+ * observations is skipped.
  *
  * Returns: a new column vector, or NULL on error.
  */
 
-gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
-			    int *err)
+gretl_matrix *panel_shrink (const double *x, int noskip,
+			    const DATASET *dset, int *err)
 {
     gretl_matrix *m = NULL;
     int n, T = sample_size(dset);
@@ -1543,7 +1544,7 @@ gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
 
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    u = t / dset->pd;
-	    if (u != ubak && !na(x[t])) {
+	    if (u != ubak && (noskip || !na(x[t]))) {
 		m->val[k++] = x[t];
 		ubak = u;
 	    }
