@@ -1514,10 +1514,12 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
  * @dset: pointer to dataset.
  * @err: location to receive error code.
  *
- * Constructs a column vector holding the first non-missing
- * observation of @x for each panel unit within the current
- * sample range. If noskip is 0, a unit with no valid 
- * observations is skipped.
+ * By default, constructs a column vector holding the first
+ * non-missing observation of @x for each panel unit within
+ * the current sample range (hence skipping any units that
+ * have no valid observations). However, if @noskip is non-zero,
+ * the vector contains an NA for units with all missing
+ * values.
  *
  * Returns: a new column vector, or NULL on error.
  */
@@ -1526,42 +1528,42 @@ gretl_matrix *panel_shrink (const double *x, int noskip,
 			    const DATASET *dset, int *err)
 {
     gretl_matrix *m = NULL;
-    int n, T = sample_size(dset);
+    int n, T;
 
-    if (!dataset_is_panel(dset) || T == 0) {
+    if (!dataset_is_panel(dset)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    n = (int) ceil((double) T / dset->pd);
+    n = panel_sample_size(dset);
+    T = dset->pd;
     m = gretl_column_vector_alloc(n);
 
     if (m == NULL) {
 	*err = E_ALLOC;
     } else {
+	int i1 = dset->t1 / T;
+	int i2 = dset->t2 / T;
+	int s = dset->t1;
 	int i, t, k = 0;
 	int gotit;
-	int pd = dset->pd;
-	int s = dset->t1;
-	int i0 = dset->t1/pd, i1 = dset->t2/pd;
 
-	for (i=i0; i<=i1; i++) {
+	for (i=i1; i<=i2; i++) {
 	    /* loop across units */
 	    gotit = 0;
-	    for (t=0; t<pd; t++, s++) {
+	    for (t=0; t<T; t++) {
 		/* loop inside units */
-		if (!na(x[s])) {
+		if (!na(x[s+t])) {
 		    gotit = 1;
-		    m->val[k++] = x[s];
+		    m->val[k++] = x[s+t];
 		    break;
 		}
 	    }
-	    /* go to the last obs for unit i */
-	    s += (pd - t);
-
 	    if (!gotit && noskip) {
 		m->val[k++] = NADBL;
 	    }
+	    /* skip to the next unit */
+	    s += T;
 	}
 
 	if (k < n) {
