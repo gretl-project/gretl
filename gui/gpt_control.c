@@ -2323,12 +2323,12 @@ static void get_plot_nobs (png_plot *plot,
 	}
 
 	if (started < 0 && line_starts_heredata(line, &eod)) {
-	    /* new method of handling plot data */
-#if GPDEBUG
-	    fprintf(stderr, "*** got heredata!\n");
-#endif
+	    /* newer method of handling plot data */
 	    spec->heredata = 1;
 	    *datapos = buftell(buf);
+#if GPDEBUG
+	    fprintf(stderr, "*** got heredata, datapos %d\n", (int) *datapos);
+#endif
 	    continue;
 	}
 
@@ -3195,6 +3195,10 @@ static int read_plotspec_from_file (png_plot *plot)
 	tailstrip(gpline);
 	fprintf(stderr, "gpline: '%s'\n", gpline);
 #endif
+	if (!strncmp(gpline, "plot ", 5)) {
+	    /* we're done with 'set' */
+	    break;
+	}
 	if (ignore) {
 	    if (!strncmp(gpline, "# end inline", 12)) {
 		ignore = 0;
@@ -3300,6 +3304,7 @@ static int read_plotspec_from_file (png_plot *plot)
     }
 
 #if HANDLE_HEREDATA
+    /* Hmm, what's this doing here? (2020-07-13) */
     if (line_starts_heredata(gpline, &eod)) {
 	while (bufgets(gpline, MAXLEN - 1, buf) != NULL) {
 	    if (!strncmp(gpline, eod, strlen(eod))) {
@@ -3385,6 +3390,10 @@ static int read_plotspec_from_file (png_plot *plot)
 	    continue;
 	}
     }
+
+#if GPDEBUG
+    fprintf(stderr, "plotspec, after line transcription, err=%d\n", err);
+#endif
 
     if (!err) {
 	err = plot_get_data_and_markers(spec, buf, &do_markers,

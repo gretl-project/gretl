@@ -25,7 +25,6 @@
 #define CL_DEBUG 0
 #define SSR_LOGISTIC 1
 #define RHOMAX 0.999
-#define FORCE_ITERATION 1
 
 /* aggregation types */
 enum {
@@ -82,17 +81,14 @@ static const char *method_names[] = {
     "fernandez", "denton-pfd", "denton-afd", NULL
 };
 
-#if FORCE_ITERATION
+static int td_plot (const gretl_matrix *y0,
+		    const gretl_matrix *y,
+		    int s, int agg, int method);
+
 static int force_iteration (int m)
 {
     return m == R_MLE || m == R_SSR;
 }
-#else
-static int force_iteration (int m)
-{
-    return 0;
-}
-#endif
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
    theoretically derived ratio of polynomials in @a matches the
@@ -1022,6 +1018,8 @@ static int fill_chowlin_bundle (struct gls_info *G,
  * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
  * quadratic trend.
  * @rho: fixed rho value, if wanted.
+ * @verbose: 0, 1 or 2.
+ * @plot: currently just a boolean.
  * @prn: printing struct pointer.
  * @err: location to receive error code.
  *
@@ -1042,8 +1040,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      int s, int agg, int method,
 				      int det, double rho,
 				      gretl_bundle *res,
-				      int verbose, PRN *prn,
-				      int *perr)
+				      int verbose, int plot,
+				      PRN *prn, int *perr)
 {
     struct gls_info G = {0};
     gretl_matrix_block *B;
@@ -1204,6 +1202,9 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     if (!err && ny == 1 && res != NULL) {
 	fill_chowlin_bundle(&G, a, res);
     }
+    if (!err && ny == 1 && plot) {
+	td_plot(Y0, Y, s, agg, method == R_FIXED ? R_ACF1 : method);
+    }
 
     *perr = err;
     gretl_matrix_block_destroy(B);
@@ -1232,7 +1233,8 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 static gretl_matrix *denton_fd (const gretl_vector *y0,
 				const gretl_vector *p,
 				int s, int agg,
-				int afd, int *err)
+				int afd, int plot,
+				int *err)
 {
     gretl_matrix *M;
     gretl_matrix *y;
@@ -1346,6 +1348,8 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
     if (*err) {
 	gretl_matrix_free(y);
 	y = NULL;
+    } else if (plot) {
+	td_plot(y0, y, s, agg, afd ? 5 : 4);
     }
 
     return y;
@@ -1356,8 +1360,8 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 				   int s, int agg, int method,
 				   int det, double rho,
 				   gretl_bundle *r,
-				   int verbose, PRN *prn,
-				   int *err)
+				   int verbose, int plot,
+				   PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
 
@@ -1367,7 +1371,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	    det = 1;
 	}
 	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho,
-			      r, verbose, prn, err);
+			      r, verbose, plot, prn, err);
     } else if (method < 6) {
 	/* Modified Denton, first differences */
 	int ylen = gretl_vector_get_length(Y0);
@@ -1388,7 +1392,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	if (!*err) {
 	    int afd = (method == 5);
 
-	    ret = denton_fd(Y0, X, s, agg, afd, err);
+	    ret = denton_fd(Y0, X, s, agg, afd, plot, err);
 	    gretl_matrix_free(X0);
 	}
     } else {
@@ -1439,7 +1443,7 @@ static int get_tdisagg_method (const char *s, int *err)
 static int tdisagg_get_options (gretl_bundle *b,
 				int *pagg, int *pmeth,
 				int *pdet, double *pr,
-				int *pverb)
+				int *pverb, int *pplot)
 {
     double rho = NADBL;
     const char *str;
@@ -1447,6 +1451,7 @@ static int tdisagg_get_options (gretl_bundle *b,
     int method = 0;
     int det = 1;
     int verbose = 0;
+    int plot = 0;
     int err = 0;
 
     if (gretl_bundle_has_key(b, "agg")) {
@@ -1476,6 +1481,9 @@ static int tdisagg_get_options (gretl_bundle *b,
     if (!err && gretl_bundle_has_key(b, "verbose")) {
 	verbose = gretl_bundle_get_int(b, "verbose", NULL);
     }
+    if (!err && gretl_bundle_has_key(b, "plot")) {
+	plot = gretl_bundle_get_int(b, "plot", NULL);
+    }
 
     if (!err) {
 	*pagg = agg;
@@ -1483,6 +1491,7 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pdet = det;
 	*pr = rho;
 	*pverb = verbose;
+	*pplot = plot;
     }
 
     return err;
@@ -1495,12 +1504,12 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 PRN *prn, int *err)
 {
     int agg = 0, method = 0, det = 1;
-    int verbose = 0;
+    int verbose = 0, plot = 0;
     double rho = NADBL;
 
     if (b != NULL) {
 	*err = tdisagg_get_options(b, &agg, &method, &det,
-				   &rho, &verbose);
+				   &rho, &verbose, &plot);
 	if (*err) {
 	    return NULL;
 	}
@@ -1512,7 +1521,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			r, verbose, prn, err);
+			r, verbose, plot, prn, err);
 }
 
 gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
@@ -1523,43 +1532,61 @@ gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
     double rho = NADBL;
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			NULL, 0, NULL, err);
+			NULL, 0, 0, NULL, err);
 }
 
-#if 0 /* not yet! */
+/* This plot -- which is invoked by giving a non-zero value
+   under the "plot" key in the tdisagg options bundle -- is
+   intended as a simple sanity check. It's a time series plot
+   of the original low-frequency series (with repetition, and
+   shown in "step" form) and the "final series" (scaled for
+   comparability with the original when aggregation is by
+   summation). The plot should offer the right-click "Zoom"
+   option so one can inspect it in more detail.
+*/
 
-static void td_plot (const gretl_matrix *Y0,
-		     const gretl_matrix *y,
-		     int s)
+static int td_plot (const gretl_matrix *y0,
+		    const gretl_matrix *y,
+		    int s, int agg, int method)
 {
     gretl_matrix *YY;
-    char *literal = NULL;
-    gretlopt opt;
-    int i, k, T = Y0->rows;
+    gchar *title;
+    int i, k, T = y0->rows;
     int sT = s * T;
-    int t, sTm = Y->rows;
+    int t, sTm = y->rows;
+    int mult = 1;
+    int err = 0;
 
     YY = gretl_matrix_alloc(sTm, 2);
     if (YY == NULL) {
-	return;
+	return E_ALLOC;
     }
 
+    /* original data in first column */
     for (i=0, t=0; i<T; i++) {
 	for (k=0; k<s; k++) {
-	    gretl_matrix_set(YY, t++, 0, Y0->val[i]);
+	    gretl_matrix_set(YY, t++, 0, y0->val[i]);
 	}
     }
 
+    if (agg == AGG_SUM) {
+	mult = s;
+    }
+
+    /* final series in second column */
     for (t=0; t<sTm; t++) {
+	gretl_matrix_set(YY, t, 1, (mult > 1)? mult*y->val[t] : y->val[t]);
 	if (t >= sT) {
 	    gretl_matrix_set(YY, t, 0, NADBL);
 	}
-	gretl_matrix_set(YY, t, 1, y->val[t]);
     }
 
-    matrix_plot(YY, NULL, literal, opt);
+    title = g_strdup_printf("%s (%s)", _("Temporal disaggregation"),
+			    method_names[method]);
+    err = write_tdisagg_plot(YY, mult, title);
 
     gretl_matrix_free(YY);
-}
+    g_free(title);
 
-#endif
+    return err;
+}

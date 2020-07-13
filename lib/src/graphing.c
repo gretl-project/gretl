@@ -9737,6 +9737,10 @@ int write_map_gp_file (const char *plotfile,
     }
 
     fp = open_plot_input_file(PLOT_GEOMAP, 0, &err);
+    if (err) {
+	return err;
+    }
+
     fprintf(fp, "# geoplot %g %g\n", dims->val[0], dims->val[1]);
 
     fputs("unset key\n", fp);
@@ -9956,6 +9960,68 @@ int transcribe_geoplot_file (const char *src,
 
     if (f1 != NULL) fclose(f1);
     if (f2 != NULL) fclose(f2);
+
+    return err;
+}
+
+/* called from the interpolate plugin */
+
+int write_tdisagg_plot (const gretl_matrix *YY, int mult,
+			const char *title)
+{
+    char mstr[16] = {0};
+    int t, T = YY->rows;
+    double y0t;
+    FILE *fp;
+    int err = 0;
+
+    set_optval_string(GNUPLOT, OPT_U, "display");
+    fp = open_plot_input_file(PLOT_REGULAR, GPT_LETTERBOX, &err);
+    if (err) {
+	return err;
+    }
+
+    fputs("# timeseries 1 (letterbox)\n", fp);
+    fputs("set key left top\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    if (title != NULL) {
+	fprintf(fp, "set title \"%s\"\n", title);
+    }
+
+    gretl_push_c_numeric_locale();
+
+    gnuplot_missval_string(fp);
+    fputs("# start inline data\n", fp);
+    fputs("$data << EOD\n", fp);
+    for (t=0; t<T; t++) {
+	fprintf(fp, "%d ", t + 1);
+	y0t = gretl_matrix_get(YY, t, 0);
+	if (na(y0t)) {
+	    fputs("? ", fp);
+	} else {
+	    fprintf(fp, "%.10g ", y0t);
+	}
+	fprintf(fp, "%.10g\n", gretl_matrix_get(YY, t, 1));
+    }
+    fputs("EOD\n", fp);
+
+    if (mult > 1) {
+	sprintf(mstr, " * %d", mult);
+    }
+
+    fprintf(fp, "plot $data using 1:2 title \"%s\" w steps, \\\n",
+	    _("original data"));
+    fprintf(fp, " $data using 1:3 title \"%s%s\" w lines\n",
+	    _("final series"), mstr);
+
+    err = finalize_plot_input_file(fp);
+    if (!err) {
+	if (gretl_in_gui_mode()) {
+	    manufacture_gui_callback(GNUPLOT);
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
 
     return err;
 }
