@@ -2345,7 +2345,7 @@ static void win32_read_gretlrc (int *updated)
 		gretl_strstrip(linevar);
 		if (*linevar != '\0') {
 		    if (!strcmp(key, "build_date")) {
-			*updated = gretl_is_updated(val);
+			*updated = gretl_is_updated(linevar);
 		    } else if (!strcmp(key, "userdir")) {
 			/* legacy */
 			find_and_set_rc_var("workdir", linevar);
@@ -2411,8 +2411,6 @@ int read_win32_config (int debug)
     /* see if we have a gretlnet.txt in place, and if so,
        read config from it */
     maybe_get_network_settings();
-
-    /* FIXME graph theme? */
 
     /* read from user config file */
     win32_read_gretlrc(&updated);
