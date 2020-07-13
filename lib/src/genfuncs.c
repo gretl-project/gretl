@@ -1539,16 +1539,31 @@ gretl_matrix *panel_shrink (const double *x, int noskip,
     if (m == NULL) {
 	*err = E_ALLOC;
     } else {
-	int ubak = -1;
-	int t, u, k = 0;
+	int i, t, k = 0;
+	int gotit;
+	int pd = dset->pd;
+	int s = dset->t1;
+	int i0 = dset->t1/pd, i1 = dset->t2/pd;
 
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    u = t / dset->pd;
-	    if (u != ubak && (noskip || !na(x[t]))) {
-		m->val[k++] = x[t];
-		ubak = u;
+	for (i=i0; i<=i1; i++) {
+	    /* loop across units */
+	    gotit = 0;
+	    for (t=0; t<pd; t++, s++) {
+		/* loop inside units */
+		if (!na(x[s])) {
+		    gotit = 1;
+		    m->val[k++] = x[s];
+		    break;
+		}
+	    }
+	    /* go to the last obs for unit i */
+	    s += (pd - t);
+
+	    if (!gotit && noskip) {
+		m->val[k++] = NADBL;
 	    }
 	}
+
 	if (k < n) {
 	    m->rows = k;
 	}
