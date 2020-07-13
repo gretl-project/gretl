@@ -3646,7 +3646,7 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 				 char *dbproxy, int *use_proxy,
-				 gchar **gptheme)
+				 int *updated, gchar **gptheme)
 {
     char line[MAXLEN], key[32], val[MAXLEN];
 
@@ -3735,7 +3735,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	} else if (!strcmp(key, "graph_theme")) {
 	    *gptheme = g_strdup(val);
 	} else if (!strcmp(key, "build_date")) {
-	    maybe_update_addons_index(val);
+	    *updated = gretl_is_updated(val);
 	}
     }
 
@@ -3779,6 +3779,7 @@ int cli_read_rc (void)
     char dbproxy[PROXLEN] = {0};
     gchar *gptheme = NULL;
     int use_proxy = 0;
+    int updated = 0;
     FILE *fp;
     int err = 0;
 
@@ -3789,7 +3790,8 @@ int cli_read_rc (void)
 	err = E_FOPEN;
     } else {
 	get_gretl_config_from_file(fp, &cpaths, dbproxy,
-				   &use_proxy, &gptheme);
+				   &use_proxy, &updated,
+				   &gptheme);
 	fclose(fp);
     }
 
@@ -3803,6 +3805,10 @@ int cli_read_rc (void)
 	set_plotstyle(gptheme);
 	g_free(gptheme);
     }
+
+    if (updated) {
+	update_addons_index(NULL);
+    }    
 
 #ifdef USE_CURL
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);

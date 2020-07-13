@@ -25,7 +25,7 @@ char *get_addon_version (const char *fname, char **date);
 
 int update_addons_index (PRN *prn);
 
-int maybe_update_addons_index (const char *prev_build);
+int gretl_is_updated (const char *prev_build);
 
 char *gretl_addon_get_path (const char *addon);
 

@@ -238,7 +238,7 @@ int update_addons_index (PRN *prn)
    gretl config file.
 */
 
-static int gretl_is_updated (const char *prev_build)
+int gretl_is_updated (const char *prev_build)
 {
     int b_curr, b_prev;
     int y, m, d;
@@ -250,18 +250,6 @@ static int gretl_is_updated (const char *prev_build)
     b_prev = 10000*y + 100*m + d;
 
     return b_curr > b_prev;
-}
-
-/* On starting gretl, see if we're updated and if so
-   try rebuilding the addons index.
-*/
-
-int maybe_update_addons_index (const char *prev_build)
-{
-    if (gretl_is_updated(prev_build)) {
-	return update_addons_index(NULL);
-    }
-    return 0;
 }
 
 /* Get the full path to the .gfn file for a given

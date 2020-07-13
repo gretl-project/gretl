@@ -2154,7 +2154,7 @@ static void maybe_fix_viewpdf (void)
    read_gretlrc() or on MS Windows, read_win32_config().
 */
 
-static int common_read_rc_setup (void)
+static int common_read_rc_setup (int updated)
 {
     int langid = 0;
     int err = 0;
@@ -2307,7 +2307,7 @@ static int maybe_get_network_settings (void)
    argv[0] at startup) for gretldir.
 */
 
-static void win32_read_gretlrc (void)
+static void win32_read_gretlrc (int *updated)
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
     int got_recent = 0;
@@ -2344,7 +2344,9 @@ static void win32_read_gretlrc (void)
 		strcpy(linevar, line + strlen(key) + 3);
 		gretl_strstrip(linevar);
 		if (*linevar != '\0') {
-		    if (!strcmp(key, "userdir")) {
+		    if (!strcmp(key, "build_date")) {
+			*updated = gretl_is_updated(val);
+		    } else if (!strcmp(key, "userdir")) {
 			/* legacy */
 			find_and_set_rc_var("workdir", linevar);
 		    } else {
@@ -2372,6 +2374,7 @@ int read_win32_config (int debug)
     char value[MAXSTR];
     char *appdata;
     char *strvar;
+    int updated = 0;
     int i, err = 0;
 
     if (chinese_locale()) {
@@ -2409,8 +2412,10 @@ int read_win32_config (int debug)
        read config from it */
     maybe_get_network_settings();
 
+    /* FIXME graph theme? */
+
     /* read from user config file */
-    win32_read_gretlrc();
+    win32_read_gretlrc(&updated);
 
     /* now read from registry for a few items, if they're
        not already set */
@@ -2456,7 +2461,7 @@ int read_win32_config (int debug)
 	}
     }
 
-    err = common_read_rc_setup();
+    err = common_read_rc_setup(updated);
 
     if (debug) {
 	fprintf(stderr, "read_win32_config: returning %d\n", err);
@@ -2475,6 +2480,7 @@ int read_win32_config (int debug)
 static int read_gretlrc (void)
 {
     FILE *fp = gretl_fopen(rcfile, "r");
+    int updated = 0;
 
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read %s\n", rcfile);
@@ -2498,7 +2504,7 @@ static int read_gretlrc (void)
 		    if (!strcmp(key, "userdir")) {
 			find_and_set_rc_var("workdir", linevar);
 		    } else if (!strcmp(key, "build_date")) {
-			maybe_update_addons_index(linevar);
+			updated = gretl_is_updated(linevar);
 		    } else {
 			find_and_set_rc_var(key, linevar);
 		    }
@@ -2513,7 +2519,7 @@ static int read_gretlrc (void)
 	fclose(fp);
     }
 
-    return common_read_rc_setup();
+    return common_read_rc_setup(updated);
 }
 
 #endif /* end of non-Windows versions */
