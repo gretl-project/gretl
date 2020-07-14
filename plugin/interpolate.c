@@ -76,6 +76,10 @@ struct gls_info {
     double s2;
 };
 
+static const char *aggtype_names[] = {
+    "sum", "average", "last", "first"
+};
+
 static const char *method_names[] = {
     "chow-lin", "chow-lin-mle", "chow-lin-ssr",
     "fernandez", "denton-pfd", "denton-afd", NULL
@@ -1443,7 +1447,8 @@ static int get_tdisagg_method (const char *s, int *err)
 static int tdisagg_get_options (gretl_bundle *b,
 				int *pagg, int *pmeth,
 				int *pdet, double *pr,
-				int *pverb, int *pplot)
+				int *pverb, int *pplot,
+				PRN *prn)
 {
     double rho = NADBL;
     const char *str;
@@ -1454,8 +1459,8 @@ static int tdisagg_get_options (gretl_bundle *b,
     int plot = 0;
     int err = 0;
 
-    if (gretl_bundle_has_key(b, "agg")) {
-	str = gretl_bundle_get_string(b, "agg", &err);
+    if (gretl_bundle_has_key(b, "aggtype")) {
+	str = gretl_bundle_get_string(b, "aggtype", &err);
 	if (!err) {
 	    agg = get_aggregation_type(str, &err);
 	}
@@ -1492,6 +1497,12 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pr = rho;
 	*pverb = verbose;
 	*pplot = plot;
+	if (verbose) {
+	    pprintf(prn, "  Aggregation type %s\n", aggtype_names[agg]);
+	    if (!na(rho)) {
+		pprintf(prn, "  Input rho value %g\n", rho);
+	    }
+	}
     }
 
     return err;
@@ -1509,7 +1520,8 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 
     if (b != NULL) {
 	*err = tdisagg_get_options(b, &agg, &method, &det,
-				   &rho, &verbose, &plot);
+				   &rho, &verbose, &plot,
+				   prn);
 	if (*err) {
 	    return NULL;
 	}
