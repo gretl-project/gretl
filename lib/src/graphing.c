@@ -9967,8 +9967,9 @@ int transcribe_geoplot_file (const char *src,
 /* called from the interpolate plugin */
 
 int write_tdisagg_plot (const gretl_matrix *YY, int mult,
-			const char *title)
+			const char *title, DATASET *dset)
 {
+    const double *obs = NULL;
     char mstr[16] = {0};
     int t, T = YY->rows;
     double y0t;
@@ -9981,7 +9982,13 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
 	return err;
     }
 
-    fputs("# timeseries 1 (letterbox)\n", fp);
+    if (dset != NULL) {
+	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
+	obs = gretl_plotx(dset, OPT_NONE);
+	fprintf(stderr, "HERE pd=%d, obs=%p\n", dset->pd, obs);
+    } else {
+	fputs("# timeseries 1 (letterbox)\n", fp);
+    }
     fputs("set key left top\n", fp);
     fputs("set xzeroaxis\n", fp);
     if (title != NULL) {
@@ -9994,7 +10001,11 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
     fputs("# start inline data\n", fp);
     fputs("$data << EOD\n", fp);
     for (t=0; t<T; t++) {
-	fprintf(fp, "%d ", t + 1);
+	if (obs != NULL) {
+	    fprintf(fp, "%g ", obs[t+dset->t1]);
+	} else {
+	    fprintf(fp, "%d ", t + 1);
+	}
 	y0t = gretl_matrix_get(YY, t, 0);
 	if (na(y0t)) {
 	    fputs("? ", fp);

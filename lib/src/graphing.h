@@ -371,7 +371,7 @@ int transcribe_geoplot_file (const char *src,
 			     const char *datname);
 
 int write_tdisagg_plot (const gretl_matrix *YY, int mult,
-			const char *title);
+			const char *title, DATASET *dset);
 
 #endif /* GRAPHING_H */
 

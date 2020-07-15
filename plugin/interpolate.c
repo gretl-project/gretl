@@ -87,7 +87,8 @@ static const char *method_names[] = {
 
 static int td_plot (const gretl_matrix *y0,
 		    const gretl_matrix *y,
-		    int s, int agg, int method);
+		    int s, int agg, int method,
+		    DATASET *dset);
 
 static int force_iteration (int m)
 {
@@ -1045,6 +1046,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      int det, double rho,
 				      gretl_bundle *res,
 				      int verbose, int plot,
+				      DATASET *dset,
 				      PRN *prn, int *perr)
 {
     struct gls_info G = {0};
@@ -1207,7 +1209,9 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	fill_chowlin_bundle(&G, a, res);
     }
     if (!err && ny == 1 && plot) {
-	td_plot(Y0, Y, s, agg, method == R_FIXED ? R_ACF1 : method);
+	int meth = method == R_FIXED ? R_ACF1 : method;
+
+	td_plot(Y0, Y, s, agg, meth, dset);
     }
 
     *perr = err;
@@ -1238,6 +1242,7 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
 				const gretl_vector *p,
 				int s, int agg,
 				int afd, int plot,
+				DATASET *dset,
 				int *err)
 {
     gretl_matrix *M;
@@ -1353,7 +1358,7 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
 	gretl_matrix_free(y);
 	y = NULL;
     } else if (plot) {
-	td_plot(y0, y, s, agg, afd ? 5 : 4);
+	td_plot(y0, y, s, agg, afd ? 5 : 4, dset);
     }
 
     return y;
@@ -1365,6 +1370,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 				   int det, double rho,
 				   gretl_bundle *r,
 				   int verbose, int plot,
+				   DATASET *dset,
 				   PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
@@ -1375,7 +1381,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	    det = 1;
 	}
 	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho,
-			      r, verbose, plot, prn, err);
+			      r, verbose, plot, dset, prn, err);
     } else if (method < 6) {
 	/* Modified Denton, first differences */
 	int ylen = gretl_vector_get_length(Y0);
@@ -1396,7 +1402,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	if (!*err) {
 	    int afd = (method == 5);
 
-	    ret = denton_fd(Y0, X, s, agg, afd, plot, err);
+	    ret = denton_fd(Y0, X, s, agg, afd, plot, dset, err);
 	    gretl_matrix_free(X0);
 	}
     } else {
@@ -1512,6 +1518,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
 				 int s, gretl_bundle *b,
 				 gretl_bundle *r,
+				 DATASET *dset,
 				 PRN *prn, int *err)
 {
     int agg = 0, method = 0, det = 1;
@@ -1533,7 +1540,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			r, verbose, plot, prn, err);
+			r, verbose, plot, dset, prn, err);
 }
 
 gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
@@ -1544,7 +1551,40 @@ gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
     double rho = NADBL;
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			NULL, 0, 0, NULL, err);
+			NULL, 0, 0, NULL, NULL, err);
+}
+
+/* Add basic info to dummy dataset @hf, sufficient to get
+   a time-series x-axis in td plot, if possible.
+*/
+
+static int set_hf_data_info (DATASET *hf, DATASET *lf, int s)
+{
+    int ok = 0;
+
+    if (lf->pd == 1) {
+	if (s == 4 || s == 12) {
+	    /* annual to quarterly or monthly */
+	    hf->pd = s;
+	    hf->sd0 = lf->sd0 + (s == 4 ? 0.1 : 0.01);
+	    ok = 1;
+	}
+    } else if (lf->pd == 4) {
+	if (s == 3) {
+	    /* quarterly to monthly */
+	    hf->pd = 12;
+	    hf->sd0 = lf->sd0 - 0.1 + 0.01;
+	    ok = 1;
+	}
+    }
+
+    if (ok) {
+	hf->structure = TIME_SERIES;
+	hf->t1 = lf->t1 * s;
+	hf->n = lf->n * s;
+    }
+
+    return ok;
 }
 
 /* This plot -- which is invoked by giving a non-zero value
@@ -1559,8 +1599,10 @@ gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
 
 static int td_plot (const gretl_matrix *y0,
 		    const gretl_matrix *y,
-		    int s, int agg, int method)
+		    int s, int agg, int method,
+		    DATASET *dset)
 {
+    DATASET hfd = {0};
     gretl_matrix *YY;
     gchar *title;
     int i, k, T = y0->rows;
@@ -1593,9 +1635,25 @@ static int td_plot (const gretl_matrix *y0,
 	}
     }
 
+    if (dset != NULL) {
+	/* Either Y0 or X was a dataset object: we should make
+	   use of dataset info in the plot if we can. But is the
+	   dataset of the higher or lower frequency?
+	*/
+	int ok, hf = (dset->pd > 1 && dset->pd != 52);
+
+	if (hf && dset->pd == 4 && s == 3) {
+	    hf = 0;
+	}
+	if (!hf) {
+	    ok = set_hf_data_info(&hfd, dset, s);
+	    dset = ok ? &hfd : NULL;
+	}
+    }
+
     title = g_strdup_printf("%s (%s)", _("Temporal disaggregation"),
 			    method_names[method]);
-    err = write_tdisagg_plot(YY, mult, title);
+    err = write_tdisagg_plot(YY, mult, title, dset);
 
     gretl_matrix_free(YY);
     g_free(title);

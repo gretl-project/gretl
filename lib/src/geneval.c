@@ -13736,7 +13736,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    ret->v.m = matrix_tdisagg(Y, X, fac, b, r, p->prn, &p->err);
+	    DATASET *dset = NULL;
+
+	    if (yconv || xconv) {
+		dset = p->dset;
+	    }
+	    ret->v.m = matrix_tdisagg(Y, X, fac, b, r, dset,
+				      p->prn, &p->err);
 	}
 	if (yconv) {
 	    gretl_matrix_free(Y);
