@@ -4156,10 +4156,11 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet,
     if (logdet) {
 	int negcount = 0;
 
-	/* not sure if this is worth the bother: but do we get a bit
-	   more numerical accuracy in some cases by adding logs,
-	   rather than by multiplying terms then taking the log of the
-	   product?
+	/* Note: we're better off here taking logs and adding, rather
+	   than multiplying terms then taking the log of the product.
+	   In this way we can get a finite result for the log-determinant
+	   of a matrix whose determinant is numerically "infinite" --
+	   up to a point.
 	*/
 	det = 0.0;
 	for (i=0; i<n; i++) {
