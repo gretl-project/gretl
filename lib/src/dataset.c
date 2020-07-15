@@ -4666,7 +4666,9 @@ static int suitable_group_names_series (const DATASET *dset,
 		    const char *st = series_get_string_for_obs(dset, i, t);
 
 		    u = t / dset->pd;
-		    if (u == ubak && strcmp(st, sbak)) {
+		    if (st == NULL || sbak == NULL) {
+			fail = 1;
+		    } else if (u == ubak && strcmp(st, sbak)) {
 			/* same unit, different label: no */
 			fail = 1;
 		    } else if (ubak >= 0 && u != ubak && !strcmp(st, sbak)) {
