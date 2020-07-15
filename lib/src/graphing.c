@@ -9996,6 +9996,13 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
 
     gretl_push_c_numeric_locale();
 
+    if (obs != NULL) {
+	double d1 = obs[dset->t1];
+	double d2 = obs[dset->t2];
+
+	fprintf(fp, "set xrange [%g:%g]\n", floor(d1), ceil(d2));
+    }
+
     gnuplot_missval_string(fp);
     fputs("# start inline data\n", fp);
     fputs("$data << EOD\n", fp);

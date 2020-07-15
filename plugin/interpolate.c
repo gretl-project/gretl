@@ -1581,6 +1581,7 @@ static int set_hf_data_info (DATASET *hf, DATASET *lf, int s)
     if (ok) {
 	hf->structure = TIME_SERIES;
 	hf->t1 = lf->t1 * s;
+	hf->t2 = lf->t2 * s;
 	hf->n = lf->n * s;
     }
 
