@@ -9985,7 +9985,6 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
     if (dset != NULL) {
 	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
 	obs = gretl_plotx(dset, OPT_NONE);
-	fprintf(stderr, "HERE pd=%d, obs=%p\n", dset->pd, obs);
     } else {
 	fputs("# timeseries 1 (letterbox)\n", fp);
     }
