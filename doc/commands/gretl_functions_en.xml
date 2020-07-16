@@ -3247,9 +3247,9 @@
       <description>
 	<para>
 	  Returns the determinant of <argname>A</argname>, computed via the
-	  LU factorization.
+	  LU factorization. If what you actually want is the log
+	  determinant you should call <fncref targ="ldet"/> instead.
 	  <seelist>
-            <fncref targ="ldet"/>
             <fncref targ="rcond"/>
 	    <fncref targ="cnumber"/>
 	  </seelist>
@@ -6386,10 +6386,15 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the natural log of the determinant of <math>A</math>,
-	  computed via the LU factorization.
+	  Returns the natural log of the determinant of
+	  <math>A</math>, computed via the LU factorization. Note that
+	  this is more efficient than calling <fncref targ="det"/> and
+	  taking the log of the result. Moreover, in some cases
+	  <lit>ldet</lit> is able to return a valid result even if the
+	  determinant of <math>A</math> is numerically
+	  <quote>infinite</quote> (exceeds the C library's maximum
+	  double-precision number).
 	  <seelist>
-            <fncref targ="det"/>
             <fncref targ="rcond"/>
 	    <fncref targ="cnumber"/>
 	  </seelist>
