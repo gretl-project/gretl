@@ -374,13 +374,32 @@ static void certs_path_init (void)
 
     if (pfx != NULL) {
 	sprintf(certs_path, "%s/share/curl/curl-ca-bundle.crt", pfx);
-	return;
+	if (gretl_stat(certs_path) != 0) {
+	    fprintf(stderr, "curl: didn't find certs at '%s'\n",
+		    certs_path);
+	    *certs_path = '\0';
+	} else {
+	    return;
+	}
+    } else {
+	strcpy(certs_path, "c:/msys64/mingw64/share/curl/curl-ca-bundle.crt");
+	if (gretl_stat(certs_path) != 0) {
+	    fprintf(stderr, "curl: didn't find certs at '%s'\n",
+		    certs_path);
+	    *certs_path = '\0';
+	} else {
+	    return;
+	}
     }
 # endif
     sprintf(certs_path, "%scurl-ca-bundle.crt", gretl_home());
+    if (gretl_stat(certs_path) != 0) {
+	fprintf(stderr, "curl: didn't find certs at '%s'\n",
+		certs_path);
+    }
 }
 
-#endif
+#endif /* WIN32 */
 
 static int gretl_curl_toggle (int on)
 {
