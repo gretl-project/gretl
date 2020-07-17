@@ -12657,46 +12657,96 @@ static int bundle_pointer_arg0 (NODE *t)
     return 0;
 }
 
-/* strip out repetition of high-frequency values in y vector */
-
-static int tdisagg_compress (gretl_matrix **py, int s)
+static gretl_matrix *matrix_shrink_to_rows (const gretl_matrix *m,
+					    int r, int *err)
 {
-    gretl_matrix *y, *y0 = *py;
-    int i, t, n = y0->rows / s;
-    int trim = 1;
+    gretl_matrix *ret = gretl_matrix_alloc(r, m->cols);
+    const double *src = m->val;
+    size_t csz = r * sizeof *src;
+    int j;
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	double *dest = ret->val;
+
+	for (j=0; j<m->cols; j++) {
+	    memcpy(dest, src, csz);
+	    src += m->rows;
+	    dest += r;
+	}
+    }
+
+    return ret;
+}
+
+/* strip out repetition of high-frequency values in Y matrix */
+
+static int tdisagg_compress (gretl_matrix **pY, int s)
+{
+    gretl_matrix *Y, *Y0 = *pY;
+    double ytj;
+    int i, j, t, n = Y0->rows / s;
+    int n_ok = n;
+    int g = Y0->cols;
+    int miss, trim = 1;
     int err = 0;
 
-    y = gretl_matrix_alloc(n, 1);
-    if (y == NULL) {
+    Y = gretl_matrix_alloc(n, g);
+    if (Y == NULL) {
 	return E_ALLOC;
     }
 
-    for (t=0, i=0; t<n; t++) {
-	y->val[t] = y0->val[i];
-	i += s;
+    /* copy every s-th element into Y */
+    for (j=0; j<g; j++) {
+	for (t=0, i=0; t<n; t++) {
+	    ytj = gretl_matrix_get(Y0, i, j);
+	    gretl_matrix_set(Y, t, j, ytj);
+	    i += s;
+	}
     }
 
     /* trim any trailing NAs but flag an error
        on "internal" NA
     */
     for (t=n-1; t>=0; t--) {
-	if (na(y->val[t])) {
-	    if (trim) {
-		y->rows -= 1;
-	    } else {
-		err = E_MISSDATA;
-		break;
+	miss = 0;
+	for (j=0; j<g && !miss; j++) {
+	    if (na(gretl_matrix_get(Y, t, j))) {
+		miss = 1;
 	    }
+	}
+	if (miss && !trim) {
+	    /* hit an internal NA */
+	    err = E_MISSDATA;
+	    break;
+	} else if (miss) {
+	    /* trim the effective number of rows */
+	    n_ok--;
 	} else {
+	    /* got a complete row, turn off trimming */
 	    trim = 0;
 	}
     }
 
+    if (!err && n_ok < Y->rows) {
+	if (g == 1) {
+	    Y->rows = n_ok;
+	} else {
+	    gretl_matrix *S = matrix_shrink_to_rows(Y, n_ok, &err);
+
+	    if (!err) {
+		gretl_matrix_free(Y);
+		Y = S;
+	    }
+	}
+    }
+
     if (err) {
-	gretl_matrix_free(y);
+	gretl_matrix_free(Y);
     } else {
-	gretl_matrix_free(y0);
-	*py = y;
+	gretl_matrix_free(Y0);
+	*pY = Y;
     }
 
     return err;
@@ -13685,6 +13735,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    if (Y == NULL) {
 			p->err = E_ALLOC;
 		    }
+		    yconv = 1;
+		} else if (e->t == LIST) {
+		    Y = gretl_matrix_data_subset(e->v.ivec, p->dset, t1, t2,
+						 M_MISSING_OK, &p->err);
 		    yconv = 1;
 		} else {
 		    p->err = E_TYPES;

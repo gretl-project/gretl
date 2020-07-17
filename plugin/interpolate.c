@@ -1114,10 +1114,6 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	rho_given = 1;
     }
 
-    if (verbose == 0 && gretl_messages_on()) {
-	verbose = 1;
-    }
-
     /* regressors: deterministic terms (as wanted), plus
        anything else the user has added
     */
@@ -1238,7 +1234,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
    storiche economiche. Nota tecnica ed estenioni".
 */
 
-static gretl_matrix *denton_fd (const gretl_vector *y0,
+static gretl_matrix *denton_fd (const gretl_matrix *Y0,
 				const gretl_vector *p,
 				int s, int agg,
 				int afd, int plot,
@@ -1246,16 +1242,19 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
 				int *err)
 {
     gretl_matrix *M;
-    gretl_matrix *y;
+    gretl_matrix *Y;
     gretl_matrix *tmp;
     gretl_matrix *DDp = NULL;
+    gretl_matrix *y0, *y;
+    gretl_matrix my0, my;
     double pk, mij;
-    int N = y0->rows;
+    int N = Y0->rows;
+    int ny = Y0->cols;
     int sN = s * N;
     int m = p->rows - sN;
     int sNm = sN + m;
     int dim = sNm + N;
-    int i, j, k = 0;
+    int i, j, ii, k = 0;
     int offset;
 
     /* we need one big matrix, @M */
@@ -1266,10 +1265,10 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
     } else {
 	tmp = gretl_matrix_alloc(sNm, N);
     }
-    /* and the return vector */
-    y = gretl_matrix_alloc(sNm, 1);
+    /* and the return matrix */
+    Y = gretl_matrix_alloc(sNm, ny);
 
-    if (M == NULL || tmp == NULL || y == NULL) {
+    if (M == NULL || tmp == NULL || Y == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
@@ -1281,6 +1280,10 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
 	    goto bailout;
 	}
     }
+
+    /* convenience pointers to columns of Y0, Y */
+    y0 = gretl_matrix_init_full(&my0, N, 1, Y0->val);
+    y = gretl_matrix_init_full(&my, sNm, 1, Y->val);
 
     /* In @M, create (D'D ~ diag(p)*J') | (J*diag(p) ~ 0);
        see di Fonzo and Marini, equation (4), or in the
@@ -1319,33 +1322,40 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
 
     *err = gretl_invert_symmetric_indef_matrix(M);
 
-    if (!*err && afd) {
-	/* form (D'Dp | y0) */
-	DDp->val[0] = p->val[0] - p->val[1];
-	for (i=1; i<sNm-1; i++) {
-	    DDp->val[i] = 2 * p->val[i] - p->val[i-1] - p->val[i+1];
+    for (ii=0; ii<ny && !*err; ii++) {
+	if (ii > 0) {
+	    /* pick up the current columns for reading and writing */
+	    y0->val = Y0->val + ii * N;
+	    y->val = Y->val + ii * sNm;
 	}
-	DDp->val[sNm-1] = p->val[sNm-1] - p->val[sNm-2];
-	memcpy(DDp->val + sNm, y0->val, N * sizeof(double));
-	/* multiply M into (D'Dp | y0) */
-	gretl_matrix_multiply(M, DDp, tmp);
-	/* and extract the portion we want */
-	memcpy(y->val, tmp->val, sNm * sizeof (double));
-    } else if (!*err) {
-	/* extract the relevant portion of M-inverse and
-	   premultiply by (diag(p) ~ 0) | (0 ~ I)
-	*/
-	for (j=0; j<N; j++) {
-	    for (i=0; i<sNm; i++) {
-		mij = gretl_matrix_get(M, i, j+sNm);
-		gretl_matrix_set(tmp, i, j, mij * p->val[i]);
+	if (afd) {
+	    /* form (D'Dp | y0) */
+	    DDp->val[0] = p->val[0] - p->val[1];
+	    for (i=1; i<sNm-1; i++) {
+		DDp->val[i] = 2 * p->val[i] - p->val[i-1] - p->val[i+1];
 	    }
+	    DDp->val[sNm-1] = p->val[sNm-1] - p->val[sNm-2];
+	    memcpy(DDp->val + sNm, y0->val, N * sizeof(double));
+	    /* multiply M into (D'Dp | y0) */
+	    gretl_matrix_multiply(M, DDp, tmp);
+	    /* and extract the portion we want */
+	    memcpy(y->val, tmp->val, sNm * sizeof(double));
+	} else {
+	    /* extract the relevant portion of M-inverse and
+	       premultiply by (diag(p) ~ 0) | (0 ~ I)
+	    */
+	    for (j=0; j<N; j++) {
+		for (i=0; i<sNm; i++) {
+		    mij = gretl_matrix_get(M, i, j+sNm);
+		    gretl_matrix_set(tmp, i, j, mij * p->val[i]);
+		}
+	    }
+	    gretl_matrix_multiply(tmp, y0, y);
 	}
-	gretl_matrix_multiply(tmp, y0, y);
-    }
 
-    if (agg == AGG_AVG) {
-	gretl_matrix_multiply_by_scalar(y, s);
+	if (agg == AGG_AVG) {
+	    gretl_matrix_multiply_by_scalar(y, s);
+	}
     }
 
  bailout:
@@ -1355,13 +1365,13 @@ static gretl_matrix *denton_fd (const gretl_vector *y0,
     gretl_matrix_free(DDp);
 
     if (*err) {
-	gretl_matrix_free(y);
-	y = NULL;
-    } else if (plot) {
-	td_plot(y0, y, s, agg, afd ? 5 : 4, dset);
+	gretl_matrix_free(Y);
+	Y = NULL;
+    } else if (ny == 1 && plot) {
+	td_plot(Y0, Y, s, agg, afd ? 5 : 4, dset);
     }
 
-    return y;
+    return Y;
 }
 
 static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
@@ -1384,7 +1394,7 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 			      r, verbose, plot, dset, prn, err);
     } else if (method < 6) {
 	/* Modified Denton, first differences */
-	int ylen = gretl_vector_get_length(Y0);
+	int ylen = Y0->rows;
 	gretl_matrix *X0 = NULL;
 
 	if (X == NULL) {
@@ -1461,7 +1471,7 @@ static int tdisagg_get_options (gretl_bundle *b,
     int agg = 0;
     int method = 0;
     int det = 1;
-    int verbose = 0;
+    int verbose = -1;
     int plot = 0;
     int err = 0;
 
@@ -1496,6 +1506,10 @@ static int tdisagg_get_options (gretl_bundle *b,
 	plot = gretl_bundle_get_int(b, "plot", NULL);
     }
 
+    if (!err && verbose < 0) {
+	verbose = gretl_messages_on();
+    }
+
     if (!err) {
 	*pagg = agg;
 	*pmeth = method;
@@ -1503,7 +1517,7 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pr = rho;
 	*pverb = verbose;
 	*pplot = plot;
-	if (verbose) {
+	if (verbose && method <= R_UROOT) {
 	    pprintf(prn, "  Aggregation type %s\n", aggtype_names[agg]);
 	    if (!na(rho)) {
 		pprintf(prn, "  Input rho value %g\n", rho);
