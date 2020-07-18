@@ -2999,7 +2999,7 @@ static int submasks_match (const DATASET *dset, const MODEL *pmod)
     }
 }
 
-/* check the subsample mask from a model against datainfo to
+/* check the subsample mask from a model against @dset to
    see if it may have been estimated on a different
    (subsampled) data set from the current one
 */
