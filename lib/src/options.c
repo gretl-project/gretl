@@ -613,6 +613,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_M, "gnu-octave", 0 },
     { STORE,    OPT_N, "no-header", 0 },
     { STORE,    OPT_R, "gnu-R", 0 },
+    { STORE,    OPT_T, "trim-strvals", 0 },
     { STORE,    OPT_X, "omit-obs", 0 },
     { STORE,    OPT_Z, "gzipped", 1 },
     { SUMMARY,  OPT_B, "by", 2 },

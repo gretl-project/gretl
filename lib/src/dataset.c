@@ -4555,7 +4555,8 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
  * series_recode_strings:
  * @dset: pointer to dataset.
  * @v: index number of target string-valued series.
- * @opt: may contain OPT_P.
+ * @opt: may contain OPT_P (see below).
+ * @changed: location to receive "changed" feedback, or NULL.
  *
  * Given a sub-sampled dataset, "trims" the array of string
  * values associated with series @v so that it contains no
@@ -4565,10 +4566,17 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
  * OPT_P it is replaced but not freed; this make sense only
  * if another pointer to the original table exists.
  *
+ * If it happens that the sub-sampled dataset contains
+ * instances of all the strings in the full dataset, this
+ * function won't actually make any changes to @dset. The
+ * @changed argument provides a means of determining
+ * whether any change has been made.
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int series_recode_strings (DATASET *dset, int v, gretlopt opt)
+int series_recode_strings (DATASET *dset, int v, gretlopt opt,
+			   int *changed)
 {
     double *x = dset->Z[v] + dset->t1;
     int n = sample_size(dset);
@@ -4576,32 +4584,52 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt)
     gretl_matrix *repl = NULL;
     char **S = NULL;
     const char *si;
-    int i, nu = 0;
+    int ns, nu = 0;
     int err = 0;
 
+    if (changed != NULL) {
+	*changed = 0;
+    }
+
+    ns = series_table_get_n_strings(dset->varinfo[v]->st);
     vals = gretl_matrix_values(x, n, OPT_NONE, &err);
 
     if (!err) {
-	nu = vals->rows; /* number of unique values */
+	/* number of unique values */
+	nu = vals->rows;
+	if (nu == ns) {
+	    /* nothing to be done */
+	    gretl_matrix_free(vals);
+	    return 0;
+	}
 	repl = gretl_zero_matrix_new(nu, 1);
 	S = strings_array_new(nu);
 	if (repl == NULL || S == NULL) {
+	    free(S);
 	    err = E_ALLOC;
 	}
     }
 
-    for (i=0; i<nu; i++) {
-	si = series_get_string_for_value(dset, v, vals->val[i]);
-	S[i] = gretl_strdup(si);
-	repl->val[i] = i;
-    }
+    if (!err) {
+	int i;
 
-    substitute_values(x, x, n, vals->val, nu, repl->val, nu);
+	for (i=0; i<nu; i++) {
+	    si = series_get_string_for_value(dset, v, vals->val[i]);
+	    S[i] = gretl_strdup(si);
+	    repl->val[i] = i + 1;
+	}
 
-    if (!(opt & OPT_P)) {
-	series_table_destroy(dset->varinfo[v]->st);
+	substitute_values(x, x, n, vals->val, nu, repl->val, nu);
+
+	if (!(opt & OPT_P)) {
+	    series_table_destroy(dset->varinfo[v]->st);
+	}
+	dset->varinfo[v]->st = series_table_new(S, nu);
+
+	if (changed != NULL) {
+	    *changed = 1;
+	}
     }
-    dset->varinfo[v]->st = series_table_new(S, nu);
 
     gretl_matrix_free(vals);
     gretl_matrix_free(repl);

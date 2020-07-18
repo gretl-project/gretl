@@ -55,7 +55,7 @@ static int recode_strvals (DATASET *dset, gretlopt opt)
 
     for (i=1; i<dset->v && !err; i++) {
 	if (is_string_valued(dset, i)) {
-	    err = series_recode_strings(dset, i, opt);
+	    err = series_recode_strings(dset, i, opt, NULL);
 	}
     }
 

@@ -554,7 +554,8 @@ int string_series_assign_value (DATASET *dset, int i,
 
 int series_set_string_vals (DATASET *dset, int i, void *ptr);
 
-int series_recode_strings (DATASET *dset, int v, gretlopt opt);
+int series_recode_strings (DATASET *dset, int v, gretlopt opt,
+			   int *changed);
 
 double series_decode_string (const DATASET *dset, int i, const char *s);
 

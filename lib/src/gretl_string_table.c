@@ -253,6 +253,15 @@ char **series_table_get_strings (series_table *st, int *n_strs)
     }
 }
 
+int series_table_get_n_strings (series_table *st)
+{
+    if (st != NULL) {
+	return st->n_strs;
+    } else {
+	return 0;
+    }
+}
+
 static char *get_unquoted (const char *s)
 {
     char *tmp = NULL;

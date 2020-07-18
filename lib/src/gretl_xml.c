@@ -2208,6 +2208,99 @@ static int p15_OK (const DATASET *dset, int v)
     return ret;
 }
 
+/* apparatus from trimming string-values on gdt save,
+   and restoration afterwards
+*/
+
+struct strval_saver_ {
+    int *list;
+    gretl_matrix *X;
+    series_table **st;
+    size_t sz;
+};
+
+typedef struct strval_saver_ strval_saver;
+
+static void strval_saver_destroy (strval_saver *ss)
+{
+    if (ss != NULL) {
+	free(ss->list);
+	gretl_matrix_free(ss->X);
+	free(ss->st);
+	free(ss);
+    }
+}
+
+static strval_saver *strval_saver_setup (DATASET *dset,
+					 int nvars, int nsv,
+					 int *list, int *err)
+{
+    strval_saver *ss;
+    int i, n;
+
+    ss = calloc(1, sizeof *ss);
+    if (ss == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    n = sample_size(dset);
+    ss->list = gretl_list_new(nsv);
+    ss->X = gretl_matrix_alloc(n, nsv);
+    ss->st = calloc(nsv, sizeof *ss->st);
+    if (ss->list == NULL || ss->X == NULL || ss->st == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (!*err) {
+	double *x = ss->X->val;
+	int changed;
+	int v, j = 0;
+
+	ss->sz = n * sizeof *x;
+
+	for (i=1; i<=nvars && !*err; i++) {
+	    v = savenum(list, i);
+	    if (is_string_valued(dset, v)) {
+		ss->list[j+1] = v;
+		ss->st[j] = series_get_string_table(dset, v);
+		memcpy(x, dset->Z[v] + dset->t1, ss->sz);
+		*err = series_recode_strings(dset, v, OPT_P, &changed);
+		if (!changed) {
+		    ss->st[j] = NULL;
+		}
+		j++;
+		x += n;
+	    }
+	}
+    } else {
+	strval_saver_destroy(ss);
+	ss = NULL;
+    }
+
+    return ss;
+}
+
+static void strval_saver_restore (DATASET *dset,
+				  strval_saver *ss)
+{
+    double *x = ss->X->val;
+    int n = ss->X->rows;
+    int i, v;
+
+    for (i=1; i<=ss->list[0]; i++) {
+	v = ss->list[i];
+	if (ss->st[i-1] != NULL) {
+	    series_destroy_string_table(dset, v);
+	    series_attach_string_table(dset, v, ss->st[i-1]);
+	    memcpy(dset->Z[v] + dset->t1, x, ss->sz);
+	}
+	x += n;
+    }
+}
+
+/* end apparatus from trimming string-values */
+
 static int real_write_gdt (const char *fname, const int *inlist,
 			   const DATASET *dset, gretlopt opt,
 			   int progress)
@@ -2221,6 +2314,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     char numstr[128], xmlbuf[1024];
     const char *gdtver;
     int (*show_progress) (double, double, int) = NULL;
+    strval_saver *ss = NULL;
     double dsize = 0;
     int i, t, v, ntabs, nvars = 0;
     int have_markers, in_c_locale = 0;
@@ -2383,6 +2477,14 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	pprintf(prn, "<variables count=\"%d\">\n", nvars);
     }
 
+    ntabs = string_table_count(dset, list, nvars);
+
+    if ((opt & OPT_T) && ntabs > 0) {
+	/* trimming strvals */
+	ss = strval_saver_setup((DATASET *) dset, nvars,
+				ntabs, list, &err);
+    }
+
     for (i=1; i<=nvars; i++) {
 	const char *vstr;
 	int vprop, mpd;
@@ -2523,8 +2625,6 @@ static int real_write_gdt (const char *fname, const int *inlist,
 
     pputs(prn, "</observations>\n");
 
-    ntabs = string_table_count(dset, list, nvars);
-
     if (ntabs > 0) {
 	char *sbuf, **strs;
 	int j, n_strs;
@@ -2560,6 +2660,11 @@ static int real_write_gdt (const char *fname, const int *inlist,
     }
 
     pputs(prn, "</gretldata>\n");
+
+    if (ss != NULL) {
+	strval_saver_restore((DATASET *) dset, ss);
+	strval_saver_destroy(ss);
+    }
 
  cleanup:
 
