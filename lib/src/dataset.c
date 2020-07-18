@@ -4551,6 +4551,64 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
     return err;
 }
 
+/**
+ * series_recode_strings:
+ * @dset: pointer to dataset.
+ * @v: index number of target string-valued series.
+ * @opt: may contain OPT_P.
+ *
+ * Given a sub-sampled dataset, "trims" the array of string
+ * values associated with series @v so that it contains no
+ * redundant elements, and resets the numeric codes for the
+ * string values. By default the original "series_table"
+ * attached to series @v is destroyed, but if @opt contains
+ * OPT_P it is replaced but not freed; this make sense only
+ * if another pointer to the original table exists.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int series_recode_strings (DATASET *dset, int v, gretlopt opt)
+{
+    double *x = dset->Z[v] + dset->t1;
+    int n = sample_size(dset);
+    gretl_matrix *vals = NULL;
+    gretl_matrix *repl = NULL;
+    char **S = NULL;
+    const char *si;
+    int i, nu = 0;
+    int err = 0;
+
+    vals = gretl_matrix_values(x, n, OPT_NONE, &err);
+
+    if (!err) {
+	nu = vals->rows; /* number of unique values */
+	repl = gretl_zero_matrix_new(nu, 1);
+	S = strings_array_new(nu);
+	if (repl == NULL || S == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    for (i=0; i<nu; i++) {
+	si = series_get_string_for_value(dset, v, vals->val[i]);
+	S[i] = gretl_strdup(si);
+	repl->val[i] = i;
+    }
+
+    substitute_values(x, x, n, vals->val, nu, repl->val, nu);
+
+    if (!(opt & OPT_P)) {
+	series_table_destroy(dset->varinfo[v]->st);
+    }
+    dset->varinfo[v]->st = series_table_new(S, nu);
+
+    gretl_matrix_free(vals);
+    gretl_matrix_free(repl);
+
+    return err;
+}
+
 int set_panel_groups_name (DATASET *dset, const char *vname)
 {
     if (dset->pangrps != NULL) {

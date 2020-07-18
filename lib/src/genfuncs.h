@@ -266,4 +266,8 @@ int geoplot_driver (const char *fname,
 		    const DATASET *dset,
 		    void *optptr);
 
+int substitute_values (double *dest, const double *src, int n,
+		       const double *v0, int n0,
+		       const double *v1, int n1);
+
 #endif /* GENFUNCS_H */

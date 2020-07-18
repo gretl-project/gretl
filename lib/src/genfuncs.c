@@ -28,6 +28,7 @@
 #include "gretl_midas.h"
 #include "estim_private.h"
 #include "matrix_extra.h"
+#include "gretl_btree.h"
 #include "kalman.h"
 #include "../../cephes/cephes.h"
 
@@ -7967,4 +7968,125 @@ int geoplot_driver (const char *fname,
     }
 
     return err;
+}
+
+enum {
+    SUBST_SIMPLE,
+    SUBST_BTREE
+};
+
+static double subst_val_via_tree (double x, const double *x0, int n0,
+				  const double *x1, int n1)
+{
+    static BTree *tree;
+
+    if (x0 == NULL) {
+	/* cleanup */
+	gretl_btree_destroy(tree);
+	tree = NULL;
+	return 0;
+    }
+
+    if (tree == NULL) {
+	/* allocate and populate tree */
+	double x1val;
+	int i;
+
+	tree = gretl_btree_new();
+	for (i=0; i<n0; i++) {
+	    x1val = n1 == 1 ? *x1 : x1[i];
+	    gretl_btree_insert(tree, x0[i], x1val);
+	}
+    }
+
+    /* do the actual lookup */
+    x = gretl_btree_lookup(tree, x);
+
+    return x;
+}
+
+static int select_subst_method (int n, int nfind)
+{
+#if 1
+    /* for testing */
+    if (getenv("REPLACE_USE_BTREE") != NULL) {
+	return SUBST_BTREE;
+    } else if (getenv("REPLACE_NAIVE") != NULL) {
+	return SUBST_SIMPLE;
+    }
+#endif
+    /* The idea here is that it's worth using a binary
+       tree mapping "find" to "replace" values only if
+       the problem is big enough. Testing seems to
+       indicate that the following condition for "big
+       enough" may be roughly appropriate.
+    */
+    if (nfind > 11 && n >= 80) {
+	return SUBST_BTREE;
+    } else {
+	return SUBST_SIMPLE;
+    }
+}
+
+/* Given an original value @x, see if it matches any of the @n0 values
+   in @x0.  If so, return the substitute value from @x1, otherwise
+   return the original.
+*/
+
+static double subst_val (double x, const double *x0, int n0,
+			 const double *x1, int n1,
+			 int method)
+{
+    if (method & SUBST_BTREE) {
+	x = subst_val_via_tree(x, x0, n0, x1, n1);
+    } else {
+	int i;
+
+	for (i=0; i<n0; i++) {
+	    if (x == x0[i]) {
+		return (n1 == 1)? *x1 : x1[i];
+	    } else if (isnan(x) && isnan(x0[i])) {
+		/* we'll count this as a match */
+		return (n1 == 1)? *x1 : x1[i];
+	    }
+	}
+    }
+
+    return x;
+}
+
+/**
+ * substitute_values:
+ * @dest: target array.
+ * @src: source array.
+ * @n: length of @src and @dest.
+ * @v0: array of "find" values.
+ * @n0: length of @v0.
+ * @v1: array of "replace" values.
+ * @n1: length of @v1.
+ *
+ * For each of the @n elements in @src, determine if it appears
+ * in @v0: if so, write to @targ the corresponding element of
+ * @v1, otherwise write the @src element to @targ. The method
+ * employed is either "naive" lookup, or if the problem is of
+ * sufficient size a binary tree.
+ *
+ * Returns: 0 on successful completion, non-zero code on error.
+ */
+
+int substitute_values (double *dest, const double *src, int n,
+		       const double *v0, int n0,
+		       const double *v1, int n1)
+{
+    int i, method = select_subst_method(n, n1);
+
+    for (i=0; i<n; i++) {
+	dest[i] = subst_val(src[i], v0, n0, v1, n1, method);
+    }
+    if (method & SUBST_BTREE) {
+	/* cleanup call */
+	subst_val(0, NULL, 0, NULL, 0, method);
+    }
+
+    return 0;
 }

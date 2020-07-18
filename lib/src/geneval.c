@@ -36,7 +36,6 @@
 #include "uservar_priv.h"
 #include "genr_optim.h"
 #include "gretl_cmatrix.h"
-#include "gretl_btree.h"
 #include "qr_estimate.h"
 #include "gretl_foreign.h"
 #include "gretl_midas.h"
@@ -12223,91 +12222,6 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-enum {
-    SUBST_SIMPLE,
-    SUBST_BTREE
-};
-
-static double subst_val_via_tree (double x, const double *x0, int n0,
-				  const double *x1, int n1)
-{
-    static BTree *tree;
-
-    if (x0 == NULL) {
-	/* cleanup */
-	gretl_btree_destroy(tree);
-	tree = NULL;
-	return 0;
-    }
-
-    if (tree == NULL) {
-	/* allocate and populate tree */
-	double x1val;
-	int i;
-
-	tree = gretl_btree_new();
-	for (i=0; i<n0; i++) {
-	    x1val = n1 == 1 ? *x1 : x1[i];
-	    gretl_btree_insert(tree, x0[i], x1val);
-	}
-    }
-
-    /* do the actual lookup */
-    x = gretl_btree_lookup(tree, x);
-
-    return x;
-}
-
-static int select_subst_method (int n, int nfind)
-{
-#if 1
-    /* for testing */
-    if (getenv("REPLACE_USE_BTREE") != NULL) {
-	return SUBST_BTREE;
-    } else if (getenv("REPLACE_NAIVE") != NULL) {
-	return SUBST_SIMPLE;
-    }
-#endif
-    /* The idea here is that it's worth using a binary
-       tree mapping "find" to "replace" values only if
-       the problem is big enough. Testing seems to
-       indicate that the following condition for "big
-       enough" may be roughly appropriate.
-    */
-    if (nfind > 11 && n >= 80) {
-	return SUBST_BTREE;
-    } else {
-	return SUBST_SIMPLE;
-    }
-}
-
-/* Given an original value @x, see if it matches any of the @n0 values
-   in @x0.  If so, return the substitute value from @x1, otherwise
-   return the original.
-*/
-
-static double subst_val (double x, const double *x0, int n0,
-			 const double *x1, int n1,
-			 int method)
-{
-    if (method & SUBST_BTREE) {
-	x = subst_val_via_tree(x, x0, n0, x1, n1);
-    } else {
-	int i;
-
-	for (i=0; i<n0; i++) {
-	    if (x == x0[i]) {
-		return (n1 == 1)? *x1 : x1[i];
-	    } else if (isnan(x) && isnan(x0[i])) {
-		/* we'll count this as a match */
-		return (n1 == 1)? *x1 : x1[i];
-	    }
-	}
-    }
-
-    return x;
-}
-
 /* String search and replace: return a node containing a copy
    of the string on node @src in which all occurrences of
    the string on @n0 are replaced by the string on @n1.
@@ -12451,15 +12365,7 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	}
 
 	if (!p->err) {
-	    int i, method = select_subst_method(n, k1);
-
-	    for (i=0; i<n; i++) {
-		targ[i] = subst_val(x[i], px0, k0, px1, k1, method);
-	    }
-	    if (method & SUBST_BTREE) {
-		/* cleanup call */
-		subst_val(0, NULL, 0, NULL, 0, method);
-	    }
+	    substitute_values(targ, x, n, px0, k0, px1, k1);
 	}
     }
 

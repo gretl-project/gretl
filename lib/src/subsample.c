@@ -45,6 +45,25 @@ typedef enum {
     SUBSAMPLE_UNKNOWN
 } SubsampleMode;
 
+#define RECODE_ON_PERMA 1 /* experiment */
+
+#if RECODE_ON_PERMA
+
+static int recode_strvals (DATASET *dset, gretlopt opt)
+{
+    int i, err = 0;
+
+    for (i=1; i<dset->v && !err; i++) {
+	if (is_string_valued(dset, i)) {
+	    err = series_recode_strings(dset, i, opt);
+	}
+    }
+
+    return err;
+}
+
+#endif
+
 /*
   The purpose of the static pointers below: When the user subsamples
   the current dataset in a non-trivial way -- i.e., by selecting cases
@@ -1855,6 +1874,9 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	/* --permanent */
 	check_models_for_subsample(mask, NULL);
 	destroy_full_dataset(dset);
+#if RECODE_ON_PERMA
+	recode_strvals(subset, OPT_NONE);
+#endif
     } else {
 	err = backup_full_dataset(dset);
 	subset->submask = copy_subsample_mask(mask, &err);
@@ -2379,6 +2401,10 @@ int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
     } else if (opt != OPT_T) {
 	return E_BADOPT;
     }
+
+#if RECODE_ON_PERMA
+    recode_strvals(dset, OPT_NONE);
+#endif
 
     if (dset->submask == NULL) {
 	/* just trim observations */
