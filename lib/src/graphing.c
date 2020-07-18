@@ -4350,7 +4350,7 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
 }
 
 /* Try to determine a suitable tic-increment for the automatic
-   x-axis in the "scatters" context". We don't want the
+   x-axis in the "scatters" context. We don't want the
    increment to be so small that the tic labels pile up on
    each other.
 */
@@ -4369,7 +4369,7 @@ static int scatters_incr (int T, const DATASET *dset)
 	}
     }
 
-    ntics = T / incr;
+    ntics = T / (incr * dset->pd);
     if (ntics > 10) {
 	ntics = 10;
 	incr = T / ntics;
@@ -4515,12 +4515,25 @@ int multi_scatters (const int *list, const DATASET *dset,
     } else if (obs != NULL) {
 	double startdate = obs[dset->t1];
 	double enddate = obs[dset->t2];
+	double obsrange = enddate - startdate;
+	double xincr = obsrange / 4;
 	int incr, T = dset->t2 - dset->t1 + 1;
 
-	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
-	incr = scatters_incr(T, dset);
-	if (incr > 0) {
-	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
+	if (obsrange > 8) {
+	    fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
+	    if (xincr > 0) {
+		incr = floor(xincr);
+		fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
+	    }
+	} else if (obsrange < 1) {
+	    fputs("set format x ''\n", fp);
+	} else {
+	    /* what to do?? for, just the status quo ante */
+	    fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
+	    incr = scatters_incr(T, dset);
+	    if (incr > 0) {
+		fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
+	    }
 	}
     } else {
 	/* avoid having points sticking to the axes */
