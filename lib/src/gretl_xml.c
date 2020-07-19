@@ -2236,6 +2236,7 @@ static strval_saver *strval_saver_setup (DATASET *dset,
 					 int *list, int *err)
 {
     strval_saver *ss;
+    int n_changed = 0;
     int i, n;
 
     ss = calloc(1, sizeof *ss);
@@ -2266,7 +2267,9 @@ static strval_saver *strval_saver_setup (DATASET *dset,
 		ss->st[j] = series_get_string_table(dset, v);
 		memcpy(x, dset->Z[v] + dset->t1, ss->sz);
 		*err = series_recode_strings(dset, v, OPT_P, &changed);
-		if (!changed) {
+		if (changed) {
+		    n_changed++;
+		} else {
 		    ss->st[j] = NULL;
 		}
 		j++;
@@ -2274,6 +2277,12 @@ static strval_saver *strval_saver_setup (DATASET *dset,
 	    }
 	}
     } else {
+	strval_saver_destroy(ss);
+	ss = NULL;
+    }
+
+    if (ss != NULL && n_changed == 0) {
+	/* we have no need for @ss */
 	strval_saver_destroy(ss);
 	ss = NULL;
     }

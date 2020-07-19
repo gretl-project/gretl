@@ -4558,17 +4558,20 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
  * @opt: may contain OPT_P (see below).
  * @changed: location to receive "changed" feedback, or NULL.
  *
- * Given a sub-sampled dataset, "trims" the array of string
- * values associated with series @v so that it contains no
- * redundant elements, and resets the numeric codes for the
- * string values. By default the original "series_table"
- * attached to series @v is destroyed, but if @opt contains
- * OPT_P it is replaced but not freed; this make sense only
- * if another pointer to the original table exists.
+ * This function "trims" the array of string values associated
+ * with series @v so that it contains no redundant elements --
+ * that is, values of which there is no instance in the
+ * current sample -- and resets the numeric codes for the
+ * strings if necessary.
  *
- * If it happens that the sub-sampled dataset contains
+ * By default the original "series_table" attached to series @v
+ * is destroyed, but if @opt contains OPT_P it is replaced but
+ * not freed; this make sense only if another pointer to the
+ * original table exists.
+ *
+ * If it happens that the current sample contains
  * instances of all the strings in the full dataset, this
- * function won't actually make any changes to @dset. The
+ * function will not actually make any changes to @dset. The
  * @changed argument provides a means of determining
  * whether any change has been made.
  *
@@ -4624,6 +4627,7 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 	if (!(opt & OPT_P)) {
 	    series_table_destroy(dset->varinfo[v]->st);
 	}
+	/* the series table takes ownership of @S */
 	dset->varinfo[v]->st = series_table_new(S, nu);
 
 	if (changed != NULL) {
