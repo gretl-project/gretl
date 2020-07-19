@@ -2522,7 +2522,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     *texbase = 0;
     strncat(texbase, texfile, dot);
 
-    texshort = path_last_slash(texbase);
+    texshort = strrslash(texbase);
     if (texshort == NULL) {
 	errbox(_("Failed to process TeX file"));
 	return;

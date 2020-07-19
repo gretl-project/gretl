@@ -9905,7 +9905,7 @@ static int script_delete_function_package (const char *action,
 	    /* delete package file(s) */
 	    err = delete_function_package(fname);
 	    if (!err) {
-		p = path_last_slash(fname);
+		p = strrslash(fname);
 		if (p != NULL) {
 		    *p = '\0';
 		}

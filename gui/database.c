@@ -1277,8 +1277,8 @@ make_db_index_window (int action, char *fname, char *buf,
 	return 1;
     }
 
-    if (buf == NULL && path_last_slash(fname) != NULL) {
-	title = path_last_slash(fname) + 1;
+    if (buf == NULL && strrslash(fname) != NULL) {
+	title = strrslash(fname) + 1;
     } else {
 	title = fname;
     }
@@ -2690,7 +2690,7 @@ static int unpack_book_data (const char *fname)
     int err = 0;
 
     strcpy(path, fname);
-    p = path_last_slash(path);
+    p = strrslash(path);
     if (p != NULL) {
 	*p = '\0';
     }

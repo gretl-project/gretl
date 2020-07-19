@@ -1564,7 +1564,7 @@ void get_gfn_dir (char *dirname, gpointer p)
 
     if (finfo->fname != NULL) {
 	strcpy(dirname, finfo->fname);
-	s = path_last_slash(dirname);
+	s = strrslash(dirname);
 	if (s != NULL) {
 	    *s = '\0';
 	} else {
@@ -1823,7 +1823,7 @@ static int maybe_copy_pdf_file (function_info *finfo)
 
     if (!strcmp(targ, finfo->pdfname)) {
 	copy = 0;
-    } else if ((p = path_last_slash(targ)) != NULL) {
+    } else if ((p = strrslash(targ)) != NULL) {
 	gchar *tmp = g_strdup(p + 1);
 
 	p++;
@@ -1907,7 +1907,7 @@ void get_gfn_pdf_dir (char *dirname, gpointer p)
 
     if (finfo->pdfname != NULL) {
 	strcpy(dirname, finfo->pdfname);
-	s = path_last_slash(dirname);
+	s = strrslash(dirname);
 	if (s != NULL) {
 	    *s = '\0';
 	} else {
@@ -1915,7 +1915,7 @@ void get_gfn_pdf_dir (char *dirname, gpointer p)
 	}
     } else if (finfo->fname != NULL) {
 	strcpy(dirname, finfo->fname);
-	s = path_last_slash(dirname);
+	s = strrslash(dirname);
 	if (s != NULL) {
 	    *s = '\0';
 	} else {
@@ -3192,7 +3192,7 @@ static int data_file_check_existence (function_info *finfo,
     char *p, test[FILENAME_MAX];
 
     strcpy(test, finfo->fname);
-    p = path_last_slash(test);
+    p = strrslash(test);
     if (p != NULL) {
 	*p = '\0';
 	strcat(p, fname);
@@ -4475,7 +4475,7 @@ static int maybe_fix_package_location (function_info *finfo)
 
 	strcpy(newpath, finfo->fname);
 	/* trim off pkgname.gfn */
-	p = path_last_slash(newpath);
+	p = strrslash(newpath);
 	*(p+1) = '\0';
 	/* append own subdir name */
 	strcat(newpath, pkgname);
@@ -4752,7 +4752,7 @@ static int maybe_write_aux_file (function_info *finfo,
 		char *s, tmp[FILENAME_MAX];
 
 		strcpy(tmp, fname);
-		s = path_last_slash(tmp);
+		s = strrslash(tmp);
 		*(s + 1) = '\0';
 		strcat(tmp, auxname);
 		fp = gretl_fopen(tmp, "wb"); /* 21017-02-22: was "w" */

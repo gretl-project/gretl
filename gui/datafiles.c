@@ -2742,7 +2742,7 @@ static void update_gfn_browser (const char *pkgname,
     }
 
     dirname = g_strdup(fname);
-    p = path_last_slash(dirname);
+    p = strrslash(dirname);
     if (p != NULL) {
 	*p = '\0';
     }

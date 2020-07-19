@@ -652,7 +652,7 @@ static gchar *gpage_switch_compiler (int term)
     int len0, have_pdf;
 
     strcpy(tmp, latex);
-    p = path_last_slash(tmp);
+    p = strrslash(tmp);
     if (p == NULL) {
 	len0 = 0;
 	p = tmp;
