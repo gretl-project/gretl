@@ -1579,7 +1579,7 @@ int get_package_data_path (const char *fname, char *fullname)
 				 pkgname);
 	    err = E_DATA;
 	} else {
-	    char *p = strrchr(gfnpath, SLASH);
+	    char *p = strrslash(gfnpath);
 	    const char *needle;
 
 	    if (p != NULL) {
@@ -1587,7 +1587,7 @@ int get_package_data_path (const char *fname, char *fullname)
 	    }
 
 	    /* trim path from @fname if present */
-	    needle = strrchr(fname, SLASH);
+	    needle = strrslash(fname);
 	    if (needle != NULL) {
 		needle++;
 	    } else {
@@ -3808,7 +3808,7 @@ int cli_read_rc (void)
 
     if (updated) {
 	update_addons_index(NULL);
-    }    
+    }
 
 #ifdef USE_CURL
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);

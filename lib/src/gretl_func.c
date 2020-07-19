@@ -2469,7 +2469,7 @@ char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 
 static void name_package_from_filename (fnpkg *pkg)
 {
-    char *p = strrchr(pkg->fname, SLASH);
+    char *p = strrslash(pkg->fname);
     int n;
 
     if (p != NULL) {
@@ -3536,12 +3536,12 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	failed = "failed\n";
     }
 
-    if (strrchr(fname, SLASH) != NULL) {
+    if (strrslash(fname) != NULL) {
 	/* directory change needed */
 	char dirname[FILENAME_MAX];
 
 	strcpy(dirname, fname);
-	p = strrchr(dirname, SLASH);
+	p = strrslash(dirname);
 	*p = '\0';
 	currdir = g_get_current_dir();
 	err = gretl_chdir(dirname);
@@ -8415,7 +8415,7 @@ static void reset_saved_loops (ufunc *u)
 
 static void set_pkgdir (fnpkg *pkg)
 {
-    const char *p = strrchr(pkg->fname, SLASH);
+    const char *p = strrslash(pkg->fname);
 
     if (p != NULL) {
 	char *pkgdir = gretl_strndup(pkg->fname, p - pkg->fname);
@@ -9801,7 +9801,7 @@ void *function_package_get_editor (fnpkg *pkg)
 
 int delete_function_package (const char *gfnname)
 {
-    char *p = strrchr(gfnname, SLASH);
+    char *p = strrslash(gfnname);
     gchar *pkgname = NULL;
     gchar *pkgdir = NULL;
     gchar *pkgsub = NULL;
@@ -9814,9 +9814,9 @@ int delete_function_package (const char *gfnname)
 	    *p = '\0';
 	}
 	pkgdir = g_strdup(gfnname);
-	p = strrchr(pkgdir, SLASH);
+	p = strrslash(pkgdir);
 	*p = '\0';
-	p = strrchr(pkgdir, SLASH);
+	p = strrslash(pkgdir);
 	if (p != NULL) {
 	    pkgsub = g_strdup(p + 1);
 	}

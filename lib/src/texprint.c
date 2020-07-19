@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* texprint.c for gretl - LaTeX output from modeling */
@@ -48,7 +48,7 @@ const char *tex_column_format (int i)
 
 void set_tex_use_pdf (const char *prog)
 {
-    const char *p = strrchr(prog, SLASH);
+    const char *p = strrslash(prog);
     char test[4];
 
     /* looking for "pdflatex", possibly preceded by
@@ -99,9 +99,9 @@ static const char *tex_greek_var (const char *s)
  * @targ: target string (must be pre-allocated)
  * @src: source string.
  *
- * Copies from @src to @targ, escaping any characters in @src that are 
+ * Copies from @src to @targ, escaping any characters in @src that are
  * special to TeX (by inserting a leading backslash).
- * 
+ *
  * Returns: the transformed copy of the string
  */
 
@@ -116,7 +116,7 @@ char *tex_escape (char *targ, const char *src)
     }
 
     while (*src) {
-	if (*src == '$' || *src == '&' || *src == '_' || 
+	if (*src == '$' || *src == '&' || *src == '_' ||
 	    *src == '%' || *src == '#')
 	    *targ++ = '\\';
 	*targ++ = *src++;
@@ -154,12 +154,12 @@ static int tex_math_pname (char *targ, const char *s)
  * @targ: target string (must be pre-allocated)
  * @src: source string.
  *
- * Copies from @src to @targ, escaping characters in @src that are 
+ * Copies from @src to @targ, escaping characters in @src that are
  * special to TeX (by inserting a leading backslash).  Unlike
  * tex_escape(), this function does not mess with '$' in the
  * source string, and it attempts to handle greek letters
  * correctly.
- * 
+ *
  * Returns: the transformed copy of the string.
  */
 
@@ -183,7 +183,7 @@ char *tex_escape_special (char *targ, const char *src)
     } else {
 	/* regular escape routine */
 	while (*src) {
-	    if (*src == '&' || *src == '_' || 
+	    if (*src == '&' || *src == '_' ||
 		*src == '%' || *src == '#') {
 		*p++ = '\\';
 	    }
@@ -256,7 +256,7 @@ char *tex_modify_exponent (char *s)
 	sprintf(tmp, "\\textrm{e%s%s}", (minus)? "--" : "+", p + 2);
 	strcpy(p, tmp);
     }
-    
+
     return s;
 }
 
@@ -529,7 +529,7 @@ static void tex_arma_coeff_name (char *targ, const char *src,
 	char fmt[16];
 
 	sprintf(fmt, "%%%d[^(](-%%d)", VNAMELEN - 1);
-	
+
 	if (sscanf(src, fmt, vname, &i) == 2) {
 	    if (!strcmp(vname, "y")) {
 		strcpy(texname, "y");
@@ -639,7 +639,7 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 	    sprintf(fmt, "$%s$", colspec[2]);
 	    pprintf(prn, fmt, mc->tval);
 	}
-    } 
+    }
 
     if (colspec[3][0]) {
 	if (colspec[0][0] || colspec[1][0] || colspec[2][0]) {
@@ -657,7 +657,7 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
 	} else {
 	    pprintf(prn, "\\multicolumn{1}{c}{}");
 	}
-    }  
+    }
 
     pputs(prn, " \\\\\n");
 
@@ -669,7 +669,7 @@ void make_tex_coeff_name (const MODEL *pmod, const DATASET *dset, int i,
 {
     char pname[VNAMELEN];
 
-    gretl_model_get_param_name(pmod, dset, i, pname);    
+    gretl_model_get_param_name(pmod, dset, i, pname);
 
     if (pmod->aux == AUX_ARCH) {
 	tex_make_cname(name, pname);
@@ -780,16 +780,16 @@ void tex_print_coeff (const model_coeff *mc, PRN *prn)
 	    col2);
 
     if (ncols == 4) {
-	pprintf(prn, 
+	pprintf(prn,
 		"      %s &\n"
-		"        %s \\\\\n",  
+		"        %s \\\\\n",
 		col3,
 		col4);
     } else {
-	pprintf(prn, 
+	pprintf(prn,
 		"      %s \\\\\n",
 		col3);
-    }	
+    }
 }
 
 static int
@@ -971,7 +971,7 @@ static void tex_beta_vname (char *s,
 
 	tex_escape(s, dset->varname[v->rlist[k]]);
 	pprintf(prn, "%s$_{t-1}$ & ", s);
-    } 
+    }
 }
 
 void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
@@ -1013,7 +1013,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
 		pputs(prn, "\\\\\n");
 	    } else {
 		pputs(prn, "& ");
-	    }	    
+	    }
 	}
 
 	if (jv->Bse != NULL) {
@@ -1069,7 +1069,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
 		pputs(prn, "\\\\\n");
 	    } else {
 		pputs(prn, "& ");
-	    }	    
+	    }
 	}
 
 	if (jv->Ase != NULL) {
@@ -1195,7 +1195,7 @@ void set_gretl_tex_preamble (void)
 	    gotit = find_gretlpre(path, localname);
 	}
     }
-    
+
     if (!gotit) {
 #ifdef OS_OSX
 	path = gretl_app_support_dir();
@@ -1230,7 +1230,7 @@ static void landscape_modify_line (char *line)
 	    }
 	} else {
 	    p += 13;
-	    rem = gretl_strdup(p); 
+	    rem = gretl_strdup(p);
 	    if (rem != NULL) {
 		sprintf(p, "[landscape]%s", rem);
 		free(rem);
@@ -1253,7 +1253,7 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	    /* FIXME model table: longtable and geom packages */
 
 	    while (fgets(line, sizeof line, fp)) {
-		if (strstr(line, "documentclass") && 
+		if (strstr(line, "documentclass") &&
 		    (fmt & GRETL_FORMAT_LANDSCAPE)) {
 		    landscape_modify_line(line);
 		}
@@ -1276,7 +1276,7 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	}
 
 	pputs(prn, "\\documentclass");
-	
+
 	if (fmt & GRETL_FORMAT_MODELTAB) {
 	    if (fmt & GRETL_FORMAT_LANDSCAPE) {
 		pputs(prn, "[landscape]");
@@ -1333,11 +1333,11 @@ static void tex_print_unsigned_double (double x, PRN *prn)
  * Prints to @prn a gretl model in the form of a LaTeX equation, either as
  * a stand-alone document or as a fragment of LaTeX source for
  * insertion into a document.
- * 
+ *
  * Returns: 0 on successful completion.
  */
 
-int tex_print_equation (const MODEL *pmod, const DATASET *dset, 
+int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
     double x;
@@ -1406,20 +1406,20 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	    tex_print_double(1.0, prn);
 	} else {
 	    if (na(pmod->sderr[i])) {
-		sderr_ok = 0;			
+		sderr_ok = 0;
 		pprintf(prn, "%s{", (pmod->coeff[i] < 0.0)? "-" :
 			(i > 0)? "+" : "");
 	    } else if (sderr_ok) {
 		if (opt & OPT_T) {
 		    /* t-ratios */
 		    x = pmod->coeff[i] / pmod->sderr[i];
-		    pprintf(prn, "%s\\underset{(%.3f)}{", 
+		    pprintf(prn, "%s\\underset{(%.3f)}{",
 			    (pmod->coeff[i] < 0.0)? "-" :
 			    (i > 0)? "+" : "", x);
 		} else {
 		    /* standard errors */
 		    tex_sprint_math_double_digits(pmod->sderr[i], tmp, se_digits);
-		    pprintf(prn, "%s\\underset{(%s)}{", 
+		    pprintf(prn, "%s\\underset{(%s)}{",
 			    (pmod->coeff[i] < 0.0)? "-" :
 			    (i > 0)? "+" : "", tmp);
 		}
@@ -1475,24 +1475,24 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 
 	if (opt & OPT_T) {
 	    x = pmod->coeff[r] / pmod->sderr[r];
-	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ", 
+	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ",
 		    x, pmod->coeff[r]);
 	} else {
 	    tex_sprint_math_double_digits(pmod->sderr[r], tmp, se_digits);
 	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%s)}{%g} ", /* FIXME? */
 		    tmp, pmod->coeff[r]);
-	}	    
+	}
 
 	for (i=1; i<=q; i++) {
 	    if (opt & OPT_T) {
 		x = pmod->coeff[r+i] / pmod->sderr[r+i];
-		pprintf(prn, "%s\\underset{(%.3f)}{", 
+		pprintf(prn, "%s\\underset{(%.3f)}{",
 			(pmod->coeff[r+i] < 0.0)? "-" : "+", x);
 	    } else {
 		tex_sprint_math_double_digits(pmod->sderr[r+i], tmp, se_digits);
-		pprintf(prn, "%s\\underset{(%s)}{", 
+		pprintf(prn, "%s\\underset{(%s)}{",
 			(pmod->coeff[r+i] < 0.0)? "-" : "+", tmp);
-	    }		
+	    }
 	    tex_print_unsigned_double(pmod->coeff[r+i], prn);
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\varepsilon^2_{t-%d}", i);
@@ -1501,13 +1501,13 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	for (i=1; i<=p; i++) {
 	    if (opt & OPT_T) {
 		x = pmod->coeff[q+r+i] / pmod->sderr[q+r+i];
-		pprintf(prn, "%s\\underset{(%.3f)}{", 
+		pprintf(prn, "%s\\underset{(%.3f)}{",
 			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", x);
 	    } else {
 		tex_sprint_math_double_digits(pmod->sderr[q+r+i], tmp, se_digits);
-		pprintf(prn, "%s\\underset{(%s)}{", 
+		pprintf(prn, "%s\\underset{(%s)}{",
 			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", tmp);
-	    }		
+	    }
 	    tex_print_unsigned_double(pmod->coeff[q+r+i], prn);
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\sigma^2_{t-%d}", i);
@@ -1519,7 +1519,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
     pprintf(prn, "T = %d ", pmod->nobs);
 
     /* additional info (R^2 etc) */
-    if (pmod->ci == LAD) { 
+    if (pmod->ci == LAD) {
 	x = gretl_model_get_double(pmod, "ladsum");
 	if (!na(x)) {
 	    tex_sprint_math_double_digits(x, tmp, 5);
@@ -1534,7 +1534,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 
 	if (pmod->ci != LOGIT && pmod->ci != PROBIT && !na(pmod->fstt)) {
 	    tex_sprint_math_double_digits(pmod->fstt, tmp, 5);
-	    pprintf(prn, "\\quad F(%d,%d) = %s ", 
+	    pprintf(prn, "\\quad F(%d,%d) = %s ",
 		    pmod->dfn, pmod->dfd, tmp);
 	}
 
@@ -1578,17 +1578,17 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
  * errors.
  * @prn: gretl printing struct.
  *
- * Prints to @prn a gretl model in the form of either a LaTeX 
- * table or an equation, and either as a stand-alone document or 
+ * Prints to @prn a gretl model in the form of either a LaTeX
+ * table or an equation, and either as a stand-alone document or
  * as a fragment of LaTeX source for insertion into a document.
  *
  * The options are read from the format field of @prn --
  * gretl_print_set_format().
- * 
+ *
  * Returns: 0 on successful completion.
  */
 
-int tex_print_model (MODEL *pmod, const DATASET *dset, 
+int tex_print_model (MODEL *pmod, const DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     int err = 0;
@@ -1601,7 +1601,7 @@ int tex_print_model (MODEL *pmod, const DATASET *dset,
 	opt |= OPT_S;
     }
 
-    if (tex_eqn_format(prn)) { 
+    if (tex_eqn_format(prn)) {
 	err = tex_print_equation(pmod, dset, opt, prn);
     } else {
 	if (opt & OPT_T) {
@@ -1629,9 +1629,9 @@ int tex_print_model (MODEL *pmod, const DATASET *dset,
  * errors when printing in equation format.
  *
  * Prints to file a gretl model in the form of a LaTeX table or
- * equation, either as a stand-alone document or as a fragment 
+ * equation, either as a stand-alone document or as a fragment
  * of LaTeX source for insertion into a document.
- * 
+ *
  * Returns: 0 on successful completion, 1 on error.
  */
 
@@ -1709,7 +1709,7 @@ int rtfprint (MODEL *pmod, const DATASET *dset,
 
     if (!err) {
 	/* now send to file, converting LF to CR + LF
-	   as we go, if required 
+	   as we go, if required
 	*/
 	FILE *fp;
 
@@ -1728,7 +1728,7 @@ int rtfprint (MODEL *pmod, const DATASET *dset,
 	    fclose(fp);
 	}
     }
-    
+
     if (trbuf != NULL) {
 	free(trbuf);
     }
@@ -1790,7 +1790,7 @@ int csvprint (MODEL *pmod, const DATASET *dset,
 	    fclose(fp);
 	}
     }
-    
+
     if (prn != NULL) {
 	gretl_print_destroy(prn);
     }
@@ -1809,10 +1809,10 @@ int csvprint (MODEL *pmod, const DATASET *dset,
 
 void tex_print_obs_marker (int t, const DATASET *dset, PRN *prn)
 {
-    if (dset->markers) { 
-	pprintf(prn, "\\texttt{%s} ", dset->S[t]); 
+    if (dset->markers) {
+	pprintf(prn, "\\texttt{%s} ", dset->S[t]);
     } else {
-	char tmp[OBSLEN]; 
+	char tmp[OBSLEN];
 
 	ntodate(tmp, t, dset);
 	pprintf(prn, "%8s ", tmp);
@@ -1857,7 +1857,7 @@ static int check_colspec (const char *s)
 	if (strchr(ok, c)) {
 	    err = 0;
 	}
-    } 
+    }
 
     return err;
 }

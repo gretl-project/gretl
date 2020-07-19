@@ -205,7 +205,7 @@ static char *simple_fname (char *dest, const char *src)
     char *p;
     const char *s;
 
-    s = strrchr(src, SLASH);
+    s = strrslash(src);
 
     /* take last part of src filename */
     if (s != NULL) {

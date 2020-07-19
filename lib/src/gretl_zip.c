@@ -539,7 +539,7 @@ static int pkg_zipfile_add (const char *fname,
 	   for a package we'll allow that it may be found in a
 	   subdirectory (probably "doc")
 	*/
-	const char *p = strrchr(fname, SLASH);
+	const char *p = strrslash(fname);
 
 	if (p != NULL && has_suffix(fname, ".pdf")) {
 	    dest = g_strdup_printf("%s%c%s", dotpath, SLASH, p + 1);
@@ -613,7 +613,7 @@ int package_make_zipfile (const char *gfnname,
        and also the name of the package
     */
     strcpy(pkgbase, gfnname);
-    tmp = strrchr(pkgbase, SLASH);
+    tmp = strrslash(pkgbase);
     if (tmp != NULL) {
 	/* got some path component */
 	*tmp = '\0';

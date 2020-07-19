@@ -2721,7 +2721,7 @@ static int install_function_package (const char *pkgname,
 	    const char *p;
 
 	    gretl_maybe_switch_dir(pkgname);
-	    p = strrchr(pkgname, SLASH);
+	    p = strrslash(pkgname);
 	    if (p != NULL) {
 		fname = gretl_strdup(p + 1);
 	    }
@@ -2836,7 +2836,7 @@ static int install_function_package (const char *pkgname,
 	const char *p;
 
 	gretl_maybe_switch_dir(pkgname);
-	p = strrchr(pkgname, SLASH);
+	p = strrslash(pkgname);
 	if (p != NULL) {
 	    fname = gretl_strdup(p + 1);
 	}

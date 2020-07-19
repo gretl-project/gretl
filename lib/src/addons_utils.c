@@ -211,8 +211,8 @@ int update_addons_index (PRN *prn)
 	    }
 	}
 
-	if (v1 > v2) {
-	    /* system version is newer (or the only one) */
+	if (v1 >= v2) {
+	    /* system version is at least as new (or the only one) */
 	    fprintf(fp, "%s %s %s\n", addon_names[i], pkgver1, syspath);
 	} else if (v2 > 0) {
 	    /* user version is newer (or the only one) */
@@ -309,7 +309,7 @@ char *get_addon_examples_dir (const char *addon)
     char *ret = NULL;
 
     if (path != NULL) {
-	s = strrchr(path, SLASH);
+	s = strrslash(path);
 	if (s != NULL) {
 	    *s = '\0';
 	}

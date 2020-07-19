@@ -638,7 +638,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	    return E_FOPEN;
 	}
 
-	fshort = strrchr(fname, SLASH);
+	fshort = strrslash(fname);
 	if (fshort != NULL) {
 	    fprintf(fp, "%s\n", fshort + 1);
 	} else {

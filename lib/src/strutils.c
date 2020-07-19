@@ -145,7 +145,11 @@ int gretl_slashpos (const char *str)
     if (str != NULL && *str != '\0') {
 	p = strlen(str);
 	for (i=p-1; i>0; i--) {
+#ifdef WIN32
+	    if (str[i] == '\\' || str[i] == '/') {
+#else
 	    if (str[i] == SLASH) {
+#endif
 		p = i;
 		break;
 	    }
@@ -153,6 +157,36 @@ int gretl_slashpos (const char *str)
     }
 
     return p;
+}
+
+/**
+ * strrslash:
+ * @s: the string to examine.
+ *
+ * Returns: a pointer to the last occurrence of 'SLASH'
+ * in the string @d, making allowance for the fact that
+ * on MS Windows this maybe either a backslash or a
+ * forward slash, or NULL is no 'SLASH' is found.
+ */
+
+char *strrslash (const char *s)
+{
+#ifdef WIN32
+    char *p1 = strrchr(s, '\\');
+    char *p2 = strrchr(s, '/');
+
+    if (p1 != NULL && p2 == NULL) {
+	return p1;
+    } else if (p2 != NULL && p1 == NULL) {
+	return p2;
+    } else if (p1 != NULL && p2 != NULL) {
+	return p2 - p1 > 0 ? p2 : p1;
+    } else {
+	return NULL;
+    }
+#else
+    return strrchr(s, '/');
+#endif
 }
 
 /**
@@ -2763,13 +2797,7 @@ char *append_dir (char *fname, const char *dir)
 
 const char *path_last_element (const char *path)
 {
-    const char *p = strrchr(path, SLASH);
-
-#ifdef WIN32
-    if (p == NULL) {
-	p = strrchr(path, '/');
-    }
-#endif
+    const char *p = strrslash(path);
 
     if (p == NULL) {
 	p = path;
