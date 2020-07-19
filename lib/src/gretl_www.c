@@ -374,7 +374,7 @@ static void certs_path_init (void)
 
     if (pfx != NULL) {
 	sprintf(certs_path, "%s/share/curl/curl-ca-bundle.crt", pfx);
-	if (gretl_stat(certs_path) != 0) {
+	if (gretl_stat(certs_path, NULL) != 0) {
 	    fprintf(stderr, "curl: didn't find certs at '%s'\n",
 		    certs_path);
 	    *certs_path = '\0';
@@ -383,7 +383,7 @@ static void certs_path_init (void)
 	}
     } else {
 	strcpy(certs_path, "c:/msys64/mingw64/share/curl/curl-ca-bundle.crt");
-	if (gretl_stat(certs_path) != 0) {
+	if (gretl_stat(certs_path, NULL) != 0) {
 	    fprintf(stderr, "curl: didn't find certs at '%s'\n",
 		    certs_path);
 	    *certs_path = '\0';
@@ -393,7 +393,7 @@ static void certs_path_init (void)
     }
 # endif
     sprintf(certs_path, "%scurl-ca-bundle.crt", gretl_home());
-    if (gretl_stat(certs_path) != 0) {
+    if (gretl_stat(certs_path, NULL) != 0) {
 	fprintf(stderr, "curl: didn't find certs at '%s'\n",
 		certs_path);
     }
