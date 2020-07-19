@@ -632,6 +632,7 @@ ac_includes_default="\
 gt_needs=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+MINGWPRE
 MSYSBIN
 MINGWBIN
 GEXEPATH
@@ -23894,7 +23895,9 @@ fi
       GEXE=`cygpath -m $GEXE`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
+      MINGWPRE=`cygpath -m $MINGW_PREFIX`
     fi
+
 
 
 

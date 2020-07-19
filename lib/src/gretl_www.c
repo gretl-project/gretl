@@ -382,6 +382,7 @@ static void certs_path_init (void)
 	    return;
 	}
     } else {
+	/* hard-wired fallback */
 	strcpy(certs_path, "c:/msys64/mingw64/share/curl/curl-ca-bundle.crt");
 	if (gretl_stat(certs_path, NULL) != 0) {
 	    fprintf(stderr, "curl: didn't find certs at '%s'\n",

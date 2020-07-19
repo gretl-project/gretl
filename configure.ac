@@ -1035,12 +1035,14 @@ if test "${win32_build}" = "yes" ; then
       GEXE=`cygpath -m $GEXE`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
+      MINGWPRE=`cygpath -m $MINGW_PREFIX`
     fi
     AC_SUBST(GHOME)
     AC_SUBST(GEXE)
     AC_SUBST(GEXEPATH)
     AC_SUBST(MINGWBIN)
     AC_SUBST(MSYSBIN)
+    AC_SUBST(MINGWPRE)
     AC_CONFIG_FILES([
       win32/gretlrun.cmd
       win32/gretlmime.reg
