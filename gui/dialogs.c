@@ -6852,7 +6852,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* border? */
     hbox = gtk_hbox_new(FALSE, 5);
-    bc = gtk_check_button_new_with_label("draw border round plot");
+    bc = gtk_check_button_new_with_label("draw border around map");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bc), TRUE);
     gi.border_check = bc;
     gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
