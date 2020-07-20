@@ -4484,20 +4484,18 @@ void map_plot_callback (int v)
 	int payload_id = 0;
 	double *plx = NULL;
 	int selpos = 0;
-	int err = 0;
+	int resp, err = 0;
 
 	opts = gretl_bundle_new();
 	gretl_bundle_set_int(opts, "gui_auto", 1);
 	payload_list = plausible_payload_list(v, &selpos);
 
+	resp = map_options_dialog(payload_list, selpos,
+				  opts, &payload_id);
+	if (resp == GRETL_CANCEL) {
+	    return;
+	}
 	if (payload_list != NULL) {
-	    int resp;
-
-	    resp = map_options_dialog(payload_list, selpos,
-				      opts, &payload_id);
-	    if (resp == GRETL_CANCEL) {
-		return;
-	    }
 	    g_list_free(payload_list);
 	}
 	if (payload_id == 0) {

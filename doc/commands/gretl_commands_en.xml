@@ -8022,12 +8022,13 @@
       <ilist>
 	<li>
 	  <para>
-	    payload: this is the series (if any) by which regions of
-	    the map should be colored. In the absence of a
-	    <quote>payload</quote> only the map outlines will be
-	    shown. If the current dataset contains one or more series
-	    that look like possible candidates (on a simple heuristic)
-	    they will be shown in the drop-down selector.
+	    series to plot: this is the series (if any) by which
+	    regions of the map should be colored, also known as the
+	    <quote>payload</quote>. In the absence of a payload only
+	    the map outlines will be shown. If the current dataset
+	    contains one or more series that look like possible
+	    candidates (on a simple heuristic) they will be shown in
+	    the drop-down selector.
 	  </para>
 	</li>
 	<li>
