@@ -4349,33 +4349,39 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     return err;
 }
 
-/* Try to determine a suitable tic-increment for the automatic
-   x-axis in the "scatters" context. We don't want the
-   increment to be so small that the tic labels pile up on
-   each other.
-*/
-
-static int scatters_incr (int T, const DATASET *dset)
+static void scatters_time_tics (const double *obs,
+				const DATASET *dset,
+				FILE *fp)
 {
-    int incr, ntics;
+    double startdate = obs[dset->t1];
+    double enddate = obs[dset->t2];
+    double obsrange = enddate - startdate;
+    int k1 = ceil(startdate);
+    int k2 = floor(enddate);
+    int nmaj = k2 - k1 + 1;
 
-    if (dset->pd == 1) {
-	incr = T / 6;
+    fputs("set xtics nomirror\n", fp);
+
+    if (obsrange > 8) {
+	double xincr = obsrange / 4;
+	int incr;
+
+	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
+	if (xincr > 0) {
+	    fprintf(fp, "set xtics %g,%d\n", ceil(startdate), incr);
+	}
+    } else if (nmaj == 0) {
+	fputs("set format x ''\n", fp);
     } else {
-	incr = T / (4 * dset->pd);
-	/* safeguard */
-	if (incr == 0) {
-	    incr = 1;
+	/* integer major tics plus minor */
+	int T = dset->t2 - dset->t1 + 1;
+
+	fprintf(fp, "set xrange [%g:%g]\n", startdate, enddate);
+	fprintf(fp, "set xtics %g,1\n", floor(startdate));
+	if (T < 55) {
+	    fprintf(fp, "set mxtics %d\n", dset->pd);
 	}
     }
-
-    ntics = T / (incr * dset->pd);
-    if (ntics > 10) {
-	ntics = 10;
-	incr = T / ntics;
-    }
-
-    return incr;
 }
 
 static void scatters_set_timefmt (const DATASET *dset,
@@ -4513,28 +4519,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fprintf(fp, "set xrange [%.12g:%.12g]\n", obs[dset->t1], obs[dset->t2]);
 	scatters_set_timefmt(dset, obs, fp);
     } else if (obs != NULL) {
-	double startdate = obs[dset->t1];
-	double enddate = obs[dset->t2];
-	double obsrange = enddate - startdate;
-	double xincr = obsrange / 4;
-	int incr, T = dset->t2 - dset->t1 + 1;
-
-	if (obsrange > 8) {
-	    fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
-	    if (xincr > 0) {
-		incr = floor(xincr);
-		fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
-	    }
-	} else if (obsrange < 1) {
-	    fputs("set format x ''\n", fp);
-	} else {
-	    /* what to do?? for, just the status quo ante */
-	    fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
-	    incr = scatters_incr(T, dset);
-	    if (incr > 0) {
-		fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
-	    }
-	}
+	scatters_time_tics(obs, dset, fp);
     } else {
 	/* avoid having points sticking to the axes */
 	fputs("set offsets graph 0.02, graph 0.02, graph 0.02, graph 0.02\n", fp);
