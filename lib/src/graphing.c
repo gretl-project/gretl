@@ -1061,8 +1061,8 @@ static void write_other_font_string (char *fstr, int stdsize)
 static char gp_style[32]; /* basename of style file */
 static gchar *alt_sty;    /* content of style file */
 
-static const char *default_sty =
-    "# gpstyle default\n"
+static const char *classic_sty =
+    "# gpstyle classic\n"
     "set linetype 1 pt 1 lc rgb \"#FF0000\"\n"  /* red */
     "set linetype 2 pt 2 lc rgb \"#0000FF\"\n"  /* blue */
     "set linetype 3 pt 3 lc rgb \"#00CC00\"\n"  /* non-standard green */
@@ -1122,7 +1122,7 @@ static int try_set_alt_sty (void)
 	if (err) {
 	    /* failed to conform to spec */
 	    fprintf(stderr, "%s failed spec check\n", gp_style);
-	    set_plotstyle("default");
+	    set_plotstyle("classic");
 	} else {
 	    /* OK, put the style in place */
 	    g_free(alt_sty);
@@ -1146,15 +1146,23 @@ static int try_set_alt_sty (void)
 
 int set_plotstyle (const char *style)
 {
-    if (!strcmp(style, gp_style) ||
-	(!strcmp(style, "default") && *gp_style == '\0')) {
+    int to_classic = 0;
+
+    if (!strcmp(style, "classic") || !strcmp(style, "default")) {
+	/* "default" is just for backward compat */
+	to_classic = 1;
+    }
+
+    if (!strcmp(style, gp_style)) {
 	return 0; /* no-op */
-    } else if (!strcmp(style, "default")) {
-	/* replace alt with default */
+    } else if (to_classic && *gp_style == '\0') {
+	return 0; /* no-op */
+    } else if (to_classic) {
+	/* replace alt with classic */
 	g_free(alt_sty);
 	alt_sty = NULL;
 	gp_style[0] = '\0';
-	transcribe_style(default_sty);
+	transcribe_style(classic_sty);
 	return 0;
     } else {
 	/* try replacing current with what's requested */
@@ -1170,7 +1178,7 @@ int set_plotstyle (const char *style)
 
 static void inject_gp_style (int offset, FILE *fp)
 {
-    const char *sty = alt_sty != NULL ? alt_sty : default_sty;
+    const char *sty = alt_sty != NULL ? alt_sty : classic_sty;
     const char *sub = NULL;
 
     if (offset > 0) {

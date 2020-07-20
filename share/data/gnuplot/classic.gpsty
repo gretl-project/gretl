@@ -1,4 +1,4 @@
-# gpstyle default
+# gpstyle classic
 set linetype 1 pt 1 lc rgb "#FF0000"
 set linetype 2 pt 2 lc rgb "#0000FF"
 set linetype 3 pt 3 lc rgb "#00CC00"

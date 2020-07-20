@@ -126,7 +126,7 @@ static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
 static char author_mail[32];
 static char sview_style[32] = "classic";
-static char graph_theme[24] = "default";
+static char graph_theme[24] = "classic";
 static char gpcolors[18];
 
 static int hc_by_default;

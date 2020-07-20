@@ -3689,7 +3689,7 @@ const char **get_graph_theme_ids (int *n)
 	dir = gretl_opendir(path);
 
 	S = strings_array_new(1);
-	S[0] = gretl_strdup("default");
+	S[0] = gretl_strdup("classic");
 	*n = 1;
 
 	if (dir != NULL) {
@@ -3698,7 +3698,8 @@ const char **get_graph_theme_ids (int *n)
 	    int err = 0;
 
 	    while (!err && (fname = g_dir_read_name(dir))) {
-		if (!strncmp(fname, "default.", 8)) {
+		if (!strncmp(fname, "default.", 8) ||
+		    !strncmp(fname, "classic.", 8)) {
 		    continue;
 		}
 		if (has_suffix(fname, ".gpsty")) {
