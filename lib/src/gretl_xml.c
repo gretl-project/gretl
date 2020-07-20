@@ -2488,7 +2488,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
 
     ntabs = string_table_count(dset, list, nvars);
 
-    if ((opt & OPT_T) && ntabs > 0) {
+    if (ntabs > 0 && !(opt & OPT_P)) {
 	/* trimming strvals */
 	ss = strval_saver_setup((DATASET *) dset, nvars,
 				ntabs, list, &err);
