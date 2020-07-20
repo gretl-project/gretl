@@ -165,7 +165,7 @@ int gretl_slashpos (const char *str)
  *
  * Returns: a pointer to the last occurrence of 'SLASH'
  * in the string @d, making allowance for the fact that
- * on MS Windows this maybe either a backslash or a
+ * on MS Windows this may be either a backslash or a
  * forward slash, or NULL is no 'SLASH' is found.
  */
 
