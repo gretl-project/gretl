@@ -7355,7 +7355,8 @@ static NODE *do_errorif (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (gretl_function_depth() == 0) {
-	gretl_errmsg_set("errorif: no function is executing");
+	gretl_errmsg_sprintf("'%s': can only be used within a function",
+			     "errorif");
 	p->err = E_DATA;
     } else {
 	int cond = node_get_bool(l, p, -1);
