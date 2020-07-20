@@ -3582,6 +3582,16 @@ static int panel_plotvar_code (const DATASET *dset)
     }
 }
 
+static double correct_to_int (double x)
+{
+    if (x - floor(x) < 1.0e-6) {
+	return floor(x);
+    } else if (ceil(x) - x < 1.0e-6) {
+	return ceil(x);
+    }
+    return x;
+}
+
 /**
  * gretl_plotx:
  * @dset: data information struct.
@@ -3605,7 +3615,9 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     static int ptype;
     static int Tbak;
     static double sd0bak;
+    double mul, frac;
     int t, y1, T = 0;
+    int maj, min;
     int new_ptype = 0;
     int panvar = 0;
     int failed = 0;
@@ -3687,21 +3699,25 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 	}
 	break;
     case PLOTVAR_QUARTERS:
-	x[0] = y1 + (10.0 * rm - 1.0) / 4.0;
-	for (t=1; t<T; t++) {
-	    x[t] = x[t-1] + .25;
-	}
-	break;
     case PLOTVAR_MONTHS:
-	x[0] = y1 + (100.0 * rm - 1.0) / 12.0;
-	for (t=1; t<T; t++) {
-	    x[t] = x[t-1] + (1.0 / 12.0);
-	}
-	break;
     case PLOTVAR_HOURLY:
-	x[0] = y1 + (100.0 * rm - 1.0) / 24.0;
-	for (t=1; t<T; t++) {
-	    x[t] = x[t-1] + (1.0 / 24.0);
+	frac = 1.0 / dset->pd;
+	if (sscanf(dset->stobs, "%d:%d", &maj, &min) == 2) {
+	    for (t=0; t<T; t++) {
+		x[t] = maj + frac * (min - 1);
+		if (min < dset->pd) {
+		    min++;
+		} else {
+		    min = 1;
+		    maj++;
+		}
+	    }
+	} else {
+	    mul = ptype == PLOTVAR_QUARTERS ? 10 : 100;
+	    x[0] = correct_to_int(y1 + (mul * rm - 1.0) / dset->pd);
+	    for (t=1; t<T; t++) {
+		x[t] = correct_to_int(x[t-1] + frac);
+	    }
 	}
 	break;
     case PLOTVAR_CALENDAR:
