@@ -4363,13 +4363,10 @@ static void scatters_time_tics (const double *obs,
     fputs("set xtics nomirror\n", fp);
 
     if (obsrange > 8) {
-	double xincr = obsrange / 4;
-	int incr;
+	double incr = obsrange / 4;
 
 	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
-	if (xincr > 0) {
-	    fprintf(fp, "set xtics %g,%d\n", ceil(startdate), incr);
-	}
+	fprintf(fp, "set xtics %g,%g\n", ceil(startdate), floor(incr));
     } else if (nmaj == 0) {
 	fputs("set format x ''\n", fp);
     } else {
