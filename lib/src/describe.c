@@ -1255,22 +1255,30 @@ void free_freq (FreqDist *freq)
     free(freq->endpt);
     free(freq->f);
 
+    if (freq->S != NULL) {
+	strings_array_free(freq->S, freq->numbins);
+    }
+
     free(freq);
 }
 
-static FreqDist *freq_new (void)
+static FreqDist *freq_new (const char *vname)
 {
     FreqDist *freq;
 
     freq = malloc(sizeof *freq);
     if (freq == NULL) return NULL;
 
+    strcpy(freq->varname, vname);
+
     freq->midpt = NULL;
     freq->endpt = NULL;
+    freq->S = NULL;
     freq->f = NULL;
 
     freq->dist = 0;
     freq->discrete = 0;
+    freq->strvals = 0;
 
     freq->xbar = NADBL;
     freq->sdx = NADBL;
@@ -1624,15 +1632,33 @@ static int freq_add_arrays (FreqDist *freq, int n)
 
     if (!freq->discrete) {
 	freq->endpt = malloc((n + 1) * sizeof *freq->endpt);
+	if (freq->endpt == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    freq->midpt = malloc(n * sizeof *freq->midpt);
-    freq->f = malloc(n * sizeof *freq->f);
+    if (!err) {
+	if (freq->strvals) {
+	    freq->S = strings_array_new(n);
+	    if (freq->S == NULL) {
+		err = E_ALLOC;
+	    }
+	} else {
+	    freq->midpt = malloc(n * sizeof *freq->midpt);
+	    if (freq->midpt == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
 
-    if ((!freq->discrete && freq->endpt == NULL) ||
-	freq->midpt == NULL || freq->f == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (!err) {
+	freq->f = malloc(n * sizeof *freq->f);
+	if (freq->f == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
 	freq->numbins = n;
     }
 
@@ -1726,6 +1752,86 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
     }
 }
 
+struct strval_sorter {
+    char *s;
+    int n;
+};
+
+int compare_strvals (const void *a, const void *b)
+{
+    const struct strval_sorter *sa = a;
+    const struct strval_sorter *sb = b;
+
+    return strcmp(sa->s, sb->s);
+}
+
+FreqDist *get_string_freq (int v, const DATASET *dset,
+			   int *err)
+{
+    FreqDist *freq;
+    struct strval_sorter *ss;
+    const double *x = dset->Z[v];
+    series_table *st;
+    char **S;
+    int i, t, n, ns;
+
+    freq = freq_new(dset->varname[v]);
+    if (freq == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    st = series_get_string_table(dset, v);
+    S = series_table_get_strings(st, &ns);
+
+    ss = malloc(ns * sizeof *ss);
+    if (ss == NULL) {
+	*err = E_ALLOC;
+	free(freq);
+	return NULL;
+    }
+
+    for (i=0; i<ns; i++) {
+	ss[i].s = S[i];
+	ss[i].n = 0;
+    }
+
+    n = 0;
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!na(x[t])) {
+	    i = x[t] - 1;
+	    ss[i].n += 1;
+	    n++;
+	}
+    }
+
+    qsort(ss, ns, sizeof *ss, compare_strvals);
+
+    freq->t1 = dset->t1;
+    freq->t2 = dset->t2;
+    freq->n = n;
+    freq->discrete = 1;
+    freq->strvals = 1;
+
+    if (freq_add_arrays(freq, ns)) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<ns; i++) {
+	    freq->S[i] = gretl_strdup(ss[i].s);
+	    freq->f[i] = ss[i].n;
+	}
+    }
+
+    free(ss);
+
+    if (*err && freq != NULL) {
+	free_freq(freq);
+	freq = NULL;
+    }
+
+    return freq;
+}
+
 FreqDist *get_discrete_freq (int v, const DATASET *dset,
 			     gretlopt opt, int *err)
 {
@@ -1737,7 +1843,7 @@ FreqDist *get_discrete_freq (int v, const DATASET *dset,
     double last;
     int i, t, nv;
 
-    freq = freq_new();
+    freq = freq_new(dset->varname[v]);
     if (freq == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1761,7 +1867,6 @@ FreqDist *get_discrete_freq (int v, const DATASET *dset,
 	goto bailout;
     }
 
-    strcpy(freq->varname, dset->varname[v]);
     freq->discrete = 1;
     freq->test = NADBL;
     freq->dist = 0;
@@ -1875,6 +1980,10 @@ FreqDist *get_freq (int varno, const DATASET *dset,
     double binwidth = fwid;
     int t, k, n;
 
+    if (is_string_valued(dset, varno)) {
+	return get_string_freq(varno, dset, err);
+    }
+
     if (series_is_discrete(dset, varno) || (opt & OPT_D)) {
 	return get_discrete_freq(varno, dset, opt, err);
     }
@@ -1883,7 +1992,7 @@ FreqDist *get_freq (int varno, const DATASET *dset,
 	return get_discrete_freq(varno, dset, opt, err);
     }
 
-    freq = freq_new();
+    freq = freq_new(dset->varname[varno]);
     if (freq == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1909,8 +2018,6 @@ FreqDist *get_freq (int varno, const DATASET *dset,
     freq->t1 = dset->t1;
     freq->t2 = dset->t2;
     freq->n = n;
-
-    strcpy(freq->varname, dset->varname[varno]);
 
     x = dset->Z[varno];
     freq_dist_stat(freq, x, opt, params);
@@ -2059,28 +2166,43 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
 static void record_freq_matrix (FreqDist *fd)
 {
     gretl_matrix *m = NULL;
+    char **Sr = NULL;
     int i, n = fd->numbins;
 
-    m = gretl_matrix_alloc(n, 2);
+    if (fd->S != NULL) {
+	m = gretl_matrix_alloc(n, 1);
+	Sr = strings_array_dup(fd->S, n);
+    } else {
+	m = gretl_matrix_alloc(n, 2);
+    }
 
     if (m != NULL) {
-	char **S = strings_array_new(2);
+	char **Sc = NULL;
 
-	if (S != NULL) {
-	    S[0] = gretl_strdup("midpoint");
-	    S[1] = gretl_strdup("count");
+	if (fd->S == NULL) {
+	    Sc = strings_array_new(2);
+	    if (Sc != NULL) {
+		Sc[0] = gretl_strdup("midpoint");
+		Sc[1] = gretl_strdup("count");
+	    }
 	}
 	for (i=0; i<n; i++) {
-	    m->val[i] = fd->midpt[i];
-	    m->val[i+n] = (double) fd->f[i];
+	    if (fd->S != NULL) {
+		gretl_matrix_set(m, i, 0, fd->f[i]);
+	    } else {
+		gretl_matrix_set(m, i, 0, fd->midpt[i]);
+		gretl_matrix_set(m, i, 1, fd->f[i]);
+	    }
 	}
-	if (S != NULL) {
-	    gretl_matrix_set_colnames(m, S);
+	if (Sc != NULL) {
+	    gretl_matrix_set_colnames(m, Sc);
+	}
+	if (Sr != NULL) {
+	    gretl_matrix_set_rownames(m, Sr);
 	}
 	set_last_result_data(m, GRETL_TYPE_MATRIX);
     }
 }
-
 
 /* Wrapper function: get the distribution, print it if
    wanted, graph it if wanted, then free stuff.
@@ -2305,6 +2427,13 @@ void free_xtab (Xtab *tab)
 	free(tab->f);
     }
 
+    if (tab->Sr != NULL) {
+	strings_array_free(tab->Sr, tab->rows);
+    }
+    if (tab->Sc != NULL) {
+	strings_array_free(tab->Sc, tab->cols);
+    }
+
     free(tab);
 }
 
@@ -2327,39 +2456,64 @@ static Xtab *xtab_new (int n, int t1, int t2)
 
     *tab->rvarname = '\0';
     *tab->cvarname = '\0';
+    tab->Sr = NULL;
+    tab->Sc = NULL;
+    tab->strvals = 0;
 
     return tab;
 }
 
-static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
+/* allocate the required arrays (apart from S, which must be
+   handled separately) and initialize counters to zero
+*/
+
+static int xtab_allocate_arrays (Xtab *tab, int rows, int cols,
+				 int strvals)
 {
-    int i, j;
+    int i, j, err = 0;
 
     tab->rows = rows;
     tab->cols = cols;
+    tab->strvals = strvals;
 
-    tab->rval = malloc(rows * sizeof *tab->rval);
-    tab->rtotal = malloc(rows * sizeof *tab->rtotal);
-
-    tab->cval = malloc(cols * sizeof *tab->cval);
-    tab->ctotal = malloc(cols * sizeof *tab->ctotal);
-
-    tab->f = malloc(rows * sizeof *tab->f);
-
-    if (tab->rval == NULL || tab->rtotal == NULL ||
-	tab->cval == NULL || tab->ctotal == NULL ||
-	tab->f == NULL) {
-	return E_ALLOC;
+    if (!strvals) {
+	tab->rval = malloc(rows * sizeof *tab->rval);
+	tab->cval = malloc(cols * sizeof *tab->cval);
+	if (tab->rval == NULL || tab->cval == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    for (i=0; i<rows; i++) {
-	tab->f[i] = NULL;
+    if (!err) {
+	tab->rtotal = malloc(rows * sizeof *tab->rtotal);
+	tab->ctotal = malloc(cols * sizeof *tab->ctotal);
+	if (tab->rtotal == NULL || tab->ctotal == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<rows; i++) {
+		tab->rtotal[i] = 0;
+	    }
+	    for (j=0; j<cols; j++) {
+		tab->ctotal[j] = 0;
+	    }
+	}
     }
 
-    for (i=0; i<rows; i++) {
+    if (!err) {
+	tab->f = malloc(rows * sizeof *tab->f);
+	if (tab->f == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<rows; i++) {
+		tab->f[i] = NULL;
+	    }
+	}
+    }
+
+    for (i=0; i<rows && !err; i++) {
 	tab->f[i] = malloc(cols * sizeof *tab->f[i]);
 	if (tab->f[i] == NULL) {
-	    return E_ALLOC;
+	    err = E_ALLOC;
 	} else {
 	    for (j=0; j<cols; j++) {
 		tab->f[i][j] = 0;
@@ -2367,7 +2521,7 @@ static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /* also used in gretl_matrix.c */
@@ -2387,11 +2541,120 @@ int compare_xtab_rows (const void *a, const void *b)
     return ret;
 }
 
+static int xtab_get_strings (int rv, int cv,
+			     const DATASET *dset,
+			     char ***pSr, int *nr,
+			     char ***pSc, int *nc)
+{
+    series_table *str, *stc;
+    char **Sr, **Sc;
+    int err = 0;
+
+    /* borrowed data */
+    str = series_get_string_table(dset, rv);
+    stc = series_get_string_table(dset, cv);
+
+    /* borrowed data */
+    Sr = series_table_get_strings(str, nr);
+    Sc = series_table_get_strings(stc, nc);
+
+    *pSr = strings_array_dup(Sr, *nr);
+    *pSc = strings_array_dup(Sc, *nc);
+
+    if (*pSr == NULL || *pSc == NULL) {
+	err = E_ALLOC;
+    } else {
+	strings_array_sort(pSr, nr, OPT_NONE);
+	strings_array_sort(pSc, nc, OPT_NONE);
+    }
+
+    return err;
+}
+
 #define complete_obs(x,y,t) (!na(x[t]) && !na(y[t]))
 
-/* crosstab struct creation function */
+/* crosstab struct creation functions */
 
-static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
+static Xtab *get_string_xtab (int rv, int cv, const DATASET *dset,
+			      int *err)
+{
+    char **Sr = NULL;
+    char **Sc = NULL;
+    const char *s1t, *s2t;
+    Xtab *tab = NULL;
+    int rows, cols;
+    int imatch, jmatch;
+    int i, j, t, n = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (complete_obs(dset->Z[rv], dset->Z[cv], t)) {
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	*err = E_MISSDATA;
+    } else {
+	*err = xtab_get_strings(rv, cv, dset, &Sr, &rows,
+				&Sc, &cols);
+    }
+
+    if (!*err) {
+	tab = xtab_new(n, dset->t1, dset->t2);
+	if (tab == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	*err = xtab_allocate_arrays(tab, rows, cols, 1);
+    }
+
+    if (*err) goto bailout;
+
+    tab->missing = (dset->t2 - dset->t1 + 1) - n;
+    strcpy(tab->rvarname, dset->varname[rv]);
+    strcpy(tab->cvarname, dset->varname[cv]);
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!complete_obs(dset->Z[rv], dset->Z[cv], t)) {
+	    continue;
+	}
+	s1t = series_get_string_for_obs(dset, rv, t);
+	s2t = series_get_string_for_obs(dset, cv, t);
+	for (i=0; i<rows; i++) {
+	    imatch = (strcmp(s1t, Sr[i]) == 0);
+	    for (j=0; j<cols; j++) {
+		jmatch = (strcmp(s2t, Sc[j]) == 0);
+		if (imatch && jmatch) {
+		    tab->f[i][j] += 1;
+		    tab->rtotal[i] += 1;
+		    tab->ctotal[j] += 1;
+		}
+	    }
+	}
+    }
+
+ bailout:
+
+    if (*err) {
+	free_xtab(tab);
+	tab = NULL;
+	if (Sr != NULL) {
+	    strings_array_free(Sr, rows);
+	}
+	if (Sc != NULL) {
+	    strings_array_free(Sc, cols);
+	}
+    } else {
+	tab->Sr = Sr;
+	tab->Sc = Sc;
+    }
+
+    return tab;
+}
+
+static Xtab *get_xtab (int rv, int cv, const DATASET *dset,
 		       int *err)
 {
     FreqDist *rowfreq = NULL, *colfreq = NULL;
@@ -2406,18 +2669,15 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
 
     /* count non-missing values */
     for (t=t1; t<=t2; t++) {
-	if (complete_obs(dset->Z[rvarno], dset->Z[cvarno], t)) {
+	if (complete_obs(dset->Z[rv], dset->Z[cv], t)) {
 	    n++;
 	}
     }
-
     if (n == 0) {
 	fprintf(stderr, "All values invalid!\n");
 	*err = E_MISSDATA;
 	return NULL;
     }
-
-    /* Put in some info we already know */
 
     tab = xtab_new(n, t1, t2);
     if (tab == NULL) {
@@ -2426,14 +2686,13 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     }
 
     tab->missing = (t2 - t1 + 1) - n;
-    strcpy(tab->rvarname, dset->varname[rvarno]);
-    strcpy(tab->cvarname, dset->varname[cvarno]);
+    strcpy(tab->rvarname, dset->varname[rv]);
+    strcpy(tab->cvarname, dset->varname[cv]);
 
-    /*
-       start allocating stuff; we use temporary FreqDists for rows
+    /* start allocating stuff; we use temporary FreqDists for rows
        and columns to retrieve values with non-zero frequencies
        and get dimensions for the cross table
-     */
+    */
 
     X = doubles_array_new(n, 2);
     if (X == NULL) {
@@ -2441,14 +2700,12 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
 	goto bailout;
     }
 
-    rowfreq = get_freq(rvarno, dset, NADBL, NADBL, 0,
+    rowfreq = get_freq(rv, dset, NADBL, NADBL, 0,
 		       0, OPT_D | OPT_X, err);
-
     if (!*err) {
-	colfreq = get_freq(cvarno, dset, NADBL, NADBL, 0,
+	colfreq = get_freq(cv, dset, NADBL, NADBL, 0,
 			   0, OPT_D | OPT_X, err);
     }
-
     if (*err) {
 	goto bailout;
     }
@@ -2456,28 +2713,24 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     rows = rowfreq->numbins;
     cols = colfreq->numbins;
 
-    if (xtab_allocate_arrays(tab, rows, cols)) {
+    if (xtab_allocate_arrays(tab, rows, cols, 0)) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
     for (i=0; i<rows; i++) {
 	tab->rval[i] = rowfreq->midpt[i];
-	tab->rtotal[i] = 0;
     }
-
     for (i=0; i<cols; i++) {
 	tab->cval[i] = colfreq->midpt[i];
-	tab->ctotal[i] = 0;
     }
 
     /* matrix X holds the values to be sorted */
-
     i = 0;
     for (t=t1; t<=t2 && i<n; t++) {
-	if (complete_obs(dset->Z[rvarno], dset->Z[cvarno], t)) {
-	    X[i][0] = dset->Z[rvarno][t];
-	    X[i][1] = dset->Z[cvarno][t];
+	if (complete_obs(dset->Z[rv], dset->Z[cv], t)) {
+	    X[i][0] = dset->Z[rv][t];
+	    X[i][1] = dset->Z[cv][t];
 	    i++;
 	}
     }
@@ -2488,7 +2741,6 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     xc = tab->cval[0];
 
     /* compute frequencies by going through sorted X */
-
     for (i=0; i<n; i++) {
 	while (X[i][0] > xr) {
 	    /* skip row */
@@ -2527,11 +2779,8 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
 			 gretlopt opt)
 {
     gretl_matrix *X = NULL;
-    series_table *col_st = NULL;
-    series_table *row_st = NULL;
-    char **Sr;
-    char **Sc;
-    double xij;
+    char **Sc = NULL, **Sr = NULL;
+    double xij, cj, ri;
     int totals, rows, cols;
     int i, j;
 
@@ -2544,28 +2793,15 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
 	return;
     }
 
-    if (dset != NULL) {
-	int cv = current_series_index(dset, tab->cvarname);
-	int rv = current_series_index(dset, tab->rvarname);
-
-	if (cv > 0) {
-	    col_st = series_get_string_table(dset, cv);
-	}
-	if (rv > 0) {
-	    row_st = series_get_string_table(dset, rv);
-	}
-    }
-
     /* column labels */
     Sc = strings_array_new(cols);
     if (Sc != NULL) {
 	for (j=0; j<tab->cols; j++) {
-	    double cj = tab->cval[j];
-
-	    if (col_st == NULL) {
-		Sc[j] = gretl_strdup_printf("%4g", cj);
+	    if (tab->strvals) {
+		Sc[j] = gretl_strdup(tab->Sc[j]);
 	    } else {
-		Sc[j] = gretl_strdup(series_table_get_string(col_st, cj));
+		cj = tab->cval[j];
+		Sc[j] = gretl_strdup_printf("%4g", cj);
 	    }
 	}
 	if (totals) {
@@ -2577,12 +2813,11 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
     Sr = strings_array_new(rows);
     if (Sr != NULL) {
 	for (i=0; i<tab->rows; i++) {
-	    double ri = tab->rval[i];
-
-	    if (row_st == NULL) {
-		Sr[i] = gretl_strdup_printf("%4g", ri);
+	    if (tab->strvals) {
+		Sr[i] = gretl_strdup(tab->Sr[i]);
 	    } else {
-		Sr[i] = gretl_strdup(series_table_get_string(row_st, ri));
+		ri = tab->rval[i];
+		Sr[i] = gretl_strdup_printf("%4g", ri);
 	    }
 	}
 	if (totals) {
@@ -2596,7 +2831,7 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
 	if (tab->rtotal[i] > 0) {
 	    /* row counts */
 	    for (j=0; j<tab->cols; j++) {
-		if (tab->ctotal[j]) {
+		if (tab->ctotal[j] > 0) {
 		    if (opt & (OPT_C | OPT_R)) {
 			if (opt & OPT_C) {
 			    xij = 100.0 * tab->f[i][j] / tab->ctotal[j];
@@ -2726,7 +2961,7 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
 	return E_ALLOC;
     }
 
-    if (xtab_allocate_arrays(tab, m->rows, m->cols)) {
+    if (xtab_allocate_arrays(tab, m->rows, m->cols, 0)) {
 	free_xtab(tab);
 	return E_ALLOC;
     }
@@ -2835,9 +3070,21 @@ int crosstab (const int *list, const DATASET *dset,
     }
 
     for (i=1; i<=rowvar[0] && !err; i++) {
+	int vj, vi, scount;
+
 	if (blanket) {
 	    for (j=1; j<i && !err; j++) {
-		tab = get_xtab(rowvar[j], rowvar[i], dset, &err);
+		vj = rowvar[j];
+		vi = rowvar[i];
+		scount = is_string_valued(dset, vj) + is_string_valued(dset, vi);
+		if (scount == 1) {
+		    err = E_TYPES;
+		    break;
+		} else if (scount == 2) {
+		    tab = get_string_xtab(vj, vi, dset, &err);
+		} else {
+		    tab = get_xtab(vj, vi, dset, &err);
+		}
 		if (!err) {
 		    if (opt & OPT_Q) {
 			/* --quiet: no printing */
@@ -2857,7 +3104,17 @@ int crosstab (const int *list, const DATASET *dset,
 	    }
 	} else {
 	    for (j=1; j<=colvar[0] && !err; j++) {
-		tab = get_xtab(rowvar[i], colvar[j], dset, &err);
+		vi = rowvar[i];
+		vj = colvar[j];
+		scount = is_string_valued(dset, vi) + is_string_valued(dset, vj);
+		if (scount == 1) {
+		    err = E_TYPES;
+		    break;
+		} else if (scount == 2) {
+		    tab = get_string_xtab(vi, vj, dset, &err);
+		} else {
+		    tab = get_xtab(vi, vj, dset, &err);
+		}
 		if (!err) {
 		    print_xtab(tab, dset, opt, prn);
 		    free_xtab(tab);

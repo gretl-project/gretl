@@ -46,29 +46,34 @@ typedef struct Summary_ {
 
 typedef struct FreqDist_ {
     char varname[VNAMELEN];  /* for ID purposes */
-    int discrete;            /* 1 if variable contains integers */
+    int discrete;            /* 1 if series contains integers */
+    int strvals;             /* 1 if series is string-valued */
     int dist;                /* code for theoretical distribution */
     int numbins;             /* number of bins or intervals */
     double xbar, sdx;        /* mean and std dev of variable */
     double *midpt;           /* array of midpoints of intervals */
     double *endpt;           /* array of endpoints of intervals */
-    int *f;                  /* frequencies in the intervals */
-    double test;             /* either Chi-squared statistic for testing
-                                for a Gaussian distribution, or z statistic
+    char **S;                /* array of string values */
+    int *f;                  /* frequencies */
+    double test;             /* Chi-squared statistic for testing for a
+                                Gaussian distribution, or z statistic
 			        for testing for Gamma dist. */
-    int n;
-    int t1, t2;
+    int n;                   /* included observation */
+    int t1, t2;              /* sample limits */
 } FreqDist;
 
 typedef struct Xtab_ {
-    char rvarname[VNAMELEN]; 
-    char cvarname[VNAMELEN]; 
-    int rows, cols;
-    double *rval, *cval;
-    int *rtotal, *ctotal;
-    int **f;
-    int n, missing;
-    int t1, t2;
+    char rvarname[VNAMELEN]; /* name of rows series */
+    char cvarname[VNAMELEN]; /* name of cols series */
+    char **Sr;               /* array of row string values */
+    char **Sc;               /* array of column string values */
+    int rows, cols;          /* dimensions of table */
+    double *rval, *cval;     /* row and column numeric values */
+    int *rtotal, *ctotal;    /* marginal totals */
+    int **f;                 /* array of frequencies */
+    int n, missing;          /* observation counts */
+    int t1, t2;              /* sample limits */
+    int strvals;             /* string-valued flag */
 } Xtab;
 
 /* functions follow */
