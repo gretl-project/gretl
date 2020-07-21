@@ -6337,6 +6337,8 @@ static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
 	if (!p->err) {
 	    if (f == B_ADD) {
 		ret->v.a = gretl_arrays_join(al, ar, &p->err);
+	    } else if (f == B_OR) {
+		ret->v.a = gretl_arrays_union(al, ar, &p->err);
 	    } else {
 		p->err = E_TYPES;
 	    }

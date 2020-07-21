@@ -1391,6 +1391,82 @@ gretl_array *gretl_arrays_join (gretl_array *A,
     return C;
 }
 
+/* respond to C = A || B */
+
+gretl_array *gretl_arrays_union (gretl_array *A,
+				 gretl_array *B,
+				 int *err)
+{
+    gretl_array *C = NULL;
+    const char *sa, *sb;
+    int i, j, add, n = 0;
+
+    if (A == NULL || B == NULL) {
+	*err = E_DATA;
+    } else if (A->type != GRETL_TYPE_STRINGS ||
+	       B->type != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else {
+	n = A->n;
+	for (j=0; j<B->n; j++) {
+	    sb = B->data[j];
+	    if (sb == NULL || *sb == '\0') {
+		continue;
+	    }
+	    add = 1;
+	    for (i=0; i<A->n; i++) {
+		sa = A->data[i];
+		if (sa == NULL || *sa == '\0') {
+		    continue;
+		}
+		if (strcmp(sa, sb) == 0) {
+		    add = 0;
+		    break;
+		}
+	    }
+	    if (add) n++;
+	}
+
+	C = gretl_array_new(A->type, n, err);
+    }
+
+    if (!*err) {
+	*err = gretl_array_copy_content(C, A, 0);
+    }
+
+    if (!*err && n > A->n) {
+	int k = A->n;
+
+	for (j=0; j<B->n; j++) {
+	    sb = B->data[j];
+	    if (sb == NULL || *sb == '\0') {
+		continue;
+	    }
+	    add = 1;
+	    for (i=0; i<A->n; i++) {
+		sa = A->data[i];
+		if (sa == NULL || *sa == '\0') {
+		    continue;
+		}
+		if (strcmp(sa, sb) == 0) {
+		    add = 0;
+		    break;
+		}
+	    }
+	    if (add) {
+		C->data[k++] = gretl_strdup(B->data[j]);
+	    }
+	}
+    }
+
+    if (*err && C != NULL) {
+	gretl_array_destroy(C);
+	C = NULL;
+    }
+
+    return C;
+}
+
 /**
  * gretl_array_copy_as:
  * @name: name of source array.

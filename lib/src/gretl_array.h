@@ -126,6 +126,10 @@ gretl_array *gretl_arrays_join (gretl_array *A,
 				gretl_array *B,
 				int *err);
 
+gretl_array *gretl_arrays_union (gretl_array *A,
+				 gretl_array *B,
+				 int *err);
+
 gretl_array *gretl_array_copy (const gretl_array *A,
 			       int *err);
 
