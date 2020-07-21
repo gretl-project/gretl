@@ -93,6 +93,20 @@ void gretl_array_void_content (gretl_array *A)
     }
 }
 
+/* Reduce the array to empty status, setting the
+   entire data array to NULL without freeing anything.
+   Makes sense only if the data array is actually
+   "owned" elsewhere.
+*/
+
+void gretl_array_nullify_content (gretl_array *A)
+{
+    if (A != NULL) {
+	A->data = NULL;
+	A->n = 0;
+    }
+}
+
 /* Set the array's element pointers to NULL, without
    freeing them. Makes sense only if the element
    pointers are actually "owned" by something else
@@ -256,6 +270,28 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
 	if (!err) {
 	    *ns = A->n;
 	    AS = (char **) A->data;
+	}
+    }
+
+    return AS;
+}
+
+/* note: take ownership of the returned value */
+
+char **gretl_array_steal_strings (gretl_array *A, int *ns)
+{
+    char **AS = NULL;
+
+    *ns = 0;
+
+    if (A != NULL && A->type == GRETL_TYPE_STRINGS) {
+	int err = strings_array_null_check(A);
+
+	if (!err) {
+	    *ns = A->n;
+	    AS = (char **) A->data;
+	    A->n = 0;
+	    A->data = NULL;
 	}
     }
 
