@@ -6995,6 +6995,57 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
     return ret;
 }
 
+static NODE *multi_str_node (NODE *l, int f, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (l->t == SERIES) {
+	if (!is_string_valued(p->dset, l->vnum)) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_series_node(p);
+	}
+    } else if (l->t == ARRAY) {
+	if (gretl_array_get_type(l->v.a) != GRETL_TYPE_STRINGS) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_matrix_node(p);
+	}
+    } else {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err && l->t == SERIES) {
+	series_table *st;
+	const char *s;
+	int t;
+
+	st = series_get_string_table(p->dset, l->vnum);
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	    s = series_table_get_string(st, l->v.xvec[t]);
+	    ret->v.xvec[t] = (s == NULL)? NADBL : g_utf8_strlen(s, -1);
+	}
+    } else if (!p->err) {
+	gretl_matrix *m = NULL;
+	char **S;
+	int i, ns = 0;
+
+	S = gretl_array_get_strings(l->v.a, &ns);
+	m = (ns == 0)? gretl_null_matrix_new() :
+	    gretl_matrix_alloc(ns, 1);
+	if (m == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    for (i=0; i<ns; i++) {
+		m->val[i] = g_utf8_strlen(S[i], -1);
+	    }
+	    ret->v.m = m;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -16877,12 +16928,20 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_OBSNUM:
     case F_ISDISCR:
-    case F_STRLEN:
     case F_NLINES:
     case F_REMOVE:
     case F_ISCMPLX:
 	if (l->t == STR) {
 	    ret = object_status(l, t, p);
+	} else {
+	    node_type_error(t->t, 1, STR, l, p);
+	}
+	break;
+    case F_STRLEN:
+	if (l->t == STR) {
+	    ret = object_status(l, t, p);
+	} else if (useries_node(l) || l->t == ARRAY) {
+	    ret = multi_str_node(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 1, STR, l, p);
 	}
