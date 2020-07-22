@@ -5177,6 +5177,10 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	return E_DATA;
     }
 
+    if (freq->strvals) {
+	dist = 0; /* just to be safe */
+    }
+
     if (dist == D_NORMAL) {
 	plottype = PLOT_FREQ_NORMAL;
     } else if (dist == D_GAMMA) {
@@ -5194,7 +5198,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     fprintf(stderr, "*** plot_freq called\n");
 #endif
 
-    if (freq->discrete) {
+    if (freq->strvals) {
+	endpt = NULL;
+	barwidth = 1;
+	use_boxes = 0;
+    } else if (freq->discrete) {
 	endpt = freq->midpt;
 	barwidth = discrete_minskip(freq);
 	use_boxes = 0;
@@ -5281,8 +5289,13 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     } else {
 	/* plain frequency plot (no theoretical distribution shown) */
 	lambda = 1.0 / freq->n;
-	plotmin = freq->midpt[0] - barwidth;
-	plotmax = freq->midpt[K-1] + barwidth;
+	if (freq->strvals) {
+	    plotmin = 0.5;
+	    plotmax = K + 0.5;
+	} else {
+	    plotmin = freq->midpt[0] - barwidth;
+	    plotmax = freq->midpt[K-1] + barwidth;
+	}
 	fprintf(fp, "set xrange [%.10g:%.10g]\n", plotmin, plotmax);
 	maybe_set_yrange(freq, lambda, fp);
 	fputs("set nokey\n", fp);
@@ -5300,14 +5313,33 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	return 1;
     }
 
-    fprintf(fp, "set xlabel '%s'\n", freq->varname);
-    if (dist) {
-	fprintf(fp, "set ylabel '%s'\n", _("Density"));
+    if (freq->strvals) {
+	fprintf(fp, "set title \"%s: relative frequencies\"\n",
+		freq->varname);
     } else {
-	fprintf(fp, "set ylabel '%s'\n", _("Relative frequency"));
+	fprintf(fp, "set xlabel '%s'\n", freq->varname);
+	if (dist) {
+	    fprintf(fp, "set ylabel '%s'\n", _("Density"));
+	} else {
+	    fprintf(fp, "set ylabel '%s'\n", _("Relative frequency"));
+	}
     }
 
-    if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 1000) {
+    if (freq->strvals) {
+	char label[32];
+
+	fputs("set xtics rotate by -45\n", fp);
+	fputs("set xtics (", fp);
+	for (i=0; i<K; i++) {
+	    strcpy(label, freq->S[i]);
+	    gretl_utf8_truncate(label, 6);
+	    fprintf(fp, "\"%s\" %d", label, i+1);
+	    if (i < K-1) {
+		fputs(", ", fp);
+	    }
+	}
+	fputs(")\n", fp);
+    } else if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 1000) {
 	/* few values, all integers: force integer tic marks */
 	fprintf(fp, "set xtics %.0f, 1, %.0f\n", freq->midpt[0],
 		freq->midpt[K-1]);
@@ -5340,7 +5372,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     }
 
     for (i=0; i<K; i++) {
-	fprintf(fp, "%.10g %.10g\n", freq->midpt[i], lambda * freq->f[i]);
+	if (freq->midpt == NULL) {
+	    fprintf(fp, "%d %.10g\n", i + 1, lambda * freq->f[i]);
+	} else {
+	    fprintf(fp, "%.10g %.10g\n", freq->midpt[i], lambda * freq->f[i]);
+	}
     }
 
     fputs("e\n", fp);
