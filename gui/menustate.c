@@ -743,6 +743,10 @@ GtkWidget *build_var_popup (int selvar)
 	    /* skip dummify option */
 	    continue;
 	}
+	if (i == MNU_STATS && is_string_valued(dataset, selvar)) {
+	    /* skip (numerical) summary stats option */
+	    continue;
+	}
 	item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(var_popup_click),

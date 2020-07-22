@@ -2259,13 +2259,11 @@ int freqdist (int varno, const DATASET *dset,
 	} else if (dist) {
 	    record_freq_test(freq);
 	}
-
 	record_freq_matrix(freq);
 
 	if (do_graph && freq->numbins < 2) {
 	    do_graph = 0;
 	}
-
 	if (do_graph) {
 	    int gerr = plot_freq(freq, dist, opt);
 
@@ -2274,7 +2272,6 @@ int freqdist (int varno, const DATASET *dset,
 		do_graph = 0;
 	    }
 	}
-
 	free_freq(freq);
     }
 
@@ -5709,34 +5706,42 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
     for (i=0; i<s->list[0]; i++)  {
 	double *pskew = NULL, *pkurt = NULL;
 	int vi = s->list[i+1];
+	int strvals;
 	int ni = 0;
         int ntot = 0;
 
-	/* create the restricted series: substitute NAs
-	   for values at which the restriction dummy is
-	   invalid or zero
-	*/
-	for (t=t1; t<=t2; t++) {
-	    if (!na(rv[t]) && rv[t] != 0.0) {
-                ntot++;
-		x[t] = dset->Z[vi][t];
-		if (!na(x[t])) {
-		    ni++;
+	strvals = is_string_valued(dset, vi);
+
+	if (!strvals) {
+	    /* create the restricted series: substitute NAs
+	       for values at which the restriction dummy is
+	       invalid or zero
+	    */
+	    for (t=t1; t<=t2; t++) {
+		if (!na(rv[t]) && rv[t] != 0.0) {
+		    ntot++;
+		    x[t] = dset->Z[vi][t];
+		    if (!na(x[t])) {
+			ni++;
+		    }
+		} else {
+		    x[t] = NADBL;
 		}
-	    } else {
-		x[t] = NADBL;
+	    }
+	    s->misscount[i] = ntot - ni;
+	    if (ni > s->n) {
+		s->n = ni;
 	    }
 	}
 
-	s->misscount[i] = ntot - ni;
-
-	if (ni > s->n) {
-	    s->n = ni;
-	}
-
 	if (ni == 0) {
-	    pprintf(prn, _("Dropping %s: sample range contains no valid "
-			   "observations\n"), dset->varname[vi]);
+	    if (strvals) {
+		pprintf(prn, _("Dropping %s: string-valued series\n"),
+			dset->varname[vi]);
+	    } else {
+		pprintf(prn, _("Dropping %s: sample range contains no valid "
+			       "observations\n"), dset->varname[vi]);
+	    }
 	    gretl_list_delete_at_pos(s->list, i + 1);
 	    if (s->list[0] == 0) {
 		return s;
@@ -5820,20 +5825,27 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	double *pskew = NULL, *pkurt = NULL;
 	const double *x;
 	double x0;
-	int vi, ni;
+	int vi = s->list[i+1];
+	int strvals;
+	int ni = 0;
 
-	vi = s->list[i+1];
-	x = dset->Z[vi];
-	ni = good_obs(x + t1, nmax, &x0);
-	s->misscount[i] = nmax - ni;
-
-	if (ni > s->n) {
-	    s->n = ni;
+	strvals = is_string_valued(dset, vi);
+	if (!strvals) {
+	    x = dset->Z[vi];
+	    ni = good_obs(x + t1, nmax, &x0);
+	    s->misscount[i] = nmax - ni;
+	    if (ni > s->n) {
+		s->n = ni;
+	    }
 	}
-
 	if (ni == 0) {
-	    pprintf(prn, _("Dropping %s: sample range contains no valid "
-			   "observations\n"), dset->varname[vi]);
+	    if (strvals) {
+		pprintf(prn, _("Dropping %s: string-valued series\n"),
+			dset->varname[vi]);
+	    } else {
+		pprintf(prn, _("Dropping %s: sample range contains no valid "
+			       "observations\n"), dset->varname[vi]);
+	    }
 	    gretl_list_delete_at_pos(s->list, i + 1);
 	    if (s->list[0] == 0) {
 		return s;
