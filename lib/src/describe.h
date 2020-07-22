@@ -73,7 +73,8 @@ typedef struct Xtab_ {
     int **f;                 /* array of frequencies */
     int n, missing;          /* observation counts */
     int t1, t2;              /* sample limits */
-    int strvals;             /* string-valued flag */
+    int rstrs;               /* row string-valued flag */
+    int cstrs;               /* col string-valued flag */
 } Xtab;
 
 /* functions follow */

@@ -616,7 +616,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     if (opt & OPT_T) {
 	/* LaTeX output */
 	tex = 1;
-	if ((opt & OPT_E) && !tab->strvals) {
+	if ((opt & OPT_E) && !(tab->rstrs || tab->cstrs)) {
 	    /* bold-face equal values */
 	    bold = 1;
 	}
@@ -655,22 +655,26 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	pputs(prn, "     & ");
     }
 
-    if (tab->strvals) {
+    if (tab->rstrs) {
 	rlen = 2 + row_strlen(tab);
-	clen = 2 + col_strlen(tab);
 	if (rlen > 16) {
 	    rlen = 16;
 	} else if (rlen < 7) {
 	    rlen = 7;
 	}
+    } else {
+	rlen = 7;
+    }
+
+    if (tab->cstrs) {
+	clen = 2 + col_strlen(tab);
 	if (clen > 10) {
 	    clen = 10;
-	} else if (clen < 5) {
-	    clen = 5;
+	} else if (clen < 6) {
+	    clen = 6;
 	}
     } else {
-	clen = 5;
-	rlen = 7;
+	clen = 6;
     }
 
     bufspace(rlen, prn);
@@ -678,7 +682,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     /* header row: column labels */
 
     for (j=0; j<tab->cols; j++) {
-	if (tab->strvals) {
+	if (tab->cstrs) {
 	    *lbl = '\0';
 	    strncat(lbl, tab->Sc[j], 63);
 	    gretl_utf8_truncate(lbl, clen-2);
@@ -720,7 +724,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	if (tab->rtotal[i] == 0) {
 	    continue;
 	}
-	if (tab->strvals) {
+	if (tab->rstrs) {
 	    *lbl = '\0';
 	    strncat(lbl, tab->Sr[i], 63);
 	    gretl_utf8_truncate(lbl, rlen-2);
