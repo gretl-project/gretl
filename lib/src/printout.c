@@ -386,7 +386,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	int len, maxlen = 0;
 
 	for (i=0; i<freq->numbins; i++) {
-	    /* FIXME UTF-8 */
+	    /* FIXME UTF-8? */
 	    len = g_utf8_strlen(freq->S[i], -1);
 	    if (len > maxlen) {
 		maxlen = len;
@@ -396,17 +396,16 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 
 	pputc(prn, '\n');
 	bufspace(len, prn);
-	pputs(prn, _("frequency    rel.     cum.\n\n"));
+	pputs(prn, _("frequency   percent\n\n"));
 	for (k=0; k<=K; k++) {
 	    *word = '\0';
 	    gretl_utf8_strncat(word, freq->S[k], len-2);
 	    pputs(prn, word);
 	    nlw = len - strlen(word);
 	    bufspace(nlw, prn);
-	    pprintf(prn, "%6d  ", freq->f[k]);
+	    pprintf(prn, "%6d   ", freq->f[k]);
 	    f = 100.0 * freq->f[k] / valid;
-	    cumf += f;
-	    pprintf(prn, "  %6.2f%% %7.2f%% ", f, cumf);
+	    pprintf(prn, "  %6.2f%% ", f);
 	    if (f < 100) {
 		i = 0.36 * f;
 		while (i--) {
