@@ -9214,15 +9214,16 @@
 
     <description>
       <para>
-	     Calcola le stime OLS per il modello indicato usando aritmetica
-        in virgola mobile a precisione multipla. Questo comando è
-        disponibile solo se <program>gretl</program> è compilato con il
-        supporto per la libreria Gnu Multiple Precision (GMP). Per impostazione
-        predefinita, vengono usati 256 bit di precisione nei calcoli, ma è
-        possibile aumentare questo valore usando la variabile d'ambiente
-        <lit>GRETL_MP_BITS</lit>.  Ad esempio, usando l'interprete dei comandi
-        bash, è possibile aumentare la precisione a 1024 bit eseguendo il
-        comando seguente prima di avviare gretl
+	Calcola le stime OLS per il modello indicato usando aritmetica
+	in virgola mobile a precisione multipla. Questo comando è
+	disponibile solo se <program>gretl</program> è compilato con
+	il supporto per la libreria Gnu Multiple Precision (GMP). Per
+	impostazione predefinita, vengono usati 256 bit di precisione
+	nei calcoli, ma è possibile aumentare questo valore usando la
+	variabile d'ambiente <lit>GRETL_MP_BITS</lit>.  Ad esempio,
+	usando l'interprete dei comandi bash, è possibile aumentare la
+	precisione a 1024 bit eseguendo il comando seguente prima di
+	avviare gretl
       </para>
       <code>
 	export GRETL_MP_BITS=1024
@@ -13514,6 +13515,38 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	    <quote><lit>R.</lit></quote> is required). See <guideref
 	      targ="chap:gretlR"/> for details on this and the
 	    previous item.
+	  </para>
+	</li>
+      </ilist>
+
+      <subhead>Varie</subhead>
+
+      <ilist>
+	<li>
+	  <para><lit>mpi_use_smt</lit>: <lit>on</lit> oppure
+	  <lit>off</lit> (default). Questo settaggio influisce sul
+	  numero di processi eseguiti in un blocco <lit>mpi</lit>
+	  presente in uno script. Se è <lit>off</lit>, il numero di
+	  processi di default è uguale al numero di <i>core</i> fisici
+	  sulla macchina locale; se invece è <lit>on</lit>, il default
+	  sarà dato dal numero massimo di thread, ossia il doppio dei
+	  <i>core</i> fisici se essi supportano lo standard SMT
+	  (Simultaneous MultiThreading, anche noto come
+	  Hyper-Threading). Il settaggio si applica solo al caso in
+	  cui l'utente non ha specificato il numero di processi, n
+	  modo diretto o indiretto, attraverso il file
+	  <lit>hosts</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>graph_theme</lit>: una stringa fra
+	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
+	    (il default attuale), <lit>ethan</lit>,
+	    <lit>iwanthue</lit> o <lit>sober</lit>.  Imposta il
+	    <quote>tema</quote> ustao per i grafici prodotti da
+	    gretl. Con l'opzione <lit>classic</lit> si avrà il tema
+	    usato fino alla versione 2020b.
 	  </para>
 	</li>
       </ilist>
