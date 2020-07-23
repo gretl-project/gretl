@@ -1435,7 +1435,8 @@ gretl_array *gretl_arrays_union (gretl_array *A,
 {
     gretl_array *C = NULL;
     const char *sa, *sb;
-    int i, j, add, n = 0;
+    char *copy = NULL;
+    int i, j, n = 0;
 
     if (A == NULL || B == NULL) {
 	*err = E_DATA;
@@ -1443,26 +1444,28 @@ gretl_array *gretl_arrays_union (gretl_array *A,
 	       B->type != GRETL_TYPE_STRINGS) {
 	*err = E_TYPES;
     } else {
+	if (B->n > 0) {
+	    copy = calloc(1, B->n);
+	}
 	n = A->n;
 	for (j=0; j<B->n; j++) {
 	    sb = B->data[j];
 	    if (sb == NULL || *sb == '\0') {
 		continue;
 	    }
-	    add = 1;
+	    copy[j] = 1;
 	    for (i=0; i<A->n; i++) {
 		sa = A->data[i];
 		if (sa == NULL || *sa == '\0') {
 		    continue;
 		}
 		if (strcmp(sa, sb) == 0) {
-		    add = 0;
+		    copy[j] = 0;
 		    break;
 		}
 	    }
-	    if (add) n++;
+	    n += copy[j];
 	}
-
 	C = gretl_array_new(A->type, n, err);
     }
 
@@ -1471,29 +1474,72 @@ gretl_array *gretl_arrays_union (gretl_array *A,
     }
 
     if (!*err && n > A->n) {
-	int k = A->n;
-
+	i = A->n;
 	for (j=0; j<B->n; j++) {
-	    sb = B->data[j];
-	    if (sb == NULL || *sb == '\0') {
-		continue;
-	    }
-	    add = 1;
-	    for (i=0; i<A->n; i++) {
-		sa = A->data[i];
-		if (sa == NULL || *sa == '\0') {
-		    continue;
-		}
-		if (strcmp(sa, sb) == 0) {
-		    add = 0;
-		    break;
-		}
-	    }
-	    if (add) {
-		C->data[k++] = gretl_strdup(B->data[j]);
+	    if (copy[j]) {
+		C->data[i++] = gretl_strdup(B->data[j]);
 	    }
 	}
     }
+    free(copy);
+
+    if (*err && C != NULL) {
+	gretl_array_destroy(C);
+	C = NULL;
+    }
+
+    return C;
+}
+
+/* respond to C = A && B */
+
+gretl_array *gretl_arrays_intersection (gretl_array *A,
+					gretl_array *B,
+					int *err)
+{
+    gretl_array *C = NULL;
+    const char *sa, *sb;
+    char *copy = NULL;
+    int i, j, n = 0;
+
+    if (A == NULL || B == NULL) {
+	*err = E_DATA;
+    } else if (A->type != GRETL_TYPE_STRINGS ||
+	       B->type != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else {
+	if (A->n > 0) {
+	    copy = calloc(1, A->n);
+	}
+	for (i=0; i<A->n; i++) {
+	    sa = A->data[i];
+	    if (sa == NULL || *sa == '\0') {
+		continue;
+	    }
+	    for (j=0; j<B->n; j++) {
+		sb = B->data[j];
+		if (sb == NULL || *sb == '\0') {
+		    continue;
+		}
+		if (strcmp(sa, sb) == 0) {
+		    copy[i] = 1;
+		    break;
+		}
+	    }
+	    n += copy[i];
+	}
+	C = gretl_array_new(A->type, n, err);
+    }
+
+    if (!*err && n > 0) {
+	j = 0;
+	for (i=0; i<A->n; i++) {
+	    if (copy[i]) {
+		C->data[j++] = gretl_strdup(A->data[i]);
+	    }
+	}
+    }
+    free(copy);
 
     if (*err && C != NULL) {
 	gretl_array_destroy(C);

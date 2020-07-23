@@ -6322,8 +6322,9 @@ static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* Binary operator applied to two arrays: at present only '+'
-   (for appending) is supported.
+/* Binary operator applied to two arrays: '+' (append),
+   '||' (union) or '&&' (intersection). But the latter
+   two are only for strings arrays.
 */
 
 static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
@@ -6339,6 +6340,8 @@ static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
 		ret->v.a = gretl_arrays_join(al, ar, &p->err);
 	    } else if (f == B_OR) {
 		ret->v.a = gretl_arrays_union(al, ar, &p->err);
+	    } else if (f == B_AND) {
+		ret->v.a = gretl_arrays_intersection(al, ar, &p->err);
 	    } else {
 		p->err = E_TYPES;
 	    }
