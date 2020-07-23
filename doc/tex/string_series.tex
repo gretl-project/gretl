@@ -30,7 +30,7 @@ describes the operations that are supported for such series.
 This can be done in two ways: first, by reading such a series from a
 suitable source file and second, by taking a suitable numerical series
 within gretl and adding string values using the \cmd{stringify()}
-function. In either case string values will now be preserved when such
+function. In either case string values will be preserved when such
 a series is saved in a gretl-native data file.
 
 \subsection{Reading string-valued series}
@@ -48,6 +48,7 @@ city,year
 "Oklahoma City",2013
 "Berlin",2015
 "Athens",2017
+"Naples",2019
 \end{code}
 %
 and here's a script:
@@ -71,6 +72,7 @@ The output from the script is:
 3 Oklahoma C..         2013
 4       Berlin         2015
 5       Athens         2017
+6       Naples         2019
 
 ? print city --byobs --numeric
 
@@ -81,6 +83,7 @@ The output from the script is:
 3            3
 4            4
 5            5
+6            6
 
 The third gretl conference took place in Oklahoma City.
 \end{code}
@@ -160,18 +163,16 @@ define the array of strings via the \cmd{defarray()} function, as in
 stringify(grade,defarray("F","D","C","B","A"))
 \end{code}
 
-
-
-We should also mention that we have a function to perform the inverse
-operation of \cmd{stringify()}: the \cmd{strvals()} function
-retrieves the array of string values from a series. (It returns an
-empty array if the series is not string-valued.)
+The inverse operation of \cmd{stringify()} can be performed by the
+\cmd{strvals()} function: this retrieves the array of string values
+from a series (or returns an empty array if the series is not
+string-valued).
 
 \section{Permitted operations}
 
 One question that arises with string-valued series is, what are you
-allowed to do with them and what is banned? This may be another
-debatable point, but here we set out the current state of things.
+allowed to do with them and what is banned? This is a debatable point,
+but here we set out the current state of things.
 
 \subsection{Setting values per observation}
 
@@ -204,25 +205,24 @@ section~\ref{sec:reading} suppose we try
 %
 \begin{code}
 dataset addobs 1
-year[6] = 2019
-city[6] = "Naples?"
+year[7] = 2021
+city[7] = "London?"
 \end{code}
 %
-This will work OK: we're implicitly adding another member to the
-string table for \texttt{city}; the associated numeric code will be
-the next available integer.\footnote{Admittedly there is a downside to
-  this feature: one may inadvertently add a new string value by
-  mistyping a string that's already present.}
+This will work: we're implicitly adding another member to the string
+table for \texttt{city}; the associated numeric code will be the next
+available integer.\footnote{Admittedly there is a downside to this
+  feature: one may inadvertently add a new string value by mistyping a
+  string that's already present.}
 
 \subsection{Assignment to an entire series}
 
-This is disallowed: you can't execute an assignment of any sort with
-the name of a string-valued series \textit{per se} on the left-hand
-side. Put differently, you cannot overwrite an entire string-valued
-series at once. This may be debatable, but it's much the easiest way
-of ensuring that we never end up with a broken mapping. If anyone can
-come up with a really good reason for wanting to do this we might
-reconsider.
+This is disallowed at present: you can't execute an assignment of any
+sort with the name of a string-valued series \textit{per se} on the
+left-hand side. Put differently, you cannot overwrite an entire
+string-valued series at once. While this is debatable, it's the
+easiest way of ensuring that we never end up with a broken
+mapping. It's possible this restriction may be relaxed in future.
 
 Besides assigning an out-of-bounds numerical value to a particular
 observation, this sort of assignment is in fact the only operation
