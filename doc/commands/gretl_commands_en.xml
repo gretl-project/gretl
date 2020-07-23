@@ -13457,6 +13457,17 @@
 	  with MPI).
 	  </para>
 	</li>
+	<li>
+	  <para>
+	    <lit>graph_theme</lit>: a string, one of
+	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
+	    (the current default), <lit>ethan</lit>,
+	    <lit>iwanthue</lit> or <lit>sober</lit>.  This sets the
+	    <quote>theme</quote> used for graphs produced by
+	    gretl. The <lit>classic</lit> option reverts to the single
+	    theme that was in force prior to version 2020c of gretl.
+	  </para>
+	</li>
       </ilist>
 
     </description>
