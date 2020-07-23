@@ -47,7 +47,8 @@ typedef enum {
     UFUN_PRIVATE   = 1 << 0,
     UFUN_PLUGIN    = 1 << 1,
     UFUN_NOPRINT   = 1 << 2,
-    UFUN_MENU_ONLY = 1 << 3
+    UFUN_MENU_ONLY = 1 << 3,
+    UFUN_USES_SET  = 1 << 4
 } UfunAttrs;
 
 #define NEEDS_TS    "needs-time-series-data"

@@ -153,7 +153,7 @@ const gretl_matrix *get_matrix_mask (void);
 int get_matrix_mask_nobs (void);
 void destroy_matrix_mask (void);
 
-void set_loop_on (int verbose);
+void set_loop_on (void);
 void set_loop_off (void);
 
 int gretl_looping (void);

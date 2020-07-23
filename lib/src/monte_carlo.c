@@ -3652,8 +3652,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     gui_mode = gretl_in_gui_mode();
     echo = gretl_echo_on();
     prev_messages = gretl_messages_on();
+    if (!prev_messages && loop_is_verbose(loop)) {
+	set_gretl_messages(1);
+    }
     indent0 = gretl_if_state_record();
-    set_loop_on(loop_is_verbose(loop));
+    set_loop_on();
 #if HAVE_GMP
     progressive = loop_is_progressive(loop);
 #endif

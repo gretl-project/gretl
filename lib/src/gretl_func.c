@@ -1790,6 +1790,11 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     while (bufgets(line, sizeof line, buf) && !err) {
 	s = line;
 	while (isspace(*s)) s++;
+	if (!(fun->flags & UFUN_USES_SET)) {
+	    if (!strncmp(s, "set ", 4)) {
+		fun->flags |= UFUN_USES_SET;
+	    }
+	}
 	tailstrip(s);
 	err = push_function_line(fun, s, 0);
     }
@@ -7176,6 +7181,10 @@ int gretl_function_append_line (ExecState *s)
 		    err = 1;
 		}
 		set_compiling_off();
+	    } else if (cmd->ci == SET) {
+		if (!(fun->flags & UFUN_USES_SET)) {
+		    fun->flags |= UFUN_USES_SET;
+		}
 	    } else if (cmd->ci == FUNC) {
 		err = E_FNEST;
 	    } else if (cmd->ci == IF) {
@@ -8380,7 +8389,9 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
 
-    pop_program_state();
+    if (call->fun->flags & UFUN_USES_SET) {
+	pop_program_state();
+    }
 
     if (dset != NULL && call->obs.changed) {
 	restore_obs_info(&call->obs, dset);
@@ -8441,7 +8452,9 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 
     set_previous_depth(fn_executing);
     fn_executing++;
-    push_program_state();
+    if (call->fun->flags & UFUN_USES_SET) {
+	push_program_state();
+    }
 
     callstack = g_list_append(callstack, call);
 

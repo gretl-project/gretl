@@ -67,17 +67,14 @@ enum {
     STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
     STATE_WARN_ON         = 1 << 11, /* print numerical warning messages */
     STATE_SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
-    STATE_LOOPING         = 1 << 13, /* loop is in progress at this level */
-    STATE_LOOP_VERBOSE    = 1 << 14, /* loop commands should be verbose */
-    STATE_BFGS_RSTEP      = 1 << 15, /* use Richardson method in BFGS numerical
-					gradient */
-    STATE_DPDSTYLE_ON     = 1 << 16, /* emulate dpd in dynamic panel data models */
-    STATE_OPENMP_ON       = 1 << 17, /* using openmp */
-    STATE_ROBUST_Z        = 1 << 18, /* use z- not t-score with HCCM/HAC */
-    STATE_MWRITE_G        = 1 << 19, /* use %g format with mwrite() */
-    STATE_ECHO_SPACE      = 1 << 20, /* preserve vertical space in output */
-    STATE_STRSUB_ON       = 1 << 21, /* string substitution activated */
-    STATE_MPI_SMT         = 1 << 22  /* MPI: use hyperthreads by default */
+    STATE_BFGS_RSTEP      = 1 << 13, /* use Richardson in BFGS numerical gradient */
+    STATE_DPDSTYLE_ON     = 1 << 14, /* emulate dpd in dynamic panel data models */
+    STATE_OPENMP_ON       = 1 << 15, /* using openmp */
+    STATE_ROBUST_Z        = 1 << 16, /* use z- not t-score with HCCM/HAC */
+    STATE_MWRITE_G        = 1 << 17, /* use %g format with mwrite() */
+    STATE_ECHO_SPACE      = 1 << 18, /* preserve vertical space in output */
+    STATE_STRSUB_ON       = 1 << 19, /* string substitution activated */
+    STATE_MPI_SMT         = 1 << 20  /* MPI: use hyperthreads by default */
 };
 
 /* for values that really want a non-negative integer */
@@ -439,11 +436,6 @@ static void state_vars_copy (set_vars *sv)
     fprintf(stderr, "state_vars_copy() called\n");
 #endif
     sv->flags = state->flags;
-    /* We're not (yet) looping at the current level of execution (but
-       note that the STATE_LOOP_VERBOSE flag should be inherited).
-    */
-    sv->flags &= ~STATE_LOOPING;
-
     sv->seed = state->seed;
     sv->conv_huge = state->conv_huge;
     sv->horizon = state->horizon;
@@ -797,13 +789,7 @@ int gretl_messages_on (void)
     if (check_for_state()) {
 	return 1;
     } else {
-	int ret = flag_to_bool(state, STATE_MSGS_ON);
-
-	if (ret && (state->flags & STATE_LOOPING)) {
-	    ret = state->flags & STATE_LOOP_VERBOSE;
-	}
-
-	return ret;
+	return flag_to_bool(state, STATE_MSGS_ON);
     }
 }
 
@@ -2535,47 +2521,49 @@ int libset_set_bool (const char *key, int val)
 */
 
 static int n_states;
-static set_vars **state_stack;
+static GPtrArray *state_stack;
+static int state_idx = -1;
 
 int push_program_state (void)
 {
-    set_vars **sstack;
     set_vars *newstate;
-    int ns = n_states;
     int err = 0;
 
 #if PDEBUG
-    fprintf(stderr, "push_program_state: n_states = %d\n", ns);
+    fprintf(stderr, "push_program_state: n_states=%d, state_idx=%d\n",
+	    n_states, state_idx);
 #endif
 
-    newstate = malloc(sizeof *newstate);
+    if (n_states == 0) {
+	state_stack = g_ptr_array_new();
+    }
 
-    if (newstate == NULL) {
-	err = E_ALLOC;
+    state_idx++;
+
+    if (state_idx < n_states) {
+	newstate = g_ptr_array_index(state_stack, state_idx);
     } else {
-	sstack = realloc(state_stack, (ns + 1) * sizeof *sstack);
-	if (sstack == NULL) {
-	    free(newstate);
+	newstate = malloc(sizeof *newstate);
+	if (newstate == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    g_ptr_array_add(state_stack, newstate);
+	    n_states++;
 	}
     }
 
-    if (!err) {
-	if (ns == 0) {
-	    /* set all defaults */
+    if (newstate != NULL) {
+	if (n_states == 1) {
 	    state_vars_init(newstate);
 	} else {
-	    /* copy existing state */
 	    state_vars_copy(newstate);
 	}
-	state_stack = sstack;
-	state = state_stack[ns] = newstate;
-	n_states++;
+	state = newstate;
     }
 
 #if PDEBUG
     if (!err) {
-	fprintf(stderr, " state is now state_stack[%d]\n", ns);
+	fprintf(stderr, " state is now state_stack[%d]\n", state_idx);
     }
 #endif
 
@@ -2584,10 +2572,11 @@ int push_program_state (void)
 
 static void free_state (set_vars *sv)
 {
-    gretl_matrix_free(sv->initvals);
-    gretl_matrix_free(sv->matmask);
-
-    free(sv);
+    if (sv != NULL) {
+	gretl_matrix_free(sv->initvals);
+	gretl_matrix_free(sv->matmask);
+	free(sv);
+    }
 }
 
 /* Called when a user-defined function exits: restores the program
@@ -2596,33 +2585,22 @@ static void free_state (set_vars *sv)
 
 int pop_program_state (void)
 {
-    set_vars **sstack;
-    int ns = n_states;
     int err = 0;
 
 #if PDEBUG
-    fprintf(stderr, "pop_program_state called: ns=%d\n", ns);
+    fprintf(stderr, "pop_program_state: n_states=%d, state_idx=%d\n",
+	    n_states, state_idx);
 #endif
 
-    if (ns < 2) {
+    if (n_states < 2) {
 	err = 1;
     } else {
-	free_state(state_stack[ns - 1]);
-	state_stack[ns - 1] = NULL;
-	sstack = realloc(state_stack, (ns - 1) * sizeof *sstack);
-	if (sstack == NULL) {
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	state_stack = sstack;
-	state = state_stack[ns - 2];
-	n_states--;
+	state_idx--;
+	state = g_ptr_array_index(state_stack, state_idx);
     }
 
 #if PDEBUG
-    fprintf(stderr, " state is now state_stack[%d]\n", ns - 2);
+    fprintf(stderr, " state is now state_stack[%d]\n", state_idx);
 #endif
 
     return err;
@@ -2656,41 +2634,43 @@ void libset_cleanup (void)
 #endif
 
     for (i=0; i<n_states; i++) {
-	free_state(state_stack[i]);
+	free_state(g_ptr_array_index(state_stack, i));
     }
 
-    free(state_stack);
+    g_ptr_array_free(state_stack, TRUE);
     state_stack = NULL;
     n_states = 0;
+    state_idx = -1;
 }
 
 /* switches for looping and batch mode: output: these depend on the
    state of the program calling libgretl, they are not user-settable
 */
 
-void set_loop_on (int verbose)
+static char *looping;
+static int looplen;
+
+void set_loop_on (void)
 {
-    state->flags |= STATE_LOOPING;
-    if (verbose) {
-	state->flags |= STATE_LOOP_VERBOSE;
-	set_gretl_messages(1);
+    int fd = gretl_function_depth();
+
+    if (looping == NULL) {
+	looplen = fd+1 < 8 ? 8 : fd+1;
+	looping = calloc(1, looplen);
+    } else if (looplen < fd+1) {
+	int n = looplen * 2;
+
+	n = n < fd+1 ? fd+1 : n;
+	looping = realloc(looping, n);
+	memset(looping + looplen, 0, n - looplen);
+	looplen = n;
     }
+    looping[fd] = 1;
 }
 
 void set_loop_off (void)
 {
-    state->flags &= ~STATE_LOOPING;
-
-    /* If we're not currently governed by "loop verbosity" at
-       caller level, turn such verbosity off too
-    */
-    if (state->flags & STATE_LOOP_VERBOSE) {
-	int i = n_states - 1;
-
-	if (i <= 0 || !(state_stack[i-1]->flags & STATE_LOOP_VERBOSE)) {
-	    state->flags ^= STATE_LOOP_VERBOSE;
-	}
-    }
+    looping[gretl_function_depth()] = 0;
 }
 
 /* returns 1 if there's a loop going on anywhere in the "caller
@@ -2699,14 +2679,14 @@ void set_loop_off (void)
 
 int gretl_looping (void)
 {
-    int i, ns = n_states;
+    int i, fd = gretl_function_depth();
+    int n = MIN(fd+1, looplen);
 
-    for (i=0; i<ns; i++) {
-	if (state_stack[i]->flags & STATE_LOOPING) {
+    for (i=0; i<n; i++) {
+	if (looping[i]) {
 	    return 1;
 	}
     }
-
     return 0;
 }
 
@@ -2716,7 +2696,9 @@ int gretl_looping (void)
 
 int gretl_looping_currently (void)
 {
-    return (state->flags & STATE_LOOPING)? 1 : 0;
+    int fd = gretl_function_depth();
+
+    return looplen >= fd+1 && looping[fd];
 }
 
 static int iter_depth;
