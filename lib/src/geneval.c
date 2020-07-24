@@ -11916,14 +11916,16 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    ret->v.xval = 0;
 	}
     } else if (f == F_STACK) {
-	int length = p->dset->n;
+	int length = 0;
 	int offset = 0;
 	int *list = NULL;
 
 	post_process = 0;
 	ret = aux_empty_series_node(p);
 	list = node_get_list(l, p);
-	if (!p->err && !null_node(m)) {
+	if (null_node(m)) {
+	    p->err = E_ARGS;
+	} else {
 	    length = node_get_int(m, p);
 	}
 	if (!p->err && !null_node(r)) {
