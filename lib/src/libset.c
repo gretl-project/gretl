@@ -234,15 +234,6 @@ static void robust_opts_init (struct robust_opts *r)
     r->qsband = NADBL;
 }
 
-static void robust_opts_copy (struct robust_opts *r)
-{
-    r->auto_lag = state->ropts.auto_lag;
-    r->user_lag = state->ropts.user_lag;
-    r->hc_version = state->ropts.hc_version;
-    r->hkern = state->ropts.hkern;
-    r->qsband = state->ropts.qsband;
-}
-
 static const char *csv_delim_args[] = {
     "comma",
     "space",
@@ -435,41 +426,11 @@ static void state_vars_copy (set_vars *sv)
 #if PDEBUG
     fprintf(stderr, "state_vars_copy() called\n");
 #endif
-    sv->flags = state->flags;
-    sv->seed = state->seed;
-    sv->conv_huge = state->conv_huge;
-    sv->horizon = state->horizon;
-    sv->bootrep = state->bootrep;
-    sv->loop_maxiter = state->loop_maxiter;
-    sv->rq_maxiter = state->rq_maxiter;
-    sv->gmm_maxiter = state->gmm_maxiter;
-    sv->nls_toler = state->nls_toler;
-    sv->vecm_norm = state->vecm_norm;
-    sv->optim = state->optim;
-    sv->bfgs_maxiter = state->bfgs_maxiter;
-    sv->bfgs_toler = state->bfgs_toler;
-    sv->bfgs_maxgrad = state->bfgs_maxgrad;
-    sv->bfgs_verbskip = state->bfgs_verbskip;
-    sv->optim_steplen = state->optim_steplen;
-    sv->max_verbose = state->max_verbose;
-    sv->bhhh_maxiter = state->bhhh_maxiter;
-    sv->bhhh_toler = state->bhhh_toler;
-    sv->boot_iters = state->boot_iters;
-    sv->lbfgs_mem = state->lbfgs_mem;
-    sv->garch_vcv = state->garch_vcv;
-    sv->arma_vcv = state->arma_vcv;
-    sv->garch_robust_vcv = state->garch_robust_vcv;
-    sv->nadarwat_trim = state->nadarwat_trim;
-    sv->fdjac_qual = state->fdjac_qual;
-    sv->fdjac_eps = state->fdjac_eps;
-    sv->wildboot_dist = state->wildboot_dist;
-
+    /* copy everything */
+    *sv = *state;
+    /* but make the matrix pointers distinct */
     sv->initvals = gretl_matrix_copy(state->initvals);
     sv->matmask = gretl_matrix_copy(state->matmask);
-    strcpy(sv->csv_write_na, state->csv_write_na);
-    strcpy(sv->csv_read_na, state->csv_read_na);
-
-    robust_opts_copy(&sv->ropts);
 }
 
 /* for processors count */
@@ -2625,6 +2586,10 @@ int libset_init (void)
     return err;
 }
 
+/* state variables for looping */
+static char *looping;
+static int looplen;
+
 void libset_cleanup (void)
 {
     int i;
@@ -2641,14 +2606,15 @@ void libset_cleanup (void)
     state_stack = NULL;
     n_states = 0;
     state_idx = -1;
+
+    free(looping);
+    looping = NULL;
+    looplen = 0;
 }
 
 /* switches for looping and batch mode: output: these depend on the
    state of the program calling libgretl, they are not user-settable
 */
-
-static char *looping;
-static int looplen;
 
 void set_loop_on (void)
 {
