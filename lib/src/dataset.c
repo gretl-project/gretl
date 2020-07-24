@@ -2697,6 +2697,10 @@ int build_stacked_series (double **pstack, int *list,
 
     if (dset == NULL || dset->n == 0) {
 	return E_NODATA;
+    } else if (dataset_is_subsampled(dset)) {
+	gretl_errmsg_set("stack: this function cannot be used when the dataset "
+			 "is sub-sampled");
+	return E_DATA;
     } else if (list == NULL || list[0] <= 0) {
 	return E_INVARG;
     } else if (length <= 0) {
