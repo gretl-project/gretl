@@ -2658,6 +2658,22 @@ static int handle_tgz (const char *fname,
 
 #endif /* DO_BINPKG */
 
+static int really_local (const char *pkgname)
+{
+#ifdef WIN32
+    if (isalpha(pkgname[0]) && pkgname[1] == ':') {
+	return 1;
+    } else if (strchr(pkgname, '\\')) {
+	return 1;
+    }
+#else
+    if (strchr(pkgname, ':') == NULL && strchr(pkgname, '/')) {
+	return 1;
+    }
+#endif
+    return 0;
+}
+
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
 				     ExecState *s,
@@ -2690,6 +2706,10 @@ static int install_function_package (const char *pkgname,
     if (!strncmp(pkgname, "http://", 7) ||
 	!strncmp(pkgname, "https://", 8)) {
 	http = 1;
+    }
+
+    if (!local && !http && really_local(pkgname)) {
+	local = 1;
     }
 
     if (strstr(pkgname, ".gfn")) {
