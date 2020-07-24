@@ -8022,12 +8022,13 @@
       <ilist>
 	<li>
 	  <para>
-	    payload: La carga que, en caso de existir, representa la serie a
-	    partir de la que se deberán colorear las regiones del mapa. A
-	    falta de esa carga solo se mostrarán los trazos del mapa. Si el
-	    conjunto de datos vigente contiene una o más series que parecen
-	    posibles candidatas (en base a una sencilla heurística), estas se
-	    van a mostrar en un selector desplegable.
+	    series to plot: En caso de existir, representa la serie a partir
+	    de la que se deberán colorear las regiones del mapa; también
+	    se conoce como la <quote>carga</quote>. Si falta esa carga
+	    solo se mostrarán los trazos del mapa. Si el conjunto de datos
+	    vigente contiene una o más series que parecen posibles candidatas
+	    (en base a una sencilla heurística), estas se van a mostrar en
+	    un selector desplegable.
 	  </para>
 	</li>
 	<li>
@@ -13454,6 +13455,17 @@
 	  procesos, bien de forma directa o bien indirectamente (mediante
 	  la especificación de un archivo <lit>hosts</lit> para utilizar
 	  con MPI).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>graph_theme</lit>: una cadena de texto a elegir entre
+	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
+	    (la vigente por defecto), <lit>ethan</lit>, <lit>iwanthue</lit>
+	    o <lit>sober</lit>. Esto establece el <quote>tema</quote> que
+	    se utiliza para los gráficos que genera Gretl. La opción
+	    <lit>classic</lit> supone volver al sencillo tema que estaba
+	    vigente con antelación a la versión 2020c de Gretl.
 	  </para>
 	</li>
       </ilist>

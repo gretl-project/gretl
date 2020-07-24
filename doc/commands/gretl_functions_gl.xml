@@ -3247,9 +3247,9 @@
       <description>
 	<para>
 	  Devolve un escalar co valor do determinante de <argname>A</argname>,
-	  calculado por medio da descomposición LU.
+	  calculado mediante a descomposición LU. Se o que realmente queres é o
+	  logaritmo natural do determinante, debes en troques invocar <fncref targ="ldet"/>.
 	  <seelist>
-            <fncref targ="ldet"/>
             <fncref targ="rcond"/>
             <fncref targ="cnumber"/>
 	  </seelist>
@@ -6388,8 +6388,13 @@
 	<para>
 	  Devolve un escalar co logaritmo natural do determinante de
 	  <math>A</math>, calculado por medio da descomposición LU.
+	  Cae na conta de que isto é máis eficiente que invocar
+	  <fncref targ="det"/> e tomar o logaritmo do resultado. Alén diso,
+	  nalgúns casos <lit>ldet</lit> é capaz de devolver un resultado
+	  válido mesmo cando o determinante de <math>A</math> é
+	  numericamente <quote>infinito</quote> (excedendo o número
+	  máximo de dobre precisión da librería de C).
 	  <seelist>
-            <fncref targ="det"/>
             <fncref targ="rcond"/>
             <fncref targ="cnumber"/>
 	  </seelist>
