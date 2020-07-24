@@ -107,6 +107,12 @@ struct obsinfo_ {
 
 /* structure representing a call to a user-defined function */
 
+enum {
+    RECURSING = 1 << 0,
+    PREV_MSGS = 1 << 1,
+    PREV_ECHO = 1 << 2
+};
+
 struct fncall_ {
     ufunc *fun;    /* the function called */
     int argc;      /* argument count */
@@ -115,8 +121,8 @@ struct fncall_ {
     int *ptrvars;  /* list of pointer arguments */
     int *listvars; /* list of series included in a list argument */
     char *retname; /* name of return value (or dummy string) */
-    int recursing; /* indicator for recursive call */
     obsinfo obs;   /* sample info */
+    int flags;     /* indicators for recursive call, etc */
 };
 
 /* structure representing a user-defined function */
@@ -255,6 +261,10 @@ static char mpi_caller[FN_NAMELEN];
 #define function_is_plugin(f)    (f->flags & UFUN_PLUGIN)
 #define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
+
+#define set_call_recursing(c)   (c->flags |= RECURSING)
+#define unset_call_recursing(c) (c->flags &= ~RECURSING)
+#define is_recursing(c)         (c->flags & RECURSING)
 
 struct flag_and_key {
     int flag;
@@ -547,7 +557,7 @@ fncall *fncall_new (ufunc *fun)
 	call->retname = NULL;
 	call->argc = 0;
 	call->args = NULL;
-	call->recursing = 0;
+	call->flags = 0;
     }
 
     return call;
@@ -1261,7 +1271,7 @@ int gretl_function_recursing (void)
 	GList *tmp = g_list_last(callstack);
 	fncall *call = tmp->data;
 
-	return call->recursing;
+	return is_recursing(call);
     } else {
 	return 0;
     }
@@ -8305,6 +8315,22 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
     return simple_set_obs(dset, oi->pd, oi->stobs, opt);
 }
 
+static void push_verbosity (fncall *call)
+{
+    if (gretl_messages_on()) {
+	call->flags |= PREV_MSGS;
+    }
+    if (gretl_echo_on()) {
+	call->flags |= PREV_ECHO;
+    }
+}
+
+static void pop_verbosity (fncall *call)
+{
+    set_gretl_messages(call->flags & PREV_MSGS);
+    set_gretl_echo(call->flags & PREV_ECHO);
+}
+
 /* do the basic housekeeping that is required when a function exits:
    destroy local variables, restore previous sample info, etc.
 */
@@ -8391,6 +8417,8 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     if (call->fun->flags & UFUN_USES_SET) {
 	pop_program_state();
+    } else {
+	pop_verbosity(call);
     }
 
     if (dset != NULL && call->obs.changed) {
@@ -8444,7 +8472,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     while (tmp != NULL) {
 	prevcall = tmp->data;
 	if (prevcall->fun == call->fun) {
-	    call->recursing = 1;
+	    set_call_recursing(call);
 	    break;
 	}
 	tmp = tmp->next;
@@ -8454,6 +8482,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     fn_executing++;
     if (call->fun->flags & UFUN_USES_SET) {
 	push_program_state();
+    } else {
+	push_verbosity(call);
     }
 
     callstack = g_list_append(callstack, call);
@@ -8987,7 +9017,7 @@ int attach_loop_to_function (void *ptr)
     ufunc *u = NULL;
     int err = 0;
 
-    if (call != NULL && !call->recursing) {
+    if (call != NULL && !is_recursing(call)) {
 	u = call->fun;
     }
 
@@ -9198,7 +9228,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
 	}
 
-	if (u->lines[i].loop != NULL && !call->recursing) {
+	if (u->lines[i].loop != NULL && !is_recursing(call)) {
 #if LSDEBUG
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
@@ -9318,7 +9348,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret,
 			    descrip, prn, &err);
 
-    if (!err && !call->recursing) {
+    if (!err && !is_recursing(call)) {
 	reset_saved_loops(call->fun);
     }
 
