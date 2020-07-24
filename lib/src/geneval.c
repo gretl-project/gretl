@@ -4952,11 +4952,12 @@ static int check_range_spec (int range[], int n)
     if (range[0] < 1 || range[0] > n) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), range[0]);
 	err = E_DATA;
-    } else if (range[1] == -999) {
+    } else if (range[1] == MSEL_MAX) {
 	range[1] = n;
     }
 
     if (!err && (range[1] < 1 || range[1] > n || range[1] < range[0])) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), range[1]);
 	err = E_DATA;
     }
 
