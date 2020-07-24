@@ -2447,6 +2447,7 @@ static gretl_bundle *read_json_bundle (const char *fname,
 	}
 	g_free(JSON);
     } else if (gerr != NULL) {
+	*err = E_FOPEN;
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
     }
