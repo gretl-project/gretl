@@ -478,31 +478,38 @@ store panel.gdt x1 x2
 \end{code}
 
 The second and third lines illustrate the syntax of the \cmd{stack}
-function, which takes up to three arguments.  The double dots in the
-first argument indicate a range of variables to be stacked: here we
-want to stack all 5 columns (for all 5 years). More generally, you can
-define a named list of series and pass that as the first argument to
-\texttt{stack} (see chapter~\ref{chap:lists-strings}). In this
-example we're supposing that the full data set contains 100 rows, and
-that in the stacking of variable \varname{x1} we wish to read only the
-first 50 rows from each column: we achieve this by adding \texttt{50}
-as a second (\texttt{length}) argument.
+function, which has this signature:
+\begin{code}
+series stack(list L, scalar length, scalar offset)
+\end{code}
+\begin{itemize}
+\item \texttt{L}: a list of series on which to operate.
+\item \texttt{length}: an integer giving the number of observations to
+  take from each series.
+\item \texttt{offset}: an integer giving the offset from the top of
+  the dataset at which to start taking values (optional, defaults to
+  0).
+\end{itemize}
+
+The ``\texttt{..}'' syntax in the example above constructs a list of
+the 5 contiguous series to be stacked.  More generally, you can define
+a named list of series and pass that as the first argument to
+\texttt{stack} (see chapter~\ref{chap:lists-strings}). In this example
+we're supposing that the full data set contains 100 rows, and that in
+the stacking of variable \varname{x1} we wish to read only the first
+50 rows from each column, so we give \texttt{50} as the second
+argument.
 
 On line 3 we do the stacking for variable \varname{x2}.  Again we want
 a \texttt{length} of 50 for the components of the stacked series, but
 this time we want to start reading from the 50th row of the original
-data, and so we add a third \texttt{offset} argument of 50.  The
-signature of the stack function is shown below; the third argument is
-optional, defaulting to 0.
-\begin{code}
-series stack(list L, int length n, int offset k)
-\end{code}
-Line 4 then imposes a panel interpretation on the data. Finally, we
-save the stacked data to file, with the panel interpretation.
+data, and so we add a third \texttt{offset} argument of 50.  Line 4
+then imposes a panel interpretation on the data. Finally, we save the
+stacked data to file, with the panel interpretation.
 
 The illustrative script above is appropriate when the number of
 variables to be processed is small.  When then are many variables in
-the dataset it's more convenient to use a loop to accomplish the
+the dataset it will be more convenient to use a loop to accomplish the
 stacking, as shown in the following script.  The setup is presumed to
 be the same as in the previous case (50 units, 5 periods), but with 20
 variables rather than 2.
