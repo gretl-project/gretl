@@ -11916,13 +11916,14 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    ret->v.xval = 0;
 	}
     } else if (f == F_STACK) {
-	int length = 0, offset = 0;
+	int length = p->dset->n;
+	int offset = 0;
 	int *list = NULL;
 
 	post_process = 0;
 	ret = aux_empty_series_node(p);
 	list = node_get_list(l, p);
-	if (!p->err) {
+	if (!p->err && !null_node(m)) {
 	    length = node_get_int(m, p);
 	}
 	if (!p->err && !null_node(r)) {
@@ -12565,7 +12566,7 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
     /* default to copying the node's data */
     *donate = 0;
 
-    if (f == F_DEFBUNDLE || f == HF_DEFARGS) {
+    if (f == F_DEFBUNDLE || f == F_DEFARGS) {
 	/* specific to bundles */
 	if (t == ARRAY) {
 	    ptr = n->v.a;
@@ -13442,7 +13443,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.a = A;
 	    }
 	}
-    } else if (t->t == F_DEFBUNDLE || t->t == HF_DEFARGS) {
+    } else if (t->t == F_DEFBUNDLE || t->t == F_DEFARGS) {
 	gretl_bundle *b = NULL;
 	GretlType gtype;
 	char *key = NULL;
@@ -16885,7 +16886,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HYP2F1:
     case HF_TDISAGG:
     case HF_CLOGFI:
-    case HF_DEFARGS:
+    case F_DEFARGS:
 	/* built-in functions taking more than three args */
 	if (t->t == F_FEVAL) {
 	    ret = eval_feval(t, p);

@@ -488,6 +488,7 @@ enum {
     F_DEFARRAY,
     F_DEFBUNDLE,
     F_DEFLIST,
+    F_DEFARGS,
     F_KSETUP,
     F_BFGSCMAX,
     F_SVM,
@@ -498,7 +499,6 @@ enum {
     F_HYP2F1,
     HF_CLOGFI,
     HF_TDISAGG,
-    HF_DEFARGS,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
