@@ -84,7 +84,6 @@ static ExecState *gretl_console_init (char *cbuf)
     /* note below: @model is a GUI global (maybe a bad
        idea, but would be kinda complicated to unpick)
     */
-
     gretl_exec_state_init(s, CONSOLE_EXEC, cbuf,
 			  get_lib_cmd(), model, prn);
 
