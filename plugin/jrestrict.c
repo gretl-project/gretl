@@ -1052,12 +1052,11 @@ static int variance_from_info_matrix (Jwrap *J, GRETL_VAR *v)
 
 static int doing_manual_init (Jwrap *J)
 {
-    const gretl_matrix *U = get_init_vals();
+    int ulen = n_init_vals();
     int ret = 0;
 
-    if (U != NULL) {
+    if (ulen > 0) {
 	int psilen = (J->G == NULL)? 0 : J->alen;
-	int ulen = gretl_vector_get_length(U);
 
 	if (ulen == J->blen + psilen) {
 	    ret = 1;
