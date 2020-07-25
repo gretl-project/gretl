@@ -73,8 +73,7 @@ enum {
     STATE_ROBUST_Z        = 1 << 16, /* use z- not t-score with HCCM/HAC */
     STATE_MWRITE_G        = 1 << 17, /* use %g format with mwrite() */
     STATE_ECHO_SPACE      = 1 << 18, /* preserve vertical space in output */
-    STATE_STRSUB_ON       = 1 << 19, /* string substitution activated */
-    STATE_MPI_SMT         = 1 << 20  /* MPI: use hyperthreads by default */
+    STATE_MPI_SMT         = 1 << 19  /* MPI: use hyperthreads by default */
 };
 
 /* for values that really want a non-negative integer */
@@ -159,7 +158,6 @@ struct set_vars_ {
 			   !strcmp(s, USE_DCMT) || \
 			   !strcmp(s, ROBUST_Z) || \
 			   !strcmp(s, MWRITE_G) || \
-			   !strcmp(s, STRSUB_ON) || \
 			   !strcmp(s, GEOJSON_FAST) || \
 			   !strcmp(s, MPI_USE_SMT) || \
 			   !strcmp(s, USE_OPENMP))
@@ -632,12 +630,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON |
-	STATE_SKIP_MISSING | STATE_STRSUB_ON;
-#if 1
-    if (getenv("GRETL_STRSUB_OFF")) {
-	sv->flags &= ~STATE_STRSUB_ON;
-    }
-#endif
+	STATE_SKIP_MISSING;
 #if defined(_OPENMP)
     if (openmp_by_default()) {
 	sv->flags |= STATE_OPENMP_ON;
@@ -758,12 +751,6 @@ int gretl_warnings_on (void)
 {
     if (check_for_state()) return 1;
     return flag_to_bool(state, STATE_WARN_ON);
-}
-
-int gretl_strsub_on (void)
-{
-    if (check_for_state()) return 1;
-    return flag_to_bool(state, STATE_STRSUB_ON);
 }
 
 int gretl_debugging_on (void)
@@ -2291,8 +2278,6 @@ static int boolvar_get_flag (const char *s)
 	return STATE_ROBUST_Z;
     } else if (!strcmp(s, MWRITE_G)) {
 	return STATE_MWRITE_G;
-    } else if (!strcmp(s, STRSUB_ON)) {
-	return STATE_STRSUB_ON;
     } else if (!strcmp(s, MPI_USE_SMT)) {
 	return STATE_MPI_SMT;
     } else {
@@ -2481,19 +2466,31 @@ int libset_set_bool (const char *key, int val)
    function exits.
 */
 
+#define PPDEBUG 0
+
 static int n_states;
 static GPtrArray *state_stack;
 static int state_idx = -1;
+
+#if PPDEBUG
+static void print_state_stack (int pop)
+{
+    set_vars *sv;
+    int i;
+
+    fputs(pop ? "\nafter pop:\n" : "\nafter push:\n", stderr);
+    for (i=0; i<n_states; i++) {
+	sv = g_ptr_array_index(state_stack, i);
+	fprintf(stderr, "%d: %p", i, (void *) sv);
+	fputs(sv == state ? " *\n" : "\n", stderr);
+    }
+}
+#endif
 
 int push_program_state (void)
 {
     set_vars *newstate;
     int err = 0;
-
-#if PDEBUG
-    fprintf(stderr, "push_program_state: n_states=%d, state_idx=%d\n",
-	    n_states, state_idx);
-#endif
 
     if (n_states == 0) {
 	state_stack = g_ptr_array_new();
@@ -2522,10 +2519,8 @@ int push_program_state (void)
 	state = newstate;
     }
 
-#if PDEBUG
-    if (!err) {
-	fprintf(stderr, " state is now state_stack[%d]\n", state_idx);
-    }
+#if PPDEBUG
+    print_state_stack(0);
 #endif
 
     return err;
@@ -2548,11 +2543,6 @@ int pop_program_state (void)
 {
     int err = 0;
 
-#if PDEBUG
-    fprintf(stderr, "pop_program_state: n_states=%d, state_idx=%d\n",
-	    n_states, state_idx);
-#endif
-
     if (n_states < 2) {
 	err = 1;
     } else {
@@ -2560,8 +2550,8 @@ int pop_program_state (void)
 	state = g_ptr_array_index(state_stack, state_idx);
     }
 
-#if PDEBUG
-    fprintf(stderr, " state is now state_stack[%d]\n", state_idx);
+#if PPDEBUG
+    print_state_stack(1);
 #endif
 
     return err;
@@ -2573,10 +2563,6 @@ int libset_init (void)
 {
     static int done;
     int err = 0;
-
-#if PDEBUG
-    fprintf(stderr, "libset_init called, done=%d\n", done);
-#endif
 
     if (!done) {
 	err = push_program_state();
@@ -2616,12 +2602,37 @@ void libset_cleanup (void)
    state of the program calling libgretl, they are not user-settable
 */
 
+#define LDEBUG 0
+
+#if LDEBUG
+
+static void print_looping (int on)
+{
+    char c;
+    int i;
+
+    fputs(on ? "loop on:  " : "loop off: ", stderr);
+    for (i=0; i<looplen; i++) {
+	c = looping[i] ? '1' : '0';
+	if (i == gretl_function_depth()) {
+	    fprintf(stderr, "[%c]", c);
+	} else {
+	    fputc(c, stderr);
+	}
+    }
+    fputc('\n', stderr);
+}
+
+#endif
+
+#define LMIN 8
+
 void set_loop_on (void)
 {
     int fd = gretl_function_depth();
 
     if (looping == NULL) {
-	looplen = fd+1 < 8 ? 8 : fd+1;
+	looplen = fd+1 < LMIN ? LMIN : fd+1;
 	looping = calloc(1, looplen);
     } else if (looplen < fd+1) {
 	int n = looplen * 2;
@@ -2632,11 +2643,17 @@ void set_loop_on (void)
 	looplen = n;
     }
     looping[fd] = 1;
+#if LDEBUG
+    print_looping(1);
+#endif
 }
 
 void set_loop_off (void)
 {
     looping[gretl_function_depth()] = 0;
+#if LDEBUG
+    print_looping(0);
+#endif
 }
 
 /* returns 1 if there's a loop going on anywhere in the "caller

@@ -91,7 +91,6 @@ typedef enum {
 #define ROBUST_Z         "robust_z"
 #define WILDBOOT_DIST    "wildboot"
 #define MWRITE_G         "mwrite_g"
-#define STRSUB_ON        "string_subst"
 #define MPI_USE_SMT      "mpi_use_smt"
 #define GEOJSON_FAST     "geojson_fast"
 
@@ -104,7 +103,6 @@ typedef int (*QUERY_STOP) (void);
 
 int libset_init (void);
 void libset_cleanup (void);
-int libset_restore_state_zero (DATASET *dset);
 
 int push_program_state (void);
 int pop_program_state (void);
@@ -183,7 +181,6 @@ int gretl_comments_on (void);
 
 int gretl_warnings_on (void);
 int gretl_debugging_on (void);
-int gretl_strsub_on (void);
 
 void set_data_export_decimal_comma (int s);
 char get_data_export_decpoint (void);
