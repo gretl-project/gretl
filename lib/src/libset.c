@@ -426,9 +426,9 @@ static void state_vars_copy (set_vars *sv)
 #endif
     /* copy everything */
     *sv = *state;
-    /* but make the matrix pointers distinct */
-    sv->initvals = gretl_matrix_copy(state->initvals);
-    sv->matmask = gretl_matrix_copy(state->matmask);
+    /* but set matrix pointers to NULL */
+    sv->initvals = NULL;
+    sv->matmask = NULL;
 }
 
 /* for processors count */
