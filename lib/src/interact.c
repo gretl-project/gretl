@@ -270,7 +270,7 @@ int parse_command_line (ExecState *s, DATASET *dset, void *ptr)
 	    line, cmd_nosub(cmd) ? 1 : 0);
 #endif
 
-    if (!gretl_strsub_on() || cmd_nosub(cmd)) {
+    if (cmd_nosub(cmd)) {
 	cmd->flags &= ~CMD_SUBST;
     } else {
 	int subst = 0;
