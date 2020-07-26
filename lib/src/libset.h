@@ -143,9 +143,8 @@ void get_bkbp_periods (const DATASET *dset, int *l, int *u);
 void set_mp_bits (int b);
 int get_mp_bits (void);
 
-const gretl_matrix *get_init_vals (void);
-int n_init_vals (void);
-void free_init_vals (void);
+gretl_matrix *get_initvals (void);
+int n_initvals (void);
 
 const gretl_matrix *get_matrix_mask (void);
 int get_matrix_mask_nobs (void);

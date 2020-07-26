@@ -1,9 +1,9 @@
-/* 
+/*
     The functions here are derived from the Fortran in VSGARCMX.FOR,
     from the Fiorentini, Calzolari and Panattoni GARCH implementation
     (Journal of Applied Econometrics, 1996), the original notice for
     which is reproduced infra.  The relevant code was extracted from
-    its original Monte Carlo context, translated to C using f2c, 
+    its original Monte Carlo context, translated to C using f2c,
     then edited extensively to turn it into more idiomatic C.
 
     I have also modified the comments at certain places in the code,
@@ -18,13 +18,13 @@
 */
 
 /* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI
-   Journal of Applied Econometrics, 1996 
+   Journal of Applied Econometrics, 1996
 
    mixed gradient algorithm
 
-   garch(p,q) estimates of a linear equation 
+   garch(p,q) estimates of a linear equation
 
-   See BOLLERSLEV, JOE 31(1986), 307-327. 
+   See BOLLERSLEV, JOE 31(1986), 307-327.
 */
 
 #include "libgretl.h"
@@ -33,7 +33,7 @@
 
 #define FDEBUG 0
 
-#define SMALL_HT  1.0e-7 
+#define SMALL_HT  1.0e-7
 #define S1MIN     1.0e-10
 #define SUMGRMAX  1.0e-4
 
@@ -85,7 +85,7 @@ static void free_H (double ***H, int np)
 	    free(H[i]);
 	}
     }
-    
+
     free(H);
 }
 
@@ -102,7 +102,7 @@ static double ***allocate_H (int np, int p, int q)
     for (i=0; i<np; i++) {
 	H[i] = NULL;
     }
-    
+
     for (i=0; i<np; i++) {
 	H[i] = malloc(np * sizeof **H);
 	if (H[i] == NULL) {
@@ -153,12 +153,12 @@ static int fcp_allocate (fcpinfo *f, int code)
     f->V = gretl_zero_matrix_new(f->npar, f->npar);
     if (f->V == NULL) {
 	return E_ALLOC;
-    }  
+    }
 
     f->H = allocate_H(f->npar, f->p, f->q);
     if (f->H == NULL) {
 	return E_ALLOC;
-    }     
+    }
 
     return 0;
 }
@@ -211,7 +211,7 @@ static fcpinfo *fcpinfo_new (int q, int p, int t1, int t2, int T,
     f->X = X;
     f->e = e;
     f->e2 = e2;
-    f->h = h;   
+    f->h = h;
     f->scale = scale;
 
     f->npar = f->nc + 1 + q + p;
@@ -268,7 +268,7 @@ static void garch_iter_info (fcpinfo *f, int iter, double ll,
     pprintf(prn, "\nll = %f\n", ll);
 }
 
-static double 
+static double
 get_yhat (const double **X, int n, int t, const double *a)
 {
     double yhat = 0.0;
@@ -311,7 +311,7 @@ static double garch_ll (fcpinfo *f)
 #endif
 
     /* Compute residuals, squared residuals, and unconditional
-       variance over the real estimation period 
+       variance over the real estimation period
     */
     uncvar = 0.0;
     for (t = t1; t <= t2; t++) {
@@ -325,15 +325,15 @@ static double garch_ll (fcpinfo *f)
     fprintf(stderr, "uncvar = %.9g (T=%d, t1=%d, t2=%d)\n", uncvar, n, t1, t2);
 #endif
 
-    /* 
-       We use sample unconditional variance as the starting value 
+    /*
+       We use sample unconditional variance as the starting value
        (at time 0, -1, -2, etc.) for the squared residuals and ht;
        we use 0 as the starting value for residuals.
     */
 
     lag = (p > q)? p : q;
 
-    for (t = t1-lag; t < t1; ++t) { 
+    for (t = t1-lag; t < t1; ++t) {
 	f->e[t] = 0.0;
 	f->e2[t] = f->h[t] = uncvar;
     }
@@ -357,7 +357,7 @@ static double garch_ll (fcpinfo *f)
 
 #if FDEBUG
     fprintf(stderr, " re-scaled uncvar = %g\n", uncvar * scale2);
-#endif	    
+#endif
 
     for (t=t1; t<=t2; t++) {
 	hts = f->h[t] * scale2;
@@ -365,11 +365,11 @@ static double garch_ll (fcpinfo *f)
     }
 
     return ll;
-} 
+}
 
 /* combined setup for OP matrix, information matrix and Hessian */
 
-static int 
+static int
 vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 {
     int i, j, k, t, n, lag, nvpar;
@@ -423,7 +423,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
     for (k=1; k<=p; k++) {
 	for (i=0; i<nvpar; i++) {
 	    dhdp[nc+i][t1-k] = 0.0;
-	    if (H != NULL) { 
+	    if (H != NULL) {
 		/* hessian only */
 		for (j=0; j<nvpar; j++) {
 		    H[nc+i][nc+j][k] = 0.0;
@@ -464,8 +464,8 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	for (t=t1; t<=t2; t++) {
 	    asum2[i] -= e[t] * 2.0 * g[i][t];
 	}
-	asum2[i] /= n; 
-    }   
+	asum2[i] /= n;
+    }
 
     /* pre-sample range */
     for (t=t1-lag; t<t1; t++) {
@@ -503,8 +503,8 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	double aa, bb;
 	int ncj, nci;
 
-	/* 
-	   First part, relative to regression coefficients (eq. 10, p. 402) 
+	/*
+	   First part, relative to regression coefficients (eq. 10, p. 402)
  	*/
 	for (i=0; i<nc; i++) {
 	    aa = r_h * g[i][t] + .5 / h[t] * dhdp[i][t] * (r2_h - 1.0);
@@ -527,8 +527,8 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	    }
 	}
 
-	/* 
-	   Second part, relative to variance parameters (eq. 6, p. 401) 
+	/*
+	   Second part, relative to variance parameters (eq. 6, p. 401)
 	*/
 	for (i=0; i<nvpar; i++) {
 	    nci = nc + i;
@@ -562,7 +562,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 		}
 	    }
 
-	    /* Part relative to the variance parameters (eq. 29, p. 406). 
+	    /* Part relative to the variance parameters (eq. 29, p. 406).
 	       Since we take the expected value, only the second term
 	       remains.
 	    */
@@ -587,7 +587,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
     for (k=0; k<lag; k++) {
 	for (i=0; i<nc; i++) {
 	    for (j=0; j<nc; j++) {
-		H[i][j][k+1] = 0.; 
+		H[i][j][k+1] = 0.;
 	    }
 	}
 	for (t=t1; t<=t2; t++) {
@@ -600,7 +600,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	for (i=0; i<nc; i++) {
 	    for (j=0; j<nvpar; j++) {
 		/* mod. by AC: zero _all_ mixed entries */
-		H[i][nc+j][k+1] = H[nc+j][i][k+1] = 0.0; 
+		H[i][nc+j][k+1] = H[nc+j][i][k+1] = 0.0;
 	    }
 	}
     }
@@ -615,7 +615,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 
 	for (i=0; i<npar; i++) {
 	    for (j=0; j<npar; j++) {
-		H[i][j][0] = 0.0; 
+		H[i][j][0] = 0.0;
 	    }
 	}
 
@@ -657,7 +657,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	    }
 	}
 
-	for (k=1; k<=p; k++) { 
+	for (k=1; k<=p; k++) {
 	    for (i=0; i<nc; i++) {
 		for (j=0; j<nvpar; j++) {
 		    H[i][nc+j][0] += H[i][nc+j][k] * beta[k-1];
@@ -667,7 +667,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 
     lag0:
 
-	/* Part relative to the coefficients (eq. 15, p. 403). 
+	/* Part relative to the coefficients (eq. 15, p. 403).
 	   Since we take the expected value, only the first two terms
 	   remain.
  	*/
@@ -675,18 +675,18 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	for (i=0; i<nc; i++) {
 	    for (j=0; j<nc; j++) {
 		x = gretl_matrix_get(V, i, j);
-		x = x - g[i][t] * g[j][t] / h[t] 
-		    - .5 * r2_h3 * dhdp[i][t] * dhdp[j][t] 
-		    - (r_h * g[j][t] * dhdp[i][t]) / h[t] 
-		    - (r_h * g[i][t] * dhdp[j][t]) / h[t] 
-		    + 0.5 * (r2_h - 1.0) * 
-		    (H[i][j][0] / h[t] - dhdp[i][t] 
+		x = x - g[i][t] * g[j][t] / h[t]
+		    - .5 * r2_h3 * dhdp[i][t] * dhdp[j][t]
+		    - (r_h * g[j][t] * dhdp[i][t]) / h[t]
+		    - (r_h * g[i][t] * dhdp[j][t]) / h[t]
+		    + 0.5 * (r2_h - 1.0) *
+		    (H[i][j][0] / h[t] - dhdp[i][t]
 		     * dhdp[j][t] / (h[t] * h[t]));
 		gretl_matrix_set(V, i, j, x);
 	    }
 	}
 
-	/* Part relative to the variance parameters (eq. 14, p. 403). 
+	/* Part relative to the variance parameters (eq. 14, p. 403).
 	   Since we take the expected value, only the second term
 	   remains.
  	*/
@@ -704,7 +704,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	    }
 	    for (k=1; k<=p; k++) {
 		for (i=0; i<nvpar; i++) {
-		    for (j=0; j<nvpar; j++) { 
+		    for (j=0; j<nvpar; j++) {
 			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
 		    }
 		}
@@ -714,8 +714,8 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	for (i=nc; i<npar; i++) {
 	    for (j=nc; j<npar; j++) {
 		x = gretl_matrix_get(V, i, j);
-		x = x + .5 * u_h2 * dhdp[i][t] * dhdp[j][t] 
-		    - r2_h3 * dhdp[i][t] * dhdp[j][t] 
+		x = x + .5 * u_h2 * dhdp[i][t] * dhdp[j][t]
+		    - r2_h3 * dhdp[i][t] * dhdp[j][t]
 		    + .5 * (r2_h - 1.0) / h[t] * H[i][j][0];
 		gretl_matrix_set(V, i, j, x);
 	    }
@@ -725,9 +725,9 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	for (i=0; i<nc; i++) {
 	    for (j=0; j<nvpar; j++) {
 		x = gretl_matrix_get(V, i, nc+j);
-		x = x - g[i][t] * r_h * dhdp[nc+j][t] / h[t] 
-		    - .5 * (r2_h - 1.0) * dhdp[nc+j][t] * dhdp[i][t] / (h[t] * h[t]) 
-		    + .5 * (r2_h - 1.0) * H[i][nc+j][0] / h[t] 
+		x = x - g[i][t] * r_h * dhdp[nc+j][t] / h[t]
+		    - .5 * (r2_h - 1.0) * dhdp[nc+j][t] * dhdp[i][t] / (h[t] * h[t])
+		    + .5 * (r2_h - 1.0) * H[i][nc+j][0] / h[t]
 		    - .5 * r2_h * u_h2 * dhdp[i][t] * dhdp[nc+j][t];
 		gretl_matrix_set(V, i, nc+j, x);
 		/* and bottom left too */
@@ -736,7 +736,7 @@ vcv_setup (fcpinfo *f,  gretl_matrix *V, int code)
 	}
 
 	/* before quitting time t, tidy up dhdpdp */
-	for (k=0; k<lag; k++) { 
+	for (k=0; k<lag; k++) {
 	    for (i=0; i<npar; i++) {
 		for (j=0; j<npar; j++) {
 		    H[i][j][lag-k] = H[i][j][lag-k-1];
@@ -782,7 +782,7 @@ static void update_theta (fcpinfo *f, double d)
 
 /* calculate the step for the new coefficients */
 
-static double step_calc (fcpinfo *f, const gretl_matrix *V, 
+static double step_calc (fcpinfo *f, const gretl_matrix *V,
 			 double *ds, double *ps2)
 {
     double s1 = 0.0, s2 = 0.0;
@@ -826,7 +826,7 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
 			 double toler, int count)
 {
     double ll2, ll3, ll1 = *pll1, fs = *pfs;
-    double d0, d1, d2, d3; 
+    double d0, d1, d2, d3;
     double d12, d31, d23;
     double d12s, d31s, d23s;
     double di, dm, ds, dmin, dmax;
@@ -858,7 +858,7 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
 
     update_theta(f, d0);
     ll2 = -garch_ll(f);
- 
+
     if (ll2 > ll1) {
 	d1 = -d0;
 	d2 = 0.0;
@@ -876,7 +876,6 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
     }
 
     while (1) {
-
 	d23 = d2 - d3;
 	d31 = d3 - d1;
 	d12 = d1 - d2;
@@ -956,7 +955,7 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
 	    d1 = ds;
 	    ll1 = fs;
 	}
-	
+
 	while (d1 > d2 || d2 > d3) {
 	    double tmp;
 
@@ -998,9 +997,9 @@ static void fcp_iterate (fcpinfo *f, gretl_matrix *V,
     *pfs = -fs;
 }
 
-static int 
-garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler, 
-		   int *count) 
+static int
+garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler,
+		   int *count)
 {
     static double ll1 = 0.0, fs = 0.0;
     int err;
@@ -1009,7 +1008,7 @@ garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler,
 
     if (count != NULL) {
 	*count += 1;
-    }    
+    }
 
     err = gretl_invert_symmetric_indef_matrix(V);
     if (err) {
@@ -1025,10 +1024,10 @@ garch_info_matrix (fcpinfo *f, gretl_matrix *V, double toler,
     gretl_matrix_switch_sign(V);
 
     return err;
-} 
+}
 
-static int 
-garch_hessian (fcpinfo *f, gretl_matrix *V, double toler, 
+static int
+garch_hessian (fcpinfo *f, gretl_matrix *V, double toler,
 	       int *count)
 {
     static double ll1 = 0.0, fs = 0.0;
@@ -1071,9 +1070,9 @@ garch_hessian (fcpinfo *f, gretl_matrix *V, double toler,
     }
 
     return err;
-} 
+}
 
-static int 
+static int
 make_garch_vcv (fcpinfo *f, const gretl_matrix *ihess,
 		gretl_matrix *V, int vopt)
 {
@@ -1120,7 +1119,7 @@ make_garch_vcv (fcpinfo *f, const gretl_matrix *ihess,
 			   OP, V, GRETL_MOD_NONE);
     } else if (vopt == ML_HESSIAN) {
 	gretl_matrix_copy_values(V, ihess);
-    }	
+    }
 
  bailout:
 
@@ -1175,20 +1174,20 @@ static int converged (fcpinfo *f, double tol)
 
 */
 
-int garch_estimate (const double *y, const double **X, 
+int garch_estimate (const double *y, const double **X,
 		    int t1, int t2, int nobs, int nc,
-		    int p, int q, double *theta, gretl_matrix *V, 
+		    int p, int q, double *theta, gretl_matrix *V,
 		    double *e, double *e2, double *h,
-		    double scale, double *pll, int *iters, 
+		    double scale, double *pll, int *iters,
 		    int vopt, PRN *prn)
 {
     fcpinfo *f;
     int it1, it2, ittot;
     int count = 0;
-    int npar = nc + 1 + p + q; 
+    int npar = nc + 1 + p + q;
     double tol1 = .05;  /* tolerance when using info matrix */
     double tol2 = 1e-8; /* tolerance when using Hessian */
-    double ll, sumgra; 
+    double ll, sumgra;
     int i, err = 0;
 
     f = fcpinfo_new(q, p, t1, t2, nobs, y, X, nc,
@@ -1201,7 +1200,7 @@ int garch_estimate (const double *y, const double **X,
 
     for (it1=0; it1<100; it1++) {
 #if FDEBUG
-	fprintf(stderr, "*** Calling garch_info_matrix, round %d\n", it1);	    
+	fprintf(stderr, "*** Calling garch_info_matrix, round %d\n", it1);
 #endif
 	ll = garch_ll(f);
 	for (i=0; i<npar; i++) {
@@ -1226,7 +1225,7 @@ int garch_estimate (const double *y, const double **X,
 
     for (it2=0; it2<100; it2++) {
 #if FDEBUG
-	fprintf(stderr, "*** Calling garch_hessian, round %d\n", it2);	    
+	fprintf(stderr, "*** Calling garch_hessian, round %d\n", it2);
 #endif
 	ll = garch_ll(f);
 	for (i=0; i<npar; i++) {
@@ -1239,7 +1238,7 @@ int garch_estimate (const double *y, const double **X,
 	}
 
 	garch_iter_info(f, ittot++, ll, 1, prn);
-	
+
 	if (converged(f, tol2)) {
 	    break;
 	}
@@ -1253,12 +1252,12 @@ int garch_estimate (const double *y, const double **X,
     }
 
     if (sumgra >= SUMGRMAX) {
-	pprintf(prn, "\nParameters and gradients at iteration %d:\n\n", 
+	pprintf(prn, "\nParameters and gradients at iteration %d:\n\n",
 		ittot);
 	for (i=0; i<f->npar; i++) {
 	    pprintf(prn, "%12.6f (%9.6f)\n", f->theta[i], f->grad[i]);
 	}
-	pprintf(prn, "\nSum of squared gradients = %.9g (should be less " 
+	pprintf(prn, "\nSum of squared gradients = %.9g (should be less "
 		"than %g)\n", sumgra, SUMGRMAX);
 	if (!err) {
 	    err = E_NOCONV;
@@ -1282,9 +1281,9 @@ int garch_estimate (const double *y, const double **X,
 }
 
 gretl_matrix *
-garch_analytical_hessian (const double *y, const double **X, 
+garch_analytical_hessian (const double *y, const double **X,
 			  int t1, int t2, int nobs, int nc,
-			  int p, int q, double *theta, 
+			  int p, int q, double *theta,
 			  double *e, double *e2, double *h,
 			  double scale, int *err)
 {
@@ -1303,7 +1302,7 @@ garch_analytical_hessian (const double *y, const double **X,
     if (!*err) {
 	H = f->V;
 	f->V = NULL;
-    }  
+    }
 
     fcpinfo_destroy(f);
 

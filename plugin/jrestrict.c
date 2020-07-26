@@ -1052,7 +1052,7 @@ static int variance_from_info_matrix (Jwrap *J, GRETL_VAR *v)
 
 static int doing_manual_init (Jwrap *J)
 {
-    int ulen = n_init_vals();
+    int ulen = n_initvals();
     int ret = 0;
 
     if (ulen > 0) {
@@ -1072,18 +1072,17 @@ static int doing_manual_init (Jwrap *J)
 
 static int user_switch_init (Jwrap *J, int *uinit)
 {
-    const gretl_matrix *U;
+    gretl_matrix *U;
     int psilen;
     int ulen, i, k;
     int err = 0;
 
-    U = get_init_vals();
+    U = get_initvals();
     if (U == NULL) {
 	return 0;
     }
 
     psilen = (J->G == NULL)? 0 : J->alen;
-
     ulen = gretl_vector_get_length(U);
 
     if (ulen == J->blen + psilen) {
@@ -1132,6 +1131,8 @@ static int user_switch_init (Jwrap *J, int *uinit)
 	gretl_errmsg_set("Invalid initialization given");
 	err = E_DATA;
     }
+
+    gretl_matrix_free(U);
 
     *uinit = 1;
 

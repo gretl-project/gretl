@@ -678,6 +678,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	int quadpoints = 32;
 	int maxit = libset_get_int(BFGS_MAXITER);
 	int fcount = 0;
+	gretlopt maxopt;
 	
 	if (opt & OPT_G) {
 	    int qp = get_optval_int(mod.ci, OPT_G, &err);
@@ -704,9 +705,9 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
 	    double crittol = 1.0e-06;
 	    double gradtol = 1.0e-05;
-	    gretlopt maxopt = opt & OPT_V;
 	    int quiet = opt & OPT_Q;
 
+	    maxopt = (opt & OPT_V) | OPT_U;
 	    err = newton_raphson_max(theta, C->npar, maxit, 
 				     crittol, gradtol, &fcount, C_LOGLIK, 
 				     reprobit_ll, reprobit_score, NULL, 
@@ -715,9 +716,10 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	} else {
 	    int gcount = 0;
 
+	    maxopt = opt | OPT_U;
 	    err = BFGS_max(theta, C->npar, maxit, 1.0e-9, 
 			   &fcount, &gcount, reprobit_ll, C_LOGLIK, 
-			   reprobit_score, C, NULL, opt, prn);
+			   reprobit_score, C, NULL, maxopt, prn);
 
 	}
 

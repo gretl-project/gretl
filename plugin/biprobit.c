@@ -1002,6 +1002,8 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 	return err;
     }
 
+    maxopt |= OPT_U; /* respect user initvals */
+
     if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
 	int grcount = 0;
 

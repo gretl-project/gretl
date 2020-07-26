@@ -781,39 +781,41 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 				   double *reltol, double *gradmax,
 				   int *quad, gretlopt opt, PRN *prn)
 {
-    const gretl_matrix *uinit;
-    int uilen, umaxit;
+    int umaxit;
     double utol;
-    int i;
 
-    /* we first check to see if we've been a usable initialization
-       for the parameter estimates */
+    if (opt & OPT_U) {
+	/* we first check to see if we've been a usable initialization
+	   for the parameter estimates */
+	gretl_matrix *uinit;
+	int i, uilen;
 
-    uinit = get_init_vals();
-    uilen = gretl_vector_get_length(uinit);
+	uinit = get_initvals();
+	uilen = gretl_vector_get_length(uinit);
 
-    if (uilen > 0) {
-	/* the user has given something */
-	if (uilen < n) {
-	    fprintf(stderr, "Only %d initial values given, but %d "
-		    "are necessary\n", uilen, n);
-	} else {
-	    for (i=0; i<n; i++) {
-		b[i] = uinit->val[i];
-	    }
-	    if ((opt & OPT_V) && !(opt & OPT_A)) {
-		/* OPT_A: arma: this is handled elsewhere */
-		pputs(prn, _("\n\n*** User-specified starting values:\n"));
+	if (uilen > 0) {
+	    /* the user has given something */
+	    if (uilen < n) {
+		fprintf(stderr, "Only %d initial values given, but %d "
+			"are necessary\n", uilen, n);
+	    } else {
 		for (i=0; i<n; i++) {
-		    pprintf(prn, " %12.6f", b[i]);
-		    if (i % 6 == 5) {
-			pputc(prn, '\n');
-		    }
+		    b[i] = uinit->val[i];
 		}
-		pputs(prn, "\n\n");
+		if ((opt & OPT_V) && !(opt & OPT_A)) {
+		    /* OPT_A: arma: this is handled elsewhere */
+		    pputs(prn, _("\n\n*** User-specified starting values:\n"));
+		    for (i=0; i<n; i++) {
+			pprintf(prn, " %12.6f", b[i]);
+			if (i % 6 == 5) {
+			    pputc(prn, '\n');
+			}
+		    }
+		    pputs(prn, "\n\n");
+		}
 	    }
-	    free_init_vals();
 	}
+	gretl_matrix_free(uinit);
     }
 
     if (reltol == NULL || gradmax == NULL) {

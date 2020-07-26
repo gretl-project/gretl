@@ -787,21 +787,18 @@ int get_mp_bits (void)
     return DEFAULT_MP_BITS;
 }
 
-const gretl_matrix *get_init_vals (void)
+gretl_matrix *get_initvals (void)
 {
+    gretl_matrix *iv;
+
+    /* note: we nullify initvals after first use */
     check_for_state();
-    return state->initvals;
+    iv = state->initvals;
+    state->initvals = NULL;
+    return iv;
 }
 
-void free_init_vals (void)
-{
-    if (state->initvals != NULL) {
-	gretl_matrix_free(state->initvals);
-	state->initvals = NULL;
-    }
-}
-
-int n_init_vals (void)
+int n_initvals (void)
 {
     check_for_state();
     if (state->initvals != NULL) {

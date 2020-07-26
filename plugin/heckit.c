@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -36,7 +36,7 @@ struct h_container_ {
     int kmain;		     /* no. of params in the main eq. */
     int ksel;		     /* no. of params in the selection eq. */
     double ll;		     /* log-likelihood */
-   
+
     int ntot, nunc;	     /* total and uncensored obs */
     int depvar;		     /* location of y in array Z */
     int selvar;		     /* location of selection variable in array Z */
@@ -52,7 +52,7 @@ struct h_container_ {
     gretl_matrix *clusvec;   /* clustering var if necessary */
     gretl_matrix *delta;     /* used in 2-step vcv calculations */
     gretl_matrix *d;	     /* selection dummy variable */
-    gretl_matrix *selreg;    /* selection eq. regressors */ 
+    gretl_matrix *selreg;    /* selection eq. regressors */
     gretl_matrix *selreg_u;  /* selection eq. regressors (subsample d==1) */
 
     gretl_matrix_block *B;   /* workspace for the follwing */
@@ -77,7 +77,7 @@ struct h_container_ {
 
     gretl_matrix *H;         /* analytical Hessian */
     gretl_matrix_block *BH;  /* workspace for the analytical Hessian */
-    gretl_matrix *H11; 
+    gretl_matrix *H11;
     gretl_matrix *H12;
     gretl_matrix *H22;
     gretl_matrix *H13;
@@ -172,7 +172,7 @@ static h_container *h_container_new (const int *list)
    Zlist.
 */
 
-static int 
+static int
 make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 		     const DATASET *dset)
 {
@@ -210,7 +210,7 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 	}
     }
 
-   
+
     if (totmiss == T) {
 	return E_MISSDATA;
     }
@@ -364,8 +364,8 @@ static int h_make_data_lists (h_container *HC,
     return 0;
 }
 
-static int h_container_fill (h_container *HC, const int *Xl, 
-			     const int *Zl, DATASET *dset, 
+static int h_container_fill (h_container *HC, const int *Xl,
+			     const int *Zl, DATASET *dset,
 			     MODEL *probmod, MODEL *olsmod)
 {
     gretl_vector *tmp = NULL;
@@ -425,7 +425,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	/* dependent variable vector */
 	tmplist[1] = HC->depvar;
 	HC->y = gretl_matrix_data_subset_masked(tmplist, dset,
-						t1, t2, 
+						t1, t2,
 						HC->uncmask, &err);
     }
 
@@ -434,7 +434,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	/* selection variable vector */
 	tmplist[1] = HC->selvar;
 	HC->d = gretl_matrix_data_subset_masked(tmplist, dset,
-						t1, t2, 
+						t1, t2,
 						HC->fullmask, &err);
     }
 
@@ -443,7 +443,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	/* Mills ratio vector */
 	tmplist[1] = HC->millsvar;
 	HC->mills = gretl_matrix_data_subset_masked(tmplist, dset,
-						    t1, t2, 
+						    t1, t2,
 						    HC->uncmask, &err);
     }
 
@@ -457,37 +457,37 @@ static int h_container_fill (h_container *HC, const int *Xl,
 
     /* regressors in primary equation */
     HC->reg = gretl_matrix_data_subset_masked(HC->Xlist, dset,
-					      t1, t2, 
+					      t1, t2,
 					      HC->uncmask, &err);
 
     if (!err) {
 	/* regressors in selection equation */
-	HC->selreg = 
+	HC->selreg =
 	    gretl_matrix_data_subset_masked(HC->Zlist, dset,
-					    t1, t2, 
+					    t1, t2,
 					    HC->fullmask, &err);
     }
 
     if (!err) {
 	/* regressors in selection equation, uncensored sample */
-	HC->selreg_u = 
+	HC->selreg_u =
 	    gretl_matrix_data_subset_masked(HC->Zlist, dset,
-					    t1, t2, 
+					    t1, t2,
 					    HC->uncmask, &err);
     }
 
     if (!err && HC->clustervar > 0) {
 	/* regressors in selection equation, uncensored sample */
 	tmplist[1] = HC->clustervar;
-	HC->clusvec = 
+	HC->clusvec =
 	    gretl_matrix_data_subset_masked(tmplist, dset,
-					    t1, t2, 
+					    t1, t2,
 					    HC->fullmask, &err);
     }
 
     if (err) {
 	return err;
-    }    
+    }
 
     tmp = gretl_matrix_multiply_new(HC->selreg_u, HC->gama, &err);
 
@@ -525,7 +525,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	if (HC->B == NULL) {
 	    err = E_ALLOC;
 	}
-		
+
     }
 
     if (!err){
@@ -603,7 +603,7 @@ static double h_loglik (const double *param, void *ptr)
     double ca, sa, ndxt, ut = 0;
     double P, mills, tmp, psum;
     double lnsig, x, ll = NADBL;
-    int sel, k, kmax, npar; 
+    int sel, k, kmax, npar;
     int i, j, jj;
     int err;
 
@@ -616,7 +616,7 @@ static double h_loglik (const double *param, void *ptr)
     npar = kmax + 2;
 
     lnsig = log(HC->sigma);
-    
+
 #if HDEBUG > 1
     gretl_matrix_print(HC->beta, "beta");
     gretl_matrix_print(HC->gama, "gama");
@@ -650,7 +650,7 @@ static double h_loglik (const double *param, void *ptr)
 	    tmp = (ut - sa*mills)/HC->sigma;
 	    for (k=0; k<HC->kmain; k++) {
 		x = tmp * gretl_matrix_get(HC->reg, j, k);
-		gretl_matrix_set(HC->score, i, k, x); 
+		gretl_matrix_set(HC->score, i, k, x);
 		psum = x + gretl_vector_get(HC->sscore, k);
 		gretl_vector_set(HC->sscore, k, psum);
 	    }
@@ -661,7 +661,7 @@ static double h_loglik (const double *param, void *ptr)
 	for (k=0; k<HC->ksel; k++) {
 	    jj = HC->kmain + k;
 	    x = tmp * gretl_matrix_get(HC->selreg, i, k);
-	    gretl_matrix_set(HC->score, i, jj, x); 
+	    gretl_matrix_set(HC->score, i, jj, x);
 	    psum = x + gretl_vector_get(HC->sscore, HC->kmain+k);
 	    gretl_vector_set(HC->sscore, jj, psum);
 	}
@@ -669,12 +669,12 @@ static double h_loglik (const double *param, void *ptr)
 	/* score for sigma and arho */
 	if (sel) {
 	    x = (ut * (ut - sa*mills) - 1) / HC->sigma;
-	    gretl_matrix_set(HC->score, i, npar-2, x); 
+	    gretl_matrix_set(HC->score, i, npar-2, x);
 	    psum = x + gretl_vector_get(HC->sscore, npar-2);
 	    gretl_vector_set(HC->sscore, npar-2, psum);
 
 	    x = mills * ca * (ut + HC->rho*ndxt);
-	    gretl_matrix_set(HC->score, i, npar-1, x); 
+	    gretl_matrix_set(HC->score, i, npar-1, x);
 	    psum = x + gretl_vector_get(HC->sscore, npar-1);
 	    gretl_vector_set(HC->sscore, npar-1, psum);
 	}
@@ -687,15 +687,15 @@ static double h_loglik (const double *param, void *ptr)
     ll = ll0 + ll1 + ll2;
 
 #if HDEBUG
-    fprintf(stderr, "ll0 = %g, ll1 = %g, ll2 = %g: ll = %g (ntot = %d)\n", 
+    fprintf(stderr, "ll0 = %g, ll1 = %g, ll2 = %g: ll = %g (ntot = %d)\n",
 	    ll0, ll1, ll2, ll, HC->ntot);
 #endif
-    
+
     return ll;
 }
 
-static int heckit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
-			 void *ptr)
+static int heckit_score (double *theta, double *s, int npar,
+			 BFGS_CRIT_FUNC ll, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     int i;
@@ -734,10 +734,10 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
     npar = kmax + 2;
 
     invs = 1/HC->sigma;
-    invs2 = invs*invs;	
-   
+    invs2 = invs*invs;
+
     sa2 = sa*sa;
-    ca2 = ca*ca;	
+    ca2 = ca*ca;
 
     /* i goes through all obs, while j keeps track of the uncensored
        ones */
@@ -758,8 +758,8 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	    mills = invmills(-x);
 	    dmills = -mills*(x + mills);
 
-	    h(1,1) = invs2 * (sa2*dmills - 1);	   
-	    h(1,3) = ut*h(1,1) - invs2*(ut - sa*mills); 
+	    h(1,1) = invs2 * (sa2*dmills - 1);
+	    h(1,3) = ut*h(1,1) - invs2*(ut - sa*mills);
 	    h(1,4) = -invs * (ca*mills + sa*dmills*z);
 	    h(1,2) = -ca * sa * invs * dmills;
 	    h(2,2) = dmills * ca2;
@@ -772,7 +772,7 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	    /* h34 = -invs*ut*(ca*mills + sa*dmills*z); */
 	    h(3,4) = h(1,4) * ut;
 	    h(4,4) = dmills*z*z + mills*x;
-	} else {	
+	} else {
 	    mills = -invmills(ndxt);
 	    dmills = -mills*(ndxt + mills);
 	    for (ii=0; ii<16; ii++) {
@@ -784,14 +784,14 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	if (sel) {
 	    for (m=0; m<HC->kmain; m++) {
 		x = gretl_matrix_get(HC->reg, j, m);
-		    
+
 		for (k=0; k<=m; k++) {
-		    tmp = gretl_matrix_get(HC->H11, m, k); 
+		    tmp = gretl_matrix_get(HC->H11, m, k);
 		    tmp += h(1,1) * x * gretl_matrix_get(HC->reg, j, k);
 		    gretl_matrix_set(HC->H11, m, k, tmp);
 		    gretl_matrix_set(HC->H11, k, m, tmp);
 		}
-	      
+
 		for (k=0; k<HC->ksel; k++) {
 		    tmp = gretl_matrix_get(HC->H12, m, k);
 		    tmp += h(1,2) * x * gretl_matrix_get(HC->selreg, i, k);
@@ -801,7 +801,7 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 		tmp = gretl_matrix_get(HC->H13, m, 0);
 		tmp += h(1,3) * x;
 		gretl_matrix_set(HC->H13, m, 0, tmp);
-		    
+
 		tmp = gretl_matrix_get(HC->H13, m, 1);
 		tmp += h(1,4) * x;
 		gretl_matrix_set(HC->H13, m, 1, tmp);
@@ -810,7 +810,7 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 
 	for (m=0; m<HC->ksel; m++) {
 	    x = gretl_matrix_get(HC->selreg, i, m);
-		
+
 	    for (k=0; k<=m; k++) {
 		tmp = gretl_matrix_get(HC->H22, m, k);
 		tmp += h(2,2) * x * gretl_matrix_get(HC->selreg, i, k);
@@ -823,14 +823,14 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 		tmp = gretl_matrix_get(HC->H13, ii, 0);
 		tmp += h(2,3) * x;
 		gretl_matrix_set(HC->H13, ii, 0, tmp);
-		
+
 		tmp = gretl_matrix_get(HC->H13, ii, 1);
 		tmp += h(2,4) * x;
 		gretl_matrix_set(HC->H13, ii, 1, tmp);
 	    }
 	}
-	    
-	if (sel) { 
+
+	if (sel) {
 	    c33 += h(3,3);
 	    c34 += h(3,4);
 	    c44 += h(4,4);
@@ -853,14 +853,14 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	    gretl_matrix_set(H, i, j, tmp);
 	    gretl_matrix_set(H, j, i, tmp);
 	}
-	
+
 	for (j=0; j<HC->ksel; j++) {
 	    jj = HC->kmain + j;
 	    tmp = -gretl_matrix_get(HC->H12, i, j);
 	    gretl_matrix_set(H, i, jj, tmp);
 	    gretl_matrix_set(H, jj, i, tmp);
-			
-	}	
+
+	}
     }
 
     for (i=0; i<HC->ksel; i++) {
@@ -871,7 +871,7 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	    gretl_matrix_set(H, ii, jj, tmp);
 	    gretl_matrix_set(H, jj, ii, tmp);
 	}
-	    
+
     }
 
     for (i=0; i<kmax; i++) {
@@ -880,7 +880,7 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	    tmp = -gretl_matrix_get(HC->H13, i, j);
 	    gretl_matrix_set(H, i, jj, tmp);
 	    gretl_matrix_set(H, jj, i, tmp);
-	}	    
+	}
     }
 
     ii = npar - 2;
@@ -894,7 +894,7 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
     return err;
 }
 
-static int heckit_hessian_inverse (double *theta, gretl_matrix *H, 
+static int heckit_hessian_inverse (double *theta, gretl_matrix *H,
 				   void *ptr)
 {
     int err = heckit_hessian(theta, H, ptr);
@@ -911,14 +911,14 @@ static int heckit_hessian_inverse (double *theta, gretl_matrix *H,
 /*
    What we should do here is not entirely clear: we set yhat to the
    linear predictor, computed over uncensored AND censored
-   observations.  
+   observations.
 
-   On the contrary, uhat is defined as 
+   On the contrary, uhat is defined as
    y - yhat	for uncensored observations, and as
    E(u|d=0)	for censored observations
 */
 
-static void heckit_yhat_uhat (MODEL *hm, h_container *HC, 
+static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 			      DATASET *dset)
 {
     double x, xb, zg, u;
@@ -991,7 +991,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     }
 
     if (llt != NULL) {
-	gretl_model_set_data(hm, "llt", llt, 
+	gretl_model_set_data(hm, "llt", llt,
 			     GRETL_TYPE_DOUBLE_ARRAY,
 			     dset->n * sizeof *llt);
     }
@@ -1045,7 +1045,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
 	    gretl_model_set_param_name(hm, i, dset->varname[hm->list[i+2]]);
 	    fullcoeff[i] = gretl_vector_get(HC->beta, i);
 	}
-	
+
 	gretl_model_set_param_name(hm, kb, "lambda");
 	fullcoeff[kb] = HC->lambda;
 
@@ -1072,11 +1072,11 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
 	gretl_model_set_int(hm, "base-coeffs", kb);
 	heckit_model_add_zlist(hm, HC);
     }
-    
+
     return err;
 }
 
-static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S, 
+static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S,
 				 const gretl_matrix *Vp)
 {
     int m = S->rows;
@@ -1092,7 +1092,7 @@ static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S,
     if (pmod->sderr != NULL) {
 	free(pmod->sderr);
     }
-    
+
     nvc = (tot * tot + tot) / 2;
 
     pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
@@ -1166,18 +1166,18 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 	goto bailout;
     }
 
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE, 
-			      X, GRETL_MOD_NONE, 
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
 			      XX, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE, 
-			      Xw, GRETL_MOD_NONE, 
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      Xw, GRETL_MOD_NONE,
 			      XXw, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(Xw, GRETL_MOD_TRANSPOSE, 
-			      W, GRETL_MOD_NONE, 
+    gretl_matrix_multiply_mod(Xw, GRETL_MOD_TRANSPOSE,
+			      W, GRETL_MOD_NONE,
 			      XwZ, GRETL_MOD_NONE);
 
     gretl_matrix_copy_values(XXi, XX);
-    err = gretl_invert_symmetric_matrix(XXi); 
+    err = gretl_invert_symmetric_matrix(XXi);
     if (err) {
 	fprintf(stderr, "heckit_2step_vcv: error inverting X'X\n");
 	goto bailout;
@@ -1204,7 +1204,7 @@ static int heckit_2step_vcv (h_container *HC, MODEL *olsmod)
 }
 
 /*
-  since lambda is not a parameter that is directly estimated by ML, 
+  since lambda is not a parameter that is directly estimated by ML,
   we compute the augmented vcv matrix via the delta method
 */
 
@@ -1241,15 +1241,15 @@ int add_lambda_to_ml_vcv (h_container *HC)
     gretl_matrix_free(J);
     gretl_matrix_free(HC->vcv);
     HC->vcv = tmp;
-    
+
     return err;
 }
 
 static int adjust_ml_vcv_hyperbolic (h_container *HC)
 {
     /*
-      Here we modify $vcv as if rho was used in BFGS instead 
-      of atanh(rho); we use the fact that 
+      Here we modify $vcv as if rho was used in BFGS instead
+      of atanh(rho); we use the fact that
 
       \frac{\partial tanh(a)}{\partial a} = (cosh(a))^{-2}
 
@@ -1280,7 +1280,7 @@ static int adjust_ml_vcv_hyperbolic (h_container *HC)
 
 #if INITH_OPG
 
-/* calculate the OPG matrix at the starting point and use 
+/* calculate the OPG matrix at the starting point and use
    its inverse (if any) as initial curvature matrix for BFGS
 */
 
@@ -1322,7 +1322,7 @@ static void heckit_trim_vcv (MODEL *pmod, int k,
 	    vij = gretl_matrix_get(V, i, j);
 	    pmod->vcv[ijton(i, j, k)] = vij;
 	}
-    }    
+    }
 }
 
 static gretl_matrix *clustered_GG (h_container *HC, int *err)
@@ -1335,7 +1335,7 @@ static gretl_matrix *clustered_GG (h_container *HC, int *err)
     int *link = NULL;
     int k = HC->H->rows;
     double x, s;
-	
+
     cvals = gretl_matrix_values(HC->clusvec->val, HC->clusvec->rows,
 				OPT_S, err);
     if (*err) {
@@ -1373,7 +1373,7 @@ static gretl_matrix *clustered_GG (h_container *HC, int *err)
 	}
     }
 
-    GG = gretl_matrix_XTX_new(Gc); 
+    GG = gretl_matrix_XTX_new(Gc);
     if (GG == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -1381,10 +1381,10 @@ static gretl_matrix *clustered_GG (h_container *HC, int *err)
 	gretl_matrix_multiply_by_scalar(GG, nc/(nc-1.0));
     }
 
-#if VCV_DEBUG	
+#if VCV_DEBUG
     gretl_matrix_print(Gc, "Gc");
     gretl_matrix_print(Gc, "GG");
-#endif    
+#endif
 
  bailout:
 
@@ -1405,15 +1405,15 @@ gretl_matrix *heckit_ml_vcv (h_container *HC, gretlopt opt, DATASET *dset,
     gretl_matrix *GG = NULL;
     int need_opg = (opt & OPT_R) || (opt & OPT_G);
     int k = iH->rows;
-    
+
     if (need_opg) {
 	GG = gretl_matrix_XTX_new(G);
-#if VCV_DEBUG	
+#if VCV_DEBUG
 	gretl_matrix_print(GG, "GG");
-#endif	
+#endif
 	if (GG == NULL) {
 	    *err = E_ALLOC;
-	} 
+	}
     } else if (opt & OPT_C) {
 	GG = clustered_GG(HC, err);
     }
@@ -1443,7 +1443,7 @@ gretl_matrix *heckit_ml_vcv (h_container *HC, gretlopt opt, DATASET *dset,
 
 #if VCV_DEBUG
     gretl_matrix_print(V, "V");
-#endif    
+#endif
     gretl_matrix_free(GG);
 
     return V;
@@ -1458,6 +1458,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
     double *hess = NULL;
     double *theta = NULL;
     int i, j, np = HC->kmain + HC->ksel + 2;
+    gretlopt maxopt;
     int use_bfgs = 0;
     int err = 0;
 
@@ -1490,6 +1491,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 
     BFGS_defaults(&maxit, &toler, HECKIT);
 
+
 #if INITH_OPG
     if (use_bfgs) {
 	init_H = heckit_init_H(theta, HC, np);
@@ -1497,29 +1499,29 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 #endif
 
     if (use_bfgs) {
-	err = BFGS_max(theta, np, maxit, toler, &fncount, 
+	maxopt = (prn != NULL)? (OPT_U | OPT_V) : OPT_U;
+	err = BFGS_max(theta, np, maxit, toler, &fncount,
 		       &grcount, h_loglik, C_LOGLIK,
 		       heckit_score, HC, init_H,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
-    } else {	
-	gretlopt maxopt = opt & OPT_V;
-
+    } else {
+	maxopt = (opt & OPT_V) | OPT_U;
 	err = newton_raphson_max(theta, np, maxit, toler, gradtol,
-				 &fncount, C_LOGLIK, h_loglik, 
+				 &fncount, C_LOGLIK, h_loglik,
 				 heckit_score, heckit_hessian,
 				 HC, maxopt, prn);
-    } 
+    }
 
     gretl_matrix_free(init_H);
 
     if (!err) {
 	HC->ll = hm->lnL = h_loglik(theta, HC);
 	if (use_bfgs) {
-	    gretl_model_set_int(hm, "fncount", fncount);	
+	    gretl_model_set_int(hm, "fncount", fncount);
 	    gretl_model_set_int(hm, "grcount", grcount);
-	} else {	    
+	} else {
 	    gretl_model_set_int(hm, "iters", fncount);
-	} 	
+	}
 	HC->lambda = HC->sigma * HC->rho;
 
 	HC->H = gretl_matrix_alloc(np, np);
@@ -1536,13 +1538,13 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 
     if (!err) {
 	gretl_matrix *fV;
-	
+
 	adjust_ml_vcv_hyperbolic(HC);
 	fV = gretl_matrix_copy(HC->vcv);
 	if (fV != NULL) {
 	    /* experiment */
 	    gretl_model_set_matrix_as_data(hm, "full_vcv", fV);
-	}	
+	}
 	add_lambda_to_ml_vcv(HC);
 #if HDEBUG
 	for (i=0; i<np; i++) {
@@ -1583,7 +1585,7 @@ static int check_heckit_probit (MODEL *pmod, h_container *HC,
 				const int *sellist)
 {
     int err = pmod->errcode;
-    
+
     if (!err && pmod->list[0] < sellist[0]) {
 	gretl_errmsg_sprintf("Couldn't estimate selection equation");
 	err = E_DATA;
@@ -1597,7 +1599,7 @@ static int heckit_cluster_init (h_container *HC,
 {
     const char *csname = get_optval_string(HECKIT, OPT_C);
     int cvar, err = 0;
-	
+
     if (csname == NULL) {
 	err = E_PARSE;
     } else {
@@ -1634,13 +1636,13 @@ static MODEL heckit_init (h_container *HC, DATASET *dset, gretlopt opt)
 	/* extract info on clustering var if necessary */
 	err = heckit_cluster_init(HC, dset);
     }
-    
+
     if (!err) {
 	HC->depvar = reglist[1];
 	HC->selvar = sellist[1];
 	err = make_heckit_NA_mask(HC, reglist, sellist, dset);
     }
-    
+
     if (err) {
 	goto bailout;
     }
@@ -1664,7 +1666,7 @@ static MODEL heckit_init (h_container *HC, DATASET *dset, gretlopt opt)
     err = dataset_add_series(dset, 1);
     if (err) {
 	goto bailout;
-    } 
+    }
 
     HC->millsvar = dset->v - 1;
 
@@ -1683,7 +1685,7 @@ static MODEL heckit_init (h_container *HC, DATASET *dset, gretlopt opt)
     hm = lsq(reglist, dset, OLS, OPT_A);
     if (!hm.errcode) {
 	hm.ci = HECKIT;
-	gretl_model_set_int(&hm, "totobs", probmod.nobs); 
+	gretl_model_set_int(&hm, "totobs", probmod.nobs);
     }
 
 #if HDEBUG
@@ -1693,7 +1695,7 @@ static MODEL heckit_init (h_container *HC, DATASET *dset, gretlopt opt)
 
     if (!hm.errcode) {
 	/* fill the container with all the relevant data */
-	err = h_container_fill(HC, reglist, sellist, dset, 
+	err = h_container_fill(HC, reglist, sellist, dset,
 			       &probmod, &hm);
     }
 
@@ -1710,8 +1712,8 @@ static MODEL heckit_init (h_container *HC, DATASET *dset, gretlopt opt)
     return hm;
 }
 
-/* 
-   The driver function for the plugin. 
+/*
+   The driver function for the plugin.
 
    The function heckit_init runs the 2-step estimation and fills up
    the container HC with all the various items to be used later. Then,
@@ -1720,8 +1722,8 @@ static MODEL heckit_init (h_container *HC, DATASET *dset, gretlopt opt)
    ML.
 */
 
-MODEL heckit_estimate (const int *list, DATASET *dset, 
-		       gretlopt opt, PRN *prn) 
+MODEL heckit_estimate (const int *list, DATASET *dset,
+		       gretlopt opt, PRN *prn)
 {
     PRN *vprn = NULL;
     h_container *HC = NULL;
@@ -1753,7 +1755,7 @@ MODEL heckit_estimate (const int *list, DATASET *dset,
     } else {
 	/* use MLE */
 	err = heckit_ml(&hm, HC, opt, dset, vprn);
-    } 
+    }
 
     if (err) {
 	hm.errcode = err;
@@ -1786,7 +1788,7 @@ MODEL heckit_estimate (const int *list, DATASET *dset,
     int t;
 
     for (t=hm.t1; t<=hm.t2; t++) {
-	fprintf(stderr, "%4d: u = %12.6f, llt = %12.6f, missing = %d\n", 
+	fprintf(stderr, "%4d: u = %12.6f, llt = %12.6f, missing = %d\n",
 		t, hm.uhat[t], hm.llt[t], model_missing(&hm, t));
     }
 #endif

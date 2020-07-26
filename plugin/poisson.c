@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* models for count data, Poisson and Negative Binomial */
@@ -31,8 +31,8 @@
 #define PDEBUG 0
 #define PR2DEBUG 0
 
-#define POISSON_TOL 1.0e-10 
-#define POISSON_MAX_ITER 100 
+#define POISSON_TOL 1.0e-10
+#define POISSON_MAX_ITER 100
 
 typedef struct negbin_info_ negbin_info;
 typedef struct offset_info_ offset_info;
@@ -89,7 +89,7 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
     nbinfo->offset = NULL;
 
     nbinfo->theta = malloc(np * sizeof *nbinfo->theta);
-    
+
     if (nbinfo->theta == NULL) {
 	return E_ALLOC;
     }
@@ -191,7 +191,7 @@ static double negbin_loglik (const double *theta, void *data)
     errno = 0;
 
     if (nbinfo->type == 2) {
-	/* in NegBin2 psi is the same for all obs, so it can 
+	/* in NegBin2 psi is the same for all obs, so it can
 	   be dealt with outside the loop */
 	psi = 1/alpha;
 	lgpsi = lngamma(psi);
@@ -218,7 +218,7 @@ static double negbin_loglik (const double *theta, void *data)
     return nbinfo->ll;
 }
 
-static int negbin_score (double *theta, double *g, int np, BFGS_CRIT_FUNC ll, 
+static int negbin_score (double *theta, double *g, int np, BFGS_CRIT_FUNC ll,
 			 void *data)
 {
     negbin_info *nbinfo = (negbin_info *) data;
@@ -240,7 +240,7 @@ static int negbin_score (double *theta, double *g, int np, BFGS_CRIT_FUNC ll,
 	for (i=0; i<np; i++) {
 	    g[i] = 0.0;
 	}
-    }    
+    }
 
     if (nbinfo->type == 1) {
 	dpsi_dmu = 1/alpha;
@@ -249,14 +249,14 @@ static int negbin_score (double *theta, double *g, int np, BFGS_CRIT_FUNC ll,
 	dpsi_dmu = 0;
 	dgpsi = digamma(psi);
 	dpsi_da = -1/a2;
-    }	 
+    }
 
     for (t=0; t<nbinfo->T; t++) {
 	if (nbinfo->type == 1) {
 	    psi = mu[t]/alpha;
 	    dgpsi = digamma(psi);
 	    dpsi_da = -mu[t]/a2;
-	}	    
+	}
 
 	mpp = mu[t] + psi;
 	dl_dpsi = digamma(psi + y[t]) - dgpsi
@@ -287,7 +287,7 @@ static gretl_matrix *negbin_init_H (negbin_info *nbinfo)
     int err;
 
     nbinfo->flags = SCORE_UPDATE_MU;
-    err = negbin_score(nbinfo->theta, NULL, nbinfo->k + 1, 
+    err = negbin_score(nbinfo->theta, NULL, nbinfo->k + 1,
 		       NULL, nbinfo);
     nbinfo->flags = 0;
 
@@ -298,7 +298,7 @@ static gretl_matrix *negbin_init_H (negbin_info *nbinfo)
     return H;
 }
 
-static gretl_matrix *negbin_hessian_inverse (negbin_info *nbinfo, 
+static gretl_matrix *negbin_hessian_inverse (negbin_info *nbinfo,
 					     int *err)
 {
     gretl_matrix *H;
@@ -325,7 +325,7 @@ static int negbin_model_add_vcv (MODEL *pmod, negbin_info *nbinfo,
 	H = negbin_hessian_inverse(nbinfo, &err);
 	if (!err) {
 	    if (opt & OPT_R) {
-		err = gretl_model_add_QML_vcv(pmod, pmod->ci, 
+		err = gretl_model_add_QML_vcv(pmod, pmod->ci,
 					      H, nbinfo->G,
 					      dset, opt, NULL);
 	    } else {
@@ -339,9 +339,9 @@ static int negbin_model_add_vcv (MODEL *pmod, negbin_info *nbinfo,
     return err;
 }
 
-static int 
-transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo, 
-			   const DATASET *dset, offset_info *oinfo, 
+static int
+transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
+			   const DATASET *dset, offset_info *oinfo,
 			   int fncount, int grcount,
 			   gretlopt opt)
 {
@@ -387,14 +387,14 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
     pmod->dfn += 1;
 
     err = gretl_model_write_coeffs(pmod, nbinfo->theta, nc);
-    
+
     if (!err) {
 	err = negbin_model_add_vcv(pmod, nbinfo, dset, opt);
     }
 
     if (!err) {
 	pmod->lnL = nbinfo->ll;
-	mle_criteria(pmod, 0); 
+	mle_criteria(pmod, 0);
 	/* mask invalid statistics (FIXME chisq?) */
 	pmod->fstt = pmod->chisq = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
@@ -410,10 +410,10 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
 }
 
 static int do_negbin (MODEL *pmod, offset_info *oinfo,
-		      DATASET *dset, gretlopt opt, 
+		      DATASET *dset, gretlopt opt,
 		      PRN *prn)
 {
-    gretlopt max_opt = (opt & OPT_V)? OPT_V : OPT_NONE;
+    gretlopt maxopt = (opt & OPT_V) | OPT_U;
     gretl_matrix *H = NULL;
     negbin_info nbinfo;
     double toler;
@@ -439,24 +439,24 @@ static int do_negbin (MODEL *pmod, offset_info *oinfo,
 	double gradtol = 1.0e-7;
 
 	nbinfo.flags = SCORE_UPDATE_MU;
-	err = newton_raphson_max(nbinfo.theta, nbinfo.k + 1, maxit, 
-				 crittol, gradtol, &fncount, 
-				 C_LOGLIK, negbin_loglik, 
-				 negbin_score, NULL, 
-				 &nbinfo, max_opt, nbinfo.prn);
+	err = newton_raphson_max(nbinfo.theta, nbinfo.k + 1, maxit,
+				 crittol, gradtol, &fncount,
+				 C_LOGLIK, negbin_loglik,
+				 negbin_score, NULL,
+				 &nbinfo, maxopt, nbinfo.prn);
 	nbinfo.flags = 0;
     } else if (!err) {
 	BFGS_defaults(&maxit, &toler, NEGBIN);
-	err = BFGS_max(nbinfo.theta, nbinfo.k + 1, maxit, toler, 
+	err = BFGS_max(nbinfo.theta, nbinfo.k + 1, maxit, toler,
 		       &fncount, &grcount, negbin_loglik, C_LOGLIK,
-		       negbin_score, &nbinfo, H, max_opt, 
+		       negbin_score, &nbinfo, H, maxopt,
 		       nbinfo.prn);
 	gretl_matrix_free(H);
     }
 
     if (!err) {
-	err = transcribe_negbin_results(pmod, &nbinfo, dset, 
-					oinfo, fncount, grcount, 
+	err = transcribe_negbin_results(pmod, &nbinfo, dset,
+					oinfo, fncount, grcount,
 					opt);
     }
 
@@ -465,15 +465,15 @@ static int do_negbin (MODEL *pmod, offset_info *oinfo,
     if (err && !pmod->errcode) {
 	pmod->errcode = err;
     }
-    
+
     return pmod->errcode;
 }
 
 /* sandwich of hessian and OPG, or clustered */
 
-static int poisson_robust_vcv (MODEL *pmod, 
+static int poisson_robust_vcv (MODEL *pmod,
 			       const gretl_matrix *G,
-			       const DATASET *dset, 
+			       const DATASET *dset,
 			       gretlopt opt)
 {
     gretl_matrix *H;
@@ -489,7 +489,7 @@ static int poisson_robust_vcv (MODEL *pmod,
     gretl_matrix_free(H);
 
     return err;
-} 
+}
 
 /* Overdispersion test via augmented OPG regression: see
    Davidson and McKinnon, ETM, section 11.5 */
@@ -517,7 +517,7 @@ static int overdispersion_test (MODEL *pmod, const DATASET *dset,
     }
 
     /* Construct gradient matrix, G, with an extra column
-       holding z_t = (y_t - exp(X_t\beta))^2 - y_t.  Under 
+       holding z_t = (y_t - exp(X_t\beta))^2 - y_t.  Under
        the null of no overdispersion, (n - SSR) from the
        artificial regression follows \chi^2(1) asymptotically.
     */
@@ -536,7 +536,7 @@ static int overdispersion_test (MODEL *pmod, const DATASET *dset,
 	zt = mt * mt - y[t];
 	gretl_matrix_set(G, s, k, zt);
 	s++;
-    } 
+    }
 
     if (opt & OPT_R) {
 	gretl_matrix_reuse(G, n, k);
@@ -558,7 +558,7 @@ static int overdispersion_test (MODEL *pmod, const DATASET *dset,
 		gretl_model_set_double(pmod, "overdisp", X2);
 	    }
 	}
-    }  
+    }
 
  bailout:
 
@@ -570,7 +570,7 @@ static int overdispersion_test (MODEL *pmod, const DATASET *dset,
     return err;
 }
 
-static double poisson_ll (const double *y, const double *mu, 
+static double poisson_ll (const double *y, const double *mu,
 			  int t1, int t2)
 {
     double loglik = 0.0;
@@ -588,12 +588,12 @@ static double poisson_ll (const double *y, const double *mu,
 	}
 	llt = -mu[t] + y[t] * log(mu[t]) - lytfact;
 	loglik += llt;
-    }  
+    }
 
     return loglik;
 }
 
-static void add_pseudoR2 (MODEL *pmod, const double *y, 
+static void add_pseudoR2 (MODEL *pmod, const double *y,
 			  offset_info *oinfo)
 {
     double llt, ll0 = 0.0;
@@ -625,14 +625,14 @@ static void add_pseudoR2 (MODEL *pmod, const double *y,
 	llt = K - lytfact;
 
 	if (oinfo != NULL && y[t] > 0) {
-	    llt += y[t] * log(oinfo->x[t]); 
+	    llt += y[t] * log(oinfo->x[t]);
 	}
 
 #if PR2DEBUG
 	fprintf(stderr, "ll[%d] = %g\n", t, llt);
 #endif
 	ll0 += llt;
-    }  
+    }
 
 #if PR2DEBUG
     fprintf(stderr, "ll0 = %g\n", ll0);
@@ -648,8 +648,8 @@ static void add_pseudoR2 (MODEL *pmod, const double *y,
     }
 }
 
-static int 
-transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y, 
+static int
+transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
 			    int iter, offset_info *oinfo)
 {
     int i, t, err = 0;
@@ -679,14 +679,13 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     }
 
     targ->lnL = poisson_ll(y, targ->yhat, targ->t1, targ->t2);
-
     add_pseudoR2(targ, y, oinfo);
 
 #if PDEBUG
     fprintf(stderr, "log-likelihood = %g\n", targ->lnL);
 #endif
 
-    mle_criteria(targ, 0); 
+    mle_criteria(targ, 0);
 
     /* mask invalid statistics */
     targ->fstt = targ->chisq = NADBL;
@@ -700,7 +699,7 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
 	}
 	targ->vcv = src->vcv;
 	src->vcv = NULL;
-    }   
+    }
 
     return err;
 }
@@ -749,13 +748,13 @@ static int get_noconst_estimates (MODEL *pmod, DATASET *dset, int tmpno)
     }
 
     free(tmplist);
-    clear_model(&logmod);    
+    clear_model(&logmod);
 
     return err;
 }
 
-static int do_poisson (MODEL *pmod, offset_info *oinfo, 
-		       DATASET *dset, gretlopt opt, 
+static int do_poisson (MODEL *pmod, offset_info *oinfo,
+		       DATASET *dset, gretlopt opt,
 		       PRN *prn)
 {
     int origv = dset->v;
@@ -803,7 +802,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
     strcpy(dset->varname[origv+1], "GNRy");
 #endif
 
-    for (i=3; i<=local_list[0]; i++) { 
+    for (i=3; i<=local_list[0]; i++) {
 	/* insert the original independent vars */
 	local_list[i] = pmod->list[i-1];
     }
@@ -813,7 +812,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 	if (oinfo != NULL) {
 	    pmod->coeff[0] -= log(oinfo->mean);
 	}
-	for (i=1; i<pmod->ncoeff; i++) { 
+	for (i=1; i<pmod->ncoeff; i++) {
 	    pmod->coeff[i] = 0.0;
 	}
     } else {
@@ -841,48 +840,41 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 	}
     }
 
-    if (prn != NULL) 
+    if (prn != NULL) {
 	pputc(prn, '\n');
+    }
 
     while (iter < POISSON_MAX_ITER && crit > POISSON_TOL) {
-
 	iter++;
-
 	/* weighted least squares */
 	tmpmod = lsq(local_list, dset, WLS, OPT_A);
-
 	if (tmpmod.errcode) {
-	    fprintf(stderr, "poisson_estimate: lsq returned %d\n", 
+	    fprintf(stderr, "poisson_estimate: lsq returned %d\n",
 		    tmpmod.errcode);
 	    pmod->errcode = tmpmod.errcode;
 	    break;
 	}
-
 #if PDEBUG
 	printmodel(&tmpmod, dset, OPT_S, prn);
 #endif
-
 	if (pmod->ifc) {
 	    crit = tmpmod.nobs * tmpmod.rsq;
 	} else {
 	    /* use sum of squared gradients? */
 	    crit = 0.0;
-	    for (i=0; i<tmpmod.ncoeff; i++) { 
+	    for (i=0; i<tmpmod.ncoeff; i++) {
 		crit += tmpmod.coeff[i] * tmpmod.coeff[i];
 	    }
 	}
-
 	if (prn != NULL) {
 	    double ll = poisson_ll(y, pmod->yhat, pmod->t1, pmod->t2);
 
-	    print_iter_info(iter, ll, C_LOGLIK, 0, 
-			    NULL, NULL, NADBL, prn);
+	    print_iter_info(iter, ll, C_LOGLIK, tmpmod.ncoeff,
+			    pmod->coeff, tmpmod.coeff, NADBL, prn);
 	}
-
-	for (i=0; i<tmpmod.ncoeff; i++) { 
+	for (i=0; i<tmpmod.ncoeff; i++) {
 	    pmod->coeff[i] += tmpmod.coeff[i];
 	}
-
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->uhat[t])) {
 		pmod->yhat[t] *= exp(tmpmod.yhat[t]);
@@ -890,7 +882,6 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 		wgt[t] = pmod->yhat[t];
 	    }
 	}
-
 	if (crit > POISSON_TOL) {
 	    clear_model(&tmpmod);
 	}
@@ -898,7 +889,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 
     if (crit > POISSON_TOL) {
 	pmod->errcode = E_NOCONV;
-    } 
+    }
 
     if (pmod->errcode == 0 && !(opt & OPT_A)) {
 	transcribe_poisson_results(pmod, &tmpmod, y, iter, oinfo);
@@ -918,7 +909,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 }
 
 /* Check the offset series (if wanted) and retrieve its mean
-   if the series is OK.   
+   if the series is OK.
 */
 
 static int get_offset_info (MODEL *pmod, offset_info *oinfo)
@@ -951,12 +942,12 @@ static int get_offset_info (MODEL *pmod, offset_info *oinfo)
 
 /* the incoming @pmod has been estimated via OLS */
 
-int count_data_estimate (MODEL *pmod, int ci, int offvar, 
-			 DATASET *dset, gretlopt opt, 
-			 PRN *prn) 
+int count_data_estimate (MODEL *pmod, int ci, int offvar,
+			 DATASET *dset, gretlopt opt,
+			 PRN *prn)
 {
     offset_info oinfo_t, *oinfo = NULL;
-    PRN *vprn = NULL;
+    PRN *vprn = (opt & OPT_V)? prn : NULL;
     int err = 0;
 
     if (offvar > 0) {
@@ -970,15 +961,11 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 	} else {
 	    oinfo = &oinfo_t;
 	}
-    } 
+    }
 
     if (opt & OPT_C) {
 	/* cluster implies robust */
 	opt |= OPT_R;
-    }
-
-    if (opt & OPT_V) {
-	vprn = prn;
     }
 
     if (ci == NEGBIN) {
@@ -993,4 +980,3 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 
     return err;
 }
-

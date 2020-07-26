@@ -941,7 +941,7 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
     int_container *IC;
     int maxit, fncount = 0, grcount = 0;
     double toler, normtest = NADBL;
-    gretlopt maxopt = opt & OPT_V;
+    gretlopt maxopt = (opt & OPT_V) | OPT_U;
     int optim, use_bfgs = 0;
     int err = 0;
 

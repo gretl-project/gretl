@@ -749,7 +749,7 @@ static int as_arma (const double *coeff,
 
     if (!err) {
 	/* maximize loglikelihood via BFGS */
-	gretlopt maxopt = opt | OPT_A;
+	gretlopt maxopt = opt | (OPT_A | OPT_U);
 	int maxit;
 	double toler;
 
