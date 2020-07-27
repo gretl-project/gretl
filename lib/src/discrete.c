@@ -3054,7 +3054,7 @@ static MODEL binary_model (int ci, const int *inlist,
 			   DATASET *dset, gretlopt opt,
 			   PRN *prn)
 {
-    gretlopt max_opt = OPT_NONE;
+    gretlopt maxopt = OPT_NONE;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *list = NULL;
@@ -3153,15 +3153,19 @@ static MODEL binary_model (int ci, const int *inlist,
     }
 
     if (opt & OPT_V) {
-	max_opt = OPT_V;
+	maxopt = OPT_V;
 	vprn = prn;
+    }
+    if (!(opt & OPT_X)) {
+	/* not just auxiliary estimator */
+	maxopt |= OPT_U;
     }
 
     mod.errcode = newton_raphson_max(bin->theta, bin->k, maxit,
 				     crittol, gradtol, &fncount,
 				     C_LOGLIK, binary_loglik,
 				     binary_score, binary_hessian, bin,
-				     max_opt | OPT_U, vprn);
+				     maxopt, vprn);
     if (bin->pp_err) {
 	/* trash any existing error message */
 	gretl_error_clear();

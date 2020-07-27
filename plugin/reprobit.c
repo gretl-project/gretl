@@ -265,7 +265,6 @@ static int rep_container_fill (reprob_container *C,
 
     /* write the data into C->y and C->X, skipping
        any observations with missing values */
-
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
@@ -280,9 +279,7 @@ static int rep_container_fill (reprob_container *C,
     }
 
     /* form and transcribe the quadrature matrix */
-
     tmp = gretl_gauss_hermite_matrix_new(C->qp, &err);
-
     if (!err) {
 	for (i=0; i<C->qp; i++) {
 	    gretl_vector_set(C->nodes, i, gretl_matrix_get(tmp, i, 0));
@@ -712,7 +709,6 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 				     crittol, gradtol, &fcount, C_LOGLIK, 
 				     reprobit_ll, reprobit_score, NULL, 
 				     C, maxopt, quiet ? NULL : prn);
-
 	} else {
 	    int gcount = 0;
 
@@ -720,7 +716,6 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	    err = BFGS_max(theta, C->npar, maxit, 1.0e-9, 
 			   &fcount, &gcount, reprobit_ll, C_LOGLIK, 
 			   reprobit_score, C, NULL, maxopt, prn);
-
 	}
 
 	if (!err) {
