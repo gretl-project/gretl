@@ -1275,7 +1275,9 @@ static int switchit (Jwrap *J, gretlopt opt, PRN *prn)
 	pputc(prn, '\n');
     }
 
-    pputc(prn, '\n');
+    if (!(opt & OPT_S)) {
+	pputc(prn, '\n');
+    }
 
     if (!err) {
 	J->ll -= J->llk;
