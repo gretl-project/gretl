@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -25,8 +25,8 @@
 
 #define HDEBUG 0
 
-static int 
-do_hurst_plot (int n, DATASET *dset, const MODEL *pmod, 
+static int
+do_hurst_plot (int n, DATASET *dset, const MODEL *pmod,
 	       const char *vname)
 {
     FILE *fp;
@@ -46,7 +46,7 @@ do_hurst_plot (int n, DATASET *dset, const MODEL *pmod,
     gretl_push_c_numeric_locale();
 
     fputs("plot \\\n", fp);
-    fprintf(fp, "%.10g+%.10g*x notitle w lines lt 2 ,\\\n", 
+    fprintf(fp, "%.10g+%.10g*x notitle w lines lt 2 ,\\\n",
 	    pmod->coeff[0], pmod->coeff[1]);
     fputs("'-' using 1:2 w points lt 1\n", fp);
 
@@ -54,7 +54,7 @@ do_hurst_plot (int n, DATASET *dset, const MODEL *pmod,
 	fprintf(fp, "%.10g %.10g\n", dset->Z[2][t], dset->Z[1][t]);
     }
     fputs("e\n", fp);
-    
+
     gretl_pop_c_numeric_locale();
 
     return finalize_plot_input_file(fp);
@@ -106,12 +106,12 @@ static int hurst_calc (const double *x, int n, int depth,
 
     get_column_widths(heads, cw, 4);
 
-    pprintf(prn, "%*s %*s %*s %*s\n", 
-	    UTF_WIDTH(_(heads[0]), cw[0]), _(heads[0]), 
+    pprintf(prn, "%*s %*s %*s %*s\n",
+	    UTF_WIDTH(_(heads[0]), cw[0]), _(heads[0]),
 	    UTF_WIDTH(_(heads[1]), cw[1]), _(heads[1]),
-	    UTF_WIDTH(_(heads[2]), cw[2]), _(heads[2]), 
+	    UTF_WIDTH(_(heads[2]), cw[2]), _(heads[2]),
 	    UTF_WIDTH(_(heads[3]), cw[3]), _(heads[3]));
-    
+
     for (i=0, m=n; i<depth; i++, m/=2) {
 	double RS = 0.0;
 	int nsub = n / m;
@@ -135,11 +135,11 @@ static int hurst_calc (const double *x, int n, int depth,
 	}
 
 	RS /= nsub;
-	
+
 	dset->Z[1][i] = log2(RS);
 	dset->Z[2][i] = log2(m);
 
-	pprintf(prn, "%*d %#*.5g %#*.5g %#*.5g\n", cw[0], m, cw[1], RS, 
+	pprintf(prn, "%*d %#*.5g %#*.5g %#*.5g\n", cw[0], m, cw[1], RS,
 		cw[2], dset->Z[2][i], cw[3], dset->Z[1][i]);
     }
 
@@ -159,10 +159,10 @@ static int get_depth (int T)
     return depth;
 }
 
-/* drop first/last observations from sample if missing obs 
+/* drop first/last observations from sample if missing obs
    encountered */
 
-static int h_adjust_t1t2 (int v, const DATASET *dset, 
+static int h_adjust_t1t2 (int v, const DATASET *dset,
 			  int *t1, int *t2)
 {
     int t, t1min = *t1, t2max = *t2;
@@ -227,7 +227,7 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
 	return E_ALLOC;
     }
 
-    pprintf(prn, _("Rescaled range figures for %s"), 
+    pprintf(prn, _("Rescaled range figures for %s"),
 	    dset->varname[vnum]);
     pputc(prn, '\n');
     pputs(prn, _("(logs are to base 2)"));
@@ -245,36 +245,37 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
 	pputs(prn, _("Error estimating Hurst exponent model\n"));
 	errmsg(err, prn);
     } else {
+	gretl_matrix *result = NULL;
+	char **colnames = NULL;
 	const char *heads[] = {
 	    N_("Intercept"),
 	    N_("coeff"),
 	    N_("std. error")
 	};
 	int cw[] = {12, 12, 12};
-	gretl_matrix *result = NULL;
 
 	get_column_widths(heads, cw, 3);
 
 	pprintf(prn, "\n%s (n = %d)\n\n", _("Regression results"), k);
-	pprintf(prn, "%*s %*s %*s\n", cw[0], "", 
-		UTF_WIDTH(_(heads[1]), cw[1]), _(heads[1]), 
+	pprintf(prn, "%*s %*s %*s\n", cw[0], "",
+		UTF_WIDTH(_(heads[1]), cw[1]), _(heads[1]),
 		UTF_WIDTH(_(heads[2]), cw[2]), _(heads[2]));
-	pprintf(prn, "%*s %#*.5g %#*.5g\n", 
-		UTF_WIDTH(_(heads[0]), cw[0]), _(heads[0]), 
-		cw[1], hmod.coeff[0], 
+	pprintf(prn, "%*s %#*.5g %#*.5g\n",
+		UTF_WIDTH(_(heads[0]), cw[0]), _(heads[0]),
+		cw[1], hmod.coeff[0],
 		cw[2], hmod.sderr[0]);
-	pprintf(prn, "%*s %#*.5g %#*.5g\n", 
-		UTF_WIDTH(_("Slope"), cw[0]), _("Slope"), 
-		cw[1], hmod.coeff[1], 
+	pprintf(prn, "%*s %#*.5g %#*.5g\n",
+		UTF_WIDTH(_("Slope"), cw[0]), _("Slope"),
+		cw[1], hmod.coeff[1],
 		cw[2], hmod.sderr[1]);
 	pputc(prn, '\n');
 	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
 
-	/* store estimate in result dollar accessor */
-	result = gretl_matrix_alloc(1,2);
+	/* store estimate for $result accessor */
+	result = gretl_matrix_alloc(1, 2);
 	gretl_matrix_set(result, 0, 0, hmod.coeff[1]);
 	gretl_matrix_set(result, 0, 1, hmod.sderr[1]);
-	char **colnames = strings_array_new(2);
+	colnames = strings_array_new(2);
 	colnames[0] = gretl_strdup("hurst");
 	colnames[1] = gretl_strdup("se");
 	gretl_matrix_set_colnames(result, colnames);
@@ -286,7 +287,6 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
     }
 
     clear_model(&hmod);
-
     destroy_dataset(hset);
 
     return err;
