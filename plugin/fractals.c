@@ -251,6 +251,7 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
 	    N_("std. error")
 	};
 	int cw[] = {12, 12, 12};
+	gretl_matrix *result = NULL;
 
 	get_column_widths(heads, cw, 3);
 
@@ -268,6 +269,16 @@ int hurst_exponent (int vnum, const DATASET *dset, gretlopt opt,
 		cw[2], hmod.sderr[1]);
 	pputc(prn, '\n');
 	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
+
+	/* store estimate in result dollar accessor */
+	result = gretl_matrix_alloc(1,2);
+	gretl_matrix_set(result, 0, 0, hmod.coeff[1]);
+	gretl_matrix_set(result, 0, 1, hmod.sderr[1]);
+	char **colnames = strings_array_new(2);
+	colnames[0] = gretl_strdup("hurst");
+	colnames[1] = gretl_strdup("se");
+	gretl_matrix_set_colnames(result, colnames);
+	set_last_result_data(result, GRETL_TYPE_MATRIX);
     }
 
     if (!err && gnuplot_graph_wanted(PLOT_HURST, opt)) {

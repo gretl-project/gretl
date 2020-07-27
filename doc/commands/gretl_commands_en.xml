@@ -6396,7 +6396,8 @@
       <para>
 	Calculates the Hurst exponent (a measure of persistence or
 	long memory) for a time-series variable having at least 128
-	observations.
+	observations. The result (together with its standard error)
+	can be retrieved via the <fncref targ="$result"/> accessor.  
       </para>
       <para>
 	The Hurst exponent is discussed by <cite
