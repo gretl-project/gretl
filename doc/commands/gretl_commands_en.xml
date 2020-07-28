@@ -13175,11 +13175,17 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>initvals</lit>: either <lit>auto</lit> (the
-	  default) or the name of a pre-specified matrix. Allows
-	  manual setting of the initial parameter estimates for
-	  numerical optimization problems (such as ARMA
-	  estimation). For details see <guideref
+	  <para><lit>initvals</lit>: the name of a predefined
+	  matrix. Allows manual setting of the initial parameter
+	  vector for certain estimation commands that involve
+	  numerical optimization: <lit>arma</lit>, <lit>garch</lit>,
+	  <lit>logit</lit> and <lit>probit</lit>, <lit>tobit</lit> and
+	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>;
+	  and also when imposing certain sorts of restriction
+	  associated with VECMs. Unlike other settings,
+	  <lit>initivals</lit> is not persistent: it resets to the
+	  default initializer after its first use. For details in
+	  connection with ARMA estimation see <guideref
 	  targ="chap:timeseries"/>.
 	  </para>
 	</li>
