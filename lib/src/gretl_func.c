@@ -48,6 +48,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define MINIMAL_SETVARS 0 /* not yet, probably later */
+
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
@@ -8315,6 +8317,8 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
     return simple_set_obs(dset, oi->pd, oi->stobs, opt);
 }
 
+#if MINIMAL_SETVARS
+
 static void push_verbosity (fncall *call)
 {
     if (gretl_messages_on()) {
@@ -8330,6 +8334,8 @@ static void pop_verbosity (fncall *call)
     set_gretl_messages(call->flags & PREV_MSGS);
     set_gretl_echo(call->flags & PREV_ECHO);
 }
+
+#endif /* MINIMAL_SETVARS */
 
 /* do the basic housekeeping that is required when a function exits:
    destroy local variables, restore previous sample info, etc.
@@ -8415,11 +8421,15 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
 
+#if MINIMAL_SETVARS
     if (call->fun->flags & UFUN_USES_SET) {
 	pop_program_state();
     } else {
 	pop_verbosity(call);
     }
+#else
+    pop_program_state();
+#endif
 
     if (dset != NULL && call->obs.changed) {
 	restore_obs_info(&call->obs, dset);
@@ -8480,11 +8490,16 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 
     set_previous_depth(fn_executing);
     fn_executing++;
+
+#if MINIMAL_SETVARS
     if (call->fun->flags & UFUN_USES_SET) {
 	push_program_state();
     } else {
 	push_verbosity(call);
     }
+#else
+    push_program_state();
+#endif
 
     callstack = g_list_append(callstack, call);
 
