@@ -6,7 +6,7 @@ version 2020c, in progress
   $result accessor
 - Add new sgn() function: returns the sign of its argument
 - bwrite() and bwrite() functions: support JSON as well as
-  XML for representing bundles
+  XML for representing gretl bundles
 - Path-searching for inputs: improve the mechanism for
   storing likely locations based on the opening of scripts
 - Packaged datasets: show type and size in the GUI, as well
