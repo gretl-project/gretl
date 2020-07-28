@@ -1,8 +1,8 @@
 version 2020c, in progress
 - Improve error message in case of invalid gnuplot path
 - loop: make "quiet" operation the default
-- "fractint" command: store the estimated d into the $result
-  accessor
+- "fractint" and "hurst" commands: store the respective estimated d
+  or exponent into the $result accessor
 - Add sgn() function
 - bwrite() and bwrite() functions: support JSON as well as
   XML for representing bundles
