@@ -21,17 +21,25 @@ version 2020c, in progress
   string-valued series arguments
 - pshrink() function: add an optional argument to avoid
   skipping missing values
+- mshape() function: make the third argument optional and
+  document the new behavior
 - Fix bug: failure of negative matrix index (exclusion)
   when a value of -999 was given
 - Fix bug: the "restrict" command as applied to VECMs could
   emit an unwanted newline even given the --silent option
 - Fix bug: "panel plot" coud crash under certain conditions
+- Fix bug: ensure greater precision when printing values
+  to 15 or more significant digits
+- Fix bug: possible error in Spearman's rho for the case of
+  no ties
 - "xtab" command: fix for the case when one or more of the
   series to be cross-tabulated are string-valued
 - "summary" command: don't provide spurious results for
   string-values series
 - "scatters" command, time-series variant: try harder to get
-  the time-axis tics right
+  appropriate time-axis tics
+- "pkg" command: enable variant "pkg index addons" to update
+  the index of installed "addon" packages
 - Arrays of strings: support union and intersection via the
   "||" and "&&" operators respectively
 - Error reporting: be more specific when the problem is an
@@ -41,6 +49,10 @@ version 2020c, in progress
   and also via a new "set" variable, graph_theme; also set
   the default to the "dark2" theme
 - Add new function, bincoeff(), giving binomial coefficents
+- Datasets supplied with gretl: include a version of R's
+  "swisspharma" dat
+- User's Guide: incorporate the previously stand-alone MIDAS
+  documentation as two new Guide chapters
 - MS Windows and macOS builds: update to gnuplot 5.2.6
 - Building gretl on MS Windows: updates and improvements to
   the auto-generated support files
