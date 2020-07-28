@@ -20,7 +20,7 @@ version 2020c, in progress
 - strlen() function: generalize to allow strings array and
   string-valued series arguments
 - pshrink() function: add an optional argument to avoid
-  skipping issing values
+  skipping missing values
 - Fix bug: failure of negative matrix index (exclusion)
   when a value of -999 was given
 - Fix bug: the "restrict" command as applied to VECMs could
