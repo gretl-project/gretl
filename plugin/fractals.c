@@ -22,7 +22,6 @@
 #include "libset.h"
 
 #define MINSAMP 8
-
 #define HDEBUG 0
 
 static int

@@ -546,14 +546,12 @@ static int overdispersion_test (MODEL *pmod, const DATASET *dset,
 
     if (!err) {
 	err = gretl_matrix_ols(u, G, b, NULL, e, NULL);
-
 	if (!err) {
 	    double X2 = e->rows;
 
 	    for (i=0; i<e->rows; i++) {
 		X2 -= e->val[i] * e->val[i];
 	    }
-
 	    if (X2 > 0) {
 		gretl_model_set_double(pmod, "overdisp", X2);
 	    }
@@ -615,19 +613,15 @@ static void add_pseudoR2 (MODEL *pmod, const double *y,
 	if (na(pmod->yhat[t])) {
 	    continue;
 	}
-
 	lytfact = log_x_factorial(y[t]);
 	if (na(lytfact)) {
 	    ll0 = NADBL;
 	    break;
 	}
-
 	llt = K - lytfact;
-
 	if (oinfo != NULL && y[t] > 0) {
 	    llt += y[t] * log(oinfo->x[t]);
 	}
-
 #if PR2DEBUG
 	fprintf(stderr, "ll[%d] = %g\n", t, llt);
 #endif
