@@ -3170,10 +3170,12 @@
       <description>
 	<para>
 	  Restituisce il determinante di <argname>A</argname>,
-	  calcolato tramite la scomposizione LU.
+	  calcolato tramite la scomposizione LU. Si noti che, se ciò
+	  che serve è il suo logaritmo, la funzione <fncref
+	  targ="ldet"/> è preferibile.
 	  <seelist> 
-            <fncref targ="ldet"/>
             <fncref targ="rcond"/>
+            <fncref targ="cnumber"/>
 	  </seelist>
 	</para>
       </description>
@@ -6245,8 +6247,15 @@
       </fnargs>
       <description>
 	<para>
-	  Produce il logaritmo naturale del determinante di <math>A</math>,
-	  calcolato attraverso la fattorizzazione LU.
+	  Produce il logaritmo naturale del determinante di
+	  <math>A</math>, calcolato attraverso la fattorizzazione
+	  LU. Questa funzione è più efficiente del calcolo del
+	  logaritmo del risultato di <fncref targ="det"/>. Fra
+	  l'altro, in alcuni casi <lit>ldet</lit> restituisce un
+	  risultato valido anche quando il determinante di
+	  <math>A</math> è numericamente <quote>infinito</quote> (nel
+	  senso che eccede il massimo consentito dalla precisione
+	  dell'elaboratore).
 	  <seelist> 
 	    <fncref targ="det"/>
 	    <fncref targ="rcond"/>
