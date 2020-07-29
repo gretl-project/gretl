@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 2018a\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-17 09:06+0200\n"
-"PO-Revision-Date: 2020-07-25 09:53-0400\n"
+"PO-Revision-Date: 2020-07-29 22:00-0400\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@wsb.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -10445,11 +10445,11 @@ msgstr "Calculate using logs"
 #: gui/dialogs.c:6426
 #, c-format
 msgid "100-based index of %s"
-msgstr "100-based index of %s"
+msgstr "Indeks jednopodstawowy dla %s"
 
 #: gui/dialogs.c:6429
 msgid "100-based indices"
-msgstr "100-based indices"
+msgstr "Indeks jednopodstawowy"
 
 #: gui/dialogs.c:6462
 msgid "Base period:"
@@ -16608,7 +16608,7 @@ msgstr "Domyślna skala wykresu"
 
 #: gui/settings.c:240
 msgid "Graph theme"
-msgstr "Graph theme"
+msgstr "Preferencje grafiki"
 
 #: gui/settings.c:243
 msgid "Command to launch gnuplot"
@@ -16720,7 +16720,7 @@ msgstr "\"Smart\" Tab and Enter"
 
 #: gui/settings.c:314
 msgid "Show line numbers"
-msgstr "Show line numbers"
+msgstr "Pokaż numery lini"
 
 #: gui/settings.c:316
 msgid "Script editor uses tabs"
@@ -16728,15 +16728,15 @@ msgstr "Okno edycji skryptu z zakładkami"
 
 #: gui/settings.c:319
 msgid "Enable auto-completion"
-msgstr "Enable auto-completion"
+msgstr "Włącz automatyczne uzupełnianie"
 
 #: gui/settings.c:322
 msgid "Enable auto-brackets"
-msgstr "Enable auto-brackets"
+msgstr "Włącz automatyczne nawiasy"
 
 #: gui/settings.c:324
 msgid "Highlighting style"
-msgstr "Highlighting style"
+msgstr "Styl podkreślający"
 
 #: gui/settings.c:336
 msgid "Use robust covariance matrix by default"
@@ -17194,7 +17194,7 @@ msgstr "Unindent region"
 
 #: gui/textbuf.c:3796 gui/toolbar.c:826
 msgid "Auto-indent script"
-msgstr "Auto-indent script"
+msgstr "Skrypt z automatycznym wcięciem"
 
 #: gui/textbuf.c:3807 gui/toolbar.c:825
 msgid "Preferences..."
@@ -17371,7 +17371,7 @@ msgstr "Dołącz..."
 
 #: gui/toolbar.c:839 gui/toolbar.c:840
 msgid "Toggle split pane"
-msgstr "Toggle split pane"
+msgstr "Przełącz panel podziału"
 
 #: gui/toolbar.c:841
 msgid "Help on command"
