@@ -568,17 +568,31 @@ printf "\n%#12.5g\n", M[1]
 
 \subsection{Operations on whole arrays}
 
-At present only one operation is available for arrays as a whole,
-namely appending. You can do, for example
+Three operators are applicable to whole arrays, but only one to
+arrays of arbitrary type (the other two being restricted to arrays of
+strings). The generally available operation is appending. You can do,
+for example
 \begin{code}
-# for S1 and S2 both arrays of strings
-strings BigS = S1 + S2
-# or
-S1 += S2
+# for M1 and M2 both arrays of matrices
+matrices BigM = M1 + M2
+# or if you wish to augment M1
+M1 += M2
 \end{code}
-In each case the result is an array of strings whose length is the sum
-of the lengths of \texttt{S1} and \texttt{S2}---and similarly for the
+In each case the result is an array of matrices whose length is the sum
+of the lengths of \texttt{M1} and \texttt{M2}---and similarly for the
 other supported types.
+
+The operators specific to strings are union, via \verb+||+, and
+intersection, via \verb+&&+. Given the following code, for \texttt{S1}
+and \texttt{S2} both arrays of strings,
+\begin{code}
+strings Su = S1 || S2
+strings Si = S1 && S2
+\end{code}
+the array \texttt{Su} will contain all the strings in \texttt{S1} plus
+any in \texttt{S2} that are not in \texttt{S1}, while \texttt{Si} will
+contain all and only the strings that appear in both \texttt{S1} and
+\texttt{S2}.
 
 \subsection{Arrays as function arguments}
 \label{subsec:array-args}
