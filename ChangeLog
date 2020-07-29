@@ -15,7 +15,7 @@ version 2020c, in progress
   as a brief description
 - GUI data access: add convenience menu items for accessing
   files supplied by "addons" such as SVAR
-- bwrite() and bwrite() functions: support JSON as well as
+- bwrite() and bread() functions: support JSON as well as
   XML for representing gretl bundles
 - atof() function: allow giving a string-valued series as
   argument
