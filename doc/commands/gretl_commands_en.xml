@@ -13183,7 +13183,7 @@
 	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>;
 	  and also when imposing certain sorts of restriction
 	  associated with VECMs. Unlike other settings,
-	  <lit>initivals</lit> is not persistent: it resets to the
+	  <lit>initvals</lit> is not persistent: it resets to the
 	  default initializer after its first use. For details in
 	  connection with ARMA estimation see <guideref
 	  targ="chap:timeseries"/>.

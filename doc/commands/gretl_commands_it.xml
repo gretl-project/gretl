@@ -10871,7 +10871,6 @@
   </command>
 
   <command name="pkg" section="Utilities" context="cli">
-
     <usage>
       <arguments>
         <argument>azione</argument>
@@ -10882,10 +10881,19 @@
 	  <flag>--local</flag>
 	  <effect>installa da file in locale</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>vedi sotto</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>vedi sotto</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
 	<example>pkg install /path/to/myfile.gfn --local</example>
+	<example>pkg query ghosts</example>
 	<example>pkg unload armax</example>
      </examples>
     </usage>    
@@ -10894,9 +10902,9 @@
       <para>
 	Comando per installare, rimuovere dalla memoria e
 	disinstallare pacchetti di funzioni (file <lit>gfn</lit> o
-	<lit>zip</lit>). Il parametro <repl>azione</repl>
-	deve essere uno fra <lit>install</lit>, <lit>unload</lit>
-	o <lit>remove</lit>.
+	<lit>zip</lit>). Il parametro <repl>azione</repl> deve essere
+	uno fra <lit>install</lit>, <lit>query</lit>,
+	<lit>unload</lit>, <lit>remove</lit> o <lit>index</lit>.
       </para>
       <para>
 	<lit>install</lit>: Nella sua forma più semplice, senza
@@ -10915,6 +10923,13 @@
 	comando <cmdref targ="include"/> sia in grado poi di trovarlo.
       </para>
       <para>
+	<lit>query</lit>: L'effetto di default effect è di stampare
+	alcune informazioni di base sul pacchetto (autore, versione,
+	ecc.). Selezionando l'opzione <opt>quiet</opt> però non viene
+	stampato nulla; le informazioni, invece, vengono salvate in un
+	bundle, accessibile via <fncref targ="$result"/>.
+      </para>
+      <para>
 	<lit>unload</lit>: l'argomento <repl>pkgname</repl> deve
 	essere dato in forma semplice, senza percorso o suffisso (come
 	nell'ultimo esempio). L'effetto è scaricare il pacchetto dalla
@@ -10925,6 +10940,20 @@
 	<lit>remove</lit>: come <lit>unload</lit>, ma in aggiunta cancella
 	anche dal disco i file di pacchetto.
       </para>
+      <para>
+	<lit>index</lit>: è un caso particolare, in cui il nome del
+	pacchetto deve essere sostituito dalla stringa
+	<quote><lit>addons</lit></quote>: l'effetto è quello di
+	aggiornare l'indice dei pacchetti standard, anche noti come
+	<quote>addons</quote>. Quest'operazione viene svolta in
+	automatico di tanto in tanto, ma in certi casi la si potrebbe
+	voler fare a mano. in tal caso, l'opzione <opt>verbose</opt>
+	produce un report di ciò che viene cercato e trovato. Ad
+	esempio:
+      </para>
+      <code>
+	pkg index addons --verbose
+      </code>
     </description>
 
     <gui-access>
@@ -13265,9 +13294,18 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  </para>
 	</li>
 	<li>	  
-          <para><lit>initvals</lit>: una matrice pre-specificata. Permette di
-            impostare manualmente le stime dei parametri ARMA. Per i dettagli,
-            si veda la <guideref targ="chap:timeseries"/>.
+          <para><lit>initvals</lit>: una matrice
+          pre-specificata. Permette di inizializzare il vettore dei
+          parametri per certi comandi che usano algoritmi di
+          ottimizzazione numerica (<lit>arma</lit>, <lit>garch</lit>,
+          <lit>logit</lit> e <lit>probit</lit>, <lit>tobit</lit> e
+          <lit>intreg</lit>, <lit>biprobit</lit>,
+          <lit>duration</lit>), nonché quando vengono imposte certe
+          restrizioni associate ai VECM. A differenza di altri
+          settaggi, <lit>initvals</lit> non è persistente: dopo,
+          l'uso, viene automaticamente resettato.  Per i dettagli
+          legati alla stima di modelli ARMA, si veda la <guideref
+          targ="chap:timeseries"/>.
 	  </para>
 	</li>
 	<li>
