@@ -1,20 +1,22 @@
 version 2020c, in progress
+- New feature: thematic maps, supported by new "geoplot"
+  addon; allow loading GeoJSON and ESRI shapefiles as
+  gretl datasets
+- New feature: offer a choice of plotting styles or themes,
+  via GUI and also via a new "set" variable, graph_theme;
+  plus set the default to the "dark2" theme
+- Add new bincoeff() function, giving binomial coefficients
+- Add new sgn() function: returns the sign of its argument
 - Improve error message in case of invalid gnuplot path
 - loop: make "quiet" operation the default
-- "fractint" and "hurst" commands: make the estimated
-  fractional difference or exponent accessible via the
-  $result accessor
-- Add new sgn() function: returns the sign of its argument
-- bwrite() and bwrite() functions: support JSON as well as
-  XML for representing gretl bundles
 - Path-searching for inputs: improve the mechanism for
   storing likely locations based on the opening of scripts
 - Packaged datasets: show type and size in the GUI, as well
   as a brief description
 - GUI data access: add convenience menu items for accessing
   files supplied by "addons" such as SVAR
-- Add new "geoplot" addon (produce thematic maps); also
-  allow loading GeoJSON and ESRI shapefiles as datasets
+- bwrite() and bwrite() functions: support JSON as well as
+  XML for representing gretl bundles
 - atof() function: allow giving a string-valued series as
   argument
 - strlen() function: generalize to allow strings array and
@@ -32,6 +34,9 @@ version 2020c, in progress
   to 15 or more significant digits
 - Fix bug: possible error in Spearman's rho for the case of
   no ties
+- "fractint" and "hurst" commands: make the estimated
+  fractional difference or exponent accessible via the
+  $result accessor
 - "xtab" command: fix for the case when one or more of the
   series to be cross-tabulated are string-valued
 - "summary" command: don't provide spurious results for
@@ -40,23 +45,25 @@ version 2020c, in progress
   appropriate time-axis tics
 - "pkg" command: enable variant "pkg index addons" to update
   the index of installed "addon" packages
+- "set" command, "initvals" keyword: clarify the status of
+  this setting (non-persistent)
+- String-valued series: drop any unused strings when sub-
+  sampling with the --permanent flag, and when saving a
+  sub-sampled dataset via the "store" command
 - Arrays of strings: support union and intersection via the
   "||" and "&&" operators respectively
 - Error reporting: be more specific when the problem is an
   out-of-bounds index value
-- Enhance the included grunfeld panel dataset
-- Provide a choice of plotting styles or themes, via GUI
-  and also via a new "set" variable, graph_theme; also set
-  the default to the "dark2" theme
-- Add new function, bincoeff(), giving binomial coefficents
 - Datasets supplied with gretl: include a version of R's
-  "swisspharma" dat
+  "swisspharma" data; enhance the grunfeld panel dataset
 - User's Guide: incorporate the previously stand-alone MIDAS
   documentation as two new Guide chapters
 - MS Windows and macOS builds: update to gnuplot 5.2.6
+- macOS: provide 64-bit builds of x13as and tramo-seats
 - Building gretl on MS Windows: updates and improvements to
   the auto-generated support files
 - Update several translations
+- Numerous small bug-fixes
 
 2020-04-11 version 2020b
 - Update gretl copyright notice
