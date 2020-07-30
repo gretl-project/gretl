@@ -1569,7 +1569,7 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	mark_vwin_content_saved(vwin);
 	mark_session_changed();
     } else {
-	FILE *fp = gretl_fopen(vwin->fname, "w");
+	FILE *fp = gretl_fopen(vwin->fname, "wb");
 
 	if (fp == NULL) {
 	    file_write_errbox(vwin->fname);
