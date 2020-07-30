@@ -6394,9 +6394,10 @@
 
     <description>
       <para>
-	Calcula el exponente de Hurst (una medida de persistencia
-	o larga memoria) para una variable de tipo serie temporal
-	que tenga por lo menos 128 observaciones.
+	Calcula el exponente de Hurst (una medida de persistencia o memoria
+	larga) para una variable de tipo serie temporal que tenga por lo menos
+	128 observaciones. Puedes obtener el resultado (junto con su desviación
+	típica) mediante el accesor <fncref targ="$result"/>.
       </para>
       <para>
 	<cite key="mandelbrot83">Mandelbrot (1983)</cite> discute
@@ -13168,17 +13169,23 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_richardson</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
-	  Utiliza la extrapolación de Richardson cuando calcula las
+	  Utiliza la extrapolación de Richardson cuando calcules las
 	  derivadas numéricas en el contexto de la maximización
 	  BFGS.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>initvals</lit>: O <lit>auto</lit> (por defecto),
-	  o bien el nombre de una matriz especificada previamente. Permite
-	  establecer manualmente las estimaciones iniciales de los parámetros
-	  para problemas de optimización numérica (tales como la estimación
-	  ARMA). Para obtener más detalles, consulta
+	  <para><lit>initvals</lit>: El nombre de una matriz que haya sido
+	  definida previamente. Permite establecer manualmente el vector
+	  inicial de parámetros en determinadas instruciones de estimación
+	  que implican realizar optimización numérica como <lit>arma</lit>,
+	  <lit>garch</lit>, <lit>logit</lit>, <lit>probit</lit>, <lit>tobit</lit>,
+	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>; y
+	  también cuando se imponen ciertos tipos de restricciones que están
+	  vinculadas a modelos VEC. A diferencia de otras configuraciones,
+	  <lit>initvals</lit> no es persistente, pues se restablece su valor
+	  al de inicio por defecto, después de su primera utilización. Para
+	  obtener detalles en relación con la estimación ARMA consulta
 	  <guideref targ="chap:timeseries"/>.
 	  </para>
 	</li>

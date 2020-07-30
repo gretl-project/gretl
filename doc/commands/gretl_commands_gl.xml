@@ -6394,9 +6394,10 @@
 
     <description>
       <para>
-	Calcula o expoñente de Hurst (unha medida de persistencia
-	ou longa memoria) para unha variable de tipo serie temporal
-	que teña polo menos 128 observacións.
+	Calcula o expoñente de Hurst (unha medida de persistencia ou memoria
+	longa) para unha variable de tipo serie temporal que teña polo menos
+	128 observacións. Podes obter o resultado (xunto coa súa desviación
+	padrón) mediante o accesorio <fncref targ="$result"/>.
       </para>
       <para>
 	<cite key="mandelbrot83">Mandelbrot (1983)</cite> discute
@@ -13168,17 +13169,23 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_richardson</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Utiliza a extrapolación de Richardson cando calcula as
+	  Utiliza a extrapolación de Richardson cando calcules as
 	  derivadas numéricas no contexto da maximización
 	  BFGS.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>initvals</lit>: Ou ben <lit>auto</lit> (por defecto),
-	  ou ben o nome dunha matriz especificada previamente. Permite
-	  establecer manualmente as estimacións iniciais dos parámetros
-	  para problemas de optimización numérica (tales como a estimación
-	  ARMA). Para obter máis detalles, consulta o
+	  <para><lit>initvals</lit>: O nome dunha matriz que fose definida
+	  previamente. Permite establecer manualmente o vector inicial de
+	  parámetros en determinadas instrucións de estimación que implican
+	  realizar optimización numérica como <lit>arma</lit>, <lit>garch</lit>,
+	  <lit>logit</lit>, <lit>probit</lit>, <lit>tobit</lit>, <lit>intreg</lit>,
+	  <lit>biprobit</lit>, <lit>duration</lit>; e tamén cando se impoñen
+	  certos tipos de restricións que están vencelladas a modelos VEC.
+	  A diferenza doutras configuracións, <lit>initvals</lit> non é
+	  persistente, pois se restablece o seu valor ao de inicio por
+	  defecto, despois da súa primeira utilización. Para obter
+	  detalles en relación coa estimación ARMA consulta
 	  <guideref targ="chap:timeseries"/>.
 	  </para>
 	</li>

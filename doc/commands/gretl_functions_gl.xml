@@ -771,7 +771,8 @@
 	  Proporciona información reservada, a continuación dalgunhas
 	  instrucións que non teñen accesorios específicos. As instrucións
 	  en cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
-	  <cmdref targ="freq"/>, <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
+	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>,
+	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
 	  <cmdref targ="vif"/> e <cmdref targ="bkw"/> (en cuxos casos, o resultado
 	  é unha matriz), ademais de <cmdref targ="pkg"/> (en cuxo caso,
 	  gárdase opcionalmente un feixe).
