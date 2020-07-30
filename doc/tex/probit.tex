@@ -897,12 +897,13 @@ country per year, the number of vehicles crossing a certain
 intersection per hour, the number of bank failures per year. A
 probabilistic description of such a variable must hinge on some
 discrete distribution and the one most commonly employed is the
-Poisson, according to which
-\begin{equation}
+Poisson, according to which, for a random variable $Y$ and a specific
+realization $y$,
+\[
 P(Y = y) = \frac{e^{-\lambda}\lambda^y}{y!}, \quad y=0,1,2\dots
-\end{equation}
-where the single parameter $\lambda$ is both the mean and the
-variance.  In an econometric context we generally want to treat
+\]
+where the single parameter $\lambda$ is both the mean and the variance
+of $Y$.  In an econometric context we generally want to treat
 $\lambda$ as specific to the observation, $i$, and driven by
 covariates $X_i$ via a parameter vector $\beta$. The standard way of
 allowing for this is the exponential mean function,
@@ -910,9 +911,9 @@ allowing for this is the exponential mean function,
   \lambda_i \equiv \exp(X_i\beta)
 \]
 hence leading to
-\begin{equation}
+\[
 P(Y_i = y) = \frac{\exp(-\exp(X_i\beta))(\exp(X_i\beta))^y}{y!}
-\end{equation}
+\]
 Given this model the log-likelihood for $n$ observations can be
 written as
 \[
@@ -932,8 +933,8 @@ risk''. In this case $\lambda$ is modeled as
 \[
   \lambda_i = t_i \exp(X_i\beta)
 \]
-The log-likelihood is not greatly complicated thereby.  Another way to
-look at the offset variable is to consider its natural log as just
+The log-likelihood is not greatly complicated thereby.  Here's another
+way of thinking about the offset variable: its natural log is just
 another explanatory variable whose coefficient is constrained to equal
 1.
 
@@ -992,7 +993,7 @@ which is known as the Negative Binomial Model. The conditional
 mean is still $E(Y_i | X_i) = \lambda_i$, but the variance is $V(Y_i |
 X_i) = \lambda_i \left( 1 + \lambda_i \alpha \right)$.
 
-To estimate the Negative Binomial Model in gretl, just substitute the
+To estimate the Negative Binomial model in gretl, just substitute the
 keyword \texttt{negbin} for \texttt{poisson} in the commands shown
 above.
 
@@ -1002,10 +1003,17 @@ in which the conditional variance is a scalar multiple of the
 conditional mean; that is,
 $V(Y_i | X_i) = \lambda_i \left( 1 + \gamma \right)$. This can be
 invoked in gretl by appending the option \option{model1} to the
-\texttt{negbin} command. A script which exemplifies the above models
-is included among gretl's sample scripts under the name
-\texttt{camtriv.inp}.
+\texttt{negbin} command.
 
+\subsection{Examples}
+
+Among the sample scripts supplied with gretl you can find
+\texttt{camtriv.inp}. This exemplifies the count-data estimators
+described above, based on a dataset analysed by
+\cite{cameron-trivedi98}. The gretl package also contains a relevant
+dataset used by \cite{mccullagh-nelder83}, namely
+\texttt{mccullagh.gdt}, on which the Poisson and Negative Binomial
+estimators may be tried.
 
 \section{Duration models}
 \label{sec:duration}
