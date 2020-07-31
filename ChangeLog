@@ -1,4 +1,4 @@
-version 2020c, in progress
+2020-07-31 version 2020c
 - New feature: thematic maps, supported by new "geoplot"
   addon; allow loading GeoJSON and ESRI shapefiles as
   gretl datasets

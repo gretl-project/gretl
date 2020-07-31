@@ -1,9 +1,13 @@
-version 2020c, in progress
+2020-07-31 version 2020c
 
 The -q or --quiet option for the "loop" command is now
 redundant; quiet operation has become the default. But the
 option is still accepted. Use the --verbose option if you
 wish to see more output.
+
+The command "set initvals" is a one-shot (non-persistent)
+setting. Not really backward incompatible because in effect
+this has been the case for some time, in most uses.
 
 2020-04-11 version 2020b
 
