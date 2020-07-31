@@ -555,16 +555,16 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Devolve un número enteiro coa cantidade total de observacións que están
-	  seleccionadas na mostra vixente. Relacionado: <fncref label="\$tmax" targ="dtmax"/>.
+	  seleccionadas na mostra vixente. Relacionado: <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
 
-    <function name="$now" section="access" targ="dnow" output="vector">
+    <function name="$now" section="access" output="vector">
       <description>
 	<para>
 	  Devolve un vector con 2 elementos: o primeiro indica o número
@@ -731,7 +731,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Devolve a probabilidade asociada ao valor do estatístico de proba que
@@ -1090,7 +1090,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1108,8 +1108,8 @@
 	</para>
 	<para>
 	  Ten en conta que, en xeral, <lit>$tmax</lit> non é igual a
-	  <fncref label="\$nobs" targ="dnobs"/>, que proporciona o
-	  número de observacións do rango da mostra vixente.
+	  <fncref targ="$nobs"/>, que proporciona o número de
+	  observacións do rango da mostra vixente.
 	</para>
       </description>
     </function>
@@ -4475,7 +4475,7 @@
 	<para>
 	  Solicita a produción dun mapa, cando se dispón de datos xeográficos
 	  axeitados. Na maioría dos casos o argumento <argname>mapfile</argname>
-	  debe proporcionarse como <fncref label="\$mapfile" targ="dmapfile"/>,
+	  debe proporcionarse como <fncref targ="$mapfile"/>,
 	  o que indica un accesorio co que se vai recuperar o nome do ficheiro
 	  que sexa relevante, de tipo GeoJSON ou de tipo ESRI de forma. O
 	  argumento opcional <argname>carga</argname> utilízase para indicar

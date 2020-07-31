@@ -522,11 +522,11 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Retorna o número de observações na amostra atualmente
-	  selecionada. Veja também: <fncref label="\$tmax" targ="dtmax"/>.
+	  selecionada. Veja também: <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
@@ -638,7 +638,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Retorna o p-valor da estatística de teste que foi gerada
@@ -963,7 +963,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -981,8 +981,8 @@
 	</para>
 	<para>
 	  Notar que, em geral, o <lit>$tmax</lit> não é igual a
-	  <fncref label="\$nobs" targ="dnobs"/>, que indica
-	  número de observações do intervalo da amostra actual.
+	  <fncref targ="$nobs"/>, que indica número de observações do
+	  intervalo da amostra actual.
 	</para>
       </description>
     </function>

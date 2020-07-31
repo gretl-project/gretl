@@ -555,16 +555,16 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Returns the number of observations in the currently selected
-	  sample. Related: <fncref label="\$tmax" targ="dtmax"/>.
+	  sample. Related: <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
 
-    <function name="$now" section="access" targ="dnow" output="vector">
+    <function name="$now" section="access" output="vector">
       <description>
 	<para>
 	  Returns a 2-vector: its first element is the number of
@@ -731,7 +731,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Returns the p-value of the test statistic that was generated
@@ -1090,7 +1090,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1108,8 +1108,8 @@
 	</para>
 	<para>
 	  Note that <lit>$tmax</lit> does not in general equal <fncref
-	  label="\$nobs" targ="dnobs"/>, which gives the number of
-	  observations in the current sample range.
+	  targ="$nobs"/>, which gives the number of observations in
+	  the current sample range.
 	</para>
       </description>
     </function>
@@ -4476,12 +4476,12 @@
 	  Calls for production of a map, when suitable geographical
 	  data are present. In most cases the
 	  <argname>mapfile</argname> argument should be given as
-	  <fncref label="\$mapfile" targ="dmapfile"/>, an accessor
-	  that retrieves the name of the relevant GeoJSON file or ESRI
-	  shapefile. The optional <argname>payload</argname> argument
-	  is used to give the name of a series with which to colorize
-	  the regions of the map. And the final bundle argument
-	  enables you to set numerous options.
+	  <fncref targ="$mapfile"/>, an accessor that retrieves the
+	  name of the relevant GeoJSON file or ESRI shapefile. The
+	  optional <argname>payload</argname> argument is used to give
+	  the name of a series with which to colorize the regions of
+	  the map. And the final bundle argument enables you to set
+	  numerous options.
 	</para>
 	<para>
 	  See the geoplot documentation, <doc>geoplot.pdf</doc>, for
