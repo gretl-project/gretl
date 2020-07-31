@@ -29,7 +29,7 @@
   when a value of -999 was given
 - Fix bug: the "restrict" command as applied to VECMs could
   emit an unwanted newline even given the --silent option
-- Fix bug: "panel plot" coud crash under certain conditions
+- Fix bug: "panel plot" could crash under certain conditions
 - Fix bug: ensure greater precision when printing values
   to 15 or more significant digits
 - Fix bug: possible error in Spearman's rho for the case of
