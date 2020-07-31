@@ -539,16 +539,16 @@
       </description>
     </function>
     
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Produce il numero delle osservazioni nel campione
-	  selezionato. Si veda anche <fncref label="\$tmax" targ="dtmax"/>.
+	  selezionato. Si veda anche <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
     
-    <function name="$now" section="access" targ="dnow" output="vector">
+    <function name="$now" section="access" output="vector">
       <description>
 	<para>
 	  Produce un vettore a 2 elementi: il primo elemento è il
@@ -690,7 +690,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Produce il p-value della statistica test generata
@@ -1032,7 +1032,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1050,9 +1050,8 @@
 	</para>
 	<para>
 	  Si noti che, in generale, <lit>$tmax</lit> non è uguale a
-	  <fncref label="\$nobs" targ="dnobs"/>, che resituisce il
-	  numero di osservazioni nel sottocampione attualmente in
-	  vigore.
+	  <fncref targ="$nobs"/>, che resituisce il numero di
+	  osservazioni nel sottocampione attualmente in vigore.
 	</para>
       </description>
     </function>

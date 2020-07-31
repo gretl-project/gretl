@@ -555,16 +555,16 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Devuelve un número entero con la cantidad total de observaciones que están
-	  seleccionadas en la muestra vigente. Relacionado: <fncref label="\$tmax" targ="dtmax"/>.
+	  seleccionadas en la muestra vigente. Relacionado: <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
 
-    <function name="$now" section="access" targ="dnow" output="vector">
+    <function name="$now" section="access" output="vector">
       <description>
 	<para>
 	  Devuelve un vector con 2 elementos: el primero indica el número
@@ -731,7 +731,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Devuelve la probabilidad asociada al valor del estadístico de prueba que
@@ -1090,7 +1090,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1107,9 +1107,9 @@
 	  funciones, se limita al rango muestral establecido por el solicitante.
 	</para>
 	<para>
-	  Ten en cuenta que, en general, <lit>$tmax</lit> no es igual a
-	  <fncref label="\$nobs" targ="dnobs"/>, que proporciona el
-	  número de observaciones del rango de la muestra vigente.
+	  Ten en cuenta que, en general, <lit>$tmax</lit> no es igual
+	  a <fncref targ="$nobs"/>, que proporciona el número de
+	  observaciones del rango de la muestra vigente.
 	</para>
       </description>
     </function>
@@ -4473,15 +4473,16 @@
       </fnargs>
       <description>
 	<para>
-	  Solicita la producción de un mapa, cuando se dispone de datos
-	  geográficos adecuados. En la mayoría de los casos el argumento
-	  <argname>mapfile</argname> debe proporcionarse como
-	  <fncref label="\$mapfile" targ="dmapfile"/>, lo que indica un accesor
-	  con el que se va a recuperar el nombre del archivo que sea relevante,
-	  de tipo GeoJSON o de tipo ESRI de forma. El argumento opcional
-	  <argname>carga</argname> se usa para indicar el nombre de una serie
-	  con la que se colorean las regiones del mapa. Y el argumento final de
-	  tipo "bundle" te permite que puedas establecer numerosas opciones.
+	  Solicita la producción de un mapa, cuando se dispone de
+	  datos geográficos adecuados. En la mayoría de los casos el
+	  argumento <argname>mapfile</argname> debe proporcionarse
+	  como <fncref targ="$mapfile"/>, lo que indica un accesor con
+	  el que se va a recuperar el nombre del archivo que sea
+	  relevante, de tipo GeoJSON o de tipo ESRI de forma. El
+	  argumento opcional <argname>carga</argname> se usa para
+	  indicar el nombre de una serie con la que se colorean las
+	  regiones del mapa. Y el argumento final de tipo "bundle" te
+	  permite que puedas establecer numerosas opciones.
 	</para>
 	<para>
 	  Puedes consultar <doc>geoplot.pdf</doc> con la documentación sobre la función,
