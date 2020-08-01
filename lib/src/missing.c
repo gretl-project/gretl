@@ -30,10 +30,6 @@ struct MISSOBS_ {
     char *missvec;
 };
 
-static char *model_missmask (const int *list, int t1, int t2,
-			     int n, const double **Z, int dwt,
-			     int *misscount);
-
 #define MASKDEBUG 0
 
 /**
@@ -658,4 +654,27 @@ int any_missing_user_values (const DATASET *dset)
     }
 
     return 0;
+}
+
+/**
+ * model_add_missmask:
+ * @pmod: pointer to gretl MODEL.
+ * @n: length of mask.
+ *
+ * Allocates a missing obs mask of length @n and attaches it
+ * to @pmod. All elements are initialized to '0' (non-missing).
+ *
+ * Returns: 0 on success, non-zero if allocation fails.
+ */
+
+int model_add_missmask (MODEL *pmod, int n)
+{
+    pmod->missmask = malloc((n+1) * sizeof *pmod->missmask);
+    if (pmod->missmask == NULL) {
+	return E_ALLOC;
+    } else {
+	memset(pmod->missmask, '0', n);
+	pmod->missmask[n] = 0; /* NUL-termination */
+	return 0;
+    }
 }

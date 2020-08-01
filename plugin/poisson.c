@@ -65,6 +65,10 @@ struct offset_info_ {
     double mean;     /* sample mean */
 };
 
+static int do_altpoisson (MODEL *pmod, offset_info *oinfo,
+			  DATASET *dset, gretlopt opt,
+			  PRN *prn);
+
 static void negbin_free (negbin_info *nbinfo)
 {
     gretl_matrix_block_destroy(nbinfo->B);
@@ -920,12 +924,17 @@ static int get_offset_info (MODEL *pmod, offset_info *oinfo,
 	    err = E_DATA;
 	} else if (na(oinfo->x[t])) {
 	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
-	    if (pmod->missmask != NULL) {
+	    if (pmod->missmask == NULL) {
+		model_add_missmask(pmod, dset->n);
+	    }
+	    if (pmod->missmask == NULL) {
+		err = E_ALLOC;
+	    } else {
 		pmod->missmask[t] = '1';
 	    }
 	    pmod->nobs -= 1;
 	    pmod->dfd -= 1;
-	    ndrop += 1;
+	    ndrop++;
 	} else {
 	    oinfo->mean += oinfo->x[t];
 	}
@@ -992,8 +1001,279 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 	    err = do_negbin(pmod, oinfo, dset, opt, vprn);
 	}
     } else {
+#if 1
+	err = do_altpoisson(pmod, oinfo, dset, opt, vprn);
+#else
 	err = do_poisson(pmod, oinfo, dset, opt, vprn);
+#endif
     }
 
     return err;
+}
+
+/* "alt" stuff follows */
+
+struct poisson_info_ {
+    int dist;              /* probability distribution type */
+    int k;                 /* number of covariates (including constant) */
+    int n;                 /* number of observations */
+    double ll;             /* loglikelihood */
+    gretl_matrix_block *B; /* workspace */
+    gretl_matrix *y;       /* dependent variable */
+    gretl_matrix *X;       /* covariates */
+    gretl_matrix *logoff;  /* log of offset variable, or NULL */
+    gretl_matrix *b;       /* coeffs on covariates */
+    gretl_matrix *llt;     /* per-observation likelihood */
+    gretl_matrix *Xb;      /* X \times \beta (+ offset) */
+    gretl_matrix *G;       /* score matrix */
+    gretl_matrix *HX;      /* workspace */
+    gretl_matrix *H;       /* hessian */
+    gretl_matrix *V;       /* covariance matrix */
+    PRN *prn;              /* verbose printer */
+};
+
+typedef struct poisson_info_ poisson_info;
+
+static void poisson_update_Xb (poisson_info *pinfo, const double *theta)
+{
+    if (theta != pinfo->b->val) {
+	int i;
+	for (i=0; i<pinfo->k; i++) {
+	    pinfo->b->val[i] = theta[i];
+	}
+    }
+    if (pinfo->logoff != NULL) {
+	gretl_matrix_copy_values(pinfo->Xb, pinfo->logoff);
+	gretl_matrix_multiply_mod(pinfo->X, GRETL_MOD_NONE,
+				  pinfo->b, GRETL_MOD_NONE,
+				  pinfo->Xb, GRETL_MOD_CUMULATE);
+    } else {
+	gretl_matrix_multiply(pinfo->X, pinfo->b, pinfo->Xb);
+    }
+}
+
+static void print_theta (const double *theta, int k)
+{
+    if (theta != NULL) {
+	int i;
+	fputs("  theta: ", stderr);
+	for (i=0; i<k; i++) {
+	    fprintf(stderr, "%g ", theta[i]);
+	}
+	fputc('\n', stderr);
+    } else {
+	fputs("  theta NULL\n", stderr);
+    }
+}
+
+static double poisson_loglik (const double *theta, void *data)
+{
+    poisson_info *pinfo = (poisson_info *) data;
+    double *y  = pinfo->y->val;
+    double *ll = pinfo->llt->val;
+    double *Xb = pinfo->Xb->val;
+    int t;
+
+    fprintf(stderr, "poisson loglik\n");
+    print_theta(theta, pinfo->k);
+
+    poisson_update_Xb(pinfo, theta);
+    pinfo->ll = 0.0;
+    errno = 0;
+
+    for (t=0; t<pinfo->n; t++) {
+	ll[t] = -exp(Xb[t]) + y[t] * Xb[t] - lngamma(y[t] + 1);
+	pinfo->ll += ll[t];
+    }
+
+    if (errno) {
+	pinfo->ll = NADBL;
+    }
+
+    fprintf(stderr, "  return ll = %g\n", pinfo->ll);
+
+    return pinfo->ll;
+}
+
+static int poisson_score (double *theta, double *g, int np,
+			  BFGS_CRIT_FUNC ll, void *data)
+{
+    poisson_info *pinfo = (poisson_info *) data;
+    double *y  = pinfo->y->val;
+    double *Xb = pinfo->Xb->val;
+    double yeXb;
+    int i, t, err = 0;
+
+    fprintf(stderr, "poisson score\n");
+    print_theta(theta, pinfo->k);
+
+    poisson_update_Xb(pinfo, theta); /* ?? */
+    for (i=0; i<np; i++) {
+	g[i] = 0.0;
+    }
+
+    for (t=0; t<pinfo->n; t++) {
+	yeXb = y[t] - exp(Xb[t]);
+	for (i=0; i<np; i++) {
+	    g[i] += yeXb * gretl_matrix_get(pinfo->X, t, i);
+	}
+    }
+
+    for (i=0; i<np; i++) {
+	fprintf(stderr, "%10g", g[i]);
+    }
+    fputc('\n', stderr);
+
+    return err;
+}
+
+static int poisson_hessian (double *theta, gretl_matrix *H,
+			    void *data)
+{
+    poisson_info *pinfo = (poisson_info *) data;
+    double *Xb = pinfo->Xb->val;
+    double eXtb, hxti;
+    int i, t, err = 0;
+
+    fprintf(stderr, "poisson hessian\n");
+    print_theta(theta, pinfo->k);
+
+    poisson_update_Xb(pinfo, theta); /* ?? */
+
+    for (t=0; t<pinfo->n; t++) {
+	eXtb = exp(Xb[t]);
+	for (i=0; i<pinfo->k; i++) {
+	    hxti = gretl_matrix_get(pinfo->X, t, i);
+	    gretl_matrix_set(pinfo->HX, t, i, eXtb * hxti);
+	}
+    }
+
+    gretl_matrix_multiply_mod(pinfo->X, GRETL_MOD_TRANSPOSE,
+			      pinfo->HX, GRETL_MOD_NONE,
+			      H, GRETL_MOD_NONE);
+    gretl_matrix_print(H, "H");
+
+    return err;
+}
+
+static int pinfo_allocate (poisson_info *pinfo,
+			   gretl_matrix_block **pB)
+{
+    gretl_matrix_block *B;
+
+    B = gretl_matrix_block_new(&pinfo->y, pinfo->n, 1,
+			       &pinfo->X, pinfo->n, pinfo->k,
+			       &pinfo->Xb, pinfo->n, 1,
+			       &pinfo->llt, pinfo->n, 1,
+			       &pinfo->G, pinfo->n, pinfo->k,
+			       &pinfo->HX, pinfo->n, pinfo->k,
+			       &pinfo->H, pinfo->k, pinfo->k,
+			       &pinfo->b, pinfo->k, 1,
+			       NULL);
+    if (B == NULL) {
+	return E_ALLOC;
+    } else {
+	*pB = B;
+	return 0;
+    }
+}
+
+static int do_altpoisson (MODEL *pmod, offset_info *oinfo,
+			  DATASET *dset, gretlopt opt,
+			  PRN *prn)
+{
+    poisson_info pinfo = {0};
+    gretl_matrix_block *B = NULL;
+    int i, s, t;
+    int err = 0;
+
+    pinfo.n = pmod->nobs;
+    pinfo.k = pmod->ncoeff;
+    pinfo.logoff = NULL;
+    err = pinfo_allocate(&pinfo, &B);
+
+    if (!err && oinfo != NULL) {
+	pinfo.logoff = gretl_matrix_alloc(pinfo.n, 1);
+	if (pinfo.logoff == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* transcribe data into matrix form */
+	const double *y = dset->Z[pmod->list[1]];
+	const double *off = NULL;
+	int vi;
+
+	if (oinfo != NULL) {
+	    off = oinfo->x;
+	}
+
+	for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
+	    if (na(pmod->uhat[t])) {
+		continue;
+	    }
+	    pinfo.y->val[s] = y[t];
+	    for (i=2; i<=pmod->list[0]; i++) {
+		vi = pmod->list[i];
+		gretl_matrix_set(pinfo.X, s, i-2, dset->Z[vi][t]);
+	    }
+	    if (off != NULL) {
+		pinfo.logoff->val[s] = log(off[t]);
+	    }
+	    s++;
+	}
+    }
+
+    if (!err) {
+	/* initialize coeffs */
+	if (pmod->ifc) {
+	    pinfo.b->val[0] = log(pmod->ybar);
+	    if (oinfo != NULL) {
+		pinfo.b->val[0] -= log(oinfo->mean);
+	    }
+	    for (i=1; i<pmod->ncoeff; i++) {
+		pinfo.b->val[i] = 0.0;
+	    }
+	}
+#if 0
+	else {
+	    pmod->errcode = get_noconst_estimates(pmod, dset, origv);
+	    if (pmod->errcode) {
+		goto bailout;
+	    }
+	}
+#endif
+    }
+
+    if (!err) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+	int maxit = 200;
+	int fncount = 0;
+	gretlopt maxopt = OPT_V;
+
+	err = newton_raphson_max(pinfo.b->val, pinfo.k, maxit,
+				 crittol, gradtol, &fncount,
+				 C_LOGLIK, poisson_loglik,
+				 poisson_score, poisson_hessian,
+				 &pinfo, maxopt, prn);
+	pprintf(prn, "newton: err = %g\n", err);
+	gretl_matrix_print(pinfo.b, "pdinfo.b");
+    }
+
+    for (i=0; i<pmod->ncoeff; i++) {
+	pmod->coeff[i] = pinfo.b->val[i];
+    }
+
+#if 0
+    if (pmod->errcode == 0 && !(opt & OPT_A)) {
+	transcribe_poisson_results(pmod, &tmpmod, y, iter, oinfo);
+	overdispersion_test(pmod, dset, opt);
+    }
+#endif
+
+    gretl_matrix_block_destroy(B);
+
+    return pmod->errcode;
 }
