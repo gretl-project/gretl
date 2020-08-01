@@ -596,13 +596,12 @@ static void add_pseudoR2 (MODEL *pmod, const double *y,
 {
     double llt, ll0 = 0.0;
     double K, lytfact;
-    double ybar = gretl_mean(pmod->t1, pmod->t2, y);
     int t;
 
     if (oinfo != NULL) {
-	K = ybar * (log(ybar/oinfo->mean) - 1.0);
+	K = pmod->ybar * (log(pmod->ybar/oinfo->mean) - 1.0);
     } else {
-	K = ybar * (log(ybar) - 1.0);
+	K = pmod->ybar * (log(pmod->ybar) - 1.0);
     }
 
 #if PR2DEBUG
@@ -906,8 +905,10 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
    if the series is OK.
 */
 
-static int get_offset_info (MODEL *pmod, offset_info *oinfo)
+static int get_offset_info (MODEL *pmod, offset_info *oinfo,
+			    DATASET *dset)
 {
+    int ndrop = 0;
     int t, err = 0;
 
     oinfo->mean = 0.0;
@@ -915,13 +916,35 @@ static int get_offset_info (MODEL *pmod, offset_info *oinfo)
     for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
 	if (na(pmod->uhat[t])) {
 	    continue;
-	} else if (na(oinfo->x[t])) {
-	    err = E_MISSDATA;
 	} else if (oinfo->x[t] < 0.0) {
 	    err = E_DATA;
+	} else if (na(oinfo->x[t])) {
+	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
+	    if (pmod->missmask != NULL) {
+		pmod->missmask[t] = '1';
+	    }
+	    pmod->nobs -= 1;
+	    pmod->dfd -= 1;
+	    ndrop += 1;
 	} else {
 	    oinfo->mean += oinfo->x[t];
 	}
+    }
+
+    if (!err && ndrop > 0 && pmod->nobs < pmod->ncoeff) {
+	err = E_DF;
+    }
+
+    if (!err && ndrop > 0) {
+	/* recalculate dep. var. statistics */
+	const double *y = dset->Z[pmod->list[1]];
+	double v;
+
+	pmod->ybar = gretl_restricted_mean(pmod->t1, pmod->t2, y,
+					   pmod->uhat, OP_NEQ, NADBL);
+	v = gretl_restricted_variance(pmod->t1, pmod->t2, y,
+				      pmod->uhat, OP_NEQ, NADBL);
+	pmod->sdy = sqrt(v);
     }
 
     if (!err) {
@@ -948,7 +971,7 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 	/* handle the offset variable */
 	oinfo_t.vnum = offvar;
 	oinfo_t.x = dset->Z[offvar];
-	err = get_offset_info(pmod, &oinfo_t);
+	err = get_offset_info(pmod, &oinfo_t, dset);
 	if (err) {
 	    pmod->errcode = err;
 	    return err;

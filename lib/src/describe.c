@@ -225,7 +225,11 @@ int eval_ytest (double y, GretlOp op, double test)
 
     switch (op) {
     case OP_EQ:
-	ret = (y == test);
+	if (na(test)) {
+	    ret = na(y);
+	} else {
+	    ret = (y == test);
+	}
 	break;
     case OP_GT:
 	ret = (y > test);
@@ -234,7 +238,11 @@ int eval_ytest (double y, GretlOp op, double test)
 	ret = (y < test);
 	break;
     case OP_NEQ:
-	ret = (y != test);
+	if (na(test)) {
+	    ret = !na(y);
+	} else {
+	    ret = (y != test);
+	}
 	break;
     case OP_GTE:
 	ret = (y >= test);
