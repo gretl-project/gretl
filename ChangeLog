@@ -2,6 +2,7 @@ version 2020d, in progress
 - "poisson" command: switch to using Newton-Raphson with
   analytical hessian; also use analytical hessian for
   "negbin", and add Wald chi-square tests for both
+- "cusum" command: add a --plot option
 
 2020-07-31 version 2020c
 - New feature: thematic maps, supported by new "geoplot"
