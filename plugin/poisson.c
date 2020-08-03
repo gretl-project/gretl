@@ -29,7 +29,9 @@
 #include <errno.h>
 
 #define PDEBUG 0
-#define PR2DEBUG 0
+
+/* initialize NegBin via Poisson estimates? */
+#define POISSON_INIT 1
 
 typedef struct count_info_ count_info;
 
@@ -103,7 +105,7 @@ static int cinfo_allocate (count_info *cinfo,
     }
 }
 
-/* copy data (y, X and offset, it applicable) in matrix form */
+/* copy data (y, X and offset, if applicable) in matrix form */
 
 static int cinfo_add_data (count_info *cinfo, MODEL *pmod,
 			   const DATASET *dset)
@@ -199,7 +201,6 @@ static int negbin_init (count_info *cinfo,
     int i, k = pmod->ncoeff;
     int err = 0;
 
-    /* NegBin2 is the default */
     cinfo->ci = NEGBIN;
     cinfo->nbtype = (opt & OPT_M)? 1 : 2;
     cinfo->flags = 0;
@@ -229,14 +230,15 @@ static int negbin_init (count_info *cinfo,
 
     cinfo_add_data(cinfo, pmod, dset);
 
-#if 1
+#if POISSON_INIT /* initialization via Poisson */
     for (i=0; i<k; i++) {
 	cinfo->theta[i] = pmod->coeff[i];
     }
 #else
+    /* or simple initialization */
     count_coeffs_init(cinfo, pmod);
 #endif
-    cinfo->theta[k] = 1.0; /* FIXME smarter alpha initialization? */
+    cinfo->theta[k] = 1.0; /* smarter alpha initialization? */
 
     cinfo->ll = NADBL;
     cinfo->prn = (opt & OPT_V)? prn : NULL;
@@ -654,7 +656,9 @@ static int poisson_robust_vcv (MODEL *pmod,
 }
 
 /* Overdispersion test via augmented OPG regression: see
-   Davidson and McKinnon, ETM, section 11.5 */
+   Davidson and McKinnon, ETM, section 11.5. In the process
+   we add a robust covariance matrix if wanted.
+*/
 
 static int overdispersion_test (MODEL *pmod, count_info *cinfo,
 				DATASET *dset, gretlopt opt)
@@ -685,6 +689,7 @@ static int overdispersion_test (MODEL *pmod, count_info *cinfo,
     */
 
     for (t=0; t<cinfo->n; t++) {
+	/* FIXME offset? */
 	mt = y[t] - exp(Xb[t]);
 	for (i=0; i<k; i++) {
 	    xti = gretl_matrix_get(cinfo->X, t, i);
@@ -1021,6 +1026,8 @@ static int do_poisson (MODEL *pmod, int offvar, double omean,
 	} else {
 	    transcribe_poisson_results(pmod, &cinfo, iters);
 	    overdispersion_test(pmod, &cinfo, dset, opt);
+	    /* do this after settling the variance matrix */
+	    pmod->chisq = wald_omit_chisq(NULL, pmod);
 	}
     }
 
@@ -1059,11 +1066,15 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
     }
 
     if (ci == NEGBIN) {
+#if POISSON_INIT
 	/* use auxiliary poisson to initialize the estimates */
 	err = do_poisson(pmod, offvar, omean, dset, OPT_A, NULL);
 	if (!err) {
 	    err = do_negbin(pmod, offvar, omean, dset, opt, vprn);
 	}
+#else
+	err = do_negbin(pmod, offvar, omean, dset, opt, vprn);
+#endif
     } else {
 	err = do_poisson(pmod, offvar, omean, dset, opt, vprn);
     }

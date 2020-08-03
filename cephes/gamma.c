@@ -343,7 +343,6 @@ double lgam (double x)
 	if (z == 0.0) {
 	    goto lgsing;
 	}
-	/* z = log(PI) - log( z ) - w;*/
 	z = LOGPI - log(z) - w;
 	return z;
     }
