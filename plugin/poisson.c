@@ -508,10 +508,15 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
 			   const DATASET *dset, int fncount,
 			   int grcount, gretlopt opt)
 {
+    double *y = cinfo->y->val;
+    int nx, *xlist = NULL;
     int nc = cinfo->k + 1;
     int i, s, t, err = 0;
 
     pmod->ci = cinfo->ci;
+
+    nx = cinfo->k - pmod->ifc;
+    xlist = gretl_list_new(nx);
 
     if (grcount > 0) {
 	gretl_model_set_int(pmod, "fncount", fncount);
@@ -524,30 +529,38 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
 	gretl_model_set_int(pmod, "offset_var", cinfo->offvar);
     }
 
-    s = 0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->yhat[t])) {
-	    pmod->yhat[t] = cinfo->mu->val[s];
-	    pmod->uhat[t] = cinfo->y->val[s] - pmod->yhat[t];
-	    s++;
+    pmod->dfd -= 1;
+    pmod->dfn += 1;
+
+    pmod->ess = 0.0;
+
+    for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
+	if (na(pmod->yhat[t])) {
+	    continue;
 	}
+	pmod->yhat[t] = cinfo->mu->val[s];
+	pmod->uhat[t] = y[s] - pmod->yhat[t];
+	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+	s++;
     }
+
+    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
     if (!err) {
 	err = gretl_model_allocate_param_names(pmod, nc);
 	if (!err) {
-	    int v;
+	    int vi, j = 1;
 
 	    for (i=0; i<cinfo->k; i++) {
-		v = pmod->list[i+2];
-		gretl_model_set_param_name(pmod, i, dset->varname[v]);
+		vi = pmod->list[i+2];
+		if (xlist != NULL && vi > 0) {
+		    xlist[j++] = vi;
+		}
+		gretl_model_set_param_name(pmod, i, dset->varname[vi]);
 	    }
 	    gretl_model_set_param_name(pmod, nc-1, "alpha");
 	}
     }
-
-    pmod->dfd -= 1;
-    pmod->dfn += 1;
 
     err = gretl_model_write_coeffs(pmod, cinfo->theta, nc);
 
@@ -558,16 +571,20 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
     if (!err) {
 	pmod->lnL = cinfo->ll;
 	mle_criteria(pmod, 0);
-	/* mask invalid statistics (FIXME chisq?) */
-	pmod->fstt = pmod->chisq = NADBL;
+	if (xlist != NULL) {
+	    pmod->chisq = wald_omit_chisq(xlist, pmod);
+	} else {
+	    pmod->chisq = NADBL;
+	}
+	pmod->fstt = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
-	pmod->ess = NADBL;
-	pmod->sigma = NADBL;
 	if (opt & OPT_M) {
 	    /* NegBin1 */
 	    pmod->opt |= OPT_M;
 	}
     }
+
+    free(xlist);
 
     return err;
 }
