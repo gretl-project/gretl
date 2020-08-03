@@ -696,7 +696,6 @@ static int overdispersion_test (MODEL *pmod, count_info *cinfo,
     */
 
     for (t=0; t<cinfo->n; t++) {
-	/* FIXME offset? */
 	mt = y[t] - exp(Xb[t]);
 	for (i=0; i<k; i++) {
 	    xti = gretl_matrix_get(cinfo->X, t, i);
