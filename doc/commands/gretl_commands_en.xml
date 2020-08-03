@@ -2417,6 +2417,11 @@
 	  <flag>--quiet</flag>
 	  <effect>just print the Harvey&ndash;Collier test</effect>
 	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+        </option>
       </options>
     </usage>
 
@@ -2437,10 +2442,10 @@
       </para>
       <para>
 	The cumulated sum of the scaled forecast errors, or the
-	squares of these errors, is printed and graphed.  The null
-	hypothesis of parameter stability is rejected at the 5 percent
-	significance level if the cumulated sum strays outside of the
-	95 percent confidence band.
+	squares of these errors, is printed.  The null hypothesis of
+	parameter stability is rejected at the 5 percent significance
+	level if the cumulated sum strays outside of the 95 percent
+	confidence band.
       </para>
       <para>
 	In the case of the CUSUM test, the Harvey&ndash;Collier
@@ -2450,6 +2455,16 @@
 	test, the 95 percent confidence band is calculated using the
 	algorithm given in <cite key="edgerton94">Edgerton and Wells
 	(1994)</cite>.
+      </para>
+      <para>
+	By default, if the program is not in batch mode a plot of the
+	cumulated series and confidence band is shown.  This can be
+	adjusted via the <opt>plot</opt> option. The acceptable
+	parameters to this option are <lit>none</lit> (to suppress the
+	plot); <lit>display</lit> (to display a plot even when in
+	batch mode); or a file name. The effect of providing a file
+	name is as described for the <opt>output</opt> option of the
+	<cmdref targ="gnuplot"/> command.
       </para>
     </description>
 
@@ -13180,13 +13195,13 @@
 	  vector for certain estimation commands that involve
 	  numerical optimization: <lit>arma</lit>, <lit>garch</lit>,
 	  <lit>logit</lit> and <lit>probit</lit>, <lit>tobit</lit> and
-	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>;
-	  and also when imposing certain sorts of restriction
-	  associated with VECMs. Unlike other settings,
-	  <lit>initvals</lit> is not persistent: it resets to the
-	  default initializer after its first use. For details in
-	  connection with ARMA estimation see <guideref
-	  targ="chap:timeseries"/>.
+	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>,
+	  <lit>poisson</lit>, <lit>negbin</lit>, and also when
+	  imposing certain sorts of restriction associated with
+	  VECMs. Unlike other settings, <lit>initvals</lit> is not
+	  persistent: it resets to the default initializer after its
+	  first use. For details in connection with ARMA estimation
+	  see <guideref targ="chap:timeseries"/>.
 	  </para>
 	</li>
 	<li>
