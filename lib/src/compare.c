@@ -69,6 +69,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 {
     char *mask;
     int off1 = 2, off2 = 0;
+    int cmax = pmod->ncoeff;
     int nmask = 0;
     int i, j;
 
@@ -86,9 +87,11 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	    }
 	}
 	off2 = pmod->list[1];
+    } else if (pmod->ci == NEGBIN) {
+	cmax -= 1;
     }
 
-    for (i=0; i<pmod->ncoeff; i++) {
+    for (i=0; i<cmax; i++) {
 	if (list != NULL) {
 	    for (j=1; j<=list[0]; j++) {
 		if (pmod->list[i + off1] == list[j]) {

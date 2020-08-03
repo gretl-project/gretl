@@ -509,14 +509,10 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
 			   int grcount, gretlopt opt)
 {
     double *y = cinfo->y->val;
-    int nx, *xlist = NULL;
     int nc = cinfo->k + 1;
     int i, s, t, err = 0;
 
     pmod->ci = cinfo->ci;
-
-    nx = cinfo->k - pmod->ifc;
-    xlist = gretl_list_new(nx);
 
     if (grcount > 0) {
 	gretl_model_set_int(pmod, "fncount", fncount);
@@ -529,8 +525,11 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
 	gretl_model_set_int(pmod, "offset_var", cinfo->offvar);
     }
 
+#if 0
+    /* messes up the overall chi-square test */
     pmod->dfd -= 1;
     pmod->dfn += 1;
+#endif
 
     pmod->ess = 0.0;
 
@@ -549,13 +548,10 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
     if (!err) {
 	err = gretl_model_allocate_param_names(pmod, nc);
 	if (!err) {
-	    int vi, j = 1;
+	    int vi;
 
 	    for (i=0; i<cinfo->k; i++) {
 		vi = pmod->list[i+2];
-		if (xlist != NULL && vi > 0) {
-		    xlist[j++] = vi;
-		}
 		gretl_model_set_param_name(pmod, i, dset->varname[vi]);
 	    }
 	    gretl_model_set_param_name(pmod, nc-1, "alpha");
@@ -571,11 +567,7 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
     if (!err) {
 	pmod->lnL = cinfo->ll;
 	mle_criteria(pmod, 0);
-	if (xlist != NULL) {
-	    pmod->chisq = wald_omit_chisq(xlist, pmod);
-	} else {
-	    pmod->chisq = NADBL;
-	}
+	pmod->chisq = wald_omit_chisq(NULL, pmod);
 	pmod->fstt = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
 	if (opt & OPT_M) {
@@ -583,8 +575,6 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
 	    pmod->opt |= OPT_M;
 	}
     }
-
-    free(xlist);
 
     return err;
 }
