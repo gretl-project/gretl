@@ -2069,6 +2069,8 @@ static const char *plot_output_option (PlotType p, int *pci)
 	ci = FREQ;
     } else if (p == PLOT_HEATMAP) {
 	ci = CORR;
+    } else if (p == PLOT_CUSUM) {
+	ci = CUSUM;
     }
 
     s = get_optval_string(ci, OPT_U);

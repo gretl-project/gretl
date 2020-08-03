@@ -191,6 +191,7 @@ struct gretl_option gretl_opts[] = {
     { CORRGM,   OPT_B, "bartlett", 0 },
     { CORRGM,   OPT_U, "plot", 2 },
     { CUSUM,    OPT_R, "squares", 0 },
+    { CUSUM,    OPT_U, "plot", 2 },
     { DATA,     OPT_C, "compact", 2 },
     { DATA,     OPT_I, "interpolate", 0 },
     { DATA,     OPT_O, "odbc", 0 },

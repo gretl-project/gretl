@@ -3378,7 +3378,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
  *
  * Tests the given model for parameter stability via the CUSUM test,
  * or if @opt includes %OPT_R, via the CUSUMSQ test; %OPT_Q makes
- * the test quiet.
+ * the test quiet; %OPT_U governs the associated plot, if wanted.
  *
  * Returns: 0 on successful completion, error code on error.
  */
@@ -3503,8 +3503,8 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 	    cusum_harvey_collier(wbar, sigma, m, pmod, opt, prn);
 	}
 
-	/* plot with 95% confidence bands if not in batch mode */
-	if (!gretl_in_batch_mode()) {
+	/* plot with 95% confidence band if wanted */
+	if (gnuplot_graph_wanted(PLOT_CUSUM, opt)) {
 	    err = cusum_do_graph(a, b, W, pmod->t1, k, m, dset, opt);
 	}
     }
