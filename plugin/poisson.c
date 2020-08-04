@@ -83,6 +83,7 @@ static int cinfo_allocate (count_info *cinfo,
 				   &cinfo->X, n, k,
 				   &cinfo->b, k, 1,
 				   &cinfo->Xb, n, 1,
+				   &cinfo->mu, n, 1,
 				   &cinfo->HX, n, k,
 				   &cinfo->V, k, k,
 				   NULL);
@@ -152,7 +153,7 @@ static int get_noconst_estimates (count_info *cinfo)
     int i, t, err = 0;
 
     /* borrow a vector of the right length */
-    lny1 = (cinfo->ci == NEGBIN)? cinfo->mu : cinfo->Xb;
+    lny1 = (cinfo->mu != NULL)? cinfo->mu : cinfo->Xb;
 
     for (t=0; t<cinfo->n; t++) {
 	lny1->val[t] = log(cinfo->y->val[t] + 1);
@@ -230,7 +231,7 @@ static int negbin_init (count_info *cinfo,
 
     cinfo_add_data(cinfo, pmod, dset);
 
-#if POISSON_INIT /* initialization via Poisson */
+#if POISSON_INIT /* initialize via Poisson */
     for (i=0; i<k; i++) {
 	cinfo->theta[i] = pmod->coeff[i];
     }
@@ -670,7 +671,7 @@ static int poisson_robust_vcv (MODEL *pmod,
 static int overdispersion_test (MODEL *pmod, count_info *cinfo,
 				DATASET *dset, gretlopt opt)
 {
-    const double *Xb = cinfo->Xb->val;
+    const double *mu = cinfo->mu->val;
     const double *y = cinfo->y->val;
     gretl_matrix *u, *G, *b, *e;
     double mt, xti, zt;
@@ -682,9 +683,9 @@ static int overdispersion_test (MODEL *pmod, count_info *cinfo,
     u = gretl_unit_matrix_new(n, 1);
     G = gretl_matrix_alloc(n, k+1);
     b = gretl_matrix_alloc(k+1, 1);
-    e = gretl_matrix_alloc(n, 1);
+    e = cinfo->Xb; /* borrowed */
 
-    if (u == NULL || G == NULL || b == NULL || e == NULL) {
+    if (u == NULL || G == NULL || b == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -696,7 +697,7 @@ static int overdispersion_test (MODEL *pmod, count_info *cinfo,
     */
 
     for (t=0; t<cinfo->n; t++) {
-	mt = y[t] - exp(Xb[t]);
+	mt = y[t] - mu[t];
 	for (i=0; i<k; i++) {
 	    xti = gretl_matrix_get(cinfo->X, t, i);
 	    gretl_matrix_set(G, t, i, mt * xti);
@@ -730,7 +731,6 @@ static int overdispersion_test (MODEL *pmod, count_info *cinfo,
     gretl_matrix_free(u);
     gretl_matrix_free(G);
     gretl_matrix_free(b);
-    gretl_matrix_free(e);
 
     return err;
 }
@@ -816,14 +816,17 @@ static int transcribe_poisson_results (MODEL *pmod,
     add_pseudoR2(pmod, cinfo);
     mle_criteria(pmod, 0);
 
-    /* mask invalid statistics */
+    /* mask missing statistics */
     pmod->fstt = pmod->chisq = NADBL;
 
     return err;
 }
 
 /* Check the offset series (if present) and retrieve its mean
-   if the series is OK.
+   if the series is OK. Here we allow for the possibility
+   that the offset variable has fewer valid observations than
+   the dependent variable and regular regressors; if that's
+   the case we need to recalculate the dep. var. statistics.
 */
 
 static int get_offset_info (MODEL *pmod, DATASET *dset,
@@ -858,6 +861,7 @@ static int get_offset_info (MODEL *pmod, DATASET *dset,
     }
 
     if (!err && ndrop > 0 && pmod->nobs < pmod->ncoeff) {
+	/* we don't have enough observations left */
 	err = E_DF;
     }
 
@@ -885,10 +889,11 @@ static int get_offset_info (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-static void poisson_update_Xb (count_info *cinfo, const double *theta)
+static void poisson_update_mu (count_info *cinfo, const double *theta)
 {
+    int i;
+
     if (theta != cinfo->b->val) {
-	int i;
 	for (i=0; i<cinfo->k; i++) {
 	    cinfo->b->val[i] = theta[i];
 	}
@@ -901,6 +906,10 @@ static void poisson_update_Xb (count_info *cinfo, const double *theta)
     } else {
 	gretl_matrix_multiply(cinfo->X, cinfo->b, cinfo->Xb);
     }
+
+    for (i=0; i<cinfo->n; i++) {
+	cinfo->mu->val[i] = exp(cinfo->Xb->val[i]);
+    }
 }
 
 static double poisson_loglik (const double *theta, void *data)
@@ -908,15 +917,16 @@ static double poisson_loglik (const double *theta, void *data)
     count_info *cinfo = (count_info *) data;
     double *y  = cinfo->y->val;
     double *Xb = cinfo->Xb->val;
+    double *mu = cinfo->mu->val;
     double llt;
     int t;
 
-    poisson_update_Xb(cinfo, theta);
+    poisson_update_mu(cinfo, theta);
     cinfo->ll = 0.0;
     errno = 0;
 
     for (t=0; t<cinfo->n; t++) {
-	llt = -exp(Xb[t]) + y[t] * Xb[t] - lngamma(y[t] + 1);
+	llt = -mu[t] + y[t] * Xb[t] - lngamma(y[t] + 1);
 	cinfo->ll += llt;
     }
 
@@ -932,8 +942,8 @@ static int poisson_score (double *theta, double *g, int np,
 {
     count_info *cinfo = (count_info *) data;
     double *y  = cinfo->y->val;
-    double *Xb = cinfo->Xb->val;
-    double yeXb;
+    double *mu = cinfo->mu->val;
+    double dev;
     int i, t, err = 0;
 
     for (i=0; i<np; i++) {
@@ -941,9 +951,9 @@ static int poisson_score (double *theta, double *g, int np,
     }
 
     for (t=0; t<cinfo->n; t++) {
-	yeXb = y[t] - exp(Xb[t]);
+	dev = y[t] - mu[t];
 	for (i=0; i<np; i++) {
-	    g[i] += yeXb * gretl_matrix_get(cinfo->X, t, i);
+	    g[i] += dev * gretl_matrix_get(cinfo->X, t, i);
 	}
     }
 
@@ -954,15 +964,14 @@ static int poisson_hessian (double *theta, gretl_matrix *H,
 			    void *data)
 {
     count_info *cinfo = (count_info *) data;
-    double *Xb = cinfo->Xb->val;
-    double eXtb, hxti;
+    double *mu = cinfo->mu->val;
+    double hxti;
     int i, t, err = 0;
 
     for (t=0; t<cinfo->n; t++) {
-	eXtb = exp(Xb[t]);
 	for (i=0; i<cinfo->k; i++) {
 	    hxti = gretl_matrix_get(cinfo->X, t, i);
-	    gretl_matrix_set(cinfo->HX, t, i, eXtb * hxti);
+	    gretl_matrix_set(cinfo->HX, t, i, mu[t] * hxti);
 	}
     }
 
