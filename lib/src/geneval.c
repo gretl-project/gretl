@@ -13531,17 +13531,18 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (scalar_matrix_node(e)) {
 		gtype = GRETL_TYPE_DOUBLE;
 	    }
-	    ptr = node_get_ptr(e, t->t, p, &donate);
-	    if (donate) {
-		gretl_bundle_donate_data(b, e->vname, ptr, gtype, size);
-	    } else {
-		gretl_bundle_set_data(b, e->vname, ptr, gtype, size);
+	    if (!p->err) {
+		ptr = node_get_ptr(e, t->t, p, &donate);
+		if (donate) {
+		    gretl_bundle_donate_data(b, e->vname, ptr, gtype, size);
+		} else {
+		    gretl_bundle_set_data(b, e->vname, ptr, gtype, size);
+		}
 	    }
 	}
 	if (p->err) {
 	    gretl_bundle_destroy(b);
 	} else {
-	    reset_p_aux(p, save_aux);
 	    ret = aux_bundle_node(p);
 	    if (ret != NULL) {
 		ret->v.b = b;
