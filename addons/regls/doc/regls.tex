@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage[letterpaper,body={6.0in,9.1in},top=0.7in,left=1.25in,nohead]{geometry}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage{fancyvrb,color,gretl}
 \usepackage{smallerhds}
 \usepackage{amsmath}
@@ -16,9 +16,16 @@
             citecolor=steel,
             bookmarksnumbered=true,
             plainpages=false
-}
+          }
 
-\begin{document}
+\newcommand{\startappendices}{%
+\newcounter{appcount}
+\setcounter{appcount}{0}
+\renewcommand{\thesection}{Appendix \Alph{appcount}}}
+
+\newcommand{\myappendix}[1]{%
+\addtocounter{appcount}{1}
+\section{#1}}          
 
 \setlength{\parskip}{1ex}
 \setlength{\parindent}{0pt}
@@ -27,23 +34,25 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{\textsf{regls}: a gretl package for regularized least squares}
+\title{regls: regularized least squares in gretl}
 \author{Allin Cottrell}
+
+\begin{document}
 \maketitle
 
 \section{Introduction}
 \label{sec:intro}
 
-This function package is essentially a front-end for functionality
-coded in C in the new gretl \texttt{regls} plugin; to run the package
-you will need gretl version 2020a.  The plugin implements LASSO
-\citep{tibshirani96} (by default via the Alternating Direction Method
-of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}) and
-also Ridge regression (by default via Singular Value Decomposition).
+This addon package is essentially a front-end for functionality coded
+in C in the gretl \texttt{regls} plugin; to run the package you will
+need gretl version 2020a or higher.  The plugin implements LASSO
+\citep{tibshirani96}---by default via the Alternating Direction Method
+of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}---and
+also Ridge regression, by default via Singular Value Decomposition.
 
 The best-known open-source implementation of regularized regression
-(perhaps the best-known implementation, period) is that provided by
-the \textsf{glmnet} package for \textsf{R}. Since we make several
+(perhaps the best-known, period) is that provided by the
+\textsf{glmnet} package for \textsf{R}. Since we make several
 references to \textsf{glmnet} below we should state up front what
 we're talking about. The authors of \textsf{glmnet} are Jerome
 Friedman, Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan
@@ -86,35 +95,36 @@ therefore
 function bundle lasso (series y, list X, bundle parms)
 \end{code}
 
-The one required element in the \texttt{parms} bundle is a
+The one \textit{required} element in the \texttt{parms} bundle is a
 specification for $\lambda$, which may take either of two forms, as
 follows:
-\begin{itemize}
+\begin{enumerate}
 \item under the key \texttt{lfrac} (``lambda fraction''), a scalar
   (single $s$ value) or vector (sequence of $s$ values); or
-\item under the key \texttt{nlambda}, the number of $s$ values
-  to be used.
-\end{itemize}
-Note that the package contains a utility function
-\texttt{lambda\_sequence()} that can be used to construct a
-logarithmic sequence of $\lambda$ values, as per \textsf{glmnet}.
-This function takes up to three arguments. The first and second
-arguments (required) give the maximum $s$ and the number of values,
-respectively. The third (optional) argument can be used to give the
-minimum $s$ (by default 0.0001). For example,
+\item under the key \texttt{nlambda}, the number of $s$ values to be
+  used, in which case the values will be assigned automatically.
+\end{enumerate}
+If \texttt{nlambda} is provided instead of \texttt{lfrac}, the
+automatic $s$ vector is a logarithmically declining sequence starting
+at 1 and finishing at 0.0001. For example, given \texttt{nlambda} = 5
+the sequence will be $s$ = \{1, 0.1, 0.01, 0.001, 0.0001\}.
+
+In case you wish to specify a sequence succinctly but with more
+control, the package contains a utility function
+\texttt{lambda\_sequence()}, which takes up to three arguments. The
+first and second arguments (required) give the maximum $s$ and the
+number of values, while the third (optional) argument can be used to
+give the minimum $s$ (by default 0.0001). As with the \texttt{nlambda}
+option the values are spaced logarithmically.  So if you were to do
 \begin{code}
-matrix lamseq = lambda_sequence(1, 5)
+parms.lfrac = lambda_sequence(1, 20, 0.001)
 \end{code}
-produces the set of $s$ values \{1, 0.1, 0.01, 0.001, 0.0001\}.
+the resulting sequence would be $s$ = \{1, 0.69519, 0.48329, \dots,
+0.00144, 0.001\}.
 
-If the second option is taken---that is, \texttt{nlambda} is provided
-instead of \texttt{lfrac}---the effect is equivalent to using a
-\texttt{lambda\_sequence} vector with a maximum of $s=1$ and a minimum
-of $s=0.0001$.
-
-The most basic optional member of the parameter bundle is
-\texttt{stdize}, a boolean switch to turn on or off standardization of
-the data. The default is \textit{on}, but if the data are already
+The most basic \textit{optional} member of the parameter bundle is
+\texttt{stdize}, a boolean switch to toggle standardization of the
+data. The default is \textit{on}, but if the data are already
 standardized on input \texttt{stdize} may be set to 0.  The estimates
 include an intercept (which is not subject to regularization) only if
 \texttt{stdize} is on.
@@ -128,8 +138,8 @@ The further optional parameters, as well as the contents of the bundle
 returned by \texttt{lasso()}, are best explained by reference to the
 various modes of usage of the function, namely estimation with a
 single value of $\lambda$; exploration of a range of $\lambda$ values
-using a unified training sample; and search for optimal $\lambda$ via
-cross validation.
+using a unified training sample; and (most relevant in practice)
+search for optimal $\lambda$ via cross validation.
 
 \section{Estimation with a single regularization}
 \label{sec:single-lambda}
@@ -334,12 +344,10 @@ thereafter.\footnote{On a desktop machine with 4 Intel i7 processors,
 \section{Additional controls}
 \label{sec:add-controls}
 
-This section treats of additional options that are obscure or
-experimental. We're talking about values that can be passed via the
-\texttt{parms} bundle to \texttt{lasso()} using the keys shown below.
-
-\texttt{admmctrl}, a 3-vector. This can be used to inflect the
-behavior of the ADMM algorithm; its elements are, in order:
+This section describes some additional controls over the ADMM
+algorithm that can be passed to the \texttt{lasso} function via the
+\texttt{parms} bundle. Under the key \texttt{admmctrl} you can supply
+a 3-vector whose elements are, in order:
 \begin{itemize}
 \item \texttt{rho}: a positive real number, the initial ADMM penalty
   parameter. It seems that $\rho = 8.0$ works well but higher or lower
@@ -353,9 +361,9 @@ We have found that \texttt{reltol} and \texttt{abstol} values of
 $10^{-4}$ and $10^{-6}$, respectively, produce reasonably accurate
 results in a manageable number of iterations. Setting smaller values
 will produce greater accuracy at the cost of more iterations.
-Non-positive values of these three terms are ignored, so one
-can, for example, set a single element by passing a zero vector
-with just the desired term set to a positive value.
+Non-positive values of these terms are ignored, so one can, for
+example, set a single element by passing a zero vector with just the
+desired term set to a positive value.
 
 \section{LASSO examples}
 \label{sec:examples}
@@ -573,18 +581,19 @@ series glmnet_pred (matrix *Rb, list X)
 \bibliographystyle{gretl}
 \bibliography{gretl}
 
-\appendix
+\clearpage
+\startappendices
 
-\section[Appendix]{Comparison with glmnet}
+\myappendix{Comparison with glmnet}
 \label{sec:comparison}
 
 It's likely that potential users of this package will take
 \textsf{R}'s \textsf{glmnet} as benchmark. So we'd be well advised to
 ensure that our results are close to those from \textsf{glmnet} unless
-we can demonstrate a good reason for divergence. We're now at that
-point. On some examples gretl's \texttt{lasso} gets a smaller (better)
-lasso criterion value than \textsf{glmnet} for a given $\lambda$, and
-on some examples \textit{vice versa}, within a quite small range of
+we can demonstrate a good reason for divergence. We're at that point:
+on some examples gretl's \texttt{lasso} gets a smaller (better) lasso
+criterion value than \textsf{glmnet} for a given $\lambda$, and on
+some examples \textit{vice versa}, within a quite small range of
 variation. Similarly for the typical full \textsf{lasso} workflow;
 that is, randomized cross validation followed by out of sample
 prediction. Sometimes we do a bit better than \textsf{glmnet},
@@ -597,7 +606,7 @@ following cross validation. We therefore conducted an extended test of
 this, with comparison to \textsf{glmnet}, using the murder-rate
 dataset referenced by Tibshirani\footnote{See
   \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
-and included with our \texttt{lasso} package.
+and included with our \texttt{regls} package.
 
 For each of 800 trials we did the following:
 \begin{enumerate}

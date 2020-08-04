@@ -23,6 +23,6 @@ bundle lret = lasso(murdPerPop, X, parms)
 # predict for the next 200 observations
 smpl 1001 1200
 series pred = lincomb(lret.nzX, lret.nzb)
-m = lasso_get_stats(murdPerPop, pred)
+m = regls_get_stats(murdPerPop, pred)
 printf "Out of sample R-squared %.4f\n\n", m[2]
 
