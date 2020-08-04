@@ -12569,7 +12569,7 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
     /* default to copying the node's data */
     *donate = 0;
 
-    if (f == F_DEFBUNDLE || f == F_DEFARGS) {
+    if (f == F_DEFBUNDLE || f == F_DEFARGS || f == F_ALTARGS) {
 	/* specific to bundles */
 	if (t == ARRAY) {
 	    ptr = n->v.a;
@@ -13500,6 +13500,44 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
 
+	if (p->err) {
+	    gretl_bundle_destroy(b);
+	} else {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_bundle_node(p);
+	    if (ret != NULL) {
+		ret->v.b = b;
+	    }
+	}
+    } else if (t->t == F_ALTARGS) {
+	gretl_bundle *b = NULL;
+	GretlType gtype;
+	int size, donate;
+	void *ptr;
+
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    p->err = E_ALLOC;
+	}
+
+	for (i=0; i<k && !p->err; i++) {
+	    size = 0;
+	    e = n->v.bn.n[i];
+	    gtype = gretl_type_from_gen_type(e->t);
+	    if (e->vname == NULL || !type_can_be_bundled(gtype)) {
+		p->err = E_INVARG;
+	    } else if (e->t == SERIES) {
+		size = p->dset->n;
+	    } else if (scalar_matrix_node(e)) {
+		gtype = GRETL_TYPE_DOUBLE;
+	    }
+	    ptr = node_get_ptr(e, t->t, p, &donate);
+	    if (donate) {
+		gretl_bundle_donate_data(b, e->vname, ptr, gtype, size);
+	    } else {
+		gretl_bundle_set_data(b, e->vname, ptr, gtype, size);
+	    }
+	}
 	if (p->err) {
 	    gretl_bundle_destroy(b);
 	} else {
@@ -16890,6 +16928,7 @@ static NODE *eval (NODE *t, parser *p)
     case HF_TDISAGG:
     case HF_CLOGFI:
     case F_DEFARGS:
+    case F_ALTARGS:
 	/* built-in functions taking more than three args */
 	if (t->t == F_FEVAL) {
 	    ret = eval_feval(t, p);
