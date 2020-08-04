@@ -1,0 +1,297 @@
+/* hansl driver for gretl's C regls plugin */
+
+function matrix unstdize (const matrix z, scalar my, scalar sy,
+                          const matrix mx, const matrix sx)
+   matrix b = zeros(1 + nelem(z), 1)
+   # initialize intercept
+   b[1] = my
+   loop i=1..nelem(z) -q
+      if z[i] != 0
+         b[i+1] = (sy/sx[i]) * z[i]
+         b[1] -= b[i+1] * mx[i]
+      endif
+   endloop
+   return b
+end function
+
+function matrix unstdize_vcv (const matrix vcv, scalar sy,
+                              const matrix sx)
+   return vcv * sy^2 ./ sx'sx
+end function
+
+function matrix m_standardize (const matrix X, matrix *mx, matrix *sx)
+   mx = meanc(X)
+   sx = sdc(X)
+   matrix S = zeros(rows(X), cols(X))
+   loop j=1..cols(X) -q
+      S[,j] = sx[j] == 0 ? 0 : (X[,j] .- mx[j]) ./ sx[j]
+   endloop
+   return S
+end function
+
+function matrix s_standardize (const matrix y, scalar *my, scalar *sy)
+   my = meanc(y)
+   sy = sdc(y)
+   matrix S = zeros(rows(y), 1)
+   S = sy == 0 ? 0 : (y - my) / sy
+   return S
+end function
+
+function matrix lambda_sequence (scalar lmax, int K, scalar eps[0.0001])
+   scalar decr = log(eps) / (K-1)
+   matrix Lam = log(lmax) + decr * seq(0, K-1)'
+   return exp(Lam)
+end function
+
+function scalar unscaled_lambda (const bundle b)
+   return inbundle(b, "lambda_scale") == 1 && b.lambda_scale == 0
+end function
+
+function scalar check_params (const bundle b, matrix *lfrac,
+                              scalar *nlam, bundle *ret)
+   matrix m = {}
+   scalar scl = 1
+   if inbundle(b, "lambda_scale") == 1
+      scl = b.lambda_scale
+      if scl < 0 || scl > 2 || floor(scl) != scl
+         print "missing or invalid lambda scale specification"
+         return 1
+      else
+         ret.lambda_scale = scl
+      endif
+   endif
+   if inbundle(b, "lfrac") == 1
+      # got a scalar lfrac
+      m = b.lfrac
+      nlam = 1
+   elif inbundle(b, "lfrac") == 3
+      # got a matrix lfrac
+      m = b.lfrac
+      nlam = nelem(m)
+   elif inbundle(b, "nlambda") == 1
+      # just got a number of lambda values
+      if b.nlambda < 4
+         print "missing or invalid lambda specification"
+         return 1
+      else
+         nlam = b.nlambda
+         lfrac = lambda_sequence(1, nlam)
+         return 0
+      endif
+   else
+      print "missing or invalid lambda specification"
+      return 1
+   endif
+   lfrac = m
+   if scl == 0 # treat the lambdas as is, not as fractions
+      if min(m) < 0
+         print "missing or invalid lambda specification"
+	 return 2
+      else
+         return 0
+      endif
+   endif
+   loop i=1..nlam -q
+      if m[i] < 0 || m[i] > 1 || (i > 1 && m[i] >= m[i-1])
+         print "missing or invalid lambda specification"
+         return 2
+      endif
+   endloop
+   return 0
+end function
+
+function void get_xvalidation_parms (bundle *targ, bundle *src)
+   # options specific to cross validation
+   targ.xvalidate = src.xvalidate
+   if targ.xvalidate
+      matrix deflts = {10, 0, 0, 0, 0, 0, 0}
+      ndef = nelem(deflts)
+      loop foreach i nfolds randfolds no_mpi np hpc use_1se single_b seed --quiet
+         if inbundle(src, "$i")
+            targ.$i = src.$i
+         elif i <= ndef
+	    targ.$i = deflts[i]
+	 endif
+      endloop
+   endif
+end function
+
+function bundle regls (series depvar, list indeps,
+                       const bundle parms, int do_ridge)
+   bundle ret
+   scalar do_stdize = 1
+   scalar verbosity = 1
+   scalar nlam = 1
+   scalar xvalidate = 0
+   scalar ccd = 0
+   scalar timer = 0
+   matrix lfrac = {}
+   matrix mx = {}
+   matrix sx = {}
+   scalar my = 0
+   scalar sy = 1
+   scalar rank = $mpirank
+
+   err = check_params(parms, &lfrac, &nlam, &ret)
+   if err
+      funcerr "invalid or missing parameter(s)"
+   endif
+
+   # read optional parameters
+   if inbundle(parms, "stdize") == 1
+      do_stdize = parms.stdize
+   endif
+   if inbundle(parms, "verbosity") == 1
+      verbosity = parms.verbosity
+      ret.verbosity = verbosity
+   endif
+   if inbundle(parms, "timer") == 1
+      timer = parms.timer
+   endif
+   if inbundle(parms, "ccd") == 1
+      ccd = parms.ccd
+      ret.ccd = ccd
+      if inbundle(parms, "ccd_toler")
+         ret.ccd_toler = parms.ccd_toler
+      endif
+   endif
+   if do_ridge
+      ret.ridge = 1
+   endif
+
+   # list of regressors with constant included, if wanted
+   list X0 = do_stdize ? 0 indeps : indeps
+
+   # record upper limit of incoming sample range
+   my_tmax = $t2
+
+   if verbosity > 0 && nlam > 1 && rank <= 0
+      string meth
+      if do_ridge
+         meth = ccd ? "CCD" : "SVD"
+	 printf "\nridge (%s): trying %d values of scaled lambda\n", meth, nlam
+      else
+         meth = ccd ? "CCD" : "ADMM"
+	 printf "\nlasso (%s): trying %d values of scaled lambda\n", meth, nlam
+      endif
+   endif
+
+   # handle possible missing values
+   list All = depvar indeps
+   series okcheck = ok(All)
+   if sum(okcheck) < $nobs
+      printf "skipping %d missing values\n", $nobs - sum(okcheck)
+      set matrix_mask okcheck
+   endif
+
+   if do_stdize
+      matrix Y = s_standardize({depvar}, &my, &sy)
+      matrix X = m_standardize({indeps}, &mx, &sx)
+   else
+      matrix Y = {depvar}
+      matrix X = {indeps}
+   endif
+
+   scalar ret.nobs = rows(X)
+   scalar ret.stdize = do_stdize
+   if nelem(lfrac) > 0
+      matrix ret.lfrac = vec(lfrac)
+   endif
+   if inbundle(parms, "admmctrl") == 3
+      matrix ret.admmctrl = parms.admmctrl
+   endif
+   if inbundle(parms, "xvcrit")
+      string ret.xvcrit = parms.xvcrit
+   endif
+
+   if inbundle(parms, "xvalidate")
+      xvalidate = parms.xvalidate
+      get_xvalidation_parms(&ret, &parms)
+   endif
+
+   # call plugin C code
+   if rank <= 0 && timer
+      set stopwatch
+   endif
+   err = _regls(X, Y, ret)
+   if err
+      funcerr("_regls failed")
+   endif
+   if rank <= 0 && timer
+      string mode = ccd ? "ccd" : do_ridge ? "svd" : "admm"
+      printf "_regls (%s): %.3f seconds\n", mode, $stopwatch
+   endif
+
+   if !xvalidate && verbosity > 0 && inbundle(ret, "crit")
+      string ss = do_ridge && unscaled_lambda(ret) ? "lambda" : "s"
+      if nlam > 1
+         if inbundle(ret, "crit") == 3
+            scalar cmin = ret.crit[ret.idxmin]
+         else
+            scalar cmin = ret.crit
+         endif
+         printf "\ncriterion minimized at %#g with %s = %f\n", cmin, ss, ret.lfmin
+      else
+         printf "\ncriterion minimized at %#g for %s = %f\n", ret.crit, ss, ret.lfrac
+      endif
+   endif
+
+   if rank > 0
+      # case where the user has invoked MPI
+      return ret
+   endif
+
+   if cols(ret.B) > 1
+      if do_stdize
+         loop j=1..cols(ret.B) -q
+            ret.B[,j] = unstdize(ret.B[2:,j], my, sy, mx, sx)
+         endloop
+      endif
+      optcol = (xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
+      matrix b = ret.B[,optcol]
+      if do_ridge
+         ret.b = b
+	 rnameset(ret.b, varnames(X0))
+      else
+         matrix bsel = b .!= 0
+         matrix ret.nzb = selifr(b, bsel)
+      endif
+   else
+      if do_stdize
+         ret.B = unstdize(ret.B[2:], my, sy, mx, sx)
+	 if inbundle(ret, "vcv")
+	    ret.vcv = unstdize_vcv(ret.vcv, sy, sx)
+	 endif
+      endif
+      if !do_ridge
+         matrix bsel = ret.B .!= 0
+         matrix ret.nzb = selifr(ret.B, bsel)
+      endif
+   endif
+
+   rnameset(ret.B, varnames(X0))
+   if !do_ridge
+      matrix tmp = X0
+      tmp = selifr(tmp', bsel)
+      list ret.nzX = tmp
+      rnameset(ret.nzb, varnames(ret.nzX))
+   endif
+   
+   if inbundle(ret, "verbosity")
+      delete ret.verbosity
+   endif
+
+   return ret
+end function
+
+function bundle lasso (series depvar, list indeps,
+                       const bundle parms)
+   return regls(depvar, indeps, parms, 0)
+end function
+
+function bundle regls_ridge (series depvar, list indeps,
+                             const bundle parms)
+   return regls(depvar, indeps, parms, 1)
+end function
+
+include regls_helpers.inp

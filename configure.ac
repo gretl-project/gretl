@@ -1089,6 +1089,9 @@ if test "${build_addons}" = "yes" ; then
     addons/geoplot/Makefile
     addons/geoplot/doc/Makefile
     addons/geoplot/examples/Makefile
+    addons/regls/pkg.inp
+    addons/regls/Makefile
+    addons/regls/doc/Makefile
   ])
 fi
 

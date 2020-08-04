@@ -1,0 +1,75 @@
+# get MSE and R^2
+
+function matrix regls_get_stats (const series y, const series yhat)
+   scalar SSR = sum((y - yhat)^2)
+   scalar SST = sum((y - mean(y))^2)
+   matrix ret = {SSR/$nobs, 1 - SSR/SST}
+   cnameset(ret, "MSE R^2")
+   return ret
+end function
+
+function scalar regls_pc_correct (const series y, const series yhat)
+   series yr = round(yhat)
+   return 100 * sum(yr == y) / $nobs
+end function
+
+# get prediction from glmnet, plus non-zero coeff vector
+
+function series glmnet_pred (matrix *Rb, list X)
+   matrix sel = Rb .!= 0
+   Rb = selifr(Rb, sel)
+   matrix mRX = X
+   list RX = selifr(mRX', sel)
+   rnameset(Rb, varnames(RX))
+   return lincomb(RX, Rb)
+end function
+
+# construct a fixed folds vector for use with glmnet
+
+function matrix regls_foldvec (int nobs, int nf)
+   matrix foldvec = zeros(nobs, 1)
+   scalar fsize = nobs / nf
+   scalar r = 1
+   loop i=1..nf -q
+      foldvec[r:r+fsize-1] = i
+      r += fsize
+   endloop
+   return foldvec
+end function
+
+# print prediction info when multiple lambda values used
+
+function void regls_multipred (const matrix B, const matrix lambda,
+                               const series y, list X,
+                               bool pre_stdized [0])
+
+   printf "\n       lambda     R^2    sum(|b|)   df"
+   if pre_stdized
+      printf "   criterion\n"
+   else
+      printf "\n"
+   endif
+   loop i=1..cols(B) -q
+      matrix bi = B[,i]
+      series yhat = lincomb(X, bi)
+      if inlist(X, const)
+         # exclude the intercept from the l1 penalty
+         bi = bi[2:]
+      endif
+      scalar l1 = sumc(abs(bi))
+      scalar df = sumc(bi .!= 0)
+      m = regls_get_stats(y, yhat)
+      R2 = m[2]
+      if R2 < 0 && R2 > -1.0e16
+         # avoid printing -0.0000
+         R2 = 0
+      endif
+      if pre_stdized
+         crit = 0.5 * m[1] + lambda[i] * l1
+         printf "%#13g  %.4f  %#10g  %3d  %#10g\n", lambda[i], R2, l1, df, crit
+      else
+         printf "%#13g  %.4f  %#10g  %3d\n", lambda[i], R2, l1, df
+      endif
+   endloop
+   printf "\n"
+end function
