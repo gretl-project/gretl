@@ -12569,7 +12569,7 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
     /* default to copying the node's data */
     *donate = 0;
 
-    if (f == F_DEFBUNDLE || f == F_DEFARGS || f == F_ALTARGS) {
+    if (f == F_DEFBUNDLE || f == F_DEFARGS || f == F_BPACK) {
 	/* specific to bundles */
 	if (t == ARRAY) {
 	    ptr = n->v.a;
@@ -13509,7 +13509,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.b = b;
 	    }
 	}
-    } else if (t->t == F_ALTARGS) {
+    } else if (t->t == F_BPACK) {
 	gretl_bundle *b = NULL;
 	GretlType gtype;
 	int size, donate;
@@ -16929,7 +16929,7 @@ static NODE *eval (NODE *t, parser *p)
     case HF_TDISAGG:
     case HF_CLOGFI:
     case F_DEFARGS:
-    case F_ALTARGS:
+    case F_BPACK:
 	/* built-in functions taking more than three args */
 	if (t->t == F_FEVAL) {
 	    ret = eval_feval(t, p);
@@ -17620,6 +17620,7 @@ static void printnode (NODE *t, parser *p, int value)
 #define ok_string_op(o) (o == B_ASN || o == B_ADD || \
 			 o == B_HCAT || o == INC)
 #define ok_array_op(o) (o == B_ASN || o == B_ADD)
+#define ok_bundle_op(o) (o == B_ASN || o == B_ADD)
 
 struct mod_assign {
     int c;
@@ -18013,8 +18014,8 @@ static int check_operator_validity (parser *p, const char *opstr)
 	/* arrays: ditto */
 	gretl_errmsg_sprintf(_("'%s' : not implemented for arrays"), opstr);
 	return E_PARSE;
-    } else if (p->lh.t == BUNDLE && p->op != B_ASN) {
-	/* bundles: no modified assignment (yet) */
+    } else if (p->lh.t == BUNDLE && !ok_bundle_op(p->op)) {
+	/* bundles: ditto */
 	gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
 	return E_PARSE;
     } else if (p->lh.t != MAT && (p->op == B_VCAT || p->op == B_DOTASN)) {
@@ -18648,6 +18649,23 @@ static void do_array_append (parser *p)
 	if (!copy && !p->err) {
 	    rhs->v.ptr = NULL;
 	}
+    }
+}
+
+static void do_bundle_append (parser *p)
+{
+    gretl_bundle *bl = NULL;
+    gretl_bundle *br = NULL;
+    NODE *rhs = p->ret;
+
+    bl = gen_get_lhs_var(p, GRETL_TYPE_BUNDLE);
+    if (rhs->t == BUNDLE) {
+	br = rhs->v.b;
+    }
+    if (bl == NULL || br == NULL) {
+	p->err = E_TYPES;
+    } else {
+	p->err = gretl_bundle_append(bl, br);
     }
 }
 
@@ -19416,6 +19434,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (r->t == EMPTY) {
 	    /* as in "bundle b = null" */
 	    p->err = assign_null_to_bundle(p);
+	} else if (p->op != B_ASN) {
+	    do_bundle_append(p);
 	} else {
 	    /* full assignment of RHS bundle */
 	    gretl_bundle *b;

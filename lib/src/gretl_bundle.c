@@ -1710,6 +1710,19 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
     return b;
 }
 
+int gretl_bundle_append (gretl_bundle *bundle1,
+			 const gretl_bundle *bundle2)
+{
+    if (bundle2->type == BUNDLE_KALMAN) {
+	gretl_errmsg_set("bundle union: the right-hand operand cannot "
+			 "be a kalman bundle");
+	return E_DATA;
+    } else {
+	g_hash_table_foreach(bundle2->ht, copy_new_bundled_item, bundle1);
+	return 0;
+    }
+}
+
 /**
  * gretl_bundle_copy:
  * @bundle: gretl bundle to be copied.

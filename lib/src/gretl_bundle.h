@@ -181,6 +181,9 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 				  const gretl_bundle *bundle2,
 				  int *err);
 
+int gretl_bundle_append (gretl_bundle *bundle1,
+			 const gretl_bundle *bundle2);
+
 void gretl_bundle_destroy (gretl_bundle *bundle);
 
 void gretl_bundle_void_content (gretl_bundle *bundle);
