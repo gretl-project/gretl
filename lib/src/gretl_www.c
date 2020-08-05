@@ -373,9 +373,13 @@ static void certs_path_init (void)
     char *pfx = getenv("MINGW_PREFIX");
 
     if (pfx != NULL) {
-	sprintf(certs_path, "%s/share/curl/curl-ca-bundle.crt", pfx);
+	/* we may get a spurious space at the end */
+	gchar *tmp = g_strchomp(g_strdup(pfx));
+
+	sprintf(certs_path, "%s/share/curl/curl-ca-bundle.crt", tmp);
+	g_free(tmp);
 	if (gretl_stat(certs_path, NULL) != 0) {
-	    fprintf(stderr, "curl: didn't find certs at '%s'\n",
+	    fprintf(stderr, "curl 1: didn't find certs at '%s'\n",
 		    certs_path);
 	    *certs_path = '\0';
 	} else {
@@ -385,7 +389,7 @@ static void certs_path_init (void)
 	/* hard-wired fallback */
 	strcpy(certs_path, "c:/msys64/mingw64/share/curl/curl-ca-bundle.crt");
 	if (gretl_stat(certs_path, NULL) != 0) {
-	    fprintf(stderr, "curl: didn't find certs at '%s'\n",
+	    fprintf(stderr, "curl 2: didn't find certs at '%s'\n",
 		    certs_path);
 	    *certs_path = '\0';
 	} else {
@@ -395,7 +399,7 @@ static void certs_path_init (void)
 # endif
     sprintf(certs_path, "%scurl-ca-bundle.crt", gretl_home());
     if (gretl_stat(certs_path, NULL) != 0) {
-	fprintf(stderr, "curl: didn't find certs at '%s'\n",
+	fprintf(stderr, "curl 3: didn't find certs at '%s'\n",
 		certs_path);
     }
 }
