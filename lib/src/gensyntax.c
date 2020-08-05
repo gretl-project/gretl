@@ -239,17 +239,22 @@ static int push_bn_node (NODE *t, NODE *n)
     return 0;
 }
 
-static void expected_symbol_error (int c, parser *p)
+static void expected_symbol_error (int c, parser *p, int badc)
 {
-    const char *found = getsymb_full(p->sym, p);
-
     parser_print_input(p);
 
-    if (found == NULL || *found == '\0') {
-	gretl_errmsg_sprintf(_("Expected '%c' but formula ended\n"), c);
+    if (badc) {
+	gretl_errmsg_sprintf(_("Expected '%c' but found '%c'\n"), c,
+			     badc);
     } else {
-	gretl_errmsg_sprintf(_("Expected '%c' but found '%s'\n"), c,
-			     found);
+	const char *found = getsymb_full(p->sym, p);
+
+	if (found == NULL || *found == '\0') {
+	    gretl_errmsg_sprintf(_("Expected '%c' but formula ended\n"), c);
+	} else {
+	    gretl_errmsg_sprintf(_("Expected '%c' but found '%s'\n"), c,
+				 found);
+	}
     }
 
     p->err = E_PARSE;
@@ -332,7 +337,7 @@ static NODE *base (parser *p, NODE *up)
 	if (p->sym == G_RPR) {
 	    lex(p);
 	} else if (p->err == 0) {
-	    expected_symbol_error(')', p);
+	    expected_symbol_error(')', p, 0);
 	}
 	break;
     case G_LBR: /* left bracket '[' */
@@ -345,7 +350,7 @@ static NODE *base (parser *p, NODE *up)
 	if (p->sym == G_RBR) {
 	    lex(p);
 	} else if (p->err == 0) {
-	    expected_symbol_error(']', p);
+	    expected_symbol_error(']', p, 0);
 	}
 	break;
     default:
@@ -925,7 +930,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
     }
 
     if (cexp && !p->err) {
-	expected_symbol_error(cexp, p);
+	expected_symbol_error(cexp, p, 0);
     }
 }
 
@@ -1003,7 +1008,7 @@ static void get_slice_parts (NODE *t, parser *p)
     }
 
     if (cexp && !p->err) {
-	expected_symbol_error(cexp, p);
+	expected_symbol_error(cexp, p, 0);
     }
 
     set_slice_off(p);
@@ -1132,7 +1137,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 #endif
 
     if (p->sym != G_LPR) {
-	expected_symbol_error('(', p);
+	expected_symbol_error('(', p, 0);
 	return;
     }
 
@@ -1207,7 +1212,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 
     if (!p->err) {
 	if (cexp) {
-	    expected_symbol_error(cexp, p);
+	    expected_symbol_error(cexp, p, 0);
 	} else if (p->sym == G_RPR) {
 	    if (i < k) {
 		pad_parent(t, k, i, p);
@@ -1230,7 +1235,7 @@ static void get_args_args (NODE *t, parser *p, int *next)
 {
     NODE *child;
     const char *src;
-    int n, i = 0;
+    int n, j, i = 0;
 
 #if SDEBUG
     fprintf(stderr, "get_args_args: ch='%c', point='%s'\n",
@@ -1240,16 +1245,20 @@ static void get_args_args (NODE *t, parser *p, int *next)
     while (p->ch && !p->err) {
 	/* first get an unquoted key */
 	while (p->ch == ' ') parser_getc(p);
-	n = 0;
 	src = p->point -1;
-	while (p->ch != ' ' && p->ch != '=') {
+	n = gretl_namechar_spn(src);
+	if (n == 0) {
+	    p->err = E_PARSE;
+	    break;
+	}
+	for (j=0; j<n; j++) {
 	    parser_getc(p);
-	    n++;
 	}
 	p->idstr = gretl_strndup(src, n);
 	while (p->ch == ' ') parser_getc(p);
 	if (p->ch != '=') {
-	    expected_symbol_error('=', p);
+	    if (p->ch == 0) lex(p);
+	    expected_symbol_error('=', p, p->ch);
 	    break;
 	}
 	child = newstr(p->idstr);
@@ -1263,7 +1272,7 @@ static void get_args_args (NODE *t, parser *p, int *next)
 	    attach_child(t, child, -1, i++, p);
 	}
 	if (p->sym == P_COM) {
-	    parser_getc(p);
+	    ; /* OK */
 	} else if (p->sym == G_RPR) {
 	    lex(p);
 	    break;
@@ -1272,6 +1281,21 @@ static void get_args_args (NODE *t, parser *p, int *next)
 	    p->err = E_PARSE;
 	}
     }
+}
+
+/* Distinguish between the variants _(id1=val1, id2=val2,...),
+   F_DEFARGS, and _(val1, val2,...), F_BPACK: the marker for
+   the latter is that we find ',' after the first identifier.
+*/
+
+static int peek_bpack (parser *p)
+{
+    const char *s = p->point;
+
+    s += strspn(s, " ");
+    s += strcspn(s, ",= ");
+    s += strspn(s, " ");
+    return (*s == ',');
 }
 
 static NODE *powterm (parser *p, NODE *l)
@@ -1506,11 +1530,16 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	}
     } else if (sym == F_DEFARGS) {
+	if (peek_bpack(p)) {
+	    sym = p->sym = F_BPACK;
+	}
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL) {
+	    if (t != NULL && sym == F_BPACK) {
+		get_args(t->L, p, sym, -1, opt, &next);
+	    } else if (t != NULL) {
 		get_args_args(t->L, p, &next);
 	    }
 	}
@@ -1835,7 +1864,7 @@ NODE *expr (parser *p)
 			t->R = expr(p);
 		    }
 		} else {
-		    expected_symbol_error(':', p);
+		    expected_symbol_error(':', p, 0);
 		}
 	    }
 	    set_parsing_query(0);
