@@ -2909,7 +2909,11 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
 	for (i=1; i<=list[0]; i++) {
 	    const char *strval = NULL;
-	    int wi = colwidths[i];
+	    int wi;
+
+	    if (colwidths != NULL) {
+		wi = colwidths[i];
+	    }
 
 	    if (is_string_valued(dset, list[i])) {
 		strval = series_get_string_for_obs(dset, list[i], t);
