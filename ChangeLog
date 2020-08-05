@@ -1,4 +1,6 @@
 version 2020d, in progress
+- Fix GUI bug: crash on copying data series to clipboard
+  in formats other than plain text
 - "poisson" command: switch to using Newton-Raphson with
   analytical hessian; also use analytical hessian for
   "negbin", and add Wald chi-square tests for both
