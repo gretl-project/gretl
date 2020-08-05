@@ -8,5 +8,5 @@ public = lasso regls_ridge lambda_sequence regls_get_stats regls_pc_correct \
   regls_foldvec regls_multipred glmnet_pred
 help = regls.pdf
 sample-script = regls_sample.inp
-data-files = murder.gdt
+data-files = examples/murder.gdt examples/winequality-red.gdt
 min-version = 2019d
