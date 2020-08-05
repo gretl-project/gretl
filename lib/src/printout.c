@@ -1929,10 +1929,12 @@ static char *bufprintnum (char *buf, double x, int signif,
 
  finish:
 
-    /* pad on left as needed */
-    l = width - strlen(numstr);
-    for (i=0; i<l; i++) {
-	strcat(buf, " ");
+    if (width > 0) {
+	/* pad on left as needed */
+	l = width - strlen(numstr);
+	for (i=0; i<l; i++) {
+	    strcat(buf, " ");
+	}
     }
     strcat(buf, numstr);
 
@@ -2909,7 +2911,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
 	for (i=1; i<=list[0]; i++) {
 	    const char *strval = NULL;
-	    int wi;
+	    int wi = 0;
 
 	    if (colwidths != NULL) {
 		wi = colwidths[i];
