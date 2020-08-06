@@ -1,0 +1,54 @@
+set verbose off
+include regls.gfn
+
+open murder.gdt --quiet --frompkg=regls
+
+# all available predictors w. no missing values
+list X = population..LemasPctOfficDrugUn
+
+smpl 1 800
+printf "Sample range %d to %d\n", $t1, $t2
+
+lamseq = lambda_sequence(1, 8)
+bundle parms = defbundle("lfrac", lamseq)
+parms.verbosity = 0
+list X0 = const X
+
+bundle lb = lasso(murdPerPop, X, parms)
+# lambda values comparable with glmnet
+matrix lam = lb.lfrac * (lb.lmax / lb.nobs)
+printf "\ngretl (ADMM):\n"
+regls_multipred(lb.B, lam, murdPerPop, X0)
+
+parms.ccd = 1
+bundle lb = lasso(murdPerPop, X, parms)
+# lambda values comparable with glmnet
+matrix lam = lb.lfrac * (lb.lmax / lb.nobs)
+printf "\ngretl (CCD):\n"
+regls_multipred(lb.B, lam, murdPerPop, X0)
+
+# R, glmnet
+list LL = murdPerPop X
+foreign language=R --send-data=LL
+  library(glmnet)
+  x <- as.matrix(gretldata[,2:ncol(gretldata)])
+  y <- as.matrix(gretldata[,1])
+  m <- glmnet(x, y, family = "gaussian", alpha = 1, nlambda = 8,
+    standardize = T, intercept = T)
+  # print(m)
+  Rb <- as.matrix(coef(m))
+  gretl.export(Rb,quiet=1)
+  Rlam = as.matrix(m$lambda)
+  gretl.export(Rlam, quiet=1)
+end foreign
+
+Rb = mread("Rb.mat", 1)
+Rlam = mread("Rlam.mat", 1)
+printf "\nglmnet:\n"
+regls_multipred(Rb, Rlam, murdPerPop, X0)
+
+
+
+
+
+

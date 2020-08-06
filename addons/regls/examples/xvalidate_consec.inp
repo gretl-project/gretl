@@ -1,0 +1,81 @@
+set verbose off
+include regls.gfn
+
+# cross validation with 10 consecutive folds and 20 values
+# of lambda
+
+open murder.gdt --frompkg=regls --quiet
+
+# all available predictors without missing values
+list X = population..LemasPctOfficDrugUn
+
+smpl 1 1000
+printf "Sample range %d to %d\n", $t1, $t2
+
+lamseq = lambda_sequence(1, 20)
+bundle parms = defbundle("lfrac", lamseq)
+parms.xvalidate = 1
+parms.nfolds = 10
+parms.single_b = 1
+
+bundle lb = lasso(murdPerPop, X, parms)
+series pred = lincomb(lb.nzX, lb.nzb)
+m = regls_get_stats(murdPerPop, pred)
+lambda = lb.lmax * lb.lfrac[lb.idxmin]
+lam_per = lambda/lb.nobs
+printf "lambda %#g, R^2 %.4f, df %d\n", lam_per, m[2], nelem(lb.nzb)
+
+# predict for the next 200 observations
+smpl 1001 1200
+series pred = lincomb(lb.nzX, lb.nzb)
+m = regls_get_stats(murdPerPop, pred)
+printf "Out of sample R-squared %.4f\n\n", m[2]
+# eval lb.nzb
+
+# supply glmnet with a fixed set of folds
+matrix foldvec = regls_foldvec(1000, 10)
+mwrite(foldvec, "folds.mat", 1)
+
+smpl 1 1000
+# R, glmnet
+list LL = murdPerPop X
+foreign language=R --send-data=LL
+  library(glmnet)
+  library(tictoc)
+  x <- as.matrix(gretldata[,2:ncol(gretldata)])
+  y <- as.matrix(gretldata[,1])
+  folds <- gretl.loadmat("folds.mat")
+  tic("glmnet")
+  m <- cv.glmnet(x, y, foldid = folds, family = "gaussian", alpha = 1,
+   nlambda = 20, standardize = T, intercept = T)
+  toc()
+  # print(m)
+  # print(m$lambda.min)
+  print(m$cvm)
+  print(m$cvsd)
+  Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.min))
+  gretl.export(Rb, quiet=1)
+  Rlam = as.matrix(m$lambda.min)
+  gretl.export(Rlam, quiet=1)
+end foreign
+
+printf "glmnet:\n"
+Rb = mread("Rb.mat", 1)
+Rfull = Rb
+list X0 = const X
+scalar Rlam = mread("Rlam.mat", 1)
+series Rpred = glmnet_pred(&Rb, X0)
+m = regls_get_stats(murdPerPop, Rpred)
+printf "lambda %#g, R^2 %.4f, df %d\n", Rlam, m[2], nelem(Rb)
+
+# predict for the next 200 observations
+smpl 1001 1200
+series Rpred = lincomb(X0, Rfull)
+m = regls_get_stats(murdPerPop, Rpred)
+printf "Out of sample R-squared %.4f\n", m[2]
+
+
+
+
+
+
