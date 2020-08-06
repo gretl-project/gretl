@@ -1,4 +1,4 @@
-version 2020d, in progress
+2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard
   in formats other than plain text
 - "poisson" command: switch to using Newton-Raphson with

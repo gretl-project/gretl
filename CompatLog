@@ -1,3 +1,7 @@
+2020-08-06 version 2020d
+
+No known incompatible changes.
+
 2020-07-31 version 2020c
 
 The -q or --quiet option for the "loop" command is now
