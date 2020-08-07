@@ -169,15 +169,18 @@ and \textsf{OpenMP} is discussed in section~\ref{sec:contention}.
 \section{How do I set this up?}
 \label{sec:setup}
 
-As of this writing you can make use of MPI in gretl only by building
-gretl from the git sources yourself (on Linux), by using a recent
-release or snapshot (on MS Windows), or by using a current snapshot
-(on Mac OS X). You will also need to have a suitable MPI package
-installed. See also section~\ref{sec:platforms} below.
+You can get MPI working in gretl using reasonably recent builds (2019a
+or higher recommended) for MS Windows, macOS, or Debian-based Linux
+distributions. On non-Debian Linux you may have to build
+gretl yourself.\footnote{To see if the gretl build supplied by a
+  distro is MPI-enabled, check for the presence of \texttt{gretlmpi}
+  in \texttt{/usr/bin}.} In each case you will need to have a suitable
+MPI package installed. The details differ by platform and are given
+in section~\ref{sec:platforms} below.
 
-Running an MPI-enabled program---such as the new \texttt{gretlmpi},
-described below---requires a special launcher, \texttt{mpiexec}.  This
-is supplied by MPI packages, the best known of which are \textsf{Open
+Running an MPI-enabled program---such as \texttt{gretlmpi}, described
+below---requires a special launcher, \texttt{mpiexec}.  This is
+supplied by MPI packages, the best known of which are \textsf{Open
   MPI}, \textsf{MPICH} and Microsoft's
 \textsf{MS-MPI}.\footnote{MPI-enabled programs are compiled with a
   special compiler-wrapper, \texttt{mpicc}, which is supplied by both
@@ -261,8 +264,8 @@ Command-line syntax differs slightly across \texttt{mpiexec}
 implementations. In place of \textsf{Open MPI}'s
 \mymbox{\verb|--hostfile|} tag you would use \verb|-machinefile| with
 \textsf{MPICH}, or \verb|/machinefile| with \textsf{MS-MPI}. Also
-under \textsf{MS-MPI} you should use \texttt{/np} for the number of
-processes option.
+under \textsf{MS-MPI} you should use \texttt{/np} rather than
+\texttt{-n} for the number of processes option.
 
 The \texttt{mpiexec} program supports several additional options not
 discussed here; see the documentation for your MPI implementation for
@@ -280,8 +283,8 @@ section~\ref{subsec:mpi-block}. (Note that this is \emph{not} required
 if you invoke \texttt{gretlmpi} directly; in that case the entire
 script is automatically an ``MPI block''.)
 
-Certain aspects of the MPI setup on your system can be specified in a
-new tab labeled \textsf{MPI} in the gretl preferences dialog (under
+Certain aspects of the MPI setup on your system can be specified in
+the tab labeled \textsf{MPI} in the gretl preferences dialog (under
 \textsf{Tools}, \textsf{Preferences}, \textsf{General} in the GUI
 program), as follows:
 \begin{itemize}
@@ -299,7 +302,7 @@ These settings are recorded in the per-user gretl configuration file,
 and they are picked up if you execute a script containing an
 \texttt{mpi} block in either the GUI program or \texttt{gretlcli}.
 
-\subsection{Why do we need a new program?}
+\subsection{Why do we need a separate program?}
 \label{subsec:why-new-prog}
 
 That is, why can't we just produce MPI-enabled versions of the
@@ -320,7 +323,7 @@ what's really single-threaded code.
 \label{subsec:concepts}
 
 Before getting into the relevant hansl commands and functions it may
-be worth outlining some of the basic ideas that they implement.
+be worth outlining some of the basic ideas they implement.
 
 Suppose you launch an MPI program with $n$ processes (meaning that $n$
 instances of the program are run). Each process has an ID number, or
@@ -332,12 +335,11 @@ instances of the program are run). Each process has an ID number, or
 \end{itemize}
 
 Many tasks that are suitable for parallelization via MPI involve a
-preparation phase and/or a final phase which are conceptually
-single-threaded. In that case you would condition on rank such that
-these phases are carried out by a single process. It is a common
-convention (though not required) that the process with rank 0 does
-this sort of work. The overall structure of such a program might then
-look like this:
+conceptually single-threaded preparation phase and/or final phase. In
+that case you would condition on rank such that these phases are
+carried out by a single process. It is a common convention (though not
+required) that the process with rank 0 does this sort of work. The
+overall structure of such a program might then look like this:
 \begin{enumerate}
 \item Process 0 does some preliminary work.
 \item Process 0 sends data to all processes.\label{enum:send}
@@ -353,16 +355,16 @@ process (\textbf{scatter} the data).  There may be several data items
 to be transmitted, some of which should be broadcast (e.g.\ each
 process gets a copy of an initial parameter vector) and others
 scattered (e.g.\ each process gets a chunk of the observations on some
-variables of interest).  Broadcast and scatter are basic MPI ideas,
-implemented in hansl via the \texttt{mpibcast} and \texttt{mpiscatter}
-functions.
+variables of interest).  Broadcast and scatter are basic MPI
+operations, implemented in hansl via the \texttt{mpibcast} and
+\texttt{mpiscatter} functions.
 
 Now consider step~\ref{enum:gather} above. Again depending on the task
 in hand, we may want process 0 to \textbf{reduce} information from all
 processes (e.g.\ form the sum of $n$ values) and/or to concatenate or
 \textbf{gather} results (e.g.\ form a big matrix by stacking rows from
-all processes). Reduce and gather are also basic MPI ideas; they are
-implemented jointly in hansl's \texttt{mpireduce}.
+all processes). Reduce and gather are also basic MPI operations; they
+are implemented jointly in hansl's \texttt{mpireduce}.
 
 The procedures just mentioned---\textbf{broadcast}, \textbf{scatter},
 \textbf{reduce} and \textbf{gather}---are all multilateral. The
@@ -370,25 +372,25 @@ functions that implement them must be called by all processes (that
 is, calls to these functions must occur in a common block of the MPI
 program, outside of any conditioning on rank). In each of them, one
 process plays a special role and is known as ``root'': the root
-process is the source of the original data in \textbf{broadcast} and
-\textbf{scatter}, and the recipient of consolidated data in
-\textbf{reduce} and \textbf{gather}. There's no requirement that root
-be process 0, and moreover there's no requirement that the root
-process be the same in each call to such procedures; nonetheless, a
-common simple case is that root is always process 0, and that is the
-default assumption in hansl.
+process is the \textit{source} of the original data in
+\textbf{broadcast} and \textbf{scatter}, and the \textit{recipient} of
+consolidated data in \textbf{reduce} and \textbf{gather}. There's no
+requirement that root be process 0, and moreover there's no
+requirement that the root process be the same in each call to such
+procedures; nonetheless, a common case is that root is always process
+0, and that is the default assumption in hansl.
 
 Besides multilateral data transfer, MPI also supports the bilateral
-procedures \textbf{send} and \textbf{receive}: in the former a given
-process supplies some data and specifies a process to which it should
-be sent; in the latter a given process requests data from another
-specified process. These procedures must be suitably paired: e.g.\
-process $k$ issues a \textbf{send} to process $j$ while process $j$
-calls for a \textbf{receive} from process $k$. Such calls must occur
-in a block of the program that is conditional on process rank.
+procedures \textbf{send} and \textbf{receive}. In \textbf{send} a
+given process supplies some data and specifies a process to which it
+should be sent; in \textbf{receive} a given process requests data from
+another specified process. These procedures must be suitably paired:
+e.g.\ process $k$ issues a \textbf{send} to process $j$ while process
+$j$ calls for a \textbf{receive} from process $k$. Such calls must
+occur in a block of the program that is conditional on process rank.
 
 
-\subsection{What goes in an MPI-type hansl script?}
+\subsection{What goes into an MPI-type hansl script?}
 \label{subsec:script}
 
 In a hansl script to be executed via \texttt{gretlmpi}---as also
@@ -396,7 +398,7 @@ in the context of an MPI command block in a ``regular'' hansl
 script---you have access to all the standard gretl commands and
 functions, plus some extra ones.
 
-First, you have these two new accessors:
+First, you have these two accessors:
 \begin{center}
 \begin{tabular}{ll}
 \texttt{\$mpirank} & gives the MPI rank of ``this'' process \\
@@ -507,15 +509,15 @@ endif
 mpiscatter(&X, byrows)
 \end{code}
 %$
-If there are 4 processes, each one (including root) will each get a
-$2500 \times 10$ share of the original $X$ as it existed in the root
-process. If you want to preserve the full matrix in the root process,
-it is necessary to make a copy of it before calling
-\texttt{mpiscatter}.
+If there are 4 processes, each one---\textit{including root}---will
+get a $2500 \times 10$ share of the original
+$X$ as it existed in the root process. If you want to preserve the
+full matrix in the root process you must make a copy of it before
+calling \texttt{mpiscatter}.
 
 The optional trailing \texttt{root} argument to the functions
-\texttt{mpibcast}, \texttt{mpireduce} and \texttt{mpiscatter} can be
-used to depart from the default assumption that root is always process
+\texttt{mpibcast}, \texttt{mpireduce} and \texttt{mpiscatter} allows
+departure from the default assumption that root is always process
 0. For example, if you want process 8 to broadcast a random matrix to
 all processes:
 \begin{code}
@@ -527,7 +529,7 @@ mpibcast(&X, 8)
 \end{code}
 % $
 
-In addition to the data-transfer functions, there's a utility function
+In addition to the data-transfer functions there's a utility function
 whose job is simply to enforce synchronization.  This is
 \texttt{mpibarrier}, which takes no arguments and has no meaningful
 return value. It should be placed in a common portion of an
@@ -567,10 +569,10 @@ displays the results. As with \texttt{foreign}, variables defined
 within the calling gretl process are not immediately available in the
 called program, and vice versa. To send data to, or retrieve results
 from, \texttt{gretlmpi} you need to use suitable input/output, for
-instance via the functions \texttt{mwrite} and \texttt{mread} or
-\texttt{bwrite} and \texttt{bread}. In the context of an MPI block you
-can also use the \texttt{store} and \texttt{open} commands to
-communicate a dataset.
+instance via the functions \texttt{mwrite} and \texttt{mread} for
+matrices, the functions \texttt{bwrite} and \texttt{bread} for
+bundles, or the commands \texttt{store} and \texttt{open} or
+\texttt{append} for series or lists of series.
 
 The gretl \texttt{mpi} command supports the following options:
 \begin{center}
@@ -649,7 +651,7 @@ parallelization in tasks such as multiplying matrices.
 However, given finite computational resources the two modes of
 parallelization become substitutes at the margin. 
 
-Let $n_i$ denote the number of MPI processes running on a given host,
+Let $n_i$ denote the number of MPI processes running on host $i$,
 and $m_i$ the maximum number of \textsf{OpenMP} threads permitted per
 process on the host. If the product $n_im_i$ exceeds the total number
 of threads supported by the machine you are liable to get a drastic
@@ -665,11 +667,10 @@ running \texttt{gretlmpi} yourself
 (section~\ref{subsec:gretlmpi}) or having gretl run it for you via
 an \texttt{mpi} block (section~\ref{subsec:mpi-block}).
 
-When launching \texttt{gretlmpi} yourself you can use the
-environment variable \verb|OMP_NUM_THREADS| to limit the number of
-\textsf{OpenMP} threads that can be used by each process. Here are two
-examples which limit the total usage of threads to 8 in different
-ways:
+When launching \texttt{gretlmpi} yourself you can use the environment
+variable \verb|OMP_NUM_THREADS| to limit the number of \textsf{OpenMP}
+threads that can be used by each process. Here are two examples which
+limit the total number of threads to 8 in different ways:
 \begin{code}
 # give all threads to MPI
 OMP_NUM_THREADS=1 mpiexec -n 8 gretlmpi myscript.inp
@@ -693,7 +694,7 @@ See section~\ref{sec:olsboot} for an illustration.
 \label{sec:hyper}
 
 Current Intel consumer CPUs typically have a certain number of actual
-cores but support twice that number of threads via so-called
+physical cores but support twice that number of threads via so-called
 hyper-threading. This raises the question: when you are figuring the
 resources available to support MPI processes and/or \textsf{OpenMP}
 should you think in terms of cores or threads, when you have more of
@@ -731,15 +732,15 @@ consistent with the goal of the program.
 
 One issue that arises in the MPI context is the distributed generation
 of pseudo-random sequences. If each of several processes simply uses
-the same PRNG with a different seed, this can end up producing
-sequences with arbitrary dependency. For this reason, in gretl/MPI we
-use by default the \textsf{DCMT} mechanism (Dynamic Creation of
-Mersenne Twisters) so that each MPI process gets its own, independent
-PRNG.\footnote{See
+the same pseudo-random number generator (PRNG) with a different seed,
+this can end up producing sequences with arbitrary dependency. For
+this reason, in gretl/MPI we use by default the \textsf{DCMT}
+mechanism (Dynamic Creation of Mersenne Twisters) so that each MPI
+process gets its own, independent PRNG.\footnote{See
   \url{http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/DC/dc.html}.}
 
 However, there are some cases in which you may not wish to use
-\textsf{DCMT}. The task handed to MPI may be such that the several
+\textsf{DCMT}. The task given to MPI may be such that the several
 processes are required to produce identical pseudo-random sequences
 (and then, presumably, do something different with them). Or you may
 have an MPI-enabled script in which all use of the PRNG occurs in a
@@ -763,7 +764,7 @@ forth between the types of generator if need be). However, if you know
 in advance that you have no need for \textsf{DCMT} it is more
 efficient to use the \verb|--single-rng| option.
 
-Script~\ref{script:rng} illustrates. As written, it will print $n$
+Listing~\ref{script:rng} illustrates. As written, it will print $n$
 identical matrices, but if you comment out the command
 \verb|set use_dcmt off| the matrices will all be different.
 
@@ -771,7 +772,7 @@ identical matrices, but if you comment out the command
   \caption{Generating identical sequences}
   \label{script:rng}
 \begin{scode}
-set use_dcmt off
+set use_dcmt off # or not?
 set seed 12337
 matrix X = mnormal(3,3)
 if $mpirank > 0
@@ -794,9 +795,9 @@ endif
 Another point to note about MPI is that since each process does its
 own thing in parallel, the result of a print command that is common to
 all processes is likely to be messy: lines of output may be
-interleaved. To ensure a coherent print-out it's necessary to send the
+interleaved. To ensure a coherent printout it's necessary to send the
 results to a single process first. This is illustrated in
-Script~\ref{script:rng}: instead of each rank printing its own random
+Listing~\ref{script:rng}: instead of each rank printing its own random
 matrix, rank 0 collects them all and prints them in sequence.
 
 The usual default behavior when gretl is executing a script is that
@@ -815,20 +816,37 @@ them on.
 \subsection{Linux}
 \label{subsec:linux}
 
-To enable MPI support on Linux at present you have to install an MPI
-package first, then build gretl from the git sources. (Hopefully this
-will be handled by the Linux distributions before long.)
+On Debian-based systems gretl should be MPI-enabled by default
+As mentioned above, on other Linux systems you may have to build gretl
+yourself (either from a released source package or from the git
+sources). The tell-tale is whether or not the \texttt{gretlmpi}
+executable is installed, and the command ``\texttt{which gretlmpi}''
+in a terminal window should tell you that.
 
-It's straightforward to install one of the open-source MPI
-implementations on a Linux system using your distribution's package
-manager. We currently recommend \textsf{Open MPI}, since that is what
-we've mostly used in testing, but \textsf{MPICH} should also work
-fine.  Here are three variants of the required command:
+If the gretl package provided by your distro includes
+\texttt{gretlmpi} you just have to ensure that MPI itself is
+installed. Here are three variants of the required command:
+\begin{code}
+# Debian-based systems
+apt-get install libopenmpi
+# Fedora
+dnf install openmpi
+# Arch
+pacman -S openmpi
+\end{code}
+And the rest of this section needn't concern you.
+
+If you're building gretl yourself you should ensure that MPI is
+installed \textit{first}.  It's straightforward to install one of the
+open-source MPI implementations on a Linux system using your
+distribution's package manager. We recommend \textsf{Open MPI}, since
+that is what we've mostly used in testing, but \textsf{MPICH} should
+also work fine.  Here are three variants of the required command:
 \begin{code}
 # Debian-based systems
 apt-get install libopenmpi-dev
 # Fedora
-yum install openmpi
+dnf install openmpi-devel
 # Arch
 pacman -S openmpi
 \end{code}
@@ -860,13 +878,13 @@ when configuring the build.
 Microsoft has its own MPI implementation for Windows, \textsf{MS-MPI},
 which is available as a free download via
 
-\url{http://www.microsoft.com/en-us/download/details.aspx?id=41634}
+\url{https://www.microsoft.com/download/details.aspx?id=100593}
 
-The current releases (and snapshots) for Windows (both 32- and 64-bit)
-provide support for this.\footnote{In principle you could install
-  \textsf{Open MPI} or \textsf{MPICH} on Windows---though you'd have
-  to build them yourself---but at present gretl on Windows only
-  supports \textsf{MS-MPI}.}
+and gretl builds for Windows have supported this since
+2017.\footnote{In principle you could install \textsf{Open MPI} or
+  \textsf{MPICH} on Windows---though you'd have to build them
+  yourself---but at present gretl on Windows only supports
+  \textsf{MS-MPI}.}
 
 When you run the \textsf{MS-MPI} installer this automatically adds the
 relevant directory to your path, and you should be good to go. Note,
@@ -881,18 +899,11 @@ smpd -d
 (This opens a console window, which you can just minimize to get it
 out of the way.)
 
-\subsection{Mac OS X}
+\subsection{MacOS}
 
-At present gretl's MPI support is enabled only in the quartz (Intel
-64-bit) snapshot.
-
-There's some history here: up to version 10.6 of OS X (Snow Leopard),
-Apple provided an MPI implementation as a standard component of the
-OS. But Snow Leopard is, of course, quite old by now and this policy
-was discontinued with OS X 10.7. So as of \today{} gretl does not
-attempt to use Apple's MPI. The current quartz snapshot includes
-\texttt{gretlmpi}, but this is linked against version 1.6.5 of
-\textsf{Open MPI}, which is assumed to be installed under
+MPI support is enabled only in the ``quartz'' (Intel 64-bit) build of
+gretl. This build includes \texttt{gretlmpi}, linked against version
+1.6.5 of \textsf{Open MPI}, which is assumed to be installed under
 \texttt{/opt/openmpi}. This assumption will \textit{not} be correct in
 general, but you can make it so by installing the package
 \begin{code}
@@ -902,7 +913,7 @@ which can be found at
 
 \url{http://sourceforge.net/projects/gretl/files/osx-testing/}
 
-To unpack the package you would do
+To unpack the package you would do, in \textsf{Terminal},
 \begin{code}
 cd /
 sudo tar xvf /where/you/put/openmpi-1.6.5-mac64.tar.xz
@@ -911,11 +922,7 @@ sudo tar xvf /where/you/put/openmpi-1.6.5-mac64.tar.xz
 This will install the files under \texttt{/opt/openmpi}, which is
 where gretl will expect to find them; plus, it's a location where they
 are unlikely to collide with any other MPI implementation you may have
-installed.\footnote{Earlier draft versions of this document referred
-  to a package containing \textsf{Open MPI} 1.2.9, to be installed
-  under the \texttt{/usr} tree on OS X. That package is obsolete, in
-  part because Apple's policy is now that users are not allowed to
-  install custom software under \texttt{/usr}.}
+installed.
 
 \section{MPI dependency questions}
 \label{sec:mpi-depend}
@@ -947,19 +954,11 @@ To test for MPI support you can use the
 members,\footnote{For a full listing of the members of the bundle see
   the current \textit{Gretl Command Reference}.} one of which is the
 scalar \texttt{mpi}: this has value 0 if gretl has not been built with
-MPI support enabled (which is, for example, the case for the old-style
-OS X snapshots that depend on X11). It is also 0 if the gretl build
-has MPI support but \texttt{mpiexec} is not installed.  Conversely, if
-you get a value of 1 from \verb|$sysinfo.mpi|, that tells you that MPI
-is both supported by gretl and installed (as best gretl can tell).
-
-Note that
-\verb|$sysinfo| was undefined on versions of gretl prior to 1.9.90
-(released in May 2014), in which case attempting to test its members
-will produce an error. So if you need a real run-time check (for
-example, if you're distributing a hansl script to others) you'll first
-need to check the gretl version using the \verb|$version| accessor:
-this should give at least 10990 (indicating gretl 1.9.90).
+MPI support enabled (which is the case for the old-style OS X builds
+that depend on X11). It is also 0 if the gretl build has MPI support
+but \texttt{mpiexec} is not installed.  Conversely, if you get a value
+of 1 from \verb|$sysinfo.mpi|, that tells you that MPI is both
+supported by gretl and installed (as best gretl can tell).
 
 \subsection{For geeks: so is libgretl linked against libmpi?}
 
@@ -968,7 +967,6 @@ of gretl will be usable by people who don't have MPI installed (not
 even \texttt{libmpi}).  When the \texttt{gretlmpi} binary is
 running we need access to various MPI symbols in libgretl, but in that
 case we get them via \texttt{dlopen}.
-
 
 \clearpage
 
@@ -983,8 +981,8 @@ overall structure is that process 0 creates an artificial dataset and
 runs OLS to obtain initial parameter estimates; the data and initial
 estimates are then broadcast; the bootstrap iterations are divided
 between all the processes; and finally the results are assembled via
-\texttt{mpireduce}.  Script~\ref{script:olsboot-funcs} shows the hansl
-functions that are used and Script~\ref{script:olsboot} shows the main
+\texttt{mpireduce}.  Listing~\ref{script:olsboot-funcs} shows the hansl
+functions that are used and Listing~\ref{script:olsboot} shows the main
 program.
 
 \begin{script}[htbp]
@@ -1171,8 +1169,8 @@ the log-likelihood for its own chunk, given the current vector of
 parameter estimates; these values can then be summed (a case of
 \textbf{reduce}) to get the overall log-likelihood.
 
-The functions we use are shown in Script~\ref{script:gamma-funcs} and
-the main program in Script~\ref{script:gamma}.
+The functions we use are shown in Listing~\ref{script:gamma-funcs} and
+the main program in Listing~\ref{script:gamma}.
 
 \begin{script}[htbp]
   \caption{hansl functions for MLE example}
