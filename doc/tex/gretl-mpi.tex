@@ -1204,41 +1204,40 @@ include gamma-funcs.inp
 set use_dcmt off
 
 if $mpirank == 0
-  nulldata 1000000
-  scalar P = 5
-  # generate gamma-distributed data
-  matrix mat_x = -sumr(ln(muniform($nobs, P)))
-  scalar mx = meanc(mat_x)
-  scalar vx = mcov(mat_x)
-  # the known "correct" starting point is:
-  # matrix param = {mx/vx, mx*mx/vx}
-  # but we'll start from a "wrong" point
-  matrix param = {mx/vx, 1}
+   scalar N = 1000000
+   scalar P = 5
+   # generate gamma-distributed data
+   matrix X = -sumr(ln(muniform(N, P)))
+   scalar mx = meanc(X)
+   scalar vx = mcov(X)
+   # the known "correct" starting point is:
+   # matrix param = {mx/vx, mx*mx/vx}
+   # but we'll start from a "wrong" point
+   matrix param = {mx/vx, 1}
 else
-  nulldata 2
-  matrix mat_x param
+   matrix X param
 endif
 
 # broadcast the initial parameter values
 mpibcast(&param)
 
 # divide the data up
-mpiscatter(&mat_x, byrows)
+mpiscatter(&X, byrows)
 
 if $mpirank == 0
-  string opt = "--verbose"
+   string opt = "--verbose"
 else
-  string opt = "--quiet"
+   string opt = "--quiet"
 endif
 
 # all processes do mle
 set stopwatch
-mle LL = mpi_gamma_llik(mat_x, param)
-  params param
+mle LL = mpi_gamma_llik(X, param)
+   params param
 end mle @opt
 
 if $mpirank == 0
-  printf "elapsed: %g\n", $stopwatch
+   printf "elapsed: %g\n", $stopwatch
 endif
 \end{scode}
 \end{script}
@@ -1271,19 +1270,12 @@ After including the functions file we do \texttt{set use\_dcmt
   off}. This is not essential, but makes it possible to do a direct
 comparison of the results from MPI with those from a single-process
 variant of the script (given a common random seed). Then the rank 0
-process prepares the gamma dataset. Notice that while process 0
-creates a dataset with a million observations, the other processes
-create datasets with just 2 observations. This reflects the fact that
-gretl's \texttt{mle} command requires that a dataset be in place,
-but---since the log-likelihood function we're using works with a data
-\textit{matrix} rather than series---it doesn't matter how big the
-dataset is. So ranks 1 and higher are just minimally satisfying
-the requirement that a dataset exists.
+process prepares the gamma data.
 
 Once the initial set-up is complete, process 0 broadcasts the initial
 parameter vector (which we deliberately make ``off'' so that
-\texttt{mle} has some substantial work to do) and scatters the matrix
-version of the gamma data, \verb|mat_x|.
+\texttt{mle} has some work to do) and scatters the data matrix,
+\texttt{X}.
 
 The final step is for all processes to run \texttt{mle}. But since we
 don't want to see $n$ copies of the model results we append the
