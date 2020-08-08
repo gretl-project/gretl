@@ -132,21 +132,20 @@ section~\ref{sec:usage} below.
 \section{Modes of parallelization}
 \label{sec:MPI-OMP}
 
-Support for parallelization via \textsf{OpenMP} has for several years
-been an option when building gretl, and it is present in the gretl
-packages for MS Windows. But although MPI and \textsf{OpenMP} are both
-in the business of parallelization, they operate at different levels
-and have different characteristics. For one thing, \textsf{OpenMP} is
-limited to multi-threading on a given (multi-core) machine whereas MPI
-is capable of operating across machines (e.g.\ in a
-``cluster''). Beyond that, there's a fundamental architectural
-difference. With \textsf{OpenMP}, all data is in common between the
-threads unless you specifically mark certain variables as ``private'',
-while with MPI all data is private to the given process unless you
-specifically request that it be sent between processes somehow or
-other.
+Support for parallelization via \textsf{OpenMP} has long been an
+option when building gretl, and it is present in the gretl packages
+for MS Windows. But although MPI and \textsf{OpenMP} are both in the
+business of parallelization, they operate at different levels and have
+different characteristics. For one thing, \textsf{OpenMP} is limited
+to multi-threading on a given (multi-core) machine whereas MPI is
+capable of operating across machines (e.g.\ in a ``cluster''). Beyond
+that, there's a fundamental architectural difference. With
+\textsf{OpenMP}, all data is in common between the threads unless you
+specifically mark certain variables as ``private'', while with MPI all
+data is private to the given process unless you specifically request
+that it be sent between processes somehow or other.
 
-This means that \textsf{OpenMP} lends itself to what we might call
+This means that \textsf{OpenMP} lends itself to what we may call
 ``fine-grained'' parallelization, where relatively few variables have
 to be marked as private or local. A classic example is matrix
 multiplication, where only the row and column indices have to be
@@ -323,7 +322,7 @@ what's really single-threaded code.
 \label{subsec:concepts}
 
 Before getting into the relevant hansl commands and functions it may
-be worth outlining some of the basic ideas they implement.
+be worth outlining some of the basic concepts they implement.
 
 Suppose you launch an MPI program with $n$ processes (meaning that $n$
 instances of the program are run). Each process has an ID number, or
@@ -427,14 +426,18 @@ functions:
   scatter matrix \texttt{m} using \texttt{op} \\
 \end{tabular}
 \end{center}
-By ``object'' above we mean (at present) a matrix, scalar or bundle
-(however, for bundles only \texttt{mpisend}, \texttt{mpirevc} and
-\texttt{mpibcast} are supported).  The scalar return value from these
-functions (apart from \texttt{mpirecv}, which returns a matrix, bundle
-or scalar depending on the context) is merely nominal: they return 0
-if they succeed. The \texttt{root} argument to \texttt{mpibcast},
-\texttt{mpireduce} and \texttt{mpiscatter} is optional, and defaults
-to 0; the use of this argument is discussed below.
+By ``object'' above we mean a matrix, scalar, bundle, array, string or
+list. All of these types are supported by \texttt{mpisend},
+\texttt{mpirevc} and \texttt{mpibcast}. The application of
+\texttt{mpiscatter} and \texttt{mpireduce} is more limited. At present
+only matrices are supported for \texttt{mpiscatter}, while
+\texttt{mpireduce} can be used for matrices, scalars and arrays.
+
+The scalar return value from these functions (apart from
+\texttt{mpirecv}, which returns the requested object) is merely
+nominal: they return 0 if they succeed. The \texttt{root} argument to
+\texttt{mpibcast}, \texttt{mpireduce} and \texttt{mpiscatter} is
+optional, and defaults to 0; use of this argument is discussed below.
 
 As you might expect, \texttt{mpisend} and \texttt{mpirecv} have to be
 paired suitably, as in the following fragment which sends a matrix
@@ -476,8 +479,9 @@ method. The methods currently supported for scalars are \texttt{sum},
 \texttt{prod} (product), \texttt{max} and \texttt{min}. For matrices
 the methods are \texttt{sum}, \texttt{prod} (Hadamard product),
 \texttt{hcat} (horizontal concatenation) and \texttt{vcat} (vertical
-concatenation). Reduction is not supported for bundles at present.
-For example:
+concatenation). For arrays, only \texttt{acat} (concatentation) is
+supported, and reduction is not supported for bundles at present.  For
+example:
 \begin{code}
 matrix X
 X = mnormal(T, k)
@@ -935,10 +939,9 @@ questions.
 
 \subsection{Can I run MPI-enabled gretl without MPI?}
 
-Well, gretl will do everything it has done up till now. The only thing
-you \textit{can't} do is use the new MPI functionality: it's there
-\textit{in potentia} but the potential is not realized until you
-install MPI.
+Yes. The only thing you \textit{can't} do is use MPI functionality:
+it's there \textit{in potentia} but the potential is not realized
+until you install MPI.
 
 The new accessors \verb|$mpirank| and \verb|$mpisize| will ``work''
 but will always return $-1$ and $0$, respectively.
@@ -963,10 +966,10 @@ supported by gretl and installed (as best gretl can tell).
 \subsection{For geeks: so is libgretl linked against libmpi?}
 
 No. We deliberately avoided doing this, so that an MPI-enabled build
-of gretl will be usable by people who don't have MPI installed (not
-even \texttt{libmpi}).  When the \texttt{gretlmpi} binary is
-running we need access to various MPI symbols in libgretl, but in that
-case we get them via \texttt{dlopen}.
+of gretl will be usable by people who don't have MPI installed.  When
+the \texttt{gretlmpi} binary is running we need access to symbols from
+the MPI library, but we get them on the fly via \texttt{dlopen} rather
+than linking against the library at build time.
 
 \clearpage
 
