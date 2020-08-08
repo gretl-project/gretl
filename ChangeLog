@@ -1,3 +1,7 @@
+version 2020e, in progress
+- MPI: update documentation and support transfer of more
+  data types
+
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard
   in formats other than plain text
