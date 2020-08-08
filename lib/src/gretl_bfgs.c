@@ -104,6 +104,19 @@ static double **triangular_array_new (int n)
     return m;
 }
 
+/* State variable set when doing hessian_from_score(), to alert
+   the gradient function to the fact that the parameters will
+   be changing and in general NOT the same as in the last call
+   to the loglikelihood function.
+*/
+static int doing_hess_score;
+
+/* accessor for the above */
+int hess_score_on (void)
+{
+    return doing_hess_score;
+}
+
 /**
  * hessian_from_score:
  * @b: array of k parameter estimates.
@@ -165,6 +178,8 @@ int hessian_from_score (double *b, gretl_matrix *H,
 	return E_ALLOC;
     }
 
+    doing_hess_score = 1;
+
     for (i=0; i<n; i++) {
 	b0 = b[i];
 	b[i] = b0 + eps;
@@ -207,6 +222,8 @@ int hessian_from_score (double *b, gretl_matrix *H,
 	    gretl_matrix_set(H, i, j, -x / den);
 	}
     }
+
+    doing_hess_score = 0;
 
     if (!err) {
 	gretl_matrix_xtr_symmetric(H);
