@@ -74,13 +74,8 @@ int gretl_array_mpi_reduce (gretl_array *sa,
 			    Gretl_MPI_Op op,
 			    int root);
 
-int gretl_mpi_receive (int source,
-		       GretlType *type,
-		       gretl_matrix **pm,
-		       gretl_bundle **pb,
-		       gretl_array **pa,
-		       double *px,
-		       int *pk);
+void *gretl_mpi_receive (int source, GretlType *type,
+			 int *err);
 
 void gretl_mpi_stopwatch_init (void);
 

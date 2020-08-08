@@ -151,9 +151,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
     }
 
     if (f == F_MPI_SEND) {
-	/* we support sending a matrix, scalar or bundle; we need
-	   the destination id as second argument
-	*/
+	/* we need a destination id as second argument */
 	if (l->t == MAT) {
 	    type = GRETL_TYPE_MATRIX;
 	} else if (l->t == NUM) {
@@ -162,6 +160,10 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    type = GRETL_TYPE_BUNDLE;
 	} else if (l->t == ARRAY) {
 	    type = GRETL_TYPE_ARRAY;
+	} else if (l->t == STR) {
+	    type = GRETL_TYPE_STRING;
+	} else if (l->t == LIST) {
+	    type = GRETL_TYPE_LIST;
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -174,7 +176,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	id = node_get_int(l, p);
     } else if (f == F_BCAST || f == F_REDUCE ||
 	       f == F_ALLREDUCE || f == F_SCATTER) {
-	/* we need a variable's address on the left */
+	/* we need the address of a variable on the left */
 	if (l->t != U_ADDR) {
 	    p->err = E_TYPES;
 	} else {
@@ -213,7 +215,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
     if (p->err) {
 	return NULL;
     } else if (f == F_MPI_SEND) {
-	void *sendp;
+	void *sendp = NULL;
 
 	if (type == GRETL_TYPE_MATRIX) {
 	    sendp = l->v.m;
@@ -221,47 +223,61 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    sendp = l->v.b;
 	} else if (type == GRETL_TYPE_ARRAY) {
 	    sendp = l->v.a;
-	} else {
+	} else if (type == GRETL_TYPE_STRING) {
+	    sendp = l->v.str;
+	} else if (type == GRETL_TYPE_LIST) {
+	    sendp = l->v.ivec;
+	} else if (type == GRETL_TYPE_DOUBLE) {
 	    sendp = &l->v.xval;
+	} else {
+	    p->err = E_TYPES;
 	}
-	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
 	if (!p->err) {
 	    p->err = ret->v.xval = gretl_mpi_send(sendp, type, id);
 	}
     } else if (f == F_MPI_RECV) {
-	gretl_matrix *m = NULL;
-	gretl_bundle *b = NULL;
-	gretl_array *a = NULL;
-	double x = NADBL;
-	int k = 0;
+	void *recvp;
 
-	p->err = gretl_mpi_receive(id, &type, &m, &b, &a, &x, &k);
+	recvp = gretl_mpi_receive(id, &type, &p->err);
 
 	if (!p->err) {
 	    if (type == GRETL_TYPE_MATRIX) {
 		ret = aux_matrix_node(p);
 		if (!p->err) {
-		    ret->v.m = m;
+		    ret->v.m = recvp;
 		}
 	    } else if (type == GRETL_TYPE_BUNDLE) {
 		ret = aux_bundle_node(p);
 		if (!p->err) {
-		    ret->v.b = b;
+		    ret->v.b = recvp;
 		}
 	    } else if (type == GRETL_TYPE_ARRAY) {
 		ret = aux_array_node(p);
 		if (!p->err) {
-		    ret->v.a = a;
+		    ret->v.a = recvp;
 		}
 	    } else if (type == GRETL_TYPE_DOUBLE) {
 		ret = aux_scalar_node(p);
 		if (!p->err) {
-		    ret->v.xval = x;
+		    ret->v.xval = *(double *) recvp;
 		}
-	    } else {
+	    } else if (type == GRETL_TYPE_STRING) {
+		ret = aux_string_node(p);
+		if (!p->err) {
+		    ret->v.str = recvp;
+		}
+	    } else if (type == GRETL_TYPE_LIST) {
+		ret = aux_list_node(p);
+		if (!p->err) {
+		    ret->v.ivec = recvp;
+		}
+	    } else if (type == GRETL_TYPE_INT) {
 		ret = aux_scalar_node(p);
 		if (!p->err) {
-		    ret->v.xval = k;
+		    ret->v.xval = *(int *) recvp;
 		}
 	    }
 	}
@@ -287,12 +303,16 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 		a = l->v.a;
 	    }
 	    bcastp = &a;
-	} else {
+	} else if (type == GRETL_TYPE_DOUBLE) {
 	    x = l->v.xval;
 	    bcastp = &x;
+	} else {
+	    p->err = E_TYPES;
 	}
 
-	ret = aux_scalar_node(p);
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
 	if (!p->err) {
 	    p->err = gretl_mpi_bcast(bcastp, type, root);
 	    if (!p->err && id != root) {
