@@ -1313,7 +1313,7 @@ static void ccd_make_lambda (regls_info *ri,
     int i;
 
     gretl_matrix_copy_values(lam, ri->lfrac);
-    if (ri->lamscale == 0) {
+    if (ri->lamscale == LAMSCALE_NONE) {
 	for (i=0; i<ri->nlam; i++) {
 	    lam->val[i] /= ri->n;
 	}
@@ -1417,7 +1417,7 @@ static int ccd_regls (regls_info *ri, PRN *prn)
 	goto bailout;
     }
 
-    if (ri->lamscale == 0) {
+    if (ri->lamscale == LAMSCALE_NONE) {
 	gretl_matrix_multiply_by_scalar(ri->y, sqrt(ri->n));
 	gretl_matrix_copy_values(lam, ri->lfrac);
     } else if (alpha < 1.0) {
@@ -1462,13 +1462,13 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     if (!err) {
 	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX, 0);
 	B = NULL;
-	if (ri->lamscale > 0) {
+	if (ri->lamscale != LAMSCALE_NONE) {
 	    gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
 	}
 	if (nlam == 1) {
 	    double lambda = ri->lfrac->val[0];
 
-	    if (ri->lamscale > 0) {
+	    if (ri->lamscale != LAMSCALE_NONE) {
 		/* show a value comparable with ADMM (??) */
 		lambda *= lmax * ri->n;
 	    }
