@@ -585,7 +585,6 @@ static int do_negbin (MODEL *pmod, int offvar, double omean,
 {
     gretlopt maxopt = (opt & OPT_V) | OPT_U;
     gretl_matrix_block *B = NULL;
-    gretl_matrix *H = NULL;
     count_info cinfo = {0};
     double toler;
     int maxit = 100;
@@ -600,24 +599,19 @@ static int do_negbin (MODEL *pmod, int offvar, double omean,
 	use_newton = 1;
     }
 
-    if (!err && !use_newton) {
-	/* initialize BFGS curvature */
-	H = negbin_init_H(&cinfo);
-    }
-
     if (!err && use_newton) {
 	void *hfunc = (cinfo.nbtype == 1)? NULL : negbin2_hessian;
 	double crittol = 1.0e-7;
 	double gradtol = 1.0e-7;
 
-	cinfo.flags = SCORE_UPDATE_MU;
 	err = newton_raphson_max(cinfo.theta, cinfo.k + 1, maxit,
 				 crittol, gradtol, &fncount,
 				 C_LOGLIK, negbin_loglik,
 				 negbin_score, hfunc,
 				 &cinfo, maxopt, cinfo.prn);
-	cinfo.flags = 0;
     } else if (!err) {
+	gretl_matrix *H = negbin_init_H(&cinfo);
+
 	BFGS_defaults(&maxit, &toler, NEGBIN);
 	err = BFGS_max(cinfo.theta, cinfo.k + 1, maxit, toler,
 		       &fncount, &grcount, negbin_loglik, C_LOGLIK,
