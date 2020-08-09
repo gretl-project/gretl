@@ -27,6 +27,7 @@
 
 #define HDEBUG 0
 #define VCV_DEBUG 0
+#define INITH_OPG 1
 
 typedef struct h_container_ h_container;
 
@@ -1276,8 +1277,6 @@ static int adjust_ml_vcv_hyperbolic (h_container *HC)
     return err;
 }
 
-#define INITH_OPG 1
-
 #if INITH_OPG
 
 /* calculate the OPG matrix at the starting point and use
@@ -1452,14 +1451,13 @@ gretl_matrix *heckit_ml_vcv (h_container *HC, gretlopt opt, DATASET *dset,
 int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	       PRN *prn)
 {
-    gretl_matrix *init_H = NULL;
     int maxit, fncount = 0, grcount = 0;
     double rho, gradtol = 1.0e-06, toler = 1.0e-8;
     double *hess = NULL;
     double *theta = NULL;
     int i, j, np = HC->kmain + HC->ksel + 2;
     gretlopt maxopt;
-    int use_bfgs = 0;
+    int use_bfgs;
     int err = 0;
 
     theta = malloc(np * sizeof *theta);
@@ -1467,43 +1465,38 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	return E_ALLOC;
     }
 
-    for (i=0; i<HC->kmain; i++) {
-	theta[i] = gretl_vector_get(HC->beta, i);
-    }
-
-    j = 0;
-    for (i=HC->kmain; i<np-2; i++) {
-	theta[i] = gretl_vector_get(HC->gama, j++);
-    }
-
-    theta[np-2] = HC->sigma;
     rho = HC->rho;
-
     if (fabs(rho) > 0.995) {
 	rho = (rho > 0)? 0.995 : -0.995;
     }
 
-    theta[np-1] = atanh(rho);
-
-    if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
-	use_bfgs = 1;
+    for (i=0, j=0; i<np; i++) {
+	if (i < HC->kmain) {
+	    theta[i] = gretl_vector_get(HC->beta, i);
+	} else if (i < np-2) {
+	    theta[i] = gretl_vector_get(HC->gama, j++);
+	} else if (i == np-2) {
+	    theta[i] = HC->sigma;
+	} else {
+	   theta[i] = atanh(rho);
+	}
     }
 
+    use_bfgs = (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS);
     BFGS_defaults(&maxit, &toler, HECKIT);
 
-
+    if (use_bfgs) {
 #if INITH_OPG
-    if (use_bfgs) {
-	init_H = heckit_init_H(theta, HC, np);
-    }
+	gretl_matrix *H = heckit_init_H(theta, HC, np);
 #endif
-
-    if (use_bfgs) {
 	maxopt = (prn != NULL)? (OPT_U | OPT_V) : OPT_U;
 	err = BFGS_max(theta, np, maxit, toler, &fncount,
 		       &grcount, h_loglik, C_LOGLIK,
-		       heckit_score, HC, init_H,
+		       heckit_score, HC, H,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+#if INITH_OPG
+	gretl_matrix_free(H);
+#endif
     } else {
 	maxopt = (opt & OPT_V) | OPT_U;
 	err = newton_raphson_max(theta, np, maxit, toler, gradtol,
@@ -1511,8 +1504,6 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 				 heckit_score, heckit_hessian,
 				 HC, maxopt, prn);
     }
-
-    gretl_matrix_free(init_H);
 
     if (!err) {
 	HC->ll = hm->lnL = h_loglik(theta, HC);
