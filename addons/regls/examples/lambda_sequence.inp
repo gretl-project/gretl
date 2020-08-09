@@ -9,6 +9,8 @@ list X = population..LemasPctOfficDrugUn
 smpl 1 800
 printf "Sample range %d to %d\n", $t1, $t2
 
+sdy = sdc({murdPerPop})
+
 lamseq = lambda_sequence(1, 8)
 bundle parms = defbundle("lfrac", lamseq)
 parms.verbosity = 0
@@ -16,14 +18,14 @@ list X0 = const X
 
 bundle lb = lasso(murdPerPop, X, parms)
 # lambda values comparable with glmnet
-matrix lam = lb.lfrac * (lb.lmax / lb.nobs)
+matrix lam = lb.lfrac * (sdy * lb.lmax / lb.nobs)
 printf "\ngretl (ADMM):\n"
 regls_multipred(lb.B, lam, murdPerPop, X0)
 
 parms.ccd = 1
 bundle lb = lasso(murdPerPop, X, parms)
 # lambda values comparable with glmnet
-matrix lam = lb.lfrac * (lb.lmax / lb.nobs)
+matrix lam = lb.lfrac * (sdy * lb.lmax / lb.nobs)
 printf "\ngretl (CCD):\n"
 regls_multipred(lb.B, lam, murdPerPop, X0)
 
@@ -46,9 +48,3 @@ Rb = mread("Rb.mat", 1)
 Rlam = mread("Rlam.mat", 1)
 printf "\nglmnet:\n"
 regls_multipred(Rb, Rlam, murdPerPop, X0)
-
-
-
-
-
-
