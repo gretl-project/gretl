@@ -1106,7 +1106,6 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 {
     int verbskip, verbose = (opt & OPT_V);
     int minimize = (opt & OPT_I);
-    gretl_matrix *A = NULL;
     double *wspace = NULL;
     double **H = NULL;
     double *g, *t, *X, *c;
@@ -1129,14 +1128,6 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     if (gradfunc == NULL) {
 	gradfunc = numeric_gradient;
-    } else if (A0 == NULL && getenv("BFGS_INIHESS") != NULL) {
-	int aerr = 0;
-
-	A = hessian_inverse_from_score(b, n, gradfunc,
-				       cfunc, data, &aerr);
-	if (!aerr) {
-	    A0 = A;
-	}
     }
 
     /* initialize curvature matrix */
@@ -1397,7 +1388,6 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
     free(wspace);
     free_triangular_array(H, n);
-    gretl_matrix_free(A);
 
 #if BFGS_DEBUG
     fprintf(stderr, "BFGS_max: returning %d\n", err);
