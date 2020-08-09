@@ -42,9 +42,9 @@
 \section{Introduction}
 \label{sec:intro}
 
-This addon package is essentially a front-end for functionality coded
-in C in the gretl \texttt{regls} plugin; to run the package you will
-need gretl version 2020a or higher.  The plugin implements LASSO
+The \textsf{regls} addon is essentially a front-end for functionality
+coded in C in the gretl \texttt{regls} plugin; to run the package you
+will need gretl version 2020a or higher.  The plugin implements LASSO
 \citep{tibshirani96}---by default via the Alternating Direction Method
 of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}---and
 also Ridge regression, by default via Singular Value Decomposition.
@@ -597,6 +597,39 @@ variation. Similarly for the typical full \textsf{lasso} workflow;
 that is, randomized cross validation followed by out of sample
 prediction. Sometimes we do a bit better than \textsf{glmnet},
 sometimes not quite so well.
+
+\subsection*{Different conventions}
+
+It should be noted that \textsf{regls} and \textsf{glmnet} employ
+different conventions in some respects. This does not affect the
+comparison of reported coefficients or predicted values, but it can
+make comparison of $\lambda$ values a little awkward. The LASSO
+objective function and definition of $\lambda_{\max}$ used by
+\textsf{regls} were stated in section~\ref{sec:intro}, but to be fully
+explicit we should say that the $X$ and $y$ in equation
+(\ref{eq:lmax}) for the maximum $\lambda$ are taken to be standardized
+values.
+
+In \textsf{glmnet} the objective (in the linear Gaussian case) is
+\[
+   \min_{\hat{\beta}} \quad \frac{1}{2n}\,
+  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 + \lambda \sum_{j=1}^k |\hat{\beta}_j| 
+\]
+This differs from our equation (\ref{eq:obj}) in dividing the sum of
+squared residuals (SSR) by $2n$ rather than 2. Since \textsf{glmnet}
+is not actually using a different relative weighting of the SSR and
+the sum of absolute coefficient values, it follows that their
+``$\lambda$'' must be read as $n^{-1}$ times ours. Moreover, while we
+take each $\lambda_i$ value to be $s_i$ times $\lambda_{\max}$ as
+defined in equation (\ref{eq:lmax}), the $\lambda$ values printed by
+\textsf{glmnet} are (in our notation)
+\[
+\lambda_i = s_i \cdot \lambda_{\max} \cdot \hat{\sigma}_y / n 
+\]
+where $\hat{\sigma}_y$ is the ML estimate of the standard deviation of
+the dependent variable. That is, in \textsf{glmnet} $\lambda$ is
+expressed per observation, and scaled by the standard deviation of
+$y$.
 
 \subsection*{An extended test}
 
