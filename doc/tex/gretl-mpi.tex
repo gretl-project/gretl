@@ -169,10 +169,10 @@ and \textsf{OpenMP} is discussed in section~\ref{sec:contention}.
 \label{sec:setup}
 
 You can get MPI working in gretl using reasonably recent builds (2019a
-or higher recommended) for MS Windows, macOS, Fedora or Debian-based
-Linux distributions. On Linux other then Fedora or Debian you may have
-to build gretl yourself.\footnote{To see if the gretl build supplied
-  by a distro is MPI-enabled, check for the presence of
+or higher recommended) for MS Windows, macOS, or Fedora or
+Debian-based Linux distributions. On Linux other then Fedora or Debian
+you may have to build gretl yourself.\footnote{To see if the gretl
+  build supplied by a distro is MPI-enabled, check for the presence of
   \texttt{gretlmpi} in \texttt{/usr/bin}.} In each case you will need
 to have a suitable MPI package installed. The details differ by
 platform and are given in section~\ref{sec:platforms} below.
@@ -830,8 +830,11 @@ command ``\texttt{which gretlmpi}'' in a terminal window should tell
 you that.
 
 If your distro includes \texttt{gretlmpi} you just have to ensure that
-MPI itself is installed. Here are three variants of the required
-command:
+MPI itself is installed. On Debian and Fedora this should be
+automatic: \textsf{Open MPI} is a dependency of the gretl package
+(Debian) or the \texttt{gretl-openmpi} package (Fedora). But just in
+case you need to install MPI yourself here are three variants of the
+required command:
 \begin{code}
 # Debian-based systems
 apt-get install libopenmpi
@@ -840,7 +843,6 @@ dnf install openmpi
 # Arch
 pacman -S openmpi
 \end{code}
-And the rest of this section needn't concern you.
 
 If you're building gretl yourself you should ensure that MPI is
 installed \textit{first}.  It's straightforward to install one of the
