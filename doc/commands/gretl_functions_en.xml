@@ -7466,11 +7466,11 @@
 	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
 	  processes. Broadcasts the <argname>object</argname>
 	  argument, which must be given in pointer form, to all
-	  processes. The object in question must be a named matrix,
-	  bundle, array or scalar, declared in all processes prior to
-	  the broadcast. No process can continue beyond a call to
-	  <lit>mpibcast</lit> until all processes have successfully
-	  executed it.
+	  processes. The object in question (a matrix, bundle, scalar,
+	  array, string or list) must be declared in all processes
+	  prior to the broadcast. No process can continue beyond a
+	  call to <lit>mpibcast</lit> until all processes have
+	  successfully executed it.
 	</para>
 	<para>
 	  By default <quote>root</quote>, the source of the broadcast,
@@ -7520,10 +7520,10 @@
 	<para>
 	  Available only when gretl is in MPI mode (see <mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
-	  processes. This function gathers objects (scalars or
-	  matrices only) of a specified name, given in pointer form,
-	  from all processes and <quote>reduces</quote> them to a
-	  single object at the root node.
+	  processes. This function gathers objects (scalars, matrices
+	  or arrays) of a specified name, given in pointer form, from
+	  all processes and <quote>reduces</quote> them to a single
+	  object at the root node.
 	</para>
 	<para>
 	  The <lit>op</lit> argument specifies the reduction operation
@@ -7532,7 +7532,8 @@
 	  and <lit>min</lit>. For matrices the methods are
 	  <lit>sum</lit>, <lit>prod</lit> (Hadamard product),
 	  <lit>hcat</lit> (horizontal concatenation) and
-	  <lit>vcat</lit> (vertical concatenation).
+	  <lit>vcat</lit> (vertical concatenation). For arrays
+	  only <lit>acat</lit> (concatenation) is supported.
 	</para>
 	<para>
 	  By default <quote>root</quote>, the target of the reduction,
@@ -7606,7 +7607,7 @@
 	<para>
 	  Available only when gretl is in MPI mode (see <mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Sends the named object
-	  (which must be a matrix, bundle, array or scalar) from the
+	  (a matrix, bundle, array, scalar, string or list) from the
 	  current process to the one identified by the integer
 	  <argname>dest</argname> (from 0 to the number of MPI
 	  processes minus 1).
