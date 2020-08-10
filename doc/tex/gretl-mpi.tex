@@ -169,13 +169,13 @@ and \textsf{OpenMP} is discussed in section~\ref{sec:contention}.
 \label{sec:setup}
 
 You can get MPI working in gretl using reasonably recent builds (2019a
-or higher recommended) for MS Windows, macOS, or Debian-based Linux
-distributions. On non-Debian Linux you may have to build
-gretl yourself.\footnote{To see if the gretl build supplied by a
-  distro is MPI-enabled, check for the presence of \texttt{gretlmpi}
-  in \texttt{/usr/bin}.} In each case you will need to have a suitable
-MPI package installed. The details differ by platform and are given
-in section~\ref{sec:platforms} below.
+or higher recommended) for MS Windows, macOS, Fedora or Debian-based
+Linux distributions. On Linux other then Fedora or Debian you may have
+to build gretl yourself.\footnote{To see if the gretl build supplied
+  by a distro is MPI-enabled, check for the presence of
+  \texttt{gretlmpi} in \texttt{/usr/bin}.} In each case you will need
+to have a suitable MPI package installed. The details differ by
+platform and are given in section~\ref{sec:platforms} below.
 
 Running an MPI-enabled program---such as \texttt{gretlmpi}, described
 below---requires a special launcher, \texttt{mpiexec}.  This is
@@ -820,16 +820,18 @@ them on.
 \subsection{Linux}
 \label{subsec:linux}
 
-On Debian-based systems gretl should be MPI-enabled by default
-As mentioned above, on other Linux systems you may have to build gretl
-yourself (either from a released source package or from the git
-sources). The tell-tale is whether or not the \texttt{gretlmpi}
-executable is installed, and the command ``\texttt{which gretlmpi}''
-in a terminal window should tell you that.
+On Debian-based systems gretl should be MPI-enabled by default.  On
+Fedora an additional package, \texttt{gretl-openmpi}, must be
+installed to provide \texttt{gretlmpi}.  As mentioned above, on other
+Linux systems you may have to build gretl yourself (either from a
+released source package or from the git sources). The tell-tale is
+whether or not the \texttt{gretlmpi} executable is installed, and the
+command ``\texttt{which gretlmpi}'' in a terminal window should tell
+you that.
 
-If the gretl package provided by your distro includes
-\texttt{gretlmpi} you just have to ensure that MPI itself is
-installed. Here are three variants of the required command:
+If your distro includes \texttt{gretlmpi} you just have to ensure that
+MPI itself is installed. Here are three variants of the required
+command:
 \begin{code}
 # Debian-based systems
 apt-get install libopenmpi
