@@ -1460,16 +1460,18 @@ static int ccd_regls (regls_info *ri, PRN *prn)
 	goto bailout;
     }
 
-    /* guard against nonsense results (why do they occur?) */
-    for (i=0, bad=0; i<nlam && !bad; i++) {
-	if (Rsq[i] > 1.0) {
-	    bad = 1;
+    if (R2 != NULL) {
+	/* guard against nonsense R^2 (why does this occur?) */
+	for (i=0, bad=0; i<nlam && !bad; i++) {
+	    if (Rsq[i] > 1.0) {
+		bad = 1;
+	    }
 	}
-    }
-    if (bad) {
-	err = ccd_alt_R2(ri, B, R2);
-	if (err) {
-	    goto bailout;
+	if (bad) {
+	    err = ccd_alt_R2(ri, B, R2);
+	    if (err) {
+		goto bailout;
+	    }
 	}
     }
 
