@@ -5,7 +5,7 @@ date = 2020-01-07
 description = Regularized least squqres
 tags = C20 C52
 public = lasso regls_ridge lambda_sequence regls_get_stats regls_pc_correct \
-  regls_foldvec regls_multipred glmnet_pred
+  regls_foldvec regls_multiprint glmnet_pred
 help = regls.pdf
 sample-script = regls_sample.inp
 data-files = examples

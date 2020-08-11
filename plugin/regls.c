@@ -870,8 +870,6 @@ static int ccd_get_crit (const gretl_matrix *B,
     int imin = B->rows > nx;
     int i, j;
 
-    // fprintf(stderr, "HERE B->rows %d, nx %d\n", B->rows, nx);
-
     if (B->rows == nx) {
 	/* no intercept */
 	nulldev = 0.0;
@@ -1341,6 +1339,51 @@ static void lasso_lambda_report (regls_info *ri, PRN *prn)
     }
 }
 
+/* remedial R^2 calculation for CCD: we'd like to know why this
+   is required in some cases!
+*/
+
+static int ccd_alt_R2 (regls_info *ri, gretl_matrix *B,
+		       gretl_matrix *R2)
+{
+    gretl_matrix *bj, *yh;
+    double ui, SSR, TSS = 0;
+    const double *y = ri->y->val;
+    int i, j, n = ri->y->rows;
+    int k = ri->X->cols;
+    size_t sz = k * sizeof(double);
+    int err = 0;
+
+    bj = gretl_matrix_alloc(k, 1);
+    yh = gretl_matrix_alloc(n, 1);
+    if (bj == NULL || yh == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<n; i++) {
+	TSS += y[i] * y[i];
+    }
+
+    for (j=0; j<ri->nlam; j++) {
+	memcpy(bj->val, B->val + j*B->rows, sz);
+	gretl_matrix_multiply(ri->X, bj, yh);
+	SSR = 0;
+	for (i=0; i<n; i++) {
+	    ui = y[i] - yh->val[i];
+	    SSR += ui * ui;
+	}
+	R2->val[j] = 1.0 - SSR/TSS;
+    }
+
+ bailout:
+
+    gretl_matrix_free(yh);
+    gretl_matrix_free(bj);
+
+    return err;
+}
+
 /* Cyclical Coordinate Descent driver: we come here either
    to get coefficient estimates right away, or after
    cross validation. Handles both LASSO and Ridge.
@@ -1361,7 +1404,7 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     int *ia, *nnz;
     int nlp = 0, lmu = 0;
     int nlam = ri->nlam;
-    int k = ri->k;
+    int i, bad, k = ri->k;
     int err = 0;
 
     alpha = ri->ridge ? 0.0 : 1.0;
@@ -1393,8 +1436,8 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     nnz = ia + k;
 
     if (!ri->xvalid) {
-	R2 = gretl_matrix_alloc(nlam, 1);
-	crit = gretl_matrix_alloc(nlam, 1);
+	R2 = gretl_zero_matrix_new(nlam, 1);
+	crit = gretl_zero_matrix_new(nlam, 1);
 	if (R2 == NULL || crit == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
@@ -1415,6 +1458,19 @@ static int ccd_regls (regls_info *ri, PRN *prn)
 #endif
     if (err) {
 	goto bailout;
+    }
+
+    /* guard against nonsense results (why do they occur?) */
+    for (i=0, bad=0; i<nlam && !bad; i++) {
+	if (Rsq[i] > 1.0) {
+	    bad = 1;
+	}
+    }
+    if (bad) {
+	err = ccd_alt_R2(ri, B, R2);
+	if (err) {
+	    goto bailout;
+	}
     }
 
     if (ri->lamscale == LAMSCALE_NONE) {

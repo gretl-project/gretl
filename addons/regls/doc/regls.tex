@@ -144,8 +144,8 @@ search for optimal $\lambda$ via cross validation.
 \label{sec:single-lambda}
 
 Suppose we have 1200 observations on some series \texttt{y} and list
-\texttt{X} (with 100 members) and we wish to train on the first 1000
-observations, using $s = 0.2$, then predict for the remaining
+\texttt{X} (with $k=100$ members) and we wish to train on the first
+1000 observations, using $s = 0.2$, then predict for the remaining
 200. And let's say the data are not pre-standardized. We might then
 do:
 \begin{code}
@@ -155,12 +155,13 @@ bundle lb = lasso(y, X, parms)
 \end{code}
 We'll then find the following in \texttt{lb}:
 \begin{itemize}
-\item \texttt{B}: The full vector of 101 coefficients (including an
+\item \texttt{B}: The full vector of $k+1$ coefficients (including an
   intercept).
 \item \texttt{nzb}: A vector holding only the non-zero coefficients.
 \item \texttt{nzX}: A list identifying the regressors with non-zero
   coefficients.
-\item \texttt{lmax}: The $\lambda_{\max}$ value for the input data.
+\item \texttt{lmax}: The $\lambda_{\max}$ value for the standardized
+  data.
 \item \texttt{lambda}: The value of $\lambda = s\,\lambda_{\max}$, see
   (\ref{eq:lmax}) above.
 \item \texttt{crit}: The minimized LASSO criterion, see (\ref{eq:obj})
@@ -190,19 +191,21 @@ bundle lb = lasso(y, X, parms)
 \end{code}
 
 In this case \texttt{lb.B} will be a matrix holding the full
-coefficient vector for each $s$ (one column per $s$ value), and the
-bundle will contain these additional items:
+coefficient vector for each $s$ (one column per $s$ value) and
+\texttt{lb.crit} will be a column vector showing the minimized LASSO
+criterion (\ref{eq:obj}) for each $s$. The bundle will contain these
+additional items:
 \begin{itemize}
-\item \texttt{lfmin}: The $s$ value which minimizes the LASSO
-  criterion (\ref{eq:obj}).
+\item \texttt{lfmin}: The $s$ value which produces the smallest LASSO
+  criterion.
 \item \texttt{idxmin}: The 1-based index value of \texttt{lfmin} in
   the vector passed as \texttt{lfrac}.
 \end{itemize}
 
 In addition, the vector \texttt{nzb} and list \texttt{nzX} refer to
 the non-zero coefficients and associated regressors obtained with $s$
-= \texttt{lfmin}. Out-of-sample predictions using the ``best'' $s$
-value can be obtained using \texttt{lincomb(nzX, nzb)}.
+= \texttt{lfmin}. Out-of-sample predictions using this $s$ value can
+be obtained using \texttt{lincomb(nzX, nzb)}.
 
 \section{Optimizing via cross validation}
 \label{sec:xvalid}
@@ -340,7 +343,7 @@ making the changes mentioned above, and about 1.5 seconds
 thereafter.\footnote{On a desktop machine with 4 Intel i7 processors,
   running Linux.}
 
-\section{Additional controls}
+\section{Additional ADMM controls}
 \label{sec:add-controls}
 
 This section describes some additional controls over the ADMM
@@ -454,10 +457,27 @@ while if \texttt{lambda\_scale} = 2 it becomes
 lam1 = tr(X'X) # Frobenius norm squared
 effective_lambda = {lam1, 0.5*lam1, 0.25*lam1, 0.125*lam1}
 \end{code}
-Note that the relevant matrix norms are computed after standardization.
+Note that the relevant matrix norms are computed after
+standardization.
+
+\section{The CCD option}
+\label{sec:ccd}
+
+As explained above, the default algorithms used by \textsf{regls} for
+LSSO and Ridge are ADMM and SVD, respectively. However, you have
+the option---for both LASSO and Ridge---of using the CCD (Cyclical
+Coordinate Descent) algorithm employed by \textsf{glmnet}. This is
+governed by two additional keys in the \texttt{parms} bundle:
+\begin{itemize}
+\item \texttt{ccd}: boolean, default 0. Set this to 1 to use CCD.
+\item \texttt{ccd\_toler}: a positive scalar setting the convergence
+  tolerance for CCD. The default is $10^{-7}$; setting a smaller value
+  will give greater accuracy at the expense of more iterations.
+\end{itemize}
 
 
 \section{Reference: public functions}
+\label{sec:funcref}
 
 \begin{funcdoc}
 \begin{verbatim}
@@ -484,7 +504,10 @@ bundle lasso (series y, list X, bundle parms)
     \texttt{seed} & optional integer & controls random folds\\
     \texttt{single\_b} & 0/1, default 0 & see section~\ref{sec:xvalid}\\
     \texttt{no\_mpi} & 0/1, default 0 & see section~\ref{sec:speed}\\
-    \texttt{admmctrl} & optional control vector & see section~\ref{sec:add-controls} \\
+    \texttt{admmctrl} & optional control vector & see
+                                                  section~\ref{sec:add-controls} \\
+    \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
+    \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see section~\ref{sec:ccd}
   \end{tabular}
   \caption{Summary of parameters for the \texttt{lasso} function}
   \label{tab:lasso-parms}
@@ -546,22 +569,27 @@ matrix regls_foldvec (int nobs, int nf)
 
 \begin{funcdoc}
 \begin{verbatim}
-void regls_multipred (const matrix B, const matrix lam,
-                      const series y, list X,
-                      bool pre_stdized [0])
+void regls_multiprint (const matrix B, const matrix lam,
+                       const series y, list X,
+                       const matrix crit[null])
 \end{verbatim}
-  Given a $k \times m$ coefficient matrix \texttt{B}, an $m$-vector of
-  $\lambda$ values \texttt{lam}, a dependent variable \texttt{y} and a
-  list \texttt{X} of $k$ regressors, prints a summary table with $m$
-  rows showing $R^2$, the sum of absolute values of the coefficients
-  and df (the number of non-zero coefficients) associated with each
-  $\lambda$. It is presumed that \texttt{B[,j]} holds lasso estimates
-  produced using \texttt{lam[j]}.
+  Given a $k \times m$ (or $k+1 \times m$) coefficient matrix
+  \texttt{B}, an $m$-vector of $\lambda$ values \texttt{lam}, a
+  dependent variable \texttt{y} and a list \texttt{X} of $k$
+  regressors, prints a summary table with $m$ rows showing $R^2$, the
+  sum of absolute values of the coefficients, and df (the number of
+  non-zero coefficients) associated with each $\lambda$. It is
+  presumed that \texttt{B[,j]} holds LASSO estimates produced using
+  \texttt{lam[j]}. If the optional \texttt{crit} matrix is provided it
+  should be an $m$-vector holding the criterion value associated with
+  each $\lambda$, which will be shown as a fifth column.
 
-  If the data fed to \texttt{lasso} were pre-standardized, this should
-  be flagged by giving a non-zero value for the trailing boolean
-  argument. In that case the table is augmented by a column showing
-  the criterion value.
+  As in the lasso function, the \texttt{X} list should not contain a
+  constant: if the \texttt{B} matrix has one more row than \texttt{X}
+  has members, the constant is handled
+  automatically. Listing~\ref{script:multiprint} shows how the
+  information provided in the lasso return bundle can be used to
+  supply the arguments \texttt{B}, \texttt{lam} and \texttt{crit}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -576,6 +604,23 @@ series glmnet_pred (matrix *Rb, list X)
   coefficients, with row-names added based on the \texttt{X}
   list. This is then comparable with gretl's \texttt{nzb}.
 \end{funcdoc}
+
+\begin{script}
+  \caption{Usage of \texttt{regls\_multiprint}}
+  \label{script:multiprint}
+\begin{scode}
+set verbose off
+include regls.gfn
+open murder.gdt --quiet --frompkg=regls
+
+# all available predictors w. no missing values
+list X = population..LemasPctOfficDrugUn
+smpl 1 800
+bundle parms = defbundle("nlambda", 8, "verbosity", 0)
+bundle lb = lasso(murdPerPop, X, parms)
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+\end{scode}
+  \end{script}
 
 \bibliographystyle{gretl}
 \bibliography{gretl}
@@ -707,7 +752,8 @@ Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.1se))
 \clearpage
 
 \begin{script}
-    \caption{Monte Carlo script for out-of-sample prediction}
+  \caption{Monte Carlo script for out-of-sample prediction}
+  \label{script:mc}
 \begin{scode}
 set verbose off
 include regls.gfn

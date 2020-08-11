@@ -37,24 +37,30 @@ function matrix regls_foldvec (int nobs, int nf)
    return foldvec
 end function
 
-# print prediction info when multiple lambda values used
+# print summary statistics when multiple lambda values are used
 
-function void regls_multipred (const matrix B, const matrix lambda,
-                               const series y, list X,
-                               bool pre_stdized [0])
+function void regls_multiprint (const matrix B, const matrix lambda,
+                                const series y, list X,
+				const matrix crit[null])
 
-   printf "\n       lambda     R^2    sum(|b|)   df"
-   if pre_stdized
-      printf "   criterion\n"
+   if exists(crit)
+      printf "\n       lambda     R^2    sum(|b|)   df   criterion\n"
    else
-      printf "\n"
+      printf "\n       lambda     R^2    sum(|b|)   df\n"
+   endif
+   scalar haveconst = 0
+   if rows(B) == nelem(X) + 1
+      haveconst = 1
+   elif rows(B) != nelem(X)
+      funcerr "B and X are not conformable"
    endif
    loop i=1..cols(B) -q
-      matrix bi = B[,i]
-      series yhat = lincomb(X, bi)
-      if inlist(X, const)
-         # exclude the intercept from the l1 penalty
-         bi = bi[2:]
+      if haveconst
+         matrix bi = B[2:,i]
+	 series yhat = lincomb(X, bi) + B[1,i]
+      else
+         matrix bi = B[,i]
+	 series yhat = lincomb(X, bi)
       endif
       scalar l1 = sumc(abs(bi))
       scalar df = sumc(bi .!= 0)
@@ -64,9 +70,8 @@ function void regls_multipred (const matrix B, const matrix lambda,
          # avoid printing -0.0000
          R2 = 0
       endif
-      if pre_stdized
-         crit = 0.5 * m[1] + lambda[i] * l1
-         printf "%#13g  %.4f  %#10g  %3d  %#10g\n", lambda[i], R2, l1, df, crit
+      if exists(crit)
+         printf "%#13g  %.4f  %#10g  %3d  %#10g\n", lambda[i], R2, l1, df, crit[i]
       else
          printf "%#13g  %.4f  %#10g  %3d\n", lambda[i], R2, l1, df
       endif
