@@ -582,7 +582,7 @@ double real_gretl_variance (int t1, int t2, const double *x,
 			    int asy)
 {
     int t, n = t2 - t1 + 1;
-    double v, xx, xbar;
+    double v, dx, xbar;
 
     if (n == 0) {
 	/* null sample */
@@ -599,8 +599,8 @@ double real_gretl_variance (int t1, int t2, const double *x,
 
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
-	    xx = x[t] - xbar;
-	    v += xx * xx;
+	    dx = x[t] - xbar;
+	    v += dx * dx;
 	    n++;
 	}
     }
@@ -688,9 +688,9 @@ double gretl_restricted_variance (int t1, int t2, const double *x,
 
 double gretl_stddev (int t1, int t2, const double *x)
 {
-    double xx = gretl_variance(t1, t2, x);
+    double v = gretl_variance(t1, t2, x);
 
-    return (na(xx))? xx : sqrt(xx);
+    return (na(v))? v : sqrt(v);
 }
 
 /**
