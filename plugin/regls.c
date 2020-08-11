@@ -744,7 +744,7 @@ static int ccd_iteration (double alpha, const gretl_matrix *X, double *g,
 	ab = alm*alpha;
 	jz = 1;
     maybe_restart:
-	if (iz*jz == 0) {
+	if (iz * jz == 0) {
             nlp++;
             dlx = 0.0;
 	    for (k=0; k<nx; k++) {
@@ -1436,8 +1436,8 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     nnz = ia + k;
 
     if (!ri->xvalid) {
-	R2 = gretl_zero_matrix_new(nlam, 1);
-	crit = gretl_zero_matrix_new(nlam, 1);
+	R2 = gretl_matrix_alloc(nlam, 1);
+	crit = gretl_matrix_alloc(nlam, 1);
 	if (R2 == NULL || crit == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
