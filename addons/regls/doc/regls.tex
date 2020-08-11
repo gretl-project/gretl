@@ -48,6 +48,8 @@ will need gretl version 2020a or higher.  The plugin implements LASSO
 \citep{tibshirani96}---by default via the Alternating Direction Method
 of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}---and
 also Ridge regression, by default via Singular Value Decomposition.
+The alternative to these default algorithms is discussed in
+section~\ref{sec:ccd}.
 
 The best-known open-source implementation of regularized regression
 (perhaps the best-known, period) is that provided by the
@@ -463,9 +465,9 @@ standardization.
 \section{The CCD option}
 \label{sec:ccd}
 
-As explained above, the default algorithms used by \textsf{regls} for
-LSSO and Ridge are ADMM and SVD, respectively. However, you have
-the option---for both LASSO and Ridge---of using the CCD (Cyclical
+As stated above, the default algorithms used by \textsf{regls} for
+LSSO and Ridge are ADMM and SVD, respectively. However, you have the
+option---for both LASSO and Ridge---of using the CCD (Cyclical
 Coordinate Descent) algorithm employed by \textsf{glmnet}. This is
 governed by two additional keys in the \texttt{parms} bundle:
 \begin{itemize}
@@ -474,6 +476,51 @@ governed by two additional keys in the \texttt{parms} bundle:
   tolerance for CCD. The default is $10^{-7}$; setting a smaller value
   will give greater accuracy at the expense of more iterations.
 \end{itemize}
+
+Using CCD will give results that are more directly comparable with
+\textsf{glmnet}. Beyond that, practitioners are likely to ask, which
+of the available algorithms is faster, and which more accurate? Those
+questions are not so simple to answer, as we'll try to explain.
+
+First, speed and accuracy cannot be assessed independently. In the
+case of LASSO, both ADMM and CCD are numerical algorithms that deliver
+an approximation to a notional ``exact'' result, with the latitude of
+the approximation governed by one or more tolerance parameters. Both
+algorithms are effective but they are quite different; their tolerance
+settings are not directly comparable and the default values are
+somewhat arbitrary. If method A produces a more accurate result than
+method B under default settings it is generally possible to reduce the
+tolerance(s) for B such that it equals the accuracy of A (which may
+reverse their ranking in terms of execution time).
+
+Moreover, the relative accuracy of two sets of results is not so
+straightforward to assess. Both LASSO and Ridge are minimization
+problems, so it's tempting to assume that---for a given dataset and
+given $\lambda$---the method that produces the smaller criterion value
+is more accurate. But recall the LASSO criterion shown in equation
+(\ref{eq:obj}). This is the Lagrangian form of a problem which can
+also be written as
+\[
+  \min_{\hat{\beta}} \quad
+  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 \,\mbox{ subject to }\,
+  \sum_{j=1}^k |\hat{\beta}_j| \leq t
+\]
+Part of the error of approximation may include failure to exactly meet
+the condition on the right, in which case a seemingly better result
+may actually be less accurate.
+
+A similar point can be made about Ridge. Unlike LASSO the Ridge
+problem has an analytic solution and by default \textsf{regls}
+implements that solution via SVD, which is pretty much the gold
+standard for accuracy in digital computation. In some cases, however,
+CCD at its default tolerance ($\epsilon = 10^{-7}$) produces a
+slightly smaller Ridge criterion value. Is it really doing better than
+SVD? No, as can be shown by tightening the CCD tolerance. For example,
+with $\epsilon = 10^{-9}$ CCD may reproduce the SVD result. This sort
+of experiment is generally useful for assessing relative accuracy. If
+the difference between the results delivered by methods A and B
+shrinks as the tolerance for method B is tightened, we can be
+reasonable confident that A's initial result was more accurate.
 
 
 \section{Reference: public functions}
@@ -672,25 +719,34 @@ defined in equation (\ref{eq:lmax}), the $\lambda$ values printed by
 \lambda_i = s_i \cdot \lambda_{\max} \cdot \hat{\sigma}_y / n 
 \]
 where $\hat{\sigma}_y$ is the ML estimate of the standard deviation of
-the dependent variable. That is, in \textsf{glmnet} $\lambda$ is
-expressed per observation, and scaled by the standard deviation of
-$y$.
+the dependent variable. To obtain the \textsf{glmnet} $\lambda$
+corresponding to a given $s$ one can do:
+\begin{code}
+Rlam = s * b.lmax * sdc({y}) / b.nobs
+\end{code}
+where \texttt{b} is a bundle obtained via \texttt{regls} on the same
+data, \texttt{y} is the dependent series and \texttt{sdc(\{y\})} gives
+$\hat{\sigma}_y$. The current sample range must be the same as for
+\texttt{b} to get $\hat{\sigma}_y$ right, but if \textsf{glmnet} was
+told \textit{not} to standardize the data then this term should be
+omitted as it is assumed to be 1.
 
 \subsection*{An extended test}
 
 The proof of the pudding for LASSO is out-of-sample prediction
 following cross validation. We therefore conducted an extended test of
 this, with comparison to \textsf{glmnet}, using the murder-rate
-dataset referenced by Tibshirani\footnote{See
+dataset referenced by Ryan Tibshirani\footnote{See
   \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
-and included with our \texttt{regls} package.
+and included with our \texttt{regls} package. We used the default ADMM
+algorithm with \texttt{regls}.
 
-For each of 800 trials we did the following:
+For each of 800 trials we:
 \begin{enumerate}
 \item Randomized the order of the entire dataset.
 \item Selected the first 1000 observations for training and the next
   200 for testing.
-\item Ran both our \texttt{lasso} and \textsf{glmnet}, using 25 values
+\item Ran both \texttt{lasso} and \textsf{glmnet}, using 25 values
   of $s = \lambda/\lambda_{\max}$ and 10 consecutive folds.
 \item Used the optimal $s$ from cross validation to obtain
   $\hat{\beta}$ on the full set of training data.
@@ -730,15 +786,14 @@ the benefit of the doubt to parsimony, the results are not quite so
 good for either code (although there's some overlap with the Case A
 confidence intervals).
 
-The negative minimum $R^2$ values call for comment. It seems that
-in 2 or 3 percent of the randomly reordered datasets the 200
-testing observations differed very substantially from the 1000
-training observations. An $R^2 < 0$ means, of course, that the
-predictions of the model are inferior to simply predicting the sample
-mean for all observations in the given sample range, but it's worth
-remembering that if we're talking out-of-sample prediction, the
-sample mean for the testing data should be considered unknown when
-predictions are made.
+The negative minimum $R^2$ values call for comment. It seems that in 2
+or 3 percent of the randomly reordered datasets the 200 testing
+observations differed substantially from the 1000 training
+observations. An $R^2 < 0$ means, of course, that the predictions of
+the model are inferior to simply predicting the sample mean for all
+observations in the given sample range, but since we're talking about
+out-of-sample prediction the sample mean for the testing data should
+be considered unknown when predictions are made.
 
 The script that produced the Case A results above is shown on the
 following page. For Case B it's necessary to add
