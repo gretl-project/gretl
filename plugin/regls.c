@@ -1339,44 +1339,45 @@ static void lasso_lambda_report (regls_info *ri, PRN *prn)
     }
 }
 
-/* remedial R^2 calculation for CCD: we'd like to know why this
-   is required in some cases!
+/* Remedial R^2 calculation for CCD: it seems that we end up
+   coming here only when standardization is turned off but
+   the dependent variable is substantially non-standard,
+   in which case ccd_iteration() can produce R^2 > 1.
 */
 
 static int ccd_alt_R2 (regls_info *ri, gretl_matrix *B,
 		       gretl_matrix *R2)
 {
     gretl_matrix *bj, *yh;
-    double ui, SSR, TSS = 0;
-    const double *y = ri->y->val;
-    int i, j, n = ri->y->rows;
+    int n = ri->y->rows;
     int k = ri->X->cols;
-    size_t sz = k * sizeof(double);
     int err = 0;
 
     bj = gretl_matrix_alloc(k, 1);
     yh = gretl_matrix_alloc(n, 1);
+
     if (bj == NULL || yh == NULL) {
 	err = E_ALLOC;
-	goto bailout;
-    }
+    } else {
+	const double *y = ri->y->val;
+	size_t sz = k * sizeof(double);
+	double ui, SSR, TSS = 0;
+	int i, j;
 
-    for (i=0; i<n; i++) {
-	TSS += y[i] * y[i];
-    }
-
-    for (j=0; j<ri->nlam; j++) {
-	memcpy(bj->val, B->val + j*B->rows, sz);
-	gretl_matrix_multiply(ri->X, bj, yh);
-	SSR = 0;
 	for (i=0; i<n; i++) {
-	    ui = y[i] - yh->val[i];
-	    SSR += ui * ui;
+	    TSS += y[i] * y[i];
 	}
-	R2->val[j] = 1.0 - SSR/TSS;
+	for (j=0; j<ri->nlam; j++) {
+	    memcpy(bj->val, B->val + j*B->rows, sz);
+	    gretl_matrix_multiply(ri->X, bj, yh);
+	    SSR = 0;
+	    for (i=0; i<n; i++) {
+		ui = y[i] - yh->val[i];
+		SSR += ui * ui;
+	    }
+	    R2->val[j] = 1.0 - SSR/TSS;
+	}
     }
-
- bailout:
 
     gretl_matrix_free(yh);
     gretl_matrix_free(bj);
@@ -1404,7 +1405,7 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     int *ia, *nnz;
     int nlp = 0, lmu = 0;
     int nlam = ri->nlam;
-    int i, bad, k = ri->k;
+    int k = ri->k;
     int err = 0;
 
     alpha = ri->ridge ? 0.0 : 1.0;
@@ -1453,16 +1454,15 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     err = ccd_iteration(alpha, ri->X, Xty->val, nlam, lam->val,
 			ccd_toler, maxit, xv->val, &lmu, B,
 			ia, nnz, Rsq, &nlp);
-#if 0
-    fprintf(stderr, "ccd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
-#endif
     if (err) {
 	goto bailout;
     }
 
     if (R2 != NULL) {
-	/* guard against nonsense R^2 (why does this occur?) */
-	for (i=0, bad=0; i<nlam && !bad; i++) {
+	/* guard against spurious R^2 > 1 */
+	int i, bad = 0;
+
+	for (i=0; i<nlam && !bad; i++) {
 	    if (Rsq[i] > 1.0) {
 		bad = 1;
 	    }
