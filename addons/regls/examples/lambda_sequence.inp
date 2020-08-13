@@ -21,11 +21,20 @@ regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 printf "time %.4fs\n", tm
 
 parms.ccd = 1
+
 parms.ccd_toler = 1.0e-14
 set stopwatch
 bundle lb = lasso(murdPerPop, X, parms)
 tm = $stopwatch
-printf "\ngretl (CCD):\n"
+printf "\ngretl (CCD, tol 1.0e-14):\n"
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+printf "time %.4fs\n", tm
+
+parms.ccd_toler = 1.0e-7
+set stopwatch
+bundle lb = lasso(murdPerPop, X, parms)
+tm = $stopwatch
+printf "\ngretl (CCD, tol 1.0e-7):\n"
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 printf "time %.4fs\n", tm
 
