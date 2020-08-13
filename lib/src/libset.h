@@ -146,6 +146,9 @@ int get_mp_bits (void);
 gretl_matrix *get_initvals (void);
 int n_initvals (void);
 
+gretl_matrix *get_initcurv (void);
+int n_initcurv (void);
+
 const gretl_matrix *get_matrix_mask (void);
 int get_matrix_mask_nobs (void);
 void destroy_matrix_mask (void);

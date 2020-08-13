@@ -51,6 +51,11 @@ enum {
     AUTO_LAG_NEWEYWEST
 };
 
+enum {
+    INIT_VALS,
+    INIT_CURV
+};
+
 /* state flags */
 
 enum {
@@ -116,6 +121,7 @@ struct set_vars_ {
     int rq_maxiter;             /* max iterations for quantreg, simplex */
     int gmm_maxiter;            /* max iterations for iterated GMM */
     gretl_matrix *initvals;     /* parameter initializer */
+    gretl_matrix *initcurv;     /* initial curvature matrix for BFGS */
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
     struct robust_opts ropts;   /* robust standard error options */
     char csv_write_na[8];       /* representation of NA in CSV output */
@@ -383,14 +389,23 @@ static const char *libset_option_string (const char *s)
     }
 }
 
-static void print_initvals (const gretl_matrix *ivals, PRN *prn,
-			    gretlopt opt)
+static void print_initmat (const gretl_matrix *imat,
+			   int type, PRN *prn,
+			   gretlopt opt)
 {
+    char *name;
+
+    if (type == INIT_VALS) {
+	name = "initvals";
+    } else if (type == INIT_CURV) {
+	name = "initcurv";
+    }
+
     if (opt & OPT_D) {
-	if (ivals == NULL) {
-	    pputs(prn, " initvals = auto\n");
+	if (imat == NULL) {
+	    pprintf(prn, " %s = auto\n", name);
 	} else {
-	    gretl_matrix_print_to_prn(ivals, " initvals =", prn);
+	    gretl_matrix_print_to_prn(imat, name, prn);
 	}
     }
 }
@@ -428,6 +443,7 @@ static void state_vars_copy (set_vars *sv)
     *sv = *state;
     /* but set matrix pointers to NULL */
     sv->initvals = NULL;
+    sv->initcurv = NULL;
     sv->matmask = NULL;
 }
 
@@ -648,6 +664,7 @@ static void state_vars_init (set_vars *sv)
     sv->optim = OPTIM_AUTO;
     sv->max_verbose = 0;
     sv->initvals = NULL;
+    sv->initcurv = NULL;
     sv->matmask = NULL;
 
     sv->bfgs_maxiter = UNSET_INT;
@@ -803,6 +820,27 @@ int n_initvals (void)
     check_for_state();
     if (state->initvals != NULL) {
 	return gretl_vector_get_length(state->initvals);
+    } else {
+	return 0;
+    }
+}
+
+gretl_matrix *get_initcurv (void)
+{
+    gretl_matrix *ic;
+
+    /* note: like initvals, we nullify initcurv after first use */
+    check_for_state();
+    ic = state->initcurv;
+    state->initcurv = NULL;
+    return ic;
+}
+
+int n_initcurv (void)
+{
+    check_for_state();
+    if (state->initcurv != NULL) {
+	return state->initcurv->rows;
     } else {
 	return 0;
     }
@@ -1272,14 +1310,20 @@ void set_garch_robust_vcv (const char *s)
     }
 }
 
-static int set_initvals (const char *mname, PRN *prn)
+static int set_initmat (const char *mname, int type,
+			PRN *prn)
 {
     gretl_matrix *m;
     int err = 0;
 
     if (!strcmp(mname, "auto")) {
-	gretl_matrix_free(state->initvals);
-	state->initvals = NULL;
+	if (type == INIT_VALS) {
+	    gretl_matrix_free(state->initvals);
+	    state->initvals = NULL;
+	} else if (type == INIT_CURV) {
+	    gretl_matrix_free(state->initcurv);
+	    state->initcurv = NULL;
+	}
     } else {
 	m = get_matrix_by_name(mname);
 	if (m == NULL) {
@@ -1287,12 +1331,16 @@ static int set_initvals (const char *mname, PRN *prn)
 	    pputc(prn, '\n');
 	    err = E_DATA;
 	} else {
-	    if (state->initvals != NULL) {
-		gretl_matrix_free(state->initvals);
-	    }
-	    state->initvals = gretl_matrix_copy(m);
-	    if (state->initvals == NULL) {
-		err = E_ALLOC;
+	    if (type == INIT_VALS) {
+		state->initvals = gretl_matrix_copy(m);
+		if (state->initvals == NULL) {
+		    err = E_ALLOC;
+		}
+	    } else if (type == INIT_CURV) {
+		state->initcurv = gretl_matrix_copy(m);
+		if (state->initcurv == NULL) {
+		    err = E_ALLOC;
+		}
 	    }
 	}
     }
@@ -1617,7 +1665,8 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_double(BHHH_TOLER, prn, opt);
     libset_print_int(RQ_MAXITER, prn, opt);
     libset_print_int(GMM_MAXITER, prn, opt);
-    print_initvals(state->initvals, prn, opt);
+    print_initmat(state->initvals, INIT_VALS, prn, opt);
+    print_initmat(state->initcurv, INIT_CURV, prn, opt);
     libset_print_bool(BFGS_RSTEP, prn, opt);
     libset_print_bool(USE_LBFGS, prn, opt);
     libset_print_int(LBFGS_MEM, prn, opt);
@@ -1700,6 +1749,13 @@ static int libset_query_settings (const char *s, PRN *prn)
 	if (state->initvals != NULL) {
 	    pprintf(prn, "%s: matrix, currently\n", s);
 	    gretl_matrix_print_to_prn(state->initvals, NULL, prn);
+	} else {
+	    pprintf(prn, "%s: matrix, currently null\n", s);
+	}
+    } else if (!strcmp(s, "initcurv")) {
+	if (state->initcurv != NULL) {
+	    pprintf(prn, "%s: matrix, currently\n", s);
+	    gretl_matrix_print_to_prn(state->initcurv, NULL, prn);
 	} else {
 	    pprintf(prn, "%s: matrix, currently null\n", s);
 	}
@@ -1832,7 +1888,9 @@ int execute_set (const char *setobj, const char *setarg,
 	} else if (!strcmp(setobj, CSV_DIGITS)) {
 	    return set_csv_digits(setarg);
 	} else if (!strcmp(setobj, "initvals")) {
-	    return set_initvals(setarg, prn);
+	    return set_initmat(setarg, INIT_VALS, prn);
+	} else if (!strcmp(setobj, "initcurv")) {
+	    return set_initmat(setarg, INIT_CURV, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
 	    return set_matmask(setarg, dset, prn);
 	} else if (!strcmp(setobj, "graph_theme")) {
@@ -2527,6 +2585,7 @@ static void free_state (set_vars *sv)
 {
     if (sv != NULL) {
 	gretl_matrix_free(sv->initvals);
+	gretl_matrix_free(sv->initcurv);
 	gretl_matrix_free(sv->matmask);
 	free(sv);
     }
