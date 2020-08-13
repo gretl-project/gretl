@@ -863,7 +863,8 @@ static int ccd_get_crit (const gretl_matrix *B,
 		         const gretl_matrix *R2,
 			 const gretl_matrix *y,
 		         gretl_matrix *crit,
-			 double alpha, int nx)
+			 double alpha, int nx,
+			 double *pnulldev)
 {
     double *bj, bsum, SSR;
     double nulldev = 1.0;
@@ -879,6 +880,10 @@ static int ccd_get_crit (const gretl_matrix *B,
     } else if (alpha < 1.0) {
 	/* for comparability with SVD */
 	nulldev = y->rows;
+    }
+
+    if (pnulldev != NULL) {
+	*pnulldev = nulldev;
     }
 
     for (j=0; j<B->cols; j++) {
@@ -939,21 +944,19 @@ static gchar *crit_print_format (const gretl_matrix *crit,
 	}
     }
 
-    /* FIXME better handling for very large criterion values */
-
     if (cmax < 1000) {
 	if (ridge) {
-	    fmt = g_strdup_printf("%%12f  %%6.2f    %%f   %%.4f\n");
+	    fmt = g_strdup_printf("%%12f  %%6.2f    %%f   %%.4f  %%#g\n");
 	} else {
-	    fmt = g_strdup_printf("%%12f  %%5d    %%f   %%.4f\n");
+	    fmt = g_strdup_printf("%%12f  %%5d    %%f   %%.4f  %%#g\n");
 	}
     } else {
 	int fdig = 6 - floor(log10(cmax));
 
 	if (ridge) {
-	    fmt = g_strdup_printf("%%12f  %%6.2f    %%8.%df   %%.4f\n", fdig);
+	    fmt = g_strdup_printf("%%12f  %%6.2f    %%8.%df   %%.4f  %%#g\n", fdig);
 	} else {
-	    fmt = g_strdup_printf("%%12f  %%5d    %%8.%df   %%.4f\n", fdig);
+	    fmt = g_strdup_printf("%%12f  %%5d    %%8.%df   %%.4f  %%#g\n", fdig);
 	}
     }
 
@@ -963,17 +966,20 @@ static gchar *crit_print_format (const gretl_matrix *crit,
 static void lambda_sequence_header (PRN *prn)
 {
     pputc(prn, '\n');
-    pputs(prn, "      lambda     df   criterion      R^2\n");
+    pputs(prn, "      lambda     df   criterion      R^2      BIC\n");
 }
 
 static void ccd_print (const gretl_matrix *B,
 		       const gretl_matrix *R2,
 		       const gretl_matrix *lam,
 		       const gretl_matrix *crit,
-		       int nx, PRN *prn)
+		       int n, double nulldev,
+		       PRN *prn)
 {
     gchar *cfmt = NULL;
     double *bj;
+    double ll, llc;
+    double SSR, BIC;
     int k = B->rows;
     int nlam = B->cols;
     int i, j, dfj;
@@ -984,8 +990,10 @@ static void ccd_print (const gretl_matrix *B,
     } else {
 	/* as per R, more or less */
 	pputc(prn, '\n');
-	pputs(prn, "    df     R^2  lambda\n");
+	pputs(prn, "    df     R^2  lambda    BIC\n");
     }
+
+    llc = -0.5 * n * (1 + LN_2_PI - log(n));
 
     cfmt = crit_print_format(crit, 0);
 
@@ -995,11 +1003,14 @@ static void ccd_print (const gretl_matrix *B,
 	for (i=0; i<k; i++) {
 	    dfj += fabs(bj[i]) > 0;
 	}
+	SSR = n * nulldev * (1.0 - R2->val[j]);
+	ll = llc - 0.5 * n * log(SSR);
+	BIC = -2 * ll + dfj * log(n);
 	if (crit != NULL) {
-	    pprintf(prn, cfmt, lam->val[j], dfj, crit->val[j], R2->val[j]);
+	    pprintf(prn, cfmt, lam->val[j], dfj, crit->val[j], R2->val[j], BIC);
 	} else {
-	    pprintf(prn, "%-2d  %2d  %.4f  %.4f\n", j+1, dfj, R2->val[j],
-		    lam->val[j]);
+	    pprintf(prn, "%-2d  %2d  %.4f  %.4f  %#g\n", j+1, dfj, R2->val[j],
+		    lam->val[j], BIC);
 	}
     }
 
@@ -1065,17 +1076,20 @@ static double lasso_objective (const gretl_matrix *X,
 			       const gretl_vector *b,
 			       double lambda,
 			       gretl_vector *u,
-			       double TSS,
-			       double *R2)
+			       double *pSSR,
+			       double *pR2)
 {
-    double SSR;
-    double obj = 0;
+    double TSS, SSR, obj;
 
+    TSS = gretl_vector_dot_product(y, y, NULL);
     gretl_matrix_multiply(X, b, u);
     vector_subtract_from(u, y, y->rows);
     SSR = gretl_vector_dot_product(u, u, NULL);
     obj = 0.5 * SSR + lambda * abs_sum(b);
-    *R2 = 1.0 - SSR/TSS;
+    *pR2 = 1.0 - SSR/TSS;
+    if (pSSR != NULL) {
+	*pSSR = SSR;
+    }
 
     return obj / y->rows;
 }
@@ -1488,12 +1502,14 @@ static int ccd_regls (regls_info *ri, PRN *prn)
     }
 
     if (!ri->xvalid) {
-	ccd_get_crit(B, lam, R2, ri->y, crit, alpha, k);
+	double nulldev;
+
+	ccd_get_crit(B, lam, R2, ri->y, crit, alpha, k, &nulldev);
 	if (ri->verbose) {
 	    if (alpha < 1.0) {
 		ridge_print(lam, sv2, crit, R2, prn);
 	    } else {
-		ccd_print(B, R2, lam, crit, k, prn);
+		ccd_print(B, R2, lam, crit, ri->n, nulldev, prn);
 	    }
 	}
 	if (nlam > 1) {
@@ -1789,7 +1805,7 @@ static int svd_ridge (regls_info *ri, PRN *prn)
     }
 
     if (!ri->xvalid) {
-	ccd_get_crit(B, lam, R2, ri->y, crit, 0.0, ri->k);
+	ccd_get_crit(B, lam, R2, ri->y, crit, 0.0, ri->k, NULL);
 	if (ri->verbose) {
 	    ridge_print(lam, sv2, crit, R2, prn);
 	}
@@ -1857,6 +1873,7 @@ static int admm_lasso (regls_info *ri, PRN *prn)
     gretl_matrix *B = NULL;
     gretl_matrix *crit = NULL;
     double lmax, rho = ri->rho;
+    double llc = 0;
     int k = ri->k;
     int n = ri->n;
     int i, j, ldim;
@@ -1904,6 +1921,7 @@ static int admm_lasso (regls_info *ri, PRN *prn)
 
     if (!ri->xvalid && ri->verbose > 0 && ri->nlam > 1) {
 	lambda_sequence_header(prn);
+	llc = -0.5 * n * (1 + LN_2_PI - log(n));
     }
 
     for (j=jmin; j<jmax && !err; j++) {
@@ -1929,12 +1947,15 @@ static int admm_lasso (regls_info *ri, PRN *prn)
 		}
 	    }
 	    if (!ri->xvalid) {
-		double R2, TSS = gretl_vector_dot_product(ri->y, ri->y, NULL);
+		double R2, SSR;
 
-		critj = lasso_objective(ri->X, ri->y, b, lambda, n1, TSS, &R2);
+		critj = lasso_objective(ri->X, ri->y, b, lambda, n1, &SSR, &R2);
 		if (ri->verbose > 0 && ri->nlam > 1) {
-		    pprintf(prn, "%12f  %5d    %f   %.4f\n",
-			    lambda/n, nnz, critj, R2);
+		    double ll = llc - 0.5 * n * log(SSR);
+		    double BIC = -2 * ll + nnz * log(n);
+
+		    pprintf(prn, "%12f  %5d    %f   %.4f  %#g\n",
+			    lambda/n, nnz, critj, R2, BIC);
 		}
 		if (critj < critmin) {
 		    critmin = critj;
