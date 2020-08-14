@@ -1042,29 +1042,11 @@ static gchar *crit_print_format (const gretl_matrix *crit,
 				 int ridge)
 {
     gchar *fmt = NULL;
-    double cmax = 0;
-    int j;
 
-    for (j=0; j<crit->rows; j++) {
-	if (crit->val[j] > cmax) {
-	    cmax = crit->val[j];
-	}
-    }
-
-    if (cmax < 1000) {
-	if (ridge) {
-	    fmt = g_strdup_printf("%%12f  %%6.2f    %%#8g   %%.4f  %%#g\n");
-	} else {
-	    fmt = g_strdup_printf("%%12f  %%5d    %%#8g   %%.4f  %%#g\n");
-	}
+    if (ridge) {
+	fmt = g_strdup_printf("%%12f  %%6.2f    %%f   %%.4f  %%#g\n");
     } else {
-	int fdig = 6 - floor(log10(cmax));
-
-	if (ridge) {
-	    fmt = g_strdup_printf("%%12f  %%6.2f    %%#8g   %%.4f  %%#g\n");
-	} else {
-	    fmt = g_strdup_printf("%%12f  %%5d    %%#8g   %%.4f  %%#g\n");
-	}
+	fmt = g_strdup_printf("%%12f  %%5d    %%f   %%.4f  %%#g\n");
     }
 
     return fmt;
@@ -1567,12 +1549,12 @@ static int ccd_regls (regls_info *ri)
 	    }
 	}
 	if (nlam > 1) {
-	    double critmin = 1e200;
+	    double BICmin = 1e200;
 	    int j, idxmin = 0;
 
 	    for (j=0; j<nlam; j++) {
-		if (ri->crit->val[j] < critmin) {
-		    critmin = ri->crit->val[j];
+		if (ri->BIC->val[j] < BICmin) {
+		    BICmin = ri->BIC->val[j];
 		    idxmin = j;
 		}
 	    }
@@ -1840,12 +1822,12 @@ static int svd_ridge (regls_info *ri)
 	    ridge_print(lam, ri);
 	}
 	if (ri->nlam > 1) {
-	    double critmin = 1e200;
+	    double BICmin = 1e200;
 	    int j, idxmin = 0;
 
 	    for (j=0; j<ri->nlam; j++) {
-		if (ri->crit->val[j] < critmin) {
-		    critmin = ri->crit->val[j];
+		if (ri->BIC->val[j] < BICmin) {
+		    BICmin = ri->BIC->val[j];
 		    idxmin = j;
 		}
 	    }
@@ -1891,7 +1873,7 @@ static int svd_ridge (regls_info *ri)
 static int admm_lasso (regls_info *ri)
 {
     gretl_matrix_block *MB;
-    double critmin = 1e200;
+    double BICmin = 1e200;
     gretl_matrix *B = NULL;
     double lmax, rho = ri->rho;
     double llc = 0;
@@ -1973,8 +1955,8 @@ static int admm_lasso (regls_info *ri)
 		    pprintf(ri->prn, "%12f  %5d    %f   %.4f  %#g\n",
 			    lambda/n, nnz, critj, R2, ri->BIC->val[j]);
 		}
-		if (critj < critmin) {
-		    critmin = critj;
+		if (ri->BIC->val[j] < BICmin) {
+		    BICmin = ri->BIC->val[j];
 		    idxmin = j;
 		}
 		ri->crit->val[j] = critj;
@@ -2328,21 +2310,20 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 
 static int post_xvalidation_task (regls_info *ri,
 				  gretl_matrix *XVC,
-				  int crit_type,
 				  PRN *prn)
 {
     gretl_matrix *metrics;
     int imin = 0, i1se = 0;
 
     metrics = process_xv_criterion(XVC, ri->lfrac, &imin, &i1se,
-				   crit_type, prn);
+				   ri->crit_type, prn);
     if (metrics == NULL) {
 	return E_ALLOC;
     }
 
     if (prn != NULL) {
 	pprintf(prn, "\nAverage out-of-sample %s minimized at %#g for s=%#g\n",
-		crit_string(crit_type), gretl_matrix_get(metrics, imin, 0),
+		crit_string(ri->crit_type), gretl_matrix_get(metrics, imin, 0),
 		ri->lfrac->val[imin]);
 	pprintf(prn, "Largest s within one s.e. of best criterion: %#g\n",
 		ri->lfrac->val[i1se]);
@@ -2497,7 +2478,7 @@ static int regls_xv (regls_info *ri)
     if (!err) {
 	PRN *myprn = ri->verbose ? prn : NULL;
 
-	err = post_xvalidation_task(ri, XVC, ri->crit_type, myprn);
+	err = post_xvalidation_task(ri, XVC, myprn);
 	if (!err) {
 	    /* determine coefficient vector(s) on full training set */
 	    if (ri->ccd) {
@@ -2634,7 +2615,7 @@ static int real_regls_xv_mpi (regls_info *ri)
     if (rank == 0 && !err) {
 	PRN *myprn = ri->verbose ? prn : NULL;
 
-	err = post_xvalidation_task(ri, XVC, ri->crit_type, myprn);
+	err = post_xvalidation_task(ri, XVC, myprn);
 	if (!err) {
 	    /* determine coefficient vector on full training set */
 	    if (ri->ccd) {
