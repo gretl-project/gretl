@@ -720,16 +720,12 @@ int gretl_calculate_criteria (double ess, int n, int k,
     if (na(ess) || ess <= 0.0 || n <= k) {
 	err = 1;
     } else {
-	const double ln2pi1 = 2.837877066409345; /* log(2*pi) + 1 */
-
 	errno = 0;
-
 	lnl = -.5 * n * log(ess);
-
 	if (errno == EDOM || errno == ERANGE) {
 	    err = 1;
 	} else {
-	    lnl += -.5 * n * (ln2pi1 - log((double) n));
+	    lnl += -.5 * n * (1 + LN_2_PI - log(n));
 	    c[0] = -2.0 * lnl + 2 * k;
 	    c[1] = -2.0 * lnl + k * log(n);
 	    c[2] = -2.0 * lnl + 2 * k * log(log(n));
@@ -737,10 +733,7 @@ int gretl_calculate_criteria (double ess, int n, int k,
     }
 
     if (err) {
-	*ll = NADBL;
-	*aic = NADBL;
-	*bic = NADBL;
-	*hqc = NADBL;
+	*ll = *aic = *bic = *hqc = NADBL;
     } else {
 	*ll = lnl;
 	*aic = c[0];
