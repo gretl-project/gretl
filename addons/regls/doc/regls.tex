@@ -139,8 +139,8 @@ The further optional parameters, as well as the contents of the bundle
 returned by \texttt{lasso()}, are best explained by reference to the
 various modes of usage of the function, namely estimation with a
 single value of $\lambda$; exploration of a range of $\lambda$ values
-using a unified training sample; and (most relevant in practice)
-search for optimal $\lambda$ via cross validation.
+using a unified training sample; and (probably most relevant in
+practice) search for optimal $\lambda$ via cross validation.
 
 \section{Estimation with a single regularization}
 \label{sec:single-lambda}
@@ -168,9 +168,11 @@ We'll then find the following in \texttt{lb}:
   (\ref{eq:lmax}) above.
 \item \texttt{crit}: The minimized LASSO criterion, see (\ref{eq:obj})
   above.
+\item \texttt{BIC}: The Bayesian Information Criterion for the
+  estimated model.
 \item \texttt{nobs}: The number of training observations used.
 \item \texttt{lfrac}: The input value of $s$.
-\item \texttt{stdize}: Whether \texttt{lasso()} did standardization or
+\item \texttt{stdize}: Whether \texttt{lasso} did standardization or
   not.
 \end{itemize}
 
@@ -193,21 +195,33 @@ bundle lb = lasso(y, X, parms)
 \end{code}
 
 In this case \texttt{lb.B} will be a matrix holding the full
-coefficient vector for each $s$ (one column per $s$ value) and
-\texttt{lb.crit} will be a column vector showing the minimized LASSO
-criterion (\ref{eq:obj}) for each $s$. The bundle will contain these
-additional items:
+coefficient vector for each $s$ (one column per $s$ value), and
+\texttt{lb.crit} and \texttt{lb.BIC} will be column vectors showing
+the minimized LASSO criterion (\ref{eq:obj}) and BIC value for each
+$s$. The bundle will contain these additional items:
 \begin{itemize}
-\item \texttt{lfmin}: The $s$ value which produces the smallest LASSO
-  criterion.
+\item \texttt{lfmin}: The $s$ value which produces the smallest BIC
+  value.
 \item \texttt{idxmin}: The 1-based index value of \texttt{lfmin} in
   the vector passed as \texttt{lfrac}.
 \end{itemize}
 
-In addition, the vector \texttt{nzb} and list \texttt{nzX} refer to
-the non-zero coefficients and associated regressors obtained with $s$
-= \texttt{lfmin}. Out-of-sample predictions using this $s$ value can
-be obtained using \texttt{lincomb(nzX, nzb)}.
+The BIC \citep{schwarz78} is calculated by \textsf{regls} as
+$-2\ell(\hat{\beta}) + k^*(\lambda) \log n$, where $\ell(\hat{\beta})$
+is the log-likelihood, based on the sum of squared residuals, and
+$k^*(\lambda)$ the number of non-zero coefficients for the given
+$\lambda$. This criterion provides a guide (though certainly not an
+infallible one) to the likely out-of-sample performance of a model:
+smaller values of BIC are better. Note that the LASSO criterion itself
+does not offer such a guide (it is likely to decrease monotonically
+along with $\lambda$), but it can be useful in comparing the
+effectiveness of minimization algorithms (see section~\ref{sec:ccd}).
+
+When multiple $\lambda$ values are specified, the vector \texttt{nzb}
+and list \texttt{nzX} refer to the non-zero coefficients and
+associated regressors obtained with $s$ = \texttt{lfmin} (the BIC
+minimizer). Out-of-sample predictions using this $s$ can be obtained
+via \texttt{lincomb(nzX, nzb)}.
 
 \section{Optimizing via cross validation}
 \label{sec:xvalid}

@@ -1044,7 +1044,7 @@ static gchar *crit_print_format (const gretl_matrix *crit,
     gchar *fmt = NULL;
 
     if (ridge) {
-	fmt = g_strdup_printf("%%12f  %%6.2f    %%f   %%.4f  %%#g\n");
+	fmt = g_strdup_printf("%%12f  %%6.2f   %%.4f   %%#g\n");
     } else {
 	fmt = g_strdup_printf("%%12f  %%5d    %%f   %%.4f  %%#g\n");
     }
@@ -1103,15 +1103,14 @@ static void ridge_print (const gretl_matrix *lam,
     gchar *cfmt = NULL;
     int j;
 
-    pprintf(ri->prn, "\n  %s\n", _("df = effective number of free parameters"));
-    pprintf(ri->prn, "  %s\n\n", _("criterion = ridge minimand"));
-    pputs(ri->prn, "      lambda      df   criterion      R^2      BIC\n");
+    pprintf(ri->prn, "\n  %s\n\n", _("df = effective number of free parameters"));
+    pputs(ri->prn, "      lambda      df      R^2       BIC\n");
 
     cfmt = crit_print_format(ri->crit, 1);
 
     for (j=0; j<ri->nlam; j++) {
 	pprintf(ri->prn, cfmt, lam->val[j], ri->edf->val[j],
-		ri->crit->val[j], ri->R2->val[j], ri->BIC->val[j]);
+		ri->R2->val[j], ri->BIC->val[j]);
     }
     g_free(cfmt);
 }
