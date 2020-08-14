@@ -340,8 +340,7 @@ int standardize_series (const double *x, double *y, int dfc,
 	    }
 	}
 
-	TSS /= (n - dfc);
-	sd = sqrt(TSS);
+	sd = sqrt(TSS / (n - dfc));
 
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (na(x[t])) {

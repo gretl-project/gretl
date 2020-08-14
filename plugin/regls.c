@@ -957,7 +957,6 @@ static int ccd_get_crit (const gretl_matrix *B,
 		         const gretl_matrix *lam,
 			 regls_info *ri)
 {
-    const double *y = ri->y->val;
     double *bj, bsum, SSR;
     double ll, llc, edf = 0;
     double nulldev = 1.0;
@@ -965,15 +964,14 @@ static int ccd_get_crit (const gretl_matrix *B,
     int dfj, n = ri->n;
     int i, j;
 
-    if (B->rows == ri->k) {
-	/* no intercept */
+    if (!ri->stdize) {
+	/* in case @y is in fact non-standard */
+	const double *y = ri->y->val;
+
 	nulldev = 0.0;
 	for (i=0; i<n; i++) {
 	    nulldev += y[i] * y[i];
 	}
-    } else if (ri->alpha < 1.0) {
-	/* for comparability with SVD */
-	nulldev = n;
     }
 
     llc = -0.5 * n * (1 + LN_2_PI - log(n));
@@ -993,6 +991,7 @@ static int ccd_get_crit (const gretl_matrix *B,
 	    }
 	}
 	SSR = nulldev * (1.0 - ri->R2->val[j]);
+	/* with CCD, y and X are scaled by 1/sqrt(n) */
 	ll = llc - 0.5 * n * log(n*SSR);
 	if (ri->alpha == 1.0) {
 	    /* lasso */
@@ -1765,8 +1764,7 @@ static double ridge_scale (regls_info *ri,
 	} else {
 	    /* as per glmnet, scale data by sqrt(1/n) */
 	    ccd_scale(ri->X, ri->y->val, Xty->val, NULL);
-	    lmax = vector_infnorm(Xty);
-	    lmax *= 1000;
+	    lmax = 1000 * vector_infnorm(Xty);
 	    for (i=0; i<ri->nlam; i++) {
 		lam->val[i] *= lmax;
 	    }
