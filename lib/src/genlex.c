@@ -1627,13 +1627,6 @@ static void look_up_word (const char *s, parser *p)
 		/* note: all "native" types take precedence over this */
 		p->sym = RFUN;
 		p->idstr = gretl_strdup(s + 2);
-	    } else if (!strcmp(s, "pi")) {
-		/* backward compat (get rid of this) */
-		gretl_warnmsg_sprintf("\"%s\"\n %s\n", p->rhs,
-				      _("obsolete use of \"pi\": "
-					"please use \"$pi\" instead"));
-		p->idnum = CONST_PI;
-		p->sym = CON;
 	    } else if (parsing_query || prevsym == B_AND) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
@@ -2152,12 +2145,10 @@ void lex (parser *p)
 	    parser_getc(p);
 	    if (p->ch == '=') {
 		parser_getc(p);
+		p->sym = B_EQ;
 	    } else {
-		gretl_warnmsg_sprintf("\"%s\"\n %s\n", p->rhs,
-				      _("obsolete use of \"=\" as Boolean test: "
-					"please use \"==\""));
+		p->err = E_PARSE;
 	    }
-	    p->sym = B_EQ;
 	    return;
         case '>':
 	    parser_getc(p);

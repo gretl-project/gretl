@@ -2706,7 +2706,9 @@ void set_loop_on (void)
 
 void set_loop_off (void)
 {
-    looping[gretl_function_depth()] = 0;
+    if (looping != NULL) {
+	looping[gretl_function_depth()] = 0;
+    }
 #if LDEBUG
     print_looping(0);
 #endif
