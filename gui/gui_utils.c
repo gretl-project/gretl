@@ -5840,7 +5840,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	if (lang == LANG_STATA) {
 	    gchar *buf = NULL;
 
-	    gretl_chdir(gretl_dotdir());
+	    gretl_chdir(gretl_workdir());
 	    remove("gretltmp.log");
 	    err = gretl_spawn(cmd);
 
@@ -5980,7 +5980,7 @@ static void run_prog_sync (char **argv, int lang)
 
     if (lang == LANG_STATA) {
 	/* control location of Stata log file */
-	gretl_chdir(gretl_dotdir());
+	gretl_chdir(gretl_workdir());
 	remove("gretltmp.log");
     }
 
@@ -6064,7 +6064,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	gchar *argv[6];
 
 	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
-	    gretl_chdir(gretl_dotdir());
+	    gretl_chdir(gretl_workdir());
 	}
 
 	if (lang == LANG_OX) {

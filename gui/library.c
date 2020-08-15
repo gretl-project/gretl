@@ -8547,6 +8547,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 {
     gretlopt opt = OPT_NONE;
     gboolean selection = FALSE;
+    gchar *prev_workdir = NULL;
     gchar *currdir = NULL;
     gchar *buf = NULL;
 
@@ -8579,14 +8580,16 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	g_path_is_absolute(vwin->fname)) {
 	/* There's a "real" full filename in place */
 	if (editing_alt_script(vwin->role)) {
-	    /* For an "alt" script we should probably chdir
-	       to its location so we're able to pick up any
-	       data files it may reference. We'll also arrange
+	    /* For an "alt" script we'll temporarily reset
+	       workdir to its location so we're able to pick up
+	       any data files it may reference. We'll also arrange
 	       to revert the working directory once we're done.
 	    */
 	    gchar *dname = g_path_get_dirname(vwin->fname);
 
 	    currdir = g_get_current_dir();
+	    prev_workdir = g_strdup(gretl_workdir());
+	    gretl_set_path_by_name("workdir", dname);
 	    gretl_chdir(dname);
 	    g_free(dname);
 	} else if (vwin->role != EDIT_GP && vwin->role != EDIT_PKG_SAMPLE) {
@@ -8629,6 +8632,10 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
     g_free(buf);
 
+    if (prev_workdir != NULL) {
+	gretl_set_path_by_name("workdir", prev_workdir);
+	g_free(prev_workdir);
+    }
     if (currdir != NULL) {
 	gretl_chdir(currdir);
 	g_free(currdir);
