@@ -9523,6 +9523,7 @@ int execute_script (char *runfile, const char *buf,
     char tmp[MAXLINE] = {0};
     int including = (exec_code & INCLUDE_EXEC);
     int indent0, bufread = 0;
+    int loopcomp0 = 0;
     int exec_err = 0;
 
     gretl_set_batch_mode(1);
@@ -9558,6 +9559,7 @@ int execute_script (char *runfile, const char *buf,
 
     gretl_exec_state_init(&state, 0, line, &libcmd, model, prn);
     indent0 = gretl_if_state_record();
+    loopcomp0 = gretl_compiling_loop();
 
     while (libcmd.ci != QUIT) {
 	if (gretl_execute_loop()) {
@@ -9652,6 +9654,14 @@ int execute_script (char *runfile, const char *buf,
 
     refresh_data();
     sync_scalars_window();
+
+    if (gretl_compiling_loop() != loopcomp0) {
+	errbox(_("Unbalanced \"loop\"/\"endloop\" in script"));
+	gretl_abort_compiling_loop();
+	if (!exec_err) {
+	    exec_err = E_PARSE;
+	}
+    }
 
     if (exec_err) {
 	gretl_if_state_clear();
