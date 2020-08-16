@@ -880,30 +880,41 @@ static int copy_initial_hessian (double **H,
 				 const gretl_matrix *A,
 				 int n)
 {
-    int i, j;
+    int i, j, vlen = gretl_vector_get_length(A);
+    int err = 0;
 
 #if BFGS_DEBUG > 1
     gretl_matrix_print(A, "BFGS: initial Hessian inverse");
 #endif
 
     if (gretl_is_null_matrix(A)) {
+	/* set identity matrix */
 	for (i=0; i<n; i++) {
 	    for (j=0; j<i; j++) {
 		H[i][j] = 0.0;
 	    }
 	    H[i][i] = 1.0;
 	}
-    } else if (A->rows != n || A->cols != n) {
-	return E_NONCONF;
-    } else {
+    } else if (vlen == n) {
+	/* set the diagonal */
+	for (i=0; i<n; i++) {
+	    for (j=0; j<i; j++) {
+		H[i][j] = 0.0;
+	    }
+	    H[i][i] = A->val[i];
+	}
+    } else  if (A->rows == n && A->cols == n) {
+	/* set the whole matrix */
 	for (i=0; i<n; i++) {
 	    for (j=0; j<=i; j++) {
 		H[i][j] = gretl_matrix_get(A, i, j);
 	    }
 	}
+    } else {
+	err = E_NONCONF;
     }
 
-    return 0;
+    return err;
 }
 
 static double optim_fncall (BFGS_CRIT_FUNC cfunc,
@@ -1131,7 +1142,14 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     }
 
     /* initialize curvature matrix */
-    err = copy_initial_hessian(H, A0, n);
+    if (A0 != NULL) {
+	err = copy_initial_hessian(H, A0, n);
+    } else {
+	gretl_matrix *A1 = get_initcurv();
+
+	err = copy_initial_hessian(H, A1, n);
+	gretl_matrix_free(A1);
+    }
     if (err) {
 	goto bailout;
     }
