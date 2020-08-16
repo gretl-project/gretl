@@ -266,15 +266,31 @@ static void regls_info_free (regls_info *ri)
     }
 }
 
+/* For when we're not doing cross validation: push various
+   statistics into the output bundle
+*/
+
 static void regls_set_crit_data (regls_info *ri)
 {
     if (ri->nlam > 1) {
 	gretl_bundle_donate_data(ri->b, "crit", ri->crit, GRETL_TYPE_MATRIX, 0);
 	gretl_bundle_donate_data(ri->b, "BIC", ri->BIC, GRETL_TYPE_MATRIX, 0);
-	ri->crit = ri->BIC = NULL;
+	if (ri->R2 != NULL) {
+	    gretl_bundle_donate_data(ri->b, "R2", ri->R2, GRETL_TYPE_MATRIX, 0);
+	}
+	if (ri->edf != NULL) {
+	    gretl_bundle_donate_data(ri->b, "edf", ri->edf, GRETL_TYPE_MATRIX, 0);
+	}
+	ri->crit = ri->BIC = ri->R2 = ri->edf = NULL;
     } else {
 	gretl_bundle_set_scalar(ri->b, "crit", ri->crit->val[0]);
 	gretl_bundle_set_scalar(ri->b, "BIC", ri->BIC->val[0]);
+	if (ri->R2 != NULL) {
+	    gretl_bundle_set_scalar(ri->b, "R2", ri->R2->val[0]);
+	}
+	if (ri->edf != NULL) {
+	    gretl_bundle_set_scalar(ri->b, "edf", ri->edf->val[0]);
+	}
     }
 }
 
@@ -660,6 +676,13 @@ static inline void compute_q (gretl_vector *q,
 }
 
 #endif /* AVX or not */
+
+static double own_dot_product (const gretl_vector *x)
+{
+    int n = gretl_vector_get_length(x);
+
+    return dot_product(x->val, x->val, n);
+}
 
 /* fortran: dot_product(X(:,j), X(:,k)) for @X with @n rows */
 
@@ -1140,10 +1163,10 @@ static double lasso_objective (const gretl_matrix *X,
 {
     double TSS, SSR, obj;
 
-    TSS = gretl_vector_dot_product(y, y, NULL);
+    TSS = own_dot_product(y);
     gretl_matrix_multiply(X, b, u);
     vector_subtract_from(u, y, y->rows);
-    SSR = gretl_vector_dot_product(u, u, NULL);
+    SSR = own_dot_product(u);
     obj = 0.5 * SSR + lambda * abs_sum(b);
     *pR2 = 1.0 - SSR/TSS;
     if (pSSR != NULL) {
@@ -1168,7 +1191,7 @@ static double xv_score (const gretl_matrix *X,
     /* compute and process residuals */
     vector_subtract_from(Xb, y, X->rows);
     if (crit_type == CRIT_MSE) {
-	sum = gretl_vector_dot_product(Xb, Xb, NULL);
+	sum = own_dot_product(Xb);
     } else {
 	sum = abs_sum(Xb);
     }
@@ -1275,11 +1298,11 @@ static int admm_iteration (const gretl_matrix *X,
 	}
 
 	/* sqrt(sum ||r_i||_2^2) */
-	prires  = sqrt(gretl_vector_dot_product(r, r, NULL));
+	prires  = sqrt(own_dot_product(r));
 	/* sqrt(sum ||v_i||_2^2) */
-	nxstack = sqrt(gretl_vector_dot_product(v, v, NULL));
+	nxstack = sqrt(own_dot_product(v));
 	/* sqrt(sum ||u_i||_2^2) */
-	nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
+	nystack = own_dot_product(u) / rho2;
 	nystack = sqrt(nystack);
 
 	vector_copy_values(bprev, b, n);
@@ -1291,11 +1314,11 @@ static int admm_iteration (const gretl_matrix *X,
 	/* dual residual */
 	vector_subtract_into(b, bprev, bdiff, n, 0); /* bdiff = b - bprev */
 	/* ||s^k||_2^2 = N rho^2 ||b - bprev||_2^2 */
-	nrm2 = sqrt(gretl_vector_dot_product(bdiff, bdiff, NULL));
+	nrm2 = sqrt(own_dot_product(bdiff));
 	dualres = rho * nrm2;
 
 	/* compute primal and dual feasibility tolerances */
-	nrm2 = sqrt(gretl_vector_dot_product(b, b, NULL));
+	nrm2 = sqrt(own_dot_product(b));
 	eps_pri  = admm_abstol + admm_reltol * fmax(nxstack, nrm2);
 	eps_dual = admm_abstol + admm_reltol * nystack;
 
@@ -1503,6 +1526,7 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (ri->ridge) {
+	/* note: not calculated by CCD */
 	err = ridge_effective_df(lam, ri);
     }
 
@@ -1588,9 +1612,13 @@ static int ccd_regls (regls_info *ri)
     return err;
 }
 
-static gretl_matrix *svd_ridge_vcv (regls_info *ri,
-				    double lam,
-				    int *err)
+/* Variant of SVD ridge that computes the covariance
+   matrix as well as the parameter vector */
+
+static int svd_ridge_vcv (regls_info *ri,
+			  double lam,
+			  gretl_matrix *B,
+			  gretl_matrix **pV)
 {
     gretl_matrix_block *MB = NULL;
     gretl_matrix *V = NULL;
@@ -1600,30 +1628,33 @@ static gretl_matrix *svd_ridge_vcv (regls_info *ri,
     gretl_matrix *RI = NULL;
     gretl_matrix *Tmp = NULL;
     gretl_matrix *Ve = NULL;
-    gretl_matrix *b = NULL;
     gretl_matrix *u = NULL;
-    double vij, s2;
+    gretl_matrix *b = NULL;
+    double vij, SSR, s2;
     int n = ri->X->rows;
     int k = ri->X->cols;
-    int i, j;
+    int offset = 0;
+    int i, j, err = 0;
 
-    *err = gretl_matrix_SVD(ri->X, NULL, &sv, &Vt, 0);
+    err = gretl_matrix_SVD(ri->X, NULL, &sv, &Vt, 0);
 
-    if (!*err) {
-	MB = gretl_matrix_block_new(&sve, 1, k, &b, k, 1,
-				    &u, n, 1, &RI, k, k,
-				    &Ve, k, k, &Tmp, k, k,
-				    NULL);
+    if (!err) {
+	MB = gretl_matrix_block_new(&sve, 1, k,
+				    &u, n, 1,
+				    &RI, k, k,
+				    &Ve, k, k,
+				    &Tmp, k, k,
+				    &b, k, 1, NULL);
 	if (MB == NULL) {
-	    *err = E_ALLOC;
+	    err = E_ALLOC;
 	    goto bailout;
 	}
     }
 
-    if (!*err) {
+    if (!err) {
 	V = gretl_matrix_alloc(k, k);
 	if (V == NULL) {
-	    *err = E_ALLOC;
+	    err = E_ALLOC;
 	    goto bailout;
 	}
     }
@@ -1647,12 +1678,17 @@ static gretl_matrix *svd_ridge_vcv (regls_info *ri,
     /* b = RI * Xty */
     gretl_matrix_multiply(RI, ri->Xty, b);
 
+    /* transcribe b to @B */
+    offset = B->rows > k ? 1 : 0;
+    memcpy(B->val + offset, b->val, k * sizeof *b->val);
+
     /* u = X*b - y */
     gretl_matrix_multiply(ri->X, b, u);
     gretl_matrix_subtract_from(u, ri->y);
 
     /* residual variance */
-    s2 = gretl_vector_dot_product(u, u, NULL) / n;
+    SSR = own_dot_product(u);
+    s2 = SSR / n;
 
     /* V = s2 * ridgeI * X'X * ridgeI */
     gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
@@ -1662,16 +1698,31 @@ static gretl_matrix *svd_ridge_vcv (regls_info *ri,
     gretl_matrix_multiply(Tmp, RI, V);
     gretl_matrix_multiply_by_scalar(V, s2);
 
+    if (ri->R2 != NULL) {
+	double TSS = own_dot_product(ri->y);
+
+	ri->R2->val[0] = 1.0 - SSR/TSS;
+    }
+
  bailout:
+
+    if (!err) {
+	*pV = V;
+    } else {
+	gretl_matrix_free(V);
+    }
 
     gretl_matrix_block_destroy(MB);
 
-    return V;
+    return err;
 }
+
+/* Variant of SVD ridge that just computes the
+   parameter vector */
 
 static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
 		       gretl_matrix *y, gretl_matrix *B,
-		       gretl_matrix *R2, int covmat)
+		       gretl_matrix *R2)
 {
     gretl_matrix_block *MB = NULL;
     gretl_matrix *U = NULL;
@@ -1683,6 +1734,7 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     gretl_matrix *yh = NULL;
     gretl_matrix *b = NULL;
     double vij, ui, SSR, TSS = 0;
+    double *targ;
     int offset = 0;
     int n = X->rows;
     int k = X->cols;
@@ -1710,7 +1762,7 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
 	}
     }
 
-    offset = B->rows > k;
+    offset = B->rows > k ? 1 : 0;
 
     gretl_matrix_multiply_mod(U, GRETL_MOD_TRANSPOSE,
 			      y, GRETL_MOD_NONE,
@@ -1735,7 +1787,8 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
 	    }
 	    R2->val[l] = 1.0 - SSR/TSS;
 	}
-	memcpy(B->val + l * B->rows + offset, b->val, k * sizeof(double));
+	targ = B->val + l * B->rows + offset;
+	memcpy(targ, b->val, k * sizeof *targ);
     }
 
  bailout:
@@ -1788,7 +1841,9 @@ static int svd_ridge (regls_info *ri)
 {
     gretl_matrix *B = NULL;
     gretl_matrix *lam = NULL;
+    gretl_matrix *V = NULL;
     double lmax = 1.0;
+    double lam0 = 0.0;
     int err = 0;
 
     lam = gretl_matrix_copy(ri->lfrac);
@@ -1803,7 +1858,14 @@ static int svd_ridge (regls_info *ri)
 
     err = ridge_effective_df(lam, ri);
 
-    err = ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B, ri->R2, 0);
+    if (ri->nlam == 1) {
+	/* calculate the covariance matrix */
+	lam0 = ri->lfrac->val[0] * lmax;
+	err = svd_ridge_vcv(ri, lam0, B, &V);
+    } else {
+	/* just calculate the parameters */
+	err = ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B, ri->R2);
+    }
     if (err) {
 	goto bailout;
     }
@@ -1841,13 +1903,10 @@ static int svd_ridge (regls_info *ri)
 	    gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
 	}
 	if (ri->nlam == 1) {
-	    double lamval = ri->lfrac->val[0] * lmax;
-	    gretl_matrix *vcv;
-
-	    gretl_bundle_set_scalar(ri->b, "lambda", ri->lfrac->val[0] * lmax);
-	    vcv = svd_ridge_vcv(ri, lamval, &err);
-	    if (vcv != NULL) {
-		gretl_bundle_donate_data(ri->b, "vcv", vcv, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_set_scalar(ri->b, "lambda", lam0);
+	    if (V != NULL) {
+		gretl_bundle_donate_data(ri->b, "vcv", V,
+					 GRETL_TYPE_MATRIX, 0);
 	    }
 	}
     }
@@ -2161,7 +2220,7 @@ static int svd_do_fold (gretl_matrix *X,
 	ccd_scale(X, y->val, NULL, NULL);
     }
 
-    err = ridge_bhat(lam->val, nlam, X, y, B, NULL, 0);
+    err = ridge_bhat(lam->val, nlam, X, y, B, NULL);
 
 #if 0
     fprintf(stderr, "svd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
