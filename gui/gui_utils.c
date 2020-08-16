@@ -716,7 +716,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	upkey = gdk_keyval_to_upper(event->keyval);
     }
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (!Ctrl && cmd_key(event)) {
 	/* treat Command as Ctrl */
 	Ctrl = 1;

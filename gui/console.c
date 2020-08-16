@@ -595,7 +595,7 @@ static gint console_key_handler (GtkWidget *cview,
     GtkTextMark *mark;
     gint ctrl = 0;
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (cmd_key(event)) {
 	if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */

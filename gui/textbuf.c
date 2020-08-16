@@ -1088,7 +1088,7 @@ void text_smaller (GtkWidget *w, gpointer data)
     text_change_size((windata_t *) data, -1);
 }
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
 # define helpfont "Geneva"
 #else
 # define helpfont "sans"

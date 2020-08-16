@@ -4977,7 +4977,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
     switch (k) {
     case GDK_q:
     case GDK_Q:
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     case GDK_w:
     case GDK_W:
 #endif
@@ -5939,7 +5939,7 @@ static int get_terminal (char *s)
 
 #endif /* !G_OS_WIN32 */
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
 
 static void mac_do_gp_script (const char *plotfile)
 {
@@ -5964,7 +5964,7 @@ void launch_gnuplot_interactive (void)
 {
 #if defined(G_OS_WIN32)
     win32_run_async(gretl_gnuplot_path(), NULL);
-#elif defined(MAC_NATIVE)
+#elif defined(OS_OSX)
     const char *gppath = gretl_gnuplot_path();
     gchar *gpline;
 
@@ -5984,7 +5984,7 @@ void launch_gnuplot_interactive (void)
 # endif
     system(gpline);
     g_free(gpline);
-#else /* neither WIN32 nor MAC_NATIVE */
+#else /* neither WIN32 nor MAC */
     char term[32];
     int err;
 
@@ -6041,16 +6041,16 @@ void launch_gnuplot_interactive (void)
 	g_free(altgp);
 # endif
     }
-#endif /* !(G_OS_WIN32 or MAC_NATIVE) */
+#endif /* !(G_OS_WIN32 or MAC) */
 }
 
 void gnuplot_view_3d (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
     win32_run_async(gretl_gnuplot_path(), plotfile);
-#elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
+#elif defined(OS_OSX) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
 #else
     real_send_to_gp(plotfile, 0);
-#endif /* !(G_OS_WIN32 or MAC_NATIVE) */
+#endif /* !(G_OS_WIN32 or MAC) */
 }

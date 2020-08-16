@@ -740,7 +740,7 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *event,
 {
     guint keyval = event->keyval;
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (keyval == GDK_g && cmd_key(event)) {
 	/* Command-G: repeat search */
 	vwin_finder_callback(entry, vwin);

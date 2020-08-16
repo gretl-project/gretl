@@ -3212,7 +3212,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.jlpath) {
 	strcpy(paths.jlpath, "julia");
     } else if (targ == paths.mpiexec) {
-#if defined(MAC_NATIVE)
+#if defined(OS_OSX)
 	strcpy(paths.mpiexec, "/opt/openmpi/bin/mpiexec");
 #else
 	strcpy(paths.mpiexec, "mpiexec");
@@ -3220,10 +3220,8 @@ static void load_default_path (char *targ)
     } else if (targ == paths.mpi_hosts) {
 	*paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
-#if defined(MAC_NATIVE)
+#if defined(OS_OSX)
 	strcpy(targ, "Sans 10"); /* was 13, why? */
-#elif defined(OS_OSX)
-	strcpy(targ, "Sans 9");
 #else
 	if (chinese_locale()) {
 	    strcpy(targ, "NSimSun 10");

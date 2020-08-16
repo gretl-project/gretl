@@ -62,7 +62,7 @@
 # endif
 #endif
 
-#if defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
+#if defined(OS_OSX) && defined(HAVE_MAC_THEMES)
 # define MAC_THEMING
 #endif
 
@@ -87,7 +87,7 @@ static char system_appfont[64];
 #if defined(G_OS_WIN32)
 static char fixedfontname[MAXLEN] = "Courier New 10";
 static char default_fixedfont[64] = "Courier New 10";
-#elif defined(MAC_NATIVE)
+#elif defined(OS_OSX) /* FIXME ? */
 static char fixedfontname[MAXLEN] = "Menlo 13";
 static char default_fixedfont[64] = "Menlo 13";
 #elif defined(MAC_THEMING)
@@ -100,7 +100,7 @@ static char default_fixedfont[64] = "monospace 10";
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "";
-#elif defined(MAC_NATIVE)
+#elif defined(OS_OSX)
 static char appfontname[MAXLEN] = "Lucida Grande 13";
 #else
 static char appfontname[MAXLEN] = "sans 10";
@@ -593,7 +593,7 @@ static void record_system_appfont (GtkSettings *settings,
     if (*pfont != NULL) {
 	strcpy(system_appfont, *pfont);
     } else {
-# if defined(MAC_NATIVE)
+# if defined(OS_OSX)
 	strcpy(system_appfont, "Lucida Grande 13");
 # else
 	strcpy(system_appfont, "sans 10");

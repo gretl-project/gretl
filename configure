@@ -688,7 +688,6 @@ GTKSPINNER_LIBS
 GTKSPINNER_CFLAGS
 GTKMAC_LIBS
 GTKMAC_CFLAGS
-GRETLMAC
 GTK3_LIBS
 GTK3_CFLAGS
 GTK2_LIBS
@@ -2939,7 +2938,7 @@ quiet_build="no"
 swap_ends="no"
 pkg_build="no"
 mac_native="no"
-have_mac_integration="no"
+mac_integration="no"
 gui_disabled="no"
 gp_3d="yes"
 MAKE="make"
@@ -22825,12 +22824,6 @@ fi
 
 fi
   fi
-  if test "$mac_native" = "yes" ; then
-     GRETLMAC="gretl"
-  else
-     GRETLMAC="Gretl"
-  fi
-
 fi
 
 if test "$mac_native" = "yes" ; then
@@ -22893,17 +22886,17 @@ fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKMAC_PKG_ERRORS" >&5
 
-	have_mac_integration="yes"
+	mac_integration="yes"
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	have_mac_integration="yes"
+	mac_integration="yes"
 else
 	GTKMAC_CFLAGS=$pkg_cv_GTKMAC_CFLAGS
 	GTKMAC_LIBS=$pkg_cv_GTKMAC_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	have_mac_integration="no"
+	mac_integration="no"
 fi
 fi
 
@@ -26553,6 +26546,16 @@ elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
 echo "
 Please install gtksourceview-3.0 and then reconfigure gretl.
 gtksourceview-3.0 is available from http://www.gnome.org/
+"
+
+elif test "${darwin_build}" = "yes" && test "${mac_native}" = "no" ; then
+echo "
+Building for macOS requires gtk+-quartz-2.0 or gtk+-quartz-3.0
+"
+
+elif test "${darwin_build}" = "yes" && test "${mac_integration}" = "no" ; then
+echo "
+Building for macOS requires gtk-mac-integration version 2.0.1 or higher
 "
 
 else
