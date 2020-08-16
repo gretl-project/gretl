@@ -168,6 +168,8 @@ We'll then find the following in \texttt{lb}:
   (\ref{eq:lmax}) above.
 \item \texttt{crit}: The minimized LASSO criterion, see (\ref{eq:obj})
   above.
+\item \texttt{R2}: Coefficient of determination,
+  $1 - \sum(y-\hat{y})^2/\sum(y-\bar{y})^2$.
 \item \texttt{BIC}: The Bayesian Information Criterion for the
   estimated model.
 \item \texttt{nobs}: The number of training observations used.
@@ -182,6 +184,11 @@ smpl 1001 1200
 series pred = lincomb(lb.nzX, lb.nzb)
 \end{code}
 
+At some points below we refer to the coefficient of determination
+(under the key \texttt{R2}) as ``$R^2$''. But note that with
+regularized regression, unlike OLS, this figure is not equal to the
+squared correlation between $y$ and $\hat{y}$.
+
 \section{Exploring a range of regularizations}
 \label{sec:simple-search}
 
@@ -195,10 +202,10 @@ bundle lb = lasso(y, X, parms)
 \end{code}
 
 In this case \texttt{lb.B} will be a matrix holding the full
-coefficient vector for each $s$ (one column per $s$ value), and
-\texttt{lb.crit} and \texttt{lb.BIC} will be column vectors showing
-the minimized LASSO criterion (\ref{eq:obj}) and BIC value for each
-$s$. The bundle will contain these additional items:
+coefficient vector for each $s$ (one column per $s$ value);
+\texttt{lb.crit}, \texttt{R2} and \texttt{lb.BIC} will be column
+vectors holding the LASSO criterion, $R^2$ and BIC value for each
+$s$; and the bundle will contain these additional items:
 \begin{itemize}
 \item \texttt{lfmin}: The $s$ value which produces the smallest BIC
   value.
@@ -476,13 +483,25 @@ effective_lambda = {lam1, 0.5*lam1, 0.25*lam1, 0.125*lam1}
 Note that the relevant matrix norms are computed after
 standardization.
 
+In addition to \texttt{BIC} and \texttt{R2} the return bundle from
+Ridge regression contains \texttt{edf} (a scalar if a single $\lambda$
+is specified, otherwise a column vector). This is the ``effective''
+degrees of freedom, or number of free parameters, calculated via
+the SVD of the matrix of regressors:
+\[
+\mbox{edf} = \sum_{i=1}^k\, \frac{\sigma_i^2}{\sigma_i^2 + \lambda}
+\]
+where the $\sigma_i$s are the singular values. As a measure of the
+``size'' of a model this takes the place of the number of non-zero
+coefficients in LASSO.
+
 \section{The CCD option}
 \label{sec:ccd}
 
 As stated above, the default algorithms used by \textsf{regls} for
 LSSO and Ridge are ADMM and SVD, respectively. However, you have the
 option---for both LASSO and Ridge---of using the CCD (Cyclical
-Coordinate Descent) algorithm employed by \textsf{glmnet}. This is
+Coordinate Descent) algorithm, as employed by \textsf{glmnet}. This is
 governed by two additional keys in the \texttt{parms} bundle:
 \begin{itemize}
 \item \texttt{ccd}: boolean, default 0. Set this to 1 to use CCD.
@@ -511,9 +530,9 @@ Moreover, the relative accuracy of two sets of results is not so
 straightforward to assess. Both LASSO and Ridge are minimization
 problems, so it's tempting to assume that---for a given dataset and
 given $\lambda$---the method that produces the smaller criterion value
-is more accurate. But recall the LASSO criterion shown in equation
-(\ref{eq:obj}). This is the Lagrangian form of a problem which can
-also be written as
+is more accurate. But the LASSO objective shown in equation
+(\ref{eq:obj}) is the Lagrangian form of a problem which can also be
+written as
 \[
   \min_{\hat{\beta}} \quad
   \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 \,\mbox{ subject to }\,
@@ -530,11 +549,15 @@ standard for accuracy in digital computation. In some cases, however,
 CCD at its default tolerance ($\epsilon = 10^{-7}$) produces a
 slightly smaller Ridge criterion value. Is it really doing better than
 SVD? No, as can be shown by tightening the CCD tolerance. For example,
-with $\epsilon = 10^{-9}$ CCD may reproduce the SVD result. This sort
-of experiment is generally useful for assessing relative accuracy. If
-the difference between the results delivered by methods A and B
-shrinks as the tolerance for method B is tightened, we can be
-reasonable confident that A's initial result was more accurate.
+with $\epsilon = 10^{-9}$ CCD may reproduce the SVD result.
+
+This sort of experiment is generally useful for assessing relative
+accuracy. If the difference between the results delivered by methods A
+and B shrinks as the tolerance for method B is tightened, we can be
+reasonable confident that A's initial result was more accurate. On
+that basis our impression is that, with tolerances at their respective
+default values, both ADMM LASSO and SVD Ridge are generally somewhat
+slower and somewhat more accurate than the CCD alternative.
 
 
 \section{Reference: public functions}
@@ -553,8 +576,8 @@ bundle lasso (series y, list X, bundle parms)
 \begin{table}[htbp]
   \centering
   \begin{tabular}{lll}
-    \texttt{lfrac} & scalar or vector, required &
-                                                  $\lambda$-fraction(s) \\
+    \texttt{lfrac} & scalar or vector & $\lambda$-fraction(s) \\
+    \texttt{nlambda} & integer & number of automatic $\lambda$s \\
     \texttt{stdize} & 0/1, default 1 & standardize the data \\
     \texttt{verbosity} & 0/1, default 1 & print some output\\
     \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
@@ -570,7 +593,8 @@ bundle lasso (series y, list X, bundle parms)
     \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
     \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see section~\ref{sec:ccd}
   \end{tabular}
-  \caption{Summary of parameters for the \texttt{lasso} function}
+  \caption{Summary of parameters for the \texttt{lasso} function: one
+    or other of the first two must be always be given}
   \label{tab:lasso-parms}
 \end{table}
 
