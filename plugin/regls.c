@@ -1031,6 +1031,11 @@ static int ccd_get_crit (const gretl_matrix *B,
     return 0;
 }
 
+/* We call ridge_effective_df() only if we're doing ridge
+   via CCD -- otherwise the effective df gets computed as
+   part of the larger SVD calculation.
+*/
+
 static int ridge_effective_df (const gretl_matrix *lam,
 			       regls_info *ri)
 {
@@ -1526,7 +1531,7 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (ri->ridge) {
-	/* note: not calculated by CCD */
+	/* we want this but it's not calculated by CCD */
 	err = ridge_effective_df(lam, ri);
     }
 
@@ -1659,9 +1664,16 @@ static int svd_ridge_vcv (regls_info *ri,
 	}
     }
 
+    if (ri->edf != NULL) {
+	ri->edf->val[0] = 0.0;
+    }
+
     /* sve = 1 / (sv.^2 + lambda) */
     for (i=0; i<k; i++) {
 	sve->val[i] = 1.0 / (sv->val[i] * sv->val[i] + lam);
+	if (ri->edf != NULL) {
+	    ri->edf->val[0] += sv->val[i] * sv->val[i] * sve->val[i];
+	}
     }
 
     /* Ve = Vt' .* sve */
@@ -1722,7 +1734,7 @@ static int svd_ridge_vcv (regls_info *ri,
 
 static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
 		       gretl_matrix *y, gretl_matrix *B,
-		       gretl_matrix *R2)
+		       gretl_matrix *R2, gretl_matrix *edf)
 {
     gretl_matrix_block *MB = NULL;
     gretl_matrix *U = NULL;
@@ -1733,7 +1745,8 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     gretl_matrix *L = NULL;
     gretl_matrix *yh = NULL;
     gretl_matrix *b = NULL;
-    double vij, ui, SSR, TSS = 0;
+    double vij, ui, SSR;
+    double edfl, TSS = 0;
     double *targ;
     int offset = 0;
     int n = X->rows;
@@ -1768,8 +1781,15 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
 			      y, GRETL_MOD_NONE,
 			      Uty, GRETL_MOD_NONE);
     for (l=0; l<nlam; l++) {
+	edfl = 0;
 	for (i=0; i<k; i++) {
 	    sve->val[i] = sv->val[i] / (sv->val[i] * sv->val[i] + lam[l]);
+	    if (edf != NULL) {
+		edfl += sv->val[i] * sve->val[i];
+	    }
+	}
+	if (edf != NULL) {
+	    edf->val[l] = edfl;
 	}
 	for (j=0; j<k; j++) {
 	    for (i=0; i<k; i++) {
@@ -1856,15 +1876,13 @@ static int svd_ridge (regls_info *ri)
 	lmax = ridge_scale(ri, lam);
     }
 
-    err = ridge_effective_df(lam, ri);
-
     if (ri->nlam == 1) {
 	/* calculate the covariance matrix */
 	lam0 = ri->lfrac->val[0] * lmax;
 	err = svd_ridge_vcv(ri, lam0, B, &V);
     } else {
 	/* just calculate the parameters */
-	err = ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B, ri->R2);
+	err = ridge_bhat(lam->val, ri->nlam, ri->X, ri->y, B, ri->R2, ri->edf);
     }
     if (err) {
 	goto bailout;
@@ -2220,7 +2238,7 @@ static int svd_do_fold (gretl_matrix *X,
 	ccd_scale(X, y->val, NULL, NULL);
     }
 
-    err = ridge_bhat(lam->val, nlam, X, y, B, NULL);
+    err = ridge_bhat(lam->val, nlam, X, y, B, NULL, NULL);
 
 #if 0
     fprintf(stderr, "svd: err=%d, nlp=%d, lmu=%d\n", err, nlp, lmu);
