@@ -86,7 +86,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
    if scl == 0 # treat the lambdas as is, not as fractions
       if min(m) < 0
          print "missing or invalid lambda specification"
-	 return 2
+         return 2
       else
          return 0
       endif
@@ -110,8 +110,8 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
          if inbundle(src, "$i")
             targ.$i = src.$i
          elif i <= ndef
-	    targ.$i = deflts[i]
-	 endif
+            targ.$i = deflts[i]
+         endif
       endloop
    endif
 end function
@@ -169,10 +169,10 @@ function bundle regls (series depvar, list indeps,
       string meth
       if do_ridge
          meth = ccd ? "CCD" : "SVD"
-	 printf "\nridge (%s): trying %d values of scaled lambda\n", meth, nlam
+         printf "\nridge (%s): trying %d values of scaled lambda\n", meth, nlam
       else
          meth = ccd ? "CCD" : "ADMM"
-	 printf "\nlasso (%s): trying %d values of scaled lambda\n", meth, nlam
+         printf "\nlasso (%s): trying %d values of scaled lambda\n", meth, nlam
       endif
    endif
 
@@ -251,7 +251,7 @@ function bundle regls (series depvar, list indeps,
       matrix b = ret.B[,optcol]
       if do_ridge
          ret.b = b
-	 rnameset(ret.b, varnames(X0))
+         rnameset(ret.b, varnames(X0))
       else
          matrix bsel = b .!= 0
          matrix ret.nzb = selifr(b, bsel)
@@ -259,9 +259,9 @@ function bundle regls (series depvar, list indeps,
    else
       if do_stdize
          ret.B = unstdize(ret.B[2:], my, sy, mx, sx)
-	 if inbundle(ret, "vcv")
-	    ret.vcv = unstdize_vcv(ret.vcv, sy, sx)
-	 endif
+         if inbundle(ret, "vcv")
+            ret.vcv = unstdize_vcv(ret.vcv, sy, sx)
+         endif
       endif
       if !do_ridge
          matrix bsel = ret.B .!= 0
@@ -276,9 +276,16 @@ function bundle regls (series depvar, list indeps,
       list ret.nzX = tmp
       rnameset(ret.nzb, varnames(ret.nzX))
    endif
-   
+
    if inbundle(ret, "verbosity")
       delete ret.verbosity
+   endif
+
+   if inbundle(ret, "vcv") && verbosity > 1
+      matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
+      matrix addstats = {ret.edf, ret.BIC, ret.R2}
+      strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
+      modprint bse pnames addstats
    endif
 
    return ret

@@ -495,6 +495,13 @@ where the $\sigma_i$s are the singular values. As a measure of the
 ``size'' of a model this takes the place of the number of non-zero
 coefficients in LASSO.
 
+In the case of a single $\lambda$, when estimation is performed using
+the default SVD method, further information is available: the return
+bundle contains the covariance matrix of the parameter estimates
+(other than the constant) under the key \texttt{vcv}. And if the
+\texttt{verbosity} option is set to 2 you get a printout of the model,
+showing standard errors, $z$ statistics and $P$-values.
+
 \section{The CCD option}
 \label{sec:ccd}
 
