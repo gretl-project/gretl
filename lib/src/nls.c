@@ -2981,7 +2981,7 @@ static int screen_bad_aux (const char *line, const DATASET *dset)
 
     ci = gretl_command_number(word);
 
-    if (ci == GENR || ci == PRINT || ci == EVAL) {
+    if (ci == GENR || ci == PRINT || ci == PRINTF || ci == EVAL) {
 	err = 0;
     } else if (plausible_genr_start(line, dset)) {
 	err = 0;
