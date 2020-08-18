@@ -14885,7 +14885,7 @@ msgstr "No hay observaciones extra para eliminar"
 
 #: gui/library.c:6472
 msgid "Divide by sample standard deviation"
-msgstr "Desvidir por la desviación típica muestral"
+msgstr "Dividir por la desviación típica muestral"
 
 #: gui/library.c:6473
 msgid "Divide by standard deviation without df correction"
