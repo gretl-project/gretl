@@ -54,7 +54,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
    if inbundle(b, "lambda_scale") == 1
       scl = b.lambda_scale
       if scl < 0 || scl > 2 || floor(scl) != scl
-         print "missing or invalid lambda scale specification"
+         print "invalid lambda scale specification"
          return 1
       else
          ret.lambda_scale = scl
@@ -79,8 +79,10 @@ function scalar check_params (const bundle b, matrix *lfrac,
          return 0
       endif
    else
-      print "missing or invalid lambda specification"
-      return 1
+      # default to 25 automatic lambdas
+      nlam = 25
+      lfrac = lambda_sequence(1, nlam)
+      return 0
    endif
    lfrac = m
    if scl == 0 # treat the lambdas as is, not as fractions
@@ -117,7 +119,7 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
 end function
 
 function bundle regls (series depvar, list indeps,
-                       const bundle parms)
+                       const bundle parms[null])
    bundle ret
    scalar do_stdize = 1
    scalar do_ridge = 0
@@ -132,6 +134,11 @@ function bundle regls (series depvar, list indeps,
    scalar my = 0
    scalar sy = 1
    scalar rank = $mpirank
+
+   if !exists(parms)
+      # an empty bundle will do
+      bundle parms = null
+   endif
 
    err = check_params(parms, &lfrac, &nlam, &ret)
    if err

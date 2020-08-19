@@ -91,25 +91,31 @@ $s = \lambda/\lambda_{\max}$, such that $0 \leq s \leq 1$.
 
 The \texttt{regls} function takes three arguments: a series (the
 dependent variable), a list (the independent variables, not including
-a constant) and a bundle to contain parameters; and it returns a
-bundle, described below. Its signature is therefore
+a constant) and a bundle to contain optional parameters; and it
+returns a bundle, described below. Its signature is therefore
 \begin{code}
 function bundle regls (series y, list X, bundle parms)
 \end{code}
 
-The one \textit{required} element in the \texttt{parms} bundle is a
-specification for $\lambda$, which may take either of two forms, as
-follows:
+The \texttt{parms} argument may be omitted, in which case all settings
+assume their default values, described below.
+
+One basic element in the \texttt{parms} bundle is a specification for
+$\lambda$, which may take either of two forms, as follows:
 \begin{enumerate}
 \item under the key \texttt{lfrac} (``lambda fraction''), a scalar
   (single $s$ value) or vector (sequence of $s$ values); or
 \item under the key \texttt{nlambda}, the number of $s$ values to be
-  used, in which case the values will be assigned automatically.
+  used ($\geq 4$), in which case the values will be assigned
+  automatically.
 \end{enumerate}
 If \texttt{nlambda} is provided instead of \texttt{lfrac}, the
 automatic $s$ vector is a logarithmically declining sequence starting
 at 1 and finishing at 0.0001. For example, given \texttt{nlambda} = 5
 the sequence will be $s$ = \{1, 0.1, 0.01, 0.001, 0.0001\}.
+
+If neither \texttt{lfrac} nor \texttt{nlambda} is specified, the
+default is as if \texttt{nlambda} were given as 25.
 
 In case you wish to specify a sequence succinctly but with more
 control, the package contains a utility function
@@ -124,17 +130,19 @@ parms.lfrac = lambda_sequence(1, 20, 0.001)
 the resulting sequence would be $s$ = \{1, 0.69519, 0.48329, \dots,
 0.00144, 0.001\}.
 
-The most basic \textit{optional} member of the parameter bundle is
-\texttt{stdize}, a boolean switch to toggle standardization of the
-data. The default is \textit{on}, but if the data are already
-standardized on input \texttt{stdize} may be set to 0.  The estimates
-include an intercept (which is not subject to regularization) only if
-\texttt{stdize} is on.
+A second basic member of the parameter bundle is \texttt{stdize}, a
+boolean switch to toggle standardization of the data. The default is
+to perform standardization (corresponding to a non-zero value of this
+option), but if the data are already standardized on input
+\texttt{stdize} may be set to 0.  The estimates include an intercept
+(which is not subject to regularization) only if \texttt{stdize} is
+on.
 
 Another basic option is \texttt{verbosity}. This has a default value
 of 1, meaning that \texttt{regls} prints out a certain amount of
 information about its progress and/or results. Setting it to 0 makes
-\texttt{regls} run (mostly) quietly.
+\texttt{regls} run (mostly) quietly; setting it to 2 produces more
+output in some cases.
 
 The further optional parameters, as well as the contents of the bundle
 returned by \texttt{regls}, are best explained by reference to the
@@ -590,7 +598,7 @@ bundle regls (series y, list X, bundle parms)
     \texttt{nlambda} & integer & number of automatic $\lambda$s \\
     \texttt{stdize} & 0/1, default 1 & standardize the data \\
     \texttt{ridge} & 0/1, default 0 & do Ridge regression \\
-    \texttt{verbosity} & 0/1, default 1 & print some output\\
+    \texttt{verbosity} & 0, 1 or 2, default 1 & printing of output\\
     \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
     \texttt{nfolds} & optional integer $>1$, default 10 & number of
                                                           folds \\
@@ -604,8 +612,7 @@ bundle regls (series y, list X, bundle parms)
     \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
     \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see section~\ref{sec:ccd}
   \end{tabular}
-  \caption{Summary of parameters for the \texttt{regls} function: one
-    or other of the first two must be always be given}
+  \caption{Summary of parameters for the \texttt{regls} function}
   \label{tab:lasso-parms}
 \end{table}
 
