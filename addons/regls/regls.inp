@@ -117,9 +117,10 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
 end function
 
 function bundle regls (series depvar, list indeps,
-                       const bundle parms, int do_ridge)
+                       const bundle parms)
    bundle ret
    scalar do_stdize = 1
+   scalar do_ridge = 0
    scalar verbosity = 1
    scalar nlam = 1
    scalar xvalidate = 0
@@ -155,8 +156,9 @@ function bundle regls (series depvar, list indeps,
          ret.ccd_toler = parms.ccd_toler
       endif
    endif
-   if do_ridge
-      ret.ridge = 1
+   if inbundle(parms, "ridge") == 1
+      do_ridge = parms.ridge
+      ret.ridge = do_ridge
    endif
 
    # list of regressors with constant included, if wanted
@@ -289,16 +291,6 @@ function bundle regls (series depvar, list indeps,
    endif
 
    return ret
-end function
-
-function bundle lasso (series depvar, list indeps,
-                       const bundle parms)
-   return regls(depvar, indeps, parms, 0)
-end function
-
-function bundle regls_ridge (series depvar, list indeps,
-                             const bundle parms)
-   return regls(depvar, indeps, parms, 1)
 end function
 
 include regls_helpers.inp

@@ -64,8 +64,10 @@ Ridge regression, \textsf{glmnet} supports a combination of these two
 methods known as ``elastic net''; this hyprid is not yet supported by
 gretl.
 
-In describing what our gretl package has to offer we begin by
-discussing LASSO; Ridge is discussed in section~\ref{sec:ridge}.
+This package supports both LASSO and Ridge via the \texttt{regls()}
+function. We begin by discussing LASSO, which is the default method.
+Ridge can be selected via an option; see section~\ref{sec:ridge} for
+more on this.
 
 We use the LASSO parameterization employed by Boyd \textit{et al}: the
 objective is
@@ -87,13 +89,12 @@ which drives all elements of $\hat{\beta}$ to zero.  A key control
 variable for our \texttt{lasso()} function is the scaled term
 $s = \lambda/\lambda_{\max}$, such that $0 \leq s \leq 1$.
 
-The \texttt{lasso} function provided by this package takes three
-arguments: a series (the dependent variable), a list (the independent
-variables, not including a constant) and a bundle to contain
-parameters; and it returns a bundle, described below. Its signature is
-therefore
+The \texttt{regls} function takes three arguments: a series (the
+dependent variable), a list (the independent variables, not including
+a constant) and a bundle to contain parameters; and it returns a
+bundle, described below. Its signature is therefore
 \begin{code}
-function bundle lasso (series y, list X, bundle parms)
+function bundle regls (series y, list X, bundle parms)
 \end{code}
 
 The one \textit{required} element in the \texttt{parms} bundle is a
@@ -131,12 +132,12 @@ include an intercept (which is not subject to regularization) only if
 \texttt{stdize} is on.
 
 Another basic option is \texttt{verbosity}. This has a default value
-of 1, meaning that \texttt{lasso} prints out a certain amount of
+of 1, meaning that \texttt{regls} prints out a certain amount of
 information about its progress and/or results. Setting it to 0 makes
-\texttt{lasso} run (mostly) quietly.
+\texttt{regls} run (mostly) quietly.
 
 The further optional parameters, as well as the contents of the bundle
-returned by \texttt{lasso()}, are best explained by reference to the
+returned by \texttt{regls}, are best explained by reference to the
 various modes of usage of the function, namely estimation with a
 single value of $\lambda$; exploration of a range of $\lambda$ values
 using a unified training sample; and (probably most relevant in
@@ -153,7 +154,7 @@ do:
 \begin{code}
 bundle parms = defbundle("lfrac", 0.2)
 smpl 1 1000
-bundle lb = lasso(y, X, parms)
+bundle lb = regls(y, X, parms)
 \end{code}
 We'll then find the following in \texttt{lb}:
 \begin{itemize}
@@ -174,7 +175,7 @@ We'll then find the following in \texttt{lb}:
   estimated model.
 \item \texttt{nobs}: The number of training observations used.
 \item \texttt{lfrac}: The input value of $s$.
-\item \texttt{stdize}: Whether \texttt{lasso} did standardization or
+\item \texttt{stdize}: Whether \texttt{regls} did standardization or
   not.
 \end{itemize}
 
@@ -198,7 +199,7 @@ using all the training data. We might then revise the prior script as:
 matrix lamseq = lambda_sequence(1, 10)
 bundle parms = defbundle("lfrac", lamseq)
 smpl 1 1000
-bundle lb = lasso(y, X, parms)
+bundle lb = regls(y, X, parms)
 \end{code}
 
 In this case \texttt{lb.B} will be a matrix holding the full
@@ -254,7 +255,7 @@ $s$ value that yields the least total MSE on the above procedure (or
 perhaps take an alternative approach---see below).
 
 The basic options connected with cross validation (to be entered in
-the parameter bundle passed to \texttt{lasso}) are as follows:
+the parameter bundle passed to \texttt{regls}) are as follows:
 \begin{itemize}
 \item \texttt{xvalidate}: Boolean, trigger for doing cross validation (required).
 \item \texttt{nfolds}: Integer, the number of folds (optional, default
@@ -272,7 +273,7 @@ the number of folds, which means that any ``remainder'' training
 observations are ignored. That could be generalized if it seems
 worthwhile.
 
-When cross validation is specified \texttt{lasso} will print some
+When cross validation is specified \texttt{regls} will print some
 information on the performance of the values of $s$ used, a
 snippet of which is shown below:
 \begin{code}
@@ -293,7 +294,7 @@ minimum, which we'll call $s^{\dagger}$. It may be that $s^*$ and
 $s^{\dagger}$ are the same value, but if not this policy gives the
 benefit of the doubt to parsimony.
 
-After cross validation, \texttt{lasso} by default stores the full
+After cross validation, \texttt{regls} by default stores the full
 coefficient matrix (one column per value of $s$, estimated on the full
 training data) under the key \texttt{B}.  And the returned bundle also
 holds the indices of both $s^*$ and $s^{\dagger}$, under the keys
@@ -310,7 +311,7 @@ Note that \texttt{B} has as many rows as \texttt{X} has members, plus
 one for the intercept.
 
 But there's another method which may be more convenient: after cross
-validation the \texttt{lasso} return bundle holds a single
+validation the \texttt{regls} return bundle holds a single
 \texttt{nzb} vector and \texttt{nzX} list, such that fitted values can
 be obtained thus:
 \begin{code}
@@ -319,7 +320,7 @@ series fitted = lincomb(lb.nzX, lb.nzb)
 By default it's the $s^*$ (\texttt{idxmin}) column that's selected for
 forming \texttt{nzb}, but if you wish to use $s^{\dagger}$ you can
 arrange for that by setting \texttt{use\_1se} to a non-zero value in
-the parameter bundle passed to \texttt{lasso}, as in
+the parameter bundle passed to \texttt{regls}, as in
 \begin{code}
 parms.use_1se = 1
 \end{code}
@@ -332,7 +333,7 @@ Some additional cross validation options are supported.
 \item \texttt{seed}: Integer, you can supply this to control the
   randomization when \texttt{randfolds} is active, hence getting
   exactly repeatable results.
-\item \texttt{single\_b}: Boolean. If non-zero it stops \texttt{lasso}
+\item \texttt{single\_b}: Boolean. If non-zero it stops \texttt{regls}
   from estimating coefficients for all $s$ values after cross
   validation; only the selected ``best'' value ($s^*$ or
   $s^{\dagger}$) is used. The matrix \texttt{B} mentioned above is
@@ -370,7 +371,7 @@ thereafter.\footnote{On a desktop machine with 4 Intel i7 processors,
 \label{sec:add-controls}
 
 This section describes some additional controls over the ADMM
-algorithm that can be passed to the \texttt{lasso} function via the
+algorithm that can be passed to the \texttt{regls} function via the
 \texttt{parms} bundle. Under the key \texttt{admmctrl} you can supply
 a 3-vector whose elements are, in order:
 \begin{itemize}
@@ -411,8 +412,8 @@ sometimes \textsf{glmnet}.
 \label{sec:ridge}
 
 While LASSO involves $\ell_1$ regularization, Ridge uses $\ell_2$: the
-penalty factor $\lambda$ applies to the sum of \textit{squared}
-coefficients, giving rise to the following objective:
+penalty factor $\lambda$ applies to the sum of squared coefficients,
+giving rise to the following objective:
 \begin{equation}
   \label{eq:ridge-obj}
   \min_{\hat{\beta}} \quad
@@ -427,10 +428,11 @@ collinear terms while Ridge will tend to distribute the predictive
 weight across the terms, yielding several small coefficients instead
 of one relatively substantial coefficient and a bunch of zeros.
 
-The function to perform Ridge regression is called
-\texttt{regls\_ridge} and it has the same signature as \texttt{lasso}:
+To get the \texttt{regls} function to perform Ridge regression rather
+than LASSO, set a value of 1 under the key \texttt{ridge} in the
+\texttt{parms} bundle, as in
 \begin{code}
-function bundle regls_ridge (series y, list X, bundle parms)
+parms.ridge = 1
 \end{code}
 
 Most of the points made above with respect to LASSO carry over to
@@ -572,12 +574,13 @@ slower and somewhat more accurate than the CCD alternative.
 
 \begin{funcdoc}
 \begin{verbatim}
-bundle lasso (series y, list X, bundle parms)
+bundle regls (series y, list X, bundle parms)
 \end{verbatim}
-  Performs LASSO estimation given the dependent variable \texttt{y},
-  the regressors \texttt{X}, and options in \texttt{parms}. Returns a
-  bundle containing the results. Table~\ref{tab:lasso-parms} lists the
-  parameters that can be passed via the \texttt{parms} argument.
+  Performs LASSO or Ridge estimation given the dependent variable
+  \texttt{y}, the regressors \texttt{X}, and options in
+  \texttt{parms}. Returns a bundle containing the
+  results. Table~\ref{tab:lasso-parms} lists the parameters that can
+  be passed via the \texttt{parms} argument.
 \end{funcdoc}
 
 \begin{table}[htbp]
@@ -586,6 +589,7 @@ bundle lasso (series y, list X, bundle parms)
     \texttt{lfrac} & scalar or vector & $\lambda$-fraction(s) \\
     \texttt{nlambda} & integer & number of automatic $\lambda$s \\
     \texttt{stdize} & 0/1, default 1 & standardize the data \\
+    \texttt{ridge} & 0/1, default 0 & do Ridge regression \\
     \texttt{verbosity} & 0/1, default 1 & print some output\\
     \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
     \texttt{nfolds} & optional integer $>1$, default 10 & number of
@@ -600,22 +604,10 @@ bundle lasso (series y, list X, bundle parms)
     \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
     \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see section~\ref{sec:ccd}
   \end{tabular}
-  \caption{Summary of parameters for the \texttt{lasso} function: one
+  \caption{Summary of parameters for the \texttt{regls} function: one
     or other of the first two must be always be given}
   \label{tab:lasso-parms}
 \end{table}
-
-\begin{funcdoc}
-\begin{verbatim}
-bundle regls_ridge (series y, list X, bundle parms)
-\end{verbatim}
-  Performs Ridge regression estimation given the dependent variable
-  \texttt{y}, the regressors \texttt{X}, and options in
-  \texttt{parms}. Returns a bundle containing the results. The
-  parameters that can be passed via the \texttt{parms} argument are
-  basically the same as in Table~\ref{tab:lasso-parms} except that
-  \texttt{admmctrl} is not applicable (it will be ignored if present).
-\end{funcdoc}
 
 \begin{funcdoc}
 \begin{verbatim}
@@ -676,12 +668,12 @@ void regls_multiprint (const matrix B, const matrix lam,
   should be an $m$-vector holding the criterion value associated with
   each $\lambda$, which will be shown as a fifth column.
 
-  As in the lasso function, the \texttt{X} list should not contain a
-  constant: if the \texttt{B} matrix has one more row than \texttt{X}
-  has members, the constant is handled
+  As in the \texttt{regls} function, the \texttt{X} list should not
+  contain a constant: if the \texttt{B} matrix has one more row than
+  \texttt{X} has members, the constant is handled
   automatically. Listing~\ref{script:multiprint} shows how the
-  information provided in the lasso return bundle can be used to
-  supply the arguments \texttt{B}, \texttt{lam} and \texttt{crit}.
+  information provided in the \texttt{regls} return bundle can be used
+  to supply the arguments \texttt{B}, \texttt{lam} and \texttt{crit}.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -709,7 +701,7 @@ open murder.gdt --quiet --frompkg=regls
 list X = population..LemasPctOfficDrugUn
 smpl 1 800
 bundle parms = defbundle("nlambda", 8, "verbosity", 0)
-bundle lb = lasso(murdPerPop, X, parms)
+bundle lb = regls(murdPerPop, X, parms)
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 \end{scode}
   \end{script}
@@ -727,10 +719,10 @@ It's likely that potential users of this package will take
 \textsf{R}'s \textsf{glmnet} as benchmark. So we'd be well advised to
 ensure that our results are close to those from \textsf{glmnet} unless
 we can demonstrate a good reason for divergence. We're at that point:
-on some examples gretl's \texttt{lasso} gets a smaller (better) lasso
+on some examples gretl's \texttt{regls} gets a smaller (better) LASSO
 criterion value than \textsf{glmnet} for a given $\lambda$, and on
 some examples \textit{vice versa}, within a quite small range of
-variation. Similarly for the typical full \textsf{lasso} workflow;
+variation. Similarly for the typical full \textsf{regls} workflow;
 that is, randomized cross validation followed by out of sample
 prediction. Sometimes we do a bit better than \textsf{glmnet},
 sometimes not quite so well.
@@ -791,7 +783,7 @@ For each of 800 trials we:
 \item Randomized the order of the entire dataset.
 \item Selected the first 1000 observations for training and the next
   200 for testing.
-\item Ran both \texttt{lasso} and \textsf{glmnet}, using 25 values
+\item Ran both \texttt{regls} and \textsf{glmnet}, using 25 values
   of $s = \lambda/\lambda_{\max}$ and 10 consecutive folds.
 \item Used the optimal $s$ from cross validation to obtain
   $\hat{\beta}$ on the full set of training data.
@@ -843,7 +835,7 @@ be considered unknown when predictions are made.
 The script that produced the Case A results above is shown on the
 following page. For Case B it's necessary to add
 \texttt{parms.use\_1se = 1} when forming the parameter bundle for
-gretl's \texttt{lasso}, and in the \textsf{R} section to change the
+gretl's \texttt{regls}, and in the \textsf{R} section to change the
 line that assigns to \texttt{Rb} to read
 \begin{code}
 Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.1se))
@@ -882,7 +874,7 @@ loop i=1..K --quiet
    dataset sortby sorter
 
    smpl 1 1000 # training data
-   bundle lb = lasso(murdPerPop, X, parms)
+   bundle lb = regls(murdPerPop, X, parms)
 
    foreign language=R --send-data=LL
      if (! "glmnet" %in% (.packages())) {

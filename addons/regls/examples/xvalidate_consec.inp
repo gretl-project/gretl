@@ -22,7 +22,7 @@ parms.single_b = 1
 # gretl, ADMM
 
 set stopwatch
-bundle lb = lasso(murdPerPop, X, parms)
+bundle lb = regls(murdPerPop, X, parms)
 series pred = lincomb(lb.nzX, lb.nzb)
 printf "time %.4fs\n", $stopwatch
 m = regls_get_stats(murdPerPop, pred)
@@ -42,7 +42,7 @@ smpl 1 1000
 parms.ccd = 1
 # parms.ccd_toler = 1.0e-10
 set stopwatch
-bundle lb = lasso(murdPerPop, X, parms)
+bundle lb = regls(murdPerPop, X, parms)
 series pred = lincomb(lb.nzX, lb.nzb)
 printf "time %.4fs\n", $stopwatch
 m = regls_get_stats(murdPerPop, pred)
