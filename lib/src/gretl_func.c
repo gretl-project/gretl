@@ -5909,13 +5909,29 @@ fnpkg *get_function_package_by_name (const char *pkgname)
 {
     int i;
 
-    for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(pkgname, pkgs[i]->name)) {
-	    return pkgs[i];
-	}
-    }
+    if (has_suffix(pkgname, ".gfn") || has_suffix(pkgname, ".zip")) {
+	/* just in case: strip off the extension */
+	gchar *tmp = g_strdup(pkgname);
+	gchar *p = strrchr(tmp, '.');
+	fnpkg *ret = NULL;
 
-    return NULL;
+	*p = '\0';
+	for (i=0; i<n_pkgs; i++) {
+	    if (!strcmp(tmp, pkgs[i]->name)) {
+		ret = pkgs[i];
+		break;
+	    }
+	}
+	g_free(tmp);
+	return ret;
+    } else {
+	for (i=0; i<n_pkgs; i++) {
+	    if (!strcmp(pkgname, pkgs[i]->name)) {
+		return pkgs[i];
+	    }
+	}
+	return NULL;
+    }
 }
 
 /**

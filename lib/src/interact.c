@@ -1268,9 +1268,16 @@ static void query_package (const char *pkgname,
 			   gretlopt opt, PRN *prn)
 {
     char path[MAXLEN];
+    fnpkg *pkg = NULL;
     int err = 0;
 
-    if (has_suffix(pkgname, ".gfn")) {
+    pkg = get_function_package_by_name(pkgname);
+
+    if (pkg != NULL) {
+	const char *p = function_package_get_string(pkg, "fname");
+
+	strcpy(path, p);
+    } else if (has_suffix(pkgname, ".gfn")) {
 	err = get_full_filename(pkgname, path, OPT_I);
     } else {
 	gchar *gfn = g_strdup_printf("%s.gfn", pkgname);
@@ -1278,7 +1285,9 @@ static void query_package (const char *pkgname,
 	err = get_full_filename(gfn, path, OPT_I);
 	g_free(gfn);
     }
+
     if (opt & OPT_Q) {
+	/* --quiet */
 	gretl_bundle *b = gretl_bundle_new();
 
 	if (b != NULL && err) {
