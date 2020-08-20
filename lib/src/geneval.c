@@ -7436,6 +7436,23 @@ static NODE *do_errorif (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *do_assert (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+    double c = l->v.xval;
+
+    if (c == 0 || na(c)) {
+	gretl_errmsg_sprintf(_("Assertion '%s' failed"), r->v.str);
+	p->err = 1;
+    }
+
+    if (ret != NULL) {
+	ret->v.xval = p->err ? c : 1;
+    }
+
+    return ret;
+}
+
 static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -17131,6 +17148,13 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	} else {
 	    ret = do_errorif(l, r, p);
+	}
+	break;
+    case F_ASSERT:
+	if (l->t == NUM && r->t == STR) {
+	    ret = do_assert(l, r, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;
     case F_OBSLABEL:

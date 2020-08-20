@@ -572,6 +572,7 @@ struct str_table funcs[] = {
     { F_STACK,     "stack" },
     { F_GEOPLOT,   "geoplot" },
     { F_BINCOEFF,  "bincoeff" },
+    { F_ASSERT,    "assert" },
     { 0,           NULL }
 };
 

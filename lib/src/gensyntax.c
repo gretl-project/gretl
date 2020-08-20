@@ -1230,9 +1230,24 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 #endif
 }
 
+static void get_assertion (NODE *t, parser *p)
+{
+    char *str, *s = strrchr(p->point, ')');
+    int n = s - p->point + 1;
+    int next = 0;
+
+    str = gretl_strndup(p->point - 1, n);
+
+    get_args(t, p, F_ASSERT, 1, 0, &next);
+    if (!p->err) {
+	str = g_strchomp(g_strchug(str));
+	t->R = newstr(str);
+    }
+}
+
 /* get 1 or more comma-separated pairs of the form key=value */
 
-static void get_args_args (NODE *t, parser *p, int *next)
+static void get_bundle_pairs (NODE *t, parser *p, int *next)
 {
     NODE *child;
     const char *src;
@@ -1384,7 +1399,11 @@ static NODE *powterm (parser *p, NODE *l)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    get_args(t, p, sym, 2, opt, &next);
+	    if (sym == F_ASSERT) {
+		get_assertion(t, p);
+	    } else {
+		get_args(t, p, sym, 2, opt, &next);
+	    }
 	}
 	if (unset) {
 	    set_doing_genseries(0);
@@ -1541,7 +1560,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    if (t != NULL && sym == F_BPACK) {
 		get_args(t->L, p, sym, -1, opt, &next);
 	    } else if (t != NULL) {
-		get_args_args(t->L, p, &next);
+		get_bundle_pairs(t->L, p, &next);
 	    }
 	}
     } else if (funcn_symb(sym)) {

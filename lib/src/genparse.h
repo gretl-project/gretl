@@ -402,6 +402,7 @@ enum {
     F_FUNCERR, /* legacy */
     F_ERRORIF,
     F_BINCOEFF,
+    F_ASSERT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
