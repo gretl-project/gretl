@@ -62,6 +62,9 @@ double admm_abstol;
 #define CCD_TOLER_DEFAULT 1.0e-7
 #define BIG_LAMBDA 9.9e35
 
+#define RHO_DEBUG 0
+#define LAMBDA_DEBUG 0
+
 double ccd_toler;
 
 enum {
@@ -1287,8 +1290,6 @@ static int get_cholesky_factor (const gretl_matrix *X,
     return gretl_matrix_cholesky_decomp(L);
 }
 
-#define RHO_DEBUG 0
-
 static int admm_iteration (const gretl_matrix *X,
 			   const gretl_vector *Xty,
 			   gretl_matrix *L,
@@ -1444,6 +1445,10 @@ static void ccd_make_lambda (regls_info *ri,
 {
     int i;
 
+#if LAMBDA_DEBUG
+    fprintf(stderr, "ccd_make_lambda: lmax = %g\n", *lmax);
+#endif
+
     gretl_matrix_copy_values(lam, ri->lfrac);
     if (ri->lamscale == LAMSCALE_NONE) {
 	for (i=0; i<ri->nlam; i++) {
@@ -1453,6 +1458,9 @@ static void ccd_make_lambda (regls_info *ri,
     }
     if (ri->alpha < 1.0) {
 	*lmax /= max(ri->alpha, 1.0e-3);
+#if LAMBDA_DEBUG
+	fprintf(stderr, "revised lmax = %g\n", *lmax);
+#endif
     }
     for (i=0; i<ri->nlam; i++) {
 	lam->val[i] *= *lmax;
@@ -1596,7 +1604,7 @@ static int ccd_regls (regls_info *ri)
 	lam->val[0] = ri->lfrac->val[0] * lmax;
     }
 
-    if (ri->xvalid && ri->verbose && ri->ridge && nlam > 1) {
+    if (ri->xvalid && ri->verbose > 1 && ri->ridge && nlam > 1) {
 	xv_ridge_print(lam, ri);
     }
 
@@ -2215,7 +2223,9 @@ static int ccd_do_fold (gretl_matrix *X,
 			ccd_toler, maxit, xv->val, &lmu, B,
 			ia, nnz, NULL, &nlp);
 
-    if (!err) {
+    if (err) {
+	fprintf(stderr, "ccd_do_fold: ccd_iteration returned %d\n", err);
+    } else {
 	/* record out-of-sample criteria */
 	size_t bsize = k * sizeof(double);
 	double score;
@@ -2455,6 +2465,10 @@ static double get_xvalidation_lmax (regls_info *ri, int esize)
 {
     double lmax = ri->infnorm;
 
+#if LAMBDA_DEBUG
+    fprintf(stderr, "get_xvalidation_lmax: lmax = %g\n", lmax);
+#endif
+
 #if 0 /* lmax shouldn't really be sample-size dependent? */
     lmax *= esize / (double) X->rows;
 #endif
@@ -2462,6 +2476,9 @@ static double get_xvalidation_lmax (regls_info *ri, int esize)
     if (ri->ccd) {
 	if (ri->alpha < 1.0) {
 	    lmax /= max(ri->alpha, 1.0e-3);
+#if LAMBDA_DEBUG
+	    fprintf(stderr, "revised lmax = %g\n", lmax);
+#endif
 	} else {
 	    /* per observation ? */
 	    lmax /= esize;
@@ -2502,7 +2519,7 @@ static gretl_matrix *make_xv_lambda (regls_info *ri,
 	for (i=0; i<ri->nlam; i++) {
 	    lam->val[i] *= lmax;
 	}
-	if (ri->ridge && ri->lamscale == LAMSCALE_GLMNET) {
+	if (ri->alpha < 1 && ri->lamscale == LAMSCALE_GLMNET) {
 	    lam->val[0] = BIG_LAMBDA;
 	}
     }
@@ -2524,7 +2541,7 @@ static int regls_xv (regls_info *ri)
     gretl_matrix *XVC = NULL;
     double lmax;
     int f, fsize, esize;
-    int err;
+    int err = 0;
 
     fsize = ri->n / ri->nf;
     esize = (ri->nf - 1) * fsize;
@@ -2571,6 +2588,7 @@ static int regls_xv (regls_info *ri)
 	if (ri->ccd) {
 	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
 			      ri->crit_type, ri->alpha);
+
 	} else if (ri->ridge) {
 	    err = svd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
 			      ri->crit_type, ri->lamscale);
