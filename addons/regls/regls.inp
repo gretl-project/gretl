@@ -60,16 +60,12 @@ function scalar check_params (const bundle b, matrix *lfrac,
          ret.lambda_scale = scl
       endif
    endif
-   if inbundle(b, "lfrac") == 1
-      # got a scalar lfrac
-      m = b.lfrac
-      nlam = 1
-   elif inbundle(b, "lfrac") == 3
-      # got a matrix lfrac
+   if inbundle(b, "lfrac") == 1 || inbundle(b, "lfrac") == 3
       m = b.lfrac
       nlam = nelem(m)
-   elif inbundle(b, "nlambda") == 1
-      # just got a number of lambda values
+   endif
+   if nelem(m) == 0 && inbundle(b, "nlambda") == 1
+      # got a number of lambda values
       if b.nlambda < 4
          print "missing or invalid lambda specification"
          return 1
@@ -78,7 +74,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
          lfrac = lambda_sequence(1, nlam)
          return 0
       endif
-   else
+   elif nelem(m) == 0
       # default to 25 automatic lambdas
       nlam = 25
       lfrac = lambda_sequence(1, nlam)
@@ -95,7 +91,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
    endif
    loop i=1..nlam -q
       if m[i] < 0 || m[i] > 1 || (i > 1 && m[i] >= m[i-1])
-         print "missing or invalid lambda specification"
+         print "invalid lambda specification"
          return 2
       endif
    endloop
@@ -121,12 +117,7 @@ end function
 function bundle regls (series depvar, list indeps,
                        const bundle parms[null])
    bundle ret
-   scalar do_stdize = 1
-   scalar do_ridge = 0
-   scalar verbosity = 1
    scalar nlam = 1
-   scalar xvalidate = 0
-   scalar ccd = 0
    scalar timer = 0
    matrix lfrac = {}
    matrix mx = {}
@@ -135,6 +126,8 @@ function bundle regls (series depvar, list indeps,
    scalar sy = 1
    scalar rank = $mpirank
    matrix bsel = {}
+   scalar alpha_set = 0
+   scalar elnet = 0
 
    if !exists(parms)
       # an empty bundle will do
@@ -150,48 +143,62 @@ function bundle regls (series depvar, list indeps,
       funcerr "invalid or missing parameter(s)"
    endif
 
+   ret.stdize = 1
+   ret.verbosity = 1
+   ret.ridge = 0
+   ret.ccd = 0
+   ret.xvalidate = 0
+
    # read optional parameters
    if inbundle(parms, "stdize") == 1
-      do_stdize = parms.stdize
+      ret.stdize = parms.stdize
    endif
    if inbundle(parms, "verbosity") == 1
-      verbosity = parms.verbosity
-      ret.verbosity = verbosity
+      ret.verbosity = parms.verbosity
    endif
    if inbundle(parms, "timer") == 1
       timer = parms.timer
    endif
-   if inbundle(parms, "ccd") == 1
-      ccd = parms.ccd
-      ret.ccd = ccd
-      if inbundle(parms, "ccd_toler")
-         ret.ccd_toler = parms.ccd_toler
-      endif
-   endif
-   if inbundle(parms, "ridge") == 1
-      do_ridge = parms.ridge
-      ret.ridge = do_ridge
-   endif
    if inbundle(parms, "alpha") == 1
-      # secret, experimental!
-      if parms.alpha >= 0 && parms.alpha <= 1
+      if parms.alpha < 0 || parms.alpha > 1 || isnan(parms.alpha)
+         funcerr "invalid alpha specification"
+      else
          ret.alpha = parms.alpha
+         if ret.alpha == 0
+            ret.ridge = 1
+         elif ret.alpha < 1
+            ret.ccd = 1
+            elnet = 1
+         endif
+         alpha_set = 1
       endif
    endif
 
+   if !alpha_set && inbundle(parms, "ridge") == 1
+      ret.ridge = parms.ridge
+   endif
+   if !ret.ccd && inbundle(parms, "ccd") == 1
+      ret.ccd = parms.ccd
+   endif
+   if ret.ccd && inbundle(parms, "ccd_toler")
+      ret.ccd_toler = parms.ccd_toler
+   endif
+
    # list of regressors with constant included, if wanted
-   list X0 = do_stdize ? 0 indeps : indeps
+   list X0 = ret.stdize ? 0 indeps : indeps
 
    # record upper limit of incoming sample range
    my_tmax = $t2
 
-   if verbosity > 0 && nlam > 1 && rank <= 0
+   if ret.verbosity > 0 && nlam > 1 && rank <= 0
       string meth
-      if do_ridge
-         meth = ccd ? "CCD" : "SVD"
+      if elnet
+         printf "\nelastic net, alpha = %g: trying %d values of scaled lambda\n", ret.alpha, nlam
+      elif ret.ridge
+         meth = ret.ccd ? "CCD" : "SVD"
          printf "\nridge (%s): trying %d values of scaled lambda\n", meth, nlam
       else
-         meth = ccd ? "CCD" : "ADMM"
+         meth = ret.ccd ? "CCD" : "ADMM"
          printf "\nlasso (%s): trying %d values of scaled lambda\n", meth, nlam
       endif
    endif
@@ -204,7 +211,7 @@ function bundle regls (series depvar, list indeps,
       set matrix_mask okcheck
    endif
 
-   if do_stdize
+   if ret.stdize
       matrix Y = s_standardize({depvar}, &my, &sy)
       matrix X = m_standardize({indeps}, &mx, &sx)
    else
@@ -213,7 +220,6 @@ function bundle regls (series depvar, list indeps,
    endif
 
    scalar ret.nobs = rows(X)
-   scalar ret.stdize = do_stdize
    if nelem(lfrac) > 0
       matrix ret.lfrac = vec(lfrac)
    endif
@@ -225,7 +231,6 @@ function bundle regls (series depvar, list indeps,
    endif
 
    if inbundle(parms, "xvalidate")
-      xvalidate = parms.xvalidate
       get_xvalidation_parms(&ret, &parms)
    endif
 
@@ -238,12 +243,12 @@ function bundle regls (series depvar, list indeps,
       funcerr("_regls failed")
    endif
    if rank <= 0 && timer
-      string mode = ccd ? "ccd" : do_ridge ? "svd" : "admm"
+      string mode = ret.ccd ? "ccd" : ret.ridge ? "svd" : "admm"
       printf "_regls (%s): %.3f seconds\n", mode, $stopwatch
    endif
 
-   if !xvalidate && verbosity > 0 && inbundle(ret, "BIC")
-      string ss = do_ridge && unscaled_lambda(ret) ? "lambda" : "s"
+   if !ret.xvalidate && ret.verbosity > 0 && inbundle(ret, "BIC")
+      string ss = ret.ridge && unscaled_lambda(ret) ? "lambda" : "s"
       if nlam > 1
          if inbundle(ret, "BIC") == 3
             scalar cmin = ret.BIC[ret.idxmin]
@@ -262,15 +267,15 @@ function bundle regls (series depvar, list indeps,
    endif
 
    if cols(ret.B) > 1
-      if do_stdize
+      if ret.stdize
          loop j=1..cols(ret.B) -q
             ret.B[,j] = unstdize(ret.B[2:,j], my, sy, mx, sx)
          endloop
       endif
       if inbundle(ret, "idxmin")
-         optcol = (xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
+         optcol = (ret.xvalidate && ret.use_1se)? ret.idx1se : ret.idxmin
          matrix b = ret.B[,optcol]
-         if do_ridge
+         if ret.ridge
             ret.b = b
             rnameset(ret.b, varnames(X0))
          else
@@ -279,35 +284,35 @@ function bundle regls (series depvar, list indeps,
          endif
       endif
    else
-      if do_stdize
+      if ret.stdize
          ret.B = unstdize(ret.B[2:], my, sy, mx, sx)
          if inbundle(ret, "vcv")
             ret.vcv = unstdize_vcv(ret.vcv, sy, sx)
          endif
       endif
-      if !do_ridge
+      if !ret.ridge
          matrix bsel = ret.B .!= 0
          matrix ret.nzb = selifr(ret.B, bsel)
       endif
    endif
 
    rnameset(ret.B, varnames(X0))
-   if !do_ridge && nelem(bsel) > 0
+   if !ret.ridge && nelem(bsel) > 0
       matrix tmp = X0
       tmp = selifr(tmp', bsel)
       list ret.nzX = tmp
       rnameset(ret.nzb, varnames(ret.nzX))
    endif
 
-   if inbundle(ret, "verbosity")
-      delete ret.verbosity
-   endif
-
-   if inbundle(ret, "vcv") && verbosity > 1
+   if inbundle(ret, "vcv") && ret.verbosity > 1
       matrix bse = ret.B ~ (NA | sqrt(diag(ret.vcv)))
       matrix addstats = {ret.edf, ret.BIC, ret.R2}
       strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
       modprint bse pnames addstats
+   endif
+
+   if inbundle(ret, "verbosity")
+      delete ret.verbosity
    endif
 
    return ret

@@ -17,8 +17,7 @@
  *
  */
 
-/* Code for regularized least squares (LASSO and Ridge). Includes
-   these methods:
+/* Code for regularized least squares. Includes these methods:
 
    ADMM: Based on Boyd et al, "Distributed Optimization and
    Statistical Learning via the Alternating Direction Method of
@@ -198,24 +197,34 @@ static regls_info *regls_info_new (gretl_matrix *X,
 				   gretl_bundle *b,
 				   PRN *prn, int *err)
 {
-    regls_info *ri = malloc(sizeof *ri);
+    regls_info *ri = calloc(1, sizeof *ri);
 
     if (ri == NULL) {
 	*err = E_ALLOC;
     } else {
+	ri->lfrac = gretl_bundle_get_matrix(b, "lfrac", err);
+    }
+
+    if (!*err) {
 	ri->b = b;
 	ri->X = X;
 	ri->y = y;
 	ri->stdize =  gretl_bundle_get_int(b, "stdize", err);
 	ri->xvalid =  gretl_bundle_get_int(b, "xvalidate", err);
 	ri->verbose = gretl_bundle_get_bool(b, "verbosity", 1);
-	ri->ridge =   gretl_bundle_get_bool(b, "ridge", 0);
-	ri->ccd =     gretl_bundle_get_bool(b, "ccd", 0);
-	ri->lfrac =   gretl_bundle_get_matrix(b, "lfrac", err);
 	if (gretl_bundle_has_key(b, "alpha")) {
 	    ri->alpha = gretl_bundle_get_scalar(b, "alpha", NULL);
+	    if (ri->alpha == 0) {
+		ri->ridge = 1;
+	    }
 	} else {
+	    ri->ridge = gretl_bundle_get_bool(b, "ridge", 0);
 	    ri->alpha = ri->ridge ? 0 : 1;
+	}
+	if (ri->alpha > 0 && ri->alpha < 1) {
+	    ri->ccd = 1;
+	} else {
+	    ri->ccd = gretl_bundle_get_bool(b, "ccd", 0);
 	}
     }
 
@@ -234,7 +243,7 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	ri->Xty = NULL;
 	if (ri->ccd) {
 	    prepare_ccd_param(ri);
-	} else if (!ri->ridge) {
+	} else if (!ri->ridge && !ri->ccd) {
 	    prepare_admm_params(ri);
 	}
 	if (ri->alpha < 1) {
@@ -250,15 +259,9 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	    ri->nf = ri->randfolds = ri->crit_type = 0;
 	    ri->crit = gretl_matrix_alloc(ri->nlam, 1);
 	    ri->R2 = gretl_matrix_alloc(ri->nlam, 1);
-	    if (ri->R2 == NULL || ri->crit == NULL) {
+	    ri->BIC = gretl_matrix_alloc(ri->nlam, 1);
+	    if (ri->R2 == NULL || ri->crit == NULL || ri->BIC == NULL) {
 		*err = E_ALLOC;
-	    }
-	    if (!*err && (ri->alpha == 0 || ri->alpha == 1)) {
-		/* not for elnet, yet */
-		ri->BIC = gretl_matrix_alloc(ri->nlam, 1);
-		if (ri->BIC == NULL) {
-		    *err = E_ALLOC;
-		}
 	    }
 	}
     }
@@ -995,9 +998,11 @@ static int ccd_get_crit (const gretl_matrix *B,
 		         const gretl_matrix *lam,
 			 regls_info *ri)
 {
-    double *bj, bsum, SSR;
+    double *bj, l1, l2, SSR;
     double ll, llc, edf = 0;
-    double nulldev = 1.0;
+    double lambda, nulldev = 1.0;
+    double alpha = ri->alpha;
+    double penalty;
     int imin = B->rows > ri->k;
     int dfj, n = ri->n;
     int i, j;
@@ -1015,38 +1020,43 @@ static int ccd_get_crit (const gretl_matrix *B,
     llc = -0.5 * n * (1 + LN_2_PI - log(n));
 
     for (j=0; j<B->cols; j++) {
-	bsum = 0;
+	lambda = lam->val[j];
+	l1 = l2 = 0;
 	dfj = 0;
 	bj = B->val + j*B->rows;
 	for (i=imin; i<B->rows; i++) {
-	    if (ri->alpha == 1) {
+	    if (alpha == 1) {
 		/* lasso */
-		bsum += fabs(bj[i]);
+		l1 += fabs(bj[i]);
 		dfj += bj[i] != 0;
-	    } else if (ri->alpha == 0) {
+	    } else if (alpha == 0) {
 		/* ridge */
-		bsum += bj[i] * bj[i];
+		l2 += bj[i] * bj[i];
 	    } else {
-		bsum += ri->alpha*fabs(bj[i]) + (1 - ri->alpha)*bj[i]*bj[i];
+		l1 += alpha * fabs(bj[i]);
+		l2 += bj[i] * bj[i];
 		dfj += bj[i] != 0;
 	    }
 	}
 	SSR = nulldev * (1.0 - ri->R2->val[j]);
 	/* with CCD, y and X are scaled by 1/sqrt(n) */
 	ll = llc - 0.5 * n * log(n*SSR);
-	if (ri->alpha == 1) {
+	if (alpha == 1) {
 	    /* lasso */
-	    gretl_vector_set(ri->crit, j, 0.5 * SSR + lam->val[j] * bsum);
+	    gretl_vector_set(ri->crit, j, 0.5 * SSR + lambda * l1);
 	    gretl_vector_set(ri->BIC, j, -2 * ll + dfj * log(n));
-	} else if (ri->alpha == 0) {
+	} else if (alpha == 0) {
 	    /* ridge */
 	    edf = ri->edf->val[j];
-	    gretl_vector_set(ri->crit, j, SSR + lam->val[j] * bsum);
+	    gretl_vector_set(ri->crit, j, SSR + lambda * l2);
 	    gretl_vector_set(ri->BIC, j, -2 * ll + edf * log(n));
 	} else {
 	    /* elnet */
-	    ri->edf->val[j] = dfj;
-	    gretl_vector_set(ri->crit, j, SSR + lam->val[j] * bsum);
+	    edf = (1 - alpha) * ri->edf->val[j] + alpha * dfj;
+	    ri->edf->val[j] = edf;
+	    penalty = 0.5 * (1 - alpha) * l2 + alpha * l1;
+	    gretl_vector_set(ri->crit, j, 0.5 * SSR + lambda * penalty);
+	    gretl_vector_set(ri->BIC, j, -2 * ll + edf * log(n));
 	}
     }
 
@@ -1146,6 +1156,8 @@ static void ccd_print (const gretl_matrix *B,
     g_free(cfmt);
 }
 
+/* This also serves for printing elastic net results */
+
 static void ridge_print (const gretl_matrix *lam,
 			 regls_info *ri)
 {
@@ -1162,20 +1174,6 @@ static void ridge_print (const gretl_matrix *lam,
 		ri->R2->val[j], ri->BIC->val[j]);
     }
     g_free(cfmt);
-}
-
-static void elnet_print (const gretl_matrix *lam,
-			 regls_info *ri)
-{
-    int j;
-
-    pputc(ri->prn, '\n');
-    pputs(ri->prn, "      lambda    df      R^2\n");
-
-    for (j=0; j<ri->nlam; j++) {
-	pprintf(ri->prn, "%12f  %4d   %.4f\n", lam->val[j],
-		(int) ri->edf->val[j], ri->R2->val[j]);
-    }
 }
 
 static void xv_ridge_print (const gretl_matrix *lam,
@@ -1537,7 +1535,6 @@ static int ccd_regls (regls_info *ri)
     int *ia, *nnz;
     int nlp = 0, lmu = 0;
     int nlam = ri->nlam;
-    int elnet = 0;
     int k = ri->k;
     int err = 0;
 
@@ -1546,10 +1543,6 @@ static int ccd_regls (regls_info *ri)
     B = gretl_zero_matrix_new(k + ri->stdize, nlam);
     if (MB == NULL || B == NULL) {
 	return E_ALLOC;
-    }
-
-    if (ri->alpha > 0 && ri->alpha < 1) {
-	elnet = 1;
     }
 
     /* scale data by sqrt(1/n) */
@@ -1571,12 +1564,12 @@ static int ccd_regls (regls_info *ri)
 	Rsq = ri->R2->val;
     }
 
-    if (ri->alpha == 0) {
-	/* we want this for ridge but it's not calculated by CCD */
+    if (ri->alpha < 1) {
+	/* we'll want this but it's not calculated by CCD */
 	err = ridge_effective_df(lam, ri);
     }
 
-    if (!ri->ridge && !ri->xvalid && ri->verbose) {
+    if (ri->alpha == 1 && !ri->xvalid && ri->verbose) {
 	lasso_lambda_report(ri);
     }
 
@@ -1610,15 +1603,13 @@ static int ccd_regls (regls_info *ri)
     if (!ri->xvalid) {
 	ccd_get_crit(B, lam, ri);
 	if (ri->verbose) {
-	    if (ri->alpha == 0) {
+	    if (ri->alpha < 1) {
 		ridge_print(lam, ri);
-	    } else if (elnet) {
-		elnet_print(lam, ri);
 	    } else {
 		ccd_print(B, lam, ri);
 	    }
 	}
-	if (nlam > 1 && !elnet) {
+	if (nlam > 1) {
 	    double BICmin = 1e200;
 	    int j, idxmin = 0;
 
