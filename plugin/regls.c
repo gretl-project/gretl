@@ -1793,14 +1793,15 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     int offset = 0;
     int n = X->rows;
     int k = X->cols;
-    int i, j, l, err;
+    int i, j, l;
+    int err;
 
     err = gretl_matrix_SVD(X, &U, &sv, &Vt, 0);
 
     if (!err) {
-	MB = gretl_matrix_block_new(&sve, 1, k,
-				    &Uty, k, 1,
-				    &L, k, k,
+	MB = gretl_matrix_block_new(&sve, 1, sv->cols,
+				    &Uty, U->cols, 1,
+				    &L, Vt->cols, Vt->rows,
 				    &b, k, 1,
 				    &yh, n, 1, NULL);
 	if (MB == NULL) {
@@ -1822,19 +1823,21 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     gretl_matrix_multiply_mod(U, GRETL_MOD_TRANSPOSE,
 			      y, GRETL_MOD_NONE,
 			      Uty, GRETL_MOD_NONE);
+
     for (l=0; l<nlam; l++) {
 	edfl = 0;
-	for (i=0; i<k; i++) {
-	    sve->val[i] = sv->val[i] / (sv->val[i] * sv->val[i] + lam[l]);
+	for (j=0; j<sv->cols; j++) {
+	    sve->val[j] = sv->val[j] / (sv->val[j] * sv->val[j] + lam[l]);
 	    if (edf != NULL) {
-		edfl += sv->val[i] * sve->val[i];
+		edfl += sv->val[j] * sve->val[j];
 	    }
 	}
 	if (edf != NULL) {
 	    edf->val[l] = edfl;
 	}
-	for (j=0; j<k; j++) {
-	    for (i=0; i<k; i++) {
+	/* L = Vt' .* sve */
+	for (j=0; j<L->cols; j++) {
+	    for (i=0; i<L->rows; i++) {
 		vij = gretl_matrix_get(Vt, j, i);
 		gretl_matrix_set(L, i, j, vij * sve->val[j]);
 	    }
