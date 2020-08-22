@@ -2472,10 +2472,6 @@ static double get_xvalidation_lmax (regls_info *ri, int esize)
     fprintf(stderr, "get_xvalidation_lmax: lmax = %g\n", lmax);
 #endif
 
-#if 0 /* lmax shouldn't really be sample-size dependent? */
-    lmax *= esize / (double) X->rows;
-#endif
-
     if (ri->ccd) {
 	if (ri->alpha < 1.0) {
 	    lmax /= max(ri->alpha, 1.0e-3);
