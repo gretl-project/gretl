@@ -194,6 +194,7 @@ struct set_vars_ {
 		       !strcmp(s, VECM_NORM) || \
 		       !strcmp(s, GRETL_OPTIM) || \
 		       !strcmp(s, GRETL_DEBUG) || \
+		       !strcmp(s, GRETL_ASSERT) || \
 		       !strcmp(s, BLAS_MNK_MIN) || \
 		       !strcmp(s, OMP_MNK_MIN) || \
 		       !strcmp(s, MP_MNK_MIN) || \
@@ -212,6 +213,7 @@ static int R_functions;
 static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static int comments_on = 0;
+static int gretl_assert = 0;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
 #ifdef OS_OSX
@@ -307,6 +309,13 @@ static const char *wildboot_strs[] = {
     NULL
 };
 
+static const char *assert_strs[] = {
+    "off",
+    "warn",
+    "stop",
+    NULL
+};
+
 static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
@@ -329,6 +338,8 @@ static const char **libset_option_strings (const char *s)
 	return steplen_strs;
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	return wildboot_strs;
+    } else if (!strcmp(s, GRETL_ASSERT)) {
+	return assert_strs;
     } else {
 	return NULL;
     }
@@ -384,6 +395,8 @@ static const char *libset_option_string (const char *s)
 	return maxverb_strs[state->max_verbose];
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	return wildboot_strs[state->wildboot_dist];
+    } else if (!strcmp(s, GRETL_ASSERT)) {
+	return assert_strs[gretl_assert];
     } else {
 	return "?";
     }
@@ -1237,6 +1250,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, GRETL_ASSERT)) {
+	for (i=0; assert_strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, assert_strs[i])) {
+		gretl_assert = i;
+		err = 0;
+		break;
+	    }
+	}
     }
 
     if (err) {
@@ -1517,7 +1538,8 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, GRETL_OPTIM) || \
 			 !strcmp(s, OPTIM_STEPLEN) || \
 			 !strcmp(s, MAX_VERBOSE) || \
-			 !strcmp(s, WILDBOOT_DIST))
+			 !strcmp(s, WILDBOOT_DIST) || \
+			 !strcmp(s, GRETL_ASSERT))
 
 const char *intvar_code_string (const char *s)
 {
@@ -2154,6 +2176,8 @@ int libset_get_int (const char *key)
 	return state->optim;
     } else if (!strcmp(key, GRETL_DEBUG)) {
 	return gretl_debug;
+    } else if (!strcmp(key, GRETL_ASSERT)) {
+	return gretl_assert;
     } else if (!strcmp(key, BLAS_MNK_MIN)) {
 	return get_blas_mnk_min();
     } else if (!strcmp(key, OMP_MNK_MIN) || !strcmp(key, MP_MNK_MIN)) {
