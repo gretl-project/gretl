@@ -5,7 +5,7 @@ function matrix unstdize (const matrix z, scalar my, scalar sy,
    matrix b = zeros(1 + nelem(z), 1)
    # initialize intercept
    b[1] = my
-   loop i=1..nelem(z) -q
+   loop i=1..nelem(z)
       if z[i] != 0
          b[i+1] = (sy/sx[i]) * z[i]
          b[1] -= b[i+1] * mx[i]
@@ -23,7 +23,7 @@ function matrix m_standardize (const matrix X, matrix *mx, matrix *sx)
    mx = meanc(X)
    sx = sdc(X)
    matrix S = zeros(rows(X), cols(X))
-   loop j=1..cols(X) -q
+   loop j=1..cols(X)
       S[,j] = sx[j] == 0 ? 0 : (X[,j] .- mx[j]) ./ sx[j]
    endloop
    return S
@@ -89,7 +89,7 @@ function scalar check_params (const bundle b, matrix *lfrac,
          return 0
       endif
    endif
-   loop i=1..nlam -q
+   loop i=1..nlam
       if m[i] < 0 || m[i] > 1 || (i > 1 && m[i] >= m[i-1])
          print "invalid lambda specification"
          return 2
@@ -104,7 +104,7 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
    if targ.xvalidate
       matrix deflts = {10, 0, 0, 0, 0, 0, 0}
       ndef = nelem(deflts)
-      loop foreach i nfolds randfolds no_mpi np hpc use_1se single_b seed --quiet
+      loop foreach i nfolds randfolds no_mpi np hpc use_1se single_b seed
          if inbundle(src, "$i")
             targ.$i = src.$i
          elif i <= ndef
@@ -268,7 +268,7 @@ function bundle regls (series depvar, list indeps,
 
    if cols(ret.B) > 1
       if ret.stdize
-         loop j=1..cols(ret.B) -q
+         loop j=1..cols(ret.B)
             ret.B[,j] = unstdize(ret.B[2:,j], my, sy, mx, sx)
          endloop
       endif
