@@ -62,8 +62,6 @@ installdirs:
 
 clean: 
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
-	@rm -f *.plt *.dat string_table.txt
 	@rm -f test.out
 	@$(MAKE) -C doc clean
-	@$(MAKE) -C examples clean
 
