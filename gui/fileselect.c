@@ -1036,7 +1036,8 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_data_filter(filesel, GRETL_ALL);
     } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
 	       action == SAVE_BOOT_DATA) {
-	filesel_add_data_filter(filesel, GRETL_XML_DATA);
+	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
+	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
     } else if (action == OPEN_ANY) {
 	filesel_add_data_filter(filesel, GRETL_ALL);
 	filesel_add_script_filter(filesel, EDIT_HANSL);
