@@ -132,9 +132,9 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
 
     if mod.type != 10
         funcerr "Wrong model type for set identification restrictions"
-    elif $version < 20193
-        # (because of feval and funcerr() etc., and maybe nested arrays)
-        funcerr "Sorry, need at least gretl 2019d for exotic restrictions"
+    elif $version < 20201
+        # (because of feval and errorif() etc., and maybe nested arrays)
+        funcerr "Sorry, need at least gretl 2020b for exotic restrictions"
     endif
 
     if !inbundle(mod, "exoticSR")
@@ -146,9 +146,7 @@ function void SVAR_SRexotic(bundle *mod, string chkstr,
     # store the relevant shock numbers
     loop s = 1..nelem(shocks) -q
         matrix snum = strpos_allin(mod.snames, shocks[s]) # can be several!
-        if !nelem(snum)
-            funcerr("No shock named %s found\n", shocks[s])
-        endif
+        errorif(!nelem(snum), "No shock named %s found\n", shocks[s])
         mod.exoticSR.eshocks |= snum
     endloop
 
