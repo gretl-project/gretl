@@ -106,6 +106,15 @@ typedef struct regls_info_ {
     PRN *prn;
 } regls_info;
 
+typedef struct ccd_info_ {
+    gretl_matrix_block *MB;
+    gretl_matrix *Xty;
+    gretl_matrix *xv;
+    gretl_matrix *B;
+    gretl_matrix *lam;
+    double lmax;
+} ccd_info;
+
 #ifdef HAVE_MPI
 static int mpi_parent_action (regls_info *ri);
 #endif
@@ -343,6 +352,12 @@ static int regls_set_Xty (regls_info *ri)
 				  ri->y, GRETL_MOD_NONE,
 				  ri->Xty, GRETL_MOD_NONE);
 	ri->infnorm = vector_infnorm(ri->Xty);
+	if (ri->ccd || ri->ridge) {
+	    ri->infnorm /= ri->n;
+	}
+#if LAMBDA_DEBUG
+	fprintf(stderr, "regls_set_Xty: infnorm = %g\n", ri->infnorm);
+#endif
     }
 
     return err;
@@ -1526,6 +1541,30 @@ static int ccd_alt_R2 (regls_info *ri, gretl_matrix *B)
     return err;
 }
 
+static int ccd_prep (regls_info *ri, ccd_info *ci)
+{
+    int nlam = ri->nlam;
+    int k = ri->k;
+
+    ci->MB = gretl_matrix_block_new(&ci->xv, k, 1,
+				    &ci->Xty, k, 1,
+				    &ci->lam, nlam, 1,
+				    NULL);
+    ci->B = gretl_zero_matrix_new(k + ri->stdize, nlam);
+    if (ci->MB == NULL || ci->B == NULL) {
+	return E_ALLOC;
+    }
+
+    /* scale data by sqrt(1/n) */
+    ccd_scale(ri->X, ri->y->val, ci->Xty->val, ci->xv->val);
+
+    /* and compute lambda sequence */
+    ci->lmax = ri->infnorm;
+    ccd_make_lambda(ri, ci->lam, &ci->lmax);
+
+    return 0;
+}
+
 /* Cyclical Coordinate Descent driver: we come here either
    to get coefficient estimates right away, or after
    cross validation. Handles both LASSO and Ridge.
@@ -1533,32 +1572,19 @@ static int ccd_alt_R2 (regls_info *ri, gretl_matrix *B)
 
 static int ccd_regls (regls_info *ri)
 {
-    gretl_matrix_block *MB;
-    gretl_matrix *Xty, *xv;
-    gretl_matrix *B = NULL;
-    gretl_matrix *lam = NULL;
+    ccd_info ci = {0};
     double *Rsq = NULL;
-    double lmax;
     int maxit = CCD_MAX_ITER;
     int *ia, *nnz;
     int nlp = 0, lmu = 0;
     int nlam = ri->nlam;
     int k = ri->k;
-    int err = 0;
+    int err;
 
-    MB = gretl_matrix_block_new(&xv, k, 1, &Xty, k, 1,
-				&lam, nlam, 1, NULL);
-    B = gretl_zero_matrix_new(k + ri->stdize, nlam);
-    if (MB == NULL || B == NULL) {
-	return E_ALLOC;
+    err = ccd_prep(ri, &ci);
+    if (err) {
+	return err;
     }
-
-    /* scale data by sqrt(1/n) */
-    ccd_scale(ri->X, ri->y->val, Xty->val, xv->val);
-
-    /* and compute lambda sequence */
-    lmax = vector_infnorm(Xty);
-    ccd_make_lambda(ri, lam, &lmax);
 
     /* integer workspace */
     ia = malloc((k + nlam) * sizeof *ia);
@@ -1572,17 +1598,22 @@ static int ccd_regls (regls_info *ri)
 	Rsq = ri->R2->val;
     }
 
-    if (ri->alpha < 1) {
+    if (ri->alpha < 1 && ri->edf != NULL) {
 	/* we'll want this but it's not calculated by CCD */
-	err = ridge_effective_df(lam, ri);
+	err = ridge_effective_df(ci.lam, ri);
     }
 
     if (ri->alpha == 1 && !ri->xvalid && ri->verbose) {
 	lasso_lambda_report(ri);
     }
 
-    err = ccd_iteration(ri->alpha, ri->X, Xty->val, nlam, lam->val,
-			ccd_toler, maxit, xv->val, &lmu, B, ia,
+#if LAMBDA_DEBUG
+    fprintf(stderr, "ccd_regls: ci.lmax = %g\n", ci.lmax);
+    gretl_matrix_print(ci.lam, "lam in ccd_regls");
+#endif
+
+    err = ccd_iteration(ri->alpha, ri->X, ci.Xty->val, nlam, ci.lam->val,
+			ccd_toler, maxit, ci.xv->val, &lmu, ci.B, ia,
 			nnz, Rsq, &nlp);
     if (err) {
 	goto bailout;
@@ -1590,7 +1621,7 @@ static int ccd_regls (regls_info *ri)
 
     if (Rsq != NULL && na(Rsq[0])) {
 	/* remedy spurious R^2 > 1 */
-	err = ccd_alt_R2(ri, B);
+	err = ccd_alt_R2(ri, ci.B);
 	if (err) {
 	    goto bailout;
 	}
@@ -1598,23 +1629,23 @@ static int ccd_regls (regls_info *ri)
 
     if (ri->lamscale == LAMSCALE_NONE) {
 	gretl_matrix_multiply_by_scalar(ri->y, sqrt(ri->n));
-	gretl_matrix_copy_values(lam, ri->lfrac);
+	gretl_matrix_copy_values(ci.lam, ri->lfrac);
     } else if (ri->alpha < 1.0) {
 	/* not entirely truthful! */
-	lam->val[0] = ri->lfrac->val[0] * lmax;
+	ci.lam->val[0] = ri->lfrac->val[0] * ci.lmax;
     }
 
     if (ri->xvalid && ri->verbose > 1 && ri->ridge && nlam > 1) {
-	xv_ridge_print(lam, ri);
+	xv_ridge_print(ci.lam, ri);
     }
 
     if (!ri->xvalid) {
-	ccd_get_crit(B, lam, ri);
+	ccd_get_crit(ci.B, ci.lam, ri);
 	if (ri->verbose) {
 	    if (ri->alpha < 1) {
-		ridge_print(lam, ri);
+		ridge_print(ci.lam, ri);
 	    } else {
-		ccd_print(B, lam, ri);
+		ccd_print(ci.B, ci.lam, ri);
 	    }
 	}
 	if (nlam > 1) {
@@ -1634,17 +1665,17 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (!err) {
-	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX, 0);
-	B = NULL;
+	gretl_bundle_donate_data(ri->b, "B", ci.B, GRETL_TYPE_MATRIX, 0);
+	ci.B = NULL;
 	if (ri->lamscale != LAMSCALE_NONE) {
-	    gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
+	    gretl_bundle_set_scalar(ri->b, "lmax", ci.lmax * ri->n);
 	}
 	if (nlam == 1) {
 	    double lambda = ri->lfrac->val[0];
 
 	    if (ri->lamscale != LAMSCALE_NONE) {
 		/* show a value comparable with ADMM (??) */
-		lambda *= lmax * ri->n;
+		lambda *= ci.lmax * ri->n;
 	    }
 	    gretl_bundle_set_scalar(ri->b, "lambda", lambda);
 	}
@@ -1652,8 +1683,8 @@ static int ccd_regls (regls_info *ri)
 
  bailout:
 
-    gretl_matrix_free(B);
-    gretl_matrix_block_destroy(MB);
+    gretl_matrix_free(ci.B);
+    gretl_matrix_block_destroy(ci.MB);
     free(ia);
 
     return err;
@@ -2219,6 +2250,10 @@ static int ccd_do_fold (gretl_matrix *X,
     }
     gretl_matrix_zero(B);
 
+#if LAMBDA_DEBUG
+    gretl_matrix_print(lam, "lam, in ccd_do_fold");
+#endif
+
     /* scale the estimation subset by sqrt(1/n) */
     ccd_scale(X, y->val, Xty->val, xv->val);
 
@@ -2306,8 +2341,8 @@ static int svd_do_fold (gretl_matrix *X,
     return err;
 }
 
-/* Note: @X and @y are the full data matrices; @Xe and @ye will hold
-   the estimation sample; and @Xf and @yf will hold the "fold" for
+/* Note: @X and @y are the full data matrices. @Xe and @ye will hold
+   the estimation sample, and @Xf and @yf will hold the data for
    which prediction is to be performed. We need to be careful not to
    write values out of bounds in case the two disjoint sub-samples do
    not exhaust the full data (i.e. the full number of observations is
@@ -2469,7 +2504,7 @@ static double get_xvalidation_lmax (regls_info *ri, int esize)
     double lmax = ri->infnorm;
 
 #if LAMBDA_DEBUG
-    fprintf(stderr, "get_xvalidation_lmax: lmax = %g\n", lmax);
+    fprintf(stderr, "get_xvalidation_lmax: ri->infnorm = %g\n", lmax);
 #endif
 
     if (ri->ccd) {
@@ -2478,9 +2513,6 @@ static double get_xvalidation_lmax (regls_info *ri, int esize)
 #if LAMBDA_DEBUG
 	    fprintf(stderr, "revised lmax = %g\n", lmax);
 #endif
-	} else {
-	    /* per observation ? */
-	    lmax /= esize;
 	}
     } else if (ri->ridge && ri->lamscale == LAMSCALE_GLMNET) {
 	if (ri->alpha < 1.0) {
