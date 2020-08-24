@@ -240,7 +240,7 @@ function bundle regls (series depvar, list indeps,
    endif
    err = _regls(X, Y, ret)
    if err
-      funcerr("_regls failed")
+      funcerr "_regls failed"
    endif
    if rank <= 0 && timer
       string mode = ret.ccd ? "ccd" : ret.ridge ? "svd" : "admm"
