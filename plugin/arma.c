@@ -1385,7 +1385,7 @@ static void arma_init_message (arma_info *ainfo)
 
 static int user_arma_init (double *coeff, arma_info *ainfo)
 {
-    int i, nc = n_init_vals();
+    int i, nc = n_initvals();
 
     if (nc == 0) {
 	return 0;
@@ -1401,12 +1401,12 @@ static int user_arma_init (double *coeff, arma_info *ainfo)
 	    coeff[i] = 0.0;
 	}
     } else {
-	const gretl_matrix *m = get_init_vals();
+	gretl_matrix *m = get_initvals();
 
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = gretl_vector_get(m, i);
 	}
-	free_init_vals();
+	gretl_matrix_free(m);
     }
 
     ainfo->init = INI_USER;
@@ -1840,7 +1840,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     /* see if it may be helpful to scale the dependent
        variable, if we're doing exact ML */
-    if (arma_exact_ml(ainfo) && ainfo->ifc) {
+    if (arma_exact_ml(ainfo) && ainfo->ifc && ainfo->init != INI_USER) {
 	maybe_set_yscale(ainfo);
 #if SHOW_INIT
 	fprintf(stderr, "yscale = %g\n", ainfo->yscale);

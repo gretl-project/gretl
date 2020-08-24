@@ -539,16 +539,16 @@
       </description>
     </function>
     
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Produce il numero delle osservazioni nel campione
-	  selezionato. Si veda anche <fncref label="\$tmax" targ="dtmax"/>.
+	  selezionato. Si veda anche <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
     
-    <function name="$now" section="access" targ="dnow" output="vector">
+    <function name="$now" section="access" output="vector">
       <description>
 	<para>
 	  Produce un vettore a 2 elementi: il primo elemento è il
@@ -690,7 +690,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Produce il p-value della statistica test generata
@@ -1032,7 +1032,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1050,9 +1050,8 @@
 	</para>
 	<para>
 	  Si noti che, in generale, <lit>$tmax</lit> non è uguale a
-	  <fncref label="\$nobs" targ="dnobs"/>, che resituisce il
-	  numero di osservazioni nel sottocampione attualmente in
-	  vigore.
+	  <fncref targ="$nobs"/>, che resituisce il numero di
+	  osservazioni nel sottocampione attualmente in vigore.
 	</para>
       </description>
     </function>
@@ -3170,10 +3169,12 @@
       <description>
 	<para>
 	  Restituisce il determinante di <argname>A</argname>,
-	  calcolato tramite la scomposizione LU.
+	  calcolato tramite la scomposizione LU. Si noti che, se ciò
+	  che serve è il suo logaritmo, la funzione <fncref
+	  targ="ldet"/> è preferibile.
 	  <seelist> 
-            <fncref targ="ldet"/>
             <fncref targ="rcond"/>
+            <fncref targ="cnumber"/>
 	  </seelist>
 	</para>
       </description>
@@ -6245,8 +6246,15 @@
       </fnargs>
       <description>
 	<para>
-	  Produce il logaritmo naturale del determinante di <math>A</math>,
-	  calcolato attraverso la fattorizzazione LU.
+	  Produce il logaritmo naturale del determinante di
+	  <math>A</math>, calcolato attraverso la fattorizzazione
+	  LU. Questa funzione è più efficiente del calcolo del
+	  logaritmo del risultato di <fncref targ="det"/>. Fra
+	  l'altro, in alcuni casi <lit>ldet</lit> restituisce un
+	  risultato valido anche quando il determinante di
+	  <math>A</math> è numericamente <quote>infinito</quote> (nel
+	  senso che eccede il massimo consentito dalla precisione
+	  dell'elaboratore).
 	  <seelist> 
 	    <fncref targ="det"/>
 	    <fncref targ="rcond"/>
@@ -7534,7 +7542,7 @@
 	  <argname>nomefile</argname>. Questa funzione è
 	  principalmente dedicata a leggere file con un formato
 	  specifico, descritto sotto, ma può anche essere usata per
-	  generici file di testo con delimitatori.  Per quetso secondo
+	  generici file di testo con delimitatori.  Per questo secondo
 	  caso, si veda sotto a <quote>File di testo delimitati</quote>.
 	</para>
 	<para>
@@ -7663,7 +7671,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7676,6 +7684,16 @@
 	  ripetuti ciclicamente; in caso contrario, se 
 	  <argname>X</argname> ha più elementi ne vengono usati solo i 
 	  primi <math>k</math>.
+	</para>
+	<para>
+	  Se l'argomento <argname>c</argname> viene omesso, il default
+	  è 1 se <argname>X</argname> è <by r="1" c="1"/>; in caso
+	  contrario, <argname>c</argname> sarà uguale a
+	  <math>N</math>/<argname>r</argname>, dove <math>N</math> è
+	  il numero totale di elementi in <argname>X</argname>. In
+	  quest'ultimo caso, la funzione produce un errore se
+	  <math>N</math> non è un multiplo intero di
+	  <argname>r</argname>.
 	</para>
 	<para>
 	  <seelist>

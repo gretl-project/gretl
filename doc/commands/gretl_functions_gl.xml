@@ -476,6 +476,18 @@
       </description>
     </function>
 
+    <function name="$mapfile" section="access" output="string">
+      <description>
+	<para>
+	  Devolve unha cadea de texto co nome do ficheiro que se debe abrir
+	  para obter os polígonos do mapa, cando antes se cargaron datos dun
+	  ficheiro GeoJSON ou dun ficheiro ESRI de forma; noutro caso,
+	  devolve unha cadea baleira. Isto está deseñado para utilizarse coa
+	  función <fncref targ="geoplot"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
@@ -543,16 +555,16 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Devolve un número enteiro coa cantidade total de observacións que están
-	  seleccionadas na mostra vixente. Relacionado: <fncref label="\$tmax" targ="dtmax"/>.
+	  seleccionadas na mostra vixente. Relacionado: <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
 
-    <function name="$now" section="access" targ="dnow" output="vector">
+    <function name="$now" section="access" output="vector">
       <description>
 	<para>
 	  Devolve un vector con 2 elementos: o primeiro indica o número
@@ -719,7 +731,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Devolve a probabilidade asociada ao valor do estatístico de proba que
@@ -758,11 +770,12 @@
 	<para>
 	  Proporciona información reservada, a continuación dalgunhas
 	  instrucións que non teñen accesorios específicos. As instrucións
-	  en cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="freq"/>,
-	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>, <cmdref targ="vif"/>
-	  e <cmdref targ="bkw"/> (en cuxos casos, o resultado é unha matriz),
-	  ademais de <cmdref targ="pkg"/> (en cuxo caso, gárdase opcionalmente
-	  un feixe).
+	  en cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
+	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>,
+	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
+	  <cmdref targ="vif"/> e <cmdref targ="bkw"/> (en cuxos casos, o resultado
+	  é unha matriz), ademais de <cmdref targ="pkg"/> (en cuxo caso,
+	  gárdase opcionalmente un feixe).
 	</para>
       </description>
     </function>
@@ -1077,7 +1090,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1095,8 +1108,8 @@
 	</para>
 	<para>
 	  Ten en conta que, en xeral, <lit>$tmax</lit> non é igual a
-	  <fncref label="\$nobs" targ="dnobs"/>, que proporciona o
-	  número de observacións do rango da mostra vixente.
+	  <fncref targ="$nobs"/>, que proporciona o número de
+	  observacións do rango da mostra vixente.
 	</para>
       </description>
     </function>
@@ -1460,11 +1473,11 @@
 	  Esta é a función <quote>xeradora</quote> básica dunha nova variable
 	  de tipo arranxo (<quote>array</quote>). Ao usar esta función é
 	  necesario que especifiques un tipo (en forma plural) para o arranxo:
-	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit> ou
-	  <lit>lists</lit>. Devolve un arranxo do tipo especificado con
-	  <argname>n</argname> elementos <quote>baleiros</quote> (por exemplo,
-	  unha cadea de texto (<quote>string</quote>) baleira ou unha matriz
-	  nula). Exemplos de utilización:
+	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit>,
+	  <lit>lists</lit> ou <lit>arrays</lit>. Devolve un arranxo do tipo
+	  especificado con <argname>n</argname> elementos <quote>baleiros</quote>
+	  (por exemplo, unha cadea de texto (<quote>string</quote>) baleira ou
+	  unha matriz nula). Exemplos de utilización:
 	</para>
 	<code>
 	  strings S = array(5)
@@ -3235,9 +3248,9 @@
       <description>
 	<para>
 	  Devolve un escalar co valor do determinante de <argname>A</argname>,
-	  calculado por medio da descomposición LU.
+	  calculado mediante a descomposición LU. Se o que realmente queres é o
+	  logaritmo natural do determinante, debes en troques invocar <fncref targ="ldet"/>.
 	  <seelist>
-            <fncref targ="ldet"/>
             <fncref targ="rcond"/>
             <fncref targ="cnumber"/>
 	  </seelist>
@@ -4448,6 +4461,32 @@
 	<para>
 	  A aqueles que atopedes útil a función <lit>genseries</lit>, pode que
 	  vos interese explorar a función <fncref targ="feval"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="geoplot" section="data-utils" output="none">
+      <fnargs>
+	<fnarg type="string">ficheiromap</fnarg>
+	<fnarg optional="true" type="series">carga</fnarg>
+	<fnarg optional="true" type="bundle">opcions</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solicita a produción dun mapa, cando se dispón de datos xeográficos
+	  axeitados. Na maioría dos casos o argumento <argname>mapfile</argname>
+	  debe proporcionarse como <fncref targ="$mapfile"/>,
+	  o que indica un accesorio co que se vai recuperar o nome do ficheiro
+	  que sexa relevante, de tipo GeoJSON ou de tipo ESRI de forma. O
+	  argumento opcional <argname>carga</argname> utilízase para indicar
+	  o nome dunha serie coa que se colorean as rexións do mapa. E o
+	  argumento final de tipo feixe (bundle) te permite que podas establecer
+	  numerosas opcións.
+	</para>
+	<para>
+	  Podes consultar <doc>geoplot.pdf</doc> coa documentación sobre a función,
+	  para obter detalles e exemplos completos. Aí se explican todos os axustes
+	  que se poden configurar mediante o argumento <argname>opcions</argname>.
 	</para>
       </description>
     </function>
@@ -6350,8 +6389,13 @@
 	<para>
 	  Devolve un escalar co logaritmo natural do determinante de
 	  <math>A</math>, calculado por medio da descomposición LU.
+	  Cae na conta de que isto é máis eficiente que invocar
+	  <fncref targ="det"/> e tomar o logaritmo do resultado. Alén diso,
+	  nalgúns casos <lit>ldet</lit> é capaz de devolver un resultado
+	  válido mesmo cando o determinante de <math>A</math> é
+	  numericamente <quote>infinito</quote> (excedendo o número
+	  máximo de dobre precisión da librería de C).
 	  <seelist>
-            <fncref targ="det"/>
             <fncref targ="rcond"/>
             <fncref targ="cnumber"/>
 	  </seelist>
@@ -7786,18 +7830,27 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Reordena os elementos da matriz <argname>X</argname> nunha nova matriz
 	  que ten <argname>r</argname> filas e <argname>c</argname> columnas. Os
-	  elementos lense e gárdanse comezando polo das primeiras columna e fila
+	  elementos lense e gárdanse comezando polo da primeira columna e primeira fila
 	  de <argname>X</argname>, e seguindo cos das seguintes filas ata acabar
 	  cos desa columna; e logo coas demais columnas. Se <argname>X</argname>
 	  ten menos elementos ca <math>k</math>= <math>rc</math>, estes vanse
 	  repetir de forma cíclica. Noutro caso, se <argname>X</argname> ten
 	  máis elementos, só se utilizan os primeiros <math>k</math> elementos.
+	</para>
+	<para>
+	  Se omites o terceiro argumento, por defecto <argname>c</argname>
+	  establécese igual a 1 se <argname>X</argname> é <by r="1" c="1"/>;
+	  noutro caso, establécese igual a <math>N</math>/<argname>r</argname>
+	  onde <math>N</math> representa o número total de elementos que
+	  hai en <argname>X</argname>. Porén, cando <math>N</math> non é
+	  un múltiplo enteiro de <argname>r</argname> se presenta un
+	  erro.
 	</para>
 	<para>
 	  <seelist>

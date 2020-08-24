@@ -47,7 +47,8 @@ typedef enum {
     UFUN_PRIVATE   = 1 << 0,
     UFUN_PLUGIN    = 1 << 1,
     UFUN_NOPRINT   = 1 << 2,
-    UFUN_MENU_ONLY = 1 << 3
+    UFUN_MENU_ONLY = 1 << 3,
+    UFUN_USES_SET  = 1 << 4
 } UfunAttrs;
 
 #define NEEDS_TS    "needs-time-series-data"
@@ -306,8 +307,6 @@ int package_needs_zipping (const char *fname,
 			   int *pdfdoc,
 			   char ***datafiles,
 			   int *n_files);
-
-int package_is_addon (const char *name);
 
 void gretl_functions_cleanup (void);
 

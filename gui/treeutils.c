@@ -415,7 +415,7 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event,
 {
     int key = event->keyval;
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (key == GDK_w && cmd_key(event)) {
 	if (vwin != mdata) {
 	    gtk_widget_destroy(vwin->main);

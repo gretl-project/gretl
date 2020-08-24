@@ -41,9 +41,22 @@ static char **cmd_history;
 static int hpos, hlines;
 static gchar *hist0;
 static GtkWidget *console_main;
+static int console_protected;
 
 static gint console_key_handler (GtkWidget *cview, GdkEventKey *key,
 				 gpointer p);
+
+static void protect_console (void)
+{
+    console_protected++;
+}
+
+static void unprotect_console (void)
+{
+    if (console_protected > 0) {
+	console_protected--;
+    }
+}
 
 static void command_history_init (void)
 {
@@ -84,7 +97,6 @@ static ExecState *gretl_console_init (char *cbuf)
     /* note below: @model is a GUI global (maybe a bad
        idea, but would be kinda complicated to unpick)
     */
-
     gretl_exec_state_init(s, CONSOLE_EXEC, cbuf,
 			  get_lib_cmd(), model, prn);
 
@@ -343,9 +355,11 @@ static void update_console (ExecState *state, GtkWidget *cview)
 
     console_record_sample(dataset);
 
+    protect_console();
     real_console_exec(state);
     if (state->cmd->ci == QUIT) {
 	*state->line = '\0';
+	unprotect_console();
 	return;
     }
 
@@ -380,12 +394,14 @@ static void update_console (ExecState *state, GtkWidget *cview)
     gtk_window_present(GTK_WINDOW(gtk_widget_get_toplevel(cview)));
     gtk_widget_grab_focus(cview);
 #endif
+
+    unprotect_console();
 }
 
 int console_is_busy (void)
 {
     if (console_main != NULL) {
-	if (hlines > 0) {
+	if (console_protected || hlines > 0) {
 	    gtk_window_present(GTK_WINDOW(console_main));
 	    return 1;
 	} else {
@@ -408,6 +424,11 @@ static void console_destroyed (GtkWidget *w, ExecState *state)
     console_main = NULL;
     /* exit the command loop */
     gtk_main_quit();
+}
+
+static gboolean console_destroy_check (void)
+{
+    return console_protected ? TRUE : FALSE;
 }
 
 /* callback from menu/button: launches the console and remains
@@ -444,6 +465,8 @@ void gretl_console (void)
 		     G_CALLBACK(console_mouse_handler), NULL);
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(console_key_handler), vwin);
+    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
+		     G_CALLBACK(console_destroy_check), NULL);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(console_destroyed), state);
 
@@ -572,7 +595,7 @@ static gint console_key_handler (GtkWidget *cview,
     GtkTextMark *mark;
     gint ctrl = 0;
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (cmd_key(event)) {
 	if (upkey == GDK_C || upkey == GDK_X) {
 	    /* allow regular copy/cut behavior */
@@ -662,7 +685,7 @@ static gint console_key_handler (GtkWidget *cview,
 		gtk_widget_destroy(vwin->main);
 	    }
 	}
-	
+
 	return TRUE; /* handled */
     }
 

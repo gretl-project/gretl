@@ -28,6 +28,7 @@
 #include "gretl_midas.h"
 #include "estim_private.h"
 #include "matrix_extra.h"
+#include "gretl_btree.h"
 #include "kalman.h"
 #include "../../cephes/cephes.h"
 
@@ -339,8 +340,7 @@ int standardize_series (const double *x, double *y, int dfc,
 	    }
 	}
 
-	TSS /= (n - dfc);
-	sd = sqrt(TSS);
+	sd = sqrt(TSS / (n - dfc));
 
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (na(x[t])) {
@@ -1510,44 +1510,62 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 /**
  * panel_shrink:
  * @x: panel-data source series.
+ * @noskip: keep NAs in output.
  * @dset: pointer to dataset.
  * @err: location to receive error code.
  *
- * Constructs a column vector holding the first non-missing
- * observation of @x for each panel unit within the current
- * sample range. If a unit has no valid observations it is
- * skipped.
+ * By default, constructs a column vector holding the first
+ * non-missing observation of @x for each panel unit within
+ * the current sample range (hence skipping any units that
+ * have no valid observations). However, if @noskip is non-zero,
+ * the vector contains an NA for units with all missing
+ * values.
  *
  * Returns: a new column vector, or NULL on error.
  */
 
-gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
-			    int *err)
+gretl_matrix *panel_shrink (const double *x, int noskip,
+			    const DATASET *dset, int *err)
 {
     gretl_matrix *m = NULL;
-    int n, T = sample_size(dset);
+    int n, T;
 
-    if (!dataset_is_panel(dset) || T == 0) {
+    if (!dataset_is_panel(dset)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    n = (int) ceil((double) T / dset->pd);
+    n = panel_sample_size(dset);
+    T = dset->pd;
     m = gretl_column_vector_alloc(n);
 
     if (m == NULL) {
 	*err = E_ALLOC;
     } else {
-	int ubak = -1;
-	int t, u, k = 0;
+	int i1 = dset->t1 / T;
+	int i2 = dset->t2 / T;
+	int s = dset->t1;
+	int i, t, k = 0;
+	int gotit;
 
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    u = t / dset->pd;
-	    if (u != ubak && !na(x[t])) {
-		m->val[k++] = x[t];
-		ubak = u;
+	for (i=i1; i<=i2; i++) {
+	    /* loop across units */
+	    gotit = 0;
+	    for (t=0; t<T; t++) {
+		/* loop inside units */
+		if (!na(x[s+t])) {
+		    gotit = 1;
+		    m->val[k++] = x[s+t];
+		    break;
+		}
 	    }
+	    if (!gotit && noskip) {
+		m->val[k++] = NADBL;
+	    }
+	    /* skip to the next unit */
+	    s += T;
 	}
+
 	if (k < n) {
 	    m->rows = k;
 	}
@@ -3563,6 +3581,16 @@ static int panel_plotvar_code (const DATASET *dset)
     }
 }
 
+static double correct_to_int (double x)
+{
+    if (x - floor(x) < 1.0e-6) {
+	return floor(x);
+    } else if (ceil(x) - x < 1.0e-6) {
+	return ceil(x);
+    }
+    return x;
+}
+
 /**
  * gretl_plotx:
  * @dset: data information struct.
@@ -3586,7 +3614,9 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
     static int ptype;
     static int Tbak;
     static double sd0bak;
+    double mul, frac;
     int t, y1, T = 0;
+    int maj, min;
     int new_ptype = 0;
     int panvar = 0;
     int failed = 0;
@@ -3668,21 +3698,25 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
 	}
 	break;
     case PLOTVAR_QUARTERS:
-	x[0] = y1 + (10.0 * rm - 1.0) / 4.0;
-	for (t=1; t<T; t++) {
-	    x[t] = x[t-1] + .25;
-	}
-	break;
     case PLOTVAR_MONTHS:
-	x[0] = y1 + (100.0 * rm - 1.0) / 12.0;
-	for (t=1; t<T; t++) {
-	    x[t] = x[t-1] + (1.0 / 12.0);
-	}
-	break;
     case PLOTVAR_HOURLY:
-	x[0] = y1 + (100.0 * rm - 1.0) / 24.0;
-	for (t=1; t<T; t++) {
-	    x[t] = x[t-1] + (1.0 / 24.0);
+	frac = 1.0 / dset->pd;
+	if (sscanf(dset->stobs, "%d:%d", &maj, &min) == 2) {
+	    for (t=0; t<T; t++) {
+		x[t] = maj + frac * (min - 1);
+		if (min < dset->pd) {
+		    min++;
+		} else {
+		    min = 1;
+		    maj++;
+		}
+	    }
+	} else {
+	    mul = ptype == PLOTVAR_QUARTERS ? 10 : 100;
+	    x[0] = correct_to_int(y1 + (mul * rm - 1.0) / dset->pd);
+	    for (t=1; t<T; t++) {
+		x[t] = correct_to_int(x[t-1] + frac);
+	    }
 	}
 	break;
     case PLOTVAR_CALENDAR:
@@ -6286,12 +6320,14 @@ double logistic_cdf (double x)
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int s, void *b, void *r,
+			      DATASET *dset,
 			      PRN *prn, int *err)
 {
     gretl_matrix *(*tdisagg) (const gretl_matrix *,
 			      const gretl_matrix *,
 			      int, gretl_bundle *,
 			      gretl_bundle *,
+			      DATASET *,
 			      PRN *, int *);
     gretl_matrix *ret = NULL;
 
@@ -6317,7 +6353,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, b, r, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, r, dset, prn, err);
     }
 
     return ret;
@@ -7947,4 +7983,125 @@ int geoplot_driver (const char *fname,
     }
 
     return err;
+}
+
+enum {
+    SUBST_SIMPLE,
+    SUBST_BTREE
+};
+
+static double subst_val_via_tree (double x, const double *x0, int n0,
+				  const double *x1, int n1)
+{
+    static BTree *tree;
+
+    if (x0 == NULL) {
+	/* cleanup */
+	gretl_btree_destroy(tree);
+	tree = NULL;
+	return 0;
+    }
+
+    if (tree == NULL) {
+	/* allocate and populate tree */
+	double x1val;
+	int i;
+
+	tree = gretl_btree_new();
+	for (i=0; i<n0; i++) {
+	    x1val = n1 == 1 ? *x1 : x1[i];
+	    gretl_btree_insert(tree, x0[i], x1val);
+	}
+    }
+
+    /* do the actual lookup */
+    x = gretl_btree_lookup(tree, x);
+
+    return x;
+}
+
+static int select_subst_method (int n, int nfind)
+{
+#if 1
+    /* for testing */
+    if (getenv("REPLACE_USE_BTREE") != NULL) {
+	return SUBST_BTREE;
+    } else if (getenv("REPLACE_NAIVE") != NULL) {
+	return SUBST_SIMPLE;
+    }
+#endif
+    /* The idea here is that it's worth using a binary
+       tree mapping "find" to "replace" values only if
+       the problem is big enough. Testing seems to
+       indicate that the following condition for "big
+       enough" may be roughly appropriate.
+    */
+    if (nfind > 11 && n >= 80) {
+	return SUBST_BTREE;
+    } else {
+	return SUBST_SIMPLE;
+    }
+}
+
+/* Given an original value @x, see if it matches any of the @n0 values
+   in @x0.  If so, return the substitute value from @x1, otherwise
+   return the original.
+*/
+
+static double subst_val (double x, const double *x0, int n0,
+			 const double *x1, int n1,
+			 int method)
+{
+    if (method & SUBST_BTREE) {
+	x = subst_val_via_tree(x, x0, n0, x1, n1);
+    } else {
+	int i;
+
+	for (i=0; i<n0; i++) {
+	    if (x == x0[i]) {
+		return (n1 == 1)? *x1 : x1[i];
+	    } else if (isnan(x) && isnan(x0[i])) {
+		/* we'll count this as a match */
+		return (n1 == 1)? *x1 : x1[i];
+	    }
+	}
+    }
+
+    return x;
+}
+
+/**
+ * substitute_values:
+ * @dest: target array.
+ * @src: source array.
+ * @n: length of @src and @dest.
+ * @v0: array of "find" values.
+ * @n0: length of @v0.
+ * @v1: array of "replace" values.
+ * @n1: length of @v1.
+ *
+ * For each of the @n elements in @src, determine if it appears
+ * in @v0: if so, write to @targ the corresponding element of
+ * @v1, otherwise write the @src element to @targ. The method
+ * employed is either "naive" lookup, or if the problem is of
+ * sufficient size a binary tree.
+ *
+ * Returns: 0 on successful completion, non-zero code on error.
+ */
+
+int substitute_values (double *dest, const double *src, int n,
+		       const double *v0, int n0,
+		       const double *v1, int n1)
+{
+    int i, method = select_subst_method(n, n1);
+
+    for (i=0; i<n; i++) {
+	dest[i] = subst_val(src[i], v0, n0, v1, n1, method);
+    }
+    if (method & SUBST_BTREE) {
+	/* cleanup call */
+	subst_val(0, NULL, 0, NULL, 0, method);
+    }
+
+    return 0;
 }

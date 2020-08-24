@@ -22,6 +22,7 @@
 #include "gretl_func.h"
 #include "gretl_string_table.h"
 #include "texprint.h"
+#include "addons_utils.h"
 
 #if defined(USE_RLIB) || defined(HAVE_MPI)
 # include "gretl_foreign.h"
@@ -1382,60 +1383,6 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 # define NAME_MAX 255
 #endif
 
-/* Search relevant paths for an addon, trying to ensure we
-   pick up the most recent version in case there are any
-   duplicates.
-*/
-
-char *gretl_addon_get_path (const char *name)
-{
-    char *ret = NULL;
-    char path[FILENAME_MAX];
-    double version, maxver = 0;
-    char **dirs;
-    int i, n_dirs, err;
-
-    *path = '\0';
-
-    dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<n_dirs; i++) {
-	const char *fndir = dirs[i];
-	const char *dname;
-	GDir *dir;
-	int found = 0;
-
-	if ((dir = gretl_opendir(fndir)) == NULL) {
-	    continue;
-	}
-
-	while ((dname = g_dir_read_name(dir)) != NULL && !found) {
-	    if (!strcmp(dname, name)) {
-		gretl_build_path(path, fndir, dname, dname, NULL);
-		strcat(path, ".gfn");
-		err = gretl_test_fopen(path, "r");
-		if (!err) {
-		    version = gfn_file_get_version(path);
-		    if (!na(version) && version > maxver) {
-			maxver = version;
-			free(ret);
-			ret = gretl_strdup(path);
-		    }
-		}
-		found = 1;
-	    }
-	}
-
-	g_dir_close(dir);
-    }
-
-    gretl_pop_c_numeric_locale();
-    strings_array_free(dirs, n_dirs);
-
-    return ret;
-}
-
 /**
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
@@ -1461,12 +1408,10 @@ char *gretl_function_package_get_path (const char *name,
     int err, found = 0;
     int i, n_dirs;
 
-    if (type == PKG_ALL && package_is_addon(name)) {
-	type = PKG_SUBDIR;
-    }
-
-    if (type == PKG_SUBDIR) {
-	return gretl_addon_get_path(name);
+    if (type == PKG_ALL || type == PKG_SUBDIR) {
+	if (is_gretl_addon(name)) {
+	    return gretl_addon_get_path(name);
+	}
     }
 
     *path = '\0';
@@ -1634,7 +1579,7 @@ int get_package_data_path (const char *fname, char *fullname)
 				 pkgname);
 	    err = E_DATA;
 	} else {
-	    char *p = strrchr(gfnpath, SLASH);
+	    char *p = strrslash(gfnpath);
 	    const char *needle;
 
 	    if (p != NULL) {
@@ -1642,7 +1587,7 @@ int get_package_data_path (const char *fname, char *fullname)
 	    }
 
 	    /* trim path from @fname if present */
-	    needle = strrchr(fname, SLASH);
+	    needle = strrslash(fname);
 	    if (needle != NULL) {
 		needle++;
 	    } else {
@@ -3267,7 +3212,7 @@ static void load_default_path (char *targ)
     } else if (targ == paths.jlpath) {
 	strcpy(paths.jlpath, "julia");
     } else if (targ == paths.mpiexec) {
-#if defined(MAC_NATIVE)
+#if defined(OS_OSX)
 	strcpy(paths.mpiexec, "/opt/openmpi/bin/mpiexec");
 #else
 	strcpy(paths.mpiexec, "mpiexec");
@@ -3275,10 +3220,8 @@ static void load_default_path (char *targ)
     } else if (targ == paths.mpi_hosts) {
 	*paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
-#if defined(MAC_NATIVE)
+#if defined(OS_OSX)
 	strcpy(targ, "Sans 10"); /* was 13, why? */
-#elif defined(OS_OSX)
-	strcpy(targ, "Sans 9");
 #else
 	if (chinese_locale()) {
 	    strcpy(targ, "NSimSun 10");
@@ -3701,7 +3644,7 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 				 char *dbproxy, int *use_proxy,
-				 gchar **gptheme)
+				 int *updated, gchar **gptheme)
 {
     char line[MAXLEN], key[32], val[MAXLEN];
 
@@ -3789,6 +3732,8 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 	    set_garch_robust_vcv(val);
 	} else if (!strcmp(key, "graph_theme")) {
 	    *gptheme = g_strdup(val);
+	} else if (!strcmp(key, "build_date")) {
+	    *updated = gretl_is_updated(val);
 	}
     }
 
@@ -3832,6 +3777,7 @@ int cli_read_rc (void)
     char dbproxy[PROXLEN] = {0};
     gchar *gptheme = NULL;
     int use_proxy = 0;
+    int updated = 0;
     FILE *fp;
     int err = 0;
 
@@ -3842,7 +3788,8 @@ int cli_read_rc (void)
 	err = E_FOPEN;
     } else {
 	get_gretl_config_from_file(fp, &cpaths, dbproxy,
-				   &use_proxy, &gptheme);
+				   &use_proxy, &updated,
+				   &gptheme);
 	fclose(fp);
     }
 
@@ -3855,6 +3802,10 @@ int cli_read_rc (void)
     if (gptheme != NULL) {
 	set_plotstyle(gptheme);
 	g_free(gptheme);
+    }
+
+    if (updated) {
+	update_addons_index(NULL);
     }
 
 #ifdef USE_CURL

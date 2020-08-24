@@ -25,6 +25,7 @@
 #include "fncall.h"
 #include "fileselect.h"
 #include "libset.h"
+#include "addons_utils.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -628,79 +629,55 @@ static void real_add_files_to_menus (int ftype)
 
 static void open_examples_dir (GtkAction *action)
 {
-    const gchar *aname = gtk_action_get_name(action);
-    gchar *path;
+    const gchar *path = gtk_action_get_name(action);
 
-    path = g_build_filename(gretl_home(), "functions",
-			    aname + 4, "examples", NULL);
     file_selector_with_startdir(OPEN_ANY, path, mdata->main);
-    g_free(path);
 }
 
-static void add_addons_resources_to_menu (char **dnames, int n)
+static void add_addons_resources_to_menu (const char **addons,
+					  char **exdirs,
+					  int n)
 {
     GtkActionEntry entry;
     const gchar *mpath = "/menubar/File/AddonResources";
-    gchar *aname, *alabel;
+    gchar *alabel;
     int i;
 
     action_entry_init(&entry);
     entry.callback = G_CALLBACK(open_examples_dir);
 
     for (i=0; i<n; i++) {
-	aname = g_strdup_printf("res.%s", dnames[i]);
-	alabel = g_strdup_printf("%s...", dnames[i]);
-	entry.name = aname;
-	entry.label = alabel;
-	vwin_menu_add_item_unique(mdata, aname, mpath, &entry);
-	g_free(aname);
-	g_free(alabel);
+	if (exdirs[i] != NULL) {
+	    alabel = g_strdup_printf("%s...", addons[i]);
+	    entry.name = exdirs[i];
+	    entry.label = alabel;
+	    vwin_menu_add_item_unique(mdata, entry.name, mpath, &entry);
+	    g_free(alabel);
+	}
     }
 }
 
 static void catalog_addons_files (void)
 {
-    char **datadirs = NULL;
-    gchar *savedir = NULL;
-    GDir *topdir;
-    gchar *path, *epath;
-    const char *dname;
-    int nd = 0;
+    const char **addon_names;
+    char **exdirs = NULL;
+    int i, nd = 0;
+    int n_addons;
 
-    path = g_strdup_printf("%sfunctions", gretl_home());
-    topdir = gretl_opendir(path);
+    addon_names = get_addon_names(&n_addons);
+    exdirs = strings_array_new(n_addons);
 
-    savedir = g_get_current_dir();
-
-    if (topdir == NULL || gretl_chdir(path) != 0) {
-	g_free(path);
-	return;
-    }
-
-    while ((dname = g_dir_read_name(topdir))) {
-	if (!is_official_addon(dname) ||
-	    !g_file_test(dname, G_FILE_TEST_IS_DIR)) {
-	    continue;
+    for (i=0; i<n_addons; i++) {
+	exdirs[i] = get_addon_examples_dir(addon_names[i]);
+	if (exdirs[i] != NULL) {
+	    nd++;
 	}
-	epath = g_build_filename(dname, "examples", NULL);
-	if (g_file_test(epath, G_FILE_TEST_IS_DIR)) {
-	    strings_array_add(&datadirs, &nd, dname);
-	}
-	g_free(epath);
     }
-
-    if (savedir != NULL) {
-	gretl_chdir(savedir);
-	g_free(savedir);
-    }
-
-    g_dir_close(topdir);
-    g_free(path);
 
     if (nd > 0) {
-	add_addons_resources_to_menu(datadirs, nd);
-	strings_array_free(datadirs, nd);
+	add_addons_resources_to_menu(addon_names, exdirs, n_addons);
     }
+    strings_array_free(exdirs, n_addons);
 }
 
 void add_files_to_menus (void)

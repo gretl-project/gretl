@@ -79,7 +79,7 @@ quiet_build="no"
 swap_ends="no"
 pkg_build="no"
 mac_native="no"
-have_mac_integration="no"
+mac_integration="no"
 gui_disabled="no"
 gp_3d="yes"
 MAKE="make"
@@ -751,12 +751,6 @@ if test "$darwin_build" = "yes" ; then
      PKG_CHECK_EXISTS(gretl-mac-themes,
      AC_DEFINE(HAVE_MAC_THEMES),)
   fi
-  if test "$mac_native" = "yes" ; then
-     GRETLMAC="gretl"
-  else
-     GRETLMAC="Gretl"
-  fi
-  AC_SUBST(GRETLMAC)
 fi
 
 dnl
@@ -764,8 +758,8 @@ dnl Mac: if using Quartz GTK, require mac-integration
 dnl
 if test "$mac_native" = "yes" ; then
     PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.1,
-      have_mac_integration="no",
-      have_mac_integration="yes",
+      mac_integration="no",
+      mac_integration="yes",
     )
 fi
 
@@ -1035,12 +1029,14 @@ if test "${win32_build}" = "yes" ; then
       GEXE=`cygpath -m $GEXE`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
+      MINGWPRE=`cygpath -m $MINGW_PREFIX`
     fi
     AC_SUBST(GHOME)
     AC_SUBST(GEXE)
     AC_SUBST(GEXEPATH)
     AC_SUBST(MINGWBIN)
     AC_SUBST(MSYSBIN)
+    AC_SUBST(MINGWPRE)
     AC_CONFIG_FILES([
       win32/gretlrun.cmd
       win32/gretlmime.reg
@@ -1087,6 +1083,9 @@ if test "${build_addons}" = "yes" ; then
     addons/geoplot/Makefile
     addons/geoplot/doc/Makefile
     addons/geoplot/examples/Makefile
+    addons/regls/pkg.inp
+    addons/regls/Makefile
+    addons/regls/doc/Makefile
   ])
 fi
 
@@ -1150,6 +1149,16 @@ elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
 echo "
 Please install gtksourceview-3.0 and then reconfigure gretl.
 gtksourceview-3.0 is available from http://www.gnome.org/
+"
+
+elif test "${darwin_build}" = "yes" && test "${mac_native}" = "no" ; then
+echo "
+Building for macOS requires gtk+-quartz-2.0 or gtk+-quartz-3.0
+"
+
+elif test "${darwin_build}" = "yes" && test "${mac_integration}" = "no" ; then
+echo "
+Building for macOS requires gtk-mac-integration version 2.0.1 or higher
 "
 
 else

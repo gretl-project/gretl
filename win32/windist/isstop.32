@@ -15,7 +15,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 DirExistsWarning=no
 UsedUserAreasWarning=no
-OutputBaseFilename=gretl_install
+OutputBaseFilename=gretl_install-32
 
 [InstallDelete]
 Type: files; Name: "{app}\*.dll"

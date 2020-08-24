@@ -1,1 +1,3 @@
-set path=@MINGWBIN@;@MSYSBIN@;%path% && start "" "@GEXE@" "%1"
+set path=@MINGWBIN@;@MSYSBIN@;%path% && ^
+set MINGW_PREFIX=@MINGWPRE@ && ^
+start "" "@GEXE@" "%1"

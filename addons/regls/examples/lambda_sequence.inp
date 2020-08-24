@@ -1,0 +1,67 @@
+set verbose off
+include regls.gfn
+
+open murder.gdt --quiet --frompkg=regls
+
+# all available predictors w. no missing values
+list X = population..LemasPctOfficDrugUn
+
+smpl 1 800
+printf "Sample range %d to %d\n", $t1, $t2
+
+lamseq = lambda_sequence(1, 8)
+bundle parms = defbundle("lfrac", lamseq)
+parms.verbosity = 0
+
+set stopwatch
+bundle lb = regls(murdPerPop, X, parms)
+tm = $stopwatch
+printf "\ngretl (ADMM):\n"
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+printf "time %.4fs\n", tm
+
+parms.ccd = 1
+
+parms.ccd_toler = 1.0e-14
+set stopwatch
+bundle lb = regls(murdPerPop, X, parms)
+tm = $stopwatch
+printf "\ngretl (CCD, tol 1.0e-14):\n"
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+printf "time %.4fs\n", tm
+
+parms.ccd_toler = 1.0e-7
+set stopwatch
+bundle lb = regls(murdPerPop, X, parms)
+tm = $stopwatch
+printf "\ngretl (CCD, tol 1.0e-7):\n"
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+printf "time %.4fs\n", tm
+
+# R::glmnet
+list LL = murdPerPop X
+foreign language=R --send-data=LL
+  library(glmnet)
+  library(tictoc)
+  x <- as.matrix(gretldata[,2:ncol(gretldata)])
+  y <- as.matrix(gretldata[,1])
+  tic("glmnet")
+  m <- glmnet(x, y, family = "gaussian", alpha = 1, nlambda = 8,
+    standardize = T, intercept = T)
+  tt <- toc(quiet = TRUE)
+  Rt <- as.matrix(tt$toc - tt$tic)
+  gretl.export(Rt, quiet=1)
+  Rb <- as.matrix(coef(m))
+  gretl.export(Rb, quiet=1)
+  Rlam = as.matrix(m$lambda)
+  gretl.export(Rlam, quiet=1)
+end foreign
+
+scalar Rt = mread("Rt.mat", 1)
+Rb = mread("Rb.mat", 1)
+Rlam = mread("Rlam.mat", 1)
+sdy = sdc({murdPerPop})
+Rlam *= lb.nobs / (sdy * lb.lmax)
+printf "\nglmnet:\n"
+regls_multiprint(Rb, Rlam, murdPerPop, X)
+printf "time %.4fs\n", Rt

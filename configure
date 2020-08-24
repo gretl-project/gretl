@@ -632,6 +632,7 @@ ac_includes_default="\
 gt_needs=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+MINGWPRE
 MSYSBIN
 MINGWBIN
 GEXEPATH
@@ -687,7 +688,6 @@ GTKSPINNER_LIBS
 GTKSPINNER_CFLAGS
 GTKMAC_LIBS
 GTKMAC_CFLAGS
-GRETLMAC
 GTK3_LIBS
 GTK3_CFLAGS
 GTK2_LIBS
@@ -2938,7 +2938,7 @@ quiet_build="no"
 swap_ends="no"
 pkg_build="no"
 mac_native="no"
-have_mac_integration="no"
+mac_integration="no"
 gui_disabled="no"
 gp_3d="yes"
 MAKE="make"
@@ -22824,12 +22824,6 @@ fi
 
 fi
   fi
-  if test "$mac_native" = "yes" ; then
-     GRETLMAC="gretl"
-  else
-     GRETLMAC="Gretl"
-  fi
-
 fi
 
 if test "$mac_native" = "yes" ; then
@@ -22892,17 +22886,17 @@ fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKMAC_PKG_ERRORS" >&5
 
-	have_mac_integration="yes"
+	mac_integration="yes"
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	have_mac_integration="yes"
+	mac_integration="yes"
 else
 	GTKMAC_CFLAGS=$pkg_cv_GTKMAC_CFLAGS
 	GTKMAC_LIBS=$pkg_cv_GTKMAC_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	have_mac_integration="no"
+	mac_integration="no"
 fi
 fi
 
@@ -23894,7 +23888,9 @@ fi
       GEXE=`cygpath -m $GEXE`
       MINGWBIN=`cygpath -m $MINGWBIN`
       MSYSBIN=`cygpath -m $MSYSBIN`
+      MINGWPRE=`cygpath -m $MINGW_PREFIX`
     fi
+
 
 
 
@@ -23911,7 +23907,7 @@ if test "${build_docs}" = "yes" ; then
 fi
 
 if test "${build_addons}" = "yes" ; then
-  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/pkg.inp addons/geoplot/Makefile addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile"
+  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/pkg.inp addons/geoplot/Makefile addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/pkg.inp addons/regls/Makefile addons/regls/doc/Makefile"
 
 fi
 
@@ -25068,6 +25064,9 @@ do
     "addons/geoplot/Makefile") CONFIG_FILES="$CONFIG_FILES addons/geoplot/Makefile" ;;
     "addons/geoplot/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/geoplot/doc/Makefile" ;;
     "addons/geoplot/examples/Makefile") CONFIG_FILES="$CONFIG_FILES addons/geoplot/examples/Makefile" ;;
+    "addons/regls/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/regls/pkg.inp" ;;
+    "addons/regls/Makefile") CONFIG_FILES="$CONFIG_FILES addons/regls/Makefile" ;;
+    "addons/regls/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/regls/doc/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -26547,6 +26546,16 @@ elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
 echo "
 Please install gtksourceview-3.0 and then reconfigure gretl.
 gtksourceview-3.0 is available from http://www.gnome.org/
+"
+
+elif test "${darwin_build}" = "yes" && test "${mac_native}" = "no" ; then
+echo "
+Building for macOS requires gtk+-quartz-2.0 or gtk+-quartz-3.0
+"
+
+elif test "${darwin_build}" = "yes" && test "${mac_integration}" = "no" ; then
+echo "
+Building for macOS requires gtk-mac-integration version 2.0.1 or higher
 "
 
 else

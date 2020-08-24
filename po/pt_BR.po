@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-17 09:06+0200\n"
-"PO-Revision-Date: 2020-06-06 19:54-0300\n"
+"PO-Revision-Date: 2020-07-14 00:45-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -14211,45 +14211,40 @@ msgstr "Download do arquivo falhou"
 
 #: gui/join-gui.c:214
 msgid "same as above"
-msgstr ""
+msgstr "igual ao anterior"
 
 #: gui/join-gui.c:218 gui/join-gui.c:446
 msgid "same as inner"
-msgstr ""
+msgstr "igual a interna"
 
 #: gui/join-gui.c:294
-#, fuzzy, c-format
+#, c-format
 msgid "Import data from %s"
-msgstr "%s importado"
+msgstr "Importar dados de %s"
 
 #: gui/join-gui.c:318 gui/join-gui.c:326
-#, fuzzy
 msgid "gretl: join data"
-msgstr "gretl: abrir dados"
+msgstr "gretl: juntar dados"
 
 #: gui/join-gui.c:422
-#, fuzzy
 msgid "import series"
-msgstr "Listar séries temporais"
+msgstr "importar séries"
 
 #: gui/join-gui.c:422
-#, fuzzy
 msgid "named as"
-msgstr "nome"
+msgstr "nomeado como"
 
 #: gui/join-gui.c:436
 msgid "inner key"
-msgstr ""
+msgstr "chave interna"
 
 #: gui/join-gui.c:438
-#, fuzzy
 msgid "outer key"
-msgstr "Agrupar por"
+msgstr "chave externa"
 
 #: gui/join-gui.c:459
-#, fuzzy
 msgid "aggregation"
-msgstr "Separação"
+msgstr "agregação"
 
 #: gui/join-gui.c:466
 msgid "show details of importation"
@@ -14261,9 +14256,8 @@ msgstr "O agregador 'seq' requer um parâmetro inteiro, como em seq:1"
 
 #: gui/join-gui.c:807 gui/join-gui.c:808 gui/join-gui.c:810 gui/join-gui.c:811
 #: gui/join-gui.c:813 gui/join-gui.c:814
-#, fuzzy
 msgid "same as"
-msgstr "Salvar como"
+msgstr "igual a"
 
 #: gui/library.c:499 gui/library.c:506 gui/library.c:6299 gui/library.c:6582
 msgid "Error adding variables"
@@ -18593,13 +18587,12 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "p-valor para H0: inclinação = 0 é %g\n"
 
 #: plugin/regls.c:1033
-#, fuzzy
 msgid "df = effective number of free parameters"
-msgstr "Ordem da Jacobiana = %d, número de parâmetros livres = %d\n"
+msgstr "gl = número efetivo de parâmetros livres"
 
 #: plugin/regls.c:1034
 msgid "criterion = ridge minimand"
-msgstr ""
+msgstr "critério = ridge minimizado"
 
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"

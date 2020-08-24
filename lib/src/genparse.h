@@ -266,7 +266,6 @@ enum {
     F_ERRMSG,
     F_GETENV,
     F_NGETENV,
-    F_PSHRINK,
     F_PEXPAND,
     F_FREQ,
     F_ISNAN,
@@ -356,6 +355,7 @@ enum {
     F_PXSUM,
     F_PXNOBS,
     F_PSD,
+    F_PSHRINK,
     F_RANDINT,
     F_MREAD,
     F_BREAD,
@@ -402,6 +402,7 @@ enum {
     F_FUNCERR, /* legacy */
     F_ERRORIF,
     F_BINCOEFF,
+    F_ASSERT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,
@@ -488,6 +489,8 @@ enum {
     F_DEFARRAY,
     F_DEFBUNDLE,
     F_DEFLIST,
+    F_DEFARGS,
+    F_BPACK,
     F_KSETUP,
     F_BFGSCMAX,
     F_SVM,
@@ -498,7 +501,6 @@ enum {
     F_HYP2F1,
     HF_CLOGFI,
     HF_TDISAGG,
-    HF_DEFARGS,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 

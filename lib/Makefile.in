@@ -186,6 +186,7 @@ PUBLIC_HDRS = \
 	vartest.h
 
 SRCS = adf_kpss.c \
+	addons_utils.c \
 	bhhh_max.c \
 	bootstrap.c \
 	boxplots.c \

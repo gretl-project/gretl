@@ -8126,6 +8126,60 @@
 
   </command>
 
+  <command name="maps" section="Utilities" label="Drawing maps" context="gui">
+    <description>
+      <para>
+	Questa finestra di dialogo permette di creare una mappa sulla
+	base di dati geografici pre-caricati (un file GeoJSON o uno
+	shapefile ESRI). Le opzioni sono le seguenti:.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    payload: questa è l'eventuale serie in base alla
+	    quale la mappa verrà colorata. senza un
+	    <quote>contenuto</quote> verranno mostrati solo i
+	    confini. Se il dataset attualmente aperto contiene una o
+	    più serie che sembrano adatte allo scopo (sulla base di
+	    semplici regole euristiche), queste verranno mostrate nel
+	    selettore a tendina.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    palette: questo elemento permette di scegliere fra diverse
+	    tavolozze di colori, cosicché è rilevante solo se è stata
+	    selezionata una serie contenuto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    log scale: Se esite una serie contenuto, va rappresentata
+	    in scala logaritmica? Di default, no.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    border: si vuole disegnare un bordo rettangolare intorno
+	    alla mappa? Di default, sì, ma lo si può rimuovere.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    height: questo parametro controlla l'altezza
+	    dell'immagine. Data quest'ultima, la larghezza viene
+	    calcolata in base all'ampiezza in longitudine della mappa.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Si noti che si usando la funzione <fncref targ="geoplot"/> da
+	script ci sono <i>molte</i> più possibilità di personalizzare
+	l'aspetto e il contenuto della mappa.
+      </para>
+    </description>
+  </command>
+
   <command name="markers" section="Dataset" label="Aggiunta di marcatori" context="cli">
 
     <usage>
@@ -9160,15 +9214,16 @@
 
     <description>
       <para>
-	     Calcola le stime OLS per il modello indicato usando aritmetica
-        in virgola mobile a precisione multipla. Questo comando è
-        disponibile solo se <program>gretl</program> è compilato con il
-        supporto per la libreria Gnu Multiple Precision (GMP). Per impostazione
-        predefinita, vengono usati 256 bit di precisione nei calcoli, ma è
-        possibile aumentare questo valore usando la variabile d'ambiente
-        <lit>GRETL_MP_BITS</lit>.  Ad esempio, usando l'interprete dei comandi
-        bash, è possibile aumentare la precisione a 1024 bit eseguendo il
-        comando seguente prima di avviare gretl
+	Calcola le stime OLS per il modello indicato usando aritmetica
+	in virgola mobile a precisione multipla. Questo comando è
+	disponibile solo se <program>gretl</program> è compilato con
+	il supporto per la libreria Gnu Multiple Precision (GMP). Per
+	impostazione predefinita, vengono usati 256 bit di precisione
+	nei calcoli, ma è possibile aumentare questo valore usando la
+	variabile d'ambiente <lit>GRETL_MP_BITS</lit>.  Ad esempio,
+	usando l'interprete dei comandi bash, è possibile aumentare la
+	precisione a 1024 bit eseguendo il comando seguente prima di
+	avviare gretl
       </para>
       <code>
 	export GRETL_MP_BITS=1024
@@ -10816,7 +10871,6 @@
   </command>
 
   <command name="pkg" section="Utilities" context="cli">
-
     <usage>
       <arguments>
         <argument>azione</argument>
@@ -10827,10 +10881,19 @@
 	  <flag>--local</flag>
 	  <effect>installa da file in locale</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>vedi sotto</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>vedi sotto</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
 	<example>pkg install /path/to/myfile.gfn --local</example>
+	<example>pkg query ghosts</example>
 	<example>pkg unload armax</example>
      </examples>
     </usage>    
@@ -10839,9 +10902,9 @@
       <para>
 	Comando per installare, rimuovere dalla memoria e
 	disinstallare pacchetti di funzioni (file <lit>gfn</lit> o
-	<lit>zip</lit>). Il parametro <repl>azione</repl>
-	deve essere uno fra <lit>install</lit>, <lit>unload</lit>
-	o <lit>remove</lit>.
+	<lit>zip</lit>). Il parametro <repl>azione</repl> deve essere
+	uno fra <lit>install</lit>, <lit>query</lit>,
+	<lit>unload</lit>, <lit>remove</lit> o <lit>index</lit>.
       </para>
       <para>
 	<lit>install</lit>: Nella sua forma più semplice, senza
@@ -10860,6 +10923,13 @@
 	comando <cmdref targ="include"/> sia in grado poi di trovarlo.
       </para>
       <para>
+	<lit>query</lit>: L'effetto di default effect è di stampare
+	alcune informazioni di base sul pacchetto (autore, versione,
+	ecc.). Selezionando l'opzione <opt>quiet</opt> però non viene
+	stampato nulla; le informazioni, invece, vengono salvate in un
+	bundle, accessibile via <fncref targ="$result"/>.
+      </para>
+      <para>
 	<lit>unload</lit>: l'argomento <repl>pkgname</repl> deve
 	essere dato in forma semplice, senza percorso o suffisso (come
 	nell'ultimo esempio). L'effetto è scaricare il pacchetto dalla
@@ -10870,6 +10940,20 @@
 	<lit>remove</lit>: come <lit>unload</lit>, ma in aggiunta cancella
 	anche dal disco i file di pacchetto.
       </para>
+      <para>
+	<lit>index</lit>: è un caso particolare, in cui il nome del
+	pacchetto deve essere sostituito dalla stringa
+	<quote><lit>addons</lit></quote>: l'effetto è quello di
+	aggiornare l'indice dei pacchetti standard, anche noti come
+	<quote>addons</quote>. Quest'operazione viene svolta in
+	automatico di tanto in tanto, ma in certi casi la si potrebbe
+	voler fare a mano. in tal caso, l'opzione <opt>verbose</opt>
+	produce un report di ciò che viene cercato e trovato. Ad
+	esempio:
+      </para>
+      <code>
+	pkg index addons --verbose
+      </code>
     </description>
 
     <gui-access>
@@ -13210,9 +13294,18 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  </para>
 	</li>
 	<li>	  
-          <para><lit>initvals</lit>: una matrice pre-specificata. Permette di
-            impostare manualmente le stime dei parametri ARMA. Per i dettagli,
-            si veda la <guideref targ="chap:timeseries"/>.
+          <para><lit>initvals</lit>: una matrice
+          pre-specificata. Permette di inizializzare il vettore dei
+          parametri per certi comandi che usano algoritmi di
+          ottimizzazione numerica (<lit>arma</lit>, <lit>garch</lit>,
+          <lit>logit</lit> e <lit>probit</lit>, <lit>tobit</lit> e
+          <lit>intreg</lit>, <lit>biprobit</lit>,
+          <lit>duration</lit>), nonché quando vengono imposte certe
+          restrizioni associate ai VECM. A differenza di altri
+          settaggi, <lit>initvals</lit> non è persistente: dopo,
+          l'uso, viene automaticamente resettato.  Per i dettagli
+          legati alla stima di modelli ARMA, si veda la <guideref
+          targ="chap:timeseries"/>.
 	  </para>
 	</li>
 	<li>
@@ -13460,6 +13553,38 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	    <quote><lit>R.</lit></quote> is required). See <guideref
 	      targ="chap:gretlR"/> for details on this and the
 	    previous item.
+	  </para>
+	</li>
+      </ilist>
+
+      <subhead>Varie</subhead>
+
+      <ilist>
+	<li>
+	  <para><lit>mpi_use_smt</lit>: <lit>on</lit> oppure
+	  <lit>off</lit> (default). Questo settaggio influisce sul
+	  numero di processi eseguiti in un blocco <lit>mpi</lit>
+	  presente in uno script. Se è <lit>off</lit>, il numero di
+	  processi di default è uguale al numero di <i>core</i> fisici
+	  sulla macchina locale; se invece è <lit>on</lit>, il default
+	  sarà dato dal numero massimo di thread, ossia il doppio dei
+	  <i>core</i> fisici se essi supportano lo standard SMT
+	  (Simultaneous MultiThreading, anche noto come
+	  Hyper-Threading). Il settaggio si applica solo al caso in
+	  cui l'utente non ha specificato il numero di processi, n
+	  modo diretto o indiretto, attraverso il file
+	  <lit>hosts</lit>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>graph_theme</lit>: una stringa fra
+	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
+	    (il default attuale), <lit>ethan</lit>,
+	    <lit>iwanthue</lit> o <lit>sober</lit>.  Imposta il
+	    <quote>tema</quote> ustao per i grafici prodotti da
+	    gretl. Con l'opzione <lit>classic</lit> si avrà il tema
+	    usato fino alla versione 2020b.
 	  </para>
 	</li>
       </ilist>

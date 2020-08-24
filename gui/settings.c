@@ -30,6 +30,8 @@
 #include "selector.h"
 #include "gpt_control.h"
 #include "tabwin.h"
+#include "build.h"
+#include "addons_utils.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -60,7 +62,7 @@
 # endif
 #endif
 
-#if defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
+#if defined(OS_OSX) && defined(HAVE_MAC_THEMES)
 # define MAC_THEMING
 #endif
 
@@ -85,7 +87,7 @@ static char system_appfont[64];
 #if defined(G_OS_WIN32)
 static char fixedfontname[MAXLEN] = "Courier New 10";
 static char default_fixedfont[64] = "Courier New 10";
-#elif defined(MAC_NATIVE)
+#elif defined(OS_OSX) /* FIXME ? */
 static char fixedfontname[MAXLEN] = "Menlo 13";
 static char default_fixedfont[64] = "Menlo 13";
 #elif defined(MAC_THEMING)
@@ -98,7 +100,7 @@ static char default_fixedfont[64] = "monospace 10";
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "";
-#elif defined(MAC_NATIVE)
+#elif defined(OS_OSX)
 static char appfontname[MAXLEN] = "Lucida Grande 13";
 #else
 static char appfontname[MAXLEN] = "sans 10";
@@ -124,7 +126,7 @@ static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
 static char author_mail[32];
 static char sview_style[32] = "classic";
-static char graph_theme[24] = "default";
+static char graph_theme[24] = "dark2";
 static char gpcolors[18];
 
 static int hc_by_default;
@@ -591,7 +593,7 @@ static void record_system_appfont (GtkSettings *settings,
     if (*pfont != NULL) {
 	strcpy(system_appfont, *pfont);
     } else {
-# if defined(MAC_NATIVE)
+# if defined(OS_OSX)
 	strcpy(system_appfont, "Lucida Grande 13");
 # else
 	strcpy(system_appfont, "sans 10");
@@ -2018,6 +2020,8 @@ int write_rc (gretlopt opt)
     }
 
     fprintf(fp, "# gretl config file\n");
+    fputs("# build date\n", fp);
+    fprintf(fp, "build_date = %s\n", BUILD_DATE);
 
     for (i=0; rc_vars[i].var != NULL; i++) {
 	rcvar = &rc_vars[i];
@@ -2150,7 +2154,7 @@ static void maybe_fix_viewpdf (void)
    read_gretlrc() or on MS Windows, read_win32_config().
 */
 
-static int common_read_rc_setup (void)
+static int common_read_rc_setup (int updated)
 {
     int langid = 0;
     int err = 0;
@@ -2303,7 +2307,7 @@ static int maybe_get_network_settings (void)
    argv[0] at startup) for gretldir.
 */
 
-static void win32_read_gretlrc (void)
+static void win32_read_gretlrc (int *updated)
 {
     char line[MAXLEN], key[32], linevar[MAXLEN];
     int got_recent = 0;
@@ -2340,7 +2344,9 @@ static void win32_read_gretlrc (void)
 		strcpy(linevar, line + strlen(key) + 3);
 		gretl_strstrip(linevar);
 		if (*linevar != '\0') {
-		    if (!strcmp(key, "userdir")) {
+		    if (!strcmp(key, "build_date")) {
+			*updated = gretl_is_updated(linevar);
+		    } else if (!strcmp(key, "userdir")) {
 			/* legacy */
 			find_and_set_rc_var("workdir", linevar);
 		    } else {
@@ -2368,6 +2374,7 @@ int read_win32_config (int debug)
     char value[MAXSTR];
     char *appdata;
     char *strvar;
+    int updated = 0;
     int i, err = 0;
 
     if (chinese_locale()) {
@@ -2406,7 +2413,7 @@ int read_win32_config (int debug)
     maybe_get_network_settings();
 
     /* read from user config file */
-    win32_read_gretlrc();
+    win32_read_gretlrc(&updated);
 
     /* now read from registry for a few items, if they're
        not already set */
@@ -2452,7 +2459,7 @@ int read_win32_config (int debug)
 	}
     }
 
-    err = common_read_rc_setup();
+    err = common_read_rc_setup(updated);
 
     if (debug) {
 	fprintf(stderr, "read_win32_config: returning %d\n", err);
@@ -2471,6 +2478,7 @@ int read_win32_config (int debug)
 static int read_gretlrc (void)
 {
     FILE *fp = gretl_fopen(rcfile, "r");
+    int updated = 0;
 
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read %s\n", rcfile);
@@ -2493,6 +2501,8 @@ static int read_gretlrc (void)
 		if (*linevar != '\0') {
 		    if (!strcmp(key, "userdir")) {
 			find_and_set_rc_var("workdir", linevar);
+		    } else if (!strcmp(key, "build_date")) {
+			updated = gretl_is_updated(linevar);
 		    } else {
 			find_and_set_rc_var(key, linevar);
 		    }
@@ -2507,7 +2517,7 @@ static int read_gretlrc (void)
 	fclose(fp);
     }
 
-    return common_read_rc_setup();
+    return common_read_rc_setup(updated);
 }
 
 #endif /* end of non-Windows versions */

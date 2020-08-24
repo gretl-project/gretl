@@ -1061,8 +1061,8 @@ static void write_other_font_string (char *fstr, int stdsize)
 static char gp_style[32]; /* basename of style file */
 static gchar *alt_sty;    /* content of style file */
 
-static const char *default_sty =
-    "# gpstyle default\n"
+static const char *classic_sty =
+    "# gpstyle classic\n"
     "set linetype 1 pt 1 lc rgb \"#FF0000\"\n"  /* red */
     "set linetype 2 pt 2 lc rgb \"#0000FF\"\n"  /* blue */
     "set linetype 3 pt 3 lc rgb \"#00CC00\"\n"  /* non-standard green */
@@ -1122,7 +1122,7 @@ static int try_set_alt_sty (void)
 	if (err) {
 	    /* failed to conform to spec */
 	    fprintf(stderr, "%s failed spec check\n", gp_style);
-	    set_plotstyle("default");
+	    set_plotstyle("classic");
 	} else {
 	    /* OK, put the style in place */
 	    g_free(alt_sty);
@@ -1146,15 +1146,23 @@ static int try_set_alt_sty (void)
 
 int set_plotstyle (const char *style)
 {
-    if (!strcmp(style, gp_style) ||
-	(!strcmp(style, "default") && *gp_style == '\0')) {
+    int to_classic = 0;
+
+    if (!strcmp(style, "classic") || !strcmp(style, "default")) {
+	/* "default" is just for backward compat */
+	to_classic = 1;
+    }
+
+    if (!strcmp(style, gp_style)) {
 	return 0; /* no-op */
-    } else if (!strcmp(style, "default")) {
-	/* replace alt with default */
+    } else if (to_classic && *gp_style == '\0') {
+	return 0; /* no-op */
+    } else if (to_classic) {
+	/* replace alt with classic */
 	g_free(alt_sty);
 	alt_sty = NULL;
 	gp_style[0] = '\0';
-	transcribe_style(default_sty);
+	transcribe_style(classic_sty);
 	return 0;
     } else {
 	/* try replacing current with what's requested */
@@ -1170,7 +1178,7 @@ int set_plotstyle (const char *style)
 
 static void inject_gp_style (int offset, FILE *fp)
 {
-    const char *sty = alt_sty != NULL ? alt_sty : default_sty;
+    const char *sty = alt_sty != NULL ? alt_sty : classic_sty;
     const char *sub = NULL;
 
     if (offset > 0) {
@@ -2061,6 +2069,8 @@ static const char *plot_output_option (PlotType p, int *pci)
 	ci = FREQ;
     } else if (p == PLOT_HEATMAP) {
 	ci = CORR;
+    } else if (p == PLOT_CUSUM) {
+	ci = CUSUM;
     }
 
     s = get_optval_string(ci, OPT_U);
@@ -4349,33 +4359,36 @@ int theil_forecast_plot (const int *plotlist, const DATASET *dset,
     return err;
 }
 
-/* Try to determine a suitable tic-increment for the automatic
-   x-axis in the "scatters" context". We don't want the
-   increment to be so small that the tic labels pile up on
-   each other.
-*/
-
-static int scatters_incr (int T, const DATASET *dset)
+static void scatters_time_tics (const double *obs,
+				const DATASET *dset,
+				FILE *fp)
 {
-    int incr, ntics;
+    double startdate = obs[dset->t1];
+    double enddate = obs[dset->t2];
+    double obsrange = enddate - startdate;
+    int k1 = ceil(startdate);
+    int k2 = floor(enddate);
+    int nmaj = k2 - k1 + 1;
 
-    if (dset->pd == 1) {
-	incr = T / 6;
+    fputs("set xtics nomirror\n", fp);
+
+    if (obsrange > 8) {
+	double incr = obsrange / 4;
+
+	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
+	fprintf(fp, "set xtics %g,%g\n", ceil(startdate), floor(incr));
+    } else if (nmaj == 0) {
+	fputs("set format x ''\n", fp);
     } else {
-	incr = T / (4 * dset->pd);
-	/* safeguard */
-	if (incr == 0) {
-	    incr = 1;
+	/* integer major tics plus minor */
+	int T = dset->t2 - dset->t1 + 1;
+
+	fprintf(fp, "set xrange [%g:%g]\n", startdate, enddate);
+	fprintf(fp, "set xtics %g,1\n", floor(startdate));
+	if (T < 55) {
+	    fprintf(fp, "set mxtics %d\n", dset->pd);
 	}
     }
-
-    ntics = T / incr;
-    if (ntics > 10) {
-	ntics = 10;
-	incr = T / ntics;
-    }
-
-    return incr;
 }
 
 static void scatters_set_timefmt (const DATASET *dset,
@@ -4513,15 +4526,7 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fprintf(fp, "set xrange [%.12g:%.12g]\n", obs[dset->t1], obs[dset->t2]);
 	scatters_set_timefmt(dset, obs, fp);
     } else if (obs != NULL) {
-	double startdate = obs[dset->t1];
-	double enddate = obs[dset->t2];
-	int incr, T = dset->t2 - dset->t1 + 1;
-
-	fprintf(fp, "set xrange [%g:%g]\n", floor(startdate), ceil(enddate));
-	incr = scatters_incr(T, dset);
-	if (incr > 0) {
-	    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), incr);
-	}
+	scatters_time_tics(obs, dset, fp);
     } else {
 	/* avoid having points sticking to the axes */
 	fputs("set offsets graph 0.02, graph 0.02, graph 0.02, graph 0.02\n", fp);
@@ -5174,6 +5179,10 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	return E_DATA;
     }
 
+    if (freq->strvals) {
+	dist = 0; /* just to be safe */
+    }
+
     if (dist == D_NORMAL) {
 	plottype = PLOT_FREQ_NORMAL;
     } else if (dist == D_GAMMA) {
@@ -5191,7 +5200,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     fprintf(stderr, "*** plot_freq called\n");
 #endif
 
-    if (freq->discrete) {
+    if (freq->strvals) {
+	endpt = NULL;
+	barwidth = 1;
+	use_boxes = 0;
+    } else if (freq->discrete) {
 	endpt = freq->midpt;
 	barwidth = discrete_minskip(freq);
 	use_boxes = 0;
@@ -5278,8 +5291,13 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     } else {
 	/* plain frequency plot (no theoretical distribution shown) */
 	lambda = 1.0 / freq->n;
-	plotmin = freq->midpt[0] - barwidth;
-	plotmax = freq->midpt[K-1] + barwidth;
+	if (freq->strvals) {
+	    plotmin = 0.5;
+	    plotmax = K + 0.5;
+	} else {
+	    plotmin = freq->midpt[0] - barwidth;
+	    plotmax = freq->midpt[K-1] + barwidth;
+	}
 	fprintf(fp, "set xrange [%.10g:%.10g]\n", plotmin, plotmax);
 	maybe_set_yrange(freq, lambda, fp);
 	fputs("set nokey\n", fp);
@@ -5297,14 +5315,33 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	return 1;
     }
 
-    fprintf(fp, "set xlabel '%s'\n", freq->varname);
-    if (dist) {
-	fprintf(fp, "set ylabel '%s'\n", _("Density"));
+    if (freq->strvals) {
+	fprintf(fp, "set title \"%s: relative frequencies\"\n",
+		freq->varname);
     } else {
-	fprintf(fp, "set ylabel '%s'\n", _("Relative frequency"));
+	fprintf(fp, "set xlabel '%s'\n", freq->varname);
+	if (dist) {
+	    fprintf(fp, "set ylabel '%s'\n", _("Density"));
+	} else {
+	    fprintf(fp, "set ylabel '%s'\n", _("Relative frequency"));
+	}
     }
 
-    if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 1000) {
+    if (freq->strvals) {
+	char label[32];
+
+	fputs("set xtics rotate by -45\n", fp);
+	fputs("set xtics (", fp);
+	for (i=0; i<K; i++) {
+	    strcpy(label, freq->S[i]);
+	    gretl_utf8_truncate(label, 6);
+	    fprintf(fp, "\"%s\" %d", label, i+1);
+	    if (i < K-1) {
+		fputs(", ", fp);
+	    }
+	}
+	fputs(")\n", fp);
+    } else if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 1000) {
 	/* few values, all integers: force integer tic marks */
 	fprintf(fp, "set xtics %.0f, 1, %.0f\n", freq->midpt[0],
 		freq->midpt[K-1]);
@@ -5337,7 +5374,11 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     }
 
     for (i=0; i<K; i++) {
-	fprintf(fp, "%.10g %.10g\n", freq->midpt[i], lambda * freq->f[i]);
+	if (freq->midpt == NULL) {
+	    fprintf(fp, "%d %.10g\n", i + 1, lambda * freq->f[i]);
+	} else {
+	    fprintf(fp, "%.10g %.10g\n", freq->midpt[i], lambda * freq->f[i]);
+	}
     }
 
     fputs("e\n", fp);
@@ -9737,6 +9778,10 @@ int write_map_gp_file (const char *plotfile,
     }
 
     fp = open_plot_input_file(PLOT_GEOMAP, 0, &err);
+    if (err) {
+	return err;
+    }
+
     fprintf(fp, "# geoplot %g %g\n", dims->val[0], dims->val[1]);
 
     fputs("unset key\n", fp);
@@ -9956,6 +10001,85 @@ int transcribe_geoplot_file (const char *src,
 
     if (f1 != NULL) fclose(f1);
     if (f2 != NULL) fclose(f2);
+
+    return err;
+}
+
+/* called from the interpolate plugin */
+
+int write_tdisagg_plot (const gretl_matrix *YY, int mult,
+			const char *title, DATASET *dset)
+{
+    const double *obs = NULL;
+    char mstr[16] = {0};
+    int t, T = YY->rows;
+    double y0t;
+    FILE *fp;
+    int err = 0;
+
+    set_optval_string(GNUPLOT, OPT_U, "display");
+    fp = open_plot_input_file(PLOT_REGULAR, GPT_LETTERBOX, &err);
+    if (err) {
+	return err;
+    }
+
+    if (dset != NULL) {
+	fprintf(fp, "# timeseries %d (letterbox)\n", dset->pd);
+	obs = gretl_plotx(dset, OPT_NONE);
+    } else {
+	fputs("# timeseries 1 (letterbox)\n", fp);
+    }
+    fputs("set key left top\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    if (title != NULL) {
+	fprintf(fp, "set title \"%s\"\n", title);
+    }
+
+    gretl_push_c_numeric_locale();
+
+    if (obs != NULL) {
+	double d1 = obs[dset->t1];
+	double d2 = obs[dset->t2];
+
+	fprintf(fp, "set xrange [%g:%g]\n", floor(d1), ceil(d2));
+    }
+
+    gnuplot_missval_string(fp);
+    fputs("# start inline data\n", fp);
+    fputs("$data << EOD\n", fp);
+    for (t=0; t<T; t++) {
+	if (obs != NULL) {
+	    fprintf(fp, "%g ", obs[t+dset->t1]);
+	} else {
+	    fprintf(fp, "%d ", t + 1);
+	}
+	y0t = gretl_matrix_get(YY, t, 0);
+	if (na(y0t)) {
+	    fputs("? ", fp);
+	} else {
+	    fprintf(fp, "%.10g ", y0t);
+	}
+	fprintf(fp, "%.10g\n", gretl_matrix_get(YY, t, 1));
+    }
+    fputs("EOD\n", fp);
+
+    if (mult > 1) {
+	sprintf(mstr, " * %d", mult);
+    }
+
+    fprintf(fp, "plot $data using 1:2 title \"%s\" w steps, \\\n",
+	    _("original data"));
+    fprintf(fp, " $data using 1:3 title \"%s%s\" w lines\n",
+	    _("final series"), mstr);
+
+    err = finalize_plot_input_file(fp);
+    if (!err) {
+	if (gretl_in_gui_mode()) {
+	    manufacture_gui_callback(GNUPLOT);
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
 
     return err;
 }

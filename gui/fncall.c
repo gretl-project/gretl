@@ -30,6 +30,7 @@
 #include "gretl_typemap.h"
 #include "matrix_extra.h"
 #include "gretl_zip.h"
+#include "addons_utils.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -2786,15 +2787,18 @@ int download_addon (const char *pkgname, char **local_path)
 	}
 	if (err) {
 	    gui_errmsg(err);
-	} else if (local_path != NULL) {
-	    /* return local path to gfn file */
-	    gchar *tmp;
+	} else {
+	    update_addons_index(NULL);
+	    if (local_path != NULL) {
+		/* fill local path to gfn file */
+		gchar *tmp;
 
-	    tmp = g_build_filename(path, pkgname, pkgname, NULL);
-	    *local_path = calloc(strlen(tmp) + 5, 1);
-	    sprintf(*local_path, "%s.gfn", tmp);
-	    g_free(tmp);
-	    fprintf(stderr, "local_path: '%s'\n", *local_path);
+		tmp = g_build_filename(path, pkgname, pkgname, NULL);
+		*local_path = calloc(strlen(tmp) + 5, 1);
+		sprintf(*local_path, "%s.gfn", tmp);
+		g_free(tmp);
+		fprintf(stderr, "local_path: '%s'\n", *local_path);
+	    }
 	}
 	g_free(fullname);
     }
@@ -3066,23 +3070,6 @@ int package_is_available_for_menu (const gchar *pkgname,
     return ret;
 }
 
-int is_official_addon (const char *pkgname)
-{
-    /* All of the following are available in zip format
-       from sourceforge */
-    if (!strcmp(pkgname, "SVAR") ||
-	!strcmp(pkgname, "gig") ||
-	!strcmp(pkgname, "HIP") ||
-	!strcmp(pkgname, "ivpanel") ||
-	!strcmp(pkgname, "dbnomics") ||
-	!strcmp(pkgname, "extra") ||
-	!strcmp(pkgname, "geoplot")) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 /* Callback for a menu item representing a function package whose
    name is attached to @action. We first see if we can find the full
    path to the corresponding gfn file; if so we initiate a GUI call to
@@ -3105,7 +3092,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	    gretl_function_package_get_path(pkgname, gpi_ptype(gpi));
     }
 
-    if (gpi->filepath == NULL && is_official_addon(pkgname)) {
+    if (gpi->filepath == NULL && is_gretl_addon(pkgname)) {
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
 				       "up to date.\nWould you like to try "
 				       "downloading it now?"), pkgname);
@@ -4152,50 +4139,43 @@ int gui_function_pkg_query_register (const char *fname,
 }
 
 char *installed_addon_status_string (const char *path,
-				     const char *svstr)
+				     const char *svstr,
+				     int minver)
 {
-    fnpkg *pkg;
-    int err = 0;
+    char *ivstr = NULL;
     char *ret = NULL;
 
-    pkg = get_function_package_by_filename(path, &err);
+    /* @ivstr = installed package version string
+       @svstr = package version string from server
+       @minver = gretl version required for pkg on server
+    */
 
-    if (pkg != NULL) {
+    ivstr = get_addon_version(path, NULL);
+
+    if (ivstr != NULL) {
+	double svnum = dot_atof(svstr);
+	double ivnum = dot_atof(ivstr);
 	int current = 0;
 	int update_ok = 0;
 	char reqstr[8] = {0};
-	gchar *ivstr = NULL;
-	int minver = 0;
 
-	/* @ivstr = installed package version string
-	   @svstr = package version string from server
-	*/
-	err = function_package_get_properties(pkg,
-					      "version", &ivstr,
-					      "min-version", &minver,
-					      NULL);
-	if (!err) {
-	    double svnum = dot_atof(svstr);
-	    double ivnum = dot_atof(ivstr);
+	current = ivnum >= svnum;
 
-	    current = ivnum >= svnum;
-	    g_free(ivstr);
-
-	    if (!current) {
-		/* Not current, but can the addon be updated?  It may
-		   be that the running instance of gretl is too old.
-		*/
-		update_ok = package_version_ok(minver, reqstr);
-	    }
-
-	    if (current) {
-		ret = gretl_strdup(_("Up to date"));
-	    } else if (update_ok) {
-		ret = gretl_strdup(_("Not up to date"));
-	    } else if (*reqstr != '\0') {
-		ret = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
-	    }
+	if (!current) {
+	    /* Not current, but can the addon be updated?  It may
+	       be that the running instance of gretl is too old.
+	    */
+	    update_ok = package_version_ok(minver, reqstr);
 	}
+
+	if (current) {
+	    ret = gretl_strdup(_("Up to date"));
+	} else if (update_ok) {
+	    ret = gretl_strdup(_("Not up to date"));
+	} else if (*reqstr != '\0') {
+	    ret = gretl_strdup_printf(_("Requires gretl %s"), reqstr);
+	}
+	free(ivstr);
     }
 
     if (ret == NULL) {
@@ -4504,20 +4484,18 @@ void map_plot_callback (int v)
 	int payload_id = 0;
 	double *plx = NULL;
 	int selpos = 0;
-	int err = 0;
+	int resp, err = 0;
 
 	opts = gretl_bundle_new();
 	gretl_bundle_set_int(opts, "gui_auto", 1);
 	payload_list = plausible_payload_list(v, &selpos);
 
+	resp = map_options_dialog(payload_list, selpos,
+				  opts, &payload_id);
+	if (resp == GRETL_CANCEL) {
+	    return;
+	}
 	if (payload_list != NULL) {
-	    int resp;
-
-	    resp = map_options_dialog(payload_list, selpos,
-				      opts, &payload_id);
-	    if (resp == GRETL_CANCEL) {
-		return;
-	    }
 	    g_list_free(payload_list);
 	}
 	if (payload_id == 0) {

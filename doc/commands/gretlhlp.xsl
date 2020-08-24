@@ -542,6 +542,19 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="doc">
+  <xsl:choose>
+    <xsl:when test="$fmt='pango'">
+      <xsl:text>&lt;@adb="</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&lt;@lit="</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="mnu">
   <xsl:choose>
     <xsl:when test="$fmt='pango'">

@@ -50,6 +50,7 @@
 "rwm","German microdata, assorted socioeconomic variables","panel, T=7 N=7293"
 "sw_ch12","International macro data (Stock and Watson)","time series, T=164"
 "sw_ch14","Unemployment and inflation (Stock and Watson)","time series, T=164"
+"swisspharma","Swiss pharmaceutical sales, 1975-2011","time series, T=146"
 "theil","Henri Theil's textile consumption data","time series, T=17"
 "ukppp","Johansen and Juselius (1992) PPP data","time series, T=62"
 "union_wooldridge","Unionization of workers in the US","panel, T=8 N=545"

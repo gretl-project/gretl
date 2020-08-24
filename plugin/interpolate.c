@@ -23,7 +23,6 @@
 #include "libset.h"
 
 #define CL_DEBUG 0
-#define LIMIT_R_SSR 1
 #define SSR_LOGISTIC 1
 #define RHOMAX 0.999
 
@@ -49,6 +48,7 @@ typedef enum {
     CL_NETVCV  = 1 << 1,
     CL_VERBOSE = 1 << 2,
     CL_SHOWMAX = 1 << 3,
+    CL_TRUNC   = 1 << 4
 } CLflags;
 
 struct chowlin {
@@ -76,10 +76,24 @@ struct gls_info {
     double s2;
 };
 
+static const char *aggtype_names[] = {
+    "sum", "average", "last", "first"
+};
+
 static const char *method_names[] = {
     "chow-lin", "chow-lin-mle", "chow-lin-ssr",
-    "fernandez", "denton"
+    "fernandez", "denton-pfd", "denton-afd", NULL
 };
+
+static int td_plot (const gretl_matrix *y0,
+		    const gretl_matrix *y,
+		    int s, int agg, int method,
+		    DATASET *dset);
+
+static int force_iteration (int m)
+{
+    return m == R_MLE || m == R_SSR;
+}
 
 /* Callback for fzero(), as we adjust the coefficient @a so the
    theoretically derived ratio of polynomials in @a matches the
@@ -212,16 +226,17 @@ static void show_regression_results (const struct gls_info *G,
 	}
     }
 
-    if (G->method == R_MLE || G->method == R_SSR) {
+    if (G->method == R_UROOT) {
+	pprintf(prn, "  %s", _("GLS estimates"));
+	pprintf(prn, " (fernandez) T = %d:\n", T);
+    } else if (G->method == R_MLE || G->method == R_SSR) {
 	pprintf(prn, "  %s", _("Iterated GLS estimates"));
 	pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
-    } else if (a == 0) {
-	if (G->method == R_UROOT) {
-	    pprintf(prn, "  %s", _("GLS estimates"));
-	    pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
-	} else {
-	    pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
+	if (G->flags & CL_TRUNC) {
+	    pprintf(prn, "  %s\n", _("rho truncated to zero"));
 	}
+    } else if (a == 0) {
+	pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
     } else {
 	pprintf(prn, "  %s", _("GLS estimates"));
 	pprintf(prn, " (%s) T = %d:\n", (G->method == R_FIXED)?
@@ -235,7 +250,8 @@ static void show_regression_results (const struct gls_info *G,
     gretl_array_destroy(names);
 }
 
-static int ar1_mle (struct gls_info *G, double s, double *rho)
+static int ar1_mle (struct gls_info *G, double s, double *rho,
+		    PRN *prn)
 {
     double *theta;
     int fc = 0, gc = 0;
@@ -274,10 +290,10 @@ static int ar1_mle (struct gls_info *G, double s, double *rho)
     }
 
     if (!err) {
-#if CL_DEBUG
-	fprintf(stderr, "ar1_mle, rho %g -> %g\n", *rho, theta[0]);
-#endif
 	*rho = theta[0] > 0.999 ? 0.999 : theta[0];
+	if (G->flags & CL_SHOWMAX) {
+	    pprintf(prn, "  rho as revised via ML: %g\n", *rho);
+	}
     }
 
     free(theta);
@@ -525,20 +541,26 @@ static double cl_gls_calc (const double *rho, void *data)
     if (G->method == R_UROOT) {
 	make_alt_VC(G->VC, G->s, G->agg, G->method);
     } else {
-#if LIMIT_R_SSR && !SSR_LOGISTIC
-	if (G->method == R_MLE) {
-	    a = logistic_cdf(*rho);
-	}
+	if (!(G->flags & CL_TRUNC)) {
+	    /* if we're on a second pass after truncation
+	       to zero, @rho will not be given in
+	       logistic form
+	    */
+#if SSR_LOGISTIC
+	    if (G->method == R_MLE || G->method == R_SSR) {
+		a = logistic_cdf(*rho);
+	    }
 #else
-	if (G->method == R_MLE || G->method == R_SSR) {
-	    a = logistic_cdf(*rho);
-	}
+	    if (G->method == R_MLE) {
+		a = logistic_cdf(*rho);
+	    }
 #endif
+	}
 	make_VC(G->VC, N, G->s, a, G->agg);
     }
 
     make_CVC(G->W, G->VC, G->s, G->agg);
-    if (G->flags & CL_NETVCV) {
+    if ((G->flags & CL_NETVCV) && a > 0) {
 	gretl_matrix_multiply_by_scalar(G->W, 1/(1.0-a*a));
     }
     if (G->Wcpy == NULL) {
@@ -629,8 +651,7 @@ static int cl_gls_one (double *a, struct gls_info *G)
    implementations we place an upper bound on rho short of 1.0.
 */
 
-static int cl_gls_max (double *a, struct gls_info *G,
-		       PRN *prn)
+static int cl_gls_max (double *a, struct gls_info *G, PRN *prn)
 {
     gretlopt opt = OPT_NONE;
     double r = *a > 0 ? *a : 0.5;
@@ -641,28 +662,27 @@ static int cl_gls_max (double *a, struct gls_info *G,
 	opt = OPT_V;
     }
 
-#if LIMIT_R_SSR
-    /* prevent R_SSR from pushing @r above RHOMAX */
     if (G->method == R_SSR) {
+	/* prevent R_SSR from pushing @r above RHOMAX */
 	gretl_matrix bounds;
-# if SSR_LOGISTIC
-	double bvals[] = {1, -10, -log(1.0/RHOMAX - 1)};
+#if SSR_LOGISTIC
+	double bvals[] = {1, -20, -log(1.0/RHOMAX - 1)};
 	double lrho = -log(1/r - 1);
 	double *rptr = &lrho;
-# else
+#else
 	double bvals[] = {1, 0, RHOMAX};
 	double *rptr = &r;
-# endif
+#endif
 
 	gretl_matrix_init_full(&bounds, 1, 3, bvals);
 	err = LBFGS_max(rptr, 1, 200, 1.0e-12,
 			&fc, &gc, cl_gls_calc, C_SSR,
 			NULL, NULL, G, &bounds, opt, prn);
-# if SSR_LOGISTIC
+#if SSR_LOGISTIC
 	if (!err) {
 	    r = logistic_cdf(lrho);
 	}
-# endif
+#endif
     } else {
 	/* G->method = R_MLE */
 	double lrho = -log(1/r - 1);
@@ -672,25 +692,20 @@ static int cl_gls_max (double *a, struct gls_info *G,
 		       NULL, G, NULL, opt, prn);
 	if (!err) {
 	    r = logistic_cdf(lrho);
+	} else if (err == E_NOCONV && lrho < -6) {
+	    /* looks like we're butting up against 0 */
+	    fprintf(stderr, "R_MLE: stopped at lrho = %g\n", lrho);
+	    err = 0;
+	    r = 0;
+	    /* recalculate with rho = 0 */
+	    G->flags |= CL_TRUNC;
+	    cl_gls_calc(&r, G);
 	}
     }
-#else
-    /* treat R_SSR and R_MLE symmetrically */
-    int crit = G->method == R_SSR ? C_SSR : C_LOGLIK;
-    gretlopt opt = G->method == R_SSR ? (opt | OPT_I) : opt;
-    double lrho = -log(1/r - 1);
-
-    err = BFGS_max(&lrho, 1, 200, 1.0e-12,
-		   &fc, &gc, cl_gls_calc, crit,
-		   NULL, G, NULL, opt, prn);
-    if (!err) {
-	r = logistic_cdf(lrho);
-    }
-#endif
 
 #if CL_DEBUG
-    fprintf(stderr, "cl_gls_max: method = %d, err = %d\n",
-	    G->method, err);
+    fprintf(stderr, "cl_gls_max: method = %s, err = %d\n",
+	    method_names[G->method], err);
 #endif
 
     if (!err && (G->flags & CL_SAVE_SE)) {
@@ -699,7 +714,7 @@ static int cl_gls_max (double *a, struct gls_info *G,
 
     if (!err) {
 	*a = r;
-	if (G->flags & CL_NETVCV) {
+	if ((G->flags & CL_NETVCV) && r > 0) {
 	    /* restore full W for subsequent calculations */
 	    gretl_matrix_multiply_by_scalar(G->W, 1/(1-r*r));
 	}
@@ -819,7 +834,7 @@ static void make_X_beta (gretl_vector *y, const double *b,
    rhohat() in estimate.c.
 */
 
-static double acf_1 (struct gls_info *G)
+static double acf_1 (struct gls_info *G, PRN *prn)
 {
     double rho, num = 0, den = 0;
     double *u = G->u->val;
@@ -834,16 +849,17 @@ static double acf_1 (struct gls_info *G)
 
     rho = num / den;
 
-    if (rho < 1.0e-6) {
-	return 0;
+    if (G->flags & CL_SHOWMAX) {
+	pprintf(prn, "  Initial rho from OLS residuals: %g\n", rho);
     }
 
-#if CL_DEBUG
-    fprintf(stderr, "initial rho from OLS residuals: %g\n", rho);
-#endif
-
-    /* improve the initial estimate of @rho via ML */
-    ar1_mle(G, sqrt(den / T), &rho);
+    if (rho < 1.0e-6) {
+	/* truncate */
+	rho = 0;
+    } else {
+	/* improve the initial estimate of @rho via ML */
+	ar1_mle(G, sqrt(den / T), &rho, prn);
+    }
 
     return rho;
 }
@@ -879,6 +895,9 @@ static int prepare_OLS_stats (struct gls_info *G)
 	    G->se->val[i] = sqrt(s2 * zii);
 	}
 	G->lnl = -n2 * (1 + LN_2_PI - log(n)) - n2 * log(G->SSR);
+	if (G->agg == AGG_SUM) {
+	    G->SSR /= G->s;
+	}
     }
 
     return err;
@@ -900,11 +919,14 @@ static int cl_ols (struct gls_info *G,
 
     err = gretl_matrix_ols(G->y0, G->CX, G->b, NULL, G->u, NULL);
     if (err) {
+#if CL_DEBUG
+	fprintf(stderr, "cl_ols: error %d from initial regression\n", err);
+#endif
 	return err;
     }
 
     if (G->method != R_FIXED) {
-	a = acf_1(G);
+	a = acf_1(G, prn);
 	if (a <= 0.0) {
 	    a = 0; /* don't pursue negative @a */
 	} else if (G->agg >= AGG_EOP) {
@@ -924,7 +946,7 @@ static int cl_ols (struct gls_info *G,
 	}
     }
 
-    if (a == 0) {
+    if (a == 0 && !force_iteration(G->method)) {
 	/* no autocorrelation: GLS isn't needed */
 	int N = G->u->rows;
 	int nx = G->b->rows;
@@ -946,6 +968,10 @@ static int cl_ols (struct gls_info *G,
 	}
 	if (G->flags & CL_SAVE_SE) {
 	    prepare_OLS_stats(G);
+	}
+	if (G->method == R_MLE || G->method == R_SSR) {
+	    /* don't lie about the method we actually used */
+	    G->method = R_ACF1;
 	}
 	if (prn != NULL && (G->flags & CL_VERBOSE)) {
 	    show_regression_results(G, a, 0, prn);
@@ -997,6 +1023,8 @@ static int fill_chowlin_bundle (struct gls_info *G,
  * @det: 0 for none, 1 for constant, 2 for linear trend, 3 for
  * quadratic trend.
  * @rho: fixed rho value, if wanted.
+ * @verbose: 0, 1 or 2.
+ * @plot: currently just a boolean.
  * @prn: printing struct pointer.
  * @err: location to receive error code.
  *
@@ -1017,8 +1045,9 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 				      int s, int agg, int method,
 				      int det, double rho,
 				      gretl_bundle *res,
-				      int verbose, PRN *prn,
-				      int *perr)
+				      int verbose, int plot,
+				      DATASET *dset,
+				      PRN *prn, int *perr)
 {
     struct gls_info G = {0};
     gretl_matrix_block *B;
@@ -1047,6 +1076,10 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 #if CL_DEBUG
     fprintf(stderr, "chow_lin_disagg; N=%d, s=%d, m=%d\n", N, s, m);
+    fprintf(stderr, "Y0 is %d x %d\n",Y0->rows, Y0->cols);
+    if (X != NULL) {
+	fprintf(stderr, "X is %d x %d\n", X->rows, X->cols);
+    }
 #endif
 
     /* the return value */
@@ -1079,10 +1112,6 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	/* don't mess with negative rho */
 	rho = rho < 0 ? 0 : rho;
 	rho_given = 1;
-    }
-
-    if (verbose == 0 && gretl_messages_on()) {
-	verbose = 1;
     }
 
     /* regressors: deterministic terms (as wanted), plus
@@ -1134,7 +1163,7 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
 	if (method != R_UROOT && (a == 0 || !rho_given)) {
 	    err = cl_ols(&G, X, y, m, &a, prn);
-	    if (a == 0) {
+	    if (a == 0 && !force_iteration(method)) {
 		/* this iteration is handled */
 		continue;
 	    }
@@ -1175,6 +1204,11 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
     if (!err && ny == 1 && res != NULL) {
 	fill_chowlin_bundle(&G, a, res);
     }
+    if (!err && ny == 1 && plot) {
+	int meth = method == R_FIXED ? R_ACF1 : method;
+
+	td_plot(Y0, Y, s, agg, meth, dset);
+    }
 
     *perr = err;
     gretl_matrix_block_destroy(B);
@@ -1187,66 +1221,99 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 /* The method of F. T. Denton, "Adjustment of Monthly or Quarterly
    Series to Annual Totals: An Approach Based on Quadratic
    Minimization", Journal of the American Statistical Association
-   Vol. 66, No. 333 (March 1971), pp. 99-102, proportional first
-   difference variant, as modified by P. A. Cholette, "Adjusting
-   Sub-annual Series to Yearly Benchmarks," Survey Methodology,
-   Vol. 10, 1984, pp. 35-49.
+   Vol. 66, No. 333 (March 1971), pp. 99-102, first difference
+   variant, as modified by P. A. Cholette, "Adjusting Sub-annual
+   Series to Yearly Benchmarks," Survey Methodology, Vol. 10, 1984,
+   pp. 35-49.
 
-   The solution method is based on Tommaso Di Fonzo and Marco Marini,
-   "On the Extrapolation with the Denton Proportional Benchmarking
-   Method", IMF Working Paper WP/12/169, 2012.
+   In the proportional case the solution method is based on Tommaso Di
+   Fonzo and Marco Marini, "On the Extrapolation with the Denton
+   Proportional Benchmarking Method", IMF Working Paper WP/12/169,
+   2012. In the additive case, we employ the "soluzione generale" on
+   page 3 of Di Fonzi's 2003 working paper, "Benchmarking de serie
+   storiche economiche. Nota tecnica ed estenioni".
 */
 
-static gretl_matrix *denton_pfd (const gretl_vector *y0,
-				 const gretl_vector *p,
-				 int s, int agg,
-				 int *err)
+static gretl_matrix *denton_fd (const gretl_matrix *Y0,
+				const gretl_vector *p,
+				int s, int agg,
+				int afd, int plot,
+				DATASET *dset,
+				int *err)
 {
     gretl_matrix *M;
-    gretl_matrix *y;
+    gretl_matrix *Y;
     gretl_matrix *tmp;
-    int N = y0->rows;
-    int sN = p->rows;
-    int sNN = sN + N;
-    int i, j, k = 0;
+    gretl_matrix *DDp = NULL;
+    gretl_matrix *y0, *y;
+    gretl_matrix my0, my;
+    double pk, mij;
+    int N = Y0->rows;
+    int ny = Y0->cols;
+    int sN = s * N;
+    int m = p->rows - sN;
+    int sNm = sN + m;
+    int dim = sNm + N;
+    int i, j, ii, k = 0;
     int offset;
 
     /* we need one big matrix, @M */
-    M = gretl_zero_matrix_new(sNN, sNN);
-    tmp = gretl_matrix_alloc(sN, N);
-    y = gretl_matrix_alloc(sN, 1);
+    M = gretl_zero_matrix_new(dim, dim);
+    /* plus some workspace */
+    if (afd) {
+	tmp = gretl_matrix_alloc(dim, 1);
+    } else {
+	tmp = gretl_matrix_alloc(sNm, N);
+    }
+    /* and the return matrix */
+    Y = gretl_matrix_alloc(sNm, ny);
 
-    if (M == NULL || tmp == NULL || y == NULL) {
+    if (M == NULL || tmp == NULL || Y == NULL) {
 	*err = E_ALLOC;
-	return NULL;
+	goto bailout;
     }
 
+    if (afd) {
+	DDp = gretl_zero_matrix_new(dim, 1);
+	if (DDp == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    /* convenience pointers to columns of Y0, Y */
+    y0 = gretl_matrix_init_full(&my0, N, 1, Y0->val);
+    y = gretl_matrix_init_full(&my, sNm, 1, Y->val);
+
     /* In @M, create (D'D ~ diag(p)*J') | (J*diag(p) ~ 0);
-       see di Fonzo and Marini, equation (4)
+       see di Fonzo and Marini, equation (4), or in the
+       afd case, (D'D ~ J') | (J ~ 0).
     */
 
     /* the upper left portion, D'D */
-    for (i=0; i<sN; i++) {
-	gretl_matrix_set(M, i, i, (i == 0 || i == sN-1)? 1 : 2);
+    for (i=0; i<sNm; i++) {
+	gretl_matrix_set(M, i, i, (i == 0 || i == sNm-1)? 1 : 2);
 	if (i > 0) {
 	    gretl_matrix_set(M, i, i-1, -1);
 	}
-	if (i < sN-1) {
+	if (i < sNm-1) {
 	    gretl_matrix_set(M, i, i+1, -1);
 	}
     }
 
-    /* the bottom and right portions, using @p */
+    /* the bottom and right portions, using @p (or not) */
     k = offset = (agg == AGG_EOP)? s-1 : 0;
-    for (i=sN; i<sNN; i++) {
+    for (i=sNm; i<dim; i++) {
 	if (agg >= AGG_EOP) {
-	    gretl_matrix_set(M, i, offset, p->val[k]);
-	    gretl_matrix_set(M, offset, i, p->val[k]);
+	    pk = afd ? 1 : p->val[k];
+	    gretl_matrix_set(M, i, offset, pk);
+	    gretl_matrix_set(M, offset, i, pk);
 	    k += s;
 	} else {
 	    for (j=offset; j<offset+s; j++) {
-		gretl_matrix_set(M, i, j, p->val[k]);
-		gretl_matrix_set(M, j, i, p->val[k]);
+		pk = afd ? 1 : p->val[k];
+		gretl_matrix_set(M, i, j, pk);
+		gretl_matrix_set(M, j, i, pk);
 		k++;
 	    }
 	}
@@ -1255,32 +1322,56 @@ static gretl_matrix *denton_pfd (const gretl_vector *y0,
 
     *err = gretl_invert_symmetric_indef_matrix(M);
 
-    if (*err) {
-	gretl_matrix_free(y);
-	y = NULL;
-    } else {
-	/* extract the relevant portion of M-inverse and
-	   premultiply by (diag(p) ~ 0) | (0 ~ I)
-	*/
-	double mij;
-
-	for (j=0; j<N; j++) {
-	    for (i=0; i<sN; i++) {
-		mij = gretl_matrix_get(M, i, j+sN);
-		gretl_matrix_set(tmp, i, j, mij * p->val[i]);
-	    }
+    for (ii=0; ii<ny && !*err; ii++) {
+	if (ii > 0) {
+	    /* pick up the current columns for reading and writing */
+	    y0->val = Y0->val + ii * N;
+	    y->val = Y->val + ii * sNm;
 	}
-	gretl_matrix_multiply(tmp, y0, y);
+	if (afd) {
+	    /* form (D'Dp | y0) */
+	    DDp->val[0] = p->val[0] - p->val[1];
+	    for (i=1; i<sNm-1; i++) {
+		DDp->val[i] = 2 * p->val[i] - p->val[i-1] - p->val[i+1];
+	    }
+	    DDp->val[sNm-1] = p->val[sNm-1] - p->val[sNm-2];
+	    memcpy(DDp->val + sNm, y0->val, N * sizeof(double));
+	    /* multiply M into (D'Dp | y0) */
+	    gretl_matrix_multiply(M, DDp, tmp);
+	    /* and extract the portion we want */
+	    memcpy(y->val, tmp->val, sNm * sizeof(double));
+	} else {
+	    /* extract the relevant portion of M-inverse and
+	       premultiply by (diag(p) ~ 0) | (0 ~ I)
+	    */
+	    for (j=0; j<N; j++) {
+		for (i=0; i<sNm; i++) {
+		    mij = gretl_matrix_get(M, i, j+sNm);
+		    gretl_matrix_set(tmp, i, j, mij * p->val[i]);
+		}
+	    }
+	    gretl_matrix_multiply(tmp, y0, y);
+	}
+
+	if (agg == AGG_AVG) {
+	    gretl_matrix_multiply_by_scalar(y, s);
+	}
     }
 
-    if (agg == AGG_AVG) {
-	gretl_matrix_multiply_by_scalar(y, s);
-    }
+ bailout:
 
     gretl_matrix_free(M);
     gretl_matrix_free(tmp);
+    gretl_matrix_free(DDp);
 
-    return y;
+    if (*err) {
+	gretl_matrix_free(Y);
+	Y = NULL;
+    } else if (ny == 1 && plot) {
+	td_plot(Y0, Y, s, agg, afd ? 5 : 4, dset);
+    }
+
+    return Y;
 }
 
 static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
@@ -1288,8 +1379,9 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 				   int s, int agg, int method,
 				   int det, double rho,
 				   gretl_bundle *r,
-				   int verbose, PRN *prn,
-				   int *err)
+				   int verbose, int plot,
+				   DATASET *dset,
+				   PRN *prn, int *err)
 {
     gretl_matrix *ret = NULL;
 
@@ -1299,10 +1391,10 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	    det = 1;
 	}
 	ret = chow_lin_disagg(Y0, X, s, agg, method, det, rho,
-			      r, verbose, prn, err);
-    } else if (method == 4) {
-	/* Modified Denton, proportional first differences */
-	int ylen = gretl_vector_get_length(Y0);
+			      r, verbose, plot, dset, prn, err);
+    } else if (method < 6) {
+	/* Modified Denton, first differences */
+	int ylen = Y0->rows;
 	gretl_matrix *X0 = NULL;
 
 	if (X == NULL) {
@@ -1313,12 +1405,14 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	} else {
 	    int xlen = gretl_vector_get_length(X);
 
-	    if (ylen == 0 || xlen == 0 || xlen != s * ylen) {
+	    if (ylen == 0 || xlen == 0 || xlen < s * ylen) {
 		*err = E_INVARG;
 	    }
 	}
 	if (!*err) {
-	    ret = denton_pfd(Y0, X, s, agg, err);
+	    int afd = (method == 5);
+
+	    ret = denton_fd(Y0, X, s, agg, afd, plot, dset, err);
 	    gretl_matrix_free(X0);
 	}
     } else {
@@ -1349,11 +1443,19 @@ static int get_tdisagg_method (const char *s, int *err)
 {
     int i;
 
-    for (i=0; i<5; i++) {
+    for (i=0; method_names[i] != NULL; i++) {
 	if (!strcmp(s, method_names[i])) {
 	    return i;
 	}
     }
+
+    /* backward compat for the moment */
+    if (!strcmp(s, "denton")) {
+	return R_UROOT + 1;
+    } else if (!strcmp(s, "denton-additive")) {
+	return R_UROOT + 2;
+    }
+
     *err = E_INVARG;
     return -1;
 }
@@ -1361,18 +1463,20 @@ static int get_tdisagg_method (const char *s, int *err)
 static int tdisagg_get_options (gretl_bundle *b,
 				int *pagg, int *pmeth,
 				int *pdet, double *pr,
-				int *pverb)
+				int *pverb, int *pplot,
+				PRN *prn)
 {
     double rho = NADBL;
     const char *str;
     int agg = 0;
     int method = 0;
     int det = 1;
-    int verbose = 0;
+    int verbose = -1;
+    int plot = 0;
     int err = 0;
 
-    if (gretl_bundle_has_key(b, "agg")) {
-	str = gretl_bundle_get_string(b, "agg", &err);
+    if (gretl_bundle_has_key(b, "aggtype")) {
+	str = gretl_bundle_get_string(b, "aggtype", &err);
 	if (!err) {
 	    agg = get_aggregation_type(str, &err);
 	}
@@ -1398,6 +1502,13 @@ static int tdisagg_get_options (gretl_bundle *b,
     if (!err && gretl_bundle_has_key(b, "verbose")) {
 	verbose = gretl_bundle_get_int(b, "verbose", NULL);
     }
+    if (!err && gretl_bundle_has_key(b, "plot")) {
+	plot = gretl_bundle_get_int(b, "plot", NULL);
+    }
+
+    if (!err && verbose < 0) {
+	verbose = gretl_messages_on();
+    }
 
     if (!err) {
 	*pagg = agg;
@@ -1405,6 +1516,13 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pdet = det;
 	*pr = rho;
 	*pverb = verbose;
+	*pplot = plot;
+	if (verbose && method <= R_UROOT) {
+	    pprintf(prn, "  Aggregation type %s\n", aggtype_names[agg]);
+	    if (!na(rho)) {
+		pprintf(prn, "  Input rho value %g\n", rho);
+	    }
+	}
     }
 
     return err;
@@ -1414,26 +1532,29 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
 				 int s, gretl_bundle *b,
 				 gretl_bundle *r,
+				 DATASET *dset,
 				 PRN *prn, int *err)
 {
     int agg = 0, method = 0, det = 1;
-    int verbose = 0;
+    int verbose = 0, plot = 0;
     double rho = NADBL;
 
     if (b != NULL) {
 	*err = tdisagg_get_options(b, &agg, &method, &det,
-				   &rho, &verbose);
+				   &rho, &verbose, &plot,
+				   prn);
 	if (*err) {
 	    return NULL;
 	}
     }
 
 #if CL_DEBUG
-    fprintf(stderr, "time_disaggregate: method = %d\n", method);
+    fprintf(stderr, "time_disaggregate: method = %s\n",
+	    method_names[method]);
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			r, verbose, prn, err);
+			r, verbose, plot, dset, prn, err);
 }
 
 gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
@@ -1444,5 +1565,113 @@ gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
     double rho = NADBL;
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			NULL, 0, NULL, err);
+			NULL, 0, 0, NULL, NULL, err);
+}
+
+/* Add basic info to dummy dataset @hf, sufficient to get
+   a time-series x-axis in td plot, if possible.
+*/
+
+static int set_hf_data_info (DATASET *hf, DATASET *lf, int s)
+{
+    int ok = 0;
+
+    if (lf->pd == 1) {
+	if (s == 4 || s == 12) {
+	    /* annual to quarterly or monthly */
+	    hf->pd = s;
+	    hf->sd0 = lf->sd0 + (s == 4 ? 0.1 : 0.01);
+	    ok = 1;
+	}
+    } else if (lf->pd == 4) {
+	if (s == 3) {
+	    /* quarterly to monthly */
+	    hf->pd = 12;
+	    hf->sd0 = lf->sd0 - 0.1 + 0.01;
+	    ok = 1;
+	}
+    }
+
+    if (ok) {
+	hf->structure = TIME_SERIES;
+	hf->t1 = lf->t1 * s;
+	hf->t2 = lf->t2 * s;
+	hf->n = lf->n * s;
+    }
+
+    return ok;
+}
+
+/* This plot -- which is invoked by giving a non-zero value
+   under the "plot" key in the tdisagg options bundle -- is
+   intended as a simple sanity check. It's a time series plot
+   of the original low-frequency series (with repetition, and
+   shown in "step" form) and the "final series" (scaled for
+   comparability with the original when aggregation is by
+   summation). The plot should offer the right-click "Zoom"
+   option so one can inspect it in more detail.
+*/
+
+static int td_plot (const gretl_matrix *y0,
+		    const gretl_matrix *y,
+		    int s, int agg, int method,
+		    DATASET *dset)
+{
+    DATASET hfd = {0};
+    gretl_matrix *YY;
+    gchar *title;
+    int i, k, T = y0->rows;
+    int sT = s * T;
+    int t, sTm = y->rows;
+    int mult = 1;
+    int err = 0;
+
+    YY = gretl_matrix_alloc(sTm, 2);
+    if (YY == NULL) {
+	return E_ALLOC;
+    }
+
+    /* original data in first column */
+    for (i=0, t=0; i<T; i++) {
+	for (k=0; k<s; k++) {
+	    gretl_matrix_set(YY, t++, 0, y0->val[i]);
+	}
+    }
+
+    if (agg == AGG_SUM) {
+	mult = s;
+    }
+
+    /* final series in second column */
+    for (t=0; t<sTm; t++) {
+	gretl_matrix_set(YY, t, 1, (mult > 1)? mult*y->val[t] : y->val[t]);
+	if (t >= sT) {
+	    gretl_matrix_set(YY, t, 0, NADBL);
+	}
+    }
+
+    if (dset != NULL) {
+	/* Either Y0 or X was a dataset object: we should make
+	   use of dataset info in the plot if we can. But is the
+	   dataset of the higher or lower frequency?
+	*/
+	int ok, hf = (dset->pd > 1 && dset->pd != 52);
+
+	if (hf && dset->pd == 4 && s == 3) {
+	    hf = 0;
+	}
+	if (!hf) {
+	    ok = set_hf_data_info(&hfd, dset, s);
+	    dset = ok ? &hfd : NULL;
+	}
+    }
+
+    title = g_strdup_printf("%s (%s)", _("Temporal disaggregation"),
+			    method_names[method]);
+    err = write_tdisagg_plot(YY, mult, title, dset);
+
+    gretl_matrix_free(YY);
+    g_free(title);
+
+    return err;
 }

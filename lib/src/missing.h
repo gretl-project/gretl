@@ -51,4 +51,6 @@ double missing_obs_fraction (const DATASET *dset);
 
 int any_missing_user_values (const DATASET *dset);
 
+int model_add_missmask (MODEL *pmod, int n);
+
 #endif /* MISSING_H */

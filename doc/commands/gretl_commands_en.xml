@@ -1743,7 +1743,7 @@
 	<option>
 	  <flag>--seasonals</flag>
 	  <effect>include seasonal dummy variables</effect>
-	</option>	
+	</option>
 	<option>
 	  <flag>--skip-df</flag>
 	  <effect>no DF tests on individual variables</effect>
@@ -2417,6 +2417,11 @@
 	  <flag>--quiet</flag>
 	  <effect>just print the Harvey&ndash;Collier test</effect>
 	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>see below</effect>
+        </option>
       </options>
     </usage>
 
@@ -2437,10 +2442,10 @@
       </para>
       <para>
 	The cumulated sum of the scaled forecast errors, or the
-	squares of these errors, is printed and graphed.  The null
-	hypothesis of parameter stability is rejected at the 5 percent
-	significance level if the cumulated sum strays outside of the
-	95 percent confidence band.
+	squares of these errors, is printed.  The null hypothesis of
+	parameter stability is rejected at the 5 percent significance
+	level if the cumulated sum strays outside of the 95 percent
+	confidence band.
       </para>
       <para>
 	In the case of the CUSUM test, the Harvey&ndash;Collier
@@ -2450,6 +2455,16 @@
 	test, the 95 percent confidence band is calculated using the
 	algorithm given in <cite key="edgerton94">Edgerton and Wells
 	(1994)</cite>.
+      </para>
+      <para>
+	By default, if the program is not in batch mode a plot of the
+	cumulated series and confidence band is shown.  This can be
+	adjusted via the <opt>plot</opt> option. The acceptable
+	parameters to this option are <lit>none</lit> (to suppress the
+	plot); <lit>display</lit> (to display a plot even when in
+	batch mode); or a file name. The effect of providing a file
+	name is as described for the <opt>output</opt> option of the
+	<cmdref targ="gnuplot"/> command.
       </para>
     </description>
 
@@ -2519,7 +2534,7 @@
 	<option>
 	  <flag>--no-align</flag>
 	  <effect>ODBC-specific, see below</effect>
-	</option>	
+	</option>
       </options>
     </usage>
 
@@ -2876,7 +2891,7 @@
 	dataset).
       </para>
     </description>
-  </command>  
+  </command>
 
   <command name="debug" section="Programming" context="cli"
     label="Debugging">
@@ -2926,7 +2941,7 @@
 	<option>
 	  <flag>--force</flag>
 	  <effect>see below</effect>
-	</option>	
+	</option>
       </options>
     </usage>
 
@@ -6396,7 +6411,8 @@
       <para>
 	Calculates the Hurst exponent (a measure of persistence or
 	long memory) for a time-series variable having at least 128
-	observations.
+	observations. The result (together with its standard error)
+	can be retrieved via the <fncref targ="$result"/> accessor.  
       </para>
       <para>
 	The Hurst exponent is discussed by <cite
@@ -8015,10 +8031,53 @@
   <command name="maps" section="Utilities" label="Drawing maps" context="gui">
     <description>
       <para>
-	This dialog allows you to create a map, based on a previously
-	loaded map file (ESRI shapefile or GeoJSON file). You have a
-	fairly limited set of options here, but you can exploit a lot
-	more options by using the <fncref targ="geoplot"/> function.
+	This dialog allows you to create a map, based on previously
+	loaded geographical data (in the form of a GeoJSON file or
+	ESRI shapefile). The options are as follows.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    series to plot: this is the series (if any) by which
+	    regions of the map should be colored, also known as the
+	    <quote>payload</quote>. In the absence of a payload only
+	    the map outlines will be shown. If the current dataset
+	    contains one or more series that look like possible
+	    candidates (on a simple heuristic) they will be shown in
+	    the drop-down selector.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    palette: this enables selection of the set of colors for
+	    representing the payload, and so is relevant only if a
+	    payload is selected.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    log scale: in case a payload is selected, should it be
+	    represented on a log scale? By default, no.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    border: should a rectangular border be drawn around the
+	    map? By default, yes, but you can remove it.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    height: this controls the size of the map image. Given the
+	    height, the width is calculated based on the longitude
+	    range of the map.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Please note, you can gain a <i>lot</i> more control over the
+	details of the map by calling the <fncref targ="geoplot"/>
+	function.
       </para>
     </description>
   </command>
@@ -10729,6 +10788,10 @@
 	  <flag>--quiet</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
@@ -10743,8 +10806,8 @@
 	This command provides a means of installing, unloading,
 	querying or deleting gretl function packages. The
 	<repl>action</repl> argument must be one of
-	<lit>install</lit>, <lit>query</lit>, <lit>unload</lit> or
-	<lit>remove</lit>.
+	<lit>install</lit>, <lit>query</lit>, <lit>unload</lit>,
+	<lit>remove</lit> or <lit>index</lit>.
       </para>
       <para>
 	<lit>install</lit>: In the most basic form, with no option
@@ -10783,12 +10846,26 @@
 	<lit>unload</lit> and in addition deletes the file(s)
 	associated with the package from disk.
       </para>
+      <para>
+	<lit>index</lit>: is a special case in which
+	<repl>pkgname</repl> must be replaced by the keyword
+	<quote><lit>addons</lit></quote>: the effect is to update the
+	index of the standard packages known as addons. Such updating
+	is performed automatically from time to time but in some cases
+	a manual update may be useful. In this case the
+	<opt>verbose</opt> flag produces a printout of where gretl has
+	searched and what it has found. To be clear, here's the way to
+	get full indexing output:
+      </para>
+      <code>
+	pkg index addons --verbose
+      </code>
     </description>
 
     <gui-access>
       <menu-path>/File/Function packages/On server</menu-path>
     </gui-access>
-  </command>  
+  </command>
 
   <command name="pkg-depends" section="Programming"
 	   label="Dependencies" context="gui">
@@ -11549,7 +11626,7 @@
     <demos>
 	  <demo>mrw.inp</demo>
 	  <demo>restrict.inp</demo>
-	</demos>  
+	</demos>
 	</examples>
     </usage>
 
@@ -13113,12 +13190,18 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>initvals</lit>: either <lit>auto</lit> (the
-	  default) or the name of a pre-specified matrix. Allows
-	  manual setting of the initial parameter estimates for
-	  numerical optimization problems (such as ARMA
-	  estimation). For details see <guideref
-	  targ="chap:timeseries"/>.
+	  <para><lit>initvals</lit>: the name of a predefined
+	  matrix. Allows manual setting of the initial parameter
+	  vector for certain estimation commands that involve
+	  numerical optimization: <lit>arma</lit>, <lit>garch</lit>,
+	  <lit>logit</lit> and <lit>probit</lit>, <lit>tobit</lit> and
+	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>,
+	  <lit>poisson</lit>, <lit>negbin</lit>, and also when
+	  imposing certain sorts of restriction associated with
+	  VECMs. Unlike other settings, <lit>initvals</lit> is not
+	  persistent: it resets to the default initializer after its
+	  first use. For details in connection with ARMA estimation
+	  see <guideref targ="chap:timeseries"/>.
 	  </para>
 	</li>
 	<li>
@@ -13394,6 +13477,17 @@
 	  specified a number of processes, either directly or
 	  indirectly (by specifying a <lit>hosts</lit> file for use
 	  with MPI).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>graph_theme</lit>: a string, one of
+	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
+	    (the current default), <lit>ethan</lit>,
+	    <lit>iwanthue</lit> or <lit>sober</lit>.  This sets the
+	    <quote>theme</quote> used for graphs produced by
+	    gretl. The <lit>classic</lit> option reverts to the single
+	    theme that was in force prior to version 2020c of gretl.
 	  </para>
 	</li>
       </ilist>
@@ -14470,7 +14564,7 @@
       <para>
 	The table of statistics produced by <lit>summary</lit> can be
 	retrieved in matrix form via the <fncref targ="$result"/>
-	accessor. 
+	accessor.
       </para>
     </description>
 
@@ -15627,12 +15721,12 @@
       </para>
 
 	  <para context="cli">
-	For weighted least squares estimation applied to panel data and 
-	based on the unit specific error variances please see the 
-	<cmdref targ="panel"/> command with the <lit>--unit-weights</lit> 
-	option.  
+	For weighted least squares estimation applied to panel data and
+	based on the unit specific error variances please see the
+	<cmdref targ="panel"/> command with the <lit>--unit-weights</lit>
+	option.
 	  </para>
-	  
+
       <para context="gui">
 	Let "wtvar" denote the variable selected in the "Weight variable"
 	box.  An OLS regression is run, where the dependent variable is
@@ -15914,7 +16008,7 @@
 	column totals and having a probability less than or equal to that
 	of the observed table.
       </para>
-      
+
       <subhead>The bivariate case</subhead>
       <para>
 	In the simple case of a bivariate cross-tabulation the

@@ -8547,6 +8547,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 {
     gretlopt opt = OPT_NONE;
     gboolean selection = FALSE;
+    gchar *prev_workdir = NULL;
     gchar *currdir = NULL;
     gchar *buf = NULL;
 
@@ -8579,14 +8580,16 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	g_path_is_absolute(vwin->fname)) {
 	/* There's a "real" full filename in place */
 	if (editing_alt_script(vwin->role)) {
-	    /* For an "alt" script we should probably chdir
-	       to its location so we're able to pick up any
-	       data files it may reference. We'll also arrange
+	    /* For an "alt" script we'll temporarily reset
+	       workdir to its location so we're able to pick up
+	       any data files it may reference. We'll also arrange
 	       to revert the working directory once we're done.
 	    */
 	    gchar *dname = g_path_get_dirname(vwin->fname);
 
 	    currdir = g_get_current_dir();
+	    prev_workdir = g_strdup(gretl_workdir());
+	    gretl_set_path_by_name("workdir", dname);
 	    gretl_chdir(dname);
 	    g_free(dname);
 	} else if (vwin->role != EDIT_GP && vwin->role != EDIT_PKG_SAMPLE) {
@@ -8629,6 +8632,10 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
     g_free(buf);
 
+    if (prev_workdir != NULL) {
+	gretl_set_path_by_name("workdir", prev_workdir);
+	g_free(prev_workdir);
+    }
     if (currdir != NULL) {
 	gretl_chdir(currdir);
 	g_free(currdir);
@@ -9516,6 +9523,7 @@ int execute_script (char *runfile, const char *buf,
     char tmp[MAXLINE] = {0};
     int including = (exec_code & INCLUDE_EXEC);
     int indent0, bufread = 0;
+    int loopcomp0 = 0;
     int exec_err = 0;
 
     gretl_set_batch_mode(1);
@@ -9551,6 +9559,7 @@ int execute_script (char *runfile, const char *buf,
 
     gretl_exec_state_init(&state, 0, line, &libcmd, model, prn);
     indent0 = gretl_if_state_record();
+    loopcomp0 = gretl_compiling_loop();
 
     while (libcmd.ci != QUIT) {
 	if (gretl_execute_loop()) {
@@ -9645,6 +9654,14 @@ int execute_script (char *runfile, const char *buf,
 
     refresh_data();
     sync_scalars_window();
+
+    if (gretl_compiling_loop() != loopcomp0) {
+	errbox(_("Unbalanced \"loop\"/\"endloop\" in script"));
+	gretl_abort_compiling_loop();
+	if (!exec_err) {
+	    exec_err = E_PARSE;
+	}
+    }
 
     if (exec_err) {
 	gretl_if_state_clear();
@@ -9905,7 +9922,7 @@ static int script_delete_function_package (const char *action,
 	    /* delete package file(s) */
 	    err = delete_function_package(fname);
 	    if (!err) {
-		p = path_last_slash(fname);
+		p = strrslash(fname);
 		if (p != NULL) {
 		    *p = '\0';
 		}

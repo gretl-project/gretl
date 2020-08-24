@@ -91,9 +91,9 @@ typedef enum {
 #define ROBUST_Z         "robust_z"
 #define WILDBOOT_DIST    "wildboot"
 #define MWRITE_G         "mwrite_g"
-#define STRSUB_ON        "string_subst"
 #define MPI_USE_SMT      "mpi_use_smt"
 #define GEOJSON_FAST     "geojson_fast"
+#define GRETL_ASSERT     "assert"
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
@@ -104,7 +104,6 @@ typedef int (*QUERY_STOP) (void);
 
 int libset_init (void);
 void libset_cleanup (void);
-int libset_restore_state_zero (DATASET *dset);
 
 int push_program_state (void);
 int pop_program_state (void);
@@ -145,15 +144,17 @@ void get_bkbp_periods (const DATASET *dset, int *l, int *u);
 void set_mp_bits (int b);
 int get_mp_bits (void);
 
-const gretl_matrix *get_init_vals (void);
-int n_init_vals (void);
-void free_init_vals (void);
+gretl_matrix *get_initvals (void);
+int n_initvals (void);
+
+gretl_matrix *get_initcurv (void);
+int n_initcurv (void);
 
 const gretl_matrix *get_matrix_mask (void);
 int get_matrix_mask_nobs (void);
 void destroy_matrix_mask (void);
 
-void set_loop_on (int verbose);
+void set_loop_on (void);
 void set_loop_off (void);
 
 int gretl_looping (void);
@@ -183,7 +184,6 @@ int gretl_comments_on (void);
 
 int gretl_warnings_on (void);
 int gretl_debugging_on (void);
-int gretl_strsub_on (void);
 
 void set_data_export_decimal_comma (int s);
 char get_data_export_decpoint (void);

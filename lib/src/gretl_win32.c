@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_www.h"
+#include "addons_utils.h"
 
 #include "gretl_win32.h"
 #include <shlobj.h>
@@ -210,13 +211,15 @@ void win32_cli_read_rc (char *callname)
     char dbproxy[64] = {0};
     gchar *gptheme = NULL;
     int use_proxy = 0;
+    int updated = 0;
     FILE *fp;
 
     /* try for a per-user rc file first */
     fp = cli_rcfile_open();
     if (fp != NULL) {
 	get_gretl_config_from_file(fp, &cpaths, dbproxy,
-				   &use_proxy, &gptheme);
+				   &use_proxy, &updated,
+				   &gptheme);
 	fclose(fp);
     }
 
@@ -226,7 +229,8 @@ void win32_cli_read_rc (char *callname)
     fp = cli_gretlnet_open(callname);
     if (fp != NULL) {
 	get_gretl_config_from_file(fp, &cpaths, dbproxy,
-				   &use_proxy, &gptheme);
+				   &use_proxy, &updated,
+				   &gptheme);
 	fclose(fp);
     }
 
@@ -255,6 +259,10 @@ void win32_cli_read_rc (char *callname)
     if (gptheme != NULL) {
 	set_plotstyle(gptheme);
 	g_free(gptheme);
+    }
+
+    if (updated) {
+	update_addons_index(NULL);
     }
 }
 

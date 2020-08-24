@@ -70,7 +70,7 @@
 # include "build.h"
 #endif
 
-#if defined(MAC_NATIVE) && defined(PKGBUILD)
+#if defined(OS_OSX) && defined(PKGBUILD)
 # define ALT_MAC_STARTUP
 #endif
 
@@ -173,11 +173,7 @@ char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OS_OSX)
 char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
-# ifdef MAC_NATIVE
 char Rcommand[MAXSTR] = "/Applications/R.app/Contents/MacOS/R";
-# else
-char Rcommand[MAXSTR] = "/usr/X11R6/bin/xterm -e R";
-# endif
 #else
 char Browser[MAXSTR] = "mozilla";
 char calculator[MAXSTR] = "xcalc";
@@ -538,25 +534,6 @@ static void install_mac_signals (GtkosxApplication *App)
 		     G_CALLBACK(app_open_file_cb), NULL);
 }
 
-# ifdef GRETL_MACINT
-
-gint mac_hide_unhide (GdkEventKey *event)
-{
-    if (event->keyval == GDK_h) {
-	/* straight command-h = hide */
-	gtkosx_application_hide(MacApp);
-	return TRUE;
-    } else if ((event->state & GDK_MOD1_MASK) && event->keyval == 0x1ff) {
-	/* opt-command-h = hide others */
-	gtkosx_application_hide_others(MacApp);
-	return TRUE;
-    }
-
-    return FALSE;
-}
-
-# endif
-
 #endif /* MAC_INTEGRATION */
 
 #if !defined(G_OS_WIN32) && !defined(OS_OSX)
@@ -857,7 +834,7 @@ int main (int argc, char **argv)
 
 #if defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
     set_up_windows_look();
-#elif defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
+#elif defined(OS_OSX) && defined(HAVE_MAC_THEMES)
     set_up_mac_look();
 #endif
 
@@ -1011,7 +988,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	return TRUE;
     }
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (Ctrl && k == GDK_F2) {
 	/* Ctrl-F2 for menubar */
 	GtkWidget *menu;
@@ -1674,7 +1651,7 @@ static void make_main_window (void)
 #endif
 }
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
 # define CTRL_ALL "<meta>A"
 # define HELPKEY "<meta>question"
 #else

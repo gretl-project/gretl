@@ -189,7 +189,7 @@ void set_gretl_charset (void)
     const char *charset = NULL;
     char gretl_charset[32];
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     /* FIXME - why is this necessary? */
     native_utf8 = 1;
 #else

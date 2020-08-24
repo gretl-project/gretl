@@ -48,6 +48,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define MINIMAL_SETVARS 0 /* not yet, probably later */
+
 #define LSDEBUG 0
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
@@ -107,6 +109,12 @@ struct obsinfo_ {
 
 /* structure representing a call to a user-defined function */
 
+enum {
+    RECURSING = 1 << 0,
+    PREV_MSGS = 1 << 1,
+    PREV_ECHO = 1 << 2
+};
+
 struct fncall_ {
     ufunc *fun;    /* the function called */
     int argc;      /* argument count */
@@ -115,8 +123,8 @@ struct fncall_ {
     int *ptrvars;  /* list of pointer arguments */
     int *listvars; /* list of series included in a list argument */
     char *retname; /* name of return value (or dummy string) */
-    int recursing; /* indicator for recursive call */
     obsinfo obs;   /* sample info */
+    int flags;     /* indicators for recursive call, etc */
 };
 
 /* structure representing a user-defined function */
@@ -255,6 +263,10 @@ static char mpi_caller[FN_NAMELEN];
 #define function_is_plugin(f)    (f->flags & UFUN_PLUGIN)
 #define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
+
+#define set_call_recursing(c)   (c->flags |= RECURSING)
+#define unset_call_recursing(c) (c->flags &= ~RECURSING)
+#define is_recursing(c)         (c->flags & RECURSING)
 
 struct flag_and_key {
     int flag;
@@ -547,7 +559,7 @@ fncall *fncall_new (ufunc *fun)
 	call->retname = NULL;
 	call->argc = 0;
 	call->args = NULL;
-	call->recursing = 0;
+	call->flags = 0;
     }
 
     return call;
@@ -1261,7 +1273,7 @@ int gretl_function_recursing (void)
 	GList *tmp = g_list_last(callstack);
 	fncall *call = tmp->data;
 
-	return call->recursing;
+	return is_recursing(call);
     } else {
 	return 0;
     }
@@ -1790,6 +1802,11 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     while (bufgets(line, sizeof line, buf) && !err) {
 	s = line;
 	while (isspace(*s)) s++;
+	if (!(fun->flags & UFUN_USES_SET)) {
+	    if (!strncmp(s, "set ", 4)) {
+		fun->flags |= UFUN_USES_SET;
+	    }
+	}
 	tailstrip(s);
 	err = push_function_line(fun, s, 0);
     }
@@ -2469,7 +2486,7 @@ char **gretl_function_retrieve_code (ufunc *u, int *nlines)
 
 static void name_package_from_filename (fnpkg *pkg)
 {
-    char *p = strrchr(pkg->fname, SLASH);
+    char *p = strrslash(pkg->fname);
     int n;
 
     if (p != NULL) {
@@ -2770,34 +2787,6 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     g_free(trname);
 
     return 0;
-}
-
-int package_is_addon (const char *name)
-{
-    char *myname = NULL;
-    int ret = 0;
-
-    if (strchr(name, '.') != NULL) {
-	char *p;
-
-	myname = gretl_strdup(name);
-	p = strchr(myname, '.');
-	*p = '\0';
-	name = myname;
-    }
-
-    if (!strcmp(name, "gig") ||
-	!strcmp(name, "SVAR") ||
-	!strcmp(name, "HIP") ||
-	!strcmp(name, "ivpanel") ||
-	!strcmp(name, "dbnomics") ||
-	!strcmp(name, "extra")) {
-	ret = 1;
-    }
-
-    free(myname);
-
-    return ret;
 }
 
 static int package_write_index (fnpkg *pkg, PRN *inprn)
@@ -3564,12 +3553,12 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	failed = "failed\n";
     }
 
-    if (strrchr(fname, SLASH) != NULL) {
+    if (strrslash(fname) != NULL) {
 	/* directory change needed */
 	char dirname[FILENAME_MAX];
 
 	strcpy(dirname, fname);
-	p = strrchr(dirname, SLASH);
+	p = strrslash(dirname);
 	*p = '\0';
 	currdir = g_get_current_dir();
 	err = gretl_chdir(dirname);
@@ -5920,13 +5909,29 @@ fnpkg *get_function_package_by_name (const char *pkgname)
 {
     int i;
 
-    for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(pkgname, pkgs[i]->name)) {
-	    return pkgs[i];
-	}
-    }
+    if (has_suffix(pkgname, ".gfn") || has_suffix(pkgname, ".zip")) {
+	/* just in case: strip off the extension */
+	gchar *tmp = g_strdup(pkgname);
+	gchar *p = strrchr(tmp, '.');
+	fnpkg *ret = NULL;
 
-    return NULL;
+	*p = '\0';
+	for (i=0; i<n_pkgs; i++) {
+	    if (!strcmp(tmp, pkgs[i]->name)) {
+		ret = pkgs[i];
+		break;
+	    }
+	}
+	g_free(tmp);
+	return ret;
+    } else {
+	for (i=0; i<n_pkgs; i++) {
+	    if (!strcmp(pkgname, pkgs[i]->name)) {
+		return pkgs[i];
+	    }
+	}
+	return NULL;
+    }
 }
 
 /**
@@ -7204,6 +7209,10 @@ int gretl_function_append_line (ExecState *s)
 		    err = 1;
 		}
 		set_compiling_off();
+	    } else if (cmd->ci == SET) {
+		if (!(fun->flags & UFUN_USES_SET)) {
+		    fun->flags |= UFUN_USES_SET;
+		}
 	    } else if (cmd->ci == FUNC) {
 		err = E_FNEST;
 	    } else if (cmd->ci == IF) {
@@ -8324,6 +8333,26 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
     return simple_set_obs(dset, oi->pd, oi->stobs, opt);
 }
 
+#if MINIMAL_SETVARS
+
+static void push_verbosity (fncall *call)
+{
+    if (gretl_messages_on()) {
+	call->flags |= PREV_MSGS;
+    }
+    if (gretl_echo_on()) {
+	call->flags |= PREV_ECHO;
+    }
+}
+
+static void pop_verbosity (fncall *call)
+{
+    set_gretl_messages(call->flags & PREV_MSGS);
+    set_gretl_echo(call->flags & PREV_ECHO);
+}
+
+#endif /* MINIMAL_SETVARS */
+
 /* do the basic housekeeping that is required when a function exits:
    destroy local variables, restore previous sample info, etc.
 */
@@ -8408,7 +8437,15 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     /* if any anonymous equations system was defined: clean up */
     delete_anonymous_equation_system(d);
 
+#if MINIMAL_SETVARS
+    if (call->fun->flags & UFUN_USES_SET) {
+	pop_program_state();
+    } else {
+	pop_verbosity(call);
+    }
+#else
     pop_program_state();
+#endif
 
     if (dset != NULL && call->obs.changed) {
 	restore_obs_info(&call->obs, dset);
@@ -8443,7 +8480,7 @@ static void reset_saved_loops (ufunc *u)
 
 static void set_pkgdir (fnpkg *pkg)
 {
-    const char *p = strrchr(pkg->fname, SLASH);
+    const char *p = strrslash(pkg->fname);
 
     if (p != NULL) {
 	char *pkgdir = gretl_strndup(pkg->fname, p - pkg->fname);
@@ -8461,7 +8498,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     while (tmp != NULL) {
 	prevcall = tmp->data;
 	if (prevcall->fun == call->fun) {
-	    call->recursing = 1;
+	    set_call_recursing(call);
 	    break;
 	}
 	tmp = tmp->next;
@@ -8469,7 +8506,16 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 
     set_previous_depth(fn_executing);
     fn_executing++;
+
+#if MINIMAL_SETVARS
+    if (call->fun->flags & UFUN_USES_SET) {
+	push_program_state();
+    } else {
+	push_verbosity(call);
+    }
+#else
     push_program_state();
+#endif
 
     callstack = g_list_append(callstack, call);
 
@@ -9002,7 +9048,7 @@ int attach_loop_to_function (void *ptr)
     ufunc *u = NULL;
     int err = 0;
 
-    if (call != NULL && !call->recursing) {
+    if (call != NULL && !is_recursing(call)) {
 	u = call->fun;
     }
 
@@ -9213,7 +9259,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
 	}
 
-	if (u->lines[i].loop != NULL && !call->recursing) {
+	if (u->lines[i].loop != NULL && !is_recursing(call)) {
 #if LSDEBUG
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
@@ -9333,7 +9379,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret,
 			    descrip, prn, &err);
 
-    if (!err && !call->recursing) {
+    if (!err && !is_recursing(call)) {
 	reset_saved_loops(call->fun);
     }
 
@@ -9829,7 +9875,7 @@ void *function_package_get_editor (fnpkg *pkg)
 
 int delete_function_package (const char *gfnname)
 {
-    char *p = strrchr(gfnname, SLASH);
+    char *p = strrslash(gfnname);
     gchar *pkgname = NULL;
     gchar *pkgdir = NULL;
     gchar *pkgsub = NULL;
@@ -9842,9 +9888,9 @@ int delete_function_package (const char *gfnname)
 	    *p = '\0';
 	}
 	pkgdir = g_strdup(gfnname);
-	p = strrchr(pkgdir, SLASH);
+	p = strrslash(pkgdir);
 	*p = '\0';
-	p = strrchr(pkgdir, SLASH);
+	p = strrslash(pkgdir);
 	if (p != NULL) {
 	    pkgsub = g_strdup(p + 1);
 	}

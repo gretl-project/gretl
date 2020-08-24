@@ -4,7 +4,7 @@ version = 0.7
 date = 2020-07-09
 description = extra functions for hansl scripting
 tags = C88
-min-version = 2016a # relatively arbitrary, was 1.10.0
+min-version = 2016a
 data-requirement = no-data-ok
 public = gap_filler winsor nearPSD zeroifclose commute \
   eliminate duplicate truncnorm scores2x2 WSRcritical WSRpvalue \

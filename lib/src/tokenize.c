@@ -2610,6 +2610,7 @@ static int try_for_command_index (CMD *cmd, int i,
 		    cmd->flags |= CMD_ENDFUN;
 		} else if (endci == LOOP) {
 		    gretl_errmsg_set("'end loop': did you mean 'endloop'");
+		    gretl_abort_compiling_loop();
 		    *err = E_PARSE;
 		}
 	    }

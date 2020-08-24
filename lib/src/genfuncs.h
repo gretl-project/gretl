@@ -82,7 +82,7 @@ int tramo_linearize_series (const double *x, double *y,
 int panel_statistic (const double *x, double *y, const DATASET *dset,
 		     int k, const double *mask);
 
-gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
+gretl_matrix *panel_shrink (const double *x, int skip, const DATASET *dset,
 			    int *err);
 
 int panel_expand (const gretl_matrix *x, double *y,
@@ -202,6 +202,7 @@ double logistic_cdf (double x);
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, void *b, void *r,
+			      DATASET *dset,
 			      PRN *prn, int *err);
 
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
@@ -264,5 +265,9 @@ int geoplot_driver (const char *fname,
 		    const double *x,
 		    const DATASET *dset,
 		    void *optptr);
+
+int substitute_values (double *dest, const double *src, int n,
+		       const double *v0, int n0,
+		       const double *v1, int n1);
 
 #endif /* GENFUNCS_H */

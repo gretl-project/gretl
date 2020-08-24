@@ -476,6 +476,18 @@
       </description>
     </function>
 
+    <function name="$mapfile" section="access" output="string">
+      <description>
+	<para>
+	  If data from a GeoJSON file or ESRI shapefile have been
+	  loaded, returns the name of the file that should be opened
+	  to obtain the map polygons, otherwise returns an empty
+	  string.  This is designed for use with the <fncref
+	  targ="geoplot"/> function.
+	</para>
+      </description>
+    </function>
+
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
@@ -543,16 +555,16 @@
       </description>
     </function>
 
-    <function name="$nobs" section="access" targ="dnobs" output="int">
+    <function name="$nobs" section="access" output="int">
       <description>
 	<para>
 	  Returns the number of observations in the currently selected
-	  sample. Related: <fncref label="\$tmax" targ="dtmax"/>.
+	  sample. Related: <fncref targ="$tmax"/>.
 	</para>
       </description>
     </function>
 
-    <function name="$now" section="access" targ="dnow" output="vector">
+    <function name="$now" section="access" output="vector">
       <description>
 	<para>
 	  Returns a 2-vector: its first element is the number of
@@ -719,7 +731,7 @@
       </description>
     </function>
 
-    <function name="$pvalue" section="access" targ="dpvalue" output="scalar-or-matrix">
+    <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
 	  Returns the p-value of the test statistic that was generated
@@ -759,10 +771,11 @@
 	  Provides stored information following certain commands that
 	  do not have specific accessors. The commands in question
 	  include <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
-	  <cmdref targ="freq"/>, <cmdref targ="summary"/>, <cmdref
-	  targ="xtab"/>, <cmdref targ="vif"/> and <cmdref targ="bkw"/>
-	  (in which cases the result is a matrix), plus <cmdref
-	  targ="pkg"/> (which optionally stores a bundle result).
+	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref
+	  targ="summary"/>, <cmdref targ="xtab"/>, <cmdref
+	  targ="vif"/> and <cmdref targ="bkw"/> (in which cases the
+	  result is a matrix), plus <cmdref targ="pkg"/> (which
+	  optionally stores a bundle result).
 	</para>
       </description>
     </function>
@@ -1077,7 +1090,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref label="\$pvalue" targ="dpvalue"/>
+            <fncref targ="$pvalue"/>
 	  </seelist>
 	</para>
       </description>
@@ -1095,8 +1108,8 @@
 	</para>
 	<para>
 	  Note that <lit>$tmax</lit> does not in general equal <fncref
-	  label="\$nobs" targ="dnobs"/>, which gives the number of
-	  observations in the current sample range.
+	  targ="$nobs"/>, which gives the number of observations in
+	  the current sample range.
 	</para>
       </description>
     </function>
@@ -3235,9 +3248,9 @@
       <description>
 	<para>
 	  Returns the determinant of <argname>A</argname>, computed via the
-	  LU factorization.
+	  LU factorization. If what you actually want is the log
+	  determinant you should call <fncref targ="ldet"/> instead.
 	  <seelist>
-            <fncref targ="ldet"/>
             <fncref targ="rcond"/>
 	    <fncref targ="cnumber"/>
 	  </seelist>
@@ -4460,8 +4473,20 @@
       </fnargs>
       <description>
 	<para>
-	  Right now this is just a placeholder, but that should be
-	  fixed before long!
+	  Calls for production of a map, when suitable geographical
+	  data are present. In most cases the
+	  <argname>mapfile</argname> argument should be given as
+	  <fncref targ="$mapfile"/>, an accessor that retrieves the
+	  name of the relevant GeoJSON file or ESRI shapefile. The
+	  optional <argname>payload</argname> argument is used to give
+	  the name of a series with which to colorize the regions of
+	  the map. And the final bundle argument enables you to set
+	  numerous options.
+	</para>
+	<para>
+	  See the geoplot documentation, <doc>geoplot.pdf</doc>, for
+	  full details and examples. This explains all the settings
+	  configurable via the <argname>options</argname> argument.
 	</para>
       </description>
     </function>
@@ -6362,10 +6387,15 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the natural log of the determinant of <math>A</math>,
-	  computed via the LU factorization.
+	  Returns the natural log of the determinant of
+	  <math>A</math>, computed via the LU factorization. Note that
+	  this is more efficient than calling <fncref targ="det"/> and
+	  taking the log of the result. Moreover, in some cases
+	  <lit>ldet</lit> is able to return a valid result even if the
+	  determinant of <math>A</math> is numerically
+	  <quote>infinite</quote> (exceeds the C library's maximum
+	  double-precision number).
 	  <seelist>
-            <fncref targ="det"/>
             <fncref targ="rcond"/>
 	    <fncref targ="cnumber"/>
 	  </seelist>
@@ -7436,11 +7466,11 @@
 	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
 	  processes. Broadcasts the <argname>object</argname>
 	  argument, which must be given in pointer form, to all
-	  processes. The object in question must be a named matrix,
-	  bundle, array or scalar, declared in all processes prior to
-	  the broadcast. No process can continue beyond a call to
-	  <lit>mpibcast</lit> until all processes have successfully
-	  executed it.
+	  processes. The object in question (a matrix, bundle, scalar,
+	  array, string or list) must be declared in all processes
+	  prior to the broadcast. No process can continue beyond a
+	  call to <lit>mpibcast</lit> until all processes have
+	  successfully executed it.
 	</para>
 	<para>
 	  By default <quote>root</quote>, the source of the broadcast,
@@ -7490,10 +7520,10 @@
 	<para>
 	  Available only when gretl is in MPI mode (see <mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
-	  processes. This function gathers objects (scalars or
-	  matrices only) of a specified name, given in pointer form,
-	  from all processes and <quote>reduces</quote> them to a
-	  single object at the root node.
+	  processes. This function gathers objects (scalars, matrices
+	  or arrays) of a specified name, given in pointer form, from
+	  all processes and <quote>reduces</quote> them to a single
+	  object at the root node.
 	</para>
 	<para>
 	  The <lit>op</lit> argument specifies the reduction operation
@@ -7502,7 +7532,8 @@
 	  and <lit>min</lit>. For matrices the methods are
 	  <lit>sum</lit>, <lit>prod</lit> (Hadamard product),
 	  <lit>hcat</lit> (horizontal concatenation) and
-	  <lit>vcat</lit> (vertical concatenation).
+	  <lit>vcat</lit> (vertical concatenation). For arrays
+	  only <lit>acat</lit> (concatenation) is supported.
 	</para>
 	<para>
 	  By default <quote>root</quote>, the target of the reduction,
@@ -7576,7 +7607,7 @@
 	<para>
 	  Available only when gretl is in MPI mode (see <mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Sends the named object
-	  (which must be a matrix, bundle, array or scalar) from the
+	  (a matrix, bundle, array, scalar, string or list) from the
 	  current process to the one identified by the integer
 	  <argname>dest</argname> (from 0 to the number of MPI
 	  processes minus 1).
@@ -7800,7 +7831,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7812,6 +7843,15 @@
 	  elements are repeated cyclically; otherwise, if
 	  <argname>X</argname> has more elements, only the first
 	  <math>k</math> are used.
+	</para>
+	<para>
+	  If the third argument is omitted, <argname>c</argname>
+	  defaults to 1 if <argname>X</argname> is <by r="1" c="1"/>
+	  otherwise to <math>N</math>/<argname>r</argname> where
+	  <math>N</math> is the total number of elements in
+	  <argname>X</argname>. However, if <math>N</math> is not an
+	  integer multiple of <argname>r</argname> an error is
+	  flagged.
 	</para>
 	<para>
 	  <seelist>

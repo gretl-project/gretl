@@ -226,7 +226,7 @@ static char *winname_double_underscores (const gchar *src)
 static gint maybe_select_other_window (GdkEventKey *event,
 				       gpointer data)
 {
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (cmd_key(event)) {
 	if (event->keyval == GDK_asciitilde) {
 	    return select_other_window(data, WINDOW_PREV);
@@ -252,17 +252,12 @@ static gint maybe_select_other_window (GdkEventKey *event,
 static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
 			       gpointer data)
 {
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if ((event->state & GDK_MOD1_MASK) && event->keyval == alt_w_key) {
 	/* alt-w -> Sigma */
 	window_list_popup(w, (GdkEvent *) event, data);
 	return TRUE;
     }
-# ifdef GRETL_MACINT
-    if (cmd_key(event) && mac_hide_unhide(event)) {
-	return TRUE;
-    }
-# endif
 #else /* non-Mac */
     if (event->state & GDK_MOD1_MASK) {
 	if (event->keyval == GDK_w) {

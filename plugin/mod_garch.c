@@ -736,6 +736,7 @@ int garch_estimate_mod (const double *y, const double **X,
 			int vopt, PRN *prn)
 {
     garch_container *DH;
+    gretlopt opt;
     double toler;
     int npar, maxit;
     int use_newton = 0;
@@ -756,6 +757,7 @@ int garch_estimate_mod (const double *y, const double **X,
     }
 
     BFGS_defaults(&maxit, &toler, GARCH);
+    opt = (prn != NULL)? (OPT_U | OPT_V) : OPT_U;
 
     if (use_newton) {
 	double crittol = 1.0e-7;
@@ -766,13 +768,11 @@ int garch_estimate_mod (const double *y, const double **X,
 				 crittol, gradtol, fncount, 
 				 C_LOGLIK, garch_loglik, 
 				 garch_score, NULL, DH,
-				 (prn != NULL)? OPT_V : OPT_NONE,
-				 prn);
+				 opt, prn);
     } else {
 	err = BFGS_max(theta, npar, maxit, toler, 
 		       fncount, grcount, garch_loglik, C_LOGLIK,
-		       garch_score, DH, NULL, 
-		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+		       garch_score, DH, NULL, opt, prn);
     }
 
 #if GDEBUG

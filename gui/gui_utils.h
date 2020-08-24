@@ -172,8 +172,6 @@ void *gui_get_plugin_function (const char *funcname);
 
 int get_imported_data (char *fname, int ftype, int append);
 
-char *path_last_slash (char *path);
-
 const char *path_last_slash_const (const char *path);
 
 char *gretl_basename (char *dest, const char *src, int addscore);

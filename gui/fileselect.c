@@ -864,52 +864,135 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
     }
 }
 
+/* local extension of enum GretlFileType in dataio.h */
+enum {
+    GRETL_TXT = GRETL_UNRECOGNIZED + 1,
+    GRETL_SHP,
+    GRETL_GEOJSON,
+    GRETL_ALL
+};
+
 struct filter_info {
     const char *desc;
     const char *pat;
+    int id;
 };
 
 static struct filter_info data_filters[] = {
-    { N_("Gretl datafiles (*.gdt, *.gdtb)"), "*.gdt" },
-    { N_("CSV files (*.csv)"), "*.csv", },
-    { N_("ASCII files (*.txt)"), "*.txt" },
-    { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" },
-    { N_("Open Document files (*.ods)"), "*.ods" },
-    { N_("Excel files (*.xls)"), "*.xls" },
-    { N_("Excel files (*.xlsx)"), "*.xlsx" },
-    { N_("Stata files (*.dta)"), "*.dta" },
-    { N_("Eviews files (*.wf1)"), "*.wf1" },
-    { N_("SPSS files (*.sav)"), "*.sav" },
-    { N_("SAS xport files (*.xpt)"), "*.xpt" },
-    { N_("JMulTi files (*.dat)"), "*.dat" },
-    { N_("Shapefiles (*.shp)"), "*.shp" },
-    { N_("GeoJSON files (*.geojson, *.json)"), "*.geojson" },
-    { N_("all files (*.*)"), "*" }
+    { N_("Gretl datafiles (*.gdt, *.gdtb)"), "*.gdt", GRETL_XML_DATA },
+    { N_("CSV files (*.csv)"), "*.csv", GRETL_CSV },
+    { N_("ASCII files (*.txt)"), "*.txt",  GRETL_TXT },
+    { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric", GRETL_GNUMERIC },
+    { N_("Open Document files (*.ods)"), "*.ods", GRETL_ODS },
+    { N_("Excel files (*.xls)"), "*.xls", GRETL_XLS },
+    { N_("Excel files (*.xlsx)"), "*.xlsx", GRETL_XLSX },
+    { N_("Stata files (*.dta)"), "*.dta", GRETL_DTA },
+    { N_("Eviews files (*.wf1)"), "*.wf1", GRETL_WF1 },
+    { N_("SPSS files (*.sav)"), "*.sav", GRETL_SAV },
+    { N_("SAS xport files (*.xpt)"), "*.xpt", GRETL_SAS },
+    { N_("JMulTi files (*.dat)"), "*.dat", GRETL_JMULTI },
+    { N_("Shapefiles (*.shp)"), "*.shp", GRETL_SHP },
+    { N_("GeoJSON files (*.geojson, *.json)"), "*.geojson", GRETL_GEOJSON },
+    { N_("all files (*.*)"), "*" , GRETL_ALL }
+};
+
+static struct filter_info script_filters[] = {
+    { N_("gretl script files (*.inp)"), "*.inp", EDIT_HANSL },
+    { N_("GNU R files (*.R)"), "*.R", EDIT_R },
+    { N_("gnuplot files (*.plt)"), "*.plt", EDIT_GP },
+    { N_("GNU Octave files (*.m)"), "*.m", EDIT_OCTAVE },
+    { N_("Python files (*.py)"), "*.py", EDIT_PYTHON },
+    { N_("Julia files (*.jl)"), "*.jl", EDIT_JULIA },
+    { N_("Ox files (*.ox)"), "*.ox", EDIT_OX },
+    { N_("Stata files (*.do)"), "*.do", EDIT_STATA },
+    { N_("Dynare files (*.mod)"), "*.mod", EDIT_DYNARE }
 };
 
 static int n_data_filters = G_N_ELEMENTS(data_filters);
-
+static int n_script_filters = G_N_ELEMENTS(script_filters);
 static int open_filter_index;
 
-static GtkFileFilter *filesel_add_data_filter (GtkWidget *filesel,
-					       int i)
+static GtkFileFilter *add_filter_by_index (GtkWidget *filesel,
+					   int action, int i)
 {
     GtkFileFilter *filt = gtk_file_filter_new();
+    struct filter_info *fi;
 
-    gtk_file_filter_set_name(filt, _(data_filters[i].desc));
-    gtk_file_filter_add_pattern(filt, data_filters[i].pat);
-    if (i == 0) {
-	gtk_file_filter_add_pattern(filt, "*.gdtb");
-    } else if (i == 13) {
-	gtk_file_filter_add_pattern(filt, "*.json");
+    if (action == OPEN_SCRIPT) {
+	fi = &script_filters[i];
     } else {
-	maybe_upcase_filter_pattern(filt, data_filters[i].pat);
+	fi = &data_filters[i];
     }
-    g_object_set_data(G_OBJECT(filt), "filter-index",
-		      GINT_TO_POINTER(i));
+
+    gtk_file_filter_set_name(filt, _(fi->desc));
+    gtk_file_filter_add_pattern(filt, fi->pat);
+    if (action == OPEN_DATA) {
+	if (fi->id == GRETL_XML_DATA) {
+	    gtk_file_filter_add_pattern(filt, "*.gdtb");
+	} else if (action == OPEN_DATA && fi->id == GRETL_GEOJSON) {
+	    gtk_file_filter_add_pattern(filt, "*.json");
+	} else {
+	    maybe_upcase_filter_pattern(filt, fi->pat);
+	}
+	g_object_set_data(G_OBJECT(filt), "filter-index",
+			  GINT_TO_POINTER(i));
+    }
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 
     return filt;
+}
+
+static void filesel_add_data_filters (GtkWidget *filesel)
+{
+    GtkFileFilter *flt;
+    int i;
+
+    for (i=0; i<n_data_filters; i++) {
+	flt = add_filter_by_index(filesel, OPEN_DATA, i);
+	if (i == open_filter_index) {
+	    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt);
+	}
+    }
+}
+
+static void filesel_add_script_filters (GtkWidget *filesel,
+					int role)
+{
+    GtkFileFilter *flt;
+    int i;
+
+    for (i=0; i<n_script_filters; i++) {
+	flt = add_filter_by_index(filesel, OPEN_SCRIPT, i);
+	if (script_filters[i].id == role) {
+	    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt);
+	}
+    }
+}
+
+static GtkFileFilter *filesel_add_data_filter (GtkWidget *filesel,
+					       int id)
+{
+    int i;
+
+    for (i=0; i<n_data_filters; i++) {
+	if (data_filters[i].id == id) {
+	    return add_filter_by_index(filesel, OPEN_DATA, i);
+	}
+    }
+    return NULL;
+}
+
+static GtkFileFilter *filesel_add_script_filter (GtkWidget *filesel,
+						 int id)
+{
+    int i;
+
+    for (i=0; i<n_script_filters; i++) {
+	if (script_filters[i].id == id) {
+	    return add_filter_by_index(filesel, OPEN_DATA, i);
+	}
+    }
+    return NULL;
 }
 
 static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
@@ -924,29 +1007,6 @@ static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
     gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filt);
 
     return filt;
-}
-
-static int script_filter_index (int role)
-{
-    int filtmap[8][2] = {
-	{EDIT_R, 1},
-	{EDIT_GP, 2},
-	{EDIT_OCTAVE, 3},
-	{EDIT_PYTHON, 4},
-	{EDIT_JULIA, 5},
-	{EDIT_OX, 6},
-	{EDIT_STATA, 7},
-	{EDIT_DYNARE, 8}
-    };
-    int i;
-
-    for (i=0; i<7; i++) {
-	if (role == filtmap[i][0]) {
-	    return filtmap[i][1];
-	}
-    }
-
-    return 0;
 }
 
 /* return non-zero if we add more than one selectable filter */
@@ -968,44 +1028,21 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
 	multi = 0;
     } else if (action == OPEN_DATA || action == APPEND_DATA) {
-	GtkFileFilter *flt;
-	int i;
-
-	for (i=0; i<n_data_filters; i++) {
-	    flt = filesel_add_data_filter(filesel, i);
-	    if (i == open_filter_index) {
-		gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt);
-	    }
-	}
+	filesel_add_data_filters(filesel);
     } else if (action == OPEN_SCRIPT) {
-	GtkFileFilter *flt[9] = {0};
-	int fidx;
-
-	flt[0] = filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
-	flt[1] = filesel_add_filter(filesel, N_("GNU R files (*.R)"), "*.R");
-	flt[2] = filesel_add_filter(filesel, N_("gnuplot files (*.plt)"), "*.plt");
-	flt[3] = filesel_add_filter(filesel, N_("GNU Octave files (*.m)"), "*.m");
-	flt[4] = filesel_add_filter(filesel, N_("Python files (*.py)"), "*.py");
-	flt[5] = filesel_add_filter(filesel, N_("Julia files (*.jl)"), "*.jl");
-	flt[6] = filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
-	flt[7] = filesel_add_filter(filesel, N_("Stata files (*.do)"), "*.do");
-	flt[8] = filesel_add_filter(filesel, N_("Dynare files (*.mod)"), "*.mod");
-	fidx = script_filter_index(role);
-	if (fidx > 0) {
-	    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt[fidx]);
-	}
+	filesel_add_script_filters(filesel, role);
     } else if (action == OPEN_LABELS || action == OPEN_BARS) {
-	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt");
-	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
+	filesel_add_data_filter(filesel, GRETL_TXT);
+	filesel_add_data_filter(filesel, GRETL_ALL);
     } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
 	       action == SAVE_BOOT_DATA) {
-	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
-	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
+	filesel_add_data_filter(filesel, GRETL_XML_DATA);
     } else if (action == OPEN_ANY) {
-	filesel_add_filter(filesel, N_("all files (*.*)"), "*");
-	filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
-	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
-	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
+	filesel_add_data_filter(filesel, GRETL_ALL);
+	filesel_add_script_filter(filesel, EDIT_HANSL);
+	filesel_add_data_filter(filesel, GRETL_XML_DATA);
+	filesel_add_data_filter(filesel, GRETL_SHP);
+	filesel_add_data_filter(filesel, GRETL_GEOJSON);
     } else if (action == UPLOAD_PKG) {
 	filesel_add_filter(filesel, N_("plain function packages (*.gfn)"), "*.gfn");
 	filesel_add_filter(filesel, N_("zipped function packages (*.zip)"), "*.zip");

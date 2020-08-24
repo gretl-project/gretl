@@ -507,7 +507,7 @@ static void get_seats_command (char *seats, const char *tramo)
     char *p;
 
     strcpy(seats, tramo);
-    p = strrchr(seats, SLASH);
+    p = strrslash(seats);
     if (p != NULL) {
 	strcpy(p + 1, "seats");
     } else {

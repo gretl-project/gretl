@@ -93,6 +93,20 @@ void gretl_array_void_content (gretl_array *A)
     }
 }
 
+/* Reduce the array to empty status, setting the
+   entire data array to NULL without freeing anything.
+   Makes sense only if the data array is actually
+   "owned" elsewhere.
+*/
+
+void gretl_array_nullify_content (gretl_array *A)
+{
+    if (A != NULL) {
+	A->data = NULL;
+	A->n = 0;
+    }
+}
+
 /* Set the array's element pointers to NULL, without
    freeing them. Makes sense only if the element
    pointers are actually "owned" by something else
@@ -256,6 +270,28 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
 	if (!err) {
 	    *ns = A->n;
 	    AS = (char **) A->data;
+	}
+    }
+
+    return AS;
+}
+
+/* note: take ownership of the returned value */
+
+char **gretl_array_steal_strings (gretl_array *A, int *ns)
+{
+    char **AS = NULL;
+
+    *ns = 0;
+
+    if (A != NULL && A->type == GRETL_TYPE_STRINGS) {
+	int err = strings_array_null_check(A);
+
+	if (!err) {
+	    *ns = A->n;
+	    AS = (char **) A->data;
+	    A->n = 0;
+	    A->data = NULL;
 	}
     }
 
@@ -1382,6 +1418,128 @@ gretl_array *gretl_arrays_join (gretl_array *A,
     if (!*err) {
 	*err = gretl_array_copy_content(C, B, A->n);
     }
+
+    if (*err && C != NULL) {
+	gretl_array_destroy(C);
+	C = NULL;
+    }
+
+    return C;
+}
+
+/* respond to C = A || B */
+
+gretl_array *gretl_arrays_union (gretl_array *A,
+				 gretl_array *B,
+				 int *err)
+{
+    gretl_array *C = NULL;
+    const char *sa, *sb;
+    char *copy = NULL;
+    int i, j, n = 0;
+
+    if (A == NULL || B == NULL) {
+	*err = E_DATA;
+    } else if (A->type != GRETL_TYPE_STRINGS ||
+	       B->type != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else {
+	if (B->n > 0) {
+	    copy = calloc(1, B->n);
+	}
+	n = A->n;
+	for (j=0; j<B->n; j++) {
+	    sb = B->data[j];
+	    if (sb == NULL || *sb == '\0') {
+		continue;
+	    }
+	    copy[j] = 1;
+	    for (i=0; i<A->n; i++) {
+		sa = A->data[i];
+		if (sa == NULL || *sa == '\0') {
+		    continue;
+		}
+		if (strcmp(sa, sb) == 0) {
+		    copy[j] = 0;
+		    break;
+		}
+	    }
+	    n += copy[j];
+	}
+	C = gretl_array_new(A->type, n, err);
+    }
+
+    if (!*err) {
+	*err = gretl_array_copy_content(C, A, 0);
+    }
+
+    if (!*err && n > A->n) {
+	i = A->n;
+	for (j=0; j<B->n; j++) {
+	    if (copy[j]) {
+		C->data[i++] = gretl_strdup(B->data[j]);
+	    }
+	}
+    }
+    free(copy);
+
+    if (*err && C != NULL) {
+	gretl_array_destroy(C);
+	C = NULL;
+    }
+
+    return C;
+}
+
+/* respond to C = A && B */
+
+gretl_array *gretl_arrays_intersection (gretl_array *A,
+					gretl_array *B,
+					int *err)
+{
+    gretl_array *C = NULL;
+    const char *sa, *sb;
+    char *copy = NULL;
+    int i, j, n = 0;
+
+    if (A == NULL || B == NULL) {
+	*err = E_DATA;
+    } else if (A->type != GRETL_TYPE_STRINGS ||
+	       B->type != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else {
+	if (A->n > 0) {
+	    copy = calloc(1, A->n);
+	}
+	for (i=0; i<A->n; i++) {
+	    sa = A->data[i];
+	    if (sa == NULL || *sa == '\0') {
+		continue;
+	    }
+	    for (j=0; j<B->n; j++) {
+		sb = B->data[j];
+		if (sb == NULL || *sb == '\0') {
+		    continue;
+		}
+		if (strcmp(sa, sb) == 0) {
+		    copy[i] = 1;
+		    break;
+		}
+	    }
+	    n += copy[i];
+	}
+	C = gretl_array_new(A->type, n, err);
+    }
+
+    if (!*err && n > 0) {
+	j = 0;
+	for (i=0; i<A->n; i++) {
+	    if (copy[i]) {
+		C->data[j++] = gretl_strdup(A->data[i]);
+	    }
+	}
+    }
+    free(copy);
 
     if (*err && C != NULL) {
 	gretl_array_destroy(C);

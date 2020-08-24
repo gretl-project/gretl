@@ -1038,10 +1038,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
     const char *strval = NULL;
     int err = 0;
 
-    if (!gretl_strsub_on()) {
-	/* not doing string substitution */
-	eachvar = get_eachvar_by_name(loop->eachname, &loop->eachtype);
-    } else if (strchr(loop->eachname, '$') != NULL) {
+    if (strchr(loop->eachname, '$') != NULL) {
 	/* $-string substitution required */
 	char vname[VNAMELEN];
 
@@ -1177,7 +1174,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     while (isspace(*s)) s++;
     tailstrip(s);
 
-    if (gretl_strsub_on() && *s == '@') {
+    if (*s == '@') {
 	/* tricksy: got a list-name that needs string subst? */
 	*loop->eachname = '\0';
 	strncat(loop->eachname, s, VNAMELEN - 1);
@@ -1693,11 +1690,7 @@ static void controller_init (controller *clr)
     clr->vsign = 1;
     clr->expr = NULL;
     clr->genr = NULL;
-    if (gretl_strsub_on()) {
-	clr->subst = -1;
-    } else {
-	clr->subst = 0;
-    }
+    clr->subst = -1;
 }
 
 static void controller_free (controller *clr)
@@ -1721,11 +1714,7 @@ static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
 	loop->cmds[i].ci = 0;
 	loop->cmds[i].opt = 0;
 	loop->cmds[i].genr = NULL;
-	if (!gretl_strsub_on()) {
-	    loop->cmds[i].flags = LOOP_CMD_NOSUB | LOOP_CMD_NODOL;
-	} else {
-	    loop->cmds[i].flags = 0;
-	}
+	loop->cmds[i].flags = 0;
     }
 }
 
@@ -3652,8 +3641,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     gui_mode = gretl_in_gui_mode();
     echo = gretl_echo_on();
     prev_messages = gretl_messages_on();
+    if (!prev_messages && loop_is_verbose(loop)) {
+	set_gretl_messages(1);
+    }
     indent0 = gretl_if_state_record();
-    set_loop_on(loop_is_verbose(loop));
+    set_loop_on();
 #if HAVE_GMP
     progressive = loop_is_progressive(loop);
 #endif

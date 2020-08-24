@@ -525,6 +525,8 @@ struct str_table funcs[] = {
     { F_DEFARRAY,  "defarray" },
     { F_DEFBUNDLE, "defbundle" },
     { F_DEFLIST,   "deflist" },
+    { F_DEFARGS,   "_" },
+    { F_BPACK,     "bpack" },
     { F_KSETUP,    "ksetup" },
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },
@@ -570,6 +572,7 @@ struct str_table funcs[] = {
     { F_STACK,     "stack" },
     { F_GEOPLOT,   "geoplot" },
     { F_BINCOEFF,  "bincoeff" },
+    { F_ASSERT,    "assert" },
     { 0,           NULL }
 };
 
@@ -600,7 +603,6 @@ struct str_table hidden_funcs[] = {
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
     { HF_TDISAGG,  "_tdisagg" },
-    { HF_DEFARGS,   "_" },
     { 0,           NULL }
 };
 
@@ -1626,13 +1628,6 @@ static void look_up_word (const char *s, parser *p)
 		/* note: all "native" types take precedence over this */
 		p->sym = RFUN;
 		p->idstr = gretl_strdup(s + 2);
-	    } else if (!strcmp(s, "pi")) {
-		/* backward compat (get rid of this) */
-		gretl_warnmsg_sprintf("\"%s\"\n %s\n", p->rhs,
-				      _("obsolete use of \"pi\": "
-					"please use \"$pi\" instead"));
-		p->idnum = CONST_PI;
-		p->sym = CON;
 	    } else if (parsing_query || prevsym == B_AND) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
@@ -2151,12 +2146,12 @@ void lex (parser *p)
 	    parser_getc(p);
 	    if (p->ch == '=') {
 		parser_getc(p);
+		p->sym = B_EQ;
 	    } else {
-		gretl_warnmsg_sprintf("\"%s\"\n %s\n", p->rhs,
-				      _("obsolete use of \"=\" as Boolean test: "
-					"please use \"==\""));
+		gretl_errmsg_set("If you meant to test for "
+				 "equality, please use '=='");
+		p->err = E_PARSE;
 	    }
-	    p->sym = B_EQ;
 	    return;
         case '>':
 	    parser_getc(p);

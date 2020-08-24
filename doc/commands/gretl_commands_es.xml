@@ -43,7 +43,7 @@
       <para context="cli">
 	Debes solicitar esta instrucción después de ejecutar una instrucción de
 	estimación. Realiza un contraste conjunto (cuyos resultados puedes obtener con
-	los accesorios <fncref targ="$test"/> y <fncref targ="$pvalue"/>) sobre la
+	los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>) sobre la
 	adición de las variables indicadas en el argumento, al último modelo estimado.
       </para>
       <para context="cli">
@@ -311,13 +311,16 @@
       </para>
 
       <para>
-	Los valores <emphasis>P</emphasis> para los contrastes de Dickey&ndash;Fuller
-	están basados en <cite key="mackinnon96">MacKinnon (1996)</cite>;
-	y el código relevante se incluye con el amable permiso del propio autor.
+	Los valores <emphasis>P</emphasis> para los contrastes de
+	Dickey&ndash;Fuller están basados en
+	<cite key="mackinnon96">MacKinnon (1996)</cite>; y el código relevante
+	se incluye con el amable permiso del propio autor. (Solo se proporcionan
+	los valores de muestra finita, en caso de tratarse del test no aumentado.
+	Para un nivel de retardo positivo se utilizan los valores asintóticos.)
 	En el caso del contraste con la tendencia lineal utilizando MCG (GLS),
-	estos valores <emphasis>P</emphasis> no son aplicables;
-	por eso, en su lugar se muestran los puntos críticos
-	de la Tabla 1 que hay en
+	estos valores <emphasis>P</emphasis> no son aplicables; por eso,
+	en su lugar se muestran los puntos críticos de la Tabla 1 que hay
+	en
 	<cite key="ERS96">Elliott, Rothenberg y Stock (1996)</cite>.
       </para>
 
@@ -394,7 +397,7 @@
 	Excepto cuando indicas la opción <opt>quiet</opt>, esta instrucción presenta
 	una tabla mostrando las sumas de cuadrados y los cuadrados de la media junto
 	con un contraste <math>F</math>. Puedes recuperar el estadístico del contraste
-	<math>F</math> y su probabilidad asociada, utilizando los accesorios
+	<math>F</math> y su probabilidad asociada, utilizando los accesores
 	<fncref targ="$test"/> y <fncref targ="$pvalue"/>, respectivamente.
       </para>
       <para>
@@ -1214,7 +1217,7 @@
 	entre la inversa de la matriz Hessiana y el PEG.
       </para>
       <para>
-	Luego de una estimación correcta, el accesorio <lit>$uhat</lit>
+	Luego de una estimación correcta, el accesor <lit>$uhat</lit>
 	permite recuperar una matriz con 2 columnas que contiene los
 	errores generalizados de las dos ecuaciones; es decir, los valores
 	esperados de las perturbaciones condicionadas a los resultados
@@ -1909,7 +1912,7 @@
 	Gamma de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
 	Se muestran dos conjuntos de valores p para el contraste de la traza: valores
 	asintóticos directos y valores ajustados por el tamaño de la muestra. Por
-	defecto, el accesorio <fncref targ="$pvalue"/> genera la variante ajustada,
+	defecto, el accesor <fncref targ="$pvalue"/> genera la variante ajustada,
 	pero puedes utilizar la opción <opt>asy</opt> para obtener en su lugar
 	los valores asintóticos.
       </para>
@@ -2325,7 +2328,7 @@
 	opción <opt>output</opt> de la instrucción <cmdref targ="gnuplot"/>.
       </para>
       <para context="cli">
-	Cuando se completa con éxito esta instrucción, los accesorios
+	Cuando se completa con éxito esta instrucción, los accesores
 	<fncref targ="$test"/> y <fncref targ="$pvalue"/> contienen los dos
 	valores respectivos del contraste de Ljung&ndash;Box para el máximo
 	orden de retardo presentado. Si únicamente quieres calcular el
@@ -3226,7 +3229,7 @@
 	selecciona el contraste de los signos.)
       </para>
       <para>
-	Al completarse con éxito, vas a tener disponibles los accesorios
+	Al completarse con éxito, vas a tener disponibles los accesores
 	<fncref targ="$test"/> y <fncref targ="$pvalue"/>. Si únicamente
 	quieres obtener estos valores, puedes añadir la opción <opt>quiet</opt>
 	a la instrucción.
@@ -3587,7 +3590,7 @@
 	nulos indiquen los casos censurados por la derecha.
       </para>
       <para>
-	Por defecto, los valores ajustados que obtienes mediante el accesorio
+	Por defecto, los valores ajustados que obtienes mediante el accesor
 	<lit>$yhat</lit> son las medias condicionadas de las duraciones, pero
 	cuando indicas la opción <opt>medians</opt> entonces <lit>$yhat</lit>
 	te proporciona las medianas condicionadas en su lugar.
@@ -4117,7 +4120,7 @@
 	hacer la predicción (pues por defecto se generan las predicciones para
 	todas las variables endógenas). En caso de un sistema o si no
 	indicas <repl>nombrev</repl>, puedes recuperar los valores de
-	predicción utilizando el accesorio <fncref targ="$fcast"/> y, si están
+	predicción utilizando el accesor <fncref targ="$fcast"/> y, si están
 	disponibles, las desviaciones típicas mediante <fncref targ="$fcse"/>.
       </para>
 
@@ -4363,10 +4366,17 @@
 	entre <math>T</math>/2 y <math>T</math><sup>0.6</sup>.
       </para>
       <para>
-	Puedes recuperar los resultados utilizando los accesorios <fncref targ="$test"/>
-	y <fncref targ="$pvalue"/>. Estos valores se basan en el Estimador Local
-	Whittle excepto cuando indicas la opción
-	<opt>gph</opt>.
+	Los órdenes estimados de integración fraccional y sus desviaciones
+	típicas correspondientes están disponibles a través del accesor
+	<fncref targ="$result"/>. Con la opción <opt>all</opt>, encontrarás
+	la estimación Local Whittle en la primera fila y la estimación GPH
+	en la segunda.
+      </para>
+      <para>
+	Puedes recuperar los resultados del test utilizando los accesores
+	<fncref targ="$test"/> y <fncref targ="$pvalue"/>. Estos valores se
+	basan en el Estimador Local Whittle excepto cuando indicas la
+	opción <opt>gph</opt>.
       </para>
     </description>
 
@@ -4478,7 +4488,7 @@
 	La opción <opt>silent</opt> elimina el resultado de texto habitual.
 	Puedes utilizar esto junto con una u otra de las opciones para contrastes
 	de distribución; entonces se registran el estadístico de prueba más su
-	probabilidad asociada, y puedes recuperarlos utilizando los accesorios
+	probabilidad asociada, y puedes recuperarlos utilizando los accesores
 	<fncref targ="$test"/> y <fncref targ="$pvalue"/>. También puedes usar
 	esto junto con la opción <opt>plot</opt> si únicamente quieres un
 	histograma y no te interesa mirar el texto que lo acompaña.
@@ -4869,11 +4879,11 @@
 	a muchas variables internas que se definen durante la ejecución
 	de las regresiones, la realización de contrastes de hipótesis, etcétera.
 	<refnote xref="false">
-	  Para obtener un listado de funciones y accesorios, escribe
+	  Para obtener un listado de funciones y accesores, escribe
 	  <quote>help functions</quote>.
 	</refnote>
 	<refnote xref="true">
-	  Para ver un listado de funciones y accesorios, consulta
+	  Para ver un listado de funciones y accesores, consulta
 	  <gfr targ="chap:funcref"/>.
 	</refnote>
       </para>
@@ -6384,9 +6394,10 @@
 
     <description>
       <para>
-	Calcula el exponente de Hurst (una medida de persistencia
-	o larga memoria) para una variable de tipo serie temporal
-	que tenga por lo menos 128 observaciones.
+	Calcula el exponente de Hurst (una medida de persistencia o memoria
+	larga) para una variable de tipo serie temporal que tenga por lo menos
+	128 observaciones. Puedes obtener el resultado (junto con su desviación
+	típica) mediante el accesor <fncref targ="$result"/>.
       </para>
       <para>
 	<cite key="mandelbrot83">Mandelbrot (1983)</cite> discute
@@ -7290,7 +7301,7 @@
 	en el conjunto vigente de datos, una o más de las variables de ese contraste.
       </para>
       <para context="tex">
-	Después de la ejecución, el accesorio <fncref targ="$test"/> devuelve el criterio
+	Después de la ejecución, el accesor <fncref targ="$test"/> devuelve el criterio
 	de validación cruzada, que se define como
         \[
         \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
@@ -7306,7 +7317,7 @@
 	y las referencias que contiene.
       </para>
       <para context="notex">
-	Después de la ejecución, el accesorio <fncref targ="$test"/> devuelve el criterio
+	Después de la ejecución, el accesor <fncref targ="$test"/> devuelve el criterio
 	de validación cruzada, que se define como la suma de las desviaciones cuadradas
 	de la variable dependiente con relación a sus valores de predicción,
 	estando la predicción para cada observación basada en una muestra de la
@@ -7631,7 +7642,7 @@
 	la variable dependiente se interpreta como una respuesta sin ordenar y
 	se generan las estimaciones con un Logit Multinomial. (En otro caso, si
 	la variable escogida como dependiente no es de tipo discreto, se muestra
-	un fallo.) En el caso multinomial, el accesorio <lit>$mnlprobs</lit> está
+	un fallo.) En el caso multinomial, el accesor <lit>$mnlprobs</lit> está
 	disponible después de la estimación, para conseguir una matriz que
 	contenga las probabilidades estimadas de los posibles valores de la variable
 	dependiente para cada observación (con las observaciones por filas y los
@@ -8000,6 +8011,60 @@
       <menu-path>/Archivo/Paquetes de funciones/Paquete nuevo</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="maps" section="Utilities" label="Dibujar mapas" context="gui">
+    <description>
+      <para>
+	Esta instrucción te permite crear un mapa, basado en datos geográficos
+	descargados previamente (en formato de un archivo GeoJSON o de un
+	archivo ESRI de forma). Las opciones son las siguientes.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    series to plot: En caso de existir, representa la serie a partir
+	    de la que se deberán colorear las regiones del mapa; también
+	    se conoce como la <quote>carga</quote>. Si falta esa carga
+	    solo se mostrarán los trazos del mapa. Si el conjunto de datos
+	    vigente contiene una o más series que parecen posibles candidatas
+	    (en base a una sencilla heurística), estas se van a mostrar en
+	    un selector desplegable.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    palette: La paleta que permite la selección del conjunto de colores
+	    que se utilizan para representar la carga, y que consecuentemente
+	    solo es relevante cuando se selecciona una carga.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    log scale: En caso de seleccionar una carga, se debería
+	    representar esta en escala logarítmica? Por defecto, no.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    border: Se debería dibujar un borde rectangular alrededor del mapa?
+	    Por defecto, si; pero puedes eliminar esto.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    height: Esto indica altura, y permite controlar el tamaño de la
+	    imagen del mapa. Dada la altura, el ancho se calcula en base
+	    al rango de longitud del mapa.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Ten en cuenta que puedes ganar un control <i>mucho</i> mayor
+	sobre los detalles del mapa, mediante la invocación a la función
+	<fncref targ="geoplot"/>.
+      </para>
+    </description>
   </command>
 
   <command name="markers" section="Dataset" label="Etiquetas de observación" context="cli">
@@ -8977,7 +9042,7 @@
 	utilizando la opción <opt>quiet</opt> (presentación mínima de
 	resultados) o la opción <opt>silent</opt> (no presenta ningún
 	resultado). Puedes recuperar el estadístico de contraste y su
-	probabilidad asociada (valor p) utilizando los accesorios
+	probabilidad asociada (valor p) utilizando los accesores
 	<fncref targ="$test"/> y <fncref targ="$pvalue"/>, respectivamente.
       </para>
       <para>
@@ -9418,7 +9483,7 @@
 	propiedades en muestras pequeñas.
       </para>
       <para>
-	Mediante los accesorios <fncref targ="$test"/> y <fncref targ="$pvalue"/>
+	Mediante los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>
 	puedes recuperar el estadístico de contraste y su probabilidad asociada
 	(valor p), respectivamente. Ten en cuenta que cuando indicas la opción
 	<opt>all</opt>, el resultado guardado es el del contraste de Doornik&ndash;Hansen.
@@ -9578,7 +9643,7 @@
       </code>
       <para context="cli">
 	guarda los errores de la estimación bajo el nombre <lit>uh</lit>. Consulta la
-	sección <quote>Accesorios</quote> de la Guía de funciones de Gretl para
+	sección <quote>Accesores</quote> de la Guía de funciones de Gretl para
 	obtener más detalles.
       </para>
 
@@ -10708,6 +10773,10 @@
 	  <flag>--quiet</flag>
 	  <effect>Mira abajo</effect>
         </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>Mira abajo</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
@@ -10719,10 +10788,10 @@
 
     <description>
       <para>
-	Esta instrución proporciona una manera de instalar, consultar
-	descargar, o eliminar paquetes de funciones de Gretl. El argumento
+	Esta instrucción proporciona una manera de instalar, consultar, descargar,
+	eliminar o indexar paquetes de funciones de Gretl. El argumento
 	<repl>acción</repl> debe ser alguno de entre <lit>install</lit>,
-	<lit>query</lit>, <lit>unload</lit> o <lit>remove</lit>,
+	<lit>query</lit>, <lit>unload</lit>, <lit>remove</lit> o <lit>index</lit>,
 	respectivamente.
       </para>
       <para>
@@ -10762,6 +10831,20 @@
 	y, además, elimina del disco el(los) archivo(s) asociado(s) con el
 	paquete indicado.
       </para>
+      <para>
+	<lit>index</lit>: Es un caso especial en el que <repl>nombrepaquete</repl>
+	debe sustituirse por la palabra clave <quote><lit>addons</lit></quote>:
+	la consecuencia de ello es que se actualiza el índice de los paquetes estándar
+	que se conocen como <quote>Complementos</quote>. Esa actualización se
+	realiza automáticamente de vez en cuando, pero en algún caso puede
+	resultar útil una actualización manual. En tal caso, la opción
+	<opt>verbose</opt> provoca un resultado impreso sobre donde ha hecho
+	Gretl la búsqueda, y lo que ha encontrado. Siendo claros, aquí tienes
+	un modo de conseguir un resultado con el índice completo:
+      </para>
+      <code>
+	pkg index addons --verbose
+      </code>
     </description>
 
     <gui-access>
@@ -11613,7 +11696,7 @@
 	el método de <cite key="hansen97">Bruce Hansen (1997)</cite>.
       </para>
       <para>
-	Además de los accesorios <fncref targ="$test"/> y <fncref targ="$pvalue"/>
+	Además de los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>
 	típicos de los contrastes de hipótesis, puedes utilizar <fncref targ="$qlrbreak"/>
 	para recuperar el índice de la observación en la que el estadístico de contraste
 	se maximiza.
@@ -11993,7 +12076,7 @@
       </para>
       <para context="cli">
 	Puedes utilizar la opción <opt>silent</opt> si tienes intención de hacer
-	uso de los accesorios <fncref targ="$test"/> y/o <fncref targ="$pvalue"/>
+	uso de los accesores <fncref targ="$test"/> y/o <fncref targ="$pvalue"/>
 	para guardar los resultados del contraste.
       </para>
     </description>
@@ -12175,7 +12258,7 @@
 	end function
       </code>
       <para>
-	Cuando se completa con éxito la instrucción <lit>restrict</lit>, los accesorios
+	Cuando se completa con éxito la instrucción <lit>restrict</lit>, los accesores
 	<fncref targ="$test"/> y <fncref targ="$pvalue"/> proporcionan el estadístico
 	de contraste y su probabilidad asociada (valor p), respectivamente.
       </para>
@@ -12184,7 +12267,7 @@
 	estimado mediante MCO o sobre un Modelo de Vectores de Corrección del
 	Error (VECM), puedes utilizar la opción <opt>full</opt> para disponer que
 	las estimaciones restringidas sean el <quote>último modelo</quote>, con la
-	intención de hacer contrastes más adelante o de usar accesorios como
+	intención de hacer contrastes más adelante o de usar accesores como
 	<lit>$coeff</lit> y <lit>$vcv</lit>. Ten en cuenta que se aplican algunos
 	detalles especiales en caso de que pruebes restricciones sobre un VECM.
 	Consulta <guideref targ="chap:vecm"/> para obtener más detalles.
@@ -12357,7 +12440,7 @@
 	del 10 por ciento, entonces se muestra en el gráfico la línea ajustada de la
 	regresión del rango sobre la media. Se registran tanto el estadístico
 	<math>t</math> para contrastar la hipótesis nula como la probabilidad
-	asociada correspondiente, y puedes recuperarlos usando los accesorios
+	asociada correspondiente, y puedes recuperarlos usando los accesores
 	<fncref targ="$test"/> y <fncref targ="$pvalue"/>, respectivamente.
       </para>
       <para context="cli">
@@ -12792,7 +12875,7 @@
 	de guion que contenga las configuraciones de los parámetros y para
 	aplicarlas a la sesión vigente; con <lit>stopwatch</lit> para poner
 	a cero el <quote>cronómetro</quote> de Gretl que puedes usar para
-	medir el tiempo de CPU (consulta los comentarios para el accesorio
+	medir el tiempo de CPU (consulta los comentarios para el accesor
 	<fncref targ="$stopwatch"/>); o para presentar las configuraciones
 	actuales, cuando indicas solo la palabra <lit>set</lit>.
       </para>
@@ -13013,7 +13096,7 @@
 	<li>
 	  <para><lit>huge</lit>: Un número positivo muy grande (por
 	  defecto, 1.0E100). Esta configuración controla el valor que
-	  devuelve el accesorio <fncref targ="$huge"/>.
+	  devuelve el accesor <fncref targ="$huge"/>.
 	  </para>
 	</li>
       </ilist>
@@ -13086,17 +13169,23 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_richardson</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
-	  Utiliza la extrapolación de Richardson cuando calcula las
+	  Utiliza la extrapolación de Richardson cuando calcules las
 	  derivadas numéricas en el contexto de la maximización
 	  BFGS.
 	  </para>
 	</li>
 	<li>
-	  <para><lit>initvals</lit>: O <lit>auto</lit> (por defecto),
-	  o bien el nombre de una matriz especificada previamente. Permite
-	  establecer manualmente las estimaciones iniciales de los parámetros
-	  para problemas de optimización numérica (tales como la estimación
-	  ARMA). Para obtener más detalles, consulta
+	  <para><lit>initvals</lit>: El nombre de una matriz que haya sido
+	  definida previamente. Permite establecer manualmente el vector
+	  inicial de parámetros en determinadas instruciones de estimación
+	  que implican realizar optimización numérica como <lit>arma</lit>,
+	  <lit>garch</lit>, <lit>logit</lit>, <lit>probit</lit>, <lit>tobit</lit>,
+	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>; y
+	  también cuando se imponen ciertos tipos de restricciones que están
+	  vinculadas a modelos VEC. A diferencia de otras configuraciones,
+	  <lit>initvals</lit> no es persistente, pues se restablece su valor
+	  al de inicio por defecto, después de su primera utilización. Para
+	  obtener detalles en relación con la estimación ARMA consulta
 	  <guideref targ="chap:timeseries"/>.
 	  </para>
 	</li>
@@ -13373,6 +13462,17 @@
 	  procesos, bien de forma directa o bien indirectamente (mediante
 	  la especificación de un archivo <lit>hosts</lit> para utilizar
 	  con MPI).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>graph_theme</lit>: una cadena de texto a elegir entre
+	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
+	    (la vigente por defecto), <lit>ethan</lit>, <lit>iwanthue</lit>
+	    o <lit>sober</lit>. Esto establece el <quote>tema</quote> que
+	    se utiliza para los gráficos que genera Gretl. La opción
+	    <lit>classic</lit> supone volver al sencillo tema que estaba
+	    vigente con antelación a la versión 2020c de Gretl.
 	  </para>
 	</li>
       </ilist>
@@ -14549,7 +14649,7 @@
 	
       <para context="cli">
 	Después de hacer la estimación utilizando las instrucciones <cmd>system</cmd>
-	o <cmd>estimate</cmd>, puedes usar los siguientes accesorios para recoger
+	o <cmd>estimate</cmd>, puedes usar los siguientes accesores para recoger
 	información adicional:
       </para>
 
@@ -15192,7 +15292,7 @@
 	con VARs de órdenes desde 1 hasta el máximo indicado. Esto trata de ayudar
 	en la selección del orden óptimo de retardos. El resultado habitual del VAR
 	no se presenta. Puedes recuperar la tabla con los criterios de información
-	en forma de matriz mediante el accesorio <fncref targ="$test"/>.
+	en forma de matriz mediante el accesor <fncref targ="$test"/>.
       </para>
 
     </description>
@@ -15270,7 +15370,7 @@
       <para>
 	Como caso especial, si el tipo es <lit>accessor</lit>, los nombres
 	que se presentan son aquellos de las variables internas disponibles
-	en ese momento como <quote>accesorios</quote>, como pueden ser
+	en ese momento como <quote>accesores</quote>, como pueden ser
 	<fncref targ="$nobs"/> y <fncref targ="$uhat"/> (sea cual sea
 	su tipo en concreto).
       </para>
@@ -15489,7 +15589,7 @@
       </para>
 
       <para context="cli">
-	A continuación de la estimación de un VECM, tienes disponibles algunos accesorios
+	A continuación de la estimación de un VECM, tienes disponibles algunos accesores
 	especiales: <lit>$jalpha</lit>, <lit>$jbeta</lit> y <lit>$jvbeta</lit>
 	recuperan las matrices &agr; y &bgr;, y la varianza estimada de &bgr;,
 	respectivamente. Para recuperar la función de respuesta ante un impulso
@@ -15611,7 +15711,7 @@
 	consulta la instrucción <cmdref targ="panel"/> junto con la opción
 	<lit>--unit-weights</lit>.
 	  </para>
-	  
+
       <para context="gui">
 	Sea 'varponder' la variable escogida en el cuadradito 'Variable de ponderaciones'.
 	Se ejecuta una regresión MCO, donde la variable dependiente es el producto
@@ -15893,11 +15993,11 @@
 	los totales de filas y columnas indicados, y que tengan una probabilidad
 	menor o igual a la de la tabla observada.
       </para>
-      
+
       <subhead>El caso bivariante</subhead>
       <para>
 	En el sencillo caso de una tabulación cruzada bivariante, puedes utilizar
-	los accesorios <fncref targ="$test"/> y <fncref targ="$pvalue"/> para
+	los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/> para
 	recuperar el estadístico del contraste chi-cuadrado de Pearson y su
 	probabilidad asociada (con tal de que se cumpla la condición del
 	mínimo valor esperado). En ese contexto, puedes utilizar la opción

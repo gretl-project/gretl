@@ -2697,6 +2697,10 @@ int build_stacked_series (double **pstack, int *list,
 
     if (dset == NULL || dset->n == 0) {
 	return E_NODATA;
+    } else if (dataset_is_subsampled(dset)) {
+	gretl_errmsg_set("stack: this function cannot be used when the dataset "
+			 "is sub-sampled");
+	return E_DATA;
     } else if (list == NULL || list[0] <= 0) {
 	return E_INVARG;
     } else if (length <= 0) {
@@ -4551,6 +4555,96 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
     return err;
 }
 
+/**
+ * series_recode_strings:
+ * @dset: pointer to dataset.
+ * @v: index number of target string-valued series.
+ * @opt: may contain OPT_P (see below).
+ * @changed: location to receive "changed" feedback, or NULL.
+ *
+ * This function "trims" the array of string values associated
+ * with series @v so that it contains no redundant elements --
+ * that is, values of which there is no instance in the
+ * current sample -- and resets the numeric codes for the
+ * strings if necessary.
+ *
+ * By default the original "series_table" attached to series @v
+ * is destroyed, but if @opt contains OPT_P it is replaced but
+ * not freed; this make sense only if another pointer to the
+ * original table exists.
+ *
+ * If it happens that the current sample contains
+ * instances of all the strings in the full dataset, this
+ * function will not actually make any changes to @dset. The
+ * @changed argument provides a means of determining
+ * whether any change has been made.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int series_recode_strings (DATASET *dset, int v, gretlopt opt,
+			   int *changed)
+{
+    double *x = dset->Z[v] + dset->t1;
+    int n = sample_size(dset);
+    gretl_matrix *vals = NULL;
+    gretl_matrix *repl = NULL;
+    char **S = NULL;
+    const char *si;
+    int ns, nu = 0;
+    int err = 0;
+
+    if (changed != NULL) {
+	*changed = 0;
+    }
+
+    ns = series_table_get_n_strings(dset->varinfo[v]->st);
+    vals = gretl_matrix_values(x, n, OPT_NONE, &err);
+
+    if (!err) {
+	/* number of unique values */
+	nu = vals->rows;
+	if (nu == ns) {
+	    /* nothing to be done */
+	    gretl_matrix_free(vals);
+	    return 0;
+	}
+	repl = gretl_zero_matrix_new(nu, 1);
+	S = strings_array_new(nu);
+	if (repl == NULL || S == NULL) {
+	    free(S);
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	int i;
+
+	for (i=0; i<nu; i++) {
+	    si = series_get_string_for_value(dset, v, vals->val[i]);
+	    S[i] = gretl_strdup(si);
+	    repl->val[i] = i + 1;
+	}
+
+	substitute_values(x, x, n, vals->val, nu, repl->val, nu);
+
+	if (!(opt & OPT_P)) {
+	    series_table_destroy(dset->varinfo[v]->st);
+	}
+	/* the series table takes ownership of @S */
+	dset->varinfo[v]->st = series_table_new(S, nu);
+
+	if (changed != NULL) {
+	    *changed = 1;
+	}
+    }
+
+    gretl_matrix_free(vals);
+    gretl_matrix_free(repl);
+
+    return err;
+}
+
 int set_panel_groups_name (DATASET *dset, const char *vname)
 {
     if (dset->pangrps != NULL) {
@@ -4666,7 +4760,9 @@ static int suitable_group_names_series (const DATASET *dset,
 		    const char *st = series_get_string_for_obs(dset, i, t);
 
 		    u = t / dset->pd;
-		    if (u == ubak && strcmp(st, sbak)) {
+		    if (st == NULL || sbak == NULL) {
+			fail = 1;
+		    } else if (u == ubak && strcmp(st, sbak)) {
 			/* same unit, different label: no */
 			fail = 1;
 		    } else if (ubak >= 0 && u != ubak && !strcmp(st, sbak)) {

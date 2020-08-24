@@ -2323,12 +2323,12 @@ static void get_plot_nobs (png_plot *plot,
 	}
 
 	if (started < 0 && line_starts_heredata(line, &eod)) {
-	    /* new method of handling plot data */
-#if GPDEBUG
-	    fprintf(stderr, "*** got heredata!\n");
-#endif
+	    /* newer method of handling plot data */
 	    spec->heredata = 1;
 	    *datapos = buftell(buf);
+#if GPDEBUG
+	    fprintf(stderr, "*** got heredata, datapos %d\n", (int) *datapos);
+#endif
 	    continue;
 	}
 
@@ -3195,6 +3195,10 @@ static int read_plotspec_from_file (png_plot *plot)
 	tailstrip(gpline);
 	fprintf(stderr, "gpline: '%s'\n", gpline);
 #endif
+	if (!strncmp(gpline, "plot ", 5)) {
+	    /* we're done with 'set' */
+	    break;
+	}
 	if (ignore) {
 	    if (!strncmp(gpline, "# end inline", 12)) {
 		ignore = 0;
@@ -3300,6 +3304,7 @@ static int read_plotspec_from_file (png_plot *plot)
     }
 
 #if HANDLE_HEREDATA
+    /* Hmm, what's this doing here? (2020-07-13) */
     if (line_starts_heredata(gpline, &eod)) {
 	while (bufgets(gpline, MAXLEN - 1, buf) != NULL) {
 	    if (!strncmp(gpline, eod, strlen(eod))) {
@@ -3385,6 +3390,10 @@ static int read_plotspec_from_file (png_plot *plot)
 	    continue;
 	}
     }
+
+#if GPDEBUG
+    fprintf(stderr, "plotspec, after line transcription, err=%d\n", err);
+#endif
 
     if (!err) {
 	err = plot_get_data_and_markers(spec, buf, &do_markers,
@@ -4968,7 +4977,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
     switch (k) {
     case GDK_q:
     case GDK_Q:
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     case GDK_w:
     case GDK_W:
 #endif
@@ -5817,9 +5826,11 @@ static int get_png_size (char *str, png_bounds *bounds)
 	ret = GRETL_PNG_BAD_COMMENTS;
     } else {
 	pw /= sc; ph /= sc;
-	fprintf(stderr, "Got size: %d x %d\n", pw, ph);
 	if (pw % 2) pw++;
 	if (ph % 2) ph++;
+#if 0
+	fprintf(stderr, "Got size: %d x %d\n", pw, ph);
+#endif
 	bounds->width = pw;
 	bounds->height = ph;
     }
@@ -5928,7 +5939,7 @@ static int get_terminal (char *s)
 
 #endif /* !G_OS_WIN32 */
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
 
 static void mac_do_gp_script (const char *plotfile)
 {
@@ -5953,7 +5964,7 @@ void launch_gnuplot_interactive (void)
 {
 #if defined(G_OS_WIN32)
     win32_run_async(gretl_gnuplot_path(), NULL);
-#elif defined(MAC_NATIVE)
+#elif defined(OS_OSX)
     const char *gppath = gretl_gnuplot_path();
     gchar *gpline;
 
@@ -5973,7 +5984,7 @@ void launch_gnuplot_interactive (void)
 # endif
     system(gpline);
     g_free(gpline);
-#else /* neither WIN32 nor MAC_NATIVE */
+#else /* neither WIN32 nor MAC */
     char term[32];
     int err;
 
@@ -6030,16 +6041,16 @@ void launch_gnuplot_interactive (void)
 	g_free(altgp);
 # endif
     }
-#endif /* !(G_OS_WIN32 or MAC_NATIVE) */
+#endif /* !(G_OS_WIN32 or MAC) */
 }
 
 void gnuplot_view_3d (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
     win32_run_async(gretl_gnuplot_path(), plotfile);
-#elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
+#elif defined(OS_OSX) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
 #else
     real_send_to_gp(plotfile, 0);
-#endif /* !(G_OS_WIN32 or MAC_NATIVE) */
+#endif /* !(G_OS_WIN32 or MAC) */
 }

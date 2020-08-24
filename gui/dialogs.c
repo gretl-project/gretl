@@ -6742,53 +6742,60 @@ struct geoplot_info {
     GtkWidget *payload_combo;
     GtkWidget *palette_combo;
     GtkWidget *border_check;
+    GtkWidget *logscale_check;
     GtkWidget *height_spin;
     GtkWidget *dlg;
 };
 
 static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
 {
-    gchar *payload, *palette;
-    int border, height;
+    int border, logscale, height;
 
-    payload = combo_box_get_active_text(gi->payload_combo);
-    palette = combo_box_get_active_text(gi->palette_combo);
+    if (gtk_widget_is_sensitive(gi->payload_combo)) {
+	gchar *payload = NULL, *palette = NULL;
 
-    if (payload != NULL && strcmp(payload, "none")) {
-	*gi->payload_id = current_series_index(dataset, payload);
-	if (strcmp(palette, "default")) {
-	    gretl_bundle_set_string(gi->bundle, "palette", palette);
+	payload = combo_box_get_active_text(gi->payload_combo);
+	palette = combo_box_get_active_text(gi->palette_combo);
+
+	if (payload != NULL && strcmp(payload, "none")) {
+	    *gi->payload_id = current_series_index(dataset, payload);
+	    if (strcmp(palette, "default")) {
+		gretl_bundle_set_string(gi->bundle, "palette", palette);
+	    }
 	}
+	g_free(payload);
+	g_free(palette);
     }
 
     border = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gi->border_check));
+    logscale = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gi->logscale_check));
     height = gtk_spin_button_get_value(GTK_SPIN_BUTTON(gi->height_spin));
 
     gretl_bundle_set_int(gi->bundle, "border", border);
+    gretl_bundle_set_int(gi->bundle, "logscale", logscale);
     gretl_bundle_set_int(gi->bundle, "height", height);
-
-    g_free(payload);
-    g_free(palette);
 
     *gi->retval = 0;
     gtk_widget_destroy(gi->dlg);
 }
 
-static void sensitize_palette (GtkComboBox *combo, GtkWidget *targ)
+static void sensitize_map_controls (GtkComboBox *combo,
+				    struct geoplot_info *gi)
 {
     gchar *s = combo_box_get_active_text(combo);
+    int active = strcmp(s, "none");
 
-    gtk_widget_set_sensitive(targ, strcmp(s, "none"));
+    gtk_widget_set_sensitive(gi->palette_combo, active);
+    gtk_widget_set_sensitive(gi->logscale_check, active);
 }
 
 int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 			int *payload_id)
 {
     struct geoplot_info gi = {0};
-    GtkWidget *dialog, *combo;
+    GtkWidget *dialog, *com1, *com2;
     GtkWidget *vbox, *hbox, *tmp;
-    GtkWidget *bc, *hs;
-    int hcode = MAPHELP;
+    GtkWidget *bc, *ls, *hs;
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -6805,31 +6812,47 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* want a payload? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("payload:");
+    tmp = gtk_label_new("series to plot:");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gi.payload_combo = combo = gtk_combo_box_text_new();
-    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-    set_combo_box_strings_from_list(combo, plist);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), selpos);
+    gi.payload_combo = com1 = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), com1, FALSE, FALSE, 5);
+    if (plist != NULL) {
+	set_combo_box_strings_from_list(com1, plist);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(com1), selpos);
+    } else {
+	combo_box_append_text(com1, "none");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(com1), 0);
+    }
+    gtk_widget_set_sensitive(hbox, plist != NULL);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* palette? */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new("palette:");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    gi.palette_combo = combo = gtk_combo_box_text_new();
-    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-    combo_box_append_text(combo, "default");
-    combo_box_append_text(combo, "blues");
-    combo_box_append_text(combo, "oranges");
-    combo_box_append_text(combo, "green-to-red");
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    gi.palette_combo = com2 = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), com2, FALSE, FALSE, 5);
+    combo_box_append_text(com2, "default");
+    combo_box_append_text(com2, "blues");
+    combo_box_append_text(com2, "oranges");
+    combo_box_append_text(com2, "green-to-red");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com2), 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_set_sensitive(combo, selpos ? 1 : 0);
+    gtk_widget_set_sensitive(com2, selpos ? 1 : 0);
+    gtk_widget_set_sensitive(hbox, plist != NULL);
+
+    /* logscale? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    ls = gtk_check_button_new_with_label("Log scale");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ls), FALSE);
+    gi.logscale_check = ls;
+    gtk_box_pack_start(GTK_BOX(hbox), ls, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_set_sensitive(ls, selpos ? 1 : 0);
 
     /* border? */
     hbox = gtk_hbox_new(FALSE, 5);
-    bc = gtk_check_button_new_with_label("Draw border round plot");
+    bc = gtk_check_button_new_with_label("draw border around map");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bc), TRUE);
     gi.border_check = bc;
     gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
@@ -6847,7 +6870,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* inter-connect selectors */
     g_signal_connect(G_OBJECT(gi.payload_combo), "changed",
-		     G_CALLBACK(sensitize_palette), gi.palette_combo);
+		     G_CALLBACK(sensitize_map_controls), &gi);
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -6856,11 +6879,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(geoplot_callback), &gi);
     gtk_widget_grab_default(tmp);
-    if (hcode) {
-	context_help_button(hbox, hcode);
-    } else {
-	gretl_dialog_keep_above(dialog);
-    }
+    context_help_button(hbox, MAPHELP);
 
     gtk_widget_show_all(dialog);
 

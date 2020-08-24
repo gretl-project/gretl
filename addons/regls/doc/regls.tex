@@ -1,0 +1,975 @@
+\documentclass{article}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+\usepackage{fancyvrb,color,gretl}
+\usepackage{amsmath}
+\usepackage[authoryear]{natbib}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={gretl + lasso},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+          }
+
+\newcommand{\startappendices}{%
+\newcounter{appcount}
+\setcounter{appcount}{0}
+\renewcommand{\thesection}{Appendix \Alph{appcount}}}
+
+\newcommand{\myappendix}[1]{%
+\addtocounter{appcount}{1}
+\section{#1}}          
+
+\setlength{\parskip}{1ex}
+\setlength{\parindent}{0pt}
+
+\newenvironment{funcdoc}
+{\noindent\hrulefill\\[-12pt]}
+{\medbreak}
+
+\title{regls: regularized least squares in gretl}
+\author{Allin Cottrell}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+The \textsf{regls} addon is essentially a front-end for functionality
+coded in C in the gretl \texttt{regls} plugin; to run the package you
+will need gretl version 2020a or higher.  The plugin implements LASSO
+\citep{tibshirani96}---by default via the Alternating Direction Method
+of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}; Ridge
+regression, by default via Singular Value Decomposition; and the
+``elastic net'' hybrid of LASSO and Ridge.
+
+The best-known open-source implementation of regularized regression
+(perhaps the best-known, period) is that provided by the
+\textsf{glmnet} package for \textsf{R}. Since we make several
+references to \textsf{glmnet} below we should state up front what
+we're talking about. The authors of \textsf{glmnet} are Jerome
+Friedman, Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan
+and Noah Simon. Current information on \textsf{glmnet} can be found at
+\url{https://glmnet.stanford.edu/}; for further information on the
+algorithms used in the package see \cite{glmnet10}.
+
+This package supports LASSO, Ridge and elastic net via the
+\texttt{regls()} function. We begin by discussing LASSO, which is the
+default method.  Ridge is discussed in section~\ref{sec:ridge} and
+elastic net in section~\ref{sec:elnet}.
+
+We use the LASSO parameterization employed by Boyd \textit{et al}: the
+objective is
+\begin{equation}
+  \label{eq:obj}
+  \min_{\hat{\beta}} \quad \frac{1}{2}\,
+  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 + \lambda \sum_{j=1}^k |\hat{\beta}_j|
+\end{equation}
+where $n$ is the number of observations, $k$ is the number of
+candidate regressors (the number of columns of $X$) and
+$\lambda \geq 0$ is the LASSO regularization hyperparameter. In this
+context $\lambda = 0$ gives plain OLS, and at the other end of the
+spectrum there exists a data-dependent value of $\lambda$, namely
+\begin{equation}
+  \label{eq:lmax}
+  \lambda_{\max} = \|X'y\|_{\infty}
+\end{equation}
+which drives all elements of $\hat{\beta}$ to zero.  A key control
+variable for our \texttt{lasso()} function is the scaled term
+$s = \lambda/\lambda_{\max}$, such that $0 \leq s \leq 1$.
+
+The \texttt{regls} function takes three arguments: a series (the
+dependent variable), a list (the independent variables, not including
+a constant) and a bundle to contain optional parameters; and it
+returns a bundle, described below. Its signature is therefore
+\begin{code}
+function bundle regls (series y, list X, bundle parms)
+\end{code}
+
+The \texttt{parms} argument may be omitted, in which case all settings
+assume their default values, described below.
+
+One basic element in the \texttt{parms} bundle is a specification for
+$\lambda$, which may take either of two forms, as follows:
+\begin{enumerate}
+\item under the key \texttt{lfrac} (``lambda fraction''), a scalar
+  (single $s$ value) or vector (sequence of $s$ values); or
+\item under the key \texttt{nlambda}, the number of $s$ values to be
+  used ($\geq 4$), in which case the values will be assigned
+  automatically.
+\end{enumerate}
+If \texttt{nlambda} is provided instead of \texttt{lfrac}, the
+automatic $s$ vector is a logarithmically declining sequence starting
+at 1 and finishing at 0.0001. For example, given \texttt{nlambda} = 5
+the sequence will be $s$ = \{1, 0.1, 0.01, 0.001, 0.0001\}.
+
+If neither \texttt{lfrac} nor \texttt{nlambda} is specified, the
+default is as if \texttt{nlambda} were given as 25.
+
+In case you wish to specify a sequence succinctly but with more
+control, the package contains a utility function
+\texttt{lambda\_sequence()}, which takes up to three arguments. The
+first and second arguments (required) give the maximum $s$ and the
+number of values, while the third (optional) argument can be used to
+give the minimum $s$ (by default 0.0001). As with the \texttt{nlambda}
+option the values are spaced logarithmically.  So if you were to do
+\begin{code}
+parms.lfrac = lambda_sequence(1, 20, 0.001)
+\end{code}
+the resulting sequence would be $s$ = \{1, 0.69519, 0.48329, \dots,
+0.00144, 0.001\}.
+
+A second basic member of the parameter bundle is \texttt{stdize}, a
+boolean switch to toggle standardization of the data. The default is
+to perform standardization (corresponding to a non-zero value of this
+option), but if the data are already standardized on input
+\texttt{stdize} may be set to 0.  The estimates include an intercept
+(which is not subject to regularization) only if \texttt{stdize} is
+on.
+
+Another basic option is \texttt{verbosity}. This has a default value
+of 1, meaning that \texttt{regls} prints out a certain amount of
+information about its progress and/or results. Setting it to 0 makes
+\texttt{regls} run (mostly) quietly; setting it to 2 produces more
+output in some cases.
+
+The further optional parameters, as well as the contents of the bundle
+returned by \texttt{regls}, are best explained by reference to the
+various modes of usage of the function, namely estimation with a
+single value of $\lambda$; exploration of a range of $\lambda$ values
+using a unified training sample; and (probably most relevant in
+practice) search for optimal $\lambda$ via cross validation.
+
+\section{Estimation with a single regularization}
+\label{sec:single-lambda}
+
+Suppose we have 1200 observations on some series \texttt{y} and list
+\texttt{X} (with $k=100$ members) and we wish to train on the first
+1000 observations, using $s = 0.2$, then predict for the remaining
+200. And let's say the data are not pre-standardized. We might then
+do:
+\begin{code}
+bundle parms = defbundle("lfrac", 0.2)
+smpl 1 1000
+bundle lb = regls(y, X, parms)
+\end{code}
+We'll then find the following in \texttt{lb}:
+\begin{itemize}
+\item \texttt{B}: The full vector of $k+1$ coefficients (including an
+  intercept).
+\item \texttt{nzb}: A vector holding only the non-zero coefficients.
+\item \texttt{nzX}: A list identifying the regressors with non-zero
+  coefficients.
+\item \texttt{lmax}: The $\lambda_{\max}$ value for the standardized
+  data.
+\item \texttt{lambda}: The value of $\lambda = s\,\lambda_{\max}$, see
+  (\ref{eq:lmax}) above.
+\item \texttt{crit}: The minimized LASSO criterion, see (\ref{eq:obj})
+  above.
+\item \texttt{R2}: Coefficient of determination,
+  $1 - \sum(y-\hat{y})^2/\sum(y-\bar{y})^2$.
+\item \texttt{BIC}: The Bayesian Information Criterion for the
+  estimated model.
+\item \texttt{nobs}: The number of training observations used.
+\item \texttt{lfrac}: The input value of $s$.
+\item \texttt{stdize}: Whether \texttt{regls} did standardization or
+  not.
+\end{itemize}
+
+To predict for the remainder of the observations we could then do:
+\begin{code}
+smpl 1001 1200
+series pred = lincomb(lb.nzX, lb.nzb)
+\end{code}
+
+At some points below we refer to the coefficient of determination
+(under the key \texttt{R2}) as ``$R^2$''. But note that with
+regularized regression, unlike OLS, this figure is not equal to the
+squared correlation between $y$ and $\hat{y}$.
+
+\section{Exploring a range of regularizations}
+\label{sec:simple-search}
+
+Suppose we wish to compare results from several values of $\lambda$,
+using all the training data. We might then revise the prior script as:
+\begin{code}
+matrix lamseq = lambda_sequence(1, 10)
+bundle parms = defbundle("lfrac", lamseq)
+smpl 1 1000
+bundle lb = regls(y, X, parms)
+\end{code}
+
+In this case \texttt{lb.B} will be a matrix holding the full
+coefficient vector for each $s$ (one column per $s$ value);
+\texttt{lb.crit}, \texttt{R2} and \texttt{lb.BIC} will be column
+vectors holding the LASSO criterion, $R^2$ and BIC value for each
+$s$; and the bundle will contain these additional items:
+\begin{itemize}
+\item \texttt{lfmin}: The $s$ value which produces the smallest BIC
+  value.
+\item \texttt{idxmin}: The 1-based index value of \texttt{lfmin} in
+  the vector passed as \texttt{lfrac}.
+\end{itemize}
+
+The BIC \citep{schwarz78} is calculated by \textsf{regls} as
+$-2\ell(\hat{\beta}) + k^*(\lambda) \log n$, where $\ell(\hat{\beta})$
+is the log-likelihood, based on the sum of squared residuals, and
+$k^*(\lambda)$ the number of non-zero coefficients for the given
+$\lambda$. This criterion provides a guide (though certainly not an
+infallible one) to the likely out-of-sample performance of a model:
+smaller values of BIC are better. Note that the LASSO criterion itself
+does not offer such a guide (it is likely to decrease monotonically
+along with $\lambda$), but it can be useful in comparing the
+effectiveness of minimization algorithms (see section~\ref{sec:ccd}).
+
+When multiple $\lambda$ values are specified, the vector \texttt{nzb}
+and list \texttt{nzX} refer to the non-zero coefficients and
+associated regressors obtained with $s$ = \texttt{lfmin} (the BIC
+minimizer). Out-of-sample predictions using this $s$ can be obtained
+via \texttt{lincomb(nzX, nzb)}.
+
+\section{Optimizing via cross validation}
+\label{sec:xvalid}
+
+Searching for optimal $\lambda$ over the entire training sample we run
+the risk of overfitting. The standard remedy is to divide the training
+data into ``folds'' and do cross validation. The algorithm is then (in
+pseudo-code):
+\begin{code}
+for each s value, s(j)
+  MSE(j) = 0
+end
+for each fold, f(i)
+  set the estimation sample to the complement of f(i)
+  for each s value, s(j)
+    perform regularized estimation using s(j) and predict for f(i)
+    MSE(j) <- MSE(j) + MSE for f(i)
+  end
+end
+\end{code}
+We then perform regularized estimation on the full training data using the
+$s$ value that yields the least total MSE on the above procedure (or
+perhaps take an alternative approach---see below).
+
+The basic options connected with cross validation (to be entered in
+the parameter bundle passed to \texttt{regls}) are as follows:
+\begin{itemize}
+\item \texttt{xvalidate}: Boolean, trigger for doing cross validation (required).
+\item \texttt{nfolds}: Integer, the number of folds (optional, default
+  10).
+\item \texttt{randfolds}: Boolean, whether the folds should be
+  assigned randomly (optional, default 0).
+\end{itemize}
+
+At present the folds are either assigned at random or (by default)
+they are sequences of consecutive observations. It may be worth adding
+a facility to set the folds via a predefined series. A further point:
+at present the folds are by construction all the same size---the
+result of integer division of the number of training observations by
+the number of folds, which means that any ``remainder'' training
+observations are ignored. That could be generalized if it seems
+worthwhile.
+
+When cross validation is specified \texttt{regls} will print some
+information on the performance of the values of $s$ used, a
+snippet of which is shown below:
+\begin{code}
+          s        MSE         se
+   1.000000   1.000000   0.063336
+   0.615848   0.870633   0.057432
+   0.379269   0.759641   0.048581
+   0.233572   0.694237   0.043515
+\end{code}
+The \texttt{MSE} value is the mean across the folds, and \texttt{se}
+is its standard error, computed as per \textsf{glmnet}.
+
+While it would seem most natural to select for further prediction the
+$s$ value that minimizes MSE on cross validation---call this
+$s^*$---\textsf{glmnet} suggests an alternative policy: select the
+largest $s$ that delivers an MSE within one standard error of the
+minimum, which we'll call $s^{\dagger}$. It may be that $s^*$ and
+$s^{\dagger}$ are the same value, but if not this policy gives the
+benefit of the doubt to parsimony.
+
+After cross validation, \texttt{regls} by default stores the full
+coefficient matrix (one column per value of $s$, estimated on the full
+training data) under the key \texttt{B}.  And the returned bundle also
+holds the indices of both $s^*$ and $s^{\dagger}$, under the keys
+\texttt{idxmin} and \texttt{idx1se} respectively. One can therefore
+select the desired set of coefficients and obtain fitted values using
+the full input list \texttt{X}---with \texttt{const} prepended unless
+your data are pre-standardized.
+\begin{code}
+matrix optimal_b = lb.B[,idxmin] # or idx1se, or other column
+list All = const X
+series fitted = lincomb(All, optimal_b)
+\end{code}
+Note that \texttt{B} has as many rows as \texttt{X} has members, plus
+one for the intercept.
+
+But there's another method which may be more convenient: after cross
+validation the \texttt{regls} return bundle holds a single
+\texttt{nzb} vector and \texttt{nzX} list, such that fitted values can
+be obtained thus:
+\begin{code}
+series fitted = lincomb(lb.nzX, lb.nzb)
+\end{code}
+By default it's the $s^*$ (\texttt{idxmin}) column that's selected for
+forming \texttt{nzb}, but if you wish to use $s^{\dagger}$ you can
+arrange for that by setting \texttt{use\_1se} to a non-zero value in
+the parameter bundle passed to \texttt{regls}, as in
+\begin{code}
+parms.use_1se = 1
+\end{code}
+
+\subsection*{Further cross validation options}
+
+Some additional cross validation options are supported.
+
+\begin{itemize}
+\item \texttt{seed}: Integer, you can supply this to control the
+  randomization when \texttt{randfolds} is active, hence getting
+  exactly repeatable results.
+\item \texttt{single\_b}: Boolean. If non-zero it stops \texttt{regls}
+  from estimating coefficients for all $s$ values after cross
+  validation; only the selected ``best'' value ($s^*$ or
+  $s^{\dagger}$) is used. The matrix \texttt{B} mentioned above is
+  then holds just a single column. This may shave a little off the
+  execution time.
+
+\end{itemize}
+
+\section{Execution speed}
+\label{sec:speed}
+
+According to the discussion in section 3.2.2 of \cite{boyd2010}: the
+ADMM algorithm is reliable but is known \textit{not} to be fast (or
+not if accurate results are wanted). However, we have been able to
+accelerate ADMM to the point where execution time is unlikely to be an
+issue, by two main means.
+\begin{itemize}
+\item We implemented the suggestion in section 3.4.1 of
+  \cite{boyd2010}: letting the penalty factor $\rho$ vary across ADMM
+  iterations to keep the magnitudes of the primary and dual residuals
+  in rough balance. This turns out to be highly effective.
+\item We implemented automatic ``farming out'' of cross validation to
+  multiple \textsf{MPI} processes (when \textsf{MPI} is available on
+  the host machine). It's possible to prevent this by adding
+  \texttt{no\_mpi} to the parameter bundle with a non-zero value.
+\end{itemize}
+In one benchmark case we considered---with 1500 training observations,
+101 covariates, 50 values of $\lambda$ and 10 randomized cross
+validation folds---the execution time was about 13 seconds before
+making the changes mentioned above, and about 1.5 seconds
+thereafter.\footnote{On a desktop machine with 4 Intel i7 processors,
+  running Linux.}
+
+\section{Additional ADMM controls}
+\label{sec:add-controls}
+
+This section describes some additional controls over the ADMM
+algorithm that can be passed to the \texttt{regls} function via the
+\texttt{parms} bundle. Under the key \texttt{admmctrl} you can supply
+a 3-vector whose elements are, in order:
+\begin{itemize}
+\item \texttt{rho}: a positive real number, the initial ADMM penalty
+  parameter. It seems that $\rho = 8.0$ works well but higher or lower
+  values might produce faster convergence in some cases.
+\item \texttt{reltol}: the relative tolerance used in gauging whether
+  the algorithm has converged sufficiently.
+\item \texttt{abstol}: the absolute convergence tolerance (which will
+  be scaled by the square root of the number of candidate regressors).
+\end{itemize}
+We have found that \texttt{reltol} and \texttt{abstol} values of
+$10^{-4}$ and $10^{-6}$, respectively, produce reasonably accurate
+results in a manageable number of iterations. Setting smaller values
+will produce greater accuracy at the cost of more iterations.
+Non-positive values of these terms are ignored, so one can, for
+example, set a single element by passing a zero vector with just the
+desired term set to a positive value.
+
+\section{LASSO examples}
+\label{sec:examples}
+
+Besides the sample script supplied with the package, more examples can
+be found in the directories \texttt{murder}, \texttt{wine} and
+\texttt{fat} at \url{http://ricardo.ecn.wfu.edu/pub/gretl/lasso/}.
+Some of these scripts incorporate comparison with \textsf{glmnet}.
+The murder-rate and wine quality examples use real-world data; the
+\texttt{fat} example is an artificial case with more regressors than
+observations.
+
+Note that it's necessary to run the scripts involving randomized cross
+validation several times to get a good idea of what's going on: in
+each case there seem to be a few ``favoured solutions'' of varying
+probability. Sometimes one sees gretl finding the better one,
+sometimes \textsf{glmnet}.
+
+\section{Ridge regression}
+\label{sec:ridge}
+
+While LASSO involves $\ell_1$ regularization, Ridge uses $\ell_2$: the
+penalty factor $\lambda$ applies to the sum of squared coefficients,
+giving rise to the following objective:
+\begin{equation}
+  \label{eq:ridge-obj}
+  \min_{\hat{\beta}} \quad
+  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 + \lambda \sum_{j=1}^k \hat{\beta}_j^2
+\end{equation}
+
+In consequence, although a large value of $\lambda$ will shrink Ridge
+estimates substantially relative to OLS it will not send any
+coefficients to exactly zero as does LASSO. If the $X$ matrix exhibits
+strong collinearity, LASSO will tend to eliminate most of the
+collinear terms while Ridge will tend to distribute the predictive
+weight across the terms, yielding several small coefficients instead
+of one relatively substantial coefficient and a bunch of zeros.
+
+To get the \texttt{regls} function to perform Ridge regression rather
+than LASSO, set a value of 1 under the key \texttt{ridge} in the
+\texttt{parms} bundle, as in
+\begin{code}
+parms.ridge = 1
+\end{code}
+
+Most of the points made above with respect to LASSO carry over to
+Ridge. The same three modes of operation described in sections
+\ref{sec:single-lambda} to \ref{sec:xvalid} (from estimation using a
+single value of $\lambda$ to cross-validation with as many values as
+you like) are available.
+
+There is an important difference, however, in respect of the
+calibration of $\lambda$. In the LASSO case there's an easily computed
+$\lambda_{\max}$ (= $\|X'y\|_{\infty}$) which just suffices to force
+all slope coefficients to zero and so, as explained above, the user is
+asked to express the LASSO penalty as a fraction of this maximum. In
+the case of Ridge there is generally no finite $\lambda$ that will
+drive all coefficients to zero and so no ``natural'' maximum to serve
+as a benchmark. We therefore offer the user three options for the
+specification of ``\texttt{lfrac},'' controlled by the integer-valued
+parameter \texttt{lambda\_scale}:
+\begin{itemize}
+\item \texttt{lambda\_scale} = 0: no scaling is performed. The
+  ``\texttt{lfrac}'' values are taken as actual $\lambda$ values (and
+  so do not have to be bounded by 1.0 above).
+\item \texttt{lambda\_scale} = 1: we emulate \textsf{glmnet}. The
+  largest value of $\lambda$ is set to $9.9 \times 10^{35}$, which
+  will drive all coefficients to near-zero. The second-largest
+  $\lambda$ (call it $\lambda_2$) is then set to 1000 times
+  $\|X'y\|_{\infty}$, and subsequent values in the sequence are scaled
+  in relation to $\lambda_2$. This is the default setting.
+\item \texttt{lambda\_scale} = 2: we follow the suggestion of some
+  practitioners, setting $\lambda_{\max}$ to the squared Frobenius
+  norm of $X$, which will not drive all coefficients to near-zero but
+  will impose substantial shrinkage in relation to OLS.
+\end{itemize}
+
+To be clear on the action of options 1 and 2 for
+\texttt{lambda\_scale}, suppose our \texttt{lfrac} specification is
+\begin{code}
+lfrac = {1, 0.5, 0.25, 0.125}
+\end{code}
+Then if \texttt{lambda\_scale} = 1 this translates to
+\begin{code}
+lam2 = 1000 * infnorm(X'y)
+effective_lambda = {9.9e35, lam2, 0.5*lam2, 0.25*lam2}
+\end{code}
+while if \texttt{lambda\_scale} = 2 it becomes
+\begin{code}
+lam1 = tr(X'X) # Frobenius norm squared
+effective_lambda = {lam1, 0.5*lam1, 0.25*lam1, 0.125*lam1}
+\end{code}
+Note that the relevant matrix norms are computed after
+standardization.
+
+In addition to \texttt{BIC} and \texttt{R2} the return bundle from
+Ridge regression contains \texttt{edf} (a scalar if a single $\lambda$
+is specified, otherwise a column vector). This is the ``effective''
+degrees of freedom, or number of free parameters, calculated via
+the SVD of the matrix of regressors:
+\begin{equation}
+  \label{eq:edf}
+\mbox{edf} = \sum_{i=1}^k\, \frac{\sigma_i^2}{\sigma_i^2 + \lambda}
+\end{equation}
+where the $\sigma_i$s are the singular values. As a measure of the
+``size'' of a model this takes the place of the number of non-zero
+coefficients in LASSO.
+
+In the case of a single $\lambda$, when estimation is performed using
+the default SVD method, further information is available: the return
+bundle contains the covariance matrix of the parameter estimates
+(other than the constant) under the key \texttt{vcv}. And if the
+\texttt{verbosity} option is set to 2 you get a printout of the model,
+showing standard errors, $z$ statistics and $P$-values.
+
+\section{The CCD option}
+\label{sec:ccd}
+
+As stated above, the default algorithms used by \textsf{regls} for
+LSSO and Ridge are ADMM and SVD, respectively. However, you have the
+option---for both LASSO and Ridge---of using the CCD (Cyclical
+Coordinate Descent) algorithm, as employed by \textsf{glmnet}. This is
+governed by two additional keys in the \texttt{parms} bundle:
+\begin{itemize}
+\item \texttt{ccd}: boolean, default 0. Set this to 1 to use CCD.
+\item \texttt{ccd\_toler}: a positive scalar setting the convergence
+  tolerance for CCD. The default is $10^{-7}$; setting a smaller value
+  will give greater accuracy at the expense of more iterations.
+\end{itemize}
+
+Using CCD will give results that are more directly comparable with
+\textsf{glmnet}. Beyond that, practitioners are likely to ask, which
+of the available algorithms is faster, and which more accurate? Those
+questions are not so simple to answer.
+
+First, speed and accuracy cannot be assessed independently. In the
+case of LASSO, both ADMM and CCD are numerical algorithms that deliver
+an approximation to a notional ``exact'' result, with the latitude of
+the approximation governed by one or more tolerance parameters. Both
+algorithms are effective but they are quite different; their tolerance
+settings are not directly comparable and the default values are
+somewhat arbitrary. If method A produces a more accurate result than
+method B under default settings it is generally possible to reduce the
+tolerance(s) for B such that it equals the accuracy of A (which may
+reverse their ranking in terms of execution time).
+
+Moreover, even the relative accuracy of two sets of results is not so
+straightforward to assess. Both LASSO and Ridge are minimization
+problems, so it's tempting to assume that---for a given dataset and
+given $\lambda$---the method that produces the smaller criterion value
+is more accurate. But the LASSO objective shown in equation
+(\ref{eq:obj}) is the Lagrangian form of a problem which can also be
+written as
+\[
+  \min_{\hat{\beta}} \quad
+  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 \,\mbox{ subject to }\,
+  \sum_{j=1}^k |\hat{\beta}_j| \leq t
+\]
+Part of the error of approximation may include failure to exactly meet
+the condition on the right, in which case a seemingly better result
+may actually be less accurate.
+
+A similar point can be made about Ridge. Unlike LASSO the Ridge
+problem has an analytic solution and by default \textsf{regls}
+implements that solution via SVD, which is pretty much the gold
+standard for accuracy in digital computation. In some cases, however,
+CCD at its default tolerance ($\epsilon = 10^{-7}$) produces a
+slightly smaller Ridge criterion value. Is it really doing better than
+SVD? No, as can be shown by tightening the CCD tolerance. For example,
+with $\epsilon = 10^{-12}$ or so CCD may reproduce the SVD result.
+
+This sort of experiment is generally useful for assessing relative
+accuracy. If the difference between the results delivered by methods A
+and B shrinks as the tolerance for method B is tightened, we can be
+reasonable confident that A's initial result was more accurate. On
+that basis our impression is that, with tolerances at their respective
+default values, both ADMM LASSO and SVD Ridge are generally somewhat
+slower and somewhat more accurate than the CCD alternative.
+
+\section{Elastic net}
+\label{sec:elnet}
+
+As mentioned above, elastic net is a hybrid of LASSO and Ridge. It
+employs a combination of $\ell_1$ and $\ell_2$ penalties governed by a
+hyperparameter $0 \leq \alpha \leq 1$. The objective is
+\[
+    \min_{\hat{\beta}} \quad \frac{1}{2}\,
+    \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 +
+    \lambda \left(\frac{1-\alpha}{2} \sum_{j=1}^k \hat{\beta}_j^2
+      + \alpha \sum_{j=1}^k |\hat{\beta}_j|\right)
+  \]
+Thus $\alpha = 1$ gives LASSO, $\alpha = 0$ gives Ridge, and anything
+between gives a combination. It has been argued that better
+out-of-sample prediction can be obtained in some cases by preserving
+some highly collinear regressors \`a la Ridge, while sending some
+coefficients to exact zero as in LASSO, and elastic net allows for
+this.
+
+In the \texttt{regls} function, elastic net is selected by specifying
+a fractional value under the key \texttt{alpha} in the parameters
+bundle. This automatically switches to the CCD algorithm
+(section~\ref{sec:ccd}), so the \texttt{ccd\_toler} option becomes
+applicable.\footnote{In principle the ADMM algorithm could handle
+  elastic net, but to date we have not implemented such support.}
+
+When elastic net is used on a sequence of $\lambda$s without cross
+validation (see section~\ref{sec:simple-search}) \texttt{regls}
+provides a BIC measure as a possible means of selecting the most
+promising penalty factor. However, calculation of the effective number
+of parameters in this case is a debatable matter. What \texttt{regls}
+uses at present is a weighted average of the number of non-zero
+coefficients as in LASSO, with weight $\alpha$, and the SVD-derived
+``edf'' for Ridge as in equation (\ref{eq:edf}), with weight
+$1-\alpha$.
+
+Note that if cross validation is called for with elastic net, it is
+only the $\lambda$ value that is optimized. To assess the efficacy of
+various $\alpha$ values one would have to perform several cross
+validation runs.
+
+\section{Reference: public functions}
+\label{sec:funcref}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundle regls (series y, list X, bundle parms)
+\end{verbatim}
+  Performs LASSO, Ridge or elastic net estimation given the dependent
+  variable \texttt{y}, the regressors \texttt{X}, and options in
+  \texttt{parms}. Returns a bundle containing the
+  results. Table~\ref{tab:regls-parms} lists the parameters that can
+  be passed via the \texttt{parms} argument.
+\end{funcdoc}
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lll}
+    \texttt{lfrac} & scalar or vector & $\lambda$-fraction(s) \\
+    \texttt{nlambda} & integer & number of automatic $\lambda$s \\
+    \texttt{stdize} & 0/1, default 1 & standardize the data \\
+    \texttt{ridge} & 0/1, default 0 & do Ridge regression \\
+    \texttt{verbosity} & 0, 1 or 2, default 1 & printing of output\\
+    \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
+    \texttt{nfolds} & optional integer $>1$, default 10 & number of
+                                                          folds \\
+    \texttt{randfolds} & 0/1, default 0 & use random folds\\
+    \texttt{use\_1se} & 0/1, default 0 & see section~\ref{sec:xvalid} \\
+    \texttt{seed} & optional integer & controls random folds\\
+    \texttt{single\_b} & 0/1, default 0 & see section~\ref{sec:xvalid}\\
+    \texttt{no\_mpi} & 0/1, default 0 & see section~\ref{sec:speed}\\
+    \texttt{admmctrl} & optional control vector & see
+                                                  section~\ref{sec:add-controls} \\
+    \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
+    \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see
+                                                               section~\ref{sec:ccd}\\
+    \texttt{alpha} & $0 \leq \alpha \leq 1$ (default 1) & see
+                                                               section~\ref{sec:elnet}
+  \end{tabular}
+  \caption{Summary of parameters for the \texttt{regls} function}
+  \label{tab:regls-parms}
+\end{table}
+
+\begin{funcdoc}
+\begin{verbatim}
+matrix lambda_sequence (scalar lmax, int K, scalar eps[0.0001])
+\end{verbatim}
+  Produces a column vector holding a logarithmic sequence of
+  \texttt{K} values running from \texttt{lmax} to \texttt{eps}. It is
+  required that $0 < \mbox{\texttt{lmax}} \le 1$ and
+  $0 \le \mbox{\texttt{eps}} < \mbox{\texttt{lmax}}$. In context such
+  values are interpreted as instances of $s = \lambda/\lambda_{\max}$.
+\end{funcdoc}
+
+%%\clearpage
+
+\begin{funcdoc}
+\begin{verbatim}
+matrix regls_get_stats (const series y, const series yhat)
+\end{verbatim}
+  Returns a 2-vector holding MSE = $\sum(y - \hat{y})^2/n$
+  and $R^2 = 1 - \sum(y - \hat{y})^2/\sum(y - \bar{y})^2$.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+scalar regls_pc_correct (const series y, const series yhat)
+\end{verbatim}
+  Returns the percentage of cases in which \texttt{yhat} rounded to
+  the nearest integer equals \texttt{y}. Useful only when \texttt{y}
+  is integer-valued.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+matrix regls_foldvec (int nobs, int nf)
+\end{verbatim}
+  Returns a column vector of length \texttt{nobs} in which \texttt{nf}
+  successive blocks of length \texttt{nobs}/\texttt{nf} take on the
+  values 1, 2,\dots, \texttt{nf}, respectively. Useful only for
+  composing a \texttt{folds} vector than can be passed to
+  \textsf{glmnet} for comparison with gretl when consecutive folds are
+  used in cross validation.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+void regls_multiprint (const matrix B, const matrix lam,
+                       const series y, list X,
+                       const matrix crit[null])
+\end{verbatim}
+  Given a $k \times m$ (or $k+1 \times m$) coefficient matrix
+  \texttt{B}, an $m$-vector of $\lambda$ values \texttt{lam}, a
+  dependent variable \texttt{y} and a list \texttt{X} of $k$
+  regressors, prints a summary table with $m$ rows showing $R^2$, the
+  sum of absolute values of the coefficients, and df (the number of
+  non-zero coefficients) associated with each $\lambda$. It is
+  presumed that \texttt{B[,j]} holds LASSO estimates produced using
+  \texttt{lam[j]}. If the optional \texttt{crit} matrix is provided it
+  should be an $m$-vector holding the criterion value associated with
+  each $\lambda$, which will be shown as a fifth column.
+
+  As in the \texttt{regls} function, the \texttt{X} list should not
+  contain a constant: if the \texttt{B} matrix has one more row than
+  \texttt{X} has members, the constant is handled
+  automatically. Listing~\ref{script:multiprint} shows how the
+  information provided in the \texttt{regls} return bundle can be used
+  to supply the arguments \texttt{B}, \texttt{lam} and \texttt{crit}.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+series glmnet_pred (matrix *Rb, list X)
+\end{verbatim}
+  Convenience function for handling results retrieved by gretl from
+  \textsf{glmnet}. On entry \texttt{Rb} should hold the full
+  coefficient vector (including any zeros) and \texttt{X} the full
+  list of candidate regressors, and the return value is the result of
+  \texttt{lincomb(X, Rb)}. On exit \texttt{Rb} holds only the non-zero
+  coefficients, with row-names added based on the \texttt{X}
+  list. This is then comparable with gretl's \texttt{nzb}.
+\end{funcdoc}
+
+\begin{script}
+  \caption{Usage of \texttt{regls\_multiprint}}
+  \label{script:multiprint}
+\begin{scode}
+set verbose off
+include regls.gfn
+open murder.gdt --quiet --frompkg=regls
+
+# all available predictors w. no missing values
+list X = population..LemasPctOfficDrugUn
+smpl 1 800
+bundle parms = defbundle("nlambda", 8, "verbosity", 0)
+bundle lb = regls(murdPerPop, X, parms)
+regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
+\end{scode}
+  \end{script}
+
+\bibliographystyle{gretl}
+\bibliography{gretl}
+
+\clearpage
+\startappendices
+
+\myappendix{Comparison with glmnet}
+\label{sec:comparison}
+
+It's likely that potential users of this package will take
+\textsf{R}'s \textsf{glmnet} as benchmark. So we'd be well advised to
+ensure that our results are close to those from \textsf{glmnet} unless
+we can demonstrate a good reason for divergence. We're at that point:
+on some examples gretl's \texttt{regls} gets a smaller (better) LASSO
+criterion value than \textsf{glmnet} for a given $\lambda$, and on
+some examples \textit{vice versa}, within a quite small range of
+variation. Similarly for the typical full \textsf{regls} workflow;
+that is, randomized cross validation followed by out of sample
+prediction. Sometimes we do a bit better than \textsf{glmnet},
+sometimes not quite so well.
+
+\subsection*{Different conventions}
+
+It should be noted that \textsf{regls} and \textsf{glmnet} employ
+different conventions in some respects. This does not affect the
+comparison of reported coefficients or predicted values, but it can
+make comparison of $\lambda$ values a little awkward. The LASSO
+objective function and definition of $\lambda_{\max}$ used by
+\textsf{regls} were stated in section~\ref{sec:intro}, but to be fully
+explicit we should say that the $X$ and $y$ in equation
+(\ref{eq:lmax}) for the maximum $\lambda$ are taken to be standardized
+values.
+
+In \textsf{glmnet} the objective (in the linear Gaussian case) is
+\[
+   \min_{\hat{\beta}} \quad \frac{1}{2n}\,
+  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 + \lambda \sum_{j=1}^k |\hat{\beta}_j| 
+\]
+This differs from our equation (\ref{eq:obj}) in dividing the sum of
+squared residuals (SSR) by $2n$ rather than 2. Since \textsf{glmnet}
+is not actually using a different relative weighting of the SSR and
+the sum of absolute coefficient values, it follows that their
+``$\lambda$'' must be read as $n^{-1}$ times ours. Moreover, while we
+take each $\lambda_i$ value to be $s_i$ times $\lambda_{\max}$ as
+defined in equation (\ref{eq:lmax}), the $\lambda$ values printed by
+\textsf{glmnet} are (in our notation)
+\[
+\lambda_i = s_i \cdot \lambda_{\max} \cdot \hat{\sigma}_y / n 
+\]
+where $\hat{\sigma}_y$ is the ML estimate of the standard deviation of
+the dependent variable. To obtain the \textsf{glmnet} $\lambda$
+corresponding to a given $s$ one can do:
+\begin{code}
+Rlam = s * b.lmax * sdc({y}) / b.nobs
+\end{code}
+where \texttt{b} is a bundle obtained via \texttt{regls} on the same
+data, \texttt{y} is the dependent series and \texttt{sdc(\{y\})} gives
+$\hat{\sigma}_y$. The current sample range must be the same as for
+\texttt{b} to get $\hat{\sigma}_y$ right, but if \textsf{glmnet} was
+told \textit{not} to standardize the data then this term should be
+omitted as it is assumed to be 1.
+
+\subsection*{Cross validation}
+
+This needs to go in proper sequence somewhere\dots.
+
+There's a significant difference between \textsf{regls} and
+\textsf{glmnet} in respect of cross validation. This applies even if
+the CCD algorithm is selected in \textsf{regls}, which results in
+near-identical results for coefficients and predicted values when
+simply testing a sequence of $\lambda$ values.
+
+In \textsf{regls} cross validation, the entire training dataset is
+standardized at the outset, then each fold gets its share of the
+standardized data. The maximum $\lambda$ is also determined using the
+full training set, so the same $\lambda$ sequence is used for each
+fold. In \textsf{glmnet}, by contrast, both standardization and
+calculation of the $\lambda$ sequence are done per fold. It's not
+obvious \textit{a priori} which of these methods is going to be more
+effective in selecting the $\lambda$ that will do best for
+out-of-sample prediction, but our Monte Carlo analyses show that the
+\textsf{regls} method is superior.
+
+\subsection*{An extended test}
+
+The proof of the pudding for LASSO is out-of-sample prediction
+following cross validation. We therefore conducted an extended test of
+this, with comparison to \textsf{glmnet}, using the murder-rate
+dataset referenced by Ryan Tibshirani\footnote{See
+  \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
+and included with our \texttt{regls} package. We used the default ADMM
+algorithm with \texttt{regls}.
+
+For each of 800 trials we:
+\begin{enumerate}
+\item Randomized the order of the entire dataset.
+\item Selected the first 1000 observations for training and the next
+  200 for testing.
+\item Ran both \texttt{regls} and \textsf{glmnet}, using 25 values
+  of $s = \lambda/\lambda_{\max}$ and 10 consecutive folds.
+\item Used the optimal $s$ from cross validation to obtain
+  $\hat{\beta}$ on the full set of training data.
+\item Obtained fitted values $X\hat{\beta}$ for the testing data and
+  calculated the out of sample $R^2$.
+\end{enumerate}
+
+In fact we ran this procedure twice, first taking $s^*$ as the optimum
+from cross validation and then using $s^{\dagger}$, following
+\textsf{glmnet}'s recommendation (see section~\ref{sec:xvalid}). The
+results are shown in Table~\ref{tab:bigtest}.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lccccccc}
+    \multicolumn{8}{c}{Case A: using $s^*$} \\
+ & mean & s.d. & s.e.(mean) & 95\% c.i. & median & min & max \\
+\textsf{gretl} & 0.4987 & 0.2223 & 0.0079 & 0.4833 - 0.5141 & 0.5451 & $-$2.4235 & 0.7081 \\
+\textsf{glmnet} & 0.4825 & 0.2226 & 0.0079 & 0.4671 - 0.4979 & 0.5244 & $-$2.4184 & 0.7136 \\[8pt]
+    \multicolumn{8}{c}{Case B: using $s^{\dagger}$} \\
+ & mean & s.d. & s.e.(mean) & 95\% c.i. & median & min & max \\
+\textsf{gretl} & 0.4817 & 0.1783 & 0.0063 & 0.4693 - 0.4940 & 0.5122 & $-$1.7316 & 0.6615 \\
+\textsf{glmnet} & 0.4585 & 0.1762 & 0.0062 & 0.4463 - 0.4708 & 0.4843 & $-$1.7313 & 0.6571 \\
+  \end{tabular}
+  \caption{Out-of-sample $R^2$ statistics, 800 trials}
+  \label{tab:bigtest}
+\end{table}
+
+In Case A, with the MSE-minimizing $s^*$ selected for prediction, the
+performance of the two codes is very similar: the 95 percent
+confidence intervals for mean $R^2$ are strongly overlapping.  Since
+the algorithms employed are quite different, one might say that their
+respective results are mutually supportive.
+
+In Case B, following the ``within one standard error'' rule to give
+the benefit of the doubt to parsimony, the results are not quite so
+good for either code (although there's some overlap with the Case A
+confidence intervals).
+
+The negative minimum $R^2$ values call for comment. It seems that in 2
+or 3 percent of the randomly reordered datasets the 200 testing
+observations differed substantially from the 1000 training
+observations. An $R^2 < 0$ means, of course, that the predictions of
+the model are inferior to simply predicting the sample mean for all
+observations in the given sample range, but since we're talking about
+out-of-sample prediction the sample mean for the testing data should
+be considered unknown when predictions are made.
+
+The script that produced the Case A results above is shown on the
+following page. For Case B it's necessary to add
+\texttt{parms.use\_1se = 1} when forming the parameter bundle for
+gretl's \texttt{regls}, and in the \textsf{R} section to change the
+line that assigns to \texttt{Rb} to read
+\begin{code}
+Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.1se))
+\end{code}
+
+\clearpage
+
+\begin{script}
+  \caption{Monte Carlo script for out-of-sample prediction}
+  \label{script:mc}
+\begin{scode}
+set verbose off
+include regls.gfn
+open murder.gdt --quiet --frompkg=regls
+
+# all available predictors without missing values
+list X = population..LemasPctOfficDrugUn
+list X0 = const X
+list LL = murdPerPop X
+
+# the lambdas we'll use
+lamseq = lambda_sequence(1, 25)
+bundle parms = defbundle("lfrac", lamseq, "stdize", 1, "verbosity", 0)
+parms.xvalidate = 1
+parms.nfolds = 10
+
+matrix foldvec = regls_foldvec(1000, 10)
+mwrite(foldvec, "folds.mat", 1) # for glmnet
+
+K = 800
+matrix OSR2 = zeros(K, 2)
+
+loop i=1..K --quiet
+   smpl full
+   series sorter = normal()
+   dataset sortby sorter
+
+   smpl 1 1000 # training data
+   bundle lb = regls(murdPerPop, X, parms)
+
+   foreign language=R --send-data=LL
+     if (! "glmnet" %in% (.packages())) {
+        library(glmnet)
+     }
+     x <- as.matrix(gretldata[,2:ncol(gretldata)])
+     y <- as.matrix(gretldata[,1])
+     folds <- gretl.loadmat("folds.mat")
+     m <- cv.glmnet(x, y, foldid = folds, family = "gaussian", alpha = 1,
+      nlambda = 25, standardize = T, intercept = T)
+     Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.min))
+     gretl.export(Rb, quiet=1)
+   end foreign --quiet
+
+   Rb = mread("Rb.mat", 1)
+
+   smpl 1001 1200 # testing data
+   series pred = lincomb(lb.nzX, lb.nzb)
+   m = regls_get_stats(murdPerPop, pred)
+   OSR2[i,1] = m[2]
+   series Rpred = lincomb(X0, Rb)
+   m = regls_get_stats(murdPerPop, Rpred)
+   OSR2[i,2] = m[2]
+endloop
+
+mwrite(OSR2, "OSR2_800.mat")
+\end{scode}
+  \end{script}
+
+\end{document}

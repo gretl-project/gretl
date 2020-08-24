@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -47,7 +47,7 @@ struct duration_info_ {
     int k;                 /* number of covariates (including constant) */
     int npar;              /* total number of parameters */
     int n;                 /* number of observations */
-    double ll;             /* loglikelihood */    
+    double ll;             /* loglikelihood */
     double *theta;         /* parameter array, length npar */
     gretl_matrix_block *B; /* workspace */
     gretl_vector *logt;    /* log of dependent variable (duration) */
@@ -68,7 +68,7 @@ static void duration_free (duration_info *dinfo)
 }
 
 /* initialize using OLS regression of the log of duration
-   on the covariates (or a simpler variant if we're 
+   on the covariates (or a simpler variant if we're
    estimating the constant-only model)
 */
 
@@ -86,7 +86,7 @@ static int duration_estimates_init (duration_info *dinfo)
 	    return E_ALLOC;
 	}
 
-	err = gretl_matrix_ols(dinfo->logt, dinfo->X, b, 
+	err = gretl_matrix_ols(dinfo->logt, dinfo->X, b,
 			       NULL, NULL, NULL);
 
 	if (!err) {
@@ -233,7 +233,7 @@ static double duration_loglik (const double *theta, void *data)
 	    return NADBL;
 	}
 	lns = log(s);
-    } 
+    }
 
     duration_update_Xb(dinfo, theta);
 
@@ -263,7 +263,7 @@ static double duration_loglik (const double *theta, void *data)
 	    if (di) {
 		ll[i] += wi - lns;
 	    }
-	}	
+	}
 	dinfo->ll += ll[i];
     }
 
@@ -281,7 +281,7 @@ static double normal_h (double w)
     return normal_pdf(w) / normal_cdf(-w);
 }
 
-static int duration_score (double *theta, double *g, int np, 
+static int duration_score (double *theta, double *g, int np,
 			   BFGS_CRIT_FUNC ll, void *data)
 {
     duration_info *dinfo = (duration_info *) data;
@@ -296,13 +296,13 @@ static int duration_score (double *theta, double *g, int np,
 
     if (dinfo->dist != DUR_EXPON) {
 	s = theta[dinfo->k];
-    } 
+    }
 
     if (g != NULL) {
 	for (j=0; j<np; j++) {
 	    g[j] = 0.0;
 	}
-    }  
+    }
 
     for (i=0; i<dinfo->n; i++) {
 	di = uncensored(dinfo, i);
@@ -341,7 +341,7 @@ static int duration_score (double *theta, double *g, int np,
    We're actually constructing the negative inverse of the Hessian here.
 */
 
-static int duration_hessian (double *theta, 
+static int duration_hessian (double *theta,
 			     gretl_matrix *H,
 			     void *data)
 {
@@ -412,7 +412,7 @@ static int duration_hessian (double *theta,
     return err;
 }
 
-static gretl_matrix *duration_hessian_inverse (double *theta, 
+static gretl_matrix *duration_hessian_inverse (double *theta,
 					       void *data,
 					       int *err)
 {
@@ -444,7 +444,7 @@ static gretl_matrix *duration_hessian_inverse (double *theta,
     return H;
 }
 
-/* calculate the OPG matrix at the starting point and use 
+/* calculate the OPG matrix at the starting point and use
    its inverse (if any) as initial curvature matrix for BFGS
 */
 
@@ -454,20 +454,18 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     int err;
 
     dinfo->flags = DUR_UPDATE_XB;
-
-    err = duration_score(dinfo->theta, NULL, dinfo->npar, 
+    err = duration_score(dinfo->theta, NULL, dinfo->npar,
 			 NULL, dinfo);
+    dinfo->flags = 0;
     if (!err) {
 	H = gretl_matrix_GG_inverse(dinfo->G, &err);
     }
 
-    dinfo->flags = 0;
-
     return H;
 }
 
-/* This is the last thing we do, after transcribing the 
-   MLE results to pmod, so we don't have to worry about 
+/* This is the last thing we do, after transcribing the
+   MLE results to pmod, so we don't have to worry about
    saving and then restoring all the original values
    attached to dinfo, which we will shortly destroy.
 */
@@ -495,19 +493,19 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo,
 	int maxit, fncount = 0, grcount = 0;
 	double toler;
 
-	BFGS_defaults(&maxit, &toler, DURATION); 
-	err = BFGS_max(dinfo->theta, dinfo->npar, maxit, toler, 
+	BFGS_defaults(&maxit, &toler, DURATION);
+	err = BFGS_max(dinfo->theta, dinfo->npar, maxit, toler,
 		       &fncount, &grcount, duration_loglik, C_LOGLIK,
 		       duration_score, dinfo, NULL, OPT_NONE, NULL);
-    } else if (!err) {	
+    } else if (!err) {
 	double crittol = 1.0e-7;
 	double gradtol = 1.0e-7;
 	int iters = 0, maxit = 100;
 
-	err = newton_raphson_max(dinfo->theta, dinfo->npar, maxit, 
-				 crittol, gradtol, &iters, 
-				 C_LOGLIK, duration_loglik, 
-				 duration_score, duration_hessian, 
+	err = newton_raphson_max(dinfo->theta, dinfo->npar, maxit,
+				 crittol, gradtol, &iters,
+				 C_LOGLIK, duration_loglik,
+				 duration_score, duration_hessian,
 				 dinfo, OPT_NONE, NULL);
     }
 
@@ -516,7 +514,7 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo,
     }
 }
 
-/* 
+/*
    Produce something to fill $yhat and $uhat for a duration model.
 
    For $yhat we produce by default the conditional expectation E[t |
@@ -632,7 +630,7 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
 	H = duration_hessian_inverse(dinfo->theta, dinfo, &err);
 	if (!err) {
 	    if (opt & OPT_R) {
-		err = gretl_model_add_QML_vcv(pmod, DURATION, 
+		err = gretl_model_add_QML_vcv(pmod, DURATION,
 					      H, dinfo->G,
 					      dset, opt, NULL);
 	    } else {
@@ -646,9 +644,9 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
     return err;
 }
 
-static int 
-transcribe_duration_results (MODEL *pmod, duration_info *dinfo, 
-			     const DATASET *dset, 
+static int
+transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
+			     const DATASET *dset,
 			     int fncount, int grcount, int use_bfgs,
 			     int censvar, gretlopt opt)
 {
@@ -676,7 +674,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	gretl_model_set_int(pmod, "grcount", grcount);
     } else {
 	gretl_model_set_int(pmod, "iters", fncount);
-    } 
+    }
 
     if (!err) {
 	err = gretl_model_allocate_param_names(pmod, np);
@@ -687,7 +685,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	    }
 	    if (dinfo->dist != DUR_EXPON) {
 		gretl_model_set_param_name(pmod, np-1, "sigma");
-	    } 
+	    }
 	}
     }
 
@@ -695,7 +693,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	pmod->sigma = 1.0;
     } else {
 	pmod->sigma = dinfo->theta[np-1];
-    } 
+    }
 
     err = gretl_model_write_coeffs(pmod, dinfo->theta, np);
 
@@ -706,7 +704,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     if (!err) {
 	duration_set_predictions(pmod, dinfo, dset, opt);
 	pmod->lnL = dinfo->ll;
-	mle_criteria(pmod, 0); 
+	mle_criteria(pmod, 0);
 	/* mask invalid statistics */
 	pmod->fstt = pmod->chisq = NADBL;
 	pmod->rsq = pmod->adjrsq = NADBL;
@@ -720,10 +718,10 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     return err;
 }
 
-int duration_estimate (MODEL *pmod, int censvar, const DATASET *dset, 
+int duration_estimate (MODEL *pmod, int censvar, const DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
-    gretlopt maxopt = opt & OPT_V;
+    gretlopt maxopt = (opt & OPT_V) | OPT_U;
     duration_info dinfo;
     int maxit = 200;
     int fncount = 0;
@@ -757,25 +755,25 @@ int duration_estimate (MODEL *pmod, int censvar, const DATASET *dset,
 	gretl_matrix *H = duration_init_H(&dinfo);
 	double toler;
 
-	BFGS_defaults(&maxit, &toler, DURATION); 
-	err = BFGS_max(dinfo.theta, dinfo.npar, maxit, toler, 
+	BFGS_defaults(&maxit, &toler, DURATION);
+	err = BFGS_max(dinfo.theta, dinfo.npar, maxit, toler,
 		       &fncount, &grcount, duration_loglik, C_LOGLIK,
-		       duration_score, &dinfo, H, maxopt, 
+		       duration_score, &dinfo, H, maxopt,
 		       dinfo.prn);
 	gretl_matrix_free(H);
-    } else {	
+    } else {
 	double crittol = 1.0e-7;
 	double gradtol = 1.0e-7;
 
-	err = newton_raphson_max(dinfo.theta, dinfo.npar, maxit, 
+	err = newton_raphson_max(dinfo.theta, dinfo.npar, maxit,
 				 crittol, gradtol, &fncount,
-				 C_LOGLIK, duration_loglik, 
-				 duration_score, duration_hessian, 
+				 C_LOGLIK, duration_loglik,
+				 duration_score, duration_hessian,
 				 &dinfo, maxopt, dinfo.prn);
     }
 
     if (!err) {
-	err = transcribe_duration_results(pmod, &dinfo, dset, 
+	err = transcribe_duration_results(pmod, &dinfo, dset,
 					  fncount, grcount, use_bfgs,
 					  censvar, opt);
     }
@@ -787,6 +785,6 @@ int duration_estimate (MODEL *pmod, int censvar, const DATASET *dset,
     if (err && !pmod->errcode) {
 	pmod->errcode = err;
     }
-    
+
     return pmod->errcode;
 }

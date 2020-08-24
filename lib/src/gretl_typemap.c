@@ -36,7 +36,7 @@ static struct type_map gretl_type_map[] = {
       GRETL_TYPE_STRINGS,  GRETL_TYPE_STRINGS_REF},
     { GRETL_TYPE_ARRAY,    GRETL_TYPE_ARRAY_REF,
       GRETL_TYPE_ARRAYS,   GRETL_TYPE_ARRAYS_REF},
-    { GRETL_TYPE_LIST,     0,
+    { GRETL_TYPE_LIST,     GRETL_TYPE_LIST_REF,
       GRETL_TYPE_LISTS,    GRETL_TYPE_LISTS_REF},
     { GRETL_TYPE_SERIES,   GRETL_TYPE_SERIES_REF, 0, 0},
     { GRETL_TYPE_DOUBLE,   GRETL_TYPE_SCALAR_REF, 0, 0}
@@ -139,13 +139,14 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_LIST:       return "list";
     case GRETL_TYPE_BUNDLE:     return "bundle";
     case GRETL_TYPE_ARRAY:      return "array";
+    case GRETL_TYPE_STRING:     return "string";
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
     case GRETL_TYPE_BUNDLE_REF: return "bundle *";
     case GRETL_TYPE_ARRAY_REF:  return "array *";
-    case GRETL_TYPE_STRING:     return "string";
     case GRETL_TYPE_STRING_REF: return "string *";
+    case GRETL_TYPE_LIST_REF:   return "list *";
 
     case GRETL_TYPE_STRINGS:      return "strings";
     case GRETL_TYPE_MATRICES:     return "matrices";
@@ -254,6 +255,8 @@ GretlType gretl_type_from_string (const char *s)
 	    }
 	} else if (*p == '\0') {
 	    return GRETL_TYPE_LIST;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_LIST_REF;
 	}
     } else {
 	/* aliases */

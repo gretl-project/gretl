@@ -69,6 +69,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 {
     char *mask;
     int off1 = 2, off2 = 0;
+    int cmax = pmod->ncoeff;
     int nmask = 0;
     int i, j;
 
@@ -86,9 +87,11 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	    }
 	}
 	off2 = pmod->list[1];
+    } else if (pmod->ci == NEGBIN) {
+	cmax -= 1;
     }
 
-    for (i=0; i<pmod->ncoeff; i++) {
+    for (i=0; i<cmax; i++) {
 	if (list != NULL) {
 	    for (j=1; j<=list[0]; j++) {
 		if (pmod->list[i + off1] == list[j]) {
@@ -115,8 +118,6 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 
     return mask;
 }
-
-#define WALD_USE_LDIV 1
 
 /* Wald (chi-square and/or F) test for a set of zero restrictions on
    the parameters of a given model, based on the covariance matrix of
@@ -149,12 +150,11 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 	b = gretl_coeff_vector_from_model(pmod, mask, &err);
     }
 
-#if WALD_USE_LDIV
-    /* using "left division", avoid explicit inversion of @C */
     if (!err) {
+	/* use "left division" to explicit inversion of @C */
 	gretl_matrix *tmp, *mx;
 
-	mx = gretl_matrix_alloc(1,1);
+	mx = gretl_matrix_alloc(1, 1);
 	tmp = gretl_matrix_divide(C, b, GRETL_MOD_NONE, &err);
 	if (tmp != NULL) {
 	    gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
@@ -165,33 +165,6 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 	    gretl_matrix_free(mx);
 	}
     }
-#else /* !WALD_USE_LDIV */
-    if (!err) {
-	double rc = gretl_symmetric_matrix_rcond(C, &err);
-
-# if WDEBUG
-	gretl_matrix_print(C, "Wald VCV matrix");
-	gretl_matrix_print(b, "Wald coeff vector");
-	fprintf(stderr, "rcond of Wald VCV matrix = %g\n", rc);
-# endif
-	if (!err) {
-	    if (rc < 1.0e-16) {
-		err = gretl_SVD_invert_matrix(C);
-	    } else {
-		err = gretl_invert_symmetric_matrix(C);
-	    }
-	}
-	if (err) {
-	    fprintf(stderr, "wald_test: couldn't invert C\n");
-	}
-# if WDEBUG
-	gretl_matrix_print(C, "VCV-inverse");
-# endif
-    }
-    if (!err) {
-	wX = gretl_scalar_qform(b, C, &err);
-    }
-#endif /* WALD_USE_LDIV or not */
 
 #if WDEBUG
     fprintf(stderr, "wX (quadratic form) = %g\n", wX);
@@ -3405,7 +3378,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
  *
  * Tests the given model for parameter stability via the CUSUM test,
  * or if @opt includes %OPT_R, via the CUSUMSQ test; %OPT_Q makes
- * the test quiet.
+ * the test quiet; %OPT_U governs the associated plot, if wanted.
  *
  * Returns: 0 on successful completion, error code on error.
  */
@@ -3530,8 +3503,8 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 	    cusum_harvey_collier(wbar, sigma, m, pmod, opt, prn);
 	}
 
-	/* plot with 95% confidence bands if not in batch mode */
-	if (!gretl_in_batch_mode()) {
+	/* plot with 95% confidence band if wanted */
+	if (gnuplot_graph_wanted(PLOT_CUSUM, opt)) {
 	    err = cusum_do_graph(a, b, W, pmod->t1, k, m, dset, opt);
 	}
     }

@@ -716,7 +716,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	upkey = gdk_keyval_to_upper(event->keyval);
     }
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
     if (!Ctrl && cmd_key(event)) {
 	/* treat Command as Ctrl */
 	Ctrl = 1;
@@ -865,32 +865,9 @@ void mark_dataset_as_modified (void)
     }
 }
 
-char *path_last_slash (char *path)
-{
-    char *p = strrchr(path, SLASH);
-
-#ifdef G_OS_WIN32
-    if (p == NULL) {
-	/* allow for both back- and forward slashes */
-	p = strrchr(path, '/');
-    }
-#endif
-
-    return p;
-}
-
 const char *path_last_slash_const (const char *path)
 {
-    const char *p = strrchr(path, SLASH);
-
-#ifdef G_OS_WIN32
-    if (p == NULL) {
-	/* allow for both backslash and forward slash */
-	p = strrchr(path, '/');
-    }
-#endif
-
-    return p;
+    return (const char *) strrslash(path);
 }
 
 char *gretl_basename (char *dest, const char *src, int addscore)
@@ -1255,9 +1232,14 @@ int get_imported_data (char *fname, int ftype, int append)
 		delete_from_filelist(FILE_LIST_DATA, fname);
 	    }
 	} else {
+	    /* Do we want to be showing this? There's no error
+	       but it might look sort of scary!
+	    */
+#if 0 /* masked out 2020-07-11 */
 	    if (buf != NULL && *buf != '\0') {
 		infobox(buf);
 	    }
+#endif
 	    finalize_data_open(fname, ftype, 1, append, plist);
 	}
     }
@@ -1587,7 +1569,7 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	mark_vwin_content_saved(vwin);
 	mark_session_changed();
     } else {
-	FILE *fp = gretl_fopen(vwin->fname, "w");
+	FILE *fp = gretl_fopen(vwin->fname, "wb");
 
 	if (fp == NULL) {
 	    file_write_errbox(vwin->fname);
@@ -5858,7 +5840,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	if (lang == LANG_STATA) {
 	    gchar *buf = NULL;
 
-	    gretl_chdir(gretl_dotdir());
+	    gretl_chdir(gretl_workdir());
 	    remove("gretltmp.log");
 	    err = gretl_spawn(cmd);
 
@@ -5998,7 +5980,7 @@ static void run_prog_sync (char **argv, int lang)
 
     if (lang == LANG_STATA) {
 	/* control location of Stata log file */
-	gretl_chdir(gretl_dotdir());
+	gretl_chdir(gretl_workdir());
 	remove("gretltmp.log");
     }
 
@@ -6082,7 +6064,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	gchar *argv[6];
 
 	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
-	    gretl_chdir(gretl_dotdir());
+	    gretl_chdir(gretl_workdir());
 	}
 
 	if (lang == LANG_OX) {

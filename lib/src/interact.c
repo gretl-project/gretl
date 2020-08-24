@@ -45,6 +45,7 @@
 #include "csvdata.h"
 #include "gretl_zip.h"
 #include "matrix_extra.h"
+#include "addons_utils.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -269,7 +270,7 @@ int parse_command_line (ExecState *s, DATASET *dset, void *ptr)
 	    line, cmd_nosub(cmd) ? 1 : 0);
 #endif
 
-    if (!gretl_strsub_on() || cmd_nosub(cmd)) {
+    if (cmd_nosub(cmd)) {
 	cmd->flags &= ~CMD_SUBST;
     } else {
 	int subst = 0;
@@ -1267,9 +1268,16 @@ static void query_package (const char *pkgname,
 			   gretlopt opt, PRN *prn)
 {
     char path[MAXLEN];
+    fnpkg *pkg = NULL;
     int err = 0;
 
-    if (has_suffix(pkgname, ".gfn")) {
+    pkg = get_function_package_by_name(pkgname);
+
+    if (pkg != NULL) {
+	const char *p = function_package_get_string(pkg, "fname");
+
+	strcpy(path, p);
+    } else if (has_suffix(pkgname, ".gfn")) {
 	err = get_full_filename(pkgname, path, OPT_I);
     } else {
 	gchar *gfn = g_strdup_printf("%s.gfn", pkgname);
@@ -1277,7 +1285,9 @@ static void query_package (const char *pkgname,
 	err = get_full_filename(gfn, path, OPT_I);
 	g_free(gfn);
     }
+
     if (opt & OPT_Q) {
+	/* --quiet */
 	gretl_bundle *b = gretl_bundle_new();
 
 	if (b != NULL && err) {
@@ -1312,6 +1322,8 @@ static int do_pkg_command (const char *action,
 	err = uninstall_function_package(pkgname, OPT_P, prn);
     } else if (!strcmp(action, "query")) {
 	query_package(pkgname, opt, prn);
+    } else if (!strcmp(action, "index") && !strcmp(pkgname, "addons")) {
+	update_addons_index((opt & OPT_V)? prn : NULL);
     } else {
 	gretl_errmsg_sprintf("pkg: unknown action '%s'", action);
 	err = E_PARSE;
@@ -2655,6 +2667,22 @@ static int handle_tgz (const char *fname,
 
 #endif /* DO_BINPKG */
 
+static int really_local (const char *pkgname)
+{
+#ifdef WIN32
+    if (isalpha(pkgname[0]) && pkgname[1] == ':') {
+	return 1;
+    } else if (strchr(pkgname, '\\')) {
+	return 1;
+    }
+#else
+    if (strchr(pkgname, ':') == NULL && strchr(pkgname, '/')) {
+	return 1;
+    }
+#endif
+    return 0;
+}
+
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
 				     ExecState *s,
@@ -2674,7 +2702,7 @@ static int install_function_package (const char *pkgname,
     }
 #endif
 
-    if (!local && package_is_addon(pkgname)) {
+    if (!local && is_gretl_addon(pkgname)) {
 	addon = 1;
 	filetype = 2;
 	if (strchr(pkgname, '.') == NULL) {
@@ -2687,6 +2715,10 @@ static int install_function_package (const char *pkgname,
     if (!strncmp(pkgname, "http://", 7) ||
 	!strncmp(pkgname, "https://", 8)) {
 	http = 1;
+    }
+
+    if (!local && !http && really_local(pkgname)) {
+	local = 1;
     }
 
     if (strstr(pkgname, ".gfn")) {
@@ -2718,7 +2750,7 @@ static int install_function_package (const char *pkgname,
 	    const char *p;
 
 	    gretl_maybe_switch_dir(pkgname);
-	    p = strrchr(pkgname, SLASH);
+	    p = strrslash(pkgname);
 	    if (p != NULL) {
 		fname = gretl_strdup(p + 1);
 	    }
@@ -2833,7 +2865,7 @@ static int install_function_package (const char *pkgname,
 	const char *p;
 
 	gretl_maybe_switch_dir(pkgname);
-	p = strrchr(pkgname, SLASH);
+	p = strrslash(pkgname);
 	if (p != NULL) {
 	    fname = gretl_strdup(p + 1);
 	}

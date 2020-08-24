@@ -360,10 +360,9 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 		 PRN *prn)
 {
     int i, k, nlw, K;
-    int total, valid, missing;
+    int total, valid;
     char word[64];
     double f, cumf = 0;
-    int strvals = 0;
 
     if (freq == NULL) {
 	return;
@@ -383,32 +382,45 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	return;
     }
 
-    if (varno > 0 && dset != NULL && is_string_valued(dset, varno)) {
-	strvals = 1;
-    }
+    if (freq->strvals) {
+	int len, maxlen = 0;
 
-    if (freq->discrete) {
-	const char *s;
-	double dval;
+	for (i=0; i<freq->numbins; i++) {
+	    /* FIXME UTF-8? */
+	    len = g_utf8_strlen(freq->S[i], -1);
+	    if (len > maxlen) {
+		maxlen = len;
+	    }
+	}
+	len = maxlen > 31 ? 31 : maxlen < 10 ? 10 : maxlen;
 
-	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
-
+	pputc(prn, '\n');
+	bufspace(len, prn);
+	pputs(prn, _("frequency   percent\n\n"));
 	for (k=0; k<=K; k++) {
-	    dval = freq->midpt[k];
 	    *word = '\0';
-	    if (strvals) {
-		s = series_get_string_for_value(dset, varno, dval);
-		if (s != NULL) {
-		    gretl_utf8_strncat(word, s, 8);
+	    gretl_utf8_strncat(word, freq->S[k], len-2);
+	    pputs(prn, word);
+	    nlw = len - strlen(word);
+	    bufspace(nlw, prn);
+	    pprintf(prn, "%6d   ", freq->f[k]);
+	    f = 100.0 * freq->f[k] / valid;
+	    pprintf(prn, "  %6.2f%% ", f);
+	    if (f < 100) {
+		i = 0.36 * f;
+		while (i--) {
+		    pputc(prn, '*');
 		}
 	    }
-	    if (*word == '\0') {
-		sprintf(word, "%4g", dval);
-	    }
+	    pputc(prn, '\n');
+	}
+    } else if (freq->discrete) {
+	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
+	for (k=0; k<=K; k++) {
+	    sprintf(word, "%4g", freq->midpt[k]);
 	    pputs(prn, word);
 	    nlw = 10 - strlen(word);
 	    bufspace(nlw, prn);
-
 	    pprintf(prn, "%6d  ", freq->f[k]);
 	    f = 100.0 * freq->f[k] / valid;
 	    cumf += f;
@@ -511,9 +523,9 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	}
     }
 
-    missing = total - valid;
+    if (valid < total) {
+	int missing = total - valid;
 
-    if (missing > 0) {
 	pprintf(prn, "\n%s = %d (%5.2f%%)\n", _("Missing observations"),
 		missing, 100 * (double) missing / total);
     }
@@ -556,18 +568,45 @@ static void tex_xtab_heading (const Xtab *tab, PRN *prn)
     pputs(prn, "\n\n\\vspace{1em}\n\n");
 }
 
+static int row_strlen (const Xtab *tab)
+{
+    int i, n, nmax = 0;
+
+    for (i=0; i<tab->rows; i++) {
+	n = strlen(tab->Sr[i]);
+	if (n > nmax) {
+	    nmax = n;
+	}
+    }
+
+    return nmax;
+}
+
+static int col_strlen (const Xtab *tab)
+{
+    int j, n, nmax = 0;
+
+    for (j=0; j<tab->cols; j++) {
+	n = strlen(tab->Sc[j]);
+	if (n > nmax) {
+	    nmax = n;
+	}
+    }
+
+    return nmax;
+}
+
 static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 			     gretlopt opt, PRN *prn)
 {
-    series_table *col_st = NULL;
-    series_table *row_st = NULL;
-    const char *sval;
-    double x, y;
+    double x, y, cj, ri;
     int n5 = 0;
     double ymin = 1.0e-7;
     double pearson = 0.0;
     double pval = NADBL;
     char lbl[64];
+    int rlen = 0;
+    int clen = 0;
     int totals = 1;
     int tex = 0;
     int bold = 0;
@@ -576,7 +615,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     if (opt & OPT_T) {
 	/* LaTeX output */
 	tex = 1;
-	if (opt & OPT_E) {
+	if ((opt & OPT_E) && !(tab->rstrs || tab->cstrs)) {
 	    /* bold-face equal values */
 	    bold = 1;
 	}
@@ -587,23 +626,6 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	totals = 0;
     }
 
-    if (dset != NULL) {
-	int cv = current_series_index(dset, tab->cvarname);
-	int rv = current_series_index(dset, tab->rvarname);
-
-	if (cv > 0) {
-	    col_st = series_get_string_table(dset, cv);
-	}
-	if (rv > 0) {
-	    row_st = series_get_string_table(dset, rv);
-	}
-    }
-
-    if (bold && (col_st != NULL || row_st != NULL)) {
-	/* don't flag spurious "equality" of row, col values */
-	bold = 0;
-    }
-
     if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
 	pputc(prn, '\n');
 	if (tex) {
@@ -611,10 +633,10 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	} else {
 	    pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
 		    tab->rvarname, tab->cvarname);
-	    pputs(prn, "\n\n       ");
+	    pputs(prn, "\n\n");
 	}
     } else {
-	pputs(prn, tex ? "\n" : "\n       ");
+	pputc(prn, '\n');
     }
 
     if (tex) {
@@ -628,32 +650,52 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	pputs(prn, "}\n");
     }
 
-    if (row_st != NULL) {
-	pputs(prn, "    ");
-    }
     if (tex) {
 	pputs(prn, "     & ");
     }
 
+    if (tab->rstrs) {
+	rlen = 2 + row_strlen(tab);
+	if (rlen > 16) {
+	    rlen = 16;
+	} else if (rlen < 7) {
+	    rlen = 7;
+	}
+    } else {
+	rlen = 7;
+    }
+
+    if (tab->cstrs) {
+	clen = 2 + col_strlen(tab);
+	if (clen > 10) {
+	    clen = 10;
+	} else if (clen < 6) {
+	    clen = 6;
+	}
+    } else {
+	clen = 6;
+    }
+
+    bufspace(rlen, prn);
+
     /* header row: column labels */
 
     for (j=0; j<tab->cols; j++) {
-	double cj = tab->cval[j];
-
-	if (col_st == NULL) {
+	if (tab->cstrs) {
+	    *lbl = '\0';
+	    strncat(lbl, tab->Sc[j], 63);
+	    gretl_utf8_truncate(lbl, clen-2);
+	    if (tex) {
+		pputs(prn, lbl);
+	    } else {
+		pprintf(prn, "%*s", clen, lbl);
+	    }
+	} else {
+	    cj = tab->cval[j];
 	    if (tex) {
 		pprintf(prn, "%4g", cj);
 	    } else {
 		pprintf(prn, "[%4g]", cj);
-	    }
-	} else {
-	    sval = series_table_get_string(col_st, cj);
-	    *lbl = '\0';
-	    gretl_utf8_strncat(lbl, sval, 8);
-	    if (tex) {
-		pprintf(prn, "%8s", lbl);
-	    } else {
-		pprintf(prn, "[%8s]", lbl);
 	    }
 	}
 	if (tex) {
@@ -678,102 +720,99 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     /* body of table */
 
     for (i=0; i<tab->rows; i++) {
-	if (tab->rtotal[i] > 0) {
-	    double ri = tab->rval[i];
-
-	    /* row label */
-	    if (row_st == NULL) {
-		if (tex) {
-		    pprintf(prn, "%4g", ri);
-		} else {
-		    pprintf(prn, "[%4g] ", ri);
-		}
-	    } else {
-		sval = series_table_get_string(row_st, ri);
-		*lbl = '\0';
-		gretl_utf8_strncat(lbl, sval, 8);
-		if (tex) {
-		    pprintf(prn, "%8s", lbl);
-		} else {
-		    pprintf(prn, "[%8s] ", lbl);
-		}
-	    }
+	if (tab->rtotal[i] == 0) {
+	    continue;
+	}
+	if (tab->rstrs) {
+	    *lbl = '\0';
+	    strncat(lbl, tab->Sr[i], 63);
+	    gretl_utf8_truncate(lbl, rlen-2);
 	    if (tex) {
-		pputs(prn, " & ");
+		pputs(prn, lbl);
+	    } else {
+		pprintf(prn, "%-*s", rlen, lbl);
 	    }
-	    /* row counts */
-	    for (j=0; j<tab->cols; j++) {
-		if (col_st != NULL) {
-		    pputs(prn, "    ");
-		}
-		if (tab->ctotal[j]) {
-		    if (tab->f[i][j] || (opt & OPT_Z)) {
-			if (opt & (OPT_C | OPT_R)) {
-			    if (opt & OPT_C) {
-				x = 100.0 * tab->f[i][j] / tab->ctotal[j];
+	} else {
+	    ri = tab->rval[i];
+	    if (tex) {
+		pprintf(prn, "%4g", ri);
+	    } else {
+		pprintf(prn, "[%4g] ", ri);
+	    }
+	}
+	if (tex) {
+	    pputs(prn, " & ");
+	}
+	/* row counts */
+	for (j=0; j<tab->cols; j++) {
+	    if (tab->ctotal[j] > 0) {
+		if (tab->f[i][j] || (opt & OPT_Z)) {
+		    if (opt & (OPT_C | OPT_R)) {
+			if (opt & OPT_C) {
+			    x = 100.0 * tab->f[i][j] / tab->ctotal[j];
+			} else {
+			    x = 100.0 * tab->f[i][j] / tab->rtotal[i];
+			}
+			if (tex) {
+			    /* FIXME strvals! */
+			    if (bold && tab->cval[j] == tab->rval[i]) {
+				pprintf(prn, "\\textbf{%.1f%%%%}", x);
 			    } else {
-				x = 100.0 * tab->f[i][j] / tab->rtotal[i];
-			    }
-			    if (tex) {
-				if (bold && tab->cval[j] == tab->rval[i]) {
-				    pprintf(prn, "\\textbf{%.1f%%%%}", x);
-				} else {
-				    pprintf(prn, "%5.1f%%%%", x);
-				}
-			    } else {
-				pprintf(prn, "%5.1f%%", x);
+				pprintf(prn, "%*.1f%%%%", clen, x);
 			    }
 			} else {
-			    if (bold && tab->cval[j] == tab->rval[i]) {
-				pprintf(prn, "\\textbf{%d} ", tab->f[i][j]);
-			    } else {
-				pprintf(prn, "%5d ", tab->f[i][j]);
-			    }
+			    pprintf(prn, "%*.1f%%", clen-1, x);
 			}
-		    } else if (!tex) {
-			pputs(prn, "      ");
-		    }
-		    if (tex && (totals || j < tab->cols-1)) {
-			pputs(prn, "& ");
-		    }
-		}
-		if (!na(pearson)) {
-		    /* cumulate chi-square */
-		    y = ((double) tab->rtotal[i] * tab->ctotal[j]) / tab->n;
-		    if (y < ymin) {
-			pearson = NADBL;
 		    } else {
-			x = (double) tab->f[i][j] - y;
-			pearson += x * x / y;
-			if (y >= 5) {
-			    n5++;
+			if (bold && tab->cval[j] == tab->rval[i]) {
+			    pprintf(prn, "\\textbf{%d} ", tab->f[i][j]);
+			} else {
+			    pprintf(prn, "%*d", clen, tab->f[i][j]);
 			}
+		    }
+		} else if (!tex) {
+		    bufspace(clen, prn);
+		}
+		if (tex && (totals || j < tab->cols-1)) {
+		    pputs(prn, "& ");
+		}
+	    }
+	    if (!na(pearson)) {
+		/* cumulate chi-square */
+		y = ((double) tab->rtotal[i] * tab->ctotal[j]) / tab->n;
+		if (y < ymin) {
+		    pearson = NADBL;
+		} else {
+		    x = (double) tab->f[i][j] - y;
+		    pearson += x * x / y;
+		    if (y >= 5) {
+			n5++;
 		    }
 		}
 	    }
-	    if (totals) {
-		/* row totals */
-		if (opt & OPT_C) {
-		    x = 100.0 * tab->rtotal[i] / tab->n;
-		    if (tex) {
-			pprintf(prn, "%5.1f%%%%", x);
-		    } else {
-			pprintf(prn, "%5.1f%%", x);
-		    }
+	}
+	if (totals) {
+	    /* row totals */
+	    if (opt & OPT_C) {
+		x = 100.0 * tab->rtotal[i] / tab->n;
+		if (tex) {
+		    pprintf(prn, "%5.1f%%%%", x);
 		} else {
-		    pprintf(prn, "%6d", tab->rtotal[i]);
-		}
-	    }
-	    /* terminate row */
-	    if (tex) {
-		if (totals && i == tab->rows-1) {
-		    pputs(prn, "\\\\ [2pt]\n");
-		} else {
-		    pputs(prn, "\\\\\n");
+		    pprintf(prn, "%5.1f%%", x);
 		}
 	    } else {
-		pputc(prn, '\n');
+		pprintf(prn, "%6d", tab->rtotal[i]);
 	    }
+	}
+	/* terminate row */
+	if (tex) {
+	    if (totals && i == tab->rows-1) {
+		pputs(prn, "\\\\ [2pt]\n");
+	    } else {
+		pputs(prn, "\\\\\n");
+	    }
+	} else {
+	    pputc(prn, '\n');
 	}
     }
 
@@ -785,24 +824,18 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    pputs(prn, "$\\Sigma$ & ");
 	} else {
 	    pputc(prn, '\n');
-	    pputs(prn, _("TOTAL  "));
-	    if (row_st != NULL) {
-		pputs(prn, "    ");
-	    }
+	    pprintf(prn, "%-*s", rlen, _("TOTAL"));
 	}
 	for (j=0; j<tab->cols; j++) {
-	    if (col_st != NULL) {
-		pputs(prn, "    ");
-	    }
 	    if (opt & OPT_R) {
 		x = 100.0 * tab->ctotal[j] / tab->n;
 		if (tex) {
-		    pprintf(prn, "%5.1f%%%%", x);
+		    pprintf(prn, "%*.1f%%%%", clen, x);
 		} else {
-		    pprintf(prn, "%5.1f%%", x);
+		    pprintf(prn, "%*.1f%%", clen-1, x);
 		}
 	    } else {
-		pprintf(prn, "%5d ", tab->ctotal[j]);
+		pprintf(prn, "%*d", clen, tab->ctotal[j]);
 	    }
 	    if (tex) {
 		pputs(prn, "& ");
@@ -1896,10 +1929,12 @@ static char *bufprintnum (char *buf, double x, int signif,
 
  finish:
 
-    /* pad on left as needed */
-    l = width - strlen(numstr);
-    for (i=0; i<l; i++) {
-	strcat(buf, " ");
+    if (width > 0) {
+	/* pad on left as needed */
+	l = width - strlen(numstr);
+	for (i=0; i<l; i++) {
+	    strcat(buf, " ");
+	}
     }
     strcat(buf, numstr);
 
@@ -2876,7 +2911,11 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
 	for (i=1; i<=list[0]; i++) {
 	    const char *strval = NULL;
-	    int wi = colwidths[i];
+	    int wi = 0;
+
+	    if (colwidths != NULL) {
+		wi = colwidths[i];
+	    }
 
 	    if (is_string_valued(dset, list[i])) {
 		strval = series_get_string_for_obs(dset, list[i], t);

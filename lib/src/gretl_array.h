@@ -26,6 +26,8 @@ void gretl_array_destroy (gretl_array *A);
 
 void gretl_array_void_content (gretl_array *A);
 
+void gretl_array_nullify_content (gretl_array *A);
+
 void gretl_array_nullify_elements (gretl_array *A);
 
 gretl_array *gretl_array_new (GretlType type, int n, int *err);
@@ -48,6 +50,8 @@ int gretl_array_set_data (gretl_array *A, int i, void *ptr);
 int gretl_array_set_type (gretl_array *A, GretlType type);
 
 char **gretl_array_get_strings (gretl_array *A, int *ns);
+
+char **gretl_array_steal_strings (gretl_array *A, int *ns);
 
 char **gretl_array_get_stringify_strings (gretl_array *A,
 					  int nreq, int *ns,
@@ -125,6 +129,14 @@ int gretl_array_copy_into (gretl_array *A1,
 gretl_array *gretl_arrays_join (gretl_array *A,
 				gretl_array *B,
 				int *err);
+
+gretl_array *gretl_arrays_union (gretl_array *A,
+				 gretl_array *B,
+				 int *err);
+
+gretl_array *gretl_arrays_intersection (gretl_array *A,
+					gretl_array *B,
+					int *err);
 
 gretl_array *gretl_array_copy (const gretl_array *A,
 			       int *err);

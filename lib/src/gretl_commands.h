@@ -238,6 +238,7 @@ typedef enum {
 			     c == FREQ || \
 			     c == FCAST || \
 			     c == CORR || \
+			     c == CUSUM || \
 			     c == PANPLOT)
 	
 int gretl_command_number (const char *s);

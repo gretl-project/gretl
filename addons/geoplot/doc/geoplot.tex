@@ -34,26 +34,25 @@
 
 \maketitle
 
-\textbf{Notice}: As of this writing the \textsf{geoplot} package is
-work in progress. You are welcome to try it but expect some bugs and
-do not bank on the user interface remaining unchanged. We should also
-mention a non-temporary peculiarity of \textsf{geoplot}. We have found
-it preferable to implement its core functionality via built-in
-functions, coded in C. For basic usage, therefore, it's not necessary
-to load the package explicitly via ``\texttt{include geoplot.gfn}'',
-as one would usually expect.
+This document describes the \textsf{geoplot} addon package for gretl,
+which is new in version 2020c. We have found it preferable, for reason
+of efficiency, to implement its core mapping functionality via
+built-in functions, coded in C. For basic usage, therefore, it's not
+necessary to load the package explicitly via ``\texttt{include
+  geoplot.gfn}'', as one would usually expect for an addon.
 
-That said, section~\ref{sec:prelim} below covers some preliminaries
-which we hope will help the reader to understand what's going
-on. Section~\ref{sec:workflow} describes the basic workflow for
-producing a map image via gretl. Section~\ref{sec:example} then
-provides a simple worked example and section~\ref{sec:pairing}
-addresses a potential stumbling block. Section~\ref{sec:opts} goes
-over the current options to the core \texttt{geoplot} function in
-detail; section~\ref{sec:gui} tells you what's available via gretl's
-graphical interface; section~\ref{sec:expert} explains some ``expert''
+Section~\ref{sec:prelim} below covers some preliminaries which we hope
+will help the reader understand the basics of cartography via
+gretl. Section~\ref{sec:workflow} describes the basic workflow for
+producing a map image. Section~\ref{sec:example} then provides a
+simple worked example and section~\ref{sec:pairing} addresses a
+potential stumbling block. Section~\ref{sec:opts} goes over in detail
+the options to the core \texttt{geoplot} function;
+section~\ref{sec:gui} tells you what's available via gretl's graphical
+interface; section~\ref{sec:expert} explains some ``expert''
 refinements; and section~\ref{sec:future} gives our current thinking
-on possible future directions for maps in gretl.
+on possible future directions for maps in gretl. Three appendices
+cover some technical points that may be of interest to expert users.
 
 \section{Preliminaries}
 \label{sec:prelim}
@@ -68,8 +67,7 @@ present. From here on we'll simply refer to maps of this sort as
 countries, states, counties, l\"ander or whatever) as
 ``regions''. Plotting a map typically involves drawing a number of
 polygons, filled with appropriate colors, to some device (the screen,
-or a file).\footnote{One may want to draw colored lines, such as
-  rivers or roads: not for now.}
+or a file).
 
 The essential ingredients for doing this are
 \begin{enumerate}
@@ -85,9 +83,7 @@ Let's say we have $n$ regions, indexed by $i$. Region $i$ is
 represented geometrically as a collection of $k_i$ polygons (think
 islands in an archipelago), indexed by $j$. Each polygon is defined by
 $h_{i,j}$ coordinates. Typically, each coordinate vector has two
-elements, latitude and longitude.\footnote{In some cases you may have
-  a third element---altitude being the most obvious candidate---or
-  more.  But we're not getting into that right now.}
+elements, latitude and longitude.
 
 The information on each region has two components:
 \begin{description}
@@ -789,8 +785,8 @@ values for the \texttt{center} of a feature.
 \section{Future directions?}
 \label{sec:future}
 
-We've alluded at various points above to possible extensions of
-\textsf{geoplot}. Here we collect various ideas---no promises, though!
+We've alluded above to possible extensions of \textsf{geoplot}. Here
+we collect various ideas.
 
 \begin{itemize}
 \item The \texttt{geoplot} function could be complemented with a
@@ -799,9 +795,9 @@ We've alluded at various points above to possible extensions of
   more comprehensible and convenient.
 \item We could provide a more fully featured graphical interface for
   selection of options that inflect the appearance of maps.
-\item Besides just colorizing map polygons, we might add support
-  for showing geographical features such cities, roads or rivers.
-  And/or labeling of regions.
+\item Besides just colorizing map polygons, we might add support for
+  showing geographical features such cities, roads or rivers.
+  Labeling of regions might also be nice to have.
 \item An ambitious project for the longer term could be adding support
   for TopoJSON, an extension of GeoJSON that encodes topology. See
   \url{https://github.com/topojson/topojson}.

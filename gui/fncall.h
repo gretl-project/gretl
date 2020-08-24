@@ -74,12 +74,11 @@ void get_registered_pkg_info (int i, char **name, char **path,
 
 int query_addons (void);
 
-int is_official_addon (const char *pkgname);
-
 int download_addon (const char *pkgname, char **local_path);
 
 char *installed_addon_status_string (const char *path,
-				     const char *svstr);
+				     const char *svstr,
+				     int minver);
 
 int dbnomics_get_series_call (const char *datacode);
 

@@ -650,7 +650,7 @@ static double op_gen_resid (op_container *OC, const double *theta, int t)
 	f0 = (yt == 0)? 0.0 : lp_pdf(ystar0, OC->ci) / dP;
 	f1 = (yt == M)? 0.0 : lp_pdf(ystar1, OC->ci) / dP;
     } else {
-	/* L'Hopital-based approximation */
+	/* L'Hôpital-based approximation */
 	f0 = (yt == 0)? 0.0 : -ystar0;
 	f1 = (yt == M)? 0.0 : -ystar1;
     }
@@ -1000,6 +1000,7 @@ static int do_ordered (int ci, int ndum, int ymin,
     int bs_iter = 0;
     int bs_maxit = 1000;
     int use_newton = 0;
+    gretlopt maxopt;
     int err;
 
     OC = op_container_new(ci, ndum, ymin, dset->Z, pmod, opt);
@@ -1048,6 +1049,8 @@ static int do_ordered (int ci, int ndum, int ymin,
 	bs_iter++;
     }
 
+    maxopt = (prn != NULL)? (OPT_U | OPT_V) : OPT_U;
+
     if (use_newton) {
 	double crittol = 1.0e-7;
 	double gradtol = 1.0e-7;
@@ -1056,15 +1059,13 @@ static int do_ordered (int ci, int ndum, int ymin,
 				 crittol, gradtol, &fncount,
 				 C_LOGLIK, op_loglik,
 				 op_score, NULL, OC,
-				 (prn != NULL)? OPT_V : OPT_NONE,
-				 prn);
+				 maxopt, prn);
 	fprintf(stderr, "use_newton: err = %d\n", err);
     } else {
 	BFGS_defaults(&maxit, &toler, PROBIT);
 	err = BFGS_max(theta, npar, maxit, toler,
 		       &fncount, &grcount, op_loglik, C_LOGLIK,
-		       op_score, OC, NULL,
-		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+		       op_score, OC, NULL, maxopt, prn);
     }
 
     if (!err && !OC->bootstrap) {
@@ -2311,6 +2312,7 @@ static MODEL mnl_model (const int *list, DATASET *dset,
     int *valcount = NULL;
     int *yvals = NULL;
     int n, k = list[0] - 1;
+    gretlopt maxopt;
     int use_bfgs = 0;
     int i, vi, t, s;
 
@@ -2382,11 +2384,12 @@ static MODEL mnl_model (const int *list, DATASET *dset,
 	use_bfgs = 1;
     }
 
+    maxopt = (prn != NULL)? (OPT_U | OPT_V) : OPT_U;
+
     if (use_bfgs) {
 	mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0,
 			       &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
-			       mn_logit_score, mnl, NULL,
-			       (prn != NULL)? OPT_V : OPT_NONE, prn);
+			       mn_logit_score, mnl, NULL, maxopt, prn);
     } else {
 	double crittol = 1.0e-8;
 	double gradtol = 1.0e-7;
@@ -2396,8 +2399,7 @@ static MODEL mnl_model (const int *list, DATASET *dset,
 					 crittol, gradtol, &fncount,
 					 C_LOGLIK, mn_logit_loglik,
 					 mn_logit_score, mnl_hessian, mnl,
-					 (prn != NULL)? OPT_V : OPT_NONE,
-					 prn);
+					 maxopt, prn);
     }
 
     if (!mod.errcode) {
@@ -3052,7 +3054,7 @@ static MODEL binary_model (int ci, const int *inlist,
 			   DATASET *dset, gretlopt opt,
 			   PRN *prn)
 {
-    gretlopt max_opt = OPT_NONE;
+    gretlopt maxopt = OPT_NONE;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *list = NULL;
@@ -3151,15 +3153,19 @@ static MODEL binary_model (int ci, const int *inlist,
     }
 
     if (opt & OPT_V) {
-	max_opt = OPT_V;
+	maxopt = OPT_V;
 	vprn = prn;
+    }
+    if (!(opt & OPT_X)) {
+	/* not just auxiliary estimator */
+	maxopt |= OPT_U;
     }
 
     mod.errcode = newton_raphson_max(bin->theta, bin->k, maxit,
 				     crittol, gradtol, &fncount,
 				     C_LOGLIK, binary_loglik,
 				     binary_score, binary_hessian, bin,
-				     max_opt, vprn);
+				     maxopt, vprn);
     if (bin->pp_err) {
 	/* trash any existing error message */
 	gretl_error_clear();

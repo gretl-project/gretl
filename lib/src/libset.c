@@ -51,6 +51,11 @@ enum {
     AUTO_LAG_NEWEYWEST
 };
 
+enum {
+    INIT_VALS,
+    INIT_CURV
+};
+
 /* state flags */
 
 enum {
@@ -67,17 +72,13 @@ enum {
     STATE_SHELL_OK        = 1 << 10, /* "shell" facility is approved? */
     STATE_WARN_ON         = 1 << 11, /* print numerical warning messages */
     STATE_SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
-    STATE_LOOPING         = 1 << 13, /* loop is in progress at this level */
-    STATE_LOOP_VERBOSE    = 1 << 14, /* loop commands should be verbose */
-    STATE_BFGS_RSTEP      = 1 << 15, /* use Richardson method in BFGS numerical
-					gradient */
-    STATE_DPDSTYLE_ON     = 1 << 16, /* emulate dpd in dynamic panel data models */
-    STATE_OPENMP_ON       = 1 << 17, /* using openmp */
-    STATE_ROBUST_Z        = 1 << 18, /* use z- not t-score with HCCM/HAC */
-    STATE_MWRITE_G        = 1 << 19, /* use %g format with mwrite() */
-    STATE_ECHO_SPACE      = 1 << 20, /* preserve vertical space in output */
-    STATE_STRSUB_ON       = 1 << 21, /* string substitution activated */
-    STATE_MPI_SMT         = 1 << 22  /* MPI: use hyperthreads by default */
+    STATE_BFGS_RSTEP      = 1 << 13, /* use Richardson in BFGS numerical gradient */
+    STATE_DPDSTYLE_ON     = 1 << 14, /* emulate dpd in dynamic panel data models */
+    STATE_OPENMP_ON       = 1 << 15, /* using openmp */
+    STATE_ROBUST_Z        = 1 << 16, /* use z- not t-score with HCCM/HAC */
+    STATE_MWRITE_G        = 1 << 17, /* use %g format with mwrite() */
+    STATE_ECHO_SPACE      = 1 << 18, /* preserve vertical space in output */
+    STATE_MPI_SMT         = 1 << 19  /* MPI: use hyperthreads by default */
 };
 
 /* for values that really want a non-negative integer */
@@ -120,6 +121,7 @@ struct set_vars_ {
     int rq_maxiter;             /* max iterations for quantreg, simplex */
     int gmm_maxiter;            /* max iterations for iterated GMM */
     gretl_matrix *initvals;     /* parameter initializer */
+    gretl_matrix *initcurv;     /* initial curvature matrix for BFGS */
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
     struct robust_opts ropts;   /* robust standard error options */
     char csv_write_na[8];       /* representation of NA in CSV output */
@@ -162,7 +164,6 @@ struct set_vars_ {
 			   !strcmp(s, USE_DCMT) || \
 			   !strcmp(s, ROBUST_Z) || \
 			   !strcmp(s, MWRITE_G) || \
-			   !strcmp(s, STRSUB_ON) || \
 			   !strcmp(s, GEOJSON_FAST) || \
 			   !strcmp(s, MPI_USE_SMT) || \
 			   !strcmp(s, USE_OPENMP))
@@ -193,6 +194,7 @@ struct set_vars_ {
 		       !strcmp(s, VECM_NORM) || \
 		       !strcmp(s, GRETL_OPTIM) || \
 		       !strcmp(s, GRETL_DEBUG) || \
+		       !strcmp(s, GRETL_ASSERT) || \
 		       !strcmp(s, BLAS_MNK_MIN) || \
 		       !strcmp(s, OMP_MNK_MIN) || \
 		       !strcmp(s, MP_MNK_MIN) || \
@@ -211,6 +213,7 @@ static int R_functions;
 static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static int comments_on = 0;
+static int gretl_assert = 0;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
 #ifdef OS_OSX
@@ -235,15 +238,6 @@ static void robust_opts_init (struct robust_opts *r)
     r->hc_version = 0;
     r->hkern = KERNEL_BARTLETT;
     r->qsband = NADBL;
-}
-
-static void robust_opts_copy (struct robust_opts *r)
-{
-    r->auto_lag = state->ropts.auto_lag;
-    r->user_lag = state->ropts.user_lag;
-    r->hc_version = state->ropts.hc_version;
-    r->hkern = state->ropts.hkern;
-    r->qsband = state->ropts.qsband;
 }
 
 static const char *csv_delim_args[] = {
@@ -315,6 +309,13 @@ static const char *wildboot_strs[] = {
     NULL
 };
 
+static const char *assert_strs[] = {
+    "off",
+    "warn",
+    "stop",
+    NULL
+};
+
 static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
@@ -337,6 +338,8 @@ static const char **libset_option_strings (const char *s)
 	return steplen_strs;
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	return wildboot_strs;
+    } else if (!strcmp(s, GRETL_ASSERT)) {
+	return assert_strs;
     } else {
 	return NULL;
     }
@@ -392,19 +395,30 @@ static const char *libset_option_string (const char *s)
 	return maxverb_strs[state->max_verbose];
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	return wildboot_strs[state->wildboot_dist];
+    } else if (!strcmp(s, GRETL_ASSERT)) {
+	return assert_strs[gretl_assert];
     } else {
 	return "?";
     }
 }
 
-static void print_initvals (const gretl_matrix *ivals, PRN *prn,
-			    gretlopt opt)
+static void print_initmat (const gretl_matrix *imat,
+			   int type, PRN *prn,
+			   gretlopt opt)
 {
+    char *name;
+
+    if (type == INIT_VALS) {
+	name = "initvals";
+    } else if (type == INIT_CURV) {
+	name = "initcurv";
+    }
+
     if (opt & OPT_D) {
-	if (ivals == NULL) {
-	    pputs(prn, " initvals = auto\n");
+	if (imat == NULL) {
+	    pprintf(prn, " %s = auto\n", name);
 	} else {
-	    gretl_matrix_print_to_prn(ivals, " initvals =", prn);
+	    gretl_matrix_print_to_prn(imat, name, prn);
 	}
     }
 }
@@ -438,46 +452,12 @@ static void state_vars_copy (set_vars *sv)
 #if PDEBUG
     fprintf(stderr, "state_vars_copy() called\n");
 #endif
-    sv->flags = state->flags;
-    /* We're not (yet) looping at the current level of execution (but
-       note that the STATE_LOOP_VERBOSE flag should be inherited).
-    */
-    sv->flags &= ~STATE_LOOPING;
-
-    sv->seed = state->seed;
-    sv->conv_huge = state->conv_huge;
-    sv->horizon = state->horizon;
-    sv->bootrep = state->bootrep;
-    sv->loop_maxiter = state->loop_maxiter;
-    sv->rq_maxiter = state->rq_maxiter;
-    sv->gmm_maxiter = state->gmm_maxiter;
-    sv->nls_toler = state->nls_toler;
-    sv->vecm_norm = state->vecm_norm;
-    sv->optim = state->optim;
-    sv->bfgs_maxiter = state->bfgs_maxiter;
-    sv->bfgs_toler = state->bfgs_toler;
-    sv->bfgs_maxgrad = state->bfgs_maxgrad;
-    sv->bfgs_verbskip = state->bfgs_verbskip;
-    sv->optim_steplen = state->optim_steplen;
-    sv->max_verbose = state->max_verbose;
-    sv->bhhh_maxiter = state->bhhh_maxiter;
-    sv->bhhh_toler = state->bhhh_toler;
-    sv->boot_iters = state->boot_iters;
-    sv->lbfgs_mem = state->lbfgs_mem;
-    sv->garch_vcv = state->garch_vcv;
-    sv->arma_vcv = state->arma_vcv;
-    sv->garch_robust_vcv = state->garch_robust_vcv;
-    sv->nadarwat_trim = state->nadarwat_trim;
-    sv->fdjac_qual = state->fdjac_qual;
-    sv->fdjac_eps = state->fdjac_eps;
-    sv->wildboot_dist = state->wildboot_dist;
-
-    sv->initvals = gretl_matrix_copy(state->initvals);
-    sv->matmask = gretl_matrix_copy(state->matmask);
-    strcpy(sv->csv_write_na, state->csv_write_na);
-    strcpy(sv->csv_read_na, state->csv_read_na);
-
-    robust_opts_copy(&sv->ropts);
+    /* copy everything */
+    *sv = *state;
+    /* but set matrix pointers to NULL */
+    sv->initvals = NULL;
+    sv->initcurv = NULL;
+    sv->matmask = NULL;
 }
 
 /* for processors count */
@@ -679,12 +659,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON |
-	STATE_SKIP_MISSING | STATE_STRSUB_ON;
-#if 1
-    if (getenv("GRETL_STRSUB_OFF")) {
-	sv->flags &= ~STATE_STRSUB_ON;
-    }
-#endif
+	STATE_SKIP_MISSING;
 #if defined(_OPENMP)
     if (openmp_by_default()) {
 	sv->flags |= STATE_OPENMP_ON;
@@ -702,6 +677,7 @@ static void state_vars_init (set_vars *sv)
     sv->optim = OPTIM_AUTO;
     sv->max_verbose = 0;
     sv->initvals = NULL;
+    sv->initcurv = NULL;
     sv->matmask = NULL;
 
     sv->bfgs_maxiter = UNSET_INT;
@@ -797,13 +773,7 @@ int gretl_messages_on (void)
     if (check_for_state()) {
 	return 1;
     } else {
-	int ret = flag_to_bool(state, STATE_MSGS_ON);
-
-	if (ret && (state->flags & STATE_LOOPING)) {
-	    ret = state->flags & STATE_LOOP_VERBOSE;
-	}
-
-	return ret;
+	return flag_to_bool(state, STATE_MSGS_ON);
     }
 }
 
@@ -811,12 +781,6 @@ int gretl_warnings_on (void)
 {
     if (check_for_state()) return 1;
     return flag_to_bool(state, STATE_WARN_ON);
-}
-
-int gretl_strsub_on (void)
-{
-    if (check_for_state()) return 1;
-    return flag_to_bool(state, STATE_STRSUB_ON);
 }
 
 int gretl_debugging_on (void)
@@ -853,25 +817,43 @@ int get_mp_bits (void)
     return DEFAULT_MP_BITS;
 }
 
-const gretl_matrix *get_init_vals (void)
+gretl_matrix *get_initvals (void)
 {
+    gretl_matrix *iv;
+
+    /* note: we nullify initvals after first use */
     check_for_state();
-    return state->initvals;
+    iv = state->initvals;
+    state->initvals = NULL;
+    return iv;
 }
 
-void free_init_vals (void)
-{
-    if (state->initvals != NULL) {
-	gretl_matrix_free(state->initvals);
-	state->initvals = NULL;
-    }
-}
-
-int n_init_vals (void)
+int n_initvals (void)
 {
     check_for_state();
     if (state->initvals != NULL) {
 	return gretl_vector_get_length(state->initvals);
+    } else {
+	return 0;
+    }
+}
+
+gretl_matrix *get_initcurv (void)
+{
+    gretl_matrix *ic;
+
+    /* note: like initvals, we nullify initcurv after first use */
+    check_for_state();
+    ic = state->initcurv;
+    state->initcurv = NULL;
+    return ic;
+}
+
+int n_initcurv (void)
+{
+    check_for_state();
+    if (state->initcurv != NULL) {
+	return state->initcurv->rows;
     } else {
 	return 0;
     }
@@ -1268,6 +1250,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, GRETL_ASSERT)) {
+	for (i=0; assert_strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, assert_strs[i])) {
+		gretl_assert = i;
+		err = 0;
+		break;
+	    }
+	}
     }
 
     if (err) {
@@ -1341,14 +1331,20 @@ void set_garch_robust_vcv (const char *s)
     }
 }
 
-static int set_initvals (const char *mname, PRN *prn)
+static int set_initmat (const char *mname, int type,
+			PRN *prn)
 {
     gretl_matrix *m;
     int err = 0;
 
     if (!strcmp(mname, "auto")) {
-	gretl_matrix_free(state->initvals);
-	state->initvals = NULL;
+	if (type == INIT_VALS) {
+	    gretl_matrix_free(state->initvals);
+	    state->initvals = NULL;
+	} else if (type == INIT_CURV) {
+	    gretl_matrix_free(state->initcurv);
+	    state->initcurv = NULL;
+	}
     } else {
 	m = get_matrix_by_name(mname);
 	if (m == NULL) {
@@ -1356,12 +1352,16 @@ static int set_initvals (const char *mname, PRN *prn)
 	    pputc(prn, '\n');
 	    err = E_DATA;
 	} else {
-	    if (state->initvals != NULL) {
-		gretl_matrix_free(state->initvals);
-	    }
-	    state->initvals = gretl_matrix_copy(m);
-	    if (state->initvals == NULL) {
-		err = E_ALLOC;
+	    if (type == INIT_VALS) {
+		state->initvals = gretl_matrix_copy(m);
+		if (state->initvals == NULL) {
+		    err = E_ALLOC;
+		}
+	    } else if (type == INIT_CURV) {
+		state->initcurv = gretl_matrix_copy(m);
+		if (state->initcurv == NULL) {
+		    err = E_ALLOC;
+		}
 	    }
 	}
     }
@@ -1538,7 +1538,8 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, GRETL_OPTIM) || \
 			 !strcmp(s, OPTIM_STEPLEN) || \
 			 !strcmp(s, MAX_VERBOSE) || \
-			 !strcmp(s, WILDBOOT_DIST))
+			 !strcmp(s, WILDBOOT_DIST) || \
+			 !strcmp(s, GRETL_ASSERT))
 
 const char *intvar_code_string (const char *s)
 {
@@ -1686,7 +1687,8 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_double(BHHH_TOLER, prn, opt);
     libset_print_int(RQ_MAXITER, prn, opt);
     libset_print_int(GMM_MAXITER, prn, opt);
-    print_initvals(state->initvals, prn, opt);
+    print_initmat(state->initvals, INIT_VALS, prn, opt);
+    print_initmat(state->initcurv, INIT_CURV, prn, opt);
     libset_print_bool(BFGS_RSTEP, prn, opt);
     libset_print_bool(USE_LBFGS, prn, opt);
     libset_print_int(LBFGS_MEM, prn, opt);
@@ -1769,6 +1771,13 @@ static int libset_query_settings (const char *s, PRN *prn)
 	if (state->initvals != NULL) {
 	    pprintf(prn, "%s: matrix, currently\n", s);
 	    gretl_matrix_print_to_prn(state->initvals, NULL, prn);
+	} else {
+	    pprintf(prn, "%s: matrix, currently null\n", s);
+	}
+    } else if (!strcmp(s, "initcurv")) {
+	if (state->initcurv != NULL) {
+	    pprintf(prn, "%s: matrix, currently\n", s);
+	    gretl_matrix_print_to_prn(state->initcurv, NULL, prn);
 	} else {
 	    pprintf(prn, "%s: matrix, currently null\n", s);
 	}
@@ -1901,7 +1910,9 @@ int execute_set (const char *setobj, const char *setarg,
 	} else if (!strcmp(setobj, CSV_DIGITS)) {
 	    return set_csv_digits(setarg);
 	} else if (!strcmp(setobj, "initvals")) {
-	    return set_initvals(setarg, prn);
+	    return set_initmat(setarg, INIT_VALS, prn);
+	} else if (!strcmp(setobj, "initcurv")) {
+	    return set_initmat(setarg, INIT_CURV, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
 	    return set_matmask(setarg, dset, prn);
 	} else if (!strcmp(setobj, "graph_theme")) {
@@ -2165,6 +2176,8 @@ int libset_get_int (const char *key)
 	return state->optim;
     } else if (!strcmp(key, GRETL_DEBUG)) {
 	return gretl_debug;
+    } else if (!strcmp(key, GRETL_ASSERT)) {
+	return gretl_assert;
     } else if (!strcmp(key, BLAS_MNK_MIN)) {
 	return get_blas_mnk_min();
     } else if (!strcmp(key, OMP_MNK_MIN) || !strcmp(key, MP_MNK_MIN)) {
@@ -2344,8 +2357,6 @@ static int boolvar_get_flag (const char *s)
 	return STATE_ROBUST_Z;
     } else if (!strcmp(s, MWRITE_G)) {
 	return STATE_MWRITE_G;
-    } else if (!strcmp(s, STRSUB_ON)) {
-	return STATE_STRSUB_ON;
     } else if (!strcmp(s, MPI_USE_SMT)) {
 	return STATE_MPI_SMT;
     } else {
@@ -2534,49 +2545,61 @@ int libset_set_bool (const char *key, int val)
    function exits.
 */
 
+#define PPDEBUG 0
+
 static int n_states;
-static set_vars **state_stack;
+static GPtrArray *state_stack;
+static int state_idx = -1;
+
+#if PPDEBUG
+static void print_state_stack (int pop)
+{
+    set_vars *sv;
+    int i;
+
+    fputs(pop ? "\nafter pop:\n" : "\nafter push:\n", stderr);
+    for (i=0; i<n_states; i++) {
+	sv = g_ptr_array_index(state_stack, i);
+	fprintf(stderr, "%d: %p", i, (void *) sv);
+	fputs(sv == state ? " *\n" : "\n", stderr);
+    }
+}
+#endif
 
 int push_program_state (void)
 {
-    set_vars **sstack;
     set_vars *newstate;
-    int ns = n_states;
     int err = 0;
 
-#if PDEBUG
-    fprintf(stderr, "push_program_state: n_states = %d\n", ns);
-#endif
+    if (n_states == 0) {
+	state_stack = g_ptr_array_new();
+    }
 
-    newstate = malloc(sizeof *newstate);
+    state_idx++;
 
-    if (newstate == NULL) {
-	err = E_ALLOC;
+    if (state_idx < n_states) {
+	newstate = g_ptr_array_index(state_stack, state_idx);
     } else {
-	sstack = realloc(state_stack, (ns + 1) * sizeof *sstack);
-	if (sstack == NULL) {
-	    free(newstate);
+	newstate = malloc(sizeof *newstate);
+	if (newstate == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    g_ptr_array_add(state_stack, newstate);
+	    n_states++;
 	}
     }
 
-    if (!err) {
-	if (ns == 0) {
-	    /* set all defaults */
+    if (newstate != NULL) {
+	if (n_states == 1) {
 	    state_vars_init(newstate);
 	} else {
-	    /* copy existing state */
 	    state_vars_copy(newstate);
 	}
-	state_stack = sstack;
-	state = state_stack[ns] = newstate;
-	n_states++;
+	state = newstate;
     }
 
-#if PDEBUG
-    if (!err) {
-	fprintf(stderr, " state is now state_stack[%d]\n", ns);
-    }
+#if PPDEBUG
+    print_state_stack(0);
 #endif
 
     return err;
@@ -2584,10 +2607,12 @@ int push_program_state (void)
 
 static void free_state (set_vars *sv)
 {
-    gretl_matrix_free(sv->initvals);
-    gretl_matrix_free(sv->matmask);
-
-    free(sv);
+    if (sv != NULL) {
+	gretl_matrix_free(sv->initvals);
+	gretl_matrix_free(sv->initcurv);
+	gretl_matrix_free(sv->matmask);
+	free(sv);
+    }
 }
 
 /* Called when a user-defined function exits: restores the program
@@ -2596,33 +2621,17 @@ static void free_state (set_vars *sv)
 
 int pop_program_state (void)
 {
-    set_vars **sstack;
-    int ns = n_states;
     int err = 0;
 
-#if PDEBUG
-    fprintf(stderr, "pop_program_state called: ns=%d\n", ns);
-#endif
-
-    if (ns < 2) {
+    if (n_states < 2) {
 	err = 1;
     } else {
-	free_state(state_stack[ns - 1]);
-	state_stack[ns - 1] = NULL;
-	sstack = realloc(state_stack, (ns - 1) * sizeof *sstack);
-	if (sstack == NULL) {
-	    err = 1;
-	}
+	state_idx--;
+	state = g_ptr_array_index(state_stack, state_idx);
     }
 
-    if (!err) {
-	state_stack = sstack;
-	state = state_stack[ns - 2];
-	n_states--;
-    }
-
-#if PDEBUG
-    fprintf(stderr, " state is now state_stack[%d]\n", ns - 2);
+#if PPDEBUG
+    print_state_stack(1);
 #endif
 
     return err;
@@ -2635,10 +2644,6 @@ int libset_init (void)
     static int done;
     int err = 0;
 
-#if PDEBUG
-    fprintf(stderr, "libset_init called, done=%d\n", done);
-#endif
-
     if (!done) {
 	err = push_program_state();
 	done = 1;
@@ -2646,6 +2651,10 @@ int libset_init (void)
 
     return err;
 }
+
+/* state variables for looping */
+static char *looping;
+static int looplen;
 
 void libset_cleanup (void)
 {
@@ -2656,41 +2665,77 @@ void libset_cleanup (void)
 #endif
 
     for (i=0; i<n_states; i++) {
-	free_state(state_stack[i]);
+	free_state(g_ptr_array_index(state_stack, i));
     }
 
-    free(state_stack);
+    g_ptr_array_free(state_stack, TRUE);
     state_stack = NULL;
     n_states = 0;
+    state_idx = -1;
+
+    free(looping);
+    looping = NULL;
+    looplen = 0;
 }
 
 /* switches for looping and batch mode: output: these depend on the
    state of the program calling libgretl, they are not user-settable
 */
 
-void set_loop_on (int verbose)
+#define LDEBUG 0
+
+#if LDEBUG
+
+static void print_looping (int on)
 {
-    state->flags |= STATE_LOOPING;
-    if (verbose) {
-	state->flags |= STATE_LOOP_VERBOSE;
-	set_gretl_messages(1);
+    char c;
+    int i;
+
+    fputs(on ? "loop on:  " : "loop off: ", stderr);
+    for (i=0; i<looplen; i++) {
+	c = looping[i] ? '1' : '0';
+	if (i == gretl_function_depth()) {
+	    fprintf(stderr, "[%c]", c);
+	} else {
+	    fputc(c, stderr);
+	}
     }
+    fputc('\n', stderr);
+}
+
+#endif
+
+#define LMIN 8
+
+void set_loop_on (void)
+{
+    int fd = gretl_function_depth();
+
+    if (looping == NULL) {
+	looplen = fd+1 < LMIN ? LMIN : fd+1;
+	looping = calloc(1, looplen);
+    } else if (looplen < fd+1) {
+	int n = looplen * 2;
+
+	n = n < fd+1 ? fd+1 : n;
+	looping = realloc(looping, n);
+	memset(looping + looplen, 0, n - looplen);
+	looplen = n;
+    }
+    looping[fd] = 1;
+#if LDEBUG
+    print_looping(1);
+#endif
 }
 
 void set_loop_off (void)
 {
-    state->flags &= ~STATE_LOOPING;
-
-    /* If we're not currently governed by "loop verbosity" at
-       caller level, turn such verbosity off too
-    */
-    if (state->flags & STATE_LOOP_VERBOSE) {
-	int i = n_states - 1;
-
-	if (i <= 0 || !(state_stack[i-1]->flags & STATE_LOOP_VERBOSE)) {
-	    state->flags ^= STATE_LOOP_VERBOSE;
-	}
+    if (looping != NULL) {
+	looping[gretl_function_depth()] = 0;
     }
+#if LDEBUG
+    print_looping(0);
+#endif
 }
 
 /* returns 1 if there's a loop going on anywhere in the "caller
@@ -2699,14 +2744,14 @@ void set_loop_off (void)
 
 int gretl_looping (void)
 {
-    int i, ns = n_states;
+    int i, fd = gretl_function_depth();
+    int n = MIN(fd+1, looplen);
 
-    for (i=0; i<ns; i++) {
-	if (state_stack[i]->flags & STATE_LOOPING) {
+    for (i=0; i<n; i++) {
+	if (looping[i]) {
 	    return 1;
 	}
     }
-
     return 0;
 }
 
@@ -2716,7 +2761,9 @@ int gretl_looping (void)
 
 int gretl_looping_currently (void)
 {
-    return (state->flags & STATE_LOOPING)? 1 : 0;
+    int fd = gretl_function_depth();
+
+    return looplen >= fd+1 && looping[fd];
 }
 
 static int iter_depth;

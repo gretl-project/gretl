@@ -26,6 +26,7 @@
 #include "guiprint.h"
 #include "gui_recode.h"
 #include "gretl_func.h"
+#include "addons_utils.h"
 #include "datafiles.h"
 #include "database.h"
 #include "fncall.h"
@@ -1087,7 +1088,7 @@ void text_smaller (GtkWidget *w, gpointer data)
     text_change_size((windata_t *) data, -1);
 }
 
-#ifdef MAC_NATIVE
+#ifdef OS_OSX
 # define helpfont "Geneva"
 #else
 # define helpfont "sans"
@@ -1612,6 +1613,8 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	strncat(tagname, text, TAGLEN-1);
 	if (p != NULL) {
 	    show = g_strdup(p + 1);
+	} else {
+	    show = g_strdup(text); /* OK? */
 	}
     } else if (page == BIB_PAGE) {
 	char *p = strrchr(text, ';');
@@ -1880,7 +1883,25 @@ static void open_pdf_file (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &name, NULL);
 
     if (name != NULL) {
-	gretl_show_pdf(name, NULL);
+	int warn = 0;
+
+	if (strchr(name, '/') == NULL && strchr(name, '\\') == NULL) {
+	    char *path = get_addon_pdf_path(name);
+
+	    if (path != NULL) {
+		gretl_show_pdf(path, NULL);
+		free(path);
+	    } else {
+		warn = 1;
+	    }
+	} else if (gretl_stat(name, NULL) == 0) {
+	    gretl_show_pdf(name, NULL);
+	} else {
+	    warn = 1;
+	}
+	if (warn) {
+	    warnbox_printf(_("Couldn't open %s"), name);
+	}
 	g_free(name);
     }
 }
@@ -3668,7 +3689,7 @@ const char **get_graph_theme_ids (int *n)
 	dir = gretl_opendir(path);
 
 	S = strings_array_new(1);
-	S[0] = gretl_strdup("default");
+	S[0] = gretl_strdup("classic");
 	*n = 1;
 
 	if (dir != NULL) {
@@ -3677,7 +3698,8 @@ const char **get_graph_theme_ids (int *n)
 	    int err = 0;
 
 	    while (!err && (fname = g_dir_read_name(dir))) {
-		if (!strncmp(fname, "default.", 8)) {
+		if (!strncmp(fname, "default.", 8) ||
+		    !strncmp(fname, "classic.", 8)) {
 		    continue;
 		}
 		if (has_suffix(fname, ".gpsty")) {

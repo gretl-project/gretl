@@ -158,10 +158,6 @@ void show_link_cursor (GtkWidget *w, gpointer p);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);
 
-#ifdef MAC_INTEGRATION
-gint mac_hide_unhide (GdkEventKey *event);
-#endif
-
 /* functions defined in files other than gretl.c */
 void about_dialog (void);
 

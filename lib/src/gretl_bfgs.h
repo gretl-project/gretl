@@ -135,4 +135,6 @@ void BFGS_defaults (int *maxit, double *tol, int ci);
 
 int optimizer_get_matrix_name (const char *fncall, char *name);
 
+int hess_score_on (void);
+
 #endif /* GRETL_BFGS_H */
