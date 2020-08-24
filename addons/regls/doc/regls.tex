@@ -46,10 +46,9 @@ The \textsf{regls} addon is essentially a front-end for functionality
 coded in C in the gretl \texttt{regls} plugin; to run the package you
 will need gretl version 2020a or higher.  The plugin implements LASSO
 \citep{tibshirani96}---by default via the Alternating Direction Method
-of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}---and
-also Ridge regression, by default via Singular Value Decomposition.
-The alternative to these default algorithms is discussed in
-section~\ref{sec:ccd}.
+of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}; Ridge
+regression, by default via Singular Value Decomposition; and the
+``elastic net'' hybrid of LASSO and Ridge.
 
 The best-known open-source implementation of regularized regression
 (perhaps the best-known, period) is that provided by the
@@ -59,15 +58,12 @@ we're talking about. The authors of \textsf{glmnet} are Jerome
 Friedman, Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan
 and Noah Simon. Current information on \textsf{glmnet} can be found at
 \url{https://glmnet.stanford.edu/}; for further information on the
-algorithms used in the package see \cite{glmnet10}. Besides LASSO and
-Ridge regression, \textsf{glmnet} supports a combination of these two
-methods known as ``elastic net''; this hyprid is not yet supported by
-gretl.
+algorithms used in the package see \cite{glmnet10}.
 
-This package supports both LASSO and Ridge via the \texttt{regls()}
-function. We begin by discussing LASSO, which is the default method.
-Ridge can be selected via an option; see section~\ref{sec:ridge} for
-more on this.
+This package supports LASSO, Ridge and elastic net via the
+\texttt{regls()} function. We begin by discussing LASSO, which is the
+default method.  Ridge is discussed in section~\ref{sec:ridge} and
+elastic net in section~\ref{sec:elnet}.
 
 We use the LASSO parameterization employed by Boyd \textit{et al}: the
 objective is
@@ -243,9 +239,9 @@ via \texttt{lincomb(nzX, nzb)}.
 \label{sec:xvalid}
 
 Searching for optimal $\lambda$ over the entire training sample we run
-a serious risk of overfitting. The standard remedy is to divide the
-training data into ``folds'' and do cross validation. The algorithm is
-then (in pseudo-code):
+the risk of overfitting. The standard remedy is to divide the training
+data into ``folds'' and do cross validation. The algorithm is then (in
+pseudo-code):
 \begin{code}
 for each s value, s(j)
   MSE(j) = 0
@@ -498,9 +494,10 @@ Ridge regression contains \texttt{edf} (a scalar if a single $\lambda$
 is specified, otherwise a column vector). This is the ``effective''
 degrees of freedom, or number of free parameters, calculated via
 the SVD of the matrix of regressors:
-\[
+\begin{equation}
+  \label{eq:edf}
 \mbox{edf} = \sum_{i=1}^k\, \frac{\sigma_i^2}{\sigma_i^2 + \lambda}
-\]
+\end{equation}
 where the $\sigma_i$s are the singular values. As a measure of the
 ``size'' of a model this takes the place of the number of non-zero
 coefficients in LASSO.
@@ -530,7 +527,7 @@ governed by two additional keys in the \texttt{parms} bundle:
 Using CCD will give results that are more directly comparable with
 \textsf{glmnet}. Beyond that, practitioners are likely to ask, which
 of the available algorithms is faster, and which more accurate? Those
-questions are not so simple to answer, as we'll try to explain.
+questions are not so simple to answer.
 
 First, speed and accuracy cannot be assessed independently. In the
 case of LASSO, both ADMM and CCD are numerical algorithms that deliver
@@ -543,7 +540,7 @@ method B under default settings it is generally possible to reduce the
 tolerance(s) for B such that it equals the accuracy of A (which may
 reverse their ranking in terms of execution time).
 
-Moreover, the relative accuracy of two sets of results is not so
+Moreover, even the relative accuracy of two sets of results is not so
 straightforward to assess. Both LASSO and Ridge are minimization
 problems, so it's tempting to assume that---for a given dataset and
 given $\lambda$---the method that produces the smaller criterion value
@@ -566,7 +563,7 @@ standard for accuracy in digital computation. In some cases, however,
 CCD at its default tolerance ($\epsilon = 10^{-7}$) produces a
 slightly smaller Ridge criterion value. Is it really doing better than
 SVD? No, as can be shown by tightening the CCD tolerance. For example,
-with $\epsilon = 10^{-9}$ CCD may reproduce the SVD result.
+with $\epsilon = 10^{-12}$ or so CCD may reproduce the SVD result.
 
 This sort of experiment is generally useful for assessing relative
 accuracy. If the difference between the results delivered by methods A
@@ -576,6 +573,46 @@ that basis our impression is that, with tolerances at their respective
 default values, both ADMM LASSO and SVD Ridge are generally somewhat
 slower and somewhat more accurate than the CCD alternative.
 
+\section{Elastic net}
+\label{sec:elnet}
+
+As mentioned above, elastic net is a hybrid of LASSO and Ridge. It
+employs a combination of $\ell_1$ and $\ell_2$ penalties governed by a
+hyperparameter $0 \leq \alpha \leq 1$. The objective is
+\[
+    \min_{\hat{\beta}} \quad \frac{1}{2}\,
+    \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 +
+    \lambda \left(\frac{1-\alpha}{2} \sum_{j=1}^k \hat{\beta}_j^2
+      + \alpha \sum_{j=1}^k |\hat{\beta}_j|\right)
+  \]
+Thus $\alpha = 1$ gives LASSO, $\alpha = 0$ gives Ridge, and anything
+between gives a combination. It has been argued that better
+out-of-sample prediction can be obtained in some cases by preserving
+some highly collinear regressors \`a la Ridge, while sending some
+coefficients to exact zero as in LASSO, and elastic net allows for
+this.
+
+In the \texttt{regls} function, elastic net is selected by specifying
+a fractional value under the key \texttt{alpha} in the parameters
+bundle. This automatically switches to the CCD algorithm
+(section~\ref{sec:ccd}), so the \texttt{ccd\_toler} option becomes
+applicable.\footnote{In principle the ADMM algorithm could handle
+  elastic net, but to date we have not implemented such support.}
+
+When elastic net is used on a sequence of $\lambda$s without cross
+validation (see section~\ref{sec:simple-search}) \texttt{regls}
+provides a BIC measure as a possible means of selecting the most
+promising penalty factor. However, calculation of the effective number
+of parameters in this case is a debatable matter. What \texttt{regls}
+uses at present is a weighted average of the number of non-zero
+coefficients as in LASSO, with weight $\alpha$, and the SVD-derived
+``edf'' for Ridge as in equation (\ref{eq:edf}), with weight
+$1-\alpha$.
+
+Note that if cross validation is called for with elastic net, it is
+only the $\lambda$ value that is optimized. To assess the efficacy of
+various $\alpha$ values one would have to perform several cross
+validation runs.
 
 \section{Reference: public functions}
 \label{sec:funcref}
@@ -584,10 +621,10 @@ slower and somewhat more accurate than the CCD alternative.
 \begin{verbatim}
 bundle regls (series y, list X, bundle parms)
 \end{verbatim}
-  Performs LASSO or Ridge estimation given the dependent variable
-  \texttt{y}, the regressors \texttt{X}, and options in
+  Performs LASSO, Ridge or elastic net estimation given the dependent
+  variable \texttt{y}, the regressors \texttt{X}, and options in
   \texttt{parms}. Returns a bundle containing the
-  results. Table~\ref{tab:lasso-parms} lists the parameters that can
+  results. Table~\ref{tab:regls-parms} lists the parameters that can
   be passed via the \texttt{parms} argument.
 \end{funcdoc}
 
@@ -610,10 +647,13 @@ bundle regls (series y, list X, bundle parms)
     \texttt{admmctrl} & optional control vector & see
                                                   section~\ref{sec:add-controls} \\
     \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
-    \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see section~\ref{sec:ccd}
+    \texttt{ccd\_toler} & positive scalar, default $10^{-7}$ & see
+                                                               section~\ref{sec:ccd}\\
+    \texttt{alpha} & $0 \leq \alpha \leq 1$ (default 1) & see
+                                                               section~\ref{sec:elnet}
   \end{tabular}
   \caption{Summary of parameters for the \texttt{regls} function}
-  \label{tab:lasso-parms}
+  \label{tab:regls-parms}
 \end{table}
 
 \begin{funcdoc}
@@ -774,6 +814,27 @@ $\hat{\sigma}_y$. The current sample range must be the same as for
 \texttt{b} to get $\hat{\sigma}_y$ right, but if \textsf{glmnet} was
 told \textit{not} to standardize the data then this term should be
 omitted as it is assumed to be 1.
+
+\subsection*{Cross validation}
+
+This needs to go in proper sequence somewhere\dots.
+
+There's a significant difference between \textsf{regls} and
+\textsf{glmnet} in respect of cross validation. This applies even if
+the CCD algorithm is selected in \textsf{regls}, which results in
+near-identical results for coefficients and predicted values when
+simply testing a sequence of $\lambda$ values.
+
+In \textsf{regls} cross validation, the entire training dataset is
+standardized at the outset, then each fold gets its share of the
+standardized data. The maximum $\lambda$ is also determined using the
+full training set, so the same $\lambda$ sequence is used for each
+fold. In \textsf{glmnet}, by contrast, both standardization and
+calculation of the $\lambda$ sequence are done per fold. It's not
+obvious \textit{a priori} which of these methods is going to be more
+effective in selecting the $\lambda$ that will do best for
+out-of-sample prediction, but our Monte Carlo analyses show that the
+\textsf{regls} method is superior.
 
 \subsection*{An extended test}
 
