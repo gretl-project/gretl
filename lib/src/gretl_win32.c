@@ -2109,7 +2109,7 @@ int win32_get_core_count (void)
         ptr++;
     }
 
-#if 1
+#if 0
     fprintf(stderr, "\nGetLogicalProcessorInformation results:\n");
     fprintf(stderr, " Number of processor cores: %d\n", n_cores);
     fprintf(stderr, " Number of logical processors: %d\n", n_procs);
