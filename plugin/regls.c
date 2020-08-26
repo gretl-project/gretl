@@ -1559,7 +1559,7 @@ static int ccd_prep (regls_info *ri, ccd_info *ci)
     ccd_scale(ri->X, ri->y->val, ci->Xty->val, ci->xv->val);
 
     /* and compute lambda sequence */
-    ci->lmax = ri->infnorm;
+    ci->lmax = vector_infnorm(ci->Xty);
     ccd_make_lambda(ri, ci->lam, &ci->lmax);
 
     return 0;
