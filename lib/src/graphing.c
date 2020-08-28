@@ -5081,7 +5081,7 @@ static void print_freq_test_label (char *s, int teststat,
 static void print_freq_dist_label (char *s, int dist, double x, double y)
 {
     int dcomma = 0;
-    char test[8];
+    char test[10];
 
     gretl_pop_c_numeric_locale();
 
