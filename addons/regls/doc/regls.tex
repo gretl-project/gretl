@@ -24,7 +24,7 @@
 
 \newcommand{\myappendix}[1]{%
 \addtocounter{appcount}{1}
-\section{#1}}          
+\section{#1}}
 
 \setlength{\parskip}{1ex}
 \setlength{\parindent}{0pt}
@@ -50,11 +50,10 @@ of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}; Ridge
 regression, by default via Singular Value Decomposition; and the
 ``elastic net'' hybrid of LASSO and Ridge.
 
-The best-known open-source implementation of regularized regression
-(perhaps the best-known, period) is that provided by the
-\textsf{glmnet} package for \textsf{R}. Since we make several
-references to \textsf{glmnet} below we should state up front what
-we're talking about. The authors of \textsf{glmnet} are Jerome
+The best-known implementation of regularized regression is that
+provided by the \textsf{glmnet} package for \textsf{R}. Since we make
+several references to \textsf{glmnet} below we should state up front
+what we're talking about. The authors of \textsf{glmnet} are Jerome
 Friedman, Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan
 and Noah Simon. Current information on \textsf{glmnet} can be found at
 \url{https://glmnet.stanford.edu/}; for further information on the
@@ -520,8 +519,9 @@ governed by two additional keys in the \texttt{parms} bundle:
 \begin{itemize}
 \item \texttt{ccd}: boolean, default 0. Set this to 1 to use CCD.
 \item \texttt{ccd\_toler}: a positive scalar setting the convergence
-  tolerance for CCD. The default is $10^{-7}$; setting a smaller value
-  will give greater accuracy at the expense of more iterations.
+  tolerance for CCD. The default is $10^{-7}$ (as in \textsf{glmnet});
+  setting a smaller value will give greater accuracy at the expense of
+  more iterations.
 \end{itemize}
 
 Using CCD will give results that are more directly comparable with
@@ -560,7 +560,7 @@ A similar point can be made about Ridge. Unlike LASSO the Ridge
 problem has an analytic solution and by default \textsf{regls}
 implements that solution via SVD, which is pretty much the gold
 standard for accuracy in digital computation. In some cases, however,
-CCD at its default tolerance ($\epsilon = 10^{-7}$) produces a
+CCD at its default tolerance, $\epsilon = 10^{-7}$, produces a
 slightly smaller Ridge criterion value. Is it really doing better than
 SVD? No, as can be shown by tightening the CCD tolerance. For example,
 with $\epsilon = 10^{-12}$ or so CCD may reproduce the SVD result.
@@ -762,17 +762,11 @@ regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 \myappendix{Comparison with glmnet}
 \label{sec:comparison}
 
-It's likely that potential users of this package will take
-\textsf{R}'s \textsf{glmnet} as benchmark. So we'd be well advised to
-ensure that our results are close to those from \textsf{glmnet} unless
-we can demonstrate a good reason for divergence. We're at that point:
-on some examples gretl's \texttt{regls} gets a smaller (better) LASSO
-criterion value than \textsf{glmnet} for a given $\lambda$, and on
-some examples \textit{vice versa}, within a quite small range of
-variation. Similarly for the typical full \textsf{regls} workflow;
-that is, randomized cross validation followed by out of sample
-prediction. Sometimes we do a bit better than \textsf{glmnet},
-sometimes not quite so well.
+Given the benchmark status of \textsf{R}'s \textsf{glmnet} we have
+tried to ensure that our results are very close to those from
+\textsf{glmnet} unless we can demonstrate a good reason for
+divergence. We comment below on reasons why results may differ in
+certain respects.
 
 \subsection*{Different conventions}
 
@@ -789,7 +783,7 @@ values.
 In \textsf{glmnet} the objective (in the linear Gaussian case) is
 \[
    \min_{\hat{\beta}} \quad \frac{1}{2n}\,
-  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 + \lambda \sum_{j=1}^k |\hat{\beta}_j| 
+  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 + \lambda \sum_{j=1}^k |\hat{\beta}_j|
 \]
 This differs from our equation (\ref{eq:obj}) in dividing the sum of
 squared residuals (SSR) by $2n$ rather than 2. Since \textsf{glmnet}
@@ -800,7 +794,7 @@ take each $\lambda_i$ value to be $s_i$ times $\lambda_{\max}$ as
 defined in equation (\ref{eq:lmax}), the $\lambda$ values printed by
 \textsf{glmnet} are (in our notation)
 \[
-\lambda_i = s_i \cdot \lambda_{\max} \cdot \hat{\sigma}_y / n 
+\lambda_i = s_i \cdot \lambda_{\max} \cdot \hat{\sigma}_y / n
 \]
 where $\hat{\sigma}_y$ is the ML estimate of the standard deviation of
 the dependent variable. To obtain the \textsf{glmnet} $\lambda$
@@ -817,13 +811,12 @@ omitted as it is assumed to be 1.
 
 \subsection*{Cross validation}
 
-This needs to go in proper sequence somewhere\dots.
-
-There's a significant difference between \textsf{regls} and
-\textsf{glmnet} in respect of cross validation. This applies even if
-the CCD algorithm is selected in \textsf{regls}, which results in
-near-identical results for coefficients and predicted values when
-simply testing a sequence of $\lambda$ values.
+There's a substantive (though ultimately minor) difference between
+\textsf{regls} and \textsf{glmnet} in respect of cross
+validation. This applies even if the CCD algorithm is selected in
+\textsf{regls}, which results in near-identical results for
+coefficients and predicted values when simply testing a sequence of
+$\lambda$ values.
 
 In \textsf{regls} cross validation, the entire training dataset is
 standardized at the outset, then each fold gets its share of the
@@ -831,60 +824,101 @@ standardized data. The maximum $\lambda$ is also determined using the
 full training set, so the same $\lambda$ sequence is used for each
 fold. In \textsf{glmnet}, by contrast, both standardization and
 calculation of the $\lambda$ sequence are done per fold. It's not
-obvious \textit{a priori} which of these methods is going to be more
-effective in selecting the $\lambda$ that will do best for
-out-of-sample prediction, but our Monte Carlo analyses show that the
-\textsf{regls} method is superior.
+obvious \textit{a priori} which of these methods is going to work
+better in selecting the $\lambda$ to be used for out-of-sample
+prediction, but our Monte Carlo analyses suggest that the two methods
+are about equally effective.
 
-\subsection*{An extended test}
+\subsection*{Extended test of cross validation}
 
 The proof of the pudding for LASSO is out-of-sample prediction
 following cross validation. We therefore conducted an extended test of
 this, with comparison to \textsf{glmnet}, using the murder-rate
 dataset referenced by Ryan Tibshirani\footnote{See
   \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
-and included with our \texttt{regls} package. We used the default ADMM
-algorithm with \texttt{regls}.
+and included with our \texttt{regls} package. This dataset contains
+2215 observations on 125 variables. We ran \texttt{regls} with both
+the default ADMM algorithm and the alternative CCD, and also threw in
+plain OLS as a reference point.
 
-For each of 800 trials we:
+For each of 2000 trials we did the following:
 \begin{enumerate}
-\item Randomized the order of the entire dataset.
+\item Randomized the order of all 2215 observations.
 \item Selected the first 1000 observations for training and the next
-  200 for testing.
+  200 for testing. For OLS we just estimated using the
+  training data and proceeded to step~\ref{step:pred}.
 \item Ran both \texttt{regls} and \textsf{glmnet}, using 25 values
   of $s = \lambda/\lambda_{\max}$ and 10 consecutive folds.
 \item Used the optimal $s$ from cross validation to obtain
   $\hat{\beta}$ on the full set of training data.
 \item Obtained fitted values $X\hat{\beta}$ for the testing data and
   calculated the out of sample $R^2$.
+  \label{step:pred}
 \end{enumerate}
 
-In fact we ran this procedure twice, first taking $s^*$ as the optimum
-from cross validation and then using $s^{\dagger}$, following
-\textsf{glmnet}'s recommendation (see section~\ref{sec:xvalid}). The
-results are shown in Table~\ref{tab:bigtest}.
+In fact we ran this procedure twice, first taking the MSE-minimizing
+$s^*$ as the optimum from cross validation and then using
+$s^{\dagger}$, following \textsf{glmnet}'s recommendation (see
+section~\ref{sec:xvalid}). The $s^*$-based results are shown in
+Table~\ref{tab:star} and the $s^{\dagger}$-based ones in
+Table~\ref{tab:dagger}.
 
 \begin{table}[htbp]
   \centering
   \begin{tabular}{lccccccc}
-    \multicolumn{8}{c}{Case A: using $s^*$} \\
- & mean & s.d. & s.e.(mean) & 95\% c.i. & median & min & max \\
-\textsf{gretl} & 0.4987 & 0.2223 & 0.0079 & 0.4833 - 0.5141 & 0.5451 & $-$2.4235 & 0.7081 \\
-\textsf{glmnet} & 0.4825 & 0.2226 & 0.0079 & 0.4671 - 0.4979 & 0.5244 & $-$2.4184 & 0.7136 \\[8pt]
-    \multicolumn{8}{c}{Case B: using $s^{\dagger}$} \\
+    \multicolumn{8}{c}{Cross validation using $s^*$ as optimum} \\
+ & mean & s.d. & s.e.(mean) & 95\% C.I. & median & min & max \\
+\textsf{regls (ADMM)} & 0.4625 & 0.3908 & 0.0087 & 0.4454 - 0.4796 & 0.5342 & $-$7.5863 & 0.7312 \\
+\textsf{regls (CCD)} & 0.4631 & 0.3886 & 0.0087 & 0.4460 - 0.4801 & 0.5336 & $-$7.5750 & 0.7314 \\
+\textsf{cv.glmnet} & 0.4509 & 0.3876 & 0.0087 & 0.4339 - 0.4679 & 0.5212 & $-$7.5278 & 0.7331 \\[4pt]
+\textsf{OLS}       & 0.4006 & 0.6006 & 0.0134 & 0.3743 - 0.4269 & 0.4976 & $-$16.769 & 0.7122
+  \end{tabular}
+  \caption{Out-of-sample $R^2$ statistics, 2000 trials}
+  \label{tab:star}
+\end{table}
+
+With $s^*$ selected for prediction, the performance of the three LASSO
+variants is very similar: the 95 percent confidence intervals for mean
+$R^2$ are strongly overlapping.  Since the algorithms employed are
+different, we might say that their respective results are mutually
+supportive. In all cases the results are (not surprisingly) clearly
+superior to OLS.
+
+We should not make too much of the differences seen in
+Table~\ref{tab:star}: it's just a single dataset (albeit randomly
+shuffled and subsetted at each iteration) and a single set of
+$\lambda$s. However, it's worth noting that the out-of-sample $R^2$
+values for the different algorithms are strongly correlated (as one
+might expect) so a paired-difference test seems
+applicable. Table~\ref{tab:z} shows the correlations, mean differences
+$\bar{d}$, and $z$ statistics for the null of $\mu_d = 0$ (A = ADMM, C
+= CCD).
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lcrr}
+    & \multicolumn{1}{c}{$\rho$} & \multicolumn{1}{c}{$\bar{d}$} &
+        \multicolumn{1}{c}{$z$} \\
+    reglsA $-$ reglsC & 0.9990 & $-$0.0006 & $-$1.478 \\
+    reglsA $-$ glmnet & 0.9656 &    0.0116 & 5.072 \\
+    reglsC $-$ glmnet & 0.9663 &    0.0122 & 5.397
+  \end{tabular}
+  \caption{Pairwise correlations and mean difference tests}
+  \label{tab:z}
+\end{table}
+
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{lccccccc}
+    \multicolumn{8}{c}{Cross validation using $s^{\dagger}$ as optimum} \\
  & mean & s.d. & s.e.(mean) & 95\% c.i. & median & min & max \\
 \textsf{gretl} & 0.4817 & 0.1783 & 0.0063 & 0.4693 - 0.4940 & 0.5122 & $-$1.7316 & 0.6615 \\
 \textsf{glmnet} & 0.4585 & 0.1762 & 0.0062 & 0.4463 - 0.4708 & 0.4843 & $-$1.7313 & 0.6571 \\
   \end{tabular}
   \caption{Out-of-sample $R^2$ statistics, 800 trials}
-  \label{tab:bigtest}
+  \label{tab:dagger}
 \end{table}
-
-In Case A, with the MSE-minimizing $s^*$ selected for prediction, the
-performance of the two codes is very similar: the 95 percent
-confidence intervals for mean $R^2$ are strongly overlapping.  Since
-the algorithms employed are quite different, one might say that their
-respective results are mutually supportive.
 
 In Case B, following the ``within one standard error'' rule to give
 the benefit of the doubt to parsimony, the results are not quite so
@@ -924,9 +958,8 @@ list X = population..LemasPctOfficDrugUn
 list X0 = const X
 list LL = murdPerPop X
 
-# the lambdas we'll use
-lamseq = lambda_sequence(1, 25)
-bundle parms = defbundle("lfrac", lamseq, "stdize", 1, "verbosity", 0)
+# parameters for regls
+bundle parms = defbundle("nlambda", 25, "stdize", 1, "verbosity", 0)
 parms.xvalidate = 1
 parms.nfolds = 10
 
