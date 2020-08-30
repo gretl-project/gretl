@@ -17,15 +17,6 @@
             plainpages=false
           }
 
-\newcommand{\startappendices}{%
-\newcounter{appcount}
-\setcounter{appcount}{0}
-\renewcommand{\thesection}{Appendix \Alph{appcount}}}
-
-\newcommand{\myappendix}[1]{%
-\addtocounter{appcount}{1}
-\section{#1}}
-
 \setlength{\parskip}{1ex}
 \setlength{\parindent}{0pt}
 
@@ -408,7 +399,7 @@ observations.
 Note that it's necessary to run the scripts involving randomized cross
 validation several times to get a good idea of what's going on: in
 each case there seem to be a few ``favoured solutions'' of varying
-probability. Sometimes one sees gretl finding the better one,
+probability. Sometimes one sees \textsf{regls} finding the better one,
 sometimes \textsf{glmnet}.
 
 \section{Ridge regression}
@@ -757,9 +748,8 @@ regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 \bibliography{gretl}
 
 \clearpage
-\startappendices
 
-\myappendix{Comparison with glmnet}
+\section*{Appendix: Comparison with glmnet}
 \label{sec:comparison}
 
 Given the benchmark status of \textsf{R}'s \textsf{glmnet} we have
@@ -845,8 +835,8 @@ For each of 2000 trials we did the following:
 \begin{enumerate}
 \item Randomized the order of all 2215 observations.
 \item Selected the first 1000 observations for training and the next
-  200 for testing. For OLS we just estimated using the
-  training data and proceeded to step~\ref{step:pred}.
+  200 for testing. (For OLS we just estimated using the
+  training data and proceeded to step~\ref{step:pred}.)
 \item Ran both \texttt{regls} and \textsf{glmnet}, using 25 values
   of $s = \lambda/\lambda_{\max}$ and 10 consecutive folds.
 \item Used the optimal $s$ from cross validation to obtain
@@ -860,13 +850,12 @@ In fact we ran this procedure twice, first taking the MSE-minimizing
 $s^*$ as the optimum from cross validation and then using
 $s^{\dagger}$, following \textsf{glmnet}'s recommendation (see
 section~\ref{sec:xvalid}). The $s^*$-based results are shown in
-Table~\ref{tab:star} and the $s^{\dagger}$-based ones in
-Table~\ref{tab:dagger}.
+Table~\ref{tab:star}.
 
 \begin{table}[htbp]
   \centering
   \begin{tabular}{lccccccc}
-    \multicolumn{8}{c}{Cross validation using $s^*$ as optimum} \\
+    \multicolumn{8}{c}{Cross validation using $s^*$ as optimum} \\[4pt]
  & mean & s.d. & s.e.(mean) & 95\% C.I. & median & min & max \\
 \textsf{regls (ADMM)} & 0.4625 & 0.3908 & 0.0087 & 0.4454 - 0.4796 & 0.5342 & $-$7.5863 & 0.7312 \\
 \textsf{regls (CCD)} & 0.4631 & 0.3886 & 0.0087 & 0.4460 - 0.4801 & 0.5336 & $-$7.5750 & 0.7314 \\
@@ -884,9 +873,18 @@ different, we might say that their respective results are mutually
 supportive. In all cases the results are (not surprisingly) clearly
 superior to OLS.
 
-We should not make too much of the differences seen in
-Table~\ref{tab:star}: it's just a single dataset (albeit randomly
-shuffled and subsetted at each iteration) and a single set of
+The negative minimum $R^2$ values call for comment. It seems that in 2
+or 3 percent of the randomly reordered datasets the 200 testing
+observations differed substantially from the 1000 training
+observations. An $R^2 < 0$ means, of course, that the predictions of
+the model are inferior to simply predicting the sample mean for all
+observations in the given sample range, but since we're talking about
+out-of-sample prediction the sample mean for the testing data should
+be considered unknown when predictions are made.
+
+We should not make too much of the differences across LASSO versions
+seen in Table~\ref{tab:star}: it's just a single dataset (albeit
+randomly shuffled and subsetted at each iteration) and a single set of
 $\lambda$s. However, it's worth noting that the out-of-sample $R^2$
 values for the different algorithms are strongly correlated (as one
 might expect) so a paired-difference test seems
@@ -907,41 +905,56 @@ $\bar{d}$, and $z$ statistics for the null of $\mu_d = 0$ (A = ADMM, C
   \label{tab:z}
 \end{table}
 
+The results shown in Table~\ref{tab:dagger}, with the same
+randomization of the data as above but following the ``within one
+standard error'' rule to give the benefit of the doubt to parsimony,
+are quite interesting---although, again, we should not give too much
+weight to findings from a single dataset. The mean out-of-sample $R^2$
+values are all higher, and the standard deviations all lower, but the
+medians are also lower. In addition the differences between the
+\textsf{regls} methods and \textsf{glmnet} are greater, to the point
+where the confidence intervals barely overlap.
 
 \begin{table}[htbp]
   \centering
   \begin{tabular}{lccccccc}
-    \multicolumn{8}{c}{Cross validation using $s^{\dagger}$ as optimum} \\
- & mean & s.d. & s.e.(mean) & 95\% c.i. & median & min & max \\
-\textsf{gretl} & 0.4817 & 0.1783 & 0.0063 & 0.4693 - 0.4940 & 0.5122 & $-$1.7316 & 0.6615 \\
-\textsf{glmnet} & 0.4585 & 0.1762 & 0.0062 & 0.4463 - 0.4708 & 0.4843 & $-$1.7313 & 0.6571 \\
+    \multicolumn{8}{c}{Cross validation using $s^{\dagger}$ as optimum} \\[4pt]    
+ & mean & s.d. & s.e.(mean) & 95\% C.I. & median & min & max \\
+\textsf{regls (ADMM)} & 0.4815 & 0.2456 & 0.0055 & 0.4707 - 0.4922 & 0.5125 & $-$5.2263 & 0.7125 \\
+\textsf{regls (CCD)} & 0.4814 & 0.2310 & 0.0052 & 0.4712 - 0.4915 & 0.5085 & $-$5.2228 & 0.6994 \\
+\textsf{cv.glmnet} & 0.4616 & 0.2287 & 0.0051 & 0.4516 - 0.4716 & 0.4868 & $-$5.2228 & 0.6994 \\
   \end{tabular}
-  \caption{Out-of-sample $R^2$ statistics, 800 trials}
+  \caption{Out-of-sample $R^2$ statistics, 2000 trials}
   \label{tab:dagger}
 \end{table}
 
-In Case B, following the ``within one standard error'' rule to give
-the benefit of the doubt to parsimony, the results are not quite so
-good for either code (although there's some overlap with the Case A
-confidence intervals).
+For what it's worth, the paired-difference test statistics have
+increased to $z = 11.9$ and $z = 13.6$ for, respectively,
+\textsf{regls-ADMM} and \textsf{regls-CCD} versus \textsf{glmnet},
+while the test for \textsf{regls-ADMM} versus \textsf{regls-CCD}
+has changed sign and shrunk to $z = 0.125$.
 
-The negative minimum $R^2$ values call for comment. It seems that in 2
-or 3 percent of the randomly reordered datasets the 200 testing
-observations differed substantially from the 1000 training
-observations. An $R^2 < 0$ means, of course, that the predictions of
-the model are inferior to simply predicting the sample mean for all
-observations in the given sample range, but since we're talking about
-out-of-sample prediction the sample mean for the testing data should
-be considered unknown when predictions are made.
+The example we have chosen may be untypical in some way, but on the
+assumption that it's not freakish we feel justified in concluding that
+\textsf{regls} is (probably) not inferior to \textsf{glmnet} in terms
+of out-of-sample prediction based on cross validation.
 
-The script that produced the Case A results above is shown on the
-following page. For Case B it's necessary to add
-\texttt{parms.use\_1se = 1} when forming the parameter bundle for
-gretl's \texttt{regls}, and in the \textsf{R} section to change the
-line that assigns to \texttt{Rb} to read
+The script that produced the first set of results above is shown on
+the following page. For the ``within one standard error'' case it's
+necessary to add \texttt{parms.use\_1se = 1} when setting up the
+parameter bundle for \texttt{regls}, and in the \textsf{R} section to
+change the line that assigns to \texttt{Rb} to read
 \begin{code}
 Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.1se))
 \end{code}
+
+By default the script will produce different results on each run,
+since in gretl the PRNG seed is set from the clock on start-up. To
+replicate the results shown here, insert the line
+\begin{code}
+set seed 5432173
+\end{code}
+anywhere before the \texttt{loop} is started.
 
 \clearpage
 
@@ -966,12 +979,12 @@ parms.nfolds = 10
 matrix foldvec = regls_foldvec(1000, 10)
 mwrite(foldvec, "folds.mat", 1) # for glmnet
 
-K = 800
+K = 2000
 matrix OSR2 = zeros(K, 2)
 
-loop i=1..K --quiet
+loop i=1..K
    smpl full
-   series sorter = normal()
+   series sorter = uniform()
    dataset sortby sorter
 
    smpl 1 1000 # training data
@@ -1001,7 +1014,7 @@ loop i=1..K --quiet
    OSR2[i,2] = m[2]
 endloop
 
-mwrite(OSR2, "OSR2_800.mat")
+mwrite(OSR2, "OSR2_2000.mat")
 \end{scode}
   \end{script}
 
