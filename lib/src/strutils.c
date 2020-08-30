@@ -372,10 +372,16 @@ char *comma_separate_numbers (char *s)
 int has_suffix (const char *str, const char *sfx)
 {
     const char *p;
-    int ret = 0;
+    int comp, ret = 0;
+
+    /* compound suffix, such as ".csv.gz" ? */
+    comp = (strchr(sfx + 1, '.') != NULL);
 
     if (str != NULL && sfx != NULL) {
 	p = strrchr(str, *sfx);
+	if (comp && p - str > 4) {
+	    p -= 4;
+	}
 	if (p != NULL && strlen(p) == strlen(sfx)) {
 	    ret = 1;
 	    while (*p) {

@@ -788,7 +788,8 @@ static GretlFileType data_file_type_from_extension (const char *ext)
 
     /* a few extras */
     if (!g_ascii_strcasecmp(ext, ".txt") ||
-	!g_ascii_strcasecmp(ext, ".asc")) {
+	!g_ascii_strcasecmp(ext, ".asc") ||
+	!g_ascii_strcasecmp(ext, ".gz")) {
 	return GRETL_CSV;
     }
 
@@ -830,7 +831,7 @@ GretlFileType data_file_type_from_name (const char *fname)
 static GretlDataFormat
 format_from_opt_or_name (gretlopt opt, const char *fname,
 			 char *delim, int *add_ext,
-			 int *err)
+			 int *gzip, int *err)
 {
     GretlDataFormat fmt = GRETL_FMT_GDT;
 
@@ -865,6 +866,9 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	    fmt = GRETL_FMT_R;
 	} else if (has_suffix(fname, ".csv")) {
 	    fmt = GRETL_FMT_CSV;
+	} else if (has_suffix(fname, ".csv.gz")) {
+	    fmt = GRETL_FMT_CSV;
+	    *gzip = 1;
 	} else if (has_suffix(fname, ".m")) {
 	    fmt = GRETL_FMT_OCTAVE;
 	} else if (has_suffix(fname, ".txt") ||
@@ -921,7 +925,7 @@ void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
 
 static void csv_data_out (const DATASET *dset, const int *list,
 			  int print_obs, int digits, char decpoint,
-			  char delim, FILE *fp)
+			  char delim, FILE *fp, gzFile fz)
 {
     const char *NA = get_csv_na_write_string();
     char tmp[TMPLEN];
@@ -939,13 +943,21 @@ static void csv_data_out (const DATASET *dset, const int *list,
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (print_obs) {
 	    if (dset->S != NULL) {
-		fprintf(fp, "\"%s\"%c", dset->S[t], delim);
+		if (fz != NULL) {
+		    gzprintf(fz, "\"%s\"%c", dset->S[t], delim);
+		} else {
+		    fprintf(fp, "\"%s\"%c", dset->S[t], delim);
+		}
 	    } else {
 		ntodate(tmp, t, dset);
 		if (quarterly_or_monthly(dset)) {
 		    modify_date_for_csv(tmp, dset->pd);
 		}
-		fprintf(fp, "%s%c", tmp, delim);
+		if (fz != NULL) {
+		    gzprintf(fz, "%s%c", tmp, delim);
+		} else {
+		    fprintf(fp, "%s%c", tmp, delim);
+		}
 	    }
 	}
 
@@ -977,9 +989,17 @@ static void csv_data_out (const DATASET *dset, const int *list,
 		if (dotsub) {
 		    gretl_charsub(tmp, '.', ',');
 		}
-		fputs(tmp, fp);
+		if (fz != NULL) {
+		    gzputs(fz, tmp);
+		} else {
+		    fputs(tmp, fp);
+		}
 	    }
-	    fputc(i < list[0] ? delim : '\n', fp);
+	    if (fz != NULL) {
+		gzputc(fz, i < list[0] ? delim : '\n');
+	    } else {
+		fputc(i < list[0] ? delim : '\n', fp);
+	    }
 	}
     }
 
@@ -1066,9 +1086,11 @@ static int real_write_data (const char *fname, int *list,
     int pop_locale = 0;
     char delim = 0;
     FILE *fp = NULL;
+    gzFile fz = NULL;
     int freelist = 0;
     int csv_digits = 0;
     int add_ext = 0;
+    int gzip = 0;
     double xx;
     int err = 0;
 
@@ -1078,7 +1100,8 @@ static int real_write_data (const char *fname, int *list,
 	return E_ARGS;
     }
 
-    fmt = format_from_opt_or_name(opt, fname, &delim, &add_ext, &err);
+    fmt = format_from_opt_or_name(opt, fname, &delim, &add_ext,
+				  &gzip, &err);
     if (err) {
 	return err;
     }
@@ -1118,8 +1141,12 @@ static int real_write_data (const char *fname, int *list,
     strcpy(datfile, fname);
 
     /* open file for output */
-    fp = gretl_fopen(datfile, "w");
-    if (fp == NULL) {
+    if (gzip) {
+	fz = gretl_gzopen(datfile, "wb1");
+    } else {
+	fp = gretl_fopen(datfile, "wb");
+    }
+    if (fp == NULL && fz == NULL) {
 	err = E_FOPEN;
 	goto write_exit;
     }
@@ -1150,7 +1177,11 @@ static int real_write_data (const char *fname, int *list,
 	}
 
 	if (msg != NULL && *msg != '\0') {
-	    fprintf(fp, "# %s\n", msg);
+	    if (gzip) {
+		gzprintf(fz, "# %s\n", msg);
+	    } else {
+		fprintf(fp, "# %s\n", msg);
+	    }
 	}
 
 	if (!(opt & OPT_X)) {
@@ -1161,16 +1192,28 @@ static int real_write_data (const char *fname, int *list,
 	if (!(opt & OPT_N)) {
 	    /* header: variable names */
 	    if (print_obs && (dset->S != NULL || dset->structure != CROSS_SECTION)) {
-		fprintf(fp, "obs%c", delim);
+		if (gzip) {
+		    gzprintf(fz, "obs%c", delim);
+		} else {
+		    fprintf(fp, "obs%c", delim);
+		}
 	    }
 	    for (i=1; i<l0; i++) {
-		fprintf(fp, "%s%c", dset->varname[list[i]], delim);
+		if (gzip) {
+		    gzprintf(fz, "%s%c", dset->varname[list[i]], delim);
+		} else {
+		    fprintf(fp, "%s%c", dset->varname[list[i]], delim);
+		}
 	    }
-	    fprintf(fp, "%s\n", dset->varname[list[l0]]);
+	    if (gzip) {
+		gzprintf(fz, "%s\n", dset->varname[list[l0]]);
+	    } else {
+		fprintf(fp, "%s\n", dset->varname[list[l0]]);
+	    }
 	}
 
 	csv_data_out(dset, list, print_obs, csv_digits,
-		     decpoint, delim, fp);
+		     decpoint, delim, fp, fz);
     } else if (fmt == GRETL_FMT_R) {
 	/* friendly to GNU R */
 	if (dataset_is_time_series(dset)) {
@@ -1279,7 +1322,9 @@ static int real_write_data (const char *fname, int *list,
 	gretl_pop_c_numeric_locale();
     }
 
-    if (fp != NULL) {
+    if (fz != NULL) {
+	gzclose(fz);
+    } else if (fp != NULL) {
 	fclose(fp);
     }
 
