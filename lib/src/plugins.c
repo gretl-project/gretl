@@ -248,6 +248,7 @@ struct plugin_function_info plugin_functions[] = {
     { "kernel_density",        P_KERNEL },
     { "array_kernel_density",  P_KERNEL },
     { "kernel_density_matrix", P_KERNEL },
+    { "multiple_kd_matrix",    P_KERNEL },
 
     /* Hurst exponent estimation */
     { "hurst_exponent", P_FRACTAL },

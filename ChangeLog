@@ -1,6 +1,8 @@
 version 2020e, in progress
 - MPI: update documentation and support transfer of more
   data types
+- kdensity() function: generalize to allow as argument a
+  list or matrix with more than one column
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard

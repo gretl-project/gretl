@@ -6033,16 +6033,20 @@
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-list-or-mat">x</fnarg>
 	<fnarg type="scalar" optional="true">scale</fnarg>
 	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Computes a kernel density estimate for the series or vector
-	  <argname>x</argname>. The returned matrix has two columns, the
-	  first holding a set of evenly spaced abscissae and the second
-	  the estimated density at each of these points.
+	  Computes a kernel density estimate (or set of estimates) for
+	  the argument <argname>x</argname>, which may be a single
+	  series or vector or a list or matrix with more than
+	  column. The returned matrix has <math>k</math> + 1 columns,
+	  where <math>k</math> is the number of elements (series or
+	  columns) in <argname>x</argname>. The first column holds a
+	  set of evenly spaced abscissae and the rest hold the
+	  estimated density or densities at each of these points.
 	</para>
 	<para>
 	  The optional <argname>scale</argname> parameter can be used to
@@ -6054,11 +6058,16 @@
 	</para>
 	<para>
 	  A plot of the results may be obtained using the <cmdref
-	  targ="gnuplot"/> command, as in
+	  targ="gnuplot"/> command, as illustrated below. Note that
+	  the column containing the abscissae should come last for
+	  plotting.
 	</para>
 	<code>
 	  matrix d = kdensity(x)
+	  # if x has a single element
 	  gnuplot 2 1 --matrix=d --with-lines --fit=none
+	  # if x has two elements
+	  gnuplot 2 3 1 --matrix=d --with-lines --fit=none
 	</code>
       </description>
     </function>

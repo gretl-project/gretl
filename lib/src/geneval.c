@@ -11265,34 +11265,60 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 static gretl_matrix *get_density_matrix (NODE *t, double bws,
 					 int ctrl, parser *p)
 {
-    gretl_matrix *(*kdfunc) (const double *, int, double,
-			     gretlopt, int *);
+    gretl_matrix *(*kdfunc1) (const double *, int, double,
+			      gretlopt, int *);
+    gretl_matrix *(*kdfunc2) (const gretl_matrix *, double,
+			      gretlopt, int *);
     gretlopt opt = ctrl ? OPT_O : OPT_NONE;
     gretl_matrix *m = NULL;
+    gretl_matrix *X = NULL;
     const double *x = NULL;
-    int n;
+    int free_X = 0;
+    int n = 0;
+
+    kdfunc1 = NULL;
+    kdfunc2 = NULL;
 
     if (t->t == SERIES) {
 	n = sample_size(p->dset);
 	x = t->v.xvec + p->dset->t1;
+    } else if (t->t == LIST) {
+	X = gretl_matrix_data_subset(t->v.ivec, p->dset,
+				     p->dset->t1, p->dset->t2,
+				     M_MISSING_SKIP, &p->err);
+	free_X = 1;
     } else {
-	n = gretl_vector_get_length(t->v.m);
-	if (n == 0) {
-	    p->err = E_TYPES;
-	} else if (t->v.m->is_complex) {
+	/* matrix */
+	if (t->v.m->is_complex) {
 	    p->err = E_CMPLX;
 	} else {
-	    x = t->v.m->val;
+	    n = gretl_vector_get_length(t->v.m);
+	    if (n > 0) {
+		/* vector */
+		x = t->v.m->val;
+	    } else {
+		X = t->v.m;
+	    }
 	}
     }
 
     if (!p->err) {
-	kdfunc = get_plugin_function("kernel_density_matrix");
-	if (kdfunc == NULL) {
-	    p->err = E_FOPEN;
-	} else {
-	    m = (*kdfunc)(x, n, bws, opt, &p->err);
+	if (X != NULL) {
+	    kdfunc2 = get_plugin_function("multiple_kd_matrix");
+	} else if (!p->err) {
+	    kdfunc1 = get_plugin_function("kernel_density_matrix");
 	}
+	if (kdfunc2 == NULL && kdfunc1 == NULL) {
+	    p->err = E_FOPEN;
+	} else if (X != NULL) {
+	    m = (*kdfunc2)(X, bws, opt, &p->err);
+	} else {
+	    m = (*kdfunc1)(x, n, bws, opt, &p->err);
+	}
+    }
+
+    if (free_X) {
+	gretl_matrix_free(X);
     }
 
     return m;
@@ -11587,7 +11613,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    p->err = E_TYPES;
 	}
     } else if (f == F_KDENSITY) {
-	if (l->t != SERIES && l->t != MAT) {
+	if (l->t != SERIES && l->t != LIST && l->t != MAT) {
 	    node_type_error(f, 1, SERIES, l, p);
 	} else if (m->t != NUM && m->t != EMPTY) {
 	    node_type_error(f, 2, NUM, m, p);
