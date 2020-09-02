@@ -2417,6 +2417,11 @@
 	  <flag>--quiet</flag>
 	  <effect>Só presenta a proba de Harvey&ndash;Collier</effect>
 	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>Modo-ou-nomeficheiro</optparm>
+	  <effect>Mira abaixo</effect>
+	</option>
       </options>
     </usage>
 
@@ -2436,11 +2441,11 @@
 	do modelo orixinal).
       </para>
       <para>
-	Preséntase e debúxase a suma acumulada dos erros de
-	predición escalados (ou os cadrados destes erros). A hipótese
-	nula de estabilidade dos parámetros rexéitase cun nivel de
-	significación do 5 por cento cando a suma acumulada se afasta
-	da banda de confianza do 95 por cento.
+	Preséntase a suma acumulada dos erros de predición escalados
+	(ou os cadrados destes erros). A hipótese nula de estabilidade
+	dos parámetros rexéitase cun nivel de significación do 5 por
+	cento cando a suma acumulada se afasta da banda de confianza
+	do 95 por cento.
       </para>
       <para>
 	No caso da proba CUSUM, tamén se presenta o estatístico
@@ -2450,6 +2455,16 @@
 	obter máis detalles. Para a proba CUSUMSQ, calcúlase a banda
 	de confianza do 95 por cento utilizando o algoritmo indicado
 	en <cite key="edgerton94">Edgerton e Wells (1994)</cite>.
+      </para>
+      <para>
+	Por defecto, cando o programa non está en modo de procesamento por lotes,
+	amósase unha gráfica coa serie acumulada e o intervalo de confianza.
+	Podes axustar isto mediante a opción <opt>plot</opt>. Os parámetros
+	admisibles para esta opción son <lit>none</lit> (para omitir a gráfica);
+	<lit>display</lit> (para visualizar unha gráfica mesmo estando en modo
+	de procesamento por lotes); ou o nome dun ficheiro. O efecto de
+	proporcionar o nome dun ficheiro é como o descrito para a opción
+	<opt>output</opt> da instrución <cmdref targ="gnuplot"/>.
       </para>
     </description>
 
