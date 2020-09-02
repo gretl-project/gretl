@@ -25,6 +25,8 @@
 #include "cmd_private.h"
 #include "gretl_xml.h"
 
+#define JDEBUG 0
+
 #define HAVE_PLACEHOLDER (GTK_MAJOR_VERSION==3 && GTK_MINOR_VERSION>=2)
 
 struct join_info_ {
@@ -163,14 +165,17 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo,
    the GtkEntry receives focus.
 */
 
-static gboolean focus_entry (GtkWidget *w,
-			     GtkDirectionType dir,
-			     gpointer p)
+static gboolean undo_placeholder (GtkWidget *w,
+				  GtkDirectionType dir,
+				  gpointer p)
 {
-    if (widget_get_int(w, "go-away")) {
-	gtk_entry_set_text(GTK_ENTRY(w), "");
+    if (widget_get_int(w, "place-holder")) {
+	if (p == NULL) {
+	    /* just getting focus, not inserting text */
+	    gtk_entry_set_text(GTK_ENTRY(w), "");
+	}
 	gtk_widget_modify_text(w, GTK_STATE_NORMAL, NULL);
-	widget_set_int(w, "go-away", 0);
+	widget_set_int(w, "place-holder", 0);
     }
 
     return FALSE;
@@ -194,10 +199,12 @@ static void set_placeholder_text (GtkWidget *w, const char *s)
 #else
     gtk_entry_set_text(GTK_ENTRY(w), s);
     make_text_gray(w);
-    widget_set_int(w, "go-away", 1);
+    widget_set_int(w, "place-holder", 1);
     if (!widget_get_int(w, "signal-set")) {
 	g_signal_connect(G_OBJECT(w), "grab-focus",
-			 G_CALLBACK(focus_entry), NULL);
+			 G_CALLBACK(undo_placeholder), NULL);
+	g_signal_connect(G_OBJECT(w), "changed",
+			 G_CALLBACK(undo_placeholder), w);
 	widget_set_int(w, "signal-set", 1);
     }
 #endif
@@ -842,9 +849,9 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     /* construct the "join" command line */
 
     if (target == NULL) {
-	pprintf(prn, "join %s %s", jinfo->fname, import);
+	pprintf(prn, "join \"%s\" %s", jinfo->fname, import);
     } else {
-	pprintf(prn, "join %s %s --data=%s", jinfo->fname, target, import);
+	pprintf(prn, "join \"%s\" %s --data=%s", jinfo->fname, target, import);
     }
 
     if (ikey1 != NULL) {
@@ -887,7 +894,7 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     gretl_print_destroy(prn);
     prn = NULL;
 
-#if 0
+#if JDEBUG
     fprintf(stderr, "\n === join command from GUI ===\n%s\n\n", buf);
 #endif
 
