@@ -118,6 +118,19 @@ static char *printf_get_string (char *s, DATASET *dset,
 	}
     } else {
 	ret = generate_string(s, dset, err);
+	if (*err && dset != NULL && t >= 0) {
+	    /* using a string-valued series? */
+	    int v = current_series_index(dset, s);
+	    const char *str;
+
+	    if (v > 0 && is_string_valued(dset, v)) {
+		str = series_get_string_for_obs(dset, v, t);
+		if (str != NULL) {
+		    ret = gretl_strdup(str);
+		    *err = 0;
+		}
+	    }
+	}
     }
 
     if (ret == NULL && !*err) {
