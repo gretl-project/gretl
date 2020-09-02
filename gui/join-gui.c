@@ -798,7 +798,7 @@ static gchar *get_aggr_string (GtkWidget *cbox,
     return s;
 }
 
-/* respond to the "OK" button */
+/* respond to the "OK" button for join */
 
 static void do_join_command (GtkWidget *w, join_info *jinfo)
 {
@@ -806,8 +806,9 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     const char *ikey1, *ikey2;
     const char *okey1, *okey2;
     const char *filter;
-    gchar *aggr;
+    char optstr[128] = {0};
     char *buf = NULL;
+    gchar *aggr;
     PRN *prn;
     int err = 0;
 
@@ -846,39 +847,61 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
 	return;
     }
 
-    /* construct the "join" command line */
+    /* Construct "join" command line for the command log, and
+       set option flags and strings as we go.
+    */
 
     if (target == NULL) {
+	/* the imported series is not being renamed */
 	pprintf(prn, "join \"%s\" %s", jinfo->fname, import);
+	target = import;
     } else {
+	jinfo->opt |= OPT_D;
 	pprintf(prn, "join \"%s\" %s --data=%s", jinfo->fname, target, import);
+	set_optval_string(JOIN, OPT_D, import);
+	memset(optstr, 0, sizeof optstr);
     }
 
     if (ikey1 != NULL) {
-	pprintf(prn, " --ikey=%s", ikey1);
+	jinfo->opt |= OPT_I;
+	strcpy(optstr, ikey1);
 	if (ikey2 != NULL) {
-	    pprintf(prn, ",%s", ikey2);
+	    strcat(optstr, ",");
+	    strcat(optstr, ikey2);
 	}
+	pprintf(prn, " --ikey=%s", optstr);
+	set_optval_string(JOIN, OPT_I, optstr);
+	memset(optstr, 0, sizeof optstr);
     }
 
     if (okey1 != NULL || okey2 != NULL) {
-	pputs(prn, " --okey=");
+	jinfo->opt |= OPT_O;
 	if (okey1 != NULL) {
-	    pprintf(prn, "%s", okey1);
+	    strcpy(optstr, okey1);
 	}
 	if (okey2 != NULL) {
-	    pprintf(prn, ",%s", okey2);
+	    strcat(optstr, ",");
+	    strcat(optstr, okey2);
 	} else if (ikey2 != NULL) {
-	    pputc(prn, ',');
+	    strcat(optstr, ",");
 	}
+	pprintf(prn, " --okey=%s", optstr);
+	set_optval_string(JOIN, OPT_O, optstr);
+	memset(optstr, 0, sizeof optstr);
     }
 
     if (filter != NULL) {
+	jinfo->opt |= OPT_F;
 	pprintf(prn, " --filter=\"%s\"", filter);
+	sprintf(optstr, "\"%s\"", filter);
+	set_optval_string(JOIN, OPT_F, optstr);
+	memset(optstr, 0, sizeof optstr);
     }
 
     if (aggr != NULL) {
+	jinfo->opt |= OPT_A;
 	pprintf(prn, " --aggr=%s", aggr);
+	set_optval_string(JOIN, OPT_A, aggr);
 	g_free(aggr);
     }
 
@@ -894,40 +917,38 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     gretl_print_destroy(prn);
     prn = NULL;
 
+    if (jinfo->opt & OPT_V) {
+	/* reuse @prn as verbose printer */
+	bufopen(&prn);
+    }
+
 #if JDEBUG
     fprintf(stderr, "\n === join command from GUI ===\n%s\n\n", buf);
 #endif
 
-    if (!err) {
-	ExecState state;
+    err = lib_join_data(target, jinfo->fname, dataset, jinfo->opt, prn);
 
-	if (jinfo->opt & OPT_V) {
-	    bufopen(&prn);
-	}
+    if (prn != NULL) {
+	/* show verbose output */
+	windata_t *vwin;
 
-	gretl_exec_state_init(&state, CONSOLE_EXEC, NULL,
-			      get_lib_cmd(), NULL, prn);
-	state.line = buf;
-	err = gui_exec_line(&state, dataset, jinfo->dlg);
-
-	if (prn != NULL) {
-	    windata_t *vwin;
-
-	    vwin = view_buffer(prn, 78, 350, "gretl: join",
-			       IMPORT, NULL);
-	    gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
-					 GTK_WINDOW(mdata->main));
-	}
+	vwin = view_buffer(prn, 78, 350, "gretl: join", IMPORT, NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
+				     GTK_WINDOW(mdata->main));
     }
-
-    free(buf);
 
     if (err) {
 	gui_errmsg(err);
     } else {
+	lib_command_strcpy(buf);
+	record_command_verbatim();
+	mark_dataset_as_modified();
+	populate_varlist();
 	infobox(_("Data appended OK\n"));
 	gtk_widget_destroy(jinfo->dlg);
     }
+
+    free(buf);
 }
 
 /* Driver function, called from do_open_data() in gui_utils.c.

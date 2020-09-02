@@ -118,6 +118,12 @@ int gretl_delete_variables (int *list,
 			    int *renumber,
 			    PRN *prn);
 
+int lib_join_data (const char *param,
+		   const char *filename,
+		   DATASET *dset,
+		   gretlopt opt,
+		   PRN *prn);
+
 #endif /* INTERACT_H */
 
 
