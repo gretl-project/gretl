@@ -2484,14 +2484,12 @@ static int compare_vals_down (const void *a, const void *b)
 }
 
 /* Turn a string-valued series into an integer-valued series
-   representing the places of the strings in a lexicographical
-   ordering.
+   representing the places of the strings in lexical order.
 */
 
 typedef struct lexval_ {
     const char *s;
-    int ks; /* sorted order */
-    int k0; /* string code */
+    int code;
 } lexval;
 
 static int compare_lexvals (const void *a, const void *b)
@@ -2499,12 +2497,12 @@ static int compare_lexvals (const void *a, const void *b)
     const lexval *lva = (const lexval *) a;
     const lexval *lvb = (const lexval *) b;
 
-    return g_utf8_collate(lvb->s, lva->s);
+    return g_utf8_collate(lva->s, lvb->s);
 }
 
 static int series_to_lexvals (DATASET *dset, int v, int *targ)
 {
-    int i, j, k, n_strs;
+    int i, t, ct, n_strs;
     series_table *st = series_get_string_table(dset, v);
     char **strs = series_table_get_strings(st, &n_strs);
     lexval *lexvals;
@@ -2514,24 +2512,24 @@ static int series_to_lexvals (DATASET *dset, int v, int *targ)
 	return E_ALLOC;
     }
 
-    for (j=0; j<n_strs; j++) {
-	lexvals[j].s = strs[j];
-	lexvals[j].ks = j+1;
+    for (i=0; i<n_strs; i++) {
+	lexvals[i].s = strs[i];
+	lexvals[i].code = i+1;
     }
 
     qsort(lexvals, n_strs, sizeof *lexvals, compare_lexvals);
 
-    for (j=0; j<n_strs; j++) {
-	lexvals[j].k0 = (int) series_decode_string(dset, v, strs[j]);
-    }
-
-    for (i=0; i<dset->n; i++) {
-	k = (int) dset->Z[v][i];
-	targ[i] = 0;
-	for (j=0; j<n_strs; j++) {
-	    if (k == lexvals[j].k0) {
-		targ[i] = lexvals[j].ks;
-		break;
+    for (t=0; t<dset->n; t++) {
+	if (na(dset->Z[v][t])) {
+	    targ[t] = INT_MAX;
+	} else {
+	    ct = (int) dset->Z[v][t];
+	    targ[t] = 0;
+	    for (i=0; i<n_strs; i++) {
+		if (ct == lexvals[i].code) {
+		    targ[t] = i+1;
+		    break;
+		}
 	    }
 	}
     }
@@ -2597,17 +2595,25 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
     }
 
     for (t=0; t<dset->n; t++) {
-	xsi = xs;
 	sv[t].obsnum = t;
-	for (i=0; i<ns; i++) {
-	    v = list[i+1];
-	    if (is_string_valued(dset, v)) {
-		sv[t].vals[i] = xsi[t];
-		xsi += dset->n;
-	    } else {
+	sv[t].nvals = ns;
+    }
+    xsi = xs;
+    for (i=0; i<ns; i++) {
+	v = list[i+1];
+	if (is_string_valued(dset, v)) {
+	    for (t=0; t<dset->n; t++) {
+		if (xsi[t] == INT_MAX) {
+		    sv[t].vals[i] = NADBL;
+		} else {
+		    sv[t].vals[i] = (double) xsi[t];
+		}
+	    }
+	    xsi += dset->n;
+	} else {
+	    for (t=0; t<dset->n; t++) {
 		sv[t].vals[i] = dset->Z[v][t];
 	    }
-	    sv[t].nvals = ns;
 	}
     }
 
