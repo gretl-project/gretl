@@ -16221,7 +16221,7 @@ static NODE *eval (NODE *t, parser *p)
 	    if (t->t == F_DATAOK) {
 		ret = matrix_to_matrix_func(l, NULL, t->t, p);
 	    } else {
-		node_type_error(t->t, 0, SERIES, l, p);
+		ret = matrix_isnan_node(l, p);
 	    }
 	} else if (l->t == SERIES) {
 	    ret = apply_series_func(l, t, p);
