@@ -2483,12 +2483,71 @@ static int compare_vals_down (const void *a, const void *b)
     return ret;
 }
 
+/* Turn a string-valued series into an integer-valued series
+   representing the places of the strings in lexical order.
+*/
+
+typedef struct lexval_ {
+    const char *s;
+    int code;
+} lexval;
+
+static int compare_lexvals (const void *a, const void *b)
+{
+    const lexval *lva = (const lexval *) a;
+    const lexval *lvb = (const lexval *) b;
+
+    return g_utf8_collate(lva->s, lvb->s);
+}
+
+static int series_to_lexvals (DATASET *dset, int v, int *targ)
+{
+    int i, t, ct, n_strs;
+    series_table *st = series_get_string_table(dset, v);
+    char **strs = series_table_get_strings(st, &n_strs);
+    lexval *lexvals;
+
+    lexvals = calloc(n_strs, sizeof *lexvals);
+    if (lexvals == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<n_strs; i++) {
+	lexvals[i].s = strs[i];
+	lexvals[i].code = i+1;
+    }
+
+    qsort(lexvals, n_strs, sizeof *lexvals, compare_lexvals);
+
+    for (t=0; t<dset->n; t++) {
+	if (na(dset->Z[v][t])) {
+	    targ[t] = INT_MAX;
+	} else {
+	    ct = (int) dset->Z[v][t];
+	    targ[t] = 0;
+	    for (i=0; i<n_strs; i++) {
+		if (ct == lexvals[i].code) {
+		    targ[t] = i+1;
+		    break;
+		}
+	    }
+	}
+    }
+
+    free(lexvals);
+
+    return 0;
+}
+
 int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 {
     spoint_t *sv = NULL;
     double *x = NULL;
+    int *xs = NULL;
+    int *xsi = NULL;
     char **S = NULL;
     int ns = list[0];
+    int nsvals = 0;
     int i, t, v;
     int err = 0;
 
@@ -2511,12 +2570,50 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 	}
     }
 
+    for (i=0; i<ns; i++) {
+	if (is_string_valued(dset, list[i+1])) {
+	    nsvals++;
+	}
+    }
+    if (nsvals > 0) {
+	xs = malloc(nsvals * dset->n * sizeof *xs);
+	if (xs == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    xsi = xs;
+	    for (i=0; i<ns && !err; i++) {
+		v = list[i+1];
+		if (is_string_valued(dset, v)) {
+		    err = series_to_lexvals(dset, v, xsi);
+		    xsi += dset->n;
+		}
+	    }
+	}
+	if (err) {
+	    goto bailout;
+	}
+    }
+
     for (t=0; t<dset->n; t++) {
 	sv[t].obsnum = t;
-	for (i=0; i<ns; i++) {
-	    v = list[i+1];
-	    sv[t].vals[i] = dset->Z[v][t];
-	    sv[t].nvals = ns;
+	sv[t].nvals = ns;
+    }
+    xsi = xs;
+    for (i=0; i<ns; i++) {
+	v = list[i+1];
+	if (is_string_valued(dset, v)) {
+	    for (t=0; t<dset->n; t++) {
+		if (xsi[t] == INT_MAX) {
+		    sv[t].vals[i] = NADBL;
+		} else {
+		    sv[t].vals[i] = (double) xsi[t];
+		}
+	    }
+	    xsi += dset->n;
+	} else {
+	    for (t=0; t<dset->n; t++) {
+		sv[t].vals[i] = dset->Z[v][t];
+	    }
 	}
     }
 
@@ -2548,6 +2645,7 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 
     free_spoints(sv, dset->n);
     free(x);
+    free(xs);
 
     return err;
 }

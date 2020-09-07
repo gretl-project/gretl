@@ -1533,17 +1533,17 @@ int test_markers_for_dates (DATASET *dset, int *reversed,
     return pd;
 }
 
-static int utf8_ok (FILE *fp, int pos)
+static int utf8_ok (gzFile fp, int pos)
 {
-    long mark = ftell(fp);
+    long mark = gztell(fp);
     int len = pos + 9;
     char *test = malloc(len + 1);
     int i, ret = 0;
 
-    fseek(fp, mark - pos - 1, SEEK_SET);
+    gzseek(fp, mark - pos - 1, SEEK_SET);
 
     for (i=0; i<len; i++) {
-	test[i] = fgetc(fp);
+	test[i] = gzgetc(fp);
     }
     test[i] = '\0';
 
@@ -1567,7 +1567,7 @@ static int utf8_ok (FILE *fp, int pos)
 
     free(test);
 
-    fseek(fp, mark, SEEK_SET);
+    gzseek(fp, mark, SEEK_SET);
 
     return ret;
 }
@@ -1584,7 +1584,7 @@ enum {
    then delete that file once we're done).
 */
 
-static int csv_recode_input (FILE **fpp,
+static int csv_recode_input (gzFile *fpp,
 			     const char *fname,
 			     gchar **pfname,
 			     int ucode,
@@ -1598,7 +1598,7 @@ static int csv_recode_input (FILE **fpp,
     /* the current stream is not useable as is,
        so shut it down
     */
-    fclose(*fpp);
+    gzclose(*fpp);
     *fpp = NULL;
 
     /* we'll recode to a temp file in dotdir */
@@ -1610,7 +1610,7 @@ static int csv_recode_input (FILE **fpp,
 
     if (!err) {
 	/* try reattaching the stream */
-	*fpp = gretl_fopen(altname, "rb");
+	*fpp = gretl_gzopen(altname, "rb");
 	if (*fpp == NULL) {
 	    gretl_remove(altname);
 	    err = E_FOPEN;
@@ -1636,10 +1636,10 @@ static int csv_recode_input (FILE **fpp,
    reading data.
 */
 
-static int csv_unicode_check (FILE *fp, csvdata *c, PRN *prn)
+static int csv_unicode_check (gzFile fp, csvdata *c, PRN *prn)
 {
     unsigned char b[4];
-    int n = fread(b, 1, 4, fp);
+    int n = gzread(fp, b, 4);
     int ucode = 0;
 
     if (n == 4) {
@@ -1666,10 +1666,10 @@ static int csv_unicode_check (FILE *fp, csvdata *c, PRN *prn)
 
     if (ucode == UTF_8) {
 	csv_set_has_bom(c);
-	fseek(fp, 3, SEEK_SET);
+	gzseek(fp, 3, SEEK_SET);
 	ucode = 0;
     } else {
-	rewind(fp);
+	gzrewind(fp);
     }
 
     return ucode;
@@ -1687,7 +1687,7 @@ static int csv_unicode_check (FILE *fp, csvdata *c, PRN *prn)
    fields in the input.
 */
 
-static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
+static int csv_max_line_length (gzFile fp, csvdata *cdata, PRN *prn)
 {
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlinelen = 0;
@@ -1699,10 +1699,10 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 
     csv_set_trailing_comma(cdata); /* just provisionally */
 
-    while ((c = fgetc(fp)) != EOF) {
+    while ((c = gzgetc(fp)) != EOF) {
 	if (c == 0x0d) {
 	    /* CR */
-	    c1 = fgetc(fp);
+	    c1 = gzgetc(fp);
 	    if (c1 == EOF) {
 		break;
 	    } else if (c1 == 0x0a) {
@@ -1712,7 +1712,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    } else {
 		/* Mac-style: CR not followed by LF */
 		c = 0x0a;
-		ungetc(c1, fp);
+		gzungetc(c1, fp);
 	    }
 	}
 	if (c == 0x0a) {
@@ -1751,11 +1751,11 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	if (!comment) {
 	    if (c == '\t') {
 		/* let's ignore trailing tabs in this heuristic */
-		c1 = fgetc(fp);
+		c1 = gzgetc(fp);
 		if (c1 != 0x0d && c1 != 0x0a) {
 		    csv_set_got_tab(cdata);
 		}
-		ungetc(c1, fp);
+		gzungetc(c1, fp);
 	    }
 	    if (c == ';') {
 		csv_set_got_semi(cdata);
@@ -2583,14 +2583,14 @@ static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
    Line-endings are converted to LF (0x0a).
 */
 
-static char *csv_fgets (csvdata *cdata, FILE *fp)
+static char *csv_fgets (csvdata *cdata, gzFile fp)
 {
     char *s = cdata->line;
     int n = cdata->maxlinelen;
     int i, c1, c = 0;
 
     for (i=0; i<n-1 && c!=0x0a; i++) {
-	c = fgetc(fp);
+	c = gzgetc(fp);
 	if (c == EOF) {
 	    if (i == 0) {
 		/* signal end of read */
@@ -2602,9 +2602,9 @@ static char *csv_fgets (csvdata *cdata, FILE *fp)
 	    /* CR: convert to LF and peek at next char: if it's
 	       LF swallow it, otherwise put it back */
 	    c = 0x0a;
-	    c1 = fgetc(fp);
+	    c1 = gzgetc(fp);
 	    if (c1 != 0x0a) {
-		ungetc(c1, fp);
+		gzungetc(c1, fp);
 	    }
 	}
 	s[i] = c;
@@ -2617,7 +2617,7 @@ static char *csv_fgets (csvdata *cdata, FILE *fp)
 
 /* pick up any comments following the data block in a CSV file */
 
-static char *get_csv_descrip (csvdata *c, FILE *fp)
+static char *get_csv_descrip (csvdata *c, gzFile fp)
 {
     char *line = c->line;
     char *desc = NULL;
@@ -2670,7 +2670,7 @@ csv_msg = N_("\nPlease note:\n"
    the number of fields per line in the CSV file
 */
 
-static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
+static int csv_fields_check (gzFile fp, csvdata *c, PRN *prn)
 {
     int gotdata = 0;
     int chkcols = 0;
@@ -2679,7 +2679,7 @@ static int csv_fields_check (FILE *fp, csvdata *c, PRN *prn)
     c->ncols = c->nrows = 0;
 
     if (csv_has_bom(c)) {
-	fseek(fp, 3, SEEK_SET);
+	gzseek(fp, 3, SEEK_SET);
     }
 
     while (csv_fgets(c, fp) && !err) {
@@ -2993,7 +2993,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 
 #define obs_labels_no_varnames(o,c,n)  (!o && c->v > 3 && n == c->v - 2)
 
-static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
+static int csv_varname_scan (csvdata *c, gzFile fp, PRN *prn, PRN *mprn)
 {
     char *p;
     int obscol = csv_has_obs_column(c);
@@ -3005,7 +3005,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
     }
 
     if (csv_has_bom(c)) {
-	fseek(fp, 3, SEEK_SET);
+	gzseek(fp, 3, SEEK_SET);
     }
 
     while (csv_fgets(c, fp)) {
@@ -3016,7 +3016,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	}
     }
 
-    c->datapos = ftell(fp);
+    c->datapos = gztell(fp);
 
     compress_csv_line(c, 1);
 
@@ -3129,7 +3129,7 @@ static int row_not_wanted (csvdata *c, int t)
 /* read numerical data when we've been given a fixed column-reading
    specification */
 
-static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
+static int fixed_format_read (csvdata *c, gzFile fp, PRN *prn)
 {
     char *p;
     int miss_shown = 0;
@@ -3141,7 +3141,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
     c->real_n = c->dset->n;
 
     if (csv_has_bom(c)) {
-	fseek(fp, 3, SEEK_SET);
+	gzseek(fp, 3, SEEK_SET);
     }
 
     if (csv_is_verbose(c)) {
@@ -3281,7 +3281,7 @@ static void transcribe_obs_label (csvdata *c, int t)
     gretl_utf8_strncat(c->dset->S[t], s, n);
 }
 
-static int real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
+static int real_read_labels_and_data (csvdata *c, gzFile fp, PRN *prn)
 {
     char *p;
     int miss_shown = 0;
@@ -3399,7 +3399,7 @@ static int csv_skip_dates (csvdata *c)
     }
 }
 
-static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
+static int csv_read_data (csvdata *c, gzFile fp, PRN *prn, PRN *mprn)
 {
     int reversed = csv_data_reversed(c);
     int err;
@@ -3412,7 +3412,7 @@ static int csv_read_data (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 	}
     }
 
-    fseek(fp, c->datapos, SEEK_SET);
+    gzseek(fp, c->datapos, SEEK_SET);
 
     err = real_read_labels_and_data(c, fp, prn);
 
@@ -3564,7 +3564,7 @@ static int real_import_csv (const char *fname,
 			    PRN *prn)
 {
     csvdata *c = NULL;
-    FILE *fp = NULL;
+    gzFile fp = NULL;
     PRN *mprn = NULL;
     gchar *altname = NULL;
     int recode = 0;
@@ -3581,7 +3581,7 @@ static int real_import_csv (const char *fname,
 	mprn = prn;
     }
 
-    fp = gretl_fopen(fname, "rb");
+    fp = gretl_gzopen(fname, "rb");
     if (fp == NULL) {
 	pprintf(prn, A_("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
@@ -3699,7 +3699,7 @@ static int real_import_csv (const char *fname,
 	csv_unset_trailing_comma(c);
     }
 
-    rewind(fp);
+    gzrewind(fp);
 
     /* read lines, check for consistency in number of fields */
     err = csv_fields_check(fp, c, mprn);
@@ -3740,7 +3740,7 @@ static int real_import_csv (const char *fname,
 
     /* second pass */
 
-    rewind(fp);
+    gzrewind(fp);
 
     if (fixed_format(c)) {
 	err = fixed_format_read(c, fp, prn);
@@ -3905,7 +3905,7 @@ static int real_import_csv (const char *fname,
  csv_bailout:
 
     if (fp != NULL) {
-	fclose(fp);
+	gzclose(fp);
     }
 
     if (!err && c->jspec != NULL) {

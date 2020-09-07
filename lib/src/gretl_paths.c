@@ -678,15 +678,15 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 
 #ifdef WIN32
     if (utf8_encoded(fname)) {
-	/* here we have to convert to locale */
-	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
+	/* here we have to convert to UTF-16 */
+	gunichar2 *tmp = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
 
 	if (tmp != NULL) {
-	    fz = gzopen(tmp, mode);
+	    fz = gzopen_w(tmp, mode);
 	    g_free(tmp);
 	}
     } else {
-	fz = gzopen(fname, mode);
+	fz = gzopen(fname, mode); /* ? */
     }
 #else
     fz = gzopen(fname, mode);

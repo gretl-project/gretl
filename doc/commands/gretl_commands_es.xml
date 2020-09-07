@@ -359,7 +359,7 @@
 	estadístico <math>W</math>; por otro lado, si las longitudes de las series
 	de tiempo difieren de un individuo a otro, se muestra su estadístico
 	<math>Z</math>; en otro caso, se muestra su estadístico <math>t</math>-barra.
-	Consulta también la instrución <cmdref targ="levinlin"/>.
+	Consulta también la instrucción <cmdref targ="levinlin"/>.
       </para>
 
     </description>
@@ -2417,6 +2417,11 @@
 	  <flag>--quiet</flag>
 	  <effect>Solo presenta el contraste de Harvey&ndash;Collier</effect>
 	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>Modo-o-nombrearchivo</optparm>
+	  <effect>Mira abajo</effect>
+	</option>
       </options>
     </usage>
 
@@ -2436,11 +2441,11 @@
 	del modelo original).
       </para>
       <para>
-	Se presenta y se dibuja la suma acumulada de los errores de
-	predicción escalados (o los cuadrados de estos errores). La hipótesis
-	nula de estabilidad de los parámetros se rechaza con un nivel de
-	significación del 5 por ciento cuando la suma acumulada se separa
-	de la banda de confianza del 95 por ciento.
+	Se presenta la suma acumulada de los errores de predicción escalados
+	(o los cuadrados de estos errores). La hipótesis nula de estabilidad
+	de los parámetros se rechaza con un nivel de significación del 5
+	por ciento cuando la suma acumulada se separa de la banda de
+	confianza del 95 por ciento.
       </para>
       <para>
 	En el caso del contraste CUSUM, también se presenta el estadístico
@@ -2450,6 +2455,16 @@
 	obtener más detalles. Para el contraste CUSUMSQ, se calcula la banda
 	de confianza del 95 por ciento utilizando el algoritmo indicado
 	en <cite key="edgerton94">Edgerton y Wells (1994)</cite>.
+      </para>
+      <para>
+	Por defecto, cuando el programa no está en modo de procesamiento por
+	lotes, se muestra un gráfico con la serie acumulada y el intervalo de
+	confianza. Puedes ajustar esto por medio de la opción <opt>plot</opt>.
+	Los parámetros admisibles para esta opción son <lit>none</lit> (para
+	omitir el gráfico); <lit>display</lit> (para visualizar un gráfico incluso
+	en modo de procesamiento por lotes); o el nombre de un archivo. El
+	efecto de proporcionar el nombre de un archivo es como el descrito para
+	la opción <opt>output</opt> de la instrucción <cmdref targ="gnuplot"/>.
       </para>
     </description>
 
@@ -3408,7 +3423,7 @@
 	<opt>dpdstyle</opt>, en cuyo caso se introducen en niveles.
       </para>
       <para context="cli">
-	De igual modo que con otras instruciones para hacer la estimación,
+	De igual modo que con otras instrucciones para hacer la estimación,
 	dispones de un 'bundle' <fncref targ="$model"/> después de realizarla.
 	En caso de <lit>dpanel</lit>, puedes usar la opción <opt>keep-extra</opt>
 	para guardar información que quieras añadir a ese 'bundle', por ejemplo
@@ -4712,7 +4727,7 @@
       </para>
 
       <para context="gui">
-	Con esta instrución dispones de diversas variantes de la matriz estimada
+	Con esta instrucción dispones de diversas variantes de la matriz estimada
 	de las covarianzas dos estimadores. Por defecto, se utiliza la
 	matriz Hessiana excepto que marques el cuadradito
 	<quote>Desviaciones típicas robustas</quote>, en cuyo caso se va a
@@ -7328,7 +7343,7 @@
 	las referencias que contiene.
       </para>
       <para context="cli">
-	Por defecto, si haces una llamada interactiva a esta instrución, se
+	Por defecto, si haces una llamada interactiva a esta instrucción, se
 	muestra un gráfico con los valores de apanlancamiento e influencia.
 	Puedes axustar esto mediante la opción <opt>plot</opt>. Los parámetros
 	que se admiten para esta opción son <lit>none</lit> (para suprimir el
@@ -10965,7 +10980,7 @@
 	Gnuplot para que se inserten en el archivo gráfico).
       </para>
       <para>
-	Un bloque de tipo <lit>plot</lit> comienza con la palabra de instrución
+	Un bloque de tipo <lit>plot</lit> comienza con la palabra de instrucción
 	<lit>plot</lit>. Habitualmente va seguida de un argumento de
 	<repl>datos</repl> que especifica los datos que se van a representar,
 	y que debe indicar el nombre de una lista, de una matriz o de una
@@ -13177,7 +13192,7 @@
 	<li>
 	  <para><lit>initvals</lit>: El nombre de una matriz que haya sido
 	  definida previamente. Permite establecer manualmente el vector
-	  inicial de parámetros en determinadas instruciones de estimación
+	  inicial de parámetros en determinadas instrucciones de estimación
 	  que implican realizar optimización numérica como <lit>arma</lit>,
 	  <lit>garch</lit>, <lit>logit</lit>, <lit>probit</lit>, <lit>tobit</lit>,
 	  <lit>intreg</lit>, <lit>biprobit</lit>, <lit>duration</lit>; y
@@ -15644,7 +15659,7 @@
 	Después de utilizar esta instrucción, puedes usar el accesor
 	<fncref targ="$result"/> para obtener un vector columna que incluya
 	los FIV. Para tener un enfoque más sofisticado para diagnosticar
-	la multicolinealidad, consulta la instrución <cmdref targ="bkw"/>.
+	la multicolinealidad, consulta la instrucción <cmdref targ="bkw"/>.
       </para>
     </description>
     <gui-access>

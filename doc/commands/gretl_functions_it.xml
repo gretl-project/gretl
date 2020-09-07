@@ -5888,36 +5888,43 @@
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series">x</fnarg>
+	<fnarg type="series-list-or-mat">x</fnarg>
 	<fnarg type="scalar" optional="true">scale</fnarg>
 	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcola la stima della densità kernel per la variabile 
-	  <argname>x</argname>. La matrice che ne risulta ha due
-	  colonne: la prima contiene un insieme di valori in ascissa
-	  equispaziati e la seconda colonna riporta le stime
-	  della densità in ciascuno di questi punti.
+	  Calcola la stima della densità kernel per l'argomento
+	  <argname>x</argname>, che può essere una serie, una lista, o
+	  una matrice con una o più colonne. La matrice che ne risulta
+	  ha <math>k</math> + 1 colonne, dove <math>k</math> è il
+	  numero di elementi (serie o colonne) in
+	  <argname>x</argname>. La prima contiene un insieme di valori
+	  in ascissa equispaziati e le altre riportano le stime della
+	  densità in ciascuno di questi punti.
 	</para>
 	<para>
 	  Il parametro opzionale <argname>scale</argname> può essere
 	  utilizzato per adattare il grado di lisciaggio rispetto al
 	  valore di default di 1.0 (valori più elevati producono un
 	  risultato più liscio). Il parametro
-	  <argname>control</argname> funziona come un booleano: si
-	  utilizza il kernel Gaussiano quando
-	  <argname>control</argname> è pari 0 (il valore di default);
-	  con un valore diverso da zero si utilizza il kernel di
+	  <argname>control</argname> è booleano: si utilizza il kernel
+	  Gaussiano quando <argname>control</argname> è pari 0 (il
+	  valore di default); altrimenti, si utilizza il kernel di
 	  Epanechnikov.
 	</para>
 	<para>
 	  Un grafico del risultato può essere ottenuto utilizzando il
-	  comando <cmdref targ="gnuplot"/>, come segue
+	  comando <cmdref targ="gnuplot"/>, come segue. Si noti che la
+	  colonna contenente le ascisse deve essere specificata per
+	  ultima.
 	</para>
 	<code>
 	  matrix d = kdensity(x)
+	  # se x ha un solo elemento
 	  gnuplot 2 1 --matrix=d --with-lines --fit=none
+	  # se x ha due elementi
+	  gnuplot 2 3 1 --matrix=d --with-lines --fit=none
 	</code>
       </description>
     </function>

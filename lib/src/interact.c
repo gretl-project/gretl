@@ -1776,11 +1776,11 @@ static int get_join_import_names (const char *s,
     return err;
 }
 
-static int lib_join_data (ExecState *s,
-			  char *newfile,
-			  DATASET *dset,
-			  gretlopt opt,
-			  PRN *prn)
+int lib_join_data (const char *param,
+		   const char *filename,
+		   DATASET *dset,
+		   gretlopt opt,
+		   PRN *prn)
 {
     gretlopt opts[] = {
 	OPT_I, /* ikey: inner key(s) */
@@ -1795,7 +1795,6 @@ static int lib_join_data (ExecState *s,
 	0
     };
     char *okey = NULL, *filter = NULL;
-    const char *param;
     char **vnames = NULL;
     char *dataname = NULL;
     char *auxname = NULL;
@@ -1818,7 +1817,6 @@ static int lib_join_data (ExecState *s,
     }
 
     tseries = dataset_is_time_series(dset);
-    param = s->cmd->parm2;
 
     err = get_join_import_names(param, dset, &vnames, &nvars);
 
@@ -1887,7 +1885,7 @@ static int lib_join_data (ExecState *s,
     }
 
     if (!err) {
-	err = gretl_join_data(newfile,
+	err = gretl_join_data(filename,
 			      (const char **) vnames,
 			      nvars, dset,
 			      ikeyvars, okey, filter,
@@ -1992,7 +1990,7 @@ static int lib_open_append (ExecState *s,
 	    if (ftype != GRETL_CSV) {
 		opt |= OPT_G;
 	    }
-	    err = lib_join_data(s, newfile, dset, opt, prn);
+	    err = lib_join_data(s->cmd->parm2, newfile, dset, opt, prn);
 	} else {
 	    gretl_errmsg_set("join: only CSV and gdt[b] files are supported");
 	    err = E_DATA;

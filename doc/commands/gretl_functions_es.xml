@@ -4473,16 +4473,15 @@
       </fnargs>
       <description>
 	<para>
-	  Solicita la producción de un mapa, cuando se dispone de
-	  datos geográficos adecuados. En la mayoría de los casos el
-	  argumento <argname>mapfile</argname> debe proporcionarse
-	  como <fncref targ="$mapfile"/>, lo que indica un accesor con
-	  el que se va a recuperar el nombre del archivo que sea
-	  relevante, de tipo GeoJSON o de tipo ESRI de forma. El
-	  argumento opcional <argname>carga</argname> se usa para
-	  indicar el nombre de una serie con la que se colorean las
-	  regiones del mapa. Y el argumento final de tipo "bundle" te
-	  permite que puedas establecer numerosas opciones.
+	  Solicita la producción de un mapa, cuando se dispone de datos
+	  geográficos adecuados. En la mayoría de los casos el argumento
+	  <argname>mapfile</argname> debe proporcionarse como
+	  <fncref targ="$mapfile"/>, lo que indica un accesor con el que se va a
+	  recuperar el nombre del archivo que sea relevante, de tipo GeoJSON o
+	  de tipo ESRI de forma. El argumento opcional <argname>carga</argname>
+	  se usa para indicar el nombre de una serie con la que se colorean las
+	  regiones del mapa. Y el argumento final de tipo "bundle" te permite
+	  que puedas establecer numerosas opciones.
 	</para>
 	<para>
 	  Puedes consultar <doc>geoplot.pdf</doc> con la documentación sobre la función,
@@ -6034,16 +6033,20 @@
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-list-or-mat">x</fnarg>
 	<fnarg type="scalar" optional="true">escala</fnarg>
 	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcula una estimación de la densidad kernel de la serie o vector
-	  <argname>x</argname>. La matriz que se devuelve tiene dos columnas:
-	  la primera incluye un conjunto de abscisas equidistantes, y la segunda
-	  la densidad estimada correspondiente a cada una de ellas.
+	  Calcula una estimación (o un conjunto de estimaciones) de la densidad
+	  kernel para el argumento <argname>x</argname>, que puede ser una serie
+	  única, una lista o una matriz con más de una columna. La matriz que
+	  se devuelve tiene <math>k</math> + 1 columnas, siendo <math>k</math>
+	  el número de elementos (series o columnas) de <argname>x</argname>.
+	  La primera columna incluye un conjunto de abscisas equidistantes, y
+	  el resto de las columnas incluyen la densidad (o densidades) estimada
+	  correspondiente a cada una de ellas.
 	</para>
 	<para>
 	  El parámetro <argname>escala</argname> (opcional) puedes usarlo para
@@ -6055,11 +6058,16 @@
 	</para>
 	<para>
 	  Puedes obtener un gráfico de los resultados utilizando la instrucción
-	  <cmdref targ="gnuplot"/>, como en
+	  <cmdref targ="gnuplot"/>, como se indica abajo. Ten en cuenta que la
+	  columna que contiene las abscisas debe ir al final para representar
+	  el gráfico.
 	</para>
 	<code>
 	  matrix d = kdensity(x)
+	  # Si x tiene un único elemento
 	  gnuplot 2 1 --matrix=d --with-lines --fit=none
+	  # Si x tiene dos elementos
+	  gnuplot 2 3 1 --matrix=d --with-lines --fit=none
 	</code>
       </description>
     </function>
@@ -7467,8 +7475,8 @@
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo
 	  todos los procesos. Difunde el argumento <argname>objeto</argname>,
 	  que deberás indicar en forma puntero, a todos los procesos. El
-	  objeto en cuestión deberá ser una matriz, un 'bundle', un 'array'
-	  o un escalar ya definidos, expresados en todos los procesos
+	  objeto en cuestión (una matriz, un 'bundle', un escalar, un 'array'
+	  una cadena de texto o una lista) debe indicarse en todos los procesos
 	  anteriores a la difusión. Ningún proceso puede continuar después
 	  de una llamada a <lit>mpibcast</lit> hasta que todos los procesos
 	  lo consigan ejecutar con éxito.
@@ -7521,10 +7529,10 @@
 	<para>
 	  Solo disponible cuando Gretl está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo todos
-	  los procesos. Esta función reúne objetos (solo escalares o matrices)
-	  con un nombre específico e indicados en forma de puntero, de todos
-	  los procesos; y los <quote>reduce</quote> a un único objeto en el
-	  nodo raíz.
+	  los procesos. Esta función reúne objetos (escalares, matrices o
+	  'arrays') con un nombre determinado indicados en forma de puntero,
+	  de todos los procesos, y los <quote>reduce</quote> a un único
+	  objeto en el nodo raíz.
 	</para>
 	<para>
 	  El argumento <lit>op</lit> especifica la operación o método
@@ -7532,8 +7540,9 @@
 	  <lit>sum</lit> (suma), <lit>prod</lit> (producto), <lit>max</lit>
 	  (máximo) y <lit>min</lit> (mínimo). Para las matrices, los métodos
 	  son <lit>sum</lit>, <lit>prod</lit> (producto de Hadamard),
-	  <lit>hcat</lit> (concatenación horizontal) y
-	  <lit>vcat</lit> (concatenación vertical).
+	  <lit>hcat</lit> (concatenación horizontal) y <lit>vcat</lit>
+	  (concatenación vertical). Para los 'arrays' solo se admite
+	  <lit>acat</lit> (concatenación).
 	</para>
 	<para>
 	  Por defecto, se entiende que la <quote>raíz</quote> o meta de la
@@ -7606,9 +7615,9 @@
       <description>
 	<para>
 	  Solo disponible cuando Gretl está en modo MPI (consulta
-	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Envía el objeto
-	  indicado (que deberá ser una matriz, un 'bundle', un 'array' o
-	  un escalar) desde el proceso vigente hasta el identificado por el
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Envía el objeto indicado
+	  (una matriz, un 'bundle', un 'array', un escalar, una cadena de texto
+	  o una lista) desde el proceso vigente hasta el identificado por el
 	  entero <argname>destino</argname> (desde 0 hasta el número de
 	  procesos MPI menos 1).
 	</para>

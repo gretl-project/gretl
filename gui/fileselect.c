@@ -629,6 +629,7 @@ file_selector_process_result (const char *in_fname, int action,
 	} else if (has_suffix(fname, ".gdt") ||
 		   has_suffix(fname, ".gdtb") ||
 		   has_suffix(fname, ".csv") ||
+		   has_suffix(fname, ".csv.gz") ||
 		   has_suffix(fname, ".json") ||
 		   has_suffix(fname, ".geojson") ||
 		   has_suffix(fname, ".shp")) {
@@ -929,8 +930,12 @@ static GtkFileFilter *add_filter_by_index (GtkWidget *filesel,
     if (action == OPEN_DATA) {
 	if (fi->id == GRETL_XML_DATA) {
 	    gtk_file_filter_add_pattern(filt, "*.gdtb");
-	} else if (action == OPEN_DATA && fi->id == GRETL_GEOJSON) {
+	} else if (fi->id == GRETL_GEOJSON) {
 	    gtk_file_filter_add_pattern(filt, "*.json");
+	} else if (fi->id == GRETL_CSV) {
+	    gtk_file_filter_add_pattern(filt, "*.csv.gz");
+	} else if (fi->id == GRETL_CSV) {
+	    gtk_file_filter_add_pattern(filt, "*.txt.gz");
 	} else {
 	    maybe_upcase_filter_pattern(filt, fi->pat);
 	}
@@ -1036,7 +1041,8 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_data_filter(filesel, GRETL_ALL);
     } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
 	       action == SAVE_BOOT_DATA) {
-	filesel_add_data_filter(filesel, GRETL_XML_DATA);
+	filesel_add_filter(filesel, N_("Gretl datafiles (*.gdt)"), "*.gdt");
+	filesel_add_filter(filesel, N_("Gretl binary datafiles (*.gdtb)"), "*.gdtb");
     } else if (action == OPEN_ANY) {
 	filesel_add_data_filter(filesel, GRETL_ALL);
 	filesel_add_script_filter(filesel, EDIT_HANSL);

@@ -6033,16 +6033,20 @@
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-list-or-mat">x</fnarg>
 	<fnarg type="scalar" optional="true">escala</fnarg>
 	<fnarg type="bool" optional="true">control</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcula unha estimación da densidade kernel da serie ou vector
-	  <argname>x</argname>. A matriz que se devolve ten dúas columnas:
-	  a primeira inclúe un conxunto de abscisas equidistantes, e a segunda
-	  a densidade estimada correspondente a cada unha delas.
+	  Calcula unha estimación (ou un conxunto de estimacións) da densidade
+	  kernel para o argumento <argname>x</argname>, que pode ser unha serie
+	  única, unha lista ou unha matriz con máis dunha columna. A matriz
+	  que se devolve ten <math>k</math> + 1 columnas, sendo <math>k</math>
+	  o número de elementos (series ou columnas) de <argname>x</argname>.
+	  A primeira columna inclúe un conxunto de abscisas equidistantes, e
+	  o resto das columnas inclúen a densidade (ou densidades) estimada
+	  correspondente a cada unha delas.
 	</para>
 	<para>
 	  O parámetro <argname>escala</argname> (opcional) podes usalo para
@@ -6054,11 +6058,16 @@
 	</para>
 	<para>
 	  Podes obter un gráfico dos resultados utilizando a instrución
-	  <cmdref targ="gnuplot"/>, como en
+	  <cmdref targ="gnuplot"/>, como se indica abaixo. Cae na conta de que
+	  a columna que contén as abscisas debe ir ao final para representar
+	  a gráfica.
 	</para>
 	<code>
 	  matrix d = kdensity(x)
+	  # Se x ten un único elemento
 	  gnuplot 2 1 --matrix=d --with-lines --fit=none
+	  # Se x ten dous elementos
+	  gnuplot 2 3 1 --matrix=d --with-lines --fit=none
 	</code>
       </description>
     </function>
@@ -7466,11 +7475,11 @@
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocalo todos
 	  os procesos. Difunde o argumento <argname>obxecto</argname>,
 	  que deberás indicar en forma punteiro, a todos os procesos. O
-	  obxecto en cuestión deberá ser unha matriz, un feixe, un arranxo
-	  ou un escalar xa definidos, expresados en todos os procesos
-	  anteriores á difusión. Ningún proceso pode continuar despois
-	  dunha chamada a <lit>mpibcast</lit> ata que todos os procesos
-	  o consigan executar con éxito.
+	  obxecto en cuestión (unha matriz, un feixe, un escalar, un arranxo
+	  unha cadea de texto ou unha lista) debe indicarse en todos os
+	  procesos anteriores á difusión. Ningún proceso pode continuar
+	  despois dunha chamada a <lit>mpibcast</lit> ata que todos os
+	  procesos o consigan executar con éxito.
 	</para>
 	<para>
 	  Por defecto, enténdese que a <quote>raíz</quote> ou orixe da
@@ -7520,10 +7529,10 @@
 	<para>
 	  Só dispoñible cando Gretl está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocalo todos
-	  os procesos. Esta función reúne obxectos (só escalares ou matrices)
-	  cun nome específico e indicados en forma de punteiro, de todos os
-	  procesos; e os <quote>reduce</quote> a un único obxecto no nodo
-	  raíz.
+	  os procesos. Esta función reúne obxectos (escalares, matrices ou
+	  arranxos) cun nome determinado indicados en forma de punteiro,
+	  de todos os procesos, e os <quote>reduce</quote> a un único
+	  obxecto no nodo raíz.
 	</para>
 	<para>
 	  O argumento <lit>op</lit> especifica a operación ou método
@@ -7531,8 +7540,9 @@
 	  <lit>sum</lit> (suma), <lit>prod</lit> (produto), <lit>max</lit>
 	  (máximo) e <lit>min</lit> (mínimo). Para as matrices, os métodos
 	  son <lit>sum</lit>, <lit>prod</lit> (produto de Hadamard),
-	  <lit>hcat</lit> (concatenación horizontal) e
-	  <lit>vcat</lit> (concatenación vertical).
+	  <lit>hcat</lit> (concatenación horizontal) e <lit>vcat</lit>
+	  (concatenación vertical). Para os arranxos só se admite
+	  <lit>acat</lit> (concatenación).
 	</para>
 	<para>
 	  Por defecto, enténdese que a <quote>raíz</quote> ou meta da
@@ -7605,9 +7615,9 @@
       <description>
 	<para>
 	  Só dispoñible cando Gretl está en modo MPI (consulta
-	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Envía o obxecto
-	  indicado (que deberá ser unha matriz, un feixe, un arranxo ou
-	  un escalar) desde o proceso vixente cara ao identificado polo
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Envía o obxecto indicado
+	  (unha matriz, un feixe, un arranxo, un escalar, unha cadea de texto
+	  ou unha lista) desde o proceso vixente cara ao identificado polo
 	  enteiro <argname>destino</argname> (desde 0 ata o número de
 	  procesos MPI menos 1).
 	</para>

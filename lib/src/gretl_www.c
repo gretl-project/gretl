@@ -112,7 +112,7 @@ static void urlinfo_init (urlinfo *u,
 
     u->progfunc = NULL;
     u->pstarted = 0;
-    u->timeout = 0;
+    u->timeout = 20; /* revised 2020-08-25, was 0 */
 
     gretl_error_clear();
 
@@ -599,11 +599,6 @@ static int retrieve_url (const char *hostname,
 	strcat(u.url, datapkg_list);
     } else {
 	strcat(u.url, datacgi);
-    }
-
-    if (opt == LIST_CATS || opt == ALL_CATS) {
-	/* getting gfn tags listing for GUI */
-	u.timeout = 8;
     }
 
     if (strstr(gretlhost, "ricardo") == NULL) {
