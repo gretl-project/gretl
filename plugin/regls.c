@@ -1378,6 +1378,13 @@ static int admm_iteration (const gretl_matrix *X,
 	eps_dual = admm_abstol + admm_reltol * nystack;
 
 	if (iter >= itermin && prires <= eps_pri && dualres <= eps_dual) {
+#if 0
+	    fprintf(stderr, "primary test/eps %.3f; dual test/eps %.3f\n",
+		    prires/eps_pri, dualres/eps_dual);
+	    fprintf(stderr, " eps_pri abs/rel %.3f, eps_dual abs/rel %.3f\n\n",
+		    admm_abstol/(admm_reltol * fmax(nxstack, nrm2)),
+		    admm_abstol/(admm_reltol * nystack));
+#endif
 	    break;
 	}
 
