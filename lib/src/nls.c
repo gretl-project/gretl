@@ -2104,7 +2104,7 @@ static DATASET *make_GNR_dataset (nlspec *spec,
     if (dataset_is_time_series(dset)) {
 	gdset->structure = dset->structure;
 	gdset->pd = dset->pd;
-	ntodate(gdset->stobs, dset->t1, dset);
+	ntolabel(gdset->stobs, dset->t1, dset);
 	gdset->sd0 = get_date_x(gdset->pd, gdset->stobs);
     }
 

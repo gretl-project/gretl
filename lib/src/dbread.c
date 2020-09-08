@@ -3531,7 +3531,7 @@ static int daily_yp (const DATASET *dset, int t,
     char obs[12];
     int mon, day;
 
-    ntodate(obs, t, dset);
+    ntolabel(obs, t, dset);
 
     if (sscanf(obs, YMD_READ_FMT, y, &mon, &day) != 3) {
 	return E_DATA;
@@ -3593,7 +3593,7 @@ static void fill_cset_t (const DATASET *dset,
 
     /* construct array of month-day indices */
     for (j=0; j<compfac && j<ndays; j++) {
-	ntodate(obs, t0 + j, dset);
+	ntolabel(obs, t0 + j, dset);
 	idx[j] = date_to_daily_index(obs, dset->pd);
     }
 
@@ -4372,7 +4372,7 @@ weeks_to_months_exec (double **mZ, const DATASET *dset,
 
     for (s=0; s<dset->n; s++) {
 	/* loop across the weekly obs in this month */
-	ntodate(obsstr, s, dset);
+	ntolabel(obsstr, s, dset);
 	sscanf(obsstr, YMD_READ_FMT, &yr, &mon, &day);
 	if (monbak > 0 && mon != monbak) {
 	    /* new month: finalize the previous one */
@@ -4444,7 +4444,7 @@ weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
     int t, err = 0;
 
     for (t=0; t<dset->n; t++) {
-	ntodate(obsstr, t, dset);
+	ntolabel(obsstr, t, dset);
 	if (sscanf(obsstr, YMD_READ_FMT, &yr, &mon, &day) != 3) {
 	    err = 1;
 	    break;
@@ -4557,7 +4557,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
     fprintf(stderr, "daily_dataset_to_weekly: repday = %d\n", repday);
 
     for (t=0; t<dset->n; t++) {
-	ntodate(obs, t, dset);
+	ntolabel(obs, t, dset);
 	wday = weekday_from_date(obs);
 	if (wday == repday) {
 	    ok = 0;
@@ -4596,7 +4596,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 	int s = 0;
 
 	for (t=0; t<dset->n; t++) {
-	    ntodate(obs, t, dset);
+	    ntolabel(obs, t, dset);
 	    wday = weekday_from_date(obs);
 	    if (wday == repday) {
 		x[s++] = dset->Z[i][t];
@@ -4623,7 +4623,7 @@ static int daily_dataset_to_weekly (DATASET *dset, int repday)
 	dset->sd0 = get_date_x(dset->pd, dset->stobs);
 	dset->t1 = 0;
 	dset->t2 = dset->n - 1;
-	ntodate(dset->endobs, dset->t2, dset);
+	ntolabel(dset->endobs, dset->t2, dset);
 
 	dataset_destroy_obs_markers(dset);
     }
@@ -4744,7 +4744,7 @@ static int insert_missing_hidden_obs (DATASET *dset, int nmiss)
 
     if (!err) {
 	dset->t2 = dset->n - 1;
-	ntodate(dset->endobs, dset->n - 1, dset);
+	ntolabel(dset->endobs, dset->n - 1, dset);
     }
 
 #if DB_DEBUG > 1
@@ -4955,12 +4955,12 @@ int compact_data_set (DATASET *dset, int newpd,
     dset->sd0 = get_date_x(dset->pd, dset->stobs);
     dset->t1 = 0;
     dset->t2 = dset->n - 1;
-    ntodate(dset->endobs, dset->t2, dset);
+    ntolabel(dset->endobs, dset->t2, dset);
 
     if (oldpd >= 5 && oldpd <= 7 && dset->markers) {
 	/* remove any daily date strings; revise endobs */
 	dataset_destroy_obs_markers(dset);
-	ntodate(dset->endobs, dset->t2, dset);
+	ntolabel(dset->endobs, dset->t2, dset);
     }
 
     err = shorten_the_constant(dset->Z, dset->n);
@@ -5129,7 +5129,7 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
     strcpy(dset->stobs, stobs);
     dset->pd = newpd;
     dset->sd0 = get_date_x(dset->pd, dset->stobs);
-    ntodate(dset->endobs, dset->n - 1, dset);
+    ntolabel(dset->endobs, dset->n - 1, dset);
 
  bailout:
 

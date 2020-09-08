@@ -1757,7 +1757,7 @@ real_matrix_print_to_prn (const gretl_matrix *m,
 	    if (rownames != NULL) {
 		pprintf(prn, "%*s ", rnamelen, rownames[i]);
 	    } else {
-		ntodate(obs, i + mt1, dset);
+		ntolabel(obs, i + mt1, dset);
 		pprintf(prn, "%*s ", rnamelen, obs);
 	    }
 	}

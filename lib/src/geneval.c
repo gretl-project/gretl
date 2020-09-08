@@ -15007,7 +15007,7 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
 	int y, m, d;
 
 	for (t=0; t<dset->n && !err; t++) {
-	    ntodate(obs, t, dset);
+	    ntolabel(obs, t, dset);
 	    if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) != 3) {
 		err = E_DATA;
 	    } else if (i == R_OBSMAJ) {

@@ -1969,8 +1969,8 @@ static void print_model_heading (const MODEL *pmod,
     int order = 0;
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
-	ntodate(startdate, t1, dset);
-	ntodate(enddate, t2, dset);
+	ntolabel(startdate, t1, dset);
+	ntolabel(enddate, t2, dset);
 	make_obs_sep(datesep, startdate, tex);
     }
 

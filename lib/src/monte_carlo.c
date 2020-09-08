@@ -2610,8 +2610,8 @@ static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset,
     char startdate[OBSLEN], enddate[OBSLEN];
     int i;
 
-    ntodate(startdate, lmod->model0->t1, dset);
-    ntodate(enddate, lmod->model0->t2, dset);
+    ntolabel(startdate, lmod->model0->t1, dset);
+    ntolabel(enddate, lmod->model0->t2, dset);
 
     pputc(prn, '\n');
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
@@ -2746,7 +2746,7 @@ static int extend_loop_dataset (LOOP_STORE *lstore)
     lstore->dset->n = n;
     lstore->dset->t2 = n - 1;
 
-    ntodate(lstore->dset->endobs, n - 1, lstore->dset);
+    ntolabel(lstore->dset->endobs, n - 1, lstore->dset);
 
     return 0;
 }
@@ -2908,8 +2908,8 @@ static int substitute_dollar_targ (char *str, int maxlen,
     } else if (loop->type == INDEX_LOOP) {
 	sprintf(insert, "%d", idx);
     } else if (loop->type == DATED_LOOP) {
-	/* note: ntodate is 0-based */
-	ntodate(insert, idx - 1, dset);
+	/* note: ntolabel is 0-based */
+	ntolabel(insert, idx - 1, dset);
     } else if (loop->type == EACH_LOOP) {
 	ins = loop->eachstrs[idx - 1];
     }

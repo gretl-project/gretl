@@ -994,8 +994,8 @@ static void print_var_smpl (int v, const DATASET *dset, PRN *prn)
 
     if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
 	char d1[OBSLEN], d2[OBSLEN];
-	ntodate(d1, dset->t1, dset);
-	ntodate(d2, dset->t2, dset);
+	ntolabel(d1, dset->t1, dset);
+	ntolabel(d2, dset->t2, dset);
 
 	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
     } else {
@@ -1520,7 +1520,7 @@ static int fit_resid_head (const FITRESID *fr,
     int ywidth;
 
     if (kstep) {
-	ntodate(obs1, fr->model_t1, dset);
+	ntolabel(obs1, fr->model_t1, dset);
 	pprintf(prn, _("Recursive %d-step ahead forecasts"), fr->k);
 	pputs(prn, "\n\n");
 	pprintf(prn, _("The forecast for time t is based on (a) coefficients obtained by\n"
@@ -1531,8 +1531,8 @@ static int fit_resid_head (const FITRESID *fr,
 		     "are in fact lagged values."));
 	pputs(prn, "\n\n");
     } else {
-	ntodate(obs1, fr->t1, dset);
-	ntodate(obs2, fr->t2, dset);
+	ntolabel(obs1, fr->t1, dset);
+	ntolabel(obs2, fr->t2, dset);
 	pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
 	pputc(prn, '\n');
 
@@ -1951,7 +1951,7 @@ static void real_print_obs_marker (int t, const DATASET *dset,
 	strcpy(tmp, dset->S[t]);
 	thislen = get_utf_width(tmp, len);
     } else {
-	ntodate(tmp, t, dset);
+	ntolabel(tmp, t, dset);
     }
 
     if (pad) {

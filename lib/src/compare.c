@@ -2978,7 +2978,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 
 	    X2 = robust ? testmax : dfn * testmax;
 	    pval = get_QLR_pval(X2, dfn, split, smax, pmod);
-	    ntodate(datestr, tmax, dset);
+	    ntolabel(datestr, tmax, dset);
 
 	    if (!(opt & OPT_Q)) {
 		QLR_print_result(testmax, pval, datestr, dfn, dfd,
@@ -3059,7 +3059,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		    pprintf(prn, _("Chow test for structural difference with respect to %s"),
 			    chowstr);
 		} else {
-		    ntodate(chowstr, chowparm, dset);
+		    ntolabel(chowstr, chowparm, dset);
 		    pprintf(prn, _("Chow test for structural break at observation %s"),
 			    chowstr);
 		}
@@ -3494,7 +3494,7 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 		sig = fabs(W[j]) > a + j * b;
 	    }
 	    if (!quiet) {
-		ntodate(cumdate, pmod->t1 + k + j, dset);
+		ntolabel(cumdate, pmod->t1 + k + j, dset);
 		pprintf(prn, " %s %9.3f %s\n", cumdate, W[j], sig? "*" : "");
 	    }
 	}

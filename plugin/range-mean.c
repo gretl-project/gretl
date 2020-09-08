@@ -253,8 +253,8 @@ int range_mean_graph (int vnum, DATASET *dset,
 	if (!quiet) {
 	    int len;
 
-	    ntodate(startdate, start, dset);
-	    ntodate(enddate, end, dset);
+	    ntolabel(startdate, start, dset);
+	    ntolabel(enddate, end, dset);
 	    len = pprintf(prn, "%s - %s", startdate, enddate);
 	    bufspace(20 - len, prn);
 	    gretl_print_fullwidth_double(range, digits, prn);

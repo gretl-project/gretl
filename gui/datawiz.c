@@ -275,7 +275,7 @@ static int dwiz_make_changes (DATASET *dwinfo, dw_opts *opts,
 
     /* preliminaries */
     if (time_series(dwinfo)) {
-	ntodate(dwinfo->stobs, dwinfo->t1, dwinfo);
+	ntolabel(dwinfo->stobs, dwinfo->t1, dwinfo);
     } else if (known_panel(dwinfo)) {
 	if (!dataset_is_panel(dataset)) {
 	    /* Turning a subset of a non-panel dataset into a panel:
@@ -586,8 +586,8 @@ static void make_confirmation_text (char *ctxt, DATASET *dwinfo, gretlopt *flags
 	    dwinfo->n = lastobs + 1;
 	}
 
-	ntodate(stobs, dwinfo->t1, dwinfo);
-	ntodate(endobs, lastobs, dwinfo);
+	ntolabel(stobs, dwinfo->t1, dwinfo);
+	ntolabel(endobs, lastobs, dwinfo);
 	sprintf(ctxt, _("%s, %s to %s"), tslabel, stobs, endobs);
     } else if (dwinfo->structure == PANEL_UNKNOWN) {
 	sprintf(ctxt, _("Panel data (%s)\n"
@@ -723,15 +723,15 @@ static void compute_default_ts_info (DATASET *dwinfo)
 	dwinfo->t1 = dateton(dataset->stobs, dwinfo);
     }
 
-    ntodate(dwinfo->endobs, dwinfo->n - 1, dwinfo);
+    ntolabel(dwinfo->endobs, dwinfo->n - 1, dwinfo);
 
 #if DWDEBUG
-    ntodate(obsstr, dwinfo->t1, dwinfo);
+    ntolabel(obsstr, dwinfo->t1, dwinfo);
     fprintf(stderr, "dwinfo: v=%d, pd=%d, stobs='%s', endobs='%s', sd0=%g, t1=%d (%s)\n",
 	    dwinfo->v, dwinfo->pd, dwinfo->stobs, dwinfo->endobs, dwinfo->sd0,
 	    dwinfo->t1, obsstr);
 
-    ntodate(obsstr, dataset->t1, dataset);
+    ntolabel(obsstr, dataset->t1, dataset);
     fprintf(stderr, "dataset: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
 	    dataset->pd, dataset->stobs, dataset->sd0, dataset->t1, obsstr);
 #endif

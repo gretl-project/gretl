@@ -210,8 +210,8 @@ static int output_db_var (int v, const DATASET *dset,
 	return 0;
     }
 
-    ntodate(stobs, t1, dset);
-    ntodate(endobs, t2, dset);
+    ntolabel(stobs, t1, dset);
+    ntolabel(endobs, t2, dset);
     if (dset->pd == 4 || dset->pd == 12) {
 	dotify(stobs);
 	dotify(endobs);

@@ -1037,8 +1037,8 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	nextlag = maxlag - 1;
     }
 
-    ntodate(startdate, var->t1, dset);
-    ntodate(enddate, var->t2, dset);
+    ntolabel(startdate, var->t1, dset);
+    ntolabel(enddate, var->t2, dset);
 
     if (rtf) {
 	pputs(prn, "{\\rtf1\\par\n\\qc ");

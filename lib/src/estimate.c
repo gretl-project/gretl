@@ -557,8 +557,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	char t1s[OBSLEN], t2s[OBSLEN];
 	int misscount = model_missval_count(pmod);
 
-	ntodate(t1s, pmod->t1, dset);
-	ntodate(t2s, pmod->t2, dset);
+	ntolabel(t1s, pmod->t1, dset);
+	ntolabel(t2s, pmod->t2, dset);
 	fprintf(stderr, "*** after adjustment, t1=%d (%s), t2=%d (%s)\n",
 		pmod->t1, t1s, pmod->t2, t2s);
 	fprintf(stderr, "Valid observations in range = %d\n",

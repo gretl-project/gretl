@@ -2400,8 +2400,8 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	}
     }
 
-    ntodate(startdate, dset->t1, dset);
-    ntodate(enddate, dset->t2, dset);
+    ntolabel(startdate, dset->t1, dset);
+    ntolabel(enddate, dset->t2, dset);
 
     simple_fname(datname, fname);
     uerr = gretl_xml_encode_to_buf(xmlbuf, datname, sizeof xmlbuf);

@@ -736,7 +736,7 @@ static void transcribe_to_matrix (gretl_matrix *fc,
     if (S != NULL) {
 	char obsstr[OBSLEN];
 
-	ntodate(obsstr, t, dset);
+	ntolabel(obsstr, t, dset);
 	S[j] = gretl_strdup(obsstr);
     }
     if (fc->cols == 2) {
@@ -2019,7 +2019,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 #if AR_DEBUG
 	char obsstr[OBSLEN];
-	ntodate(obsstr, t, dset);
+	ntolabel(obsstr, t, dset);
 #endif
 	DPRINTF(("\n *** Doing forecast for obs %d (%s)\n", t, obsstr));
 
@@ -2119,7 +2119,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		if (na(pmod->uhat[s])) {
 		    char obsstr[OBSLEN];
 
-		    ntodate(obsstr, s, dset);
+		    ntolabel(obsstr, s, dset);
 		    fprintf(stderr, "Uh oh, pmod->uhat[%d] is missing! (%s)\n",
 			    s, obsstr);
 		} else {

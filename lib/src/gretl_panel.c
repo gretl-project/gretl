@@ -5052,8 +5052,8 @@ int switch_panel_orientation (DATASET *dset)
     }
 
     dset->sd0 += pdx;
-    ntodate(dset->stobs, 0, dset);
-    ntodate(dset->endobs, dset->n - 1, dset);
+    ntolabel(dset->stobs, 0, dset);
+    ntolabel(dset->endobs, dset->n - 1, dset);
 
     free(tmp);
 
@@ -5671,8 +5671,8 @@ static void finalize_panel_datainfo (DATASET *dset, int nperiods)
     dset->structure = STACKED_TIME_SERIES;
     dset->pd = nperiods;
     dset->sd0 = 1.0 + 1.0 / den;
-    ntodate(dset->stobs, 0, dset);
-    ntodate(dset->endobs, dset->n - 1, dset);
+    ntolabel(dset->stobs, 0, dset);
+    ntolabel(dset->endobs, dset->n - 1, dset);
 }
 
 static int check_full_dataset (void)

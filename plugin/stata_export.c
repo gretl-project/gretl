@@ -343,7 +343,7 @@ static gint32 get_stata_t0 (const DATASET *dset,
     char obs[OBSLEN];
 
     *timevar = '\0';
-    ntodate(obs, dset->t1, dset);
+    ntolabel(obs, dset->t1, dset);
 
     if (dset->pd == 1 && dset->sd0 > 999) {
 	/* we just want the year */

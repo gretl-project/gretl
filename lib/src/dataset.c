@@ -998,7 +998,7 @@ static int real_dataset_add_observations (DATASET *dset, int n,
     }
 
     /* does daily data need special handling? */
-    ntodate(dset->endobs, bign - 1, dset);
+    ntolabel(dset->endobs, bign - 1, dset);
 
     return err;
 }
@@ -1128,7 +1128,7 @@ static int panel_dataset_extend_time (DATASET *dset, int n)
 
     dataset_set_nobs(dset, bign);
     dset->pd = newT;
-    ntodate(dset->endobs, bign - 1, dset);
+    ntolabel(dset->endobs, bign - 1, dset);
 
  bailout:
 
@@ -1203,7 +1203,7 @@ static int real_insert_observation (int pos, DATASET *dset)
     }
 
     dataset_set_nobs(dset, n);
-    ntodate(dset->endobs, n - 1, dset);
+    ntolabel(dset->endobs, n - 1, dset);
 
     return err;
 }
@@ -1266,7 +1266,7 @@ int dataset_drop_observations (DATASET *dset, int n)
     dataset_set_nobs(dset, newn);
 
     /* does daily data need special handling? */
-    ntodate(dset->endobs, newn - 1, dset);
+    ntolabel(dset->endobs, newn - 1, dset);
 
     return 0;
 }
@@ -1314,10 +1314,10 @@ int dataset_shrink_obs_range (DATASET *dset)
 	}
 
 	if (dset->structure == CROSS_SECTION) {
-	    ntodate(dset->stobs, 0, dset);
+	    ntolabel(dset->stobs, 0, dset);
 	} else {
 	    /* FIXME panel? */
-	    ntodate(dset->stobs, dset->t1, dset);
+	    ntolabel(dset->stobs, dset->t1, dset);
 	    dset->sd0 = get_date_x(dset->pd, dset->stobs);
 	}
 
@@ -3681,8 +3681,8 @@ int dataset_set_time_series (DATASET *dset, int pd,
 	}
 
 	dset->sd0 = dot_atof(stobs);
-	ntodate(dset->stobs, 0, dset);
-	ntodate(dset->endobs, dset->n - 1, dset);
+	ntolabel(dset->stobs, 0, dset);
+	ntolabel(dset->endobs, dset->n - 1, dset);
 	g_free(stobs);
     }
 
@@ -4967,7 +4967,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
     int t, err = 0;
 
     for (t=0; t<dset->n; t++) {
-	ntodate(datestr, t, dset);
+	ntolabel(datestr, t, dset);
 	if (t == 0) {
 	    ed0 = edbak = get_epoch_day(datestr);
 	} else {
@@ -4995,7 +4995,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 
 	for (t=0; t<dset->n; t++) {
 	    if (t > 0) {
-		ntodate(datestr, t, dset);
+		ntolabel(datestr, t, dset);
 		wd = weekday_from_date(datestr);
 		ed = get_epoch_day(datestr);
 		s += 1 + effective_daily_skip(ed - edbak, wd, pd);
@@ -5014,7 +5014,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	bigset->structure = TIME_SERIES;
 	bigset->sd0 = (double) ed0;
 	strcpy(bigset->stobs, dset->stobs);
-	ntodate(bigset->endobs, bigset->n - 1, bigset);
+	ntolabel(bigset->endobs, bigset->n - 1, bigset);
 
 	dset->varname = NULL;
 	dset->varinfo = NULL;

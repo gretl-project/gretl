@@ -1273,7 +1273,7 @@ static int time_series_label_check (DATASET *dset, int reversed,
 		sprintf(dset->stobs, "%s:%s", year, sub);
 	    }
 	    dset->sd0 = obs_str_to_double(dset->stobs);
-	    ntodate(dset->endobs, dset->n - 1, dset);
+	    ntolabel(dset->endobs, dset->n - 1, dset);
 	} else {
 	    pputs(prn, A_("   but the dates are not complete and consistent\n"));
 	    pd = -1;
@@ -4326,7 +4326,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	}
     } else if (jr->auto_keys->native) {
 	/* using native time-series info on right */
-	ntodate_8601(sconv, i, jr->r_dset);
+	ntolabel_8601(sconv, i, jr->r_dset);
 	s = sconv;
 	s_src = 1;
     } else {
@@ -4899,7 +4899,7 @@ static int midas_day_index (int t, DATASET *dset)
     char obs[OBSLEN];
     int y, m, d, idx = -1;
 
-    ntodate(obs, t, dset);
+    ntolabel(obs, t, dset);
     if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) == 3) {
 	idx = month_day_index(y, m, d, dset->pd);
     }
@@ -5163,7 +5163,7 @@ static int get_inner_key_values (joiner *jr, int i,
 	/* using the LHS dataset obs info */
 	char obs[12];
 
-	ntodate(obs, i, dset);
+	ntolabel(obs, i, dset);
 	if (calendar_data(dset)) {
 	    *pk1 = get_epoch_day(obs);
 	} else {

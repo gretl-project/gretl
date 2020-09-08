@@ -3076,8 +3076,8 @@ static void coint_test_header (const GRETL_VAR *v,
     pprintf(prn, "%s = %d\n", _("Number of equations"), v->neqns);
     pprintf(prn, "%s = %d\n", _("Lag order"), v->order + 1);
     pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
-	    ntodate(stobs, v->t1, dset),
-	    ntodate(endobs, v->t2, dset), v->T);
+	    ntolabel(stobs, v->t1, dset),
+	    ntolabel(endobs, v->t2, dset), v->T);
 
 }
 

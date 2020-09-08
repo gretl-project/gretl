@@ -1165,8 +1165,8 @@ int set_obs (const char *parm1, const char *parm2,
 	calendar_date_string(dset->stobs, 0, dset);
 	calendar_date_string(dset->endobs, dset->n - 1, dset);
     } else {
-	ntodate(dset->stobs, 0, dset);
-	ntodate(dset->endobs, dset->n - 1, dset);
+	ntolabel(dset->stobs, 0, dset);
+	ntolabel(dset->endobs, dset->n - 1, dset);
     }
 
     /* pre-process stacked cross-sectional panels: put into canonical
@@ -1254,8 +1254,8 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 	calendar_date_string(dset->stobs, 0, dset);
 	calendar_date_string(dset->endobs, dset->n - 1, dset);
     } else {
-	ntodate(dset->stobs, 0, dset);
-	ntodate(dset->endobs, dset->n - 1, dset);
+	ntolabel(dset->stobs, 0, dset);
+	ntolabel(dset->endobs, dset->n - 1, dset);
     }
 
     if (dset->structure == STACKED_CROSS_SECTION) {

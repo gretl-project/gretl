@@ -1814,7 +1814,7 @@ void tex_print_obs_marker (int t, const DATASET *dset, PRN *prn)
     } else {
 	char tmp[OBSLEN];
 
-	ntodate(tmp, t, dset);
+	ntolabel(tmp, t, dset);
 	pprintf(prn, "%8s ", tmp);
     }
 }

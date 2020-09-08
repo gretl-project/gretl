@@ -3099,7 +3099,7 @@ static int print_gp_dummy_data (gnuplot_info *gi,
 		    } else if (dataset_is_time_series(dset)) {
 			char obs[OBSLEN];
 
-			ntodate(obs, t, dset);
+			ntolabel(obs, t, dset);
 			fprintf(fp, " # %s", obs);
 		    }
 		}
@@ -3121,7 +3121,7 @@ maybe_print_panel_jot (int t, const DATASET *dset, FILE *fp)
     char obs[OBSLEN];
     int maj, min;
 
-    ntodate(obs, t, dset);
+    ntolabel(obs, t, dset);
     sscanf(obs, "%d:%d", &maj, &min);
     if (maj > 1 && min == 1) {
 	fprintf(fp, "%g %s\n", t + 0.5, gpna);
@@ -3229,7 +3229,7 @@ static void print_gp_data (gnuplot_info *gi, const DATASET *dset,
 		if (dset->markers) {
 		    label = dset->S[t];
 		} else if (!nomarkers && dataset_is_time_series(dset)) {
-		    ntodate(obs, t, dset);
+		    ntolabel(obs, t, dset);
 		    label = obs;
 		}
 	    }
@@ -3774,9 +3774,9 @@ static int single_year_sample (const DATASET *dset,
     char obs[OBSLEN];
     int y1, y2;
 
-    ntodate(obs, t1, dset);
+    ntolabel(obs, t1, dset);
     y1 = atoi(obs);
-    ntodate(obs, t2, dset);
+    ntolabel(obs, t2, dset);
     y2 = atoi(obs);
 
     return y2 == y1;
@@ -9090,7 +9090,7 @@ static int pd_from_compfac (const DATASET *dset,
 	char *p, tmp[OBSLEN];
 	int y, q, m;
 
-	ntodate(tmp, dset->t1, dset);
+	ntolabel(tmp, dset->t1, dset);
 	y = atoi(tmp);
 	p = strchr(tmp, ':');
 

@@ -467,7 +467,7 @@ static int parse_wf1_header (FILE *fp, int ftype, DATASET *dset,
 	}
 
 	dset->sd0 = get_date_x(dset->pd, dset->stobs);
-	ntodate(dset->endobs, dset->n - 1, dset);
+	ntolabel(dset->endobs, dset->n - 1, dset);
     }
 
     return err;

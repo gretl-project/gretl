@@ -1032,7 +1032,7 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
     } else {
 	char datestr[OBSLEN] = {0};
 
-	ntodate(datestr, t - 1, dset);
+	ntolabel(datestr, t - 1, dset);
 	ret = gretl_strdup(datestr);
 	if (ret == NULL) {
 	    *err = E_ALLOC;

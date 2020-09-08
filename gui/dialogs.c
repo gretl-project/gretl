@@ -1686,8 +1686,8 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    /* selecting panel group range */
 	    t1 = unit_get_first_obs(t1);
 	    t2 = unit_get_last_obs(t2);
-	    ntodate(s1, t1, dataset);
-	    ntodate(s2, t2, dataset);
+	    ntolabel(s1, t1, dataset);
+	    ntolabel(s2, t2, dataset);
 	}
 
 	if (t1 != dataset->t1 || t2 != dataset->t2) {
@@ -6272,7 +6272,7 @@ static void index_values_callback (GtkWidget *w,
 	int i, t1;
 
 	t1 = spinner_get_int(ixi->spin);
-	ntodate(obsstr, t1, dataset);
+	ntolabel(obsstr, t1, dataset);
 
 	for (i=1; i<=ixi->varlist[0] && !err; i++) {
 	    const char *vname = dataset->varname[ixi->varlist[i]];

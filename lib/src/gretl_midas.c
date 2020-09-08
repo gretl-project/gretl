@@ -346,7 +346,7 @@ DATASET *midas_aux_dataset (const int *list,
 	p = strrchr(mset->varname[0], '_');
 	if (p != NULL) *p = '\0';
 
-	ntodate(obs, dset->t1, dset);
+	ntolabel(obs, dset->t1, dset);
 
 	if (mpd == 4) {
 	    sprintf(mset->stobs, "%d:1", atoi(obs));
@@ -363,7 +363,7 @@ DATASET *midas_aux_dataset (const int *list,
 	s = 0;
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (daily) {
-		ntodate(obs, t, dset);
+		ntolabel(obs, t, dset);
 		sscanf(obs, "%d:%d", &yr, &mon);
 		if (pd == 4) {
 		    qtr = mon;
@@ -402,7 +402,7 @@ DATASET *midas_aux_dataset (const int *list,
 
 	mset->sd0 = get_date_x(mset->pd, mset->stobs);
 	if (!daily) {
-	    ntodate(mset->endobs, mset->t2, mset);
+	    ntolabel(mset->endobs, mset->t2, mset);
 	}
     }
 
@@ -1789,7 +1789,7 @@ static int cond_ols_GNR (MODEL *pmod,
     if (dataset_is_time_series(dset)) {
 	gdset->structure = dset->structure;
 	gdset->pd = dset->pd;
-	ntodate(gdset->stobs, dset->t1, dset);
+	ntolabel(gdset->stobs, dset->t1, dset);
 	gdset->sd0 = get_date_x(gdset->pd, gdset->stobs);
     }
 

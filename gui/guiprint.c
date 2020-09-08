@@ -535,7 +535,7 @@ void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
     } else {
 	char tmp[OBSLEN];
 
-	ntodate(tmp, t, pdinfo);
+	ntolabel(tmp, t, pdinfo);
 	obs = tmp;
     }
 
@@ -596,8 +596,8 @@ rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, pdinfo->t1, pdinfo);
+    ntolabel(date2, pdinfo->t2, pdinfo);
 
     sprintf(tmp, A_("Summary Statistics, using the observations %s - %s"),
 	    date1, date2);
@@ -644,8 +644,8 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, pdinfo->t1, pdinfo);
+    ntolabel(date2, pdinfo->t2, pdinfo);
 
     sprintf(tmp, A_("Summary Statistics, using the observations %s - %s"),
 	    date1, date2);
@@ -912,8 +912,8 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
 	}
     }
 
-    ntodate(obs1, t1, dset);
-    ntodate(obs2, t2, dset);
+    ntolabel(obs1, t1, dset);
+    ntolabel(obs2, t2, dset);
     pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
     pputs(prn, "\n\n");
     bufspace(obslen, prn);
@@ -1005,8 +1005,8 @@ texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, pdinfo->t1, pdinfo);
+    ntolabel(date2, pdinfo->t2, pdinfo);
 
     sprintf(tmp, A_("Summary Statistics, using the observations %s--%s"),
 	    date1, date2);
@@ -1056,8 +1056,8 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, pdinfo->t1, pdinfo);
+    ntolabel(date2, pdinfo->t2, pdinfo);
 
     sprintf(tmp, A_("Summary Statistics, using the observations %s--%s"),
 	    date1, date2);
@@ -1247,8 +1247,8 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
     if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntodate(date1, vmat->t1, pdinfo);
-	ntodate(date2, vmat->t2, pdinfo);
+	ntolabel(date1, vmat->t1, pdinfo);
+	ntolabel(date2, vmat->t2, pdinfo);
 
 	sprintf(tmp, A_("Correlation coefficients, using the observations "
 			"%s - %s"), date1, date2);
@@ -1339,8 +1339,8 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
     if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntodate(date1, vmat->t1, pdinfo);
-	ntodate(date2, vmat->t2, pdinfo);
+	ntolabel(date1, vmat->t1, pdinfo);
+	ntolabel(date2, vmat->t2, pdinfo);
 
 	pputs(prn, "\\begin{center}\n");
 	pprintf(prn, A_("Correlation coefficients, using the observations "
@@ -1502,8 +1502,8 @@ void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
 {
     char date1[OBSLEN], date2[OBSLEN];
 
-    ntodate(date1, fr->t1, pdinfo);
-    ntodate(date2, fr->t2, pdinfo);
+    ntolabel(date1, fr->t1, pdinfo);
+    ntolabel(date2, fr->t2, pdinfo);
 
     pputs(prn, "\\begin{raggedright}\n");
     pputs(prn, A_("Model estimation range:"));
@@ -1520,8 +1520,8 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
     char date1[OBSLEN], date2[OBSLEN];
     char tmp[128];
 
-    ntodate(date1, fr->t1, pdinfo);
-    ntodate(date2, fr->t2, pdinfo);
+    ntolabel(date1, fr->t1, pdinfo);
+    ntolabel(date2, fr->t2, pdinfo);
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
     pputs(prn, A_("Model estimation range:"));

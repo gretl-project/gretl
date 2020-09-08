@@ -2385,7 +2385,7 @@ char *get_obs_string (char *obs, int t, const DATASET *dset)
     if (dataset_has_markers(dset)) {
 	strcpy(obs, dset->S[t]);
     } else {
-	ntodate(obs, t, dset);
+	ntolabel(obs, t, dset);
     }
 
     return obs;
@@ -2458,7 +2458,7 @@ char *colonize_obs (char *obs)
  * Modifies the observation string corresponding to obervation @t to
  * producing a form suitable for a CSV file.  This applies only to
  * time series data. The string @s should be obtained by calling
- * ntodate();
+ * ntolabel();
  */
 
 void modify_date_for_csv (char *s, int pd)

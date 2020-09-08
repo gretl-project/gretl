@@ -498,7 +498,7 @@ static char *panel_obs (char *s, int t, const DATASET *dset)
 }
 
 /**
- * ntodate:
+ * ntolabel:
  * @datestr: char array to which date is to be printed.
  * @t: zero-based observation number.
  * @dset: data information struct.
@@ -509,12 +509,12 @@ static char *panel_obs (char *s, int t, const DATASET *dset)
  * Returns: the observation string.
  */
 
-char *ntodate (char *datestr, int t, const DATASET *dset)
+char *ntolabel (char *datestr, int t, const DATASET *dset)
 {
     double x;
 
 #if 0
-    fprintf(stderr, "ntodate: t=%d, pd=%d, sd0=%g, incoming stobs='%s'\n",
+    fprintf(stderr, "ntolabel: t=%d, pd=%d, sd0=%g, incoming stobs='%s'\n",
 	    t, dset->pd, dset->sd0, dset->stobs);
 #endif
 
@@ -561,7 +561,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
 
 /* print observation date in ISO 8601 extended format */
 
-char *ntodate_8601 (char *datestr, int t, const DATASET *dset)
+char *ntolabel_8601 (char *datestr, int t, const DATASET *dset)
 {
     *datestr = '\0';
 
@@ -893,7 +893,7 @@ void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
 {
     char obs[OBSLEN];
 
-    ntodate(obs, t, dset);
+    ntolabel(obs, t, dset);
 
     if (maj != NULL) {
 	*maj = atoi(obs);
@@ -949,7 +949,7 @@ static void csv_data_out (const DATASET *dset, const int *list,
 		    fprintf(fp, "\"%s\"%c", dset->S[t], delim);
 		}
 	    } else {
-		ntodate(tmp, t, dset);
+		ntolabel(tmp, t, dset);
 		if (quarterly_or_monthly(dset)) {
 		    modify_date_for_csv(tmp, dset->pd);
 		}
@@ -1219,7 +1219,7 @@ static int real_write_data (const char *fname, int *list,
 	if (dataset_is_time_series(dset)) {
 	    char datestr[OBSLEN];
 
-	    ntodate(datestr, dset->t1, dset);
+	    ntolabel(datestr, dset->t1, dset);
 	    fprintf(fp, "# time-series data: start = %s, frequency = %d\n",
 		    datestr, dset->pd);
 	}
@@ -2025,7 +2025,7 @@ static int merge_lengthen_series (DATASET *dset,
 
     if (!err) {
 	dset->n = new_n;
-	ntodate(dset->endobs, new_n - 1, dset);
+	ntolabel(dset->endobs, new_n - 1, dset);
 	dset->t2 = dset->n - 1;
     }
 
@@ -2287,7 +2287,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		int s;
 
 		for (t=tmin; t<dset->n; t++) {
-		    ntodate(obs, t, dset);
+		    ntolabel(obs, t, dset);
 		    s = dateton(obs, addset);
 		    if (s >= 0 && s < addset->n) {
 			dset->Z[v][t] = addset->Z[i][s];
@@ -3781,7 +3781,7 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 
 	/* start by finding first Sat and/or Sun */
 	for (t=0; t<dset->n; t++) {
-	    ntodate(datestr, t, dset);
+	    ntolabel(datestr, t, dset);
 	    wkday = weekday_from_date(datestr);
 	    if (wkday == 6 && sat0 < 0) {
 		sat0 = t;

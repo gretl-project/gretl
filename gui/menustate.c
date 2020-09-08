@@ -1053,8 +1053,8 @@ void set_sample_label (DATASET *dset)
 	char t1str[OBSLEN], t2str[OBSLEN];
 	const char *pdstr = get_pd_string(dset);
 
-	ntodate(t1str, dset->t1, dset);
-	ntodate(t2str, dset->t2, dset);
+	ntolabel(t1str, dset->t1, dset);
+	ntolabel(t2str, dset->t2, dset);
 	sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), t1str, t2str);
 	gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
     } else {
@@ -1063,8 +1063,8 @@ void set_sample_label (DATASET *dset)
 
 	if (calendar_data(dset) && tsubset) {
 	    /* it's too verbose to print both full range and sample */
-	    ntodate(t1str, dset->t1, dset);
-	    ntodate(t2str, dset->t2, dset);
+	    ntolabel(t1str, dset->t1, dset);
+	    ntolabel(t2str, dset->t2, dset);
 	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), t1str, t2str);
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else if (calendar_data(dset) && complex_subsampled()) {
@@ -1073,15 +1073,15 @@ void set_sample_label (DATASET *dset)
 		    dset->endobs);
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else {
-	    ntodate(t1str, 0, dset);
-	    ntodate(t2str, dset->n - 1, dset);
+	    ntolabel(t1str, 0, dset);
+	    ntolabel(t2str, dset->n - 1, dset);
 	    sprintf(tmp, _("%s: Full range %s - %s"), _(pdstr),
 		    t1str, t2str);
 	    if (tsubset) {
 		gchar *fulltext;
 
-		ntodate(t1str, dset->t1, dset);
-		ntodate(t2str, dset->t2, dset);
+		ntolabel(t1str, dset->t1, dset);
+		ntolabel(t2str, dset->t2, dset);
 		fulltext = g_strdup_printf(_("%s; sample %s - %s"), tmp, t1str, t2str);
 		gtk_label_set_text(GTK_LABEL(mdata->status), fulltext);
 		g_free(fulltext);

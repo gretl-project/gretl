@@ -3094,7 +3094,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	int wkday;
 
 	for (t=0; t<dset->n; t++) {
-	    ntodate(datestr, t, dset);
+	    ntolabel(datestr, t, dset);
 	    wkday = weekday_from_date(datestr);
 	    wkday = (wkday == 0)? 7 : wkday;
 	    for (k=1, i=1; i<=list[0]; i++) {
@@ -3129,7 +3129,7 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	int wknum;
 
 	for (t=0; t<dset->n; t++) {
-	    ntodate(datestr, t, dset);
+	    ntolabel(datestr, t, dset);
 	    wknum = iso_week_from_date(datestr);
 	    for (k=1, i=1; i<=list[0]; i++) {
 		vi = list[i];
@@ -3401,7 +3401,7 @@ int panel_unit_first_obs (int t, const DATASET *dset)
     char *p, obs[OBSLEN];
     int ret = 0;
 
-    ntodate(obs, t, dset);
+    ntolabel(obs, t, dset);
     p = strchr(obs, ':');
     if (p != NULL && atoi(p + 1) == 1) {
 	ret = 1;
@@ -3509,7 +3509,7 @@ int gen_wkday (DATASET *dset, int *vnum)
     series_set_label(dset, i, _("day of week (1 = Monday)"));
 
     for (t=0; t<dset->n; t++) {
-	ntodate(datestr, t, dset);
+	ntolabel(datestr, t, dset);
 	dset->Z[i][t] = weekday_from_date(datestr);
     }
 
@@ -7237,7 +7237,7 @@ static int panel_daily_or_weekly (const DATASET *dset, double *x)
     calendar_date_string(tsset.stobs, 0, &tsset);
 
     for (t=0; t<dset->pd && !err; t++) {
-	ntodate(datestr, t, &tsset);
+	ntolabel(datestr, t, &tsset);
 	n = sscanf(datestr, "%d-%d-%d", &y, &m, &d);
 	if (n != 3) {
 	    err = E_DATA;
@@ -7256,7 +7256,7 @@ static int regular_daily_or_weekly (const DATASET *dset, double *x)
     int err = 0;
 
     for (t=0; t<dset->n && !err; t++) {
-	ntodate(datestr, t, dset);
+	ntolabel(datestr, t, dset);
 #if 0
 	fprintf(stderr, "regular: datestr = '%s'\n", datestr);
 #endif

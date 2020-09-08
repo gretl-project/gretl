@@ -1870,7 +1870,7 @@ static int write_data_for_R (const DATASET *dset,
 	char *p, datestr[OBSLEN];
 	int subper = 1;
 
-	ntodate(datestr, dset->t1, dset);
+	ntolabel(datestr, dset->t1, dset);
 	p = strchr(datestr, ':');
 	if (p != NULL) {
 	    subper = atoi(p + 1);

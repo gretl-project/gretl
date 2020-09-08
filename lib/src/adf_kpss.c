@@ -159,8 +159,8 @@ static int GLS_demean_detrend (DATASET *dset, int v,
 	char date1[OBSLEN];
 	char date2[OBSLEN];
 
-	ntodate(date1, offset, dset);
-	ntodate(date2, offset + T - 1, dset);
+	ntolabel(date1, offset, dset);
+	ntolabel(date2, offset + T - 1, dset);
 	pprintf(prn, "\nGLS demean/detrend: using %s-%s (T = %d)\n",
 		date1, date2, yd->rows);
 	for (i=0; i<xcols; i++) {

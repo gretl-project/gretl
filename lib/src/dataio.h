@@ -81,9 +81,9 @@ int dateton (const char *date, const DATASET *dset);
 
 int merge_dateton (const char *date, const DATASET *dset);
 
-char *ntodate (char *datestr, int t, const DATASET *dset);
+char *ntolabel (char *datestr, int t, const DATASET *dset);
 
-char *ntodate_8601 (char *datestr, int t, const DATASET *dset);
+char *ntolabel_8601 (char *datestr, int t, const DATASET *dset);
 
 int get_subperiod (int t, const DATASET *dset, int *err);
 

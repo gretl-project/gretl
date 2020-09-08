@@ -740,7 +740,7 @@ make_x12a_date_string (int t, const DATASET *dset, char *str)
 
 	sprintf(str, "%d.%d", maj, min);
     } else {
-	ntodate(str, t, dset);
+	ntolabel(str, t, dset);
 	gretl_charsub(str, ':', '.');
     }
 }

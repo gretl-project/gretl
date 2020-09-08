@@ -630,8 +630,8 @@ void add_fcast_data (windata_t *vwin, ModelDataIndex idx)
     if (!err) {
 	char stobs[OBSLEN], endobs[OBSLEN];
 
-	ntodate(stobs, fr->t1, dataset);
-	ntodate(endobs, fr->t2, dataset);
+	ntolabel(stobs, fr->t1, dataset);
+	ntolabel(endobs, fr->t2, dataset);
 	if (idx == M_FCSE) {
 	    lib_command_sprintf("fcast %s %s --quiet", stobs, endobs);
 	    record_model_command_verbatim(fr->model_ID);
@@ -2088,8 +2088,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 					t1, t2, k, pre_n,
 					&err);
     } else {
-	ntodate(startobs, t1, dataset);
-	ntodate(endobs, t2, dataset);
+	ntolabel(startobs, t1, dataset);
+	ntolabel(endobs, t2, dataset);
 	lib_command_sprintf("fcast %s %s%s", startobs, endobs,
 			    print_flags(opt, FCAST));
 	if (parse_lib_command()) {
@@ -3068,7 +3068,7 @@ static int real_limited_chow (selector *sr)
 	} else {
 	    char brkstr[OBSLEN];
 
-	    ntodate(brkstr, cp->splitbrk, dataset);
+	    ntolabel(brkstr, cp->splitbrk, dataset);
 	    lib_command_sprintf("chow %s --limit-to=chow_args_", brkstr);
 	}
 	err = bufopen(&prn);
@@ -3155,7 +3155,7 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	} else {
 	    char brkstr[OBSLEN];
 
-	    ntodate(brkstr, splitbrk, dataset);
+	    ntolabel(brkstr, splitbrk, dataset);
 	    lib_command_sprintf("chow %s", brkstr);
 	}
     } else if (ci == QLRTEST) {

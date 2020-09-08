@@ -4398,8 +4398,8 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	char obs2[OBSLEN];
 	PRN *prn;
 
-	ntodate(obs1, t1, dataset);
-	ntodate(obs2, t2, dataset);
+	ntolabel(obs1, t1, dataset);
+	ntolabel(obs2, t2, dataset);
 	lib_command_sprintf("fcast %s %s %s%s", obs1, obs2, dataset->varname[yno],
 			    print_flags(opt, FCAST));
 	record_command_verbatim();

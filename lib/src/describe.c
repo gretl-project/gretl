@@ -5008,8 +5008,8 @@ static void prhdr (const char *str, const DATASET *dset,
     char date1[OBSLEN], date2[OBSLEN];
     gchar *tmp;
 
-    ntodate(date1, dset->t1, dset);
-    ntodate(date2, dset->t2, dset);
+    ntolabel(date1, dset->t1, dset);
+    ntolabel(date2, dset->t2, dset);
 
     pputc(prn, '\n');
 
@@ -5085,8 +5085,8 @@ void print_summary_single (const Summary *s,
 	char obs1[OBSLEN], obs2[OBSLEN];
 	gchar *tmp = NULL;
 
-	ntodate(obs1, dset->t1, dset);
-	ntodate(obs2, dset->t2, dset);
+	ntolabel(obs1, dset->t1, dset);
+	ntolabel(obs2, dset->t2, dset);
 
 	prhdr(_("Summary statistics"), dset, 0, prn);
 
@@ -6488,8 +6488,8 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
     } else {
 	char date1[OBSLEN], date2[OBSLEN], tmp[96];
 
-	ntodate(date1, corr->t1, dset);
-	ntodate(date2, corr->t2, dset);
+	ntolabel(date1, corr->t1, dset);
+	ntolabel(date2, corr->t2, dset);
 
 	pputc(prn, '\n');
 

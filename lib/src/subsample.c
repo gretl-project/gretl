@@ -870,7 +870,7 @@ static int make_weekday_mask (const DATASET *dset, char *mask)
 	int t, wd;
 
 	for (t=0; t<dset->n; t++) {
-	    ntodate(datestr, t, dset);
+	    ntolabel(datestr, t, dset);
 	    wd = weekday_from_date(datestr);
 	    mask[t] = (wd >= 1 && wd <= 5);
 	}
@@ -1528,7 +1528,7 @@ static int add_daily_date_strings (char *selected,
 	subset->markers = DAILY_DATE_STRINGS;
 	for (t=0; t<dset->n; t++) {
 	    if (selected[t]) {
-		ntodate(subset->S[i++], t, dset);
+		ntolabel(subset->S[i++], t, dset);
 	    }
 	}
     }
@@ -1559,7 +1559,7 @@ static int try_for_daily_subset (char *selected,
 	/* first pass: look at weekend status of included obs */
 	for (t=0; t<dset->n; t++) {
 	    if (selected[t]) {
-		ntodate(datestr, t, dset);
+		ntolabel(datestr, t, dset);
 		wd = weekday_from_date(datestr);
 		if (wd == 0) {
 		    /* got a Sunday: result must be 7-day */
@@ -1587,7 +1587,7 @@ static int try_for_daily_subset (char *selected,
     /* second pass: count the calendar gaps */
     for (t=0; t<dset->n; t++) {
 	if (selected[t]) {
-	    ntodate(datestr, t, dset);
+	    ntolabel(datestr, t, dset);
 	    wd = weekday_from_date(datestr);
 	    ed = get_epoch_day(datestr);
 	    if (started) {
@@ -1632,8 +1632,8 @@ static int try_for_daily_subset (char *selected,
 		subset->pd = newpd;
 		subset->sd0 = (double) ed0;
 		subset->t2 = subset->n - 1;
-		ntodate(subset->stobs, 0, subset);
-		ntodate(subset->endobs, subset->t2, subset);
+		ntolabel(subset->stobs, 0, subset);
+		ntolabel(subset->endobs, subset->t2, subset);
 	    }
 	}
     }
@@ -1745,8 +1745,8 @@ static void finalize_panel_subset (DATASET *subset,
     }
 
     subset->sd0 = 1.0 + 1.0 / den;
-    ntodate(subset->stobs, 0, subset);
-    ntodate(subset->endobs, subset->n - 1, subset);
+    ntolabel(subset->stobs, 0, subset);
+    ntolabel(subset->endobs, subset->n - 1, subset);
 
     if (dset->pangrps != NULL && npad == 0) {
 	/* carry over panel group names from full dataset */
@@ -2071,7 +2071,7 @@ static int handle_ts_restrict (char *mask, DATASET *dset,
     double sd0;
     int err;
 
-    ntodate(stobs, t1, dset);
+    ntolabel(stobs, t1, dset);
     sd0 = get_date_x(dset->pd, stobs);
 
     err = restrict_sample_from_mask(mask, dset, opt);
@@ -2082,7 +2082,7 @@ static int handle_ts_restrict (char *mask, DATASET *dset,
 	dset->pd = pd;
 	dset->sd0 = sd0;
 	strcpy(dset->stobs, stobs);
-	ntodate(dset->endobs, dset->n - 1, dset);
+	ntolabel(dset->endobs, dset->n - 1, dset);
     }
 
     return err;
@@ -2809,7 +2809,7 @@ int count_missing_values (const DATASET *dset, gretlopt opt,
 		} else {
 		    char tmp[OBSLEN];
 
-		    ntodate(tmp, t, dset);
+		    ntolabel(tmp, t, dset);
 		    pprintf(prn, "%8s %4d %s\n", tmp, tmiss,
 			    _("missing values"));
 		}
@@ -3144,8 +3144,8 @@ void print_sample_obs (const DATASET *dset, PRN *prn)
 {
     char d1[OBSLEN], d2[OBSLEN];
 
-    ntodate(d1, dset->t1, dset);
-    ntodate(d2, dset->t2, dset);
+    ntolabel(d1, dset->t1, dset);
+    ntolabel(d2, dset->t2, dset);
 
     pprintf(prn, "%s: %s - %s", _("Current sample"), d1, d2);
     pprintf(prn, " (n = %d)\n", dset->t2 - dset->t1 + 1);
@@ -3222,8 +3222,8 @@ int data_report (const DATASET *dset, const char *fname, PRN *prn)
     const char *vlabel;
     int i;
 
-    ntodate(startdate, 0, dset);
-    ntodate(enddate, dset->n - 1, dset);
+    ntolabel(startdate, 0, dset);
+    ntolabel(enddate, dset->n - 1, dset);
 
     sprintf(tmp, _("Data file %s\nas of"),
 	    (*fname != '\0')? fname : _("(unsaved)"));

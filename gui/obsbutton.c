@@ -44,7 +44,7 @@ static gboolean obs_button_output (GtkSpinButton *spin, gpointer p)
     gchar buf[OBSLEN];
     int n = gtk_spin_button_get_value_as_int(spin);
 
-    ntodate(buf, n, (DATASET *) p);
+    ntolabel(buf, n, (DATASET *) p);
 
     if (strcmp(buf, gtk_entry_get_text(GTK_ENTRY(spin)))) {
 	gtk_entry_set_text(GTK_ENTRY(spin), buf);
