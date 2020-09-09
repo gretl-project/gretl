@@ -87,7 +87,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{Version 1.91}
+\date{Version 1.92}
 \begin{document}
 
 \maketitle
@@ -2152,7 +2152,7 @@ goes by.
 
 An important versioning note: These new parts of the SVAR code use some recent 
 syntactic features of the \textsl{hansl} language, such that \textsl{gretl} version 
-2019d or newer is required to use this model type.
+2020b or newer is required to use this model type.
 But the whole SVAR addon does not yet impose this requirement to keep the traditional
 model types available for those users who cannot or do not want to install the brand
 new gretl version.
@@ -2385,10 +2385,20 @@ are computed, this can be done by either
   compute the $M_i$ matrices from those.
 \end{enumerate}
 Let's call option 1 the ``frequentist'' option and option 2 the
-``Bayesian'' option.  This choice corresponds to a Boolean flag which
+``Bayesian'' option. However, let us be clear that option 1 
+uses the fixed point estimates of the reduced-form coefficients and 
+therefore does not take parameter uncertainty into account. This current
+state of affairs could be generalized even within the frequentist paradigm, 
+e.g. by adding another bootstrap layer. Furthermore, option 2 effectively applies
+some perturbation to the reduced-form coefficients centered around the 
+likelihood point estimates, which essentially corresponds to a flat or 
+uninformative Bayesian prior. Some might argue that this kind of prior is 
+relatively close in spirit to a frequentist approach.
+
+In any case, this choice corresponds to a Boolean flag which
 is the third argument to the \texttt{SVAR\_SRdraw} function: the
 default, 0, is to skip the sampling from the posterior and just use
-the frequentist estimates.
+the frequentist point estimates.
 
 What happens inside this function? First, the relevant items from the
 model bundle are copied: this of course includes the VAR parameters
@@ -3130,7 +3140,7 @@ The plot will be displayed in interactive mode.
   or until the \texttt{maxiter} limit is hit. Therefore the number of good 
   draws can be anything between zero and \texttt{rep}.
   If the DO\_BAYES flag is on, the VAR parameters (including Sigma)
-  are resampled too (using the standard Normal-Wishart prior); otherwise, 
+  are resampled too (from a standard Normal-Wishart distribution); otherwise, 
   they are kept fixed at the OLS estimates. 
   
   This is the heart of the set identification algorithm 
@@ -3148,7 +3158,7 @@ The plot will be displayed in interactive mode.
 \item pointer to the SVAR model bundle
 \item the number of (accepted) draws $H$ to aim for
 \item Boolean flag for the Bayesian option
-  (default = 0 $\to$ frequentist)
+  (default = 0 $\to$ frequentist / no parameter uncertainty)
 \item the desired empirical coverage of the calculated intervals (default 90\%)
 \item Maximum number of attempted draws (default = 10000)
 \end{enumerate}
@@ -3394,10 +3404,16 @@ int length[0], int ini[0])}
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
+\subsection*{Version 1.92, August/September 2020}
+\begin{itemize}
+\item Clarify documentation for Bayesian draws in set-id models.
+\item Replace deprecated funcerr() with errorif(), therefore need gretl 2020b for the sign restriction part. 
+\end{itemize}
+
 \subsection*{Version 1.91, April 2020}
 \begin{itemize}
 \item Minor plot legend fix for GUI usage; a fix of DoF calculation for Bayesian redrawing;
-catch the case of no accepted draws more gracefully
+catch the case of no accepted draws more gracefully.
 \item Introduce new convenience function SRgetbest to find the best draw according to 
 user-specified IRF criterion.
 \item New functions with alternative interface: SVAR\_HD (wrapper for SVAR\_hd) and 
