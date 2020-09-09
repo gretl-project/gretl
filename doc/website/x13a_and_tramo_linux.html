@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/1998/REC-html40-19980424/loose.dtd">
+
+<head>
+<title>x13as and tramo for 64-bit Linux</title>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="./css-gretl.html">
+<link rel="shortcut icon"  href="./favicon.ico">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+
+<body>
+
+<h2>Builds of x13as and tramo-seats for use with gretl on Linux</h2>
+
+<table cellpadding="2">
+<tr>
+<td>x13as</td>
+<td>
+<a href="https://sourceforge.net/projects/gretl/files/x13as/x13as-linux-64.tar.gz/download">x13as-linux-64.tar.gz</a>
+</td>
+</tr>
+<tr>
+<td>tramo-seats</td>
+<td>
+<a href="https://sourceforge.net/projects/gretl/files/tramo/tramo-seats-linux-64.tar.gz/download">tramo-seats-linux-64.tar.gz</a>
+</td>
+</tr>
+</table>
+
+<ol>
+<li>
+<p>System requirements: You'll need a 64-bit system with these
+libraries:</p>
+
+<pre>
+libgfortran.so.5
+libgcc_s.so.1
+libquadmath.so.0
+</pre>
+</li>
+
+<li>
+<p>Download the file or files you want from the links above. Keep track of the download location!</p>
+</li>
+
+<li>
+<p>In a terminal window, do:</p>
+
+<pre>
+cd /
+sudo tar xvf &lt;download-location&gt;/x13as-linux-64.tar.gz # and/or
+sudo tar xvf &lt;download-location&gt;/tramo-seats-linux-64.tar.gz
+</pre>
+
+<p>(replacing <kbd>&lt;download-location&gt;</kbd>, of course).
+This will unpack the selected program into <kbd>/opt/x13as</kbd> or
+<kbd>/opt/tramo</kbd>.</p>
+</li>
+
+<li>
+<p>In gretl go to the menu item /Tools/Preferences/General and select 
+the "Programs" tab.</p>
+<ul>
+<li><p> For x13as, set "Path to x12arima" to <kbd>/opt/x13as/bin/x13as</kbd></p></li>
+<li><p> For tramo-seats, set "Path to tramo" to <kbd>/opt/tramo/bin/tramo</kbd></p></li>
+</ul>
+
+</ol>
+
+<p>And that should be all.</p>
+
+</body>
