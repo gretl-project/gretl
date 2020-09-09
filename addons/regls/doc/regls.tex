@@ -20,6 +20,15 @@
 \setlength{\parskip}{1ex}
 \setlength{\parindent}{0pt}
 
+\newcommand{\startappendices}{%
+\newcounter{appcount}
+\setcounter{appcount}{0}
+\renewcommand{\thesection}{\Alph{appcount}}}
+
+\newcommand{\myappendix}[1]{%
+\addtocounter{appcount}{1}
+\section{#1}}
+
 \newenvironment{funcdoc}
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
@@ -217,7 +226,7 @@ infallible one) to the likely out-of-sample performance of a model:
 smaller values of BIC are better. Note that the LASSO criterion itself
 does not offer such a guide (it is likely to decrease monotonically
 along with $\lambda$), but it can be useful in comparing the
-effectiveness of minimization algorithms (see section~\ref{sec:ccd}).
+effectiveness of minimization algorithms (see Appendix~\ref{app:ccd}).
 
 When multiple $\lambda$ values are specified, the vector \texttt{nzb}
 and list \texttt{nzX} refer to the non-zero coefficients and
@@ -504,8 +513,8 @@ showing standard errors, $z$ statistics and $P$-values.
 
 As stated above, the default algorithms used by \textsf{regls} for
 LSSO and Ridge are ADMM and SVD, respectively. However, you have the
-option---for both LASSO and Ridge---of using the CCD (Cyclical
-Coordinate Descent) algorithm, as employed by \textsf{glmnet}. This is
+option---for both LASSO and Ridge---of using the Cyclical Coordinate
+Descent (CCD) algorithm, as employed by \textsf{glmnet}. This is
 governed by two additional keys in the \texttt{parms} bundle:
 \begin{itemize}
 \item \texttt{ccd}: boolean, default 0. Set this to 1 to use CCD.
@@ -516,53 +525,13 @@ governed by two additional keys in the \texttt{parms} bundle:
 \end{itemize}
 
 Using CCD will give results that are more directly comparable with
-\textsf{glmnet}. Beyond that, practitioners are likely to ask, which
-of the available algorithms is faster, and which more accurate? Those
-questions are not so simple to answer.
-
-First, speed and accuracy cannot be assessed independently. In the
-case of LASSO, both ADMM and CCD are numerical algorithms that deliver
-an approximation to a notional ``exact'' result, with the latitude of
-the approximation governed by one or more tolerance parameters. Both
-algorithms are effective but they are quite different; their tolerance
-settings are not directly comparable and the default values are
-somewhat arbitrary. If method A produces a more accurate result than
-method B under default settings it is generally possible to reduce the
-tolerance(s) for B such that it equals the accuracy of A (which may
-reverse their ranking in terms of execution time).
-
-Moreover, even the relative accuracy of two sets of results is not so
-straightforward to assess. Both LASSO and Ridge are minimization
-problems, so it's tempting to assume that---for a given dataset and
-given $\lambda$---the method that produces the smaller criterion value
-is more accurate. But the LASSO objective shown in equation
-(\ref{eq:obj}) is the Lagrangian form of a problem which can also be
-written as
-\[
-  \min_{\hat{\beta}} \quad
-  \sum_{i=1}^n (y_i - X_i\hat{\beta})^2 \,\mbox{ subject to }\,
-  \sum_{j=1}^k |\hat{\beta}_j| \leq t
-\]
-Part of the error of approximation may include failure to exactly meet
-the condition on the right, in which case a seemingly better result
-may actually be less accurate.
-
-A similar point can be made about Ridge. Unlike LASSO the Ridge
-problem has an analytic solution and by default \textsf{regls}
-implements that solution via SVD, which is pretty much the gold
-standard for accuracy in digital computation. In some cases, however,
-CCD at its default tolerance, $\epsilon = 10^{-7}$, produces a
-slightly smaller Ridge criterion value. Is it really doing better than
-SVD? No, as can be shown by tightening the CCD tolerance. For example,
-with $\epsilon = 10^{-12}$ or so CCD may reproduce the SVD result.
-
-This sort of experiment is generally useful for assessing relative
-accuracy. If the difference between the results delivered by methods A
-and B shrinks as the tolerance for method B is tightened, we can be
-reasonable confident that A's initial result was more accurate. On
-that basis our impression is that, with tolerances at their respective
-default values, both ADMM LASSO and SVD Ridge are generally somewhat
-slower and somewhat more accurate than the CCD alternative.
+\textsf{glmnet}. Beyond that, practitioners are likely to ask, how do
+the algorithms compare in terms of speed and accuracy? This question
+is addressed in detail in Appendix~\ref{app:ccd}. The short answer
+is that CCD at its default tolerance is faster but somewhat less
+accurate than ADMM and SVD. By tightening the CCD tolerance one can
+generally close the accuracy gap; this may or may not reverse the
+ranking in terms of speed.
 
 \section{Elastic net}
 \label{sec:elnet}
@@ -748,9 +717,233 @@ regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 \bibliography{gretl}
 
 \clearpage
+\startappendices
 
-\section*{Appendix: Comparison with glmnet}
-\label{sec:comparison}
+\myappendix{Comparison of algorithms}
+\label{app:ccd}
+
+This appendix reports some experiments designed to gauge the accuracy
+and speed of the Cyclical Coordinate Descent (CCD) algorithm as
+compared to the default algorithms in \textsf{regls}---ADMM for LASSO
+and SVD for Ridge.
+
+\subsection*{Design of experiments}
+
+The general design of our experiments is as follows. For some selected
+dataset and sample range we compute the values of the minimized
+objective function (LASSO or Ridge) for a sequence of $\lambda$
+values. In each test we compare two optimization methods---call them A
+and B---taking A as the baseline and exploring how the difference in
+results between the methods behaves as we tighten the convergence
+tolerance for method B. We assume that for the iterative methods ADMM
+and CCD, tightening the tolerance (within reason) will produce more
+accurate results, or at least will not produce less accurate
+results. Therefore, if the difference diminishes as tolerance is
+tightened for B we can infer that A was more accurate at the initial
+tolerance level.
+
+We employ two measures of distance between sets of results: Euclidean
+distance (labeled ``distance'' in the tables below) and Mean Absolute
+Deviation (MAD). To gauge the trade-off between accuracy and speed we
+also record the execution time for method B divided by that for A
+(labeled ``reltime'').
+
+In the experiments reported below we used the murder rates dataset
+(\texttt{murder.gdt}) supplied with the \texttt{regls} package, with
+\texttt{murdPerPop} as dependent variable and 101 regressors. The
+$\lambda$ sequence was of length 20. In the LASSO tests we used the
+first 800 observations and in the Ridge tests the first 1500 (to make
+the test take longer and improve the resolution of the timer). We're
+aware that the results we show are liable to be data- and
+model-dependent and we offer some comments on this in the concluding
+section.
+
+\subsection*{Ridge: SVD and CCD}
+
+The Ridge problem has an analytical solution and \textsf{regls}
+implements this using Singular Value Decomposition, which is generally
+regarded as the gold standard for accuracy in digital
+computation. Results obtained via SVD can therefore be used as a
+benchmark against which to assess the accuracy of the solution
+provided by CCD.
+
+Table~\ref{tab:svd-ccd} shows our findings. The distance between the
+two sets of results declines monotonically as the CCD tolerance
+(``toler'') is tightened, as one would expect. At its default
+tolerance of $10^{-7}$ CCD is faster than SVD (in this example by
+about 30 percent), but it takes longer than SVD if one wants the extra
+accuracy associated with a tolerance of $10^{-9}$ or less.
+
+
+%% Ridge: CCD and SVD, using \texttt{ridge\_crit\_native.inp}
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{cccc}
+toler & distance & MAD & reltime \\[4pt]
+1e-07 & 3.3195e-05 & 4.4762e-06 & 0.6709 \\
+1e-08 & 4.9195e-06 & 6.2989e-07 & 0.8697 \\
+1e-09 & 4.2140e-07 & 5.6182e-08 & 1.5747 \\
+1e-10 & 4.9928e-08 & 6.5323e-09 & 1.2452 \\
+1e-11 & 4.6010e-09 & 6.1132e-10 & 1.4367 \\
+1e-12 & 5.1062e-10 & 6.4981e-11 & 1.6129 \\
+\end{tabular}
+\caption{Ridge, CCD versus SVD as benchmark}
+\label{tab:svd-ccd}
+\end{center}
+\end{table}
+
+\subsection*{LASSO: ADMM and CCD}
+
+LASSO is trickier than Ridge in that there's no analytical solution to
+serve as a natural benchmark. In this case we take ADMM (at its
+default tolerance in \textsf{regls}) as baseline, without assuming its
+results are ``correct'', and see what happens.
+
+Table~\ref{tab:admm-ccd} shows monotonic decline in difference of
+results as the CCD tolerance is tightened from $10^{-7}$ to
+$10^{-11}$, but an increase in difference when the tolerance is shrunk
+to $10^{-12}$. We interpret this to mean that the accuracy of ADMM at
+its default settings is probably equal to that of CCD with a tolerance
+in the neighborhood of $10^{-11}$. We infer that at a tolerance of
+$10^{-12}$ CCD is moving away from ADMM towards greater accuracy.
+
+%% LASSO: CCD and ADMM, using \texttt{lasso\_crit\_native.inp}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{cccc}
+toler & distance & MAD & reltime \\[4pt]
+1e-07 & 2.8205e-04 & 3.9019e-05 & 0.4104 \\
+1e-08 & 2.3953e-05 & 3.1643e-06 & 1.1343 \\
+1e-09 & 1.3033e-06 & 1.6300e-07 & 2.2506 \\
+1e-10 & 1.2282e-07 & 1.5630e-08 & 2.9660 \\
+1e-11 & 2.9729e-08 & 3.1001e-09 & 3.8768 \\
+1e-12 & 4.2206e-08 & 3.9132e-09 & 4.6986 \\
+\end{tabular}
+\caption{LASSO, CCD versus ADMM}
+\label{tab:admm-ccd}
+\end{center}
+\end{table}
+
+To check our interpretation of the reversal in the last row of
+Table~\ref{tab:admm-ccd} we tried a second comparison, this time
+reducing the ADMM tolerances from $10^{-4}$ (relative) and $10^{-6}$
+(absolute) to $10^{-5}$ and $10^{-8}$. Table~\ref{tab:admm2-ccd}
+offers some confirmation: after forcing greater accuracy from ADMM,
+the decline in difference as the CCD tolerance is reduced becomes
+monotonic.
+
+%% LASSO: CCD and ADMM, using \texttt{lasso\_crit\_native2.inp}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{cccc}
+toler & distance & MAD & reltime \\[4pt]
+1e-07 & 2.8208e-04 & 3.9024e-05 & 0.3041 \\
+1e-08 & 2.3975e-05 & 3.1684e-06 & 0.8071 \\
+1e-09 & 1.3276e-06 & 1.6687e-07 & 1.6252 \\
+1e-10 & 1.5031e-07 & 1.9374e-08 & 2.1110 \\
+1e-11 & 1.8258e-08 & 2.2745e-09 & 3.1030 \\
+1e-12 & 2.0164e-09 & 1.8598e-10 & 3.3492 \\
+\end{tabular}
+\caption{LASSO, CCD versus ADMM (tighter tolerance)}
+\label{tab:admm2-ccd}
+\end{center}
+\end{table}
+
+If ADMM is more accurate than CCD at their respective default
+tolerances, can we find tolerances for the former that produce similar
+accuracy to the CCD default? And if so, what happens to the speed
+comparison? To tackle these questions we take as benchmark the results
+from ADMM with tight tolerances $(10^{-5}, 10^{-8})$, which we judge
+to be as close to ``correct'' as we're likely to
+get. Table~\ref{tab:admm-seq} shows the differences relative to this
+benchmark of (a) CCD at its default tolerance and (b) ADMM using
+progressively slacker tolerances. The rows labeled ADMM($i$) employ
+relative tolerance $i\times 10^{-2}$ and absolute tolerance
+$i\times 10^{-4}$; note that even on the first such row the tolerances
+are 100 times greater than their default values. In this table the
+``reltime'' values are timings relative to CCD.
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{rccc}
+  & distance & MAD & reltime \\[4pt]
+CCD & 2.8208e-04 & 3.9024e-05 & 1.000 \\
+ADMM(1) & 5.9912e-05 & 5.6145e-06 & 1.267 \\
+ADMM(2) & 1.2942e-04 & 1.3734e-05 & 1.121 \\
+ADMM(3) & 2.2721e-04 & 2.3878e-05 & 1.045 \\
+ADMM(4) & 3.3517e-04 & 3.4345e-05 & 0.992 \\
+\end{tabular}
+\caption{LASSO, ADMM with progressively slacker tolerance}
+\label{tab:admm-seq}
+\end{center}
+\end{table}
+
+As seen in the table, the first three ADMM rows produce results closer
+to the benchmark than CCD but on the final row the deviation for ADMM
+(as measured by Euclidean distance) is greater. Looking at the timings
+column it appears that the two methods are roughly at par speed-wise
+when accuracy is taken into account.
+
+As noted above, such figures are likely to be data- and
+model-dependent, but we conjecture that ADMM tolerances of
+$(10^{-2}, 10^{-4})$, corresponding to the ADMM(1) row, are
+conservative relative to CCD at tolerance $10^{-7}$, in the sense that
+they are likely to deliver results of equal accuracy to CCD or better.
+
+\subsection*{Conclusion}
+
+The results shown above, from a single dataset, are obviously
+illustrative rather than definitive. On the strength of similar tests
+on other datasets we're able to say something about what is generally
+applicable and what is variable.
+
+In all of our experiments CCD at its default tolerance is faster but
+less accurate than SVD for Ridge regression, and faster but less
+accurate than ADMM (at its default tolerance) for LASSO. And in all
+cases the accuracy of CCD can be increased (up to a point) by
+reducing its tolerance.
+
+Two things are relatively variable (apparently depending on, among other
+things, the number of observations and the number of regressors,
+though not in any easily predictable way).
+\begin{itemize}
+\item The time taken by CCD relative to the alternatives as a function
+  of the CCD tolerance. In some cases (unlike the example above) CCD
+  retains its speed advantage as its tolerance is reduced. While CCD
+  is bound to slow down some at tighter tolerance it may still be the
+  fastest method.
+\item Convergence of CCD is not guaranteed. In a few LASSO trials we
+  saw failure at, for example, a tolerance of $10^{-10}$, when ADMM
+  had converged OK and the difference statistics seemed to show room
+  for further improvement of accuracy on the part of CCD. This
+  suggests that CCD is not always capable of accuracy equal to
+  ADMM. It's possible that in other cases this could be reversed (ADMM
+  unable to equal the accuracy of CCD), though we didn't see any such
+  in our trials.
+\end{itemize}
+
+So here's our conclusion. (As a warning to the reader we have
+emphasized the words that signal our remaining uncertainty!)  If you
+want maximally accurate results you should use SVD for Ridge and
+\textit{probably} use ADMM for LASSO. You can \textit{usually} get
+equal accuracy from CCD if you tighten its tolerance far enough but
+then CCD \textit{may} take longer than the alternatives. On the other
+hand, if you reckon the accuracy of CCD at its default tolerance is
+good enough for practical purposes you can save time by using it.
+Unless, in the case of LASSO, you'd like to set the ADMM tolerances to
+$(10^{-2}, 10^{-4})$, in which case you \textit{may} get somewhat more
+accurate results with little difference in execution time.
+
+To go any further we would have to assess what's ``good enough''
+accuracy (for example, with out-of-sample prediction in view). Does
+the extra accuracy of ADMM and SVD actually help, or is it surplus to
+requirements? We have something to say about that in
+Appendix~\ref{app:glmnet-comp}.
+
+\myappendix{Comparison with glmnet}
+\label{app:glmnet-comp}
 
 Given the benchmark status of \textsf{R}'s \textsf{glmnet} we have
 tried to ensure that our results are very close to those from
