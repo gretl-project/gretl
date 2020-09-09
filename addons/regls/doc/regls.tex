@@ -2,12 +2,13 @@
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage{fancyvrb,color,gretl}
 \usepackage{amsmath}
+\usepackage{graphicx}
 \usepackage[authoryear]{natbib}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
 \definecolor{steel}{rgb}{0.03,0.20,0.45}
 
-\hypersetup{pdftitle={gretl + lasso},
+\hypersetup{pdftitle={gretl regls},
             pdfauthor={Allin Cottrell},
             colorlinks=true,
             linkcolor=blue,
@@ -1014,123 +1015,212 @@ are about equally effective.
 
 \subsection*{Extended test of cross validation}
 
-The proof of the pudding for LASSO is out-of-sample prediction
-following cross validation. We therefore conducted an extended test of
-this, with comparison to \textsf{glmnet}, using the murder-rate
-dataset referenced by Ryan Tibshirani\footnote{See
-  \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
-and included with our \texttt{regls} package. This dataset contains
-2215 observations on 125 variables. We ran \texttt{regls} with both
-the default ADMM algorithm and the alternative CCD, and also threw in
-plain OLS as a reference point.
+The primary point of cross validation is to determine the value of a
+hyperparameter (for LASSO, $\lambda$) that is likely to give
+best results in genuine out-of-sample prediction. Do any of the points
+of detail mentioned above make much difference in that regard?
 
-For each of 2000 trials we did the following:
-\begin{enumerate}
-\item Randomized the order of all 2215 observations.
-\item Selected the first 1000 observations for training and the next
-  200 for testing. (For OLS we just estimated using the
-  training data and proceeded to step~\ref{step:pred}.)
-\item Ran both \texttt{regls} and \textsf{glmnet}, using 25 values
-  of $s = \lambda/\lambda_{\max}$ and 10 consecutive folds.
-\item Used the optimal $s$ from cross validation to obtain
-  $\hat{\beta}$ on the full set of training data.
-\item Obtained fitted values $X\hat{\beta}$ for the testing data and
-  calculated the out of sample $R^2$.
-  \label{step:pred}
-\end{enumerate}
+Not a great deal can be said about this \textit{a priori}, though one
+thing is clear: the more homogeneous the training data, the less such
+details are going to matter. If the statistical properties of the
+fold-complement samples are very similar to those of the full training
+data then the locus of standardization (training data or
+fold-complement) won't make much difference. In addition, if
+$\lambda_{\max} = \|X'y\|_{\infty}$ doesn't differ much across the
+samples the locus of calculation of the $\lambda$ sequence won't
+matter much either, and $\lambda$-matching---if it is
+required---should be relatively unproblematic. The number of folds is
+also relevant. For given $N$, more folds means smaller folds and
+bigger fold-complements, comprising a larger proportion of the
+training data and therefore presumably more representative of the
+whole.
 
-In fact we ran this procedure twice, first taking the MSE-minimizing
-$s^*$ as the optimum from cross validation and then using
-$s^{\dagger}$, following \textsf{glmnet}'s recommendation (see
-section~\ref{sec:xvalid}). The $s^*$-based results are shown in
-Table~\ref{tab:star}.
+That said, real-world datasets of interest are not necessarily very
+homogeneous so the details \textit{could} matter. So let's ask, when
+the training data are not so homogeneous:
+\begin{itemize}
+\item Are we better off standardizing at the level of the training
+  data or at the level of the fold-complement?
+\item Is is better to work with a single $\lambda$ sequence or
+  per-fold sequences?
+\end{itemize}
+
+Allowing that the answer to both questions may simply be ``it
+depends'', we nonetheless tried experimenting with two rather
+different datasets to see if anything systematic might emerge.
+\begin{itemize}
+\item Dataset 1: murder rates and covariates for US localities,
+  referenced by Ryan Tibshirani in the LASSO context. Comprises 2215
+  observations on 124 variables.\footnote{See
+    \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
+\item Dataset 2: white wine quality and physico-chemical covariates.
+  Comprises 4898 observations on 12 variables (78 after adding squares
+  and interactions of covariates).\footnote{See
+    \url{https://archive.ics.uci.edu/ml/datasets/wine+quality}.}
+\end{itemize}
+
+We ``leveraged'' the datasets by randomizing the order of the
+observations at each of 2000 iterations then taking the first $N$
+observations for training and the next $M$ for testing, with $N+M$
+a subset of the full data available. For Dataset 1 $N=1200$ and
+$M=200$, and for Dataset 2 $N=1500$, $M=500$.
+
+The body of the test involved cross validating with 10 folds (composed
+of consecutive observations since the whole dataset was randomized)
+then predicting for the $M$ holdout observations using the optimal
+$\lambda$ on the ``one standard error'' rule favored by
+\textsf{glmnet}. This rule selects the larger of (a) the $\lambda^*$
+which minimizes mean out-of-sample MSE and (b) the largest $\lambda$
+that lies within $\sigma^*$ of $\lambda^*$, where $\sigma^*$ is the
+standard error of the minimized mean MSE.\footnote{The mean is taken
+  across the folds, weighted if necessary.} The figure of merit
+calculated at each iteration was the $R^2$ for the testing data,
+$1 - \sum (y-\hat{y})^2 / \sum (y-\bar{y})^2$.
+
+This test was run (with common randomization) using three variants of
+cross validation, each with its default settings: the \textsf{glmnet}
+function \texttt{cv.glmnet}; \textrm{regls} using the CCD algorithm;
+and \textsf{regls} using the ADMM algorithm. There are two distinct
+differences at play. In comparing \textsf{glmnet} with \textsf{regls}
+CCD the coefficient vectors produced for given data and given
+$\lambda$ are near-identical, and the relevant difference lies in the
+details of the cross validation methodology. In comparing
+\textsf{regls} CCD and ADMM the cross validation method is exactly the
+same and the relevant difference lies in the ``excess precision''
+afforded by ADMM over CCD, at their respective default tolerances.
+
+\subsection*{Dataset 1}
+
+Statistics for out-of-sample $R^2$ from the Dataset 1 experiment are
+shown in Table~\ref{tab:dset1}. In this experiment \textsf{regls} CCD
+gave better out of sample prediction than \textsf{glmnet}, and ADMM
+did a little better again. The first difference---due to cross
+validation methodology---appears to be more substantial than the
+second.
 
 \begin{table}[htbp]
   \centering
-  \begin{tabular}{lccccccc}
-    \multicolumn{8}{c}{Cross validation using $s^*$ as optimum} \\[4pt]
+  \begin{tabular}{rccccccc}
  & mean & s.d. & s.e.(mean) & 95\% C.I. & median & min & max \\
-\textsf{regls (ADMM)} & 0.4625 & 0.3908 & 0.0087 & 0.4454 - 0.4796 & 0.5342 & $-$7.5863 & 0.7312 \\
-\textsf{regls (CCD)} & 0.4631 & 0.3886 & 0.0087 & 0.4460 - 0.4801 & 0.5336 & $-$7.5750 & 0.7314 \\
-\textsf{cv.glmnet} & 0.4509 & 0.3876 & 0.0087 & 0.4339 - 0.4679 & 0.5212 & $-$7.5278 & 0.7331 \\[4pt]
-\textsf{OLS}       & 0.4006 & 0.6006 & 0.0134 & 0.3743 - 0.4269 & 0.4976 & $-$16.769 & 0.7122
+      glmnet & 0.4724 & 0.1518 & 0.0034 & 0.4657 - 0.4790 & 0.4881 & $-$2.6289 & 0.7044 \\
+        CCD & 0.4954 & 0.1545 & 0.0035 & 0.4886 - 0.5022 & 0.5118 & $-$2.7911 & 0.6900 \\
+       ADMM & 0.4984 & 0.1608 & 0.0036 & 0.4914 - 0.5055 & 0.5172 & $-$2.7831 & 0.6925 \\
   \end{tabular}
-  \caption{Out-of-sample $R^2$ statistics, 2000 trials}
-  \label{tab:star}
+  \caption{Out of sample $R^2$, 2000 replications, Dataset 1}
+  \label{tab:dset1}
 \end{table}
 
-With $s^*$ selected for prediction, the performance of the three LASSO
-variants is very similar: the 95 percent confidence intervals for mean
-$R^2$ are strongly overlapping.  Since the algorithms employed are
-different, we might say that their respective results are mutually
-supportive. In all cases the results are (not surprisingly) clearly
-superior to OLS.
+Figure~\ref{fig:dset1} gives another angle on the comparisons,
+plotting estimated kernel densities for the three
+variants.\footnote{We truncated the plot on the left to focus on the
+  bulk of the distributions; instances of $R^2 < 0.2$ were rare, and
+  their frequency did not differ much by method.}
 
-The negative minimum $R^2$ values call for comment. It seems that in 2
-or 3 percent of the randomly reordered datasets the 200 testing
-observations differed substantially from the 1000 training
-observations. An $R^2 < 0$ means, of course, that the predictions of
-the model are inferior to simply predicting the sample mean for all
-observations in the given sample range, but since we're talking about
-out-of-sample prediction the sample mean for the testing data should
-be considered unknown when predictions are made.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.9]{murder_kd3.pdf} 
+  \caption{Estimated densities for out of sample $R^2$, Dataset 1}
+  \label{fig:dset1}
+\end{figure}
 
-We should not make too much of the differences across LASSO versions
-seen in Table~\ref{tab:star}: it's just a single dataset (albeit
-randomly shuffled and subsetted at each iteration) and a single set of
-$\lambda$s. However, it's worth noting that the out-of-sample $R^2$
-values for the different algorithms are strongly correlated (as one
-might expect) so a paired-difference test seems
-applicable. Table~\ref{tab:z} shows the correlations, mean differences
-$\bar{d}$, and $z$ statistics for the null of $\mu_d = 0$ (A = ADMM, C
-= CCD).
+Since each mothod was given the same data at each iteration,
+paired-difference tests for $R^2$ might be considered appropriate;
+these are shown below, along with the correlations across the
+methods per iteration.
+\begin{center}
+  \begin{tabular}{rrr}
+    & $|z|$ & $\rho$ \\[4pt]
+glmnet, CCD & 20.6 & 0.946 \\
+glmnet, ADMM & 21.6 & 0.942 \\
+CCD, ADMM & 8.4 & 0.996 \\
+  \end{tabular}  
+\end{center}
+From this point of view all the differences are strongly statistically
+significant, though the advantage of ADMM over CCD might not be
+considered of much practical importance.
+
+\subsection*{Dataset 2}
+
+Table~\ref{tab:dset2} shows out-of-sample $R^2$ statistics for Dataset
+2. Again ADMM has the highest mean and median, and regls CCD does
+better than glmnet on these citeria, but here the differences are
+relatively small. Kernel densities are shown in
+Figure~\ref{fig:dset2}. The displacement of the distribution between
+methods, in the same direction as for Dataset 1, is
+appreciable\footnote{And statistically significant: paired-difference
+  $|z| = 19.9$ for glmnet vs CCD and $5.8$ for CCD vs ADMM.} but
+maybe not large enough to be of practical importance.
 
 \begin{table}[htbp]
   \centering
-  \begin{tabular}{lcrr}
-    & \multicolumn{1}{c}{$\rho$} & \multicolumn{1}{c}{$\bar{d}$} &
-        \multicolumn{1}{c}{$z$} \\
-    reglsA $-$ reglsC & 0.9990 & $-$0.0006 & $-$1.478 \\
-    reglsA $-$ glmnet & 0.9656 &    0.0116 & 5.072 \\
-    reglsC $-$ glmnet & 0.9663 &    0.0122 & 5.397
-  \end{tabular}
-  \caption{Pairwise correlations and mean difference tests}
-  \label{tab:z}
-\end{table}
-
-The results shown in Table~\ref{tab:dagger}, with the same
-randomization of the data as above but following the ``within one
-standard error'' rule to give the benefit of the doubt to parsimony,
-are quite interesting---although, again, we should not give too much
-weight to findings from a single dataset. The mean out-of-sample $R^2$
-values are all higher, and the standard deviations all lower, but the
-medians are also lower. In addition the differences between the
-\textsf{regls} methods and \textsf{glmnet} are greater, to the point
-where the confidence intervals barely overlap.
-
-\begin{table}[htbp]
-  \centering
-  \begin{tabular}{lccccccc}
-    \multicolumn{8}{c}{Cross validation using $s^{\dagger}$ as optimum} \\[4pt]    
+  \begin{tabular}{rccccccc}
  & mean & s.d. & s.e.(mean) & 95\% C.I. & median & min & max \\
-\textsf{regls (ADMM)} & 0.4815 & 0.2456 & 0.0055 & 0.4707 - 0.4922 & 0.5125 & $-$5.2263 & 0.7125 \\
-\textsf{regls (CCD)} & 0.4814 & 0.2310 & 0.0052 & 0.4712 - 0.4915 & 0.5085 & $-$5.2228 & 0.6994 \\
-\textsf{cv.glmnet} & 0.4616 & 0.2287 & 0.0051 & 0.4516 - 0.4716 & 0.4868 & $-$5.2228 & 0.6994 \\
+      glmnet & 0.2735 & 0.0518 & 0.0012 & 0.2712 - 0.2758 & 0.2775 & $-$0.5072 & 0.3994 \\
+         CCD & 0.2763 & 0.0523 & 0.0012 & 0.2740 - 0.2786 & 0.2803 & $-$0.5072 & 0.3994 \\
+        ADMM & 0.2774 & 0.0558 & 0.0012 & 0.2750 - 0.2799 & 0.2826 & $-$0.5260 & 0.4029 \\
   \end{tabular}
-  \caption{Out-of-sample $R^2$ statistics, 2000 trials}
-  \label{tab:dagger}
+  \caption{Out of sample $R^2$, 2000 replications, Dataset 2}
+  \label{tab:dset2}
 \end{table}
 
-For what it's worth, the paired-difference test statistics have
-increased to $z = 11.9$ and $z = 13.6$ for, respectively,
-\textsf{regls-ADMM} and \textsf{regls-CCD} versus \textsf{glmnet},
-while the test for \textsf{regls-ADMM} versus \textsf{regls-CCD}
-has changed sign and shrunk to $z = 0.125$.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.9]{wine_kd3.pdf} 
+  \caption{Estimated densities for out of sample $R^2$, Dataset 2}
+  \label{fig:dset2}
+\end{figure}
 
-The example we have chosen may be untypical in some way, but on the
-assumption that it's not freakish we feel justified in concluding that
-\textsf{regls} is (probably) not inferior to \textsf{glmnet} in terms
-of out-of-sample prediction based on cross validation.
+\subsection*{Dataset heterogeneity}
+
+Can we account for the difference in results between Dataset 1 and
+Dataset 2 by reference to the relative heterogeneity of the data?
+It's not obvious how such heterogeneity can best be measured, but we
+tried a rough and ready heuristic with focus on the dependent
+variable: how much do its sample statistics vary across the
+fold-complement samples, relative to the full training data?
+
+We calculated two statistics, $H_\mu$ and $H_\sigma$, for each
+dataset, using the randomize-and-subset procedure described above, as
+follows.  At each of 2000 iterations, $i$, we summed the absolute
+proportional deviations of the fold-complement sample means,
+$\bar{y}_{ij},\, j=1,2,\dots,10$, from the sample mean for the
+training data, $\bar{y}_i$. We then took the mean of these values
+across the iterations:
+\[
+  H_\mu = \frac{1}{2000} \sum_{i=1}^{2000} \sum_{j=1}^{10} |(\bar{y}_{ij} - \bar{y}_i)/\bar{y}_i|
+\]
+$H_\sigma$ was calculated in an exactly analogous way, based on the
+sample standard deviation, $s$:
+\[
+  H_\sigma = \frac{1}{2000} \sum_{i=1}^{2000} \sum_{j=1}^{10} |(s_{ij} - s_i)/s_i|
+\]
+The values of these measures for the datasets were
+\begin{center}
+  \begin{tabular}{lcc}
+    & $H_\mu$ & $H_\sigma$ \\
+    Dataset 1 & 0.12059 & 0.15032 \\
+    Dataset 2 & 0.01039 & 0.05089
+  \end{tabular}
+\end{center}
+Thus it appears that---on this crude measure at least---Dataset 2 is a
+good deal more homogeneous than Dataset 1. This is consistent with the
+observation that differences in out-of-sample performance attributable
+to details of the cross validation algorithm were much smaller for
+Dataset 2.
+
+\subsection*{Conclusion}
+
+It's risky to conclude much on the strength of just two
+datasets---even when leveraged by randomization and subsetting. But it
+does seem that standardization at the level of the full training data,
+and employment of a single $\lambda$ sequence---derived from the full
+training data and applied for all folds---may be conducive to best
+out-of-sample prediction. It also seems that the extra precision of
+ADMM at its default setting is helpful for out-of-sample prediction,
+though this effect is relatively small and may or may not be
+considered worthwhile.
+
+%% FIXME The following needs updating!! %%
 
 The script that produced the first set of results above is shown on
 the following page. For the ``within one standard error'' case it's
