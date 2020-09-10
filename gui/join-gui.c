@@ -28,6 +28,9 @@
 #define JDEBUG 0
 
 #define HAVE_PLACEHOLDER (GTK_MAJOR_VERSION==3 && GTK_MINOR_VERSION>=2)
+#if !HAVE_PLACEHOLDER
+# define PLACEHOLDER "place-holder"
+#endif
 
 struct join_info_ {
     GtkWidget *dlg;         /* dialog box */
@@ -165,17 +168,15 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo,
    the GtkEntry receives focus.
 */
 
-static gboolean undo_placeholder (GtkWidget *w,
-				  GtkDirectionType dir,
-				  gpointer p)
+static gboolean undo_placeholder (GtkWidget *w, gpointer p)
 {
-    if (widget_get_int(w, "place-holder")) {
+    if (widget_get_int(w, PLACEHOLDER)) {
 	if (p == NULL) {
 	    /* just getting focus, not inserting text */
 	    gtk_entry_set_text(GTK_ENTRY(w), "");
 	}
 	gtk_widget_modify_text(w, GTK_STATE_NORMAL, NULL);
-	widget_set_int(w, "place-holder", 0);
+	widget_set_int(w, PLACEHOLDER, 0);
     }
 
     return FALSE;
@@ -199,7 +200,7 @@ static void set_placeholder_text (GtkWidget *w, const char *s)
 #else
     gtk_entry_set_text(GTK_ENTRY(w), s);
     make_text_gray(w);
-    widget_set_int(w, "place-holder", 1);
+    widget_set_int(w, PLACEHOLDER, 1);
     if (!widget_get_int(w, "signal-set")) {
 	g_signal_connect(G_OBJECT(w), "grab-focus",
 			 G_CALLBACK(undo_placeholder), NULL);
@@ -245,16 +246,16 @@ static void cancel_joiner (GtkWidget *w, join_info *jinfo)
    of zero length or just a placeholder.
 */
 
-static const char *join_entry_text (GtkWidget *w, const char *nulltext)
+static const char *join_entry_text (GtkWidget *w)
 {
     const char *s = gtk_entry_get_text(GTK_ENTRY(w));
-    int l = strlen(nulltext);
+#if HAVE_PLACEHOLDER
+    return (*s == '\0')? NULL : s;
+#else
+    int ph = widget_get_int(w, PLACEHOLDER);
 
-    if (*s == '\0' || !strncmp(s, nulltext, l)) {
-	return NULL;
-    } else {
-	return s;
-    }
+    return (ph || *s == '\0')? NULL : s;
+#endif
 }
 
 /* The buttons for the dialog's "action area" */
@@ -393,18 +394,15 @@ static GtkWidget *aggregation_combo (void)
 	"seq:",
 	"spread"
     };
-
     GtkWidget *ac, *entry;
     int i, n = G_N_ELEMENTS(as);
 
     ac = combo_box_text_new_with_entry();
-
     for (i=0; i<n; i++) {
 	combo_box_append_text(ac, as[i]);
     }
-
     entry = gtk_bin_get_child(GTK_BIN(ac));
-    set_placeholder_text(entry, "none");
+    set_placeholder_text(entry, _("none"));
 
     return ac;
 }
@@ -424,7 +422,7 @@ static void joiner_add_controls (join_info *jinfo)
     GtkWidget *w;
     int i;
 
-    /* series to import plus LHS name */
+    /* series to import plus LHS name (target) */
     for (i=0; i<2; i++) {
 	w = gtk_label_new(i == 0 ? _("import series") : _("named as"));
 	gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
@@ -434,7 +432,7 @@ static void joiner_add_controls (join_info *jinfo)
 	if (i == 0) {
 	    jinfo->import = w;
 	} else {
-	    set_placeholder_text(w, "same as above");
+	    set_placeholder_text(w, _("same as above"));
 	    jinfo->target = w;
 	}
     }
@@ -775,12 +773,18 @@ static void join_dialog_setup (join_info *jinfo)
 static gchar *get_aggr_string (GtkWidget *cbox,
 			       int *err)
 {
-    gchar *s;
+    gchar *s = combo_box_get_active_text(cbox);
+#if !HAVE_PLACEHOLDER
+    int ph = widget_get_int(cbox, PLACEHOLDER);
 
-    s = combo_box_get_active_text(cbox);
+    if (ph) {
+	g_free(s);
+	return NULL;
+    }
+#endif
 
     if (s != NULL) {
-	if (*s == '\0' || !strcmp(s, "none")) {
+	if (*s == '\0' || !strcmp(s, _("none"))) {
 	    /* nothing there, OK */
 	    g_free(s);
 	    s = NULL;
@@ -812,16 +816,16 @@ static void do_join_command (GtkWidget *w, join_info *jinfo)
     PRN *prn;
     int err = 0;
 
-    import = join_entry_text(jinfo->import, _("same as"));
-    target = join_entry_text(jinfo->target, _("same as"));
+    import = join_entry_text(jinfo->import);
+    target = join_entry_text(jinfo->target);
 
-    ikey1 = join_entry_text(jinfo->ikey[0], _("same as"));
-    ikey2 = join_entry_text(jinfo->ikey[1], _("same as"));
+    ikey1 = join_entry_text(jinfo->ikey[0]);
+    ikey2 = join_entry_text(jinfo->ikey[1]);
 
-    okey1 = join_entry_text(jinfo->okey[0], _("same as"));
-    okey2 = join_entry_text(jinfo->okey[1], _("same as"));
+    okey1 = join_entry_text(jinfo->okey[0]);
+    okey2 = join_entry_text(jinfo->okey[1]);
 
-    filter = join_entry_text(jinfo->filter, _("none"));
+    filter = join_entry_text(jinfo->filter);
 
     /* aggregation: check validity */
     aggr = get_aggr_string(jinfo->aggr, &err);
