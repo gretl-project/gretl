@@ -751,13 +751,16 @@ also record the execution time for method B divided by that for A
 
 In the experiments reported below we used the murder rates dataset
 (\texttt{murder.gdt}) supplied with the \texttt{regls} package, with
-\texttt{murdPerPop} as dependent variable and 101 regressors. The
-$\lambda$ sequence was of length 20. In the LASSO tests we used the
-first 800 observations and in the Ridge tests the first 1500 (to make
-the test take longer and improve the resolution of the timer). We're
-aware that the results we show are liable to be data- and
-model-dependent and we offer some comments on this in the concluding
-section.
+\texttt{murdPerPop} as dependent variable and 101
+regressors.\footnote{This dataset was referenced by Ryan Tibshirani in
+  the LASSO context; see
+  \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
+The $\lambda$ sequence was of length 20. In the LASSO tests we used
+the first 800 observations and in the Ridge tests the first 1500 (to
+make the test take longer and improve the resolution of the
+timer). We're aware that the results we show are liable to be data-
+and model-dependent and we offer some comments on this in the
+concluding section.
 
 \subsection*{Ridge: SVD and CCD}
 
@@ -993,14 +996,13 @@ $\hat{\sigma}_y$. The current sample range must be the same as for
 told \textit{not} to standardize the data then this term should be
 omitted as it is assumed to be 1.
 
-\subsection*{Cross validation}
+\subsection*{Cross validation methodologies}
 
-There's a substantive (though ultimately minor) difference between
-\textsf{regls} and \textsf{glmnet} in respect of cross
-validation. This applies even if the CCD algorithm is selected in
-\textsf{regls}, which results in near-identical results for
-coefficients and predicted values when simply testing a sequence of
-$\lambda$ values.
+There's a substantive difference between \textsf{regls} and
+\textsf{glmnet} in respect of cross validation. This applies even if
+the CCD algorithm is selected in \textsf{regls}, which results in
+near-identical results for LASSO or Ridge coefficients when simply
+processing a sequence of $\lambda$ values.
 
 In \textsf{regls} cross validation, the entire training dataset is
 standardized at the outset, then each fold gets its share of the
@@ -1010,49 +1012,33 @@ fold. In \textsf{glmnet}, by contrast, both standardization and
 calculation of the $\lambda$ sequence are done per fold. It's not
 obvious \textit{a priori} which of these methods is going to work
 better in selecting the $\lambda$ to be used for out-of-sample
-prediction, but our Monte Carlo analyses suggest that the two methods
-are about equally effective.
+prediction.
 
 \subsection*{Extended test of cross validation}
 
 The primary point of cross validation is to determine the value of a
-hyperparameter (for LASSO, $\lambda$) that is likely to give
-best results in genuine out-of-sample prediction. Do any of the points
-of detail mentioned above make much difference in that regard?
+hyperparameter (for LASSO, $\lambda$) that is likely to give best
+results in genuine out-of-sample prediction. Do any of the points
+mentioned above make much difference in that regard?
 
 Not a great deal can be said about this \textit{a priori}, though one
-thing is clear: the more homogeneous the training data, the less such
-details are going to matter. If the statistical properties of the
-fold-complement samples are very similar to those of the full training
-data then the locus of standardization (training data or
+thing is clear: the more homogeneous the training data, the less
+details of method are going to matter. If the statistical properties
+of the fold-complement samples are very similar to those of the full
+training data then the locus of standardization (training data or
 fold-complement) won't make much difference. In addition, if
 $\lambda_{\max} = \|X'y\|_{\infty}$ doesn't differ much across the
 samples the locus of calculation of the $\lambda$ sequence won't
 matter much either, and $\lambda$-matching---if it is
-required---should be relatively unproblematic. The number of folds is
-also relevant. For given $N$, more folds means smaller folds and
-bigger fold-complements, comprising a larger proportion of the
-training data and therefore presumably more representative of the
-whole.
+required---should be relatively unproblematic.
 
 That said, real-world datasets of interest are not necessarily very
-homogeneous so the details \textit{could} matter. So let's ask, when
-the training data are not so homogeneous:
+homogeneous so the details \textit{could} matter. To investigate this
+we ran experiment on two rather different datasets.
 \begin{itemize}
-\item Are we better off standardizing at the level of the training
-  data or at the level of the fold-complement?
-\item Is is better to work with a single $\lambda$ sequence or
-  per-fold sequences?
-\end{itemize}
-
-Allowing that the answer to both questions may simply be ``it
-depends'', we nonetheless tried experimenting with two rather
-different datasets to see if anything systematic might emerge.
-\begin{itemize}
-\item Dataset 1: murder rates and covariates for US localities,
-  referenced by Ryan Tibshirani in the LASSO context. Comprises 2215
-  observations on 124 variables.\footnote{See
-    \url{https://www.stat.cmu.edu/~ryantibs/datamining/lectures/17-modr2.pdf}.}
+\item Dataset 1: murder rates and covariates for US localities
+  (\texttt{murder.gdt}, supplied with the \textsf{regls} package).
+  Comprises 2215 observations on 102 variables.
 \item Dataset 2: white wine quality and physico-chemical covariates.
   Comprises 4898 observations on 12 variables (78 after adding squares
   and interactions of covariates).\footnote{See
@@ -1087,9 +1073,10 @@ $\lambda$ are near-identical, and the relevant difference lies in the
 details of the cross validation methodology. In comparing
 \textsf{regls} CCD and ADMM the cross validation method is exactly the
 same and the relevant difference lies in the ``excess precision''
-afforded by ADMM over CCD, at their respective default tolerances.
+afforded by ADMM over CCD, at their respective default tolerances, as
+discussed in Appendix~\ref{app:ccd}.
 
-\subsection*{Dataset 1}
+%% \subsection*{Dataset 1}
 
 Statistics for out-of-sample $R^2$ from the Dataset 1 experiment are
 shown in Table~\ref{tab:dset1}. In this experiment \textsf{regls} CCD
@@ -1125,21 +1112,27 @@ variants.\footnote{We truncated the plot on the left to focus on the
 
 Since each mothod was given the same data at each iteration,
 paired-difference tests for $R^2$ might be considered appropriate;
-these are shown below, along with the correlations across the
-methods per iteration.
+these are shown in Table~\ref{tab:paired}, along with the correlations
+across the methods per iteration.
+
+\begin{table}[htbp]
 \begin{center}
   \begin{tabular}{rrr}
     & $|z|$ & $\rho$ \\[4pt]
-glmnet, CCD & 20.6 & 0.946 \\
-glmnet, ADMM & 21.6 & 0.942 \\
-CCD, ADMM & 8.4 & 0.996 \\
-  \end{tabular}  
+glmnet, regls CCD & 20.6 & 0.946 \\
+glmnet, regls ADMM & 21.6 & 0.942 \\
+regls CCD, regls ADMM & 8.4 & 0.996 \\
+  \end{tabular}
+  \caption{Paired-difference tests and correlations, out of sample $R^2$}
+  \label{tab:paired}  
 \end{center}
+\end{table}
+
 From this point of view all the differences are strongly statistically
 significant, though the advantage of ADMM over CCD might not be
 considered of much practical importance.
 
-\subsection*{Dataset 2}
+%% \subsection*{Dataset 2}
 
 Table~\ref{tab:dset2} shows out-of-sample $R^2$ statistics for Dataset
 2. Again ADMM has the highest mean and median, and regls CCD does
@@ -1180,21 +1173,18 @@ variable: how much do its sample statistics vary across the
 fold-complement samples, relative to the full training data?
 
 We calculated two statistics, $H_\mu$ and $H_\sigma$, for each
-dataset, using the randomize-and-subset procedure described above, as
-follows.  At each of 2000 iterations, $i$, we summed the absolute
-proportional deviations of the fold-complement sample means,
+dataset, using the randomize-and-subset procedure described above.  At
+each of 2000 iterations, $i$, we summed the absolute proportional
+deviations of the fold-complement sample means,
 $\bar{y}_{ij},\, j=1,2,\dots,10$, from the sample mean for the
 training data, $\bar{y}_i$. We then took the mean of these values
 across the iterations:
 \[
-  H_\mu = \frac{1}{2000} \sum_{i=1}^{2000} \sum_{j=1}^{10} |(\bar{y}_{ij} - \bar{y}_i)/\bar{y}_i|
+  H_\mu = \frac{1}{2000} \sum_{i=1}^{2000} \sum_{j=1}^{10} |\bar{y}_{ij} - \bar{y}_i|/|\bar{y}_i|
 \]
-$H_\sigma$ was calculated in an exactly analogous way, based on the
-sample standard deviation, $s$:
-\[
-  H_\sigma = \frac{1}{2000} \sum_{i=1}^{2000} \sum_{j=1}^{10} |(s_{ij} - s_i)/s_i|
-\]
-The values of these measures for the datasets were
+$H_\sigma$ was calculated in an exactly analogous way, with the sample
+standard deviations in place of the means.  The values of these
+measures for the datasets were
 \begin{center}
   \begin{tabular}{lcc}
     & $H_\mu$ & $H_\sigma$ \\
@@ -1205,8 +1195,7 @@ The values of these measures for the datasets were
 Thus it appears that---on this crude measure at least---Dataset 2 is a
 good deal more homogeneous than Dataset 1. This is consistent with the
 observation that differences in out-of-sample performance attributable
-to details of the cross validation algorithm were much smaller for
-Dataset 2.
+to differences in the algorithms were much smaller for Dataset 2.
 
 \subsection*{Conclusion}
 
@@ -1220,24 +1209,15 @@ ADMM at its default setting is helpful for out-of-sample prediction,
 though this effect is relatively small and may or may not be
 considered worthwhile.
 
-%% FIXME The following needs updating!! %%
+\subsection*{Example script}
 
-The script that produced the first set of results above is shown on
-the following page. For the ``within one standard error'' case it's
-necessary to add \texttt{parms.use\_1se = 1} when setting up the
-parameter bundle for \texttt{regls}, and in the \textsf{R} section to
-change the line that assigns to \texttt{Rb} to read
-\begin{code}
-Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.1se))
-\end{code}
-
-By default the script will produce different results on each run,
-since in gretl the PRNG seed is set from the clock on start-up. To
-replicate the results shown here, insert the line
-\begin{code}
-set seed 5432173
-\end{code}
-anywhere before the \texttt{loop} is started.
+An example script used with Dataset 1 is shown on the following page.
+This instance produces results for \textsf{regls} CCD and
+\textsf{glmnet}. Results for \textsf{regls} ADMM can be obtained by
+omitting the \texttt{ccd} setting in the \texttt{parms} bundle.  To
+explore a different randomization one could comment out the
+\texttt{set seed} line, in which case the seed for the random number
+generator will be set from the clock on start-up.
 
 \clearpage
 
@@ -1246,49 +1226,49 @@ anywhere before the \texttt{loop} is started.
   \label{script:mc}
 \begin{scode}
 set verbose off
+set R_lib on
+set R_functions on
 include regls.gfn
 open murder.gdt --quiet --frompkg=regls
 
+# obtain results for regls CCD and cv.glmnet
+
+foreign language=R
+  lasso_R <- function(x,y,f,nl) {
+    if (! "glmnet" %in% (.packages())) {
+       library(glmnet)
+    }
+    m <- cv.glmnet(x, y, foldid = f, family = "gaussian", alpha = 1,
+      nlambda = nl, standardize = T, intercept = T)
+    Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.1se))
+  }
+end foreign
+
 # all available predictors without missing values
 list X = population..LemasPctOfficDrugUn
-list X0 = const X
-list LL = murdPerPop X
+list X0 = const X # for glmnet prediction
 
-# parameters for regls
-bundle parms = defbundle("nlambda", 25, "stdize", 1, "verbosity", 0)
-parms.xvalidate = 1
+bundle parms = _(nlambda=50, verbosity=0, ccd=1, xvalidate=1)
 parms.nfolds = 10
+parms.use_1se = 1
 
-matrix foldvec = regls_foldvec(1000, 10)
-mwrite(foldvec, "folds.mat", 1) # for glmnet
+# for glmnet
+matrix foldvec = regls_foldvec(1200, 10)
 
+set seed 997361
 K = 2000
-matrix OSR2 = zeros(K, 2)
+matrix OSR2 = zeros(K,2)
 
-loop i=1..K
+loop i=1..K --quiet
    smpl full
    series sorter = uniform()
    dataset sortby sorter
 
-   smpl 1 1000 # training data
+   smpl 1 1200 # training data
    bundle lb = regls(murdPerPop, X, parms)
+   matrix Rb = R.lasso_R({X}, {murdPerPop}, foldvec, 50)
 
-   foreign language=R --send-data=LL
-     if (! "glmnet" %in% (.packages())) {
-        library(glmnet)
-     }
-     x <- as.matrix(gretldata[,2:ncol(gretldata)])
-     y <- as.matrix(gretldata[,1])
-     folds <- gretl.loadmat("folds.mat")
-     m <- cv.glmnet(x, y, foldid = folds, family = "gaussian", alpha = 1,
-      nlambda = 25, standardize = T, intercept = T)
-     Rb <- as.matrix(coef(m$glmnet.fit, s = m$lambda.min))
-     gretl.export(Rb, quiet=1)
-   end foreign --quiet
-
-   Rb = mread("Rb.mat", 1)
-
-   smpl 1001 1200 # testing data
+   smpl 1201 1400 # testing data
    series pred = lincomb(lb.nzX, lb.nzb)
    m = regls_get_stats(murdPerPop, pred)
    OSR2[i,1] = m[2]
@@ -1297,7 +1277,7 @@ loop i=1..K
    OSR2[i,2] = m[2]
 endloop
 
-mwrite(OSR2, "OSR2_2000.mat")
+mwrite(OSR2, "murder_ccd.mat")
 \end{scode}
   \end{script}
 
