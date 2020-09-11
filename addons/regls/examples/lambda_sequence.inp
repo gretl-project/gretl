@@ -9,8 +9,7 @@ list X = population..LemasPctOfficDrugUn
 smpl 1 800
 printf "Sample range %d to %d\n", $t1, $t2
 
-lamseq = lambda_sequence(1, 8)
-bundle parms = defbundle("lfrac", lamseq)
+bundle parms = defbundle("nlambda", 8)
 parms.verbosity = 0
 
 set stopwatch
