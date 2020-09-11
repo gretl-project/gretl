@@ -4,7 +4,7 @@ function void scoreC(matrix *ret, matrix *theta, matrix *dat)
     scalar n = rows(Sigma)
     scalar npar = cols(Ss) - 1
 
-    matrix C = mat_exp(theta, Ss, 0)
+    matrix C = mat_exp(theta, Ss) # was: , 0)
     matrix S = Ss[,1:npar]
 
     matrix iC = inv(C)
@@ -78,7 +78,7 @@ function void PseudoHessC(matrix *H, matrix *theta, matrix *dat)
 
     # printf "PseudoHessC\n%10.4f\n%4.1f\n", theta, Ss
 
-    matrix C = mat_exp(theta, Ss, 0)
+    matrix C = mat_exp(theta, Ss) # was: , 0)
     H = InfoMat(C, S) # was InfoMatC
 end function
 
@@ -110,7 +110,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
 
     # printf "estC\n%10.4f\n%4.1f\n", theta, Ss
 
-    matrix tmp = mat_exp(theta, Ss, 1)
+    matrix tmp = mat_exp(theta, Ss) # was: , 1)
 
     if verbose > 2
         /* obsolete ? */
@@ -183,7 +183,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
         endif
 
         # printf "estC(2)\n%10.4f\n%4.1f\n", theta, Ss
-        matrix C = mat_exp(theta, Ss, 1)
+        matrix C = mat_exp(theta, Ss) # was: , 1)
 
         if SCALE == 1
             C = C .* s'

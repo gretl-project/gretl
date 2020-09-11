@@ -1,21 +1,22 @@
 function scalar check_bounds(int s, int v, int n)
     # negative s is allowed and means to flip the shock
 
+	ret = 0
     if abs(s) > n || (s == 0)
-        return 1
+        ret = 1
 
     elif (v > n) || (v < 1)
-        return 2
+        ret = 2
     endif
 
-    return 0
+    return ret
 end function
 
 /* ---------------------------------------------------------------------- */
 /* --- IRF core graphing function --------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
+function string IRFgrph(const matrix IRFmat, int snum, int vnum, scalar scale, \
                         string sname, string vname, int keypos[0:2:1], \
                         matrix *cumul[null],  bundle *boot[null], \
                         int bc[0:2:0], int whichdraw[0::0])
@@ -53,7 +54,7 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
     if bootrep > 0
         matrix hicb = flip ? -boot.lo_cb : boot.hi_cb	# matrix?
         matrix locb = flip ? -boot.hi_cb : boot.lo_cb
-        matrix mdn  = flip ? -boot.mdns : boot.mdns
+        matrix mdn  = flip ? -boot.mdns  : boot.mdns
         matrix locb = locb[,k] ./ scale
         matrix hicb = hicb[,k] ./ scale
         matrix mdn  = mdn[,k]  ./ scale
@@ -70,6 +71,8 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
     set force_decpoint on
 
     ## write the raw gnuplot code
+    # TODO: replace outfile --write ... outfile --close 
+    # with outfile ... end outfile eventually (but needs gretl 2018b)
     outfile "@tmpfile" --write
     printf "set yrange [%g:%g]\n", miny*1.05, maxy*1.05
     printf "set xrange [%g:%g]\n", 0, (h-1)*1.05
@@ -246,7 +249,7 @@ end function
 /* --- FEVD core graphing function -------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function string FEVDgrph(matrix FEVDmat, scalar v,
+function string FEVDgrph(const matrix FEVDmat, scalar v,
                          string vname, strings snames, int keypos[0:2:1],
                          string titletail[null])
     
@@ -262,18 +265,22 @@ function string FEVDgrph(matrix FEVDmat, scalar v,
 
     scalar tmpfname = int(10000*muniform(1,1))
     if $windows
-        sprintf datfile "@dotdir\\fevd%d.txt", tmpfname
-        sprintf tmpfile "@dotdir\\fevd%d.gp", tmpfname
+        string datfile = sprintf("@dotdir\\fevd%d.txt", tmpfname)
+        # sprintf datfile "@dotdir\\fevd%d.txt", tmpfname 
+        string tmpfile = sprintf("@dotdir\\fevd%d.gp", tmpfname)
+        # sprintf tmpfile "@dotdir\\fevd%d.gp", tmpfname
     else
-        sprintf datfile "@dotdir/fevd%d.txt", tmpfname
-        sprintf tmpfile "@dotdir/fevd%d.gp", tmpfname
+        string datfile = sprintf("@dotdir/fevd%d.txt", tmpfname)
+        # sprintf datfile "@dotdir/fevd%d.txt", tmpfname
+        string tmpfile = sprintf("@dotdir/fevd%d.gp", tmpfname)
+        # sprintf tmpfile "@dotdir/fevd%d.gp", tmpfname
     endif
 
     matrix sel = (v-1)*n + seq(1,n)
     set force_decpoint on
 
     outfile "@tmpfile" --write
-    if keypos == 0
+    if   keypos == 0
         printf "set key off\n"
     elif keypos == 1
         printf "set key outside\n"

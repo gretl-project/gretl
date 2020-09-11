@@ -146,7 +146,7 @@ function void ABmat_exp(matrix theta, matrix aSs, matrix bSs,
     matrix A = mat_exp(theta_a, aSs)
 
     matrix theta_b = (p2>p1) ? theta[p1+1:p2] : {}
-    matrix B = mat_exp(theta_b, bSs, 1)
+    matrix B = mat_exp(theta_b, bSs) # was: , 1)
 end function
 
 function void PseudoHessAB(matrix *H, matrix *theta, matrix *dat, int p1)
