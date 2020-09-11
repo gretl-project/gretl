@@ -1,0 +1,65 @@
+set verbose off
+include regls.gfn
+
+n = 80  # observations
+k = 71 # regressors
+set seed 33775430
+matrix X = mnormal(n,k)
+u = mnormal(n, 1)
+matrix sel = {5, 20, 37, 60, 70}
+matrix y = sumr(X[,sel]) + u
+printf "Truly non-zero coefficients:\n"
+eval sel
+
+nulldata n --preserve
+series ys = y
+list LX = null
+loop i=1..k -q
+  LX += genseries(sprintf("x%d", i), X[,i])
+endloop
+
+summary ys --simple
+
+bundle parms = defbundle("lfrac", 0.35, "stdize", 0, "verbosity", 2)
+bundle b = regls(ys, LX, parms)
+eval b.nzb
+yh = lincomb(b.nzX, b.nzb)
+SSR = sum((ys - yh)^2)
+l1 = sum(abs(b.nzb))
+crit = 0.5*SSR + 0.35*l1
+printf "SSR = %g, l1 = %g, crit = %g\n\n", SSR, l1, crit
+
+parms.ccd = 1
+parms.verbosity = 1
+bundle b = regls(ys, LX, parms)
+eval b.nzb
+yh = lincomb(b.nzX, b.nzb)
+SSR = sum((ys - yh)^2)
+l1 = sum(abs(b.nzb))
+crit = 0.5*SSR + 0.35*l1
+printf "SSR = %g, l1 = %g, crit = %g\n\n", SSR, l1, crit
+
+Rlam = 0.35 * b.lmax / b.nobs
+mwrite({Rlam}, "Rlam.mat", 1)
+
+list LL = ys LX
+foreign language=R --send-data=LL
+  library(glmnet)
+  x <- as.matrix(gretldata[,2:ncol(gretldata)])
+  y <- as.matrix(gretldata[,1])
+  lam <- gretl.loadmat("Rlam.mat")
+  m <- glmnet(x, y, family = "gaussian", alpha = 1, lambda = lam,
+    standardize = F, intercept = F, thresh = 1.0e-7)
+  print(m)
+  Rb <- as.matrix(coef(m))
+  gretl.export(Rb, quiet=1)
+end foreign
+
+Rb = mread("Rb.mat", 1)[2:]
+series yh = glmnet_pred(&Rb, LX)
+print Rb
+SSR = sum((ys - yh)^2)
+l1 = sum(abs(Rb))
+crit = 0.5*SSR + 0.35*l1
+printf "SSR = %g, l1 = %g, crit = %g\n", SSR, l1, crit
+  

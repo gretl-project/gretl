@@ -28,7 +28,8 @@
 
 static const char *addon_names[] = {
     "SVAR", "gig", "HIP", "ivpanel",
-    "dbnomics", "extra", "geoplot", NULL
+    "dbnomics", "extra", "geoplot",
+    "regls", NULL
 };
 
 /* Determine if @pkgname is the name of an addon:
