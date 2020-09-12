@@ -1,0 +1,43 @@
+# Simulate effect of an increase in government spending using
+# Klein's "Model 1".
+
+open klein.gdt
+
+series W = Wp + Wg
+series A = t - obsnum(1931)
+# the endogenous variables
+list endo = C I Wp P W X K
+
+Klein1 <- system
+ equation C 0 P P(-1) W 
+ equation I 0 P P(-1) K(-1)
+ equation Wp 0 X X(-1) A
+ identity P = X - T - Wp
+ identity W = Wp + Wg
+ identity X = C + I + G
+ identity K = K(-1) + I
+ endog endo
+end system
+
+# Baseline estimate and forecast
+estimate Klein1 method=fiml --quiet
+fcast 1932 1939 --dynamic --quiet
+matrix F0 = $fcast
+
+# Increase government wage payments from 1933
+series Wgsave = Wg
+Wg = Wgsave + ((t > obsnum(1932))? 0.5 : 0)
+# print Wgsave Wg -o
+
+# Generate counter-factual forecast
+fcast 1932 1939 --dynamic --quiet
+matrix F1 = $fcast
+matrix Fdiff = F1 - F0
+# attach column names from the "endo" list
+cnameset(Fdiff, endo)
+printf "\nEstimated effects, over 1932-39, of a "
+printf "sustained increase in"
+printf "\n Wg of 0.5 units, starting in 1933\n\n"
+printf "%7.3f", Fdiff
+
+

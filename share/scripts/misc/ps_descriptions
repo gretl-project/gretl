@@ -20,6 +20,7 @@
 "jgm-1996","Unit root tests (MacKinnon, 1996)","interest & inflation"
 "keane","Multinomial logit","career choice data"
 "klein","System estimation","US macro data"
+"kleinsim","Simulation with Klein model","US macro data"
 "kmenta","System estimation","US macro plus artificial data"
 "leverage","Influential observations","artificial data"
 "LLTestim.inp","Local Linear Trend","Australian insterest rate"
