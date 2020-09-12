@@ -218,7 +218,7 @@ function scalar loglik(matrix *theta, matrix *dat, scalar modeltype)
     matrix Ss = {}
     unscramble_dat(&dat, &Sigma, &Ss)
     if modeltype < 0
-        matrix C = mat_exp(theta, Ss, 0)
+        matrix C = mat_exp(theta, Ss) # was: , 0)
     else
         p1 = modeltype
         p2 = rows(theta)

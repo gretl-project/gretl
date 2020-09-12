@@ -2,13 +2,16 @@ include SVAR_compatibility_funcs.inp # for basename()
 
 ###########################
 
-function scalar range(scalar a, scalar n, scalar *n0, scalar *n1)
+function scalar range(int a, int n, scalar *n0, scalar *n1)
     # this is used in the plotting function to have
     # 0 as a synonym for "all"
     #
     # The flipping of the shock by passing a negative number
     # is then not possible to specify; users have to do it explicitly
     # in their own loop then.
+    #
+    # (n0 and n1 are integers, too, but gretl doesn't accept 
+    #   pointerized integers)
 
     if a != 0
         ret = 0
@@ -24,18 +27,19 @@ end function
 
 # ---------------------------
 
-function scalar max_eval(matrix A)
+function scalar max_eval(const matrix A)
     n = rows(A)
-    p = cols(A)/n
-    matrix compan = p==1 ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))
-    matrix lambda = eigengen(compan)
+    p = cols(A) / n
+    matrix compan = (p==1) ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))
+    # TODO: eventually replace this with "eigen" (but needs 2020b or so):
+    matrix lambda = eigengen(compan) # deprecated 
     scalar maxmod = maxc(sumr(lambda.^2))
     return maxmod
 end function
 
 /* ------------------------------------------------------------------ */
 
-function list determ(list X, bool cnst, bool trnd, bool seas)
+function list determ(const list X, bool cnst, bool trnd, bool seas)
     list ret = cnst ? const : null
 
     if trnd
@@ -71,7 +75,7 @@ end function
 
 #################
 
-function matrix N2_ify(matrix A)
+function matrix N2_ify(const matrix A)
     n2 = rows(A)
     n = int(sqrt(n2))
     k = cols(A)
@@ -79,7 +83,7 @@ function matrix N2_ify(matrix A)
     return A + A[e,1:k]
 end function
 
-function scalar has_unit_diag(matrix Rd)
+function scalar has_unit_diag(const matrix Rd)
     ret = 0
     n2 = cols(Rd) - 1
     n = sqrt(n2)
@@ -92,7 +96,7 @@ function scalar has_unit_diag(matrix Rd)
     return maxr(sumc(e.*e)) < 1.0e-12 # ret
 end function
 
-function scalar has_free_diag(matrix Rd)
+function scalar has_free_diag(const matrix Rd)
     n2 = cols(Rd) - 1
     n = sqrt(n2)
     matrix e = 1 + seq(0,n2-1,n+1)
@@ -100,9 +104,7 @@ function scalar has_free_diag(matrix Rd)
     return ( sumc(abs(test)) < 1.0e-12 ) # ret
 end function
 
-function matrix mat_exp(matrix theta, matrix Ss, bool force_pos[0])
-    # FIXME: force_pos switch is not used currently (commented out below)
-
+function matrix mat_exp(const matrix theta, const matrix Ss)
     # we don't check for conformability, but
     # cols(Ss) should be equal to rows(theta)+1
 
@@ -111,16 +113,7 @@ function matrix mat_exp(matrix theta, matrix Ss, bool force_pos[0])
     k = cols(Ss) - 1
     matrix C = (k>0) ? ( Ss[,1:k]*theta + Ss[,k+1] ) : Ss
 
-    C = mshape(C,n,n)
-
-    /*
-       if force_pos
-       neg = (diag(C)') .< 0
-       pos = !neg
-       C = C .* (pos - neg)
-       endif
-    */
-    return C
+    return mshape(C,n,n)
 end function
 
 function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
@@ -133,7 +126,7 @@ function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
 end function
 
 
-function void maybe_flip_columns(matrix C, matrix *X)
+function void maybe_flip_columns(const matrix C, matrix *X)
 /*
    the objective here is to make X as similar as possible to C
    by flipping the sign of the columns. Used for bootstrapping,
@@ -151,7 +144,7 @@ function void maybe_flip_columns(matrix C, matrix *X)
     endif
 end function
 
-function void printStrMat(matrix X, matrix V, string name)
+function void printStrMat(const matrix X, matrix V, string name)
     n = rows(X)
     matrix x = vec(X)
 
@@ -168,8 +161,9 @@ function void printStrMat(matrix X, matrix V, string name)
 
     loop j=1..n --quiet
         loop i=1..n --quiet
-            sprintf tmpstr "%s[%2d;%2d]", name, i, j
-            parnames += tmpstr
+            # sprintf tmpstr "%s[%2d;%2d]", name, i, j
+            # parnames += tmpstr
+            parnames += sprintf("%s[%2d;%2d]", name, i, j)
             if (j<n) || (i<n)
                 parnames += ","
             endif
@@ -187,6 +181,8 @@ end function
    to the A input.
 */
 function scalar add_and_smash(matrix *A, const matrix Psi)
+    # Note that Psi here seems to correspond to -\Psi 
+    # in Kilian (1998)! That's why it's added.
 
     matrix Ab = A + Psi
     # now check stationarity
@@ -198,12 +194,11 @@ function scalar add_and_smash(matrix *A, const matrix Psi)
     iter = 0
     loop while (maxmod > 0.9999) && (iter < maxiter) --quiet
         iter++
+        H *= h
         Ab = A + H .* Psi
         maxmod = max_eval(Ab)
-        H *= h
-        # printf "H = %g\n", H
     endloop
+
     A = Ab
-    H = (iter >= maxiter) ? NA : H
-    return H
+    return (iter >= maxiter) ? NA : H
 end function
