@@ -1,5 +1,6 @@
 include extra_matrix.inp
 include extra_string.inp
+include extra_withdata.inp
 
 
 function matrix WPtable (int n[4::12] "number of trials")
@@ -34,83 +35,6 @@ function matrix WPtable (int n[4::12] "number of trials")
     endif
 end function
 
-function series lin_int (series y)
-    # originally from Jack's yahoo_get function
-    series DOK = diff(ok(y))
-    series Beg = DOK == -1
-    series End = DOK(+1) == 1
-    series splen = 0
-    splen = DOK == -1 ? 1 : DOK==1 ? 0 : (splen(-1) == 0 ? 0 : splen(-1) + 1)
-    series y0 = NA
-    series y0 = Beg ? y(-1) : y0(-1)
-    series y1 = NA
-    series y1 = End ? y(+1) : y1(-1)
-    set skip_missing off
-    matrix A = {y, y0, y1, splen}
-    scalar t = lastobs(y)
-    loop while t>firstobs(y) --quiet
-        if ok(End[t]) && (End[t] == 1)
-            scalar l = A[t, 4]
-            dy = (A[t,3] - A[t,2]) / (l + 1)
-            patch = A[t,2] + dy * seq(1,l)'
-            A[t-l+1:t,1] = patch
-            t -= l
-        else
-            t--
-        endif
-    endloop
-    return A[,1]
-end function
-
-function series gap_filler (series x "Series to fill",
-                            int method[0:2:2] "Fill method" {"Don't", "Repetition", "Linear interpolation"})
-    string lbl = argname(x)
-    if method == 0 # do nothing
-        series ret = x
-    elif method == 1 # get previous value
-        genr time
-        series OK = ok(x)
-        series ret = x
-        series tmp = OK ? time : NA
-        scalar ini = min(tmp)
-        scalar fin = max(tmp)
-        smpl ini fin
-        ret = OK ? x : ret(-1)
-        string lbl = sprintf("gap-filled version of %s (with repetition)", argname(x))
-        setinfo ret --description="@lbl"
-    elif method == 2 # interpolate_linearly
-        set warnings off
-        series ret = lin_int(x)
-        string lbl = sprintf("gap-filled version of %s (with interpolation)", argname(x))
-        setinfo ret --description="@lbl"
-    endif
-    return ret
-end function
-
-function series winsor (series x,
-                        scalar p[0:1:0.05],
-                        scalar phi[0:1:0])
-    # phi (as in p-high) is optional and defines an upper tail mass
-    #  different from lower (the default phi == 0 means ignore)
-    #
-    # This is a rewrite of the function in the winsor.gfn package
-    # (originally by JoshuaHe2015@163.com)
-    smpl --no-missing x
-    # standard symmetric or asymmetric case?
-    phi = !phi ? 1 - p : phi
-    # determine bounds
-    matrix lowhi = quantile({x}, {p, phi})
-    # lower end (and address non-existing extreme quantiles)
-    scalar low = ok(lowhi[1]) ? lowhi[1] : min(x)
-    x = (x < low) ? low : x
-    # upper end
-    scalar hi = ok(lowhi[2]) ? lowhi[2] : max(x)
-    x = (x > hi) ? hi : x
-    # prepare output
-    string label = sprintf("winsorized %s (%g,%g)", argname(x), p, phi)
-    setinfo x --description="@label"
-    return x
-end function
 
 
 function matrix truncnorm (int n[1::],
@@ -320,32 +244,6 @@ function matrix onemode (const matrix v "Vector of values")
     return E[where, 1] | howmuch[where]
 end function
 
-#######################
-
-function scalar correspondence(series x, series y)
-    # This function takes two series and establishes if there's a 
-    # 1-to-1 relationship between them, in which case it returns 2.
-    # If there's a 1-to-n relationship, it returns 1. If there's
-    # no relationship, it returns 0.
-
-    # recode values so as to ensure we only get integer values
-    matrix v = values(y)
-    y = replace(y, v, seq(1,rows(v)))
-    matrix v = values(x)
-    x = replace(x, v, seq(1,rows(v)))
-    
-    matrix H = mxtab(x, y) .> 0
-    is_a_function = maxr(sumc(H)) == 1
-    is_1_to_1 = maxc(sumr(H)) == 1
-
-    if is_a_function
-        ret = is_1_to_1 ? 2 : 1
-    else
-        ret = 0
-    endif
-    return ret
-
-end function 
 
 #######################
 

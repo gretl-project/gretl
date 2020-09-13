@@ -33,7 +33,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{July 2020, release 0.7, still growing\ldots }
+\date{September 2020, release 0.8 (in progress), still growing\ldots }
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -382,13 +382,39 @@ frequencies are 0.05, but re-settable with \texttt{p}. Pass \texttt{phi}
 in addition to \texttt{p} for an asymmetric trimming, then \texttt{p}
 determines only the lower frequency and \texttt{phi} the upper. 
 
+\subsection{fracorder}
+
+\ArgRet{\texttt{series x, int order} (optional), \texttt{bool verbosity} (optional)}{matrix}
+
+Meta function to invoke all the various ways in gretl to estimate the order of fractional 
+integration of the input series, namely the Local Whittle estimator, the one by 
+Geweke \& Porter-Hudak (GPH), and the Hurst exponent minus $0.5$. The first two 
+are executed through gretl's command \texttt{fractint}, the latter via \texttt{hurst}.%
+\footnote{Another estimation approach for the Hurst exponent is provided in the 
+user-contributed function package 'gen\_hurst'.}
+This function only works with gretl 2020c or higher.
+
+Returns a matrix with three rows corresponding to the methods above; the four columns
+contain (1) the point estimate, (2) its standard error, (3) the test statistic for the null
+hypothesis of integration order zero, (4) the associated p-value. For example, to obtain 
+the standard error of the Local Whittle estimator one picks the 1,2-element of the output
+matrix. The optional 'verbosity' switch is set to 0 (OFF) by default, otherwise the standard
+output of the underlying commands is printed out.
+
+The optional 'order' argument only applies to the Local Whittle and GPH estimators and 
+overrides gretl's default lag order of $\min(T/2, T^{0.6})$. 
+
+For the Hurst method a minimum of 128 observations is required, and test results are 
+never available. Also note that by construction this estimator can only take values between
+$-0.5$ and $0.5$.
+
 \section{Authors}
 \begin{itemize}
 \item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset,
   drill, correspondence: Jack Lucchetti
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
-splitfname, multi\_instrings:
+splitfname, multi\_instrings, fracorder:
 Sven Schreiber 
 
 \item winsor: Sven Schreiber, original code JoshuaHe
@@ -398,6 +424,7 @@ Sven Schreiber
 
 \section{Changelog }
 \begin{itemize}
+\item September 2020: 0.8 (in progress), add fracorder
 \item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to 
 bwritejson, efficiency improvement for zeroifclose
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
