@@ -2407,7 +2407,7 @@ range_dummy_callback (GtkWidget *w, struct range_setting *rset)
 
     if (t2 == t1) {
 	/* a singleton dummy */
-	if (strchr(s1, '/')) {
+	if (strchr(s1, '-')) {
 	    buf = g_strdup_printf("series %s = obs==\"%s\"", vname, s1);
 	} else if (annual_data(dataset)) {
 	    buf = g_strdup_printf("series %s = obs==obsnum(%s)", vname, s1);
@@ -2419,7 +2419,7 @@ range_dummy_callback (GtkWidget *w, struct range_setting *rset)
 	}
     } else {
 	/* a range of 2 or more observations */
-	if (strchr(s1, '/') || strchr(s2, '/')) {
+	if (strchr(s1, '-') || strchr(s2, '-')) {
 	    buf = g_strdup_printf("series %s = obs>=\"%s\" && obs<=\"%s\"",
 				  vname, s1, s2);
 	} else if (annual_data(dataset)) {
