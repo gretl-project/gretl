@@ -131,5 +131,9 @@ print "---- correspondence -----"  ##
 x = $obsminor == 4
 C = seasonals(1,1)
 
-printf "correspondence(x, S4) = %d\n", correspondence(x, S4)
+printf "correspondence(x, S4) = %d\n\n", correspondence(x, S4)
 
+print "---- fracorder ------"
+open djclose.gdt --quiet	# need longer data here
+matrix M = fracorder(ldiff(djclose), 20)
+print M
