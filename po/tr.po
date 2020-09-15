@@ -5,19 +5,20 @@
 #
 # A. Talha YALTA <yalta@etu.edu.tr>, 2008, 2009, 2010.
 # A. Talha Yalta, 2010, 2011, 2012, 2013, 2014, 2015, 2016.
+# talhayalta <talhayalta@gmail.com>, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-17 09:06+0200\n"
-"PO-Revision-Date: 2019-01-21 19:28-0500\n"
-"Last-Translator: A. Talha Yalta\n"
+"PO-Revision-Date: 2020-09-15 14:56+0300\n"
+"Last-Translator: talhayalta <talhayalta@gmail.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Lokalize 2.0\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: lib/src/adf_kpss.c:511
@@ -77,9 +78,9 @@ msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "%s için Genişletmeli Dickey-Fuller sınaması\n"
 
 #: lib/src/adf_kpss.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "testing down from %d lags, criterion %s"
-msgstr "ençok gecikme derecesinden geriye sına"
+msgstr "%d gecikmeden geriye sınama, ölçüt %s"
 
 #: lib/src/adf_kpss.c:567 lib/src/adf_kpss.c:670 lib/src/adf_kpss.c:689
 #: plugin/panurc.c:568
@@ -108,9 +109,8 @@ msgid "with constant and trend"
 msgstr "sabit terim ve eğilim ile"
 
 #: lib/src/adf_kpss.c:614
-#, fuzzy
 msgid "with constant, linear and quadratic trend"
-msgstr "sabit terim ve ikinci dereceden eğilim"
+msgstr "sabit terim, doğrusal ve ikinci derece eğilim"
 
 #: lib/src/adf_kpss.c:641 lib/src/adf_kpss.c:646 lib/src/adf_kpss.c:2266
 #: lib/src/adf_kpss.c:2268 lib/src/bootstrap.c:694 lib/src/compare.c:395
@@ -597,7 +597,7 @@ msgstr "%-16s çıkarıldı (p-değeri %.3f)\n"
 #: lib/src/compare.c:1539
 #, c-format
 msgid "No coefficient has a p-value less than %g"
-msgstr ""
+msgstr "Hiçbir katsayı %g değerinden düşük p-değerine sahip değil"
 
 #: lib/src/compare.c:1903 lib/src/estimate.c:2760 lib/src/gretl_model.c:4168
 #: lib/src/gretl_model.c:4174 lib/src/modelprint.c:877 gui/library.c:3219
@@ -915,9 +915,9 @@ msgid "quarter %s?\n"
 msgstr "%s. üç ay?\n"
 
 #: lib/src/csvdata.c:1190
-#, fuzzy, c-format
+#, c-format
 msgid "quarter %d?\n"
-msgstr "%s. üç ay?\n"
+msgstr "çeyrek no %d?\n"
 
 #: lib/src/csvdata.c:1197
 #, c-format
@@ -962,22 +962,22 @@ msgid "Data file has trailing commas\n"
 msgstr "Veri dosyasında birbirini izleyen virgüller var\n"
 
 #: lib/src/csvdata.c:1787
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d double-quotes, max %d per line\n"
-msgstr "%d değişken ve %d gözlem bulundu\n"
+msgstr "%d çift-tırnak bulundu, her satırda ençok %d olabilir\n"
 
 #: lib/src/csvdata.c:1791
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d single-quotes, max %d per line\n"
-msgstr "%d değişken ve %d gözlem bulundu\n"
+msgstr "%d tek-tırnak bulundu, her satırda ençok %d olabilir\n"
 
 #: lib/src/csvdata.c:1819
 msgid "Assuming double-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Geçerli tırnak işaretinin çift-tırnak olduğu varsayılıyor\n"
 
 #: lib/src/csvdata.c:1823
 msgid "Assuming single-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Geçerli tırnak işaretinin tek-tırnak olduğu varsayılıyor\n"
 
 #: lib/src/csvdata.c:2027
 #, c-format
@@ -1001,14 +1001,14 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   Uyarı: %d değişkeni, %d. gözlem değeri kayıp\n"
 
 #: lib/src/csvdata.c:2220
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
-msgstr "HATA: %d (%s) değişkeni, %d. gözlem değeri sayısal-dışı\n"
+msgstr "değişken %d (%s): sayısal olmayan değerler = %d (yüzde %.2f)\n"
 
 #: lib/src/csvdata.c:2227
 #, c-format
 msgid "ERROR: variable %d (%s), observation %d, non-numeric value\n"
-msgstr "HATA: %d (%s) değişkeni, %d. gözlem değeri sayısal-dışı\n"
+msgstr "HATA: %d (%s) değişkeni, %d. gözlem değeri sayısal değil\n"
 
 #: lib/src/csvdata.c:2235
 msgid "allocating string table\n"
@@ -1188,21 +1188,20 @@ msgstr "%s: '%s' sütunu bulunamadı"
 #: lib/src/csvdata.c:6059
 #, c-format
 msgid "%s: string key on left but numeric on right"
-msgstr "%s: soldaki metin ama sağdaki sayısal"
+msgstr "%s: soldaki karakter ama sağdaki sayısal"
 
 #: lib/src/csvdata.c:6061
 #, c-format
 msgid "%s: string key on right but numeric on left"
-msgstr "%s: sağdaki metin ama soldaki sayısal"
+msgstr "%s: sağdaki karakter ama soldaki sayısal"
 
 #: lib/src/csvdata.c:6398 lib/src/csvdata.c:6403 gui/library.c:4606
 msgid "Series length does not match the dataset"
 msgstr "Seri uzunluğu veri seti ile uyuşmuyor"
 
 #: lib/src/csvdata.c:6442 lib/src/csvdata.c:6739 lib/src/csvdata.c:6829
-#, fuzzy
 msgid "Invalid join specification"
-msgstr "Geçersiz sütun belirtimi"
+msgstr "Geçersiz birleştirme belirtimi"
 
 #: lib/src/csvdata.c:7013
 #, c-format
@@ -1215,14 +1214,12 @@ msgid "Data appended OK\n"
 msgstr "Verilere iliştirme başarılı\n"
 
 #: lib/src/csvdata.c:7147
-#, fuzzy
 msgid "Data modified OK\n"
-msgstr "Verilere iliştirme başarılı\n"
+msgstr "Verilerde değişiklik başarılı\n"
 
 #: lib/src/csvdata.c:7149
-#, fuzzy
 msgid "No changes were made to the dataset\n"
-msgstr "Yapılan bir değişiklik yok"
+msgstr "Verisetinde bir değişiklik yapılmadı\n"
 
 #: lib/src/dataio.c:109
 msgid "Varname exceeds the maximum of 31 characters"
@@ -1339,7 +1336,7 @@ msgstr ""
 
 #: lib/src/dataio.c:2857
 msgid "No markers are available for writing"
-msgstr "Elde yazmak için imleç yok"
+msgstr "Elimizde yazmak için imleç yok"
 
 #: lib/src/dataio.c:2938
 #, c-format
@@ -1467,9 +1464,9 @@ msgid "The data set is currently sub-sampled.\n"
 msgstr "Veri seti şu an altörneklemeli durumda.\n"
 
 #: lib/src/dataset.c:2897
-#, fuzzy, c-format
+#, c-format
 msgid "Panel time extended by %d observations"
-msgstr "Veri seti %d gözlem ile genişletildi"
+msgstr "Panel dönemi %d gözlem uzatıldı"
 
 #: lib/src/dataset.c:2903
 #, c-format
@@ -1508,9 +1505,9 @@ msgid "dataset restore: dataset is not resampled\n"
 msgstr "Veri seti geri yerleştirme: yeniden örneklemeli değil\n"
 
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4256
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data found"
-msgstr "Bulunan veri yok.\n"
+msgstr "%s: veri bulunamadı"
 
 #: lib/src/dbread.c:406 lib/src/dbread.c:690
 msgid "Couldn't open database index file"
@@ -1648,9 +1645,9 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "%s dizeyi bir olumsallık çizelgesi anlatmıyor"
 
 #: lib/src/describe.c:2809
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s: not a discrete variable\n"
-msgstr "%s: dizgi değişkeni değil"
+msgstr "%s çıkartılıyor: kesikli değişken değil\n"
 
 #: lib/src/describe.c:3108 lib/src/describe.c:3293 lib/src/describe.c:3841
 #: lib/src/geneval.c:8610 lib/src/transforms.c:900 lib/src/transforms.c:1499
@@ -1894,13 +1891,11 @@ msgstr ""
 
 #: lib/src/describe.c:4892 lib/src/describe.c:5567 gui/guiprint.c:621
 #: gui/guiprint.c:1030
-#, fuzzy
 msgid "Min"
-msgstr "Ana"
+msgstr "Enaz"
 
 #: lib/src/describe.c:4893 lib/src/describe.c:5568 gui/guiprint.c:621
 #: gui/guiprint.c:1030
-#, fuzzy
 msgid "Max"
 msgstr "Ençok"
 
@@ -2324,13 +2319,12 @@ msgid "Specification includes time dummies: cannot forecast out of sample"
 msgstr ""
 
 #: lib/src/forecast.c:3061
-#, fuzzy
 msgid "No out-of-sample observations are available"
-msgstr "Elde uygun veriler yok"
+msgstr "Elde örneklem-dışı gözlem yok"
 
 #: lib/src/forecast.c:3064
 msgid "The --out-of-sample option is only supported in the time dimension"
-msgstr ""
+msgstr "--out-of-sample seçeneği yalnızca zaman boyutunda destekleniyor"
 
 #: lib/src/forecast.c:3579 lib/src/genmain.c:100
 #, c-format
@@ -2343,14 +2337,12 @@ msgid "Generated series %s (ID %d)"
 msgstr "%s serisi (Kimlik# %d) oluşturuldu"
 
 #: lib/src/forecast.c:3883
-#, fuzzy
 msgid "Forecast plot not implemented for panel data"
-msgstr "'%s': listeler için eklenmedi"
+msgstr "Yordama çizimi panel verileri için desteklenmiyor"
 
 #: lib/src/geneval.c:1317
-#, fuzzy
 msgid "complex operands are not supported"
-msgstr "Internet erişimi desteklenmiyor"
+msgstr "karmaşık işlemler desteklenmiyor"
 
 #: lib/src/geneval.c:1324
 #, fuzzy
@@ -2405,7 +2397,7 @@ msgstr "Değişken sayısı %d sınırlar dışında"
 
 #: lib/src/geneval.c:5202 lib/src/gensyntax.c:400
 msgid "Wrong type of operand for unary '&'"
-msgstr "'&' teklisi için yanlış işlenen türü"
+msgstr "'&' teklisi için yanlış işlem türü"
 
 #: lib/src/geneval.c:7341 lib/src/geneval.c:7367 lib/src/gretl_func.c:8719
 #, c-format
@@ -2453,7 +2445,7 @@ msgstr "Seri uzunluğu veri seti ile uyuşmuyor"
 #: lib/src/geneval.c:17804
 #, c-format
 msgid "'%s' : not implemented for this type"
-msgstr "'%s': bu tür için eklenmedi"
+msgstr "'%s': bu tür için desteklenmiyor"
 
 #: lib/src/geneval.c:10756
 #, fuzzy
@@ -2505,12 +2497,12 @@ msgstr "%s: argüman %d için geçersiz tür %s"
 #: lib/src/geneval.c:15428
 #, c-format
 msgid "%s: operand should be %s"
-msgstr "%s: işlenen, %s olmalı"
+msgstr "%s: işlem türü %s olmalı"
 
 #: lib/src/geneval.c:15431
 #, c-format
 msgid "%s: operand %d should be %s"
-msgstr "%s: %d işleneni %s olmalı"
+msgstr "%s: %d işlem türü %s olmalı"
 
 #: lib/src/geneval.c:15436
 #, c-format
@@ -2550,22 +2542,22 @@ msgstr ""
 #: lib/src/geneval.c:17780
 #, c-format
 msgid "'%s' : not implemented for matrices"
-msgstr "'%s': dizeyler için eklenmedi"
+msgstr "'%s': dizeyler için desteklenmiyor"
 
 #: lib/src/geneval.c:17784
 #, c-format
 msgid "'%s' : not implemented for lists"
-msgstr "'%s': listeler için eklenmedi"
+msgstr "'%s': listeler için desteklenmiyor"
 
 #: lib/src/geneval.c:17788
 #, c-format
 msgid "'%s' : not implemented for strings"
-msgstr "'%s': dizgiler için eklenmedi"
+msgstr "'%s': karakter dizgileri için desteklenmiyor"
 
 #: lib/src/geneval.c:17792
 #, c-format
 msgid "'%s' : not implemented for arrays"
-msgstr "'%s': dizgeler için eklenmedi"
+msgstr "'%s': dizgeler için desteklenmiyor"
 
 #: lib/src/geneval.c:17800
 #, c-format
@@ -2791,12 +2783,12 @@ msgstr "%s adlı sayıl oluşturuldu"
 #: lib/src/genmain.c:93
 #, c-format
 msgid "Modified series %s (ID %d)"
-msgstr "%s serisi (Kimlik# %d) kiplendi (modify)"
+msgstr "%s serisinde (Kimlik# %d) değişiklik yapıldı"
 
 #: lib/src/genmain.c:108
 #, c-format
 msgid "Modified matrix %s"
-msgstr "%s dizeyi kiplendi (modify)"
+msgstr "%s dizeyinde değişiklik yapıldı"
 
 #: lib/src/genmain.c:110
 #, c-format
@@ -2809,9 +2801,9 @@ msgid "Generated matrix %s"
 msgstr "%s dizeyi oluşturuldu"
 
 #: lib/src/genmain.c:119
-#, fuzzy, c-format
+#, c-format
 msgid "Modified list %s"
-msgstr "%s dizeyi kiplendi (modify)"
+msgstr "%s listesinde değişiklik yapıldı"
 
 #: lib/src/genmain.c:121
 #, c-format
@@ -2824,9 +2816,9 @@ msgid "Generated list %s"
 msgstr "%s listesi oluşturuldu"
 
 #: lib/src/genmain.c:127
-#, fuzzy, c-format
+#, c-format
 msgid "Modified string %s"
-msgstr "%s dizeyi kiplendi (modify)"
+msgstr "%s dizgisinde değişiklik yapıldı"
 
 #: lib/src/genmain.c:129
 #, c-format
@@ -2853,7 +2845,7 @@ msgstr "Panel kukla değişkenleri oluşturuldu.\n"
 
 #: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
 msgid "complex arguments/operands not supported"
-msgstr ""
+msgstr "karmaşık argümanlar/işlemler desteklenmiyor"
 
 #: lib/src/genmpi.c:148 lib/src/genmpi.c:370
 msgid "The MPI library is not loaded"
@@ -3008,9 +3000,8 @@ msgid "Relative frequency"
 msgstr "Göreli sıklık"
 
 #: lib/src/graphing.c:5329 lib/src/graphing.c:5336
-#, fuzzy
 msgid "relative frequency"
-msgstr "Göreli sıklık"
+msgstr "göreli sıklık"
 
 #: lib/src/graphing.c:5397 gui/menustate.c:586
 msgid "Correlation matrix"
@@ -3063,9 +3054,8 @@ msgid "time"
 msgstr "zaman"
 
 #: lib/src/graphing.c:7597
-#, fuzzy
 msgid "This command needs panel data"
-msgstr "Bu paket panel verilerine gerek duyar."
+msgstr "Bu komut panel verilerine gerek duyar"
 
 #: lib/src/graphing.c:7727
 #, c-format
@@ -3371,7 +3361,7 @@ msgstr "Komut argümanları yetersiz"
 
 #: lib/src/gretl_errors.c:54
 msgid "This command is implemented only for OLS models"
-msgstr "Bu komut yalnızca SEK modelleri için sağlanmaktadır"
+msgstr "Bu komut yalnızca SEK modelleri için desteklenmektedir"
 
 #: lib/src/gretl_errors.c:55
 msgid "Invalid argument"
@@ -4443,8 +4433,8 @@ msgid ""
 "These variables have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
-"Bir ya da birden fazla sayısal-dışı değişken bulundu.\n"
-"Bu değişkenlere verilmiş olan sayısal kodlar aşağıdadır.\n"
+"Bir ya da daha fazla sayısal olmayan değişken bulundu.\n"
+"Bu değişkenlere aşağıdaki sayısal kodlar verildi.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:643
@@ -4675,23 +4665,21 @@ msgid "'%s': malformed gdt file"
 msgstr ""
 
 #: lib/src/gretl_xml.c:4002 gui/gpt_control.c:5642 plugin/geoplot.c:1207
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't read '%s'"
-msgstr "'%s' açılamadı"
+msgstr "'%s' okunamadı"
 
 #: lib/src/gretl_zip.c:495 lib/src/gretl_zip.c:503
 msgid "not found"
 msgstr "bulunamadı"
 
 #: lib/src/interact.c:793
-#, fuzzy
 msgid "is a 0/1 variable"
-msgstr "X-ekseni değişkeni"
+msgstr "0/1 değişkenidir"
 
 #: lib/src/interact.c:794
-#, fuzzy
 msgid "not integer-valued"
-msgstr "Kurulu değil"
+msgstr "tamsayı değil"
 
 #: lib/src/interact.c:886 lib/src/printout.c:2023
 msgid "No series are defined\n"
@@ -6349,7 +6337,7 @@ msgstr "Sayılları bu bağlamda silemezsiniz\n"
 #: lib/src/monte_carlo.c:3607
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
-msgstr "%s: 'ilerlemeli' döngülerde eklenmedi"
+msgstr "%s: 'ilerlemeli' döngülerde desteklenmiyor"
 
 #: lib/src/nls.c:260
 #, c-format
@@ -7208,9 +7196,9 @@ msgid "Poisson (mean = %g): "
 msgstr "Poisson (ortalama = %g): "
 
 #: lib/src/pvalues.c:3832
-#, fuzzy, c-format
+#, c-format
 msgid "Exponential (scale = %g): "
-msgstr "GED (şekil = %g): "
+msgstr "Üstel (ölçek = %g): "
 
 #: lib/src/pvalues.c:3840
 #, c-format
@@ -7223,9 +7211,9 @@ msgid "GED (shape = %g): "
 msgstr "GED (şekil = %g): "
 
 #: lib/src/pvalues.c:3857
-#, fuzzy, c-format
+#, c-format
 msgid "Laplace (mean = %g, scale = %g): "
-msgstr "Weibull (şekil = %g, ölçek = %g): "
+msgstr "Laplace (ortalama = %g, ölçek = %g): "
 
 #: lib/src/strutils.c:717 lib/src/strutils.c:739 lib/src/tokenize.c:3394
 #, c-format
@@ -7273,7 +7261,7 @@ msgstr "'--balanced' seçeneği geçersiz: (tam) veri seti panel değil"
 
 #: lib/src/subsample.c:2109 lib/src/subsample.c:2360 gui/ssheet.c:4115
 msgid "The dataset cannot be modified at present"
-msgstr "Veri seti şu an kiplenemiyor (modify)"
+msgstr "Veri setinde şu an değişiklik yapılamıyor"
 
 #: lib/src/subsample.c:2119
 msgid ""
@@ -8761,7 +8749,7 @@ msgstr "gretl: rastsal değişken ekle"
 
 #: gui/calculator.c:3096 gui/selector.c:7928
 msgid "No suitable data are available"
-msgstr "Elde uygun veriler yok"
+msgstr "Elde uygun veri yok"
 
 #: gui/calculator.c:3281
 msgid "gretl: plot a curve"
@@ -8805,7 +8793,7 @@ msgstr "her iki yığınsal"
 
 #: gui/callbacks.c:248
 msgid "Sorry, this item not yet implemented!"
-msgstr "Üzgünüm, bu nesne daha eklenmedi!"
+msgstr "Üzgünüm, bu madde henüz desteklenmiyor"
 
 #: gui/callbacks.c:373 gui/dialogs.c:5399
 msgid "gretl: warning"
@@ -9226,22 +9214,20 @@ msgid "showing series %d-%d of %d"
 msgstr ""
 
 #: gui/database.c:3587
-#, fuzzy
 msgid "No datasets were found"
-msgstr "Bulunan kullanılabilir veri yok"
+msgstr "Hiçbir veriseti bulunamadı"
 
 #: gui/database.c:3682 gui/database.c:3711
-#, fuzzy
 msgid "No series were found"
-msgstr "Bulunan gözlem yok"
+msgstr "Hiçbir seri bulunamadı"
 
 #: gui/database.c:3830 gui/database.c:3953
 msgid "No function packages found"
-msgstr "Bulunan işlev paketi yok"
+msgstr "Hiçbir işlev paketi bulunamadı"
 
 #: gui/database.c:4030
 msgid "No data packages found"
-msgstr "Bulunan veri paketi yok"
+msgstr "Hiçbir veri paketi bulunamadı"
 
 #: gui/datafiles.c:688
 msgid "data info"
@@ -9282,7 +9268,7 @@ msgstr "%s gerçekten silinsin mi?"
 
 #: gui/datafiles.c:1016 gui/datafiles.c:1057
 msgid "No function files were found"
-msgstr "Bulunan işlev dosyası yok"
+msgstr "Hiçbir işlev dosyası bulunamadı"
 
 #: gui/datafiles.c:1022
 #, c-format
@@ -9480,13 +9466,12 @@ msgid "gretl: packages on menus"
 msgstr "gretl: menülerdeki paketler"
 
 #: gui/datafiles.c:2694
-#, fuzzy
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Please try /File/Functions packages/On server"
 msgstr ""
-"Bu bilgisayarda gretl işlev paketi bulunamadı.\n"
-"Lütfen /Araçlar/İşlev paketleri/Sunucu... yolunu deneyiniz"
+"Bu bilgisayarda hiçbir gretl işlev paketi bulunamadı.\n"
+"Lütfen /Dosya/İşlev paketleri/Sunucu... yolunu deneyiniz"
 
 #: gui/datafiles.c:2873 gui/datafiles.c:2878
 msgid "File"
@@ -11130,7 +11115,7 @@ msgstr "seçim (ya da yeni değişken)"
 
 #: gui/fncall.c:1658
 msgid "allow access to out-of-sample data"
-msgstr ""
+msgstr "örneklem-dışı verilere izin ver"
 
 #: gui/fncall.c:1669
 msgid "close this dialog on \"OK\""
@@ -11142,7 +11127,7 @@ msgstr "İşlev seçiniz"
 
 #: gui/fncall.c:2337
 msgid "This function needs a model in place"
-msgstr "Bu işlev hazırda bir model olmasını istemektedir."
+msgstr "Bu işlev hazırda bir modele gerek duyar"
 
 #: gui/fncall.c:2388
 msgid "Function package is broken"
@@ -11421,12 +11406,13 @@ msgstr ""
 "Pakete eklenmek üzere veri dosyası adları ekleyebilir ya da silebilirsiniz."
 
 #: gui/fnsave.c:2759
-#, fuzzy
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
 "Leave off the .gfn or .zip suffix."
 msgstr ""
-"Pakete eklenmek üzere veri dosyası adları ekleyebilir ya da silebilirsiniz."
+"Bağımlılık olarak kaydedilmek üzere paket adları ekleyebilir ya da"
+" silebilirsiniz.\n"
+".gfn veya .zip uzantılarını eklemeyin."
 
 #: gui/fnsave.c:2780
 msgid "provider?"
@@ -11474,9 +11460,8 @@ msgid "Data files"
 msgstr "Veri dosyaları"
 
 #: gui/fnsave.c:3682
-#, fuzzy
 msgid "Dependencies"
-msgstr "Bağımlı değişken"
+msgstr "Bağımlı değişkenler"
 
 #: gui/fnsave.c:3784
 msgid "Email"
@@ -11726,7 +11711,7 @@ msgstr "Düzenle"
 
 #: gui/gpt_control.c:4450 gui/gpt_control.c:4526
 msgid "Font"
-msgstr "Yazı tipi"
+msgstr "Yazıtipi"
 
 #: gui/gpt_control.c:4452 gui/gpt_control.c:4528 gui/gpt_control.c:4534
 #: gui/gui_utils.c:2020
@@ -11803,11 +11788,11 @@ msgstr "Geçersiz konum, X Y şeklinde olmalı"
 #: gui/gpt_dialog.c:1896 gui/gpt_dialog.c:1898 gui/graphics.c:386
 #, c-format
 msgid "font: %s"
-msgstr "yazı tipi: %s"
+msgstr "yazıtipi: %s"
 
 #: gui/gpt_dialog.c:1232 gui/gpt_dialog.c:1329
 msgid "Font for graphs"
-msgstr "Çizim yazı tipi"
+msgstr "Çizim yazıtipi"
 
 #: gui/gpt_dialog.c:1429 gui/settings.c:2534 gui/settings.c:2714
 #: gui/settings.c:2796 gui/settings.c:2883
@@ -11892,19 +11877,16 @@ msgid "No formula was given"
 msgstr "Verili bir formül yok"
 
 #: gui/gpt_dialog.c:2333
-#, fuzzy
 msgid "box"
-msgstr "kutular"
+msgstr "kutu"
 
 #: gui/gpt_dialog.c:2338
-#, fuzzy
 msgid "c.i. bound"
-msgstr "sağ sınır"
+msgstr "güven aralığı sınırı"
 
 #: gui/gpt_dialog.c:2340 gui/gpt_dialog.c:2346
-#, fuzzy
 msgid "outliers"
-msgstr "Dışadüşenler"
+msgstr "dışadüşenler"
 
 #: gui/gpt_dialog.c:2366
 #, c-format
@@ -11924,9 +11906,8 @@ msgid "type"
 msgstr "tür"
 
 #: gui/gpt_dialog.c:2764
-#, fuzzy
 msgid "line"
-msgstr "çizgiler"
+msgstr "çizgi"
 
 #: gui/gpt_dialog.c:2765
 msgid "line width"
@@ -12078,13 +12059,12 @@ msgid "Preview"
 msgstr "Önizleme"
 
 #: gui/gretl.c:126
-#, fuzzy
 msgid ""
 "\n"
 "You may supply the name of a data or script file on the command line"
 msgstr ""
 "\n"
-"Bir veri dosyası adını komut satırında sağlayabilirsiniz"
+"Bir veri ya da betik dosyası adını komut satırında sağlayabilirsiniz"
 
 #: gui/gretl.c:130
 msgid "open a script file on startup"
@@ -12147,9 +12127,8 @@ msgid " No datafile loaded "
 msgstr " Yüklü bir veri dosyası yok "
 
 #: gui/gretl.c:1581
-#, fuzzy
 msgid "Working directory: click to configure"
-msgstr "Çalışma dizini:"
+msgstr "Çalışma dizini: ayarlamak için tıklayın"
 
 #: gui/gretl.c:1689 gui/gretl.c:1701
 msgid "_User file..."
@@ -12300,9 +12279,8 @@ msgid "Edit spec file..."
 msgstr "Spec dosyası düzenle..."
 
 #: gui/gretl.c:1736
-#, fuzzy
 msgid "_Resource from addon"
-msgstr "Tam aralığı geri _getir"
+msgstr "_Eklentiden kaynak sağla"
 
 #: gui/gretl.c:1741
 msgid "_Tools"
@@ -12317,18 +12295,16 @@ msgid "_General..."
 msgstr "_Genel..."
 
 #: gui/gretl.c:1745
-#, fuzzy
 msgid "Font _scale..."
-msgstr "X-Y _serpilim çizimi..."
+msgstr "Yazıtipi _ölçeği..."
 
 #: gui/gretl.c:1747
-#, fuzzy
 msgid "Monospaced _font..."
-msgstr "Menü yazı tipi..."
+msgstr "Eşaralıklı _yazıtipi..."
 
 #: gui/gretl.c:1749 gui/gretl.c:2074
 msgid "_Menu font..."
-msgstr "_Menü yazı tipi..."
+msgstr "_Menü yazıtipi..."
 
 #: gui/gretl.c:1751
 msgid "_Statistical tables"
@@ -12803,9 +12779,8 @@ msgid "_Model"
 msgstr "_Model"
 
 #: gui/gretl.c:1899
-#, fuzzy
 msgid "_Ordinary Least Squares"
-msgstr "Sıradan Enküçük Kareler"
+msgstr "_Sıradan Enküçük Kareler"
 
 #: gui/gretl.c:1900
 msgid "_Instrumental variables"
@@ -13133,11 +13108,11 @@ msgstr "abcçdefgğhıi ABCÇDEFGĞHIİ"
 
 #: gui/gtkfontselhack.c:250
 msgid "Font name"
-msgstr "Yazı tipi adı"
+msgstr "Yazıtipi adı"
 
 #: gui/gtkfontselhack.c:251
 msgid "The X string that represents this font"
-msgstr "Bu yazı tipini temsil eden X dizgisi"
+msgstr "Bu yazıtipini temsil eden X dizgisi"
 
 #: gui/gtkfontselhack.c:257
 msgid "Preview text"
@@ -13145,7 +13120,7 @@ msgstr "Metin önizleme"
 
 #: gui/gtkfontselhack.c:258
 msgid "The text to display in order to demonstrate the selected font"
-msgstr "Seçili yazı tipini tanıtmak için gösterilecek metin"
+msgstr "Seçili yazıtipini tanıtmak için gösterilecek metin"
 
 #: gui/gtkfontselhack.c:264
 msgid "Filter"
@@ -13153,7 +13128,7 @@ msgstr "Süzgeç"
 
 #: gui/gtkfontselhack.c:265
 msgid "The filter for acceptable fonts."
-msgstr "Kabul edilebilir yazı tipleri için süzgeç."
+msgstr "Kabul edilebilir yazıtipleri için süzgeç."
 
 #: gui/gtkfontselhack.c:356
 msgid "_Family:"
@@ -13173,7 +13148,7 @@ msgstr "_Önizleme:"
 
 #: gui/gtkfontselhack.c:1324
 msgid "Font Selection"
-msgstr "Yazı tipi seçimi"
+msgstr "Yazıtipi Seçimi"
 
 #: gui/gui_utils.c:212
 msgid "equation"
@@ -13214,7 +13189,7 @@ msgstr "_Kopyala"
 
 #: gui/gui_utils.c:229
 msgid "_Modify model..."
-msgstr "_Belirtimi gözden geçir"
+msgstr "_Modelde değişiklik yap..."
 
 #: gui/gui_utils.c:232
 msgid "_Restore model sample"
@@ -14322,9 +14297,8 @@ msgid "Import data from %s"
 msgstr "İçe aktar"
 
 #: gui/join-gui.c:318 gui/join-gui.c:326
-#, fuzzy
 msgid "gretl: join data"
-msgstr "gretl: veri aç"
+msgstr "gretl: verileri birleştir"
 
 #: gui/join-gui.c:422
 #, fuzzy
@@ -14734,7 +14708,7 @@ msgstr "gretl: Chow sınama çıktıları"
 
 #: gui/library.c:3113
 msgid "This test only implemented for OLS models"
-msgstr "Bu sınama yalnızca SEK modelleri için sağlanmaktadır"
+msgstr "Bu sınama yalnızca SEK modelleri için desteklenmektedir"
 
 #: gui/library.c:3144
 msgid "gretl: chow test"
@@ -14790,7 +14764,7 @@ msgstr ""
 
 #: gui/library.c:4227
 msgid "Sorry, not implemented yet!"
-msgstr "Üzgünüm, daha eklenmedi!"
+msgstr "Üzgünüm, henüz desteklenmiyor!"
 
 #: gui/library.c:4243
 msgid "gretl: GARCH"
@@ -16864,17 +16838,16 @@ msgid "Use HTTP proxy"
 msgstr "HTTP vekili kullan"
 
 #: gui/settings.c:298
-#, fuzzy
 msgid "Monospaced font"
-msgstr "yorumlar için boşluk"
+msgstr "Eşaralıklı yazıtipi"
 
 #: gui/settings.c:300
 msgid "Menu font"
-msgstr "Menü yazı tipi"
+msgstr "Menü yazıtipi"
 
 #: gui/settings.c:306
 msgid "PNG graph font"
-msgstr "PNG çizim yazı tipi"
+msgstr "PNG çizimi yazıtipi"
 
 #: gui/settings.c:308
 #, fuzzy
@@ -16998,28 +16971,27 @@ msgstr "Bu değişiklik gretl'ı yeniden başlattığınızda etkili olacaktır"
 
 #: gui/settings.c:2533
 msgid "Select a specific font"
-msgstr "Belli bir yazı tipini seç"
+msgstr "Belli bir yazıtipini seç"
 
 #: gui/settings.c:2667 gui/settings.c:2777
 msgid "Font for gretl output windows"
-msgstr "Gretl çıktı penceresi yazı tipi"
+msgstr "Gretl çıktı penceresi yazıtipi"
 
 #: gui/settings.c:2671 gui/settings.c:2781
 msgid "Font for menus and labels"
-msgstr "Menü ve etiketler için yazı tipi"
+msgstr "Menü ve etiketler için yazıtipi"
 
 #: gui/settings.c:2862
 msgid "Remember this setting"
 msgstr ""
 
 #: gui/settings.c:2872
-#, fuzzy
 msgid "gretl: font scale"
-msgstr "gretl: örneklem sapta"
+msgstr "gretl: yazıtipi ölçeği"
 
 #: gui/settings.c:2877
 msgid "Scale for monospaced and menu fonts"
-msgstr ""
+msgstr "Eşaralıklı ve menü yazıtipleri ölçeği"
 
 #: gui/settings.c:3028
 msgid "Working directory:"
@@ -18131,7 +18103,7 @@ msgstr "yineleme"
 
 #: plugin/arma_common.c:527
 msgid "No usable data were found"
-msgstr "Bulunan kullanılabilir veri yok"
+msgstr "Kullanılabilir veri bulunamadı"
 
 #: plugin/arma_common.c:731 plugin/arma_common.c:812
 msgid "Error in arma command"
@@ -18165,11 +18137,11 @@ msgstr "Dizgi endeksi aşırı geniş"
 #: plugin/excel_import.c:932
 #, c-format
 msgid "%s: No BOF record found"
-msgstr "%s: Bulunan BOF kaydı yok"
+msgstr "%s: Hiçbir BOF kaydı bulunamadı"
 
 #: plugin/excel_import.c:1476 plugin/excel_import.c:1515
 msgid "No data found.\n"
-msgstr "Bulunan veri yok.\n"
+msgstr "Hiçbir veri bulunamadı.\n"
 
 #: plugin/excel_import.c:1650 plugin/gnumeric_import.c:652
 msgid "Failed to get workbook info"
@@ -18177,7 +18149,7 @@ msgstr "Çalışma kitabı bilgisi alma başarısız"
 
 #: plugin/excel_import.c:1653 plugin/gnumeric_import.c:660
 msgid "No worksheets found"
-msgstr "Bulunan çalışma sayfası yok"
+msgstr "Hiçbir çalışma sayfası bulunamadı"
 
 #: plugin/excel_import.c:1669 plugin/gnumeric_import.c:676
 #: plugin/ods_import.c:1174 plugin/xlsx_import.c:1348 plugin/xlsx_import.c:1408
@@ -18206,7 +18178,7 @@ msgid ""
 "Expected numeric data, found string:\n"
 "%s\" at row %d, column %d\n"
 msgstr ""
-"Sayısal veriler beklenirken dizgi bulundu:\n"
+"Sayısal veriler beklenirken karakter dizgisi bulundu:\n"
 "%s\" (satır %d, sütun %d)\n"
 
 #: plugin/fcp.c:246
@@ -18306,7 +18278,7 @@ msgstr "Seçim denklemi"
 
 #: plugin/import_common.c:164 plugin/import_common.c:309
 msgid "No numeric data were found"
-msgstr "Bulunan sayısal veriler yok"
+msgstr "Hiçbir sayısal veri bulunamadı"
 
 #: plugin/import_common.c:536
 #, c-format
@@ -18519,7 +18491,7 @@ msgstr "('*' kaldıraç noktasını göstermektedir.)"
 
 #: plugin/leverage.c:347
 msgid "No leverage points were found"
-msgstr "Bulunan kaldıraç noktası yok"
+msgstr "Hiçbir kaldıraç noktası bulunamadı"
 
 #: plugin/leverage.c:350
 msgid "Cross-validation criterion"
@@ -18618,7 +18590,7 @@ msgid ""
 "Expected numeric data, found string:\n"
 "'%s' at row %d, column %d\n"
 msgstr ""
-"Sayısal veriler beklenirken dizgi bulundu:\n"
+"Sayısal veriler beklenirken karakter dizgisi bulundu:\n"
 "'%s' (satır %d, sütun %d)\n"
 
 #: plugin/ods_import.c:423
@@ -18693,7 +18665,7 @@ msgstr "gretl: veriler yerleştiriliyor"
 
 #: plugin/progress_bar.c:64
 msgid "gretl: scanning fonts"
-msgstr "gretl: yazı tipleri taranıyor"
+msgstr "gretl: yazıtipleri taranıyor"
 
 #: plugin/progress_bar.c:135
 msgid "Retrieving"
@@ -18706,7 +18678,7 @@ msgstr "Yerleştiriliyor"
 #: plugin/progress_bar.c:138
 #, c-format
 msgid "Scanning %d fonts"
-msgstr "%d yazı tipi taranıyor"
+msgstr "%d yazıtipi taranıyor"
 
 #: plugin/quantreg.c:380
 msgid "Couldn't calculate confidence intervals for this model"
@@ -19079,7 +19051,7 @@ msgstr "Dosyada veri yok\n"
 
 #: plugin/xlsx_import.c:1299
 msgid "Found no sheets\n"
-msgstr "Bulunan sayfa yok\n"
+msgstr "Hiçbir sayfa bulunamadı\n"
 
 #: plugin/xlsx_import.c:1346
 #, c-format
@@ -19093,7 +19065,7 @@ msgid ""
 "Found %d valid sheet(s)\n"
 msgstr ""
 "\n"
-"%d geçerli sayfa(lar) bulundu\n"
+"%d geçerli sayfa bulundu\n"
 
 #: doc/commands/matfuncs.c:44
 msgid "Creation and I/O"
