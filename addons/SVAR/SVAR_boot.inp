@@ -1,6 +1,7 @@
 function void boot_printout(int type, int n, int rep,
-                            int failed, matrix *Spar_mat)
-
+                            int failed, const matrix Spar_mat)
+    # Sep 2020: change from pointerized Spar_mat to const 
+    
     matrix bm = meanc(Spar_mat)
     matrix bV = mcov(Spar_mat)
     scalar nc = cols(Spar_mat)
@@ -17,7 +18,7 @@ function void boot_printout(int type, int n, int rep,
     printf "Bootstrap results (%d replications, %d failed)\n", \
       rep + failed, failed
 
-    if (type != 3) && ( cols(Spar_mat) == 2 * n2 )
+    if (type != 3) && ( nc == 2 * n2 )	# was cols(Spar_mat)
         # Long-run matrix at the end exists!
         # And so this is a model with long-run restrictions
         # (Bl-Quah-style or SVEC),
@@ -50,7 +51,7 @@ end function
 
 ###############
 
-function matrix bias_correction(const bundle b, const matrix mu,
+function matrix bias_correction(const bundle b, 
                                 const matrix Y0, matrix *BC,
 								const bundle bparams[null])
 
@@ -69,25 +70,29 @@ function matrix bias_correction(const bundle b, const matrix mu,
 	   (So the check below for what we need in the bundle.)
     */
 
-	if !inbundle(b,"BCiter") || !inbundle(b,"VARpar") || \
-		!inbundle(b,"E") || !inbundle(b,"X") || !inbundle(b,"boottype")
+    if !inbundle(b,"BCiter") || !inbundle(b,"VARpar") || \
+      !inbundle(b,"E") || !inbundle(b,"X") || !inbundle(b,"boottype") || \
+      !inbundle(b,"bmu")      
 		funcerr "needed input missing in bundle arg" 
 	endif
 
-    n = rows(b.VARpar)
-    p = cols(b.VARpar)/n
-    k = cols(b.X)
-    cmu = cols(mu)
-    rY0 = rows(Y0)
+    # n = rows(b.VARpar)
+    # p = cols(b.VARpar)/n
+    # k = cols(b.X)
+    # cmu = cols(mu)
+    # rY0 = rows(Y0)
 
     # check for stationarity first
     scalar maxmod = max_eval(b.VARpar)
 
     if maxmod < 0.9999
-        matrix Ab = zeros(n, n*p)
+        
         matrix innov = prepres(b.E, b.boottype)
-		matrix U
-
+		
+        # matrix U
+        # matrix Ab = zeros(n, n*p)
+        # -------
+        /*
         loop i=1 .. b.BCiter --quiet
 			if exists(bparams)
 				U = zeros(p,n) | drawbootres(innov, b.boottype, bparams)
@@ -105,6 +110,14 @@ function matrix bias_correction(const bundle b, const matrix mu,
         endloop
 
         Ab = Ab ./ b.BCiter
+        */
+        #------
+        
+        bundle bootstuff = defbundle("Y0",Y0, "innov",innov)
+        if exists(bparams)
+            bootstuff.bparams = bparams
+        endif 
+        matrix Ab = avg_VARpar_boot(b, bootstuff)[1]
         matrix BC = b.VARpar - Ab
         add_and_smash(&Ab, BC) 	 # was H = ..., unused
 
@@ -114,9 +127,49 @@ function matrix bias_correction(const bundle b, const matrix mu,
     return Ab
 end function
 
+####################
 
-function matrix calc_bmu(const bundle obj)
+function matrices avg_VARpar_boot(const bundle b, const bundle stuff)
+    # In principle we could call base_est() below in the loop,                             
+    # because that's what it's for, but since we only need 
+    # the reduced-form AR coefficients, it's not worth it...
+                             
+    # This function returns an array (matrices) just in case in the 
+    # future we want to apply the parallel_func MPI approach to it. 
+    # (This is a requirement there.)
+    # Of course in essence it's still just a single matrix. 
+    
+    bundle bparams = inbundle(stuff, "bparams") ? stuff.bparams : null
+      
+    # simulate the average reduced-form coeffs
+    matrix Absum = zeros(b.n, b.n*b.p) 
+    matrix lagseq = seq(1,b.p) 
+    matrix Uinit = zeros(b.p, b.n)
+    
+
+    if rows(stuff.Y0) != b.p
+        funcerr "wrong assumption about length of Y initvals here!"
+    endif
+                              
+    loop i=1 .. b.BCiter --quiet
+        matrix U = Uinit | drawbootres(stuff.innov, b.boottype, bparams) 
+        if cols(b.bmu) > 0	# was mu
+            U += b.bmu 
+        endif
+        matrix bY  = varsimul(b.VARpar, U[b.p + 1: ,], stuff.Y0) # was rows(stuff.Y0)+1
+        matrix reg = b.X ~ mlag(bY, lagseq)
+        matrix Pi  = mols(bY[b.p + 1: ,], reg[b.p + 1: ,])
+        Absum += transp(Pi[b.k + 1: b.k + b.n*b.p, ])
+    endloop
+     
+    return defarray(Absum ./ b.BCiter)   
+end function 
+
+##################
+
+function void calc_bmu(bundle *obj)
     # disentangle determ/exog
+    # Sep 2020: add the result directly to the (pointerized) bundle
 
     matrix bmu = zeros(obj.T, obj.n)
     if obj.k && obj.type == 4 # SVEC,
@@ -156,7 +209,7 @@ function matrix calc_bmu(const bundle obj)
         endif
     endif
 
-    return bmu
+    matrix obj.bmu = bmu
 end function
 
 #----------------------------------
@@ -276,6 +329,35 @@ function matrix drawbootres(const matrix E,
 
 end function
 
+##################
+
+function void boottypechoice(bundle *mod, string btypestr)
+    temp = boottypecode(btypestr)    
+    if temp == 0
+        print "Warning: ignoring unrecognized SVAR bootstrap type."
+    else
+        mod.boottype = temp
+    endif
+end function 
+
+#################
+
+function void maybe_do_biascorr(bundle *bobj, const bundle bparams)
+    # this function adds "ABCorA" and perhaps "Psi" to bobj    
+
+    # BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots
+    if bobj.biascorr && (bobj.type != 4)  # not available w/unit roots # BIASCORR
+        matrix Psi = {}
+        matrix start = bobj.Y[1: bobj.p, ]
+		# matrix ABC = 
+        matrix bobj.ABCorA = bias_correction(bobj, start, &Psi, bparams) # ABC # moved up from inside the loop 
+        matrix bobj.Psi = Psi
+    else 
+        matrix bobj.ABCorA = bobj.VARpar
+    endif
+    
+end function 
+
 /* ------------------------------------------------------------------- */
 /* --- Main bootstrap function --------------------------------------- */
 /* ------------------------------------------------------------------- */
@@ -297,6 +379,7 @@ function scalar SVAR_boot(bundle *obj,
     loop foreach i n k T p type --quiet
         scalar $i = obj.$i
     endloop
+    # matrix C = obj.C	# (used below at least in maybe_flip_columns(C, &K))
     scalar h = obj.horizon
     scalar n2 = n*n
     obj.nboot = rep         # record bootstrap details
@@ -304,24 +387,23 @@ function scalar SVAR_boot(bundle *obj,
 
     ## Bootstrap type choice (if different from default)
     if exists(btypestr)
-        temp = boottypecode(btypestr)
-        if temp == 0
-            print "Warning: ignoring unrecognized bootstrap type choice."
-        else
-            obj.boottype = temp
-        endif
+        boottypechoice(&obj, btypestr)
+        # temp = boottypecode(btypestr)
+        # if temp == 0
+        #     print "Warning: ignoring unrecognized bootstrap type choice."
+        # else
+        #     obj.boottype = temp
+        # endif
     endif
+    
 	# Copy optional block length choice 
+    bundle bparams = null
 	if obj.boottype == 5 && inbundle(obj, "moveblocklen")
-		bundle bparams = defbundle("moveblocklen", obj.moveblocklen)
-	else 
-		bundle bparams = null 
+		bparams.moveblocklen = obj.moveblocklen
 	endif
 	
-    # Bias correction choice
-    if biascorr > -1
-        obj.biascorr = biascorr
-    endif
+    # Bias correction choice, leave or update?
+    obj.biascorr = (biascorr == -1) ? obj.biascorr : biascorr
 
     # define default for bias correction iterations
     if obj.biascorr && !inbundle(obj, "BCiter")
@@ -329,8 +411,8 @@ function scalar SVAR_boot(bundle *obj,
     endif
 
     /* --- constraints-related matrices ---------------------*/
-    matrix Rd1 = obj.Rd1
-    matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
+    # matrix Rd1 = obj.Rd1
+    # matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
 
     ## Various needed stuff
     if type == 3 # AB
@@ -338,65 +420,121 @@ function scalar SVAR_boot(bundle *obj,
     elif type == 4
         matrix J = zeros(n - obj.crank, obj.crank) | I(obj.crank)
     endif
-    matrix start = obj.Y[1:p, ] # Y0
-    matrix C = obj.C	# (used below at least in maybe_flip_columns(C, &K))
+    matrix start = obj.Y[1:p, ] # Y0    
 
     # disentangle determ/exog:
-    matrix bmu = calc_bmu(obj)
-
-    /*
-       the matrix "bootirfs" will contain the bootstrap results:
-       each bootstrap replication on one row; each row contains
-       the vectorisation of the complete IRF matrix
-    */
-    matrix bootirfs = zeros(rep, (h+1) * n2)
+    calc_bmu(&obj)	# adds obj.bmu
 
     bundle bobj = obj       # store a copy of the model for bootstrap
-
+    
     # Spar_mat: the result matrix (IRFs further below)
-    if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
-        # save either A,B (for type 3) or C and the long-run matrix
-        matrix Spar_mat = zeros(rep, 2 * n2)
-
-    else # type 1,2,4 and just save the C matrices.
-        matrix Spar_mat =  zeros(rep, n2)
-    endif
+    # (-- type==10 (set-ID) cannot/should not happen in here --)
+    # need more cols if saving either A,B (for type 3) or C and the long-run matrix
+    numcols = (type > 2) || (rows(obj.Rd1l) || obj.calc_lr) ? 2*n2 : n2 
+    matrix Spar_mat = zeros(rep, numcols)
+     
+    # if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
+    #    # save either A,B (for type 3) or C and the long-run matrix
+    #     matrix Spar_mat = zeros(rep, 2 * n2)
+    #
+    # else # type 1,2,4 and just save the C matrices.
+    #    matrix Spar_mat =  zeros(rep, n2)
+    # endif
 
     # Do the bias correction pre-step if applicable
-    BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots
-    if BIASCORR
-        matrix Psi = {}
-		matrix ABC = bias_correction(obj, bmu, start, &Psi, bparams)
-        matrix ABCorA = ABC # moved up from inside the loop 
-    else 
-        matrix ABCorA = obj.VARpar
-    endif
+    maybe_do_biascorr(&bobj, bparams)
+    
+    # BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots
+    # if obj.biascorr && (type != 4)  # not available w/unit roots # BIASCORR
+    #     matrix Psi = {}
+		# matrix ABC = 
+    #    matrix ABCorA = bias_correction(obj, start, &Psi, bparams) # ABC # moved up from inside the loop 
+    # else 
+    #    matrix ABCorA = obj.VARpar
+    # endif
 
     # Prepare the residuals
-    matrix innov = prepres(obj.E, obj.boottype)
+    # matrix innov = prepres(obj.E, obj.boottype)
 
     printf "\nBootstrapping model (%d iterations)\n", rep
     printf "Bootstrap type: %s\n", btypestring(obj.boottype)
     printf "Bias correction: %s\n\n", BCstring(obj.biascorr)
     flush
 
+	# -----------
+    # the inner loop was here...
+    matrices bootout = SVAR_boot_innerloop(&bobj, obj, bparams)
+    /*
+       "bootirfs":
+       each bootstrap replication on one row; each row contains
+       the vectorisation of the complete IRF matrix
+    */
+    matrix bootirfs = bootout[1] # zeros(rep, (h+1) * n2)
+    matrix Spar_mat = bootout[2] # zeros(rep, n2) or zeros(rep, 2*n2)
+    scalar failed   = bootout[3] 
+	# -----------
+	
+    if !quiet
+        boot_printout(type, n, rep, failed, Spar_mat)
+    endif
+
+    # quantiles of bootstrapped IRFs used in graphs
+    q_alpha = 0.5 * (1 - alpha)	# changed in v1.5
+    matrix locb = quantile(bootirfs, q_alpha)
+    matrix hicb = quantile(bootirfs, 1 - q_alpha)
+    matrix mdn  = quantile(bootirfs, 0.5)
+
+    bundle bootdata = null
+    bootdata.rep   = rep                # no of replications
+    bootdata.alpha = alpha              # alpha
+    bootdata.biascorr  = obj.biascorr   # type of bias correction
+    matrix bootdata.lo_cb = mshape(locb, h+1, n2) # lower bounds
+    matrix bootdata.hi_cb = mshape(hicb, h+1, n2) # upper bounds
+    matrix bootdata.mdns  = mshape(mdn, h+1, n2)  # medians
+
+    bundle obj.bootdata = bootdata
+    
+   
+    return failed
+end function
+
+############################################
+## SVAR boot inner loop #######
+
+function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bundle bparams)
+
+    # will return a three-matrix array:
+    # 1: bootirfs 
+    # 2: Spar_mat
+    # 3: number of failures (1x1 scalar)
+    
+    # copy
+    type = obj.type
+    n2   = obj.n * obj.n
+    
+    # Prepare the residuals
+    matrix innov = prepres(obj.E, obj.boottype)
+
+    ## prepare output
+    matrix bootirfs = zeros(obj.nboot, (obj.horizon + 1) * n2)
+    # Spar_mat: the result matrix 
+    # (-- type==10 (set-ID) cannot/should not happen in here --)
+    # need more cols if saving either A,B (for type 3) or C and the long-run matrix
+    numcols = (type > 2) || (rows(obj.Rd1l) || obj.calc_lr) ? 2*n2 : n2 
+    matrix Spar_mat = zeros(obj.nboot, numcols)
+    
     i = 1
     failed = 0
     set loop_maxiter 16384
-    loop while i <= rep --quiet
-        bobj.step = 0	# clear previous bootstrap indicator
-        /*
-           generate bootstrap disturbances: first p rows
-           (corresponding to Y0) are 0; for next rows see the
-           drawbootres function.
-        */
-        matrix U = bmu[p+1:, ] + \
-			drawbootres(innov, obj.boottype, bparams)
-        # (bmu may be zero)
+    loop while i <= obj.nboot --quiet
+        # clear previous bootstrap indicator
+        bobj.step = 0	
+        
+        # generate bootstrap disturbances (bmu may be zero)
+        matrix U = obj.bmu[obj.p + 1:, ] + drawbootres(innov, obj.boottype, bparams)
 
-        # generate bootstrap data and store it in bootstrap obj
-        # matrix ABCorA = BIASCORR ? ABC : obj.VARpar # moved up
-        matrix bobj.Y = varsimul(ABCorA, U, start)
+        # generate bootstrap data and store it in bootstrap object
+        matrix bobj.Y = varsimul(bobj.ABCorA, U, obj.Y[1: obj.p, ] )
 
         /*
            estimate VAR parameters, special treatment VECM/SVEC
@@ -425,7 +563,7 @@ function scalar SVAR_boot(bundle *obj,
         */
 
         if obj.biascorr == 2 && type != 4 # only for non-SVEC
-            scalar H = add_and_smash(&bA, Psi)
+            scalar H = add_and_smash(&bA, bobj.Psi)
 
             if ok(H)
                 bobj.VARpar = bA
@@ -476,23 +614,26 @@ function scalar SVAR_boot(bundle *obj,
 
         elif type == 3 # "AB"
             matrices transferAB = array(2)
+            # matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
+            
             # new: get A,B instead of re-calc'ing it below
-            matrix K = estAB(&theta, bSigma, Rd2, Rd1, null, \
+            # (obj.Rd0 was Rd2 before, but redundant...)
+            matrix K = estAB(&theta, bSigma, obj.Rd0, obj.Rd1, null, \
               &errcode, obj.optmeth, 0, &transferAB)
 
         endif
 
         ## Process and store the simulated C results
-        if !errcode && rows(K) == n
+        if !errcode && rows(K) == obj.n
             bobj.step = 2
             bobj.theta = theta
 
             # we don't treat the AB-model specially here (no reason to)
-            maybe_flip_columns(C, &K)
+            maybe_flip_columns(obj.C, &K)
 
             if (type == 1) || (type == 2) || (type == 4)
                 bobj.C = K	# is used in doIRF()
-                Spar_mat[i, 1:n2] = vec(K)'
+                Spar_mat[i, 1: n2] = vec(K)'
 
                 /* New Oct 2017: Also bootstrap the long-run matrix if wanted
                 Jan 2018: add type 4 */
@@ -519,7 +660,7 @@ function scalar SVAR_boot(bundle *obj,
 
         endif
 
-        if !errcode && rows(K) == n
+        if !errcode && rows(K) == obj.n
             doIRF(&bobj)
             bootirfs[i,] = vec(bobj.IRFs)'
             i++
@@ -527,28 +668,9 @@ function scalar SVAR_boot(bundle *obj,
             failed++
             outfile stderr --write
             printf "Iter %4d failed (error code = %d)\n", i, errcode
-            outfile --close
+            outfile --close	# TODO: should be replaced with 'end outfile' once we can require 2018b or so
         endif
     endloop
 
-    if !quiet
-        boot_printout(type, n, rep, failed, &Spar_mat)
-    endif
-
-    # quantiles of bootstrapped IRFs used in graphs
-    q_alpha = 0.5 * (1 - alpha)	# changed in v1.5
-    matrix locb = quantile(bootirfs, q_alpha)
-    matrix hicb = quantile(bootirfs, 1 - q_alpha)
-    matrix mdn  = quantile(bootirfs, 0.5)
-
-    bundle bootdata = null
-    bootdata.rep   = rep             # no of replications
-    bootdata.alpha = alpha           # alpha
-    bootdata.biascorr  = obj.biascorr   # type of bias correction
-    matrix bootdata.lo_cb = mshape(locb, h+1, n2) # lower bounds
-    matrix bootdata.hi_cb = mshape(hicb, h+1, n2) # upper bounds
-    matrix bootdata.mdns  = mshape(mdn, h+1, n2)	# medians
-
-    bundle obj.bootdata = bootdata
-    return failed
-end function
+    return defarray(bootirfs, Spar_mat, {failed})
+end function 
