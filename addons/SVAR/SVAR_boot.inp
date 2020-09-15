@@ -379,8 +379,6 @@ function scalar SVAR_boot(bundle *obj,
     loop foreach i n k T p type --quiet
         scalar $i = obj.$i
     endloop
-    scalar h = obj.horizon
-    scalar n2 = n*n
     obj.nboot = rep         # record bootstrap details
     obj.boot_alpha = alpha  # into original model
 
@@ -455,6 +453,8 @@ function scalar SVAR_boot(bundle *obj,
     bootdata.rep   = rep                # no of replications
     bootdata.alpha = alpha              # alpha
     bootdata.biascorr  = obj.biascorr   # type of bias correction
+    scalar h = obj.horizon
+    scalar n2 = n*n
     matrix bootdata.lo_cb = mshape(locb, h+1, n2) # lower bounds
     matrix bootdata.hi_cb = mshape(hicb, h+1, n2) # upper bounds
     matrix bootdata.mdns  = mshape(mdn, h+1, n2)  # medians
