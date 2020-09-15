@@ -1070,8 +1070,7 @@ static int ccd_get_crit (const gretl_matrix *B,
 	    gretl_vector_set(ri->BIC, j, -2 * ll + edf * log(n));
 	} else {
 	    /* elnet */
-	    edf = (1 - alpha) * ri->edf->val[j] + alpha * dfj;
-	    ri->edf->val[j] = edf;
+	    edf = ri->edf->val[j];
 	    penalty = 0.5 * (1 - alpha) * l2 + alpha * l1;
 	    gretl_vector_set(ri->crit, j, 0.5 * SSR + lambda * penalty);
 	    gretl_vector_set(ri->BIC, j, -2 * ll + edf * log(n));
@@ -1111,6 +1110,81 @@ static int ridge_effective_df (const gretl_matrix *lam,
 	}
 	gretl_matrix_free(s);
     }
+
+    return err;
+}
+
+static int elnet_effective_df (const gretl_matrix *lam,
+			       const gretl_matrix *B,
+			       regls_info *ri)
+{
+    gretl_matrix *XTX = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *xi = NULL;
+    double *dest, *src;
+    double xii, dfj;
+    size_t csize;
+    int i, j, t;
+    int err = 0;
+
+    X = gretl_matrix_copy(ri->X);
+    XTX = gretl_matrix_alloc(ri->k, ri->k);
+    xi = gretl_matrix_alloc(1, ri->k);
+
+    if (X == NULL || XTX == NULL || xi == NULL) {
+	return E_ALLOC;
+    }
+
+    csize = ri->n * sizeof(double);
+
+    for (j=0; j<ri->nlam; j++) {
+	double lam2 = lam->val[j] * (1 - ri->alpha)/2;
+	int inv_err, kj = 0;
+
+	dest = X->val;
+	dfj = 0;
+
+	for (i=0; i<ri->k; i++) {
+	    if (gretl_matrix_get(B, i, j) != 0) {
+		src = ri->X->val + i * ri->n;
+		memcpy(dest, src, csize);
+		dest += ri->n;
+		kj++;
+	    }
+	}
+	if (kj == 0) {
+	    ri->edf->val[j] = 0;
+	    continue;
+	}
+	gretl_matrix_reuse(X, -1, kj);
+	gretl_matrix_reuse(XTX, kj, kj);
+	gretl_matrix_reuse(xi, 1, kj);
+
+	gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+				  X, GRETL_MOD_NONE,
+				  XTX, GRETL_MOD_NONE);
+	for (i=0; i<kj; i++) {
+	    xii = gretl_matrix_get(XTX, i, i);
+	    gretl_matrix_set(XTX, i, i, xii + lam2);
+	}
+	inv_err = gretl_invert_symmetric_matrix(XTX);
+	if (inv_err) {
+	    fprintf(stderr, "elnet df: inversion failed for j=%d\n", j);
+	    ri->edf->val[j] = NADBL;
+	} else {
+	    for (t=0; t<ri->n; t++) {
+		for (i=0; i<kj; i++) {
+		    xi->val[i] = gretl_matrix_get(X, t, i);
+		}
+		dfj += gretl_scalar_qform(xi, XTX, &err);
+	    }
+	    ri->edf->val[j] = dfj;
+	}
+    }
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(XTX);
+    gretl_matrix_free(xi);
 
     return err;
 }
@@ -1378,13 +1452,7 @@ static int admm_iteration (const gretl_matrix *X,
 	eps_dual = admm_abstol + admm_reltol * nystack;
 
 	if (iter >= itermin && prires <= eps_pri && dualres <= eps_dual) {
-#if 0
-	    fprintf(stderr, "primary test/eps %.3f; dual test/eps %.3f\n",
-		    prires/eps_pri, dualres/eps_dual);
-	    fprintf(stderr, " eps_pri abs/rel %.3f, eps_dual abs/rel %.3f\n\n",
-		    admm_abstol/(admm_reltol * fmax(nxstack, nrm2)),
-		    admm_abstol/(admm_reltol * nystack));
-#endif
+	    /* converged */
 	    break;
 	}
 
@@ -1605,7 +1673,7 @@ static int ccd_regls (regls_info *ri)
 	Rsq = ri->R2->val;
     }
 
-    if (ri->alpha < 1 && ri->edf != NULL) {
+    if (ri->edf != NULL && ri->alpha == 0) {
 	/* we'll want this but it's not calculated by CCD */
 	err = ridge_effective_df(ci.lam, ri);
     }
@@ -1624,6 +1692,11 @@ static int ccd_regls (regls_info *ri)
 			nnz, Rsq, &nlp);
     if (err) {
 	goto bailout;
+    }
+
+    if (ri->edf != NULL && ri->alpha > 0 && ri->alpha < 1) {
+	/* elastic net */
+	elnet_effective_df(ci.lam, ci.B, ri);
     }
 
     if (Rsq != NULL && na(Rsq[0])) {

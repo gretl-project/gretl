@@ -563,12 +563,9 @@ applicable.\footnote{In principle the ADMM algorithm could handle
 When elastic net is used on a sequence of $\lambda$s without cross
 validation (see section~\ref{sec:simple-search}) \texttt{regls}
 provides a BIC measure as a possible means of selecting the most
-promising penalty factor. However, calculation of the effective number
-of parameters in this case is a debatable matter. What \texttt{regls}
-uses at present is a weighted average of the number of non-zero
-coefficients as in LASSO, with weight $\alpha$, and the SVD-derived
-``edf'' for Ridge as in equation (\ref{eq:edf}), with weight
-$1-\alpha$.
+promising penalty factor. This requires calculation of the effective
+number of parameters (degrees of freedom), for which we use the method
+specified in \cite{zou-hastie05}.
 
 Note that if cross validation is called for with elastic net, it is
 only the $\lambda$ value that is optimized. To assess the efficacy of
@@ -1009,10 +1006,7 @@ standardized at the outset, then each fold gets its share of the
 standardized data. The maximum $\lambda$ is also determined using the
 full training set, so the same $\lambda$ sequence is used for each
 fold. In \textsf{glmnet}, by contrast, both standardization and
-calculation of the $\lambda$ sequence are done per fold. It's not
-obvious \textit{a priori} which of these methods is going to work
-better in selecting the $\lambda$ to be used for out-of-sample
-prediction.
+calculation of the $\lambda$ sequence are done per fold.
 
 \subsection*{Extended test of cross validation}
 
