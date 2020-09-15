@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-17 09:06+0200\n"
-"PO-Revision-Date: 2020-09-15 14:56+0300\n"
+"PO-Revision-Date: 2020-09-15 17:39+0300\n"
 "Last-Translator: talhayalta <talhayalta@gmail.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
@@ -1219,11 +1219,11 @@ msgstr "Verilerde değişiklik başarılı\n"
 
 #: lib/src/csvdata.c:7149
 msgid "No changes were made to the dataset\n"
-msgstr "Verisetinde bir değişiklik yapılmadı\n"
+msgstr "Veri setinde bir değişiklik yapılmadı\n"
 
 #: lib/src/dataio.c:109
 msgid "Varname exceeds the maximum of 31 characters"
-msgstr "Değişken adı ençok uzunluk olan 31 harfi aşıyor"
+msgstr "Değişken adı en büyük uzunluk olan 31 harfi aşıyor"
 
 #: lib/src/dataio.c:120 lib/src/geneval.c:18706 lib/src/geneval.c:18709
 #, c-format
@@ -1600,7 +1600,7 @@ msgstr "%s: dönüştürme uygulanamıyor"
 
 #: lib/src/dbread.c:4582 lib/src/dbread.c:4648 lib/src/dbread.c:4926
 msgid "Compacted dataset would be empty"
-msgstr "Daraltmalı veri seti boş olur!"
+msgstr "Daraltılmış veri seti boş olur!"
 
 #: lib/src/dbwrite.c:510 lib/src/dbwrite.c:519 lib/src/gretl_xml.c:1797
 #: plugin/geoplot.c:1197
@@ -2146,7 +2146,7 @@ msgstr "bağımlı değişken için yasak, artı-dışı değer"
 
 #: lib/src/discrete.c:3459
 msgid "Invalid value for the maximum of the dependent variable"
-msgstr "Bağımlı değişkenin ençoksal değeri için geçersiz değer"
+msgstr "Bağımlı değişkenin en yüksek değeri için geçersiz değer"
 
 #: lib/src/discrete.c:3497 lib/src/interact.c:3511
 msgid "This estimator requires panel data"
@@ -2345,9 +2345,8 @@ msgid "complex operands are not supported"
 msgstr "karmaşık işlemler desteklenmiyor"
 
 #: lib/src/geneval.c:1324
-#, fuzzy
 msgid "complex arguments are not supported"
-msgstr "Internet erişimi desteklenmiyor"
+msgstr "karmaşık argümanlar desteklenmiyor"
 
 #: lib/src/geneval.c:1634
 #, c-format
@@ -2409,14 +2408,13 @@ msgstr ""
 " %s"
 
 #: lib/src/geneval.c:8566
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid observation specifier \"%s\""
-msgstr "'%s': geçersiz gözlem endeksi"
+msgstr "geçersiz gözlem beliteci \"%s\""
 
 #: lib/src/geneval.c:8650 lib/src/transforms.c:903 lib/src/transforms.c:1222
-#, fuzzy
 msgid "The constant cannot be lagged"
-msgstr "sabit terim ve eğilim ile"
+msgstr "Sabit terimin gecikmesi alınamaz"
 
 #: lib/src/geneval.c:9171
 msgid "Matrix specification is not coherent"
@@ -2432,14 +2430,14 @@ msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr "Kullanıcı-tanımlı işlevleri çağırmak için \"catch\" kullanılmamalıdır"
 
 #: lib/src/geneval.c:10154
-#, fuzzy, c-format
+#, c-format
 msgid "Expected %s but got %s"
 msgstr "%s beklenirken %s bulundu"
 
 #: lib/src/geneval.c:10158
-#, fuzzy, c-format
+#, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "Seri uzunluğu veri seti ile uyuşmuyor"
+msgstr "Belirtilen %s türü, dizge türü %s ile örtüşmüyor"
 
 #: lib/src/geneval.c:10719 lib/src/geneval.c:10787 lib/src/geneval.c:17796
 #: lib/src/geneval.c:17804
@@ -2448,14 +2446,13 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s': bu tür için desteklenmiyor"
 
 #: lib/src/geneval.c:10756
-#, fuzzy
 msgid "Invalid list element"
-msgstr "Geçersiz argüman"
+msgstr "Geçersiz liste öğesi"
 
 #: lib/src/geneval.c:10945
-#, fuzzy, c-format
+#, c-format
 msgid "The operator '%s' is not valid in this context"
-msgstr "'%s' simgesi bu bağlamda geçerli değil\n"
+msgstr "'%s' işlemcisi bu bağlamda geçerli değil"
 
 #: lib/src/geneval.c:12050
 msgid "non-existent date"
@@ -2475,9 +2472,9 @@ msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': %s() için geçersiz argüman\n"
 
 #: lib/src/geneval.c:15214
-#, fuzzy, c-format
+#, c-format
 msgid "The result for %s is not well defined"
-msgstr "'%s' simgesi tanımsız"
+msgstr "%s için sonuç iyi tanımlı değil"
 
 #: lib/src/geneval.c:15413
 #, c-format
@@ -2530,9 +2527,9 @@ msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "%s değişkeninin türünün %s olması bu bağlamda kabul edilebilir değil"
 
 #: lib/src/geneval.c:17672
-#, fuzzy, c-format
+#, c-format
 msgid "A variable of type %s is not acceptable in context"
-msgstr "%s değişkeninin türünün %s olması bu bağlamda kabul edilebilir değil"
+msgstr "%s türünde bir değişken bu bağlamda kabul edilebilir değil"
 
 #: lib/src/geneval.c:17685
 #, c-format
@@ -2565,9 +2562,8 @@ msgid "'%s' : only defined for matrices"
 msgstr "'%s': yalnızca dizeyler için tanımlı"
 
 #: lib/src/geneval.c:18893 lib/src/geneval.c:18976 lib/src/geneval.c:18980
-#, fuzzy
 msgid "Invalid left-hand side expression"
-msgstr "Eksik girdi\n"
+msgstr "Geçersiz sol taraf girdisi"
 
 #: lib/src/geneval.c:19590
 msgid "Bare declarations are not allowed here"
@@ -2657,9 +2653,9 @@ msgid "fitted variance from model %d"
 msgstr "model %d yakıştırılan varyans"
 
 #: lib/src/genfuncs.c:3829
-#, fuzzy, c-format
+#, c-format
 msgid "individual effects from model %d"
-msgstr "model %d kalıntılar"
+msgstr "model %d tekil etkiler"
 
 #: lib/src/genfuncs.c:3831
 #, c-format
@@ -2696,13 +2692,13 @@ msgid "other"
 msgstr "diğer"
 
 #: lib/src/genfuncs.c:7714
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid number of draws %d"
-msgstr "Geçersiz durum sayısı %d"
+msgstr "Geçersiz çekiliş sayısı %d"
 
 #: lib/src/genlex.c:762
 msgid "obsolete function isnull(): please use !exists() instead"
-msgstr ""
+msgstr "isnull() işlevi artık kullanılmıyor: lütfen lexists() kullanın"
 
 #: lib/src/genlex.c:1151
 #, c-format
@@ -2754,7 +2750,7 @@ msgstr "Boş gözlem []\n"
 
 #: lib/src/genlex.c:1631
 msgid "obsolete use of \"pi\": please use \"$pi\" instead"
-msgstr ""
+msgstr "\"pi\" artık kullanılmıyor: lütfen \"$pi\" kullanın"
 
 #: lib/src/genlex.c:2034 lib/src/genlex.c:2336
 #, c-format
@@ -2763,7 +2759,7 @@ msgstr "Beklenmeyen bayt 0x%x\n"
 
 #: lib/src/genlex.c:2155
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
-msgstr ""
+msgstr "Booleyen sınamalarda \"=\" artık kullanılmıyor: lütfen \"==\" kullanın"
 
 #: lib/src/genlex.c:2334
 #, c-format
@@ -2845,7 +2841,7 @@ msgstr "Panel kukla değişkenleri oluşturuldu.\n"
 
 #: lib/src/genmpi.c:132 lib/src/gretl_errors.c:88
 msgid "complex arguments/operands not supported"
-msgstr "karmaşık argümanlar/işlemler desteklenmiyor"
+msgstr "karmaşık argüman/işlemler desteklenmiyor"
 
 #: lib/src/genmpi.c:148 lib/src/genmpi.c:370
 msgid "The MPI library is not loaded"
@@ -2863,7 +2859,7 @@ msgstr "'%c' beklenirken %s bulundu\n"
 
 #: lib/src/gensyntax.c:1162
 msgid "too many arguments"
-msgstr "argümanlar aşırı sayıda"
+msgstr "aşırı sayıda argüman"
 
 #: lib/src/gmm.c:131
 #, c-format
@@ -3148,12 +3144,12 @@ msgstr "ölçekli sıklık"
 
 #: lib/src/graphing.c:8640
 msgid "Residual spectrum"
-msgstr "Kalıntı İzgesi"
+msgstr "Kalıntı İzgesi (spectrum)"
 
 #: lib/src/graphing.c:8642
 #, c-format
 msgid "Spectrum of %s"
-msgstr "İzge, Değişken: %s"
+msgstr "Değişken %s izgesi (spectrum)"
 
 #: lib/src/graphing.c:8648
 #, c-format
@@ -3165,14 +3161,12 @@ msgid "log scale"
 msgstr "log ölçeği"
 
 #: lib/src/graphing.c:8759
-#, fuzzy
 msgid "Sample periodogram vs ARMA Spectrum"
-msgstr "Örneklem dönemçiziti"
+msgstr "Örneklem dönemçiziti ve ARMA izgesi (spectrum)"
 
 #: lib/src/graphing.c:8761
-#, fuzzy
 msgid "spectrum"
-msgstr "İzge"
+msgstr "izge (spectrum)"
 
 #: lib/src/graphing.c:8762 gui/library.c:6020
 msgid "periodogram"
@@ -3231,14 +3225,14 @@ msgid "BFGS: initial value of objective function is not finite"
 msgstr "BFGS: Hedef işlevin başlangıç değeri sonlu değil"
 
 #: lib/src/gretl_bfgs.c:1335
-#, fuzzy, c-format
+#, c-format
 msgid "Reached the maximum iterations (%d)"
-msgstr "Ençoksal yineleme sayısına (%d) ulaşıldı"
+msgstr "En yüksek yinelemeye (%d) ulaşıldı"
 
 #: lib/src/gretl_bfgs.c:1338
-#, fuzzy, c-format
+#, c-format
 msgid "Norm of gradient %g exceeds maximum of %g"
-msgstr "Düşüm norm sayısı = %g"
+msgstr "Düşüm %g için norm sayısı en yüksek %g değerini aşıyor"
 
 #: lib/src/gretl_bfgs.c:1354
 #, c-format
@@ -3293,19 +3287,17 @@ msgstr "xmlDocGetRootElement başarısız"
 
 #: lib/src/gretl_bundle.c:2711 lib/src/gretl_bundle.c:2852
 #: lib/src/gretl_bundle.c:2859
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data available"
-msgstr "%s: dizgi değişkeni değil"
+msgstr "%s: elde veri yok"
 
 #: lib/src/gretl_cmatrix.c:1008
-#, fuzzy
 msgid "Matrix is singular"
-msgstr "Dizey şekillendirme"
+msgstr "Dizey, tekil"
 
 #: lib/src/gretl_cmatrix.c:2678
-#, fuzzy
 msgid "Matrix is not Hermitian"
-msgstr "Dizey bakışımlı değil"
+msgstr "Dizey, Hermityen değil"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3460,9 +3452,8 @@ msgid "External command failed"
 msgstr "Kullanıcı komutu başarısız"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (65536 bytes) exceeded"
-msgstr "Komut satırı için ençok uzunluk (16384 bayt) aşıldı"
+msgstr "Komut satırı için en büyük uzunluk (65536 bayt) aşıldı"
 
 #: lib/src/gretl_errors.c:80
 msgid "No dataset is in place"
@@ -3498,7 +3489,7 @@ msgstr "'catch' bu bağlamda kullanılamaz"
 
 #: lib/src/gretl_errors.c:89
 msgid "mixed complex/real arguments not supported"
-msgstr ""
+msgstr "karmaşık/reel argüman karışımları desteklenmiyor"
 
 #: lib/src/gretl_errors.c:97
 msgid "gradient is not close to zero"
@@ -3513,14 +3504,12 @@ msgid "generated non-finite values"
 msgstr "sonlu-dışı değerler oluştu"
 
 #: lib/src/gretl_errors.c:228 lib/src/gretl_errors.c:231
-#, fuzzy
 msgid "In regard to function"
-msgstr "İşlev seçiniz"
+msgstr "İşlev ile ilgili"
 
 #: lib/src/gretl_errors.c:229
-#, fuzzy
 msgid "package"
-msgstr "Paket"
+msgstr "paket"
 
 #: lib/src/gretl_errors.c:258 lib/src/gretl_errors.c:264
 msgid "Warning"
@@ -3536,9 +3525,9 @@ msgid "'%s': no such list"
 msgstr "'%s': böyle bir liste yok"
 
 #: lib/src/gretl_func.c:618
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find function %s"
-msgstr "'%s' işlevi bulunamıyor"
+msgstr "%s işlevi bulunamadı"
 
 #: lib/src/gretl_func.c:1620
 msgid "Missing function return type"
@@ -3633,9 +3622,8 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: değiştirge adı '%s' tekrar edilmiş"
 
 #: lib/src/gretl_func.c:7034
-#, fuzzy
 msgid "Identifier exceeds the maximum of 31 characters"
-msgstr "Değişken adı ençok uzunluk olan 31 harfi aşıyor"
+msgstr "Değişken adı en büyük uzunluk olan 31 karakteri aşıyor"
 
 #: lib/src/gretl_func.c:7499
 #, c-format
@@ -4320,7 +4308,7 @@ msgstr "Beta üzerinde geçersiz sınırlama"
 #: lib/src/gretl_restrict.c:677
 #, c-format
 msgid "Too many restrictions: the maximum number is %d"
-msgstr "Sınırlamalar aşırı sayıda (ençok %d)"
+msgstr "Aşırı sayıda sınırlama: en yüksek sayı %d"
 
 #: lib/src/gretl_restrict.c:681
 #, c-format
@@ -4377,7 +4365,7 @@ msgstr "Geçersiz sınırlama"
 #: lib/src/gretl_restrict.c:1919
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr "Sınırlamalar aşırı sayıda (ençok %d)"
+msgstr "Aşırı sayıda sınırlama (en yüksek %d)"
 
 #: lib/src/gretl_restrict.c:2073
 msgid "Restricted estimates"
@@ -4469,7 +4457,7 @@ msgstr "Kabuk komutu etkinleştirilmiş değil."
 #: lib/src/gretl_string_table.c:1174
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
-msgstr "Komut satırı için ençok uzunluk (%d bayt) aşıldı\n"
+msgstr "Komut satırı için en büyük uzunluk (%d bayt) aşıldı\n"
 
 #: lib/src/gretl_utils.c:868
 msgid "no ':' allowed in starting obs with frequency 1"
@@ -4733,9 +4721,9 @@ msgid "No data information is available.\n"
 msgstr "Elde veri bilgisi yok.\n"
 
 #: lib/src/interact.c:1452 gui/library.c:162
-#, fuzzy, c-format
+#, c-format
 msgid "Maximum length of command line (%d bytes) exceeded"
-msgstr "Komut satırı için ençok uzunluk (%d bayt) aşıldı\n"
+msgstr "Komut satırı için en büyük uzunluk (%d bayt) aşıldı"
 
 #: lib/src/interact.c:1546
 #, c-format
@@ -5280,7 +5268,7 @@ msgstr "GEK (GLS) rastsal-etki"
 
 #: lib/src/modelprint.c:990
 msgid "Maximum Likelihood"
-msgstr "ençok olabilirlik"
+msgstr "Ençok olabilirlik"
 
 #: lib/src/modelprint.c:995
 msgid "Between-groups"
@@ -5429,7 +5417,7 @@ msgstr "Göreli yanlılık büyük olasılıkla %%%g değeri altında"
 #: lib/src/modelprint.c:1163
 #, c-format
 msgid "Maximal size is probably less than %g%%"
-msgstr "Ençok büyüklük büyük olasılıkla %%%g değeri altında"
+msgstr "Ençoksal büyüklük büyük olasılıkla %%%g değeri altında"
 
 #: lib/src/modelprint.c:1173
 #, c-format
@@ -5439,7 +5427,7 @@ msgstr "Göreli yanlılık %%%g değerini aşıyor olabilir"
 #: lib/src/modelprint.c:1175
 #, c-format
 msgid "Maximal size may exceed %g%%"
-msgstr "Ençok büyüklük %%%g değerini aşıyor olabilir"
+msgstr "Ençoksal büyüklük %%%g değerini aşıyor olabilir"
 
 #: lib/src/modelprint.c:1184
 msgid "Weak instrument test"
@@ -5451,11 +5439,11 @@ msgstr "Birinci-aşama F-istatistiği"
 
 #: lib/src/modelprint.c:1223 lib/src/modelprint.c:1232
 msgid "Cragg-Donald minimum eigenvalue"
-msgstr "Cragg-Donald enazsal özdeğeri"
+msgstr "Cragg-Donald en düşük özdeğeri"
 
 #: lib/src/modelprint.c:1229
 msgid "Cragg--Donald minimum eigenvalue"
-msgstr "Cragg--Donald enazsal özdeğeri"
+msgstr "Cragg--Donald en düşük özdeğeri"
 
 #: lib/src/modelprint.c:1270
 msgid "A value < 10 may indicate weak instruments"
@@ -5759,7 +5747,7 @@ msgstr "Zaman-serisi uzunluğu = %d"
 #: lib/src/modelprint.c:2107
 #, c-format
 msgid "Time-series length: minimum %d, maximum %d"
-msgstr "Zaman-serisi uzunluğu: enaz %d, ençok %d"
+msgstr "Zaman-serisi uzunluğu: en az %d, en çok %d"
 
 #: lib/src/modelprint.c:2114
 msgid "Including equations in levels"
@@ -6264,7 +6252,7 @@ msgstr ""
 #: lib/src/monte_carlo.c:1621 lib/src/monte_carlo.c:1630
 #, c-format
 msgid "Reached maximum iterations, %d"
-msgstr "Ençoksal yineleme sayısına (%d) ulaşıldı"
+msgstr "En yüksek yineleme sayısına (%d) ulaşıldı"
 
 #: lib/src/monte_carlo.c:1633
 msgid "You can use \"set loop_maxiter\" to increase the limit"
@@ -7505,9 +7493,9 @@ msgid "Exogenous variables:"
 msgstr "Dıştürel değişkenler:"
 
 #: lib/src/system.c:852
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a list or array of lists"
-msgstr "'%s': listeler için eklenmedi"
+msgstr "'%s': bir liste ya da listeler dizgesi değil"
 
 #: lib/src/system.c:1239
 msgid "Wald test for the specified restrictions"
@@ -7703,9 +7691,9 @@ msgid "dummy for %s = %g"
 msgstr "%s = %g kuklası"
 
 #: lib/src/transforms.c:2036
-#, fuzzy, c-format
+#, c-format
 msgid "A minimum of %d observations is required"
-msgstr "Ortalamadaki gözlem sayısı:"
+msgstr "En az %d gözlem gerekli"
 
 #: lib/src/transforms.c:2155
 msgid "dummify: no suitable variables were found"
@@ -7959,7 +7947,7 @@ msgstr "ARCH sınaması derece"
 #: lib/src/vartest.c:681
 #, c-format
 msgid "VAR system, maximum lag order %d"
-msgstr "VAR sistemi, ençok gecikme derecesi %d"
+msgstr "VAR sistemi, en yüksek gecikme derecesi %d"
 
 #: lib/src/vartest.c:684
 msgid ""
@@ -8761,7 +8749,7 @@ msgstr "formül"
 
 #: gui/calculator.c:3307
 msgid "x minimum"
-msgstr "x enaz değeri"
+msgstr "en düşük x"
 
 #: gui/calculator.c:3316
 msgid "x range"
@@ -9215,7 +9203,7 @@ msgstr ""
 
 #: gui/database.c:3587
 msgid "No datasets were found"
-msgstr "Hiçbir veriseti bulunamadı"
+msgstr "Hiçbir veri seti bulunamadı"
 
 #: gui/database.c:3682 gui/database.c:3711
 msgid "No series were found"
@@ -9932,7 +9920,7 @@ msgstr "BFGS ençoklayıcısı"
 
 #: gui/dialogs.c:1498
 msgid "Maximum iterations:"
-msgstr "Ençok yineleme sayısı:"
+msgstr "En fazla yineleme:"
 
 #: gui/dialogs.c:1509
 msgid "Convergence tolerance:"
@@ -10313,7 +10301,7 @@ msgstr "Kap sayısı:"
 
 #: gui/dialogs.c:5066
 msgid "Minimum value, left bin:"
-msgstr "Enaz değer, sol kap:"
+msgstr "En düşük değer, sol kap:"
 
 #: gui/dialogs.c:5067
 msgid "Bin width:"
@@ -13009,9 +12997,8 @@ msgid "_Nonlinear Least Squares"
 msgstr "_Doğrusal-dışı en küçük kareler..."
 
 #: gui/gretl.c:1950
-#, fuzzy
 msgid "_Maximum likelihood"
-msgstr "Ençok olabilirlik"
+msgstr "_Ençok olabilirlik"
 
 #: gui/gretl.c:1952
 #, fuzzy
@@ -13554,9 +13541,8 @@ msgid "Outcome probabilities"
 msgstr "Sonuç olasılıkları"
 
 #: gui/gui_utils.c:2991
-#, fuzzy
 msgid "_Model as bundle"
-msgstr "Model çizelge"
+msgstr "_Model, bohça olarak"
 
 #: gui/gui_utils.c:2993
 msgid "_Fitted values"
@@ -13611,9 +13597,8 @@ msgid "Per-unit _constants"
 msgstr "Birim-başı _sabitler"
 
 #: gui/gui_utils.c:3040
-#, fuzzy
 msgid "Individual effects"
-msgstr "Sabit etkiler"
+msgstr "Tekil etkiler"
 
 #: gui/gui_utils.c:3214
 msgid "_Against time"
@@ -13641,14 +13626,12 @@ msgid "Residual _periodogram"
 msgstr "Kalıntı _dönemçiziti"
 
 #: gui/gui_utils.c:3289
-#, fuzzy
 msgid "_Spectrum vs sample periodogram"
-msgstr "Örneklem dönemçiziti"
+msgstr "_İzge (spectrum) ve örneklem dönemçiziti"
 
 #: gui/gui_utils.c:3294
-#, fuzzy
 msgid "_MIDAS coefficients"
-msgstr "Katsayılar _toplamı"
+msgstr "_MIDAS katsayıları"
 
 #: gui/gui_utils.c:3304
 msgid "Residual _Q-Q plot"
@@ -13873,14 +13856,14 @@ msgid "A string named %s already exists"
 msgstr "%s adında bir dizgi zaten var"
 
 #: gui/gui_utils.c:5583
-#, fuzzy, c-format
+#, c-format
 msgid "A bundle named %s already exists"
-msgstr "%s adında bir liste zaten var"
+msgstr "%s adında bir bohça zaten var"
 
 #: gui/gui_utils.c:5585
-#, fuzzy, c-format
+#, c-format
 msgid "An array named %s already exists"
-msgstr "%s adında bir dizey zaten var"
+msgstr "%s adında bir dizge zaten var"
 
 #: gui/gui_utils.c:5621
 #, c-format
@@ -13918,19 +13901,16 @@ msgid "No command was supplied to start R"
 msgstr "R'yi başlatmak için sağlanmış bir komut yok"
 
 #: gui/gui_utils.c:6140
-#, fuzzy
 msgid "multiple time series object"
-msgstr "İstifli zaman serileri"
+msgstr "çoklu zaman serileri nesnesi"
 
 #: gui/gui_utils.c:6141
-#, fuzzy
 msgid "data frame"
-msgstr "veri ölçeği"
+msgstr "veri çerçevesi"
 
 #: gui/gui_utils.c:6145
-#, fuzzy
 msgid "Send data as"
-msgstr "Verileri _farklı kaydet..."
+msgstr "Verileri farklı gönder"
 
 #: gui/guiprint.c:73 gui/guiprint.c:75
 msgid "gretl output"
@@ -14215,9 +14195,8 @@ msgid "Calendar"
 msgstr "Takvim"
 
 #: gui/helpfiles.c:352
-#, fuzzy
 msgid "Complex numbers"
-msgstr "Satır numaralarını göster"
+msgstr "Karmaşık sayılar"
 
 #: gui/helpfiles.c:354 gui/settings.c:1428
 msgid "MPI"
@@ -14236,23 +14215,20 @@ msgid "all pages"
 msgstr "tüm sayfalar"
 
 #: gui/helpfiles.c:985
-#, fuzzy
 msgid "selected dataset"
-msgstr "Seçili değişkenler"
+msgstr "Seçili veri seti"
 
 #: gui/helpfiles.c:987
-#, fuzzy
 msgid "this dataset"
-msgstr "Veri setine ekle"
+msgstr "bu veri seti"
 
 #: gui/helpfiles.c:989
 msgid "all DB.NOMICS"
 msgstr ""
 
 #: gui/helpfiles.c:991
-#, fuzzy
 msgid "this window"
-msgstr "ana pencere"
+msgstr "bu pencere"
 
 #: gui/helpfiles.c:1057 gui/textutil.c:288
 msgid "Find:"
@@ -14283,32 +14259,29 @@ msgid "Failed to download file"
 msgstr "dosya indirme başarısız"
 
 #: gui/join-gui.c:214
-#, fuzzy
 msgid "same as above"
-msgstr "TeX olarak kaydet..."
+msgstr "yukarıdaki ile aynı"
 
 #: gui/join-gui.c:218 gui/join-gui.c:446
 msgid "same as inner"
 msgstr ""
 
 #: gui/join-gui.c:294
-#, fuzzy, c-format
+#, c-format
 msgid "Import data from %s"
-msgstr "İçe aktar"
+msgstr "%s kaynağından veri içe aktar"
 
 #: gui/join-gui.c:318 gui/join-gui.c:326
 msgid "gretl: join data"
 msgstr "gretl: verileri birleştir"
 
 #: gui/join-gui.c:422
-#, fuzzy
 msgid "import series"
-msgstr "Serileri listele"
+msgstr "seri içe aktar"
 
 #: gui/join-gui.c:422
-#, fuzzy
 msgid "named as"
-msgstr "ad"
+msgstr "adındaki"
 
 #: gui/join-gui.c:436
 msgid "inner key"
@@ -14397,7 +14370,7 @@ msgstr "ölçüt"
 
 #: gui/library.c:1024 gui/library.c:1040 gui/library.c:1124
 msgid "test down from maximum lag order"
-msgstr "ençok gecikme derecesinden geriye sına"
+msgstr "en yüksek gecikme derecesinden geriye sına"
 
 #: gui/library.c:1026 gui/library.c:1037 gui/library.c:1268
 msgid "with constant"
@@ -14445,9 +14418,8 @@ msgid "Lag order for KPSS test:"
 msgstr "KPSS sınaması için gecikme derecesi:"
 
 #: gui/library.c:1265
-#, fuzzy
 msgid "show individual results"
-msgstr "tekil sınama sonuçlarını göster"
+msgstr "tekil sonuçları göster"
 
 #: gui/library.c:1299
 msgid "gretl: ADF test"
@@ -14826,7 +14798,7 @@ msgstr "gretl: X-12-ARIMA çözümlemesi"
 
 #: gui/library.c:5790
 msgid "Trim maximum and minimum in sub-samples"
-msgstr "Alt-örneklemlerde ençok ve enaz değerleri kırp"
+msgstr "Alt-örneklemlerde en büyük ve en küçük değerleri kırp"
 
 #: gui/library.c:5798
 msgid "gretl: range-mean graph"
@@ -14850,7 +14822,7 @@ msgstr "Bartlett ölçünlü hataları kullan"
 
 #: gui/library.c:5885 gui/library.c:5889
 msgid "Maximum lag:"
-msgstr "Ençok gecikme:"
+msgstr "En fazla gecikme:"
 
 #: gui/library.c:6055
 msgid "gretl: fractional integration"
@@ -14988,18 +14960,17 @@ msgid "Akaike Information Criterion"
 msgstr "Akaike Bilgi Ölçütü"
 
 #: gui/library.c:6869
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Bundle from model %d\n"
 "Name (max. %d characters):"
 msgstr ""
-"Model %d istatistikleri\n"
-"%s (değer = %g)\n"
+"%d modelinden bohça yap\n"
 "Ad (ençok %d harf):"
 
 #: gui/library.c:6872
 msgid "add bundle"
-msgstr ""
+msgstr "bohça ekle"
 
 #: gui/library.c:6876
 #, c-format
@@ -15851,7 +15822,7 @@ msgstr "sıra:"
 
 #: gui/selector.c:4756
 msgid "maximum lag:"
-msgstr "ençok gecikme:"
+msgstr "en fazla gecikme:"
 
 #: gui/selector.c:4771
 msgid "Number of cointegrating vectors"
@@ -16007,7 +15978,7 @@ msgstr "Mevsimsel kuklalar ekle"
 
 #: gui/selector.c:6069
 msgid "Test down from maximum lag order"
-msgstr "Ençok gecikme derecesinden geriye sınama"
+msgstr "En yüksek gecikme derecesinden geriye sınama"
 
 #: gui/selector.c:6075
 msgid "Skip initial DF tests"
@@ -16083,7 +16054,7 @@ msgstr "Kendiliğinden ençok"
 
 #: gui/selector.c:6287
 msgid "Specified maximum"
-msgstr "Belirtilen ençok"
+msgstr "Belirtilmiş ençok"
 
 #: gui/selector.c:6304 gui/toolbar.c:622
 msgid "Confidence level"
@@ -16538,7 +16509,7 @@ msgstr "karşı"
 
 #: gui/session.c:2325
 msgid "Bundle is empty"
-msgstr "Tomar boş"
+msgstr "Bohça boş"
 
 #: gui/session.c:2690 gui/session.c:2716
 #, c-format
@@ -17218,9 +17189,8 @@ msgid "Initial fill value:"
 msgstr "Başlangıç doldurma değeri:"
 
 #: gui/ssheet.c:4057
-#, fuzzy
 msgid "complex matrix"
-msgstr "şablon dizey"
+msgstr "karmaşık dizey"
 
 #: gui/ssheet.c:4070 plugin/geoplot.c:1290 plugin/geoplot.c:1295
 #: plugin/geoplot.c:1300
@@ -17959,68 +17929,60 @@ msgid "VAR variables"
 msgstr "VAR değişkenleri"
 
 #: plugin/addons-i18n.c:79
-#, fuzzy
 msgid "bias correction (non-SVEC)"
-msgstr "Yanlılık düzeltme"
+msgstr "Yanlılık düzeltme (SVEC-dışı)"
 
 #: plugin/addons-i18n.c:80
-#, fuzzy
 msgid "bootstrap iterations"
-msgstr "özyetinim t-oranı"
+msgstr "özyetinim yinelemeleri"
 
 #: plugin/addons-i18n.c:81
-#, fuzzy
 msgid "bootstrap type"
-msgstr "özyetinim sınaması"
+msgstr "özyetinim türü"
 
 #: plugin/addons-i18n.c:82
-#, fuzzy
 msgid "choose 1 for medians"
-msgstr "Ortanca için aralık göster"
+msgstr "Ortancalar için 1 seçin"
 
 #: plugin/addons-i18n.c:84
 msgid "measure to target"
-msgstr ""
+msgstr "hedeflenecek ölçüm"
 
 #: plugin/addons-i18n.c:86
 msgid "moving blocks"
-msgstr ""
+msgstr "hareketli blok"
 
 #: plugin/addons-i18n.c:87
 msgid "plain (Cholesky)"
 msgstr "düz (Cholesky)"
 
 #: plugin/addons-i18n.c:88
-#, fuzzy
 msgid "residual resampling"
-msgstr "Denklemden kalıntılar"
+msgstr "kalıntı yeniden örnekleme"
 
 #: plugin/addons-i18n.c:89
-#, fuzzy
 msgid "the model bundle"
-msgstr "Model çizelge"
+msgstr "model bohçası"
 
 #: plugin/addons-i18n.c:90
 msgid "which shocks"
-msgstr ""
+msgstr "hangi şoklar"
 
 #: plugin/addons-i18n.c:91
-#, fuzzy
 msgid "which variables"
-msgstr "Yeni değişken"
+msgstr "hangi değişkenler"
 
 #: plugin/addons-i18n.c:92
 msgid "wild/Mammen"
-msgstr ""
+msgstr "vahşi/Mammen"
 
 #: plugin/addons-i18n.c:93
-#, fuzzy
 msgid "wild/Normal"
-msgstr "Normal"
+msgstr "vahşi/Normal"
 
 #: plugin/addons-i18n.c:94
 msgid "wild/Rademacher"
-msgstr ""
+msgstr "vahşi/Rademacher"
 
 #: plugin/addons-i18n.c:98
 msgid "IV/Heteroskedastic"
@@ -18512,7 +18474,7 @@ msgstr ""
 
 #: plugin/mailer.c:708
 msgid "A password is not required"
-msgstr ""
+msgstr "Şifre gerekli değil"
 
 #: plugin/mailer.c:788
 msgid "To:"
@@ -19012,7 +18974,7 @@ msgstr "Varyans Şişme Çarpanları"
 
 #: plugin/vif.c:521
 msgid "Minimum possible value = 1.0"
-msgstr "Olabilecek enaz değer = 1,0"
+msgstr "Olabilecek en düşük değer = 1,0"
 
 #: plugin/vif.c:522
 msgid "Values > 10.0 may indicate a collinearity problem"
