@@ -76,43 +76,12 @@ function matrix bias_correction(const bundle b,
 		funcerr "needed input missing in bundle arg" 
 	endif
 
-    # n = rows(b.VARpar)
-    # p = cols(b.VARpar)/n
-    # k = cols(b.X)
-    # cmu = cols(mu)
-    # rY0 = rows(Y0)
-
     # check for stationarity first
     scalar maxmod = max_eval(b.VARpar)
 
     if maxmod < 0.9999
         
-        matrix innov = prepres(b.E, b.boottype)
-		
-        # matrix U
-        # matrix Ab = zeros(n, n*p)
-        # -------
-        /*
-        loop i=1 .. b.BCiter --quiet
-			if exists(bparams)
-				U = zeros(p,n) | drawbootres(innov, b.boottype, bparams)
-			else
-            	U = zeros(p,n) | drawbootres(innov, b.boottype)
-			endif 
-
-            if cmu > 0
-                U = mu + U
-            endif
-            matrix bY = varsimul(b.VARpar, U[rY0+1:,], Y0)
-            matrix reg  = b.X ~ mlag(bY, seq(1,p))
-            matrix Pi = mols(bY[p+1:,], reg[p+1:,])
-            Ab += transp(Pi[k+1: k + n*p, ])
-        endloop
-
-        Ab = Ab ./ b.BCiter
-        */
-        #------
-        
+        matrix innov = prepres(b.E, b.boottype)        
         bundle bootstuff = defbundle("Y0",Y0, "innov",innov)
         if exists(bparams)
             bootstuff.bparams = bparams
@@ -345,11 +314,9 @@ end function
 function void maybe_do_biascorr(bundle *bobj, const bundle bparams)
     # this function adds "ABCorA" and perhaps "Psi" to bobj    
 
-    # BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots
     if bobj.biascorr && (bobj.type != 4)  # not available w/unit roots # BIASCORR
         matrix Psi = {}
         matrix start = bobj.Y[1: bobj.p, ]
-		# matrix ABC = 
         matrix bobj.ABCorA = bias_correction(bobj, start, &Psi, bparams) # ABC # moved up from inside the loop 
         matrix bobj.Psi = Psi
     else 
@@ -459,9 +426,7 @@ function scalar SVAR_boot(bundle *obj,
     matrix bootdata.hi_cb = mshape(hicb, h+1, n2) # upper bounds
     matrix bootdata.mdns  = mshape(mdn, h+1, n2)  # medians
 
-    bundle obj.bootdata = bootdata
-    
-   
+    bundle obj.bootdata = bootdata   
     return failed
 end function
 
