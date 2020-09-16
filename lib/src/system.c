@@ -2202,7 +2202,7 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
    estimate <sysname> method=<method>
 
    where <sysname> is the name of a previously defined
-   equation system and <method> is a reognized estimation
+   equation system and <method> is a recognized estimation
    method.
 
    However, if the "last model" is an equation system, we
