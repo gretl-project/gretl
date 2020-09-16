@@ -1419,14 +1419,21 @@ static void save_var_vecm (ExecState *s)
 
 static void gui_save_system (ExecState *s)
 {
+    equation_system *sys = s->sys;
+
+    if (!gretl_in_gui_mode() || s->callback == NULL) {
+	return;
+    }
     /* note: with GRETL_OBJ_SYS, the business of calling
        "maybe_stack" is handled within system.c, so here
        all we have to do is invoke the GUI callback, if
        appropriate
     */
-    if (gretl_in_gui_mode() && s->callback != NULL &&
-	*s->cmd->savename != '\0') {
-	s->callback(s, s->sys, GRETL_OBJ_SYS);
+    if (sys == NULL && s->cmd->ci == ESTIMATE && s->cmd->param != NULL) {
+	sys = get_equation_system_by_name(s->cmd->param);
+    }
+    if (sys != NULL && (*s->cmd->savename != '\0' || (s->cmd->opt & OPT_W))) {
+	s->callback(s, sys, GRETL_OBJ_SYS);
     }
 }
 
@@ -3196,6 +3203,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case ESTIMATE:
 	err = estimate_named_system(cmd->param, cmd->parm2, dset,
 				    cmd->opt, prn);
+	if (!err && (cmd->opt & OPT_W) && gretl_in_gui_mode()) {
+	    gui_save_system(s);
+	}
 	break;
 
     case FUNC:

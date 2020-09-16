@@ -391,6 +391,7 @@ equation_system_new (int method, const char *name, int *err)
     sys->method = method;
 
     sys->t1 = sys->t2 = 0;
+    sys->smpl_t1 = sys->smpl_t2 = 0;
     sys->T = sys->df = 0;
 
     sys->neqns = 0;
@@ -457,6 +458,7 @@ static void system_clear_results (equation_system *sys)
     sys->iters = 0;
 
     sys->t1 = sys->t2 = 0;
+    sys->smpl_t1 = sys->smpl_t2 = 0;
     sys->T = sys->df = 0;
 
     sys->ll = NADBL;
@@ -1561,7 +1563,8 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 
     if (sys->xlist == NULL || sys->biglist == NULL) {
 	/* allow for the possibility that we're looking at a
-	   system restored from a session file */
+	   system restored from a session file
+	*/
 	err = sys_check_lists(sys, dset);
 	if (err) {
 	    return err;
@@ -1617,8 +1620,12 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 
  system_bailout:
 
-    if (!err && !(sys->flags & SYSTEM_LIML1)) {
-	set_as_last_model(sys, GRETL_OBJ_SYS);
+    if (!err) {
+	sys->smpl_t1 = dset->t1;
+	sys->smpl_t2 = dset->t2;
+	if (!(sys->flags & SYSTEM_LIML1)) {
+	    set_as_last_model(sys, GRETL_OBJ_SYS);
+	}
     }
 
     return err;
@@ -4885,4 +4892,16 @@ MODEL single_equation_liml (const int *list, DATASET *dset,
     free(mlist);
 
     return model;
+}
+
+int gretl_system_get_sample (const equation_system *sys,
+			     int *t1, int *t2)
+{
+    if (sys != NULL) {
+	*t1 = sys->smpl_t1;
+	*t2 = sys->smpl_t2;
+	return 0;
+    }
+
+    return E_DATA;
 }

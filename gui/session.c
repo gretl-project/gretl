@@ -1089,7 +1089,9 @@ static int show_model_in_window (void *ptr, GretlObjType type)
     char *name = NULL;
     PRN *prn;
 
-    if (type != GRETL_OBJ_EQN && type != GRETL_OBJ_VAR) {
+    if (type != GRETL_OBJ_EQN &&
+	type != GRETL_OBJ_VAR &&
+	type != GRETL_OBJ_SYS) {
 	return 1;
     }
 
@@ -1110,6 +1112,11 @@ static int show_model_in_window (void *ptr, GretlObjType type)
 
 	gretl_VAR_print(var, dataset, OPT_NONE, prn);
 	view_buffer(prn, 78, 450, name, var->ci, var);
+    } else if (type == GRETL_OBJ_SYS) {
+	equation_system *sys = (equation_system *) ptr;
+
+	gretl_system_print(sys, dataset, OPT_NONE, prn);
+	view_buffer(prn, 78, 450, name, SYSTEM, sys);
     }
 
     return 0;
@@ -1128,7 +1135,10 @@ int add_model_to_session_callback (void *ptr, GretlObjType type,
     char *name = gretl_object_get_name(ptr, type);
     int err = 0;
 
-    if (name == NULL || *name == '\0') {
+    if (type == GRETL_OBJ_SYS && (opt & OPT_W)) {
+	/* we got the --window callback from "estimate" */
+	return show_model_in_window(ptr, type);
+    } else if (name == NULL || *name == '\0') {
 	/* we just got the --window callback */
 	return show_model_in_window(ptr, type);
     }

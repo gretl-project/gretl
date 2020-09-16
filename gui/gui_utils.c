@@ -146,11 +146,9 @@ static int model_get_t1_t2 (void *ptr, int role, int *t1, int *t2)
 
 	err = gretl_var_get_sample(var, t1, t2);
     } else if (role == SYSTEM) {
-	/* FIXME? */
 	equation_system *sys = ptr;
 
-	*t1 = sys->t1;
-	*t2 = sys->t2;
+	err = gretl_system_get_sample(sys, t1, t2);
     }
 
     return err;

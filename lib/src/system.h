@@ -56,6 +56,8 @@ struct equation_system_ {
     int fd;                     /* function execution depth */
     int t1;                     /* starting observation number */
     int t2;                     /* ending observation number */
+    int smpl_t1;                /* first obs in sample range */
+    int smpl_t2;                /* last obs in sample range */
     int T;                      /* number of observations per equation */
     int df;                     /* T - average coeffs per equation */
     int method;                 /* estimation method */
@@ -273,5 +275,8 @@ int system_arch_test (equation_system *sys, int order,
 
 MODEL single_equation_liml (const int *list, DATASET *dset, 
 			    gretlopt opt);
+
+int gretl_system_get_sample (const equation_system *sys,
+			     int *t1, int *t2);
 
 #endif /* EQUATION_SYSTEM_H */
