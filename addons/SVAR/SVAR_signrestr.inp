@@ -320,12 +320,16 @@ function bundles SVAR_SRdraw(bundle *mod, int rep, bool DO_BAYES[0],
       "df", mod.T - rows(B), \
       "T", mod.T) # df was: mod.T - nelem(B)
 
+    # for the future: set a matrix for keeping some shocks from being rotated
+    # eventually, this could probably be inferred from the model bundle
+    rot_only = {}
+    
     loop while good<rep && iter<=maxiter --quiet
 
         # first just using non-exotic restrictions
         
         # generate the random rotation matrix and, optionally, resample
-        rot_redraw(&b, mod, DO_BAYES, B, iXX) 		# b.rot, b.B, b.Sigma
+        rot_redraw(&b, mod, DO_BAYES, B, iXX, rot_only) 	# b.rot, b.B, b.Sigma
         
         matrices irfs = gen_SRirfs(b, numh, to_cum)
         matrix id_matrix = get_id_mat(mod, shocks, irfs, Ais, DO_NORM)
