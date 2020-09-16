@@ -1012,19 +1012,29 @@ calculation of the $\lambda$ sequence are done per fold.
 
 The primary point of cross validation is to determine the value of a
 hyperparameter (for LASSO, $\lambda$) that is likely to give best
-results in genuine out-of-sample prediction. Do any of the points
-mentioned above make much difference in that regard?
+results in genuine out-of-sample prediction. In this section we
+describe some experiments designed to probe the impact (if any) of
+certain differences noted above on the efficacy of out-of-sample
+prediction. We are particularly interested in
+\begin{itemize}
+\item the methodological difference between \textsf{regls} and
+  \textsf{glmnet} noted in the previous section, and
+\item the ``extra accuracy'' of the ADMM algorithm, at its default
+  tolerance, over CCD at its default tolerance, noted in
+  Appendix~\ref{app:ccd}.
+\end{itemize}
 
-Not a great deal can be said about this \textit{a priori}, though one
-thing is clear: the more homogeneous the training data, the less
-details of method are going to matter. If the statistical properties
-of the fold-complement samples are very similar to those of the full
-training data then the locus of standardization (training data or
-fold-complement) won't make much difference. In addition, if
-$\lambda_{\max} = \|X'y\|_{\infty}$ doesn't differ much across the
-samples the locus of calculation of the $\lambda$ sequence won't
-matter much either, and $\lambda$-matching---if it is
-required---should be relatively unproblematic.
+As regards the methodological difference, not a great deal can be said
+about this \textit{a priori}, though one thing is clear: the more
+homogeneous the training data, the less details of method are going to
+matter. If the statistical properties of the fold-complement samples
+are very similar to those of the full training data then the locus of
+standardization (training data or fold-complement) won't make much
+difference. In addition, if $\lambda_{\max} = \|X'y\|_{\infty}$
+doesn't differ much across the samples the locus of calculation of the
+$\lambda$ sequence won't matter much either, and
+$\lambda$-matching---if it is required---should be relatively
+unproblematic.
 
 That said, real-world datasets of interest are not necessarily very
 homogeneous so the details \textit{could} matter. To investigate this
@@ -1060,15 +1070,15 @@ $1 - \sum (y-\hat{y})^2 / \sum (y-\bar{y})^2$.
 This test was run (with common randomization) using three variants of
 cross validation, each with its default settings: the \textsf{glmnet}
 function \texttt{cv.glmnet}; \textrm{regls} using the CCD algorithm;
-and \textsf{regls} using the ADMM algorithm. There are two distinct
-differences at play. In comparing \textsf{glmnet} with \textsf{regls}
-CCD the coefficient vectors produced for given data and given
-$\lambda$ are near-identical, and the relevant difference lies in the
-details of the cross validation methodology. In comparing
-\textsf{regls} CCD and ADMM the cross validation method is exactly the
-same and the relevant difference lies in the ``excess precision''
-afforded by ADMM over CCD, at their respective default tolerances, as
-discussed in Appendix~\ref{app:ccd}.
+and \textsf{regls} using the ADMM algorithm. As mentioned above, there
+are two distinct differences at play. In comparing \textsf{glmnet}
+with \textsf{regls} CCD the coefficient vectors produced for given
+data and given $\lambda$ are near-identical, and the relevant
+difference lies in the details of the cross validation methodology. In
+comparing \textsf{regls} CCD and ADMM the cross validation method is
+exactly the same and the relevant difference lies in the ``excess
+precision'' afforded by ADMM over CCD, at their respective default
+tolerances, as discussed in Appendix~\ref{app:ccd}.
 
 %% \subsection*{Dataset 1}
 
