@@ -111,10 +111,25 @@ function scalar get_n_exotic(const bundle mod)
 end function
 
 # ----------------------------------
+function matrix rand_rotation(scalar n, const matrix sel)
+
+    scalar nk = cols(sel)
+    if nk == 0
+	matrix ret = qrdecomp(mnormal(n, n))
+    else
+	matrix ret = I(n)
+	ret[sel, sel] = qrdecomp(mnormal(nk, nk))
+    endif
+
+    return ret
+end function
+
+# ----------------------------------
 
 function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES, 
                          const matrix B,
-                         const matrix iXX )
+                         const matrix iXX,
+			 const matrix rotate_only)
 
     if DO_BAYES
         matrices Mats = drawnormwis(iXX, B, mod.Sigma, b.df) # changed df at source
@@ -122,7 +137,7 @@ function void rot_redraw(bundle *b, const bundle mod, bool DO_BAYES,
         matrix b.Sigma = Mats[2]
     endif
     
-    matrix b.rot = qrdecomp(mnormal(mod.n, mod.n))
+    matrix b.rot = rand_rotation(mod.n, rotate_only)
 
 end function 
 
