@@ -417,7 +417,21 @@ print GC pvals
 
 Vector Error Correction Models are more complex than VARs in this
 respect, since we employ Johansen's variance estimator for the
-``$\beta$'' terms. FIXME expand on this.
+``$\beta$'' terms. 
+This means for example that the \dollar{xtxinv} accessor treats each estimated 
+error correction (EC) term as one regressor on its own, such that the sampling uncertainty
+of the loading coefficients is thereby addressed (after Kronecker-multiplying with 
+\dollar{sigma} as before) . The ``internals'' of the EC terms
+are of course made up of the integrated (levels) variables, and the special
+\dollar{jvbeta} accessor is responsible for the variance of the cointegration coefficients,
+where degrees-of-freedom corrections are not available. 
+
+But as soon as the loading coefficients attached to the EC terms are restricted, there is 
+no common set of regressors with freely varying coefficients in the VECM system anymore,
+and therefore in these cases the formulas above are misleading and the \dollar{xtxinv} 
+accessor cannot be retrieved. The notion of system degrees 
+of freedom then also becomes fuzzier since the number of regressors can vary across 
+equations.
 
 %%% Local Variables:
 %%% mode: latex
