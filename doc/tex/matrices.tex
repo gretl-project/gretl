@@ -1129,14 +1129,14 @@ Id (2 x 2)
 \end{code}
 
 For presentation purposes you may wish to give titles to the columns
-of a matrix.  For this you can use the \cmd{colnames} function: the first
+of a matrix.  For this you can use the \cmd{cnameset} function: the first
 argument is a matrix and the second is either a named list of variables,
 whose names will be used as headings, or a string that contains as many
 space-separated substrings as the matrix has columns.  For example,
 %
 \begin{code}
 ? matrix M = mnormal(3,3)
-? colnames(M, "foo bar baz")
+? cnameset(M, "foo bar baz")
 ? print M
 M (3 x 3)
 

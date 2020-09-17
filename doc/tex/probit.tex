@@ -1392,8 +1392,8 @@ loop t=1..100
   mat_n[t, 3] = (1/t) * pdf(z, wi_n) / cdf(z, -wi_n)
 endloop
 
-colnames(mat_w, "months unmarried married")
-colnames(mat_n, "months unmarried married")
+cnameset(mat_w, "months unmarried married")
+cnameset(mat_n, "months unmarried married")
 
 gnuplot 2 3 1 --with-lines --supp --matrix=mat_w --output=weibull.plt
 gnuplot 2 3 1 --with-lines --supp --matrix=mat_n --output=lognorm.plt

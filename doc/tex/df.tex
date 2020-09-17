@@ -312,7 +312,7 @@ matrix se = $stderr * sqrt($df/$T)
 matrix zscore = $coeff ./ se
 matrix pv = 2 * pvalue(z, abs(zscore))
 matrix M = $coeff ~ se ~ zscore ~ pv
-colnames(M, "coeff stderr z p-value")
+cnameset(M, "coeff stderr z p-value")
 print M
 \end{code}
 
@@ -391,8 +391,8 @@ if USE_F
 endif
 
 matrix GC = zeros(k, k)
-colnames(GC, LST)
-rownames(GC, LST)
+cnameset(GC, LST)
+rnameset(GC, LST)
 
 matrix idx = seq(1,p) + 1
 loop i = 1..k
@@ -409,8 +409,8 @@ else
   matrix pvals = pvalue(X, p, GC)
 endif
 
-colnames(pvals, LST)
-rownames(pvals, LST)
+cnameset(pvals, LST)
+rnameset(pvals, LST)
 print GC pvals
 \end{scode}
 \end{script}
