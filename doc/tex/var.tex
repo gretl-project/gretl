@@ -324,7 +324,7 @@ maximum tested order is 6.
 Gretl's built-in \cmd{var} command does not support the general class
 of models known as ``Structural VARs''---though it does support the
 Cholesky decomposition-based approach, the classic and most popular
-SVAR variant. If you wish to go beyond that there is a gretl ``addon''
+structural VAR variant. If you wish to go beyond that there is a gretl ``addon''
 named \app{SVAR} which will likely meet your needs. \app{SVAR} is
 supplied as part of the gretl package, you can find its documentation
 (which is quite detailed) as follows: under the \textsf{Tools} menu in
@@ -335,6 +335,9 @@ search box to find \textsf{SVAR}. Then right-click and select
 ``Info.'' This opens a window which gives basic information on the
 package, including a link to \texttt{SVAR.pdf}, the full
 documentation.
+
+The remainder of this section will thus only deal with the Cholesky-based
+recursive shock identification used by the native \cmd{var} command.
 
 \subsection{IRF and FEVD}
 
@@ -415,14 +418,16 @@ thought to ``own'' one shock: variable 1 owns shock number 1,
 and so on.
 
 In this sort of exercise, therefore, the ordering of the $y$ variables
-is important, and the applied literature has developed the ``most
-exogenous first'' mantra---where, in this setting, ``exogenous'' really
-means ``instantaneously insensitive to structural
-shocks''.\footnote{The word ``exogenous'' has caught on in this
-  context, but it's a rather unfortunate choice: for a start, each
-  shock impacts on every variable after one lag, so nothing is really
-  exogenous here. A better choice of words would probably have
-  been something like ``sturdy'', but it's too late now.} To put it
+is important.
+% , and the applied literature has developed the ``most
+% exogenous first'' mantra---where, in this setting, ``exogenous'' really
+% means ``instantaneously insensitive to structural
+% shocks''.\footnote{The word ``exogenous'' has caught on in this
+%   context, but it's a rather unfortunate choice: for a start, each
+%   shock impacts on every variable after one lag, so nothing is really
+%   exogenous here. A better choice of words would probably have
+%   been something like ``sturdy'', but it's too late now.} 
+To put it
 differently, if variable \texttt{foo} comes before variable
 \texttt{bar} in the $Y$ list, it follows that the shock owned by
 \texttt{foo} affects \texttt{bar} instantaneously, but not
@@ -431,9 +436,9 @@ vice versa.
 Impulse Response Functions and the FEVD can be printed out via the
 command line interface by using the \option{impulse-response} and
 \option{variance-decomp} options, respectively. If you need to store
-them into matrices, you can compute the structural VMA and proceed
+them into matrices, you could compute the structural VMA and proceed
 from there. For example, the following code snippet shows you how to
-compute a matrix containing the IRFs:
+manually compute a matrix containing the IRFs:
 \begin{code}
 open denmark
 list Y = 1 2 3 4
@@ -452,11 +457,52 @@ in which the equality
 \]
 was used.
 
-FIXME: show all the nice stuff we have under the GUI.
+A more convenient way of obtaining the desired quantities is to use the 
+\cmd{irf} and \cmd{fevd} functions which can be used in scripts after
+a VAR (or VECM, see the next chapter) has been estimated. In these functions
+you must specify the number of the responding (target) variable and the number 
+of the analyzed shock to get the corresponding results as a column vector. The 
+choice of how many periods should be calculated --and thus how long the result
+vector will be-- is determined by previously invoking \cmd{set horizon x}, where
+x is a non-negative integer and the first response concerns the impact effect.
 
 \subsection{IRF bootstrap}
 
-FIXME: todo
+The IRFs obtained above are estimates and as such they are uncertain. 
+Mostly due to the fact that they are nonlinear functions of the VAR parameters
+the standard way of assessing this estimation uncertainty and to derive 
+confidence intervals or bands is to use a bootstrap approach. Again, more
+advanced options are available with the \app{SVAR} addon, but the \cmd{irf}
+function used after the built-in \cmd{var} (or \cmd{vecm}) command also 
+provides the option to run a bootstrap based on resampling from the residuals.
+(The number of bootstrap iterations can be adjusted through \cmd{set boot\_iters x},
+where x must be larger than 499.) 
+The desired nominal confidence level must be specified after the target and 
+shock numbers as the third argument, and in that case the return vector becomes
+a three-column matrix where the lower and upper bounds of the confidence intervals
+are given in the extra two columns.
+
+\subsection{Menu-driven usage}
+
+Almost all the functionality related to the described (recursively identified) structural 
+VARs is also available under the menus in the model window that appears 
+after a VAR is estimated in the GUI.\footnote{Note that you cannot directly invoke 
+the \app{SVAR} addon from the model window of an estimated VAR; that menu 
+entry is only present in gretl's \emph{main} window under the Model menu and 
+multivariate time series sub-menu.}
+
+\begin{itemize}
+\item In the ``Plots'' menu there are a number of menu entries relating to the
+impulse responses as well as one entry for the forecast error variance decomposition.
+Selecting any of these will bring up a little specification window where the ordering
+for the Cholesky decomposition must be chosen, and in case of IRFs the intended 
+bootstrap coverage can be set. 
+
+\item In the ``Analysis'' menu there are also entries for IRF and FEVD, which may 
+sometimes be a little confusing. The point is that here the numbers (of the point 
+estimates) will be printed out in a tabular format instead of being plotted.
+
+\end{itemize}
 
 \section{Residual-based diagnostic tests}
 
