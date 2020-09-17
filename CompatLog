@@ -33,6 +33,9 @@ works until further notice.
 Simplify iteration output from the --verbose flag for "mle"
 and similar commands. But the previous behavior can be
 obtained via "set max_verbose full".
+The "eigengen" function is now deprecated and has been 
+superseded by the new "eigen". 
+
 
 2019-12-22 version 2019d
 
@@ -69,7 +72,9 @@ compatibility until further notice.
 
 2018-09-03 version 2018c
 
-No incompatible changes.
+No incompatible changes; but the syntax for a block
+"outfile --write ... outfile --close" is now deprecated and was replaced
+with "outfile ... end outfile". (The old form continues to work.)
 
 2018-08-11 version 2018b
 
