@@ -108,7 +108,7 @@ matrix b_nist = {-3482258.63459582, 15.0618722713733,
 
 matrix b_numpy = mread("py_b.mat", 1)
 matrix E = logrel_err(b_gretl, b_nist) ~ logrel_err(b_numpy, b_nist)
-colnames(E, "gretl python")
+cnameset(E, "gretl python")
 printf "Log-relative errors, Longley coefficients:\n\n%#12.5g\n", E
 printf "Column means\n%#12.5g\n", meanc(E)
 \end{scode}

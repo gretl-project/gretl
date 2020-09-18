@@ -166,7 +166,7 @@ foreign language=Octave
 end foreign
 
 h = mread("h.mat", 1)
-colnames(h, "coherence")
+cnameset(h, "coherence")
 gnuplot 1 --time-series --with-lines --matrix=h --output=display
 \end{scode}
 \label{Octave-coher}
