@@ -429,7 +429,7 @@ differently, if variable \texttt{foo} comes before variable
 vice versa.
 
 Impulse Response Functions and the FEVD can be printed out via the
-command line interface by using the \option{impulse-response} and
+command line interface by using the \option{impulse-responses} and
 \option{variance-decomp} options, respectively. If you need to store
 them into matrices, you can compute the structural VMA and proceed
 from there. For example, the following code snippet shows you how to
@@ -438,7 +438,7 @@ compute a matrix containing the IRFs:
 open denmark
 list Y = 1 2 3 4
 scalar n = nelem(Y)
-var 2 Y --quiet --impulse
+var 2 Y --quiet --impulse-responses
 
 matrix K = cholesky($sigma)
 matrix V = $vma

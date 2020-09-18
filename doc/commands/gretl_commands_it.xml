@@ -5384,10 +5384,6 @@
 	  <effect>mostra rispetto al tempo</effect>
         </option>
         <option>
-	  <flag>--suppress-fitted</flag>
-	  <effect>non mostra la linea stimata</effect>
-        </option>
-        <option>
 	  <flag>--single-yaxis</flag>
 	  <effect>forza l'uso di un solo asse delle ordinate</effect>
         </option>

@@ -314,9 +314,9 @@ gnuplot PCR YER --output=display --time-series --with-lines
 # --- Phillips' curve, different fitted lines -------------
 
 gnuplot INFQ URX --output=display
-gnuplot INFQ URX --suppress-fitted --output=display
-gnuplot INFQ URX --inverse-fit --output=display
-gnuplot INFQ URX --loess-fit --output=display
+gnuplot INFQ URX --fit=none --output=display
+gnuplot INFQ URX --fit=inverse --output=display
+gnuplot INFQ URX --fit=loess --output=display
 \end{scode}
 
 FIXME: comment on the above
@@ -379,7 +379,7 @@ latter occupies a few more lines but is clearer
 
 \begin{code}
    gnuplot 1 2 3 4 --with-lines --matrix=plotmat \
-   --suppress-fitted --output=display \
+   --fit=none --output=display \
    { set linetype 3 lc rgb "#0000ff"; set title "@title"; \
      set nokey; set xlabel "@xname"; }
 \end{code}
