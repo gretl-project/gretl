@@ -128,6 +128,7 @@ function bundle regls (series depvar, list indeps,
    matrix bsel = {}
    scalar alpha_set = 0
    scalar elnet = 0
+   string est = ""
 
    if !exists(parms)
       # an empty bundle will do
@@ -190,16 +191,18 @@ function bundle regls (series depvar, list indeps,
    # record upper limit of incoming sample range
    my_tmax = $t2
 
+   est = elnet ? "Elastic net" : ret.ridge ? "Ridge" : "LASSO"
+
    if ret.verbosity > 0 && nlam > 1 && rank <= 0
       string meth
       if elnet
-         printf "\nelastic net, alpha = %g: trying %d values of scaled lambda\n", ret.alpha, nlam
+         printf "\n%s, alpha = %g: trying %d values of scaled lambda\n", est, ret.alpha, nlam
       elif ret.ridge
          meth = ret.ccd ? "CCD" : "SVD"
-         printf "\nridge (%s): trying %d values of scaled lambda\n", meth, nlam
+         printf "\n%s (%s): trying %d values of scaled lambda\n", est, meth, nlam
       else
          meth = ret.ccd ? "CCD" : "ADMM"
-         printf "\nlasso (%s): trying %d values of scaled lambda\n", meth, nlam
+         printf "\n%s (%s): trying %d values of scaled lambda\n", est, meth, nlam
       endif
    endif
 
@@ -220,6 +223,14 @@ function bundle regls (series depvar, list indeps,
    endif
 
    scalar ret.nobs = rows(X)
+   if ret.verbosity > 0
+      if nlam == 1
+         printf "%s: using %d observations\n", est, ret.nobs
+      else
+         printf "using %d observations\n", ret.nobs
+      endif
+   endif
+
    if nelem(lfrac) > 0
       matrix ret.lfrac = vec(lfrac)
    endif
@@ -309,6 +320,13 @@ function bundle regls (series depvar, list indeps,
       matrix addstats = {ret.edf, ret.BIC, ret.R2}
       strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
       modprint bse pnames addstats
+   elif nlam == 1 && ret.verbosity > 1
+      printf "\n%s coefficients:\n\n", est
+      if inbundle(ret, "nzb")
+         printf "%13.6g\n", ret.nzb
+      else
+         printf "%13.6g\n", ret.b
+      endif
    endif
 
    if inbundle(ret, "verbosity")

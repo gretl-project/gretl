@@ -231,6 +231,7 @@
       <menu action="LinearModels">
 	<menuitem action="wls"/>
 	<menuitem action="hsk"/>
+	<menuitem action="regls"/>
 	<menuitem action="mpols"/>
         <menuitem action="anova"/>
       </menu>

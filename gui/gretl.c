@@ -1881,6 +1881,7 @@ GtkActionEntry main_entries[] = {
     { "LinearModels", NULL, N_("Other _linear models"), NULL, NULL, NULL },
     { "wls", NULL, N_("_Weighted Least Squares"), NULL, NULL, G_CALLBACK(model_callback) },
     { "hsk", NULL, N_("H_eteroskedasticity corrected"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "regls", NULL, N_("_Regularized least squares"), NULL, NULL, G_CALLBACK(model_callback) },
     { "mpols", NULL, N_("High _precision OLS"), NULL, NULL, G_CALLBACK(model_callback) },
     { "anova", NULL, N_("ANOVA"), NULL, NULL, G_CALLBACK(model_callback) },
     { "TSModels", NULL, N_("_Univariate time series"), NULL, NULL, NULL },

@@ -279,6 +279,8 @@ static int model_action_code (GtkAction *action)
 	    ci = IV_GMM;
 	else if (!strcmp(s, "countmod"))
 	    ci = COUNTMOD;
+	else if (!strcmp(s, "regls"))
+	    ci = REGLS;
 	else if (!strcmp(s, "FE_LOGISTIC"))
 	    ci = FE_LOGISTIC;
     }

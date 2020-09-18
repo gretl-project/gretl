@@ -139,6 +139,7 @@ static struct gui_help_item gui_help_items[] = {
     { SAVE_LABELS,    "save-labels" }, /* FIXME */
     { OPEN_LABELS,    "add-labels" },  /* FIXME */
     { COUNTMOD,       "count-model" },
+    { REGLS,          "regls" },
     { BWFILTER,       "bwfilter" },
     { POLYWEIGHTS,    "polyweights" },
     { EMAFILTER,      "ema-filter" },

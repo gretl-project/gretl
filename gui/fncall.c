@@ -4190,24 +4190,27 @@ char *installed_addon_status_string (const char *path,
    the current list of providers. We thereby ensure that if
    the dbnomics function package is not found on the local
    machine we try to download and install it.
+
+   We also invoke it for regls.
 */
 
-static fncall *get_dbnomics_function_call (const char *funcname)
+static fncall *get_addon_function_call (const char *addon,
+					const char *funcname)
 {
     static char *pkgpath;
     fncall *fc = NULL;
     int err = 0;
 
     if (pkgpath == NULL) {
-	pkgpath = gretl_addon_get_path("dbnomics");
+	pkgpath = gretl_addon_get_path(addon);
 	if (pkgpath == NULL) {
 	    /* not found locally */
-	    err = download_addon("dbnomics", &pkgpath);
+	    err = download_addon(addon, &pkgpath);
 	}
     }
 
     if (!err) {
-	fc = get_pkg_function_call(funcname, "dbnomics", pkgpath);
+	fc = get_pkg_function_call(funcname, addon, pkgpath);
     }
 
     return fc;
@@ -4255,7 +4258,7 @@ int dbnomics_get_series_call (const char *datacode)
     err = bufopen(&prn);
 
     if (!err) {
-	fc = get_dbnomics_function_call("dbnomics_get_series");
+	fc = get_addon_function_call("dbnomics", "dbnomics_get_series");
 	if (fc == NULL) {
 	    gretl_print_destroy(prn);
 	    err = E_DATA;
@@ -4318,7 +4321,7 @@ void *dbnomics_get_providers_call (int *err)
     fncall *fc = NULL;
     GdkWindow *cwin = NULL;
 
-    fc = get_dbnomics_function_call("dbnomics_providers");
+    fc = get_addon_function_call("dbnomics", "dbnomics_providers");
     if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;
@@ -4445,6 +4448,64 @@ void *dbnomics_probe_series (const char *prov,
     }
 
     return A;
+}
+
+int real_do_regls (const char *buf)
+{
+    gretl_bundle *parms = selector_get_regls_bundle();
+    gretl_bundle *rb = NULL;
+    fncall *fc = NULL;
+    double *y = NULL;
+    int *X = NULL;
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (parms == NULL) {
+	errbox("regls: no parameters bundle");
+	return E_DATA;
+    }
+
+    fc = get_addon_function_call("regls", "regls");
+    if (fc == NULL) {
+	errbox("regls: couldn't find regls()");
+	return E_DATA;
+    }
+
+    bufopen(&prn);
+
+    X = gretl_list_from_varnames(buf, dataset, &err);
+    if (!err) {
+	int yno = X[1];
+
+	y = dataset->Z[yno];
+	gretl_list_delete_at_pos(X, 1);
+	err = push_function_args(fc, GRETL_TYPE_SERIES, (void *) y,
+				 GRETL_TYPE_LIST, (void *) X,
+				 GRETL_TYPE_BUNDLE, (void *) parms, -1);
+    }
+
+    if (!err) {
+	GdkWindow *cwin = NULL;
+
+	set_wait_cursor(&cwin);
+	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+				  &rb, NULL, prn);
+	unset_wait_cursor(cwin);
+	if (!err) {
+	    view_buffer(prn, 78, 350, "gretl: regls", VIEW_BUNDLE, rb);
+	    prn = NULL; /* ownership taken by viewer */
+	}
+	/* FIXME record function call */
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    free(X);
+    gretl_print_destroy(prn);
+
+    return err;
 }
 
 /* geomap related functions */

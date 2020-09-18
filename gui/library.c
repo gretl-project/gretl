@@ -4436,6 +4436,8 @@ int do_model (selector *sr)
 	}
     } else if (ci == MIDASREG) {
 	pbuf = compose_midas_param(extra_data, &addopt, &err);
+    } else if (ci == REGLS) {
+	return real_do_regls(buf);
     }
 
     if (err) {
