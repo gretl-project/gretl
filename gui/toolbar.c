@@ -375,7 +375,7 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
-#ifdef G_OS_WIN32
+#if 0 // def G_OS_WIN32
     /* gtksourceview printing is screwed on Windows (FIXME?) */
     window_print(NULL, vwin);
 #else
