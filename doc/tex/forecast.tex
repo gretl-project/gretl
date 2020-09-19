@@ -208,12 +208,20 @@ associated confidence intervals -- unless you wish to suppress this
 verbose output with the options \verb|--stats-only| or \verb|--quiet|. 
 The former option restricts output to the forecast evaluation statistics
 as explained in the next section; the latter option silences output 
-altogether.   
+altogether. Another accepted syntax variant is to supply the name of a
+new series for the point forecasts after the \cmd{fcast} command, as for
+example in \verb|fcast Yfc --out-of-sample|. At the same time this also
+suppresses printout. 
 
 Accessing and saving the produced forecast times series along with the 
-estimated standard errors works through 
+estimated standard errors also works through 
 the \dollar{fcast} and \dollar{fcse} accessors available after 
-\cmd{fcast} execution. But if you want to create forecast plots within a
+\cmd{fcast} execution. These return vectors as gretl matrix objects, not
+series, so if you want to add the results to the dataset in this way you
+would have to set the active sample to the forecast range first. (You 
+can of course first access and store the matrices and then later after 
+resetting the sample assign them to series.)
+But if you want to create forecast plots within a
 script the relevant option already has to be appended to the \cmd{fcast}
 command. As explained in the 
 command reference, specify \verb|--plot=<filename>| (without the < > 
@@ -328,8 +336,13 @@ range; use the \texttt{smpl} command to adjust the range if needed.
 \section{Forecasts based on VAR models}
 \label{sec:fcast-VAR}
 
-To be written properly. For the moment, the following simple example
-script should hopefully provide the main info. The code
+% (parameter uncertainty?) 
+
+% (recursive?)
+The interface to perform forecasts from a VAR model is quite similar to 
+the one for single equations. Let us start with a concrete and commented
+script example in the command line context; the code:
+
 \begin{code}
 # open sample data file
 open sw_ch14.gdt --quiet
@@ -411,6 +424,22 @@ yields
   Regression proportion, UR         0.45311
   Disturbance proportion, UD        0.28404
 \end{code}
+
+One of the main differences is that specifying a variable name after the
+\cmd{fcast} command does not mean to save something under that name, but 
+now it serves to pick one of the $N$ variables of the VAR for printing
+out the forecasts. That leaves only the \dollar{fcast} and \dollar{fcse}
+accessors to obtain and save the produced forecasts -- in this system 
+case the returned matrix objects will have as many columns as equations.
+
+In the GUI the relevant menu entry is again Forecasts in the Analysis 
+menu in the window of the estimated VAR model. Here the user must pick
+the variable of interest, after which a dialog window with relevant 
+options is presented.\footnote{One difference is that the significance
+level of the confidence intervals cannot be set, it is fixed at 95\% in
+this context.} As in the single-equation context a plot and a textual
+output windows are created. Again, forecast series can be added to the 
+dataset through the ``+'' button, and the plot can be saved or exported.
 
 \section{Forecasting from simultaneous systems}
 \label{sec:fcast-system}
