@@ -142,6 +142,16 @@ loop t=2009:1..2009:4
 endloop
 \end{code}
 
+In single-equation OLS models a \verb|--recursive| forecast option is
+also available, expanding the estimation sample one-by-one and 
+re-calculating the forecasts again and again for the constantly updated
+information set. In this case a number must be given of how many periods
+ahead should be forecast for each of the estimation samples. Note that
+only this $k$-steps-ahead forecast will be printed (or accessible in 
+\dollar{fcast}), not the interim values from step 1 through $k-1$ (if 
+$k>1$). If those interim values are also needed, then several 
+\verb|fcast ... --recursive| rounds would have to be done with different
+steps-ahead numbers.
 
 \subsection{Static and dynamic forecasts}
 
@@ -338,8 +348,6 @@ range; use the \texttt{smpl} command to adjust the range if needed.
 
 \section{Forecasts based on VAR models}
 \label{sec:fcast-VAR}
-
-% (parameter uncertainty?) 
 
 % (recursive?)
 The interface to perform forecasts from a VAR model is quite similar to 
