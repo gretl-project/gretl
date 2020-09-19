@@ -3456,7 +3456,6 @@ static void read_regls_extras (selector *sr)
     gchar *estr = combo_box_get_active_text(est);
     gretl_bundle *rb = gretl_bundle_new();
 
-    gretl_bundle_set_int(rb, "verbosity", 2);
     gretl_bundle_set_int(rb, "gui", 1);
 
     if (!strcmp(estr, _("Elastic net"))) {

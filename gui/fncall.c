@@ -4455,7 +4455,6 @@ int real_do_regls (const char *buf)
     gretl_bundle *parms = selector_get_regls_bundle();
     gretl_bundle *rb = NULL;
     fncall *fc = NULL;
-    double *y = NULL;
     int *X = NULL;
     PRN *prn = NULL;
     int err = 0;
@@ -4477,11 +4476,13 @@ int real_do_regls (const char *buf)
     if (!err) {
 	int yno = X[1];
 
-	y = dataset->Z[yno];
 	gretl_list_delete_at_pos(X, 1);
-	err = push_function_args(fc, GRETL_TYPE_SERIES, (void *) y,
-				 GRETL_TYPE_LIST, (void *) X,
-				 GRETL_TYPE_BUNDLE, (void *) parms, -1);
+	err = push_function_arg(fc, dataset->varname[yno], NULL,
+				GRETL_TYPE_USERIES, &yno);
+	if (!err) {
+	    err = push_function_args(fc, GRETL_TYPE_LIST, (void *) X,
+				     GRETL_TYPE_BUNDLE, (void *) parms, -1);
+	}
     }
 
     if (!err) {
@@ -4495,7 +4496,6 @@ int real_do_regls (const char *buf)
 	    view_buffer(prn, 78, 350, "gretl: regls", VIEW_BUNDLE, rb);
 	    prn = NULL; /* ownership taken by viewer */
 	}
-	/* FIXME record function call */
     }
 
     if (err) {
