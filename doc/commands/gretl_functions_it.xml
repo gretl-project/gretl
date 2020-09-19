@@ -7103,7 +7103,6 @@
       </description>
     </function>    
 
-    
     <function name="mlog" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -7126,7 +7125,7 @@
       <description>
 	<para>
 	  Restituisce una matrice di <argname>r</argname> righe e
-	  <argname>c</argname> colonne, contenene numeri pseudocasuali
+	  <argname>c</argname> colonne, contenente numeri pseudocasuali
 	  generati da una normale standardizzata.
 	  <seelist> 
 	    <fncref targ="normal"/>
@@ -7280,12 +7279,13 @@
       <description>
 	<para>
 	  Disponibile solo se gretl è in modalità MPI (si veda <mnu
-	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da tutti
-	  i processi. Questa funzione funziona come <fncref
-	  targ="mpireduce"/> ad eccezione del fatto che tutti i processi, non
-	  solamente il processo root, ottengono una copia dell'oggetto
-	  <quote>ridotto</quote> al posto dell'originale. E' quindi equivalente
-	  a <lit>mpireduce</lit> seguito da <fncref targ="mpibcast"/>, ma più efficiente.
+	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da
+	  tutti i processi. Questa funzione funziona come <fncref
+	  targ="mpireduce"/> ad eccezione del fatto che tutti i
+	  processi, non solamente il processo root, ottengono una
+	  copia dell'oggetto <quote>ridotto</quote> al posto
+	  dell'originale. E' quindi equivalente a <lit>mpireduce</lit>
+	  seguito da <fncref targ="mpibcast"/>, ma più efficiente.
 	</para>
       </description>
     </function>
@@ -7320,12 +7320,12 @@
 	  processi. L'oggetto in questione deve essere una matrice,
 	  un bundle, vettore o scalare, dichiarato in tutti i processi 
 	  precedentemente alla trasmissione. Nessun processo può
-	  proseguire oltre una chiamata a <lit>mpibcast</lit>finchè
+	  proseguire oltre una chiamata a <lit>mpibcast</lit>finché
 	  tutti i processi non l'abbiano eseguita correttamente.
 	</para>
 	<para>
 	  Di default <quote>root</quote>, la sorgente della trasmissione,
-	  è il processo MPI con rango 0, ma quasto può essere modificato
+	  è il processo MPI con rango 0, ma questo può essere modificato
 	  tramite il secondo argomento (opzionale), il quale deve essere un intero
 	  compreso tra 0 e il numero dei processi MPI meno 1.
 	</para>
@@ -7356,7 +7356,7 @@
 	  essere accoppiata, per una spiegazione. L'argomento <argname>src</argname>
 	  specifica il rango del processo dal quale
 	  l'oggetto deve essere ricevuto, all'interno dell'intervallo che va
-	  da 0 al numero dei procesi MPI meno 1.
+	  da 0 al numero dei processi MPI meno 1.
 	</para>
       </description>
     </function>
@@ -7382,8 +7382,8 @@
 	  <lit>sum</lit>, <lit>prod</lit> (prodotto), <lit>max</lit>
 	  e <lit>min</lit>. Per le matrici i metodi sono
 	  <lit>sum</lit>, <lit>prod</lit> (prodotto di Hadamard),
-	  <lit>hcat</lit> (concanetazione orizzontale) e
-	  <lit>vcat</lit> (concanetazione verticale).
+	  <lit>hcat</lit> (concatenazione orizzontale) e
+	  <lit>vcat</lit> (concatenazione verticale).
 	</para>
 	<para>
 	  Di default <quote>root</quote>, il destinatario della riduzione,
@@ -7416,7 +7416,7 @@
 	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da tutti
 	  i processi. Questa funzione distribuisce parti di una matrice nel 
 	  processo root di tutti i processi. La matrice deve
-	  essere dichiarata in tutti i processi prima della chiamat di
+	  essere dichiarata in tutti i processi prima della chiamata di
 	  <lit>mpiscatter</lit>, e deve essere data in forma di puntatore.
 	</para>
 	<para>
@@ -7426,8 +7426,8 @@
 	  numero di processi. Nel caso <lit>byrows</lit> la root
 	  mandale prime <math>q</math> righe al processo 0, le successive
 	  <math>q</math> al processo 1, e così via. Se c'è un
-	  resto all divisione delle righe, esso è assegnato all'ultimo
-	  allocamento. Il caso <lit>bycols</lit> è analogo ma 
+	  resto alla divisione delle righe, esso è assegnato all'ultimo
+	  segmento. Il caso <lit>bycols</lit> è analogo ma 
 	  la matrice si divide per colonne.
 	</para>
 	<para>
@@ -7455,7 +7455,7 @@
       </fnargs>
       <description>
 	<para>
-	  Disponibile solo quando retl è in modalità MPI (si veda <mnu
+	  Disponibile solo quando gretl è in modalità MPI (si veda <mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Manda l'oggetto nominato
 	  (che deve essere una matrice, bundle, vettore o scalare) dal processo 
 	  corrente a quello identificato dall'intero
@@ -7513,7 +7513,7 @@
       <description>
 	<para>
 	  Funziona come <fncref targ="randgen"/> tranne che il valore
-	  calcolato è una matrice anzichè una variabile. Gli argomenti
+	  calcolato è una matrice anziché una variabile. Gli argomenti
 	  iniziali di questa funzione (il cui numero dipende dalla
 	  distribuzione specificata) sono come quelli descritti per
 	  <lit>randgen</lit>, ma devono essere seguiti da due interi
@@ -7753,7 +7753,7 @@
 	  Nel seguente esempio si divide una matrice <by r="3" c="3"/>
 	  in tre matrici: le prime due righe sono assegnate alla prima
 	  matrice; la seconda matrice è lasciata vuota; e la terza
-	  matrice riceve righa 3 di<argname>X</argname>.
+	  matrice riceve riga 3 di<argname>X</argname>.
 	</para>
 	<code>
 	  matrix X = {1,2,3; 4,5,6; 7,8,9}
@@ -7815,10 +7815,10 @@
 	  L'argomento <repl>tipo</repl> identifica il tipo di
 	  parameterizzazione, che a sua volta determina
 	  <math>k</math>, il numero di elementi di <repl>theta</repl>:
-	  1 = Almon espnenziale normalizzata (<math>k</math> almeno 1,
+	  1 = Almon esponenziale normalizzata (<math>k</math> almeno 1,
 	  di solito 2); 2 = beta normalizzata con zero in fondo
-	  (<math>k</math> = 2); 3 = beta normalzzata senza zero in
-	  fondo lag (<math>k</math> = 3); and 4 = polinomio di Almon
+	  (<math>k</math> = 2); 3 = beta normalizzata senza zero in
+	  fondo  (<math>k</math> = 3); e 4 = polinomio di Almon
 	  (<math>k</math> almeno 1). Si noti che per la beta
 	  normalizzata i primi due elementi di <repl>theta</repl>
 	  devono essere positivi.
@@ -8029,7 +8029,7 @@
 	</para>
 	<subhead>Ampiezza di banda</subhead>
 	<para>
-	  L'argomanto <argname>h</argname>, l'ampiezza di banda, è un
+	  L'argomento <argname>h</argname>, l'ampiezza di banda, è un
 	  numero positivo, di solito piccolo.  Più esso è grande, più il
 	  risultato <math>m(x)</math> sarà liscio. Comunemente, si sceglie
 	  <argname>h</argname> in modo che sia proporzionale a
@@ -8046,7 +8046,7 @@
 	  omette l'<math>i</math>-esima osservazione nel calcolo
 	  di <math>m(x</math><sub>i</sub><math>)</math>. Questo rende lo
 	  stimatore Nadaraya&ndash;Watson più robusto numericamente ed è
-	  in genere consigliato qunado la stima viene fatta a fini
+	  in genere consigliato quando la stima viene fatta a fini
 	  inferenziali. Questa variante non è di default, ma viene
 	  attivata se l'argomento <argname>LOO</argname> è non-zero.
 	</para>
@@ -8245,7 +8245,7 @@
 	</code>
 	<para>
 	  La matrice risultato è <by r="1" c="2"/>; contiene la
-	  statistica test statistic e il suo p-value. Vedi anche il
+	  statistica test  e il suo p-value. Vedi anche il
 	  comando <cmdref targ="normtest"/>.
 	</para>
       </description>
@@ -8398,7 +8398,7 @@
 	  $A$ è $m \times n$, $B$ sarà una matrice $n \times (n-r)$, dove
 	  $r$ è il rango di $A$.
 	  \item Se il rango colonna di $A$ non è pieno, la
-	  concatenzaione verticale di $A$ e $B'$ produce una matrice di rango
+	  concatenazione verticale di $A$ e $B'$ produce una matrice di rango
 	  pieno.
 	  \end{itemize}
 	</para>
@@ -8720,7 +8720,7 @@
 	<para>
 	  Restituisce una matrice con due colonne e <math>T</math>/2 righe:
 	  la prima colonna contiene la frequenza, &omega;, da 2&pi;/<math>T</math>
-	  a &pi;, ae la seconda la densità spettrale corrispondente.
+	  a &pi;, e la seconda la densità spettrale corrispondente.
 	</para>
       </description>
     </function>
@@ -8735,9 +8735,9 @@
 	  corrente ha struttura panel.  Effettua l'operazione inversa
 	  di <fncref targ="pshrink"/>. Vale a dire, dato un vettore di
 	  lunghezza uguale al numero di individui nel campione panel
-	  vigente, restituisce una serie in cui gni valore è ripetuto
+	  vigente, restituisce una serie in cui ogni valore è ripetuto
 	  <math>T</math> volte, dove <math>T</math> è la lunghezza
-	  temporale del panel. La serie risultaante è, di conseguenza,
+	  temporale del panel. La serie risultante è, di conseguenza,
 	  invariante nel tempo.
 	</para>
       </description>
@@ -9890,7 +9890,7 @@
 	  non contiene un percorso completo, gretl darà per scontato
 	  che il nome file è relativo alla <cmdref targ="workdir"/>
 	  attuale. Se il file non viene trovato o non si hanno i
-	  privilegi per cancellarlo, la rierca non si estenderà ad
+	  privilegi per cancellarlo, la ricerca non si estenderà ad
 	  altre directory.
 	</para>
       </description>
@@ -9984,7 +9984,7 @@
 	  previsto. Esso è disponibile solo nella sua forma più
 	  semplice: i dati sono ricampionati <quote>per
 	  unità</quote>. Ad esempio, in un panel con 100 unità
-	  ossrervate su 5 periodi, la serie risultrante dalla funzione
+	  osservate su 5 periodi, la serie risultante dalla funzione
 	  sarà essa stessa composta da 100 blocchi di 5 osservazioni:
 	  ogni blocco sarà estratto con pari probabilità dalle 100
 	  serie storiche individuali, preservandone l'ordine interno.
@@ -10182,7 +10182,7 @@
 	  Quando viene restituita una lista alle singole variabili viene
 	  automaticamente assegnato un nome secondo il formato
 	  <lit>sd_</lit><repl>varname</repl>, dove <repl>varname</repl> è
-	  il nome della variabile originaria. Se necessaril il nome viene
+	  il nome della variabile originaria. Se necessario il nome viene
 	  troncato e può essere modificato in caso di non unicità
 	  all'interno dell'insieme di nomi costruiti in questo modo.
 	</para> 
@@ -10627,7 +10627,7 @@
 	  modello <lit>sq_</lit><repl>varname</repl>.  Se il secondo
 	  argomento (opzionale) è presente e ha valore non-zero,
 	  vengono inclusi anche i prodotti incrociati delle variabili
-	  in <argname>L</argname>; i nomi sono vasati sul modello
+	  in <argname>L</argname>; i nomi sono basati sul modello
 	  <repl>var1</repl><lit>_</lit><repl>var2</repl>.  I nomi
 	  delle serie risultato potrebbero venir troncati se troppo
 	  lunghi, e aggiustati per evitare duplicazioni.
@@ -10789,14 +10789,14 @@
 	  Di default ritorna una versione standardizzata della serie,
 	  lista o matrice: l'input è centrato e diviso dalla sua
 	  deviazione standard campionaria (con una correzione di
-	  gradi di liberta di 1). I risultati sono calcolati in colonna nel
+	  gradi di libertà di 1). I risultati sono calcolati in colonna nel
 	  caso di una matrice.
 	</para>
 	<para>
 	  Il secondo argomento (opzionale) può essere utilizzato per
 	  influenzare il risultato.Un valore non negativo di <argname>v</argname>
 	  imposta la correzione di gradi di libertà usata  nella deviazione
-	  standard, cosicchè <argname>v</argname> = 0 dia lo stimatore di
+	  standard, cosicché <argname>v</argname> = 0 dia lo stimatore di
 	  massima verosimiglianza. Come caso speciale, se
 	  <argname>v</argname> è uguale a &minus;1 è eseguita solo
 	  la centratura.
@@ -10961,7 +10961,7 @@
       <description>
 	<para>
 	  Nel suo uso base, con un solo argomento, restituisce un
-	  array di stringhe rislutante dalla divisione di
+	  array di stringhe risultante dalla divisione di
 	  <argname>s</argname> per spazi bianche (ossia qualsiasi
 	  combinazione di spazi, tabulazioni e a capo).
 	</para>
@@ -10971,7 +10971,7 @@
 	  l'<argname>i</argname>-esimo elemento della divisione di cui
 	  sopra. Se <argname>i</argname> è minore di 1 verrà segnalato
 	  un errore, ma se <argname>i</argname>
-	  è più grande del numero di elementi che risultetrebbe dalla
+	  è più grande del numero di elementi che risulterebbe dalla
 	  divisione viene ritornata una stringa vuota.
 	</para>
 	<para>
@@ -10987,7 +10987,7 @@
 	  dividerà l'input in un array di 4 stringhe in base alle
 	  virgole. la virgola <quote>extra</quote> nell'input indica
 	  che l'argomento <argname>i</argname> è omesso, ma non è
-	  strettamente necessario am meno che non si voglia estrarre
+	  strettamente necessario a meno che non si voglia estrarre
 	  un solo elemento; se il secondo argomento è una stringa e la
 	  funzione viene invocata con due soli argomenti si intende
 	  che il secondo argomento sia <argname>sep</argname> anziché
@@ -12012,19 +12012,19 @@
 	<para>
 	  Questa funzione restituisce una stringa coi dati trovati nel
 	  buffer XML al percorso specificato. Se l'espressione
-	  corrisponde a più di un nodo, i conenuti sono stampati uno
+	  corrisponde a più di un nodo, i contenuti sono stampati uno
 	  per riga nella stringa risultato. Se il secondo argomento è
 	  un array di percorsi, la stringa risultato conterrà un
 	  buffer separato da virgole, dove la colonna <math>i</math>
 	  contiene in risultati del percorso <math>i</math>. Se le
-	  stringhe così ottenute contangono virgole, esse sono
+	  stringhe così ottenute contengono virgole, esse sono
 	  racchiuse da virgolette doppie.
 	</para>
 	<para>
 	  Per una buona introduzione a XPath e alla sua sintassi, si
 	  veda
 	  <url>https://www.w3schools.com/xml/xml_xpath.asp</url>. L'implementazione
-	  di <lit>xmlget</lit> è quella conenuta nel corrispondente
+	  di <lit>xmlget</lit> è quella contenuta nel corrispondente
 	  modulo di libxml2, che supporta XPath 1.0 ma non XPath 2.0.
 	</para>
 	<para>
