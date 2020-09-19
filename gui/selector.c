@@ -126,7 +126,6 @@ enum {
 enum {
     REGLS_EST,
     REGLS_ALPHA,
-    REGLS_ALGO,
     REGLS_LAMVAL,
     REGLS_NLAM
 };
@@ -3457,24 +3456,21 @@ static void read_regls_extras (selector *sr)
     gchar *estr = combo_box_get_active_text(est);
     gretl_bundle *rb = gretl_bundle_new();
 
-    gretl_bundle_set_int(rb, "verbosity", 2);
+    gretl_bundle_set_int(rb, "gui", 1);
 
     if (!strcmp(estr, _("Elastic net"))) {
 	GtkWidget *aspin = sr->extra[REGLS_ALPHA];
 	double a = gtk_spin_button_get_value(GTK_SPIN_BUTTON(aspin));
 
-	gretl_bundle_set_scalar(rb, "alpha", a);
-    } else {
-	GtkWidget *algo = sr->extra[REGLS_ALGO];
-	gchar *astr = combo_box_get_active_text(algo);
-
-	if (!strcmp(estr, _("Ridge"))) {
+	if (a == 1.0) {
+	    ; /* LASSO */
+	} else if (a == 0) {
 	    gretl_bundle_set_int(rb, "ridge", 1);
+	} else {
+	    gretl_bundle_set_scalar(rb, "alpha", a);
 	}
-	if (!strcmp(astr, "CCD")) {
-	    gretl_bundle_set_int(rb, "ccd", 1);
-	}
-	g_free(astr);
+    } else if (!strcmp(estr, _("Ridge"))) {
+	gretl_bundle_set_int(rb, "ridge", 1);
     }
 
     if (gtk_widget_is_sensitive(sr->extra[REGLS_LAMVAL])) {
@@ -5387,7 +5383,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (want_radios(sr)) {
 	if (ci == REGLS) {
 	    /* more stuff to show */
-	    dlgy += 120;
+	    dlgy += 140;
 	} else {
 	    dlgy += 60;
 	}
@@ -6389,34 +6385,14 @@ static void build_logistic_radios (selector *sr)
 static void regls_estim_switch (GtkComboBox *cb, selector *sr)
 {
     GtkWidget *aspin = sr->extra[REGLS_ALPHA];
-    GtkWidget *algo = sr->extra[REGLS_ALGO];
     gchar *estr = combo_box_get_active_text(cb);
-    gchar *astr = combo_box_get_active_text(algo);
-
-    gtk_widget_set_sensitive(algo, TRUE);
 
     if (!strcmp(estr, _("LASSO"))) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(aspin), 1);
 	gtk_widget_set_sensitive(aspin, FALSE);
-	/* algorithm choice: ADMM/CCD */
-	if (strcmp(astr, "ADMM")) {
-	    combo_box_remove(algo, 0);
-	    gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(algo),
-					   0, "ADMM");
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(algo), 0);
-	    gtk_widget_set_sensitive(algo, TRUE);
-	}
     } else if (!strcmp(estr, _("Ridge"))) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(aspin), 0);
 	gtk_widget_set_sensitive(aspin, FALSE);
-	/* algorithm choice: SVD/CCD */
-	if (strcmp(astr, "SVD")) {
-	    combo_box_remove(algo, 0);
-	    gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(algo),
-					   0, "SVD");
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(algo), 0);
-	    gtk_widget_set_sensitive(algo, TRUE);
-	}
     } else {
 	/* elastic net */
 	double a = gtk_spin_button_get_value(GTK_SPIN_BUTTON(aspin));
@@ -6425,16 +6401,9 @@ static void regls_estim_switch (GtkComboBox *cb, selector *sr)
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(aspin), 0.5);
 	}
 	gtk_widget_set_sensitive(aspin, TRUE);
-	if (strcmp(astr, "CCD")) {
-	    /* switch to CCD, the only applicable option */
-	    gtk_combo_box_set_active(GTK_COMBO_BOX(algo), 1);
-	}
-	/* and clamp CCD for now */
-	gtk_widget_set_sensitive(algo, FALSE);
     }
 
     g_free(estr);
-    g_free(astr);
 }
 
 static void build_regls_controls (selector *sr)
@@ -6461,16 +6430,6 @@ static void build_regls_controls (selector *sr)
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(sr->extra[REGLS_EST]), "changed",
 		     G_CALLBACK(regls_estim_switch), sr);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new("Algorithm");
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    sr->extra[REGLS_ALGO] = w = gtk_combo_box_text_new();
-    combo_box_append_text(w, "ADMM");
-    combo_box_append_text(w, "CCD");
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
     vbox_add_vwedge(sr->vbox);
 

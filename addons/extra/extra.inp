@@ -247,6 +247,9 @@ end function
 
 #######################
 
+## This function is a leftover private helper for bwritejson
+##  (through bundle2json).
+## In principle it could be removed or commented out...
 function string mrow2json (const matrix m, string misscode)
     # Helper function to convert a matrix row to json-format array string.
     # Below we check for integer values to potentially
@@ -293,6 +296,8 @@ function string mrow2json (const matrix m, string misscode)
     return out
 end function
 
+## This function is a leftover private helper for bwritejson.
+## In principle it could be removed or commented out...
 function string bundle2json (const bundle b, string misscode)
     # Bundle elements represented as a json-formatted string.
     # Not all gretl object types are supported yet, in particular
@@ -364,6 +369,10 @@ function string bundle2json (const bundle b, string misscode)
     return out
 end function
 
+/*
+This was removed for extra v0.8 (Sep 19, 2020) as obsoleted 
+by the built-in bwrite, see the documentation.
+
 function scalar bwritejson (const bundle b, string fname[null],
                             bool export[0],
                             string *jsonresult[null],
@@ -417,3 +426,5 @@ function scalar bwritejson (const bundle b, string fname[null],
 
     return result
 end function
+
+*/

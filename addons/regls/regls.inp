@@ -114,6 +114,70 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
    endif
 end function
 
+function void print_regls_header (const bundle b, int nlam,
+                                  int elnet, string est,
+				  string yname)
+
+   string algo = b.ccd ? "CCD" : b.ridge ? "SVD" : "ADMM"
+   string t1str = obslabel($t1)
+   string t2str = obslabel($t2)
+
+   if elnet
+      printf "\n%s, alpha = %g, ", est, b.alpha
+   else
+      printf "\n%s (%s) ", est, algo
+   endif
+   printf "using observations %s to %s (n = %d)\n", t1str, t2str, b.nobs
+   printf "Dependent variable: %s\n", yname
+   if nlam == 1
+      printf "single lambda-fraction %g\n", b.lfrac[1]
+   else
+      printf "%d values of scaled lambda\n", nlam
+   endif
+end function
+
+function void gui_adjust_ret (bundle *b, const bundle parms,
+                              const string yname, const list X)
+   strings S = defarray("xvalidate", "ridge", "ccd")
+   loop i=1..nelem(S)
+      if inbundle(b, S[i]) == 1 && b[S[i]] == 0
+         delete b[S[i]] --force
+      endif
+   endloop
+   if inbundle(b, "nzb")
+      setnote(b, "nzb", "non-zero coefficients")
+   endif
+   if inbundle(b, "nzX")
+      setnote(b, "nzX", "included regressors")
+   endif
+   if inbundle(b, "B")
+      setnote(b, "B", "all coefficients")
+   endif
+   string cmdstr
+   set force_decpoint on
+   outfile --buffer=cmdstr --quiet
+      printf "include regls.gfn\n"
+      printf "list RX = \\\n"
+      list X print
+      printf "bundle rb = regls(%s, RX", yname
+      if inbundle(parms, "nlambda")
+         printf ", nlambda=%d", parms.nlambda
+      else
+         printf ", lfrac=%g", parms.lfrac
+      endif      
+      if inbundle(b, "ridge")
+         printf ", ridge=1"
+      endif
+      if inbundle(b, "alpha")
+         printf ", alpha=%g", ret.alpha
+      endif
+      printf ", verbosity=2))\n"
+   end outfile
+   printf "Command line equivalent:\n\n"
+   printf "%s\n", cmdstr
+   b.commands = cmdstr
+end function
+
 function bundle regls (series depvar, list indeps,
                        const bundle parms[null])
    bundle ret
@@ -128,7 +192,9 @@ function bundle regls (series depvar, list indeps,
    matrix bsel = {}
    scalar alpha_set = 0
    scalar elnet = 0
-   string est = ""
+   scalar gui = 0
+   string est
+   string yname
 
    if !exists(parms)
       # an empty bundle will do
@@ -159,6 +225,12 @@ function bundle regls (series depvar, list indeps,
    endif
    if inbundle(parms, "timer") == 1
       timer = parms.timer
+   endif
+   if inbundle(parms, "gui") == 1
+      gui = parms.gui
+      if gui
+         ret.verbosity = 2
+      endif
    endif
    if inbundle(parms, "alpha") == 1
       if parms.alpha < 0 || parms.alpha > 1 || isnan(parms.alpha)
@@ -191,26 +263,11 @@ function bundle regls (series depvar, list indeps,
    # record upper limit of incoming sample range
    my_tmax = $t2
 
-   est = elnet ? "Elastic net" : ret.ridge ? "Ridge" : "LASSO"
-
-   if ret.verbosity > 0 && nlam > 1 && rank <= 0
-      string meth
-      if elnet
-         printf "\n%s, alpha = %g: trying %d values of scaled lambda\n", est, ret.alpha, nlam
-      elif ret.ridge
-         meth = ret.ccd ? "CCD" : "SVD"
-         printf "\n%s (%s): trying %d values of scaled lambda\n", est, meth, nlam
-      else
-         meth = ret.ccd ? "CCD" : "ADMM"
-         printf "\n%s (%s): trying %d values of scaled lambda\n", est, meth, nlam
-      endif
-   endif
-
    # handle possible missing values
    list All = depvar indeps
    series okcheck = ok(All)
-   if sum(okcheck) < $nobs
-      printf "skipping %d missing values\n", $nobs - sum(okcheck)
+   nskip = $nobs - sum(okcheck)
+   if nskip > 0
       set matrix_mask okcheck
    endif
 
@@ -223,13 +280,6 @@ function bundle regls (series depvar, list indeps,
    endif
 
    scalar ret.nobs = rows(X)
-   if ret.verbosity > 0
-      if nlam == 1
-         printf "%s: using %d observations\n", est, ret.nobs
-      else
-         printf "using %d observations\n", ret.nobs
-      endif
-   endif
 
    if nelem(lfrac) > 0
       matrix ret.lfrac = vec(lfrac)
@@ -240,9 +290,14 @@ function bundle regls (series depvar, list indeps,
    if inbundle(parms, "xvcrit")
       string ret.xvcrit = parms.xvcrit
    endif
-
    if inbundle(parms, "xvalidate")
       get_xvalidation_parms(&ret, &parms)
+   endif
+   
+   if ret.verbosity > 0 && rank <= 0
+      yname = argname(depvar, "unnamed")
+      est = elnet ? "Elastic net" : ret.ridge ? "Ridge" : "LASSO"
+      print_regls_header(ret, nlam, elnet, est, yname)
    endif
 
    # call plugin C code
@@ -254,7 +309,7 @@ function bundle regls (series depvar, list indeps,
       funcerr "_regls failed"
    endif
    if rank <= 0 && timer
-      string mode = ret.ccd ? "ccd" : ret.ridge ? "svd" : "admm"
+      string mode = ret.ccd ? "CCD" : ret.ridge ? "SVD" : "ADMM"
       printf "_regls (%s): %.3f seconds\n", mode, $stopwatch
    endif
 
@@ -331,6 +386,9 @@ function bundle regls (series depvar, list indeps,
 
    if inbundle(ret, "verbosity")
       delete ret.verbosity
+   endif
+   if gui
+      gui_adjust_ret(&ret, parms, yname, indeps)
    endif
 
    return ret

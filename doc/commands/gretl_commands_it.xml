@@ -1360,7 +1360,7 @@
 	  <para>Il metodo di bootstrap. Con la prima opzione i residui
 	  originali (riscalati, come suggerito in ETM) vengono
 	  ricampionati con rimpiazzo. Nel secondo caso, viene
-	  effettuato in ricampionamente per <quote>coppie</quote> o
+	  effettuato un ricampionamente per <quote>coppie</quote> o
 	  <quote>casi</quote>, ossia le righe di dati <math>y</math>,
 	  <math>X</math>. Con la terza opzione, i residui originali
 	  vengono prima trasformati secondo il metodo di <cite
@@ -12044,6 +12044,40 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       <menu-path>/File/Esci</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="regls" section="Estimation"
+	   label="Regularized least squares" context="gui">
+    <description>
+      <para>
+	Questa finestra di dialogo permette di utilizzare alcuni dei
+	metodi per minimi quadrati regolarizzati che sono implementati
+	nella funzione <lit>regls</lit>.
+      </para>
+      <para>
+	Sono previste tre varianti: LASSO, che penalizza la somma dei
+	valori assoluti dei coefficienti; Ridge, che penalizza la
+	somma dei loro quadrati; e la "rete elastica", che è una
+	combinazione degli altri due, regolata dall'iperparametro
+	&alpha;. (&alpha; = 1 porta al LASSO, &alpha; = 0 al Ridge;
+	valori intermedi danno una combinazione ponderata.)
+      </para>
+      <para>
+	Il termine &lgr; specifica quanto sia forte la
+	penalizzazione. Sì può specificare un unico valore frazionale
+	per &lgr;-fraction (da 0 = nessuna penalizzazione a 1 =
+	massima penalizzazione), oppure un numero di valori per
+	&lgr;. Nel secondo caso i valori di penalizzazione vengono
+	scalati automaticamente.
+      </para>
+      <para>
+	È possibile esercitare un controllo molto più puntuale su
+	questa procedura usando la funzione <lit>regls</lit> da
+	script. In particolare, è possibile specificare le opzioni di
+	validazione incrociata (cross validation); si veda
+	<doc>regls.pdf</doc> per ulteriori dettagli.
+      </para>
+    </description>
   </command>
 
   <command name="rename" section="Dataset" label="Rinomina variabili" context="cli">
