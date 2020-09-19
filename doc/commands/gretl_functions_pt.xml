@@ -511,8 +511,29 @@
 	  print b
 	</code>
       </description>
+    </function>    
+    
+    <function name="$mpirank" section="access" output="int">
+      <description>
+	<para>
+	  Se gretl foi compilado con suporte MPI, e o programa foi iniciado
+	  em modo MPI, retorna o
+	  <quote>posto</quote> de base 0 o ID do processo
+	  actual. Caso contrário retorna &minus;1.
+	</para>
+      </description>
     </function>
-
+    
+    <function name="$mpisize" section="access" output="int">
+      <description>
+	<para>
+	  Se gretl foi compilado con suporte MPI, e o programa foi iniciado
+	  em modo MPI, retorna o número do processo MPi actualmente em execução. Caso contrário retorna 
+	  0.
+	</para>
+      </description>
+    </function>
+    
     <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
@@ -530,7 +551,21 @@
 	</para>
       </description>
     </function>
-
+    
+    <function name="$now" section="access" output="vector">
+      <description>
+	<para>
+	  Produz um vector de dois elementos: o primeiro elemento é
+          o número de segundos decorridos desde1970-01-01 00:00:00 +0000
+	  (UTC), que é uma medida utilizada muito frequentemente no mundo da
+          informatica para representar a hora. O segundo é a data actual no
+          formato <quote>básico</quote> ISO 8601, que é
+	  <lit>YYYYMMDD</lit>; para processar o segundo elemento pode-se usar
+          a função <fncref targ="epochday"/>.
+	</para>
+      </description>
+    </function>
+    
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
@@ -619,7 +654,30 @@
 	</para>
       </description>
     </function>
-
+    
+    <function name="$parnames" section="access" output="strings">
+      <description>
+	<para>
+	  Depois da estimação de um modelo de uma só equação, produz
+          um vector de texto contendo os nomes dos parâmetros do modelo.
+          Os números do nomes correspondem ao número dos elementos no vector
+          <fncref targ="$coeff"/> .
+	</para>
+	<para>
+	  Para modelos especificados com uma lista de regressores o resultado será
+          o mesmo que
+	</para>
+	<code>
+	  varnames($xlist)
+	</code>
+	<para>
+	  (ver <fncref targ="varnames"/>), mas <lit>$parnames</lit> é
+	  mais geral, pois que funciona também com modelos sem lista de regressores
+          (<cmdref targ="nls"/>, <cmdref targ="mle"/>, <cmdref targ="gmm"/>).
+	</para>
+      </description>
+    </function>
+    
     <function name="$pd" section="access" output="int">
       <description>
 	<para>
@@ -670,8 +728,21 @@
 	  estatística de teste é maximizada.
 	</para>
       </description>
+    </function>   
+    
+    <function name="$result" section="access" output="matrix-or-bundle">
+      <description>
+	<para>
+	  Fornece a informação  armazenada de alguns comandos que não têm acessores
+          específicos. Tais comandos incluem <cmdref targ="corr"/>, <cmdref targ="fractint"/>, <cmdref
+	  targ="freq"/>, <cmdref targ="summary"/>, <cmdref
+	  targ="xtab"/>, <cmdref targ="vif"/> e <cmdref targ="bkw"/>
+	  ; neste caso o resultado é uma matriz, e ainda <cmdref
+	  targ="pkg"/>, que opcionalmente guarda como um resultado bundle.
+	</para>
+      </description>
     </function>
-
+    
     <function name="$rho" section="access" output="scalar">
       <fnargs>
 	<fnarg optional="true" type="scalar">n</fnarg>
@@ -1393,8 +1464,6 @@
 	<para>
 	  Retorna o arco-tangente de <argname>x</argname>, isto é, o valor
 	  cuja tangente é <argname>x</argname>. Resultado em radianos.
-	</para>
-	<para>
       <seelist>
         <fncref targ="cos"/>
         <fncref targ="sin"/>
@@ -1404,6 +1473,37 @@
       </description>
     </function>
 
+    <function name="atan2" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna o valor principal do arco-tangente de
+	  <argname>y</argname>/<argname>x</argname>, usando os sinais
+	  dos dois argumentos para determinar o quadrante do resultado, que é
+          expresso em radianos, dentro do intervalo [&minus;&pi;, &pi;].
+	</para>
+	<para>
+	  Se os dois argumentos forem de tipos diferentes, o resultado é do tipo
+          <quote>mais alto</quote> dos dois, seguindo a ordem,
+          matriz &gt; série &gt; escalar. Por exemlo, se
+	  <argname>y</argname> é um escalar e <argname>x</argname> um
+	  vector de <math>n</math> elementos (ou viceversa), o
+	  resultado é também um vector. Note-se que os argumentos matriciais
+          deverem ser vectores, e que se nenhum deles for escalar, devem ter
+          a mesma dimensão.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="tan"/>
+            <fncref targ="tanh"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="atanh" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -1620,6 +1720,53 @@
       </description>
     </function>
 
+    <function name="bincoeff" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">n</fnarg>
+	<fnarg type="anyfloat">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula o coeficiente binomial, ou seja o número de maneiras
+          com que <argname>k</argname> elementos possam ser escolhidos
+          a partir dos <argname>n</argname> elementos sem repetições, 
+          independentemente da sua ordenação. Este número é também
+          igual ao <argname>(k+1)</argname>-esimo coeficiente
+	  da expansão polinomial da <equation status="inline"
+	  ascii="(1+x)^n" tex="$(1+x)^n$"/>.
+	</para>
+	<para context="tex">
+	  Para argumentos inteiros, o resultado é $n!/k!(n-k)!$, mas a
+	  função aceita também aceita argumentos reais, e a fórmula
+          generaliza-se com $\frac{\Gamma(n+1)}{\Gamma(k+1)\Gamma(n-k+1)}$.
+	</para>
+	<para context="notex">
+	  Para argumentos inteiros, o resultado é 
+	  <math>n!/k!(n-k)!</math>, mas a
+	  função aceita também aceita argumentos reais, e a fórmula
+          generaliza-se com <math>
+	  Γ(n+1)/( Γ(k+1) &times; Γ(n-k+1) )</math>
+	</para>
+	<para>
+	  Quando <argname>k</argname> &gt; <argname>n</argname> ou
+	  <argname>k</argname> &lt; 0, a função retorna NA.
+	</para>
+	<para>
+          Se os dois argumentos forem de tipos diferentes, o resultado é do tipo
+          <quote>mais alto</quote> dos dois, seguindo a ordem,
+          matriz &gt; série &gt; escalar. Por exemlo, se
+	  <argname>n</argname> é um escalar e <argname>k</argname> um
+	  vector de <math>r</math> elementos (ou viceversa), o
+	  resultado é também um vector. Note-se que os argumentos matriciais
+          deverem ser vectores, e que se nenhum deles for escalar, devem ter
+          a mesma dimensão.
+	</para>
+	<para>
+	  Ver também <fncref targ="gammafun"/> e <fncref targ="lngamma"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -1660,6 +1807,39 @@
             <fncref targ="bwfilt"/>
             <fncref targ="hpfilt"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+    
+    <function name="bkw" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">V</fnarg>
+	<fnarg optional="true" type="strings">parnames</fnarg>
+	<fnarg optional="true" type="bool">verbose</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula o test BKW para a colinearidade (ver
+	  <cite key="belsley-etal80">Belsley, Kuh and Welsch
+	  (1980)</cite>) dada a matriz covariança da estimativa dos
+	  parâmetros <argname>V</argname>. O segundo argumento opcional,
+          que pode ser um vector de texto ou uma cadeia de texto que contenha
+          nomes separados por vírgulas, é usado para etiquetar a coluna que
+          mostra a proporção da variância; o número de nomes deve ser igual
+          à dimensão de <argname>V</argname>.  Depois de se ter estimado uma modelo
+          em gretl, pode-se obter os parâmetros adequados por via dos acessores
+          <fncref targ="$vcv"/> e <fncref
+	  targ="$parnames"/>.
+	</para>
+	<para>
+	  Por defeito esta função produz apenas a tabela BKW como matriz,
+          mas se inserir um valor diferente de 0 como terceiro argumento,
+          junto com a tabela é mostrado mais alguma análise.
+	</para>
+	<para>
+	  Esta função também existe como comando que retorna o mesmo cálculo,
+	  <cmdref targ="bkw"/>, e que usa automaticamente o último modelo sem
+          necessitar argumentos.
 	</para>
       </description>
     </function>
@@ -1742,6 +1922,48 @@
       </description>
     </function>
 
+    <function name="brename" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">B</fnarg>
+	<fnarg type="string">antiga</fnarg>
+	<fnarg type="string">nova</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se o argumento bundle <argname>B</argname> contém um elemento com
+	  a etiqueta <argname>antiga</argname>, esta é alterada
+	  para <argname>nova</argname>; caso contrário, é mostrado um 
+          erro. Em caso de sucesso, retorna 0.
+	</para>
+	<para>
+	  Esta não é uma operação muito comum, mas pode ser necessária
+          em funções que trabalham com bundles, e
+	  <lit>brename</lit> é uma ferramenta eficiente para essa tarefa.
+          Exemplo:
+	</para>
+	<code>
+	  # controi um bundle contendo uma matriz grande
+	  bundle b
+	  b.X = mnormal(1000, 1000)
+	  if 0
+	      # muda o nome manualmente
+	      Xcopy = b.X
+	      delete b.X
+	      b.Y = Xcopy
+	      delete Xcopy
+	  else
+	      # melhor: mais eficiente
+	      brename(b, "X", "Y")
+	  endif
+	</code>
+	<para>
+	  O primeiro método obriga a que a matriz seja copiada duas vezes,
+          fora do bundle e depois insere com nova etiqueta,
+          enquanto o método eficiente altera directamente a etiqueta.
+	</para>
+      </description>
+    </function>
+
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -1812,21 +2034,48 @@
       </description>
     </function>
 
+    <function name="carg" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz real <by r="m" c="n"/> contendo o 
+          <quote>argumento</quote> complexo de cada elemento da
+          matriz complexa <by r="m" c="n"/>
+	  <argname>C</argname>. O argumento do número complexo
+	  <math>z</math> = <math>x</math> + <math>yi</math> também pode
+          ser calculado como <lit>atan2(y, x)</lit>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="cmod"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="bool" optional="true">standardize</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Centraliza as colunas da matriz <argname>X</argname> em torno
-	  de suas médias.
+	  de suas médias. Se o segundo argumento (opcional) é diferente de zero,
+	  a coluna é normalizada, usando o desvio padrão ajustada com os graus
+          de liberdade (ou seja <math>n</math>
+	  &minus; 1 como divisor, onde <math>n</math> é o número de linhas de 
+	  <argname>X</argname>).
 	</para>
       </description>
     </function>
 
     <function name="cdf" section="probdist" output="asinput">
       <fnargs>
-	<fnarg type="string">d</fnarg>
+	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -1840,8 +2089,8 @@
 	  Calculadora da função de distribuição acumulada. Retorna
 	  <equation status="inline" ascii="P(X &le; x)" tex="$P(X \le
 	  x)$"/>, onde a distribuição de <math>X</math> é especificada
-	  pela letra <argname>d</argname>. Entre os argumentos <argname>
-	  d</argname> e <argname>x</argname>, zero ou mais argumentos
+	  pela letra <argname>c</argname>. Entre os argumentos <argname>
+	  c</argname> e <argname>x</argname>, zero ou mais argumentos
 	  adicionais são necessários para que se especifique os parâmetros
 	  da distribuição. Isso é feito da seguinte forma (note que a
 	  distribuição normal tem, por conveniência, uma função própria,
@@ -2110,6 +2359,28 @@
 	  número de linhas em <argname>X</argname> não for igual a
 	  <argname>xfac</argname> vezes o número de linhas em
 	  <argname>Y</argname>.
+	</para>
+      </description>
+    </function>
+
+    <function name="cmod" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ritorna una matrice reale <by r="m" c="n"/> contenente i
+	  valori assoluti (o <quote>moduli</quote>) di ogni elemento
+	  della matrice complessa <by r="m" c="n"/>
+	  <argname>C</argname>. Il modulo del numero complesso
+	  <math>z</math> = <math>x</math> + <math>yi</math> è uguale
+	  alla radice quadrata di <math>x</math><sup>2</sup> +
+	  <math>y</math><sup>2</sup>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	  </seelist>
 	</para>
       </description>
     </function>
