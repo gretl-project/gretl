@@ -258,37 +258,42 @@ When that is multi-modal the first mode is found (following the native
 imaxc function). Returns a 2-element column vector with the modal 
 value and its absolute frequency.
 
-\subsection{bwritejson}
+\subsection{bwritejson (removed)}
 
-\ArgRet{\texttt{bundle b, string fname, bool export} (optional), 
-    \texttt{string *jsonresult} (pointer form, optional), 
-    \texttt{string misscode} (optional)}{scalar}
+This function was removed from extra version 0.8 (September 2020)
+ because gretl's native \texttt{bwrite} function supports writing a 
+ bundle in JSON format since gretl 2020c. Please switch to that 
+ function.
 
--- Attention: Writing a bundle to JSON is possible with the native function \cmd{bwrite} 
-starting in gretl 2020c. The present function is only kept for older gretl versions and will be 
-removed from this extra package eventually. Please adapt your scripts. --
+% \ArgRet{\texttt{bundle b, string fname, bool export} (optional), 
+%     \texttt{string *jsonresult} (pointer form, optional), 
+%     \texttt{string misscode} (optional)}{scalar}
 
-Similar to the native function \texttt{bwrite}: Instead of an XML representation 
-of the input bundle this function produces a JSON serialized representation.
-So far supported bundle member types are string, scalar, series (will be saved as a
-vector), matrix, string arrays.
+% -- Attention: Writing a bundle to JSON is possible with the native function \cmd{bwrite} 
+% starting in gretl 2020c. The present function is only kept for older gretl versions and will be 
+% removed from this extra package eventually. Please adapt your scripts. --
 
-The standard usage is to pass a valid file name in \texttt{fname} and have the result 
-written to that file. However, if the pointer string argument \texttt{jsonresult} is used, 
-then the file name input is ignored (could be omitted) and the JSON string is just 
-copied to the \texttt{jsonresult} string variable. 
+% Similar to the native function \texttt{bwrite}: Instead of an XML representation 
+% of the input bundle this function produces a JSON serialized representation.
+% So far supported bundle member types are string, scalar, series (will be saved as a
+% vector), matrix, string arrays.
 
-Missing values are supported, but the JSON specification does not define them. The 
-default is to print "NaN" for any missing value (in a numerical object), but this can 
-be overridden with the string in the optional \texttt{misscode} argument.\footnote{Note 
-that round-tripping the result with gretl's native \cmd{jsonget} and \cmd{jsongetb} 
-functions does not fully work, apparently due to a limitation of the underlying third-party
-library. However, this function is not meant for internal gretl usage, but for exporting data.
-For just storing gretl bundles use the native XML-based format produced by gretl's
-\cmd{bwrite}.}
+% The standard usage is to pass a valid file name in \texttt{fname} and have the result 
+% written to that file. However, if the pointer string argument \texttt{jsonresult} is used, 
+% then the file name input is ignored (could be omitted) and the JSON string is just 
+% copied to the \texttt{jsonresult} string variable. 
 
-Returns 0 after successful completion, or the non-zero gretl error code if writing the 
-output file failed for some reason (in which case also a warning message is printed).
+% Missing values are supported, but the JSON specification does not define them. The 
+% default is to print "NaN" for any missing value (in a numerical object), but this can 
+% be overridden with the string in the optional \texttt{misscode} argument.\footnote{Note 
+% that round-tripping the result with gretl's native \cmd{jsonget} and \cmd{jsongetb} 
+% functions does not fully work, apparently due to a limitation of the underlying third-party
+% library. However, this function is not meant for internal gretl usage, but for exporting data.
+% For just storing gretl bundles use the native XML-based format produced by gretl's
+% \cmd{bwrite}.}
+
+% Returns 0 after successful completion, or the non-zero gretl error code if writing the 
+% output file failed for some reason (in which case also a warning message is printed).
 
 \subsection{splitfname}
 
@@ -418,13 +423,13 @@ splitfname, multi\_instrings, fracorder:
 Sven Schreiber 
 
 \item winsor: Sven Schreiber, original code JoshuaHe
-\item bwritejson: Artur Tarassow and Sven Schreiber
+% \item bwritejson: Artur Tarassow and Sven Schreiber
 
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
-\item September 2020: 0.8 (in progress), add fracorder
+\item September 2020: 0.8 (in progress), add fracorder, remove bwritejson
 \item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to 
 bwritejson, efficiency improvement for zeroifclose
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
