@@ -220,7 +220,10 @@ the \dollar{fcast} and \dollar{fcse} accessors available after
 series, so if you want to add the results to the dataset in this way you
 would have to set the active sample to the forecast range first. (You 
 can of course first access and store the matrices and then later after 
-resetting the sample assign them to series.)
+resetting the sample assign them to series.) Note that the estimated 
+standard errors do not incorporate parameter uncertainty in the case
+of dynamic models.
+
 But if you want to create forecast plots within a
 script the relevant option already has to be appended to the \cmd{fcast}
 command. As explained in the 
