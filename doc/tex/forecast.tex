@@ -65,7 +65,8 @@ residual values.
 \section{The \texttt{fcast} command}
 \label{sec:fcast-fcast}
 
-The \texttt{fcast} command generates predictions based on the last
+The \texttt{fcast} command (and its equivalent GUI invocation, see 
+below) generates predictions based on the last
 estimated model.  Several questions arise here: How to control the
 range over which predictions are generated?  How to control the
 forecasting method (where a choice is available)?  How to control the
@@ -183,9 +184,44 @@ This is what is called a dynamic forecast.  A static forecast, on the
 other hand, is simply a fitted value (even if it happens to be computed
 out-of-sample).
 
-\subsection{Printing and saving forecasts}
+\subsection{Printing, displaying, and saving forecasts}
 
-To be written.
+When working from the GUI, the way to perform and access forecasts is to
+first estimate a model with some inherently dynamic features, and then 
+in the model window navigate to the Forecasts entry in the Analysis 
+menu. If some out-of-sample observations are already available (see 
+above) a dialog window is presented where the discussed forecasting 
+options can be chosen by pointing and clicking. Executing the forecasts
+then automatically yields two result windows: one with a time-series
+plot of the forecasts along with their confidence bands (if those were
+chosen), and another one with tabular output.
+
+The produced plot can be saved to the current session or exported like
+any other plot in gretl by right-clicking. Notice that in the textual
+result window there is a ``+'' button at the top which offers to save
+the point forecasts and their standard errors as new series to the
+active dataset. 
+
+In a command line context the \cmd{fcast} command automatically prints 
+out the tables with the produced forecasts, their standard errors, and 
+associated confidence intervals -- unless you wish to suppress this 
+verbose output with the options \verb|--stats-only| or \verb|--quiet|. 
+The former option restricts output to the forecast evaluation statistics
+as explained in the next section; the latter option silences output 
+altogether.   
+
+Accessing and saving the produced forecast times series along with the 
+estimated standard errors works through 
+the \dollar{fcast} and \dollar{fcse} accessors available after 
+\cmd{fcast} execution. But if you want to create forecast plots within a
+script the relevant option already has to be appended to the \cmd{fcast}
+command. As explained in the 
+command reference, specify \verb|--plot=<filename>| (without the < > 
+symbols) to save the plot file directly to disc, namely by default to 
+the active working directory if no full path is specified.\footnote{%
+Being a single plot, this is currently not available
+for forecasts based on multiple equation systems. If the path contains
+spaces it must be enclosed in quotes.} 
 
 \section{Univariate forecast evaluation statistics}
 \label{sec:fcast-stats}
