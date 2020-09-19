@@ -1206,7 +1206,7 @@ static gchar *crit_print_format (const gretl_matrix *crit,
 static void lambda_sequence_header (PRN *prn)
 {
     pputc(prn, '\n');
-    pputs(prn, "      lambda     df   criterion      R^2      BIC\n");
+    pputs(prn, "    lambda/n     df   criterion      R^2      BIC\n");
 }
 
 static void ccd_print (const gretl_matrix *B,
