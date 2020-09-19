@@ -498,9 +498,9 @@ enum {
     F_NADARWAT,
     F_FEVAL,
     F_CHOWLIN,
+    F_TDISAGG,
     F_HYP2F1,
     HF_CLOGFI,
-    HF_TDISAGG,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
