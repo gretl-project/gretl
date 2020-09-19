@@ -525,7 +525,7 @@
 	<para>
 	  Se gretl è compilato con supporto MPI, e il programma è
 	  stato lanciato in modalità MPI, ritorna il numero di
-	  processi MPi attualmente in svolgimento. Altrimenti ritorna
+	  processi MPI attualmente in svolgimento. Altrimenti ritorna
 	  0.
 	</para>
       </description>
@@ -552,7 +552,7 @@
       <description>
 	<para>
 	  Produce un vettore a 2 elementi: il primo elemento è il
-	  numero disecondi trascorsi dal 1970-01-01 00:00:00 +0000
+	  numero di secondi trascorsi dal 1970-01-01 00:00:00 +0000
 	  (UTC), che una misura molto comune nel mondo
 	  dell'informatica per rappresentare l'ora. Il secondo è la
 	  data attuale nel formato ISO 8601 <quote>di base</quote>, e
@@ -731,7 +731,7 @@
 	  non hanno specifici accessori. Tali comandi includono
 	  <cmdref targ="corr"/>, <cmdref targ="fractint"/>, <cmdref
 	  targ="freq"/>, <cmdref targ="summary"/>, <cmdref
-	  targ="xtab"/>, <cmdref targ="vif"/> and <cmdref targ="bkw"/>
+	  targ="xtab"/>, <cmdref targ="vif"/> e <cmdref targ="bkw"/>
 	  ; in questi casi il risultato è una matrice. In più <cmdref
 	  targ="pkg"/>, che opzionalmente registra come risultato un
 	  bundle.
@@ -965,7 +965,7 @@
 	  con uno dei comandi <cmdref targ="system"/>, <cmdref targ="var"/>
 	  o <cmdref targ="vecm"/>; restituisce un bundle contenente
 	  svariati elementi relativi al sistema. Sono inclusi tutti
-	  gli accessoriu di sistema rilevanti, sotto chiavi che hanno
+	  gli accessori di sistema rilevanti, sotto chiavi che hanno
 	  lo stesso nome dei normali accessori, a parte il dollaro
 	  iniziale. Ad esempio, i residui compaiono sotto la chiave
 	  <lit>uhat</lit> e i coefficienti sotto <lit>coeff</lit>. Le
@@ -1050,7 +1050,7 @@
 	</para>
 	<para>
 	  Si noti che, in generale, <lit>$tmax</lit> non è uguale a
-	  <fncref targ="$nobs"/>, che resituisce il numero di
+	  <fncref targ="$nobs"/>, che restituisce il numero di
 	  osservazioni nel sottocampione attualmente in vigore.
 	</para>
       </description>
@@ -1754,13 +1754,13 @@
 	  ascii="(1+x)^n" tex="$(1+x)^n$"/>.
 	</para>
 	<para context="tex">
-	  Per argomenti interi, il risulatato è $n!/k!(n-k)!$, ma la
+	  Per argomenti interi, il risultato è $n!/k!(n-k)!$, ma la
 	  funzione accetta anche argomenti reali, e la formula si
 	  generalizza a $\frac{\Gamma(n+1)}{\Gamma(k+1)
 	  \Gamma(n-k+1)}$.
 	</para>
 	<para context="notex">
-	  Per argomenti interi, il risulatato è
+	  Per argomenti interi, il risultato è
 	  <math>n!/k!(n-k)!</math>, ma la funzione accetta anche
 	  argomenti reali, e la formula si generalizza a <math>
 	  Γ(n+1)/( Γ(k+1) &times; Γ(n-k+1) )</math>
@@ -1857,7 +1857,7 @@
 	</para>
 	<para>
 	  Esiste anche un comando che svolge gli stessi calcoli,
-	  <cmdref targ="bkw"/>, che automaticamente usa l'utimo
+	  <cmdref targ="bkw"/>, che automaticamente usa l'ultimo
 	  modello stimato e non richiede alcun argomento.
 	</para>
       </description>
@@ -1955,7 +1955,7 @@
 	</para>
 	<para>
 	  Questa non è un'operazione molto comune, ma può essere
-	  necessaria in funzionui che lavorano coi bundle, e
+	  necessaria in funzioni che lavorano coi bundle, e
 	  <lit>brename</lit> permette di svolgere questa operazione in
 	  modo efficiente. Esempio:
 	</para>
@@ -2056,7 +2056,7 @@
       </fnargs>
       <description>
 	<para>
-	  Rirona una matrice reale <by r="m" c="n"/> contenente gli
+	  Ritorna una matrice reale <by r="m" c="n"/> contenente gli
 	  <quote>argomenti</quote> complessi di ogni elemento della
 	  matrice complessa <by r="m" c="n"/>
 	  <argname>C</argname>. L'argomento del numero complesso
@@ -2287,7 +2287,7 @@
 	  Le dummy eventualmente generate avranno un nome dato da
 	  <lit>D</lit><repl>nomevar</repl><lit>_</lit><repl>vi</repl>
 	  dove <repl>vi</repl> è l'<repl>i</repl>-esimo valore
-	  rappresentato dalla variabile codificata. Se ve ne forrsero
+	  rappresentato dalla variabile codificata. Se ve ne fossero
 	  di negativi, verrà inserita una <quote>m</quote> prima del
 	  valore assoluto di <repl>vi</repl>.
 	</para>
@@ -2992,7 +2992,7 @@
 	  sito dell'US Bureau of Labor Statistics; a tal fine, bisogna
 	  formulare una query JSON. Si noti l'uso di <cmdref
 	  targ="sprintf"/> per inserire il carattere nei
-	  dati <lit>POST</lit> il caratter <quote>virgoletta doppia</quote>.
+	  dati <lit>POST</lit> il carattere <quote>virgoletta doppia</quote>.
 	</para>
 	<code>
 	  bundle req
@@ -3470,7 +3470,7 @@
 	  Per ottenere gli autovettori sinistri (di nuovo, nella forma di una 
 	  matrice complessa), fornire l'indirizzo di una matrice come terzo argomento.
 	  Notare che se si desiderano gli autovettori sinistri e non quelli destri,
-	  occore inserire la parola chiave <lit>null</lit>
+	  occorre inserire la parola chiave <lit>null</lit>
 	  al posto del secondo argomento.
 	</para>
 	<para>
@@ -3657,7 +3657,7 @@
 	  a chi utilizza la funzione in questione.
 	</para>
 	<para>
-	  Il valore (1) ritornato da questa funzone è puramente nominale.
+	  Il valore (1) ritornato da questa funzione è puramente nominale.
 	</para>
       </description>
     </function>
@@ -3870,7 +3870,7 @@
 	  (FEVD)dopo la stima di un VAR o di un VECM. Senza
 	  l'argomento finale (opzionale), è disponibile soltanto
 	  quando l'ultimo modello stimato è un VAR o un VECM. In
-	  alternativa, le informaizoni sul modello possono essere
+	  alternativa, le informazioni sul modello possono essere
 	  contenute in un bundle via l'accessore <fncref targ="$system"/>
 	  e poi passate alla funzione <lit>fevd</lit>.
 	</para>
@@ -3883,7 +3883,7 @@
 	  <lit>fe1</lit> contiene le quote di FEVD per <lit>y1</lit>
 	  attribuibili a <lit>y1</lit>, <lit>y2</lit> e <lit>y3</lit>
 	  (con le righe che sommano a 1). Nel secondo, <lit>fe2</lit>
-	  contiene il contrinbuto di <lit>y2</lit> alla varianza di
+	  contiene il contributo di <lit>y2</lit> alla varianza di
 	  tutte e tre le variabili (e quindi le righe non sommano a
 	  1). Nel terzo caso, il valore ritornato è un vettore colonna
 	  contenente la <quote>propria quota</quote> di FEVD per
@@ -4174,7 +4174,7 @@
 	  Nel caso di un array di stringhe, esse sono contenute in
 	  <argname>A</argname>, e sono sistemate una per riga di default.
 	  Se un valore diverso da 0 è inserito in <argname>alt</argname> le 
-	  stringhe verranno separate da spazi anzichè da interruzioni di riga.
+	  stringhe verranno separate da spazi anziché da interruzioni di riga.
 	</para>
       </description>
     </function>
@@ -4254,7 +4254,7 @@
 	  Sarà più probabile ottenere migliori risultati qualora l'utente
 	  inserisca, come secondo argomento, un vettore di cui componenti
 	  contenente gli estremi del supporto. Altrimenti, è possibile fornire un solo
-	  valore scalare e <lit>fzero</lit> tenterà di trovera un intervallo adeguato.
+	  valore scalare e <lit>fzero</lit> tenterà di trovare un intervallo adeguato.
 	  Se il secondo argomento è omesso, <math>x</math><sub>0</sub>
 	  è inizializzato ad un piccolo valore positivo.
 	</para>
@@ -4866,7 +4866,7 @@
 	<para>
 	  Il filtro HP viene di soluto usato per detrendizzare una serie,
 	  ma se invece quel che interessa è il trend, basta sottrarre il
-	  risulattao dalla serie originale, come di seguito:
+	  risultato dalla serie originale, come di seguito:
 	</para>
 	<para>
 	  <seelist> 
@@ -5663,7 +5663,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritornal il numero di settimana secondo lo standard ISO
+	  Ritorna il numero di settimana secondo lo standard ISO
 	  8601, corrispondente alla data specificata nei tre argomenti, o <lit>NA</lit>
 	  se la data non è valida. Si noti che tutti e tre gli
 	  argomenti devono essere dello stesso tipo, cioè scalari
@@ -5675,7 +5675,7 @@
 	  53. 
 	  Secondo la definizione ISO 8601, la settimana 01 è quella
 	  che contiene il primo giovedì dell'anno, secondo il
-	  calendario gregoriano. Per maggiorni dettagli, si veda
+	  calendario gregoriano. Per maggiori dettagli, si veda
 	  <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
 	</para>
       </description>
@@ -5845,7 +5845,7 @@
 	      (asterisco), che indica l'inclusione di tutti gli
 	      elementi a quel livello; o infine (c), una lista di
 	      elementi separati da virgole, compresa fra graffe (<quote>{</quote> e
-	      <quote>}</quote>), nel qual caso verrano inclusi solo
+	      <quote>}</quote>), nel qual caso verranno inclusi solo
 	      quei certi elementi JSON.
 	    </para>
 	  </li>
@@ -6055,7 +6055,7 @@
 	</para>
 	<para>
 	  I valori critici sono basati sulle superfici di risposta
-	  stimated da <cite key="sephton95">Sephton (Economics
+	  stimate da <cite key="sephton95">Sephton (Economics
 	  Letters, 1995)</cite>. Vedi anche il comando <cmdref
 	  targ="kpss"/>.
  	</para>
@@ -6073,7 +6073,7 @@
       <description>
 	<para>
 	  Imposta un bundle di tipo Kalman, ossia un oggetto
-	  contentente le informazioni necessarie a definire un modello
+	  contenente le informazioni necessarie a definire un modello
 	  lineare in spazio degli stati della seguente forma:
 	  <equation status="display" 
 		    tex="\[y_t=H'\alpha_t\]"
@@ -6099,7 +6099,7 @@
 	  ampia di quanto implicato dalla rappresentazione qui sopra:
 	  si possono creare modelli con matrici di sistema variabili
 	  nel tempo, modelli con prior diffuse, variabili esogene
-	  nell'equazione di misura e moelli con innovazioni correlate
+	  nell'equazione di misura e modelli con innovazioni correlate
 	  fra loro. Per ulteriori dettagli, si veda <guideref
 	  targ="chap:kalman"/>.
 	</para>
@@ -6124,7 +6124,7 @@
 	  <fncref targ="ksetup"/> per simulare dei dati.
 	</para>
 	<para>
-	  For details see <guideref targ="chap:kalman"/>.
+	  Per maggiori dettagliu, vedi <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -6142,16 +6142,17 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a fixed-point smoothing (backwards) pass on a
-	  Kalman bundle previously set up by means of the <fncref
-	  targ="ksetup"/> and returns 0 on successful completion or 1
-	  if numerical problems are encountered.  
+	  Effettua un passaggio di filtraggio all'indietro su un bundle
+	  di tipo Kalman, creato in precedenza per mezzo della
+	  funzione <fncref targ="ksetup"/>; ritorna 0 se l'esecuzione
+	  va a buon fine o 1 quando si incontrino problemi numerici.
 	</para>
 	<para>
-	  On succession completion, the smoothed states will be
-	  available as <lit>Mod.state</lit> and the sequence of their
-	  covariance matrices as <lit>Mod.stvar</lit>, respectively.
-	  For more details see <guideref targ="chap:kalman"/>.
+	  Se l'esecuzione va a buon fine, l'elemento
+	  <lit>Mod.state</lit> conterrà gli stati lisciati, assieme
+	  alla sequenza delle rispettive matrici di covarianza in
+	  <lit>Mod.stvar</lit>.  Per maggiori dettagli, si veda
+	  <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -6328,7 +6329,7 @@
 	  <quote>linearizzata</quote> della serie in input, ossia una
 	  serie in cui le osservazioni mancanti vengono sostituite da
 	  valori interpolati e gli outlier vengono aggiustati. A tal
-	  fine, viene usato il meccanismo automatico di TRAMO'; per
+	  fine, viene usato il meccanismo automatico di TRAMO; per
 	  maggiori dettagli, si consulti la documentazione di TRAMO.
 	</para>
 	<para>
@@ -6580,7 +6581,7 @@
 	<para>
 	  Risolve l'equazione <math>Ax = b</math> per <math>x</math>,
 	  dove <argname>L</argname> è il fattore di Cholesky
-	  (triangolare bassa) della matrice definita postitiva
+	  (triangolare bassa) della matrice definita positiva
 	  <math>A</math>. Matrici <argname>L</argname> siffatte
 	  vengono ottenute a partire da una matrice definita positiva
 	  per mezzo della funzione <fncref targ="cholesky"/>.
@@ -6666,7 +6667,7 @@
       </fnargs>
       <description>
 	<para>
-	  Calcola la matrice di correlazione di Pearon considerando ogni
+	  Calcola la matrice di correlazione di Pearson considerando ogni
 	  colonna di <argname>X</argname> come una variabile.
 	  <seelist> 
 	    <fncref targ="corr"/>
@@ -6863,7 +6864,7 @@
 	<para>
 	  Se <argname>x</argname> è una lista, ritorna una serie
 	  <math>y</math> tale per cui <math>y</math><sub>t</sub> è la
-	  mediana dei valori delle variabili nell lista
+	  mediana dei valori delle variabili nella lista
 	  all'osservazione <math>t</math>, o <lit>NA</lit> se c'è
 	  almeno un valore mancante all'osservazione <math>t</math>.
 	</para>
