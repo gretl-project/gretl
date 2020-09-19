@@ -11949,7 +11949,37 @@
     <gui-access>
       <menu-path>/File/Exit</menu-path>
     </gui-access>
+  </command>
 
+  <command name="regls" section="Estimation"
+	   label="Regularized least squares" context="gui">
+    <description>
+      <para>
+	This dialog gives you a limited degree of access to the
+	<lit>regls</lit> function for regularized least squares.
+      </para>
+      <para>
+	Three variants are supported: LASSO, which limits the sum of
+	absolute values of the coefficients; Ridge, which limits the
+	sum of squared coefficients; and Elastic net, which is a
+	combination of the first two, governed by the hyperparameter
+	&alpha;. (&alpha; = 1 gives LASSO, &alpha; = 0 gives Ridge,
+	intermediate values give a weighted combination.)
+      </para>
+      <para>
+	The term &lgr; specifies the degree to which the sum of
+	absolute or squared coefficients is penalized. You can
+	either give a single &lgr;-fraction (from 0 = no penalty
+	to 1 = maximal penalty) or a number of &lgr; values. In
+	the second case the penalty values are scaled automatically.
+      </para>
+      <para>
+	You can exercise much greater control over gretl's regularized
+	least squares facility by calling the <lit>regls</lit>
+	function via scripting. In particular you are able to specify
+	cross validation; see <doc>regls.pdf</doc> for details.
+      </para>
+    </description>
   </command>
 
   <command name="rename" section="Dataset"
@@ -12048,9 +12078,7 @@
 	the <opt>random-effects</opt> option.
       </para>
     </description>
-
   </command>
-
 
   <command name="reset" section="Tests" label="Ramsey's RESET">
 
