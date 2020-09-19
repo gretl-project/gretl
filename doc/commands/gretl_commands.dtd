@@ -103,7 +103,7 @@
                 lit | emphasis | i | book | quote | filename | by |
                 func | guideref | cmdref | fncref | tabref | 
                 sub | sup | flag | footnote | refnote | opt |
-                argname | cmd | cite | url | mnu | seelist)*>
+                argname | cmd | cite | url | mnu | doc| seelist)*>
 <!ATTLIST para
    context (cli | gui | tex | notex | all) "all"
 >
@@ -212,6 +212,7 @@
 <!ELEMENT book     (#PCDATA)>
 <!ELEMENT url      (#PCDATA)>
 <!ELEMENT mnu      (#PCDATA)>
+<!ELEMENT doc      (#PCDATA)>
 <!ELEMENT quote    (#PCDATA | lit | repl | math)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
