@@ -130,9 +130,13 @@ function void print_regls_header (const bundle b, int nlam,
    printf "using observations %s to %s (n = %d)\n", t1str, t2str, b.nobs
    printf "Dependent variable: %s\n", yname
    if nlam == 1
-      printf "single lambda-fraction %g\n", b.lfrac[1]
+      if unscaled_lambda(b)
+         printf "single lambda value %g\n", b.lfrac[1]
+      else
+         printf "single lambda-fraction %g\n", b.lfrac[1]
+      endif
    else
-      printf "%d values of scaled lambda\n", nlam
+      printf "%d values of lambda\n", nlam
    endif
 end function
 

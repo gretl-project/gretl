@@ -459,12 +459,12 @@ parameter \texttt{lambda\_scale}:
 \item \texttt{lambda\_scale} = 0: no scaling is performed. The
   ``\texttt{lfrac}'' values are taken as actual $\lambda$ values (and
   so do not have to be bounded by 1.0 above).
-\item \texttt{lambda\_scale} = 1: we emulate \textsf{glmnet}. The
-  largest value of $\lambda$ is set to $9.9 \times 10^{35}$, which
-  will drive all coefficients to near-zero. The second-largest
-  $\lambda$ (call it $\lambda_2$) is then set to 1000 times
-  $\|X'y\|_{\infty}$, and subsequent values in the sequence are scaled
-  in relation to $\lambda_2$. This is the default setting.
+\item \texttt{lambda\_scale} = 1 (the default): we emulate
+  \textsf{glmnet}. The largest value of $\lambda$ is set to
+  $9.9 \times 10^{35}$, which will drive all coefficients to
+  near-zero. The second-largest $\lambda$ (call it $\lambda_2$) is
+  then set to 1000 times $\|X'y\|_{\infty}$, and subsequent values in
+  the sequence are scaled in relation to $\lambda_2$.
 \item \texttt{lambda\_scale} = 2: we follow the suggestion of some
   practitioners, setting $\lambda_{\max}$ to the squared Frobenius
   norm of $X$, which will not drive all coefficients to near-zero but
@@ -579,7 +579,7 @@ validation runs.
 \begin{verbatim}
 bundle regls (series y, list X, bundle parms)
 \end{verbatim}
-  Performs LASSO, Ridge or elastic net estimation given the dependent
+  Performs LASSO, Ridge or Elastic net estimation given the dependent
   variable \texttt{y}, the regressors \texttt{X}, and options in
   \texttt{parms}. Returns a bundle containing the
   results. Table~\ref{tab:regls-parms} lists the parameters that can
@@ -593,6 +593,7 @@ bundle regls (series y, list X, bundle parms)
     \texttt{nlambda} & integer & number of automatic $\lambda$s \\
     \texttt{stdize} & 0/1, default 1 & standardize the data \\
     \texttt{ridge} & 0/1, default 0 & do Ridge regression \\
+    \texttt{lambda\_scale} & 0, 1 or 2, default 1 & see section~\ref{sec:ridge} \\
     \texttt{verbosity} & 0, 1 or 2, default 1 & printing of output\\
     \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
     \texttt{nfolds} & optional integer $>1$, default 10 & number of
