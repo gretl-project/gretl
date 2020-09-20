@@ -451,6 +451,31 @@ this context.} As in the single-equation context a plot and a textual
 output windows are created. Again, forecast series can be added to the 
 dataset through the ``+'' button, and the plot can be saved or exported.
 
+\subsection{Special VAR cases: exogenous variables, cointegration}
+
+It may be worth noting that when a VAR is specified with additional
+(non-deterministic) exogenous regressors a similar issue as with single
+equations arises: the forecast is conditional and requires some
+assumptions about the development of those regressors out of sample.
+ As before, these values
+can be easily filled in after the dataset has been extended with the
+observations for the forecasting sample, but naturally only the user,
+not gretl, can and must decide what those values should be. This 
+includes hand-crafted deterministic variables like shift dummies; but
+on the other hand standard deterministic terms like trends and
+seasonals will be extrapolated by gretl automatically.
+
+Using a cointegrated VAR model with gretl's \cmd{vecm} command does not
+change the way a forecast is obtained afterwards. The VECM can be 
+internally represented as a VAR (in levels) that automatically contains
+the reduced-rank restrictions of cointegration, and this VAR form is
+then used to calculate the forecasts. Providing forecast standard errors
+and the associated confidence bands is also straightforward since only
+the innovation uncertainty is captured in those. This ease of use also
+carries over to the situation when a VECM with additional exogenous
+terms is used for forecasting -- provided that future values of
+the exogenous variables are specified, of course.   
+
 \section{Forecasting from simultaneous systems}
 \label{sec:fcast-system}
 
