@@ -580,7 +580,9 @@ static void set_sv_auto_complete (windata_t *vwin)
 
 #endif /* COMPLETION_OK */
 
-#ifdef G_OS_WIN32
+#define SV_PRINT_DEBUG 0
+
+#if SV_PRINT_DEBUG
 
 static void show_print_context (GtkPrintContext *context)
 {
@@ -615,7 +617,7 @@ static void begin_print (GtkPrintOperation *operation,
 
     comp = GTK_SOURCE_PRINT_COMPOSITOR(data);
 
-#ifdef G_OS_WIN32
+#if SV_PRINT_DEBUG
     GtkPrintSettings *st = gtk_print_operation_get_print_settings(operation);
     if (st != NULL) {
 	int rx = gtk_print_settings_get_resolution_x(st);
@@ -644,12 +646,6 @@ static void draw_page (GtkPrintOperation *operation,
 					  page_nr);
 }
 
-#define KEEP_SETTINGS 0 /* not sure about this */
-
-#if KEEP_SETTINGS
-static GtkPrintSettings *settings = NULL;
-#endif
-
 void sourceview_print (windata_t *vwin)
 {
     GtkSourceView *view = GTK_SOURCE_VIEW(vwin->text);
@@ -662,20 +658,16 @@ void sourceview_print (windata_t *vwin)
     comp = gtk_source_print_compositor_new_from_view(view);
     print = gtk_print_operation_new();
 
-#ifdef OS_WIN32
-    gtk_print_operation_set_unit(print, GTK_UNIT_PIXEL); /* or POINTS? */
-#else
-# if KEEP_SETTINGS
-    if (settings != NULL) {
-	gtk_print_operation_set_print_settings(print, settings);
-    }
-# endif
+#ifdef G_OS_WIN32
+    /* the units are wacky if we don't set this */
+    gtk_print_operation_set_unit(print, GTK_UNIT_POINTS);
+#endif
+
     gtk_source_print_compositor_set_right_margin(comp, 60, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_left_margin(comp, 60, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_top_margin(comp, 54, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_bottom_margin(comp, 72, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_wrap_mode(comp, GTK_WRAP_WORD);
-#endif
     gtk_source_print_compositor_set_body_font_name(comp, "Monospace 9");
 
     g_signal_connect(G_OBJECT(print), "begin_print", G_CALLBACK(begin_print), comp);
@@ -701,11 +693,7 @@ void sourceview_print (windata_t *vwin)
 	gtk_widget_show(dlg);
 	g_error_free(error);
     } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
-	; /* OK */
-#if KEEP_SETTINGS
-	/* unref previous settings if non-NULL? */
-	settings = g_object_ref(gtk_print_operation_get_print_settings(print));
-#endif
+	; /* OK: maybe save the settings? */
     }
 
     if (print != NULL) {
