@@ -663,7 +663,14 @@ void sourceview_print (windata_t *vwin)
     print = gtk_print_operation_new();
 
 #ifdef G_OS_WIN32
+#if 1
     GtkPaperSize *psize = gtk_paper_size_new(NULL);
+#else
+    GtkPaperSize *psize =
+	gtk_paper_size_new_custom("letterfix", "letter fixed",
+				  612 / 0.12, 792 / 0.12,
+				  GTK_UNIT_POINTS);
+#endif
     GtkPageSetup *psu = gtk_page_setup_new();
     gtk_page_setup_set_paper_size_and_default_margins(psu, psize);
     gtk_print_operation_set_default_page_setup(print, psu);
