@@ -504,19 +504,17 @@ static int negbin_model_add_vcv (MODEL *pmod, count_info *cinfo,
     return err;
 }
 
-static int negbin_fill_hatvars(MODEL *pmod, count_info *cinfo)
+static int negbin_fill_hatvars (MODEL *pmod, count_info *cinfo)
 {
-    int err = 0;
     double *y = cinfo->y->val;
+    double u, nb_par, x, l = 0;
     int s, t, k = cinfo->k;
-    int type = cinfo->nbtype;
+    int err = 0;
 
-    double u, nb_par, l, x;
-
-    if (type == 1) {
+    if (cinfo->nbtype == 1) {
 	nb_par = cinfo->theta[k];
 	l = log1p(nb_par);
-    } else if (type == 2) {
+    } else {
 	nb_par = 1.0 / cinfo->theta[k];
     }
 
@@ -531,15 +529,13 @@ static int negbin_fill_hatvars(MODEL *pmod, count_info *cinfo)
 	pmod->ess += u*u;
 
 	/* NOTE: uhat holds the generalized residuals */
-
-	if (type == 1) {
+	if (cinfo->nbtype == 1) {
 	    x = pmod->yhat[t] / nb_par;
 	    pmod->uhat[t] = x * (digamma(y[s] + x) - digamma(x) - l);
-	} else if (type == 2) {
+	} else {
 	    x = nb_par / (pmod->yhat[t] + nb_par);
 	    pmod->uhat[t] = u * x;
 	}
-
 	s++;
     }
 
