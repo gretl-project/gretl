@@ -2630,7 +2630,8 @@ int system_get_overid_df (const equation_system *sys)
     return gl - k;
 }
 
-/* dealing with identities (FIML, LIML) */
+/* dealing with identities (FIML, LIML) 
+	(really also needed for LIML? not clear why...) */
 
 int rhs_var_in_identity (const equation_system *sys, int lhsvar,
 			 int rhsvar)
