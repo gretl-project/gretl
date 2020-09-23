@@ -6341,8 +6341,8 @@ static GtkWidget *single_lambda_spinner (void)
     GtkAdjustment *adj;
 
     adj = (GtkAdjustment *) gtk_adjustment_new(0.5, 0, 1,
-					       0.01, 0.1, 0);
-    return gtk_spin_button_new(adj, 1, 2);
+					       0.001, 0.1, 0);
+    return gtk_spin_button_new(adj, 1, 3);
 }
 
 static GtkWidget *multi_lambda_spinner (void)
