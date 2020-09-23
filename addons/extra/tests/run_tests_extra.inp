@@ -4,10 +4,6 @@ clear
 
 include "../extra.inp" --force
 
-# This won't work with the package extra.gfn, as it uses private functions.
-# So you need to run extra.inp manually to have all the functions available,
-# or even _better_: just run the shell script "run_tests.sh"
-
 
 function void test_splitfname (void)
   print "Start with splitfname()"
@@ -100,6 +96,7 @@ function void test_onemode (void)
   matrix m = {NA, NA}
   assert(sum(ok(onemode(m))) == 0)
 end function
+
 
 
 printf "\nInfo: All tests passed.\n"

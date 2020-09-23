@@ -36,7 +36,6 @@ function matrix WPtable (int n[4::12] "number of trials")
 end function
 
 
-
 function matrix truncnorm (int n[1::],
                            scalar m[0],
                            scalar sigma[0::1],
@@ -49,6 +48,7 @@ function matrix truncnorm (int n[1::],
     matrix u = l + (r-l) .* muniform(n,1)
     return invcdf(z, u) .* sigma + m
 end function
+
 
 function matrix scores2x2 (matrix in,
                            bool verbose[0])
@@ -237,12 +237,12 @@ function matrix onemode (matrix v "Vector of values")
    is inherited, i.e. it should be the first occurrence.
    Returns a 2-element column vector with the modal value and
    its absolute frequency. If v is an empty matrix (comprises only nan
-   value) a 1x1 matrix with nan is returned. */
+   values) a 1x1 matrix with nan is returned. */
 
     matrix ret = mshape(NA, 1, 1)
     matrix v = vec(v)
 
-    if sum(ok(v)) == FALSE
+    if sum(ok(v)) == 0
         printf "\nError: No valid input data.\n"
     else
         matrix E = ecdf(v)
@@ -255,5 +255,3 @@ function matrix onemode (matrix v "Vector of values")
 
     return ret
 end function
-
-
