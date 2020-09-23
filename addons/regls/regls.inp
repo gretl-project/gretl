@@ -163,11 +163,11 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       printf "include regls.gfn\n"
       printf "list RX = \\\n"
       list X print
-      printf "bundle rb = regls(%s, RX", yname
+      printf "bundle rb = regls(%s, RX, _(", yname
       if inbundle(parms, "nlambda")
-         printf ", nlambda=%d", parms.nlambda
+         printf "nlambda=%d", parms.nlambda
       else
-         printf ", lfrac=%g", parms.lfrac
+         printf "lfrac=%g", parms.lfrac
       endif      
       if inbundle(b, "ridge")
          printf ", ridge=1"
