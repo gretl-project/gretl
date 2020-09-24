@@ -5,6 +5,14 @@ version 2020e, in progress
 - kdensity() function: generalize to allow as argument a
   list or matrix with more than one column
 - "dataset sortby": handle sorting by string-valued series
+- Documentation: add material on forecasting for VARs and
+  other multi-equation systems
+- MS Windows build: support printing scripts with syntax
+  highlighting
+- MS Windows build (64-bit): update pixman, cairo and pango
+  libraries (DLLs)
+- New addon package "regls": supports LASSO, Ridge regression
+  and Elastic net
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard

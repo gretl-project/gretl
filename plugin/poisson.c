@@ -504,14 +504,51 @@ static int negbin_model_add_vcv (MODEL *pmod, count_info *cinfo,
     return err;
 }
 
+static int negbin_fill_hatvars (MODEL *pmod, count_info *cinfo)
+{
+    double *y = cinfo->y->val;
+    double u, nb_par, x, l = 0;
+    int s, t, k = cinfo->k;
+    int err = 0;
+
+    if (cinfo->nbtype == 1) {
+	nb_par = cinfo->theta[k];
+	l = log1p(nb_par);
+    } else {
+	nb_par = 1.0 / cinfo->theta[k];
+    }
+
+    pmod->ess = 0.0;
+
+    for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
+	if (na(pmod->yhat[t])) {
+	    continue;
+	}
+	pmod->yhat[t] = cinfo->mu->val[s];
+	u = y[s] - pmod->yhat[t];
+	pmod->ess += u*u;
+
+	/* NOTE: uhat holds the generalized residuals */
+	if (cinfo->nbtype == 1) {
+	    x = pmod->yhat[t] / nb_par;
+	    pmod->uhat[t] = x * (digamma(y[s] + x) - digamma(x) - l);
+	} else {
+	    x = nb_par / (pmod->yhat[t] + nb_par);
+	    pmod->uhat[t] = u * x;
+	}
+	s++;
+    }
+
+    return err;
+}
+
 static int
 transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
 			   const DATASET *dset, int fncount,
 			   int grcount, gretlopt opt)
 {
-    double *y = cinfo->y->val;
     int nc = cinfo->k + 1;
-    int i, s, t, err = 0;
+    int i, err = 0;
 
     pmod->ci = cinfo->ci;
 
@@ -532,18 +569,7 @@ transcribe_negbin_results (MODEL *pmod, count_info *cinfo,
     pmod->dfn += 1;
 #endif
 
-    pmod->ess = 0.0;
-
-    for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
-	if (na(pmod->yhat[t])) {
-	    continue;
-	}
-	pmod->yhat[t] = cinfo->mu->val[s];
-	pmod->uhat[t] = y[s] - pmod->yhat[t];
-	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-	s++;
-    }
-
+    err = negbin_fill_hatvars(pmod, cinfo);
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
     if (!err) {

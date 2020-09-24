@@ -130,9 +130,13 @@ function void print_regls_header (const bundle b, int nlam,
    printf "using observations %s to %s (n = %d)\n", t1str, t2str, b.nobs
    printf "Dependent variable: %s\n", yname
    if nlam == 1
-      printf "single lambda-fraction %g\n", b.lfrac[1]
+      if unscaled_lambda(b)
+         printf "single lambda value %g\n", b.lfrac[1]
+      else
+         printf "single lambda-fraction %g\n", b.lfrac[1]
+      endif
    else
-      printf "%d values of scaled lambda\n", nlam
+      printf "%d values of lambda\n", nlam
    endif
 end function
 
@@ -159,11 +163,11 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       printf "include regls.gfn\n"
       printf "list RX = \\\n"
       list X print
-      printf "bundle rb = regls(%s, RX", yname
+      printf "bundle rb = regls(%s, RX, _(", yname
       if inbundle(parms, "nlambda")
-         printf ", nlambda=%d", parms.nlambda
+         printf "nlambda=%d", parms.nlambda
       else
-         printf ", lfrac=%g", parms.lfrac
+         printf "lfrac=%g", parms.lfrac
       endif      
       if inbundle(b, "ridge")
          printf ", ridge=1"

@@ -307,27 +307,38 @@ Two extensions of the basic key mechanism are available.
 The example shown in Table~\ref{tab:join-csv} is an instance of a 1 to
 1 match: applying the matching criterion produces exactly one value of
 the variable \texttt{xh} corresponding to each row of the inner
-dataset. Two other possibilities arise: it may be that some rows in
-the inner dataset have no match on the right, and/or some rows on the
-left have multiple matches on the right. The latter case (``1 to $n$
-matching'') is addressed in detail in the next section; here we
-discuss the former.
+dataset. Three other possibilities arise:
+\begin{itemize}
+\item Some rows on the left have multiple matches on the right (``1 to
+  $n$ matching'').  
+\item Some rows on the right have multiple matches on the left (``$n$
+  to 1 matching'').
+\item Some rows in the inner dataset have no match on the right.
+  
+\end{itemize}
+The first case is addressed in detail in the next section; here we
+discuss the others.
 
-The case where there's no match on the right is handled differently
-depending on whether the join operation is adding a new series to the
+The $n$ to 1 case is straightforward. If a particular key value
+(or combination of key values) occurs at each of $n > 1$
+observations on the left but at a single observation on the right,
+then the right-hand value is entered at each of the matching slots on
+the left.
+
+The handling of the case where there's \textit{no} match on the right
+depends on whether the join operation is adding a new series to the
 inner dataset or modifying an existing one. If it's a new series, then
-the unmatched rows automatically get \texttt{NA} for the imported
-data. If, on the other hand, the join is pulling in values for a
-series that is already present on the left, only matched rows will be
-updated---or in other words, we do \textit{not} overwite an existing
-value on the left with \texttt{NA} in the case where there's no match
-on the right.
+unmatched rows automatically get \texttt{NA} for the imported
+data. However, if join is pulling in values for a series already
+present on the left only matched rows will be updated. In other words
+we do \textit{not} overwite an existing value on the left with
+\texttt{NA} when there's no match on the right.
 
 These defaults may not produce the desired results in every case but
 gretl provides the means to modify the effect if need be.  We will
 illustrate with two scenarios.
 
-First, consider adding a new series recording ``number of hours
+First consider adding a new series recording ``number of hours
 worked'' when the inner dataset contains individuals and the outer
 file contains data on jobs. If an individual does not appear in the
 jobs file, we may want to take her hours worked as implicitly zero
@@ -335,9 +346,9 @@ rather than \texttt{NA}. In this case gretl's \texttt{misszero()}
 function can be used to turn \texttt{NA} into 0 in the imported
 series.
 
-Second, consider updating a series via join, when the outer file is
+Second, consider updating a series via join when the outer file is
 presumed to contain all available updated values, such that ``no
-match'' should be taken as an implicit \texttt{NA}. In this case we
+match'' should be taken as an implicit \texttt{NA}. In that case we
 want the (presumably out-of-date) values on any unmatched rows to be
 overwritten with \texttt{NA}. Let the series in question be called
 \texttt{x} (both on the left and the right) and let the common key be
@@ -352,13 +363,13 @@ more complicated case one might use the \texttt{smpl} command to limit
 the sample range before assigning \texttt{tmpvar} to \texttt{x}, or
 use the conditional assignment operator \texttt{?:}.
 
-One further point should be mentioned here. Given some missing values
-in an imported series you may sometimes want to know whether (a) 
-the \texttt{NA}s were explicitly represented in the outer data file or
-(b) they arose due to ``no match''. You can find this out by using
-a method described in the following section, namely the \texttt{count}
-variant of the aggregation option: this will give you a series with 0
-values for all and only unmatched rows.
+One further point: given some missing values in an imported series you
+may want to know whether (a) the \texttt{NA}s were explicitly
+represented in the outer data file or (b) they arose due to ``no
+match''. You can find this out by using a method described in the
+following section, namely the \texttt{count} variant of the
+aggregation option: this will give you a series with 0 values for all
+and only unmatched rows.
 
 \section{Aggregation}
 \label{sec:join-aggr}

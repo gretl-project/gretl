@@ -4120,7 +4120,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	int tmpmat = 0;
 	int parm = 0;
 	int gotopt = 0;
-	int a = 0, b, c;
+	int a = 0, b = 0, c = 0;
 
 	/* note: @parm is an integer parameter, required
 	   for some functions, optional for others
@@ -8510,6 +8510,7 @@ static NODE *series_matrix_node (NODE *l, NODE *r, int f, parser *p)
 	    if (f == F_NORMTEST) {
 		ret->v.m = gretl_normtest_matrix(x, t1, t2, opt, &p->err);
 	    } else {
+		/* F_ECDF */
 		ret->v.m = empirical_cdf(x, n, &p->err);
 	    }
 	}

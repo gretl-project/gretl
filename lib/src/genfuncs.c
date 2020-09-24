@@ -7385,12 +7385,14 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 {
     gretl_matrix *m = NULL;
     double *sy = NULL;
+    double *crf = NULL;
     int n_le, n_u, n_ok = 0;
+    int percentages = 0;
     int i, j, k, kbak;
 
     /* count non-missing values */
     for (i=0; i<n; i++) {
-	if (!na(y[i]) && !isnan(y[i])) {
+	if (!na(y[i])) {
 	    n_ok += 1;
 	}
     }
@@ -7409,7 +7411,7 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 
     j = 0;
     for (i=0; i<n; i++) {
-	if (!na(y[i]) && !isnan(y[i])) {
+	if (!na(y[i])) {
 	    sy[j++] = y[i];
 	}
     }
@@ -7431,6 +7433,8 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 	return NULL;
     }
 
+    crf = m->val + n_u;
+
     /* The first column of @m holds unique values,
        the second cumulative relative frequency
     */
@@ -7445,8 +7449,11 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 		    break;
 		}
 	    }
-	    gretl_matrix_set(m, j, 1, n_le / (double ) n_ok);
-	    j++;
+	    if (percentages) {
+		crf[j++] = 100 * n_le / (double) n_ok;
+	    } else {
+		crf[j++] = n_le / (double) n_ok;
+	    }
 	    kbak = k;
 	}
     }

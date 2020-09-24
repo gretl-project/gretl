@@ -580,6 +580,34 @@ static void set_sv_auto_complete (windata_t *vwin)
 
 #endif /* COMPLETION_OK */
 
+#define SV_PRINT_DEBUG 0
+
+#if SV_PRINT_DEBUG
+
+static void show_print_context (GtkPrintContext *context)
+{
+    gdouble x = gtk_print_context_get_width(context);
+    gdouble y = gtk_print_context_get_height(context);
+    GtkPageSetup *psu;
+
+    fprintf(stderr, "begin_print: context pixel size: %g x %g\n", x, y);
+    x = gtk_print_context_get_dpi_x(context);
+    y = gtk_print_context_get_dpi_y(context);
+    fprintf(stderr, "  context dpi: %g, %g\n", x, y);
+
+    psu = gtk_print_context_get_page_setup(context);
+    if (psu != NULL) {
+	x = gtk_page_setup_get_paper_width(psu, GTK_UNIT_INCH);
+	y = gtk_page_setup_get_paper_width(psu, GTK_UNIT_POINTS);
+	fprintf(stderr, "  paper width: %g in, %g points\n", x, y);
+	x = gtk_page_setup_get_paper_height(psu, GTK_UNIT_INCH);
+	y = gtk_page_setup_get_paper_height(psu, GTK_UNIT_POINTS);
+	fprintf(stderr, "  paper height: %g in, %g points\n", x, y);
+    }
+}
+
+#endif
+
 static void begin_print (GtkPrintOperation *operation,
                          GtkPrintContext *context,
                          gpointer data)
@@ -588,6 +616,17 @@ static void begin_print (GtkPrintOperation *operation,
     int n_pages;
 
     comp = GTK_SOURCE_PRINT_COMPOSITOR(data);
+
+#if SV_PRINT_DEBUG
+    GtkPrintSettings *st = gtk_print_operation_get_print_settings(operation);
+    if (st != NULL) {
+	int rx = gtk_print_settings_get_resolution_x(st);
+	int ry = gtk_print_settings_get_resolution_y(st);
+
+        fprintf(stderr, "settings: resolution %d,%d\n", rx, ry);
+    }
+    show_print_context(context);
+#endif
 
     while (!gtk_source_print_compositor_paginate(comp, context));
 
@@ -607,8 +646,6 @@ static void draw_page (GtkPrintOperation *operation,
 					  page_nr);
 }
 
-static GtkPrintSettings *settings = NULL;
-
 void sourceview_print (windata_t *vwin)
 {
     GtkSourceView *view = GTK_SOURCE_VIEW(vwin->text);
@@ -621,25 +658,22 @@ void sourceview_print (windata_t *vwin)
     comp = gtk_source_print_compositor_new_from_view(view);
     print = gtk_print_operation_new();
 
-    if (settings != NULL) {
-	gtk_print_operation_set_print_settings(print, settings);
-    }
+#ifdef G_OS_WIN32
+    /* the units are wacky if we don't set this */
+    gtk_print_operation_set_unit(print, GTK_UNIT_POINTS);
+#endif
 
-    /* should put up a dialog for these things? */
-#ifndef G_OS_WIN32
     gtk_source_print_compositor_set_right_margin(comp, 60, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_left_margin(comp, 60, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_top_margin(comp, 54, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_bottom_margin(comp, 72, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_wrap_mode(comp, GTK_WRAP_WORD);
-#endif
     gtk_source_print_compositor_set_body_font_name(comp, "Monospace 9");
 
     g_signal_connect(G_OBJECT(print), "begin_print", G_CALLBACK(begin_print), comp);
     g_signal_connect(G_OBJECT(print), "draw_page", G_CALLBACK(draw_page), comp);
 
     mainwin = vwin_toplevel(vwin);
-
     res = gtk_print_operation_run(print,
 				  GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
 				  GTK_WINDOW(mainwin),
@@ -659,14 +693,12 @@ void sourceview_print (windata_t *vwin)
 	gtk_widget_show(dlg);
 	g_error_free(error);
     } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
-	if (settings != NULL) {
-	    g_object_unref(settings);
-	}
-	settings = g_object_ref(gtk_print_operation_get_print_settings(print));
+	; /* OK: maybe save the settings? */
     }
 
-    g_object_unref(print);
-    /* g_object_unref(comp); ?? */
+    if (print != NULL) {
+	g_object_unref(print);
+    }
 }
 
 void sourceview_insert_file (windata_t *vwin, const char *fname)
