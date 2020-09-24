@@ -181,21 +181,22 @@ integer-ization. Warnings are issued if \texttt{verbose} is 1.
 \label{tab:scores2x2}
 \end{table}
 
+
 \subsection{truncnorm}
 
 \ArgRet{\texttt{int n, scalar m, scalar sigma, scalar below, scalar
 above}}{matrix}
 
 Generates $n$ truncated normal random values. Specify mean \texttt{m}
-and std.\,dev. \texttt{sigma}, and the left/right truncation values
+and standard deviation \texttt{sigma}, and the left/right truncation values
 \texttt{below} and \texttt{above}. (Pass NA for any one of them to
-skip the respective truncation.) Returns a col vector of values.
+skip the respective truncation.) Returns a column vector of values.
+
 
 \subsection{WSRcritical}
 
 \ArgRet{\texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
 (optional)}{matrix}
-
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4). Tries to find the critical values

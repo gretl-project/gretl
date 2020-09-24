@@ -4,6 +4,7 @@ set assert stop
 clear
 
 include "../extra.inp" --force
+include assertion.gfn
 
 
 function void test_splitfname (void)
@@ -97,6 +98,30 @@ function void test_onemode (void)
   matrix m = {NA, NA}
   assert(sum(ok(onemode(m))) == 0)
 end function
+
+
+set seed 12345
+function void test_truncnorm (void)
+  print "Start testing truncnorm()."
+
+  matrix m = truncnorm(5, 1, 5, 0.1, 1.5)
+
+  assert_almost_equal_num(m[1], 0.69278, 1e-5)
+  assert_almost_equal_num(m[2], 1.4910, 1e-4)
+  assert_almost_equal_num(m[3], 0.13854, 1e-5)
+  assert_almost_equal_num(m[4], 0.81192, 1e-5)
+  assert_almost_equal_num(m[5], 0.54419, 1e-5)
+
+
+  matrix m = truncnorm(5, 1, 5, NA, NA)
+
+  assert_almost_equal_num(m[1], -6.4419, 1e-4)
+  assert_almost_equal_num(m[2], 5.7794, 1e-4)
+  assert_almost_equal_num(m[3], -4.5460, 1e-4)
+  assert_almost_equal_num(m[4], -0.79578, 1e-5)
+  assert_almost_equal_num(m[5], 5.4342, 1e-4)
+end function
+test_truncnorm()
 
 
 

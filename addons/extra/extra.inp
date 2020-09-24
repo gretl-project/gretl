@@ -36,18 +36,25 @@ function matrix WPtable (int n[4::12] "number of trials")
 end function
 
 
-function matrix truncnorm (int n[1::],
-                           scalar m[0],
-                           scalar sigma[0::1],
-                           scalar below,
-                           scalar above)
-    # Generates truncated normal random values.
-    # Set 'below' and/or 'above' to NA to skip.
+function matrix truncnorm (int n[1::] "Number of random variables",
+                           const scalar m[0] "Mean value",
+                           const scalar sigma[0::1] "Std. deviation",
+                           const scalar below "left truncation value",
+                           const scalar above "right truncation value")
+    /* Generates truncated normal random values. Set 'below' and/or 'above'
+    to NA to skip. Returns a column vector. */
+
+    if !ok(m)
+        funcerr "You must pass a valid (non-nan) value for the mean."
+    endif
+
     scalar l = ok(below) ? cnorm((below - m)/sigma) : 0
     scalar r = ok(above) ? cnorm((above - m)/sigma) : 1
-    matrix u = l + (r-l) .* muniform(n,1)
+    matrix u = l + (r - l) .* muniform(n, 1)
+
     return invcdf(z, u) .* sigma + m
 end function
+
 
 
 function matrix scores2x2 (matrix in,
@@ -232,12 +239,12 @@ end function
 
 
 function matrix onemode (matrix v "Vector of values")
-/* Returns one mode (modal value) of the input data v. If that is multi-modal,
-details of internal computer arithmetic can influence which of the modes
-is actually found. Returns a 2-element column vector with the modal value
-and its absolute frequency. Returns a 2-element column vector with the
-modal value and its absolute frequency. If v is an empty matrix (comprises
-only nan values) a 1x1 matrix with nan is returned. */
+  /* Returns one mode (modal value) of the input data v. If that is multi-modal,
+  details of internal computer arithmetic can influence which of the modes
+  is actually found. Returns a 2-element column vector with the modal value
+  and its absolute frequency. Returns a 2-element column vector with the
+  modal value and its absolute frequency. If v is an empty matrix (comprises
+  only nan values) a 1x1 matrix with nan is returned. */
 
     matrix ret = mshape(NA, 1, 1)
     matrix v = vec(v)
