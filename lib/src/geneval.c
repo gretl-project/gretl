@@ -13776,7 +13776,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err) {
 	    ret->v.m = matrix_chowlin(Y, X, fac, agg, &p->err);
 	}
-    } else if (t->t == HF_TDISAGG) {
+    } else if (t->t == F_TDISAGG) {
 	int t1 = p->dset->t1;
 	int t2 = p->dset->t2;
 	gretl_matrix *Y = NULL;
@@ -16986,7 +16986,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FEVAL:
     case F_CHOWLIN:
     case F_HYP2F1:
-    case HF_TDISAGG:
+    case F_TDISAGG:
     case HF_CLOGFI:
     case F_DEFARGS:
     case F_BPACK:

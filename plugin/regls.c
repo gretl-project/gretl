@@ -1206,7 +1206,7 @@ static gchar *crit_print_format (const gretl_matrix *crit,
 static void lambda_sequence_header (PRN *prn)
 {
     pputc(prn, '\n');
-    pputs(prn, "      lambda     df   criterion      R^2      BIC\n");
+    pputs(prn, "    lambda/n     df   criterion      R^2      BIC\n");
 }
 
 static void ccd_print (const gretl_matrix *B,
@@ -1563,12 +1563,14 @@ static void ccd_make_lambda (regls_info *ri,
 static void lasso_lambda_report (regls_info *ri)
 {
     pprintf(ri->prn, "lambda-max = %g\n", ri->infnorm);
+#if 0 /* the following repeats what's shown via hansl */
     if (ri->nlam > 1) {
-	pprintf(ri->prn, "using lambda-fraction sequence of length %d, starting at %g\n",
+	pprintf(ri->prn, "lambda-fraction sequence of length %d, starting at %g\n",
 		ri->nlam, ri->lfrac->val[0]);
     } else {
-	pprintf(ri->prn, "using lambda-fraction %g\n", ri->lfrac->val[0]);
+	pprintf(ri->prn, "single lambda-fraction %g\n", ri->lfrac->val[0]);
     }
+#endif    
 }
 
 /* Remedial R^2 calculation for CCD: it seems that we end up

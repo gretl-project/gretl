@@ -120,6 +120,7 @@ enum extra_cmds {
     IV_GMM,
     BFGS_CONFIG,
     COUNTMOD,
+    REGLS,
     BWFILTER,
     POLYWEIGHTS,
     EMAFILTER,

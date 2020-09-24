@@ -1475,7 +1475,7 @@ gchar *combo_box_get_active_text (gpointer p)
 
 #if GTK_MAJOR_VERSION >= 3
     ret = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p));
-#else /* gtk 2 >= 2.6 */
+#else /* gtk < 2.24 */
     ret = gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
 #endif
 

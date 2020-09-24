@@ -89,6 +89,8 @@ gpointer selector_get_data (const selector *sr);
 
 gpointer selector_get_extra_data (const selector *sr);
 
+gpointer selector_get_regls_bundle (void);
+
 gretlopt selector_get_opts (const selector *sr);
 
 int selector_get_depvar_number (const selector *sr);

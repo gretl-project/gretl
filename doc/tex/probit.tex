@@ -1000,6 +1000,11 @@ invoked in gretl by appending the option \option{model1} to the
   indicate the power to which $\lambda_i$ is raised in the conditional
   variance expression.}
 
+The two accessors \dollar{yhat} and \dollar{uhat} return the predicted
+values and generalized residuals, respectively. Note that
+\dollar{uhat} is \emph{not} equal to the difference between the
+dependent variable and \dollar{yhat}.
+
 \subsection{Examples}
 
 Among the sample scripts supplied with gretl you can find

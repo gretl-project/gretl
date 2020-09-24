@@ -1976,7 +1976,7 @@ int out_of_sample_info (int add_ok, int *t2)
     } else {
 	infobox(_("There are no observations available for forecasting\n"
 		  "out of sample.  If you wish, you can add observations\n"
-		  "(Data menu, Edit data), or you can shorten the sample\n"
+		  "(Data menu, Add observations), or you can shorten the sample\n"
 		  "range over which the model is estimated (Sample menu)."));
     }
 
@@ -4436,6 +4436,8 @@ int do_model (selector *sr)
 	}
     } else if (ci == MIDASREG) {
 	pbuf = compose_midas_param(extra_data, &addopt, &err);
+    } else if (ci == REGLS) {
+	return real_do_regls(buf);
     }
 
     if (err) {

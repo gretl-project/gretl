@@ -572,6 +572,7 @@ struct str_table funcs[] = {
     { F_STACK,     "stack" },
     { F_GEOPLOT,   "geoplot" },
     { F_BINCOEFF,  "bincoeff" },
+    { F_TDISAGG,   "tdisagg" },
     { F_ASSERT,    "assert" },
     { 0,           NULL }
 };
@@ -602,7 +603,6 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
-    { HF_TDISAGG,  "_tdisagg" },
     { 0,           NULL }
 };
 
