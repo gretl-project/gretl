@@ -254,10 +254,10 @@ array. Being a set, the ordering is not defined and arbitrary.
 \ArgRet{\texttt{matrix v}}{}
 
 Finds the mode of the empirical distribution of the input data.
-When that is multi-modal, the first mode is found (following the native
-imaxc function). Returns a 2-element column vector with the modal
-value and its absolute frequency. If v is an empty matrix (comprises
-only nan values) a 1x1 matrix with nan is returned.
+If that is multi-modal, details of internal computer arithmetic can
+influence which of the modes is actually found. Returns a 2-element column vector with the modal value and its absolute frequency. If v is an empty
+matrix (comprises only nan values) a 1x1 matrix with nan is returned.
+
 
 \subsection{bwritejson (removed)}
 

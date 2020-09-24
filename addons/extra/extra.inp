@@ -232,12 +232,12 @@ end function
 
 
 function matrix onemode (matrix v "Vector of values")
-/* This function only returns one mode (modal value) of the
-   input data v. If that is multi-modal, the behavior of imaxc
-   is inherited, i.e. it should be the first occurrence.
-   Returns a 2-element column vector with the modal value and
-   its absolute frequency. If v is an empty matrix (comprises only nan
-   values) a 1x1 matrix with nan is returned. */
+/* Returns one mode (modal value) of the input data v. If that is multi-modal,
+details of internal computer arithmetic can influence which of the modes
+is actually found. Returns a 2-element column vector with the modal value
+and its absolute frequency. Returns a 2-element column vector with the
+modal value and its absolute frequency. If v is an empty matrix (comprises
+only nan values) a 1x1 matrix with nan is returned. */
 
     matrix ret = mshape(NA, 1, 1)
     matrix v = vec(v)
@@ -247,6 +247,8 @@ function matrix onemode (matrix v "Vector of values")
     else
         matrix E = ecdf(v)
         matrix howmuch = diff(0 | E[,2])[2:]    # make sure 1st is also diffed
+        /* if multi-modal selection is not clear (finite precision digital
+        arithmetic) */
         matrix where = imaxc(howmuch)
 
         matrix ret = E[where, 1] | howmuch[where]
