@@ -1,5 +1,6 @@
 set warnings off
 set verbose off
+set assert stop
 clear
 
 include "../extra.inp" --force
@@ -10,11 +11,11 @@ function void test_splitfname (void)
 
   strings S = splitfname("/what/on/earth/isthisfile.gdt")
 
-  assert(nelem(S) != 3)
+  assert(nelem(S) == 3)
 
-  assert(S[1] != "/what/on/earth")
-  assert(S[2] != "isthisfile")
-  assert(S[3] != "gdt")
+  assert(S[1] == "/what/on/earth")
+  assert(S[2] == "isthisfile")
+  assert(S[3] == "gdt")
 end function
 test_splitfname()
 
@@ -24,11 +25,11 @@ function void test_splitfname_spec_chars (void)
 
   strings S = splitfname("../what/on_=65/earth/is_this-file.gdt")
 
-  assert(nelem(S) != 3)
+  assert(nelem(S) == 3)
 
-  assert(S[1] != "../what/on_=65/earth")
-  assert(S[2] != "is_this-file")
-  assert(S[3] != "gdt")
+  assert(S[1] == "../what/on_=65/earth")
+  assert(S[2] == "is_this-file")
+  assert(S[3] == "gdt")
 end function
 test_splitfname_spec_chars()
 
@@ -38,11 +39,11 @@ function void test_splitfname_wo_file_ext (void)
 
   strings S = splitfname("../what/on_=65/earth/is_this-file")
 
-  assert(nelem(S) != 3)
+  assert(nelem(S) == 3)
 
-  assert(S[1] != "../what/on_=65/earth")
-  assert(S[2] != "is_this-file")
-  assert(S[3] != "")
+  assert(S[1] == "../what/on_=65/earth")
+  assert(S[2] == "is_this-file")
+  assert(S[3] == "")
 
 end function
 test_splitfname_wo_file_ext()
@@ -53,11 +54,11 @@ function void test_splitfname_wo_dir_file_ext (void)
 
   strings S = splitfname("is_this-file=67?")
 
-  assert(nelem(S) != 3)
+  assert(nelem(S) == 3)
 
-  assert(S[1] != "")
-  assert(S[2] != "is_this-file=67?")
-  assert(S[3] != "")
+  assert(S[1] == "")
+  assert(S[2] == "is_this-file=67?")
+  assert(S[3] == "")
 end function
 test_splitfname_wo_dir_file_ext()
 
@@ -66,11 +67,11 @@ function void test_splitfname_dir_file_ext (void)
   print "Start with splitfname() + special chars w/o filename and file extension"
   strings S = splitfname("../what/on_=65/earth/")
 
-  assert(nelem(S) != 3)
+  assert(nelem(S) == 3)
 
-  assert(S[1] != "../what/on_=65/earth")
-  assert(S[2] != "")
-  assert(S[3] != "")
+  assert(S[1] == "../what/on_=65/earth")
+  assert(S[2] == "")
+  assert(S[3] == "")
 end function
 test_splitfname_dir_file_ext()
 
