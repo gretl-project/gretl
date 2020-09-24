@@ -9,6 +9,8 @@ version 2020e, in progress
   other multi-equation systems
 - MS Windows build: support printing scripts with syntax
   highlighting
+- MS Windows build (64-bit): update pixman, cairo and pango
+  libraries (DLLs)
 - New addon package "regls": supports LASSO, Ridge regression
   and Elastic net
 
