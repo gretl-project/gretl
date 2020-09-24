@@ -2,7 +2,7 @@
 
 function scalar nearPSD (matrix *m,
                          scalar epsilon[0::0])
-    # FIXME: cover the case with some variances == 0
+    # TODO: cover the case with some variances == 0
     # (use misszero() after scaling, or something)
     #
     # Forces the matrix m into the positive semi-definite region.
@@ -14,42 +14,52 @@ function scalar nearPSD (matrix *m,
     # eigenvalues.
     #
     # The return value 0 or 1 indicates whether m was altered or not.
+
     matrix s = sqrt(diag(m)) # std dev
     matrix scaling = s * s'
     matrix ms = m ./ scaling	# rescaled
     matrix eigvec
     matrix eigval = eigensym(ms, &eigvec)
     matrix val = (eigval .> epsilon) ? eigval : epsilon	# like xmax
+
     if sum(val .> eigval)	# actually something was changed
         matrix T = 1 / ( (eigvec .^2) * val )
+
         # transform vector T to a diagonal matrix
         matrix temp = I(rows(T))
         temp[diag] = sqrt(T)
+
         # and also val
         matrix temp2 = I(rows(T))
         temp2[diag] = sqrt(val)
         matrix B = temp * eigvec * temp2
         ms = B * B'
+
         # undo the re-scaling
         m = ms .* scaling
+
         return 1
     else
         return 0
     endif
 end function
 
+
 function scalar zeroifclose (matrix *m,
                              scalar thresh[0::1e-12])
     # Sets elements to zero if they are really close.
     # The return value 0 or 1 indicates whether m was altered or not.
     # (an older version copied and returned the matrix)
-    matrix indicator = (abs(m) .< thresh)   
+    matrix indicator = (abs(m) .< thresh)
     ret = sum(indicator) > 0
+
     if ret
         m = indicator ? 0 : m
     endif
+
     return ret
 end function
+
 
 function matrix commute (const matrix A,
                          int m[1::],
@@ -62,16 +72,20 @@ function matrix commute (const matrix A,
     # If post != 0, does post-multiplication:
     # if n == 0 (default), then it's understood to be equal to m,
     # as per Magnus/Neudecker convention: K_nn = K_n
+
     n = n ? n : m
-    if !post && (rows(A) != n*m)
+
+    if !post && (rows(A) != n * m)
         funcerr "m*n doesn't match row dim of input"
-    elif post && (cols(A) != n*m)
-        funcerr "m*n doesn't match col dim of input"
+    elif post && (cols(A) != n * m)
+        funcerr "m*n doesn't match column dimension of input"
     endif
 
     matrix e = vec(mshape(seq(1, m*n), m, n)')
+
     return post ? A[,e] : A[e,]
 end function
+
 
 function matrix eliminate (const matrix vecA)
     # Each column of the input vecA is assumed to
@@ -85,12 +99,16 @@ function matrix eliminate (const matrix vecA)
     # (and the results stacked side-by-side).
 
     r = sqrt(rows(vecA))
+
     if r != round(r)
-        funcerr "input must have a square number of rows"
+        funcerr "Input must have a square number of rows"
     endif
-    e = vech(mshape(seq(1,r^2), r, r)')
+
+    e = vech(mshape(seq(1, r^2), r, r)')
+
     return vecA[e,]
 end function
+
 
 function matrix duplicate (const matrix vechA)
     # The input is a vector assumed to come from
@@ -106,40 +124,39 @@ function matrix duplicate (const matrix vechA)
     return vechA[e,]
 end function
 
-function matrix drill(const matrices x,
+
+function matrix drill (const matrices x,
                       matrix rowspec[null],
                       matrix colspec[null])
-
     # This function "drills through" a matrix array and returns a matrix;
     # for example, drill(x, 2, 3) returns a vector with the [2,3] elements
-    # of all matrices in the x array. "0" means "all".
-    #
+    # of all matrices in the x array. "0" means "all". Returns an empty
+    # 1x1 matrix in case of any error.
+
     # NOTA BENE: all matrices must be the same size
 	# (might perhaps be relaxed in the future?)
 
     matrix ret = {}
-    n = nelem(x)
+    scalar n = nelem(x)
+    scalar same_dim = 1
 
     if n == 0
         return ret
     endif
 
     ### check sizes
-
     nr = rows(x[1])
     nc = cols(x[1])
-    
-    same_dim = 1
+
     loop i = 2..n --quiet
-        same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc) 
+        same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc)
         if !same_dim
 			printf "Matrix number %d with different dimensions\n", i
-            funcerr "Error: not all matrices are the same size."
+            funcerr "Not all matrices are the same size."
         endif
     endloop
 
     ### process specs
-
     matrix rs = seq(1, nr)'	# default
     if exists(rowspec)
         rs = (rowspec[1] == 0) ? rs : vec(rowspec) # force to column
@@ -149,40 +166,38 @@ function matrix drill(const matrices x,
     if exists(colspec)
         cs = (colspec[1] == 0) ? cs : vec(colspec) # force to column
     endif
-        
+
     ### check for multiple or illegal specs
-    
-    nrspec = rows(rs)
-    ncspec = rows(cs)
+    scalar nrspec = rows(rs)
+    scalar ncspec = rows(cs)
 
     if xmin(nrspec, ncspec) > 1
-        funcerr "Error: can’t have multiple row and column specs"
-   
+        funcerr "Cannot have multiple row and column specifications"
+
     elif minc(rs|cs) < 0
-        funcerr "Error: negative spec not allowed"
-    
+        funcerr "Negative specification not allowed"
+
     elif maxc(rs) > nr
         printf "(matrices have %d rows, but %d wanted)\n", nr, maxc(rs)
-        funcerr "Error: incorrect row spec"
-    
+        funcerr "Incorrect row specification"
+
     elif maxc(cs) > nc
         printf "(matrices have %d columns, but %d wanted)\n", nc, maxc(cs)
-        funcerr "Error: incorrect col spec"
+        funcerr "Incorrect column specification"
     endif
-    
-    ### do the actual drilling
 
-    if nrspec == 1 
+    ### do the actual drilling
+    if nrspec == 1
         ret = flatten(x)[rs,]
         ret = transp(mshape(ret, nc, n))
         ret = ret[,cs]
 
-    elif ncspec == 1 
+    elif ncspec == 1
         ret = flatten(x,1)[,cs]
         ret = mshape(ret, nr, n)
         ret = ret[rs,]
     endif
-    
+
     return ret
 end function
 
