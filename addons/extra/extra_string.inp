@@ -12,7 +12,7 @@
   # all the indices seems unnecessary, because a user then could always
   # do seq(1,nelem(lookinhere))' instead.)
 
-function matrix multi_instrings(strings lookinhere, strings tofind)
+function matrix multi_instrings (strings lookinhere, strings tofind)
     # Returns the positions (indices) in 'lookinhere' where any of the
     # strings from 'tofind' occur.
     # If there are duplicates in 'tofind' then the output may also
@@ -37,32 +37,29 @@ function matrix multi_instrings(strings lookinhere, strings tofind)
         endloop
         # which = values(which) # this was done in the old names2indices
     endif
+
     return which # may still be empty
 end function
 
 ####################
 
 function strings powerset (strings S)
-    # Computes the powerset of the input S,
-    # i.e. all possible cominations of the
-    # string elements in S. (Including the
-    # empty set / empty string "".)
-    # Each combination
-    # yields one string in the output array.
-    # Being a set, the ordering is not
-    # defined.
-    l = nelem(S)
-    N = 2^l
-    matrix P = zeros(N,l)
+    /* Computes the powerset of the input S, i.e. all possible cominations
+    of the string elements in S. (Including the empty set / empty
+    string "".) Each combination yields one string in the output array.
+    Being a set, the ordering is not defined. */
+
+    scalar l = nelem(S)
+    scalar N = 2^l
+    matrix P = zeros(N, l)
     matrix s = seq(0, N-1)'
+    strings PS = array(N)
 
     loop i=1..l --quiet
         matrix a = s % 2
         P[,i] = a
         s = (s - a) / 2
     endloop
-
-    strings PS = array(N)
 
     loop i = 1..N --quiet
         string c = ""
@@ -79,12 +76,12 @@ end function
 
 ######################
 
-function void splitfname_check(strings out, int num)
+function void splitfname_check (strings out, int num)
     # Just a stupid debug checker and error catcher
     # for splitfname.
     if nelem(out) != num
         print out
-        funcerr "shouldn't happen (weird input?)"
+        funcerr "Shouldn't happen (weird input?)"
     endif
 end function
 
