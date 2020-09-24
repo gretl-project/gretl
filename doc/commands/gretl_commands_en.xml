@@ -13142,6 +13142,13 @@
 	  accessor <fncref targ="$huge"/>.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (the default),
+	  <lit>warn</lit> or <lit>stop</lit>. Controls the
+	  consequences of failure (return value of 0) from the
+	  <fncref targ="assert"/> function.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Numerical methods</subhead>

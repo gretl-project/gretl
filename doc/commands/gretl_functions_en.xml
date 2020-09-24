@@ -1516,6 +1516,51 @@
       </description>
     </function>
 
+    <function name="assert" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function is intended for testing or debugging of hansl
+	  code. The argument should be an expression which evaluates
+	  to a scalar. The return value is 1 if
+	  <argname>expr</argname> evaluates to a non-zero value
+	  (boolean <quote>true</quote>, or <quote>success</quote>) or
+	  0 if it evaluates to zero (boolean <quote>false</quote>, or
+	  <quote>failure</quote>).
+	</para>
+	<para>
+	  By default there are no consequences of a call to
+	  <lit>assert</lit> failing other than the return value being
+	  zero. However, the <cmdref targ="set"/> command can be used
+	  to make failure of an assertion more consequential. There
+	  are two levels:
+	</para>
+	<code>
+	  # print a warning message but continue execution
+	  set assert warn
+	  # print an error message and stop execution
+	  set assert stop
+	</code>
+	<para>
+	  The default behavior can be restored via
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  By way of a simple example, if at a certain point in a hansl
+	  script a scalar <lit>x</lit> ought to be non-negative, the
+	  following will flag an error if that is not the case:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
+      </description>
+    </function>
+
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
