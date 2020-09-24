@@ -13906,30 +13906,50 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     }
 
     if (rc == 0) {
+	/* going by rows */
 	for (i=0; i<A->rows; i++) {
 	    d = gretl_matrix_get(A, i, 0);
 	    k = 0;
 	    for (j=1; j<A->cols; j++) {
 		x = gretl_matrix_get(A, i, j);
-		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
-		    d = x;
-		    k = j;
+		if (mm > 0) {
+		    /* looking for max */
+		    if (x > d) {
+			d = x;
+			k = j;
+		    }
+		} else {
+		    /* looking for min */
+		    if (x < d) {
+			d = x;
+			k = j;
+		    }
 		}
 	    }
-	    B->val[i] = (idx > 0)? (double) k + 1 : d;
+	    B->val[i] = idx ? (double) k + 1 : d;
 	}
     } else {
+	/* going by columns */
 	for (j=0; j<A->cols; j++) {
 	    d = gretl_matrix_get(A, 0, j);
 	    k = 0;
 	    for (i=1; i<A->rows; i++) {
 		x = gretl_matrix_get(A, i, j);
-		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
-		    d = x;
-		    k = i;
+		if (mm > 0) {
+		    /* looking for max */
+		    if (x > d) {
+			d = x;
+			k = i;
+		    }
+		} else {
+		    /* looking for min */
+		    if (x < d) {
+			d = x;
+			k = i;
+		    }
 		}
 	    }
-	    B->val[j] = (idx > 0)? (double) k + 1 : d;
+	    B->val[j] = idx ? (double) k + 1 : d;
 	}
     }
 
