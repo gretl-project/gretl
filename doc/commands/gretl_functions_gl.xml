@@ -1516,6 +1516,51 @@
       </description>
     </function>
 
+    <function name="assert" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función está dirixida a comprobar e depurar código HANSL.
+	  O seu argumento deberá ser unha expresión cuxo valor sexa un
+	  escalar. O valor que devolve esta función é ou ben 1 cando o
+	  valor do argumento <argname>expr</argname> non é cero
+	  (<quote>verdadeiro</quote> booleano ou <quote>éxito</quote>),
+	  ou ben 0 se o valor do argumento é cero (<quote>falso</quote>
+	  booleano ou <quote>fallo</quote>).
+	</para>
+	<para>
+	  Por defecto, non hai outras consecuencias de que falle unha
+	  chamada a <lit>assert</lit>, máis que o feito de que o valor
+	  que se devolve é cero. Porén, podes utilizar a instrución
+	  <cmdref targ="set"/> para facer que o fallo dunha afirmación
+	  teña máis consecuencias. Hai dous niveles:
+	</para>
+	<code>
+	  # Amosar unha mensaxe de aviso, mais continuar coa execución
+	  set assert warn
+	  # Amosar unha mensaxe de aviso e deter a execución
+	  set assert stop
+	</code>
+	<para>
+	  Podes restablecer o funcionamento por defecto mediante
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  A xeito de exemplo sinxelo:
+	  Se en certo punto dun guión HANSL, un escalar <lit>x</lit> debera ser
+	  non negativo, o seguinte código amosará un erro se este non é o caso:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
+      </description>
+    </function>
+
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
