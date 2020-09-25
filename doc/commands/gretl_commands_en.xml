@@ -2597,10 +2597,10 @@
 	added data as required, but the <opt>interpolate</opt> option
 	can be used to request interpolation using the method of <cite
 	key="chowlin71">Chow and Lin (1971)</cite>: the regressors are
-	a constant and quadratic trend and an AR(1) disturbance
-	process is assumed. Note, however, that this option is
-	available only for conversion from quarterly data to monthly
-	or annual data to quarterly.
+	a constant and trend and an AR(1) disturbance process is
+	assumed. Note, however, that this option is available only for
+	conversion from quarterly data to monthly or annual data to
+	quarterly or monthly.
       </para>
       <para>
 	In the case of native gretl databases (only), the
@@ -2778,14 +2778,9 @@
       <para>
 	<lit>expand</lit>: This command is only available for annual
 	or quarterly time series data: annual data can be expanded to
-	quarterly, and quarterly data to monthly frequency. By default
-	all the series in the data set are padded out to the new
-	frequency by repeating the existing values, but if the
-	modifier <lit>interp</lit> is appended then the series are
-	expanded using Chow&ndash;Lin interpolation (see <cite
-	key="chowlin71">Chow and Lin, 1971</cite>): the regressors are
-	a constant and quadratic trend and an AR(1) disturbance
-	process is assumed.
+	quarterly or monthly, and quarterly data to monthly
+	frequency. All the series in the data set are padded out to
+	the new frequency by repeating the existing values.
       </para>
       <para>
 	<lit>transpose</lit>: No additional parameter required.
