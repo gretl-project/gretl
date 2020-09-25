@@ -147,8 +147,7 @@ int compact_data_set (DATASET *dset, int newpd,
 		      CompactMethod default_method,
 		      int monstart, int repday);
 
-int expand_data_set (DATASET *dset, int newpd,
-		     int interpol);
+int expand_data_set (DATASET *dset, int newpd);
 
 int midas_days_per_period (int days_per_week, int pd);
 

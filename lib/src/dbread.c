@@ -5024,16 +5024,15 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
  * expand_data_set:
  * @dset: dataset struct.
  * @newpd: target data frequency.
- * @interpol: use interpolation (0/1).
  *
  * Expand the data set from lower to higher frequency: an "expert"
- * option.  This is supported at present only for expansion from
- * annual to quarterly or monthly, or from quarterly to monthly.
+ * option.  This is supported only for expansion from annual
+ * to quarterly or monthly, or from quarterly to monthly.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int expand_data_set (DATASET *dset, int newpd, int interpol)
+int expand_data_set (DATASET *dset, int newpd)
 {
     char stobs[OBSLEN];
     int oldn = dset->n;
@@ -5041,9 +5040,9 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
     int t1 = dset->t1;
     int t2 = dset->t2;
     int mult, newn, nadd;
-    gretl_matrix *X = NULL;
     double *x = NULL;
-    int i, j, t;
+    size_t sz;
+    int i, j, t, s;
     int err = 0;
 
     if (oldpd != 1 && oldpd != 4) {
@@ -5052,21 +5051,11 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
 	return E_DATA;
     } else if (oldpd == 4 && newpd != 12) {
 	return E_DATA;
-    } else if (oldpd == 1 && newpd == 12 && interpol) {
-	return E_DATA;
     }
 
-    if (interpol) {
-	X = interpol_expand_dataset(dset, newpd, &err);
-    } else {
-	x = malloc(oldn * sizeof *x);
-	if (x == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (err) {
-	return err;
+    x = malloc(oldn * sizeof *x);
+    if (x == NULL) {
+	return E_ALLOC;
     }
 
     mult = newpd / oldpd;  /* frequency increase factor */
@@ -5078,25 +5067,13 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
 	goto bailout;
     }
 
-    if (interpol) {
-	const double *Xi = X->val;
-	size_t sz = newn * sizeof *Xi;
-
-	for (i=1; i<dset->v; i++) {
-	    memcpy(dset->Z[i], Xi, sz);
-	    Xi += newn;
-	}
-    } else {
-	size_t sz = oldn * sizeof *x;
-	int s;
-
-	for (i=1; i<dset->v; i++) {
-	    memcpy(x, dset->Z[i], sz);
-	    s = 0;
-	    for (t=0; t<oldn; t++) {
-		for (j=0; j<mult; j++) {
-		    dset->Z[i][s++] = x[t];
-		}
+    sz = oldn * sizeof *x;
+    for (i=1; i<dset->v; i++) {
+	memcpy(x, dset->Z[i], sz);
+	s = 0;
+	for (t=0; t<oldn; t++) {
+	    for (j=0; j<mult; j++) {
+		dset->Z[i][s++] = x[t];
 	    }
 	}
     }
@@ -5134,7 +5111,6 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
  bailout:
 
     free(x);
-    gretl_matrix_free(X);
 
     return err;
 }
