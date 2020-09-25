@@ -1467,6 +1467,52 @@
       </description>
     </function>
 
+    <function name="assert" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione serve per testare o fare il debug di codice
+	  hansl. L'argomento deve essere un'espressione scalare. Il
+	  valore ritornato è 1 se <argname>expr</argname> ritorna un
+	  valore non-zero (il valore booleano <quote>vero</quote>, o
+	  <quote>successo</quote>) o 0 se l'espressione uguaglia zero
+	  (il valore booleano <quote>falso</quote>, o
+	  <quote>insuccesso</quote>).
+	</para>
+	<para>
+	  Di default, non ci sono conseguenze se <lit>assert</lit>
+	  fallisce, a parte il fatto che il valore restituito è
+	  zero. Tuttavia, si può usare il comando <cmdref targ="set"/>
+	  per far sì che succeda qualcosa in caso di insuccesso. Ci
+	  sono due livelli:
+	</para>
+	<code>
+	  # stampa un messaggio di avvertimento ma l'esecuzione continua
+	  set assert warn
+	  # stampa un messaggio e interrompe l'esecuzione
+	  set assert stop
+	</code>
+	<para>
+	  Il comportamento standard viene ripristinato col comando
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  Un esempio semplice: se a un certo punto di uno script lo
+	  scalare <lit>x</lit> dev'essere non-negativo, questo codice
+	  controllerà questa condizione e fermerà l'esecuzione se essa
+	  non è soddisfatta:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
+      </description>
+    </function>
+    
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
