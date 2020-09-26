@@ -527,7 +527,7 @@
     <function name="$mpirank" section="access" output="int">
       <description>
 	<para>
-	  Se gretl foi compilado con suporte MPI, e o programa foi iniciado
+	  Se gretl foi compilado com suporte MPI, e o programa foi iniciado
 	  em modo MPI, retorna o
 	  <quote>posto</quote> de base 0 o ID do processo
 	  actual. Caso contrário retorna &minus;1.
@@ -538,7 +538,7 @@
     <function name="$mpisize" section="access" output="int">
       <description>
 	<para>
-	  Se gretl foi compilado con suporte MPI, e o programa foi iniciado
+	  Se gretl foi compilado com suporte MPI, e o programa foi iniciado
 	  em modo MPI, retorna o número do processo MPi actualmente em execução. Caso contrário retorna 
 	  0.
 	</para>
@@ -1499,6 +1499,50 @@
       </description>
     </function>
 
+    <function name="assert" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta função serve para testar ou despistar erros no código
+	  hansl. O argumento deve ser uma expressão escalar. O valor retornado
+          é 1 se <argname>expr</argname> retorna um valor não-zero
+          (o valor booleano <quote>verdadeiro</quote>, ou
+	  <quote>sucesso</quote>) ou 0 se a expressão é zero
+	  (o valor booleano <quote>falso</quote>, ou
+	  <quote>insucesso</quote>).
+	</para>
+	<para>
+	  Por defeito, não há consequências se <lit>assert</lit>
+	  falhar, para além do valor retornado ser zero. No entanto o comando
+          <cmdref targ="set"/> pode ser usado para fazer com que uma falha da
+          verificação seja mais consequente. Existem dois níveis:
+	</para>
+	<code>
+	  # mostra uma mensagem de aviso mas continua a execução
+	  set assert warn
+	  # mostra uma mensagem de erro e interrompe a execução
+	  set assert stop
+	</code>
+	<para>
+	  O comportamento padrão pode ser restaurado com o comando
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  Como simples exemplo, se num certo ponto no script hansl
+	  um escalar <lit>x</lit> ser sempre não-negativo, este código controlará
+          esta condição e terminará se ela não for satisfeita:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
+      </description>
+    </function>
+    
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -7250,6 +7294,205 @@
       </description>
     </function>
 
+    <function name="mpiallred" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="string">op</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Esta função funciona como <fncref
+	  targ="mpireduce"/> excepto que todos os processos, e não apenas o processo
+          raiz, recebem uma cópia do objecto <quote>reduzido</quote> em lugar do
+	  original. É assim, equivalente a <lit>mpireduce</lit> seguida de uma chamada
+          a  <fncref targ="mpibcast"/>, mas mais eficiente.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpibarrier" section="mpi" output="int">
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Não usa
+          argumentos. Força a sincronização dos processos MPI: nenhum processo
+          pode ultrapassar a barreira até que todos a tenham atingido.
+	</para>
+	<code>
+	  # nenhum passa deste ponto, até que todos o tenham atingido
+	  mpibarrier()
+	</code>
+      </description>
+    </function>
+    
+    <function name="mpibcast" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;objecto</fnarg>
+	<fnarg type="int" optional="true">raiz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Transmite o argumento <argname>objecto</argname>,
+	  que deve ser dado na forma de ponteiro, a todos os processos. O objecto 
+          em questão deve ser uma matriz, um bundle, escalar, vector, texto ou lista, e ter seido
+          declarado em todos os processos antes da trasnmissão. Nenhum processo
+          poderá prosseguir para além da chamada a <lit>mpibcast</lit> até que todos
+          os processos a tenham executado com sucesso.
+	</para>
+	<para>
+	  Por defeito a <quote>raiz</quote>, é a origem da transmissão,
+          é o processo com o índice 0, mas isto pode ser modificado por via
+          do segundo argumento (opcional), o qual deve ser um inteiro entre 0 e o
+          número de processos MPI menos 1.
+	</para>
+	<para>
+	  De seguida mostra-se um simples exemplo. Se a função completar com sucesso,
+          todos os processos terão uma cópia da matriz <lit>X</lit> definida no processo de índice 0.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	  X = mnormal(T, k)
+	  endif
+	  mpibcast(&amp;X)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpirecv" section="mpi" output="object">
+      <fnargs>
+	<fnarg type="int">origem</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Para uma explicação,
+          ver <fncref targ="mpisend"/>, que emparelha com <lit>mpirecv</lit> e que tem
+	  ques estar sempre acoplada. O argumento <argname>origem</argname>
+	  especifica o índice do processo de onde deve ser recebido o objecto,
+          dentro do intervalo inteiro entre 0 e o número de processos MPI menos 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpireduce" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;objecto</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">raiz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Esta função recolhe objectos funzione (apenas escalares ou matrizes) e
+	  matrici) com nome específico, dado na forma de ponteiro, de todos os processo
+	  e <quote>reduz</quote>-los a um único objecto no nó raiz.
+	</para>
+	<para>
+	  O argomunto <lit>op</lit> específica a operação ou método de 
+          redução. Os métodos suportados para escalares são
+	  <lit>sum</lit>, <lit>prod</lit> (produto), <lit>max</lit>
+	  e <lit>min</lit>. Para matrizes os métodoa são
+	  <lit>sum</lit>, <lit>prod</lit> (produto de Hadamard),
+	  <lit>hcat</lit> (concatenação horizontal) e
+	  <lit>vcat</lit> (concatenação vertical).
+	</para>
+	<para>
+	  Por defeito, a <quote>raiz</quote>, a destinatária da redução
+	  é o processo MPI com índice  0, mas isto pode ser modificado por via
+          do segundo argumento (opcional), o qual deve ser um inteiro entre 0 e o
+          número de processos MPI menos 1.
+	</para>
+	<para>
+	  De seguida mostra-se um exemplo. Se a função completar com sucesso,
+          o processo raiz terá uma matriz <lit>X</lit> que é a soma das
+          matrizes <lit>X</lit> de todos os processos.
+	</para>
+	<code>
+	  matrix X
+	  X = mnormal(T, k)
+	  mpireduce(&amp;X, sum)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpiscatter" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="matrixref">&amp;M</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">raiz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Esta função distribui partes de uma matriz
+          no processo raiz por todos os processos. A matriz deve ter sido declarada
+	  em todos os processos, antes da chamada de
+	  <lit>mpiscatter</lit>, e deve ser dada na forma de ponteiro.
+	</para>
+	<para>
+	  O argumento <lit>op</lit> deve ser <lit>byrows</lit>
+	  ou <lit>bycols</lit>. Seja <math>q</math> o quociente entre
+	  o número de linhas da matriz a dividir pelo número de processos. No 
+          caso <lit>byrows</lit> a raiz envia as primeiras <math>q</math> linhas
+          para o processo 0, as seguintes <math>q</math> para o processo 1, e assim
+          sucessivamente. Existe um resto na divisão, as linhas remanescentes são 
+          atribuídas ao último segmento. O caso <lit>bycols</lit> é semelhante, mas
+          a matriz é dividida por colunas.
+	</para>
+	<para>
+	  Segue-se uma exemplo. Se existem 4 processos, todos
+	  (incluíndo o processo raiz) receberá uma parte <by r="2500" c="10"/>
+	  do original <lit>X</lit> como existia no processo raiz. Se você pretender 
+          preservar a matriz inteira no processo raiz, terá que fazer uma cópia dela
+          antes de chamar.
+	  <lit>mpiscatter</lit>.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	  X = mnormal(10000, 10)
+	  endif
+	  mpiscatter(&amp;X, byrows)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpisend" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="object">objecto</fnarg>
+	<fnarg type="int">destino</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Envia o objecto
+          designado (que deve ser uma matriz, bundle, vector, escalar, texto ou lista) do processo 
+	  corrente para aquele identificado pelo inteiro <argname>destino</argname> (de 0 a número de
+          processos MPI menos 1).
+	</para>
+	<para>
+	  A chamada desta função deve estar sempre emparelhada com uma chamada a
+          <fncref targ="mpirecv"/> no processo <argname>destino</argname>,
+	  como no exemplo seguinte que envia uma matriz do índice 2 para o índice 3.
+	</para>
+	<code>
+	  if $mpirank == 2
+	  matrix C = cholesky(A)
+	  mpisend(C, 3)
+	  elif $mpirank == 3
+	  matrix C = mpirecv(2)
+	  endif
+	</code>
+      </description>
+    </function>
+
     <function name="mpols" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
@@ -7307,7 +7550,7 @@
       </description>
     </function>
 
-    <function name="mread" section="matbuild" output="matrix">
+    <function name="mread" section="data-utils" output="matrix">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
 	<fnarg optional="true" type="bool">import</fnarg>
@@ -7315,11 +7558,18 @@
       <description>
 	<para>
 	  Lê uma matriz armazenada no arquivo chamado <argname>fname
-	  </argname>. Se o arquivo possuir a extensão <quote><lit>.gz
+	  </argname>. Isto destina-se principalmente para ler arquivos
+          com um format específico como descrito adiante, mas também pode
+          ser usado em arquivos genéricos de texto delimitados.  Neste último caso,
+          ver a seção intitulada <quote>Arquivos de texto delimitados</quote> abaixo.
+         </para>
+	<para>
+          Se o arquivo possuir a extensão <quote><lit>.gz
 	  </lit></quote> é assumido que ele foi comprimido no formato
 	  gzip, se tiver a extensão <quote><lit>.bin</lit></quote> é
 	  assumido que o arquivo está em formato binário (veja <fncref
-	  targ="mwrite"/> para detalhes). Caso contrário assume-se que
+	  targ="mwrite"/> para detalhes). Caso contrário, se o arquivo tiver a
+          extensão <quote><lit>.mat</lit></quote> assume-se que
 	  é um arquivo de texto simples, seguindo as seguintes
 	  especificações:
 	</para>
@@ -7363,6 +7613,19 @@
 	  no contexto do comando <cmdref targ="foreign"/>. Nesse caso o
 	  argumento <argname>fname</argname> deve ser um nome simples,
 	  sem que se especique o caminho para o arquivo.
+	</para>
+        <subhead>Arquivos de texto delimitados</subhead>
+	<para>
+	  Se o arquivo possuir a extensão <quote><lit>.csv</lit></quote> as
+          regras que regulam o formato do arquivo são diferentes, e mais
+          relaxadas. Neste caso os dados concretos, <emphasis>não</emphasis> 
+          devem ser antecedidos por uma linha com o número de linhas e colunas.
+          Gretl tentará determinar o qual o delimitador (vírgula, ponto e vírgula
+          ou espaço) e fazer o seu melhor para importar a matriz,
+          permitindo o uso da vírgula como separador decimal se necessário.
+          Note que o delimitador não deve ser uma tabulação, sob pena de criar
+          confusão com os arquivos de formato matriz <quote>nativos</quote> do
+          gretl.
 	</para>
 	<para>
 	  <seelist>
@@ -7469,6 +7732,50 @@
       </description>
     </function>
 
+    <function name="msplitby" section="matshape" output="matrices">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="vector">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna um arranjo de matrizes, o resultado de dividir
+          verticalmente <argname>X</argname> segundo o controlo do
+          vector <argname>v</argname>. Este vector deve ser de comprimento
+          igual ao número de linhas do argumento <argname>X</argname>, e
+	  deverá conter valores inteiros com um mínimo de 1 e um máximo igual
+          ao número de matrizes no arranjo desejado.
+	  Cada elemento de <argname>v</argname> indica o índice
+	  vectorial da matriz que corresponde à linha de <argname>X</argname> que deverá
+          ser atríbuída.
+	</para>
+	<para>
+	  No seguinte exemplo, divide-se uma matriz <by r="3" c="3"/>
+	  em três matrizes: as primeiras duas linhas são atribuídas 
+          à primeira matriz; as segunda matriz fica vazia; e a terceira
+          matriz recebe a linha 3 de <argname>X</argname>.
+	</para>
+	<code>
+	  matrix X = {1,2,3; 4,5,6; 7,8,9}
+	  matrices M = msplitby(X, {1,1,3})
+	  print M
+	</code>
+	<para>
+	  A saída mostra:
+	</para>
+	<code>
+	  Vetor ("array") de matrizes, comprimento 3
+	  [1] 2 x 3
+	  [2] null
+	  [3] 1 x 3
+	</code>
+	<para>
+	  Ver <fncref targ="flatten"/> para a operação inversa.
+	</para>
+      </description>
+    </function>
+
+    
     <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
@@ -9346,6 +9653,41 @@
       </description>
     </function>
 
+    
+    <function name="randperm" section="probdist" output="vector">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se apenas é dado o primeiro argumento, retorna um vector linha
+          contendo uma permutação aleatória dos inteiros de 1 a <argname>n</argname>,
+          sem repetição dos elementos. Se o segundo argumento é dado, ele tem que ser
+          um inteiro no intervalo de 1 a <argname>n</argname>; neste caso a função
+          retorna um vector linha contendo <argname>k</argname> inteiros seleccionados
+          aleatóriamente entre 1 e <argname>n</argname> sem substituição.
+	</para>
+	<para>
+	  Caso se pretenda uma amostra de <math>k</math> linhas de uma matriz
+	  <lit>X</lit> com <math>n</math> linhas (sem substituição),
+	  pode-se proceder como se mostra adiante:
+	</para>
+	<code>
+	  matrix S = X[randperm(n, k),]
+	</code>
+	<para>
+	  E case se queira preservar a ordem original das linhas na amostra:
+	</para>
+	<code>
+	  matrix S = X[sort(randperm(n, k)),]
+	</code>
+	<para>
+	  Ver também <fncref targ="resample"/> para a reamostragem com substituição.
+	</para>
+      </description>
+    </function>
+
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -9423,6 +9765,19 @@
       </description>
     </function>
 
+    <function name="Re" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz real com a mesma dimensão que
+	  <argname>C</argname>, contendo a parte real dessa matriz de entrada.
+           Ver também <fncref targ="Im"/>.
+	</para>
+      </description>
+    </function>
+    
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
@@ -9723,6 +10078,27 @@
       </description>
     </function>
 
+    <function name="schur" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;Z</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;w</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Executa a decomposição de Schur da matriz complexa 
+	  <argname>A</argname>, retornando uma matriz complexa triangular
+	  superior <math>T</math>. Caso seja fornecido o segundo argumento
+          e seja diferente de <lit>null</lit> a função retorna uma matriz
+          complexa <math>Z</math> contendo o vector de Schur associado a
+	  <math>A</math> e <math>T</math>, tais que <math>A</math>
+	  = <math>ZTZ</math><sup>H</sup>. Se é dado um terceiro argumento
+          retorna os valores próprios de <math>A</math> num vector coluna
+          complexo.
+	</para>
+      </description>
+    </function>
+
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
@@ -9907,7 +10283,7 @@
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
 	<fnarg type="string">note</fnarg>
-      </fnargs>
+      </fnargs>   
       <description>
 	<para>
 	  Insere uma nota descritiva para o objeto identificado
@@ -9917,6 +10293,21 @@
 	  A função retorna 0 em caso de sucesso e um valor não-nulo
 	  em caso de falha (por exemplo, se não existir o objeto
 	  <argname>key</argname> em <argname>b</argname>).
+	</para>
+      </description>
+    </function>
+
+    <function name="sgn" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna o sinal do <argname>x</argname>, ou seja,  
+	  0 se <argname>x</argname> é zero, 1 se <argname>x</argname> é
+	  positivo, &minus;1 se <argname>x</argname> é negativo, ou
+	  <lit>NA</lit> se <argname>x</argname> é um não-número (Not a
+	  Number).
 	</para>
       </description>
     </function>
@@ -10327,6 +10718,87 @@
       </description>
     </function>
 
+    <function name="stack" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">offset</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Destina-se a manipular dados em séries temporais para o tipo de dados
+          empilhados requerido por gretl para dados de painel. O valor retornado
+	  é uma série obtida por empilhar <quote>verticalmente</quote> <argname>n</argname> observations
+	  de cada série da lista <argname>L</argname>. Por defeito, são usadas as primeiras 
+          <argname>n</argname> (correspondendo ao argumento <argname>offset</argname> = 0) 
+          mas o ponto inicial pode ser deslocado ao se fornecer um valor positivo
+          para <argname>offset</argname>. Se a série resultante for maior que o conjunto de dados
+          existente, serão acrescentadas observações conforme necessário.
+	</para>
+	<para>
+	  Esta função pode lidar com dados de séries temporais lado-a-lado para um certo
+          número de unidades de secção cruzada, e também no caso onde o tempo é expresso
+          horizontalmente e cada linha representa uma unidade de secção cruzada.
+	</para>
+	<para>
+	  Ver a secção intitulada <quote>Detalhes de dados de painel</quote>
+	  em <guideref targ="chap:datafiles"/> para mais detalhes e exemplos de uso.
+	</para>
+      </description>
+    </function>
+
+    <function name="stdize" section="stats" output="asinput">
+      <fnargs>
+	<fnarg type="series-list-or-mat">X</fnarg>
+	<fnarg type="int" optional="true">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Por defeito, retorna uma versão padronizada da série, lista ou matriz: 
+          os dados de entrada são centrados e divididos pelo seu desvio padrão
+          amostral (com uma correção de graus de liberdade de 1). Os resultados são
+          calculados por coluna no caso de uma matriz.
+	</para>
+	<para>
+	  O segundo argumento (opcional) pode ser utilizado para influenciar
+          o resultado. Um valor não negativo de <argname>v</argname>
+	  define os graus de liberdade usados no desvio padrão, assim,
+          <argname>v</argname> = 0 resulta no estimador de máxima verosimilhança.
+          Como caso especial, se <argname>v</argname> é igual a &minus;1 apenas é
+          feita a centragem.
+	</para>
+      </description>
+    </function>
+
+    <function name="strftime" section="calendar" output="string">
+      <fnargs>
+	<fnarg type="scalar">t</fnarg>
+	<fnarg optional="true" type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  O argumento <argname>t</argname> é interpretado como o
+	  número de segundos decorridos desde o início do ano
+          1970 no fuso horário UTC (Tempo Universal Coordenado, anteriomente 
+          designado como Tempo Médio de Greenwich (GMT) );
+	  produz uma cadeia de texto com a data e hora correspondente. O formato
+          por defeito é o mesmo que o padrão no sistema, mas pode ser modificado
+          se o segundo argumento (opcional) é uma cadeia de texto de formatação.
+	</para>
+	<para>
+	  Os valores adequados como argumentos <argname>t</argname> para esta função podem
+          ser obtidos a partir do acessor <fncref targ="$now"/>
+	  ou da função <fncref targ="strptime"/>.
+	</para>
+	<para>
+	  Os detalhes da opção de formatação podem ser obtidos na página do manual
+          de <lit>strftime</lit>, nos sistemas que o disponibilizam, ou num dos muitos
+          sítios que têm essa informação, como por exemplo 
+	  <url>https://devhints.io/strftime</url>.
+	</para>
+      </description>
+    </function>
+
     <function name="stringify" section="strings" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -10395,6 +10867,48 @@
 	  necessário utilizar esta função. Ao invés disso é pode-se usar
 	  a seguinte expressão: <lit>if (s1 == s2)...</lit>.
 	</para>
+      </description>
+    </function>
+  
+    <function name="strptime" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta função é a inversa de <fncref targ="strftime"/>;
+	  interpreta a cadeia de texto <argname>s</argname> como sendo data ou hora usando
+	  o <argname>formato</argname> especificado e retorna o número de segundos desde
+          o início de 1970 (UTC).
+	</para>
+	<para>
+	  As opções para o <argname>formato</argname> estão disponíveis
+          na página do manual de <lit>strptime</lit>, nos sistemas que o
+          disponibilizam, ou num dos muitos sítios com essa informação, como
+          por exemplo
+          <url>http://man7.org/linux/man-pages/man3/strptime.3.html</url>.
+	</para>
+	<para>
+	  O exemplo abaixo mostra como converter informação de data de um formato
+          para outro.
+	</para>
+	<code>
+	  scalar tm = strptime("Thursday 02/07/19", "%A %m/%d/%y")
+	  eval strftime(tm) # default output
+	  eval strftime(tm, "%d %B, %Y")
+	</code>
+	<para>
+	  Se a Língua é o Português, o resultado é
+	</para>
+	<code>
+          ? scalar tm = strptime("Thursday 02/07/19", "%A %m/%d/%y")
+          Gerou-se o escalar tm = 1,5495e+09
+          ? eval strftime(tm) # default output
+          qui 07 fev 2019 00:00:00
+          ? eval strftime(tm, "%d %B, %Y")
+          07 fevereiro, 2019
+	</code>
       </description>
     </function>
 
@@ -10712,6 +11226,33 @@
       </description>
     </function>
 
+    <function name="svm" section="stats" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="bundle">param</fnarg>
+	<fnarg type="bundleref" optional="true">bmod</fnarg>
+	<fnarg type="bundleref" optional="true">bprob</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta função permite o treinamento de um modelo SVM
+	  (Supervised Vector Machine) e a respectiva predição; o motor utilizado
+          é a biblioteca LIBSVM. A lista passada como argumento
+          <argname>L</argname> deve incluir a variável dependente,
+	  seguida pelas variáveis independentes, e o bundle
+	  <argname>param</argname> é usado para passar opções para
+          o mecanismo SVM. A função retorna uma série contendo
+          as predições SVM. Os dois outros parâmetros opcionais são 
+          ponteiros para bundles para recolher informação adicional
+          após o treinamento e ou a predição.
+	</para>
+	<para>
+	  Para mais detalhes, consultar a documentação em PDF:
+	  <mnu targ="gretlSVM">gretl + SVM</mnu>.
+	</para>
+      </description>
+    </function>
+
     <function name="tan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -10745,6 +11286,30 @@
             <fncref targ="cosh"/>
             <fncref targ="sinh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="tdisagg" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-mat">Y</fnarg>
+	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
+	<fnarg type="scalar">s</fnarg>
+	<fnarg optional="true" type="bundle">opções</fnarg>
+	<fnarg optional="true" type="bundle">resultados</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Produz desagregação temporal (conversão para maior frequência) da
+          série temporal em <argname>Y</argname>. O argumento <argname>s</argname>
+	  fornece o factor de expansão (por exemplo, 3 de trimestral para mensal). O
+          argumento <argname>X</argname> pode conter uma ou mais covariáveis na frequência
+          maior para auxiliar na desagregação. Podem ser passadas diversas opções em
+	  <argname>opções</argname>, e os detalhes da desagregação podem ser obtidos por via
+          nos <argname>resultados</argname>.
+	</para>
+	<para>
+	  Ver mais detalhes em <guideref targ="chap:tdisagg"/>.
 	</para>
       </description>
     </function>
