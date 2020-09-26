@@ -45,6 +45,7 @@ GUIDETEX = gretl-guide.tex \
 	graphs.tex \
 	join.tex \
 	realtime.tex \
+	tdisagg.tex \
 	genr.tex \
 	datatypes.tex \
 	discrete.tex \
