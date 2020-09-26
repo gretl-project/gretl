@@ -4063,10 +4063,16 @@ void data_expand_dialog (int *newpd, GtkWidget *parent)
 {
     GtkWidget *d, *tmp, *vbox, *hbox;
 
+    if (dataset->pd != 1 && dataset->pd != 4) {
+	/* "can't happen" */
+	return;
+    }
+
     d = gretl_dialog_new(_("gretl: expand data"), parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(d));
-    hbox = gtk_hbox_new(FALSE, 5);
 
+    /* top message, possibly with frequency selector */
+    hbox = gtk_hbox_new(FALSE, 5);
     if (dataset->pd == 1) {
 	GtkWidget *com;
 
@@ -4082,12 +4088,14 @@ void data_expand_dialog (int *newpd, GtkWidget *parent)
     } else if (dataset->pd == 4) {
 	tmp = gtk_label_new(_("Expand quarterly data to monthly"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    } else {
-	/* "can't happen" */
-	return;
     }
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+    /* message to check the Help */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Please read the Help before proceeding."));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(d));
 
