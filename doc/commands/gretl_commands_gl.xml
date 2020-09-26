@@ -11949,7 +11949,37 @@
     <gui-access>
       <menu-path>/Ficheiro/Saír</menu-path>
     </gui-access>
+  </command>
 
+  <command name="regls" section="Estimation"
+	   label="Mínimos cadrados regularizados" context="gui">
+    <description>
+      <para>
+	Este diálogo te permite un grao limitado de acceso á función
+	<lit>regls</lit> para mínimos cadrados regularizados.
+      </para>
+      <para>
+	Se toleran tres variantes: LASSO, que limita a suma dos valores absolutos
+	dos coeficientes; Ridge (crista), que limita a suma dos coeficientes
+	cadrados; e Elastic net (malla elástica), que é unha combinación das
+	dúas primeiras, rexida polo 'hiperparámetro' &alpha; de xeito que
+	&alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona Ridge, e
+	valores intermedios proporcionan unha combinación ponderada.
+      </para>
+      <para>
+	O termo &lgr; especifica o grao ata o que se penaliza a suma de
+	coeficientes absolutos ou cadrados. Podes ben indicar unha única
+	fracción &lgr; desde 0 (sen penalización) ata 1 (máxima penalización),
+	ou ben un número de valores &lgr;. No segundo caso, os valores de
+	penalización escálanse automaticamente.
+      </para>
+      <para>
+	Podes exercer un control moito maior sobre a funcionalidade de Mínimos
+	Cadrados Regularizados de GRETL apelando á función <lit>regls</lit>
+	mediante o uso de guións. En particular, tes a potestade de especificar a
+	validación cruzada; consulta <doc>regls.pdf</doc> para ter máis detalles.
+      </para>
+    </description>
   </command>
 
   <command name="rename" section="Dataset"
@@ -12048,9 +12078,7 @@
 	<opt>random-effects</opt>.
       </para>
     </description>
-
   </command>
-
 
   <command name="reset" section="Tests" label="RESET de Ramsey">
 
@@ -13112,6 +13140,13 @@
 	  <para><lit>huge</lit>: Un número positivo moi grande (por
 	  defecto, 1.0E100). Esta configuración controla o valor que
 	  devolve o accesorio <fncref targ="$huge"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (por defecto), <lit>warn</lit>
+	  ou <lit>stop</lit>. Controla as consecuencias dun fallo
+	  (que o valor que se devolva sexa igual a 0) da función
+	  <fncref targ="assert"/>.
 	  </para>
 	</li>
       </ilist>

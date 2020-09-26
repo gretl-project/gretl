@@ -231,6 +231,28 @@ static void graph_dbdata (DATASET *dbset)
     gui_graph_handler(err);
 }
 
+#define NEW_EXPAND 0 /* not ready yet! */
+
+#if NEW_EXPAND
+
+static int call_tdisagg_dialog (int src_pd, int targ_pd)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    gretl_bundle *tdb = gretl_bundle_new();
+    int xvar = -1;
+    int resp;
+
+    resp = tdisagg_dialog(&xvar, tdb);
+    fprintf(stderr, "resp = %d, xvar = %d\n", resp, xvar);
+    gretl_bundle_print(tdb, prn);
+    gretl_print_destroy(prn);
+    gretl_bundle_destroy(tdb);
+
+    return resp;
+}
+
+#endif
+
 static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
 			       GtkWidget *parent)
 {
@@ -238,19 +260,24 @@ static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
     int resp;
 
     if ((targ_pd == 4 && src_pd == 1) ||
-	(targ_pd == 12 && src_pd == 4)) {
+	(targ_pd == 12 && (src_pd == 4 || src_pd == 1))) {
 	/* interpolation is an option */
 	const char *opts[] = {
 	    N_("Repeat the lower frequency values"),
 	    N_("Interpolate higher frequency values")
+	    /* N_("Distribute/Interpolate") */
 	};
 
 	resp = radio_dialog("gretl", _("Adding a lower frequency series to a\n"
 				       "higher frequency dataset"),
 			    opts, 2, 0, EXPAND, parent);
 	if (resp == 1) {
+#if NEW_EXPAND
+	    resp = call_tdisagg_dialog(src_pd, targ_pd);
+#else
 	    *interpol = 1;
 	    resp = GRETL_YES;
+#endif
 	} else if (resp == 0) {
 	    resp = GRETL_YES;
 	}
@@ -4395,10 +4422,10 @@ void do_compact_data_set (void)
 
 void do_expand_data_set (void)
 {
-    int newpd, interpol = 1;
+    int newpd = -1;
     int err = 0;
 
-    if (!(dataset->pd == 1 || dataset->pd == 4)) {
+    if (dataset->pd != 1 && dataset->pd != 4) {
 	/* should not happen! */
 	return;
     }
@@ -4407,18 +4434,18 @@ void do_expand_data_set (void)
 	return;
     }
 
-    /* supported: annual to quarterly or quarterly to monthly */
+    /* supported: annual to quarterly, quarterly to monthly,
+       or annual to monthly */
     newpd = (dataset->pd == 1)? 4 : 12;
+    data_expand_dialog(&newpd, mdata->main);
 
-    data_expand_dialog(dataset->pd, &interpol, mdata->main);
-
-    if (interpol < 0) {
+    if (newpd < 0) {
 	/* canceled */
 	return;
     }
 
     gretl_error_clear();
-    err = expand_data_set(dataset, newpd, interpol);
+    err = expand_data_set(dataset, newpd);
 
     if (err) {
 	gui_errmsg(err);

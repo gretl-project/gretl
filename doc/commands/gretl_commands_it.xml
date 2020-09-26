@@ -13246,6 +13246,13 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  dall'accessore <fncref targ="$huge"/>.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (default),
+	  <lit>warn</lit> oppure <lit>stop</lit>. Controlla cosa
+	  succede se la funzione <fncref targ="assert"/> fallisce,
+	  ossia ritorna 0.
+	  </para>
+	</li>
       </ilist>
 
       <para>

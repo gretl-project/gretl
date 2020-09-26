@@ -4042,72 +4042,67 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
     gtk_widget_show_all(dlg);
 }
 
-static void set_expand_method (GtkWidget *w, gpointer data)
-{
-    int *k = (int *) data;
-
-    *k = button_is_active(w);
-}
-
-static void expand_method_buttons (GtkWidget *dlg, int *interpol)
-{
-    const char *opts[] = {
-	N_("Interpolate higher frequency values"),
-	N_("Repeat the lower frequency values")
-    };
-    GtkWidget *button, *vbox;
-    GSList *group;
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-
-    button = gtk_radio_button_new_with_label(NULL, _(opts[0]));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
-    g_signal_connect(G_OBJECT(button), "toggled",
-		     G_CALLBACK(set_expand_method), interpol);
-
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    button = gtk_radio_button_new_with_label(group, _(opts[1]));
-    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
-}
-
 static void abort_expand (GtkWidget *w, gpointer data)
 {
-    int *k = (int *) data;
+    int *newpd = (int *) data;
 
-    *k = -1;
+    *newpd = -1;
+}
+
+static void set_expansion (GtkComboBox *cb, gpointer data)
+{
+    int sel = gtk_combo_box_get_active(cb);
+    int *newpd = (int *) data;
+
+    *newpd = sel == 0 ? 4 : 12;
 }
 
 /* called from do_expand_data_set() in database.c */
 
-void data_expand_dialog (int spd, int *interpol, GtkWidget *parent)
+void data_expand_dialog (int *newpd, GtkWidget *parent)
 {
     GtkWidget *d, *tmp, *vbox, *hbox;
-    const gchar *msg = NULL;
 
-    d = gretl_dialog_new(_("gretl: expand data"), parent, GRETL_DLG_BLOCK);
-
-    if (spd == 1) {
-	msg = N_("Expand annual data to quarterly");
-    } else if (spd == 4) {
-	msg = N_("Expand quarterly data to monthly");
-    } else {
+    if (dataset->pd != 1 && dataset->pd != 4) {
 	/* "can't happen" */
-	*interpol = -1;
 	return;
     }
 
+    d = gretl_dialog_new(_("gretl: expand data"), parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(d));
-    tmp = gtk_label_new(_(msg));
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
-    expand_method_buttons(d, interpol);
+
+    /* top message, possibly with frequency selector */
+    hbox = gtk_hbox_new(FALSE, 5);
+    if (dataset->pd == 1) {
+	GtkWidget *com;
+
+	tmp = gtk_label_new(_("Expand annual data to"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	com = gtk_combo_box_text_new();
+	gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+	combo_box_append_text(com, _("quarterly"));
+	combo_box_append_text(com, _("monthly"));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
+	g_signal_connect(G_OBJECT(com), "changed",
+			 G_CALLBACK(set_expansion), newpd);
+    } else if (dataset->pd == 4) {
+	tmp = gtk_label_new(_("Expand quarterly data to monthly"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    }
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    /* message to check the Help */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Please read the Help before proceeding."));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(d));
 
     /* Cancel button */
     tmp = cancel_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(abort_expand), interpol);
+		     G_CALLBACK(abort_expand), newpd);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(delete_widget),
 		     G_OBJECT(d));
@@ -4120,7 +4115,7 @@ void data_expand_dialog (int spd, int *interpol, GtkWidget *parent)
     gtk_widget_grab_default(tmp);
 
     /* Create a "Help" button */
-    context_help_button(hbox, EXPAND);
+    context_help_button(hbox, EXPAND); /* FIXME! */
 
     gtk_widget_show_all(d);
 }
@@ -6880,6 +6875,224 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 		     G_CALLBACK(geoplot_callback), &gi);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, MAPHELP);
+
+    gtk_widget_show_all(dialog);
+
+    return ret;
+}
+struct tdisagg_info {
+    int *retval;
+    int *xvar;
+    gretl_bundle *bundle;
+    GtkWidget *agg_combo;  /* aggregation type */
+    GtkWidget *cl_combo;   /* chow-lin methods */
+    GtkWidget *det_combo;  /* chow-lin deterministics */
+    GtkWidget *cov_combo;  /* chow-lin covariates */
+    GtkWidget *dn_combo;   /* denton methods */
+    GtkWidget *dp_combo;   /* denton preliminary series */
+    GtkWidget *plot_check; /* sanity-check plot? */
+    GtkWidget *dlg;
+};
+
+static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
+{
+    gchar *str = NULL;
+    int idx;
+
+    str = combo_box_get_active_text(tdi->agg_combo);
+    gretl_bundle_set_string(tdi->bundle, "aggtype", str);
+    g_free(str);
+
+    if (gtk_widget_is_sensitive(tdi->cl_combo)) {
+	idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->cl_combo));
+	gretl_bundle_set_string(tdi->bundle, "method",
+				idx == 1 ? "fernandez" : "chow-lin");
+	idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->det_combo));
+	gretl_bundle_set_int(tdi->bundle, "det", idx);
+	str = combo_box_get_active_text(tdi->cov_combo);
+	*tdi->xvar = current_series_index(dataset, str);
+	g_free(str);
+    } else {
+	idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->dn_combo));
+	gretl_bundle_set_string(tdi->bundle, "method",
+				idx == 1 ? "denton-afd" : "denton-pfd");
+	str = combo_box_get_active_text(tdi->dp_combo);
+	*tdi->xvar = current_series_index(dataset, str);
+	g_free(str);
+    }
+    if (button_is_active(tdi->plot_check)) {
+	gretl_bundle_set_int(tdi->bundle, "plot", 1);
+    }
+
+    *tdi->retval = 0;
+    gtk_widget_destroy(tdi->dlg);
+}
+
+static void sensitize_chowlin (struct tdisagg_info *tdi,
+			       gboolean s)
+{
+    gtk_widget_set_sensitive(tdi->cl_combo, s);
+    gtk_widget_set_sensitive(tdi->det_combo, s);
+    gtk_widget_set_sensitive(tdi->cov_combo, s);
+}
+
+static void sensitize_denton (struct tdisagg_info *tdi,
+			      gboolean s)
+{
+    gtk_widget_set_sensitive(tdi->dn_combo, s);
+    gtk_widget_set_sensitive(tdi->dp_combo, s);
+}
+
+static void tdisagg_switch_method (GtkToggleButton *tb,
+				   struct tdisagg_info *tdi)
+{
+    gboolean s = gtk_toggle_button_get_active(tb);
+
+    sensitize_chowlin(tdi, s);
+    sensitize_denton(tdi, !s);
+}
+
+static GList *plausible_covariate_list (void)
+{
+    GList *list = NULL;
+    int i;
+
+    for (i=dataset->v-1; i>0; i--) {
+	if (gretl_isstoch(dataset->t1, dataset->t2, dataset->Z[i])) {
+	    list = g_list_append(list, (gpointer) dataset->varname[i]);
+	}
+    }
+
+    return list;
+}
+
+int tdisagg_dialog (int *xvar, gretl_bundle *b)
+{
+    const char *aggs[] = {
+        "sum", "avg", "first", "last"
+    };
+    struct tdisagg_info tdi = {0};
+    GtkWidget *dialog, *com, *hbox;
+    GtkWidget *vbox, *tmp;
+    GtkWidget *rb1, *rb2, *pc;
+    GList *xlist = NULL;
+    GSList *group = NULL;
+    int i, ret = GRETL_CANCEL;
+
+    if (maybe_raise_dialog()) {
+	return ret;
+    }
+
+    dialog = gretl_dialog_new("gretl: temporal disaggregation",
+			      NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    tdi.retval = &ret;
+    tdi.xvar = xvar;
+    tdi.bundle = b;
+    tdi.dlg = dialog;
+
+    xlist = plausible_covariate_list();
+
+    /* aggregation type */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("aggregation type:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tdi.agg_combo = com = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+    for (i=0; i<4; i++) {
+	combo_box_append_text(com, aggs[i]);
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+
+    /* Regression vs Denton radio buttons */
+    rb1 = gtk_radio_button_new_with_label(group, "Regression based");
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb1));
+    rb2 = gtk_radio_button_new_with_label(group, "Denton");
+
+    /* Regression */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), rb1, FALSE, FALSE, 5);
+    tdi.cl_combo = com = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+    combo_box_append_text(com, "Chow-Lin");
+    combo_box_append_text(com, "Fernández");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("deterministic terms:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tdi.det_combo = com = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+    combo_box_append_text(com, "none");
+    combo_box_append_text(com, "constant");
+    combo_box_append_text(com, "constant plus trend");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com), 1);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    if (xlist != NULL) {
+	xlist = g_list_prepend(xlist, (gpointer) "none");
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new("covariate:");
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	tdi.cov_combo = com = gtk_combo_box_text_new();
+	set_combo_box_strings_from_list(com, xlist);
+	gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    }
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+
+    /* denton radio */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), rb2, FALSE, FALSE, 5);
+    tdi.dn_combo = com = gtk_combo_box_text_new();
+    gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+    combo_box_append_text(com, "proportional");
+    combo_box_append_text(com, "additive");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    xlist = g_list_prepend(xlist, (gpointer) "constant");
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("preliminary series:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tdi.dp_combo = com = gtk_combo_box_text_new();
+    set_combo_box_strings_from_list(com, xlist);
+    gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+
+    /* sensitivity */
+    sensitize_denton(&tdi, FALSE);
+    g_signal_connect(G_OBJECT(rb1), "toggled",
+		     G_CALLBACK(tdisagg_switch_method), &tdi);
+
+    /* show plot? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    pc = gtk_check_button_new_with_label("show plot");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pc), TRUE);
+    tdi.plot_check = pc;
+    gtk_box_pack_start(GTK_BOX(hbox), pc, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* buttons */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(tdisagg_callback), &tdi);
+    gtk_widget_grab_default(tmp);
+    //context_help_button(hbox, TDISHELP);
 
     gtk_widget_show_all(dialog);
 

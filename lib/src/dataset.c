@@ -3439,13 +3439,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     } else if (op == DS_COMPACT) {
 	err = compact_data_set_wrapper(param, dset, k);
     } else if (op == DS_EXPAND) {
-	int n = (param == NULL)? 0 : strlen(param);
-	int interp = 0;
-
-	if (n > 0 && !strncmp(param, "interpolate", n)) {
-	    interp = 1;
-	}
-	err = expand_data_set(dset, k, interp);
+	err = expand_data_set(dset, k);
     } else if (op == DS_PAD_DAILY) {
 	err = pad_daily_data(dset, k, prn);
     } else if (op == DS_TRANSPOSE) {

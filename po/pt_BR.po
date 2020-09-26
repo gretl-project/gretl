@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-06-17 09:06+0200\n"
-"PO-Revision-Date: 2020-07-14 00:45-0300\n"
+"PO-Revision-Date: 2020-09-26 07:53-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 2.4.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -6336,7 +6336,7 @@ msgstr "Você não pode apagar escalares neste contexto\n"
 #: lib/src/monte_carlo.c:3607
 #, c-format
 msgid "%s: not implemented in 'progressive' loops"
-msgstr "'%s' : não está implementado em ciclos (\"loop\") 'progressivos'"
+msgstr "'%s' : não está implementado em loops 'progressivos'"
 
 #: lib/src/nls.c:260
 #, c-format
@@ -8191,7 +8191,7 @@ msgid "translator_credits"
 msgstr ""
 "Traduzido por\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>,\n"
-"Henrique Andrade <henrique.andrade@ufrgs.br> e\n"
+"Henrique Andrade <henrique.coelho@economia.gov.br> e\n"
 "Raquel Guimarães."
 
 #: gui/about.c:205

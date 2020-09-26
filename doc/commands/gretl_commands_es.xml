@@ -11949,7 +11949,37 @@
     <gui-access>
       <menu-path>/Archivo/Salir</menu-path>
     </gui-access>
+  </command>
 
+  <command name="regls" section="Estimation"
+	   label="Mínimos cuadrados regularizados" context="gui">
+    <description>
+      <para>
+	Este diálogo te permite un grado limitado de acceso a la función
+	<lit>regls</lit> para mínimos cuadrados regularizados.
+      </para>
+      <para>
+	Se toleran tres variantes: LASSO, que limita la suma de los valores
+	absolutos de los coeficientes; Ridge (cresta), que limita la suma de
+	los coeficientes cuadrados; y Elastic net (malla elástica), que es una
+	combinación de las dos primeras, regida por el 'hiperparámetro' &alpha;
+	de forma que &alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona
+	Ridge, y valores intermedios proporcionan una combinación ponderada.
+      </para>
+      <para>
+	El término &lgr; especifica el grado hasta el que se penaliza la suma
+	de coeficientes absolutos o cuadrados. Puedes indicar una única
+	fracción &lgr; desde 0 (sin penalización) hasta 1 (máxima penalización),
+	o bien un número de valores &lgr;. En el segundo caso, los valores de
+	penalización se escalan automáticamente.
+      </para>
+      <para>
+	Puedes ejercer un control mucho mayor sobre la funcionalidad de Mínimos
+	Cuadrados Regularizados de GRETL recurriendo a la función <lit>regls</lit>
+	con el uso de guiones. En particular, tienes la potestad de especificar la
+	validación cruzada; consulta <doc>regls.pdf</doc> para tener más detalles.
+      </para>
+    </description>
   </command>
 
   <command name="rename" section="Dataset"
@@ -12048,9 +12078,7 @@
 	<opt>random-effects</opt>.
       </para>
     </description>
-
   </command>
-
 
   <command name="reset" section="Tests" label="RESET de Ramsey">
 
@@ -13112,6 +13140,13 @@
 	  <para><lit>huge</lit>: Un número positivo muy grande (por
 	  defecto, 1.0E100). Esta configuración controla el valor que
 	  devuelve el accesor <fncref targ="$huge"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (por defecto), <lit>warn</lit>
+	  o <lit>stop</lit>. Controla las consecuencias de un fallo
+	  (que el valor que se devuelva sea igual a 0) de la función
+	  <fncref targ="assert"/>.
 	  </para>
 	</li>
       </ilist>
