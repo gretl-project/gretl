@@ -134,8 +134,7 @@ int check_db_import_conversion (int pd, DATASET *dset);
 int transcribe_db_data (DATASET *dset, int targv,
 			const double *src, int pd,
 			int nobs, char *stobs,
-			CompactMethod cmethod,
-			int interpolate);
+			CompactMethod cmethod);
 
 int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
 			DATASET *dset, PRN *prn);

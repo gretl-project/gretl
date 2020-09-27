@@ -127,7 +127,7 @@ float retrieve_float (netfloat nf)
 
 static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 			    DATASET *dset, CompactMethod cmethod,
-			    int interpolate, int dbv, PRN *prn);
+			    int dbv, PRN *prn);
 
 static int do_compact_spread (DATASET *dset, int newpd);
 
@@ -1594,38 +1594,6 @@ static double *compact_db_series (const double *src,
     return x;
 }
 
-static double *interpolate_db_series (const double *src,
-				      int oldn, int mult,
-				      int *err)
-{
-    gretl_matrix *yx;
-    gretl_matrix *y;
-    double *ret = NULL;
-    int t;
-
-    y = gretl_column_vector_alloc(oldn);
-    if (y == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (t=0; t<oldn; t++) {
-	y->val[t] = src[t];
-    }
-
-    yx = matrix_chowlin(y, NULL, mult, 0, err);
-    gretl_matrix_free(y);
-
-    if (!*err) {
-	ret = yx->val;
-	yx->val = NULL;
-    }
-
-    gretl_matrix_free(yx);
-
-    return ret;
-}
-
 #define EXPAND_DEBUG 0
 
 /* Expand a single series from a database, for importation
@@ -1635,16 +1603,15 @@ static double *interpolate_db_series (const double *src,
    1) annual    -> quarterly
    2) annual    -> monthly
    3) quarterly -> monthly
-
-   Interpolation is supported for cases 1 and 3 only.
 */
 
 static double *expand_db_series (const double *src,
 				 int pd, int *pnobs,
-				 char *stobs, int target_pd,
-				 int interpol)
+				 char *stobs,
+				 DATASET *dset)
 {
     char new_stobs[OBSLEN] = {0};
+    int target_pd = dset->pd;
     int oldn = *pnobs;
     int mult, newn;
     double *x = NULL;
@@ -1654,24 +1621,15 @@ static double *expand_db_series (const double *src,
     mult = target_pd / pd;
     newn = mult * oldn;
 
-    if (!((target_pd == 4 && pd == 1) ||
-	  (target_pd == 12 && pd == 4))) {
-	interpol = 0;
-    }
-
-    if (interpol) {
-	x = interpolate_db_series(src, oldn, mult, &err);
+    x = malloc(newn * sizeof *x);
+    if (x == NULL) {
+	err = E_ALLOC;
     } else {
-	x = malloc(newn * sizeof *x);
-	if (x == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    int s = 0;
+	int s = 0;
 
-	    for (t=0; t<oldn; t++) {
-		for (j=0; j<mult; j++) {
-		    x[s++] = src[t];
-		}
+	for (t=0; t<oldn; t++) {
+	    for (j=0; j<mult; j++) {
+		x[s++] = src[t];
 	    }
 	}
     }
@@ -2571,7 +2529,6 @@ static int get_one_db_series (const char *sername,
 			      const char *altname,
 			      DATASET *dset,
 			      CompactMethod cmethod,
-			      int interpolate,
 			      const char *idxname,
 			      PRN *prn)
 {
@@ -2650,8 +2607,8 @@ static int get_one_db_series (const char *sername,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "sinfo.varname='%s', this_method=%d, interpolate=%d\n",
-	    sinfo.varname, this_method, interpolate);
+    fprintf(stderr, "sinfo.varname='%s', this_method=%d\n",
+	    sinfo.varname, this_method);
 #endif
 
     if (!err) {
@@ -2663,7 +2620,7 @@ static int get_one_db_series (const char *sername,
 	    err = lib_spread_db_data(dbZ, &sinfo, dset, prn);
 	} else {
 	    err = lib_add_db_data(dbZ, &sinfo, dset, this_method,
-				  interpolate, v, prn);
+				  v, prn);
 	}
     }
 
@@ -2709,7 +2666,6 @@ int db_get_series (const char *line, DATASET *dset,
     CompactMethod cmethod;
     int i, nnames = 0;
     int from_scratch = 0;
-    int interpolate = 0;
     int err = 0;
 
     if (opt & OPT_O) {
@@ -2773,10 +2729,6 @@ int db_get_series (const char *line, DATASET *dset,
 	}
     }
 
-    if (!err && (opt & OPT_I)) {
-	interpolate = 1;
-    }
-
     /* now process the imports individually */
 
     for (i=0; i<nnames && !err; i++) {
@@ -2794,8 +2746,7 @@ int db_get_series (const char *line, DATASET *dset,
 					     idxname, &err);
 		for (j=0; j<nmatch && !err; j++) {
 		    err = get_one_db_series(tmp[j], altname, dset,
-					    cmethod, interpolate,
-					    idxname, prn);
+					    cmethod, idxname, prn);
 		}
 		strings_array_free(tmp, nmatch);
 	    } else {
@@ -2803,8 +2754,7 @@ int db_get_series (const char *line, DATASET *dset,
 	    }
 	} else {
 	    err = get_one_db_series(vnames[i], altname, dset,
-				    cmethod, interpolate,
-				    idxname, prn);
+				    cmethod, idxname, prn);
 	}
     }
 
@@ -3272,8 +3222,7 @@ real_transcribe_db_data (const char *stobs, int nobs,
 int transcribe_db_data (DATASET *dset, int targv,
 			const double *src, int pd,
 			int nobs, char *stobs,
-			CompactMethod cmethod,
-			int interpolate)
+			CompactMethod cmethod)
 {
     double *xvec = (double *) src;
     int free_xvec = 0;
@@ -3281,8 +3230,7 @@ int transcribe_db_data (DATASET *dset, int targv,
     if (pd != dset->pd) {
 	if (pd < dset->pd) {
 	    /* the series needs to be expanded */
-	    xvec = expand_db_series(src, pd, &nobs, stobs, dset->pd,
-				    interpolate);
+	    xvec = expand_db_series(src, pd, &nobs, stobs, dset);
 	} else {
 	    /* the series needs to be compacted */
 	    xvec = compact_db_series(src, pd, &nobs, stobs, dset->pd,
@@ -3365,7 +3313,7 @@ int lib_spread_dbnomics_data (DATASET *dset, DATASET *dbset,
 
 static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 			    DATASET *dset, CompactMethod cmethod,
-			    int interpolate, int dbv, PRN *prn)
+			    int dbv, PRN *prn)
 {
     int new = (dbv == dset->v);
     int err = 0;
@@ -3415,7 +3363,7 @@ static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 #endif
 
     err = transcribe_db_data(dset, dbv, dbZ[1], sinfo->pd, sinfo->nobs,
-			     sinfo->stobs, cmethod, interpolate);
+			     sinfo->stobs, cmethod);
 
     if (!err) {
 	/* common stuff for adding a var */
@@ -5002,24 +4950,6 @@ int compact_data_set (DATASET *dset, int newpd,
     return err;
 }
 
-static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
-					      int newpd, int *err)
-{
-    gretl_matrix *Y0, *Y1 = NULL;
-
-    Y0 = gretl_matrix_data_subset(NULL, dset, 0, dset->n - 1,
-				  M_MISSING_ERROR, err);
-
-    if (!*err) {
-	int f = newpd / dset->pd;
-
-	Y1 = matrix_chowlin(Y0, NULL, f, 0, err);
-	gretl_matrix_free(Y0);
-    }
-
-    return Y1;
-}
-
 /**
  * expand_data_set:
  * @dset: dataset struct.
@@ -5076,6 +5006,7 @@ int expand_data_set (DATASET *dset, int newpd)
 		dset->Z[i][s++] = x[t];
 	    }
 	}
+	series_set_orig_pd(dset, i, oldpd);
     }
 
     if (dset->pd == 1) {
