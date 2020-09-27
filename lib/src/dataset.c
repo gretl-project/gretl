@@ -43,6 +43,7 @@ struct VARINFO_ {
     short stack_level;
     short midas_period;
     char midas_freq;
+    short orig_pd;
     series_table *st;
 };
 
@@ -309,6 +310,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->lag = 0;
     vinfo->midas_period = 0;
     vinfo->midas_freq = 0;
+    vinfo->orig_pd = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->mtime = 0;
     vinfo->stack_level = gretl_function_depth();
@@ -357,6 +359,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->lag = src->lag;
     targ->midas_period = src->midas_period;
     targ->midas_freq = src->midas_freq;
+    targ->orig_pd = src->orig_pd;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
     if (src->st != NULL) {
@@ -3104,31 +3107,35 @@ static int dataset_int_param (const char **ps, int op,
 	    *err = E_DATA;
 	}
     } else if (op == DS_COMPACT) {
-	int ok = 0;
-
+	*err = E_PDWRONG;
 	if (dset->pd == 12 && (k == 4 || k == 1)) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dset->pd == 4 && k == 1) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dset->pd == 52 && k == 12) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dated_daily_data(dset) && (k == 52 || k == 12)) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dataset_is_daily(dset) && k == 4) {
 	    if (strstr(*ps, "spread")) {
-		ok = 1;
+		*err = 0;
 	    }
 	}
-
-	if (!ok) {
-	    *err = E_PDWRONG;
-	    gretl_errmsg_set("This conversion is not supported");
+    } else if (op == DS_EXPAND) {
+	*err = E_PDWRONG;
+	if (dset->pd == 1 && (k == 4 || k == 12)) {
+	    *err = 0;
+	} else if (dset->pd == 4 && k == 12) {
+	    *err = 0;
 	}
     } else if (op == DS_PAD_DAILY) {
 	if (k < 5 || k > 7 || k < dset->pd) {
 	    *err = E_PDWRONG;
-	    gretl_errmsg_set("This conversion is not supported");
 	}
+    }
+
+    if (*err == E_PDWRONG) {
+	gretl_errmsg_set("This conversion is not supported");
     }
 
     return k;
@@ -3343,7 +3350,7 @@ int renumber_series_with_checks (const int *list,
    dataset addobs            24
    dataset compact           1
    dataset compact           4 last
-   dataset expand            interpolate
+   dataset expand            4
    dataset transpose
    dataset sortby     x1
    dataset resample          500
@@ -3423,12 +3430,17 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	    return err;
 	}
     } else if (op == DS_EXPAND) {
-	if (dset->pd == 1) {
+	if (param != NULL) {
+	    k = dataset_int_param(&param, op, dset, &err);
+	} else if (dset->pd == 1) {
 	    k = 4;
 	} else if (dset->pd == 4) {
 	    k = 12;
 	} else {
-	    return E_PDWRONG;
+	    err = E_PDWRONG;
+	}
+	if (err) {
+	    return err;
 	}
     }
 
@@ -5125,6 +5137,29 @@ void series_set_midas_anchor (const DATASET *dset, int i)
 
 /* end MIDAS-related functions */
 
+int series_get_orig_pd (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->orig_pd;
+    } else {
+	return 0;
+    }
+}
+
+void series_set_orig_pd (const DATASET *dset, int i, int pd)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->orig_pd = pd;
+    }
+}
+
+void series_unset_orig_pd (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->orig_pd = 0;
+    }
+}
+
 void *series_info_bundle (const DATASET *dset, int i,
 			  int *err)
 {
@@ -5167,6 +5202,9 @@ void *series_info_bundle (const DATASET *dset, int i,
 	}
 	if (vinfo->midas_freq > 0) {
 	    gretl_bundle_set_int(b, "midas_freq", vinfo->midas_freq);
+	}
+	if (vinfo->orig_pd > 0) {
+	    gretl_bundle_set_int(b, "orig_pd", vinfo->orig_pd);
 	}
     }
 

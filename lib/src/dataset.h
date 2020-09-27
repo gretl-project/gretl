@@ -599,6 +599,12 @@ int series_is_midas_anchor (const DATASET *dset, int i);
 
 void series_set_midas_anchor (const DATASET *dset, int i);
 
+int series_get_orig_pd (const DATASET *dset, int i);
+
+void series_set_orig_pd (const DATASET *dset, int i, int pd);
+
+void series_unset_orig_pd (const DATASET *dset, int i);
+
 void *series_info_bundle (const DATASET *dset, int i,
 			  int *err);
 

@@ -2565,6 +2565,10 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	    pprintf(prn, "\n midas_freq=\"%d\"", mpd);
 	}
 
+	if ((mpd = series_get_orig_pd(dset, v)) > 0) {
+	    pprintf(prn, "\n orig_pd=\"%d\"", mpd);
+	}
+
 	pputs(prn, "\n/>\n");
     }
 
@@ -2897,6 +2901,15 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 
 		if (mpc > 0) {
 		    series_set_midas_freq(dset, i, mpc);
+		}
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "orig_pd");
+	    if (tmp != NULL) {
+		int opd = atoi((char *) tmp);
+
+		if (opd > 0) {
+		    series_set_orig_pd(dset, i, opd);
 		}
 		free(tmp);
 	    }
