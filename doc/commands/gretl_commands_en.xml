@@ -14823,6 +14823,16 @@
 
   </command>
 
+  <command name="tdisagg" section="Dataset" context="gui"
+    label="Temporal disaggregation">
+
+    <description>
+      <para>
+	Help is on the way.
+      </para>
+    </description>
+  </command>
+
   <command name="textplot" section="Graphs"
     label="ASCII plot" context="cli">
 
