@@ -1531,7 +1531,7 @@ static int tdisagg_get_options (gretl_bundle *b,
 gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
 				 int s, gretl_bundle *b,
-				 gretl_bundle *r,
+				 gretl_bundle *res,
 				 DATASET *dset,
 				 PRN *prn, int *err)
 {
@@ -1554,18 +1554,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			r, verbose, plot, dset, prn, err);
-}
-
-gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
-			     const gretl_matrix *X,
-			     int s, int agg, int *err)
-{
-    int method = 0, det = 1;
-    double rho = NADBL;
-
-    return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			NULL, 0, 0, NULL, NULL, err);
+			res, verbose, plot, dset, prn, err);
 }
 
 /* Add basic info to dummy dataset @hf, sufficient to get
