@@ -106,6 +106,7 @@ static struct gui_help_item gui_help_items[] = {
     { SMPLDUM,        "sampling" },
     { COMPACT,        "compact" },
     { EXPAND,         "expand" },
+    { TDISAGG,        "tdisagg" },
     { VSETMISS,       "missing" },
     { GSETMISS,       "missing" },
     { GUI_HELP,       "dialog" },

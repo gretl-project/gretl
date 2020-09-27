@@ -6890,6 +6890,7 @@ struct tdisagg_info {
     GtkWidget *dn_combo;   /* denton methods */
     GtkWidget *dp_combo;   /* denton preliminary series */
     GtkWidget *plot_check; /* sanity-check plot? */
+    GtkWidget *reg_check;  /* regression results? */
     GtkWidget *dlg;
 };
 
@@ -6900,7 +6901,6 @@ static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
     GString *GSC = NULL;
     gchar *agg, *xname = NULL;
     const gchar *yname, *str;
-    int denton = 0;
     int idx, s, err;
 
     s = dataset->pd / series_get_orig_pd(dataset, tdi->v);
@@ -6928,7 +6928,6 @@ static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
 	    xname = combo_box_get_active_text(tdi->cov_combo);
 	}
     } else {
-	denton = 1;
 	idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->dn_combo));
 	str = idx == 1 ? "denton-afd" : "denton-pfd";
 	g_string_append_printf(GSB, ", method=\"%s\"", str);
@@ -6950,13 +6949,15 @@ static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
 	g_string_append(GSB, ")");
     }
 
+    if (gtk_widget_is_sensitive(tdi->reg_check) &&
+	button_is_active(tdi->reg_check)) {
+	bufopen(&prn);
+    }
+
     g_string_printf(GSC, "series %s = tdisagg(%s, %s, %d, %s)",
 		    yname, dataset->varname[tdi->v],
 		    xname != NULL ? xname : "null", s, GSB->str);
 
-    if (!denton) {
-	bufopen(&prn);
-    }
     err = generate(GSC->str, dataset, GRETL_TYPE_ANY, OPT_NONE, prn);
     if (err) {
 	gui_errmsg(err);
@@ -7001,6 +7002,7 @@ static void tdisagg_switch_method (GtkToggleButton *tb,
 
     sensitize_chowlin(tdi, s);
     sensitize_denton(tdi, !s);
+    gtk_widget_set_sensitive(tdi->reg_check, s);
 }
 
 static GList *plausible_covariate_list (void)
@@ -7025,7 +7027,7 @@ void tdisagg_dialog (int v, int newseries)
     struct tdisagg_info tdi = {0};
     GtkWidget *dialog, *com, *hbox;
     GtkWidget *vbox, *tmp;
-    GtkWidget *rb1, *rb2, *pc;
+    GtkWidget *rb1, *rb2;
     GList *xlist = NULL;
     GSList *group = NULL;
     int i;
@@ -7149,11 +7151,18 @@ void tdisagg_dialog (int v, int newseries)
 
     /* show plot? */
     hbox = gtk_hbox_new(FALSE, 5);
-    pc = gtk_check_button_new_with_label("show plot");
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pc), TRUE);
-    tdi.plot_check = pc;
-    gtk_box_pack_start(GTK_BOX(hbox), pc, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    tdi.plot_check = tmp = gtk_check_button_new_with_label("show plot");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    /* show regression results? (Not for Denton) */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tdi.reg_check = tmp =
+	gtk_check_button_new_with_label("show regression results");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -7162,7 +7171,7 @@ void tdisagg_dialog (int v, int newseries)
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(tdisagg_callback), &tdi);
     gtk_widget_grab_default(tmp);
-    //context_help_button(hbox, TDISHELP);
+    context_help_button(hbox, TDISAGG);
 
     gtk_widget_show_all(dialog);
 }
