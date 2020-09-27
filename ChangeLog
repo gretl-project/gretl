@@ -1,4 +1,6 @@
 version 2020e, in progress
+- New function tdisagg() for temporal disaggregation
+  (distribution and interpolation)
 - New function assert() for debugging purposes
 - Fix "join" GUI dialog window: was not working on Windows
 - MPI: update documentation and support transfer of more
