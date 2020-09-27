@@ -199,6 +199,11 @@ double gretl_irr (const double *x, int n, int pd, int *err);
 
 double logistic_cdf (double x);
 
+gretl_matrix *tdisagg_matrix_from_series (const double *x,
+					  const int *list,
+					  const DATASET *dset,
+					  int cfac, int *err);
+
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, void *b, void *r,
@@ -207,7 +212,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, int agg, int *err);
+			      int s, int *err);
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 

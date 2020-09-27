@@ -12685,99 +12685,21 @@ static int bundle_pointer_arg0 (NODE *t)
     return 0;
 }
 
-static gretl_matrix *matrix_shrink_to_rows (const gretl_matrix *m,
-					    int r, int *err)
+/* Called in the context of tdisagg driver, when we're trying
+   to determine if the target y (series or list) needs
+   compressing. This will be the case if y just repeats
+   low-frequency values.
+*/
+
+static int series_wants_compression (NODE *t, parser *p)
 {
-    gretl_matrix *ret = gretl_matrix_alloc(r, m->cols);
-    const double *src = m->val;
-    size_t csz = r * sizeof *src;
-    int j;
-
-    if (ret == NULL) {
-	*err = E_ALLOC;
+    if (t->t == SERIES && series_get_orig_pd(p->dset, t->vnum)) {
+	return 1;
+    } else if (p->targ == SERIES) {
+	return 1;
     } else {
-	double *dest = ret->val;
-
-	for (j=0; j<m->cols; j++) {
-	    memcpy(dest, src, csz);
-	    src += m->rows;
-	    dest += r;
-	}
+	return 0;
     }
-
-    return ret;
-}
-
-/* strip out repetition of high-frequency values in Y matrix */
-
-static int tdisagg_compress (gretl_matrix **pY, int s)
-{
-    gretl_matrix *Y, *Y0 = *pY;
-    double ytj;
-    int i, j, t, n = Y0->rows / s;
-    int n_ok = n;
-    int g = Y0->cols;
-    int miss, trim = 1;
-    int err = 0;
-
-    Y = gretl_matrix_alloc(n, g);
-    if (Y == NULL) {
-	return E_ALLOC;
-    }
-
-    /* copy every s-th element into Y */
-    for (j=0; j<g; j++) {
-	for (t=0, i=0; t<n; t++) {
-	    ytj = gretl_matrix_get(Y0, i, j);
-	    gretl_matrix_set(Y, t, j, ytj);
-	    i += s;
-	}
-    }
-
-    /* trim any trailing NAs but flag an error
-       on "internal" NA
-    */
-    for (t=n-1; t>=0; t--) {
-	miss = 0;
-	for (j=0; j<g && !miss; j++) {
-	    if (na(gretl_matrix_get(Y, t, j))) {
-		miss = 1;
-	    }
-	}
-	if (miss && !trim) {
-	    /* hit an internal NA */
-	    err = E_MISSDATA;
-	    break;
-	} else if (miss) {
-	    /* trim the effective number of rows */
-	    n_ok--;
-	} else {
-	    /* got a complete row, turn off trimming */
-	    trim = 0;
-	}
-    }
-
-    if (!err && n_ok < Y->rows) {
-	if (g == 1) {
-	    Y->rows = n_ok;
-	} else {
-	    gretl_matrix *S = matrix_shrink_to_rows(Y, n_ok, &err);
-
-	    if (!err) {
-		gretl_matrix_free(Y);
-		Y = S;
-	    }
-	}
-    }
-
-    if (err) {
-	gretl_matrix_free(Y);
-    } else {
-	gretl_matrix_free(Y0);
-	*pY = Y;
-    }
-
-    return err;
 }
 
 /* evaluate a built-in function that has more than three arguments */
@@ -13741,10 +13663,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_CHOWLIN) {
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
-	int fac = 0, agg = 0;
+	int fac = 0;
 
-	if (k < 2 || k > 4) {
-	    n_args_error(k, 4, t->t, p);
+	if (k < 2 || k > 3) {
+	    n_args_error(k, 3, t->t, p);
 	}
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
@@ -13765,9 +13687,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
 		}
-	    } else if (i == 3) {
-		/* optional aggregation type */
-		agg = node_get_int(e, p);
 	    }
 	}
 	if (!p->err) {
@@ -13775,18 +13694,19 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    ret->v.m = matrix_chowlin(Y, X, fac, agg, &p->err);
+	    ret->v.m = matrix_chowlin(Y, X, fac, &p->err);
 	}
     } else if (t->t == F_TDISAGG) {
-	int t1 = p->dset->t1;
-	int t2 = p->dset->t2;
 	gretl_matrix *Y = NULL;
 	gretl_matrix *X = NULL;
 	gretl_bundle *b = NULL;
 	gretl_bundle *r = NULL;
+	const double *yval = NULL;
+	const int *ylist = NULL;
 	int fac = 0;
-	int yconv = 0;
+	int ycomp = 0;
 	int xconv = 0;
+	int yconv = 0;
 
 	if (k < 3 || k > 5) {
 	    n_args_error(k, 4, t->t, p);
@@ -13794,39 +13714,33 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
 	    if (i == 0) {
-		/* Y matrix, or series */
+		/* Y: matrix, series or list */
 		if (e->t == MAT) {
 		    Y = e->v.m;
-		} else if (e->t == SERIES) {
-		    Y = gretl_vector_from_series(e->v.xvec, t1, t2);
-		    if (Y == NULL) {
-			p->err = E_ALLOC;
-		    }
-		    yconv = 1;
+		} else if (e->t == SERIES || e->t == LIST) {
+		    ycomp = series_wants_compression(e, p);
+		    yval = e->v.xvec;
 		} else if (e->t == LIST) {
-		    Y = gretl_matrix_data_subset(e->v.ivec, p->dset, t1, t2,
-						 M_MISSING_OK, &p->err);
-		    yconv = 1;
+		    ycomp = series_wants_compression(e, p);
+		    ylist = e->v.ivec;
 		} else {
 		    p->err = E_TYPES;
 		}
 	    } else if (i == 1) {
-		/* X matrix, or series or list  */
+		/* X: matrix, series, list or null */
 		if (e->t == MAT) {
 		    X = e->v.m;
 		} else if (e->t == SERIES) {
-		    X = gretl_vector_from_series(e->v.xvec, t1, t2);
-		    if (X == NULL) {
-			p->err = E_ALLOC;
-		    }
+		    X = tdisagg_matrix_from_series(e->v.xvec, NULL,
+						   p->dset, 1, &p->err);
 		    xconv = 1;
 		} else if (e->t == LIST) {
 		    if (gretl_is_midas_list(e->v.ivec, p->dset)) {
 			X = midas_list_to_vector(e->v.ivec, p->dset, &p->err);
 			xconv = 2;
 		    } else {
-			X = gretl_matrix_data_subset(e->v.ivec, p->dset, t1, t2,
-						     M_MISSING_ERROR, &p->err);
+			X = tdisagg_matrix_from_series(NULL, e->v.ivec,
+						       p->dset, 1, &p->err);
 			xconv = 1;
 		    }
 		} else if (!null_node(e)) {
@@ -13849,19 +13763,20 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-	if (xconv == 1 && yconv) {
-	    p->err = tdisagg_compress(&Y, fac);
+	if (Y == NULL) {
+	    int cfac = (ycomp || xconv == 1)? fac : 1;
+
+	    Y = tdisagg_matrix_from_series(yval, ylist, p->dset,
+					   cfac, &p->err);
+	    yconv = 1;
 	}
 	if (!p->err) {
 	    reset_p_aux(p, save_aux);
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    DATASET *dset = NULL;
+	    DATASET *dset = (yconv || xconv)? p->dset : NULL;
 
-	    if (yconv || xconv) {
-		dset = p->dset;
-	    }
 	    ret->v.m = matrix_tdisagg(Y, X, fac, b, r, dset,
 				      p->prn, &p->err);
 	}
@@ -19461,6 +19376,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	}
 	strcpy(p->dset->varname[v], p->lh.name);
+	/* 2020-09-27 */
+	series_unset_orig_pd(p->dset, v);
 #if EDEBUG
 	fprintf(stderr, "var %d: gave generated series the name '%s'\n",
 		v, p->lh.name);

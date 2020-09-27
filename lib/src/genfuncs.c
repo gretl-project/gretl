@@ -6295,25 +6295,60 @@ double logistic_cdf (double x)
     return ret;
 }
 
+/* Convert from @x or @list (whichever is non-NULL) to matrix,
+   respecting the current sample range. If @cfac > 1 we take
+   only every cfac-th row from the data source.
+*/
+
+gretl_matrix *tdisagg_matrix_from_series (const double *x,
+					  const int *list,
+					  const DATASET *dset,
+					  int cfac, int *err)
+{
+    gretl_matrix *m = NULL;
+    int k = list != NULL ? list[0] : 1;
+    int T = (dset->t2 - dset->t1 + 1) / cfac;
+    int i, s, t;
+
+    m = gretl_matrix_alloc(T, k);
+    if (m == NULL) {
+	return NULL;
+    }
+
+    if (list != NULL) {
+	for (i=0; i<k; i++) {
+	    x = dset->Z[list[i+1]];
+	    s = dset->t1;
+	    for (t=0; t<T; t++) {
+		gretl_matrix_set(m, t, i, x[s]);
+		s += cfac;
+	    }
+	}
+    } else {
+	s = dset->t1;
+	for (t=0; t<T; t++) {
+	    m->val[t] = x[s];
+	    s += cfac;
+	}
+    }
+
+    return m;
+}
+
 /**
  * matrix_tdisagg:
- * @Y: N x k: holds the original data to be expanded, series
+ * @Y: T x g: holds the original data to be disaggregated, series
  * in columns.
  * @X: (optionally) holds covariates of Y at the higher frequency.
- * @s: the expansion factor: 3 for quarterly to monthly,
- * 4 for annual to quarterly, or 12 for annual to monthly.
+ * @s: the expansion factor: e.g. 3 for quarterly to monthly,
+ * 4 for annual to quarterly, 12 for annual to monthly.
  * @b: bundle containing optional arguments, or NULL.
  * @r: bundle for retrieving details, or NULL.
  * @err: location to receive error code.
  *
- * Interpolate, from annual to quarterly or quarterly to monthly, by
- * default via the Chow-Lin method. See Gregory C. Chow and An-loh
- * Lin, "Best Linear Unbiased Interpolation, Distribution, and
- * Extrapolation of Time Series by Related Series", The Review of
- * Economics and Statistics, Vol. 53, No. 4 (November 1971)
- * pp. 372-375.
+ * Temporal disaggregation, via regression or Denton-type method.
  *
- * Returns: matrix containing the expanded series, or
+ * Returns: matrix containing the disaggregated series, or
  * NULL on failure.
  */
 
@@ -6359,39 +6394,22 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     return ret;
 }
 
+/* For backward compatibility only: support the old chowlin()
+   function, with "avg" as default aggregation type.
+*/
+
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, int agg, int *err)
+			      int s, int *err)
 {
-    gretl_matrix *(*tdbasic) (const gretl_matrix *,
-			      const gretl_matrix *,
-			      int, int, int *);
-    gretl_matrix *ret = NULL;
+    gretl_bundle *b = gretl_bundle_new();
+    gretl_matrix *m = NULL;
 
-    if (s != 3 && s != 4 && s != 12) {
-	*err = E_INVARG;
-	return NULL;
-    }
+    gretl_bundle_set_string(b, "aggtype", "avg");
+    m = matrix_tdisagg(Y, X, s, b, NULL, NULL, NULL, err);
+    gretl_bundle_destroy(b);
 
-    if (X != NULL) {
-	if (X->rows != s * Y->rows) {
-	    *err = E_INVARG;
-	    return NULL;
-	} else if (X->is_complex) {
-	    *err = E_CMPLX;
-	    return NULL;
-	}
-    }
-
-    tdbasic = get_plugin_function("tdisagg_basic");
-
-    if (tdbasic == NULL) {
-	*err = E_FOPEN;
-    } else {
-	ret = (*tdbasic) (Y, X, s, agg, err);
-    }
-
-    return ret;
+    return m;
 }
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn)
