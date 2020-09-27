@@ -14828,8 +14828,32 @@
 
     <description>
       <para>
-	Help is on the way.
+	Here's a walk-through of the options available in the temporal
+	disaggregation dialog box.
       </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>output name</lit> (if applicable): You can choose to
+	    overwrite an existing series with the disaggregated
+	    version, or give a new name to the output.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>aggregation type</lit>: If you were going in the
+	    other direction (aggregating instead of disaggregating)
+	    how would you create the low-frequency series? By
+	    summation, averaging, or taking the last or first period
+	    value? It matters for disaggregation too.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    TO BE CONTINUED
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
