@@ -6160,8 +6160,7 @@ static gchar *pc_change_get_vname (GtkWidget *dialog,
     return newname;
 }
 
-static void pc_change_callback (GtkWidget *w,
-				struct pc_change_info *pci)
+static void do_pc_change (GtkWidget *w, struct pc_change_info *pci)
 {
     gchar *newname = NULL;
     int autoname = 0;
@@ -6389,7 +6388,7 @@ static void percent_change_dialog (const int *list)
     cancel_delete_button(hbox, dialog);
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(pc_change_callback), &pci);
+		     G_CALLBACK(do_pc_change), &pci);
     gtk_widget_grab_default(tmp);
 
     gretl_dialog_keep_above(dialog);
@@ -6880,10 +6879,10 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     return ret;
 }
+
 struct tdisagg_info {
-    int *retval;
-    int *xvar;
-    gretl_bundle *bundle;
+    int v;                 /* target series ID */
+    GtkWidget *name_entry; /* entry box for output name */
     GtkWidget *agg_combo;  /* aggregation type */
     GtkWidget *cl_combo;   /* chow-lin methods */
     GtkWidget *det_combo;  /* chow-lin deterministics */
@@ -6896,35 +6895,85 @@ struct tdisagg_info {
 
 static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
 {
-    gchar *str = NULL;
-    int idx;
+    PRN *prn = NULL;
+    GString *GSB = NULL;
+    GString *GSC = NULL;
+    gchar *agg, *xname = NULL;
+    const gchar *yname, *str;
+    int denton = 0;
+    int idx, s, err;
 
-    str = combo_box_get_active_text(tdi->agg_combo);
-    gretl_bundle_set_string(tdi->bundle, "aggtype", str);
-    g_free(str);
+    s = dataset->pd / series_get_orig_pd(dataset, tdi->v);
+
+    GSB = g_string_new(NULL);
+    GSC = g_string_new(NULL);
+
+    if (tdi->name_entry != NULL) {
+	yname = gtk_entry_get_text(GTK_ENTRY(tdi->name_entry));
+    } else {
+	yname = dataset->varname[tdi->v];
+    }
+
+    agg = combo_box_get_active_text(tdi->agg_combo);
+    g_string_printf(GSB, "_(aggtype=\"%s\"", agg);
+    g_free(agg);
 
     if (gtk_widget_is_sensitive(tdi->cl_combo)) {
 	idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->cl_combo));
-	gretl_bundle_set_string(tdi->bundle, "method",
-				idx == 1 ? "fernandez" : "chow-lin");
+	str = idx == 1 ? "fernandez" : "chow-lin";
+	g_string_append_printf(GSB, ", method=\"%s\"", str);
 	idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->det_combo));
-	gretl_bundle_set_int(tdi->bundle, "det", idx);
-	str = combo_box_get_active_text(tdi->cov_combo);
-	*tdi->xvar = current_series_index(dataset, str);
-	g_free(str);
+	g_string_append_printf(GSB, ", det=%d", idx);
+	if (tdi->cov_combo != NULL) {
+	    xname = combo_box_get_active_text(tdi->cov_combo);
+	}
     } else {
+	denton = 1;
 	idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->dn_combo));
-	gretl_bundle_set_string(tdi->bundle, "method",
-				idx == 1 ? "denton-afd" : "denton-pfd");
-	str = combo_box_get_active_text(tdi->dp_combo);
-	*tdi->xvar = current_series_index(dataset, str);
-	g_free(str);
-    }
-    if (button_is_active(tdi->plot_check)) {
-	gretl_bundle_set_int(tdi->bundle, "plot", 1);
+	str = idx == 1 ? "denton-afd" : "denton-pfd";
+	g_string_append_printf(GSB, ", method=\"%s\"", str);
+	xname = combo_box_get_active_text(tdi->dp_combo);
+	if (!strcmp(xname, "constant")) {
+	    g_free(xname);
+	    xname = NULL;
+	}
     }
 
-    *tdi->retval = 0;
+    if (xname != NULL && current_series_index(dataset, xname) < 0) {
+	g_free(xname);
+	xname = NULL;
+    }
+
+    if (button_is_active(tdi->plot_check)) {
+	g_string_append(GSB, ", plot=1)");
+    } else {
+	g_string_append(GSB, ")");
+    }
+
+    g_string_printf(GSC, "series %s = tdisagg(%s, %s, %d, %s)",
+		    yname, dataset->varname[tdi->v],
+		    xname != NULL ? xname : "null", s, GSB->str);
+
+    if (!denton) {
+	bufopen(&prn);
+    }
+    err = generate(GSC->str, dataset, GRETL_TYPE_ANY, OPT_NONE, prn);
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	lib_command_strcpy(GSC->str);
+	record_command_verbatim();
+	mark_dataset_as_modified();
+	populate_varlist();
+	if (prn != NULL) {
+	    view_buffer(prn, 78, 400, "tdisagg", PRINT, NULL);
+	}
+    }
+
+    g_string_free(GSC, TRUE);
+    g_string_free(GSB, TRUE);
+
     gtk_widget_destroy(tdi->dlg);
 }
 
@@ -6933,7 +6982,9 @@ static void sensitize_chowlin (struct tdisagg_info *tdi,
 {
     gtk_widget_set_sensitive(tdi->cl_combo, s);
     gtk_widget_set_sensitive(tdi->det_combo, s);
-    gtk_widget_set_sensitive(tdi->cov_combo, s);
+    if (tdi->cov_combo != NULL) {
+	gtk_widget_set_sensitive(tdi->cov_combo, s);
+    }
 }
 
 static void sensitize_denton (struct tdisagg_info *tdi,
@@ -6966,7 +7017,7 @@ static GList *plausible_covariate_list (void)
     return list;
 }
 
-int tdisagg_dialog (int *xvar, gretl_bundle *b)
+void tdisagg_dialog (int v, int newseries)
 {
     const char *aggs[] = {
         "sum", "avg", "first", "last"
@@ -6977,22 +7028,39 @@ int tdisagg_dialog (int *xvar, gretl_bundle *b)
     GtkWidget *rb1, *rb2, *pc;
     GList *xlist = NULL;
     GSList *group = NULL;
-    int i, ret = GRETL_CANCEL;
+    int i;
 
     if (maybe_raise_dialog()) {
-	return ret;
+	return;
     }
 
     dialog = gretl_dialog_new("gretl: temporal disaggregation",
 			      NULL, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-    tdi.retval = &ret;
-    tdi.xvar = xvar;
-    tdi.bundle = b;
     tdi.dlg = dialog;
+    tdi.v = v;
 
     xlist = plausible_covariate_list();
+
+    /* output name? */
+    if (!newseries) {
+	GtkWidget *entry;
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new("output name:");
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	tdi.name_entry = entry = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
+	gtk_entry_set_text(GTK_ENTRY(entry), dataset->varname[v]);
+	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	tmp = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    } else {
+	tdi.name_entry = NULL;
+    }
 
     /* aggregation type */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -7044,6 +7112,8 @@ int tdisagg_dialog (int *xvar, gretl_bundle *b)
 	gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
 	gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    } else {
+	tdi.cov_combo = NULL;
     }
 
     tmp = gtk_hseparator_new();
@@ -7095,6 +7165,4 @@ int tdisagg_dialog (int *xvar, gretl_bundle *b)
     //context_help_button(hbox, TDISHELP);
 
     gtk_widget_show_all(dialog);
-
-    return ret;
 }

@@ -231,70 +231,19 @@ static void graph_dbdata (DATASET *dbset)
     gui_graph_handler(err);
 }
 
-#define NEW_EXPAND 0 /* not ready yet! */
-
-#if NEW_EXPAND
-
-static int call_tdisagg_dialog (int src_pd, int targ_pd)
+static int expand_data_dialog (int nx, int nv, GtkWidget *parent)
 {
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-    gretl_bundle *tdb = gretl_bundle_new();
-    int xvar = -1;
-    int resp;
+    const gchar *msg;
 
-    resp = tdisagg_dialog(&xvar, tdb);
-    fprintf(stderr, "resp = %d, xvar = %d\n", resp, xvar);
-    gretl_bundle_print(tdb, prn);
-    gretl_print_destroy(prn);
-    gretl_bundle_destroy(tdb);
-
-    return resp;
-}
-
-#endif
-
-static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
-			       GtkWidget *parent)
-{
-    int mult = targ_pd / src_pd;
-    int resp;
-
-    if ((targ_pd == 4 && src_pd == 1) ||
-	(targ_pd == 12 && (src_pd == 4 || src_pd == 1))) {
-	/* interpolation is an option */
-	const char *opts[] = {
-	    N_("Repeat the lower frequency values"),
-	    N_("Interpolate higher frequency values")
-	    /* N_("Distribute/Interpolate") */
-	};
-
-	resp = radio_dialog("gretl", _("Adding a lower frequency series to a\n"
-				       "higher frequency dataset"),
-			    opts, 2, 0, EXPAND, parent);
-	if (resp == 1) {
-#if NEW_EXPAND
-	    resp = call_tdisagg_dialog(src_pd, targ_pd);
-#else
-	    *interpol = 1;
-	    resp = GRETL_YES;
-#endif
-	} else if (resp == 0) {
-	    resp = GRETL_YES;
-	}
+    if (nx == nv) {
+	msg = N_("The data to be imported are of a lower frequency\n"
+		 "than the current dataset. OK to proceed?");
     } else {
-	/* can only do expansion via replication */
-	gchar *msg =
-	    g_strdup_printf(_("Do you really want to add a lower frequency series\n"
-			      "to a higher frequency dataset?\n\n"
-			      "If you say 'yes' I will expand the source data by\n"
-			      "repeating each value %d times.  In general, this is\n"
-			      "not a valid thing to do."),
-			    mult);
-	resp = yes_no_dialog("gretl", msg, parent);
-	g_free(msg);
+	msg = N_("Some of the data to be imported are of a lower frequency\n"
+		 "than the current dataset. OK to proceed?");
     }
 
-    return resp;
+    return yes_no_help_dialog(msg, EXPAND);
 }
 
 static int obs_overlap_check (int pd, const char *stobs,
@@ -524,7 +473,6 @@ static void unset_dbnomics_id (void)
 
 static void record_db_import (const char *vname,
 			      int compact,
-			      int interpol,
 			      CompactMethod method)
 {
     const char *cstr = NULL;
@@ -533,9 +481,6 @@ static void record_db_import (const char *vname,
 	if (compact && (cstr = compact_method_string(method)) != NULL) {
 	    lib_command_sprintf("data %s --name=%s --compact=%s",
 				dbnomics_id, vname, cstr);
-	} else if (interpol) {
-	    lib_command_sprintf("data %s --name=%s --interpolate",
-				dbnomics_id, vname);
 	} else {
 	    lib_command_sprintf("data %s --name=%s", dbnomics_id, vname);
 	}
@@ -543,8 +488,6 @@ static void record_db_import (const char *vname,
 	if (compact && (cstr = compact_method_string(method)) != NULL) {
 	    lib_command_sprintf("data %s --compact=%s", vname,
 				cstr);
-	} else if (interpol) {
-	    lib_command_sprintf("data %s --interpolate", vname);
 	} else {
 	    lib_command_sprintf("data %s", vname);
 	}
@@ -601,7 +544,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     CompactMethod cmethod = COMPACT_AVG;
     int dbv, resp, overwrite = 0;
     int compact = 0;
-    int interpol = 0;
+    int expand = 0;
     int err = 0;
 
     /* is there a series of this name already in the dataset? */
@@ -640,10 +583,11 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 
     if (dbset->pd < dataset->pd) {
 	/* the incoming series needs to be expanded */
-	resp = expand_data_dialog(dbset->pd, dataset->pd, &interpol,
-				  vwin->main);
+	resp = expand_data_dialog(1, 1, vwin->main);
 	if (resp != GRETL_YES) {
 	    return 0;
+	} else {
+	    expand = 1;
 	}
     } else if (dbset->pd > dataset->pd) {
 	/* the incoming series needs to be compacted */
@@ -665,9 +609,11 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	}
     }
 
+    /* FIXME maybe handle tdisagg via post-processing of the
+       imported series? */
+
     err = transcribe_db_data(dataset, dbv, dbset->Z[1], dbset->pd,
-			     dbset->n, dbset->stobs, cmethod,
-			     interpol);
+			     dbset->n, dbset->stobs, cmethod);
 
     if (!err) {
 	const char *vlabel = series_get_label(dbset, 1);
@@ -676,7 +622,10 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	if (vlabel != NULL && *vlabel != '\0') {
 	    series_set_label(dataset, dbv, vlabel);
 	}
-	record_db_import(dbset->varname[1], compact, interpol, cmethod);
+	if (expand) {
+	    series_set_orig_pd(dataset, dbv, dbset->pd);
+	}
+	record_db_import(dbset->varname[1], compact, cmethod);
     } else {
 	if (!overwrite) {
 	    dataset_drop_last_variables(dataset, 1);
@@ -695,7 +644,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
     SERIESINFO *sinfo;
     double **dbZ = dbset->Z;
     CompactMethod cmethod = COMPACT_AVG;
-    int resp, warned = 0, chosen = 0;
+    int nx, resp, chosen = 0;
     int i, err = 0;
 
     sinfo = &dw->sinfo[0];
@@ -706,12 +655,25 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 
     record_db_open_command(dw);
 
+    nx = 0;
+    for (i=0; i<dw->nv && !err; i++) {
+	if (dw->sinfo[i].pd < dataset->pd) {
+	    nx++;
+	}
+    }
+    if (nx > 0) {
+	resp = expand_data_dialog(nx, dw->nv, vwin->main);
+	if (resp != GRETL_YES) {
+	    return 0;
+	}
+    }
+
     for (i=0; i<dw->nv && !err; i++) {
 	int v, dbv;
 	int existing = 0;
 	int overwrite = 0;
 	int compact = 0;
-	int interpol = 0;
+	int expand = 0;
 
 	sinfo = &dw->sinfo[i];
 	v = sinfo->v;
@@ -729,14 +691,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 
 	if (sinfo->pd < dataset->pd) {
 	    /* the incoming series needs to be expanded */
-	    if (!warned) {
-		resp = expand_data_dialog(sinfo->pd, dataset->pd, &interpol,
-					  vwin->main);
-		if (resp != GRETL_YES) {
-		    return 0;
-		}
-		warned = 1;
-	    }
+	    expand = 1;
 	} else if (sinfo->pd > dataset->pd) {
 	    /* the incoming series needs to be compacted */
 	    if (!chosen) {
@@ -755,7 +710,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 		if (err) {
 		    break;
 		} else {
-		    record_db_import(sinfo->varname, compact, interpol, cmethod);
+		    record_db_import(sinfo->varname, compact, cmethod);
 		    continue;
 		}
 	    }
@@ -783,8 +738,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 	}
 
 	err = transcribe_db_data(dataset, dbv, dbZ[v], sinfo->pd,
-				 sinfo->nobs, sinfo->stobs, cmethod,
-				 interpol);
+				 sinfo->nobs, sinfo->stobs, cmethod);
 	if (err) {
 	    gui_errmsg(err);
 	    if (!overwrite) {
@@ -793,7 +747,10 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 	} else {
 	    strcpy(dataset->varname[dbv], sinfo->varname);
 	    series_set_label(dataset, dbv, sinfo->descrip);
-	    record_db_import(sinfo->varname, compact, interpol, cmethod);
+	    if (expand) {
+		series_set_orig_pd(dataset, dbv, sinfo->pd);
+	    }
+	    record_db_import(sinfo->varname, compact, cmethod);
 	}
     }
 
@@ -830,9 +787,8 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 	    }
 	} else {
 	    record_db_open_command(NULL);
-	    record_db_import(dbset->varname[1], 0, 0, 0);
+	    record_db_import(dbset->varname[1], 0, 0);
 	}
-
 	data_status |= (GUI_DATA | MODIFIED_DATA);
     }
 

@@ -533,7 +533,8 @@ enum MenuIdx_ {
     MNU_IDXV,
     MNU_DUMIF,
     MNU_GENR,
-    MNU_LIST
+    MNU_LIST,
+    MNU_TDIS
 };
 
 enum MDSIdx_ {
@@ -598,7 +599,8 @@ struct popup_entries main_pop_entries[] = {
     { MNU_LOGS,  N_("Add logs"), T_MULTI },
     { MNU_DIFF,  N_("Add differences"), T_MULTI },
     { MNU_PCDIF, N_("Add percent changes..."), T_MULTI },
-    { MNU_IDXV, N_("Add index values..."), T_MULTI },
+    { MNU_IDXV,  N_("Add index values..."), T_MULTI },
+    { MNU_TDIS,  N_("Disaggregate..."), T_SINGLE },
     { MNU_SEPAR, NULL, T_BOTH },
     { MNU_GENR,  N_("Define new variable..."), T_BOTH },
     { MNU_LIST,  N_("Define list"), T_MULTI }
@@ -675,6 +677,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     case MNU_DUMIF:
 	add_discrete_dummies(v);
 	break;
+    case MNU_TDIS:
+	tdisagg_dialog(v, 0);
+	break;
     case MNU_GENR:
 	genr_callback();
 	break;
@@ -745,6 +750,10 @@ GtkWidget *build_var_popup (int selvar)
 	}
 	if (i == MNU_STATS && is_string_valued(dataset, selvar)) {
 	    /* skip (numerical) summary stats option */
+	    continue;
+	}
+	if (i == MNU_TDIS && series_get_orig_pd(dataset, selvar) == 0) {
+	    /* skip temporal disaggregation option */
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));
