@@ -2705,7 +2705,7 @@
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2771,9 +2771,12 @@
       <para>
 	<lit>expand</lit>: This command is only available for annual
 	or quarterly time series data: annual data can be expanded to
-	quarterly or monthly, and quarterly data to monthly
-	frequency. All the series in the data set are padded out to
-	the new frequency by repeating the existing values.
+	quarterly or monthly, and quarterly data to monthly.  All
+	series in the data set are padded out to the new frequency by
+	repeating the existing values. If the original dataset is
+	annual the default expansion is to quarterly but
+	<lit>expand</lit> can be followed by <lit>12</lit> to request
+	monthly.
       </para>
       <para>
 	<lit>transpose</lit>: No additional parameter required.
@@ -3913,22 +3916,22 @@
 
     <description>
       <para>
-	<quote>Expansion</quote> of a dataset from a lower to a higher
-	frequency should be considered an expert option; you need to
-	know what you are doing. When combining series of differing
-	original frequencies within one dataset, you should probably
-	consider compacting the higher-frequency data rather than
-	expanding the lower-frequency series.
+	<quote>Expansion</quote> of a dataset or series from a lower
+	to a higher frequency should be considered an expert option;
+	you need to know what you are doing. When combining series of
+	differing original frequencies within one dataset, you should
+	probably consider compacting the higher-frequency data rather
+	than expanding the lower-frequency series.
       </para>
       <para>
 	That said, gretl supports expansion by simple repetition of
-	the low frequency values. For example, take conversion from
-	quarterly to monthly: what happens is that quarterly values
-	are repeated for each month of the quarter. Series constructed
-	in this way are unlikely to be usable as is for econometric
-	analysis, but after expansion the <fncref targ="tdisagg"/>
-	function can be used to produce a distributed or interpolated
-	version of the data (<quote>temporal disaggregation</quote>).
+	the low frequency values. For example, in expanding from
+	quarterly to monthly the quarterly values are repeated for
+	each month of the quarter. Series constructed in this way are
+	unlikely to be usable as is for econometric analysis, but
+	after expansion the <fncref targ="tdisagg"/> function can be
+	used to produce a distributed or interpolated version of the
+	data (<quote>temporal disaggregation</quote>).
       </para>
     </description>
   </command>

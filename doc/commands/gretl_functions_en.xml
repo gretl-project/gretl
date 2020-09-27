@@ -2472,26 +2472,31 @@
       </fnargs>
       <description>
 	<para>
+	  We no longer recommend use of this function; please use
+	  <fncref targ="tdisagg"/> instead.
+	</para>
+	<para>
 	  Expands the input data, <argname>Y</argname>, to a higher
-	  frequency, using the interpolation method of <cite
-	  key="chowlin71">Chow and Lin (1971)</cite>. It is
-	  assumed that the columns of <argname>Y</argname>
-	  represent data series; the returned matrix has as many columns
-	  as <argname>Y</argname> and <argname>xfac</argname> times
-	  as many rows.
+	  frequency, using the method of <cite key="chowlin71">Chow
+	  and Lin (1971)</cite>. It is assumed that the columns of
+	  <argname>Y</argname> represent data series; the returned
+	  matrix has as many columns as <argname>Y</argname> and
+	  <argname>xfac</argname> times as many rows. It is also
+	  assumed that each low-frequency value should be treated as
+	  the average of <argname>xfac</argname> high-frequency
+	  values.
 	</para>
 	<para>
-	  The second argument represents the expansion factor: it should
-	  be 3 for expansion from quarterly to monthly or 4 for expansion
-	  from annual to quarterly, these being the only supported
-	  factors. The optional third argument may be used to provide a
-	  matrix of covariates at the higher (target) frequency.
+	  The <argname>xfac</argname> value should be 3 for quarterly
+	  to monthly, 4 for annual to quarterly or 12 for annual to
+	  monthly. The optional third argument may be used to provide
+	  a matrix of covariates at the higher (target) frequency.
 	</para>
 	<para>
-	  The regressors used by default are a constant and quadratic
-	  trend. If <argname>X</argname> is provided, its columns are
-	  used as additional regressors; it is an error if the number of
-	  rows in <argname>X</argname> does not equal
+	  The regressors used by default are a constant and trend.  If
+	  <argname>X</argname> is provided, its columns are used as
+	  additional regressors; it is an error if the number of rows
+	  in <argname>X</argname> does not equal
 	  <argname>xfac</argname> times the number of rows in
 	  <argname>Y</argname>.
 	</para>
@@ -11607,7 +11612,7 @@
       </description>
     </function>
 
-    <function name="tdisagg" section="math" output="matrix">
+    <function name="tdisagg" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">Y</fnarg>
 	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
