@@ -2759,7 +2759,7 @@
         <example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
         <example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2818,14 +2818,9 @@
       <para>
 	<lit>expand</lit>: Questo comando è disponibile solo per serie
 	storiche annuali o trimestrali. I dati annuali vengono espansi
-	a trimestrali, quelli trimestrali a mensili. Per default,
-	tutte le serie nel dataset verranno espanse assegnando alle
-	nuove osservazioni i valori del periodo corrispondente nel
-	vecchio dataset, ma con il modificatore <lit>interp</lit> le
-	serie vengono espanse usando l'interpolazione di
-	Chow&ndash;Lin (si veda <cite key="chowlin71">Chow e Lin,
-	1971</cite>): i regressori sono una costante ed un trend quadratico;
-	il disturbo è assunto AR(1).
+	a trimestrali, quelli trimestrali a mensili. Tutte le serie
+	nel dataset verranno espanse ripetendo il valore a bassa
+	frequenza.
       </para>
       <para>
 	<lit>transpose</lit>: non richiede parametri aggiuntivi. Traspone il
@@ -3986,7 +3981,6 @@
     label="Espansione dei dati">
 
     <description>
-
       <para>
 	Se si vuole aggiungere a un dataset una serie di frequenza
 	inferiore, è necessario <quote>espandere</quote> la nuova
@@ -4005,11 +3999,14 @@
         frequenza
       </para>
       <para>
-	Ciò premesso, gretl offre due opzioni: valori ad alta
-	frequenza possono essere espansi usando il metodo di <cite
-	key="chowlin71">Chow e Lin (1971)</cite> oppure per valori di
-	dati a frequenza più bassa si procede ripetendo per il
-	numero necessario di volte.
+	Ciò premesso, gretl può espandere una serie ripetendo il
+	valore a bassa frequuenza per il numero necessario di
+	volte. Si consideri la conversione da trimestrale a mensile fa
+	sì che il valore del trimestre venga ripetuto in tutti e tre i
+	mesi. È improbabile che la seri risultante sia di una qualche
+	utilità, ma dopo l'espansione si può usare la funzione <fncref
+	targ="tdisagg"/> per produrre una versione dei dati interpolata
+	o distribuita.
       </para>
       <para>
 	Il metodo di Chow&ndash;Lin è basato su una regressione avente
@@ -4027,8 +4024,6 @@
 	ragione di ritenere che la variabile in questione rimanga
 	costante nei vari sotto-periodi.
       </para>
-
-
     </description>
   </command>
 
@@ -14865,8 +14860,40 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
   </command>
 
+  <command name="tdisagg" section="Dataset" label="Disaggregazione temporale"
+	   context="gui">
+    <description>
+      <para>
+	Queste sono le opzioni disponibili nella finestra di dialogo
+	per la disaggregazione temporale
+      </para>
+      <ilist>
+       <li>
+	 <para>
+	   <lit>nome di output</lit> (se applicabile): Qui si sceglie
+	   se sovrascrivere una serie esistente con i dati
+	   disaggregati o crearne una nuova.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   <lit>tipo di aggregazione</lit>: Se si andasse nella
+	   direzione opposta, (aggregando anziché disaggregando) come
+	   sarebbe definita la serie a bassa frequenza? Somma, media,
+	   periodo iniziale o periodo finale? La disaggregazione
+	   dipende anche da questo.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   CONTINUA
+	 </para>
+       </li>
+      </ilist>
+    </description>
+  </command>
+    
   <command name="textplot" section="Graphs" label="Grafici ASCII" context="cli">
-
     <usage>
       <arguments>
         <argument>lista-variabili</argument>

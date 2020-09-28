@@ -472,6 +472,18 @@
       </description>
     </function>
 
+    <function name="$mapfile" section="access" output="string">
+      <description>
+	<para>
+	  Se il dataset in uso è stato caricato da un file GeoJSON o
+	  ESRI (shapefile), restituisce il nome del file da aprire per
+	  ottenere il poligoni della mappa, o una stringa vuota
+	  altrimenti. Questo accessore è usato con la funzione <fncref
+	  targ="geoplot"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
@@ -690,6 +702,28 @@
       </description>
     </function>
 
+    <function name="$pkgdir" section="access" output="string">
+      <description>
+	<para>
+	  Pensato per gli autori di pacchetti di funzioni. Ritorna una
+	  stringa vuota, a meno che non sia in esecuzione una funzione
+	  appartenente ad un pacchetto, nel qual caso ritorna il path
+	  completo (dipendente dal sistema operativo) in cui il
+	  pacchetto è installato. Ad esempio, il valore ritornato
+	  potrebbe essere
+	</para>
+	<code>
+	  /usr/share/gretl/functions/foo
+	</code>
+	<para>
+	  se questa è la directory in cui si trova
+	  <lit>foo.gfn</lit>. Questo accessore dà modo di accedere a
+	  risorse come ad esempio file contenti matrici speciali,
+	  inclusi nel pacchetto.
+	</para>
+      </description>
+    </function>
+
     <function name="$pvalue" section="access" output="scalar-or-matrix">
       <description>
 	<para>
@@ -795,6 +829,18 @@
 	  corrispondenti gradi di libertà e il p-value. Se il modello è
 	  esattamente identificato, la statistica non è disponibile, e
 	  tentare di ottenerla provoca un errore.
+	</para>
+      </description>
+    </function>
+
+    <function name="$seed" section="access" output="scalar">
+      <description>
+	<para>
+	  Ritorna il seme usato dal generatore di numeri casuali di
+	  gretl. Ovviamente questo accessore è inutile se il seme è
+	  stato fissato in precedenza, ma può essere di interesse se
+	  il seme è stato generato automaticamente (in base al momento
+	  in cui il programma è stato lanciato).
 	</para>
       </description>
     </function>
@@ -2394,30 +2440,36 @@
       </fnargs>
       <description>
 	<para>
-	  Espande i dati in ingresso, <argname>Y</argname>, a una frequenza
-	  maggiore, usando il metodo di interpolazione di <cite
+	  Questa funzione è da ritenersi obsoleta, e il suo uso è
+	  sconsigliato: è preferibile usare la funzione <fncref
+	  targ="tdisagg"/>.
+	</para>
+	<para>
+	  Espande i dati in ingresso, <argname>Y</argname>, a una
+	  frequenza maggiore, usando il metodo di <cite
 	  key="chowlin71">Chow e Lin (1971)</cite>. Si assume che le
 	  colonne di <argname>Y</argname> rappresentino serie di dati;
 	  la matrice restituita ha tante colonne quante sono le
 	  colonne di <argname>Y</argname> e tante righe quante sono
 	  quelle di <argname>Y</argname> moltiplicate per
-	  <argname>xfac</argname>.
+	  <argname>xfac</argname>. Si assume anche che ogni valore a
+	  bassa frequenza sia trattato come la media di
+	  <argname>xfac</argname> valori ad alta frequenza.
 	</para>
 	<para>
 	  Il secondo argomento rappresenta il fattore di espansione:
 	  deve essere 3 per espandere la frequenza della serie da
 	  trimestrale a mensile, o 4 per espansioni da annuale a
-	  trimestrale. Questi sono gli unici fattori di espansione
-	  supportati. Il terzo argomento opzionale può essere
+	  trimestrale. Il terzo argomento opzionale può essere
 	  utilizzato per generare una matrice di regressori con una
 	  frequenza (obiettivo) maggiore.
 	</para>
 	<para>
 	  I regressori utilizzati di default sono una costante e un
-	  trend quadratico. Se viene fornita <argname>X</argname>, le
-	  sue colonne sono utilizzate come regressori addizionali; è
-	  un errore se il numero di righe in <argname>X</argname> non
-	  è uguale a <argname>xfac</argname> per il numero di righe in
+	  trend. Se viene fornita <argname>X</argname>, le sue colonne
+	  sono utilizzate come regressori addizionali; è un errore se
+	  il numero di righe in <argname>X</argname> non è uguale a
+	  <argname>xfac</argname> per il numero di righe in
 	  <argname>Y</argname>.
 	</para>
       </description>
@@ -4400,6 +4452,33 @@
       </description>
     </function>
 
+    <function name="geoplot" section="data-utils" output="none">
+      <fnargs>
+	<fnarg type="string">mapfile</fnarg>
+	<fnarg optional="true" type="series">payload</fnarg>
+	<fnarg optional="true" type="bundle">options</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Produce una mappa tematica se sono presenti adeguati dati
+	  geografici. Il più delle volte, l'argomento
+	  <argname>mapfile</argname> sarà uguale a <fncref
+	  targ="$mapfile"/>, un accessore che ritorna il nome del file
+	  GeoJSON o dello shapefile rilevante. L'argomento opzionale
+	  <argname>payload</argname> è invece usato per indicare il
+	  nome della serie usata per colorare la mappa. Opzioni
+	  aggiuntive possono essere indicate nell'argomento opzionale
+	  <argname>options</argname>.
+	</para>
+	<para>
+	  Per tutti i dettagli svariati esempi, rinviamo alla
+	  documentazione specifica <doc>geoplot.pdf</doc>. Il
+	  documento contiene anche una lista completa delle opzioni
+	  configurabili tramite il bundle <argname>options</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="getenv" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -4949,14 +5028,17 @@
       </description>
     </function>
     
-    <function name="I" section="matbuild" output="smatrix">
+    <function name="I" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">n</fnarg>
+	<fnarg optional="true" type="int">m</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Produce la matrice identità con <argname>n</argname> righe e
-	  colonne.
+	  Se l'argomento <argname>m</argname> è omesso, produce la
+	  matrice identità con <argname>n</argname> righe e
+	  colonne. Altrimenti, ritorna una matrice <by r="n" c="m"/>
+	  con uno sulla diagonale e zero altrove.
 	</para>
       </description>
     </function>
@@ -5490,7 +5572,7 @@
       </fnargs>
       <description>
 	<para>
-	  Ritorna 1 se<argname>name</argname> è il nome di una 
+	  Ritorna 1 se <argname>name</argname> è il nome di una 
 	  matrice complessa, 0 se è il nome di una matrice reale, o
 	  <lit>NA</lit> altrimenti.
 	</para>
@@ -7063,7 +7145,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="stats" output="matrix">
+    <function name="mlag" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
@@ -7253,6 +7335,7 @@
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar">p</fnarg>
 	<fnarg type="int" optional="true">control</fnarg>
+	<fnarg type="scalar" optional="true">y0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7360,14 +7443,15 @@
       <description>
 	<para>
 	  Disponibile solo se gretl è in modalità MPI (si veda<mnu
-	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da 
-	  tutti i processi. Trasmette l'argomento <argname>object</argname>,
-	  che deve essere dato in forma di puntatore, a tutti i
-	  processi. L'oggetto in questione deve essere una matrice,
-	  un bundle, vettore o scalare, dichiarato in tutti i processi 
-	  precedentemente alla trasmissione. Nessun processo può
-	  proseguire oltre una chiamata a <lit>mpibcast</lit>finché
-	  tutti i processi non l'abbiano eseguita correttamente.
+	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da
+	  tutti i processi. Trasmette l'argomento
+	  <argname>object</argname>, che deve essere dato in forma di
+	  puntatore, a tutti i processi. L'oggetto in questione
+	  (matrice, bundle, scalare, array, stringa o lista) deve
+	  essere dichiarato in tutti i processi precedentemente alla
+	  trasmissione. Nessun processo può proseguire oltre una
+	  chiamata a <lit>mpibcast</lit>finché tutti i processi non
+	  l'abbiano eseguita correttamente.
 	</para>
 	<para>
 	  Di default <quote>root</quote>, la sorgente della trasmissione,
@@ -7458,7 +7542,7 @@
       </fnargs>
       <description>
 	<para>
-	  Disponibile solo quando retl è in modalità MPI (si veda <mnu
+	  Disponibile solo quando gretl è in modalità MPI (si veda <mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da tutti
 	  i processi. Questa funzione distribuisce parti di una matrice nel 
 	  processo root di tutti i processi. La matrice deve
@@ -7585,7 +7669,7 @@
       </description>
     </function>
     
-    <function name="mread" section="matbuild" output="matrix">
+    <function name="mread" section="data-utils" output="matrix">
       <fnargs>
 	<fnarg type="string">nomefile</fnarg>
 	<fnarg optional="true" type="bool">import</fnarg>
@@ -7669,17 +7753,14 @@
     <function name="mreverse" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="bool" optional="true">bycol</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce una matrice contenente le righe di
-	  <argname>X</argname> in ordine inverso. Per ottenere una
-	  matrice in cui le colonne di <argname>X</argname> appaiano
-	  in ordine inverso si usi:
+	  Restituisce una matrice in cui le righe di
+	  <argname>X</argname> (o le colonne se l'argomento
+	  <argname>bool</argname> è non-zero) sono in ordine inverso.
 	</para>
-	<code>
-	  matrix Y = mreverse(X')'
-	</code>
       </description>
     </function>  
 
@@ -10825,6 +10906,40 @@
       </description>
     </function>
     
+    <function name="stack" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">offset</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Usato per manipolare dati nel formato <quote>serie storiche
+	  sovrapposte</quote> richiesto da gretl per dati
+	  panel. Ritorna una serie ottenuta accostando 
+	  <quote>verticalmente</quote> <argname>n</argname> osservazioni
+	  da ogni serie nella lista <argname>L</argname>. Per default,
+	  le prime <argname>n</argname> osservazioni vengono usate
+	  (quando <argname>offset</argname> = 0), ma il punto di
+	  partenza può essere spostato verso il basso usando dando un
+	  valore positivo a <argname>offset</argname>. Se la seri
+	  risultate è più lunga del dataset in uso, vengono
+	  autometicamente aggiunte le osservazioni che mancano.
+	</para>
+	<para>
+	  Questa funzione serve a gestire sia il caso in cui un file
+	  di dati contiene tante serie temporali quante sono le unità
+	  cross-sezionali, sia il caso in cui il tempo scorre
+	  <quote>orizzontalmente</quote> e ogni riga è un'unità
+	  cross-sezionale.
+	</para>
+	<para>
+	  Si veda la sezione <quote>Panel data specifics</quote>
+	  in <guideref targ="chap:datafiles"/> per dettagli ed esempi.
+	</para>
+      </description>
+    </function>
+    
     <function name="stdize" section="stats" output="asinput">
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
@@ -10850,7 +10965,7 @@
       </description>
     </function>
 
-    <function name="strftime" section="strings" output="string">
+    <function name="strftime" section="calendar" output="string">
       <fnargs>
 	<fnarg type="scalar">t</fnarg>
 	<fnarg optional="true" type="string">formato</fnarg>
@@ -10935,7 +11050,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
-	<fnarg optional="true" type="scalar">n</fnarg>
+	<fnarg optional="true" type="int">n</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -10968,7 +11083,6 @@
 	  numero di secondi dall'inizio del 1970 (UTC).
 	</para>
 	<para>
-	  Le opzioni di formato disponibili vengono elencati 
 	  Le opzioni per il <argname>formato</argname> sono elencate sulla
 	  pagina di manuale per <lit>strptime</lit>, sui sistemi che
 	  la offrono, oppure su uno dei tanti siti che contengono tale
@@ -11385,6 +11499,33 @@
 	    <fncref targ="cosh"/>
 	    <fncref targ="sinh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="tdisagg" section="transforms" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-mat">Y</fnarg>
+	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
+	<fnarg type="scalar">s</fnarg>
+	<fnarg optional="true" type="bundle">opts</fnarg>
+	<fnarg optional="true" type="bundle">results</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Effettua la disaggregazione temporale (conversione ad alta
+	  frequenza) dei dati di serie storiche in
+	  <argname>Y</argname>. L'argomento <argname>s</argname>
+	  indica il fattore di espansione (ad esempio, 3 da
+	  trimestrale a mensile). L'argomento <argname>X</argname> può
+	  contenere una o più covariate ad alta frequenza sulla base
+	  delle quali procedere alla disaggregazione. L'argomento
+	  <argname>opts</argname> serve a passare opzioni più
+	  dettagliate; dettagli sui risultati sono disponibili nel
+	  bundle <argname> results</argname>.
+	</para>
+	<para>
+	  Vedi <guideref targ="chap:tdisagg"/> per maggiori dettagli.
 	</para>
       </description>
     </function>
