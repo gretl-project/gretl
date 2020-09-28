@@ -11290,7 +11290,7 @@
       </description>
     </function>
 
-    <function name="tdisagg" section="math" output="matrix">
+    <function name="tdisagg" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">Y</fnarg>
 	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
