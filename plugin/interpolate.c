@@ -1441,11 +1441,11 @@ static int get_aggregation_type (const char *s, int *err)
     if (!strcmp(s, "avg")) {
 	return AGG_AVG;
     } else if (!strcmp(s, "sum")) {
-	return AVG_SUM;
+	return AGG_SUM;
     } else if (!strcmp(s, "last")) {
-	return AVG_EOP;
+	return AGG_EOP;
     } else if (!strcmp(s, "first")) {
-	return AVG_SOP;
+	return AGG_SOP;
     } else {
 	*err = E_INVARG;
 	return -1;
