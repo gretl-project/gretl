@@ -1481,10 +1481,10 @@ static int tdisagg_get_options (gretl_bundle *b,
 {
     double rho = NADBL;
     const char *str;
-    int agg = 0;
+    int agg = AGG_SUM; /* debatable */
     int method = 0;
     int det = 1;
-    int verbose = -1;
+    int verbose = 0;
     int plot = 0;
     int err = 0;
 
