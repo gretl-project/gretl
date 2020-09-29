@@ -6944,15 +6944,14 @@ static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
     }
 
     if (button_is_active(tdi->plot_check)) {
-	g_string_append(GSB, ", plot=1)");
-    } else {
-	g_string_append(GSB, ")");
+	g_string_append(GSB, ", plot=1");
     }
-
     if (gtk_widget_is_sensitive(tdi->reg_check) &&
 	button_is_active(tdi->reg_check)) {
+	g_string_append(GSB, ", verbose=2");
 	bufopen(&prn);
     }
+    g_string_append(GSB, ")");
 
     g_string_printf(GSC, "series %s = tdisagg(%s, %s, %d, %s)",
 		    yname, dataset->varname[tdi->v],

@@ -13738,7 +13738,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (e->t == MAT) {
 		    X = e->v.m;
 		} else if (e->t == SERIES) {
-		    X = tdisagg_matrix_from_series(e->v.xvec, NULL,
+		    X = tdisagg_matrix_from_series(e->v.xvec, e->vnum, NULL,
 						   p->dset, 1, &p->err);
 		    xconv = 1;
 		} else if (e->t == LIST) {
@@ -13746,7 +13746,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 			X = midas_list_to_vector(e->v.ivec, p->dset, &p->err);
 			xconv = 2;
 		    } else {
-			X = tdisagg_matrix_from_series(NULL, e->v.ivec,
+			X = tdisagg_matrix_from_series(NULL, 0, e->v.ivec,
 						       p->dset, 1, &p->err);
 			xconv = 1;
 		    }
@@ -13773,7 +13773,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (!p->err && Y == NULL) {
 	    int cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
 
-	    Y = tdisagg_matrix_from_series(yval, ylist, p->dset,
+	    Y = tdisagg_matrix_from_series(yval, ynum, ylist, p->dset,
 					   cfac, &p->err);
 	    yconv = 1;
 	}

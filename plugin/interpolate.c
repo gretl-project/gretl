@@ -58,6 +58,7 @@ struct chowlin {
 
 struct gls_info {
     const gretl_matrix *y0;
+    const gretl_matrix *X;
     gretl_matrix *CX;
     gretl_matrix *VC;
     gretl_matrix *W;
@@ -189,6 +190,7 @@ static void show_regression_results (const struct gls_info *G,
 {
     const char *dnames[] = {"const", "trend", "trend^2"};
     const char *snames[] = {"rho", "SSR", "lnl"};
+    const char **Xnames = NULL;
     char tmp[16];
     int i, k = G->b->rows;
     int df = G->CX->rows - G->CX->cols;
@@ -201,6 +203,10 @@ static void show_regression_results (const struct gls_info *G,
 
     if (cs == NULL || adds == NULL || names == NULL) {
 	return;
+    }
+
+    if (G->X != NULL) {
+	Xnames = gretl_matrix_get_colnames(G->X);
     }
 
     for (i=0; i<k; i++) {
@@ -219,8 +225,12 @@ static void show_regression_results (const struct gls_info *G,
 	if (i < G->det) {
 	    gretl_array_set_data(names, i, gretl_strdup(dnames[i]));
 	} else if (i < k) {
-	    sprintf(tmp, "X%d", i - G->det + 1);
-	    gretl_array_set_data(names, i, gretl_strdup(tmp));
+	    if (Xnames != NULL) {
+		gretl_array_set_data(names, i, gretl_strdup(Xnames[i-G->det]));
+	    } else {
+		sprintf(tmp, "X%d", i - G->det + 1);
+		gretl_array_set_data(names, i, gretl_strdup(tmp));
+	    }
 	} else {
 	    gretl_array_set_data(names, i, gretl_strdup(snames[p++]));
 	}
@@ -1081,6 +1091,9 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	fprintf(stderr, "X is %d x %d\n", X->rows, X->cols);
     }
 #endif
+
+    /* pointer to get varnames, if present */
+    G.X = X;
 
     /* the return value */
     Y = gretl_zero_matrix_new(sN + m, ny);

@@ -6301,14 +6301,17 @@ double logistic_cdf (double x)
 */
 
 gretl_matrix *tdisagg_matrix_from_series (const double *x,
+					  int xnum,
 					  const int *list,
 					  const DATASET *dset,
 					  int cfac, int *err)
 {
     gretl_matrix *m = NULL;
+    char **S = NULL;
     int k = list != NULL ? list[0] : 1;
     int T = (dset->t2 - dset->t1 + 1) / cfac;
     int i, s, t;
+    int serr = 0;
 
     m = gretl_matrix_alloc(T, k);
     if (m == NULL) {
@@ -6324,12 +6327,23 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
 		s += cfac;
 	    }
 	}
+	S = gretl_list_get_names_array(list, dset, &serr);
     } else {
 	s = dset->t1;
 	for (t=0; t<T; t++) {
 	    m->val[t] = x[s];
 	    s += cfac;
 	}
+	if (xnum > 0) {
+	    S = strings_array_new(1);
+	    if (S != NULL) {
+		S[0] = gretl_strdup(dset->varname[xnum]);
+	    }
+	}
+    }
+
+    if (S != NULL) {
+	gretl_matrix_set_colnames(m, S);
     }
 
     return m;

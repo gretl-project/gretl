@@ -200,6 +200,7 @@ double gretl_irr (const double *x, int n, int pd, int *err);
 double logistic_cdf (double x);
 
 gretl_matrix *tdisagg_matrix_from_series (const double *x,
+					  int xnum,
 					  const int *list,
 					  const DATASET *dset,
 					  int cfac, int *err);
