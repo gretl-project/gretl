@@ -12694,7 +12694,7 @@ static int bundle_pointer_arg0 (NODE *t)
 static int tdisagg_get_y_compression (int ynum, int xconv,
 				      int s, parser *p)
 {
-    if (ynum > 0 && series_get_orig_pd(p->dset, t->vnum)) {
+    if (ynum > 0 && series_get_orig_pd(p->dset, ynum)) {
 	return s;
     } else if (p->targ == SERIES) {
 	return s;
@@ -12703,6 +12703,7 @@ static int tdisagg_get_y_compression (int ynum, int xconv,
     } else if (p->dset->pd == 12 && s == 12) {
 	return s;
     } else if (xconv) {
+	/* X was given as a series or list */
 	return s;
     } else {
 	return 1;
