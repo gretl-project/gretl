@@ -12691,14 +12691,21 @@ static int bundle_pointer_arg0 (NODE *t)
    low-frequency values.
 */
 
-static int series_wants_compression (NODE *t, parser *p)
+static int tdisagg_get_y_compression (int ynum, int xconv,
+				      int s, parser *p)
 {
-    if (t->t == SERIES && series_get_orig_pd(p->dset, t->vnum)) {
-	return 1;
+    if (ynum > 0 && series_get_orig_pd(p->dset, t->vnum)) {
+	return s;
     } else if (p->targ == SERIES) {
-	return 1;
+	return s;
+    } else if (p->dset->pd == 4 && s == 4) {
+	return s;
+    } else if (p->dset->pd == 12 && s == 12) {
+	return s;
+    } else if (xconv) {
+	return s;
     } else {
-	return 0;
+	return 1;
     }
 }
 
@@ -13704,7 +13711,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const double *yval = NULL;
 	const int *ylist = NULL;
 	int fac = 0;
-	int ycomp = 0;
+	int ynum = 0;
 	int xconv = 0;
 	int yconv = 0;
 
@@ -13717,11 +13724,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		/* Y: matrix, series or list */
 		if (e->t == MAT) {
 		    Y = e->v.m;
-		} else if (e->t == SERIES || e->t == LIST) {
-		    ycomp = series_wants_compression(e, p);
+		} else if (e->t == SERIES) {
+		    ynum = e->vnum;
 		    yval = e->v.xvec;
 		} else if (e->t == LIST) {
-		    ycomp = series_wants_compression(e, p);
 		    ylist = e->v.ivec;
 		} else {
 		    p->err = E_TYPES;
@@ -13763,8 +13769,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-	if (Y == NULL) {
-	    int cfac = (ycomp || xconv == 1)? fac : 1;
+	if (!p->err && Y == NULL) {
+	    int cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
 
 	    Y = tdisagg_matrix_from_series(yval, ylist, p->dset,
 					   cfac, &p->err);
