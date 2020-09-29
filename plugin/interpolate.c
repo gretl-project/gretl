@@ -1528,6 +1528,40 @@ static int tdisagg_get_options (gretl_bundle *b,
     return err;
 }
 
+static int td_matrix_check (const gretl_matrix *Y,
+			    const gretl_matrix *X)
+{
+    int i, n;
+
+    if (Y->is_complex) {
+	return E_CMPLX;
+    } else if (gretl_is_null_matrix(Y)) {
+	return E_INVARG;
+    } else if (X != NULL && X->is_complex) {
+	return E_CMPLX;
+    } else if (X != NULL && X->rows * X->cols == 0) {
+	return E_INVARG;
+    }
+
+    n = Y->rows * Y->cols;
+    for (i=0; i<n; i++) {
+	if (na(Y->val[i])) {
+	    return E_MISSDATA;
+	}
+    }
+
+    if (X != NULL) {
+	n = X->rows * X->cols;
+	for (i=0; i<n; i++) {
+	    if (na(X->val[i])) {
+		return E_MISSDATA;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
 				 int s, gretl_bundle *b,
@@ -1539,13 +1573,16 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
     int verbose = 0, plot = 0;
     double rho = NADBL;
 
-    if (b != NULL) {
+    *err = td_matrix_check(Y0, X);
+
+    if (!*err && b != NULL) {
 	*err = tdisagg_get_options(b, &agg, &method, &det,
 				   &rho, &verbose, &plot,
 				   prn);
-	if (*err) {
-	    return NULL;
-	}
+    }
+
+    if (*err) {
+	return NULL;
     }
 
 #if CL_DEBUG
