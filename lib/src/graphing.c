@@ -10073,10 +10073,9 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
 	    _("final series"), mstr);
 
     err = finalize_plot_input_file(fp);
-    if (!err) {
-	if (gretl_in_gui_mode()) {
-	    manufacture_gui_callback(GNUPLOT);
-	}
+
+    if (!err && gretl_in_gui_mode()) {
+	manufacture_gui_callback(GNUPLOT);
     }
 
     gretl_pop_c_numeric_locale();

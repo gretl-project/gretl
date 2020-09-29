@@ -2134,7 +2134,9 @@ static void callback_exec (ExecState *s, char *fname, int err)
 
 void manufacture_gui_callback (int ci)
 {
-    if (gui_callback != NULL) {
+    void *fncheck = gui_callback;
+
+    if (fncheck != NULL) {
 	ExecState s = {0};
 	CMD cmd = {0};
 
