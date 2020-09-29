@@ -8,6 +8,8 @@
 \newcommand{\Vb}{\mathbf{V}}
 \newcommand{\Db}{\mathbf{D}}
 
+\def\tditem[#1]#2{\item[{\tt #1}]#2}
+
 \section{Introduction}
 \label{sec:tdisagg-intro}
 
@@ -39,14 +41,16 @@ illustrative examples.
 \begin{itemize}
 \item GDP: say we have quarterly GDP data and wish to produce an
   annual series. This is a flow variable and the annual flow will be
-  the \textit{sum} of the quarterly values. (Unless the quarterly
-  values are annualized, in which case we'd take their mean.)
+  the \textit{sum} of the quarterly values---unless the quarterly
+  values are annualized, in which case we'd take their mean.
 \item Industrial Production: this takes the form of an index reporting
   the level of production over some period relative to that in a base
   period in which the index is by construction 100. To aggregate from
   (for example) monthly to quarterly we should take the
   \textit{average} of the monthly values. (The sum would give a
-  nonsense result.)
+  nonsense result.) The same goes for price indices, and also for
+  ratios of stocks to flows or vice versa (inventory to sales, debt
+  to GDP, capacity utilization).
 \item Money stock: this is typically reported as an
   \textit{end-of-period} value, so in aggregating from monthly to
   quarterly we'd take the value from the final month of each
@@ -199,7 +203,12 @@ most convenient will depend on the user's workflow.
     corresponding to the high-frequency representation of the MIDAS
     list.
   \end{enumerate}
-\item $\Xb$ is omitted. Then $\Yb$ is taken to have $T$ rows. 
+\item $\Xb$ is omitted. If $\Yb$ is given as a matrix it is taken to
+  have $T$ rows. Otherwise the interpretation is determined
+  heuristically: if the $\Yb$ series is recognized by gretl as
+  composed of repeated low-frequency observations, or if a series
+  result is requested, it is taken as having length $sT$, otherwise
+  its length is taken to be $T$.
 \end{enumerate}
 
 \section{Function signature}
@@ -219,38 +228,37 @@ provided it's of the right length to match the current dataset, or the
 current sample range. Details on the arguments follow.
 
 \begin{description}
-\item[\texttt{Y0}]: $\Yb$, as a matrix, series or list.
-\item[\texttt{X}](optional): $\Xb$ as a matrix, series or list.  This
+\tditem[Y0]: $\Yb$, as a matrix, series or list.
+\tditem[X](optional): $\Xb$ as a matrix, series or list.  This
   should \textit{not} contain standard deterministic terms, since they
   are handled separately (see \texttt{det} under \texttt{opts}
   below). If this matrix is omitted, then disaggregation will be
   performed using deterministic terms only.
-\item[\texttt{int s}]: The temporal expansion factor, for example 3
+\tditem[s](int): The temporal expansion factor, for example 3
   for quarterly to monthly, 4 for annual to quarterly or 12 for annual
   to monthly.  We do not support cases such as monthly to weekly or
   monthly to daily, where $s$ is not a fixed integer value common to
   all observations; otherwise, anything goes.
-\item[\texttt{bundle opts}](optional): a bundle holding additional
+\tditem[opts](bundle, optional): a bundle holding additional
   options. The recognized keys are (in alphabetical order):
   \begin{description}
-  \item[\texttt{aggtype}](string): Specifies the type of temporal
-    aggregation appropriate to the series in question. The value must
-    be one of \texttt{sum} (each low-frequency value is a sum of $s$
-    high-frequency values, the default); \texttt{avg} (each
-    low-frequency value is the average of $s$ high frequency values);
-    or \texttt{last} or \texttt{first}, indicating respectively that
-    each low-frequency value is the last or first of $s$ high
-    frequency values.
-  \item[\texttt{det}](int): Relevant only when one of the Chow--Lin
-    methods is selected. This is a numeric code for the deterministic
-    terms to be included in the regressions: 0 means none; 1, constant
-    only; 2, constant and linear trend; 3, constant and quadratic
-    trend. The default is 1.
-  \item[\texttt{method}](string): Selects the method of disaggregation
-    (see the listing below). Note that the Chow--Lin methods employ an
-    autoregression coefficient, $\rho$, which captures the persistence
-    of the target series at the higher frequency and is used in GLS
-    estimation of the parameters linking $\Xb$ to $\Yb$.
+  \tditem[aggtype](string): Specifies the type of temporal aggregation
+  appropriate to the series in question. The value must be one of
+  \texttt{avg} (each low-frequency value is the average of $s$ high
+  frequency values, the default); \texttt{sum} (each low-frequency
+  value is a sum of $s$ high-frequency values); or \texttt{last} or
+  \texttt{first}, indicating respectively that each low-frequency
+  value is the last or first of $s$ high frequency values.
+  \tditem[det](int): Relevant only when one of the Chow--Lin methods
+  is selected. This is a numeric code for the deterministic terms to
+  be included in the regressions: 0 means none; 1, constant only; 2,
+  constant and linear trend; 3, constant and quadratic trend. The
+  default is 1.
+  \tditem[method](string): Selects the method of disaggregation (see
+  the listing below). Note that the Chow--Lin methods employ an
+  autoregression coefficient, $\rho$, which captures the persistence
+  of the target series at the higher frequency and is used in GLS
+  estimation of the parameters linking $\Xb$ to $\Yb$.
     \begin{itemize}
     \item \texttt{chow-lin} (the default) is modeled on the original
       method proposed by Chow and Lin. It uses a value of $\rho$
@@ -277,36 +285,36 @@ current sample range. Details on the arguments follow.
       involves regression.
     \end{itemize}
     %% end of sub-listing for "method"
-  \item[\texttt{plot}](int): If a non-zero value is given, a simple
+  \tditem[plot](int): If a non-zero value is given, a simple
     plot is displayed by way of a ``sanity check'' on the final
     series. See section~\ref{sec:tdisagg-plot} for details.
-  \item[\texttt{rho}](scalar): Relevant only when one of the Chow--Lin
+  \tditem[rho](scalar): Relevant only when one of the Chow--Lin
     methods is selected. If the method is \texttt{chow-lin}, then
     \texttt{rho} is treated as a fixed value for $\rho$, thus enabling
     the user to bypass the default estimation procedure altogether.
     If the method is \texttt{chow-lin-mle} or \texttt{chow-lin-ssr},
     on the other hand, the supplied $\rho$ value is used to initialize
     the numerical optimization algorithm.
-  \item[\texttt{verbose}](int): Controls the verbosity of Chow--Lin or
+  \tditem[verbose](int): Controls the verbosity of Chow--Lin or
     Fern\'andez output. If 0 (the default) nothing is printed unless
     an error occurs; if 1, summary output from the relevant regression
     is shown; if 2, in addition output from the optimizer for the
     iterated GLS procedure is shown, if applicable.
   \end{description}
   %% end of listing for options keys
-\item[\texttt{bundle results}](optional): If present, this argument
+\tditem[results](bundle, optional): If present, this argument
   must be a previously defined bundle. Upon successful completion of
   any of the methods other than \texttt{denton} it contains details of
   the disaggregation under the following keys:
   \begin{description}
-  \item[\texttt{method}]: the method employed
-  \item[\texttt{rho}]: the value of $\rho$ used
-  \item[\texttt{lnl}]: loglikelihood, maximized by the
-    \texttt{chow-lin-mle} method
-  \item[\texttt{SSR}]: sum of squared residuals, minimized by the
-    \texttt{chow-lin-ssr} method
-  \item[\texttt{coeff}]: the GLS (or OLS) coefficients
-  \item[\texttt{stderr}]: standard errors for the coefficients
+  \tditem[method]: the method employed
+  \tditem[rho]: the value of $\rho$ used
+  \tditem[lnl]: loglikelihood (maximized by the
+    \texttt{chow-lin-mle} method)
+  \tditem[SSR]: sum of squared residuals (minimized by the
+    \texttt{chow-lin-ssr} method)
+  \tditem[coeff]: the GLS (or OLS) coefficients
+  \tditem[stderr]: standard errors for the coefficients
   \end{description}
   If $\rho$ is set to zero---either by specification of the user or
   because the estimate $\hat{\rho}$ turned out to be

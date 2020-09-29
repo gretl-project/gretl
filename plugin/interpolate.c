@@ -28,8 +28,8 @@
 
 /* aggregation types */
 enum {
-    AGG_SUM, /* sum */
     AGG_AVG, /* average */
+    AGG_SUM, /* sum */
     AGG_EOP, /* end of period */
     AGG_SOP  /* start of period */
 };
@@ -78,7 +78,7 @@ struct gls_info {
 };
 
 static const char *aggtype_names[] = {
-    "sum", "average", "last", "first"
+    "average", "sum", "last", "first"
 };
 
 static const char *method_names[] = {
@@ -1438,14 +1438,14 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 
 static int get_aggregation_type (const char *s, int *err)
 {
-    if (!strcmp(s, "sum")) {
-	return 0;
-    } else if (!strcmp(s, "avg")) {
-	return 1;
+    if (!strcmp(s, "avg")) {
+	return AGG_AVG;
+    } else if (!strcmp(s, "sum")) {
+	return AVG_SUM;
     } else if (!strcmp(s, "last")) {
-	return 2;
+	return AVG_EOP;
     } else if (!strcmp(s, "first")) {
-	return 3;
+	return AVG_SOP;
     } else {
 	*err = E_INVARG;
 	return -1;

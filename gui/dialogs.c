@@ -7021,7 +7021,7 @@ static GList *plausible_covariate_list (void)
 void tdisagg_dialog (int v, int newseries)
 {
     const char *aggs[] = {
-        "sum", "avg", "first", "last"
+        "avg", "sum", "first", "last"
     };
     struct tdisagg_info tdi = {0};
     GtkWidget *dialog, *com, *hbox;
