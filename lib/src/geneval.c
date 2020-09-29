@@ -12702,7 +12702,7 @@ static int tdisagg_get_y_compression (int ynum, int xconv,
 	return s;
     } else if (p->dset->pd == 12 && s == 12) {
 	return s;
-    } else if (xconv) {
+    } else if (xconv == 1) {
 	/* X was given as a series or list */
 	return s;
     } else {
