@@ -16,6 +16,8 @@ version 2020e, in progress
   libraries (DLLs)
 - New addon package "regls": supports LASSO, Ridge regression
   and Elastic net
+- Fix bug: possibility of invalid XML when saving a model to
+  session file
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard
