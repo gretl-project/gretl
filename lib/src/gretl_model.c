@@ -4855,7 +4855,7 @@ static void serialize_model_data_items (const MODEL *pmod, PRN *prn)
 		pprintf(prn, "%d ", list[j]);
 	    }
 	} else if (item->type == GRETL_TYPE_STRING) {
-	    pprintf(prn, "%s", (char *) item->ptr);
+	    gretl_xml_put_string((const char *) item->ptr, prn);
 	} else if (item->type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = (gretl_matrix *) item->ptr;
 
