@@ -59,6 +59,7 @@ struct chowlin {
 struct gls_info {
     const gretl_matrix *y0;
     const gretl_matrix *X;
+    const char *yname;
     gretl_matrix *CX;
     gretl_matrix *VC;
     gretl_matrix *W;
@@ -184,6 +185,14 @@ static double ar1_loglik (const double *theta, void *data)
     return ll1 - inv2s2 * yf2;
 }
 
+static void maybe_print_depvar (const struct gls_info *G,
+				PRN *prn)
+{
+    if (G->yname != NULL && prn != NULL) {
+	pprintf(prn, "%s: %s\n", _("Dependent variable"), G->yname);
+    }
+}
+
 static void show_regression_results (const struct gls_info *G,
 				     double a, int gls,
 				     PRN *prn)
@@ -237,20 +246,24 @@ static void show_regression_results (const struct gls_info *G,
     }
 
     if (G->method == R_UROOT) {
-	pprintf(prn, "  %s", _("GLS estimates"));
-	pprintf(prn, " (fernandez) T = %d:\n", T);
+	pprintf(prn, "%s", _("GLS estimates"));
+	pprintf(prn, " (fernandez) T = %d\n", T);
+	maybe_print_depvar(G, prn);
     } else if (G->method == R_MLE || G->method == R_SSR) {
-	pprintf(prn, "  %s", _("Iterated GLS estimates"));
-	pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
+	pprintf(prn, "%s", _("Iterated GLS estimates"));
+	pprintf(prn, " (%s) T = %d\n", method_names[G->method], T);
+	maybe_print_depvar(G, prn);
 	if (G->flags & CL_TRUNC) {
-	    pprintf(prn, "  %s\n", _("rho truncated to zero"));
+	    pprintf(prn, "%s\n", _("rho truncated to zero"));
 	}
     } else if (a == 0) {
-	pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
+	pprintf(prn, "%s T = %d\n", _("OLS estimates"), T);
+	maybe_print_depvar(G, prn);
     } else {
-	pprintf(prn, "  %s", _("GLS estimates"));
-	pprintf(prn, " (%s) T = %d:\n", (G->method == R_FIXED)?
+	pprintf(prn, "%s", _("GLS estimates"));
+	pprintf(prn, " (%s) T = %d\n", (G->method == R_FIXED)?
 		"fixed rho" : "chow-lin", T);
+	maybe_print_depvar(G, prn);
     }
 
     print_model_from_matrices(cs, adds, names, df, OPT_I, prn);
@@ -302,7 +315,7 @@ static int ar1_mle (struct gls_info *G, double s, double *rho,
     if (!err) {
 	*rho = theta[0] > 0.999 ? 0.999 : theta[0];
 	if (G->flags & CL_SHOWMAX) {
-	    pprintf(prn, "  rho as revised via ML: %g\n", *rho);
+	    pprintf(prn, "rho as revised via ML: %g\n", *rho);
 	}
     }
 
@@ -860,7 +873,7 @@ static double acf_1 (struct gls_info *G, PRN *prn)
     rho = num / den;
 
     if (G->flags & CL_SHOWMAX) {
-	pprintf(prn, "  Initial rho from OLS residuals: %g\n", rho);
+	pprintf(prn, "Initial rho from OLS residuals: %g\n", rho);
     }
 
     if (rho < 1.0e-6) {
@@ -1094,6 +1107,15 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 
     /* pointer to get varnames, if present */
     G.X = X;
+
+    /* get (single) yname if present */
+    if (Y0->cols == 1) {
+	const char **S = gretl_matrix_get_colnames(Y0);
+
+	if (S != NULL) {
+	    G.yname = S[0];
+	}
+    }
 
     /* the return value */
     Y = gretl_zero_matrix_new(sN + m, ny);
@@ -1531,9 +1553,9 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pverb = verbose;
 	*pplot = plot;
 	if (verbose && method <= R_UROOT) {
-	    pprintf(prn, "  Aggregation type %s\n", aggtype_names[agg]);
+	    pprintf(prn, "Aggregation type %s\n", aggtype_names[agg]);
 	    if (!na(rho)) {
-		pprintf(prn, "  Input rho value %g\n", rho);
+		pprintf(prn, "Input rho value %g\n", rho);
 	    }
 	}
     }
