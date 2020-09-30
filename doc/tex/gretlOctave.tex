@@ -61,7 +61,7 @@ foreign language=Octave
    gretl_export(gmat, "octave.mat")
 end foreign
 
-matric chk = mread("octave.mat", 1)
+matrix chk = mread("octave.mat", 1)
 eval maxr(maxc(abs(m - chk)))
 \end{code}
 
