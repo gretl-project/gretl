@@ -1,6 +1,8 @@
 version 2020e, in progress
 - New function tdisagg() for temporal disaggregation
   (distribution and interpolation)
+- New addon package "regls": supports LASSO, Ridge regression
+  and Elastic net
 - New function assert() for debugging purposes
 - Fix "join" GUI dialog window: was not working on Windows
 - MPI: update documentation and support transfer of more
@@ -14,8 +16,6 @@ version 2020e, in progress
   highlighting
 - MS Windows build (64-bit): update pixman, cairo and pango
   libraries (DLLs)
-- New addon package "regls": supports LASSO, Ridge regression
-  and Elastic net
 - Fix bug: possibility of invalid XML when saving a model to
   session file
 
