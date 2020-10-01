@@ -785,6 +785,7 @@ int main (int argc, char **argv)
     set_show_activity_func(gui_show_activity);
     set_query_stop_func(gui_query_stop);
     set_gui_model_list_callback(get_or_send_gui_models);
+    gui_exec_callback_init(); /* see library.c */
 
     /* allocate dataset struct */
     dataset = datainfo_new();

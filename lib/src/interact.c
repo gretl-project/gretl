@@ -2134,9 +2134,7 @@ static void callback_exec (ExecState *s, char *fname, int err)
 
 void manufacture_gui_callback (int ci)
 {
-    void *fncheck = gui_callback;
-
-    if (fncheck != NULL) {
+    if (gui_callback != NULL) {
 	ExecState s = {0};
 	CMD cmd = {0};
 
@@ -4212,6 +4210,11 @@ void gretl_exec_state_set_callback (ExecState *s,
 EXEC_CALLBACK get_gui_callback (void)
 {
     return gui_callback;
+}
+
+void set_gui_callback (EXEC_CALLBACK callback)
+{
+    gui_callback = callback;
 }
 
 void gretl_exec_state_clear (ExecState *s)

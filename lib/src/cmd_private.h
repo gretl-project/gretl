@@ -80,6 +80,8 @@ void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback,
 
 EXEC_CALLBACK get_gui_callback (void);
 
+void set_gui_callback (EXEC_CALLBACK callback);
+
 void gretl_exec_state_clear (ExecState *s);
 
 void gretl_exec_state_destroy (ExecState *s);
