@@ -7004,12 +7004,15 @@ static void tdisagg_switch_method (GtkToggleButton *tb,
     gtk_widget_set_sensitive(tdi->reg_check, s);
 }
 
-static GList *plausible_covariate_list (void)
+static GList *plausible_covariate_list (int v)
 {
     GList *list = NULL;
     int i;
 
     for (i=dataset->v-1; i>0; i--) {
+	if (i == v) {
+	    continue;
+	}
 	if (gretl_isstoch(dataset->t1, dataset->t2, dataset->Z[i])) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	}
@@ -7042,7 +7045,7 @@ void tdisagg_dialog (int v, int newseries)
     tdi.dlg = dialog;
     tdi.v = v;
 
-    xlist = plausible_covariate_list();
+    xlist = plausible_covariate_list(v);
 
     /* output name? */
     if (!newseries) {
