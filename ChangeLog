@@ -16,8 +16,12 @@ version 2020e, in progress
   highlighting
 - MS Windows build (64-bit): update pixman, cairo and pango
   libraries (DLLs)
+- macOS build: the Preview button in print dialogs was not
+  working
 - Fix bug: possibility of invalid XML when saving a model to
   session file
+- Fix bug: "smpl" command rejects the combination of "full"
+  and --quiet
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard
