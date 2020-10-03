@@ -266,6 +266,8 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
 #endif
     flip(mdata->ui, "/menubar/Variable/Hurst", s);
+    flip(mdata->ui, "/menubar/Variable/tdisagg", s &&
+	 series_get_orig_pd(dataset, mdata->active_var));
 
     /* Model menu */
     flip(mdata->ui, "/menubar/Model/TSModels", s);
@@ -678,7 +680,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	add_discrete_dummies(v);
 	break;
     case MNU_TDIS:
-	tdisagg_dialog(v, 0);
+	tdisagg_dialog(v);
 	break;
     case MNU_GENR:
 	genr_callback();

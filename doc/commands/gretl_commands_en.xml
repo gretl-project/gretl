@@ -14828,29 +14828,41 @@
 
     <description>
       <para>
-	Here's a walk-through of the options available in the temporal
-	disaggregation dialog box.
+	Here's a walk-through of the main choices in the temporal
+	disaggregation dialog box. For detailed explanation see
+	<guideref targ="chap:tdisagg"/>.
       </para>
       <ilist>
 	<li>
 	  <para>
-	    <lit>output name</lit> (if applicable): You can choose to
-	    overwrite an existing series with the disaggregated
-	    version, or give a new name to the output.
+	    Output name: You can choose to overwrite an existing
+	    series with the disaggregated version, or give a new name
+	    to the output.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>aggregation type</lit>: If you were going in the
-	    other direction (aggregating instead of disaggregating)
-	    how would you create the low-frequency series? By
-	    summation, averaging, or taking the last or first period
-	    value? It matters for disaggregation too.
+	    Aggregation type: Choose <lit>sum</lit> if the high
+	    frequency values should sum to the given low frequency
+	    value (flows, such as GDP and its components).  Choose
+	    <lit>avg</lit> if the high frequency values should have
+	    mean equal to the given low frequency value (index
+	    variables, ratios, or flows <quote>at an annual
+	    rate</quote>). Choose <lit>last</lit> or <lit>first</lit>
+	    if the last or first high frequency value should equal the
+	    low frequency value (stock variables, such as money
+	    stock).
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    TO BE CONTINUED
+	    Regression based versus Denton: The first is generally
+	    recommended.  If you choose <quote>Regression
+	    based</quote> you can select the Fernández method if you
+	    believe the series in question has a unit root; otherwise
+	    go with Chow&ndash;Lin. If you choose Denton we assume you
+	    know what you're doing. The Denton methods are in first
+	    differences, as modified by Cholette.
 	  </para>
 	</li>
       </ilist>

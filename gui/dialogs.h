@@ -218,6 +218,6 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent);
 int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 			int *payload_id);
 
-void tdisagg_dialog (int v, int newseries);
+void tdisagg_dialog (int v);
 
 #endif /* DIALOGS_H */

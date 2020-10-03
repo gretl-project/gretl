@@ -7021,15 +7021,16 @@ static GList *plausible_covariate_list (int v)
     return list;
 }
 
-void tdisagg_dialog (int v, int newseries)
+void tdisagg_dialog (int v)
 {
     const char *aggs[] = {
-        "avg", "sum", "first", "last"
+        "sum", "avg", "first", "last"
     };
     struct tdisagg_info tdi = {0};
     GtkWidget *dialog, *com, *hbox;
     GtkWidget *vbox, *tmp;
     GtkWidget *rb1, *rb2;
+    GtkWidget *entry;
     GList *xlist = NULL;
     GSList *group = NULL;
     int i;
@@ -7047,28 +7048,22 @@ void tdisagg_dialog (int v, int newseries)
 
     xlist = plausible_covariate_list(v);
 
-    /* output name? */
-    if (!newseries) {
-	GtkWidget *entry;
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_label_new("output name:");
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	tdi.name_entry = entry = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
-	gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
-	gtk_entry_set_text(GTK_ENTRY(entry), dataset->varname[v]);
-	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	tmp = gtk_hseparator_new();
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-    } else {
-	tdi.name_entry = NULL;
-    }
+    /* output name */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("Output name:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tdi.name_entry = entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
+    gtk_entry_set_text(GTK_ENTRY(entry), dataset->varname[v]);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 
     /* aggregation type */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("aggregation type:");
+    tmp = gtk_label_new("Aggregation type:");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.agg_combo = com = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
@@ -7096,7 +7091,7 @@ void tdisagg_dialog (int v, int newseries)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("deterministic terms:");
+    tmp = gtk_label_new("Deterministic terms:");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.det_combo = com = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
@@ -7109,7 +7104,7 @@ void tdisagg_dialog (int v, int newseries)
     if (xlist != NULL) {
 	xlist = g_list_prepend(xlist, (gpointer) "none");
 	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_label_new("covariate:");
+	tmp = gtk_label_new("Covariate:");
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	tdi.cov_combo = com = gtk_combo_box_text_new();
 	set_combo_box_strings_from_list(com, xlist);
@@ -7135,7 +7130,7 @@ void tdisagg_dialog (int v, int newseries)
 
     xlist = g_list_prepend(xlist, (gpointer) "constant");
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("preliminary series:");
+    tmp = gtk_label_new("Preliminary series:");
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.dp_combo = com = gtk_combo_box_text_new();
     set_combo_box_strings_from_list(com, xlist);

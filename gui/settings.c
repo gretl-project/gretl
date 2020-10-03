@@ -891,8 +891,7 @@ static void set_tramo_status (void)
     tramo_ok = ok;
 
     if (gui_up) {
-	flip(mdata->ui, "/menubar/Variable/Tramo",
-	     get_tramo_ok());
+	flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
     }
 }
 

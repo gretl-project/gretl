@@ -220,6 +220,7 @@
       <placeholder action="X12A"/>
       <placeholder action="Tramo"/>
       <menuitem action="Hurst"/>
+      <menuitem action="tdisagg"/>
     </menu>
     <menu action="Model">
       <menuitem action="ols"/>
