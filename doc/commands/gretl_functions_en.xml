@@ -3237,6 +3237,49 @@
 	<code>
 	  bundle b = null
 	</code>
+	<subhead>Variant syntax</subhead>
+	<para>
+	  Two alternative forms of syntax are available for defining
+	  bundles. In each case the keyword <lit>defbundle</lit> is
+	  replaced by a single underscore. In the first variant the
+	  comma-separated arguments take the form
+	  <lit>key=value</lit>, where the key is taken to be a literal
+	  string and does not require quotation. Here is an example:
+	</para>
+	<code>
+	  bundle b = _(x=5, strval="some string", m=I(3))
+	</code>
+	<para>
+	  This form is particularly convenient for constructing an
+	  anonymous bundle on the fly as a function argument, as in
+	</para>
+	<code>
+	  b = regls(ys, LX, _(lfrac=0.35, stdize=0))
+	</code>
+	<para>
+	  where the <lit>regls</lit> function takes an optional bundle
+	  argument holding various parameters.
+	</para>
+	<para>
+	  The second variant is designed for the case where you wish to
+	  pack several pre-existing named objects into a bundle: you
+	  just give their names, unquoted:
+	</para>
+	<code>
+	  bundle b = _(x, y, z)
+	</code>
+	<para>
+	  Here the object <lit>x</lit> is copied into the bundle under
+	  the key <quote><lit>x</lit></quote>, and similarly for
+	  <lit>y</lit> and <lit>z</lit>.
+	</para>
+	<para>
+	  These alternative forms involve less typing than the full
+	  <lit>defbundle()</lit> version and are likely to be more
+	  convenient in many cases, but note that they are less
+	  flexible. Only the full version can handle keys given as
+	  string variables rather than literal strings.
+	</para>
       </description>
     </function>
 
