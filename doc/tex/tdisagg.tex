@@ -242,23 +242,23 @@ current sample range. Details on the arguments follow.
 \tditem[opts](bundle, optional): a bundle holding additional
   options. The recognized keys are (in alphabetical order):
   \begin{description}
-  \tditem[aggtype](string): Specifies the type of temporal aggregation
-  appropriate to the series in question. The value must be one of
-  \texttt{avg} (each low-frequency value is the average of $s$ high
-  frequency values, the default); \texttt{sum} (each low-frequency
-  value is a sum of $s$ high-frequency values); or \texttt{last} or
-  \texttt{first}, indicating respectively that each low-frequency
-  value is the last or first of $s$ high frequency values.
-  \tditem[det](int): Relevant only when one of the Chow--Lin methods
-  is selected. This is a numeric code for the deterministic terms to
-  be included in the regressions: 0 means none; 1, constant only; 2,
-  constant and linear trend; 3, constant and quadratic trend. The
-  default is 1.
+  \tditem[aggtype](string): Specifies the type of temporal
+    aggregation appropriate to the series in question. The value must
+    be one of \texttt{sum} (each low-frequency value is a sum of $s$
+    high-frequency values, the default); \texttt{avg} (each
+    low-frequency value is the average of $s$ high frequency values);
+    or \texttt{last} or \texttt{first}, indicating respectively that
+    each low-frequency value is the last or first of $s$ high
+    frequency values.  \tditem[det](int): Relevant only when one of
+    the Chow--Lin methods is selected. This is a numeric code for the
+    deterministic terms to be included in the regressions: 0 means
+    none; 1, constant only; 2, constant and linear trend; 3, constant
+    and quadratic trend. The default is 1.
   \tditem[method](string): Selects the method of disaggregation (see
-  the listing below). Note that the Chow--Lin methods employ an
-  autoregression coefficient, $\rho$, which captures the persistence
-  of the target series at the higher frequency and is used in GLS
-  estimation of the parameters linking $\Xb$ to $\Yb$.
+    the listing below). Note that the Chow--Lin methods employ an
+    autoregression coefficient, $\rho$, which captures the persistence
+    of the target series at the higher frequency and is used in GLS
+    estimation of the parameters linking $\Xb$ to $\Yb$.
     \begin{itemize}
     \item \texttt{chow-lin} (the default) is modeled on the original
       method proposed by Chow and Lin. It uses a value of $\rho$
@@ -504,21 +504,60 @@ of series to be disaggregated via one of the Denton methods you may
 well find it much faster to use the batch facility of
 \texttt{tdisagg}.
 
-\section{Annotated list of examples}
+\section{Examples}
 \label{sec:tdisagg-examples}
 
-These entries describe the content of the example scripts named
-\texttt{example*.inp}.
+Listing~\ref{listing:tdscript} shows an example of usage and its
+output. The data are drawn from the St Louis Fed; we disaggregate
+quarterly GDP to monthly with the help of industrial production and
+payroll employment, using the default ``traditional'' Chow--Lin
+method.
 
-\begin{enumerate}
-\item Traditional Chow--Lin, data from St Louis FED.
-\item Several methods, data from St Louis FED.
-\item Denton, data from AWM.
-\item Chow--Lin with different deterministics, Russian data from DBnomics.
-\item Extrapolation on artificial data.
-\item Comparison with R's \textsf{tempdisagg} on the
-  \textsf{swisspharma} dataset.
-\item As example 1, but with ML Chow--Lin and a further
-  comparison with \textsf{tempdisagg}.
-\item Fern\'andez method with usage of a MIDAS list for the $\Xb$ matrix.
-\end{enumerate}
+Several other example scripts are available from
+\url{http://gretl.sourceforge.net/tdisagg/}.
+
+\begin{script}[htbp]
+  \caption{Example of \texttt{tdisagg} usage}
+  \label{listing:tdscript}
+ Input:
+\begin{scodebit}
+### Traditional Chow-Lin: y is a series with repetition
+### and X is a list of series (case 4 in the doc)
+###
+
+# ensure that no data are in place
+clear
+# open gretl's St Louis Fed database
+open fedstl.bin
+# import two monthly series
+data indpro payems
+# import quarterly GDP (values are repeated)
+data gdpc1
+
+# restrict sample to complete data
+smpl --no-missing
+
+# disaggregate GDP from quarterly to monthly, using
+# industrial production and payroll employment as indicators
+scalar s = 3
+list X = indpro payems
+series gdpm = tdisagg(gdpc1, X, s, _(verbose=1, aggtype="sum"))
+\end{scodebit}
+  Output:
+\begin{scodebit}
+Aggregation type sum
+GLS estimates (chow-lin) T = 294
+Dependent variable: gdpc1
+
+             coefficient    std. error    t-ratio   p-value 
+  ----------------------------------------------------------
+  const      312.394       263.372         1.186    0.2365  
+  indpro      10.9158        1.75785       6.210    1.83e-09 ***
+  payems       0.0242860     0.00171935   14.13     7.39e-35 ***
+
+  rho = 0.999, SSR = 51543.9, lnl = -1604.98
+
+Generated series gdpm (ID 4)
+\end{scodebit}
+\end{script}
+
