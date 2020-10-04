@@ -12710,14 +12710,19 @@ static int tdisagg_get_y_compression (int ynum, int xconv,
     }
 }
 
+/* tdisagg: when both Y and X are dataset objects, try to
+   restrict the sample ranges appropriately and ensure
+   alignment at the start of the data.
+*/
+
 static int tdisagg_get_start_stop (int ynum, const int *ylist,
 				   int xnum, const int *xlist,
 				   const DATASET *dset,
 				   int *start, int *ystop,
 				   int *xstop)
 {
-    int yvars[2] = {1, 0};
-    int xvars[2] = {1, 0};
+    int yvars[2] = {1, ynum};
+    int xvars[2] = {1, xnum};
     int t1 = dset->t1;
     int t2 = dset->t2;
     int err = 0;
@@ -12729,29 +12734,23 @@ static int tdisagg_get_start_stop (int ynum, const int *ylist,
     }
 
     if (ylist == NULL) {
-	yvars[1] = ynum;
 	ylist = yvars;
     }
     if (xlist == NULL) {
-	xvars[1] = xnum;
 	xlist = xvars;
     }
 
     err = list_adjust_sample(xlist, &t1, &t2, dset, NULL);
-    fprintf(stderr, "xlist: t1=%d, t2=%d\n", t1, t2);
 
     if (!err) {
 	int yt1 = t1, yt2 = t2;
 	int subper = 0;
 
 	date_maj_min(t1, dset, NULL, &subper);
-	fprintf(stderr, "xlist: subper at t1 = %d\n", subper);
 	if (subper > 1) {
 	    t1 += dset->pd - subper + 1;
-	    fprintf(stderr, "xlist: adjusted t1 = %d\n", t1);
 	}
 	err = list_adjust_sample(ylist, &yt1, &yt2, dset, NULL);
-	fprintf(stderr, "ylist: yt1=%d, yt2=%d\n", yt1, yt2);
 	if (!err) {
 	    if (yt1 > t1) {
 		t1 = yt1;
@@ -12763,11 +12762,31 @@ static int tdisagg_get_start_stop (int ynum, const int *ylist,
 	    *start = t1;
 	    *ystop = yt2;
 	    *xstop = t2;
-	    fprintf(stderr, "start = %d; stop = %d,%d\n", t1, yt2, t2);
 	}
     }
 
     return err;
+}
+
+/* tdisagg: when Y is a dataset object and no stochastic
+   X is given, try to restrict the sample range for Y
+   appropriately.
+*/
+
+static int tdisagg_get_y_start_stop (int ynum, const int *ylist,
+				     const DATASET *dset,
+				     int *t1, int *t2)
+{
+    int yvars[2] = {1, ynum};
+
+    if (ynum == 0 && ylist == NULL) {
+	/* can't do this */
+	return 0;
+    } else if (ylist == NULL) {
+	ylist = yvars;
+    }
+
+    return list_adjust_sample(ylist, t1, t2, dset, NULL);
 }
 
 /* evaluate a built-in function that has more than three arguments */
@@ -13836,22 +13855,28 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
 	if (!p->err && (yconv || xconv)) {
-	    /* conversion from dataset object to matrix
-	       is needed
+	    /* Conversion from dataset object to matrix
+	       is needed, for Y and/or X.
 	    */
 	    int save_t1 = p->dset->t1;
 	    int save_t2 = p->dset->t2;
+	    int t1 = p->dset->t1;
+	    int t2 = p->dset->t2;
 	    int yt2 = 0, xt2 = 0;
 
 	    if (yconv && xconv) {
-		int t1 = p->dset->t1;
-
 		p->err = tdisagg_get_start_stop(ynum, ylist, xnum, xlist,
 						p->dset, &t1, &yt2, &xt2);
 		if (!p->err) {
 		    p->dset->t1 = t1;
 		}
-		yconv = 1;
+	    } else if (yconv) {
+		p->err = tdisagg_get_y_start_stop(ynum, ylist, p->dset,
+						  &t1, &t2);
+		if (!p->err) {
+		    p->dset->t1 = t1;
+		    p->dset->t2 = t2;
+		}
 	    }
 	    if (!p->err && yconv) {
 		int cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
