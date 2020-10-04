@@ -33,24 +33,24 @@ time-series data observed at some given frequency (say, annually) and
 producing a counterpart series at a higher frequency (say,
 quarterly). The term ``disaggregation'' indicates the inverse
 operation of aggregation, and to understand temporal disaggregation
-it's helpful first to understand temporal \textit{aggregation}. In
-converting a higher frequency series to a lower frequency there are
-three basic aggregation methods, the appropriate method depending on
-whether the data represent a flow rate, an index or a stock. Here are
-illustrative examples.
+it's helpful first to understand temporal aggregation. In aggregating
+a high frequency series to a lower frequency there are three basic
+methods, the appropriate method depending on the nature of the data.
+Here are some illustrative examples.
 \begin{itemize}
 \item GDP: say we have quarterly GDP data and wish to produce an
-  annual series. This is a flow variable and the annual flow will be
-  the \textit{sum} of the quarterly values---unless the quarterly
-  values are annualized, in which case we'd take their mean.
-\item Industrial Production: this takes the form of an index reporting
-  the level of production over some period relative to that in a base
-  period in which the index is by construction 100. To aggregate from
-  (for example) monthly to quarterly we should take the
+  annual series. This is a \textit{flow variable} and the annual flow
+  will be the \textit{sum} of the quarterly values (unless the
+  quarterly values are annualized, in which case we would aggregate by
+  taking their their mean).
+\item Industrial Production: this takes the form of an \textit{index}
+  reporting the level of production over some period relative to that
+  in a base period in which the index is by construction 100. To
+  aggregate from (for example) monthly to quarterly we should take the
   \textit{average} of the monthly values. (The sum would give a
   nonsense result.) The same goes for price indices, and also for
-  ratios of stocks to flows or vice versa (inventory to sales, debt
-  to GDP, capacity utilization).
+  ratios of stocks to flows or vice versa (inventory to sales, debt to
+  GDP, capacity utilization).
 \item Money stock: this is typically reported as an
   \textit{end-of-period} value, so in aggregating from monthly to
   quarterly we'd take the value from the final month of each
@@ -59,31 +59,31 @@ illustrative examples.
   of the first month of the quarter.
 \end{itemize}
 
-A central idea in temporal disaggregation is that the disaggregated
+A central idea in temporal disaggregation is that the high frequency
 series must respect both the given low frequency data and the
 aggregation method. So for example, whatever numbers we come up with
 for quarterly GDP, given an annual series as starting point, our
 numbers must sum to the annual total. If money stock is measured at
-the end of the period, whatever numbers we come up with for monthly
-money stock, given quarterly data, the figure for the last month of
-the quarter must match that for the quarter as a whole.  This is why
-temporal disaggregation is sometimes called ``benchmarking'': the
-given low frequency data constitute a benchmark which the constructed
-high frequency data must match, in a well defined sense that depends
-on the nature of the data.
+the end of the period then whatever numbers we come up with for
+monthly money stock, given quarterly data, the figure for the last
+month of the quarter must match that for the quarter as a whole.  This
+is why temporal disaggregation is sometimes called ``benchmarking'':
+the given low frequency data constitute a benchmark which the
+constructed high frequency data must match, in a well defined sense
+that depends on the nature of the data.
 
-Colloquially, we might speak of temporal disaggregation as
-``interpolation,'' but strictly interpolation applies only to stock
-variables. We have a known end-of-quarter value (say), which is also
-the value at the end of the last month of the quarter, and we're
-trying to figure what the value might have been at the end of months 1
-and 2. We're filling in the blanks, or interpolating. In the GDP case,
-however, we talk of \textit{distribution} rather than
-interpolation. We're given an annual total and we're trying to figure
-how it should be distributed over the quarters. We're also doing
-distribution for variables taking the form of indices, except in this
-case we're seeking plausible values whose mean equals the given
-low-frequency value.
+Colloquially, we might describe temporal disaggregation as
+``interpolation,'' but strictly speaking interpolation applies only to
+stock variables. We have a known end-of-quarter value (say), which is
+also the value at the end of the last month of the quarter, and we're
+trying to figure out what the value might have been at the end of
+months 1 and 2. We're filling in the blanks, or interpolating. In the
+GDP case, however, the procedure is \textit{distribution} rather than
+interpolation. We have a given an annual total and we're trying to
+figure out how it should be distributed over the quarters. We're also
+doing distribution for variables taking the form of indices or ratios,
+except in this case we're seeking plausible values whose mean equals
+the given low-frequency value.
 
 While matching the low frequency benchmark is an important constraint,
 it obviously does not tie down the high frequency values. That is a
@@ -93,7 +93,8 @@ non-regression methods such as Denton.
 \section{Notation and design}
 \label{sec:tdisagg-nd}
 
-Some notation first: the two main ingredients are
+Some notation first: the two main ingredients in temoral
+disaggregation are
 \begin{itemize}
 \item a $T \times g$ matrix $\Yb$ (holding the series to be
   disaggregated) and
@@ -148,13 +149,14 @@ adjust the deterministic terms used via an option named \texttt{det},
 described below. In other words the content of $\Xb$ becomes
 implicit. See section~\ref{sec:tdisagg-det} for more detail.
 
-An important point, relevant when $\Xb$ is given explicitly: we assume
-throughout that although this matrix may contain extra observations
-``at the end'', $\Yb$ and $\Xb$ are correctly aligned at the
-start. Take for example the annual to quarterly case: if the first
-observation in annual $\Yb$ corresponds to 1980 then the first
-observation in quarterly $\Xb$ must correspond to 1980Q1. Ensuring
-this is the user's responsibility.
+Here's an important point to note when $\Xb$ is given explicitly:
+although this matrix may contain extra observations ``at the end'' we
+assume that $\Yb$ and $\Xb$ are \textit{correctly aligned at the
+  start}. Take for example the annual to quarterly case: if the first
+observation in annual $\Yb$ is for 1980 then the first observation in
+quarterly $\Xb$ must be for the first quarter of 1980. Ensuring this
+is the user's responsibility. We will have some more to say about this
+in the following section.
 
 \section{Overview of data handling}
 \label{sec:tdisagg-data}
@@ -213,6 +215,23 @@ most convenient will depend on the user's workflow.
   result is requested, it is taken as having length $sT$, otherwise
   its length is taken to be $T$.
 \end{enumerate}
+
+In the previous section we flagged the importance of correct alignment
+of $\Xb$ and $\Yb$ at the start of the data; we're now in a position
+to say a little more about this. If either $\Xb$ or $\Yb$ are given in
+matrix form alignment is truly the user's responsibility. But if both
+are dataset objects gretl can be more helpful. We automatically
+advance the start of the sample range to exclude any leading missing
+values, and automatically retard the end of the sample ranges for
+$\Xb$ and $\Yb$ to exclude trailing missing values (allowing for the
+possibility that $\Xb$ may extend beyond $\Yb$). In addition we
+further advance the sample start if this is required to ensure that
+the $\Xb$ data begin in the first high-frequency sub-period (e.g.\ the
+first quarter of a year or the first month of a quarter). But please
+note: such automatic alignment is \textit{not} currently enabled when
+$\Xb$ takes the form of a MIDAS list; and even when gretl
+automatically excludes leading or trailing missing values,
+intra-sample missing values will still provoke an error.
 
 \section{Function signature}
 \label{sec:tdisagg-sig}
