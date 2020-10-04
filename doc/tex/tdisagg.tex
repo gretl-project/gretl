@@ -59,15 +59,18 @@ illustrative examples.
   of the first month of the quarter.
 \end{itemize}
 
-A central idea in temporal disaggregation is that the
-``disaggregated'' series must respect both the given low frequency
-data and the aggregation method. So for example, whatever numbers we
-come up with for quarterly GDP, given an annual series as starting
-point, our numbers must sum to the annual total. This is why temporal
-disaggregation is sometimes called ``benchmarking'': the given low
-frequency data constitute a benchmark which the constructed high
-frequency data must match, in a well defined sense that depends on the
-nature of the data.
+A central idea in temporal disaggregation is that the disaggregated
+series must respect both the given low frequency data and the
+aggregation method. So for example, whatever numbers we come up with
+for quarterly GDP, given an annual series as starting point, our
+numbers must sum to the annual total. If money stock is measured at
+the end of the period, whatever numbers we come up with for monthly
+money stock, given quarterly data, the figure for the last month of
+the quarter must match that for the quarter as a whole.  This is why
+temporal disaggregation is sometimes called ``benchmarking'': the
+given low frequency data constitute a benchmark which the constructed
+high frequency data must match, in a well defined sense that depends
+on the nature of the data.
 
 Colloquially, we might speak of temporal disaggregation as
 ``interpolation,'' but strictly interpolation applies only to stock
@@ -195,13 +198,13 @@ most convenient will depend on the user's workflow.
     composed by repeating each element of a low-frequency variable $s$
     times.
   \item Alternatively, $\Xb$ could be a ``MIDAS list''. The concept of
-    a MIDAS list is fully explained in chapter 19 of the User's Guide,
-    but for example, in a quarterly dataset a MIDAS list would be a
-    list of three series, for the third, second and first month (note
-    the ordering). In this case, the current periodicity is taken to
-    be the \emph{lower} one and $\Xb$ will contain one column,
-    corresponding to the high-frequency representation of the MIDAS
-    list.
+    a MIDAS list is fully explained in
+    chapter~\ref{chap:mixed-frequency} but for example, in a quarterly
+    dataset a MIDAS list would be a list of three series, for the
+    third, second and first month (note the ordering). In this case,
+    the current periodicity is taken to be the \emph{lower} one and
+    $\Xb$ will contain one column, corresponding to the high-frequency
+    representation of the MIDAS list.
   \end{enumerate}
 \item $\Xb$ is omitted. If $\Yb$ is given as a matrix it is taken to
   have $T$ rows. Otherwise the interpretation is determined
