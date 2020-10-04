@@ -13778,6 +13778,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int xnum = 0;
 	int yconv = 0;
 	int xconv = 0;
+	int xmidas = 0;
 
 	if (k < 3 || k > 5) {
 	    n_args_error(k, 4, t->t, p);
@@ -13791,8 +13792,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t == SERIES) {
 		    ynum = e->vnum;
 		    yval = e->v.xvec;
+		    yconv = 1;
 		} else if (e->t == LIST) {
 		    ylist = e->v.ivec;
+		    yconv = 1;
 		} else {
 		    p->err = E_TYPES;
 		}
@@ -13803,12 +13806,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t == SERIES) {
 		    xnum = e->vnum;
 		    xval = e->v.xvec;
+		    xconv = 1;
 		} else if (e->t == LIST) {
 		    if (gretl_is_midas_list(e->v.ivec, p->dset)) {
 			X = midas_list_to_vector(e->v.ivec, p->dset, &p->err);
-			xconv = 2;
+			xmidas = 1;
 		    } else {
 			xlist = e->v.ivec;
+			xconv = 1;
 		    }
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
@@ -13830,7 +13835,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-	if (!p->err && (Y == NULL || X == NULL)) {
+	if (!p->err && (yconv || xconv)) {
 	    /* conversion from dataset object to matrix
 	       is needed
 	    */
@@ -13838,7 +13843,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    int save_t2 = p->dset->t2;
 	    int yt2 = 0, xt2 = 0;
 
-	    if (Y == NULL && X == NULL) {
+	    if (yconv && xconv) {
 		int t1 = p->dset->t1;
 
 		p->err = tdisagg_get_start_stop(ynum, ylist, xnum, xlist,
@@ -13846,9 +13851,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (!p->err) {
 		    p->dset->t1 = t1;
 		}
-		yconv = xconv = 1;
+		yconv = 1;
 	    }
-	    if (!p->err && Y == NULL) {
+	    if (!p->err && yconv) {
 		int cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
 
 		if (yt2 > 0) {
@@ -13856,15 +13861,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 		Y = tdisagg_matrix_from_series(yval, ynum, ylist, p->dset,
 					       cfac, &p->err);
-		yconv = 1;
 	    }
-	    if (!p->err && X == NULL) {
+	    if (!p->err && xconv) {
 		if (xt2 > 0) {
 		    p->dset->t2 = xt2;
 		}
 		X = tdisagg_matrix_from_series(xval, xnum, xlist, p->dset,
 					       1, &p->err);
-		xconv = 1;
 	    }
 	    p->dset->t1 = save_t1;
 	    p->dset->t2 = save_t2;
@@ -13874,7 +13877,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    DATASET *dset = (yconv || xconv)? p->dset : NULL;
+	    DATASET *dset = (yconv || xconv || xmidas)? p->dset : NULL;
 
 	    ret->v.m = matrix_tdisagg(Y, X, fac, b, r, dset,
 				      p->prn, &p->err);
@@ -13882,7 +13885,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (yconv) {
 	    gretl_matrix_free(Y);
 	}
-	if (xconv) {
+	if (xconv || xmidas) {
 	    gretl_matrix_free(X);
 	}
     }
