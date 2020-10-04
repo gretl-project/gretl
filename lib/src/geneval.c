@@ -12710,6 +12710,66 @@ static int tdisagg_get_y_compression (int ynum, int xconv,
     }
 }
 
+static int tdisagg_get_start_stop (int ynum, const int *ylist,
+				   int xnum, const int *xlist,
+				   const DATASET *dset,
+				   int *start, int *ystop,
+				   int *xstop)
+{
+    int yvars[2] = {1, 0};
+    int xvars[2] = {1, 0};
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+    int err = 0;
+
+    if ((ynum == 0 && ylist == NULL) ||
+	(xnum == 0 && xlist == NULL)) {
+	/* can't do this */
+	return 0;
+    }
+
+    if (ylist == NULL) {
+	yvars[1] = ynum;
+	ylist = yvars;
+    }
+    if (xlist == NULL) {
+	xvars[1] = xnum;
+	xlist = xvars;
+    }
+
+    err = list_adjust_sample(xlist, &t1, &t2, dset, NULL);
+    fprintf(stderr, "xlist: t1=%d, t2=%d\n", t1, t2);
+
+    if (!err) {
+	int yt1 = t1, yt2 = t2;
+	int subper = 0;
+
+	date_maj_min(t1, dset, NULL, &subper);
+	fprintf(stderr, "xlist: subper at t1 = %d\n", subper);
+	if (subper > 1) {
+	    t1 += dset->pd - subper + 1;
+	    fprintf(stderr, "xlist: adjusted t1 = %d\n", t1);
+	}
+	err = list_adjust_sample(ylist, &yt1, &yt2, dset, NULL);
+	fprintf(stderr, "ylist: yt1=%d, yt2=%d\n", yt1, yt2);
+	if (!err) {
+	    if (yt1 > t1) {
+		t1 = yt1;
+		date_maj_min(t1, dset, NULL, &subper);
+		if (subper > 1) {
+		    t1 += dset->pd - subper + 1;
+		}
+	    }
+	    *start = t1;
+	    *ystop = yt2;
+	    *xstop = t2;
+	    fprintf(stderr, "start = %d; stop = %d,%d\n", t1, yt2, t2);
+	}
+    }
+
+    return err;
+}
+
 /* evaluate a built-in function that has more than three arguments */
 
 static NODE *eval_nargs_func (NODE *t, parser *p)
@@ -13710,11 +13770,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	gretl_bundle *b = NULL;
 	gretl_bundle *r = NULL;
 	const double *yval = NULL;
+	const double *xval = NULL;
 	const int *ylist = NULL;
+	const int *xlist = NULL;
 	int fac = 0;
 	int ynum = 0;
-	int xconv = 0;
+	int xnum = 0;
 	int yconv = 0;
+	int xconv = 0;
 
 	if (k < 3 || k > 5) {
 	    n_args_error(k, 4, t->t, p);
@@ -13738,17 +13801,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (e->t == MAT) {
 		    X = e->v.m;
 		} else if (e->t == SERIES) {
-		    X = tdisagg_matrix_from_series(e->v.xvec, e->vnum, NULL,
-						   p->dset, 1, &p->err);
-		    xconv = 1;
+		    xnum = e->vnum;
+		    xval = e->v.xvec;
 		} else if (e->t == LIST) {
 		    if (gretl_is_midas_list(e->v.ivec, p->dset)) {
 			X = midas_list_to_vector(e->v.ivec, p->dset, &p->err);
 			xconv = 2;
 		    } else {
-			X = tdisagg_matrix_from_series(NULL, 0, e->v.ivec,
-						       p->dset, 1, &p->err);
-			xconv = 1;
+			xlist = e->v.ivec;
 		    }
 		} else if (!null_node(e)) {
 		    p->err = E_TYPES;
@@ -13770,12 +13830,44 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-	if (!p->err && Y == NULL) {
-	    int cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
+	if (!p->err && (Y == NULL || X == NULL)) {
+	    /* conversion from dataset object to matrix
+	       is needed
+	    */
+	    int save_t1 = p->dset->t1;
+	    int save_t2 = p->dset->t2;
+	    int yt2 = 0, xt2 = 0;
 
-	    Y = tdisagg_matrix_from_series(yval, ynum, ylist, p->dset,
-					   cfac, &p->err);
-	    yconv = 1;
+	    if (Y == NULL && X == NULL) {
+		int t1 = p->dset->t1;
+
+		p->err = tdisagg_get_start_stop(ynum, ylist, xnum, xlist,
+						p->dset, &t1, &yt2, &xt2);
+		if (!p->err) {
+		    p->dset->t1 = t1;
+		}
+		yconv = xconv = 1;
+	    }
+	    if (!p->err && Y == NULL) {
+		int cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
+
+		if (yt2 > 0) {
+		    p->dset->t2 = yt2;
+		}
+		Y = tdisagg_matrix_from_series(yval, ynum, ylist, p->dset,
+					       cfac, &p->err);
+		yconv = 1;
+	    }
+	    if (!p->err && X == NULL) {
+		if (xt2 > 0) {
+		    p->dset->t2 = xt2;
+		}
+		X = tdisagg_matrix_from_series(xval, xnum, xlist, p->dset,
+					       1, &p->err);
+		xconv = 1;
+	    }
+	    p->dset->t1 = save_t1;
+	    p->dset->t2 = save_t2;
 	}
 	if (!p->err) {
 	    reset_p_aux(p, save_aux);
