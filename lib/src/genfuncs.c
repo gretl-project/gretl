@@ -6342,6 +6342,9 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
 	}
     }
 
+    gretl_matrix_set_t1(m, dset->t1);
+    gretl_matrix_set_t2(m, dset->t2);
+
     if (S != NULL) {
 	gretl_matrix_set_colnames(m, S);
     }
