@@ -12710,6 +12710,22 @@ static int tdisagg_get_y_compression (int ynum, int xconv,
     }
 }
 
+/* tdisagg: advance the sample start if the first
+   high-frequency X observation is not aligned to
+   the first sub-period.
+*/
+
+static int maybe_advance_t1 (int t1, const DATASET *dset)
+{
+    int subper = 0;
+
+    date_maj_min(t1, dset, NULL, &subper);
+    if (subper > 1) {
+	t1 += dset->pd - subper + 1;
+    }
+    return t1;
+}
+
 /* tdisagg: when both Y and X are dataset objects, try to
    restrict the sample ranges appropriately and ensure
    alignment at the start of the data.
@@ -12718,6 +12734,7 @@ static int tdisagg_get_y_compression (int ynum, int xconv,
 static int tdisagg_get_start_stop (int ynum, const int *ylist,
 				   int xnum, const int *xlist,
 				   const DATASET *dset,
+				   int cfac, int xmidas,
 				   int *start, int *ystop,
 				   int *xstop)
 {
@@ -12742,21 +12759,24 @@ static int tdisagg_get_start_stop (int ynum, const int *ylist,
 
     err = list_adjust_sample(xlist, &t1, &t2, dset, NULL);
 
+    if (!err && !xmidas) {
+	t1 = maybe_advance_t1(t1, dset);
+    }
+
     if (!err) {
 	int yt1 = t1, yt2 = t2;
-	int subper = 0;
+	int nmiss = 0;
 
-	date_maj_min(t1, dset, NULL, &subper);
-	if (subper > 1) {
-	    t1 += dset->pd - subper + 1;
+	if (cfac > 1) {
+	    err = list_adjust_sample(ylist, &yt1, &yt2, dset, &nmiss);
+	} else {
+	    err = list_adjust_sample(ylist, &yt1, &yt2, dset, NULL);
 	}
-	err = list_adjust_sample(ylist, &yt1, &yt2, dset, NULL);
 	if (!err) {
 	    if (yt1 > t1) {
 		t1 = yt1;
-		date_maj_min(t1, dset, NULL, &subper);
-		if (subper > 1) {
-		    t1 += dset->pd - subper + 1;
+		if (!xmidas) {
+		    t1 = maybe_advance_t1(t1, dset);
 		}
 	    }
 	    *start = t1;
@@ -12774,10 +12794,11 @@ static int tdisagg_get_start_stop (int ynum, const int *ylist,
 */
 
 static int tdisagg_get_y_start_stop (int ynum, const int *ylist,
-				     const DATASET *dset,
+				     const DATASET *dset, int cfac,
 				     int *t1, int *t2)
 {
     int yvars[2] = {1, ynum};
+    int err = 0;
 
     if (ynum == 0 && ylist == NULL) {
 	/* can't do this */
@@ -12786,7 +12807,15 @@ static int tdisagg_get_y_start_stop (int ynum, const int *ylist,
 	ylist = yvars;
     }
 
-    return list_adjust_sample(ylist, t1, t2, dset, NULL);
+    if (cfac > 1) {
+	int nmiss = 0;
+
+	err = list_adjust_sample(ylist, t1, t2, dset, &nmiss);
+    } else {
+	err = list_adjust_sample(ylist, t1, t2, dset, NULL);
+    }
+
+    return err;
 }
 
 /* evaluate a built-in function that has more than three arguments */
@@ -13828,7 +13857,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    xconv = 1;
 		} else if (e->t == LIST) {
 		    if (gretl_is_midas_list(e->v.ivec, p->dset)) {
-			X = midas_list_to_vector(e->v.ivec, p->dset, &p->err);
+			xlist = e->v.ivec;
 			xmidas = 1;
 		    } else {
 			xlist = e->v.ivec;
@@ -13854,7 +13883,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		p->err = E_TYPES;
 	    }
 	}
-	if (!p->err && (yconv || xconv)) {
+	if (!p->err && (yconv || xconv || xmidas)) {
 	    /* Conversion from dataset object to matrix
 	       is needed, for Y and/or X.
 	    */
@@ -13863,24 +13892,27 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    int t1 = p->dset->t1;
 	    int t2 = p->dset->t2;
 	    int yt2 = 0, xt2 = 0;
+	    int cfac = 1;
 
-	    if (yconv && xconv) {
+	    if (yconv) {
+		cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
+	    }
+	    if (yconv && (xconv || xmidas)) {
 		p->err = tdisagg_get_start_stop(ynum, ylist, xnum, xlist,
-						p->dset, &t1, &yt2, &xt2);
+						p->dset, cfac, xmidas, &t1,
+						&yt2, &xt2);
 		if (!p->err) {
 		    p->dset->t1 = t1;
 		}
 	    } else if (yconv) {
 		p->err = tdisagg_get_y_start_stop(ynum, ylist, p->dset,
-						  &t1, &t2);
+						  cfac, &t1, &t2);
 		if (!p->err) {
 		    p->dset->t1 = t1;
 		    p->dset->t2 = t2;
 		}
 	    }
 	    if (!p->err && yconv) {
-		int cfac = tdisagg_get_y_compression(ynum, xconv, fac, p);
-
 		if (yt2 > 0) {
 		    p->dset->t2 = yt2;
 		}
@@ -13893,6 +13925,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 		X = tdisagg_matrix_from_series(xval, xnum, xlist, p->dset,
 					       1, &p->err);
+	    } else if (!p->err && xmidas) {
+		if (xt2 > 0) {
+		    p->dset->t2 = xt2;
+		}
+		X = midas_list_to_vector(xlist, p->dset, &p->err);
 	    }
 	    p->dset->t1 = save_t1;
 	    p->dset->t2 = save_t2;

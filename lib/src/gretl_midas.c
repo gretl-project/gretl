@@ -418,7 +418,7 @@ static int midas_list_check (const int *list,
     if (m < 3 || gretl_list_has_separator(list)) {
 	return E_INVARG;
     } else if (!dataset_is_time_series(dset)) {
-	return E_INVARG;
+	return E_PDWRONG;
     } else if (dset->pd != 1 && dset->pd != 4) {
 	/* host dataset should be annual or quarterly */
 	return E_PDWRONG;
@@ -437,6 +437,7 @@ gretl_matrix *midas_list_to_vector (const int *list,
 				    int *err)
 {
     gretl_matrix *mvec;
+    int t, i, vi, n_tail = 0;
     int T, m = list[0];
 
     *err = midas_list_check(list, dset);
@@ -444,18 +445,37 @@ gretl_matrix *midas_list_to_vector (const int *list,
 	return NULL;
     }
 
-    T = sample_size(dset) * m;
+    if (dset->t2 < dset->n - 1) {
+	t = dset->t2 + 1;
+	for (i=m; i>0; i--) {
+	    vi = list[i];
+	    if (!na(dset->Z[vi][t])) {
+		n_tail++;
+	    } else {
+		break;
+	    }
+	}
+    }
+
+    T = sample_size(dset) * m + n_tail;
     mvec = gretl_matrix_alloc(T, 1);
 
     if (mvec == NULL) {
 	*err = E_ALLOC;
     } else {
-	int i, vi, t, s = 0;
+	int s = 0;
 
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    /* read data right-to-left! */
 	    for (i=m; i>0; i--) {
 		vi = list[i];
+		mvec->val[s++] = dset->Z[vi][t];
+	    }
+	}
+	if (n_tail > 0) {
+	    t = dset->t2 + 1;
+	    for (i=0; i<n_tail; i++) {
+		vi = list[m-i];
 		mvec->val[s++] = dset->Z[vi][t];
 	    }
 	}
