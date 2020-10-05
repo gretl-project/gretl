@@ -7103,8 +7103,7 @@ static NODE *n_elements_node (NODE *n, parser *p)
     if (ret != NULL && starting(p)) {
 	if (n->t == NUM) {
 	    ret->v.xval = 1;
-	}
-	else if (n->t == MAT) {
+	} else if (n->t == MAT) {
 	    gretl_matrix *m = n->v.m;
 	    
 	    ret->v.xval = m->rows * m->cols;
