@@ -2686,7 +2686,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
 static int get_fitted_line (gnuplot_info *gi,
 			    const DATASET *dset,
-			    char *targ)
+			    gchar **targ)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
@@ -2770,7 +2770,8 @@ static int get_fitted_line (gnuplot_info *gi,
 	}
 
 	set_plotfit_line(title, formula, gi->fit, b->val, x0, pd);
-	sprintf(targ, "%s title \"%s\" w lines\n", formula, title);
+	*targ = g_strdup_printf("%s title \"%s\" w lines\n",
+				formula, title);
 	gi->flags |= GPT_AUTO_FIT;
     }
 
@@ -2793,8 +2794,8 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 {
     int yno = gi->list[1];
     const double *yvar = dset->Z[yno];
+    gchar *fitline = NULL;
     FILE *fp = NULL;
-    char fitline[128] = {0};
     PRN *prn;
     int t, err = 0;
 
@@ -2807,7 +2808,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 	return err;
     }
 
-    err = get_fitted_line(gi, dset, fitline);
+    err = get_fitted_line(gi, dset, &fitline);
     if (err) {
 	return err;
     }
@@ -2816,6 +2817,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     fp = open_plot_input_file(PLOT_REGULAR, gi->flags, &err);
     if (err) {
+	g_free(fitline);
 	return err;
     }
 
@@ -2829,9 +2831,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     print_keypos_string(GP_KEY_LEFT_TOP, fp);
     print_axis_label('y', series_get_graph_name(dset, yno), fp);
-
     print_auto_fit_string(gi->fit, fp);
-
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     fputs("plot \\\n", fp);
@@ -2840,6 +2840,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     gretl_push_c_numeric_locale();
 
     fprintf(fp, " %s", fitline);
+    g_free(fitline);
 
     for (t=gi->t1; t<=gi->t2; t++) {
 	if (gi->flags & GPT_TIMEFMT) {
@@ -2853,7 +2854,6 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     gretl_pop_c_numeric_locale();
 
     err = finalize_plot_input_file(fp);
-
     clear_gpinfo(gi);
 
     return err;
@@ -3954,7 +3954,7 @@ int gnuplot (const int *plotlist, const char *literal,
     char withstr[16] = {0};
     char lwstr[8] = {0};
     char keystr[48] = {0};
-    char fit_line[128] = {0};
+    gchar *fitline = NULL;
     int time_fit = 0;
     int oddman = 0;
     int many = 0;
@@ -4043,7 +4043,7 @@ int gnuplot (const int *plotlist, const char *literal,
     /* add a regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 &&
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
-	err = get_fitted_line(&gi, dset, fit_line);
+	err = get_fitted_line(&gi, dset, &fitline);
 	if (err) {
 	    goto bailout;
 	} else {
@@ -4274,8 +4274,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     }
 
-    if (*fit_line != '\0') {
-        fputs(fit_line, fp);
+    if (fitline != NULL) {
+        fputs(fitline, fp);
     }
 
     /* print the data to be graphed */
@@ -4291,6 +4291,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
  bailout:
 
+    g_free(fitline);
     clear_gpinfo(&gi);
 
     return err;
