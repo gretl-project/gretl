@@ -3206,6 +3206,52 @@
 	<code>
 	  bundle b = null
 	</code>
+	<subhead>Sintassi alternativa</subhead>
+	<para>
+	  Questa funzione può anche essere invocata con una sintassi
+	  alternativa, a sua volta articolata in due varianti. In ambo
+	  i casi, la stringa <lit>defbundle</lit> è rimpiazzata da un
+	  trattino basso. Nel primo caso, gli argomenti prendono la
+	  forma  <lit>chiave=valore</lit>, dove la chiave è
+	  interpretata come una stringa e non richiede le
+	  virgolette. Ad esempio:
+	</para>
+	<code>
+	  bundle b = _(x=5, strval="buongiorno!", m=I(3))
+	</code>
+	<para>
+	  Questa variante è particolarmente comoda quando si deve
+	  costruire un bundle anonimo <quote>al volo</quote> come
+	  argomento di una funzione, come ad esempio in
+	</para>
+	<code>
+	  b = regls(ys, LX, _(lfrac=0.35, stdize=0))
+	</code>
+	<para>
+	  dove la funzione <lit>regls</lit> prende come argomento un
+	  bundle opzionale contenete vari parametri.
+	</para>
+	<para>
+	  La seconda variante è pensata per il caso in cui si vogliano
+	  includere nel bundle più oggetti preesistenti: tutto quel
+	  che basta fare è elencarli:
+	</para>
+	<code>
+	  bundle b = _(x, y, z)
+	</code>
+	<para>
+	  Qui l'oggetto <lit>x</lit> è copiato nel bundle sotto la
+	  chiave <quote><lit>x</lit></quote>, e lo stesso succede per
+	  <lit>y</lit> e <lit>z</lit>.
+	</para>
+	<para>
+	  Queste forme alternative sono più compatte della chiamata
+	  standard a <lit>defbundle()</lit> e probabilmente sono più
+	  comode in varia circostanze, ma si noti che sono meno
+	  flessibili. Solo la versione standard gestisce il caso in
+	  cui le chiavi siano passate come variabili stringa anziché
+	  come costanti.
+	</para>
       </description>
     </function>
 
