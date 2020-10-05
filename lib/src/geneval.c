@@ -7101,9 +7101,12 @@ static NODE *n_elements_node (NODE *n, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	if (n->t == MAT) {
+	if (n->t == NUM) {
+	    ret->v.xval = 1;
+	}
+	else if (n->t == MAT) {
 	    gretl_matrix *m = n->v.m;
-
+	    
 	    ret->v.xval = m->rows * m->cols;
 	} else if (n->t == ARRAY) {
 	    gretl_array *a = n->v.a;
