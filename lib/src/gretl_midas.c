@@ -409,30 +409,37 @@ DATASET *midas_aux_dataset (const int *list,
     return mset;
 }
 
+static int midas_list_check (const int *list,
+			     const DATASET *dset)
+{
+    int mpd, m = list[0];
+    int err = 0;
+
+    if (m < 3 || gretl_list_has_separator(list)) {
+	return E_INVARG;
+    } else if (!dataset_is_time_series(dset)) {
+	return E_INVARG;
+    } else if (dset->pd != 1 && dset->pd != 4) {
+	/* host dataset should be annual or quarterly */
+	return E_PDWRONG;
+    }
+
+    mpd = get_midas_pd(dset->pd, m, &err);
+    if (!err && mpd != 3 && mpd != 4 && mpd != 12) {
+	err = E_INVARG;
+    }
+
+    return err;
+}
+
 gretl_matrix *midas_list_to_vector (const int *list,
 				    const DATASET *dset,
 				    int *err)
 {
     gretl_matrix *mvec;
-    int mpd, pd = dset->pd;
     int T, m = list[0];
 
-    if (m < 3 || gretl_list_has_separator(list)) {
-	*err = E_INVARG;
-    } else if (!dataset_is_time_series(dset)) {
-	*err = E_INVARG;
-    } else if (pd != 1 && pd != 4) {
-	/* host dataset should be annual or quarterly */
-	*err = E_PDWRONG;
-    }
-
-    if (!*err) {
-	mpd = get_midas_pd(pd, m, err);
-	if (!*err && mpd != 3 && mpd != 4 && mpd != 12) {
-	    *err = E_INVARG;
-	}
-    }
-
+    *err = midas_list_check(list, dset);
     if (*err) {
 	return NULL;
     }
