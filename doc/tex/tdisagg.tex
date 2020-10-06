@@ -88,7 +88,8 @@ the given low-frequency value.
 While matching the low frequency benchmark is an important constraint,
 it obviously does not tie down the high frequency values. That is a
 job for either regression-based methods such as Chow--Lin or
-non-regression methods such as Denton.
+non-regression methods such as Denton. Details are provided in
+section~\ref{sec:tdisagg-details}.
 
 \section{Notation and design}
 \label{sec:tdisagg-nd}
@@ -428,14 +429,14 @@ A few notes on our Chow--Lin algorithm follow.
 \begin{itemize}
 \item One might question the value of performing steps 2 to 5 when the
   method is one that calls for GLS iteration (\texttt{chow-lin-mle} or
-  \texttt{chow-lin-ssr}), but our testing to date indicates that it
-  can be helpful to have a reasonably good estimate of $\rho$ in hand
-  before embarking on these iterations.
+  \texttt{chow-lin-ssr}), but our testing indicates that it can be
+  helpful to have a reasonably good estimate of $\rho$ in hand before
+  embarking on these iterations.
 \item Conversely, one might wonder why we bother with GLS iterations
   if we find $\hat{\rho}_L < 10^{-6}$. But this allows for the
   possibility (most likely associated with small sample size) that
   iteration will lead to $\rho > 0$ even when the estimate based on
-  OLS residuals is zero or negative.
+  the intial OLS residuals is zero or negative.
 \item Note that in all cases we are discarding an estimate of
   $\rho < 0$ (truncating to 0), which we take to be standard in this
   field. In our iterated GLS we achieve this by having the optimizer
@@ -530,8 +531,7 @@ well find it much faster to use the batch facility of
 Listing~\ref{listing:tdscript} shows an example of usage and its
 output. The data are drawn from the St Louis Fed; we disaggregate
 quarterly GDP to monthly with the help of industrial production and
-payroll employment, using the default ``traditional'' Chow--Lin
-method.
+payroll employment, using the default Chow--Lin method.
 
 Several other example scripts are available from
 \url{http://gretl.sourceforge.net/tdisagg/}.
@@ -542,7 +542,8 @@ Several other example scripts are available from
  Input:
 \begin{scodebit}
 ### Traditional Chow-Lin: y is a series with repetition
-### and X is a list of series (case 4 in the doc)
+### and X is a list of series. This corresponds to case 4(a)
+### as described in section 9.3 of the documentation above.
 ###
 
 # ensure that no data are in place
