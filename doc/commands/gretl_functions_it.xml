@@ -11070,25 +11070,32 @@
     
     <function name="strlen" section="strings" output="int">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string-or-strings">s</fnarg>
       </fnargs>  
       <description>
 	<para>
-	  Restituisce il numero di caratteri nella stringa
-	  <argname>s</argname>. Si note che questo può non coincidere
-	  col numero di byte se sono presenti
-	  caratteri al di fuori del campo ASCII stampabile (ad
-	  esempio, lettere accentate).
+	  Se <argname>s</argname> è una stringa, restituisce il numero
+	  di caratteri di cui è composta. Si noti che questo può non
+	  coincidere col numero di byte se sono presenti caratteri al
+	  di fuori del campo ASCII stampabile (ad esempio, lettere
+	  accentate). Se invece l'argomento è un array di stringhe, il
+	  valore ritornato è un vettore colonna col numero di
+	  caratteri per ognuna di esse.
 	</para>
 	<para>
-	  Esempio:
+	  Se l'argomento è una serie i cui valori hanno una codifica
+	  come stringa, il valore ritornato è esso stesso una serie
+	  contentnete la lunghezza delle stringhe nel sottocampione
+	  attualmente in uso.
+	</para>
+	<para>
+	  Un semplice esempio:
 	</para>
 	<code>
 	  string s = "regression"
-	  scalar number = strlen(s)
-	  print number
+	  scalar slen = strlen(s)
+	  print slen
 	</code>
-
       </description>
     </function>
 
