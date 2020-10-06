@@ -6309,9 +6309,15 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
     gretl_matrix *m = NULL;
     char **S = NULL;
     int k = list != NULL ? list[0] : 1;
-    int T = (dset->t2 - dset->t1 + 1) / cfac;
+    int T = dset->t2 - dset->t1 + 1;
     int i, s, t;
     int serr = 0;
+
+    if (cfac > 1) {
+	int rem = T % cfac;
+
+	T = T / cfac + (rem > 0);
+    }
 
     m = gretl_matrix_alloc(T, k);
     if (m == NULL) {

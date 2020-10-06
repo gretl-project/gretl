@@ -4385,7 +4385,9 @@ static int check_matrix_file (const char *fname, int *csv_etc)
 	}
     }
 
+#if 0
     fprintf(stderr, "check_matrix_file : csv_etc = %d\n", *csv_etc);
+#endif
 
     fclose(fp);
 
@@ -7105,7 +7107,7 @@ static NODE *n_elements_node (NODE *n, parser *p)
 	    ret->v.xval = 1;
 	} else if (n->t == MAT) {
 	    gretl_matrix *m = n->v.m;
-	    
+
 	    ret->v.xval = m->rows * m->cols;
 	} else if (n->t == ARRAY) {
 	    gretl_array *a = n->v.a;
