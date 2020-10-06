@@ -11185,23 +11185,30 @@
 
     <function name="strlen" section="strings" output="int">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string-or-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the number of characters in the string
-	  <argname>s</argname>. Note that this does not necessarily
-	  equal the number of bytes if some characters are outside
-	  of the printable-ASCII range.
+	  If <argname>s</argname> is a single string, returns the
+	  number of UTF-8 characters it contains.  Note that this does
+	  not equal the number of bytes if some characters are outside
+	  of the printable-ASCII range. If the argument is an array of
+	  strings the return value is a column vector holding the
+	  number of characters in each string.
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s = "regression"
-        scalar number = strlen(s)
-        print number
-    </code>
+	<para>
+	  A string-valued series is also an acceptable argument: in
+	  this case the return value is a series holding the length of
+	  the string values over the current sample range.
+	</para>
+	<para>
+          Simple example:
+	</para>
+	<code>
+          string s = "regression"
+          scalar slen = strlen(s)
+          print slen
+	</code>
       </description>
     </function>
 
