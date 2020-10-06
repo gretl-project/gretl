@@ -219,17 +219,15 @@ most convenient will depend on the user's workflow.
 In the previous section we flagged the importance of correct alignment
 of $\Xb$ and $\Yb$ at the start of the data; we're now in a position
 to say a little more about this. If either $\Xb$ or $\Yb$ are given in
-matrix form alignment is truly the user's responsibility. But if both
+matrix form alignment is truly the user's responsibility. But if they
 are dataset objects gretl can be more helpful. We automatically
 advance the start of the sample range to exclude any leading missing
-values, and automatically retard the end of the sample ranges for
-$\Xb$ and $\Yb$ to exclude trailing missing values (allowing for the
-possibility that $\Xb$ may extend beyond $\Yb$). In addition we
-further advance the sample start if this is required to ensure that
-the $\Xb$ data begin in the first high-frequency sub-period (e.g.\ the
-first quarter of a year or the first month of a quarter). But please
-note: such automatic alignment is \textit{not} currently enabled when
-$\Xb$ takes the form of a MIDAS list; and even when gretl
+values, and retard the end of the sample ranges for $\Xb$ and $\Yb$ to
+exclude trailing missing values (allowing for the possibility that
+$\Xb$ may extend beyond $\Yb$). In addition we further advance the
+sample start if this is required to ensure that the $\Xb$ data begin
+in the first high-frequency sub-period (e.g.\ the first quarter of a
+year or the first month of a quarter). But please note: when gretl
 automatically excludes leading or trailing missing values,
 intra-sample missing values will still provoke an error.
 
