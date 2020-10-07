@@ -1940,6 +1940,117 @@ static int scatter_to_self (int *rc, double *val,
     return err;
 }
 
+#if 1 /* new matrix splitting rule */
+
+static int matsplit_rule (int n, int np, int *tail)
+{
+    int a = nearbyint(n / (double) np);
+
+    *tail = n - (np-1) * a;
+    return a;
+}
+
+int gretl_matrix_mpi_scatter (const gretl_matrix *m,
+			      gretl_matrix **recvm,
+			      Gretl_MPI_Op op,
+			      int root)
+{
+    double *tmp = NULL;
+    int id, np;
+    int rc[MI_LEN] = {0};
+    int err = 0;
+
+    mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_rank_error(root);
+    }
+
+    if (id == root) {
+	int i, n;
+
+	if (op == GRETL_MPI_VSPLIT) {
+	    /* scatter by rows */
+	    int rem = 0, sent = 0;
+	    int nr = matsplit_rule(m->rows, np, &rem);
+	    int tmpr = MAX(nr, rem);
+	    int offset = 0;
+
+	    /* we'll need a working buffer */
+	    tmp = malloc(m->cols * tmpr * sizeof *tmp);
+	    if (tmp == NULL) {
+		err = E_ALLOC;
+	    }
+
+	    n = nr * m->cols;
+	    /* FIXME fill_matrix_info(rc, m) ? */
+	    rc[0] = nr;
+	    rc[1] = m->cols;
+
+	    for (i=0; i<np; i++) {
+		if (sent == m->rows) {
+		    n = rc[0] = 0;
+		} else if (i == np - 1 && rem > 0) {
+		    rc[0] = rem;
+		    n = m->cols * rem;
+		}
+		if (rc[0] > 0) {
+		    fill_tmp(tmp, m, rc[0], &offset);
+		}
+		if (i == root) {
+		    err = scatter_to_self(rc, tmp, recvm);
+		} else {
+		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+				   mpi_comm_world);
+		    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
+				   mpi_comm_world);
+		}
+		sent += rc[0];
+	    }
+	} else {
+	    /* scatter by columns */
+	    int rem = 0, sent = 0;
+	    int nc = matsplit_rule(m->cols, np, &rem);
+	    double *val = m->val;
+
+	    n = m->rows * nc;
+	    fill_matrix_info(rc, m);
+	    rc[1] = nc;
+
+	    for (i=0; i<np; i++) {
+		if (sent == m->cols) {
+		    n = rc[1] = 0;
+		} else if (i == np - 1 && rem > 0) {
+		    rc[1] = rem;
+		    n = m->rows * rem;
+		}
+		if (i == root) {
+		    err = scatter_to_self(rc, val, recvm);
+		} else {
+		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+				   mpi_comm_world);
+		    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
+				   mpi_comm_world);
+		}
+		sent += rc[1];
+		val += n;
+	    }
+	}
+    } else {
+	/* non-root processes get their share-out */
+	*recvm = gretl_matrix_mpi_receive(root, &err);
+    }
+
+    if (id == root) {
+	free(tmp);
+    }
+
+    return err;
+}
+
+#else
+
 int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 			      gretl_matrix **recvm,
 			      Gretl_MPI_Op op,
@@ -2007,7 +2118,6 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 		} else {
 		    rc[1] = nc;
 		}
-		
 		if (i == root) {
 		    err = scatter_to_self(rc, val, recvm);
 		} else {
@@ -2030,6 +2140,8 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 
     return err;
 }
+
+#endif
 
 /* MPI timer */
 
