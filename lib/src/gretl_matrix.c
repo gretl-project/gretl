@@ -3657,22 +3657,15 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
 	return E_NONCONF;
     } else if (src->is_complex + targ->is_complex == 1) {
 	return E_MIXED;
-    }
-
-    if (row >= src->rows) {
+    } else if (row >= src->rows) {
 	fprintf(stderr, "extract_matrix: requested starting row=%d, but "
 		"src has %d rows\n", row, src->rows);
 	return E_NONCONF;
-    }
-
-    if (col >= src->cols) {
+    } else if (col >= src->cols) {
 	fprintf(stderr, "extract_matrix: requested starting col=%d, but "
 		"src has %d cols\n", col, src->cols);
 	return E_NONCONF;
-    }
-
-
-    if (row + m > src->rows || col + n > src->cols) {
+    } else if (row + m > src->rows || col + n > src->cols) {
 	fprintf(stderr, "gretl_matrix_extract_matrix: out of bounds\n");
 	return E_NONCONF;
     }
