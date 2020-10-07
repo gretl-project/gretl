@@ -2004,7 +2004,10 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 		if (i == np - 1 && rem > 0) {
 		    rc[1] += rem;
 		    n += m->rows * rem;
+		} else {
+		    rc[1] = nc;
 		}
+		
 		if (i == root) {
 		    err = scatter_to_self(rc, val, recvm);
 		} else {
