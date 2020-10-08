@@ -1973,17 +1973,17 @@ static void matsplit_rule (int n, int np, int *k1, int *n1,
 	int a = ceil(1.0e-12 + n / (double) np);
 	int head = n % np;
 
-	*k1 = head;
-	*n1 = a;
-	*k2 = np - head;
-	*n2 = a - 1;
+        *k1 = head;
+        *n1 = a;
+        *k2 = np - head;
+        *n2 = a - 1;
     }
 }
 
 int gretl_matrix_mpi_scatter (const gretl_matrix *m,
-			      gretl_matrix **recvm,
-			      Gretl_MPI_Op op,
-			      int root)
+                              gretl_matrix **recvm,
+                              Gretl_MPI_Op op,
+                              int root)
 {
     double *tmp = NULL;
     int id, np;
@@ -1994,90 +1994,90 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
     mpi_comm_size(mpi_comm_world, &np);
 
     if (root < 0 || root >= np) {
-	return invalid_rank_error(root);
+        return invalid_rank_error(root);
     }
 
     if (id == root) {
-	int cmplx = m->is_complex;
-	int k1, n1, k2, n2;
-	int i, n;
+        int cmplx = m->is_complex;
+        int k1, n1, k2, n2;
+        int i, n;
 
-	if (op == GRETL_MPI_VSPLIT) {
-	    /* scatter by rows */
-	    int offset = 0;
+        if (op == GRETL_MPI_VSPLIT) {
+            /* scatter by rows */
+            int offset = 0;
 
-	    matsplit_rule(m->rows, np, &k1, &n1, &k2, &n2);
+            matsplit_rule(m->rows, np, &k1, &n1, &k2, &n2);
 
-	    n = n1 * m->cols;
-	    rc[0] = n1;
-	    rc[1] = m->cols;
-	    if (cmplx) {
-		rc[2] = 1;
-		n *= 2;
-	    }
+            n = n1 * m->cols;
+            rc[0] = n1;
+            rc[1] = m->cols;
+            if (cmplx) {
+                rc[2] = 1;
+                n *= 2;
+            }
 
-	    /* we'll need a working buffer */
-	    tmp = malloc(n * sizeof *tmp);
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    }
+            /* we'll need a working buffer */
+            tmp = malloc(n * sizeof *tmp);
+            if (tmp == NULL) {
+                err = E_ALLOC;
+            }
 
-	    for (i=0; i<np; i++) {
-		if (i == k1) {
-		    rc[0] = n2;
-		    n = n2 * m->cols;
-		    if (cmplx) n *= 2;
-		}
-		if (rc[0] > 0) {
-		    fill_tmp(tmp, m, rc[0], cmplx, &offset);
-		}
-		if (i == root) {
-		    err = scatter_to_self(rc, tmp, recvm);
-		} else {
-		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-				   mpi_comm_world);
-		    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
-				   mpi_comm_world);
-		}
-	    }
-	} else {
-	    /* scatter by columns */
-	    double *val = m->val;
+            for (i=0; i<np; i++) {
+                if (i == k1) {
+                    rc[0] = n2;
+                    n = n2 * m->cols;
+                    if (cmplx) n *= 2;
+                }
+                if (rc[0] > 0) {
+                    fill_tmp(tmp, m, rc[0], cmplx, &offset);
+                }
+                if (i == root) {
+                    err = scatter_to_self(rc, tmp, recvm);
+                } else {
+                    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+                                   mpi_comm_world);
+                    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
+                                   mpi_comm_world);
+                }
+            }
+        } else {
+            /* scatter by columns */
+            double *val = m->val;
 
-	    matsplit_rule(m->cols, np, &k1, &n1, &k2, &n2);
+            matsplit_rule(m->cols, np, &k1, &n1, &k2, &n2);
 
-	    n = n1 * m->rows;
-	    if (cmplx) {
-		n *= 2;
-	    }
-	    fill_matrix_info(rc, m);
-	    rc[1] = n1;
+            n = n1 * m->rows;
+            if (cmplx) {
+                n *= 2;
+            }
+            fill_matrix_info(rc, m);
+            rc[1] = n1;
 
-	    for (i=0; i<np; i++) {
-		if (i == k1) {
-		    rc[1] = n2;
-		    n = n2 * m->rows;
-		    if (cmplx) n *= 2;
-		}
-		if (i == root) {
-		    err = scatter_to_self(rc, val, recvm);
-		} else {
-		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-				   mpi_comm_world);
-		    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
-				   mpi_comm_world);
-		}
-		/* advance the read pointer */
-		val += n;
-	    }
-	}
+            for (i=0; i<np; i++) {
+                if (i == k1) {
+                    rc[1] = n2;
+                    n = n2 * m->rows;
+                    if (cmplx) n *= 2;
+                }
+                if (i == root) {
+                    err = scatter_to_self(rc, val, recvm);
+                } else {
+                    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+                                   mpi_comm_world);
+                    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
+                                   mpi_comm_world);
+                }
+                /* advance the read pointer */
+                val += n;
+            }
+        }
     } else {
-	/* non-root processes get their share-out */
-	*recvm = gretl_matrix_mpi_receive(root, &err);
+        /* non-root processes get their share-out */
+        *recvm = gretl_matrix_mpi_receive(root, &err);
     }
 
     if (id == root) {
-	free(tmp);
+        free(tmp);
     }
 
     return err;
