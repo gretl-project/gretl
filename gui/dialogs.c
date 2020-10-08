@@ -3168,7 +3168,7 @@ static void snap_to_static (GtkToggleButton *b, GtkWidget *w)
 static int fcast_errs_ok (MODEL *pmod)
 {
     if (pmod == NULL) {
-	return 0;
+	return 1; /* 2020-10-08: is this right? */
     } else if (pmod->ci == NLS) {
 	return gretl_model_get_int(pmod, "dynamic") == 0;
     } else if (pmod->ci == MIDASREG) {
@@ -3209,7 +3209,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"),
 		    parent);
-
     if (rset == NULL) {
 	return ret;
     }
