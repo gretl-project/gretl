@@ -1956,8 +1956,6 @@ static int scatter_to_self (int *rc, double *val,
     return err;
 }
 
-#if 1 /* new matrix splitting rule */
-
 static void matsplit_rule (int n, int np, int *k1, int *n1,
 			   int *k2, int *n2)
 {
@@ -2084,100 +2082,6 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 
     return err;
 }
-
-#else
-
-int gretl_matrix_mpi_scatter (const gretl_matrix *m,
-			      gretl_matrix **recvm,
-			      Gretl_MPI_Op op,
-			      int root)
-{
-    double *tmp = NULL;
-    int id, np;
-    int rc[MI_LEN] = {0};
-    int err = 0;
-
-    mpi_comm_rank(mpi_comm_world, &id);
-    mpi_comm_size(mpi_comm_world, &np);
-
-    if (root < 0 || root >= np) {
-	return invalid_rank_error(root);
-    }
-
-    if (id == root) {
-	int i, n;
-
-	if (op == GRETL_MPI_VSPLIT) {
-	    /* scatter by rows */
-	    int nr = m->rows / np;
-	    int rem = m->rows % np;
-	    int offset = 0;
-
-	    /* we'll need a working buffer */
-	    tmp = malloc(m->cols * (nr + rem) * sizeof *tmp);
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    }
-
-	    n = nr * m->cols;
-	    rc[0] = nr;
-	    rc[1] = m->cols;
-
-	    for (i=0; i<np; i++) {
-		if (i == np - 1 && rem > 0) {
-		    rc[0] += rem;
-		    n += m->cols * rem;
-		}
-		fill_tmp(tmp, m, rc[0], &offset);
-		if (i == root) {
-		    err = scatter_to_self(rc, tmp, recvm);
-		} else {
-		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-				   mpi_comm_world);
-		    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
-				   mpi_comm_world);
-		}
-	    }
-	} else {
-	    /* scatter by columns */
-	    int nc = m->cols / np;
-	    int rem = m->cols % np;
-	    double *val = m->val;
-
-	    n = m->rows * nc;
-	    fill_matrix_info(rc, m);
-
-	    for (i=0; i<np; i++) {
-		if (i == np - 1 && rem > 0) {
-		    rc[1] += rem;
-		    n += m->rows * rem;
-		} else {
-		    rc[1] = nc;
-		}
-		if (i == root) {
-		    err = scatter_to_self(rc, val, recvm);
-		} else {
-		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-				   mpi_comm_world);
-		    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
-				   mpi_comm_world);
-		}
-		val += n;
-	    }
-	}
-    } else {
-	/* non-root processes get their share-out */
-	*recvm = gretl_matrix_mpi_receive(root, &err);
-    }
-
-    if (id == root) {
-	free(tmp);
-    }
-
-    return err;
-}
-
-#endif
 
 /* MPI timer */
 
