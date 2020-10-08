@@ -1905,17 +1905,25 @@ gretl_bundle *gretl_bundle_receive (int source, int *err)
 
 static void fill_tmp (double * restrict tmp,
 		      const gretl_matrix *m,
-		      int nr, int *offset)
+		      int nr, int cmplx,
+		      int *offset)
 {
     double x;
+    double complex z;
     int imin = *offset;
     int imax = imin + nr;
     int i, j, k = 0;
 
     for (j=0; j<m->cols; j++) {
 	for (i=imin; i<imax; i++) {
-	    x = gretl_matrix_get(m, i, j);
-	    tmp[k++] = x;
+	    if (cmplx) {
+		z = gretl_cmatrix_get(m, i, j);
+		tmp[k++] = creal(z);
+		tmp[k++] = cimag(z);
+	    } else {
+		x = gretl_matrix_get(m, i, j);
+		tmp[k++] = x;
+	    }
 	}
     }
 
@@ -1925,15 +1933,23 @@ static void fill_tmp (double * restrict tmp,
 static int scatter_to_self (int *rc, double *val,
 			    gretl_matrix **pm)
 {
+    int cmplx = rc[2];
     int err = 0;
 
-    *pm = gretl_matrix_alloc(rc[0], rc[1]);
+    if (cmplx) {
+	*pm = gretl_cmatrix_new(rc[0], rc[1]);
+    } else {
+	*pm = gretl_matrix_alloc(rc[0], rc[1]);
+    }
 
     if (*pm == NULL) {
 	err = E_ALLOC;
     } else {
 	size_t n = rc[0] * rc[1] * sizeof *val;
 
+	if (cmplx) {
+	    n *= 2;
+	}
 	memcpy((*pm)->val, val, n);
     }
 
@@ -1942,12 +1958,28 @@ static int scatter_to_self (int *rc, double *val,
 
 #if 1 /* new matrix splitting rule */
 
-static int matsplit_rule (int n, int np, int *tail)
+static void matsplit_rule (int n, int np, int *k1, int *n1,
+			   int *k2, int *n2)
 {
-    int a = nearbyint(n / (double) np);
+    if (n <= np) {
+	*k1 = n;
+	*n1 = 1;
+	*k2 = np - n;
+	*n2 = 0;
+    } else if (n % np == 0) {
+	*k1 = np;
+	*n1 = n / np;
+	*k2 = 0;
+	*n2 = 0;
+    } else {
+	int a = ceil(1.0e-12 + n / (double) np);
+	int head = n % np;
 
-    *tail = n - (np-1) * a;
-    return a;
+	*k1 = head;
+	*n1 = a;
+	*k2 = np - head;
+	*n2 = a - 1;
+    }
 }
 
 int gretl_matrix_mpi_scatter (const gretl_matrix *m,
@@ -1968,35 +2000,38 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
     }
 
     if (id == root) {
+	int cmplx = m->is_complex;
+	int k1, n1, k2, n2;
 	int i, n;
 
 	if (op == GRETL_MPI_VSPLIT) {
 	    /* scatter by rows */
-	    int rem = 0, sent = 0;
-	    int nr = matsplit_rule(m->rows, np, &rem);
-	    int tmpr = MAX(nr, rem);
 	    int offset = 0;
 
+	    matsplit_rule(m->rows, np, &k1, &n1, &k2, &n2);
+
+	    n = n1 * m->cols;
+	    rc[0] = n1;
+	    rc[1] = m->cols;
+	    if (cmplx) {
+		rc[2] = 1;
+		n *= 2;
+	    }
+
 	    /* we'll need a working buffer */
-	    tmp = malloc(m->cols * tmpr * sizeof *tmp);
+	    tmp = malloc(n * sizeof *tmp);
 	    if (tmp == NULL) {
 		err = E_ALLOC;
 	    }
 
-	    n = nr * m->cols;
-	    /* FIXME fill_matrix_info(rc, m) ? */
-	    rc[0] = nr;
-	    rc[1] = m->cols;
-
 	    for (i=0; i<np; i++) {
-		if (sent == m->rows) {
-		    n = rc[0] = 0;
-		} else if (i == np - 1 && rem > 0) {
-		    rc[0] = rem;
-		    n = m->cols * rem;
+		if (i == k1) {
+		    rc[0] = n2;
+		    n = n2 * m->cols;
+		    if (cmplx) n *= 2;
 		}
 		if (rc[0] > 0) {
-		    fill_tmp(tmp, m, rc[0], &offset);
+		    fill_tmp(tmp, m, rc[0], cmplx, &offset);
 		}
 		if (i == root) {
 		    err = scatter_to_self(rc, tmp, recvm);
@@ -2006,24 +2041,25 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 		    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
 				   mpi_comm_world);
 		}
-		sent += rc[0];
 	    }
 	} else {
 	    /* scatter by columns */
-	    int rem = 0, sent = 0;
-	    int nc = matsplit_rule(m->cols, np, &rem);
 	    double *val = m->val;
 
-	    n = m->rows * nc;
+	    matsplit_rule(m->cols, np, &k1, &n1, &k2, &n2);
+
+	    n = n1 * m->rows;
+	    if (cmplx) {
+		n *= 2;
+	    }
 	    fill_matrix_info(rc, m);
-	    rc[1] = nc;
+	    rc[1] = n1;
 
 	    for (i=0; i<np; i++) {
-		if (sent == m->cols) {
-		    n = rc[1] = 0;
-		} else if (i == np - 1 && rem > 0) {
-		    rc[1] = rem;
-		    n = m->rows * rem;
+		if (i == k1) {
+		    rc[1] = n2;
+		    n = n2 * m->rows;
+		    if (cmplx) n *= 2;
 		}
 		if (i == root) {
 		    err = scatter_to_self(rc, val, recvm);
@@ -2033,7 +2069,7 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 		    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
 				   mpi_comm_world);
 		}
-		sent += rc[1];
+		/* advance the read pointer */
 		val += n;
 	    }
 	}
