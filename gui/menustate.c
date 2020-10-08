@@ -1033,7 +1033,7 @@ static const char *get_pd_string (DATASET *dset)
 void set_sample_label (DATASET *dset)
 {
     GtkWidget *dlabel;
-    char tmp[256];
+    gchar *tmp = NULL;
     int tsubset;
 
     if (mdata == NULL) {
@@ -1057,8 +1057,8 @@ void set_sample_label (DATASET *dset)
     */
 
     if (complex_subsampled() && !tsubset && dataset_is_cross_section(dset)) {
-	sprintf(tmp, _("Undated: Full range n = %d; current sample"
-		       " n = %d"), get_full_length_n(), dataset->n);
+	tmp = g_strdup_printf(_("Undated: Full range n = %d; current sample"
+				" n = %d"), get_full_length_n(), dataset->n);
 	gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
     } else if (complex_subsampled() && dataset_is_panel(dset)) {
 	char t1str[OBSLEN], t2str[OBSLEN];
@@ -1066,7 +1066,7 @@ void set_sample_label (DATASET *dset)
 
 	ntolabel(t1str, dset->t1, dset);
 	ntolabel(t2str, dset->t2, dset);
-	sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), t1str, t2str);
+	tmp = g_strdup_printf(_("%s; sample %s - %s"), _(pdstr), t1str, t2str);
 	gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
     } else {
 	char t1str[OBSLEN], t2str[OBSLEN];
@@ -1076,31 +1076,44 @@ void set_sample_label (DATASET *dset)
 	    /* it's too verbose to print both full range and sample */
 	    ntolabel(t1str, dset->t1, dset);
 	    ntolabel(t2str, dset->t2, dset);
-	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), t1str, t2str);
+	    tmp = g_strdup_printf(_("%s; sample %s - %s"), _(pdstr), t1str, t2str);
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else if (calendar_data(dset) && complex_subsampled()) {
 	    /* ditto, too verbose */
-	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), dset->stobs,
-		    dset->endobs);
+	    tmp = g_strdup_printf(_("%s; sample %s - %s"), _(pdstr), dset->stobs,
+				  dset->endobs);
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else {
+	    int done = 0;
+
 	    ntolabel(t1str, 0, dset);
 	    ntolabel(t2str, dset->n - 1, dset);
-	    sprintf(tmp, _("%s: Full range %s - %s"), _(pdstr),
-		    t1str, t2str);
+	    tmp = g_strdup_printf(_("%s: Full range %s - %s"), _(pdstr),
+				  t1str, t2str);
+	    if (dataset_is_panel(dset) && !tsubset) {
+		GString *full = g_string_new(tmp);
+
+		g_string_append(full, " ");
+		g_string_append(full, _("(unit:period)"));
+		gtk_label_set_text(GTK_LABEL(mdata->status), full->str);
+		g_string_free(full, TRUE);
+		done = 1;
+	    }
 	    if (tsubset) {
-		gchar *fulltext;
+		gchar *full;
 
 		ntolabel(t1str, dset->t1, dset);
 		ntolabel(t2str, dset->t2, dset);
-		fulltext = g_strdup_printf(_("%s; sample %s - %s"), tmp, t1str, t2str);
-		gtk_label_set_text(GTK_LABEL(mdata->status), fulltext);
-		g_free(fulltext);
-	    } else {
+		full = g_strdup_printf(_("%s; sample %s - %s"), tmp, t1str, t2str);
+		gtk_label_set_text(GTK_LABEL(mdata->status), full);
+		g_free(full);
+	    } else if (!done) {
 		gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	    }
 	}
     }
+
+    g_free(tmp);
 
     /* construct label with datafile name (this goes above the
        data series window) */
@@ -1108,24 +1121,27 @@ void set_sample_label (DATASET *dset)
     dlabel = g_object_get_data(G_OBJECT(mdata->main), "dlabel");
 
     if (dlabel != NULL) {
+	GString *dl = NULL;
+
 	if (strlen(datafile) > 2) {
 	    /* data file open already */
 	    gchar *basename = g_path_get_basename(datafile);
 
-	    strcpy(tmp, " ");
+	    dl = g_string_new(" ");
 	    if (data_status & SESSION_DATA) {
-		sprintf(tmp + 1, _("Imported %s"), basename);
+		g_string_append_printf(dl, _("Imported %s"), basename);
 	    } else if (data_status & MODIFIED_DATA) {
-		sprintf(tmp + 1, "%s *", basename);
+		g_string_append_printf(dl, "%s *", basename);
 	    } else {
-		sprintf(tmp + 1, "%s", basename);
+		g_string_append(dl, basename);
 	    }
-	    gtk_label_set_text(GTK_LABEL(dlabel), tmp);
+	    gtk_label_set_text(GTK_LABEL(dlabel), dl->str);
 	    g_free(basename);
 	} else if (data_status & MODIFIED_DATA) {
-	    strcpy(tmp, _(" Unsaved data "));
-	    gtk_label_set_text(GTK_LABEL(dlabel), tmp);
+	    dl = g_string_new(_(" Unsaved data "));
+	    gtk_label_set_text(GTK_LABEL(dlabel), dl->str);
 	}
+	g_string_free(dl, TRUE);
     }
 
     if (complex_subsampled() || dset->t1 > 0 || dset->t2 < dset->n - 1) {
