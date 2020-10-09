@@ -5,7 +5,7 @@ open murder.gdt --quiet --frompkg=regls
 # all available predictors w. no missing values
 list X = population..LemasPctOfficDrugUn
 smpl 1 800
-bundle parms = defbundle("nlambda", 8, "verbosity", 0)
+bundle parms = _(nlambda=8, verbosity=0)
 bundle lb = regls(murdPerPop, X, parms)
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 

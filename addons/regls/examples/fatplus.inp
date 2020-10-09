@@ -1,7 +1,7 @@
 set verbose off
 include regls.gfn
 
-n = 80  # observations
+n = 80 # observations
 k = 71 # regressors
 set seed 33775430
 matrix X = mnormal(n,k)
@@ -20,7 +20,7 @@ endloop
 
 summary ys --simple
 
-bundle parms = defbundle("lfrac", 0.35, "stdize", 0, "verbosity", 2)
+bundle parms = _(lfrac=0.35, stdize=0, verbosity=2)
 bundle b = regls(ys, LX, parms)
 eval b.nzb
 yh = lincomb(b.nzX, b.nzb)
