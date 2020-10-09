@@ -1,8 +1,8 @@
 author = Allin Cottrell
 email = cottrell@wfu.edu
 version = 0.1
-date = 2020-01-07
-description = Regularized least squqres
+date = 2020-10-09
+description = Regularized least squares
 tags = C20 C52
 public = regls lambda_sequence regls_get_stats regls_pc_correct \
   regls_foldvec regls_multiprint glmnet_pred
