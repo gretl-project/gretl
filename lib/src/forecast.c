@@ -3614,7 +3614,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
-	/* FIXME */
+	/* random effects probit: FIXME */
 	return E_NOTIMP;
     }
 

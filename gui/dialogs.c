@@ -3165,10 +3165,18 @@ static void snap_to_static (GtkToggleButton *b, GtkWidget *w)
     }
 }
 
+/* FIXME: Ideally this conditionality should be centralized in
+   lib/src/forecast.c, and worked out in proper detail. Note
+   that we don't need to worry here about estimators for which
+   forecasts are not supported at all; we're just trying to
+   screen out cases where forecast standard errors are not
+   available.
+*/
+
 static int fcast_errs_ok (MODEL *pmod)
 {
-    if (pmod == NULL) {
-        return 1; /* 2020-10-08: is this right? */
+    if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	return 0;
     } else if (pmod->ci == NLS) {
         return gretl_model_get_int(pmod, "dynamic") == 0;
     } else if (pmod->ci == MIDASREG) {
@@ -3178,8 +3186,9 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
-/* Note: the @pmod argument may be NULL, if this dialog is
-   called in relation to a system of equations */
+/* Note: the @pmod argument will be NULL if this dialog is
+   called in relation to a system of equations.
+*/
 
 int forecast_dialog (int t1min, int t1max, int *t1,
                      int t2min, int t2max, int *t2,
@@ -3334,8 +3343,11 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     g_signal_connect(GTK_ADJUSTMENT(rset->p), "value-changed",
                      G_CALLBACK(toggle_activate_fitvals), tmp);
 
-    if (fcast_errs_ok(pmod)) {
-        /* graph style selection for confidence intervals */
+    if (pmod == NULL || fcast_errs_ok(pmod)) {
+	/* Applicable only if forecast standard errors can be
+	   produced: offer selection of plotting style and
+	   alpha value for confidence intervals
+	*/
         static const char *strs[] = {
             N_("error bars"),
             N_("low and high lines"),
@@ -3394,21 +3406,16 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     bbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
 
-    /* Cancel button */
+    /* Buttons: Cancel, OK and Help */
     cancel_delete_button(bbox, rset->dlg);
-
-    /* "OK" button */
     tmp = ok_validate_button(bbox, &ret, &radio_val);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_obs_from_dialog), rset);
     gtk_widget_grab_default(tmp);
-
-    /* Create a "Help" button */
     context_help_button(bbox, FCAST);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy",
                      G_CALLBACK(free_rsetting), rset);
-
     gtk_widget_show_all(rset->dlg);
 
     return ret;
