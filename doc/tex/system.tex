@@ -314,7 +314,12 @@ individual OLS regressions. In both cases the test statistic is
 distributed asymptotically as $\chi^2$ with $g(g-1)/2$ degrees of
 freedom. 
 
-\subsection{Structural and reduced forms}
+All these quantities can also be retrieved if necessary via the
+\verb|$system| accessor: after successful completion of the estimation
+procedure, il will contains a bundle holding various quantities that
+describe the estimated system.
+
+\subsection{Structural and reduced forms for forecasting and simulation}
 
 Systems of simultaneous systems can be represented in structural form
 as
@@ -335,17 +340,25 @@ of $A_1,\dots,A_p$, and is therefore $m \times mp$.
 
 From the structural form it is straightforward to obtain the reduced
 form, namely,
-\[
-y_t = \Gamma^{-1} \left(\sum_{i=1}^p A_i y_{t-i}\right)
- + \Gamma^{-1} B x_t + v_t
-\]
-where $v_t \equiv \Gamma^{-1}\epsilon_t$. The reduced form is used by
-gretl to generate forecasts in response to the \texttt{fcast}
-command. This means that---in contrast to single-equation
-estimation---the values produced via \texttt{fcast} for a static,
-within-sample forecast will in general differ from the fitted values
-retrieved via \verb|$yhat|. The fitted values for equation $i$
-represent the expectation of $y_{ti}$ conditional on the
+
+\begin{equation}
+  \label{eq:VAR-reduced-form}
+  y_t = \Gamma^{-1} \left(\sum_{i=1}^p A_i y_{t-i}\right)
+  + \Gamma^{-1} B x_t + v_t
+\end{equation}
+where $v_t \equiv \Gamma^{-1}\epsilon_t$.
+
+As is well known, the reduced form can be used any time one has to
+calculate the values of the endogenous variables given the exogenous
+ones; this is typically necessary in two cases: forecasting or simulation.
+
+Forecasts for multi-equation systems are generated natively by gretl
+in response to the \texttt{fcast} command. This means that---in
+contrast to single-equation estimation---the values produced via
+\texttt{fcast} for a static, within-sample forecast will in general
+differ from the fitted values retrieved via
+\verb|$yhat|. The fitted values for equation
+$i$ represent the expectation of $y_{ti}$ conditional on the
 contemporaneous values of all the regressors, while the \texttt{fcast}
 values are conditional on the exogenous and predetermined variables
 only.
@@ -362,6 +375,129 @@ constructing the structural-form matrices. This means that forecasts
 are conditional on the observed values of the ``extra'' endogenous
 regressors rather than solely on the values of the exogenous and
 predetermined variables. 
+
+\begin{script}[htbp]
+  \caption{Simulation from a simultaneous equation system $\beta$}
+  \label{system-simula}
+\begin{scodebit}
+set verbose off
+set seed 131020
+
+### --------------------------------------------------
+### load the data and generate the variables
+### --------------------------------------------------
+
+open AWM18.gdt --quiet
+Con = log(PCR)
+Inv = log(GCR)
+Inc = log(YER)
+list EXO = const time
+
+### --------------------------------------------------
+### estimate the system via FIML
+### --------------------------------------------------
+
+system method=fiml
+    equation Con EXO Con(-1) Inc(0 to -1)
+    equation Inv EXO Inv(-1) Inc(-1)
+    equation Inc EXO Inc(-1 to -2) Inv(-1)
+end system
+
+bundle sys = $system    # save the estimated system to a bundle
+
+### --------------------------------------------------
+### compute the reduced form VAR representation
+### --------------------------------------------------
+
+matrix iG = inv(sys.Gamma)
+matrix rfA = iG * sys.A
+matrix rfB = iG * sys.B
+
+### --------------------------------------------------
+### produce the simulation
+### --------------------------------------------------
+
+scalar horizon = 12
+
+###  retrieve a few magnitudes from the estimated system
+scalar g = sys.neqns           # number of equations
+scalar p = cols(sys.A) / g     # maximum lag
+
+### future values of the exogenous variable
+matrix SimExo = 1 ~ seq($nobs + 1, $nobs + horizon)'
+matrix X = SimExo * rfB'
+
+### simulated disturbances
+E = mnormal(horizon, g) * cholesky(sys.sigma)'  # reduced form disturbances
+V = E * iG'                                  # structural form disturbances
+
+### initial values
+list ENDO = Con Inv Inc
+matrix init = {ENDO}[$nobs-p+1:,]
+
+### perform simulation
+Sim = varsimul(rfA, X + V, init)
+
+print Sim
+\end{scodebit}
+%$
+\end{script}
+
+On the contrary, gretl does not provide a native command for
+generating simulated data from a multi-equation system, but this is
+relatively easily accomplished by means of scripting: script
+\ref{system-simula} gives an example on a 3-variable
+system.\footnote{Note: the system of equation that is being estimated
+  here is not meant to stand for a realistic model of the European
+  economy. It is just set up in such a way to provide a simple
+  example.} All equations contain lagged endogenous variables, but the
+equation for consumption at time $t$ also contains income at time $t$
+as an explanatory variable. This makes the system simultaneous, so we
+use FIML as the estimation method.
+
+Once the system is estimated, we store its results to a bundle named
+\texttt{sys}, so as to make it easier to retrieve certain quantities
+used in the remainder of the script.
+
+First, we compute the reduced form matrices by using the \texttt{Gamma},
+\texttt{A} and \texttt{B} bundle elements.\footnote{These same
+  matrices can also be accessed if wanted via the
+  \verb|$sysGamma|, \verb|$sysA| and
+  \verb|$sysB| accessors, respectively.} Of course, simulation needs
+values for the exogenous variable, which are easy to create in a
+system such as this where all the exogenous variables are
+deterministic. The simulation horizon is set for this example at 12 periods.
+
+Subsequently, structural-form disturbances are drawn randomly from a
+multivariate normal distibution with mean 0 and variance equal to the
+estimated covariance matrix $\hat{\Sigma}$, available as the
+\texttt{sigma} element of the \texttt{sys} bundle. These are
+then mapped to reduced-form innovations via the relationship
+$v_t \equiv \Gamma^{-1}\epsilon_t$.
+
+Finally, all these ingredients are combined to produce the simulated
+values with the \cmd{varsimul} function. Note that initial values for
+the VAR recursion are taken from the latest available data. Running
+the script should produce the following set of simulated values:
+
+\begin{code}
+Sim (14 x 3)
+
+      13.887       12.874       14.508 
+      13.889       12.877       14.515 
+      13.893       12.880       14.520 
+      13.895       12.885       14.518 
+      13.895       12.894       14.517 
+      13.900       12.902       14.520 
+      13.907       12.908       14.525 
+      13.917       12.910       14.534 
+      13.920       12.911       14.539 
+      13.919       12.906       14.547 
+      13.934       12.910       14.567 
+      13.935       12.908       14.575 
+      13.942       12.913       14.581 
+      13.944       12.916       14.583 
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
