@@ -729,13 +729,15 @@
 
     <description>
       <para>
+	This command is deprecated in favor of the updated and
+	more flexible <cmdref targ="dpanel"/>. It is likely to be
+	removed, and should not be used in newly written scripts.
+      </para>
+      <para>
 	Carries out estimation of dynamic panel data models (that is,
 	panel models including one or more lags of the dependent
 	variable) using the GMM-DIF method set out by <cite
 	key="arellano-bond91">Arellano and Bond (1991)</cite>.
-	Please see <cmdref targ="dpanel"/> for an updated and
-	more flexible version of this command which handles GMM-SYS
-	as well as GMM-DIF.
       </para>
       <para>
 	The parameter <repl>p</repl> represents the order of the
