@@ -1158,7 +1158,7 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	    sz = nelem * sizeof *M->val;
 	    memcpy(ret->val, M->val + offset, sz);
 	}
-	if (M->rows > 1 && rows == M->rows && offset == 0 &&
+	if (M->rows > 1 && rows == M->rows && (offset % M->rows) == 0 &&
 	    gretl_matrix_is_dated(M)) {
 	    matrix_transcribe_dates(ret, M);
 	}
