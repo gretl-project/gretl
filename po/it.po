@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-10-09 08:03-0400\n"
-"PO-Revision-Date: 2020-06-17 09:09+0200\n"
+"PO-Revision-Date: 2020-10-12 18:04+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1931,9 +1931,9 @@ msgstr ""
 "%s scartato: l'intervallo del campione non contiene osservazioni valide\n"
 
 #: lib/src/describe.c:5747 lib/src/describe.c:5851
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s: string-valued series\n"
-msgstr "Scartata %s: osservazioni insufficienti"
+msgstr "Scartata %s: serie a valori stringa\n"
 
 #: lib/src/describe.c:6387
 msgid "corr: needs at least two non-constant arguments"
@@ -2425,9 +2425,9 @@ msgstr ""
 " %s"
 
 #: lib/src/geneval.c:7462
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: assertion '%s' failed"
-msgstr "Attenzione: la serie %s è vuota"
+msgstr "Attenzione: l'asserzione '%s' è falsa"
 
 #: lib/src/geneval.c:7467
 #, c-format
@@ -2867,9 +2867,9 @@ msgid "The MPI library is not loaded"
 msgstr "La libreria MPI non è caricata"
 
 #: lib/src/gensyntax.c:247
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but found '%c'\n"
-msgstr "Al posto di \"%c\" è stato trovato \"%s\"\n"
+msgstr "Atteso '%c' ma trovato '%c'\n"
 
 #: lib/src/gensyntax.c:253
 #, c-format
@@ -2886,9 +2886,8 @@ msgid "too many arguments"
 msgstr "troppi argomenti"
 
 #: lib/src/gensyntax.c:1296
-#, fuzzy
 msgid "Expected ',' or ')'"
-msgstr "Al posto di \"%c\" è stato trovato \"%s\"\n"
+msgstr "Era atteso un carattere ',' oppure ')'"
 
 #: lib/src/gmm.c:131
 #, c-format
@@ -3234,14 +3233,12 @@ msgid "Couldn't open %s"
 msgstr "Impossibile aprire %s"
 
 #: lib/src/graphing.c:10072
-#, fuzzy
 msgid "original data"
-msgstr "%s (dati originali)"
+msgstr "dati originali"
 
 #: lib/src/graphing.c:10074
-#, fuzzy
 msgid "final series"
-msgstr "aggiungi serie"
+msgstr "serie finale"
 
 #: lib/src/gretl_array.c:1727 lib/src/gretl_array.c:1743
 #, c-format
@@ -6880,11 +6877,12 @@ msgstr ""
 "Distribuzione di frequenza per %s, oss. %d-%d\n"
 
 #: lib/src/printout.c:399
-#, fuzzy
 msgid ""
 "frequency   percent\n"
 "\n"
-msgstr "Grafico della frequenza"
+msgstr ""
+"frequenza   percentuale\n"
+"\n"
 
 #: lib/src/printout.c:418
 msgid ""
@@ -6925,9 +6923,8 @@ msgid "TOT."
 msgstr "TOT."
 
 #: lib/src/printout.c:827
-#, fuzzy
 msgid "TOTAL"
-msgstr "TOTALE "
+msgstr "TOT. "
 
 #: lib/src/printout.c:856
 #, c-format
@@ -10249,18 +10246,16 @@ msgid "gretl: expand data"
 msgstr "gretl: espandi dati"
 
 #: gui/dialogs.c:4078
-#, fuzzy
 msgid "Expand annual data to"
-msgstr "Espandi dati annuali a trimestrali"
+msgstr "Espandi dati annuali a"
 
 #: gui/dialogs.c:4088
 msgid "Expand quarterly data to monthly"
 msgstr "Espandi dati da frequenza trimestrale ad annuale"
 
 #: gui/dialogs.c:4095
-#, fuzzy
 msgid "Please read the Help before proceeding."
-msgstr "(si veda l'Aiuto per indicazioni)"
+msgstr "Si consulti la Guida prima di procedere"
 
 #: gui/dialogs.c:4251
 msgid "density estimation options"
@@ -11193,9 +11188,8 @@ msgid "Error reading package"
 msgstr "Errore nella lettura del pacchetto"
 
 #: gui/fncall.c:4541
-#, fuzzy
 msgid "No mapfile is present"
-msgstr "non sono presenti effetti ARCH"
+msgstr "non è presente un file mappa"
 
 #: gui/fnsave.c:374
 msgid "_Save gfn"
@@ -12772,9 +12766,8 @@ msgid "_Hurst exponent"
 msgstr "Esponente di _Hurst"
 
 #: gui/gretl.c:1875 gui/menustate.c:605
-#, fuzzy
 msgid "Disaggregate..."
-msgstr "aggregazione"
+msgstr "Disaggregazione..."
 
 #: gui/gretl.c:1876
 msgid "_Edit attributes"
@@ -12821,9 +12814,8 @@ msgid "H_eteroskedasticity corrected"
 msgstr "WLS corretti per eteroschedasticità"
 
 #: gui/gretl.c:1890
-#, fuzzy
 msgid "_Regularized least squares"
-msgstr "WLS - Minimi quadrati ponderati"
+msgstr "Minimi quadrati regolarizzati"
 
 #: gui/gretl.c:1891
 msgid "High _precision OLS"
@@ -14560,7 +14552,6 @@ msgstr ""
 "se lo si vuole."
 
 #: gui/library.c:1977
-#, fuzzy
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  If you wish, you can add observations\n"
@@ -15328,9 +15319,8 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: campione completo %s - %s"
 
 #: gui/menustate.c:1097
-#, fuzzy
 msgid "(unit:period)"
-msgstr "periodo"
+msgstr "(unità:periodo)"
 
 #: gui/menustate.c:1132
 #, c-format
@@ -15706,9 +15696,8 @@ msgid "MIDAS regression"
 msgstr "Regressione MIDAS"
 
 #: gui/selector.c:4311
-#, fuzzy
 msgid "Regularized least squares"
-msgstr "WLS - Minimi quadrati ponderati"
+msgstr "Minimi quadrati regolarizzati"
 
 #: gui/selector.c:4321
 msgid "Weight variable"
@@ -16053,14 +16042,12 @@ msgid "LASSO"
 msgstr ""
 
 #: gui/selector.c:6437
-#, fuzzy
 msgid "Single λ-fraction"
-msgstr "Frazione centrale:"
+msgstr "Frazione λ singola"
 
 #: gui/selector.c:6446
-#, fuzzy
 msgid "Multiple λ values"
-msgstr "Grafici multipli"
+msgstr "Valori di λ multipli"
 
 #: gui/selector.c:6465 gui/toolbar.c:617
 msgid "Confidence level"
@@ -18263,23 +18250,20 @@ msgid "Produce debugging output"
 msgstr "Genera output di debug"
 
 #: plugin/interpolate.c:249 plugin/interpolate.c:263
-#, fuzzy
 msgid "GLS estimates"
-msgstr "Stime OLS"
+msgstr "Stime GLS"
 
 #: plugin/interpolate.c:253
-#, fuzzy
 msgid "Iterated GLS estimates"
-msgstr "Stima iterata"
+msgstr "Stima GLS iterata"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
 msgstr ""
 
 #: plugin/interpolate.c:1740
-#, fuzzy
 msgid "Temporal disaggregation"
-msgstr "aggregazione"
+msgstr "Disaggregazione temporale"
 
 #: plugin/interval.c:225
 #, c-format
