@@ -525,14 +525,16 @@ When your dataset is a panel, the traditional choice for binary
 dependent variable models was, for many years, to use logit with fixed
 effects and probit with random effects (see \ref{sec:FE-vs-RE} for a
 brief discussion of this dichotomy in the context of linear
-models). Nowadays, the choice is somewhat wider, but the two
+models). Nowadays the choice is somewhat wider but the two
 traditional models are by and large what practitioners use as routine
 tools.
 
-Gretl provides FE logit as a function package\footnote{Although this
-  may change in the near future.} and RE probit natively. Provided
-your dataset has a panel structure, the latter option can be obtained
-by adding the \option{random} option to the \cmd{probit} command:
+Gretl provides FE logit via the function package
+\textsf{felogit},\footnote{See
+  \url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/current_fnfiles/felogit.gfn}.}
+RE probit natively. Provided your dataset has a panel structure, the
+latter option can be obtained by adding the \option{random} option to
+the \cmd{probit} command:
 \begin{code}
   probit depvar const indvar1 indvar2 --random
 \end{code}
