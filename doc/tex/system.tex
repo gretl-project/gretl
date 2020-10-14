@@ -77,7 +77,7 @@ name \texttt{mysys}.
 If the system is not named via the back-arrow mechanism, it is still
 available for subsequent use via \texttt{restrict} and
 \texttt{estimate}; in this case you should use the generic name
-\verb|$system| to refer to the last-defined multivariate system.
+\dollar{system} to refer to the last-defined multivariate system.
 
 \subsection{The body of a system block}
 
@@ -191,7 +191,7 @@ end system
 
 As mentioned above, the option of assigning a specific name to a
 system is not available within functions, but the generic identifier
-\verb|$system| can be used to similar effect. The following example
+\dollar{system} can be used to similar effect. The following example
 illustrates how one can define a system, estimate it via two methods,
 apply a restriction, then re-estimate it subject to the restriction.
 
@@ -220,13 +220,13 @@ In the single-equation case, \texttt{restrict} refers to the
 last-estimated model, and once the command is completed the
 restriction is tested. In the multivariate case, you must give the
 name of the system to which the restriction is to be applied (or
-\verb|$system| to refer to the last-defined system), and the effect of
+\dollar{system} to refer to the last-defined system), and the effect of
 the command is just to attach the restriction to the system; testing
 is not done until the next \texttt{estimate} command is given.  In
 addition, in the system case the default is to produce full estimates
 of the restricted model; if you are not interested in the full
 estimates and just want the test statistic you can append the
-\verb|--quiet| option to \texttt{estimate}.
+\option{quiet} option to \texttt{estimate}.
 
 A given system restriction remains in force until it is replaced or
 removed. To return a system to its unrestricted state you can give
@@ -246,7 +246,7 @@ The \texttt{estimate} command is the main locus for options regarding
 the details of estimation. The available options are as follows:
 
 \begin{itemize}
-\item If the estimation method is SUR or 3SLS and the \verb|--iterate|
+\item If the estimation method is SUR or 3SLS and the \option{iterate}
   flag is given, the estimator will be iterated. In the case of SUR,
   if the procedure converges the results are maximum likelihood
   estimates. Iteration of three-stage least squares, however, does not
@@ -255,7 +255,7 @@ the details of estimation. The available options are as follows:
 \item If the equation-by-equation estimators OLS or TSLS are chosen,
   the default is to apply a degrees of freedom correction when
   calculating standard errors. This can be suppressed using the
-  \verb|--no-df-corr| flag. This flag has no effect with the other
+  \option{no-df-corr} flag. This flag has no effect with the other
   estimators; no degrees of freedom correction is applied in any case.
 \item By default, the formula used in calculating the elements of the
   cross-equation covariance matrix is
@@ -263,23 +263,23 @@ the details of estimation. The available options are as follows:
 \hat{\sigma}_{ij} = \frac{\hat{u}'_i \hat{u}_j}{T}
 \]
 where $T$ is the sample size and $\hat{u}_i$ is the vector of
-residuals from equation $i$. But if the \verb|--geomean| flag is
+residuals from equation $i$. But if the \option{geomean} flag is
 given, a degrees of freedom correction is applied: the formula is
 \[
 \hat{\sigma}_{ij} = \frac{\hat{u}'_i \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}
 \]
 where $k_i$ denotes the number of independent parameters in equation
 $i$.
-\item If an iterative method is specified, the \verb|--verbose| option
+\item If an iterative method is specified, the \option{verbose} option
   calls for printing of the details of the iterations.
 \item When the system estimator is SUR or 3SLS the cross-equation
   covariance matrix is initially estimated via OLS or TSLS,
   respectively. In the case of a system subject to restrictions the
   question arises: should the initial single-equation estimator be
   restricted or unrestricted? The default is the former, but the
-  \verb|--unrestrict-init| flag can be used to select unrestricted
+  \option{unrestrict-init} flag can be used to select unrestricted
   initialization. (Note that this is unlikely to make much difference
-  if the \verb|--iterate| option is given.)
+  if the \option{iterate} option is given.)
 \end{itemize}
 
 \section{System accessors}
@@ -288,16 +288,16 @@ $i$.
 After system estimation various matrices may be retrieved for further
 analysis.  Let $g$ denote the number of equations in the system and
 let $K$ denote the total number of estimated parameters ($K = \sum_i
-k_i$). The accessors \verb|$uhat| and \verb|$yhat| get $T \times g$
+k_i$). The accessors \dollar{uhat} and \dollar{yhat} get $T \times g$
 matrices holding the residuals and fitted values respectively. The
-accessor \verb|$coeff| gets the stacked $K$-vector of parameter
-estimates; \verb|$vcv| gets the $K \times K$ variance matrix of the
-parameter estimates; and \verb|$sigma| gets the $g \times g$
+accessor \dollar{coeff} gets the stacked $K$-vector of parameter
+estimates; \dollar{vcv} gets the $K \times K$ variance matrix of the
+parameter estimates; and \dollar{sigma} gets the $g \times g$
 cross-equation covariance matrix, $\hat{\Sigma}$.
 
 A test statistic for the hypothesis that $\Sigma$ is diagonal can be
-retrieved as \verb|$diagtest| and its p-value as
-\verb|$diagpval|. This is the Breusch--Pagan test except when the
+retrieved as \dollar{diagtest} and its p-value as
+\dollar{diagpval}. This is the Breusch--Pagan test except when the
 estimator is (unrestricted) iterated SUR, in which case it's a
 Likelihood Ratio test. The Breusch--Pagan test is computed as
 \[
@@ -315,7 +315,7 @@ distributed asymptotically as $\chi^2$ with $g(g-1)/2$ degrees of
 freedom. 
 
 All these quantities can also be retrieved if necessary via the
-\verb|$system| accessor: after successful completion of the estimation
+\dollar{system} accessor: after successful completion of the estimation
 procedure, il will contains a bundle holding various quantities that
 describe the estimated system.
 
@@ -330,12 +330,14 @@ as
 where $y_t$ represents the vector of endogenous variables in period
 $t$, $x_t$ denotes the vector of exogenous variables, and $p$ is the
 maximum lag of the endogenous regressors.  The structural-form
-matrices can be retrieved as \verb|$sysGamma|, \verb|$sysA| and
-\verb|$sysB| respectively. If $y_t$ is $m \times 1$ and $x_t$ is $n
-\times 1$, then $\Gamma$ is $m \times m$ and $B$ is $m \times n$. If
-the system contains no lags of the endogenous variables then the $A$
-matrix is not defined, otherwise $A$ is the horizontal concatenation
-of $A_1,\dots,A_p$, and is therefore $m \times mp$.
+matrices can be retrieved as \dollar{sysGamma}, \dollar{sysA} and
+\dollar{sysB} respectively, or as elements of the returned
+\dollar{system} bundle. If $y_t$ is $m \times 1$
+and $x_t$ is $n \times 1$, then $\Gamma$ is $m \times m$ and $B$ is
+$m \times n$. If the system contains no lags of the endogenous
+variables then the $A$ matrix is not defined, otherwise $A$ is the
+horizontal concatenation of $A_1,\dots,A_p$, and is therefore
+$m \times mp$.
 % $
 
 From the structural form it is straightforward to obtain the reduced
@@ -357,7 +359,7 @@ in response to the \texttt{fcast} command. This means that---in
 contrast to single-equation estimation---the values produced via
 \texttt{fcast} for a static, within-sample forecast will in general
 differ from the fitted values retrieved via
-\verb|$yhat|. The fitted values for equation
+\dollar{yhat}. The fitted values for equation
 $i$ represent the expectation of $y_{ti}$ conditional on the
 contemporaneous values of all the regressors, while the \texttt{fcast}
 values are conditional on the exogenous and predetermined variables
@@ -377,7 +379,7 @@ regressors rather than solely on the values of the exogenous and
 predetermined variables. 
 
 \begin{script}[htbp]
-  \caption{Simulation from a simultaneous equation system $\beta$}
+  \caption{Simulation from a simultaneous equation system}
   \label{system-simula}
 \begin{scodebit}
 set verbose off
@@ -447,7 +449,7 @@ On the contrary, gretl does not provide a native command for
 generating simulated data from a multi-equation system, but this is
 relatively easily accomplished by means of scripting: script
 \ref{system-simula} gives an example on a 3-variable
-system.\footnote{Note: the system of equation that is being estimated
+system.\footnote{Note: the system of equations that is being estimated
   here is not meant to stand for a realistic model of the European
   economy. It is just set up in such a way to provide a simple
   example.} All equations contain lagged endogenous variables, but the
@@ -460,10 +462,7 @@ Once the system is estimated, we store its results to a bundle named
 used in the remainder of the script.
 
 First, we compute the reduced form matrices by using the \texttt{Gamma},
-\texttt{A} and \texttt{B} bundle elements.\footnote{These same
-  matrices can also be accessed if wanted via the
-  \verb|$sysGamma|, \verb|$sysA| and
-  \verb|$sysB| accessors, respectively.} Of course, simulation needs
+\texttt{A} and \texttt{B} bundle elements. Of course, simulation needs
 values for the exogenous variable, which are easy to create in a
 system such as this where all the exogenous variables are
 deterministic. The simulation horizon is set for this example at 12 periods.
