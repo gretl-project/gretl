@@ -154,6 +154,16 @@
       </description>
     </function>
 
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  This accessor returns the path where gretl stores temporary
+	  files, for example when using the <fncref targ="mwrite"/>
+	  function with a non-zero third argument.
+	</para>
+      </description>
+    </function>
+
     <function name="$dw" section="access" output="scalar">
       <description>
 	<para>
@@ -1232,6 +1242,18 @@
 	<para>
 	  Also see the <cmdref targ="shell"/> command.
 	</para>
+      </description>
+    </function>
+
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  This accessor returns the path where gretl reads from and
+	  writes to by default. A fuller discussion is provided in the
+	  Command Reference under <cmdref targ="workdir"/>. Note that
+	  this string can be set by the user vis the <cmdref
+	  targ="set"/> command.
+        </para>
       </description>
     </function>
 
