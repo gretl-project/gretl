@@ -3299,7 +3299,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
 	l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
-	&& !(gi->flags & GPT_DUMMY)  & !(opt & OPT_Y)) {
+	&& !(gi->flags & GPT_DUMMY) && !(opt & OPT_Y)) {
 	/* FIXME GPT_XYZ ? */
 	/* allow probe for using two y axes */
 #if GP_DEBUG
@@ -6453,10 +6453,12 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     if (pm.bdummy) {
 	int oddman = 0;
 
-	check_for_yscale(gi, (const double **) dset->Z, &oddman);
-	if (gi->flags & GPT_Y2AXIS) {
-	    fputs("set ytics nomirror\n", fp);
-	    fputs("set y2tics\n", fp);
+	if (!(opt & OPT_Y)) {
+	    check_for_yscale(gi, (const double **) dset->Z, &oddman);
+	    if (gi->flags & GPT_Y2AXIS) {
+		fputs("set ytics nomirror\n", fp);
+		fputs("set y2tics\n", fp);
+	    }
 	}
 
 	fputs("plot \\\n", fp);
