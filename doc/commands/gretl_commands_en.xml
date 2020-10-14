@@ -11037,7 +11037,7 @@
 	matrix with at least 2 columns (or a list with at least two
 	members).  Note that it is considered good practice to place
 	the <opt>output</opt> option (only) on the last line of the
-	block.
+	block; other options should be placed within the block.
       </para>
       <subhead>Plotting a band with matrix data</subhead>
       <para>
