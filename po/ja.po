@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl revision 1.405\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-09 08:03-0400\n"
+"POT-Creation-Date: 2020-10-14 16:49-0400\n"
 "PO-Revision-Date: 2020-06-25 11:22+0900\n"
 "Last-Translator: Shintaro Nakagawa <shintaro@center.konan-u.ac.jp>\n"
 "Language-Team: Shintaro Nakagawa <shintaro@center.konan-u.ac.jp>\n"
@@ -117,7 +117,7 @@ msgstr "定数項と線形および二次トレンド項付きの検定"
 #: lib/src/modelprint.c:2482 lib/src/modelprint.c:3159
 #: lib/src/modelprint.c:4366 lib/src/modelprint.c:4703
 #: lib/src/modelprint.c:5567 lib/src/modelprint.c:5569 lib/src/vartest.c:1495
-#: gui/dialogs.c:5754 gui/library.c:3366 plugin/anova.c:153 plugin/anova.c:155
+#: gui/dialogs.c:5761 gui/library.c:3366 plugin/anova.c:153 plugin/anova.c:155
 #: plugin/johansen.c:1608 plugin/johansen.c:1609 plugin/johansen.c:1628
 #: plugin/johansen.c:1654
 msgid "p-value"
@@ -192,7 +192,7 @@ msgstr "有効でないオプション"
 
 #: lib/src/adf_kpss.c:1271 lib/src/adf_kpss.c:2048 lib/src/boxplots.c:874
 #: lib/src/describe.c:1707 lib/src/describe.c:3637 lib/src/describe.c:4191
-#: lib/src/describe.c:4787 lib/src/graphing.c:8965
+#: lib/src/describe.c:4787 lib/src/graphing.c:8967
 #, c-format
 msgid "%s is a constant"
 msgstr "%sは定数です"
@@ -548,7 +548,7 @@ msgstr ""
 "変数を取り除くことにより、%d個（全%d個の内）の情報量規準が改善しました\n"
 
 #: lib/src/compare.c:926 lib/src/compare.c:2334 lib/src/graphing.c:4123
-#: lib/src/graphing.c:4135 lib/src/graphing.c:4221 lib/src/graphing.c:6925
+#: lib/src/graphing.c:4135 lib/src/graphing.c:4221 lib/src/graphing.c:6927
 #: lib/src/printout.c:1563 gui/guiprint.c:1570 gui/guiprint.c:1630
 #: gui/library.c:6973 plugin/leverage.c:306
 msgid "residual"
@@ -1407,7 +1407,7 @@ msgstr "変数ID %d は、コマンドリストで複製されました."
 msgid "dataset is subsampled"
 msgstr "データセットはサブサンプルです"
 
-#: lib/src/dataset.c:2300 lib/src/dataset.c:2312 lib/src/graphing.c:8657
+#: lib/src/dataset.c:2300 lib/src/dataset.c:2312 lib/src/graphing.c:8659
 #: lib/src/gretl_utils.c:1199 lib/src/gretl_utils.c:1288
 msgid "periods"
 msgstr "期"
@@ -1630,12 +1630,12 @@ msgstr "離散変数でないため、%sを落とします\n"
 msgid "Invalid lag order %d"
 msgstr "有効でないラグ次数: %d"
 
-#: lib/src/describe.c:3523 gui/menustate.c:586
+#: lib/src/describe.c:3523 gui/menustate.c:582
 msgid "Correlogram"
 msgstr "コレログラム"
 
 #: lib/src/describe.c:3524 lib/src/describe.c:3936 lib/src/describe.c:3981
-#: lib/src/graphing.c:8544
+#: lib/src/graphing.c:8546
 msgid "lag"
 msgstr "ラグ"
 
@@ -1674,7 +1674,7 @@ msgstr "入力値は定数です"
 msgid "Correlations of %s and lagged %s"
 msgstr ""
 
-#: lib/src/describe.c:3980 gui/menustate.c:591
+#: lib/src/describe.c:3980 gui/menustate.c:587
 msgid "Cross-correlogram"
 msgstr "クロス・コレログラム"
 
@@ -1826,7 +1826,7 @@ msgstr "グループ内標準偏差"
 msgid "Between s.d."
 msgstr "グループ間標準偏差"
 
-#: lib/src/describe.c:5091 lib/src/describe.c:5234 gui/menustate.c:580
+#: lib/src/describe.c:5091 lib/src/describe.c:5234 gui/menustate.c:576
 msgid "Summary statistics"
 msgstr "基本統計量"
 
@@ -2350,7 +2350,7 @@ msgstr ""
 #: lib/src/gretl_array.c:1145 lib/src/gretl_array.c:1209
 #: lib/src/gretl_cmatrix.c:2450 lib/src/usermat.c:162 lib/src/usermat.c:217
 #: lib/src/usermat.c:233 lib/src/usermat.c:244 lib/src/usermat.c:288
-#: lib/src/usermat.c:337 lib/src/usermat.c:1108
+#: lib/src/usermat.c:337 lib/src/usermat.c:1098
 #, c-format
 msgid "Index value %d is out of bounds"
 msgstr "インデックス変数 %d は、境界外です"
@@ -2929,13 +2929,13 @@ msgstr ""
 msgid "time series by group"
 msgstr "グループ別時系列"
 
-#: lib/src/graphing.c:4210 lib/src/graphing.c:6472 lib/src/plotspec.c:734
+#: lib/src/graphing.c:4210 lib/src/graphing.c:6474 lib/src/plotspec.c:734
 #: lib/src/plotspec.c:1557 gui/gpt_dialog.c:967 gui/gpt_dialog.c:1387
 #: gui/gpt_dialog.c:2851
 msgid "right"
 msgstr "右"
 
-#: lib/src/graphing.c:4210 lib/src/graphing.c:6472 lib/src/plotspec.c:730
+#: lib/src/graphing.c:4210 lib/src/graphing.c:6474 lib/src/plotspec.c:730
 #: lib/src/plotspec.c:736 lib/src/plotspec.c:1555 gui/gpt_dialog.c:1382
 #: gui/gpt_dialog.c:2850
 msgid "left"
@@ -2980,11 +2980,11 @@ msgstr "相対度数"
 msgid "relative frequency"
 msgstr "相対度数"
 
-#: lib/src/graphing.c:5439 gui/menustate.c:589
+#: lib/src/graphing.c:5439 gui/menustate.c:585
 msgid "Correlation matrix"
 msgstr "相関行列"
 
-#: lib/src/graphing.c:5831 lib/src/graphing.c:6728
+#: lib/src/graphing.c:5831 lib/src/graphing.c:6730
 #, c-format
 msgid "%g percent interval"
 msgstr "%g パーセント区間"
@@ -2993,199 +2993,199 @@ msgstr "%g パーセント区間"
 msgid "forecast"
 msgstr "予測"
 
-#: lib/src/graphing.c:6726
+#: lib/src/graphing.c:6728
 #, c-format
 msgid "%g%% interval for mean"
 msgstr ""
 
-#: lib/src/graphing.c:6830
+#: lib/src/graphing.c:6832
 #, c-format
 msgid "Coefficient on %s"
 msgstr ""
 
-#: lib/src/graphing.c:6854
+#: lib/src/graphing.c:6856
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "区分回帰推定値(但し、%g%%範囲)"
 
-#: lib/src/graphing.c:6862
+#: lib/src/graphing.c:6864
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr ""
 
-#: lib/src/graphing.c:6925
+#: lib/src/graphing.c:6927
 msgid "+- sqrt(h(t))"
 msgstr ""
 
-#: lib/src/graphing.c:7080
+#: lib/src/graphing.c:7082
 #, c-format
 msgid "mean %s"
 msgstr ""
 
-#: lib/src/graphing.c:7160
+#: lib/src/graphing.c:7162
 msgid "Group means"
 msgstr "グループ（群）平均"
 
-#: lib/src/graphing.c:7548
+#: lib/src/graphing.c:7550
 msgid "time"
 msgstr ""
 
-#: lib/src/graphing.c:7639
+#: lib/src/graphing.c:7641
 msgid "This command needs panel data"
 msgstr "このコマンドにはパネル・データが必要です."
 
-#: lib/src/graphing.c:7769
+#: lib/src/graphing.c:7771
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr ""
 
-#: lib/src/graphing.c:7774
+#: lib/src/graphing.c:7776
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr "%sの応答（%sにおけるショックに対する）"
 
-#: lib/src/graphing.c:7789
+#: lib/src/graphing.c:7791
 #, c-format
 msgid "%g percent confidence band"
 msgstr "%g パーセント信頼帯"
 
-#: lib/src/graphing.c:7794 lib/src/graphing.c:7797
+#: lib/src/graphing.c:7796 lib/src/graphing.c:7799
 msgid "point estimate"
 msgstr "点推定"
 
-#: lib/src/graphing.c:7798
+#: lib/src/graphing.c:7800
 #, c-format
 msgid "%g and %g quantiles"
 msgstr ""
 
-#: lib/src/graphing.c:7900
+#: lib/src/graphing.c:7902
 #, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "%sに対する分散分解を予測する"
 
-#: lib/src/graphing.c:8129
+#: lib/src/graphing.c:8131
 msgid "VAR residuals"
 msgstr ""
 
-#: lib/src/graphing.c:8131 gui/gui_utils.c:3659
+#: lib/src/graphing.c:8133 gui/gui_utils.c:3659
 msgid "System residuals"
 msgstr "連立方程式の残差"
 
-#: lib/src/graphing.c:8207
+#: lib/src/graphing.c:8209
 msgid "EC terms"
 msgstr ""
 
-#: lib/src/graphing.c:8209 gui/gui_utils.c:4905
+#: lib/src/graphing.c:8211 gui/gui_utils.c:4905
 msgid "EC term"
 msgstr ""
 
-#: lib/src/graphing.c:8356
+#: lib/src/graphing.c:8358
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr ""
 
-#: lib/src/graphing.c:8440
+#: lib/src/graphing.c:8442
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% 信頼楕円 および %g%% 限界区間"
 
-#: lib/src/graphing.c:8527
+#: lib/src/graphing.c:8529
 #, no-c-format
 msgid "95% interval"
 msgstr "95% 区間"
 
-#: lib/src/graphing.c:8553
+#: lib/src/graphing.c:8555
 msgid "Residual ACF"
 msgstr "残差自己相関係数"
 
-#: lib/src/graphing.c:8555
+#: lib/src/graphing.c:8557
 msgid "ACF for"
 msgstr "自己相関係数(ACF)"
 
-#: lib/src/graphing.c:8589
+#: lib/src/graphing.c:8591
 msgid "Residual PACF"
 msgstr "残差偏自己相関係数"
 
-#: lib/src/graphing.c:8591
+#: lib/src/graphing.c:8593
 msgid "PACF for"
 msgstr "偏自己相関係数(PACF)"
 
-#: lib/src/graphing.c:8668
+#: lib/src/graphing.c:8670
 msgid "radians"
 msgstr "ラジアン"
 
-#: lib/src/graphing.c:8670
+#: lib/src/graphing.c:8672
 msgid "degrees"
 msgstr "角度"
 
-#: lib/src/graphing.c:8672
+#: lib/src/graphing.c:8674
 msgid "scaled frequency"
 msgstr ""
 
-#: lib/src/graphing.c:8682
+#: lib/src/graphing.c:8684
 msgid "Residual spectrum"
 msgstr "残差スペクトル"
 
-#: lib/src/graphing.c:8684
+#: lib/src/graphing.c:8686
 #, c-format
 msgid "Spectrum of %s"
 msgstr "%sのスペクトル"
 
-#: lib/src/graphing.c:8690
+#: lib/src/graphing.c:8692
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "バートレット窓, 長さ: %d"
 
-#: lib/src/graphing.c:8696 lib/src/graphing.c:8802 gui/dialogs.c:4854
+#: lib/src/graphing.c:8698 lib/src/graphing.c:8804 gui/dialogs.c:4861
 msgid "log scale"
 msgstr "対数スケール"
 
-#: lib/src/graphing.c:8801
+#: lib/src/graphing.c:8803
 msgid "Sample periodogram vs ARMA Spectrum"
 msgstr "標本ピリオドグラム 対 ARMAスペクトラム"
 
-#: lib/src/graphing.c:8803
+#: lib/src/graphing.c:8805
 msgid "spectrum"
 msgstr "スペクトラム"
 
-#: lib/src/graphing.c:8804 gui/library.c:6022
+#: lib/src/graphing.c:8806 gui/library.c:6022
 msgid "periodogram"
 msgstr "ピリオドグラム"
 
-#: lib/src/graphing.c:8907 gui/library.c:896 gui/library.c:2922
+#: lib/src/graphing.c:8909 gui/library.c:896 gui/library.c:2922
 msgid "Q-Q plot"
 msgstr "Q-Qプロット"
 
-#: lib/src/graphing.c:9000
+#: lib/src/graphing.c:9002
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "%sのQ-Qプロット"
 
-#: lib/src/graphing.c:9003
+#: lib/src/graphing.c:9005
 msgid "Normal quantiles"
 msgstr "正規分布の分位数"
 
-#: lib/src/graphing.c:9323 lib/src/graphing.c:9326
+#: lib/src/graphing.c:9325 lib/src/graphing.c:9328
 #, c-format
 msgid "adjusted %s"
 msgstr "調整済み %s"
 
-#: lib/src/graphing.c:9389 plugin/range-mean.c:112
+#: lib/src/graphing.c:9391 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "（最小二乗法による回帰直線付き）"
 
-#: lib/src/graphing.c:9506 lib/src/gretl_func.c:2741 lib/src/gretl_utils.c:1954
-#: lib/src/interact.c:1498 gui/dialogs.c:5540 gui/fnsave.c:5291
+#: lib/src/graphing.c:9508 lib/src/gretl_func.c:2741 lib/src/gretl_utils.c:1954
+#: lib/src/interact.c:1498 gui/dialogs.c:5547 gui/fnsave.c:5291
 #: gui/textbuf.c:1937 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr "%sを開けません"
 
-#: lib/src/graphing.c:10072
+#: lib/src/graphing.c:10074
 #, fuzzy
 msgid "original data"
 msgstr "%s（原系列）"
 
-#: lib/src/graphing.c:10074
+#: lib/src/graphing.c:10076
 #, fuzzy
 msgid "final series"
 msgstr "系列を追加"
@@ -3751,13 +3751,13 @@ msgstr "変数ID %d は、オリジナルのリストにはありませんでし
 msgid "Can't do this: some vars in original model have been redefined"
 msgstr "実行不能: オリジナル・モデルのいくつかの変数が、再定義されました"
 
-#: lib/src/gretl_midas.c:207 lib/src/subsample.c:3122 gui/dialogs.c:3952
-#: gui/dialogs.c:4082
+#: lib/src/gretl_midas.c:207 lib/src/subsample.c:3122 gui/dialogs.c:3959
+#: gui/dialogs.c:4089
 msgid "quarterly"
 msgstr "四半期"
 
-#: lib/src/gretl_midas.c:208 lib/src/subsample.c:3124 gui/dialogs.c:3952
-#: gui/dialogs.c:4083
+#: lib/src/gretl_midas.c:208 lib/src/subsample.c:3124 gui/dialogs.c:3959
+#: gui/dialogs.c:4090
 msgid "monthly"
 msgstr "月次"
 
@@ -4369,7 +4369,7 @@ msgid "Sum of coefficients"
 msgstr "係数の合計"
 
 #: lib/src/gretl_restrict.c:2996 lib/src/gretl_restrict.c:3003
-#: gui/dialogs.c:5752
+#: gui/dialogs.c:5759
 msgid "Standard error"
 msgstr "標準誤差"
 
@@ -4460,7 +4460,7 @@ msgstr "ユニット"
 msgid "Command failed"
 msgstr "コマンドは失敗しました"
 
-#: lib/src/gretl_utils.c:1959 lib/src/printout.c:925 gui/dialogs.c:5551
+#: lib/src/gretl_utils.c:1959 lib/src/printout.c:925 gui/dialogs.c:5558
 #, c-format
 msgid "Couldn't write to %s"
 msgstr "%sに書き込めませんでした"
@@ -4793,7 +4793,7 @@ msgid "Robust estimation"
 msgstr "頑健推定"
 
 #: lib/src/libset.c:1729 gui/datawiz.c:441 gui/datawiz.c:520
-#: gui/menustate.c:1000 plugin/addons-i18n.c:30
+#: gui/menustate.c:996 plugin/addons-i18n.c:30
 msgid "Time series"
 msgstr "時系列"
 
@@ -5759,7 +5759,7 @@ msgid "$t$-ratio"
 msgstr ""
 
 #: lib/src/modelprint.c:2419 lib/src/modelprint.c:3970
-#: lib/src/modelprint.c:4365 lib/src/modelprint.c:4702 gui/dialogs.c:5753
+#: lib/src/modelprint.c:4365 lib/src/modelprint.c:4702 gui/dialogs.c:5760
 #: plugin/panurc.c:553
 msgid "t-ratio"
 msgstr "t値"
@@ -5804,7 +5804,7 @@ msgstr "上側"
 msgid "Estimate"
 msgstr ""
 
-#: lib/src/modelprint.c:2469 gui/dialogs.c:1042 gui/dialogs.c:5751
+#: lib/src/modelprint.c:2469 gui/dialogs.c:1042 gui/dialogs.c:5758
 #: gui/guiprint.c:1961 gui/guiprint.c:2013
 msgid "Coefficient"
 msgstr "係数"
@@ -6359,7 +6359,7 @@ msgstr "コマンド '%s' は、この文脈では有効ではありません"
 msgid "'%s': not valid in this context"
 msgstr "'%s' は、この文脈では有効ではありません"
 
-#: lib/src/nls.c:3087 gui/dialogs.c:5898
+#: lib/src/nls.c:3087 gui/dialogs.c:5905
 #, c-format
 msgid "'%s' is not a known series"
 msgstr "'%s'は、既知の系列ではありません"
@@ -6640,7 +6640,7 @@ msgstr "階段"
 msgid "boxes"
 msgstr "縦棒"
 
-#: lib/src/plotspec.c:233 gui/dialogs.c:3012 gui/dialogs.c:3340
+#: lib/src/plotspec.c:233 gui/dialogs.c:3012 gui/dialogs.c:3352
 msgid "error bars"
 msgstr "エラーバー"
 
@@ -7650,7 +7650,7 @@ msgstr "範囲 %d から %d は、非正(non-positive)です!"
 msgid "Ambiguous matrix index"
 msgstr "あいまいな行列インデックス"
 
-#: lib/src/usermat.c:1584
+#: lib/src/usermat.c:1574
 msgid "Matrix decomposition failed"
 msgstr "行列分解に失敗しました"
 
@@ -8665,7 +8665,7 @@ msgstr "両方の分布関数"
 msgid "Sorry, this item not yet implemented!"
 msgstr "この項目は、まだ実装されていません. ごめんなさい!"
 
-#: gui/callbacks.c:375 gui/dialogs.c:5393
+#: gui/callbacks.c:375 gui/dialogs.c:5400
 msgid "gretl: warning"
 msgstr "gretl: 警告"
 
@@ -8952,7 +8952,7 @@ msgstr "グラフ"
 msgid "Import"
 msgstr "インポート"
 
-#: gui/database.c:1094 gui/database.c:1117 gui/menustate.c:594
+#: gui/database.c:1094 gui/database.c:1117 gui/menustate.c:590
 #: gui/session.c:162 gui/session.c:182 gui/session.c:190 gui/session.c:217
 #: gui/session.c:224 gui/session.c:3456 gui/session.c:3472 gui/session.c:3571
 #: gui/ssheet.c:2715
@@ -8963,7 +8963,7 @@ msgstr "削除"
 msgid "Codebook"
 msgstr "コードブック"
 
-#: gui/database.c:1113 gui/menustate.c:578 gui/menustate.c:612
+#: gui/database.c:1113 gui/menustate.c:574 gui/menustate.c:608
 #: gui/toolbar.c:808
 msgid "Display values"
 msgstr "データ（値）を表示"
@@ -9421,7 +9421,7 @@ msgstr ""
 "最初の変数の名称を入力して下さい\n"
 "(最大%d文字)"
 
-#: gui/datawiz.c:186 gui/dialogs.c:5585 gui/ssheet.c:1003
+#: gui/datawiz.c:186 gui/dialogs.c:5592 gui/ssheet.c:1003
 msgid "gretl: name variable"
 msgstr "gretl: 変数の名前を付ける"
 
@@ -9429,39 +9429,39 @@ msgstr "gretl: 変数の名前を付ける"
 msgid "No changes were made"
 msgstr "変更は行われませんでした"
 
-#: gui/datawiz.c:411 gui/dialogs.c:3680 gui/menustate.c:1004
+#: gui/datawiz.c:411 gui/dialogs.c:3687 gui/menustate.c:1000
 msgid "Annual"
 msgstr "年次"
 
-#: gui/datawiz.c:412 gui/dialogs.c:3679 gui/dialogs.c:6350 gui/menustate.c:1006
+#: gui/datawiz.c:412 gui/dialogs.c:3686 gui/dialogs.c:6357 gui/menustate.c:1002
 msgid "Quarterly"
 msgstr "四半期"
 
-#: gui/datawiz.c:413 gui/dialogs.c:3686 gui/dialogs.c:6355 gui/menustate.c:1008
+#: gui/datawiz.c:413 gui/dialogs.c:3693 gui/dialogs.c:6362 gui/menustate.c:1004
 msgid "Monthly"
 msgstr "月次"
 
-#: gui/datawiz.c:414 gui/dialogs.c:3685 gui/menustate.c:1012
+#: gui/datawiz.c:414 gui/dialogs.c:3692 gui/menustate.c:1008
 msgid "Weekly"
 msgstr "週次"
 
-#: gui/datawiz.c:415 gui/dialogs.c:3693 gui/menustate.c:1014
+#: gui/datawiz.c:415 gui/dialogs.c:3700 gui/menustate.c:1010
 msgid "Daily (5 days)"
 msgstr "日次（週５日）"
 
-#: gui/datawiz.c:416 gui/dialogs.c:3694 gui/menustate.c:1016
+#: gui/datawiz.c:416 gui/dialogs.c:3701 gui/menustate.c:1012
 msgid "Daily (6 days)"
 msgstr "日次（週６日）"
 
-#: gui/datawiz.c:417 gui/dialogs.c:3692 gui/menustate.c:1018
+#: gui/datawiz.c:417 gui/dialogs.c:3699 gui/menustate.c:1014
 msgid "Daily (7 days)"
 msgstr "日次（週７日）"
 
-#: gui/datawiz.c:418 gui/menustate.c:1010
+#: gui/datawiz.c:418 gui/menustate.c:1006
 msgid "Hourly"
 msgstr "1時間おき"
 
-#: gui/datawiz.c:419 gui/menustate.c:1020
+#: gui/datawiz.c:419 gui/menustate.c:1016
 msgid "Decennial"
 msgstr "10年おき"
 
@@ -9489,35 +9489,35 @@ msgstr ""
 msgid "Cross-sectional"
 msgstr "クロスセクション"
 
-#: gui/datawiz.c:521 gui/menustate.c:1025
+#: gui/datawiz.c:521 gui/menustate.c:1021
 msgid "Panel"
 msgstr "パネル"
 
-#: gui/datawiz.c:523 gui/dialogs.c:3748
+#: gui/datawiz.c:523 gui/dialogs.c:3755
 msgid "Monday"
 msgstr "月曜日"
 
-#: gui/datawiz.c:524 gui/dialogs.c:3749
+#: gui/datawiz.c:524 gui/dialogs.c:3756
 msgid "Tuesday"
 msgstr "火曜日"
 
-#: gui/datawiz.c:525 gui/dialogs.c:3750
+#: gui/datawiz.c:525 gui/dialogs.c:3757
 msgid "Wednesday"
 msgstr "水曜日"
 
-#: gui/datawiz.c:526 gui/dialogs.c:3751
+#: gui/datawiz.c:526 gui/dialogs.c:3758
 msgid "Thursday"
 msgstr "木曜日"
 
-#: gui/datawiz.c:527 gui/dialogs.c:3752
+#: gui/datawiz.c:527 gui/dialogs.c:3759
 msgid "Friday"
 msgstr "金曜日"
 
-#: gui/datawiz.c:528 gui/dialogs.c:3753
+#: gui/datawiz.c:528 gui/dialogs.c:3760
 msgid "Saturday"
 msgstr "土曜日"
 
-#: gui/datawiz.c:529 gui/dialogs.c:3747
+#: gui/datawiz.c:529 gui/dialogs.c:3754
 msgid "Sunday"
 msgstr "日曜日"
 
@@ -9821,7 +9821,7 @@ msgstr ""
 msgid "Periods"
 msgstr ""
 
-#: gui/dialogs.c:2076 gui/dialogs.c:6628 gui/selector.c:8861
+#: gui/dialogs.c:2076 gui/dialogs.c:6635 gui/selector.c:8861
 msgid "to"
 msgstr ""
 
@@ -9924,7 +9924,7 @@ msgstr "gretl: チョウ(Chow)検定"
 msgid "Test a subset of regressors"
 msgstr "説明変数の部分集合を検定する"
 
-#: gui/dialogs.c:3006 gui/dialogs.c:3342
+#: gui/dialogs.c:3006 gui/dialogs.c:3354
 msgid "shaded area"
 msgstr "網掛け"
 
@@ -9944,370 +9944,370 @@ msgstr ""
 msgid "Produce forecast for"
 msgstr "以下の変数に対する予測を作成"
 
-#: gui/dialogs.c:3191
+#: gui/dialogs.c:3200
 msgid "Number of pre-forecast observations to graph"
 msgstr "グラフに描く予測前の観測数"
 
-#: gui/dialogs.c:3194
+#: gui/dialogs.c:3203
 msgid "automatic forecast (dynamic out of sample)"
 msgstr "自動的に選択（標本内は静学的、標本外は動学的）"
 
-#: gui/dialogs.c:3195
+#: gui/dialogs.c:3204
 msgid "dynamic forecast"
 msgstr "動学的予想"
 
-#: gui/dialogs.c:3196
+#: gui/dialogs.c:3205
 msgid "static forecast"
 msgstr "静学的予想"
 
-#: gui/dialogs.c:3197
+#: gui/dialogs.c:3206
 msgid "recursive k-step ahead forecasts: k = "
 msgstr "再帰的k-ステップ前方予測: k= "
 
-#: gui/dialogs.c:3210
+#: gui/dialogs.c:3219
 msgid "gretl: forecast"
 msgstr "gretl: 予測"
 
-#: gui/dialogs.c:3218
+#: gui/dialogs.c:3227
 msgid "Forecast range:"
 msgstr "予測範囲:"
 
-#: gui/dialogs.c:3219
+#: gui/dialogs.c:3228
 msgid "Start"
 msgstr "開始"
 
-#: gui/dialogs.c:3219
+#: gui/dialogs.c:3228
 msgid "End"
 msgstr "終了"
 
-#: gui/dialogs.c:3328
+#: gui/dialogs.c:3337
 msgid "Show fitted values for pre-forecast range"
 msgstr "予測前の範囲の理論値を表示する"
 
-#: gui/dialogs.c:3341
+#: gui/dialogs.c:3353
 msgid "low and high lines"
 msgstr "信頼限界をグラフに描く"
 
-#: gui/dialogs.c:3372
+#: gui/dialogs.c:3384
 msgid "Plot confidence interval using"
 msgstr "信頼区間のプロットに次を使用する"
 
-#: gui/dialogs.c:3439 gui/library.c:6413
+#: gui/dialogs.c:3446 gui/library.c:6413
 msgid "Add observations"
 msgstr "観測を追加"
 
-#: gui/dialogs.c:3452
+#: gui/dialogs.c:3459
 msgid "Number of observations to add:"
 msgstr "追加する観測数:"
 
-#: gui/dialogs.c:3543
+#: gui/dialogs.c:3550
 msgid "select variable"
 msgstr "変数を選択して下さい"
 
-#: gui/dialogs.c:3725
+#: gui/dialogs.c:3732
 msgid "Week starts on Monday"
 msgstr "１週間が月曜日から始まる"
 
-#: gui/dialogs.c:3736
+#: gui/dialogs.c:3743
 msgid "Week starts on Sunday"
 msgstr "１週間が日曜日から始まる"
 
-#: gui/dialogs.c:3798
+#: gui/dialogs.c:3805
 msgid "Compact by averaging"
 msgstr "平均による変換"
 
-#: gui/dialogs.c:3799
+#: gui/dialogs.c:3806
 msgid "Compact by summing"
 msgstr "合計による変換"
 
-#: gui/dialogs.c:3800
+#: gui/dialogs.c:3807
 msgid "Use end-of-period values"
 msgstr "期末の値を用いる"
 
-#: gui/dialogs.c:3801
+#: gui/dialogs.c:3808
 msgid "Use start-of-period values"
 msgstr "期首の値を用いる"
 
-#: gui/dialogs.c:3802
+#: gui/dialogs.c:3809
 msgid "Spread to multiple series (MIDAS)"
 msgstr ""
 
-#: gui/dialogs.c:3822
+#: gui/dialogs.c:3829
 msgid "Default method:"
 msgstr "既定の方法:"
 
-#: gui/dialogs.c:3853
+#: gui/dialogs.c:3860
 msgid "Use representative day"
 msgstr ""
 
-#: gui/dialogs.c:3936
+#: gui/dialogs.c:3943
 msgid "gretl: compact data"
 msgstr "gretl: データのコンパクト化"
 
-#: gui/dialogs.c:3951
+#: gui/dialogs.c:3958
 #, c-format
 msgid "You are adding a %s series to %s dataset"
 msgstr "系列 %s をデータセット %s に追加しています"
 
-#: gui/dialogs.c:3953
+#: gui/dialogs.c:3960
 msgid "a quarterly"
 msgstr "四半期"
 
-#: gui/dialogs.c:3953
+#: gui/dialogs.c:3960
 msgid "an annual"
 msgstr "年次"
 
-#: gui/dialogs.c:3958
+#: gui/dialogs.c:3965
 msgid "Compact quarterly data to annual"
 msgstr "四半期のデータを年次に変換する"
 
-#: gui/dialogs.c:3961
+#: gui/dialogs.c:3968
 msgid "Compact monthly data to:"
 msgstr "月次のデータを次の形式に変換する:"
 
-#: gui/dialogs.c:3967
+#: gui/dialogs.c:3974
 msgid "Compact daily data to:"
 msgstr "日次データを次の期種に変換する:"
 
-#: gui/dialogs.c:3970
+#: gui/dialogs.c:3977
 msgid "Compact daily data to weekly"
 msgstr "日次データを週次データに期種変換する"
 
-#: gui/dialogs.c:3977
+#: gui/dialogs.c:3984
 msgid "Compact weekly data to monthly"
 msgstr "週次のデータを月次に変換する"
 
-#: gui/dialogs.c:3980
+#: gui/dialogs.c:3987
 msgid "Compact hourly data to:"
 msgstr "時間後とのデータを次の期種に変換する:"
 
-#: gui/dialogs.c:4070
+#: gui/dialogs.c:4077
 msgid "gretl: expand data"
 msgstr "gretl: データの拡張"
 
-#: gui/dialogs.c:4078
+#: gui/dialogs.c:4085
 #, fuzzy
 msgid "Expand annual data to"
 msgstr "年次のデータを四半期に変換する"
 
-#: gui/dialogs.c:4088
+#: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
 msgstr "四半期のデータを月次に変換する"
 
-#: gui/dialogs.c:4095
+#: gui/dialogs.c:4102
 #, fuzzy
 msgid "Please read the Help before proceeding."
 msgstr "(入力ガイドについてはヘルプをご参照下さい)"
 
-#: gui/dialogs.c:4251
+#: gui/dialogs.c:4258
 msgid "density estimation options"
 msgstr "カーネル密度推定オプション"
 
-#: gui/dialogs.c:4258 plugin/kernel.c:116
+#: gui/dialogs.c:4265 plugin/kernel.c:116
 msgid "Gaussian kernel"
 msgstr "Gaussianカーネル"
 
-#: gui/dialogs.c:4268 plugin/kernel.c:117
+#: gui/dialogs.c:4275 plugin/kernel.c:117
 msgid "Epanechnikov kernel"
 msgstr "Epanechnikovカーネル"
 
-#: gui/dialogs.c:4283
+#: gui/dialogs.c:4290
 msgid "bandwidth adjustment factor:"
 msgstr "バンド幅調整ファクター:"
 
-#: gui/dialogs.c:4322
+#: gui/dialogs.c:4329
 msgid "paste data from clipboard"
 msgstr "クリップボードからデータをペースト"
 
-#: gui/dialogs.c:4329
+#: gui/dialogs.c:4336
 msgid "Try pasting data from clipboard?"
 msgstr "クリップボードからのデータの貼り付けを試みますか?"
 
-#: gui/dialogs.c:4338
+#: gui/dialogs.c:4345
 msgid "Clear current dataset first"
 msgstr "現在のデータセットを先に消去する"
 
-#: gui/dialogs.c:4349
+#: gui/dialogs.c:4356
 msgid "Try appending to current dataset"
 msgstr "現在のデータセットに追加するよう試みる"
 
-#: gui/dialogs.c:4606
+#: gui/dialogs.c:4613
 msgid "No model is specified"
 msgstr "モデルが指定されていません"
 
-#: gui/dialogs.c:4828
+#: gui/dialogs.c:4835
 msgid "gretl: periodogram"
 msgstr "gretl: ピリオドグラム"
 
-#: gui/dialogs.c:4834
+#: gui/dialogs.c:4841
 msgid "Sample periodogram"
 msgstr "標本ピリオドグラム"
 
-#: gui/dialogs.c:4839
+#: gui/dialogs.c:4846
 msgid "Bartlett window, bandwidth:"
 msgstr "バートレット窓　バンド幅:"
 
-#: gui/dialogs.c:4861
+#: gui/dialogs.c:4868
 msgid "frequency axis scale:"
 msgstr "周波数軸スケール:"
 
-#: gui/dialogs.c:5059
+#: gui/dialogs.c:5066
 msgid "Number of bins:"
 msgstr "階級の数:"
 
-#: gui/dialogs.c:5060
+#: gui/dialogs.c:5067
 msgid "Minimum value, left bin:"
 msgstr "左端の階級の下限値:"
 
-#: gui/dialogs.c:5061
+#: gui/dialogs.c:5068
 msgid "Bin width:"
 msgstr "階級幅:"
 
-#: gui/dialogs.c:5134
+#: gui/dialogs.c:5141
 msgid "Show data only"
 msgstr "データのみ表示"
 
-#: gui/dialogs.c:5135
+#: gui/dialogs.c:5142
 msgid "Test against normal distribution"
 msgstr "正規分布であるか検定する"
 
-#: gui/dialogs.c:5136
+#: gui/dialogs.c:5143
 msgid "Test against gamma distribution"
 msgstr "ガンマ分布であるか検定する"
 
-#: gui/dialogs.c:5155
+#: gui/dialogs.c:5162
 msgid "show plot"
 msgstr "グラフを表示"
 
-#: gui/dialogs.c:5247
+#: gui/dialogs.c:5254
 msgid "Use model names"
 msgstr "モデル名を使用する"
 
-#: gui/dialogs.c:5250
+#: gui/dialogs.c:5257
 msgid "Show standard errors in parentheses"
 msgstr "標準誤差を括弧内に表示する"
 
-#: gui/dialogs.c:5251
+#: gui/dialogs.c:5258
 msgid "Show t-statistics in parentheses"
 msgstr "t検定統計量を括弧内に表示する"
 
-#: gui/dialogs.c:5269
+#: gui/dialogs.c:5276
 msgid "model table options"
 msgstr "モデル比較表オプション"
 
-#: gui/dialogs.c:5276
+#: gui/dialogs.c:5283
 msgid "column headings"
 msgstr "列の見出し"
 
-#: gui/dialogs.c:5324 gui/selector.c:6499
+#: gui/dialogs.c:5331 gui/selector.c:6499
 msgid "Show p-values"
 msgstr "p値を表示する"
 
-#: gui/dialogs.c:5332
+#: gui/dialogs.c:5339
 msgid "Show significance asterisks"
 msgstr "有意水準をアスタリスクで表示する"
 
-#: gui/dialogs.c:5341 gui/dialogs.c:5820 gui/series_view.c:756
+#: gui/dialogs.c:5348 gui/dialogs.c:5827 gui/series_view.c:756
 #: gui/ssheet.c:4216
 msgid "Show"
 msgstr "表示"
 
-#: gui/dialogs.c:5352 gui/dialogs.c:5831 gui/series_view.c:770
+#: gui/dialogs.c:5359 gui/dialogs.c:5838 gui/series_view.c:770
 #: gui/ssheet.c:4228
 msgid "significant figures"
 msgstr "有効数字桁数"
 
-#: gui/dialogs.c:5353 gui/dialogs.c:5828 gui/series_view.c:771
+#: gui/dialogs.c:5360 gui/dialogs.c:5835 gui/series_view.c:771
 #: gui/ssheet.c:4229
 msgid "decimal places"
 msgstr "小数位桁数"
 
-#: gui/dialogs.c:5369
+#: gui/dialogs.c:5376
 msgid "Reset"
 msgstr "リセット"
 
-#: gui/dialogs.c:5392
+#: gui/dialogs.c:5399
 msgid "gretl: error"
 msgstr "gretl: エラー"
 
-#: gui/dialogs.c:5394
+#: gui/dialogs.c:5401
 msgid "gretl: information"
 msgstr "gretl: お知らせ"
 
-#: gui/dialogs.c:5611
+#: gui/dialogs.c:5618
 msgid "show scalars window"
 msgstr "スカラー・ウィンドウを表示"
 
-#: gui/dialogs.c:5612
+#: gui/dialogs.c:5619
 msgid "show icons window"
 msgstr "アイコン・ウィンドウを表示"
 
-#: gui/dialogs.c:5770
+#: gui/dialogs.c:5777
 msgid "gretl: TeX tabular format"
 msgstr "gretl: TeXの表の書式"
 
-#: gui/dialogs.c:5778 gui/series_view.c:748 gui/ssheet.c:4208
+#: gui/dialogs.c:5785 gui/series_view.c:748 gui/ssheet.c:4208
 msgid "Standard format"
 msgstr "標準書式"
 
-#: gui/dialogs.c:5781
+#: gui/dialogs.c:5788
 msgid "Custom format"
 msgstr "カスタム・フォーマット"
 
-#: gui/dialogs.c:5896
+#: gui/dialogs.c:5903
 msgid "Please specify a cluster variable"
 msgstr "クラスター変数を指定して下さい"
 
-#: gui/dialogs.c:5935
+#: gui/dialogs.c:5942
 msgid "Select from Regular HCCME options"
 msgstr "標準のHCCMEオプションより設定"
 
-#: gui/dialogs.c:5946
+#: gui/dialogs.c:5953
 msgid "Cluster by"
 msgstr "クラスター変数"
 
-#: gui/dialogs.c:6019
+#: gui/dialogs.c:6026
 msgid "New script output:"
 msgstr "新しいスクリプトの実行結果:"
 
-#: gui/dialogs.c:6021
+#: gui/dialogs.c:6028
 msgid "New script output should:"
 msgstr "新しいスクリプトの出力:"
 
-#: gui/dialogs.c:6081
+#: gui/dialogs.c:6088
 msgid "Replace previous output"
 msgstr ""
 
-#: gui/dialogs.c:6082
+#: gui/dialogs.c:6089
 msgid "Add to previous output"
 msgstr "先の出力結果に追加する"
 
-#: gui/dialogs.c:6083
+#: gui/dialogs.c:6090
 msgid "Go to a new window"
 msgstr "新しいウィンドウへ移動"
 
-#: gui/dialogs.c:6090
+#: gui/dialogs.c:6097
 msgid "Replaces output in this window"
 msgstr ""
 
-#: gui/dialogs.c:6091
+#: gui/dialogs.c:6098
 msgid "Adds to output in this window"
 msgstr ""
 
-#: gui/dialogs.c:6092
+#: gui/dialogs.c:6099
 msgid "Always goes to a new window"
 msgstr "常に新しいウィンドウへ移動"
 
-#: gui/dialogs.c:6318
+#: gui/dialogs.c:6325
 #, c-format
 msgid "percent change in %s"
 msgstr "%s のパーセント変化"
 
-#: gui/dialogs.c:6321
+#: gui/dialogs.c:6328
 msgid "percent changes"
 msgstr "パーセント変化"
 
-#: gui/dialogs.c:6330 gui/dialogs.c:6431 gui/ssheet.c:999
+#: gui/dialogs.c:6337 gui/dialogs.c:6438 gui/ssheet.c:999
 #, c-format
 msgid ""
 "Enter name for new variable\n"
@@ -10316,79 +10316,84 @@ msgstr ""
 "新しい変数の名前を入力して下さい\n"
 "(最大%d文字)"
 
-#: gui/dialogs.c:6351
+#: gui/dialogs.c:6358
 msgid "Quarterly, annualized"
 msgstr "四半期, 年率換算"
 
-#: gui/dialogs.c:6352 gui/dialogs.c:6357
+#: gui/dialogs.c:6359 gui/dialogs.c:6364
 msgid "Year on year"
 msgstr "前年比"
 
-#: gui/dialogs.c:6356
+#: gui/dialogs.c:6363
 msgid "Monthly, annualized"
 msgstr "月次, 年次化"
 
-#: gui/dialogs.c:6382
+#: gui/dialogs.c:6389
 msgid "Calculate using logs"
 msgstr "対数を用いて計算する"
 
-#: gui/dialogs.c:6419
+#: gui/dialogs.c:6426
 #, c-format
 msgid "100-based index of %s"
 msgstr ""
 
-#: gui/dialogs.c:6422
+#: gui/dialogs.c:6429
 msgid "100-based indices"
 msgstr ""
 
-#: gui/dialogs.c:6455
+#: gui/dialogs.c:6462
 msgid "Base period:"
 msgstr "基準となる期:"
 
-#: gui/dialogs.c:6557
+#: gui/dialogs.c:6564
 msgid "Unrestricted (U-MIDAS)"
 msgstr ""
 
-#: gui/dialogs.c:6558
+#: gui/dialogs.c:6565
 msgid "Normalized exponential Almon"
 msgstr ""
 
-#: gui/dialogs.c:6559
+#: gui/dialogs.c:6566
 msgid "Normalized beta (zero last lag)"
 msgstr ""
 
-#: gui/dialogs.c:6560
+#: gui/dialogs.c:6567
 msgid "Normalized beta (non-zero last lag)"
 msgstr ""
 
-#: gui/dialogs.c:6561
+#: gui/dialogs.c:6568
 msgid "Almon polynomial"
 msgstr ""
 
-#: gui/dialogs.c:6562
+#: gui/dialogs.c:6569
 msgid "Normalized beta, one parameter"
 msgstr ""
 
-#: gui/dialogs.c:6585
+#: gui/dialogs.c:6592
 #, c-format
 msgid "High-frequency regressor %s"
 msgstr ""
 
-#: gui/dialogs.c:6598
+#: gui/dialogs.c:6605
 msgid "Parameterization"
 msgstr "パラメータ化"
 
-#: gui/dialogs.c:6610
+#: gui/dialogs.c:6617
 msgid "Number of parameters"
 msgstr "パラメータ数"
 
-#: gui/dialogs.c:6621 plugin/addons-i18n.c:65
+#: gui/dialogs.c:6628 plugin/addons-i18n.c:65
 msgid "Lags"
 msgstr "ラグ"
 
-#: gui/dialogs.c:6700
+#: gui/dialogs.c:6707
 msgid "series code:"
 msgstr "系列コード:"
+
+#: gui/dialogs.c:7085
+#, c-format
+msgid "The series %s does not seem suitable for disaggregation"
+msgstr ""
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -10904,8 +10909,8 @@ msgstr "リストの名称が設定されていません"
 msgid "Really create an empty list?"
 msgstr "本当に、空のリストを作成しますか?"
 
-#: gui/fncall.c:810 gui/fncall.c:817 gui/fncall.c:1385 gui/menustate.c:608
-#: gui/menustate.c:623
+#: gui/fncall.c:810 gui/fncall.c:817 gui/fncall.c:1385 gui/menustate.c:604
+#: gui/menustate.c:619
 msgid "Define list"
 msgstr "変数リストを定義"
 
@@ -11444,7 +11449,7 @@ msgstr "白黒"
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Windowsメタファイル（EMF)として保存..."
 
-#: gui/gpt_control.c:4175 gui/gpt_control.c:4521 gui/menustate.c:593
+#: gui/gpt_control.c:4175 gui/gpt_control.c:4521 gui/menustate.c:589
 msgid "Copy to clipboard"
 msgstr "クリップボードにコピー"
 
@@ -11944,7 +11949,7 @@ msgstr "変数名"
 msgid "Descriptive label"
 msgstr "変数説明ラベル"
 
-#: gui/gretl.c:1552 gui/menustate.c:956
+#: gui/gretl.c:1552 gui/menustate.c:952
 msgid " No datafile loaded "
 msgstr " データファイルがロードされていません "
 
@@ -12584,7 +12589,7 @@ msgstr "_TRAMO分析"
 msgid "_Hurst exponent"
 msgstr "ハースト(_Hurst)指数"
 
-#: gui/gretl.c:1875 gui/menustate.c:605
+#: gui/gretl.c:1875 gui/menustate.c:601
 msgid "Disaggregate..."
 msgstr ""
 
@@ -14119,7 +14124,7 @@ msgstr "主要な統計量を表示する"
 msgid "Show full statistics"
 msgstr "全ての統計量を表示する"
 
-#: gui/library.c:703 gui/library.c:733 gui/library.c:894 gui/menustate.c:441
+#: gui/library.c:703 gui/library.c:733 gui/library.c:894 gui/menustate.c:437
 msgid "correlation matrix"
 msgstr "相関行列"
 
@@ -14982,145 +14987,145 @@ msgstr "スクリプトを実行しました\n"
 msgid "Failed to flip state of \"%s\"\n"
 msgstr ""
 
-#: gui/menustate.c:415 gui/selector.c:6167
+#: gui/menustate.c:411 gui/selector.c:6167
 msgid "Ensure uniform sample size"
 msgstr "標本のサイズを揃える"
 
-#: gui/menustate.c:579
+#: gui/menustate.c:575
 msgid "Edit values"
 msgstr "値を編集"
 
-#: gui/menustate.c:581 gui/menustate.c:613
+#: gui/menustate.c:577 gui/menustate.c:609
 msgid "Time series plot"
 msgstr "時系列グラフを描く"
 
-#: gui/menustate.c:582
+#: gui/menustate.c:578
 msgid "Panel plot..."
 msgstr "パネル・プロット..."
 
-#: gui/menustate.c:583
+#: gui/menustate.c:579
 msgid "Display map"
 msgstr "地図を表示"
 
-#: gui/menustate.c:584
+#: gui/menustate.c:580
 msgid "Frequency distribution"
 msgstr "度数分布"
 
-#: gui/menustate.c:585
+#: gui/menustate.c:581
 msgid "Boxplot"
 msgstr "箱ひげ図"
 
-#: gui/menustate.c:587
+#: gui/menustate.c:583
 msgid "Periodogram"
 msgstr "ピリオドグラム"
 
-#: gui/menustate.c:588
+#: gui/menustate.c:584
 msgid "Edit attributes"
 msgstr "属性を編集"
 
-#: gui/menustate.c:590
+#: gui/menustate.c:586
 msgid "Collinearity"
 msgstr "共線性"
 
-#: gui/menustate.c:592 gui/selector.c:7193
+#: gui/menustate.c:588 gui/selector.c:7193
 msgid "XY scatterplot"
 msgstr "XY散布図"
 
-#: gui/menustate.c:596
+#: gui/menustate.c:592
 msgid "Add log"
 msgstr "対数を取る"
 
-#: gui/menustate.c:597
+#: gui/menustate.c:593
 msgid "Add difference"
 msgstr "階差を取る"
 
-#: gui/menustate.c:598
+#: gui/menustate.c:594
 msgid "Add percent change..."
 msgstr "パーセント変化を追加..."
 
-#: gui/menustate.c:599 gui/menustate.c:604
+#: gui/menustate.c:595 gui/menustate.c:600
 msgid "Add index values..."
 msgstr "インデックス変数を追加する.."
 
-#: gui/menustate.c:600
+#: gui/menustate.c:596
 msgid "Dummify..."
 msgstr "ダミー変数を作成..."
 
-#: gui/menustate.c:601
+#: gui/menustate.c:597
 msgid "Add logs"
 msgstr "対数を取る"
 
-#: gui/menustate.c:602
+#: gui/menustate.c:598
 msgid "Add differences"
 msgstr "階差を取る"
 
-#: gui/menustate.c:603
+#: gui/menustate.c:599
 msgid "Add percent changes..."
 msgstr "パーセント変化を追加..."
 
-#: gui/menustate.c:607 gui/menustate.c:622
+#: gui/menustate.c:603 gui/menustate.c:618
 msgid "Define new variable..."
 msgstr "新しい変数を定義..."
 
-#: gui/menustate.c:614
+#: gui/menustate.c:610
 msgid "Add logs..."
 msgstr "対数を取る.."
 
-#: gui/menustate.c:615
+#: gui/menustate.c:611
 msgid "Add differences..."
 msgstr "階差を取る.."
 
-#: gui/menustate.c:617
+#: gui/menustate.c:613
 msgid "Display components"
 msgstr ""
 
-#: gui/menustate.c:618
+#: gui/menustate.c:614
 msgid "Plot components"
 msgstr ""
 
-#: gui/menustate.c:619
+#: gui/menustate.c:615
 msgid "Edit components"
 msgstr ""
 
-#: gui/menustate.c:620
+#: gui/menustate.c:616
 msgid "Delete components"
 msgstr ""
 
-#: gui/menustate.c:1022
+#: gui/menustate.c:1018
 msgid "Unknown"
 msgstr ""
 
-#: gui/menustate.c:1027
+#: gui/menustate.c:1023
 msgid "Undated"
 msgstr "日付なし"
 
-#: gui/menustate.c:1060
+#: gui/menustate.c:1056
 #, c-format
 msgid "Undated: Full range n = %d; current sample n = %d"
 msgstr "日付なし: 全範囲 n = %d; 現在の標本 n = %d"
 
-#: gui/menustate.c:1069 gui/menustate.c:1079 gui/menustate.c:1083
-#: gui/menustate.c:1107
+#: gui/menustate.c:1065 gui/menustate.c:1075 gui/menustate.c:1079
+#: gui/menustate.c:1103
 #, c-format
 msgid "%s; sample %s - %s"
 msgstr "%s; 標本 %s - %s"
 
-#: gui/menustate.c:1091
+#: gui/menustate.c:1087
 #, c-format
 msgid "%s: Full range %s - %s"
 msgstr "%s: 全範囲 %s - %s"
 
-#: gui/menustate.c:1097
+#: gui/menustate.c:1093
 #, fuzzy
 msgid "(unit:period)"
 msgstr "期"
 
-#: gui/menustate.c:1132
+#: gui/menustate.c:1128
 #, c-format
 msgid "Imported %s"
 msgstr "%sをインポートしました"
 
-#: gui/menustate.c:1141
+#: gui/menustate.c:1137
 msgid " Unsaved data "
 msgstr " 保存されていないデータ "
 
@@ -18041,7 +18046,7 @@ msgstr "繰り返し推定"
 msgid "rho truncated to zero"
 msgstr ""
 
-#: plugin/interpolate.c:1740
+#: plugin/interpolate.c:1736
 msgid "Temporal disaggregation"
 msgstr ""
 

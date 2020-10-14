@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-09 08:03-0400\n"
+"POT-Creation-Date: 2020-10-14 16:49-0400\n"
 "PO-Revision-Date: 2019-01-21 19:27-0500\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -118,7 +118,7 @@ msgstr "me konstante dhe prirje kohore kuadratike"
 #: lib/src/modelprint.c:2482 lib/src/modelprint.c:3159
 #: lib/src/modelprint.c:4366 lib/src/modelprint.c:4703
 #: lib/src/modelprint.c:5567 lib/src/modelprint.c:5569 lib/src/vartest.c:1495
-#: gui/dialogs.c:5754 gui/library.c:3366 plugin/anova.c:153 plugin/anova.c:155
+#: gui/dialogs.c:5761 gui/library.c:3366 plugin/anova.c:153 plugin/anova.c:155
 #: plugin/johansen.c:1608 plugin/johansen.c:1609 plugin/johansen.c:1628
 #: plugin/johansen.c:1654
 msgid "p-value"
@@ -193,7 +193,7 @@ msgstr "Zgjedhje e pavlefshme"
 
 #: lib/src/adf_kpss.c:1271 lib/src/adf_kpss.c:2048 lib/src/boxplots.c:874
 #: lib/src/describe.c:1707 lib/src/describe.c:3637 lib/src/describe.c:4191
-#: lib/src/describe.c:4787 lib/src/graphing.c:8965
+#: lib/src/describe.c:4787 lib/src/graphing.c:8967
 #, c-format
 msgid "%s is a constant"
 msgstr "%s është konstante"
@@ -564,7 +564,7 @@ msgstr ""
 "Heqja e ndryshoreve përmirësoi %d nga %d kriteret informues të modelit.\n"
 
 #: lib/src/compare.c:926 lib/src/compare.c:2334 lib/src/graphing.c:4123
-#: lib/src/graphing.c:4135 lib/src/graphing.c:4221 lib/src/graphing.c:6925
+#: lib/src/graphing.c:4135 lib/src/graphing.c:4221 lib/src/graphing.c:6927
 #: lib/src/printout.c:1563 gui/guiprint.c:1570 gui/guiprint.c:1630
 #: gui/library.c:6973 plugin/leverage.c:306
 msgid "residual"
@@ -1448,7 +1448,7 @@ msgstr "në komandë, ndryshorja %d është përsëritur"
 msgid "dataset is subsampled"
 msgstr "të dhënat i përkasin një nën-kampioni"
 
-#: lib/src/dataset.c:2300 lib/src/dataset.c:2312 lib/src/graphing.c:8657
+#: lib/src/dataset.c:2300 lib/src/dataset.c:2312 lib/src/graphing.c:8659
 #: lib/src/gretl_utils.c:1199 lib/src/gretl_utils.c:1288
 msgid "periods"
 msgstr "periudha"
@@ -1676,12 +1676,12 @@ msgstr "%s: nuk është ndryshore tekst"
 msgid "Invalid lag order %d"
 msgstr "Rendi i vonesës për %d është i pasaktë"
 
-#: lib/src/describe.c:3523 gui/menustate.c:586
+#: lib/src/describe.c:3523 gui/menustate.c:582
 msgid "Correlogram"
 msgstr "Korrelogram"
 
 #: lib/src/describe.c:3524 lib/src/describe.c:3936 lib/src/describe.c:3981
-#: lib/src/graphing.c:8544
+#: lib/src/graphing.c:8546
 msgid "lag"
 msgstr "vonesa"
 
@@ -1722,7 +1722,7 @@ msgstr "Argumenti është një konstante"
 msgid "Correlations of %s and lagged %s"
 msgstr "Korrelacioni mes %s dhe %s të vonuara"
 
-#: lib/src/describe.c:3980 gui/menustate.c:591
+#: lib/src/describe.c:3980 gui/menustate.c:587
 msgid "Cross-correlogram"
 msgstr "Korrelogram i kryqëzuar"
 
@@ -1880,7 +1880,7 @@ msgstr "Dev. std. (intra)"
 msgid "Between s.d."
 msgstr "Dev. std. (inter)"
 
-#: lib/src/describe.c:5091 lib/src/describe.c:5234 gui/menustate.c:580
+#: lib/src/describe.c:5091 lib/src/describe.c:5234 gui/menustate.c:576
 msgid "Summary statistics"
 msgstr "Statistikat përshkruese"
 
@@ -2416,7 +2416,7 @@ msgstr ""
 #: lib/src/gretl_array.c:1145 lib/src/gretl_array.c:1209
 #: lib/src/gretl_cmatrix.c:2450 lib/src/usermat.c:162 lib/src/usermat.c:217
 #: lib/src/usermat.c:233 lib/src/usermat.c:244 lib/src/usermat.c:288
-#: lib/src/usermat.c:337 lib/src/usermat.c:1108
+#: lib/src/usermat.c:337 lib/src/usermat.c:1098
 #, c-format
 msgid "Index value %d is out of bounds"
 msgstr "Treguesi %d është jashtë kufijve"
@@ -3002,13 +3002,13 @@ msgstr "përafrim loess, d = %d, q = %g"
 msgid "time series by group"
 msgstr "seri kohore të grupuara"
 
-#: lib/src/graphing.c:4210 lib/src/graphing.c:6472 lib/src/plotspec.c:734
+#: lib/src/graphing.c:4210 lib/src/graphing.c:6474 lib/src/plotspec.c:734
 #: lib/src/plotspec.c:1557 gui/gpt_dialog.c:967 gui/gpt_dialog.c:1387
 #: gui/gpt_dialog.c:2851
 msgid "right"
 msgstr "djathtas"
 
-#: lib/src/graphing.c:4210 lib/src/graphing.c:6472 lib/src/plotspec.c:730
+#: lib/src/graphing.c:4210 lib/src/graphing.c:6474 lib/src/plotspec.c:730
 #: lib/src/plotspec.c:736 lib/src/plotspec.c:1555 gui/gpt_dialog.c:1382
 #: gui/gpt_dialog.c:2850
 msgid "left"
@@ -3054,11 +3054,11 @@ msgstr "Frekuenca relative"
 msgid "relative frequency"
 msgstr "Frekuenca relative"
 
-#: lib/src/graphing.c:5439 gui/menustate.c:589
+#: lib/src/graphing.c:5439 gui/menustate.c:585
 msgid "Correlation matrix"
 msgstr "Matrica e korrelacioneve"
 
-#: lib/src/graphing.c:5831 lib/src/graphing.c:6728
+#: lib/src/graphing.c:5831 lib/src/graphing.c:6730
 #, c-format
 msgid "%g percent interval"
 msgstr "intervali i besimit %g%%"
@@ -3067,203 +3067,203 @@ msgstr "intervali i besimit %g%%"
 msgid "forecast"
 msgstr "parashikimi"
 
-#: lib/src/graphing.c:6726
+#: lib/src/graphing.c:6728
 #, c-format
 msgid "%g%% interval for mean"
 msgstr "interval  %g%% për mesataren"
 
-#: lib/src/graphing.c:6830
+#: lib/src/graphing.c:6832
 #, c-format
 msgid "Coefficient on %s"
 msgstr "Koeficienti i %s"
 
-#: lib/src/graphing.c:6854
+#: lib/src/graphing.c:6856
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "Vlerësimi Kuantil me interval %g%%"
 
-#: lib/src/graphing.c:6862
+#: lib/src/graphing.c:6864
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr "Vlerësimi KVZ me interval %g%%"
 
-#: lib/src/graphing.c:6925
+#: lib/src/graphing.c:6927
 msgid "+- sqrt(h(t))"
 msgstr "+- sqrt(h(t))"
 
-#: lib/src/graphing.c:7080
+#: lib/src/graphing.c:7082
 #, c-format
 msgid "mean %s"
 msgstr "mesatarja %s"
 
-#: lib/src/graphing.c:7160
+#: lib/src/graphing.c:7162
 msgid "Group means"
 msgstr "Mesataret e grupeve"
 
-#: lib/src/graphing.c:7548
+#: lib/src/graphing.c:7550
 msgid "time"
 msgstr "koha"
 
-#: lib/src/graphing.c:7639
+#: lib/src/graphing.c:7641
 #, fuzzy
 msgid "This command needs panel data"
 msgstr "Për këtë regresion nevojiten të dhëna paneli"
 
-#: lib/src/graphing.c:7769
+#: lib/src/graphing.c:7771
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr ""
 "përgjigjja e %s ndaj një goditjeje mbi %s, me interval besimi bootstrap"
 
-#: lib/src/graphing.c:7774
+#: lib/src/graphing.c:7776
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr "përgjigjja e %s ndaj një goditjeje mbi %s"
 
-#: lib/src/graphing.c:7789
+#: lib/src/graphing.c:7791
 #, c-format
 msgid "%g percent confidence band"
 msgstr "intervali i besimit %g%%"
 
-#: lib/src/graphing.c:7794 lib/src/graphing.c:7797
+#: lib/src/graphing.c:7796 lib/src/graphing.c:7799
 msgid "point estimate"
 msgstr "vlerësim pikësor"
 
-#: lib/src/graphing.c:7798
+#: lib/src/graphing.c:7800
 #, c-format
 msgid "%g and %g quantiles"
 msgstr "kuantilet %g dhe %g"
 
-#: lib/src/graphing.c:7900
+#: lib/src/graphing.c:7902
 #, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "zbërthimi i variancës së parashikimit për %s"
 
-#: lib/src/graphing.c:8129
+#: lib/src/graphing.c:8131
 msgid "VAR residuals"
 msgstr "Mbetjet e VAR"
 
-#: lib/src/graphing.c:8131 gui/gui_utils.c:3659
+#: lib/src/graphing.c:8133 gui/gui_utils.c:3659
 msgid "System residuals"
 msgstr "Mbetjet e sistemit"
 
-#: lib/src/graphing.c:8207
+#: lib/src/graphing.c:8209
 msgid "EC terms"
 msgstr "Termat e korrigjimit të gabimit (EC)"
 
-#: lib/src/graphing.c:8209 gui/gui_utils.c:4905
+#: lib/src/graphing.c:8211 gui/gui_utils.c:4905
 msgid "EC term"
 msgstr "Termi i korrigjimit të gabimit (EC)"
 
-#: lib/src/graphing.c:8356
+#: lib/src/graphing.c:8358
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr "VAR: rrënjët e anasjellta kundrejt rrethit të njësishëm"
 
-#: lib/src/graphing.c:8440
+#: lib/src/graphing.c:8442
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "elipsi i besimit %g%% me intervalet marzhinalë %g%%"
 
-#: lib/src/graphing.c:8527
+#: lib/src/graphing.c:8529
 #, fuzzy, no-c-format
 msgid "95% interval"
 msgstr "(intervali 90%)"
 
-#: lib/src/graphing.c:8553
+#: lib/src/graphing.c:8555
 msgid "Residual ACF"
 msgstr " ACF i mbetjes"
 
-#: lib/src/graphing.c:8555
+#: lib/src/graphing.c:8557
 msgid "ACF for"
 msgstr "ACF për"
 
-#: lib/src/graphing.c:8589
+#: lib/src/graphing.c:8591
 msgid "Residual PACF"
 msgstr "PACF i mbetjes"
 
-#: lib/src/graphing.c:8591
+#: lib/src/graphing.c:8593
 msgid "PACF for"
 msgstr "PACF për"
 
-#: lib/src/graphing.c:8668
+#: lib/src/graphing.c:8670
 msgid "radians"
 msgstr "radianë"
 
-#: lib/src/graphing.c:8670
+#: lib/src/graphing.c:8672
 msgid "degrees"
 msgstr "gradë"
 
-#: lib/src/graphing.c:8672
+#: lib/src/graphing.c:8674
 msgid "scaled frequency"
 msgstr "frekuencë e ponderuar"
 
-#: lib/src/graphing.c:8682
+#: lib/src/graphing.c:8684
 msgid "Residual spectrum"
 msgstr "Spektri i mbetjes"
 
-#: lib/src/graphing.c:8684
+#: lib/src/graphing.c:8686
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Spektri i  %s"
 
-#: lib/src/graphing.c:8690
+#: lib/src/graphing.c:8692
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Dritarja e Bartlett, gjerësia %d"
 
-#: lib/src/graphing.c:8696 lib/src/graphing.c:8802 gui/dialogs.c:4854
+#: lib/src/graphing.c:8698 lib/src/graphing.c:8804 gui/dialogs.c:4861
 msgid "log scale"
 msgstr "shkallë logaritmike"
 
-#: lib/src/graphing.c:8801
+#: lib/src/graphing.c:8803
 #, fuzzy
 msgid "Sample periodogram vs ARMA Spectrum"
 msgstr "Periodogrami i kampionit"
 
-#: lib/src/graphing.c:8803
+#: lib/src/graphing.c:8805
 #, fuzzy
 msgid "spectrum"
 msgstr "Spektri i mbetjes"
 
-#: lib/src/graphing.c:8804 gui/library.c:6022
+#: lib/src/graphing.c:8806 gui/library.c:6022
 msgid "periodogram"
 msgstr "periodogram"
 
-#: lib/src/graphing.c:8907 gui/library.c:896 gui/library.c:2922
+#: lib/src/graphing.c:8909 gui/library.c:896 gui/library.c:2922
 msgid "Q-Q plot"
 msgstr "Grafiku i kuantileve (Q-Q) "
 
-#: lib/src/graphing.c:9000
+#: lib/src/graphing.c:9002
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Grafiku i kuantileve (Q-Q) për %s"
 
-#: lib/src/graphing.c:9003
+#: lib/src/graphing.c:9005
 msgid "Normal quantiles"
 msgstr "Kuantilet e shpërndarjes normale"
 
-#: lib/src/graphing.c:9323 lib/src/graphing.c:9326
+#: lib/src/graphing.c:9325 lib/src/graphing.c:9328
 #, c-format
 msgid "adjusted %s"
 msgstr "%s i korrigjuar"
 
-#: lib/src/graphing.c:9389 plugin/range-mean.c:112
+#: lib/src/graphing.c:9391 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "me vijën e regresit KVZ"
 
-#: lib/src/graphing.c:9506 lib/src/gretl_func.c:2741 lib/src/gretl_utils.c:1954
-#: lib/src/interact.c:1498 gui/dialogs.c:5540 gui/fnsave.c:5291
+#: lib/src/graphing.c:9508 lib/src/gretl_func.c:2741 lib/src/gretl_utils.c:1954
+#: lib/src/interact.c:1498 gui/dialogs.c:5547 gui/fnsave.c:5291
 #: gui/textbuf.c:1937 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr "E pamundur të hap %s"
 
-#: lib/src/graphing.c:10072
+#: lib/src/graphing.c:10074
 #, fuzzy
 msgid "original data"
 msgstr "%s (të dhënat fillestare)"
 
-#: lib/src/graphing.c:10074
+#: lib/src/graphing.c:10076
 #, fuzzy
 msgid "final series"
 msgstr "shto seri"
@@ -3842,13 +3842,13 @@ msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
 "E pamundur të bëhet: disa nga ndryshoret fillestare të modelit kanë ndryshuar"
 
-#: lib/src/gretl_midas.c:207 lib/src/subsample.c:3122 gui/dialogs.c:3952
-#: gui/dialogs.c:4082
+#: lib/src/gretl_midas.c:207 lib/src/subsample.c:3122 gui/dialogs.c:3959
+#: gui/dialogs.c:4089
 msgid "quarterly"
 msgstr "tremujore"
 
-#: lib/src/gretl_midas.c:208 lib/src/subsample.c:3124 gui/dialogs.c:3952
-#: gui/dialogs.c:4083
+#: lib/src/gretl_midas.c:208 lib/src/subsample.c:3124 gui/dialogs.c:3959
+#: gui/dialogs.c:4090
 msgid "monthly"
 msgstr "mujore"
 
@@ -4501,7 +4501,7 @@ msgid "Sum of coefficients"
 msgstr "Shuma e koeficientëve"
 
 #: lib/src/gretl_restrict.c:2996 lib/src/gretl_restrict.c:3003
-#: gui/dialogs.c:5752
+#: gui/dialogs.c:5759
 msgid "Standard error"
 msgstr "Gabimi standart"
 
@@ -4598,7 +4598,7 @@ msgstr "individë"
 msgid "Command failed"
 msgstr "Komanda dështoi"
 
-#: lib/src/gretl_utils.c:1959 lib/src/printout.c:925 gui/dialogs.c:5551
+#: lib/src/gretl_utils.c:1959 lib/src/printout.c:925 gui/dialogs.c:5558
 #, c-format
 msgid "Couldn't write to %s"
 msgstr "Nuk mund të shkruhet në %s"
@@ -4935,7 +4935,7 @@ msgid "Robust estimation"
 msgstr "Vlerësim i qëndrueshëm"
 
 #: lib/src/libset.c:1729 gui/datawiz.c:441 gui/datawiz.c:520
-#: gui/menustate.c:1000 plugin/addons-i18n.c:30
+#: gui/menustate.c:996 plugin/addons-i18n.c:30
 msgid "Time series"
 msgstr "Seri kohore"
 
@@ -5914,7 +5914,7 @@ msgid "$t$-ratio"
 msgstr "$t$-Student"
 
 #: lib/src/modelprint.c:2419 lib/src/modelprint.c:3970
-#: lib/src/modelprint.c:4365 lib/src/modelprint.c:4702 gui/dialogs.c:5753
+#: lib/src/modelprint.c:4365 lib/src/modelprint.c:4702 gui/dialogs.c:5760
 #: plugin/panurc.c:553
 msgid "t-ratio"
 msgstr "t-Student"
@@ -5959,7 +5959,7 @@ msgstr "i sipërm"
 msgid "Estimate"
 msgstr "Vlerësimi"
 
-#: lib/src/modelprint.c:2469 gui/dialogs.c:1042 gui/dialogs.c:5751
+#: lib/src/modelprint.c:2469 gui/dialogs.c:1042 gui/dialogs.c:5758
 #: gui/guiprint.c:1961 gui/guiprint.c:2013
 msgid "Coefficient"
 msgstr "Koeficienti"
@@ -6531,7 +6531,7 @@ msgstr "komanda '%s' është e pavleshme në këtë kontekst"
 msgid "'%s': not valid in this context"
 msgstr "komanda '%s' është e pavleshme në këtë kontekst"
 
-#: lib/src/nls.c:3087 gui/dialogs.c:5898
+#: lib/src/nls.c:3087 gui/dialogs.c:5905
 #, c-format
 msgid "'%s' is not a known series"
 msgstr "'%s' nuk është emri i një serije"
@@ -6820,7 +6820,7 @@ msgstr "hapa"
 msgid "boxes"
 msgstr "kuti"
 
-#: lib/src/plotspec.c:233 gui/dialogs.c:3012 gui/dialogs.c:3340
+#: lib/src/plotspec.c:233 gui/dialogs.c:3012 gui/dialogs.c:3352
 msgid "error bars"
 msgstr "kufijtë e gabimit"
 
@@ -7857,7 +7857,7 @@ msgstr "Intervali nga %d në %d nuk është positiv!"
 msgid "Ambiguous matrix index"
 msgstr "Tregues matricor i paqartë"
 
-#: lib/src/usermat.c:1584
+#: lib/src/usermat.c:1574
 msgid "Matrix decomposition failed"
 msgstr "Zbërthimi i matricës është i pamundur"
 
@@ -8898,7 +8898,7 @@ msgstr "të dy CDF"
 msgid "Sorry, this item not yet implemented!"
 msgstr "Për fat të keq, veprimi i kërkuar s'është i gatshëm"
 
-#: gui/callbacks.c:375 gui/dialogs.c:5393
+#: gui/callbacks.c:375 gui/dialogs.c:5400
 msgid "gretl: warning"
 msgstr "gretl: kujdes"
 
@@ -9190,7 +9190,7 @@ msgstr "Grafik"
 msgid "Import"
 msgstr "Importo"
 
-#: gui/database.c:1094 gui/database.c:1117 gui/menustate.c:594
+#: gui/database.c:1094 gui/database.c:1117 gui/menustate.c:590
 #: gui/session.c:162 gui/session.c:182 gui/session.c:190 gui/session.c:217
 #: gui/session.c:224 gui/session.c:3456 gui/session.c:3472 gui/session.c:3571
 #: gui/ssheet.c:2715
@@ -9201,7 +9201,7 @@ msgstr "Fshij"
 msgid "Codebook"
 msgstr "Libri i kodeve"
 
-#: gui/database.c:1113 gui/menustate.c:578 gui/menustate.c:612
+#: gui/database.c:1113 gui/menustate.c:574 gui/menustate.c:608
 #: gui/toolbar.c:808
 msgid "Display values"
 msgstr "Shfaq vlerat"
@@ -9677,7 +9677,7 @@ msgstr ""
 "Jepni emrin për ndryshoren e parë\n"
 "(maksimumi %d karaktere)"
 
-#: gui/datawiz.c:186 gui/dialogs.c:5585 gui/ssheet.c:1003
+#: gui/datawiz.c:186 gui/dialogs.c:5592 gui/ssheet.c:1003
 msgid "gretl: name variable"
 msgstr "gretl: emri i ndryshores"
 
@@ -9685,39 +9685,39 @@ msgstr "gretl: emri i ndryshores"
 msgid "No changes were made"
 msgstr "Asnjë ndryshim nuk u bë"
 
-#: gui/datawiz.c:411 gui/dialogs.c:3680 gui/menustate.c:1004
+#: gui/datawiz.c:411 gui/dialogs.c:3687 gui/menustate.c:1000
 msgid "Annual"
 msgstr "Vjetore"
 
-#: gui/datawiz.c:412 gui/dialogs.c:3679 gui/dialogs.c:6350 gui/menustate.c:1006
+#: gui/datawiz.c:412 gui/dialogs.c:3686 gui/dialogs.c:6357 gui/menustate.c:1002
 msgid "Quarterly"
 msgstr "Tremujore"
 
-#: gui/datawiz.c:413 gui/dialogs.c:3686 gui/dialogs.c:6355 gui/menustate.c:1008
+#: gui/datawiz.c:413 gui/dialogs.c:3693 gui/dialogs.c:6362 gui/menustate.c:1004
 msgid "Monthly"
 msgstr "Mujore"
 
-#: gui/datawiz.c:414 gui/dialogs.c:3685 gui/menustate.c:1012
+#: gui/datawiz.c:414 gui/dialogs.c:3692 gui/menustate.c:1008
 msgid "Weekly"
 msgstr "Javore"
 
-#: gui/datawiz.c:415 gui/dialogs.c:3693 gui/menustate.c:1014
+#: gui/datawiz.c:415 gui/dialogs.c:3700 gui/menustate.c:1010
 msgid "Daily (5 days)"
 msgstr "5 ditore"
 
-#: gui/datawiz.c:416 gui/dialogs.c:3694 gui/menustate.c:1016
+#: gui/datawiz.c:416 gui/dialogs.c:3701 gui/menustate.c:1012
 msgid "Daily (6 days)"
 msgstr "6 ditore"
 
-#: gui/datawiz.c:417 gui/dialogs.c:3692 gui/menustate.c:1018
+#: gui/datawiz.c:417 gui/dialogs.c:3699 gui/menustate.c:1014
 msgid "Daily (7 days)"
 msgstr "7 ditore"
 
-#: gui/datawiz.c:418 gui/menustate.c:1010
+#: gui/datawiz.c:418 gui/menustate.c:1006
 msgid "Hourly"
 msgstr "Orare"
 
-#: gui/datawiz.c:419 gui/menustate.c:1020
+#: gui/datawiz.c:419 gui/menustate.c:1016
 msgid "Decennial"
 msgstr "10-vjeçare"
 
@@ -9745,35 +9745,35 @@ msgstr "Frekuencë e pazakonshme"
 msgid "Cross-sectional"
 msgstr "Të dhëna individuale"
 
-#: gui/datawiz.c:521 gui/menustate.c:1025
+#: gui/datawiz.c:521 gui/menustate.c:1021
 msgid "Panel"
 msgstr "Panel"
 
-#: gui/datawiz.c:523 gui/dialogs.c:3748
+#: gui/datawiz.c:523 gui/dialogs.c:3755
 msgid "Monday"
 msgstr "E hënë"
 
-#: gui/datawiz.c:524 gui/dialogs.c:3749
+#: gui/datawiz.c:524 gui/dialogs.c:3756
 msgid "Tuesday"
 msgstr "E martë"
 
-#: gui/datawiz.c:525 gui/dialogs.c:3750
+#: gui/datawiz.c:525 gui/dialogs.c:3757
 msgid "Wednesday"
 msgstr "E mërkurë"
 
-#: gui/datawiz.c:526 gui/dialogs.c:3751
+#: gui/datawiz.c:526 gui/dialogs.c:3758
 msgid "Thursday"
 msgstr "E enjte"
 
-#: gui/datawiz.c:527 gui/dialogs.c:3752
+#: gui/datawiz.c:527 gui/dialogs.c:3759
 msgid "Friday"
 msgstr "E premte"
 
-#: gui/datawiz.c:528 gui/dialogs.c:3753
+#: gui/datawiz.c:528 gui/dialogs.c:3760
 msgid "Saturday"
 msgstr "E shtunë"
 
-#: gui/datawiz.c:529 gui/dialogs.c:3747
+#: gui/datawiz.c:529 gui/dialogs.c:3754
 msgid "Sunday"
 msgstr "E dielë"
 
@@ -10077,7 +10077,7 @@ msgstr "Individët"
 msgid "Periods"
 msgstr "Periudhat"
 
-#: gui/dialogs.c:2076 gui/dialogs.c:6628 gui/selector.c:8861
+#: gui/dialogs.c:2076 gui/dialogs.c:6635 gui/selector.c:8861
 msgid "to"
 msgstr "në"
 
@@ -10181,7 +10181,7 @@ msgstr "gretl: testi Chow"
 msgid "Test a subset of regressors"
 msgstr "Regresorët e ekuacionit të zgjedhjes"
 
-#: gui/dialogs.c:3006 gui/dialogs.c:3342
+#: gui/dialogs.c:3006 gui/dialogs.c:3354
 msgid "shaded area"
 msgstr "zonë të mbushur"
 
@@ -10201,373 +10201,373 @@ msgstr "mesatarja Y"
 msgid "Produce forecast for"
 msgstr "Parashikimi për"
 
-#: gui/dialogs.c:3191
+#: gui/dialogs.c:3200
 msgid "Number of pre-forecast observations to graph"
 msgstr "Vizato edhe \"k\" vrojtime para parashikimit: k ="
 
-#: gui/dialogs.c:3194
+#: gui/dialogs.c:3203
 msgid "automatic forecast (dynamic out of sample)"
 msgstr "parashikim automatik (dinamik përtej kampionit)"
 
-#: gui/dialogs.c:3195
+#: gui/dialogs.c:3204
 msgid "dynamic forecast"
 msgstr "parashikim dinamik"
 
-#: gui/dialogs.c:3196
+#: gui/dialogs.c:3205
 msgid "static forecast"
 msgstr "parashikim statik"
 
-#: gui/dialogs.c:3197
+#: gui/dialogs.c:3206
 #, fuzzy
 msgid "recursive k-step ahead forecasts: k = "
 msgstr "Parashikim përsëritës për %d periudha para"
 
-#: gui/dialogs.c:3210
+#: gui/dialogs.c:3219
 msgid "gretl: forecast"
 msgstr "gretl: parashikimi"
 
-#: gui/dialogs.c:3218
+#: gui/dialogs.c:3227
 msgid "Forecast range:"
 msgstr "Intervali i parashikimit:"
 
-#: gui/dialogs.c:3219
+#: gui/dialogs.c:3228
 msgid "Start"
 msgstr "Fillimi"
 
-#: gui/dialogs.c:3219
+#: gui/dialogs.c:3228
 msgid "End"
 msgstr "Mbarimi"
 
-#: gui/dialogs.c:3328
+#: gui/dialogs.c:3337
 msgid "Show fitted values for pre-forecast range"
 msgstr "Vizato përafrimin edhe për \"k\" vrojtimet para parashikimit"
 
-#: gui/dialogs.c:3341
+#: gui/dialogs.c:3353
 msgid "low and high lines"
 msgstr "vija të poshtme dhe të sipërme"
 
-#: gui/dialogs.c:3372
+#: gui/dialogs.c:3384
 msgid "Plot confidence interval using"
 msgstr "Vizato intervalin e besimit duke përdorur"
 
-#: gui/dialogs.c:3439 gui/library.c:6413
+#: gui/dialogs.c:3446 gui/library.c:6413
 msgid "Add observations"
 msgstr "Shto vrojtime të tjera"
 
-#: gui/dialogs.c:3452
+#: gui/dialogs.c:3459
 msgid "Number of observations to add:"
 msgstr "Numri i vrojtimeve për t'u shtuar:"
 
-#: gui/dialogs.c:3543
+#: gui/dialogs.c:3550
 msgid "select variable"
 msgstr "zgjidh një ndryshore"
 
-#: gui/dialogs.c:3725
+#: gui/dialogs.c:3732
 msgid "Week starts on Monday"
 msgstr "Java fillon të hënën"
 
-#: gui/dialogs.c:3736
+#: gui/dialogs.c:3743
 msgid "Week starts on Sunday"
 msgstr "Java fillon të dielën"
 
-#: gui/dialogs.c:3798
+#: gui/dialogs.c:3805
 msgid "Compact by averaging"
 msgstr "Përdor mesataren e vlerave"
 
-#: gui/dialogs.c:3799
+#: gui/dialogs.c:3806
 msgid "Compact by summing"
 msgstr "Përdor shumën e vlerave "
 
-#: gui/dialogs.c:3800
+#: gui/dialogs.c:3807
 msgid "Use end-of-period values"
 msgstr "Përdor vlerat e periudhës së fundit"
 
-#: gui/dialogs.c:3801
+#: gui/dialogs.c:3808
 msgid "Use start-of-period values"
 msgstr "Përdor vlerat e periudhës së parë"
 
-#: gui/dialogs.c:3802
+#: gui/dialogs.c:3809
 #, fuzzy
 msgid "Spread to multiple series (MIDAS)"
 msgstr "Seri kohore të stivuara"
 
-#: gui/dialogs.c:3822
+#: gui/dialogs.c:3829
 msgid "Default method:"
 msgstr "Metoda a priori:"
 
-#: gui/dialogs.c:3853
+#: gui/dialogs.c:3860
 msgid "Use representative day"
 msgstr "Përdor një format për ditën"
 
-#: gui/dialogs.c:3936
+#: gui/dialogs.c:3943
 msgid "gretl: compact data"
 msgstr "gretl: ngjeshja e të dhënave"
 
-#: gui/dialogs.c:3951
+#: gui/dialogs.c:3958
 #, c-format
 msgid "You are adding a %s series to %s dataset"
 msgstr "Një seri %s po u shtohet të dhënave %s"
 
-#: gui/dialogs.c:3953
+#: gui/dialogs.c:3960
 msgid "a quarterly"
 msgstr "tremujore"
 
-#: gui/dialogs.c:3953
+#: gui/dialogs.c:3960
 msgid "an annual"
 msgstr "vjetore"
 
-#: gui/dialogs.c:3958
+#: gui/dialogs.c:3965
 msgid "Compact quarterly data to annual"
 msgstr "Ngjesh të dhënat tremujore në të dhëna vjetore"
 
-#: gui/dialogs.c:3961
+#: gui/dialogs.c:3968
 msgid "Compact monthly data to:"
 msgstr "Ngjesh të dhënat mujore :"
 
-#: gui/dialogs.c:3967
+#: gui/dialogs.c:3974
 msgid "Compact daily data to:"
 msgstr "Ngjesh të dhënat ditore :"
 
-#: gui/dialogs.c:3970
+#: gui/dialogs.c:3977
 msgid "Compact daily data to weekly"
 msgstr "Ngjesh të dhënat ditore në të dhëna javore"
 
-#: gui/dialogs.c:3977
+#: gui/dialogs.c:3984
 msgid "Compact weekly data to monthly"
 msgstr "Ngjesh të dhënat javore në të dhëna mujore"
 
-#: gui/dialogs.c:3980
+#: gui/dialogs.c:3987
 msgid "Compact hourly data to:"
 msgstr "Ngjesh të dhënat orare në :"
 
-#: gui/dialogs.c:4070
+#: gui/dialogs.c:4077
 msgid "gretl: expand data"
 msgstr "gretl: zgjerimi i të dhënave"
 
-#: gui/dialogs.c:4078
+#: gui/dialogs.c:4085
 #, fuzzy
 msgid "Expand annual data to"
 msgstr "Zgjero të dhënat vjetore në mujore:"
 
-#: gui/dialogs.c:4088
+#: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
 msgstr "Zgjero të dhënat tremujore në mujore"
 
-#: gui/dialogs.c:4095
+#: gui/dialogs.c:4102
 #, fuzzy
 msgid "Please read the Help before proceeding."
 msgstr "(Nevojë për udhëzim? Shikoni ju lutem, rubrikën e Ndihmës )"
 
-#: gui/dialogs.c:4251
+#: gui/dialogs.c:4258
 msgid "density estimation options"
 msgstr "mundësi zgjedhjeje për vlerësimin e densitetit"
 
-#: gui/dialogs.c:4258 plugin/kernel.c:116
+#: gui/dialogs.c:4265 plugin/kernel.c:116
 msgid "Gaussian kernel"
 msgstr "kernel Gosjan"
 
-#: gui/dialogs.c:4268 plugin/kernel.c:117
+#: gui/dialogs.c:4275 plugin/kernel.c:117
 msgid "Epanechnikov kernel"
 msgstr "kernel Epanechnikov"
 
-#: gui/dialogs.c:4283
+#: gui/dialogs.c:4290
 msgid "bandwidth adjustment factor:"
 msgstr "faktori i korrigjimit të intervalit:"
 
-#: gui/dialogs.c:4322
+#: gui/dialogs.c:4329
 msgid "paste data from clipboard"
 msgstr "sill të dhënat nga clipboard-i"
 
-#: gui/dialogs.c:4329
+#: gui/dialogs.c:4336
 msgid "Try pasting data from clipboard?"
 msgstr "A doni të sillni të dhënat nga clipboard-i?"
 
-#: gui/dialogs.c:4338
+#: gui/dialogs.c:4345
 msgid "Clear current dataset first"
 msgstr "Fshini së pari  të dhënat "
 
-#: gui/dialogs.c:4349
+#: gui/dialogs.c:4356
 msgid "Try appending to current dataset"
 msgstr "Përpjekje për të shtuar të dhëna të tjera"
 
-#: gui/dialogs.c:4606
+#: gui/dialogs.c:4613
 msgid "No model is specified"
 msgstr "Nuk ka asnjë model"
 
-#: gui/dialogs.c:4828
+#: gui/dialogs.c:4835
 msgid "gretl: periodogram"
 msgstr "gretl: periodogram"
 
-#: gui/dialogs.c:4834
+#: gui/dialogs.c:4841
 msgid "Sample periodogram"
 msgstr "Periodogrami i kampionit"
 
-#: gui/dialogs.c:4839
+#: gui/dialogs.c:4846
 msgid "Bartlett window, bandwidth:"
 msgstr "Dritarja e Bartlett, gjerësia %d"
 
-#: gui/dialogs.c:4861
+#: gui/dialogs.c:4868
 msgid "frequency axis scale:"
 msgstr "shkalla e boshtit të frekuencave:"
 
-#: gui/dialogs.c:5059
+#: gui/dialogs.c:5066
 msgid "Number of bins:"
 msgstr "Numri i klasave:"
 
-#: gui/dialogs.c:5060
+#: gui/dialogs.c:5067
 msgid "Minimum value, left bin:"
 msgstr "Vlera më e vogël, klasa e majtë:"
 
-#: gui/dialogs.c:5061
+#: gui/dialogs.c:5068
 msgid "Bin width:"
 msgstr "Gjerësia e klasës:"
 
-#: gui/dialogs.c:5134
+#: gui/dialogs.c:5141
 msgid "Show data only"
 msgstr "Vetëm shfaq të dhënat"
 
-#: gui/dialogs.c:5135
+#: gui/dialogs.c:5142
 msgid "Test against normal distribution"
 msgstr "Test kundrejt shpërndarjes normale"
 
-#: gui/dialogs.c:5136
+#: gui/dialogs.c:5143
 msgid "Test against gamma distribution"
 msgstr "Test kundrejt shpërndarjes gamma"
 
-#: gui/dialogs.c:5155
+#: gui/dialogs.c:5162
 msgid "show plot"
 msgstr "shfaq grafikun"
 
-#: gui/dialogs.c:5247
+#: gui/dialogs.c:5254
 msgid "Use model names"
 msgstr "Përdor emrat e modeleve"
 
-#: gui/dialogs.c:5250
+#: gui/dialogs.c:5257
 msgid "Show standard errors in parentheses"
 msgstr "Shfaq në kllapa gabimin standart"
 
-#: gui/dialogs.c:5251
+#: gui/dialogs.c:5258
 msgid "Show t-statistics in parentheses"
 msgstr "Shfaq në kllapa t-Student"
 
-#: gui/dialogs.c:5269
+#: gui/dialogs.c:5276
 msgid "model table options"
 msgstr "mundësi zgjedhjeje për tabelën e modeleve"
 
-#: gui/dialogs.c:5276
+#: gui/dialogs.c:5283
 msgid "column headings"
 msgstr "titujt e shtyllave"
 
-#: gui/dialogs.c:5324 gui/selector.c:6499
+#: gui/dialogs.c:5331 gui/selector.c:6499
 msgid "Show p-values"
 msgstr "Shfaq p. kritik"
 
-#: gui/dialogs.c:5332
+#: gui/dialogs.c:5339
 msgid "Show significance asterisks"
 msgstr "Trego shkallën e domethënies"
 
-#: gui/dialogs.c:5341 gui/dialogs.c:5820 gui/series_view.c:756
+#: gui/dialogs.c:5348 gui/dialogs.c:5827 gui/series_view.c:756
 #: gui/ssheet.c:4216
 msgid "Show"
 msgstr "Shfaq"
 
-#: gui/dialogs.c:5352 gui/dialogs.c:5831 gui/series_view.c:770
+#: gui/dialogs.c:5359 gui/dialogs.c:5838 gui/series_view.c:770
 #: gui/ssheet.c:4228
 msgid "significant figures"
 msgstr "vlerat domethënëse"
 
-#: gui/dialogs.c:5353 gui/dialogs.c:5828 gui/series_view.c:771
+#: gui/dialogs.c:5360 gui/dialogs.c:5835 gui/series_view.c:771
 #: gui/ssheet.c:4229
 msgid "decimal places"
 msgstr "shifra pas presjes dhjetore"
 
-#: gui/dialogs.c:5369
+#: gui/dialogs.c:5376
 msgid "Reset"
 msgstr ""
 
-#: gui/dialogs.c:5392
+#: gui/dialogs.c:5399
 msgid "gretl: error"
 msgstr "gretl: gabim"
 
-#: gui/dialogs.c:5394
+#: gui/dialogs.c:5401
 msgid "gretl: information"
 msgstr "gretl: hollësi"
 
-#: gui/dialogs.c:5611
+#: gui/dialogs.c:5618
 msgid "show scalars window"
 msgstr "shfaq dritaren e numrave"
 
-#: gui/dialogs.c:5612
+#: gui/dialogs.c:5619
 msgid "show icons window"
 msgstr "shfaq dritaren e ikonave"
 
-#: gui/dialogs.c:5770
+#: gui/dialogs.c:5777
 msgid "gretl: TeX tabular format"
 msgstr "gretl: lloji i tabelës TeX"
 
-#: gui/dialogs.c:5778 gui/series_view.c:748 gui/ssheet.c:4208
+#: gui/dialogs.c:5785 gui/series_view.c:748 gui/ssheet.c:4208
 msgid "Standard format"
 msgstr "Format standart"
 
-#: gui/dialogs.c:5781
+#: gui/dialogs.c:5788
 msgid "Custom format"
 msgstr "Format personal"
 
-#: gui/dialogs.c:5896
+#: gui/dialogs.c:5903
 msgid "Please specify a cluster variable"
 msgstr "Përcaktoni një ndryshore grupuese"
 
-#: gui/dialogs.c:5935
+#: gui/dialogs.c:5942
 msgid "Select from Regular HCCME options"
 msgstr "Përzgjidh nga mundësitë e HCMME të zakonshëm"
 
-#: gui/dialogs.c:5946
+#: gui/dialogs.c:5953
 msgid "Cluster by"
 msgstr "Grupim sipas"
 
-#: gui/dialogs.c:6019
+#: gui/dialogs.c:6026
 msgid "New script output:"
 msgstr "rezultati i skriptit të ri:"
 
-#: gui/dialogs.c:6021
+#: gui/dialogs.c:6028
 msgid "New script output should:"
 msgstr "Dritarja e re e rezultatit të skriptit duhet:"
 
-#: gui/dialogs.c:6081
+#: gui/dialogs.c:6088
 msgid "Replace previous output"
 msgstr "Zëvendëson rezultatin e mëparshëm"
 
-#: gui/dialogs.c:6082
+#: gui/dialogs.c:6089
 msgid "Add to previous output"
 msgstr "I shtohet rezultatit të mëparshëm"
 
-#: gui/dialogs.c:6083
+#: gui/dialogs.c:6090
 msgid "Go to a new window"
 msgstr "Dritare e re"
 
-#: gui/dialogs.c:6090
+#: gui/dialogs.c:6097
 msgid "Replaces output in this window"
 msgstr "Shfaq rezultatin në këtë dritare"
 
-#: gui/dialogs.c:6091
+#: gui/dialogs.c:6098
 msgid "Adds to output in this window"
 msgstr "I shtohet rezultatit në këtë dritare"
 
-#: gui/dialogs.c:6092
+#: gui/dialogs.c:6099
 msgid "Always goes to a new window"
 msgstr "Krijo gjithmonë dritare të re"
 
-#: gui/dialogs.c:6318
+#: gui/dialogs.c:6325
 #, fuzzy, c-format
 msgid "percent change in %s"
 msgstr "asnjë ndryshim në parametra"
 
-#: gui/dialogs.c:6321
+#: gui/dialogs.c:6328
 #, fuzzy
 msgid "percent changes"
 msgstr "asnjë ndryshim në parametra"
 
-#: gui/dialogs.c:6330 gui/dialogs.c:6431 gui/ssheet.c:999
+#: gui/dialogs.c:6337 gui/dialogs.c:6438 gui/ssheet.c:999
 #, c-format
 msgid ""
 "Enter name for new variable\n"
@@ -10576,88 +10576,93 @@ msgstr ""
 "Emërtoni ndryshoren e re\n"
 "(maks. %d karaktere)"
 
-#: gui/dialogs.c:6351
+#: gui/dialogs.c:6358
 #, fuzzy
 msgid "Quarterly, annualized"
 msgstr "Tremujore"
 
-#: gui/dialogs.c:6352 gui/dialogs.c:6357
+#: gui/dialogs.c:6359 gui/dialogs.c:6364
 msgid "Year on year"
 msgstr ""
 
-#: gui/dialogs.c:6356
+#: gui/dialogs.c:6363
 msgid "Monthly, annualized"
 msgstr ""
 
-#: gui/dialogs.c:6382
+#: gui/dialogs.c:6389
 #, fuzzy
 msgid "Calculate using logs"
 msgstr "Makina llogaritëse"
 
-#: gui/dialogs.c:6419
+#: gui/dialogs.c:6426
 #, c-format
 msgid "100-based index of %s"
 msgstr ""
 
-#: gui/dialogs.c:6422
+#: gui/dialogs.c:6429
 msgid "100-based indices"
 msgstr ""
 
-#: gui/dialogs.c:6455
+#: gui/dialogs.c:6462
 #, fuzzy
 msgid "Base period:"
 msgstr "periudha"
 
-#: gui/dialogs.c:6557
+#: gui/dialogs.c:6564
 #, fuzzy
 msgid "Unrestricted (U-MIDAS)"
 msgstr "I pakufizuar"
 
-#: gui/dialogs.c:6558
+#: gui/dialogs.c:6565
 #, fuzzy
 msgid "Normalized exponential Almon"
 msgstr "Kohëzgjatje (eksponenciale)"
 
-#: gui/dialogs.c:6559
+#: gui/dialogs.c:6566
 msgid "Normalized beta (zero last lag)"
 msgstr ""
 
-#: gui/dialogs.c:6560
+#: gui/dialogs.c:6567
 msgid "Normalized beta (non-zero last lag)"
 msgstr ""
 
-#: gui/dialogs.c:6561
+#: gui/dialogs.c:6568
 msgid "Almon polynomial"
 msgstr ""
 
-#: gui/dialogs.c:6562
+#: gui/dialogs.c:6569
 #, fuzzy
 msgid "Normalized beta, one parameter"
 msgstr "Numri i rasteve"
 
-#: gui/dialogs.c:6585
+#: gui/dialogs.c:6592
 #, fuzzy, c-format
 msgid "High-frequency regressor %s"
 msgstr "= diferenca e parë e %s"
 
-#: gui/dialogs.c:6598
+#: gui/dialogs.c:6605
 #, fuzzy
 msgid "Parameterization"
 msgstr "kusht"
 
-#: gui/dialogs.c:6610
+#: gui/dialogs.c:6617
 #, fuzzy
 msgid "Number of parameters"
 msgstr "Numri i rasteve"
 
-#: gui/dialogs.c:6621 plugin/addons-i18n.c:65
+#: gui/dialogs.c:6628 plugin/addons-i18n.c:65
 msgid "Lags"
 msgstr "Vonesat"
 
-#: gui/dialogs.c:6700
+#: gui/dialogs.c:6707
 #, fuzzy
 msgid "series code:"
 msgstr "seri"
+
+#: gui/dialogs.c:7085
+#, c-format
+msgid "The series %s does not seem suitable for disaggregation"
+msgstr ""
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11188,8 +11193,8 @@ msgstr "Lista nuk ka emër"
 msgid "Really create an empty list?"
 msgstr "Doni të krijoni një listë bosh?"
 
-#: gui/fncall.c:810 gui/fncall.c:817 gui/fncall.c:1385 gui/menustate.c:608
-#: gui/menustate.c:623
+#: gui/fncall.c:810 gui/fncall.c:817 gui/fncall.c:1385 gui/menustate.c:604
+#: gui/menustate.c:619
 msgid "Define list"
 msgstr "Përcaktoni listën"
 
@@ -11760,7 +11765,7 @@ msgstr "bardh e zi"
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Ruaj si Windows metafile (EMF)..."
 
-#: gui/gpt_control.c:4175 gui/gpt_control.c:4521 gui/menustate.c:593
+#: gui/gpt_control.c:4175 gui/gpt_control.c:4521 gui/menustate.c:589
 msgid "Copy to clipboard"
 msgstr "Kopjo në kujtesë"
 
@@ -12265,7 +12270,7 @@ msgstr "Emri i ndryshores"
 msgid "Descriptive label"
 msgstr "Përshkrimi i ndryshores"
 
-#: gui/gretl.c:1552 gui/menustate.c:956
+#: gui/gretl.c:1552 gui/menustate.c:952
 msgid " No datafile loaded "
 msgstr "Asnjë skedë të dhënash e hapur"
 
@@ -12918,7 +12923,7 @@ msgstr "Analizë _TRAMO"
 msgid "_Hurst exponent"
 msgstr "Eksponenti _Hurst"
 
-#: gui/gretl.c:1875 gui/menustate.c:605
+#: gui/gretl.c:1875 gui/menustate.c:601
 #, fuzzy
 msgid "Disaggregate..."
 msgstr "Ndarja"
@@ -14535,7 +14540,7 @@ msgstr "Statistikat përshkruese"
 msgid "Show full statistics"
 msgstr "Statistikat përshkruese"
 
-#: gui/library.c:703 gui/library.c:733 gui/library.c:894 gui/menustate.c:441
+#: gui/library.c:703 gui/library.c:733 gui/library.c:894 gui/menustate.c:437
 msgid "correlation matrix"
 msgstr "matrica e korrelacioneve"
 
@@ -15423,156 +15428,156 @@ msgstr "Script-i u ekzekutua\n"
 msgid "Failed to flip state of \"%s\"\n"
 msgstr "I pamundur rikthimi në gjendjen \"%s\"\n"
 
-#: gui/menustate.c:415 gui/selector.c:6167
+#: gui/menustate.c:411 gui/selector.c:6167
 msgid "Ensure uniform sample size"
 msgstr "Përdor të njëjtat vrojtime për të gjitha ndryshoret "
 
-#: gui/menustate.c:579
+#: gui/menustate.c:575
 msgid "Edit values"
 msgstr "Ndrysho vlerat"
 
-#: gui/menustate.c:581 gui/menustate.c:613
+#: gui/menustate.c:577 gui/menustate.c:609
 msgid "Time series plot"
 msgstr "Grafik kohor"
 
-#: gui/menustate.c:582
+#: gui/menustate.c:578
 msgid "Panel plot..."
 msgstr "Grafik _paneli..."
 
-#: gui/menustate.c:583
+#: gui/menustate.c:579
 #, fuzzy
 msgid "Display map"
 msgstr "Shfaq"
 
-#: gui/menustate.c:584
+#: gui/menustate.c:580
 msgid "Frequency distribution"
 msgstr "Shpërndarja e frekuencave"
 
-#: gui/menustate.c:585
+#: gui/menustate.c:581
 msgid "Boxplot"
 msgstr "Grafik BoxPlot"
 
-#: gui/menustate.c:587
+#: gui/menustate.c:583
 msgid "Periodogram"
 msgstr "Periodogram"
 
-#: gui/menustate.c:588
+#: gui/menustate.c:584
 msgid "Edit attributes"
 msgstr "Ndrysho vetitë"
 
-#: gui/menustate.c:590
+#: gui/menustate.c:586
 #, fuzzy
 msgid "Collinearity"
 msgstr "_Kolineariteti i ndryshoreve"
 
-#: gui/menustate.c:592 gui/selector.c:7193
+#: gui/menustate.c:588 gui/selector.c:7193
 msgid "XY scatterplot"
 msgstr "Grafik pikash (X;Y)"
 
-#: gui/menustate.c:596
+#: gui/menustate.c:592
 msgid "Add log"
 msgstr "Shto logaritmin"
 
-#: gui/menustate.c:597
+#: gui/menustate.c:593
 msgid "Add difference"
 msgstr "Shto diferencën"
 
-#: gui/menustate.c:598
+#: gui/menustate.c:594
 msgid "Add percent change..."
 msgstr ""
 
-#: gui/menustate.c:599 gui/menustate.c:604
+#: gui/menustate.c:595 gui/menustate.c:600
 #, fuzzy
 msgid "Add index values..."
 msgstr "Ndrysho vlerat..."
 
-#: gui/menustate.c:600
+#: gui/menustate.c:596
 msgid "Dummify..."
 msgstr "Krijo ndryshore treguese..."
 
-#: gui/menustate.c:601
+#: gui/menustate.c:597
 msgid "Add logs"
 msgstr "Shto logaritmet"
 
-#: gui/menustate.c:602
+#: gui/menustate.c:598
 msgid "Add differences"
 msgstr "Shto diferencat"
 
-#: gui/menustate.c:603
+#: gui/menustate.c:599
 #, fuzzy
 msgid "Add percent changes..."
 msgstr "asnjë ndryshim në parametra"
 
-#: gui/menustate.c:607 gui/menustate.c:622
+#: gui/menustate.c:603 gui/menustate.c:618
 msgid "Define new variable..."
 msgstr "Përcakto një ndryshore të re..."
 
-#: gui/menustate.c:614
+#: gui/menustate.c:610
 #, fuzzy
 msgid "Add logs..."
 msgstr "Shto logaritmet"
 
-#: gui/menustate.c:615
+#: gui/menustate.c:611
 #, fuzzy
 msgid "Add differences..."
 msgstr "Shto diferencat"
 
-#: gui/menustate.c:617
+#: gui/menustate.c:613
 #, fuzzy
 msgid "Display components"
 msgstr "Të gjithë faktorët"
 
-#: gui/menustate.c:618
+#: gui/menustate.c:614
 #, fuzzy
 msgid "Plot components"
 msgstr "Të gjithë faktorët"
 
-#: gui/menustate.c:619
+#: gui/menustate.c:615
 #, fuzzy
 msgid "Edit components"
 msgstr "Të gjithë faktorët"
 
-#: gui/menustate.c:620
+#: gui/menustate.c:616
 #, fuzzy
 msgid "Delete components"
 msgstr "Të gjithë faktorët"
 
-#: gui/menustate.c:1022
+#: gui/menustate.c:1018
 msgid "Unknown"
 msgstr "Të panjohura"
 
-#: gui/menustate.c:1027
+#: gui/menustate.c:1023
 msgid "Undated"
 msgstr "Të padatuara"
 
-#: gui/menustate.c:1060
+#: gui/menustate.c:1056
 #, c-format
 msgid "Undated: Full range n = %d; current sample n = %d"
 msgstr ""
 "Të dhëna të padatuara: kampioni i plotë n = %d ; kampioni në përdorim n = %d"
 
-#: gui/menustate.c:1069 gui/menustate.c:1079 gui/menustate.c:1083
-#: gui/menustate.c:1107
+#: gui/menustate.c:1065 gui/menustate.c:1075 gui/menustate.c:1079
+#: gui/menustate.c:1103
 #, c-format
 msgid "%s; sample %s - %s"
 msgstr "%s ; kampioni në përdorim %s - %s"
 
-#: gui/menustate.c:1091
+#: gui/menustate.c:1087
 #, c-format
 msgid "%s: Full range %s - %s"
 msgstr "%s: kampioni i plotë %s - %s"
 
-#: gui/menustate.c:1097
+#: gui/menustate.c:1093
 #, fuzzy
 msgid "(unit:period)"
 msgstr "periudha"
 
-#: gui/menustate.c:1132
+#: gui/menustate.c:1128
 #, fuzzy, c-format
 msgid "Imported %s"
 msgstr "Importo"
 
-#: gui/menustate.c:1141
+#: gui/menustate.c:1137
 msgid " Unsaved data "
 msgstr "Të dhënat nuk janë ruajtur akoma"
 
@@ -18573,7 +18578,7 @@ msgstr "Vlerësime përsëritës"
 msgid "rho truncated to zero"
 msgstr ""
 
-#: plugin/interpolate.c:1740
+#: plugin/interpolate.c:1736
 #, fuzzy
 msgid "Temporal disaggregation"
 msgstr "Ndarja"

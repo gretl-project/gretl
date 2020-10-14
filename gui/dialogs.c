@@ -7081,6 +7081,9 @@ static int tdisagg_expansion (int v)
 	}
 	if (!err) {
 	    s = pd;
+	} else if (err == E_DATA) {
+	    errbox_printf(_("The series %s does not seem suitable for "
+			    "disaggregation"), dataset->varname[v]);
 	} else {
 	    gui_errmsg(err);
 	}
