@@ -6888,6 +6888,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
 struct tdisagg_info {
     int v;                 /* target series ID */
+    int s;                 /* expansion factor */
     GtkWidget *name_entry; /* entry box for output name */
     GtkWidget *agg_combo;  /* aggregation type */
     GtkWidget *cl_combo;   /* chow-lin methods */
@@ -6900,16 +6901,14 @@ struct tdisagg_info {
     GtkWidget *dlg;
 };
 
-static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
+static void do_tdisagg (GtkWidget *w, struct tdisagg_info *tdi)
 {
     PRN *prn = NULL;
     GString *GSB = NULL;
     GString *GSC = NULL;
     gchar *agg, *xname = NULL;
     const gchar *yname, *str;
-    int idx, s, err;
-
-    s = dataset->pd / series_get_orig_pd(dataset, tdi->v);
+    int idx, err;
 
     GSB = g_string_new(NULL);
     GSC = g_string_new(NULL);
@@ -6961,7 +6960,7 @@ static void tdisagg_callback (GtkWidget *w, struct tdisagg_info *tdi)
 
     g_string_printf(GSC, "series %s = tdisagg(%s, %s, %d, %s)",
                     yname, dataset->varname[tdi->v],
-                    xname != NULL ? xname : "null", s, GSB->str);
+                    xname != NULL ? xname : "null", tdi->s, GSB->str);
 
     err = generate(GSC->str, dataset, GRETL_TYPE_ANY, OPT_NONE, prn);
     if (err) {
@@ -7027,6 +7026,69 @@ static GList *plausible_covariate_list (int v)
     return list;
 }
 
+static int td_pattern (const double *x, int t1, int t2, int pd)
+{
+    int t, i, err = 0;
+
+    for (t=t1; t<=t2 && !err; t+=pd) {
+	/* the first obs per period must be valid */
+	if (na(x[t])) {
+	    err = E_MISSDATA;
+	}
+	/* subsequent values must be NA or the same
+	   as the first */
+	for (i=1; i<pd; i++) {
+	    if (!na(x[t+i]) && x[t+i] != x[t+i-1]) {
+		err = E_DATA;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* Try to figure the expansion factor for temporal
+   disaggregation candidate series @v. Return 0 if
+   this doesn't work.
+*/
+
+static int tdisagg_expansion (int v)
+{
+    int opd = series_get_orig_pd(dataset, v);
+    int s = 0;
+
+    if (opd > 0) {
+	/* series is pre-approved */
+	s = dataset->pd / opd;
+    } else {
+	const double *x = dataset->Z[v];
+	int t1 = dataset->t1;
+	int t2 = dataset->t2;
+	int pd = dataset->pd;
+	int sub, err;
+
+	series_adjust_sample(x, &t1, &t2);
+	date_maj_min(t1, dataset, NULL, &sub);
+	if (sub > 1) {
+	    /* advance to first sub-period */
+	    t1 += pd - sub + 1;
+	}
+	err = td_pattern(x, t1, t2, pd);
+	if (err && pd == 12) {
+	    /* monthly dataset: try for quarterly series */
+	    pd = 3;
+	    err = td_pattern(x, t1, t2, pd);
+	}
+	if (!err) {
+	    s = pd;
+	} else {
+	    gui_errmsg(err);
+	}
+    }
+
+    return s;
+}
+
 void tdisagg_dialog (int v)
 {
     const char *aggs[] = {
@@ -7039,10 +7101,15 @@ void tdisagg_dialog (int v)
     GtkWidget *entry;
     GList *xlist = NULL;
     GSList *group = NULL;
-    int i;
+    int i, s;
 
     if (maybe_raise_dialog()) {
         return;
+    }
+
+    s = tdisagg_expansion(v);
+    if (s == 0) {
+	return;
     }
 
     dialog = gretl_dialog_new("gretl: temporal disaggregation",
@@ -7051,6 +7118,7 @@ void tdisagg_dialog (int v)
 
     tdi.dlg = dialog;
     tdi.v = v;
+    tdi.s = s;
 
     xlist = plausible_covariate_list(v);
 
@@ -7172,7 +7240,7 @@ void tdisagg_dialog (int v)
     cancel_delete_button(hbox, dialog);
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(tdisagg_callback), &tdi);
+                     G_CALLBACK(do_tdisagg), &tdi);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, TDISAGG);
 

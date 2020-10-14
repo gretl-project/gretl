@@ -267,17 +267,13 @@ void time_series_menu_state (gboolean s)
 #endif
     flip(mdata->ui, "/menubar/Variable/Hurst", s);
     flip(mdata->ui, "/menubar/Variable/tdisagg", s &&
-         series_get_orig_pd(dataset, mdata->active_var));
+         quarterly_or_monthly(dataset));
 
     /* Model menu */
     flip(mdata->ui, "/menubar/Model/TSModels", s);
     flip(mdata->ui, "/menubar/Model/TSMulti", s);
-#if 1 /* not ready yet */
     flip(mdata->ui, "/menubar/Model/TSModels/midasreg",
          s && OK_MIDAS_PD(dataset->pd));
-#else
-    flip(mdata->ui, "/menubar/Model/TSModels/midasreg", FALSE);
-#endif
 
     /* Sample menu */
     flip(mdata->ui, "/menubar/Data/DataCompact",
