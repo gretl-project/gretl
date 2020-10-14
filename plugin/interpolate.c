@@ -1455,14 +1455,10 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	*err = E_INVARG;
     }
 
-    if (ret != NULL && ret->rows == X->rows &&
-	gretl_matrix_is_dated(X)) {
-	/* copy obs numbers from X to final series */
-	int t1 = gretl_matrix_get_t1(X);
-	int t2 = gretl_matrix_get_t2(X);
-
-	gretl_matrix_set_t1(ret, t1);
-	gretl_matrix_set_t2(ret, t2);
+    if (ret != NULL && X != NULL) {
+	if (ret->rows == X->rows && gretl_matrix_is_dated(X)) {
+	    gretl_matrix_transcribe_obs_info(ret, X);
+	}
     }
 
     return ret;
