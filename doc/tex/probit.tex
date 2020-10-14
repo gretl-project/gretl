@@ -401,7 +401,7 @@ $y^*_i$ simply by adding the two together.
 
 When the dependent variable is not binary and does not have a natural
 ordering, \emph{multinomial} models are used.  Multinomial logit is
-supported in gretl via the \verb|--multinomial| option to the
+supported in gretl via the \option{multinomial} option to the
 \texttt{logit} command.  Simple models can also be handled via the
 \texttt{mle} command (see chapter \ref{chap:mle}). We give here an
 example of such a model.  Let the dependent variable, $y_i$, take on
@@ -512,7 +512,7 @@ Note that, since what is estimated is a two-equation system, the
 \dollar{uhat} and \dollar{yhat} accessors will return two
 matrices. The former is a two-column matrix containing the generalized
 residuals. The \dollar{yhat} accessor, instead, will contain four
-colums, with the estimated probabilities for
+columns, with the estimated probabilities for
 $(y_{1,i}, y_{1,i}) = (1,1)$ in column 1, $(y_{1,i}, y_{2,i}) = (1,0)$
 in column 2, $(y_{1,i}, y_{2,i}) = (0,1)$ in column 3 and
 $(y_{1,i}, y_{2,i}) = (0,0)$ in column 4.
@@ -1233,8 +1233,8 @@ list of regressors, and \texttt{cens} is the censoring dummy.
 
 By default the Weibull distribution is used; you can substitute any of
 the other three distributions discussed here by appending one of the
-option flags \verb|--exponential|, \verb|--loglogistic| or 
-\verb|--lognormal|.
+option flags \option{exponential}, \option{loglogistic} or 
+\option{lognormal}.
 
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
@@ -1330,7 +1330,7 @@ would do so straight out of prison. In the data, we find that only 2.6
 percent of those followed were rearrested within 3 months. The
 log-normal specification, which allows the hazard to rise and then
 fall, may be more appropriate.  Using the \texttt{duration} command
-again with the same covariates but the \verb|--lognormal| flag, we get
+again with the same covariates but the \option{lognormal} flag, we get
 a log-likelihood of $-1597$ as against $-1633$ for the Weibull,
 confirming that the log-normal gives a better fit.
 
@@ -1355,9 +1355,9 @@ that does this, and the resulting plots are shown in
 Figure~\ref{fig:hazard-plots}. Note that when computing the hazards we
 need to multiply by the Jacobian of the transformation from $t_i$ to
 $w_i = \log (t_i - x_i\beta)/\sigma$, namely $1/t$.  Note also that
-the estimate of $\sigma$ is available via the accessor \verb|$sigma|,
+the estimate of $\sigma$ is available via the accessor \dollar{sigma},
 but it is also present as the last element in the coefficient vector
-obtained via \verb|$coeff|.
+obtained via \dollar{coeff}.
 
 A further difference between the Weibull and log-normal specifications
 is illustrated in the plots. The Weibull is an instance of a
@@ -1474,7 +1474,7 @@ is not noted in all software.\footnote{The \texttt{predict} adjunct to
   produces large negative values for the log-logistic mean in duration
   models with $\sigma > 1$.}
 
-Alternatively, if the \verb|--medians| option is given, gretl's
+Alternatively, if the \option{medians} option is given, gretl's
 \texttt{duration} command will produce conditional medians as the
 content of \dollar{yhat}.  For the Weibull the median is
 $\exp(X\beta)(\log 2)^\sigma$; for the log-logistic and log-normal it
