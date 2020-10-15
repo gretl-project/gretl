@@ -243,7 +243,7 @@ static int expand_data_dialog (int nx, int nv, GtkWidget *parent)
 		 "than the current dataset. OK to proceed?");
     }
 
-    return yes_no_help_dialog(msg, EXPAND);
+    return yes_no_help_dialog(_(msg), EXPAND);
 }
 
 static int obs_overlap_check (int pd, const char *stobs,
