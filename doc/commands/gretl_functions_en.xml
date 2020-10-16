@@ -1251,7 +1251,7 @@
 	  This accessor returns the path where gretl reads from and
 	  writes to by default. A fuller discussion is provided in the
 	  Command Reference under <cmdref targ="workdir"/>. Note that
-	  this string can be set by the user vis the <cmdref
+	  this string can be set by the user via the <cmdref
 	  targ="set"/> command.
         </para>
       </description>
