@@ -4660,6 +4660,36 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
     return err;
 }
 
+/* The pre-checked case: we know that series @i is suitable
+   for stringifying, and that @S contains the right number of
+   strings.
+*/
+
+int series_set_string_vals_direct (DATASET *dset, int i,
+				   char **S, int ns)
+{
+    series_table *st = series_table_new(S, ns);
+    int err = 0;
+
+    if (st == NULL) {
+	err = E_ALLOC;
+    } else {
+	if (dset->varinfo[i]->st != NULL) {
+	    /* remove any pre-existing table */
+	    series_table_destroy(dset->varinfo[i]->st);
+	}
+	series_set_discrete(dset, i, 1);
+	dset->varinfo[i]->st = st;
+	maybe_adjust_label(dset, i, S, ns);
+    }
+
+    if (err && S != NULL && ns > 0) {
+	strings_array_free(S, ns);
+    }
+
+    return err;
+}
+
 /**
  * series_recode_strings:
  * @dset: pointer to dataset.
