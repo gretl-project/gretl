@@ -6908,6 +6908,7 @@ static void do_tdisagg (GtkWidget *w, struct tdisagg_info *tdi)
     GString *GSC = NULL;
     gchar *agg, *xname = NULL;
     const gchar *yname, *str;
+    int discard_x = 0;
     int idx, err;
 
     GSB = g_string_new(NULL);
@@ -6929,23 +6930,23 @@ static void do_tdisagg (GtkWidget *w, struct tdisagg_info *tdi)
         g_string_append_printf(GSB, ", method=\"%s\"", str);
         idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->det_combo));
         g_string_append_printf(GSB, ", det=%d", idx);
-        if (tdi->cov_combo != NULL) {
+        if (gtk_widget_is_sensitive(tdi->cov_combo)) {
             xname = combo_box_get_active_text(tdi->cov_combo);
+	    discard_x = strcmp(xname, "none") == 0;
         }
     } else {
         idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->dn_combo));
         str = idx == 1 ? "denton-afd" : "denton-pfd";
         g_string_append_printf(GSB, ", method=\"%s\"", str);
         xname = combo_box_get_active_text(tdi->dp_combo);
-        if (!strcmp(xname, "constant")) {
-            g_free(xname);
-            xname = NULL;
-        }
+	discard_x = strcmp(xname, "constant") == 0;
     }
 
-    if (xname != NULL && current_series_index(dataset, xname) < 0) {
-        g_free(xname);
-        xname = NULL;
+    if (xname != NULL) {
+	if (discard_x || current_series_index(dataset, xname) < 0) {
+	    g_free(xname);
+	    xname = NULL;
+	}
     }
 
     if (button_is_active(tdi->plot_check)) {
@@ -7178,19 +7179,16 @@ void tdisagg_dialog (int v)
     gtk_combo_box_set_active(GTK_COMBO_BOX(com), 1);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    if (xlist != NULL) {
-        xlist = g_list_prepend(xlist, (gpointer) "none");
-        hbox = gtk_hbox_new(FALSE, 5);
-        tmp = gtk_label_new("Covariate:");
-        gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-        tdi.cov_combo = com = gtk_combo_box_text_new();
-        set_combo_box_strings_from_list(com, xlist);
-        gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
-        gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    } else {
-        tdi.cov_combo = NULL;
-    }
+    xlist = g_list_prepend(xlist, (gpointer) "none");
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new("Covariate:");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    tdi.cov_combo = com = gtk_combo_box_text_new();
+    set_combo_box_strings_from_list(com, xlist);
+    gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
+    gtk_widget_set_sensitive(com, g_list_length(xlist) > 1);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
