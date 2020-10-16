@@ -3935,6 +3935,12 @@
 	used to produce a distributed or interpolated version of the
 	data (<quote>temporal disaggregation</quote>).
       </para>
+      <para>
+	Some of the functionality of the <lit>tdisagg</lit> function
+	can be accessed via the graphical interface: select a
+	candidate series in the main gretl window, then under the
+	Variable menu look for <quote>Disaggregate</quote>.
+      </para>
     </description>
   </command>
 
@@ -14852,8 +14858,8 @@
 	    variables, ratios, or flows <quote>at an annual
 	    rate</quote>). Choose <lit>last</lit> or <lit>first</lit>
 	    if the last or first high frequency value should equal the
-	    low frequency value (stock variables, such as money
-	    stock).
+	    low frequency value (which may be the case with stock
+	    variables, such as money stock).
 	  </para>
 	</li>
 	<li>
