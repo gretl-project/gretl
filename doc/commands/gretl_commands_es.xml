@@ -729,13 +729,15 @@
 
     <description>
       <para>
+	Esta instrucción se desaconseja en favor de la instrucción actualizada
+	y más flexible <cmdref targ="dpanel"/>. Probablemente será eliminada,
+	por lo que no deberías utilizarla en los nuevos guiones que escribas.
+      </para>
+      <para>
 	Realiza la estimación de modelos dinámicos con datos de panel
 	(es decir, modelos de panel que incluyen uno o más retardos de la
 	variable dependiente) utilizando el método MGM-DIF establecido
 	por <cite key="arellano-bond91">Arellano y Bond (1991)</cite>.
-	Consulta <cmdref targ="dpanel"/> para ver los detalles de una
-	versión actualizada y más flexible de esta instrucción, que permite
-	manejar tanto MGM-SIS como MGM-DIF.
       </para>
       <para>
 	El parámetro <repl>p</repl> representa el orden de la autorregresión de la
@@ -2515,10 +2517,6 @@
 	  <effect>Especifica el método para compactar</effect>
 	</option>
 	<option>
-	  <flag>--interpolate</flag>
-	  <effect>Hace la interpolación para datos de baja frecuencia</effect>
-	</option>
-	<option>
 	  <flag>--quiet</flag>
 	  <effect>No muestra los resultados excepto en caso de fallo</effect>
 	</option>
@@ -2592,15 +2590,12 @@
 	<lit>m01</lit>, <lit>m02</lit> y <lit>m03</lit>.
       </para>
       <para>
-	Cuando las series que se leen son de frecuencia menor que la del
-	conjunto de datos de trabajo, por defecto se repiten los valores de los
-	datos añadidos según se necesite. Pero puedes utilizar la opción
-	<opt>interpolate</opt> para solicitar que se haga la interpolación
-	utilizando el método de <cite key="chowlin71">Chow y Lin (1971)</cite>
-	en el que los regresores son una constante más una tendencia lineal y
-	cuadrada, y se asume que la perturbación sigue un AR(1). Sin embargo, ten en
-	cuenta que dispones de esta opción solo para convertir datos trimestrales en
-	mensuales, o datos anuales en trimestrales.
+	Cuando las series que se leen son de frecuencia <emphasis>menor</emphasis>
+	que la del conjunto de datos de trabajo, los valores de los datos
+	añadidos sencillamente se repiten según se necesite; pero ten en
+	cuenta que puedes utilizar la función <fncref targ="tdisagg"/> para
+	solicitar que se haga una distribución o una interpolación
+	(<quote>desagregación temporal </quote>).
       </para>
       <para>
 	En el caso de bases de datos propias (únicamente) de Gretl, puedes
@@ -2712,7 +2707,7 @@
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2776,16 +2771,14 @@
 	(una por cada subperíodo), pues por defecto se hace usando la media.
       </para>
       <para>
-	<lit>expand</lit>: Esta instrucción solo está disponible para datos de
-	series temporales anuales o trimestrales, pues los datos anuales se pueden
-	expandir a trimestrales y los datos trimestrales a frecuencia mensual.
-	Por defecto, todas las series del conjunto de datos se rellenan con la nueva
-	frecuencia repitiendo los valores existentes, pero si añades el
-	parámetro <lit>interp</lit>, entonces la serie se expande utilizando la
-	interpolación de Chow&ndash;Lin  (para los detalles, consulta
-	<cite key="chowlin71">Chow y Lin, 1971</cite>) en la que los regresores
-	son una constante más una tendencia cuadrática, y se asume
-	que la perturbación sigue un AR(1).
+	<lit>expand</lit>: Esta instrucción solo está disponible para datos
+	de series temporales anuales o trimestrales, pues los datos anuales
+	se pueden expandir a trimestrales o mensuales, y los datos trimestrales
+	a mensuales. Todas las series del conjunto de datos se rellenan con
+	la nueva frecuencia repitiendo los valores existentes. Si la base de
+	datos original es anual, la expansión por defecto es a trimestral,
+	pero la función <lit>expand</lit> pode estar seguida de <lit>12</lit>
+	para solicitar que sea a mensual.
       </para>
       <para>
 	<lit>transpose</lit>: No necesita ningún parámetro adicional.
@@ -3925,43 +3918,22 @@
 
     <description>
       <para>
-	Si quieres añadir a un conjunto de datos, una serie que es de frecuencia
-	menor, es necesario <quote>expandir</quote> la nueva serie. Por ejemplo,
-	tendrás que expandir una serie trimestral para ajustarla a un conjunto
-	de datos mensual. Además, a veces puedes querer expandir un conjunto
-	de datos entero a otro de frecuencia mayor (quizás antes de añadir
-	una variable de frecuencia mayor al conjunto de datos).
+	Debes considerar la <quote>expansión</quote> desde una frecuencia
+	menor a una mayor de un conjunto de datos o de una serie, como una
+	opción para expertos, pues necesitas saber que estás haciendo. Cuando
+	combinas series de diferentes frecuencias originales dentro de un conjunto
+	de datos, probablemente deberías considerar como compactar los datos
+	de frecuencia mayor, en lugar de expandir las series de frecuencia menor.
       </para>
       <para>
-	Debes considerar la expansión de los datos como una opción para
-	<quote>expertos</quote> pues necesitas saber qué estás haciendo.
-	Cuando combinas series de diferentes frecuencias originales dentro
-	de un conjunto de datos, probablemente deberías de considerar como
-	compactar los datos de frecuencia mayor, más que expandir las series
-	de frecuencia menor.
-      </para>
-      <para>
-	Dicho esto, Gretl te permite dos opciones para la expansión: (a)
-	puedes interpolar valores de alta frecuencia utilizando el método de
-	<cite key="chowlin71">Chow y Lin (1971)</cite>, o (b) puedes
-	repetir valores de las series de frecuencia menor tantas veces
-	como sea necesario.
-      </para>
-      <para>
-	El método de Chow&ndash;Lin está basado en la regresión, y utiliza
-	una constante más una tendencia cuadrática, asumiendo
-	un proceso autorregresivo de primer orden para las perturbaciones.
-	Se gastan cuatro grados de libertad con este procedimiento.
-      </para>
-      <para>
-	Respecto al método de repetición de valores, supón que tienes una serie
-	trimestral con el valor 35.5 en 1990:1 (el primer trimestre de
-	1990). En la expansión a mensual, se va a asignar el valor 35.5
-	a las observaciones de enero, febrero y marzo de 1990. En
-	consecuencia, la variable expandida es inútil para un análisis
-	pormenorizado de series temporales, excepto en el caso especial en el
-	que ya sabes de hecho que la variable en cuestión se mantiene
-	constante durante los subperíodos.
+	Dicho esto, Gretl admite la expansión mediante la simple repetición
+	de los valores de baja frecuencia. Por ejemplo, al expandir desde
+	frecuencia trimestral a mensual, los valores trimestrales se repiten
+	para cada mes del trimestre. Las series generadas de este modo no es
+	probable que se puedan usar tal cual para el análisis econométrico, pero
+	después de la expansión puedes usar la función <fncref targ="tdisagg"/>
+	para producir una versión distribuida o interpolada de los datos
+	(<quote>desagregación temporal</quote>).
       </para>
     </description>
   </command>
@@ -11061,11 +11033,11 @@
 	end plot --output=display
       </code>
       <para>
-	Este ejemplo asume que <lit>plotmat</lit> es el nombre de una
-	matriz que tiene 2 columnas por lo menos (o una lista que tiene
-	2 elementos por lo menos). Ten en cuenta que se considera
-	una buena praxis colocar (únicamente) la opción <opt>output</opt>
-	en la última línea del bloque.
+	Este ejemplo asume que <lit>plotmat</lit> es el nombre de una matriz
+	que tiene 2 columnas por lo menos (o una lista que tiene 2 elementos
+	por lo menos). Ten en cuenta que se considera una buena praxis colocar
+	(únicamente) la opción <opt>output</opt> en la última línea del bloque;
+	otras opciones deberías colocarlas dentro del bloque.
       </para>
       <subhead>Dibujar una franja con datos de matrices</subhead>
       <para>
@@ -14851,6 +14823,52 @@
       <menu-path>Ventana de modelo: LaTeX</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="tdisagg" section="Dataset" context="gui"
+    label="Desagregación temporal">
+
+    <description>
+      <para>
+	Aquí tienes un repaso de las opciones disponibles en el cuadro de
+	diálogo de la desagregación temporal. Para obtener una explicación
+	detallada, consulta <guideref targ="chap:tdisagg"/>.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Nombre del resultado: Puedes elegir entre sobrescribir una serie
+	    ya existente con la versión desagregada, o dar un nuevo nombre
+	    al resultado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Tipo de agregación: Escoge <lit>sum</lit> si la suma de los valores
+	    de alta frecuencia debe resultar igual al valor de baja frecuencia
+	    proporcionado (ej. flujos como el PIB y sus componentes).
+	    Elige <lit>avg</lit> si la media de los valores de alta frecuencia
+	    debe resultar igual al valor de baja frecuencia proporcionado
+	    (ej. índices, cocientes, o flujos <quote>en tasas anuales</quote>).
+	    Opta por <lit>last</lit> o <lit>first</lit> si el último o el
+	    primer valor de alta frecuencia debe ser igual al valor de
+	    baja frecuencia (ej. variables de stock como la cantidad de
+	    dinero).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Basado en regresión frente a Denton: En general, se recomienda el
+	    primero. Si escoges <quote>Basado en regresión</quote>, vas a
+	    poder seleccionar el método de Fernández si piensas que la serie
+	    en cuestión tiene una raíz unitaria; en caso contrario, opta por
+	    Chow&ndash;Lin. Si escoges Denton, se asume que sabes lo que
+	    estás haciendo pues los métodos Denton son en primeras diferencias,
+	    tal como los modificó Cholette.
+	  </para>
+	</li>
+      </ilist>
+    </description>
   </command>
 
   <command name="textplot" section="Graphs"
