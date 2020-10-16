@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-10-14 16:49-0400\n"
-"PO-Revision-Date: 2020-10-12 18:04+0200\n"
+"PO-Revision-Date: 2020-10-16 00:17+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -2432,7 +2432,7 @@ msgstr "Attenzione: l'asserzione '%s' è falsa"
 #: lib/src/geneval.c:7467
 #, c-format
 msgid "Assertion '%s' failed"
-msgstr ""
+msgstr "L'asserzione '%s' è falsa"
 
 #: lib/src/geneval.c:8663
 #, c-format
@@ -9064,12 +9064,16 @@ msgid ""
 "The data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"I dati da importare sono a una frequenza più bassa\n"
+"di quella del dataset aperto. Vado avanti?"
 
 #: gui/database.c:242
 msgid ""
 "Some of the data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Alcuni dei dati da importare sono a frequenza più bassa\n"
+"del dataset aperto. Vado avanti?"
 
 #: gui/database.c:372
 msgid "Sorry, can't handle this frequency conversion"
@@ -9090,7 +9094,7 @@ msgid ""
 "from the database '%s'?"
 msgstr ""
 "Eliminare davvero le serie selezionate\n"
-"dal database \"%s\"?"
+"dal database '%s'?"
 
 #: gui/database.c:1019
 msgid "Warning: series has missing observations"
@@ -10552,7 +10556,7 @@ msgstr "codice della serie:"
 #: gui/dialogs.c:7085
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
-msgstr ""
+msgstr "La serie %s non sembra adatta per la disaggregazione"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -15171,7 +15175,7 @@ msgstr ""
 
 #: gui/library.c:9661
 msgid "Unbalanced \"loop\"/\"endloop\" in script"
-msgstr ""
+msgstr "Nello script c'è uno sbilanciamento \"loop\"/\"endloop\""
 
 #: gui/library.c:9673
 msgid "Unmatched \"if\" in script (fixed)"
@@ -15542,11 +15546,11 @@ msgstr "Occorre scegliere una variabile dipendente"
 
 #: gui/selector.c:3461 gui/selector.c:6422
 msgid "Elastic net"
-msgstr ""
+msgstr "Rete elastica"
 
 #: gui/selector.c:3472 gui/selector.c:6393 gui/selector.c:6421
 msgid "Ridge"
-msgstr ""
+msgstr "Ridge"
 
 #: gui/selector.c:3499
 msgid "You must specify a quantile"
@@ -16044,7 +16048,7 @@ msgstr "Massimo specificato"
 
 #: gui/selector.c:6390 gui/selector.c:6420
 msgid "LASSO"
-msgstr ""
+msgstr "LASSO"
 
 #: gui/selector.c:6437
 msgid "Single λ-fraction"
@@ -18264,7 +18268,7 @@ msgstr "Stima GLS iterata"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
-msgstr ""
+msgstr "rho troncato a zero"
 
 #: plugin/interpolate.c:1736
 msgid "Temporal disaggregation"
