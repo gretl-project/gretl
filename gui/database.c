@@ -2542,6 +2542,7 @@ static int get_target_in_home (char *targ, int code,
 			       const char *objname,
 			       const char *ext)
 {
+    GString *gs = g_string_new(NULL);
 #ifdef OS_OSX
     const char *savedir = gretl_app_support_dir();
 #else
@@ -2552,30 +2553,31 @@ static int get_target_in_home (char *targ, int code,
     if (savedir == NULL || *savedir == '\0') {
 	err = E_FOPEN;
     } else {
-	int subdir = 0;
+	int subdir = 1;
 
 	if (code == REMOTE_FUNC_FILES) {
-	    sprintf(targ, "%sfunctions", savedir);
-	    subdir = 1;
+	    g_string_append_printf(gs, "%sfunctions", savedir);
 	} else if (code == REMOTE_DB) {
-	    sprintf(targ, "%sdb", savedir);
-	    subdir = 1;
+	    g_string_append_printf(gs, "%sdb", savedir);
 	} else if (code == REMOTE_DATA_PKGS) {
-	    sprintf(targ, "%sdata", savedir);
-	    subdir = 1;
+	    g_string_append_printf(gs, "%sdata", savedir);
 	} else {
-	    sprintf(targ, "%s%s%s", savedir, objname, ext);
+	    g_string_append_printf(gs, "%s%s%s", savedir, objname, ext);
+	    subdir = 0;
 	}
 
 	if (subdir) {
-	    err = gretl_mkdir(targ);
+	    err = gretl_mkdir(gs->str);
 	    if (!err) {
-		strcat(targ, SLASHSTR);
-		strcat(targ, objname);
-		strcat(targ, ext);
+		g_string_append_c(gs, SLASH);
+		g_string_append(gs, objname);
+		g_string_append(gs, ext);
 	    }
 	}
     }
+
+    strcpy(targ, gs->str);
+    g_string_free(gs, TRUE);
 
     return err;
 }
