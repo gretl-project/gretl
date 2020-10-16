@@ -4323,6 +4323,7 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
  * @dset: pointer to dataset.
  * @i: index number of series.
  * @n_strs: location to receive the number of strings, or NULL.
+ * @subsample: non-zero to restrict to current sample range.
  *
  * Returns: the array of strings associated with distinct numerical
  * values of series @i, or NULL if there's no such array. The returned
