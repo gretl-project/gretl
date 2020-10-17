@@ -2474,9 +2474,14 @@ static int complex_strcalc_ok (NODE *n, parser *p)
 	/* can't do when subsampled */
 	return 0;
     } else {
+	/* OK, we'll try it */
 	return 1;
     }
 }
+
+/* Get node @ret ready to return a string-valued series,
+   which must be a member of the current dataset.
+*/
 
 static void prepare_stringvec_return (NODE *ret, parser *p,
 				      char **S, int ns,
@@ -2485,7 +2490,7 @@ static void prepare_stringvec_return (NODE *ret, parser *p,
     p->flags |= P_STRVEC;
 
     if (p->lh.t == SERIES) {
-	/* overwrite entire existing series */
+	/* overwrite existing LHS series */
 	if (write_vec) {
 	    double *targ = p->dset->Z[p->lh.vnum];
 	    size_t nb = p->dset->n * sizeof *targ;
@@ -2494,22 +2499,24 @@ static void prepare_stringvec_return (NODE *ret, parser *p,
 	}
 	series_set_string_vals_direct(p->dset, p->lh.vnum, S, ns);
     } else {
-	/* add product as new series */
+	/* or add as new series */
 	p->err = dataset_add_allocated_series(p->dset, ret->v.xvec);
 	if (!p->err) {
 	    int vnew = p->dset->v - 1;
 
 	    series_set_string_vals_direct(p->dset, vnew, S, ns);
 	    strcpy(p->dset->varname[vnew], p->lh.name);
+	    ret->v.xvec = NULL; /* donated to dset */
 	    ret->vnum = vnew;
-	    ret->v.xvec = NULL;
 	} else {
 	    strings_array_free(S, ns);
 	}
     }
 }
 
-/* Both nodes are string-valued series */
+/* Both nodes are string-valued series. We support a limited
+   set of operations.
+*/
 
 static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
 {
@@ -2538,6 +2545,7 @@ static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
     vr = r->vnum;
 
     if (f == B_POW) {
+	/* "logical product" */
 	char *slr, **Sl, **Sr;
 	int nl, j, ll;
 
@@ -12472,9 +12480,11 @@ static NODE *string_replace (NODE *src, NODE *n0, NODE *n1,
         }
 
 	if (src->t == STR) {
+	    /* single string variable */
 	    S[0] = src->v.str;
 	    ret = aux_string_node(p);
 	} else if (useries_node(src)) {
+	    /* string-valued series? */
 	    if (is_string_valued(p->dset, src->vnum) &&
 		complex_strcalc_ok(call, p)) {
 		Ssrc = series_get_string_vals(p->dset, src->vnum,
@@ -12484,6 +12494,7 @@ static NODE *string_replace (NODE *src, NODE *n0, NODE *n1,
 		p->err = E_TYPES;
 	    }
 	} else if (src->t == ARRAY) {
+	    /* array of strings? */
 	    if (gretl_array_get_type(src->v.a) == GRETL_TYPE_STRINGS) {
 		Ssrc = gretl_array_get_strings(src->v.a, &ns);
 		ret = aux_array_node(p);
