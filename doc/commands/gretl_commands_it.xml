@@ -216,7 +216,7 @@
 	che la rimozione della media o del trend lineare dalla
 	variabile che deve essere testata è fatta utilizzando la
 	procedura GLS suggerita da <cite key="ERS96">Elliott,
-	Rothenberg and Stock (1996)</cite>, la quale restituisce un
+	Rothenberg e Stock (1996)</cite>, la quale restituisce un
 	test di potenza superiore al test standard di
 	Dickey&ndash;Fuller.  Questa opzione non è compatibile con
 	<opt>nc</opt>,<opt>ctt</opt> o <opt>seasonals</opt>.
@@ -254,7 +254,7 @@
         all'indietro può essere selezionato usando il parametro
         opzionale e deve essere uno fra <lit>MAIC</lit>,
         <lit>MBIC</lit> o <lit>tstat</lit>.  I metodi MAIC e MBIC sono
-        descritti in <cite key="ng-perron01">Ng and Perron
+        descritti in <cite key="ng-perron01">Ng e Perron
         (2001)</cite>; l'ordine dei ritardi viene scelto in modo da
         ottimizzare rispettivamente una versione modificata del
         Criterio di Informazione di Akaike o del Criterio Bayesiano di
@@ -274,7 +274,7 @@
         ricavato applicando la seguente procedura di test
         "all'indietro", usando il criterio scelto tramite la tendina
         associata. I metodi AIC e BIC modificati sono descritti in
-        <cite key="ng-perron01">Ng and Perron (2001)</cite>; l'ordine
+        <cite key="ng-perron01">Ng e Perron (2001)</cite>; l'ordine
         dei ritardi viene scelto in modo da ottimizzare
         rispettivamente una versione modificata del Criterio di
         Informazione di Akaike o del Criterio Bayesiano di
@@ -309,7 +309,7 @@
         modello con costante o quello con costante e trend). L'effetto
         di questa opzione è di rimuovere la media o il trend della
         variabile da testare, usando la procedura GLS suggerita da
-        <cite key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>,
+        <cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>,
         che fornisce un test di potenza maggiore rispetto a
         quell'approccio standard di Dickey&ndash;Fuller. Questa
         opzione non è compatibile con le opzioni <opt>nc</opt>,
@@ -322,7 +322,7 @@
         usando la procedura GLS questi <emphasis>P</emphasis>-value
         non sono utilizzabili; vengono usati i valori critici
         contenuti nella Tabella 1 di <cite key="ERS96">Elliott,
-        Rothenberg and Stock (1996)</cite>.
+        Rothenberg e Stock (1996)</cite>.
       </para>
 
       <subhead context="cli">Dati panel</subhead>
@@ -496,10 +496,10 @@
       <para>
 	Attenzione: non è supportato il caso i nuovo dati inizino
 	prima e finiscano dopo quelli originali. Per aggiungere nuove
-	serie in tal caso bisogna usare l'opzione <opt>fixed-sample</opt>
-	option; ciò ha l'effetto di di sopprimere l'aggiunta di
-	osservazioni, e quindi restringere l'operazione all'aggiunta
-	di nuove serie.
+	serie in tal caso bisogna usare l'opzione
+	<opt>fixed-sample</opt>; ciò ha l'effetto di di sopprimere
+	l'aggiunta di osservazioni, e quindi restringere l'operazione
+	all'aggiunta di nuove serie.
       </para>
       <para>
 	Nel caso di aggiunta di dati a un dataset panel, c'è una
@@ -743,7 +743,7 @@
 	Esegue la stima di modelli panel dinamici (ossia, modelli
 	panel che includono uno o più ritardi della variabile
 	dipendente) usando il metodo GMM proposto da <cite
-	key="arellano-bond91">Arellano and Bond (1991)</cite>.  Vedi,
+	key="arellano-bond91">Arellano e Bond (1991)</cite>.  Vedi,
 	tuttavia, il comando <cmdref targ="dpanel"/> per una
 	alternativa più avanzata e più flessibile, che offre lo
 	stimatore GMM-SYS oltre al GMM-DIF.
@@ -4422,7 +4422,7 @@
 	sia zero. Di default viene utilizzato lo stimatore locale di 
 	Whittle <cite key="robinson95" p="true">(Robinson,
 	1995)</cite>, ma se si indica l'opzione <opt>gph</opt> il comando 
-	usa il test GPH <cite key="GPH83" p="true">(Geweke and
+	usa il test GPH <cite key="GPH83" p="true">(Geweke e
 	Porter-Hudak, 1983)</cite>. L'opzione 
 	<opt>all</opt> permette di ottenere i risultati di 
 	entrambi i test.
@@ -9096,7 +9096,7 @@
 	termine di errore; test dei moltiplicatori di Lagrange per la
 	non-linearità (logaritmi o quadrati); test di White (con o
 	senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
-	l'eteroschedasticità (<cite key="breusch-pagan79">Breusch and
+	l'eteroschedasticità (<cite key="breusch-pagan79">Breusch e
 	Pagan, 1979</cite>), test LMF per la correlazione seriale (si
 	veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
 	test per il modello ARCH (Autoregressive Conditional
@@ -11990,10 +11990,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         Senza l'opzione <opt>intervals</opt>, vengono mostrati gli errori
         standard per le stime quantili; per impostazione predefinita
         questi sono calcolati con la formula asintotica di
-        <cite key="koenker-bassett78">Koenker and Bassett (1978)</cite>, ma
+        <cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>, ma
         se si usa l'opzione <opt>robust</opt>, verrà usata la variante robusta
         per l'eteroschedasticità utilizzando il metodo di <cite key="koenker-zhao94">Koenker
-        and Zhao (1994)</cite>.
+        e Zhao (1994)</cite>.
       </para>
       <para>
         Se si usa l'opzione <opt>intervals</opt>, gretl calcolerà gli
@@ -12922,14 +12922,14 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	Highlighting style).
       </para>
       <para>
-	<emphasis>Smart Tab and Enter</emphasis>: If
-	this is turned on, then when you press the <lit>Tab</lit> key
-	at the start of a line in a hansl script, instead of just
-	entering a tab stop the program will try to adjust the
-	indentation level of the line consistently with other lines
-	that have been entered. Simlarly, when you press the
-	<lit>Enter</lit> key the program will try to ensure that the
-	indentation of the completed line is correct.
+	<emphasis>Tab e Invio intelligenti</emphasis>: Se questo
+	settaggio è abilitato, premere il tasto <lit>Tab</lit>
+	all'inizio della linea in uno script hansl farà sì che il
+	programma, anziché inserire una tabulazione, cercherà di
+	aggiustare il livello di indentazione rispetto alle alter
+	linee dello script. Nello stesso modo, premendo
+	<lit>Invio</lit> il programma cercherà di far si che
+	l'indentazione della linea sia corretta.
       </para>
       <para>
 	<emphasis>Mostra i numeri di linea</emphasis>: Mostra i numeri di
@@ -13083,8 +13083,8 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <para><lit>verbose</lit>: <lit>off</lit> oppure
 	  <lit>on</lit> (valore predefinito). Funziona come
 	  <quote>interruttore doppio</quote> per <lit>echo</lit> e
-	  <lit>messages</lit> (vedi sopra), ponenendoli ambedue accesi
-	  o spenti. 
+	  <lit>messages</lit> (vedi sopra), ponendoli ambedue accesi o
+	  spenti.
          </para>
 	</li>
 	<li>
@@ -15612,12 +15612,12 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       <subhead>Matrice BKW</subhead>
       <para>
 	Questa tabella, basata sul lavoro di <cite
-	key="belsley-etal80">Belsley, Kuh and Welsch (1980)</cite>,
+	key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>,
 	presenta un'analisi più sofisticata del grado di collinearità
 	e delle sue cause per mezzo dell'analisi spettrale della
 	matrice <math>X'X</math>. Per una descrizione completa della
 	tavola BKW in riferimento a gretl, si veda <cite
-	key="adkins15">Adkins, Waters and Hill (2015)</cite>.
+	key="adkins15">Adkins, Waters e Hill (2015)</cite>.
       </para>
 
       <para>
