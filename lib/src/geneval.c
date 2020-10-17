@@ -2462,6 +2462,53 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static int complex_strcalc_ok (NODE *n, parser *p)
+{
+    if (n != p->tree) {
+	/* we must be at the top of the tree */
+	return 0;
+    } else if (p->targ != SERIES && p->targ != UNK) {
+	/* target must be series or undetermined */
+	return 0;
+    } else if (p->lh.t == SERIES && dataset_is_subsampled(p->dset)) {
+	/* can't do when subsampled */
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
+static void prepare_stringvec_return (NODE *ret, parser *p,
+				      char **S, int ns,
+				      int write_vec)
+{
+    p->flags |= P_STRVEC;
+
+    if (p->lh.t == SERIES) {
+	/* overwrite entire existing series */
+	if (write_vec) {
+	    double *targ = p->dset->Z[p->lh.vnum];
+	    size_t nb = p->dset->n * sizeof *targ;
+
+	    memcpy(targ, ret->v.xvec, nb);
+	}
+	series_set_string_vals_direct(p->dset, p->lh.vnum, S, ns);
+    } else {
+	/* add product as new series */
+	p->err = dataset_add_allocated_series(p->dset, ret->v.xvec);
+	if (!p->err) {
+	    int vnew = p->dset->v - 1;
+
+	    series_set_string_vals_direct(p->dset, vnew, S, ns);
+	    strcpy(p->dset->varname[vnew], p->lh.name);
+	    ret->vnum = vnew;
+	    ret->v.xvec = NULL;
+	} else {
+	    strings_array_free(S, ns);
+	}
+    }
+}
+
 /* Both nodes are string-valued series */
 
 static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
@@ -2473,13 +2520,8 @@ static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
     int vl, vr, f = n->t;
     int i, t, eq;
 
-    if (f == B_MUL && n == p->tree) {
-	if (p->lh.t == SERIES && dataset_is_subsampled(p->dset)) {
-	    /* this is not going to work */
-	    p->err = E_TYPES;
-	} else {
-	    ; /* may be OK! */
-	}
+    if (f == B_POW && complex_strcalc_ok(n, p)) {
+	; /* should be alright */
     } else if (f != B_EQ && f != B_NEQ) {
 	p->err = E_TYPES;
     }
@@ -2495,7 +2537,7 @@ static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
     vl = l->vnum;
     vr = r->vnum;
 
-    if (f == B_MUL) {
+    if (f == B_POW) {
 	char *slr, **Sl, **Sr;
 	int nl, j, ll;
 
@@ -2513,7 +2555,7 @@ static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
 	    ll = strlen(Sl[i]) + 2;
 	    for (j=0; j<nr; j++) {
 		slr = calloc(ll + strlen(Sr[j]), 1);
-		sprintf(slr, "%s_%s", Sl[i], Sr[j]);
+		sprintf(slr, "%s.%s", Sl[i], Sr[j]);
 		Sx[i*nr+j] = slr;
 	    }
 	}
@@ -2524,7 +2566,7 @@ static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
 	sr = series_get_string_for_obs(p->dset, vr, t);
 	if (sl == NULL || sr == NULL) {
 	    ret->v.xvec[t] = NADBL;
-	} else if (f == B_MUL) {
+	} else if (f == B_POW) {
 	    int il = p->dset->Z[vl][t] - 1;
 	    int ir = p->dset->Z[vr][t] - 1;
 
@@ -2535,29 +2577,8 @@ static NODE *stringvec_calc (NODE *l, NODE *r, NODE *n, parser *p)
         }
     }
 
-    if (f == B_MUL && Sx != NULL) {
-        p->flags |= P_STRMUL;
-        if (p->lh.t == SERIES) {
-            /* overwrite entire existing series */
-            double *targ = p->dset->Z[p->lh.vnum];
-            size_t nb = p->dset->n * sizeof *targ;
-
-            memcpy(targ, ret->v.xvec, nb);
-            series_set_string_vals_direct(p->dset, p->lh.vnum, Sx, nx);
-        } else {
-            /* add product as new series */
-            p->err = dataset_add_allocated_series(p->dset, ret->v.xvec);
-            if (!p->err) {
-                int vnew = p->dset->v - 1;
-
-                series_set_string_vals_direct(p->dset, vnew, Sx, nx);
-                strcpy(p->dset->varname[vnew], p->lh.name);
-                ret->vnum = vnew;
-                ret->v.xvec = NULL;
-            } else {
-                strings_array_free(Sx, nx);
-            }
-        }
+    if (f == B_POW && Sx != NULL) {
+	prepare_stringvec_return(ret, p, Sx, nx, 1);
     }
 
     return ret;
@@ -12418,43 +12439,96 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 }
 
 /* String search and replace: return a node containing a copy
-   of the string on node @src in which all occurrences of
+   of the string(s) on node @src in which all occurrences of
    the string on @n0 are replaced by the string on @n1.
    This is literal string replacement if @f is F_STRSUB,
    regular expression replacement if @f is F_REGSUB.
 */
 
-static NODE *string_replace (NODE *src, NODE *n0, NODE *n1, int f,
-                             parser *p)
+static NODE *string_replace (NODE *src, NODE *n0, NODE *n1,
+                             NODE *call, parser *p)
 {
+    int f = call->t;
+
     if (!starting(p)) {
-        return aux_string_node(p);
+        return aux_any_node(p);
     } else {
         NODE *ret = NULL;
-        NODE *n[3] = {src, n0, n1};
-        char const *S[3];
-        int i;
+        NODE *n[2] = {n0, n1};
+        char const *S[3] = {NULL};
+	char **Ssrc = NULL;
+	char **Snew = NULL;
+	char **targ = NULL;
+        int i, ns = 1;
 
-        for (i=0; i<3; i++) {
-            /* all nodes must be of string type */
+        for (i=0; i<2; i++) {
+            /* @n0 and @n1 must be of string type */
             if (n[i]->t != STR) {
                 node_type_error(f, i+1, STR, n[i], p);
                 return NULL;
             } else {
-                S[i] = n[i]->v.str;
+                S[i+1] = n[i]->v.str;
             }
         }
 
-        ret = aux_string_node(p);
-        if (p->err) {
+	if (src->t == STR) {
+	    S[0] = src->v.str;
+	    ret = aux_string_node(p);
+	} else if (useries_node(src)) {
+	    if (is_string_valued(p->dset, src->vnum) &&
+		complex_strcalc_ok(call, p)) {
+		Ssrc = series_get_string_vals(p->dset, src->vnum,
+					      &ns, 1);
+		ret = aux_series_node(p);
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else if (src->t == ARRAY) {
+	    if (gretl_array_get_type(src->v.a) == GRETL_TYPE_STRINGS) {
+		Ssrc = gretl_array_get_strings(src->v.a, &ns);
+		ret = aux_array_node(p);
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else {
+	    p->err = E_TYPES;
+	}
+
+        if (ret == NULL) {
             return NULL;
         }
 
-        if (f == F_REGSUB) {
-            ret->v.str = gretl_regexp_replace(S[0], S[1], S[2], &p->err);
-        } else {
-            ret->v.str = gretl_literal_replace(S[0], S[1], S[2], &p->err);
-        }
+	if (src->t == STR) {
+	    targ = &ret->v.str;
+	} else {
+	    Snew = strings_array_new(ns);
+	    if (Snew == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+
+	for (i=0; i<ns && !p->err; i++) {
+	    if (src->t != STR) {
+		S[0] = Ssrc[i];
+		targ = &Snew[i];
+	    }
+	    if (f == F_REGSUB) {
+		*targ = gretl_regexp_replace(S[0], S[1], S[2], &p->err);
+	    } else {
+		*targ = gretl_literal_replace(S[0], S[1], S[2], &p->err);
+	    }
+	}
+
+	if (!p->err && src->t == ARRAY) {
+	    ret->v.a = gretl_array_from_strings(Snew, ns, 0, &p->err);
+	} else if (!p->err && src->t == SERIES) {
+	    if (p->lh.vnum != src->vnum) {
+		for (i=p->dset->t1; i<=p->dset->t2; i++) {
+		    ret->v.xvec[i] = src->v.xvec[i];
+		}
+	    }
+	    prepare_stringvec_return(ret, p, Snew, ns, 0);
+	}
 
         return ret;
     }
@@ -17080,7 +17154,7 @@ static NODE *eval (NODE *t, parser *p)
         if (t->t == F_REPLACE) {
             ret = replace_value(l, m, r, p);
         } else if (t->t == F_STRSUB || t->t == F_REGSUB) {
-            ret = string_replace(l, m, r, t->t, p);
+            ret = string_replace(l, m, r, t, p);
         } else if (t->t == F_EPOCHDAY) {
             ret = eval_epochday(l, m, r, p);
         } else {
@@ -18246,10 +18320,6 @@ static int check_operator_validity (parser *p, const char *opstr)
         /* horizontal concat: only OK for matrices, strings */
         gretl_errmsg_sprintf(_("'%s' : not implemented for this type"), opstr);
         return E_PARSE;
-    } else if (p->lh.t == SERIES && is_string_valued(p->dset, p->lh.vnum)) {
-        /* string-valued series: do not overwrite wholesale */
-        gretl_errmsg_set("Cannot overwrite entire string-valued series");
-        return E_TYPES;
     }
 
     /* otherwise OK? */
@@ -19381,12 +19451,17 @@ static int save_generated_var (parser *p, PRN *prn)
             (r == NULL)? "none" : getsymb(r->t));
 #endif
 
-    if (p->flags & P_STRMUL) {
-        /* special case: multiplication of string-valued series:
-           this is mostly handled in stringvec_calc().
+    if (p->flags & P_STRVEC) {
+        /* special case: calculation with string-valued series,
+	   return value handled upstream
 	*/
 	set_dataset_is_changed(p->dset, 1);
 	return 0;
+    } else if (p->lh.t == SERIES && is_string_valued(p->dset, p->lh.vnum) &&
+	       p->lhtree == NULL) {
+	gretl_errmsg_set("Cannot overwrite entire string-valued series");
+	p->err = E_TYPES;
+	return p->err;
     }
 
     if (p->lhtree != NULL) {
@@ -19621,8 +19696,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	}
 	strcpy(p->dset->varname[v], p->lh.name);
-	/* 2020-09-27 */
-	series_unset_orig_pd(p->dset, v);
+	series_unset_orig_pd(p->dset, v); /* 2020-09-27 */
 #if EDEBUG
 	fprintf(stderr, "var %d: gave generated series the name '%s'\n",
 		v, p->lh.name);

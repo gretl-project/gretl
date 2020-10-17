@@ -668,7 +668,7 @@ enum parser_flags {
     P_STACK   = 1 << 26, /* executing stack() */
     P_ALTINP  = 1 << 27, /* the input string has been substituted */
     P_OBJQRY  = 1 << 28, /* querying the existence of an object */
-    P_STRMUL  = 1 << 29  /* multiplying 2 string-valued series */
+    P_STRVEC  = 1 << 29  /* "complex" calc with string-valued series */
 };
 
 struct lhinfo {
