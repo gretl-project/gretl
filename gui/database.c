@@ -3131,7 +3131,7 @@ static int read_remote_filetime (char *line, char *fname,
 				 time_t *date, char *tbuf)
 {
     char month[4], hrs[9];
-    int mday, yr, mon = 0;
+    int mday = -1, yr = -1, mon = -1;
     const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr",
 	"May", "Jun", "Jul", "Aug",
@@ -3161,6 +3161,10 @@ static int read_remote_filetime (char *line, char *fname,
 	if (!strcmp(month, months[i])) {
 	    mon = i;
 	}
+    }
+
+    if (mon < 0 || mday < 1 || yr < 2000) {
+	return 1;
     }
 
     if (date != NULL) {
