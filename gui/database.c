@@ -246,15 +246,17 @@ static int expand_data_dialog (int nx, int nv, GtkWidget *parent)
     return yes_no_help_dialog(_(msg), EXPAND);
 }
 
-static int give_tdisagg_option (const char *vname, GtkWidget *parent)
+static void give_tdisagg_option (int v)
 {
     gchar *msg;
-    int ret;
+    int resp;
 
-    msg = g_strdup_printf(_("Disaggregate %s now?"), vname);
-    ret = yes_no_dialog("database import", msg, parent);
+    msg = g_strdup_printf(_("Disaggregate %s now?"), dataset->varname[v]);
+    resp = yes_no_dialog("database import", msg, NULL);
     g_free(msg);
-    return ret;
+    if (resp == GRETL_YES) {
+	tdisagg_dialog(v);
+    }
 }
 
 static int obs_overlap_check (int pd, const char *stobs,
@@ -635,19 +637,17 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	}
 	record_db_import(dbset->varname[1], compact, cmethod);
 	if (expand) {
-	    int ret;
-
 	    series_set_orig_pd(dataset, dbv, dbset->pd);
-	    ret = give_tdisagg_option(dataset->varname[dbv], NULL);
-	    if (ret == GRETL_YES) {
-		tdisagg_dialog(dbv);
-	    }
 	}
     } else {
 	if (!overwrite) {
 	    dataset_drop_last_variables(dataset, 1);
 	}
 	gui_errmsg(err);
+    }
+
+    if (!err && expand) {
+	give_tdisagg_option(dbv);
     }
 
     return err;
@@ -774,11 +774,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
     }
 
     if (!err && vx > 0) {
-	int ret = give_tdisagg_option(dataset->varname[vx], NULL);
-
-	if (ret == GRETL_YES) {
-	    tdisagg_dialog(vx);
-	}
+	give_tdisagg_option(vx);
     }
 
     return err;
