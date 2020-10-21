@@ -459,32 +459,62 @@ method of calculation of this term is a matter of convention, but the
 gretl authors decided to follow the convention employed by
 \app{Stata}; this involves adding the global mean back into the
 variables from which the group means have been removed.\footnote{See
-  \cite{gould13} for an extended explanation.}
+  \cite{gould13} for an extended explanation.} If you prefer to
+interpret the fixed effects model as ``OLS plus unit dummies
+throughout'', it can be proven the this approach is equivalent to
+using centered unit dummies insted of plain 0/1 dummies.
 
 The method that gretl uses internally is exemplified in
-Listing~\ref{fe-intercept}. The coefficients in the final OLS
+Listing~\ref{fe-intercept}. The coefficients in the second OLS
 estimation, including the intercept, agree with those in the initial
 fixed effects model, though the standard errors differ due to a
 degrees of freedom correction in the fixed-effects covariance matrix.
-(Note that the \texttt{pmean} function returns the group mean of a
-series.)
+(Note that the \cmd{pmean} function returns the group mean of a
+series.) The third estimate, which contains quite a lot of output,
+instead uses the \cmd{stdize} function to define the centered dummies
+and show the equivalence of the internally-used method to ``OLS plus
+centered dummies'' (note that the standard errors agree).
 
 \begin{script}[htbp]
   \caption{Calculating the intercept in the fixed effects model}
   \label{fe-intercept}
 \begin{scode}
 open abdata.gdt
-panel n const w k ys --fixed-effects
 
-depvar = n - pmean(n) + mean(n)
+list X = w k ys                  # list of explanatory variables
+
+###
+### built-in method
+###
+
+panel n const X --fixed-effects
+
+###
+### recentering "by hand"
+###
+
+depvar = n - pmean(n) + mean(n)  # redefine the dependent variable
+
 list indepvars = const
-loop foreach i w k ys
-  x_$i = $i - pmean($i) + mean($i)
-  indepvars += x_$i
+loop foreach i X
+    # redefine the explanatory variables
+    x_$i = $i - pmean($i) + mean($i)
+    indepvars += x_$i
 endloop
-ols depvar indepvars
+
+ols depvar indepvars             # perform estimation
+
+###
+### using centered dummies
+###
+
+list C = dummify(unit)           # create the unit dummies
+smpl n X --no-missing            # adjust to perform centering correctly
+list D = stdize(C, -1)           # center the unit dummies
+ols n const X D                  # perform estimation
 \end{scode}
 \end{script}
+%$
 
 \subsection{R-squared in the fixed effects model}
 
