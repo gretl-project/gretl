@@ -470,10 +470,11 @@ estimation, including the intercept, agree with those in the initial
 fixed effects model, though the standard errors differ due to a
 degrees of freedom correction in the fixed-effects covariance matrix.
 (Note that the \cmd{pmean} function returns the group mean of a
-series.) The third estimate, which contains quite a lot of output,
-instead uses the \cmd{stdize} function to define the centered dummies
-and show the equivalence of the internally-used method to ``OLS plus
-centered dummies'' (note that the standard errors agree).
+series.) The third estimator---which produces quite a lot of
+output---instead uses the \cmd{stdize} function to create the centered
+dummies. It thereby shows the equivalence of the internally-used
+method to ``OLS plus centered dummies''. (Note that in this case the
+standard errors agree with the initial estimates.)
 
 \begin{script}[htbp]
   \caption{Calculating the intercept in the fixed effects model}
