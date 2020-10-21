@@ -246,6 +246,19 @@ static int expand_data_dialog (int nx, int nv, GtkWidget *parent)
     return yes_no_help_dialog(_(msg), EXPAND);
 }
 
+static void give_tdisagg_option (int v)
+{
+    gchar *msg;
+    int resp;
+
+    msg = g_strdup_printf(_("Disaggregate %s now?"), dataset->varname[v]);
+    resp = yes_no_dialog("database import", msg, NULL);
+    g_free(msg);
+    if (resp == GRETL_YES) {
+	tdisagg_dialog(v);
+    }
+}
+
 static int obs_overlap_check (int pd, const char *stobs,
 			      const char *endobs,
 			      const char *varname)
@@ -622,15 +635,19 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	if (vlabel != NULL && *vlabel != '\0') {
 	    series_set_label(dataset, dbv, vlabel);
 	}
+	record_db_import(dbset->varname[1], compact, cmethod);
 	if (expand) {
 	    series_set_orig_pd(dataset, dbv, dbset->pd);
 	}
-	record_db_import(dbset->varname[1], compact, cmethod);
     } else {
 	if (!overwrite) {
 	    dataset_drop_last_variables(dataset, 1);
 	}
 	gui_errmsg(err);
+    }
+
+    if (!err && expand) {
+	give_tdisagg_option(dbv);
     }
 
     return err;
@@ -644,7 +661,8 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
     SERIESINFO *sinfo;
     double **dbZ = dbset->Z;
     CompactMethod cmethod = COMPACT_AVG;
-    int nx, resp, chosen = 0;
+    int resp, chosen = 0;
+    int nx, vx = 0;
     int i, err = 0;
 
     sinfo = &dw->sinfo[0];
@@ -749,9 +767,14 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 	    series_set_label(dataset, dbv, sinfo->descrip);
 	    if (expand) {
 		series_set_orig_pd(dataset, dbv, sinfo->pd);
+		if (nx == 1) vx = dbv;
 	    }
 	    record_db_import(sinfo->varname, compact, cmethod);
 	}
+    }
+
+    if (!err && vx > 0) {
+	give_tdisagg_option(vx);
     }
 
     return err;
@@ -3131,7 +3154,7 @@ static int read_remote_filetime (char *line, char *fname,
 				 time_t *date, char *tbuf)
 {
     char month[4], hrs[9];
-    int mday, yr, mon = 0;
+    int mday = -1, yr = -1, mon = -1;
     const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr",
 	"May", "Jun", "Jul", "Aug",
@@ -3161,6 +3184,10 @@ static int read_remote_filetime (char *line, char *fname,
 	if (!strcmp(month, months[i])) {
 	    mon = i;
 	}
+    }
+
+    if (mon < 0 || mday < 1 || yr < 2000) {
+	return 1;
     }
 
     if (date != NULL) {
