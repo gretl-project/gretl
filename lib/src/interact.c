@@ -925,11 +925,12 @@ static void showlabels (const int *list, gretlopt opt,
 }
 
 static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
-			     gretlopt opt, int *parms)
+			     const char *fname, gretlopt opt,
+			     int *parms)
 {
     int err;
 
-    err = print_start_redirection(prn, fp, strvar);
+    err = print_start_redirection(prn, fp, fname, strvar);
     if (err) {
 	return err;
     }
@@ -1039,9 +1040,9 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     if (fp == NULL) {
 	err = E_FOPEN;
     } else if (opt & OPT_B) {
-	err = outfile_redirect(prn, fp, strvar, opt, vparms);
+	err = outfile_redirect(prn, fp, strvar, tempname, opt, vparms);
     } else {
-	err = outfile_redirect(prn, fp, NULL, opt, vparms);
+	err = outfile_redirect(prn, fp, NULL, tempname, opt, vparms);
     }
     if (!err && (opt & OPT_T)) {
 	/* write the tempfile name into strvar */
@@ -1155,13 +1156,13 @@ do_outfile_command (gretlopt opt, const char *fname,
 	if (gretl_messages_on()) {
 	    pputs(prn, _("Now discarding output\n"));
 	}
-	err = outfile_redirect(prn, NULL, NULL, opt, vparms);
+	err = outfile_redirect(prn, NULL, NULL, "null", opt, vparms);
 	*savename = '\0';
     } else if (!strcmp(fname, "stderr")) {
-	err = outfile_redirect(prn, stderr, NULL, opt, vparms);
+	err = outfile_redirect(prn, stderr, NULL, "stderr", opt, vparms);
 	*savename = '\0';
     } else if (!strcmp(fname, "stdout")) {
-	err = outfile_redirect(prn, stdout, NULL, opt, vparms);
+	err = outfile_redirect(prn, stdout, NULL, "stdout", opt, vparms);
 	*savename = '\0';
     } else {
 	/* should the stream be opened in binary mode on Windows? */
@@ -1197,7 +1198,7 @@ do_outfile_command (gretlopt opt, const char *fname,
 	    }
 	}
 
-	err = outfile_redirect(prn, fp, NULL, opt, vparms);
+	err = outfile_redirect(prn, fp, NULL, targ, opt, vparms);
 	if (err) {
 	    fclose(fp);
 	    remove(outname);
