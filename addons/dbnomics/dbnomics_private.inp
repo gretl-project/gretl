@@ -50,12 +50,19 @@ function void fix_dimensions_bundle (const string J, bundle *sd)
     bundle d0 = sd.dimensions
     strings keys = getkeys(d0)
     ndims = nelem(keys)
-    bundle dl = null
+    bundle dlb = null
+    strings dla = null
     if dsmulti
-        catch dl = dinfo[dsid].dimensions_labels
+        catch dld = dinfo[dsid].dimensions_labels
+        if $error
+            catch dla = dinfo[dsid].dimensions_codes_order
+        endif
         dvl = dinfo[dsid].dimensions_values_labels
     else
-        catch dl = dinfo.dimensions_labels
+        catch dld = dinfo.dimensions_labels
+        if $error
+            catch dla = dinfo.dimensions_codes_order
+        endif
         dvl = dinfo.dimensions_values_labels
     endif
 
@@ -65,8 +72,10 @@ function void fix_dimensions_bundle (const string J, bundle *sd)
         string key = keys[i]
         string value = d0[key]
         bundle b = null
-        if nelem(dl) > 0
-            b.dimension_label = dl[key]
+        if nelem(dlb) > 0
+            b.dimension_label = dlb[key]
+        elif nelem(dla) > 0
+            b.dimension_label = dla[i]
         else
             b.dimension_label = key
         endif
