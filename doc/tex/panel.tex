@@ -100,7 +100,7 @@ genr unitdum
 ols y x du_*
 \end{code}
 %
-(See Chapter~\ref{chap:genr} for details on \texttt{unitdum}).
+(See Chapter~\ref{chap:genr} for details on \cmd{unitdum}).
 
 The $\hat{\alpha}_i$ estimates are not printed as part of the standard
 model output in gretl (there may be a large number of these, and
@@ -462,7 +462,7 @@ variables from which the group means have been removed.\footnote{See
   \cite{gould13} for an extended explanation.} If you prefer to
 interpret the fixed effects model as ``OLS plus unit dummies
 throughout'', it can be proven the this approach is equivalent to
-using centered unit dummies insted of plain 0/1 dummies.
+using centered unit dummies instead of plain 0/1 dummies.
 
 The method that gretl uses internally is exemplified in
 Listing~\ref{fe-intercept}. The coefficients in the second OLS
@@ -573,11 +573,11 @@ fixed-effects estimation as follows:
 \begin{code}
 series ue_fe = $uhat + $ahat - $coeff[1]
 \end{code}
-%
+%$
 where \dollar{ahat} gives the unit-specific intercept (as it would be
 calculated if one included all
 $N$ unit dummies and omitted a common
-$y$-intercept), and \verb|$coeff[1]| gives the ``global''
+$y$-intercept), and \dollar{coeff[1]} gives the ``global''
 $y$-intercept.\footnote{For anyone used to Stata, gretl's
   fixed-effects \dollar{uhat} corresponds to what you get from Stata's
   ``\texttt{predict, e}'' after \texttt{xtreg}, while the second
