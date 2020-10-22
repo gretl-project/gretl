@@ -243,7 +243,11 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
       bf = bf.series_dimensions_facets
       strings dcodes = b.dimensions_codes_order
       ndims = nelem(dcodes)
-      bundle dlabels = b.dimensions_labels
+      if inbundle(b, "dimensions_labels")
+         bundle dlabels = b.dimensions_labels
+      else
+         strings dlabels = b.dimensions_codes_order
+      endif
       bundle vlabels = b.dimensions_values_labels
    else
       ndims = 0
@@ -254,7 +258,11 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
    loop i=1..ndims --quiet
       string dci = dcodes[i]
       ret[i].code = dci
-      ret[i].label = dlabels[dci]
+      if typeof(dlabels) == 5
+         ret[i].label = dlabels[dci]
+      else
+         ret[i].label = dlabels[i]
+      endif
       bundles bfi = bf[dci]
       ret[i].values = bfi
       nv = nelem(bfi)
