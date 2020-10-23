@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-10-14 16:49-0400\n"
-"PO-Revision-Date: 2020-09-26 07:53-0300\n"
+"PO-Revision-Date: 2020-10-23 17:58-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -445,8 +445,7 @@ msgstr "grupo"
 
 #: lib/src/boxplots.c:834 gui/library.c:7706
 msgid "You must supply two variables, the second of which is discrete"
-msgstr ""
-"Devem ser fornecidas duas variáveis, sendo que a última deve ser discreta"
+msgstr "Você deve fornecer duas variáveis, sendo a segunda discreta"
 
 #: lib/src/boxplots.c:896
 #, c-format
@@ -687,7 +686,7 @@ msgstr "O teste de Wald máximo = %g ocorre na observação %s"
 #: lib/src/compare.c:2784
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
-msgstr "O máximo F(%d ; %d) = %g ocorre na observação %s"
+msgstr "O máximo F(%d, %d) = %g ocorre na observação %s"
 
 #: lib/src/compare.c:2791
 #, c-format
@@ -941,7 +940,7 @@ msgstr "   datas estão revertidas?\n"
 #: lib/src/csvdata.c:1485
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr " O rótulo da primeira linha é \"%s\" e da última é \"%s\".\n"
+msgstr "   rótulo da primeira linha é \"%s\" e da última é \"%s\".\n"
 
 #: lib/src/csvdata.c:1509
 msgid "trying to parse row labels as dates...\n"
@@ -1470,7 +1469,7 @@ msgstr "horas"
 
 #: lib/src/dataset.c:2994 lib/src/dataset.c:3022 gui/library.c:6440
 msgid "The data set is currently sub-sampled.\n"
-msgstr "O conjunto de dados encontra-se sub-amostrado.\n"
+msgstr "O conjunto de dados está sub-amostrado.\n"
 
 #: lib/src/dataset.c:3002
 #, c-format
@@ -1495,7 +1494,7 @@ msgstr "O ID %d não está disponível"
 #: lib/src/dataset.c:3339
 #, c-format
 msgid "Renumbered %s as variable %d\n"
-msgstr "Renumerou-se %s como variável %d\n"
+msgstr "%s foi renumerada como variável %d\n"
 
 #: lib/src/dataset.c:3392
 msgid "The 'dataset' command is not available within functions"
@@ -1935,9 +1934,9 @@ msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "Descartando %s: o intervalo da amostra não tem observações válidas\n"
 
 #: lib/src/describe.c:5747 lib/src/describe.c:5851
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s: string-valued series\n"
-msgstr "Descartando %s: o intervalo da amostra não tem observações válidas\n"
+msgstr "Descartando %s: séries cujos valores representam texto\n"
 
 #: lib/src/describe.c:6387
 msgid "corr: needs at least two non-constant arguments"
@@ -2356,7 +2355,7 @@ msgstr "Série %s (ID %d) substituída"
 #: lib/src/forecast.c:3582 lib/src/genmain.c:102 gui/calculator.c:1433
 #, c-format
 msgid "Generated series %s (ID %d)"
-msgstr "Gerou-se a série temporal %s (ID %d)"
+msgstr "A série %s (ID %d) foi gerada"
 
 #: lib/src/forecast.c:3883
 msgid "Forecast plot not implemented for panel data"
@@ -2430,14 +2429,14 @@ msgstr ""
 "%s"
 
 #: lib/src/geneval.c:7462
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: assertion '%s' failed"
-msgstr "Aviso: a série %s está vazia"
+msgstr "Aviso: declaração '%s' falhou"
 
 #: lib/src/geneval.c:7467
 #, c-format
 msgid "Assertion '%s' failed"
-msgstr ""
+msgstr "Declaração '%s' falhou"
 
 #: lib/src/geneval.c:8663
 #, c-format
@@ -2465,7 +2464,7 @@ msgstr ""
 #: lib/src/geneval.c:10251
 #, c-format
 msgid "Expected %s but got %s"
-msgstr "Esperado %s mas encontrou-se %s"
+msgstr "Esperado %s mas foi encontrado %s"
 
 #: lib/src/geneval.c:10255
 #, c-format
@@ -2801,7 +2800,7 @@ msgstr "Escalar %s substituído"
 #: lib/src/genmain.c:45
 #, c-format
 msgid "Generated scalar %s"
-msgstr "Gerou-se o escalar %s"
+msgstr "O escalar %s foi gerado"
 
 #: lib/src/genmain.c:93
 #, c-format
@@ -2831,7 +2830,7 @@ msgstr "Lista %s modificada"
 #: lib/src/genmain.c:121
 #, c-format
 msgid "Replaced list %s"
-msgstr "Substituiu-se a lista '%s'"
+msgstr "A lista %s foi substituída"
 
 #: lib/src/genmain.c:123
 #, c-format
@@ -2846,12 +2845,12 @@ msgstr "String %s modificada "
 #: lib/src/genmain.c:129
 #, c-format
 msgid "Replaced string %s"
-msgstr "Substituiu-se a cadeia de texto '%s'"
+msgstr "A cadeia de texto '%s' foi substituída"
 
 #: lib/src/genmain.c:131
 #, c-format
 msgid "Generated string %s"
-msgstr "Gerou-se a cadeia de texto '%s'"
+msgstr "A cadeia de texto '%s' foi gerada"
 
 #: lib/src/genmain.c:319
 #, c-format
@@ -2875,9 +2874,9 @@ msgid "The MPI library is not loaded"
 msgstr "A biblioteca MPI não está carregada"
 
 #: lib/src/gensyntax.c:247
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but found '%c'\n"
-msgstr "Esperado '%c' mas encontrou-se '%s'\n"
+msgstr "Esperado '%c' mas foi encontrado '%c'\n"
 
 #: lib/src/gensyntax.c:253
 #, c-format
@@ -2887,16 +2886,15 @@ msgstr "Esperado '%c' mas a fórmula terminou\n"
 #: lib/src/gensyntax.c:255
 #, c-format
 msgid "Expected '%c' but found '%s'\n"
-msgstr "Esperado '%c' mas encontrou-se '%s'\n"
+msgstr "Esperado '%c' mas foi encontrado '%s'\n"
 
 #: lib/src/gensyntax.c:1168
 msgid "too many arguments"
 msgstr "excesso de argumentos"
 
 #: lib/src/gensyntax.c:1296
-#, fuzzy
 msgid "Expected ',' or ')'"
-msgstr "Esperado '%c' mas encontrou-se '%s'\n"
+msgstr "Esperado ',' ou ')'"
 
 #: lib/src/gmm.c:131
 #, c-format
@@ -2940,8 +2938,7 @@ msgstr "desvio padrão"
 
 #: lib/src/graphing.c:760 gui/library.c:7739
 msgid "You must supply three variables, the last of which is discrete"
-msgstr ""
-"Devem ser fornecidas três variáveis, sendo que a última deve ser discreta"
+msgstr "Você deve fornecer três variáveis, sendo a última discreta"
 
 #: lib/src/graphing.c:2372 gui/gpt_dialog.c:581
 #, c-format
@@ -3239,14 +3236,12 @@ msgid "Couldn't open %s"
 msgstr "Não foi possível abrir %s"
 
 #: lib/src/graphing.c:10074
-#, fuzzy
 msgid "original data"
-msgstr "%s (dados originais)"
+msgstr "dados originais"
 
 #: lib/src/graphing.c:10076
-#, fuzzy
 msgid "final series"
-msgstr "adicionar séries"
+msgstr "séries finais"
 
 # I'm not sure about translating the term "array" to Portuguese.
 #: lib/src/gretl_array.c:1727 lib/src/gretl_array.c:1743
@@ -3584,7 +3579,7 @@ msgstr "Tipo de retorno da função está ausente"
 #: lib/src/gretl_func.c:1634
 #, c-format
 msgid "Expected a function return type, found '%s'"
-msgstr "Esperado um tipo de retorno para a função, mas encontrou-se '%s'"
+msgstr "Esperado um tipo de retorno para a função, mas foi encontrado '%s'"
 
 #: lib/src/gretl_func.c:1637
 #, c-format
@@ -3730,7 +3725,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Para ajuda sobre uma função específica, escreva: help nomedafunção"
+"Para ajuda sobre uma função específica, escreva: help 'nome da função'"
 
 #: lib/src/gretl_help.c:101
 msgid " (e.g. help qrdecomp)\n"
@@ -3794,12 +3789,12 @@ msgstr "%s: indioma não suportado por este sistema"
 #: lib/src/gretl_list.c:362
 #, c-format
 msgid "Replaced list '%s'\n"
-msgstr "Substituiu-se a lista '%s'\n"
+msgstr "A lista '%s' foi substituída\n"
 
 #: lib/src/gretl_list.c:367
 #, c-format
 msgid "Added list '%s'\n"
-msgstr "Acrescentou-se a lista '%s'\n"
+msgstr "A lista '%s' foi acrescentada\n"
 
 #: lib/src/gretl_list.c:1984
 #, c-format
@@ -4856,7 +4851,7 @@ msgstr "%s: valor inválido '%s'"
 
 #: lib/src/libset.c:1612
 msgid "Variables that can be set using \"set\""
-msgstr "Podem-se definir variáveis usando o comando \"set\""
+msgstr "Variáveis que podem ser definidas com o comando \"set\""
 
 #: lib/src/libset.c:1614
 msgid "\"help set\" for details"
@@ -6886,11 +6881,12 @@ msgstr ""
 "Distribuição de frequência para %s, observações %d-%d\n"
 
 #: lib/src/printout.c:399
-#, fuzzy
 msgid ""
 "frequency   percent\n"
 "\n"
-msgstr "Gráfico de Frequência"
+msgstr ""
+"frequência  porcentagem\n"
+"\n"
 
 #: lib/src/printout.c:418
 msgid ""
@@ -6931,9 +6927,8 @@ msgid "TOT."
 msgstr "TOT."
 
 #: lib/src/printout.c:827
-#, fuzzy
 msgid "TOTAL"
-msgstr "TOTAL  "
+msgstr "TOTAL"
 
 #: lib/src/printout.c:856
 #, c-format
@@ -7377,11 +7372,11 @@ msgstr "o conjunto de dados é subamostrado, o modelo não\n"
 
 #: lib/src/subsample.c:3026 lib/src/subsample.c:3027 lib/src/subsample.c:3068
 msgid "model is subsampled, dataset is not\n"
-msgstr " o modelo é subamostrado, o conjunto de dados não\n"
+msgstr "o modelo é subamostrado, o conjunto de dados não\n"
 
 #: lib/src/subsample.c:3034 lib/src/subsample.c:3083
 msgid "model and dataset subsamples not the same\n"
-msgstr " o modelo e o conjunto de dados sub-amostrados são diferentes\n"
+msgstr "o modelo e o conjunto de dados sub-amostrados são diferentes\n"
 
 #: lib/src/subsample.c:3105
 msgid "time series"
@@ -8114,7 +8109,7 @@ msgid ""
 " gretlcli -r myfile.inp\n"
 msgstr ""
 "\n"
-"Pode-se fornecer um nome de um arquivo de dados na linha de comandos.\n"
+"Você pode fornecer um nome de um arquivo de dados na linha de comandos.\n"
 "Opções:\n"
 " -b ou --batch     Processar um script e sair.\n"
 " -r ou --run         Executar um script e passar o controle para a linha de "
@@ -8257,7 +8252,7 @@ msgstr "Distribuição de amostragem Chi-square(%d)"
 #: gui/calculator.c:191
 #, c-format
 msgid "F(%d, %d) sampling distribution"
-msgstr "Distribuição de amostragem F(%d ; %d)"
+msgstr "Distribuição de amostragem F(%d, %d)"
 
 #: gui/calculator.c:204
 #, c-format
@@ -8277,7 +8272,7 @@ msgstr "Qui-quadrado(%d)"
 #: gui/calculator.c:210
 #, c-format
 msgid "F(%d, %d)"
-msgstr "F(%d ; %d)"
+msgstr "F(%d, %d)"
 
 #: gui/calculator.c:212
 #, c-format
@@ -8463,7 +8458,7 @@ msgstr ""
 #: gui/calculator.c:1724 gui/calculator.c:1729
 #, c-format
 msgid "Test statistic: F(%d, %d) = %g\n"
-msgstr "Estatística de teste: F(%d ; %d) = %g\n"
+msgstr "Estatística de teste: F(%d, %d) = %g\n"
 
 #: gui/calculator.c:1743
 msgid "Null hypothesis: the population proportions are equal\n"
@@ -9075,12 +9070,16 @@ msgid ""
 "The data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Os dados que serão importados possuem uma frequência mais\n"
+"baixa que a do conjunto de dados atual. Deseja prosseguir?"
 
 #: gui/database.c:242
 msgid ""
 "Some of the data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Alguns dos dados que serão importados possuem uma frequência\n"
+"mais baixa que a do conjunto de dados atual. Deseja prosseguir?"
 
 #: gui/database.c:372
 msgid "Sorry, can't handle this frequency conversion"
@@ -10257,18 +10256,16 @@ msgid "gretl: expand data"
 msgstr "gretl: expandir dados"
 
 #: gui/dialogs.c:4085
-#, fuzzy
 msgid "Expand annual data to"
-msgstr "Expandir dados anuais para dados trimestrais"
+msgstr "Expandir dados anuais para"
 
 #: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
 msgstr "Expandir dados trimestrais para mensais"
 
 #: gui/dialogs.c:4102
-#, fuzzy
 msgid "Please read the Help before proceeding."
-msgstr "(Consulte a Ajuda para orientações)"
+msgstr "Favor ler a Ajuda antes de continuar."
 
 #: gui/dialogs.c:4258
 msgid "density estimation options"
@@ -10564,7 +10561,7 @@ msgstr "código da série:"
 #: gui/dialogs.c:7085
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
-msgstr ""
+msgstr "A série %s não parece adequada para desagregação"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11203,9 +11200,8 @@ msgid "Error reading package"
 msgstr "Erro ao ler o pacote"
 
 #: gui/fncall.c:4541
-#, fuzzy
 msgid "No mapfile is present"
-msgstr "efeito ARCH não está presente"
+msgstr "Arquivo de mapa não está presente"
 
 #: gui/fnsave.c:374
 msgid "_Save gfn"
@@ -11833,8 +11829,8 @@ msgid ""
 "To add your own \"bars\" to a plot, you must supply the\n"
 "name of a plain text file containing pairs of dates."
 msgstr ""
-"Para adicionar \"áreas sombreadas\" personalizadas a um gráfico deve-se\n"
-"fornecer o nome de um arquivo de texto simples contendo pares de datas."
+"Para adicionar \"barras\" personalizadas a um gráfico você deve fornecer\n"
+"o nome de um arquivo de texto simples contendo pares de datas."
 
 #: gui/gpt_dialog.c:1547
 msgid "See example"
@@ -12085,7 +12081,8 @@ msgid ""
 "You may supply the name of a data or script file on the command line"
 msgstr ""
 "\n"
-"Pode-se fornecer o nome de um arquivo de dados ou script na linha de comando"
+"Você pode fornecer o nome de um arquivo de dados ou script na linha de "
+"comando"
 
 #: gui/gretl.c:130
 msgid "open a script file on startup"
@@ -12784,9 +12781,8 @@ msgid "_Hurst exponent"
 msgstr "Expoente de _Hurst"
 
 #: gui/gretl.c:1875 gui/menustate.c:601
-#, fuzzy
 msgid "Disaggregate..."
-msgstr "agregação"
+msgstr "Desagregação..."
 
 #: gui/gretl.c:1876
 msgid "_Edit attributes"
@@ -12833,9 +12829,8 @@ msgid "H_eteroskedasticity corrected"
 msgstr "H_eteroscedasticidade corrigida"
 
 #: gui/gretl.c:1890
-#, fuzzy
 msgid "_Regularized least squares"
-msgstr "Mínimos quadrados _ponderados"
+msgstr "Mínimos quadrados _regularizados"
 
 #: gui/gretl.c:1891
 msgid "High _precision OLS"
@@ -14561,16 +14556,15 @@ msgstr ""
 "neste momento."
 
 #: gui/library.c:1977
-#, fuzzy
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  If you wish, you can add observations\n"
 "(Data menu, Add observations), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
-"Não existem observações fora da amostra para previsão.\n"
-"É possivel acrescentar observações (menu Dados, Editar\n"
-"valores), ou diminuir a amplitude da amostra usada para\n"
+"Não existem observações fora da amostra para previsão. É\n"
+"possivel acrescentar observações (menu Dados, Acrescentar\n"
+"observações), ou diminuir a amplitude da amostra usada para\n"
 "estimar o modelo (menu Amostra)."
 
 #: gui/library.c:2328 gui/selector.c:8303
@@ -14647,7 +14641,7 @@ msgstr "padronizar os dados"
 
 #: gui/library.c:2915
 msgid "raw quantiles versus N(0, 1)"
-msgstr "quantis \"puros\" versus N(0, 1)"
+msgstr "quantis puros versus N(0, 1)"
 
 #: gui/library.c:2923
 msgid "Normal Q-Q plot"
@@ -15173,7 +15167,7 @@ msgstr ""
 
 #: gui/library.c:9661
 msgid "Unbalanced \"loop\"/\"endloop\" in script"
-msgstr ""
+msgstr "\"loop\"/\"endloop\" iniciado/terminado de forma incorreta no script"
 
 #: gui/library.c:9673
 msgid "Unmatched \"if\" in script (fixed)"
@@ -15325,9 +15319,8 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: Intervalo completo %s - %s"
 
 #: gui/menustate.c:1093
-#, fuzzy
 msgid "(unit:period)"
-msgstr "período"
+msgstr "(unidade:período)"
 
 #: gui/menustate.c:1128
 #, c-format
@@ -15519,31 +15512,31 @@ msgstr "Estado de '%s' em VECM:"
 
 #: gui/selector.c:2772
 msgid "You must select an X-axis variable"
-msgstr "Deve-se selecionar uma variável para o eixo X"
+msgstr "Você deve selecionar uma variável para o eixo X"
 
 #: gui/selector.c:2775
 msgid "You must select a Y-axis variable"
-msgstr "Deve-se selecionar uma variável para o eixo Y"
+msgstr "Você deve selecionar uma variável para o eixo Y"
 
 #: gui/selector.c:2778
 msgid "You must select a lower bound variable"
-msgstr "Deve-se selecionar uma variável limite inferior"
+msgstr "Você deve selecionar uma variável limite inferior"
 
 #: gui/selector.c:2781 gui/selector.c:4068
 msgid "You must select a dependent variable"
-msgstr "Deve-se selecionar uma variável dependente"
+msgstr "Você deve selecionar uma variável dependente"
 
 #: gui/selector.c:3461 gui/selector.c:6422
 msgid "Elastic net"
-msgstr ""
+msgstr "Elastic net"
 
 #: gui/selector.c:3472 gui/selector.c:6393 gui/selector.c:6421
 msgid "Ridge"
-msgstr ""
+msgstr "Ridge"
 
 #: gui/selector.c:3499
 msgid "You must specify a quantile"
-msgstr "Deve-se especificar um quantil"
+msgstr "Você deve especificar um quantil"
 
 #: gui/selector.c:3512
 msgid "Invalid quantile specification"
@@ -15555,55 +15548,55 @@ msgstr "Agrupar"
 
 #: gui/selector.c:3745
 msgid "You must select a weight variable"
-msgstr "Deve-se selecionar uma variável peso"
+msgstr "Você deve selecionar uma variável peso"
 
 #: gui/selector.c:3748
 msgid "You must specify a list of lags"
-msgstr "Deve-se especificar uma lista de defasagens"
+msgstr "Você deve especificar uma lista de defasagens"
 
 #: gui/selector.c:3751
 msgid "You must specify a selection variable"
-msgstr "Deve-se especificar uma variável de seleção"
+msgstr "Você deve especificar uma variável de seleção"
 
 #: gui/selector.c:3754
 msgid "You must specify a second dependent variable"
-msgstr "Deve-se especificar uma segunda variável dependente"
+msgstr "Você deve especificar uma segunda variável dependente"
 
 #: gui/selector.c:3757
 msgid "You must specify an upper bound variable"
-msgstr "Deve-se especificar uma variável limite superior"
+msgstr "Você deve especificar uma variável limite superior"
 
 #: gui/selector.c:3760
 msgid "You must specify a treatment variable"
-msgstr "Deve-se especificar uma variável de tratamento"
+msgstr "Você deve especificar uma variável de tratamento"
 
 #: gui/selector.c:3763 gui/selector.c:4072
 msgid "You must specify an independent variable"
-msgstr "Deve-se especificar uma variável dependente independente"
+msgstr "Você deve especificar uma variável dependente independente"
 
 #: gui/selector.c:3905
 msgid "You must select a Z-axis variable"
-msgstr "Deve-se selecionar uma variável para o eixo Z"
+msgstr "Você deve selecionar uma variável para o eixo Z"
 
 #: gui/selector.c:3907
 msgid "You must select a factor variable"
-msgstr "Deve-se selecionar uma variável fator"
+msgstr "Você deve selecionar uma variável fator"
 
 #: gui/selector.c:3909
 msgid "You must select a control variable"
-msgstr "Deve-se selecionar uma variável de controle"
+msgstr "Você deve selecionar uma variável de controle"
 
 #: gui/selector.c:4064
 msgid "You must select two or more endogenous variables"
-msgstr "Deve-se selecionar duas ou mais variáveis exógenas"
+msgstr "Você deve selecionar duas ou mais variáveis exógenas"
 
 #: gui/selector.c:4120
 msgid "You must specify a set of instrumental variables"
-msgstr "Deve-se especificar um conjunto de variáveis instrumentais"
+msgstr "Você deve especificar um conjunto de variáveis instrumentais"
 
 #: gui/selector.c:4123
 msgid "You must specify regressors for the selection equation"
-msgstr "Deve-se especificar regressores para a equação de seleção"
+msgstr "Você deve especificar regressores para a equação de seleção"
 
 #: gui/selector.c:4233
 msgid "Heteroskedasticity corrected"
@@ -15694,9 +15687,8 @@ msgid "MIDAS regression"
 msgstr "Regressão MIDAS"
 
 #: gui/selector.c:4311
-#, fuzzy
 msgid "Regularized least squares"
-msgstr "Mínimos quadrados ponderados"
+msgstr "Mínimos quadrados regularizados"
 
 #: gui/selector.c:4321
 msgid "Weight variable"
@@ -16036,17 +16028,15 @@ msgstr "Máximo especificado"
 
 #: gui/selector.c:6390 gui/selector.c:6420
 msgid "LASSO"
-msgstr ""
+msgstr "LASSO"
 
 #: gui/selector.c:6437
-#, fuzzy
 msgid "Single λ-fraction"
-msgstr "Fração central:"
+msgstr "Fração λ única"
 
 #: gui/selector.c:6446
-#, fuzzy
 msgid "Multiple λ values"
-msgstr "Múltiplos gráficos"
+msgstr "Valores múltiplos de λ"
 
 #: gui/selector.c:6465 gui/toolbar.c:617
 msgid "Confidence level"
@@ -16334,7 +16324,7 @@ msgstr "Nome da lista"
 
 #: gui/selector.c:8199
 msgid "You must specify a public interface"
-msgstr "Deve-se especificar um interface público"
+msgstr "Você deve especificar um interface público"
 
 #: gui/selector.c:8363
 msgid "Copy data"
@@ -18116,7 +18106,7 @@ msgstr "Falta um ou mais nomes de variáveis.\n"
 #, c-format
 msgid ""
 "Expected numeric data, found string:\n"
-"%s\" at row %d, column %d\n"
+"\"%s\" at row %d, column %d\n"
 msgstr ""
 "dados numéricos esperados, mas encontrado texto:\n"
 "\"%s\" na linha %d, coluna %d\n"
@@ -18250,23 +18240,20 @@ msgid "Produce debugging output"
 msgstr "Produzir saída de depuração"
 
 #: plugin/interpolate.c:249 plugin/interpolate.c:263
-#, fuzzy
 msgid "GLS estimates"
-msgstr "Estimativas MQO"
+msgstr "Estimativas GLS"
 
 #: plugin/interpolate.c:253
-#, fuzzy
 msgid "Iterated GLS estimates"
-msgstr "Estimação iterada"
+msgstr "Estimativas GLS iteradas"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
-msgstr ""
+msgstr "rô truncado para zero"
 
 #: plugin/interpolate.c:1736
-#, fuzzy
 msgid "Temporal disaggregation"
-msgstr "agregação"
+msgstr "Desagregação temporal"
 
 #: plugin/interval.c:225
 #, c-format
@@ -18557,7 +18544,7 @@ msgstr "Linha da planilha de cálculo %d, coluna %d"
 #: plugin/ods_import.c:437
 #, c-format
 msgid "expected %s but found %s"
-msgstr "Esperado %s mas encontrou-se %s"
+msgstr "Esperado %s mas foi encontrado %s"
 
 #: plugin/panurc.c:554
 msgid "z-score"
