@@ -2281,9 +2281,9 @@ void open_db_index (GtkWidget *w, gpointer data)
 
 void open_remote_db_index (GtkWidget *w, gpointer data)
 {
+    GtkTreeSelection *sel;
     GtkTreeIter iter;
     GtkTreeModel *model;
-    GtkTreeSelection *sel;
     char *getbuf = NULL;
     gchar *fname = NULL;
     windata_t *vwin = (windata_t *) data;
@@ -2334,33 +2334,72 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     g_free(pname);
 }
 
-void open_dbnomics_dataset (GtkWidget *w, gpointer data)
+static int get_db_provider_and_name (windata_t *vwin,
+				     const gchar **provider,
+				     gchar **dsname)
 {
-    windata_t *vwin = (windata_t *) data;
+    GtkTreeSelection *sel;
     GtkTreeIter iter;
     GtkTreeModel *model;
-    GtkTreeSelection *sel;
-    gchar *provider, *arg;
-    gchar *dsname = NULL;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
-	return;
+	return E_DATA;
     }
-    gtk_tree_model_get(model, &iter, 0, &dsname, -1);
-    if (dsname == NULL || *dsname == '\0') {
+    gtk_tree_model_get(model, &iter, 0, dsname, -1);
+    if (*dsname == NULL || **dsname == '\0') {
 	g_free(dsname);
-	return;
+	return E_DATA;
     }
-    provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
-    if (provider == NULL) {
+    *provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
+    if (*provider == NULL) {
+	g_free(*dsname);
+	return E_DATA;
+    }
+
+    return 0;
+}
+
+/* "open" a dbnomics dataset in the sense of showing the series
+   it contains (or a portion thereof if there are many series)
+*/
+
+void open_dbnomics_dataset (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    const gchar *provider = NULL;
+    gchar *dsname = NULL;
+    int err;
+
+    err = get_db_provider_and_name(vwin, &provider, &dsname);
+
+    if (!err) {
+	gchar *arg = g_strdup_printf("%s/%s", provider, dsname);
+
 	g_free(dsname);
-	return;
+	display_files(DBNOMICS_SERIES, arg);
+	g_free(arg);
     }
-    arg = g_strdup_printf("%s/%s", provider, dsname);
-    g_free(dsname);
-    display_files(DBNOMICS_SERIES, arg);
-    g_free(arg);
+}
+
+/* "open" a dbnomics dataset in the sense of showing its
+   "dimensions": topics/subjects/indicators and countries,
+   if applicable.
+*/
+
+void show_dbnomics_dimensions (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    const gchar *provider = NULL;
+    gchar *dsname = NULL;
+    int err;
+
+    err = get_db_provider_and_name(vwin, &provider, &dsname);
+
+    if (!err) {
+	err = dbnomics_get_dimensions_call(provider, dsname);
+	g_free(dsname);
+    }
 }
 
 #define INFOLEN 100
