@@ -39,7 +39,7 @@
 #include "nlspec.h"
 #include "gretl_midas.h"
 
-#define MIDAS_DEBUG 0
+#define MIDAS_DEBUG 1
 #define FC_DEBUG 0
 
 enum mflags {
@@ -122,7 +122,7 @@ static double cond_ols_callback (double *theta, double *g,
 #define takes_coeff(t) (t != MIDAS_U && t != MIDAS_ALMONP)
 
 /* convenience macro for picking out beta specifications */
-#define beta_type(t) (t == MIDAS_BETA0 || t == MIDAS_BETAN)
+#define beta_type(t) (t == MIDAS_BETA0 || t == MIDAS_BETA1 || t == MIDAS_BETAN)
 
 /* days per month or quarter: maybe make this user-
    configurable? */
@@ -495,7 +495,7 @@ static gretl_matrix *make_auto_theta (char *mstr, int i,
 	/* we have to infer k */
 	if (*mstr == '\0' || !strcmp(mstr, "null")) {
 	    /* OK if we know how many parameters are needed? */
-	    if (ptype == MIDAS_BETA0) {
+	    if (ptype == MIDAS_BETA0 || ptype == MIDAS_BETA1) {
 		k = 2;
 	    } else if (ptype == MIDAS_BETAN) {
 		k = 3;
@@ -619,18 +619,25 @@ static int type_from_string (const char *s, int *umidas, int *err)
     if (integer_string(s)) {
 	ret = atoi(s);
     } else if (!strcmp(s, "\"umidas\"")) {
-	ret = 0;
+	ret = MIDAS_U;
     } else if (!strcmp(s, "\"nealmon\"")) {
-	ret = 1;
+	ret = MIDAS_NEALMON;
     } else if (!strcmp(s, "\"beta0\"")) {
-	ret = 2;
+	ret = MIDAS_BETA0;
     } else if (!strcmp(s, "\"betan\"")) {
-	ret = 3;
+	ret = MIDAS_BETAN;
     } else if (!strcmp(s, "\"almonp\"")) {
-	ret = 4;
+	ret = MIDAS_ALMONP;
+    } else if (!strcmp(s, "\"beta1\"")) {
+	ret = MIDAS_BETA1;
+    } else if (gretl_is_scalar(s)) {
+	int err = 0;
+
+	ret = gretl_scalar_get_value(s, &err);
+	fprintf(stderr, "HERE %s -> %d\n", s, ret);
     }
 
-    if (ret < 0) {
+    if (ret < MIDAS_U || ret >= MIDAS_MAX) {
 	*err = E_INVARG;
     } else if (ret == 0) {
 	*umidas = 1;
@@ -754,6 +761,7 @@ static int parse_midas_term (const char *s,
 	} else {
 	    k = gretl_vector_get_length(mt->theta);
 	    if (k < 1 || (type == MIDAS_BETA0 && k != 2) ||
+		(type == MIDAS_BETA1 && k != 2) ||
 		(type == MIDAS_BETAN && k != 3)) {
 		err = E_INVARG;
 	    }
@@ -822,8 +830,9 @@ static int umidas_check (midas_info *mi, int n_umidas)
 
 static int
 parse_midas_specs (midas_info *mi, const char *spec,
-		   const DATASET *dset, gretlopt opt)
+		   const DATASET *dset, gretlopt *popt)
 {
+    gretlopt opt = *popt;
     const char *s;
     int n_spec = 0;
     int n_umidas = 0;
@@ -876,6 +885,11 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		strncat(test, s, len);
 		err = parse_midas_term(test, mt, i, dset);
 		if (!err) {
+		    if (mt->type == MIDAS_BETA1) {
+			mt->type = MIDAS_BETA0;
+			opt |= OPT_C;
+			*popt = opt;
+		    }
 		    if (mt->type == MIDAS_U) {
 			n_umidas++;
 		    } else if (beta_type(mt->type) ||
@@ -2869,7 +2883,7 @@ MODEL midas_model (const int *list,
     if (param == NULL || *param == '\0') {
 	err = E_DATA;
     } else {
-	err = parse_midas_specs(mi, param, dset, opt);
+	err = parse_midas_specs(mi, param, dset, &opt);
     }
 
     if (!err) {

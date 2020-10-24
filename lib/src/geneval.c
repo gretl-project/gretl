@@ -6649,19 +6649,25 @@ static int node_get_midas_method (NODE *n, parser *p)
     int ret = -1;
 
     if (n->t == STR) {
-        if (!strcmp(n->v.str, "nealmon")) {
-            ret = 1;
+	if (!strcmp(n->v.str, "umidas")) {
+	    ret = MIDAS_U;
+        } else if (!strcmp(n->v.str, "nealmon")) {
+            ret = MIDAS_NEALMON;
         } else if (!strcmp(n->v.str, "beta0")) {
-            ret = 2;
+            ret = MIDAS_BETA0;
         } else if (!strcmp(n->v.str, "betan")) {
-            ret = 3;
+            ret = MIDAS_BETAN;
         } else if (!strcmp(n->v.str, "almonp")) {
-            ret = 4;
-        } else {
-            p->err = E_INVARG;
+            ret = MIDAS_ALMONP;
+	} else if (!strcmp(n->v.str, "beta1")) {
+	    ret = MIDAS_BETA1;
         }
     } else {
         ret = node_get_int(n, p);
+    }
+
+    if (ret < MIDAS_U || ret >= MIDAS_MAX) {
+	p->err = E_INVARG;
     }
 
     return ret;
@@ -13970,6 +13976,46 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         if (!p->err) {
             ret->v.m = matrix_chowlin(Y, X, fac, &p->err);
         }
+    } else if (t->t == F_MMULT) {
+        gretl_matrix *theta = NULL;
+        gretl_matrix *V = NULL;
+	int mtype = -1;
+        int h = 0, cum = 0;
+
+        if (k < 4 || k > 5) {
+            n_args_error(k, 4, t->t, p);
+        }
+        for (i=0; i<k && !p->err; i++) {
+            e = eval(n->v.bn.n[i], p);
+            if (i == 0) {
+                if (e->t == MAT) {
+                    theta = e->v.m;
+                } else {
+                    p->err = E_TYPES;
+                }
+            } else if (i == 1) {
+                if (e->t == MAT) {
+                    V = e->v.m;
+                } else {
+                    p->err = E_TYPES;
+                }
+            } else if (i == 2) {
+		mtype = node_get_midas_method(e, p);
+	    } else if (i == 3) {
+		/* horizon */
+		h = node_get_int(e, p);
+	    } else {
+		/* cumulate? */
+		cum = node_get_bool(e, p, 0);
+	    }
+        }
+        if (!p->err) {
+            reset_p_aux(p, save_aux);
+            ret = aux_matrix_node(p);
+        }
+        if (!p->err) {
+            ret->v.m = midas_multipliers(theta, V, mtype, h, cum, &p->err);
+        }
     } else if (t->t == F_TDISAGG) {
         gretl_matrix *Y = NULL;
         gretl_matrix *X = NULL;
@@ -17228,6 +17274,7 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CLOGFI:
     case F_DEFARGS:
     case F_BPACK:
+    case F_MMULT:
         /* built-in functions taking more than three args */
         if (t->t == F_FEVAL) {
             ret = eval_feval(t, p);

@@ -500,6 +500,7 @@ enum {
     F_CHOWLIN,
     F_TDISAGG,
     F_HYP2F1,
+    F_MMULT,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

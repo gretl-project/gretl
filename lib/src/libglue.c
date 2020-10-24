@@ -515,26 +515,28 @@ int do_modprint (const char *mname, const char *names,
     gretl_matrix *addstats = NULL;
     gretl_array *parnames = NULL;
     const char *parstr = NULL;
+    const char **rnames = NULL;
     int free_parnames = 0;
     int nnames = 0;
+    int ncoef = 0;
     int err = 0;
 
-    if (mname == NULL || names == NULL) {
+    if (mname == NULL) {
 	return E_ARGS;
     }
 
     /* k x 2 matrix: coeffs and standard errors */
     coef_se = get_matrix_by_name(mname);
     if (coef_se == NULL) {
-	err = E_UNKVAR;
+	return E_UNKVAR;
     } else if (gretl_matrix_cols(coef_se) != 2) {
 	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
-	err = E_DATA;
-    } else {
-	nnames = coef_se->rows;
+	return E_DATA;
     }
 
-    if (!err) {
+    nnames = ncoef = coef_se->rows;
+
+    if (names != NULL) {
 	/* names for coeffs: string literal, string variable,
 	   or array of strings */
 	if (opt & OPT_L) {
@@ -549,6 +551,11 @@ int do_modprint (const char *mname, const char *names,
 		    err = E_TYPES;
 		}
 	    }
+	}
+    } else {
+	rnames = gretl_matrix_get_rownames(coef_se);
+	if (rnames == NULL) {
+	    return E_ARGS;
 	}
     }
 
@@ -566,8 +573,17 @@ int do_modprint (const char *mname, const char *names,
 	}
     }
 
+    if (!err && nnames > ncoef && rnames != NULL) {
+	/* for now reject this case */
+	err = E_ARGS;
+    }
+
     if (!err) {
-	if (parnames == NULL) {
+	if (rnames != NULL) {
+	    /* use matrix rownames: convert to array */
+	    parnames = gretl_array_from_strings((char **) rnames, ncoef, 1, &err);
+	    free_parnames = 1;
+	} else if (parnames == NULL) {
 	    /* we need to construct the strings array */
 	    parnames = strings_array_from_string(parstr, nnames, &err);
 	    free_parnames = 1;

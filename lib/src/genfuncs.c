@@ -4513,12 +4513,14 @@ static int inf_check (double val, const gretl_matrix *theta,
     return *err;
 }
 
+#define BETA_METHOD(m) (m==MIDAS_BETA0 || m==MIDAS_BETA1 || m==MIDAS_BETAN)
+
 static int check_beta_params (int method, double *theta,
 			      int k, double eps)
 {
     int err = 0;
 
-    if (method == MIDAS_BETA0 && k != 2) {
+    if ((method == MIDAS_BETA0 || method == MIDAS_BETA1) && k != 2) {
 	gretl_errmsg_set("theta must be a 2-vector");
 	err = E_INVARG;
     } else if (method == MIDAS_BETAN && k != 3) {
@@ -4572,7 +4574,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 
     theta = m->val;
 
-    if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    if (BETA_METHOD(method)) {
 	*err = check_beta_params(method, theta, k, eps);
 	if (*err) {
 	    return NULL;
@@ -4599,7 +4601,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 		break;
 	    }
 	}
-    } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    } else if (BETA_METHOD(method)) {
 	double si, ai, bi;
 
 	for (i=0; i<p; i++) {
@@ -4763,7 +4765,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     theta = m->val;
     errno = 0;
 
-    if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    if (BETA_METHOD(method)) {
 	*err = check_beta_params(method, theta, k, eps);
 	if (*err) {
 	    return NULL;
@@ -4820,7 +4822,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	}
 	free(dsum);
-    } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    } else if (BETA_METHOD(method)) {
 	double si, ai, bi;
 	double g1sum = 0;
 	double g2sum = 0;
@@ -4939,6 +4941,118 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     return G;
 }
 
+gretl_matrix *midas_multipliers (const gretl_matrix *theta,
+				 const gretl_matrix *V,
+				 int mtype, int h,
+				 int cumulate, int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *mult;
+    gretl_matrix *J;
+    gretl_matrix *vcv;
+    char **S = NULL;
+    char rname[32];
+    int i, k = theta->rows;
+
+    /* FIXME arg sanity checking */
+
+    if (mtype == MIDAS_U) {
+	mult = gretl_matrix_alloc(k-1, 1);
+	for (i=0; i<k-1; i++) {
+	    mult->val[i] = theta->val[i];
+	}
+	J = gretl_zero_matrix_new(h, k);
+	gretl_matrix_inscribe_I(J, 0, 0, MIN(k,h));
+    } else if (mtype == MIDAS_ALMONP) {
+	mult = midas_weights(h, theta, mtype, err);
+        J = midas_gradient(h, theta, mtype, err);
+    } else {
+	gretl_matrix *tmp1, *tmp2;
+        double mg, th0 = theta->val[0];
+	int j;
+
+	tmp1 = gretl_matrix_alloc(k-1, 1);
+	for (i=1; i<k; i++) {
+	    tmp1->val[i-1] = theta->val[i];
+	}
+        mult = midas_weights(h, tmp1, mtype, err);
+        tmp2 = midas_gradient(h, tmp1, mtype, err);
+	J = gretl_matrix_alloc(h, k);
+	for (i=0; i<h; i++) {
+	    gretl_matrix_set(J, i, 0, mult->val[i]);
+	    for (j=1; j<k; j++) {
+		mg = gretl_matrix_get(tmp2, i, j-1);
+		gretl_matrix_set(J, i, j, th0*mg);
+	    }
+	}
+	gretl_matrix_multiply_by_scalar(mult, th0);
+	gretl_matrix_free(tmp1);
+	gretl_matrix_free(tmp2);
+    }
+
+    if (*err || mult == NULL || J == NULL) {
+	if (!*err) {
+	    *err = E_ALLOC;
+	}
+	return NULL;
+    }
+
+    //gretl_matrix_print(J, "J");
+    //gretl_matrix_print(V, "V");
+
+    vcv = gretl_matrix_alloc(J->rows, J->rows);
+    if (vcv == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = gretl_matrix_qform(J, GRETL_MOD_NONE,
+				  V, vcv, GRETL_MOD_NONE);
+    }
+
+    if (!*err && cumulate) {
+	gretl_matrix *tmp;
+
+	for (i=1; i<h; i++) {
+	    mult->val[i] += mult->val[i-1];
+	}
+	gretl_matrix_free(J);
+	J = gretl_unit_matrix_new(h, h);
+	gretl_matrix_set_triangle(J, NULL, 0, 1);
+	tmp = gretl_matrix_alloc(h, h);
+	*err = gretl_matrix_qform(J, GRETL_MOD_NONE,
+				  vcv, tmp, GRETL_MOD_NONE);
+	gretl_matrix_free(vcv);
+	vcv = tmp;
+    }
+
+    if (!*err) {
+	double vi;
+
+	ret = gretl_matrix_alloc(h, 2);
+	for (i=0; i<h; i++) {
+	    gretl_matrix_set(ret, i, 0, mult->val[i]);
+	    vi = gretl_matrix_get(vcv, i, i);
+	    gretl_matrix_set(ret, i, 1, sqrt(vi));
+	}
+    }
+
+    if (ret != NULL) {
+	S = strings_array_new(h);
+	if (S != NULL) {
+	    for (i=0; i<h; i++) {
+		sprintf(rname, "%s_%02d", cumulate ? "cmult" : "mult", i+1);
+		S[i] = gretl_strdup(rname);
+	    }
+	    gretl_matrix_set_rownames(ret, S);
+	}
+    }
+
+    gretl_matrix_free(mult);
+    gretl_matrix_free(J);
+    gretl_matrix_free(vcv);
+
+    return ret;
+}
+
 int midas_linear_combo (double *y, const int *list,
 			const gretl_matrix *theta,
 			int method, const DATASET *dset)
@@ -4949,8 +5063,7 @@ int midas_linear_combo (double *y, const int *list,
 
     w = midas_weights(m, theta, method, &err);
 
-    if ((method == MIDAS_BETA0 || method == MIDAS_BETAN) &&
-	!err && w == NULL) {
+    if (BETA_METHOD(method) && !err && w == NULL) {
 	int t;
 
 	for (t=dset->t1; t<=dset->t2; t++) {

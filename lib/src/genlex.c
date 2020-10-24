@@ -531,6 +531,7 @@ struct str_table funcs[] = {
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },
     { F_MLINCOMB,  "mlincomb" },
+    { F_MMULT,     "mmults" },
     { F_HFDIFF,    "hfdiff" },
     { F_HFLDIFF,   "hfldiff" },
     { F_HFLIST,    "hflist" },
