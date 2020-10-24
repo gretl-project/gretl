@@ -39,7 +39,7 @@
 #include "nlspec.h"
 #include "gretl_midas.h"
 
-#define MIDAS_DEBUG 1
+#define MIDAS_DEBUG 0
 #define FC_DEBUG 0
 
 enum mflags {
