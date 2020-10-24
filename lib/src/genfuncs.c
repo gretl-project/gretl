@@ -4997,9 +4997,6 @@ gretl_matrix *midas_multipliers (const gretl_matrix *theta,
 	return NULL;
     }
 
-    //gretl_matrix_print(J, "J");
-    //gretl_matrix_print(V, "V");
-
     vcv = gretl_matrix_alloc(J->rows, J->rows);
     if (vcv == NULL) {
 	*err = E_ALLOC;

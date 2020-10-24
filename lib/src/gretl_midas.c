@@ -86,6 +86,7 @@ struct midas_info_ {
     gchar *pnames;        /* string holding parameter names */
     int hfslopes;         /* # of high-frequency slope coeffs */
     int nalmonp;          /* number of straight Almon poly terms */
+    int nbeta1;           /* number of clamped beta terms */
     int method;           /* estimation method */
     int ldepvar;          /* position of lagged dependent variable? */
     int nobs;             /* number of observations used */
@@ -634,7 +635,6 @@ static int type_from_string (const char *s, int *umidas, int *err)
 	int err = 0;
 
 	ret = gretl_scalar_get_value(s, &err);
-	fprintf(stderr, "HERE %s -> %d\n", s, ret);
     }
 
     if (ret < MIDAS_U || ret >= MIDAS_MAX) {
@@ -830,14 +830,13 @@ static int umidas_check (midas_info *mi, int n_umidas)
 
 static int
 parse_midas_specs (midas_info *mi, const char *spec,
-		   const DATASET *dset, gretlopt *popt)
+		   const DATASET *dset, gretlopt opt)
 {
-    gretlopt opt = *popt;
     const char *s;
     int n_spec = 0;
     int n_umidas = 0;
     int n_boxed = 0;
-    int n_beta0 = 0;
+    int n_beta1 = 0;
     int n_almonp = 0;
     int err = 0;
 
@@ -885,11 +884,6 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		strncat(test, s, len);
 		err = parse_midas_term(test, mt, i, dset);
 		if (!err) {
-		    if (mt->type == MIDAS_BETA1) {
-			mt->type = MIDAS_BETA0;
-			opt |= OPT_C;
-			*popt = opt;
-		    }
 		    if (mt->type == MIDAS_U) {
 			n_umidas++;
 		    } else if (beta_type(mt->type) ||
@@ -901,8 +895,8 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		    if (takes_coeff(mt->type)) {
 			mi->hfslopes += 1;
 		    }
-		    if (mt->type == MIDAS_BETA0) {
-			n_beta0++;
+		    if (mt->type == MIDAS_BETA1) {
+			n_beta1++;
 		    }
 		}
 		s = p + 1;
@@ -910,23 +904,21 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	}
     }
 
-    if (!err) {
-	/* check validity of options */
-	if ((opt & OPT_C) && n_beta0 == 0) {
-	    /* --clamp-beta applies only to beta0 terms */
+    if (!err && n_beta1 > 0) {
+	/* check validity of beta clamping */
+	if (n_almonp > 0) {
+	    gretl_errmsg_set("Can't combine beta1 with almonp terms");
+	    err = E_INVARG;
+	} else if (opt & OPT_L) {
+	    /* can't combine beta1 and --levenberg */
 	    err = E_BADOPT;
-	} else if ((opt & OPT_C) && n_almonp > 0) {
-	    gretl_errmsg_set("Can't combine --clamp-beta with almonp terms");
-	    err = E_BADOPT;
-	} else {
-	    /* can't combine --clamp-beta and --levenberg */
-	    err = incompatible_options(opt, OPT_C | OPT_L);
 	}
     }
 
     if (!err) {
 	mi->nmidas = n_spec;
 	mi->nalmonp = n_almonp;
+	mi->nbeta1 = n_beta1;
 	if (n_boxed > 0 && n_almonp == 0) {
 	    /* prefer LBFGS, but respect OPT_L if it's given */
 	    if (!(opt & OPT_L)) {
@@ -945,6 +937,7 @@ parse_midas_specs (midas_info *mi, const char *spec,
 	mi->mterms = NULL;
 	mi->nmidas = 0;
 	mi->nalmonp = 0;
+	mi->nbeta1 = 0;
     }
 
     return err;
@@ -1352,9 +1345,10 @@ static int midas_beta_init (midas_info *mi)
 	    {1, 1}, {1, 10}, {2, 10}
 	};
 	double SSR, SSRmin = 1e200;
+	int imax = mt->type == MIDAS_BETA1 ? 2 : 3;
 	int best_idx = -1;
 
-	for (i=0; i<3; i++) {
+	for (i=0; i<imax; i++) {
 	    SSR = cond_ols_callback(theta[i], NULL, 2, mi);
 	    if (SSR < SSRmin) {
 		SSRmin = SSR;
@@ -1385,31 +1379,11 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
     double *src, *targ = NULL;
     int i, j, k, ii, vi;
     int nb, bound_rows = 0;
-    int clamp = (opt & OPT_C);
+    int type0 = 0;
     midas_term *mt;
 
-    if (clamp) {
-	int ok = 0;
-
-	/* check for valid use of OPT_C, --clamp-beta */
-	if (mi->nmidas == 1 && mi->mterms[0].type == MIDAS_BETA0) {
-	    ok = 1; /* clearly OK */
-	    mi->method = MDS_GSS;
-	} else {
-	    /* Maybe OK? Watch out for breakage! */
-	    for (i=0; i<mi->nmidas; i++) {
-		if (mi->mterms[i].type == MIDAS_BETA0) {
-		    /* should be supported? */
-		    ok = 1;
-		    break;
-		}
-	    }
-	}
-	if (!ok) {
-	    gretl_errmsg_set("clamp-beta can be used only with a single "
-			     "beta0 MIDAS term");
-	    return E_BADOPT;
-	}
+    if (mi->nbeta1 == 1 && mi->nmidas == 1) {
+	mi->method = MDS_GSS;
     }
 
     mi->u = gretl_column_vector_alloc(mi->nobs);
@@ -1473,7 +1447,7 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
 		for (ii=0; ii<2; ii++) {
 		    /* columns: index, minimum, maximum */
 		    gretl_matrix_set(mi->bounds, j, 0, k + ii + 1);
-		    if (clamp) {
+		    if (mt->type == MIDAS_BETA1) {
 			if (ii == 0) {
 			    gretl_matrix_set(mi->bounds, j, 1, mt->theta->val[0]);
 			    gretl_matrix_set(mi->bounds, j, 2, mt->theta->val[0]);
@@ -1522,7 +1496,9 @@ static int midas_bfgs_setup (midas_info *mi, DATASET *dset,
 	return E_ALLOC;
     }
 
-    if (mi->nmidas == 1 && mi->mterms[0].type == MIDAS_BETA0) {
+    type0 = mi->mterms[0].type;
+
+    if (mi->nmidas == 1 && (type0 == MIDAS_BETA0 || type0 == MIDAS_BETA1)) {
 	/* FIXME multiple beta terms? */
 	midas_beta_init(mi);
     } else {
@@ -1801,7 +1777,6 @@ static int cond_ols_GNR (MODEL *pmod,
     gretl_matrix *w, *G;
     int nc, zcol, vi;
     int i, j, k, kk, t, s, v;
-    int clamp = (opt & OPT_C);
     int cpi, *cpos = NULL;
     int err = 0;
 
@@ -1857,27 +1832,17 @@ static int cond_ols_GNR (MODEL *pmod,
 	glist[0] += 1;
     }
 
-    if (clamp) {
-	/* number of clamped beta0 terms? */
-	int nb0 = 0;
-
-	for (i=0; i<mi->nmidas; i++) {
-	    if (mi->mterms[i].type == MIDAS_BETA0) {
-		nb0++;
-	    }
-	}
-	if (nb0 > 0) {
-	    cpos = gretl_list_new(nb0);
-	    if (cpos == NULL) {
-		err = E_ALLOC;
-	    }
+    if (mi->nbeta1 > 0) {
+	cpos = gretl_list_new(mi->nbeta1);
+	if (cpos == NULL) {
+	    err = E_ALLOC;
 	}
     }
 
     /* the read position for OLS coefficients */
     k = mi->nx;
 
-    /* the write position and coeff position for clamped beta0 terms */
+    /* the write position and coeff position for beta1 terms */
     cpi = 1;
     kk = mi->nx;
 
@@ -1951,7 +1916,7 @@ static int cond_ols_GNR (MODEL *pmod,
 	    for (ii=0; ii<mt->nparm; ii++) {
 		glist[0] += 1;
 		glist[glist[0]] = pos + ii;
-		if (ii == 0 && mt->type == MIDAS_BETA0 && clamp) {
+		if (ii == 0 && mt->type == MIDAS_BETA1) {
 		    cpos[cpi++] = kk;
 		    sprintf(gdset->varname[pos+ii], "grad%dc", ii+1);
 		} else {
@@ -2077,7 +2042,7 @@ static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
     int fncount = 0, grcount = 0;
     int err;
 
-    if (theta[0] == 1.0 && mi->nmidas == 1 && (opt & OPT_C)) {
+    if (theta[0] == 1.0 && mi->nmidas == 1 && mi->nbeta1 == 1) {
 #if MIDAS_DEBUG
 	fprintf(stderr, "midas_bfgs_run: calling midas_gss\n");
 #endif
@@ -2645,7 +2610,7 @@ static void make_pname (char *targ, midas_term *mt, int i,
 {
     if (mt->type == MIDAS_NEALMON) {
 	sprintf(targ, "Almon%d", i+1);
-    } else if (mt->type == MIDAS_BETA0 || mt->type == MIDAS_BETAN) {
+    } else if (beta_type(mt->type)) {
 	sprintf(targ, "Beta%d", i+1);
     } else if (mt->type == MIDAS_ALMONP) {
 	sprintf(targ, "Almon%d", i);
@@ -2883,7 +2848,7 @@ MODEL midas_model (const int *list,
     if (param == NULL || *param == '\0') {
 	err = E_DATA;
     } else {
-	err = parse_midas_specs(mi, param, dset, &opt);
+	err = parse_midas_specs(mi, param, dset, opt);
     }
 
     if (!err) {
