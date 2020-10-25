@@ -269,7 +269,10 @@ void gretl_win32_debug_init (int debug)
 	}
 	set_windebug(1);
     }
+}
 
+void gretl_win32_debug_init2 (int debug)
+{
     set_g_logging(debug);
 }
 

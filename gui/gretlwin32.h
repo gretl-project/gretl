@@ -38,6 +38,8 @@ void win32_start_R_async (void);
 
 void gretl_win32_debug_init (int debug);
 
+void gretl_win32_debug_init2 (int debug);
+
 void gretl_win32_init (const char *progname, int debug);
 
 int prn_to_clipboard (PRN *prn, int fmt);
