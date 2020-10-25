@@ -372,12 +372,9 @@ static void real_nls_init (void)
 static void real_nls_init (void)
 {
     char localedir[MAXSTR];
-    char *got;
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
-    got = setlocale(LC_ALL, "");
-    fprintf(stderr, "nls_init: setlocale gave %s\n",
-	    (got == NULL)? "NULL" : got);
+    record_win32_locale(setlocale(LC_ALL, ""));
     set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
@@ -710,7 +707,6 @@ int main (int argc, char **argv)
 #if defined(G_OS_WIN32)
     /* this must come before NLS initialization */
     win32_set_gretldir(callname);
-    gretl_win32_debug_init(optdebug);
 #elif defined(ALT_MAC_STARTUP)
     osx_setup_paths();
 #elif !defined(OS_OSX)
@@ -749,7 +745,7 @@ int main (int argc, char **argv)
 
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
-    gretl_win32_debug_init2(optdebug);
+    gretl_win32_debug_init(optdebug);
 #elif GTK_MAJOR_VERSION == 3
     quell_glib_spew();
 #endif

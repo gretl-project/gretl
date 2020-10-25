@@ -4941,6 +4941,17 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     return G;
 }
 
+/*
+  Working from model bundle: 
+
+  # lofreq parms = nelem(xlist)
+  for midas term i:
+    number of lags = maxlag - minlag + 1
+    number of params = nparm
+    parms = relevant rows of coeff
+    gross coeffs = hfslope * weights = relevant rows of hfb
+*/
+
 gretl_matrix *midas_multipliers (const gretl_matrix *theta,
 				 const gretl_matrix *V,
 				 int mtype, int h,

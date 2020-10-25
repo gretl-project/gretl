@@ -172,6 +172,13 @@ static int gretl_cpage;
 #endif
 static int native_utf8;
 
+#ifdef WIN32
+
+int get_gretl_cpage (void)
+{
+    return gretl_cpage;
+}
+
 void set_native_utf8 (int s)
 {
     native_utf8 = s;

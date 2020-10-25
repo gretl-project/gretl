@@ -254,6 +254,15 @@ void get_default_windows_app_font (char *target)
     }
 }
 
+static char *winlocale;
+
+void record_win32_locale (char *s)
+{
+    if (s != NULL) {
+	winlocale = gretl_strdup(s);
+    }
+}
+
 void gretl_win32_debug_init (int debug)
 {
     if (debug) {
@@ -268,11 +277,11 @@ void gretl_win32_debug_init (int debug)
 	    redirect_io_to_console();
 	}
 	set_windebug(1);
+	fprintf(stderr, "Windows locale = %s\n",
+		winlocale == NULL ? "NULL" : winlocale);
+	fprintf(stderr, "codepage = %d\n", get_gretl_cpage());
     }
-}
 
-void gretl_win32_debug_init2 (int debug)
-{
     set_g_logging(debug);
 }
 
