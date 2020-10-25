@@ -319,7 +319,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
 	/* *ps1 will be the command line */
 	if (windebug) {
-	    fprintf(stderr, "recoding s1 to locale\n");
+	    fprintf(stderr, "ensure_locale_encoding: recoding cmdline to locale\n");
 	}
 	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
 	if (*ls1 == NULL) {
@@ -327,7 +327,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
 	} else {
 	    *ps1 = (const char *) *ls1;
 	    if (windebug) {
-		fprintf(stderr, "recoded s1: '%s'\n", *ps1);
+		fprintf(stderr, "recoded cmdline: '%s'\n", *ps1);
 	    }
 	}
     }
@@ -343,7 +343,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     }
 
     if (gerr != NULL) {
-	fprintf(stderr, "maybe_recode_to_locale: got GLib error:\n");
+	fprintf(stderr, "ensure_locale_encoding: got GLib error:\n");
 	fprintf(stderr, " '%s'\n", gerr->message);
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
@@ -486,7 +486,7 @@ char *appdata_path (void)
 #if 0 /* testing */
     if (!strcmp(g_get_user_name(), "cottrell")) {
 	/* fake up a non-ASCII dotdir, in UTF-8 */
-	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
+	const char *s = "c:\\users\\cottrell\\desktop\\Дми́трий";
 
 	return gretl_strdup(s);
     }
