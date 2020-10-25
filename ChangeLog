@@ -13,19 +13,21 @@ version 2020e, in progress
   across the dates information
 - Documentation: add material on forecasting for VARs and
   other multi-equation systems
-- MS Windows build: support printing scripts with syntax
-  highlighting
-- MS Windows build (64-bit): update pixman, cairo and pango
-  libraries (DLLs)
-- macOS build: the Preview button in print dialogs was not
-  working
 - Fix bug: possibility of invalid XML when saving a model to
   session file
 - Fix bug: "smpl" command rejects the combination of "full"
   and --quiet
 - Fix: --single-yaxis option not respected by "gnuplot" and
   "plot" when a band is specified
-- Fix "join" GUI dialog window: was not working on Windows
+- Fix: GUI dialog for "join" was not working on Windows
+- Fix: work around bug in Apple's LAPACK that could lead to
+  a crash when computing eigenvalues
+- Fix: the Preview button in print dialogs was not working
+  in macOS build
+- MS Windows build: support printing scripts with syntax
+  highlighting
+- MS Windows build (64-bit): update pixman, cairo and pango
+  libraries (DLLs)
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard
