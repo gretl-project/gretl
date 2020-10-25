@@ -884,6 +884,10 @@ parse_midas_specs (midas_info *mi, const char *spec,
 		strncat(test, s, len);
 		err = parse_midas_term(test, mt, i, dset);
 		if (!err) {
+		    if (mt->type == MIDAS_BETA0 && (opt & OPT_C)) {
+			/* support legacy option */
+			mt->type = MIDAS_BETA1;
+		    }
 		    if (mt->type == MIDAS_U) {
 			n_umidas++;
 		    } else if (beta_type(mt->type) ||
