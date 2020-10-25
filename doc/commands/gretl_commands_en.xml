@@ -8878,6 +8878,11 @@
 	the extra statistics.
       </para>
       <para>
+	If <repl>addstats</repl> is not provided amd the
+	<repl>coeffmat</repl> matrix has row names attached, then
+	the <repl>names</repl> argument can be omitted.
+      </para>
+      <para>
 	To put the output into a file, use the flag <opt>output=</opt>
 	plus a filename. If the filename has the suffix
 	<quote><lit>.tex</lit></quote>, the output will be in &tex;
