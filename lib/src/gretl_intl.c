@@ -179,6 +179,8 @@ int get_gretl_cpage (void)
     return gretl_cpage;
 }
 
+#endif
+
 void set_native_utf8 (int s)
 {
     native_utf8 = s;
