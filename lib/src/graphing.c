@@ -1307,7 +1307,7 @@ int write_plot_bounding_box_request (FILE *fp)
 
 static int do_plot_bounding_box (void)
 {
-    FILE *fp = gretl_fopen(gretl_plotfile(), "a");
+    FILE *fp = gretl_fopen(gretl_plotfile(), "ab");
     int err = 0;
 
     if (fp != NULL) {
