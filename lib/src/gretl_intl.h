@@ -104,7 +104,7 @@ int get_utf_width (const char *str, int width);
 
 #ifdef WIN32
 
-int get_gretl_cpage (void)
+int get_gretl_cpage (void);
 
 #endif
 
