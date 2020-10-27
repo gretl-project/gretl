@@ -497,11 +497,11 @@ The gretl command for this model is \cmd{biprobit}, which performs ML
 estimation via numerical optimization using the Newton--Raphson method
 with analytical derivatives. An example of usage is provided in the
 \texttt{biprobit.inp} sample script.  The command takes either three
-or four arguments. The first three arguments are series names for
-$y_{1}$ and $y_{2}$ and a list of explanatory variables. In the common
-case when the regressors are the same for the two equations this is
-sufficient, but if $z$ differs from $x$ a second list should be
-appended following a semicolon, as in:
+or four arguments, the first three being series names for $y_{1}$ and
+$y_{2}$ and a list of explanatory variables. In the common case when
+the regressors are the same for the two equations this is sufficient,
+but if $z$ differs from $x$ a second list should be appended following
+a semicolon, as in:
 \begin{code}
   biprobit y1 y2 X ; Z
 \end{code}
