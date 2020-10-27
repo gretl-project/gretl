@@ -322,7 +322,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
 	    fprintf(stderr, "ensure_locale_encoding: recoding cmdline to locale\n");
 	}
 	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
-	if (*ls1 == NULL) {
+	if (*ls1 == NULL || gerr != NULL) {
 	    err = 1;
 	} else {
 	    *ps1 = (const char *) *ls1;
