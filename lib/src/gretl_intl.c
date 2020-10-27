@@ -233,7 +233,14 @@ void set_gretl_charset (void)
 	}
 #ifdef WIN32
 	if (p == NULL) {
-	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
+	    int n = sscanf(gretl_charset, "cp%d", &gretl_cpage);
+
+	    if (n == 0) {
+		p = strrchr(gretl_charset, '.');
+		if (p != NULL) {
+		    gretl_cpage = atoi(p+1);
+		}
+	    }
 	}
 #endif
     }
