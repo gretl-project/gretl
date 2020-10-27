@@ -483,7 +483,7 @@ char *desktop_path (void)
 
 char *appdata_path (void)
 {
-#if 1 /* testing */
+#if 0 /* testing */
     if (!strcmp(g_get_user_name(), "cottrell")) {
 	/* fake up a non-ASCII dotdir, in UTF-8 */
 	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
