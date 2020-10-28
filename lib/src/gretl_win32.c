@@ -305,7 +305,10 @@ void win_copy_last_error (void)
 }
 
 /* If the command-line (*ps1) and/or current directory
-   (*ps2) are UTF-8, convert them to locale encoding.
+   (*ps2) are UTF-8, convert them to locale encoding
+   in *ls1 and *ls2 respectively, and make *ps1, *ps2
+   point to the converted values.
+
    This is exclusively for the benefit of third-party
    software that cannot handle UTF-16.
 */
