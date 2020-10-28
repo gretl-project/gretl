@@ -3960,7 +3960,7 @@ int gnuplot (const int *plotlist, const char *literal,
     int many = 0;
     int set_xrange = 1;
     PlotType ptype;
-    gnuplot_info gi;
+    gnuplot_info gi = {0};
     int i, err = 0;
 
     gretl_error_clear();
@@ -3979,6 +3979,9 @@ int gnuplot (const int *plotlist, const char *literal,
 
     if (dataset_is_panel(dset) &&
 	plotlist_is_group_invariant(plotlist, dset)) {
+#if GP_DEBUG
+	fprintf(stderr, "doing panel_group_invariant_plot\n");
+#endif
 	return panel_group_invariant_plot(plotlist, literal,
 					  (DATASET *) dset, opt);
     }
@@ -7033,27 +7036,28 @@ static int panel_means_ts_plot (const int vnum,
 {
     DATASET *gset;
     int nunits, T = dset->pd;
-    int list[3] = {2, 1, 2};
+    int list[2] = {1, 1};
     gchar *literal = NULL;
     gchar *title = NULL;
-    const double *obs;
     int i, t, s, s0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
 
-    obs = gretl_plotx(dset, OPT_P);
-    if (obs == NULL) {
-	return E_ALLOC;
-    }
-
-    gset = create_auxiliary_dataset(3, T, 0);
+    gset = create_auxiliary_dataset(2, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
     }
 
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
+
+    if (dset->panel_pd > 0) {
+	/* add time series info to @gset */
+	gset->structure = TIME_SERIES;
+	gset->pd = dset->panel_pd;
+	gset->sd0 = dset->panel_sd0;
+    }
 
     s0 = dset->t1;
 
@@ -7069,15 +7073,10 @@ static int panel_means_ts_plot (const int vnum,
 		n++;
 	    }
 	}
-	if (n == 0) {
-	    gset->Z[1][t] = NADBL;
-	} else {
-	    gset->Z[1][t] = xsum / n;
-	}
-	gset->Z[2][t] = obs[t];
+	gset->Z[1][t] = (n == 0)? NADBL : xsum / n;
     }
 
-    opt |= OPT_O; /* use lines */
+    opt |= (OPT_O | OPT_T); /* use lines, time series */
 
     title = g_strdup_printf(_("mean %s"),
 			    series_get_graph_name(dset, vnum));
