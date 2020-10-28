@@ -319,6 +319,11 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     GError *gerr = NULL;
     int err = 0;
 
+    if (g_get_charset(NULL)) {
+	/* charset is UTF-8 */
+	return 0;
+    }
+
     if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
 	/* *ps1 will be the command line */
 	if (windebug) {
@@ -489,7 +494,7 @@ char *appdata_path (void)
 #if 0 /* testing */
     if (!strcmp(g_get_user_name(), "cottrell")) {
 	/* fake up a non-ASCII dotdir, in UTF-8 */
-	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
+	const char *s = "c:\\users\\cottrell\\desktop\\Дмитрий";
 
 	return gretl_strdup(s);
     }
