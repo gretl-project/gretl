@@ -306,11 +306,16 @@ void win_copy_last_error (void)
 
 /* If the command-line (*ps1) and/or current directory
    (*ps2) are UTF-8, convert them to locale encoding
-   in *ls1 and *ls2 respectively, and make *ps1, *ps2
-   point to the converted values.
+   ("system codepage") in *ls1 and *ls2 respectively,
+   and make *ps1, *ps2 point to the converted values.
 
    This is exclusively for the benefit of third-party
-   software that cannot handle UTF-16.
+   software that expects "ANSI" filenames.
+
+   2020-10-28: We get out of here immediately if it turns
+   out that the Windows charset is UTF-8; but it remains to
+   be seen if it actually works to pass UTF-8 filenames
+   to third-party programs in that case.
 */
 
 int ensure_locale_encoding (const char **ps1, gchar **ls1,
@@ -320,7 +325,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     int err = 0;
 
     if (g_get_charset(NULL)) {
-	/* charset is UTF-8 */
+	/* the Windows charset is UTF-8 */
 	return 0;
     }
 
