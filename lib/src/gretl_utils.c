@@ -2486,7 +2486,15 @@ static int other_gretl_running (const char *fname)
 
 static void dotdir_cleanup (void)
 {
-    int err = gretl_chdir(gretl_dotdir());
+    const char *dotdir = gretl_dotdir();
+    const char *workdir = gretl_workdir();
+    int err;
+
+    if (!strcmp(dotdir, workdir)) {
+	return;
+    }
+
+    err = gretl_chdir(dotdir);
 
     if (!err) {
 	GDir *dir = gretl_opendir(".");
