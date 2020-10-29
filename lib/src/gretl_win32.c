@@ -304,6 +304,42 @@ void win_copy_last_error (void)
     LocalFree(buf);
 }
 
+static int ensure_utf16 (const char *s1, gunichar2 **pmod1,
+			 const char *s2, gunichar2 **pmod2)
+{
+    GError *gerr = NULL;
+    int err = 0;
+
+    if (s1 != NULL && *s1 != '\0') {
+	if (windebug) {
+	    fprintf(stderr, "recoding s1 to UTF-16\n");
+	}
+	*pmod1 = g_utf8_to_utf16(s1, -1, NULL, NULL, &gerr);
+	if (*pmod1 == NULL || gerr != NULL) {
+	    err = 1;
+	}
+    }
+
+    if (!err && s2 != NULL && *s2 != '\0') {
+	if (windebug) {
+	    fprintf(stderr, "recoding s2 to UTF-16\n");
+	}
+	*pmod2 = g_utf8_to_utf16(s2, -1, NULL, NULL, &gerr);
+	if (*pmod2 == NULL || gerr != NULL) {
+	    err = 1;
+	}
+    }
+
+    if (gerr != NULL) {
+	fprintf(stderr, "ensure_utf16: got GLib error:\n");
+	fprintf(stderr, " '%s'\n", gerr->message);
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return err;
+}
+
 /* If the command-line (*ps1) and/or current directory
    (*ps2) are UTF-8, convert them to locale encoding
    ("system codepage") in *ls1 and *ls2 respectively,
@@ -438,6 +474,77 @@ static int real_win_run_sync (char *cmdline,
 
     g_free(ls1);
     g_free(ls2);
+
+    return err;
+}
+
+static int real_win_run_sync_unicode (char *cmdline,
+				      const char *currdir,
+				      int console_app)
+{
+    STARTUPINFOW sinfo;
+    PROCESS_INFORMATION pinfo;
+    DWORD exitcode;
+    DWORD flags;
+    gunichar2 *cl16 = NULL;
+    gunichar2 *cd16 = NULL;
+    int ok, err = 0;
+
+    err = ensure_utf16(cmdline, &cl16, currdir, &cd16);
+    if (err) {
+	return err;
+    }
+
+    ZeroMemory(&sinfo, sizeof sinfo);
+    ZeroMemory(&pinfo, sizeof pinfo);
+    sinfo.cb = sizeof sinfo;
+
+    if (console_app) {
+	flags = CREATE_NO_WINDOW | HIGH_PRIORITY_CLASS;
+    } else {
+	sinfo.dwFlags = STARTF_USESHOWWINDOW;
+	sinfo.wShowWindow = SW_SHOWMINIMIZED;
+	flags = HIGH_PRIORITY_CLASS;
+    }
+
+    /* zero return means failure */
+    ok = CreateProcessW(NULL,
+			cl16,
+			NULL,
+			NULL,
+			FALSE,
+			flags,
+			NULL,
+			cd16,
+			&sinfo,
+			&pinfo);
+
+    if (!ok) {
+	fprintf(stderr, "win_run_sync: failed command:\n%s\n", cmdline);
+	win_copy_last_error();
+	err = 1;
+    } else {
+	WaitForSingleObject(pinfo.hProcess, INFINITE);
+	if (GetExitCodeProcess(pinfo.hProcess, &exitcode)) {
+	    /* the call "succeeded" */
+	    if (exitcode != 0) {
+		fprintf(stderr, "%s: exit code %u\n", cmdline, exitcode);
+		gretl_errmsg_sprintf("%s: exit code %u", cmdline,
+				     exitcode);
+		err = 1;
+	    }
+	} else {
+	    fprintf(stderr, "win_run_sync: no exit code:\n%s\n", cmdline);
+	    win_copy_last_error();
+	    err = 1;
+	}
+    }
+
+    CloseHandle(pinfo.hProcess);
+    CloseHandle(pinfo.hThread);
+
+    g_free(cl16);
+    g_free(cd16);
 
     return err;
 }
