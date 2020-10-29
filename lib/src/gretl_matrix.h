@@ -88,7 +88,7 @@ typedef struct gretl_matrix_ {
     int rows;
     int cols;
     double *val;
-    double _Complex *z;
+    double _Complex *z; /* was "complex" */
     int is_complex;
     /*< private >*/
     matrix_info *info;
