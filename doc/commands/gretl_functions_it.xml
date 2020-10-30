@@ -11078,24 +11078,27 @@
 	  di caratteri di cui è composta. Si noti che questo può non
 	  coincidere col numero di byte se sono presenti caratteri al
 	  di fuori del campo ASCII stampabile (ad esempio, lettere
-	  accentate). Se invece l'argomento è un array di stringhe, il
-	  valore ritornato è un vettore colonna col numero di
-	  caratteri per ognuna di esse.
-	</para>
-	<para>
-	  Se l'argomento è una serie i cui valori hanno una codifica
-	  come stringa, il valore ritornato è esso stesso una serie
-	  contentnete la lunghezza delle stringhe nel sottocampione
-	  attualmente in uso.
-	</para>
-	<para>
-	  Un semplice esempio:
+	  accentate); il numero effettivo di byte può essere ricavato
+	  tramite la funzione <fncref targ="nelem"/>. Ad esempio: 
 	</para>
 	<code>
-	  string s = "regression"
-	  scalar slen = strlen(s)
-	  print slen
+	  string s = "¡Olé!"
+	  printf "strlen(s) = %d, nelem(s) = %d\n", strlen(s), nelem(s)
 	</code>
+	<para>
+	  should return
+	</para>
+	<code>
+	  strlen(s) = 5, nelem(s) = 7
+	</code>
+	<para>
+	  Se l'argomento è un array di stringhe, il valore ritornato è
+	  un vettore colonna col numero di caratteri per ognuna di
+	  esse.  Se, infine, l'argomento è una serie i cui valori
+	  hanno una codifica come stringa, il valore ritornato è esso
+	  stesso una serie contenente la lunghezza delle stringhe nel
+	  sottocampione attualmente in uso.
+	</para>
       </description>
     </function>
 
