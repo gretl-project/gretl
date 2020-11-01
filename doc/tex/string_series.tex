@@ -215,14 +215,30 @@ available integer.\footnote{Admittedly there is a downside to this
   feature: one may inadvertently add a new string value by mistyping a
   string that's already present.}
 
+\subsection{Logical product of two string-valued series}
+
+The operator \verb|^| can be used to produce what we might call the
+logical product of two string-valued series, as in
+\begin{code}
+series sv3 = sv1 ^ sv2
+\end{code}
+The result is another string-valued series with value $s_i.s_j$ at
+observations where \texttt{sv1} has value $s_i$ and \texttt{sv2} has
+value $s_j$. For example, if at a given observation \texttt{sv1} has
+value ``\texttt{A}'' and \texttt{sv2} has value ``\texttt{X}'', then
+\texttt{sv3} will have value ``\texttt{A.X}''. The set of strings
+attached to the resulting series will include all such string
+combinations even if they are not all represented in the given sample.
+
 \subsection{Assignment to an entire series}
 
-This is disallowed at present: you can't execute an assignment of any
-sort with the name of a string-valued series \textit{per se} on the
-left-hand side. Put differently, you cannot overwrite an entire
-string-valued series at once. While this is debatable, it's the
-easiest way of ensuring that we never end up with a broken
-mapping. It's possible this restriction may be relaxed in future.
+Other than the ``logical product'' case described above, this is
+disallowed at present: you can't execute an assignment with the name
+of a string-valued series \textit{per se} on the left-hand side. Put
+differently, you cannot overwrite an entire string-valued series at
+once. While this is debatable, it's the easiest way of ensuring that
+we never end up with a broken mapping. It's possible this restriction
+may be relaxed in future.
 
 Besides assigning an out-of-bounds numerical value to a particular
 observation, this sort of assignment is in fact the only operation
