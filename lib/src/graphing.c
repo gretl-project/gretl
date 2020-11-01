@@ -1832,6 +1832,8 @@ static int set_term_type_from_fname (const char *fname)
 	this_term_type = GP_TERM_SVG;
     } else if (has_suffix(fname, ".tex")) {
 	this_term_type = GP_TERM_TEX;
+    } else if (!strcmp(fname, "gnuplot")) {
+	this_term_type = GP_TERM_VAR;
     }
 
     return this_term_type;
@@ -2220,6 +2222,13 @@ int graph_written_to_file (void)
     return graph_file_written;
 }
 
+static int graph_file_shown;
+
+int graph_displayed (void)
+{
+    return graph_file_shown;
+}
+
 static void remove_old_png (void)
 {
     gchar *tmp = gretl_make_dotpath("gretltmp.png");
@@ -2249,6 +2258,7 @@ static int gnuplot_make_graph (void)
     int fmt, err = 0;
 
     graph_file_written = 0;
+    graph_file_shown = 0;
     fmt = specified_gp_output_format();
 
     if (fmt == GP_TERM_PLT) {
@@ -2292,8 +2302,12 @@ static int gnuplot_make_graph (void)
 	} else {
 	    /* remove the temporary input file */
 	    gretl_remove(fname);
-	    gretl_set_path_by_name("plotfile", gnuplot_outname);
-	    graph_file_written = 1;
+	    if (fmt == GP_TERM_VAR) {
+		graph_file_shown = 1;
+	    } else {
+		gretl_set_path_by_name("plotfile", gnuplot_outname);
+		graph_file_written = 1;
+	    }
 	}
     }
 

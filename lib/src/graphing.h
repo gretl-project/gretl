@@ -213,6 +213,8 @@ void plot_get_scaled_dimensions (int *width, int *height, double scale);
 
 int graph_written_to_file (void);
 
+int graph_displayed (void);
+
 void reset_plot_count (void);
 
 int matrix_plot (gretl_matrix *m, const int *list, const char *literal, 

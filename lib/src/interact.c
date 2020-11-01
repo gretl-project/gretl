@@ -2945,7 +2945,7 @@ static void maybe_schedule_graph_callback (ExecState *s)
 	    pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
 	}
 	report_plot_written(s->prn);
-    } else if (gui_mode) {
+    } else if (gui_mode && !graph_displayed()) {
 	schedule_callback(s);
     }
 }
