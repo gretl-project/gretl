@@ -3397,6 +3397,25 @@ static int unexpected_symbol_error (char c)
     return E_PARSE;
 }
 
+static int utf8_fail (char *s)
+{
+#ifdef WIN32
+    if (!gretl_in_gui_mode()) {
+	/* gretlcli on MS Windows: allow stuff (e.g. filenames)
+	   in locale encoding?
+	*/
+	return 0;
+    }
+#endif
+    /* otherwise insist on UTF-8 */
+    if (!g_utf8_validate(s, -1, NULL)) {
+	gretl_errmsg_set("command line is not valid UTF-8");
+	return E_DATA;
+    }
+
+    return 0;
+}
+
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
 
 /* tokenize_line: parse @line into a set of tokens on a
@@ -3426,8 +3445,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    compmode ? "get_command_index" : "parse_command_line", s);
 #endif
 
-    if (!g_utf8_validate(s, -1, NULL)) {
-	gretl_errmsg_set("command line is not valid UTF-8");
+    if (utf8_fail(s)) {
 	return E_DATA;
     }
 
