@@ -4516,8 +4516,6 @@ static void maybe_adjust_label (DATASET *dset, int v,
     }
 }
 
-#if 0 /* not yet */
-
 /* Encode the strings in @a into numerical values in series
    @v of dataset @dset. "Return" via @pU the array of unique
    string values and via @pnu the number of such values.
@@ -4550,7 +4548,23 @@ static int alt_set_strvals (DATASET *dset, int v, gretl_array *a,
     return err;
 }
 
-#endif
+static int alt_strvals_case (DATASET *dset, int v, gretl_array *a)
+{
+    double *x = dset->Z[v];
+    int i;
+
+    if (gretl_array_get_length(a) != dset->n) {
+	return 0;
+    }
+
+    for (i=0; i<dset->n; i++) {
+	if (x[i] != 0) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
 
 /* here we're trying to set strings values on a series from
    scratch */
@@ -4565,6 +4579,15 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
 
     if (a == NULL || dset == NULL || i < 1 || i >= dset->v) {
 	return E_DATA;
+    }
+
+    if (alt_strvals_case(dset, i, a)) {
+	err = alt_set_strvals(dset, i, a, &S, &ns);
+	if (err) {
+	    return err;
+	} else {
+	    goto do_strtable;
+	}
     }
 
     /* get sorted vector of unique values */
@@ -4604,6 +4627,8 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
 	    }
 	}
     }
+
+ do_strtable:
 
     if (!err) {
 	series_table *st = series_table_new(S, ns);
