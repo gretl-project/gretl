@@ -1027,13 +1027,13 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 static int biprobit_vcv (MODEL *pmod, bp_container *bp, 
 			 const DATASET *dset, gretlopt opt)
 {
-    gretl_matrix *H = NULL;
     int err = 0;
 
     if (opt & OPT_G) {
 	err = gretl_model_add_OPG_vcv(pmod, bp->score, NULL);
     } else {
 	double *theta = make_bp_theta(bp, &err);
+	gretl_matrix *H = NULL;
 
 	if (!err) {
 	    H = biprobit_hessian_inverse(theta, bp, &err);
@@ -1041,16 +1041,15 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
 	if (!err) {
 	    if (opt & OPT_R) {
 		err = gretl_model_add_QML_vcv(pmod, BIPROBIT, 
-					      H, bp->score,
-					      dset, opt, NULL);
+					      H, bp->score, dset, opt,
+					      NULL);
 	    } else {
 		err = gretl_model_add_hessian_vcv(pmod, H);
 	    }
 	}
 	free(theta);
+	gretl_matrix_free(H);
     }
-
-    gretl_matrix_free(H);
 
     return err;
 }
