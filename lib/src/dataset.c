@@ -4586,7 +4586,7 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
 	return E_DATA;
     }
 
-    if (alt_strvals_case(dset, i, a)) {
+    if (0 && alt_strvals_case(dset, i, a)) {
 	err = alt_set_strvals(dset, i, a, &S, &ns);
 	if (err) {
 	    return err;
