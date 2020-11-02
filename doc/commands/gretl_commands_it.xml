@@ -1269,7 +1269,10 @@
       <para>
 	L'output comprende un test del rapporto di verosimiglianza
 	dell'ipotesi nulla che gli errori delle due equazioni siano
-	incorrelati fra loro.
+	incorrelati fra loro. Si noti che, se lo stimatore è inteso
+	come stimatore QMLE e quindi viene usata l'opzione
+	<opt>robust</opt>, il test potrebbe non essere valido, anche
+	asintoticamente.
       </para>
     </description>
   </command>

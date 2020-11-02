@@ -506,9 +506,11 @@ a semicolon, as in:
   biprobit y1 y2 X ; Z
 \end{code}
 Output from estimation includes a Likelihood Ratio test for the
-hypothesis $\rho = 0$. This can be retrieved in the form of a bundle
-named \texttt{independence\_test} under the \dollar{model} accessor,
-as in
+hypothesis $\rho = 0$.\footnote{Note that if this estimator is meant
+  as a QMLE estimator and the \option{robust} option is used, this
+  test may not be valid, even asymptotically.} This can be retrieved
+in the form of a bundle named \texttt{independence\_test} under the
+\dollar{model} accessor, as in
 \begin{code}
 ? eval $model.independence_test
 bundle:

@@ -1234,7 +1234,9 @@
       <para>
 	The output includes a likelihood ratio test of the null
 	hypothesis that the disturbances in the two equations are
-	uncorrelated.
+	uncorrelated. Note that if this estimator is meant as a QMLE
+	estimator and the <opt>robust</opt> option is used, this test
+	may not be valid, even asymptotically.
       </para>
     </description>
   </command>
