@@ -565,16 +565,20 @@ static int win_run_sync_unicode (char *cmdline,
 
 int win_run_sync (char *cmdline, const char *currdir)
 {
+#if 1
+    return win_run_sync_unicode(cmdline, currdir, 1);
+#else
     return real_win_run_sync(cmdline, currdir, 1);
+#endif
 }
 
 int gretl_spawn (char *cmdline)
 {
-#if 0
+#if 1
     return win_run_sync_unicode(cmdline, NULL, 0);
-#else    
+#else
     return real_win_run_sync(cmdline, NULL, 0);
-#endif    
+#endif
 }
 
 /* Retrieve various special paths from the bowels of MS
