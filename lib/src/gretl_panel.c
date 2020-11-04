@@ -6078,11 +6078,9 @@ int set_panel_group_strings (const char *vname,
     }
 
     if (!err) {
-	series_table *st = series_table_new(S, ng);
+	series_table *st = series_table_new(S, ng, &err);
 
-	if (st == NULL) {
-	    err = E_ALLOC;
-	} else {
+	if (!err) {
 	    int i, g = 0;
 
 	    series_attach_string_table(dset, v, st);

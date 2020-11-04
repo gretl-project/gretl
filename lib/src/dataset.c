@@ -4631,11 +4631,9 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
  do_strtable:
 
     if (!err) {
-	series_table *st = series_table_new(S, ns);
+	series_table *st = series_table_new(S, ns, &err);
 
-	if (st == NULL) {
-	    err = E_ALLOC;
-	} else {
+	if (!err) {
 	    if (dset->varinfo[i]->st != NULL) {
 		/* remove any pre-existing table */
 		series_table_destroy(dset->varinfo[i]->st);
@@ -4663,12 +4661,10 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
 int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns)
 {
-    series_table *st = series_table_new(S, ns);
     int err = 0;
+    series_table *st = series_table_new(S, ns, &err);
 
-    if (st == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (!err) {
 	if (dset->varinfo[i]->st != NULL) {
 	    /* remove any pre-existing table */
 	    series_table_destroy(dset->varinfo[i]->st);
@@ -4762,7 +4758,7 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 	    series_table_destroy(dset->varinfo[v]->st);
 	}
 	/* the series table takes ownership of @S */
-	dset->varinfo[v]->st = series_table_new(S, nu);
+	dset->varinfo[v]->st = series_table_new(S, nu, &err);
 
 	if (changed != NULL) {
 	    *changed = 1;

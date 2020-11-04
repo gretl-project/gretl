@@ -48,7 +48,7 @@ int in_string_table (gretl_string_table *gst, int id);
 
 int *string_table_copy_list (gretl_string_table *gst);
 
-series_table *series_table_new (char **strs, int n_strs);
+series_table *series_table_new (char **strs, int n_strs, int *err);
 
 series_table *series_table_copy (series_table *st);
 

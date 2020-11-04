@@ -3519,10 +3519,9 @@ static int process_string_tables (xmlDocPtr doc,
 		    fprintf(stderr, "process_string_tables: get_strings_array "
 			    "gave error %d\n", err);
 		} else {
-		    st = series_table_new(strs, n_strs);
-		    if (st == NULL) {
+		    st = series_table_new(strs, n_strs, &err);
+		    if (err) {
 			strings_array_free(strs, n_strs);
-			err = E_ALLOC;
 		    } else {
 			series_attach_string_table(dset, v, st);
 		    }

@@ -311,17 +311,24 @@ int series_table_add_string (series_table *st, const char *s)
     return n;
 }
 
-series_table *series_table_new (char **strs, int n_strs)
+series_table *series_table_new (char **strs, int n_strs, int *err)
 {
     series_table *st = series_table_alloc();
     int i;
 
-    if (st != NULL) {
+    if (st == NULL) {
+	*err = E_ALLOC;
+    } else {
 	st->n_strs = n_strs;
 	st->strs = strs;
 	for (i=0; i<n_strs; i++) {
-	    g_hash_table_insert(st->ht, (gpointer) st->strs[i],
-				GINT_TO_POINTER(i+1));
+	    if (st->strs[i] == NULL) {
+		fprintf(stderr, "series_table_new: str %d is NULL\n", i);
+		*err = E_DATA;
+	    } else {
+		g_hash_table_insert(st->ht, (gpointer) st->strs[i],
+				    GINT_TO_POINTER(i+1));
+	    }
 	}
     }
 
