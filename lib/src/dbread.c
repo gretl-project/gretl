@@ -2412,7 +2412,7 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    gretl_odinfo.gst = NULL;
 	} else {
 	    string_table_replace_list(gretl_odinfo.gst, gstlnew);
-	    gstlnew = NULL;
+	    gstlnew = NULL; /* donated to table */
 	    gretl_string_table_save(gretl_odinfo.gst, dset);
 	}
     }
