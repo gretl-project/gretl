@@ -2272,15 +2272,19 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 {
     char label[MAXLABEL];
     int *gstlist = NULL;
+    int *gstlnew = NULL;
     int nv = gretl_odinfo.nvars;
     int n = gretl_odinfo.nrows;
     int nrepl = nv - newvars;
     int simple_fill = (opt & OPT_F);
     int i, s, t, v;
+    int spos = 1;
     int err = 0;
 
     if (gretl_odinfo.gst != NULL) {
 	gstlist = string_table_copy_list(gretl_odinfo.gst);
+	gstlnew = gretl_list_new(gstlist[0]);
+	gstlnew[0] = 0;
     }
 
     for (i=0; i<nv && !err; i++) {
@@ -2312,7 +2316,8 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	if (in_gretl_list(gstlist, i+1)) {
 	    /* the imported data are string-valued */
 	    if (vnew) {
-		gretl_string_table_reset_column_id(gretl_odinfo.gst, i+1, v);
+		gstlnew[spos++] = v;
+		gstlnew[0] += 1;
 	    } else if (stl == NULL) {
 		gretl_errmsg_sprintf("%s: can't mix numeric and string data",
 				     dset->varname[v]);
@@ -2394,8 +2399,6 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	}
     }
 
-    free(gstlist);
-
     if (err) {
 	dataset_drop_last_variables(dset, newvars);
 	if (gretl_odinfo.gst != NULL) {
@@ -2403,8 +2406,19 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	    gretl_odinfo.gst = NULL;
 	}
     } else if (gretl_odinfo.gst != NULL) {
-	gretl_string_table_save(gretl_odinfo.gst, dset);
+	if (gstlnew[0] == 0) {
+	    /* no series tables to transfer */
+	    gretl_string_table_destroy(gretl_odinfo.gst);
+	    gretl_odinfo.gst = NULL;
+	} else {
+	    string_table_replace_list(gretl_odinfo.gst, gstlnew);
+	    gstlnew = NULL;
+	    gretl_string_table_save(gretl_odinfo.gst, dset);
+	}
     }
+
+    free(gstlist);
+    free(gstlnew);
 
     return err;
 }
