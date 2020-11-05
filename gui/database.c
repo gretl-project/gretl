@@ -2718,10 +2718,12 @@ static char *get_writable_target (int code, char *objname)
     get_system_target(targ, code, objname, ext);
 #endif
 
+#if DLDBG
     if (dlstep == 2) {
 	infobox("Stopping at dlstep 2");
 	return NULL;
     }
+#endif
 
     if (!err) {
 	err = gretl_test_fopen(targ, "w");
