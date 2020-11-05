@@ -754,6 +754,7 @@ void set_gretl_startdir (void)
 
 static void get_pkg_save_dir (char *dirname, int action)
 {
+
     const char *subdir = NULL;
     int try_sysdir = 1;
     int ok = 0;
@@ -769,10 +770,7 @@ static void get_pkg_save_dir (char *dirname, int action)
     }
 
 #ifdef G_OS_WIN32
-    if (win32_uses_virtual_store()) {
-	/* don't write to virtualized location */
-	try_sysdir = 0;
-    }
+    try_sysdir = 0;
 #endif
 
     if (try_sysdir) {

@@ -1276,58 +1276,6 @@ int win32_delete_recursive (const char *path)
     }
 }
 
-static BOOL running_as_admin (void)
-{
-    SID_IDENTIFIER_AUTHORITY auth = {SECURITY_NT_AUTHORITY};
-    PSID admin_group = NULL;
-    BOOL ok, ret = FALSE;
-
-    ok = AllocateAndInitializeSid(&auth, 2,
-				  SECURITY_BUILTIN_DOMAIN_RID,
-				  DOMAIN_ALIAS_RID_ADMINS,
-				  0, 0, 0, 0, 0, 0,
-				  &admin_group);
-
-    if (ok) {
-	ok = CheckTokenMembership(NULL, admin_group, &ret);
-    }
-
-    if (!ok) {
-	fprintf(stderr, "running_as_admin: the check failed\n");
-    }
-
-    if (admin_group != NULL) {
-	FreeSid(admin_group);
-    }
-
-    return ret;
-}
-
-/* Note: at some point MS will scrap the virtual store
-   apparatus (supposedly), in which case we'll want to
-   add a further condition in this function -- that is,
-   dwMajorVersion < something.
-*/
-
-int win32_uses_virtual_store (void)
-{
-    OSVERSIONINFO osvi;
-    int ret;
-
-    ZeroMemory(&osvi, sizeof osvi);
-    osvi.dwOSVersionInfoSize = sizeof osvi;
-
-    GetVersionEx(&osvi);
-    /* VirtualStore came in with Vista */
-    ret = osvi.dwMajorVersion > 5;
-
-    if (ret && running_as_admin()) {
-	ret = 0;
-    }
-
-    return ret;
-}
-
 char *slash_convert (char *str, int which)
 {
     char *p;

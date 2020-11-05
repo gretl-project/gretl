@@ -2651,7 +2651,7 @@ static int get_target_in_home (char *targ, int code,
     return err;
 }
 
-#ifndef OS_OSX
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
 
 static void get_system_target (char *targ, int code,
 			       const char *objname,
@@ -2707,9 +2707,10 @@ static char *get_writable_target (int code, char *objname)
 	ext = ".tar.gz";
     }
 
-#ifdef OS_OSX
-    /* we prefer writing to ~/Library/Application Support
-       rather than /Applications/Gretl.app
+#if defined(G_OS_WIN32) || defined(OS_OSX)
+    /* On macOS we prefer writing to ~/Library/Application Support
+       rather than /Applications/Gretl.app, and on Windows let's
+       steer clear of Program Files.
     */
     err = get_target_in_home(targ, code, objname, ext);
     done_home = 1;

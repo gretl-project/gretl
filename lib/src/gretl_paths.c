@@ -3927,12 +3927,8 @@ const char *gretl_function_package_path (void)
 	/* we prefer writing to ~/Library/Application Support */
 	sys_first = 0;
 #elif defined(WIN32)
-	if (win32_uses_virtual_store()) {
-	    /* don't write to virtualized location */
-	    sys_first = 0;
-	}
+	sys_first = 0;
 #endif
-
 	if (sys_first) {
 	    err = get_system_install_path(path, "functions");
 	    if (err) {
