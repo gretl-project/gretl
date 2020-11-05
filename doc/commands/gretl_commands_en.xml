@@ -8373,6 +8373,10 @@
 	requires at least one parameter
       </para>
       <para context="cli">
+	5 or <lit>"beta1"</lit>: as <lit>beta0</lit>, but with the
+	first parameter fixed at 1, leaving a single free parameter.
+      </para>
+      <para context="cli">
 	When the parameterization is U-MIDAS, the final initializer
 	argument is not required. In other cases you can request an
 	automatic initialization by substituting one or other of these
