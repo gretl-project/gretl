@@ -547,8 +547,6 @@ static gretl_matrix *make_auto_theta (char *mstr, int i,
     return theta;
 }
 
-
-
 static int lag_info_from_prelag_list (midas_term *mt,
 				      const int *list,
 				      const DATASET *dset)
