@@ -4941,7 +4941,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     return G;
 }
 
-/* Retrieve from a $model bundle after midasreg the info
+/* Retrieve from a midasreg $model bundle all the info
    needed to construct the array of per-lag multipliers
    and their standard errors.
 */
@@ -4950,7 +4950,8 @@ static int process_midas_bundle (gretl_bundle *mb, int idx,
 				 gretl_matrix **ptheta,
 				 gretl_matrix **pV,
 				 int *pmtype, int *ph,
-				 int *pminlag)
+				 int *pminlag,
+				 const char **plname)
 {
     gretl_array *mt;
     gretl_matrix *b, *vcv;
@@ -5026,6 +5027,7 @@ static int process_midas_bundle (gretl_bundle *mb, int idx,
 	    *pmtype = mtype;
 	    *ph = nl;
 	    *pminlag = minlag;
+	    *plname = gretl_bundle_get_string(mti, "lname", NULL);
 	}
 	i0 = i1 + 1;
     }
@@ -5051,14 +5053,13 @@ gretl_matrix *midas_multipliers (void *data, int cumulate,
     gretl_matrix *V = NULL;
     gretl_matrix *J = NULL;
     gretl_matrix *vcv = NULL;
-    char **S = NULL;
-    char rname[32];
+    const char *lname = NULL;
     int minlag = 0;
     int mtype = 0, h = 0;
     int i, k;
 
     *err = process_midas_bundle(mb, idx, &theta, &V, &mtype,
-				&h, &minlag);
+				&h, &minlag, &lname);
     if (*err) {
 	gretl_errmsg_set("Not a valid midasreg bundle");
 	return NULL;
@@ -5140,11 +5141,21 @@ gretl_matrix *midas_multipliers (void *data, int cumulate,
     }
 
     if (ret != NULL) {
-	S = strings_array_new(h);
+	char **S = strings_array_new(h);
+	char rname[32];
+
 	if (S != NULL) {
 	    for (i=0; i<h; i++) {
-		sprintf(rname, "%s_%02d", cumulate ? "cmult" : "mult",
-			i + minlag);
+		if (lname != NULL) {
+		    if (cumulate) {
+			sprintf(rname, "c%s_%d", lname, i + minlag);
+		    } else {
+			sprintf(rname, "%s_%d", lname, i + minlag);
+		    }
+		} else {
+		    sprintf(rname, "%s_%d", cumulate ? "cmult" : "mult",
+			    i + minlag);
+		}
 		S[i] = gretl_strdup(rname);
 	    }
 	    gretl_matrix_set_rownames(ret, S);
