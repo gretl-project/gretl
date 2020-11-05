@@ -147,10 +147,8 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 			      int method, int *err);
 
-gretl_matrix *midas_multipliers (const gretl_matrix *theta,
-				 const gretl_matrix *V,
-				 int mtype, int h,
-				 int cumulate, int *err);
+gretl_matrix *midas_multipliers (void *data, int cumulate,
+				 int idx, int *err);
 
 int midas_linear_combo (double *y, const int *list,
 			const gretl_matrix *theta,

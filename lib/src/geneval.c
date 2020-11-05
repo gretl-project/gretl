@@ -13977,36 +13977,27 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             ret->v.m = matrix_chowlin(Y, X, fac, &p->err);
         }
     } else if (t->t == F_MMULT) {
-        gretl_matrix *theta = NULL;
-        gretl_matrix *V = NULL;
-	int mtype = -1;
-        int h = 0, cum = 0;
+        gretl_bundle *mb = NULL;
+	int cum = 0;
+	int idx = 1;
 
-        if (k < 4 || k > 5) {
-            n_args_error(k, 4, t->t, p);
+        if (k < 1 || k > 3) {
+            n_args_error(k, 3, t->t, p);
         }
         for (i=0; i<k && !p->err; i++) {
             e = eval(n->v.bn.n[i], p);
             if (i == 0) {
-                if (e->t == MAT) {
-                    theta = e->v.m;
+                if (e->t == BUNDLE) {
+                    mb = e->v.b;
                 } else {
                     p->err = E_TYPES;
                 }
             } else if (i == 1) {
-                if (e->t == MAT) {
-                    V = e->v.m;
-                } else {
-                    p->err = E_TYPES;
-                }
-            } else if (i == 2) {
-		mtype = node_get_midas_method(e, p);
-	    } else if (i == 3) {
-		/* horizon */
-		h = node_get_int(e, p);
-	    } else {
 		/* cumulate? */
 		cum = node_get_bool(e, p, 0);
+            } else if (!null_node(e)) {
+		/* index of MIDAS term? */
+		idx = node_get_int(e, p);
 	    }
         }
         if (!p->err) {
@@ -14014,7 +14005,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-            ret->v.m = midas_multipliers(theta, V, mtype, h, cum, &p->err);
+            ret->v.m = midas_multipliers(mb, cum, idx, &p->err);
         }
     } else if (t->t == F_TDISAGG) {
         gretl_matrix *Y = NULL;

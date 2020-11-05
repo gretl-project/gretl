@@ -4941,37 +4941,133 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     return G;
 }
 
-/*
-  Working from model bundle: 
-
-  # lofreq parms = nelem(xlist)
-  for midas term i:
-    number of lags = maxlag - minlag + 1
-    number of params = nparm
-    parms = relevant rows of coeff
-    gross coeffs = hfslope * weights = relevant rows of hfb
+/* Retrieve from a $model bundle after midasreg the info
+   needed to construct the array of per-lag multipliers
+   and their standard errors.
 */
 
-gretl_matrix *midas_multipliers (const gretl_matrix *theta,
-				 const gretl_matrix *V,
-				 int mtype, int h,
-				 int cumulate, int *err)
+static int process_midas_bundle (gretl_bundle *mb, int idx,
+				 gretl_matrix **ptheta,
+				 gretl_matrix **pV,
+				 int *pmtype, int *ph,
+				 int *pminlag)
 {
+    gretl_array *mt;
+    gretl_matrix *b, *vcv;
+    gretl_matrix *theta = NULL;
+    gretl_matrix *V = NULL;
+    int *xlist = NULL;
+    int mtype, np;
+    int i0, i1;
+    int i, j, k, nm;
+    int err = 0;
+
+    mt = gretl_bundle_get_array(mb, "midas_info", &err);
+    if (!err) {
+	xlist = gretl_bundle_get_list(mb, "xlist", &err);
+    }
+    if (!err) {
+	b = gretl_bundle_get_matrix(mb, "coeff", &err);
+    }
+    if (!err) {
+	vcv = gretl_bundle_get_matrix(mb, "vcv", &err);
+    }
+    if (err) {
+	return err;
+    }
+
+    i0 = xlist[0];
+    nm = gretl_array_get_length(mt);
+    if (idx < 1 || idx > nm) {
+	gretl_errmsg_set("Invalid MIDAS term index");
+	err = E_DATA;
+    } else {
+	idx--; /* convert index to 0-based */
+    }
+
+    for (i=0; i<=idx && !err; i++) {
+	gretl_bundle *mti;
+	int minlag, maxlag;
+	int nl, leader = 1;
+
+	mti = gretl_array_get_data(mt, i);
+	minlag = gretl_bundle_get_int(mti, "minlag", &err);
+	maxlag = gretl_bundle_get_int(mti, "maxlag", &err);
+	mtype = gretl_bundle_get_int(mti, "type", &err);
+	np = gretl_bundle_get_int(mti, "nparm", &err);
+	if (err) {
+	    break;
+	}
+
+	if (mtype == MIDAS_U || mtype == MIDAS_ALMONP) {
+	    leader = 0;
+	}
+	nl = maxlag - minlag + 1;
+	i1 = i0 + np - 1 + leader;
+#if 1
+	fprintf(stderr, "midas term %d, type %d, np %d, nlags %d\n",
+		i, mtype, np, nl);
+#endif
+	if (i == idx) {
+	    double vjk;
+	    int r = i1 - i0 + 1;
+	    int jj;
+
+	    theta = gretl_matrix_alloc(r, 1);
+	    V = gretl_matrix_alloc(r, r);
+	    for (j=0; j<r; j++) {
+		jj = j + i0;
+		theta->val[j] = b->val[jj];
+		for (k=0; k<r; k++) {
+		    vjk = gretl_matrix_get(vcv, jj, k+i0);
+		    gretl_matrix_set(V, j, k, vjk);
+		}
+	    }
+	    *pmtype = mtype;
+	    *ph = nl;
+	    *pminlag = minlag;
+	}
+	i0 = i1 + 1;
+    }
+
+    if (err) {
+	gretl_matrix_free(theta);
+	gretl_matrix_free(V);
+    } else {
+	*ptheta = theta;
+	*pV = V;
+    }
+
+    return err;
+}
+
+gretl_matrix *midas_multipliers (void *data, int cumulate,
+				 int idx, int *err)
+{
+    gretl_bundle *mb = (gretl_bundle *) data;
     gretl_matrix *ret = NULL;
-    gretl_matrix *mult;
-    gretl_matrix *J;
-    gretl_matrix *vcv;
+    gretl_matrix *theta = NULL;
+    gretl_matrix *mult = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *J = NULL;
+    gretl_matrix *vcv = NULL;
     char **S = NULL;
     char rname[32];
-    int i, k = theta->rows;
+    int minlag = 0;
+    int mtype = 0, h = 0;
+    int i, k;
 
-    /* FIXME arg sanity checking */
+    *err = process_midas_bundle(mb, idx, &theta, &V, &mtype,
+				&h, &minlag);
+    if (*err) {
+	gretl_errmsg_set("Not a valid midasreg bundle");
+	return NULL;
+    }
+
+    k = theta->rows;
 
     if (mtype == MIDAS_U) {
-	mult = gretl_matrix_alloc(k-1, 1);
-	for (i=0; i<k-1; i++) {
-	    mult->val[i] = theta->val[i];
-	}
+	mult = gretl_matrix_copy(theta);
 	J = gretl_zero_matrix_new(h, k);
 	gretl_matrix_inscribe_I(J, 0, 0, MIN(k,h));
     } else if (mtype == MIDAS_ALMONP) {
@@ -5047,13 +5143,16 @@ gretl_matrix *midas_multipliers (const gretl_matrix *theta,
 	S = strings_array_new(h);
 	if (S != NULL) {
 	    for (i=0; i<h; i++) {
-		sprintf(rname, "%s_%02d", cumulate ? "cmult" : "mult", i+1);
+		sprintf(rname, "%s_%02d", cumulate ? "cmult" : "mult",
+			i + minlag);
 		S[i] = gretl_strdup(rname);
 	    }
 	    gretl_matrix_set_rownames(ret, S);
 	}
     }
 
+    gretl_matrix_free(theta);
+    gretl_matrix_free(V);
     gretl_matrix_free(mult);
     gretl_matrix_free(J);
     gretl_matrix_free(vcv);
