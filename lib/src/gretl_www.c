@@ -463,6 +463,8 @@ static int common_curl_setup (CURL **pcurl)
 	curl_easy_setopt(*pcurl, CURLOPT_VERBOSE,
 			 getenv("GRETL_WWW_VERBOSE") != NULL);
 #ifdef WIN32
+	/* be on the safe side: 'http' can turn into 'https'
+	   at the server */
 	curl_easy_setopt(*pcurl, CURLOPT_CAINFO, certs_path);
 #endif
     }
@@ -497,12 +499,6 @@ static int curl_get (urlinfo *u)
     if (wproxy && *proxyhost != '\0') {
 	set_curl_proxy(u, curl);
     }
-
-#ifdef WIN32
-    /* be on the safe side: 'http' can turn into 'https'
-       at the server */
-    curl_easy_setopt(curl, CURLOPT_CAINFO, certs_path);
-#endif
 
     if (u->progfunc != NULL) {
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);

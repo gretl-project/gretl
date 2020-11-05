@@ -2733,10 +2733,9 @@ static char *get_writable_target (int code, char *objname)
 
 static int unpack_book_data (const char *fname)
 {
-    char *p, path[FILENAME_MAX];
+    char *p, *path = g_strdup(fname);
     int err = 0;
 
-    strcpy(path, fname);
     p = strrslash(path);
     if (p != NULL) {
 	*p = '\0';
@@ -2749,6 +2748,8 @@ static int unpack_book_data (const char *fname)
     if (!err) {
 	err = gretl_untar(fname);
     }
+
+    g_free(path);
 
     return err;
 }
@@ -2813,6 +2814,9 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	}
     }
 
+    fprintf(stderr, "HERE 1 install file: objname '%s', targ '%s' zipfile %d\n",
+	    objname, targ, zipfile);
+
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (zipfile) {
 	    const char *path = gretl_function_package_path();
@@ -2833,6 +2837,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == REMOTE_DATA_PKGS) {
 	gchar *tarname = g_strdup_printf("%s.tar.gz", objname);
 
+	fprintf(stderr, "HERE 2 tarname '%s'\n", tarname);
 	err = retrieve_remote_datafiles_package(tarname, targ);
 	g_free(tarname);
     } else if (vwin->role == REMOTE_DB) {
@@ -2871,7 +2876,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	} else if (vwin->role == REMOTE_DATA_PKGS) {
 	    fprintf(stderr, "downloaded '%s'\n", targ);
 	    err = unpack_book_data(targ);
-	    remove(targ);
+	    gretl_remove(targ);
 	    if (err) {
 		errbox(_("Error unzipping compressed data"));
 	    } else {

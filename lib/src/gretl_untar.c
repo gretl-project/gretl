@@ -15,22 +15,6 @@
 #include <utime.h>
 #include <dirent.h>
 
-#ifdef WIN32
-#  ifndef F_OK
-#    define F_OK (0)
-#  endif
-#  ifdef _MSC_VER
-#    define mkdir(dirname,mode) _mkdir(dirname)
-#    define unlink(fn)          _unlink(fn)
-#    define access(path,mode)   _access(path,mode)
-#  else
-#    ifdef _WIN64
-#      include <direct.h>
-#    endif
-#    define mkdir(dirname,mode) _mkdir(dirname)
-#  endif
-#endif
-
 /* values used in typeflag field */
 
 #define REGTYPE	 '0'		/* regular file */
@@ -95,51 +79,6 @@ static int getoct (char *p, int width)
     return result;
 }
 
-static int makedir (char *path)
-{
-    char *buffer = gretl_strdup(path);
-    int len = strlen(buffer);
-    char *p;
-
-    if (len <= 0) {
-	free(buffer);
-	return 0;
-    }
-
-    if (buffer[len-1] == '/') {
-	buffer[len-1] = '\0';
-    }
-
-    if (gretl_mkdir(buffer) == 0) {
-	free(buffer);
-	return 1;
-    }
-
-    p = buffer + 1;
-
-    while (1) {
-	char hold;
-
-	while (*p && *p != '\\' && *p != '/') {
-	    p++;
-	}
-	hold = *p;
-	*p = 0;
-	if ((gretl_mkdir(buffer) == -1) && (errno == ENOENT)) {
-	    fprintf(stderr,"couldn't create directory %s\n", buffer);
-	    free(buffer);
-	    return 0;
-	}
-	if (hold == 0)
-	    break;
-	*p++ = hold;
-    }
-
-    free(buffer);
-
-    return 1;
-}
-
 static int untar (gzFile in)
 {
     union tar_buffer buffer;
@@ -172,7 +111,7 @@ static int untar (gzFile in)
 
 	    switch (buffer.header.typeflag) {
 	    case DIRTYPE:
-		makedir(fname);
+		err = gretl_mkdir(fname);
 		break;
 	    case REGTYPE:
 	    case AREGTYPE:
@@ -182,9 +121,10 @@ static int untar (gzFile in)
 		    if (outfile == NULL) {
 			/* try creating directory */
 			char *p = strrchr(fname, '/');
+
 			if (p != NULL) {
 			    *p = '\0';
-			    makedir(fname);
+			    err = gretl_mkdir(fname);
 			    *p = '/';
 			    outfile = gretl_fopen(fname, "wb");
 			}
