@@ -611,28 +611,43 @@ static int get_p1_p2 (const char *s1, const char *s2,
     return err;
 }
 
-static int type_from_string (const char *s, int *umidas, int *err)
+static int midas_type_from_string (const char *s)
+{
+    if (!strcmp(s, "\"umidas\"") || !strcmp(s, "umidas")) {
+	return MIDAS_U;
+    } else if (!strcmp(s, "\"nealmon\"") || !strcmp(s, "nealmon")) {
+	return MIDAS_NEALMON;
+    } else if (!strcmp(s, "\"beta0\"") || !strcmp(s, "beta0")) {
+	return MIDAS_BETA0;
+    } else if (!strcmp(s, "\"betan\"") || !strcmp(s, "betan")) {
+	return MIDAS_BETAN;
+    } else if (!strcmp(s, "\"almonp\"") || !strcmp(s, "almonp")) {
+	return MIDAS_ALMONP;
+    } else if (!strcmp(s, "\"beta1\"") || !strcmp(s, "beta1")) {
+	return MIDAS_BETA1;
+    } else {
+	return -1;
+    }
+}
+
+static int midas_type_from_arg (const char *s, int *umidas, int *err)
 {
     int ret = -1;
 
     if (integer_string(s)) {
 	ret = atoi(s);
-    } else if (!strcmp(s, "\"umidas\"")) {
-	ret = MIDAS_U;
-    } else if (!strcmp(s, "\"nealmon\"")) {
-	ret = MIDAS_NEALMON;
-    } else if (!strcmp(s, "\"beta0\"")) {
-	ret = MIDAS_BETA0;
-    } else if (!strcmp(s, "\"betan\"")) {
-	ret = MIDAS_BETAN;
-    } else if (!strcmp(s, "\"almonp\"")) {
-	ret = MIDAS_ALMONP;
-    } else if (!strcmp(s, "\"beta1\"")) {
-	ret = MIDAS_BETA1;
-    } else if (gretl_is_scalar(s)) {
-	int err = 0;
+    } else {
+	ret = midas_type_from_string(s);
+	if (ret < 0) {
+	    char *sval = get_string_by_name(s);
 
-	ret = gretl_scalar_get_value(s, &err);
+	    if (sval != NULL) {
+		ret = midas_type_from_string(sval);
+	    }
+	}
+	if (ret < 0 && gretl_is_scalar(s)) {
+	    ret = gretl_scalar_get_value(s, err);
+	}
     }
 
     if (ret < MIDAS_U || ret >= MIDAS_MAX) {
@@ -690,7 +705,7 @@ static int parse_midas_term (const char *s,
 	ns = sscanf(s, fmt, lname, p1str, p2str, typestr, mname);
 	err = get_p1_p2(p1str, p2str, &p1, &p2);
 	if (!err) {
-	    type = type_from_string(typestr, &umidas, &err);
+	    type = midas_type_from_arg(typestr, &umidas, &err);
 	}
 	if (!err && ns < 4) {
 	    err = E_PARSE;
@@ -702,7 +717,7 @@ static int parse_midas_term (const char *s,
 	sprintf(fmt, "%%%d[^, ] , %%%d[^,) ] , %%%d[^) ])",
 		VNAMELEN-1, 9, VNAMELEN-1);
 	ns = sscanf(s, fmt, lname, typestr, mname);
-	type = type_from_string(typestr, &umidas, &err);
+	type = midas_type_from_arg(typestr, &umidas, &err);
 	if (!err && ns < 2) {
 	    err = E_PARSE;
 	}
