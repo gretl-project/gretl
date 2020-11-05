@@ -6515,7 +6515,9 @@ static void set_midas_ptype (GtkComboBox *w, struct midas_sync *msync)
     int pt = gtk_combo_box_get_active(w);
     int fixval = 0;
 
-    if (pt == MIDAS_BETA0) {
+    if (pt == MIDAS_BETA1) {
+	fixval = 1;
+    } else if (pt == MIDAS_BETA0) {
         fixval = 2;
     } else if (pt == MIDAS_BETAN) {
         fixval = 3;
