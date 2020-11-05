@@ -58,6 +58,13 @@
 
 #define DB_SEARCH_DEBUG 0
 
+#define DLDBG 0
+
+#if DLDBG
+# include "libset.h"
+static int dlstep = 100;
+#endif
+
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
 static int add_local_db_series_list (windata_t *vwin);
@@ -2710,6 +2717,11 @@ static char *get_writable_target (int code, char *objname)
     get_system_target(targ, code, objname, ext);
 #endif
 
+    if (dlstep == 2) {
+	infobox("Stopping at dlstep 2");
+	return NULL;
+    }
+
     if (!err) {
 	err = gretl_test_fopen(targ, "w");
 	if (err == EACCES && !done_home) {
@@ -2777,6 +2789,10 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     gboolean zipfile = FALSE;
     int err = 0;
 
+#if DLDBG
+    dlstep = get_dlstep();
+#endif
+
     /* note: addon files are handled separately, by the function
        install_addon_callback() in datafiles.c
     */
@@ -2806,6 +2822,13 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
+#if DLDBG
+    if (dlstep == 1) {
+	infobox("Stopping at dlstep 1");
+	return;
+    }
+#endif
+
     if (!zipfile) {
 	targ = get_writable_target(vwin->role, objname);
 	if (targ == NULL) {
@@ -2813,6 +2836,13 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    return;
 	}
     }
+
+#if DLDBG
+    if (dlstep == 3) {
+	infobox("Stopping at dlstep 3");
+	return;
+    }
+#endif
 
     fprintf(stderr, "HERE 1 install file: objname '%s', targ '%s' zipfile %d\n",
 	    objname, targ, zipfile);
@@ -2839,6 +2869,13 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
 	fprintf(stderr, "HERE 2 tarname '%s'\n", tarname);
 	err = retrieve_remote_datafiles_package(tarname, targ);
+#if DLDBG
+	if (dlstep == 4) {
+	    infobox("Stopping at dlstep 4");
+	    gretl_remove(targ);
+	    return;
+	}
+#endif
 	g_free(tarname);
     } else if (vwin->role == REMOTE_DB) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -2875,6 +2912,12 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    }
 	} else if (vwin->role == REMOTE_DATA_PKGS) {
 	    fprintf(stderr, "downloaded '%s'\n", targ);
+#if DLDBG
+	    if (dlstep == 5) {
+		infobox("Stopping at dlstep 5");
+		return;
+	    }
+#endif
 	    err = unpack_book_data(targ);
 	    gretl_remove(targ);
 	    if (err) {
