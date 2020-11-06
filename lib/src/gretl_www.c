@@ -92,7 +92,7 @@ static void urlinfo_init (urlinfo *u,
 			  int saveopt,
 			  const char *localfile)
 {
-    u->url[0] = '\0';
+    memset(u->url, 0, URLLEN);
 
     if (hostname != NULL) {
 	sprintf(u->url, "http://%s", hostname);
@@ -123,13 +123,13 @@ static void urlinfo_init (urlinfo *u,
 #endif
 
 #ifdef WIN32
-    strcat(u->agent, "w");
+    strncat(u->agent, "w", 1);
 #endif
 }
 
 static void urlinfo_set_url (urlinfo *u, const char *url)
 {
-    u->url[0] = '\0';
+    memset(u->url, 0, URLLEN);
     strncat(u->url, url, URLLEN - 1);
 }
 
@@ -493,7 +493,7 @@ static int curl_get (urlinfo *u)
     curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
 
     if (u->timeout > 0) {
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) u->timeout);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, u->timeout);
     }
 
     if (wproxy && *proxyhost != '\0') {
@@ -563,7 +563,7 @@ static int retrieve_url (const char *hostname,
 			 char **getbuf)
 {
     int saveopt = SAVE_NONE;
-    urlinfo u;
+    urlinfo u = {0};
     int err = 0;
 
     maybe_revise_www_paths();
