@@ -49,7 +49,7 @@ const char *get_gretlnet_filename (void);
 
 int set_gretlnet_filename (const char *prog);
 
-void win32_cli_read_rc (char *callname);
+void win32_cli_read_rc (void);
 
 void win_show_last_error (void);
 

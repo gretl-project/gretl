@@ -148,11 +148,9 @@ int set_gretlnet_filename (const char *pkgdir)
     return 0;
 }
 
-static FILE *cli_gretlnet_open (const char *prog)
+static FILE *cli_gretlnet_open (void)
 {
     FILE *fp = NULL;
-
-    set_gretlnet_filename(prog);
 
     if (*netfile != '\0') {
 	fp = gretl_fopen(netfile, "r");
@@ -194,7 +192,7 @@ static FILE *cli_rcfile_open (void)
 
 /* called from gretlcli.exe and gretlmpi.exe */
 
-void win32_cli_read_rc (char *callname)
+void win32_cli_read_rc (void)
 {
     ConfigPaths cpaths = {0};
     char dbproxy[64] = {0};
@@ -215,7 +213,7 @@ void win32_cli_read_rc (char *callname)
     /* read the "gretlnet" file, if present: any settings from this
        file will override those from the per-user rc file.
     */
-    fp = cli_gretlnet_open(callname);
+    fp = cli_gretlnet_open();
     if (fp != NULL) {
 	get_gretl_config_from_file(fp, &cpaths, dbproxy,
 				   &use_proxy, &updated,

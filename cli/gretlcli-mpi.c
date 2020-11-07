@@ -323,9 +323,6 @@ static void maybe_print_intro (int id)
 
 int main (int argc, char *argv[])
 {
-#ifdef WIN32
-    char *callname = argv[0];
-#endif
     char linecopy[MAXLINE];
     DATASET *dset = NULL;
     MODEL *model = NULL;
@@ -346,8 +343,8 @@ int main (int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &np);
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 
-#if defined(G_OS_WIN32) && defined(PKGBUILD)
-    win32_set_gretldir(callname);
+#if defined(G_OS_WIN32)
+    win32_set_gretldir();
 #endif
 
 #ifdef ENABLE_NLS
@@ -408,7 +405,7 @@ int main (int argc, char *argv[])
     }
 
 #ifdef WIN32
-    win32_cli_read_rc(callname);
+    win32_cli_read_rc();
 #else
     cli_read_rc();
 #endif /* WIN32 */

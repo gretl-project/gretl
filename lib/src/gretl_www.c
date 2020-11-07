@@ -123,7 +123,7 @@ static void urlinfo_init (urlinfo *u,
 #endif
 
 #ifdef WIN32
-    strncat(u->agent, "w", 1);
+    strcat(u->agent, "w");
 #endif
 }
 
