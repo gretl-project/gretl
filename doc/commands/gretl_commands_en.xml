@@ -8884,7 +8884,7 @@
 	the extra statistics.
       </para>
       <para>
-	If <repl>addstats</repl> is not provided amd the
+	If <repl>addstats</repl> is not provided and the
 	<repl>coeffmat</repl> matrix has row names attached, then
 	the <repl>names</repl> argument can be omitted.
       </para>
