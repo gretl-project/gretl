@@ -7075,6 +7075,28 @@
 	  observation <math>t</math>, or <lit>NA</lit> if there are
 	  any missing values at <math>t</math>.
 	</para>
+	<para>
+	  The following example illustrates the working of the function
+	</para>
+	<code>
+		open denmark.gdt
+		eval mean(LRM)
+		list L = dataset
+		eval mean(L)
+	</code>
+	<para>
+		The first evaluated call will return the scalar value of series <argname>LRM</argname>, and the second one returns a series object given the past list <argname>L</argname>.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="median"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -7084,11 +7106,41 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the columns of <argname>X</argname>.
+	  Returns the means of the columns of <argname>X</argname> not skipping any missing observations.
+	</para>
+	<para>
+	  For example, the following piece of code
+	</para>
+	<code>
+		matrix m = mnormal(5, 2)
+		m[1,2] = NA
+		print m
+		eval meanc(m)
+	</code>
+	<para>
+	  produces this output:
+	</para>
+	<code>
+		? print m
+		m (5 x 2)
+
+	   -0.098299          nan
+	      1.1829      -1.2817
+	     0.46037     -0.92947
+	      1.4896     -0.91970
+	     0.91918      0.47748
+
+		? eval meanc(m)
+	     0.79075          nan
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
+            <fncref targ="maxc"/>
+            <fncref targ="minc"/>
             <fncref targ="sdc"/>
+            <fncref targ="prodc"/>
 	  </seelist>
 	</para>
       </description>
