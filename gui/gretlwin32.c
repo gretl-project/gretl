@@ -296,11 +296,9 @@ void gretl_win32_debug_init (int debug)
    call read_rc to get the per-user configuration info.
 */
 
-void gretl_win32_init (const char *progname, int debug)
+void gretl_win32_init (int debug)
 {
     char tmp[4] = {0};
-
-    set_gretlnet_filename(progname);
 
 #if GTK_MAJOR_VERSION < 3
     /* Are we using the XP theme (as opposed to "classic")?

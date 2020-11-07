@@ -229,7 +229,7 @@ char *gretl_build_path (char *targ,
 
 #ifdef WIN32
 
-void win32_set_gretldir (const char *progname);
+void win32_set_gretldir (void);
 
 #else
 

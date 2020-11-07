@@ -139,22 +139,11 @@ const char *get_gretlnet_filename (void)
     return (netfile[0] == '\0')? NULL : netfile;
 }
 
-int set_gretlnet_filename (const char *prog)
+int set_gretlnet_filename (const char *pkgdir)
 {
-    char *p;
-    int i, n;
-
     netfile[0] = '\0';
-    strncat(netfile, prog, FILENAME_MAX-1);
-    n = strlen(netfile) - 1;
-    p = netfile;
-
-    for (i=n; i>0; i--) {
-	if (p[i] == '\\' || p[i] == '/') {
-	    strcpy(p + i,  "\\gretlnet.txt");
-	    break;
-	}
-    }
+    strncat(netfile, pkgdir, FILENAME_MAX-1);
+    strcat(netfile, "gretlnet.txt");
 
     return 0;
 }

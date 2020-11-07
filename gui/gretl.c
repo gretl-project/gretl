@@ -697,16 +697,13 @@ static int have_data (void)
 
 int main (int argc, char **argv)
 {
-#ifdef G_OS_WIN32
-    char *callname = argv[0];
-#endif
     char auxname[MAXLEN];
     char filearg[MAXLEN];
     GError *opterr = NULL;
 
 #if defined(G_OS_WIN32)
     /* this must come before NLS initialization */
-    win32_set_gretldir(callname);
+    win32_set_gretldir();
 #elif defined(ALT_MAC_STARTUP)
     osx_setup_paths();
 #elif !defined(OS_OSX)
@@ -754,7 +751,7 @@ int main (int argc, char **argv)
     gretl_set_gui_mode();
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(callname, optdebug);
+    gretl_win32_init(optdebug);
 #else
     gretl_config_init();
 #endif
