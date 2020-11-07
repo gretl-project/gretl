@@ -268,6 +268,7 @@ void gretl_win32_debug_init (int debug)
     if (debug) {
 	char *s = getenv("OSTYPE");
 	const char *charset = NULL;
+	gchar *pkgdir;
 
 	if (s == NULL || strcmp(s, "msys")) {
 	    /* This doesn't work if gretl is launched
@@ -283,6 +284,9 @@ void gretl_win32_debug_init (int debug)
 	fprintf(stderr, "codepage = %d\n", get_gretl_cpage());
 	g_get_charset(&charset);
 	fprintf(stderr, "charset = %s\n", charset);
+	pkgdir = g_win32_get_package_installation_directory_of_module(NULL);
+	fprintf(stderr, "pkgdir = '%s'\n", pkgdir);
+	g_free(pkgdir);
     }
 
     set_g_logging(debug);

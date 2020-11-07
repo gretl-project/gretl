@@ -510,9 +510,14 @@ static int curl_get (urlinfo *u)
 
     res = curl_easy_perform(curl);
 
-#ifdef WIN32
+    if (res == CURLE_SSL_CACERT) {
+	fprintf(stderr, "Error CURLE_SSL_CACERT from curl_easy_perform()\n");
+    }
+
+#if 0 // def WIN32
     if (res == CURLE_SSL_CACERT) {
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+	/* does this re-run provoke a crash? */
 	res = curl_easy_perform(curl);
     }
 #endif

@@ -2641,7 +2641,10 @@ static int slash_terminated (const char *s, int n)
 void win32_set_gretldir (const char *progname)
 {
     gchar *pconv = NULL;
+    // gchar *pkgdir = NULL;
     int done = 0;
+
+    // pkgdir = g_win32_get_package_installation_directory_of_module(NULL);
 
     if (!g_utf8_validate(progname, -1, NULL)) {
 	gsize bytes;

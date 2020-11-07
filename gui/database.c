@@ -2718,13 +2718,6 @@ static char *get_writable_target (int code, char *objname)
     get_system_target(targ, code, objname, ext);
 #endif
 
-#if DLDBG
-    if (dlstep == 2) {
-	infobox("Stopping at dlstep 2");
-	return NULL;
-    }
-#endif
-
     if (!err) {
 	err = gretl_test_fopen(targ, "w");
 	if (err == EACCES && !done_home) {
@@ -2788,6 +2781,7 @@ static gchar *make_gfn_path (const char *pkgname)
 void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
+    gchar *tarname = NULL;
     char *targ = NULL;
     gboolean zipfile = FALSE;
     int err = 0;
@@ -2827,7 +2821,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
 #if DLDBG
     if (dlstep == 1) {
-	infobox("Stopping at dlstep 1");
+	infobox_printf("Stop at dlstep 1: objname='%s'\n", objname);
 	return;
     }
 #endif
@@ -2841,14 +2835,11 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     }
 
 #if DLDBG
-    if (dlstep == 3) {
-	infobox("Stopping at dlstep 3");
+    if (dlstep == 2) {
+	infobox_printf("Stop at dlstep 3: target='%s'\n", targ);
 	return;
     }
 #endif
-
-    fprintf(stderr, "HERE 1 install file: objname '%s', targ '%s' zipfile %d\n",
-	    objname, targ, zipfile);
 
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (zipfile) {
@@ -2868,18 +2859,8 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    err = retrieve_remote_function_package(objname, targ);
 	}
     } else if (vwin->role == REMOTE_DATA_PKGS) {
-	gchar *tarname = g_strdup_printf("%s.tar.gz", objname);
-
-	fprintf(stderr, "HERE 2 tarname '%s'\n", tarname);
+	tarname = g_strdup_printf("%s.tar.gz", objname);
 	err = retrieve_remote_datafiles_package(tarname, targ);
-#if DLDBG
-	if (dlstep == 4) {
-	    infobox("Stopping at dlstep 4");
-	    gretl_remove(targ);
-	    return;
-	}
-#endif
-	g_free(tarname);
     } else if (vwin->role == REMOTE_DB) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	err = retrieve_remote_db(objname, targ, GRAB_NBO_DATA);
@@ -2950,6 +2931,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     }
 
     g_free(objname);
+    g_free(tarname);
     free(targ);
 }
 
