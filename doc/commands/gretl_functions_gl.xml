@@ -11214,23 +11214,26 @@
 	  Se <argname>s</argname> é unha cadea de texto simple, devolve
 	  a cantidade de caracteres UTF-8 que contén. Ten en conta que
 	  iso non é igual ao número de bytes, se algúns caracteres están
-	  fóra do intervalo de impresión ASCII. Cando o argumento é un
-	  arranxo de cadeas de texto, o que se devolve é un vector columna
-	  que contén o número de caracteres de cada cadea.
-	</para>
-	<para>
-	  Tamén se acepta como argumento unha serie con valores de cadea;
-	  neste caso, o que se devolve é una serie que contén a longura
-	  deses valores de cadea, no rango mostral vixente.
-	</para>
-	<para>
-          Un exemplo sinxelo:
+	  fóra do intervalo de impresión ASCII. Cando desexes obter o número
+	  de bytes, podes usar a función <fncref targ="nelem"/>. Por exemplo:
 	</para>
 	<code>
-          string s = "Regresión"
-          scalar slen = strlen(s)
-          print slen
+	  string s = "Olé!"
+	  printf "strlen(s) = %d, nelem(s) = %d\n", strlen(s), nelem(s)
 	</code>
+	<para>
+	  debera devolver
+	</para>
+	<code>
+	  strlen(s) = 5, nelem(s) = 7
+	</code>
+	<para>
+	  Se o argumento é un arranxo de cadeas de texto, o valor que se devolve
+	  é un vector columna que contén o número de caracteres de cada cadea.
+	  Tamén se acepta que uses como argumento unha serie con cadeas de
+	  valores; nese caso, o valor que se devolve é unha serie que contén a
+	  longura das cadeas de valores ao longo do rango mostral vixente.
+	</para>
       </description>
     </function>
 

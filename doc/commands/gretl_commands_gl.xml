@@ -1232,9 +1232,11 @@
 	e contén os valores das funcións índice das ecuacións respectivas.
       </para>
       <para>
-	O resultado inclúe unha proba de Razón de Verosimilitudes respecto
-	á hipótese nula de que as perturbacións das dúas ecuacións non
-	están correlacionadas.
+	O resultado inclúe unha proba de Razón de Verosimilitudes respecto á
+	hipótese nula de que as perturbacións das dúas ecuacións non están
+	correlacionadas. Ten en conta que cando se designa este estimador como
+	estimador case que máximo verosímil (QMLE) e se utiliza a opción
+	<opt>robust</opt>, esta proba pode non ser válida, mesmo asintoticamente.
       </para>
     </description>
   </command>
@@ -3934,6 +3936,12 @@
 	despois da expansión podes usar a función <fncref targ="tdisagg"/>
 	para producir unha versión distribuída ou interpolada dos datos
 	(<quote>desagregación temporal</quote>).
+      </para>
+      <para>
+	Podes acceder a algunhas das prestacións da función <lit>tdisagg</lit>
+	mediante a interface gráfica, seleccionando unha serie na xanela
+	principal de Gretl, e a continuación procurar <quote>Desagregar</quote>
+	baixo o menú Variable.
       </para>
     </description>
   </command>
@@ -8365,6 +8373,10 @@
 	que require polo menos un parámetro.
       </para>
       <para context="cli">
+	5 or <lit>"beta1"</lit>: Similar a <lit>beta0</lit>, mais co primeiro
+	parámetro fixado en 1 (deixando un único parámetro libre).
+      </para>
+      <para context="cli">
 	Cando a disposición de parámetros é U-MIDAS, non é necesario o
 	vector de inicio do último argumento. Noutros casos, podes solicitar
 	unha iniciación automática substituíndo o nome do vector de
@@ -8870,6 +8882,11 @@
 	entón <repl>nomes</repl> debe de conter <math>k + p</math>
 	nomes, de forma que os <math>p</math> nomes agregados
 	se asocien aos estatísticos adicionais.
+      </para>
+      <para>
+	Se non indicas o argumento <repl>estadicionais</repl> e a matriz
+	<repl>matrizcoef</repl> ten adxuntos os nomes das filas, entón podes
+	omitir o argumento <repl>nomes</repl>.
       </para>
       <para>
 	Para colocar o resultado nun ficheiro, utiliza a opción
@@ -14852,8 +14869,8 @@
 	    (ex. índices, cocientes, ou fluxos <quote>en taxas anuais</quote>).
 	    Opta por <lit>last</lit> ou <lit>first</lit> se o derradeiro ou
 	    primeiro valor de alta frecuencia debe ser igual ao valor de
-	    baixa frecuencia (ex. variables de stock como a cantidade de
-	    diñeiro).
+	    baixa frecuencia (como pode ser o caso das variables de stock,
+	    como a cantidade de diñeiro).
 	  </para>
 	</li>
 	<li>

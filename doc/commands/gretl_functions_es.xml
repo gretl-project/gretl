@@ -11214,23 +11214,26 @@
 	  Cuando <argname>s</argname> es una cadena de texto simple, devuelve
 	  el número de caracteres UTF-8 que contiene. Ten en cuenta que esto
 	  no es igual al número de bytes, si algunos caracteres están fuera
-	  del intervalo de impresión ASCII. Si el argumento es un 'array' de
-	  cadenas de texto, lo que se devuelve es un vector columna que
-	  contiene el número de caracteres de cada cadena.
-	</para>
-	<para>
-	  También se acepta como argumento una serie con valores de cadena;
-	  en este caso, lo que se devuelve es una serie que contiene la longitud
-	  de esos valores de cadena, en el rango muestral vigente.
-	</para>
-	<para>
-          Un ejemplo sencillo:
+	  del intervalo de impresión ASCII. Cuando desees obtener el número
+	  de bytes, puedes usar la función <fncref targ="nelem"/>. Por ejemplo:
 	</para>
 	<code>
-          string s = "Regresión"
-          scalar slen = strlen(s)
-          print slen
+	  string s = "¡Olé!"
+	  printf "strlen(s) = %d, nelem(s) = %d\n", strlen(s), nelem(s)
 	</code>
+	<para>
+	  debería devolver
+	</para>
+	<code>
+	  strlen(s) = 5, nelem(s) = 7
+	</code>
+	<para>
+	  Si el argumento es un 'array' de cadenas de texto, el valor que se devuelve
+	  es un vector columna que contiene el número de caracteres de cada cadena.
+	  También se acepta que uses como argumento una serie con cadenas de
+	  valores; en ese caso, el valor que se devuelve es una serie que contiene el
+	  largo de las cadenas de valores a lo largo del rango muestral vigente.
+	</para>
       </description>
     </function>
 

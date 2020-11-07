@@ -1232,9 +1232,11 @@
 	y contiene los valores de las funciones índice de las ecuaciones respectivas.
       </para>
       <para>
-	El resultado incluye un contraste de Razón de Verosimilitudes respecto
-	a la hipótesis nula de que las perturbaciones de las dos ecuaciones no
-	están correlacionadas.
+	El resultado incluye un contraste de Razón de Verosimilitudes respecto a la
+	hipótesis nula de que las perturbaciones de las dos ecuaciones no están
+	correlacionadas. Observa que cuando se designa este estimador como estimador
+	cuasi máximo verosímil (QMLE) y se utiliza la opción <opt>robust</opt>,
+	este contraste puede no ser válido, ni siquiera asintóticamente.
       </para>
     </description>
   </command>
@@ -3934,6 +3936,12 @@
 	después de la expansión puedes usar la función <fncref targ="tdisagg"/>
 	para producir una versión distribuida o interpolada de los datos
 	(<quote>desagregación temporal</quote>).
+      </para>
+      <para>
+	Puedes acceder a algunas de las prestaciones de la función
+	<lit>tdisagg</lit> por medio de la interface gráfica, seleccionando
+	una serie en la ventana principal de Gretl, y a continuación buscar
+	<quote>Desagregar</quote> bajo el menú Variable.
       </para>
     </description>
   </command>
@@ -8365,6 +8373,10 @@
 	que requiere por lo menos un parámetro.
       </para>
       <para context="cli">
+	5 or <lit>"beta1"</lit>: Similar a <lit>beta0</lit>, pero con el primer
+	parámetro fijado en 1 (dejando un único parámetro libre).
+      </para>
+      <para context="cli">
 	Cuando la disposición de parámetros es U-MIDAS, no es necesario el
 	vector de inicio del último argumento. En otros casos, puedes solicitar
 	un inicio automático substituyendo el nombre del vector de
@@ -8870,6 +8882,11 @@
 	entonces <repl>nombres</repl> debe contener <math>k + p</math>
 	nombres, de forma que los <math>p</math> nombres agregados
 	se asocien a los estadísticos adicionales.
+      </para>
+      <para>
+	Si no indicas el argumento <repl>estadicionales</repl> y la matriz
+	<repl>matrizcoef</repl> tiene adjuntos los nombres de las filas,
+	entonces puedes omitir el argumento <repl>nombres</repl>.
       </para>
       <para>
 	Para colocar el resultado en un archivo, utiliza la opción
@@ -14852,8 +14869,8 @@
 	    (ej. índices, cocientes, o flujos <quote>en tasas anuales</quote>).
 	    Opta por <lit>last</lit> o <lit>first</lit> si el último o el
 	    primer valor de alta frecuencia debe ser igual al valor de
-	    baja frecuencia (ej. variables de stock como la cantidad de
-	    dinero).
+	    baja frecuencia (como puede ser el caso de las variables de
+	    stock, como la cantidad de dinero).
 	  </para>
 	</li>
 	<li>
