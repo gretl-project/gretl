@@ -108,7 +108,11 @@ static void urlinfo_init (urlinfo *u,
     u->datalen = 0;
     u->err = 0;
 
+#if WDEBUG
+    u->verbose = 1;
+#else
     u->verbose = getenv("GRETL_WWW_VERBOSE") != NULL;
+#endif
 
     u->progfunc = NULL;
     u->pstarted = 0;
@@ -460,8 +464,12 @@ static int common_curl_setup (CURL **pcurl)
 	gretl_errmsg_set("curl_easy_init failed");
 	err = 1;
     } else {
+#if WDEBUG
+	curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1);
+#else
 	curl_easy_setopt(*pcurl, CURLOPT_VERBOSE,
 			 getenv("GRETL_WWW_VERBOSE") != NULL);
+#endif
 #ifdef WIN32
 	/* be on the safe side: 'http' can turn into 'https'
 	   at the server */

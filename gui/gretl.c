@@ -64,6 +64,7 @@
 #endif
 
 #define GUI_DEBUG 0
+#define WIN32_DEBUG 0
 
 #if GUI_DEBUG
 # include "version.h"
@@ -742,7 +743,11 @@ int main (int argc, char **argv)
 
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
+# if WIN32_DEBUG
+    gretl_win32_debug_init(1);
+# else
     gretl_win32_debug_init(optdebug);
+# endif
 #elif GTK_MAJOR_VERSION == 3
     quell_glib_spew();
 #endif
