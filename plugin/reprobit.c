@@ -665,7 +665,6 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
     } else if (mod.list[0] < list[0]) {
 	/* something was dropped */
 	gretl_errmsg_set("Couldn't estimate initial probit");
-	err = E_DATA;
     }
 
     if (!err) {
