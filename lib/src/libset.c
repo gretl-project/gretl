@@ -1869,19 +1869,6 @@ static int check_set_bool (const char *setobj, const char *setarg)
     }
 }
 
-#define DLDBG 0
-
-#if DLDBG
-
-static int dlstep = 100;
-
-int get_dlstep (void)
-{
-    return dlstep;
-}
-
-#endif
-
 int execute_set (const char *setobj, const char *setarg,
 		 DATASET *dset, gretlopt opt, PRN *prn)
 {
@@ -1911,12 +1898,6 @@ int execute_set (const char *setobj, const char *setarg,
 	    return libset_query_settings(setobj, prn);
 	}
     } else if (argc == 2) {
-#if DLDBG
-	if (!strcmp(setobj, "dlstep")) {
-	    dlstep = atoi(setarg);
-	    return 0;
-	}
-#endif
 	if (!strcmp(setobj, "shelldir")) {
 	    pputs(prn, "'shelldir' is obsolete, please use 'workdir'\n");
 	    return 0;

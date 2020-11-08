@@ -218,8 +218,5 @@ void set_workdir_callback (int (*callback)());
 int libset_write_script (const char *fname);
 int libset_read_script (const char *fname);
 
-/* temporary */
-int get_dlstep (void);
-
 #endif /* LIBSET_H */
 

@@ -58,13 +58,6 @@
 
 #define DB_SEARCH_DEBUG 0
 
-#define DLDBG 0
-
-#if DLDBG
-# include "libset.h"
-static int dlstep = 100;
-#endif
-
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
 static int add_local_db_series_list (windata_t *vwin);
@@ -2786,10 +2779,6 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     gboolean zipfile = FALSE;
     int err = 0;
 
-#if DLDBG
-    dlstep = get_dlstep();
-#endif
-
     /* note: addon files are handled separately, by the function
        install_addon_callback() in datafiles.c
     */
@@ -2819,13 +2808,6 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-#if DLDBG
-    if (dlstep == 1) {
-	infobox_printf("Stop at dlstep 1: objname='%s'\n", objname);
-	return;
-    }
-#endif
-
     if (!zipfile) {
 	targ = get_writable_target(vwin->role, objname);
 	if (targ == NULL) {
@@ -2833,13 +2815,6 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    return;
 	}
     }
-
-#if DLDBG
-    if (dlstep == 2) {
-	infobox_printf("Stop at dlstep 3: target='%s'\n", targ);
-	return;
-    }
-#endif
 
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (zipfile) {
@@ -2896,12 +2871,6 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    }
 	} else if (vwin->role == REMOTE_DATA_PKGS) {
 	    fprintf(stderr, "downloaded '%s'\n", targ);
-#if DLDBG
-	    if (dlstep == 5) {
-		infobox("Stopping at dlstep 5");
-		return;
-	    }
-#endif
 	    err = unpack_book_data(targ);
 	    gretl_remove(targ);
 	    if (err) {
