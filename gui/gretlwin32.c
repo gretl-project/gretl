@@ -123,7 +123,7 @@ static int real_create_child_process (const char *prog,
 			NULL,          /* primary thread security attributes */
 			FALSE,         /* handles are inherited?  */
 			0,             /* creation flags  */
-			(LPVOID) NULL, /* NULL => use parent's environment  */
+			NULL,          /* NULL => use parent's environment  */
 			NULL,          /* use parent's current directory  */
 			&start_info,   /* receives STARTUPINFO */
 			&proc_info);   /* receives PROCESS_INFORMATION  */
@@ -585,18 +585,19 @@ static int get_pdf_service_name (char *service, const char *exe)
     return err;
 }
 
+static int coinitted;
+
 /* If and when win32_open_arg() gets called, @arg should
    already be re-encoded to the locale if necessary.
 */
 
 static int win32_open_arg (const char *arg, char *ext)
 {
-    static int initted;
     int err = 0;
 
-    if (!initted) {
+    if (!coinitted) {
 	CoInitialize(NULL);
-	initted = 1;
+	coinitted = 1;
     }
 
     /* From the MSDN doc: "If the function succeeds, it returns a

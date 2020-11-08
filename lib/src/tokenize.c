@@ -3400,7 +3400,7 @@ static int unexpected_symbol_error (char c)
 static int utf8_fail (char *s)
 {
     if (!g_utf8_validate(s, -1, NULL)) {
-	gretl_errmsg_set("command line is not valid UTF-8");
+	gretl_errmsg_set(_("Command line is not valid UTF-8"));
 	return E_DATA;
     } else {
 	return 0;
