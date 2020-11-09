@@ -3262,10 +3262,8 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
         int err = 0;
         double h = durbins_h(pmod, &err);
 
-	if (!na(h)) {
-	    key[K_DW] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
-	    val[K_DW] = err ? NADBL : h;
-	}
+	key[K_DW] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
+	val[K_DW] = err ? NADBL : h;
     } else if (intreg_model(pmod)) {
 	for (i=0; i<MID_STATS; i++) {
 	    if (i < K_FST || i > K_HQ) {
