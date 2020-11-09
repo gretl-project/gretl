@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-07-26 17:41+0200\n"
+"PO-Revision-Date: 2020-11-09 19:08+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.4\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #: lib/src/adf_kpss.c:511
 msgid "lagged differences"
@@ -1008,9 +1008,9 @@ msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
 msgstr "Variable %d (%s): nicht-numerische Werte = %d (%.2f Prozent)\n"
 
 #: lib/src/csvdata.c:2227
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, expected numeric value\n"
-msgstr "FEHLER: Variable %d (%s), Beobachtung %d, nicht-numerischer Wert\n"
+msgstr "FEHLER: Variable %d (%s), Beobachtung %d, erwartete numerischen Wert\n"
 
 #: lib/src/csvdata.c:2236
 msgid "allocating string table\n"
@@ -1922,9 +1922,9 @@ msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "%s entfernt: Stichprobenbereich enthält keine gültigen Beobachtungen\n"
 
 #: lib/src/describe.c:5747 lib/src/describe.c:5851
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s: string-valued series\n"
-msgstr "%s entfernt: nicht genügend Beobachtungen"
+msgstr "%s entfernt: Zeichenketten-Reihe\n"
 
 #: lib/src/describe.c:6387
 msgid "corr: needs at least two non-constant arguments"
@@ -2413,14 +2413,14 @@ msgstr ""
 "%s"
 
 #: lib/src/geneval.c:7566
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: assertion '%s' failed"
-msgstr "Warnung: Reihe %s ist leer"
+msgstr "Warnung: Bestätigung '%s' schlug fehl"
 
 #: lib/src/geneval.c:7571
 #, c-format
 msgid "Assertion '%s' failed"
-msgstr ""
+msgstr "Bestätigung '%s' schlug fehl"
 
 #: lib/src/geneval.c:8767
 #, c-format
@@ -2857,9 +2857,9 @@ msgid "The MPI library is not loaded"
 msgstr "Die MPI-Bibliothek ist nicht geladen"
 
 #: lib/src/gensyntax.c:247
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but found '%c'\n"
-msgstr "Erwartete '%c' aber fand '%s'\n"
+msgstr "Erwartete '%c' aber fand '%c'\n"
 
 #: lib/src/gensyntax.c:253
 #, c-format
@@ -2876,9 +2876,8 @@ msgid "too many arguments"
 msgstr "zuviele Argumente"
 
 #: lib/src/gensyntax.c:1296
-#, fuzzy
 msgid "Expected ',' or ')'"
-msgstr "Erwartete '%c' aber fand '%s'\n"
+msgstr "Erwartete ',' oder ')'"
 
 #: lib/src/gmm.c:131
 #, c-format
@@ -3222,14 +3221,12 @@ msgid "Couldn't open %s"
 msgstr "Konnte %s nicht öffnen"
 
 #: lib/src/graphing.c:10087
-#, fuzzy
 msgid "original data"
-msgstr "%s (Originaldaten)"
+msgstr "Originaldaten"
 
 #: lib/src/graphing.c:10089
-#, fuzzy
 msgid "final series"
-msgstr "Reihen hinzufügen"
+msgstr "endgültige Reihe"
 
 #: lib/src/gretl_array.c:1727 lib/src/gretl_array.c:1743
 #, c-format
@@ -6848,11 +6845,12 @@ msgstr ""
 "Häufigkeitsverteilung für %s, Beob. %d-%d\n"
 
 #: lib/src/printout.c:399
-#, fuzzy
 msgid ""
 "frequency   percent\n"
 "\n"
-msgstr "Häufigkeits-Graph"
+msgstr ""
+"Häufigkeit   Prozent\n"
+"\n"
 
 #: lib/src/printout.c:418
 msgid ""
@@ -6893,9 +6891,8 @@ msgid "TOT."
 msgstr "TOT."
 
 #: lib/src/printout.c:827
-#, fuzzy
 msgid "TOTAL"
-msgstr "TOTAL  "
+msgstr "TOTAL"
 
 #: lib/src/printout.c:856
 #, c-format
@@ -9025,17 +9022,21 @@ msgid ""
 "The data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Zu importierende Daten haben geringere Frequenz\n"
+"als die derzeitigen. Fortfahren OK?"
 
 #: gui/database.c:249
 msgid ""
 "Some of the data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Manche der zu importierenden Daten haben geringere Frequenz\n"
+"als die derzeitigen. Fortfahren OK?"
 
 #: gui/database.c:261
-#, fuzzy, c-format
+#, c-format
 msgid "Disaggregate %s now?"
-msgstr "Aggregation"
+msgstr "%s jetzt disaggregieren?"
 
 #: gui/database.c:392
 msgid "Sorry, can't handle this frequency conversion"
@@ -10211,18 +10212,16 @@ msgid "gretl: expand data"
 msgstr "gretl: Datenfrequenz erhöhen"
 
 #: gui/dialogs.c:4085
-#, fuzzy
 msgid "Expand annual data to"
-msgstr "Erhöhe Frequenz von jährlich auf quartalsweise"
+msgstr "Erhöhe jährliche Frequenz auf"
 
 #: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
 msgstr "Erhöhe Frequenz von quartalsweise auf monatlich"
 
 #: gui/dialogs.c:4102
-#, fuzzy
 msgid "Please read the Help before proceeding."
-msgstr "(Bitte konsultieren Sie dafür die Hilfe)"
+msgstr "Bitte konsultieren Sie vor dem Fortfahren die Hilfe."
 
 #: gui/dialogs.c:4258
 msgid "density estimation options"
@@ -10518,7 +10517,7 @@ msgstr "Reihencode:"
 #: gui/dialogs.c:7088
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
-msgstr ""
+msgstr "Die Reihe %s erscheint ungeeignet für Disaggregierung."
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11157,9 +11156,8 @@ msgid "Error reading package"
 msgstr "Fehler beim Lesen vom Paket"
 
 #: gui/fncall.c:4602
-#, fuzzy
 msgid "No mapfile is present"
-msgstr "kein ARCH-Effekt vorhanden"
+msgstr "Keine Kartendatei vorhanden"
 
 #: gui/fnsave.c:374
 msgid "_Save gfn"
@@ -11384,7 +11382,7 @@ msgstr ""
 
 #: gui/fnsave.c:2780
 msgid "provider?"
-msgstr ""
+msgstr "provider?"
 
 #: gui/fnsave.c:2803
 msgid ""
@@ -12737,9 +12735,8 @@ msgid "_Hurst exponent"
 msgstr "_Hurst-Exponent"
 
 #: gui/gretl.c:1875 gui/menustate.c:601
-#, fuzzy
 msgid "Disaggregate..."
-msgstr "Aggregation"
+msgstr "Disaggregiere..."
 
 #: gui/gretl.c:1876
 msgid "_Edit attributes"
@@ -12786,9 +12783,8 @@ msgid "H_eteroskedasticity corrected"
 msgstr "_Heteroskedastizitätskorrigiert"
 
 #: gui/gretl.c:1890
-#, fuzzy
 msgid "_Regularized least squares"
-msgstr "_Gewichtete KQ (WLS)"
+msgstr "_Regularisierte KQ"
 
 #: gui/gretl.c:1891
 msgid "High _precision OLS"
@@ -12996,7 +12992,7 @@ msgstr "_gretl + MPI"
 
 #: gui/gretl.c:1949
 msgid "_gretl + SVM"
-msgstr ""
+msgstr "_gretl + SVM"
 
 #: gui/gretl.c:1950
 msgid "_gretl + DB.NOMICS"
@@ -14521,7 +14517,6 @@ msgstr ""
 "falls gewünscht."
 
 #: gui/library.c:1977
-#, fuzzy
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  If you wish, you can add observations\n"
@@ -14530,7 +14525,7 @@ msgid ""
 msgstr ""
 "Keine verfügbaren Beobachtungen für out-of-sample-\n"
 "Prognose. Falls gewünscht können Sie jetzt Beobachtungen\n"
-" hinzufügen (Datenmenü, Bearbeite Werte), oder Sie können\n"
+" hinzufügen (Datenmenü, Beobachtungen hinzufügen), oder Sie können\n"
 "die Stichprobe zum Schätzen verkürzen (Stichprobenmenü)."
 
 #: gui/library.c:2328 gui/selector.c:8303
@@ -15133,7 +15128,7 @@ msgstr ""
 
 #: gui/library.c:9661
 msgid "Unbalanced \"loop\"/\"endloop\" in script"
-msgstr ""
+msgstr "Unbalanciertes \"loop\"/\"endloop\" im Skript"
 
 #: gui/library.c:9673
 msgid "Unmatched \"if\" in script (fixed)"
@@ -15285,9 +15280,8 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: Voller Bereich %s - %s"
 
 #: gui/menustate.c:1093
-#, fuzzy
 msgid "(unit:period)"
-msgstr "Periode"
+msgstr "(Gruppe:Periode)"
 
 #: gui/menustate.c:1128
 #, c-format
@@ -15495,11 +15489,11 @@ msgstr "Sie müssen eine abhängige Variable wählen"
 
 #: gui/selector.c:3461 gui/selector.c:6422
 msgid "Elastic net"
-msgstr ""
+msgstr "Elastic net"
 
 #: gui/selector.c:3472 gui/selector.c:6393 gui/selector.c:6421
 msgid "Ridge"
-msgstr ""
+msgstr "Ridge"
 
 #: gui/selector.c:3499
 msgid "You must specify a quantile"
@@ -15654,9 +15648,8 @@ msgid "MIDAS regression"
 msgstr "MIDAS-Regression"
 
 #: gui/selector.c:4311
-#, fuzzy
 msgid "Regularized least squares"
-msgstr "Gewichtete Kleinstquadrate (WLS)"
+msgstr "Regularisierte KQ"
 
 #: gui/selector.c:4321
 msgid "Weight variable"
@@ -15996,17 +15989,15 @@ msgstr "Spezifiziertes Maximum"
 
 #: gui/selector.c:6390 gui/selector.c:6420
 msgid "LASSO"
-msgstr ""
+msgstr "LASSO"
 
 #: gui/selector.c:6437
-#, fuzzy
 msgid "Single λ-fraction"
-msgstr "Zentraler Anteil:"
+msgstr "Einzelner λ-Quotient"
 
 #: gui/selector.c:6446
-#, fuzzy
 msgid "Multiple λ values"
-msgstr "Mehrere Graphen"
+msgstr "Mehrere λ-Werte"
 
 #: gui/selector.c:6465 gui/toolbar.c:617
 msgid "Confidence level"
@@ -17192,11 +17183,11 @@ msgstr "bearbeite...\n"
 
 #: gui/textbuf.c:1598
 msgid "gretl + MPI"
-msgstr ""
+msgstr "gretl + MPI"
 
 #: gui/textbuf.c:1600
 msgid "gretl + SVM"
-msgstr ""
+msgstr "gretl + SVM"
 
 #: gui/textbuf.c:1604
 msgid "dbnomics for gretl"
@@ -17885,11 +17876,11 @@ msgstr "wähle 1 für Mediane"
 
 #: plugin/addons-i18n.c:84
 msgid "measure to target"
-msgstr ""
+msgstr "Zielmaß"
 
 #: plugin/addons-i18n.c:86
 msgid "moving blocks"
-msgstr ""
+msgstr "gleitende Blöcke"
 
 #: plugin/addons-i18n.c:87
 msgid "plain (Cholesky)"
@@ -17913,15 +17904,15 @@ msgstr "welche Variablen"
 
 #: plugin/addons-i18n.c:92
 msgid "wild/Mammen"
-msgstr ""
+msgstr "wild/Mammen"
 
 #: plugin/addons-i18n.c:93
 msgid "wild/Normal"
-msgstr ""
+msgstr "wild/Normal"
 
 #: plugin/addons-i18n.c:94
 msgid "wild/Rademacher"
-msgstr ""
+msgstr "wild/Rademacher"
 
 #: plugin/addons-i18n.c:98
 msgid "IV/Heteroskedastic"
@@ -18209,23 +18200,20 @@ msgid "Produce debugging output"
 msgstr "Erzeuge Debug-Ausgabe"
 
 #: plugin/interpolate.c:249 plugin/interpolate.c:263
-#, fuzzy
 msgid "GLS estimates"
-msgstr "KQ-Schätzungen"
+msgstr "GLS-Schätzung"
 
 #: plugin/interpolate.c:253
-#, fuzzy
 msgid "Iterated GLS estimates"
-msgstr "Iterierte Schätzung"
+msgstr "Iterierte GLS-Schätzung"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
-msgstr ""
+msgstr "rho abgeschnitten bei Null"
 
 #: plugin/interpolate.c:1736
-#, fuzzy
 msgid "Temporal disaggregation"
-msgstr "Aggregation"
+msgstr "Zeitliche Disaggregierung"
 
 #: plugin/interval.c:225
 #, c-format
@@ -18865,19 +18853,19 @@ msgstr "Saisonale MA-Terme:"
 
 #: plugin/vif.c:359
 msgid "Count of condition indices >= 30"
-msgstr ""
+msgstr "Anzahl der Konditionsindizes >= 30"
 
 #: plugin/vif.c:360
 msgid "Variance proportions >= 0.5 associated with cond >= 30"
-msgstr ""
+msgstr "Varianzverhältnisse >= 0,5 zusammenhängend mit cond >= 30"
 
 #: plugin/vif.c:361
 msgid "Count of condition indices >= 10"
-msgstr ""
+msgstr "Anzahl der Konditionsindizes >= 10"
 
 #: plugin/vif.c:362
 msgid "Variance proportions >= 0.5 associated with cond >= 10"
-msgstr ""
+msgstr "Varianzverhältnisse >= 0,5 zusammenhängend mit cond >= 10"
 
 #: plugin/vif.c:363
 msgid "No evidence of excessive collinearity"
