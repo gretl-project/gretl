@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-09 15:06+0100\n"
+"PO-Revision-Date: 2020-11-10 19:42+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -591,11 +591,10 @@ msgstr "avec p. critique"
 msgid "Sequential elimination using two-sided alpha = %.2f"
 msgstr "Élimination séquentielle à l'aide de alpha bilatéral = %.2f"
 
-# p-value à traduire
 #: lib/src/compare.c:1428
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
-msgstr " Elimination de %-16s (p-value %.3f)\n"
+msgstr " Elimination de %-16s (p. critique %.3f)\n"
 
 #: lib/src/compare.c:1512
 #, c-format
@@ -681,12 +680,12 @@ msgstr ""
 #, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
 msgstr ""
-"La valeur maximale du test de Wald = %g est apparue pour l'observation %s"
+"La valeur maximale du test de Wald = %g est réalisée à l'observation %s"
 
 #: lib/src/compare.c:2784
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
-msgstr "La valeur maximale de F(%d, %d) = %g est apparue pour l'observation %s"
+msgstr "La valeur maximale de F(%d, %d) = %g est réalisée à l'observation %s"
 
 #: lib/src/compare.c:2791
 #, c-format
@@ -2290,7 +2289,7 @@ msgstr "Test de White pour l'hétéroscédasticité"
 
 #: lib/src/estimate.c:3295
 msgid "Generalized Cochrane-Orcutt estimation"
-msgstr "Estimation généralisée de Cochrane-Orcutt"
+msgstr "Estimation de Cochrane-Orcutt généralisée"
 
 #: lib/src/estimate.c:3298
 #, no-c-format
@@ -2331,7 +2330,7 @@ msgstr "condition indéterminée pour 'if'"
 #: lib/src/flow_control.c:169 lib/src/flow_control.c:331
 #, c-format
 msgid "Unmatched \"%s\""
-msgstr "Unmatched \"%s\""
+msgstr "Non apparié « %s »"
 
 #: lib/src/forecast.c:1131 lib/src/forecast.c:3575
 msgid "predicted values"
@@ -2681,7 +2680,7 @@ msgstr "résidu du modèle %d"
 #: lib/src/genfuncs.c:3847
 #, c-format
 msgid "fitted value from model %d"
-msgstr "valeur ajusté à partir du modèle %d"
+msgstr "valeur ajustée à partir du modèle %d"
 
 #: lib/src/genfuncs.c:3852
 #, c-format
@@ -2791,7 +2790,7 @@ msgstr "Le symbole '%s' n'est pas valide dans ce contexte \n"
 #: lib/src/tokenize.c:3502 lib/src/tokenize.c:3520
 #, c-format
 msgid "Unmatched '%c'\n"
-msgstr "Unmatched '%c'\n"
+msgstr "Non apparié '%c'\n"
 
 #: lib/src/genlex.c:1342
 msgid "Empty observation []\n"
@@ -4035,7 +4034,7 @@ msgstr "Pas d’autocorrélation de premier ordre (rho = 0)"
 #: lib/src/gretl_model.c:4403
 #, c-format
 msgid "chi-square(%d) = %g at observation %s"
-msgstr "Khi-2 (%d) = %g à l'observation %s"
+msgstr "Khi-deux (%d) = %g à l'observation %s"
 
 #: lib/src/gretl_model.c:4436 lib/src/gretl_model.c:4443 gui/textbuf.c:1339
 msgid "failed"
@@ -4183,8 +4182,6 @@ msgstr ""
 msgid "Error estimating random effects model\n"
 msgstr "Erreur lors de l'estimation du modèle à effets aléatoires\n"
 
-# cross-sectional unit : unités transeversale
-# unités individuelles???
 #: lib/src/gretl_panel.c:3275
 msgid "Means of pooled OLS residuals for cross-sectional units:"
 msgstr "Moyennes individuelles des résidus des MCO empilés :"
@@ -4737,7 +4734,6 @@ msgstr "Aucune série n'a été définie\n"
 msgid "No series labels are defined\n"
 msgstr "Aucune étiquette de série n'a été définie\n"
 
-# string variable - ta shikoj
 #: lib/src/interact.c:1007
 #, c-format
 msgid "'%s' : not a string variable"
@@ -4907,7 +4903,6 @@ msgstr "Séries temporelles"
 msgid "Pseudo-random number generator seeded with %u\n"
 msgstr "Générateur de nombre pseudo-aléatoire avec germe %u\n"
 
-# voir où ça intervient
 #: lib/src/libset.c:2031
 #, c-format
 msgid "set: unknown variable '%s'"
@@ -5051,7 +5046,6 @@ msgstr "Test de surdispersion"
 msgid "Sargan test"
 msgstr "Test de Sargan"
 
-# GMM
 #: lib/src/modelprint.c:535 lib/src/modelprint.c:538 lib/src/modelprint.c:546
 #: lib/src/modelprint.c:548 lib/src/printout.c:3341
 msgid "GMM criterion"
@@ -5356,15 +5350,15 @@ msgstr "Panel dynamique à 1 étape"
 
 #: lib/src/modelprint.c:1032 lib/src/modelprint.c:1036
 msgid "2-step GMM"
-msgstr "GMM en 2 étapes"
+msgstr "MMG en 2 étapes"
 
 #: lib/src/modelprint.c:1034 lib/src/modelprint.c:1038
 msgid "Iterated GMM"
-msgstr "GMM par itérations"
+msgstr "MMG itérative"
 
 #: lib/src/modelprint.c:1040
 msgid "1-step GMM"
-msgstr "GMM en 1 étape"
+msgstr "MMG en 1 étape"
 
 #: lib/src/modelprint.c:1044 gui/selector.c:4239
 msgid "Ordered Logit"
@@ -5372,7 +5366,7 @@ msgstr "Logit ordonné"
 
 #: lib/src/modelprint.c:1046 gui/selector.c:4241
 msgid "Multinomial Logit"
-msgstr "Logit Multinomial"
+msgstr "Logit multinomial"
 
 #: lib/src/modelprint.c:1052
 msgid "Random-effects probit"
@@ -5402,7 +5396,6 @@ msgstr "Estimation du quantile"
 msgid "LIML"
 msgstr "MVIL"
 
-# TSLS, Double moindres carrés, 2MCO
 #: lib/src/modelprint.c:1080 lib/src/system.c:96
 msgid "TSLS"
 msgstr "2MC"
@@ -5439,7 +5432,6 @@ msgstr "MIDAS (MCO)"
 msgid "MIDAS (NLS)"
 msgstr "MIDAS (MCNL)"
 
-# TSLS, Two-staged least squares, Double moindres carrés 2MCO
 #: lib/src/modelprint.c:1154
 msgid "Critical values for TSLS bias relative to OLS:\n"
 msgstr "Valeurs critiques du biais des 2MC par rapport aux MCO :\n"
@@ -6096,7 +6088,6 @@ msgstr "$R^2$ ajusté"
 msgid "P-value($F$)"
 msgstr "P. critique ($F$)"
 
-# LSDV
 #: lib/src/modelprint.c:3148
 #, c-format
 msgid "LSDV F(%d, %d)"
@@ -6227,7 +6218,7 @@ msgstr "MM"
 
 #: lib/src/modelprint.c:5293
 msgid "MA (seasonal)"
-msgstr "MM (saisonnier)"
+msgstr "MM (saisonnalité)"
 
 #: lib/src/modelprint.c:5324 lib/src/modelprint.c:5329
 #: lib/src/modelprint.c:5333
@@ -6480,7 +6471,6 @@ msgstr ""
 msgid "Invalid NLS specification"
 msgstr "Spécification MCNL non valide"
 
-# MCNL, Moindres carrés non-linéaires
 #: lib/src/nls.c:2743 lib/src/nls.c:2845
 #, c-format
 msgid "NLS: failed to converge after %d iterations"
@@ -6976,13 +6966,14 @@ msgid ""
 "Pearson chi-square test not computed: some expected frequencies were less\n"
 "than %g\n"
 msgstr ""
-"Test du chi 2 non effectué : certaines fréquences attendues étaient moins\n"
-"que %g\n"
+"Test Khi-deux de Pearson non effectué : certaines fréquences attendues "
+"étaient moins\n"
+"de %g\n"
 
 #: lib/src/printout.c:874
 #, c-format
 msgid "Pearson chi-square test = %g (%d df, p-value = %g)"
-msgstr "Test du Chi-deux = %g (ddl = %d, p. critique = %g)"
+msgstr "Test Khi-deux de Pearson = %g (ddl = %d, p. critique = %g)"
 
 #: lib/src/printout.c:879
 #, no-c-format
@@ -8338,7 +8329,7 @@ msgstr "Entrée non valide"
 #: gui/calculator.c:1071
 #, no-c-format
 msgid "5% critical values for Durbin-Watson statistic"
-msgstr "5% valeurs critique pour la statistique Durbin-Watson"
+msgstr "valeurs critiques à 5% de la statistique de Durbin-Watson"
 
 #: gui/calculator.c:1077 gui/calculator.c:1271 gui/calculator.c:3068
 msgid "gretl: critical values"
@@ -8546,7 +8537,7 @@ msgstr " t "
 
 #: gui/calculator.c:2001
 msgid "chi-square"
-msgstr "Khi-2"
+msgstr "Khi-deux"
 
 #: gui/calculator.c:2002
 msgid " F "
@@ -9773,12 +9764,12 @@ msgstr "(observations manquantes omises)"
 #: gui/datawiz.c:827 gui/datawiz.c:894
 msgid "The selected index variables do not represent a panel structure"
 msgstr ""
-"Les variables d' sélectionnées ne déterminent pas une structure de panel"
+"Les variables d’identification sélectionnées ne correspondent pas à un panel"
 
 #: gui/datawiz.c:858
 msgid "The unit and time index variables must be distinct"
 msgstr ""
-"Les variables d'identification individuelles et temporelles doivent être "
+"Les variables d'identification individuelle et temporelle doivent être "
 "distinctes"
 
 #: gui/datawiz.c:993
@@ -10198,7 +10189,7 @@ msgstr "Afficher les valeurs ajustée pour l'intervalle de prévision"
 
 #: gui/dialogs.c:3353
 msgid "low and high lines"
-msgstr "ligne minimales et maximales"
+msgstr "frontières min/max"
 
 #: gui/dialogs.c:3384
 msgid "Plot confidence interval using"
@@ -10226,11 +10217,11 @@ msgstr "Semaine débutant le dimanche"
 
 #: gui/dialogs.c:3805
 msgid "Compact by averaging"
-msgstr "Compacter par moyennage"
+msgstr "Utiliser la moyenne"
 
 #: gui/dialogs.c:3806
 msgid "Compact by summing"
-msgstr "Compacter par addition"
+msgstr "Utiliser la somme"
 
 #: gui/dialogs.c:3807
 msgid "Use end-of-period values"
@@ -10242,7 +10233,7 @@ msgstr "Utiliser les valeurs de début de période"
 
 #: gui/dialogs.c:3809
 msgid "Spread to multiple series (MIDAS)"
-msgstr "Étendre à plusieurs séries (MIDAS)"
+msgstr "Répartir en plusieurs séries (MIDAS)"
 
 #: gui/dialogs.c:3829
 msgid "Default method:"
@@ -10870,7 +10861,6 @@ msgstr "Résidu par MA à %d périodes de %s"
 msgid "Exponential moving average of %s (current weight %g)"
 msgstr "Moyenne mobile exponentielle de %s (pondération utilisée %g)"
 
-# poids utilisés
 #: gui/filters.c:226
 #, c-format
 msgid "Residual from EMA of %s (current weight %g)"
@@ -11348,7 +11338,6 @@ msgstr ""
 "la boîte de dialogue « propriétés supplémentaires » (après validation\n"
 "des modifications que vous souhaitez conserver)."
 
-# packaged functions, fonctions empaquetées
 #: gui/fnsave.c:1358
 msgid ""
 "Saving packaged functions as script:\n"
@@ -12035,10 +12024,9 @@ msgstr "position (X Y)"
 msgid "arrow has head"
 msgstr "la flèche comporte une tête"
 
-# à améliorer peut-être
 #: gui/gpt_dialog.c:3136
 msgid "line is dotted"
-msgstr "ligne discontinue"
+msgstr "ligne en pointillés"
 
 #: gui/gpt_dialog.c:3174
 msgid "X-axis"
@@ -12355,7 +12343,7 @@ msgstr "Autres _ressources addon"
 
 #: gui/gretl.c:1724
 msgid "_Tools"
-msgstr "_Outils"
+msgstr "Ou_tils"
 
 #: gui/gretl.c:1725
 msgid "_Preferences"
@@ -12495,7 +12483,7 @@ msgstr "_Compacter les données..."
 
 #: gui/gretl.c:1765
 msgid "_Expand data..."
-msgstr "_Etendre les données..."
+msgstr "Ét_endre les données..."
 
 #: gui/gretl.c:1766
 msgid "_Transpose data..."
@@ -12857,7 +12845,6 @@ msgstr "Moindres Carrés _Ordinaires - MCO"
 msgid "_Instrumental variables"
 msgstr "Variables _instrumentales"
 
-# Where to place « _ »?
 #: gui/gretl.c:1884
 msgid "_Two-Stage Least Squares"
 msgstr "_Doubles Moindres Carrés - 2MC"
@@ -12888,7 +12875,7 @@ msgstr "Moindres carrés co_rrigés"
 
 #: gui/gretl.c:1891
 msgid "High _precision OLS"
-msgstr "MCO de haute _précision"
+msgstr "MCO à haute _précision"
 
 #: gui/gretl.c:1892 gui/library.c:4109 gui/library.c:6177 gui/selector.c:7207
 msgid "ANOVA"
@@ -13140,7 +13127,7 @@ msgstr "abcdefghijk ABCDEFGHIJK"
 
 #: gui/gtkfontselhack.c:250
 msgid "Font name"
-msgstr "Nom de la fonte"
+msgstr "Nom de la police"
 
 #: gui/gtkfontselhack.c:251
 msgid "The X string that represents this font"
@@ -13370,7 +13357,7 @@ msgstr "Test de White (carré seulement)"
 
 #: gui/gui_utils.c:282
 msgid "_groupwise"
-msgstr " _groupés"
+msgstr "_groupés"
 
 #: gui/gui_utils.c:286
 msgid "Pesaran-Taylor test"
@@ -14858,7 +14845,7 @@ msgstr "Utiliser les écarts-types Bartlett"
 
 #: gui/library.c:5887 gui/library.c:5891
 msgid "Maximum lag:"
-msgstr "Ordre maximum des retards:"
+msgstr "Ordre des retards max :"
 
 #: gui/library.c:6057
 msgid "gretl: fractional integration"
@@ -15155,7 +15142,7 @@ msgid ""
 msgstr ""
 "La transposition signifie que chaque variable sera interprétée\n"
 "comme une observation et chaque observation comme une variable.\n"
-"Désirez-vous procéder?"
+"Voulez-vous procéder?"
 
 #: gui/library.c:8806
 msgid "Data transposed"
@@ -15888,7 +15875,7 @@ msgstr "Variable de contrôle"
 
 #: gui/selector.c:4900
 msgid "Block variable (optional)"
-msgstr "Bloquer la variable (optionnel)"
+msgstr "Variable de groupe (optionnel)"
 
 #: gui/selector.c:5009
 msgid "Add"
@@ -16759,7 +16746,7 @@ msgstr "Utiliser le dernier dossier pour le choix du fichier"
 
 #: gui/settings.c:237
 msgid "Language preference"
-msgstr "Langue"
+msgstr "Préférence de langue"
 
 #: gui/settings.c:240
 msgid "Default graph scale"
@@ -17885,7 +17872,7 @@ msgstr "modèle C"
 
 #: plugin/addons-i18n.c:55
 msgid "CI coverage"
-msgstr "Etendue IC"
+msgstr "Étendue IC"
 
 #: plugin/addons-i18n.c:56
 msgid "Check identification"
@@ -18043,7 +18030,7 @@ msgstr "Traitement"
 
 #: plugin/anova.c:119 plugin/anova.c:121
 msgid "Block"
-msgstr "Bloc"
+msgstr "Groupe"
 
 #: plugin/anova.c:193 plugin/anova.c:203
 msgid "Level"
@@ -18068,7 +18055,7 @@ msgstr "%s, réponse = %s, traitement = %s:"
 
 #: plugin/arma.c:875
 msgid "MA estimate(s) out of bounds\n"
-msgstr "Estimations MA hors limites\n"
+msgstr "Estimation(s) MM hors limites\n"
 
 #: plugin/arma.c:1305
 msgid "BFGS iteration"
@@ -18431,7 +18418,7 @@ msgstr "Vraisemblance restreinte (lr) = %.8g\n"
 #: plugin/johansen.c:1840 plugin/jrestrict.c:1887
 #, c-format
 msgid "Allowing for prior restriction, df = %d\n"
-msgstr "Permettre la restriction préalable, ddl = %d\n"
+msgstr "Permettre une restriction préalable, ddl = %d\n"
 
 #: plugin/johansen.c:2599
 msgid "Test of restrictions on cointegrating relations"
