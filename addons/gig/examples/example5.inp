@@ -4,8 +4,8 @@
 # variable as mean regressors. Several techniques for standard errors
 # are compared.
 
-set echo off
-set messages off
+
+set verbose off
 include gig.gfn
 
 open djclose

@@ -112,16 +112,16 @@ function matrix var_coef_init(bundle *mod, scalar s2)
        5) delta
     */
 
-    code = mod.type 
-    p = mod.p
-    q = mod.q
+    scalar code = mod.type 
+    scalar p = mod.p
+    scalar q = mod.q
     if (p > 0)
-	a = 0.1
-	b = 0.8
-	omega = s2 * (1 - a - b) 
+	scalar a = 0.1
+	scalar b = 0.8
+	scalar omega = s2 * (1 - a - b) 
     else
-	a = 0.9
-	omega = s2 * (1 - a) 
+	scalar a = 0.9
+	scalar omega = s2 * (1 - a) 
     endif
 
     vk = mod.vk # variance regressors
@@ -425,7 +425,7 @@ function bundle gig_setup(series y, int type[1], list X[null], list Y[null],
 	string names = varname(X)
 
 	if (ARlags>0)
-	    loop i=1..ARlags --quiet
+	    loop i = 1 .. ARlags
 		names = sprintf("%s,AR%d", names, i)
 	    endloop
 	endif

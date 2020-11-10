@@ -3,8 +3,8 @@
 # compare QR and non-QR treatment of regressors in
 # variance
 
-set echo off
-set messages off
+
+set verbose off
 include gig.gfn
 
 # prepare data

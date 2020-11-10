@@ -1,8 +1,8 @@
 author = Riccardo "Jack" Lucchetti and Stefano Balietti
 email = r.lucchetti@univpm.it
 tags = C22
-version = 2.23
-date = 2019-06-25
+version = 2.24
+date = 2020-11-10
 description = An assortment of univariate GARCH models
 public = GUI_gig \
     gig_setup gig_set_dist gig_set_pq gig_set_vQR gig_set_vcvtype \

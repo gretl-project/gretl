@@ -3,8 +3,8 @@
 # GARCH(1,1) with Normal conditional distribution, 
 # no mean regressors.
   
-set echo off
-set messages off
+
+set verbose off
 
 # Import the gig library.
 include gig.gfn

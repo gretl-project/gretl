@@ -1,4 +1,4 @@
-set echo off
+set verbose off
 # Import the gig library
 include gig.gfn
 
