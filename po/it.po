@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-10-16 00:17+0200\n"
+"PO-Revision-Date: 2020-11-10 09:21+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1013,9 +1013,9 @@ msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
 msgstr "variabile %d (%s), valori non numerici = %d (%2f per cento)\n"
 
 #: lib/src/csvdata.c:2227
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, expected numeric value\n"
-msgstr "ERRORE: variabile %d (%s), osservazione %d, valore non numerico\n"
+msgstr "ERRORE: variabile %d (%s), osservazione %d, valore numerico atteso\n"
 
 #  Comando plotvar, non ancora implementato
 #: lib/src/csvdata.c:2236
@@ -9077,9 +9077,9 @@ msgstr ""
 "del dataset aperto. Vado avanti?"
 
 #: gui/database.c:261
-#, fuzzy, c-format
+#, c-format
 msgid "Disaggregate %s now?"
-msgstr "Disaggregazione..."
+msgstr "Disaggregare %s ora?"
 
 #: gui/database.c:392
 msgid "Sorry, can't handle this frequency conversion"
