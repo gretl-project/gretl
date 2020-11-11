@@ -29,11 +29,13 @@ version 2020e, in progress
 - Fix: prune correctly the regressor list in the "perfect
   prediction" case in RE probit
 - Fix: incorrect $vcv matrix for bivariate probit models
+- Fix: dbnomics import misaligning data of different
+  frequencies in certain cases
 - MS Windows build: support printing scripts with syntax
   highlighting
 - MS Windows build (64-bit): update pixman, cairo and pango
   libraries (DLLs)
-- MS Windows build (64-bit): update SSL DLL so as to prevent
+- MS Windows build: update SSL DLL so as to prevent
   crashes on certain CPUs
 
 2020-08-06 version 2020d
