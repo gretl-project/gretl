@@ -1653,7 +1653,11 @@ static double *expand_db_series (const double *src,
     } else {
 	int yr, qtr, mo;
 
-	sscanf(stobs, "%d.%d", &yr, &qtr);
+	if (strchr(stobs, '.')) {
+	    sscanf(stobs, "%d.%d", &yr, &qtr);
+	} else {
+	    sscanf(stobs, "%d:%d", &yr, &qtr);
+	}
 	mo = (qtr - 1) * 3 + 1;
 	sprintf(new_stobs, "%d:%02d", yr, mo);
     }
@@ -1664,7 +1668,7 @@ static double *expand_db_series (const double *src,
 
 #if EXPAND_DEBUG
     fprintf(stderr, "expand_db_series 2: pd=%d, stobs='%s'\n",
-	    *ppd, stobs);
+	    pd, stobs);
 #endif
 
     return x;
