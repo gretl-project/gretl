@@ -345,6 +345,8 @@ static int nls_genr_setup (nlspec *s)
 	}
 
 	if (err) {
+	    fprintf(stderr, "nls: fail at genr_compile for genrs[%d]\n", i);
+	    fprintf(stderr, "> '%s'\n", formula);
 	    genr_setup_error(formula, err, 0);
 	    break;
 	}
@@ -358,6 +360,8 @@ static int nls_genr_setup (nlspec *s)
 
 	if (err) {
 	    genr_setup_error(formula, err, 1);
+	    fprintf(stderr, "nls: fail at execute_genr for genrs[%d]\n", i);
+	    fprintf(stderr, "> '%s'\n", formula);
 	    break;
 	}
 
@@ -436,6 +440,9 @@ static int nls_genr_setup (nlspec *s)
     if (!err && s->hesscall != NULL) {
 	s->hgen = genr_compile(s->hesscall, s->dset, GRETL_TYPE_ANY,
 			       OPT_P | OPT_O, s->prn, &err);
+	if (err) {
+	    fprintf(stderr, "compilation of s->hgen failed\n");
+	}
     }
 
     if (err) {
