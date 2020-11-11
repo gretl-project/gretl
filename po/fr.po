@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-10 19:42+0100\n"
+"PO-Revision-Date: 2020-11-11 22:00+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -2041,7 +2041,7 @@ msgid ""
 "   p-value (two-tailed) = %g\n"
 "\n"
 msgstr ""
-"   valeur de P (bilatérale) = %g\n"
+"   p. critique (bilatérale) = %g\n"
 "\n"
 
 #: lib/src/describe.c:6712 lib/src/describe.c:6795
@@ -3832,16 +3832,16 @@ msgstr ""
 #: lib/src/gretl_midas.c:208 lib/src/subsample.c:3122 gui/dialogs.c:3959
 #: gui/dialogs.c:4089
 msgid "quarterly"
-msgstr "trimestriel"
+msgstr "données trimestrielles"
 
 #: lib/src/gretl_midas.c:209 lib/src/subsample.c:3124 gui/dialogs.c:3959
 #: gui/dialogs.c:4090
 msgid "monthly"
-msgstr "mensuel"
+msgstr "données mensuelles"
 
 #: lib/src/gretl_midas.c:210
 msgid "daily"
-msgstr "journalier"
+msgstr "données journalières"
 
 #: lib/src/gretl_midas.c:2333
 #, c-format
@@ -4361,7 +4361,7 @@ msgstr "Restriction non valide sur bêta"
 #: lib/src/gretl_restrict.c:677
 #, c-format
 msgid "Too many restrictions: the maximum number is %d"
-msgstr "Trop de restrictions : le maximum est de %d"
+msgstr "Trop de restrictions : le nombre maximum est de %d"
 
 #: lib/src/gretl_restrict.c:681
 #, c-format
@@ -4418,7 +4418,7 @@ msgstr "Restriction non valide"
 #: lib/src/gretl_restrict.c:1919
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr "Trop de restrictions (maximum est de %d)"
+msgstr "Trop de restrictions (le maximum est de %d)"
 
 #: lib/src/gretl_restrict.c:2073
 msgid "Restricted estimates"
@@ -5550,11 +5550,11 @@ msgstr "Ne peut pas calculer des écarts-types robustes"
 
 #: lib/src/modelprint.c:1470
 msgid "Bartlett kernel"
-msgstr "Kernel Bartlett"
+msgstr "Kernel de Bartlett"
 
 #: lib/src/modelprint.c:1471
 msgid "Parzen kernel"
-msgstr "Kernel Parzen"
+msgstr "Kernel de Parzen"
 
 #: lib/src/modelprint.c:1472
 msgid "QS kernel"
@@ -7430,15 +7430,15 @@ msgstr "hebdomadaire"
 
 #: lib/src/subsample.c:3130
 msgid "daily (5 days)"
-msgstr "journalier (5 jours)"
+msgstr "données journalières (5 jours)"
 
 #: lib/src/subsample.c:3132
 msgid "daily (6 days)"
-msgstr "journalier (6 jours)"
+msgstr "données journalières (6 jours)"
 
 #: lib/src/subsample.c:3134
 msgid "daily (7 days)"
-msgstr "journalier (7 jours)"
+msgstr "données journalières (7 jours)"
 
 #: lib/src/subsample.c:3136
 msgid "decennial"
@@ -9223,7 +9223,7 @@ msgstr "Installé"
 #: gui/database.c:3234 gui/datafiles.c:1228 gui/datafiles.c:1264
 #: gui/fncall.c:4172
 msgid "Up to date"
-msgstr "Mis à jour"
+msgstr "A jour"
 
 #: gui/database.c:2927 gui/database.c:2937
 msgid "Error unzipping compressed data"
@@ -9591,7 +9591,7 @@ msgstr "Fréquence des séries temporelles"
 
 #: gui/datawiz.c:106
 msgid "Daily date to represent week"
-msgstr "Date journalière pour réprésenter la semaine"
+msgstr "Date quotidienne pour représenter la semaine"
 
 #: gui/datawiz.c:107
 msgid "Starting observation"
@@ -9636,11 +9636,11 @@ msgstr "Annuel"
 
 #: gui/datawiz.c:412 gui/dialogs.c:3686 gui/dialogs.c:6357 gui/menustate.c:1002
 msgid "Quarterly"
-msgstr "Trimestriel"
+msgstr "Données trimestrielles"
 
 #: gui/datawiz.c:413 gui/dialogs.c:3693 gui/dialogs.c:6362 gui/menustate.c:1004
 msgid "Monthly"
-msgstr "Mensuel"
+msgstr "Données mensuelles"
 
 #: gui/datawiz.c:414 gui/dialogs.c:3692 gui/menustate.c:1008
 msgid "Weekly"
@@ -9648,15 +9648,15 @@ msgstr "Hebdomadaire"
 
 #: gui/datawiz.c:415 gui/dialogs.c:3700 gui/menustate.c:1010
 msgid "Daily (5 days)"
-msgstr "Journalier (5 jours)"
+msgstr "Données journalières (5 jours)"
 
 #: gui/datawiz.c:416 gui/dialogs.c:3701 gui/menustate.c:1012
 msgid "Daily (6 days)"
-msgstr "Journalier (6 jours)"
+msgstr "Données journalières (6 jours)"
 
 #: gui/datawiz.c:417 gui/dialogs.c:3699 gui/menustate.c:1014
 msgid "Daily (7 days)"
-msgstr "Journalier (7 jours)"
+msgstr "Données journalières (7 jours)"
 
 #: gui/datawiz.c:418 gui/menustate.c:1006
 msgid "Hourly"
@@ -10519,7 +10519,7 @@ msgstr ""
 
 #: gui/dialogs.c:6358
 msgid "Quarterly, annualized"
-msgstr "Trimestriel, annualisé"
+msgstr "Données trimestrielles, annualisées"
 
 #: gui/dialogs.c:6359 gui/dialogs.c:6364
 msgid "Year on year"
@@ -10527,7 +10527,7 @@ msgstr "Glissement annuel"
 
 #: gui/dialogs.c:6363
 msgid "Monthly, annualized"
-msgstr "Mensuel, annualisé"
+msgstr "Données mensuelles, annualisées"
 
 #: gui/dialogs.c:6389
 msgid "Calculate using logs"
@@ -12911,7 +12911,7 @@ msgstr "Séries temporelles _multivariées"
 
 #: gui/gretl.c:1901
 msgid "_Vector Autoregression"
-msgstr "_Vecteur Autorégressif (VAR)"
+msgstr "_Vecteur Autorégressif - VAR"
 
 #: gui/gretl.c:1902
 msgid "VAR _lag selection"
@@ -12923,11 +12923,11 @@ msgstr "Modèle à correction d’erreurs (V_ECM)"
 
 #: gui/gretl.c:1904
 msgid "Cointegration test (_Johansen)"
-msgstr "Test de cointégration (_Johansen)"
+msgstr "Test de cointégration de _Johansen"
 
 #: gui/gretl.c:1905
 msgid "Cointegration test (_Engle-Granger)"
-msgstr "Test de cointégration (_Engle-Granger)"
+msgstr "Test de cointégration d’_Engle-Granger"
 
 #: gui/gretl.c:1906
 msgid "_Panel"
@@ -14607,7 +14607,7 @@ msgid ""
 "range over which the model is estimated (Sample menu)."
 msgstr ""
 "Aucune observation disponible pour la prévision hors\n"
-"échantillon. Si vous voulez, vous pouvez ajouter des\n"
+"échantillon.  Si vous voulez, vous pouvez ajouter des\n"
 "observations (Menu « Données - Ajouter des \n"
 "observations ») ou réduire l’étendue de l’échantillon\n"
 "sur lequel le modèle est estimé (Menu « Échantillon »)."
@@ -16361,7 +16361,7 @@ msgstr "Sélectionner les variables à sauvegarder"
 
 #: gui/selector.c:7609
 msgid "Select variables to copy"
-msgstr "Sélectionner les variables pour copier"
+msgstr "Sélectionner les variables à copier"
 
 #: gui/selector.c:7611
 msgid "Select variables to test"
