@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-12 12:08+0100\n"
+"PO-Revision-Date: 2020-11-12 22:01+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Bookmarks: 2462,2318,1768,1701,1672,1189,912,788,449,200\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: lib/src/adf_kpss.c:511
 msgid "lagged differences"
@@ -179,7 +179,7 @@ msgstr "tregues për periudhat"
 #: lib/src/adf_kpss.c:1100
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
-msgstr ""
+msgstr "Zbutja GLS: b0 = %g, b1 = %g\n"
 
 #: lib/src/adf_kpss.c:1103
 #, fuzzy, c-format
@@ -329,10 +329,10 @@ msgstr "H0: të gjithë grupet janë stacionarë"
 #: lib/src/adf_kpss.c:2636 lib/src/adf_kpss.c:2679
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
-msgstr "Etapa %d: testi i rrënjës së njësishme për %s\n"
+msgstr "Etapa %d: test i rrënjës së njësishme për %s\n"
 
 #: lib/src/adf_kpss.c:2646
-#, c-format
+#, fuzzy, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Etapa %d: regresion kointegrimi\n"
 
@@ -606,7 +606,7 @@ msgstr " Duke hequr %-16s (p. kritik %.3f)\n"
 #: lib/src/compare.c:1512
 #, c-format
 msgid "No coefficient has a p-value less than %g"
-msgstr ""
+msgstr "Asnjë koeficient nuk paraqet p. kritik më të vogël se %g"
 
 #: lib/src/compare.c:1876 lib/src/estimate.c:2760 lib/src/gretl_model.c:4222
 #: lib/src/gretl_model.c:4228 lib/src/modelprint.c:898 gui/library.c:3219
@@ -708,7 +708,7 @@ msgstr "Testi Chow për ndryshim të strukturës në varësi të %s"
 #: lib/src/compare.c:3063 lib/src/gretl_model.c:4114
 #, c-format
 msgid "Chow test for structural break at observation %s"
-msgstr "Testi Chow për ndryshim të strukturës në vrojtimin %s"
+msgstr "Testi Chow për thyerje të strukturës në vrojtimin %s"
 
 #: lib/src/compare.c:3126 lib/src/compare.c:3157
 msgid "Invalid sample split for Chow test"
@@ -741,7 +741,7 @@ msgstr ""
 
 #: lib/src/compare.c:3437
 msgid "CUSUMSQ test for stability of parameters"
-msgstr "Testi CUSUMSQ për qëndrueshmëri të parametrave"
+msgstr "Testi CUSUM-SQ për qëndrueshmëri të parametrave"
 
 #: lib/src/compare.c:3454
 msgid "Cumulated sum of squared residuals"
@@ -985,11 +985,11 @@ msgstr "U gjenden %d ndryshore dhe %d vrojtime\n"
 
 #: lib/src/csvdata.c:1819
 msgid "Assuming double-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Nëse thonjëzat janë shenjat e përdorura për citim\n"
 
 #: lib/src/csvdata.c:1823
 msgid "Assuming single-quote is the relevant quotation character\n"
-msgstr ""
+msgstr "Nëse apostrofi është shenja e përdorur për citim\n"
 
 #: lib/src/csvdata.c:2027
 #, c-format
@@ -1025,7 +1025,7 @@ msgstr "GABIM: ndryshorja %d (%s), vrojtimi %d, përmban vlerë jo-numerike\n"
 
 #: lib/src/csvdata.c:2236
 msgid "allocating string table\n"
-msgstr ""
+msgstr "caktimi i tabelës së vargjeve\n"
 
 #: lib/src/csvdata.c:2661
 msgid ""
@@ -4707,6 +4707,9 @@ msgid ""
 "supported by this build of gretl (%g). Some features may not be\n"
 "correctly recognized.\n"
 msgstr ""
+"Versioni i skedës së të dhënave (% g) është më i vonshëm se ai\n"
+"që mund të përpunojë ky version i gretl (% g). Si rrjedhojë,\n"
+"disa karakteristika mund të mos interpretohen siç duhet.\n"
 
 #: lib/src/gretl_xml.c:3940
 msgid "Uncompressing"
@@ -4733,7 +4736,7 @@ msgstr "Asnjë vrojtim nuk u gjet"
 #: lib/src/gretl_xml.c:4126
 #, c-format
 msgid "'%s': malformed gdt file"
-msgstr ""
+msgstr "‘%s’: skedë gdt e keqformuar"
 
 #: lib/src/gretl_xml.c:4128 gui/gpt_control.c:5651 plugin/geoplot.c:1207
 #, fuzzy, c-format
@@ -4873,7 +4876,7 @@ msgstr "Komanda %s kërkon një ndryshore.\n"
 
 #: lib/src/interact.c:4310
 msgid "An error occurred when 'outfile' was active\n"
-msgstr ""
+msgstr "Ndodhi një gabim kur ‘outfile’ ishte aktive\n"
 
 #: lib/src/kalman.c:467
 msgid "kalman: a required matrix is missing"
@@ -4945,11 +4948,11 @@ msgstr "U gjetën vlera jo-pozitive"
 #: lib/src/matrix_extra.c:1680
 #, c-format
 msgid "%s: matrix is NULL"
-msgstr ""
+msgstr "%s: matricë e pavlefshme"
 
 #: lib/src/matrix_extra.c:1682
 msgid "matrix is NULL"
-msgstr ""
+msgstr "matrica është e pavlefshme"
 
 #: lib/src/matrix_extra.c:1688
 #, fuzzy, c-format
@@ -5041,7 +5044,7 @@ msgstr "Shuma e katrorëve të shpjeguar"
 
 #: lib/src/modelprint.c:388 lib/src/modelprint.c:390 lib/src/modelprint.c:3199
 msgid "Smallest eigenvalue"
-msgstr "Vlera e vet minimale"
+msgstr "Vlera e veçantë minimale"
 
 #: lib/src/modelprint.c:399 lib/src/modelprint.c:401 lib/src/modelprint.c:405
 #: lib/src/system.c:3535 lib/src/system.c:3550
@@ -5099,7 +5102,7 @@ msgstr "Toleranca në konvergjencë:"
 
 #: lib/src/modelprint.c:697
 msgid "GNR: got incomplete results"
-msgstr ""
+msgstr "GNR: rezultatet janë jo të plota"
 
 #: lib/src/modelprint.c:702
 msgid "Warning: Jacobian is rank-deficient"
@@ -5529,11 +5532,11 @@ msgstr "Statistika F e nivelit të parë"
 
 #: lib/src/modelprint.c:1244 lib/src/modelprint.c:1253
 msgid "Cragg-Donald minimum eigenvalue"
-msgstr "Vlera e vet Cragg-Donald minimale "
+msgstr "Vlera e veçanta Cragg-Donald minimale"
 
 #: lib/src/modelprint.c:1250
 msgid "Cragg--Donald minimum eigenvalue"
-msgstr "Vlera e vet Cragg--Donald minimale"
+msgstr "Vlera e veçantë Cragg--Donald minimale"
 
 #: lib/src/modelprint.c:1291
 msgid "A value < 10 may indicate weak instruments"
@@ -7163,6 +7166,7 @@ msgid "FINAL VALUES"
 msgstr "VLERAT PËRFUNDIMTARE"
 
 #: lib/src/printout.c:3362 lib/src/printout.c:3366
+#, fuzzy
 msgid "Iteration"
 msgstr "Etapa"
 
@@ -8377,7 +8381,7 @@ msgstr "gretl: probabiliteti"
 
 #: gui/calculator.c:1373
 msgid "You must give a name for the variable"
-msgstr "Duhet t'i jepni një emër ndryshores "
+msgstr "Duhet t'i jepni një emër ndryshores"
 
 #: gui/calculator.c:1440
 #, c-format
@@ -9048,9 +9052,8 @@ msgid "personal gfn directory"
 msgstr "Skedari gfn i përdoruesit"
 
 #: gui/callbacks.c:805 gui/callbacks.c:808 gui/callbacks.c:811
-#, fuzzy
 msgid "current working directory"
-msgstr "gretl: skedari i punës"
+msgstr "gretl: skedari i tanishëm i punës"
 
 #: gui/callbacks.c:814
 #, fuzzy
@@ -9540,9 +9543,8 @@ msgid "gretl: addons"
 msgstr "gretl: module shtesë"
 
 #: gui/datafiles.c:2095
-#, fuzzy
 msgid "gretl: packages on menus"
-msgstr "gretl: paketë funksioni në %s"
+msgstr "gretl: paketat në menu"
 
 #: gui/datafiles.c:2691
 #, fuzzy
@@ -13442,7 +13444,7 @@ msgstr "Testi _CUSUM (qëndrueshmëria e parametrave)"
 
 #: gui/gui_utils.c:267
 msgid "CUSUM_SQ test"
-msgstr "Testi C_USUMSQ (qëndrueshmëria e parametrave)"
+msgstr "Testi C_USUM-SQ (qëndrueshmëria e parametrave)"
 
 #: gui/gui_utils.c:268
 msgid "_Common factor"
@@ -13621,9 +13623,8 @@ msgid "gretl: edit Dynare script"
 msgstr "gretl: skript R"
 
 #: gui/gui_utils.c:1803
-#, fuzzy
 msgid "gretl: edit package spec file"
-msgstr "gretl: paketë të dhënash në server"
+msgstr "gretl: ndrysho një skedë pakete"
 
 #: gui/gui_utils.c:1805
 msgid "gretl: untitled"
@@ -14247,8 +14248,8 @@ msgid ""
 "You can't use the same character for the column delimiter and the decimal "
 "point"
 msgstr ""
-"Nuk mund të përdorni të njëjtin karakter edhe për presjen dhjetore edhe për "
-"ndarjen e shtyllave."
+"Nuk mund të përdoret i njëjti karakter për presjen dhjetore dhe për ndarjen "
+"e shtyllave."
 
 #: gui/guiprint.c:2225
 msgid "No scalar variables are currently defined"
@@ -14561,7 +14562,7 @@ msgstr "Rendi i vonesës për testin ADF:"
 
 #: gui/library.c:1125
 msgid "use Perron-Qu method"
-msgstr ""
+msgstr "përdor metodën Perron-Qu"
 
 #: gui/library.c:1126 gui/library.c:1134 gui/library.c:1201 gui/library.c:1210
 msgid "include a trend"
@@ -16893,9 +16894,8 @@ msgid "Prompt to save session"
 msgstr "Më kujto të ruaj sesionin"
 
 #: gui/settings.c:228
-#, fuzzy
 msgid "Display working directory"
-msgstr "gretl: skedari i punës"
+msgstr "Trego skedarin e punës"
 
 #: gui/settings.c:232
 msgid "Set working directory from shell"
@@ -17874,9 +17874,8 @@ msgid "Numeric values represent an encoding"
 msgstr ""
 
 #: gui/varinfo.c:1068
-#, fuzzy
 msgid "gretl: save series"
-msgstr "gretl: ruaj matricën"
+msgstr "gretl: ruaj seritë"
 
 #: gui/winstack.c:300
 msgid "Main window"
@@ -18538,7 +18537,7 @@ msgstr "matrica e efekteve afatgjatë (alpha* beta')"
 
 #: plugin/johansen.c:1108
 msgid "eigenvalue"
-msgstr "vlera e vet"
+msgstr "vlera e veçantë"
 
 #: plugin/johansen.c:1534
 msgid "Exogenous regressor(s)"
@@ -18596,12 +18595,12 @@ msgstr ""
 
 #: plugin/johansen.c:1755
 msgid "Failed to find eigenvalues\n"
-msgstr "Vlerat e veta nuk u gjendën\n"
+msgstr "E pamundur llogaritja e vlerave të veçanta\n"
 
 #: plugin/johansen.c:1808
 #, c-format
 msgid "eigenvalue %d = %g\n"
-msgstr "Vlera e vet %d = %g\n"
+msgstr "vlera e veçantë %d = %g\n"
 
 #: plugin/johansen.c:1832 plugin/jrestrict.c:2814
 #, c-format
@@ -18824,7 +18823,7 @@ msgstr "Cungimi i Barlett në vonesën %d\n"
 
 #: plugin/pca.c:122
 msgid "Components with eigenvalues > mean"
-msgstr "Faktorët për të cilët Vlera e vet > mesatarja"
+msgstr "Faktorët për të cilët vlera e veçantë > mesatarja"
 
 #: plugin/pca.c:131
 msgid "All components"
@@ -18853,7 +18852,7 @@ msgstr "Vektorët e vet (përbërësit faktorialë të ndryshoreve)"
 #: plugin/pca.c:383
 #, c-format
 msgid "Component with eigenvalue = %.4f"
-msgstr "Faktori për Vlerën e vet =  %.4f"
+msgstr "Faktori me vlerën e veçantë =  %.4f"
 
 #: plugin/progress_bar.c:60
 msgid "gretl: loading data"
@@ -19191,9 +19190,8 @@ msgid "variance proportions"
 msgstr "zbërthimi i variancës"
 
 #: plugin/vif.c:423
-#, fuzzy
 msgid "eigenvalues of inverse covariance matrix"
-msgstr "E anasjellta e matricës së kovariancave"
+msgstr "vlerat e veçanta të matricës së anasjelltë të kovariancave"
 
 #: plugin/vif.c:424
 #, fuzzy
