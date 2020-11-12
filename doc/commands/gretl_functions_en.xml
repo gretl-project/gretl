@@ -176,12 +176,18 @@
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the p-value for the Durbin&ndash;Watson statistic
-	  for the model last estimated (if available), computed using
-	  the Imhof procedure.
+	  Returns the CDF of the Durbin&ndash;Watson distribution
+	  evaluated at the DW statistic for the model last estimated
+	  (if available), computed using the <cite
+	  key="imhof61">Imhof</cite> procedure. This is the p-value
+	  for a one-sided test with an alternative of positive
+	  first-order autocorrelation. If you want the p-value for
+	  a two-sided test, take 2<math>P</math> if DW &lt; 2 or
+	  2(1 &minus; <math>P</math>) if DW &gt; 2, where <math>P</math>
+	  is the value returned by the accessor.
 	</para>
 	<para>
-	  Due to the limited precision of computer arithmetic, the
+	  Due to the limited precision of digital arithmetic, the
 	  Imhof integral can go negative when the Durbin&ndash;Watson
 	  statistic is close to its lower bound. In that case the
 	  accessor returns <lit>NA</lit>. Since any other failure mode

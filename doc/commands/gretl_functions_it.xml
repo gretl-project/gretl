@@ -167,7 +167,13 @@
 	<para>
 	  Fornisce il p-value per la statistica Durbin&ndash;Watson
 	  relativa all'ultimo modello stimato, se disponibile. Tale
-	  valore è calcolato tramite la procedura di Imhof.
+	  valore è calcolato tramite la procedura di <cite
+	  key="imhof61">Imhof</cite>. Essa ritorna il p-value per un
+	  test a una coda con l'alternativa dei autocorrelazione di
+	  primo ordine positiva. Per il p-value del test a due code,
+	  is usi 2<math>P</math> se DW &lt; 2 oppure 2(1 &minus;
+	  <math>P</math>) se DW &gt; 2, dove <math>P</math> è il
+	  valore fornito dall'accessore.
 	</para>
 	<para>
 	  A causa della limitata precisione dell'aritmetica digitale,
