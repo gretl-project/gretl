@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-11 22:00+0100\n"
+"PO-Revision-Date: 2020-11-12 20:12+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -527,7 +527,7 @@ msgstr "Test Wald"
 #: lib/src/vartest.c:253 lib/src/vartest.c:1207 lib/src/vartest.c:1494
 #: plugin/johansen.c:1842 plugin/jrestrict.c:2832
 msgid "Chi-square"
-msgstr "Chi-deux"
+msgstr "Khi-deux"
 
 #: lib/src/compare.c:373 lib/src/compare.c:386 lib/src/vartest.c:1206
 msgid "LR test"
@@ -3796,7 +3796,7 @@ msgstr "_Ouvrir les données"
 
 #: lib/src/gretl_intl.c:104 lib/src/subsample.c:3120
 msgid "annual"
-msgstr "annuel"
+msgstr "données annuelles"
 
 #: lib/src/gretl_intl.c:805 gui/gretl.c:1670 gui/gui_utils.c:218
 #: gui/gui_utils.c:349
@@ -4431,7 +4431,7 @@ msgstr "Écart-type de la régression"
 
 #: lib/src/gretl_restrict.c:2379
 msgid "Robust chi^2"
-msgstr "Chi^2 robuste"
+msgstr "Khi^2 robuste"
 
 #: lib/src/gretl_restrict.c:2512
 msgid ""
@@ -5078,7 +5078,7 @@ msgstr "Avertissement : La jacobienne est proche de l’nsuffisance de rang"
 
 #: lib/src/modelprint.c:716
 msgid "Warning: solution is probably not unique"
-msgstr "Averstissement : la solution n'est probablement pas unique"
+msgstr "Avertissement : la solution n'est probablement pas unique"
 
 #: lib/src/modelprint.c:724
 msgid "Warning: couldn't compute numerical Hessian"
@@ -5563,12 +5563,12 @@ msgstr "Kernel QS"
 #: lib/src/modelprint.c:1476
 #, c-format
 msgid "HAC standard errors, bandwidth %.2f"
-msgstr "éc. types HAC, largeur de bande %.2f"
+msgstr "Éc. types HAC, largeur de bande %.2f"
 
 #: lib/src/modelprint.c:1479
 #, c-format
 msgid "HAC standard errors, bandwidth %d"
-msgstr "éc. types HAC, largeur de bande %d"
+msgstr "Éc. types HAC, largeur de bande %d"
 
 #: lib/src/modelprint.c:1486
 msgid "prewhitened"
@@ -8292,7 +8292,7 @@ msgstr "t(%d)"
 #: gui/calculator.c:208
 #, c-format
 msgid "Chi-square(%d)"
-msgstr "Chi-deux(%d)"
+msgstr "Khi-deux(%d)"
 
 #: gui/calculator.c:210
 #, c-format
@@ -9632,7 +9632,7 @@ msgstr "Aucun changement n'a été fait"
 
 #: gui/datawiz.c:411 gui/dialogs.c:3687 gui/menustate.c:1000
 msgid "Annual"
-msgstr "Annuel"
+msgstr "Données annuelles"
 
 #: gui/datawiz.c:412 gui/dialogs.c:3686 gui/dialogs.c:6357 gui/menustate.c:1002
 msgid "Quarterly"
