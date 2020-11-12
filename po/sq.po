@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-12 11:59+0100\n"
+"PO-Revision-Date: 2020-11-12 12:08+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -262,7 +262,7 @@ msgid ""
 " (including trend)\n"
 "\n"
 msgstr ""
-"(me prirje kohore)\n"
+" (me prirje kohore)\n"
 "\n"
 
 #: lib/src/adf_kpss.c:2197
@@ -906,7 +906,7 @@ msgstr "'%s' dhe '%s': e pamundur të gjenden datat\n"
 #: lib/src/csvdata.c:1152
 #, c-format
 msgid "   %s: probably a year... "
-msgstr "   %s: ndoshta është vit..."
+msgstr "   %s: ndoshta është vit... "
 
 #: lib/src/csvdata.c:1154
 #, c-format
@@ -1261,7 +1261,7 @@ msgid ""
 "Use only letters, digits and underscore"
 msgstr ""
 "Emri i ndryshores '%s' përmban një karakter të palejuar '%c'\n"
-"Ju lutem përdorni vetëm shkronja dhe numra."
+"Ju lutem përdorni vetëm shkronja dhe numra"
 
 #: lib/src/dataio.c:153
 #, c-format
@@ -1279,7 +1279,7 @@ msgid ""
 "Use only letters, digits and underscore"
 msgstr ""
 "Emri i ndryshores përmban një karakter të palejuar 0x%x\n"
-"Ju lutem përdorni vetëm shkronja dhe numra."
+"Ju lutem përdorni vetëm shkronja dhe numra"
 
 #: lib/src/dataio.c:198
 #, c-format
@@ -1294,7 +1294,7 @@ msgstr "Karakter i pavlefshëm %d për një datë"
 #: lib/src/dataio.c:400 lib/src/dataio.c:405 lib/src/dataio.c:418
 #, c-format
 msgid "'%s': invalid observation index"
-msgstr "'%s': tregues vrojtimi i pavlefshëm "
+msgstr "'%s': tregues vrojtimi i pavlefshëm"
 
 #: lib/src/dataio.c:437 lib/src/forecast.c:3000 lib/src/genfuncs.c:4039
 msgid "Observation number out of bounds"
@@ -2149,7 +2149,7 @@ msgstr "Shënim: %s = %s%s për të gjithë vrojtimet\n"
 #: lib/src/discrete.c:1584 lib/src/discrete.c:1590
 #, c-format
 msgid "Note: Prob(%s = %d | %s = %d) = 1\n"
-msgstr " Shënim: Prob(%s = %d | %s = %d) = 1\n"
+msgstr "Shënim: Prob(%s = %d | %s = %d) = 1\n"
 
 #: lib/src/discrete.c:1596
 #, c-format
@@ -3168,7 +3168,7 @@ msgstr "intervali 95%"
 
 #: lib/src/graphing.c:8568
 msgid "Residual ACF"
-msgstr " ACF i mbetjes"
+msgstr "ACF i mbetjes"
 
 #: lib/src/graphing.c:8570
 msgid "ACF for"
@@ -4372,7 +4372,7 @@ msgstr "gretl: ndiq këto rrugë\n"
 #: lib/src/tokenize.c:2897
 #, c-format
 msgid "Parse error at unexpected token '%s'"
-msgstr "Gabim në kod; vlerë e paparashikuar '%s' "
+msgstr "Gabim në kod; vlerë e paparashikuar '%s'"
 
 #: lib/src/gretl_prn.c:333
 #, c-format
@@ -5673,7 +5673,7 @@ msgstr "Përjashtuar për arësye kolineariteti të plotë:"
 #: lib/src/modelprint.c:1710
 #, c-format
 msgid " %d series"
-msgstr "%d seri"
+msgstr " %d seri"
 
 #: lib/src/modelprint.c:1725
 msgid "Redundant instruments:"
@@ -5856,7 +5856,7 @@ msgstr "%s i ponderuar (varianca e qëndrueshme Koenker)"
 #: lib/src/modelprint.c:2169
 #, c-format
 msgid "scaled %s"
-msgstr " %s i ponderuar"
+msgstr "%s i standardizuar"
 
 #: lib/src/modelprint.c:2250 gui/selector.c:4327
 msgid "Selection variable"
@@ -7169,7 +7169,7 @@ msgstr "Etapa"
 #: lib/src/printout.c:3381
 #, c-format
 msgid " (steplength = %g)"
-msgstr "(gjatësia e hapit = %g)"
+msgstr " (gjatësia e hapit = %g)"
 
 #: lib/src/printout.c:3383
 #, c-format
@@ -7382,7 +7382,7 @@ msgstr "gabim në vrojtimin ri të parë"
 
 #: lib/src/subsample.c:2660
 msgid "error in new ending obs"
-msgstr "gabim në vrojtimin e ri të fundit "
+msgstr "gabim në vrojtimin e ri të fundit"
 
 #: lib/src/subsample.c:2706
 #, fuzzy, c-format
@@ -7641,7 +7641,7 @@ msgstr "%s : asnjë sistem nuk është përcaktuar"
 #: lib/src/system.c:2458 lib/src/system.c:2460
 #, c-format
 msgid "iterated %s"
-msgstr "%s etapa "
+msgstr "%s etapa"
 
 #: lib/src/system.c:3559
 msgid ""
@@ -8006,7 +8006,7 @@ msgstr "Metoda e vlerësimit: %s; vrojtimet %s-%s (T = %d)"
 
 #: lib/src/varprint.c:1131 lib/src/varprint.c:1135 lib/src/varprint.c:1138
 msgid "Equation for "
-msgstr "Ekuacioni i"
+msgstr "Ekuacioni i "
 
 #: lib/src/varprint.c:1150 lib/src/varprint.c:1153 lib/src/varprint.c:1155
 msgid "F-tests of zero restrictions"
@@ -10262,7 +10262,7 @@ msgstr "Përdor mesataren e vlerave"
 
 #: gui/dialogs.c:3806
 msgid "Compact by summing"
-msgstr "Përdor shumën e vlerave "
+msgstr "Përdor shumën e vlerave"
 
 #: gui/dialogs.c:3807
 msgid "Use end-of-period values"
@@ -10370,7 +10370,7 @@ msgstr "A doni të sillni të dhënat nga clipboard-i?"
 
 #: gui/dialogs.c:4345
 msgid "Clear current dataset first"
-msgstr "Fshini së pari  të dhënat "
+msgstr "Fshini së pari të dhënat aktuale"
 
 #: gui/dialogs.c:4356
 msgid "Try appending to current dataset"
@@ -11086,7 +11086,7 @@ msgstr "shfaq polet"
 
 #: gui/filters.c:794
 msgid "filter may be numerically unstable"
-msgstr "filtri rrezikon të jetë i paqëndrueshëm numerikisht "
+msgstr "filtri rrezikon të jetë i paqëndrueshëm numerikisht"
 
 #: gui/filters.c:801
 msgid "Order:"
@@ -12214,7 +12214,7 @@ msgstr "përdor patjetër anglishten"
 
 #: gui/gretl.c:140
 msgid "force use of Basque"
-msgstr " "
+msgstr "detyro përdorimin e Basque"
 
 #: gui/gretl.c:142
 msgid "dump gretl configuration to file"
@@ -12250,7 +12250,7 @@ msgstr "Përshkrimi i ndryshores"
 
 #: gui/gretl.c:1552 gui/menustate.c:952
 msgid " No datafile loaded "
-msgstr "Asnjë skedë të dhënash e hapur"
+msgstr " Asnjë skedë të dhënash e hapur "
 
 #: gui/gretl.c:1564
 #, fuzzy
@@ -12283,7 +12283,7 @@ msgstr "_Eksporto të dhënat në..."
 
 #: gui/gretl.c:1678 gui/toolbar.c:822
 msgid "Send To..."
-msgstr "Dërgo të dhënat me email"
+msgstr "Dërgo drejt…"
 
 #: gui/gretl.c:1679
 msgid "_New data set"
@@ -12365,7 +12365,7 @@ msgstr "_Bazë të dhënash"
 
 #: gui/gretl.c:1704
 msgid "_Gretl native..."
-msgstr " _Gretl..."
+msgstr "_Gretl..."
 
 #: gui/gretl.c:1705
 msgid "_RATS 4..."
@@ -14043,7 +14043,7 @@ msgid ""
 "Use only unaccented letters, digits and underscore"
 msgstr ""
 "Emri përmban një karakter të palejuar (vendndodhja %d)\n"
-"Ju lutem përdorni vetëm shkronja (pa theks) ose numra."
+"Ju lutem përdorni vetëm shkronja (pa theks) ose numra"
 
 #: gui/gui_utils.c:5756 gui/gui_utils.c:5761
 msgid "No output was produced"
@@ -14128,7 +14128,7 @@ msgstr "5\\% perc."
 #: gui/guiprint.c:1150
 #, no-c-format
 msgid "95\\% perc."
-msgstr "95\\% perc"
+msgstr "Perc. 95\\%"
 
 #: gui/guiprint.c:1151
 msgid "IQ Range"
@@ -17414,7 +17414,7 @@ msgstr "gretl: editori i skriptit"
 
 #: gui/tabwin.c:434 gui/tabwin.c:436
 msgid "untitled"
-msgstr " i paemërtuar"
+msgstr "i paemërtuar"
 
 #: gui/tabwin.c:577
 #, fuzzy
@@ -18366,7 +18366,7 @@ msgstr ""
 
 #: plugin/fcp.c:246
 msgid " (using Hessian)"
-msgstr "(duke përdorur Hesianen)"
+msgstr " (duke përdorur Hesianen)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
@@ -18378,7 +18378,7 @@ msgstr "Gradientët e njehsimit të fundit"
 
 #: plugin/fractals.c:41
 msgid "Rescaled-range plot for"
-msgstr "Grafiku i \"shtrirjes së ponderuar\" për "
+msgstr "Grafiku i shtrirjes së standardizuar për"
 
 #: plugin/fractals.c:42
 msgid "log(sample size)"
@@ -18873,7 +18873,7 @@ msgstr "Të dhënat po ngarkohen..."
 
 #: plugin/progress_bar.c:135
 msgid "Storing"
-msgstr "Duke ruajtur..."
+msgstr "Duke ruajtur"
 
 #: plugin/progress_bar.c:138
 #, c-format
