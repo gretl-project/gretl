@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-13 10:49+0100\n"
+"PO-Revision-Date: 2020-11-13 12:09+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -15368,7 +15368,7 @@ msgstr "%s : étendue complète %s - %s"
 
 #: gui/menustate.c:1093
 msgid "(unit:period)"
-msgstr "(unité : période)"
+msgstr "(individu:période)"
 
 #: gui/menustate.c:1128
 #, c-format
