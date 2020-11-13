@@ -5475,6 +5475,10 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 	}
     }
 
+    if (opt & OPT_T) {
+	fputs("set border 3\n", fp);
+    }
+
     /* for grid lines */
     fputs("set x2tics 1 format '' scale 0,0.001\n", fp);
     fputs("set y2tics 1 format '' scale 0,0.001\n", fp);
@@ -5527,8 +5531,12 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("EOD\n", fp);
     fputs("# end inline data\n", fp);
     fputs("if (printcorr) {\n", fp);
-    fputs("plot $data matrix with image, ", fp);
-    fputs("$data matrix using 1:2:(sprintf(\"%.1f\",$3)) with labels\n", fp);
+    fputs("plot $data matrix with image, $data matrix using 1:2:", fp);
+    if (opt & OPT_T) {
+	fputs("($3!=$3 ? \"\" : sprintf(\"%.1f\",$3)) with labels\n", fp);
+    } else {
+	fputs("(sprintf(\"%.1f\",$3)) with labels\n", fp);
+    }
     fputs("} else {\n", fp);
     fputs("plot $data matrix with image\n", fp);
     fputs("}\n", fp);
