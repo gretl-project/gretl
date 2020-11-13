@@ -3388,6 +3388,9 @@ static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	strcpy(dset->varname[dbv], sinfo->varname);
 	series_set_label(dset, dbv, sinfo->descrip);
 	series_set_compact_method(dset, dbv, cmethod);
+	if (sinfo->pd < dset->pd) {
+	    series_set_orig_pd(dset, dbv, sinfo->pd);
+	}
     } else if (new) {
 	/* we added a series that has not been filled */
 	dataset_drop_last_variables(dset, 1);

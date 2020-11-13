@@ -290,6 +290,13 @@ static const struct ccode fixups[] = {
     {"North Korea", "KP", "PRK", 408},
     {"Great Britain", "GB", "GBR", 826},
     {"USA", "US", "USA", 840},
+    {"Czech Republic", "CZ", "CZE", 203},
+    {"Taiwan Province of China", "TW", "TWN", 158},
+    {"Laos", "LA", "LAO", 418},
+    {"Ivory Coast", "CI", "CIV", 384},
+    {"Congo (Kinshasa)", "CD", "COD", 180},
+    {"Congo (Brazzaville)", "CG", "COG", 178},
+    {"Hong Kong S.A.R. of China", "HK", "HKG", 344},
     {NULL, "0", "0", 0}
 };
 

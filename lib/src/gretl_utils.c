@@ -260,8 +260,7 @@ int gretl_isconst (int t1, int t2, const double *x)
  *
  * Check whether series @x is stochastic, and contains
  * nothing but valid values, over the given sample range
- * using a simple and fallible heuristic: the series
- * must contain non-integer values and the differences
+ * using a simple and fallible heuristic: the differences
  * between successive values must not all be the same.
  *
  * Returns: 1 if the variable appears to be stochastic on
@@ -271,9 +270,9 @@ int gretl_isconst (int t1, int t2, const double *x)
 int gretl_isstoch (int t1, int t2, const double *x)
 {
     double dx0;
-    int nonint = 0;
+    int na_count = 0;
     int multidiff = 0;
-    int t, ret = 0;
+    int t;
 
     if (t1 >= t2) {
         return 0;
@@ -283,24 +282,17 @@ int gretl_isstoch (int t1, int t2, const double *x)
 
     for (t=t1; t<=t2; t++) {
 	if (na(x[t])) {
-	    ret = 0;
+	    na_count++;
 	    break;
 	}
-	if (!nonint && x[t] != nearbyint(x[t])) {
-	    nonint = 1;
-	}
-	if (t > t1) {
-	    if (!multidiff && (x[t] - x[t-1] != dx0)) {
+	if (t > t1 && !multidiff) {
+	    if (x[t] - x[t-1] != dx0) {
 		multidiff = 1;
 	    }
 	}
-	if (nonint && multidiff) {
-	    ret = 1;
-	    break;
-	}
     }
 
-    return ret;
+    return (na_count == 0 && multidiff);
 }
 
 /**
