@@ -3985,15 +3985,6 @@
 
     <description>
       <para>
-	Se si vuole aggiungere a un dataset una serie di frequenza
-	inferiore, è necessario <quote>espandere</quote> la nuova
-	serie. Ad esempio, una serie trimestrale dovrà essere espansa
-	per essere aggiunta a un dataset mensile. Altre volte
-	occorrerà espandere un intero dataset a una frequenza
-	superiore prima di aggiungervi una serie che ha una frequenza
-	superiore.
-      </para>
-      <para>
         L'operazione di espansione dei dati è riservata gli utenti
         <quote>esperti</quote>: occorre sapere bene cosa si sta
         facendo. Quando si combinano serie di frequenza diversa nello
@@ -4012,20 +4003,11 @@
 	o distribuita.
       </para>
       <para>
-	Il metodo di Chow&ndash;Lin è basato su una regressione avente
-	una costante, trend quadratico ed assumendo che il disturbo è
-	assunto AR(1). Questa procedura richiede 4 gradi di libertà.
-      </para>
-      <para>
-	Per quanto riguarda il metodo della ripetizione del dato,
-	invece, diamo un esempio. Se si ha una serie trimestrale con
-	il valore 35.5 per l'osservazione 1990:1 (il primo trimestre
-	del 1990), espandendo la serie, il valore 35.5 verrà assegnato
-	alle osservazioni per gennaio, febbraio e marzo del 1990. La
-	variabile espansa non potrà quindi essere utilizzata per
-	analisi temporali "a grana fine", tranne nel caso si abbia
-	ragione di ritenere che la variabile in questione rimanga
-	costante nei vari sotto-periodi.
+	Alcune funzionalità di <lit>tdisagg</lit> sono accessibili
+	attraverso l'interfaccia grafica: basta selezionare la serie
+	candidata nella finestra principale e scegliere la voce
+	<quote>Disaggregazione</quote> sotto il menu
+	<quote>Variabile</quote>.
       </para>
     </description>
   </command>
@@ -13633,10 +13615,18 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
     <usage>
       <arguments>
         <argument>nome-variabile</argument>
-        <argument flag="-d ">descrizione</argument>
-        <argument flag="-n ">nome-grafici</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--description</flag>
+	  <optparm>stringa</optparm>
+	  <effect>imposta la descrizione</effect>
+	</option>
+	<option>
+	  <flag>--graph-name</flag>
+	  <optparm>stringa</optparm>
+	  <effect>imposta il nome per i grafici</effect>
+	</option>
 	<option>
 	  <flag>--discrete</flag>
 	  <effect>marca la variabile come discreta</effect>
@@ -13645,34 +13635,70 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <flag>--continuous</flag>
 	  <effect>marca la variabile come continua</effect>
 	</option>
+	<option>
+	  <flag>--coded</flag>
+	  <effect>mark come codifica</effect>
+	</option>
+	<option>
+	  <flag>--numeric</flag>
+	  <effect>marca come numerica</effect>
+	</option>
+	<option>
+	  <flag>--midas</flag>
+	  <effect>mark come componente di dati ad alta frequenza</effect>
+	</option>
       </options>
       <examples>
-        <example>setinfo x1 -d "Descrizione di x1" -n "Nome nei grafici"</example>
+        <example>setinfo x1 --description "Descrizione di x1"</example>
+        <example>setinfo y --graph-name="Nome nei grafici"</example>
 	<example>setinfo z --discrete</example>
       </examples>
     </usage>
 
     <description context="cli">
       <para>
-        Imposta fino a tre attributi di una variabile, nel modo seguente.
+	Se sono usate le opzioni <opt>description</opt> o <opt>graph-name</opt>
+	l'argomento deve essere una serie singola. Altrimenti, può
+	essere una lista, nel qual caso il comando opera su ognuna
+	delle variabile. Questo comando imposta fino a quattro
+	attributi, come segue.
       </para>
       <para>
-        Usando l'opzione <lit>-d</lit> seguita da una stringa tra
-        virgolette doppie, la stringa verrà usata come etichetta descrittiva per
-        la variabile indicata, che viene mostrata dal comando <cmdref
-        targ="labels"/> e anche nella finestra principale del programma.
+        Usando l'opzione <opt>description</opt> seguita da una stringa
+        tra virgolette doppie, la stringa verrà usata come etichetta
+        descrittiva per la variabile indicata, che viene mostrata dal
+        comando <cmdref targ="labels"/> e anche nella finestra
+        principale del programma.
       </para>
       <para>
-        Usando l'opzione <lit>-n</lit> seguita da una stringa tra
-        virgolette doppie, la stringa verrà usata nei grafici al posto del nome
-        della variabile.
+        Usando l'opzione <opt>graph-name</opt> seguita da una stringa
+        tra virgolette doppie, la stringa verrà usata nei grafici al
+        posto del nome della variabile.
       </para>
       <para>
         Usando una delle opzioni <opt>discrete</opt> o
-        <opt>continuous</opt>, viene impostato il carattere numerico della
-        variabile.  In modalità predefinita, tutte le variabili sono considerate come
-        continue; marcando una variabile come discreta, essa viene trattata in
-        modo speciale nei diagrammi di frequenza.
+        <opt>continuous</opt>, viene impostato il carattere numerico
+        della variabile.  In modalità predefinita, tutte le variabili
+        sono considerate come continue; marcando una variabile come
+        discreta, essa viene trattata in modo speciale in certi
+	comandi e funzioni, come ad esempio <cmdref targ="freq"/> o
+	<fncref targ="dummify"/> .
+      </para>
+      <para>
+	Se viene data una fra le opzioni <opt>coded</opt> o
+	<opt>numeric</opt>,lo stato della serie è impostato di
+	conseguenza. L'impostazione di default è di trattare tutti i
+	valori numerici come tali, per lo meno in un senso ordinale;
+	se una variabile viene impostata come <lit>coded</lit>, i
+	valori numerici sono considerati una codifica arbitraria di
+	qualche caratteristica qualitativa.
+      </para>
+      <para>
+	L'opzione <opt>midas</opt> imposta l'indicazione che una data
+	serie contiene dati a frequenza più alta di quella base del
+	dataset; per esempio, il dataset è trimestrale e la serie
+	contiene valori per il mese 1, 2 o 3 del trimestre. (MIDAS =
+	Mixed Data Sampling.)
       </para>
     </description>
 
@@ -13705,9 +13731,6 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       <para>* Marcare una variabile come discreta (per serie che contengono
         solo valori discreti). In questo modo, essa viene
         trattata in modo speciale nei diagrammi di frequenza.
-      </para>
-
-      <para>* Impostare il valore di una variabile (per variabili discrete).
       </para>
 
     </description>
@@ -15057,14 +15080,31 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </arguments>
       <options>
         <option>
+	  <flag>--no-tests</flag>
+	  <effect>omette i test diagnostici</effect>
+        </option>
+        <option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampare i risultati</effect>
+        </option>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>omette la correzione per gradi di libertà</effect>
         </option>
 	<option>
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>
  	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>standard error clusterizzati</effect>
+        </option>
+	<option>
  	  <flag>--liml</flag>
  	  <effect>usa massima verosimiglianza a informazione limitata</effect>
          </option>
@@ -15099,12 +15139,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </para>
 
       <para context="gui">
-	Questo comando richiede la scelta di due liste di variabili; le
-        variabili indipendenti che appaiono nel modello e un elenco di
-        strumenti. Questi ultimi comprendono le variabili esogene e/o
-        altre variabili predeterminate che possono essere usate per
-        derivare valori stimati dei regressori endogeni. Si noti che eventuali
-        regressori esogeni devono essere inclusi in entrambe le liste.
+	Questo comando richiede la scelta di due liste di variabili;
+	le variabili indipendenti che appaiono nel modello e un elenco
+	di strumenti. Si noti che eventuali regressori esogeni devono
+	essere inclusi in entrambe le liste.
       </para>
       
       <para>
@@ -15124,10 +15162,34 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	di entrambi i test.
       </para>
 
-      <para>
+       <para>
+	Per gli stimatori TSLS e LIML, viene mostrata una statistica
+	aggiuntiva se il modello è stimato senza l'opzione
+	<opt>robust</opt>, che riguarda la presenza di strumenti
+	deboli. Con sttrumenti deboli, possono esserci seri problemi
+	inferenziali: stime distorte e/o livelli di significatività
+	sbagliati per le statistiche test basate sulla matrice di
+	covarianze, con tassi ti rifiuto ben più grandi del livello di
+	significatività nominale <cite key="stock-wright-yogo02"
+	p="true">(Stock, Wright and Yogo, 2002)</cite>.  La statistica
+	è la <math>F</math> di primo stadio se il modello contiene un
+	solo regressore endogeno, o il più piccolo autovalore della
+	matrice corrispondente in caso contrario. Quando disponibili,
+	sono mostrati i valori critici derivati dall'analisi di Monte
+	Carlo contenuta in <cite key="stock-yogo03">Stock e Yogo
+	(2003)</cite>.
+      </para>
+
+     <para>
 	Il valore R-quadro mostrato i modelli stimati con i minimi quadrati a
         due stadi è il quadrato della correlazione tra la variabile dipendente
         e i valori stimati.
+      </para>
+
+      <para context="cli">
+	Per dettagli sull'effetto delle opzioni <opt>robust</opt> e
+	<opt>cluster</opt> si veda la documentazione per il comando
+	<cmdref targ="ols"/>.
       </para>
 
       <para context="cli">
@@ -15201,12 +15263,20 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <effect>errori standard robusti</effect>
         </option>
         <option>
+	  <flag>--quiet</flag>
+	  <effect>omette l'output delle singole equazioni</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
+        <option>
 	  <flag>--impulse-responses</flag>
-	  <effect>mostra impulso-risposta</effect>
+	  <effect>mostra le risposte di impulse</effect>
         </option>
         <option>
 	  <flag>--variance-decomp</flag>
-	  <effect>mostra decomposizioni della varianza della previsione</effect>
+	  <effect>mostra scomposizioni della varianza</effect>
         </option>
         <option>
 	  <flag>--lagselect</flag>
@@ -15217,6 +15287,9 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         <example>var 4 x1 x2 x3 ; time mydum</example>
 	<example>var 4 x1 x2 x3 --seasonals</example>
 	<example>var 12 x1 x2 x3 --lagselect</example>
+	<demos>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -15227,23 +15300,20 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
       <ilist context="gui">
 	<li><para context="gui">- L'ordine di ritardi, ossia il numero
-        di ritardi di ogni variabile presente nel sistema;</para>
+            di ritardi di ogni variabile presente nel sistema;</para>
 	</li>
-
-        <li><para context="gui">- Eventuali termini esogeni
-        (ma si noti che una costante viene inclusa automaticamente, a meno che
-        non si richieda altrimenti; inoltre è possibile includere variabili
-        dummy stagionali con l'apposita casella); e
+        <li><para context="gui">- Eventuali termini esogeni (ma si
+            noti che una costante viene inclusa automaticamente, a meno
+            che non si richieda altrimenti; inoltre è possibile includere
+            variabili dummy stagionali con l'apposita casella); e
         </para>
 	</li>
-
 	<li><para context="gui">- Una lista di variabili esogene,
-        i cui ritardi saranno inclusi a destra delle equazioni (nota:
-        non includere variabili ritardate in questa lista, verranno
-        aggiunte automaticamente).</para>
+             i cui ritardi saranno inclusi a destra delle equazioni (nota:
+             non includere variabili ritardate in questa lista, verranno
+             aggiunte automaticamente).</para>
 	</li>
       </ilist>
-
       <para context="gui">Viene calcolata una regressione separata per
       ogni variabile del sistema; i risultati comprendono i test F per i
       vincoli di uguaglianza a zero su tutti i ritardi della variabili e
@@ -15271,7 +15341,7 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </para>
 
       <para context="cli">
-	Viene calcolata una regressione separata per ognuna delle
+	Viene stampata una regressione separata per ognuna delle
         variabili nella <repl>lista-variabili</repl>. Il risultato di
         ogni equazione include i test <math>F</math> per i vincoli
         di uguaglianza a zero su tutti i ritardi delle variabili, un
@@ -15288,8 +15358,11 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	La prima variabile nella lista viene considerata come la
 	<quote>più esogena</quote> all'interno del periodo. L'orizzonte
         per le decomposizioni della varianza e le funzioni di impulso-risposta
-        può essere impostato usando il comando <cmdref targ="set"/>.
-      </para> 
+        può essere impostato usando il comando <cmdref
+	targ="set"/>. Per salvare una specifica risposta di impulso
+	sotto forma di matrice, si veda la funzione <fncref targ="irf"/>.
+      </para>
+      
       <para context="cli">
         Se si usa l'opzione <opt>lagselect</opt>, il primo parametro
         del comando <lit>var</lit> viene interpretato come il massimo

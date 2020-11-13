@@ -10519,8 +10519,8 @@
 
   </command>
 
-    <command name="panplot" section="Graphs"
-    label="plot a panel series" context="cli">
+  <command name="panplot" section="Graphs"
+   label="plot a panel series" context="cli">
 
     <usage>
       <arguments>
@@ -13587,9 +13587,11 @@
       <para>
 	If one or other of the <opt>discrete</opt> or
 	<opt>continuous</opt> option flags is given, the variable's
-	numerical character is set accordingly.  The default is to treat
-	all series as continuous; setting a series as discrete
-	affects the way the variable is handled in frequency plots.
+	numerical character is set accordingly.  The default is to
+	treat all series as continuous; setting a series as discrete
+	affects the way the variable is handled in other commands and
+	functions, such as for example <cmdref targ="freq"/> or
+	<fncref targ="dummify"/> .
       </para>
       <para>
 	If one or other of the <opt>coded</opt> or <opt>numeric</opt>
@@ -15265,11 +15267,11 @@
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
-		<example>var 4 x1 x2 x3 --seasonals</example>
-		<example>var 12 x1 x2 x3 --lagselect</example>
-	  <demos>
+	<example>var 4 x1 x2 x3 --seasonals</example>
+	<example>var 12 x1 x2 x3 --lagselect</example>
+	<demos>
 	  <demo>sw_ch14.inp</demo>
-	  </demos>
+	</demos>
       </examples>
     </usage>
 
