@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-13 22:03+0100\n"
+"PO-Revision-Date: 2020-11-14 10:08+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -1014,14 +1014,15 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   kujdes: Mungon vlera e ndryshores %d, vrojtimi %d\n"
 
 #: lib/src/csvdata.c:2220
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
-msgstr "GABIM: ndryshorja %d (%s), vrojtimi %d, përmban vlerë jo-numerike\n"
+msgstr "ndryshorja %d (%s): vlera jo-numerike = %d (%.2f përqind)\n"
 
 #: lib/src/csvdata.c:2227
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, expected numeric value\n"
-msgstr "GABIM: ndryshorja %d (%s), vrojtimi %d, përmban vlerë jo-numerike\n"
+msgstr ""
+"GABIM: ndryshorja %d (%s), vrojtimi %d, pritej vlerë përmban numerike\n"
 
 #: lib/src/csvdata.c:2236
 msgid "allocating string table\n"
@@ -1696,14 +1697,13 @@ msgid "***, **, * indicate significance at the 1%, 5%, 10% levels\n"
 msgstr "** koeficient domethënës në pragun 5%"
 
 #: lib/src/describe.c:3700
-#, fuzzy
 msgid "using Bartlett standard errors for ACF"
-msgstr "Gabimet std. të grupuar"
+msgstr "ACF përdor gabimet std. të Bartlett"
 
 #: lib/src/describe.c:3702
-#, fuzzy, c-format
+#, c-format
 msgid "using standard error 1/T^%.1f"
-msgstr "Gabime std. të qëndrueshëm"
+msgstr "me gabimin std. 1/T^%.1f"
 
 #: lib/src/describe.c:3720
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
@@ -1908,9 +1908,8 @@ msgstr "G.S."
 
 #: lib/src/describe.c:5247 lib/src/describe.c:5937 gui/guiprint.c:621
 #: gui/guiprint.c:1030
-#, fuzzy
 msgid "Min"
-msgstr "Faqja kryesore"
+msgstr "Min"
 
 #: lib/src/describe.c:5248 lib/src/describe.c:5938 gui/guiprint.c:621
 #: gui/guiprint.c:1030
@@ -3568,9 +3567,8 @@ msgid "generated non-finite values"
 msgstr "u simuluan vlera të pafundme"
 
 #: lib/src/gretl_errors.c:234 lib/src/gretl_errors.c:237
-#, fuzzy
 msgid "In regard to function"
-msgstr "Zgjidh funksionin"
+msgstr "Në lidhje me funksionin"
 
 #: lib/src/gretl_errors.c:235
 msgid "package"
@@ -4642,7 +4640,7 @@ msgstr "Mungon shënimi për vrojtimin %d"
 #: lib/src/gretl_xml.c:3268 lib/src/gretl_xml.c:3412
 #, c-format
 msgid "Values missing at observation %d"
-msgstr "Ka ca vlera që mungojnë në vrojtimin %d"
+msgstr "Ka vlera që mungojnë në vrojtimin %d"
 
 #: lib/src/gretl_xml.c:3302 lib/src/gretl_xml.c:3435
 msgid "Number of observations does not match declaration"
@@ -4866,7 +4864,7 @@ msgstr "kalman: mungon një matricë e nevojshme"
 #: lib/src/kalman.c:469
 #, c-format
 msgid "kalman: required matrix %s is missing"
-msgstr "kalman: mungon matricë e nevojshme %s"
+msgstr "kalman: mungon matrica e nevojshme %s"
 
 #: lib/src/libglue.c:465
 #, c-format
@@ -7783,9 +7781,9 @@ msgid "dummy for %s = %g"
 msgstr "ndryshore treguese për %s = %g"
 
 #: lib/src/transforms.c:2036
-#, fuzzy, c-format
+#, c-format
 msgid "A minimum of %d observations is required"
-msgstr "Vrojtimet e përfshirë në mesatare:"
+msgstr "Nevojiten të paktën %d vrojtime"
 
 #: lib/src/transforms.c:2155
 msgid "dummify: no suitable variables were found"
@@ -9026,9 +9024,8 @@ msgid "Failed to create empty data set"
 msgstr "E pamundur të krijohet një skedë të dhënash boshe"
 
 #: gui/callbacks.c:803 gui/callbacks.c:807
-#, fuzzy
 msgid "system gfn directory"
-msgstr "Zgjidh skedarin"
+msgstr "skedari gfn i sistemit"
 
 #: gui/callbacks.c:804 gui/callbacks.c:810
 msgid "personal gfn directory"
@@ -9415,9 +9412,8 @@ msgid "Browse..."
 msgstr "Kërko..."
 
 #: gui/datafiles.c:1669 gui/gretl.c:1710
-#, fuzzy
 msgid "Specific series..."
-msgstr "G_rafik kohor..."
+msgstr "Seri specifike…"
 
 #: gui/datafiles.c:1703
 msgid "Select directory"
@@ -9471,9 +9467,8 @@ msgid "All packages"
 msgstr "Të gjitha paketat"
 
 #: gui/datafiles.c:1897 gui/join-gui.c:456
-#, fuzzy
 msgid "filter"
-msgstr "Filtri"
+msgstr "filtrim"
 
 #: gui/datafiles.c:1984
 msgid "local machine"
@@ -9490,9 +9485,8 @@ msgid "gretl: function packages on %s"
 msgstr "gretl: paketë funksioni në %s"
 
 #: gui/datafiles.c:2074
-#, fuzzy
 msgid "The gui package registry is empty"
-msgstr "Faqja e grafikëve është bosh"
+msgstr "Regjistri i paketave gui është bosh"
 
 #: gui/datafiles.c:2081
 msgid "gretl: practice files"
@@ -9940,9 +9934,8 @@ msgid "Resample residuals"
 msgstr "Zgjedhje e rastësishme e mbetjeve"
 
 #: gui/dialogs.c:1100
-#, fuzzy
 msgid "Resample data \"pairs\""
-msgstr "zgjidh një kampion të rastit"
+msgstr "Rikampiono të dhënat në ’’çifte’’"
 
 #: gui/dialogs.c:1108
 #, fuzzy
@@ -10310,9 +10303,8 @@ msgid "gretl: expand data"
 msgstr "gretl: zgjerimi i të dhënave"
 
 #: gui/dialogs.c:4085
-#, fuzzy
 msgid "Expand annual data to"
-msgstr "Zgjero të dhënat vjetore në mujore:"
+msgstr "Zgjero të dhënat vjetore në"
 
 #: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
@@ -10684,9 +10676,9 @@ msgid "Open %s in new window"
 msgstr "Dritare e re"
 
 #: gui/fileselect.c:387
-#, fuzzy, c-format
+#, c-format
 msgid "Replace %s"
-msgstr "Zëvëndësuar"
+msgstr "Zëvëndëso %s"
 
 #: gui/fileselect.c:392
 #, fuzzy, c-format
@@ -10824,9 +10816,8 @@ msgid "Open %s file"
 msgstr ""
 
 #: gui/fileselect.c:1179
-#, fuzzy
 msgid "select directory"
-msgstr "Zgjidh skedarin"
+msgstr "zgjidh skedarin"
 
 #: gui/fileselect.c:1188
 #, fuzzy
@@ -10834,9 +10825,8 @@ msgid "select PDF file"
 msgstr "skedë PDF"
 
 #: gui/fileselect.c:1190
-#, fuzzy
 msgid "select file"
-msgstr "zgjidh një ndryshore"
+msgstr "zgjidh një skedë"
 
 #: gui/fileselect.c:1196
 #, fuzzy
@@ -11046,7 +11036,7 @@ msgstr "k (vlerë e madhe -> përafrim i mirë):"
 
 #: gui/filters.c:767
 msgid "n (higher values -> better approximation):"
-msgstr "k (vlerë e madhe -> përafrim i mirë):"
+msgstr "n (vlerë e madhe -> përafrim i mirë):"
 
 #: gui/filters.c:779
 msgid "frequency cutoff (degrees):"
@@ -11451,9 +11441,8 @@ msgid "PDF file"
 msgstr "skedë PDF"
 
 #: gui/fnsave.c:1972
-#, fuzzy
 msgid "Select"
-msgstr "_Zgjidh të gjitha ndryshoret"
+msgstr "Zgjidh"
 
 #: gui/fnsave.c:2146
 msgid "Minimum gretl version"
@@ -11972,9 +11961,8 @@ msgid "c.i. bound"
 msgstr "kufiri i sipërm"
 
 #: gui/gpt_dialog.c:2340 gui/gpt_dialog.c:2346
-#, fuzzy
 msgid "outliers"
-msgstr "Vrojtime anormalë"
+msgstr "vlera të tejskajshme"
 
 #: gui/gpt_dialog.c:2366
 #, c-format
@@ -12113,7 +12101,7 @@ msgstr "Faqja e grafikëve është bosh"
 
 #: gui/graph_page.c:709
 msgid "graph page options"
-msgstr "mundësi për grafikun"
+msgstr "opsjonet e faqes së grafikëve"
 
 #: gui/graphics.c:197
 msgid "height"
@@ -12895,9 +12883,8 @@ msgid "_LIML"
 msgstr "MPIK"
 
 #: gui/gretl.c:1886 gui/gretl.c:1935
-#, fuzzy
 msgid "_GMM"
-msgstr "_GMM - Metoda e Përgjithësuar e Momenteve (MPM)"
+msgstr "_GMM - Metoda e Përgjithësuar e Momenteve"
 
 #: gui/gretl.c:1887
 msgid "Other _linear models"
@@ -12934,9 +12921,8 @@ msgid "ARI_MA"
 msgstr "Model ARI_MA"
 
 #: gui/gretl.c:1895
-#, fuzzy
 msgid "_GARCH"
-msgstr "GARCH"
+msgstr "_GARCH"
 
 #: gui/gretl.c:1897
 msgid "_AR errors (GLS)"
@@ -12961,9 +12947,8 @@ msgid "_Vector Autoregression"
 msgstr "Model _VAR..."
 
 #: gui/gretl.c:1902
-#, fuzzy
 msgid "VAR _lag selection"
-msgstr "Zgjedhja e vonesës për modelin VAR"
+msgstr "Mode_li VAR- Zgjedhja e vonesës"
 
 #: gui/gretl.c:1903
 #, fuzzy
@@ -13134,19 +13119,16 @@ msgid "_Function package guide"
 msgstr "Udhëzues mbi paketën e _funksionit"
 
 #: gui/gretl.c:1948
-#, fuzzy
 msgid "_gretl + MPI"
-msgstr "gretl: MPM"
+msgstr "_gretl + MPI"
 
 #: gui/gretl.c:1949
-#, fuzzy
 msgid "_gretl + SVM"
-msgstr "gretl: MPM"
+msgstr "_gretl + SVM"
 
 #: gui/gretl.c:1950
-#, fuzzy
 msgid "_gretl + DB.NOMICS"
-msgstr "gretl: MPM"
+msgstr "_gretl + DB.NOMICS"
 
 #: gui/gretl.c:1951
 msgid "Check for _updates"
@@ -13558,19 +13540,16 @@ msgid "gretl: edit Python script"
 msgstr "gretl: skript Python"
 
 #: gui/gui_utils.c:1797
-#, fuzzy
 msgid "gretl: edit Julia program"
-msgstr "gretl: skript Ox"
+msgstr "gretl: edito skriptin Julia"
 
 #: gui/gui_utils.c:1799
-#, fuzzy
 msgid "gretl: edit Stata program"
-msgstr "gretl: skript Ox"
+msgstr "gretl: edito skriptin Stata"
 
 #: gui/gui_utils.c:1801
-#, fuzzy
 msgid "gretl: edit Dynare script"
-msgstr "gretl: skript R"
+msgstr "gretl: edito skriptin Dynare"
 
 #: gui/gui_utils.c:1803
 msgid "gretl: edit package spec file"
@@ -14379,9 +14358,8 @@ msgid "Import data from %s"
 msgstr "Importo të dhënat nga %s"
 
 #: gui/join-gui.c:326 gui/join-gui.c:334
-#, fuzzy
 msgid "gretl: join data"
-msgstr "gretl: hap një skedë të dhënash"
+msgstr "gretl: bashko të dhënash"
 
 #: gui/join-gui.c:427
 msgid "import series"
@@ -14396,9 +14374,8 @@ msgid "inner key"
 msgstr ""
 
 #: gui/join-gui.c:443
-#, fuzzy
 msgid "outer key"
-msgstr "Grupim sipas"
+msgstr "çelës i jashtëm"
 
 #: gui/join-gui.c:464
 msgid "aggregation"
@@ -14766,9 +14743,8 @@ msgid "Normal Q-Q plot"
 msgstr "Grafiku Q-Q Normal"
 
 #: gui/library.c:3039
-#, fuzzy
 msgid "You must select at least one regressor"
-msgstr "Zgjidhni një ndryshore për limitin e poshtëm"
+msgstr "Zgjidh të paktën një regresor"
 
 #: gui/library.c:3090 gui/library.c:3201
 msgid "gretl: Chow test output"
@@ -14779,7 +14755,6 @@ msgid "This test only implemented for OLS models"
 msgstr "Ky test përdoret vetëm për modelin KVZ"
 
 #: gui/library.c:3144
-#, fuzzy
 msgid "gretl: chow test"
 msgstr "gretl: testi Chow"
 
@@ -14914,9 +14889,8 @@ msgid "correlogram"
 msgstr "korrelogram"
 
 #: gui/library.c:5881
-#, fuzzy
 msgid "Use Bartlett standard errors"
-msgstr "Gabimet std. të grupuar"
+msgstr "Përdor gabimet std. të Bartlett"
 
 #: gui/library.c:5887 gui/library.c:5891
 msgid "Maximum lag:"
@@ -15012,9 +14986,8 @@ msgid "Standardizing %s"
 msgstr "Standardizimi i %s"
 
 #: gui/library.c:6485
-#, fuzzy
 msgid "Standardizing variables"
-msgstr "Gabim gjatë shtimit të ndryshoreve"
+msgstr "Reduktim i ndryshoreve"
 
 #: gui/library.c:6488
 #, fuzzy
@@ -15627,7 +15600,7 @@ msgstr "P"
 # ka te beje me ndryshoren ne VECM
 #: gui/selector.c:962
 msgid "R"
-msgstr "K"
+msgstr "R"
 
 #: gui/selector.c:1338
 msgid "Select and right-click to edit specification"
@@ -16184,9 +16157,8 @@ msgid "Single λ-fraction"
 msgstr "Fraksioni λ:"
 
 #: gui/selector.c:6446
-#, fuzzy
 msgid "Multiple λ values"
-msgstr "Grafik i shumëfishtë"
+msgstr "Vlera të shumëfishta të λ"
 
 #: gui/selector.c:6465 gui/toolbar.c:617
 msgid "Confidence level"
@@ -16461,9 +16433,8 @@ msgid "Select variables to copy"
 msgstr "Zgjidhni ndryshoret që doni të kopjoni"
 
 #: gui/selector.c:7611
-#, fuzzy
 msgid "Select variables to test"
-msgstr "Zgjidhni ndryshoret që doni të hiqni"
+msgstr "Zgjidh ndryshoret që do testohen"
 
 #: gui/selector.c:7613
 msgid "Define named list"
@@ -16486,9 +16457,8 @@ msgid "Export data"
 msgstr "Eksporto të dhënat"
 
 #: gui/selector.c:8381
-#, fuzzy
 msgid "Select functions"
-msgstr "Zgjidh funksionin"
+msgstr "Zgjidh funksionet"
 
 #: gui/selector.c:8403
 msgid "Edit package list"
@@ -16572,9 +16542,8 @@ msgid "Edit plot commands"
 msgstr "Shfaq komandat e vizatimit"
 
 #: gui/session.c:188 gui/session.c:3561
-#, fuzzy
 msgid "Add to graph page"
-msgstr "Faqja e grafikëve"
+msgstr "Shto në faqen e grafikëve"
 
 #: gui/session.c:191 gui/session.c:218 gui/session.c:3458 gui/session.c:3602
 #: gui/textutil.c:490 gui/toolbar.c:812
@@ -16853,9 +16822,8 @@ msgid "Default graph scale"
 msgstr "Shkalla e zakonshme e grafikut"
 
 #: gui/settings.c:242
-#, fuzzy
 msgid "Graph theme"
-msgstr "Faqja e grafikëve"
+msgstr "Paraqitja e grafikut"
 
 #: gui/settings.c:245
 msgid "Command to launch gnuplot"
@@ -17135,9 +17103,8 @@ msgid "Show working directory in main window"
 msgstr "Përcakto skedarin e punës nëpërmjet shell-it"
 
 #: gui/settings.c:3119
-#, fuzzy
 msgid "Open working directory"
-msgstr "gretl: skedari i punës"
+msgstr "Hap skedarin i punës"
 
 #: gui/settings.c:3182
 msgid "gretl: working directory"
@@ -17350,9 +17317,8 @@ msgid "untitled"
 msgstr "i paemërtuar"
 
 #: gui/tabwin.c:577
-#, fuzzy
 msgid "gretl: foreign script editor"
-msgstr "gretl: editori i skriptit"
+msgstr "gretl: editor skripti të jashtëm"
 
 #: gui/tabwin.c:581
 msgid "gretl: models"
@@ -17387,14 +17353,12 @@ msgid "processing...\n"
 msgstr "punë e sipër...\n"
 
 #: gui/textbuf.c:1598
-#, fuzzy
 msgid "gretl + MPI"
-msgstr "gretl: MPM"
+msgstr "gretl + MPI"
 
 #: gui/textbuf.c:1600
-#, fuzzy
 msgid "gretl + SVM"
-msgstr "gretl: MPM"
+msgstr "gretl + SVM"
 
 #: gui/textbuf.c:1604
 msgid "dbnomics for gretl"
@@ -18000,9 +17964,8 @@ msgid "Full"
 msgstr "Plot"
 
 #: plugin/addons-i18n.c:61
-#, fuzzy
 msgid "Historical decomposition"
-msgstr "zbërthimi i variancës"
+msgstr "Zbërthimi historik"
 
 #: plugin/addons-i18n.c:62
 #, fuzzy
@@ -18919,7 +18882,7 @@ msgstr "zgjedhje për X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:242 plugin/tramo_options.c:608
 msgid "Detect and correct for outliers"
-msgstr "Gjej dhe korrigjo vrojtimet anormalë"
+msgstr "Gjej dhe korrigjo vlerat e tejskajshme"
 
 #: plugin/tramo-x12a.c:248
 msgid "Correct for trading days effect"
@@ -19021,11 +18984,11 @@ msgstr "Pa korrigjim të mesatares"
 
 #: plugin/tramo_options.c:605
 msgid "Outliers"
-msgstr "Vrojtime anormale"
+msgstr "Vlera të tejskajshme"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
-msgstr "Përveç vrojtimeve anormalë shtesë, lejo edhe:"
+msgstr "Përveç shtesës së vlerave të tejskajshme, lejo edhe:"
 
 #: plugin/tramo_options.c:628
 msgid "transitory changes"
@@ -19037,11 +19000,11 @@ msgstr "ndryshim niveli"
 
 #: plugin/tramo_options.c:646
 msgid "innovational outliers"
-msgstr "inovime anormalë"
+msgstr "inovime të tejskajshme"
 
 #: plugin/tramo_options.c:661
 msgid "Critical value for outliers:"
-msgstr "Vlera kritike për vrojtimet anormalë:"
+msgstr "Vlera kritike për vlerat e tejskajshme:"
 
 #: plugin/tramo_options.c:739
 msgid "Non-seasonal differences:"
@@ -19102,9 +19065,8 @@ msgid "Belsley-Kuh-Welsch collinearity diagnostics"
 msgstr ""
 
 #: plugin/vif.c:422
-#, fuzzy
 msgid "variance proportions"
-msgstr "zbërthimi i variancës"
+msgstr "Proporcionet e variancës"
 
 #: plugin/vif.c:423
 msgid "eigenvalues of inverse covariance matrix"
