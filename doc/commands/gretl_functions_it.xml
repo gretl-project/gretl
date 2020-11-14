@@ -7020,6 +7020,29 @@
 	  l'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
 	  valori mancanti in <math>t</math>.
 	</para>
+	<para>
+	  L'esempio seguente illustra la funzione:
+	</para>
+	<code>
+	  open denmark.gdt
+	  eval mean(LRM)
+	  list L = dataset
+	  eval mean(L)
+	</code>
+	<para>
+	  La prima chiamata restituisce la media (scalare) della serie
+	  <lit>LRM</lit>, mentre la seconda ritorna una serie.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="median"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -7029,11 +7052,42 @@
       </fnargs>
       <description>
 	<para>
-	  Calcola le medie per colonna di <argname>X</argname>. 
+	  Calcola le medie per colonna di <argname>X</argname>, senza
+	  saltare osservazioni mancanti. 
+	</para>
+	<para>
+	  Ad esempio, il codice seguente
+	</para>
+	<code>
+		matrix m = mnormal(5, 2)
+		m[1,2] = NA
+		print m
+		eval meanc(m)
+	</code>
+	<para>
+	  produce questo output:
+	</para>
+	<code>
+		? print m
+		m (5 x 2)
+
+	   -0.098299          nan
+	      1.1829      -1.2817
+	     0.46037     -0.92947
+	      1.4896     -0.91970
+	     0.91918      0.47748
+
+		? eval meanc(m)
+	     0.79075          nan
+	</code>
+	<para>
 	  <seelist>
 	    <fncref targ="meanr"/>
 	    <fncref targ="sumc"/>
-	    <fncref targ="sdc"/>
+            <fncref targ="maxc"/>
+            <fncref targ="minc"/>
+            <fncref targ="sdc"/>
+            <fncref targ="prodc"/>
 	  </seelist>
 	</para>
       </description>
@@ -10150,6 +10204,7 @@
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="int">b</fnarg>
+	<fnarg optional="true" type="int">d</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -10179,6 +10234,20 @@
 	  della lunghezza del blocco, l'ultimo blocco estratto è
 	  troncato per adattarlo.
 	</para>
+	<subhead>Numero di estrazioni</subhead>
+	<para>
+	  Il default per il numero di osservazioni ricampionato in
+	  output è uguale a quello dell'input&mdash; se
+	  <argname>x</argname> è una serie, l'ampiezza del campione
+	  attualmente in vigore; se <argname>x</argname> è una
+	  matrice, il numero di righe.  Nel caso matriciale,
+	  <emphasis>solo</emphasis> questo è aggiustabile tramite il
+	  terzo argomento, che deve essere un intero positivo.
+	  Nota: se <argname>b</argname> è maggiore di 1,
+	  <argname>d</argname> si riferisce al numero di singole
+	  osservazioni, non di blocchi.
+	</para>
+	<subhead>Panel data</subhead>
 	<para>
 	  Se l'argomento <argname>x</argname> è una serie e il dataset
 	  è di tipo panel, il ricampionamento per blocchi mobili non è
@@ -10422,6 +10491,23 @@
 	  che vengano generate dummy centrate. Per esempio, con dati
 	  trimestrali le dummy centrate assumono valori di &minus;0,25
 	  e 0,75 anziché 0 e 1.
+	</para>
+	<para>
+	  Con dati settimanali l'effetto dipende a seconda se i dati
+	  sono datati o no. Se sì, venfono create fino a 53 serie
+	  stagionali, sulla base del numero progressivo ISO 8601 (si
+	  veda la funzione <fncref targ="isoweek"/>); altrimenti, il
+	  numero massimo di serie è 52 (cosicché nel lungo termine
+	  le dummy <quote>stagionali</quote> finiranno fuori sincrono
+	  con l'anno). Nel caso datato, per creare dummy mensili si
+	  può fare così:
+	</para>
+	<code>
+	  series month = $obsminor
+	  list months = dummify(month)
+	</code>
+	<para>
+	  Si veda <fncref targ="dummify"/> per maggiori dettagli.
 	</para>
       </description>
     </function>    
