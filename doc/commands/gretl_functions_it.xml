@@ -152,6 +152,16 @@
       </description>
     </function>    
 
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce il percorso dove gretl salva i
+	  file temporanei, ad esempio quando si usa la funzione
+	  <fncref targ="mwrite"/> con un terzo argomento non-zero.
+	</para>
+      </description>
+    </function>
+
     <function name="$dw" section="access" output="scalar">
       <description>
 	<para>
@@ -1229,6 +1239,18 @@
 	<para>
 	  Si veda anche il comando <cmdref targ="shell"/>.
 	</para>
+      </description>
+    </function>
+
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce il percorso di default dove
+	  gretl legge e scrive file. Una descrizione più ampia si
+	  trova nella Command Reference sotto <cmdref
+	  targ="workdir"/>. Si noti che questa stringa può essere
+	  impostata tramite il comando <cmdref targ="set"/>.
+        </para>
       </description>
     </function>
 
