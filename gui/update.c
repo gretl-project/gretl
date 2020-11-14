@@ -31,13 +31,12 @@ static void show_update_message (int vserver)
 
     if (vserver > vclient) {
 	msg = g_strdup_printf(_("You are running gretl %s.\n"
-				"Version %s is available at http://ricardo.ecn.wfu.edu/pub/gretl/\n"
-				"(If this version is not yet at http://gretl.sourceforge.net/\n"
-				"it should be shortly.)"), GRETL_VERSION, latest);
+				"Version %s is available at http://gretl.sourceforge.net/\n"),
+				GRETL_VERSION, latest);
     } else if (vclient > vserver) {
 	msg = g_strdup_printf(_("You are running gretl %s.\n"
 				"This seems to be a pre-release; the latest version available at\n"
-				"http://ricardo.ecn.wfu.edu/pub/gretl/ is %s"),
+				"http://gretl.sourceforge.net/ is %s"),
 			      GRETL_VERSION, latest);
     } else {
 	msg = g_strdup_printf(_("You are running gretl %s.\n"
