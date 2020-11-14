@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-12 20:12+0100\n"
+"PO-Revision-Date: 2020-11-13 12:09+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: lib/src/adf_kpss.c:511
 msgid "lagged differences"
@@ -7426,7 +7426,7 @@ msgstr "horaire"
 
 #: lib/src/subsample.c:3128
 msgid "weekly"
-msgstr "hebdomadaire"
+msgstr "données hebdomadaires"
 
 #: lib/src/subsample.c:3130
 msgid "daily (5 days)"
@@ -9644,7 +9644,7 @@ msgstr "Données mensuelles"
 
 #: gui/datawiz.c:414 gui/dialogs.c:3692 gui/menustate.c:1008
 msgid "Weekly"
-msgstr "Hebdomadaire"
+msgstr "Données hebdomadaires"
 
 #: gui/datawiz.c:415 gui/dialogs.c:3700 gui/menustate.c:1010
 msgid "Daily (5 days)"
@@ -15368,7 +15368,7 @@ msgstr "%s : étendue complète %s - %s"
 
 #: gui/menustate.c:1093
 msgid "(unit:period)"
-msgstr "(unité : période)"
+msgstr "(individu:période)"
 
 #: gui/menustate.c:1128
 #, c-format

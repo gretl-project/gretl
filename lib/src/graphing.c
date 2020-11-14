@@ -7420,7 +7420,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	    if (sval != NULL) {
 		strncat(gset->varname[i+1], sval, VNAMELEN-1);
 	    } else {
-		sprintf(gset->varname[i+1], "group %d", u0+i+1);
+		sprintf(gset->varname[i+1], "%d", u0+i+1);
 	    }
 	} else if (panel_labels) {
 	    if (use > 0) {
@@ -7431,7 +7431,7 @@ static int panel_overlay_ts_plot (const int vnum,
 		strcpy(gset->varname[i+1], dset->S[s]);
 	    }
 	} else {
-	    sprintf(gset->varname[i+1], "group %d", u0+i+1);
+	    sprintf(gset->varname[i+1], "%d", u0+i+1);
 	}
 	for (t=0; t<T; t++) {
 	    gset->Z[i+1][t] = dset->Z[vnum][s++];
