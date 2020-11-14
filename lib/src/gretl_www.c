@@ -49,13 +49,22 @@ enum {
 
 #define DBHLEN 64
 
+#define SF_CGI 0
+
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
 static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
-static char updatecgi[DBHLEN]    = "/gretl/cgi-bin/gretl_update.cgi";
+static char updatecgi[DBHLEN]    = "/cgi-bin/gretl_update.cgi";
 static char manual_path[DBHLEN]  = "/project/gretl/manual/";
 static char dataset_path[DBHLEN] = "/project/gretl/datafiles/";
 static char datapkg_list[DBHLEN] = "/addons-data/datapkgs.txt";
+
+#if SF_CGI
+static char dbserver[DBHLEN]     = "gretl.sourceforge.net";
+static char dbcgi[DBHLEN]        = "/cgi-bin/gretldata.cgi";
+#else
+static char dbserver[DBHLEN]     = "ricardo.ecn.wfu.edu";
+#endif
 
 static int wproxy;
 static char proxyhost[128];
@@ -272,6 +281,19 @@ static size_t gretl_write_func (void *buf, size_t size, size_t nmemb,
     return ret;
 }
 
+#if SF_CGI
+
+static int is_db_transaction (int opt)
+{
+    return (opt == LIST_DBS ||
+	    opt == CHECK_DB ||
+	    opt == GRAB_IDX ||
+	    opt == GRAB_DATA ||
+	    opt == GRAB_NBO_DATA);
+}
+
+#endif
+
 static int progress_bar_wanted (int opt)
 {
     if (gretl_in_gui_mode()) {
@@ -355,17 +377,6 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
 	sprintf(fstr, "%d", filter);
 	strcat(u->url, "&filter=");
 	strcat(u->url, fstr);
-    }
-}
-
-static void maybe_revise_www_paths (void)
-{
-    if (!strcmp(dbhost, "localhost")) {
-	strcpy(gretlhost, "localhost");
-    } else if (!strcmp(dbhost, "www.wfu.edu")) {
-	strcpy(gretlhost, "www.wfu.edu");
-	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
-	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
     }
 }
 
@@ -579,8 +590,6 @@ static int retrieve_url (const char *hostname,
     urlinfo u = {0};
     int err = 0;
 
-    maybe_revise_www_paths();
-
     if (getbuf != NULL) {
 	*getbuf = NULL;
 	saveopt = SAVE_TO_BUFFER;
@@ -593,6 +602,13 @@ static int retrieve_url (const char *hostname,
 #endif
 
     urlinfo_init(&u, hostname, saveopt, localfile);
+
+#if SF_CGI
+    if (is_db_transaction(opt)) {
+	strcat(u.url, dbcgi);
+	goto url_next;
+    }
+#endif
 
     if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
 	strcat(u.url, fname);
@@ -609,6 +625,10 @@ static int retrieve_url (const char *hostname,
     } else {
 	strcat(u.url, datacgi);
     }
+
+#if SF_CGI
+ url_next:
+#endif
 
     if (strstr(gretlhost, "ricardo") == NULL) {
 	fprintf(stderr, "using gretlhost = '%s'\n", gretlhost);
@@ -665,7 +685,7 @@ int get_update_info (char **saver, int verbose)
     urlinfo u;
     int err = 0;
 
-    urlinfo_init(&u, gretlhost, SAVE_TO_BUFFER, NULL);
+    urlinfo_init(&u, sfweb, SAVE_TO_BUFFER, NULL);
     strcat(u.url, updatecgi);
 
     if (verbose) {
@@ -699,8 +719,6 @@ int upload_function_package (const char *login, const char *pass,
     int saveopt = SAVE_NONE;
     urlinfo u;
     int err = 0;
-
-    maybe_revise_www_paths();
 
     if (retbuf != NULL) {
 	*retbuf = NULL;
@@ -893,7 +911,7 @@ int curl_does_smtp (void)
 
 int list_remote_dbs (char **getbuf)
 {
-    return retrieve_url(dbhost, LIST_DBS, NULL, NULL,
+    return retrieve_url(dbserver, LIST_DBS, NULL, NULL,
 			NULL, 0, getbuf);
 }
 
@@ -925,7 +943,7 @@ int list_remote_data_packages (char **getbuf)
 
 int retrieve_remote_db_index (const char *dbname, char **getbuf)
 {
-    return retrieve_url(dbhost, GRAB_IDX, dbname, NULL,
+    return retrieve_url(dbserver, GRAB_IDX, dbname, NULL,
 			NULL, 0, getbuf);
 }
 
@@ -933,7 +951,7 @@ int retrieve_remote_db (const char *dbname,
 			const char *localname,
 			int opt)
 {
-    return retrieve_url(dbhost, opt, dbname, NULL,
+    return retrieve_url(dbserver, opt, dbname, NULL,
 			localname, 0, NULL);
 }
 
@@ -942,7 +960,7 @@ int check_remote_db (const char *dbname)
     char *getbuf = NULL;
     int err;
 
-    err = retrieve_url(dbhost, CHECK_DB, dbname, NULL,
+    err = retrieve_url(dbserver, CHECK_DB, dbname, NULL,
 		       NULL, 0, &getbuf);
 
     if (!err && getbuf != NULL) {
@@ -1178,7 +1196,7 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
-    return retrieve_url(dbhost, opt, dbname, varname,
+    return retrieve_url(dbserver, opt, dbname, varname,
 			NULL, 0, getbuf);
 }
 
