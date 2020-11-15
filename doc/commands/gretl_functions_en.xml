@@ -7205,7 +7205,7 @@
 	<code>
 		11.704916
 
-      m
+	    m
 		1974:1     3.029197
 		1974:2     3.025906
 		1974:3     3.004191
@@ -8566,7 +8566,23 @@
       <description>
 	<para>
 	  Returns the number of non-missing observations for the variable
-	  <argname>y</argname> in the currently selected sample.
+	  <argname>y</argname> in the currently selected sample. In case of
+	  a panel data set, the number of cross-sectional units times the
+	  number of non-missing observations per unit is returned. See the
+	  following example for a panel data set:
+	</para>
+	<code>
+		open grunfeld.gdt
+		eval $nobs
+
+		? eval $nobs
+		200
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="pnobs"/>
+            <fncref targ="pxnobs"/>
+	  </seelist>
 	</para>
       </description>
     </function>
