@@ -9308,6 +9308,7 @@
     <function name="psdroot" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
+	<fnarg type="bool" optional="true">psdcheck</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9323,6 +9324,18 @@
 	  = LL'$"/>. Gli elementi indeterminati della soluzione
 	  vengono posti pari a zero.
 	</para>
+	<para>
+	  Per forzare un controllo sulla definitezza di
+	  <argname>A</argname>, si può usare un valore non-zero per il
+	  secondo argomento (opzionale). In tal caso, verrà prodotto
+	  un errore se il minimo valore assoluto di <equation
+	  status="inline" ascii="A &minus; LL'" tex="$A - LL'$"/>
+	  eccede 1.0e-8. Per effettuare lo stesso controllo a mano:
+	</para>
+	<code>
+	  L = psdroot(A)
+	  chk = maxc(maxr(abs(A - L*L')))
+	</code>
 	<para>
 	  Nel caso in cui <argname>A</argname> sia definita positiva, v. 
 	  <fncref targ="cholesky"/>.
@@ -11422,14 +11435,21 @@
     <function name="strvals" section="strings" output="strings">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg optional="true" type="bool">subsample</fnarg>
       </fnargs>  
       <description>
 	<para>
 	  Se la serie <argname>y</argname> contiene stringhe,
-	  restituisce un array contenente tutti i suoi valori
-	  distinti, ordinati per il valore numerico associato,
-	  partendo da 1. Se invece <argname>y</argname> non contiene
-	  stringhe, viene restituito un array vuoto.
+	  restituisce un array contenente tutti i suoi valori distinti
+	  (indipendentemente da quale sia il campione attualmente in
+	  vigore), ordinati per il valore numerico associato, partendo
+	  da 1. Se il dataset è limitato a un sottocampione, dando un
+	  valore non-zero al secondo argomento la funzione restituirà
+	  un array con le sole stringhe corrispondenti al
+	  sottocampione selezionato.
+	</para>
+	<para>Se invece <argname>y</argname> non contiene stringhe,
+	  viene restituito un array vuoto.
 	  <seelist> 
 	    <fncref targ="stringify"/>
 	  </seelist>
