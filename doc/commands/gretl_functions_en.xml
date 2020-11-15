@@ -7091,7 +7091,7 @@
 		eval mean(L)
 	</code>
 	<para>
-	  The first call will return the scalar mean value of the
+	  The first call will return the scalar mean value (scalar) of the
 	  series <lit>LRM</lit>, and the second one returns a
 	  series.
 	</para>
@@ -7185,6 +7185,42 @@
 	  median of the values of the variables in the list at
 	  observation <math>t</math>, or <lit>NA</lit> if there are
 	  any missing values at <math>t</math>.
+	</para>
+	<para>
+	  The following example illustrates the working of the function
+	</para>
+	<code>
+		set verbose off
+		open denmark.gdt
+		eval median(LRM)
+		list L = dataset
+		series m = median(L)
+		print m --byobs --range=1:5
+	</code>
+	<para>
+	  The first call will return the scalar mean value (scalar) of the
+	  series <lit>LRM</lit>, and the second one returns a
+	  series.
+	</para>
+	<code>
+		11.704916
+
+      m
+		1974:1     3.029197
+		1974:2     3.025906
+		1974:3     3.004191
+		1974:4     2.982241
+		1975:1     2.969087
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="mean"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
 	</para>
       </description>
     </function>
