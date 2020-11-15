@@ -2157,11 +2157,17 @@
 	  <flag>--verbose</flag>
 	  <effect>print rankings</effect>
 	</option>
-        <option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
-        </option>
+     </option>
+		
+	<option>
+	  <flag>--triangle</flag>
+	  <effect>only plot lower half, see below</effect>
+     </option>
+	 
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -2220,8 +2226,8 @@
 	mode); or a file name. The effect of providing a file name is
 	as described for the <opt>output</opt> option of the <cmdref
 	targ="gnuplot"/> command. When plotting is active the
-	additional option <opt>triangle</opt> can be used to show only
-	the lower triangle of the matrix.
+	option <opt>triangle</opt> can be used to show only
+	the lower triangle of the matrix plot.
       </para>
       <para>
 	If the alternative form is given, using a named matrix rather
