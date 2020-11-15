@@ -1,4 +1,4 @@
-# Polish translation for gretl 2020b_cvs
+# Polish translation for gretl 2020e_cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <pawel.kufel@wsb.torun.pl>, 2004 - 2020
 # Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2020
@@ -6,10 +6,10 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 2018a\n"
+"Project-Id-Version: gretl 2020e\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-07-29 22:00-0400\n"
+"PO-Revision-Date: 2020-11-15 16:10-0500\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@wsb.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1008,9 +1008,9 @@ msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
 msgstr "zmienna %d (%s): %d (%.2f percent) obserwacji - są nienumeryczne\n"
 
 #: lib/src/csvdata.c:2227
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, expected numeric value\n"
-msgstr "ERROR: zmienna %d (%s), obserwacja %d nie jest wartością numeryczną\n"
+msgstr "ERROR: zmienna %d (%s), obserwacja %d oczekiwana wartość numeryczną\n"
 
 #: lib/src/csvdata.c:2236
 msgid "allocating string table\n"
@@ -1926,9 +1926,9 @@ msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "Dropping %s: zakres próby zawiera nieprawidłowe obserwacje\n"
 
 #: lib/src/describe.c:5747 lib/src/describe.c:5851
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s: string-valued series\n"
-msgstr "Dropping %s: zakres próby zawiera nieprawidłowe obserwacje\n"
+msgstr "Usunięcie %s: szereg o wartościach łańcuchowych\n"
 
 #: lib/src/describe.c:6387
 msgid "corr: needs at least two non-constant arguments"
@@ -2422,14 +2422,14 @@ msgstr ""
 " %s"
 
 #: lib/src/geneval.c:7566
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: assertion '%s' failed"
-msgstr "Uwaga: seria %s zawiera puste obserwacje"
+msgstr "Uwaga: potwierdzenie %s jest błędne"
 
 #: lib/src/geneval.c:7571
 #, c-format
 msgid "Assertion '%s' failed"
-msgstr ""
+msgstr "Asercja '%s' nie powiodła się"
 
 #: lib/src/geneval.c:8767
 #, c-format
@@ -2866,9 +2866,9 @@ msgid "The MPI library is not loaded"
 msgstr "Biblioteka MPT nie jest załadowana"
 
 #: lib/src/gensyntax.c:247
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but found '%c'\n"
-msgstr "Oczekiwano '%c' lecz znaleziono '%s'\n"
+msgstr "Oczekiwano '%c' lecz znaleziono '%c'\n"
 
 #: lib/src/gensyntax.c:253
 #, c-format
@@ -2885,9 +2885,8 @@ msgid "too many arguments"
 msgstr "Za dużo argumentów"
 
 #: lib/src/gensyntax.c:1296
-#, fuzzy
 msgid "Expected ',' or ')'"
-msgstr "Oczekiwano '%c' lecz znaleziono '%s'\n"
+msgstr "Oczekiwano ',' lub ')'"
 
 #: lib/src/gmm.c:131
 #, c-format
@@ -3230,14 +3229,12 @@ msgid "Couldn't open %s"
 msgstr "Niemożliwe otwarcie pliku %s"
 
 #: lib/src/graphing.c:10087
-#, fuzzy
 msgid "original data"
-msgstr "%s (oryginalny szereg)"
+msgstr "oryginalne dane"
 
 #: lib/src/graphing.c:10089
-#, fuzzy
 msgid "final series"
-msgstr "Dodaj serie danych"
+msgstr "Finalny szereg"
 
 #: lib/src/gretl_array.c:1727 lib/src/gretl_array.c:1743
 #, c-format
@@ -6856,11 +6853,12 @@ msgstr ""
 "Rozkład częstości dla %s, obserwacje %d-%d\n"
 
 #: lib/src/printout.c:399
-#, fuzzy
 msgid ""
 "frequency   percent\n"
 "\n"
-msgstr "jednostki osi częstości:"
+msgstr ""
+"częstotliwość procent\n"
+"\n"
 
 #: lib/src/printout.c:418
 msgid ""
@@ -6901,9 +6899,8 @@ msgid "TOT."
 msgstr "RAZEM"
 
 #: lib/src/printout.c:827
-#, fuzzy
 msgid "TOTAL"
-msgstr " RAZEM "
+msgstr "RAZEM"
 
 #: lib/src/printout.c:856
 #, c-format
@@ -9039,17 +9036,21 @@ msgid ""
 "The data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Dane do zaimportowania mają niższą częstotliwość\n"
+"niż bieżący zbiór danych. Czy kontynuować?"
 
 #: gui/database.c:249
 msgid ""
 "Some of the data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
-
+"Część importowanych danych ma niższą częstotlowość\n"
+"niż bieżący zbiór danych. Czy kontynuować?"
+                       
 #: gui/database.c:261
-#, fuzzy, c-format
+#, c-format
 msgid "Disaggregate %s now?"
-msgstr "agregacja"
+msgstr "Zdezagregować %s teraz?"
 
 #: gui/database.c:392
 msgid "Sorry, can't handle this frequency conversion"
@@ -10225,18 +10226,16 @@ msgid "gretl: expand data"
 msgstr "gretl: Dezagregowanie danych"
 
 #: gui/dialogs.c:4085
-#, fuzzy
 msgid "Expand annual data to"
-msgstr "Dezagregacja danych rocznych do kwartalnych"
+msgstr "Dezagreguj dane roczne do"
 
 #: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
 msgstr "Dezagregacja danych kwartalnych do miesięcznych"
 
 #: gui/dialogs.c:4102
-#, fuzzy
 msgid "Please read the Help before proceeding."
-msgstr "(Proszę skorzystać z porady w Pomocy dla polecenia)"
+msgstr "Przed kontynuowaniem przeczytaj Pomoc."
 
 #: gui/dialogs.c:4258
 msgid "density estimation options"
@@ -10532,7 +10531,7 @@ msgstr "Kod serii danych:"
 #: gui/dialogs.c:7088
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
-msgstr ""
+msgstr "Szereg %s nie jest odpowiedni do dezagregacji"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11173,9 +11172,8 @@ msgid "Error reading package"
 msgstr "Błąd wczytania pakietu funkcji"
 
 #: gui/fncall.c:4602
-#, fuzzy
 msgid "No mapfile is present"
-msgstr "efekt ARCH nie występuje"
+msgstr "Brak pliku mapowania"
 
 #: gui/fnsave.c:374
 msgid "_Save gfn"
@@ -11800,8 +11798,8 @@ msgid ""
 "To add your own \"bars\" to a plot, you must supply the\n"
 "name of a plain text file containing pairs of dates."
 msgstr ""
-"To add your own \"bars\" to a plot, you must supply the\n"
-"name of a plain text file containing pairs of dates."
+"Aby dodać własne \"słupki\" do wykresu, musisz podać\n"
+"nazwa zwykłego pliku tekstowego zawierającego pary dat."
 
 #: gui/gpt_dialog.c:1547
 msgid "See example"
@@ -12052,7 +12050,7 @@ msgid ""
 "You may supply the name of a data or script file on the command line"
 msgstr ""
 "\n"
-"You may supply the name of a data or script file on the command line"
+"Możesz podać nazwę pliku danych lub pliku skryptu w wierszu poleceń"
 
 #: gui/gretl.c:130
 msgid "open a script file on startup"
@@ -12751,9 +12749,8 @@ msgid "_Hurst exponent"
 msgstr "Wykładnik _Hursta"
 
 #: gui/gretl.c:1875 gui/menustate.c:601
-#, fuzzy
 msgid "Disaggregate..."
-msgstr "agregacja"
+msgstr "Zdezagregacja..."
 
 #: gui/gretl.c:1876
 msgid "_Edit attributes"
@@ -12800,9 +12797,8 @@ msgid "H_eteroskedasticity corrected"
 msgstr "Korekta heteroskedastyczności"
 
 #: gui/gretl.c:1890
-#, fuzzy
 msgid "_Regularized least squares"
-msgstr "_Ważona MNK"
+msgstr "_Regularyzowana MNK (RLS)"
 
 #: gui/gretl.c:1891
 msgid "High _precision OLS"
@@ -14535,15 +14531,14 @@ msgstr ""
 "dodać obserwacje do bazy danych?"
 
 #: gui/library.c:1977
-#, fuzzy
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  If you wish, you can add observations\n"
 "(Data menu, Add observations), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
-"Brak dostępnych obserwacji poza estymowaną próbą do\n"
-"budowy prognozy. Należy dodać obserwacje do bazy\n"
+"Brak dostępnych obserwacji do prognozowania poza\n"
+"estymowaną próbą. Należy dodać obserwacje do bazy\n"
 "danych (Dane/Dodaj obserwacje...) lub skrócić zakres\n"
 "próby (Próba/Zakres próby...) i reestymować model."
 
@@ -15147,7 +15142,7 @@ msgstr ""
 
 #: gui/library.c:9661
 msgid "Unbalanced \"loop\"/\"endloop\" in script"
-msgstr ""
+msgstr "Niezbilansowane \"loop\"/\"endloop\" w skrypcie"
 
 #: gui/library.c:9673
 msgid "Unmatched \"if\" in script (fixed)"
@@ -15299,9 +15294,8 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: Pełny zakres %s - %s"
 
 #: gui/menustate.c:1093
-#, fuzzy
 msgid "(unit:period)"
-msgstr "okres"
+msgstr "(jednostka:okres)"
 
 #: gui/menustate.c:1128
 #, c-format
@@ -15513,11 +15507,11 @@ msgstr "Należy wybrać zmienną zależną (Y)"
 
 #: gui/selector.c:3461 gui/selector.c:6422
 msgid "Elastic net"
-msgstr ""
+msgstr "Elastic net"
 
 #: gui/selector.c:3472 gui/selector.c:6393 gui/selector.c:6421
 msgid "Ridge"
-msgstr ""
+msgstr "Ridge"
 
 #: gui/selector.c:3499
 msgid "You must specify a quantile"
@@ -15672,9 +15666,8 @@ msgid "MIDAS regression"
 msgstr "MIDAS regression"
 
 #: gui/selector.c:4311
-#, fuzzy
 msgid "Regularized least squares"
-msgstr "Ważona MNK"
+msgstr "Regularyzowana MNK (RLS)"
 
 #: gui/selector.c:4321
 msgid "Weight variable"
@@ -16014,17 +16007,15 @@ msgstr "Specyficzne maksimum"
 
 #: gui/selector.c:6390 gui/selector.c:6420
 msgid "LASSO"
-msgstr ""
+msgstr "LASSO"
 
 #: gui/selector.c:6437
-#, fuzzy
 msgid "Single λ-fraction"
-msgstr "Centralne pasmo częstości:"
+msgstr "Single λ-fraction"
 
 #: gui/selector.c:6446
-#, fuzzy
 msgid "Multiple λ values"
-msgstr "Oddzielne wykresy reszt"
+msgstr "Multiple λ values"
 
 #: gui/selector.c:6465 gui/toolbar.c:617
 msgid "Confidence level"
@@ -18225,23 +18216,20 @@ msgid "Produce debugging output"
 msgstr "Wyniki procedury 'debug' (śledzenia błędów)"
 
 #: plugin/interpolate.c:249 plugin/interpolate.c:263
-#, fuzzy
 msgid "GLS estimates"
-msgstr "Wyniki estymacji równania regresji"
+msgstr "estymacja GLS"
 
 #: plugin/interpolate.c:253
-#, fuzzy
 msgid "Iterated GLS estimates"
-msgstr "Estymacja iteracyjna"
+msgstr "Iteracyjna estymacja GLS"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
-msgstr ""
+msgstr "rho obcięte do zera"
 
 #: plugin/interpolate.c:1736
-#, fuzzy
 msgid "Temporal disaggregation"
-msgstr "agregacja"
+msgstr "Dezagregacja czasowa"
 
 #: plugin/interval.c:225
 #, c-format
@@ -19016,43 +19004,3 @@ msgstr "Statystyki/Transformacje"
 msgid "Decoration"
 msgstr "Decoration"
 
-#~ msgid "obsolete use of \"pi\": please use \"$pi\" instead"
-#~ msgstr "obsolete use of \"pi\": please use \"$pi\" instead"
-
-#~ msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
-#~ msgstr "obsolete use of \"=\" as Boolean test: please use \"==\""
-
-#~ msgid "Repeat the lower frequency values"
-#~ msgstr "Powtórzenie wartości o niskiej częstotliwości"
-
-#~ msgid "Interpolate higher frequency values"
-#~ msgstr "Interpolacja wartości do wyższych częstotliwości"
-
-#~ msgid ""
-#~ "Adding a lower frequency series to a\n"
-#~ "higher frequency dataset"
-#~ msgstr ""
-#~ "Dodanie szeregu o niższej częstotliwości\n"
-#~ "do bazy o wyższej częstotliwości"
-
-#, c-format
-#~ msgid ""
-#~ "Do you really want to add a lower frequency series\n"
-#~ "to a higher frequency dataset?\n"
-#~ "\n"
-#~ "If you say 'yes' I will expand the source data by\n"
-#~ "repeating each value %d times.  In general, this is\n"
-#~ "not a valid thing to do."
-#~ msgstr ""
-#~ "Czy na pewno chcesz dodać serię o niższej \n"
-#~ "częstotliwości do bazy o wyższej częstotliwości?\n"
-#~ "\n"
-#~ "Jeśli wybierzesz 'TAK', to wartość źródłowa \n"
-#~ "zostanie powtórzona %d razy. Ogólnie, takie \n"
-#~ "działanie nie musi być poprawne."
-
-#~ msgid "same as"
-#~ msgstr "taki sam jak"
-
-#~ msgid "criterion = ridge minimand"
-#~ msgstr "criterion = ridge minimand"
