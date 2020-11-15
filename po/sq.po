@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-14 21:10+0100\n"
+"PO-Revision-Date: 2020-11-15 07:57+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -377,7 +377,7 @@ msgstr "Në bazë të %d njehsimeve"
 
 #: lib/src/bootstrap.c:731
 msgid "using resampled residuals"
-msgstr "me zgjedhje të rastësishme të mbetjeve"
+msgstr "me rikampionim të mbetjeve"
 
 #: lib/src/bootstrap.c:733
 msgid "using resampled y,X \"pairs\""
@@ -4155,12 +4155,12 @@ msgid ""
 "model is consistent, in favor of the fixed effects model.)\n"
 msgstr ""
 "(Një prob. i vogël luan kundër hipotezës zero që i jep përparësinë efekteve "
-"të rastësishëm\n"
+"të rastësishme\n"
 "përkundrejt hypotezës alternative që parapëlqen efektet fikse.)\n"
 
 #: lib/src/gretl_panel.c:3168
 msgid "Error estimating random effects model\n"
-msgstr "Gabim gjatë llogaritjes së modelit të efekteve të rastësishëm\n"
+msgstr "Gabim gjatë njehsimit të modelit të efekteve të rastësishme\n"
 
 #: lib/src/gretl_panel.c:3275
 msgid "Means of pooled OLS residuals for cross-sectional units:"
@@ -4189,7 +4189,7 @@ msgstr ""
 "(Një prob. i vogël luan kundër hipotezës zero që i jep përparësinë modelit "
 "KVZ\n"
 "mbi të dhënat e stivuara përkundrejt hypotezës alternative që parapëlqen "
-"efektet e rastësishëm.)\n"
+"efektet e rastësishme.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:3335
@@ -4315,7 +4315,7 @@ msgstr ""
 #: lib/src/gretl_paths.c:2588
 #, c-format
 msgid "gretl: using these basic search paths:\n"
-msgstr "gretl: ndiq këto rrugë\n"
+msgstr "gretl: ndiq këto rrugë për kërkim\n"
 
 #: lib/src/gretl_plot.c:452 lib/src/tokenize.c:2322 lib/src/tokenize.c:2878
 #: lib/src/tokenize.c:2897
@@ -5302,7 +5302,7 @@ msgstr "Efekte fikse"
 
 #: lib/src/modelprint.c:1008
 msgid "Random-effects (GLS)"
-msgstr "Efekte të rastësishëm (GLS)"
+msgstr "Efekte të rastësishme (GLS)"
 
 #: lib/src/modelprint.c:1011
 msgid "Maximum Likelihood"
@@ -5350,7 +5350,7 @@ msgstr "Logit multinomial"
 
 #: lib/src/modelprint.c:1052
 msgid "Random-effects probit"
-msgstr "Probit me efekte të rastësishëm"
+msgstr "Probit me efekte të rastësishme"
 
 #: lib/src/modelprint.c:1054 gui/selector.c:4245
 msgid "Ordered Probit"
@@ -13973,7 +13973,7 @@ msgstr "Amplituda IQ"
 #: gui/guiprint.c:1253
 #, c-format
 msgid "Correlation coefficients, using the observations %s - %s"
-msgstr "Koef. i korrelacioneve të llogaritur mbi kampionin %s - %s"
+msgstr "Koef. e korrelacioneve të llogaritur mbi kampionin %s - %s"
 
 #: gui/guiprint.c:1264 gui/guiprint.c:1358
 msgid "Coefficient covariance matrix"
@@ -15621,7 +15621,7 @@ msgstr "Gabimet AR (1)"
 
 #: gui/selector.c:4247
 msgid "Random effects (binary) probit"
-msgstr "Probit (binar) me efekte të rastësishëm"
+msgstr "Probit (binar) me efekte të rastësishme"
 
 #: gui/selector.c:4257
 msgid "Fixed effects logistic model"
@@ -16110,7 +16110,7 @@ msgstr "Efekte fikse"
 
 #: gui/selector.c:6660
 msgid "Random effects"
-msgstr "Efekte të rastësishëm"
+msgstr "Efekte të rastësishme"
 
 #: gui/selector.c:6665
 msgid "Swamy-Arora"
@@ -16146,7 +16146,7 @@ msgstr "Trego përqindjet sipas shtyllave"
 
 #: gui/selector.c:6745
 msgid "Fine-tune using Cochrane-Orcutt"
-msgstr "Korrigjo me metodën Cochrane-Orcutt"
+msgstr "Korrigjim i imët me metodën Cochrane-Orcutt"
 
 #: gui/selector.c:6770 gui/selector.c:6782
 msgid "Exact Maximum Likelihood"
@@ -18571,7 +18571,7 @@ msgstr "z-score"
 #: plugin/panurc.c:562
 #, c-format
 msgid "Levin-Lin-Chu pooled ADF test for %s\n"
-msgstr "Testi ADF 'pooled' i Levin-Lin-Chu për %s\n"
+msgstr "Testi ADF 'pooled' i Levin-Lin-Chu mbi %s\n"
 
 #: plugin/panurc.c:566
 #, c-format
