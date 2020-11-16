@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-13 12:09+0100\n"
+"PO-Revision-Date: 2020-11-16 19:09+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -328,7 +328,7 @@ msgstr "H0 : tous les groupes sont stationnaires"
 #: lib/src/adf_kpss.c:2636 lib/src/adf_kpss.c:2679
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
-msgstr "Étape %d : test d'une racine unitaire dans %s\n"
+msgstr "Étape %d : test de racine unitaire dans %s\n"
 
 #: lib/src/adf_kpss.c:2646
 #, c-format
@@ -553,7 +553,7 @@ msgstr "L'ajout de variables améliore %d des %d critères d'information.\n"
 #: lib/src/compare.c:406
 #, c-format
 msgid "Omitting variables improved %d of %d information criteria.\n"
-msgstr "L'omission de variables améliore %d des %d critères d'information.\n"
+msgstr "L'omission de variables améliore %d parmi %d critères d'information.\n"
 
 #: lib/src/compare.c:926 lib/src/compare.c:2334 lib/src/graphing.c:4140
 #: lib/src/graphing.c:4152 lib/src/graphing.c:4238 lib/src/graphing.c:6944
@@ -2366,7 +2366,7 @@ msgstr "Séries %s (ID %d) remplacées"
 #: gui/calculator.c:1433
 #, c-format
 msgid "Generated series %s (ID %d)"
-msgstr "Séries %s (ID %d) générées"
+msgstr "Série %s générée (ID %d)"
 
 #: lib/src/forecast.c:3883
 msgid "Forecast plot not implemented for panel data"
@@ -5062,7 +5062,7 @@ msgstr "Avertissement : la convergence demeure discutable"
 
 #: lib/src/modelprint.c:692
 msgid "Convergence seems to be reasonably complete"
-msgstr "La convergence semble achevée"
+msgstr "La convergence semble suffisamment complète"
 
 #: lib/src/modelprint.c:697
 msgid "GNR: got incomplete results"
@@ -6454,7 +6454,7 @@ msgid ""
 "%d out of %d gradients looked suspicious.\n"
 "\n"
 msgstr ""
-"%d en dehors de %d gradients semblent suspects.\n"
+"%d parmi %d gradients semblent suspects.\n"
 "\n"
 
 #: lib/src/nls.c:2663
@@ -6994,7 +6994,7 @@ msgstr "Échantillon actuel : %d observations\n"
 
 #: lib/src/printout.c:979 lib/src/printout.c:1002
 msgid "Full data range"
-msgstr "Plage de données complète"
+msgstr "Plage des données complète"
 
 #: lib/src/printout.c:1000 lib/src/subsample.c:3150
 msgid "Current sample"
