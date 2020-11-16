@@ -290,14 +290,23 @@
 	  <math>h</math> è l'orizzonte di previsione, che può essere
 	  modificato tramite il comando <lit>set horizon</lit> o,
 	  altrimenti, viene fissato automaticamente sulla base della
-	  frequenza dei dati.  Per un VAR con <math>p</math>
+	  frequenza dei dati.
+	</para>
+	<para>
+	  Per un VAR con <math>p</math>
 	  variabili, la matrice ha <math>p</math><sup>2</sup>
-	  colonne. La parte dell'errore di previsione sulla variabile
+	  colonne: il primo blocco di <math>p</math> colonne contiene le FEVD
+	  per la prima variabile, il secondo blocco la FEVD per la
+	  seconda, e così via. La parte dell'errore di previsione sulla variabile
 	  <math>i</math> attribuibile allo shock alla variabile
 	  <math>j</math> si troverà nella colonna (<math>i</math> &minus;
 	  1)<math>p</math> + <math>j</math>.
 	</para>
-      </description>
+ 	<para>
+	  Per una variante più flessibile di questa funzionalità, si
+	  veda la funzione <fncref targ="fevd"/>.
+	</para>
+     </description>
     </function>
 
     <function name="$Fstat" section="access" output="scalar">
@@ -2450,12 +2459,20 @@
       <description>
 	<para>
 	  Esegue la decomposizione di Cholesky della matrice
-	  <argname>A</argname>, assunta simmetrica e
-	  definita positiva. Il risultato è una matrice triangolare
-	  inferiore <math>K</math> che soddisfa <equation
-	  status="inline" ascii="A = KK'" tex="$A = KK'$"/>. La
-	  funzione restituisce un errore se <argname>A</argname> non è
-	  simmetrica o definita positiva.
+	  <argname>A</argname>. Se <argname>A</argname> è reale, deve
+	  essere simmetrica e definita positiva. In tal caso, il
+	  risultato è una matrice triangolare inferiore <math>L</math>
+	  che soddisfa <equation status="inline" ascii="A = LL'"
+	  tex="$A = LL'$"/>. Nel caso complesso, <argname>A</argname> deve
+	  essere hermitiana e definita positiva, e il
+	  risultato è una matrice triangolare inferiore <math>L</math>
+	  tale per cui <equation status="inline" ascii="A = LL^H"
+	  tex="$A = LL^{\mathrm H}$"/>.  La funzione restituisce un errore se
+	  <argname>A</argname> non è simmetrica o definita positiva.
+	</para>
+	<para>
+	  Per il caso reale, si veda anche <fncref targ="psdroot"/> e
+	  <fncref targ="Lsolve"/>.
 	</para>
       </description>
     </function>
@@ -3794,6 +3811,18 @@
 	  gregoriano, a meno che l'anno sia negativo, nel qual caso si fa
 	  riferimento al calendario giuliano.
 	</para>
+	<para>
+	  È possibile invocare la funzione con una sintassi
+	  alternativa: se viene passato un solo argomento, esso viene
+	  inteso come una data (o una serie di date) in formato ISO
+	  8601 <quote>di base</quote>, e cioè
+	  <lit>AAAAMMGG</lit>. Quindi, le due righe seguenti producono
+	  lo stesso risultato, e cioè 700115:
+	</para>
+	<code>
+	  eval epochday(1917, 11, 7)
+	  eval epochday(19171107)
+	</code>
 	<para>
 	  Per la funzione inversa, vedi <fncref targ="isodate"/> e anche
 	  (per il calendario giuliano) <fncref targ="juldate"/>.
@@ -7142,9 +7171,15 @@
 	  \[ e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!}
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\] 
-	  (La convergenza di questa serie è garantita.) La funzione 
+	  (La convergenza di questa serie è garantita.) Se
+	  <argname>A</argname> è una matrice reale, la funzione 
 	  usa l'algoritmo 11.3.1 di <cite key="golub96">Golub and
-	  Van Loan (1996)</cite>.
+	  Van Loan (1996)</cite>. Se invece è complessa, viene usato
+	  un algoritmo basato sugli autovalori e la matrice deve
+	  essere diagonalizzabile.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="mlog"/>.
 	</para>
       </description>
     </function>
@@ -8438,9 +8473,15 @@
       </fnargs>
       <description>
 	<para>
-	  Restituisce il numero di osservazioni non mancanti
-	  per la variabile 
-	  <argname>y</argname> nella selezione corrente del campione.
+	  Restituisce il numero di osservazioni non mancanti per la
+	  variabile <argname>y</argname> nella selezione corrente del
+	  campione.
+       </para>
+       <para>
+	 <seelist>
+	   <fncref targ="pnobs"/>
+	   <fncref targ="pxnobs"/>
+	 </seelist>
 	</para>
       </description>
     </function>

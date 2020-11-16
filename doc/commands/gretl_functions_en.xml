@@ -2483,7 +2483,8 @@
 	  If <argname>A</argname> is complex it must be Hermitian and
 	  positive definite, and the result is a lower-triangular
 	  complex matrix such that <equation status="inline" ascii="A
-	  = LL^H" tex="$A = LL^{\mathrm H}$"/>.
+	  = LL^H" tex="$A = LL^{\mathrm H}$"/>. Otherwise, the
+	  function will return an error.
 	</para>
 	<para>
 	  For the real case, see also <fncref targ="psdroot"/> and
@@ -7190,28 +7191,17 @@
 	  The following example illustrates the working of the function
 	</para>
 	<code>
-		set verbose off
-		open denmark.gdt
-		eval median(LRM)
-		list L = dataset
-		series m = median(L)
-		print m --byobs --range=1:5
+	  set verbose off
+	  open denmark.gdt
+	  eval median(LRM)
+	  list L = dataset
+	  series m = median(L)
 	</code>
 	<para>
-	  The first call will return the scalar mean value (scalar) of the
-	  series <lit>LRM</lit>, and the second one returns a
+	  The first call will return the scalar median value (scalar)
+	  of the series <lit>LRM</lit>, and the second one returns a
 	  series.
 	</para>
-	<code>
-		11.704916
-
-	    m
-		1974:1     3.029197
-		1974:2     3.025906
-		1974:3     3.004191
-		1974:4     2.982241
-		1975:1     2.969087
-	</code>
 	<para>
 	  <seelist>
             <fncref targ="mean"/>
@@ -8566,18 +8556,8 @@
       <description>
 	<para>
 	  Returns the number of non-missing observations for the variable
-	  <argname>y</argname> in the currently selected sample. In case of
-	  a panel data set, the number of cross-sectional units times the
-	  number of non-missing observations per unit is returned. See the
-	  following example for a panel data set:
+	  <argname>y</argname> in the currently selected sample.
 	</para>
-	<code>
-		open grunfeld.gdt
-		eval $nobs
-
-		? eval $nobs
-		200
-	</code>
 	<para>
 	  <seelist>
             <fncref targ="pnobs"/>
