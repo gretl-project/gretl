@@ -2212,8 +2212,12 @@
 	  alla loro media. Se il secondo argomento (opzionale) è non-zero,
 	  allora le colonne vengono standardizzate, usando la deviazione
 	  standard aggiustata per gradi di libertà (ossia <math>n</math>
-	  &minus;, dove <math>n</math> è il numero di righe di
+	  &minus; 1, dove <math>n</math> è il numero di righe di
 	  <argname>X</argname>).
+	</para>
+	<para>
+	  Si noti che la funzione <fncref targ="stdize"/> è più
+	  flessibile.
 	</para>
       </description>
     </function>
@@ -3752,8 +3756,18 @@
 	  l'argomento <argname>A</argname> deve essere una matrice
 	  simmetrica (in questo caso i calcoli possono essere
 	  semplificati). A differenza di <fncref targ="eigengen"/>, gli
-	  autovalori sono ordinati in senso crescente.
+	  autovalori sono ordinati in senso crescente. Per avere
+	  l'ordinamento opposto, si può fare così:
 	</para>
+	<code>
+	  matrix U
+	  e = eigensym(A, &amp;U)
+	  Tmp = msortby((-e' | U)',1)'
+	  e = -Tmp[1,]'
+	  U = Tmp[2:,]
+	  # now largest to smallest eigenvalues
+	  print e U
+	</code>
 	<para>
 	  Notare che nel calcolo degli autovalori ed autovettori di una
 	  matrice del tipo <math>X'X</math>, ove <math>X</math> sia di
@@ -4309,13 +4323,16 @@
     <function name="firstobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">insample</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce il primo valore non-mancante della variabile
 	  <argname>y</argname>. Si noti che se si sta operando su un
 	  sottocampione ristretto, il valore ottenuto può essere più
-	  piccolo della variabile dollaro <fncref targ="$t1"/>.
+	  piccolo della variabile dollaro <fncref targ="$t1"/>. Se però
+	  l'argomento <argname>insample</argname> è nonzero, viene
+	  considerato solo il sottocampione attualmente in vigore.
 	  <seelist> 
             <fncref targ="lastobs"/>
 	  </seelist>
@@ -4329,13 +4346,13 @@
       </fnargs>
       <description>
 	<para>
-	  Destinato all'uso in relazione al comando <cmdref
+	  Destinato principalmente all'uso col comando <cmdref
 	  targ="join"/>.  Restituisce il risultato della conversione
 	  di <argname>rawname</argname> in un identificatore gretl
 	  valido, che deve iniziare con un carattere alfabetico,
-	  contenere esclusivamente caratteri (ASCII), numeri e trattino
-	  basso, e non deve eccedere i 31 caratteri. Le regole
-	  utilizzate per la conversione sono:
+	  contenere esclusivamente caratteri (ASCII), numeri e
+	  trattino basso, e non deve eccedere i 31 caratteri. Le
+	  regole utilizzate per la conversione sono:
 	</para>
 	<para>
 	  1. Eliminare qualsiasi carattere iniziale che non sia un
@@ -4349,6 +4366,17 @@
 	  trattino basso, a meno che il precedente carattere
 	  trascritto sia un trattino, nel qual caso lo spazio è
 	  saltato.
+	</para>
+	<para>
+	  Se si è sicuri che la stringa in input non è troppo lunga (e
+	  quindi potenzialmente troncata), è possibile far sì che
+	  sequenze di caratteri illegali vengano sostituite con un
+	  trattino basso anziché cancellate, così da produrre un
+	  risultato più leggibile. Per fare ciò, bisogna passare un
+	  argomento non-zero come secondo argomento. Tuttavia questo
+	  non è consigliabile nel contesto del comando <cmdref
+	  targ="join"/> visto che il nome <quote>aggiustato</quote>
+	  non userà i trattini bassi in questo modo.
 	</para>
       </description>
     </function>
@@ -6465,13 +6493,16 @@
     <function name="lastobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">insample</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Ultimo valore non-mancante per la variabile
 	  <argname>y</argname>. Si noti che se si sta operando su un
 	  sottocampione ristretto, il valore prodotto può essere
-	  maggiore della variabile dollaro <fncref targ="$t2"/>.
+	  maggiore della variabile dollaro <fncref targ="$t2"/>. Se però
+	  l'argomento <argname>insample</argname> è nonzero, viene
+	  considerato solo il sottocampione attualmente in vigore.
 	  <seelist>
 	    <fncref targ="firstobs"/>
 	  </seelist>
@@ -7162,9 +7193,12 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Calcola l'esponenziale della matrice <argname>A</argname>, usando
-	  l'algoritmo 11.3.1 di <cite key="golub96">Golub and
-	  Van Loan (1996)</cite>.
+	  Calcola l'esponenziale della matrice <argname>A</argname>.Se
+	  <argname>A</argname> è una matrice reale, la funzione 
+	  usa l'algoritmo 11.3.1 di <cite key="golub96">Golub and
+	  Van Loan (1996)</cite>. Se invece è complessa, viene usato
+	  un algoritmo basato sugli autovalori e la matrice deve
+	  essere diagonalizzabile.
 	</para>
 	<para context="tex">
 	  Esponenziale di una matrice,
@@ -7476,9 +7510,15 @@
       <description>
 	<para>
 	  Restituisce il numero di giorni (rilevanti) in un dato mese
-	  e anno; l'argomento <argname>gioset</argname> può essere
-	  5, 6 o 7, e indica il numero di giorni nella settimana da
-	  contare (il 6 omette le domeniche, il 5 anche i sabati).
+	  e anno secondo il calendario gregoriano prolettico;
+	  l'argomento <argname>gioset</argname> può essere 5, 6 o 7, e
+	  indica il numero di giorni nella settimana da contare (il 6
+	  omette le domeniche, il 5 anche i sabati).
+	</para>
+	<para>
+	  la funzione ritorna uno scalare se gli argomenti
+	  <argname>mese</argname> e <argname>anno</argname> sono
+	  entrambi scalari;altrimenti, ritorna una serie.
 	</para>
 	<para>
 	  Ad esempio: se si ha un dataset mensile aperto, l'istruzione
@@ -12417,6 +12457,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">percorso</fnarg>
+	<fnarg optional="true" type="scalarref">trovati</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12437,6 +12478,22 @@
 	  contiene in risultati del percorso <math>i</math>. Se le
 	  stringhe così ottenute contengono virgole, esse sono
 	  racchiuse da virgolette doppie.
+	</para>
+	<para>
+	  Se <argname>path</argname> non viene trovata nel buffer XML,
+	  di default viene generato un errore, ma questo comportamento
+	  può essere modificato passando il terzo argomento
+	  (opzionale): il tal caso, l'argomento restituisce il
+	  conteggio delle chiavi trovate e se non ne è stata trovata
+	  nessuna, la funzione ritorna una stringa vuota. Per esempio:
+	</para>
+	<code>
+	  ngot = 0
+	  ret = xmlget(xbuf, "//some/thing", &amp;ngot)
+	</code>
+	<para>
+	  However, an error is still flagged in case of a malformed
+	  query.
 	</para>
 	<para>
 	  Per una buona introduzione a XPath e alla sua sintassi, si

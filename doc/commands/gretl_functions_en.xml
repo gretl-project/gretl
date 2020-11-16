@@ -12457,6 +12457,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">path</fnarg>
+	<fnarg optional="true" type="scalarref">matches</fnarg>
       </fnargs>
       <description>
 	<para>
