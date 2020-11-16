@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-16 19:09+0100\n"
+"PO-Revision-Date: 2020-11-16 19:24+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -7512,7 +7512,7 @@ msgstr "FIML"
 
 #: lib/src/system.c:102
 msgid "Seemingly Unrelated Regressions"
-msgstr "Régressions Apparemment Non-reliées"
+msgstr "Régressions Apparemment Non-reliées (SUR)"
 
 #: lib/src/system.c:103
 msgid "Three-Stage Least Squares"
