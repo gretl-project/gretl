@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-10-23 17:58-0300\n"
+"PO-Revision-Date: 2020-11-17 02:05+0000\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -1012,9 +1012,9 @@ msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
 msgstr "variável %d (%s): valores não-numéricos = %d (%.2f por cento)\n"
 
 #: lib/src/csvdata.c:2227
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, expected numeric value\n"
-msgstr "ERRO: variável %d (%s), observação %d, não-numérico\n"
+msgstr "ERRO: variável %d (%s), observação %d, esperado valor numérico\n"
 
 #: lib/src/csvdata.c:2236
 msgid "allocating string table\n"
@@ -1985,11 +1985,11 @@ msgstr "Coeficientes de Correlação"
 
 #: lib/src/describe.c:6663 lib/src/describe.c:6756
 msgid "Sample range has no valid observations."
-msgstr "O intervalo da amostra não tem observações válidas"
+msgstr "O intervalo da amostra não tem observações válidas."
 
 #: lib/src/describe.c:6669 lib/src/describe.c:6762
 msgid "Sample range has only one observation."
-msgstr "O intervalo da amostra tem apenas uma observação"
+msgstr "O intervalo da amostra tem apenas uma observação."
 
 #: lib/src/describe.c:6699
 #, c-format
@@ -2094,7 +2094,7 @@ msgstr "Distâncias gravadas como '%s'"
 
 #: lib/src/describe.c:7075
 msgid "illegal negative value"
-msgstr "valor negativo ilegal "
+msgstr "valor negativo ilegal"
 
 #: lib/src/describe.c:7182
 msgid "Lorenz curve"
@@ -2161,11 +2161,11 @@ msgstr "Foi obtida uma previsão perfeita: não existe MLE"
 
 #: lib/src/discrete.c:3339
 msgid "Illegal non-positive value of the dependent variable"
-msgstr "Valor não-positivo da variável dependente ilegal."
+msgstr "Valor não-positivo da variável dependente ilegal"
 
 #: lib/src/discrete.c:3465
 msgid "Invalid value for the maximum of the dependent variable"
-msgstr "Valor inválido para o máximo da variável dependente."
+msgstr "Valor inválido para o máximo da variável dependente"
 
 #: lib/src/discrete.c:3503 lib/src/interact.c:3564
 msgid "This estimator requires panel data"
@@ -2841,7 +2841,7 @@ msgstr "Gerada a lista %s"
 #: lib/src/genmain.c:129
 #, c-format
 msgid "Modified string %s"
-msgstr "String %s modificada "
+msgstr "String %s modificada"
 
 #: lib/src/genmain.c:131
 #, c-format
@@ -3437,7 +3437,7 @@ msgstr "Erro ao gerar variáveis defasadas"
 
 #: lib/src/gretl_errors.c:64
 msgid "Attempting to take square root of negative number"
-msgstr "Tentando obter raiz quadrada de número negativo "
+msgstr "Tentando obter raiz quadrada de número negativo"
 
 #: lib/src/gretl_errors.c:65
 msgid "Excessive exponent in genr formula"
@@ -3913,7 +3913,7 @@ msgstr "Teste de não-linearidade (quadrados)"
 #: lib/src/gretl_model.c:4145 lib/src/gretl_model.c:4148
 #: lib/src/gretl_model.c:4169
 msgid "heteroskedasticity not present"
-msgstr "sem heteroscedasticidade "
+msgstr "sem heteroscedasticidade"
 
 #: lib/src/gretl_model.c:4150 lib/src/modelprint.c:453
 msgid "Sargan over-identification test"
@@ -5118,7 +5118,7 @@ msgstr "Regressão de cointegração -- "
 
 #: lib/src/modelprint.c:910
 msgid "Cointegrating regression - "
-msgstr "Regressão de cointegração -"
+msgstr "Regressão de cointegração - "
 
 #: lib/src/modelprint.c:914
 msgid "Augmented Dickey--Fuller regression"
@@ -5536,7 +5536,7 @@ msgstr "Núcleo de Parzen"
 
 #: lib/src/modelprint.c:1472
 msgid "QS kernel"
-msgstr "Núcleo QS "
+msgstr "Núcleo QS"
 
 #: lib/src/modelprint.c:1476
 #, c-format
@@ -8226,7 +8226,8 @@ msgstr ""
 "Traduzido por\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>,\n"
 "Henrique Andrade <henrique.coelho@economia.gov.br> e\n"
-"Raquel Guimarães."
+"Raquel Guimarães.\n"
+"(data: 17 de novembro de 2020)"
 
 #: gui/about.c:201
 msgid "News"
@@ -9083,9 +9084,9 @@ msgstr ""
 "mais baixa que a do conjunto de dados atual. Deseja prosseguir?"
 
 #: gui/database.c:261
-#, fuzzy, c-format
+#, c-format
 msgid "Disaggregate %s now?"
-msgstr "Desagregação..."
+msgstr "Desagregar %s agora?"
 
 #: gui/database.c:392
 msgid "Sorry, can't handle this frequency conversion"
@@ -14841,7 +14842,7 @@ msgstr "Ignorar o valor mais alto"
 
 #: gui/library.c:6223
 msgid "Variable to dummify"
-msgstr "Variável a ser transformada em dummy..."
+msgstr "Variável a ser transformada em dummy"
 
 #: gui/library.c:6242
 #, c-format
@@ -15335,7 +15336,7 @@ msgstr "%s importado"
 
 #: gui/menustate.c:1137
 msgid " Unsaved data "
-msgstr "Dados não gravados"
+msgstr " Dados não gravados "
 
 #: gui/model_table.c:82
 msgid "Model table is full"
@@ -17485,7 +17486,7 @@ msgstr "Dígitos…"
 
 #: gui/toolbar.c:1062
 msgid "_Save forecast..."
-msgstr "_Salvar previsão"
+msgstr "_Salvar previsão..."
 
 #: gui/toolbar.c:1063
 msgid "Save standard errors..."
@@ -18109,12 +18110,12 @@ msgid "One or more variable names are missing.\n"
 msgstr "Falta um ou mais nomes de variáveis.\n"
 
 #: plugin/excel_import.c:1741
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Expected numeric data, found string:\n"
 "%s\" at row %d, column %d\n"
 msgstr ""
-"dados numéricos esperados, mas encontrado texto:\n"
+"Dados numéricos esperados, mas encontrado texto:\n"
 "\"%s\" na linha %d, coluna %d\n"
 
 #: plugin/fcp.c:246
