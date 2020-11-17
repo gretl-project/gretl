@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-07-25 21:15+0100\n"
+"PO-Revision-Date: 2020-11-17 01:55+0000\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 2.4.1\n"
 "X-Poedit-SourceCharset: iso-8859-15\n"
 "X-Language: pt_PT\n"
 
@@ -1012,9 +1012,9 @@ msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
 msgstr "variável %d (%s): valores não-numéricos = %d (%.2f porcento)\n"
 
 #: lib/src/csvdata.c:2227
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, expected numeric value\n"
-msgstr "ERRO: variável %d (%s), observação %d, não-numérico\n"
+msgstr "ERRO: variável %d (%s), observação %d, esperado valor numérico\n"
 
 #: lib/src/csvdata.c:2236
 msgid "allocating string table\n"
@@ -1931,9 +1931,9 @@ msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "Descartando %s: o intervalo da amostra não tem observações válida\n"
 
 #: lib/src/describe.c:5747 lib/src/describe.c:5851
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s: string-valued series\n"
-msgstr "Descartando %s: o intervalo da amostra não tem observações válida\n"
+msgstr "Descartando %s: série com valores em texto\n"
 
 #: lib/src/describe.c:6387
 msgid "corr: needs at least two non-constant arguments"
@@ -2424,14 +2424,14 @@ msgstr ""
 "%s"
 
 #: lib/src/geneval.c:7566
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: assertion '%s' failed"
-msgstr "Aviso: a série %s está vazia"
+msgstr "Aviso: a validação %s falhou"
 
 #: lib/src/geneval.c:7571
 #, c-format
 msgid "Assertion '%s' failed"
-msgstr ""
+msgstr "A validação '%s' falhou"
 
 #: lib/src/geneval.c:8767
 #, c-format
@@ -2868,9 +2868,9 @@ msgid "The MPI library is not loaded"
 msgstr "A biblioteca MPI não foi carregada"
 
 #: lib/src/gensyntax.c:247
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but found '%c'\n"
-msgstr "Esperado '%c' mas encontrou-se '%s'\n"
+msgstr "Esperado '%c' mas encontrou-se '%c'\n"
 
 #: lib/src/gensyntax.c:253
 #, c-format
@@ -2887,9 +2887,8 @@ msgid "too many arguments"
 msgstr "demasiados argumentos"
 
 #: lib/src/gensyntax.c:1296
-#, fuzzy
 msgid "Expected ',' or ')'"
-msgstr "Esperado '%c' mas encontrou-se '%s'\n"
+msgstr "Esperado ',' ou ')'"
 
 #: lib/src/gmm.c:131
 #, c-format
@@ -3230,14 +3229,12 @@ msgid "Couldn't open %s"
 msgstr "Não se conseguiu abrir %s"
 
 #: lib/src/graphing.c:10087
-#, fuzzy
 msgid "original data"
-msgstr "%s (dados originais)"
+msgstr "dados originais"
 
 #: lib/src/graphing.c:10089
-#, fuzzy
 msgid "final series"
-msgstr "acrescentar série"
+msgstr "série final"
 
 #: lib/src/gretl_array.c:1727 lib/src/gretl_array.c:1743
 #, c-format
@@ -6885,11 +6882,12 @@ msgstr ""
 "Distribuição de frequência para %s, observações %d-%d\n"
 
 #: lib/src/printout.c:399
-#, fuzzy
 msgid ""
 "frequency   percent\n"
 "\n"
-msgstr "escala do eixo da frequência:"
+msgstr ""
+"frequência  percentagem\n"
+"\n"
 
 #: lib/src/printout.c:418
 msgid ""
@@ -6930,9 +6928,8 @@ msgid "TOT."
 msgstr "TOTAL"
 
 #: lib/src/printout.c:827
-#, fuzzy
 msgid "TOTAL"
-msgstr "TOTAL  "
+msgstr "TOTAL"
 
 #: lib/src/printout.c:856
 #, c-format
@@ -8233,7 +8230,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>. \n"
-"Tradução de 25 de julho de 2020"
+"Tradução de 17 de Novembro de 2020"
 
 #: gui/about.c:201
 msgid "News"
@@ -9077,17 +9074,21 @@ msgid ""
 "The data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Os dados a importar são de menor frequência\n"
+"do que o conjunto de dados corrente. Prosseguir?"
 
 #: gui/database.c:249
 msgid ""
 "Some of the data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"Alguns dos dados a importar são de menor frequência\n"
+"do que o conjunto de dados corrente. Prosseguir?"
 
 #: gui/database.c:261
-#, fuzzy, c-format
+#, c-format
 msgid "Disaggregate %s now?"
-msgstr "agregaração"
+msgstr "Desagregar %s agora?"
 
 #: gui/database.c:392
 msgid "Sorry, can't handle this frequency conversion"
@@ -10265,18 +10266,16 @@ msgid "gretl: expand data"
 msgstr "gretl: expandir dados"
 
 #: gui/dialogs.c:4085
-#, fuzzy
 msgid "Expand annual data to"
-msgstr "Expandir dados anuais para trimestral"
+msgstr "Expandir dados anuais para"
 
 #: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
 msgstr "Expandir dados trimestrais para mensais"
 
 #: gui/dialogs.c:4102
-#, fuzzy
 msgid "Please read the Help before proceeding."
-msgstr "(Por favor consulte a Ajuda para orientações)"
+msgstr "Por favor consulte a Ajuda antes de prosseguir."
 
 #: gui/dialogs.c:4258
 msgid "density estimation options"
@@ -10572,7 +10571,7 @@ msgstr "código das séries:"
 #: gui/dialogs.c:7088
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
-msgstr ""
+msgstr "A série %s não parece ser adequada para desagregação"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -11211,9 +11210,8 @@ msgid "Error reading package"
 msgstr "Erro ao ler o pacote"
 
 #: gui/fncall.c:4602
-#, fuzzy
 msgid "No mapfile is present"
-msgstr "o efeito ARCH não está presente"
+msgstr "Não está presente um ficheiro-mapa"
 
 #: gui/fnsave.c:374
 msgid "_Save gfn"
@@ -12793,9 +12791,8 @@ msgid "_Hurst exponent"
 msgstr "Expoente de _Hurst"
 
 #: gui/gretl.c:1875 gui/menustate.c:601
-#, fuzzy
 msgid "Disaggregate..."
-msgstr "agregaração"
+msgstr "Desagregar..."
 
 #: gui/gretl.c:1876
 msgid "_Edit attributes"
@@ -12842,9 +12839,8 @@ msgid "H_eteroskedasticity corrected"
 msgstr "H_eterocedasticidade corrigida"
 
 #: gui/gretl.c:1890
-#, fuzzy
 msgid "_Regularized least squares"
-msgstr "Mínimos Quadrados (OLS) com _pesos"
+msgstr "Mínimos Quadrados (OLS) _Regularizados"
 
 #: gui/gretl.c:1891
 msgid "High _precision OLS"
@@ -14570,16 +14566,15 @@ msgstr ""
 "neste momento."
 
 #: gui/library.c:1977
-#, fuzzy
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  If you wish, you can add observations\n"
 "(Data menu, Add observations), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
-"Não existem observações fora da amostra para\n"
-"previsão.  Se o desejar pode acrescentar observações\n"
-"(menu Dados, Editar valores), ou pode encurtar a amplitude da\n"
+"Não existem observações para\n"
+"predição.  Se o desejar pode acrescentar observações\n"
+"(menu Dados, Acrescentar observações), ou pode encurtar a amplitude da\n"
 "amostra usada para estimar o modelo (menu Amostra)."
 
 #: gui/library.c:2328 gui/selector.c:8303
@@ -15183,7 +15178,7 @@ msgstr ""
 
 #: gui/library.c:9661
 msgid "Unbalanced \"loop\"/\"endloop\" in script"
-msgstr ""
+msgstr "Encontrado \"loop\"/\"endloop\" desequilibrado no script"
 
 #: gui/library.c:9673
 msgid "Unmatched \"if\" in script (fixed)"
@@ -15335,9 +15330,8 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: Intervalo completo %s - %s"
 
 #: gui/menustate.c:1093
-#, fuzzy
 msgid "(unit:period)"
-msgstr "período"
+msgstr "(unidade:período)"
 
 #: gui/menustate.c:1128
 #, c-format
@@ -15545,11 +15539,11 @@ msgstr "Tem que seleccionar uma variável dependente"
 
 #: gui/selector.c:3461 gui/selector.c:6422
 msgid "Elastic net"
-msgstr ""
+msgstr "Rede elástica"
 
 #: gui/selector.c:3472 gui/selector.c:6393 gui/selector.c:6421
 msgid "Ridge"
-msgstr ""
+msgstr "Ridge"
 
 #: gui/selector.c:3499
 msgid "You must specify a quantile"
@@ -15706,9 +15700,8 @@ msgid "MIDAS regression"
 msgstr "Regressão MIDAS"
 
 #: gui/selector.c:4311
-#, fuzzy
 msgid "Regularized least squares"
-msgstr "Mínimos Quadrados (OLS) com pesos"
+msgstr "Mínimos quadrados regularizados"
 
 #: gui/selector.c:4321
 msgid "Weight variable"
@@ -16048,17 +16041,15 @@ msgstr "Máximo especificado"
 
 #: gui/selector.c:6390 gui/selector.c:6420
 msgid "LASSO"
-msgstr ""
+msgstr "LASSO"
 
 #: gui/selector.c:6437
-#, fuzzy
 msgid "Single λ-fraction"
-msgstr "Fracção central:"
+msgstr "Única fracção-λ"
 
 #: gui/selector.c:6446
-#, fuzzy
 msgid "Multiple λ values"
-msgstr "Gráficos múltiplos"
+msgstr "Múltiplos valores λ"
 
 #: gui/selector.c:6465 gui/toolbar.c:617
 msgid "Confidence level"
@@ -18263,23 +18254,20 @@ msgid "Produce debugging output"
 msgstr "Produzir saída para despiste de erros"
 
 #: plugin/interpolate.c:249 plugin/interpolate.c:263
-#, fuzzy
 msgid "GLS estimates"
-msgstr "Estimativas Mínimos Quadrados (OLS)"
+msgstr "Estimativas GLS"
 
 #: plugin/interpolate.c:253
-#, fuzzy
 msgid "Iterated GLS estimates"
-msgstr "Estimação iterada"
+msgstr "Estimadores GLS iterados"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
-msgstr ""
+msgstr "rho truncado a zero"
 
 #: plugin/interpolate.c:1736
-#, fuzzy
 msgid "Temporal disaggregation"
-msgstr "agregaração"
+msgstr "Desagregação temporal"
 
 #: plugin/interval.c:225
 #, c-format
