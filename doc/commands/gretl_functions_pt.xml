@@ -3,7 +3,7 @@
 
 <funcref language="portuguese">
 
-  <funclist name="Accessors" ref="accessors">
+  <funclist name="Acessores" ref="accessors">
 
     <function name="$ahat" section="access" output="series">
       <description>
@@ -150,6 +150,16 @@
 	  o estimador for o SUR iterado (irrestrito), nesse caso será um
 	  teste de razão de verossimilhança. Veja <guideref targ="chap:system"/>
 	  para detalhes e também <fncref targ="$diagpval"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  Este acessor retorna o caminho onde Gretl guarda os ficheiros
+          temporários, por exemplo quando se usa a função
+	  <fncref targ="mwrite"/> com um argumento não-nulo.
 	</para>
       </description>
     </function>
@@ -1219,6 +1229,18 @@
 	<para>
 	  Veja também o comando <cmdref targ="shell"/>.
 	</para>
+      </description>
+    </function>
+
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Este acessor retorna o caminho por defeito onde
+	  Gretl lê e escreve os ficheiros. Uma descrição mais detalhada pode ser
+          encontrada no Guia de Referência dos Comandos em <cmdref
+	  targ="workdir"/>.Note-se que esta variável pode ser alterada por meio
+          do comando <cmdref targ="set"/>.
+        </para>
       </description>
     </function>
 
