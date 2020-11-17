@@ -258,13 +258,14 @@ int gretl_isconst (int t1, int t2, const double *x)
  * @t1: starting observation.
  * @t2: ending observation.
  *
- * Check whether series @x is stochastic, and contains
- * nothing but valid values, over the given sample range
- * using a simple and fallible heuristic: the differences
- * between successive values must not all be the same.
+ * Check whether series @x is stochastic, and contains a
+ * contiguous set of valid values within the given sample span.
+ * The simple and fallible heuristic for a stochastic series is
+ * that the differences between successive values are all the
+ * same.
  *
  * Returns: 1 if the variable appears to be stochastic on
- * the specified heuristic, otherwise 0.
+ * the specified criterion, otherwise 0.
  */
 
 int gretl_isstoch (int t1, int t2, const double *x)
@@ -272,20 +273,37 @@ int gretl_isstoch (int t1, int t2, const double *x)
     double dx0;
     int na_count = 0;
     int multidiff = 0;
+    int s1 = -1, s2 = -1;
     int t;
 
     if (t1 >= t2) {
         return 0;
     }
 
-    dx0 = x[t1+1] - x[t1];
-
     for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    s1 = t;
+	    break;
+	}
+    }
+    for (t=t2; t>=s1; t--) {
+	if (!na(x[t])) {
+	    s2 = t;
+	    break;
+	}
+    }
+    if (s1 < 0 || s2 < 0 || s1 >= s2) {
+        return 0;
+    }
+
+    dx0 = x[s1+1] - x[s1];
+
+    for (t=s1; t<=s2; t++) {
 	if (na(x[t])) {
 	    na_count++;
 	    break;
 	}
-	if (t > t1 && !multidiff) {
+	if (t > s1 && !multidiff) {
 	    if (x[t] - x[t-1] != dx0) {
 		multidiff = 1;
 	    }
