@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-16 13:19+0100\n"
+"PO-Revision-Date: 2020-11-17 09:44+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -4236,7 +4236,7 @@ msgstr "Autoregresioni i mbetjeve (ndryshorja e varur, uhat)"
 
 #: lib/src/gretl_panel.c:4571
 msgid "Auxiliary regression including lagged residual"
-msgstr "Regresioni ndihmës përfshirë mbetjen e vonuar"
+msgstr "Regresion ndihmës përfshirë mbetjen e vonuar"
 
 #: lib/src/gretl_panel.c:5253
 #, c-format
@@ -4944,15 +4944,15 @@ msgstr "Testi i raportit të përgjasisë për termat (G)ARCH"
 
 #: lib/src/modelprint.c:240
 msgid "Left-unbounded observations"
-msgstr "Vrojtime të pacunguar majtas"
+msgstr "Vrojtime të pakufizuara majtas"
 
 #: lib/src/modelprint.c:241
 msgid "Right-unbounded observations"
-msgstr "Vrojtime të pacunguar djathtas"
+msgstr "Vrojtime të pakufizuara djathtas"
 
 #: lib/src/modelprint.c:242
 msgid "Bounded observations"
-msgstr "Vrojtime të cunguar"
+msgstr "Vrojtime të kufizuara"
 
 #: lib/src/modelprint.c:243
 msgid "Point observations"
@@ -4964,11 +4964,11 @@ msgstr "vrojtime ‘’Pseudo-point’’"
 
 #: lib/src/modelprint.c:259
 msgid "Left-censored observations"
-msgstr "Vrojtime të cunguara majtas"
+msgstr "Vrojtime të censuruara majtas"
 
 #: lib/src/modelprint.c:260
 msgid "Right-censored observations"
-msgstr "Vrojtime të cunguara djathtas"
+msgstr "Vrojtime të censuruara djathtas"
 
 #: lib/src/modelprint.c:292 lib/src/modelprint.c:308 lib/src/modelprint.c:340
 #: lib/src/modelprint.c:3238
@@ -5136,7 +5136,7 @@ msgstr "Regresion Dickey--Fuller"
 
 #: lib/src/modelprint.c:922
 msgid "Dickey-Fuller regression"
-msgstr "Regresioni Dickey-Fuller"
+msgstr "Regresion Dickey-Fuller"
 
 #: lib/src/modelprint.c:925
 msgid "KPSS regression"
@@ -6202,7 +6202,7 @@ msgstr "Totali i vrojtimeve"
 #: lib/src/modelprint.c:5325 lib/src/modelprint.c:5330
 #: lib/src/modelprint.c:5334
 msgid "Censored observations"
-msgstr "Vrojtime të cunguar"
+msgstr "Vrojtime të censuruara"
 
 #: lib/src/modelprint.c:5355 lib/src/modelprint.c:5363
 msgid "Actual"
@@ -6256,7 +6256,7 @@ msgstr "Mesatarja e katrorëve"
 
 #: lib/src/modelprint.c:5522 lib/src/modelprint.c:5524
 msgid "Regression"
-msgstr "Regresioni"
+msgstr "Regresion"
 
 #: lib/src/modelprint.c:5535 lib/src/modelprint.c:5537 plugin/anova.c:129
 #: plugin/anova.c:131
@@ -12799,7 +12799,7 @@ msgstr "M_odeli"
 
 #: gui/gretl.c:1882
 msgid "_Ordinary Least Squares"
-msgstr "Katrorët më të Vegjël të Zak_onshëm"
+msgstr "Katrorët më të Vegjël të Zak_onshëm - KVZ"
 
 #: gui/gretl.c:1883
 msgid "_Instrumental variables"
