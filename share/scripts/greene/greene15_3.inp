@@ -5,9 +5,10 @@
 open greene13_1.gdt
 
 # generate panelized variables (stacked time series)
-series It = stack(I_GM,I_CH,I_GE,I_WE,I_US)
-series Ft = stack(F_GM,F_CH,F_GE,F_WE,F_US)
-series Ct = stack(C_GM,C_CH,C_GE,C_WE,C_US)
+scalar n = $nobs
+series It = stack(I_*, n)
+series Ft = stack(F_*, n)
+series Ct = stack(C_*, n)
 
 # first, treat as if plain cross-sectional regression
 setobs 1 1 --cross
