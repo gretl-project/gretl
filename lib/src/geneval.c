@@ -15283,8 +15283,9 @@ static int dvar_get_series (double *x, int i, const DATASET *dset)
 
         for (t=0; t<dset->n && !err; t++) {
             ntolabel(obs, t, dset);
-            if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) != 3) {
-                err = E_DATA;
+            if (sscanf(obs, YMD_READ_FMT, &y, &m, &d) != 3 &&
+		sscanf(obs, "%d/%d/%d", &y, &m, &d) != 3) {
+		err = E_DATA;
             } else if (i == R_OBSMAJ) {
                 x[t] = y;
             } else if (i == R_OBSMIN) {
