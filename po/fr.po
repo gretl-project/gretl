@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-17 09:40+0100\n"
+"PO-Revision-Date: 2020-11-18 16:36+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -662,7 +662,7 @@ msgstr "indicatrice pour le test de Chow"
 
 #: lib/src/compare.c:2638
 msgid "Chow F-test for break"
-msgstr "Test F de Chow de stabilité"
+msgstr "Test F de Chow pour rupture"
 
 #: lib/src/compare.c:2639
 msgid "Robust Wald test for break"
@@ -673,8 +673,9 @@ msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
-"Quandt likelihood ratio test for structural break at an unknown point,\n"
-"with 15 percent trimming"
+"Test de Quandt du ratio de vraisemblance pour rupture structurelle à un "
+"point inconnu,\n"
+"avec élimination de 15 pour cent des observations"
 
 #: lib/src/compare.c:2781
 #, c-format
@@ -3892,7 +3893,7 @@ msgstr "pas de changement dans les paramètres"
 
 #: lib/src/gretl_model.c:4123
 msgid "QLR test for structural break"
-msgstr "Test QLR pour rupture structurel"
+msgstr "Test QLR pour rupture structurelle"
 
 #: lib/src/gretl_model.c:4126
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
