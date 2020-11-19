@@ -5012,7 +5012,10 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	return 0;
     }
 
-    bigset = create_new_dataset(dset->v, dset->n + totskip, NO_MARKERS);
+    /* We pass OPT_R here to avoid allocating varnames in @bigset,
+       since we're going to preserve these from @dset.
+    */
+    bigset = real_create_new_dataset(dset->v, dset->n + totskip, OPT_R);
 
     if (bigset == NULL) {
 	err = E_ALLOC;
@@ -5052,6 +5055,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	clear_datainfo(dset, CLEAR_SUBSAMPLE);
 
 	*dset = *bigset;
+	free(bigset); /* avoid leaking memory */
     }
 
     return err;

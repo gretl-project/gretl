@@ -577,6 +577,14 @@
 	  Returns the number of observations in the currently selected
 	  sample. Related: <fncref targ="$tmax"/>.
 	</para>
+	<para>
+	  In the case of panel data the value returned is the number
+	  of pooled observations (number of units times number of
+	  observations per unit). If you want the time-series length
+	  of a panel use <fncref targ="$pd"/>, and the number of
+	  included units can be found as <lit>$nobs</lit> divided by
+	  <lit>$pd</lit>.
+	</para>
       </description>
     </function>
 
