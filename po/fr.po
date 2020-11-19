@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-18 16:36+0100\n"
+"PO-Revision-Date: 2020-11-19 09:28+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -491,7 +491,7 @@ msgid ""
 "  Null hypothesis: the regression parameters are zero for the variables\n"
 msgstr ""
 "\n"
-"  Hypothèse nulle : les paramètres de le régression sont nuls pour les "
+"  Hypothèse nulle : les paramètres de la régression sont nuls pour les "
 "variables\n"
 
 #: lib/src/compare.c:316
@@ -3885,7 +3885,7 @@ msgstr "pas de différence structurelle"
 
 #: lib/src/gretl_model.c:4120
 msgid "CUSUM test for parameter stability"
-msgstr "Test de CUSUM pour la stabilité des paramètres"
+msgstr "Test CUSUM pour la stabilité des paramètres"
 
 #: lib/src/gretl_model.c:4121
 msgid "no change in parameters"
@@ -7637,7 +7637,7 @@ msgstr "Test LR pour la matrice de covariance diagonale"
 
 #: lib/src/system.c:3653
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr "Test Breusch--Pagan pour la matrice de covariance diagonale"
+msgstr "Test de Breusch--Pagan pour la matrice de covariance diagonale"
 
 #: lib/src/system.c:3654
 msgid "Robust Breusch--Pagan test for diagonal covariance matrix"
@@ -7645,7 +7645,7 @@ msgstr "Test de Breusch--Pagan robuste pour la matrice de covariance diagonale"
 
 #: lib/src/system.c:3655
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr "Test Breusch-Pagan pour la matrice de covariance diagonale"
+msgstr "Test de Breusch-Pagan pour la matrice de covariance diagonale"
 
 #: lib/src/system.c:3656
 msgid "Robust Breusch-Pagan test for diagonal covariance matrix"
@@ -7980,7 +7980,7 @@ msgstr "Équation de "
 
 #: lib/src/varprint.c:1150 lib/src/varprint.c:1153 lib/src/varprint.c:1155
 msgid "F-tests of zero restrictions"
-msgstr "Tests Fisher d'absence de restriction"
+msgstr "Tests de Fisher d'absence de restriction"
 
 #: lib/src/varprint.c:1244 lib/src/varprint.c:1245
 #, c-format
@@ -8014,7 +8014,7 @@ msgstr "Test d'autocorrélation d’ordre"
 
 #: lib/src/vartest.c:422
 msgid "Test for ARCH of order up to"
-msgstr "Test pour ARCH jusqu’à l’ordre de"
+msgstr "Test pour ARCH d’ordre max"
 
 #: lib/src/vartest.c:681
 #, c-format
@@ -8755,7 +8755,7 @@ msgstr "H0 : Différences des moyennes ="
 
 #: gui/calculator.c:2765
 msgid "Assume common population standard deviation"
-msgstr "Supposer que l'écart type de chaque population est identique"
+msgstr "Supposer un écart-type identique à celui de la population"
 
 #: gui/calculator.c:2770
 msgid "variance of sample 1"
@@ -8783,7 +8783,7 @@ msgstr "H0 : Différence des proportions = 0"
 
 #: gui/calculator.c:2798 gui/dialogs.c:1142
 msgid "Show graph of sampling distribution"
-msgstr "Afficher le graphique de la distribution de l'échantillon"
+msgstr "Afficher le graphique de la distribution d'échantillonnage"
 
 #: gui/calculator.c:3028 gui/calculator.c:3072
 msgid "gretl: add distribution graph"
@@ -10371,11 +10371,11 @@ msgstr "Montrer seulement les données"
 
 #: gui/dialogs.c:5142
 msgid "Test against normal distribution"
-msgstr "Test contre la distribution normale"
+msgstr "Test pour distribution normale"
 
 #: gui/dialogs.c:5143
 msgid "Test against gamma distribution"
-msgstr "Test contre la distribution gamma"
+msgstr "Test pour distribution gamma"
 
 #: gui/dialogs.c:5162
 msgid "show plot"
@@ -13817,7 +13817,7 @@ msgstr "Graphiques des résidus EC combinés"
 
 #: gui/gui_utils.c:4821
 msgid "VAR inverse roots"
-msgstr "racines inverses VAR"
+msgstr "Racines inverses VAR"
 
 #: gui/gui_utils.c:4829
 msgid "Impulse responses (combined)"
