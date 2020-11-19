@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-19 09:28+0100\n"
+"PO-Revision-Date: 2020-11-19 19:41+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -368,7 +368,7 @@ msgstr "Intervalle de confiance paramétrique (Student) de %g%% : %g à %g"
 #: lib/src/bootstrap.c:722
 #, c-format
 msgid "%g%% confidence interval = %g to %g"
-msgstr "intervalle de confiance de %g%%  : %g à %g"
+msgstr "intervalle de confiance de %g%% = %g à %g"
 
 #: lib/src/bootstrap.c:728
 #, c-format
@@ -765,7 +765,7 @@ msgstr "Somme cumulée des résidus standardisés"
 #: lib/src/compare.c:3479
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
-msgstr "('*' indique une valeur en dehors de l'intervalle de confiance 95%)"
+msgstr "('*' indique une valeur en dehors de l'intervalle de confiance de 95%)"
 
 #: lib/src/compare.c:3648 lib/src/gretl_model.c:4171
 msgid "Test of common factor restriction"
@@ -7103,7 +7103,7 @@ msgstr "Note : * indique un résidu supérieur à 2,5 fois l'écart-type\n"
 #: lib/src/printout.c:3192
 #, c-format
 msgid " For %g%% confidence intervals, z(%g) = %.2f\n"
-msgstr " Pour l'intervalle de confiance à %g%%, z(.%g) = %.2f\n"
+msgstr " Pour l'intervalle de confiance de %g%%, z(%g) = %.2f\n"
 
 #: lib/src/printout.c:3195
 #, c-format
@@ -8387,7 +8387,7 @@ msgstr " écart-type de la moyenne = %g\n"
 #: gui/calculator.c:1569 gui/calculator.c:1579
 #, c-format
 msgid " 95%% confidence interval for mean: %g to %g\n"
-msgstr " Intervalle de confiance 95%% pour la moyenne : %g à %g\n"
+msgstr " Intervalle de confiance de 95%% pour la moyenne : %g à %g\n"
 
 #: gui/calculator.c:1574
 #, c-format
@@ -14083,7 +14083,7 @@ msgid ""
 "For %g\\%% confidence intervals, $z(%g) = %.2f$\n"
 "\n"
 msgstr ""
-"Pour l'intervalle de confiance %g\\%%, $z(%g) = %.2f$\n"
+"Pour l'intervalle de confiance de %g\\%%, $z(%g) = %.2f$\n"
 "\n"
 
 #: gui/guiprint.c:1744
@@ -14092,7 +14092,7 @@ msgid ""
 "For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n"
 "\n"
 msgstr ""
-"Pour l'intervalle de confiance %g\\%%, $t(%d, %g) = %.3f$\n"
+"Pour l'intervalle de confiance de %g\\%%, $t(%d, %g) = %.3f$\n"
 "\n"
 
 #: gui/guiprint.c:1764
@@ -14103,12 +14103,12 @@ msgstr "intervalle à %g\\%%"
 #: gui/guiprint.c:1848
 #, c-format
 msgid "For %g%% confidence intervals, z(%g) = %.2f"
-msgstr "Pour l'intervalle de confiance %g%%, z(%g) = %.2f"
+msgstr "Pour l'intervalle de confiance de %g%%, z(%g) = %.2f"
 
 #: gui/guiprint.c:1852
 #, c-format
 msgid "For %g%% confidence intervals, t(%d, %g) = %.3f"
-msgstr "Pour l'intervalle de confiance %g%%, t(%d, %g) = %.3f"
+msgstr "Pour l'intervalle de confiance de %g%%, t(%d, %g) = %.3f"
 
 #: gui/guiprint.c:1857
 #, c-format
@@ -14118,7 +14118,7 @@ msgstr "intervalle de %g%%"
 #: gui/guiprint.c:1956 gui/guiprint.c:2005
 #, c-format
 msgid "%g\\%% confidence interval"
-msgstr "intervalle de confiance à %g\\%%"
+msgstr "intervalle de confiance de %g\\%%"
 
 #: gui/guiprint.c:2046
 msgid ""
@@ -14639,7 +14639,7 @@ msgstr "gretl : test LM "
 
 #: gui/library.c:2621 gui/library.c:2625 gui/library.c:2629
 msgid "(heteroskedasticity)"
-msgstr "(hétroscédasticité)"
+msgstr "(hétéroscédasticité)"
 
 #: gui/library.c:2637
 msgid "gretl: groupwise heteroskedasticity"
