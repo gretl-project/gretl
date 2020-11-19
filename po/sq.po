@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-17 09:44+0100\n"
+"PO-Revision-Date: 2020-11-19 22:14+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -2153,7 +2153,7 @@ msgstr "'%s' nuk është ndryshore binare"
 
 #: lib/src/discrete.c:3099 lib/src/discrete.c:3173
 msgid "Perfect prediction obtained: no MLE exists"
-msgstr "Parashikim i përsosur :MP-ja nuk ekziston"
+msgstr "Parashikim i përsosur :MP nuk ekziston"
 
 #: lib/src/discrete.c:3339
 msgid "Illegal non-positive value of the dependent variable"
@@ -5030,7 +5030,7 @@ msgstr "Testi Sargan"
 #: lib/src/modelprint.c:535 lib/src/modelprint.c:538 lib/src/modelprint.c:546
 #: lib/src/modelprint.c:548 lib/src/printout.c:3341
 msgid "GMM criterion"
-msgstr "Kriteri MPM"
+msgstr "Kriteri GMM"
 
 #: lib/src/modelprint.c:585
 #, c-format
@@ -5162,7 +5162,7 @@ msgstr "KVZ"
 #: lib/src/modelprint.c:950 lib/src/modelprint.c:1013 lib/src/system.c:97
 #: gui/model_table.c:460
 msgid "WLS"
-msgstr "WLS (KVP)"
+msgstr "WLS"
 
 #: lib/src/modelprint.c:951
 msgid "WLS (ARCH)"
@@ -5222,7 +5222,7 @@ msgstr "ML"
 
 #: lib/src/modelprint.c:965
 msgid "GMM"
-msgstr "MPM"
+msgstr "GMM"
 
 #: lib/src/modelprint.c:966 lib/src/modelprint.c:1062 gui/selector.c:4255
 msgid "Logistic"
@@ -5330,15 +5330,15 @@ msgstr "Panel dinamik në 1 etapë"
 
 #: lib/src/modelprint.c:1032 lib/src/modelprint.c:1036
 msgid "2-step GMM"
-msgstr "MPM në 2 etapa"
+msgstr "GMM në 2 etapa"
 
 #: lib/src/modelprint.c:1034 lib/src/modelprint.c:1038
 msgid "Iterated GMM"
-msgstr "MPM përsëritëse"
+msgstr "GMM përsëritëse"
 
 #: lib/src/modelprint.c:1040
 msgid "1-step GMM"
-msgstr "MPM në 1 etapë"
+msgstr "GMM në 1 etapë"
 
 #: lib/src/modelprint.c:1044 gui/selector.c:4239
 msgid "Ordered Logit"
@@ -5374,11 +5374,11 @@ msgstr "Vlerësimi Kuantil"
 
 #: lib/src/modelprint.c:1078 lib/src/system.c:94
 msgid "LIML"
-msgstr "MPIK"
+msgstr "LIML"
 
 #: lib/src/modelprint.c:1080 lib/src/system.c:96
 msgid "TSLS"
-msgstr "2KVZ"
+msgstr "TSLS"
 
 #: lib/src/modelprint.c:1084
 msgid "Negative Binomial 1"
@@ -5414,7 +5414,7 @@ msgstr "MIDAS (NLS)"
 
 #: lib/src/modelprint.c:1154
 msgid "Critical values for TSLS bias relative to OLS:\n"
-msgstr "Vlerat kritike të zhvendosjes së vlerësimit 2KVZ kundrejt atij KVZ:\n"
+msgstr "Vlerat kritike të zhvendosjes së vlerësimit TSLS kundrejt atij KVZ:\n"
 
 #: lib/src/modelprint.c:1157
 #, no-c-format
@@ -5422,7 +5422,7 @@ msgid ""
 "Critical values for desired LIML maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
-"Vlerat kritike për vëllimin maksimal të dëshirueshëm të MPIK\n"
+"Vlerat kritike për vëllimin maksimal të dëshirueshëm për vlerësimin LIML\n"
 "  sipas testeve për pragun e domethënies 5%:\n"
 
 #: lib/src/modelprint.c:1161
@@ -5431,7 +5431,7 @@ msgid ""
 "Critical values for desired TSLS maximal size, when running\n"
 "  tests at a nominal 5% significance level:\n"
 msgstr ""
-"Vlerat kritike për vëllimin maksimal të dëshirueshëm të 2KVZ\n"
+"Vlerat kritike për vëllimin maksimal të dëshirueshëm të modelit TSLS\n"
 "  sipas testeve për pragun e domethënies 5%:\n"
 
 #: lib/src/modelprint.c:1165
@@ -5648,7 +5648,7 @@ msgstr "MP i saktë"
 #: lib/src/modelprint.c:1801 lib/src/modelprint.c:1825
 #: lib/src/modelprint.c:1830
 msgid "conditional ML"
-msgstr "MP i kushtëzuar"
+msgstr "MP i kushtëzuarWL"
 
 #: lib/src/modelprint.c:1807 lib/src/modelprint.c:1823
 msgid "Estimated using least squares"
@@ -6452,7 +6452,7 @@ msgstr "NLS : konvergjenca nuk u arrit dot pas %d përsëritjesh"
 
 #: lib/src/nls.c:2907
 msgid "Analytical derivatives cannot be used with GMM"
-msgstr "Derivatet analitikë nuk mund të përdoren me MPM"
+msgstr "Derivatet analitikë nuk mund të përdoren me GMM"
 
 #: lib/src/nls.c:2993
 #, c-format
@@ -7490,7 +7490,7 @@ msgstr "SUR - Ekuacione në dukje të pavarur"
 
 #: lib/src/system.c:103
 msgid "Three-Stage Least Squares"
-msgstr "Katrorët më të Vegjël të Trefishtë"
+msgstr "Katrorët më të Vegjël të Trefishtë (3SLS)"
 
 #: lib/src/system.c:104
 msgid "Full Information Maximum Likelihood"
@@ -8189,7 +8189,7 @@ msgstr ""
 #: cli/gretlcli.c:1069
 #, c-format
 msgid "writing session output to %s%s\n"
-msgstr "rezultati i seancës po shkruhet në %s%s\n"
+msgstr "rezultati i sesjonit po shkruhet në %s%s\n"
 
 #: cli/gretlcli.c:1109
 msgid "Terminated on error\n"
@@ -8323,7 +8323,7 @@ msgstr "gretl: probabiliteti"
 
 #: gui/calculator.c:1373
 msgid "You must give a name for the variable"
-msgstr "Duhet t'i jepni një emër ndryshores"
+msgstr "Duhet të emërtoni ndryshoren"
 
 #: gui/calculator.c:1440
 #, c-format
@@ -8913,11 +8913,11 @@ msgstr "Jepni vlerën që do të lexohet si \"munguese\":"
 
 #: gui/callbacks.c:604 gui/callbacks.c:695
 msgid "gretl: GMM"
-msgstr "gretl: MPM"
+msgstr "gretl: GMM"
 
 #: gui/callbacks.c:605 gui/callbacks.c:696
 msgid "GMM: Specify function and orthogonality conditions:"
-msgstr "MPM: Përcakto funksionet dhe kushtet e ortogonalitetit:"
+msgstr "GMM: Përcakto funksionet dhe kushtet e ortogonalitetit:"
 
 #: gui/callbacks.c:611 gui/callbacks.c:700
 msgid "gretl: maximum likelihood"
@@ -9039,7 +9039,7 @@ msgid ""
 "# Record of session commands.  Please note that this will\n"
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
-"# Regjistrim i komandave të seancës. Kini parasysh që mund të\n"
+"# Regjistrim i komandave të sesjonit. Kini parasysh që mund të\n"
 "# jetë nevoja të bëni ndryshime nqs do t'i përdorni në një skript.\n"
 
 #: gui/console.c:445
@@ -9773,7 +9773,7 @@ msgstr "Përcaktimi i strukturës së të dhënave"
 
 #: gui/dialogs.c:193
 msgid "Do you want to save this gretl session?"
-msgstr "A doni ta ruani këtë seancë?"
+msgstr "A doni ta ruani këtë sesjon?"
 
 #: gui/dialogs.c:195
 msgid "Save a record of the commands you executed?"
@@ -9785,7 +9785,7 @@ msgstr "Paralajmëro gjithmonë për ndryshime të paruajtura"
 
 #: gui/dialogs.c:204
 msgid "save session"
-msgstr "ruaj seancën"
+msgstr "ruaj sesjonin"
 
 #: gui/dialogs.c:204
 msgid "save commands"
@@ -11684,7 +11684,7 @@ msgstr "Ruaj si postscript (EPS)..."
 
 #: gui/gpt_control.c:4428 gui/gpt_control.c:4522 gui/toolbar.c:233
 msgid "Save to session as icon"
-msgstr "Ruaj si ikonë të seancës"
+msgstr "Ruaj si ikonë të sesjonit"
 
 #: gui/gpt_control.c:4434 gui/gpt_control.c:4523
 msgid "Freeze data labels"
@@ -12123,7 +12123,7 @@ msgstr "shtyp hollësitë mbi versionin"
 
 #: gui/gretl.c:604
 msgid "Start a new gretl instance?"
-msgstr "Dëshironi të hapni një sesjon të ri gretl-i?"
+msgstr "Dëshironi të hapni një seancë të re gretl-i?"
 
 #: gui/gretl.c:1377
 msgid "No lists are currently defined"
@@ -12239,15 +12239,15 @@ msgstr "_Skedë sesjoni"
 
 #: gui/gretl.c:1697
 msgid "_Open session..."
-msgstr "_Hap seancën…"
+msgstr "_Hap sesjonin…"
 
 #: gui/gretl.c:1698
 msgid "_Save session"
-msgstr "_Ruaj seancën"
+msgstr "_Ruaj sesjonin"
 
 #: gui/gretl.c:1700
 msgid "Save session _as..."
-msgstr "Ruaj seancën me emrin..."
+msgstr "Ruaj sesjonin me emrin..."
 
 #: gui/gretl.c:1703
 msgid "_Databases"
@@ -12463,7 +12463,7 @@ msgstr "S_hiko"
 
 #: gui/gretl.c:1772
 msgid "_Icon view"
-msgstr "_Dritarja e ikonave"
+msgstr "_Ikonat e sesjonit"
 
 #: gui/gretl.c:1773
 msgid "_Graph specified vars"
@@ -12807,15 +12807,15 @@ msgstr "_IV - Ndryshoret Instrumentale (NI)"
 
 #: gui/gretl.c:1884
 msgid "_Two-Stage Least Squares"
-msgstr "Katrorët më të Vegjël të Dyfishtë (TSLS)"
+msgstr "Katrorët më të Vegjël të Dyfishtë (_TSLS)"
 
 #: gui/gretl.c:1885
 msgid "_LIML"
-msgstr "_LIML - Maksimumi i përgjasisë me informacion të kufizuar"
+msgstr "Maksimumi i përgjasisë me informacion të kufizuar (_LIML)"
 
 #: gui/gretl.c:1886 gui/gretl.c:1935
 msgid "_GMM"
-msgstr "_GMM - Metoda e Përgjithësuar e Momenteve"
+msgstr "Metoda e Përgjithësuar e Momenteve (_GMM)"
 
 #: gui/gretl.c:1887
 msgid "Other _linear models"
@@ -12823,7 +12823,7 @@ msgstr "_Modele të tjerë linearë"
 
 #: gui/gretl.c:1888
 msgid "_Weighted Least Squares"
-msgstr "Katrorët më të Vegjël të Ponderuar (WLS)"
+msgstr "Katrorët më të Vegjël të Ponderuar (_WLS)"
 
 #: gui/gretl.c:1889
 msgid "H_eteroskedasticity corrected"
@@ -12831,7 +12831,7 @@ msgstr "Korrigjim të _heteroskedasticitetit"
 
 #: gui/gretl.c:1890
 msgid "_Regularized least squares"
-msgstr "Katrorët më të Vegjël të _Rregullt"
+msgstr "Katrorët më të vegjël të _rregullt"
 
 #: gui/gretl.c:1891
 msgid "High _precision OLS"
@@ -13055,7 +13055,7 @@ msgstr "Kërk_o module shtesë"
 
 #: gui/gretl.c:1953
 msgid "_About gretl"
-msgstr "_Diçka rreth gretl"
+msgstr "_Diçka rreth gretl-it"
 
 #: gui/gretl.c:2038 gui/gui_utils.c:237 gui/gui_utils.c:362
 msgid "_Analysis"
@@ -13139,7 +13139,7 @@ msgstr "_Ruaj si..."
 
 #: gui/gui_utils.c:220 gui/gui_utils.c:351
 msgid "Save to session as _icon"
-msgstr "Ruaj si _ikonë të seancës"
+msgstr "Ruaj si _ikonë të sesjonit"
 
 #: gui/gui_utils.c:221 gui/gui_utils.c:352
 msgid "Save as icon and cl_ose"
@@ -13417,7 +13417,7 @@ msgstr ""
 
 #: gui/gui_utils.c:1446
 msgid "gretl: open session"
-msgstr "gretl: hap seancën"
+msgstr "gretl: hap sesjonin"
 
 #: gui/gui_utils.c:1447
 msgid ""
@@ -13501,7 +13501,7 @@ msgstr "gretl: lista e komandave të ekzekutuara"
 
 #: gui/gui_utils.c:1878 gui/session.c:546
 msgid "gretl: session notes"
-msgstr "gretl: shënime mbi seancën"
+msgstr "gretl: shënime mbi sesjonin"
 
 #: gui/gui_utils.c:1884 gui/library.c:7254 gui/library.c:7288
 #: gui/library.c:7292
@@ -13797,7 +13797,7 @@ msgstr "_Ruaj tekstin..."
 
 #: gui/gui_utils.c:5336
 msgid "Save bundle to session as _icon"
-msgstr "Ruaj pakon si _ikonë të seancës"
+msgstr "Ruaj pakon si _ikonë të sesjonit"
 
 #: gui/gui_utils.c:5418
 msgid ""
@@ -14458,9 +14458,9 @@ msgid ""
 "Do you want to go ahead with the subsampling now?"
 msgstr ""
 "Ndryshimi i të dhënave në këtë mënyrë do të rezultojë në fshirjen\n"
-"nga kjo seancë gretl të %d modeli/eve .\n"
+"nga ky sesjon gretl të %d modeli/eve .\n"
 "\n"
-"Ju mund të ndaleni këtu dhe të ruani seancën së pari.\n"
+"Ju mund të ndaleni këtu dhe të ruani sesjonin së pari.\n"
 "\n"
 "A dëshironi të vazhdoni me nënkampionimin tani?"
 
@@ -15653,11 +15653,11 @@ msgstr "Model paneli dinamik"
 
 #: gui/selector.c:4271
 msgid "Weighted least squares"
-msgstr "Katrorët më të Vegjël të Ponderuar - WLS"
+msgstr "Katrorët më të Vegjël të Ponderuar (WLS)"
 
 #: gui/selector.c:4273
 msgid "Two-stage least squares"
-msgstr "Katrorët më të Vegjël të Dyfishtë (2KVZ)"
+msgstr "Katrorët më të Vegjël të Dyfishtë (TSLS)"
 
 #: gui/selector.c:4275
 msgid "Limited information maximum likelihood"
@@ -16398,7 +16398,7 @@ msgstr "Zgjidhni llojin e të dhënave"
 
 #: gui/session.c:151 gui/session.c:3400 gui/session.c:3848
 msgid "Save session"
-msgstr "Ruaj seancën"
+msgstr "Ruaj sesjonin"
 
 #: gui/session.c:152 gui/session.c:3410
 msgid "Arrange icons"
@@ -16480,7 +16480,7 @@ msgid ""
 "Reading session file %s\n"
 msgstr ""
 "\n"
-"Skeda e seancës %s po lexohet\n"
+"Skeda e sesjonit %s po lexohet\n"
 
 #: gui/session.c:1531
 msgid "Couldn't set sample"
@@ -16492,7 +16492,7 @@ msgid ""
 "your current session.  Continue?"
 msgstr ""
 "Fshirja e të dhënave në përdorim\n"
-"mbyll dhe seancën. Doni të vazhdoni?"
+"mbyll dhe sesjonin. Doni të vazhdoni?"
 
 #: gui/session.c:2106
 msgid "Display notes on opening session file"
@@ -16691,7 +16691,7 @@ msgstr "Përdor \"tabs\" në dritaren e modeleve"
 
 #: gui/settings.c:226
 msgid "Prompt to save session"
-msgstr "Më kujto të ruaj seancën"
+msgstr "Më kujto të ruaj sesjonin"
 
 #: gui/settings.c:228
 msgid "Display working directory"
@@ -17140,7 +17140,7 @@ msgstr "Të dhënat duhet të përmbajnë së paku një ndryshore"
 
 #: gui/ssheet.c:3522
 msgid "You must give the matrix a name"
-msgstr "Duhet të emërtoni matricës"
+msgstr "Duhet të emërtoni matricën"
 
 #: gui/ssheet.c:3544
 msgid "The matrix formula is empty"
@@ -18947,7 +18947,7 @@ msgstr ""
 
 #: plugin/vif.c:421
 msgid "Belsley-Kuh-Welsch collinearity diagnostics"
-msgstr "Diagnoza e kolinearitetit Belsley-Kuh-Welsch"
+msgstr "Diagnostikim kolineariteti Belsley-Kuh-Welsch"
 
 #: plugin/vif.c:422
 msgid "variance proportions"
