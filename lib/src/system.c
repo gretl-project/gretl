@@ -1552,7 +1552,6 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 {
     int (*system_est) (equation_system *, DATASET *,
 		       gretlopt, PRN *);
-    int stest = 0;
     int err = 0;
 
 #if SYSDEBUG
@@ -1601,24 +1600,20 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 	}
     }
 
-    if (err) {
-	goto system_bailout;
+    if (!err) {
+	int stest = sys_test_type(sys);
+
+	if (stest == SYS_TEST_NOTIMP) {
+	    pputs(prn, _("Sorry, command not available for this estimator"));
+	    pputc(prn, '\n');
+	    err = 1;
+	} else if (stest != SYS_TEST_NONE) {
+	    err = estimate_with_test(sys, dset, stest,
+				     system_est, opt, prn);
+	} else {
+	    err = (*system_est) (sys, dset, opt, prn);
+	}
     }
-
-    stest = sys_test_type(sys);
-
-    if (stest == SYS_TEST_NOTIMP) {
-	pputs(prn, _("Sorry, command not available for this estimator"));
-	pputc(prn, '\n');
-	err = 1;
-    } else if (stest != SYS_TEST_NONE) {
-	err = estimate_with_test(sys, dset, stest,
-				 system_est, opt, prn);
-    } else {
-	err = (*system_est) (sys, dset, opt, prn);
-    }
-
- system_bailout:
 
     if (!err) {
 	sys->smpl_t1 = dset->t1;
