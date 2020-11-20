@@ -36,19 +36,26 @@ function matrix WPtable (int n[4::12] "number of trials")
 end function
 
 
+function matrix truncnorm (int n[1::] "Number of random variables",
+                           const scalar m[0] "Mean value",
+                           const scalar sigma[0::1] "Std. deviation",
+                           const scalar below "left truncation value",
+                           const scalar above "right truncation value")
+    /* Generates truncated normal random values. Set 'below' and/or 'above'
+    to NA to skip. Returns a column vector. */
 
-function matrix truncnorm (int n[1::],
-                           scalar m[0],
-                           scalar sigma[0::1],
-                           scalar below,
-                           scalar above)
-    # Generates truncated normal random values.
-    # Set 'below' and/or 'above' to NA to skip.
+    if !ok(m)
+        funcerr "You must pass a valid (non-nan) value for the mean."
+    endif
+
     scalar l = ok(below) ? cnorm((below - m)/sigma) : 0
     scalar r = ok(above) ? cnorm((above - m)/sigma) : 1
-    matrix u = l + (r-l) .* muniform(n,1)
+    matrix u = l + (r - l) .* muniform(n, 1)
+
     return invcdf(z, u) .* sigma + m
 end function
+
+
 
 function matrix scores2x2 (matrix in,
                            bool verbose[0])
@@ -230,201 +237,30 @@ function scalar WSRpvalue (int n[4::] "number of trials",
     endif
 end function
 
-function matrix onemode (const matrix v "Vector of values")
-/* This function only returns one mode (modal value) of the
-   input data v. If that is multi-modal, the behavior of imaxc
-   is inherited, i.e. it should be the first occurrence.
-    */
 
-    # v should be a vector
-    matrix E = ecdf(vec(v))
-    matrix howmuch = diff(0 | E[,2])[2:] 	# make sure 1st is also diffed
-    matrix where = imaxc(howmuch)
+function matrix onemode (matrix v "Vector of values")
+  /* Returns one mode (modal value) of the input data v. If that is multi-modal,
+  details of internal computer arithmetic can influence which of the modes
+  is actually found. Returns a 2-element column vector with the modal value
+  and its absolute frequency. Returns a 2-element column vector with the
+  modal value and its absolute frequency. If v is an empty matrix (comprises
+  only nan values) a 1x1 matrix with nan is returned. */
 
-    return E[where, 1] | howmuch[where]
-end function
+    matrix ret = mshape(NA, 1, 1)
+    matrix v = vec(v)
 
-
-#######################
-
-## This function is a leftover private helper for bwritejson
-##  (through bundle2json).
-## In principle it could be removed or commented out...
-function string mrow2json (const matrix m, string misscode)
-    # Helper function to convert a matrix row to json-format array string.
-    # Below we check for integer values to potentially
-    # save a lot of space and bytes in the output file.
- 
-    if rows(m) != 1
-        funcerr "This function only for a single row"
-    endif
-    if !cols(m)
-        return "[]"
-    endif
-
-    # check for missings or NaN or other invalid stuff
-    if min(ok(m)) == 0
-
-        # now need to go elem-by-elem 
-        string out = "["
-        loop c = 1..cols(m) -q
-            scalar x = m[c]
-            string s = misscode
-            if ok(x) 
-                if abs(x) < 1e9	&& int(x) == x # avoid overflow
-                    s = sprintf("%14d", x) 
-                else
-                    s = sprintf("%14.10f", x) 
-                endif             
-            endif
-
-            out ~= strstrip(s)
-            out ~= (c < cols(m)) ? "," : "]"
-        endloop
-
-    else    # all values OK, can do in one go
-        if max(abs(m)) < 1e9 && int(m) == m # avoid overflow
-            string out = sprintf("%14d", m)
-        else
-            string out = sprintf("%14.10f", m)
-        endif
-        out = "[" ~ strstrip(out) ~ "]"
-        # replace (multiple) blanks inside with comma sep
-        out = regsub(out, "\s+", ",") 
-    endif
-
-    return out
-end function
-
-## This function is a leftover private helper for bwritejson.
-## In principle it could be removed or commented out...
-function string bundle2json (const bundle b, string misscode)
-    # Bundle elements represented as a json-formatted string.
-    # Not all gretl object types are supported yet, in particular
-    # no nesting, and among arrays only strings.
-
-    # Any unsupported element type will produce a missing ("null")
-    # entry (quoted in double quotes in the output).
-
-    strings keys = getkeys(b)
-    string out = "{"
-
-    loop k = 1..nelem(keys) -q
-        string key = keys[k]
-
-        # print the key
-        out ~= sprintf("\n\"%s\": ", key)
-
-        ## print the value
-        string typ = typestr(typeof(b[key]))
-
-        if typ == "string"
-            out ~= sprintf("\"%s\"", b[key])
-
-        elif typ == "scalar"
-            if ok(b[key])
-                out ~= sprintf("%g", b[key])
-            else
-                out ~= misscode	# in case of "NA"
-            endif
-
-        elif typ == "series" || typ == "matrix" # (series as vector)
-            matrix m = (typ == "series") ? {b[key]} : b[key]
-
-            if !nelem(m)
-                out ~= "[[]]"	# empty 2-d array
-            else
-
-                # matrix and vector always done as 2-dim
-                out ~= "["
-                loop r = 1..rows(m) -q
-                    out ~= mrow2json(m[r,], misscode)  
-                    out ~= (r < rows(m)) ? sprintf(",\n") : "]"
-                endloop
-            endif
-
-        elif typ == "array"
-            if typestr(typeof(b[key][1])) != "string"
-                print "Warning: Only string arrays supported."
-                print "(Treat array as missing.)"
-                out ~= misscode
-
-            else
-                strings S = b[key]
-                out ~= "["
-                loop r = 1..nelem(S) -q
-                    out ~= sprintf("\"%s\"", S[r])
-                    out ~= (r < nelem(S)) ? sprintf(",") : sprintf("]")
-                endloop
-            endif
-        else
-            printf "Warning: Type %s not supported.\n", typ
-            print "(Treat as missing.)"
-            out ~= misscode
-
-        endif
-        out ~= (k < nelem(keys)) ? "," : sprintf("\n}")
-    endloop
-
-    return out
-end function
-
-/*
-This was removed for extra v0.8 (Sep 19, 2020) as obsoleted 
-by the built-in bwrite, see the documentation.
-
-function scalar bwritejson (const bundle b, string fname[null],
-                            bool export[0],
-                            string *jsonresult[null],
-                            string misscode[null])
-    # The interface mimics the native bwrite function.
-    # Saves the input bundle b in JSON representation.
-    # (or copies it to jsonresult)
-
-    if !exists(misscode)
-        string misscode = "NaN"
-    endif
-
-    string json = bundle2json(b, misscode)
-
-    # No-file usage variant
-    if exists(jsonresult)
-        jsonresult = json
-        return 0
-
-    elif !exists(fname)
-        funcerr "Need file name input"
-
-    elif !strlen(fname)
-        funcerr "Need non-empty file name input"
-    endif
-
-    # Writing to files
-    if export
-        strings pathparts = splitfname(fname)
-        if strlen(pathparts[1])
-            print "Warning: export to dotdir requested, ignoring path prefix"
-        endif
-        fname = $dotdir ~ "/" ~ pathparts[2]  # also works on Windows
-
-        # append extension
-        if strlen(pathparts[3])
-            fname = fname ~ "." ~ pathparts[3]
-        endif
-    endif
-
-    catch outfile @fname --quiet
-        print json
-    end outfile
-    err = $error
-    if err
-        printf "bwritejson: Writing file failed; %s\n", errmsg(err)
-        result = err
+    if sum(ok(v)) == 0
+        printf "\nError: No valid input data.\n"
     else
-        result = 0
+        matrix E = ecdf(v)
+        matrix howmuch = diff(0 | E[,2])[2:]    # make sure 1st is also diffed
+        /* if multi-modal selection is not clear (finite precision digital
+        arithmetic) */
+        matrix where = imaxc(howmuch)
+
+        matrix ret = E[where, 1] | howmuch[where]
+        rnameset(ret, "Mode frequency")
     endif
 
-    return result
+    return ret
 end function
-
-*/

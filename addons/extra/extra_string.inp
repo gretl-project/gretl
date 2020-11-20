@@ -7,62 +7,59 @@
 # with multiple occurrences).
 # Another difference: When the second argument is an empty array,
   # then an empty matrix is returned (used to be the opposite, a vector
-  # with _all_ indices). 
-  # (Adding a "null" default for the 2nd argument and then returning 
+  # with _all_ indices).
+  # (Adding a "null" default for the 2nd argument and then returning
   # all the indices seems unnecessary, because a user then could always
   # do seq(1,nelem(lookinhere))' instead.)
 
-function matrix multi_instrings(strings lookinhere, strings tofind)
-    # Returns the positions (indices) in 'lookinhere' where any of the 
+function matrix multi_instrings (strings lookinhere, strings tofind)
+    # Returns the positions (indices) in 'lookinhere' where any of the
     # strings from 'tofind' occur.
-    # If there are duplicates in 'tofind' then the output may also 
-    # contain duplicate indices. Use uniq() or values() afterwards 
-    # if needed. 
-    
+    # If there are duplicates in 'tofind' then the output may also
+    # contain duplicate indices. Use uniq() or values() afterwards
+    # if needed.
+
     if $version < 20200
         funcerr "Sorry, this function needs at least gretl 2020a."
         # (because of instrings)
     endif
-    
+
     matrix which = {}
-    
-    # The case !nelem(tofind) used to be (in SVAR) some sort of default 
+
+    # The case !nelem(tofind) used to be (in SVAR) some sort of default
     # and returned all indices instead of none
-    # (don't remember why) 
+    # (don't remember why)
     # which = seq(1, nelem(lookinhere))
 
     if nelem(tofind)
         loop n = 1..nelem(tofind) -q
-            which |= instrings(lookinhere, tofind[n]) 
-        endloop 
+            which |= instrings(lookinhere, tofind[n])
+        endloop
         # which = values(which) # this was done in the old names2indices
     endif
+
     return which # may still be empty
-end function 
+end function
 
 ####################
 
 function strings powerset (strings S)
-    # Computes the powerset of the input S,
-    # i.e. all possible cominations of the
-    # string elements in S. (Including the
-    # empty set / empty string "".)
-    # Each combination
-    # yields one string in the output array.
-    # Being a set, the ordering is not
-    # defined.
-    l = nelem(S)
-    N = 2^l
-    matrix P = zeros(N,l)
+    /* Computes the powerset of the input S, i.e. all possible cominations
+    of the string elements in S. (Including the empty set / empty
+    string "".) Each combination yields one string in the output array.
+    Being a set, the ordering is not defined. */
+
+    scalar l = nelem(S)
+    scalar N = 2^l
+    matrix P = zeros(N, l)
     matrix s = seq(0, N-1)'
+    strings PS = array(N)
 
     loop i=1..l --quiet
         matrix a = s % 2
         P[,i] = a
         s = (s - a) / 2
     endloop
-
-    strings PS = array(N)
 
     loop i = 1..N --quiet
         string c = ""
@@ -79,42 +76,42 @@ end function
 
 ######################
 
-function void splitfname_check(strings out, int num)
+function void splitfname_check (strings out, int num)
     # Just a stupid debug checker and error catcher
     # for splitfname.
     if nelem(out) != num
         print out
-        funcerr "shouldn't happen (weird input?)"
+        funcerr "Shouldn't happen (weird input?)"
     endif
 end function
 
 function strings splitfname (const string fn)
-    /* The idea is to take a file name or full path and extract 
+    /* The idea is to take a file name or full path and extract
       up to 3 components:
     1. The path prefix (may be empty; without the trailing / or \ )
-    2. The "base" component of the file name, without the 
-       extension and without the path prefix 
+    2. The "base" component of the file name, without the
+       extension and without the path prefix
     3. The file extension (without the dot; may be empty)
-	
+
     Example:
     Input string: "/what/on/earth/isthisfile.gdt"
-	Output: 
+	Output:
     defarray("/what/on/earth", "isthisfile", "gdt")
 
-    (To separate the path prefix we just look for the last / _OR_ 
+    (To separate the path prefix we just look for the last / _OR_
      \ (forward or backward slash) and also think of the possibility of //.)
 
-    We use the \t character as internal separator because \n doesn't 
-    work properly with strsplit (bug fixed in gretl Dec 17th, 2019, for 2019d). 
+    We use the \t character as internal separator because \n doesn't
+    work properly with strsplit (bug fixed in gretl Dec 17th, 2019, for 2019d).
     */
 
     hasslash = instring(fn, "/") || instring(fn, sprintf("\\"))
 
-    # Test for a dot in a position where it signals an extension 
+    # Test for a dot in a position where it signals an extension
     # (not the Unixy other meanings)
     hasext = 0
     if regsub(fn, ".*[\w\s]+\.[\w\s]+", "!") == "!" && (fn != "!")
-        hasext = 1 
+        hasext = 1
     endif
 
 	if hasext && hasslash    # the full monty
@@ -125,7 +122,7 @@ function strings splitfname (const string fn)
 
     elif hasext           # only base file name and ext, no prefix
         string sepa = regsub(fn, "(.*)\.([^\.]*)", "\1\t\2")
-        strings parts = strsplit(sepa, "\t") 
+        strings parts = strsplit(sepa, "\t")
         splitfname_check(parts, 2)
 
         strings out = defarray("") + parts # empty prefix first
@@ -139,7 +136,6 @@ function strings splitfname (const string fn)
 
     else                 # no slash, no ext, just simple filename
         strings out = defarray("", fn, "")
-
     endif
 
 	return out

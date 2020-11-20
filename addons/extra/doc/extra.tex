@@ -68,17 +68,17 @@ Returns $A$ premultiplied by $K_{mn}$ (the commutation matrix; more
 efficient than explicit multiplication). In particular, \cmd{commute(vec(B),
 rows(B), cols(B))} gives $vec(B')$. The optional argument $n$ defaults to
 $m$ (giving $K_{mm}=K_{m}$). If the optional arg \texttt{post} is
-non-zero, then does post-multiplication ($A\times K_{mn}$). 
+non-zero, then does post-multiplication ($A\times K_{mn}$).
 
 \subsection{eliminate}
 
 \ArgRet{\texttt{matrix vecA}}{matrix}
 
-Each column of the input vecA is assumed to come from the operation vec(A) 
+Each column of the input vecA is assumed to come from the operation vec(A)
 on a square matrix, thus rows(vecA) must be a square number.
-Returns vech(A), which is the result of pre-multiplying vec(A) with the 
+Returns vech(A), which is the result of pre-multiplying vec(A) with the
 "elimination" matrix $L_m$.
-If vecA has several columns, each column is 
+If vecA has several columns, each column is
 treated separately as described above (and the results stacked side-by-side).
 
 \subsection{duplicate}
@@ -86,8 +86,8 @@ treated separately as described above (and the results stacked side-by-side).
 \ArgRet{\texttt{matrix vechA}}{matrix}
 
 The input is a vector assumed to come from an operation like vech(A).
-Returns vec(A), which is the result of pre-multiplying vech(A) with the 
-"duplication" matrix $D_m$. If vechA has several columns, each column is 
+Returns vec(A), which is the result of pre-multiplying vech(A) with the
+"duplication" matrix $D_m$. If vechA has several columns, each column is
 treated separately as described above (and the results stacked side-by-side).
 
 \subsection{nearPSD}
@@ -100,7 +100,7 @@ ported from ``DomPazz'' in Stackoverflow,
 apparently mimicking the nearPD() function in R. Because of re-scaling
 (to correlation matrix), the \texttt{epsilon} criterion value should
 implicitly apply to the correlation-based eigenvalues. The return
-value 0 or 1 indicates whether \texttt{m} was altered or not. 
+value 0 or 1 indicates whether \texttt{m} was altered or not.
 
 \subsection{zeroifclose}
 
@@ -110,13 +110,13 @@ value 0 or 1 indicates whether \texttt{m} was altered or not.
 Sets elements of \texttt{m} to zero if they are really close. The
 return value 0 or 1 indicates whether \texttt{m} was altered or not.
 
-The default value for the threshold has been \texttt{1e-12} since extra 
+The default value for the threshold has been \texttt{1e-12} since extra
 version 0.7. In some applications smaller (in absolute value) but mathematically
-truly non-zero results may occur, in which case a smaller threshold can be chosen.  
+truly non-zero results may occur, in which case a smaller threshold can be chosen.
 
 \subsection{drill}
 
-\ArgRet{\texttt{matrices} array, \texttt{matrix rowspec} (optional), 
+\ArgRet{\texttt{matrices} array, \texttt{matrix rowspec} (optional),
   \texttt{matrix colspec} (optional)}{matrix}
 
 This function "drills through" a matrix array and returns a matrix;
@@ -141,7 +141,7 @@ table of the form:
 
 \begin{center}
 \begin{tabular}{cccc}
-\toprule 
+\toprule
  &  & \multicolumn{2}{c}{Observed}\tabularnewline
  &  & 1 & 0\tabularnewline
 \midrule
@@ -168,7 +168,7 @@ integer-ization. Warnings are issued if \texttt{verbose} is 1.
 4 & FAR & false alarm rate & $\frac{f}{h+f}$ \\
 5 & CSI & critical success index & $\frac{h}{h+f+m}$\\
 6 & OR & odds ratio & $\frac{h \cdot z}{f \cdot m}$\\
-7 & BIAS & bias score & $\frac{h+f}{h+m}$\\ 
+7 & BIAS & bias score & $\frac{h+f}{h+m}$\\
 8 & TSS & true skill stat ($POD-POFD$); also known as the
           Hanssen-Kuipers score & $\frac{h}{h+m} -\frac{f}{f+z}$. \\
 9 & HSS & Heidke skill score & $2 \frac{h \cdot z - f \cdot m}{(h+m) \cdot (m+z)+(h+f) \cdot (f+z)}$ \\
@@ -181,21 +181,22 @@ integer-ization. Warnings are issued if \texttt{verbose} is 1.
 \label{tab:scores2x2}
 \end{table}
 
+
 \subsection{truncnorm}
 
 \ArgRet{\texttt{int n, scalar m, scalar sigma, scalar below, scalar
 above}}{matrix}
 
 Generates $n$ truncated normal random values. Specify mean \texttt{m}
-and std.\,dev. \texttt{sigma}, and the left/right truncation values
+and standard deviation \texttt{sigma}, and the left/right truncation values
 \texttt{below} and \texttt{above}. (Pass NA for any one of them to
-skip the respective truncation.) Returns a col vector of values.
+skip the respective truncation.) Returns a column vector of values.
+
 
 \subsection{WSRcritical}
 
 \ArgRet{\texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
 (optional)}{matrix}
-
 
 Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4). Tries to find the critical values
@@ -243,56 +244,57 @@ See also the sister function \cmd{WSRcritical}.
 
 \ArgRet{\texttt{strings S}}{}
 
-Computes the powerset of the input S, i.e. all possible combinations 
-of the string elements in S. (Including the empty set / 
-empty string "".) Each combination yields one string in the output 
-array. Being a set, the ordering is not defined and arbitrary. 
+Computes the powerset of the input S, i.e. all possible combinations
+of the string elements in S. (Including the empty set /
+empty string "".) Each combination yields one string in the output
+array. Being a set, the ordering is not defined and arbitrary.
 
 
 \subsection{onemode}
 
 \ArgRet{\texttt{matrix v}}{}
 
-Finds the mode of the empirical distribution of the input data. 
-When that is multi-modal the first mode is found (following the native
-imaxc function). Returns a 2-element column vector with the modal 
-value and its absolute frequency.
+Finds the mode of the empirical distribution of the input data.
+If that is multi-modal, details of internal computer arithmetic can
+influence which of the modes is actually found. Returns a 2-element column vector with the modal value and its absolute frequency. If v is an empty
+matrix (comprises only nan values) a 1x1 matrix with nan is returned.
+
 
 \subsection{bwritejson (removed)}
 
 This function was removed from extra version 0.8 (September 2020)
- because gretl's native \texttt{bwrite} function supports writing a 
- bundle in JSON format since gretl 2020c. Please switch to that 
+ because gretl's native \texttt{bwrite} function supports writing a
+ bundle in JSON format since gretl 2020c. Please switch to that
  function.
 
-% \ArgRet{\texttt{bundle b, string fname, bool export} (optional), 
-%     \texttt{string *jsonresult} (pointer form, optional), 
+% \ArgRet{\texttt{bundle b, string fname, bool export} (optional),
+%     \texttt{string *jsonresult} (pointer form, optional),
 %     \texttt{string misscode} (optional)}{scalar}
 
-% -- Attention: Writing a bundle to JSON is possible with the native function \cmd{bwrite} 
-% starting in gretl 2020c. The present function is only kept for older gretl versions and will be 
+% -- Attention: Writing a bundle to JSON is possible with the native function \cmd{bwrite}
+% starting in gretl 2020c. The present function is only kept for older gretl versions and will be
 % removed from this extra package eventually. Please adapt your scripts. --
 
-% Similar to the native function \texttt{bwrite}: Instead of an XML representation 
+% Similar to the native function \texttt{bwrite}: Instead of an XML representation
 % of the input bundle this function produces a JSON serialized representation.
 % So far supported bundle member types are string, scalar, series (will be saved as a
 % vector), matrix, string arrays.
 
-% The standard usage is to pass a valid file name in \texttt{fname} and have the result 
-% written to that file. However, if the pointer string argument \texttt{jsonresult} is used, 
-% then the file name input is ignored (could be omitted) and the JSON string is just 
-% copied to the \texttt{jsonresult} string variable. 
+% The standard usage is to pass a valid file name in \texttt{fname} and have the result
+% written to that file. However, if the pointer string argument \texttt{jsonresult} is used,
+% then the file name input is ignored (could be omitted) and the JSON string is just
+% copied to the \texttt{jsonresult} string variable.
 
-% Missing values are supported, but the JSON specification does not define them. The 
-% default is to print "NaN" for any missing value (in a numerical object), but this can 
-% be overridden with the string in the optional \texttt{misscode} argument.\footnote{Note 
-% that round-tripping the result with gretl's native \cmd{jsonget} and \cmd{jsongetb} 
+% Missing values are supported, but the JSON specification does not define them. The
+% default is to print "NaN" for any missing value (in a numerical object), but this can
+% be overridden with the string in the optional \texttt{misscode} argument.\footnote{Note
+% that round-tripping the result with gretl's native \cmd{jsonget} and \cmd{jsongetb}
 % functions does not fully work, apparently due to a limitation of the underlying third-party
 % library. However, this function is not meant for internal gretl usage, but for exporting data.
 % For just storing gretl bundles use the native XML-based format produced by gretl's
 % \cmd{bwrite}.}
 
-% Returns 0 after successful completion, or the non-zero gretl error code if writing the 
+% Returns 0 after successful completion, or the non-zero gretl error code if writing the
 % output file failed for some reason (in which case also a warning message is printed).
 
 \subsection{splitfname}
@@ -302,16 +304,16 @@ This function was removed from extra version 0.8 (September 2020)
 The idea is to take a file name or full path and extract three components:
 \begin{enumerate}
 \item The path prefix (may be empty; without the trailing / or \textbackslash)
-\item The "base" component of the file name, without the extension and without the path prefix 
+\item The "base" component of the file name, without the extension and without the path prefix
 \item The file extension (without the dot; may be empty)
-\end{enumerate}	
+\end{enumerate}
 In principle should work with forward as well as backslashes and also with double forward slashes.
 
 Example:
 
 Input string: "/what/on/earth/isthisfile.gdt"
 
-Output equivalent to: 
+Output equivalent to:
 
 \cmd{defarray("/what/on/earth", "isthisfile", "gdt")}
 
@@ -319,9 +321,9 @@ Output equivalent to:
 
 \ArgRet{\texttt{strings lookinhere}, \texttt{strings tofind}}{matrix}
 
-Returns in a column vector the positions (indices) in `lookinhere' where any of the 
-strings from `tofind' occur. If there are duplicates in `tofind' then the output 
-may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterwards if needed. 
+Returns in a column vector the positions (indices) in `lookinhere' where any of the
+strings from `tofind' occur. If there are duplicates in `tofind' then the output
+may also contain duplicate indices. Use \cmd{uniq()} or \cmd{values()} afterwards if needed.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -336,7 +338,7 @@ relationship between them, in which case it returns 2.  If there's a
 1-to-n relationship such that \texttt{a} could be interpreted as a (mathematical)
 function of \texttt{b}, it returns 1. If there's no relationship -- for example several
 different values of series \texttt{a} appear together with some value of \texttt{b} -- it
-returns 0. 
+returns 0.
 
 One of the possible use cases is to check whether two
 discrete series encode the same variable. For example, the code:
@@ -385,31 +387,31 @@ values. Truncation quantiles are determined according to relative
 tail frequencies \texttt{p} and \texttt{phi}. Default lower and upper
 frequencies are 0.05, but re-settable with \texttt{p}. Pass \texttt{phi}
 in addition to \texttt{p} for an asymmetric trimming, then \texttt{p}
-determines only the lower frequency and \texttt{phi} the upper. 
+determines only the lower frequency and \texttt{phi} the upper.
 
 \subsection{fracorder}
 
 \ArgRet{\texttt{series x, int order} (optional), \texttt{bool verbosity} (optional)}{matrix}
 
-Meta function to invoke all the various ways in gretl to estimate the order of fractional 
-integration of the input series, namely the Local Whittle estimator, the one by 
-Geweke \& Porter-Hudak (GPH), and the Hurst exponent minus $0.5$. The first two 
+Meta function to invoke all the various ways in gretl to estimate the order of fractional
+integration of the input series, namely the Local Whittle estimator, the one by
+Geweke \& Porter-Hudak (GPH), and the Hurst exponent minus $0.5$. The first two
 are executed through gretl's command \texttt{fractint}, the latter via \texttt{hurst}.%
-\footnote{Another estimation approach for the Hurst exponent is provided in the 
+\footnote{Another estimation approach for the Hurst exponent is provided in the
 user-contributed function package 'gen\_hurst'.}
 This function only works with gretl 2020c or higher.
 
 Returns a matrix with three rows corresponding to the methods above; the four columns
 contain (1) the point estimate, (2) its standard error, (3) the test statistic for the null
-hypothesis of integration order zero, (4) the associated p-value. For example, to obtain 
+hypothesis of integration order zero, (4) the associated p-value. For example, to obtain
 the standard error of the Local Whittle estimator one picks the 1,2-element of the output
 matrix. The optional 'verbosity' switch is set to 0 (OFF) by default, otherwise the standard
 output of the underlying commands is printed out.
 
-The optional 'order' argument only applies to the Local Whittle and GPH estimators and 
-overrides gretl's default lag order of $\min(T/2, T^{0.6})$. 
+The optional 'order' argument only applies to the Local Whittle and GPH estimators and
+overrides gretl's default lag order of $\min(T/2, T^{0.6})$.
 
-For the Hurst method a minimum of 128 observations is required, and test results are 
+For the Hurst method a minimum of 128 observations is required, and test results are
 never available. Also note that by construction this estimator can only take values between
 $-0.5$ and $0.5$.
 
@@ -420,7 +422,7 @@ $-0.5$ and $0.5$.
 
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue, onemode,
 splitfname, multi\_instrings, fracorder:
-Sven Schreiber 
+Sven Schreiber
 
 \item winsor: Sven Schreiber, original code JoshuaHe
 % \item bwritejson: Artur Tarassow and Sven Schreiber
@@ -430,7 +432,7 @@ Sven Schreiber
 \section{Changelog }
 \begin{itemize}
 \item September 2020: 0.8 (in progress), add fracorder, remove bwritejson
-\item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to 
+\item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to
 bwritejson, efficiency improvement for zeroifclose
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;
   finally remove the retired sepstr2arr (use native strsplit instead);
@@ -440,7 +442,7 @@ bwritejson, efficiency improvement for zeroifclose
 \item February 2018: 0.41, allow non-integer input in WSRpvalue
 \item January 2018: 0.4, add WSRcritical, WSRpvalue
 \item December 2017: 0.3, add scores2x2; switch to pdf help document
-\item September 2017: 0.2, add winsor 
+\item September 2017: 0.2, add winsor
 \item July 2017: initial release
 \end{itemize}
 
