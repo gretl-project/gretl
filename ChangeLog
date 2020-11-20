@@ -58,6 +58,9 @@ version 2020e, in progress
   libraries (DLLs)
 - MS Windows build: update libeay.dll so as to prevent
   crashes on certain CPUs
+- MS Windows: give up on trying to write downloaded PDFs
+  and function packages to "system" location -- go straight
+  to the user's filespace
 - Update packaged fedstl database
 - Update several translations
 
