@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-20 11:28+0100\n"
+"PO-Revision-Date: 2020-11-20 11:45+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -742,7 +742,7 @@ msgstr "Testi CUSUMSQ për qëndrueshmëri të parametrave"
 
 #: lib/src/compare.c:3454
 msgid "Cumulated sum of squared residuals"
-msgstr "Shuma e katrorëve të mbetjes e kumuluar"
+msgstr "Shuma kumulative e katrorëve të mbetjes"
 
 #: lib/src/compare.c:3458
 msgid "CUSUM test for stability of parameters"
@@ -764,7 +764,7 @@ msgstr ""
 
 #: lib/src/compare.c:3473
 msgid "Cumulated sum of scaled residuals"
-msgstr "Shuma e mbetjeve të ponderuara e kumuluar"
+msgstr "Shuma kumulative e mbetjes së reduktuar"
 
 #: lib/src/compare.c:3479
 #, no-c-format
