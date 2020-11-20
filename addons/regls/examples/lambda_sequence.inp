@@ -9,8 +9,7 @@ list X = population..LemasPctOfficDrugUn
 smpl 1 800
 printf "Sample range %d to %d\n", $t1, $t2
 
-bundle parms = defbundle("nlambda", 8)
-parms.verbosity = 0
+bundle parms = _(nlambda = 8, verbosity = 0)
 
 set stopwatch
 bundle lb = regls(murdPerPop, X, parms)
@@ -20,7 +19,6 @@ regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 printf "time %.4fs\n", tm
 
 parms.ccd = 1
-
 parms.ccd_toler = 1.0e-14
 set stopwatch
 bundle lb = regls(murdPerPop, X, parms)

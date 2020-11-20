@@ -2691,6 +2691,40 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
     return err;
 }
 
+/* Special for biprobit, maybe just temporary: trim
+   the last row and column of the covariance matrix,
+   pertaining to the "extra" parameter rho. The
+   alternative to this would be promoting rho to
+   full "coeff" status.
+
+   Fixes breakage in the $vcv accessor noticed and
+   discussed in late October 2020.
+*/
+
+static int prune_vcv (gretl_matrix **pV)
+{
+    gretl_matrix *V, *V0 = *pV;
+    int i, j, k = V0->rows - 1;
+    double vij;
+
+    V = gretl_matrix_alloc(k, k);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+
+    for (j=0; j<k; j++) {
+	for (i=0; i<k; i++) {
+	    vij = gretl_matrix_get(V0, i, j);
+	    gretl_matrix_set(V, i, j, vij);
+	}
+    }
+
+    gretl_matrix_free(V0);
+    *pV = V;
+
+    return 0;
+}
+
 /**
  * gretl_model_add_QML_vcv:
  * @pmod: pointer to model.
@@ -2760,6 +2794,10 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	}
     }
 
+    if (!err && ci == BIPROBIT) {
+	err = prune_vcv(&V);
+    }
+
     if (!err) {
 	err = gretl_model_write_vcv(pmod, V);
     }
@@ -2801,7 +2839,19 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 int gretl_model_add_hessian_vcv (MODEL *pmod,
 				 const gretl_matrix *H)
 {
-    int err = gretl_model_write_vcv(pmod, H);
+    int err = 0;
+
+    if (pmod->ci == BIPROBIT) {
+	gretl_matrix *H0 = gretl_matrix_copy(H);
+
+	err = prune_vcv(&H0);
+	if (!err) {
+	    err = gretl_model_write_vcv(pmod, H0);
+	}
+	gretl_matrix_free(H0);
+    } else {
+	gretl_model_write_vcv(pmod, H);
+    }
 
     if (!err) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
@@ -2835,6 +2885,10 @@ int gretl_model_add_OPG_vcv (MODEL *pmod,
     }
 
     err = gretl_invert_symmetric_matrix(GG);
+
+    if (!err && pmod->ci == BIPROBIT) {
+	err = prune_vcv(&GG);
+    }
 
     if (!err) {
 	err = gretl_model_write_vcv(pmod, GG);
@@ -4855,7 +4909,7 @@ static void serialize_model_data_items (const MODEL *pmod, PRN *prn)
 		pprintf(prn, "%d ", list[j]);
 	    }
 	} else if (item->type == GRETL_TYPE_STRING) {
-	    pprintf(prn, "%s", (char *) item->ptr);
+	    gretl_xml_put_string((const char *) item->ptr, prn);
 	} else if (item->type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = (gretl_matrix *) item->ptr;
 

@@ -279,9 +279,8 @@ struct plugin_function_info plugin_functions[] = {
     /* duration models */
     { "duration_estimate", P_DURATION},
 
-    /* data interpolation */
+    /* temporal aggregation */
     { "time_disaggregate", P_INTERPOLATE},
-    { "tdisagg_basic", P_INTERPOLATE},
 
     /* ISO 3166 country codes */
     { "iso_country", P_ISO3166},

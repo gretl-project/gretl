@@ -500,6 +500,7 @@ enum {
     F_CHOWLIN,
     F_TDISAGG,
     F_HYP2F1,
+    F_MMULT,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
@@ -667,7 +668,8 @@ enum parser_flags {
     P_AND     = 1 << 25, /* state: working on right-hand term of B_AND */
     P_STACK   = 1 << 26, /* executing stack() */
     P_ALTINP  = 1 << 27, /* the input string has been substituted */
-    P_OBJQRY  = 1 << 28  /* querying the existence of an object */
+    P_OBJQRY  = 1 << 28, /* querying the existence of an object */
+    P_STRVEC  = 1 << 29  /* "complex" calc with string-valued series */
 };
 
 struct lhinfo {

@@ -231,43 +231,32 @@ static void graph_dbdata (DATASET *dbset)
     gui_graph_handler(err);
 }
 
-static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
-			       GtkWidget *parent)
+static int expand_data_dialog (int nx, int nv, GtkWidget *parent)
 {
-    int mult = targ_pd / src_pd;
-    int resp;
+    const gchar *msg;
 
-    if ((targ_pd == 4 && src_pd == 1) ||
-	(targ_pd == 12 && src_pd == 4)) {
-	/* interpolation is an option */
-	const char *opts[] = {
-	    N_("Repeat the lower frequency values"),
-	    N_("Interpolate higher frequency values")
-	};
-
-	resp = radio_dialog("gretl", _("Adding a lower frequency series to a\n"
-				       "higher frequency dataset"),
-			    opts, 2, 0, EXPAND, parent);
-	if (resp == 1) {
-	    *interpol = 1;
-	    resp = GRETL_YES;
-	} else if (resp == 0) {
-	    resp = GRETL_YES;
-	}
+    if (nx == nv) {
+	msg = N_("The data to be imported are of a lower frequency\n"
+		 "than the current dataset. OK to proceed?");
     } else {
-	/* can only do expansion via replication */
-	gchar *msg =
-	    g_strdup_printf(_("Do you really want to add a lower frequency series\n"
-			      "to a higher frequency dataset?\n\n"
-			      "If you say 'yes' I will expand the source data by\n"
-			      "repeating each value %d times.  In general, this is\n"
-			      "not a valid thing to do."),
-			    mult);
-	resp = yes_no_dialog("gretl", msg, parent);
-	g_free(msg);
+	msg = N_("Some of the data to be imported are of a lower frequency\n"
+		 "than the current dataset. OK to proceed?");
     }
 
-    return resp;
+    return yes_no_help_dialog(_(msg), EXPAND);
+}
+
+static void give_tdisagg_option (int v)
+{
+    gchar *msg;
+    int resp;
+
+    msg = g_strdup_printf(_("Disaggregate %s now?"), dataset->varname[v]);
+    resp = yes_no_dialog("database import", msg, NULL);
+    g_free(msg);
+    if (resp == GRETL_YES) {
+	tdisagg_dialog(v);
+    }
 }
 
 static int obs_overlap_check (int pd, const char *stobs,
@@ -497,7 +486,6 @@ static void unset_dbnomics_id (void)
 
 static void record_db_import (const char *vname,
 			      int compact,
-			      int interpol,
 			      CompactMethod method)
 {
     const char *cstr = NULL;
@@ -506,9 +494,6 @@ static void record_db_import (const char *vname,
 	if (compact && (cstr = compact_method_string(method)) != NULL) {
 	    lib_command_sprintf("data %s --name=%s --compact=%s",
 				dbnomics_id, vname, cstr);
-	} else if (interpol) {
-	    lib_command_sprintf("data %s --name=%s --interpolate",
-				dbnomics_id, vname);
 	} else {
 	    lib_command_sprintf("data %s --name=%s", dbnomics_id, vname);
 	}
@@ -516,8 +501,6 @@ static void record_db_import (const char *vname,
 	if (compact && (cstr = compact_method_string(method)) != NULL) {
 	    lib_command_sprintf("data %s --compact=%s", vname,
 				cstr);
-	} else if (interpol) {
-	    lib_command_sprintf("data %s --interpolate", vname);
 	} else {
 	    lib_command_sprintf("data %s", vname);
 	}
@@ -574,7 +557,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     CompactMethod cmethod = COMPACT_AVG;
     int dbv, resp, overwrite = 0;
     int compact = 0;
-    int interpol = 0;
+    int expand = 0;
     int err = 0;
 
     /* is there a series of this name already in the dataset? */
@@ -613,10 +596,11 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 
     if (dbset->pd < dataset->pd) {
 	/* the incoming series needs to be expanded */
-	resp = expand_data_dialog(dbset->pd, dataset->pd, &interpol,
-				  vwin->main);
+	resp = expand_data_dialog(1, 1, vwin->main);
 	if (resp != GRETL_YES) {
 	    return 0;
+	} else {
+	    expand = 1;
 	}
     } else if (dbset->pd > dataset->pd) {
 	/* the incoming series needs to be compacted */
@@ -638,9 +622,11 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	}
     }
 
+    /* FIXME maybe handle tdisagg via post-processing of the
+       imported series? */
+
     err = transcribe_db_data(dataset, dbv, dbset->Z[1], dbset->pd,
-			     dbset->n, dbset->stobs, cmethod,
-			     interpol);
+			     dbset->n, dbset->stobs, cmethod);
 
     if (!err) {
 	const char *vlabel = series_get_label(dbset, 1);
@@ -649,12 +635,19 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	if (vlabel != NULL && *vlabel != '\0') {
 	    series_set_label(dataset, dbv, vlabel);
 	}
-	record_db_import(dbset->varname[1], compact, interpol, cmethod);
+	record_db_import(dbset->varname[1], compact, cmethod);
+	if (expand) {
+	    series_set_orig_pd(dataset, dbv, dbset->pd);
+	}
     } else {
 	if (!overwrite) {
 	    dataset_drop_last_variables(dataset, 1);
 	}
 	gui_errmsg(err);
+    }
+
+    if (!err && expand) {
+	give_tdisagg_option(dbv);
     }
 
     return err;
@@ -668,7 +661,8 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
     SERIESINFO *sinfo;
     double **dbZ = dbset->Z;
     CompactMethod cmethod = COMPACT_AVG;
-    int resp, warned = 0, chosen = 0;
+    int resp, chosen = 0;
+    int nx, vx = 0;
     int i, err = 0;
 
     sinfo = &dw->sinfo[0];
@@ -679,12 +673,25 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 
     record_db_open_command(dw);
 
+    nx = 0;
+    for (i=0; i<dw->nv && !err; i++) {
+	if (dw->sinfo[i].pd < dataset->pd) {
+	    nx++;
+	}
+    }
+    if (nx > 0) {
+	resp = expand_data_dialog(nx, dw->nv, vwin->main);
+	if (resp != GRETL_YES) {
+	    return 0;
+	}
+    }
+
     for (i=0; i<dw->nv && !err; i++) {
 	int v, dbv;
 	int existing = 0;
 	int overwrite = 0;
 	int compact = 0;
-	int interpol = 0;
+	int expand = 0;
 
 	sinfo = &dw->sinfo[i];
 	v = sinfo->v;
@@ -702,14 +709,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 
 	if (sinfo->pd < dataset->pd) {
 	    /* the incoming series needs to be expanded */
-	    if (!warned) {
-		resp = expand_data_dialog(sinfo->pd, dataset->pd, &interpol,
-					  vwin->main);
-		if (resp != GRETL_YES) {
-		    return 0;
-		}
-		warned = 1;
-	    }
+	    expand = 1;
 	} else if (sinfo->pd > dataset->pd) {
 	    /* the incoming series needs to be compacted */
 	    if (!chosen) {
@@ -728,7 +728,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 		if (err) {
 		    break;
 		} else {
-		    record_db_import(sinfo->varname, compact, interpol, cmethod);
+		    record_db_import(sinfo->varname, compact, cmethod);
 		    continue;
 		}
 	    }
@@ -756,8 +756,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 	}
 
 	err = transcribe_db_data(dataset, dbv, dbZ[v], sinfo->pd,
-				 sinfo->nobs, sinfo->stobs, cmethod,
-				 interpol);
+				 sinfo->nobs, sinfo->stobs, cmethod);
 	if (err) {
 	    gui_errmsg(err);
 	    if (!overwrite) {
@@ -766,8 +765,16 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 	} else {
 	    strcpy(dataset->varname[dbv], sinfo->varname);
 	    series_set_label(dataset, dbv, sinfo->descrip);
-	    record_db_import(sinfo->varname, compact, interpol, cmethod);
+	    if (expand) {
+		series_set_orig_pd(dataset, dbv, sinfo->pd);
+		if (nx == 1) vx = dbv;
+	    }
+	    record_db_import(sinfo->varname, compact, cmethod);
 	}
+    }
+
+    if (!err && vx > 0) {
+	give_tdisagg_option(vx);
     }
 
     return err;
@@ -803,9 +810,8 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 	    }
 	} else {
 	    record_db_open_command(NULL);
-	    record_db_import(dbset->varname[1], 0, 0, 0);
+	    record_db_import(dbset->varname[1], 0, 0);
 	}
-
 	data_status |= (GUI_DATA | MODIFIED_DATA);
     }
 
@@ -2275,9 +2281,9 @@ void open_db_index (GtkWidget *w, gpointer data)
 
 void open_remote_db_index (GtkWidget *w, gpointer data)
 {
+    GtkTreeSelection *sel;
     GtkTreeIter iter;
     GtkTreeModel *model;
-    GtkTreeSelection *sel;
     char *getbuf = NULL;
     gchar *fname = NULL;
     windata_t *vwin = (windata_t *) data;
@@ -2328,33 +2334,72 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     g_free(pname);
 }
 
-void open_dbnomics_dataset (GtkWidget *w, gpointer data)
+static int get_db_provider_and_name (windata_t *vwin,
+				     const gchar **provider,
+				     gchar **dsname)
 {
-    windata_t *vwin = (windata_t *) data;
+    GtkTreeSelection *sel;
     GtkTreeIter iter;
     GtkTreeModel *model;
-    GtkTreeSelection *sel;
-    gchar *provider, *arg;
-    gchar *dsname = NULL;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
-	return;
+	return E_DATA;
     }
-    gtk_tree_model_get(model, &iter, 0, &dsname, -1);
-    if (dsname == NULL || *dsname == '\0') {
+    gtk_tree_model_get(model, &iter, 0, dsname, -1);
+    if (*dsname == NULL || **dsname == '\0') {
 	g_free(dsname);
-	return;
+	return E_DATA;
     }
-    provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
-    if (provider == NULL) {
+    *provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
+    if (*provider == NULL) {
+	g_free(*dsname);
+	return E_DATA;
+    }
+
+    return 0;
+}
+
+/* "open" a dbnomics dataset in the sense of showing the series
+   it contains (or a portion thereof if there are many series)
+*/
+
+void open_dbnomics_dataset (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    const gchar *provider = NULL;
+    gchar *dsname = NULL;
+    int err;
+
+    err = get_db_provider_and_name(vwin, &provider, &dsname);
+
+    if (!err) {
+	gchar *arg = g_strdup_printf("%s/%s", provider, dsname);
+
 	g_free(dsname);
-	return;
+	display_files(DBNOMICS_SERIES, arg);
+	g_free(arg);
     }
-    arg = g_strdup_printf("%s/%s", provider, dsname);
-    g_free(dsname);
-    display_files(DBNOMICS_SERIES, arg);
-    g_free(arg);
+}
+
+/* "open" a dbnomics dataset in the sense of showing its
+   "dimensions": topics/subjects/indicators and countries,
+   if applicable.
+*/
+
+void show_dbnomics_dimensions (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    const gchar *provider = NULL;
+    gchar *dsname = NULL;
+    int err;
+
+    err = get_db_provider_and_name(vwin, &provider, &dsname);
+
+    if (!err) {
+	err = dbnomics_get_dimensions_call(provider, dsname);
+	g_free(dsname);
+    }
 }
 
 #define INFOLEN 100
@@ -2559,6 +2604,7 @@ static int get_target_in_home (char *targ, int code,
 			       const char *objname,
 			       const char *ext)
 {
+    GString *gs = g_string_new(NULL);
 #ifdef OS_OSX
     const char *savedir = gretl_app_support_dir();
 #else
@@ -2569,35 +2615,36 @@ static int get_target_in_home (char *targ, int code,
     if (savedir == NULL || *savedir == '\0') {
 	err = E_FOPEN;
     } else {
-	int subdir = 0;
+	int subdir = 1;
 
 	if (code == REMOTE_FUNC_FILES) {
-	    sprintf(targ, "%sfunctions", savedir);
-	    subdir = 1;
+	    g_string_append_printf(gs, "%sfunctions", savedir);
 	} else if (code == REMOTE_DB) {
-	    sprintf(targ, "%sdb", savedir);
-	    subdir = 1;
+	    g_string_append_printf(gs, "%sdb", savedir);
 	} else if (code == REMOTE_DATA_PKGS) {
-	    sprintf(targ, "%sdata", savedir);
-	    subdir = 1;
+	    g_string_append_printf(gs, "%sdata", savedir);
 	} else {
-	    sprintf(targ, "%s%s%s", savedir, objname, ext);
+	    g_string_append_printf(gs, "%s%s%s", savedir, objname, ext);
+	    subdir = 0;
 	}
 
 	if (subdir) {
-	    err = gretl_mkdir(targ);
+	    err = gretl_mkdir(gs->str);
 	    if (!err) {
-		strcat(targ, SLASHSTR);
-		strcat(targ, objname);
-		strcat(targ, ext);
+		g_string_append_c(gs, SLASH);
+		g_string_append(gs, objname);
+		g_string_append(gs, ext);
 	    }
 	}
     }
 
+    strcpy(targ, gs->str);
+    g_string_free(gs, TRUE);
+
     return err;
 }
 
-#ifndef OS_OSX
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
 
 static void get_system_target (char *targ, int code,
 			       const char *objname,
@@ -2653,9 +2700,10 @@ static char *get_writable_target (int code, char *objname)
 	ext = ".tar.gz";
     }
 
-#ifdef OS_OSX
-    /* we prefer writing to ~/Library/Application Support
-       rather than /Applications/Gretl.app
+#if defined(G_OS_WIN32) || defined(OS_OSX)
+    /* On macOS we prefer writing to ~/Library/Application Support
+       rather than /Applications/Gretl.app, and on Windows let's
+       steer clear of Program Files.
     */
     err = get_target_in_home(targ, code, objname, ext);
     done_home = 1;
@@ -2686,10 +2734,9 @@ static char *get_writable_target (int code, char *objname)
 
 static int unpack_book_data (const char *fname)
 {
-    char *p, path[FILENAME_MAX];
+    char *p, *path = g_strdup(fname);
     int err = 0;
 
-    strcpy(path, fname);
     p = strrslash(path);
     if (p != NULL) {
 	*p = '\0';
@@ -2702,6 +2749,8 @@ static int unpack_book_data (const char *fname)
     if (!err) {
 	err = gretl_untar(fname);
     }
+
+    g_free(path);
 
     return err;
 }
@@ -2725,6 +2774,7 @@ static gchar *make_gfn_path (const char *pkgname)
 void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
+    gchar *tarname = NULL;
     char *targ = NULL;
     gboolean zipfile = FALSE;
     int err = 0;
@@ -2784,10 +2834,8 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    err = retrieve_remote_function_package(objname, targ);
 	}
     } else if (vwin->role == REMOTE_DATA_PKGS) {
-	gchar *tarname = g_strdup_printf("%s.tar.gz", objname);
-
+	tarname = g_strdup_printf("%s.tar.gz", objname);
 	err = retrieve_remote_datafiles_package(tarname, targ);
-	g_free(tarname);
     } else if (vwin->role == REMOTE_DB) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	err = retrieve_remote_db(objname, targ, GRAB_NBO_DATA);
@@ -2824,7 +2872,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	} else if (vwin->role == REMOTE_DATA_PKGS) {
 	    fprintf(stderr, "downloaded '%s'\n", targ);
 	    err = unpack_book_data(targ);
-	    remove(targ);
+	    gretl_remove(targ);
 	    if (err) {
 		errbox(_("Error unzipping compressed data"));
 	    } else {
@@ -2852,6 +2900,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     }
 
     g_free(objname);
+    g_free(tarname);
     free(targ);
 }
 
@@ -3146,7 +3195,7 @@ static int read_remote_filetime (char *line, char *fname,
 				 time_t *date, char *tbuf)
 {
     char month[4], hrs[9];
-    int mday, yr, mon = 0;
+    int mday = -1, yr = -1, mon = -1;
     const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr",
 	"May", "Jun", "Jul", "Aug",
@@ -3176,6 +3225,10 @@ static int read_remote_filetime (char *line, char *fname,
 	if (!strcmp(month, months[i])) {
 	    mon = i;
 	}
+    }
+
+    if (mon < 0 || mday < 1 || yr < 2000) {
+	return 1;
     }
 
     if (date != NULL) {
@@ -4395,10 +4448,10 @@ void do_compact_data_set (void)
 
 void do_expand_data_set (void)
 {
-    int newpd, interpol = 1;
+    int newpd = -1;
     int err = 0;
 
-    if (!(dataset->pd == 1 || dataset->pd == 4)) {
+    if (dataset->pd != 1 && dataset->pd != 4) {
 	/* should not happen! */
 	return;
     }
@@ -4407,18 +4460,18 @@ void do_expand_data_set (void)
 	return;
     }
 
-    /* supported: annual to quarterly or quarterly to monthly */
+    /* supported: annual to quarterly, quarterly to monthly,
+       or annual to monthly */
     newpd = (dataset->pd == 1)? 4 : 12;
+    data_expand_dialog(&newpd, mdata->main);
 
-    data_expand_dialog(dataset->pd, &interpol, mdata->main);
-
-    if (interpol < 0) {
+    if (newpd < 0) {
 	/* canceled */
 	return;
     }
 
     gretl_error_clear();
-    err = expand_data_set(dataset, newpd, interpol);
+    err = expand_data_set(dataset, newpd);
 
     if (err) {
 	gui_errmsg(err);

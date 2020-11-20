@@ -23,6 +23,6 @@ loop i=1..k -q
   LX += genseries(sprintf("x%d", i), X[,i])
 endloop
 
-bundle parms = defbundle("lfrac", 0.35, "stdize", 0)
+bundle parms = _(lfrac=0.35, stdize=0)
 bundle b = regls(ys, LX, parms)
 eval b.nzb

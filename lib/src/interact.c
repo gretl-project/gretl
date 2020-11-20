@@ -925,11 +925,12 @@ static void showlabels (const int *list, gretlopt opt,
 }
 
 static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
-			     gretlopt opt, int *parms)
+			     const char *fname, gretlopt opt,
+			     int *parms)
 {
     int err;
 
-    err = print_start_redirection(prn, fp, strvar);
+    err = print_start_redirection(prn, fp, fname, strvar);
     if (err) {
 	return err;
     }
@@ -1039,9 +1040,9 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     if (fp == NULL) {
 	err = E_FOPEN;
     } else if (opt & OPT_B) {
-	err = outfile_redirect(prn, fp, strvar, opt, vparms);
+	err = outfile_redirect(prn, fp, strvar, tempname, opt, vparms);
     } else {
-	err = outfile_redirect(prn, fp, NULL, opt, vparms);
+	err = outfile_redirect(prn, fp, NULL, tempname, opt, vparms);
     }
     if (!err && (opt & OPT_T)) {
 	/* write the tempfile name into strvar */
@@ -1155,13 +1156,13 @@ do_outfile_command (gretlopt opt, const char *fname,
 	if (gretl_messages_on()) {
 	    pputs(prn, _("Now discarding output\n"));
 	}
-	err = outfile_redirect(prn, NULL, NULL, opt, vparms);
+	err = outfile_redirect(prn, NULL, NULL, "null", opt, vparms);
 	*savename = '\0';
     } else if (!strcmp(fname, "stderr")) {
-	err = outfile_redirect(prn, stderr, NULL, opt, vparms);
+	err = outfile_redirect(prn, stderr, NULL, "stderr", opt, vparms);
 	*savename = '\0';
     } else if (!strcmp(fname, "stdout")) {
-	err = outfile_redirect(prn, stdout, NULL, opt, vparms);
+	err = outfile_redirect(prn, stdout, NULL, "stdout", opt, vparms);
 	*savename = '\0';
     } else {
 	/* should the stream be opened in binary mode on Windows? */
@@ -1197,7 +1198,7 @@ do_outfile_command (gretlopt opt, const char *fname,
 	    }
 	}
 
-	err = outfile_redirect(prn, fp, NULL, opt, vparms);
+	err = outfile_redirect(prn, fp, NULL, targ, opt, vparms);
 	if (err) {
 	    fclose(fp);
 	    remove(outname);
@@ -2944,7 +2945,7 @@ static void maybe_schedule_graph_callback (ExecState *s)
 	    pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
 	}
 	report_plot_written(s->prn);
-    } else if (gui_mode) {
+    } else if (gui_mode && !graph_displayed()) {
 	schedule_callback(s);
     }
 }
@@ -3004,6 +3005,15 @@ static int smpl_restrict (gretlopt opt)
     opt &= ~OPT_Q;
     opt &= ~OPT_T;
     return opt != OPT_NONE;
+}
+
+static int check_smpl_full (gretlopt opt)
+{
+    opt ^= OPT_F;
+    if (opt & OPT_Q) {
+	opt ^= OPT_Q;
+    }
+    return opt == OPT_NONE ? 0 : E_BADOPT;
 }
 
 static int panel_smpl_special (gretlopt opt)
@@ -3462,8 +3472,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SMPL:
-	if (cmd->opt == OPT_F) {
-	    err = restore_full_sample(dset, s);
+	if (cmd->opt & OPT_F) {
+	    err = check_smpl_full(cmd->opt);
+	    if (!err) {
+		err = restore_full_sample(dset, s);
+	    }
 	} else if (cmd->opt == OPT_T && cmd->param == NULL) {
 	    /* --permanent, by itself */
 	    err = perma_sample(dset, cmd->opt, prn, NULL);
@@ -3482,7 +3495,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    /* simple setting of t1, t2 business */
 	    err = set_sample(cmd->param, cmd->parm2, dset, cmd->opt);
 	}
-	if (!err && !(cmd->opt & OPT_Q)) {
+	if (!err && gretl_messages_on() && !(cmd->opt & OPT_Q)) {
 	    print_smpl(dset, get_full_length_n(), OPT_NONE, prn);
 	}
 	break;
@@ -4210,6 +4223,11 @@ void gretl_exec_state_set_callback (ExecState *s,
 EXEC_CALLBACK get_gui_callback (void)
 {
     return gui_callback;
+}
+
+void set_gui_callback (EXEC_CALLBACK callback)
+{
+    gui_callback = callback;
 }
 
 void gretl_exec_state_clear (ExecState *s)

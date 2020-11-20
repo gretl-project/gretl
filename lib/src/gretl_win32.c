@@ -139,31 +139,18 @@ const char *get_gretlnet_filename (void)
     return (netfile[0] == '\0')? NULL : netfile;
 }
 
-int set_gretlnet_filename (const char *prog)
+int set_gretlnet_filename (const char *pkgdir)
 {
-    char *p;
-    int i, n;
-
     netfile[0] = '\0';
-    strncat(netfile, prog, FILENAME_MAX-1);
-    n = strlen(netfile) - 1;
-    p = netfile;
-
-    for (i=n; i>0; i--) {
-	if (p[i] == '\\' || p[i] == '/') {
-	    strcpy(p + i,  "\\gretlnet.txt");
-	    break;
-	}
-    }
+    strncat(netfile, pkgdir, FILENAME_MAX-1);
+    strcat(netfile, "gretlnet.txt");
 
     return 0;
 }
 
-static FILE *cli_gretlnet_open (const char *prog)
+static FILE *cli_gretlnet_open (void)
 {
     FILE *fp = NULL;
-
-    set_gretlnet_filename(prog);
 
     if (*netfile != '\0') {
 	fp = gretl_fopen(netfile, "r");
@@ -205,7 +192,7 @@ static FILE *cli_rcfile_open (void)
 
 /* called from gretlcli.exe and gretlmpi.exe */
 
-void win32_cli_read_rc (char *callname)
+void win32_cli_read_rc (void)
 {
     ConfigPaths cpaths = {0};
     char dbproxy[64] = {0};
@@ -226,7 +213,7 @@ void win32_cli_read_rc (char *callname)
     /* read the "gretlnet" file, if present: any settings from this
        file will override those from the per-user rc file.
     */
-    fp = cli_gretlnet_open(callname);
+    fp = cli_gretlnet_open();
     if (fp != NULL) {
 	get_gretl_config_from_file(fp, &cpaths, dbproxy,
 				   &use_proxy, &updated,
@@ -304,10 +291,54 @@ void win_copy_last_error (void)
     LocalFree(buf);
 }
 
+static int ensure_utf16 (const char *s1, gunichar2 **pmod1,
+			 const char *s2, gunichar2 **pmod2)
+{
+    GError *gerr = NULL;
+    int err = 0;
+
+    if (s1 != NULL && *s1 != '\0') {
+	if (windebug) {
+	    fprintf(stderr, "recoding s1 to UTF-16\n");
+	}
+	*pmod1 = g_utf8_to_utf16(s1, -1, NULL, NULL, &gerr);
+	if (*pmod1 == NULL || gerr != NULL) {
+	    err = 1;
+	}
+    }
+
+    if (!err && s2 != NULL && *s2 != '\0') {
+	if (windebug) {
+	    fprintf(stderr, "recoding s2 to UTF-16\n");
+	}
+	*pmod2 = g_utf8_to_utf16(s2, -1, NULL, NULL, &gerr);
+	if (*pmod2 == NULL || gerr != NULL) {
+	    err = 1;
+	}
+    }
+
+    if (gerr != NULL) {
+	fprintf(stderr, "ensure_utf16: got GLib error:\n");
+	fprintf(stderr, " '%s'\n", gerr->message);
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return err;
+}
+
 /* If the command-line (*ps1) and/or current directory
-   (*ps2) are UTF-8, convert them to locale encoding.
+   (*ps2) are UTF-8, convert them to locale encoding
+   ("system codepage") in *ls1 and *ls2 respectively,
+   and make *ps1, *ps2 point to the converted values.
+
    This is exclusively for the benefit of third-party
-   software that cannot handle UTF-16.
+   software that expects "ANSI" filenames.
+
+   2020-10-28: We get out of here immediately if it turns
+   out that the Windows charset is UTF-8; but it remains to
+   be seen if it actually works to pass UTF-8 filenames
+   to third-party programs in that case.
 */
 
 int ensure_locale_encoding (const char **ps1, gchar **ls1,
@@ -316,18 +347,23 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     GError *gerr = NULL;
     int err = 0;
 
+    if (g_get_charset(NULL)) {
+	/* the Windows charset is UTF-8 */
+	return 0;
+    }
+
     if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
 	/* *ps1 will be the command line */
 	if (windebug) {
-	    fprintf(stderr, "recoding s1 to locale\n");
+	    fprintf(stderr, "ensure_locale_encoding: recoding cmdline to locale\n");
 	}
 	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
-	if (*ls1 == NULL) {
+	if (*ls1 == NULL || gerr != NULL) {
 	    err = 1;
 	} else {
 	    *ps1 = (const char *) *ls1;
 	    if (windebug) {
-		fprintf(stderr, "recoded s1: '%s'\n", *ps1);
+		fprintf(stderr, "recoded cmdline: '%s'\n", *ps1);
 	    }
 	}
     }
@@ -343,7 +379,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     }
 
     if (gerr != NULL) {
-	fprintf(stderr, "maybe_recode_to_locale: got GLib error:\n");
+	fprintf(stderr, "ensure_locale_encoding: got GLib error:\n");
 	fprintf(stderr, " '%s'\n", gerr->message);
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
@@ -429,6 +465,77 @@ static int real_win_run_sync (char *cmdline,
     return err;
 }
 
+static int win_run_sync_unicode (char *cmdline,
+				 const char *currdir,
+				 int console_app)
+{
+    STARTUPINFOW sinfo;
+    PROCESS_INFORMATION pinfo;
+    DWORD exitcode;
+    DWORD flags;
+    gunichar2 *cl16 = NULL;
+    gunichar2 *cd16 = NULL;
+    int ok, err = 0;
+
+    err = ensure_utf16(cmdline, &cl16, currdir, &cd16);
+    if (err) {
+	return err;
+    }
+
+    ZeroMemory(&sinfo, sizeof sinfo);
+    ZeroMemory(&pinfo, sizeof pinfo);
+    sinfo.cb = sizeof sinfo;
+
+    if (console_app) {
+	flags = CREATE_NO_WINDOW | HIGH_PRIORITY_CLASS;
+    } else {
+	sinfo.dwFlags = STARTF_USESHOWWINDOW;
+	sinfo.wShowWindow = SW_SHOWMINIMIZED;
+	flags = HIGH_PRIORITY_CLASS;
+    }
+
+    /* zero return means failure */
+    ok = CreateProcessW(NULL,
+			cl16,
+			NULL,
+			NULL,
+			FALSE,
+			flags,
+			NULL,
+			cd16,
+			&sinfo,
+			&pinfo);
+
+    if (!ok) {
+	fprintf(stderr, "win_run_sync: failed command:\n%s\n", cmdline);
+	win_copy_last_error();
+	err = 1;
+    } else {
+	WaitForSingleObject(pinfo.hProcess, INFINITE);
+	if (GetExitCodeProcess(pinfo.hProcess, &exitcode)) {
+	    /* the call "succeeded" */
+	    if (exitcode != 0) {
+		fprintf(stderr, "%s: exit code %u\n", cmdline, exitcode);
+		gretl_errmsg_sprintf("%s: exit code %u", cmdline,
+				     exitcode);
+		err = 1;
+	    }
+	} else {
+	    fprintf(stderr, "win_run_sync: no exit code:\n%s\n", cmdline);
+	    win_copy_last_error();
+	    err = 1;
+	}
+    }
+
+    CloseHandle(pinfo.hProcess);
+    CloseHandle(pinfo.hThread);
+
+    g_free(cl16);
+    g_free(cd16);
+
+    return err;
+}
+
 /**
  * win_run_sync:
  * @cmdline: command line to execute.
@@ -445,12 +552,20 @@ static int real_win_run_sync (char *cmdline,
 
 int win_run_sync (char *cmdline, const char *currdir)
 {
+#if 1
+    return win_run_sync_unicode(cmdline, currdir, 1);
+#else
     return real_win_run_sync(cmdline, currdir, 1);
+#endif
 }
 
 int gretl_spawn (char *cmdline)
 {
+#if 1
+    return win_run_sync_unicode(cmdline, NULL, 0);
+#else
     return real_win_run_sync(cmdline, NULL, 0);
+#endif
 }
 
 /* Retrieve various special paths from the bowels of MS
@@ -486,7 +601,7 @@ char *appdata_path (void)
 #if 0 /* testing */
     if (!strcmp(g_get_user_name(), "cottrell")) {
 	/* fake up a non-ASCII dotdir, in UTF-8 */
-	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
+	const char *s = "c:\\users\\cottrell\\desktop\\Дмитрий";
 
 	return gretl_strdup(s);
     }
@@ -1146,58 +1261,6 @@ int win32_delete_recursive (const char *path)
     } else {
 	return win32_delete_a(path);
     }
-}
-
-static BOOL running_as_admin (void)
-{
-    SID_IDENTIFIER_AUTHORITY auth = {SECURITY_NT_AUTHORITY};
-    PSID admin_group = NULL;
-    BOOL ok, ret = FALSE;
-
-    ok = AllocateAndInitializeSid(&auth, 2,
-				  SECURITY_BUILTIN_DOMAIN_RID,
-				  DOMAIN_ALIAS_RID_ADMINS,
-				  0, 0, 0, 0, 0, 0,
-				  &admin_group);
-
-    if (ok) {
-	ok = CheckTokenMembership(NULL, admin_group, &ret);
-    }
-
-    if (!ok) {
-	fprintf(stderr, "running_as_admin: the check failed\n");
-    }
-
-    if (admin_group != NULL) {
-	FreeSid(admin_group);
-    }
-
-    return ret;
-}
-
-/* Note: at some point MS will scrap the virtual store
-   apparatus (supposedly), in which case we'll want to
-   add a further condition in this function -- that is,
-   dwMajorVersion < something.
-*/
-
-int win32_uses_virtual_store (void)
-{
-    OSVERSIONINFO osvi;
-    int ret;
-
-    ZeroMemory(&osvi, sizeof osvi);
-    osvi.dwOSVersionInfoSize = sizeof osvi;
-
-    GetVersionEx(&osvi);
-    /* VirtualStore came in with Vista */
-    ret = osvi.dwMajorVersion > 5;
-
-    if (ret && running_as_admin()) {
-	ret = 0;
-    }
-
-    return ret;
 }
 
 char *slash_convert (char *str, int which)

@@ -2634,58 +2634,23 @@ static int slash_terminated (const char *s, int n)
     return s[n-1] == '\\' || s[n-1] == '/';
 }
 
-/* note: @progname is argv[0] at startup; we use
-   this apparatus only for MS Windows
-*/
-
-void win32_set_gretldir (const char *progname)
+void win32_set_gretldir (void)
 {
-    gchar *pconv = NULL;
-    int done = 0;
-
-    if (!g_utf8_validate(progname, -1, NULL)) {
-	gsize bytes;
-
-	pconv = g_locale_to_utf8(progname, -1, NULL, &bytes, NULL);
-	if (pconv != NULL) {
-	    progname = (const char *) pconv;
-	}
-    }
+    gchar *pkgdir;
 
     *paths.gretldir = '\0';
 
-    if (g_path_is_absolute(progname)) {
-	strncat(paths.gretldir, progname, MAXLEN - 1);
-    } else {
-	gchar *cwd = g_get_current_dir();
+    pkgdir = g_win32_get_package_installation_directory_of_module(NULL);
 
-	if (cwd != NULL) {
-	    gchar *abspath = g_build_filename(cwd, progname, NULL);
-
-	    if (gretl_file_exists(abspath)) {
-		strncat(paths.gretldir, abspath, MAXLEN - 1);
-	    }
-	    g_free(abspath);
-	    g_free(cwd);
-	}
-    }
-
-    /* we're done with @progname */
-    g_free(pconv);
-
-    if (*paths.gretldir != '\0') {
-	char *s = rslashpos(paths.gretldir);
-
-	if (s != NULL) {
-	    /* chop off the program-name bit */
-	    *(s+1) = '\0';
-	    done = 1;
-	}
+    if (pkgdir != NULL) {
+	strncat(paths.gretldir, pkgdir, MAXLEN - 1);
+	slash_terminate(paths.gretldir);
+	g_free(pkgdir);
     }
 
 # ifdef PKGBUILD
-    if (!done) {
-	/* try the registry */
+    if (*paths.gretldir == '\0') {
+	/* try the registry? */
 	char tmp[MAXLEN];
 	int err;
 
@@ -2695,26 +2660,23 @@ void win32_set_gretldir (const char *progname)
 	    slash_terminate(paths.gretldir);
 	}
     }
+    if (*paths.gretldir != '\0') {
+	set_gretlnet_filename(paths.gretldir);
+    }
 # else
     /* a non-pkgbuild Windows build */
     if (*paths.gretldir != '\0') {
-	/* if we got "path-to\bin\" (with slashes of either sort)
-	   we need to convert to "path-to\share\gretl\"
-	*/
-	int n = strlen(paths.gretldir);
-	char *tail = paths.gretldir + n - 5;
-
-	if (*tail == '\\' || *tail == '/' && !strncmp(tail+1, "bin", 3)) {
-	    tail[1] = '\0';
-	    strcat(tail + 1, "share");
-	    slash_terminate(paths.gretldir);
-	    strcat(paths.gretldir, "gretl");
-	    slash_terminate(paths.gretldir);
-	}
-    } else {
-	fprintf(stderr, "win32_set_gretldir: haven't got gretldir yet!\n");
+	/* we need to append unix-style sharedir */
+	strcat(paths.gretldir, "share");
+	slash_terminate(paths.gretldir);
+	strcat(paths.gretldir, "gretl");
+	slash_terminate(paths.gretldir);
     }
 # endif
+
+    if (*paths.gretldir == '\0') {
+	fprintf(stderr, "win32_set_gretldir: haven't got gretldir yet!\n");
+    }
 }
 
 #else /* !WIN32 */
@@ -3927,12 +3889,8 @@ const char *gretl_function_package_path (void)
 	/* we prefer writing to ~/Library/Application Support */
 	sys_first = 0;
 #elif defined(WIN32)
-	if (win32_uses_virtual_store()) {
-	    /* don't write to virtualized location */
-	    sys_first = 0;
-	}
+	sys_first = 0;
 #endif
-
 	if (sys_first) {
 	    err = get_system_install_path(path, "functions");
 	    if (err) {

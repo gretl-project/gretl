@@ -193,7 +193,6 @@ struct gretl_option gretl_opts[] = {
     { CUSUM,    OPT_R, "squares", 0 },
     { CUSUM,    OPT_U, "plot", 2 },
     { DATA,     OPT_C, "compact", 2 },
-    { DATA,     OPT_I, "interpolate", 0 },
     { DATA,     OPT_O, "odbc", 0 },
     { DATA,     OPT_N, "name", 2 },
     { DATA,     OPT_V, "verbose", 0 },
@@ -406,7 +405,7 @@ struct gretl_option gretl_opts[] = {
     { MIDASREG, OPT_L, "levenberg", 0 },
     { MIDASREG, OPT_P, "print-spec", 0 },
     { MIDASREG, OPT_B, "breaktest", 0 },
-    { MIDASREG, OPT_C, "clamp-beta", 0 },
+    { MIDASREG, OPT_C, "clamp-beta", 0 }, /* legacy */
     { MLE,      OPT_A, "auxiliary", 0 },
     { MLE,      OPT_G, "opg", 0 },
     { MLE,      OPT_H, "hessian", 0 },

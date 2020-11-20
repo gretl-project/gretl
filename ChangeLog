@@ -1,10 +1,42 @@
 version 2020e, in progress
-- Fix "join" GUI dialog window: was not working on Windows
+- New function tdisagg() for temporal disaggregation
+  (distribution and interpolation)
+- New addon package "regls": supports LASSO, Ridge regression
+  and Elastic net
+- New function assert() for debugging purposes
 - MPI: update documentation and support transfer of more
   data types
 - kdensity() function: generalize to allow as argument a
   list or matrix with more than one column
 - "dataset sortby": handle sorting by string-valued series
+- OLS output: don't print out DW statistic when calculation of
+  Durbin's h fails
+- Fix: when extracting a column of a "dated" matrix, copy
+  across the dates information
+- Documentation: add material on forecasting for VARs and
+  other multi-equation systems
+- Fix bug: possibility of invalid XML when saving a model to
+  session file
+- Fix bug: "smpl" command rejects the combination of "full"
+  and --quiet
+- Fix: --single-yaxis option not respected by "gnuplot" and
+  "plot" when a band is specified
+- Fix: GUI dialog for "join" was not working on Windows
+- Fix: work around bug in Apple's LAPACK that could lead to
+  a crash when computing eigenvalues
+- Fix: the Preview button in print dialogs was not working
+  in macOS build
+- Fix: prune correctly the regressor list in the "perfect
+  prediction" case in RE probit
+- Fix: incorrect $vcv matrix for bivariate probit models
+- Fix: dbnomics import misaligning data of different
+  frequencies in certain cases
+- MS Windows build: support printing scripts with syntax
+  highlighting
+- MS Windows build (64-bit): update pixman, cairo and pango
+  libraries (DLLs)
+- MS Windows build: update SSL DLL so as to prevent
+  crashes on certain CPUs
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard

@@ -729,13 +729,15 @@
 
     <description>
       <para>
+	This command is deprecated in favor of the updated and
+	more flexible <cmdref targ="dpanel"/>. It is likely to be
+	removed, and should not be used in newly written scripts.
+      </para>
+      <para>
 	Carries out estimation of dynamic panel data models (that is,
 	panel models including one or more lags of the dependent
 	variable) using the GMM-DIF method set out by <cite
 	key="arellano-bond91">Arellano and Bond (1991)</cite>.
-	Please see <cmdref targ="dpanel"/> for an updated and
-	more flexible version of this command which handles GMM-SYS
-	as well as GMM-DIF.
       </para>
       <para>
 	The parameter <repl>p</repl> represents the order of the
@@ -1232,7 +1234,9 @@
       <para>
 	The output includes a likelihood ratio test of the null
 	hypothesis that the disturbances in the two equations are
-	uncorrelated.
+	uncorrelated. Note that if this estimator is meant as a QMLE
+	estimator and the <opt>robust</opt> option is used, this test
+	may not be valid, even asymptotically.
       </para>
     </description>
   </command>
@@ -2153,11 +2157,17 @@
 	  <flag>--verbose</flag>
 	  <effect>print rankings</effect>
 	</option>
-        <option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
-        </option>
+     </option>
+		
+	<option>
+	  <flag>--triangle</flag>
+	  <effect>only plot lower half, see below</effect>
+     </option>
+	 
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -2216,8 +2226,8 @@
 	mode); or a file name. The effect of providing a file name is
 	as described for the <opt>output</opt> option of the <cmdref
 	targ="gnuplot"/> command. When plotting is active the
-	additional option <opt>triangle</opt> can be used to show only
-	the lower triangle of the matrix.
+	option <opt>triangle</opt> can be used to show only
+	the lower triangle of the matrix plot.
       </para>
       <para>
 	If the alternative form is given, using a named matrix rather
@@ -2515,10 +2525,6 @@
 	  <effect>specify compaction method</effect>
 	</option>
 	<option>
-	  <flag>--interpolate</flag>
-	  <effect>do interpolation for low-frequency data</effect>
-	</option>
-	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't report results except on error</effect>
 	</option>
@@ -2592,15 +2598,12 @@
 	and <lit>m03</lit>.
       </para>
       <para>
-	If the series to be read are of lower frequency than the
-	working dataset, the default is to repeat the values of the
-	added data as required, but the <opt>interpolate</opt> option
-	can be used to request interpolation using the method of <cite
-	key="chowlin71">Chow and Lin (1971)</cite>: the regressors are
-	a constant and quadratic trend and an AR(1) disturbance
-	process is assumed. Note, however, that this option is
-	available only for conversion from quarterly data to monthly
-	or annual data to quarterly.
+	If the series to be read are of <emphasis>lower</emphasis>
+	frequency than the working dataset the values of the added
+	data are simply repeated as required, but note that the
+	<fncref targ="tdisagg"/> function can then be used to
+	distribution or interpolation (<quote>temporal
+	disaggregation</quote>).
       </para>
       <para>
 	In the case of native gretl databases (only), the
@@ -2712,7 +2715,7 @@
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2778,14 +2781,12 @@
       <para>
 	<lit>expand</lit>: This command is only available for annual
 	or quarterly time series data: annual data can be expanded to
-	quarterly, and quarterly data to monthly frequency. By default
-	all the series in the data set are padded out to the new
-	frequency by repeating the existing values, but if the
-	modifier <lit>interp</lit> is appended then the series are
-	expanded using Chow&ndash;Lin interpolation (see <cite
-	key="chowlin71">Chow and Lin, 1971</cite>): the regressors are
-	a constant and quadratic trend and an AR(1) disturbance
-	process is assumed.
+	quarterly or monthly, and quarterly data to monthly.  All
+	series in the data set are padded out to the new frequency by
+	repeating the existing values. If the original dataset is
+	annual the default expansion is to quarterly but
+	<lit>expand</lit> can be followed by <lit>12</lit> to request
+	monthly.
       </para>
       <para>
 	<lit>transpose</lit>: No additional parameter required.
@@ -3925,43 +3926,28 @@
 
     <description>
       <para>
-	If you wish to add to a dataset a series that is of lower
-	frequency, it is necessary to <quote>expand</quote> the new
-	series.  For instance, a quarterly series will have to be expanded
-	to fit into a monthly dataset. In addition, you may sometimes want
-	to expand an entire dataset to a higher frequency (perhaps, prior
-	to adding a higher-frequency variable to the dataset).
+	<quote>Expansion</quote> of a dataset or series from a lower
+	to a higher frequency should be considered an expert option;
+	you need to know what you are doing. When combining series of
+	differing original frequencies within one dataset, you should
+	probably consider compacting the higher-frequency data rather
+	than expanding the lower-frequency series.
       </para>
       <para>
-	Expansion of data should be considered an
-	<quote>expert</quote> option; you need to know what you are
-	doing. When combining series of differing original frequencies
-	within one dataset, you should probably consider compacting
-	the higher-frequency data rather than expanding the
-	lower-frequency series.
+	That said, gretl supports expansion by simple repetition of
+	the low frequency values. For example, in expanding from
+	quarterly to monthly the quarterly values are repeated for
+	each month of the quarter. Series constructed in this way are
+	unlikely to be usable as is for econometric analysis, but
+	after expansion the <fncref targ="tdisagg"/> function can be
+	used to produce a distributed or interpolated version of the
+	data (<quote>temporal disaggregation</quote>).
       </para>
       <para>
-	That said, gretl offers two options: higher-frequency values
-	can be interpolated using the method of <cite
-	key="chowlin71">Chow and Lin (1971)</cite>, or the values of
-	the lower-frequency series can be repeated as many times as
-	required.
-      </para>
-      <para>
-	The Chow&ndash;Lin method is regression-based, using a constant and
-	quadratic trend and assuming a first-order autoregressive
-	process for the disturbances. Four degrees of freedom are used
-	up by this procedure.
-      </para>
-      <para>
-	As for the repetition of values, suppose we have a quarterly
-	series with the value 35.5 in 1990:1, the first quarter of
-	1990.  On expansion to monthly, the value 35.5 will be
-	assigned to the observations for January, February and March
-	of 1990.  The expanded variable is therefore useless for
-	fine-grained time-series analysis, outside of the special case
-	where you know that the variable in question does in fact
-	remain constant over the sub-periods.
+	Some of the functionality of the <lit>tdisagg</lit> function
+	can be accessed via the graphical interface: select a
+	candidate series in the main gretl window, then under the
+	Variable menu look for <quote>Disaggregate</quote>.
       </para>
     </description>
   </command>
@@ -8393,6 +8379,10 @@
 	requires at least one parameter
       </para>
       <para context="cli">
+	5 or <lit>"beta1"</lit>: as <lit>beta0</lit>, but with the
+	first parameter fixed at 1, leaving a single free parameter.
+      </para>
+      <para context="cli">
 	When the parameterization is U-MIDAS, the final initializer
 	argument is not required. In other cases you can request an
 	automatic initialization by substituting one or other of these
@@ -8898,6 +8888,11 @@
 	<repl>names</repl> should contain <math>k + p</math> names,
 	the additional <math>p</math> names to be associated with
 	the extra statistics.
+      </para>
+      <para>
+	If <repl>addstats</repl> is not provided and the
+	<repl>coeffmat</repl> matrix has row names attached, then
+	the <repl>names</repl> argument can be omitted.
       </para>
       <para>
 	To put the output into a file, use the flag <opt>output=</opt>
@@ -10530,8 +10525,8 @@
 
   </command>
 
-    <command name="panplot" section="Graphs"
-    label="plot a panel series" context="cli">
+  <command name="panplot" section="Graphs"
+   label="plot a panel series" context="cli">
 
     <usage>
       <arguments>
@@ -11065,7 +11060,7 @@
 	matrix with at least 2 columns (or a list with at least two
 	members).  Note that it is considered good practice to place
 	the <opt>output</opt> option (only) on the last line of the
-	block.
+	block; other options should be placed within the block.
       </para>
       <subhead>Plotting a band with matrix data</subhead>
       <para>
@@ -13142,6 +13137,13 @@
 	  accessor <fncref targ="$huge"/>.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (the default),
+	  <lit>warn</lit> or <lit>stop</lit>. Controls the
+	  consequences of failure (return value of 0) from the
+	  <fncref targ="assert"/> function.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Numerical methods</subhead>
@@ -13591,9 +13593,11 @@
       <para>
 	If one or other of the <opt>discrete</opt> or
 	<opt>continuous</opt> option flags is given, the variable's
-	numerical character is set accordingly.  The default is to treat
-	all series as continuous; setting a series as discrete
-	affects the way the variable is handled in frequency plots.
+	numerical character is set accordingly.  The default is to
+	treat all series as continuous; setting a series as discrete
+	affects the way the variable is handled in other commands and
+	functions, such as for example <cmdref targ="freq"/> or
+	<fncref targ="dummify"/> .
       </para>
       <para>
 	If one or other of the <opt>coded</opt> or <opt>numeric</opt>
@@ -14846,6 +14850,52 @@
 
   </command>
 
+  <command name="tdisagg" section="Dataset" context="gui"
+    label="Temporal disaggregation">
+
+    <description>
+      <para>
+	Here's a walk-through of the main choices in the temporal
+	disaggregation dialog box. For detailed explanation see
+	<guideref targ="chap:tdisagg"/>.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Output name: You can choose to overwrite an existing
+	    series with the disaggregated version, or give a new name
+	    to the output.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Aggregation type: Choose <lit>sum</lit> if the high
+	    frequency values should sum to the given low frequency
+	    value (flows, such as GDP and its components).  Choose
+	    <lit>avg</lit> if the high frequency values should have
+	    mean equal to the given low frequency value (index
+	    variables, ratios, or flows <quote>at an annual
+	    rate</quote>). Choose <lit>last</lit> or <lit>first</lit>
+	    if the last or first high frequency value should equal the
+	    low frequency value (which may be the case with stock
+	    variables, such as money stock).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Regression based versus Denton: The first is generally
+	    recommended.  If you choose <quote>Regression
+	    based</quote> you can select the Fernández method if you
+	    believe the series in question has a unit root; otherwise
+	    go with Chow&ndash;Lin. If you choose Denton we assume you
+	    know what you're doing. The Denton methods are in first
+	    differences, as modified by Cholette.
+	  </para>
+	</li>
+      </ilist>
+    </description>
+  </command>
+
   <command name="textplot" section="Graphs"
     label="ASCII plot" context="cli">
 
@@ -15223,11 +15273,11 @@
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
-		<example>var 4 x1 x2 x3 --seasonals</example>
-		<example>var 12 x1 x2 x3 --lagselect</example>
-	  <demos>
+	<example>var 4 x1 x2 x3 --seasonals</example>
+	<example>var 12 x1 x2 x3 --lagselect</example>
+	<demos>
 	  <demo>sw_ch14.inp</demo>
-	  </demos>
+	</demos>
       </examples>
     </usage>
 

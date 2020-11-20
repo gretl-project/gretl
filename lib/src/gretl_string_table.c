@@ -311,17 +311,24 @@ int series_table_add_string (series_table *st, const char *s)
     return n;
 }
 
-series_table *series_table_new (char **strs, int n_strs)
+series_table *series_table_new (char **strs, int n_strs, int *err)
 {
     series_table *st = series_table_alloc();
     int i;
 
-    if (st != NULL) {
+    if (st == NULL) {
+	*err = E_ALLOC;
+    } else {
 	st->n_strs = n_strs;
 	st->strs = strs;
 	for (i=0; i<n_strs; i++) {
-	    g_hash_table_insert(st->ht, (gpointer) st->strs[i],
-				GINT_TO_POINTER(i+1));
+	    if (st->strs[i] == NULL) {
+		fprintf(stderr, "series_table_new: str %d is NULL\n", i);
+		*err = E_DATA;
+	    } else {
+		g_hash_table_insert(st->ht, (gpointer) st->strs[i],
+				    GINT_TO_POINTER(i+1));
+	    }
 	}
     }
 
@@ -485,10 +492,15 @@ series_table *gretl_string_table_detach_col (gretl_string_table *gst,
 
     if (gst != NULL) {
 	int pos = in_gretl_list(gst->cols_list, col);
+	int i, n = gst->cols_list[0];
 
 	if (pos > 0) {
 	    st = gst->cols[pos-1];
-	    gst->cols[pos-1] = NULL;
+	    for (i=pos-1; i<n-1; i++) {
+		gst->cols[i] = gst->cols[i+1];
+	    }
+	    gst->cols[n-1] = NULL;
+	    gretl_list_delete_at_pos(gst->cols_list, pos);
 	}
     }
 
@@ -511,6 +523,18 @@ int *string_table_copy_list (gretl_string_table *gst)
     } else {
 	return NULL;
     }
+}
+
+int string_table_replace_list (gretl_string_table *gst,
+			       int *newlist)
+{
+    if (gst != NULL) {
+	/* FIXME pruning? */
+	free(gst->cols_list);
+	gst->cols_list = newlist;
+    }
+
+    return E_DATA;
 }
 
 /**

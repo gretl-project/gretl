@@ -231,7 +231,7 @@ static struct gretl_cmd gretl_cmds[] = {
 
 #define parm2_optional(c) (c == SET || c == SETOPT || c == SETOBS || \
 			   c == ESTIMATE || c == HELP || c == GRAPHPG || \
-			   c == EQUATION)
+			   c == EQUATION || c == MODPRINT)
 
 #define vargs_optional(c) (c == PRINTF || c == SPRINTF)
 
@@ -3397,6 +3397,16 @@ static int unexpected_symbol_error (char c)
     return E_PARSE;
 }
 
+static int utf8_fail (char *s)
+{
+    if (!g_utf8_validate(s, -1, NULL)) {
+	gretl_errmsg_set(_("Command line is not valid UTF-8"));
+	return E_DATA;
+    } else {
+	return 0;
+    }
+}
+
 #define MAY_START_NUMBER(c) (c == '.' || c == '-' || c == '+')
 
 /* tokenize_line: parse @line into a set of tokens on a
@@ -3426,8 +3436,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    compmode ? "get_command_index" : "parse_command_line", s);
 #endif
 
-    if (!g_utf8_validate(s, -1, NULL)) {
-	gretl_errmsg_set("command line is not valid UTF-8");
+    if (utf8_fail(s)) {
 	return E_DATA;
     }
 

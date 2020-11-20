@@ -531,6 +531,7 @@ struct str_table funcs[] = {
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },
     { F_MLINCOMB,  "mlincomb" },
+    { F_MMULT,     "mmults" },
     { F_HFDIFF,    "hfdiff" },
     { F_HFLDIFF,   "hfldiff" },
     { F_HFLIST,    "hflist" },
@@ -1634,6 +1635,10 @@ static void look_up_word (const char *s, parser *p)
 	    } else if (p->flags & P_AND) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
+	    } else if (!strcmp(s, "pi")) {
+		/* deprecated */
+		p->idnum = CONST_PI;
+		p->sym = CON;
 	    } else {
 		err = E_UNKVAR;
 	    }

@@ -43,6 +43,7 @@ struct VARINFO_ {
     short stack_level;
     short midas_period;
     char midas_freq;
+    short orig_pd;
     series_table *st;
 };
 
@@ -309,6 +310,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->lag = 0;
     vinfo->midas_period = 0;
     vinfo->midas_freq = 0;
+    vinfo->orig_pd = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->mtime = 0;
     vinfo->stack_level = gretl_function_depth();
@@ -357,6 +359,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->lag = src->lag;
     targ->midas_period = src->midas_period;
     targ->midas_freq = src->midas_freq;
+    targ->orig_pd = src->orig_pd;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
     if (src->st != NULL) {
@@ -3104,31 +3107,35 @@ static int dataset_int_param (const char **ps, int op,
 	    *err = E_DATA;
 	}
     } else if (op == DS_COMPACT) {
-	int ok = 0;
-
+	*err = E_PDWRONG;
 	if (dset->pd == 12 && (k == 4 || k == 1)) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dset->pd == 4 && k == 1) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dset->pd == 52 && k == 12) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dated_daily_data(dset) && (k == 52 || k == 12)) {
-	    ok = 1;
+	    *err = 0;
 	} else if (dataset_is_daily(dset) && k == 4) {
 	    if (strstr(*ps, "spread")) {
-		ok = 1;
+		*err = 0;
 	    }
 	}
-
-	if (!ok) {
-	    *err = E_PDWRONG;
-	    gretl_errmsg_set("This conversion is not supported");
+    } else if (op == DS_EXPAND) {
+	*err = E_PDWRONG;
+	if (dset->pd == 1 && (k == 4 || k == 12)) {
+	    *err = 0;
+	} else if (dset->pd == 4 && k == 12) {
+	    *err = 0;
 	}
     } else if (op == DS_PAD_DAILY) {
 	if (k < 5 || k > 7 || k < dset->pd) {
 	    *err = E_PDWRONG;
-	    gretl_errmsg_set("This conversion is not supported");
 	}
+    }
+
+    if (*err == E_PDWRONG) {
+	gretl_errmsg_set("This conversion is not supported");
     }
 
     return k;
@@ -3343,7 +3350,7 @@ int renumber_series_with_checks (const int *list,
    dataset addobs            24
    dataset compact           1
    dataset compact           4 last
-   dataset expand            interpolate
+   dataset expand            4
    dataset transpose
    dataset sortby     x1
    dataset resample          500
@@ -3423,12 +3430,17 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	    return err;
 	}
     } else if (op == DS_EXPAND) {
-	if (dset->pd == 1) {
+	if (param != NULL) {
+	    k = dataset_int_param(&param, op, dset, &err);
+	} else if (dset->pd == 1) {
 	    k = 4;
 	} else if (dset->pd == 4) {
 	    k = 12;
 	} else {
-	    return E_PDWRONG;
+	    err = E_PDWRONG;
+	}
+	if (err) {
+	    return err;
 	}
     }
 
@@ -3439,13 +3451,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
     } else if (op == DS_COMPACT) {
 	err = compact_data_set_wrapper(param, dset, k);
     } else if (op == DS_EXPAND) {
-	int n = (param == NULL)? 0 : strlen(param);
-	int interp = 0;
-
-	if (n > 0 && !strncmp(param, "interpolate", n)) {
-	    interp = 1;
-	}
-	err = expand_data_set(dset, k, interp);
+	err = expand_data_set(dset, k);
     } else if (op == DS_PAD_DAILY) {
 	err = pad_daily_data(dset, k, prn);
     } else if (op == DS_TRANSPOSE) {
@@ -4317,6 +4323,7 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
  * @dset: pointer to dataset.
  * @i: index number of series.
  * @n_strs: location to receive the number of strings, or NULL.
+ * @subsample: non-zero to restrict to current sample range.
  *
  * Returns: the array of strings associated with distinct numerical
  * values of series @i, or NULL if there's no such array. The returned
@@ -4541,27 +4548,22 @@ static int alt_set_strvals (DATASET *dset, int v, gretl_array *a,
     return err;
 }
 
-/* Recognize the case where we have an "empty" series
-   and an array of strings of full dataset length.
-*/
-
 static int alt_strvals_case (DATASET *dset, int v, gretl_array *a)
 {
     double *x = dset->Z[v];
-    double x0 = dset->Z[v][0];
-    int i, xconst = 1;
+    int i;
 
-    for (i=1; i<dset->n && xconst; i++) {
-	if (na(x0)) {
-	    if (!na(x[i])) {
-		xconst = 0;
-	    }
-	} else if (x[i] != x0) {
-	    xconst = 0;
+    if (gretl_array_get_length(a) != dset->n) {
+	return 0;
+    }
+
+    for (i=0; i<dset->n; i++) {
+	if (x[i] != 0) {
+	    return 0;
 	}
     }
 
-    return xconst && gretl_array_get_length(a) == dset->n;
+    return 1;
 }
 
 /* here we're trying to set strings values on a series from
@@ -4629,11 +4631,9 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
  do_strtable:
 
     if (!err) {
-	series_table *st = series_table_new(S, ns);
+	series_table *st = series_table_new(S, ns, &err);
 
-	if (st == NULL) {
-	    err = E_ALLOC;
-	} else {
+	if (!err) {
 	    if (dset->varinfo[i]->st != NULL) {
 		/* remove any pre-existing table */
 		series_table_destroy(dset->varinfo[i]->st);
@@ -4649,6 +4649,34 @@ int series_set_string_vals (DATASET *dset, int i, void *ptr)
     }
 
     gretl_matrix_free(vals);
+
+    return err;
+}
+
+/* The pre-checked case: we know that series @i is suitable
+   for stringifying, and that @S contains the right number of
+   strings.
+*/
+
+int series_set_string_vals_direct (DATASET *dset, int i,
+				   char **S, int ns)
+{
+    int err = 0;
+    series_table *st = series_table_new(S, ns, &err);
+
+    if (!err) {
+	if (dset->varinfo[i]->st != NULL) {
+	    /* remove any pre-existing table */
+	    series_table_destroy(dset->varinfo[i]->st);
+	}
+	series_set_discrete(dset, i, 1);
+	dset->varinfo[i]->st = st;
+	maybe_adjust_label(dset, i, S, ns);
+    }
+
+    if (err && S != NULL && ns > 0) {
+	strings_array_free(S, ns);
+    }
 
     return err;
 }
@@ -4730,7 +4758,7 @@ int series_recode_strings (DATASET *dset, int v, gretlopt opt,
 	    series_table_destroy(dset->varinfo[v]->st);
 	}
 	/* the series table takes ownership of @S */
-	dset->varinfo[v]->st = series_table_new(S, nu);
+	dset->varinfo[v]->st = series_table_new(S, nu, &err);
 
 	if (changed != NULL) {
 	    *changed = 1;
@@ -4984,7 +5012,10 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	return 0;
     }
 
-    bigset = create_new_dataset(dset->v, dset->n + totskip, NO_MARKERS);
+    /* We pass OPT_R here to avoid allocating varnames in @bigset,
+       since we're going to preserve these from @dset.
+    */
+    bigset = real_create_new_dataset(dset->v, dset->n + totskip, OPT_R);
 
     if (bigset == NULL) {
 	err = E_ALLOC;
@@ -5024,6 +5055,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	clear_datainfo(dset, CLEAR_SUBSAMPLE);
 
 	*dset = *bigset;
+	free(bigset); /* avoid leaking memory */
     }
 
     return err;
@@ -5131,6 +5163,29 @@ void series_set_midas_anchor (const DATASET *dset, int i)
 
 /* end MIDAS-related functions */
 
+int series_get_orig_pd (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	return dset->varinfo[i]->orig_pd;
+    } else {
+	return 0;
+    }
+}
+
+void series_set_orig_pd (const DATASET *dset, int i, int pd)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->orig_pd = pd;
+    }
+}
+
+void series_unset_orig_pd (const DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->orig_pd = 0;
+    }
+}
+
 void *series_info_bundle (const DATASET *dset, int i,
 			  int *err)
 {
@@ -5173,6 +5228,9 @@ void *series_info_bundle (const DATASET *dset, int i,
 	}
 	if (vinfo->midas_freq > 0) {
 	    gretl_bundle_set_int(b, "midas_freq", vinfo->midas_freq);
+	}
+	if (vinfo->orig_pd > 0) {
+	    gretl_bundle_set_int(b, "orig_pd", vinfo->orig_pd);
 	}
     }
 

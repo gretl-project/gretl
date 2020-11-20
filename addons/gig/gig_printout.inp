@@ -1,5 +1,5 @@
 function string s_modeltype(bundle *mod)
-    scalar type  = mod.type
+    scalar type = mod.type
     scalar p    = mod.p
     scalar q    = mod.q
     
@@ -124,7 +124,7 @@ function void GJR_alt_param(matrix coeff, matrix vcv, scalar p, scalar q,
     c_ag2 = zeros(2*q,1)
     J = zeros(2*q,2*q) # Jacobian
 
-    loop i=1..q --quiet
+    loop i = 1 .. q
 	alpha = c_ag[i]
 	gamma = c_ag[i+q]
 	c_ag2[i] = alpha * (1-gamma)^2

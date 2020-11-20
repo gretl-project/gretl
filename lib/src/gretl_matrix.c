@@ -3657,22 +3657,15 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
 	return E_NONCONF;
     } else if (src->is_complex + targ->is_complex == 1) {
 	return E_MIXED;
-    }
-
-    if (row >= src->rows) {
+    } else if (row >= src->rows) {
 	fprintf(stderr, "extract_matrix: requested starting row=%d, but "
 		"src has %d rows\n", row, src->rows);
 	return E_NONCONF;
-    }
-
-    if (col >= src->cols) {
+    } else if (col >= src->cols) {
 	fprintf(stderr, "extract_matrix: requested starting col=%d, but "
 		"src has %d cols\n", col, src->cols);
 	return E_NONCONF;
-    }
-
-
-    if (row + m > src->rows || col + n > src->cols) {
+    } else if (row + m > src->rows || col + n > src->cols) {
 	fprintf(stderr, "gretl_matrix_extract_matrix: out of bounds\n");
 	return E_NONCONF;
     }
@@ -9790,6 +9783,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 {
     integer n, info, lwork, liwork;
     integer nv, ldz = 1;
+    double vl = 0, vu = 0;
     gretl_matrix *evals = NULL;
     double *z = NULL;
     double *work = NULL;
@@ -9800,6 +9794,12 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
     double abstol = 0;
     char range = 'A';
     char uplo = 'U';
+
+    /* Note: vl and vu are required to work around buggy
+       implementations of dsyevr, which reference these
+       terms even when they're not supposed to. E.g.
+       Apple's libLAPACK.dylib. 2020-10-25.
+    */
 
     n = m->rows;
 
@@ -9830,7 +9830,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 
     lwork = liwork = -1; /* find optimal workspace size */
     dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
-	    NULL, NULL, NULL, NULL, &abstol, &nv, w,
+	    &vl, &vu, NULL, NULL, &abstol, &nv, w,
 	    z, &ldz, isuppz, work, &lwork, iwork,
 	    &liwork, &info);
 
@@ -9849,7 +9849,7 @@ static gretl_matrix *eigensym_rrr (gretl_matrix *m,
 
     if (!*err) {
 	dsyevr_(&jobz, &range, &uplo, &n, m->val, &n,
-		NULL, NULL, NULL, NULL, &abstol, &nv, w,
+		&vl, &vu, NULL, NULL, &abstol, &nv, w,
 		z, &ldz, isuppz, work, &lwork, iwork,
 		&liwork, &info);
 	if (info != 0) {
@@ -13906,30 +13906,50 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
     }
 
     if (rc == 0) {
+	/* going by rows */
 	for (i=0; i<A->rows; i++) {
 	    d = gretl_matrix_get(A, i, 0);
 	    k = 0;
 	    for (j=1; j<A->cols; j++) {
 		x = gretl_matrix_get(A, i, j);
-		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
-		    d = x;
-		    k = j;
+		if (mm > 0) {
+		    /* looking for max */
+		    if (x > d) {
+			d = x;
+			k = j;
+		    }
+		} else {
+		    /* looking for min */
+		    if (x < d) {
+			d = x;
+			k = j;
+		    }
 		}
 	    }
-	    B->val[i] = (idx > 0)? (double) k + 1 : d;
+	    B->val[i] = idx ? (double) k + 1 : d;
 	}
     } else {
+	/* going by columns */
 	for (j=0; j<A->cols; j++) {
 	    d = gretl_matrix_get(A, 0, j);
 	    k = 0;
 	    for (i=1; i<A->rows; i++) {
 		x = gretl_matrix_get(A, i, j);
-		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
-		    d = x;
-		    k = i;
+		if (mm > 0) {
+		    /* looking for max */
+		    if (x > d) {
+			d = x;
+			k = i;
+		    }
+		} else {
+		    /* looking for min */
+		    if (x < d) {
+			d = x;
+			k = i;
+		    }
 		}
 	    }
-	    B->val[j] = (idx > 0)? (double) k + 1 : d;
+	    B->val[j] = idx ? (double) k + 1 : d;
 	}
     }
 

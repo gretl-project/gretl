@@ -793,21 +793,21 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     }
 }
 
-static double durbins_h (const MODEL *pmod)
+static double durbins_h (const MODEL *pmod, int *err)
 {
     int ldv = gretl_model_get_int(pmod, "ldepvar");
     double se = pmod->sderr[ldv - 2];
     int T = pmod->nobs;
     double h = NADBL;
 
-    if (pmod->ess <= 0.0 || na(se) || (T * se * se) >= 1.0 ||
-	na(pmod->rho)) {
-	; /* can't calculate h */
+    if (pmod->ess <= 0.0 || na(se) || na(pmod->rho)) {
+	/* the model is flaky */
+	*err = E_BADSTAT;
+    } else if ((T * se * se) >= 1.0) {
+	/* h is undefined */
+	*err = E_SQRT;
     } else {
 	h = pmod->rho * sqrt(T / (1 - T * se * se));
-	if (na(h)) {
-	    h = NADBL;
-	}
     }
 
     return h;
@@ -3259,12 +3259,11 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	}
     } else if (pmod->ci != VAR && pmod->aux != AUX_VECM &&
 	       !na(pmod->rho) && gretl_model_get_int(pmod, "ldepvar")) {
-	double h = durbins_h(pmod);
+        int err = 0;
+        double h = durbins_h(pmod, &err);
 
-	if (!na(h)) {
-	    key[K_DW] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
-	    val[K_DW] = h;
-	}
+	key[K_DW] = (tex)? N_("Durbin's $h$") : N_("Durbin's h");
+	val[K_DW] = err ? NADBL : h;
     } else if (intreg_model(pmod)) {
 	for (i=0; i<MID_STATS; i++) {
 	    if (i < K_FST || i > K_HQ) {

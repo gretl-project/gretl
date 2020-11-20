@@ -154,6 +154,16 @@
       </description>
     </function>
 
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  Este accesorio devolve unha cadea de texto coa ruta onde Gretl
+	  garda ficheiros temporalmente, por exemplo cando usa a función
+	  <fncref targ="mwrite"/> cun terceiro argumento distinto de cero.
+	</para>
+      </description>
+    </function>
+
     <function name="$dw" section="access" output="scalar">
       <description>
 	<para>
@@ -1235,6 +1245,18 @@
       </description>
     </function>
 
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Este accesorio devolve unha cadea de texto coa ruta desde a que le e
+	  na que escribe Gretl por defecto. Ofrécese unha discusión máis cumprida
+	  no manual de Instrucións, na referencia <cmdref targ="workdir"/>. Cae
+	  na conta de que o usuario pode determinar esta cadea por medio da
+	  instrución <cmdref targ="set"/>.
+        </para>
+      </description>
+    </function>
+
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1513,6 +1535,51 @@
             <fncref targ="sinh"/>
 	  </seelist>
 	</para>
+      </description>
+    </function>
+
+    <function name="assert" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función está dirixida a comprobar e depurar código HANSL.
+	  O seu argumento deberá ser unha expresión cuxo valor sexa un
+	  escalar. O valor que devolve esta función é ou ben 1 cando o
+	  valor do argumento <argname>expr</argname> non é cero
+	  (<quote>verdadeiro</quote> booleano ou <quote>éxito</quote>),
+	  ou ben 0 se o valor do argumento é cero (<quote>falso</quote>
+	  booleano ou <quote>fallo</quote>).
+	</para>
+	<para>
+	  Por defecto, non hai outras consecuencias de que falle unha
+	  chamada a <lit>assert</lit>, máis que o feito de que o valor
+	  que se devolve é cero. Porén, podes utilizar a instrución
+	  <cmdref targ="set"/> para facer que o fallo dunha afirmación
+	  teña máis consecuencias. Hai dous niveles:
+	</para>
+	<code>
+	  # Amosar unha mensaxe de aviso, mais continuar coa execución
+	  set assert warn
+	  # Amosar unha mensaxe de aviso e deter a execución
+	  set assert stop
+	</code>
+	<para>
+	  Podes restablecer o funcionamento por defecto mediante
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  A xeito de exemplo sinxelo:
+	  Se en certo punto dun guión HANSL, un escalar <lit>x</lit> debera ser
+	  non negativo, o seguinte código amosará un erro se este non é o caso:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
       </description>
     </function>
 
@@ -2427,24 +2494,29 @@
       </fnargs>
       <description>
 	<para>
+	  Non se recomenda seguir utilizando esta función; en troques,
+	  utiliza <fncref targ="tdisagg"/>.
+	</para>
+	<para>
 	  Devolve unha matriz como resultado de expandir os datos de
 	  entrada, <argname>Y</argname>, a unha frecuencia maior, co método
 	  de <cite key="chowlin71">Chow e Lin (1971)</cite>. Asúmese que as
 	  columnas de <argname>Y</argname> representan series de datos.
 	  A matriz que se devolve ten o mesmo número de columnas que
 	  <argname>Y</argname> e <argname>factorx</argname> veces o seu
-	  número de filas.
+	  número de filas. Tamén se asume que cada valor de baixa frecuencia
+	  debe tratarse como a media de <argname>factorx</argname> valores
+	  de alta frecuencia.
 	</para>
 	<para>
-	  O segundo argumento representa o factor de expansión: debe de ser
-	  igual a 3 para expandir datos trimestrais a mensuais, ou igual a 4 para
-	  facelo de datos anuais a trimestrais (estes son os únicos factores
-	  admitidos actualmente). O terceiro argumento (opcional) pode usarse
-	  para prover unha matriz de covariables con maior frecuencia obxectivo.
+	  O valor de <argname>factorx</argname> debe ser igual a 3 para expandir
+	  datos trimestrais a mensuais, 4 para facelo de anuais a trimestrais, ou
+	  12 de anuais a mensuais. Podes usar o terceiro argumento (opcional)
+	  para prover unha matriz de covariables cun obxectivo de maior frecuencia.
 	</para>
 	<para>
-	  Os regresores que se utilizan por defecto son unha constante e unha
-	  tendencia cadrada. Cando se proporciona <argname>X</argname>, as
+	  Os regresores que se utilizan por defecto son unha constante e
+	  unha tendencia. Cando se proporciona <argname>X</argname>, as
 	  súas columnas utilízanse como regresores adicionais. A función
 	  devolve un fallo se o número de filas de <argname>X</argname> non
 	  é igual a <argname>factorx</argname> veces o número de filas de
@@ -2965,7 +3037,7 @@
 	<para>
 	  Devolve unha matriz complexa de dimensión <by r="n" c="m"/> que
 	  contén a trasposta conxugada da matriz complexa <argname>C</argname>
-	  de dimensión <by r="m" c="n"/>. O operador <lit>'</lit> (traspoñer)
+	  de dimensión <by r="m" c="n"/>. O operador <lit>&apos;</lit> (traspoñer)
 	  fai tamén a transposición conxugada de matrices complexas. Podes
 	  utilizar a función <fncref targ="transp"/> con matrices complexas,
 	  pero iso vai realizar a transposición <quote>directa</quote>
@@ -3187,6 +3259,49 @@
 	<code>
 	  bundle b = null
 	</code>
+	<subhead>Variantes de sintaxe</subhead>
+	<para>
+	  Dispós de dúas formas alternativas de sintaxe para definir feixes.
+	  En ambos casos, a palabra chave <lit>defbundle</lit> substitúese
+	  por un carácter de barra baixa. Na primeira variante, os elementos
+	  separados por comas teñen a forma <lit>chave=valor</lit>, onde a
+	  chave se entende que debe ser unha cadea de texto literal e non
+	  require que a poñas entre comiñas. Este é un exemplo:
+	</para>
+	<code>
+	  bundle b = _(x=5, strval="Algunha cadea", m=I(3))
+	</code>
+	<para>
+	  Esta forma resulta particularmente conveniente para producir un feixe
+	  anónimo improvisadamente como argumento dunha función, como en
+	</para>
+	<code>
+	  b = regls(ys, LX, _(lfrac=0.35, stdize=0))
+	</code>
+	<para>
+	  onde a función <lit>regls</lit> ten un argumento opcional de tipo
+	  feixe que contén varios parámetros.
+	</para>
+	<para>
+	  A segunda variante está pensada para o caso no que queiras empaquetar
+	  varios obxectos xa existentes nun feixe: simplemente indica os seus
+	  nomes sen comiñas:
+	</para>
+	<code>
+	  bundle b = _(x, y, z)
+	</code>
+	<para>
+	  Neste caso, o obxecto <lit>x</lit> se copia nun feixe coa chave
+	  <quote><lit>x</lit></quote>. De xeito similar faise tanto para
+	  <lit>y</lit> como para <lit>z</lit>.
+	</para>
+	<para>
+	  Estas formas alternativas implican teclear menos que na versión
+	  cumprida de <lit>defbundle()</lit>, e probablemente moitas veces
+	  son máis convenientes, pero ten en conta que son menos flexibles.
+	  Só na versión cumprida podes manexar as chaves indicándoas como
+	  variables de cadea de texto en troques de cadeas literais.
+	</para>
       </description>
     </function>
 
@@ -11092,23 +11207,33 @@
 
     <function name="strlen" section="strings" output="int">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string-or-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un número enteiro coa cantidade de caracteres que ten a
-	  cadea de texto <argname>s</argname>. Ten en conta que iso non é
-	  necesariamente igual ao número de bytes, se algúns caracteres están
-	  fóra do intervalo de impresión ASCII.
+	  Se <argname>s</argname> é unha cadea de texto simple, devolve
+	  a cantidade de caracteres UTF-8 que contén. Ten en conta que
+	  iso non é igual ao número de bytes, se algúns caracteres están
+	  fóra do intervalo de impresión ASCII. Cando desexes obter o número
+	  de bytes, podes usar a función <fncref targ="nelem"/>. Por exemplo:
 	</para>
-    <para>
-        Exemplo:
-    </para>
-    <code>
-        string s = "Regresión"
-        scalar number = strlen(s)
-        print number
-    </code>
+	<code>
+	  string s = "Olé!"
+	  printf "strlen(s) = %d, nelem(s) = %d\n", strlen(s), nelem(s)
+	</code>
+	<para>
+	  debera devolver
+	</para>
+	<code>
+	  strlen(s) = 5, nelem(s) = 7
+	</code>
+	<para>
+	  Se o argumento é un arranxo de cadeas de texto, o valor que se devolve
+	  é un vector columna que contén o número de caracteres de cada cadea.
+	  Tamén se acepta que uses como argumento unha serie con cadeas de
+	  valores; nese caso, o valor que se devolve é unha serie que contén a
+	  longura das cadeas de valores ao longo do rango mostral vixente.
+	</para>
       </description>
     </function>
 
@@ -11558,6 +11683,32 @@
             <fncref targ="cosh"/>
             <fncref targ="sinh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="tdisagg" section="transforms" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-mat">Y</fnarg>
+	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
+	<fnarg type="scalar">s</fnarg>
+	<fnarg optional="true" type="bundle">opcions</fnarg>
+	<fnarg optional="true" type="bundle">resultados</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza a desagregación temporal (conversión a unha frecuencia maior)
+	  dos datos de tipo serie temporal que haxa en <argname>Y</argname>.
+	  O argumento <argname>s</argname> proporciona o factor de expansión
+	  (por exemplo, 3 para pasar de trimestrais a mensuais). O argumento
+	  <argname>X</argname> pode conter unha ou máis covariantes (que teñan
+	  a frecuencia maior) para axudar no proceso de desagregación. Podes
+	  asumir diversas opcións no argumento <argname>opcions</argname>,
+	  e podes recoller os detalles da desagregación por medio de
+	  <argname> resultados</argname>.
+	</para>
+	<para>
+	  Consulta o <guideref targ="chap:tdisagg"/> para obter máis detalles.
 	</para>
       </description>
     </function>

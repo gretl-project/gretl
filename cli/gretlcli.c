@@ -467,6 +467,42 @@ static int line_ensure_utf8 (char *s)
     return err;
 }
 
+static int win32_get_args (int *pargc, char ***pargv)
+{
+    int argc_w = 0;
+    LPWSTR *argv_w;
+    int err = 0;
+
+    /* get command-line arguments as UTF-16 */
+    argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
+
+    if (argv_w == NULL) {
+	err = 1;
+    } else {
+	/* convert args to UTF-8 */
+	char **argv_u8 = calloc(argc_w, sizeof *argv_u8);
+	int i;
+
+	for (i=0; i<argc_w && !err; i++) {
+	    argv_u8[i] = g_utf16_to_utf8(argv_w[i], -1, NULL, NULL, NULL);
+	    if (argv_u8[i] == NULL) {
+		err = 1;
+	    }
+	}
+	*pargc = argc_w;
+	*pargv = argv_u8;
+	/* we're done with this */
+	LocalFree(argv_w);
+    }
+
+    if (err) {
+	fprintf(stderr, "Failed to get command-line arguments\n");
+	exit(EXIT_FAILURE);
+    }
+
+    return err;
+}
+
 #endif
 
 static int xout;
@@ -563,9 +599,6 @@ static void check_help_file (void)
 
 int main (int argc, char *argv[])
 {
-#ifdef WIN32
-    char *callname = argv[0];
-#endif
     char linecopy[MAXLINE];
     DATASET *dset = NULL;
     MODEL *model = NULL;
@@ -583,8 +616,9 @@ int main (int argc, char *argv[])
     PRN *cmdprn = NULL;
     int err = 0;
 
-#if defined(G_OS_WIN32) && defined(PKGBUILD)
-    win32_set_gretldir(callname);
+#if defined(G_OS_WIN32)
+    win32_get_args(&argc, &argv);
+    win32_set_gretldir();
 #endif
 
 #ifdef ENABLE_NLS
@@ -689,7 +723,7 @@ int main (int argc, char *argv[])
     }
 
 #ifdef WIN32
-    win32_cli_read_rc(callname);
+    win32_cli_read_rc();
 #else
     cli_read_rc();
 #endif /* WIN32 */
@@ -864,7 +898,6 @@ int main (int argc, char *argv[])
     libgretl_cleanup();
 
     exit(err ? EXIT_FAILURE : EXIT_SUCCESS);
-    /* was just return 0; */
 }
 
 static void printline (const char *s)

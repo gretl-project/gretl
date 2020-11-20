@@ -82,6 +82,9 @@ char *installed_addon_status_string (const char *path,
 
 int dbnomics_get_series_call (const char *datacode);
 
+int dbnomics_get_dimensions_call (const char *provider,
+				  const char *dsname);
+
 void *dbnomics_get_providers_call (int *err);
 
 void *dbnomics_search_call (const char *key,

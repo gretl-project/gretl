@@ -32,7 +32,7 @@ mkinstalldirs = $(tooldir)/mkinstalldirs
 
 GMSGFMT = @GMSGFMT@
 MSGFMT = @MSGFMT@
-XGETTEXT = @XGETTEXT@
+XGETTEXT = @XGETTEXT@ --from-code=UTF-8
 MSGMERGE = msgmerge
 MSGMERGE_UPDATE = @MSGMERGE@ --update
 MSGINIT = msginit

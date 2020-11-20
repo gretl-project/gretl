@@ -12,13 +12,12 @@ list X = population..LemasPctOfficDrugUn
 smpl 1 1000
 printf "Training on observations %d to %d\n", $t1, $t2
 
-lamseq = lambda_sequence(1, 20)
-bundle parms = defbundle("lfrac", lamseq, "stdize", 1)
+bundle parms = _(nlambda=20, stdize=1)
 parms.verbosity = 1
 parms.xvalidate = 1
 parms.nfolds = 10
 parms.randfolds = 1
-bundle lret = lasso(murdPerPop, X, parms)
+bundle lret = regls(murdPerPop, X, parms)
 
 # predict for the next 200 observations
 smpl 1001 1200

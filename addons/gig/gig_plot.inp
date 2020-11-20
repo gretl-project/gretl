@@ -30,7 +30,7 @@ function string do_xtics(scalar t1, scalar t2, scalar d1, scalar d2,
     s_d = d1 + s .* (d2 - d1)
     t = t1 + (t2 - t1)/(2*n)
 
-    loop for i=1..n -q
+    loop for i = 1 .. n
 	string tmp = sprintf("'%s' %g", obslabel(round(t)), s_d[i])
 	ret += tmp
 	if i==n
@@ -59,6 +59,8 @@ function string gig_grph(string yname, series u, series h)
     scalar t1 = $t1
     scalar t2 = $t2
 
+    ### FIXME 10/11/2020: this can probably be made much smarter by using
+    ### more recent calendar functions 
     scalar d1 = dateton(t1)
     scalar d2 = dateton(t2)
     scalar incr = (d2-d1)/($nobs-1)
@@ -77,15 +79,15 @@ function string gig_grph(string yname, series u, series h)
     printf "'-' using 1:2 w lines lt 2, \\\n"
     printf "'-' using 1:2 w lines lt 2 \n"
 
-    loop for t=t1..t2 --quiet
+    loop for t = t1 .. t2
 	printf "%12.6f %12.6f\n", xt[t], u[t]
     endloop
     printf "e\n"
-    loop for t=t1..t2 --quiet
+    loop for t = t1 .. t2
 	printf "%12.6f %12.6f\n", xt[t], s[t]
     endloop
     printf "e\n"
-     loop for t=t1..t2 --quiet
+     loop for t = t1 .. t2
      	printf "%12.6f %12.6f\n", xt[t], -s[t]
      endloop
      printf "e\n"
@@ -121,11 +123,11 @@ function string gig_dgrph(matrix X, string desc)
     printf "plot '-' using 1:2 title 'kernel' w lines, \\\n"
     printf "'-' using 1:2 title 'theoretical' w lines lt 2 \n"
 
-    loop for i=1..n --quiet
+    loop for i = 1 .. n
 	printf "%12.6f %12.6f\n", x[i], kd[i]
     endloop
     printf "e\n"
-    loop for i=1..n --quiet
+    loop for i = 1 .. n
 	printf "%12.6f %12.6f\n", x[i], td[i]
     endloop
     printf "e\n"
@@ -230,8 +232,6 @@ function void gig_dplot(bundle *model)
     string tmpfile = gig_dgrph(X~d, descstr)
     gnuplot --input="@tmpfile" --output="display"
 end function
-
-
     
 function void GUI_gig_plot(bundle *model, int ptype[0:2:0] \
                            "Plot type" {"Time series", "Density", "Forecast"})

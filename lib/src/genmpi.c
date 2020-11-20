@@ -97,13 +97,15 @@ static Gretl_MPI_Op scatter_op_from_string (const char *s)
     return op;
 }
 
-static gretl_matrix *get_transfer_matrix (NODE *t, int f, parser *p)
+static gretl_matrix *get_transfer_matrix (NODE *t, int f,
+					  int cmplx_ok,
+					  parser *p)
 {
     gretl_matrix *m = t->v.m;
 
     if (m == NULL) {
 	p->err = E_DATA;
-    } else if (m->is_complex) {
+    } else if (m->is_complex && !cmplx_ok) {
 	gretl_errmsg_sprintf("%s: %s", getsymb(f),
 			     _("complex arguments/operands not supported"));
 	p->err = E_CMPLX;
@@ -339,7 +341,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    if (type == GRETL_TYPE_ARRAY) {
 		p->err = gretl_array_mpi_reduce(l->v.a, &a, op, root);
 	    } else if (type == GRETL_TYPE_MATRIX) {
-		lm = get_transfer_matrix(l, f, p);
+		lm = get_transfer_matrix(l, f, 0, p);
 		if (!p->err) {
 		    p->err = gretl_matrix_mpi_reduce(lm, &m, op, root, opt);
 		}
@@ -358,7 +360,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    ret->v.xval = p->err;
 	}
     } else if (f == F_SCATTER) {
-	gretl_matrix *lm = get_transfer_matrix(l, f, p);
+	gretl_matrix *lm = get_transfer_matrix(l, f, 1, p);
 
 	if (!p->err) {
 	    ret = aux_scalar_node(p);

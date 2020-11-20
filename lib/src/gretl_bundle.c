@@ -2329,8 +2329,10 @@ gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2,
     xmlDocPtr doc = p2;
     gretl_bundle *b = NULL;
     char *btype = NULL;
+    char *creator = NULL;
 
     btype = (char *) xmlGetProp(node, (XUC) "type");
+    creator = (char *) xmlGetProp(node, (XUC) "creator");
 
     cur = node->xmlChildrenNode;
 
@@ -2340,10 +2342,14 @@ gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2,
 	b = gretl_bundle_new();
 	if (b == NULL) {
 	    *err = E_ALLOC;
+	} else if (creator != NULL) {
+	    b->creator = creator;
+	    creator = NULL;
 	}
     }
 
     free(btype);
+    free(creator);
 
     if (b != NULL) {
 	*err = load_bundled_items(b, cur, doc);

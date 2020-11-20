@@ -269,6 +269,20 @@ static void obsbit_from_sql_date (char *targ, DATE_STRUCT *dv)
     }
 }
 
+static void sql_diagnose_stmt (SQLHSTMT stmt)
+{
+    SQLCHAR state[6] = {0};
+    SQLCHAR buf[256]= {0};
+    SQLINTEGER sqlerr = 0;
+    SQLSMALLINT msglen = 0;
+
+    SQLGetDiagRec(SQL_HANDLE_STMT,
+		  stmt, 1, state, &sqlerr,
+		  buf, 256, &msglen);
+    fprintf(stderr, "sql_diagnose: state '%s', err %d, buf '%s', len %d\n",
+	    state, sqlerr, buf, (int) msglen);
+}
+
 static int odbc_read_rows (ODBC_info *odinfo,
 			   SQLHSTMT stmt,
 			   int totcols,
@@ -291,8 +305,14 @@ static int odbc_read_rows (ODBC_info *odinfo,
     int t = 0, err = 0;
 
     ret = SQLFetch(stmt);
+    if (ret != SQL_SUCCESS) {
+	fprintf(stderr, "%s\n", sql_status(ret));
+        if (ret == SQL_SUCCESS_WITH_INFO) {
+	    sql_diagnose_stmt(stmt);
+	}
+    }
 
-    while (ret == SQL_SUCCESS && !err) {
+    while ((ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) && !err) {
 	j = k = p = q = v = 0;
 	if (verbose) {
 	    pprintf(prn, "Fetch, row %d: ", t);
@@ -376,7 +396,8 @@ static int odbc_read_rows (ODBC_info *odinfo,
 	}
     } /* end loop across rows */
 
-    if (ret != SQL_SUCCESS && ret != SQL_NO_DATA && !err) {
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO &&
+	ret != SQL_NO_DATA && !err) {
 	err = E_DATA;
     }
 
@@ -716,12 +737,12 @@ int gretl_odbc_get_data (ODBC_info *odinfo, gretlopt opt, PRN *inprn)
 	    colbytes[i] = 0;
 	    j = i - odinfo->obscols;
 	    if (IS_SQL_STRING_TYPE(dt)) {
-		char *sval = get_str_bind_target(&strvals, len, odinfo->nvars, j, &err);
+		char *sval = get_str_bind_target(&strvals, len+1, odinfo->nvars, j, &err);
 
 		if (!err) {
 		    pprintf(prn, "  binding col %d to strvals[%d] (len = %d)\n",
 			    i+1, j, len);
-		    SQLBindCol(stmt, i+1, SQL_C_CHAR, sval, len, &colbytes[i]);
+		    SQLBindCol(stmt, i+1, SQL_C_CHAR, sval, len+1, &colbytes[i]);
 		}
 	    } else if (IS_SQL_DATE(dt)) {
 		DATE_STRUCT *ds = get_date_bind_target(&dv, odinfo->nvars, j, &err);

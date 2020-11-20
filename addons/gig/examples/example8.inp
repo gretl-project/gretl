@@ -3,8 +3,8 @@
 # estimate a simple model and then perform
 # variance forecasting via simulation
 
-set echo off
-set messages off
+
+set verbose off
 set seed 123
 include gig.gfn
 

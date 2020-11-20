@@ -124,12 +124,17 @@ static int dbn_dset_from_csv (DATASET *dbset,
 			      gretl_array *P,
 			      gretl_matrix *v)
 {
+    PRN *prn = NULL;
     gchar *fname;
     FILE *fp;
     int T, err = 0;
 
+#if DB_DEBUG
+    prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+#endif
+
     fname = g_strdup_printf("%sdbnomics_tmp.txt", gretl_dotdir());
-    fp = gretl_fopen(fname, "w");
+    fp = gretl_fopen(fname, "wb");
 
     if (fp == NULL) {
 	err = E_FOPEN;
@@ -140,12 +145,12 @@ static int dbn_dset_from_csv (DATASET *dbset,
 	fclose(fp);
 
 	if (!err) {
-	    err = import_csv(fname, dbset, OPT_NONE, NULL);
+	    err = import_csv(fname, dbset, OPT_NONE, prn);
 	}
 	if (!err && !dataset_is_time_series(dbset)) {
 	    /* try again, after sorting by "period" strings */
 	    gretl_remove(fname);
-	    fp = gretl_fopen(fname, "w");
+	    fp = gretl_fopen(fname, "wb");
 	    if (fp == NULL) {
 		err = E_FOPEN;
 	    } else {
@@ -154,7 +159,7 @@ static int dbn_dset_from_csv (DATASET *dbset,
 		free_Z(dbset);
 		clear_datainfo(dbset, CLEAR_FULL);
 		if (!err) {
-		    err = import_csv(fname, dbset, OPT_NONE, NULL);
+		    err = import_csv(fname, dbset, OPT_NONE, prn);
 		}
 	    }
 	}
@@ -162,6 +167,7 @@ static int dbn_dset_from_csv (DATASET *dbset,
     }
 
     g_free(fname);
+    gretl_print_destroy(prn);
 
     return err;
 }

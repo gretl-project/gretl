@@ -1,5 +1,9 @@
 version 2020e, in progress
 
+The chowlin() function is now deprecated in favor of tdisagg(),
+and the --interpolate option to the "data" command has been
+removed (again in favor of use of tdisagg).
+
 The obsolete usage of '=' to test for equality now provokes
 an error: "==" must be used instead.
 

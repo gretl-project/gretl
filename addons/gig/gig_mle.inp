@@ -10,7 +10,7 @@ function series ln_pdf_skt(series *u, scalar df, scalar ht_skew)
 	scalar b = sqrt(1 + 3*ht_skew^2 - a^2)
 	series d = (b*u + a)
 	d = (d<0) ? d/(1-ht_skew) : d/(1+ht_skew)
-	ret = ln(b) + ln(c) - ((df+1)/2) * ln(1+(d^2/(df-2)))
+	ret = log(b) + log(c) - ((df+1)/2) * log(1+(d^2/(df-2)))
     endif
 
     return ret
@@ -31,7 +31,7 @@ function series ln_pdf_skged(series *x, scalar ni, scalar ta)
 
     # m: mode
     scalar m = - 2*ta/beta * exp( lg2p - lgp )
-    scalar lnorm = ln(0.5 * beta) - lngamma(p+1)
+    scalar lnorm = log(0.5 * beta) - lngamma(p+1)
 
     series z = (x<m) ? (m-x)*beta/tam1 : (x-m)*beta/tap1 
     ret = lnorm - (z^ni)
@@ -63,11 +63,11 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 
             # series hadj = sqrt(h*(1-2/ni))
             # series u = e/hadj
-	    # ret = ln(pdf(t, ni, u)/hadj)
+	    # ret = log(pdf(t, ni, u)/hadj)
 
 	    series e2 = e*e
-	    scalar K1 = lngamma((ni+1)/2) - lngamma(ni/2) - 0.5*ln(pi*(ni-2))
-	    series ret = K1 - 0.5 * ln(h) - 0.5*(ni+1) * ln(1 + e2/(h*(ni-2)))
+	    scalar K1 = lngamma((ni+1)/2) - lngamma(ni/2) - 0.5*log($pi*(ni-2))
+	    series ret = K1 - 0.5 * log(h) - 0.5*(ni+1) * log(1 + e2/(h*(ni-2)))
 
 	    series den = e2 + (ni-2)*h
 	    de = - (ni + 1) * e / den
@@ -75,7 +75,7 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 
 	    scalar k1 = digamma((ni+1)/2) - digamma(ni/2) - 1/(ni-2)
 	    series s1 = (ni + 1)/(ni - 2) * e2/den
-	    series s2 = ln(1 + e2/(h*(ni-2)))
+	    series s2 = log(1 + e2/(h*(ni-2)))
 
 	    matrix dd = 0.5*(k1 + s1 - s2)
 	endif
@@ -87,10 +87,10 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 	    scalar lg1 = lngamma(p)
 	    scalar lg3 = lngamma(3*p)
 	    
-	    scalar lC = ln(ni/2) + 0.5*(lg3 - 3*lg1)
+	    scalar lC = log(ni/2) + 0.5*(lg3 - 3*lg1)
 	    scalar k = exp(0.5*(lg1-lg3)) * (0.5^p)
 	    series u = abs(e)/(k*sqrt(h))
-	    ret = lC - 0.5*(u^ni + ln(h))
+	    ret = lC - 0.5*(u^ni + log(h))
 	endif
 	
     elif distrType == 3 # Skewed-T
@@ -98,7 +98,7 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 	if (ni>2) 
 	    series u = e/sqrt(h)
 	    alpha    = tanh(addpar[2])
-	    ret      = ln_pdf_skt(&u, ni, alpha) - 0.5*ln(h)
+	    ret      = ln_pdf_skt(&u, ni, alpha) - 0.5*log(h)
 	endif
 
     elif distrType == 4 # Skewed-GED
@@ -106,7 +106,7 @@ function series gig_loglik(series *e, series *h, scalar distrType,
 	if (ni>0) 
 	    series u = e/sqrt(h)
 	    alpha    = tanh(addpar[2])
-	    ret      = ln_pdf_skged(&u, ni, alpha) - 0.5*ln(h)
+	    ret      = ln_pdf_skged(&u, ni, alpha) - 0.5*log(h)
 	endif
 
     endif
@@ -185,8 +185,8 @@ function scalar aparchFilter(series *depVar, series *h, series *e,
        # produces a complex number
        err = (delta != floor(delta)) && (minc(minr(tmp_ae)) < 0) 
        if (!err)
-	   Kd = (tmp_ae.^delta)
-	   series h = (Kd * avec)
+	   Kd = tmp_ae .^ delta
+	   series h = Kd * avec
 	   
 	   # Var regressors
 	   if (nvX>1)
@@ -257,7 +257,7 @@ function scalar aparchFilter(series *depVar, series *h, series *e,
 	   matrix mfocs = meanc({e} .* mReg)
 	   matrix dmu = zeros(rows(deriv_h), nmX)
 
-	   loop for i=1..q -q
+	   loop for i = 1 .. q
 	       matrix focs = eeff[,i] .* mlag(mReg, i)
 	       matrix tmpmat = (mlag(sgn, i) + gvec[i]) .* focs
 	       dmu += avec[i] .* tmpmat
@@ -269,7 +269,7 @@ function scalar aparchFilter(series *depVar, series *h, series *e,
        endif
 
        if p > 0
-	   loop for i=1..cols(deriv_h) -q
+	   loop for i = 1 .. cols(deriv_h)
 	       series tmpser = deriv_h[,i]
 	       tmpser = filter(tmpser, null, bvec)
 	       deriv_h[,i] = tmpser
@@ -313,7 +313,7 @@ function scalar egarchFilter(series *y, series *h, series *u, \
 	series omega = vReg * params[omegaini:base]
     endif
     
-    series logh = ln(var(e))
+    series logh = log(var(e))
     
     # ERRORS
     series d = (e>0)
@@ -362,13 +362,13 @@ function scalar egarchFilter(series *y, series *h, series *u, \
     else
         string evalstr = "omega"
     
-        loop for i=1..q -q
+        loop for i = 1 .. q
     	    scalar a$i = params[base+i]
             scalar g$i = params[base+i+p+q]
     	    evalstr += " + a$i*abs(e(-$i)/exp(logh(-$i)*0.5)) + g$i*e(-$i)/exp(logh(-$i)*0.5)"
         endloop
     
-        loop for i=1..p -q
+        loop for i = 1 .. p
     	    scalar b$i = params[base+p+i]
     	    evalstr += " + b$i*logh(-$i)"
         endloop
@@ -501,9 +501,7 @@ function scalar do_mle(bundle *model, bool verbose)
     matrix dd = {}
     matrix score = NA
 
-    NSCORE = !ascore_ok(type, cdist)
-
-    if NSCORE
+    if !ascore_ok(type, cdist)
 	catch mle loglik = ll 
             # put the newly estimated values into the full params vector
 	    fulltheta[sel] = theta
@@ -531,7 +529,7 @@ function scalar do_mle(bundle *model, bool verbose)
 	    # SCORE
 	    score = do_score(&de, &dh, &DE, &DH, &dd)
 	    deriv theta = score
-	end mle @mleString
+	end mle @mleString --no-gradient-check
 	err = $error
     endif
 

@@ -9,7 +9,7 @@ setobs 1 1960
 ### the DBnomics dataset we're drawing from
 
 provider = "IMF"
-database = "WEO"
+database = "WEO:2020-10"
 
 verbose = 0
 dims = dbnomics_get_dataset_dimensions(provider, database, 0)

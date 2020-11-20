@@ -1307,7 +1307,7 @@ int write_plot_bounding_box_request (FILE *fp)
 
 static int do_plot_bounding_box (void)
 {
-    FILE *fp = gretl_fopen(gretl_plotfile(), "a");
+    FILE *fp = gretl_fopen(gretl_plotfile(), "ab");
     int err = 0;
 
     if (fp != NULL) {
@@ -1832,6 +1832,8 @@ static int set_term_type_from_fname (const char *fname)
 	this_term_type = GP_TERM_SVG;
     } else if (has_suffix(fname, ".tex")) {
 	this_term_type = GP_TERM_TEX;
+    } else if (!strcmp(fname, "gnuplot")) {
+	this_term_type = GP_TERM_VAR;
     }
 
     return this_term_type;
@@ -2220,6 +2222,13 @@ int graph_written_to_file (void)
     return graph_file_written;
 }
 
+static int graph_file_shown;
+
+int graph_displayed (void)
+{
+    return graph_file_shown;
+}
+
 static void remove_old_png (void)
 {
     gchar *tmp = gretl_make_dotpath("gretltmp.png");
@@ -2249,6 +2258,7 @@ static int gnuplot_make_graph (void)
     int fmt, err = 0;
 
     graph_file_written = 0;
+    graph_file_shown = 0;
     fmt = specified_gp_output_format();
 
     if (fmt == GP_TERM_PLT) {
@@ -2292,8 +2302,12 @@ static int gnuplot_make_graph (void)
 	} else {
 	    /* remove the temporary input file */
 	    gretl_remove(fname);
-	    gretl_set_path_by_name("plotfile", gnuplot_outname);
-	    graph_file_written = 1;
+	    if (fmt == GP_TERM_VAR) {
+		graph_file_shown = 1;
+	    } else {
+		gretl_set_path_by_name("plotfile", gnuplot_outname);
+		graph_file_written = 1;
+	    }
 	}
     }
 
@@ -2686,7 +2700,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
 static int get_fitted_line (gnuplot_info *gi,
 			    const DATASET *dset,
-			    char *targ)
+			    gchar **targ)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
@@ -2770,7 +2784,8 @@ static int get_fitted_line (gnuplot_info *gi,
 	}
 
 	set_plotfit_line(title, formula, gi->fit, b->val, x0, pd);
-	sprintf(targ, "%s title \"%s\" w lines\n", formula, title);
+	*targ = g_strdup_printf("%s title \"%s\" w lines\n",
+				formula, title);
 	gi->flags |= GPT_AUTO_FIT;
     }
 
@@ -2793,8 +2808,8 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 {
     int yno = gi->list[1];
     const double *yvar = dset->Z[yno];
+    gchar *fitline = NULL;
     FILE *fp = NULL;
-    char fitline[128] = {0};
     PRN *prn;
     int t, err = 0;
 
@@ -2807,7 +2822,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 	return err;
     }
 
-    err = get_fitted_line(gi, dset, fitline);
+    err = get_fitted_line(gi, dset, &fitline);
     if (err) {
 	return err;
     }
@@ -2816,6 +2831,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     fp = open_plot_input_file(PLOT_REGULAR, gi->flags, &err);
     if (err) {
+	g_free(fitline);
 	return err;
     }
 
@@ -2829,9 +2845,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     print_keypos_string(GP_KEY_LEFT_TOP, fp);
     print_axis_label('y', series_get_graph_name(dset, yno), fp);
-
     print_auto_fit_string(gi->fit, fp);
-
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     fputs("plot \\\n", fp);
@@ -2840,6 +2854,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     gretl_push_c_numeric_locale();
 
     fprintf(fp, " %s", fitline);
+    g_free(fitline);
 
     for (t=gi->t1; t<=gi->t2; t++) {
 	if (gi->flags & GPT_TIMEFMT) {
@@ -2853,7 +2868,6 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     gretl_pop_c_numeric_locale();
 
     err = finalize_plot_input_file(fp);
-
     clear_gpinfo(gi);
 
     return err;
@@ -3299,7 +3313,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
 	l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
-	&& !(gi->flags & GPT_DUMMY)  & !(opt & OPT_Y)) {
+	&& !(gi->flags & GPT_DUMMY) && !(opt & OPT_Y)) {
 	/* FIXME GPT_XYZ ? */
 	/* allow probe for using two y axes */
 #if GP_DEBUG
@@ -3954,13 +3968,13 @@ int gnuplot (const int *plotlist, const char *literal,
     char withstr[16] = {0};
     char lwstr[8] = {0};
     char keystr[48] = {0};
-    char fit_line[128] = {0};
+    gchar *fitline = NULL;
     int time_fit = 0;
     int oddman = 0;
     int many = 0;
     int set_xrange = 1;
     PlotType ptype;
-    gnuplot_info gi;
+    gnuplot_info gi = {0};
     int i, err = 0;
 
     gretl_error_clear();
@@ -3979,6 +3993,9 @@ int gnuplot (const int *plotlist, const char *literal,
 
     if (dataset_is_panel(dset) &&
 	plotlist_is_group_invariant(plotlist, dset)) {
+#if GP_DEBUG
+	fprintf(stderr, "doing panel_group_invariant_plot\n");
+#endif
 	return panel_group_invariant_plot(plotlist, literal,
 					  (DATASET *) dset, opt);
     }
@@ -4043,7 +4060,7 @@ int gnuplot (const int *plotlist, const char *literal,
     /* add a regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 &&
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
-	err = get_fitted_line(&gi, dset, fit_line);
+	err = get_fitted_line(&gi, dset, &fitline);
 	if (err) {
 	    goto bailout;
 	} else {
@@ -4274,8 +4291,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     }
 
-    if (*fit_line != '\0') {
-        fputs(fit_line, fp);
+    if (fitline != NULL) {
+        fputs(fitline, fp);
     }
 
     /* print the data to be graphed */
@@ -4291,6 +4308,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
  bailout:
 
+    g_free(fitline);
     clear_gpinfo(&gi);
 
     return err;
@@ -5457,6 +5475,10 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 	}
     }
 
+    if (opt & OPT_T) {
+	fputs("set border 3\n", fp);
+    }
+
     /* for grid lines */
     fputs("set x2tics 1 format '' scale 0,0.001\n", fp);
     fputs("set y2tics 1 format '' scale 0,0.001\n", fp);
@@ -5509,8 +5531,12 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("EOD\n", fp);
     fputs("# end inline data\n", fp);
     fputs("if (printcorr) {\n", fp);
-    fputs("plot $data matrix with image, ", fp);
-    fputs("$data matrix using 1:2:(sprintf(\"%.1f\",$3)) with labels\n", fp);
+    fputs("plot $data matrix with image, $data matrix using 1:2:", fp);
+    if (opt & OPT_T) {
+	fputs("($3!=$3 ? \"\" : sprintf(\"%.1f\",$3)) with labels\n", fp);
+    } else {
+	fputs("(sprintf(\"%.1f\",$3)) with labels\n", fp);
+    }
     fputs("} else {\n", fp);
     fputs("plot $data matrix with image\n", fp);
     fputs("}\n", fp);
@@ -6452,10 +6478,12 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     if (pm.bdummy) {
 	int oddman = 0;
 
-	check_for_yscale(gi, (const double **) dset->Z, &oddman);
-	if (gi->flags & GPT_Y2AXIS) {
-	    fputs("set ytics nomirror\n", fp);
-	    fputs("set y2tics\n", fp);
+	if (!(opt & OPT_Y)) {
+	    check_for_yscale(gi, (const double **) dset->Z, &oddman);
+	    if (gi->flags & GPT_Y2AXIS) {
+		fputs("set ytics nomirror\n", fp);
+		fputs("set y2tics\n", fp);
+	    }
 	}
 
 	fputs("plot \\\n", fp);
@@ -7030,27 +7058,28 @@ static int panel_means_ts_plot (const int vnum,
 {
     DATASET *gset;
     int nunits, T = dset->pd;
-    int list[3] = {2, 1, 2};
+    int list[2] = {1, 1};
     gchar *literal = NULL;
     gchar *title = NULL;
-    const double *obs;
     int i, t, s, s0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
 
-    obs = gretl_plotx(dset, OPT_P);
-    if (obs == NULL) {
-	return E_ALLOC;
-    }
-
-    gset = create_auxiliary_dataset(3, T, 0);
+    gset = create_auxiliary_dataset(2, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
     }
 
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
+
+    if (dset->panel_pd > 0) {
+	/* add time series info to @gset */
+	gset->structure = TIME_SERIES;
+	gset->pd = dset->panel_pd;
+	gset->sd0 = dset->panel_sd0;
+    }
 
     s0 = dset->t1;
 
@@ -7066,15 +7095,10 @@ static int panel_means_ts_plot (const int vnum,
 		n++;
 	    }
 	}
-	if (n == 0) {
-	    gset->Z[1][t] = NADBL;
-	} else {
-	    gset->Z[1][t] = xsum / n;
-	}
-	gset->Z[2][t] = obs[t];
+	gset->Z[1][t] = (n == 0)? NADBL : xsum / n;
     }
 
-    opt |= OPT_O; /* use lines */
+    opt |= (OPT_O | OPT_T); /* use lines, time series */
 
     title = g_strdup_printf(_("mean %s"),
 			    series_get_graph_name(dset, vnum));
@@ -7396,7 +7420,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	    if (sval != NULL) {
 		strncat(gset->varname[i+1], sval, VNAMELEN-1);
 	    } else {
-		sprintf(gset->varname[i+1], "group %d", u0+i+1);
+		sprintf(gset->varname[i+1], "%d", u0+i+1);
 	    }
 	} else if (panel_labels) {
 	    if (use > 0) {
@@ -7407,7 +7431,7 @@ static int panel_overlay_ts_plot (const int vnum,
 		strcpy(gset->varname[i+1], dset->S[s]);
 	    }
 	} else {
-	    sprintf(gset->varname[i+1], "group %d", u0+i+1);
+	    sprintf(gset->varname[i+1], "%d", u0+i+1);
 	}
 	for (t=0; t<T; t++) {
 	    gset->Z[i+1][t] = dset->Z[vnum][s++];
@@ -10073,10 +10097,9 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
 	    _("final series"), mstr);
 
     err = finalize_plot_input_file(fp);
-    if (!err) {
-	if (gretl_in_gui_mode()) {
-	    manufacture_gui_callback(GNUPLOT);
-	}
+
+    if (!err && gretl_in_gui_mode()) {
+	manufacture_gui_callback(GNUPLOT);
     }
 
     gretl_pop_c_numeric_locale();

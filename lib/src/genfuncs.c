@@ -4513,12 +4513,14 @@ static int inf_check (double val, const gretl_matrix *theta,
     return *err;
 }
 
+#define BETA_METHOD(m) (m==MIDAS_BETA0 || m==MIDAS_BETA1 || m==MIDAS_BETAN)
+
 static int check_beta_params (int method, double *theta,
 			      int k, double eps)
 {
     int err = 0;
 
-    if (method == MIDAS_BETA0 && k != 2) {
+    if ((method == MIDAS_BETA0 || method == MIDAS_BETA1) && k != 2) {
 	gretl_errmsg_set("theta must be a 2-vector");
 	err = E_INVARG;
     } else if (method == MIDAS_BETAN && k != 3) {
@@ -4572,7 +4574,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 
     theta = m->val;
 
-    if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    if (BETA_METHOD(method)) {
 	*err = check_beta_params(method, theta, k, eps);
 	if (*err) {
 	    return NULL;
@@ -4599,7 +4601,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 		break;
 	    }
 	}
-    } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    } else if (BETA_METHOD(method)) {
 	double si, ai, bi;
 
 	for (i=0; i<p; i++) {
@@ -4763,7 +4765,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     theta = m->val;
     errno = 0;
 
-    if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    if (BETA_METHOD(method)) {
 	*err = check_beta_params(method, theta, k, eps);
 	if (*err) {
 	    return NULL;
@@ -4820,7 +4822,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    }
 	}
 	free(dsum);
-    } else if (method == MIDAS_BETA0 || method == MIDAS_BETAN) {
+    } else if (BETA_METHOD(method)) {
 	double si, ai, bi;
 	double g1sum = 0;
 	double g2sum = 0;
@@ -4939,6 +4941,236 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
     return G;
 }
 
+/* Retrieve from a midasreg $model bundle all the info
+   needed to construct the array of per-lag multipliers
+   and their standard errors.
+*/
+
+static int process_midas_bundle (gretl_bundle *mb, int idx,
+				 gretl_matrix **ptheta,
+				 gretl_matrix **pV,
+				 int *pmtype, int *ph,
+				 int *pminlag,
+				 const char **plname)
+{
+    gretl_array *mt;
+    gretl_matrix *b, *vcv;
+    gretl_matrix *theta = NULL;
+    gretl_matrix *V = NULL;
+    int *xlist = NULL;
+    int mtype, np;
+    int i0, i1;
+    int i, j, k, nm;
+    int err = 0;
+
+    mt = gretl_bundle_get_array(mb, "midas_info", &err);
+    if (!err) {
+	xlist = gretl_bundle_get_list(mb, "xlist", &err);
+    }
+    if (!err) {
+	b = gretl_bundle_get_matrix(mb, "coeff", &err);
+    }
+    if (!err) {
+	vcv = gretl_bundle_get_matrix(mb, "vcv", &err);
+    }
+    if (err) {
+	return err;
+    }
+
+    i0 = xlist[0];
+    nm = gretl_array_get_length(mt);
+    if (idx < 1 || idx > nm) {
+	gretl_errmsg_set("Invalid MIDAS term index");
+	err = E_DATA;
+    } else {
+	idx--; /* convert index to 0-based */
+    }
+
+    for (i=0; i<=idx && !err; i++) {
+	gretl_bundle *mti;
+	int minlag, maxlag;
+	int nl, leader = 1;
+
+	mti = gretl_array_get_data(mt, i);
+	minlag = gretl_bundle_get_int(mti, "minlag", &err);
+	maxlag = gretl_bundle_get_int(mti, "maxlag", &err);
+	mtype = gretl_bundle_get_int(mti, "type", &err);
+	np = gretl_bundle_get_int(mti, "nparm", &err);
+	if (err) {
+	    break;
+	}
+
+	if (mtype == MIDAS_U || mtype == MIDAS_ALMONP) {
+	    leader = 0;
+	}
+	nl = maxlag - minlag + 1;
+	i1 = i0 + np - 1 + leader;
+#if 1
+	fprintf(stderr, "midas term %d, type %d, np %d, nlags %d\n",
+		i, mtype, np, nl);
+#endif
+	if (i == idx) {
+	    double vjk;
+	    int r = i1 - i0 + 1;
+	    int jj;
+
+	    theta = gretl_matrix_alloc(r, 1);
+	    V = gretl_matrix_alloc(r, r);
+	    for (j=0; j<r; j++) {
+		jj = j + i0;
+		theta->val[j] = b->val[jj];
+		for (k=0; k<r; k++) {
+		    vjk = gretl_matrix_get(vcv, jj, k+i0);
+		    gretl_matrix_set(V, j, k, vjk);
+		}
+	    }
+	    *pmtype = mtype;
+	    *ph = nl;
+	    *pminlag = minlag;
+	    *plname = gretl_bundle_get_string(mti, "lname", NULL);
+	}
+	i0 = i1 + 1;
+    }
+
+    if (err) {
+	gretl_matrix_free(theta);
+	gretl_matrix_free(V);
+    } else {
+	*ptheta = theta;
+	*pV = V;
+    }
+
+    return err;
+}
+
+gretl_matrix *midas_multipliers (void *data, int cumulate,
+				 int idx, int *err)
+{
+    gretl_bundle *mb = (gretl_bundle *) data;
+    gretl_matrix *ret = NULL;
+    gretl_matrix *theta = NULL;
+    gretl_matrix *mult = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *J = NULL;
+    gretl_matrix *vcv = NULL;
+    const char *lname = NULL;
+    int minlag = 0;
+    int mtype = 0, h = 0;
+    int i, k;
+
+    *err = process_midas_bundle(mb, idx, &theta, &V, &mtype,
+				&h, &minlag, &lname);
+    if (*err) {
+	gretl_errmsg_set("Not a valid midasreg bundle");
+	return NULL;
+    }
+
+    k = theta->rows;
+
+    if (mtype == MIDAS_U) {
+	mult = gretl_matrix_copy(theta);
+	J = gretl_zero_matrix_new(h, k);
+	gretl_matrix_inscribe_I(J, 0, 0, MIN(k,h));
+    } else if (mtype == MIDAS_ALMONP) {
+	mult = midas_weights(h, theta, mtype, err);
+        J = midas_gradient(h, theta, mtype, err);
+    } else {
+	gretl_matrix *tmp1, *tmp2;
+        double mg, th0 = theta->val[0];
+	int j;
+
+	tmp1 = gretl_matrix_alloc(k-1, 1);
+	for (i=1; i<k; i++) {
+	    tmp1->val[i-1] = theta->val[i];
+	}
+        mult = midas_weights(h, tmp1, mtype, err);
+        tmp2 = midas_gradient(h, tmp1, mtype, err);
+	J = gretl_matrix_alloc(h, k);
+	for (i=0; i<h; i++) {
+	    gretl_matrix_set(J, i, 0, mult->val[i]);
+	    for (j=1; j<k; j++) {
+		mg = gretl_matrix_get(tmp2, i, j-1);
+		gretl_matrix_set(J, i, j, th0*mg);
+	    }
+	}
+	gretl_matrix_multiply_by_scalar(mult, th0);
+	gretl_matrix_free(tmp1);
+	gretl_matrix_free(tmp2);
+    }
+
+    if (*err || mult == NULL || J == NULL) {
+	if (!*err) {
+	    *err = E_ALLOC;
+	}
+	return NULL;
+    }
+
+    vcv = gretl_matrix_alloc(J->rows, J->rows);
+    if (vcv == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = gretl_matrix_qform(J, GRETL_MOD_NONE,
+				  V, vcv, GRETL_MOD_NONE);
+    }
+
+    if (!*err && cumulate) {
+	gretl_matrix *tmp;
+
+	for (i=1; i<h; i++) {
+	    mult->val[i] += mult->val[i-1];
+	}
+	gretl_matrix_free(J);
+	J = gretl_unit_matrix_new(h, h);
+	gretl_matrix_set_triangle(J, NULL, 0, 1);
+	tmp = gretl_matrix_alloc(h, h);
+	*err = gretl_matrix_qform(J, GRETL_MOD_NONE,
+				  vcv, tmp, GRETL_MOD_NONE);
+	gretl_matrix_free(vcv);
+	vcv = tmp;
+    }
+
+    if (!*err) {
+	double vi;
+
+	ret = gretl_matrix_alloc(h, 2);
+	for (i=0; i<h; i++) {
+	    gretl_matrix_set(ret, i, 0, mult->val[i]);
+	    vi = gretl_matrix_get(vcv, i, i);
+	    gretl_matrix_set(ret, i, 1, sqrt(vi));
+	}
+    }
+
+    if (ret != NULL) {
+	char **S = strings_array_new(h);
+	char rname[32];
+
+	if (S != NULL) {
+	    for (i=0; i<h; i++) {
+		if (lname != NULL) {
+		    if (cumulate) {
+			sprintf(rname, "c%s_%d", lname, i + minlag);
+		    } else {
+			sprintf(rname, "%s_%d", lname, i + minlag);
+		    }
+		} else {
+		    sprintf(rname, "%s_%d", cumulate ? "cmult" : "mult",
+			    i + minlag);
+		}
+		S[i] = gretl_strdup(rname);
+	    }
+	    gretl_matrix_set_rownames(ret, S);
+	}
+    }
+
+    gretl_matrix_free(theta);
+    gretl_matrix_free(V);
+    gretl_matrix_free(mult);
+    gretl_matrix_free(J);
+    gretl_matrix_free(vcv);
+
+    return ret;
+}
+
 int midas_linear_combo (double *y, const int *list,
 			const gretl_matrix *theta,
 			int method, const DATASET *dset)
@@ -4949,8 +5181,7 @@ int midas_linear_combo (double *y, const int *list,
 
     w = midas_weights(m, theta, method, &err);
 
-    if ((method == MIDAS_BETA0 || method == MIDAS_BETAN) &&
-	!err && w == NULL) {
+    if (BETA_METHOD(method) && !err && w == NULL) {
 	int t;
 
 	for (t=dset->t1; t<=dset->t2; t++) {
@@ -6295,25 +6526,83 @@ double logistic_cdf (double x)
     return ret;
 }
 
+/* Convert from @x or @list (whichever is non-NULL) to matrix,
+   respecting the current sample range. If @cfac > 1 we take
+   only every cfac-th row from the data source.
+*/
+
+gretl_matrix *tdisagg_matrix_from_series (const double *x,
+					  int xnum,
+					  const int *list,
+					  const DATASET *dset,
+					  int cfac, int *err)
+{
+    gretl_matrix *m = NULL;
+    char **S = NULL;
+    int k = list != NULL ? list[0] : 1;
+    int T = dset->t2 - dset->t1 + 1;
+    int i, s, t;
+    int serr = 0;
+
+    if (cfac > 1) {
+	int rem = T % cfac;
+
+	T = T / cfac + (rem > 0);
+    }
+
+    m = gretl_matrix_alloc(T, k);
+    if (m == NULL) {
+	return NULL;
+    }
+
+    if (list != NULL) {
+	for (i=0; i<k; i++) {
+	    x = dset->Z[list[i+1]];
+	    s = dset->t1;
+	    for (t=0; t<T; t++) {
+		gretl_matrix_set(m, t, i, x[s]);
+		s += cfac;
+	    }
+	}
+	S = gretl_list_get_names_array(list, dset, &serr);
+    } else {
+	s = dset->t1;
+	for (t=0; t<T; t++) {
+	    m->val[t] = x[s];
+	    s += cfac;
+	}
+	if (xnum > 0) {
+	    S = strings_array_new(1);
+	    if (S != NULL) {
+		S[0] = gretl_strdup(dset->varname[xnum]);
+	    }
+	}
+    }
+
+    gretl_matrix_set_t1(m, dset->t1);
+    gretl_matrix_set_t2(m, dset->t2);
+
+    if (S != NULL) {
+	gretl_matrix_set_colnames(m, S);
+    }
+
+    return m;
+}
+
 /**
  * matrix_tdisagg:
- * @Y: N x k: holds the original data to be expanded, series
+ * @Y: T x g: holds the original data to be disaggregated, series
  * in columns.
  * @X: (optionally) holds covariates of Y at the higher frequency.
- * @s: the expansion factor: 3 for quarterly to monthly,
- * 4 for annual to quarterly, or 12 for annual to monthly.
+ * @s: the expansion factor: e.g. 3 for quarterly to monthly,
+ * 4 for annual to quarterly, 12 for annual to monthly.
  * @b: bundle containing optional arguments, or NULL.
  * @r: bundle for retrieving details, or NULL.
  * @err: location to receive error code.
  *
- * Interpolate, from annual to quarterly or quarterly to monthly, by
- * default via the Chow-Lin method. See Gregory C. Chow and An-loh
- * Lin, "Best Linear Unbiased Interpolation, Distribution, and
- * Extrapolation of Time Series by Related Series", The Review of
- * Economics and Statistics, Vol. 53, No. 4 (November 1971)
- * pp. 372-375.
+ * Temporal disaggregation, via regression or Denton-type method.
  *
- * Returns: matrix containing the expanded series, or
+ * Returns: matrix containing the disaggregated series, or
  * NULL on failure.
  */
 
@@ -6359,39 +6648,22 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     return ret;
 }
 
+/* For backward compatibility only: support the old chowlin()
+   function, with "avg" as default aggregation type.
+*/
+
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, int agg, int *err)
+			      int s, int *err)
 {
-    gretl_matrix *(*tdbasic) (const gretl_matrix *,
-			      const gretl_matrix *,
-			      int, int, int *);
-    gretl_matrix *ret = NULL;
+    gretl_bundle *b = gretl_bundle_new();
+    gretl_matrix *m = NULL;
 
-    if (s != 3 && s != 4 && s != 12) {
-	*err = E_INVARG;
-	return NULL;
-    }
+    gretl_bundle_set_string(b, "aggtype", "avg");
+    m = matrix_tdisagg(Y, X, s, b, NULL, NULL, NULL, err);
+    gretl_bundle_destroy(b);
 
-    if (X != NULL) {
-	if (X->rows != s * Y->rows) {
-	    *err = E_INVARG;
-	    return NULL;
-	} else if (X->is_complex) {
-	    *err = E_CMPLX;
-	    return NULL;
-	}
-    }
-
-    tdbasic = get_plugin_function("tdisagg_basic");
-
-    if (tdbasic == NULL) {
-	*err = E_FOPEN;
-    } else {
-	ret = (*tdbasic) (Y, X, s, agg, err);
-    }
-
-    return ret;
+    return m;
 }
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn)
@@ -7385,12 +7657,14 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 {
     gretl_matrix *m = NULL;
     double *sy = NULL;
+    double *crf = NULL;
     int n_le, n_u, n_ok = 0;
+    int percentages = 0;
     int i, j, k, kbak;
 
     /* count non-missing values */
     for (i=0; i<n; i++) {
-	if (!na(y[i]) && !isnan(y[i])) {
+	if (!na(y[i])) {
 	    n_ok += 1;
 	}
     }
@@ -7409,7 +7683,7 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 
     j = 0;
     for (i=0; i<n; i++) {
-	if (!na(y[i]) && !isnan(y[i])) {
+	if (!na(y[i])) {
 	    sy[j++] = y[i];
 	}
     }
@@ -7431,6 +7705,8 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 	return NULL;
     }
 
+    crf = m->val + n_u;
+
     /* The first column of @m holds unique values,
        the second cumulative relative frequency
     */
@@ -7445,8 +7721,11 @@ gretl_matrix *empirical_cdf (const double *y, int n, int *err)
 		    break;
 		}
 	    }
-	    gretl_matrix_set(m, j, 1, n_le / (double ) n_ok);
-	    j++;
+	    if (percentages) {
+		crf[j++] = 100 * n_le / (double) n_ok;
+	    } else {
+		crf[j++] = n_le / (double) n_ok;
+	    }
 	    kbak = k;
 	}
     }

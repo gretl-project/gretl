@@ -43,7 +43,6 @@ Performs garch-like parameters estimation: the parameters must have
 already been initialised somehow.
 */
 
-
 function scalar gig_estimate(bundle *model, int verbose[0:2:1])
     # verbose = 0 -> quiet
     # verbose = 1 -> show output

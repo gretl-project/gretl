@@ -28,8 +28,8 @@
 
 /* aggregation types */
 enum {
-    AGG_SUM, /* sum */
     AGG_AVG, /* average */
+    AGG_SUM, /* sum */
     AGG_EOP, /* end of period */
     AGG_SOP  /* start of period */
 };
@@ -58,6 +58,8 @@ struct chowlin {
 
 struct gls_info {
     const gretl_matrix *y0;
+    const gretl_matrix *X;
+    const char *yname;
     gretl_matrix *CX;
     gretl_matrix *VC;
     gretl_matrix *W;
@@ -77,7 +79,7 @@ struct gls_info {
 };
 
 static const char *aggtype_names[] = {
-    "sum", "average", "last", "first"
+    "average", "sum", "last", "first"
 };
 
 static const char *method_names[] = {
@@ -183,12 +185,21 @@ static double ar1_loglik (const double *theta, void *data)
     return ll1 - inv2s2 * yf2;
 }
 
+static void maybe_print_depvar (const struct gls_info *G,
+				PRN *prn)
+{
+    if (G->yname != NULL && prn != NULL) {
+	pprintf(prn, "%s: %s\n", _("Dependent variable"), G->yname);
+    }
+}
+
 static void show_regression_results (const struct gls_info *G,
 				     double a, int gls,
 				     PRN *prn)
 {
     const char *dnames[] = {"const", "trend", "trend^2"};
     const char *snames[] = {"rho", "SSR", "lnl"};
+    const char **Xnames = NULL;
     char tmp[16];
     int i, k = G->b->rows;
     int df = G->CX->rows - G->CX->cols;
@@ -201,6 +212,10 @@ static void show_regression_results (const struct gls_info *G,
 
     if (cs == NULL || adds == NULL || names == NULL) {
 	return;
+    }
+
+    if (G->X != NULL) {
+	Xnames = gretl_matrix_get_colnames(G->X);
     }
 
     for (i=0; i<k; i++) {
@@ -219,28 +234,36 @@ static void show_regression_results (const struct gls_info *G,
 	if (i < G->det) {
 	    gretl_array_set_data(names, i, gretl_strdup(dnames[i]));
 	} else if (i < k) {
-	    sprintf(tmp, "X%d", i - G->det + 1);
-	    gretl_array_set_data(names, i, gretl_strdup(tmp));
+	    if (Xnames != NULL) {
+		gretl_array_set_data(names, i, gretl_strdup(Xnames[i-G->det]));
+	    } else {
+		sprintf(tmp, "X%d", i - G->det + 1);
+		gretl_array_set_data(names, i, gretl_strdup(tmp));
+	    }
 	} else {
 	    gretl_array_set_data(names, i, gretl_strdup(snames[p++]));
 	}
     }
 
     if (G->method == R_UROOT) {
-	pprintf(prn, "  %s", _("GLS estimates"));
-	pprintf(prn, " (fernandez) T = %d:\n", T);
+	pprintf(prn, "%s", _("GLS estimates"));
+	pprintf(prn, " (fernandez) T = %d\n", T);
+	maybe_print_depvar(G, prn);
     } else if (G->method == R_MLE || G->method == R_SSR) {
-	pprintf(prn, "  %s", _("Iterated GLS estimates"));
-	pprintf(prn, " (%s) T = %d:\n", method_names[G->method], T);
+	pprintf(prn, "%s", _("Iterated GLS estimates"));
+	pprintf(prn, " (%s) T = %d\n", method_names[G->method], T);
+	maybe_print_depvar(G, prn);
 	if (G->flags & CL_TRUNC) {
-	    pprintf(prn, "  %s\n", _("rho truncated to zero"));
+	    pprintf(prn, "%s\n", _("rho truncated to zero"));
 	}
     } else if (a == 0) {
-	pprintf(prn, "  %s T = %d:\n", _("OLS estimates"), T);
+	pprintf(prn, "%s T = %d\n", _("OLS estimates"), T);
+	maybe_print_depvar(G, prn);
     } else {
-	pprintf(prn, "  %s", _("GLS estimates"));
-	pprintf(prn, " (%s) T = %d:\n", (G->method == R_FIXED)?
+	pprintf(prn, "%s", _("GLS estimates"));
+	pprintf(prn, " (%s) T = %d\n", (G->method == R_FIXED)?
 		"fixed rho" : "chow-lin", T);
+	maybe_print_depvar(G, prn);
     }
 
     print_model_from_matrices(cs, adds, names, df, OPT_I, prn);
@@ -292,7 +315,7 @@ static int ar1_mle (struct gls_info *G, double s, double *rho,
     if (!err) {
 	*rho = theta[0] > 0.999 ? 0.999 : theta[0];
 	if (G->flags & CL_SHOWMAX) {
-	    pprintf(prn, "  rho as revised via ML: %g\n", *rho);
+	    pprintf(prn, "rho as revised via ML: %g\n", *rho);
 	}
     }
 
@@ -850,7 +873,7 @@ static double acf_1 (struct gls_info *G, PRN *prn)
     rho = num / den;
 
     if (G->flags & CL_SHOWMAX) {
-	pprintf(prn, "  Initial rho from OLS residuals: %g\n", rho);
+	pprintf(prn, "Initial rho from OLS residuals: %g\n", rho);
     }
 
     if (rho < 1.0e-6) {
@@ -1081,6 +1104,18 @@ static gretl_matrix *chow_lin_disagg (const gretl_matrix *Y0,
 	fprintf(stderr, "X is %d x %d\n", X->rows, X->cols);
     }
 #endif
+
+    /* pointer to get varnames, if present */
+    G.X = X;
+
+    /* get (single) yname if present */
+    if (Y0->cols == 1) {
+	const char **S = gretl_matrix_get_colnames(Y0);
+
+	if (S != NULL) {
+	    G.yname = S[0];
+	}
+    }
 
     /* the return value */
     Y = gretl_zero_matrix_new(sN + m, ny);
@@ -1420,19 +1455,25 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	*err = E_INVARG;
     }
 
+    if (ret != NULL && X != NULL) {
+	if (ret->rows == X->rows && gretl_matrix_is_dated(X)) {
+	    gretl_matrix_transcribe_obs_info(ret, X);
+	}
+    }
+
     return ret;
 }
 
 static int get_aggregation_type (const char *s, int *err)
 {
-    if (!strcmp(s, "sum")) {
-	return 0;
-    } else if (!strcmp(s, "avg")) {
-	return 1;
+    if (!strcmp(s, "avg")) {
+	return AGG_AVG;
+    } else if (!strcmp(s, "sum")) {
+	return AGG_SUM;
     } else if (!strcmp(s, "last")) {
-	return 2;
+	return AGG_EOP;
     } else if (!strcmp(s, "first")) {
-	return 3;
+	return AGG_SOP;
     } else {
 	*err = E_INVARG;
 	return -1;
@@ -1468,10 +1509,10 @@ static int tdisagg_get_options (gretl_bundle *b,
 {
     double rho = NADBL;
     const char *str;
-    int agg = 0;
+    int agg = AGG_SUM; /* debatable */
     int method = 0;
     int det = 1;
-    int verbose = -1;
+    int verbose = 0;
     int plot = 0;
     int err = 0;
 
@@ -1518,9 +1559,9 @@ static int tdisagg_get_options (gretl_bundle *b,
 	*pverb = verbose;
 	*pplot = plot;
 	if (verbose && method <= R_UROOT) {
-	    pprintf(prn, "  Aggregation type %s\n", aggtype_names[agg]);
+	    pprintf(prn, "Aggregation type %s\n", aggtype_names[agg]);
 	    if (!na(rho)) {
-		pprintf(prn, "  Input rho value %g\n", rho);
+		pprintf(prn, "Input rho value %g\n", rho);
 	    }
 	}
     }
@@ -1528,10 +1569,44 @@ static int tdisagg_get_options (gretl_bundle *b,
     return err;
 }
 
+static int td_matrix_check (const gretl_matrix *Y,
+			    const gretl_matrix *X)
+{
+    int i, n;
+
+    if (Y->is_complex) {
+	return E_CMPLX;
+    } else if (gretl_is_null_matrix(Y)) {
+	return E_INVARG;
+    } else if (X != NULL && X->is_complex) {
+	return E_CMPLX;
+    } else if (X != NULL && X->rows * X->cols == 0) {
+	return E_INVARG;
+    }
+
+    n = Y->rows * Y->cols;
+    for (i=0; i<n; i++) {
+	if (na(Y->val[i])) {
+	    return E_MISSDATA;
+	}
+    }
+
+    if (X != NULL) {
+	n = X->rows * X->cols;
+	for (i=0; i<n; i++) {
+	    if (na(X->val[i])) {
+		return E_MISSDATA;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 				 const gretl_matrix *X,
 				 int s, gretl_bundle *b,
-				 gretl_bundle *r,
+				 gretl_bundle *res,
 				 DATASET *dset,
 				 PRN *prn, int *err)
 {
@@ -1539,13 +1614,16 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
     int verbose = 0, plot = 0;
     double rho = NADBL;
 
-    if (b != NULL) {
+    *err = td_matrix_check(Y0, X);
+
+    if (!*err && b != NULL) {
 	*err = tdisagg_get_options(b, &agg, &method, &det,
 				   &rho, &verbose, &plot,
 				   prn);
-	if (*err) {
-	    return NULL;
-	}
+    }
+
+    if (*err) {
+	return NULL;
     }
 
 #if CL_DEBUG
@@ -1554,18 +1632,7 @@ gretl_matrix *time_disaggregate (const gretl_matrix *Y0,
 #endif
 
     return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			r, verbose, plot, dset, prn, err);
-}
-
-gretl_matrix *tdisagg_basic (const gretl_matrix *Y0,
-			     const gretl_matrix *X,
-			     int s, int agg, int *err)
-{
-    int method = 0, det = 1;
-    double rho = NADBL;
-
-    return real_tdisagg(Y0, X, s, agg, method, det, rho,
-			NULL, 0, 0, NULL, NULL, err);
+			res, verbose, plot, dset, prn, err);
 }
 
 /* Add basic info to dummy dataset @hf, sufficient to get

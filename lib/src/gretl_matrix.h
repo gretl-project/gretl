@@ -20,12 +20,12 @@
 #ifndef GRETL_MATRIX_H
 #define GRETL_MATRIX_H
 
-#include <stdarg.h>
-#include <complex.h>
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+#include <stdarg.h>
+#include <complex.h>
 
 /* minimum value of diagonal element of R (as in X = QR) that counts
    as non-zero for the purpose of determining the rank of X */
@@ -88,7 +88,7 @@ typedef struct gretl_matrix_ {
     int rows;
     int cols;
     double *val;
-    double complex *z;
+    double _Complex *z; /* was "complex" */
     int is_complex;
     /*< private >*/
     matrix_info *info;

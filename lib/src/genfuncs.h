@@ -147,6 +147,9 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 			      int method, int *err);
 
+gretl_matrix *midas_multipliers (void *data, int cumulate,
+				 int idx, int *err);
+
 int midas_linear_combo (double *y, const int *list,
 			const gretl_matrix *theta,
 			int method,
@@ -199,6 +202,12 @@ double gretl_irr (const double *x, int n, int pd, int *err);
 
 double logistic_cdf (double x);
 
+gretl_matrix *tdisagg_matrix_from_series (const double *x,
+					  int xnum,
+					  const int *list,
+					  const DATASET *dset,
+					  int cfac, int *err);
+
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, void *b, void *r,
@@ -207,7 +216,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 
 gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, int agg, int *err);
+			      int s, int *err);
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 

@@ -318,8 +318,8 @@ static double negbin_loglik (const double *theta, void *data)
     return cinfo->ll;
 }
 
-static int negbin_score (double *theta, double *g, int np, BFGS_CRIT_FUNC ll,
-			 void *data)
+static int negbin_score (double *theta, double *g, int np,
+			 BFGS_CRIT_FUNC ll, void *data)
 {
     count_info *cinfo = (count_info *) data;
     double dpsi_dmu, dmu_dbi, dpsi_da = 0;
@@ -616,17 +616,12 @@ static int do_negbin (MODEL *pmod, int offvar, double omean,
     int maxit = 100;
     int fncount = 0;
     int grcount = 0;
-    int use_newton = 0;
     int err = 0;
 
     err = negbin_init(&cinfo, &B, pmod, dset, offvar, omean, opt, prn);
 
-    if (cinfo.nbtype == 2 || libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
-	use_newton = 1;
-    }
-
-    if (!err && use_newton) {
-	void *hfunc = (cinfo.nbtype == 1)? NULL : negbin2_hessian;
+    if (!err && cinfo.nbtype == 2) {
+	void *hfunc = negbin2_hessian;
 	double crittol = 1.0e-7;
 	double gradtol = 1.0e-7;
 

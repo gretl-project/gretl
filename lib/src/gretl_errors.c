@@ -208,9 +208,15 @@ void errmsg (int err, PRN *prn)
 
 	if (print_redirection_level(prn) > 0) {
 	    /* FIXME can we get this message to appear at the
-	       "top level" of @prn?
-	    */
-	    fprintf(stderr, "error when 'outfile' active\n %s\n", msg);
+	       "top level" of @prn? */
+	    const char *fname = print_redirection_filename(prn);
+
+	    if (fname != NULL) {
+		fprintf(stderr, "error when 'outfile' (%s) active\n %s\n",
+			fname, msg);
+	    } else {
+		fprintf(stderr, "error when 'outfile' active\n %s\n", msg);
+	    }
 	}
 	pprintf(prn, "%s\n", msg);
 	error_printed = 1;

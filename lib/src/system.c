@@ -2630,7 +2630,7 @@ int system_get_overid_df (const equation_system *sys)
     return gl - k;
 }
 
-/* dealing with identities (FIML, LIML) 
+/* dealing with identities (FIML, LIML)
 	(really also needed for LIML? not clear why...) */
 
 int rhs_var_in_identity (const equation_system *sys, int lhsvar,
@@ -4249,6 +4249,29 @@ gretl_matrix *sys_get_fitted_values (equation_system *sys,
     return F;
 }
 
+/* trim the first sys->order rows off sys->F */
+
+static int sys_F_trim (equation_system *sys)
+{
+    int err, p = sys->order;
+    int r = sys->F->rows - p;
+    gretl_matrix *tmp = gretl_matrix_alloc(r, sys->F->cols);
+
+    if (tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_matrix_extract_matrix(tmp, sys->F, p, 0,
+					  GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	gretl_matrix_free(sys->F);
+	sys->F = tmp;
+    }
+
+    return err;
+}
+
 static int sys_add_forecast (equation_system *sys,
 			     int t1, int t2,
 			     const DATASET *dset,
@@ -4263,7 +4286,7 @@ static int sys_add_forecast (equation_system *sys,
     int n = sys->neqns + sys->nidents;
     double xit, xitd;
     int tdyn, col, T, ncols;
-    int i, vi, s, t, lag;
+    int i, vi, s, t, lag, s0 = 0;
     int err = 0;
 
     if (sys->Gamma == NULL || sys->Gamma->rows != n) {
@@ -4277,6 +4300,8 @@ static int sys_add_forecast (equation_system *sys,
     printlist(xlist, "xlist");
     printlist(plist, "plist");
     fprintf(stderr, "sys->order = %d\n", sys->order);
+    fprintf(stderr, "t1=%d, t2=%d, out-of-sample=%d\n",
+	    t1, t2, (opt & OPT_O)? 1 : 0);
 #endif
 
     if (!gretl_is_identity_matrix(sys->Gamma)) {
@@ -4292,9 +4317,6 @@ static int sys_add_forecast (equation_system *sys,
 	}
     }
 
-    T = t2 - t1 + 1;
-    ncols = 2 * n;
-
     /* At which observation (tdyn) does the forecast turn
        dynamic, if at all? */
 
@@ -4308,6 +4330,16 @@ static int sys_add_forecast (equation_system *sys,
 	/* by default, for a model with dynamics: just after
 	   the estimation sample ends */
 	tdyn = sys->t2 + 1;
+    }
+
+    T = t2 - t1 + 1;
+    ncols = 2 * n;
+
+    if (sys->order > 0 && (opt & OPT_O)) {
+	/* out-of-sample option: we'll need some extra rows
+	   for pre-sample values
+	*/
+	T += sys->order;
     }
 
     y = gretl_matrix_alloc(n, 1);
@@ -4325,6 +4357,19 @@ static int sys_add_forecast (equation_system *sys,
 	    err = E_ALLOC;
 	    goto bailout;
 	}
+	if (opt & OPT_O) {
+	    /* out-of-sample */
+	    int p = sys->order;
+	    double yti;
+
+	    for (t=t1-p, s=0; t<t1; t++, s++) {
+		for (i=0; i<n; i++) {
+		    yti = dset->Z[ylist[i+1]][t];
+		    gretl_matrix_set(sys->F, s, i, yti);
+		}
+	    }
+	    s0 = p;
+	}
     }
 
     if (xlist[0] > 0) {
@@ -4335,7 +4380,7 @@ static int sys_add_forecast (equation_system *sys,
 	}
     }
 
-    for (t=t1, s=0; t<=t2; t++, s++) {
+    for (t=t1, s=s0; t<=t2; t++, s++) {
 	int miss = 0;
 
 	/* lags of endogenous vars */
@@ -4416,6 +4461,10 @@ static int sys_add_forecast (equation_system *sys,
     gretl_matrix_free(yl);
     gretl_matrix_free(x);
     gretl_matrix_free(G);
+
+    if (!err && s0 > 0) {
+	err = sys_F_trim(sys);
+    }
 
     if (err) {
 	gretl_matrix_free(sys->F);

@@ -96,7 +96,9 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    write_scalar_message(p, prn);
 	}
     } else if (targ == SERIES) {
-	if (vnum < oldv) {
+	if (vnum == 0 && (p->flags & P_STRVEC)) {
+	    pprintf(prn, _("Generated series %s (ID %d)"), name, p->ret->vnum);
+	} else if (vnum < oldv) {
 	    pprintf(prn, _("Replaced series %s (ID %d)"), name, vnum);
 	} else {
 	    pprintf(prn, _("Generated series %s (ID %d)"), name, vnum);

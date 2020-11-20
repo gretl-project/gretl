@@ -4369,8 +4369,6 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	dyn_ok = 0;
     }
 
-    /* FIXME pre_n with static fcast? */
-
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2, NULL,
 			   0, premax, &pre_n,

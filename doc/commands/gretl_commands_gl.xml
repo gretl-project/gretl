@@ -729,13 +729,15 @@
 
     <description>
       <para>
+	Se desaconsella esta instrución en favor da instrución actualizada e
+	máis flexible <cmdref targ="dpanel"/>. Probablemente será eliminada,
+	polo que non deberas utilizala nos novos guións que redactes.
+      </para>
+      <para>
 	Realiza a estimación de modelos dinámicos con datos de panel
 	(é dicir, modelos de panel que inclúen un ou máis retardos da
 	variable dependente) utilizando o método MXM-DIF establecido
 	por <cite key="arellano-bond91">Arellano e Bond (1991)</cite>.
-	Consulta <cmdref targ="dpanel"/> para ver os detalles dunha
-	versión actualizada e máis flexible desta instrución, que permite
-	manexar tanto MXM-SIS coma MXM-DIF.
       </para>
       <para>
 	O parámetro <repl>p</repl> representa o alcance da autorregresión da
@@ -1230,9 +1232,11 @@
 	e contén os valores das funcións índice das ecuacións respectivas.
       </para>
       <para>
-	O resultado inclúe unha proba de Razón de Verosimilitudes respecto
-	á hipótese nula de que as perturbacións das dúas ecuacións non
-	están correlacionadas.
+	O resultado inclúe unha proba de Razón de Verosimilitudes respecto á
+	hipótese nula de que as perturbacións das dúas ecuacións non están
+	correlacionadas. Ten en conta que cando se designa este estimador como
+	estimador case que máximo verosímil (QMLE) e se utiliza a opción
+	<opt>robust</opt>, esta proba pode non ser válida, mesmo asintoticamente.
       </para>
     </description>
   </command>
@@ -2515,10 +2519,6 @@
 	  <effect>Especifica o método para compactar</effect>
 	</option>
 	<option>
-	  <flag>--interpolate</flag>
-	  <effect>Fai a interpolación para datos de baixa frecuencia</effect>
-	</option>
-	<option>
 	  <flag>--quiet</flag>
 	  <effect>Non amosa os resultados agás no caso de fallo</effect>
 	</option>
@@ -2592,15 +2592,12 @@
 	<lit>m01</lit>, <lit>m02</lit> e <lit>m03</lit>.
       </para>
       <para>
-	Cando as series que se len son de frecuencia menor que a do
-	conxunto de datos de traballo, por defecto repítense os valores dos
-	datos engadidos segundo se necesite. Pero podes utilizar a opción
-	<opt>interpolate</opt> para solicitar que se faga a interpolación
-	utilizando o método de <cite key="chowlin71">Chow e Lin (1971)</cite>
-	no que os regresores son unha constante máis unha tendencia linear e
-	cadrada, e asúmese que a perturbación segue un AR(1). Porén, ten en
-	conta que dispós desta opción só para converter datos trimestrais en
-	mensuais, ou datos anuais en trimestrais.
+	Cando as series que se len son de frecuencia <emphasis>menor</emphasis>
+	que a do conxunto de datos de traballo, os valores dos datos engadidos
+	sinxelamente repítense segundo se necesite; pero cae na conta de
+	que podes utilizar a función <fncref targ="tdisagg"/> para solicitar
+	que se faga unha distribución ou unha interpolación
+	(<quote>desagregación temporal </quote>).
       </para>
       <para>
 	No caso de bancos de datos propios (unicamente) de Gretl, podes
@@ -2712,7 +2709,7 @@
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2776,16 +2773,14 @@
 	(unha por cada subperíodo), pois por defecto faise usando a media.
       </para>
       <para>
-	<lit>expand</lit>: Esta instrución só está dispoñible para datos de
-	series temporais anuais ou trimestrais, pois os datos anuais pódense
-	estender a trimestrais e os datos trimestrais a frecuencia mensual.
-	Por defecto, todas as series do conxunto de datos énchense coa nova
-	frecuencia repetindo os valores existentes, pero se engades o
-	parámetro <lit>interp</lit>, entón a serie esténdese utilizando a
-	interpolación de Chow&ndash;Lin  (para os detalles, consulta
-	<cite key="chowlin71">Chow e Lin, 1971</cite>) na que os regresores
-	son unha constante máis unha tendencia linear e cadrada, e asúmese
-	que a perturbación segue un AR(1).
+	<lit>expand</lit>: Esta instrución só está dispoñible para datos
+	de series temporais anuais ou trimestrais, pois os datos anuais
+	pódense estender a trimestrais ou mensuais, e os datos trimestrais
+	a mensuais. Todas as series do conxunto de datos énchense coa nova
+	frecuencia repetindo os valores existentes. Se o banco de datos
+	orixinal é anual, a extensión por defecto é a trimestral, pero a función
+	<lit>expand</lit> pode estar seguida de <lit>12</lit> para solicitar
+	que sexa a mensual.
       </para>
       <para>
 	<lit>transpose</lit>: Non necesita ningún parámetro adicional.
@@ -3925,43 +3920,28 @@
 
     <description>
       <para>
-	Se queres engadir a un conxunto de datos, unha serie que é de frecuencia
-	menor, é necesario <quote>expandir</quote> a nova serie. Por exemplo,
-	terás que expandir unha serie trimestral para axustala a un conxunto
-	de datos mensual. Ademais, ás veces podes querer expandir un conxunto
-	de datos enteiro a outro de frecuencia maior (quizais antes de engadir
-	unha variable de frecuencia maior ao conxunto de datos).
+	Debes considerar a <quote>expansión</quote> desde unha frecuencia
+	menor a unha maior dun conxunto de datos ou dunha serie, como unha
+	opción para expertos, pois necesitas saber que estás facendo. Cando
+	combinas series de diferentes frecuencias orixinais dentro dun conxunto
+	de datos, probablemente deberías de considerar como compactar os datos
+	de frecuencia maior, máis ca expandir as series de frecuencia menor.
       </para>
       <para>
-	Debes considerar a expansión dos datos como unha opción para
-	<quote>expertos</quote> pois necesitas saber que estás facendo.
-	Cando combinas series de diferentes frecuencias orixinais dentro
-	dun conxunto de datos, probablemente deberías de considerar como
-	compactar os datos de frecuencia maior, máis ca expandir as series
-	de frecuencia menor.
+	Aclarado isto, Gretl admite a expansión mediante a simple repetición
+	dos valores de baixa frecuencia. Por exemplo, ao expandir desde
+	frecuencia trimestral a mensual, os valores trimestrais se repiten
+	para cada mes do trimestre. As series xeradas deste xeito non é
+	probable que se podan usar así para a análise econométrica, pero
+	despois da expansión podes usar a función <fncref targ="tdisagg"/>
+	para producir unha versión distribuída ou interpolada dos datos
+	(<quote>desagregación temporal</quote>).
       </para>
       <para>
-	Dito isto, Gretl permíteche dúas opcións para a expansión: (a)
-	podes interpolar valores de alta frecuencia utilizando o método de
-	<cite key="chowlin71">Chow e Lin (1971)</cite>, ou (b) podes
-	repetir valores das series de frecuencia menor tantas veces
-	como sexa necesario.
-      </para>
-      <para>
-	O método de Chow&ndash;Lin está baseado na regresión, e utiliza
-	unha constante máis unha tendencia linear e cadrada, asumindo
-	un proceso autorregresivo de primeira orde para as perturbacións.
-	Gástanse catro graos de liberdade con este procedemento.
-      </para>
-      <para>
-	Respecto ao método de repetición de valores, supón que tes unha serie
-	trimestral co valor 35.5 en 1990:1 (o primeiro trimestre de
-	1990). Na expansión a mensual, vaise asignar o valor 35.5
-	ás observacións de xaneiro, febreiro e marzo de 1990. En
-	consecuencia, a variable expandida é inútil para una análise
-	pormenorizada de series temporais, agás no caso especial no
-	que xa sabes de feito que a variable en cuestión se mantén
-	constante durante os subperíodos.
+	Podes acceder a algunhas das prestacións da función <lit>tdisagg</lit>
+	mediante a interface gráfica, seleccionando unha serie na xanela
+	principal de Gretl, e a continuación procurar <quote>Desagregar</quote>
+	baixo o menú Variable.
       </para>
     </description>
   </command>
@@ -8393,6 +8373,10 @@
 	que require polo menos un parámetro.
       </para>
       <para context="cli">
+	5 or <lit>"beta1"</lit>: Similar a <lit>beta0</lit>, mais co primeiro
+	parámetro fixado en 1 (deixando un único parámetro libre).
+      </para>
+      <para context="cli">
 	Cando a disposición de parámetros é U-MIDAS, non é necesario o
 	vector de inicio do último argumento. Noutros casos, podes solicitar
 	unha iniciación automática substituíndo o nome do vector de
@@ -8898,6 +8882,11 @@
 	entón <repl>nomes</repl> debe de conter <math>k + p</math>
 	nomes, de forma que os <math>p</math> nomes agregados
 	se asocien aos estatísticos adicionais.
+      </para>
+      <para>
+	Se non indicas o argumento <repl>estadicionais</repl> e a matriz
+	<repl>matrizcoef</repl> ten adxuntos os nomes das filas, entón podes
+	omitir o argumento <repl>nomes</repl>.
       </para>
       <para>
 	Para colocar o resultado nun ficheiro, utiliza a opción
@@ -11061,11 +11050,11 @@
 	end plot --output=display
       </code>
       <para>
-	Este exemplo asume que <lit>plotmat</lit> é o nome dunha
-	matriz que ten 2 columnas polo menos (ou unha lista que ten
-	2 elementos polo menos). Cae na conta de que se considera
-	unha boa praxe colocar (unicamente) a opción <opt>output</opt>
-	na derradeira liña do bloque.
+	Este exemplo asume que <lit>plotmat</lit> é o nome dunha matriz que
+	ten 2 columnas polo menos (ou unha lista que ten 2 elementos polo
+	menos). Cae na conta de que se considera unha boa praxe colocar
+	(unicamente) a opción <opt>output</opt> na derradeira liña do bloque;
+	outras opcións deberías colocalas dentro do bloque.
       </para>
       <subhead>Debuxar unha franxa con datos de matrices</subhead>
       <para>
@@ -11949,7 +11938,37 @@
     <gui-access>
       <menu-path>/Ficheiro/Saír</menu-path>
     </gui-access>
+  </command>
 
+  <command name="regls" section="Estimation"
+	   label="Mínimos cadrados regularizados" context="gui">
+    <description>
+      <para>
+	Este diálogo te permite un grao limitado de acceso á función
+	<lit>regls</lit> para mínimos cadrados regularizados.
+      </para>
+      <para>
+	Se toleran tres variantes: LASSO, que limita a suma dos valores absolutos
+	dos coeficientes; Ridge (crista), que limita a suma dos coeficientes
+	cadrados; e Elastic net (malla elástica), que é unha combinación das
+	dúas primeiras, rexida polo 'hiperparámetro' &alpha; de xeito que
+	&alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona Ridge, e
+	valores intermedios proporcionan unha combinación ponderada.
+      </para>
+      <para>
+	O termo &lgr; especifica o grao ata o que se penaliza a suma de
+	coeficientes absolutos ou cadrados. Podes ben indicar unha única
+	fracción &lgr; desde 0 (sen penalización) ata 1 (máxima penalización),
+	ou ben un número de valores &lgr;. No segundo caso, os valores de
+	penalización escálanse automaticamente.
+      </para>
+      <para>
+	Podes exercer un control moito maior sobre a funcionalidade de Mínimos
+	Cadrados Regularizados de GRETL apelando á función <lit>regls</lit>
+	mediante o uso de guións. En particular, tes a potestade de especificar a
+	validación cruzada; consulta <doc>regls.pdf</doc> para ter máis detalles.
+      </para>
+    </description>
   </command>
 
   <command name="rename" section="Dataset"
@@ -12048,9 +12067,7 @@
 	<opt>random-effects</opt>.
       </para>
     </description>
-
   </command>
-
 
   <command name="reset" section="Tests" label="RESET de Ramsey">
 
@@ -13112,6 +13129,13 @@
 	  <para><lit>huge</lit>: Un número positivo moi grande (por
 	  defecto, 1.0E100). Esta configuración controla o valor que
 	  devolve o accesorio <fncref targ="$huge"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (por defecto), <lit>warn</lit>
+	  ou <lit>stop</lit>. Controla as consecuencias dun fallo
+	  (que o valor que se devolva sexa igual a 0) da función
+	  <fncref targ="assert"/>.
 	  </para>
 	</li>
       </ilist>
@@ -14816,6 +14840,52 @@
       <menu-path>Xanela de modelo: LaTeX</menu-path>
     </gui-access>
 
+  </command>
+
+  <command name="tdisagg" section="Dataset" context="gui"
+    label="Desagregación temporal">
+
+    <description>
+      <para>
+	Aquí tes un repaso das principais opcións no cadro de diálogo da
+	desagregación temporal. Para obter unha explicación detallada,
+	consulta o <guideref targ="chap:tdisagg"/>.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Nome do resultado: Podes elixir entre sobrescribir unha serie
+	    xa existente coa versión desagregada, ou dar un nome novo ao
+	    resultado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Tipo de agregación: Escolle <lit>sum</lit> se a suma dos valores
+	    de alta frecuencia debe resultar igual ao valor de baixa frecuencia
+	    proporcionado (ex. fluxos como o PIB e as súas compoñentes).
+	    Elixe <lit>avg</lit> se a media dos valores de alta frecuencia
+	    debe resultar igual ao valor de baixa frecuencia proporcionado
+	    (ex. índices, cocientes, ou fluxos <quote>en taxas anuais</quote>).
+	    Opta por <lit>last</lit> ou <lit>first</lit> se o derradeiro ou
+	    primeiro valor de alta frecuencia debe ser igual ao valor de
+	    baixa frecuencia (como pode ser o caso das variables de stock,
+	    como a cantidade de diñeiro).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Baseado en regresión fronte a Denton: En xeral, recoméndase o
+	    primeiro. Se escolles <quote>Baseado en regresión</quote>, vas
+	    poder seleccionar o método de Fernández se pensas que a serie
+	    que te interesa ten unha raíz unitaria; en caso contrario, opta
+	    por Chow&ndash;Lin. Se escolles Denton, asúmese que sabes o que
+	    estás facendo pois os métodos Denton son en primeiras diferenzas,
+	    tal como os modificou Cholette.
+	  </para>
+	</li>
+      </ilist>
+    </description>
   </command>
 
   <command name="textplot" section="Graphs"

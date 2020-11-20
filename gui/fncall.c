@@ -4315,6 +4315,67 @@ int dbnomics_get_series_call (const char *datacode)
     return err;
 }
 
+int dbnomics_get_dimensions_call (const char *provider,
+				  const char *dsname)
+{
+    fncall *fc = NULL;
+    double one = 1;
+    PRN *prn = NULL;
+    int err;
+
+    err = bufopen(&prn);
+
+    if (!err) {
+	fc = get_addon_function_call("dbnomics", "dbnomics_get_dataset_dimensions");
+	if (fc == NULL) {
+	    gretl_print_destroy(prn);
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    pprintf(prn, "Information on dbnomics dataset %s/%s (may be quite voluminous)\n\n",
+	    provider, dsname);
+    pputs(prn, "This may indicate (as applicable):\n"
+	  " * topics covered by the dataset\n"
+	  " * countries included\n"
+	  " * units of measurement\n"
+	  " * other information\n\n");
+
+    err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
+    if (!err) {
+	err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) dsname);
+    }
+    if (!err) {
+	/* verbosity */
+	err = push_anon_function_arg(fc, GRETL_TYPE_DOUBLE, (void *) &one);
+    }
+    if (!err) {
+	GdkWindow *cwin = NULL;
+
+	set_wait_cursor(&cwin);
+	err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL,
+				  NULL, NULL, prn);
+	unset_wait_cursor(cwin);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	gchar *title;
+
+	title = g_strdup_printf("gretl: %s/%s", provider, dsname);
+	view_buffer(prn, 80, 500, title, PRINT, NULL);
+	g_free(title);
+    }
+
+    return err;
+}
+
 void *dbnomics_get_providers_call (int *err)
 {
     gretl_array *A = NULL;

@@ -9794,6 +9794,11 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     }
 }
 
+void gui_exec_callback_init (void)
+{
+    set_gui_callback(gui_exec_callback);
+}
+
 /* add to @l1 any elements of @l2 and @l3 that are not
    already present */
 

@@ -100,7 +100,7 @@ void data_compact_dialog (int spd, int *target_pd, int *mon_start,
 			  CompactMethod *method, int *repday, 
 			  GtkWidget *parent);
 
-void data_expand_dialog (int spd, int *interpol, GtkWidget *parent);
+void data_expand_dialog (int *newpd, GtkWidget *parent);
 
 int pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
 		  GtkWidget *parent);
@@ -217,5 +217,7 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent);
 
 int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 			int *payload_id);
+
+void tdisagg_dialog (int v);
 
 #endif /* DIALOGS_H */

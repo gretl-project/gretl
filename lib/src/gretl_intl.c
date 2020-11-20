@@ -172,6 +172,15 @@ static int gretl_cpage;
 #endif
 static int native_utf8;
 
+#ifdef WIN32
+
+int get_gretl_cpage (void)
+{
+    return gretl_cpage;
+}
+
+#endif
+
 void set_native_utf8 (int s)
 {
     native_utf8 = s;
@@ -224,7 +233,9 @@ void set_gretl_charset (void)
 	}
 #ifdef WIN32
 	if (p == NULL) {
-	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
+	    if (sscanf(gretl_charset, "cp%d", &gretl_cpage) == 0) {
+		sscanf(gretl_charset, "CP%d", &gretl_cpage);
+	    }
 	}
 #endif
     }

@@ -426,17 +426,27 @@ static int xlsx_handle_stringval3 (xlsx_info *xinfo,
 				   const char *s,
 				   PRN *prn)
 {
-    int err = 0;
+    const char *strval;
+    gchar *tmp = NULL;
+    int ix, err = 0;
 
     if (xinfo->dset->Z[i][t] == NON_NUMERIC) {
-	int ix = gretl_string_table_index(xinfo->st, s, i, 0, prn);
-
-	if (ix > 0) {
-	    xinfo->dset->Z[i][t] = (double) ix;
-	} else {
-	    err = E_DATA;
-	}
+	strval = s;
+    } else if (!na(xinfo->dset->Z[i][t])) {
+	tmp = g_strdup_printf("%g", xinfo->dset->Z[i][t]);
+	strval = tmp;
+    } else {
+	return 0;
     }
+
+    ix = gretl_string_table_index(xinfo->st, strval, i, 0, prn);
+    if (ix > 0) {
+	xinfo->dset->Z[i][t] = (double) ix;
+    } else {
+	err = E_DATA;
+    }
+
+    g_free(tmp);
 
     return err;
 }
@@ -700,7 +710,8 @@ static int get_cell_basics (xmlNodePtr cur,
    not a property but a sub-element "<v>...</v>".
 */
 
-static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
+static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo,
+			  int i, PRN *prn)
 {
     PRN *myprn = NULL;
     xmlNodePtr val;
@@ -832,7 +843,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 
 		if (pass == 3) {
 		    if (i > 0 && t >= 0) {
-			if (strcell && in_gretl_list(xinfo->codelist, i)) {
+			if (in_gretl_list(xinfo->codelist, i)) {
 			    xlsx_handle_stringval3(xinfo, i, t, strval, prn);
 			}
 		    }
@@ -948,6 +959,9 @@ static int xlsx_non_numeric_check (xlsx_info *xinfo, PRN *prn)
     if (!err) {
 	xinfo->codelist = nlist;
 	xinfo->st = st;
+#if XDEBUG
+	printlist(nlist, "xlsx non-numeric cols list");
+#endif
     }
 
     return err;
@@ -961,7 +975,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
     xmlNodePtr data_node = NULL;
     xmlNodePtr cur = NULL;
     xmlNodePtr c1;
-    int gotdata = 0;
+    int i, gotdata = 0;
     int err = 0;
 
     sprintf(xinfo->sheetfile, "xl%c%s", SLASH,
@@ -984,13 +998,14 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
     }
 
     /* walk the tree, first pass */
+    i = 0;
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err && !gotdata) {
         if (!xmlStrcmp(cur->name, (XUC) "sheetData")) {
 	    data_node = c1 = cur->xmlChildrenNode;
 	    while (c1 != NULL && !err) {
 		if (!xmlStrcmp(c1->name, (XUC) "row")) {
-		    err = xlsx_read_row(c1, xinfo, prn);
+		    err = xlsx_read_row(c1, xinfo, i++, prn);
 		}
 		c1 = c1->next;
 	    }
@@ -1011,11 +1026,12 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
 	err = xlsx_check_dimensions(xinfo, prn);
 	if (!err) {
 	    /* second pass: get actual data */
+	    i = 0;
 	    gretl_push_c_numeric_locale();
 	    c1 = data_node;
 	    while (c1 != NULL && !err) {
 		if (!xmlStrcmp(c1->name, (XUC) "row")) {
-		    err = xlsx_read_row(c1, xinfo, prn);
+		    err = xlsx_read_row(c1, xinfo, i++, prn);
 		}
 		c1 = c1->next;
 	    }
@@ -1028,9 +1044,10 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
 	if (!err && xinfo->codelist != NULL) {
 	    /* third pass, if needed: get string-valued vars */
 	    c1 = data_node;
+	    i = 0;
 	    while (c1 != NULL && !err) {
 		if (!xmlStrcmp(c1->name, (XUC) "row")) {
-		    err = xlsx_read_row(c1, xinfo, prn);
+		    err = xlsx_read_row(c1, xinfo, i++, prn);
 		}
 		c1 = c1->next;
 	    }

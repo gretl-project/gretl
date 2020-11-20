@@ -3,7 +3,7 @@
 
 <funcref language="portuguese">
 
-  <funclist name="Accessors" ref="accessors">
+  <funclist name="Acessores" ref="accessors">
 
     <function name="$ahat" section="access" output="series">
       <description>
@@ -150,6 +150,16 @@
 	  o estimador for o SUR iterado (irrestrito), nesse caso será um
 	  teste de razão de verossimilhança. Veja <guideref targ="chap:system"/>
 	  para detalhes e também <fncref targ="$diagpval"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  Este acessor retorna o caminho onde Gretl guarda os ficheiros
+          temporários, por exemplo quando se usa a função
+	  <fncref targ="mwrite"/> com um argumento não-nulo.
 	</para>
       </description>
     </function>
@@ -476,6 +486,17 @@
       </description>
     </function>
 
+    <function name="$mapfile" section="access" output="string">
+      <description>
+	<para>
+	  Se tiver sido carregado dados de um ficheiro de formas GeoJSON
+          ou ESRI, retorna o nome do ficheiro que deve obter o mapa de
+          polígonos, caso contrário retorna uma cadeia de texto vazia.
+           Isto está preparado para ser usado com a função <fncref targ="geoplot"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
@@ -511,8 +532,29 @@
 	  print b
 	</code>
       </description>
+    </function>    
+    
+    <function name="$mpirank" section="access" output="int">
+      <description>
+	<para>
+	  Se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI, retorna o
+	  <quote>posto</quote> de base 0 o ID do processo
+	  actual. Caso contrário retorna &minus;1.
+	</para>
+      </description>
     </function>
-
+    
+    <function name="$mpisize" section="access" output="int">
+      <description>
+	<para>
+	  Se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI, retorna o número do processo MPi actualmente em execução. Caso contrário retorna 
+	  0.
+	</para>
+      </description>
+    </function>
+    
     <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
@@ -530,7 +572,21 @@
 	</para>
       </description>
     </function>
-
+    
+    <function name="$now" section="access" output="vector">
+      <description>
+	<para>
+	  Produz um vector de dois elementos: o primeiro elemento é
+          o número de segundos decorridos desde1970-01-01 00:00:00 +0000
+	  (UTC), que é uma medida utilizada muito frequentemente no mundo da
+          informatica para representar a hora. O segundo é a data actual no
+          formato <quote>básico</quote> ISO 8601, que é
+	  <lit>YYYYMMDD</lit>; para processar o segundo elemento pode-se usar
+          a função <fncref targ="epochday"/>.
+	</para>
+      </description>
+    </function>
+    
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
@@ -619,7 +675,30 @@
 	</para>
       </description>
     </function>
-
+    
+    <function name="$parnames" section="access" output="strings">
+      <description>
+	<para>
+	  Depois da estimação de um modelo de uma só equação, produz
+          um vector de texto contendo os nomes dos parâmetros do modelo.
+          Os números do nomes correspondem ao número dos elementos no vector
+          <fncref targ="$coeff"/> .
+	</para>
+	<para>
+	  Para modelos especificados com uma lista de regressores o resultado será
+          o mesmo que
+	</para>
+	<code>
+	  varnames($xlist)
+	</code>
+	<para>
+	  (ver <fncref targ="varnames"/>), mas <lit>$parnames</lit> é
+	  mais geral, pois que funciona também com modelos sem lista de regressores
+          (<cmdref targ="nls"/>, <cmdref targ="mle"/>, <cmdref targ="gmm"/>).
+	</para>
+      </description>
+    </function>
+    
     <function name="$pd" section="access" output="int">
       <description>
 	<para>
@@ -634,6 +713,26 @@
       <description>
 	<para>
 	  Retorna o valor de &pi; com dupla precisão.
+	</para>
+      </description>
+    </function>
+
+    <function name="$pkgdir" section="access" output="string">
+      <description>
+	<para>
+	  Uma ferramenta especial para ser usada por autores de pacotes
+          de funções. Retorna uma cadeia de texto vazia se não estiver em
+          execução, e se estiver, retorna o caminho completo (de acordo com
+          a plataforma) de onde o pacote está instalado. Por exemplo, o valor
+          retornado pode ser:
+	</para>
+	<code>
+	  /usr/share/gretl/functions/foo
+	</code>
+	<para>
+	  se for essa a directoria onde <lit>foo.gfn</lit> estiver localizado.
+	   Isto permite escritores de pacotes aceder a recursos como sejam 
+          ficheiros de matrizes que tenham sido incluidos nos seus pacotes.
 	</para>
       </description>
     </function>
@@ -670,8 +769,21 @@
 	  estatística de teste é maximizada.
 	</para>
       </description>
+    </function>   
+    
+    <function name="$result" section="access" output="matrix-or-bundle">
+      <description>
+	<para>
+	  Fornece a informação  armazenada de alguns comandos que não têm acessores
+          específicos. Tais comandos incluem <cmdref targ="corr"/>, <cmdref targ="fractint"/>, <cmdref
+	  targ="freq"/>, <cmdref targ="summary"/>, <cmdref
+	  targ="xtab"/>, <cmdref targ="vif"/> e <cmdref targ="bkw"/>
+	  ; neste caso o resultado é uma matriz, e ainda <cmdref
+	  targ="pkg"/>, que opcionalmente guarda como um resultado bundle.
+	</para>
+      </description>
     </function>
-
+    
     <function name="$rho" section="access" output="scalar">
       <fnargs>
 	<fnarg optional="true" type="scalar">n</fnarg>
@@ -726,6 +838,18 @@
 	  de liberdade e p-valor, respectivamente. Se o modelo for
 	  exatamente identificado a estatística não estará disponível
 	  e tentar acessá-la irá provocar um erro.
+	</para>
+      </description>
+    </function>
+
+    <function name="$seed" section="access" output="scalar">
+      <description>
+	<para>
+	  Retorna o valor com que o gerador de números aleatórios de gretl
+          foi inicializado (<quote>semeado</quote>). Se tiver sido definido por você, então
+          não há necessidade de usar este acessor, mas pode ser de interesse
+          se a <quote>semente</quote> tiver sido inicializada automaticamente (baseado no tempo
+          em que o programa foi iniciado).
 	</para>
       </description>
     </function>
@@ -1108,6 +1232,18 @@
       </description>
     </function>
 
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Este acessor retorna o caminho por defeito onde
+	  Gretl lê e escreve os ficheiros. Uma descrição mais detalhada pode ser
+          encontrada no Guia de Referência dos Comandos em <cmdref
+	  targ="workdir"/>.Note-se que esta variável pode ser alterada por meio
+          do comando <cmdref targ="set"/>.
+        </para>
+      </description>
+    </function>
+
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1385,6 +1521,50 @@
       </description>
     </function>
 
+    <function name="assert" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta função serve para testar ou despistar erros no código
+	  hansl. O argumento deve ser uma expressão escalar. O valor retornado
+          é 1 se <argname>expr</argname> retorna um valor não-zero
+          (o valor booleano <quote>verdadeiro</quote>, ou
+	  <quote>sucesso</quote>) ou 0 se a expressão é zero
+	  (o valor booleano <quote>falso</quote>, ou
+	  <quote>insucesso</quote>).
+	</para>
+	<para>
+	  Por defeito, não há consequências se <lit>assert</lit>
+	  falhar, para além do valor retornado ser zero. No entanto o comando
+          <cmdref targ="set"/> pode ser usado para fazer com que uma falha da
+          verificação seja mais consequente. Existem dois níveis:
+	</para>
+	<code>
+	  # mostra uma mensagem de aviso mas continua a execução
+	  set assert warn
+	  # mostra uma mensagem de erro e interrompe a execução
+	  set assert stop
+	</code>
+	<para>
+	  O comportamento padrão pode ser restaurado com o comando
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  Como simples exemplo, se num certo ponto no script hansl
+	  um escalar <lit>x</lit> ser sempre não-negativo, este código controlará
+          esta condição e terminará se ela não for satisfeita:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
+      </description>
+    </function>
+    
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -1393,8 +1573,6 @@
 	<para>
 	  Retorna o arco-tangente de <argname>x</argname>, isto é, o valor
 	  cuja tangente é <argname>x</argname>. Resultado em radianos.
-	</para>
-	<para>
       <seelist>
         <fncref targ="cos"/>
         <fncref targ="sin"/>
@@ -1404,6 +1582,37 @@
       </description>
     </function>
 
+    <function name="atan2" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna o valor principal do arco-tangente de
+	  <argname>y</argname>/<argname>x</argname>, usando os sinais
+	  dos dois argumentos para determinar o quadrante do resultado, que é
+          expresso em radianos, dentro do intervalo [&minus;&pi;, &pi;].
+	</para>
+	<para>
+	  Se os dois argumentos forem de tipos diferentes, o resultado é do tipo
+          <quote>mais alto</quote> dos dois, seguindo a ordem,
+          matriz &gt; série &gt; escalar. Por exemlo, se
+	  <argname>y</argname> é um escalar e <argname>x</argname> um
+	  vector de <math>n</math> elementos (ou viceversa), o
+	  resultado é também um vector. Note-se que os argumentos matriciais
+          deverem ser vectores, e que se nenhum deles for escalar, devem ter
+          a mesma dimensão.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="tan"/>
+            <fncref targ="tanh"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="atanh" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -1620,6 +1829,53 @@
       </description>
     </function>
 
+    <function name="bincoeff" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">n</fnarg>
+	<fnarg type="anyfloat">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula o coeficiente binomial, ou seja o número de maneiras
+          com que <argname>k</argname> elementos possam ser escolhidos
+          a partir dos <argname>n</argname> elementos sem repetições, 
+          independentemente da sua ordenação. Este número é também
+          igual ao <argname>(k+1)</argname>-esimo coeficiente
+	  da expansão polinomial da <equation status="inline"
+	  ascii="(1+x)^n" tex="$(1+x)^n$"/>.
+	</para>
+	<para context="tex">
+	  Para argumentos inteiros, o resultado é $n!/k!(n-k)!$, mas a
+	  função aceita também aceita argumentos reais, e a fórmula
+          generaliza-se com $\frac{\Gamma(n+1)}{\Gamma(k+1)\Gamma(n-k+1)}$.
+	</para>
+	<para context="notex">
+	  Para argumentos inteiros, o resultado é 
+	  <math>n!/k!(n-k)!</math>, mas a
+	  função aceita também aceita argumentos reais, e a fórmula
+          generaliza-se com <math>
+	  Γ(n+1)/( Γ(k+1) &times; Γ(n-k+1) )</math>
+	</para>
+	<para>
+	  Quando <argname>k</argname> &gt; <argname>n</argname> ou
+	  <argname>k</argname> &lt; 0, a função retorna NA.
+	</para>
+	<para>
+          Se os dois argumentos forem de tipos diferentes, o resultado é do tipo
+          <quote>mais alto</quote> dos dois, seguindo a ordem,
+          matriz &gt; série &gt; escalar. Por exemlo, se
+	  <argname>n</argname> é um escalar e <argname>k</argname> um
+	  vector de <math>r</math> elementos (ou viceversa), o
+	  resultado é também um vector. Note-se que os argumentos matriciais
+          deverem ser vectores, e que se nenhum deles for escalar, devem ter
+          a mesma dimensão.
+	</para>
+	<para>
+	  Ver também <fncref targ="gammafun"/> e <fncref targ="lngamma"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="bkfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -1663,24 +1919,59 @@
 	</para>
       </description>
     </function>
-
-    <function name="boxcox" section="filters" output="series">
+    
+    <function name="bkw" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="matrix">V</fnarg>
+	<fnarg optional="true" type="strings">parnames</fnarg>
+	<fnarg optional="true" type="bool">verbose</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula o test BKW para a colinearidade (ver
+	  <cite key="belsley-etal80">Belsley, Kuh and Welsch
+	  (1980)</cite>) dada a matriz covariança da estimativa dos
+	  parâmetros <argname>V</argname>. O segundo argumento opcional,
+          que pode ser um vector de texto ou uma cadeia de texto que contenha
+          nomes separados por vírgulas, é usado para etiquetar a coluna que
+          mostra a proporção da variância; o número de nomes deve ser igual
+          à dimensão de <argname>V</argname>.  Depois de se ter estimado uma modelo
+          em gretl, pode-se obter os parâmetros adequados por via dos acessores
+          <fncref targ="$vcv"/> e <fncref
+	  targ="$parnames"/>.
+	</para>
+	<para>
+	  Por defeito esta função produz apenas a tabela BKW como matriz,
+          mas se inserir um valor diferente de 0 como terceiro argumento,
+          junto com a tabela é mostrado mais alguma análise.
+	</para>
+	<para>
+	  Esta função também existe como comando que retorna o mesmo cálculo,
+	  <cmdref targ="bkw"/>, e que usa automaticamente o último modelo sem
+          necessitar argumentos.
+	</para>
+      </description>
+    </function>
+
+    <function name="boxcox" section="filters" output="asinput">
+      <fnargs>
+	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Retorna a transformação de Box&ndash;Cox com parâmetro
-	  <argname>d</argname> para uma série positiva <argname>y</argname>.
-	</para>
+          <argname>d</argname> para uma variável positiva
+	  <argname>y</argname> (ou a coluna da matriz
+	  <argname>y</argname>).
+	</para> 
 	<para context="tex">
 	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
 	  {\rm if}\quad d\neq 0 \\ \log (y_t) &amp; {\rm if}\quad d=0
 	  \end{array} \right. \]
 	</para>
 	<para context="notex">
-	  A série transformada é (<math>y</math><sup>d</sup> -
+	  O resultado é (<math>y</math><sup>d</sup> -
 	  1)/<math>d</math> para <math>d</math> diferente de zero ou
 	  log(<math>y</math>) para <math>d</math> = 0.
 	</para>
@@ -1738,6 +2029,48 @@
             <fncref targ="mread"/>
             <fncref targ="bwrite"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="brename" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">B</fnarg>
+	<fnarg type="string">antiga</fnarg>
+	<fnarg type="string">nova</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se o argumento bundle <argname>B</argname> contém um elemento com
+	  a etiqueta <argname>antiga</argname>, esta é alterada
+	  para <argname>nova</argname>; caso contrário, é mostrado um 
+          erro. Em caso de sucesso, retorna 0.
+	</para>
+	<para>
+	  Esta não é uma operação muito comum, mas pode ser necessária
+          em funções que trabalham com bundles, e
+	  <lit>brename</lit> é uma ferramenta eficiente para essa tarefa.
+          Exemplo:
+	</para>
+	<code>
+	  # controi um bundle contendo uma matriz grande
+	  bundle b
+	  b.X = mnormal(1000, 1000)
+	  if 0
+	      # muda o nome manualmente
+	      Xcopy = b.X
+	      delete b.X
+	      b.Y = Xcopy
+	      delete Xcopy
+	  else
+	      # melhor: mais eficiente
+	      brename(b, "X", "Y")
+	  endif
+	</code>
+	<para>
+	  O primeiro método obriga a que a matriz seja copiada duas vezes,
+          fora do bundle e depois insere com nova etiqueta,
+          enquanto o método eficiente altera directamente a etiqueta.
 	</para>
       </description>
     </function>
@@ -1812,21 +2145,48 @@
       </description>
     </function>
 
+    <function name="carg" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz real <by r="m" c="n"/> contendo o 
+          <quote>argumento</quote> complexo de cada elemento da
+          matriz complexa <by r="m" c="n"/>
+	  <argname>C</argname>. O argumento do número complexo
+	  <math>z</math> = <math>x</math> + <math>yi</math> também pode
+          ser calculado como <lit>atan2(y, x)</lit>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="cmod"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="bool" optional="true">standardize</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Centraliza as colunas da matriz <argname>X</argname> em torno
-	  de suas médias.
+	  de suas médias. Se o segundo argumento (opcional) é diferente de zero,
+	  a coluna é normalizada, usando o desvio padrão ajustada com os graus
+          de liberdade (ou seja <math>n</math>
+	  &minus; 1 como divisor, onde <math>n</math> é o número de linhas de 
+	  <argname>X</argname>).
 	</para>
       </description>
     </function>
 
     <function name="cdf" section="probdist" output="asinput">
       <fnargs>
-	<fnarg type="string">d</fnarg>
+	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -1840,8 +2200,8 @@
 	  Calculadora da função de distribuição acumulada. Retorna
 	  <equation status="inline" ascii="P(X &le; x)" tex="$P(X \le
 	  x)$"/>, onde a distribuição de <math>X</math> é especificada
-	  pela letra <argname>d</argname>. Entre os argumentos <argname>
-	  d</argname> e <argname>x</argname>, zero ou mais argumentos
+	  pela letra <argname>c</argname>. Entre os argumentos <argname>
+	  c</argname> e <argname>x</argname>, zero ou mais argumentos
 	  adicionais são necessários para que se especifique os parâmetros
 	  da distribuição. Isso é feito da seguinte forma (note que a
 	  distribuição normal tem, por conveniência, uma função própria,
@@ -2006,7 +2366,7 @@
       </description>
     </function>
 
-<function name="cdummify" section="transforms" output="list">
+    <function name="cdummify" section="transforms" output="list">
       <fnargs>
 	<fnarg type="list">L</fnarg>
       </fnargs>
@@ -2110,6 +2470,28 @@
 	  número de linhas em <argname>X</argname> não for igual a
 	  <argname>xfac</argname> vezes o número de linhas em
 	  <argname>Y</argname>.
+	</para>
+      </description>
+    </function>
+
+    <function name="cmod" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz real <by r="m" c="n"/> contendo o
+	  valor absoluto (ou <quote>módulo</quote>) de cada elemento
+	  da matriz complexa <by r="m" c="n"/>
+	  <argname>C</argname>. O módulo do número complexo
+	  <math>z</math> = <math>x</math> + <math>yi</math> é igual
+          à raiz quadrada de <math>x</math><sup>2</sup> +
+	  <math>y</math><sup>2</sup>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -2267,6 +2649,81 @@
             <fncref targ="unvech"/>
             <fncref targ="vec"/>
             <fncref targ="vech"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="complex" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="scalar-or-matrix">A</fnarg>
+	<fnarg optional="true" type="scalar-or-matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz complexa, onde <argname>A</argname> é
+	  utilisada para fornecer a parte real e <argname>B</argname>
+	  a parte imaginária. Se <argname>A</argname> é <by r="m"
+	  c="n"/> e <argname>B</argname> é um escalar, o resultado
+	  é <by r="m" c="n"/> com a parte imaginária constante&mdash;e
+	  recíprocamente o oposto, mas com a parte real constante. Se
+	  ambos os argumentos são matrizes, elas devem ser da mesmas
+          dimensões.  Por defeito, caso o segundo argumento seja omitido,
+          a parte imaginária é igual a zero.
+	  <seelist><fncref targ="cswitch"/></seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="conj" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz complexa <by r="m" c="n"/> contendo o
+	  complexo conjugado de cada elemento da matriz complexa
+	  <by r="m" c="n"/> <argname>C</argname>. O conjugado de um
+          número complexo <math>z</math> = <math>x</math> +
+	  <math>yi</math> é igual a <math>x</math> &minus;
+	  <math>yi</math>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	    <fncref targ="cmod"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
+    <function name="conv2d" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula a convolução bidimensional das matrizes
+	  <argname>A</argname> e <argname>B</argname>. Se
+	  <argname>A</argname> é <by r="r" c="c"/> e
+	  <argname>B</argname> é <by r="m" c="n"/> a matriz resultante
+	  terá <math>r+m-1</math> linhas e <math>c+n-1</math> colunas.
+	</para>
+	<para context="tex">
+	  A convolução bidimensional das matrizes
+	  <argname>A</argname> e <argname>B</argname> é definida
+	  como: \[
+	    C_{i,j} =
+	    \sum_{k=1}^r\sum_{l=1}^c A_{k,l} B_{i-k+1,j-l+1},
+	    \]
+          onde as somas incluem apenas os valores de $k$ e $l$ cujos indices de
+          $B$ se encontrem dentro do intervalo.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="fft"/>
+            <fncref targ="filter"/>
 	  </seelist>
 	</para>
       </description>
@@ -2470,6 +2927,67 @@
             <fncref targ="invcdf"/>
             <fncref targ="pvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>  
+
+    <function name="cswitch" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="scalar">modo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Reinterpreta uma matriz real como contendo valores
+	  complexos ou viceversa.  A acção exacta depende de
+	  <argname>modo</argname> (que pode ter os valores 1,2,3 ou 4)
+	  como se mostra a seguir:
+	</para>
+	<para>
+	  modo 1: <argname>A</argname> deve ser uma matriz real
+	  com um número par de colunas. Produz uma matriz complexa
+          com a metade das colunas; as colunas ímpares de
+	  <argname>A</argname> fornecem a parte real e as colunas
+          pares as partes imaginárias.
+	</para>
+	<para>
+	  modo 2: Produz o resultado inverso daquele em modo 1. 
+          <argname>A</argname> deve ser uma matriz complexa
+	  e o resultado é uma matriz real com o dobro das
+          colunas de <argname>A</argname>.
+	</para>
+	<para>
+	  modo 3: <argname>A</argname> deve ser uma matriz real
+	  com um número par de linhas. Produz uma matriz complexa
+          com a metade das linhas; as linhas ímpares de
+	  <argname>A</argname> fornecem a parte real e as linhas
+          pares as partes imaginárias.
+	</para>
+	<para>
+	  modo 4: Produz o resultado inverso daquele em modo
+	  modo 3. <argname>A</argname> deve ser uma matriz complexa
+	  e o resultado é uma matriz real com o dobro das
+          linhas de <argname>A</argname>.
+	</para>
+	<para>
+	  <seelist><fncref targ="complex"/></seelist>
+	</para>
+      </description>
+    </function>
+    
+    <function name="ctrans" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna a matriz complexa <by r="n" c="m"/> contendo a
+          transposta do conjugado da matriz complexa <by r="m"
+	  c="n"/> <argname>C</argname>. O operador <lit>'</lit>
+	  (primo) também produz a transposição conjugada de matrizes
+          complexas. A função <fncref targ="transp"/> pode ser usada
+          em matrizes complexas mas produz a transposiçã0
+	  <quote>directa</quote> (não coniugada).
 	</para>
       </description>
     </function>
@@ -3023,6 +3541,41 @@
       </description>
     </function>
 
+    <function name="eigen" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;W</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula os valores próprios e, opcionalmente, os vectores próprios
+          direito e/ou esquerdo, da matriz <by r="n" c="n"/>
+	  <argname>A</argname>, que pode ser real ou complexa. O valores próprios
+          são retornados num vector complexo.
+	</para>
+	<para>
+	  Se você deseja obter o vector próprio direito na forma de matriz complexa,
+          <by r="n" c="n"/>), forneça o nome de uma matriz existente, precedida por 
+          <lit>&amp;</lit> para indicar o <quote>endereço</quote> da matriz em questão,
+          comom segundo argumento. De outro modo, este argumento pode ser omitido.
+	</para>
+	<para>
+	  Para obter o vector próprio esquerdo (igualmente, na forma de matriz complexa),
+          fornecer o endereço da matrix como terceiro argumento.
+          Note que se pretender os vectores esquerdos mas não os direitos, você deve usar a 
+          palavra chave <lit>null</lit> como valor para o segundo argumento.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="eigensym"/>
+            <fncref targ="eigsolve"/>
+            <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -3176,6 +3729,24 @@
 	</para>
       </description>
     </function>
+    
+    <function name="errorif" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bool">condição</fnarg>
+	<fnarg type="string">msg</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Aplicável apenas no contexto de uma função cirada pelo utilizador.
+          Se a <argname>condição</argname> é diferente de zero,
+	  termina a execução da função actual, mostrando a razão de erro; o argumento <argname>msg</argname>
+	  é então mostrado no écran como parte da resposta do chamador da função em questão.
+	</para>
+	<para>
+	  O valor de retorno (1) desta função é puramente nominal.
+	</para>
+      </description>
+    </function>
 
     <function name="exists" section="data-utils" output="int">
       <fnargs>
@@ -3325,7 +3896,49 @@
 	</para>
       </description>
     </function>
+    
+    <function name="feval" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="string">nome-de-função</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Ferramenta sobretudo destinada a autores de funções. O primeiro argumento
+          é o nome de uma função, e os restantes argumentos devem ser passados 
+          para a função em questão.  Na práctica a função identificada como 
+         <argname>nome-de-função</argname> é tratada ela mesmo como sendo uma variável.
+          O valor retornado é o que a função retorna de acordo com os argumentos especificados.
+	</para>
+	<para>
+	  O exemplo abaixo mostra alguns usos possíveis:
+	</para>
+	<code>
+	  function scalar utility (scalar c, scalar sigma)
+	  return (c^(1-sigma)-1)/(1-sigma)
+	  end function
 
+	  strings S = defarray("log", "utility")
+
+	  # chama uma função interna com um argumento
+	  x = feval(S[1], 2.5)
+	  # chama uma função definida pelo utilizador
+	  x = feval(S[2], 5, 0.5)
+	  # uma função com dois argumentos
+	  func = "zeros"
+	  m = feval(func, 5-2, sqrt(4))
+	  print m
+	  # uma função com três argumentos
+	  x = feval("monthlen", 12, 1980, 5)
+	</code>
+	<para>
+	  Existe uma analogia entre <lit>feval</lit> e <fncref
+	  targ="genseries"/>: ambas as funções recebem a variaável como elemento sintático
+          que no momento da composição é fixo.
+	</para>
+      </description>
+    </function>
+    
     <function name="fevd" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
@@ -3395,6 +4008,29 @@
 	  vetores com o mesmo número de elementos, é mais eficiente, do ponto
 	  de vista numérico, agrupar esses vetores em uma única matriz ao invés
 	  de aplicar a função <lit>fft</lit> em cada vetor de forma separada.
+	  <seelist>
+            <fncref targ="ffti"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
+    <function name="fft2" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Transfromada discreta de Fourier. A matriz de entrada
+          <argname>X</argname> pode ser real ou complexa.
+          O resultado é uma matiz complexa de com a mesma dimensão
+          de <argname>X</argname>.
+	</para>
+	<para>
+	  Quando seja necessário calcular a transformada de Fourier em vários
+	  vetores com o mesmo número de elementos, é mais eficiente, do ponto
+	  de vista numérico, agrupar esses vetores em uma única matriz ao invés
+	  de aplicar a função <lit>fft2</lit> em cada vetor de forma separada.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -3599,6 +4235,33 @@
       </description>
     </function>
 
+    <function name="flatten" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="matrices-or-strings">A</fnarg>
+	<fnarg optional="true" type="bool">alt</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Compacta um conjunto de matrizes numa única matriz
+          ou conjunto de cadeias de texto numa única cadeia de texto.
+	</para>
+	<para>
+	  No caso matricial, as matrizes contidas em <argname>A</argname> são,
+	  por defeito, concatenadas horizontalmente, mas se um valor diferente de
+          zero for passado como argumento <argname>alt</argname> a
+	  concatenação é vertical. Em ambos os casos será mostrado um erro
+          se as matrizes não forem compatíveis com a operação. Ver
+	  <fncref targ="msplitby"/> para a operação inversa.
+	</para>
+	<para>
+	  No caso de cadeia de texto, o resultado são as cadeias de texto em
+	  <argname>A</argname>, e arranjadas uma por linha, por defeito.
+	  Se e um valor diferente de zero for passado como argumento <argname>alt</argname> as
+          cadeias de texto são separadas por espaços aon invés de linhas.
+	</para>
+      </description>
+    </function>
+
     <function name="floor" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">y</fnarg>
@@ -3640,6 +4303,66 @@
 	  É possível utilizar valores de <argname>d</argname> negativos.
 	  Nesse caso é realizada a integração fracionária.
 	</para>
+      </description>
+    </function>
+
+    <function name="fzero" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">init</fnarg>
+	<fnarg optional="true" type="scalar">toler</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Tenta encontrar a raiz unitária de uma função coninua 
+          (tipicamente não-linear) <math>f</math>, que é uma variável
+          escalar <math>x</math> tal que <math>f</math>(<math>x</math>) = 0.
+          O argumento <argname>fcall</argname> deve chamar a função em
+          causa; <argname>fcall</argname> pode incluir um número
+          arbitrário de argumentos, mas o primeiro tem que ser um escalar
+         actuando com <math>x</math>.
+	  Em caso de sucesso, a função retorna o valor da raiz.
+	</para>
+	<para>
+	  O método utilizado é o de <cite key="ridders79">Ridders
+	  (1979)</cite>. Isto necessita de um intervalo inicial
+	  &lbr;<math>x</math><sub>0</sub>,
+	  <math>x</math><sub>1</sub>&rbr; tal que ambos os valores pertençam
+          ao domínio da função e as respectivas imagens sejam de sinais opostos.
+	  Será mais provável obter melhores resultados, se o utilizador fornecer
+          como segundo argumento, um vector cujos componentes sejam os valores
+          extremos do intervalo. Se não for assim, pode-se fornecer um único valor
+          escalar e <lit>fzero</lit> tentará encontrar um intervalo adequado.
+	  Se o segundo argumento fôr omitido, <math>x</math><sub>0</sub>
+	  é inicializado com um valor positivo pequeno e nós procuramos um valor
+          adequado para <math>x</math><sub>1</sub>.
+	</para>
+	<para>
+	  O argumento opcional <argname>toler</argname> pode ser utilizado para
+          ajustar a diferença máxima aceitável de <math>f</math>(<math>x</math>)
+          de zero, sendo o valor por defeito 1.0e&minus;14.
+	</para>
+	<para>
+	  Por defeito esta função opera silenciosamente, mas o progresso do
+          processo iteractivo pode ser exposto usando o comando <quote><lit>set max_verbose on</lit></quote> 
+          antes de chamar <lit>fzero</lit>.
+	</para>
+	<para>
+	  Seguem-se alguns simples exemplos:
+	</para>
+	<code>
+	  # Aproximação de Pi pesquisando um zero da 
+	  # função sin() no intervalo 2.8 a 3.2
+	  x = fzero(sin(x), {2.8, 3.2})
+	  printf "\nx = %.12f vs pi = %.12f\n\n", x, $pi
+
+	  # Aproximação da 'constante Omega' partindo de x=0.5
+	  function scalar f(scalar x)
+	  return log(x) + x
+	  end function
+	  x = fzero(f(x), 0.5)
+	  printf "x = %.12f f(x) = %.15f\n", x, f(x)
+	</code>
       </description>
     </function>
 
@@ -3695,6 +4418,32 @@
 	<para>
 	  Ao término da execução a lista <lit>Normals</lit> irá conter as
 	  séries <lit>norm1</lit>, <lit>norm2</lit> e assim sucessivamente.
+	</para>
+      </description>
+    </function>
+
+    <function name="geoplot" section="data-utils" output="none">
+      <fnargs>
+	<fnarg type="string">mapfile</fnarg>
+	<fnarg optional="true" type="series">payload</fnarg>
+	<fnarg optional="true" type="bundle">options</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Chama a produção de um mapa, quando existem dados 
+          geográficos apropriados. Na maior parte dos casos
+          o argumento <argname>mapfile</argname> deve ser dado como
+          <fncref targ="$mapfile"/>, um acessor que obtém o nome
+          relevante do ficheiro GeoJSON ou do ficheiro de formas ESRI.
+          O argumento opcional <argname>payload</argname> é usado para
+          fornecer o nome de uma série com a qual se coloriza as regiões
+          do mapa. E o argumento final <argname>options</argname> como
+          bundle permite você definir inúmeras opções.
+       </para>
+       <para>
+          Veja a documentação do geoplot, <doc>geoplot.pdf</doc>, para
+          mais detalhes e exemplos. Aqui se explica todas as configurações
+          por via do argumento <argname>options</argname>.
 	</para>
       </description>
     </function>
@@ -4213,7 +4962,33 @@
       </description>
     </function>
 
-    <function name="I" section="matbuild" output="smatrix">
+    <function name="hyp2f1" section="math" output="scalar-or-matrix">
+      <fnargs>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+	<fnarg type="scalar">c</fnarg>
+	<fnarg type="scalar-or-matrix">x</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Retorna a função hipergeométrica de Gauss para o argumento
+          real <argname>x</argname>.
+	</para>
+	<para context="tex">
+	  etorna a função hipergeométrica de Gauss 
+	  <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n
+	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> para o argumento
+          real <argname>x</argname>.
+	</para>
+	<para>
+	  Se <argname>x</argname> é um escalar, a função retorna um escalar;
+          se não, o resultado será uma matriz com a mesma dimensão que
+          o argumento <argname>x</argname>.
+	</para>
+      </description>
+    </function>
+    
+    <function name="I" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">n</fnarg>
       </fnargs>
@@ -4221,6 +4996,19 @@
 	<para>
 	  Retorna uma matriz identidade com <argname>n</argname> linhas e
 	  colunas.
+	</para>
+      </description>
+    </function>
+
+    <function name="Im" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz real com a mesma dimensão que
+	  <argname>C</argname>, contendo a parte imaginária da 
+          matriz de entrada. Ver também <fncref targ="Re"/>.
 	</para>
       </description>
     </function>
@@ -4431,6 +5219,31 @@
     <code>
       if strlen(strstr("cattle", "cat")) > 0
     </code>
+      </description>
+    </function>
+    
+    <function name="instrings" section="strings" output="matrix">
+      <fnargs>
+	<fnarg type="strings">S</fnarg>
+	<fnarg type="string">test</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Verifica quais os elementos do arranjo de texto em
+	  <argname>S</argname> são iguais a <argname>test</argname>.
+          Retorna um vector de comprimento igual ao número de
+          igualdades, contendo as posições correspondentes dentro do arranjo; ou
+          uma matriz vazia em caso de não haver correspondências.
+	</para>
+	<para>
+	  Exemplo:
+	</para>
+	<code>
+	  strings S = defarray("A", "B", "C", "B")
+	  eval instrings(S, "B")
+	  2
+	  4
+	</code>
       </description>
     </function>
 
@@ -4724,6 +5537,19 @@
       </description>
     </function>
 
+    <function name="iscomplex" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">nome</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna 1 se <argname>nome</argname> é o nome de uma 
+          matriz complexa, 0 se é o nome de uma matriz real, ou
+	  <lit>NA</lit> se nenhum dos dois.
+	</para>
+      </description>
+    </function>
+
     <function name="isconst" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
@@ -4820,6 +5646,82 @@
       </description>
     </function>
 
+    <function name="isocountry" section="strings" output="asinput">
+      <fnargs>
+	<fnarg type="string-or-strings">país</fnarg>
+	<fnarg type="int" optional="true">tipo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta função  produz a correspondência da designação dos países
+          segundo os quatro modos previstos na norma ISO 3166, que são
+	</para>
+	<nlist>
+	  <li><para>
+	    Nome do país (em Inglês)
+	  </para></li>
+	  <li><para>
+	    Código Alfa-2 (duas letras maiúsculas)
+	  </para></li>
+	  <li><para>
+	    Código Alfa-3 (três letras maiúsculas)
+	  </para></li>
+	  <li><para>
+	    Código numérico (com três digitos)
+	  </para></li>
+	</nlist>
+	<para>
+	  Partindo de uma das quatro formas, a função retorna
+	  o código do país conforme a opção <argname>tipo</argname>,
+          que deve estar entre 1 e 4; se o argumento for omitido, 
+          a conversão é como se segue:
+	  quando o <argname>país</argname> é o nome de um país,
+          o valor de retorno é o código Alfa-2; noutro casos, é retornado
+          o nome do país. Adiante mostra-se várias chamadas válidas:
+	</para>
+	<code>
+	  ? eval isocountry("Bolivia")
+	  BO
+	  ? eval isocountry("Bolivia", 3)
+	  BOL
+	  ? eval isocountry("GB")
+	  United Kingdom of Great Britain and Northern Ireland
+	  ? eval isocountry("GB", 3)
+	  GBR
+	  ? strings S = defarray("ES", "DE", "SD")
+	  ? strings C = isocountry(S)
+	  ? print C
+	  Array of strings, length 3
+	  [1] "Spain"
+	  [2] "Germany"
+	  [3] "Sudan"
+	  ? matrix m = {4, 840}
+	  ? C = isocountry(m)
+	  ? print C
+	  Array of strings, length 2
+	  [1] "Afghanistan"
+	  [2] "United States of America"
+	</code>
+	<para>
+	  O argumento <argname>país</argname> na forma 4 (código
+	  numérico), pode estar contido numa cadeia de texto ou
+          num arranjo de texto (por exemplo, <quote>032</quote> para
+	  a Argentina), ou como uma variável numérica. Neste caso,
+          <argname>país</argname> pode ser uma série ou um vector, 
+          mas a função dará erro se algum dos valores estiver for do
+          intervalo entre 0 e 999.
+	</para>
+	<para>
+	  Em qualquer dos casos (mesmo quando o modo 4 é selecionado) é
+          retornado uma cadeia de texto ou um arranjo de texto;
+          se são necessários valores numéricos, estes podem ser obidos
+          usando a função <fncref targ="atof"/>. Se o <argname>país</argname> 
+          não for encontrado na tabela ISO 3166, o valor retornado é
+          uma cadeia de texto vazia e é mostrado um aviso.
+	</para>
+      </description>
+    </function>
+
     <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
@@ -4846,6 +5748,31 @@
 	<para>
 	  Para a função inversa veja <fncref targ="epochday"/>. Veja
 	  também a função <fncref targ="juldate"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="isoweek" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">ano</fnarg>
+	<fnarg type="scalar-or-series">mês</fnarg>
+	<fnarg type="scalar-or-series">dia</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna o número da semana segundo o padrão ISO
+	  8601, correspondente à data especificada nos três argumentos,
+          ou <lit>NA</lit> se a data não é válida. Note-se que todos os
+          três argumentos têm que ser do mesmo tipo, sejam escalares
+	  (inteiros) ou séries.
+	</para>
+	<para>
+	  As semanas ISO são numeradas de 01 a 53; a maior parte dos anos
+          têm 52, mas em média, em 400 anos, 71 têm 53 semanas. 
+	  De acordo com a definição ISO 8601, a semana 01 é aquela que
+          contém a primeira quinta-feira do ano, seguindo o
+	  calendário Gregoriano. Para mais detalhes, ver
+          <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
 	</para>
       </description>
     </function>
@@ -5696,6 +6623,43 @@
 	<para>
 	  Ver a função <fncref targ="lrcovar"/> para o caso multivariado.
 	</para>
+	<para>
+	  Per l'equivalente multivariato, si veda <fncref
+	  targ="lrcovar"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="Lsolve" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">L</fnarg>
+	<fnarg type="matrix">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Resolve a equação <math>Ax = b</math> para cada <math>x</math>,
+	  onde <argname>L</argname> é o factor de Cholesky
+	  (triangular baixa) da matriz definida positiva
+	  <math>A</math>, satisfazendo <math>LL' = A</math>. A matriz 
+          <argname>L</argname> pode ser obtida usando a função <fncref targ="cholesky"/>
+          com a matriz <math>A</math> como argumento.
+	</para>
+	<para>
+	  Os dois seguintes cálculos deve dar resultados iguais
+          (excepto devido à precisão da máquina). mas a primeira variante
+          baseada em <lit>Lsolve</lit> permite reutilizar um factor de
+          Cholesky já calculado e assim optimizar o tempo de cálculo para
+          uma dada matriz <math>A</math> e vários valores de <math>b</math>. A
+	  melhoria de velocidade será tanto maior quanto maior a dimensão das colunas
+          de <math>A</math>.
+	</para>
+	<code>
+	  # variante 1
+	  matrix L = cholesky(A)
+	  matrix x = Lsolve(L, b)
+	  # variante 2
+	  matrix x = A \ b
+	</code>
       </description>
     </function>
 
@@ -6109,7 +7073,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="stats" output="matrix">
+    <function name="mlag" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
@@ -6196,6 +7160,20 @@
       </description>
     </function>
 
+    <function name="mlog" section="linalg" output="smatrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula o logarimo matricial de  <argname>A</argname>.
+	  O algoritmo utilizado baseia-se na decomposição espectral,
+          que necessita que <argname>A</argname> seja diagonizável.
+	  Ver taambé <fncref targ="mexp"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
@@ -6253,7 +7231,7 @@
       </description>
     </function>
 
-    <function name="monthlen" section="calendar" output="int">
+    <function name="monthlen" section="calendar" output="asinput">
       <fnargs>
 	<fnarg type="int">mês</fnarg>
 	<fnarg type="int">ano</fnarg>
@@ -6338,6 +7316,205 @@
       </description>
     </function>
 
+    <function name="mpiallred" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="string">op</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Esta função funciona como <fncref
+	  targ="mpireduce"/> excepto que todos os processos, e não apenas o processo
+          raiz, recebem uma cópia do objecto <quote>reduzido</quote> em lugar do
+	  original. É assim, equivalente a <lit>mpireduce</lit> seguida de uma chamada
+          a  <fncref targ="mpibcast"/>, mas mais eficiente.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpibarrier" section="mpi" output="int">
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Não usa
+          argumentos. Força a sincronização dos processos MPI: nenhum processo
+          pode ultrapassar a barreira até que todos a tenham atingido.
+	</para>
+	<code>
+	  # nenhum passa deste ponto, até que todos o tenham atingido
+	  mpibarrier()
+	</code>
+      </description>
+    </function>
+    
+    <function name="mpibcast" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;objecto</fnarg>
+	<fnarg type="int" optional="true">raiz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Transmite o argumento <argname>objecto</argname>,
+	  que deve ser dado na forma de ponteiro, a todos os processos. O objecto 
+          em questão deve ser uma matriz, um bundle, escalar, vector, texto ou lista, e ter seido
+          declarado em todos os processos antes da trasnmissão. Nenhum processo
+          poderá prosseguir para além da chamada a <lit>mpibcast</lit> até que todos
+          os processos a tenham executado com sucesso.
+	</para>
+	<para>
+	  Por defeito a <quote>raiz</quote>, é a origem da transmissão,
+          é o processo com o índice 0, mas isto pode ser modificado por via
+          do segundo argumento (opcional), o qual deve ser um inteiro entre 0 e o
+          número de processos MPI menos 1.
+	</para>
+	<para>
+	  De seguida mostra-se um simples exemplo. Se a função completar com sucesso,
+          todos os processos terão uma cópia da matriz <lit>X</lit> definida no processo de índice 0.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	  X = mnormal(T, k)
+	  endif
+	  mpibcast(&amp;X)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpirecv" section="mpi" output="object">
+      <fnargs>
+	<fnarg type="int">origem</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Para uma explicação,
+          ver <fncref targ="mpisend"/>, que emparelha com <lit>mpirecv</lit> e que tem
+	  ques estar sempre acoplada. O argumento <argname>origem</argname>
+	  especifica o índice do processo de onde deve ser recebido o objecto,
+          dentro do intervalo inteiro entre 0 e o número de processos MPI menos 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpireduce" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;objecto</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">raiz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Esta função recolhe objectos funzione (apenas escalares ou matrizes) e
+	  matrici) com nome específico, dado na forma de ponteiro, de todos os processo
+	  e <quote>reduz</quote>-los a um único objecto no nó raiz.
+	</para>
+	<para>
+	  O argomunto <lit>op</lit> específica a operação ou método de 
+          redução. Os métodos suportados para escalares são
+	  <lit>sum</lit>, <lit>prod</lit> (produto), <lit>max</lit>
+	  e <lit>min</lit>. Para matrizes os métodoa são
+	  <lit>sum</lit>, <lit>prod</lit> (produto de Hadamard),
+	  <lit>hcat</lit> (concatenação horizontal) e
+	  <lit>vcat</lit> (concatenação vertical).
+	</para>
+	<para>
+	  Por defeito, a <quote>raiz</quote>, a destinatária da redução
+	  é o processo MPI com índice  0, mas isto pode ser modificado por via
+          do segundo argumento (opcional), o qual deve ser um inteiro entre 0 e o
+          número de processos MPI menos 1.
+	</para>
+	<para>
+	  De seguida mostra-se um exemplo. Se a função completar com sucesso,
+          o processo raiz terá uma matriz <lit>X</lit> que é a soma das
+          matrizes <lit>X</lit> de todos os processos.
+	</para>
+	<code>
+	  matrix X
+	  X = mnormal(T, k)
+	  mpireduce(&amp;X, sum)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpiscatter" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="matrixref">&amp;M</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">raiz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Deve ser chamada
+          por todos os processos. Esta função distribui partes de uma matriz
+          no processo raiz por todos os processos. A matriz deve ter sido declarada
+	  em todos os processos, antes da chamada de
+	  <lit>mpiscatter</lit>, e deve ser dada na forma de ponteiro.
+	</para>
+	<para>
+	  O argumento <lit>op</lit> deve ser <lit>byrows</lit>
+	  ou <lit>bycols</lit>. Seja <math>q</math> o quociente entre
+	  o número de linhas da matriz a dividir pelo número de processos. No 
+          caso <lit>byrows</lit> a raiz envia as primeiras <math>q</math> linhas
+          para o processo 0, as seguintes <math>q</math> para o processo 1, e assim
+          sucessivamente. Existe um resto na divisão, as linhas remanescentes são 
+          atribuídas ao último segmento. O caso <lit>bycols</lit> é semelhante, mas
+          a matriz é dividida por colunas.
+	</para>
+	<para>
+	  Segue-se uma exemplo. Se existem 4 processos, todos
+	  (incluíndo o processo raiz) receberá uma parte <by r="2500" c="10"/>
+	  do original <lit>X</lit> como existia no processo raiz. Se você pretender 
+          preservar a matriz inteira no processo raiz, terá que fazer uma cópia dela
+          antes de chamar.
+	  <lit>mpiscatter</lit>.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	  X = mnormal(10000, 10)
+	  endif
+	  mpiscatter(&amp;X, byrows)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpisend" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="object">objecto</fnarg>
+	<fnarg type="int">destino</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Apenas disponível se gretl foi compilado com suporte MPI, e o programa foi iniciado
+	  em modo MPI (ver em <mnu targ="gretlMPI">gretl + MPI</mnu>). Envia o objecto
+          designado (que deve ser uma matriz, bundle, vector, escalar, texto ou lista) do processo 
+	  corrente para aquele identificado pelo inteiro <argname>destino</argname> (de 0 a número de
+          processos MPI menos 1).
+	</para>
+	<para>
+	  A chamada desta função deve estar sempre emparelhada com uma chamada a
+          <fncref targ="mpirecv"/> no processo <argname>destino</argname>,
+	  como no exemplo seguinte que envia uma matriz do índice 2 para o índice 3.
+	</para>
+	<code>
+	  if $mpirank == 2
+	  matrix C = cholesky(A)
+	  mpisend(C, 3)
+	  elif $mpirank == 3
+	  matrix C = mpirecv(2)
+	  endif
+	</code>
+      </description>
+    </function>
+
     <function name="mpols" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
@@ -6395,7 +7572,7 @@
       </description>
     </function>
 
-    <function name="mread" section="matbuild" output="matrix">
+    <function name="mread" section="data-utils" output="matrix">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
 	<fnarg optional="true" type="bool">import</fnarg>
@@ -6403,11 +7580,18 @@
       <description>
 	<para>
 	  Lê uma matriz armazenada no arquivo chamado <argname>fname
-	  </argname>. Se o arquivo possuir a extensão <quote><lit>.gz
+	  </argname>. Isto destina-se principalmente para ler arquivos
+          com um format específico como descrito adiante, mas também pode
+          ser usado em arquivos genéricos de texto delimitados.  Neste último caso,
+          ver a seção intitulada <quote>Arquivos de texto delimitados</quote> abaixo.
+         </para>
+	<para>
+          Se o arquivo possuir a extensão <quote><lit>.gz
 	  </lit></quote> é assumido que ele foi comprimido no formato
 	  gzip, se tiver a extensão <quote><lit>.bin</lit></quote> é
 	  assumido que o arquivo está em formato binário (veja <fncref
-	  targ="mwrite"/> para detalhes). Caso contrário assume-se que
+	  targ="mwrite"/> para detalhes). Caso contrário, se o arquivo tiver a
+          extensão <quote><lit>.mat</lit></quote> assume-se que
 	  é um arquivo de texto simples, seguindo as seguintes
 	  especificações:
 	</para>
@@ -6451,6 +7635,19 @@
 	  no contexto do comando <cmdref targ="foreign"/>. Nesse caso o
 	  argumento <argname>fname</argname> deve ser um nome simples,
 	  sem que se especique o caminho para o arquivo.
+	</para>
+        <subhead>Arquivos de texto delimitados</subhead>
+	<para>
+	  Se o arquivo possuir a extensão <quote><lit>.csv</lit></quote> as
+          regras que regulam o formato do arquivo são diferentes, e mais
+          relaxadas. Neste caso os dados concretos, <emphasis>não</emphasis> 
+          devem ser antecedidos por uma linha com o número de linhas e colunas.
+          Gretl tentará determinar o qual o delimitador (vírgula, ponto e vírgula
+          ou espaço) e fazer o seu melhor para importar a matriz,
+          permitindo o uso da vírgula como separador decimal se necessário.
+          Note que o delimitador não deve ser uma tabulação, sob pena de criar
+          confusão com os arquivos de formato matriz <quote>nativos</quote> do
+          gretl.
 	</para>
 	<para>
 	  <seelist>
@@ -6557,6 +7754,50 @@
       </description>
     </function>
 
+    <function name="msplitby" section="matshape" output="matrices">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="vector">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna um arranjo de matrizes, o resultado de dividir
+          verticalmente <argname>X</argname> segundo o controlo do
+          vector <argname>v</argname>. Este vector deve ser de comprimento
+          igual ao número de linhas do argumento <argname>X</argname>, e
+	  deverá conter valores inteiros com um mínimo de 1 e um máximo igual
+          ao número de matrizes no arranjo desejado.
+	  Cada elemento de <argname>v</argname> indica o índice
+	  vectorial da matriz que corresponde à linha de <argname>X</argname> que deverá
+          ser atríbuída.
+	</para>
+	<para>
+	  No seguinte exemplo, divide-se uma matriz <by r="3" c="3"/>
+	  em três matrizes: as primeiras duas linhas são atribuídas 
+          à primeira matriz; as segunda matriz fica vazia; e a terceira
+          matriz recebe a linha 3 de <argname>X</argname>.
+	</para>
+	<code>
+	  matrix X = {1,2,3; 4,5,6; 7,8,9}
+	  matrices M = msplitby(X, {1,1,3})
+	  print M
+	</code>
+	<para>
+	  A saída mostra:
+	</para>
+	<code>
+	  Vetor ("array") de matrizes, comprimento 3
+	  [1] 2 x 3
+	  [2] null
+	  [3] 1 x 3
+	</code>
+	<para>
+	  Ver <fncref targ="flatten"/> para a operação inversa.
+	</para>
+      </description>
+    </function>
+
+    
     <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
@@ -8434,6 +9675,41 @@
       </description>
     </function>
 
+    
+    <function name="randperm" section="probdist" output="vector">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se apenas é dado o primeiro argumento, retorna um vector linha
+          contendo uma permutação aleatória dos inteiros de 1 a <argname>n</argname>,
+          sem repetição dos elementos. Se o segundo argumento é dado, ele tem que ser
+          um inteiro no intervalo de 1 a <argname>n</argname>; neste caso a função
+          retorna um vector linha contendo <argname>k</argname> inteiros seleccionados
+          aleatóriamente entre 1 e <argname>n</argname> sem substituição.
+	</para>
+	<para>
+	  Caso se pretenda uma amostra de <math>k</math> linhas de uma matriz
+	  <lit>X</lit> com <math>n</math> linhas (sem substituição),
+	  pode-se proceder como se mostra adiante:
+	</para>
+	<code>
+	  matrix S = X[randperm(n, k),]
+	</code>
+	<para>
+	  E case se queira preservar a ordem original das linhas na amostra:
+	</para>
+	<code>
+	  matrix S = X[sort(randperm(n, k)),]
+	</code>
+	<para>
+	  Ver também <fncref targ="resample"/> para a reamostragem com substituição.
+	</para>
+      </description>
+    </function>
+
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -8511,6 +9787,19 @@
       </description>
     </function>
 
+    <function name="Re" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz real com a mesma dimensão que
+	  <argname>C</argname>, contendo a parte real dessa matriz de entrada.
+           Ver também <fncref targ="Im"/>.
+	</para>
+      </description>
+    </function>
+    
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
@@ -8811,6 +10100,27 @@
       </description>
     </function>
 
+    <function name="schur" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;Z</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;w</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Executa a decomposição de Schur da matriz complexa 
+	  <argname>A</argname>, retornando uma matriz complexa triangular
+	  superior <math>T</math>. Caso seja fornecido o segundo argumento
+          e seja diferente de <lit>null</lit> a função retorna uma matriz
+          complexa <math>Z</math> contendo o vector de Schur associado a
+	  <math>A</math> e <math>T</math>, tais que <math>A</math>
+	  = <math>ZTZ</math><sup>H</sup>. Se é dado um terceiro argumento
+          retorna os valores próprios de <math>A</math> num vector coluna
+          complexo.
+	</para>
+      </description>
+    </function>
+
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
@@ -8995,7 +10305,7 @@
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
 	<fnarg type="string">note</fnarg>
-      </fnargs>
+      </fnargs>   
       <description>
 	<para>
 	  Insere uma nota descritiva para o objeto identificado
@@ -9005,6 +10315,21 @@
 	  A função retorna 0 em caso de sucesso e um valor não-nulo
 	  em caso de falha (por exemplo, se não existir o objeto
 	  <argname>key</argname> em <argname>b</argname>).
+	</para>
+      </description>
+    </function>
+
+    <function name="sgn" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna o sinal do <argname>x</argname>, ou seja,  
+	  0 se <argname>x</argname> é zero, 1 se <argname>x</argname> é
+	  positivo, &minus;1 se <argname>x</argname> é negativo, ou
+	  <lit>NA</lit> se <argname>x</argname> é um não-número (Not a
+	  Number).
 	</para>
       </description>
     </function>
@@ -9415,6 +10740,87 @@
       </description>
     </function>
 
+    <function name="stack" section="data-utils" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">offset</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Destina-se a manipular dados em séries temporais para o tipo de dados
+          empilhados requerido por gretl para dados de painel. O valor retornado
+	  é uma série obtida por empilhar <quote>verticalmente</quote> <argname>n</argname> observations
+	  de cada série da lista <argname>L</argname>. Por defeito, são usadas as primeiras 
+          <argname>n</argname> (correspondendo ao argumento <argname>offset</argname> = 0) 
+          mas o ponto inicial pode ser deslocado ao se fornecer um valor positivo
+          para <argname>offset</argname>. Se a série resultante for maior que o conjunto de dados
+          existente, serão acrescentadas observações conforme necessário.
+	</para>
+	<para>
+	  Esta função pode lidar com dados de séries temporais lado-a-lado para um certo
+          número de unidades de secção cruzada, e também no caso onde o tempo é expresso
+          horizontalmente e cada linha representa uma unidade de secção cruzada.
+	</para>
+	<para>
+	  Ver a secção intitulada <quote>Detalhes de dados de painel</quote>
+	  em <guideref targ="chap:datafiles"/> para mais detalhes e exemplos de uso.
+	</para>
+      </description>
+    </function>
+
+    <function name="stdize" section="stats" output="asinput">
+      <fnargs>
+	<fnarg type="series-list-or-mat">X</fnarg>
+	<fnarg type="int" optional="true">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Por defeito, retorna uma versão padronizada da série, lista ou matriz: 
+          os dados de entrada são centrados e divididos pelo seu desvio padrão
+          amostral (com uma correção de graus de liberdade de 1). Os resultados são
+          calculados por coluna no caso de uma matriz.
+	</para>
+	<para>
+	  O segundo argumento (opcional) pode ser utilizado para influenciar
+          o resultado. Um valor não negativo de <argname>v</argname>
+	  define os graus de liberdade usados no desvio padrão, assim,
+          <argname>v</argname> = 0 resulta no estimador de máxima verosimilhança.
+          Como caso especial, se <argname>v</argname> é igual a &minus;1 apenas é
+          feita a centragem.
+	</para>
+      </description>
+    </function>
+
+    <function name="strftime" section="calendar" output="string">
+      <fnargs>
+	<fnarg type="scalar">t</fnarg>
+	<fnarg optional="true" type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  O argumento <argname>t</argname> é interpretado como o
+	  número de segundos decorridos desde o início do ano
+          1970 no fuso horário UTC (Tempo Universal Coordenado, anteriomente 
+          designado como Tempo Médio de Greenwich (GMT) );
+	  produz uma cadeia de texto com a data e hora correspondente. O formato
+          por defeito é o mesmo que o padrão no sistema, mas pode ser modificado
+          se o segundo argumento (opcional) é uma cadeia de texto de formatação.
+	</para>
+	<para>
+	  Os valores adequados como argumentos <argname>t</argname> para esta função podem
+          ser obtidos a partir do acessor <fncref targ="$now"/>
+	  ou da função <fncref targ="strptime"/>.
+	</para>
+	<para>
+	  Os detalhes da opção de formatação podem ser obtidos na página do manual
+          de <lit>strftime</lit>, nos sistemas que o disponibilizam, ou num dos muitos
+          sítios que têm essa informação, como por exemplo 
+	  <url>https://devhints.io/strftime</url>.
+	</para>
+      </description>
+    </function>
+
     <function name="stringify" section="strings" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -9483,6 +10889,48 @@
 	  necessário utilizar esta função. Ao invés disso é pode-se usar
 	  a seguinte expressão: <lit>if (s1 == s2)...</lit>.
 	</para>
+      </description>
+    </function>
+  
+    <function name="strptime" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta função é a inversa de <fncref targ="strftime"/>;
+	  interpreta a cadeia de texto <argname>s</argname> como sendo data ou hora usando
+	  o <argname>formato</argname> especificado e retorna o número de segundos desde
+          o início de 1970 (UTC).
+	</para>
+	<para>
+	  As opções para o <argname>formato</argname> estão disponíveis
+          na página do manual de <lit>strptime</lit>, nos sistemas que o
+          disponibilizam, ou num dos muitos sítios com essa informação, como
+          por exemplo
+          <url>http://man7.org/linux/man-pages/man3/strptime.3.html</url>.
+	</para>
+	<para>
+	  O exemplo abaixo mostra como converter informação de data de um formato
+          para outro.
+	</para>
+	<code>
+	  scalar tm = strptime("Thursday 02/07/19", "%A %m/%d/%y")
+	  eval strftime(tm) # default output
+	  eval strftime(tm, "%d %B, %Y")
+	</code>
+	<para>
+	  Se a Língua é o Português, o resultado é
+	</para>
+	<code>
+          ? scalar tm = strptime("Thursday 02/07/19", "%A %m/%d/%y")
+          Gerou-se o escalar tm = 1,5495e+09
+          ? eval strftime(tm) # default output
+          qui 07 fev 2019 00:00:00
+          ? eval strftime(tm, "%d %B, %Y")
+          07 fevereiro, 2019
+	</code>
       </description>
     </function>
 
@@ -9800,6 +11248,33 @@
       </description>
     </function>
 
+    <function name="svm" section="stats" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="bundle">param</fnarg>
+	<fnarg type="bundleref" optional="true">bmod</fnarg>
+	<fnarg type="bundleref" optional="true">bprob</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta função permite o treinamento de um modelo SVM
+	  (Supervised Vector Machine) e a respectiva predição; o motor utilizado
+          é a biblioteca LIBSVM. A lista passada como argumento
+          <argname>L</argname> deve incluir a variável dependente,
+	  seguida pelas variáveis independentes, e o bundle
+	  <argname>param</argname> é usado para passar opções para
+          o mecanismo SVM. A função retorna uma série contendo
+          as predições SVM. Os dois outros parâmetros opcionais são 
+          ponteiros para bundles para recolher informação adicional
+          após o treinamento e ou a predição.
+	</para>
+	<para>
+	  Para mais detalhes, consultar a documentação em PDF:
+	  <mnu targ="gretlSVM">gretl + SVM</mnu>.
+	</para>
+      </description>
+    </function>
+
     <function name="tan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -9833,6 +11308,30 @@
             <fncref targ="cosh"/>
             <fncref targ="sinh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="tdisagg" section="transforms" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-mat">Y</fnarg>
+	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
+	<fnarg type="scalar">s</fnarg>
+	<fnarg optional="true" type="bundle">opções</fnarg>
+	<fnarg optional="true" type="bundle">resultados</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Produz desagregação temporal (conversão para maior frequência) da
+          série temporal em <argname>Y</argname>. O argumento <argname>s</argname>
+	  fornece o factor de expansão (por exemplo, 3 de trimestral para mensal). O
+          argumento <argname>X</argname> pode conter uma ou mais covariáveis na frequência
+          maior para auxiliar na desagregação. Podem ser passadas diversas opções em
+	  <argname>opções</argname>, e os detalhes da desagregação podem ser obtidos por via
+          nos <argname>resultados</argname>.
+	</para>
+	<para>
+	  Ver mais detalhes em <guideref targ="chap:tdisagg"/>.
 	</para>
       </description>
     </function>

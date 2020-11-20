@@ -2565,6 +2565,10 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	    pprintf(prn, "\n midas_freq=\"%d\"", mpd);
 	}
 
+	if ((mpd = series_get_orig_pd(dset, v)) > 0) {
+	    pprintf(prn, "\n orig_pd=\"%d\"", mpd);
+	}
+
 	pputs(prn, "\n/>\n");
     }
 
@@ -2897,6 +2901,15 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 
 		if (mpc > 0) {
 		    series_set_midas_freq(dset, i, mpc);
+		}
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "orig_pd");
+	    if (tmp != NULL) {
+		int opd = atoi((char *) tmp);
+
+		if (opd > 0) {
+		    series_set_orig_pd(dset, i, opd);
 		}
 		free(tmp);
 	    }
@@ -3506,10 +3519,9 @@ static int process_string_tables (xmlDocPtr doc,
 		    fprintf(stderr, "process_string_tables: get_strings_array "
 			    "gave error %d\n", err);
 		} else {
-		    st = series_table_new(strs, n_strs);
-		    if (st == NULL) {
+		    st = series_table_new(strs, n_strs, &err);
+		    if (err) {
 			strings_array_free(strs, n_strs);
-			err = E_ALLOC;
 		    } else {
 			series_attach_string_table(dset, v, st);
 		    }

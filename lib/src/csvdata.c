@@ -2216,18 +2216,19 @@ int non_numeric_check (DATASET *dset, int **plist,
 	    }
 	}
 
-	nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
+	nnfrac = (nok == 0)? 1.0 : nnon / (double) (nnon + nok);
 	pprintf(prn, A_("variable %d (%s): non-numeric values = %d "
 			"(%.2f percent)\n"), v, dset->varname[v],
 		nnon, 100 * nnfrac);
-	if ((nnon < 2 && dset->n > 2) || nnfrac < 0.01) {
+	if ((nnon < 2 && dset->n > 2) || nnfrac < 0.05) {
 	    /* if we got just a few non-numeric values, we'll assume
 	       that the data file is broken
 	    */
 	    pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
-			    "non-numeric value\n"),
+			    "expected numeric value\n"),
 		    v, dset->varname[v], tn);
 	    err = E_DATA;
+	    break;
 	}
     }
 

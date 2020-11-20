@@ -77,6 +77,8 @@ int gretl_iszero (int t1, int t2, const double *x);
 
 int gretl_isconst (int t1, int t2, const double *x);
 
+int gretl_isstoch (int t1, int t2, const double *x);
+
 int gretl_isunits (int t1, int t2, const double *x);
 
 int gretl_iscount (int t1, int t2, const double *x);

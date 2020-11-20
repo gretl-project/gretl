@@ -1,5 +1,5 @@
-set echo off
-set messages off
+
+set verbose off
 
 # Import the gig library.
 include gig.gfn

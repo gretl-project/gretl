@@ -106,6 +106,7 @@ static struct gui_help_item gui_help_items[] = {
     { SMPLDUM,        "sampling" },
     { COMPACT,        "compact" },
     { EXPAND,         "expand" },
+    { TDISAGG,        "tdisagg" },
     { VSETMISS,       "missing" },
     { GSETMISS,       "missing" },
     { GUI_HELP,       "dialog" },
@@ -2033,6 +2034,10 @@ static int get_writable_doc_path (char *path, const char *fname)
     FILE *fp;
     int err = 0;
 
+#ifdef G_OS_WIN32
+    sysdoc_writable = 0;
+#endif
+
     if (sysdoc_writable == 1) {
 	sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
 	return 0;
@@ -2040,13 +2045,6 @@ static int get_writable_doc_path (char *path, const char *fname)
 	sprintf(path, "%sdoc%c%s", dotdir, SLASH, fname);
 	return 0;
     }
-
-#ifdef G_OS_WIN32
-    if (sysdoc_writable < 0 && win32_uses_virtual_store()) {
-	/* don't write to virtualized location */
-	sysdoc_writable = 0;
-    }
-#endif
 
     if (sysdoc_writable < 0) {
 	sysdoc_writable = 0;

@@ -45,7 +45,7 @@
 
 The \textsf{regls} addon is essentially a front-end for functionality
 coded in C in the gretl \texttt{regls} plugin; to run the package you
-will need gretl version 2020a or higher.  The plugin implements LASSO
+will need gretl version 2020e or higher.  The plugin implements LASSO
 \citep{tibshirani96}---by default via the Alternating Direction Method
 of Multipliers (ADMM) algorithm as set out in \cite{boyd2010}; Ridge
 regression, by default via Singular Value Decomposition; and the
@@ -55,10 +55,13 @@ The best-known implementation of regularized regression is that
 provided by the \textsf{glmnet} package for \textsf{R}. Since we make
 several references to \textsf{glmnet} below we should state up front
 what we're talking about. The authors of \textsf{glmnet} are Jerome
-Friedman, Trevor Hastie, Rob Tibshirani, Balasubramanian Narasimhan
-and Noah Simon. Current information on \textsf{glmnet} can be found at
+Friedman, Trevor Hastie, Rob Tibshirani, \textit{et al}.  Current
+information on \textsf{glmnet} can be found at
 \url{https://glmnet.stanford.edu/}; for further information on the
-algorithms used in the package see \cite{glmnet10}.
+algorithms used in the package see \cite{glmnet10}.\footnote{We should
+  point out that \textsf{glmnet} supports regularized estimation of
+  generalized linear models. At present \textsf{regls} only supports
+  least squares.}
 
 This package supports LASSO, Ridge and elastic net via the
 \texttt{regls()} function. We begin by discussing LASSO, which is the
@@ -340,10 +343,9 @@ Some additional cross validation options are supported.
 \item \texttt{single\_b}: Boolean. If non-zero it stops \texttt{regls}
   from estimating coefficients for all $s$ values after cross
   validation; only the selected ``best'' value ($s^*$ or
-  $s^{\dagger}$) is used. The matrix \texttt{B} mentioned above is
+  $s^{\dagger}$) is used. The matrix \texttt{B} mentioned above
   then holds just a single column. This may shave a little off the
   execution time.
-
 \end{itemize}
 
 \section{Execution speed}

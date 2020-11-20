@@ -13,6 +13,8 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data);
 
 void open_dbnomics_dataset (GtkWidget *w, gpointer data);
 
+void show_dbnomics_dimensions (GtkWidget *w, gpointer data);
+
 void open_dbnomics_series (GtkWidget *w, gpointer data);
 
 void dbnomics_specific_series (GtkAction *action, gpointer data);

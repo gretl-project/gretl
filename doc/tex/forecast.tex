@@ -214,7 +214,7 @@ active dataset.
 
 In a command line context the \cmd{fcast} command automatically prints 
 out the tables with the produced forecasts, their standard errors, and 
-associated confidence intervals -- unless you wish to suppress this 
+associated confidence intervals---unless you wish to suppress this 
 verbose output with the options \verb|--stats-only| or \verb|--quiet|. 
 The former option restricts output to the forecast evaluation statistics
 as explained in the next section; the latter option silences output 
@@ -439,17 +439,16 @@ One of the main differences is that specifying a variable name after the
 \cmd{fcast} command does not mean to save something under that name, but 
 now it serves to pick one of the $N$ variables of the VAR for printing
 out the forecasts. That leaves only the \dollar{fcast} and \dollar{fcse}
-accessors to obtain and save the produced forecasts -- in this system 
+accessors to obtain and save the produced forecasts---in this system 
 case the returned matrix objects will have as many columns as equations.
 
-In the GUI the relevant menu entry is again Forecasts in the Analysis 
+In the GUI the relevant menu entry is again Forecasts in the Analysis
 menu in the window of the estimated VAR model. Here the user must pick
-the variable of interest, after which a dialog window with relevant 
-options is presented.\footnote{One difference is that the significance
-level of the confidence intervals cannot be set, it is fixed at 95\% in
-this context.} As in the single-equation context a plot and a textual
-output windows are created. Again, forecast series can be added to the 
-dataset through the ``+'' button, and the plot can be saved or exported.
+the variable of interest, after which a dialog window with relevant
+options is presented. As in the single-equation context a plot and a
+textual output windows are created. Again, forecast series can be
+added to the dataset through the ``+'' button, and the plot can be
+saved or exported.
 
 \subsection{Special VAR cases: exogenous variables, cointegration}
 
@@ -473,50 +472,50 @@ then used to calculate the forecasts. Providing forecast standard errors
 and the associated confidence bands is also straightforward since only
 the innovation uncertainty is captured in those. This ease of use also
 carries over to the situation when a VECM with additional exogenous
-terms is used for forecasting -- provided that future values of
+terms is used for forecasting---provided that future values of
 the exogenous variables are specified, of course.   
 
 \section{Forecasting from simultaneous systems}
 \label{sec:fcast-system}
 
-To be interesting for a forecasting application, a simultaneous-equation
-system must be dynamic, including some lags of endogenous variables as
-regressors. Otherwise we would be conducting a scenario analysis purely 
-conditional on assumed exogenous developments. For the following 
-discussion we therefore presuppose that we are dealing with such a
-dynamic system. Then the difference between such a model set up with
-gretl's \cmd{system} block and a VAR system concerns mainly two aspects:
-First, a VAR model is already given as a so-called reduced form and as
-such is ready to be used for forward simulation a.k.a. forecasting. In 
-contrast, a simultaneous system can come in a structural form with some 
-contemporaneous endogenous variables as regressors in the equations; the
- future values of those
-regressors are unknown, however. Secondly, a plain VAR is estimated by
-OLS, whereas a simultaneous system can be estimated with different 
-methods for reasons of efficiency.
+To be interesting for a forecasting application, a
+simultaneous-equation system must be dynamic, including some lags of
+endogenous variables as regressors. Otherwise we would be conducting a
+scenario analysis purely conditional on assumed exogenous
+developments. For the following discussion we therefore presuppose
+that we are dealing with such a dynamic system. Then the difference
+between such a model set up with gretl's \cmd{system} block and a VAR
+system concerns mainly two aspects: First, a VAR model is already
+given as a so-called reduced form and as such is ready to be used for
+forward simulation a.k.a.\ forecasting. In contrast, a simultaneous
+system can come in a structural form with some contemporaneous
+endogenous variables as regressors in the equations; the future values
+of those regressors are unknown, however. Second, a plain VAR is
+estimated by OLS, whereas a simultaneous system can be estimated with
+different methods for reasons of efficiency.
 
 Neither of these differences present any deep challenge for forecasting,
-however:
+however.
 
 \begin{itemize}
-\item As explained at the end of the previous chapter on multivariate 
-models, it is easy to obtain the reduced form of any such 
-simultaneous-equation system. This reduced form is then used by gretl to
-simulate the system forward in time, just like with a VAR model. The
-slight complication for computing the forecast variances is mereley that
-the estimated error term $\epsilon_t$ from the structural form
-must be mapped to the reduced-form innovations $v_t$ using the (inverse 
-of the) estimated structural relations matrix $\Gamma$. This is
-automatically taken into account.
+\item As explained at the end of the previous chapter on multivariate
+  models (see the subsection titled ``Structural and reduced forms''),
+  it is easy to obtain the reduced form of any such simultaneous
+  equation system. This reduced form is used by gretl to simulate the
+  system forward in time, just as with a VAR model. The slight
+  complication for computing the forecast variances is merely that the
+  estimated error term $\epsilon_t$ from the structural form must be
+  mapped to the reduced-form innovations $v_t$ using the (inverse of
+  the) estimated structural relations matrix $\Gamma$. This is
+  automatically taken into account.
 
-\item The estimation method through which the coefficient values of the
-system are determined does not matter for forecasting. The prediction
-algorithm can simply take these point estimates as given, use these for 
-calculating the associated reduced form, and use that representation to 
-iterate the model forward over the desired forecasting horizon. It
-should nonetheless be obvious that different estimators entail different
-forecast values. 
-  
+\item The estimation method through which the coefficient values of
+  the system are determined does not matter for forecasting. The
+  prediction algorithm can simply take these point estimates as given,
+  use these for calculating the associated reduced form, and use that
+  representation to iterate the model forward over the desired
+  forecasting horizon. It should nonetheless be obvious that different
+  estimators entail different forecast values.
 \end{itemize} 
 
 As a consequence of these considerations, the way to handle forecasts
