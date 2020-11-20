@@ -7,7 +7,7 @@ removed (again in favor of use of tdisagg).
 The obsolete usage of '=' to test for equality now provokes
 an error: "==" must be used instead.
 
-The $uhat accessor, available after the negbin command, now
+The $uhat accessor available after the negbin command now
 returns generalized residuals instead of the difference between
 y and $yhat.
 
