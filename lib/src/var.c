@@ -4826,8 +4826,8 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "ncoeff", var->ncoeff);
     gretl_bundle_set_int(b, "order", var->order);
     gretl_bundle_set_int(b, "robust", var->robust);
-    gretl_bundle_set_int(b, "t1", var->t1);
-    gretl_bundle_set_int(b, "t2", var->t2);
+    gretl_bundle_set_int(b, "t1", var->t1 + 1);
+    gretl_bundle_set_int(b, "t2", var->t2 + 1);
     gretl_bundle_set_int(b, "T", var->T);
 
     gretl_bundle_set_scalar(b, "lnl", var->ll);
