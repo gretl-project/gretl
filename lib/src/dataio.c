@@ -497,23 +497,6 @@ static char *panel_obs (char *s, int t, const DATASET *dset)
     return s;
 }
 
-static void fix_old_daily_label (char *s)
-{
-    char *p = s;
-    int ns = 0;
-
-    while (*p) {
-	if (*p == '/') {
-	    ns++;
-	}
-	p++;
-    }
-
-    if (ns == 2) {
-	gretl_charsub(s, '/', '-');
-    }
-}
-
 /**
  * ntolabel:
  * @datestr: char array to which date is to be printed.
@@ -540,7 +523,7 @@ char *ntolabel (char *datestr, int t, const DATASET *dset)
 	if (dataset_has_markers(dset)) {
 	    strcpy(datestr, dset->S[t]);
 	    if (strchr(datestr, '/')) {
-		fix_old_daily_label(datestr);
+		gretl_charsub(datestr, '/', '-');
 	    }
 	} else {
 	    calendar_date_string(datestr, t, dset);
