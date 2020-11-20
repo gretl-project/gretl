@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-19 22:14+0100\n"
+"PO-Revision-Date: 2020-11-20 11:28+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -235,7 +235,7 @@ msgstr "Vlerësimi i qëndrueshëm i variancës"
 
 #: lib/src/adf_kpss.c:2175
 msgid "Sum of squares of cumulated residuals"
-msgstr "Shuma e katrorëve të shumatores të mbetjeve"
+msgstr "Shuma e katrorëve të mbetjeve rekursive"
 
 #: lib/src/adf_kpss.c:2188
 #, c-format
@@ -529,6 +529,7 @@ msgstr "Testi Wald"
 msgid "Chi-square"
 msgstr "Hi-katror"
 
+# Raporti i pëgjasisë
 #: lib/src/compare.c:373 lib/src/compare.c:386 lib/src/vartest.c:1206
 msgid "LR test"
 msgstr "Testi LR"
@@ -678,8 +679,8 @@ msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
-"Testi Quandt (raporti i përgjasisë) për ndërprerje të strukturës në një\n"
-"vrojtim të panjohur, duke prerë 15% të vrojtimeve"
+"Testi Quandt i raportit të përgjasisë për ndërprerje të strukturës në një\n"
+"vrojtim të panjohur, me cungim të 15% të vrojtimeve"
 
 #: lib/src/compare.c:2781
 #, c-format
@@ -732,12 +733,12 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Testi Harvey-Collier(%d) = %g me p. kritik %.4g\n"
+"Testi Harvey-Collier t(%d) = %g me p. kritik %.4g\n"
 "\n"
 
 #: lib/src/compare.c:3437
 msgid "CUSUMSQ test for stability of parameters"
-msgstr "Testi CUSUM-SQ për qëndrueshmëri të parametrave"
+msgstr "Testi CUSUMSQ për qëndrueshmëri të parametrave"
 
 #: lib/src/compare.c:3454
 msgid "Cumulated sum of squared residuals"
@@ -1996,7 +1997,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Testi i barazisë së mesatareve (variancat merren %s)\n"
+"Testi i barazisë së mesatareve (variancat supozohen %s)\n"
 "\n"
 
 #: lib/src/describe.c:6700
@@ -4996,7 +4997,7 @@ msgstr "Vlera e veçantë minimale"
 #: lib/src/modelprint.c:399 lib/src/modelprint.c:401 lib/src/modelprint.c:405
 #: lib/src/system.c:3535 lib/src/system.c:3550
 msgid "LR over-identification test"
-msgstr "Testi LR i mbi-përcaktimit (raporti i pëgjasisë)"
+msgstr "Testi LR i mbi-përcaktimit"
 
 #: lib/src/modelprint.c:410
 msgid "Equation is just identified"
@@ -6150,7 +6151,7 @@ msgstr "SKM"
 
 #: lib/src/modelprint.c:4656
 msgid "Sum of AR coefficients"
-msgstr "Shuma e koeficientevë të AR"
+msgstr "Shuma e koeficientevë AR"
 
 #: lib/src/modelprint.c:4704
 msgid "slope"
@@ -13241,7 +13242,7 @@ msgstr "_Shto ndryshore të tjera"
 
 #: gui/gui_utils.c:254
 msgid "_Sum of coefficients"
-msgstr "Shu_ma e koeficientëve"
+msgstr "_Shuma e koeficientëve"
 
 #: gui/gui_utils.c:255
 msgid "_Linear restrictions"
@@ -13293,7 +13294,7 @@ msgstr "Testi _CUSUM (qëndrueshmëria e parametrave)"
 
 #: gui/gui_utils.c:267
 msgid "CUSUM_SQ test"
-msgstr "Testi C_USUM-SQ (qëndrueshmëria e parametrave)"
+msgstr "Testi CUSUM_SQ (qëndrueshmëria e parametrave)"
 
 #: gui/gui_utils.c:268
 msgid "_Common factor"
@@ -13549,7 +13550,7 @@ msgstr "_Katrori i mbetjes"
 
 #: gui/gui_utils.c:2982
 msgid "_Error sum of squares"
-msgstr "_Shuma e katrorit të mbetjes (SKM)"
+msgstr "Shuma e katrorit të mb_etjes - SKM"
 
 #: gui/gui_utils.c:2984
 msgid "_Standard error of the regression"
@@ -17046,7 +17047,7 @@ msgstr "_Llogarit të anasjelltën"
 
 #: gui/ssheet.c:188
 msgid "_Multiply by scalar"
-msgstr "_Shumëzo me një numër"
+msgstr "Shu_mëzo me një numër"
 
 #: gui/ssheet.c:189
 msgid "_Divide by scalar"
