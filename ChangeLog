@@ -15,6 +15,21 @@ version 2020e, in progress
   across the dates information
 - Documentation: add material on forecasting for VARs and
   other multi-equation systems
+- Improve format of panel plot when there are many unnamed
+  individuals
+- gretlcli and gretlmpi on MS Windows: accept unicode filenames
+  on the command line
+- "midasreg" command: be more flexible in parsing arguments to
+  mds() terms
+- Add to practice scripts: simulation using Klein model
+- Implement the '^' operator (logical product) for string-
+  valued series
+- xlsx data importer: handle correctly the case where a given
+  column is "partially" string-valued
+- dbnomics data importer: handle absence of dimensions_labels
+  in some cases
+- mpiscatter() function: revise rule for dividing matrices
+  for greater efficiency
 - Fix bug: possibility of invalid XML when saving a model to
   session file
 - Fix bug: "smpl" command rejects the combination of "full"
@@ -31,12 +46,20 @@ version 2020e, in progress
 - Fix: incorrect $vcv matrix for bivariate probit models
 - Fix: dbnomics import misaligning data of different
   frequencies in certain cases
+- Fix: $obsmajor and friends not working for daily data
+  with non-trading days omitted and dates given in the old
+  form of YYYY/MM/DD; also "dataset pad-daily" not working
+  with such old-style dates
+- Fix: potential crash on closing a maximized window on
+  recent macOS (a GDK problem)
 - MS Windows build: support printing scripts with syntax
   highlighting
 - MS Windows build (64-bit): update pixman, cairo and pango
   libraries (DLLs)
-- MS Windows build: update SSL DLL so as to prevent
+- MS Windows build: update libeay.dll so as to prevent
   crashes on certain CPUs
+- Update packaged fedstl database
+- Update several translations
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard
