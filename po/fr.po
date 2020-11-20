@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-11-06 10:26-0500\n"
-"PO-Revision-Date: 2020-11-20 11:29+0100\n"
+"PO-Revision-Date: 2020-11-20 11:41+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -238,7 +238,7 @@ msgstr "Estimation robuste de la variance"
 
 #: lib/src/adf_kpss.c:2175
 msgid "Sum of squares of cumulated residuals"
-msgstr "Somme des carrés des résidus cumulés"
+msgstr "Somme des carrés des résidus récursifs"
 
 #: lib/src/adf_kpss.c:2188
 #, c-format
@@ -738,7 +738,7 @@ msgstr "Test CUSUMSQ de stabilité des paramètres"
 
 #: lib/src/compare.c:3454
 msgid "Cumulated sum of squared residuals"
-msgstr "Somme cumulée des carrés des résidus"
+msgstr "Série cumulée des carrés des résidus"
 
 #: lib/src/compare.c:3458
 msgid "CUSUM test for stability of parameters"
@@ -755,12 +755,12 @@ msgid ""
 "sigmahat                 = %g\n"
 "\n"
 msgstr ""
-"sigmahat                 = %g\n"
+"sigma-chapeau                 = %g\n"
 "\n"
 
 #: lib/src/compare.c:3473
 msgid "Cumulated sum of scaled residuals"
-msgstr "Somme cumulée des résidus standardisés"
+msgstr "Série cumulée des résidus standardisés"
 
 #: lib/src/compare.c:3479
 #, no-c-format
