@@ -2676,8 +2676,6 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	strval_saver_destroy(ss);
     }
 
- cleanup:
-
     if (in_c_locale) {
 	gretl_pop_c_numeric_locale();
     }
