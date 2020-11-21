@@ -4811,6 +4811,25 @@ static gretl_matrix *make_detflags_matrix (const GRETL_VAR *var)
     return d;
 }
 
+static void bundle_VAR_C (const GRETL_VAR *var,
+			  gretl_bundle *b)
+{
+    int i, j, k = var->C->cols;
+    gretl_matrix *C = gretl_matrix_alloc(k, k);
+
+    if (C != NULL) {
+	double cij;
+
+	for (j=0; j<k; j++) {
+	    for (i=0; i<k; i++) {
+		cij = gretl_matrix_get(var->C, i, j);
+		gretl_matrix_set(C, i, j, cij);
+	    }
+	}
+	gretl_bundle_donate_data(b, "C", C, GRETL_TYPE_MATRIX, 0);
+    }
+}
+
 int gretl_VAR_bundlize (const GRETL_VAR *var,
 			DATASET *dset,
 			gretl_bundle *b)
@@ -4870,7 +4889,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 	gretl_bundle_set_matrix(b, "A", var->A);
     }
     if (var->C != NULL) {
-	gretl_bundle_set_matrix(b, "C", var->C);
+	bundle_VAR_C(var, b);
     }
     if (var->B != NULL) {
 	gretl_bundle_set_matrix(b, "coeff", var->B);
