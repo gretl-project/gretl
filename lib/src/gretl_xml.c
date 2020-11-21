@@ -2346,7 +2346,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     }
 
     if (nvars <= 0) {
-	gretl_errmsg_sprintf("No data to save!");
+	gretl_errmsg_set("No data to save!");
 	free(list);
 	return E_DATA;
     }
@@ -2465,10 +2465,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     if (dset->descrip != NULL) {
 	char *dbuf = gretl_xml_encode(dset->descrip);
 
-	if (dbuf == NULL) {
-	    err = 1;
-	    goto cleanup;
-	} else {
+	if (dbuf != NULL) {
 	    pputs(prn, "<description>");
 	    pputs(prn, dbuf);
 	    pputs(prn, "</description>\n");
@@ -2689,7 +2686,9 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
     }
 
-    if (p15) free(p15);
+    if (p15 != NULL) {
+	free(p15);
+    }
     free(list);
 
     gretl_print_destroy(prn);
