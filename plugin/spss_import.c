@@ -277,13 +277,13 @@ static int read_rec_7_3 (spss_data *sdat, int size, int count)
 #if SPSS_DEBUG
     fprintf(stderr, "rec_7_3 encoding: got %d\n", enc);
 #endif
-    
+
     /* See
        http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html
     */
 
     if (enc == 1 || enc == 4) {
-	return sav_error("Indicated character encoding (%s) is not ASCII", 
+	return sav_error("Indicated character encoding (%s) is not ASCII",
 			 (enc == 1)? "EBCDIC" : "DEC Kanji");
     }
 
@@ -379,7 +379,7 @@ static int recode_sav_string (char *targ, const char *src,
 	char cpage[8];
 	gchar *conv;
 	gsize wrote = 0;
-	
+
 	sprintf(cpage, "CP%d", encoding);
 	conv = g_convert(src, -1, "UTF-8", cpage,
 			 NULL, &wrote, NULL);
@@ -400,9 +400,35 @@ static int recode_sav_string (char *targ, const char *src,
     return err;
 }
 
+static void strip_vname_illegals (char *s)
+{
+    char name[VNAMELEN] = {0};
+    int i, j = 0;
+
+    for (i=0; s[i] != '\0'; i++) {
+	if (isalnum(s[i]) || s[i] == '_') {
+	    name[j++] = s[i];
+	}
+    }
+
+    name[j] = '\0';
+    strcpy(s, name);
+}
+
+static int check_sav_varname (char *vname, const char *s)
+{
+    /* skip any leading garbage */
+    while (*s && !isalpha(*s)) s++;
+
+    strncat(vname, s, VNAMELEN - 1);
+    iso_to_ascii(vname);
+    strip_vname_illegals(vname);
+    return check_varname(vname);
+}
+
 /* Read record type 7, subtype 13: long variable names */
 
-static int read_long_varnames (spss_data *sdat, unsigned size, 
+static int read_long_varnames (spss_data *sdat, unsigned size,
 			       unsigned count)
 {
     char *buf, *val;
@@ -450,7 +476,7 @@ static int read_long_varnames (spss_data *sdat, unsigned size,
 		fprintf(stderr, "'%s' -> '%s'\n", p, val);
 #endif
 		*var->name = '\0';
-		strncat(var->name, val, VNAMELEN - 1);
+		check_sav_varname(var->name, val);
 	    }
 	}
 	if (endp != NULL) {
@@ -505,10 +531,10 @@ static int read_subrecord (spss_data *sdat)
     case 7: /* Multiple-response sets (later versions of SPSS) */
 	skip = 1;
 	break;
-    case 13: 
+    case 13:
 	err = read_long_varnames(sdat, data.size, data.count);
 	break;
-    case 16: 
+    case 16:
 	/* http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html */
 	skip = 1;
 	break;
@@ -525,7 +551,7 @@ static int read_subrecord (spss_data *sdat)
     if (skip) {
 	int n = data.size * data.count;
 
-	fprintf(stderr, "record type 7, subtype %d: skipping %d bytes\n", 
+	fprintf(stderr, "record type 7, subtype %d: skipping %d bytes\n",
 		data.subtype, n);
 	fseek(sdat->fp, n, SEEK_CUR);
     }
@@ -637,7 +663,7 @@ static int check_label_varindex (spss_data *sdat, spss_labelset *lset, int idx)
 			    "to a continuation of a string variable, not to an actual "
 			    "variable", idx);
 	} else if (v->type == SPSS_STRING && v->width > MAX_SHORT_STRING) {
-	    err = sav_error("Value labels are not allowed on long string variables (%s)", 
+	    err = sav_error("Value labels are not allowed on long string variables (%s)",
 			    v->name);
 	} else if (lset->vtype == SPSS_UNDEF) {
 	    /* record type of first variable */
@@ -718,7 +744,7 @@ static int read_value_labels (spss_data *sdat)
     }
 
     /* second step: read the type 4 record holding the list of
-       variables to which the value labels are to be applied 
+       variables to which the value labels are to be applied
     */
 
     if (!err) {
@@ -810,7 +836,7 @@ static int read_sav_other_records (spss_data *sdat)
 
 #if SPSS_DEBUG > 1
 	fprintf(stderr, "read_sav_other_records: type = %d\n", rec_type);
-#endif	
+#endif
 
 	switch (rec_type) {
 	case 3:
@@ -874,7 +900,7 @@ static int validate_var_info (struct sysfile_variable *sv, int i)
 	err = sav_error("position %d: bad variable type code %d\n", i, sv->type);
     } else if (sv->has_var_label != 0 && sv->has_var_label != 1) {
 	err = sav_error("position %d: variable label indicator field is not 0 or 1\n", i);
-    } else if (sv->n_missing_values < -3 || sv->n_missing_values > 3 || 
+    } else if (sv->n_missing_values < -3 || sv->n_missing_values > 3 ||
 	       sv->n_missing_values == -1) {
 	err = sav_error("position %d: missing value indicator field is not "
 			 "-3, -2, 0, 1, 2, or 3\n", i);
@@ -891,7 +917,7 @@ static int transcribe_varname (spss_data *sdat, struct sysfile_variable *sv, int
 
     if (!isalpha(c) && c != '@' && c != '#') {
 	return sav_error("position %d: Variable name begins with invalid character", i);
-    } 
+    }
 
     if (c == '#') {
 	fprintf(stderr, "position %d: Variable name begins with '#'.\n"
@@ -952,7 +978,7 @@ static int grab_var_label (spss_data *sdat, spss_var *v)
 
     if (fread(v->label, labread, 1, sdat->fp) != 1) {
 	return sav_error("Variable %s: couldn't read label", v->name);
-    }	
+    }
 
     v->label[len] = '\0';
     tailstrip(v->label);
@@ -977,7 +1003,7 @@ static int record_missing_vals_info (spss_data *sdat, spss_var *v,
     int j;
 
     if (v->width > MAX_SHORT_STRING) {
-	return sav_error("Long string variable %s cannot have missing values", 
+	return sav_error("Long string variable %s cannot have missing values",
 			  v->name);
     }
 
@@ -1082,7 +1108,7 @@ static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 	fprintf(stderr, " has_var_label = %d\n", sv.has_var_label);
 	fprintf(stderr, " n_missing_values = %d\n", sv.n_missing_values);
 #endif
-	
+
 	/* If there was a long string previously, make sure that the
 	   continuations are present; otherwise make sure there aren't
 	   any */
@@ -1099,7 +1125,7 @@ static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 		err = sav_error("position %d: string variable is missing a "
 				"continuation record", i);
 		break;
-	    } 
+	    }
 	} else if (sv.type == -1) {
 	    fprintf(stderr, "position %d: superfluous string continuation record\n", i);
 	}
@@ -1127,7 +1153,7 @@ static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 		v->offset = next_value;
 		next_value += v->nv;
 		long_string_count = v->nv - 1;
-	    }	
+	    }
 	}
 
 	/* get the variable label, if any */
@@ -1138,7 +1164,7 @@ static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 	/* set missing values, if applicable */
 	if (!err && sv.n_missing_values != 0) {
 	    err = record_missing_vals_info(sdat, v, sv.n_missing_values);
-	} 
+	}
     }
 
     /* consistency checks */
@@ -1474,7 +1500,7 @@ static int read_compressed_data (spss_data *sdat, struct sysfile_header *hdr,
 	    default:
 		/* Codes 1 through 251 inclusive indicate a value of
 		   (BYTE - BIAS), where BYTE is the byte's value and
-		   BIAS is the compression bias (generally 100.0) 
+		   BIAS is the compression bias (generally 100.0)
 		*/
 		*tmp = *p - hdr->bias;
 		if (sdat->swapends) {
@@ -1487,7 +1513,7 @@ static int read_compressed_data (spss_data *sdat, struct sysfile_header *hdr,
 	    if (tmp >= tmp_end) {
 		done = 1;
 		break;
-	    }	    
+	    }
 	}
 
 	if (err || done) {
@@ -1532,9 +1558,9 @@ static int value_is_missing (spss_data *sdat, spss_var *v, double x)
 
 /* Read values for all variables at observation t */
 
-static int sav_read_observation (spss_data *sdat, 
+static int sav_read_observation (spss_data *sdat,
 				 struct sysfile_header *hdr,
-				 double *tmp, 
+				 double *tmp,
 				 DATASET *dset,
 				 int t)
 {
@@ -1554,7 +1580,7 @@ static int sav_read_observation (spss_data *sdat,
 		err = sav_error("Partial record at end of SPSS file");
 	    }
 	}
-    } 
+    }
 
     j = 1;
 
@@ -1597,7 +1623,7 @@ static int sav_read_observation (spss_data *sdat,
 		}
 	    } else {
 		dset->Z[j][t] = NADBL;
-		
+
 	    }
 	}
 	j++;
@@ -1616,7 +1642,7 @@ static int do_drop_empty (spss_data *sdat)
 	    /* no collision with string table: OK to drop vars */
 	    return 1;
 	}
-    } 
+    }
 
     return 0;
 }
@@ -1639,7 +1665,7 @@ static int read_sav_data (spss_data *sdat, struct sysfile_header *hdr,
     j = 1;
     for (i=0; i<sdat->nvars; i++) {
 	if (!CONTD(sdat, i)) {
-	    recode_sav_string(dset->varname[j], sdat->vars[i].name, 
+	    recode_sav_string(dset->varname[j], sdat->vars[i].name,
 			      sdat->encoding, VNAMELEN - 1);
 	    recode_sav_string(label, sdat->vars[i].label,
 			      sdat->encoding, MAXLABEL - 1);
@@ -1682,7 +1708,7 @@ static int read_sav_data (spss_data *sdat, struct sysfile_header *hdr,
        variables.
     */
     if (do_drop_empty(sdat)) {
-	err = dataset_drop_listed_variables(sdat->droplist, dset, 
+	err = dataset_drop_listed_variables(sdat->droplist, dset,
 					    NULL, NULL);
     }
 
@@ -1789,11 +1815,11 @@ static void print_labelsets (spss_data *sdat, PRN *prn)
 	    /* mapping applies to just one variable */
 	    lj = vlist[1] - 1;
 	    v = &sdat->vars[lj];
-	    pprintf(prn, "Value -> label mappings for variable %d (%s)\n", 
+	    pprintf(prn, "Value -> label mappings for variable %d (%s)\n",
 		    v->gretl_index, v->name);
 	} else {
 	    /* mapping applies to two or more variables */
-	    pprintf(prn, "Value -> label mappings for the following %d variables\n", 
+	    pprintf(prn, "Value -> label mappings for the following %d variables\n",
 		    vlist[0]);
 	    for (j=1; j<=vlist[0]; j++) {
 		lj = vlist[j] - 1;
@@ -1945,7 +1971,7 @@ int sav_get_data (const char *fname, DATASET *dset,
     if (fread(buf, 4, 1, fp) != 1) {
 	fclose(fp);
 	return E_DATA;
-    }	
+    }
 
     if (!strncmp("$FL2", buf, 4)) {
 	/* should be OK */
@@ -1972,7 +1998,7 @@ int sav_get_data (const char *fname, DATASET *dset,
 
     if (!err) {
 	err = prepare_gretl_dataset(&sdat, &newset, prn);
-    }	
+    }
 
     if (!err) {
 	err = read_sav_data(&sdat, &hdr, newset, prn);
@@ -1993,7 +2019,7 @@ int sav_get_data (const char *fname, DATASET *dset,
 	    }
 	    gretl_string_table_print(sdat.st, newset, fname, prn);
 	}
-	
+
 	if (sdat.descrip != NULL) {
 	    newset->descrip = sdat.descrip;
 	    sdat.descrip = NULL;
@@ -2003,11 +2029,11 @@ int sav_get_data (const char *fname, DATASET *dset,
 
 	if (!err && !merge) {
 	    dataset_add_import_info(dset, fname, GRETL_SAV);
-	}	
+	}
     }
 
     fclose(fp);
     free_spss_data(&sdat);
 
     return err;
-} 
+}
