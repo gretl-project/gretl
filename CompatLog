@@ -1,4 +1,4 @@
-version 2020e, in progress
+2020-11-21 version 2020e
 
 The chowlin() function is now deprecated in favor of tdisagg(),
 and the --interpolate option to the "data" command has been

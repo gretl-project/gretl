@@ -1,4 +1,4 @@
-version 2020e, in progress
+2020-11-21 version 2020e
 - New function tdisagg() for temporal disaggregation
   (distribution and interpolation)
 - New addon package "regls": supports LASSO, Ridge regression
