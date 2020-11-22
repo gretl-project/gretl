@@ -4870,7 +4870,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 	gretl_bundle_set_matrix(b, "A", var->A);
     }
     if (var->C != NULL) {
-	gretl_bundle_set_matrix(b, "C", var->A);
+	gretl_bundle_set_matrix(b, "C", var->C);
     }
     if (var->B != NULL) {
 	gretl_bundle_set_matrix(b, "coeff", var->B);
