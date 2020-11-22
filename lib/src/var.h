@@ -62,7 +62,7 @@ struct GRETL_VAR_ {
     gretl_matrix *A;     /* augmented coefficient matrix (companion form) */
     gretl_matrix *L;     /* lambda: inverse roots of A(L) polynomial */
     gretl_matrix *E;     /* residuals matrix */
-    gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
+    gretl_matrix *C;     /* Cholesky-decomposed covariance matrix */
     gretl_matrix *S;     /* cross-equation variance matrix */
     gretl_matrix *F;     /* optional forecast matrix */
     gretl_matrix *V;     /* full parameter covariance matrix */

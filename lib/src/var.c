@@ -104,15 +104,14 @@ static int VAR_add_companion_matrix (GRETL_VAR *var)
 
 static int VAR_allocate_cholesky_matrix (GRETL_VAR *var)
 {
-    int n, err = 0;
+    int n = var->neqns;
+    int err = 0;
 
     if (var->C != NULL) {
 	return 0;
     }
 
-    n = var->neqns * effective_order(var);
-
-    var->C = gretl_zero_matrix_new(n, var->neqns);
+    var->C = gretl_zero_matrix_new(n, n);
     if (var->C == NULL) {
 	err = E_ALLOC;
     }
@@ -1344,9 +1343,7 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
     int i, j, r, c;
     int err = 0;
 
-    /* copy cross-equation covariance matrix (note: the C matrix has
-       more rows than S)
-    */
+    /* copy cross-equation covariance matrix */
     tmp = gretl_matrix_copy(S);
     if (tmp == NULL) {
 	err = E_ALLOC;
@@ -1599,7 +1596,7 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
     double x;
 
     S = gretl_matrix_copy(var->S);
-    C = gretl_matrix_copy(var->C);
+    C = gretl_matrix_alloc(var->neqns, var->neqns);
 
     if (S == NULL || C == NULL) {
 	gretl_matrix_free(S);
@@ -1608,6 +1605,7 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
 	return NULL;
     }
 
+    /* rearrange @S */
     for (i=0; i<var->neqns; i++) {
 	r = var->ord->val[i];
 	for (j=0; j<var->neqns; j++) {
@@ -1617,8 +1615,10 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
 	}
     }
 
+    /* decompose rearranged @S */
     gretl_matrix_cholesky_decomp(S);
 
+    /* C = rearranged decomposed S */
     for (i=0; i<var->neqns; i++) {
 	r = var->ord->val[i];
 	for (j=0; j<var->neqns; j++) {
@@ -1631,6 +1631,28 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
     gretl_matrix_free(S);
 
     return C;
+}
+
+static void copy_north_west (gretl_matrix *targ,
+			     gretl_matrix *src,
+			     int add)
+{
+    int i, j, k = src->cols;
+    double xij;
+
+    if (!add) {
+	gretl_matrix_zero(targ);
+    }
+
+    for (j=0; j<k; j++) {
+	for (i=0; i<k; i++) {
+	    xij = gretl_matrix_get(src, i, j);
+	    if (add) {
+		xij += gretl_matrix_get(targ, i, j);
+	    }
+	    gretl_matrix_set(targ, i, j, xij);
+	}
+    }
 }
 
 static gretl_matrix *
@@ -1672,7 +1694,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 
     resp = gretl_matrix_alloc(periods, 1);
     rtmp = gretl_matrix_alloc(rows, var->neqns);
-    ctmp = gretl_matrix_alloc(rows, var->neqns);
+    ctmp = gretl_zero_matrix_new(rows, var->neqns);
 
     if (resp == NULL || rtmp == NULL || ctmp == NULL) {
 	*err = E_ALLOC;
@@ -1682,7 +1704,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     for (t=0; t<periods; t++) {
 	if (t == 0) {
 	    /* initial estimated responses */
-	    gretl_matrix_copy_values(rtmp, C);
+	    copy_north_west(rtmp, C, 0);
 	} else {
 	    /* calculate further estimated responses */
 	    gretl_matrix_multiply(var->A, rtmp, ctmp);
@@ -1792,7 +1814,7 @@ gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
 {
     int k = var->neqns * effective_order(var);
     gretl_matrix *vtmp = NULL;
-    gretl_matrix *cc = NULL, *vt = NULL;
+    gretl_matrix *vt = NULL;
     gretl_matrix *se = NULL;
     double vti;
     int i, t;
@@ -1804,13 +1826,10 @@ gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
 
     se = gretl_zero_matrix_new(periods, var->neqns);
     vt = gretl_matrix_alloc(k, k);
-    cc = gretl_zero_matrix_new(k, k);
     vtmp = gretl_matrix_alloc(k, k);
 
-    if (se == NULL || cc == NULL ||
-	vt == NULL || vtmp == NULL) {
+    if (se == NULL || vt == NULL || vtmp == NULL) {
 	gretl_matrix_free(se);
-	gretl_matrix_free(cc);
 	gretl_matrix_free(vt);
 	gretl_matrix_free(vtmp);
 	return NULL;
@@ -1819,23 +1838,20 @@ gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
     for (t=0; t<periods; t++) {
 	if (t == 0) {
 	    /* initial variance */
-	    gretl_matrix_inscribe_matrix(cc, var->S, 0, 0, GRETL_MOD_NONE);
-	    gretl_matrix_copy_values(vt, cc);
+	    copy_north_west(vt, var->S, 0);
 	} else {
 	    /* calculate further variances */
 	    gretl_matrix_copy_values(vtmp, vt);
 	    gretl_matrix_qform(var->A, GRETL_MOD_NONE,
 			       vtmp, vt, GRETL_MOD_NONE);
-	    gretl_matrix_add_to(vt, cc);
+	    copy_north_west(vt, var->S, 1);
 	}
-
 	for (i=0; i<var->neqns; i++) {
 	    vti = gretl_matrix_get(vt, i, i);
 	    gretl_matrix_set(se, t, i, sqrt(vti));
 	}
     }
 
-    gretl_matrix_free(cc);
     gretl_matrix_free(vt);
     gretl_matrix_free(vtmp);
 
@@ -1878,7 +1894,7 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
     }
 
     B = gretl_matrix_block_new(&idx, n, n,
-			       &cic, k, k,
+			       &cic, n, n,
 			       &vt,  k, k,
 			       &vtmp, k, k,
 			       NULL);
@@ -1909,13 +1925,13 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
 		/* calculate initial variances */
 		*err = gretl_matrix_qform(C, GRETL_MOD_NONE,
 					  idx, cic, GRETL_MOD_NONE);
-		gretl_matrix_copy_values(vt, cic);
+		copy_north_west(vt, cic, 0);
 	    } else {
 		/* calculate further variances */
 		gretl_matrix_copy_values(vtmp, vt);
 		*err = gretl_matrix_qform(var->A, GRETL_MOD_NONE,
 					  vtmp, vt, GRETL_MOD_NONE);
-		gretl_matrix_add_to(vt, cic);
+		copy_north_west(vt, cic, 1);
 	    }
 	    if (!*err) {
 		vti = gretl_matrix_get(vt, targ, targ);

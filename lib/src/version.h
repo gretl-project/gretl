@@ -24,6 +24,6 @@
 #define LIBGRETL_REVISION  0
 #define LIBGRETL_AGE       0
 
-#define GRETL_VERSION "2020e"
+#define GRETL_VERSION "2020f-git"
 
 #endif /* GRETL__VERSION_H */
