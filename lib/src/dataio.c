@@ -25,6 +25,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "gretl_string_table.h"
+#include "matrix_extra.h"
 #include "csvdata.h"
 #include "usermat.h"
 
@@ -2382,6 +2383,23 @@ gretlopt get_merge_opts (gretlopt opt)
     return merge_opt;
 }
 
+/* Apparatus for converting a dataset read from file
+   into a gretl matrix, as opposed to replacing an
+   existing dataset or merging with it.
+*/
+
+static gretl_matrix **dset_matrix;
+
+void set_dset_matrix_target (gretl_matrix **pm)
+{
+    dset_matrix = pm;
+}
+
+void *get_dset_matrix_target (void)
+{
+    return dset_matrix;
+}
+
 /**
  * merge_or_replace_data:
  * @dset0: original dataset struct.
@@ -2406,6 +2424,21 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 {
     int keep = (opt & OPT_K);
     int err = 0;
+
+    if (dset_matrix != NULL) {
+	/* Convert the new dataset to matrix; don't touch
+	   the existing dataset, if any.
+	*/
+	const DATASET *dset = *pdset1;
+
+	*dset_matrix = gretl_matrix_data_subset(NULL, dset,
+						0, dset->n - 1,
+						M_MISSING_OK,
+						&err);
+	destroy_dataset(*pdset1);
+	*pdset1 = NULL;
+	return err;
+    }
 
     if (dset0->Z != NULL) {
 	/* we have an existing dataset into which the new data

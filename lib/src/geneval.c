@@ -39,6 +39,7 @@
 #include "qr_estimate.h"
 #include "gretl_foreign.h"
 #include "gretl_midas.h"
+#include "gretl_xml.h"
 #include "var.h"
 
 #include <time.h> /* for the $now accessor */
@@ -4508,6 +4509,7 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
         gchar *tmp = NULL;
         int import = node_get_bool(r, p, 0);
         int csv = 0;
+	int gdt = 0;
         int done = 0;
 
         gretl_error_clear();
@@ -4522,7 +4524,10 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
             if (p->err) {
                 return ret;
             }
-        }
+        } else if (has_suffix(realpath, ".gdt") ||
+		   has_suffix(realpath, ".gdtb")) {
+	    gdt = 1;
+	}
 
         switch (f) {
         case F_MREAD:
@@ -4534,6 +4539,10 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 #endif
             if (!done && csv) {
                 ret->v.m = import_csv_as_matrix(realpath, &p->err);
+	    } else if (!done && gdt) {
+		set_dset_matrix_target(&ret->v.m);
+		p->err = gretl_read_gdt(realpath, NULL, OPT_NONE, NULL);
+		set_dset_matrix_target(NULL);
             } else if (!done) {
                 ret->v.m = gretl_matrix_read_from_file(realpath, 0, &p->err);
             }

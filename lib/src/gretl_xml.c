@@ -4096,19 +4096,21 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	xmlFreeDoc(doc);
     }
 
-    /* pre-process stacked cross-sectional panels: put into canonical
-       stacked time series form
-    */
-    if (!err && dset->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(dset);
-    }
+    if (dset != NULL) {
+	/* pre-process stacked cross-sectional panels: put into canonical
+	   stacked time series form
+	*/
+	if (!err && dset->structure == STACKED_CROSS_SECTION) {
+	    err = switch_panel_orientation(dset);
+	}
 
-    if (!err && dset->v == 1) {
-	err = remedy_empty_data(dset);
-    }
+	if (!err && dset->v == 1) {
+	    err = remedy_empty_data(dset);
+	}
 
-    if (!err && gdtversion < 1.2) {
-	record_transform_info(dset, gdtversion);
+	if (!err && gdtversion < 1.2) {
+	    record_transform_info(dset, gdtversion);
+	}
     }
 
     if (err && tmpset != NULL) {

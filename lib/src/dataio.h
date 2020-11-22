@@ -157,4 +157,8 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
 
 int analyse_daily_import (const DATASET *dset, PRN *prn);
 
+void set_dset_matrix_target (gretl_matrix **pm);
+
+void *get_dset_matrix_target (void);
+
 #endif /* DATAIO_H */
