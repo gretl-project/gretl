@@ -1,39 +1,39 @@
-    /*
-     *  gretl -- Gnu Regression, Econometrics and Time-series Library
-     *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
-     *
-     *  This program is free software: you can redistribute it and/or modify
-     *  it under the terms of the GNU General Public License as published by
-     *  the Free Software Foundation, either version 3 of the License, or
-     *  (at your option) any later version.
-     *
-     *  This program is distributed in the hope that it will be useful,
-     *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-     *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     *  GNU General Public License for more details.
-     *
-     *  You should have received a copy of the GNU General Public License
-     *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-     *
-     */
+/*
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 
-    #define FULL_XML_HEADERS
+#define FULL_XML_HEADERS
 
-    #include "libgretl.h"
-    #include "var.h"
-    #include "johansen.h"
-    #include "varprint.h"
-    #include "vartest.h"
-    #include "libset.h"
-    #include "transforms.h"
-    #include "gretl_xml.h"
-    #include "matrix_extra.h"
-    #include "system.h"
+#include "libgretl.h"
+#include "var.h"
+#include "johansen.h"
+#include "varprint.h"
+#include "vartest.h"
+#include "libset.h"
+#include "transforms.h"
+#include "gretl_xml.h"
+#include "matrix_extra.h"
+#include "system.h"
 
-    #define VDEBUG 0
+#define VDEBUG 0
 
-    #define VAR_SE_DFCORR 1
-    #define VAR_S_DFCORR 0
+#define VAR_SE_DFCORR 1
+#define VAR_S_DFCORR 0
 
 enum {
     VAR_ESTIMATE = 1,
@@ -146,8 +146,8 @@ static int VAR_add_XTX_matrix (GRETL_VAR *var)
         err = E_ALLOC;
     } else {
         gretl_matrix_multiply_mod(var->X, GRETL_MOD_TRANSPOSE,
-          var->X, GRETL_MOD_NONE,
-          var->XTX, GRETL_MOD_NONE);
+                                  var->X, GRETL_MOD_NONE,
+                                  var->XTX, GRETL_MOD_NONE);
         err = gretl_invert_matrix(var->XTX);
     }
 
@@ -160,15 +160,15 @@ int n_restricted_terms (const GRETL_VAR *v)
 
     if (v->jinfo != NULL &&
         (v->jinfo->code == J_REST_CONST ||
-           v->jinfo->code == J_REST_TREND)) {
+         v->jinfo->code == J_REST_TREND)) {
         n++;
-}
+    }
 
-if (v->rlist != NULL) {
-    n += v->rlist[0];
-}
+    if (v->rlist != NULL) {
+        n += v->rlist[0];
+    }
 
-return n;
+    return n;
 }
 
 void gretl_VAR_clear (GRETL_VAR *var)
@@ -214,21 +214,21 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->name = NULL;
 }
 
-    #define lag_wanted(v, i) (v->lags == NULL || in_gretl_list(v->lags, i))
+#define lag_wanted(v, i) (v->lags == NULL || in_gretl_list(v->lags, i))
 
-    /* Construct the common X matrix (composed of lags of the core
-       variables plus other terms if applicable). This is in
-       common between VARs and VECMs
-    */
+/* Construct the common X matrix (composed of lags of the core
+   variables plus other terms if applicable). This is in
+   common between VARs and VECMs
+*/
 
 void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
 {
     const double *x;
     int diff = (v->ci == VECM);
     int i, j, s, t, vi;
-        int k = 0; /* X column index */
+    int k = 0; /* X column index */
 
-        /* const first */
+    /* const first */
     if (v->detflags & DET_CONST) {
         s = 0;
         for (t=v->t1; t<=v->t2; t++) {
@@ -237,7 +237,7 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
         k++;
     }
 
-        /* add lagged Ys */
+    /* add lagged Ys */
     for (i=0; i<v->neqns; i++) {
         vi = v->ylist[i+1];
         for (j=1; j<=p; j++) {
@@ -257,7 +257,7 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
         }
     }
 
-        /* add any exogenous vars */
+    /* add any exogenous vars */
     if (v->xlist != NULL) {
         for (i=1; i<=v->xlist[0]; i++) {
             vi = v->xlist[i];
@@ -269,7 +269,7 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
         }
     }
 
-        /* add other deterministic terms */
+    /* add other deterministic terms */
     if (v->detflags & DET_SEAS) {
         int per = get_subperiod(v->t1, dset, NULL);
         int pd1 = dset->pd - 1;
@@ -305,12 +305,12 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
         gretl_matrix_set_t2(v->X, v->t2);
     }
 
-    #if VDEBUG
+#if VDEBUG
     gretl_matrix_print(v->X, "X");
-    #endif
+#endif
 }
 
-    /* construct the matrix of dependent variables for a plain VAR */
+/* construct the matrix of dependent variables for a plain VAR */
 
 static void VAR_fill_Y (GRETL_VAR *v, const DATASET *dset)
 {
@@ -329,15 +329,15 @@ static void VAR_fill_Y (GRETL_VAR *v, const DATASET *dset)
         gretl_matrix_set_t2(v->Y, v->t2);
     }
 
-    #if VDEBUG
+#if VDEBUG
     gretl_matrix_print(v->Y, "Y");
-    #endif
+#endif
 }
 
-    /* construct the combined matrix of dependent variables for a VECM */
+/* construct the combined matrix of dependent variables for a VECM */
 
 static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
-   gretl_matrix *Y)
+                         gretl_matrix *Y)
 {
     const double *yi;
     int i, vi, s, t;
@@ -375,29 +375,29 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
             k++;
             s = 0;
             for (t=v->t1; t<=v->t2; t++) {
-            gretl_matrix_set(Y, s++, k, dset->Z[vi][t]); /* was t-1 */
+                gretl_matrix_set(Y, s++, k, dset->Z[vi][t]); /* was t-1 */
             }
         }
     }
 
-    #if VDEBUG
+#if VDEBUG
     gretl_matrix_print(Y, "VECM Y");
-    #endif
+#endif
 }
 
-    /* Split the user-supplied list, if need be, and construct the lists
-       of endogenous and (possibly) exogenous vars.  Note that
-       deterministic terms are handled separately, via option flags.
-    */
+/* Split the user-supplied list, if need be, and construct the lists
+   of endogenous and (possibly) exogenous vars.  Note that
+   deterministic terms are handled separately, via option flags.
+*/
 
 static int VAR_make_lists (GRETL_VAR *v, const int *list,
- const DATASET *dset)
+                           const DATASET *dset)
 {
     int err = 0;
 
-    #if VDEBUG
+#if VDEBUG
     printlist(list, "VAR_make_lists: incoming list");
-    #endif
+#endif
 
     if (gretl_list_has_separator(list)) {
         err = gretl_list_split_on_separator(list, &v->ylist, &v->xlist);
@@ -440,28 +440,28 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
         err = E_ARGS;
     }
 
-    #if VDEBUG
+#if VDEBUG
     printlist(v->ylist, "v->ylist");
     printlist(v->xlist, "v->xlist");
     printlist(v->rlist, "v->rlist");
-    #endif
+#endif
 
     return err;
 }
 
-    /* Starting from the given sample range, construct the feasible
-       estimation range for a VAR or VECM.  Flag an error if there
-       are missing values within the sample period.
-       Also see system_adjust_t1t2 in lib/src/system.c
-       (perhaps the two could be consolidated at some point)
-    */
+/* Starting from the given sample range, construct the feasible
+   estimation range for a VAR or VECM.  Flag an error if there
+   are missing values within the sample period.
+   Also see system_adjust_t1t2 in lib/src/system.c
+   (perhaps the two could be consolidated at some point)
+*/
 
 static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
 {
     int diff = (v->ci == VECM)? 1 : 0;
     int i, vi, t, err = 0;
 
-        /* advance t1 if needed */
+    /* advance t1 if needed */
 
     for (t=dset->t1; t<=dset->t2; t++) {
         int miss = 0, p, s = t - (v->order + diff);
@@ -511,7 +511,7 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
         }
     }
 
-        /* retard t2 if needed */
+    /* retard t2 if needed */
 
     for (t=dset->t2; t>=v->t1; t--) {
         int miss = 0;
@@ -549,7 +549,7 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
         }
     }
 
-        /* reject sample in case of internal missing values */
+    /* reject sample in case of internal missing values */
 
     for (t=v->t1; t<=v->t2 && !err; t++) {
 
@@ -579,19 +579,19 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
         }
     }
 
-    #if 0
-        fprintf(stderr, "VAR_set_sample: t1=%d, t2=%d\n", v->t1, v->t2);
-    #endif
+#if 0
+    fprintf(stderr, "VAR_set_sample: t1=%d, t2=%d\n", v->t1, v->t2);
+#endif
 
     return err;
 }
 
-    /* Account for deterministic terms and check for
-       non-negative degrees of freedom.
-    */
+/* Account for deterministic terms and check for
+   non-negative degrees of freedom.
+*/
 
 static int VAR_check_df_etc (GRETL_VAR *v, const DATASET *dset,
-   gretlopt opt)
+                             gretlopt opt)
 {
     int nl, err = 0;
 
@@ -670,15 +670,15 @@ static void set_to_NA (double *x, int n)
     }
 }
 
-    /* main function for constructing a new VAR struct, which
-       may be used for estimating a VAR, a VECM, or various
-       auxiliary tasks */
+/* main function for constructing a new VAR struct, which
+   may be used for estimating a VAR, a VECM, or various
+   auxiliary tasks */
 
 static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
-   const int *lags,
-   const int *list,
-   const DATASET *dset,
-   gretlopt opt, int *errp)
+                                 const int *lags,
+                                 const int *list,
+                                 const DATASET *dset,
+                                 gretlopt opt, int *errp)
 {
     GRETL_VAR *var;
     int ci, err = 0;
@@ -724,8 +724,8 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
         var->t2 = dset->t2;
     }
 
-        /* FIXME below: some of these allocations are redundant
-           for some uses of the VAR struct */
+    /* FIXME below: some of these allocations are redundant
+       for some uses of the VAR struct */
 
     if (!err) {
         err = VAR_set_sample(var, dset);
@@ -829,10 +829,10 @@ void gretl_VAR_free (GRETL_VAR *var)
 {
     if (var == NULL) return;
 
-    #if VDEBUG
+#if VDEBUG
     fprintf(stderr, "gretl_VAR_free: var = %p, refcount = %d\n",
-        (void *) var, var->refcount);
-    #endif
+            (void *) var, var->refcount);
+#endif
 
     var->refcount -= 1;
     if (var->refcount > 0) {
@@ -872,14 +872,14 @@ void gretl_VAR_free (GRETL_VAR *var)
 
     free(var);
 
-    #if VDEBUG
+#if VDEBUG
     fprintf(stderr, "gretl_VAR_free: done\n");
     fflush(stderr);
-    #endif
+#endif
 }
 
 static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
- int n_static)
+                                   int n_static)
 {
     gretl_matrix *se = NULL;
     double ftj, vti;
@@ -923,7 +923,7 @@ static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
         gretl_matrix_free(se);
     }
 
-    bailout:
+ bailout:
 
     if (err) {
         for (i=0; i<n; i++) {
@@ -936,7 +936,7 @@ static int VAR_add_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
     return err;
 }
 
-    /* determine start of dynamic portion of forecast */
+/* determine start of dynamic portion of forecast */
 
 static int VAR_get_tdyn (GRETL_VAR *var, int t1, int t2, gretlopt opt)
 {
@@ -958,8 +958,8 @@ static int VAR_get_tdyn (GRETL_VAR *var, int t1, int t2, gretlopt opt)
 
 static int
 VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
-  const DATASET *dset,
-  gretlopt opt)
+                  const DATASET *dset,
+                  gretlopt opt)
 {
     const MODEL *pmod;
     double fti, xti, xtid;
@@ -970,10 +970,10 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
 
     fcols = 2 * var->neqns;
 
-        /* rows = number of forecast periods; cols = 1 to hold forecast
-           for each variable, plus 1 to hold variance for each variable
-           if forecast is dynamic.
-        */
+    /* rows = number of forecast periods; cols = 1 to hold forecast
+       for each variable, plus 1 to hold variance for each variable
+       if forecast is dynamic.
+    */
 
     var->F = gretl_zero_matrix_new(nf, fcols);
     if (var->F == NULL) {
@@ -984,12 +984,12 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
         m = get_subperiod(t1, dset, NULL);
     }
 
-        /* start of dynamic portion of forecast? */
+    /* start of dynamic portion of forecast? */
     tdyn = VAR_get_tdyn(var, t1, t2, opt);
 
-    #if VDEBUG
+#if VDEBUG
     fprintf(stderr, "var fcast: t1=%d, tdyn=%d, t2=%d\n", t1, tdyn, t2);
-    #endif
+#endif
 
     for (t=t1, s=0; t<=t2; t++, s++) {
         int miss = 0;
@@ -1014,14 +1014,14 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
                     p = t - lag;
                     xtid = NADBL;
                     if (p < tdyn || s - lag < 0) {
-                /* use actual data if possible */
+                        /* use actual data if possible */
                         if (p < 0) {
                             xti = NADBL;
                         } else {
                             xti = dset->Z[vj][p];
                         }
                     } else {
-                /* prior forecast value preferred */
+                        /* prior forecast value preferred */
                         if (p >= 0) {
                             xtid = dset->Z[vj][p];
                         }
@@ -1084,16 +1084,16 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
         gretl_matrix_set_t2(var->F, t2);
     }
 
-    #if VDEBUG
+#if VDEBUG
     gretl_matrix_print(var->F, "var->F");
-    #endif
+#endif
 
     return 0;
 }
 
 static int
 VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
- const DATASET *dset, gretlopt opt)
+                   const DATASET *dset, gretlopt opt)
 {
     gretl_matrix *B = NULL;
     double s0 = 0, s1 = 1;
@@ -1118,7 +1118,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
         return E_ALLOC;
     }
 
-        /* start of dynamic portion of forecast? */
+    /* start of dynamic portion of forecast? */
     tdyn = VAR_get_tdyn(var, t1, t2, opt);
 
     if (nseas > 0) {
@@ -1143,7 +1143,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
             for (j=0; j<var->neqns; j++) {
                 vj = var->ylist[j+1];
                 for (k=1; k<=order; k++) {
-                /* FIXME gappy lags */
+                    /* FIXME gappy lags */
                     if (t - k < 0) {
                         fti = NADBL;
                         break;
@@ -1151,10 +1151,10 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
                     bij = gretl_matrix_get(B, i, col++);
                     xtjd = NADBL;
                     if (t < tdyn || s - k < 0) {
-                /* pre-forecast value */
+                        /* pre-forecast value */
                         xtj = dset->Z[vj][t-k];
                     } else {
-                /* prior forecast value preferred */
+                        /* prior forecast value preferred */
                         xtjd = dset->Z[vj][t-k];
                         xtj = gretl_matrix_get(var->F, s-k, j);
                     }
@@ -1200,14 +1200,14 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
             }
 
             if (jcode(var) == J_UNREST_TREND) {
-            /* unrestricted trend */
+                /* unrestricted trend */
                 bij = gretl_matrix_get(B, i, col++);
                 fti += bij * (t + 1);
             } else if (jcode(var) == J_REST_CONST) {
-            /* restricted constant */
+                /* restricted constant */
                 fti += gretl_matrix_get(B, i, col++);
             } else if (jcode(var) == J_REST_TREND) {
-            /* restricted trend */
+                /* restricted trend */
                 bij = gretl_matrix_get(B, i, col++);
                 fti += bij * t;
             }
@@ -1216,7 +1216,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
             if (var->rlist != NULL) {
                 for (j=0; j<var->rlist[0]; j++) {
                     vj = var->rlist[j+1];
-                xtj = dset->Z[vj][t-1]; /* ?? */
+                    xtj = dset->Z[vj][t-1]; /* ?? */
                     if (na(xtj)) {
                         fti = NADBL;
                     } else {
@@ -1226,8 +1226,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
                 }
             }
 
-            set_fcast:
-
+        set_fcast:
             gretl_matrix_set(var->F, s, i, fti);
         }
 
@@ -1243,17 +1242,17 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
     gretl_matrix_set_t1(var->F, t1);
     gretl_matrix_set_t2(var->F, t2);
 
-    #if VDEBUG
+#if VDEBUG
     gretl_matrix_print(var->F, "var->F");
-    #endif
+#endif
 
     return 0;
 }
 
 const gretl_matrix *
 gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
- DATASET *dset, gretlopt opt,
- int *err)
+                               DATASET *dset, gretlopt opt,
+                               int *err)
 {
     if (var->F != NULL) {
         /* there's a forecast attached, but it may not be what we want */
@@ -1292,8 +1291,8 @@ static void VAR_dw_rho (MODEL *pmod)
     pmod->rho = ut1 / u11;
 }
 
-    /* set basic per-model statistics after estimation has been
-       done by matrix methods */
+/* set basic per-model statistics after estimation has been
+   done by matrix methods */
 
 int set_VAR_model_stats (GRETL_VAR *var, int i)
 {
@@ -1302,7 +1301,7 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     double u, x, SSR = 0, TSS = 0;
     int t;
 
-        /* get the appropriate column of var->Y as a plain array */
+    /* get the appropriate column of var->Y as a plain array */
     y = var->Y->val + i * var->T;
 
     pmod->ybar = gretl_mean(0, var->T - 1, y);
@@ -1318,11 +1317,11 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
     }
 
     pmod->ess = SSR;
-    #if VAR_SE_DFCORR
+#if VAR_SE_DFCORR
     pmod->sigma = sqrt(SSR / pmod->dfd);
-    #else
+#else
     pmod->sigma = sqrt(SSR / var->T);
-    #endif
+#endif
     pmod->tss = TSS;
     pmod->rsq = 1.0 - SSR / TSS;
     pmod->adjrsq = 1.0 - (SSR / (pmod->dfd)) / (TSS / (pmod->nobs - 1));
@@ -1336,8 +1335,8 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
 }
 
 int gretl_VAR_do_error_decomp (const gretl_matrix *S,
- gretl_matrix *C,
- const gretl_matrix *ord)
+                               gretl_matrix *C,
+                               const gretl_matrix *ord)
 {
     int g = gretl_matrix_rows(S);
     gretl_matrix *tmp = NULL;
@@ -1345,7 +1344,7 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
     int i, j, r, c;
     int err = 0;
 
-        /* copy cross-equation covariance matrix */
+    /* copy cross-equation covariance matrix */
     tmp = gretl_matrix_copy(S);
     if (tmp == NULL) {
         err = E_ALLOC;
@@ -1362,7 +1361,7 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
         }
     }
 
-        /* lower-triangularize and decompose */
+    /* lower-triangularize and decompose */
     if (!err) {
         for (i=0; i<g-1; i++) {
             for (j=i+1; j<g; j++) {
@@ -1372,7 +1371,7 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
         err = gretl_matrix_cholesky_decomp(tmp);
     }
 
-        /* write the decomposition (lower triangle) into the C matrix */
+    /* write the decomposition (lower triangle) into the C matrix */
     if (!err) {
         for (i=0; i<g; i++) {
             r = (ord != NULL)? ord->val[i] : i;
@@ -1402,7 +1401,7 @@ gretl_VAR_get_residual_matrix (const GRETL_VAR *var)
     return var->E;
 }
 
-    #define samesize(p,q) (p->rows == q->rows && p->cols == q->cols)
+#define samesize(p,q) (p->rows == q->rows && p->cols == q->cols)
 
 gretl_matrix *
 gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
@@ -1423,7 +1422,7 @@ gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
 
 gretl_matrix *
 gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
-  int *err)
+                          int *err)
 {
     int h = default_VAR_horizon(dset);
     int ar, n = var->neqns;
@@ -1454,7 +1453,7 @@ gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
         goto bailout;
     }
 
-        /* compose first row of VMA = vec(I(n))' */
+    /* compose first row of VMA = vec(I(n))' */
     for (i=0; i<n2; i+=n+1) {
         gretl_matrix_set(VMA, 0, i, 1.0);
     }
@@ -1475,7 +1474,7 @@ gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
         }
     }
 
-    bailout:
+ bailout:
 
     gretl_matrix_free(Tmp1);
     gretl_matrix_free(Tmp2);
@@ -1607,7 +1606,7 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
         return NULL;
     }
 
-        /* rearrange @S */
+    /* rearrange @S */
     for (i=0; i<var->neqns; i++) {
         r = var->ord->val[i];
         for (j=0; j<var->neqns; j++) {
@@ -1617,10 +1616,10 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
         }
     }
 
-        /* decompose rearranged @S */
+    /* decompose rearranged @S */
     gretl_matrix_cholesky_decomp(S);
 
-        /* C = rearranged decomposed S */
+    /* C = rearranged decomposed S */
     for (i=0; i<var->neqns; i++) {
         r = var->ord->val[i];
         for (j=0; j<var->neqns; j++) {
@@ -1636,8 +1635,8 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
 }
 
 static void copy_north_west (gretl_matrix *targ,
-   gretl_matrix *src,
-   int add)
+                             gretl_matrix *src,
+                             int add)
 {
     int i, j, k = src->cols;
     double xij;
@@ -1659,7 +1658,7 @@ static void copy_north_west (gretl_matrix *targ,
 
 static gretl_matrix *
 gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
- int periods, int *err)
+                               int periods, int *err)
 {
     int rows = var->neqns * effective_order(var);
     gretl_matrix *rtmp = NULL;
@@ -1716,7 +1715,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
         gretl_matrix_set(resp, t, 0, x);
     }
 
-    bailout:
+ bailout:
 
     gretl_matrix_free(rtmp);
     gretl_matrix_free(ctmp);
@@ -1733,41 +1732,41 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     return resp;
 }
 
-    /**
-     * gretl_VAR_get_impulse_response:
-     * @var: pointer to VAR struct.
-     * @targ: index of the target or response variable.
-     * @shock: index of the source or shock variable.
-     * @periods: number of periods over which to compute the response.
-     * @alpha: determines confidence level for bootstrap interval.
-     * @dset: dataset struct.
-     * @err: location to receive error code.
-     *
-     * Computes the response of @targ to a perturbation of @shock
-     * in the context of @var: @targ and @shock are zero-based indices
-     * relative to the structure of @var.  For example if @targ = 0 and
-     * @shock = 1, we compute the response of the dependent variable in
-     * the first VAR equation to a perturbation of the variable that
-     * appears as dependent in the second VAR equation.
-     *
-     * If @alpha is zero, the response matrix returned is a column vector
-     * of length @periods, giving the point estimate of the response
-     * function.  Otherwise, the response matrix returned has
-     * three columns, containing the point estimate, the @alpha / 2
-     * quantile and the 1 - @alpha / 2 quantile, where the quantiles
-     * are based on 999 bootstrap replications, with resampling of the
-     * original residuals with replacement.
-     *
-     * Returns: matrix containing the estimated impulse responses,
-     * with or without a confidence interval.
-     */
+/**
+ * gretl_VAR_get_impulse_response:
+ * @var: pointer to VAR struct.
+ * @targ: index of the target or response variable.
+ * @shock: index of the source or shock variable.
+ * @periods: number of periods over which to compute the response.
+ * @alpha: determines confidence level for bootstrap interval.
+ * @dset: dataset struct.
+ * @err: location to receive error code.
+ *
+ * Computes the response of @targ to a perturbation of @shock
+ * in the context of @var: @targ and @shock are zero-based indices
+ * relative to the structure of @var.  For example if @targ = 0 and
+ * @shock = 1, we compute the response of the dependent variable in
+ * the first VAR equation to a perturbation of the variable that
+ * appears as dependent in the second VAR equation.
+ *
+ * If @alpha is zero, the response matrix returned is a column vector
+ * of length @periods, giving the point estimate of the response
+ * function.  Otherwise, the response matrix returned has
+ * three columns, containing the point estimate, the @alpha / 2
+ * quantile and the 1 - @alpha / 2 quantile, where the quantiles
+ * are based on 999 bootstrap replications, with resampling of the
+ * original residuals with replacement.
+ *
+ * Returns: matrix containing the estimated impulse responses,
+ * with or without a confidence interval.
+ */
 
 gretl_matrix *
 gretl_VAR_get_impulse_response (GRETL_VAR *var,
-    int targ, int shock,
-    int periods, double alpha,
-    const DATASET *dset,
-    int *err)
+                                int targ, int shock,
+                                int periods, double alpha,
+                                const DATASET *dset,
+                                int *err)
 {
     gretl_matrix *point = NULL;
     gretl_matrix *full = NULL;
@@ -1795,7 +1794,7 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
         ret = point;
     } else if (point != NULL) {
         full = irf_bootstrap(var, targ, shock, periods,
-           alpha, dset, err);
+                             alpha, dset, err);
         if (full != NULL) {
             double p;
 
@@ -1845,7 +1844,7 @@ gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
             /* calculate further variances */
             gretl_matrix_copy_values(vtmp, vt);
             gretl_matrix_qform(var->A, GRETL_MOD_NONE,
-             vtmp, vt, GRETL_MOD_NONE);
+                               vtmp, vt, GRETL_MOD_NONE);
             copy_north_west(vt, var->S, 1);
         }
         for (i=0; i<var->neqns; i++) {
@@ -1862,8 +1861,8 @@ gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
 
 gretl_matrix *
 gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
-    int targ, int periods,
-    int *err)
+                            int targ, int periods,
+                            int *err)
 {
     int n = var->neqns;
     int k = n * effective_order(var);
@@ -1896,10 +1895,10 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
     }
 
     B = gretl_matrix_block_new(&idx, n, n,
-     &cic, n, n,
-     &vt,  k, k,
-     &vtmp, k, k,
-     NULL);
+                               &cic, n, n,
+                               &vt,  k, k,
+                               &vtmp, k, k,
+                               NULL);
     if (B == NULL) {
         *err = E_ALLOC;
         goto bailout;
@@ -1924,15 +1923,15 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
 
         for (t=0; t<periods && !*err; t++) {
             if (t == 0) {
-            /* calculate initial variances */
+                /* calculate initial variances */
                 *err = gretl_matrix_qform(C, GRETL_MOD_NONE,
-                  idx, cic, GRETL_MOD_NONE);
+                                          idx, cic, GRETL_MOD_NONE);
                 copy_north_west(vt, cic, 0);
             } else {
-            /* calculate further variances */
+                /* calculate further variances */
                 gretl_matrix_copy_values(vtmp, vt);
                 *err = gretl_matrix_qform(var->A, GRETL_MOD_NONE,
-                  vtmp, vt, GRETL_MOD_NONE);
+                                          vtmp, vt, GRETL_MOD_NONE);
                 copy_north_west(vt, cic, 1);
             }
             if (!*err) {
@@ -1957,7 +1956,7 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
         gretl_matrix_set(vd, t, var->neqns, sqrt(vtot));
     }
 
-    bailout:
+ bailout:
 
     gretl_matrix_block_destroy(B);
 
@@ -1975,10 +1974,10 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
 
 gretl_matrix *
 gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
- int targ, int shock,
- int horizon,
- const DATASET *dset,
- int *err)
+                           int targ, int shock,
+                           int horizon,
+                           const DATASET *dset,
+                           int *err)
 {
     gretl_matrix *vd, *V;
     double vjk;
@@ -2024,12 +2023,12 @@ gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
         }
     }
 
-        /* If @shock is specific, not all, we now proceed to carve
-           out the columns of @V that are actually wanted. This is
-           not as efficient as it might be -- we're computing more
-           than we need above -- but it's simple and will do for
-           the present.
-        */
+    /* If @shock is specific, not all, we now proceed to carve
+       out the columns of @V that are actually wanted. This is
+       not as efficient as it might be -- we're computing more
+       than we need above -- but it's simple and will do for
+       the present.
+    */
 
     if (!*err && shock >= 0) {
         gretl_matrix *V2 = NULL;
@@ -2074,7 +2073,7 @@ gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
 
 gretl_matrix *
 gretl_VAR_get_full_FEVD_matrix (const GRETL_VAR *var, const DATASET *dset,
-    int *err)
+                                int *err)
 {
     return gretl_VAR_get_FEVD_matrix(var, -1, -1, -1, dset, err);
 }
@@ -2124,12 +2123,12 @@ static int VAR_add_roots (GRETL_VAR *var)
         return E_DATA;
     }
 
-        /* save eigenvalues of companion form matrix */
+    /* save eigenvalues of companion form matrix */
     var->L = gretl_general_matrix_eigenvals(var->A, &err);
-    #if 0
-        gretl_matrix_print(var->A, "Companion form matrix");
-        gretl_matrix_print(var->L, "Eigenvalues");
-    #endif
+#if 0
+    gretl_matrix_print(var->A, "Companion form matrix");
+    gretl_matrix_print(var->L, "Eigenvalues");
+#endif
 
     if (err) {
         gretl_matrix_free(var->L);
@@ -2155,10 +2154,10 @@ const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var, int *err)
     return var->L;
 }
 
-    /* used in context of LR tests: see vartest.c */
+/* used in context of LR tests: see vartest.c */
 
 double gretl_VAR_ldet (GRETL_VAR *var, const gretl_matrix *E,
- int *err)
+                       int *err)
 {
     gretl_matrix *S = NULL;
     double ldet = NADBL;
@@ -2169,8 +2168,8 @@ double gretl_VAR_ldet (GRETL_VAR *var, const gretl_matrix *E,
         *err = E_ALLOC;
     } else {
         gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
-          E, GRETL_MOD_NONE,
-          S, GRETL_MOD_NONE);
+                                  E, GRETL_MOD_NONE,
+                                  S, GRETL_MOD_NONE);
         gretl_matrix_divide_by_scalar(S, var->T);
         ldet = gretl_vcv_log_determinant(S, err);
         gretl_matrix_free(S);
@@ -2179,8 +2178,8 @@ double gretl_VAR_ldet (GRETL_VAR *var, const gretl_matrix *E,
     return ldet;
 }
 
-    /* identify columns of the VAR X matrix that contain the final
-       lag of an endogenous variable */
+/* identify columns of the VAR X matrix that contain the final
+   lag of an endogenous variable */
 
 static int omit_column (GRETL_VAR *var, int nl, int j)
 {
@@ -2191,7 +2190,7 @@ static int omit_column (GRETL_VAR *var, int nl, int j)
     }
 }
 
-    /* make and record residuals for LR test on last lag */
+/* make and record residuals for LR test on last lag */
 
 static gretl_matrix *VAR_short_residuals (GRETL_VAR *var, int *err)
 {
@@ -2199,7 +2198,7 @@ static gretl_matrix *VAR_short_residuals (GRETL_VAR *var, int *err)
     gretl_matrix *B = NULL;
     gretl_matrix *E = NULL;
     double x;
-        /* note: removing one lag from each equation */
+    /* note: removing one lag from each equation */
     int g = var->ncoeff - var->neqns;
     int j, t, k, nl;
 
@@ -2227,10 +2226,10 @@ static gretl_matrix *VAR_short_residuals (GRETL_VAR *var, int *err)
         k++;
     }
 
-        /* put residuals from "short" estimation into E */
+    /* put residuals from "short" estimation into E */
     *err = gretl_matrix_multi_ols(var->Y, X, B, E, NULL);
 
-    bailout:
+ bailout:
 
     gretl_matrix_free(X);
     gretl_matrix_free(B);
@@ -2259,8 +2258,8 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
 
     if (!err) {
         gretl_matrix_multiply_mod(var->E, GRETL_MOD_TRANSPOSE,
-          var->E, GRETL_MOD_NONE,
-          var->S, GRETL_MOD_NONE);
+                                  var->E, GRETL_MOD_NONE,
+                                  var->S, GRETL_MOD_NONE);
         /* for computing log-determinant, don't apply df
            correction (?) */
         gretl_matrix_divide_by_scalar(var->S, var->T);
@@ -2269,7 +2268,7 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
     if (!err) {
         var->ldet = gretl_vcv_log_determinant(var->S, &err);
 
-    #if VAR_S_DFCORR
+#if VAR_S_DFCORR
         /* Hmm, should we df-adjust var->S here?  Note that this
            will affect the impulse response output */
         if (!err) {
@@ -2277,7 +2276,7 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
 
             gretl_matrix_multiply_by_scalar(var->S, cfac);
         }
-    #endif
+#endif
     }
 
     if (!err) {
@@ -2307,7 +2306,7 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
 }
 
 void gretl_VAR_param_names (GRETL_VAR *v, char **params,
-    const DATASET *dset)
+                            const DATASET *dset)
 {
     char lagstr[12];
     int i, j, n, k = 0;
@@ -2328,7 +2327,7 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
                 n += 2;
             }
             strncat(params[k], dset->varname[v->ylist[i]],
-                VNAMELEN - n - 1);
+                    VNAMELEN - n - 1);
             strncat(params[k], lagstr, n);
             k++;
         }
@@ -2359,7 +2358,7 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
     }
 }
 
-    /* public because called from irfboot.c */
+/* public because called from irfboot.c */
 
 void VAR_write_A_matrix (GRETL_VAR *v)
 {
@@ -2386,9 +2385,9 @@ void VAR_write_A_matrix (GRETL_VAR *v)
         }
     }
 
-    #if 0
-        gretl_matrix_print(v->A, "v->A");
-    #endif
+#if 0
+    gretl_matrix_print(v->A, "v->A");
+#endif
 }
 
 static int VAR_depvar_name (GRETL_VAR *var, int i, const char *yname)
@@ -2408,12 +2407,12 @@ static int VAR_depvar_name (GRETL_VAR *var, int i, const char *yname)
     return (pmod->depvar == NULL)? E_ALLOC: 0;
 }
 
-    /* transcribe the per-equation output from a VAR or VECM into
-       MODEL structs, if wanted */
+/* transcribe the per-equation output from a VAR or VECM into
+   MODEL structs, if wanted */
 
 int transcribe_VAR_models (GRETL_VAR *var,
- const DATASET *dset,
- const gretl_matrix *XTX)
+                           const DATASET *dset,
+                           const gretl_matrix *XTX)
 {
     MODEL *pmod;
     char **params = NULL;
@@ -2519,34 +2518,34 @@ static int *lags_from_laglist (const int *llist, int *err)
     return lags;
 }
 
-    /**
-     * gretl_VAR:
-     * @order: lag order for the VAR.
-     * @laglist: specific list of lags, or NULL.
-     * @list: specification for the first model in the set.
-     * @dset: dataset struct.
-     * @opt: if includes %OPT_R, use robust VCV;
-     *       if includes %OPT_H, use HAC VCV;
-     *       if includes %OPT_I, print impulse responses;
-     *       if includes %OPT_F, print forecast variance decompositions;
-     *       if includes %OPT_D, add seasonal dummies;
-     *       if includes %OPT_N, do not include a constant.
-     *       if includes %OPT_Q, do not show individual regressions.
-     *       if includes %OPT_T, include a linear trend.
-     *       if includes %OPT_L, test for optimal lag length (only).
-     *       if includes %OPT_S, silent (no printing).
-     * @prn: gretl printing struct.
-     * @err: location to receive error code.
-     *
-     * Estimate a vector auto-regression (VAR), print and save
-     * the results.
-     *
-     * Returns: pointer to VAR struct, which may be %NULL on error.
-     */
+/**
+ * gretl_VAR:
+ * @order: lag order for the VAR.
+ * @laglist: specific list of lags, or NULL.
+ * @list: specification for the first model in the set.
+ * @dset: dataset struct.
+ * @opt: if includes %OPT_R, use robust VCV;
+ *       if includes %OPT_H, use HAC VCV;
+ *       if includes %OPT_I, print impulse responses;
+ *       if includes %OPT_F, print forecast variance decompositions;
+ *       if includes %OPT_D, add seasonal dummies;
+ *       if includes %OPT_N, do not include a constant.
+ *       if includes %OPT_Q, do not show individual regressions.
+ *       if includes %OPT_T, include a linear trend.
+ *       if includes %OPT_L, test for optimal lag length (only).
+ *       if includes %OPT_S, silent (no printing).
+ * @prn: gretl printing struct.
+ * @err: location to receive error code.
+ *
+ * Estimate a vector auto-regression (VAR), print and save
+ * the results.
+ *
+ * Returns: pointer to VAR struct, which may be %NULL on error.
+ */
 
 GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
-  const DATASET *dset, gretlopt opt,
-  PRN *prn, int *err)
+                      const DATASET *dset, gretlopt opt,
+                      PRN *prn, int *err)
 {
     GRETL_VAR *var = NULL;
     int code = (opt & OPT_L)? VAR_LAGSEL : VAR_ESTIMATE;
@@ -2559,23 +2558,23 @@ GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
         }
     }
 
-        /* allocation and initial set-up */
+    /* allocation and initial set-up */
     var = gretl_VAR_new(code, order, 0, lags, list, dset,
-        opt, err);
+                        opt, err);
     if (var == NULL) {
         return NULL;
     }
 
-        /* run the regressions */
+    /* run the regressions */
     if (getenv("VAR_USE_QR") != NULL) {
         *err = gretl_matrix_QR_ols(var->Y, var->X,
-         var->B, var->E,
-         &var->XTX, NULL);
+                                   var->B, var->E,
+                                   &var->XTX, NULL);
     } else {
         /* use Cholesky or QR as needed */
         *err = gretl_matrix_multi_ols(var->Y, var->X,
-          var->B, var->E,
-          &var->XTX);
+                                      var->B, var->E,
+                                      &var->XTX);
     }
 
     if (!*err) {
@@ -2591,7 +2590,7 @@ GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
 
             if (!*err) {
                 VAR_write_A_matrix(var);
-            /* note: the following also sets std. errors */
+                /* note: the following also sets std. errors */
                 *err = VAR_wald_omit_tests(var);
             }
 
@@ -2651,17 +2650,17 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
     pputc(prn, '\n');
 }
 
-    /* called from gretl_restriction_finalize() if the target
-       is a VECM */
+/* called from gretl_restriction_finalize() if the target
+   is a VECM */
 
 int gretl_VECM_test (GRETL_VAR *vecm,
-   gretl_restriction *rset,
-   const DATASET *dset,
-   gretlopt opt,
-   PRN *prn)
+                     gretl_restriction *rset,
+                     const DATASET *dset,
+                     gretlopt opt,
+                     PRN *prn)
 {
     int (*jfun) (GRETL_VAR *, gretl_restriction *,
-       const DATASET *, gretlopt opt, PRN *);
+                 const DATASET *, gretlopt opt, PRN *);
     int err = 0;
 
     if (vecm->jinfo == NULL || rset == NULL) {
@@ -2727,14 +2726,14 @@ static int var_add_full_vcv (GRETL_VAR *var)
     return err;
 }
 
-    /* called from gretl_restriction_finalize() if the target
-       is a plain VAR */
+/* called from gretl_restriction_finalize() if the target
+   is a plain VAR */
 
 int gretl_VAR_test (GRETL_VAR *var,
-    gretl_restriction *rset,
-    const DATASET *dset,
-    gretlopt opt,
-    PRN *prn)
+                    gretl_restriction *rset,
+                    const DATASET *dset,
+                    gretlopt opt,
+                    PRN *prn)
 {
     int err = 0;
 
@@ -2758,7 +2757,7 @@ int gretl_VAR_test (GRETL_VAR *var,
         /* pass var->B as a column vector */
         gretl_matrix_reuse(var->B, r*c, 1);
         err = multi_eqn_wald_test(var->B, var->V, R, q, dfu,
-          opt, prn);
+                                  opt, prn);
         gretl_matrix_reuse(var->B, r, c);
     }
 
@@ -2767,7 +2766,7 @@ int gretl_VAR_test (GRETL_VAR *var,
 
 static int
 johansen_test_complete (GRETL_VAR *jvar, const DATASET *dset,
-    gretlopt opt, PRN *prn)
+                        gretlopt opt, PRN *prn)
 {
     int (*jfun) (GRETL_VAR *, const DATASET *, gretlopt, PRN *);
     int err = 0;
@@ -2787,10 +2786,10 @@ johansen_test_complete (GRETL_VAR *jvar, const DATASET *dset,
 
 static int
 johansen_estimate_complete (GRETL_VAR *jvar, gretl_restriction *rset,
-    const DATASET *dset, PRN *prn)
+                            const DATASET *dset, PRN *prn)
 {
     int (*jfun) (GRETL_VAR *, gretl_restriction *,
-       const DATASET *, PRN *);
+                 const DATASET *, PRN *);
     int err = 0;
 
     gretl_error_clear();
@@ -2806,8 +2805,8 @@ johansen_estimate_complete (GRETL_VAR *jvar, gretl_restriction *rset,
     return err;
 }
 
-    /* N.B. we allow for the possibility that this allocation has
-       already been done */
+/* N.B. we allow for the possibility that this allocation has
+   already been done */
 
 static int allocate_johansen_extra_matrices (GRETL_VAR *v)
 {
@@ -2815,71 +2814,71 @@ static int allocate_johansen_extra_matrices (GRETL_VAR *v)
         v->jinfo->S00 != NULL &&
         v->jinfo->YY != NULL) {
         return 0;
-} else {
-    int xc = v->X == NULL ? 0 : v->X->cols;
-    int p0 = v->neqns;
-    int p1 = p0 + n_restricted_terms(v);
-    int p = p0 + p1;
+    } else {
+        int xc = v->X == NULL ? 0 : v->X->cols;
+        int p0 = v->neqns;
+        int p1 = p0 + n_restricted_terms(v);
+        int p = p0 + p1;
 
-    clear_gretl_matrix_err();
+        clear_gretl_matrix_err();
 
-    if (v->jinfo->R0 == NULL) {
-        v->jinfo->R0 = gretl_matrix_alloc(v->T, p0);
-        v->jinfo->R1 = gretl_matrix_alloc(v->T, p1);
+        if (v->jinfo->R0 == NULL) {
+            v->jinfo->R0 = gretl_matrix_alloc(v->T, p0);
+            v->jinfo->R1 = gretl_matrix_alloc(v->T, p1);
+        }
+
+        if (v->jinfo->S00 == NULL) {
+            v->jinfo->S00 = gretl_matrix_alloc(p0, p0);
+            v->jinfo->S11 = gretl_matrix_alloc(p1, p1);
+            v->jinfo->S01 = gretl_matrix_alloc(p0, p1);
+        }
+
+        if (xc > 0 && v->ncoeff > 0 && v->jinfo->YY == NULL) {
+            v->jinfo->YY = gretl_matrix_alloc(v->T, p);
+            v->jinfo->RR = gretl_matrix_alloc(v->T, p);
+            v->jinfo->BB = gretl_matrix_alloc(v->X->cols, p);
+        }
+
+        return get_gretl_matrix_err();
     }
-
-    if (v->jinfo->S00 == NULL) {
-        v->jinfo->S00 = gretl_matrix_alloc(p0, p0);
-        v->jinfo->S11 = gretl_matrix_alloc(p1, p1);
-        v->jinfo->S01 = gretl_matrix_alloc(p0, p1);
-    }
-
-    if (xc > 0 && v->ncoeff > 0 && v->jinfo->YY == NULL) {
-        v->jinfo->YY = gretl_matrix_alloc(v->T, p);
-        v->jinfo->RR = gretl_matrix_alloc(v->T, p);
-        v->jinfo->BB = gretl_matrix_alloc(v->X->cols, p);
-    }
-
-    return get_gretl_matrix_err();
-}
 }
 
 static void johansen_fill_S_matrices (GRETL_VAR *v)
 {
     gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
-      v->jinfo->R0, GRETL_MOD_NONE,
-      v->jinfo->S00, GRETL_MOD_NONE);
+                              v->jinfo->R0, GRETL_MOD_NONE,
+                              v->jinfo->S00, GRETL_MOD_NONE);
     gretl_matrix_multiply_mod(v->jinfo->R1, GRETL_MOD_TRANSPOSE,
-      v->jinfo->R1, GRETL_MOD_NONE,
-      v->jinfo->S11, GRETL_MOD_NONE);
+                              v->jinfo->R1, GRETL_MOD_NONE,
+                              v->jinfo->S11, GRETL_MOD_NONE);
     gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
-      v->jinfo->R1, GRETL_MOD_NONE,
-      v->jinfo->S01, GRETL_MOD_NONE);
+                              v->jinfo->R1, GRETL_MOD_NONE,
+                              v->jinfo->S01, GRETL_MOD_NONE);
 
     gretl_matrix_divide_by_scalar(v->jinfo->S00, v->T);
     gretl_matrix_divide_by_scalar(v->jinfo->S11, v->T);
     gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
 }
 
-    /* We come here if there are no regressors at stage 1 of
-       the Johansen procedure. This happens if the associated
-       VAR is of order 1 (becomes order 0 on differencing)
-       and there are no unrestricted exogenous variables.
-       The residuals are then just the values of the
-       variables themselves.
-    */
+/* We come here if there are no regressors at stage 1 of
+   the Johansen procedure. This happens if the associated
+   VAR is of order 1 (becomes order 0 on differencing)
+   and there are no unrestricted exogenous variables.
+   The residuals are then just the values of the
+   variables themselves.
+*/
 
 static int johansen_degenerate_stage_1 (GRETL_VAR *v,
-    const DATASET *dset)
+                                        const DATASET *dset)
 {
     const double **Z = (const double **) dset->Z;
     gretl_matrix *R0 = v->jinfo->R0;
     gretl_matrix *R1 = v->jinfo->R1;
     int i, vi, s, t, j = 0;
 
-    #if 0
-        fprintf(stderr, "degenerate stage 1\n");
-    #endif
+#if 0
+    fprintf(stderr, "degenerate stage 1\n");
+#endif
 
     for (i=0; i<v->neqns; i++) {
         vi = v->ylist[i+1];
@@ -2906,7 +2905,7 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
             vi = v->rlist[i+1];
             s = 0;
             for (t=v->t1; t<=v->t2; t++) {
-            gretl_matrix_set(R1, s++, j, Z[vi][t]); /* was t-1 */
+                gretl_matrix_set(R1, s++, j, Z[vi][t]); /* was t-1 */
             }
             j++;
         }
@@ -2918,7 +2917,7 @@ static int johansen_degenerate_stage_1 (GRETL_VAR *v,
 }
 
 static void print_stage_1_coeffs (GRETL_VAR *v, gretl_matrix *B,
-  PRN *prn)
+                                  PRN *prn)
 {
     gretl_matrix tmp;
 
@@ -2929,16 +2928,16 @@ static void print_stage_1_coeffs (GRETL_VAR *v, gretl_matrix *B,
     tmp.val = B->val;
 
     gretl_matrix_print_to_prn(&tmp, "\nCoefficients, VAR in differences",
-      prn);
+                              prn);
 
     tmp.cols += n_restricted_terms(v);
     tmp.val += v->neqns * tmp.rows;
 
     gretl_matrix_print_to_prn(&tmp, "Coefficients, eqns in lagged levels",
-      prn);
+                              prn);
 }
 
-    #define JVAR_USE_SVD 1
+#define JVAR_USE_SVD 1
 
 static void johansen_partition_residuals (GRETL_VAR *v)
 {
@@ -2950,15 +2949,15 @@ static void johansen_partition_residuals (GRETL_VAR *v)
     memcpy(v->jinfo->R1->val, R->val + n, m * sizeof(double));
 }
 
-    /* For Johansen analysis: estimate VAR in differences along with the
-       other auxiliary regressions required to compute the relevant
-       matrices of residuals, for concentration of the log-likelihood.
-       Then compute S00, S11, S01. See for example James Hamilton,
-       "Time Series Analysis", section 20.2.
-    */
+/* For Johansen analysis: estimate VAR in differences along with the
+   other auxiliary regressions required to compute the relevant
+   matrices of residuals, for concentration of the log-likelihood.
+   Then compute S00, S11, S01. See for example James Hamilton,
+   "Time Series Analysis", section 20.2.
+*/
 
 int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
-  gretlopt opt, PRN *prn)
+                      gretlopt opt, PRN *prn)
 {
     int err;
 
@@ -2968,9 +2967,9 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
         return err;
     }
 
-    #if 0
-        fprintf(stderr, "johansen_stage_1: ncoeff = %d\n", v->ncoeff);
-    #endif
+#if 0
+    fprintf(stderr, "johansen_stage_1: ncoeff = %d\n", v->ncoeff);
+#endif
 
     if (v->ncoeff == 0 || v->jinfo->BB == NULL) {
         /* nothing to concentrate out */
@@ -2985,11 +2984,11 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 
         VECM_fill_Y(v, dset, Y);
 
-    #if JVAR_USE_SVD
+#if JVAR_USE_SVD
         err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);
-    #else
+#else
         err = gretl_matrix_multi_ols(Y, v->X, B, R, NULL);
-    #endif
+#endif
 
         if (!err) {
             if (opt & OPT_V) {
@@ -3085,8 +3084,8 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 }
 
 static void coint_test_header (const GRETL_VAR *v,
- const DATASET *dset,
- PRN *prn)
+                               const DATASET *dset,
+                               PRN *prn)
 {
     char stobs[OBSLEN], endobs[OBSLEN];
 
@@ -3094,8 +3093,8 @@ static void coint_test_header (const GRETL_VAR *v,
     pprintf(prn, "%s = %d\n", _("Number of equations"), v->neqns);
     pprintf(prn, "%s = %d\n", _("Lag order"), v->order + 1);
     pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
-        ntolabel(stobs, v->t1, dset),
-        ntolabel(endobs, v->t2, dset), v->T);
+            ntolabel(stobs, v->t1, dset),
+            ntolabel(endobs, v->t2, dset), v->T);
 
 }
 
@@ -3116,15 +3115,15 @@ static int jvar_check_allocation (GRETL_VAR *v, const DATASET *dset)
     return err;
 }
 
-    /* Driver function for Johansen analysis.  An appropriately
-       initialized "jvar" must have been set up already.
-    */
+/* Driver function for Johansen analysis.  An appropriately
+   initialized "jvar" must have been set up already.
+*/
 
 static int
 johansen_driver (GRETL_VAR *jvar,
-   gretl_restriction *rset,
-   const DATASET *dset,
-   gretlopt opt, PRN *prn)
+                 gretl_restriction *rset,
+                 const DATASET *dset,
+                 gretlopt opt, PRN *prn)
 {
     int r = jrank(jvar);
 
@@ -3151,7 +3150,7 @@ johansen_driver (GRETL_VAR *jvar,
         /* call the johansen plugin to finish the job */
         if (r > 0) {
             jvar->err = johansen_estimate_complete(jvar, rset, dset,
-             prn);
+                                                   prn);
         } else {
             jvar->err = johansen_test_complete(jvar, dset, opt, prn);
         }
@@ -3162,15 +3161,15 @@ johansen_driver (GRETL_VAR *jvar,
 
 static GRETL_VAR *
 johansen_wrapper (int code, int order, int rank,
-  const int *lags, const int *list,
-  gretl_restriction *rset,
-  const DATASET *dset,
-  gretlopt opt, PRN *prn, int *err)
+                  const int *lags, const int *list,
+                  gretl_restriction *rset,
+                  const DATASET *dset,
+                  gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *jvar;
 
     jvar = gretl_VAR_new(code, order - 1, rank, lags, list, dset,
-       opt, err);
+                         opt, err);
     if (jvar != NULL && !jvar->err) {
         *err = jvar->err = johansen_driver(jvar, rset, dset, opt, prn);
     }
@@ -3178,64 +3177,64 @@ johansen_wrapper (int code, int order, int rank,
     return jvar;
 }
 
-    /**
-     * johansen_test:
-     * @order: lag order for test.
-     * @list: list of variables to test for cointegration.
-     * @dset: dataset struct.
-     * @opt: %OPT_A: include constant plus restricted trend; %OPT_D:
-     * include centered seasonals; %OPT_N: no constant; %OPT_R:
-     * restricted constant; %OPT_T: constant and unrestricted trend
-     * (note: default "case" is unrestricted constant).
-     * %OPT_V: produce verbose results.
-     * @prn: gretl printing struct.
-     *
-     * Carries out the Johansen test for cointegration.
-     *
-     * Returns: pointer to struct containing information on
-     * the test.
-     */
+/**
+ * johansen_test:
+ * @order: lag order for test.
+ * @list: list of variables to test for cointegration.
+ * @dset: dataset struct.
+ * @opt: %OPT_A: include constant plus restricted trend; %OPT_D:
+ * include centered seasonals; %OPT_N: no constant; %OPT_R:
+ * restricted constant; %OPT_T: constant and unrestricted trend
+ * (note: default "case" is unrestricted constant).
+ * %OPT_V: produce verbose results.
+ * @prn: gretl printing struct.
+ *
+ * Carries out the Johansen test for cointegration.
+ *
+ * Returns: pointer to struct containing information on
+ * the test.
+ */
 
 GRETL_VAR *johansen_test (int order, const int *list,
-  const DATASET *dset,
-  gretlopt opt, PRN *prn)
+                          const DATASET *dset,
+                          gretlopt opt, PRN *prn)
 {
     int err = 0;
 
     return johansen_wrapper(VECM_CTEST, order, 0, NULL, list, NULL,
-        dset, opt, prn, &err);
+                            dset, opt, prn, &err);
 }
 
-    /**
-     * johansen_test_simple:
-     * @order: lag order for test.
-     * @list: list of variables to test for cointegration.
-     * @dset: dataset struct.
-     * @opt: %OPT_A: include constant plus restricted trend; %OPT_D:
-     * include centered seasonals; %OPT_N: no constant; %OPT_R:
-     * restricted constant; %OPT_T: constant and unrestricted trend
-     * (note: default "case" is unrestricted constant);
-     * %OPT_V: produce verbose results; %OPT_Q: just print the tests;
-     * %OPT_S: don't print anything.
-     * @prn: gretl printing struct.
-     *
-     * Carries out the Johansen test for cointegration and prints the
-     * results (but unlike johansen_test(), does not return the
-     * allocated results in VAR form).
-     *
-     * Returns: 0 on success, non-zero code on error.
-     */
+/**
+ * johansen_test_simple:
+ * @order: lag order for test.
+ * @list: list of variables to test for cointegration.
+ * @dset: dataset struct.
+ * @opt: %OPT_A: include constant plus restricted trend; %OPT_D:
+ * include centered seasonals; %OPT_N: no constant; %OPT_R:
+ * restricted constant; %OPT_T: constant and unrestricted trend
+ * (note: default "case" is unrestricted constant);
+ * %OPT_V: produce verbose results; %OPT_Q: just print the tests;
+ * %OPT_S: don't print anything.
+ * @prn: gretl printing struct.
+ *
+ * Carries out the Johansen test for cointegration and prints the
+ * results (but unlike johansen_test(), does not return the
+ * allocated results in VAR form).
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
 
 int johansen_test_simple (int order, const int *list,
-  const DATASET *dset,
-  gretlopt opt, PRN *prn)
+                          const DATASET *dset,
+                          gretlopt opt, PRN *prn)
 {
     GRETL_VAR *jvar = NULL;
     int err = 0;
 
     jvar = johansen_wrapper(VECM_CTEST, order, 0, NULL, list, NULL,
-        dset, opt, (opt & OPT_S)? NULL : prn,
-        &err);
+                            dset, opt, (opt & OPT_S)? NULL : prn,
+                            &err);
 
     if (jvar != NULL) {
         gretl_VAR_free(jvar);
@@ -3244,27 +3243,27 @@ int johansen_test_simple (int order, const int *list,
     return err;
 }
 
-    /**
-     * gretl_VECM:
-     * @order: lag order.
-     * @rank: cointegration rank.
-     * @list: list of endogenous variables, possibly plus
-     * exogenous variables.
-     * @dset: dataset struct.
-     * @opt: may include OPT_N ("nc"), OPT_R ("rc"), OPT_A ("crt"),
-     * OPT_T ("ct"), OPT_D (include seasonals), OPT_F (show variance
-     * decompositions), OPT_I (show impulse responses), OPT_V
-     * (verbose operation), OPT_Q (quiet), OPT_S (silent).
-     * @prn: gretl printing struct.
-     * @err: location to receive error code.
-     *
-     * Returns: pointer to struct containing a VECM system,
-     * or %NULL on failure.
-     */
+/**
+ * gretl_VECM:
+ * @order: lag order.
+ * @rank: cointegration rank.
+ * @list: list of endogenous variables, possibly plus
+ * exogenous variables.
+ * @dset: dataset struct.
+ * @opt: may include OPT_N ("nc"), OPT_R ("rc"), OPT_A ("crt"),
+ * OPT_T ("ct"), OPT_D (include seasonals), OPT_F (show variance
+ * decompositions), OPT_I (show impulse responses), OPT_V
+ * (verbose operation), OPT_Q (quiet), OPT_S (silent).
+ * @prn: gretl printing struct.
+ * @err: location to receive error code.
+ *
+ * Returns: pointer to struct containing a VECM system,
+ * or %NULL on failure.
+ */
 
 GRETL_VAR *gretl_VECM (int order, int rank, int *list,
- const DATASET *dset,
- gretlopt opt, PRN *prn, int *err)
+                       const DATASET *dset,
+                       gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *jvar = NULL;
     int *lags = NULL;
@@ -3276,7 +3275,7 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     }
 
     jvar = johansen_wrapper(VECM_ESTIMATE, order, rank, lags, list,
-        NULL, dset, opt, prn, err);
+                            NULL, dset, opt, prn, err);
 
     if (jvar != NULL && !jvar->err) {
         gretl_VAR_print(jvar, dset, opt, prn);
@@ -3286,7 +3285,7 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
 }
 
 int *VAR_list_composite (const int *ylist, const int *xlist,
-   const int *rlist)
+                         const int *rlist)
 {
     int *big = NULL;
     int i, k, n = ylist[0];
@@ -3343,29 +3342,29 @@ static int *rebuild_full_VAR_list (const GRETL_VAR *var)
         list = gretl_list_copy(var->ylist);
     } else {
         list = VAR_list_composite(var->ylist, var->xlist,
-          var->rlist);
+                                  var->rlist);
     }
 
     return list;
 }
 
-    /**
-     * real_gretl_restricted_vecm:
-     * @orig: orginal VECM model.
-     * @rset: restriction information.
-     * @dset: dataset struct.
-     * @prn: gretl printing struct.
-     * @err: location to receive error code.
-     *
-     * Returns: pointer to struct containing information on
-     * the newly restricted VECM system or %NULL on failure.
-     */
+/**
+ * real_gretl_restricted_vecm:
+ * @orig: orginal VECM model.
+ * @rset: restriction information.
+ * @dset: dataset struct.
+ * @prn: gretl printing struct.
+ * @err: location to receive error code.
+ *
+ * Returns: pointer to struct containing information on
+ * the newly restricted VECM system or %NULL on failure.
+ */
 
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig,
-    gretl_restriction *rset,
-    const DATASET *dset,
-    PRN *prn, int *err)
+                            gretl_restriction *rset,
+                            const DATASET *dset,
+                            PRN *prn, int *err)
 {
     GRETL_VAR *jvar = NULL;
     gretlopt jopt = OPT_NONE;
@@ -3389,9 +3388,9 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
     }
 
     jvar = johansen_wrapper(VECM_ESTIMATE, orig->order + 1,
-        orig->jinfo->rank, orig->lags,
-        list, rset, dset,
-        jopt, prn, err);
+                            orig->jinfo->rank, orig->lags,
+                            list, rset, dset,
+                            jopt, prn, err);
 
     if (jvar != NULL && !jvar->err) {
         gretlopt ropt, prnopt = OPT_NONE;
@@ -3448,7 +3447,7 @@ const char *gretl_VAR_get_name (const GRETL_VAR *var)
 }
 
 double *gretl_VAR_get_resid_series (GRETL_VAR *var, int eqnum,
-    int *err)
+                                    int *err)
 {
     MODEL *pmod;
     double *u = NULL;
@@ -3476,7 +3475,7 @@ int gretl_VAR_set_ordering (GRETL_VAR *var, gretl_matrix *ord)
 }
 
 int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
-  const DATASET *dset)
+                      const DATASET *dset)
 {
     int targ = -1, shock = 1;
     int h = 20, boot = 0;
@@ -3508,25 +3507,25 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
         boot = 1;
     }
 
-    #if 0
-        fprintf(stderr, "targ=%d, shock=%d, h=%d, alpha=%g, boot=%d\n",
+#if 0
+    fprintf(stderr, "targ=%d, shock=%d, h=%d, alpha=%g, boot=%d\n",
             targ, shock, h, alpha, boot);
-    #endif
+#endif
 
     if (targ < 0 || shock < 0 || h <= 0 ||
         alpha < .01 || alpha > 0.5) {
         err = E_INVARG;
-} else if (boot) {
-    err = gretl_VAR_plot_impulse_response(var, targ, shock,
-      h, alpha, dset,
-      OPT_NONE);
-} else {
-    err = gretl_VAR_plot_impulse_response(var, targ, shock,
-      h, 0, dset,
-      OPT_NONE);
-}
+    } else if (boot) {
+        err = gretl_VAR_plot_impulse_response(var, targ, shock,
+                                              h, alpha, dset,
+                                              OPT_NONE);
+    } else {
+        err = gretl_VAR_plot_impulse_response(var, targ, shock,
+                                              h, 0, dset,
+                                              OPT_NONE);
+    }
 
-return err;
+    return err;
 }
 
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var)
@@ -3630,9 +3629,9 @@ int restricted_VECM (const GRETL_VAR *vecm)
     if (vecm->jinfo != NULL &&
         (vecm->jinfo->R != NULL || vecm->jinfo->Ra != NULL)) {
         return 1;
-}
+    }
 
-return 0;
+    return 0;
 }
 
 const gretl_matrix *gretl_VECM_R_matrix (const GRETL_VAR *vecm)
@@ -3656,50 +3655,50 @@ const gretl_matrix *gretl_VECM_qa_matrix (const GRETL_VAR *vecm)
 }
 
 double *gretl_VAR_get_series (const GRETL_VAR *var, const DATASET *dset,
-  int idx, const char *key, int *err)
+                              int idx, const char *key, int *err)
 {
     double *x = NULL;
     const char *msel;
     int t, col = 0;
 
-        if (var == NULL || idx != M_UHAT) { /* FIXME generalize this */
-    *err = E_BADSTAT;
-    return NULL;
-}
-
-msel = strchr(key, '[');
-if (msel == NULL || sscanf(msel, "[,%d]", &col) != 1) {
-    *err = E_PARSE;
-} else if (col <= 0 || col > var->neqns) {
-    *err = E_DATA;
-}
-
-if (!*err) {
-    x = malloc(dset->n * sizeof *x);
-    if (x == NULL) {
-        *err = E_ALLOC;
+    if (var == NULL || idx != M_UHAT) { /* FIXME generalize this */
+        *err = E_BADSTAT;
+        return NULL;
     }
-}
 
-if (!*err) {
-    const MODEL *pmod = var->models[col-1];
-
-    if (pmod == NULL || pmod->full_n != dset->n) {
+    msel = strchr(key, '[');
+    if (msel == NULL || sscanf(msel, "[,%d]", &col) != 1) {
+        *err = E_PARSE;
+    } else if (col <= 0 || col > var->neqns) {
         *err = E_DATA;
-        free(x);
-        x = NULL;
-    } else {
-        for (t=0; t<dset->n; t++) {
-            x[t] = pmod->uhat[t];
+    }
+
+    if (!*err) {
+        x = malloc(dset->n * sizeof *x);
+        if (x == NULL) {
+            *err = E_ALLOC;
         }
     }
+
+    if (!*err) {
+        const MODEL *pmod = var->models[col-1];
+
+        if (pmod == NULL || pmod->full_n != dset->n) {
+            *err = E_DATA;
+            free(x);
+            x = NULL;
+        } else {
+            for (t=0; t<dset->n; t++) {
+                x[t] = pmod->uhat[t];
+            }
+        }
+    }
+
+    return x;
 }
 
-return x;
-}
-
-    /* get coefficients or standard errors from the models
-       in the VAR */
+/* get coefficients or standard errors from the models
+   in the VAR */
 
 static gretl_matrix *
 VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
@@ -3760,8 +3759,8 @@ VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
 }
 
 static gretl_matrix *alt_VECM_get_EC_matrix (const GRETL_VAR *vecm,
-   const DATASET *dset,
-   int *err)
+                                             const DATASET *dset,
+                                             int *err)
 {
     const gretl_matrix *B = vecm->jinfo->Beta;
     int r = jrank(vecm);
@@ -3843,8 +3842,8 @@ static gretl_matrix *alt_VECM_get_EC_matrix (const GRETL_VAR *vecm,
 }
 
 gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v,
-  const DATASET *dset,
-  int *err)
+                                  const DATASET *dset,
+                                  int *err)
 {
     gretl_matrix *EC = NULL;
     double x;
@@ -3889,1058 +3888,1058 @@ gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v,
     return EC;
 }
 
-    #define vecm_matrix(i) (i == M_JALPHA || i == M_JBETA || \
-i == M_JVBETA || i == M_JS00 || \
-i == M_JS11 || i == M_JS01 || \
-i == M_EC || i == M_EVALS)
+#define vecm_matrix(i) (i == M_JALPHA || i == M_JBETA ||        \
+                        i == M_JVBETA || i == M_JS00 ||         \
+                        i == M_JS11 || i == M_JS01 ||           \
+                        i == M_EC || i == M_EVALS)
 
-    gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
-        int *err)
-    {
-        const gretl_matrix *src = NULL;
-        gretl_matrix *M = NULL;
-        int copy = 1;
+gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
+                                    int *err)
+{
+    const gretl_matrix *src = NULL;
+    gretl_matrix *M = NULL;
+    int copy = 1;
 
-        if (var == NULL) {
-            *err = E_BADSTAT;
-            return NULL;
-        }
-
-        if (idx == M_UHAT) {
-            src = gretl_VAR_get_residual_matrix(var);
-        } else if (idx == M_YHAT) {
-            M = gretl_VAR_get_fitted_matrix(var);
-            copy = 0;
-        } else if (idx == M_COMPAN) {
-            src = var->A;
-        } else if (idx == M_COEFF || idx == M_SE || idx == M_VECG) {
-            M = VAR_matrix_from_models(var, idx, err);
-            copy = 0;
-        } else if (idx == M_XTXINV) {
-            src = var->XTX;
-        } else if (idx == M_SIGMA) {
-            src = var->S;
-        } else if (idx == M_PMANTEAU) {
-            M = gretl_VAR_get_portmanteau_test(var, err);
-            copy = 0;
-        } else if (vecm_matrix(idx)) {
-            if (var->jinfo != NULL) {
-                switch (idx) {
-                    case M_EVALS:
-                    src = var->jinfo->evals;
-                    break;
-                    case M_JALPHA:
-                    src = var->jinfo->Alpha;
-                    break;
-                    case M_JBETA:
-                    src = var->jinfo->Beta;
-                    break;
-                    case M_JVBETA:
-                    src = var->jinfo->Bvar;
-                    break;
-                    case M_JS00:
-                    src = var->jinfo->S00;
-                    break;
-                    case M_JS11:
-                    src = var->jinfo->S11;
-                    break;
-                    case M_JS01:
-                    src = var->jinfo->S01;
-                    break;
-                    case M_EC:
-                    M = VECM_get_EC_matrix(var, NULL, err);
-                    copy = 0;
-                    break;
-                }
-            }
-        }
-
-        if (copy) {
-            if (src == NULL) {
-                *err = E_BADSTAT;
-            } else {
-                M = gretl_matrix_copy(src);
-                if (M == NULL) {
-                    *err = E_ALLOC;
-                }
-            }
-        }
-
-        return M;
+    if (var == NULL) {
+        *err = E_BADSTAT;
+        return NULL;
     }
 
-    /* retrieve EC (j >= 0 && j < rank) as a full-length series */
+    if (idx == M_UHAT) {
+        src = gretl_VAR_get_residual_matrix(var);
+    } else if (idx == M_YHAT) {
+        M = gretl_VAR_get_fitted_matrix(var);
+        copy = 0;
+    } else if (idx == M_COMPAN) {
+        src = var->A;
+    } else if (idx == M_COEFF || idx == M_SE || idx == M_VECG) {
+        M = VAR_matrix_from_models(var, idx, err);
+        copy = 0;
+    } else if (idx == M_XTXINV) {
+        src = var->XTX;
+    } else if (idx == M_SIGMA) {
+        src = var->S;
+    } else if (idx == M_PMANTEAU) {
+        M = gretl_VAR_get_portmanteau_test(var, err);
+        copy = 0;
+    } else if (vecm_matrix(idx)) {
+        if (var->jinfo != NULL) {
+            switch (idx) {
+            case M_EVALS:
+                src = var->jinfo->evals;
+                break;
+            case M_JALPHA:
+                src = var->jinfo->Alpha;
+                break;
+            case M_JBETA:
+                src = var->jinfo->Beta;
+                break;
+            case M_JVBETA:
+                src = var->jinfo->Bvar;
+                break;
+            case M_JS00:
+                src = var->jinfo->S00;
+                break;
+            case M_JS11:
+                src = var->jinfo->S11;
+                break;
+            case M_JS01:
+                src = var->jinfo->S01;
+                break;
+            case M_EC:
+                M = VECM_get_EC_matrix(var, NULL, err);
+                copy = 0;
+                break;
+            }
+        }
+    }
 
-    double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j,
-     const DATASET *dset, int *err)
-    {
-        const gretl_matrix *B = vecm->jinfo->Beta;
-        int r = jrank(vecm);
-        double *x = NULL;
-        double xti;
-        int i, k, t, t0;
+    if (copy) {
+        if (src == NULL) {
+            *err = E_BADSTAT;
+        } else {
+            M = gretl_matrix_copy(src);
+            if (M == NULL) {
+                *err = E_ALLOC;
+            }
+        }
+    }
 
-        if (j < 0 || j >= r) {
+    return M;
+}
+
+/* retrieve EC (j >= 0 && j < rank) as a full-length series */
+
+double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j,
+                           const DATASET *dset, int *err)
+{
+    const gretl_matrix *B = vecm->jinfo->Beta;
+    int r = jrank(vecm);
+    double *x = NULL;
+    double xti;
+    int i, k, t, t0;
+
+    if (j < 0 || j >= r) {
+        *err = E_DATA;
+        return NULL;
+    }
+
+    for (i=1; i<=vecm->ylist[0]; i++) {
+        if (vecm->ylist[i] >= dset->v) {
             *err = E_DATA;
             return NULL;
         }
+    }
 
-        for (i=1; i<=vecm->ylist[0]; i++) {
-            if (vecm->ylist[i] >= dset->v) {
-                *err = E_DATA;
-                return NULL;
-            }
+    x = malloc(dset->n * sizeof *x);
+    if (x == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    t0 = (dset->t1 >= 1)? dset->t1 : 1;
+
+    for (t=0; t<dset->n; t++) {
+        if (t < t0 || t > dset->t2) {
+            x[t] = NADBL;
+            continue;
         }
+        x[t] = 0.0;
 
-        x = malloc(dset->n * sizeof *x);
-        if (x == NULL) {
-            *err = E_ALLOC;
-            return NULL;
-        }
-
-        t0 = (dset->t1 >= 1)? dset->t1 : 1;
-
-        for (t=0; t<dset->n; t++) {
-            if (t < t0 || t > dset->t2) {
-                x[t] = NADBL;
-                continue;
-            }
-            x[t] = 0.0;
-
-            k = 0;
+        k = 0;
 
         /* beta * X(t-1) */
-            for (i=0; i<vecm->neqns; i++) {
-                xti = dset->Z[vecm->ylist[i+1]][t-1];
+        for (i=0; i<vecm->neqns; i++) {
+            xti = dset->Z[vecm->ylist[i+1]][t-1];
+            if (na(xti)) {
+                x[t] = NADBL;
+                break;
+            }
+            x[t] += xti * gretl_matrix_get(B, k++, j);
+        }
+
+        /* restricted const or trend */
+        if (auto_restr(vecm) && !na(x[t])) {
+            xti = gretl_matrix_get(B, k++, j);
+            if (jcode(vecm) == J_REST_TREND) {
+                xti *= t;
+            }
+            x[t] += xti;
+        }
+
+        /* restricted exog vars */
+        if (vecm->rlist != NULL && !na(x[t])) {
+            for (i=0; i<vecm->rlist[0]; i++) {
+                xti = dset->Z[vecm->rlist[i+1]][t-1];
                 if (na(xti)) {
                     x[t] = NADBL;
                     break;
                 }
                 x[t] += xti * gretl_matrix_get(B, k++, j);
             }
-
-        /* restricted const or trend */
-            if (auto_restr(vecm) && !na(x[t])) {
-                xti = gretl_matrix_get(B, k++, j);
-                if (jcode(vecm) == J_REST_TREND) {
-                    xti *= t;
-                }
-                x[t] += xti;
-            }
-
-        /* restricted exog vars */
-            if (vecm->rlist != NULL && !na(x[t])) {
-                for (i=0; i<vecm->rlist[0]; i++) {
-                    xti = dset->Z[vecm->rlist[i+1]][t-1];
-                    if (na(xti)) {
-                        x[t] = NADBL;
-                        break;
-                    }
-                    x[t] += xti * gretl_matrix_get(B, k++, j);
-                }
-            }
         }
-
-        return x;
     }
 
-    static GRETL_VAR *gretl_VAR_rebuilder_new (void)
-    {
-        GRETL_VAR *var = malloc(sizeof *var);
+    return x;
+}
 
-        if (var == NULL) {
-            return NULL;
-        }
+static GRETL_VAR *gretl_VAR_rebuilder_new (void)
+{
+    GRETL_VAR *var = malloc(sizeof *var);
 
-        gretl_VAR_clear(var);
-
-        return var;
+    if (var == NULL) {
+        return NULL;
     }
 
-    static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
-     GRETL_VAR *var)
-    {
-        xmlNodePtr cur = node->xmlChildrenNode;
-        JohansenInfo *jinfo;
-        int ID, code, rank;
-        int seas;
-        int got = 0;
-        int err = 0;
+    gretl_VAR_clear(var);
 
-        got += gretl_xml_get_prop_as_int(node, "ID", &ID);
-        got += gretl_xml_get_prop_as_int(node, "code", &code);
-        got += gretl_xml_get_prop_as_int(node, "rank", &rank);
-        got += gretl_xml_get_prop_as_int(node, "seasonals", &seas);
+    return var;
+}
 
-        if (got != 4) {
-            return E_DATA;
-        }
+static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
+                               GRETL_VAR *var)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    JohansenInfo *jinfo;
+    int ID, code, rank;
+    int seas;
+    int got = 0;
+    int err = 0;
 
-        jinfo = johansen_info_new(var, rank, OPT_NONE);
-        if (jinfo == NULL) {
-            return E_ALLOC;
-        }
+    got += gretl_xml_get_prop_as_int(node, "ID", &ID);
+    got += gretl_xml_get_prop_as_int(node, "code", &code);
+    got += gretl_xml_get_prop_as_int(node, "rank", &rank);
+    got += gretl_xml_get_prop_as_int(node, "seasonals", &seas);
 
-        jinfo->ID = ID;
-        jinfo->code = code;
-        jinfo->rank = rank;
-        jinfo->seasonals = seas;
-
-        gretl_xml_get_prop_as_double(node, "ll0", &jinfo->ll0);
-        gretl_xml_get_prop_as_int(node, "bdf", &jinfo->lrdf);
-        gretl_xml_get_prop_as_double(node, "oldll", &jinfo->prior_ll);
-        gretl_xml_get_prop_as_int(node, "olddf", &jinfo->prior_df);
-
-        cur = node->xmlChildrenNode;
-
-        while (cur != NULL && !err) {
-            if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
-                char *mname;
-
-                gretl_xml_get_prop_as_string(cur, "name", &mname);
-                if (mname == NULL) {
-                    err = E_DATA;
-                } else {
-                    if (!strcmp(mname, "u")) {
-                        jinfo->R0 = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "v")) {
-                        jinfo->R1 = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Suu")) {
-                        jinfo->S00 = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Svv")) {
-                        jinfo->S11 = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Suv")) {
-                        jinfo->S01 = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "evals")) {
-                        jinfo->evals = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Beta")) {
-                        jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Alpha")) {
-                        jinfo->Alpha = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Bvar")) {
-                        jinfo->Bvar = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Bse")) {
-                        jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "R")) {
-                        jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "q")) {
-                        jinfo->q = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "Ra")) {
-                        jinfo->Ra = gretl_xml_get_matrix(cur, doc, &err);
-                    } else if (!strcmp(mname, "qa")) {
-                        jinfo->qa = gretl_xml_get_matrix(cur, doc, &err);
-                    }
-                    free(mname);
-                }
-            }
-            cur = cur->next;
-        }
-
-        if (err) {
-            johansen_info_free(jinfo);
-        } else {
-            var->jinfo = jinfo;
-        }
-
-        fprintf(stderr, "VAR_retrieve_jinfo: err = %d\n", err);
-
-        return err;
+    if (got != 4) {
+        return E_DATA;
     }
 
-    static int VAR_retrieve_equations (xmlNodePtr node, xmlDocPtr doc,
-     MODEL **models, int neqns,
-     const DATASET *dset)
-    {
-        xmlNodePtr cur = node->xmlChildrenNode;
-        int i = 0, err = 0;
+    jinfo = johansen_info_new(var, rank, OPT_NONE);
+    if (jinfo == NULL) {
+        return E_ALLOC;
+    }
 
-        while (cur != NULL && !err) {
-            MODEL *pmod;
+    jinfo->ID = ID;
+    jinfo->code = code;
+    jinfo->rank = rank;
+    jinfo->seasonals = seas;
 
-            if (!xmlStrcmp(cur->name, (XUC) "gretl-model")) {
-                pmod = gretl_model_from_XML(cur, doc, dset, &err);
-                if (pmod != NULL) {
-                    models[i++] = pmod;
+    gretl_xml_get_prop_as_double(node, "ll0", &jinfo->ll0);
+    gretl_xml_get_prop_as_int(node, "bdf", &jinfo->lrdf);
+    gretl_xml_get_prop_as_double(node, "oldll", &jinfo->prior_ll);
+    gretl_xml_get_prop_as_int(node, "olddf", &jinfo->prior_df);
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+            char *mname;
+
+            gretl_xml_get_prop_as_string(cur, "name", &mname);
+            if (mname == NULL) {
+                err = E_DATA;
+            } else {
+                if (!strcmp(mname, "u")) {
+                    jinfo->R0 = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "v")) {
+                    jinfo->R1 = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Suu")) {
+                    jinfo->S00 = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Svv")) {
+                    jinfo->S11 = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Suv")) {
+                    jinfo->S01 = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "evals")) {
+                    jinfo->evals = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Beta")) {
+                    jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Alpha")) {
+                    jinfo->Alpha = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Bvar")) {
+                    jinfo->Bvar = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Bse")) {
+                    jinfo->Bse = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "R")) {
+                    jinfo->R = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "q")) {
+                    jinfo->q = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "Ra")) {
+                    jinfo->Ra = gretl_xml_get_matrix(cur, doc, &err);
+                } else if (!strcmp(mname, "qa")) {
+                    jinfo->qa = gretl_xml_get_matrix(cur, doc, &err);
                 }
+                free(mname);
             }
-            cur = cur->next;
         }
+        cur = cur->next;
+    }
 
-        fprintf(stderr, "VAR_retrieve_equations: got %d models (neqns = %d), err = %d\n",
+    if (err) {
+        johansen_info_free(jinfo);
+    } else {
+        var->jinfo = jinfo;
+    }
+
+    fprintf(stderr, "VAR_retrieve_jinfo: err = %d\n", err);
+
+    return err;
+}
+
+static int VAR_retrieve_equations (xmlNodePtr node, xmlDocPtr doc,
+                                   MODEL **models, int neqns,
+                                   const DATASET *dset)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    int i = 0, err = 0;
+
+    while (cur != NULL && !err) {
+        MODEL *pmod;
+
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-model")) {
+            pmod = gretl_model_from_XML(cur, doc, dset, &err);
+            if (pmod != NULL) {
+                models[i++] = pmod;
+            }
+        }
+        cur = cur->next;
+    }
+
+    fprintf(stderr, "VAR_retrieve_equations: got %d models (neqns = %d), err = %d\n",
             i, neqns, err);
 
-        return err;
+    return err;
+}
+
+/* for backward compatibility */
+
+static int make_VAR_global_lists (GRETL_VAR *var)
+{
+    MODEL *pmod = var->models[0];
+    int *list = pmod->list;
+    int p = var->order;
+    int n = var->neqns;
+    int nx, np = n * p;
+    int i, j, ifc;
+
+    if (list == NULL || list[0] < 3) {
+        return E_DATA;
     }
 
-    /* for backward compatibility */
+    /* the _endogenous_ vars start in position 2 or 3 (3 if a constant
+       is included), and there are (order * neqns) such terms */
 
-    static int make_VAR_global_lists (GRETL_VAR *var)
-    {
-        MODEL *pmod = var->models[0];
-        int *list = pmod->list;
-        int p = var->order;
-        int n = var->neqns;
-        int nx, np = n * p;
-        int i, j, ifc;
+    ifc = (list[2] == 0);
+    nx = list[0] - 1 - ifc - np;
 
-        if (list == NULL || list[0] < 3) {
-            return E_DATA;
-        }
+    var->ylist = gretl_list_new(n);
+    if (var->ylist == NULL) {
+        return E_ALLOC;
+    }
 
-        /* the _endogenous_ vars start in position 2 or 3 (3 if a constant
-           is included), and there are (order * neqns) such terms */
-
-        ifc = (list[2] == 0);
-        nx = list[0] - 1 - ifc - np;
-
-        var->ylist = gretl_list_new(n);
-        if (var->ylist == NULL) {
+    if (nx > 0) {
+        var->xlist = gretl_list_new(nx);
+        if (var->xlist == NULL) {
+            free(var->ylist);
+            var->ylist = NULL;
             return E_ALLOC;
         }
-
-        if (nx > 0) {
-            var->xlist = gretl_list_new(nx);
-            if (var->xlist == NULL) {
-                free(var->ylist);
-                var->ylist = NULL;
-                return E_ALLOC;
-            }
-        }
-
-        for (i=0; i<n; i++) {
-            pmod = var->models[i];
-            var->ylist[i+1] = pmod->list[1];
-        }
-
-        j = 2 + ifc + np;
-        for (i=0; i<nx; i++) {
-            var->xlist[i+1] = list[j++];
-        }
-
-        return 0;
     }
 
-    static int rebuild_VAR_matrices (GRETL_VAR *var)
-    {
-        MODEL *pmod;
-        double x;
-        int gotA = (var->A != NULL);
-        int gotX = (var->X != NULL);
-        int j, i;
-        int err = 0;
+    for (i=0; i<n; i++) {
+        pmod = var->models[i];
+        var->ylist[i+1] = pmod->list[1];
+    }
 
-        if (var->E == NULL) {
-            err = VAR_allocate_residuals_matrix(var);
+    j = 2 + ifc + np;
+    for (i=0; i<nx; i++) {
+        var->xlist[i+1] = list[j++];
+    }
+
+    return 0;
+}
+
+static int rebuild_VAR_matrices (GRETL_VAR *var)
+{
+    MODEL *pmod;
+    double x;
+    int gotA = (var->A != NULL);
+    int gotX = (var->X != NULL);
+    int j, i;
+    int err = 0;
+
+    if (var->E == NULL) {
+        err = VAR_allocate_residuals_matrix(var);
+    }
+
+    if (!err && var->A == NULL) {
+        err = VAR_add_companion_matrix(var);
+    }
+
+    if (!err && gotX && var->XTX == NULL) {
+        err = VAR_add_XTX_matrix(var);
+    }
+
+    if (!err && var->C == NULL) {
+        err = VAR_allocate_cholesky_matrix(var);
+    }
+
+    if (!err && var->B == NULL) {
+        var->B = gretl_matrix_alloc(var->models[0]->ncoeff,
+                                    var->neqns);
+        if (var->B == NULL) {
+            err = E_ALLOC;
         }
+    }
 
-        if (!err && var->A == NULL) {
-            err = VAR_add_companion_matrix(var);
+    for (j=0; j<var->neqns && !err; j++) {
+        pmod = var->models[j];
+        for (i=0; i<pmod->ncoeff; i++) {
+            x = pmod->coeff[i];
+            gretl_matrix_set(var->B, i, j, x);
         }
-
-        if (!err && gotX && var->XTX == NULL) {
-            err = VAR_add_XTX_matrix(var);
+        for (i=0; i<var->T; i++) {
+            x = pmod->uhat[pmod->t1 + i];
+            gretl_matrix_set(var->E, i, j, x);
         }
+    }
 
-        if (!err && var->C == NULL) {
-            err = VAR_allocate_cholesky_matrix(var);
-        }
-
-        if (!err && var->B == NULL) {
-            var->B = gretl_matrix_alloc(var->models[0]->ncoeff,
-                var->neqns);
-            if (var->B == NULL) {
-                err = E_ALLOC;
-            }
-        }
-
-        for (j=0; j<var->neqns && !err; j++) {
-            pmod = var->models[j];
-            for (i=0; i<pmod->ncoeff; i++) {
-                x = pmod->coeff[i];
-                gretl_matrix_set(var->B, i, j, x);
-            }
-            for (i=0; i<var->T; i++) {
-                x = pmod->uhat[pmod->t1 + i];
-                gretl_matrix_set(var->E, i, j, x);
-            }
-        }
-
-        if (!err && !gotA) {
+    if (!err && !gotA) {
         /* note: for VECMs, A should be retrieved from the session
            file, and gotA should be non-zero
         */
-            VAR_write_A_matrix(var);
-        }
-
-        if (!err && !gotX) {
-            fprintf(stderr, "Can't we rebuild VAR->X somehow?\n");
-        }
-
-        return err;
+        VAR_write_A_matrix(var);
     }
 
-    GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
-     const DATASET *dset,
-     int *err)
-    {
-        GRETL_VAR *var;
-        MODEL *pmod;
-        xmlNodePtr cur;
-        char *vname;
-        int i, n, got = 0;
+    if (!err && !gotX) {
+        fprintf(stderr, "Can't we rebuild VAR->X somehow?\n");
+    }
 
-        var = gretl_VAR_rebuilder_new();
-        if (var == NULL) {
-            *err = E_ALLOC;
-            return NULL;
-        }
+    return err;
+}
 
-        got += gretl_xml_get_prop_as_int(node, "ecm", &var->ci);
-        got += gretl_xml_get_prop_as_int(node, "neqns", &var->neqns);
-        got += gretl_xml_get_prop_as_int(node, "order", &var->order);
+GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
+                               const DATASET *dset,
+                               int *err)
+{
+    GRETL_VAR *var;
+    MODEL *pmod;
+    xmlNodePtr cur;
+    char *vname;
+    int i, n, got = 0;
 
-        if (got < 3) {
-            *err = E_DATA;
-            goto bailout;
-        }
+    var = gretl_VAR_rebuilder_new();
+    if (var == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
 
-        var->ci = (var->ci == 0)? VAR : VECM;
+    got += gretl_xml_get_prop_as_int(node, "ecm", &var->ci);
+    got += gretl_xml_get_prop_as_int(node, "neqns", &var->neqns);
+    got += gretl_xml_get_prop_as_int(node, "order", &var->order);
 
-        gretl_xml_get_prop_as_string(node, "name", &vname);
-        if (vname != NULL) {
-            gretl_VAR_set_name(var, vname);
-            free(vname);
-        }
+    if (got < 3) {
+        *err = E_DATA;
+        goto bailout;
+    }
 
-        /* these are not show-stoppers */
-        gretl_xml_get_prop_as_int(node, "robust", &var->robust);
-        gretl_xml_get_prop_as_int(node, "detflags", &var->detflags);
-        gretl_xml_get_prop_as_int(node, "LBs", &var->LBs);
-        gretl_xml_get_prop_as_double(node, "LB", &var->LB);
+    var->ci = (var->ci == 0)? VAR : VECM;
 
-        var->models = malloc(var->neqns * sizeof *var->models);
-        if (var->models == NULL) {
-            *err = E_ALLOC;
-            goto bailout;
-        }
+    gretl_xml_get_prop_as_string(node, "name", &vname);
+    if (vname != NULL) {
+        gretl_VAR_set_name(var, vname);
+        free(vname);
+    }
 
-        for (i=0; i<var->neqns; i++) {
-            var->models[i] = NULL;
-        }
+    /* these are not show-stoppers */
+    gretl_xml_get_prop_as_int(node, "robust", &var->robust);
+    gretl_xml_get_prop_as_int(node, "detflags", &var->detflags);
+    gretl_xml_get_prop_as_int(node, "LBs", &var->LBs);
+    gretl_xml_get_prop_as_double(node, "LB", &var->LB);
 
-        gretl_push_c_numeric_locale();
+    var->models = malloc(var->neqns * sizeof *var->models);
+    if (var->models == NULL) {
+        *err = E_ALLOC;
+        goto bailout;
+    }
 
-        cur = node->xmlChildrenNode;
+    for (i=0; i<var->neqns; i++) {
+        var->models[i] = NULL;
+    }
 
-        while (cur != NULL && !*err) {
-            if (!xmlStrcmp(cur->name, (XUC) "lags")) {
-                var->lags = gretl_xml_get_list(cur, doc, err);
-            } else if (!xmlStrcmp(cur->name, (XUC) "ylist")) {
-                var->ylist = gretl_xml_get_list(cur, doc, err);
-            } else if (!xmlStrcmp(cur->name, (XUC) "xlist")) {
-                var->xlist = gretl_xml_get_list(cur, doc, err);
-            } else if (!xmlStrcmp(cur->name, (XUC) "rlist")) {
-                var->rlist = gretl_xml_get_list(cur, doc, err);
-            } else if (!xmlStrcmp(cur->name, (XUC) "Fvals")) {
-                var->Fvals = gretl_xml_get_double_array(cur, doc, &n, err);
-            } else if (!xmlStrcmp(cur->name, (XUC) "Ivals")) {
-                var->Ivals = gretl_xml_get_double_array(cur, doc, &n, err);
-            } else if (!xmlStrcmp(cur->name, (XUC) "equations")) {
-                *err = VAR_retrieve_equations(cur, doc, var->models, var->neqns, dset);
-            } else if (!xmlStrcmp(cur->name, (XUC) "gretl-johansen")) {
-                *err = VAR_retrieve_jinfo(cur, doc, var);
-            } else if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
-                char *mname;
+    gretl_push_c_numeric_locale();
 
-                gretl_xml_get_prop_as_string(cur, "name", &mname);
-                if (mname == NULL) {
-                    *err = E_DATA;
-                } else {
-                    if (!strcmp(mname, "A")) {
-                        var->A = gretl_xml_get_matrix(cur, doc, err);
-                    } else if (!strcmp(mname, "X")) {
-                        var->X = gretl_xml_get_matrix(cur, doc, err);
-                    } else if (!strcmp(mname, "Y")) {
-                        var->Y = gretl_xml_get_matrix(cur, doc, err);
-                    } else if (!strcmp(mname, "ord")) {
-                        var->ord = gretl_xml_get_matrix(cur, doc, err);
-                    }
-                    free(mname);
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !*err) {
+        if (!xmlStrcmp(cur->name, (XUC) "lags")) {
+            var->lags = gretl_xml_get_list(cur, doc, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "ylist")) {
+            var->ylist = gretl_xml_get_list(cur, doc, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "xlist")) {
+            var->xlist = gretl_xml_get_list(cur, doc, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "rlist")) {
+            var->rlist = gretl_xml_get_list(cur, doc, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "Fvals")) {
+            var->Fvals = gretl_xml_get_double_array(cur, doc, &n, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "Ivals")) {
+            var->Ivals = gretl_xml_get_double_array(cur, doc, &n, err);
+        } else if (!xmlStrcmp(cur->name, (XUC) "equations")) {
+            *err = VAR_retrieve_equations(cur, doc, var->models, var->neqns, dset);
+        } else if (!xmlStrcmp(cur->name, (XUC) "gretl-johansen")) {
+            *err = VAR_retrieve_jinfo(cur, doc, var);
+        } else if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+            char *mname;
+
+            gretl_xml_get_prop_as_string(cur, "name", &mname);
+            if (mname == NULL) {
+                *err = E_DATA;
+            } else {
+                if (!strcmp(mname, "A")) {
+                    var->A = gretl_xml_get_matrix(cur, doc, err);
+                } else if (!strcmp(mname, "X")) {
+                    var->X = gretl_xml_get_matrix(cur, doc, err);
+                } else if (!strcmp(mname, "Y")) {
+                    var->Y = gretl_xml_get_matrix(cur, doc, err);
+                } else if (!strcmp(mname, "ord")) {
+                    var->ord = gretl_xml_get_matrix(cur, doc, err);
                 }
+                free(mname);
             }
-            cur = cur->next;
         }
-
-        gretl_pop_c_numeric_locale();
-
-        if (*err) {
-            goto bailout;
-        }
-
-        pmod = var->models[0];
-
-        /* Note: get "global" info from the first model (equation) */
-        var->ncoeff = pmod->ncoeff;
-        var->ifc = pmod->ifc;
-        var->t1 = pmod->t1;
-        var->t2 = pmod->t2;
-        var->T = var->t2 - var->t1 + 1;
-        var->df = var->T - var->ncoeff;
-
-        if (var->ylist == NULL) {
-            *err = make_VAR_global_lists(var);
-        }
-
-        if (!*err) {
-            *err = rebuild_VAR_matrices(var);
-        }
-
-        if (!*err) {
-            *err = VAR_add_stats(var, 0);
-        }
-
-        if (!*err) {
-            *err = gretl_VAR_do_error_decomp(var->S, var->C, NULL);
-        }
-
-        /* FIXME vecm tests on beta/alpha */
-
-        bailout:
-
-        if (*err) {
-            gretl_VAR_free(var);
-            var = NULL;
-        }
-
-        return var;
+        cur = cur->next;
     }
 
-    static void johansen_serialize (JohansenInfo *j, PRN *prn)
-    {
-        pprintf(prn, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ",
+    gretl_pop_c_numeric_locale();
+
+    if (*err) {
+        goto bailout;
+    }
+
+    pmod = var->models[0];
+
+    /* Note: get "global" info from the first model (equation) */
+    var->ncoeff = pmod->ncoeff;
+    var->ifc = pmod->ifc;
+    var->t1 = pmod->t1;
+    var->t2 = pmod->t2;
+    var->T = var->t2 - var->t1 + 1;
+    var->df = var->T - var->ncoeff;
+
+    if (var->ylist == NULL) {
+        *err = make_VAR_global_lists(var);
+    }
+
+    if (!*err) {
+        *err = rebuild_VAR_matrices(var);
+    }
+
+    if (!*err) {
+        *err = VAR_add_stats(var, 0);
+    }
+
+    if (!*err) {
+        *err = gretl_VAR_do_error_decomp(var->S, var->C, NULL);
+    }
+
+    /* FIXME vecm tests on beta/alpha */
+
+ bailout:
+
+    if (*err) {
+        gretl_VAR_free(var);
+        var = NULL;
+    }
+
+    return var;
+}
+
+static void johansen_serialize (JohansenInfo *j, PRN *prn)
+{
+    pprintf(prn, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ",
             j->ID, j->code, j->rank);
-        pprintf(prn, "seasonals=\"%d\" ", j->seasonals);
+    pprintf(prn, "seasonals=\"%d\" ", j->seasonals);
 
-        if (j->lrdf > 0 && !na(j->ll0)) {
-            gretl_xml_put_double("ll0", j->ll0, prn);
-            gretl_xml_put_int("bdf", j->lrdf, prn);
-        }
-
-        if (j->prior_df > 0 && !na(j->prior_ll)) {
-            gretl_xml_put_double("oldll", j->prior_ll, prn);
-            gretl_xml_put_int("olddf", j->prior_df, prn);
-        }
-
-        pputs(prn, ">\n");
-
-        gretl_matrix_serialize(j->R0, "u", prn);
-        gretl_matrix_serialize(j->R1, "v", prn);
-        gretl_matrix_serialize(j->S00, "Suu", prn);
-        gretl_matrix_serialize(j->S11, "Svv", prn);
-        gretl_matrix_serialize(j->S01, "Suv", prn);
-        gretl_matrix_serialize(j->evals, "evals", prn);
-        gretl_matrix_serialize(j->Beta, "Beta", prn);
-        gretl_matrix_serialize(j->Alpha, "Alpha", prn);
-        gretl_matrix_serialize(j->Bvar, "Bvar", prn);
-        gretl_matrix_serialize(j->Bse, "Bse", prn);
-        gretl_matrix_serialize(j->R, "R", prn);
-        gretl_matrix_serialize(j->q, "q", prn);
-        gretl_matrix_serialize(j->Ra, "Ra", prn);
-        gretl_matrix_serialize(j->qa, "qa", prn);
-
-        pputs(prn, "</gretl-johansen>\n");
+    if (j->lrdf > 0 && !na(j->ll0)) {
+        gretl_xml_put_double("ll0", j->ll0, prn);
+        gretl_xml_put_int("bdf", j->lrdf, prn);
     }
 
-    /* Retrieve enough VECM-related info from @b to carry
-       out an IRF bootstrap: this requires more testing.
-    */
-
-    static int retrieve_johansen_basics (GRETL_VAR *var,
-       gretl_bundle *b)
-    {
-        int err = 0;
-
-        var->jinfo = calloc(1, sizeof *var->jinfo);
-
-        if (var->jinfo == NULL) {
-            err = E_ALLOC;
-        } else {
-            int i, e[10] = {0};
-
-            var->jinfo->code = gretl_bundle_get_int(b, "code", &e[0]);
-            var->jinfo->rank = gretl_bundle_get_int(b, "rank", &e[1]);
-            var->jinfo->seasonals = gretl_bundle_get_int(b, "seasonals", &e[2]);
-            var->jinfo->R0 = gretl_bundle_get_matrix(b, "u", &e[3]);
-            var->jinfo->R1 = gretl_bundle_get_matrix(b, "v", &e[4]);
-            var->jinfo->S00 = gretl_bundle_get_matrix(b, "Suu", &e[5]);
-            var->jinfo->S11 = gretl_bundle_get_matrix(b, "Svv", &e[6]);
-            var->jinfo->S01 = gretl_bundle_get_matrix(b, "Suv", &e[7]);
-            var->jinfo->Beta = gretl_bundle_get_matrix(b, "Beta", &e[8]);
-            var->jinfo->Alpha = gretl_bundle_get_matrix(b, "Alpha", &e[9]);
-
-            for (i=0; i<10; i++) {
-                if (e[i]) {
-                    err = e[i];
-                    break;
-                }
-            }
-
-            if (!err) {
-            /* restriction matrices: may not be present */
-                var->jinfo->R = gretl_bundle_get_matrix(b, "R", NULL);
-                var->jinfo->q = gretl_bundle_get_matrix(b, "q", NULL);
-                var->jinfo->Ra = gretl_bundle_get_matrix(b, "Ra", NULL);
-                var->jinfo->qa = gretl_bundle_get_matrix(b, "qa", NULL);
-            }
-        }
-
-        if (err && var->jinfo != NULL) {
-            free(var->jinfo);
-            var->jinfo = NULL;
-        }
-
-        return err;
+    if (j->prior_df > 0 && !na(j->prior_ll)) {
+        gretl_xml_put_double("oldll", j->prior_ll, prn);
+        gretl_xml_put_int("olddf", j->prior_df, prn);
     }
 
-    static gretl_bundle *johansen_bundlize (JohansenInfo *j)
-    {
-        gretl_bundle *b = gretl_bundle_new();
+    pputs(prn, ">\n");
 
-        if (b == NULL) {
-            return NULL;
-        }
+    gretl_matrix_serialize(j->R0, "u", prn);
+    gretl_matrix_serialize(j->R1, "v", prn);
+    gretl_matrix_serialize(j->S00, "Suu", prn);
+    gretl_matrix_serialize(j->S11, "Svv", prn);
+    gretl_matrix_serialize(j->S01, "Suv", prn);
+    gretl_matrix_serialize(j->evals, "evals", prn);
+    gretl_matrix_serialize(j->Beta, "Beta", prn);
+    gretl_matrix_serialize(j->Alpha, "Alpha", prn);
+    gretl_matrix_serialize(j->Bvar, "Bvar", prn);
+    gretl_matrix_serialize(j->Bse, "Bse", prn);
+    gretl_matrix_serialize(j->R, "R", prn);
+    gretl_matrix_serialize(j->q, "q", prn);
+    gretl_matrix_serialize(j->Ra, "Ra", prn);
+    gretl_matrix_serialize(j->qa, "qa", prn);
 
-        /* "j->ID"? */
-        gretl_bundle_set_int(b, "code", j->code);
-        gretl_bundle_set_int(b, "rank", j->rank);
-        gretl_bundle_set_int(b, "seasonals", j->seasonals);
+    pputs(prn, "</gretl-johansen>\n");
+}
 
-        if (j->lrdf > 0 && !na(j->ll0)) {
-            gretl_bundle_set_scalar(b, "ll0", j->ll0);
-            gretl_bundle_set_scalar(b, "bdf", j->lrdf);
-        }
+/* Retrieve enough VECM-related info from @b to carry
+   out an IRF bootstrap: this requires more testing.
+*/
 
-        gretl_bundle_set_matrix(b, "u", j->R0);
-        gretl_bundle_set_matrix(b, "v", j->R1);
-        gretl_bundle_set_matrix(b, "Suu", j->S00);
-        gretl_bundle_set_matrix(b, "Svv", j->S11);
-        gretl_bundle_set_matrix(b, "Suv", j->S01);
-        gretl_bundle_set_matrix(b, "evals", j->evals);
-        gretl_bundle_set_matrix(b, "Beta", j->Beta);
-        gretl_bundle_set_matrix(b, "Alpha", j->Alpha);
-        gretl_bundle_set_matrix(b, "Bvar", j->Bvar);
-        gretl_bundle_set_matrix(b, "Bse", j->Bse);
+static int retrieve_johansen_basics (GRETL_VAR *var,
+                                     gretl_bundle *b)
+{
+    int err = 0;
 
-        if (j->R != NULL) {
-            gretl_bundle_set_matrix(b, "R", j->R);
-        }
-        if (j->q != NULL) {
-            gretl_bundle_set_matrix(b, "q", j->q);
-        }
-        if (j->Ra != NULL) {
-            gretl_bundle_set_matrix(b, "Ra", j->Ra);
-        }
-        if (j->qa != NULL) {
-            gretl_bundle_set_matrix(b, "qa", j->qa);
-        }
+    var->jinfo = calloc(1, sizeof *var->jinfo);
 
-        return b;
-    }
+    if (var->jinfo == NULL) {
+        err = E_ALLOC;
+    } else {
+        int i, e[10] = {0};
 
-    int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
-       PRN *prn)
-    {
-        char *xmlname = NULL;
-        int g = var->neqns;
-        int m = g * g + g;
-        int i, err = 0;
+        var->jinfo->code = gretl_bundle_get_int(b, "code", &e[0]);
+        var->jinfo->rank = gretl_bundle_get_int(b, "rank", &e[1]);
+        var->jinfo->seasonals = gretl_bundle_get_int(b, "seasonals", &e[2]);
+        var->jinfo->R0 = gretl_bundle_get_matrix(b, "u", &e[3]);
+        var->jinfo->R1 = gretl_bundle_get_matrix(b, "v", &e[4]);
+        var->jinfo->S00 = gretl_bundle_get_matrix(b, "Suu", &e[5]);
+        var->jinfo->S11 = gretl_bundle_get_matrix(b, "Svv", &e[6]);
+        var->jinfo->S01 = gretl_bundle_get_matrix(b, "Suv", &e[7]);
+        var->jinfo->Beta = gretl_bundle_get_matrix(b, "Beta", &e[8]);
+        var->jinfo->Alpha = gretl_bundle_get_matrix(b, "Alpha", &e[9]);
 
-        if (var->name == NULL || *var->name == '\0') {
-            xmlname = gretl_strdup("none");
-        } else {
-            xmlname = gretl_xml_encode(var->name);
-        }
-
-        pprintf(prn, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", xmlname, (int) flags);
-        free(xmlname);
-
-        pprintf(prn, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ",
-            (var->ci == VECM), var->neqns, var->order, var->detflags);
-
-        if (var->robust) {
-            gretl_xml_put_int("robust", var->robust, prn);
-        }
-
-        if (var->LBs > 0 && !na(var->LB)) {
-        /* Portmanteau test */
-            gretl_xml_put_double("LB", var->LB, prn);
-            gretl_xml_put_int("LBs", var->LBs, prn);
-        }
-
-        pputs(prn, ">\n");
-
-        gretl_xml_put_tagged_list("lags", var->lags, prn);
-        gretl_xml_put_tagged_list("ylist", var->ylist, prn);
-        gretl_xml_put_tagged_list("xlist", var->xlist, prn);
-        gretl_xml_put_tagged_list("rlist", var->rlist, prn);
-
-        gretl_push_c_numeric_locale();
-
-        if (var->Fvals != NULL) {
-            gretl_xml_put_double_array("Fvals", var->Fvals, m, prn);
-        }
-
-        if (var->Ivals != NULL) {
-            gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, prn);
-        }
-
-        if (var->X != NULL && var->Y != NULL) {
-        /* could be fiddly to reconstruct, needed for IRF bootstrap */
-            gretl_matrix_serialize(var->X, "X", prn);
-            gretl_matrix_serialize(var->Y, "Y", prn);
-        }
-
-        if (var->ord != NULL) {
-            gretl_matrix_serialize(var->ord, "ord", prn);
-        }
-
-        if (var->ci == VECM) {
-        /* this is hard to reconstruct for VECMs */
-            gretl_matrix_serialize(var->A, "A", prn);
-        }
-
-        gretl_pop_c_numeric_locale();
-
-        pputs(prn, "<equations>\n");
-
-        for (i=0; i<var->neqns; i++) {
-            gretl_model_serialize(var->models[i], 0, prn);
-        }
-
-        pputs(prn, "</equations>\n");
-
-        if (var->jinfo != NULL) {
-            johansen_serialize(var->jinfo, prn);
-        }
-
-        pputs(prn, "</gretl-VAR>\n");
-
-        return err;
-    }
-
-    /* Reconstitute a VAR or VECM (partially) from the
-       bundle @b, for the purposes of generating an
-       FEVD or IRF. How far we need to go in rebuilding
-       the GRETL_VAR struct depends on the purpose, and
-       in the IRF case, whether or not bootstrapping is
-       required. For FEVD we basically just need the A
-       and C matrices from the bundle.
-    */
-
-    static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
-     int irf, int boot,
-     int *err)
-    {
-        GRETL_VAR *var = malloc(sizeof *var);
-        int i, ierr[6];
-
-        if (var == NULL) {
-            *err = E_ALLOC;
-            return NULL;
-        }
-
-        gretl_VAR_clear(var);
-
-        if (gretl_bundle_get_int(b, "ecm", NULL)) {
-            var->ci = VECM;
-        } else {
-            var->ci = VAR;
-        }
-
-        var->neqns = gretl_bundle_get_int(b, "neqns", &ierr[0]);
-        var->order = gretl_bundle_get_int(b, "order", &ierr[1]);
-        var->ncoeff = gretl_bundle_get_int(b, "ncoeff", &ierr[2]);
-        var->t1 = gretl_bundle_get_int(b, "t1", &ierr[3]);
-        var->t2 = gretl_bundle_get_int(b, "t2", &ierr[4]);
-        var->T  = gretl_bundle_get_int(b, "T", &ierr[5]);
-        for (i=0; i<6; i++) {
-            if (ierr[i]) {
-                *err = ierr[i];
+        for (i=0; i<10; i++) {
+            if (e[i]) {
+                err = e[i];
                 break;
             }
         }
 
-        if (!*err) {
-        /* note: borrowing */
-            var->ylist = gretl_bundle_get_list(b, "ylist", NULL);
-            var->xlist = gretl_bundle_get_list(b, "xlist", NULL);
-            var->rlist = gretl_bundle_get_list(b, "rlist", NULL);
+        if (!err) {
+            /* restriction matrices: may not be present */
+            var->jinfo->R = gretl_bundle_get_matrix(b, "R", NULL);
+            var->jinfo->q = gretl_bundle_get_matrix(b, "q", NULL);
+            var->jinfo->Ra = gretl_bundle_get_matrix(b, "Ra", NULL);
+            var->jinfo->qa = gretl_bundle_get_matrix(b, "qa", NULL);
         }
+    }
 
-        if (!*err) {
+    if (err && var->jinfo != NULL) {
+        free(var->jinfo);
+        var->jinfo = NULL;
+    }
+
+    return err;
+}
+
+static gretl_bundle *johansen_bundlize (JohansenInfo *j)
+{
+    gretl_bundle *b = gretl_bundle_new();
+
+    if (b == NULL) {
+        return NULL;
+    }
+
+    /* "j->ID"? */
+    gretl_bundle_set_int(b, "code", j->code);
+    gretl_bundle_set_int(b, "rank", j->rank);
+    gretl_bundle_set_int(b, "seasonals", j->seasonals);
+
+    if (j->lrdf > 0 && !na(j->ll0)) {
+        gretl_bundle_set_scalar(b, "ll0", j->ll0);
+        gretl_bundle_set_scalar(b, "bdf", j->lrdf);
+    }
+
+    gretl_bundle_set_matrix(b, "u", j->R0);
+    gretl_bundle_set_matrix(b, "v", j->R1);
+    gretl_bundle_set_matrix(b, "Suu", j->S00);
+    gretl_bundle_set_matrix(b, "Svv", j->S11);
+    gretl_bundle_set_matrix(b, "Suv", j->S01);
+    gretl_bundle_set_matrix(b, "evals", j->evals);
+    gretl_bundle_set_matrix(b, "Beta", j->Beta);
+    gretl_bundle_set_matrix(b, "Alpha", j->Alpha);
+    gretl_bundle_set_matrix(b, "Bvar", j->Bvar);
+    gretl_bundle_set_matrix(b, "Bse", j->Bse);
+
+    if (j->R != NULL) {
+        gretl_bundle_set_matrix(b, "R", j->R);
+    }
+    if (j->q != NULL) {
+        gretl_bundle_set_matrix(b, "q", j->q);
+    }
+    if (j->Ra != NULL) {
+        gretl_bundle_set_matrix(b, "Ra", j->Ra);
+    }
+    if (j->qa != NULL) {
+        gretl_bundle_set_matrix(b, "qa", j->qa);
+    }
+
+    return b;
+}
+
+int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
+                         PRN *prn)
+{
+    char *xmlname = NULL;
+    int g = var->neqns;
+    int m = g * g + g;
+    int i, err = 0;
+
+    if (var->name == NULL || *var->name == '\0') {
+        xmlname = gretl_strdup("none");
+    } else {
+        xmlname = gretl_xml_encode(var->name);
+    }
+
+    pprintf(prn, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", xmlname, (int) flags);
+    free(xmlname);
+
+    pprintf(prn, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ",
+            (var->ci == VECM), var->neqns, var->order, var->detflags);
+
+    if (var->robust) {
+        gretl_xml_put_int("robust", var->robust, prn);
+    }
+
+    if (var->LBs > 0 && !na(var->LB)) {
+        /* Portmanteau test */
+        gretl_xml_put_double("LB", var->LB, prn);
+        gretl_xml_put_int("LBs", var->LBs, prn);
+    }
+
+    pputs(prn, ">\n");
+
+    gretl_xml_put_tagged_list("lags", var->lags, prn);
+    gretl_xml_put_tagged_list("ylist", var->ylist, prn);
+    gretl_xml_put_tagged_list("xlist", var->xlist, prn);
+    gretl_xml_put_tagged_list("rlist", var->rlist, prn);
+
+    gretl_push_c_numeric_locale();
+
+    if (var->Fvals != NULL) {
+        gretl_xml_put_double_array("Fvals", var->Fvals, m, prn);
+    }
+
+    if (var->Ivals != NULL) {
+        gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, prn);
+    }
+
+    if (var->X != NULL && var->Y != NULL) {
+        /* could be fiddly to reconstruct, needed for IRF bootstrap */
+        gretl_matrix_serialize(var->X, "X", prn);
+        gretl_matrix_serialize(var->Y, "Y", prn);
+    }
+
+    if (var->ord != NULL) {
+        gretl_matrix_serialize(var->ord, "ord", prn);
+    }
+
+    if (var->ci == VECM) {
+        /* this is hard to reconstruct for VECMs */
+        gretl_matrix_serialize(var->A, "A", prn);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    pputs(prn, "<equations>\n");
+
+    for (i=0; i<var->neqns; i++) {
+        gretl_model_serialize(var->models[i], 0, prn);
+    }
+
+    pputs(prn, "</equations>\n");
+
+    if (var->jinfo != NULL) {
+        johansen_serialize(var->jinfo, prn);
+    }
+
+    pputs(prn, "</gretl-VAR>\n");
+
+    return err;
+}
+
+/* Reconstitute a VAR or VECM (partially) from the
+   bundle @b, for the purposes of generating an
+   FEVD or IRF. How far we need to go in rebuilding
+   the GRETL_VAR struct depends on the purpose, and
+   in the IRF case, whether or not bootstrapping is
+   required. For FEVD we basically just need the A
+   and C matrices from the bundle.
+*/
+
+static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
+                                   int irf, int boot,
+                                   int *err)
+{
+    GRETL_VAR *var = malloc(sizeof *var);
+    int i, ierr[6];
+
+    if (var == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    gretl_VAR_clear(var);
+
+    if (gretl_bundle_get_int(b, "ecm", NULL)) {
+        var->ci = VECM;
+    } else {
+        var->ci = VAR;
+    }
+
+    var->neqns = gretl_bundle_get_int(b, "neqns", &ierr[0]);
+    var->order = gretl_bundle_get_int(b, "order", &ierr[1]);
+    var->ncoeff = gretl_bundle_get_int(b, "ncoeff", &ierr[2]);
+    var->t1 = gretl_bundle_get_int(b, "t1", &ierr[3]);
+    var->t2 = gretl_bundle_get_int(b, "t2", &ierr[4]);
+    var->T  = gretl_bundle_get_int(b, "T", &ierr[5]);
+    for (i=0; i<6; i++) {
+        if (ierr[i]) {
+            *err = ierr[i];
+            break;
+        }
+    }
+
+    if (!*err) {
+        /* note: borrowing */
+        var->ylist = gretl_bundle_get_list(b, "ylist", NULL);
+        var->xlist = gretl_bundle_get_list(b, "xlist", NULL);
+        var->rlist = gretl_bundle_get_list(b, "rlist", NULL);
+    }
+
+    if (!*err) {
         /* note: here we're "borrowing" the required
            matrices from the bundle
         */
-            gretl_matrix **mm[] = {
-                &var->A, &var->C, &var->X, &var->Y,
-                &var->XTX, &var->B, &var->S, &var->E
-            };
-            const char *keys[] = {
-                "A", "C", "X", "Y", "xtxinv",
-                "coeff", "sigma", "uhat"
-            };
-            int n = 2 + 2*irf + 4*boot;
+        gretl_matrix **mm[] = {
+            &var->A, &var->C, &var->X, &var->Y,
+            &var->XTX, &var->B, &var->S, &var->E
+        };
+        const char *keys[] = {
+            "A", "C", "X", "Y", "xtxinv",
+            "coeff", "sigma", "uhat"
+        };
+        int n = 2 + 2*irf + 4*boot;
 
-            for (i=0; i<n && !*err; i++) {
-                *mm[i] = gretl_bundle_get_matrix(b, keys[i], err);
-            }
-            if (!*err && var->ci == VECM && boot) {
+        for (i=0; i<n && !*err; i++) {
+            *mm[i] = gretl_bundle_get_matrix(b, keys[i], err);
+        }
+        if (!*err && var->ci == VECM && boot) {
             /* not fully ready, won't be reached at present */
-                gretl_bundle *jb;
+            gretl_bundle *jb;
 
-                jb = gretl_bundle_get_bundle(b, "vecm_info", err);
-                if (!*err) {
-                    *err = retrieve_johansen_basics(var, jb);
-                }
-            }
-            if (*err) {
-            /* scrub all borrowed pointers on error */
-                for (i=0; i<n; i++) {
-                    *mm[i] = NULL;
-                }
+            jb = gretl_bundle_get_bundle(b, "vecm_info", err);
+            if (!*err) {
+                *err = retrieve_johansen_basics(var, jb);
             }
         }
-
-    #if 0
-        gretl_matrix_print(var->A, "var->A, from bundle");
-    #endif
-
         if (*err) {
+            /* scrub all borrowed pointers on error */
+            for (i=0; i<n; i++) {
+                *mm[i] = NULL;
+            }
+        }
+    }
+
+#if 0
+    gretl_matrix_print(var->A, "var->A, from bundle");
+#endif
+
+    if (*err) {
         /* clean up carefully! */
-            var->ylist = var->xlist = var->rlist = NULL;
-            if (var->jinfo != NULL) {
-                free(var->jinfo);
-                var->jinfo = NULL;
-            }
-            gretl_VAR_free(var);
-            var = NULL;
+        var->ylist = var->xlist = var->rlist = NULL;
+        if (var->jinfo != NULL) {
+            free(var->jinfo);
+            var->jinfo = NULL;
         }
-
-        return var;
+        gretl_VAR_free(var);
+        var = NULL;
     }
 
-    gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
-      int targ, int shock,
-      const DATASET *dset,
-      int *err)
-    {
-        GRETL_VAR *var = VAR_from_bundle(b, 0, 0, err);
-        gretl_matrix *ret = NULL;
+    return var;
+}
 
-        if (var != NULL) {
-            ret = gretl_VAR_get_FEVD_matrix(var, targ, shock, 0, dset, err);
+gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
+                                      int targ, int shock,
+                                      const DATASET *dset,
+                                      int *err)
+{
+    GRETL_VAR *var = VAR_from_bundle(b, 0, 0, err);
+    gretl_matrix *ret = NULL;
+
+    if (var != NULL) {
+        ret = gretl_VAR_get_FEVD_matrix(var, targ, shock, 0, dset, err);
         /* nullify borrowed pointers */
-            var->A = var->C = NULL;
-            var->xlist = var->ylist = var->rlist = NULL;
-            gretl_VAR_free(var);
-        }
-
-        return ret;
+        var->A = var->C = NULL;
+        var->xlist = var->ylist = var->rlist = NULL;
+        gretl_VAR_free(var);
     }
 
-    /* Clean-up of temporary "jinfo" used in IRF
-       bootstrapping. We can't use the regular destructor,
-       johansen_info_free(), because the primary matrix
-       pointers on var->jinfo are in this case borrowed
-       from a $system bundle; but we do need to free any
-       "extra" matrices that have been added.
-    */
+    return ret;
+}
 
-    static void free_temp_jinfo (GRETL_VAR *var)
-    {
-        /* handle extra matrice */
-        gretl_matrix_free(var->jinfo->YY);
-        gretl_matrix_free(var->jinfo->RR);
-        gretl_matrix_free(var->jinfo->BB);
+/* Clean-up of temporary "jinfo" used in IRF
+   bootstrapping. We can't use the regular destructor,
+   johansen_info_free(), because the primary matrix
+   pointers on var->jinfo are in this case borrowed
+   from a $system bundle; but we do need to free any
+   "extra" matrices that have been added.
+*/
 
-        free(var->jinfo);
+static void free_temp_jinfo (GRETL_VAR *var)
+{
+    /* handle extra matrice */
+    gretl_matrix_free(var->jinfo->YY);
+    gretl_matrix_free(var->jinfo->RR);
+    gretl_matrix_free(var->jinfo->BB);
+
+    free(var->jinfo);
+}
+
+gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
+                                     int targ, int shock,
+                                     double alpha,
+                                     const DATASET *dset,
+                                     int *err)
+{
+    gretl_matrix *ret = NULL;
+    GRETL_VAR *var = NULL;
+    int boot = 0;
+
+    if (alpha != 0 && (alpha < 0.01 || alpha > 0.6)) {
+        *err = E_INVARG;
+        return NULL;
+    } else if (alpha != 0) {
+        boot = 1;
     }
 
-    gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
-       int targ, int shock,
-       double alpha,
-       const DATASET *dset,
-       int *err)
-    {
-        gretl_matrix *ret = NULL;
-        GRETL_VAR *var = NULL;
-        int boot = 0;
+    var = VAR_from_bundle(b, 1, boot, err);
 
-        if (alpha != 0 && (alpha < 0.01 || alpha > 0.6)) {
-            *err = E_INVARG;
-            return NULL;
-        } else if (alpha != 0) {
-            boot = 1;
-        }
+    if (0 && var != NULL && boot && var->ci == VECM) {
+        gretl_errmsg_set("irf bootstrap on VECM bundle: not ready yet!");
+        *err = E_BADSTAT;
+    }
 
-        var = VAR_from_bundle(b, 1, boot, err);
+    if (!*err && var != NULL) {
+        ret = gretl_VAR_get_impulse_response(var, targ, shock,
+                                             0, alpha, dset, err);
+    }
 
-        if (0 && var != NULL && boot && var->ci == VECM) {
-            gretl_errmsg_set("irf bootstrap on VECM bundle: not ready yet!");
-            *err = E_BADSTAT;
-        }
-
-        if (!*err && var != NULL) {
-            ret = gretl_VAR_get_impulse_response(var, targ, shock,
-               0, alpha, dset, err);
-        }
-
-        if (var != NULL) {
+    if (var != NULL) {
         /* nullify borrowed pointers */
-            var->A = var->C = NULL;
-            var->X = var->Y = NULL;
-            var->B = var->S = NULL;
-            var->XTX = var->E = NULL;
-            var->xlist = var->ylist = var->rlist = NULL;
-            if (var->jinfo != NULL) {
-                free_temp_jinfo(var);
-                var->jinfo = NULL;
-            }
-            gretl_VAR_free(var);
+        var->A = var->C = NULL;
+        var->X = var->Y = NULL;
+        var->B = var->S = NULL;
+        var->XTX = var->E = NULL;
+        var->xlist = var->ylist = var->rlist = NULL;
+        if (var->jinfo != NULL) {
+            free_temp_jinfo(var);
+            var->jinfo = NULL;
         }
-
-        return ret;
+        gretl_VAR_free(var);
     }
 
-    static gretl_matrix *make_detflags_matrix (const GRETL_VAR *var)
-    {
-        gretl_matrix *d = gretl_zero_matrix_new(1, 3);
+    return ret;
+}
 
-        if (var->ifc || (var->detflags & DET_CONST)) {
-            d->val[0] = 1;
-        }
-        if (var->detflags & DET_TREND) {
-            d->val[1] = 1;
-        }
-        if (var->detflags & DET_SEAS) {
-            d->val[2] = 1;
-        }
+static gretl_matrix *make_detflags_matrix (const GRETL_VAR *var)
+{
+    gretl_matrix *d = gretl_zero_matrix_new(1, 3);
 
-        return d;
+    if (var->ifc || (var->detflags & DET_CONST)) {
+        d->val[0] = 1;
+    }
+    if (var->detflags & DET_TREND) {
+        d->val[1] = 1;
+    }
+    if (var->detflags & DET_SEAS) {
+        d->val[2] = 1;
     }
 
-    int gretl_VAR_bundlize (const GRETL_VAR *var,
-        DATASET *dset,
-        gretl_bundle *b)
-    {
-        gretl_matrix *d;
-        int err = 0;
+    return d;
+}
 
-        if (var->name != NULL) {
-            gretl_bundle_set_string(b, "name", var->name);
-        }
-        gretl_bundle_set_int(b, "ecm", var->ci == VECM);
-        gretl_bundle_set_int(b, "neqns", var->neqns);
-        gretl_bundle_set_int(b, "ncoeff", var->ncoeff);
-        gretl_bundle_set_int(b, "order", var->order);
-        gretl_bundle_set_int(b, "robust", var->robust);
-        gretl_bundle_set_int(b, "t1", var->t1 + 1);
-        gretl_bundle_set_int(b, "t2", var->t2 + 1);
-        gretl_bundle_set_int(b, "T", var->T);
+int gretl_VAR_bundlize (const GRETL_VAR *var,
+                        DATASET *dset,
+                        gretl_bundle *b)
+{
+    gretl_matrix *d;
+    int err = 0;
 
-        gretl_bundle_set_scalar(b, "lnl", var->ll);
-        gretl_bundle_set_scalar(b, "ldet", var->ldet);
+    if (var->name != NULL) {
+        gretl_bundle_set_string(b, "name", var->name);
+    }
+    gretl_bundle_set_int(b, "ecm", var->ci == VECM);
+    gretl_bundle_set_int(b, "neqns", var->neqns);
+    gretl_bundle_set_int(b, "ncoeff", var->ncoeff);
+    gretl_bundle_set_int(b, "order", var->order);
+    gretl_bundle_set_int(b, "robust", var->robust);
+    gretl_bundle_set_int(b, "t1", var->t1 + 1);
+    gretl_bundle_set_int(b, "t2", var->t2 + 1);
+    gretl_bundle_set_int(b, "T", var->T);
 
-        if (var->LBs > 0 && !na(var->LB)) {
+    gretl_bundle_set_scalar(b, "lnl", var->ll);
+    gretl_bundle_set_scalar(b, "ldet", var->ldet);
+
+    if (var->LBs > 0 && !na(var->LB)) {
         /* Portmanteau test */
-            gretl_bundle_set_scalar(b, "Ljung_Box", var->LB);
-            gretl_bundle_set_scalar(b, "LB_order", var->LBs);
-        }
+        gretl_bundle_set_scalar(b, "Ljung_Box", var->LB);
+        gretl_bundle_set_scalar(b, "LB_order", var->LBs);
+    }
 
-        /* deterministic terms: pack in matrix */
-        d = make_detflags_matrix(var);
-        gretl_bundle_donate_data(b, "detflags", d,
-           GRETL_TYPE_MATRIX, 0);
+    /* deterministic terms: pack in matrix */
+    d = make_detflags_matrix(var);
+    gretl_bundle_donate_data(b, "detflags", d,
+                             GRETL_TYPE_MATRIX, 0);
 
-        /* lists: lags, ylist, xlist, rlist */
-        if (var->lags != NULL) {
-            gretl_matrix *v = gretl_list_to_vector(var->lags, &err);
+    /* lists: lags, ylist, xlist, rlist */
+    if (var->lags != NULL) {
+        gretl_matrix *v = gretl_list_to_vector(var->lags, &err);
 
-            if (!err) {
-                gretl_bundle_donate_data(b, "lags", v,
-                   GRETL_TYPE_MATRIX, 0);
-                gretl_bundle_set_note(b, "lags", "gappy lags vector");
-            }
+        if (!err) {
+            gretl_bundle_donate_data(b, "lags", v,
+                                     GRETL_TYPE_MATRIX, 0);
+            gretl_bundle_set_note(b, "lags", "gappy lags vector");
         }
-        if (var->ylist != NULL) {
-            gretl_bundle_set_list(b, "ylist", var->ylist);
-        }
-        if (var->xlist != NULL) {
-            gretl_bundle_set_list(b, "xlist", var->xlist);
-        }
-        if (var->rlist != NULL) {
-            gretl_bundle_set_list(b, "rlist", var->rlist);
-        }
+    }
+    if (var->ylist != NULL) {
+        gretl_bundle_set_list(b, "ylist", var->ylist);
+    }
+    if (var->xlist != NULL) {
+        gretl_bundle_set_list(b, "xlist", var->xlist);
+    }
+    if (var->rlist != NULL) {
+        gretl_bundle_set_list(b, "rlist", var->rlist);
+    }
 
-        /* doubles arrays: Fvals, Ivals? */
+    /* doubles arrays: Fvals, Ivals? */
 
-        if (var->A != NULL) {
-            gretl_bundle_set_matrix(b, "A", var->A);
-        }
-        if (var->C != NULL) {
-            gretl_bundle_set_matrix(b, "C", var->C);
-        }
-        if (var->B != NULL) {
-            gretl_bundle_set_matrix(b, "coeff", var->B);
-        }
-        if (var->S != NULL) {
-            gretl_bundle_set_matrix(b, "sigma", var->S);
-        }
-        if (var->XTX != NULL) {
-            gretl_bundle_set_matrix(b, "xtxinv", var->XTX);
-        }
-        if (var->E != NULL) {
-            gretl_bundle_set_matrix(b, "uhat", var->E);
-        }
-        if (var->X != NULL && var->Y != NULL) {
-            gretl_bundle_set_matrix(b, "X", var->X);
-            gretl_bundle_set_matrix(b, "Y", var->Y);
-        }
-        if (var->ord != NULL) {
-            gretl_bundle_set_matrix(b, "ord", var->ord);
-        }
+    if (var->A != NULL) {
+        gretl_bundle_set_matrix(b, "A", var->A);
+    }
+    if (var->C != NULL) {
+        gretl_bundle_set_matrix(b, "C", var->C);
+    }
+    if (var->B != NULL) {
+        gretl_bundle_set_matrix(b, "coeff", var->B);
+    }
+    if (var->S != NULL) {
+        gretl_bundle_set_matrix(b, "sigma", var->S);
+    }
+    if (var->XTX != NULL) {
+        gretl_bundle_set_matrix(b, "xtxinv", var->XTX);
+    }
+    if (var->E != NULL) {
+        gretl_bundle_set_matrix(b, "uhat", var->E);
+    }
+    if (var->X != NULL && var->Y != NULL) {
+        gretl_bundle_set_matrix(b, "X", var->X);
+        gretl_bundle_set_matrix(b, "Y", var->Y);
+    }
+    if (var->ord != NULL) {
+        gretl_bundle_set_matrix(b, "ord", var->ord);
+    }
 
-    #if 0
-        /* bundle up the individual MODEL structs (?) */
-        gretl_array *models;
-        int i;
+#if 0
+    /* bundle up the individual MODEL structs (?) */
+    gretl_array *models;
+    int i;
 
-        models = gretl_array_new(GRETL_TYPE_BUNDLES, var->neqns, &err);
-        for (i=0; i<var->neqns && !err; i++) {
+    models = gretl_array_new(GRETL_TYPE_BUNDLES, var->neqns, &err);
+    for (i=0; i<var->neqns && !err; i++) {
         gretl_bundle *mbi;
 
         mbi = bundle_from_model(var->models[i], dset, &err);
         if (!err) {
             gretl_array_set_bundle(models, i, mbi, 0);
         }
-        }
-        if (!err) {
-        err = gretl_bundle_set_data(b, "models", models,
-                        GRETL_TYPE_ARRAY, 0);
-        } else if (models != NULL) {
-        gretl_array_destroy(models);
-        }
-    #endif
-
-        if (var->jinfo != NULL) {
-        /* VECM specific info */
-            gretl_bundle *jb = johansen_bundlize(var->jinfo);
-
-            if (jb != NULL) {
-                err = gretl_bundle_donate_data(b, "vecm_info", jb,
-                 GRETL_TYPE_BUNDLE, 0);
-            }
-        }
-
-        return err;
     }
+    if (!err) {
+        err = gretl_bundle_set_data(b, "models", models,
+                                    GRETL_TYPE_ARRAY, 0);
+    } else if (models != NULL) {
+        gretl_array_destroy(models);
+    }
+#endif
+
+    if (var->jinfo != NULL) {
+        /* VECM specific info */
+        gretl_bundle *jb = johansen_bundlize(var->jinfo);
+
+        if (jb != NULL) {
+            err = gretl_bundle_donate_data(b, "vecm_info", jb,
+                                           GRETL_TYPE_BUNDLE, 0);
+        }
+    }
+
+    return err;
+}
