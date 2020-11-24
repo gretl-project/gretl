@@ -127,3 +127,14 @@ print "---- fracorder ------"
 open djclose.gdt --quiet	# need longer data here
 matrix M = fracorder(ldiff(djclose), 20)
 print M
+
+print "---- mat2list ------"
+
+nulldata 20
+matrix M = mnormal($nobs, 2)
+list X = mat2list(M)
+matrix M = muniform($nobs, 3)
+cnameset(M, defarray("foo", "bar", "baz"))
+list X = mat2list(M)
+
+print --byobs

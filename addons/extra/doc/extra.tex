@@ -12,6 +12,8 @@
 {fontsize=\small, xleftmargin=1em}
 
 \newcommand{\noun}[1]{\textsc{#1}}
+\newcommand{\dollar}[1]{\texttt{\$#1}}
+
 %% Because html converters don't know tabularnewline
 \providecommand{\tabularnewline}{\\}
 
@@ -33,7 +35,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{September 2020, release 0.8 (in progress), still growing\ldots }
+\date{November 2020, release 1.0}
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -415,6 +417,35 @@ For the Hurst method a minimum of 128 observations is required, and test results
 never available. Also note that by construction this estimator can only take values between
 $-0.5$ and $0.5$.
 
+\subsection{mat2list}
+
+\ArgRet{\texttt{matrix m, string prefix} (optional)}{list}
+
+Turns the columns of \texttt{m} into a list of series, provided
+\texttt{m} is suitable. This may mean two things:
+\begin{enumerate}
+\item the number of its rows equals \dollar{nobs}, that is the number
+  of observations in the current subsample of the open dataset;
+\item the matrix is endowed with the two internal descriptors
+  \texttt{t1} and \texttt{t2}, so that gretl knows where to put the
+  data. These two items are not settable directly by the user, but
+  exist in matrices previously created from series.
+\end{enumerate}
+
+The variable names are attributed as follows:
+\begin{itemize}
+\item if the optional argument
+\texttt{prefix} is present, the variables will be named by stitching a
+progressive number to it. For example, if \texttt{prefix} is ``blah'',
+the returned list will contain the series \texttt{blah1},
+\texttt{blah2}, and so on;
+\item alternatively, the names will be taken from the column names, if
+  present (column names are settable by the user via the
+  \cmd{cnameset()} function;
+\item finally, if no column names are present, the default prefix
+  ``col'' will be used.
+\end{itemize}
+
 \section{Authors}
 \begin{itemize}
 \item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset,
@@ -425,13 +456,16 @@ splitfname, multi\_instrings, fracorder:
 Sven Schreiber
 
 \item winsor: Sven Schreiber, original code JoshuaHe
+
+\item mat2list: Allin Cottrell and Jack Lucchetti
 % \item bwritejson: Artur Tarassow and Sven Schreiber
 
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
-\item September 2020: 0.8 (in progress), add fracorder, remove bwritejson
+\item November 2020: 1.0 (in progress), add mat2list
+\item September 2020: 0.8, add fracorder, remove bwritejson
 \item July 2020: 0.7, add multi\_instrings and correspondence, add deprecation warning to
 bwritejson, efficiency improvement for zeroifclose
 \item January 2020: 0.6, add drill, bwritejson, onemode, splitfname;

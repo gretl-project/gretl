@@ -6,7 +6,8 @@
 # lin_int (private helper)
 # winsor
 # correspondence
-
+# fracorder
+# mat2list
 
 function series gap_filler (series x "Series to fill",
                             int method[0:2:2] "Fill method" {"Don't", "Repetition", "Linear interpolation"})
@@ -162,20 +163,57 @@ function matrix fracorder (const series x, int order[0::0], bool verbosity[0])
     if $nobs < 128 && verbosity
         print "Warning: not enough obs for Hurst, leaving result row as NA."
     elif $nobs >= 128
-		if verbosity
-			hurst x --plot=none
-		else
-        	outfile null	# workaround for the missing quiet option of hurst
-            	hurst x --plot=none
-        	end outfile 	# This is in >=2018b, so OK here.
-		endif
+                if verbosity
+                        hurst x --plot=none
+                else
+                outfile null    # workaround for the missing quiet option of hurst
+                hurst x --plot=none
+                end outfile     # This is in >=2018b, so OK here.
+                endif
         # shifted to be comparable to d
-		Hurst[1:2] = ($result[1] - 0.5) ~ $result[2]
+                Hurst[1:2] = ($result[1] - 0.5) ~ $result[2]
     endif
 
-	matrix ret = LocWhit | GewPorthud | Hurst
-	cnameset(ret, "estim SE teststat pval") # is in >= 2018a
-	rnameset(ret, "LocalWh GPH Hurst")
+        matrix ret = LocWhit | GewPorthud | Hurst
+        cnameset(ret, "estim SE teststat pval") # is in >= 2018a
+        rnameset(ret, "LocalWh GPH Hurst")
 
-	return ret
+        return ret
+end function
+
+######################
+
+function list mat2list (const matrix m, string prefix[null])
+    list ret = null
+    if cols(m) == 0
+        return ret
+    endif
+
+    catch series tmp = m[,1]
+    if $error
+        printf "Rows don't match current sample; returning empty list\n"
+        return ret
+    endif
+
+    if !exists(prefix)
+        strings S = cnameget(m)
+        if nelem(S) == 0
+            prefix = "col"
+        endif
+    endif
+    nc = cols(m)
+    digits = exists(prefix) ? ceil(log10(nc+0.1)) : 0
+    descfmt = sprintf("Matrix %s, column %%d", argname(m))
+
+    loop i = 1 .. nc
+        if digits > 0
+            sname = sprintf("%s%0*d", prefix, digits, i)
+        else
+            sname = S[i]
+        endif
+        ret += genseries(sname, m[,i])
+        desc = sprintf(descfmt, i)
+        setinfo @sname --description="@desc"
+    endloop
+    return ret
 end function
