@@ -1077,6 +1077,77 @@ static int is_web_resource (const char *s)
     }
 }
 
+static gchar *gzipped_file_get_content (const char *fname,
+					int *err)
+{
+    gzFile fz = gretl_gzopen(fname, "rb");
+    gchar *ret = NULL;
+
+    if (fz == NULL) {
+	*err = E_FOPEN;
+    } else {
+	size_t len = 0;
+	int chk;
+
+	while (gzgetc(fz) > 0) {
+	    len++;
+	}
+	if (len > 0) {
+	    gzrewind(fz);
+	    ret = g_try_malloc(len + 1);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		chk = gzread(fz, ret, len);
+		if (chk <= 0) {
+		    *err = E_DATA;
+		}
+		ret[len] = '\0';
+	    }
+	} else {
+	    ret = g_strdup("");
+	}
+	gzclose(fz);
+    }
+
+    return ret;
+}
+
+static gchar *regular_file_get_content (const char *fname,
+					int *err)
+{
+    GError *gerr = NULL;
+    gchar *ret = NULL;
+    size_t len = 0;
+    int done = 0;
+
+#ifdef WIN32
+    /* g_file_get_contents() requires a UTF-8 filename */
+    if (!g_utf8_validate(fullname, -1, NULL)) {
+	gchar *fconv;
+	gsize wrote = 0;
+
+	fconv = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
+	if (fconv != NULL) {
+	    g_file_get_contents(fconv, &ret, &len, &gerr);
+	    g_free(conv);
+	}
+	done = 1;
+    }
+#endif
+    if (!done) {
+	g_file_get_contents(fname, &ret, &len, &gerr);
+    }
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	*err = E_FOPEN;
+	g_error_free(gerr);
+    }
+
+    return ret;
+}
+
 char *retrieve_file_content (const char *fname, const char *codeset,
 			     int *err)
 {
@@ -1093,35 +1164,14 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	*err = E_DATA;
 #endif
     } else {
-	char fullname[FILENAME_MAX];
-	GError *gerr = NULL;
-	int done = 0;
+	char fullname[FILENAME_MAX] = {0};
 
-	*fullname = '\0';
 	strncat(fullname, fname, FILENAME_MAX - 1);
 	gretl_addpath(fullname, 0);
-#ifdef WIN32
-	/* g_file_get_contents() requires a UTF-8 filename */
-	if (!g_utf8_validate(fullname, -1, NULL)) {
-	    gchar *conv;
-	    gsize wrote = 0;
-
-	    conv = g_locale_to_utf8(fullname, -1, NULL, &wrote, &gerr);
-	    if (conv != NULL) {
-		g_file_get_contents(conv, &content, &len, &gerr);
-		g_free(conv);
-	    }
-	    done = 1;
-	}
-#endif
-	if (!done) {
-	    g_file_get_contents(fullname, &content, &len, &gerr);
-	}
-
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    *err = E_FOPEN;
-	    g_error_free(gerr);
+	if (is_gzipped(fullname)) {
+	    content = gzipped_file_get_content(fullname, err);
+	} else {
+	    content = regular_file_get_content(fullname, err);
 	}
     }
 
