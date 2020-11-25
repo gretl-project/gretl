@@ -92,8 +92,8 @@ static int force_en_fnref;
 static void set_helpfile_option (gretlopt opt)
 {
     if (opt & OPT_N) {
-	force_en_cmdref = 1;
-	force_en_fnref = 1;
+        force_en_cmdref = 1;
+        force_en_fnref = 1;
     }
 }
 
@@ -133,31 +133,31 @@ const char *helpfile_path (int id, int cli, int en)
     *hpath = '\0';
 
     if ((id == GRETL_CMDREF && force_en_cmdref) ||
-	(id == GRETL_FUNCREF && force_en_fnref)) {
-	en = 1;
+        (id == GRETL_FUNCREF && force_en_fnref)) {
+        en = 1;
     }
 
     if (cli) {
-	/* Command-line program */
-	if (id == GRETL_CMDREF) {
-	    i = 0;
-	} else if (id == GRETL_FUNCREF) {
-	    i = 3;
-	}
+        /* Command-line program */
+        if (id == GRETL_CMDREF) {
+            i = 0;
+        } else if (id == GRETL_FUNCREF) {
+            i = 3;
+        }
     } else {
-	/* GUI program */
-	if (id == GRETL_CMDREF) {
-	    i = 1;
-	} else if (id == GRETL_GUI_HELP) {
-	    i = 2;
-	} else if (id == GRETL_FUNCREF) {
-	    i = 4;
-	}
+        /* GUI program */
+        if (id == GRETL_CMDREF) {
+            i = 1;
+        } else if (id == GRETL_GUI_HELP) {
+            i = 2;
+        } else if (id == GRETL_FUNCREF) {
+            i = 4;
+        }
     }
 
     if (i >= 0) {
-	sprintf(hpath, "%s%s", paths.gretldir, en ? helpfiles[i] :
-		_(helpfiles[i]));
+        sprintf(hpath, "%s%s", paths.gretldir, en ? helpfiles[i] :
+                _(helpfiles[i]));
     }
 
     return hpath;
@@ -169,13 +169,13 @@ int using_translated_helpfile (int id)
     int i = 0;
 
     if (id == GRETL_CMDREF) {
-	if (force_en_cmdref) return 0;
-	i = 1;
+        if (force_en_cmdref) return 0;
+        i = 1;
     } else if (id == GRETL_FUNCREF) {
-	if (force_en_fnref) return 0;
-	i = 4;
+        if (force_en_fnref) return 0;
+        i = 4;
     } else {
-	return 0;
+        return 0;
     }
 
     /* If we're not forcing English help, the criterion is
@@ -184,20 +184,20 @@ int using_translated_helpfile (int id)
     */
 
     if (strcmp(helpfiles[i], _(helpfiles[i]))) {
-	char test[MAXLEN];
-	int err;
+        char test[MAXLEN];
+        int err;
 
-	sprintf(test, "%s%s", paths.gretldir, _(helpfiles[i]));
-	err = gretl_test_fopen(test, "r");
-	if (err) {
-	    if (id == GRETL_CMDREF) {
-		force_en_cmdref = 1;
-	    } else {
-		force_en_fnref = 1;
-	    }
-	} else {
-	    ret = 1;
-	}
+        sprintf(test, "%s%s", paths.gretldir, _(helpfiles[i]));
+        err = gretl_test_fopen(test, "r");
+        if (err) {
+            if (id == GRETL_CMDREF) {
+                force_en_cmdref = 1;
+            } else {
+                force_en_fnref = 1;
+            }
+        } else {
+            ret = 1;
+        }
     }
 
     return ret;
@@ -212,12 +212,12 @@ int using_translated_helpfile (int id)
 static int maybe_add_suffix (char *fname, const char *sfx)
 {
     if (has_suffix(fname, ".gdtb") && !strcmp(sfx, ".gdt")) {
-	return 0;
+        return 0;
     } else if (has_suffix(fname, ".gdt") && !strcmp(sfx, ".gdtb")) {
-	return 0;
+        return 0;
     } else if (!has_suffix(fname, sfx)) {
-	strcat(fname, sfx);
-	return 1;
+        strcat(fname, sfx);
+        return 1;
     }
 
     return 0;
@@ -250,16 +250,16 @@ int utf8_encoded (const char *s)
     int ret = 0;
 
     if (g_utf8_validate(s, -1, NULL)) {
-	const unsigned char *p = (const unsigned char *) s;
+        const unsigned char *p = (const unsigned char *) s;
 
-	while (*p) {
-	    if (*p < 32 || *p > 126) {
-		/* not printable ASCII */
-		ret = 1;
-		break;
-	    }
-	    p++;
-	}
+        while (*p) {
+            if (*p < 32 || *p > 126) {
+                /* not printable ASCII */
+                ret = 1;
+                break;
+            }
+            p++;
+        }
     }
 
     return ret;
@@ -291,9 +291,9 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
 #ifdef WIN32
     if (valid_utf8(fname)) {
-	fp = g_fopen(fname, mode);
+        fp = g_fopen(fname, mode);
     } else {
-	fp = fopen(fname, mode);
+        fp = fopen(fname, mode);
     }
 #else
     fp = fopen(fname, mode);
@@ -304,7 +304,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 #endif
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(fname, errno);
+        gretl_errmsg_set_from_errno(fname, errno);
     }
 
     return fp;
@@ -333,23 +333,23 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
 
 #ifdef WIN32
     if (valid_utf8(pattern)) {
-	fd = g_mkstemp(pattern);
+        fd = g_mkstemp(pattern);
     } else {
-	fd = mkstemp(pattern);
+        fd = mkstemp(pattern);
     }
 #else
     fd = mkstemp(pattern);
 #endif
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(NULL, errno);
+        gretl_errmsg_set_from_errno(NULL, errno);
     } else if (fd != -1) {
-	fp = fdopen(fd, mode);
+        fp = fdopen(fd, mode);
     }
 
 #if 0
     fprintf(stderr, "gretl_mktemp: name='%s', fd=%d, fp=%p\n",
-	    pattern, fd, (void *) fp);
+            pattern, fd, (void *) fp);
 #endif
 
     return fp;
@@ -376,27 +376,27 @@ int gretl_test_fopen (const char *fname, const char *mode)
 
 #ifdef WIN32
     if (valid_utf8(fname)) {
-	fp = g_fopen(fname, mode);
-	if (fp == NULL) {
-	    err = errno;
-	} else {
-	    fclose(fp);
-	    if (*mode == 'w') {
-		g_remove(fname);
-	    }
-	}
-	return err;
+        fp = g_fopen(fname, mode);
+        if (fp == NULL) {
+            err = errno;
+        } else {
+            fclose(fp);
+            if (*mode == 'w') {
+                g_remove(fname);
+            }
+        }
+        return err;
     }
 #endif
 
     fp = fopen(fname, mode);
     if (fp == NULL) {
-	err = errno;
+        err = errno;
     } else {
-	fclose(fp);
-	if (*mode == 'w') {
-	    remove(fname);
-	}
+        fclose(fp);
+        if (*mode == 'w') {
+            remove(fname);
+        }
     }
 
     return err;
@@ -424,21 +424,21 @@ int gretl_open (const char *pathname, int flags, int mode)
     gretl_error_clear();
 
     if (flags & O_CREAT) {
-	m = (mode_t) mode;
+        m = (mode_t) mode;
     }
 
 #ifdef WIN32
     if (valid_utf8(pathname)) {
-	fd = g_open(pathname, flags, m);
+        fd = g_open(pathname, flags, m);
     } else {
-	fd = open(pathname, flags, m);
+        fd = open(pathname, flags, m);
     }
 #else
     fd = open(pathname, flags, m);
 #endif
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(pathname, errno);
+        gretl_errmsg_set_from_errno(pathname, errno);
     }
 
     return fd;
@@ -466,22 +466,22 @@ int gretl_stat (const char *fname, struct stat *buf)
 
 #ifdef WIN32
     if (utf8_encoded(fname)) {
-	/* A native stat() call won't work with such a filename:
-	   we should either call g_stat(), which expects UTF-8
-	   on Windows, or convert @fname before calling stat().
-	   Unfortunately g_stat() from GLib 2.36.4 crashes on
-	   (some variants of) 32-bit Windows, so it seems we need
-	   to do the conversion ourselves.
-	*/
-	gunichar2 *wname;
+        /* A native stat() call won't work with such a filename:
+           we should either call g_stat(), which expects UTF-8
+           on Windows, or convert @fname before calling stat().
+           Unfortunately g_stat() from GLib 2.36.4 crashes on
+           (some variants of) 32-bit Windows, so it seems we need
+           to do the conversion ourselves.
+        */
+        gunichar2 *wname;
 
-	wname = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
-	if (wname != NULL) {
-	    int ret = wstat(wname, buf == NULL ? &tmp : buf);
+        wname = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
+        if (wname != NULL) {
+            int ret = wstat(wname, buf == NULL ? &tmp : buf);
 
-	    g_free(wname);
-	    return ret;
-	}
+            g_free(wname);
+            return ret;
+        }
     }
 #endif
 
@@ -514,58 +514,58 @@ int gretl_file_exists (const char *fname)
 */
 
 static int win32_rename (const char *oldpath,
-			 const char *newpath)
+                         const char *newpath)
 {
     int u_old = valid_utf8(oldpath);
     int u_new = valid_utf8(newpath);
     int ret = -1;
 
     if (gretl_file_exists(newpath)) {
-	/* get rid of stale target */
-	win32_delete_recursive(newpath);
+        /* get rid of stale target */
+        win32_delete_recursive(newpath);
     }
 
     if (u_old && u_new) {
-	/* OK, both names are UTF-8 */
-	ret = g_rename(oldpath, newpath);
+        /* OK, both names are UTF-8 */
+        ret = g_rename(oldpath, newpath);
     } else if (!u_old && !u_new) {
-	/* both names in locale? */
-	ret = rename(oldpath, newpath);
+        /* both names in locale? */
+        ret = rename(oldpath, newpath);
     } else {
-	/* let's get both names into UTF-8 */
-	const gchar *old_ok = NULL;
-	const gchar *new_ok = NULL;
-	gchar *oldtmp = NULL;
-	gchar *newtmp = NULL;
+        /* let's get both names into UTF-8 */
+        const gchar *old_ok = NULL;
+        const gchar *new_ok = NULL;
+        gchar *oldtmp = NULL;
+        gchar *newtmp = NULL;
 
-	if (u_old) {
-	    old_ok = oldpath;
-	} else {
-	    oldtmp = g_locale_to_utf8(oldpath, -1, NULL, NULL, NULL);
-	    if (oldtmp != NULL) {
-		old_ok = oldtmp;
-	    }
-	}
-	if (u_new) {
-	    new_ok = newpath;
-	} else {
-	    newtmp = g_locale_to_utf8(newpath, -1, NULL, NULL, NULL);
-	    if (newtmp != NULL) {
-		new_ok = newtmp;
-	    }
-	}
+        if (u_old) {
+            old_ok = oldpath;
+        } else {
+            oldtmp = g_locale_to_utf8(oldpath, -1, NULL, NULL, NULL);
+            if (oldtmp != NULL) {
+                old_ok = oldtmp;
+            }
+        }
+        if (u_new) {
+            new_ok = newpath;
+        } else {
+            newtmp = g_locale_to_utf8(newpath, -1, NULL, NULL, NULL);
+            if (newtmp != NULL) {
+                new_ok = newtmp;
+            }
+        }
 
-	if (old_ok != NULL && new_ok != NULL) {
-	    ret = g_rename(old_ok, new_ok);
-	} else {
-	    fprintf(stderr, "old_ok = %p, new_ok = %p\n",
-		    (void *) old_ok, (void *) new_ok);
-	    fprintf(stderr, "oldpath='%s', newpath='%s'\n",
-		    oldpath, newpath);
-	}
+        if (old_ok != NULL && new_ok != NULL) {
+            ret = g_rename(old_ok, new_ok);
+        } else {
+            fprintf(stderr, "old_ok = %p, new_ok = %p\n",
+                    (void *) old_ok, (void *) new_ok);
+            fprintf(stderr, "oldpath='%s', newpath='%s'\n",
+                    oldpath, newpath);
+        }
 
-	g_free(oldtmp);
-	g_free(newtmp);
+        g_free(oldtmp);
+        g_free(newtmp);
     }
 
     return ret;
@@ -590,8 +590,8 @@ int gretl_rename (const char *oldpath, const char *newpath)
     int err = 0;
 
     if (!strcmp(oldpath, newpath)) {
-	/* check for no-op */
-	return 0;
+        /* check for no-op */
+        return 0;
     }
 
     gretl_error_clear();
@@ -603,8 +603,8 @@ int gretl_rename (const char *oldpath, const char *newpath)
 #endif
 
     if (errno != 0) {
-	perror("rename");
-	gretl_errmsg_set_from_errno("gretl_rename", errno);
+        perror("rename");
+        gretl_errmsg_set_from_errno("gretl_rename", errno);
     }
 
     return err;
@@ -627,29 +627,29 @@ int gretl_remove (const char *path)
 
 #ifdef WIN32
     if (valid_utf8(path)) {
-	ret = g_remove(path);
+        ret = g_remove(path);
     } else {
-	/* @path is in locale encoding */
-	ret = remove(path);
-	if (ret == -1) {
-	    /* allow for the possibility that we're trying to remove a
-	       directory on win32 -> recode to UTF-8 and use g_remove
-	    */
-	    GError *gerr = NULL;
-	    gchar *pconv = NULL;
-	    gsize sz;
+        /* @path is in locale encoding */
+        ret = remove(path);
+        if (ret == -1) {
+            /* allow for the possibility that we're trying to remove a
+               directory on win32 -> recode to UTF-8 and use g_remove
+            */
+            GError *gerr = NULL;
+            gchar *pconv = NULL;
+            gsize sz;
 
-	    pconv = g_locale_to_utf8(path, -1, NULL, &sz, &gerr);
-	    if (pconv == NULL) {
-		if (gerr != NULL) {
-		    gretl_errmsg_set(gerr->message);
-		    g_error_free(gerr);
-		}
-	    } else {
-		ret = g_remove(pconv);
-		g_free(pconv);
-	    }
-	}
+            pconv = g_locale_to_utf8(path, -1, NULL, &sz, &gerr);
+            if (pconv == NULL) {
+                if (gerr != NULL) {
+                    gretl_errmsg_set(gerr->message);
+                    g_error_free(gerr);
+                }
+            } else {
+                ret = g_remove(pconv);
+                g_free(pconv);
+            }
+        }
     }
 #else
     ret = remove(path);
@@ -678,22 +678,22 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 
 #ifdef WIN32
     if (utf8_encoded(fname)) {
-	/* here we have to convert to UTF-16 */
-	gunichar2 *tmp = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
+        /* here we have to convert to UTF-16 */
+        gunichar2 *tmp = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
 
-	if (tmp != NULL) {
-	    fz = gzopen_w(tmp, mode);
-	    g_free(tmp);
-	}
+        if (tmp != NULL) {
+            fz = gzopen_w(tmp, mode);
+            g_free(tmp);
+        }
     } else {
-	fz = gzopen(fname, mode); /* ? */
+        fz = gzopen(fname, mode); /* ? */
     }
 #else
     fz = gzopen(fname, mode);
 #endif
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno("gzopen", errno);
+        gretl_errmsg_set_from_errno("gzopen", errno);
     }
 
     return fz;
@@ -718,25 +718,25 @@ int gretl_chdir (const char *path)
 
 #ifdef WIN32
     if (valid_utf8(path)) {
-	err = g_chdir(path);
+        err = g_chdir(path);
     } else {
-	int len = strlen(path);
-	char *ptmp = NULL;
+        int len = strlen(path);
+        char *ptmp = NULL;
 
-	if (len > 1 && path[len-1] == '\\' && path[len-2] != ':') {
-	    /* trim trailing slash for non-root dir */
-	    ptmp = gretl_strndup(path, len - 1);
-	    path = ptmp;
-	}
-	err = chdir(path);
-	free(ptmp);
+        if (len > 1 && path[len-1] == '\\' && path[len-2] != ':') {
+            /* trim trailing slash for non-root dir */
+            ptmp = gretl_strndup(path, len - 1);
+            path = ptmp;
+        }
+        err = chdir(path);
+        free(ptmp);
     }
 #else
     err = chdir(path);
 #endif
 
     if (errno != 0) {
-	gretl_errmsg_set_from_errno("chdir", errno);
+        gretl_errmsg_set_from_errno("chdir", errno);
     }
 
     return err;
@@ -756,12 +756,12 @@ int gretl_chdir (const char *path)
 int gretl_isdir (const char *path)
 {
     if (valid_utf8(path)) {
-	return g_file_test(path, G_FILE_TEST_IS_DIR);
+        return g_file_test(path, G_FILE_TEST_IS_DIR);
     } else {
-	struct stat buf;
-	int err = gretl_stat(path, &buf);
+        struct stat buf;
+        int err = gretl_stat(path, &buf);
 
-	return err ? 0 : S_ISDIR(buf.st_mode);
+        return err ? 0 : S_ISDIR(buf.st_mode);
     }
 }
 
@@ -784,27 +784,27 @@ int gretl_mkdir (const char *path)
 
 #ifdef WIN32
     if (valid_utf8(path)) {
-	err = g_mkdir_with_parents(path, 0755);
+        err = g_mkdir_with_parents(path, 0755);
     } else {
-	gchar *pconv;
-	gsize bytes;
+        gchar *pconv;
+        gsize bytes;
 
-	pconv = g_locale_to_utf8(path, -1, NULL, &bytes, NULL);
-	if (pconv != NULL) {
-	    err = g_mkdir_with_parents(pconv, 0755);
-	    g_free(pconv);
-	} else {
-	    /* won't work if parents have to be created! */
-	    err = _mkdir(path);
-	}
+        pconv = g_locale_to_utf8(path, -1, NULL, &bytes, NULL);
+        if (pconv != NULL) {
+            err = g_mkdir_with_parents(pconv, 0755);
+            g_free(pconv);
+        } else {
+            /* won't work if parents have to be created! */
+            err = _mkdir(path);
+        }
     }
 #else
     err = g_mkdir_with_parents(path, 0755);
 #endif
 
     if (err) {
-	fprintf(stderr, "%s: %s\n", path, gretl_strerror(errno));
-	err = 1;
+        fprintf(stderr, "%s: %s\n", path, gretl_strerror(errno));
+        err = 1;
     }
 
     return err;
@@ -821,33 +821,33 @@ static int real_delete_recursive (const char *path)
     dir = g_dir_open(path, 0, NULL);
 
     if (dir == NULL) {
-	err = 1;
+        err = 1;
     } else {
-	const gchar *fname;
+        const gchar *fname;
 
-	err = g_chdir(path);
-	while ((fname = g_dir_read_name(dir)) != NULL && !err) {
-	    /* recursively delete dir's contents */
-	    if (strcmp(fname, ".") && strcmp(fname, "..")) {
-		if (g_file_test(fname, G_FILE_TEST_IS_DIR)) {
-		    err = real_delete_recursive(fname);
-		} else {
-		    err = g_remove(fname);
-		}
-	    }
-	}
-	if (!err) {
-	    g_dir_close(dir);
-	    /* delete the directory itself */
-	    if (g_chdir("..") == 0) {
-		err = g_remove(path);
-	    }
-	}
+        err = g_chdir(path);
+        while ((fname = g_dir_read_name(dir)) != NULL && !err) {
+            /* recursively delete dir's contents */
+            if (strcmp(fname, ".") && strcmp(fname, "..")) {
+                if (g_file_test(fname, G_FILE_TEST_IS_DIR)) {
+                    err = real_delete_recursive(fname);
+                } else {
+                    err = g_remove(fname);
+                }
+            }
+        }
+        if (!err) {
+            g_dir_close(dir);
+            /* delete the directory itself */
+            if (g_chdir("..") == 0) {
+                err = g_remove(path);
+            }
+        }
     }
 
     if (err) {
-	gretl_errmsg_set_from_errno(path, errno);
-	err = E_FOPEN;
+        gretl_errmsg_set_from_errno(path, errno);
+        err = E_FOPEN;
     }
 
     return err;
@@ -876,8 +876,8 @@ int gretl_deltree (const char *path)
     err = real_delete_recursive(path);
 
     if (savedir != NULL) {
-	g_chdir(savedir);
-	g_free(savedir);
+        g_chdir(savedir);
+        g_free(savedir);
     }
 
     return err;
@@ -891,24 +891,24 @@ GDir *gretl_opendir (const char *name)
 
 #ifdef WIN32
     if (valid_utf8(name)) {
-	dir = g_dir_open(name, 0, &error);
+        dir = g_dir_open(name, 0, &error);
     } else {
-	gchar *pconv;
-	gsize bytes;
+        gchar *pconv;
+        gsize bytes;
 
-	pconv = g_locale_to_utf8(name, -1, NULL, &bytes, &error);
-	if (pconv != NULL) {
-	    dir = g_dir_open(pconv, 0, &error);
-	    g_free(pconv);
-	}
+        pconv = g_locale_to_utf8(name, -1, NULL, &bytes, &error);
+        if (pconv != NULL) {
+            dir = g_dir_open(pconv, 0, &error);
+            g_free(pconv);
+        }
     }
 #else
     dir = g_dir_open(name, 0, &error);
 #endif
 
     if (error != NULL) {
-	gretl_errmsg_set(error->message);
-	g_error_free(error);
+        gretl_errmsg_set(error->message);
+        g_error_free(error);
     }
 
     return dir;
@@ -958,22 +958,22 @@ int gretl_write_access (char *fname)
 
 #ifdef WIN32
     if (utf8_encoded(fname)) {
-	gunichar2 *tmp = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
+        gunichar2 *tmp = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
 
-	if (tmp != NULL) {
-	    err = win32_write_access(NULL, tmp);
-	    g_free(tmp);
-	} else {
-	    err = 1;
-	}
+        if (tmp != NULL) {
+            err = win32_write_access(NULL, tmp);
+            g_free(tmp);
+        } else {
+            err = 1;
+        }
     } else {
-	/* @fname is ASCII or in locale encoding */
-	err = win32_write_access(fname, NULL);
+        /* @fname is ASCII or in locale encoding */
+        err = win32_write_access(fname, NULL);
     }
 #else
     err = access(fname, W_OK);
     if (errno != 0) {
-	gretl_errmsg_set_from_errno(fname, errno);
+        gretl_errmsg_set_from_errno(fname, errno);
     }
 #endif
 
@@ -996,11 +996,11 @@ int gretl_is_xml_file (const char *fname)
 
     fz = gretl_gzopen(fname, "rb");
     if (fz != Z_NULL) {
-	if (gzread(fz, test, 5)) {
-	    test[5] = '\0';
-	    if (!strcmp(test, "<?xml")) ret = 1;
-	}
-	gzclose(fz);
+        if (gzread(fz, test, 5)) {
+            test[5] = '\0';
+            if (!strcmp(test, "<?xml")) ret = 1;
+        }
+        gzclose(fz);
     }
 
     gretl_error_clear();
@@ -1028,14 +1028,14 @@ int gretl_path_prepend (char *file, const char *path)
     char temp[MAXLEN];
 
     if (n > MAXLEN) {
-	return 1;
+        return 1;
     }
 
     strcpy(temp, path);
     n = strlen(temp);
 
     if (temp[n-1] != SLASH && n < MAXLEN - 1) {
-	strcat(temp, SLASHSTR);
+        strcat(temp, SLASHSTR);
     }
 
     strcat(temp, file);
@@ -1053,7 +1053,7 @@ enum {
 #ifdef WIN32
 
 static int try_open_file (char *targ, const char *finddir,
-			  WIN32_FIND_DATA *fdata, int flags)
+                          WIN32_FIND_DATA *fdata, int flags)
 {
     char tmp[MAXLEN];
     int n = strlen(finddir);
@@ -1068,19 +1068,19 @@ static int try_open_file (char *targ, const char *finddir,
     err = gretl_test_fopen(tmp, "r");
 
     if (err && (flags & ADD_GDT)) {
-	if (maybe_add_suffix(tmp, ".gdt")) {
-	    err = gretl_test_fopen(tmp, "rb");
-	    if (err) {
-		/* try .gdtb also */
-		strcat(tmp, "b");
-		err = gretl_test_fopen(tmp, "rb");
-	    }
-	}
+        if (maybe_add_suffix(tmp, ".gdt")) {
+            err = gretl_test_fopen(tmp, "rb");
+            if (err) {
+                /* try .gdtb also */
+                strcat(tmp, "b");
+                err = gretl_test_fopen(tmp, "rb");
+            }
+        }
     }
 
     if (!err) {
-	strcpy(targ, tmp);
-	found = 1;
+        strcpy(targ, tmp);
+        found = 1;
     }
 
     return found;
@@ -1091,21 +1091,21 @@ static void make_findname (char *targ, const char *src)
     strcpy(targ, src);
 
     if (utf8_encoded((const unsigned char *) targ)) {
-	/* FIXME : do we want this? */
-	gchar *tmp;
-	gsize sz;
+        /* FIXME : do we want this? */
+        gchar *tmp;
+        gsize sz;
 
-	tmp = g_locale_from_utf8(src, -1, NULL, &sz, NULL);
-	if (tmp != NULL) {
-	    strcpy(targ, tmp);
-	    g_free(tmp);
-	}
+        tmp = g_locale_from_utf8(src, -1, NULL, &sz, NULL);
+        if (tmp != NULL) {
+            strcpy(targ, tmp);
+            g_free(tmp);
+        }
     }
 
     if (targ[strlen(targ)-1] != '\\') {
-	strcat(targ, "\\*");
+        strcat(targ, "\\*");
     } else {
-	strcat(targ, "*");
+        strcat(targ, "*");
     }
 }
 
@@ -1114,10 +1114,10 @@ static int got_subdir (WIN32_FIND_DATA *fdata)
     int ret = 0;
 
     if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-	if (strcmp(fdata->cFileName, ".") &&
-	    strcmp(fdata->cFileName, "..")) {
-	    ret = 1;
-	}
+        if (strcmp(fdata->cFileName, ".") &&
+            strcmp(fdata->cFileName, "..")) {
+            ret = 1;
+        }
     }
 
     return ret;
@@ -1135,15 +1135,15 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 
     handle = FindFirstFile(finddir, &fdata);
     if (handle != INVALID_HANDLE_VALUE) {
-	if (got_subdir(&fdata)) {
-	    found = try_open_file(fname, finddir, &fdata, flags);
-	}
-	while (!found && FindNextFile(handle, &fdata)) {
-	    if (got_subdir(&fdata)) {
-		found = try_open_file(fname, finddir, &fdata, flags);
-	    }
-	}
-	FindClose(handle);
+        if (got_subdir(&fdata)) {
+            found = try_open_file(fname, finddir, &fdata, flags);
+        }
+        while (!found && FindNextFile(handle, &fdata)) {
+            if (got_subdir(&fdata)) {
+                found = try_open_file(fname, finddir, &fdata, flags);
+            }
+        }
+        FindClose(handle);
     }
 
     return found;
@@ -1152,7 +1152,7 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 #else /* end of win32 file-finding, on to posix */
 
 static int try_open_file (char *targ, const char *finddir,
-			  const gchar *dname, int flags)
+                          const gchar *dname, int flags)
 {
     char tmp[MAXLEN];
     int err, found = 0;
@@ -1165,19 +1165,19 @@ static int try_open_file (char *targ, const char *finddir,
     err = gretl_test_fopen(tmp, "r");
 
     if (err && (flags & ADD_GDT)) {
-	if (maybe_add_suffix(tmp, ".gdt")) {
-	    err = gretl_test_fopen(tmp, "r");
-	    if (err) {
-		/* try .gdtb also */
-		strcat(tmp, "b");
-		err = gretl_test_fopen(tmp, "r");
-	    }
-	}
+        if (maybe_add_suffix(tmp, ".gdt")) {
+            err = gretl_test_fopen(tmp, "r");
+            if (err) {
+                /* try .gdtb also */
+                strcat(tmp, "b");
+                err = gretl_test_fopen(tmp, "r");
+            }
+        }
     }
 
     if (!err) {
-	strcpy(targ, tmp);
-	found = 1;
+        strcpy(targ, tmp);
+        found = 1;
     }
 
     return found;
@@ -1190,7 +1190,7 @@ static void make_findname (char *targ, const char *src)
     strcpy(targ, src);
 
     if (targ[n-1] != '/') {
-	strcat(targ, "/");
+        strcat(targ, "/");
     }
 }
 
@@ -1199,16 +1199,16 @@ static int got_subdir (const char *topdir, const gchar *dname)
     int ret = 0;
 
     if (strcmp(dname, ".") && strcmp(dname, "..")) {
-	char tmp[MAXLEN];
-	GDir *sub;
+        char tmp[MAXLEN];
+        GDir *sub;
 
-	strcpy(tmp, topdir);
-	strcat(tmp, dname);
-	sub = gretl_opendir(tmp);
-	if (sub != NULL) {
-	    g_dir_close(sub);
-	    ret = 1;
-	}
+        strcpy(tmp, topdir);
+        strcat(tmp, dname);
+        sub = gretl_opendir(tmp);
+        if (sub != NULL) {
+            g_dir_close(sub);
+            ret = 1;
+        }
     }
 
     return ret;
@@ -1226,12 +1226,12 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 
     dir = gretl_opendir(finddir);
     if (dir != NULL) {
-	while (!found && (dname = g_dir_read_name(dir))) {
-	    if (got_subdir(finddir, dname)) {
-		found = try_open_file(fname, finddir, dname, flags);
-	    }
-	}
-	g_dir_close(dir);
+        while (!found && (dname = g_dir_read_name(dir))) {
+            if (got_subdir(finddir, dname)) {
+                found = try_open_file(fname, finddir, dname, flags);
+            }
+        }
+        g_dir_close(dir);
     }
 
     return found;
@@ -1248,48 +1248,48 @@ char *search_dir (char *fname, const char *topdir, int flags)
 
 #if SEARCH_DEBUG
     fprintf(stderr, "search_dir: trying '%s' for '%s' (ADD_GDT=%d)\n",
-	    topdir, fname, flags & ADD_GDT);
+            topdir, fname, flags & ADD_GDT);
 #endif
 
     strcpy(orig, fname);
 
     if (gretl_path_prepend(fname, topdir) == 0) {
-	err = gretl_test_fopen(fname, "r");
+        err = gretl_test_fopen(fname, "r");
 #if SEARCH_DEBUG
-	fprintf(stderr, " trying '%s'\n", fname);
+        fprintf(stderr, " trying '%s'\n", fname);
 #endif
-	if (!err) {
-	    return fname;
-	}
-	if (flags & ADD_GDT) {
-	    if (maybe_add_suffix(fname, ".gdt")) {
+        if (!err) {
+            return fname;
+        }
+        if (flags & ADD_GDT) {
+            if (maybe_add_suffix(fname, ".gdt")) {
 #if SEARCH_DEBUG
-		fprintf(stderr, " trying '%s'\n", fname);
+                fprintf(stderr, " trying '%s'\n", fname);
 #endif
-		err = gretl_test_fopen(fname, "r");
-		if (!err) {
-		    return fname;
-		}
-	    } else if (maybe_add_suffix(fname, ".gdtb")) {
-		err = gretl_test_fopen(fname, "r");
-		if (!err) {
-		    return fname;
-		}
-	    }
-	} else if (flags & ADD_GFN) {
-	    if (maybe_add_suffix(fname, ".gfn")) {
-		err = gretl_test_fopen(fname, "r");
-		if (!err) {
-		    return fname;
-		}
-	    }
-	}
-	strcpy(fname, orig);
-	if (flags & SUBDIRS) {
-	    if (find_in_subdir(topdir, fname, flags)) {
-		return fname;
-	    }
-	}
+                err = gretl_test_fopen(fname, "r");
+                if (!err) {
+                    return fname;
+                }
+            } else if (maybe_add_suffix(fname, ".gdtb")) {
+                err = gretl_test_fopen(fname, "r");
+                if (!err) {
+                    return fname;
+                }
+            }
+        } else if (flags & ADD_GFN) {
+            if (maybe_add_suffix(fname, ".gfn")) {
+                err = gretl_test_fopen(fname, "r");
+                if (!err) {
+                    return fname;
+                }
+            }
+        }
+        strcpy(fname, orig);
+        if (flags & SUBDIRS) {
+            if (find_in_subdir(topdir, fname, flags)) {
+                return fname;
+            }
+        }
     }
 
     return NULL;
@@ -1317,16 +1317,16 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     *n_dirs = 0;
 
     if (stype == DATA_SEARCH) {
-	subdir = "data";
+        subdir = "data";
     } else if (stype == DB_SEARCH) {
-	subdir = "db";
+        subdir = "db";
     } else if (stype == FUNCS_SEARCH) {
-	subdir = "functions";
+        subdir = "functions";
     } else if (stype == SCRIPT_SEARCH) {
-	subdir = "scripts";
+        subdir = "scripts";
     } else {
-	fprintf(stderr, "get_plausible_search_dir: no type specified\n");
-	return NULL;
+        fprintf(stderr, "get_plausible_search_dir: no type specified\n");
+        return NULL;
     }
 
     /* system dir first */
@@ -1335,44 +1335,44 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 
 #ifdef OS_OSX
     if (!err) {
-	/* the user's ~/Library */
-	gretl_build_path(dirname, gretl_app_support_dir(), subdir, NULL);
-	err = strings_array_add(&dirs, n_dirs, dirname);
+        /* the user's ~/Library */
+        gretl_build_path(dirname, gretl_app_support_dir(), subdir, NULL);
+        err = strings_array_add(&dirs, n_dirs, dirname);
     }
 #else
     if (!err) {
-	/* the user's dotdir */
-	gretl_build_path(dirname, gretl_dotdir(), subdir, NULL);
-	err = strings_array_add(&dirs, n_dirs, dirname);
+        /* the user's dotdir */
+        gretl_build_path(dirname, gretl_dotdir(), subdir, NULL);
+        err = strings_array_add(&dirs, n_dirs, dirname);
     }
 #endif
 
     if (!err) {
-	/* the user's working dir */
-	gretl_build_path(dirname, gretl_workdir(), subdir, NULL);
-	err = strings_array_add(&dirs, n_dirs, dirname);
+        /* the user's working dir */
+        gretl_build_path(dirname, gretl_workdir(), subdir, NULL);
+        err = strings_array_add(&dirs, n_dirs, dirname);
     }
 
     if (!err) {
-	/* working dir, no subdir */
-	strcpy(dirname, gretl_workdir());
-	err = strings_array_add(&dirs, n_dirs, dirname);
+        /* working dir, no subdir */
+        strcpy(dirname, gretl_workdir());
+        err = strings_array_add(&dirs, n_dirs, dirname);
     }
 
     if (!err) {
-	/* a legacy thing: some files may have been written to
-	   the "default workdir" in the past
-	*/
-	const char *wd = maybe_get_default_workdir();
+        /* a legacy thing: some files may have been written to
+           the "default workdir" in the past
+        */
+        const char *wd = maybe_get_default_workdir();
 
-	if (wd != NULL) {
-	    gretl_build_path(dirname, wd, subdir, NULL);
-	    err = strings_array_add(&dirs, n_dirs, dirname);
-	    if (!err && stype != FUNCS_SEARCH) {
-		strcpy(dirname, wd);
-		err = strings_array_add(&dirs, n_dirs, dirname);
-	    }
-	}
+        if (wd != NULL) {
+            gretl_build_path(dirname, wd, subdir, NULL);
+            err = strings_array_add(&dirs, n_dirs, dirname);
+            if (!err && stype != FUNCS_SEARCH) {
+                strcpy(dirname, wd);
+                err = strings_array_add(&dirs, n_dirs, dirname);
+            }
+        }
     }
 
     return dirs;
@@ -1400,7 +1400,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
  */
 
 char *gretl_function_package_get_path (const char *name,
-				       PkgType type)
+                                       PkgType type)
 {
     char *ret = NULL;
     char path[FILENAME_MAX];
@@ -1409,9 +1409,9 @@ char *gretl_function_package_get_path (const char *name,
     int i, n_dirs;
 
     if (type == PKG_ALL || type == PKG_SUBDIR) {
-	if (is_gretl_addon(name)) {
-	    return gretl_addon_get_path(name);
-	}
+        if (is_gretl_addon(name)) {
+            return gretl_addon_get_path(name);
+        }
     }
 
     *path = '\0';
@@ -1419,56 +1419,56 @@ char *gretl_function_package_get_path (const char *name,
     dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
     for (i=0; i<n_dirs && !found; i++) {
-	const char *fndir = dirs[i];
-	const char *dname;
-	char *p, test[NAME_MAX+1];
-	GDir *dir;
+        const char *fndir = dirs[i];
+        const char *dname;
+        char *p, test[NAME_MAX+1];
+        GDir *dir;
 
-	if ((dir = gretl_opendir(fndir)) == NULL) {
-	    continue;
-	}
+        if ((dir = gretl_opendir(fndir)) == NULL) {
+            continue;
+        }
 
-	if (type != PKG_TOPLEV) {
-	    /* look preferentially for .gfn files in their own
-	       subdirectories */
-	    while ((dname = g_dir_read_name(dir)) != NULL && !found) {
-		if (!strcmp(dname, name)) {
-		    sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH,
-			    dname, SLASH, dname);
-		    err = gretl_test_fopen(path, "r");
-		    if (!err) {
-			found = 1;
-		    } else {
-			*path = '\0';
-		    }
-		}
-	    }
-	}
+        if (type != PKG_TOPLEV) {
+            /* look preferentially for .gfn files in their own
+               subdirectories */
+            while ((dname = g_dir_read_name(dir)) != NULL && !found) {
+                if (!strcmp(dname, name)) {
+                    sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH,
+                            dname, SLASH, dname);
+                    err = gretl_test_fopen(path, "r");
+                    if (!err) {
+                        found = 1;
+                    } else {
+                        *path = '\0';
+                    }
+                }
+            }
+        }
 
-	if (!found && type != PKG_SUBDIR) {
-	    /* look for .gfn files in the top-level functions
-	       directory */
-	    g_dir_rewind(dir);
-	    while ((dname = g_dir_read_name(dir)) != NULL && !found) {
-		if (has_suffix(dname, ".gfn")) {
-		    strcpy(test, dname);
-		    p = strrchr(test, '.');
-		    *p = '\0';
-		    if (!strcmp(test, name)) {
-			sprintf(path, "%s%c%s", fndir, SLASH, dname);
-			found = 1;
-		    }
-		}
-	    }
-	}
+        if (!found && type != PKG_SUBDIR) {
+            /* look for .gfn files in the top-level functions
+               directory */
+            g_dir_rewind(dir);
+            while ((dname = g_dir_read_name(dir)) != NULL && !found) {
+                if (has_suffix(dname, ".gfn")) {
+                    strcpy(test, dname);
+                    p = strrchr(test, '.');
+                    *p = '\0';
+                    if (!strcmp(test, name)) {
+                        sprintf(path, "%s%c%s", fndir, SLASH, dname);
+                        found = 1;
+                    }
+                }
+            }
+        }
 
-	g_dir_close(dir);
+        g_dir_close(dir);
     }
 
     strings_array_free(dirs, n_dirs);
 
     if (*path != '\0') {
-	ret = gretl_strdup(path);
+        ret = gretl_strdup(path);
     }
 
     return ret;
@@ -1482,10 +1482,10 @@ char *gretl_function_package_get_path (const char *name,
 */
 
 static int find_file_in_dir (const char *fname,
-			     const char *dirname,
-			     char *fullname,
-			     int maxdepth,
-			     int depth)
+                             const char *dirname,
+                             char *fullname,
+                             int maxdepth,
+                             int depth)
 {
     char tmp[FILENAME_MAX];
     const gchar *dname;
@@ -1496,42 +1496,42 @@ static int find_file_in_dir (const char *fname,
     dir = gretl_opendir(dirname);
 
     if (dir == NULL) {
-	return 0;
+        return 0;
     }
 
     /* look for top-level plain file first */
     while (!found && (dname = g_dir_read_name(dir))) {
-	if (!strcmp(dname, ".") ||
-	    !strcmp(dname, "..")) {
-	    continue;
-	}
-	sprintf(tmp, "%s%c%s", dirname, SLASH, dname);
-	if (gretl_stat(tmp, &sbuf) < 0) {
-	    continue;
-	} else if ((sbuf.st_mode & S_IFREG) &&
-		   !strcmp(dname, fname)) {
-	    strcpy(fullname, tmp);
-	    found = 1;
-	}
+        if (!strcmp(dname, ".") ||
+            !strcmp(dname, "..")) {
+            continue;
+        }
+        sprintf(tmp, "%s%c%s", dirname, SLASH, dname);
+        if (gretl_stat(tmp, &sbuf) < 0) {
+            continue;
+        } else if ((sbuf.st_mode & S_IFREG) &&
+                   !strcmp(dname, fname)) {
+            strcpy(fullname, tmp);
+            found = 1;
+        }
     }
 
     if (!found && depth < maxdepth) {
-	/* then look in subdirs */
-	g_dir_rewind(dir);
-	depth++;
-	while (!found && (dname = g_dir_read_name(dir))) {
-	    if (!strcmp(dname, ".") ||
-		!strcmp(dname, "..")) {
-		continue;
-	    }
-	    sprintf(tmp, "%s%c%s", dirname, SLASH, dname);
-	    if (gretl_stat(tmp, &sbuf) < 0) {
-		continue;
-	    } else if (sbuf.st_mode & S_IFDIR) {
-		found = find_file_in_dir(fname, tmp, fullname,
-					 maxdepth, depth);
-	    }
-	}
+        /* then look in subdirs */
+        g_dir_rewind(dir);
+        depth++;
+        while (!found && (dname = g_dir_read_name(dir))) {
+            if (!strcmp(dname, ".") ||
+                !strcmp(dname, "..")) {
+                continue;
+            }
+            sprintf(tmp, "%s%c%s", dirname, SLASH, dname);
+            if (gretl_stat(tmp, &sbuf) < 0) {
+                continue;
+            } else if (sbuf.st_mode & S_IFDIR) {
+                found = find_file_in_dir(fname, tmp, fullname,
+                                         maxdepth, depth);
+            }
+        }
     }
 
     g_dir_close(dir);
@@ -1561,47 +1561,47 @@ int get_package_data_path (const char *fname, char *fullname)
     pkgname = get_optval_string(OPEN, OPT_K);
 
     if (pkgname == NULL) {
-	err = E_DATA;
+        err = E_DATA;
     } else {
-	const char *ppath;
-	char *gfnpath;
+        const char *ppath;
+        char *gfnpath;
 
-	ppath = get_function_package_path_by_name(pkgname);
+        ppath = get_function_package_path_by_name(pkgname);
 
-	if (ppath != NULL) {
-	    gfnpath = gretl_strdup(ppath);
-	} else {
-	    gfnpath = gretl_addon_get_path(pkgname);
-	}
+        if (ppath != NULL) {
+            gfnpath = gretl_strdup(ppath);
+        } else {
+            gfnpath = gretl_addon_get_path(pkgname);
+        }
 
-	if (gfnpath == NULL) {
-	    gretl_errmsg_sprintf(_("Couldn't find package %s"),
-				 pkgname);
-	    err = E_DATA;
-	} else {
-	    char *p = strrslash(gfnpath);
-	    const char *needle;
+        if (gfnpath == NULL) {
+            gretl_errmsg_sprintf(_("Couldn't find package %s"),
+                                 pkgname);
+            err = E_DATA;
+        } else {
+            char *p = strrslash(gfnpath);
+            const char *needle;
 
-	    if (p != NULL) {
-		*p = '\0';
-	    }
+            if (p != NULL) {
+                *p = '\0';
+            }
 
-	    /* trim path from @fname if present */
-	    needle = strrslash(fname);
-	    if (needle != NULL) {
-		needle++;
-	    } else {
-		needle = fname;
-	    }
+            /* trim path from @fname if present */
+            needle = strrslash(fname);
+            if (needle != NULL) {
+                needle++;
+            } else {
+                needle = fname;
+            }
 
-	    if (!find_file_in_dir(needle, gfnpath, fullname, 1, 0)) {
-		gretl_errmsg_sprintf(_("Couldn't find file %s for package %s"),
-				     needle, pkgname);
-		*fullname = '\0';
-		err = E_FOPEN;
-	    }
-	    free(gfnpath);
-	}
+            if (!find_file_in_dir(needle, gfnpath, fullname, 1, 0)) {
+                gretl_errmsg_sprintf(_("Couldn't find file %s for package %s"),
+                                     needle, pkgname);
+                *fullname = '\0';
+                err = E_FOPEN;
+            }
+            free(gfnpath);
+        }
     }
 
     return err;
@@ -1616,13 +1616,13 @@ static void print_script_dirs (void)
     GList *L = g_list_first(script_dirs);
 
     if (L != NULL) {
-	int i = 0;
+        int i = 0;
 
-	while (L != NULL) {
-	    fprintf(stderr, "script_dir %d: '%s'\n", ++i, (char *) L->data);
-	    L = L->next;
-	}
-	fputc('\n', stderr);
+        while (L != NULL) {
+            fprintf(stderr, "script_dir %d: '%s'\n", ++i, (char *) L->data);
+            L = L->next;
+        }
+        fputc('\n', stderr);
     }
 }
 
@@ -1656,171 +1656,171 @@ char *gretl_addpath (char *fname, int script)
 
 #if SEARCH_DEBUG
     fprintf(stderr, "gretl_addpath: fname='%s', script=%d\n",
-	    fname, script);
+            fname, script);
 #endif
 
     /* keep a backup of the original input */
     strcpy(orig, fname);
 
     if (g_path_is_absolute(fname)) {
-	err = gretl_test_fopen(fname, "r");
-	if (err && !script && maybe_add_suffix(fname, ".gdt")) {
-	    err = gretl_test_fopen(fname, "r");
-	    if (err) {
-		strcpy(fname, orig);
-	    }
-	}
-	return err ? NULL : fname;
+        err = gretl_test_fopen(fname, "r");
+        if (err && !script && maybe_add_suffix(fname, ".gdt")) {
+            err = gretl_test_fopen(fname, "r");
+            if (err) {
+                strcpy(fname, orig);
+            }
+        }
+        return err ? NULL : fname;
     }
 
     /* try workdir first */
     gretl_build_path(fname, paths.workdir, orig, NULL);
     err = gretl_test_fopen(fname, "r");
     if (!err) {
-	/* got it */
-	return fname;
+        /* got it */
+        return fname;
     }
 
     if (script_dirs != NULL) {
-	GList *dirs = g_list_last(script_dirs);
-	int flags = script ? 0 : ADD_GDT;
-	const char *gpath;
+        GList *dirs = g_list_last(script_dirs);
+        int flags = script ? 0 : ADD_GDT;
+        const char *gpath;
 
 #if SCRIPT_DIRS_DEBUG
-	print_script_dirs();
+        print_script_dirs();
 #endif
-	while (dirs != NULL && !found) {
-	    strcpy(fname, orig);
-	    gpath = dirs->data;
-	    test = search_dir(fname, gpath, flags);
-	    if (test != NULL) {
-		found = 1;
-	    }
-	    dirs = dirs->prev;
-	}
-	if (found) {
-	    return fname;
-	}
+        while (dirs != NULL && !found) {
+            strcpy(fname, orig);
+            gpath = dirs->data;
+            test = search_dir(fname, gpath, flags);
+            if (test != NULL) {
+                found = 1;
+            }
+            dirs = dirs->prev;
+        }
+        if (found) {
+            return fname;
+        }
     }
 
     if (!found) {
-	char trydir[MAXLEN];
-	const char *gpath;
+        char trydir[MAXLEN];
+        const char *gpath;
 
-	strcpy(fname, orig);
+        strcpy(fname, orig);
 
-	/* now try gretl installation dir */
-	gpath = gretl_home();
+        /* now try gretl installation dir */
+        gpath = gretl_home();
 
-	if (*gpath != '\0') {
-	    /* try searching some standard gretl paths */
-	    if (script) {
-		sprintf(trydir, "%sscripts", gpath);
-		test = search_dir(fname, trydir, SUBDIRS);
-		if (test != NULL) {
-		    return fname;
-		} else {
-		    strcpy(fname, orig);
-		    sprintf(trydir, "%sfunctions", gpath);
-		    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
-		    if (test != NULL) {
-			return fname;
-		    }
-		}
-	    } else if (has_suffix(fname, ".bin")) {
-		/* database? */
-		sprintf(trydir, "%sdb", gpath);
-		test = search_dir(fname, trydir, 0);
-		if (test != NULL) {
-		    return fname;
-		}
-	    } else {
-		/* data file */
-		sprintf(trydir, "%sdata", gpath);
-		test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
-		if (test != NULL) {
-		    return fname;
-		}
-	    }
-	}
+        if (*gpath != '\0') {
+            /* try searching some standard gretl paths */
+            if (script) {
+                sprintf(trydir, "%sscripts", gpath);
+                test = search_dir(fname, trydir, SUBDIRS);
+                if (test != NULL) {
+                    return fname;
+                } else {
+                    strcpy(fname, orig);
+                    sprintf(trydir, "%sfunctions", gpath);
+                    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
+                    if (test != NULL) {
+                        return fname;
+                    }
+                }
+            } else if (has_suffix(fname, ".bin")) {
+                /* database? */
+                sprintf(trydir, "%sdb", gpath);
+                test = search_dir(fname, trydir, 0);
+                if (test != NULL) {
+                    return fname;
+                }
+            } else {
+                /* data file */
+                sprintf(trydir, "%sdata", gpath);
+                test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
+                if (test != NULL) {
+                    return fname;
+                }
+            }
+        }
 
-	strcpy(fname, orig);
+        strcpy(fname, orig);
 
-	/* now try user's personal filespace */
+        /* now try user's personal filespace */
 #ifdef OS_OSX
-	gpath = gretl_app_support_dir();
+        gpath = gretl_app_support_dir();
 #else
-	gpath = gretl_dotdir();
+        gpath = gretl_dotdir();
 #endif
 
-	if (*gpath != '\0') {
-	    /* try looking in ~/Library or dotdir */
-	    if (script) {
-		sprintf(trydir, "%sscripts", gpath);
-		test = search_dir(fname, trydir, SUBDIRS);
-		if (test != NULL) {
-		    return fname;
-		} else {
-		    strcpy(fname, orig);
-		    sprintf(trydir, "%sfunctions", gpath);
-		    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
-		    if (test != NULL) {
-			return fname;
-		    }
-		}
-	    } else if (has_suffix(fname, ".bin")) {
-		/* database? */
-		sprintf(trydir, "%sdb", gpath);
-		test = search_dir(fname, trydir, 0);
-		if (test != NULL) {
-		    return fname;
-		}
-	    } else {
-		/* data file? */
-		sprintf(trydir, "%sdata", gpath);
-		test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
-		if (test != NULL) {
-		    return fname;
-		}
-	    }
-	}
+        if (*gpath != '\0') {
+            /* try looking in ~/Library or dotdir */
+            if (script) {
+                sprintf(trydir, "%sscripts", gpath);
+                test = search_dir(fname, trydir, SUBDIRS);
+                if (test != NULL) {
+                    return fname;
+                } else {
+                    strcpy(fname, orig);
+                    sprintf(trydir, "%sfunctions", gpath);
+                    test = search_dir(fname, trydir, ADD_GFN | SUBDIRS);
+                    if (test != NULL) {
+                        return fname;
+                    }
+                }
+            } else if (has_suffix(fname, ".bin")) {
+                /* database? */
+                sprintf(trydir, "%sdb", gpath);
+                test = search_dir(fname, trydir, 0);
+                if (test != NULL) {
+                    return fname;
+                }
+            } else {
+                /* data file? */
+                sprintf(trydir, "%sdata", gpath);
+                test = search_dir(fname, trydir, ADD_GDT | SUBDIRS);
+                if (test != NULL) {
+                    return fname;
+                }
+            }
+        }
 
-	strcpy(fname, orig);
-	gpath = gretl_workdir();
+        strcpy(fname, orig);
+        gpath = gretl_workdir();
 
-	if (*gpath != '\0') {
-	    /* try looking in user's dir (and subdirs) */
-	    test = search_dir(fname, gpath, SUBDIRS);
-	    if (test != NULL) {
-		return fname;
-	    }
-	}
+        if (*gpath != '\0') {
+            /* try looking in user's dir (and subdirs) */
+            test = search_dir(fname, gpath, SUBDIRS);
+            if (test != NULL) {
+                return fname;
+            }
+        }
 
-	strcpy(fname, orig);
-	gpath = maybe_get_default_workdir();
+        strcpy(fname, orig);
+        gpath = maybe_get_default_workdir();
 
-	if (gpath != NULL && *gpath != '\0') {
-	    /* try looking in default workdir? */
-	    test = search_dir(fname, gpath, SUBDIRS);
-	    if (test != NULL) {
-		return fname;
-	    }
-	}
+        if (gpath != NULL && *gpath != '\0') {
+            /* try looking in default workdir? */
+            test = search_dir(fname, gpath, SUBDIRS);
+            if (test != NULL) {
+                return fname;
+            }
+        }
     }
 
 #ifdef WIN32
     /* try looking on the desktop? */
     if (1) {
-	char *dtdir = desktop_path();
+        char *dtdir = desktop_path();
 
-	strcpy(fname, orig);
-	if (dtdir != NULL) {
-	    test = search_dir(fname, dtdir, 0);
-	    free(dtdir);
-	}
-	if (test != NULL) {
-	    return fname;
-	}
+        strcpy(fname, orig);
+        if (dtdir != NULL) {
+            test = search_dir(fname, dtdir, 0);
+            free(dtdir);
+        }
+        if (test != NULL) {
+            return fname;
+        }
     }
 #endif
 
@@ -1839,15 +1839,15 @@ char *gretl_prepend_homedir (const char *fname, int *err)
     char *ret = NULL;
 
     if (homedir != NULL) {
-	ret = malloc(strlen(homedir) + strlen(fname));
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    strcpy(ret, homedir);
-	    strcat(ret, fname + 1);
-	}
+        ret = malloc(strlen(homedir) + strlen(fname));
+        if (ret == NULL) {
+            *err = E_ALLOC;
+        } else {
+            strcpy(ret, homedir);
+            strcat(ret, fname + 1);
+        }
     } else {
-	*err = E_DATA;
+        *err = E_DATA;
     }
 
     return ret;
@@ -1859,18 +1859,18 @@ static int substitute_homedir (char *fname)
     int err = 0;
 
     if (homedir != NULL) {
-	int len = strlen(fname);
-	int homelen = strlen(homedir);
+        int len = strlen(fname);
+        int homelen = strlen(homedir);
 
-	if (len + homelen > MAXLEN) {
-	    err = 1;
-	} else {
-	    char tmp[MAXLEN];
+        if (len + homelen > MAXLEN) {
+            err = 1;
+        } else {
+            char tmp[MAXLEN];
 
-	    strcpy(tmp, homedir);
-	    strcat(tmp, fname + 1);
-	    strcpy(fname, tmp);
-	}
+            strcpy(tmp, homedir);
+            strcat(tmp, fname + 1);
+            strcpy(fname, tmp);
+        }
     }
 
     return err;
@@ -1881,19 +1881,19 @@ static int get_gfn_special (char *fname)
     int ok = 0;
 
     if (!strchr(fname, '/') && !strchr(fname, '\\')) {
-	char *p, pkgname[64];
-	char *pkgpath;
+        char *p, pkgname[64];
+        char *pkgpath;
 
-	*pkgname = '\0';
-	strncat(pkgname, fname, 63);
-	p = strstr(pkgname, ".gfn");
-	*p = '\0';
-	pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
-	if (pkgpath != NULL) {
-	    strcpy(fname, pkgpath);
-	    free(pkgpath);
-	    ok = 1;
-	}
+        *pkgname = '\0';
+        strncat(pkgname, fname, 63);
+        p = strstr(pkgname, ".gfn");
+        *p = '\0';
+        pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
+        if (pkgpath != NULL) {
+            strcpy(fname, pkgpath);
+            free(pkgpath);
+            ok = 1;
+        }
     }
 
     return ok;
@@ -1922,38 +1922,38 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     *fullname = '\0';
 
     if (fname == NULL || *fname == '\0') {
-	return E_DATA;
+        return E_DATA;
     }
 
     strncat(fullname, fname, MAXLEN - 1);
 
     if (opt & OPT_W) {
-	/* remote database: just use original name */
-	return 0;
+        /* remote database: just use original name */
+        return 0;
     }
 
     if (fullname[0] == '~' && fullname[1] == '/') {
-	/* handle tilde == HOME */
-	substitute_homedir(fullname);
+        /* handle tilde == HOME */
+        substitute_homedir(fullname);
     }
 
     if (g_path_is_absolute(fullname)) {
-	goto test_open;
+        goto test_open;
     }
 
     if (opt & OPT_I) {
-	/* respect special "include" setting if present */
-	char *ipath = getenv("GRETL_INCLUDE_PATH");
+        /* respect special "include" setting if present */
+        char *ipath = getenv("GRETL_INCLUDE_PATH");
 
-	if (ipath != NULL && *ipath != '\0') {
-	    gretl_build_path(fullname, ipath, fname, NULL);
-	    goto test_open;
-	}
+        if (ipath != NULL && *ipath != '\0') {
+            gretl_build_path(fullname, ipath, fname, NULL);
+            goto test_open;
+        }
     }
 
     if (has_suffix(fullname, ".gfn") && get_gfn_special(fullname)) {
-	/* checked for existence */
-	return 0;
+        /* checked for existence */
+        return 0;
     }
 
     /* try a basic path search on this filename */
@@ -1970,19 +1970,19 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
  test_open:
 
     if (!err && test == NULL) {
-	err = gretl_test_fopen(fullname, "r");
-	if (err) {
-	    /* ensure we return a gretl error code */
-	    err = E_FOPEN;
-	}
+        err = gretl_test_fopen(fullname, "r");
+        if (err) {
+            /* ensure we return a gretl error code */
+            err = E_FOPEN;
+        }
     }
 
     if (test != NULL && (opt & OPT_S)) {
-	/* If @test is non-NULL that means we actually found
-	   the file somewhere, so if it's a script we'll
-	   record the directory in which it was found.
-	*/
-	gretl_set_script_dir(fullname);
+        /* If @test is non-NULL that means we actually found
+           the file somewhere, so if it's a script we'll
+           record the directory in which it was found.
+        */
+        gretl_set_script_dir(fullname);
     }
 
     return err;
@@ -1995,17 +1995,17 @@ int has_system_prefix (const char *fname, SearchType stype)
     int ret = 0;
 
     if (strlen(fname) < n) {
-	return 0;
+        return 0;
     }
 
     if (!strncmp(fname, gretldir, n)) {
-	if (stype == DATA_SEARCH &&
-	    !strncmp(fname + n, "data", 4)) {
-	    ret = 1;
-	} else if (stype == SCRIPT_SEARCH &&
-		   !strncmp(fname + n, "scripts", 7)) {
-	    ret = 1;
-	}
+        if (stype == DATA_SEARCH &&
+            !strncmp(fname + n, "data", 4)) {
+            ret = 1;
+        } else if (stype == SCRIPT_SEARCH &&
+                   !strncmp(fname + n, "scripts", 7)) {
+            ret = 1;
+        }
     }
 
     return ret;
@@ -2036,12 +2036,12 @@ static void set_gretl_plugpath (const char *path)
 #  endif
 
     if (p != NULL) {
-	/* back up a level */
-	size_t len = p - path;
+        /* back up a level */
+        size_t len = p - path;
 
-	strncat(paths.plugpath, path, len);
+        strncat(paths.plugpath, path, len);
     } else {
-	strcpy(paths.plugpath, path);
+        strcpy(paths.plugpath, path);
     }
     slash_terminate(paths.plugpath);
     strcat(paths.plugpath, "lib");
@@ -2084,22 +2084,22 @@ static int set_extra_dot_paths (void)
     n = strlen(dirname);
 
     if (n > 0 && (dirname[n-1] == '\\' || dirname[n-1] == '/')) {
-	dirname[n-1] = '\0';
+        dirname[n-1] = '\0';
     }
 
 #ifdef HAVE_X12A
     gretl_build_path(paths.x12adir, paths.dotdir, "x12arima", NULL);
     err = gretl_mkdir(paths.x12adir);
     if (err) {
-	*paths.x12adir = '\0';
+        *paths.x12adir = '\0';
     }
 #endif
 
 #ifdef HAVE_TRAMO
     gretl_build_path(paths.tramodir, paths.dotdir, "tramo", NULL);
     if (gretl_mkdir(paths.tramodir)) {
-	*paths.tramodir = '\0';
-	return 1;
+        *paths.tramodir = '\0';
+        return 1;
     }
 
     sprintf(dirname, "%s%coutput", paths.tramodir, SLASH);
@@ -2107,8 +2107,8 @@ static int set_extra_dot_paths (void)
 
     sprintf(dirname, "%s%cgraph", paths.tramodir, SLASH);
     if (gretl_mkdir(dirname)) {
-	*paths.tramodir = '\0';
-	return 1;
+        *paths.tramodir = '\0';
+        return 1;
     }
 
     sprintf(dirname, "%s%cgraph%cacf", paths.tramodir, SLASH, SLASH);
@@ -2134,31 +2134,31 @@ static void set_builtin_path_strings (int update)
     gretl_insert_builtin_string("tramo",    paths.tramo);
 
     if (!update) {
-	/* these only have to be done once */
-	gretl_insert_builtin_string("dotdir",   paths.dotdir);
-	gretl_insert_builtin_string("workdir",  paths.workdir);
-	gretl_insert_builtin_string("x12adir",  paths.x12adir);
-	gretl_insert_builtin_string("tramodir", paths.tramodir);
+        /* these only have to be done once */
+        gretl_insert_builtin_string("dotdir",   paths.dotdir);
+        gretl_insert_builtin_string("workdir",  paths.workdir);
+        gretl_insert_builtin_string("x12adir",  paths.x12adir);
+        gretl_insert_builtin_string("tramodir", paths.tramodir);
     }
 
     if (*paths.tramo != '\0') {
-	char s[MAXLEN];
-	int n;
+        char s[MAXLEN];
+        int n;
 
-	*s = '\0';
-	strncat(s, paths.tramo, MAXLEN - 1);
-	n = strlen(s);
+        *s = '\0';
+        strncat(s, paths.tramo, MAXLEN - 1);
+        n = strlen(s);
 #ifdef WIN32
-	if (n >= 9 && !strcmp(s + n - 9, "tramo.exe")) {
-	    strcpy(s + n - 9, "seats.exe");
-	    gretl_insert_builtin_string("seats", s);
-	    return;
-	}
+        if (n >= 9 && !strcmp(s + n - 9, "tramo.exe")) {
+            strcpy(s + n - 9, "seats.exe");
+            gretl_insert_builtin_string("seats", s);
+            return;
+        }
 #else
-	if (n >= 5 && !strcmp(s + n - 5, "tramo")) {
-	    strcpy(s + n - 5, "seats");
-	    gretl_insert_builtin_string("seats", s);
-	}
+        if (n >= 5 && !strcmp(s + n - 5, "tramo")) {
+            strcpy(s + n - 5, "seats");
+            gretl_insert_builtin_string("seats", s);
+        }
 #endif
     }
 }
@@ -2173,22 +2173,22 @@ const char *gretl_bindir (void)
     static char bindir[MAXLEN];
 
     if (*bindir == '\0') {
-	char *p;
+        char *p;
 
-	strcpy(bindir, paths.gretldir);
-	p = strstr(bindir, "share/gretl");
-	if (p != NULL) {
-	    *p = '\0';
-	    strcat(p, "bin/");
-	}
+        strcpy(bindir, paths.gretldir);
+        p = strstr(bindir, "share/gretl");
+        if (p != NULL) {
+            *p = '\0';
+            strcat(p, "bin/");
+        }
 #ifdef WIN32
-	if (p == NULL) {
-	    p = strstr(bindir, "share\\gretl");
-	    if (p != NULL) {
-		*p = '\0';
-		strcat(p, "bin\\");
-	    }
-	}
+        if (p == NULL) {
+            p = strstr(bindir, "share\\gretl");
+            if (p != NULL) {
+                *p = '\0';
+                strcat(p, "bin\\");
+            }
+        }
 #endif
     }
 
@@ -2200,30 +2200,30 @@ const char *gretl_plugin_path (void)
     static int set;
 
     if (!set) {
-	char *epath = getenv("GRETL_PLUGIN_PATH");
+        char *epath = getenv("GRETL_PLUGIN_PATH");
 
-	if (epath != NULL) {
-	    *paths.plugpath = '\0';
-	    strncat(paths.plugpath, epath, MAXLEN - 2);
-	    slash_terminate(paths.plugpath);
-	}
+        if (epath != NULL) {
+            *paths.plugpath = '\0';
+            strncat(paths.plugpath, epath, MAXLEN - 2);
+            slash_terminate(paths.plugpath);
+        }
 
 #if defined(LIBDIR) || defined(GRETL_PREFIX)
-	/* if blank, try drawing on compiled-in values */
-	if (*paths.plugpath == '\0') {
+        /* if blank, try drawing on compiled-in values */
+        if (*paths.plugpath == '\0') {
 # ifdef LIBDIR
-	    strcat(paths.plugpath, LIBDIR);
+            strcat(paths.plugpath, LIBDIR);
 # else
-	    strcat(paths.plugpath, GRETL_PREFIX);
-	    slash_terminate(paths.plugpath);
-	    strcat(paths.plugpath, "lib");
+            strcat(paths.plugpath, GRETL_PREFIX);
+            slash_terminate(paths.plugpath);
+            strcat(paths.plugpath, "lib");
 # endif
-	    slash_terminate(paths.plugpath);
-	    strcat(paths.plugpath, PLUGIN_SFX);
-	    slash_terminate(paths.plugpath);
-	}
+            slash_terminate(paths.plugpath);
+            strcat(paths.plugpath, PLUGIN_SFX);
+            slash_terminate(paths.plugpath);
+        }
 #endif /* LIBDIR or GRETL_PREFIX defined */
-	set = 1;
+        set = 1;
     }
 
     return paths.plugpath;
@@ -2253,16 +2253,16 @@ static const char *win32_default_workdir (void)
     const char *retval = NULL;
 
     if (base != NULL) {
-	sprintf(default_workdir, "%s\\gretl\\", base);
-	if (strcmp(default_workdir, paths.workdir)) {
-	    GDir *dir = gretl_opendir(default_workdir);
+        sprintf(default_workdir, "%s\\gretl\\", base);
+        if (strcmp(default_workdir, paths.workdir)) {
+            GDir *dir = gretl_opendir(default_workdir);
 
-	    if (dir != NULL) {
-		g_dir_close(dir);
-		retval = default_workdir;
-	    }
-	}
-	free(base);
+            if (dir != NULL) {
+                g_dir_close(dir);
+                retval = default_workdir;
+            }
+        }
+        free(base);
     }
 
     return retval;
@@ -2277,15 +2277,15 @@ static const char *regular_default_workdir (void)
     const char *retval = NULL;
 
     if (home != NULL) {
-	sprintf(default_workdir, "%s/gretl/", home);
-	if (strcmp(default_workdir, paths.workdir)) {
-	    GDir *dir = gretl_opendir(default_workdir);
+        sprintf(default_workdir, "%s/gretl/", home);
+        if (strcmp(default_workdir, paths.workdir)) {
+            GDir *dir = gretl_opendir(default_workdir);
 
-	    if (dir != NULL) {
-		g_dir_close(dir);
-		retval = default_workdir;
-	    }
-	}
+            if (dir != NULL) {
+                g_dir_close(dir);
+                retval = default_workdir;
+            }
+        }
     }
 
     return retval;
@@ -2321,35 +2321,35 @@ static int validate_writedir (const char *dirname)
     int err = 0;
 
     if (*dirname == '\0') {
-	gretl_errmsg_set(_("User directory is not set"));
-	return E_DATA;
+        gretl_errmsg_set(_("User directory is not set"));
+        return E_DATA;
     }
 
     err = gretl_mkdir(dirname);
     if (err) {
-	gretl_errmsg_sprintf( _("Couldn't create directory '%s'"), dirname);
+        gretl_errmsg_sprintf( _("Couldn't create directory '%s'"), dirname);
     }
 
     if (!err) {
-	/* ensure the directory is writable */
-	char testname[FILENAME_MAX];
-	FILE *fp;
+        /* ensure the directory is writable */
+        char testname[FILENAME_MAX];
+        FILE *fp;
 
-	gretl_build_path(testname, dirname, "write.chk", NULL);
-	fp = gretl_fopen(testname, "w");
-	if (fp == NULL) {
-	    gretl_errmsg_sprintf(_("Couldn't write to '%s': "
-				   "gretl will not work properly!"),
-				 dirname);
-	    err = E_FOPEN;
-	} else {
-	    fclose(fp);
-	    gretl_remove(testname);
-	}
+        gretl_build_path(testname, dirname, "write.chk", NULL);
+        fp = gretl_fopen(testname, "w");
+        if (fp == NULL) {
+            gretl_errmsg_sprintf(_("Couldn't write to '%s': "
+                                   "gretl will not work properly!"),
+                                 dirname);
+            err = E_FOPEN;
+        } else {
+            fclose(fp);
+            gretl_remove(testname);
+        }
     }
 
     if (err) {
-	set_gretl_alarm(1);
+        set_gretl_alarm(1);
     }
 
     return err;
@@ -2365,14 +2365,14 @@ static int set_gretl_workdir (const char *path)
     test = gretl_opendir(path);
 
     if (test == NULL) {
-	gretl_errmsg_set_from_errno(path, errno);
-	fprintf(stderr, "set_gretl_work_dir: '%s': failed\n", path);
-	err = E_FOPEN;
+        gretl_errmsg_set_from_errno(path, errno);
+        fprintf(stderr, "set_gretl_work_dir: '%s': failed\n", path);
+        err = E_FOPEN;
     } else {
-	g_dir_close(test);
-	strcpy(paths.workdir, path);
-	slash_terminate(paths.workdir);
-	gretl_insert_builtin_string("workdir", paths.workdir);
+        g_dir_close(test);
+        strcpy(paths.workdir, path);
+        slash_terminate(paths.workdir);
+        gretl_insert_builtin_string("workdir", paths.workdir);
     }
 
     return err;
@@ -2391,7 +2391,7 @@ const char *gretl_plotfile (void)
 void report_plot_written (PRN *prn)
 {
     if (prn != NULL) {
-	pprintf(prn, _("wrote %s\n"), paths.plotfile);
+        pprintf(prn, _("wrote %s\n"), paths.plotfile);
     }
 }
 
@@ -2437,8 +2437,8 @@ static void R_path_try_registry (int which, char *targ)
     err = R_path_from_registry(tmp, which);
 
     if (!err) {
-	*targ = '\0';
-	strncat(targ, tmp, MAXLEN - 1);
+        *targ = '\0';
+        strncat(targ, tmp, MAXLEN - 1);
     }
 }
 
@@ -2450,8 +2450,8 @@ const char *gretl_rbin_path (void)
     static int checked;
 
     if (!checked) {
-	R_path_try_registry(REXE, paths.rbinpath);
-	checked = 1;
+        R_path_try_registry(REXE, paths.rbinpath);
+        checked = 1;
     }
 #endif
 
@@ -2468,8 +2468,8 @@ const char *gretl_rlib_path (void)
     static int checked;
 
     if (!checked) {
-	R_path_try_registry(RLIB, paths.rlibpath);
-	checked = 1;
+        R_path_try_registry(RLIB, paths.rlibpath);
+        checked = 1;
     }
 #endif
 
@@ -2516,7 +2516,7 @@ const char *gretl_mpiexec (void)
 }
 
 static gint pathcomp (gconstpointer a,
-		      gconstpointer b)
+                      gconstpointer b)
 {
     return strcmp((const char *) a, (const char *) b);
 }
@@ -2527,15 +2527,15 @@ void gretl_set_script_dir (const char *s)
     GList *L = g_list_find_custom(script_dirs, add, pathcomp);
 
     if (L != NULL) {
-	/* this directory is already in the list */
-	if (L->next != NULL) {
-	    /* delete intervening record */
-	    g_free(L->next->data);
-	    script_dirs = g_list_delete_link(script_dirs, L->next);
-	}
-	g_free(add);
+        /* this directory is already in the list */
+        if (L->next != NULL) {
+            /* delete intervening record */
+            g_free(L->next->data);
+            script_dirs = g_list_delete_link(script_dirs, L->next);
+        }
+        g_free(add);
     } else {
-	script_dirs = g_list_append(script_dirs, add);
+        script_dirs = g_list_append(script_dirs, add);
     }
 }
 
@@ -2543,17 +2543,17 @@ void gretl_script_dirs_cleanup (void)
 {
     if (script_dirs != NULL) {
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 28
-	GList *l0 = g_list_first(script_dirs);
+        GList *l0 = g_list_first(script_dirs);
 
-	while (l0) {
-	    g_free(l0->data);
-	    l0 = l0->next;
-	}
-	g_list_free(script_dirs);
+        while (l0) {
+            g_free(l0->data);
+            l0 = l0->next;
+        }
+        g_list_free(script_dirs);
 #else
-	g_list_free_full(script_dirs, g_free);
+        g_list_free_full(script_dirs, g_free);
 #endif
-	script_dirs = NULL;
+        script_dirs = NULL;
     }
 }
 
@@ -2597,11 +2597,11 @@ void show_paths (void)
 static char *rightmost (char *s1, char *s2)
 {
     if (s1 == NULL) {
-	return s2;
+        return s2;
     } else if (s2 == NULL) {
-	return s1;
+        return s1;
     } else {
-	return (s2 - s1 > 0)? s2 : s1;
+        return (s2 - s1 > 0)? s2 : s1;
     }
 }
 
@@ -2610,12 +2610,12 @@ static char getsep (const char *s)
     int bak = 0, fwd = 0;
 
     while (*s) {
-	if (*s == '\\') {
-	    bak++;
-	} else if (*s == '/') {
-	    fwd++;
-	}
-	s++;
+        if (*s == '\\') {
+            bak++;
+        } else if (*s == '/') {
+            fwd++;
+        }
+        s++;
     }
 
     return fwd > bak ? '/' : '\\';
@@ -2643,39 +2643,39 @@ void win32_set_gretldir (void)
     pkgdir = g_win32_get_package_installation_directory_of_module(NULL);
 
     if (pkgdir != NULL) {
-	strncat(paths.gretldir, pkgdir, MAXLEN - 1);
-	slash_terminate(paths.gretldir);
-	g_free(pkgdir);
+        strncat(paths.gretldir, pkgdir, MAXLEN - 1);
+        slash_terminate(paths.gretldir);
+        g_free(pkgdir);
     }
 
 # ifdef PKGBUILD
     if (*paths.gretldir == '\0') {
-	/* try the registry? */
-	char tmp[MAXLEN];
-	int err;
+        /* try the registry? */
+        char tmp[MAXLEN];
+        int err;
 
-	err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", tmp);
-	if (!err) {
-	    strcpy(paths.gretldir, tmp);
-	    slash_terminate(paths.gretldir);
-	}
+        err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", tmp);
+        if (!err) {
+            strcpy(paths.gretldir, tmp);
+            slash_terminate(paths.gretldir);
+        }
     }
     if (*paths.gretldir != '\0') {
-	set_gretlnet_filename(paths.gretldir);
+        set_gretlnet_filename(paths.gretldir);
     }
 # else
     /* a non-pkgbuild Windows build */
     if (*paths.gretldir != '\0') {
-	/* we need to append unix-style sharedir */
-	strcat(paths.gretldir, "share");
-	slash_terminate(paths.gretldir);
-	strcat(paths.gretldir, "gretl");
-	slash_terminate(paths.gretldir);
+        /* we need to append unix-style sharedir */
+        strcat(paths.gretldir, "share");
+        slash_terminate(paths.gretldir);
+        strcat(paths.gretldir, "gretl");
+        slash_terminate(paths.gretldir);
     }
 # endif
 
     if (*paths.gretldir == '\0') {
-	fprintf(stderr, "win32_set_gretldir: haven't got gretldir yet!\n");
+        fprintf(stderr, "win32_set_gretldir: haven't got gretldir yet!\n");
     }
 }
 
@@ -2699,50 +2699,50 @@ static void check_gretldir (char *config_path)
     fp = gretl_fopen(testname, "r");
 
     if (fp != NULL) {
-	/* should be fine as is */
-	fclose(fp);
-	gotit = 1;
+        /* should be fine as is */
+        fclose(fp);
+        gotit = 1;
     } else if (*config_path != '\0') {
-	slash_terminate(config_path);
-	if (strcmp(config_path, paths.gretldir)) {
-	    /* we weren't using the config-file version: try it now */
-	    sprintf(testname, "%sCOPYING", config_path);
-	    fp = gretl_fopen(testname, "r");
-	    if (fp != NULL) {
-		strcpy(paths.gretldir, config_path);
-		fclose(fp);
-		gotit = 1;
-	    }
-	}
+        slash_terminate(config_path);
+        if (strcmp(config_path, paths.gretldir)) {
+            /* we weren't using the config-file version: try it now */
+            sprintf(testname, "%sCOPYING", config_path);
+            fp = gretl_fopen(testname, "r");
+            if (fp != NULL) {
+                strcpy(paths.gretldir, config_path);
+                fclose(fp);
+                gotit = 1;
+            }
+        }
     }
 
     if (!gotit && !gretl_in_tool_mode()) {
-	/* we're messed up; try to recover */
-	pid_t pid = getpid();
-	gchar *proc_exe;
-	const char *s;
-	ssize_t nr;
+        /* we're messed up; try to recover */
+        pid_t pid = getpid();
+        gchar *proc_exe;
+        const char *s;
+        ssize_t nr;
 
-	proc_exe = g_strdup_printf("/proc/%d/exe", pid);
-	nr = readlink(proc_exe, testname, FILENAME_MAX - 1);
+        proc_exe = g_strdup_printf("/proc/%d/exe", pid);
+        nr = readlink(proc_exe, testname, FILENAME_MAX - 1);
 
-	if (nr > 0) {
-	    testname[nr] = '\0';
-	    fprintf(stderr, "gretl is process %d, '%s'\n", (int) pid, testname);
-	    /* should be something like /foo/bar/bin/gretl; we
-	       want the /foo/bar bit to append to
-	    */
-	    s = strstr(testname, "bin/gretl");
-	    if (s != NULL) {
-		*paths.gretldir = '\0';
-		strncat(paths.gretldir, testname, s - testname);
-		strcat(paths.gretldir, "share/gretl/");
-		fprintf(stderr, "gretldir is maybe '%s'?\n",
-			paths.gretldir);
-	    }
-	}
+        if (nr > 0) {
+            testname[nr] = '\0';
+            fprintf(stderr, "gretl is process %d, '%s'\n", (int) pid, testname);
+            /* should be something like /foo/bar/bin/gretl; we
+               want the /foo/bar bit to append to
+            */
+            s = strstr(testname, "bin/gretl");
+            if (s != NULL) {
+                *paths.gretldir = '\0';
+                strncat(paths.gretldir, testname, s - testname);
+                strcat(paths.gretldir, "share/gretl/");
+                fprintf(stderr, "gretldir is maybe '%s'?\n",
+                        paths.gretldir);
+            }
+        }
 
-	g_free(proc_exe);
+        g_free(proc_exe);
     }
 }
 
@@ -2759,28 +2759,28 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
     int err = 0;
 
     if (ghome != NULL) {
-	/* environment setting, if any, takes precedence */
-	strcpy(paths.gretldir, ghome);
-	slash_terminate(paths.gretldir);
+        /* environment setting, if any, takes precedence */
+        strcpy(paths.gretldir, ghome);
+        slash_terminate(paths.gretldir);
     } else if (dirname != NULL && *dirname != '\0' &&
-	       *paths.gretldir == '\0') {
-	/* use value from config/registry, unless we already got
-	   a value somehow */
-	strcpy(paths.gretldir, dirname);
-	slash_terminate(paths.gretldir);
+               *paths.gretldir == '\0') {
+        /* use value from config/registry, unless we already got
+           a value somehow */
+        strcpy(paths.gretldir, dirname);
+        slash_terminate(paths.gretldir);
     }
 
     if (*paths.gretldir == '\0') {
 #ifdef WIN32
-	/* fall back on installation-time default */
-	char *progfiles = program_files_path();
+        /* fall back on installation-time default */
+        char *progfiles = program_files_path();
 
-	sprintf(paths.gretldir, "%s\\gretl\\", progfiles);
-	free(progfiles);
+        sprintf(paths.gretldir, "%s\\gretl\\", progfiles);
+        free(progfiles);
 #else
-	/* use the compile-time value */
-	strcpy(paths.gretldir, GRETL_PREFIX);
-	strcat(paths.gretldir, "/share/gretl/");
+        /* use the compile-time value */
+        strcpy(paths.gretldir, GRETL_PREFIX);
+        strcat(paths.gretldir, "/share/gretl/");
 #endif
     }
 
@@ -2789,9 +2789,9 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 #endif
 
     if (!err) {
-	set_helpfile_option(opt);
-	set_gretl_plugpath(paths.gretldir);
-	set_gretl_binbase(paths.gretldir);
+        set_helpfile_option(opt);
+        set_gretl_plugpath(paths.gretldir);
+        set_gretl_binbase(paths.gretldir);
     }
 
     strcpy(dirname, paths.gretldir);
@@ -2813,9 +2813,9 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 void set_gretl_plugin_path (const char *path)
 {
     if (path != NULL) {
-	*paths.plugpath = '\0';
-	strncat(paths.plugpath, path, MAXLEN - 2);
-	slash_terminate(paths.plugpath);
+        *paths.plugpath = '\0';
+        strncat(paths.plugpath, path, MAXLEN - 2);
+        slash_terminate(paths.plugpath);
     }
 }
 
@@ -2825,31 +2825,31 @@ int gretl_set_path_by_name (const char *name, const char *path)
     int builtin = 0;
 
     if (name == NULL || path == NULL) {
-	return 1;
+        return 1;
     } else if (!strcmp(name, "workdir")) {
-	return set_gretl_workdir(path);
+        return set_gretl_workdir(path);
     } else if (!strcmp(name, "gnuplot")) {
-	targ = paths.gnuplot;
+        targ = paths.gnuplot;
     } else if (!strcmp(name, "plotfile")) {
-	targ = paths.plotfile;
+        targ = paths.plotfile;
     } else if (!strcmp(name, "tramo")) {
-	targ = paths.tramo;
-	builtin = 1;
+        targ = paths.tramo;
+        builtin = 1;
     } else if (!strcmp(name, "x12a")) {
-	targ = paths.x12a;
-	builtin = 1;
+        targ = paths.x12a;
+        builtin = 1;
     } else {
-	fprintf(stderr, "gretl_set_path_by_name: target '%s' not recognized\n",
-		name);
-	return 1;
+        fprintf(stderr, "gretl_set_path_by_name: target '%s' not recognized\n",
+                name);
+        return 1;
     }
 
     if (targ != NULL) {
-	*targ = '\0';
-	strncat(targ, path, MAXLEN - 2);
-	if (builtin) {
-	    gretl_insert_builtin_string(name, targ);
-	}
+        *targ = '\0';
+        strncat(targ, path, MAXLEN - 2);
+        if (builtin) {
+            gretl_insert_builtin_string(name, targ);
+        }
     }
 
     return 0;
@@ -2869,26 +2869,26 @@ static int initialize_dotdir (void)
 #ifdef WIN32
     dirname = appdata_path();
     if (dirname != NULL) {
-	sprintf(paths.dotdir, "%s\\gretl\\", dirname);
-	free(dirname);
+        sprintf(paths.dotdir, "%s\\gretl\\", dirname);
+        free(dirname);
     } else {
-	sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
+        sprintf(paths.dotdir, "%s\\user\\", paths.gretldir);
     }
 #else
     dirname = getenv("HOME");
     if (dirname != NULL) {
-	sprintf(paths.dotdir, "%s/.gretl/", dirname);
+        sprintf(paths.dotdir, "%s/.gretl/", dirname);
     }
 #endif
 
     err = validate_writedir(paths.dotdir);
 
     if (err) {
-	*paths.x12adir = '\0';
-	*paths.tramodir = '\0';
+        *paths.x12adir = '\0';
+        *paths.tramodir = '\0';
     } else {
-	/* these paths depend on dotdir */
-	err = set_extra_dot_paths();
+        /* these paths depend on dotdir */
+        err = set_extra_dot_paths();
     }
 
     return err;
@@ -2911,21 +2911,21 @@ static int maybe_transcribe_path (char *targ, char *src, int flags)
     int ret = 0;
 
     if (*src == '\0' && (flags & PATH_BLANK_OK)) {
-	if (*targ != '\0') {
-	    *targ = '\0';
-	    ret = 1;
-	}
+        if (*targ != '\0') {
+            *targ = '\0';
+            ret = 1;
+        }
     } else if (*src != '\0') {
-	if (flags & PATH_NEEDS_SLASH) {
-	    slash_terminate(src);
-	}
-	if (strcmp(src, targ)) {
-	    strcpy(targ, src);
-	    ret = 1;
-	}
+        if (flags & PATH_NEEDS_SLASH) {
+            slash_terminate(src);
+        }
+        if (strcmp(src, targ)) {
+            strcpy(targ, src);
+            ret = 1;
+        }
     } else {
-	/* back-sync */
-	strcpy(src, targ);
+        /* back-sync */
+        strcpy(src, targ);
     }
 
     return ret;
@@ -2956,15 +2956,15 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
     int ndelta = 0;
 
     if (maybe_transcribe_path(paths.gretldir, cpaths->gretldir,
-			      PATH_NEEDS_SLASH)) {
-	set_helpfile_option(opt);
-	set_gretl_plugpath(paths.gretldir);
-	ndelta++;
+                              PATH_NEEDS_SLASH)) {
+        set_helpfile_option(opt);
+        set_gretl_plugpath(paths.gretldir);
+        ndelta++;
     }
 
     /* native databases */
     maybe_transcribe_path(paths.dbhost, cpaths->dbhost,
-			  PATH_BLANK_OK);
+                          PATH_BLANK_OK);
 
 #if !defined(WIN32) || !defined(PKGBUILD)
     /* gnuplot path: this is set immutably at start-up in the
@@ -2985,20 +2985,20 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 #ifdef HAVE_MPI
     ndelta += maybe_transcribe_path(paths.mpiexec, cpaths->mpiexec, 0);
     ndelta += maybe_transcribe_path(paths.mpi_hosts, cpaths->mpi_hosts,
-				    PATH_BLANK_OK);
+                                    PATH_BLANK_OK);
 #endif
 
 #ifdef USE_RLIB
     if (maybe_transcribe_path(paths.rlibpath, cpaths->rlibpath, 0)) {
-	gretl_R_reset_error();
-	ndelta++;
+        gretl_R_reset_error();
+        ndelta++;
     }
 #endif
 
     if (ndelta > 0) {
-	/* we changed at least one thing that should be
-	   recorded in the builtin path strings */
-	set_builtin_path_strings(1);
+        /* we changed at least one thing that should be
+           recorded in the builtin path strings */
+        set_builtin_path_strings(1);
     }
 
 #if CFG_DEBUG
@@ -3020,10 +3020,10 @@ static void load_default_workdir (char *targ)
     char *home = mydocs_path();
 
     if (home != NULL) {
-	sprintf(targ, "%s\\gretl\\", home);
-	free(home);
+        sprintf(targ, "%s\\gretl\\", home);
+        free(home);
     } else {
-	sprintf(targ, "%suser\\", paths.gretldir);
+        sprintf(targ, "%suser\\", paths.gretldir);
     }
 }
 
@@ -3034,8 +3034,8 @@ static void load_default_path (char *targ)
 
 #ifndef PKGBUILD
     if (targ == paths.gnuplot) {
-	sprintf(targ, "%swgnuplot.exe", gretl_bindir());
-	return;
+        sprintf(targ, "%swgnuplot.exe", gretl_bindir());
+        return;
     }
 #endif
 
@@ -3043,39 +3043,39 @@ static void load_default_path (char *targ)
     pfx86 = program_files_x86_path();
 
     if (targ == paths.workdir) {
-	load_default_workdir(targ);
+        load_default_workdir(targ);
     } else if (targ == paths.dbhost) {
-	strcpy(targ, "ricardo.ecn.wfu.edu");
+        strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.x12a) {
-	sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);
+        sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);
     } else if (targ == paths.tramo) {
-	sprintf(targ, "%s\\tramo\\tramo.exe", pfx86);
+        sprintf(targ, "%s\\tramo\\tramo.exe", pfx86);
     } else if (targ == paths.rbinpath) {
-	R_path_from_registry(targ, REXE);
+        R_path_from_registry(targ, REXE);
     } else if (targ == paths.rlibpath) {
-	R_path_from_registry(targ, RLIB);
+        R_path_from_registry(targ, RLIB);
     } else if (targ == paths.oxlpath) {
-	sprintf(targ, "%s\\OxMetrics6\\Ox\\bin\\oxl.exe", progfiles);
+        sprintf(targ, "%s\\OxMetrics6\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
-	strcpy(targ, "C:\\Octave-3.6.4\\bin\\octave.exe");
+        strcpy(targ, "C:\\Octave-3.6.4\\bin\\octave.exe");
     } else if (targ == paths.statapath) {
-	sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
+        sprintf(targ, "%s\\Stata\\stata.exe", progfiles);
     } else if (targ == paths.pypath) {
-	strcpy(targ, "python.exe");
+        strcpy(targ, "python.exe");
     } else if (targ == paths.jlpath) {
-	strcpy(targ, "julia.exe");
+        strcpy(targ, "julia.exe");
     } else if (targ == paths.mpiexec) {
-	strcpy(targ, "mpiexec.exe");
+        strcpy(targ, "mpiexec.exe");
     } else if (targ == paths.mpi_hosts) {
-	*targ = '\0';
+        *targ = '\0';
     } else if (targ == paths.pngfont) {
-	if (chinese_locale()) {
-	    strcpy(targ, "SimSun 8");
-	} else if (japanese_locale()) {
-	    strcpy(targ, "Meiryo 8");
-	} else {
-	    strcpy(targ, "verdana 8");
-	}
+        if (chinese_locale()) {
+            strcpy(targ, "SimSun 8");
+        } else if (japanese_locale()) {
+            strcpy(targ, "Meiryo 8");
+        } else {
+            strcpy(targ, "verdana 8");
+        }
     }
 
     free(progfiles);
@@ -3106,14 +3106,14 @@ static void load_default_workdir (char *targ)
     char *home = getenv("HOME");
 
     if (home != NULL) {
-	sprintf(targ, "%s/gretl/", home);
+        sprintf(targ, "%s/gretl/", home);
     } else {
-	home = getenv("GRETL_WORKDIR");
-	if (home != NULL) {
-	    strcpy(targ, home);
-	} else {
-	    gretl_path_compose(targ, MAXLEN, paths.gretldir, "user/");
-	}
+        home = getenv("GRETL_WORKDIR");
+        if (home != NULL) {
+            strcpy(targ, home);
+        } else {
+            gretl_path_compose(targ, MAXLEN, paths.gretldir, "user/");
+        }
     }
 }
 
@@ -3121,75 +3121,75 @@ static void load_default_path (char *targ)
 {
 #ifdef OS_OSX
     const char *app_paths[] = {
-	"/Applications/OxMetrics6/ox/bin/oxl",
-	"/Applications/Octave.app/Contents/Resources/bin/octave",
-	"/Applications/Stata/Stata.app/Contents/MacOS/Stata"
+        "/Applications/OxMetrics6/ox/bin/oxl",
+        "/Applications/Octave.app/Contents/Resources/bin/octave",
+        "/Applications/Stata/Stata.app/Contents/MacOS/Stata"
     };
 #else
     const char *app_paths[] = {
-	"oxl",
-	"octave",
-	"stata"
+        "oxl",
+        "octave",
+        "stata"
     };
 #endif
 
     if (targ == paths.workdir) {
-	load_default_workdir(targ);
+        load_default_workdir(targ);
     } else if (targ == paths.dbhost) {
-	strcpy(targ, "ricardo.ecn.wfu.edu");
+        strcpy(targ, "ricardo.ecn.wfu.edu");
     } else if (targ == paths.gnuplot) {
 #if defined(OS_OSX) && defined(PKGBUILD)
-	sprintf(targ, "%sgnuplot", gretl_bindir());
+        sprintf(targ, "%sgnuplot", gretl_bindir());
 #else
-	strcpy(targ, "gnuplot");
+        strcpy(targ, "gnuplot");
 #endif
     } else if (targ == paths.x12a) {
 #ifdef HAVE_X12A
-	strcpy(targ, "x12a");
+        strcpy(targ, "x12a");
 #else
-	*targ = '\0';
+        *targ = '\0';
 #endif
     } else if (targ == paths.tramo) {
 #ifdef HAVE_TRAMO
-	strcpy(targ, "tramo");
+        strcpy(targ, "tramo");
 #else
-	*targ = '\0';
+        *targ = '\0';
 #endif
     } else if (targ == paths.rbinpath) {
-	strcpy(paths.rbinpath, "R");
+        strcpy(paths.rbinpath, "R");
     } else if (targ == paths.rlibpath) {
 #ifdef RLIBPATH
-	strcpy(paths.rlibpath, RLIBPATH);
+        strcpy(paths.rlibpath, RLIBPATH);
 #else
-	*paths.rlibpath = '\0';
+        *paths.rlibpath = '\0';
 #endif
     } else if (targ == paths.oxlpath) {
-	strcpy(paths.oxlpath, app_paths[0]);
+        strcpy(paths.oxlpath, app_paths[0]);
     } else if (targ == paths.octpath) {
-	strcpy(paths.octpath, app_paths[1]);
+        strcpy(paths.octpath, app_paths[1]);
     } else if (targ == paths.statapath) {
-	strcpy(paths.statapath, app_paths[2]);
+        strcpy(paths.statapath, app_paths[2]);
     } else if (targ == paths.pypath) {
-	strcpy(paths.pypath, "python");
+        strcpy(paths.pypath, "python");
     } else if (targ == paths.jlpath) {
-	strcpy(paths.jlpath, "julia");
+        strcpy(paths.jlpath, "julia");
     } else if (targ == paths.mpiexec) {
 #if defined(OS_OSX)
-	strcpy(paths.mpiexec, "/opt/openmpi/bin/mpiexec");
+        strcpy(paths.mpiexec, "/opt/openmpi/bin/mpiexec");
 #else
-	strcpy(paths.mpiexec, "mpiexec");
+        strcpy(paths.mpiexec, "mpiexec");
 #endif
     } else if (targ == paths.mpi_hosts) {
-	*paths.mpi_hosts = '\0';
+        *paths.mpi_hosts = '\0';
     } else if (targ == paths.pngfont) {
 #if defined(OS_OSX)
-	strcpy(targ, "Sans 10"); /* was 13, why? */
+        strcpy(targ, "Sans 10"); /* was 13, why? */
 #else
-	if (chinese_locale()) {
-	    strcpy(targ, "NSimSun 10");
-	} else {
-	    strcpy(targ, "Vera 9");
-	}
+        if (chinese_locale()) {
+            strcpy(targ, "NSimSun 10");
+        } else {
+            strcpy(targ, "Vera 9");
+        }
 #endif
     }
 }
@@ -3199,8 +3199,8 @@ static void load_default_path (char *targ)
 int add_slash (char *s)
 {
     if (s[strlen(s)-1] != SLASH) {
-	strcat(s, SLASHSTR);
-	return 1;
+        strcat(s, SLASHSTR);
+        return 1;
     }
 
     return 0;
@@ -3209,13 +3209,13 @@ int add_slash (char *s)
 static void path_init (char *targ, char *src, int needs_slash)
 {
     if (*src) {
-	strcpy(targ, src);
-	if (needs_slash && slash_terminate(targ)) {
-	    strcpy(src, targ);
-	}
+        strcpy(targ, src);
+        if (needs_slash && slash_terminate(targ)) {
+            strcpy(src, targ);
+        }
     } else {
-	load_default_path(targ);
-	strcpy(src, targ);
+        load_default_path(targ);
+        strcpy(src, targ);
     }
 }
 
@@ -3280,29 +3280,29 @@ int gretl_set_paths (ConfigPaths *cpaths)
     initialize_gretldir(cpaths->gretldir, OPT_NONE);
 
     if (!cpaths->no_dotdir) {
-	err0 = initialize_dotdir();
+        err0 = initialize_dotdir();
     }
 
     copy_paths_with_fallback(cpaths);
 
     if (cpaths->no_dotdir) {
-	strcpy(paths.dotdir, paths.workdir);
+        strcpy(paths.dotdir, paths.workdir);
     }
 
     if (strcmp(paths.dotdir, paths.workdir)) {
-	err1 = validate_writedir(paths.workdir);
-	if (err1) {
-	    /* try falling back on the default working dir */
-	    const char *defpath = maybe_get_default_workdir();
+        err1 = validate_writedir(paths.workdir);
+        if (err1) {
+            /* try falling back on the default working dir */
+            const char *defpath = maybe_get_default_workdir();
 
-	    if (defpath != NULL && *defpath != '\0' &&
-		strcmp(defpath, paths.workdir)) {
-		err1 = validate_writedir(defpath);
-		if (err1 == 0) {
-		    strcpy(paths.workdir, defpath);
-		}
-	    }
-	}
+            if (defpath != NULL && *defpath != '\0' &&
+                strcmp(defpath, paths.workdir)) {
+                err1 = validate_writedir(defpath);
+                if (err1 == 0) {
+                    strcpy(paths.workdir, defpath);
+                }
+            }
+        }
     }
 
     set_builtin_path_strings(0);
@@ -3328,13 +3328,13 @@ int gretl_set_paths (ConfigPaths *cpaths)
 const char *gretl_maybe_switch_dir (const char *fname)
 {
     if (fname[0] == '~' && fname[1] == '/') {
-	char *home = getenv("HOME");
+        char *home = getenv("HOME");
 
-	if (home != NULL && gretl_chdir(home) == 0) {
-	    fname += 2;
-	}
+        if (home != NULL && gretl_chdir(home) == 0) {
+            fname += 2;
+        }
     } else if (!g_path_is_absolute(fname)) {
-	gretl_chdir(paths.workdir);
+        gretl_chdir(paths.workdir);
     }
 
     return fname;
@@ -3361,17 +3361,17 @@ char *gretl_maybe_prepend_dir (char *fname)
     *tmp = '\0';
 
     if (fname[0] == '~' && fname[1] == '/') {
-	char *home = getenv("HOME");
+        char *home = getenv("HOME");
 
-	if (home != NULL) {
-	    gretl_build_path(tmp, home, fname + 2, NULL);
-	}
+        if (home != NULL) {
+            gretl_build_path(tmp, home, fname + 2, NULL);
+        }
     } else if (!g_path_is_absolute(fname)) {
-	gretl_build_path(tmp, paths.workdir, fname, NULL);
+        gretl_build_path(tmp, paths.workdir, fname, NULL);
     }
 
     if (*tmp != '\0') {
-	strcpy(fname, tmp);
+        strcpy(fname, tmp);
     }
 
     return fname;
@@ -3394,13 +3394,13 @@ FILE *gretl_read_user_file (const char *fname)
     FILE *fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
-	char fullname[FILENAME_MAX];
+        char fullname[FILENAME_MAX];
 
-	strcpy(fullname, fname);
-	gretl_maybe_prepend_dir(fullname);
-	if (*fullname != '\0') {
-	    fp = gretl_fopen(fullname, "r");
-	}
+        strcpy(fullname, fname);
+        gretl_maybe_prepend_dir(fullname);
+        if (*fullname != '\0') {
+            fp = gretl_fopen(fullname, "r");
+        }
     }
 
     return fp;
@@ -3422,46 +3422,46 @@ int gretl_normalize_path (char *path)
     int err = 0;
 
     if (*path == '\0') {
-	return 0;
+        return 0;
     }
 
 #ifdef WIN32
     while (*s) {
-	if (*s == '\\') bs++;
-	else if (*s == '/') fs++;
-	s++;
+        if (*s == '\\') bs++;
+        else if (*s == '/') fs++;
+        s++;
     }
     if (fs > 0 && bs > 0) {
-	strcpy(split, "\\/");
-	strcpy(slash, "/");
+        strcpy(split, "\\/");
+        strcpy(slash, "/");
     } else if (bs > 0) {
-	strcpy(split, "\\");
-	strcpy(slash, "\\");
+        strcpy(split, "\\");
+        strcpy(slash, "\\");
     } else if (fs == 0) {
-	return 0;
+        return 0;
     }
 #else
     if (strstr(path, slash) == NULL) {
-	return 0;
+        return 0;
     }
 #endif
 
     if (*path == '.') {
-	/* absolutize the path first, if necessary */
-	gchar *cwd = g_get_current_dir();
+        /* absolutize the path first, if necessary */
+        gchar *cwd = g_get_current_dir();
 
-	if (cwd != NULL) {
-	    char *tmp = gretl_strdup(path + 1);
+        if (cwd != NULL) {
+            char *tmp = gretl_strdup(path + 1);
 
-	    gretl_build_path(path, cwd, tmp, NULL);
-	    free(tmp);
-	    g_free(cwd);
-	}
+            gretl_build_path(path, cwd, tmp, NULL);
+            free(tmp);
+            g_free(cwd);
+        }
     }
 
     pcpy = gretl_strdup(path);
     if (pcpy == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     }
 
     *tmp = '\0';
@@ -3470,11 +3470,11 @@ int gretl_normalize_path (char *path)
 #ifdef WIN32
     /* may be ok for a filename to start with a double backslash */
     if (!strncmp(path, "\\\\", 2)) {
-	strcpy(tmp, slash);
-	s++;
+        strcpy(tmp, slash);
+        s++;
     } else if (*path && path[1] == ':') {
-	strncat(tmp, path, 2);
-	s += 2;
+        strncat(tmp, path, 2);
+        s += 2;
     }
 #endif
 
@@ -3484,40 +3484,40 @@ int gretl_normalize_path (char *path)
 
     n = 0;
     while ((pbit = strtok(s, split)) != NULL && !err) {
-	if (strcmp(pbit, ".")) {
-	    S = realloc(P, (n+1) * sizeof *P);
-	    if (S == NULL) {
-		err = E_ALLOC;
-	    } else {
-		P = S;
-		P[n++] = pbit;
-	    }
-	}
-	s = NULL; /* for subsequent strtok calls */
+        if (strcmp(pbit, ".")) {
+            S = realloc(P, (n+1) * sizeof *P);
+            if (S == NULL) {
+                err = E_ALLOC;
+            } else {
+                P = S;
+                P[n++] = pbit;
+            }
+        }
+        s = NULL; /* for subsequent strtok calls */
     }
 
     if (!err) {
-	int j;
+        int j;
 
-	/* let each ".." annihilate the preceding path chunk */
-	for (i=n-1; i>0; i--) {
-	    if (P[i] != NULL && !strcmp(P[i], "..")) {
-		for (j=i-1; j>0; j--) {
-		    if (P[j] != NULL && strcmp(P[j], "..")) {
-			P[j] = NULL;
-			break;
-		    }
-		}
-	    }
-	}
-	/* re-assemble the path */
-	for (i=0; i<n; i++) {
-	    if (P[i] != NULL && strcmp(P[i], "..")) {
-		strcat(tmp, slash);
-		strcat(tmp, P[i]);
-	    }
-	}
-	strcpy(path, tmp);
+        /* let each ".." annihilate the preceding path chunk */
+        for (i=n-1; i>0; i--) {
+            if (P[i] != NULL && !strcmp(P[i], "..")) {
+                for (j=i-1; j>0; j--) {
+                    if (P[j] != NULL && strcmp(P[j], "..")) {
+                        P[j] = NULL;
+                        break;
+                    }
+                }
+            }
+        }
+        /* re-assemble the path */
+        for (i=0; i<n; i++) {
+            if (P[i] != NULL && strcmp(P[i], "..")) {
+                strcat(tmp, slash);
+                strcat(tmp, P[i]);
+            }
+        }
+        strcpy(path, tmp);
     }
 
     free(P);
@@ -3541,21 +3541,21 @@ int slash_terminate (char *path)
 {
 #ifdef WIN32
     if (path != NULL && *path != '\0') {
-	int n = strlen(path);
+        int n = strlen(path);
 
-	if (path[n-1] != '\\' && path[n-1] != '/') {
-	    char sep = getsep(path);
+        if (path[n-1] != '\\' && path[n-1] != '/') {
+            char sep = getsep(path);
 
-	    strcat(path, sep == '/' ? "/" : "\\");
-	    return 1;
-	}
+            strcat(path, sep == '/' ? "/" : "\\");
+            return 1;
+        }
     }
 #else
     if (path != NULL && *path != '\0') {
-	if (path[strlen(path) - 1] != '/') {
-	    strcat(path, "/");
-	    return 1;
-	}
+        if (path[strlen(path) - 1] != '/') {
+            strcat(path, "/");
+            return 1;
+        }
     }
 #endif
 
@@ -3569,17 +3569,17 @@ static void rc_set_gp_extra_colors (const char *s)
     *cstr[0] = *cstr[1] = '\0';
 
     if (sscanf(s, "%7s %7s", cstr[0], cstr[1]) == 2) {
-	set_graph_color_from_string(0, cstr[0]);
-	set_graph_color_from_string(1, cstr[1]);
+        set_graph_color_from_string(0, cstr[0]);
+        set_graph_color_from_string(1, cstr[1]);
     }
 }
 
 static int rc_bool (const char *s)
 {
     if (!strcmp(s, "true") || !strcmp(s, "1")) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -3588,14 +3588,14 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
     libset_set_bool(USE_CWD, use_cwd);
 
     if (use_cwd) {
-	gchar *cwd = g_get_current_dir();
+        gchar *cwd = g_get_current_dir();
 
-	if (cwd != NULL) {
-	    *cpaths->workdir = '\0';
-	    strncat(cpaths->workdir, cwd, MAXLEN - 2);
-	    slash_terminate(cpaths->workdir);
-	    g_free(cwd);
-	}
+        if (cwd != NULL) {
+            *cpaths->workdir = '\0';
+            strncat(cpaths->workdir, cwd, MAXLEN - 2);
+            slash_terminate(cpaths->workdir);
+            g_free(cwd);
+        }
     }
 }
 
@@ -3605,98 +3605,98 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
 /* called only on behalf of gretlcli (for all platforms) */
 
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
-				 char *dbproxy, int *use_proxy,
-				 int *updated, gchar **gptheme)
+                                 char *dbproxy, int *use_proxy,
+                                 int *updated, gchar **gptheme)
 {
     char line[MAXLEN], key[32], val[MAXLEN];
 
     while (fgets(line, sizeof line, fp) != NULL) {
-	if (*line == '#') {
-	    continue;
-	}
-	if (!strncmp(line, "recent", 6)) {
-	    /* reached the "recent files" section */
-	    break;
-	}
-	if (sscanf(line, "%s", key) != 1) {
-	    continue;
-	}
-	*val = '\0';
-	/* get the string that follows " = " */
-	strncat(val, line + strlen(key) + 3, MAXLEN - 1);
-	gretl_strstrip(val);
-	if (!strcmp(key, "gretldir")) {
-	    strncat(cpaths->gretldir, val, MAXLEN - 1);
+        if (*line == '#') {
+            continue;
+        }
+        if (!strncmp(line, "recent", 6)) {
+            /* reached the "recent files" section */
+            break;
+        }
+        if (sscanf(line, "%s", key) != 1) {
+            continue;
+        }
+        *val = '\0';
+        /* get the string that follows " = " */
+        strncat(val, line + strlen(key) + 3, MAXLEN - 1);
+        gretl_strstrip(val);
+        if (!strcmp(key, "gretldir")) {
+            strncat(cpaths->gretldir, val, MAXLEN - 1);
 #ifndef WIN32
-	} else if (!strcmp(key, "gnuplot")) {
-	    strncat(cpaths->gnuplot, val, MAXLEN - 1);
+        } else if (!strcmp(key, "gnuplot")) {
+            strncat(cpaths->gnuplot, val, MAXLEN - 1);
 #endif
-	} else if (!strcmp(key, "workdir") || !strcmp(key, "userdir")) {
-	    /* "userdir" is a legacy thing */
-	    strncat(cpaths->workdir, val, MAXLEN - 1);
-	} else if (!strcmp(key, "no_dotdir")) {
-	    cpaths->no_dotdir = rc_bool(val);
-	} else if (!strcmp(key, "shellok")) {
-	    libset_set_bool(SHELL_OK, rc_bool(val));
-	} else if (!strcmp(key, "usecwd")) {
+        } else if (!strcmp(key, "workdir") || !strcmp(key, "userdir")) {
+            /* "userdir" is a legacy thing */
+            strncat(cpaths->workdir, val, MAXLEN - 1);
+        } else if (!strcmp(key, "no_dotdir")) {
+            cpaths->no_dotdir = rc_bool(val);
+        } else if (!strcmp(key, "shellok")) {
+            libset_set_bool(SHELL_OK, rc_bool(val));
+        } else if (!strcmp(key, "usecwd")) {
 #if GRETLCLI_USE_CWD
-	    ; /* handled later */
+            ; /* handled later */
 #else
-	    handle_use_cwd(rc_bool(val), cpaths);
+            handle_use_cwd(rc_bool(val), cpaths);
 #endif
-	} else if (!strcmp(key, "lcnumeric")) {
-	    libset_set_bool(FORCE_DECP, !rc_bool(val));
-	} else if (!strcmp(key, "dbhost")) {
-	    strncat(cpaths->dbhost, val, 32 - 1);
-	} else if (!strcmp(key, "dbproxy")) {
-	    strncat(dbproxy, val, PROXLEN - 1);
-	} else if (!strcmp(key, "useproxy")) {
-	    *use_proxy = rc_bool(val);
-	} else if (!strcmp(key, "x12a")) {
-	    strncat(cpaths->x12a, val, MAXLEN - 1);
-	} else if (!strcmp(key, "tramo")) {
-	    strncat(cpaths->tramo, val, MAXLEN - 1);
-	} else if (!strcmp(key, "Rbin")) {
-	    strncat(cpaths->rbinpath, val, MAXLEN - 1);
-	} else if (!strcmp(key, "Rlib")) {
-	    strncat(cpaths->rlibpath, val, MAXLEN - 1);
-	} else if (!strcmp(key, "ox")) {
-	    strncat(cpaths->oxlpath, val, MAXLEN - 1);
-	} else if (!strcmp(key, "octave")) {
-	    strncat(cpaths->octpath, val, MAXLEN - 1);
-	} else if (!strcmp(key, "stata")) {
-	    strncat(cpaths->statapath, val, MAXLEN - 1);
-	} else if (!strcmp(key, "python")) {
-	    strncat(cpaths->pypath, val, MAXLEN - 1);
-	} else if (!strcmp(key, "julia")) {
-	    strncat(cpaths->jlpath, val, MAXLEN - 1);
-	} else if (!strcmp(key, "mpiexec")) {
-	    strncat(cpaths->mpiexec, val, MAXLEN - 1);
-	} else if (!strcmp(key, "mpi_hosts")) {
-	    strncat(cpaths->mpi_hosts, val, MAXLEN - 1);
-	} else if (!strcmp(key, "mpi_pref")) {
+        } else if (!strcmp(key, "lcnumeric")) {
+            libset_set_bool(FORCE_DECP, !rc_bool(val));
+        } else if (!strcmp(key, "dbhost")) {
+            strncat(cpaths->dbhost, val, 32 - 1);
+        } else if (!strcmp(key, "dbproxy")) {
+            strncat(dbproxy, val, PROXLEN - 1);
+        } else if (!strcmp(key, "useproxy")) {
+            *use_proxy = rc_bool(val);
+        } else if (!strcmp(key, "x12a")) {
+            strncat(cpaths->x12a, val, MAXLEN - 1);
+        } else if (!strcmp(key, "tramo")) {
+            strncat(cpaths->tramo, val, MAXLEN - 1);
+        } else if (!strcmp(key, "Rbin")) {
+            strncat(cpaths->rbinpath, val, MAXLEN - 1);
+        } else if (!strcmp(key, "Rlib")) {
+            strncat(cpaths->rlibpath, val, MAXLEN - 1);
+        } else if (!strcmp(key, "ox")) {
+            strncat(cpaths->oxlpath, val, MAXLEN - 1);
+        } else if (!strcmp(key, "octave")) {
+            strncat(cpaths->octpath, val, MAXLEN - 1);
+        } else if (!strcmp(key, "stata")) {
+            strncat(cpaths->statapath, val, MAXLEN - 1);
+        } else if (!strcmp(key, "python")) {
+            strncat(cpaths->pypath, val, MAXLEN - 1);
+        } else if (!strcmp(key, "julia")) {
+            strncat(cpaths->jlpath, val, MAXLEN - 1);
+        } else if (!strcmp(key, "mpiexec")) {
+            strncat(cpaths->mpiexec, val, MAXLEN - 1);
+        } else if (!strcmp(key, "mpi_hosts")) {
+            strncat(cpaths->mpi_hosts, val, MAXLEN - 1);
+        } else if (!strcmp(key, "mpi_pref")) {
 #ifdef HAVE_MPI
-	    set_mpi_variant(val);
+            set_mpi_variant(val);
 #else
-	    ;
+            ;
 #endif
-	} else if (!strcmp(key, "Png_font")) {
-	    strncat(cpaths->pngfont, val, 128 - 1);
-	} else if (!strcmp(key, "Gp_extra_colors")) {
-	    rc_set_gp_extra_colors(val);
-	} else if (!strcmp(key, "HC_xsect")) {
-	    set_xsect_hccme(val);
-	} else if (!strcmp(key, "HC_tseri")) {
-	    set_tseries_hccme(val);
-	} else if (!strcmp(key, "HC_panel")) {
-	    set_panel_hccme(val);
-	} else if (!strcmp(key, "HC_garch")) {
-	    set_garch_robust_vcv(val);
-	} else if (!strcmp(key, "graph_theme")) {
-	    *gptheme = g_strdup(val);
-	} else if (!strcmp(key, "build_date")) {
-	    *updated = gretl_is_updated(val);
-	}
+        } else if (!strcmp(key, "Png_font")) {
+            strncat(cpaths->pngfont, val, 128 - 1);
+        } else if (!strcmp(key, "Gp_extra_colors")) {
+            rc_set_gp_extra_colors(val);
+        } else if (!strcmp(key, "HC_xsect")) {
+            set_xsect_hccme(val);
+        } else if (!strcmp(key, "HC_tseri")) {
+            set_tseries_hccme(val);
+        } else if (!strcmp(key, "HC_panel")) {
+            set_panel_hccme(val);
+        } else if (!strcmp(key, "HC_garch")) {
+            set_garch_robust_vcv(val);
+        } else if (!strcmp(key, "graph_theme")) {
+            *gptheme = g_strdup(val);
+        } else if (!strcmp(key, "build_date")) {
+            *updated = gretl_is_updated(val);
+        }
     }
 
 #if GRETLCLI_USE_CWD
@@ -3712,18 +3712,18 @@ void get_gretl_rc_path (char *rcfile)
     char *path = getenv("GRETL_CONFIG_FILE");
 
     if (path != NULL) {
-	*rcfile = '\0';
-	strncat(rcfile, path, FILENAME_MAX - 1);
+        *rcfile = '\0';
+        strncat(rcfile, path, FILENAME_MAX - 1);
 #if 0
-	fprintf(stderr, "rcfile from env: '%s'\n", rcfile);
+        fprintf(stderr, "rcfile from env: '%s'\n", rcfile);
 #endif
     } else {
-	path = getenv("HOME");
-	if (path != NULL) {
-	    sprintf(rcfile, "%s/.gretl2rc", path);
-	} else {
-	    strcpy(rcfile, ".gretl2rc");
-	}
+        path = getenv("HOME");
+        if (path != NULL) {
+            sprintf(rcfile, "%s/.gretl2rc", path);
+        } else {
+            strcpy(rcfile, ".gretl2rc");
+        }
     }
 }
 
@@ -3747,27 +3747,27 @@ int cli_read_rc (void)
     fp = gretl_fopen(rcfile, "r");
 
     if (fp == NULL) {
-	err = E_FOPEN;
+        err = E_FOPEN;
     } else {
-	get_gretl_config_from_file(fp, &cpaths, dbproxy,
-				   &use_proxy, &updated,
-				   &gptheme);
-	fclose(fp);
+        get_gretl_config_from_file(fp, &cpaths, dbproxy,
+                                   &use_proxy, &updated,
+                                   &gptheme);
+        fclose(fp);
     }
 
     if (err) {
-	gretl_set_paths(&cpaths);
+        gretl_set_paths(&cpaths);
     } else {
-	err = gretl_set_paths(&cpaths);
+        err = gretl_set_paths(&cpaths);
     }
 
     if (gptheme != NULL) {
-	set_plotstyle(gptheme);
-	g_free(gptheme);
+        set_plotstyle(gptheme);
+        g_free(gptheme);
     }
 
     if (updated) {
-	update_addons_index(NULL);
+        update_addons_index(NULL);
     }
 
 #ifdef USE_CURL
@@ -3790,36 +3790,36 @@ const char *gretl_app_support_dir (void)
     static char suppdir[FILENAME_MAX];
 
     if (*suppdir == '\0') {
-	/* try to ensure that we have a per-user Application
-	   Support dir, with appropriate subdirectories
-	*/
-	const char *home = getenv("HOME");
+        /* try to ensure that we have a per-user Application
+           Support dir, with appropriate subdirectories
+        */
+        const char *home = getenv("HOME");
 
-	if (home == NULL) {
-	    fprintf(stderr, "problem: HOME is not defined\n");
-	} else {
-	    char *p;
-	    int err;
+        if (home == NULL) {
+            fprintf(stderr, "problem: HOME is not defined\n");
+        } else {
+            char *p;
+            int err;
 
-	    sprintf(suppdir, "%s/Library/Application Support/gretl/functions",
-		    home);
-	    p = strrchr(suppdir, '/') + 1;
-	    err = gretl_mkdir(suppdir);
-	    if (!err) {
-		strcpy(p, "data");
-		err = gretl_mkdir(suppdir);
-	    }
-	    if (!err) {
-		strcpy(p, "db");
-		err = gretl_mkdir(suppdir);
-	    }
-	    if (err) {
-		*suppdir = '\0';
-	    } else {
-		/* chop off subdir from name */
-		*p = '\0';
-	    }
-	}
+            sprintf(suppdir, "%s/Library/Application Support/gretl/functions",
+                    home);
+            p = strrchr(suppdir, '/') + 1;
+            err = gretl_mkdir(suppdir);
+            if (!err) {
+                strcpy(p, "data");
+                err = gretl_mkdir(suppdir);
+            }
+            if (!err) {
+                strcpy(p, "db");
+                err = gretl_mkdir(suppdir);
+            }
+            if (err) {
+                *suppdir = '\0';
+            } else {
+                /* chop off subdir from name */
+                *p = '\0';
+            }
+        }
     }
 
     return suppdir;
@@ -3832,12 +3832,12 @@ static int dir_is_writable (const char *dirname)
     int ok = 0;
 
     if (gretl_mkdir(dirname) == 0) {
-	gchar *test = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
+        gchar *test = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
 
-	if (test != NULL) {
-	    ok = (gretl_test_fopen(test, "w") == 0);
-	    g_free(test);
-	}
+        if (test != NULL) {
+            ok = (gretl_test_fopen(test, "w") == 0);
+            g_free(test);
+        }
     }
 
     return ok;
@@ -3853,10 +3853,10 @@ static int get_user_install_path (char *path, const char *subdir)
     int err = 0;
 
     if (dirname == NULL || *dirname == '\0') {
-	err = E_FOPEN;
+        err = E_FOPEN;
     } else {
-	sprintf(path, "%s%s", dirname, subdir);
-	err = (dir_is_writable(path) == 0);
+        sprintf(path, "%s%s", dirname, subdir);
+        err = (dir_is_writable(path) == 0);
     }
 
     return err;
@@ -3867,9 +3867,9 @@ static int get_system_install_path (char *path, const char *subdir)
     sprintf(path, "%s%s", gretl_home(), subdir);
 
     if (dir_is_writable(path)) {
-	return 0;
+        return 0;
     } else {
-	return E_FOPEN;
+        return E_FOPEN;
     }
 }
 
@@ -3882,46 +3882,46 @@ const char *gretl_function_package_path (void)
     static char path[FILENAME_MAX];
 
     if (*path == '\0') {
-	int sys_first = 1;
-	int err = 0;
+        int sys_first = 1;
+        int err = 0;
 
 #if defined(OS_OSX)
-	/* we prefer writing to ~/Library/Application Support */
-	sys_first = 0;
+        /* we prefer writing to ~/Library/Application Support */
+        sys_first = 0;
 #elif defined(WIN32)
-	sys_first = 0;
+        sys_first = 0;
 #endif
-	if (sys_first) {
-	    err = get_system_install_path(path, "functions");
-	    if (err) {
-		err = get_user_install_path(path, "functions");
-	    }
-	} else {
-	    err = get_user_install_path(path, "functions");
-	}
+        if (sys_first) {
+            err = get_system_install_path(path, "functions");
+            if (err) {
+                err = get_user_install_path(path, "functions");
+            }
+        } else {
+            err = get_user_install_path(path, "functions");
+        }
 
-	if (err) {
-	    *path = '\0';
-	} else {
-	    slash_terminate(path);
-	}
+        if (err) {
+            *path = '\0';
+        } else {
+            slash_terminate(path);
+        }
     }
 
     return path;
 }
 
 int gretl_path_compose (char *targ, int len,
-			const char *s1,
-			const char *s2)
+                        const char *s1,
+                        const char *s2)
 {
     targ[0] = '\0';
     if (strlen(s1) + strlen(s2) >= len) {
-	gretl_errmsg_set("filename is too long");
-	return E_DATA;
+        gretl_errmsg_set("filename is too long");
+        return E_DATA;
     } else {
-	strcpy(targ, s1);
-	strcat(targ, s2);
-	return 0;
+        strcpy(targ, s1);
+        strcat(targ, s2);
+        return 0;
     }
 }
 
@@ -3937,8 +3937,8 @@ int gretl_path_compose (char *targ, int len,
 #ifdef G_OS_WIN32
 
 static void real_build_path_win32 (char *targ,
-				   const gchar *first_element,
-				   va_list *args)
+                                   const gchar *first_element,
+                                   va_list *args)
 {
     gboolean is_first = TRUE;
     gboolean have_leading = FALSE;
@@ -3950,78 +3950,78 @@ static void real_build_path_win32 (char *targ,
     next_element = first_element;
 
     while (1) {
-	const gchar *element;
-	const gchar *start;
-	const gchar *end;
+        const gchar *element;
+        const gchar *start;
+        const gchar *end;
 
-	if (next_element) {
-	    element = next_element;
-	    next_element = va_arg(*args, gchar *);
-	} else {
-	    break;
-	}
+        if (next_element) {
+            element = next_element;
+            next_element = va_arg(*args, gchar *);
+        } else {
+            break;
+        }
 
-	/* ignore empty elements */
-	if (*element == '\0') {
-	    continue;
-	}
+        /* ignore empty elements */
+        if (*element == '\0') {
+            continue;
+        }
 
-	start = element;
-	while (start && (*start == '\\' || *start == '/')) {
-	    current_separator = *start;
-	    start++;
-	}
+        start = element;
+        while (start && (*start == '\\' || *start == '/')) {
+            current_separator = *start;
+            start++;
+        }
 
-	end = start + strlen(start);
-	while (end >= start + 1 && (end[-1] == '\\' || end[-1] == '/')) {
-	    current_separator = end[-1];
-	    end--;
-	}
+        end = start + strlen(start);
+        while (end >= start + 1 && (end[-1] == '\\' || end[-1] == '/')) {
+            current_separator = end[-1];
+            end--;
+        }
 
-	last_trailing = end;
-	while (last_trailing >= element + 1 &&
-	       (last_trailing[-1] == '\\' || last_trailing[-1] == '/')) {
-	    last_trailing--;
-	}
+        last_trailing = end;
+        while (last_trailing >= element + 1 &&
+               (last_trailing[-1] == '\\' || last_trailing[-1] == '/')) {
+            last_trailing--;
+        }
 
-	if (!have_leading) {
-	    /* If the leading and trailing separator strings are in the
-	       same element and overlap, the result is exactly that
-	       element
-	    */
-	    if (last_trailing <= start) {
-		single_element = element;
-	    }
-	    strncat(targ, element, start - element);
-	    have_leading = TRUE;
-	} else {
-	    single_element = NULL;
-	}
+        if (!have_leading) {
+            /* If the leading and trailing separator strings are in the
+               same element and overlap, the result is exactly that
+               element
+            */
+            if (last_trailing <= start) {
+                single_element = element;
+            }
+            strncat(targ, element, start - element);
+            have_leading = TRUE;
+        } else {
+            single_element = NULL;
+        }
 
-	if (end == start) {
-	    continue;
-	}
+        if (end == start) {
+            continue;
+        }
 
-	if (!is_first) {
-	    strncat(targ, &current_separator, 1);
-	}
-	strncat(targ, start, end - start);
-	is_first = FALSE;
+        if (!is_first) {
+            strncat(targ, &current_separator, 1);
+        }
+        strncat(targ, start, end - start);
+        is_first = FALSE;
     }
 
     if (single_element) {
-	*targ = '\0';
-	strcat(targ, single_element);
+        *targ = '\0';
+        strcat(targ, single_element);
     } else if (last_trailing) {
-	strcat(targ, last_trailing);
+        strcat(targ, last_trailing);
     }
 }
 
 #else
 
 static void real_build_path (char *targ,
-			     const gchar *first_element,
-			     va_list *args)
+                             const gchar *first_element,
+                             va_list *args)
 {
     gboolean is_first = TRUE;
     gboolean have_leading = FALSE;
@@ -4032,67 +4032,67 @@ static void real_build_path (char *targ,
     next_element = first_element;
 
     while (1) {
-	const gchar *element;
-	const gchar *start;
-	const gchar *end;
+        const gchar *element;
+        const gchar *start;
+        const gchar *end;
 
-	if (next_element) {
-	    element = next_element;
-	    next_element = va_arg(*args, gchar *);
-	} else {
-	    break;
-	}
+        if (next_element) {
+            element = next_element;
+            next_element = va_arg(*args, gchar *);
+        } else {
+            break;
+        }
 
-	/* ignore empty elements */
-	if (*element == '\0') {
-	    continue;
-	}
+        /* ignore empty elements */
+        if (*element == '\0') {
+            continue;
+        }
 
-	start = element;
-	while (*start == '/') {
-	    start++;
-	}
+        start = element;
+        while (*start == '/') {
+            start++;
+        }
 
-	end = start + strlen (start);
-	while (end >= start + 1 && end[-1] == '/') {
-	    end--;
-	}
+        end = start + strlen (start);
+        while (end >= start + 1 && end[-1] == '/') {
+            end--;
+        }
 
-	last_trailing = end;
-	while (last_trailing >= element + 1 && last_trailing[-1] == '/') {
-	    last_trailing--;
-	}
+        last_trailing = end;
+        while (last_trailing >= element + 1 && last_trailing[-1] == '/') {
+            last_trailing--;
+        }
 
-	if (!have_leading) {
-	    /* If the leading and trailing separator strings are in the
-	       same element and overlap, the result is exactly that
-	       element
-	    */
-	    if (last_trailing <= start) {
-		single_element = element;
-	    }
-	    strncat(targ, element, start - element);
-	    have_leading = TRUE;
-	} else {
-	    single_element = NULL;
-	}
+        if (!have_leading) {
+            /* If the leading and trailing separator strings are in the
+               same element and overlap, the result is exactly that
+               element
+            */
+            if (last_trailing <= start) {
+                single_element = element;
+            }
+            strncat(targ, element, start - element);
+            have_leading = TRUE;
+        } else {
+            single_element = NULL;
+        }
 
-	if (end == start) {
-	    continue;
-	}
+        if (end == start) {
+            continue;
+        }
 
-	if (!is_first) {
-	    strcat(targ, "/");
-	}
-	strncat(targ, start, end - start);
-	is_first = FALSE;
+        if (!is_first) {
+            strcat(targ, "/");
+        }
+        strncat(targ, start, end - start);
+        is_first = FALSE;
     }
 
     if (single_element) {
-	*targ = '\0';
-	strcat(targ, single_element);
+        *targ = '\0';
+        strcat(targ, single_element);
     } else if (last_trailing) {
-	strcat(targ, last_trailing);
+        strcat(targ, last_trailing);
     }
 }
 
