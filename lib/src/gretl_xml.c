@@ -82,12 +82,19 @@ static xmlDocPtr transcribe_and_parse (const char *fname)
     return ptr;
 }
 
+/* Try to work around potential problems with filenames
+   on Windows
+*/
+
 static xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
     xmlDocPtr ptr = NULL;
     FILE *fp = fopen(fname, "r");
 
     if (fp != NULL) {
+	/* If we manage to fopen() the file as is, plain
+	   xmlParseFile() should work fine.
+	*/
 	fclose(fp);
 	ptr = xmlParseFile(fname);
     } else {
