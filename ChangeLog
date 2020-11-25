@@ -2,6 +2,7 @@ version 2020f, in progress
 - VAR internals: scrap augmented Cholesky matrix; so the
   $system.C accessor is now a square matrix
 - mread(): support reading gdt and gdtb files as matrices
+- readfile(): support reading gzipped files
 
 2020-11-21 version 2020e
 - New function tdisagg() for temporal disaggregation
