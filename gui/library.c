@@ -9725,6 +9725,14 @@ static void handle_gui_pkg_install (gretl_bundle *b)
     gretl_bundle_destroy(b);
 }
 
+/* Callbacks for when lib_open_append() is invoked. In
+   the first case we're just checking if OPEN is going
+   to destroy any unsaved data, and if so giving the user
+   the option of aborting the command. In the second
+   case we're prompting the GUI program to update its
+   state in response to opening a new dataset.
+*/
+
 static int handle_data_open_callback (CMD *cmd, void *ptr,
                                       GretlObjType type)
 {
@@ -10017,178 +10025,28 @@ static int script_renumber_series (const int *list,
     return err;
 }
 
-static int script_open_append (ExecState *s, DATASET *dset,
-                               PRN *prn, GtkWidget *parent)
-{
-    gretlopt opt = s->cmd->opt;
-    PRN *vprn = prn;
-    CMD *cmd = s->cmd;
-    char myfile[MAXLEN] = {0};
-    int http = 0, dbdata = 0;
-    int ftype, got_type = 0;
-    int err = 0;
-
-    if (opt & OPT_W) {
-        /* --www: database on server */
-        ftype = GRETL_NATIVE_DB_WWW;
-        got_type = 1;
-    } else if (opt & OPT_O) {
-        /* --odbc */
-        ftype = GRETL_ODBC;
-        got_type = 1;
-    } else if (opt & OPT_K) {
-        /* --frompkg=whatever */
-        err = get_package_data_path(cmd->param, myfile);
-        if (err) {
-            gui_errmsg(err);
-            return err;
-        }
-    } else if (!strcmp(cmd->param, "dbnomics")) {
-        strcpy(myfile, "dbnomics");
-        ftype = GRETL_DBNOMICS;
-        got_type = 1;
-    } else {
-        err = try_http(cmd->param, myfile, &http);
-        if (err) {
-            gui_errmsg(err);
-            return err;
-        }
-        if (!http) {
-            /* not using http: local file */
-            err = get_full_filename(cmd->param, myfile, OPT_NONE);
-            if (err) {
-                gui_errmsg(err);
-                return err;
-            }
-        }
-    }
-
-    if (!got_type) {
-        ftype = detect_filetype(myfile, OPT_P);
-    }
-
-    dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
-              ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB ||
-              ftype == GRETL_ODBC || ftype == GRETL_DBNOMICS);
-
-    if ((data_status & MODIFIED_DATA) && !dbdata && cmd->ci != APPEND) {
-        if (maybe_stop_script(parent)) {
-            return 1;
-        }
-    }
-
-    if (!dbdata && cmd->ci != APPEND) {
-        gretlopt closeopt = cmd->opt;
-
-        if (!(cmd->opt & OPT_P) && csv_open_needs_matrix(cmd->opt)) {
-            closeopt |= OPT_P;
-        }
-        close_session(closeopt);
-    }
-
-    if (cmd->opt & OPT_Q) {
-        /* --quiet, but in case we hit any problems below... */
-        vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    }
-
-    if (ftype == GRETL_CSV) {
-        err = import_csv(myfile, dset, opt, vprn);
-    } else if (ftype == GRETL_XML_DATA || ftype == GRETL_BINARY_DATA) {
-        err = gretl_read_gdt(myfile, dset, opt | OPT_B, vprn);
-    } else if (SPREADSHEET_IMPORT(ftype)) {
-        err = import_spreadsheet(myfile, ftype, cmd->list, cmd->parm2, dset,
-                                 opt, vprn);
-    } else if (OTHER_IMPORT(ftype)) {
-        err = import_other(myfile, ftype, dset, opt, vprn);
-    } else if (ftype == GRETL_ODBC) {
-        err = set_odbc_dsn(cmd->param, vprn);
-    } else if (ftype == GRETL_NATIVE_DB_WWW) {
-        err = set_db_name(cmd->param, ftype, vprn);
-    } else if (dbdata) {
-        err = set_db_name(myfile, ftype, vprn);
-    } else {
-        err = gretl_get_data(myfile, dset, opt, vprn);
-    }
-
-    if (vprn != NULL && vprn != prn) {
-        if (err) {
-            /* The user asked for quiet operation, but something
-               went wrong so let's print any info we got on
-               vprn.
-            */
-            const char *buf = gretl_print_get_buffer(vprn);
-
-            if (buf != NULL && *buf != '\0') {
-                pputs(prn, buf);
-            }
-        } else if (*myfile != '\0') {
-            /* print minimal success message */
-            pprintf(prn, _("Read datafile %s\n"), myfile);
-        }
-        gretl_print_destroy(vprn);
-    }
-
-    if (err) {
-        gui_errmsg(err);
-        return err;
-    }
-#if 0
-    else if (check_gretl_warning()) {
-        gui_warnmsg(0);
-    }
-#endif
-
-    if (http) {
-        /* arrange to display "Unsaved data" in place of filename */
-        data_status |= MODIFIED_DATA;
-    } else if (!dbdata && cmd->ci != APPEND && *myfile != '\0') {
-        strncpy(datafile, myfile, MAXLEN - 1);
-    }
-
-    if (ftype == GRETL_CSV || SPREADSHEET_IMPORT(ftype) ||
-        OTHER_IMPORT(ftype)) {
-        data_status |= IMPORT_DATA;
-        if (!(cmd->opt & OPT_Q)) {
-            maybe_display_string_table();
-        }
-    }
-
-    if (dset->v > 0 && !dbdata) {
-        if (cmd->ci == APPEND) {
-            register_data(DATA_APPENDED);
-        } else {
-            register_data(OPENED_VIA_CLI);
-        }
-        if (!(cmd->opt & OPT_Q)) {
-            list_series(dset, OPT_NONE, prn);
-        }
-    }
-
-    if (http) {
-        remove(myfile);
-    }
-
-    return err;
-}
-
 static int script_open_session_file (CMD *cmd)
 {
     char myfile[MAXLEN] = {0};
     int err;
 
     err = get_full_filename(cmd->param, myfile, OPT_NONE);
+    if (err) {
+	gui_errmsg(err);
+	return err;
+    }
 
     if (gretl_is_pkzip_file(myfile)) {
-        if (cmd->ci == APPEND) {
-            errbox("Can't append a gretl session file");
-            err = E_DATA;
-        } else {
-            set_tryfile(myfile);
-            verify_open_session();
-        }
+	if (cmd->ci == APPEND) {
+	    errbox("Can't append a gretl session file");
+	    return E_DATA;
+	} else {
+	    set_tryfile(myfile);
+	    verify_open_session();
+	}
     } else {
-        errbox("Expected a gretl session file");
-        err = E_DATA;
+	errbox("Expected a gretl session file");
+	err = E_DATA;
     }
 
     return err;
@@ -10504,8 +10362,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         } else if (has_suffix(cmd->param, ".gretl")) {
             err = script_open_session_file(cmd);
         } else {
-            // gretl_cmd_exec(s, dset);
-            err = script_open_append(s, dset, prn, parent);
+            err = gretl_cmd_exec(s, dset);
         }
         break;
 

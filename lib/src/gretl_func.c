@@ -8546,8 +8546,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     return 0;
 }
 
-static void func_exec_callback (ExecState *s, void *ptr,
-				GretlObjType type)
+static int func_exec_callback (ExecState *s, void *ptr,
+			       GretlObjType type)
 {
     if (s->cmd->ci == FLUSH || is_plotting_command(s->cmd)) {
 	/* we permit "reach-back" into the GUI for these */
@@ -8557,6 +8557,8 @@ static void func_exec_callback (ExecState *s, void *ptr,
 	    gc(s, NULL, 0);
 	}
     }
+
+    return 0;
 }
 
 static double arg_get_double_val (fn_arg *arg)
