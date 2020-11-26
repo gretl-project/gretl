@@ -6134,6 +6134,7 @@ static int determine_gdt_matches (const char *fname,
 				  joinspec *jspec,
 				  int **plist,
 				  int *addvars,
+				  int *obsmaj,
 				  PRN *prn)
 {
     char **vnames = NULL;
@@ -6157,6 +6158,11 @@ static int determine_gdt_matches (const char *fname,
 
 	for (i=0; i<ns && !err; i++) {
 	    int match = 0;
+
+	    if (!strcmp(S[i], "$obsmajor")) {
+		*obsmaj = 1;
+		continue;
+	    }
 
 	    if (prn != NULL) {
 		pprintf(prn, "checking for '%s'\n", S[i]);
@@ -6212,6 +6218,23 @@ static int determine_gdt_matches (const char *fname,
     return err;
 }
 
+static int rhs_add_obsmajor (DATASET *dset)
+{
+    int err = dataset_add_series(dset, 1);
+
+    if (!err) {
+	int t, maj, v = dset->v - 1;
+
+	strcpy(dset->varname[v], "$obsmajor");
+	for (t=0; t<dset->n; t++) {
+	    date_maj_min(t, dset, &maj, NULL);
+	    dset->Z[v][t] = maj;
+	}
+    }
+
+    return err;
+}
+
 static int join_import_gdt (const char *fname,
 			    joinspec *jspec,
 			    gretlopt opt,
@@ -6221,9 +6244,11 @@ static int join_import_gdt (const char *fname,
     int *vlist = NULL;
     int orig_ncols = jspec->ncols;
     int i, vi, addvars = 0;
+    int obsmaj = 0;
     int err = 0;
 
-    err = determine_gdt_matches(fname, jspec, &vlist, &addvars, prn);
+    err = determine_gdt_matches(fname, jspec, &vlist, &addvars,
+				&obsmaj, prn);
 
     if (!err) {
 	jspec->dset = datainfo_new();
@@ -6239,6 +6264,11 @@ static int join_import_gdt (const char *fname,
     if (!err && addvars > 0) {
 	/* we have some extra vars due to wildcard expansion */
 	err = expand_jspec(jspec, addvars);
+    }
+
+    if (!err && obsmaj) {
+	/* we need to add $obsmajor on the right */
+	err = rhs_add_obsmajor(jspec->dset);
     }
 
     if (!err) {
