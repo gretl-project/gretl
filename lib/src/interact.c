@@ -1680,17 +1680,17 @@ static int *get_inner_keys (const char *s, DATASET *dset,
     return klist;
 }
 
-static int check_join_import_names (char **S, int ns,
-                                    DATASET *dset)
+static int check_import_names (char **S, int ns,
+			       int ci, DATASET *dset)
 {
     int i, err = 0;
 
     for (i=0; i<ns && !err; i++) {
         if (S[i] == NULL || S[i][0] == '\0') {
             err = E_DATA;
-        } else if (strchr(S[i], '*') || strchr(S[i], '?')) {
+        } else if (ci == JOIN && (strchr(S[i], '*') || strchr(S[i], '?'))) {
             ; /* wildcards: may be OK? */
-        } else if (current_series_index(dset, S[i]) < 0) {
+        } else if (ci == JOIN && current_series_index(dset, S[i]) < 0) {
             err = check_varname(S[i]);
             if (!err && gretl_type_from_name(S[i], NULL)) {
                 err = E_TYPES;
@@ -1734,10 +1734,11 @@ static char **strings_array_singleton (const char *s,
     return S;
 }
 
-static int get_join_import_names (const char *s,
-                                  DATASET *dset,
-                                  char ***pvnames,
-                                  int *pnvars)
+static int get_selected_import_names (const char *s,
+				      int ci,
+				      DATASET *dset,
+				      char ***pvnames,
+				      int *pnvars)
 {
     char **S = NULL;
     gretl_array *A = NULL;
@@ -1764,7 +1765,7 @@ static int get_join_import_names (const char *s,
     }
 
     if (S != NULL) {
-        err = check_join_import_names(S, ns, dset);
+        err = check_import_names(S, ns, ci, dset);
     }
 
     if (!err) {
@@ -1826,7 +1827,7 @@ int lib_join_data (const char *param,
 
     tseries = dataset_is_time_series(dset);
 
-    err = get_join_import_names(param, dset, &vnames, &nvars);
+    err = get_selected_import_names(param, JOIN, dset, &vnames, &nvars);
 
     if (!err && nvars > 1) {
         /* multiple series: we can't handle the --data option */
@@ -1930,6 +1931,26 @@ static void open_op_init (CMD *cmd, OpenOp *op)
     op->ftype = -1;
 }
 
+/* selection of series by name: applicable only for "open"
+   for native gretl data files
+*/
+
+static int check_import_subsetting (CMD *cmd, OpenOp *op)
+{
+    if (cmd->ci != OPEN || (op->ftype != GRETL_XML_DATA &&
+			    op->ftype != GRETL_BINARY_DATA)) {
+	return E_BADOPT;
+    } else {
+	const char *s = get_optval_string(OPEN, OPT_E);
+
+	if (get_array_by_name(s)) {
+	    /* protect array from deletion */
+	    cmd->opt |= OPT_P;
+	}
+	return 0;
+    }
+}
+
 static int open_append_stage_1 (CMD *cmd,
                                 DATASET *dset,
                                 OpenOp *op,
@@ -1976,27 +1997,21 @@ static int open_append_stage_1 (CMD *cmd,
         }
     }
 
+    if (!err) {
+	if (op->ftype < 0) {
+	    op->ftype = detect_filetype(op->fname, OPT_P);
+	}
+	if (opt & OPT_E) {
+	    err = check_import_subsetting(cmd, op);
+	}
+    }
+
     if (err) {
         errmsg(err, prn);
         return err;
     }
 
-    if (op->ftype < 0) {
-        op->ftype = detect_filetype(op->fname, OPT_P);
-    }
-
-    if (opt & OPT_E) {
-	/* selection of series: applicable only for "open"
-	   for native gretl data files
-	*/
-	if (cmd->ci != OPEN || (op->ftype != GRETL_XML_DATA &&
-				op->ftype != GRETL_BINARY_DATA)) {
-	    err = E_BADOPT;
-	    errmsg(err, prn);
-	}
-    }
-
-    if (!err && cmd->ci == JOIN) {
+    if (cmd->ci == JOIN) {
         if (op->ftype == GRETL_CSV || op->ftype == GRETL_XML_DATA ||
             op->ftype == GRETL_BINARY_DATA) {
             set_dataset_is_changed(dset, 0);
@@ -2011,7 +2026,7 @@ static int open_append_stage_1 (CMD *cmd,
         if (err) {
             errmsg(err, prn);
         }
-    } else if (!err) {
+    } else {
         if (!op->dbdata) {
             op->dbdata = (op->ftype == GRETL_NATIVE_DB ||
                           op->ftype == GRETL_RATS_DB ||
@@ -2046,8 +2061,10 @@ static int handle_gdt_selection (const char *fname,
 	return E_BADOPT;
     }
 
-    S_sel = gretl_string_split(s, &n_sel, NULL);
-    err = gretl_read_gdt_varnames(fname, &S_ok, &n_ok);
+    err = get_selected_import_names(s, OPEN, dset, &S_sel, &n_sel);
+    if (!err) {
+	err = gretl_read_gdt_varnames(fname, &S_ok, &n_ok);
+    }
 
     if (!err) {
 	int *list = gretl_list_new(n_sel);
