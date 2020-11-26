@@ -3458,6 +3458,10 @@ int equation_system_bundlize (equation_system *sys,
         gretl_bundle_set_list(b, "instr_vars", sys->ilist);
     }
 
+    if (sys->xlist != NULL) {
+	gretl_bundle_set_list(b, "xlist", sys->xlist);
+    }
+
     if (sys->plist != NULL) {
         gretl_bundle_set_list(b, "predet_vars", sys->plist);
     }
