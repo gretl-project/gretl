@@ -23,6 +23,8 @@
 #include "gretl_foreign.h"
 #include "matrix_extra.h"
 #include "gretl_typemap.h"
+#include "uservar.h"
+
 #include <unistd.h>
 
 #ifdef HAVE_MPI

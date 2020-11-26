@@ -143,12 +143,6 @@ int gretl_list_n_distinct_members (const int *list);
 
 int *full_var_list (const DATASET *dset, int *nvars);
 
-const char *saved_list_get_name (const int *list);
-
-int *get_list_by_name (const char *name);
-
-int gretl_is_list (const char *name);
-
 int gretl_is_midas_list (const int *list, const DATASET *dset);
 
 int gretl_list_set_midas (const int *list, DATASET *dset);

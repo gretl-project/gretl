@@ -220,6 +220,10 @@ int in_midas_list (int ID, const DATASET *dset,
 const char *
 get_listname_by_consecutive_content (int l0, int l1);
 
+int gretl_is_list (const char *name);
+
+int *get_list_by_name (const char *name);
+
 int user_list_append (user_var *uvar, const int *add);
 
 int user_list_subtract (user_var *uvar, int *sub,

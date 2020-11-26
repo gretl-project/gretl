@@ -28,6 +28,7 @@
 #include "gretl_xml.h"
 #include "gretl_func.h"
 #include "tsls.h"
+#include "uservar.h"
 
 #define SYSDEBUG 0
 

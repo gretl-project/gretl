@@ -27,6 +27,7 @@
 #include "matrix_extra.h"
 #include "plotspec.h"
 #include "tsls.h"
+#include "uservar.h"
 
 /**
  * SECTION:compare

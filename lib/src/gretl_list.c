@@ -54,62 +54,6 @@
  */
 
 /**
- * saved_list_get_name:
- * @list: list whose name should be retrieved.
- *
- * Returns: the name of the specified saved list, or NULL if
- * there is no match.
- */
-
-const char *saved_list_get_name (const int *list)
-{
-    user_var *u = get_user_var_by_data(list);
-
-    if (u != NULL) {
-	return user_var_get_name(u);
-    }
-
-    return NULL;
-}
-
-/**
- * get_list_by_name:
- * @name: the name of the list to be found.
- *
- * Looks up @name in the stack of saved variables, at the current level
- * of function execution, and retrieves the associated list.
- *
- * Returns: the list, or NULL if the lookup fails.
- */
-
-int *get_list_by_name (const char *name)
-{
-    user_var *u;
-    int *ret = NULL;
-
-    u = get_user_var_of_type_by_name(name, GRETL_TYPE_LIST);
-
-    if (u != NULL) {
-	ret = user_var_get_value(u);
-    }
-
-    return ret;
-}
-
-/**
- * gretl_is_list:
- * @name: the name to test.
- *
- * Returns: 1 if @name is the name of a saved list, 0
- * otherwise.
- */
-
-int gretl_is_list (const char *name)
-{
-    return get_user_var_of_type_by_name(name, GRETL_TYPE_LIST) != NULL;
-}
-
-/**
  * gretl_is_midas_list:
  * @list: the list array.
  * @dset: pointer to dataset.
