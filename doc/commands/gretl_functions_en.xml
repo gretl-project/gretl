@@ -7932,7 +7932,7 @@
 	<para>Currently, the function recognizes four file formats:
 	</para>
 
-	<subhead>Legacy text format</subhead>
+	<subhead>Native text format</subhead>
 	<para>
 	  These files are identified by the extension
 	  <quote><lit>.mat</lit></quote>, and are fully compatible
@@ -8003,15 +8003,13 @@
 
 	<subhead>Gretl dataset files</subhead>
 	<para>
-	  Files with the extensions <quote><lit>.gdt</lit></quote> or
+	  Files with extension <quote><lit>.gdt</lit></quote> or
 	  <quote><lit>.gdtb</lit></quote> are treated as gretl native
-	  data files, such as the ones created by the <cmdref
-	  targ="store"/> command. In this case, the matrix returned
-	  contains the numerical values of the series of the dataset,
-	  arranged by column.
-
-	  Note that string-valued series are not read as such, and the
-	  output matrix will just contain their numeric encodings.
+	  data files, as created by the <cmdref targ="store"/>
+	  command. In this case, the matrix returned contains the
+	  numerical values of the series of the dataset, arranged by
+	  column.  Note that string-valued series are not read as
+	  such; the matrix will just contain their numeric encodings.
 	</para>
 	  
 	<para>
