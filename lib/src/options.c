@@ -457,6 +457,7 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_A, "all-cols", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
+    { OPEN,     OPT_E, "select", 2 },
     { OPEN,     OPT_F, "fixed-cols", 2 },
     { OPEN,     OPT_O, "odbc", 0 },
     { OPEN,     OPT_P, "preserve", 0 },

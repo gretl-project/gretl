@@ -1939,12 +1939,6 @@ static int open_append_stage_1 (CMD *cmd,
     int pkgdata = 0;
     int err = 0;
 
-    if (cmd->ci == JOIN && (dset == NULL || dset->v == 0)) {
-        /* "join" is not applicable in the absence of
-           a dataset */
-        return E_NODATA;
-    }
-
     open_op_init(cmd, op);
 
     /* initial detection of some open/append variants */
@@ -1991,7 +1985,18 @@ static int open_append_stage_1 (CMD *cmd,
         op->ftype = detect_filetype(op->fname, OPT_P);
     }
 
-    if (cmd->ci == JOIN) {
+    if (opt & OPT_E) {
+	/* selection of series: applicable only for "open"
+	   for native gretl data files
+	*/
+	if (cmd->ci != OPEN || (op->ftype != GRETL_XML_DATA &&
+				op->ftype != GRETL_BINARY_DATA)) {
+	    err = E_BADOPT;
+	    errmsg(err, prn);
+	}
+    }
+
+    if (!err && cmd->ci == JOIN) {
         if (op->ftype == GRETL_CSV || op->ftype == GRETL_XML_DATA ||
             op->ftype == GRETL_BINARY_DATA) {
             set_dataset_is_changed(dset, 0);
@@ -2006,7 +2011,7 @@ static int open_append_stage_1 (CMD *cmd,
         if (err) {
             errmsg(err, prn);
         }
-    } else {
+    } else if (!err) {
         if (!op->dbdata) {
             op->dbdata = (op->ftype == GRETL_NATIVE_DB ||
                           op->ftype == GRETL_RATS_DB ||
@@ -2018,6 +2023,55 @@ static int open_append_stage_1 (CMD *cmd,
             err = E_DATA;
         }
     }
+
+    return err;
+}
+
+/* respond to --select (select specific series) on OPEN
+   for native gdt or gdtb data files
+*/
+
+static int handle_gdt_selection (const char *fname,
+				 DATASET *dset,
+				 gretlopt opt,
+				 PRN *prn)
+{
+    const char *s = get_optval_string(OPEN, OPT_E);
+    char **S_sel = NULL;
+    char **S_ok = NULL;
+    int n_ok, n_sel = 0;
+    int err = 0;
+
+    if (s == NULL || *s == '\0') {
+	return E_BADOPT;
+    }
+
+    S_sel = gretl_string_split(s, &n_sel, NULL);
+    err = gretl_read_gdt_varnames(fname, &S_ok, &n_ok);
+
+    if (!err) {
+	int *list = gretl_list_new(n_sel);
+	int i, j, k = 0;
+
+	for (j=0; j<n_sel; j++) {
+	    for (i=1; i<n_ok; i++) {
+		if (!strcmp(S_sel[j], S_ok[i])) {
+		    list[++k] = i;
+		    break;
+		}
+	    }
+	}
+	if (k != n_sel) {
+	    pputs(prn, "Invalid selection");
+	    pputc(prn, '\n');
+	    err = E_DATA;
+	} else {
+	    err = gretl_read_gdt_subset(fname, dset, list, opt);
+	}
+    }
+
+    strings_array_free(S_ok, n_ok);
+    strings_array_free(S_sel, n_sel);
 
     return err;
 }
@@ -2061,15 +2115,19 @@ static int lib_open_append (ExecState *s,
         vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     }
 
-    if (op.ftype == GRETL_CSV) {
+    if (op.ftype == GRETL_XML_DATA || op.ftype == GRETL_BINARY_DATA) {
+	if (opt & OPT_E) {
+	    err = handle_gdt_selection(op.fname, dset, opt, vprn);
+	} else {
+	    err = gretl_read_gdt(op.fname, dset, opt, vprn);
+	}
+    } else if (op.ftype == GRETL_CSV) {
         err = import_csv(op.fname, dset, opt, vprn);
     } else if (SPREADSHEET_IMPORT(op.ftype)) {
         err = import_spreadsheet(op.fname, op.ftype, cmd->list, cmd->parm2,
                                  dset, opt, vprn);
     } else if (OTHER_IMPORT(op.ftype)) {
         err = import_other(op.fname, op.ftype, dset, cmd->opt, vprn);
-    } else if (op.ftype == GRETL_XML_DATA || op.ftype == GRETL_BINARY_DATA) {
-        err = gretl_read_gdt(op.fname, dset, opt, vprn);
     } else if (op.ftype == GRETL_ODBC) {
         err = set_odbc_dsn(cmd->param, vprn);
     } else if (op.dbdata) {
@@ -3124,7 +3182,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case APPEND:
     case JOIN:
     case OPEN:
-        err = lib_open_append(s, dset, readfile, prn);
+	if (cmd->ci == JOIN && (dset == NULL || dset->v == 0)) {
+	    /* "join" is not applicable in the absence of
+	       a dataset */
+	    err = E_NODATA;
+	} else {
+	    err = lib_open_append(s, dset, readfile, prn);
+	}
         if (!err && cmd->ci != OPEN) {
             schedule_callback(s);
         }
