@@ -7915,22 +7915,33 @@
       </fnargs>
       <description>
 	<para>
-	  Reads a matrix from a file named
-	  <argname>fname</argname>. This is mostly intended for
-	  reading files with a specific format described below, but it
-	  can also be used on generic delimited text files.  For the
-	  latter usage see the section titled <quote>Delimited text
-	  files</quote> below.
+	  Reads a matrix from a file named <argname>fname</argname>.
+	  If the file name does not contain a full path specification,
+	  it will be looked for in several <quote>likely</quote>
+	  locations, beginning with the currently set <cmdref
+	  targ="workdir"/>. However, if a non-zero value is given for
+	  the optional <argname>import</argname> argument, the input
+	  file is looked for in the user's <quote>dot</quote>
+	  directory. This is intended for use with the
+	  matrix-exporting functions offered in the context of the
+	  <cmdref targ="foreign"/> command. In this case the
+	  <argname>fname</argname> argument should be a plain
+	  filename, without any path component.
 	</para>
+	
+	<para>Currently, the function recognizes four file formats:
+	</para>
+
+	<subhead>Legacy text format</subhead>
 	<para>
-	  If the filename has the suffix <quote><lit>.gz</lit></quote>
-	  it is assumed that gzip compression has been applied in
-	  writing the data; if it has the suffix
-	  <quote><lit>.bin</lit></quote> the file is assumed to be in
-	  binary format (see <fncref targ="mwrite"/> for
-	  details). Otherwise if the filename has suffix
-	  <quote><lit>.mat</lit></quote> it is assumed to be plain
-	  text, conforming to the following specification:
+	  These files are identified by the extension
+	  <quote><lit>.mat</lit></quote>, and are fully compatible
+	  with the Ox matrix file format. If the filename has the
+	  suffix <quote><lit>.gz</lit></quote> it is assumed that
+	  gzip compression has been applied in writing the data.
+
+	  The file is assumed to be plain text, conforming to the
+	  following specification:
 	</para>
 	<ilist>
 	  <li>
@@ -7958,20 +7969,23 @@
               <quote><lit>.</lit></quote>.
             </para>
 	  </li>
-	</ilist>
+	</ilist>	  
+
+	<subhead>Binary files</subhead>
 	<para>
-	  If the file name does not contain a full path specification,
-	  it will be looked for in several <quote>likely</quote>
-	  locations, beginning with the currently set <cmdref
-	  targ="workdir"/>. However, if a non-zero value is given for
-	  the optional <argname>import</argname> argument, the input
-	  file is looked for in the user's <quote>dot</quote>
-	  directory. This is intended for use with the
-	  matrix-exporting functions offered in the context of the
-	  <cmdref targ="foreign"/> command. In this case the
-	  <argname>fname</argname> argument should be a plain
-	  filename, without any path component.
+	  Files with the suffix <quote><lit>.bin</lit></quote> are
+	  assumed to be in binary format. The
+	  <quote><lit>.gz</lit></quote> suffix, for gzip compression,
+	  is also recognized. The first 19 bytes contain the
+	  characters <lit>gretl_binary_matrix</lit>, the next 8 bytes
+	  contain two 32-bit integers giving the number of rows and
+	  columns, and the remainder of the file contains the matrix
+	  elements as little-endian <quote>doubles</quote>, in
+	  column-major order. If gretl is run on a big-endian system,
+	  the binary values are converted to little endian on writing,
+	  and converted to big endian on reading.
 	</para>
+	  
 	<subhead>Delimited text files</subhead>
 	<para>
 	  If the name of the file to be read has extension
@@ -7986,6 +8000,20 @@
 	  pain of confusing such files with those in gretl's
 	  <quote>native</quote> matrix format.
 	</para>
+
+	<subhead>Gretl dataset files</subhead>
+	<para>
+	  Files with the extensions <quote><lit>.gdt</lit></quote> or
+	  <quote><lit>.gdtb</lit></quote> are treated as gretl native
+	  data files, such as the ones created by the <cmdref
+	  targ="store"/> command. In this case, the matrix returned
+	  contains the numerical values of the series of the dataset,
+	  arranged by column.
+
+	  Note that string-valued series are not read as such, and the
+	  output matrix will just contain their numeric encodings.
+	</para>
+	  
 	<para>
 	  <seelist>
             <fncref targ="bread"/>
