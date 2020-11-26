@@ -153,14 +153,6 @@ int gretl_is_midas_list (const int *list, const DATASET *dset);
 
 int gretl_list_set_midas (const int *list, DATASET *dset);
 
-int append_to_list_by_data (void *ptr, int *add, const DATASET *dset);
-
-int subtract_from_list_by_data (void *ptr, int *sub, const DATASET *dset);
-
-int replace_list_by_data (void *ptr, const int *src);
-
-int remember_list (const int *list, const char *name, PRN *prn);
-
 void gretl_list_print (const int *list, 
 		       const DATASET *dset,
 		       PRN *prn);

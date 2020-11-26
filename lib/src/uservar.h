@@ -220,4 +220,14 @@ int in_midas_list (int ID, const DATASET *dset,
 const char *
 get_listname_by_consecutive_content (int l0, int l1);
 
+int user_list_append (user_var *uvar, const int *add);
+
+int user_list_subtract (user_var *uvar, int *sub,
+			const DATASET *dset);
+
+int user_list_replace (user_var *uvar, const int *src);
+
+int remember_list (const int *list, const char *name,
+		   PRN *prn);
+
 #endif /* USERVAR_H_ */

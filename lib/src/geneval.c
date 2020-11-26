@@ -1144,12 +1144,12 @@ static int gen_edit_list (parser *p, int *list, int op)
     }
 
     if (op == B_ASN) {
-	err = replace_list_by_data(u, list);
+	err = user_list_replace(u, list);
     } else if (op == B_ADD) {
-	err = append_to_list_by_data(u, list, p->dset);
+	err = user_list_append(u, list);
     } else {
 	/* must be B_SUB */
-	err = subtract_from_list_by_data(u, list, p->dset);
+	err = user_list_subtract(u, list, p->dset);
     }
 
     return err;
