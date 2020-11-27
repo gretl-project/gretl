@@ -5333,7 +5333,13 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 
             if (!p->err) {
                 if (vlist[0] == 1) {
-                    ret = array_element_node(l->v.a, vlist[1], p);
+		    if (p->aux != NULL && p->aux->t == ARRAY) {
+			/* produce a singleton array */
+			ret = array_subspec_node(l->v.a, vlist, p);
+		    } else {
+			/* produce an array element */
+			ret = array_element_node(l->v.a, vlist[1], p);
+		    }
                 } else {
                     ret = array_subspec_node(l->v.a, vlist, p);
                 }
