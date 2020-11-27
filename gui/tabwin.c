@@ -305,6 +305,7 @@ void tabwin_tab_destroy (windata_t *vwin)
 	    tabwin_remove_toolbar(tabwin);
 	}
 	g_object_unref(vwin->mbar);
+	vwin->mbar = NULL;
 	gtk_notebook_remove_page(notebook, pg);
     } else {
 	gtk_widget_destroy(vwin->topmain);
