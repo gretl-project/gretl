@@ -1123,14 +1123,14 @@ static gchar *regular_file_get_content (const char *fname,
 
 #ifdef WIN32
     /* g_file_get_contents() requires a UTF-8 filename */
-    if (!g_utf8_validate(fullname, -1, NULL)) {
+    if (!g_utf8_validate(fname, -1, NULL)) {
 	gchar *fconv;
 	gsize wrote = 0;
 
 	fconv = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
 	if (fconv != NULL) {
 	    g_file_get_contents(fconv, &ret, &len, &gerr);
-	    g_free(conv);
+	    g_free(fconv);
 	}
 	done = 1;
     }
