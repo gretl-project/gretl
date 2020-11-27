@@ -7880,19 +7880,34 @@
       <description>
 	<para>
 	  Legge una matrice da un file di nome
-	  <argname>nomefile</argname>. Questa funzione è
-	  principalmente dedicata a leggere file con un formato
-	  specifico, descritto sotto, ma può anche essere usata per
-	  generici file di testo con delimitatori.  Per questo secondo
-	  caso, si veda sotto a <quote>File di testo delimitati</quote>.
+	  <argname>nomefile</argname>.  Se il nome di file non
+	  contiene un percorso completo, il file verrà cercato in
+	  varie sottodirectory <quote>probabili</quote> a partire dal
+	  valore corrente di <cmdref targ="workdir"/>.  Se però viene
+	  indicato un valore non nullo per l'argomento opzionale
+	  <argname>import</argname>, la ricerca del file di input
+	  avviene all'interno della directory <quote>dot</quote>
+	  dell'utente. Questa funzione è pensata per essere usata in
+	  combinazione con le funzioni che esportano matrici
+	  illustrate nel contesto del comando <cmdref
+	  targ="foreign"/>.  In questo caso l'argomento
+	  <argname>fname</argname> dovrebbe essere semplicemente un
+	  nome di file, senza indicazione del percorso.
 	</para>
+	
+	<para>Al momento, sono riconosciuti quattro formati di file:
+	</para>
+
+	<subhead>Formato di testo nativo</subhead>
 	<para>
-	  Se il file ha estensione <quote><lit>.gz</lit></quote>, si
-	  assume che il file sia stato creato con compressione gzip;
-	  se invece ha estensione <quote><lit>.bin</lit></quote>, si
-	  assume che il file sia in formato binario (vedi <fncref
-	  targ="mwrite"/> per dettagli). Altrimenti, si intende che il
-	  file sia di testo, conforme alla seguenti specifiche:
+	  Questi file sono identificati dall'estensione
+	  <quote><lit>.mat</lit></quote> e sono compatibili col
+	  formato di file matrice usato da Ox.  Se il file ha
+	  estensione <quote><lit>.gz</lit></quote>, si assume che il
+	  file sia stato creato con compressione gzip.
+
+	  Si assume che il file contenga testo, conforme alla seguenti
+	  specifiche:
 	</para>
 	<ilist>
 	  <li>
@@ -7911,25 +7926,32 @@
 	  </li>
 	  <li>
 	    <para>
+	      Le colonne sono separate da tabulazioni.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      Il separatore decimale deve essere il punto,
 	      <quote><lit>.</lit></quote>.
 	    </para>
 	  </li>
 	</ilist>
+
+	<subhead>File binari</subhead>
 	<para>
-	  Se il nome di file non contiene un percorso completo, il file
-	  verrà cercato in varie sottodirectory <quote>probabili</quote> a
-	  partire dal valore corrente di <cmdref targ="workdir"/>.
-	  Se però viene indicato un valore non nullo per l'argomento
-	  opzionale <argname>import</argname>, la ricerca del file di
-	  input avviene all'interno della directory <quote>dot</quote>
-	  dell'utente. Questa funzione è pensata per essere usata in
-	  combinazione con le funzioni che esportano matrici
-	  illustrate nel contesto del comando <cmdref
-	  targ="foreign"/>.  In questo caso l'argomento
-	  <argname>fname</argname> dovrebbe essere semplicemente un
-	  nome di file, senza indicazione del percorso.
+	  File con l'estensione <quote><lit>.bin</lit></quote> sono
+	  trattati come file in formato binario, eentualmente
+	  compressi se hanno anche il suffisso
+	  <quote><lit>.gz</lit></quote>.  I primi 19 byte contengono
+	  la stringa <lit>gretl_binary_matrix</lit>, i successivi 8
+	  contengono due interi da 32 bit coi numeri di righe e
+	  colonne, e il resto contiene gli elementi della matrice in
+	  numeri in doppia precisione (little-endian, ordine per
+	  colonna). Se gretl viene eseguito su un sistema operativo
+	  big-endian, la conversione viene effettuata automaticamente
+	  in lettura e scrittura.
 	</para>
+	  
 	<subhead>File di testo delimitati</subhead>
 	<para>
 	  Se il file ha estensione <quote><lit>.csv</lit></quote>, la
@@ -7944,6 +7966,19 @@
 	  delimitatore non può essere la tabulazione, per evitare
 	  confusioni col formato <quote>nativo</quote> di gretl.
 	</para>
+
+	<subhead>Dataset in formato gretl</subhead>
+	<para>
+	  File con estensione <quote><lit>.gdt</lit></quote> o
+	  <quote><lit>.gdtb</lit></quote> vengono trattati come
+	  dataset in formato gretl, così come creati dal comando
+	  <cmdref targ="store"/>. In tal caso, la matrice restituita
+	  dalla funzione contiene i valori numerici delle serie del
+	  dataset, una per colonna.  Si noti che serie con valori
+	  stringa non sono lette come tali, ma la matrice conterrà
+	  solo le corrispondenti codifiche numeriche.
+	</para>
+	  
 	<para>
 	  <seelist>
 	    <fncref targ="bread"/>
