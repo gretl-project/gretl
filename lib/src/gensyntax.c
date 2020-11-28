@@ -1300,18 +1300,19 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 }
 
 /* Distinguish between the variants _(id1=val1, id2=val2,...),
-   F_DEFARGS, and _(val1, val2,...), F_BPACK: the marker for
-   the latter is that we find ',' after the first identifier.
+   F_DEFARGS, and _(val1, val2,...), F_BPACK. The marker for
+   the latter is that after the first identifier we find ',',
+   or ')' if there's a singleton term.
 */
 
 static int peek_bpack (parser *p)
 {
     const char *s = p->point;
 
-    s += strspn(s, " ");
-    s += strcspn(s, ",= ");
-    s += strspn(s, " ");
-    return (*s == ',');
+    s += strspn(s, " ");    /* skip any spaces */
+    s += strcspn(s, ",=)"); /* skip identifier or key */
+    s += strspn(s, " ");    /* skip any spaces */
+    return (*s == ',' || *s == ')');
 }
 
 static NODE *powterm (parser *p, NODE *l)
