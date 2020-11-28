@@ -10012,7 +10012,29 @@
 	mapping between strings and their numeric coding. You can
 	suppress this behavior via the <opt>quiet</opt> option.
       </para>
-      <subhead context="cli">Opening a database</subhead>
+      <subhead context="cli">Loading selected series</subhead>
+      <para>
+	Use of <lit>open</lit> with a data file argument (as opposed
+	to the database case, see below) generally implies loading all
+	series from the specified file. However, in the case of native
+	gretl files (<lit>gdt</lit> and <lit>gdtb</lit>) only, it is
+	possible to specify by name a subset of series to load. This
+	is done with via the <opt>select</opt> option, which requires
+	an accompanying argument in one of three forms: the name of a
+	single series; a list of names, separated by spaces and
+	enclosed in double quotes; or the name of an array of strings.
+	Examples:
+      </para>
+      <code>
+	# single series
+	open somefile.gdt --select=x1
+	# more than one series
+	open somefile.gdt --select="x1 x5 x27"
+	# alternative method
+	strings Sel = defarray("x1", "x5", "x27")
+	open somefile.gdt --select=Sel
+	</code>
+       <subhead context="cli">Opening a database</subhead>
       <para>
 	As mentioned above, the <lit>open</lit> command can be used to
 	open a database file for subsequent reading via the <cmdref
