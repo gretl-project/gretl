@@ -3982,20 +3982,20 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 		       GtkWidget *parent)
 {
     const char *opts[] = {
+	N_("stacked bar graph"),
 	N_("line graph"),
-	N_("stacked bar graph")
     };
     gchar *title;
     int h = default_VAR_horizon(dataset);
     GtkWidget *dlg;
-    int histo = 0;
+    int lines = 0;
     int resp = -1;
 
     title = g_strdup_printf("gretl: %s", _("Forecast variance decomposition"));
 
     dlg = build_checks_dialog(title, NULL, opts,
 			      0, NULL, 0, 0, /* no checks */
-			      2, &histo, /* two radio buttons */
+			      2, &lines, /* two radio buttons */
 			      &h, _("forecast horizon (periods):"),
 			      2, dataset->n / 2, 0,
 			      parent, &resp);
@@ -4017,7 +4017,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 	*horizon = 0;
     } else {
 	*horizon = h;
-	if (histo) {
+	if (!lines) {
 	    *opt = OPT_H;
 	}
     }
