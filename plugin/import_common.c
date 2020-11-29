@@ -192,11 +192,11 @@ static gchar *get_absolute_path (const char *fname)
 static void remove_temp_dir (char *dname)
 {
 # ifdef G_OS_WIN32
+    /* use of a full path is recommended */
     gchar *fullpath = gretl_make_dotpath(dname);
 
     if (gretl_chdir(gretl_dotdir()) == 0) {
-	/* use of a full path is recommended */
-	win32_delete_recursive(fullpath);
+	gretl_deltree(fullpath);
     }
     g_free(fullpath);
 # else

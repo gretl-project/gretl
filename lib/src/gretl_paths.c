@@ -3630,7 +3630,7 @@ int gretl_path_compose (char *targ, int len,
    a newly allocated string. The code is also somewhat
    simplified by the assumption that if the platform is
    not MS Windows the directory separator is always '/':
-   this is a safe assumptions for the platforms supported
+   this is a safe assumption for the platforms supported
    by gretl.
 */
 
