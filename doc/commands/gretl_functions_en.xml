@@ -10226,6 +10226,8 @@
 	  does not contain a full path specification, it will be
 	  looked for in several <quote>likely</quote> locations,
 	  beginning with the currently set <cmdref targ="workdir"/>.
+	  If the file in question is gzip-compressed, this is handled
+	  transparently.
 	</para>
 	<para>
 	  If <argname>fname</argname> starts with the identifier of a
