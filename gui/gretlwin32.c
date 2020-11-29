@@ -64,7 +64,7 @@ void redirect_io_to_console (void)
 
     /* redirect unbuffered STDOUT to the console */
     stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    font_ok = SetCurrentConsoleFontEx(stdhandle, false, &cfie);
+    font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stdout = *fp;
@@ -72,7 +72,7 @@ void redirect_io_to_console (void)
 
     /* redirect unbuffered STDERR to the console */
     stdhandle = GetStdHandle(STD_ERROR_HANDLE);
-    font_ok = SetCurrentConsoleFontEx(stdhandle, false, &cfie);
+    font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stderr = *fp;
