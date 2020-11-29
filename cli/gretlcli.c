@@ -503,6 +503,13 @@ static int win32_get_args (int *pargc, char ***pargv)
     return err;
 }
 
+static int console_use_utf8 (void)
+{
+    if (font_ok && IsValidCodePage(65001)) {
+	SetConsoleOutputCP(65001);
+    }
+}
+
 #endif
 
 static int xout;
@@ -618,6 +625,7 @@ int main (int argc, char *argv[])
 
 #if defined(G_OS_WIN32)
     win32_get_args(&argc, &argv);
+    console_use_utf8();
     win32_set_gretldir();
 #endif
 
