@@ -84,8 +84,6 @@ char *program_files_x86_path (void);
 
 int win32_write_access (char *apath, gunichar2 *wpath);
 
-int win32_delete_recursive (const char *path);
-
 int R_path_from_registry (char *s, int which);
 
 int win32_check_for_program (const char *prog);

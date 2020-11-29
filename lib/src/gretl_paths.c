@@ -36,7 +36,6 @@
 
 #ifdef WIN32
 # include "gretl_win32.h"
-# include <direct.h> /* for _mkdir() */
 #endif
 
 #include <sys/stat.h>
@@ -272,9 +271,8 @@ int utf8_encoded (const char *s)
  * @fname: name of file to be opened.
  * @mode: mode in which to open the file.
  *
- * A wrapper for the C library's fopen(), making allowance for
- * the possibility that @fname has to be converted from
- * UTF-8 to the locale encoding or vice versa.
+ * A wrapper for the C library's fopen(), using
+ * g_fopen() on Windows, and adding some error handling.
  *
  * Returns: file pointer, or %NULL on failure.
  */
@@ -285,22 +283,10 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 
     gretl_error_clear();
 
-#if FDEBUG
-    fprintf(stderr, "gretl_fopen: got '%s'\n", fname);
-#endif
-
 #ifdef WIN32
-    if (valid_utf8(fname)) {
-        fp = g_fopen(fname, mode);
-    } else {
-        fp = fopen(fname, mode);
-    }
+    fp = g_fopen(fname, mode);
 #else
     fp = fopen(fname, mode);
-#endif
-
-#if FDEBUG
-    fprintf(stderr, "  after fopen, errno = %d\n", errno);
 #endif
 
     if (errno != 0) {
@@ -316,8 +302,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
  * @mode: e.g. "w" for text use or "wb" for binary mode.
  *
  * A wrapper for the combination of mkstemp() and fdopen(),
- * making allowance for the possibility that @pattern has to
- * be converted from UTF-8 to the locale encoding or vice versa.
+ * using the associated GLib functions on Windows.
  * On successful exit @pattern holds the name of the newly
  * created file.
  *
@@ -332,11 +317,7 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (valid_utf8(pattern)) {
-        fd = g_mkstemp(pattern);
-    } else {
-        fd = mkstemp(pattern);
-    }
+    fd = g_mkstemp(pattern);
 #else
     fd = mkstemp(pattern);
 #endif
@@ -346,11 +327,6 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
     } else if (fd != -1) {
         fp = fdopen(fd, mode);
     }
-
-#if 0
-    fprintf(stderr, "gretl_mktemp: name='%s', fd=%d, fp=%p\n",
-            pattern, fd, (void *) fp);
-#endif
 
     return fp;
 }
@@ -375,21 +351,11 @@ int gretl_test_fopen (const char *fname, const char *mode)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (valid_utf8(fname)) {
-        fp = g_fopen(fname, mode);
-        if (fp == NULL) {
-            err = errno;
-        } else {
-            fclose(fp);
-            if (*mode == 'w') {
-                g_remove(fname);
-            }
-        }
-        return err;
-    }
+    fp = g_fopen(fname, mode);
+#else
+    fp = fopen(fname, mode);
 #endif
 
-    fp = fopen(fname, mode);
     if (fp == NULL) {
         err = errno;
     } else {
@@ -409,9 +375,8 @@ int gretl_test_fopen (const char *fname, const char *mode)
  * @mode: ignored unless @flags contains O_CREAT
  * or O_TMPFILE.
  *
- * A wrapper for the C library's open(), making allowance for
- * the possibility that @pathname has to be converted from
- * UTF-8 to the locale encoding or vice versa.
+ * A wrapper for the C library's open(), using GLib on
+ * Windows and adding some error handling.
  *
  * Returns: new file descriptor, or -1 on error.
  */
@@ -428,11 +393,7 @@ int gretl_open (const char *pathname, int flags, int mode)
     }
 
 #ifdef WIN32
-    if (valid_utf8(pathname)) {
-        fd = g_open(pathname, flags, m);
-    } else {
-        fd = open(pathname, flags, m);
-    }
+    fd = g_open(pathname, flags, m);
 #else
     fd = open(pathname, flags, m);
 #endif
@@ -516,59 +477,12 @@ int gretl_file_exists (const char *fname)
 static int win32_rename (const char *oldpath,
                          const char *newpath)
 {
-    int u_old = valid_utf8(oldpath);
-    int u_new = valid_utf8(newpath);
-    int ret = -1;
-
     if (gretl_file_exists(newpath)) {
         /* get rid of stale target */
         win32_delete_recursive(newpath);
     }
 
-    if (u_old && u_new) {
-        /* OK, both names are UTF-8 */
-        ret = g_rename(oldpath, newpath);
-    } else if (!u_old && !u_new) {
-        /* both names in locale? */
-        ret = rename(oldpath, newpath);
-    } else {
-        /* let's get both names into UTF-8 */
-        const gchar *old_ok = NULL;
-        const gchar *new_ok = NULL;
-        gchar *oldtmp = NULL;
-        gchar *newtmp = NULL;
-
-        if (u_old) {
-            old_ok = oldpath;
-        } else {
-            oldtmp = g_locale_to_utf8(oldpath, -1, NULL, NULL, NULL);
-            if (oldtmp != NULL) {
-                old_ok = oldtmp;
-            }
-        }
-        if (u_new) {
-            new_ok = newpath;
-        } else {
-            newtmp = g_locale_to_utf8(newpath, -1, NULL, NULL, NULL);
-            if (newtmp != NULL) {
-                new_ok = newtmp;
-            }
-        }
-
-        if (old_ok != NULL && new_ok != NULL) {
-            ret = g_rename(old_ok, new_ok);
-        } else {
-            fprintf(stderr, "old_ok = %p, new_ok = %p\n",
-                    (void *) old_ok, (void *) new_ok);
-            fprintf(stderr, "oldpath='%s', newpath='%s'\n",
-                    oldpath, newpath);
-        }
-
-        g_free(oldtmp);
-        g_free(newtmp);
-    }
-
-    return ret;
+    return g_rename(oldpath, newpath);
 }
 
 #endif
@@ -614,48 +528,19 @@ int gretl_rename (const char *oldpath, const char *newpath)
  * gretl_remove:
  * @path: name of file or directory to remove.
  *
- * A wrapper for remove(), making allowance for
- * the possibility that @path has to be converted from
- * UTF-8 to the locale encoding or vice versa.
+ * A wrapper for remove(), using the GLib counterpart
+ * on Windows.
  *
  * Returns: 0 on sucess, non-zero on failure.
  */
 
 int gretl_remove (const char *path)
 {
-    int ret = -1;
-
 #ifdef WIN32
-    if (valid_utf8(path)) {
-        ret = g_remove(path);
-    } else {
-        /* @path is in locale encoding */
-        ret = remove(path);
-        if (ret == -1) {
-            /* allow for the possibility that we're trying to remove a
-               directory on win32 -> recode to UTF-8 and use g_remove
-            */
-            GError *gerr = NULL;
-            gchar *pconv = NULL;
-            gsize sz;
-
-            pconv = g_locale_to_utf8(path, -1, NULL, &sz, &gerr);
-            if (pconv == NULL) {
-                if (gerr != NULL) {
-                    gretl_errmsg_set(gerr->message);
-                    g_error_free(gerr);
-                }
-            } else {
-                ret = g_remove(pconv);
-                g_free(pconv);
-            }
-        }
-    }
+    return g_remove(path);
 #else
-    ret = remove(path);
+    return remove(path);
 #endif
-
-    return ret;
 }
 
 /**
@@ -665,7 +550,7 @@ int gretl_remove (const char *path)
  *
  * A wrapper for zlib's gzopen(), making allowance for
  * the possibility that @fname has to be converted from
- * UTF-8 to the locale encoding.
+ * UTF-8 to UTF-16.
  *
  * Returns: pointer to gzip stream, or %NULL on failure.
  */
@@ -717,20 +602,7 @@ int gretl_chdir (const char *path)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (valid_utf8(path)) {
-        err = g_chdir(path);
-    } else {
-        int len = strlen(path);
-        char *ptmp = NULL;
-
-        if (len > 1 && path[len-1] == '\\' && path[len-2] != ':') {
-            /* trim trailing slash for non-root dir */
-            ptmp = gretl_strndup(path, len - 1);
-            path = ptmp;
-        }
-        err = chdir(path);
-        free(ptmp);
-    }
+    err = g_chdir(path);
 #else
     err = chdir(path);
 #endif
@@ -748,21 +620,14 @@ int gretl_chdir (const char *path)
  *
  * A test for whether or not @path is the name of a directory,
  * allowing for the possibility that @path has to be converted
- * from UTF-8 to the locale encoding or vice versa.
+ * from UTF-8 to UTF-16.
  *
  * Returns: 1 if @path is the name of a directory, else 0.
  */
 
 int gretl_isdir (const char *path)
 {
-    if (valid_utf8(path)) {
-        return g_file_test(path, G_FILE_TEST_IS_DIR);
-    } else {
-        struct stat buf;
-        int err = gretl_stat(path, &buf);
-
-        return err ? 0 : S_ISDIR(buf.st_mode);
-    }
+    return g_file_test(path, G_FILE_TEST_IS_DIR);
 }
 
 /**
@@ -781,26 +646,7 @@ int gretl_mkdir (const char *path)
     int err;
 
     errno = 0;
-
-#ifdef WIN32
-    if (valid_utf8(path)) {
-        err = g_mkdir_with_parents(path, 0755);
-    } else {
-        gchar *pconv;
-        gsize bytes;
-
-        pconv = g_locale_to_utf8(path, -1, NULL, &bytes, NULL);
-        if (pconv != NULL) {
-            err = g_mkdir_with_parents(pconv, 0755);
-            g_free(pconv);
-        } else {
-            /* won't work if parents have to be created! */
-            err = _mkdir(path);
-        }
-    }
-#else
     err = g_mkdir_with_parents(path, 0755);
-#endif
 
     if (err) {
         fprintf(stderr, "%s: %s\n", path, gretl_strerror(errno));
@@ -809,8 +655,6 @@ int gretl_mkdir (const char *path)
 
     return err;
 }
-
-#ifndef WIN32
 
 static int real_delete_recursive (const char *path)
 {
@@ -853,8 +697,6 @@ static int real_delete_recursive (const char *path)
     return err;
 }
 
-#endif /* WIN32 or not */
-
 /**
  * gretl_deltree:
  * @path: name of directory to be deleted.
@@ -866,9 +708,6 @@ static int real_delete_recursive (const char *path)
 
 int gretl_deltree (const char *path)
 {
-#ifdef WIN32
-    return win32_delete_recursive(path);
-#else
     gchar *savedir = NULL;
     int err;
 
@@ -881,30 +720,14 @@ int gretl_deltree (const char *path)
     }
 
     return err;
-#endif
 }
 
 GDir *gretl_opendir (const char *name)
 {
     GError *error = NULL;
-    GDir *dir = NULL;
+    GDir *dir;
 
-#ifdef WIN32
-    if (valid_utf8(name)) {
-        dir = g_dir_open(name, 0, &error);
-    } else {
-        gchar *pconv;
-        gsize bytes;
-
-        pconv = g_locale_to_utf8(name, -1, NULL, &bytes, &error);
-        if (pconv != NULL) {
-            dir = g_dir_open(pconv, 0, &error);
-            g_free(pconv);
-        }
-    }
-#else
     dir = g_dir_open(name, 0, &error);
-#endif
 
     if (error != NULL) {
         gretl_errmsg_set(error->message);
@@ -1050,107 +873,6 @@ enum {
     SUBDIRS = 1 << 2
 };
 
-#ifdef WIN32
-
-static int try_open_file (char *targ, const char *finddir,
-                          WIN32_FIND_DATA *fdata, int flags)
-{
-    char tmp[MAXLEN];
-    int n = strlen(finddir);
-    int err, found = 0;
-
-    strcpy(tmp, finddir);
-    tmp[n-1] = '\0';
-    strcat(tmp, fdata->cFileName);
-    strcat(tmp, "\\");
-    strcat(tmp, targ);
-
-    err = gretl_test_fopen(tmp, "r");
-
-    if (err && (flags & ADD_GDT)) {
-        if (maybe_add_suffix(tmp, ".gdt")) {
-            err = gretl_test_fopen(tmp, "rb");
-            if (err) {
-                /* try .gdtb also */
-                strcat(tmp, "b");
-                err = gretl_test_fopen(tmp, "rb");
-            }
-        }
-    }
-
-    if (!err) {
-        strcpy(targ, tmp);
-        found = 1;
-    }
-
-    return found;
-}
-
-static void make_findname (char *targ, const char *src)
-{
-    strcpy(targ, src);
-
-    if (utf8_encoded((const unsigned char *) targ)) {
-        /* FIXME : do we want this? */
-        gchar *tmp;
-        gsize sz;
-
-        tmp = g_locale_from_utf8(src, -1, NULL, &sz, NULL);
-        if (tmp != NULL) {
-            strcpy(targ, tmp);
-            g_free(tmp);
-        }
-    }
-
-    if (targ[strlen(targ)-1] != '\\') {
-        strcat(targ, "\\*");
-    } else {
-        strcat(targ, "*");
-    }
-}
-
-static int got_subdir (WIN32_FIND_DATA *fdata)
-{
-    int ret = 0;
-
-    if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        if (strcmp(fdata->cFileName, ".") &&
-            strcmp(fdata->cFileName, "..")) {
-            ret = 1;
-        }
-    }
-
-    return ret;
-}
-
-static int find_in_subdir (const char *topdir, char *fname, int flags)
-{
-    HANDLE handle;
-    WIN32_FIND_DATA fdata;
-    char finddir[MAXLEN];
-    int found = 0;
-
-    /* make find target */
-    make_findname(finddir, topdir);
-
-    handle = FindFirstFile(finddir, &fdata);
-    if (handle != INVALID_HANDLE_VALUE) {
-        if (got_subdir(&fdata)) {
-            found = try_open_file(fname, finddir, &fdata, flags);
-        }
-        while (!found && FindNextFile(handle, &fdata)) {
-            if (got_subdir(&fdata)) {
-                found = try_open_file(fname, finddir, &fdata, flags);
-            }
-        }
-        FindClose(handle);
-    }
-
-    return found;
-}
-
-#else /* end of win32 file-finding, on to posix */
-
 static int try_open_file (char *targ, const char *finddir,
                           const gchar *dname, int flags)
 {
@@ -1159,7 +881,7 @@ static int try_open_file (char *targ, const char *finddir,
 
     strcpy(tmp, finddir);
     strcat(tmp, dname);
-    strcat(tmp, "/");
+    strcat(tmp, SLASHSTR);
     strcat(tmp, targ);
 
     err = gretl_test_fopen(tmp, "r");
@@ -1183,14 +905,14 @@ static int try_open_file (char *targ, const char *finddir,
     return found;
 }
 
-static void make_findname (char *targ, const char *src)
+static void make_finddir (char *targ, const char *src)
 {
     int n = strlen(src);
 
     strcpy(targ, src);
 
-    if (targ[n-1] != '/') {
-        strcat(targ, "/");
+    if (targ[n-1] != SLASH) {
+        strcat(targ, SLASHSTR);
     }
 }
 
@@ -1214,6 +936,10 @@ static int got_subdir (const char *topdir, const gchar *dname)
     return ret;
 }
 
+/* Try to find @fname in a first-level subdirectory of @topdir.
+   Return 1 if found, otherwise 0.
+*/
+
 static int find_in_subdir (const char *topdir, char *fname, int flags)
 {
     GDir *dir;
@@ -1222,7 +948,7 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
     int found = 0;
 
     /* make find target */
-    make_findname(finddir, topdir);
+    make_finddir(finddir, topdir);
 
     dir = gretl_opendir(finddir);
     if (dir != NULL) {
@@ -1237,35 +963,20 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
     return found;
 }
 
-#endif /* win32 vs posix */
-
-#define SEARCH_DEBUG 0
-
-char *search_dir (char *fname, const char *topdir, int flags)
+static char *search_dir (char *fname, const char *topdir, int flags)
 {
     char orig[MAXLEN];
     int err;
-
-#if SEARCH_DEBUG
-    fprintf(stderr, "search_dir: trying '%s' for '%s' (ADD_GDT=%d)\n",
-            topdir, fname, flags & ADD_GDT);
-#endif
 
     strcpy(orig, fname);
 
     if (gretl_path_prepend(fname, topdir) == 0) {
         err = gretl_test_fopen(fname, "r");
-#if SEARCH_DEBUG
-        fprintf(stderr, " trying '%s'\n", fname);
-#endif
         if (!err) {
             return fname;
         }
         if (flags & ADD_GDT) {
             if (maybe_add_suffix(fname, ".gdt")) {
-#if SEARCH_DEBUG
-                fprintf(stderr, " trying '%s'\n", fname);
-#endif
                 err = gretl_test_fopen(fname, "r");
                 if (!err) {
                     return fname;
@@ -1654,11 +1365,6 @@ char *gretl_addpath (char *fname, int script)
     int found = 0;
     int err;
 
-#if SEARCH_DEBUG
-    fprintf(stderr, "gretl_addpath: fname='%s', script=%d\n",
-            fname, script);
-#endif
-
     /* keep a backup of the original input */
     strcpy(orig, fname);
 
@@ -1957,13 +1663,7 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     }
 
     /* try a basic path search on this filename */
-#if SEARCH_DEBUG
-    fprintf(stderr, "get_full_filename: calling addpath on '%s'\n", fullname);
-#endif
     test = gretl_addpath(fullname, script);
-#if SEARCH_DEBUG
-    fprintf(stderr, "get_full_filename: after: '%s'\n", fullname);
-#endif
 
     gretl_normalize_path(fullname);
 
