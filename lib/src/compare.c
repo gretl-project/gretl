@@ -1520,6 +1520,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    /* not printing @omod, so pass along OPT_Q */
 	    ropt |= OPT_Q;
 	}
+	set_reference_missmask_from_model(orig);
 	omod = replicate_estimator(orig, tmplist, dset, ropt, prn);
     }
 
