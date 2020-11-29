@@ -1506,24 +1506,9 @@ static gchar *file_get_content (const char *fname,
 {
     GError *gerr = NULL;
     gchar *buf = NULL;
-    int ok = 0;
+    int ok;
 
-#ifdef WIN32
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gchar *tmp = NULL;
-	gsize wrote = 0;
-
-	tmp = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
-	if (tmp != NULL) {
-	    ok = g_file_get_contents(tmp, &buf, bytes, &gerr);
-	    g_free(tmp);
-	}
-    } else {
-	ok = g_file_get_contents(fname, &buf, bytes, &gerr);
-    }
-#else
     ok = g_file_get_contents(fname, &buf, bytes, &gerr);
-#endif
 
     if (ok) {
 	pprintf(prn, "got content, %" G_GSIZE_FORMAT " bytes\n", *bytes);
@@ -1543,25 +1528,9 @@ static int file_set_content (const char *fname,
 			     gsize buflen)
 {
     GError *gerr = NULL;
-    int ok = 0;
-    int err = 0;
+    int ok, err = 0;
 
-#ifdef WIN32
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gchar *tmp = NULL;
-	gsize wrote = 0;
-
-	tmp = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
-	if (tmp != NULL) {
-	    ok = g_file_set_contents(tmp, buf, buflen, &gerr);
-	    g_free(tmp);
-	}
-    } else {
-	ok = g_file_set_contents(fname, buf, buflen, &gerr);
-    }
-#else
     ok = g_file_set_contents(fname, buf, buflen, &gerr);
-#endif
 
     if (!ok) {
 	err = E_FOPEN;
