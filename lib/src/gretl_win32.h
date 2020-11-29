@@ -82,7 +82,7 @@ char *program_files_path (void);
 
 char *program_files_x86_path (void);
 
-int win32_write_access (char *apath, gunichar2 *wpath);
+int win32_write_access (const char *path);
 
 int R_path_from_registry (char *s, int which);
 

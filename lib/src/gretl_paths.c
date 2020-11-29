@@ -780,19 +780,7 @@ int gretl_write_access (char *fname)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (utf8_encoded(fname)) {
-        gunichar2 *tmp = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
-
-        if (tmp != NULL) {
-            err = win32_write_access(NULL, tmp);
-            g_free(tmp);
-        } else {
-            err = 1;
-        }
-    } else {
-        /* @fname is ASCII or in locale encoding */
-        err = win32_write_access(fname, NULL);
-    }
+    err = win32_write_access(fname);
 #else
     err = access(fname, W_OK);
     if (errno != 0) {

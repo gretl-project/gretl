@@ -274,21 +274,11 @@ void win_show_last_error (void)
 
 void win_copy_last_error (void)
 {
-    DWORD dw = GetLastError();
-    LPVOID buf;
+    gint err = GetLastError();
+    gchar *buf = g_win32_error_message(err);
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		  FORMAT_MESSAGE_FROM_SYSTEM |
-		  FORMAT_MESSAGE_IGNORE_INSERTS,
-		  NULL,
-		  dw,
-		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		  (LPTSTR) &buf,
-		  0,
-		  NULL);
-
-    gretl_errmsg_set((const char *) buf);
-    LocalFree(buf);
+    gretl_errmsg_set(buf);
+    g_free(buf);
 }
 
 static int ensure_utf16 (const char *s1, gunichar2 **pmod1,
@@ -1056,74 +1046,45 @@ static int win32_access_init (TRUSTEE_W *pt, SID **psid)
     return err;
 }
 
-static gunichar2 *get_wide_path (const char *s)
-{
-    gunichar2 *ret = NULL;
-
-    if (gretl_is_ascii(s)) {
-	ret = g_utf8_to_utf16(s, -1, NULL, NULL, NULL);
-    } else {
-	gchar *tmp = g_locale_to_utf8(s, -1, NULL, NULL, NULL);
-
-	if (tmp != NULL) {
-	    ret = g_utf8_to_utf16(tmp, -1, NULL, NULL, NULL);
-	    g_free(tmp);
-	}
-    }
-
-    return ret;
-}
-
 /* Note: the return values from the underlying win32 API
    functions are translated to return 0 on success.
-   Handles either an 8-bit locale filename, via @apath,
-   or a UTF-16 name (@wpath); exactly one of these must
-   be given.
+   @path must be given as UTF-8.
 */
 
-int win32_write_access (char *apath, gunichar2 *wpath)
+int win32_write_access (const char *path)
 {
     static SID *sid = NULL;
     static TRUSTEE_W t;
     ACL *dacl = NULL;
     SECURITY_DESCRIPTOR *sd = NULL;
     ACCESS_MASK amask;
-    int free_wpath = 0;
-    int ret, ok = 0, err = 0;
+    GError *gerr = NULL;
+    gunichar2 *wpath;
+    int ret, ok = 0;
+    int err = 0;
 
-    /* check for invalid call: we must have exactly one
-       of @apath and @wpath non-NULL
-    */
-    if ((apath == NULL && wpath == NULL) ||
-	(apath != NULL && wpath != NULL)) {
+    if (path == NULL || *path == '\0') {
 	return -1;
     }
 
-#if ACCESS_DEBUG
-    fprintf(stderr, "win32_write_access: apath=%p\n", (void *) apath);
-#endif
-
-    /* basic check for the read-write attribute first */
-    if (apath != NULL) {
-	err = _access(apath, 06);
-    } else {
-	err = _waccess(wpath, 06);
+    wpath = g_utf8_to_utf16(path, -1, NULL, NULL, &gerr);
+    if (gerr != NULL) {
+        gretl_errmsg_set(gerr->message);
+        g_error_free(gerr);
+	return -1;
     }
 
+    /* basic check for the read-write attribute first */
+    err = _waccess(wpath, 06);
+
 #if ACCESS_DEBUG
-    fprintf(stderr, " first quick check: err = %d\n", err);
+    fprintf(stderr, "win32_write_access (%s): first check: err = %d\n",
+	    path, err);
 #endif
 
     if (err) {
+	g_free(wpath);
 	return -1;
-    }
-
-    if (wpath == NULL) {
-	wpath = get_wide_path(apath);
-	if (wpath == NULL) {
-	    return -1;
-	}
-	free_wpath = 1;
     }
 
     if (sid == NULL) {
@@ -1163,14 +1124,12 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 #endif
     }
 
-    if (free_wpath) {
-	g_free(wpath);
-    }
+    g_free(wpath);
     if (sd != NULL) {
 	LocalFree(sd);
     }
     if (err) {
-	win_show_last_error();
+	win_copy_last_error();
     }
 
     return ok ? 0 : -1;
