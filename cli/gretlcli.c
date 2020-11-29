@@ -505,7 +505,7 @@ static int win32_get_args (int *pargc, char ***pargv)
 
 static int console_use_utf8 (void)
 {
-    if (font_ok && IsValidCodePage(65001)) {
+    if (IsValidCodePage(65001)) {
 	SetConsoleOutputCP(65001);
     }
 }
