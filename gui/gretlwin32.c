@@ -42,9 +42,11 @@
 
 void redirect_io_to_console (void)
 {
+    CONSOLE_FONT_INFOEX cfie = {0};
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     int conhandle;
     HANDLE stdhandle;
+    int font_ok;
     FILE *fp;
 
     AllocConsole();
@@ -56,8 +58,13 @@ void redirect_io_to_console (void)
     SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),
 			       coninfo.dwSize);
 
+    /* try to ensure TrueType font */
+    cfie.cbSize = sizeof(cfie);
+    lstrcpyW(cfie.FaceName, L"Lucida Console"); /* maybe Consolas? */
+
     /* redirect unbuffered STDOUT to the console */
     stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    font_ok = SetCurrentConsoleFontEx(stdhandle, false, &cfie);
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stdout = *fp;
@@ -65,10 +72,15 @@ void redirect_io_to_console (void)
 
     /* redirect unbuffered STDERR to the console */
     stdhandle = GetStdHandle(STD_ERROR_HANDLE);
+    font_ok = SetCurrentConsoleFontEx(stdhandle, false, &cfie);
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stderr = *fp;
     setvbuf(stderr, NULL, _IONBF, 0);
+
+    if (font_ok && IsValidCodePage(65001)) {
+	SetConsoleOutputCP(65001);
+    }
 }
 
 /* Asynchronous execution of child process. We'll be ready
