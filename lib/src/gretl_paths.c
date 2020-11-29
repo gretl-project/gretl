@@ -479,7 +479,7 @@ static int win32_rename (const char *oldpath,
 {
     if (gretl_file_exists(newpath)) {
         /* get rid of stale target */
-        win32_delete_recursive(newpath);
+        gretl_deltree(newpath);
     }
 
     return g_rename(oldpath, newpath);
