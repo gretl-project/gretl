@@ -2162,12 +2162,12 @@
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
      </option>
-		
+
 	<option>
 	  <flag>--triangle</flag>
 	  <effect>only plot lower half, see below</effect>
      </option>
-	 
+
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -6398,7 +6398,7 @@
 	Calculates the Hurst exponent (a measure of persistence or
 	long memory) for a time-series variable having at least 128
 	observations. The result (together with its standard error)
-	can be retrieved via the <fncref targ="$result"/> accessor.  
+	can be retrieved via the <fncref targ="$result"/> accessor.
       </para>
       <para>
 	The Hurst exponent is discussed by <cite
@@ -10019,7 +10019,7 @@
 	series from the specified file. However, in the case of native
 	gretl files (<lit>gdt</lit> and <lit>gdtb</lit>) only, it is
 	possible to specify by name a subset of series to load. This
-	is done with via the <opt>select</opt> option, which requires
+	is done via the <opt>select</opt> option, which requires
 	an accompanying argument in one of three forms: the name of a
 	single series; a list of names, separated by spaces and
 	enclosed in double quotes; or the name of an array of strings.
