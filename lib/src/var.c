@@ -1634,9 +1634,9 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
     return C;
 }
 
-static void copy_north_west (gretl_matrix *targ,
-                             gretl_matrix *src,
-                             int add)
+void copy_north_west (gretl_matrix *targ,
+		      gretl_matrix *src,
+		      int add)
 {
     int i, j, k = src->cols;
     double xij;

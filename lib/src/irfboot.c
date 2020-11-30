@@ -171,7 +171,7 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *var,
     for (t=0; t<b->horizon; t++) {
 	if (t == 0) {
 	    /* initial estimated responses */
-	    gretl_matrix_copy_values(b->rtmp, C);
+	    copy_north_west(b->rtmp, C, 0);
 	} else {
 	    /* calculate further estimated responses */
 	    gretl_matrix_multiply(var->A, b->rtmp, b->ctmp);
