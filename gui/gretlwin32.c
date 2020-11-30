@@ -40,13 +40,17 @@
 
 #define MAX_CONSOLE_LINES 500
 
+#define SET_FONT 0
+
 void redirect_io_to_console (void)
 {
+#if SET_FONT
     CONSOLE_FONT_INFOEX cfie = {0};
+    int font_ok;
+#endif
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     int conhandle;
     HANDLE stdhandle;
-    int font_ok;
     FILE *fp;
 
     AllocConsole();
@@ -64,7 +68,9 @@ void redirect_io_to_console (void)
 
     /* redirect unbuffered STDOUT to the console */
     stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
+#if SET_FONT
     font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
+#endif
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stdout = *fp;
@@ -72,13 +78,15 @@ void redirect_io_to_console (void)
 
     /* redirect unbuffered STDERR to the console */
     stdhandle = GetStdHandle(STD_ERROR_HANDLE);
+#if SET_FONT
     font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
+#endif
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stderr = *fp;
     setvbuf(stderr, NULL, _IONBF, 0);
 
-    if (font_ok && IsValidCodePage(65001)) {
+    if (IsValidCodePage(65001)) {
 	SetConsoleOutputCP(65001);
     }
 }
