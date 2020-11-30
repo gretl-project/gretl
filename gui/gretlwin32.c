@@ -62,9 +62,11 @@ void redirect_io_to_console (void)
     SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),
 			       coninfo.dwSize);
 
+#if SET_FONT
     /* try to ensure TrueType font */
     cfie.cbSize = sizeof(cfie);
     lstrcpyW(cfie.FaceName, L"Lucida Console"); /* maybe Consolas? */
+#endif
 
     /* redirect unbuffered STDOUT to the console */
     stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
