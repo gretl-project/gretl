@@ -7970,6 +7970,8 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     return finalize_plot_input_file(fp);
 }
 
+#define NEW_IRF 1
+
 int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 				 int periods, double alpha,
 				 const DATASET *dset,
@@ -7982,6 +7984,11 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     char title[128];
     int n = var->neqns;
     int nplots = n * n;
+    int vtarg, vshock;
+#if NEW_IRF
+    gretl_matrix *R = NULL;
+    int Rcol, Rstep;
+#endif
     int t, i, j;
     int err = 0;
 
@@ -8011,12 +8018,80 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 
     gretl_push_c_numeric_locale();
 
+    /* Use facility to get all impulse responses
+       via one call
+    */
+#if NEW_IRF
+    R = gretl_VAR_get_impulse_response(var, -1, -1, periods,
+				       alpha, dset, &err);
+    if (!err && R->cols > nplots) {
+	confint = 1;
+    }
+    Rcol = 0;
+    Rstep = confint ? 3 : 1;
+
     for (i=0; i<n && !err; i++) {
-	int vtarg = gretl_VAR_get_variable_number(var, i);
+	vtarg = gretl_VAR_get_variable_number(var, i);
+
+	for (j=0; j<n; j++) {
+	    vshock = gretl_VAR_get_variable_number(var, j);
+
+	    if (i == 0 && j == 0) {
+		/* the first plot */
+		if (confint) {
+		    fputs("set key left top\n", fp);
+		} else {
+		    fputs("set nokey\n", fp);
+		}
+	    }
+	    sprintf(title, "%s -> %s", dset->varname[vshock],
+		    dset->varname[vtarg]);
+	    fprintf(fp, "set title '%s'\n", title);
+
+	    fputs("plot \\\n", fp);
+	    if (confint && use_fill) {
+		print_filledcurve_line(NULL, NULL, fp);
+		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
+	    } else if (confint) {
+		fputs("'-' using 1:2 notitle w lines, \\\n", fp);
+		fputs("'-' using 1:2:3:4 notitle w errorbars\n", fp);
+	    } else {
+		fputs("'-' using 1:2 notitle w lines\n", fp);
+	    }
+
+	    if (confint && use_fill) {
+		for (t=0; t<periods; t++) {
+		    fprintf(fp, "%d %.10g %.10g\n", t,
+			    gretl_matrix_get(R, t, Rcol+1),
+			    gretl_matrix_get(R, t, Rcol+2));
+		}
+		fputs("e\n", fp);
+	    }
+
+	    for (t=0; t<periods; t++) {
+		fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(R, t, Rcol));
+	    }
+	    fputs("e\n", fp);
+
+	    if (confint && !use_fill) {
+		for (t=0; t<periods; t++) {
+		    fprintf(fp, "%d %.10g %.10g %.10g\n", t,
+			    gretl_matrix_get(R, t, Rcol),
+			    gretl_matrix_get(R, t, Rcol+1),
+			    gretl_matrix_get(R, t, Rcol+2));
+		}
+		fputs("e\n", fp);
+	    }
+	    Rcol += Rstep;
+	}
+    }
+    gretl_matrix_free(R);
+#else /* old IRF method */
+    for (i=0; i<n && !err; i++) {
+	vtarg = gretl_VAR_get_variable_number(var, i);
 
 	for (j=0; j<n; j++) {
 	    gretl_matrix *resp;
-	    int vshock;
 
 	    resp = gretl_VAR_get_impulse_response(var, i, j, periods,
 						  alpha, dset, &err);
@@ -8078,6 +8153,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	    gretl_matrix_free(resp);
 	}
     }
+#endif /* NEW_IRF or not */
 
     gretl_pop_c_numeric_locale();
 
