@@ -235,6 +235,33 @@ gretl_array *gretl_array_from_strings (char **S, int n,
     return A;
 }
 
+gretl_array *gretl_matrix_array_sized (int n, int r, int c,
+				       int *err)
+{
+    gretl_array *A;
+
+    A = gretl_array_new(GRETL_TYPE_MATRICES, n, err);
+
+    if (A != NULL && n > 0) {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    A->data[i] = gretl_matrix_alloc(r, c);
+	    if (A->data[i] == NULL) {
+		*err = E_ALLOC;
+		break;
+	    }
+	}
+    }
+
+    if (*err && A != NULL) {
+	gretl_array_destroy(A);
+	A = NULL;
+    }
+
+    return A;
+}
+
 /* When we're returning an array of strings, ensure
    that any NULL elements are converted to empty
    strings.

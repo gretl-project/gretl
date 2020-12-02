@@ -54,6 +54,7 @@ void copy_north_west (gretl_matrix *targ,
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
 			     int targ, int shock,
 			     int periods, double alpha,
+			     gretl_matrix *point,
 			     const DATASET *dset,
 			     int *err);
 

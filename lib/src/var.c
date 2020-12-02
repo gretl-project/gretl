@@ -1661,12 +1661,13 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
                                int periods, int *err)
 {
     int rows = var->neqns * effective_order(var);
+    int nresp = 1;
+    int t, i, j, k;
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
     gretl_matrix *C = var->C;
-    double x;
-    int t;
+    double xt;
 
     if (shock >= var->neqns) {
         fprintf(stderr, "Shock variable out of bounds\n");
@@ -1693,7 +1694,14 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
         }
     }
 
-    resp = gretl_matrix_alloc(periods, 1);
+    if (targ < 0 && shock < 0) {
+	/* compute all */
+	nresp = var->neqns * var->neqns;
+    } else if (targ < 0 || shock < 0) {
+	nresp = var->neqns;
+    }
+
+    resp = gretl_matrix_alloc(periods, nresp);
     rtmp = gretl_matrix_alloc(rows, var->neqns);
     ctmp = gretl_zero_matrix_new(rows, var->neqns);
 
@@ -1711,8 +1719,31 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
             gretl_matrix_multiply(var->A, rtmp, ctmp);
             gretl_matrix_copy_values(rtmp, ctmp);
         }
-        x = gretl_matrix_get(rtmp, targ, shock);
-        gretl_matrix_set(resp, t, 0, x);
+	if (nresp == 1) {
+	    xt = gretl_matrix_get(rtmp, targ, shock);
+	    gretl_matrix_set(resp, t, 0, xt);
+	} else if (shock >= 0) {
+	    /* all targets for one shock */
+	    for (i=0; i<var->neqns; i++) {
+		xt = gretl_matrix_get(rtmp, i, shock);
+		gretl_matrix_set(resp, t, i, xt);
+	    }
+	} else if (targ >= 0) {
+	    /* all shocks for one target */
+	    for (j=0; j<var->neqns; j++) {
+		xt = gretl_matrix_get(rtmp, targ, j);
+		gretl_matrix_set(resp, t, j, xt);
+	    }
+	} else {
+	    /* all shocks, all targets */
+	    k = 0;
+	    for (i=0; i<var->neqns; i++) {
+		for (j=0; j<var->neqns; j++) {
+		    xt = gretl_matrix_get(rtmp, i, j);
+		    gretl_matrix_set(resp, t, k++, xt);
+		}
+	    }
+	}
     }
 
  bailout:
@@ -1771,7 +1802,6 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
     gretl_matrix *point = NULL;
     gretl_matrix *full = NULL;
     gretl_matrix *ret = NULL;
-    int i;
 
     if (periods == 0) {
         if (dset != NULL) {
@@ -1794,16 +1824,8 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
         ret = point;
     } else if (point != NULL) {
         full = irf_bootstrap(var, targ, shock, periods,
-                             alpha, dset, err);
-        if (full != NULL) {
-            double p;
-
-            for (i=0; i<periods; i++) {
-                p = gretl_matrix_get(point, i, 0);
-                gretl_matrix_set(full, i, 0, p);
-            }
-        }
-        gretl_matrix_free(point);
+                             alpha, point, dset, err);
+	gretl_matrix_free(point);
         ret = full;
     }
 
