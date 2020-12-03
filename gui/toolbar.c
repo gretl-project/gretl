@@ -1173,13 +1173,13 @@ static void gretl_tool_item_set_tip (GtkWidget *item,
     const char *accel = NULL;
 
     if (tool->flag == EXEC_ITEM) {
-	accel = "Ctrl-R";
+	accel = "Ctrl+R";
     } else if (tool->flag == COPY_ITEM) {
-	accel = "Ctrl-C";
+	accel = "Ctrl+C";
     } else if (tool->flag == SAVE_ITEM) {
-	accel = "Ctrl-S";
+	accel = "Ctrl+S";
     } else if (tool->flag == FIND_ITEM) {
-	accel = "Ctrl-F";
+	accel = "Ctrl+F";
     }
 
     if (accel != NULL) {

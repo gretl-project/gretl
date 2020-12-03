@@ -107,6 +107,7 @@ static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
+static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -768,6 +769,8 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 		g_free(str);
 	    }
 	    ret = TRUE;
+	} else if (keyval == GDK_i) {
+	    auto_indent_script(w, vwin);
 	}
     } else {
 	if (keyval == GDK_F1) {
@@ -3086,7 +3089,6 @@ static void indent_region (GtkWidget *w, gpointer p)
 
 void indent_hansl (GtkWidget *w, windata_t *vwin)
 {
-    /* make this work on just the selection if wanted? */
     auto_indent_script(w, vwin);
 }
 
@@ -3849,7 +3851,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 	}
 
-	item = gtk_menu_item_new_with_label(_("Auto-indent script"));
+	item = gtk_menu_item_new_with_label(_("Auto-indent script (Ctrl+I)"));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(auto_indent_script),
 			 vwin);
