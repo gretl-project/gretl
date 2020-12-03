@@ -92,6 +92,7 @@ struct call_info_ {
 #define array_arg(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
 
 #define AUTOLIST "LTmp___"
+#define DUMLIST  "LRetTmp___"
 #define SELNAME "selected series"
 
 static GtkWidget *open_fncall_dlg;
@@ -1933,7 +1934,8 @@ static void compose_fncall_line (char *line,
 				 call_info *cinfo,
 				 const char *funname,
 				 char **tmpname,
-				 int *grab_bundle)
+				 int *grab_bundle,
+				 int *dummy_list)
 {
     arglist *alist;
 
@@ -1946,7 +1948,10 @@ static void compose_fncall_line (char *line,
 
     *line = '\0';
 
-    if (cinfo->ret != NULL) {
+    if (cinfo->rettype == GRETL_TYPE_LIST && cinfo->ret == NULL) {
+	strcpy(line, "list " DUMLIST " = ");
+	*dummy_list = 1;
+    } else if (cinfo->ret != NULL) {
 	strcat(line, cinfo->ret);
 	strcat(line, " = ");
     } else if (cinfo->rettype == GRETL_TYPE_BUNDLE) {
@@ -1990,6 +1995,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     const char *title;
     gretl_bundle *bundle = NULL;
     int grab_bundle = 0;
+    int dummy_list = 0;
     int show = 1;
     int err = 0;
 
@@ -1997,7 +2003,8 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     title = cinfo->label != NULL ? cinfo->label : funname;
 
     compose_fncall_line(fnline, cinfo, funname,
-			&tmpname, &grab_bundle);
+			&tmpname, &grab_bundle,
+			&dummy_list);
 
     /* FIXME: the following conditionality may be wrong? */
 
@@ -2064,6 +2071,16 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	}
     }
 
+    if (dummy_list) {
+	/* handle use of dummy list to get series saved */
+	int *L = get_list_by_name(DUMLIST);
+
+	if (L != NULL && L[0] > 0) {
+	    set_dataset_is_changed(dataset, 1);
+	}
+	user_var_delete_by_name(DUMLIST, NULL);
+    }
+
     if (!err && strstr(fnline, AUTOLIST) == NULL) {
 	int ID = 0;
 
@@ -2079,6 +2096,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	} else {
 	    lib_command_strcpy(fnline);
 	    record_command_verbatim();
+	    if (dummy_list) {
+		lib_command_strcpy("list " DUMLIST " delete");
+		record_command_verbatim();
+	    }
 	}
     }
 
