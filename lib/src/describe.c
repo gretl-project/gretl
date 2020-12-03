@@ -423,33 +423,31 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
     if (p <= 0 || p >= 1) {
 	/* sanity check */
 	*err = E_DATA;
-	return NADBL;
-    }
-
-    n = gretl_minmax(t1, t2, x, &xmin, &xmax);
-    if (n == 0) {
-	*err = E_DATA;
-	return NADBL;
-    }
-
-    h = quantile_index(n, p);
-    hf = floor(h);
-    hc = ceil(h);
-
-    if (hc == 0 || hc == n) {
-	/* too few usable observations for such an extreme
-	   quantile */
-	*err = E_TOOFEW;
-	if (!(opt & OPT_Q)) {
-	    fprintf(stderr, "n = %d: not enough data for %g quantile\n",
-		    n, p);
+    } else {
+	n = gretl_minmax(t1, t2, x, &xmin, &xmax);
+	if (n == 0) {
+	    *err = E_DATA;
 	}
-	return NADBL;
     }
 
-    a = malloc(n * sizeof *a);
-    if (a == NULL) {
-	*err = E_ALLOC;
+    if (!*err) {
+	h = quantile_index(n, p);
+	hf = floor(h);
+	hc = ceil(h);
+
+	if (hc == 0 || hc == n) {
+	    /* too few usable observations for such an extreme
+	       quantile */
+	    *err = E_TOOFEW;
+	} else {
+	    a = malloc(n * sizeof *a);
+	    if (a == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (*err) {
 	return NADBL;
     }
 
@@ -459,11 +457,6 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 	    a[n++] = x[t];
 	}
     }
-
-#if 1
-    fprintf(stderr, "\tp = %12.10f, n = %d, h = %12.10f, hf = %d, hc = %d\n",
-	    p, n, h, hf, hc);
-#endif
 
     if (hf == hc) {
 	/* "exact" */
