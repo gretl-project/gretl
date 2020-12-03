@@ -304,7 +304,7 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 }
 
 /*
-   For an array a with n elements, find the element which would be a[k]
+   For an array a with n elements, find the element which would be a[h]
    if the array were sorted from smallest to largest (without the need
    to do a full sort).  The algorithm is due to C. A. R. Hoare; the C
    implementation is shamelessly copied, with minor adaptations, from
@@ -312,7 +312,7 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
    (Atakan G\"urkan).
 */
 
-static double find_hoare (double *a, int n, int k)
+static double find_hoare (double *a, int n, int h)
 {
     double w, x;
     int l = 0;
@@ -320,7 +320,7 @@ static double find_hoare (double *a, int n, int k)
     int i, j;
 
     while (l < r) {
-	x = a[k];
+	x = a[h];
 	i = l;
 	j = r;
 	while (j >= i) {
@@ -332,34 +332,34 @@ static double find_hoare (double *a, int n, int k)
 		a[j--] = w;
 	    }
 	}
-	if (j < k) l = i;
-	if (k < i) r = j;
+	if (j < h) l = i;
+	if (h < i) r = j;
     }
 
-    return a[k];
+    return a[h];
 }
 
 static double find_hoare_inexact (double *a, double p,
 				  double xmin, double xmax,
 				  double frac, int n,
-				  int nl, int nh)
+				  int hf, int hc)
 {
     double tmp, high, low;
     int i;
 
     if (p < 0.5) {
-	high = find_hoare(a, n, nh);
+	high = find_hoare(a, n, hc);
 	tmp = xmin;
-	for (i=0; i<nh; i++) {
+	for (i=0; i<hc; i++) {
 	    if (a[i] > tmp) {
 		tmp = a[i];
 	    }
 	}
 	low = tmp;
     } else {
-	low = find_hoare(a, n, nl);
+	low = find_hoare(a, n, hf);
 	tmp = xmax;
-	for (i=nh; i<n; i++) {
+	for (i=hc; i<n; i++) {
 	    if (a[i] < tmp) {
 		tmp = a[i];
 	    }
@@ -368,6 +368,32 @@ static double find_hoare_inexact (double *a, double p,
     }
 
     return low + frac * (high - low);
+}
+
+/* See https://en.wikipedia.org/wiki/Quantile, also
+   Hyndman and Fan, "Sample Quantiles in Statistical
+   Packages" (The American Statistician, 1996).
+   Return the "index" of the @p-quantile for a sample
+   of size @n (which may not be an integer).
+*/
+
+static double quantile_index (int n, double p)
+{
+    int Qtype = libset_get_int(QUANTILE_TYPE);
+    double h;
+
+    if (Qtype == 0) {
+	/* \hat{Q}_6 */
+	h = (n + 1) * p;
+    } else if (Qtype == 1) {
+	/* \hat{Q}_7 */
+	h = (n - 1) * p + 1;
+    } else {
+	/* \hat{Q}_8 */
+	h = (n + 1.0/3) * p + 1.0/3;
+    }
+
+    return h - 1; /* 0-based */
 }
 
 /**
@@ -390,8 +416,8 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 {
     double *a = NULL;
     double xmin, xmax;
-    double N, ret;
-    int nl, nh;
+    double h, ret;
+    int hf, hc;
     int t, n = 0;
 
     if (p <= 0 || p >= 1) {
@@ -406,14 +432,14 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 	return NADBL;
     }
 
-    N = (n + 1) * p - 1;
-    nl = floor(N);
-    nh = ceil(N);
+    h = quantile_index(n, p);
+    hf = floor(h);
+    hc = ceil(h);
 
-    if (nh == 0 || nh == n) {
+    if (hc == 0 || hc == n) {
 	/* too few usable observations for such an extreme
 	   quantile */
-	*err = E_DATA;
+	*err = E_TOOFEW;
 	if (!(opt & OPT_Q)) {
 	    fprintf(stderr, "n = %d: not enough data for %g quantile\n",
 		    n, p);
@@ -434,17 +460,17 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 	}
     }
 
-#if 0
-    fprintf(stderr, "\tp = %12.10f, n = %d, N = %12.10f, nl = %d, nh = %d\n",
-	    p, n, N, nl, nh);
+#if 1
+    fprintf(stderr, "\tp = %12.10f, n = %d, h = %12.10f, hf = %d, hc = %d\n",
+	    p, n, h, hf, hc);
 #endif
 
-    if (nl == nh) {
+    if (hf == hc) {
 	/* "exact" */
-	ret = find_hoare(a, n, nl);
+	ret = find_hoare(a, n, hf);
     } else {
-	ret = find_hoare_inexact(a, p, xmin, xmax, N - nl,
-				 n, nl, nh);
+	ret = find_hoare_inexact(a, p, xmin, xmax, h - hf,
+				 n, hf, hc);
     }
 
     free(a);
@@ -461,15 +487,15 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
  *
  * Computes @k quantiles (given by the elements of @p) for the
  * first n elements of the array @a, which is re-ordered in
- * the process.  On successful exit, @p contains the quantiles.
+ * the process. On successful exit, @p contains the quantiles.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
 int gretl_array_quantiles (double *a, int n, double *p, int k)
 {
-    double N, xmin = 0, xmax = NADBL;
-    int nl, nh, i;
+    double h, xmin = 0, xmax = NADBL;
+    int hf, hc, i;
     int err = 0;
 
     if (n <= 0 || k <= 0) {
@@ -483,20 +509,20 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
 	    continue;
 	}
 
-	N = (n + 1) * p[i] - 1;
-	nl = floor(N);
-	nh = ceil(N);
+	h = quantile_index(n, p[i]);
+	hf = floor(h);
+	hc = ceil(h);
 
-	if (nh == 0 || nh == n) {
+	if (hc == 0 || hc == n) {
 	    p[i] = NADBL;
-	} else if (nl == nh) {
-	    p[i] = find_hoare(a, n, nl);
+	} else if (hf == hc) {
+	    p[i] = find_hoare(a, n, hf);
 	} else {
 	    if (na(xmax)) {
 		gretl_minmax(0, n-1, a, &xmin, &xmax);
 	    }
-	    p[i] = find_hoare_inexact(a, p[i], xmin, xmax, N - nl,
-				      n, nl, nh);
+	    p[i] = find_hoare_inexact(a, p[i], xmin, xmax, h - hf,
+				      n, hf, hc);
 	}
     }
 

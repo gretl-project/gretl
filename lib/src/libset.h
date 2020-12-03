@@ -94,6 +94,7 @@ typedef enum {
 #define MPI_USE_SMT      "mpi_use_smt"
 #define GEOJSON_FAST     "geojson_fast"
 #define GRETL_ASSERT     "assert"
+#define QUANTILE_TYPE    "quantile_type"
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);

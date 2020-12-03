@@ -202,7 +202,8 @@ struct set_vars_ {
 		       !strcmp(s, SIMD_K_MAX) || \
 		       !strcmp(s, SIMD_MN_MIN) || \
 		       !strcmp(s, FDJAC_QUAL) || \
-		       !strcmp(s, WILDBOOT_DIST))
+		       !strcmp(s, WILDBOOT_DIST) || \
+		       !strcmp(s, QUANTILE_TYPE))
 
 /* global state */
 set_vars *state;
@@ -214,6 +215,7 @@ static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static int comments_on = 0;
 static int gretl_assert = 0;
+static int Qtype = 0;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
 #ifdef OS_OSX
@@ -309,6 +311,13 @@ static const char *wildboot_strs[] = {
     NULL
 };
 
+static const char *qtype_strs[] = {
+    "Q6",
+    "Q7",
+    "Q8",
+    NULL
+};
+
 static const char *assert_strs[] = {
     "off",
     "warn",
@@ -338,6 +347,8 @@ static const char **libset_option_strings (const char *s)
 	return steplen_strs;
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	return wildboot_strs;
+    } else if (!strcmp(s, QUANTILE_TYPE)) {
+	return qtype_strs;
     } else if (!strcmp(s, GRETL_ASSERT)) {
 	return assert_strs;
     } else {
@@ -395,6 +406,8 @@ static const char *libset_option_string (const char *s)
 	return maxverb_strs[state->max_verbose];
     } else if (!strcmp(s, WILDBOOT_DIST)) {
 	return wildboot_strs[state->wildboot_dist];
+    } else if (!strcmp(s, QUANTILE_TYPE)) {
+	return qtype_strs[Qtype];
     } else if (!strcmp(s, GRETL_ASSERT)) {
 	return assert_strs[gretl_assert];
     } else {
@@ -1242,6 +1255,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, QUANTILE_TYPE)) {
+	for (i=0; qtype_strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, qtype_strs[i])) {
+		Qtype = i;
+		err = 0;
+		break;
+	    }
+	}
     } else if (!g_ascii_strcasecmp(key, OPTIM_STEPLEN)) {
 	for (i=0; i<STEPLEN_MAX; i++) {
 	    if (!g_ascii_strcasecmp(val, steplen_strs[i])) {
@@ -1539,6 +1560,7 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, OPTIM_STEPLEN) || \
 			 !strcmp(s, MAX_VERBOSE) || \
 			 !strcmp(s, WILDBOOT_DIST) || \
+			 !strcmp(s, QUANTILE_TYPE) || \
 			 !strcmp(s, GRETL_ASSERT))
 
 const char *intvar_code_string (const char *s)
@@ -2196,6 +2218,8 @@ int libset_get_int (const char *key)
 	return state->fdjac_qual;
     } else if (!strcmp(key, WILDBOOT_DIST)) {
 	return state->wildboot_dist;
+    } else if (!strcmp(key, QUANTILE_TYPE)) {
+	return Qtype;
     } else if (!strcmp(key, "loop_maxiter_default")) {
 	return LOOP_MAXITER_DEFAULT; /* for internal use */
     } else {
