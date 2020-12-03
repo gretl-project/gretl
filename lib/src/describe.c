@@ -309,7 +309,7 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
    to do a full sort).  The algorithm is due to C. A. R. Hoare; the C
    implementation is shamelessly copied, with minor adaptations, from
    http://www.astro.northwestern.edu/~ato/um/programming/sorting.html
-   (Atakan G\"urkan).
+   (Atakan G\"urkan: link now dead).
 */
 
 static double find_hoare (double *a, int n, int h)
