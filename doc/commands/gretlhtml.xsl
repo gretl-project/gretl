@@ -719,11 +719,11 @@
     </xsl:when>
     <xsl:otherwise>
       <xsl:choose>
-	<xsl:when test="$topic = 'funcs'">
-	  <xsl:text>&lt;a href="./cmdref.html#</xsl:text>
+	<xsl:when test="$topic = 'cmds'">
+	  <xsl:text>&lt;a href="#</xsl:text>
 	</xsl:when>
 	<xsl:otherwise>
-	  <xsl:text>&lt;a href="#</xsl:text>
+	  <xsl:text>&lt;a href="./cmdref.html#</xsl:text>
 	</xsl:otherwise>
       </xsl:choose>
       <xsl:value-of select="@targ"/>
