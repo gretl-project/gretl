@@ -988,7 +988,7 @@ po/Makefile.in
 share/Makefile
 share/bcih/Makefile
 tests/Makefile
-extra/Makefile
+apidemo/Makefile
 redhat/gretl.spec
 utils/emacs/Makefile
 doc/gretl.sty

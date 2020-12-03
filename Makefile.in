@@ -112,7 +112,7 @@ dist:
 
 distclean: clean
 	rm -f config.log config.cache config.status config.h gretl.pc
-	for d in $(SUBDIRS) $(DOCDIR) extra tests osx utils/emacs ; do \
+	for d in $(SUBDIRS) $(DOCDIR) apidemo tests osx utils/emacs ; do \
 	$(MAKE) -C $$d distclean ; done
 	rm -f gretl_sh libtool Makefile redhat/gretl.spec
 
