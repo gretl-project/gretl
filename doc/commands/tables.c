@@ -169,12 +169,17 @@ void print_internals (void)
 void print_func_words (void)
 {
     char **S = NULL;
-    int i, n, err = 0;
+    const char *s;
+    int i, n, nf;
+    int err = 0;
 
-    n = gen_func_count();
+    nf = gen_func_count();
 
-    for (i=0; i<n && !err; i++) {
-	err = push_string_on_array(&S, gen_func_name(i), i);
+    for (i=0, n=0; i<nf && !err; i++) {
+	s = gen_func_name(i);
+	if (*s != '_') {
+	    err = push_string_on_array(&S, s, n++);
+	}
     }
 
     if (!err) {
