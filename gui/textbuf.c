@@ -543,17 +543,58 @@ static void sourceview_apply_language (windata_t *vwin)
 
 #if COMPLETION_OK
 
+#include "genparse.h"
+
+/* Create a GtkTextBuffer holing the names of built-in
+   gretl functions, to serve as a completion provider.
+*/
+
+static GtkTextBuffer *function_names_buffer (void)
+{
+    GtkTextBuffer *tbuf;
+    GString *str;
+    gchar *fnames;
+    const char *s;
+    int i, nf;
+
+    nf = gen_func_count();
+    tbuf = gtk_text_buffer_new(NULL);
+    str = g_string_new(NULL);
+
+    for (i=0; i<nf; i++) {
+	s = gen_func_name(i);
+	if (*s != '_') {
+	    g_string_append(str, s);
+	    g_string_append_c(str, ' ');
+	}
+    }
+
+    fnames = g_string_free(str, FALSE);
+    gtk_text_buffer_set_text(tbuf, fnames, -1);
+    g_free(fnames);
+
+    return tbuf;
+}
+
+#define AC_DEBUG 0
+
 static void set_sv_auto_complete (windata_t *vwin)
 {
+    static GtkTextBuffer *funcs_buf;
     GtkSourceCompletionWords *words;
+    GtkSourceCompletionWords *funcs;
     GtkSourceCompletion *comp;
 
     words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
 
     if (script_auto_complete && words == NULL) {
 	/* set up and activate */
+#if AC_DEBUG
+	fprintf(stderr, "auto_complete set-up\n");
+#endif
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-	words = gtk_source_completion_words_new(NULL, NULL);
+	/* provider: all previously typed words */
+	words = gtk_source_completion_words_new("words", NULL);
 	g_object_set(words, "priority", 1, NULL);
 	gtk_source_completion_words_register(words,
 					     gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
@@ -561,9 +602,21 @@ static void set_sv_auto_complete (windata_t *vwin)
 					   GTK_SOURCE_COMPLETION_PROVIDER(words),
 					   NULL);
 	g_object_set_data(G_OBJECT(vwin->text), "prov_words", words);
+	/* provider: names of built-in functions */
+	funcs = gtk_source_completion_words_new("functions", NULL);
+	funcs_buf = function_names_buffer();
+	gtk_source_completion_words_register(funcs, funcs_buf);
+	gtk_source_completion_add_provider(comp,
+					   GTK_SOURCE_COMPLETION_PROVIDER(funcs),
+					   NULL);
+	g_object_set_data(G_OBJECT(vwin->text), "prov_funcs", funcs);
     } else if (!script_auto_complete && words != NULL) {
 	/* de-activate and clean up */
+#if AC_DEBUG
+	fprintf(stderr, "auto_complete tear-down\n");
+#endif
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+	/* destroy the "words" provider */
 	gtk_source_completion_words_unregister(words,
 					       gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
 	gtk_source_completion_remove_provider(comp,
@@ -571,11 +624,23 @@ static void set_sv_auto_complete (windata_t *vwin)
 					      NULL);
 	g_object_unref(G_OBJECT(words));
 	g_object_set_data(G_OBJECT(vwin->text), "prov_words", NULL);
+	/* destroy the "funcs" provider, if present */
+	funcs = g_object_get_data(G_OBJECT(vwin->text), "prov_funcs");
+	if (funcs != NULL) {
+	    gtk_source_completion_words_unregister(funcs, funcs_buf);
+	    gtk_source_completion_remove_provider(comp,
+						  GTK_SOURCE_COMPLETION_PROVIDER(funcs),
+						  NULL);
+	    g_object_unref(G_OBJECT(funcs));
+	    g_object_set_data(G_OBJECT(vwin->text), "prov_funcs", NULL);
+	    g_object_unref(G_OBJECT(funcs_buf));
+	    funcs_buf = NULL;
+	}
     }
 
-#if 0
-    fprintf(stderr, "set_sv_auto_complete: comp=%p, prov=%p, auto_complete=%d, ok=%d\n",
-	    (void *) comp, (void *) words, script_auto_complete, ok);
+#if AC_DEBUG
+    fprintf(stderr, "set_sv_auto_complete: auto_complete=%d, comp=%p, prov=%p,%p\n",
+	    script_auto_complete, (void *) comp, (void *) words, (void *) funcs);
 #endif
 }
 
