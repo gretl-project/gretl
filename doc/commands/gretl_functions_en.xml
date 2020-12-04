@@ -4104,7 +4104,7 @@
 	</para>
 	<para>
 	  The <argname>target</argname> and <argname>shock</argname>
-	  argument take the form of 1-based indices of endogenous
+	  arguments take the form of 1-based indices of the endogenous
 	  variables in the system, with 0 taken to mean
 	  <quote>all</quote>. The following code fragment illustrates
 	  usage. In the first example the matrix <lit>fe1</lit> holds
@@ -5665,33 +5665,46 @@
       </fnargs>
       <description>
 	<para>
-	  Without the final optional argument, this function is
-	  available only when the last model estimated was a VAR or
-	  VECM. Alternatively, information on a VAR or VECM can be
-	  stored in a bundle via the <fncref targ="$system"/> accessor
+	  Provides estimated impulse response functions pertaining to
+	  a VAR or VECM, traced out over a certain forecast
+	  horizon. Without the final optional argument, this function
+	  works only when the last model estimated was a VAR or
+	  VECM. Alternatively, information on such a system can be
+	  saved as a bundle via the <fncref targ="$system"/> accessor
 	  and subsequently passed to <lit>irf</lit>.
 	</para>
 	<para>
-	  The return value is a matrix containing the estimated
-	  response of the <argname>target</argname> variable to an
-	  impulse of one standard deviation in the
-	  <argname>shock</argname> variable. These variables are
-	  identified by their position in the model specification: for
-	  example, if <argname>target</argname> and
-	  <argname>shock</argname> are given as 1 and 3 respectively,
-	  the returned matrix gives the response of the first variable
-	  in the system for a shock to the third variable.
+	  The <argname>target</argname> and <argname>shock</argname>
+	  arguments take the form of 1-based indices of the endogenous
+	  variables in the system, with 0 taken to mean
+	  <quote>all</quote>. The responses (expressed in the units of
+	  the <argname>target</argname> variable) are to an innovation
+	  of one standard deviation in the <argname>shock</argname>
+	  variable.  If <argname>alpha</argname> is given a suitable
+	  positive value the estimates include a 1 &minus; &agr;
+	  confidence interval (so, for example, give 0.1 for a 90
+	  percent interval).
 	</para>
 	<para>
-	  If the optional <argname>alpha</argname> argument is given,
-	  the returned matrix has three columns: the point estimate of
-	  the responses, followed by the lower and upper limits of a 1
-	  &minus; &agr; confidence interval obtained via
-	  bootstrapping.  (So <argname>alpha</argname> = 0.1
-	  corresponds to 90 percent confidence.) If
-	  <argname>alpha</argname> is omitted or set to zero, only the
-	  point estimate is provided.
+	  The following code fragment illustrates usage. In the first
+	  example the matrix <lit>ir1</lit> holds the responses of
+	  <lit>y1</lit> to innovations in each of <lit>y1</lit>,
+	  <lit>y2</lit> and <lit>y3</lit> (point estimates only since
+	  <argname>alpha</argname> is omitted).  In the second,
+	  <lit>ir2</lit> holds the responses of all targets to an
+	  innovation in <lit>y2</lit>, with 90 percent confidence
+	  intervals. In this case the returned matrix will have 9
+	  columns: each response path occupies 3 adjacent columns
+	  giving point estimate, lower bound and upper bound.  The
+	  last example produces a matrix with 27 columns: 3 per
+	  response for each target times each shock.
 	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  matrix ir1 = irf(1, 0)
+	  matrix ir2 = irf(0, 2, 0.1)
+	  matrix ir3 = irf(0, 0, 0.1)
+	</code>
 	<para>
 	  The number of periods (rows) over which the response is
 	  traced is determined automatically based on the frequency
