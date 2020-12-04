@@ -2157,11 +2157,17 @@
 	  <flag>--verbose</flag>
 	  <effect>Presenta jerarquías</effect>
 	</option>
-        <option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>modo-o-nombrearchivo</optparm>
 	  <effect>Mira abajo</effect>
-        </option>
+	</option>
+	
+	<option>
+	  <flag>--triangle</flag>
+	  <effect>Representa solo la mitad inferior, mira abajo</effect>
+	</option>
+	
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -2220,8 +2226,8 @@
 	por lotes), o un nombre de archivo. El efecto de indicar un nombre de
 	archivo es como el descrito para la opción <opt>output</opt> de la instrucción
 	<cmdref targ="gnuplot"/>. Cuando activas la representación del gráfico,
-	puedes utilizar la opción adicional <opt>triangle</opt> para mostrar solo
-	el mapa de calor del triángulo inferior de la matriz.
+	puedes utilizar la opción <opt>triangle</opt> para mostrar solo el mapa
+	de calor del triángulo inferior de la matriz.
       </para>
       <para>
 	Cuando indicas una forma alternativa, utilizando una matriz ya
@@ -10006,6 +10012,28 @@
 	la correspondencia entre las cadenas y su codificación numérica.
 	Puedes eliminar este proceder mediante la opción<opt>quiet</opt>.
       </para>
+      <subhead context="cli">Cargando series seleccionadas</subhead>
+      <para>
+	El uso de <lit>open</lit> con un archivo de datos como argumento (en
+	contraposición al caso con una base de datos, mira abajo) generalmente
+	implica cargar todas las series del archivo indicado. Sin embargo, solo en
+	el caso de archivos originales de Gretl (<lit>gdt</lit> e <lit>gdtb</lit>)
+	es posible especificar un subconjunto de series a cargar, mediante su
+	nombre. Esto se consigue mediante la opción <opt>select</opt>, lo que
+	requiere un argumento adjunto con uno de estos formatos: el nombre de
+	una única serie; una lista de nombres, separados mediante espacios y
+	delimitados por comillas; o el nombre de un 'array' de cadenas de texto.
+	Ejemplos:
+      </para>
+      <code>
+	# Serie única
+	open somefile.gdt --select=x1
+	# Más de una serie
+	open somefile.gdt --select="x1 x5 x27"
+	# Método alternativo
+	strings Sel = defarray("x1", "x5", "x27")
+	open somefile.gdt --select=Sel
+	</code>
       <subhead context="cli">Abriendo una base de datos</subhead>
       <para>
 	Como se comentó antes, puedes utilizar la instrucción <lit>open</lit>
@@ -10519,8 +10547,8 @@
 
   </command>
 
-    <command name="panplot" section="Graphs"
-    label="Dibuja una serie de panel" context="cli">
+  <command name="panplot" section="Graphs"
+   label="Dibuja una serie de panel" context="cli">
 
     <usage>
       <arguments>
@@ -13298,6 +13326,14 @@
 	  defecto es 0.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>quantile_type</lit>: Una cadena de texto
+	  (<quote>Q6</quote>, <quote>Q7</quote> o <quote>Q8</quote>), que indica
+	  el método usado para calcular cuantiles muestrales, de acuerdo con la
+	  clasificación recogida en <cite key="hyndman96">Hyndman y Fan (1996)</cite>.
+	  Por defecto es <quote>Q6</quote>.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Generación de números aleatorios</subhead>
@@ -13589,7 +13625,9 @@
 	o <opt>continuous</opt>, el carácter numérico de la variable se establece
 	en consonancia con eso. Por defecto, se tratan todas las series como
 	continuas, entonces determinar que una serie sea discreta va a afectar
-	al modo en que se maneja la variable en los gráficos de frecuencia.
+	al modo en que se maneja la variable en otras instrucciones y
+	funciones, como por ejemplo con <cmdref targ="freq"/> o con
+	<fncref targ="dummify"/>.
       </para>
       <para>
 	Cuando indicas alguna de las dos opciones <opt>coded</opt> o <opt>numeric</opt>,

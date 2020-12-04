@@ -176,13 +176,19 @@
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
-	  Se pode calcularse, devolve un escalar coa probabilidade asociada ao
-	  valor do estatístico de Durbin-Watson do último modelo estimado.
-	  Calcúlase utilizando o método Imhof.
+	  Se pode calcularse, devolve un escalar co valor da función de distribución
+	  acumulada (CDF) de Durbin&ndash;Watson, avaliada no valor do estatístico
+	  de DW para o derradeiro modelo estimado; para isto úsase o procedemento
+	  de cálculo <cite key="imhof61">Imhof</cite>. Este é o valor p (probabilidade
+	  asociada) para unha proba dunha cola na que a hipótese alternativa
+	  é que existe autocorrelación positiva de primeira orde. Se queres o
+	  valor p para unha proba de dúas colas, colle 2<math>P</math> cando
+	  DW &lt; 2, ou 2(1 &minus; <math>P</math>) cando DW &gt; 2, onde
+	  <math>P</math> é o valor que devolve este accesorio.
 	</para>
 	<para>
-	  Debido á limitada precisión da aritmética das computadoras, o resultado
-	  do cálculo da integral do método Imhof pode volverse negativo cando
+	  Debido á limitada precisión da aritmética dixital, o resultado do
+	  cálculo da integral do método Imhof pode volverse negativo cando
 	  o estatístico de Durbin-Watson está próximo ao seu límite inferior;
 	  por iso este accesorio devolve <lit>NA</lit> nesa situación. Dado que
 	  calquera outra modalidade de fallo ten como resultado un erro que se
@@ -570,6 +576,14 @@
 	<para>
 	  Devolve un número enteiro coa cantidade total de observacións que están
 	  seleccionadas na mostra vixente. Relacionado: <fncref targ="$tmax"/>.
+	</para>
+	<para>
+	  No caso de datos de panel, o valor que se devolve é o número de
+	  observacións combinadas (o número de unidades de sección cruzada
+	  multiplicado polo número de períodos de tempo). Se queres saber o
+	  número de unidades tempo dun panel, utiliza <fncref targ="$pd"/>.
+	  E o número de unidades de sección cruzada incluídas pode obterse
+	  mediante <lit>$nobs</lit> dividido por <lit>$pd</lit>.
 	</para>
       </description>
     </function>
@@ -2478,6 +2492,7 @@
 	  Hermitiana e definida positiva; e o resultado será unha matriz
 	  complexa triangular inferior de xeito que
 	  <equation status="inline" ascii="A = LL^H" tex="$A = LL^{\mathrm H}$"/>.
+	  En caso contrario, a función devolverá un fallo.
 	</para>
 	<para>
 	  Para o caso real, consulta tamén <fncref targ="psdroot"/> e
@@ -7075,6 +7090,30 @@
 	  ou <lit>NA</lit> no caso de que exista algún valor ausente en
 	  <math>t</math>.
 	</para>
+	<para>
+	  O seguinte exemplo ilustra o funcionamento da función:
+	</para>
+	<code>
+	  open denmark.gdt
+	  eval mean(LRM)
+	  list L = dataset
+	  eval mean(L)
+	</code>
+	<para>
+    A primeira solicitude devolverá un escalar co valor medio da serie
+    <argname>LRM</argname>, e a segunda devolverá unha
+    serie.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="median"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -7084,11 +7123,42 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila coa media de cada columna de <argname>X</argname>.
+	  Devolve as medias das columnas de <argname>X</argname>, sen omitir
+	  as observacións perdidas.
+	</para>
+	<para>
+	  Por exemplo, o seguinte anaco de código...
+	</para>
+	<code>
+	  matrix m = mnormal(5, 2)
+	  m[1,2] = NA
+	  print m
+	  eval meanc(m)
+	</code>
+	<para>
+	  xera este resultado:
+	</para>
+	<code>
+	  ? print m
+	  m (5 x 2)
+
+	   -0.098299          nan
+	      1.1829      -1.2817
+	     0.46037     -0.92947
+	      1.4896     -0.91970
+	     0.91918      0.47748
+
+	  ? eval meanc(m)
+	     0.79075          nan
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
+            <fncref targ="maxc"/>
+            <fncref targ="minc"/>
             <fncref targ="sdc"/>
+            <fncref targ="prodc"/>
 	  </seelist>
 	</para>
       </description>
@@ -7124,6 +7194,31 @@
 	  dos valores das variables desa lista na observación <math>t</math>,
 	  ou <lit>NA</lit> no caso de que exista algún valor ausente en
 	  <math>t</math>.
+	</para>
+	<para>
+	  O seguinte exemplo ilustra o funcionamento da función:
+	</para>
+	<code>
+	  set verbose off
+	  open denmark.gdt
+	  eval median(LRM)
+	  list L = dataset
+	  series m = median(L)
+	</code>
+	<para>
+    A primeira solicitude devolverá un escalar co valor mediano da
+    serie <argname>LRM</argname>, e a segunda devolverá unha
+    serie.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mean"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -7821,21 +7916,32 @@
       <description>
 	<para>
 	  Le unha matriz gardada no ficheiro chamado
-	  <argname>nomeficheiro</argname>. Isto está pensado principalmente
-	  para ler ficheiros cun formato específico, como se describe máis
-	  abaixo; pero tamén podes usalo con ficheiros xenéricos de texto
-	  delimitado. Para este último tipo de uso, consulta máis abaixo a
-	  sección titulada <quote>Ficheiros con texto delimitado</quote>.
+	  <argname>nomeficheiro</argname>. Se no nome non está especificado o
+	  camiño completo ata o ficheiro, vaise procurar en algunhas localizacións
+	  que se consideren <quote>probables</quote>, empezando polo cartafol
+	  de traballo establecido nese momento en <cmdref targ="workdir"/>. Non
+	  obstante, cando se indica un valor non nulo para o segundo argumento
+	  <argname>importar</argname> (opcional) da función, o ficheiro procúrase
+	  no cartafol <quote>punto</quote> do usuario. Isto ten a intención de
+	  que se use esta función xunto coas que exportan matrices, e que se
+	  ofrecen no contexto da instrución <cmdref targ="foreign"/>. Nese caso,
+	  o argumento <argname>nomeficheiro</argname> debe de ser un nome de
+	  ficheiro simple, sen indicar o camiño ata o ficheiro.
 	</para>
+	
+	<para>Polo de agora, a función recoñece catro formatos de ficheiro:
+	</para>
+
+	<subhead>Formato de texto orixinal</subhead>
 	<para>
-	  Se o ficheiro posúe a extensión <quote><lit>.gz</lit></quote> asúmese
-	  que se aplicou a compresión gzip ao gardar os datos. Se ten a
-	  extensión <quote><lit>.bin</lit></quote> asúmese que o ficheiro
-	  está en formato binario (consulta a función <fncref targ="mwrite"/>
-	  para ter máis detalles). Noutro caso, se o nome do ficheiro inclúe
-	  o sufixo <quote><lit>.mat</lit></quote>, asúmese que o ficheiro
-	  ten un formato de texto simple, de acordo coas seguintes
-	  especificacións:
+	  Estes ficheiros identifícanse grazas á extensión
+	  <quote><lit>.mat</lit></quote>, e son completamente compatibles co
+	  formato de ficheiro de matriz Ox. Cando o nome do ficheiro ten a
+	  extensión <quote><lit>.gz</lit></quote>, asúmese que ao gardar
+	  os datos se aplicou a compresión gzip.
+
+	  O ficheiro asúmese que é de texto plano, de acordo coa seguinte
+	  especificación:
 	</para>
 	<ilist>
 	  <li>
@@ -7864,19 +7970,22 @@
             </para>
 	  </li>
 	</ilist>
+
+	<subhead>Ficheiros binarios</subhead>
 	<para>
-	  Se no primeiro argumento non está especificado o camiño completo
-	  ata o ficheiro, vaise procurar en algunhas localizacións que se
-	  consideren <quote>probables</quote>, empezando polo cartafol de
-	  traballo establecido nese momento en <cmdref targ="workdir"/>. Non
-	  obstante, cando se indica un valor non nulo para o segundo argumento
-	  <argname>importar</argname> (opcional) da función, o ficheiro
-	  procúrase no cartafol <quote>punto</quote> do usuario. Isto ten a
-	  intención de que se use esta función xunto coas que exportan matrices,
-	  e que se ofrecen no contexto da instrución <cmdref targ="foreign"/>.
-	  Nese caso, o argumento <argname>nomeficheiro</argname> debe de ser un nome
-	  de ficheiro simple, sen indicar o camiño ata o ficheiro.
+	  Os ficheiros coa extensión <quote><lit>.bin</lit></quote> asúmese
+	  que están en formato binario. A extensión <quote><lit>.gz</lit></quote>
+	  tamén se recoñece para a compresión gzip. Os primeiros 19 bytes
+	  conteñen os caracteres <lit>gretl_binary_matrix</lit>; os seguintes
+	  8 bytes conteñen dous enteiros de 32 bits que proporcionan
+	  o número de filas e de columnas; e o que resta do ficheiro contén
+	  os elementos da matriz ordenados por orde de maior columna, con
+	  formato de <quote>dobres</quote> en extremo menor (little-endian).
+	  Se executas Gretl nun sistema de extremo maior (big-endian), os
+	  valores binarios convértense a extremo menor cando se escriben, e
+	  convértense a extremo maior cando se len.
 	</para>
+	  
 	<subhead>Ficheiros con texto delimitado</subhead>
 	<para>
 	  Se o nome do ficheiro que se vai ler ten a extensión
@@ -7889,8 +7998,20 @@
 	  importar a matriz, permitindo o uso da coma como separador decimal,
 	  se é necesario. Cae na conta de que o delimitador non debe ser o
 	  carácter do tabulador, polo risco de confundir ese tipo de ficheiros
-	  cos que teñen o formato <quote>orixinal</quote> de Gretl.
+	  cos que teñen o formato de matrices <quote>orixinal</quote> de Gretl.
 	</para>
+
+	<subhead>Ficheiros de conxuntos de datos de Gretl</subhead>
+	<para>
+	  Os ficheiros que teñan extensión <quote><lit>.gdt</lit></quote> ou
+	  <quote><lit>.gdtb</lit></quote> trátanse como ficheiros orixinais de
+	  datos de Gretl, tal como os crea a instrución <cmdref targ="store"/>
+	  (gardar). En tal caso, a matriz que se vai devolver contén os valores
+	  numéricos das series do conxunto de datos, ordenadas en columnas. Cae
+	  na conta de que as series con valores en cadeas de texto non se len
+	  como tales; a matriz só vai conter as súas codificacións numéricas.
+	</para>
+	  
 	<para>
 	  <seelist>
             <fncref targ="bread"/>
@@ -8172,17 +8293,17 @@
 	  </li>
 	  <li>
 	    <para>
-	      Se o argumento <argname>nomeficheiro</argname> ten a extensión
-	      <quote><lit>.bin</lit></quote>, entón a matriz gárdase con
-	      formato binario. Neste caso, os primeiros 19 bytes conteñen
-	      os caracteres <lit>gretl_binary_matrix</lit>; os seguintes
+	      Se o argumento <argname>nomeficheiro</argname> ten a
+	      extensión <quote><lit>.bin</lit></quote>, entón a matriz gárdase
+	      con formato binario. Neste caso, os primeiros 19 bytes
+	      conteñen os caracteres <lit>gretl_binary_matrix</lit>; os seguintes
 	      8 bytes conteñen dous enteiros de 32 bits que proporcionan
-	      o número de filas e de columnas; e o que resta do ficheiro
-	      contén os elementos da matriz ordenados por columnas, en
-	      formato <quote>little-endian doubles</quote>. Cando executas
-	      Gretl nun sistema <quote>big-endian</quote>, os valores
-	      binarios convértense a <quote>little-endian</quote> ao
-	      escribilos, e a <quote>big-endian</quote> aos ler.
+	      o número de filas e de columnas; e o que resta do ficheiro contén
+	      os elementos da matriz ordenados por orde de maior columna, con
+	      formato de <quote>dobres</quote> en extremo menor (little-endian).
+	      Se executas Gretl nun sistema de extremo maior (big-endian), os
+	      valores binarios convértense a extremo menor cando se escriben, e
+	      convértense a extremo maior cando se len.
 	    </para>
 	  </li>
 	  <li>
@@ -8469,7 +8590,13 @@
       <description>
 	<para>
 	  Devolve o número de observacións non ausentes da variable
-	  <argname>y</argname> na mostra vixente seleccionada.
+	  (<argname>y</argname>) na mostra vixente seleccionada.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="pnobs"/>
+            <fncref targ="pxnobs"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -9750,14 +9877,50 @@
 	  elementos de <argname>p</argname> e <repl>n</repl> indica o número
 	  de columnas de <argname>y</argname>.
 	</para>
-	<para context="tex">
-	  Para unha serie de longura $n$, $q$ é o cuantil $p$ se cumpre a
-	  igualdade:
-	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\]
-	  onde $k$ é a parte enteira de $(n+1) \cdot p$, e $y_{[i]}$
-	  é o elemento $i$-ésimo da serie cando se ordena de menor a
-	  maior.
+	<para>
+	  <cite key="hyndman96">Hyndman e Fan (1996)</cite> describen nove
+	  métodos distintos para calcular os cuantís da mostra. En Gretl, por
+	  defecto, o método é o que eles denominan <math>Q</math><sub>6</sub>
+	  (que tamén o é en Python, por defecto). En troques, podes seleccionar
+	  os métodos <math>Q</math><sub>7</sub> (que é o usado por defecto
+	  en R) ou <math>Q</math><sub>8</sub> (que é o recomendado por
+	  Hyndman e Fan) mediante a instrución <cmdref targ="set"/>,
+	  como en
 	</para>
+	<code>
+	  set quantile_type Q7 # ou Q8
+	</code>
+	<para context="tex">
+	  O cuantil $p$ ($Q_p$) dunha serie $y$ que ten longura igual
+	  a $n$ defínese como:
+	  \[Q_p = y_{[k]} + (h - k) (y_{[k+1]} - y_{[k]})\]
+	  onde $k$ representa a parte enteira de $h$, un termo que difire
+	  segundo o método
+	  ---$h=(n+1)p$ para $Q_6$, $(n-1)p+1$ para $Q_7$ e $(n+1/3)p + 1/3$ para $Q_8$---
+	  onde $y_{[i]}$ representa o elemento $i$-ésimo da serie cando se
+	  ordena de menor a maior.
+	</para>
+	<para>
+	Por exemplo, o código
+	</para>
+	<code>
+	  set verbose off
+	  matrix x = seq(1,7)'
+	  set quantile_type Q6
+	  printf "Q6: %g\n", quantile(x, 0.45)
+	  set quantile_type Q7
+	  printf "Q7: %g\n", quantile(x, 0.45)
+	  set quantile_type Q8
+	  printf "Q8: %g\n", quantile(x, 0.45)
+	</code>
+	<para>
+	produce o seguinte resultado:
+	</para>
+	<code>
+	  Q6: 3.6
+	  Q7: 3.7
+	  Q8: 3.63333
+	</code>
       </description>
     </function>
 
@@ -10093,12 +10256,14 @@
       </fnargs>
       <description>
 	<para>
-	  Se existe un ficheiro co nome do argumento <argname>nomeficheiro</argname>, e
-	  pode lerse, a función devolve unha cadea de texto que inclúe o contido
-	  dese ficheiro; noutro caso amosa un fallo. Se <argname>nomeficheiro</argname>
-	  non indica unha especificación da ruta completa ao ficheiro, vaise
-	  procurar en distintas localizacións <quote>probables</quote>, comezando
-	  polo cartafol vixente nese momento, <cmdref targ="workdir"/>.
+	  Se existe (e pode lerse) un ficheiro co nome do argumento
+	  <argname>nomeficheiro</argname>, a función devolve unha cadea de
+	  texto que inclúe o contido dese ficheiro; noutro caso amosa un fallo.
+	  Se <argname>nomeficheiro</argname> non indica unha especificación
+	  da ruta completa ao ficheiro, vaise procurar en distintas localizacións
+	  <quote>probables</quote>, comezando polo cartafol vixente nese
+	  momento, <cmdref targ="workdir"/>. Cando o ficheiro en cuestión
+	  está comprimido con gzip, manéxase do xeito evidente.
 	</para>
 	<para>
 	  Se <argname>nomeficheiro</argname> comeza cun identificador dun protocolo
@@ -12364,6 +12529,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">ruta</fnarg>
+	<fnarg optional="true" type="scalarref">coincidencias</fnarg>
       </fnargs>
       <description>
 	<para>
