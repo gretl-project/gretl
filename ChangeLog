@@ -1,6 +1,8 @@
 version 2020f, in progress
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
+- irf(): support calculation of multiple impulse responses
+  in a single call (with internal speed-up)
 - VAR internals: scrap augmented Cholesky matrix; so the
   $system.C accessor is now a square matrix
 - $system accessor: ensure presence of xlist member
