@@ -10,8 +10,8 @@
 #include <sys/stat.h>
 
 char line[1024];
-const char *START = "begin{code}";
-const char *END = "end{code}";
+const char *START = "begin{scode}";
+const char *END = "end{scode}";
 
 int first_char (const char *s)
 {
