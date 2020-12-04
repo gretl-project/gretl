@@ -13154,6 +13154,15 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>quantile_type</lit>: must be one of <lit>Q6</lit>
+	  (the default), <lit>Q7</lit> or <lit>Q8</lit>. Selects the
+	  specific method used by the <fncref targ="quantile"/>
+	  function. For details see <cite key="hyndman96">Hyndman and
+	  Fan (1996)</cite> or the Wikipedia entry at
+	  <url>https://en.wikipedia.org/wiki/Quantile</url>.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>huge</lit>: a large positive number (by default,
 	  1.0E100). This setting controls the value returned by the
 	  accessor <fncref targ="$huge"/>.
