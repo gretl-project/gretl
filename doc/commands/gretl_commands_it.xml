@@ -9622,23 +9622,22 @@
 
     <description>
       <para>
-	     Crea un dataset <quote>vuoto</quote>, che contiene solo
-	     una costante e una variabile indice, con periodicità 1 e
-	     il numero indicato di osservazioni. Ad esempio, è
-	     possibile creare un dataset a scopo di simulazione usando
-	     alcuni comandi come <cmd>uniform()</cmd> e
-	     <cmd>normal()</cmd>) i quali genereranno serie di dati ex
-	     nihilo che dovranno poi venir riempiti con dati. Questo
-	     comando può risultare particolarmente comodo se
-	     utilizzato assieme a <cmd>loop</cmd>.  Si veda anche
-	     l'opzione <quote>seed</quote> del comando <cmdref
-	     targ="set"/>.
+	Crea un dataset <quote>vuoto</quote>, che contiene solo una
+	costante e una variabile indice, con periodicità 1 e il numero
+	indicato di osservazioni. Ad esempio, è possibile creare un
+	dataset a scopo di simulazione usando alcuni comandi come
+	<cmd>uniform()</cmd> e <cmd>normal()</cmd>) i quali
+	genereranno serie di dati ex nihilo che dovranno poi venir
+	riempiti con dati. Questo comando può risultare
+	particolarmente comodo se utilizzato assieme a
+	<cmd>loop</cmd>.  Si veda anche l'opzione <quote>seed</quote>
+	del comando <cmdref targ="set"/>.
       </para>
       <para>
-	     Per impostazione predefinita, questo comando cancella tutti i dati
-        presenti nell'ambiente di lavoro di gretl. Usando l'opzione
-        <opt>preserve</opt>, verranno mantenute tutte le matrici attualmente
-        definite.
+	Per impostazione predefinita, questo comando cancella tutti i
+	dati presenti nell'ambiente di lavoro di gretl. Usando
+	l'opzione <opt>preserve</opt>, verranno mantenute tutte le
+	matrici attualmente definite.
       </para>
     </description>
 
@@ -13389,6 +13388,15 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <para><lit>fdjac_quality</lit>: un intero fra 0 e 2,
 	  corrsipondente all'algoritmo usato nella funzione <fncref
 	  targ="fdjac"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>quantile_type</lit>: una stringa
+	  (<quote>Q6</quote>, <quote>Q7</quote> o <quote>Q8</quote>),
+	  corrispondente al metodo usato per calcolare i quantili
+	  campionari secondo la classificazione di <cite
+	  key="hyndman96">Hyndman e Fan (1996)</cite>. Il default è
+	  <quote>Q6</quote>.
 	  </para>
 	</li>
       </ilist>

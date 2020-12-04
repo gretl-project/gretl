@@ -9863,6 +9863,29 @@
 	  <argname>p</argname> e <repl>n</repl> il numero di colonne
 	  di <argname>y</argname>.
 	</para>
+	<para>
+	  <cite key="hyndman96">Hyndman e Fan (1996)</cite>
+	  descrivono nove metodi diversi per il calcolo dei quantili
+	  campionari. Il metodo di default in gretl è quello indicato
+	  come <math>Q</math><sub>6</sub> (che è anche il default in
+	  Python). Volendo però optare per il metodo
+	  <math>Q</math><sub>7</sub> (di default in R) o il
+	  <math>Q</math><sub>8</sub> (quello consigliato da Hyndman
+	  and Fan) può essere usato il comando <cmdref
+	  targ="set"/>, per esempio così:
+	</para>
+	<code>
+	  set quantile_type Q7 # or Q8
+	</code>
+	<para context="tex">
+	  Il $p$-esimo quantile $Q_p$, per una serie $y$ di lunghezza
+	  $n$ è definito come: \[Q_p = y_{[k]} + (h - k) (y_{[k+1]} -
+	  y_{[k]})\] dove $k$ è la parte intera di $h$, un termine che
+	  varia a seconda dei metodi---$h=(n+1)p$ per $Q_6$,
+	  $(n-1)p+1$ per $Q_7$ e $(n+1/3)p + 1/3$ per $Q_8$---mentre
+	  $y_{[i]}$ è l'$i$-esimo elemento della serie ordinata in
+	  senso crescente.
+	</para>
 	<para context="tex">
 	  Per una serie di lunghezza $n$, il $p$-quantile, $q$, è
 	  definito come: \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} -
@@ -9870,6 +9893,27 @@
 	  $y_{[i]}$ è l'elemento $i$-esimo della serie ordinata in
 	  senso crescente.
 	</para>
+	<para>
+	Ad esempio, il codice
+	</para>
+	<code>
+	  set verbose off
+	  matrix x = seq(1,7)'
+	  set quantile_type Q6
+	  printf "Q6: %g\n", quantile(x, 0.45)
+	  set quantile_type Q7
+	  printf "Q7: %g\n", quantile(x, 0.45)
+	  set quantile_type Q8
+	  printf "Q8: %g\n", quantile(x, 0.45)
+	</code>
+	<para>
+	produce il seguente output:
+	</para>
+	<code>
+	  Q6: 3.6
+	  Q7: 3.7
+	  Q8: 3.63333
+	</code>
       </description>
     </function>
 
