@@ -1900,20 +1900,19 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
     if (targ >= n) {
         fprintf(stderr, "Target variable out of bounds\n");
         *err = E_DATA;
-        return NULL;
     }
 
-    if (periods <= 0) {
+    if (!*err && periods <= 0) {
         fprintf(stderr, "Invalid number of periods\n");
         *err = E_DATA;
-        return NULL;
     }
 
-    if (var->ord != NULL) {
+    if (!*err && var->ord != NULL) {
         C = reorder_responses(var, err);
-        if (*err) {
-            return NULL;
-        }
+    }
+
+    if (*err) {
+	return NULL;
     }
 
     B = gretl_matrix_block_new(&idx, n, n,
