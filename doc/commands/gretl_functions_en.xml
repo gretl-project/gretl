@@ -1319,6 +1319,80 @@
 
   </funclist>
 
+  <funclist name="String constants" ref="string_constants">
+
+   	<function name="$dotdir" section="stringconsts" output="string">
+        <description>
+        <para>    
+   	    Yields the path string of the directory gretl uses for temporary
+        files. To use it in string-substitution mode, prepend the at-sign
+        (@dotdir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gnuplot" section="stringconsts" output="string">
+        <description>
+        <para>
+        Yields the path to, or name of, the gnuplot executable. To use it
+        in string-substitution mode, prepend the at-sign (@gnuplot).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gretldir" section="stringconsts" output="string">
+        <description>
+        <para>
+        Yields the path string of the gretl installation directory. To use
+        it in string-substitution mode, prepend the at-sign (@gretldir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramo" section="stringconsts" output="string">
+        <description>
+        <para>
+         Yields the path to, or name of, the tramo executable. To use it in string-substitution mode, prepend the at-sign (@tramo)
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramodir" section="stringconsts" output="string">
+        <description>
+        <para>
+         Yields the path string of the tramo data directory. To use it in string-substitution mode, prepend the at-sign (@tramodir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$workdir" section="stringconsts" output="string">
+        <description>
+        <para>
+        Yields the path string of the user’s current gretl working directory.
+        To use it in string-substitution mode, prepend the at-sign (@workdir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12a" section="stringconsts" output="string">
+        <description>
+        <para>
+        Yields the path to, or name of, the x-12-arima executable. To use it
+        in string-substitution mode, prepend the at-sign (@x12a).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12adir" section="stringconsts" output="string">
+        <description>
+        <para>
+        Yields the path string of the x-12-arima data directory. To use it in string-substitution mode, prepend the at-sign (@x12adir).
+        </para>
+        </description>
+    </function>
+
+  </funclist>
+
   <funclist name="Functions proper" ref="functions">
 
     <function name="abs" section="math" output="asinput">
