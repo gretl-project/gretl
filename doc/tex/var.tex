@@ -121,7 +121,7 @@ var p X
 \end{scodebit}
 %$
 Output (selected portions):
-\begin{scodebit}
+\begin{outbit}
 Model 1: OLS, using observations 1960:3-1999:4 (T = 158)
 Dependent variable: LHUR
 
@@ -160,7 +160,7 @@ Equation 1: LHUR
 
 Mean dependent var   6.019198   S.D. dependent var   1.502549
 Sum squared resid    8.654176   S.E. of regression   0.237830
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 The gretl command for estimating a VAR is \cmd{var} which, in
@@ -268,7 +268,7 @@ var 6 Y --lagselect
 \end{scodebit}
 %$
 Output (selected portions):
-\begin{scodebit}
+\begin{outbit}
 VAR system, maximum lag order 4
 
 The asterisks below indicate the best (that is, minimized) values
@@ -296,7 +296,7 @@ lags        loglik    p(LR)       AIC          BIC          HQC
    4     636.03766  0.13926  -23.185210   -20.559827   -22.189144 
    5     658.36014  0.00016  -23.443271   -20.200150   -22.212836 
    6     669.88472  0.11243  -23.260601   -19.399743   -21.795797 
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 Warning: in finite samples the choice of the maximum lag, $p$, may
@@ -557,7 +557,7 @@ eval $test ~ $pvalue
 \end{scodebit}
 %$
 Output from tests:
-\begin{scodebit}
+\begin{outbit}
 ? modtest 4 --autocorr
 Test for autocorrelation of order up to 4
 
@@ -589,7 +589,7 @@ Ljung-Box Q' = 1.59931 with p-value = P(Chi-square(4) > 1.59931) = 0.809
       6.1151      0.19072 
       1.6714      0.79591 
       1.5993      0.80892 
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 %%% Local Variables: 

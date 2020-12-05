@@ -1243,7 +1243,7 @@ and applying formula \eqref{eq:mle-constvar}.
 \begin{script}[htbp]
   \caption{Example of ML estimation of a model under constraints}
   \label{ex:mle-constr}
-  \begin{scodebit}
+  \begin{scode}
 set verbose off
 set seed 7120
 
@@ -1298,7 +1298,7 @@ matrix vpar = qform(anJacob(psi)', $vcv)
 matrix cs = par ~ sqrt(diag(vpar))
 modprint cs "mean variance"
     
-  \end{scodebit}
+\end{scode}
 %$
 \end{script}
 
@@ -1362,7 +1362,7 @@ evaluations.
 \begin{script}[htbp]
   \caption{Handling non-convergence via \cmd{catch}}
   \label{ex:catch-mle}
-\begin{scodebit}
+\begin{scode}
 set verbose off
 nulldata 200
 set seed 8118
@@ -1393,7 +1393,7 @@ else
     pn = "m s2"
     modprint cs pn
 endif
-\end{scodebit}
+\end{scode}
 \end{script}
 
 

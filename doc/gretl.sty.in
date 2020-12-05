@@ -78,6 +78,10 @@
 {fontsize=\small, formatcom=\color{myteal}}
 
 \DefineVerbatimEnvironment%
+{outbit}{Verbatim}
+{fontsize=\small, formatcom=\color{myteal}}
+
+\DefineVerbatimEnvironment%
 {scodebot}{Verbatim}
 {frame=bottomline, framesep=2ex, fontsize=\small,
  formatcom=\color{myteal}, rulecolor=\color{mygray}}

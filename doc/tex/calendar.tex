@@ -276,7 +276,7 @@ series hcal = ed > epochday(-1752,9,2) ? gdate : jdate
 print ed jdate gdate hcal -o
 \end{scodebit}
 Partial output:
-\begin{scodebit}
+\begin{outbit}
               ed        jdate        gdate         hcal
 
   1       639551     17520101     17520112     17520101
@@ -288,7 +288,7 @@ Partial output:
 248       639798     17520904     17520915     17520915
 ...
 355       639905     17521220     17521231     17521231
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 Notice that although the series \texttt{hcal} contains the correct
@@ -311,7 +311,7 @@ genr markers = "%04d-%02d-%02d", y, m, d
 print ed jdate gdate hcal -o
 \end{scodebit}
 Partial output:
-\begin{scodebit}
+\begin{outbit}
                      ed        jdate        gdate         hcal
 
 1752-01-01       639551     17520101     17520112     17520101
@@ -323,7 +323,7 @@ Partial output:
 1752-09-15       639798     17520904     17520915     17520915
 ...
 1752-12-31       639905     17521220     17521231     17521231
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 \section{Year numbering}
@@ -355,7 +355,7 @@ genr markers = "%04d-%02d-%02d", y, m, d
 print index -o
 \end{scodebit}
 Partial output:
-\begin{scodebit}
+\begin{outbit}
 1750-01-01            1
 1750-01-02            2
 1750-01-03            3
@@ -366,5 +366,5 @@ Partial output:
 1751-03-26           85
 ...
 1751-12-31          365
-\end{scodebit}
+\end{outbit}
 \end{script}

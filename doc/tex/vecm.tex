@@ -833,7 +833,7 @@ end restrict
 ll1 = $rlnl
 \end{scodebit}
 Partial output:
-\begin{scodebit}
+\begin{outbit}
 Unrestricted loglikelihood (lu) = 116.60268
 Restricted loglikelihood (lr) = 115.86451
 2 * (lu - lr) = 1.47635
@@ -851,7 +851,7 @@ rs         0.0000       0.0000      -1.0000
           (0.0000)     (0.0000)     (0.0000) 
 y         -1.3304       0.0000       0.0000 
         (0.030533)     (0.0000)     (0.0000) 
-\end{scodebit}
+\end{outbit}
 %$
 \end{script}
 
@@ -902,14 +902,14 @@ printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 	pvalue(X, 4, 2*(ll0-ll_hfh))
 \end{scodebit}
 Output:
-\begin{scodebit}
+\begin{outbit}
 Testing zero restrictions in cointegration space:
   LR-test, rank = 3: chi^2(3) = 1.4763 [0.6877]
 Unit income elasticity: LR-test, rank = 3:
   chi^2(4) = 17.2071 [0.0018]
 Homogeneity in the Fisher hypothesis:
   LR-test, rank = 3: chi^2(4) = 15.547 [0.0037]  
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 Another type of test that is commonly performed is the ``weak
@@ -960,13 +960,13 @@ loop foreach i m p l s y
 endloop
 \end{scodebit}
 Output (variable, LR test, p-value):
-\begin{scodebit}
+\begin{outbit}
 Delta m	18.111 [0.0060]
 Delta p	21.067 [0.0018]
 Delta l	11.819 [0.0661]
 Delta s	16.000 [0.0138]
 Delta y	11.335 [0.0786]
-\end{scodebit}
+\end{outbit}
 %$
 \end{script}
 
