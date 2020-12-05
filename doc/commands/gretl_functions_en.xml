@@ -5713,9 +5713,9 @@
 	</para>
 	<para>
 	  When confidence intervals are produced they are derived via
-	  bootstrapping, with resampling of the residuals from initial
-	  estimation of the system. This assumes the lag order of the
-	  VAR or VECM is sufficient to <quote>whiten</quote> the
+	  bootstrapping, with resampling of the original residuals.
+	  It is assumed that the lag order of the VAR or VECM is
+	  sufficient to eliminate serial correlation of the
 	  residuals. By default the number of bootstrap replications
 	  is 1999, but that can be adjusted via <cmdref targ="set"/>,
 	  as in
