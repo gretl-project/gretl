@@ -1785,7 +1785,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
  * function.  Otherwise, the response matrix returned has
  * three columns, containing the point estimate, the @alpha / 2
  * quantile and the 1 - @alpha / 2 quantile, where the quantiles
- * are based on 999 bootstrap replications, with resampling of the
+ * are based on bootstrap replication, with resampling of the
  * original residuals with replacement.
  *
  * Returns: matrix containing the estimated impulse responses,
