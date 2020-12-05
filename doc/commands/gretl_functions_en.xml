@@ -1368,7 +1368,7 @@
     <function name="$workdir" section="stringconsts" output="string">
         <description>
         <para>
-        Yields the path string of the user’s current gretl working directory.
+        Yields the path string of the user's current gretl working directory.
         To use it in string-substitution mode, prepend the at-sign (@workdir).
         </para>
         </description>
