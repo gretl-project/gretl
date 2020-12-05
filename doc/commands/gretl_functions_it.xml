@@ -5645,31 +5645,55 @@
 	<fnarg type="int">target</fnarg>
 	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
+	<fnarg type="bundle" optional="true">sys</fnarg>
       </fnargs>  
       <description>
 	<para>
-	  Questa funzione è disponibile solo quando l'ultimo modello
-	  stimato è un VAR o VECM. Produce una matrice contenente le
-	  risposte stimate della variabile <argname>target</argname>
-	  ad un impulso di una deviazione standard nella variabile
-	  <argname>shock</argname>. Queste variabili sono identificate
-	  dalla loro posizione nella specificazione VAR: ad esempio,
-	  se <argname>target</argname> e <argname>shock</argname> sono
-	  rispettivamente pari a 1 e 3, la matrice che ne risulta
-	  fornisce le risposte della prima variabile nella
-	  specificazione VAR ad uno shock nella terza variabile.
+	  Questa funzione produce le risposte di impulso (IRF) stimate
+	  relative ad un VAR o ad un VECM, fino a un certo
+	  orizzonte. Se l'ultimo argomento (opzionale) è omesso, la
+	  funzione produce risultati solo se l'ultimo modello stimato
+	  è un VAR o un VECM. In caso contrario, si assume che le
+	  informazioni necessarie siano contenute nel bundle
+	  <argname>sys</argname>, che deve avere la stessa struttura
+	  di quello prodotto dell'accessore <fncref targ="$system"/>
+	  per tali modelli.
 	</para>
 	<para>
+	  Gli argomenti <argname>target</argname> e
+	  <argname>shock</argname> sono gli indici (partendo da 1)
+	  delle variabili endogene del sistema, mentre 0 è un codice
+	  convenzionale per <quote>tutte</quote>. Le IRF sono espresse
+	  nell'unità di misura della variabile
+	  <argname>target</argname> e sono relative ad uno shock di
+	  una deviazione standard nella variabile <argname>shock</argname>.
 	  Se si specifica l'argomento opzionale
-	  <argname>alpha</argname>, la matrice dei risultati ha tre
-	  colonne: le stime puntuali delle risposte, seguite dai
-	  limiti superiore e inferiore dell'intervallo di confidenza
-	  per 1 &minus; &agr; ottenuti attraverso bootstrap.  (Quindi
-	  <argname>alpha</argname> = 0.1 corrisponde a un intervallo
-	  di confidenza al 90 percento.) Se <argname>alpha</argname> è
-	  omesso o posto pari a zero, il risultato contiene solo le
-	  stime puntuali.
+	  <argname>alpha</argname>, la matrice dei risultati
+	  comprenderà anche un intervallo di confidenza al livello 1 &minus; &agr;,
+	  per cui da esempio il valore 0.1 fornisce un intervallo al
+	  90 per cento.
 	</para>
+	<para>
+	  Il frammento di codice che segue illustra l'uso della
+	  funzione. Nel primo esempio, la matrice <lit>ir1</lit>
+	  contiene le IRF di <lit>y1</lit> alle innovazioni di
+	  ciascuna fra <lit>y1</lit>, <lit>y2</lit> e <lit>y3</lit>
+	  (visto che <argname>alpha</argname> è omesso, si tratta di
+	  stime puntuali). Nel secondo, <lit>ir2</lit> contiene tutte
+	  le IRF rispetto a uno shock in <lit>y2</lit>,
+	  con un intervallo di confidenza del 90 per cento. In questo
+	  caso, la matrice risultato avrà 9 colonne: ogni IRF occupa
+	  tre colonne adiacenti, con stima puntuale e limiti della
+	  banda di confidenza.  Nell'ultimo esempio, la matrice
+	  prodotta ha 27 colonne: 3 per ogni IRF per tutte le
+	  variabilli per tutti gli shock.
+	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  matrix ir1 = irf(1, 0)
+	  matrix ir2 = irf(0, 2, 0.1)
+	  matrix ir3 = irf(0, 0, 0.1)
+	</code>
 	<para>
 	  Il numero di periodi (righe) su cui sono calcolate le
 	  risposte è determinato automaticamente sulla base della
