@@ -935,7 +935,7 @@ matrix u = $uhat
 matrix b = m1.$coeff
 matrix v2 = m1.$vcv[1:2,1:2]
 \end{code}
-%$
+%
 The first command grabs the residuals from the last model; the second
 grabs the coefficient vector from model \texttt{m1}; and the third
 (which uses the mechanism of submatrix selection described above)
@@ -1064,13 +1064,12 @@ to first position.
 function void normalize_list (matrix *x)
   # If the matrix (representing a list) contains var 0,
   # but not in first position, move it to first position
-
   if (x[1] != 0)
      scalar k = cols(x)
      loop for (i=2; i<=k; i++)
         if (x[i] == 0)
-            x[i] == x[1]
-            x[1] == 0
+            x[i] = x[1]
+            x[1] = 0
             break
          endif
      endloop
@@ -1082,6 +1081,7 @@ list Xl = 2 3 0 4
 matrix x = Xl
 normalize_list(&x)
 list Xl = x
+list Xl print
 \end{scode}
 \end{script}
 

@@ -261,7 +261,7 @@ and \cmd{carg}.
     start of the chapter: $z = |z|\,(\cos \theta + i\,\sin \theta)$ or
     $z = |z|\,e^{i\theta}$.}
   \label{cmplx-modes}
-\begin{scode}
+\begin{scodebit}
 # complex values in a + b*i form
 scalar rp5 = sqrt(0.5)
 matrix A = {1, rp5, 0, -rp5, -1, -rp5,  0,  rp5}'
@@ -280,9 +280,9 @@ matrix Z1 = zmod .* complex(cos(theta), sin(theta))
 matrix Z2 = zmod .* exp(complex(0, theta))
 matrix chk = Z ~ Z1 ~ Z2
 print chk
-\end{scode}
+\end{scodebit}
   Printing of \texttt{Polar} and \texttt{chk}
-\begin{scode}
+\begin{outbit}
      modulus     radians     degrees
       1.0000      0.0000      0.0000
       1.0000      0.7854     45.0000
@@ -301,7 +301,7 @@ print chk
 -0.70711 - 0.70711i  -0.70711 - 0.70711i  -0.70711 - 0.70711i
  0.00000 - 1.00000i   0.00000 - 1.00000i   0.00000 - 1.00000i
  0.70711 - 0.70711i   0.70711 - 0.70711i   0.70711 - 0.70711i
-\end{scode}
+\end{outbit}
 \end{script}
 
 \subsection{Transformations}

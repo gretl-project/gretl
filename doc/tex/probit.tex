@@ -103,7 +103,7 @@ probit GRADE const GPA TUCE PSI
 As an example, we reproduce the results given in chapter 21 of
 \cite{greene00}, where the effectiveness of a program for teaching
 economics is evaluated by the improvements of students' grades.
-Running the code in example \ref{simple-QR} gives the output reported
+Running the code in Listing~\ref{simple-QR} gives the output reported
 in Table \ref{tab:logit-probit}. Note that for the probit model a
 conditional moment test on skewness and kurtosis \citep*{JBL84} is
 printed automatically as a test for normality.
@@ -166,7 +166,7 @@ Test for normality of residual -
   Test statistic: Chi-square(2) = 3.61059
   with p-value = 0.164426
 \end{code}
-  \caption{Example logit and probit}
+  \caption{Example logit and probit output}
   \label{tab:logit-probit}
 \end{table}
 
@@ -206,7 +206,6 @@ printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
 \end{scode}
 \end{script}
-%$
 
 \subsection{The perfect prediction problem}
 \label{sec:perfpred}
@@ -430,7 +429,7 @@ smpl year==87 --restrict
 logit status 0 educ exper expersq black --multinomial
 \end{scodebit}
 Output (selected portions):
-\begin{scodebit}
+\begin{outbit}
 Model 1: Multinomial Logit, using observations 1-1738 (n = 1717)
 Missing or incomplete observations dropped: 21
 Dependent variable: status
@@ -457,7 +456,7 @@ Schwarz criterion    1890.198   Hannan-Quinn         1855.874
 
 Number of cases 'correctly predicted' = 1366 (79.6%)
 Likelihood ratio test: Chi-square(8) = 583.722 [0.0000]  
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 Listing~\ref{ex:mlogit} reproduces Table 15.2 in
@@ -763,7 +762,7 @@ yhat = $yhat + gen_resid
 corr ystar yhat 
 \end{scodebit}
 Output (selected portions):
-\begin{scodebit}
+\begin{outbit}
 Model 1: Interval estimates using the 100 observations 1-100
 Lower limit: lo_bound, Upper limit: hi_bound
 
@@ -787,7 +786,7 @@ Point observations: 0
 corr(ystar, yhat) = 0.98960092
 Under the null hypothesis of no correlation:
  t(98) = 68.1071, with two-tailed p-value 0.0000
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 As with the probit and Tobit models, after a model has been estimated
@@ -1280,6 +1279,7 @@ appropriate in this case.)
 
 \begin{script}[htbp]
   \caption{Models for recidivism data}
+  \label{ex:duration1}
 Input:
 \begin{scodebit}
 open recid.gdt
@@ -1289,7 +1289,7 @@ duration durat 0 X ; cens
 duration durat 0 X ; cens --lognormal
 \end{scodebit}
 Partial output:
-\begin{scodebit}
+\begin{outbit}
 Model 1: Duration (Weibull), using observations 1-1445
 Dependent variable: durat
 
@@ -1331,9 +1331,7 @@ Dependent variable: durat
 
 Chi-square(10)       166.7361   p-value              1.31e-30
 Log-likelihood      -1597.059   Akaike criterion     3218.118
-
-\end{scodebit}
-\label{ex:duration1}
+\end{outbit}
 \end{script}
 
 On a priori grounds, however, we may doubt the monotonic decline in

@@ -1,7 +1,13 @@
-CC = gcc -Wall -W -O2
+topsrc = @top_srcdir@
+auxdir = @abs_builddir@
+CC = @CC@
 
-scriptbits: extract_scripts
-	./extract_scripts > $@
+texdir = $(topsrc)/doc/tex
+vpath %.c = $(texdir)
+
+scripts: extract_scripts
+	./extract_scripts $(texdir) $(auxdir)
 
 extract_scripts: extract_scripts.c
-	$(CC) -o $@ $<
+	$(CC) -W -o $@ $<
+

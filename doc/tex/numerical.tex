@@ -187,7 +187,6 @@ fourth must lie between 0 and 1:
 \begin{code}
 matrix bounds = {2, 0, $huge; 4, 0, 1}
 \end{code}
-% $
 
 \subsection{Newton--Raphson}
 \label{sec:newton-raphson}
@@ -243,8 +242,8 @@ function void Rosen_hess (matrix *H, const matrix param)
   H[2,2] = 200
 end function
 
-matrix theta = { 0, 0 }
-matrix grad = { 0, 0 }
+matrix theta = {0, 0}
+matrix grad = {0, 0}
 matrix H = zeros(2, 2)
 set max_verbose 1
 M = NRmax(&theta, Rosenbrock(theta), Rosen_grad(&grad, theta), 
