@@ -1,0 +1,63 @@
+This note describes the various LaTeX environments used for "code"
+(in a broad sense) in the tex sources for the Gretl User's Guide.
+
+First note that there are two types of code material in the Guide:
+
+(1) Chunks or one-liners interspersed in the text.
+
+(2) Hansl code and/or output packaged as a "float" using
+    the "script" environment defined in gretl.sty (on the
+    pattern of the figure and table environments).
+   
+We currently use the environments code, script, scode, scodebit
+and outbit (the last being new as of December 2020).
+
+* Use of "code" looks like:
+
+  \begin{code}
+     stuff goes here
+  \end{code}
+  
+  The content of this environment is shown in a small monospace
+  font and indented relative to the surrounding text. It is
+  primarily intended for use (1) above.
+
+* "scode": This is used within the script environment, when the
+  only content of the float is program code (no output included).
+  
+  \begin{script}[...]
+  \caption{...}
+  \label{...}
+  \begin{scode}
+     Code goes here
+  \end{scode}
+  \end{script}
+  
+  The content is shown in a small monospace font, colored teal, with
+  rules at top and bottom.
+  
+* "scodebit": This should be used within the script environment,
+  along with "outbit", when the float contains both program code
+  and output:
+  
+  \begin{script}[...]
+  \caption{...}
+  \label{...}
+  can put short text here
+  \begin{scodebit}
+     Code goes here
+  \end{scodebit}
+  can put short text here
+  \begin{outbit}
+     Output goes here
+  \end{outbit}
+  \end{script}
+  
+  The appearance of content within scodebit (and outbit) is the same
+  as scode, except that the rules are omitted.
+
+* "outbit": Used in the script environment rather than scodebit to
+  signal that its content should not be included when we auto-
+  extract scripts from the Guide chapter files.
+
+Last revised 2020-12-06
