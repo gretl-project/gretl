@@ -27,8 +27,10 @@ only supports the so-called ``difference'' estimator
 method of choice in the applied literature.
 
 \section{Introduction}
+\label{sec:dpanel-intro}
+
 \subsection{Notation}
-\label{sec:notation}
+\label{sec:dpanel-notation}
 
 A dynamic linear panel data model can be represented as follows
 (in notation based on \cite{arellano03}):
@@ -247,6 +249,7 @@ replicating published results may prove tricky if your dataset
 contains individuals with gaps between valid observations.
 
 \section{Usage}
+\label{sec:dpanel-usage}
 
 One of the concepts underlying the syntax of \texttt{dpanel} is that
 you get default values for several choices you may want to make, so
@@ -830,6 +833,7 @@ used, which in turn depends on the details of the implementation of
 the estimator.
 
 \section{Auxiliary test statistics}
+\label{sec:dpanel-aux}
 
 We have concentrated above on the parameter estimates and standard
 errors. It may be worth adding a few words on the additional test
@@ -897,13 +901,14 @@ self-explanatory, but here's a partial list:
 Note, however, that \texttt{GMMinst} and \texttt{wgtmat} (which may be
 quite large matrices) are not saved in the \dollar{model} bundle by
 default; that requires use of the \option{keep-extra} option with the
-\cmd{dpanel} command. The script in Table \ref{tab:dpanel-rep}
-illustrates use of these matrices to replicate via hansl commands the
-calculation of the GMM estimator.
+\cmd{dpanel} command. Listing~\ref{ex:dpanel-rep} illustrates use
+of these matrices to replicate via hansl commands the calculation of
+the GMM estimator.
 
-\begin{table}[htbp]
-\label{tab:dpanel-rep}
-  \begin{scode}
+\begin{script}[p]
+  \caption{replication of built-in command via hansl commands}
+  \label{ex:dpanel-rep}
+\begin{scode}
 set verbose off
 open abdata.gdt
 
@@ -937,11 +942,11 @@ matrix coef = due\tre
 
 print coef
 \end{scode}
-  \caption{replication of built-in command via hansl commands}
-\end{table}
+\end{script}
+
 
 \section{Memo: \texttt{dpanel} options}
-\label{sec:options}
+\label{sec:dpanel-options}
 
 \begin{center}
 \begin{tabular}{lp{.7\textwidth}}

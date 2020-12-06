@@ -406,7 +406,6 @@ vars <- as.matrix(strmod$coef)
 gretl.export(compon)
 gretl.export(vars)
 \end{code}
-%$
 
 Running this script via gretl produces minimal output:
 \begin{code}
@@ -485,8 +484,14 @@ a subset thereof specified via a named list.  The \option{quiet}
 option prevents the output from \app{R} from being echoed in the gretl
 output.
 
+Using this method, replicating the example in the previous subsection
+is rather easy: basically, all it takes is encapsulating the content
+of the \app{R} script in a \texttt{foreign}\ldots\texttt{end foreign}
+block; see Listing~\ref{RStructTS-simple}.
+
 \begin{script}[htbp]
   \caption{Estimation of the Basic Structural Model -- simple}
+  \label{RStructTS-simple}
 \begin{scode}
 open bjg.gdt
 
@@ -506,17 +511,16 @@ rename sea lg_seas
 
 vars = mread("vars.mat", 1)
 \end{scode}
-\label{RStructTS-simple}
 \end{script}
-%$
 
-Using this method, replicating the example in the previous subsection
-is rather easy: basically, all it takes is encapsulating the content
-of the \app{R} script in a \texttt{foreign}\ldots\texttt{end foreign}
-block; see example \ref{RStructTS-simple}.
+The above syntax, despite being already quite useful by itself, shows
+its full power when it is used in conjunction with user-written
+functions.  Listing~\ref{RStructTS-func} shows how to define a
+gretl function that calls \app{R} internally.
 
 \begin{script}[htbp]
   \caption{Estimation of the Basic Structural Model -- via a function}
+  \label{RStructTS-func}
 \begin{scode}
 function list RStructTS(series myseries)
     smpl ok(myseries) --restrict
@@ -543,14 +547,7 @@ end function
 open bjg.gdt
 list X = RStructTS(lg)
 \end{scode}
-
-\label{RStructTS-func}
 \end{script}
-
-The above syntax, despite being already quite useful by itself, shows
-its full power when it is used in conjunction with user-written
-functions.  Listing~\ref{RStructTS-func} shows how to define a
-gretl function that calls \app{R} internally.
 
 \section{Performance issues with \app{R}}
 \label{sec:R-performance}
