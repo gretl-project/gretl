@@ -18,7 +18,7 @@ series pf = 100*(log(PC6IT)-log(PC6IT[1973:01]))
 smpl 1974:2 ;
 
 # Determine cointegration rank
-coint2 12 p s pf
+johansen 12 p s pf
 
 # Estimate VECM: lag order 12, cointegration rank 1
 Hamilton <- vecm 12 1 p s pf

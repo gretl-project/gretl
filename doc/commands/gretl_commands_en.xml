@@ -1832,6 +1832,10 @@
 	key="mackinnon96">MacKinnon (1996)</cite>.  The relevant code
 	is included by kind permission of the author.
       </para>
+      <para>
+	For the cointegration tests due to Søren Johansen, see <cmdref
+	targ="johansen"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -1840,7 +1844,7 @@
 
   </command>
 
-  <command name="coint2" section="Tests" label="Johansen cointegration test">
+  <command name="johansen" section="Tests" label="Johansen cointegration test">
 
     <usage>
       <arguments>
@@ -1896,9 +1900,9 @@
         </option>
       </options>
       <examples>
-        <example>coint2 2 y x</example>
-	<example>coint2 4 y x1 x2 --verbose</example>
-	<example>coint2 3 y x1 x2 --rc</example>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
 	<demos>
 	  <demo>hamilton.inp</demo>
 	  <demo>denmark.inp</demo>
@@ -15615,7 +15619,7 @@
 	individually integrated of order 1 (that is, are random walks, with or
 	without drift), but exhibit cointegration.  This command is closely
 	related to the Johansen test for cointegration (see <cmdref
-	  targ="coint2"/>).
+	  targ="johansen"/>).
       </para>
 
       <para context="cli">

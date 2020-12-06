@@ -147,11 +147,11 @@ Estimation typically proceeds in two stages: first, a sequence of
 tests is run to determine $r$, the cointegration rank. Then, for a
 given rank the parameters in equation (\ref{eq:VECMab}) are estimated.
 The two commands that gretl offers for estimating these systems
-are \texttt{coint2} and \texttt{vecm}, respectively. 
+are \texttt{johansen} and \texttt{vecm}, respectively.
 
-The syntax for \texttt{coint2} is 
+The syntax for \texttt{johansen} is
 \begin{code}
-  coint2 p ylist [ ; xlist [ ; zlist ] ]
+  johansen p ylist [ ; xlist [ ; zlist ] ]
 \end{code}
 where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR});
 \texttt{ylist} is a list containing the $y_t$ variables;
@@ -166,7 +166,7 @@ The syntax for \texttt{vecm} is
 where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR});
 \texttt{r} is the cointegration rank; and the lists
 \texttt{ylist}, \texttt{xlist} and \texttt{zlist} have the
-same interpretation as in \texttt{coint2}.
+same interpretation as in \texttt{johansen}.
 
 Both commands can be given specific options to handle the treatment of
 the deterministic component $\mu_t$. These are discussed in the
@@ -358,7 +358,7 @@ The previous example can be generalized in three directions:
 \end{enumerate}
 
 In order to accommodate the five cases, gretl provides the
-following options to the \texttt{coint2} and \texttt{vecm} commands:
+following options to the \texttt{johansen} and \texttt{vecm} commands:
 \begin{center}
   \begin{tabular}{ccl}
     $\mu_t$ & \textit{option flag} & \textit{description} \\ [4pt]
@@ -390,7 +390,7 @@ smallest. The null hypothesis for the $\lambda$-max test on the $i$-th
 eigenvalue is that $\lambda_i = 0$. The corresponding trace test,
 instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge i$.
 
-The gretl command \cmd{coint2} performs these two
+The gretl command \cmd{johansen} performs these two
 tests. The corresponding menu entry in the GUI is ``Model, Time
 Series, Cointegration Test, Johansen''.
 
@@ -402,7 +402,7 @@ Johansen's example found in his 1995 book.
 %
 \begin{code}
 open denmark
-coint2 2 LRM LRY IBO IDE --rc --seasonals
+johansen 2 LRM LRY IBO IDE --rc --seasonals
 \end{code}
 %
 In this case, the vector $y_t$ in equation (\ref{eq:VECM}) comprises

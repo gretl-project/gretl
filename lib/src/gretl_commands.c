@@ -49,7 +49,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { CLEAR,    "clear" },
     { COEFFSUM, "coeffsum" },
     { COINT,    "coint" },
-    { COINT2,   "coint2" },
+    { COINT2,   "johansen" },
     { CORR,     "corr" },
     { CORRGM,   "corrgm" },
     { CUSUM,    "cusum" },
@@ -194,6 +194,7 @@ static struct gretl_cmd gretl_cmd_aliases[] = {
     { GENR, "lists" },
     { GENR, "arrays" },
     { ARMA, "arma" },
+    { COINT2, "coint2" },
     { NC,   NULL }
 };
 
