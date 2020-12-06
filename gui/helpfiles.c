@@ -1464,7 +1464,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 		}
 	    }
 
-	    /* special: "coint2" command */
+	    /* special: "coint2" command alias (remove?) */
 	    if (!got_dollar && text != NULL && !strcmp(text, "coint")) {
 		if (gtk_text_iter_forward_char(&w_end)) {
 		    gchar *s = gtk_text_buffer_get_text(buf, &w_start,

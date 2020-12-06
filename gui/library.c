@@ -933,7 +933,7 @@ int do_coint (selector *sr)
     if (action == COINT) {
         lib_command_sprintf("coint %s%s", buf, flagstr);
     } else {
-        lib_command_sprintf("coint2 %s%s", buf, flagstr);
+        lib_command_sprintf("johansen %s%s", buf, flagstr);
     }
 
     if (parse_lib_command() || bufopen(&prn)) {
