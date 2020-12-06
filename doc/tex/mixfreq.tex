@@ -671,8 +671,8 @@ list DJ = djc*
 open fedstl.bin
 data indpro
 
-# high-frequency plot
-hfplot DJ ; indpro --with-lines --output=daily.pdf \
+# high-frequency plot (set --output=daily.pdf for PDF)
+hfplot DJ ; indpro --with-lines --output=display \
  {set key top left;}
 \end{scode}
 \end{script}

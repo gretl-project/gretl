@@ -6019,11 +6019,11 @@
 	  The argument <argname>ed</argname> is interpreted as an
 	  epoch day, which equals 1 for the first of January in the
 	  year AD 1 on the proleptic Gregorian calendar. The default
-	  return value&mdash;of the same type as
-	  <argname>ed</argname>&mdash;is an 8-digit number, or a
-	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
-	  (ISO 8601 <quote>basic</quote> format), giving the Gregorian
-	  calendar date corresponding to the epoch day.
+	  return value (of the same type as <argname>ed</argname>) is
+	  an 8-digit number, or a series of such numbers, on the
+	  pattern <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote>
+	  format), giving the Gregorian calendar date corresponding to
+	  the epoch day.
 	</para>
 	<para>
 	  If <argname>ed</argname> is a scalar (only) and the optional

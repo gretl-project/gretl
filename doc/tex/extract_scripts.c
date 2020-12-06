@@ -206,7 +206,7 @@ int process_tex_file (const char *fname)
 	FILE *fa = open_aux_file(fname);
 	int i, err = 0;
 
-	printf("\nCHAPTER ID '%s': %d script(s)\n", chaplabel, n_scripts);
+	printf("\nChapter ID '%s': %d script(s)\n", chaplabel, n_scripts);
 	if (fa == NULL) {
 	    exit(EXIT_FAILURE);
 	}
@@ -237,7 +237,7 @@ int process_tex_file (const char *fname)
 	    fclose(fa);
 	}
     } else {
-	printf("\nCHAPTER ID '%s': no scripts\n", chaplabel);
+	printf("\nChapter ID '%s': no scripts\n", chaplabel);
     }
 
     return 0;
