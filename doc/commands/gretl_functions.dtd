@@ -43,7 +43,7 @@
 <!ATTLIST function
    name    CDATA #REQUIRED
    targ    CDATA #IMPLIED
-   section (data-utils | filters | linalg | math | matbuild | 
+   section (data-utils | filters | linalg | math | matbuild | stringconsts |
             matshape | numerical | probdist | stats | sspace | strings | 
             transforms | access | calendar | midas | complex | mpi) "math"
    output  (scalar | series | matrix | smatrix | vector | string | seebelow |

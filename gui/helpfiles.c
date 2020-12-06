@@ -323,6 +323,8 @@ static const char *real_funcs_heading (const char *s)
 {
     if (!strcmp(s, "access")) {
 	return _("Accessors");
+    } else if (!strcmp(s, "stringconsts")) {
+	return _("Built-in strings");
     } else if (!strcmp(s, "math")) {
 	return _("Mathematical");
     } else if (!strcmp(s, "numerical")) {
