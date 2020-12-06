@@ -156,6 +156,7 @@ matrix xy = { PRIME, UNEMP }
 mwrite(xy, "xy.mat", 1)
 
 foreign language=Octave
+ pkg load signal
  # uncomment and modify the following if necessary
  # addpath("~/stats/octave/forni");
  xy = gretl_loadmat("xy.mat");
