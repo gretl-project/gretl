@@ -1844,208 +1844,6 @@
 
   </command>
 
-  <command name="johansen" section="Tests" label="Johansen cointegration test">
-
-    <usage>
-      <arguments>
-        <argument>order</argument>
-        <argument>ylist</argument>
-	<argblock optional="true" separated="true">
-	  <argument>xlist</argument>
-	</argblock>
-	<argblock optional="true" separated="true">
-	  <argument>rxlist</argument>
-	</argblock>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--nc</flag>
-	  <effect>no constant</effect>
-        </option>
-        <option>
-	  <flag>--rc</flag>
-	  <effect>restricted constant</effect>
-        </option>
-        <option>
-	  <flag>--uc</flag>
-	  <effect>unrestricted constant</effect>
-        </option>
-        <option>
-	  <flag>--crt</flag>
-	  <effect>constant and restricted trend</effect>
-        </option>
-        <option>
-	  <flag>--ct</flag>
-	  <effect>constant and unrestricted trend</effect>
-        </option>
-        <option>
-	  <flag>--seasonals</flag>
-	  <effect>include centered seasonal dummies</effect>
-        </option>
-        <option>
-	  <flag>--asy</flag>
-	  <effect>record asymptotic p-values</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>print just the tests</effect>
-        </option>
-        <option>
-	  <flag>--silent</flag>
-	  <effect>don't print anything</effect>
-        </option>
-        <option>
-	  <flag>--verbose</flag>
-	  <effect>print details of auxiliary regressions</effect>
-        </option>
-      </options>
-      <examples>
-        <example>johansen 2 y x</example>
-	<example>johansen 4 y x1 x2 --verbose</example>
-	<example>johansen 3 y x1 x2 --rc</example>
-	<demos>
-	  <demo>hamilton.inp</demo>
-	  <demo>denmark.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Carries out the Johansen test for cointegration among the
-	variables in <repl>ylist</repl> for the given lag order.  For
-	details of this test see <guideref targ="chap:vecm"/> or <cite
-	key="hamilton94">Hamilton (1994)</cite>, Chapter 20. P-values
-	are computed via Doornik's gamma approximation <cite
-	key="doornik98" p="true">(Doornik, 1998)</cite>. Two sets of
-	p-values are shown for the trace test, straight asymptotic
-	values and values adjusted for the sample size. By default the
-	<fncref targ="$pvalue"/> accessor gets the adjusted variant,
-	but the <opt>asy</opt> flag may be used to record the
-	asymptotic values instead.
-      </para>
-
-      <para context="gui">
-	Carries out the Johansen test for cointegration among the
-	listed variables for the selected lag order.  For details of
-	this test see, for example, Hamilton, <book>Time Series
-	Analysis</book> (1994), Chapter 20.  P-values are computed via
-	Doornik's (1998) gamma approximation. Two sets of
-	p-values are shown for the trace test, straight asymptotic
-	values and values adjusted for the sample size.
-      </para>
-
-      <para context="cli">
-	The inclusion of deterministic terms in the model is controlled by
-	the option flags.  The default if no option is specified is to
-	include an <quote>unrestricted constant</quote>, which allows for
-	the presence of a non-zero intercept in the cointegrating
-	relations as well as a trend in the levels of the endogenous
-	variables.  In the literature stemming from the work of Johansen
-	(see for example his 1995 book) this is often referred to as
-	<quote>case 3</quote>.  The first four options given above, which
-	are mutually exclusive, produce cases 1, 2, 4 and 5 respectively.
-	The meaning of these cases and the criteria for selecting a case
-	are explained in <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="gui">
-	The inclusion of deterministic terms in the model is controlled by
-	the drop-down option list.  The default is to include an
-	<quote>unrestricted constant</quote>, which allows for the
-	presence of a non-zero intercept in the cointegrating relations as
-	well as a trend in the levels of the endogenous variables.  In the
-	literature stemming from the work of Johansen (see for example his
-	1995 book) this is often referred to as <quote>case 3</quote>. The
-	other four options produce cases 1, 2, 4 and 5 respectively. The
-	meaning of these cases and the criteria for selecting a case are
-	explained in <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="cli">
-	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
-	allow you to control for specified exogenous variables: these
-	enter the system either unrestrictedly (<repl>xlist</repl>) or
-	restricted to the cointegration space (<repl>rxlist</repl>). These
-	lists are separated from <repl>ylist</repl> and from each other by
-	semicolons.
-      </para>
-
-      <para context="gui">
-	You may control for exogenous variables by adding them to the
-	lower list box.  By default these enter the model in unrestricted
-	form (indicated by a <lit>U</lit> next to the name of the
-	variable).  If you want a certain exogenous variable to be
-	restricted to the cointegrating space, right-click on it and
-	select <quote>Restricted</quote> from the pop-up menu.  The symbol
-	next to the variable will change to R.
-      </para>
-
-      <para context="cli">
-	The <opt>seasonals</opt> option, which may be combined with any of the
-	other options, specifies the inclusion of a set of centered seasonal
-	dummy variables.  This option is available only for quarterly or monthly
-	data.
-      </para>
-
-      <para context="gui">
-	If the data are quarterly or monthly, a check box is shown that allows
-	you to include a set of centered seasonal dummy variables.  In all
-	cases, an additional check box (<quote>Show details</quote>) allows
-	for the printing of the auxiliary regressions that form the starting
-	point of the Johansen maximum likelihood estimation procedure.
-      </para>
-
-      <para context="notex">
-	The following table is offered as a guide to the
-	interpretation of the results shown for the test, for the
-	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
-	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
-	number of cointegrating relations.
-      </para>
-      <mono context="notex">
-         Rank     Trace test         Lmax test
-                  H0     H1          H0     H1
-         ---------------------------------------
-          0      c = 0  c = 3       c = 0  c = 1
-          1      c = 1  c = 3       c = 1  c = 2
-          2      c = 2  c = 3       c = 2  c = 3
-         ---------------------------------------
-      </mono>
-      <para context="tex">
-	The following table is offered as a guide to the
-	interpretation of the results shown for the test, for the
-	3-variable case.  $H_0$ denotes the null hypothesis,
-	$H_1$ the alternative hypothesis, and $c$ the
-	number of cointegrating relations.
-
-	\begin{center}
-	\begin{tabular}{cllll}
-	&amp; \multicolumn{2}{c}{Trace test} &amp;
-	   \multicolumn{2}{c}{$\lambda$-max test} \\
-	Rank &amp;  \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} &amp;
-	       \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
- 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
-	\end{tabular}
-	\end{center}
-      </para>
-
-      <para>
-	See also the <cmdref targ="vecm"/> command.
-      </para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Model/Multivariate time series</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="compact" section="Dataset" context="gui"
     label="Compact data">
 
@@ -6685,6 +6483,210 @@
 	  and more bootstrap options.)
 	  </para>
     </description>
+
+  </command>
+
+  <command name="johansen" section="Tests" label="Johansen cointegration test">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>ylist</argument>
+	<argblock optional="true" separated="true">
+	  <argument>xlist</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>rxlist</argument>
+	</argblock>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>no constant</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>restricted constant</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>unrestricted constant</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>constant and restricted trend</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>constant and unrestricted trend</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include centered seasonal dummies</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>record asymptotic p-values</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>print just the tests</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print details of auxiliary regressions</effect>
+        </option>
+      </options>
+      <examples>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Carries out the Johansen test for cointegration among the
+	variables in <repl>ylist</repl> for the given lag order.  For
+	details of this test see <guideref targ="chap:vecm"/> or <cite
+	key="hamilton94">Hamilton (1994)</cite>, Chapter 20. P-values
+	are computed via Doornik's gamma approximation <cite
+	key="doornik98" p="true">(Doornik, 1998)</cite>. Two sets of
+	p-values are shown for the trace test, straight asymptotic
+	values and values adjusted for the sample size. By default the
+	<fncref targ="$pvalue"/> accessor gets the adjusted variant,
+	but the <opt>asy</opt> flag may be used to record the
+	asymptotic values instead.
+      </para>
+
+      <para context="gui">
+	Carries out the Johansen test for cointegration among the
+	listed variables for the selected lag order.  For details of
+	this test see, for example, Hamilton, <book>Time Series
+	Analysis</book> (1994), Chapter 20.  P-values are computed via
+	Doornik's (1998) gamma approximation. Two sets of
+	p-values are shown for the trace test, straight asymptotic
+	values and values adjusted for the sample size.
+      </para>
+
+      <para context="cli">
+	The inclusion of deterministic terms in the model is controlled by
+	the option flags.  The default if no option is specified is to
+	include an <quote>unrestricted constant</quote>, which allows for
+	the presence of a non-zero intercept in the cointegrating
+	relations as well as a trend in the levels of the endogenous
+	variables.  In the literature stemming from the work of Johansen
+	(see for example his 1995 book) this is often referred to as
+	<quote>case 3</quote>.  The first four options given above, which
+	are mutually exclusive, produce cases 1, 2, 4 and 5 respectively.
+	The meaning of these cases and the criteria for selecting a case
+	are explained in <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="gui">
+	The inclusion of deterministic terms in the model is controlled by
+	the drop-down option list.  The default is to include an
+	<quote>unrestricted constant</quote>, which allows for the
+	presence of a non-zero intercept in the cointegrating relations as
+	well as a trend in the levels of the endogenous variables.  In the
+	literature stemming from the work of Johansen (see for example his
+	1995 book) this is often referred to as <quote>case 3</quote>. The
+	other four options produce cases 1, 2, 4 and 5 respectively. The
+	meaning of these cases and the criteria for selecting a case are
+	explained in <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="cli">
+	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
+	allow you to control for specified exogenous variables: these
+	enter the system either unrestrictedly (<repl>xlist</repl>) or
+	restricted to the cointegration space (<repl>rxlist</repl>). These
+	lists are separated from <repl>ylist</repl> and from each other by
+	semicolons.
+      </para>
+
+      <para context="gui">
+	You may control for exogenous variables by adding them to the
+	lower list box.  By default these enter the model in unrestricted
+	form (indicated by a <lit>U</lit> next to the name of the
+	variable).  If you want a certain exogenous variable to be
+	restricted to the cointegrating space, right-click on it and
+	select <quote>Restricted</quote> from the pop-up menu.  The symbol
+	next to the variable will change to R.
+      </para>
+
+      <para context="cli">
+	The <opt>seasonals</opt> option, which may be combined with any of the
+	other options, specifies the inclusion of a set of centered seasonal
+	dummy variables.  This option is available only for quarterly or monthly
+	data.
+      </para>
+
+      <para context="gui">
+	If the data are quarterly or monthly, a check box is shown that allows
+	you to include a set of centered seasonal dummy variables.  In all
+	cases, an additional check box (<quote>Show details</quote>) allows
+	for the printing of the auxiliary regressions that form the starting
+	point of the Johansen maximum likelihood estimation procedure.
+      </para>
+
+      <para context="notex">
+	The following table is offered as a guide to the
+	interpretation of the results shown for the test, for the
+	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
+	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
+	number of cointegrating relations.
+      </para>
+      <mono context="notex">
+         Rank     Trace test         Lmax test
+                  H0     H1          H0     H1
+         ---------------------------------------
+          0      c = 0  c = 3       c = 0  c = 1
+          1      c = 1  c = 3       c = 1  c = 2
+          2      c = 2  c = 3       c = 2  c = 3
+         ---------------------------------------
+      </mono>
+      <para context="tex">
+	The following table is offered as a guide to the
+	interpretation of the results shown for the test, for the
+	3-variable case.  $H_0$ denotes the null hypothesis,
+	$H_1$ the alternative hypothesis, and $c$ the
+	number of cointegrating relations.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Trace test} &amp;
+	   \multicolumn{2}{c}{$\lambda$-max test} \\
+	Rank &amp;  \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} &amp;
+	       \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
+	\end{tabular}
+	\end{center}
+      </para>
+
+      <para>
+	See also the <cmdref targ="vecm"/> command, and <cmdref
+	targ="coint"/> if you want the Engle&ndash;Granger
+	cointegration test.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Multivariate time series</menu-path>
+    </gui-access>
 
   </command>
 
