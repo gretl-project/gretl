@@ -1891,202 +1891,6 @@
 
   </command>
 
-  <command name="coint2" section="Tests" label="Test di cointegrazione di Johansen">
-
-    <usage>
-      <arguments>
-        <argument>ordine</argument>
-        <argument>lista-y</argument>
-	<argblock optional="true" separated="true">
-	  <argument>lista-x</argument>
-	</argblock>
-	<argblock optional="true" separated="true">
-	  <argument>lista-rx</argument>
-	</argblock>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--nc</flag>
-	  <effect>senza costante</effect>
-        </option>
-        <option>
-	  <flag>--rc</flag>
-	  <effect>costante vincolata</effect>
-        </option>
-        <option>
-	  <flag>--uc</flag>
-	  <effect>costante non vincolata</effect>
-        </option>
-        <option>
-	  <flag>--crt</flag>
-	  <effect>costante e trend vincolato</effect>
-        </option>
-        <option>
-	  <flag>--ct</flag>
-	  <effect>costante e trend non vincolato</effect>
-        </option>
-        <option>
-	  <flag>--seasonals</flag>
-	  <effect>include dummy stagionali centrate</effect>
-        </option>
-        <option>
-	  <flag>--asy</flag>
-	  <effect>registra i p-value asintotici</effect>
-        </option>
-        <option>
-	  <flag>--silent</flag>
-	  <effect>non mostra nulla</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>mostra solo i test</effect>
-        </option>
-        <option>
-	  <flag>--verbose</flag>
-	  <effect>mostra i dettagli delle regressioni ausiliarie</effect>
-        </option>
-      </options>
-      <examples>
-        <example>coint2 2 y x</example>
-	<example>coint2 4 y x1 x2 --verbose</example>
-	<example>coint2 3 y x1 x2 --rc</example>
-	<demos>
-	  <demo>hamilton.inp</demo>
-	  <demo>denmark.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-        Esegue il test di Johansen per la cointegrazione tra le
-        variabili della <repl>lista-y</repl> per l'ordine specificato
-        di ritardi. Per dettagli, si veda <guideref targ="chap:vecm"/>
-        oppure <cite key="hamilton94">Hamilton (1994)</cite>, capitolo
-        20. I valori critici sono calcolati con l'approssimazione
-        gamma di J. Doornik <cite key="doornik98" p="true">(Doornik,
-        1998)</cite>. Per il test traccia, vengono formiti due set di
-        valori critici: asintotici e aggiustati per l'ampiezza
-        campionaria.  Di default, l'accessore <fncref targ="$pvalue"/>
-        riporta la variante aggiustata, ma i valori asintotici possono
-        essere ottenuti usando l'opzione <opt>asy</opt>.
-      </para>
-      <para context="gui">
-        Esegue il test di Johansen per la cointegrazione tra le variabili
-        elencate per l'ordine specificato di ritardi. I valori critici
-        sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
-        1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
-        Series Analysis</book> (1994), Cap. 20. Per il test traccia,
-        vengono formiti due set di valori critici: asintotici e
-        aggiustati per l'ampiezza campionaria.
-      </para>
-      <para context="cli">
-	L'inclusione di trend deterministici nel modello è controllata dalle
-        opzioni del comando. Se non si indica alcuna opzione, viene inclusa una
-	<quote>costante non vincolata</quote>, che permette la presenza di
-        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
-        trend nei livelli delle variabili endogene. Nella letteratura originata
-        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
-        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
-        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
-        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-        casi e i criteri per scegliere tra di essi sono spiegati nella
-	<guideref targ="chap:vecm"/>.
-      </para>
-      <para context="gui">
-	L'inclusione di termini deterministici nel modello è controllata dai
-        pulsanti delle opzioni. L'opzione predefinita è di includere una
-	<quote>costante non vincolata</quote>, che permette la presenza di
-        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
-        trend nei livelli delle variabili endogene. Nella letteratura originata
-        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
-        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
-        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
-        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-        casi e i criteri per scegliere tra di essi sono spiegati nella
-	<guideref targ="chap:vecm"/>.
-      </para>
-      <para context="cli">
-	Le liste opzionali <repl>lista-x</repl> e
-	<repl>lista-rx</repl> permettono di controllare per specifiche
-	variabili esogene che entrano nel sistema in modo non
-	vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
-	cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
-	separate tra di loro e dalla <repl>lista-y</repl> usando il
-	carattere punto e virgola.
-      </para>
-      <para context="gui">
-	È possibile controllare per le variabili esogene aggiungendole
-	nel campo inferiore. Per impostazione predefinita, le
-	variabili vengono aggiunte al modello in forma non vincolata
-	(indicata da una lettera <lit>U</lit> vicino al nome della
-	variabile). Se si vuole che una certa variabile esogena sia
-	vincolata allo spazio di cointegrazione, basta fare clic col
-	tasto destro e selezionare <quote>Vincolata</quote> dal menu
-	pop-up. Il simbolo vicino alla variabile diventerà una V.
-      </para>
-      <para context="cli">
-        L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
-        delle altre opzioni, specifica l'inclusione di un gruppo di variabili
-        dummy stagionali centrate. Questa opzione è disponibile solo per dati
-        trimestrali o mensili.
-      </para>
-      <para context="gui">
-	Se i dati sono trimestrali o mensili, è presente anche una casella che
-        permette di includere un gruppo di variabili dummy stagionali centrate.
-	In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
-        vedere il risultato delle regressioni ausiliarie che sono il punto di
-        partenza per la procedura di stima di massima verosimiglianza di
-        Johansen.
-      </para>
-      <para context="notex">
-	La tabella seguente fornisce un esempio di interpretazione dei
-	risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
-        l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
-        il numero delle relazioni di cointegrazione.
-      </para>
-      <code context="notex">
-                 Rango    Test traccia       Test Lmax
-                          H0     H1          H0     H1
-                 ---------------------------------------
-                  0      c = 0  c = 3       c = 0  c = 1
-                  1      c = 1  c = 3       c = 1  c = 2
-                  2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------
-      </code>
-
-      <para context="tex">
-	La tabella seguente fornisce un esempio di interpretazione dei
-	risultati del test nel caso di 3 variabili. $H_0$ denota
-        l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
-        il numero delle relazioni di cointegrazione.
-
-	\begin{center}
-	\begin{tabular}{cllll}
-	&amp; \multicolumn{2}{c}{Test traccia} &amp;
-	   \multicolumn{2}{c}{Test $\lambda$-max} \\
-	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
-	       \multicolumn{1}{c}{$H_1$} &amp; 
-	       \multicolumn{1}{c}{$H_0$} &amp; 
-	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
- 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
-	\end{tabular}
-	\end{center}
-      </para>      
- 
-      <para>
-	Si veda anche il comando <cmdref targ="vecm"/>.
-      </para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/Serie storiche/Test di cointegrazione/Johansen</menu-path>
-    </gui-access>
-
-  </command>
 
   <command name="compact" section="Dataset" context="gui"
     label="Compattamento dei dati">
@@ -6734,13 +6538,210 @@
 	una variabile selezionata.
       </para>
       <para>
-	In riferimento alla scala delle risposte di impulso,: lo
+	In riferimento alla scala delle risposte di impulso: lo
 	<quote>shock</quote> è porporzionato alla deviazione standard
 	delle innovazioni stimate nella variabile sorgente, e la
 	risposta è data in qualunque sia l'unità di misura
 	<quote>naturale</quote> della variabile obiettivo.
       </para>
     </description>
+
+  </command>
+
+  <command name="johansen" section="Tests" label="Test di cointegrazione di Johansen">
+
+    <usage>
+      <arguments>
+        <argument>ordine</argument>
+        <argument>lista-y</argument>
+	<argblock optional="true" separated="true">
+	  <argument>lista-x</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>lista-rx</argument>
+	</argblock>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>senza costante</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>costante vincolata</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>costante non vincolata</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>costante e trend vincolato</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>costante e trend non vincolato</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include dummy stagionali centrate</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>registra i p-value asintotici</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>non mostra nulla</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>mostra solo i test</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle regressioni ausiliarie</effect>
+        </option>
+      </options>
+      <examples>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Esegue il test di Johansen per la cointegrazione tra le
+        variabili della <repl>lista-y</repl> per l'ordine specificato
+        di ritardi. Per dettagli, si veda <guideref targ="chap:vecm"/>
+        oppure <cite key="hamilton94">Hamilton (1994)</cite>, capitolo
+        20. I valori critici sono calcolati con l'approssimazione
+        gamma di J. Doornik <cite key="doornik98" p="true">(Doornik,
+        1998)</cite>. Per il test traccia, vengono formiti due set di
+        valori critici: asintotici e aggiustati per l'ampiezza
+        campionaria.  Di default, l'accessore <fncref targ="$pvalue"/>
+        riporta la variante aggiustata, ma i valori asintotici possono
+        essere ottenuti usando l'opzione <opt>asy</opt>.
+      </para>
+      <para context="gui">
+        Esegue il test di Johansen per la cointegrazione tra le variabili
+        elencate per l'ordine specificato di ritardi. I valori critici
+        sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
+        1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
+        Series Analysis</book> (1994), Cap. 20. Per il test traccia,
+        vengono formiti due set di valori critici: asintotici e
+        aggiustati per l'ampiezza campionaria.
+      </para>
+      <para context="cli">
+	L'inclusione di trend deterministici nel modello è controllata dalle
+        opzioni del comando. Se non si indica alcuna opzione, viene inclusa una
+	<quote>costante non vincolata</quote>, che permette la presenza di
+        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
+        trend nei livelli delle variabili endogene. Nella letteratura originata
+        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
+        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
+        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
+        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+        casi e i criteri per scegliere tra di essi sono spiegati nella
+	<guideref targ="chap:vecm"/>.
+      </para>
+      <para context="gui">
+	L'inclusione di termini deterministici nel modello è controllata dai
+        pulsanti delle opzioni. L'opzione predefinita è di includere una
+	<quote>costante non vincolata</quote>, che permette la presenza di
+        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
+        trend nei livelli delle variabili endogene. Nella letteratura originata
+        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
+        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
+        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
+        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+        casi e i criteri per scegliere tra di essi sono spiegati nella
+	<guideref targ="chap:vecm"/>.
+      </para>
+      <para context="cli">
+	Le liste opzionali <repl>lista-x</repl> e
+	<repl>lista-rx</repl> permettono di controllare per specifiche
+	variabili esogene che entrano nel sistema in modo non
+	vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
+	cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
+	separate tra di loro e dalla <repl>lista-y</repl> usando il
+	carattere punto e virgola.
+      </para>
+      <para context="gui">
+	È possibile controllare per le variabili esogene aggiungendole
+	nel campo inferiore. Per impostazione predefinita, le
+	variabili vengono aggiunte al modello in forma non vincolata
+	(indicata da una lettera <lit>U</lit> vicino al nome della
+	variabile). Se si vuole che una certa variabile esogena sia
+	vincolata allo spazio di cointegrazione, basta fare clic col
+	tasto destro e selezionare <quote>Vincolata</quote> dal menu
+	pop-up. Il simbolo vicino alla variabile diventerà una V.
+      </para>
+      <para context="cli">
+        L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
+        delle altre opzioni, specifica l'inclusione di un gruppo di variabili
+        dummy stagionali centrate. Questa opzione è disponibile solo per dati
+        trimestrali o mensili.
+      </para>
+      <para context="gui">
+	Se i dati sono trimestrali o mensili, è presente anche una casella che
+        permette di includere un gruppo di variabili dummy stagionali centrate.
+	In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
+        vedere il risultato delle regressioni ausiliarie che sono il punto di
+        partenza per la procedura di stima di massima verosimiglianza di
+        Johansen.
+      </para>
+      <para context="notex">
+	La tabella seguente fornisce un esempio di interpretazione dei
+	risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
+        l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
+        il numero delle relazioni di cointegrazione.
+      </para>
+      <code context="notex">
+                 Rango    Test traccia       Test Lmax
+                          H0     H1          H0     H1
+                 ---------------------------------------
+                  0      c = 0  c = 3       c = 0  c = 1
+                  1      c = 1  c = 3       c = 1  c = 2
+                  2      c = 2  c = 3       c = 2  c = 3
+                 ---------------------------------------
+      </code>
+
+      <para context="tex">
+	La tabella seguente fornisce un esempio di interpretazione dei
+	risultati del test nel caso di 3 variabili. $H_0$ denota
+        l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
+        il numero delle relazioni di cointegrazione.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Test traccia} &amp;
+	   \multicolumn{2}{c}{Test $\lambda$-max} \\
+	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} &amp; 
+	       \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
+	\end{tabular}
+	\end{center}
+      </para>      
+ 
+      <para>
+	Si veda anche il comando <cmdref targ="vecm"/>.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Serie storiche/Test di cointegrazione/Johansen</menu-path>
+    </gui-access>
 
   </command>
 
@@ -15552,12 +15553,13 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
     <description>
       <para>
-	Un VECM è un tipo di autoregressione vettoriale, o VAR (si veda <cmdref
-	  targ="var"/>), applicabile quando le variabili del modello sono
-        individualmente integrate di ordine 1 (ossia, sono <quote>random walk</quote>
-        con o senza deriva), ma esibiscono cointegrazione. Questo comando è
-        strettamente connesso al test di Johansen per la cointegrazione (si veda
-	<cmdref targ="coint2"/>).
+	Un VECM è un tipo di autoregressione vettoriale, o VAR (si
+	veda <cmdref targ="var"/>), applicabile quando le variabili
+	del modello sono individualmente integrate di ordine 1 (ossia,
+	sono <quote>random walk</quote> con o senza deriva), ma
+	esibiscono cointegrazione. Questo comando è strettamente
+	connesso al test di Johansen per la cointegrazione (si veda
+	<cmdref targ="johansen"/>).
       </para>
       <para context="cli">
         Il parametro <repl>ordine</repl> rappresenta l'ordine di ritardo del

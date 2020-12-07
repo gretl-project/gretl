@@ -5701,6 +5701,21 @@
 	  essere modificata attraverso il comando <cmdref
 	  targ="set"/>, ad esempio <lit>set horizon 10</lit>.
 	</para>
+	<para>
+	  Gli intervalli di confidenza, se prodotti, sono generati
+	  tramite il bootstrap, ricampionando i residui originali.  Si
+	  assume che l'ordine del modello sia sufficiente ad eliminare
+	  la correlazione seriale nei residui. Il numero di default di
+	  replicazioni bootstrap è 1999, ma è possibile modificarlo
+	  usando il comando <cmdref targ="set"/>, come nel seguente
+	  esempio:
+	</para>
+	<code>
+	  set boot_iters 2999
+	</code>
+	<para>
+	  <seelist><fncref targ="fevd"/></seelist>
+	</para>
       </description>
     </function>
 
