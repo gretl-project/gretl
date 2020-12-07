@@ -253,16 +253,14 @@ estimator used.  In this situation it is convenient to present the
 regression results in the form of a table, where each column contains
 the results (coefficient estimates and standard errors) for a given
 model, and each row contains the estimates for a given variable across
-the models.
-Note that some estimation methods are not compatible with the 
-straightforward model table format, therefore
-gretl will not let those models be added to the model table. These 
-methods include non-linear least squares (\cmd{nls}), generic 
-maximum-likelihood estimators (\cmd{mle}), generic GMM (\cmd{gmm}),
-dynamic panel models (\cmd{dpanel} or its predecessor \cmd{arbond}),
-interval regressions (\cmd{intreg}), bivariate probit models 
-(\cmd{biprobit}), AR(I)MA models (\cmd{arima} or \cmd{arma}), and
-(G)ARCH models (\cmd{garch} and \cmd{arch}).
+the models.  Note that some estimation methods are not compatible with
+the straightforward model table format, therefore gretl will not let
+those models be added to the model table. These methods include
+non-linear least squares (\cmd{nls}), generic maximum-likelihood
+estimators (\cmd{mle}), generic GMM (\cmd{gmm}), dynamic panel models
+(\cmd{dpanel}), interval regressions (\cmd{intreg}), bivariate probit
+models (\cmd{biprobit}), AR(I)MA models (\cmd{arima} or \cmd{arma}),
+and (G)ARCH models (\cmd{garch} and \cmd{arch}).
 
 In the Icon view window gretl provides a means of constructing such a
 table (and copying it in plain text, {\LaTeX} or Rich Text Format).

@@ -154,13 +154,8 @@ Generated matrix oxparm
 \begin{scode}
 open abdata.gdt
 
-# Take first differences of the independent variables
-genr Dw = diff(w)
-genr Dk = diff(k)
-genr Dys = diff(ys)
-
 # 1-step GMM estimation
-arbond 2 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies
+dpanel 2 ; n w w(-1) k ys ys(-1) 0 --time-dummies --dpdstyle
 matrix parm = $coeff
 
 # Write CSV file for Ox

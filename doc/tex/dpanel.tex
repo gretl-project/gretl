@@ -18,13 +18,11 @@
 {altcode}%
 {\vspace{1ex}\small\leftmargin 1em}{\vspace{1ex}}
 
-The primary command for estimating dynamic panel models in gretl is
-\texttt{dpanel}. The closely related \texttt{arbond} command predated
-\texttt{dpanel}, and is still present, but whereas \texttt{arbond}
-only supports the so-called ``difference'' estimator
-\citep{arellano-bond91}, \texttt{dpanel} in addition offers the
-``system'' estimator \citep{blundell-bond98}, which has become the
-method of choice in the applied literature.
+The command for estimating dynamic panel models in gretl is
+\texttt{dpanel}. This command supports both the ``difference''
+estimator \citep{arellano-bond91} and the ``system'' estimator
+\citep{blundell-bond98}, which has become the method of choice in the
+applied literature.
 
 \section{Introduction}
 \label{sec:dpanel-intro}
@@ -270,8 +268,7 @@ conditions as possible.  The scalar \texttt{1} between \texttt{dpanel}
 and the semicolon indicates that only one lag of \texttt{y} is
 included as an explanatory variable; using \texttt{2} would give an
 AR(2) model. The syntax that gretl uses for the non-seasonal AR and MA
-lags in an ARMA model is also supported in this context.\footnote{This
-  represents an enhancement over the \texttt{arbond} command.} For
+lags in an ARMA model is also supported in this context. For
 example, if you want the first and third lags of \texttt{y} (but not
 the second) included as explanatory variables you can say
 \begin{code}
@@ -301,13 +298,9 @@ are appended automatically (see eq.\ \ref{eq:sys-gmm}).
 
 If we want to introduce additional regressors, we list them after the
 dependent variable in the same way as other gretl commands, such as
-\texttt{ols}.
-
-For the difference orthogonality relations, \texttt{dpanel} takes care
-of transforming the regressors in parallel with the dependent
-variable. Note that this differs from gretl's \texttt{arbond} command,
-where only the dependent variable is differenced automatically; it
-brings us more in line with other software.
+\texttt{ols}.  For the difference orthogonality relations,
+\texttt{dpanel} takes care of transforming the regressors in parallel
+with the dependent variable.
 
 One case of potential ambiguity is when an intercept is specified but
 the difference-only estimator is selected, as in
