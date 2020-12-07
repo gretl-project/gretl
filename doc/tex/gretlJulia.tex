@@ -13,9 +13,10 @@ function library.'' \app{Julia} is well known for being very fast;
 however, you should be aware that by default starting \app{Julia}
 takes some time due to Just-in-Time compilation of the input. This
 fixed cost is well worth bearing if you are asking \app{Julia} to
-perform a big computation, but small jobs are likely to run faster
-if you use the (\app{Julia}-specific) \option{no-compile} option
-with the \texttt{foreign} command.
+perform a big computation, but small jobs are likely to run faster if
+you use the (\app{Julia}-specific) \option{no-compile} option with the
+\texttt{foreign} command.\footnote{Caveat: it seems that this option
+  is not supported by all builds of \app{Julia}.}
 
 \section{Julia support in gretl}
 \label{sec:Julia-support}
