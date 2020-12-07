@@ -11,11 +11,14 @@ version 2020f, in progress
 - "open" command: support reading selected series from
   native gretl datafiles (gdt, gdtb)
 - "join" command: support $obsmajor as an outer key
+- "coint2" command: rename as "johansen"
 - Fix bug: potential crash on "Save as icon and close" for
   a model displayed in tabbed model viewer
 - Fix bug: possible crash on confusion between singleton
   array and array element within a loop
 - Fix: memory leaks associated with GUI window lists
+- Fix bug: buggy completion proposals in script editor
+  when using gtksourceview-2.0
 
 2020-11-21 version 2020e
 - New function tdisagg() for temporal disaggregation

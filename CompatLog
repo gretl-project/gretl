@@ -1,3 +1,9 @@
+version 2020f, in progress
+
+The command formerly known as "coint2" has been renamed as
+"johansen". The old name is accepted as an alias for now, but
+should not be used in new hansl code.
+
 2020-11-21 version 2020e
 
 The chowlin() function is now deprecated in favor of tdisagg(),
