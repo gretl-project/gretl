@@ -13341,14 +13341,6 @@
 	  default is 0.
 	  </para>
 	</li>
-	<li>
-	  <para><lit>quantile_type</lit>: one string
-	  (<quote>Q6</quote>, <quote>Q7</quote> or <quote>Q8</quote>),
-	  the method used for computing sample quantiles according the
-	  classification given in <cite key="hyndman96">Hyndman e Fan
-	  (1996)</cite>. The default is <quote>Q6</quote>.
-	  </para>
-	</li>
       </ilist>
 
       <subhead>Random number generation</subhead>
