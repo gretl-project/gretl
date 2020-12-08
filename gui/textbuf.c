@@ -2353,7 +2353,7 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
     while (*s) {
 	if (*s == '\n' && s[1] == '#' && s[2] != '\0') {
-	    if (s[2]) == '#') {
+	    if (s[2] == '#') {
 		/* insert section heading */
 		if (i > 1) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
