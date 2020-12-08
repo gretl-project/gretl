@@ -948,6 +948,9 @@ static int cli_exec_callback (ExecState *s, void *ptr,
             if (maybe_abort_open(s)) {
                 return 1;
             } else {
+		if (gretl_looping()) {
+		    s->cmd->opt |= OPT_P;
+		}
                 cli_clear_data(s, (DATASET *) ptr);
             }
         } else if (type == GRETL_OBJ_ANY) {
