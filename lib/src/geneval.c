@@ -41,6 +41,7 @@
 #include "gretl_midas.h"
 #include "gretl_xml.h"
 #include "var.h"
+#include "vartest.h"
 
 #include <time.h> /* for the $now accessor */
 
@@ -10061,24 +10062,35 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *get_bundle_array (NODE *n, int f, parser *p)
+static NODE *get_bundle_result (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_array_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL) {
-        if (f == F_GETKEYS) {
-            ret->v.a = gretl_bundle_get_keys(n->v.b, &p->err);
-        } else {
-            /* HF_JBTERMS */
-            gretl_array *(*jfunc) (gretl_bundle *, int *);
+    if (starting(p)) {
+	if (f == HF_IRF) {
+	    ret = aux_matrix_node(p);
+	} else {
+	    ret = aux_array_node(p);
+	}
+	if (!p->err) {
+	    if (f == F_GETKEYS) {
+		ret->v.a = gretl_bundle_get_keys(n->v.b, &p->err);
+	    } else if (f == HF_JBTERMS) {
+		gretl_array *(*jfunc) (gretl_bundle *, int *);
 
-            jfunc = get_plugin_function("json_bundle_get_terminals");
-            if (jfunc == NULL) {
-                p->err = E_FOPEN;
-            } else {
-                ret->v.a = jfunc(n->v.b, &p->err);
-            }
-        }
+		jfunc = get_plugin_function("json_bundle_get_terminals");
+		if (jfunc == NULL) {
+		    p->err = E_FOPEN;
+		} else {
+		    ret->v.a = jfunc(n->v.b, &p->err);
+		}
+	    } else {
+		/* HF_IRF */
+		ret->v.m = point_irf_from_bundle(n->v.b, &p->err);
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -16632,8 +16644,9 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_GETKEYS:
     case HF_JBTERMS:
+    case HF_IRF:
         if (l->t == BUNDLE) {
-            ret = get_bundle_array(l, t->t, p);
+            ret = get_bundle_result(l, t->t, p);
         } else {
             node_type_error(t->t, 0, BUNDLE, l, p);
         }

@@ -134,10 +134,9 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
 				     const DATASET *dset,
 				     int *err);
 
-gretl_matrix *
-VECM_get_EC_matrix (const GRETL_VAR *v,
-		    const DATASET *dset,
-		    int *err);
+gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v,
+				  const DATASET *dset,
+				  int *err);
 
 int
 gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C,

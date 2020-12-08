@@ -48,7 +48,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var);
 gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err);
 
 void copy_north_west (gretl_matrix *targ,
-		      gretl_matrix *src,
+		      const gretl_matrix *src,
 		      int add);
 
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
@@ -57,5 +57,8 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 			     gretl_matrix *point,
 			     const DATASET *dset,
 			     int *err);
+
+gretl_matrix *point_irf_from_bundle (gretl_bundle *b,
+				     int *err);
 
 #endif /* VARTEST_H_ */

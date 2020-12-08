@@ -1635,7 +1635,7 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
 }
 
 void copy_north_west (gretl_matrix *targ,
-		      gretl_matrix *src,
+		      const gretl_matrix *src,
 		      int add)
 {
     int i, j, k = src->cols;
@@ -1656,18 +1656,129 @@ void copy_north_west (gretl_matrix *targ,
     }
 }
 
+static int real_point_responses (const gretl_matrix *C,
+				 const gretl_matrix *A,
+				 gretl_matrix *rtmp,
+				 gretl_matrix *ctmp,
+				 gretl_matrix *resp,
+				 int targ, int shock)
+{
+    double xt;
+    int n = C->rows;
+    int i, j, k, t;
+
+    for (t=0; t<resp->rows; t++) {
+        if (t == 0) {
+            /* initial estimated responses */
+            copy_north_west(rtmp, C, 0);
+        } else {
+            /* calculate further estimated responses */
+            gretl_matrix_multiply(A, rtmp, ctmp);
+            gretl_matrix_copy_values(rtmp, ctmp);
+        }
+	if (resp->cols == 1) {
+	    resp->val[t] = gretl_matrix_get(rtmp, targ, shock);
+	} else if (shock >= 0) {
+	    /* all targets for one shock */
+	    for (i=0; i<n; i++) {
+		xt = gretl_matrix_get(rtmp, i, shock);
+		gretl_matrix_set(resp, t, i, xt);
+	    }
+	} else if (targ >= 0) {
+	    /* all shocks for one target */
+	    for (j=0; j<n; j++) {
+		xt = gretl_matrix_get(rtmp, targ, j);
+		gretl_matrix_set(resp, t, j, xt);
+	    }
+	} else {
+	    /* all shocks, all targets */
+	    k = 0;
+	    for (i=0; i<n; i++) {
+		for (j=0; j<n; j++) {
+		    xt = gretl_matrix_get(rtmp, i, j);
+		    gretl_matrix_set(resp, t, k++, xt);
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+gretl_matrix *point_irf_from_bundle (gretl_bundle *b, int *err)
+{
+    gretl_matrix *C, *A;
+    int targ, shock;
+    int horizon;
+    int neqns, nresp;
+    gretl_matrix *rtmp = NULL;
+    gretl_matrix *ctmp = NULL;
+    gretl_matrix *resp = NULL;
+    int b_err = 0;
+
+    /* extract what we need from @b */
+    C = gretl_bundle_get_matrix(b, "C", err); b_err += *err;
+    A = gretl_bundle_get_matrix(b, "A", err); b_err += *err;
+    targ = gretl_bundle_get_scalar(b, "targ", err); b_err += *err;
+    shock = gretl_bundle_get_scalar(b, "shock", err); b_err += *err;
+    horizon = gretl_bundle_get_scalar(b, "horizon", err); b_err += *err;
+
+    if (b_err) {
+	*err = E_INVARG;
+    } else {
+	neqns = C->rows;
+	if (shock > neqns || targ > neqns || horizon <= 0) {
+	    *err = E_INVARG;
+	}
+    }
+    if (*err) {
+	return NULL;
+    }
+
+    /* convert to 0-based */
+    targ--;
+    shock--;
+
+    if (targ < 0 && shock < 0) {
+        nresp = neqns * neqns;
+    } else if (targ < 0 || shock < 0) {
+        nresp = neqns;
+    } else {
+        nresp = 1;
+    }
+
+    resp = gretl_matrix_alloc(horizon, nresp);
+    rtmp = gretl_matrix_alloc(A->rows, neqns);
+    ctmp = gretl_zero_matrix_new(A->rows, neqns);
+
+    if (resp == NULL || rtmp == NULL || ctmp == NULL) {
+        *err = E_ALLOC;
+    } else {
+	*err = real_point_responses(C, A, ctmp, rtmp, resp,
+				    targ, shock);
+    }
+
+    gretl_matrix_free(rtmp);
+    gretl_matrix_free(ctmp);
+
+    if (*err && resp != NULL) {
+        gretl_matrix_free(resp);
+        resp = NULL;
+    }
+
+    return resp;
+}
+
 static gretl_matrix *
 gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
                                int periods, int *err)
 {
     int rows = var->neqns * effective_order(var);
     int nresp = 1;
-    int t, i, j, k;
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
     gretl_matrix *C = var->C;
-    double xt;
 
     if (shock >= var->neqns) {
         fprintf(stderr, "Shock variable out of bounds\n");
@@ -1707,46 +1818,10 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 
     if (resp == NULL || rtmp == NULL || ctmp == NULL) {
         *err = E_ALLOC;
-        goto bailout;
+    } else {
+	*err = real_point_responses(C, var->A, ctmp, rtmp, resp,
+				    targ, shock);
     }
-
-    for (t=0; t<periods; t++) {
-        if (t == 0) {
-            /* initial estimated responses */
-            copy_north_west(rtmp, C, 0);
-        } else {
-            /* calculate further estimated responses */
-            gretl_matrix_multiply(var->A, rtmp, ctmp);
-            gretl_matrix_copy_values(rtmp, ctmp);
-        }
-	if (nresp == 1) {
-	    xt = gretl_matrix_get(rtmp, targ, shock);
-	    gretl_matrix_set(resp, t, 0, xt);
-	} else if (shock >= 0) {
-	    /* all targets for one shock */
-	    for (i=0; i<var->neqns; i++) {
-		xt = gretl_matrix_get(rtmp, i, shock);
-		gretl_matrix_set(resp, t, i, xt);
-	    }
-	} else if (targ >= 0) {
-	    /* all shocks for one target */
-	    for (j=0; j<var->neqns; j++) {
-		xt = gretl_matrix_get(rtmp, targ, j);
-		gretl_matrix_set(resp, t, j, xt);
-	    }
-	} else {
-	    /* all shocks, all targets */
-	    k = 0;
-	    for (i=0; i<var->neqns; i++) {
-		for (j=0; j<var->neqns; j++) {
-		    xt = gretl_matrix_get(rtmp, i, j);
-		    gretl_matrix_set(resp, t, k++, xt);
-		}
-	    }
-	}
-    }
-
- bailout:
 
     gretl_matrix_free(rtmp);
     gretl_matrix_free(ctmp);
@@ -4804,11 +4879,6 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
     }
 
     var = VAR_from_bundle(b, 1, boot, err);
-
-    if (0 && var != NULL && boot && var->ci == VECM) {
-        gretl_errmsg_set("irf bootstrap on VECM bundle: not ready yet!");
-        *err = E_BADSTAT;
-    }
 
     if (!*err && var != NULL) {
         ret = gretl_VAR_get_impulse_response(var, targ, shock,
