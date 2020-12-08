@@ -242,7 +242,7 @@ static int varprint_namelen (const GRETL_VAR *var,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int
+static int
 gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATASET *dset,
 				  PRN *prn)
