@@ -1705,11 +1705,15 @@ static int real_point_responses (const gretl_matrix *C,
     return 0;
 }
 
+/* Calculate point estimates of impulse responses based on
+   a minimal bundle which includes the C and A matrices
+   along with specification of target, shock and horizon.
+*/
+
 gretl_matrix *point_irf_from_bundle (gretl_bundle *b, int *err)
 {
     gretl_matrix *C, *A;
-    int targ, shock;
-    int horizon;
+    int targ, shock, horizon;
     int neqns, nresp;
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
