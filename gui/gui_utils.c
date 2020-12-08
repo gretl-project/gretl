@@ -6166,32 +6166,17 @@ void verbose_gerror_report (GError *gerr, const char *src)
 	    src, gerr->message, gerr->domain, gerr->code);
 }
 
-/* Note: simplified 2018-09-15 on the assumption that filenames
-   will be in UTF-8 on all platforms other than MS Windows.
+/* Note: simplified 2020-12-08 on the assumption that filenames
+   within gretl will be in UTF-8 on all platforms.
 */
 
 int gretl_file_get_contents (const gchar *fname, gchar **contents,
 			     gsize *size)
 {
     GError *gerr = NULL;
-    gboolean u8 = g_utf8_validate(fname, -1, NULL);
     gboolean ok = 0;
 
-    if (u8) {
-	ok = g_file_get_contents(fname, contents, size, &gerr);
-    }
-
-#ifdef G_OS_WIN32
-    if (!u8) {
-	gsize bytes;
-	gchar *fconv = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
-
-	if (fconv != NULL) {
-	    ok = g_file_get_contents(fconv, contents, size, &gerr);
-	    g_free(fconv);
-	}
-    }
-#endif
+    ok = g_file_get_contents(fname, contents, size, &gerr);
 
     if (gerr != NULL) {
 	verbose_gerror_report(gerr, "g_file_get_contents");

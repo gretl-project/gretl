@@ -1233,6 +1233,13 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("grayhead");
+    g_object_set(tag, "family", helpfont,
+		 "foreground", "gray",
+		 "pixels_below_lines", 5,
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
+
     tag = gtk_text_tag_new("italic");
     g_object_set(tag, "family", helpfont,
 		 "style", PANGO_STYLE_ITALIC,
@@ -2322,11 +2329,17 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Function Reference");
+    const char *heads[] = {
+	N_("Accessors"),
+	N_("Built-in strings"),
+	N_("Functions proper")
+    };
     const gchar *s = (const gchar *) hwin->data;
+    gchar *hstr;
     GtkTextIter iter;
     char word[12];
     int llen, llen_max = 5;
-    int i, j, n;
+    int i, j, k, n;
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
@@ -2335,22 +2348,26 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 
     i = 1;
+    k = 0;
     llen = 0;
 
     while (*s) {
-	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
-	    if (*(s+2) == '#') {
-		/* category divider */
+	if (*s == '\n' && s[1] == '#' && s[2] != '\0') {
+	    if (s[2]) == '#') {
+		/* insert section heading */
 		if (i > 1) {
-		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-		    if (llen < llen_max) {
-			gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-			llen = 0;
-		    }
+		    gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 		}
+		hstr = g_strdup_printf("%s\n", en ? heads[k] : _(heads[k]));
+		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+							 hstr, -1,
+							 "grayhead", NULL);
+		g_free(hstr);
+		llen = 0;
 		s += 2;
+		k++;
 	    } else if (sscanf(s + 2, "%10s", word)) {
-		/* function name */
+		/* got a function name */
 		insert_link(tbuf, &iter, word, i, NULL);
 		if (++llen == llen_max) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
