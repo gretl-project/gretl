@@ -1027,6 +1027,17 @@ static int run_include_error (ExecState *s, const char *param,
     return process_command_error(s, err);
 }
 
+static void do_quit_message (ExecState *s, int err)
+{
+    if (gretl_messages_on() && s != NULL && s->prn != NULL) {
+	if (err) {
+	    pputs(s->prn, _("Terminated on error\n"));
+	} else {
+	    pputs(s->prn, _("Done\n"));
+	}
+    }
+}
+
 static void cli_quit (ExecState *s, PRN *cmdprn, int err)
 {
     if (runit || batch_stdin) {
@@ -1035,16 +1046,12 @@ static void cli_quit (ExecState *s, PRN *cmdprn, int err)
         fclose(fb);
         fb = pop_input_file();
         if (fb == NULL) {
-            if (gretl_messages_on()) {
-                if (err) {
-                    pputs(s->prn, _("Terminated on error\n"));
-                } else {
-                    pputs(s->prn, _("Done\n"));
-                }
-            }
+	    do_quit_message(s, err);
         } else {
             s->cmd->ci = ENDRUN;
         }
+    } else if (batch && fb == NULL) {
+	do_quit_message(s, err);
     } else {
         gretl_print_destroy(cmdprn);
         if (s->cmd->opt & OPT_X) {

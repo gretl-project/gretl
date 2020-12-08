@@ -420,6 +420,8 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
     int hf, hc;
     int t, n = 0;
 
+    *err = 0;
+
     if (p <= 0 || p >= 1) {
 	/* sanity check */
 	*err = E_DATA;
