@@ -7334,7 +7334,7 @@
       <description>
 	<para context="notex">
 	  Computes the matrix exponential of <argname>A</argname>.  If
-	  <argname>A</argname> is a real matrix algorithm 11.3.1 from
+	  <argname>A</argname> is a real matrix, algorithm 11.3.1 from
 	  <cite key="golub96">Golub and Van Loan (1996)</cite> is
 	  used. If <argname>A</argname> is complex the algorithm uses
 	  eigendecomposition and <argname>A</argname> must be
