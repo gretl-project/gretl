@@ -9745,8 +9745,10 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
                 return 1; /* abort open */
             }
         }
-        if (!(opt & OPT_P) && csv_open_needs_matrix(opt)) {
-            opt |= OPT_P;
+        if (!(opt & OPT_P)) {
+	    if (gretl_looping() || csv_open_needs_matrix(opt)) {
+		opt |= OPT_P;
+	    }
         }
         close_session(opt);
     } else if (type == GRETL_OBJ_ANY) {
