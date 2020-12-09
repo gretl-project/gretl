@@ -1584,7 +1584,11 @@ int default_VAR_horizon (const DATASET *dset)
     int h = libset_get_int(HORIZON);
 
     if (h <= 0) {
-        h = periods_from_pd(dset->pd);
+	if (dset != NULL) {
+	    h = periods_from_pd(dset->pd);
+	} else {
+	    h = 20; /* default */
+	}
     }
 
     return h;
@@ -1713,28 +1717,29 @@ static int real_point_responses (const gretl_matrix *C,
 gretl_matrix *point_irf_from_bundle (gretl_bundle *b, int *err)
 {
     gretl_matrix *C, *A;
-    int targ, shock, horizon;
+    int targ = 0;
+    int shock = 0;
+    int horizon = 20;
     int neqns, nresp;
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
-    int b_err = 0;
 
     /* extract what we need from @b */
-    C = gretl_bundle_get_matrix(b, "C", err); b_err += *err;
-    A = gretl_bundle_get_matrix(b, "A", err); b_err += *err;
-    targ = gretl_bundle_get_scalar(b, "targ", err); b_err += *err;
-    shock = gretl_bundle_get_scalar(b, "shock", err); b_err += *err;
-    horizon = gretl_bundle_get_scalar(b, "horizon", err); b_err += *err;
-
-    if (b_err) {
-	*err = E_INVARG;
-    } else {
+    C = gretl_bundle_get_matrix(b, "C", err);
+    if (!*err) {
+	A = gretl_bundle_get_matrix(b, "A", err);
+    }
+    if (!*err) {
 	neqns = C->rows;
+	targ = gretl_bundle_get_int(b, "targ", NULL);
+	shock = gretl_bundle_get_int(b, "shock", NULL);
+	horizon = gretl_bundle_get_int(b, "horizon", NULL);
 	if (shock > neqns || targ > neqns || horizon <= 0) {
 	    *err = E_INVARG;
 	}
     }
+
     if (*err) {
 	return NULL;
     }
