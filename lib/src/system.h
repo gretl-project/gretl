@@ -74,6 +74,7 @@ struct equation_system_ {
     double bdiff;               /* summary stat for change in coefficients */
     double ldet;                /* log-determinant of covariance matrix */
     int **lists;                /* regression lists for stochastic equations */
+    int **tslists;              /* back-up of TSLS-style lists */
     int *ylist;                 /* list of endogenous variables */
     int *ilist;                 /* list of instruments */
     int *xlist;                 /* list of truly exogenous variables */
