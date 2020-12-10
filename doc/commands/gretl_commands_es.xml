@@ -1832,208 +1832,10 @@
 	contraste se basan en <cite key="mackinnon96">MacKinnon (1996)</cite>.
 	El código relevante se incluye con el amable permiso del propio autor.
       </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelo/Series temporales multivariantes</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="coint2" section="Tests" label="Contraste de cointegración de Johansen">
-
-    <usage>
-      <arguments>
-        <argument>orden</argument>
-        <argument>ylista</argument>
-	     <argblock optional="true" separated="true">
-	      <argument>xlista</argument>
-	     </argblock>
-	     <argblock optional="true" separated="true">
-	      <argument>rxlista</argument>
-	     </argblock>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--nc</flag>
-	  <effect>Sin constante</effect>
-        </option>
-        <option>
-	  <flag>--rc</flag>
-	  <effect>Constante restringida</effect>
-        </option>
-        <option>
-	  <flag>--uc</flag>
-	  <effect>Constante no restringida</effect>
-        </option>
-        <option>
-	  <flag>--crt</flag>
-	  <effect>Constante y tendencia restringida</effect>
-        </option>
-        <option>
-	  <flag>--ct</flag>
-	  <effect>Constante y tendencia no restringida</effect>
-        </option>
-        <option>
-	  <flag>--seasonals</flag>
-	  <effect>Incluye variables ficticias estacionales centradas</effect>
-        </option>
-        <option>
-	  <flag>--asy</flag>
-	  <effect>Guarda los valores p asintóticos</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>Presenta solo los contrastes</effect>
-        </option>
-        <option>
-	  <flag>--silent</flag>
-	  <effect>No presenta nada</effect>
-        </option>
-        <option>
-	  <flag>--verbose</flag>
-	  <effect>Presenta detalles de las regresiones auxiliares</effect>
-        </option>
-      </options>
-      <examples>
-        <example>coint2 2 y x</example>
-	<example>coint2 4 y x1 x2 --verbose</example>
-	<example>coint2 3 y x1 x2 --rc</example>
-	<demos>
-	  <demo>hamilton.inp</demo>
-	  <demo>denmark.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Lleva a cabo el contraste de cointegración de Johansen entre las variables
-	de <repl>ylista</repl> para el orden de retardos seleccionado. Para obtener
-	más detalles sobre este contraste, consulta <guideref targ="chap:vecm"/>
-	o el capítulo 20 de <cite key="hamilton94">Hamilton (1994)</cite>. Las
-	probabilidades asociadas (valores p) se calculan mediante la aproximación
-	Gamma de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
-	Se muestran dos conjuntos de valores p para el contraste de la traza: valores
-	asintóticos directos y valores ajustados por el tamaño de la muestra. Por
-	defecto, el accesor <fncref targ="$pvalue"/> genera la variante ajustada,
-	pero puedes utilizar la opción <opt>asy</opt> para obtener en su lugar
-	los valores asintóticos.
-      </para>
-
-      <para context="gui">
-	Lleva a cabo el contraste de cointegración de Johansen entre las variables
-	indicadas para el orden de retardos seleccionado. Para obtener más detalles
-	sobre este contraste consulta, por ejemplo, el capítulo 20 del libro
-	<book>Time Series Analysis</book> (1994) de Hamilton. Las probabilidades
-	asociadas (valores p) se calculan mediante la aproximación Gamma de Doornik
-	(1998). Se muestran dos conjuntos de valores p para el contraste de la traza:
-	valores asintóticos directos y valores ajustados por el tamaño de la muestra.
-      </para>
-
-      <para context="cli">
-	La inclusión de términos determinísticos en el modelo se controla mediante
-	los indicadores de opción. Por defecto, si no especificas ninguna
-	opción, se incluye una <quote>constante no restringida</quote>, que
-	permite la presencia de una ordenada en el origen no nula en las relaciones
-	de cointegración, así como una tendencia en los niveles de las variables
-	endógenas. En la literatura generada a partir del trabajo de Johansen
-	(por ejemplo, consulta su libro de 1995) se refiere esta situación
-	como el <quote>caso 3</quote>. Las 4 primeras opciones indicadas arriba,
-	que son mutuamente excluyentes, producen respectivamente los casos 1,
-	2, 4 y 5. Tanto el significado de estos casos como el criterio para
-	seleccionar un caso se explican en <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="gui">
-	La inclusión de términos determinísticos en el modelo se controla por medio
-	de una lista desplegable de opciones. Por defecto, se incluye una
-	<quote>constante no restringida</quote>, que permite la presencia
-	de una ordenada en el origen no nula en las relaciones de cointegración, así
-	como una tendencia en los niveles de las variables endógenas. En la literatura
-	generada a partir del trabajo de Johansen (por ejemplo, consulta su
-	libro de 1995) se refiere esta situación como el <quote>caso 3</quote>.
-	Las 4 primeras opciones indicadas arriba producen respectivamente los
-	casos 1, 2, 4 y 5. Tanto el significado de estos casos como el criterio
-	para seleccionar un caso se explican en <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="cli">
-	Las listas <repl>xlista</repl> y <repl>rxlista</repl> (opcionales) te permiten
-	controlar las variables exógenas especificadas, y así estas entran
-	en el sistema bien sin restricciones (<repl>xlista</repl>) o bien restringidas
-	al espacio de cointegración (<repl>rxlista</repl>). Estas listas
-	se separan de <repl>ylista</repl> y unas de las otras mediante un
-	punto y coma.
-      </para>
-
-      <para context="gui">
-	Puedes controlar las variables exógenas añadiéndolas a la caja de la lista
-	inferior. Por defecto, estas entran a formar parte del modelo de forma
-	no restringida (indicada por una <lit>U</lit> al lado del nombre de la
-	variable). Si quieres que una determinada variable exógena esté
-	restringida al espacio de cointegración, pulsa con el botón derecho del
-	ratón sobre ella y escoge <quote>Restringido</quote> en el menú emergente;
-	y el símbolo al lado de la variable se va a cambiar a R.
-      </para>
-
-      <para context="cli">
-	La opción <opt>seasonals</opt>, que puedes combinar con cualquiera de las
-	otras opciones, especifica la inclusión de un conjunto de variables
-	ficticias estacionales centradas. Esta opción está disponible solo
-	para datos trimestrales o mensuales.
-      </para>
-
-      <para context="gui">
-	Si los datos son trimestrales o mensuales, se te muestra un cuadradito de verificación que
-	te permite incluir un conjunto de variables ficticias estacionales centradas. En
-	todos los casos, un cuadradito de verificación adicional (<quote>Mostrar los detalles</quote>)
-	permite la presentación de las regresiones auxiliares que forman el punto de comienzo
-	del procedimiento de estimación máximo verosímil de Johansen.
-      </para>
-
-      <para context="notex">
-	La siguiente tabla se ofrece como guía para la interpretación
-	de los resultados del contraste que se muestran, para el caso con
-	3 variables. <lit>H0</lit> denota la hipótesis nula, <lit>H1</lit>
-	la hipótesis alternativa, y <lit>c</lit> el número de relaciones
-	de cointegración.
-      </para>
-      <mono context="notex">
-         Rango   Contraste traza      Contraste Lmáx
-                  H0     H1          H0     H1
-         ---------------------------------------
-          0      c = 0  c = 3       c = 0  c = 1
-          1      c = 1  c = 3       c = 1  c = 2
-          2      c = 2  c = 3       c = 2  c = 3
-         ---------------------------------------
-      </mono>
-      <para context="tex">
-	La siguiente tabla se ofrece como guía para la interpretación
-	de los resultados del contraste que se muestran, para el caso con
-	3 variables. $H_0$ denota la hipótesis nula, $H_1$ la
-	hipótesis alternativa, y $c$ el número de relaciones de
-	cointegración.
-
-	\begin{center}
-	\begin{tabular}{cllll}
-	&amp; \multicolumn{2}{c}{Contraste traza} &amp;
-	   \multicolumn{2}{c}{Contraste $\lambda$-máx} \\
-	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} &amp;
-	       \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
- 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
-	\end{tabular}
-	\end{center}
-      </para>
-
       <para>
-	Consulta también la instrucción <cmdref targ="vecm"/>.
+	Para obtener los contrastes de cointegración de Søren Johansen,
+	consulta <cmdref targ="johansen"/>.
       </para>
-
     </description>
 
     <gui-access>
@@ -6681,6 +6483,210 @@
 	  de 'shocks' y para más opciones de bootstrap.)
 	  </para>
     </description>
+
+  </command>
+
+  <command name="johansen" section="Tests" label="Contraste de cointegración de Johansen">
+
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+        <argument>ylista</argument>
+	     <argblock optional="true" separated="true">
+	      <argument>xlista</argument>
+	     </argblock>
+	     <argblock optional="true" separated="true">
+	      <argument>rxlista</argument>
+	     </argblock>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>Sin constante</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>Constante restringida</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>Constante no restringida</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>Constante y tendencia restringida</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>Constante y tendencia no restringida</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>Incluye variables ficticias estacionales centradas</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>Guarda los valores p asintóticos</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Presenta solo los contrastes</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>No presenta nada</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>Presenta detalles de las regresiones auxiliares</effect>
+        </option>
+      </options>
+      <examples>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Lleva a cabo el contraste de cointegración de Johansen entre las variables
+	de <repl>ylista</repl> para el orden de retardos seleccionado. Para obtener
+	más detalles sobre este contraste, consulta <guideref targ="chap:vecm"/>
+	o el capítulo 20 de <cite key="hamilton94">Hamilton (1994)</cite>. Las
+	probabilidades asociadas (valores p) se calculan mediante la aproximación
+	Gamma de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
+	Se muestran dos conjuntos de valores p para el contraste de la traza: valores
+	asintóticos directos y valores ajustados por el tamaño de la muestra. Por
+	defecto, el accesor <fncref targ="$pvalue"/> genera la variante ajustada,
+	pero puedes utilizar la opción <opt>asy</opt> para obtener en su lugar
+	los valores asintóticos.
+      </para>
+
+      <para context="gui">
+	Lleva a cabo el contraste de cointegración de Johansen entre las variables
+	indicadas para el orden de retardos seleccionado. Para obtener más detalles
+	sobre este contraste consulta, por ejemplo, el capítulo 20 del libro
+	<book>Time Series Analysis</book> (1994) de Hamilton. Las probabilidades
+	asociadas (valores p) se calculan mediante la aproximación Gamma de Doornik
+	(1998). Se muestran dos conjuntos de valores p para el contraste de la traza:
+	valores asintóticos directos y valores ajustados por el tamaño de la muestra.
+      </para>
+
+      <para context="cli">
+	La inclusión de términos determinísticos en el modelo se controla mediante
+	los indicadores de opción. Por defecto, si no especificas ninguna
+	opción, se incluye una <quote>constante no restringida</quote>, que
+	permite la presencia de una ordenada en el origen no nula en las relaciones
+	de cointegración, así como una tendencia en los niveles de las variables
+	endógenas. En la literatura generada a partir del trabajo de Johansen
+	(por ejemplo, consulta su libro de 1995) se refiere esta situación
+	como el <quote>caso 3</quote>. Las 4 primeras opciones indicadas arriba,
+	que son mutuamente excluyentes, producen respectivamente los casos 1,
+	2, 4 y 5. Tanto el significado de estos casos como el criterio para
+	seleccionar un caso se explican en <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="gui">
+	La inclusión de términos determinísticos en el modelo se controla por medio
+	de una lista desplegable de opciones. Por defecto, se incluye una
+	<quote>constante no restringida</quote>, que permite la presencia
+	de una ordenada en el origen no nula en las relaciones de cointegración, así
+	como una tendencia en los niveles de las variables endógenas. En la literatura
+	generada a partir del trabajo de Johansen (por ejemplo, consulta su
+	libro de 1995) se refiere esta situación como el <quote>caso 3</quote>.
+	Las 4 primeras opciones indicadas arriba producen respectivamente los
+	casos 1, 2, 4 y 5. Tanto el significado de estos casos como el criterio
+	para seleccionar un caso se explican en <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="cli">
+	Las listas <repl>xlista</repl> y <repl>rxlista</repl> (opcionales) te permiten
+	controlar las variables exógenas especificadas, y así estas entran
+	en el sistema bien sin restricciones (<repl>xlista</repl>) o bien restringidas
+	al espacio de cointegración (<repl>rxlista</repl>). Estas listas
+	se separan de <repl>ylista</repl> y unas de las otras mediante un
+	punto y coma.
+      </para>
+
+      <para context="gui">
+	Puedes controlar las variables exógenas añadiéndolas a la caja de la lista
+	inferior. Por defecto, estas entran a formar parte del modelo de forma
+	no restringida (indicada por una <lit>U</lit> al lado del nombre de la
+	variable). Si quieres que una determinada variable exógena esté
+	restringida al espacio de cointegración, pulsa con el botón derecho del
+	ratón sobre ella y escoge <quote>Restringido</quote> en el menú emergente;
+	y el símbolo al lado de la variable se va a cambiar a R.
+      </para>
+
+      <para context="cli">
+	La opción <opt>seasonals</opt>, que puedes combinar con cualquiera de las
+	otras opciones, especifica la inclusión de un conjunto de variables
+	ficticias estacionales centradas. Esta opción está disponible solo
+	para datos trimestrales o mensuales.
+      </para>
+
+      <para context="gui">
+	Si los datos son trimestrales o mensuales, se te muestra un cuadradito de verificación que
+	te permite incluir un conjunto de variables ficticias estacionales centradas. En
+	todos los casos, un cuadradito de verificación adicional (<quote>Mostrar los detalles</quote>)
+	permite la presentación de las regresiones auxiliares que forman el punto de comienzo
+	del procedimiento de estimación máximo verosímil de Johansen.
+      </para>
+
+      <para context="notex">
+	La siguiente tabla se ofrece como guía para la interpretación
+	de los resultados del contraste que se muestran, para el caso con
+	3 variables. <lit>H0</lit> denota la hipótesis nula, <lit>H1</lit>
+	la hipótesis alternativa, y <lit>c</lit> el número de relaciones
+	de cointegración.
+      </para>
+      <mono context="notex">
+         Rango   Contraste traza      Contraste Lmáx
+                  H0     H1          H0     H1
+         ---------------------------------------
+          0      c = 0  c = 3       c = 0  c = 1
+          1      c = 1  c = 3       c = 1  c = 2
+          2      c = 2  c = 3       c = 2  c = 3
+         ---------------------------------------
+      </mono>
+      <para context="tex">
+	La siguiente tabla se ofrece como guía para la interpretación
+	de los resultados del contraste que se muestran, para el caso con
+	3 variables. $H_0$ denota la hipótesis nula, $H_1$ la
+	hipótesis alternativa, y $c$ el número de relaciones de
+	cointegración.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Contraste traza} &amp;
+	   \multicolumn{2}{c}{Contraste $\lambda$-máx} \\
+	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} &amp;
+	       \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
+	\end{tabular}
+	\end{center}
+      </para>
+
+      <para>
+	Consulta también la instrucción <cmdref targ="vecm"/>; y la instrucción
+	<cmdref targ="coint"/> si quieres obtener el contraste de cointegración
+	de Engle&ndash;Granger.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Series temporales multivariantes</menu-path>
+    </gui-access>
 
   </command>
 
@@ -13154,6 +13160,15 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>quantile_type</lit>: Debes escoger entre <lit>Q6</lit> (por
+	  defecto), <lit>Q7</lit> o <lit>Q8</lit>. Selecciona el método concreto
+	  que utiliza la función <fncref targ="quantile"/>. Para obtener más
+	  detalles, consulta <cite key="hyndman96">Hyndman y Fan (1996)</cite>
+	  o la entrada de la Wikipedia disponible en
+	  <url>https://en.wikipedia.org/wiki/Quantile</url>.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>huge</lit>: Un número positivo muy grande (por
 	  defecto, 1.0E100). Esta configuración controla el valor que
 	  devuelve el accesor <fncref targ="$huge"/>.
@@ -13324,14 +13339,6 @@
 	  <para><lit>fdjac_quality</lit>: Un entero (0, 1 o 2) que indica
 	  el algoritmo utilizado por la función <fncref targ="fdjac"/>; por
 	  defecto es 0.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>quantile_type</lit>: Una cadena de texto
-	  (<quote>Q6</quote>, <quote>Q7</quote> o <quote>Q8</quote>), que indica
-	  el método usado para calcular cuantiles muestrales, de acuerdo con la
-	  clasificación recogida en <cite key="hyndman96">Hyndman y Fan (1996)</cite>.
-	  Por defecto es <quote>Q6</quote>.
 	  </para>
 	</li>
       </ilist>
@@ -15606,7 +15613,7 @@
 	individualmente integradas de orden 1 (por lo tanto son paseos aleatorios,
 	con o sin deriva) pero presentan cointegración. Esta instrucción está
 	íntimamente relacionada con el contraste de cointegración de Johansen
-	(consulta <cmdref targ="coint2"/>).
+	(consulta <cmdref targ="johansen"/>).
       </para>
 
       <para context="cli">

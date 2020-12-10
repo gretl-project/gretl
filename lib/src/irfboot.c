@@ -350,7 +350,11 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
 	gretl_matrix_multiply_mod(v->E, GRETL_MOD_TRANSPOSE,
 				  v->E, GRETL_MOD_NONE,
 				  v->S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(v->S, v->T); /* was df in denom. */
+#if VAR_S_DFCORR
+	gretl_matrix_divide_by_scalar(v->S, v->df);
+#else
+	gretl_matrix_divide_by_scalar(v->S, v->T);
+#endif
 	err = gretl_VAR_do_error_decomp(v->S, v->C, v->ord);
     }
 

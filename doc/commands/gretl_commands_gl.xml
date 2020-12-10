@@ -1832,208 +1832,10 @@
 	proba baséanse en <cite key="mackinnon96">MacKinnon (1996)</cite>.
 	O código relevante inclúese co amable permiso do propio autor.
       </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelar/Series temporais multivariantes</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="coint2" section="Tests" label="Proba de cointegración de Johansen">
-
-    <usage>
-      <arguments>
-        <argument>nivel</argument>
-        <argument>ylista</argument>
-	     <argblock optional="true" separated="true">
-	      <argument>xlista</argument>
-	     </argblock>
-	     <argblock optional="true" separated="true">
-	      <argument>rxlista</argument>
-	     </argblock>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--nc</flag>
-	  <effect>Sen constante</effect>
-        </option>
-        <option>
-	  <flag>--rc</flag>
-	  <effect>Constante restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--uc</flag>
-	  <effect>Constante non restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--crt</flag>
-	  <effect>Constante e tendencia restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--ct</flag>
-	  <effect>Constante e tendencia non restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--seasonals</flag>
-	  <effect>Inclúe variables ficticias estacionais centradas</effect>
-        </option>
-        <option>
-	  <flag>--asy</flag>
-	  <effect>Garda os valores p asintóticos</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>Presenta só as probas</effect>
-        </option>
-        <option>
-	  <flag>--silent</flag>
-	  <effect>Non presenta nada</effect>
-        </option>
-        <option>
-	  <flag>--verbose</flag>
-	  <effect>Presenta detalles das regresións auxiliares</effect>
-        </option>
-      </options>
-      <examples>
-        <example>coint2 2 y x</example>
-	<example>coint2 4 y x1 x2 --verbose</example>
-	<example>coint2 3 y x1 x2 --rc</example>
-	<demos>
-	  <demo>hamilton.inp</demo>
-	  <demo>denmark.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Leva a cabo a proba de cointegración de Johansen entre as variables
-	de <repl>ylista</repl> para o nivel de retardos seleccionado. Para obter
-	máis detalles sobre esta proba, consulta o <guideref targ="chap:vecm"/>
-	ou o capítulo 20 de <cite key="hamilton94">Hamilton (1994)</cite>. As
-	probabilidades asociadas (valores p) calcúlanse mediante a aproximación
-	Gamma de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
-	Amósanse dous conxuntos de valores p para a proba da traza: valores
-	asintóticos directos e valores axustados polo tamaño da mostra. Por
-	defecto, o accesorio <fncref targ="$pvalue"/> xera a variante axustada,
-	pero podes utilizar a opción <opt>asy</opt> para obter no seu lugar
-	os valores asintóticos.
-      </para>
-
-      <para context="gui">
-	Leva a cabo a proba de cointegración de Johansen entre as variables
-	indicadas para o nivel de retardos seleccionado. Para obter máis detalles
-	sobre esta proba consulta, por exemplo, o capítulo 20 do libro
-	<book>Time Series Analysis</book> (1994) de Hamilton. As probabilidades
-	asociadas (valores p) calcúlanse mediante a aproximación Gamma de Doornik
-	(1998). Amósanse dous conxuntos de valores p para a proba da traza:
-	valores asintóticos directos e valores axustados polo tamaño da mostra.
-      </para>
-
-      <para context="cli">
-	A inclusión de termos determinísticos no modelo contrólase mediante
-	os indicadores de opción. Por defecto, se non especificas ningunha
-	opción, inclúese unha <quote>constante non restrinxida</quote>, que
-	permite a presenza dunha ordenada na orixe non nula nas relacións
-	de cointegración, así como unha tendencia nos niveis das variables
-	endóxenas. Na literatura xerada a partir do traballo de Johansen
-	(por exemplo, consulta o seu libro de 1995) refírese esta situación
-	como o <quote>caso 3</quote>. As 4 primeiras opcións indicadas arriba,
-	que son mutuamente excluíntes, producen respectivamente os casos 1,
-	2, 4 e 5. Tanto o significado destes casos como o criterio para
-	seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="gui">
-	A inclusión de termos determinísticos no modelo contrólase por medio
-	dunha lista despregable de opcións. Por defecto, inclúese unha
-	<quote>constante non restrinxida</quote>, que permite a presenza
-	dunha ordenada na orixe non nula nas relacións de cointegración, así
-	como unha tendencia nos niveis das variables endóxenas. Na literatura
-	xerada a partir do traballo de Johansen (por exemplo, consulta o seu
-	libro de 1995) refírese esta situación como o <quote>caso 3</quote>.
-	As 4 primeiras opcións indicadas arriba producen respectivamente os
-	casos 1, 2, 4 e 5. Tanto o significado destes casos como o criterio
-	para seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="cli">
-	As listas <repl>xlista</repl> e <repl>rxlista</repl> (opcionais) te permiten
-	controlar as variables esóxenas especificadas, e así estas entran
-	no sistema ben sen restricións (<repl>xlista</repl>) ou ben restrinxidas
-	ao espazo de cointegración (<repl>rxlista</repl>). Estas listas
-	sepáranse de <repl>ylista</repl> e unhas das outras mediante un
-	punto e coma.
-      </para>
-
-      <para context="gui">
-	Podes controlar as variables esóxenas engadíndoas á caixa da lista
-	inferior. Por defecto, estas entran a formar parte do modelo de forma
-	non restrinxida (indicada por un <lit>U</lit> á beira do nome da
-	variable). Se queres que unha determinada variable esóxena estea
-	restrinxida ao espazo de cointegración, preme co botón dereito do
-	rato sobre ela e escolle <quote>Restrinxido</quote> no menú emerxente;
-	e o símbolo á beira da variable vaise mudar a R.
-      </para>
-
-      <para context="cli">
-	A opción <opt>seasonals</opt>, que podes combinar con calquera das
-	outras opcións, especifica a inclusión dun conxunto de variables
-	ficticias estacionais centradas. Esta opción está dispoñible só
-	para datos trimestrais ou mensuais.
-      </para>
-
-      <para context="gui">
-	Se os datos son trimestrais ou mensuais, amósase un cadriño de verificación que
-	te permite incluír un conxunto de variables ficticias estacionais centradas. En
-	tódolos casos, un cadriño de verificación adicional (<quote>Amosar os detalles</quote>)
-	permite a presentación das regresións auxiliares que forman o punto de comezo
-	do procedemento de estimación máximo verosímil de Johansen.
-      </para>
-
-      <para context="notex">
-	A seguinte táboa ofrécese como guía para a interpretación
-	dos resultados da proba que se amosan, para o caso con
-	3 variables. <lit>H0</lit> denota a hipótese nula, <lit>H1</lit>
-	a hipótese alternativa, e <lit>c</lit> o número de relacións
-	de cointegración.
-      </para>
-      <mono context="notex">
-         Rango    Proba traza        Proba Lmáx
-                  H0     H1          H0     H1
-         ---------------------------------------
-          0      c = 0  c = 3       c = 0  c = 1
-          1      c = 1  c = 3       c = 1  c = 2
-          2      c = 2  c = 3       c = 2  c = 3
-         ---------------------------------------
-      </mono>
-      <para context="tex">
-	A seguinte táboa ofrécese como guía para a interpretación
-	dos resultados da proba que se amosan, para o caso con
-	3 variables. $H_0$ denota a hipótese nula, $H_1$ a
-	hipótese alternativa, e $c$ o número de relacións de
-	cointegración.
-
-	\begin{center}
-	\begin{tabular}{cllll}
-	&amp; \multicolumn{2}{c}{Proba traza} &amp;
-	   \multicolumn{2}{c}{Proba $\lambda$-máx} \\
-	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} &amp;
-	       \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
- 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
-	\end{tabular}
-	\end{center}
-      </para>
-
       <para>
-	Consulta tamén a instrución <cmdref targ="vecm"/>.
+	Para obter as probas de cointegración de Søren Johansen,
+	consulta <cmdref targ="johansen"/>.
       </para>
-
     </description>
 
     <gui-access>
@@ -6681,6 +6483,210 @@
 	  de 'shocks' e para máis opcións de bootstrap.)
 	  </para>
     </description>
+
+  </command>
+
+  <command name="johansen" section="Tests" label="Proba de cointegración de Johansen">
+
+    <usage>
+      <arguments>
+        <argument>nivel</argument>
+        <argument>ylista</argument>
+	     <argblock optional="true" separated="true">
+	      <argument>xlista</argument>
+	     </argblock>
+	     <argblock optional="true" separated="true">
+	      <argument>rxlista</argument>
+	     </argblock>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>Sen constante</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>Constante restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>Constante non restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>Constante e tendencia restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>Constante e tendencia non restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>Inclúe variables ficticias estacionais centradas</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>Garda os valores p asintóticos</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Presenta só as probas</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>Non presenta nada</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>Presenta detalles das regresións auxiliares</effect>
+        </option>
+      </options>
+      <examples>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Leva a cabo a proba de cointegración de Johansen entre as variables
+	de <repl>ylista</repl> para o nivel de retardos seleccionado. Para obter
+	máis detalles sobre esta proba, consulta o <guideref targ="chap:vecm"/>
+	ou o capítulo 20 de <cite key="hamilton94">Hamilton (1994)</cite>. As
+	probabilidades asociadas (valores p) calcúlanse mediante a aproximación
+	Gamma de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
+	Amósanse dous conxuntos de valores p para a proba da traza: valores
+	asintóticos directos e valores axustados polo tamaño da mostra. Por
+	defecto, o accesorio <fncref targ="$pvalue"/> xera a variante axustada,
+	pero podes utilizar a opción <opt>asy</opt> para obter no seu lugar
+	os valores asintóticos.
+      </para>
+
+      <para context="gui">
+	Leva a cabo a proba de cointegración de Johansen entre as variables
+	indicadas para o nivel de retardos seleccionado. Para obter máis detalles
+	sobre esta proba consulta, por exemplo, o capítulo 20 do libro
+	<book>Time Series Analysis</book> (1994) de Hamilton. As probabilidades
+	asociadas (valores p) calcúlanse mediante a aproximación Gamma de Doornik
+	(1998). Amósanse dous conxuntos de valores p para a proba da traza:
+	valores asintóticos directos e valores axustados polo tamaño da mostra.
+      </para>
+
+      <para context="cli">
+	A inclusión de termos determinísticos no modelo contrólase mediante
+	os indicadores de opción. Por defecto, se non especificas ningunha
+	opción, inclúese unha <quote>constante non restrinxida</quote>, que
+	permite a presenza dunha ordenada na orixe non nula nas relacións
+	de cointegración, así como unha tendencia nos niveis das variables
+	endóxenas. Na literatura xerada a partir do traballo de Johansen
+	(por exemplo, consulta o seu libro de 1995) refírese esta situación
+	como o <quote>caso 3</quote>. As 4 primeiras opcións indicadas arriba,
+	que son mutuamente excluíntes, producen respectivamente os casos 1,
+	2, 4 e 5. Tanto o significado destes casos como o criterio para
+	seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="gui">
+	A inclusión de termos determinísticos no modelo contrólase por medio
+	dunha lista despregable de opcións. Por defecto, inclúese unha
+	<quote>constante non restrinxida</quote>, que permite a presenza
+	dunha ordenada na orixe non nula nas relacións de cointegración, así
+	como unha tendencia nos niveis das variables endóxenas. Na literatura
+	xerada a partir do traballo de Johansen (por exemplo, consulta o seu
+	libro de 1995) refírese esta situación como o <quote>caso 3</quote>.
+	As 4 primeiras opcións indicadas arriba producen respectivamente os
+	casos 1, 2, 4 e 5. Tanto o significado destes casos como o criterio
+	para seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="cli">
+	As listas <repl>xlista</repl> e <repl>rxlista</repl> (opcionais) te permiten
+	controlar as variables esóxenas especificadas, e así estas entran
+	no sistema ben sen restricións (<repl>xlista</repl>) ou ben restrinxidas
+	ao espazo de cointegración (<repl>rxlista</repl>). Estas listas
+	sepáranse de <repl>ylista</repl> e unhas das outras mediante un
+	punto e coma.
+      </para>
+
+      <para context="gui">
+	Podes controlar as variables esóxenas engadíndoas á caixa da lista
+	inferior. Por defecto, estas entran a formar parte do modelo de forma
+	non restrinxida (indicada por un <lit>U</lit> á beira do nome da
+	variable). Se queres que unha determinada variable esóxena estea
+	restrinxida ao espazo de cointegración, preme co botón dereito do
+	rato sobre ela e escolle <quote>Restrinxido</quote> no menú emerxente;
+	e o símbolo á beira da variable vaise mudar a R.
+      </para>
+
+      <para context="cli">
+	A opción <opt>seasonals</opt>, que podes combinar con calquera das
+	outras opcións, especifica a inclusión dun conxunto de variables
+	ficticias estacionais centradas. Esta opción está dispoñible só
+	para datos trimestrais ou mensuais.
+      </para>
+
+      <para context="gui">
+	Se os datos son trimestrais ou mensuais, amósase un cadriño de verificación que
+	te permite incluír un conxunto de variables ficticias estacionais centradas. En
+	tódolos casos, un cadriño de verificación adicional (<quote>Amosar os detalles</quote>)
+	permite a presentación das regresións auxiliares que forman o punto de comezo
+	do procedemento de estimación máximo verosímil de Johansen.
+      </para>
+
+      <para context="notex">
+	A seguinte táboa ofrécese como guía para a interpretación
+	dos resultados da proba que se amosan, para o caso con
+	3 variables. <lit>H0</lit> denota a hipótese nula, <lit>H1</lit>
+	a hipótese alternativa, e <lit>c</lit> o número de relacións
+	de cointegración.
+      </para>
+      <mono context="notex">
+         Rango    Proba traza        Proba Lmáx
+                  H0     H1          H0     H1
+         ---------------------------------------
+          0      c = 0  c = 3       c = 0  c = 1
+          1      c = 1  c = 3       c = 1  c = 2
+          2      c = 2  c = 3       c = 2  c = 3
+         ---------------------------------------
+      </mono>
+      <para context="tex">
+	A seguinte táboa ofrécese como guía para a interpretación
+	dos resultados da proba que se amosan, para o caso con
+	3 variables. $H_0$ denota a hipótese nula, $H_1$ a
+	hipótese alternativa, e $c$ o número de relacións de
+	cointegración.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Proba traza} &amp;
+	   \multicolumn{2}{c}{Proba $\lambda$-máx} \\
+	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} &amp;
+	       \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
+	\end{tabular}
+	\end{center}
+      </para>
+
+      <para>
+	Consulta tamén a instrución <cmdref targ="vecm"/>; e a instrución
+	<cmdref targ="coint"/> se queres obter a proba de cointegración de
+	Engle&ndash;Granger.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelar/Series temporais multivariantes</menu-path>
+    </gui-access>
 
   </command>
 
@@ -13154,6 +13160,15 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>quantile_type</lit>: Debes escoller entre <lit>Q6</lit> (por
+	  defecto), <lit>Q7</lit> ou <lit>Q8</lit>. Selecciona o método concreto
+	  que utiliza a función <fncref targ="quantile"/>. Para obter máis
+	  detalles, consulta <cite key="hyndman96">Hyndman e Fan (1996)</cite>
+	  ou a entrada da Wikipedia dispoñible en
+	  <url>https://en.wikipedia.org/wiki/Quantile</url>.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>huge</lit>: Un número positivo moi grande (por
 	  defecto, 1.0E100). Esta configuración controla o valor que
 	  devolve o accesorio <fncref targ="$huge"/>.
@@ -13324,14 +13339,6 @@
 	  <para><lit>fdjac_quality</lit>: Un enteiro (0, 1 ou 2) que indica
 	  o algoritmo utilizado pola función <fncref targ="fdjac"/>; por
 	  defecto é 0.
-	  </para>
-	</li>
-	<li>
-	  <para><lit>quantile_type</lit>: Unha cadea de texto
-	  (<quote>Q6</quote>, <quote>Q7</quote> ou <quote>Q8</quote>), que indica
-	  o método utilizado para calcular cuantís na mostra, de acordo cos tipos
-	  recollidos en <cite key="hyndman96">Hyndman e Fan (1996)</cite>.
-	  Por defecto é <quote>Q6</quote>.
 	  </para>
 	</li>
       </ilist>
@@ -15606,7 +15613,7 @@
 	individualmente integradas de orde 1 (polo tanto son paseos aleatorios,
 	con ou sen deriva) pero presentan cointegración. Esta instrución está
 	intimamente relacionada coa proba de cointegración de Johansen
-	(consulta <cmdref targ="coint2"/>).
+	(consulta <cmdref targ="johansen"/>).
       </para>
 
       <para context="cli">

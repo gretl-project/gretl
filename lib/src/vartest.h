@@ -21,6 +21,7 @@
 #define VARTEST_H_
 
 #define N_IVALS 3
+#define VAR_S_DFCORR 0
 
 void gretl_VAR_clear (GRETL_VAR *var);
 
