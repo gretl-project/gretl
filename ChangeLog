@@ -3,6 +3,8 @@ version 2020f, in progress
   in Hyndman and Fan (1996)
 - irf(): support calculation of multiple impulse responses
   in a single call (with internal speed-up)
+- irf() bug-fix: failing to compute bootstrap confidence band
+  correctly when passed a $system bundle argument
 - VAR internals: scrap augmented Cholesky matrix; so the
   $system.C accessor is now a square matrix
 - $system accessor: ensure presence of xlist member
@@ -19,6 +21,8 @@ version 2020f, in progress
 - Fix: memory leaks associated with GUI window lists
 - Fix bug: buggy completion proposals in script editor
   when using gtksourceview-2.0
+- Fix Windows-specific bug: gretlcli and gretlmpi could
+  fail on parsing command-line arguments
 
 2020-11-21 version 2020e
 - New function tdisagg() for temporal disaggregation
