@@ -350,7 +350,7 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
 	gretl_matrix_multiply_mod(v->E, GRETL_MOD_TRANSPOSE,
 				  v->E, GRETL_MOD_NONE,
 				  v->S, GRETL_MOD_NONE);
-	gretl_matrix_divide_by_scalar(v->S, v->df); /* was v->T in denom. */
+	gretl_matrix_divide_by_scalar(v->S, v->T); /* was df in denom. */
 	err = gretl_VAR_do_error_decomp(v->S, v->C, v->ord);
     }
 
@@ -685,42 +685,69 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
     }
 }
 
+static void grab_row_from (gretl_matrix *targ,
+			   gretl_matrix *src,
+			   int t)
+{
+    int j;
+
+    for (j=0; j<src->cols; j++) {
+	targ->val[j] = gretl_matrix_get(src, t, j);
+    }
+}
+
+static void stick_row_into (gretl_matrix *targ,
+			    gretl_matrix *src,
+			    int t)
+{
+    int j;
+
+    for (j=0; j<src->cols; j++) {
+	gretl_matrix_set(targ, t, j, src->val[j]);
+    }
+}
+
 /* (Re-)fill the bootstrap dataset with artificial data, based on the
    re-sampled residuals from the original VAR (case of simple VAR, not
    VECM).
 */
 
 static void compute_VAR_dataset (irfboot *b, GRETL_VAR *var,
-				 const GRETL_VAR *vbak)
+				 const GRETL_VAR *vbak,
+				 int iter)
 {
     double x;
     int i, j, k, t;
     int nl = var_n_lags(var);
 
 #if BDEBUG
-    gretl_matrix_print(var->Y, "var->Y before resampling");
-    gretl_matrix_print(var->X, "var->X before resampling");
+    if (iter == 0) {
+	fprintf(stderr, "ifc = %d, nl = %d, T = %d\n", var->ifc,
+		nl, var->T);
+	gretl_matrix_print(var->Y, "var->Y before resampling");
+	gretl_matrix_print(var->X, "var->X before resampling");
+    }
 #endif
 
     for (t=0; t<var->T; t++) {
 	/* extract row of var->X at t */
-	gretl_matrix_extract_matrix(b->Xt, var->X, t, 0, GRETL_MOD_NONE);
+	grab_row_from(b->Xt, var->X, t);
 
 	/* multiply Xt into original coeff matrix, forming Yt */
 	gretl_matrix_multiply(b->Xt, vbak->B, b->Yt);
 
 	/* extract resampled residuals at t */
-	gretl_matrix_extract_matrix(b->Et, b->rE, t, 0, GRETL_MOD_NONE);
+	grab_row_from(b->Et, b->rE, t);
 
 	/* add resampled residual to Yt */
 	gretl_matrix_add_to(b->Yt, b->Et);
 
 	/* write into big Y matrix */
-	gretl_matrix_inscribe_matrix(var->Y, b->Yt, t, 0, GRETL_MOD_NONE);
+	stick_row_into(var->Y, b->Yt, t);
 
 	/* revise lagged Y columns in X */
-	k = var->ifc;
 	for (i=0; i<var->neqns; i++) {
+	    k = var->ifc + i*nl;
 	    x = b->Yt->val[i];
 	    for (j=1; j<=nl && t+j < var->T; j++) {
 		gretl_matrix_set(var->X, t+j, k++, x);
@@ -737,7 +764,7 @@ static void compute_VAR_dataset (irfboot *b, GRETL_VAR *var,
 /* Resample the original VAR or VECM residuals, stored in
    vbak->E, writing the new sample into b->rE.
 
-   Note the option to "resample" _without_ actually changing the
+   Note the facility to "resample" _without_ actually changing the
    order, if BDEBUG > 1.  This is useful for checking that the IRF
    bootstrap rounds are idempotent: we should then get exactly the
    same set of responses as in the original estimation of the
@@ -749,23 +776,19 @@ static void irf_resample_resids (irfboot *b, const GRETL_VAR *vbak)
     double eti;
     int i, t;
 
-    /* construct sampling array */
-
-    for (t=0; t<vbak->T; t++) {
 #if BDEBUG > 1
-	b->sample[t] = t; /* fake it */
-#else
+    gretl_matrix_copy_values(b->rE, vbak->E);
+    return;
+#endif
+
+    /* construct sampling array */
+    for (t=0; t<vbak->T; t++) {
 	b->sample[t] = gretl_rand_int_max(vbak->T);
-#endif
-#if 0
-	fprintf(stderr, "boot->sample[%d] = %d\n", t, b->sample[t]);
-#endif
     }
 
     /* draw from the original residuals */
-
-    for (t=0; t<vbak->T; t++) {
-	for (i=0; i<vbak->neqns; i++) {
+    for (i=0; i<vbak->neqns; i++) {
+	for (t=0; t<vbak->T; t++) {
 	    eti = gretl_matrix_get(vbak->E, b->sample[t], i);
 	    gretl_matrix_set(b->rE, t, i, eti);
 	}
@@ -991,7 +1014,6 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 #if BDEBUG
     fprintf(stderr, "\n*** irf_bootstrap() called: var->Y = %p\n",
 	    (void *) var->Y);
-    gretl_matrix_print(var->A, "initial var->A");
 #endif
 
     R = gretl_zero_matrix_new(periods, 3*nresp);
@@ -1040,7 +1062,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	    }
 #endif
 	} else {
-	    compute_VAR_dataset(boot, var, vbak);
+	    compute_VAR_dataset(boot, var, vbak, iter);
 	    *err = re_estimate_VAR(boot, var, targ, shock, iter);
 	}
 	if (*err && !irf_fatal(*err, boot, iter, scount)) {

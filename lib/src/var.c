@@ -4746,7 +4746,7 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
                                    int *err)
 {
     GRETL_VAR *var = malloc(sizeof *var);
-    int i, ierr[6];
+    int i, ierr[7];
 
     if (var == NULL) {
         *err = E_ALLOC;
@@ -4766,8 +4766,9 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
     var->ncoeff = gretl_bundle_get_int(b, "ncoeff", &ierr[2]);
     var->t1 = gretl_bundle_get_int(b, "t1", &ierr[3]);
     var->t2 = gretl_bundle_get_int(b, "t2", &ierr[4]);
+    var->df = gretl_bundle_get_int(b, "df", &ierr[6]);
     var->T  = gretl_bundle_get_int(b, "T", &ierr[5]);
-    for (i=0; i<6; i++) {
+    for (i=0; i<7; i++) {
         if (ierr[i]) {
             *err = ierr[i];
             break;
@@ -4775,10 +4776,14 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
     }
 
     if (!*err) {
+	/* convert sample range to zero-based */
+	var->t1 -= 1;
+	var->t2 -= 1;
         /* note: borrowing */
         var->ylist = gretl_bundle_get_list(b, "ylist", NULL);
         var->xlist = gretl_bundle_get_list(b, "xlist", NULL);
         var->rlist = gretl_bundle_get_list(b, "rlist", NULL);
+	var->ifc = gretl_bundle_get_int(b, "ifc", NULL);
     }
 
     if (!*err) {
@@ -4945,7 +4950,9 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "robust", var->robust);
     gretl_bundle_set_int(b, "t1", var->t1 + 1);
     gretl_bundle_set_int(b, "t2", var->t2 + 1);
+    gretl_bundle_set_int(b, "df", var->df);
     gretl_bundle_set_int(b, "T", var->T);
+    gretl_bundle_set_int(b, "ifc", var->ifc);
 
     gretl_bundle_set_scalar(b, "lnl", var->ll);
     gretl_bundle_set_scalar(b, "ldet", var->ldet);
