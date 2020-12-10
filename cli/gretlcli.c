@@ -480,7 +480,7 @@ static int win32_get_args (int *pargc, char ***pargv)
         err = 1;
     } else {
         /* convert args to UTF-8 */
-        char **argv_u8 = calloc(argc_w, sizeof *argv_u8);
+        char **argv_u8 = calloc((argc_w + 1), sizeof *argv_u8);
         int i;
 
         for (i=0; i<argc_w && !err; i++) {

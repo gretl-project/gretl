@@ -398,12 +398,9 @@ equation_system_new (int method, const char *name, int *err)
     sys->neqns = 0;
     sys->nidents = 0;
 
-    sys->R = NULL;
-    sys->q = NULL;
+    sys->q = sys->R = NULL;
 
-    sys->iters = 0;
-    sys->flags = 0;
-    sys->order = 0;
+    sys->order = sys->flags = sys->iters = 0;
 
     sys->ll = sys->llu = sys->ldet = NADBL;
     sys->X2 = NADBL;
@@ -411,23 +408,17 @@ equation_system_new (int method, const char *name, int *err)
     sys->diag_test = 0.0;
     sys->bdiff = 0.0;
 
-    sys->b = NULL;
-    sys->vcv = NULL;
-    sys->S = NULL;
-    sys->E = NULL;
+    sys->b = sys->vcv = NULL;
+    sys->E = sys->S = NULL;
     sys->yhat = NULL;
 
     sys->Gamma = NULL;
-    sys->B = NULL;
-    sys->A = NULL;
-    sys->Sr = NULL;
-    sys->F = NULL;
+    sys->A = sys->B = NULL;
+    sys->F = sys->Sr = NULL;
 
-    sys->lists = NULL;
-    sys->ylist = NULL;
-    sys->ilist = NULL;
-    sys->xlist = NULL;
-    sys->plist = NULL;
+    sys->tslists = sys->lists = NULL;
+    sys->ilist = sys->ylist = NULL;
+    sys->plist = sys->xlist = NULL;
     sys->biglist = NULL;
 
     sys->pre_vars = NULL;
@@ -568,6 +559,63 @@ void equation_system_destroy (equation_system *sys)
     free(sys);
 }
 
+#define SYS_PRUNE_LISTS 1
+
+#if SYS_PRUNE_LISTS
+
+/* 2020-12-09: When a system is defined using TSLS-style
+   regression lists, with instruments specified per
+   equation, there were problems estimating the system
+   via estimators that don't take such a specification.
+   The apparatus below is designed to handle this: we
+   remove the instruments immediately prior to estimation,
+   then restore them immediately afterwards.
+*/
+
+/* Make a copy of the incoming per-equation regression
+   lists, with any instruments removed.
+*/
+
+static int lists_strip_insts (equation_system *sys)
+{
+    int i, *eqlist;
+
+    sys->tslists = malloc(sys->neqns * sizeof *sys->tslists);
+
+    for (i=0; i<sys->neqns; i++) {
+	sys->tslists[i] = sys->lists[i];
+	if (gretl_list_has_separator(sys->lists[i])) {
+	    gretl_list_split_on_separator(sys->tslists[i], &eqlist, NULL);
+	    sys->lists[i] = eqlist;
+	} else {
+	    sys->lists[i] = gretl_list_copy(sys->tslists[i]);
+	}
+    }
+
+    return 0;
+}
+
+/* Restore the original per-equation regression lists,
+   in case instruments were removed for estimation by
+   OLS, WLS, SUR or FIML.
+*/
+
+static void lists_restore_insts (equation_system *sys)
+{
+    int i;
+
+    for (i=0; i<sys->neqns; i++) {
+	free(sys->lists[i]);
+	sys->lists[i] = sys->tslists[i];
+	sys->tslists[i] = NULL;
+    }
+
+    free(sys->tslists);
+    sys->tslists = NULL;
+}
+
+#endif /* SYS_PRUNE_LISTS */
+
 static int sys_rearrange_eqn_lists (equation_system *sys,
                                     const DATASET *dset)
 {
@@ -577,6 +625,20 @@ static int sys_rearrange_eqn_lists (equation_system *sys,
         reglist_check_for_const(sys->lists[i], dset);
     }
 
+#if SYS_PRUNE_LISTS
+    if (sys->method != SYS_METHOD_TSLS &&
+        sys->method != SYS_METHOD_3SLS &&
+	sys->method != SYS_METHOD_LIML) {
+        /* we can't have ';' in equation lists */
+	for (i=0; i<sys->neqns; i++) {
+	    if (gretl_list_has_separator(sys->lists[i])) {
+		lists_strip_insts(sys);
+		break;
+	    }
+	}
+    }
+#else
+    /* the status quo prior to 2020-12-09 */
     if (sys->method != SYS_METHOD_TSLS &&
         sys->method != SYS_METHOD_3SLS) {
         /* we can't have ';' in equation lists */
@@ -592,6 +654,7 @@ static int sys_rearrange_eqn_lists (equation_system *sys,
             }
         }
     }
+#endif
 
     return err;
 }
@@ -1614,6 +1677,10 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
         } else {
             err = (*system_est) (sys, dset, opt, prn);
         }
+    }
+
+    if (sys->tslists != NULL) {
+	lists_restore_insts(sys);
     }
 
     if (!err) {
