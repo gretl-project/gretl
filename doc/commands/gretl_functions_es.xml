@@ -1319,6 +1319,85 @@
 
   </funclist>
 
+  <funclist name="String constants" ref="string_constants">
+
+    <function name="$dotdir" section="stringconsts" output="string">
+      <description>
+        <para>
+          Proporciona una cadena de texto con la ruta completa del directorio que
+          utiliza Gretl para los archivos temporales. Para usarla en modo de
+          sustitución para cadenas de texto, antepón el símbolo arroba (@dotdir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gnuplot" section="stringconsts" output="string">
+        <description>
+        <para>
+          Proporciona una cadena de texto con la ruta hasta el ejecutable 'gnuplot'. Para
+          usarla en modo de sustitución para cadenas, antepón el símbolo arroba (@gnuplot).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gretldir" section="stringconsts" output="string">
+        <description>
+        <para>
+          Proporciona una cadena de texto con la ruta completa al directorio
+          de instalación de Gretl. Para usarla en modo de substitución para
+          cadenas de texto, antepón el símbolo arroba (@gretldir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramo" section="stringconsts" output="string">
+        <description>
+        <para>
+          Proporciona una cadena de texto con la ruta hasta el ejecutable 'tramo'. Para
+          usarla en modo de sustitución para cadenas, antepón el símbolo arroba (@tramo).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramodir" section="stringconsts" output="string">
+        <description>
+        <para>
+          Proporciona una cadena de texto con la ruta hasta el directorio de datos de 'tramo'. Para
+          usarla en modo de sustitución para cadenas, antepón el símbolo arroba (@tramodir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$workdir" section="stringconsts" output="string">
+        <description>
+        <para>
+          Proporciona una cadena de texto con la ruta hasta el directorio
+          de trabajo vigente en Gretl. Para usarla en modo de sustitución
+          para cadenas de texto , antepón el símbolo arroba (@workdir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12a" section="stringconsts" output="string">
+        <description>
+        <para>
+          Proporciona una cadena de texto con la ruta hasta el ejecutable 'x-12-arima'. Para usarla
+          en modo de sustitución para cadenas, antepón el símbolo arroba (@x12a).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12adir" section="stringconsts" output="string">
+        <description>
+        <para>
+          Proporciona una cadena de texto con la ruta hasta el directorio de datos de 'x-12-arima'. Para
+          usarla en modo de sustitución para cadenas, antepón el símbolo arroba (@x12adir).
+        </para>
+        </description>
+    </function>
+
+  </funclist>
+
   <funclist name="Functions proper" ref="functions">
 
     <function name="abs" section="math" output="asinput">
@@ -5659,45 +5738,70 @@
     <function name="irf" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">efecto</fnarg>
-	<fnarg type="int">motivo</fnarg>
-	<fnarg type="pscalar" optional="true">alpha</fnarg>
+	<fnarg type="int">impacto</fnarg>
+	<fnarg type="pscalar" optional="true">alfa</fnarg>
 	<fnarg type="bundle" optional="true">sys</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Sin el argumento final (opcional), esta función solo está
-	  disponible cuando el último modelo estimado fue un VAR o un
-	  VECM. Como alternativa, puedes guardar en un 'bundle' la información
-	  sobre un VAR o un VECM con el acceso <fncref targ="$system"/>,
-	  y posteriormente pasarle la función <lit>irf</lit>.
+	  Proporciona una matriz con las funciones estimadas de respuesta al
+	  impulso correspondientes a un VAR o un VECM, trazadas sobre un
+	  determinado horizonte de predicción. Sin el argumento final (opcional),
+	  esta función sirve solo cuando el último modelo estimado fue un VAR o
+	  un VECM. Como alternativa, puedes guardar la información sobre uno de esos
+	  sistemas como 'bundle', mediante el accesor <fncref targ="$system"/>,
+	  y posteriormente aplicarle la función <lit>irf</lit>.
 	</para>
 	<para>
-	  Como resultado, devuelve una matriz que contiene
-	  la respuesta estimada de la variable <argname>efecto</argname> ante un
-	  impulso en la variable <argname>motivo</argname> de magnitud igual
-	  a su desviación típica. Estas dos variables se identifican
-	  teniendo en cuenta sus posiciones en la especificación del modelo: por
-	  ejemplo, cuando indicas los argumentos <argname>efecto</argname>
-	  y <argname>motivo</argname> con los valores 1 y 3, respectivamente, la
-	  matriz que se devuelve proporciona la respuesta de la primera variable
-	  del sistema, ante un impulso de la tercera variable.
+	  Los argumentos <argname>efecto</argname> e <argname>impacto</argname>
+	  son índices, con formato de números enteros, de las variables endógenas
+	  del sistema; y se usa 0 para indicar <quote>todas</quote>. Las respuestas
+	  (expresadas en las unidades de la variable <argname>efecto</argname>)
+	  lo son ante una innovación de una desviación típica en la variable
+	  <argname>impacto</argname>. Cando le asignas un valor positivo
+	  adecuado a <argname>alfa</argname>, las estimaciones incluyen
+	  un intervalo de confianza de 1 &minus; &agr; (de esta forma, por
+	  ejemplo, indica 0.1 si deseas obtener un intervalo del 90 por
+	  ciento).
 	</para>
 	<para>
-	  Si indicas el tercer argumento <argname>alpha</argname> (opcional),
-	  la matriz que te devuelve la función tiene tres columnas: la primera con la
-	  estimación por punto de las respuestas, y las otras con los límites inferior y
-	  superior del intervalo con confianza (1 &minus; &agr;) para las mismas,
-	  obtenidas mediante autosuficiencia (<quote>bootstrapping</quote>).
-	  Si <argname>alpha</argname> = 0.1, la confianza será del 90 por ciento.
-	  Cuando <argname>alpha</argname> se omite o se iguala a cero, tan solo
-	  se proporciona la estimación por punto.
+	  El siguiente fragmento de código ilustra su uso. En el primer ejemplo,
+	  la matriz <lit>ir1</lit> contiene las respuestas de <lit>y1</lit> ante las
+	  innovaciones en cada una de las <lit>y1</lit>, <lit>y2</lit> e <lit>y3</lit>
+	  (son estimaciones por punto ya que se omite <argname>alfa</argname>).
+	  En el segundo ejemplo, <lit>ir2</lit> contiene las respuestas de todas las
+	  variables de efecto a una innovación en <lit>y2</lit>, con intervalos
+	  de confianza del 90 por ciento. En este caso, la matriz que se devuelve
+	  tendrá 9 columnas: cada vía de respuesta ocupa 3 columnas contiguas que
+	  indican la estimación por punto, el límite inferior y el límite superior.
+	  El último ejemplo produce una matriz con 27 columnas: 3 columnas
+	  para cada respuesta ante cada variable de efecto, multiplicadas por
+	  cada una de las tres variables de choque.
 	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  matrix ir1 = irf(1, 0)
+	  matrix ir2 = irf(0, 2, 0.1)
+	  matrix ir3 = irf(0, 0, 0.1)
+	</code>
 	<para>
 	  El número de períodos (filas) sobre los que se traza la respuesta se
 	  determina automáticamente dependiendo de la frecuencia de los datos; pero
 	  eso puede ajustarse por medio de la instrucción <cmdref targ="set"/>,
 	  como por ejemplo con <lit>set horizon 10</lit>.
 	</para>
+	<para>
+	  Cuando se presentan los intervalos de confianza, estos se generan
+	  mediante la técnica de muestreo repetido 'bootstrapping' de los residuos
+	  originales. Se asume que el orden del retardo del VAR o del VECM ya
+	  es suficiente como para eliminar la autocorrelación de los residuos. Por
+	  defecto, el número de repeticiones del muestreo 'bootstrap' es de 1999,
+	  pero puedes ajustar esto mediante la instrucción <cmdref targ="set"/>,
+	  como en
+	</para>
+	<code>
+	  set boot_iters 2999
+	</code>
 	<para>
 	  <seelist><fncref targ="fevd"/></seelist>
 	</para>
