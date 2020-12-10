@@ -33,7 +33,6 @@
 #define VDEBUG 0
 
 #define VAR_SE_DFCORR 1
-#define VAR_S_DFCORR 0
 
 enum {
     VAR_ESTIMATE = 1,
@@ -2375,7 +2374,9 @@ static int VAR_add_stats (GRETL_VAR *var, int code)
 
 #if VAR_S_DFCORR
         /* Hmm, should we df-adjust var->S here?  Note that this
-           will affect the impulse response output */
+           will affect the impulse response output; see also
+	   irfboot.c.
+	*/
         if (!err) {
             double cfac = var->T / (double) var->df;
 
