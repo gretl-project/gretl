@@ -4351,15 +4351,17 @@ static void plot_do_rescale (png_plot *plot, int mod)
 
 static void show_all_labels (png_plot *plot)
 {
-    FILE *fp;
+    FILE *fp = NULL;
 
     if (plot->spec->labeled != NULL) {
+	/* Destroy record of labeling of specific points via
+	   "brushing", if present.
+	*/
 	free(plot->spec->labeled);
 	plot->spec->labeled = NULL;
     }
 
     plot->spec->flags |= GPT_PRINT_MARKERS;
-
     gnuplot_png_init(plot, &fp);
 
     if (fp == NULL) {

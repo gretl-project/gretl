@@ -220,8 +220,6 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     guint8 r, g, b;
     gretlRGB rgb;
 
-    fprintf(stderr, "HERE color_select_callback\n");
-
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
     csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
 
@@ -232,7 +230,6 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     rgb = (r << 16) | (g << 8) | b;
 
     if (widget_get_int(w, "boxcolor")) {
-	fprintf(stderr, "HERE set_boxcolor()\n");
 	set_boxcolor(rgb);
     } else {
 	gretlRGB *prgb = malloc(sizeof *prgb);
@@ -617,7 +614,12 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 	} else {
 	    gtk_entry_set_text(GTK_ENTRY(ed->fitformula), spec->lines[1].formula);
 	}
-	gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), spec->lines[1].title);
+	if (f == PLOT_FIT_NONE) {
+	    gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), "");
+	} else {
+	    gtk_entry_set_text(GTK_ENTRY(ed->fitlegend), spec->lines[1].title);
+	}
+	gtk_widget_set_sensitive(ed->fitlegend, (f != PLOT_FIT_NONE));
     }
 
     return FALSE;
@@ -2548,8 +2550,6 @@ static GList *add_style_spec (GList *list, int t)
     return g_list_append(list, get_style_spec(t));
 }
 
-#define line_is_formula(l) (l->formula[0] != '\0' || (l->flags & GP_LINE_USER))
-
 static void line_controls_init (plot_editor *ed, int i)
 {
     ed->lineformula[i] = NULL;
@@ -2626,6 +2626,9 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	int line_width_ok = 1;
 	int dash_type_ok = 1;
 	int color_sel_ok = 1;
+	int is_autofit = 0;
+	int is_formula = 0;
+	int is_hidden = 0;
 	int label_done = 0;
 
 	hbox = NULL;
@@ -2635,12 +2638,20 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    dash_type_ok = 0; /* ? */
 	    color_sel_ok = 0;
 	}
-
+	if (i == 1 && spec->flags & GPT_AUTO_FIT) {
+	    is_autofit = 1;
+	    if (spec->flags & GPT_FIT_HIDDEN) {
+		is_hidden = 1;
+	    }
+	}
 	if (line->type <= 0 && line->type != LT_AUTO) {
 	    color_sel_ok = 0;
 	}
+	if (plotspec_line_is_formula(spec, i)) {
+	    is_formula = 1;
+	}
 
-	if (line_is_formula(line)) {
+	if (is_formula) {
 	    gtk_table_resize(GTK_TABLE(tbl), ++nrows, ncols);
 	    print_line_label(tbl, nrows, spec, i);
 	    label_done = 1;
@@ -2650,10 +2661,10 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 				      2, ncols, nrows-1, nrows);
 	    strip_lr(line->formula);
 	    gp_string_to_entry(ed->lineformula[i], line->formula);
-	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
+	    if (is_autofit) {
 		/* fitted formula: not GUI-editable */
-		gtk_widget_set_sensitive(ed->lineformula[i], FALSE);
 		ed->fitformula = ed->lineformula[i];
+		gtk_widget_set_sensitive(ed->lineformula[i], FALSE);
 	    } else {
 		g_signal_connect(G_OBJECT(ed->lineformula[i]), "activate",
 				 G_CALLBACK(apply_gpt_changes),
@@ -2677,19 +2688,24 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ed->linetitle[i] = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), ed->linetitle[i],
 				      2, ncols, nrows-1, nrows);
-	    strip_lr(line->title);
-	    gp_string_to_entry(ed->linetitle[i], line->title);
-	    g_signal_connect(G_OBJECT(ed->linetitle[i]), "changed",
-			     G_CALLBACK(linetitle_callback), ed);
-	    g_signal_connect(G_OBJECT(ed->linetitle[i]), "activate",
-			     G_CALLBACK(apply_gpt_changes), ed);
+	    if (is_hidden) {
+		gtk_entry_set_text(GTK_ENTRY(ed->linetitle[i]), "");
+	    } else {
+		strip_lr(line->title);
+		gp_string_to_entry(ed->linetitle[i], line->title);
+		g_signal_connect(G_OBJECT(ed->linetitle[i]), "changed",
+				 G_CALLBACK(linetitle_callback), ed);
+		g_signal_connect(G_OBJECT(ed->linetitle[i]), "activate",
+				 G_CALLBACK(apply_gpt_changes), ed);
+	    }
 	    gtk_widget_show(ed->linetitle[i]);
-	    if (i == 1 && (spec->flags & GPT_AUTO_FIT)) {
+	    if (is_autofit) {
 		ed->fitlegend = ed->linetitle[i];
+		gtk_widget_set_sensitive(ed->fitlegend, !is_hidden);
 	    }
 	}
 
-	if (line_is_formula(line)) {
+	if (is_formula) {
 	    goto line_width_adj;
 	}
 
@@ -2785,6 +2801,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    g_signal_connect(G_OBJECT(ed->linewidth[i]), "activate",
 			     G_CALLBACK(apply_gpt_changes), ed);
 	    gtk_widget_show_all(hbox);
+	    gtk_widget_set_sensitive(hbox, !is_hidden);
 	    if (should_apply_changes(ed->stylecombo[i])) {
 		g_object_set_data(G_OBJECT(ed->stylecombo[i]), "line-controls",
 				  hbox);
@@ -2794,7 +2811,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    if (line->style == GP_STYLE_CANDLESTICKS) {
 		gtk_widget_set_sensitive(hbox, TRUE);
 	    } else {
-		gtk_widget_set_sensitive(hbox, hl);
+		gtk_widget_set_sensitive(hbox, hl && !is_hidden);
 	    }
 	}
 
@@ -2804,6 +2821,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    hbox = gpt_hboxit(ed->colorsel[i]);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 3, ncols,
 				      nrows-1, nrows);
+	    gtk_widget_set_sensitive(hbox, !is_hidden);
 	    gtk_widget_show_all(hbox);
 	}
 
@@ -2855,6 +2873,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, ncols,
 				      nrows-1, nrows);
 	    gtk_widget_show_all(hbox);
+	    gtk_widget_set_sensitive(hbox, !is_hidden);
 	}
 
 	/* separator */

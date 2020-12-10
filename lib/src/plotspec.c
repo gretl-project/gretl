@@ -811,6 +811,19 @@ static int usable_obs (const double *x, const double *y0,
     }
 }
 
+int plotspec_line_is_formula (const GPT_SPEC *spec, int i)
+{
+    if (i < 0 || i >= spec->n_lines) {
+	return 0;
+    } else {
+	GPT_LINE *ln = &spec->lines[i];
+
+	return ln->formula[0] != '\0' ||
+	    (ln->flags & GP_LINE_USER) ||
+	    (i == 1 && (spec->flags & GPT_AUTO_FIT));
+    }
+}
+
 static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 {
     const double *x, *y, *y0;
@@ -819,15 +832,25 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
     double xmin, xmax;
     double ymin, ymax;
     double yoff;
-    int t;
+    int nlines;
+    int i, t;
 
-    if ((spec->flags & GPT_POLAR) && spec->markers != NULL) {
+    if (spec->markers == NULL) {
+	/* "can't happen" */
+	return 1;
+    }
+
+    if (spec->flags & GPT_POLAR) {
 	return print_polar_labels(spec, fp);
     }
 
-    if (spec->n_lines > 2 ||
-	spec->lines[0].ncols != 2 ||
-	spec->markers == NULL) {
+    nlines = 0;
+    for (i=0; i<spec->n_lines; i++) {
+	if (!plotspec_line_is_formula(spec, i)) {
+	    nlines++;
+	}
+    }
+    if (nlines > 2 || spec->lines[0].ncols != 2) {
 	return 1;
     }
 
