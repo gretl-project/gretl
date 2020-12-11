@@ -853,6 +853,65 @@ int get_days_in_month (int m, int y, int wkdays, int julian)
 }
 
 /**
+ * fill_monthlen_array:
+ * @mlen: array to be filled.
+ * @t1: starting index for fill.
+ * @t2: stopping index for fill.
+ * @wkdays: number of days in week (7, 6 or 5).
+ * @mo: month (ignored if @movec is non-NULL).
+ * @yr: year (ignored if @yrvec is non-NULL).
+ * @movec: array of month values (or NULL).
+ * @yrvec: array of year values (or NULL).
+ * @julian: non-zero for Julian calendar, otherwise Gregorian.
+ *
+ * Fills @mlen from @t1 to @t2 with the number of days in
+ * each month/year pair. It is assumed that at least one
+ * of @movec and @yrvec is non-NULL. The various arrays
+ * are doubles only because in context they will be
+ * dataset series; in concept they are integers.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int fill_monthlen_array (double *mlen, int t1, int t2,
+			 int wkdays, int mo, int yr,
+			 const double *movec,
+			 const double *yrvec,
+			 int julian)
+{
+    int t, err = 0;
+
+    if (movec == NULL && yrvec == NULL) {
+	return E_INVARG;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	if (movec != NULL) {
+	    mo = gretl_int_from_double(movec[t], &err);
+	    if (err || mo < 1 || mo > 12) {
+		err = E_INVARG;
+		break;
+	    }
+	}
+	if (yrvec != NULL) {
+	    yr = gretl_int_from_double(yrvec[t], &err);
+	    if (err) {
+		break;
+	    }
+	    if (yr < 0) {
+		yr = -yr;
+		julian = 1;
+	    } else {
+		julian = 0;
+	    }
+	}
+	mlen[t] = get_days_in_month(mo, yr, wkdays, julian);
+    }
+
+    return err;
+}
+
+/**
  * month_day_index:
  * @y: 4-digit year
  * @m: month number, 1-based

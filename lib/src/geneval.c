@@ -11483,7 +11483,28 @@ static gretl_matrix *mshape_scalar (double x, int r, int c, int *err)
     return m;
 }
 
-/* evaluate a built-in function that has three arguments */
+static void node_get_int_or_series (int *ip, double **vecp,
+				    NODE *n, parser *p)
+{
+    if (scalar_node(n)) {
+	*ip = node_get_int(n, p);
+    } else if (n->t == SERIES) {
+	*vecp = n->v.xvec;
+    } else {
+	p->err = E_TYPES;
+    }
+}
+
+/* eval_3args_func: evaluate a built-in function that has three
+   arguments. The @post_process flag is a convenience for the
+   case where the function in question returns a matrix: it
+   centralizes the creation or retrieval of an "aux node" of the
+   right type, and attaches the computed matrix @A to it. This
+   flag must be set to zero for all cases where the function does
+   NOT return a matrix. Conversely, when a function DOES return
+   a matrix it should assign this to @A, and leave the aux node
+   business to the post-processor.
+*/
 
 static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                               int f, parser *p)
@@ -11752,78 +11773,52 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         }
     } else if (f == F_MONTHLEN) {
         double *movec = NULL, *yrvec = NULL;
-        int wk, julian = 0;
+        int wkdays, julian = 0;
         int mo = 0, yr = 0;
         int rettype = NUM;
 
         post_process = 0;
-        wk = node_get_int(r, p);
-        if (!p->err && wk != 5 && wk != 6 && wk != 7) {
+        wkdays = node_get_int(r, p);
+        if (!p->err && (wkdays < 5 || wkdays > 7)) {
             p->err = E_INVARG;
         }
         if (!p->err) {
-            if (scalar_node(l)) {
-                mo = node_get_int(l, p);
-                if (!p->err && (mo < 1 || mo > 12)) {
-                    p->err = E_INVARG;
-                }
-            } else if (l->t == SERIES) {
-                rettype = SERIES;
-                movec = l->v.xvec;
-            } else {
-                p->err = E_TYPES;
-            }
-        }
+	    node_get_int_or_series(&mo, &movec, l, p);
+	    if (!p->err) {
+		if (movec != NULL) {
+		    rettype = SERIES;
+		} else if (mo < 1 || mo > 12) {
+		    p->err = E_INVARG;
+		}
+	    }
+	}
         if (!p->err) {
-            if (scalar_node(m)) {
-                yr = node_get_int(m, p);
-                if (yr < 0) {
+	    node_get_int_or_series(&yr, &yrvec, m, p);
+	    if (!p->err) {
+		if (yrvec != NULL) {
+		    rettype = SERIES;
+		} else if (yr < 0) {
                     yr = -yr;
                     julian = 1;
                 }
-            } else if (m->t == SERIES) {
-                rettype = SERIES;
-                yrvec = m->v.xvec;
-            } else {
-                p->err = E_TYPES;
             }
         }
+	reset_p_aux(p, save_aux);
         if (!p->err && rettype == NUM) {
-            reset_p_aux(p, save_aux);
             ret = aux_scalar_node(p);
             if (ret != NULL) {
-                ret->v.xval = get_days_in_month(mo, yr, wk, julian);
+                ret->v.xval = get_days_in_month(mo, yr, wkdays, julian);
             }
         } else if (!p->err) {
-            reset_p_aux(p, save_aux);
             ret = aux_series_node(p);
             if (ret != NULL) {
-                int t;
-
-                for (t=p->dset->t1; t<=p->dset->t2; t++) {
-                    if (movec != NULL) {
-                        mo = gretl_int_from_double(movec[t], &p->err);
-                        if (p->err || mo < 1 || mo > 12) {
-                            p->err = E_INVARG;
-                            break;
-                        }
-                    }
-                    if (yrvec != NULL) {
-                        yr = gretl_int_from_double(yrvec[t], &p->err);
-                        if (p->err) {
-                            break;
-                        }
-                        if (yr < 0) {
-                            yr = -yr;
-                            julian = 1;
-                        } else {
-                            julian = 0;
-                        }
-                    }
-                    ret->v.xvec[t] = get_days_in_month(mo, yr, wk, julian);
-                }
-            }
-        }
+		p->err = fill_monthlen_array(ret->v.xvec,
+					     p->dset->t1, p->dset->t2,
+					     wkdays, mo, yr,
+					     movec, yrvec,
+					     julian);
+	    }
+         }
     } else if (f == F_SETNOTE || f == F_BRENAME) {
         post_process = 0;
         if (l->t != BUNDLE) {
@@ -12001,6 +11996,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
         }
     } else if (f == F_SUBSTR) {
+	post_process = 0;
         if (l->t != STR) {
             node_type_error(f, 1, STR, l, p);
         } else if (!scalar_node(m)) {
@@ -12008,7 +12004,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         } else if (!scalar_node(r)) {
             node_type_error(f, 3, NUM, r, p);
         } else {
-            post_process = 0;
             reset_p_aux(p, save_aux);
             ret = aux_string_node(p);
             if (ret != NULL) {
@@ -12159,7 +12154,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                                                   p->dset, opts);
 	}
     } else if (f == F_VMA) {
-	post_process = 0;
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (m->t != MAT) {
@@ -12168,19 +12162,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    int horizon = (r->t == EMPTY) ? 24: node_get_int(r, p);
+
 	    if (!p->err) {
-		ret = aux_matrix_node(p);
-		ret->v.m = vma_rep(l->v.m, m->v.m, horizon, &p->err);
+		A = vma_rep(l->v.m, m->v.m, horizon, &p->err);
 	    }
         }
     }
 
-    if (!p->err && post_process) {
-        reset_p_aux(p, save_aux);
-        ret = aux_matrix_node(p);
-        if (!p->err) {
-            ret->v.m = A;
-        }
+    if (post_process) {
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		ret->v.m = A;
+	    }
+	}
+	if (p->err) {
+	    /* don't leak memory on error */
+	    gretl_matrix_free(A);
+	}
     }
 
     return ret;
