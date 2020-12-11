@@ -10062,28 +10062,24 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *get_bundle_result (NODE *n, int f, parser *p)
+static NODE *get_bundle_array (NODE *n, int f, parser *p)
 {
-    NODE *ret = NULL;
+    NODE *ret = aux_array_node(p);
 
-    if (starting(p)) {
-	ret = aux_array_node(p);
-	if (!p->err) {
-	    if (f == F_GETKEYS) {
-		ret->v.a = gretl_bundle_get_keys(n->v.b, &p->err);
-	    } else if (f == HF_JBTERMS) {
-		gretl_array *(*jfunc) (gretl_bundle *, int *);
+    if (ret != NULL) {
+        if (f == F_GETKEYS) {
+            ret->v.a = gretl_bundle_get_keys(n->v.b, &p->err);
+        } else {
+            /* HF_JBTERMS */
+            gretl_array *(*jfunc) (gretl_bundle *, int *);
 
-		jfunc = get_plugin_function("json_bundle_get_terminals");
-		if (jfunc == NULL) {
-		    p->err = E_FOPEN;
-		} else {
-		    ret->v.a = jfunc(n->v.b, &p->err);
-		}
-	    }
-	}
-    } else {
-	ret = aux_any_node(p);
+            jfunc = get_plugin_function("json_bundle_get_terminals");
+            if (jfunc == NULL) {
+                p->err = E_FOPEN;
+            } else {
+                ret->v.a = jfunc(n->v.b, &p->err);
+            }
+        }
     }
 
     return ret;
@@ -16655,6 +16651,12 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_GETKEYS:
     case HF_JBTERMS:
+	if (l->t == BUNDLE) {
+            ret = get_bundle_array(l, t->t, p);
+        } else {
+            node_type_error(t->t, 0, BUNDLE, l, p);
+        }
+        break;
     case DBMEMB:
         /* name of $-bundle plus string */
         if (l->t == BUNDLE && r->t == STR) {
