@@ -59,7 +59,4 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 			     const DATASET *dset,
 			     int *err);
 
-gretl_matrix *point_irf_from_bundle (gretl_bundle *b,
-				     int *err);
-
 #endif /* VARTEST_H_ */

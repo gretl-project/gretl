@@ -10067,11 +10067,7 @@ static NODE *get_bundle_result (NODE *n, int f, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	if (f == HF_IRF) {
-	    ret = aux_matrix_node(p);
-	} else {
-	    ret = aux_array_node(p);
-	}
+	ret = aux_array_node(p);
 	if (!p->err) {
 	    if (f == F_GETKEYS) {
 		ret->v.a = gretl_bundle_get_keys(n->v.b, &p->err);
@@ -10084,9 +10080,6 @@ static NODE *get_bundle_result (NODE *n, int f, parser *p)
 		} else {
 		    ret->v.a = jfunc(n->v.b, &p->err);
 		}
-	    } else {
-		/* HF_IRF */
-		ret->v.m = point_irf_from_bundle(n->v.b, &p->err);
 	    }
 	}
     } else {
@@ -12168,6 +12161,24 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             ret = aux_scalar_node(p);
             p->err = ret->v.xval = geoplot_driver(mapfile, mapbun, plm, plx,
                                                   p->dset, opts);
+	}
+    } else if (f == F_VMA) {
+	post_process = 0;
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (!scalar_node(m)) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != MAT && r->t != EMPTY) {
+	    node_type_error(f, 3, MAT, r, p);
+	} else {
+	    int horizon = node_get_int(m, p);
+
+	    if (!p->err) {
+		gretl_matrix *C = (r->t == MAT) ? r->v.m : NULL;
+
+		ret = aux_matrix_node(p);
+		ret->v.m = vma_rep(l->v.m, horizon, C, &p->err);
+	    }
         }
     }
 
@@ -16644,13 +16655,6 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_GETKEYS:
     case HF_JBTERMS:
-    case HF_IRF:
-        if (l->t == BUNDLE) {
-            ret = get_bundle_result(l, t->t, p);
-        } else {
-            node_type_error(t->t, 0, BUNDLE, l, p);
-        }
-        break;
     case DBMEMB:
         /* name of $-bundle plus string */
         if (l->t == BUNDLE && r->t == STR) {
@@ -17226,6 +17230,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case HF_REGLS:
     case F_GEOPLOT:
+    case F_VMA:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
             ret = replace_value(l, m, r, p);
