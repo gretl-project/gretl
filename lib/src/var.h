@@ -282,7 +282,7 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
 
 #endif
 
-gretl_matrix *vma_rep (const gretl_matrix *A, int horizon,
-		       const gretl_matrix *C, int *err);
+gretl_matrix *vma_rep (const gretl_matrix *A, const gretl_matrix *C,
+		       int horizon, int *err);
 
 #endif /* VAR_H_ */

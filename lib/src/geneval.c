@@ -12162,18 +12162,15 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	post_process = 0;
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
-	} else if (!scalar_node(m)) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != MAT && r->t != EMPTY) {
-	    node_type_error(f, 3, MAT, r, p);
+	} else if (m->t != MAT) {
+	    node_type_error(f, 2, MAT, m, p);
+	} else if (r->t != NUM && r->t != EMPTY) {
+	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    int horizon = node_get_int(m, p);
-
+	    int horizon = (r->t == EMPTY) ? 24: node_get_int(r, p);
 	    if (!p->err) {
-		gretl_matrix *C = (r->t == MAT) ? r->v.m : NULL;
-
 		ret = aux_matrix_node(p);
-		ret->v.m = vma_rep(l->v.m, horizon, C, &p->err);
+		ret->v.m = vma_rep(l->v.m, m->v.m, horizon, &p->err);
 	    }
         }
     }

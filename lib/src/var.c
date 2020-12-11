@@ -1659,13 +1659,6 @@ void copy_north_west (gretl_matrix *targ,
     }
 }
 
-/* The C matrix may be null, in which case it is assumed to be the
-   identity matrix; however, since what we pass here for A is the
-   full companion matrix, there is no way to figure out what the
-   real size of the VAR is, and therefore it is assumed that the
-   VAR order is 1.
-*/
-
 static int real_point_responses (const gretl_matrix *C,
 				 const gretl_matrix *A,
 				 gretl_matrix *rtmp,
@@ -1674,47 +1667,42 @@ static int real_point_responses (const gretl_matrix *C,
 				 int targ, int shock)
 {
     double xt;
-    int C_is_null = C == NULL;
-    int n = C_is_null ? A->rows : C->rows;
+    int n = C->rows;
     int i, j, k, t;
 
     for (t=0; t<resp->rows; t++) {
         if (t == 0) {
             /* initial estimated responses */
-	    if (C_is_null) {
-		gretl_matrix_inscribe_I(rtmp, 0, 0, n);
-	    } else {
-		copy_north_west(rtmp, C, 0);
-	    }
+	    copy_north_west(rtmp, C, 0);
         } else {
             /* calculate further estimated responses */
             gretl_matrix_multiply(A, rtmp, ctmp);
             gretl_matrix_copy_values(rtmp, ctmp);
         }
-	if (resp->cols == 1) {
-	    resp->val[t] = gretl_matrix_get(rtmp, targ, shock);
-	} else if (shock >= 0) {
-	    /* all targets for one shock */
-	    for (i=0; i<n; i++) {
-		xt = gretl_matrix_get(rtmp, i, shock);
-		gretl_matrix_set(resp, t, i, xt);
-	    }
-	} else if (targ >= 0) {
-	    /* all shocks for one target */
-	    for (j=0; j<n; j++) {
-		xt = gretl_matrix_get(rtmp, targ, j);
-		gretl_matrix_set(resp, t, j, xt);
-	    }
-	} else {
-	    /* all shocks, all targets */
-	    k = 0;
-	    for (i=0; i<n; i++) {
-		for (j=0; j<n; j++) {
-		    xt = gretl_matrix_get(rtmp, i, j);
-		    gretl_matrix_set(resp, t, k++, xt);
-		}
-	    }
-	}
+        if (resp->cols == 1) {
+            resp->val[t] = gretl_matrix_get(rtmp, targ, shock);
+        } else if (shock >= 0) {
+            /* all targets for one shock */
+            for (i=0; i<n; i++) {
+                xt = gretl_matrix_get(rtmp, i, shock);
+                gretl_matrix_set(resp, t, i, xt);
+            }
+        } else if (targ >= 0) {
+            /* all shocks for one target */
+            for (j=0; j<n; j++) {
+                xt = gretl_matrix_get(rtmp, targ, j);
+                gretl_matrix_set(resp, t, j, xt);
+            }
+        } else {
+            /* all shocks, all targets */
+            k = 0;
+            for (i=0; i<n; i++) {
+                for (j=0; j<n; j++) {
+                    xt = gretl_matrix_get(rtmp, i, j);
+                    gretl_matrix_set(resp, t, k++, xt);
+                }
+            }
+        }
     }
 
     return 0;
@@ -1724,8 +1712,8 @@ static int real_point_responses (const gretl_matrix *C,
    for a given horizon.
 */
 
-gretl_matrix *vma_rep (const gretl_matrix *A, int horizon,
-		       const gretl_matrix *C, int *err)
+gretl_matrix *vma_rep (const gretl_matrix *A, const gretl_matrix *C,
+		       int horizon, int *err)
 {
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
@@ -1734,13 +1722,10 @@ gretl_matrix *vma_rep (const gretl_matrix *A, int horizon,
 
     if (horizon <= 0) {
 	*err = E_INVARG;
-    }
-
-    if (*err) {
 	return NULL;
     }
 
-    neqns = C == NULL ? A->rows : C->rows;
+    neqns = C->rows;
     nresp = neqns * neqns;
 
     resp = gretl_matrix_alloc(horizon, nresp);
