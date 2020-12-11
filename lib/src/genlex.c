@@ -575,6 +575,7 @@ struct str_table funcs[] = {
     { F_BINCOEFF,  "bincoeff" },
     { F_TDISAGG,   "tdisagg" },
     { F_ASSERT,    "assert" },
+    { F_VMA,       "vma" },
     { 0,           NULL }
 };
 
@@ -604,7 +605,6 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
-    { HF_IRF,      "_irf" },
     { 0,           NULL }
 };
 

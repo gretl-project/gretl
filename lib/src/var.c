@@ -1659,6 +1659,13 @@ void copy_north_west (gretl_matrix *targ,
     }
 }
 
+/* The C matrix may be null, in which case it is assumed to be the
+   identity matrix; however, since what we pass here for A is the
+   full companion matrix, there is no way to figure out what the
+   real size of the VAR is, and therefore it is assumed that the
+   VAR order is 1.
+*/
+
 static int real_point_responses (const gretl_matrix *C,
 				 const gretl_matrix *A,
 				 gretl_matrix *rtmp,
@@ -1667,13 +1674,18 @@ static int real_point_responses (const gretl_matrix *C,
 				 int targ, int shock)
 {
     double xt;
-    int n = C->rows;
+    int C_is_null = C == NULL;
+    int n = C_is_null ? A->rows : C->rows;
     int i, j, k, t;
 
     for (t=0; t<resp->rows; t++) {
         if (t == 0) {
             /* initial estimated responses */
-            copy_north_west(rtmp, C, 0);
+	    if (C_is_null) {
+		gretl_matrix_inscribe_I(rtmp, 0, 0, n);
+	    } else {
+		copy_north_west(rtmp, C, 0);
+	    }
         } else {
             /* calculate further estimated responses */
             gretl_matrix_multiply(A, rtmp, ctmp);
@@ -1708,52 +1720,28 @@ static int real_point_responses (const gretl_matrix *C,
     return 0;
 }
 
-/* Calculate point estimates of impulse responses based on
-   a minimal bundle which includes the C and A matrices
-   along with specification of target, shock and horizon.
+/* Calculate the VMA representation based on the A and C matrices,
+   for a given horizon.
 */
 
-gretl_matrix *point_irf_from_bundle (gretl_bundle *b, int *err)
+gretl_matrix *vma_rep (const gretl_matrix *A, int horizon,
+		       const gretl_matrix *C, int *err)
 {
-    gretl_matrix *C, *A;
-    int targ = 0;
-    int shock = 0;
-    int horizon = 20;
-    int neqns, nresp;
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
+    int neqns, nresp;
 
-    /* extract what we need from @b */
-    C = gretl_bundle_get_matrix(b, "C", err);
-    if (!*err) {
-	A = gretl_bundle_get_matrix(b, "A", err);
-    }
-    if (!*err) {
-	neqns = C->rows;
-	targ = gretl_bundle_get_int(b, "targ", NULL);
-	shock = gretl_bundle_get_int(b, "shock", NULL);
-	horizon = gretl_bundle_get_int(b, "horizon", NULL);
-	if (shock > neqns || targ > neqns || horizon <= 0) {
-	    *err = E_INVARG;
-	}
+    if (horizon <= 0) {
+	*err = E_INVARG;
     }
 
     if (*err) {
 	return NULL;
     }
 
-    /* convert to 0-based */
-    targ--;
-    shock--;
-
-    if (targ < 0 && shock < 0) {
-        nresp = neqns * neqns;
-    } else if (targ < 0 || shock < 0) {
-        nresp = neqns;
-    } else {
-        nresp = 1;
-    }
+    neqns = C == NULL ? A->rows : C->rows;
+    nresp = neqns * neqns;
 
     resp = gretl_matrix_alloc(horizon, nresp);
     rtmp = gretl_matrix_alloc(A->rows, neqns);
@@ -1762,8 +1750,7 @@ gretl_matrix *point_irf_from_bundle (gretl_bundle *b, int *err)
     if (resp == NULL || rtmp == NULL || ctmp == NULL) {
         *err = E_ALLOC;
     } else {
-	*err = real_point_responses(C, A, ctmp, rtmp, resp,
-				    targ, shock);
+	*err = real_point_responses(C, A, ctmp, rtmp, resp, -1, -1);
     }
 
     gretl_matrix_free(rtmp);

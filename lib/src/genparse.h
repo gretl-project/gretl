@@ -291,7 +291,6 @@ enum {
     F_MLOG,
     F_BARRIER,
     HF_JBTERMS,
-    HF_IRF,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
     F_ARGNAME,
@@ -466,6 +465,7 @@ enum {
     F_RESAMPLE,
     F_STACK,
     F_GEOPLOT,
+    F_VMA,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
