@@ -15,6 +15,8 @@ version 2020f, in progress
   native gretl datafiles (gdt, gdtb)
 - "join" command: support $obsmajor as an outer key
 - "coint2" command: rename as "johansen"
+- Fix obscure problem with plots: inability to show markers
+  for observations in some cases where this should be OK
 - Fix bug: potential crash on "Save as icon and close" for
   a model displayed in tabbed model viewer
 - Fix bug: possible crash on confusion between singleton
