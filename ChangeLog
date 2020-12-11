@@ -7,7 +7,8 @@ version 2020f, in progress
   correctly when passed a $system bundle argument
 - VAR internals: scrap augmented Cholesky matrix; so the
   $system.C accessor is now a square matrix
-- $system accessor: ensure presence of xlist member
+- $system bundle: ensure presence of xlist member, and
+  include the command-word (var, vecm or system)
 - mread(): support reading gdt and gdtb files as matrices
 - readfile(): support reading gzipped files
 - "open" command: support reading selected series from

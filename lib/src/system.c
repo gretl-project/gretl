@@ -3477,6 +3477,8 @@ int equation_system_bundlize (equation_system *sys,
     int tsls_style = 0;
     int i, err = 0;
 
+    gretl_bundle_set_string(b, "command", "system");
+
     gretl_bundle_set_int(b, "neqns", sys->neqns);
     s = system_method_short_string(sys->method);
     if (s != NULL) {
@@ -3486,7 +3488,7 @@ int equation_system_bundlize (equation_system *sys,
         gretl_bundle_set_int(b, "robust", 1);
     }
 
-    /* convert to 1-based */
+    /* convert to 1-based for user-space */
     gretl_bundle_set_int(b, "t1", sys->t1 + 1);
     gretl_bundle_set_int(b, "t2", sys->t2 + 1);
 

@@ -4913,6 +4913,8 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_matrix *d;
     int err = 0;
 
+    gretl_bundle_set_string(b, "command", gretl_command_word(var->ci));
+
     if (var->name != NULL) {
         gretl_bundle_set_string(b, "name", var->name);
     }
