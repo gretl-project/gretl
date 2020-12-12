@@ -1032,9 +1032,9 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
 
     tempname = gretl_make_dotpath("outfile.XXXXXX");
     if (opt & OPT_B) {
-        fp = gretl_mktemp(tempname, "wb+");
+        fp = gretl_mktemp(tempname, "w+");
     } else {
-        fp = gretl_mktemp(tempname, "wb");
+        fp = gretl_mktemp(tempname, "w");
     }
 
     if (fp == NULL) {
