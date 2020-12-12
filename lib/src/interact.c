@@ -1165,7 +1165,9 @@ do_outfile_command (gretlopt opt, const char *fname,
         err = outfile_redirect(prn, stdout, NULL, "stdout", opt, vparms);
         *savename = '\0';
     } else {
-        /* should the stream be opened in binary mode on Windows? */
+        /* Should the stream be opened in binary mode on Windows?
+	   2020-12-12: it seems this may be better.
+	*/
         char outname[FILENAME_MAX];
         const char *targ;
         FILE *fp;
