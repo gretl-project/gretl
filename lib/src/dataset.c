@@ -2401,42 +2401,52 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 
 /* apparatus for sorting entire dataset */
 
+typedef struct spoints_t_ spoints_t;
 typedef struct spoint_t_ spoint_t;
 
+/* these structs will be passed to qsort() */
 struct spoint_t_ {
     int obsnum;
     int nvals;
     double *vals;
 };
 
-static void free_spoints (spoint_t *sv, int n)
+/* wrapper for spoint_t to economize on malloc/free */
+struct spoints_t_ {
+    int n_points;
+    int n_vals;
+    spoint_t *points;
+    double *val;
+};
+
+static void free_spoints (spoints_t *sv)
 {
-    int i;
-
-    for (i=0; i<n; i++) {
-	free(sv[i].vals);
-    }
-
+    free(sv->points);
+    free(sv->val);
     free(sv);
 }
 
-static spoint_t *allocate_spoints (int n, int v)
+static spoints_t *allocate_spoints (int n, int v)
 {
-    spoint_t *sv;
+    spoints_t *sv;
     int i;
 
-    sv = malloc(n * sizeof *sv);
+    sv = malloc(sizeof *sv);
 
     if (sv != NULL) {
-	for (i=0; i<n; i++) {
-	    sv[i].vals = NULL;
-	}
-	for (i=0; i<n; i++) {
-	    sv[i].vals = malloc(v * sizeof(double));
-	    if (sv[i].vals == NULL) {
-		free_spoints(sv, n);
-		sv = NULL;
-		break;
+	sv->points = malloc(n * sizeof *sv->points);
+	sv->val = malloc((n * v) * sizeof(double));
+	if (sv->points == NULL || sv->val == NULL) {
+	    free_spoints(sv);
+	    sv = NULL;
+	} else {
+	    double *x = sv->val;
+
+	    for (i=0; i<n; i++) {
+		sv->points[i].obsnum = i;
+		sv->points[i].nvals = v;
+		sv->points[i].vals = x;
+		x += v;
 	    }
 	}
     }
@@ -2544,11 +2554,11 @@ static int series_to_lexvals (DATASET *dset, int v, int *targ)
 
 int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 {
-    spoint_t *sv = NULL;
+    spoints_t *sv = NULL;
     double *x = NULL;
+    char **S = NULL;
     int *xs = NULL;
     int *xsi = NULL;
-    char **S = NULL;
     int ns = list[0];
     int nsvals = 0;
     int i, t, v;
@@ -2561,15 +2571,16 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 
     x = malloc(dset->n * sizeof *x);
     if (x == NULL) {
-	free_spoints(sv, dset->n);
+	free_spoints(sv);
 	return E_ALLOC;
     }
 
     if (dset->S != NULL) {
-	S = strings_array_new_with_length(dset->n, OBSLEN);
+	S = malloc(dset->n * sizeof *S);
 	if (S == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
+	    free_spoints(sv);
+	    free(x);
+	    return E_ALLOC;
 	}
     }
 
@@ -2597,58 +2608,56 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 	}
     }
 
-    for (t=0; t<dset->n; t++) {
-	sv[t].obsnum = t;
-	sv[t].nvals = ns;
-    }
     xsi = xs;
     for (i=0; i<ns; i++) {
 	v = list[i+1];
 	if (is_string_valued(dset, v)) {
 	    for (t=0; t<dset->n; t++) {
 		if (xsi[t] == INT_MAX) {
-		    sv[t].vals[i] = NADBL;
+		    sv->points[t].vals[i] = NADBL;
 		} else {
-		    sv[t].vals[i] = (double) xsi[t];
+		    sv->points[t].vals[i] = (double) xsi[t];
 		}
 	    }
 	    xsi += dset->n;
 	} else {
 	    for (t=0; t<dset->n; t++) {
-		sv[t].vals[i] = dset->Z[v][t];
+		sv->points[t].vals[i] = dset->Z[v][t];
 	    }
 	}
     }
 
     if (opt & OPT_D) {
 	/* descending */
-	qsort(sv, dset->n, sizeof *sv, compare_vals_down);
+	qsort(sv->points, dset->n, sizeof(spoint_t), compare_vals_down);
     } else {
-	qsort(sv, dset->n, sizeof *sv, compare_vals_up);
+	/* ascending */
+	qsort(sv->points, dset->n, sizeof(spoint_t), compare_vals_up);
     }
 
     for (i=1; i<dset->v; i++) {
+	/* reorder data values */
 	for (t=0; t<dset->n; t++) {
-	    x[t] = dset->Z[i][sv[t].obsnum];
+	    x[t] = dset->Z[i][sv->points[t].obsnum];
 	}
-	for (t=0; t<dset->n; t++) {
-	    dset->Z[i][t] = x[t];
-	}
+	memcpy(dset->Z[i], x, dset->n * sizeof *x);
     }
 
     if (S != NULL) {
+	/* reorder observation markers */
 	for (t=0; t<dset->n; t++) {
-	    strcpy(S[t], dset->S[sv[t].obsnum]);
+	    S[t] = dset->S[sv->points[t].obsnum];
 	}
-	strings_array_free(dset->S, dset->n);
-	dset->S = S;
+	for (t=0; t<dset->n; t++) {
+	    dset->S[t] = S[t];
+	}
     }
 
  bailout:
 
-    free_spoints(sv, dset->n);
-    free(x);
+    free_spoints(sv);
     free(xs);
+    free(S);
 
     return err;
 }
