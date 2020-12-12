@@ -1032,9 +1032,9 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
 
     tempname = gretl_make_dotpath("outfile.XXXXXX");
     if (opt & OPT_B) {
-        fp = gretl_mktemp(tempname, "w+");
+        fp = gretl_mktemp(tempname, "wb+");
     } else {
-        fp = gretl_mktemp(tempname, "w");
+        fp = gretl_mktemp(tempname, "wb");
     }
 
     if (fp == NULL) {
@@ -1175,10 +1175,10 @@ do_outfile_command (gretlopt opt, const char *fname,
         gretl_maybe_prepend_dir(outname);
         if (opt & OPT_A) {
             /* appending */
-            fp = gretl_fopen(outname, "a");
+            fp = gretl_fopen(outname, "ab");
         } else {
             /* writing */
-            fp = gretl_fopen(outname, "w");
+            fp = gretl_fopen(outname, "wb");
         }
 
         if (fp == NULL) {
