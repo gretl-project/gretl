@@ -12156,15 +12156,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
     } else if (f == F_VMA) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
-	} else if (m->t != MAT) {
+	} else if (m->t != MAT && m->t != EMPTY) {
 	    node_type_error(f, 2, MAT, m, p);
 	} else if (r->t != NUM && r->t != EMPTY) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
+	    gretl_matrix *compan_top = node_get_real_matrix(l, p, 0, 1);
 	    int horizon = (r->t == EMPTY) ? 24: node_get_int(r, p);
 
-	    if (!p->err) {
-		A = vma_rep(l->v.m, m->v.m, horizon, &p->err);
+	    int n = compan_top->rows;
+            gretl_matrix *C = NULL;
+            if (m->t != EMPTY) {
+                C = node_get_real_matrix(m, p, 1, 2);
+                if (C->rows != n || C->cols !=n) {
+                    p->err = E_NONCONF;
+                }
+            }
+            
+            if (!p->err) {
+                A = vma_rep(compan_top, C, horizon, &p->err);
 	    }
         }
     }

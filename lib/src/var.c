@@ -1712,35 +1712,78 @@ static int real_point_responses (const gretl_matrix *C,
    for a given horizon.
 */
 
-gretl_matrix *vma_rep (const gretl_matrix *A, const gretl_matrix *C,
+gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
 		       int horizon, int *err)
 {
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
-    int neqns, nresp;
+    gretl_matrix *realC, *realA;
+    int neqns, dim, order, nresp;
 
     if (horizon <= 0) {
 	*err = E_INVARG;
 	return NULL;
     }
 
-    neqns = C->rows;
+    neqns = A->rows;
+    dim = A->cols;
+
+    int C_is_I = C == NULL;
+    order = dim / neqns;
+    int makecompan = order > 1;
+    
+    if (C_is_I) {
+	realC = gretl_identity_matrix_new(neqns);
+    } else {
+	realC = C;
+    }
+    
+    if (realC == NULL) {
+        *err = E_ALLOC;
+    }
+
+    if (!makecompan) {
+	realA = A;
+    } else {
+	realA = gretl_zero_matrix_new(A->cols, A->cols);
+    }
+    
+    if (realA == NULL) {
+        *err = E_ALLOC;
+    }
+
+    /* make companion matrix */
+    if (makecompan) {
+        *err = gretl_matrix_inscribe_matrix(realA, A, 0, 0, GRETL_MOD_NONE);
+        if (!*err) {
+            *err = gretl_matrix_inscribe_I(realA, neqns, 0, neqns * (order-1));
+        }
+    }
+    
     nresp = neqns * neqns;
 
     resp = gretl_matrix_alloc(horizon, nresp);
-    rtmp = gretl_matrix_alloc(A->rows, neqns);
-    ctmp = gretl_zero_matrix_new(A->rows, neqns);
-
+    rtmp = gretl_matrix_alloc(dim, neqns);
+    ctmp = gretl_zero_matrix_new(dim, neqns);
+    
     if (resp == NULL || rtmp == NULL || ctmp == NULL) {
         *err = E_ALLOC;
     } else {
-	*err = real_point_responses(C, A, ctmp, rtmp, resp, -1, -1);
+	*err = real_point_responses(realC, realA, ctmp, rtmp, resp, -1, -1);
     }
 
     gretl_matrix_free(rtmp);
     gretl_matrix_free(ctmp);
 
+    if (C_is_I) {
+	gretl_matrix_free(realC);
+    }
+    
+    if (makecompan) {
+	gretl_matrix_free(realA);
+    }
+    
     if (*err && resp != NULL) {
         gretl_matrix_free(resp);
         resp = NULL;

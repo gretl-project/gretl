@@ -91,8 +91,8 @@ struct gretl_matrix_block_ {
 #define no_metadata(m) (m->info == NULL || is_block_matrix(m))
 
 static int real_invert_symmetric_matrix (gretl_matrix *a,
-					 int checked,
-					 int verbose);
+                                         int checked,
+                                         int verbose);
 
 static inline void *mval_malloc (size_t sz)
 {
@@ -102,7 +102,7 @@ static inline void *mval_malloc (size_t sz)
 
     err = posix_memalign(&mem, 32, sz);
     if (err) {
-	fprintf(stderr, "posix_memalign: failed\n");
+        fprintf(stderr, "posix_memalign: failed\n");
     }
     return mem;
 #else
@@ -164,7 +164,7 @@ int get_simd_mn_min (void)
 
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
 static int gretl_matrix_copy_info (gretl_matrix *targ,
-				   const gretl_matrix *src);
+                                   const gretl_matrix *src);
 
 /* matrix metadata struct, not allocated by default */
 
@@ -202,7 +202,7 @@ void clear_gretl_matrix_err (void)
 static void set_gretl_matrix_err (int err)
 {
     if (gretl_matrix_err == 0) {
-	gretl_matrix_err = err;
+        gretl_matrix_err = err;
     }
 }
 
@@ -211,7 +211,7 @@ static int wspace_fail (integer info, double w0)
     int iinfo = (int) info;
 
     fprintf(stderr, "gretl_matrix: workspace query failed: info = %d, "
-	    "work[0] = %g\n", iinfo, w0);
+            "work[0] = %g\n", iinfo, w0);
     return E_DATA;
 }
 
@@ -240,14 +240,14 @@ static void *lapack_malloc (size_t sz)
     void *mem = NULL;
 
     if (sz > lapack_mem_sz) {
-	void *chunk = realloc(lapack_mem_chunk, sz);
+        void *chunk = realloc(lapack_mem_chunk, sz);
 
-	if (chunk != NULL) {
-	    lapack_mem_chunk = mem = chunk;
-	    lapack_mem_sz = sz;
-	}
+        if (chunk != NULL) {
+            lapack_mem_chunk = mem = chunk;
+            lapack_mem_sz = sz;
+        }
     } else {
-	mem = lapack_mem_chunk;
+        mem = lapack_mem_chunk;
     }
 
     return mem;
@@ -295,11 +295,11 @@ static int math_err_check (const char *msg, int errnum)
     int err = E_DATA;
 
     if (!fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW)) {
-	/* we'll let "pure" underflow pass */
-	fprintf(stderr, "warning: calculation underflow\n");
-	err = 0;
+        /* we'll let "pure" underflow pass */
+        fprintf(stderr, "warning: calculation underflow\n");
+        err = 0;
     } else {
-	gretl_errmsg_set_from_errno(msg, errnum);
+        gretl_errmsg_set_from_errno(msg, errnum);
     }
     feclearexcept(FE_ALL_EXCEPT);
     errno = 0;
@@ -314,7 +314,7 @@ static int math_err_check (const char *msg, int errnum)
 static int matrix_block_error (const char *f)
 {
     fprintf(stderr, "CODING ERROR: illegal call to %s on "
-	    "member of matrix block\n", f);
+            "member of matrix block\n", f);
     return E_DATA;
 }
 
@@ -334,28 +334,28 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     int n;
 
     if (rows < 0 || cols < 0) {
-	fprintf(stderr, "gretl error: gretl_matrix_alloc: rows=%d, cols=%d\n",
-		rows, cols);
-	return NULL;
+        fprintf(stderr, "gretl error: gretl_matrix_alloc: rows=%d, cols=%d\n",
+                rows, cols);
+        return NULL;
     }
 
     m = malloc(sizeof *m);
     if (m == NULL) {
-	set_gretl_matrix_err(E_ALLOC);
-	return NULL;
+        set_gretl_matrix_err(E_ALLOC);
+        return NULL;
     }
 
     n = rows * cols;
 
     if (n == 0) {
-	m->val = NULL;
+        m->val = NULL;
     } else {
-	m->val = mval_malloc(n * sizeof *m->val);
-	if (m->val == NULL) {
-	    set_gretl_matrix_err(E_ALLOC);
-	    free(m);
-	    return NULL;
-	}
+        m->val = mval_malloc(n * sizeof *m->val);
+        if (m->val == NULL) {
+            set_gretl_matrix_err(E_ALLOC);
+            free(m);
+            return NULL;
+        }
     }
 
     m->rows = rows;
@@ -372,9 +372,9 @@ gretl_matrix *gretl_cmatrix_new (int r, int c)
     gretl_matrix *m = gretl_matrix_alloc(2*r, c);
 
     if (m != NULL) {
-	m->is_complex = 1;
-	m->z = (double complex *) m->val;
-	m->rows = r;
+        m->is_complex = 1;
+        m->z = (double complex *) m->val;
+        m->rows = r;
     }
     return m;
 }
@@ -384,43 +384,43 @@ gretl_matrix *gretl_cmatrix_new0 (int r, int c)
     gretl_matrix *m = gretl_zero_matrix_new(2*r, c);
 
     if (m != NULL) {
-	m->is_complex = 1;
-	m->z = (double complex *) m->val;
-	m->rows = r;
+        m->is_complex = 1;
+        m->z = (double complex *) m->val;
+        m->rows = r;
     }
     return m;
 }
 
 gretl_matrix *gretl_matching_matrix_new (int r, int c,
-					 const gretl_matrix *m)
+                                         const gretl_matrix *m)
 {
     if (m->is_complex) {
-	return gretl_cmatrix_new(r, c);
+        return gretl_cmatrix_new(r, c);
     } else {
-	return gretl_matrix_alloc(r, c);
+        return gretl_matrix_alloc(r, c);
     }
 }
 
 static int matrix_set_complex (gretl_matrix *m, int c, int full)
 {
     if (m == NULL) {
-	return E_INVARG;
+        return E_INVARG;
     } else if (c && !m->is_complex) {
-	if (full && m->rows % 2 != 0) {
-	    return E_INVARG;
-	} else {
-	    m->is_complex = 1;
-	    m->z = (double complex *) m->val;
-	    if (full) {
-		m->rows /= 2;
-	    }
-	}
+        if (full && m->rows % 2 != 0) {
+            return E_INVARG;
+        } else {
+            m->is_complex = 1;
+            m->z = (double complex *) m->val;
+            if (full) {
+                m->rows /= 2;
+            }
+        }
     } else if (!c && m->is_complex) {
-	m->is_complex = 0;
-	m->z = NULL;
-	if (full) {
-	    m->rows *= 2;
-	}
+        m->is_complex = 0;
+        m->z = NULL;
+        if (full) {
+            m->rows *= 2;
+        }
     }
 
     return 0;
@@ -441,14 +441,14 @@ void gretl_matrix_block_destroy (gretl_matrix_block *B)
     int i;
 
     if (B == NULL) {
-	return;
+        return;
     }
 
     if (B->matrix != NULL) {
-	for (i=0; i<B->n; i++) {
-	    free(B->matrix[i]);
-	}
-	free(B->matrix);
+        for (i=0; i<B->n; i++) {
+            free(B->matrix[i]);
+        }
+        free(B->matrix);
     }
 
     free(B->val);
@@ -458,11 +458,11 @@ void gretl_matrix_block_destroy (gretl_matrix_block *B)
 void gretl_matrix_block_zero (gretl_matrix_block *B)
 {
     if (B != NULL && B->matrix != NULL) {
-	int i;
+        int i;
 
-	for (i=0; i<B->n; i++) {
-	    gretl_matrix_zero(B->matrix[i]);
-	}
+        for (i=0; i<B->n; i++) {
+            gretl_matrix_zero(B->matrix[i]);
+        }
     }
 }
 
@@ -494,19 +494,19 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 
     B = malloc(sizeof *B);
     if (B == NULL) {
-	return NULL;
+        return NULL;
     }
 
     /* first pass: determine the number of
        (pointer, int, int) triples */
     va_start(ap, pm);
     for (i=1; ; i++) {
-	va_arg(ap, int);
-	va_arg(ap, int);
-	targ = va_arg(ap, gretl_matrix **);
-	if (targ == NULL) {
-	    break;
-	}
+        va_arg(ap, int);
+        va_arg(ap, int);
+        targ = va_arg(ap, gretl_matrix **);
+        if (targ == NULL) {
+            break;
+        }
     }
     va_end(ap);
 
@@ -514,27 +514,27 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
     B->n = i;
     B->matrix = malloc(B->n * sizeof *B->matrix);
     if (B->matrix == NULL) {
-	free(B);
-	return NULL;
+        free(B);
+        return NULL;
     }
 
     /* NULL everything in case we fail */
     B->val = NULL;
     for (i=0; i<B->n; i++) {
-	B->matrix[i] = NULL;
+        B->matrix[i] = NULL;
     }
 
     /* now allocate and initialize the matrices */
     for (i=0; i<B->n; i++) {
-	B->matrix[i] = malloc(sizeof **B->matrix);
-	if (B->matrix[i] == NULL) {
-	    gretl_matrix_block_destroy(B);
-	    return NULL;
-	}
-	B->matrix[i]->info = (matrix_info *) INFO_INVALID;
-	B->matrix[i]->val = NULL;
-	B->matrix[i]->z = NULL;
-	B->matrix[i]->is_complex = 0;
+        B->matrix[i] = malloc(sizeof **B->matrix);
+        if (B->matrix[i] == NULL) {
+            gretl_matrix_block_destroy(B);
+            return NULL;
+        }
+        B->matrix[i]->info = (matrix_info *) INFO_INVALID;
+        B->matrix[i]->val = NULL;
+        B->matrix[i]->z = NULL;
+        B->matrix[i]->is_complex = 0;
     }
 
     /* second pass through arg list */
@@ -542,48 +542,48 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
     va_start(ap, pm);
 
     for (i=0; i<B->n; i++) {
-	m = B->matrix[i];
-	if (i == 0) {
-	    *pm = m;
-	} else {
-	    targ = va_arg(ap, gretl_matrix **);
-	    *targ = m;
-	}
-	m->rows = va_arg(ap, int);
-	m->cols = va_arg(ap, int);
-	if (m->rows < 0 || m->cols < 0) {
-	    err = 1;
-	    break;
-	}
-	vsize += m->rows * m->cols;
+        m = B->matrix[i];
+        if (i == 0) {
+            *pm = m;
+        } else {
+            targ = va_arg(ap, gretl_matrix **);
+            *targ = m;
+        }
+        m->rows = va_arg(ap, int);
+        m->cols = va_arg(ap, int);
+        if (m->rows < 0 || m->cols < 0) {
+            err = 1;
+            break;
+        }
+        vsize += m->rows * m->cols;
     }
 
     va_end(ap);
 
     if (!err && vsize > 0) {
-	/* allocate combined data block */
-	B->val = malloc(vsize * sizeof *B->val);
-	if (B->val == NULL) {
-	    err = 1;
-	}
+        /* allocate combined data block */
+        B->val = malloc(vsize * sizeof *B->val);
+        if (B->val == NULL) {
+            err = 1;
+        }
     }
 
     if (err) {
-	gretl_matrix_block_destroy(B);
-	B = NULL;
+        gretl_matrix_block_destroy(B);
+        B = NULL;
     } else {
-	/* set the val pointers */
-	double *val = B->val;
-	int n;
+        /* set the val pointers */
+        double *val = B->val;
+        int n;
 
-	for (i=0; i<B->n; i++) {
-	    m = B->matrix[i];
-	    n = m->rows * m->cols;
-	    if (n > 0) {
-		m->val = val;
-		val += n;
-	    }
-	}
+        for (i=0; i<B->n; i++) {
+            m = B->matrix[i];
+            n = m->rows * m->cols;
+            if (n > 0) {
+                m->val = val;
+                val += n;
+            }
+        }
     }
 
     return B;
@@ -595,25 +595,25 @@ int gretl_matrix_block_n_matrices (gretl_matrix_block *B)
 }
 
 gretl_matrix *gretl_matrix_block_get_matrix (gretl_matrix_block *B,
-					     int i)
+                                             int i)
 {
     if (B == NULL || i < 0 || i >= B->n) {
-	return NULL;
+        return NULL;
     } else {
-	return B->matrix[i];
+        return B->matrix[i];
     }
 }
 
 int gretl_matrix_na_check (const gretl_matrix *m)
 {
     if (m != NULL) {
-	int i, n = m->rows * m->cols;
+        int i, n = m->rows * m->cols;
 
-	for (i=0; i<n; i++) {
-	    if (na(m->val[i])) {
-		return E_NAN;
-	    }
-	}
+        for (i=0; i<n; i++) {
+            if (na(m->val[i])) {
+                return E_NAN;
+            }
+        }
     }
 
     return 0;
@@ -624,65 +624,65 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
     int ret = 0;
 
     if (gretl_is_null_matrix(m)) {
-	return 0;
+        return 0;
     }
 
     if (m != NULL) {
-	if (m->rows == m->cols) {
-	    ret = GRETL_MATRIX_SQUARE;
-	    if (m->rows == 1) {
-		ret = GRETL_MATRIX_SCALAR;
-	    }
-	}
+        if (m->rows == m->cols) {
+            ret = GRETL_MATRIX_SQUARE;
+            if (m->rows == 1) {
+                ret = GRETL_MATRIX_SCALAR;
+            }
+        }
     }
 
     if (ret == GRETL_MATRIX_SQUARE) {
-	double x;
-	int uzero = 1;
-	int lzero = 1;
-	int symm = 1;
-	int udiag = 1;
-	int i, j;
+        double x;
+        int uzero = 1;
+        int lzero = 1;
+        int symm = 1;
+        int udiag = 1;
+        int i, j;
 
-	for (i=0; i<m->rows; i++) {
-	    for (j=0; j<m->cols; j++) {
-		x = gretl_matrix_get(m,i,j);
-		if (j > i) {
-		    if (x != 0.0) {
-			uzero = 0;
-		    }
-		} else if (i > j) {
-		    if (x != 0.0) {
-			lzero = 0;
-		    }
-		} else if (i == j) {
-		    if (x != 1.0) {
-			udiag = 0;
-		    }
-		}
-		if (j != i && x != gretl_matrix_get(m,j,i)) {
-		    symm = 0;
-		}
-		if (!uzero && !lzero && !symm) {
-		    break;
-		}
-	    }
-	    if (!uzero && !lzero && !symm) {
-		break;
-	    }
-	}
+        for (i=0; i<m->rows; i++) {
+            for (j=0; j<m->cols; j++) {
+                x = gretl_matrix_get(m,i,j);
+                if (j > i) {
+                    if (x != 0.0) {
+                        uzero = 0;
+                    }
+                } else if (i > j) {
+                    if (x != 0.0) {
+                        lzero = 0;
+                    }
+                } else if (i == j) {
+                    if (x != 1.0) {
+                        udiag = 0;
+                    }
+                }
+                if (j != i && x != gretl_matrix_get(m,j,i)) {
+                    symm = 0;
+                }
+                if (!uzero && !lzero && !symm) {
+                    break;
+                }
+            }
+            if (!uzero && !lzero && !symm) {
+                break;
+            }
+        }
 
-	if (udiag && uzero && lzero) {
-	    ret = GRETL_MATRIX_IDENTITY;
-	} else if (uzero && lzero) {
-	    ret = GRETL_MATRIX_DIAGONAL;
-	} else if (uzero) {
-	    ret = GRETL_MATRIX_LOWER_TRIANGULAR;
-	} else if (lzero) {
-	    ret = GRETL_MATRIX_UPPER_TRIANGULAR;
-	} else if (symm) {
-	    ret = GRETL_MATRIX_SYMMETRIC;
-	}
+        if (udiag && uzero && lzero) {
+            ret = GRETL_MATRIX_IDENTITY;
+        } else if (uzero && lzero) {
+            ret = GRETL_MATRIX_DIAGONAL;
+        } else if (uzero) {
+            ret = GRETL_MATRIX_LOWER_TRIANGULAR;
+        } else if (lzero) {
+            ret = GRETL_MATRIX_UPPER_TRIANGULAR;
+        } else if (symm) {
+            ret = GRETL_MATRIX_SYMMETRIC;
+        }
     }
 
     return ret;
@@ -714,11 +714,11 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 {
     if (rows > 0) {
-	m->rows = rows;
+        m->rows = rows;
     }
 
     if (cols > 0) {
-	m->cols = cols;
+        m->cols = cols;
     }
 
 #if 0
@@ -747,38 +747,38 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     double *x = NULL;
 
     if (m == NULL) {
-	return E_DATA;
+        return E_DATA;
     }
 
     if (rows == m->rows && cols == m->cols) {
-	/* no-op */
-	return 0;
+        /* no-op */
+        return 0;
     }
 
     if (m->rows * m->cols == n) {
-	/* no need to reallocate storage */
-	m->rows = rows;
-	m->cols = cols;
-	gretl_matrix_destroy_info(m);
-	return 0;
+        /* no need to reallocate storage */
+        m->rows = rows;
+        m->cols = cols;
+        gretl_matrix_destroy_info(m);
+        return 0;
     }
 
     if (is_block_matrix(m)) {
-	matrix_block_error("gretl_matrix_realloc");
-	return E_DATA;
+        matrix_block_error("gretl_matrix_realloc");
+        return E_DATA;
     }
 
     if (n == 0) {
-	mval_free(m->val);
+        mval_free(m->val);
     } else {
-	if (m->is_complex) {
-	    x = mval_realloc(m->val, 2 * n * sizeof *m->val);
-	} else {
-	    x = mval_realloc(m->val, n * sizeof *m->val);
-	}
-	if (x == NULL) {
-	    return E_ALLOC;
-	}
+        if (m->is_complex) {
+            x = mval_realloc(m->val, 2 * n * sizeof *m->val);
+        } else {
+            x = mval_realloc(m->val, n * sizeof *m->val);
+        }
+        if (x == NULL) {
+            return E_ALLOC;
+        }
     }
 
     oldrows = m->rows;
@@ -788,19 +788,19 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     m->rows = rows;
     m->cols = cols;
     if (m->is_complex) {
-	m->z = (double complex *) m->val;
+        m->z = (double complex *) m->val;
     }
 
     if (m->info != NULL) {
-	if (m->rows != oldrows && m->cols != oldcols) {
-	    gretl_matrix_destroy_info(m);
-	} else if (m->rows != oldrows && m->info->rownames != NULL) {
-	    strings_array_free(m->info->rownames, oldrows);
-	    m->info->rownames = NULL;
-	} else if (m->cols != oldcols && m->info->colnames != NULL) {
-	    strings_array_free(m->info->colnames, oldcols);
-	    m->info->colnames = NULL;
-	}
+        if (m->rows != oldrows && m->cols != oldcols) {
+            gretl_matrix_destroy_info(m);
+        } else if (m->rows != oldrows && m->info->rownames != NULL) {
+            strings_array_free(m->info->rownames, oldrows);
+            m->info->rownames = NULL;
+        } else if (m->cols != oldcols && m->info->colnames != NULL) {
+            strings_array_free(m->info->colnames, oldcols);
+            m->info->colnames = NULL;
+        }
     }
 
     return 0;
@@ -820,8 +820,8 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
  */
 
 gretl_matrix *gretl_matrix_init_full (gretl_matrix *m,
-				      int rows, int cols,
-				      double *val)
+                                      int rows, int cols,
+                                      double *val)
 {
     m->rows = rows;
     m->cols = cols;
@@ -860,7 +860,7 @@ gretl_matrix *gretl_matrix_init (gretl_matrix *m)
  */
 
 gretl_matrix *gretl_matrix_replace (gretl_matrix **pa,
-				    gretl_matrix *b)
+                                    gretl_matrix *b)
 {
     gretl_matrix_free(*pa);
     *pa = b;
@@ -879,20 +879,20 @@ gretl_matrix *gretl_matrix_replace (gretl_matrix **pa,
  */
 
 int gretl_matrix_replace_content (gretl_matrix *targ,
-				  gretl_matrix *donor)
+                                  gretl_matrix *donor)
 {
     if (is_block_matrix(targ) || is_block_matrix(donor)) {
-	matrix_block_error("gretl_matrix_replace_content");
-	return E_DATA;
+        matrix_block_error("gretl_matrix_replace_content");
+        return E_DATA;
     } else {
-	gretl_matrix_destroy_info(targ);
-	free(targ->val);
-	targ->rows = donor->rows;
-	targ->cols = donor->cols;
-	targ->val = donor->val;
-	donor->val = NULL;
-	gretl_matrix_set_complex(targ, donor->is_complex);
-	return 0;
+        gretl_matrix_destroy_info(targ);
+        free(targ->val);
+        targ->rows = donor->rows;
+        targ->cols = donor->cols;
+        targ->val = donor->val;
+        donor->val = NULL;
+        gretl_matrix_set_complex(targ, donor->is_complex);
+        return 0;
     }
 }
 
@@ -910,19 +910,19 @@ gretl_matrix *gretl_identity_matrix_new (int n)
     int i, k;
 
     if (n < 0) {
-	return NULL;
+        return NULL;
     } else if (n == 0) {
-	return gretl_null_matrix_new();
+        return gretl_null_matrix_new();
     }
 
     m = gretl_matrix_alloc(n, n);
 
     if (m != NULL) {
-	k = n * n;
-	n++;
-	for (i=0; i<k; i++) {
-	    m->val[i] = (i % n)? 0.0 : 1.0;
-	}
+        k = n * n;
+        n++;
+        for (i=0; i<k; i++) {
+            m->val[i] = (i % n)? 0.0 : 1.0;
+        }
     }
 
     return m;
@@ -944,52 +944,52 @@ gretl_matrix *gretl_DW_matrix_new (int n)
     int i, j;
 
     if (m == NULL) {
-	return NULL;
+        return NULL;
     }
 
     for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    if (j == i) {
-		if (i == 0 || i == n-1) {
-		    gretl_matrix_set(m, i, j, 1.0);
-		} else {
-		    gretl_matrix_set(m, i, j, 2.0);
-		}
-	    } else if (j == i + 1 || i == j + 1) {
-		gretl_matrix_set(m, i, j, -1.0);
-	    }
-	}
+        for (j=0; j<n; j++) {
+            if (j == i) {
+                if (i == 0 || i == n-1) {
+                    gretl_matrix_set(m, i, j, 1.0);
+                } else {
+                    gretl_matrix_set(m, i, j, 2.0);
+                }
+            } else if (j == i + 1 || i == j + 1) {
+                gretl_matrix_set(m, i, j, -1.0);
+            }
+        }
     }
 
     return m;
 }
 
 static gretl_matrix *gretl_filled_matrix_new (int r, int c,
-					      double val)
+                                              double val)
 {
     gretl_matrix *m = NULL;
 
     if (r < 0 || c < 0) {
-	return NULL;
+        return NULL;
     } else if (r == 0 || c == 0) {
-	m = gretl_null_matrix_new();
-	if (m != NULL) {
-	    m->rows = r;
-	    m->cols = c;
-	}
+        m = gretl_null_matrix_new();
+        if (m != NULL) {
+            m->rows = r;
+            m->cols = c;
+        }
     } else {
-	int i, n = r * c;
+        int i, n = r * c;
 
-	m = gretl_matrix_alloc(r, c);
-	if (m != NULL) {
-	    if (val == 0.0) {
-		memset(m->val, 0, n * sizeof *m->val);
-	    } else {
-		for (i=0; i<n; i++) {
-		    m->val[i] = val;
-		}
-	    }
-	}
+        m = gretl_matrix_alloc(r, c);
+        if (m != NULL) {
+            if (val == 0.0) {
+                memset(m->val, 0, n * sizeof *m->val);
+            } else {
+                for (i=0; i<n; i++) {
+                    m->val[i] = val;
+                }
+            }
+        }
     }
 
     return m;
