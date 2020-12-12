@@ -72,30 +72,27 @@ static int VAR_add_models (GRETL_VAR *var, const DATASET *dset)
     return err;
 }
 
-static int VAR_add_companion_matrix (GRETL_VAR *var)
+static int VAR_allocate_companion_matrix (GRETL_VAR *var)
 {
-    int n, i, j, err = 0;
+    int n, dim, err = 0;
 
     if (var->A != NULL) {
+	/* the job is already done */
         return 0;
     }
 
-    n = var->neqns * effective_order(var);
-
-    var->A = gretl_matrix_alloc(n, n);
+    n = var->neqns;
+    dim = n * effective_order(var);
+    var->A = gretl_zero_matrix_new(dim, dim);
 
     if (var->A == NULL) {
         err = E_ALLOC;
     } else {
-        int g = var->neqns;
-        double x;
+	int j, jmax = dim - n;
 
-        for (i=g; i<n; i++) {
-            for (j=0; j<n; j++) {
-                x = (j == i - g)? 1 : 0;
-                gretl_matrix_set(var->A, i, j, x);
-            }
-        }
+	for (j=0; j<jmax; j++) {
+	    gretl_matrix_set(var->A, j+n, j, 1);
+	}
     }
 
     return err;
@@ -107,6 +104,7 @@ static int VAR_allocate_cholesky_matrix (GRETL_VAR *var)
     int err = 0;
 
     if (var->C != NULL) {
+	/* the job is already done */
         return 0;
     }
 
@@ -123,6 +121,7 @@ static int VAR_allocate_residuals_matrix (GRETL_VAR *var)
     int err = 0;
 
     if (var->E != NULL) {
+	/* the job is already done */
         return 0;
     }
 
@@ -739,7 +738,7 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     }
 
     if (!err && var->ci == VAR) {
-        err = VAR_add_companion_matrix(var);
+        err = VAR_allocate_companion_matrix(var);
     }
 
     if (!err && var->ci == VAR) {
@@ -3253,7 +3252,7 @@ static int jvar_check_allocation (GRETL_VAR *v, const DATASET *dset)
     int err = VAR_add_models(v, dset);
 
     if (!err) {
-        err = VAR_add_companion_matrix(v);
+        err = VAR_allocate_companion_matrix(v);
     }
     if (!err) {
         err = VAR_allocate_cholesky_matrix(v);
@@ -4383,7 +4382,7 @@ static int rebuild_VAR_matrices (GRETL_VAR *var)
     }
 
     if (!err && var->A == NULL) {
-        err = VAR_add_companion_matrix(var);
+        err = VAR_allocate_companion_matrix(var);
     }
 
     if (!err && gotX && var->XTX == NULL) {
