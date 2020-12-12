@@ -1708,6 +1708,50 @@ static int real_point_responses (const gretl_matrix *C,
     return 0;
 }
 
+/* Given an m x n matrix @A, with m < n, construct the full
+   n x n companion matrix.
+*/
+
+static gretl_matrix *companionize (const gretl_matrix *A,
+				   int *err)
+{
+    gretl_matrix *ret = NULL;
+    int m = A->rows, n = A->cols;
+    int d = n - m;
+
+    if (d < 0) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (d == 0) {
+	/* shouldn't get here, but just in case */
+	ret = gretl_matrix_copy(A);
+    } else {
+	double aij;
+	int i, j;
+
+	ret = gretl_zero_matrix_new(n, n);
+	if (ret != NULL) {
+	    for (j=0; j<n; j++) {
+		for (i=0; i<m; i++) {
+		    aij = gretl_matrix_get(A, i, j);
+		    gretl_matrix_set(ret, i, j, aij);
+		}
+		if (j < d) {
+		    gretl_matrix_set(ret, j+m, j, 1);
+		}
+	    }
+	}
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return ret;
+}
+
 /* Calculate the VMA representation based on the A and C matrices,
    for a given horizon.
 */
@@ -1718,8 +1762,9 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
-    gretl_matrix *realC, *realA;
-    int neqns, dim, order, nresp;
+    gretl_matrix *realC = C;
+    gretl_matrix *realA = A;
+    int neqns, dim;
 
     if (horizon <= 0) {
 	*err = E_INVARG;
@@ -1729,61 +1774,45 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
     neqns = A->rows;
     dim = A->cols;
 
-    int C_is_I = C == NULL;
-    order = dim / neqns;
-    int makecompan = order > 1;
-    
-    if (C_is_I) {
-	realC = gretl_identity_matrix_new(neqns);
-    } else {
-	realC = C;
-    }
-    
     if (realC == NULL) {
-        *err = E_ALLOC;
+	/* manufacture "plain" @C for convenience */
+	realC = gretl_identity_matrix_new(neqns);
+	if (realC == NULL) {
+	    *err = E_ALLOC;
+	}
     }
 
-    if (!makecompan) {
-	realA = A;
-    } else {
-	realA = gretl_zero_matrix_new(A->cols, A->cols);
-    }
-    
-    if (realA == NULL) {
-        *err = E_ALLOC;
+    if (!*err && dim > neqns) {
+	/* the incoming @A is just the top @neqns rows
+	   of the companion matrix
+	*/
+	realA = companionize(A, err);
     }
 
-    /* make companion matrix */
-    if (makecompan) {
-        *err = gretl_matrix_inscribe_matrix(realA, A, 0, 0, GRETL_MOD_NONE);
-        if (!*err) {
-            *err = gretl_matrix_inscribe_I(realA, neqns, 0, neqns * (order-1));
-        }
-    }
-    
-    nresp = neqns * neqns;
+    if (!*err) {
+	int nresp = neqns * neqns;
 
-    resp = gretl_matrix_alloc(horizon, nresp);
-    rtmp = gretl_matrix_alloc(dim, neqns);
-    ctmp = gretl_zero_matrix_new(dim, neqns);
-    
-    if (resp == NULL || rtmp == NULL || ctmp == NULL) {
-        *err = E_ALLOC;
-    } else {
-	*err = real_point_responses(realC, realA, ctmp, rtmp, resp, -1, -1);
+	resp = gretl_matrix_alloc(horizon, nresp);
+	rtmp = gretl_matrix_alloc(dim, neqns);
+	ctmp = gretl_zero_matrix_new(dim, neqns);
+
+	if (resp == NULL || rtmp == NULL || ctmp == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = real_point_responses(realC, realA, ctmp, rtmp,
+					resp, -1, -1);
+	}
+
+	gretl_matrix_free(rtmp);
+	gretl_matrix_free(ctmp);
     }
 
-    gretl_matrix_free(rtmp);
-    gretl_matrix_free(ctmp);
-
-    if (C_is_I) {
+    if (realC != C) {
 	gretl_matrix_free(realC);
     }
-    
-    if (makecompan) {
+    if (realA != A) {
 	gretl_matrix_free(realA);
     }
-    
     if (*err && resp != NULL) {
         gretl_matrix_free(resp);
         resp = NULL;
