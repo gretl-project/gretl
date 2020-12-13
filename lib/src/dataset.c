@@ -2422,25 +2422,39 @@ struct spoints_t_ {
 static void free_spoints (spoints_t *sv)
 {
     free(sv->points);
-    free(sv->val);
+    if (sv->n_vals > 1) {
+	/* if n_vals == 1, @val is borrowed */
+	free(sv->val);
+    }
     free(sv);
 }
 
-static spoints_t *allocate_spoints (int n, int v)
+static spoints_t *allocate_spoints (DATASET *dset,
+				    const int *list)
 {
     spoints_t *sv;
-    int i;
+    int n = dset->n;
+    int v = list[0];
 
     sv = malloc(sizeof *sv);
 
     if (sv != NULL) {
+	sv->n_vals = v;
+	sv->n_points = n;
 	sv->points = malloc(n * sizeof *sv->points);
-	sv->val = malloc((n * v) * sizeof(double));
+	if (v == 1) {
+	    /* can point directly at data array */
+	    sv->val = dset->Z[list[1]];
+	} else {
+	    /* need to allocate storage */
+	    sv->val = malloc((n * v) * sizeof(double));
+	}
 	if (sv->points == NULL || sv->val == NULL) {
 	    free_spoints(sv);
 	    sv = NULL;
 	} else {
 	    double *x = sv->val;
+	    int i;
 
 	    for (i=0; i<n; i++) {
 		sv->points[i].obsnum = i;
@@ -2458,13 +2472,15 @@ static int compare_vals_up (const void *a, const void *b)
 {
     const spoint_t *pa = (const spoint_t *) a;
     const spoint_t *pb = (const spoint_t *) b;
-    int i, ret = 0;
+    int i, naa, nab, ret = 0;
 
     for (i=0; i<pa->nvals && !ret; i++) {
-	if (isnan(pa->vals[i]) || isnan(pb->vals[i])) {
-	    if (!isnan(pa->vals[i])) {
+	naa = isnan(pa->vals[i]);
+	nab = isnan(pb->vals[i]);
+	if (naa || nab) {
+	    if (!naa) {
 		ret = -1;
-	    } else if (!isnan(pb->vals[i])) {
+	    } else if (!nab) {
 		ret = 1;
 	    }
 	} else {
@@ -2479,13 +2495,15 @@ static int compare_vals_down (const void *a, const void *b)
 {
     const spoint_t *pa = (const spoint_t *) a;
     const spoint_t *pb = (const spoint_t *) b;
-    int i, ret = 0;
+    int i, naa, nab, ret = 0;
 
     for (i=0; i<pa->nvals && !ret; i++) {
-	if (isnan(pa->vals[i]) || isnan(pb->vals[i])) {
-	    if (!isnan(pa->vals[i])) {
+	naa = isnan(pa->vals[i]);
+	nab = isnan(pb->vals[i]);
+	if (naa || nab) {
+	    if (!naa) {
 		ret = 1;
-	    } else if (!isnan(pb->vals[i])) {
+	    } else if (!nab) {
 		ret = -1;
 	    }
 	} else {
@@ -2564,7 +2582,7 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
     int i, t, v;
     int err = 0;
 
-    sv = allocate_spoints(dset->n, ns);
+    sv = allocate_spoints(dset, list);
     if (sv == NULL) {
 	return E_ALLOC;
     }
@@ -2620,7 +2638,7 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 		}
 	    }
 	    xsi += dset->n;
-	} else {
+	} else if (ns > 1) {
 	    for (t=0; t<dset->n; t++) {
 		sv->points[t].vals[i] = dset->Z[v][t];
 	    }
@@ -2635,8 +2653,8 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
 	qsort(sv->points, dset->n, sizeof(spoint_t), compare_vals_up);
     }
 
+    /* reorder data values */
     for (i=1; i<dset->v; i++) {
-	/* reorder data values */
 	for (t=0; t<dset->n; t++) {
 	    x[t] = dset->Z[i][sv->points[t].obsnum];
 	}
