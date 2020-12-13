@@ -1802,10 +1802,8 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     while (bufgets(line, sizeof line, buf) && !err) {
 	s = line;
 	while (isspace(*s)) s++;
-	if (!(fun->flags & UFUN_USES_SET)) {
-	    if (!strncmp(s, "set ", 4)) {
-		fun->flags |= UFUN_USES_SET;
-	    }
+	if (!(fun->flags & UFUN_USES_SET) && !strncmp(s, "set ", 4)) {
+	    fun->flags |= UFUN_USES_SET;
 	}
 	tailstrip(s);
 	err = push_function_line(fun, s, 0);
