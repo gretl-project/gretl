@@ -6567,9 +6567,9 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	gretl_errmsg_set("'null' is not a valid default for scalars");
 	err = E_TYPES;
     } else if (param->type == GRETL_TYPE_BOOL) {
-	if (!strcmp(p, "[TRUE]")) {
+	if (!strncmp(p, "[TRUE]", 6)) {
 	    param->deflt = 1;
-	} else if (!strcmp(p, "[FALSE]")) {
+	} else if (!strncmp(p, "[FALSE]", 7)) {
 	    param->deflt = 0;
 	} else if (sscanf(p, "[%lf]", &param->deflt) != 1) {
 	    err = E_PARSE;
@@ -6617,12 +6617,10 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 		param->deflt = x[2];
 		param->step = x[3];
 	    }
-
 #if VALDEBUG
 	    fprintf(stderr, "min %g, max %g, deflt %g, step %g\n",
 		    param->min, param->max, param->deflt, param->step);
 #endif
-
 	    err = check_parm_min_max(param, name, nvals);
 	}
     }
