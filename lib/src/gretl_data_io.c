@@ -61,7 +61,7 @@
  *     } else {
  *         pprintf(prn, "Read data from %s OK\n", fname);
  *         print_smpl(dset, 0, OPT_NONE, prn);
- *         varlist(dset, prn);
+ *         list_series(dset, OPT_NONE, prn);
  *     }
  * 
  *     destroy_dataset(dset);
