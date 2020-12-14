@@ -401,7 +401,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	    *word = '\0';
 	    gretl_utf8_strncat(word, freq->S[k], len-2);
 	    pputs(prn, word);
-	    nlw = len - strlen(word);
+	    nlw = len - g_utf8_strlen(word, -1);
 	    bufspace(nlw, prn);
 	    pprintf(prn, "%6d   ", freq->f[k]);
 	    f = 100.0 * freq->f[k] / valid;
