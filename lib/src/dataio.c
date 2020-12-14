@@ -1105,9 +1105,10 @@ int gretl_read_purebin (const char *fname, DATASET *dset,
 {
     FILE *fp;
     DATASET *bset = NULL;
+    double sd0;
     int i, j, dims[NDIM] = {0};
     char c, buf[16];
-    size_t sz;
+    size_t sz, sz2;
     int err = 0;
 
     fp = gretl_fopen(fname, "rb");
@@ -1124,22 +1125,26 @@ int gretl_read_purebin (const char *fname, DATASET *dset,
     }
 
     /* dimensions */
-    sz = fread(dims, sizeof dims[0], NDIM, fp);
-    if (sz != NDIM) {
+    sz  = fread(dims, sizeof dims[0], NDIM, fp);
+    sz2 = fread(&sd0, sizeof sd0, 1, fp);
+    if (sz != NDIM || sz2 != 1) {
 	pputs(prn, "didn't get gbin dimensions\n");
 	err = E_DATA;
 	goto bailout;
     }
 
     /* allocate dataset */
-    bset = create_new_dataset(dims[1], dims[0], dims[2]);
+    bset = create_new_dataset(dims[1], dims[2], dims[3]);
     if (bset == NULL) {
 	pputs(prn, "gbin: create_new_dataset failed\n");
 	fprintf(stderr, "dims = %d, %d, %d\n",
-		dims[0], dims[1], dims[2]);
+		dims[1], dims[2], dims[3]);
 	err = E_ALLOC;
 	goto bailout;
     }
+
+    bset->pd = dims[4];
+    bset->sd0 = sd0;
 
     /* variable names */
     for (i=1; i<bset->v; i++) {
@@ -1196,7 +1201,9 @@ static int write_purebin (const char *fname,
 			  gretlopt opt)
 {
     FILE *fp;
-    int i, dims[NDIM] = {0};
+    double *x, sd0 = 1.0;
+    int dims[NDIM] = {0};
+    int nobs, nv, i, t;
     int err = 0;
 
     fp = gretl_fopen(fname, "wb");
@@ -1204,28 +1211,38 @@ static int write_purebin (const char *fname,
 	return E_FOPEN;
     }
 
-    dims[0] = dset->n;
-    dims[1] = dset->v;
-    dims[2] = dset->S != NULL ? dset->n : 0;
-    dims[3] = 1; /* format version info */
+    nv = list[0];
+    nobs = sample_size(dset);
+
+    dims[0] = 1; /* version info */
+    dims[1] = nv + 1;
+    dims[2] = nobs;
+    dims[3] = dset->S != NULL ? 1 : 0;
+    dims[4] = dset->pd;
 
     fputs("gretl-purebin", fp);
     fputc(0, fp);
     fwrite(dims, sizeof dims[0], NDIM, fp);
 
+    if (dataset_is_time_series(dset)) {
+	sd0 = date_as_double(dset->t1, dset->pd, dset->sd0);
+    }
+    fwrite(&sd0, sizeof sd0, 1, fp);
+
     /* variable names */
-    for (i=1; i<dset->v; i++) {
-	fputs(dset->varname[i], fp);
+    for (i=1; i<=nv; i++) {
+	fputs(dset->varname[list[i]], fp);
 	fputc(0, fp);
     }
     /* numerical values */
-    for (i=1; i<dset->v; i++) {
-	fwrite(dset->Z[i], sizeof(double), dset->n, fp);
+    for (i=1; i<=nv; i++) {
+	x = dset->Z[list[i]] + dset->t1;
+	fwrite(x, sizeof(double), nobs, fp);
     }
     /* observation markers */
     if (dset->S != NULL) {
-	for (i=0; i<dset->n; i++) {
-	    fputs(dset->S[i], fp);
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    fputs(dset->S[t], fp);
 	    fputc(0, fp);
 	}
     }
