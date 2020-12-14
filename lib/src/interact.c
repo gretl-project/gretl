@@ -2140,13 +2140,15 @@ static int lib_open_append (ExecState *s,
 	} else {
 	    err = gretl_read_gdt(op.fname, dset, opt, vprn);
 	}
+    } else if (op.ftype == GRETL_PUREBIN) {
+	err = gretl_read_purebin(op.fname, dset, opt, vprn);
     } else if (op.ftype == GRETL_CSV) {
         err = import_csv(op.fname, dset, opt, vprn);
     } else if (SPREADSHEET_IMPORT(op.ftype)) {
         err = import_spreadsheet(op.fname, op.ftype, cmd->list, cmd->parm2,
                                  dset, opt, vprn);
     } else if (OTHER_IMPORT(op.ftype)) {
-        err = import_other(op.fname, op.ftype, dset, cmd->opt, vprn);
+        err = import_other(op.fname, op.ftype, dset, opt, vprn);
     } else if (op.ftype == GRETL_ODBC) {
         err = set_odbc_dsn(cmd->param, vprn);
     } else if (op.dbdata) {

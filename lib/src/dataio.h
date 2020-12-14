@@ -47,6 +47,7 @@ typedef enum {
     GRETL_ODBC,           /* Open DataBase Connectivity */
     GRETL_DBNOMICS,       /* DB.NOMICS access */
     GRETL_MAP,            /* shapefile or GeoJSON */
+    GRETL_PUREBIN,        /* simple "pure" binary format */
     GRETL_UNRECOGNIZED    /* none of the above */
 } GretlFileType;
 
@@ -123,6 +124,9 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 
 int import_other (const char *fname, GretlFileType ftype,
 		  DATASET *dset, gretlopt opt, PRN *prn);
+
+int gretl_read_purebin (const char *fname, DATASET *dset,
+			gretlopt opt, PRN *prn);
 
 int add_obs_markers_from_file (DATASET *dset, const char *fname);
 

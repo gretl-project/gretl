@@ -59,7 +59,8 @@ typedef enum {
     GRETL_FMT_DAT,       /* data in PcGive format */
     GRETL_FMT_DB,        /* gretl native database format */
     GRETL_FMT_JM,        /* JMulti ascii data */
-    GRETL_FMT_DTA        /* Stata .dta format */
+    GRETL_FMT_DTA,       /* Stata .dta format */
+    GRETL_FMT_PUREBIN    /* native "pure" binary data */
 } GretlDataFormat;
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
@@ -752,7 +753,8 @@ static struct extmap data_ftype_map[] = {
     { GRETL_DTA,          ".dta" },
     { GRETL_SAV,          ".sav" },
     { GRETL_SAS,          ".xpt" },
-    { GRETL_JMULTI,       ".dat" }
+    { GRETL_JMULTI,       ".dat" },
+    { GRETL_PUREBIN,      ".gbin" }
 };
 
 static const char *map_suffixes[] = {
@@ -849,6 +851,11 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	    *err = E_BADOPT;
 	}
 	return GRETL_FMT_BINARY;
+    } else if (has_suffix(fname, ".gbin")) {
+	if (non_native(opt)) {
+	    *err = E_BADOPT;
+	}
+	return GRETL_FMT_PUREBIN;
     }
 
     if (opt & OPT_M) {
@@ -1077,6 +1084,157 @@ static int write_dta_data (const char *fname, const int *list,
     return err;
 }
 
+/* Experiment, December 2020 */
+
+#define NDIM 8 /* allow for adding info */
+
+static void gbin_read_message (const char *fname,
+			       DATASET *dset,
+			       PRN *prn)
+{
+    pprintf(prn, A_("\nRead datafile %s\n"), fname);
+    pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
+		    "observations range: %s to %s\n"),
+	    (custom_time_series(dset))? 1 : dset->pd,
+	    dset->n, dset->stobs, dset->endobs);
+    pputc(prn, '\n');
+}
+
+int gretl_read_purebin (const char *fname, DATASET *dset,
+			gretlopt opt, PRN *prn)
+{
+    FILE *fp;
+    DATASET *bset = NULL;
+    int i, j, dims[NDIM] = {0};
+    char c, buf[16];
+    size_t sz;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "rb");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    /* "gretl-purebin" */
+    sz = fread(buf, 1, 14, fp);
+    if (sz != 14 || strcmp(buf, "gretl-purebin")) {
+	pputs(prn, "not gretl-purebin\n");
+	err = E_DATA;
+	goto bailout;
+    }
+
+    /* dimensions */
+    sz = fread(dims, sizeof dims[0], NDIM, fp);
+    if (sz != NDIM) {
+	pputs(prn, "didn't get gbin dimensions\n");
+	err = E_DATA;
+	goto bailout;
+    }
+
+    /* allocate dataset */
+    bset = create_new_dataset(dims[1], dims[0], dims[2]);
+    if (bset == NULL) {
+	pputs(prn, "gbin: create_new_dataset failed\n");
+	fprintf(stderr, "dims = %d, %d, %d\n",
+		dims[0], dims[1], dims[2]);
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* variable names */
+    for (i=1; i<bset->v; i++) {
+	for (j=0; ; j++) {
+	    c = fgetc(fp);
+	    bset->varname[i][j] = c;
+	    if (c == '\0') {
+		break;
+	    }
+	}
+    }
+
+    /* numerical values */
+    for (i=1; i<bset->v && !err; i++) {
+	sz = fread(bset->Z[i], sizeof(double), bset->n, fp);
+	if (sz != (size_t) bset->n) {
+	    pprintf(prn, "failed reading variable %d\n", i);
+	    err = E_DATA;
+	}
+    }
+
+    /* observation markers */
+    if (!err && bset->S != NULL) {
+	for (i=0; i<bset->n; i++) {
+	    for (j=0; ; j++) {
+		c = fgetc(fp);
+		bset->S[i][j] = c;
+		if (c == '\0') {
+		    break;
+		}
+	    }
+	}
+    }
+
+ bailout:
+
+    fclose(fp);
+
+    if (err) {
+	destroy_dataset(bset);
+    } else {
+	gretlopt mopt = get_merge_opts(opt);
+
+	gbin_read_message(fname, bset, prn);
+	err = merge_or_replace_data(dset, &bset, mopt, prn);
+    }
+
+    return err;
+}
+
+static int write_purebin (const char *fname,
+			  const int *list,
+			  const DATASET *dset,
+			  gretlopt opt)
+{
+    FILE *fp;
+    int i, dims[NDIM] = {0};
+    int err = 0;
+
+    fp = gretl_fopen(fname, "wb");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    dims[0] = dset->n;
+    dims[1] = dset->v;
+    dims[2] = dset->S != NULL ? dset->n : 0;
+    dims[3] = 1; /* format version info */
+
+    fputs("gretl-purebin", fp);
+    fputc(0, fp);
+    fwrite(dims, sizeof dims[0], NDIM, fp);
+
+    /* variable names */
+    for (i=1; i<dset->v; i++) {
+	fputs(dset->varname[i], fp);
+	fputc(0, fp);
+    }
+    /* numerical values */
+    for (i=1; i<dset->v; i++) {
+	fwrite(dset->Z[i], sizeof(double), dset->n, fp);
+    }
+    /* observation markers */
+    if (dset->S != NULL) {
+	for (i=0; i<dset->n; i++) {
+	    fputs(dset->S[i], fp);
+	    fputc(0, fp);
+	}
+    }
+
+    fclose(fp);
+
+    return err;
+}
+
 #define DEFAULT_CSV_DIGITS 15
 
 static int real_write_data (const char *fname, int *list,
@@ -1127,6 +1285,12 @@ static int real_write_data (const char *fname, int *list,
     if (fmt == GRETL_FMT_GDT || fmt == GRETL_FMT_BINARY) {
 	/* write native data file (.gdt or .gdtb) */
 	err = gretl_write_gdt(fname, list, dset, opt, progress);
+	goto write_exit;
+    }
+
+    if (fmt == GRETL_FMT_PUREBIN) {
+	/* write native "pure binary" data file (.gbin) */
+	err = write_purebin(fname, list, dset, opt);
 	goto write_exit;
     }
 
