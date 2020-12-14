@@ -573,7 +573,7 @@ static int row_strlen (const Xtab *tab)
     int i, n, nmax = 0;
 
     for (i=0; i<tab->rows; i++) {
-	n = strlen(tab->Sr[i]);
+	n = g_utf8_strlen(tab->Sr[i], -1);
 	if (n > nmax) {
 	    nmax = n;
 	}
@@ -587,7 +587,7 @@ static int col_strlen (const Xtab *tab)
     int j, n, nmax = 0;
 
     for (j=0; j<tab->cols; j++) {
-	n = strlen(tab->Sc[j]);
+	n = g_utf8_strlen(tab->Sc[j], -1);
 	if (n > nmax) {
 	    nmax = n;
 	}
@@ -688,7 +688,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    if (tex) {
 		pputs(prn, lbl);
 	    } else {
-		pprintf(prn, "%*s", clen, lbl);
+		bufspace(clen - g_utf8_strlen(lbl, -1), prn);
+		pputs(prn, lbl);
 	    }
 	} else {
 	    cj = tab->cval[j];
@@ -727,10 +728,9 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    *lbl = '\0';
 	    strncat(lbl, tab->Sr[i], 63);
 	    gretl_utf8_truncate(lbl, rlen-2);
-	    if (tex) {
-		pputs(prn, lbl);
-	    } else {
-		pprintf(prn, "%-*s", rlen, lbl);
+	    pputs(prn, lbl);
+	    if (!tex) {
+		bufspace(rlen - g_utf8_strlen(lbl, -1), prn);
 	    }
 	} else {
 	    ri = tab->rval[i];
