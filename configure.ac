@@ -271,6 +271,8 @@ AC_ARG_WITH(gsf,
 if test "x${withval}" = "xno"
 then
   try_gsf=no
+else
+  try_gsf=yes
 fi,
 try_gsf=yes)
 

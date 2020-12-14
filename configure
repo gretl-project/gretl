@@ -7118,6 +7118,8 @@ if test "${with_gsf+set}" = set; then :
   withval=$with_gsf; if test "x${withval}" = "xno"
 then
   try_gsf=no
+else
+  try_gsf=yes
 fi
 else
   try_gsf=yes
