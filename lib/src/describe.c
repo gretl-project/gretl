@@ -36,8 +36,6 @@
 
 #include <glib.h>
 
-#define USE_ORIG_XTAB 0 /* testing wanted */
-
 /**
  * SECTION:describe
  * @short_description: descriptive statistics plus some tests
@@ -2735,131 +2733,6 @@ static Xtab *get_new_xtab (int rv, int cv, const DATASET *dset,
     return tab;
 }
 
-#if USE_ORIG_XTAB
-
-static Xtab *get_numeric_xtab (int rv, int cv, const DATASET *dset,
-			       int *err)
-{
-    FreqDist *rowfreq = NULL, *colfreq = NULL;
-    Xtab *tab = NULL;
-    double **X = NULL;
-    int ri = 0, cj = 0;
-    int rows, cols;
-    double xr = 0.0, xc = 0.0;
-    int t1 = dset->t1;
-    int t2 = dset->t2;
-    int i, t, n = 0;
-
-    /* count non-missing values */
-    for (t=t1; t<=t2; t++) {
-	if (complete_obs(dset->Z[rv], dset->Z[cv], t)) {
-	    n++;
-	}
-    }
-    if (n == 0) {
-	fprintf(stderr, "All values invalid!\n");
-	*err = E_MISSDATA;
-	return NULL;
-    }
-
-    tab = xtab_new(n, t1, t2);
-    if (tab == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    tab->missing = (t2 - t1 + 1) - n;
-    strcpy(tab->rvarname, dset->varname[rv]);
-    strcpy(tab->cvarname, dset->varname[cv]);
-
-    /* start allocating stuff; we use temporary FreqDists for rows
-       and columns to retrieve values with non-zero frequencies
-       and get dimensions for the cross table
-    */
-
-    X = doubles_array_new(n, 2);
-    if (X == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    rowfreq = get_freq(rv, dset, NADBL, NADBL, 0,
-		       0, OPT_D | OPT_X, err);
-    if (!*err) {
-	colfreq = get_freq(cv, dset, NADBL, NADBL, 0,
-			   0, OPT_D | OPT_X, err);
-    }
-    if (*err) {
-	goto bailout;
-    }
-
-    tab->rows = rows = rowfreq->numbins;
-    tab->cols = cols = colfreq->numbins;
-
-    if (xtab_allocate_arrays(tab)) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    for (i=0; i<rows; i++) {
-	tab->rval[i] = rowfreq->midpt[i];
-    }
-    for (i=0; i<cols; i++) {
-	tab->cval[i] = colfreq->midpt[i];
-    }
-
-    /* matrix X holds the values to be sorted */
-    i = 0;
-    for (t=t1; t<=t2 && i<n; t++) {
-	if (complete_obs(dset->Z[rv], dset->Z[cv], t)) {
-	    X[i][0] = dset->Z[rv][t];
-	    X[i][1] = dset->Z[cv][t];
-	    i++;
-	}
-    }
-
-    qsort(X, n, sizeof *X, compare_xtab_rows);
-    ri = cj = 0;
-    xr = tab->rval[0];
-    xc = tab->cval[0];
-
-    /* compute frequencies by going through sorted X */
-    for (i=0; i<n; i++) {
-	while (X[i][0] > xr) {
-	    /* skip row */
-	    xr = tab->rval[++ri];
-	    cj = 0;
-	    xc = tab->cval[0];
-	}
-	while (X[i][1] > xc) {
-	    /* skip column */
-	    xc = tab->cval[++cj];
-	}
-#if XTAB_DEBUG
-	fprintf(stderr,"%d: (%d,%d) [%g,%g] %g,%g\n",
-		i, ri, cj, xr, xc, X[i][0], X[i][1]);
-#endif
-	tab->f[ri][cj] += 1;
-	tab->rtotal[ri] += 1;
-	tab->ctotal[cj] += 1;
-    }
-
- bailout:
-
-    doubles_array_free(X, n);
-    free_freq(rowfreq);
-    free_freq(colfreq);
-
-    if (*err) {
-	free_xtab(tab);
-	tab = NULL;
-    }
-
-    return tab;
-}
-
-#endif /* USE_ORIG_XTAB */
-
 static void record_xtab (const Xtab *tab, const DATASET *dset,
 			 gretlopt opt)
 {
@@ -3164,15 +3037,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (j=1; j<i && !err; j++) {
 		vj = rowvar[j];
 		vi = rowvar[i];
-#if USE_ORIG_XTAB
-		if (is_string_valued(dset, vj) || is_string_valued(dset, vi)) {
-		    tab = get_new_xtab(vj, vi, dset, &err);
-		} else {
-		    tab = get_numeric_xtab(vj, vi, dset, &err);
-		}
-#else
 		tab = get_new_xtab(vj, vi, dset, &err);
-#endif
 		if (!err) {
 		    if (opt & OPT_Q) {
 			/* --quiet: no printing */
@@ -3194,15 +3059,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (j=1; j<=colvar[0] && !err; j++) {
 		vi = rowvar[i];
 		vj = colvar[j];
-#if USE_ORIG_XTAB
-		if (is_string_valued(dset, vi) || is_string_valued(dset, vj)) {
-		    tab = get_new_xtab(vi, vj, dset, &err);
-		} else {
-		    tab = get_numeric_xtab(vi, vj, dset, &err);
-		}
-#else
 		tab = get_new_xtab(vi, vj, dset, &err);
-#endif
 		if (!err) {
 		    print_xtab(tab, dset, opt, prn);
 		    free_xtab(tab);
@@ -3243,15 +3100,7 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
 	return NULL;
     }
 
-#if USE_ORIG_XTAB
-    if (is_string_valued(dset, rv) || is_string_valued(dset, cv)) {
-	tab = get_new_xtab(rv, cv, dset, err);
-    } else {
-	tab = get_numeric_xtab(rv, cv, dset, err);
-    }
-#else
     tab = get_new_xtab(rv, cv, dset, err);
-#endif
 
     if (!*err) {
 	print_xtab(tab, dset, opt, prn);
