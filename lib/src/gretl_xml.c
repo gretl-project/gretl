@@ -86,6 +86,8 @@ static xmlDocPtr transcribe_and_parse (const char *fname)
    on Windows
 */
 
+/* FIXME figure out how to use xmlInputOpenCallback ? */
+
 static xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
     xmlDocPtr ptr = NULL;
