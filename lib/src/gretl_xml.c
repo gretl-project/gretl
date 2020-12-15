@@ -50,91 +50,6 @@
 
 #define GDT_DEBUG 0
 
-#ifdef WIN32
-
-#define BUFLEN 131072
-
-static xmlDocPtr transcribe_and_parse (const char *fname)
-{
-    xmlDocPtr ptr = NULL;
-    gchar *xmltmp = gretl_make_dotpath("xmldoc.XXXXXX");
-    FILE *fz, *ftmp;
-
-    fz = g_fopen(fname, "rb");
-    if (fz != NULL) {
-	ftmp = gretl_mktemp(xmltmp, "wb");
-	if (ftmp != NULL) {
-	    char buf[BUFLEN];
-	    int len;
-
-	    while ((len = fread(buf, 1, BUFLEN, fz)) > 0) {
-		fwrite(buf, 1, len, ftmp);
-	    }
-	    fclose(ftmp);
-	    ptr = xmlParseFile(xmltmp);
-	}
-	fclose(fz);
-    }
-
-    gretl_remove(xmltmp);
-    g_free(xmltmp);
-
-    return ptr;
-}
-
-/* Try to work around potential problems with filenames
-   on Windows
-*/
-
-/* FIXME figure out how to use xmlInputOpenCallback ? */
-
-static xmlDocPtr gretl_xmlParseFile (const char *fname)
-{
-    xmlDocPtr ptr = NULL;
-    FILE *fp = fopen(fname, "r");
-
-    if (fp != NULL) {
-	/* If we manage to fopen() the file as is, plain
-	   xmlParseFile() should work fine.
-	*/
-	fclose(fp);
-	ptr = xmlParseFile(fname);
-    } else {
-	int save_errno = errno;
-	gchar *fconv;
-	gsize wrote;
-
-	fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
-	if (fconv != NULL) {
-	    ptr = xmlParseFile(fconv);
-	    g_free(fconv);
-	} else if (is_gzipped(fname)) {
-	    /* fallback for gzipped case: try transcribing the data
-	       to a file that can be accessed by libxml2
-	    */
-	    ptr = transcribe_and_parse(fname);
-	} else {
-	    /* fallback, non-gzipped case: use GLib to grab the
-	       content to pass to libxml2
-	    */
-	    gchar *buf = NULL;
-	    gsize len = 0;
-
-	    if (g_file_get_contents(fname, &buf, &len, NULL)) {
-		ptr = xmlParseMemory(buf, len);
-		g_free(buf);
-	    }
-	}
-	errno = save_errno;
-    }
-
-    return ptr;
-}
-
-#else /* not WIN32 */
-# define gretl_xmlParseFile(f) xmlParseFile(f)
-#endif
-
 int gretl_xml_open_doc_root (const char *fname,
 			     const char *rootname,
 			     xmlDocPtr *pdoc,
@@ -152,7 +67,7 @@ int gretl_xml_open_doc_root (const char *fname,
 	*pnode = NULL;
     }
 
-    doc = gretl_xmlParseFile(fname);
+    doc = xmlParseFile(fname);
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
 	err = 1;
@@ -4597,7 +4512,7 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
     xmlNodePtr node;
     char *ret = NULL;
 
-    doc = gretl_xmlParseFile(fname);
+    doc = xmlParseFile(fname);
 
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
