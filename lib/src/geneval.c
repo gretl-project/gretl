@@ -14193,6 +14193,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     return ret;
 }
 
+/* Create a temporary empty node to handle the case where,
+   in feval(), we get fewer arguments than the max for a
+   built-in function. If the missing (presumably trailing)
+   arguments are optional this will work OK; otherwise the
+   called function will flag the appropriate error.
+*/
+
 static NODE *auxempty (int *del)
 {
     NODE *n = newempty();
@@ -14223,8 +14230,7 @@ static NODE *eval_feval (NODE *t, parser *p)
     argc = k - 1;
 
     /* evaluate the first (string) arg: should be the
-       name of a function
-    */
+       name of a function */
     e = eval(n->v.bn.n[0], p);
     if (!p->err && e->t != STR) {
         node_type_error(t->t, 1, STR, e, p);
@@ -14293,15 +14299,17 @@ static NODE *eval_feval (NODE *t, parser *p)
                         (void *) fn, getsymb(fn->t), (void *) t);
 #endif
                 t->aux = fn;
-		/* destroy temporary empty nodes, if any */
-		if (del[0]) {
-		    free(fn->L); fn->L = NULL;
-		}
-		if (del[1]) {
-		    free(fn->M); fn->M = NULL;
-		}
-		if (del[2]) {
-		    free(fn->R); fn->R = NULL;
+		if (np > 0) {
+		    /* destroy "auxempty" nodes, if any were created */
+		    if (del[0]) {
+			free(fn->L); fn->L = NULL;
+		    }
+		    if (del[1]) {
+			free(fn->M); fn->M = NULL;
+		    }
+		    if (del[2]) {
+			free(fn->R); fn->R = NULL;
+		    }
 		}
             }
         }
