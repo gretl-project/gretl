@@ -87,9 +87,8 @@ struct str_table dummies[] = {
 };
 
 /* Identify matrix-selection dummy constants:
-   these can be valid only brtween '[' and ']'.
+   these can be valid only between '[' and ']'.
 */
-//#define MSEL_DUM(d) (d==DUM_DIAG || d==DUM_REAL || d==DUM_IMAG)
 #define MSEL_DUM(d) (d >= DUM_DIAG && d <= DUM_IMAG)
 
 /* dvars: dataset- and test-related accessors */
@@ -801,6 +800,19 @@ int is_function_alias (const char *s)
     }
 
     return 0;
+}
+
+void *get_genr_function_pointer (int f)
+{
+    int i;
+
+    for (i=0; ptrfuncs[i].str != NULL; i++) {
+	if (ptrfuncs[i].id == f) {
+	    return ptrfuncs[i].ptr;
+	}
+    }
+
+    return NULL;
 }
 
 static int function_lookup_with_alias (const char *s,

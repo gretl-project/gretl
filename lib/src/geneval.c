@@ -175,7 +175,7 @@ static int ok_list_node (NODE *n, parser *p)
 	return 1;
     } else if (p->flags & P_LISTDEF) {
 	/* when defining a list we can be a bit more accommodating */
-	return scalar_node(n) || n->t == EMPTY;
+	return null_or_scalar(n);
     }
 
     return 0;
@@ -4844,7 +4844,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         } else {
             p->err = set_sel_vector(spec, 0, l->v.m);
         }
-    } else if (l->t == EMPTY) {
+    } else if (null_node(l)) {
         spec->ltype = SEL_ALL;
     } else {
         p->err = E_TYPES;
@@ -4867,7 +4867,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         } else {
             p->err = set_sel_vector(spec, 1, r->v.m);
         }
-    } else if (r->t == EMPTY) {
+    } else if (null_node(r)) {
         spec->rtype = SEL_ALL;
     } else {
         p->err = E_TYPES;
@@ -5419,11 +5419,11 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-        if (scalar_node(l) && (scalar_node(r) || r->t == EMPTY)) {
+        if (scalar_node(l) && null_or_scalar(r)) {
             ret = aux_ivec_node(p, 2);
             if (ret != NULL) {
                 ret->v.ivec[0] = node_get_int(l, p);
-                if (r->t == EMPTY) {
+                if (null_node(r)) {
                     ret->v.ivec[1] = MSEL_MAX; /* placeholder */
                 } else {
                     ret->v.ivec[1] = node_get_int(r, p);
@@ -5752,7 +5752,7 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
             ; /* don't do anything more */
         } else if (list == NULL) {
             p->err = E_ALLOC;
-        } else if (r->t == EMPTY) {
+        } else if (null_node(r)) {
             /* got just one argument */
             p->err = list_dumgenr(&list, p->dset, OPT_F);
             ret->v.ivec = list;
@@ -6782,8 +6782,8 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
         double x, y;
 
-        x = (l->t == EMPTY)? NADBL : node_get_scalar(l, p);
-        y = (r->t == EMPTY)? NADBL : node_get_scalar(r, p);
+        x = null_node(l) ? NADBL : node_get_scalar(l, p);
+        y = null_node(r) ? NADBL : node_get_scalar(r, p);
 
         switch (f) {
         case F_RUNIFORM:
@@ -9374,7 +9374,7 @@ static gretl_matrix *matrix_from_scalars (GPtrArray *a, int m,
         k = 0;
         for (i=0; i<m; i++) {
             n = g_ptr_array_index(a, i);
-            if (n->t == EMPTY) {
+            if (null_node(n)) {
                 if (i - k != seppos) {
                     p->err = E_PARSE;
                     break;
@@ -9403,7 +9403,7 @@ static gretl_matrix *matrix_from_scalars (GPtrArray *a, int m,
         for (i=0; i<r && !p->err; i++) {
             for (j=0; j<c; j++) {
                 n = g_ptr_array_index(a, k++);
-                if (n->t == EMPTY) {
+                if (null_node(n)) {
                     n = g_ptr_array_index(a, k++);
                 }
                 x = node_get_scalar(n, p);
@@ -10561,7 +10561,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
             (void *) bundle, key);
 #endif
 
-    if ((p->flags & P_PRIV) && p->op == B_ASN && rhs->t == EMPTY) {
+    if ((p->flags & P_PRIV) && p->op == B_ASN && null_node(rhs)) {
         /* this is an internal "special" that implements removal
            of a bundle member via the "delete" command
         */
@@ -10625,7 +10625,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
         targ = gretl_type_from_gen_type(p->targ);
     }
 
-    if (targ == GRETL_TYPE_NONE && rhs->t == EMPTY) {
+    if (targ == GRETL_TYPE_NONE && null_node(rhs)) {
         /* at this point @targ is indeterminate, but maybe there's
            an existing member to fix its value?
         */
@@ -11915,7 +11915,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             /* optional boolean */
             node_type_error(f, 3, NUM, r, p);
         } else {
-            int cov = (r->t == EMPTY)? 0 : node_get_int(r, p);
+            int cov = null_node(r) ? 0 : node_get_int(r, p);
             gretlopt opt = cov ? OPT_V : OPT_NONE;
             int k = node_get_int(m, p);
 
@@ -11932,7 +11932,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             /* optional offset */
             node_type_error(f, 3, NUM, r, p);
         } else {
-            int offset = (r->t == EMPTY)? 10 : node_get_int(r, p);
+            int offset = null_node(r) ? 10 : node_get_int(r, p);
             int rows = node_get_int(l, p);
             int cols = node_get_int(m, p);
 
@@ -11951,7 +11951,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         } else {
             gretl_matrix *S = node_get_real_matrix(l, p, 0, 0);
             int v = node_get_int(m, p);
-            int N = (r->t == EMPTY)? 0 : node_get_int(r, p);
+            int N = null_node(r) ? 0 : node_get_int(r, p);
 
             if (!p->err) {
                 if (N == 0) {
@@ -12165,7 +12165,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    gretl_matrix *compan_top = node_get_real_matrix(l, p, 0, 1);
-	    int horizon = (r->t == EMPTY) ? 24: node_get_int(r, p);
+	    int horizon = null_node(r) ? 24: node_get_int(r, p);
 	    int n = compan_top->rows;
             gretl_matrix *C = NULL;
 
@@ -12354,7 +12354,7 @@ static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
     double sval;
     int i;
 
-    if (nm->t == EMPTY && nd->t == EMPTY) {
+    if (null_node(nm) && null_node(nd)) {
         /* try for ISO 8601 basic input */
         basic_input = 1;
         if (scalar_node(ny)) {
@@ -13057,7 +13057,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
         for (i=1; i<k && !p->err; i++) {
             e = n->v.bn.n[i];
-            if (e->t == EMPTY) {
+            if (null_node(e)) {
                 ; /* NULL arguments are OK */
             } else {
                 e = eval(n->v.bn.n[i], p);
@@ -13168,7 +13168,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             e = eval(n->v.bn.n[i], p);
             if (e == NULL) {
                 fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-            } else if ((i == 1 || i == 2) && e->t == EMPTY) {
+            } else if ((i == 1 || i == 2) && null_node(e)) {
                 ; /* for u or w, NULL is acceptable */
             } else if (e->t != targ) {
                 node_type_error(t->t, i+1, targ, e, p);
@@ -13214,7 +13214,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                     M[i] = node_get_real_matrix(e, p, i, i+1);
                 }
             } else {
-                if (e->t == EMPTY) {
+                if (null_node(e)) {
                     ; /* OK */
                 } else if (e->t != U_ADDR) {
                     node_type_error(t->t, i+1, U_ADDR, e, p);
@@ -13252,7 +13252,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             if (i < 4) {
                 M[i] = node_get_real_matrix(e, p, i, i+1);
             } else {
-                if (e->t == EMPTY) {
+                if (null_node(e)) {
                     ; /* OK */
                 } else if (e->t != U_ADDR) {
                     node_type_error(t->t, i+1, U_ADDR, e, p);
@@ -13294,7 +13294,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 } else {
                     sf = e->v.str;
                 }
-            } else if (e->t == EMPTY) {
+            } else if (null_node(e)) {
                 ; /* OK */
             } else if (e->t != STR) {
                 node_type_error(t->t, i+1, STR, e, p);
@@ -13397,7 +13397,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 M[i] = node_get_real_matrix(e, p, i, i+1);
             } else {
                 /* the optional last argument */
-                if (e->t == EMPTY) {
+                if (null_node(e)) {
                     ; /* OK */
                 } else if (e->t != U_ADDR) {
                     node_type_error(t->t, i+1, U_ADDR, e, p);
@@ -13680,7 +13680,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             } else if (i == 3) {
                 /* optional matrix-pointer for storing the
                    derivative wrt z */
-                if (e->t == EMPTY) {
+                if (null_node(e)) {
                     ; /* OK */
                 } else if (e->t != U_ADDR) {
                     node_type_error(t->t, 4, U_ADDR, e, p);
@@ -13911,7 +13911,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                 y = e->v.xvec;
             } else if (i == 2) {
                 /* set bandwidth? */
-                if (e->t == EMPTY) {
+                if (null_node(e)) {
                     ; /* OK: will use the default */
                 } else {
                     h = node_get_scalar(e, p);
@@ -14193,6 +14193,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     return ret;
 }
 
+static NODE *auxempty (int *del)
+{
+    NODE *n = newempty();
+
+    *del = 1;
+    return n;
+}
+
 static NODE *eval_feval (NODE *t, parser *p)
 {
     NODE *save_aux = p->aux;
@@ -14226,32 +14234,41 @@ static NODE *eval_feval (NODE *t, parser *p)
 
     if (!p->err) {
         /* try for a built-in function */
+	int del[3] = {0};
+
         f = function_lookup(e->v.str);
         if (f != 0) {
             NODE *fn = aux_parent_node(p);
-            NODE *args = NULL;
-            int kerr = 0;
+            int np;
 
             fn->t = f;
+	    if (f < FP_MAX) {
+		fn->v.ptr = get_genr_function_pointer(f);
+	    }
             fn->flags |= TMP_NODE;
-            if (func1_symb(f)) {
-                if ((kerr = argc - 1) == 0) {
-                    fn->L = n->v.bn.n[1];
+
+	    np = func1_symb(f) ? 1 : func2_symb(f) ? 2 :
+		func3_symb(f) ? 3 : -1;
+
+	    if (np > 0) {
+		/* known max number of arguments */
+		if (argc > np) {
+		    gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
+		    p->err = E_DATA;
+		} else if (np == 1) {
+                    fn->L = argc > 0 ? n->v.bn.n[1] : auxempty(&del[0]);
+                } else if (np == 2) {
+		    fn->L = argc > 0 ? n->v.bn.n[1] : auxempty(&del[0]);
+                    fn->R = argc > 1 ? n->v.bn.n[2] : auxempty(&del[2]);
+                } else if (np == 3) {
+                    fn->L = argc > 0 ? n->v.bn.n[1] : auxempty(&del[0]);
+                    fn->M = argc > 1 ? n->v.bn.n[2] : auxempty(&del[1]);
+                    fn->R = argc > 2 ? n->v.bn.n[3] : auxempty(&del[2]);
                 }
-            } else if (func2_symb(f)) {
-                if ((kerr = argc - 2) == 0) {
-                    fn->L = n->v.bn.n[1];
-                    fn->R = n->v.bn.n[2];
-                }
-            } else if (func3_symb(f)) {
-                if ((kerr = argc - 3) == 0) {
-                    fn->L = n->v.bn.n[1];
-                    fn->M = n->v.bn.n[2];
-                    fn->R = n->v.bn.n[3];
-                }
-            } else {
+	    } else {
                 /* multi-arg function */
-                args = fn->L;
+                NODE *args = fn->L;
+
                 if (args != NULL && args->t != FARGS) {
                     fprintf(stderr, "feval, multiargs, fn type is wrong!\n");
                     p->err = E_DATA;
@@ -14268,13 +14285,6 @@ static NODE *eval_feval (NODE *t, parser *p)
                     }
                 }
             }
-            if (kerr > 0) {
-                gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
-                p->err = E_DATA;
-            } else if (kerr < 0) {
-                gretl_errmsg_sprintf("%s: too few arguments", e->v.str);
-                p->err = E_ARGS;
-            }
             if (!p->err) {
                 ret = eval(fn, p);
                 /* there was a leak here, OK now? */
@@ -14283,6 +14293,16 @@ static NODE *eval_feval (NODE *t, parser *p)
                         (void *) fn, getsymb(fn->t), (void *) t);
 #endif
                 t->aux = fn;
+		/* destroy temporary empty nodes, if any */
+		if (del[0]) {
+		    free(fn->L); fn->L = NULL;
+		}
+		if (del[1]) {
+		    free(fn->M); fn->M = NULL;
+		}
+		if (del[2]) {
+		    free(fn->R); fn->R = NULL;
+		}
             }
         }
     }
@@ -15994,7 +16014,7 @@ static void node_type_error (int ntype, int argnum, int goodt,
     }
 
     if (goodt == 0 && bad != NULL) {
-        if (bad->t == EMPTY) {
+        if (null_node(bad)) {
             pprintf(p->prn, _("%s: insufficient arguments"), nstr);
         } else if (argnum <= 0) {
             pprintf(p->prn, _("%s: invalid argument type %s"),
@@ -19065,7 +19085,7 @@ static int create_or_edit_string (parser *p)
             p->err = E_TYPES;
             return p->err;
         }
-    } else if (p->ret->t == EMPTY || p->ret->v.str == NULL) {
+    } else if (null_node(p->ret) || p->ret->v.str == NULL) {
         src = "";
     } else {
         src = p->ret->v.str;
@@ -19828,7 +19848,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	create_or_edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if (r->t == EMPTY) {
+	if (null_node(r)) {
 	    /* as in "bundle b = null" */
 	    p->err = assign_null_to_bundle(p);
 	} else if (p->op != B_ASN) {
@@ -19858,7 +19878,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == ARRAY) {
 	if (p->op != B_ASN) {
 	    do_array_append(p);
-	} else if (r->t == EMPTY) {
+	} else if (null_node(r)) {
 	    /* as in, e.g., "strings A = null" */
 	    p->err = assign_null_to_array(p);
 	} else if (r->t == ARRAY) {

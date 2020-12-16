@@ -778,6 +778,9 @@ int *node_get_list (NODE *n, parser *p);
 /* in genmain.c, used only internally */
 int stack_update_parser_input (parser *p);
 
+/* in genlex.c, used only internally */
+void *get_genr_function_pointer (int f);
+
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
 const char *gen_func_name (int i);
