@@ -325,36 +325,40 @@ static const char *real_funcs_heading (const char *s)
 	return _("Accessors");
     } else if (!strcmp(s, "stringconsts")) {
 	return _("Built-in strings");
-    } else if (!strcmp(s, "math")) {
-	return _("Mathematical");
-    } else if (!strcmp(s, "numerical")) {
-	return _("Numerical methods");
-    } else if (!strcmp(s, "filters")) {
-	return _("Filters");
-    } else if (!strcmp(s, "stats")) {
-	return _("Statistical");
-    } else if (!strcmp(s, "probdist")) {
-	return _("Probability");
-    } else if (!strcmp(s, "linalg")) {
-	return _("Linear algebra");
-    } else if (!strcmp(s, "matbuild")) {
-	return _("Matrix building");
-    } else if (!strcmp(s, "matshape")) {
-	return _("Matrix shaping");
-    } else if (!strcmp(s, "transforms")) {
-	return _("Transformations");
     } else if (!strcmp(s, "data-utils")) {
 	return _("Data utilities");
-    } else if (!strcmp(s, "strings")) {
-	return _("Strings");
-    } else if (!strcmp(s, "sspace")) {
-	return _("State space");
-    } else if (!strcmp(s, "calendar")) {
-	return _("Calendar");
-    } else if (!strcmp(s, "midas")) {
-	return _("MIDAS");
+    } else if (!strcmp(s, "math")) {
+	return _("Mathematical");
+    } else if (!strcmp(s, "transforms")) {
+	return _("Transformations");
+    } else if (!strcmp(s, "matrix")) {
+	return _("Matrix manipulation");
+    } else if (!strcmp(s, "linalg")) {
+	return _("Linear algebra");
     } else if (!strcmp(s, "complex")) {
 	return _("Complex numbers");
+    } else if (!strcmp(s, "numerical")) {
+	return _("Numerical methods");
+    } else if (!strcmp(s, "probdist")) {
+	return _("Probability");
+    } else if (!strcmp(s, "panel")) {
+	return _("Panel data");
+    } else if (!strcmp(s, "calendar")) {
+	return _("Calendar");
+    } else if (!strcmp(s, "timeseries")) {
+	return _("Time-series");
+    } else if (!strcmp(s, "stats")) {
+	return _("Statistical");
+    } else if (!strcmp(s, "nonparam")) {
+	return _("Non-parametric");
+    } else if (!strcmp(s, "midas")) {
+	return _("MIDAS");
+    } else if (!strcmp(s, "sspace")) {
+	return _("State space");
+    } else if (!strcmp(s, "programming")) {
+	return _("Programming");
+    } else if (!strcmp(s, "strings")) {
+	return _("Strings");
     } else if (!strcmp(s, "mpi")) {
 	return _("MPI");
     } else {
