@@ -171,6 +171,7 @@ static int not_wanted (const char *s)
 	!strcmp(s, "midas") ||
 	!strcmp(s, "mpi") ||
 	!strcmp(s, "complex") ||
+	!strcmp(s, "panel") ||
 	!strcmp(s, "math")) {
 	return 1;
     }
