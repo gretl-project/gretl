@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2020-12-17 09:50+0100\n"
+"PO-Revision-Date: 2020-12-17 09:53+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -17580,7 +17580,7 @@ msgid ""
 "Version %s is available at http://gretl.sourceforge.net/\n"
 msgstr ""
 "Questa è la versione %s di gretl.\n"
-"La versione %s è disponibile all'indirizzo http://gretl.sourceforge.net/"
+"La versione %s è disponibile all'indirizzo http://gretl.sourceforge.net/\n"
 
 #: gui/update.c:37
 #, c-format
