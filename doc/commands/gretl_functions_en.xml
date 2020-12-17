@@ -12470,6 +12470,50 @@
       </description>
     </function>
 
+    <function name="vma" section="timeseries" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix" optional="true">K</fnarg>
+	<fnarg type="int" optional="true">horizon</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function yields the VMA representation for a VAR
+	  system: if
+	  <equation status="inline"
+		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
+		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
+          then the corresponding VMA representation is 
+	  <equation status="inline"
+		    ascii="y(t) = e(t) + C1 e(t-1) + ..."
+		    tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>,
+          where <equation status="inline" ascii="u(t) = K e(t)"
+          tex="$u_t = K e_t$"/>.
+        </para>
+        <para>
+          The coefficient matrix <argname>A</argname> is composed by
+	  stacking the <math>A</math><sub>i</sub> matrices horizontally;
+	  it is <by r="n" c="np"/>, with one row per equation. This
+	  corresponds to the first <math>n</math> rows of the matrix
+	  <lit>$compan</lit> provided by gretl's <lit>var</lit> and
+	  <lit>vecm</lit> commands. The <argname>K</argname> matrix is
+	  optional, and defaults to the identity matrix if omitted. 
+	</para>
+        <para>
+          The returned matrix will have <argname>horizon</argname>
+	  rows and <math>n</math><sup>2</sup> columns: its
+	  <math>i</math>-th row contains <math>C</math><sub>i-1</sub>
+	  in vectorized form. The <argname>horizon</argname> parameter
+	  defaults to 24 if omitted.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="irf"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="vech" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>

@@ -25,8 +25,7 @@
 
 /* the order in which the topics should appear */
 enum {
-    MATBUILD,
-    MATSHAPE,
+    MATRIX,
     LINALG,
     STATS,
     NUMERICAL,
@@ -41,8 +40,7 @@ struct tab_labeler {
 };
 
 struct tab_labeler labelers[] = {
-    { MATBUILD,     "matbuild",     N_("Creation and I/O") },
-    { MATSHAPE,     "matshape",     N_("Shape/size/arrangement") },
+    { MATRIX,       "matrix",       N_("Matrix manipulation") },
     { LINALG,       "linalg",       N_("Matrix algebra") },
     { STATS,        "stats",        N_("Statistics/transformations") },
     { NUMERICAL,    "numerical",    N_("Numerical methods") },
@@ -166,7 +164,9 @@ static int not_wanted (const char *s)
 	!strcmp(s, "access") ||
 	!strcmp(s, "transforms") ||
 	!strcmp(s, "sspace") ||
-	!strcmp(s, "filters") ||
+	!strcmp(s, "timeseries") ||
+	!strcmp(s, "programming") ||
+	!strcmp(s, "nonparam") ||
 	!strcmp(s, "data-utils") ||
 	!strcmp(s, "midas") ||
 	!strcmp(s, "mpi") ||

@@ -12417,12 +12417,12 @@
 		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
 		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
           La matrice dei coefficienti <argname>A</argname> è formata
-	  incolonnando orizzontalmente le matrici
-	  <math>A</math><sub>i</sub>. Si tratta di una matrice <by
-	  r="n" c="np"/>, con una riga per ogni equazione. Ciò corrisponde
-	  alle prime <math>n</math> righe della matrice
-	  <lit>$compan</lit> fornita dai comandi <lit>var</lit> e
-	  <lit>vecm</lit> di gretl.
+          accostando orizzontalmente le matrici
+          <math>A</math><sub>i</sub>. Si tratta di una matrice <by
+          r="n" c="np"/>, con una riga per ogni equazione. Ciò
+          corrisponde alle prime <math>n</math> righe della matrice
+          <lit>$compan</lit> fornita dai comandi <lit>var</lit> e
+          <lit>vecm</lit> di gretl.
 	</para>
 	<para>
 	  I vettori <math>u_t</math> sono contenuti (sotto forma di righe)
@@ -12486,6 +12486,51 @@
 	  targ="unvech"/>.
 	  <seelist> 
 	    <fncref targ="vec"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
+
+    <function name="vma" section="timeseries" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix" optional="true">K</fnarg>
+	<fnarg type="int" optional="true">h</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione calcola la rappresentazione VMA di un sistema VAR: se
+	  <equation status="inline"
+		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
+		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
+          la rappresentazione VMA corrispondente è 
+	  <equation status="inline"
+		    ascii="y(t) = e(t) + C1 e(t-1) + ..."
+		    tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>,
+          dove <equation status="inline" ascii="u(t) = K e(t)"
+          tex="$u_t = K e_t$"/>.
+        </para>
+        <para>
+          La matrice dei coefficienti <argname>A</argname> è formata
+          accostando orizzontalmente le matrici
+          <math>A</math><sub>i</sub>. Si tratta di una matrice <by
+          r="n" c="np"/>, con una riga per ogni equazione. Ciò
+          corrisponde alle prime <math>n</math> righe della matrice
+          <lit>$compan</lit> fornita dai comandi <lit>var</lit> e
+          <lit>vecm</lit> di gretl. L'argomento <argname>K</argname> è
+	  opzionale; se omesso, è la matrice identità. 
+	</para>
+        <para>
+          La matrice risultato avrà <argname>h</argname> righe e
+	  <math>n</math><sup>2</sup> colonne: la sua
+	  <math>i</math>-esima riga contiene la vettorizzazione di
+	  <math>C</math><sub>i-1</sub>. Se <argname>h</argname> è
+	  omesso, il valore di default è 24.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="irf"/>
 	  </seelist>
 	</para>
       </description>
