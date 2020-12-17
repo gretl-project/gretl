@@ -15523,8 +15523,33 @@
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances for the variables
 	<repl>series1</repl> and <repl>series2</repl> are equal, and
-	shows its p-value.
+	shows its p-value. The test statistics and the p-value can be
+	retrieved through the accessors <fncref targ="$test"/>
+	and <fncref targ="$pvalue"/>, respectively. The following code
       </para>
+      <code>
+      	open AWM18.gdt
+		vartest EEN EXR
+		eval $test
+		eval $pvalue
+      </code>
+    <para>
+      computes the test and shows how to retrieve the test statistics and
+      corresponding p-value afterwards:
+  	</para>
+  	<code>
+		Equality of variances test
+
+		EEN: Number of observations = 192
+		EXR: Number of observations = 188
+		Ratio of sample variances = 3.70707
+		Null hypothesis: The two population variances are equal
+		Test statistic: F(191,187) = 3.70707
+		p-value (two-tailed) = 1.94866e-18
+
+		3.7070716
+		1.9486605e-18
+	</code>
       <para context="gui">
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances are equal for the
