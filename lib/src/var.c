@@ -1798,8 +1798,14 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
 	if (resp == NULL || rtmp == NULL || ctmp == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    *err = real_point_responses(realC, realA, ctmp, rtmp,
-					resp, -1, -1);
+	    if (neqns == 1) {
+		/* "all" means "first" in this case */
+		*err = real_point_responses(realC, realA, ctmp, rtmp,
+					    resp, 0, 0);
+	    } else {
+		*err = real_point_responses(realC, realA, ctmp, rtmp,
+					    resp, -1, -1);
+	    }
 	}
 
 	gretl_matrix_free(rtmp);
