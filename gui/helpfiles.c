@@ -323,7 +323,7 @@ static const char *real_funcs_heading (const char *s)
 {
     if (!strcmp(s, "access")) {
 	return _("Accessors");
-    } else if (!strcmp(s, "stringconsts")) {
+    } else if (!strcmp(s, "straccess")) {
 	return _("Built-in strings");
     } else if (!strcmp(s, "data-utils")) {
 	return _("Data utilities");
