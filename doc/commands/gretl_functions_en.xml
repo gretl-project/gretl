@@ -12470,6 +12470,24 @@
       </description>
     </function>
 
+    <function name="vech" section="matrix" output="cvec">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns in a column vector the elements of <argname>A</argname>
+	  on and above the diagonal. Typically, this function is used on
+	  symmetric matrices; in this case, it can be undone by the
+	  function <fncref targ="unvech"/>.
+	  <seelist>
+            <fncref targ="vec"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+
     <function name="vma" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
@@ -12509,23 +12527,6 @@
 	<para>
 	  <seelist>
             <fncref targ="irf"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="vech" section="matrix" output="cvec">
-      <fnargs>
-	<fnarg type="smatrix">A</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns in a column vector the elements of <argname>A</argname>
-	  on and above the diagonal. Typically, this function is used on
-	  symmetric matrices; in this case, it can be undone by the
-	  function <fncref targ="unvech"/>.
-	  <seelist>
-            <fncref targ="vec"/>
 	  </seelist>
 	</para>
       </description>

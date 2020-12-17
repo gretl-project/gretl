@@ -12490,7 +12490,6 @@
 	</para>
       </description>
     </function>
-    
 
     <function name="vma" section="timeseries" output="matrix">
       <fnargs>
