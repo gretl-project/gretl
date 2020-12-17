@@ -7497,6 +7497,7 @@
 	 Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is a
 	 series, the conversion is done element by element. For example,
 	 the following code
+	</para>
 	<code>
 		nulldata 3
 		series x = normal()
@@ -7508,6 +7509,7 @@
 	 sets a missing value at the second observation of <argname>x</argname>,
 	 and creates a new series <argname>y</argname> for which the missing
 	 observation is replaced by zero:
+	</para>
 	<code>
 	             x            y
 
@@ -7515,7 +7517,7 @@
 		2                     0.000
 		3   -0.2465936   -0.2465936
 	</code>
-	</para>
+	<para>
 	  <seelist>
             <fncref targ="missing"/>
             <fncref targ="ok"/>
