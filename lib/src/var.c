@@ -4983,6 +4983,36 @@ static gretl_matrix *make_detflags_matrix (const GRETL_VAR *var)
     return d;
 }
 
+#define TRIM_COMPAN 0 /* not just yet */
+
+#if TRIM_COMPAN
+
+static gretl_matrix *trim_VAR_compan (const GRETL_VAR *var)
+{
+    const gretl_matrix *A = var->A;
+    gretl_matrix *ret;
+    int nr = var->neqns;
+    int nc = A->cols;
+
+    ret = gretl_matrix_alloc(nr, nc);
+
+    if (ret != NULL) {
+	double aij;
+	int i, j;
+
+	for (j=0; j<nc; j++) {
+	    for (i=0; i<nr; i++) {
+		aij = gretl_matrix_get(A, i, j);
+		gretl_matrix_set(ret, i, j, aij);
+	    }
+	}
+    }
+
+    return ret;
+}
+
+#endif /* TRIM_COMPAN */
+
 int gretl_VAR_bundlize (const GRETL_VAR *var,
                         DATASET *dset,
                         gretl_bundle *b)
@@ -5043,7 +5073,16 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     /* doubles arrays: Fvals, Ivals? */
 
     if (var->A != NULL) {
-        gretl_bundle_set_matrix(b, "A", var->A);
+#if TRIM_COMPAN
+	/* companion matrix: trim it */
+	gretl_matrix *A = trim_VAR_compan(var);
+
+	if (A != NULL) {
+	    gretl_bundle_donate_data(b, "A", A, GRETL_TYPE_MATRIX, 0);
+	}
+#else
+	gretl_bundle_set_matrix(b, "A", var->A);
+#endif
     }
     if (var->C != NULL) {
         gretl_bundle_set_matrix(b, "C", var->C);
