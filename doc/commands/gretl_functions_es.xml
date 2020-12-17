@@ -1321,7 +1321,7 @@
 
   <funclist name="String constants" ref="string_constants">
 
-    <function name="$dotdir" section="stringconsts" output="string">
+    <function name="$dotdir" section="straccess" output="string">
       <description>
         <para>
           Proporciona una cadena de texto con la ruta completa del directorio que
@@ -1331,7 +1331,7 @@
         </description>
     </function>
 
-    <function name="$gnuplot" section="stringconsts" output="string">
+    <function name="$gnuplot" section="straccess" output="string">
         <description>
         <para>
           Proporciona una cadena de texto con la ruta hasta el ejecutable 'gnuplot'. Para
@@ -1340,7 +1340,7 @@
         </description>
     </function>
 
-    <function name="$gretldir" section="stringconsts" output="string">
+    <function name="$gretldir" section="straccess" output="string">
         <description>
         <para>
           Proporciona una cadena de texto con la ruta completa al directorio
@@ -1350,7 +1350,7 @@
         </description>
     </function>
 
-    <function name="$tramo" section="stringconsts" output="string">
+    <function name="$tramo" section="straccess" output="string">
         <description>
         <para>
           Proporciona una cadena de texto con la ruta hasta el ejecutable 'tramo'. Para
@@ -1359,7 +1359,7 @@
         </description>
     </function>
 
-    <function name="$tramodir" section="stringconsts" output="string">
+    <function name="$tramodir" section="straccess" output="string">
         <description>
         <para>
           Proporciona una cadena de texto con la ruta hasta el directorio de datos de 'tramo'. Para
@@ -1368,7 +1368,7 @@
         </description>
     </function>
 
-    <function name="$workdir" section="stringconsts" output="string">
+    <function name="$workdir" section="straccess" output="string">
         <description>
         <para>
           Proporciona una cadena de texto con la ruta hasta el directorio
@@ -1378,7 +1378,7 @@
         </description>
     </function>
 
-    <function name="$x12a" section="stringconsts" output="string">
+    <function name="$x12a" section="straccess" output="string">
         <description>
         <para>
           Proporciona una cadena de texto con la ruta hasta el ejecutable 'x-12-arima'. Para usarla
@@ -1387,7 +1387,7 @@
         </description>
     </function>
 
-    <function name="$x12adir" section="stringconsts" output="string">
+    <function name="$x12adir" section="straccess" output="string">
         <description>
         <para>
           Proporciona una cadena de texto con la ruta hasta el directorio de datos de 'x-12-arima'. Para
