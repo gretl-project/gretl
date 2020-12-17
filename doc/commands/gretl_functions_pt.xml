@@ -11755,7 +11755,7 @@
       </description>
     </function>
 
-    <function name="varsimul" section="linalg" output="matrix">
+    <function name="varsimul" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">U</fnarg>

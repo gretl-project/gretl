@@ -152,16 +152,6 @@
       </description>
     </function>    
 
-    <function name="$dotdir" section="access" output="string">
-      <description>
-	<para>
-	  Questo accessore restituisce il percorso dove gretl salva i
-	  file temporanei, ad esempio quando si usa la funzione
-	  <fncref targ="mwrite"/> con un terzo argomento non-zero.
-	</para>
-      </description>
-    </function>
-
     <function name="$dw" section="access" output="scalar">
       <description>
 	<para>
@@ -1251,18 +1241,6 @@
       </description>
     </function>
 
-    <function name="$workdir" section="access" output="string">
-      <description>
-	<para>
-	  Questo accessore restituisce il percorso di default dove
-	  gretl legge e scrive file. Una descrizione più ampia si
-	  trova nella Command Reference sotto <cmdref
-	  targ="workdir"/>. Si noti che questa stringa può essere
-	  impostata tramite il comando <cmdref targ="set"/>.
-        </para>
-      </description>
-    </function>
-
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1311,6 +1289,94 @@
 	  elementi.
 	</para>
       </description>
+    </function>
+
+  </funclist>
+
+  <funclist name="Stringhe predefinite" ref="string_constants">
+    
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce il percorso dove gretl salva i
+	  file temporanei. Per usare questa stringa in modalità
+	  sostituzione, si usi la chiocciola (@dotdir).
+	</para>
+      </description>
+    </function>
+
+    <function name="$gnuplot" section="stringconsts" output="string">
+      <description>
+        <para>
+	  Restituisce il percorso completo all'eseguibile di
+	  gnuplot. Per usare questa stringa in modalità sostituzione,
+	  si usi la chiocciola (@gnuplot).
+        </para>
+      </description>
+    </function>
+
+    <function name="$gretldir" section="stringconsts" output="string">
+        <description>
+        <para>
+	  Restituisce il percorso completo dell'installazione di
+	  gretl. Per usare questa stringa in modalità sostituzione, si
+	  usi la chiocciola (@gretldir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramo" section="stringconsts" output="string">
+        <description>
+        <para>
+	  Restituisce il percorso completo all'eseguibile di
+	  TRAMO. Per usare questa stringa in modalità sostituzione,
+	  si usi la chiocciola (@tramo).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramodir" section="stringconsts" output="string">
+        <description>
+        <para>
+	  Restituisce il percorso completo dell'installazione di
+	  TRAMO. Per usare questa stringa in modalità sostituzione, si
+	  usi la chiocciola (@tramodir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Questo accessore restituisce il percorso di default dove
+	  gretl legge e scrive file. Una descrizione più ampia si
+	  trova nella Command Reference sotto <cmdref
+	  targ="workdir"/>. Si noti che questa stringa può essere
+	  impostata tramite il comando <cmdref targ="set"/>. Per usare
+	  questa stringa in modalità sostituzione, si usi la
+	  chiocciola (@tramodir).
+        </para>
+      </description>
+    </function>
+
+    <function name="$x12a" section="stringconsts" output="string">
+        <description>
+        <para>
+	  Restituisce il percorso completo all'eseguibile di
+	  X-12. Per usare questa stringa in modalità sostituzione,
+	  si usi la chiocciola (@x12a).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12adir" section="stringconsts" output="string">
+        <description>
+        <para>
+	  Restituisce il percorso completo dell'installazione di
+	  X-12. Per usare questa stringa in modalità sostituzione, si
+	  usi la chiocciola (@x12adir).
+        </para>
+        </description>
     </function>
 
   </funclist>
@@ -12337,7 +12403,7 @@
       </description>
     </function>
 
-    <function name="varsimul" section="linalg" output="matrix">
+    <function name="varsimul" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">U</fnarg>
