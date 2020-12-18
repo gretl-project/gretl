@@ -184,7 +184,7 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *var,
 {
     gretl_matrix *C = var->C;
     gretl_matrix *resp = b->resp;
-    double xt;
+    double rij;
     int t, i, j, k;
     int err = 0;
 
@@ -205,21 +205,21 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *var,
 	    gretl_matrix_copy_values(b->rtmp, b->ctmp);
 	}
 	if (targ >= 0 && shock >= 0) {
-	    xt = gretl_matrix_get(b->rtmp, targ, shock);
-	    gretl_matrix_set(resp, t, iter, xt);
+	    rij = gretl_matrix_get(b->rtmp, targ, shock);
+	    gretl_matrix_set(resp, t, iter, rij);
 	} else if (shock >= 0) {
 	    /* all targets for one shock */
 	    for (i=0; i<var->neqns; i++) {
 		resp = gretl_array_get_data(b->aresp, i);
-		xt = gretl_matrix_get(b->rtmp, i, shock);
-		gretl_matrix_set(resp, t, iter, xt);
+		rij = gretl_matrix_get(b->rtmp, i, shock);
+		gretl_matrix_set(resp, t, iter, rij);
 	    }
 	} else if (targ >= 0) {
 	    /* all shocks for one target */
 	    for (j=0; j<var->neqns; j++) {
 		resp = gretl_array_get_data(b->aresp, j);
-		xt = gretl_matrix_get(b->rtmp, targ, j);
-		gretl_matrix_set(resp, t, iter, xt);
+		rij = gretl_matrix_get(b->rtmp, targ, j);
+		gretl_matrix_set(resp, t, iter, rij);
 	    }
 	} else {
 	    /* all shocks, all targets */
@@ -227,8 +227,8 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *var,
 	    for (i=0; i<var->neqns; i++) {
 		for (j=0; j<var->neqns; j++) {
 		    resp = gretl_array_get_data(b->aresp, k++);
-		    xt = gretl_matrix_get(b->rtmp, i, j);
-		    gretl_matrix_set(resp, t, iter, xt);
+		    rij = gretl_matrix_get(b->rtmp, i, j);
+		    gretl_matrix_set(resp, t, iter, rij);
 		}
 	    }
 	}
