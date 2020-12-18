@@ -34,6 +34,8 @@
 
 #define VAR_SE_DFCORR 1
 
+#define TRIM_COMPAN 1 /* watch for fallout! */
+
 enum {
     VAR_ESTIMATE = 1,
     VAR_LAGSEL,
@@ -4782,18 +4784,70 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     return err;
 }
 
-/* Reconstitute a VAR or VECM (partially) from the
-   bundle @b, for the purposes of generating an
-   FEVD or IRF. How far we need to go in rebuilding
-   the GRETL_VAR struct depends on the purpose, and
-   in the IRF case, whether or not bootstrapping is
-   required. For FEVD we basically just need the A
-   and C matrices from the bundle.
+/* Clean-up of temporary "jinfo" used in IRF
+   bootstrapping. We can't use the regular destructor,
+   johansen_info_free(), because the primary matrix
+   pointers on var->jinfo are in this case borrowed
+   from a $system bundle; but we do need to free any
+   "extra" matrices that have been added.
 */
 
-static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
-                                   int irf, int boot,
-                                   int *err)
+static void free_temp_jinfo (GRETL_VAR *var)
+{
+    /* handle extra matrices */
+    gretl_matrix_free(var->jinfo->YY);
+    gretl_matrix_free(var->jinfo->RR);
+    gretl_matrix_free(var->jinfo->BB);
+
+    free(var->jinfo);
+}
+
+/* When destroying a VAR that was reconstituted by reading
+   from a $system bundle, we must be careful not to free
+   any elements which were just borrowed from the bundle;
+   we set the associated pointers to NULL.
+*/
+
+static void destroy_VAR_from_bundle (GRETL_VAR *var)
+{
+    gretl_matrix **mm[] = {
+	&var->A, &var->C, &var->X, &var->Y,
+	&var->XTX, &var->B, &var->S, &var->E,
+	NULL
+    };
+    int i, imin = 0;
+
+#if TRIM_COMPAN
+    /* var->A is NOT borrowed */
+    imin = 1;
+#endif
+    /* nullify borrowed matrices */
+    for (i=imin; mm[i] != NULL; i++) {
+	*mm[i] = NULL;
+    }
+
+    /* nullify borrowed lists */
+    var->xlist = var->ylist = var->rlist = NULL;
+
+    if (var->jinfo != NULL) {
+	free_temp_jinfo(var);
+	var->jinfo = NULL;
+    }
+
+    gretl_VAR_free(var);
+}
+
+/* Reconstitute a VAR or VECM (partially) from the bundle @b,
+   for the purposes of generating an FEVD or IRF. How far we
+   need to go in rebuilding the GRETL_VAR struct depends on
+   the purpose, and in the IRF case, whether bootstrapping is
+   required. For FEVD we basically just need the A and C
+   matrices from the bundle.
+*/
+
+static GRETL_VAR *build_VAR_from_bundle (gretl_bundle *b,
+					 int irf, int boot,
+					 int *err)
 {
     GRETL_VAR *var = malloc(sizeof *var);
     int i, ierr[7];
@@ -4811,6 +4865,7 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
         var->ci = VAR;
     }
 
+    /* get integer dimensions */
     var->neqns = gretl_bundle_get_int(b, "neqns", &ierr[0]);
     var->order = gretl_bundle_get_int(b, "order", &ierr[1]);
     var->ncoeff = gretl_bundle_get_int(b, "ncoeff", &ierr[2]);
@@ -4829,17 +4884,15 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 	/* convert sample range to zero-based */
 	var->t1 -= 1;
 	var->t2 -= 1;
-        /* note: borrowing */
+	var->ifc = gretl_bundle_get_int(b, "ifc", NULL);
+        /* note: borrowing of lists from bundle */
         var->ylist = gretl_bundle_get_list(b, "ylist", NULL);
         var->xlist = gretl_bundle_get_list(b, "xlist", NULL);
         var->rlist = gretl_bundle_get_list(b, "rlist", NULL);
-	var->ifc = gretl_bundle_get_int(b, "ifc", NULL);
     }
 
     if (!*err) {
-        /* note: here we're "borrowing" the required
-           matrices from the bundle
-        */
+        /* note: borrowing of matrices */
         gretl_matrix **mm[] = {
             &var->A, &var->C, &var->X, &var->Y,
             &var->XTX, &var->B, &var->S, &var->E
@@ -4853,6 +4906,16 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
         for (i=0; i<n && !*err; i++) {
             *mm[i] = gretl_bundle_get_matrix(b, keys[i], err);
         }
+#if TRIM_COMPAN
+	/* the @A from the bundle must be converted into the
+	   full companion matrix
+	*/
+	if (!*err) {
+	    gretl_matrix *A = companionize(var->A, err);
+
+	    var->A = A;
+	}
+#endif
         if (!*err && var->ci == VECM && boot) {
             /* not fully ready, won't be reached at present */
             gretl_bundle *jb;
@@ -4862,26 +4925,10 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
                 *err = retrieve_johansen_basics(var, jb);
             }
         }
-        if (*err) {
-            /* scrub all borrowed pointers on error */
-            for (i=0; i<n; i++) {
-                *mm[i] = NULL;
-            }
-        }
     }
 
-#if 0
-    gretl_matrix_print(var->A, "var->A, from bundle");
-#endif
-
     if (*err) {
-        /* clean up carefully! */
-        var->ylist = var->xlist = var->rlist = NULL;
-        if (var->jinfo != NULL) {
-            free(var->jinfo);
-            var->jinfo = NULL;
-        }
-        gretl_VAR_free(var);
+	destroy_VAR_from_bundle(var);
         var = NULL;
     }
 
@@ -4893,36 +4940,15 @@ gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
                                       const DATASET *dset,
                                       int *err)
 {
-    GRETL_VAR *var = VAR_from_bundle(b, 0, 0, err);
+    GRETL_VAR *var = build_VAR_from_bundle(b, 0, 0, err);
     gretl_matrix *ret = NULL;
 
     if (var != NULL) {
         ret = gretl_VAR_get_FEVD_matrix(var, targ, shock, 0, dset, err);
-        /* nullify borrowed pointers */
-        var->A = var->C = NULL;
-        var->xlist = var->ylist = var->rlist = NULL;
-        gretl_VAR_free(var);
+	destroy_VAR_from_bundle(var);
     }
 
     return ret;
-}
-
-/* Clean-up of temporary "jinfo" used in IRF
-   bootstrapping. We can't use the regular destructor,
-   johansen_info_free(), because the primary matrix
-   pointers on var->jinfo are in this case borrowed
-   from a $system bundle; but we do need to free any
-   "extra" matrices that have been added.
-*/
-
-static void free_temp_jinfo (GRETL_VAR *var)
-{
-    /* handle extra matrice */
-    gretl_matrix_free(var->jinfo->YY);
-    gretl_matrix_free(var->jinfo->RR);
-    gretl_matrix_free(var->jinfo->BB);
-
-    free(var->jinfo);
 }
 
 gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
@@ -4942,7 +4968,7 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
         boot = 1;
     }
 
-    var = VAR_from_bundle(b, 1, boot, err);
+    var = build_VAR_from_bundle(b, 1, boot, err);
 
     if (!*err && var != NULL) {
         ret = gretl_VAR_get_impulse_response(var, targ, shock,
@@ -4950,17 +4976,7 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
     }
 
     if (var != NULL) {
-        /* nullify borrowed pointers */
-        var->A = var->C = NULL;
-        var->X = var->Y = NULL;
-        var->B = var->S = NULL;
-        var->XTX = var->E = NULL;
-        var->xlist = var->ylist = var->rlist = NULL;
-        if (var->jinfo != NULL) {
-            free_temp_jinfo(var);
-            var->jinfo = NULL;
-        }
-        gretl_VAR_free(var);
+	destroy_VAR_from_bundle(var);
     }
 
     return ret;
@@ -4983,9 +4999,11 @@ static gretl_matrix *make_detflags_matrix (const GRETL_VAR *var)
     return d;
 }
 
-#define TRIM_COMPAN 0 /* not just yet */
-
 #if TRIM_COMPAN
+
+/* chop off the extra rows from var->A when saving to
+   $system bundle
+*/
 
 static gretl_matrix *trim_VAR_compan (const GRETL_VAR *var)
 {
