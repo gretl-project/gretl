@@ -3821,6 +3821,8 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	series_set_label(dset, v, "DFFITS values");
     }
 
+    set_dataset_is_changed(dset, 1);
+
     return 0;
 }
 
