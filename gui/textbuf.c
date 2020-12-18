@@ -2960,7 +2960,7 @@ static int line_broken (const char *s)
 	int i, n = strlen(s);
 
 	for (i=n-1; i>=0; i--) {
-	    if (s[i] == '\\' || s[i] == ',' || s[i] == ';') {
+	    if (s[i] == '\\' || s[i] == ',') {
 		ret = 1;
 	    } else if (!ret && !isspace(s[i])) {
 		break;
