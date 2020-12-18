@@ -1,4 +1,5 @@
 version 2020f, in progress
+- New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
 - irf(): support calculation of multiple impulse responses
@@ -17,6 +18,7 @@ version 2020f, in progress
 - "coint2" command: rename as "johansen"
 - "freq" and "xtab" for string-valued series: don't let
   non-ASCII characters break the formatting
+- reorganization of the categories for the functions help file
 - Fix obscure problem with plots: inability to show markers
   for observations in some cases where this should be OK
 - Fix bug: potential crash on "Save as icon and close" for
