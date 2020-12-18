@@ -926,7 +926,7 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
 	       name to @fname */
 	    maybe_move_plot_datafile(fname, fullname, &has_datafile);
 	    gretl_remove(fname);
-	    strcpy(fname, fullname); /* was @shortname */
+	    strcpy(fname, fullname);
 	}
     }
 
@@ -2528,6 +2528,9 @@ static void maybe_delete_session_object (gui_obj *obj)
 
 	    session_file_make_path(fullname, graph->fname);
 	    busywin = vwin_toplevel(get_editor_for_file(fullname));
+	    if (busywin == NULL) {
+		busywin = get_viewer_for_plot(fullname);
+	    }
 	}
     } else {
 	gpointer p = NULL;

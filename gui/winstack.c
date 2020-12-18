@@ -866,6 +866,28 @@ windata_t *get_editor_for_file (const char *filename)
     return ret;
 }
 
+GtkWidget *get_viewer_for_plot (const char *filename)
+{
+    GtkWidget *ret = NULL;
+
+    if (n_listed_windows > 1) {
+	GList *wlist = gtk_action_group_list_actions(window_group);
+	GList *list = wlist;
+	GtkWidget *w;
+
+	while (list != NULL && ret == NULL) {
+	    w = window_from_action((GtkAction *) list->data);
+	    if (is_shell_for_plotfile(w, filename)) {
+		ret = w;
+	    }
+	    list = list->next;
+	}
+	g_list_free(wlist);
+    }
+
+    return ret;
+}
+
 static int db_role_matches (windata_t *vwin, int code)
 {
     int ret = 0;

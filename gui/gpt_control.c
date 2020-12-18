@@ -220,6 +220,15 @@ GtkWidget *plot_get_shell (png_plot *plot)
     return plot->shell;
 }
 
+gboolean is_shell_for_plotfile (GtkWidget *w,
+				const char *fname)
+{
+    png_plot *plot = g_object_get_data(G_OBJECT(w), "plot");
+
+    return plot != NULL && plot->spec != NULL &&
+	!strcmp(fname, plot->spec->fname);
+}
+
 GPT_SPEC *plot_get_spec (png_plot *plot)
 {
     return plot->spec;
@@ -5381,6 +5390,7 @@ static int plot_add_shell (png_plot *plot, const char *name)
 
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_object_ref(plot->shell);
+    g_object_set_data(G_OBJECT(plot->shell), "plot", plot);
 
     if (name != NULL) {
 	title = g_strdup_printf("gretl: %s", name);
