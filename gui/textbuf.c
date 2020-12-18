@@ -2948,8 +2948,8 @@ static void check_for_comment (const char *s, int *incomm)
 }
 
 /* determine whether a given line is subject to
-   continuation (i.e. ends with backslash or comma,
-   other then in a comment)
+   continuation (i.e. ends with backslash, comma
+   or semicolon, other than in a comment)
 */
 
 static int line_broken (const char *s)
@@ -2960,7 +2960,7 @@ static int line_broken (const char *s)
 	int i, n = strlen(s);
 
 	for (i=n-1; i>=0; i--) {
-	    if (s[i] == '\\' || s[i] == ',') {
+	    if (s[i] == '\\' || s[i] == ',' || s[i] == ';') {
 		ret = 1;
 	    } else if (!ret && !isspace(s[i])) {
 		break;

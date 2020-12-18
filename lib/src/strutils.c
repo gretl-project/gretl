@@ -1524,7 +1524,7 @@ static int ends_in_comment (const char *s, int n)
     return 0;
 }
 
-#define LINE_CONT(c) (c == '\\' || c == ',' || c == '(')
+#define LINE_CONT(c) (c == '\\' || c == ',' || c == '(' || c == ';')
 
 /**
  * top_n_tail:
@@ -1538,8 +1538,8 @@ static int ends_in_comment (const char *s, int n)
  * @maxlen, and @err is not NULL, then E_TOOLONG is written
  * to @err.
  *
- * Returns: 1 if a trailing backslash, comma or left parenthesis
- * was found, otherwise 0.
+ * Returns: 1 if a trailing backslash, comma, semicolon, or left
+ * parenthesis was found, otherwise 0.
  */
 
 #include <assert.h>
