@@ -1262,7 +1262,7 @@
     <function name="$workdir" section="access" output="string">
       <description>
 	<para>
-	  This accessor returns the path where gretl reads from and
+	  This accessor returns the path which gretl reads from and
 	  writes to by default. A fuller discussion is provided in the
 	  Command Reference under <cmdref targ="workdir"/>. Note that
 	  this string can be set by the user via the <cmdref
@@ -12509,8 +12509,11 @@
 	<para>
 	  Returns in a column vector the elements of <argname>A</argname>
 	  on and above the diagonal. Typically, this function is used on
-	  symmetric matrices; in this case, it can be undone by the
-	  function <fncref targ="unvech"/>.
+	  symmetric matrices, in which case it can be undone by the
+	  function <fncref targ="unvech"/>. If the input matrix is not
+	  symmetric and it's the lower triangle that contains the
+	  <quote>right</quote> values, <lit>vech(A')</lit> will give
+	  the desired answer.
 	  <seelist>
             <fncref targ="vec"/>
 	  </seelist>
