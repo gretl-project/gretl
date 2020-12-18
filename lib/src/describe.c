@@ -418,6 +418,11 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
     int hf, hc;
     int t, n = 0;
 
+    if (*err) {
+	/* don't compound a prior error */
+	return NADBL;
+    }
+
     if (p <= 0 || p >= 1) {
 	/* sanity check */
 	*err = E_DATA;
@@ -5540,6 +5545,34 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     return s;
 }
 
+/* Get the additional statistics wanted if the --simple
+   flag was not given to the summary command.
+*/
+
+static int get_extra_stats (Summary *s, int i,
+			    int t1, int t2,
+			    const double *x)
+{
+    int err = 0;
+
+    if (floateq(s->mean[i], 0.0)) {
+	s->cv[i] = NADBL;
+    } else if (floateq(s->sd[i], 0.0)) {
+	s->cv[i] = 0.0;
+    } else {
+	s->cv[i] = fabs(s->sd[i] / s->mean[i]);
+    }
+
+    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
+    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
+    s->iqr[i] = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
+    if (!na(s->iqr[i])) {
+	s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
+    }
+
+    return err;
+}
+
 /**
  * get_summary_restricted:
  * @list: list of variables to process.
@@ -5641,23 +5674,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	s->median[i] = gretl_median(t1, t2, x);
 
 	if (!(opt & OPT_S)) {
-	    if (floateq(s->mean[i], 0.0)) {
-		s->cv[i] = NADBL;
-	    } else if (floateq(s->sd[i], 0.0)) {
-		s->cv[i] = 0.0;
-	    } else {
-		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
-	    }
-	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, err);
-	    if (!*err) {
-		s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, err);
-	    }
-	    if (!*err) {
-		s->iqr[i] = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, err);
-	    }
-	    if (!*err && !na(s->iqr[i])) {
-		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, err);
-	    }
+	    *err = get_extra_stats(s, i, t1, t2, x);
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {
@@ -5757,21 +5774,7 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	s->median[i] = gretl_median(t1, t2, x);
 
 	if (!(opt & OPT_S)) {
-	    int err;
-
-	    if (floateq(s->mean[i], 0.0)) {
-		s->cv[i] = NADBL;
-	    } else if (floateq(s->sd[i], 0.0)) {
-		s->cv[i] = 0.0;
-	    } else {
-		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
-	    }
-	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
-	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
-	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
-	    if (!na(s->iqr[i])) {
-		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
-	    }
+	    *err = get_extra_stats(s, i, t1, t2, x);
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {
