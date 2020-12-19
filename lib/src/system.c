@@ -1464,20 +1464,16 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
     int err = 0;
 
     /* estimate the unrestricted system first */
-
     sys->flags &= ~SYSTEM_RESTRICT;
     err = (* system_est) (sys, dset, opt | OPT_Q, prn);
     sys->flags ^= SYSTEM_RESTRICT;
-
     if (err) {
         goto bailout;
     }
 
     /* grab the data from unrestricted estimation */
-
     b = sys->b;
     sys->b = NULL;
-
     if (stest == SYS_TEST_LR) {
         llu = sys->ll;
     } else if (stest == SYS_TEST_F) {
@@ -1486,10 +1482,8 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
     }
 
     /* now estimate the restricted system */
-
     system_clear_results(sys);
     err = (* system_est) (sys, dset, opt, prn);
-
     if (!err) {
         if (stest == SYS_TEST_LR) {
             err = system_do_LR_test(sys, llu, opt, prn);
@@ -1533,7 +1527,7 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
         }
     }
 
-    /* by default, apply a df correction for single-equation methods */
+    /* by default, apply df correction for single-equation methods */
     if (sys->method == SYS_METHOD_OLS ||
         sys->method == SYS_METHOD_WLS ||
         sys->method == SYS_METHOD_TSLS ||
@@ -1584,11 +1578,9 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     if (opt & OPT_M) {
         sys->flags |= SYSTEM_VCV_GEOMEAN;
     }
-
     if (opt & OPT_Q) {
         sys->flags |= SYSTEM_QUIET;
     }
-
     if (opt & OPT_S) {
         /* estimating single equation via LIML */
         sys->flags |= SYSTEM_LIML1;
@@ -1651,10 +1643,6 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 
     /* in case we're re-estimating */
     system_clear_results(sys);
-
-    /* AC 2010-12-04; we were doing the following only for SUR,
-       but it seems we have to do it generally.
-    */
     err = sys_rearrange_eqn_lists(sys, dset);
 
     if (!err) {
@@ -1707,7 +1695,6 @@ int system_adjust_t1t2 (equation_system *sys, const DATASET *dset)
     sys->t2 = dset->t2;
 
     err = list_adjust_sample(sys->biglist, &sys->t1, &sys->t2, dset, NULL);
-
     if (!err) {
         sys->T = sys->t2 - sys->t1 + 1;
     }

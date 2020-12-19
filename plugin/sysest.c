@@ -868,12 +868,14 @@ static gretlopt sys_tsls_opt (const equation_system *sys)
     return opt;
 }
 
-/* options to be passed in running initial OLS */
+/* options to be passed in running initial OLS; @nr is
+   the number of restrictions imposed
+*/
 
 static gretlopt sys_ols_opt (const equation_system *sys,
 			     int nr)
 {
-    gretlopt opt = OPT_NONE;
+    gretlopt opt = OPT_S; /* flag as part of system */
 
     if (sys->method == SYS_METHOD_OLS) {
 	if (!(sys->flags & SYSTEM_DFCORR)) {

@@ -1292,9 +1292,10 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
  lsq_abort:
 
-    if (!(opt & OPT_A)) {
-	/* if it's not an auxiliary regression, set an ID number
-	   on the model */
+    if (!(opt & (OPT_A | OPT_S))) {
+	/* if it's not an auxiliary regression, or part of
+	   a system, set an ID number on the model
+	*/
 	set_model_id(&mdl, opt);
     }
 
@@ -1319,6 +1320,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
  *   OPT_I: compute Durbin-Watson p-value.
  *   OPT_U: treat null model as OK.
  *   OPT_P: (ar1 only): use Prais-Winsten.
+ *   OPT_S: estimation as part of system.
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
