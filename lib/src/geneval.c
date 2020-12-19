@@ -2990,6 +2990,10 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
     return m;
 }
 
+/* "Fake" a series using a column vector: the vector must be
+   of the same length as the current dataset.
+*/
+
 const double *get_colvec_as_series (NODE *n, int f, parser *p)
 {
     if (n->t != MAT) {
