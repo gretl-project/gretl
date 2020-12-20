@@ -800,10 +800,11 @@ static void irf_resample_resids (irfboot *b, const GRETL_VAR *vbak)
 static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha,
 			       gretl_matrix *point)
 {
-    double pi, *ri;
+    double r0, *ri;
+    int nr = b->iters + 1;
     int i, ilo, ihi;
 
-    ri = malloc((b->iters + 1) * sizeof *ri);
+    ri = malloc(nr * sizeof *ri);
     if (ri == NULL) {
 	return E_ALLOC;
     }
@@ -813,23 +814,22 @@ static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha,
     ihi = b->iters;
     fprintf(stderr, "IRF bootstrap (%d iters), min and max values\n", b->iters);
 #else
-    ilo = (b->iters + 1) * alpha / 2.0;
-    ihi = (b->iters + 1) * (1.0 - alpha / 2.0);
+    ilo = nr * alpha / 2.0;
+    ihi = nr * (1.0 - alpha / 2.0);
 #endif
 
     if (b->nresp > 1) {
 	gretl_matrix *resp;
 	int j, Rcol = 0;
-	double pij;
 
 	for (j=0; j<b->nresp; j++) {
 	    resp = gretl_array_get_data(b->aresp, j);
 	    for (i=0; i<b->horizon; i++) {
-		pij = gretl_matrix_get(point, i, j);
+		r0 = gretl_matrix_get(point, i, j);
 		gretl_matrix_row_to_array(resp, i, ri);
-		ri[b->iters] = pij;
-		qsort(ri, b->iters, sizeof *ri, gretl_compare_doubles);
-		gretl_matrix_set(R, i, Rcol, pij);
+		ri[b->iters] = r0;
+		qsort(ri, nr, sizeof *ri, gretl_compare_doubles);
+		gretl_matrix_set(R, i, Rcol, r0);
 		gretl_matrix_set(R, i, Rcol+1, ri[ilo-1]);
 		gretl_matrix_set(R, i, Rcol+2, ri[ihi-1]);
 	    }
@@ -837,11 +837,11 @@ static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha,
 	}
     } else {
 	for (i=0; i<b->horizon; i++) {
-	    pi = point->val[i];
+	    r0 = point->val[i];
 	    gretl_matrix_row_to_array(b->resp, i, ri);
-	    ri[b->iters] = pi;
-	    qsort(ri, b->iters, sizeof *ri, gretl_compare_doubles);
-	    gretl_matrix_set(R, i, 0, pi);
+	    ri[b->iters] = r0;
+	    qsort(ri, nr, sizeof *ri, gretl_compare_doubles);
+	    gretl_matrix_set(R, i, 0, r0);
 	    gretl_matrix_set(R, i, 1, ri[ilo-1]);
 	    gretl_matrix_set(R, i, 2, ri[ihi-1]);
 	}
