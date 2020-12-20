@@ -3825,23 +3825,22 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 static void vec_get_spinner_data (selector *sr, int *order)
 {
     const int *llist;
-    char *dvlags;
-    char numstr[8];
+    char numstr[16];
 
-    /* lag order from global spinner */
-    *order = spinner_get_int(sr->extra[0]);
-
-    /* possible list of specific lags */
+    /* check for list of specific lags */
     llist = get_VAR_lags_list();
 
     if (llist != NULL) {
 	/* "gappy" lag specification for VAR */
+	char *dvlags;
+
 	dvlags = gretl_list_to_lags_string(llist, &sr->error);
 	if (dvlags != NULL) {
 	    add_to_cmdlist(sr, dvlags);
 	    free(dvlags);
 	}
     } else {
+	*order = spinner_get_int(sr->extra[0]);
 	sprintf(numstr, "%d", *order);
 	add_to_cmdlist(sr, numstr);
     }
