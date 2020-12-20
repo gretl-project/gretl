@@ -34,8 +34,6 @@
 
 #define VAR_SE_DFCORR 1
 
-#define TRIM_COMPAN 1 /* watch for fallout! */
-
 enum {
     VAR_ESTIMATE = 1,
     VAR_LAGSEL,
@@ -159,19 +157,19 @@ gretl_matrix *decompanionize (const gretl_matrix *A, int neqns,
 			      GretlMatrixMod mod)
 {
     gretl_matrix *ret;
-    int nc = A->cols;
+    int np = A->cols;
 
     if (mod == GRETL_MOD_TRANSPOSE) {
-	ret = gretl_matrix_alloc(nc, neqns);
+	ret = gretl_matrix_alloc(np, neqns);
     } else {
-	ret = gretl_matrix_alloc(neqns, nc);
+	ret = gretl_matrix_alloc(neqns, np);
     }
 
     if (ret != NULL) {
 	double aij;
 	int i, j;
 
-	for (j=0; j<nc; j++) {
+	for (j=0; j<np; j++) {
 	    for (i=0; i<neqns; i++) {
 		aij = gretl_matrix_get(A, i, j);
 		if (mod == GRETL_MOD_TRANSPOSE) {
@@ -4851,10 +4849,9 @@ static void destroy_VAR_from_bundle (GRETL_VAR *var)
     };
     int i, imin = 0;
 
-#if TRIM_COMPAN
     /* var->A is NOT borrowed */
     imin = 1;
-#endif
+
     /* nullify borrowed matrices */
     for (i=imin; mm[i] != NULL; i++) {
 	*mm[i] = NULL;
@@ -4940,18 +4937,16 @@ static GRETL_VAR *build_VAR_from_bundle (gretl_bundle *b,
         for (i=0; i<n && !*err; i++) {
             *mm[i] = gretl_bundle_get_matrix(b, keys[i], err);
         }
-#if TRIM_COMPAN
-	/* the @A from the bundle must be converted into the
-	   full companion matrix
-	*/
 	if (!*err) {
+	    /* matrix @A from the bundle must be converted into
+	       the full companion matrix
+	    */
 	    gretl_matrix *A = companionize(var->A, err);
 
 	    var->A = A;
 	}
-#endif
         if (!*err && var->ci == VECM && boot) {
-            /* not fully ready, won't be reached at present */
+            /* not fully ready, won't be reached at present? */
             gretl_bundle *jb;
 
             jb = gretl_bundle_get_bundle(b, "vecm_info", err);
@@ -5102,17 +5097,18 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     /* doubles arrays: Fvals, Ivals? */
 
     if (var->A != NULL) {
-#if TRIM_COMPAN
-	/* companion matrix: trim it */
-	gretl_matrix *A = decompanionize(var->A, var->neqns,
-					 GRETL_MOD_NONE);
+	/* companion matrix */
+	if (var->A->rows == var->A->cols) {
+	    gretl_bundle_set_matrix(b, "A", var->A);
+	} else {
+	    /* A needs trimming */
+	    gretl_matrix *A = decompanionize(var->A, var->neqns,
+					     GRETL_MOD_NONE);
 
-	if (A != NULL) {
-	    gretl_bundle_donate_data(b, "A", A, GRETL_TYPE_MATRIX, 0);
+	    if (A != NULL) {
+		gretl_bundle_donate_data(b, "A", A, GRETL_TYPE_MATRIX, 0);
+	    }
 	}
-#else
-	gretl_bundle_set_matrix(b, "A", var->A);
-#endif
     }
     if (var->C != NULL) {
         gretl_bundle_set_matrix(b, "C", var->C);
