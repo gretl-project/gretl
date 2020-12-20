@@ -29,7 +29,7 @@
 #define BDEBUG 0
 
 #if BDEBUG
-# define DBG_BOOT_ITERS 5
+# define DBG_BOOT_ITERS 4
 #endif
 
 typedef struct irfboot_ irfboot;
@@ -344,6 +344,9 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
 
     if (!err) {
 	VAR_write_A_matrix(v);
+#if BDEBUG
+	gretl_matrix_print(v->A, "var->A");
+#endif
     }
 
     if (!err) {
@@ -594,9 +597,6 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 #if BDEBUG
     fprintf(stderr, "compute_VECM_dataset: order=%d, nexo=%d, nseas=%d, t1=%d\n",
 	    order, nexo, nseas, var->t1);
-    if (var->X != NULL) {
-	gretl_matrix_print(var->X, "var->X, before resampling");
-    }
 #endif
 
     for (t=var->t1, s=0; t<=var->t2; t++, s++) {
@@ -660,7 +660,7 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 	}
     }
 
-#if BDEBUG > 1
+#if BDEBUG > 2
     fprintf(stderr, "VECM: recomputed levels\n\n");
     for (t=0; t<b->dset->n; t++) {
 	for (i=1; i<=var->neqns; i++) {
@@ -683,7 +683,7 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 		k++;
 	    }
 	}
-#if BDEBUG > 1
+#if BDEBUG > 2
 	gretl_matrix_print(var->X, "var->X (vecm, resampled)");
 #endif
     }
@@ -728,8 +728,6 @@ static void compute_VAR_dataset (irfboot *b, GRETL_VAR *var,
     if (iter == 0) {
 	fprintf(stderr, "ifc = %d, nl = %d, T = %d\n", var->ifc,
 		nl, var->T);
-	gretl_matrix_print(var->Y, "var->Y before resampling");
-	gretl_matrix_print(var->X, "var->X before resampling");
     }
 #endif
 
@@ -759,7 +757,7 @@ static void compute_VAR_dataset (irfboot *b, GRETL_VAR *var,
 	}
     }
 
-#if BDEBUG > 1
+#if BDEBUG > 2
     gretl_matrix_print(var->Y, "var->Y after resampling");
     gretl_matrix_print(var->X, "var->X after resampling");
 #endif

@@ -74,6 +74,12 @@ static int VAR_add_models (GRETL_VAR *var, const DATASET *dset)
     return err;
 }
 
+/* Here we allocate storage for a full-size companion
+   matrix and fill in the "boilerplate" rows at the
+   bottom. The initial (VAR coefficient) rows are left
+   as zeros.
+*/
+
 static int VAR_allocate_companion_matrix (GRETL_VAR *var)
 {
     int n, dim, err = 0;
@@ -2511,10 +2517,11 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
 void VAR_write_A_matrix (GRETL_VAR *v)
 {
     int i, ii, j, k, lag;
-    int dim = v->neqns * v->order;
+    int n = v->neqns;
+    int dim = n * v->order;
     double bij;
 
-    for (j=0; j<v->neqns; j++) {
+    for (j=0; j<n; j++) {
         k = lag = ii = 0;
         for (i=0; i<dim; i++) {
             if (lag_wanted(v, lag+1)) {
@@ -2523,7 +2530,7 @@ void VAR_write_A_matrix (GRETL_VAR *v)
             } else {
                 bij = 0;
             }
-            gretl_matrix_set(v->A, j, v->neqns * lag + k, bij);
+            gretl_matrix_set(v->A, j, n * lag + k, bij);
             if (lag < v->order - 1) {
                 lag++;
             } else {
