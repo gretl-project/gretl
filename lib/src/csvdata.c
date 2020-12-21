@@ -4220,8 +4220,7 @@ static joiner *joiner_new (int nrows)
 #define TS_WILDCARD -888
 
 static int real_set_outer_auto_keys (joiner *jr, const char *s,
-				     int j, struct tm *tp,
-				     gretlopt opt)
+				     int j, struct tm *tp)
 {
     int err = 0;
 
@@ -4257,8 +4256,8 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 		err = E_DATA;
 	    }
 	} else if (lpd == 4) {
-	    if (rpd == 1 && (opt & OPT_R)) {
-		/* --repeat */
+	    if (rpd == 1) {
+		/* repeat the lower frequency values */
 		minor = TS_WILDCARD;
 	    } else if (rpd == 12) {
 		/* map from month on right to quarter on left, but
@@ -4267,9 +4266,9 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 		micro = minor;
 		minor = (int) ceil(minor / 3.0);
 	    }
-	} else if (lpd == 12 && (opt & OPT_R)) {
-	    /* --repeat */
-	    if (rpd == 1 || rpd == 4) {
+	} else if (lpd == 12) {
+	    if (rpd == 1) {
+		/* repeat the lower frequency values */
 		minor = TS_WILDCARD;
 	    }
 	}
@@ -4315,8 +4314,7 @@ static int numdate_to_string (char *targ, double x)
    treatment; in that case we use read_iso_basic instead.
 */
 
-static int read_outer_auto_keys (joiner *jr, int j, int i,
-				 gretlopt opt)
+static int read_outer_auto_keys (joiner *jr, int j, int i)
 {
     char *tfmt = jr->auto_keys->timefmt;
     int numdates = jr->auto_keys->numdates;
@@ -4383,7 +4381,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i,
     }
 
     if (!err) {
-	err = real_set_outer_auto_keys(jr, s, j, &t, opt);
+	err = real_set_outer_auto_keys(jr, s, j, &t);
     }
 
     return err;
@@ -4420,7 +4418,7 @@ static int read_iso_basic (joiner *jr, int j, int i)
 	    t.tm_year = y - 1900;
 	    t.tm_mon = m - 1;
 	    t.tm_mday = d;
-	    err = real_set_outer_auto_keys(jr, NULL, j, &t, 0);
+	    err = real_set_outer_auto_keys(jr, NULL, j, &t);
 	}
     }
 
@@ -4536,7 +4534,6 @@ static joiner *build_joiner (joinspec *jspec,
 			     AggrType aggr,
 			     int seqval,
 			     obskey *auto_keys,
-			     gretlopt opt,
 			     int *err)
 {
     joiner *jr = NULL;
@@ -4617,7 +4614,7 @@ static joiner *build_joiner (joinspec *jspec,
 	    if (use_iso_basic) {
 		*err = read_iso_basic(jr, j, i);
 	    } else if (using_auto_keys(jr)) {
-		*err = read_outer_auto_keys(jr, j, i, opt);
+		*err = read_outer_auto_keys(jr, j, i);
 	    } else if (keycol > 0) {
 		jr->rows[j].keyval = dtoll_full(Z[keycol][i], 1, i+1, err);
 		if (!*err && key2col > 0) {
@@ -6153,7 +6150,7 @@ static int determine_gdt_matches (const char *fname,
 				  joinspec *jspec,
 				  int **plist,
 				  int *addvars,
-				  int *obsmaj,
+				  int *omm,
 				  PRN *prn)
 {
     char **vnames = NULL;
@@ -6179,7 +6176,10 @@ static int determine_gdt_matches (const char *fname,
 	    int match = 0;
 
 	    if (!strcmp(S[i], "$obsmajor")) {
-		*obsmaj = 1;
+		omm[0] = 1;
+		continue;
+	    } else if (!strcmp(S[i], "$obsminor")) {
+		omm[1] = 1;
 		continue;
 	    }
 
@@ -6237,17 +6237,30 @@ static int determine_gdt_matches (const char *fname,
     return err;
 }
 
-static int rhs_add_obsmajor (DATASET *dset)
+static int rhs_add_obsmajmin (int *omm, DATASET *dset)
 {
-    int err = dataset_add_series(dset, 1);
+    int err = dataset_add_series(dset, omm[0] + omm[1]);
 
     if (!err) {
-	int t, maj, v = dset->v - 1;
+	int t, maj, min, vmaj = 0, vmin = 0;
+	int *pmaj = NULL, *pmin = NULL;
 
-	strcpy(dset->varname[v], "$obsmajor");
+	if (omm[0]) {
+	    pmaj = &maj; vmaj = dset->v - 1 - omm[1];
+	    strcpy(dset->varname[vmaj], "$obsmajor");
+	}
+	if (omm[1]) {
+	    pmin = &min; vmin = dset->v - 1;
+	    strcpy(dset->varname[vmin], "$obsminor");
+	}
 	for (t=0; t<dset->n; t++) {
-	    date_maj_min(t, dset, &maj, NULL);
-	    dset->Z[v][t] = maj;
+	    date_maj_min(t, dset, pmaj, pmin);
+	    if (vmaj) {
+		dset->Z[vmaj][t] = maj;
+	    }
+	    if (vmin) {
+		dset->Z[vmin][t] = min;
+	    }
 	}
     }
 
@@ -6263,11 +6276,11 @@ static int join_import_gdt (const char *fname,
     int *vlist = NULL;
     int orig_ncols = jspec->ncols;
     int i, vi, addvars = 0;
-    int obsmaj = 0;
+    int omm[2] = {0};
     int err = 0;
 
     err = determine_gdt_matches(fname, jspec, &vlist, &addvars,
-				&obsmaj, prn);
+				omm, prn);
 
     if (!err) {
 	jspec->dset = datainfo_new();
@@ -6285,9 +6298,9 @@ static int join_import_gdt (const char *fname,
 	err = expand_jspec(jspec, addvars);
     }
 
-    if (!err && obsmaj) {
-	/* we need to add $obsmajor on the right */
-	err = rhs_add_obsmajor(jspec->dset);
+    if (!err && (omm[0] || omm[1])) {
+	/* we need to add $obsmajor and/or $obsminor on the right */
+	err = rhs_add_obsmajmin(omm, jspec->dset);
     }
 
     if (!err) {
@@ -7093,7 +7106,7 @@ int gretl_join_data (const char *fname,
 
     if (!err) {
 	jr = build_joiner(&jspec, dset, filter, aggr, seqval,
-			  &auto_keys, opt, &err);
+			  &auto_keys, &err);
 	if (!err && jr == NULL) {
 	    /* no matching data to join */
 	    goto bailout;
