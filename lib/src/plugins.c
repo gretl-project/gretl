@@ -95,7 +95,8 @@ enum {
     P_STATA_EXPORT,
     P_SVM,
     P_REGLS,
-    P_GEOPLOT
+    P_GEOPLOT,
+    P_PUREBIN
 } plugin_codes;
 
 struct plugin_info {
@@ -158,6 +159,7 @@ struct plugin_info plugins[] = {
     { P_SVM,             "svm",             NULL },
     { P_REGLS,           "regls",           NULL },
     { P_GEOPLOT,         "geoplot",         NULL },
+    { P_PUREBIN,         "purebin",         NULL }
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -313,6 +315,10 @@ struct plugin_function_info plugin_functions[] = {
     { "map_get_data",    P_GEOPLOT},
     { "shp_get_bundle",  P_GEOPLOT},
     { "geoplot", P_GEOPLOT},
+
+    /* "pure" binary data read/write */
+    { "gretl_read_purebin",  P_PUREBIN},
+    { "gretl_write_purebin", P_PUREBIN},
 
     /* sentinel */
     { NULL, 0 }

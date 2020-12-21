@@ -4301,6 +4301,24 @@ static int real_read_gdt_varnames (const char *fname,
     return err;
 }
 
+static int read_gbin (const char *fname, DATASET *dset,
+		      gretlopt opt, PRN *prn)
+{
+    int (*reader) (const char *, DATASET *, gretlopt,
+		   PRN *prn);
+    int err = 0;
+
+    reader = get_plugin_function("gretl_read_purebin");
+
+    if (reader == NULL) {
+        err = 1;
+    } else {
+	err = (*reader)(fname, dset, opt, prn);
+    }
+
+    return err;
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to open for reading.
@@ -4351,6 +4369,9 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 
 	g_free(zdir);
 	return err;
+    } else if (has_suffix(fname, ".gbin")) {
+	/* a temporary thing */
+	return read_gbin(fname, dset, opt, prn);
     } else {
 	/* plain XML file */
 	return real_read_gdt(fname, NULL, dset, opt, prn);

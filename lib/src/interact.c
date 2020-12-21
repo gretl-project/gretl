@@ -2134,14 +2134,14 @@ static int lib_open_append (ExecState *s,
         vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     }
 
-    if (op.ftype == GRETL_XML_DATA || op.ftype == GRETL_BINARY_DATA) {
+    if (op.ftype == GRETL_XML_DATA ||
+	op.ftype == GRETL_BINARY_DATA ||
+	op.ftype == GRETL_PUREBIN) {
 	if (opt & OPT_E) {
 	    err = handle_gdt_selection(op.fname, dset, opt, vprn);
 	} else {
 	    err = gretl_read_gdt(op.fname, dset, opt, vprn);
 	}
-    } else if (op.ftype == GRETL_PUREBIN) {
-	err = gretl_read_purebin(op.fname, dset, opt, vprn);
     } else if (op.ftype == GRETL_CSV) {
         err = import_csv(op.fname, dset, opt, vprn);
     } else if (SPREADSHEET_IMPORT(op.ftype)) {

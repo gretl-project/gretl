@@ -17,6 +17,8 @@
  *
  */
 
+#include "libgretl.h"
+
 /* Writing and reading of gretl-native "pure binary" data files */
 
 #define NDIM 8 /* allow for adding info */
