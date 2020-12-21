@@ -287,5 +287,16 @@
 \renewcommand{\l@section}{\@dottedtocline{1}{1.5em}{2.8em}}
 \renewcommand{\l@subsection}{\@dottedtocline{2}{4.3em}{3.2em}}
 
+%% Script URLS
+
+\newcommand{\scriptURL}{%
+  \smallskip\centering
+  \def\@scriptname{%
+    example-\ifnum\value{chapter}<10 0\fi\arabic{chapter}.\arabic{script}%
+  }
+  \href{http://gretl.sourceforge.net/guidefiles/\@scriptname.inp}%
+  {Click here to download this script from SourceForge}\par\medskip%
+}
+
 \endinput
 %% end of gretl.sty

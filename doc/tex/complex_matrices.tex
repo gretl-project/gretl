@@ -281,6 +281,8 @@ matrix Z2 = zmod .* exp(complex(0, theta))
 matrix chk = Z ~ Z1 ~ Z2
 print chk
 \end{scodebit}
+%$
+\scriptURL
   Printing of \texttt{Polar} and \texttt{chk}
 \begin{outbit}
      modulus     radians     degrees
@@ -370,6 +372,7 @@ end foreign
 jl_D = mread("jl_D.bin", 1)
 eval D - jl_D
 \end{scode}
+\scriptURL
 \end{script}
 
 \section{Backward compatibility}

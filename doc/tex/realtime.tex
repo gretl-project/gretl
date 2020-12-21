@@ -479,6 +479,7 @@ setinfo plus12 --graph-name="Plus 12 months"
 gnuplot firstpub plus3 plus6 plus12 --time --with-lines \
  --output=display { set key left bottom; }
 \end{scode}
+\scriptURL
 \end{script}
 
 \section{Getting the revision history for an observation}
@@ -529,6 +530,7 @@ join INDPRO.txt ip_jan70 --data=INDPRO --tkey=realtime_start_date \
 ip_jan70 = ok(ip_jan70) ? ip_jan70 : ip_jan70(-1)
 gnuplot ip_jan70 --time --with-lines --output=display
 \end{scode}
+\scriptURL
 \end{script}
 
 \begin{figure}[htbp]

@@ -404,6 +404,8 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   params b0 b1 b2 b3 b4 su sv
 end mle
 \end{scode}
+%$
+\scriptURL
 \end{script}
 
 The script in example \ref{cost-estimation} is relatively easy to
@@ -452,8 +454,10 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   params b su sv
 end mle
 \end{scode}
-\end{script}
 %$
+\scriptURL
+\end{script}
+
 \section{GARCH models}
 \label{sec:garch}
 
@@ -752,6 +756,7 @@ function void zip(series y, list X)
     modprint coef_stde parnames
 end function
 \end{scode}
+\scriptURL
 \end{script}
 %$
 
@@ -803,6 +808,7 @@ function matrix zip_estimate(series y, list X)
     return $coeff ~ $stderr
 end function
 \end{scode}
+\scriptURL
 \end{script}
 %$
 
@@ -1299,6 +1305,7 @@ matrix cs = par ~ sqrt(diag(vpar))
 modprint cs "mean variance"
     
 \end{scode}
+\scriptURL
 %$
 \end{script}
 
@@ -1394,6 +1401,7 @@ else
     modprint cs pn
 endif
 \end{scode}
+\scriptURL
 \end{script}
 
 

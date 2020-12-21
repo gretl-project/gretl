@@ -514,8 +514,9 @@ smpl n X --no-missing            # adjust to perform centering correctly
 list D = stdize(C, -1)           # center the unit dummies
 ols n const X D                  # perform estimation
 \end{scode}
-\end{script}
 %$
+\scriptURL
+\end{script}
 
 \subsection{R-squared in the fixed effects model}
 
@@ -705,6 +706,7 @@ tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
 # Anderson-Hsiao, using d_Y(-2) as instrument
 tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
 \end{scode}
+\scriptURL
 \end{script}
 
 Although the Anderson--Hsiao estimator is consistent, it is not most
