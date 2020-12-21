@@ -5780,7 +5780,10 @@
 	  set boot_iters 2999
 	</code>
 	<para>
-	  <seelist><fncref targ="fevd"/></seelist>
+	  <seelist>
+	    <fncref targ="fevd"/>
+	    <fncref targ="vma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -12499,16 +12502,17 @@
       </fnargs>
       <description>
 	<para>
-	  Questa funzione calcola la rappresentazione VMA di un sistema VAR: se
-	  <equation status="inline"
-		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
-		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
-          la rappresentazione VMA corrispondente è 
-	  <equation status="inline"
-		    ascii="y(t) = e(t) + C1 e(t-1) + ..."
-		    tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>,
-          dove <equation status="inline" ascii="u(t) = K e(t)"
-          tex="$u_t = K e_t$"/>.
+	  Questa funzione calcola la rappresentazione VMA di un
+	  sistema VAR: se <equation status="inline" ascii="y(t) = A1
+	  y(t-1) + ... + Ap y(t-p) + u(t)" tex="$y_t = \sum_{i=1}^p
+	  A_i y_{t-i} + u_t$"/>, dove <math>u</math><sub>t</sub> sono
+	  gli errori di previsione a un passo, la rappresentazione VMA
+	  corrispondente è <equation status="inline" ascii="y(t) = C0
+	  e(t) + C1 e(t-1) + ..."  tex="$y_t = C_0 e_t + C_1 e_{t-1} +
+	  \ldots$."/>, dove la relazione fra errori di previsione
+	  <math>u</math><sub>t</sub> e shock strutturali
+	  <math>e</math><sub>t</sub> è data da <equation status="inline"
+	  ascii="u(t) = K e(t)" tex="$u_t = K e_t$"/>.
         </para>
         <para>
           La matrice dei coefficienti <argname>A</argname> è formata

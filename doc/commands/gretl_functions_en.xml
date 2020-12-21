@@ -5795,7 +5795,10 @@
 	  set boot_iters 2999
 	</code>
 	<para>
-	  <seelist><fncref targ="fevd"/></seelist>
+	  <seelist>
+	    <fncref targ="fevd"/>
+	    <fncref targ="vma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -12531,16 +12534,17 @@
       <description>
 	<para>
 	  This function yields the VMA representation for a VAR
-	  system: if
-	  <equation status="inline"
-		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
-		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
-          then the corresponding VMA representation is
-	  <equation status="inline"
-		    ascii="y(t) = e(t) + C1 e(t-1) + ..."
-		    tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>,
-          where <equation status="inline" ascii="u(t) = K e(t)"
-          tex="$u_t = K e_t$"/>.
+	  system: if <equation status="inline" ascii="y(t) = A1 y(t-1)
+	  + ... + Ap y(t-p) + u(t)" tex="$y_t = \sum_{i=1}^p A_i
+	  y_{t-i} + u_t$"/>, where <math>u</math><sub>t</sub> are the
+	  one-step-ahead prediction errors, the corresponding VMA
+	  representation is <equation status="inline" ascii="y(t) =
+	  C0 e(t) + C1 e(t-1) + ..."  tex="$y_t = C_0 e_t + C_1 e_{t-1} +
+	  \ldots$."/>, where the relationship between the forecast
+	  errors <math>u</math><sub>t</sub> and the structural shocks
+	  <math>e</math><sub>t</sub> is given by <equation
+	  status="inline" ascii="u(t) = K e(t)" tex="$u_t = K
+	  e_t$"/>. (Note that <math>C</math><sub>0</sub><math>=K</math>.) 
         </para>
         <para>
           The coefficient matrix <argname>A</argname> is composed by
