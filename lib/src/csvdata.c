@@ -4217,8 +4217,11 @@ static joiner *joiner_new (int nrows)
     return jr;
 }
 
+#define TS_WILDCARD -888
+
 static int real_set_outer_auto_keys (joiner *jr, const char *s,
-				     int j, struct tm *tp)
+				     int j, struct tm *tp,
+				     gretlopt opt)
 {
     int err = 0;
 
@@ -4241,6 +4244,8 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 	    jr->rows[j].micro = 0;
 	}
     } else {
+	int lpd = jr->l_dset->pd;
+	int rpd = jr->r_dset->pd;
 	int major = tp->tm_year + 1900;
 	int minor = tp->tm_mon + 1;
 	int micro = 0;
@@ -4251,12 +4256,22 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 		gretl_errmsg_sprintf("'%s' is not a valid date", s);
 		err = E_DATA;
 	    }
-	} else if (jr->l_dset->pd == 4) {
-	    /* map from month on right to quarter on left, but
-	       preserve the month info in case we need it
-	    */
-	    micro = minor;
-	    minor = (int) ceil(minor / 3.0);
+	} else if (lpd == 4) {
+	    if (rpd == 1 && (opt & OPT_R)) {
+		/* --repeat */
+		minor = TS_WILDCARD;
+	    } else if (rpd == 12) {
+		/* map from month on right to quarter on left, but
+		   preserve the month info in case we need it
+		*/
+		micro = minor;
+		minor = (int) ceil(minor / 3.0);
+	    }
+	} else if (lpd == 12 && (opt & OPT_R)) {
+	    /* --repeat */
+	    if (rpd == 1 || rpd == 4) {
+		minor = TS_WILDCARD;
+	    }
 	}
 	if (!err && micro == 0) {
 	    micro = tp->tm_mday;
@@ -4300,7 +4315,8 @@ static int numdate_to_string (char *targ, double x)
    treatment; in that case we use read_iso_basic instead.
 */
 
-static int read_outer_auto_keys (joiner *jr, int j, int i)
+static int read_outer_auto_keys (joiner *jr, int j, int i,
+				 gretlopt opt)
 {
     char *tfmt = jr->auto_keys->timefmt;
     int numdates = jr->auto_keys->numdates;
@@ -4367,7 +4383,7 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     }
 
     if (!err) {
-	err = real_set_outer_auto_keys(jr, s, j, &t);
+	err = real_set_outer_auto_keys(jr, s, j, &t, opt);
     }
 
     return err;
@@ -4404,7 +4420,7 @@ static int read_iso_basic (joiner *jr, int j, int i)
 	    t.tm_year = y - 1900;
 	    t.tm_mon = m - 1;
 	    t.tm_mday = d;
-	    err = real_set_outer_auto_keys(jr, NULL, j, &t);
+	    err = real_set_outer_auto_keys(jr, NULL, j, &t, 0);
 	}
     }
 
@@ -4520,6 +4536,7 @@ static joiner *build_joiner (joinspec *jspec,
 			     AggrType aggr,
 			     int seqval,
 			     obskey *auto_keys,
+			     gretlopt opt,
 			     int *err)
 {
     joiner *jr = NULL;
@@ -4600,7 +4617,7 @@ static joiner *build_joiner (joinspec *jspec,
 	    if (use_iso_basic) {
 		*err = read_iso_basic(jr, j, i);
 	    } else if (using_auto_keys(jr)) {
-		*err = read_outer_auto_keys(jr, j, i);
+		*err = read_outer_auto_keys(jr, j, i, opt);
 	    } else if (keycol > 0) {
 		jr->rows[j].keyval = dtoll_full(Z[keycol][i], 1, i+1, err);
 		if (!*err && key2col > 0) {
@@ -4908,6 +4925,8 @@ static int midas_day_index (int t, DATASET *dset)
     return idx;
 }
 
+#define k2_matches(lk2, rk2) (rk2==lk2 || rk2==TS_WILDCARD)
+
 #define midas_daily(j) (j->midas_m > 20)
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
@@ -5043,7 +5062,7 @@ static double aggr_value (joiner *jr,
     for (i=imin; i<imax; i++) {
 	jr_row *r = &jr->rows[i];
 
-	if (jr->n_keys == 1 || key2 == r->keyval2) {
+	if (jr->n_keys == 1 || k2_matches(key2, r->keyval2)) {
 	    ntotal++;
 	    x = jr->r_dset->Z[v][r->dset_row];
 	    if (jr->auxcol) {
@@ -6789,6 +6808,7 @@ static int initial_midas_check (int nvars, int any_wild, int pd,
  * or NULL.
  * @tconvstr: string specifying date columns for conversion, or NULL.
  * @tconvfmt: string giving format(s) for "timeconv" columns, or NULL.
+ * @midas_pd: hint regarding pd for --aggr=spread (?).
  * @opt: may contain OPT_V for verbose operation, OPT_H to assume
  * no header row, OPT_G for native gretl import file as opposed to
  * CSV.
@@ -7072,7 +7092,8 @@ int gretl_join_data (const char *fname,
     */
 
     if (!err) {
-	jr = build_joiner(&jspec, dset, filter, aggr, seqval, &auto_keys, &err);
+	jr = build_joiner(&jspec, dset, filter, aggr, seqval,
+			  &auto_keys, opt, &err);
 	if (!err && jr == NULL) {
 	    /* no matching data to join */
 	    goto bailout;
