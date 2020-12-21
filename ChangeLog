@@ -25,6 +25,8 @@ version 2020f, in progress
   a model displayed in tabbed model viewer
 - Fix bug: possible crash on confusion between singleton
   array and array element within a loop
+- Fix bug: crash after setting "specific lags" for a VAR in
+  the GUI model selection dialog
 - Fix: memory leaks associated with GUI window lists
 - Fix bug: buggy completion proposals in script editor
   when using gtksourceview-2.0
