@@ -8663,10 +8663,12 @@ static void activate_specific_lags (GtkWidget *w, var_lag_info *vlinfo)
 	gtk_widget_set_sensitive(vlinfo->entry, TRUE);
 	gtk_widget_set_sensitive(vlinfo->spin1, FALSE);
 	gtk_widget_set_sensitive(vlinfo->spin2, FALSE);
+	gtk_widget_grab_focus(vlinfo->entry);
     } else {
 	gtk_widget_set_sensitive(vlinfo->entry, FALSE);
 	gtk_widget_set_sensitive(vlinfo->spin1, TRUE);
 	gtk_widget_set_sensitive(vlinfo->spin2, TRUE);
+	gtk_widget_grab_focus(vlinfo->spin1);
     }
 
     if (vlinfo->v == VDEFLT) {
