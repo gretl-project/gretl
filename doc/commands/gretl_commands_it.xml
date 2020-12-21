@@ -9980,6 +9980,11 @@
 	  <effect>mantieni in memoria le variabili non-serie</effect>
 	</option>
 	<option>
+	  <flag>--select</flag>
+	  <optparm>selezione</optparm>
+	  <effect>leggi solo le serie specificate, vedi sotto</effect>
+	</option>
+	<option>
 	  <flag>--frompkg</flag>
 	  <optparm>pkgname</optparm>
 	  <effect>vedi sotto</effect>
@@ -10003,10 +10008,19 @@
 
     <description>
       <para>
-        Apre un file di dati. Se è già stato aperto un file di dati,
-        esso viene sostituito da quello selezionato. Per aggiungere
+        Apre un file di dati o un database (vedi <guideref
+	targ="chap:datafiles"/> per una spiegazione sulla differenza
+	fra le due possibilità). L'effetto del comando è abbastanza
+	diverso nei due casi: quando si apre un file di dati, il suo
+	contenuto viene letto in memoria, sostituendo i dati
+	eventualmente già presenti. Per aggiungere
 	dati al dataset aperto, vedi <cmdref targ="append"/> o, per
-	maggiore flessibilità, <cmdref targ="join"/>.
+	maggiore flessibilità, <cmdref targ="join"/>. Se invece viene
+	aperto un database, nessun dato viene letto immediatamente. Il
+	comando si limita a impostare la fonte per i susseguenti
+	comandi <cmdref targ="data"/>, usati per effettuare
+	l'importazione vera e propria. Si veda <quote>Apertura di un
+	database</quote> più sotto.
       </para>
       <para>
 	Se non si specifica un percorso completo, il programma
@@ -10017,7 +10031,7 @@
 	di un file di dati standard, con estensione <lit>.gdt</lit>. A
 	seconda del nome del file e di alcune sue caratteristiche,
 	gretl cerca di indovinare il formato dei dati (standard, testo
-	semplice, CSV, MS Excel, Stata, ecc).
+	semplice, CSV, MS Excel, Stata, SPSS, ecc.).
       </para>
       <para>
 	Usando l'opzione <opt>frompkg</opt>, <program>gretl</program>
@@ -10026,8 +10040,9 @@
       </para>
       <para>
 	Se l'argomento <repl>nome-file</repl> è un URI che inizia con
-	<lit>http://</lit>, allora <program>gretl</program> cercherà
-	di scaricare il file dalla rete prima di aprirlo.
+	<lit>http://</lit> o <lit>https://</lit>, allora
+	<program>gretl</program> cercherà di scaricare il file dalla
+	rete prima di aprirlo.
       </para>
       <para>
 	Come impostazione predefinita, l'apertura di un nuovo file di
@@ -10036,17 +10051,6 @@
 	si vuole preservare tali variabili (con l'eccezione delle
 	serie, che sono necessariamente eliminate), va usata l'opzione
 	<opt>preserve</opt>.
-      </para>
-      <subhead context="cli">Apertura di un database</subhead>
-      <para>
-	Questo comando può essere usato anche per aprire un database
-	(gretl, RATS 4.0 o PcGive) per la lettura. In questo caso,
-	dev'essere seguito dal comando <cmdref targ="data"/> per
-	estrarre una particolare serie dal database.  Se si usa
-	l'opzione <lit>www</lit>, il programma cercherà di accedere al
-	database specificato sul server di gretl &mdash; ad esempio il
-	database "Federal Reserve interest rates" nel terzo degli
-	esempi visti sopra.
       </para>
       <subhead context="cli">Fogli elettronici</subhead>
       <para>
@@ -10057,7 +10061,7 @@
 	all'interno del file, indicando il suo numero con la sintassi
 	<opt>sheet=2</opt>, oppure indicando il suo nome tra
 	virgolette doppie, usando la sintassi
-	<opt>--sheet="MacroData"</opt>.  L'impostazione predefinita
+	<opt>sheet="MacroData"</opt>.  L'impostazione predefinita
 	consiste nel leggere il primo foglio di lavoro del file. È
 	anche possibile specificare la riga/colonna da cui iniziare a
 	leggere, usando la sintassi
@@ -10122,6 +10126,49 @@
 	contiene una legenda sull'associazione fra le stringhe ed i
 	valori numerici corrispondenti. Per far sì che ciò non accada,
 	si usi l'opzione <opt>quiet</opt>.
+      </para>
+      <subhead context="cli">Apertura di una selezione</subhead>
+      <para>
+	In generale, l'uso di <lit>open</lit> con un file di dati (al
+	contrario di ciò che accade con un database) implica la
+	lettura di tutte le serie che esso contiene. Tuttavia, per
+	dati in formato gretl nativo (<lit>gdt</lit> e
+	<lit>gdtb</lit>) è possibile indicare un sottinsieme delle
+	serie da leggere. L'opzione da usare a questo scopo è
+	<opt>select</opt>, che richiede un argomento. Quest'ultimo può
+	prendere tre forme: il nome di una serie singola, una lista di
+	nomi, comppresa fra virgolette doppie e separati da spazi, o
+	un array di stringhe preesistente. Ad esempio:
+      </para>
+      <code>
+	# serie singola
+	open somefile.gdt --select=x1
+	# più serie
+	open somefile.gdt --select="x1 x5 x27"
+	# metodo alternativo
+	strings Sel = defarray("x1", "x5", "x27")
+	open somefile.gdt --select=Sel
+	</code>
+      <subhead context="cli">Apertura di un database</subhead>
+      <para>
+	Come si diceva sopra, questo comando può essere usato anche
+	per aprire un database (gretl, RATS 4.0 o PcGive) per la
+	lettura. In questo caso, dev'essere seguito dal comando
+	<cmdref targ="data"/> per estrarre una particolare serie dal
+	database.
+      </para>
+      <para>
+	Sono ammessi anche altri casi: in primo luogo, se si usa
+	l'opzione <lit>www</lit>, il programma cercherà di accedere al
+	database specificato sul server di gretl &mdash; ad esempio il
+	database "Federal Reserve interest rates" nel terzo degli
+	esempi visti sopra. Un altra possibilità è quella di usare il
+	comando nella forma <quote><lit>open dbnomics</lit></quote>,
+	che userà DB.NOMICS come fonte dei dati; su questo argomento,
+	vedi <mnu targ="gretlDBN">dbnomics per gretl</mnu>.  Infine,
+	se viene date l'opzione <opt>odbc</opt> gretl prenderà i dati
+	da un database ODBC. Per spiegazioni dettagliate, si veda
+	<guideref targ="chap:odbc"/>.
       </para>
     </description>
 

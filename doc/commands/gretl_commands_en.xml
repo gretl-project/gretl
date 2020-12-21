@@ -9875,6 +9875,11 @@
 	  <effect>preserve variables other than series</effect>
 	</option>
 	<option>
+	  <flag>--select</flag>
+	  <optparm>selection</optparm>
+	  <effect>read only the specified series, see below</effect>
+	</option>
+	<option>
 	  <flag>--frompkg</flag>
 	  <optparm>pkgname</optparm>
 	  <effect>see below</effect>
@@ -9907,7 +9912,7 @@
 	targ="chap:datafiles"/> for an explanation of this
 	distinction. The effect is somewhat different in the two
 	cases. When a <emphasis>data file</emphasis> is opened, its
-	entire content is read into gretl's workspace, replacing the
+	content is read into gretl's workspace, replacing the
 	current dataset (if any). To add data to the current dataset
 	instead of replacing, see <cmdref targ="append"/> or (for
 	greater flexibility) <cmdref targ="join"/>. When a
