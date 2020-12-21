@@ -126,6 +126,7 @@ setinfo qgdp --description="Real quarterly US GDP"
 append payroll_midas.gdt
 store gdp_midas.gdt
 \end{scode}
+\scriptURL
 \end{script}
 
 Note that both series are simply named \texttt{VALUE} in the source
@@ -435,6 +436,7 @@ setinfo dX --graph-name="Payroll Employment"
 smpl 1980:1 2009:1
 hfplot dX ; dy --with-lines --time-series --output=display
 \end{scode}
+\scriptURL
 \end{script}
 
 \begin{figure}[p]
@@ -492,6 +494,7 @@ print x
 list H = high_freq_list(x, 3, "test_m")
 print H --byobs
 \end{scode}
+\scriptURL
 \end{script}
 
 The final command in the script should produce
@@ -675,6 +678,7 @@ data indpro
 hfplot DJ ; indpro --with-lines --output=display \
  {set key top left;}
 \end{scode}
+\scriptURL
 \end{script}
 
 \begin{figure}[htbp]
