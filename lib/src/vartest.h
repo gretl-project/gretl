@@ -27,7 +27,10 @@ void gretl_VAR_clear (GRETL_VAR *var);
 
 void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset);
 
-void VAR_write_A_matrix (GRETL_VAR *v);
+void VAR_write_A_matrix (GRETL_VAR *v, GretlMatrixMod mod);
+
+gretl_matrix *decompanionize (const gretl_matrix *A, int neqns,
+			      GretlMatrixMod mod);
 
 int johansen_stage_1 (GRETL_VAR *jvar, const DATASET *dset,
 		      gretlopt opt, PRN *prn);

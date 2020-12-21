@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2020-11-06 19:29+0100\n"
+"PO-Revision-Date: 2020-12-17 14:23+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -2378,7 +2378,7 @@ msgstr "O argumento %d está ausente ou é dun tipo non válido"
 
 #: lib/src/geneval.c:2232 lib/src/geneval.c:2239 lib/src/gretl_foreign.c:215
 msgid "MPI is not supported in this gretl build"
-msgstr "Esta compilación de Gretl non admite MPI"
+msgstr "Esta compilación de GRETL non admite MPI"
 
 #: lib/src/geneval.c:2358 lib/src/gretl_func.c:6652 lib/src/gretl_win32.c:1801
 #: lib/src/matrix_extra.c:1234
@@ -3748,7 +3748,7 @@ msgid ""
 "Valid gretl commands are:\n"
 msgstr ""
 "\n"
-"As instrucións correctas de Gretl son:\n"
+"As instrucións correctas de GRETL son:\n"
 
 #: lib/src/gretl_help.c:228
 msgid ""
@@ -3773,7 +3773,7 @@ msgstr ""
 #: lib/src/gretl_help.c:451
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
-msgstr "\"%s\" non é unha instrución de Gretl.\n"
+msgstr "\"%s\" non é unha instrución de GRETL.\n"
 
 #: lib/src/gretl_intl.c:102 gui/gretl.c:1673
 msgid "_Open data"
@@ -4300,12 +4300,12 @@ msgstr "Non puido crearse o cartafol '%s'"
 #: lib/src/gretl_paths.c:2029
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
-msgstr "Non puido escribirse en '%s': Gretl non funcionará ben!"
+msgstr "Non puido escribirse en '%s': GRETL non funcionará ben!"
 
 #: lib/src/gretl_paths.c:2276
 #, c-format
 msgid "gretl: using these basic search paths:\n"
-msgstr "Gretl: Usando os seguintes camiños de procura básicos:\n"
+msgstr "GRETL: Usando os seguintes camiños de procura básicos:\n"
 
 #: lib/src/gretl_plot.c:452 lib/src/tokenize.c:2322 lib/src/tokenize.c:2878
 #: lib/src/tokenize.c:2897
@@ -4537,7 +4537,7 @@ msgstr "Non puido escribirse a %s"
 #: lib/src/gretl_www.c:1147
 #, c-format
 msgid "Couldn't find %s for gretl %s"
-msgstr "Non puido atoparse *%s* para *%s* de Gretl"
+msgstr "Non puido atoparse *%s* para *%s* de GRETL"
 
 #: lib/src/gretl_xml.c:72 lib/src/gretl_xml.c:4518
 #, c-format
@@ -4642,7 +4642,7 @@ msgid ""
 msgstr ""
 "A versión deste ficheiro de datos (%g) é superior á que pode ser tolerada "
 "por\n"
-"completo mediante esta composición de Gretl (%g). Algunhas funcionalidades\n"
+"completo mediante esta composición de GRETL (%g). Algunhas funcionalidades\n"
 "poden non recoñecerse correctamente.\n"
 
 #: lib/src/gretl_xml.c:3861
@@ -6814,7 +6814,7 @@ msgstr "Sesión actual"
 #: lib/src/printout.c:106 lib/src/printout.c:164
 #, c-format
 msgid "gretl version %s\n"
-msgstr "versión de Gretl %s\n"
+msgstr "versión de GRETL %s\n"
 
 #: lib/src/printout.c:109
 msgid ""
@@ -6829,7 +6829,7 @@ msgstr "Este é software libre sen ABSOLUTAMENTE NINGUNHA GARANTÍA"
 #: lib/src/printout.c:131
 #, c-format
 msgid "gretl: gui client for gretl version %s,\n"
-msgstr "Gretl: Cliente gui para versión %s de Gretl,\n"
+msgstr "GRETL: Cliente gui para versión %s de GRETL,\n"
 
 #: lib/src/printout.c:132
 msgid "Copyright Allin Cottrell and Riccardo \"Jack\" Lucchetti"
@@ -7657,7 +7657,7 @@ msgstr "Símbolo %c inesperado"
 
 #: lib/src/tokenize.c:3403
 msgid "Command line is not valid UTF-8"
-msgstr ""
+msgstr "A liña de instruccións non ten formato UTF-8 válido"
 
 #: lib/src/transforms.c:188
 #, c-format
@@ -8213,7 +8213,7 @@ msgstr "\"Por económetras, para económetras.\""
 
 #: gui/about.c:115
 msgid "About gretl"
-msgstr "Acerca de Gretl"
+msgstr "Acerca de GRETL"
 
 #: gui/about.c:145 gui/about.c:151 plugin/excel_import.c:108
 msgid "build date"
@@ -8310,7 +8310,7 @@ msgstr ""
 
 #: gui/calculator.c:1077 gui/calculator.c:1271 gui/calculator.c:3068
 msgid "gretl: critical values"
-msgstr "Gretl: Valores críticos"
+msgstr "GRETL: Valores críticos"
 
 #: gui/calculator.c:1257
 msgid "Failed to compute critical value"
@@ -8322,7 +8322,7 @@ msgstr "Produciuse un fallo ao calcular o valor p"
 
 #: gui/calculator.c:1327
 msgid "gretl: p-value"
-msgstr "Gretl: Valor p"
+msgstr "GRETL: Valor p"
 
 #: gui/calculator.c:1373
 msgid "You must give a name for the variable"
@@ -8500,7 +8500,7 @@ msgstr "Estatístico de proba: z = (%g - %g) / %g = %g\n"
 
 #: gui/calculator.c:1770
 msgid "gretl: hypothesis test"
-msgstr "Gretl: Proba de hipóteses"
+msgstr "GRETL: Proba de hipóteses"
 
 #: gui/calculator.c:1814
 msgid ""
@@ -8773,27 +8773,27 @@ msgstr "Amosar a gráfica da distribución da mostra"
 
 #: gui/calculator.c:3028 gui/calculator.c:3072
 msgid "gretl: add distribution graph"
-msgstr "Gretl: Engadir a gráfica de distribución"
+msgstr "GRETL: Engadir a gráfica de distribución"
 
 #: gui/calculator.c:3067
 msgid "gretl: p-value finder"
-msgstr "Gretl: Buscador de valor p"
+msgstr "GRETL: Buscador de valor p"
 
 #: gui/calculator.c:3069
 msgid "gretl: test calculator"
-msgstr "Gretl: Calculadora de estatísticos de proba"
+msgstr "GRETL: Calculadora de estatísticos de proba"
 
 #: gui/calculator.c:3070
 msgid "gretl: nonparametric tests"
-msgstr "Gretl: Probas non paramétricas"
+msgstr "GRETL: Probas non paramétricas"
 
 #: gui/calculator.c:3071
 msgid "gretl: distribution graphs"
-msgstr "Gretl: Gráficas de distribución"
+msgstr "GRETL: Gráficas de distribución"
 
 #: gui/calculator.c:3073
 msgid "gretl: add random variable"
-msgstr "Gretl: Engadir variable aleatoria"
+msgstr "GRETL: Engadir variable aleatoria"
 
 #: gui/calculator.c:3096 gui/selector.c:8091
 msgid "No suitable data are available"
@@ -8801,7 +8801,7 @@ msgstr "Non se dispón de datos axeitados"
 
 #: gui/calculator.c:3281
 msgid "gretl: plot a curve"
-msgstr "Gretl: Trazar unha curva"
+msgstr "GRETL: Trazar unha curva"
 
 #: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2658
 msgid "formula"
@@ -8825,7 +8825,7 @@ msgstr "FDA Loxística"
 
 #: gui/calculator.c:3421
 msgid "gretl: plot CDF"
-msgstr "Gretl: Debuxar a FDA"
+msgstr "GRETL: Debuxar a FDA"
 
 #: gui/calculator.c:3429
 msgid "standard normal"
@@ -8845,7 +8845,7 @@ msgstr "Este tema aínda non está preparado!"
 
 #: gui/callbacks.c:375 gui/dialogs.c:5400
 msgid "gretl: warning"
-msgstr "Gretl: Aviso"
+msgstr "GRETL: Aviso"
 
 #: gui/callbacks.c:379
 msgid "No MIDAS data were found in the current dataset"
@@ -8854,7 +8854,7 @@ msgstr "Non se atoparon datos MIDAS no actual conxunto de datos"
 #: gui/callbacks.c:416 gui/callbacks.c:581 gui/callbacks.c:739
 #: gui/selector.c:7139
 msgid "gretl: add var"
-msgstr "Gretl: Engadir variable"
+msgstr "GRETL: Engadir variable"
 
 #: gui/callbacks.c:417
 msgid "Enter formula for new variable:"
@@ -8862,30 +8862,30 @@ msgstr "Inserir a fórmula para a nova variable:"
 
 #: gui/callbacks.c:472 gui/library.c:961
 msgid "gretl: cointegration test"
-msgstr "Gretl: Proba de cointegración"
+msgstr "GRETL: Proba de cointegración"
 
 #: gui/callbacks.c:474 gui/selector.c:952
 msgid "gretl: VAR"
-msgstr "Gretl: VAR"
+msgstr "GRETL: VAR"
 
 #: gui/callbacks.c:474 gui/library.c:3570 gui/library.c:4820 gui/selector.c:952
 msgid "gretl: VECM"
-msgstr "Gretl: VECM"
+msgstr "GRETL: VECM"
 
 #: gui/callbacks.c:477 gui/library.c:4812
 msgid "gretl: VAR lag selection"
-msgstr "Gretl: Selección da orde do VAR"
+msgstr "GRETL: Selección da orde do VAR"
 
 #: gui/callbacks.c:506 gui/callbacks.c:520 gui/callbacks.c:523
 #: gui/callbacks.c:525 gui/callbacks.c:667 gui/callbacks.c:676
 #: gui/library.c:7943 gui/toolbar.c:1436
 msgid "gretl: define graph"
-msgstr "Gretl: Definir gráfica"
+msgstr "GRETL: Definir gráfica"
 
 #: gui/callbacks.c:508 gui/callbacks.c:511 gui/callbacks.c:514
 #: gui/callbacks.c:517
 msgid "gretl: model tests"
-msgstr "Gretl: Probas do modelo"
+msgstr "GRETL: Probas do modelo"
 
 #: gui/callbacks.c:530 gui/selector.c:4305
 msgid "Loess"
@@ -8909,7 +8909,7 @@ msgstr ""
 
 #: gui/callbacks.c:592 gui/callbacks.c:599
 msgid "gretl: missing code"
-msgstr "Gretl: Falta o código"
+msgstr "GRETL: Falta o código"
 
 #: gui/callbacks.c:593
 #, c-format
@@ -8926,7 +8926,7 @@ msgstr "Inserir o valor para ler como \"ausente\":"
 
 #: gui/callbacks.c:604 gui/callbacks.c:695
 msgid "gretl: GMM"
-msgstr "Gretl: MXM"
+msgstr "GRETL: MXM"
 
 #: gui/callbacks.c:605 gui/callbacks.c:696
 msgid "GMM: Specify function and orthogonality conditions:"
@@ -8934,7 +8934,7 @@ msgstr "MXM: Especificar a función e as condicións de ortogonalidade"
 
 #: gui/callbacks.c:611 gui/callbacks.c:700
 msgid "gretl: maximum likelihood"
-msgstr "Gretl: Máxima Verosimilitude"
+msgstr "GRETL: Máxima Verosimilitude"
 
 #: gui/callbacks.c:612 gui/callbacks.c:701
 msgid "MLE: Specify function, and derivatives if possible:"
@@ -8942,7 +8942,7 @@ msgstr "EMV: Especificar a función e, se é posible, as derivadas"
 
 #: gui/callbacks.c:618 gui/callbacks.c:705
 msgid "gretl: nonlinear least squares"
-msgstr "Gretl: Mínimos cadrados non lineais"
+msgstr "GRETL: Mínimos cadrados non lineais"
 
 #: gui/callbacks.c:619 gui/callbacks.c:706
 msgid "NLS: Specify function, and derivatives if possible:"
@@ -8950,7 +8950,7 @@ msgstr "MC non lineais: Especificar a función e, se é posible, as derivadas"
 
 #: gui/callbacks.c:625 gui/callbacks.c:721 gui/library.c:3744
 msgid "gretl: simultaneous equations system"
-msgstr "Gretl: Sistema de ecuacións simultáneas"
+msgstr "GRETL: Sistema de ecuacións simultáneas"
 
 #: gui/callbacks.c:626 gui/callbacks.c:722
 msgid "Specify simultaneous equations:"
@@ -8958,7 +8958,7 @@ msgstr "Especificar as ecuacións simultáneas"
 
 #: gui/callbacks.c:632
 msgid "gretl: linear restrictions"
-msgstr "Gretl: Restricións lineais"
+msgstr "GRETL: Restricións lineais"
 
 #: gui/callbacks.c:633
 msgid "Specify restrictions:"
@@ -8966,7 +8966,7 @@ msgstr "Especificar as restricións:"
 
 #: gui/callbacks.c:638 gui/callbacks.c:746
 msgid "gretl: command entry"
-msgstr "Gretl: Anotación de instrución"
+msgstr "GRETL: Anotación de instrución"
 
 #: gui/callbacks.c:639 gui/callbacks.c:747
 msgid "Type a command:"
@@ -8986,7 +8986,7 @@ msgstr "Con factor de separación"
 
 #: gui/callbacks.c:760
 msgid "gretl: create data set"
-msgstr "Gretl: Crear conxunto de datos"
+msgstr "GRETL: Crear conxunto de datos"
 
 #: gui/callbacks.c:761
 msgid "Number of observations:"
@@ -9057,7 +9057,7 @@ msgstr ""
 
 #: gui/console.c:445
 msgid "gretl console: type 'help' for a list of commands"
-msgstr "Consola de Gretl: Teclea 'help' para obter unha lista de instrucións"
+msgstr "Consola de GRETL: Teclea 'help' para obter unha lista de instrucións"
 
 #: gui/database.c:129
 #, c-format
@@ -9074,7 +9074,7 @@ msgstr "Recuperando datos..."
 
 #: gui/database.c:209
 msgid "gretl: display database series"
-msgstr "Gretl: Amosar series do banco de datos"
+msgstr "GRETL: Amosar series do banco de datos"
 
 #: gui/database.c:239
 msgid ""
@@ -9448,12 +9448,12 @@ msgstr "máquina local"
 #: gui/datafiles.c:1989
 #, c-format
 msgid "gretl: databases on %s"
-msgstr "Gretl: Bancos de datos en %s"
+msgstr "GRETL: Bancos de datos en %s"
 
 #: gui/datafiles.c:1991
 #, c-format
 msgid "gretl: function packages on %s"
-msgstr "Gretl: Paquetes de funcións en %s"
+msgstr "GRETL: Paquetes de funcións en %s"
 
 #: gui/datafiles.c:2074
 msgid "The gui package registry is empty"
@@ -9461,15 +9461,15 @@ msgstr "O rexistro do paquete *gui* está baldeiro"
 
 #: gui/datafiles.c:2081
 msgid "gretl: practice files"
-msgstr "Gretl: Ficheiros de exemplo"
+msgstr "GRETL: Ficheiros de exemplo"
 
 #: gui/datafiles.c:2083
 msgid "gretl: data files"
-msgstr "Gretl: Ficheiros de datos"
+msgstr "GRETL: Ficheiros de datos"
 
 #: gui/datafiles.c:2085
 msgid "gretl: databases on server"
-msgstr "Gretl: Bancos de datos no servidor"
+msgstr "GRETL: Bancos de datos no servidor"
 
 #: gui/datafiles.c:2087
 msgid "gretl: DB.NOMICS providers"
@@ -9477,26 +9477,26 @@ msgstr "gretl: Provedores de DB.NOMICS"
 
 #: gui/datafiles.c:2089
 msgid "gretl: function packages on server"
-msgstr "Gretl: Paquetes de funcións no servidor"
+msgstr "GRETL: Paquetes de funcións no servidor"
 
 #: gui/datafiles.c:2091
 msgid "gretl: data packages on server"
-msgstr "Gretl: Paquetes de datos no servidor"
+msgstr "GRETL: Paquetes de datos no servidor"
 
 #: gui/datafiles.c:2093
 msgid "gretl: addons"
-msgstr "Gretl: Complementos"
+msgstr "GRETL: Complementos"
 
 #: gui/datafiles.c:2095
 msgid "gretl: packages on menus"
-msgstr "Gretl: Paquetes nos menús"
+msgstr "GRETL: Paquetes nos menús"
 
 #: gui/datafiles.c:2691
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Please try /File/Functions packages/On server"
 msgstr ""
-"Non se atoparon paquetes de funcións de Gretl neste ordenador.\n"
+"Non se atoparon paquetes de funcións de GRETL neste ordenador.\n"
 "Proba en /Ficheiro/Paquetes de función/No servidor"
 
 #: gui/datafiles.c:2870 gui/datafiles.c:2875
@@ -9610,7 +9610,7 @@ msgstr ""
 
 #: gui/datawiz.c:186 gui/dialogs.c:5592 gui/ssheet.c:1003
 msgid "gretl: name variable"
-msgstr "Gretl: Nomear variable"
+msgstr "GRETL: Nomear variable"
 
 #: gui/datawiz.c:311 gui/ssheet.c:1712
 msgid "No changes were made"
@@ -9786,7 +9786,7 @@ msgstr "Asistente da estrutura de datos"
 
 #: gui/dialogs.c:193
 msgid "Do you want to save this gretl session?"
-msgstr "Queres gardar esta sesión de Gretl?"
+msgstr "Queres gardar esta sesión de GRETL?"
 
 #: gui/dialogs.c:195
 msgid "Save a record of the commands you executed?"
@@ -9810,7 +9810,7 @@ msgid ""
 "to this session?"
 msgstr ""
 "Queres gardar os cambios que fixeches\n"
-"nesta sesión de Gretl?"
+"nesta sesión de GRETL?"
 
 #: gui/dialogs.c:329 gui/ssheet.c:2972
 msgid ""
@@ -9826,7 +9826,7 @@ msgstr "Amosar os valores ausentes como:"
 
 #: gui/dialogs.c:518
 msgid "gretl: data delimiter"
-msgstr "Gretl: Delimitar datos"
+msgstr "GRETL: Delimitar datos"
 
 #: gui/dialogs.c:526
 msgid "separator for data columns:"
@@ -9866,7 +9866,7 @@ msgstr "Incluír a columna das observacións"
 
 #: gui/dialogs.c:796
 msgid "gretl: select format"
-msgstr "Gretl: Escoller formato"
+msgstr "GRETL: Escoller formato"
 
 #: gui/dialogs.c:824
 msgid "Copy as:"
@@ -9890,7 +9890,7 @@ msgstr "Texto plano"
 
 #: gui/dialogs.c:1035 gui/library.c:2184
 msgid "gretl: bootstrap analysis"
-msgstr "Gretl: Análise bootstrap"
+msgstr "GRETL: Análise bootstrap"
 
 #: gui/dialogs.c:1063
 msgid "Confidence interval"
@@ -9926,7 +9926,7 @@ msgstr "Gardar os datos bootstrap nun ficheiro"
 
 #: gui/dialogs.c:1225
 msgid "gretl: database description"
-msgstr "Gretl: Descrición do banco de datos"
+msgstr "GRETL: Descrición do banco de datos"
 
 #: gui/dialogs.c:1229
 msgid "description:"
@@ -9934,7 +9934,7 @@ msgstr "Descrición:"
 
 #: gui/dialogs.c:1287
 msgid "gretl: seed for random numbers"
-msgstr "Gretl: Semente de números aleatorios"
+msgstr "GRETL: Semente de números aleatorios"
 
 #: gui/dialogs.c:1291
 msgid "Seed for generator:"
@@ -9946,7 +9946,7 @@ msgstr "Elixir unha lista nominal"
 
 #: gui/dialogs.c:1472
 msgid "gretl: iteration controls"
-msgstr "Gretl: Controis de iteración"
+msgstr "GRETL: Controis de iteración"
 
 #: gui/dialogs.c:1489
 msgid "BHHH maximizer"
@@ -9997,7 +9997,7 @@ msgstr "Fin:"
 
 #: gui/dialogs.c:1948 gui/dialogs.c:2307
 msgid "gretl: set sample"
-msgstr "Gretl: Poñer mostra"
+msgstr "GRETL: Poñer mostra"
 
 #: gui/dialogs.c:2069
 msgid "Groups"
@@ -10030,7 +10030,7 @@ msgstr "Establecer rango da mostra"
 
 #: gui/dialogs.c:2448
 msgid "gretl: define dummy"
-msgstr "Gretl: Definir variable ficticia"
+msgstr "GRETL: Definir variable ficticia"
 
 #: gui/dialogs.c:2458
 msgid "Set dummy range"
@@ -10080,7 +10080,7 @@ msgstr "Inserir condición booleana para escoller casos:"
 
 #: gui/dialogs.c:2703
 msgid "gretl: restrict sample"
-msgstr "Gretl: Restrinxir mostra"
+msgstr "GRETL: Restrinxir mostra"
 
 #: gui/dialogs.c:2741
 msgid "Use dummy variable:"
@@ -10104,7 +10104,7 @@ msgstr "Nome de variable ficticia a utilizar:"
 
 #: gui/dialogs.c:2850
 msgid "gretl: Chow test"
-msgstr "Gretl: Proba de Chow"
+msgstr "GRETL: Proba de Chow"
 
 #: gui/dialogs.c:2894
 msgid "Test a subset of regressors"
@@ -10152,7 +10152,7 @@ msgstr "Predicións recursivas k pasos adiante: k = "
 
 #: gui/dialogs.c:3219
 msgid "gretl: forecast"
-msgstr "Gretl: Predición"
+msgstr "GRETL: Predición"
 
 #: gui/dialogs.c:3227
 msgid "Forecast range:"
@@ -10228,7 +10228,7 @@ msgstr "Usar día representativo"
 
 #: gui/dialogs.c:3943
 msgid "gretl: compact data"
-msgstr "Gretl: Compactar datos"
+msgstr "GRETL: Compactar datos"
 
 #: gui/dialogs.c:3958
 #, c-format
@@ -10269,7 +10269,7 @@ msgstr "Compactar datos horarios a:"
 
 #: gui/dialogs.c:4077
 msgid "gretl: expand data"
-msgstr "Gretl: Expandir os datos"
+msgstr "GRETL: Expandir os datos"
 
 #: gui/dialogs.c:4085
 msgid "Expand annual data to"
@@ -10321,7 +10321,7 @@ msgstr "Ningún modelo foi especificado"
 
 #: gui/dialogs.c:4835
 msgid "gretl: periodogram"
-msgstr "Gretl: Periodograma"
+msgstr "GRETL: Periodograma"
 
 #: gui/dialogs.c:4841
 msgid "Sample periodogram"
@@ -10412,11 +10412,11 @@ msgstr "Restaurar"
 
 #: gui/dialogs.c:5399
 msgid "gretl: error"
-msgstr "Gretl: Fallo"
+msgstr "GRETL: Fallo"
 
 #: gui/dialogs.c:5401
 msgid "gretl: information"
-msgstr "Gretl: Información"
+msgstr "GRETL: Información"
 
 #: gui/dialogs.c:5618
 msgid "show scalars window"
@@ -10428,7 +10428,7 @@ msgstr "Amosar a xanela de iconas"
 
 #: gui/dialogs.c:5777
 msgid "gretl: TeX tabular format"
-msgstr "Gretl: Formato tabular de TeX"
+msgstr "GRETL: Formato tabular de TeX"
 
 #: gui/dialogs.c:5785 gui/series_view.c:748 gui/ssheet.c:4208
 msgid "Standard format"
@@ -10656,7 +10656,7 @@ msgstr "Abrir guión"
 
 #: gui/fileselect.c:883
 msgid "Gretl datafiles (*.gdt, *.gdtb)"
-msgstr "Ficheiros de datos Gretl (*.gdt, *.gdtb)"
+msgstr "Ficheiros de datos GRETL (*.gdt, *.gdtb)"
 
 #: gui/fileselect.c:884
 msgid "CSV files (*.csv)"
@@ -10716,7 +10716,7 @@ msgstr "Todos os ficheiros (*.*)"
 
 #: gui/fileselect.c:901
 msgid "gretl script files (*.inp)"
-msgstr "Ficheiros de guións de Gretl (*.inp)"
+msgstr "Ficheiros de guións de GRETL (*.inp)"
 
 #: gui/fileselect.c:902
 msgid "GNU R files (*.R)"
@@ -10752,11 +10752,11 @@ msgstr "Ficheiros Dynare (*.mod)"
 
 #: gui/fileselect.c:1044
 msgid "Gretl datafiles (*.gdt)"
-msgstr "Ficheiro de datos Gretl (.gdt)"
+msgstr "Ficheiro de datos GRETL (.gdt)"
 
 #: gui/fileselect.c:1045
 msgid "Gretl binary datafiles (*.gdtb)"
-msgstr "Ficheiros de datos binarios Gretl (*.gdtb)"
+msgstr "Ficheiros de datos binarios GRETL (*.gdtb)"
 
 #: gui/fileselect.c:1053
 msgid "plain function packages (*.gfn)"
@@ -10963,7 +10963,7 @@ msgstr "Amosar as ponderacións"
 
 #: gui/filters.c:676
 msgid "gretl: time-series filter"
-msgstr "Gretl: Filtro de series temporais"
+msgstr "GRETL: Filtro de series temporais"
 
 #: gui/filters.c:697
 msgid "Number of observations in average:"
@@ -11202,14 +11202,14 @@ msgid ""
 "as \"%s/%s\" in the %s.\n"
 "Do you want to do this?"
 msgstr ""
-"O paquete %s pode engadirse a os menús de Gretl\n"
+"O paquete %s pode engadirse a os menús de GRETL\n"
 "como \"%s/%s\" en %s.\n"
 "Queres facer isto?"
 
 #: gui/fncall.c:4197
 #, c-format
 msgid "Requires gretl %s"
-msgstr "Require Gretl %s"
+msgstr "Require GRETL %s"
 
 #: gui/fncall.c:4203
 msgid "Error reading package"
@@ -11402,7 +11402,7 @@ msgstr "Escoller"
 
 #: gui/fnsave.c:2146
 msgid "Minimum gretl version"
-msgstr "Versión mínima de Gretl"
+msgstr "Versión mínima de GRETL"
 
 #: gui/fnsave.c:2351
 msgid "Tag"
@@ -11469,7 +11469,7 @@ msgstr "Aplicar os cambios?"
 
 #: gui/fnsave.c:3553
 msgid "gretl: extra properties"
-msgstr "Gretl: Propiedades extra"
+msgstr "GRETL: Propiedades extra"
 
 #: gui/fnsave.c:3570
 msgid "Special functions"
@@ -11533,7 +11533,7 @@ msgid ""
 "last upload."
 msgstr ""
 "Subir o paquete: Isto significa que o paquete vaise\n"
-"subir ao servidor de Gretl para a súa aceptación.\n"
+"subir ao servidor de GRETL para a súa aceptación.\n"
 "Debes de facer isto se es o autor deste\n"
 "paquete e, ou o paquete non está ainda no servidor,\n"
 "ou ben fixeches cambios nel desde a derradeira vez que \n"
@@ -11541,7 +11541,7 @@ msgstr ""
 
 #: gui/fnsave.c:3990
 msgid "gretl: upload"
-msgstr "Gretl: Subir"
+msgstr "GRETL: Subir"
 
 #: gui/fnsave.c:4004
 msgid "Login"
@@ -11558,7 +11558,7 @@ msgid ""
 "The 'Website' button below should open this page\n"
 "in your web browser."
 msgstr ""
-"Se non tes un nome de usuario definido no servidor de Gretl\n"
+"Se non tes un nome de usuario definido no servidor de GRETL\n"
 "mira http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
 "O botón de 'Sitio web' de abaixo debera de abrir esta páxina\n"
 "no teu navegador web."
@@ -11605,7 +11605,7 @@ msgstr ""
 
 #: gui/fnsave.c:5269
 msgid "gretl: function packages"
-msgstr "Gretl: Paquetes de funcións"
+msgstr "GRETL: Paquetes de funcións"
 
 #: gui/fnsave.c:5324
 msgid "build gfn file"
@@ -11671,7 +11671,7 @@ msgstr "raíces"
 
 #: gui/gpt_control.c:4265
 msgid "gretl: boxplot data"
-msgstr "Gretl: Datos da gráfica de caixa"
+msgstr "GRETL: Datos da gráfica de caixa"
 
 #: gui/gpt_control.c:4407
 msgid " Drag to define zoom rectangle"
@@ -11758,7 +11758,7 @@ msgstr "Ficheiro PNG de gráfico mal formado"
 
 #: gui/gpt_control.c:5388
 msgid "gretl: graph"
-msgstr "Gretl: Gráfica"
+msgstr "GRETL: Gráfica"
 
 #: gui/gpt_control.c:5937
 msgid "Couldn't find a usable terminal program"
@@ -11794,7 +11794,7 @@ msgstr "linear-log: y = a + b*log(x)"
 
 #: gui/gpt_dialog.c:297
 msgid "gretl: graph color selection"
-msgstr "Gretl: Escoller a cor da gráfica"
+msgstr "GRETL: Escoller a cor da gráfica"
 
 #: gui/gpt_dialog.c:325
 msgid "Select color"
@@ -12039,7 +12039,7 @@ msgstr "Título do eixe"
 
 #: gui/gpt_dialog.c:3660
 msgid "gretl plot controls"
-msgstr "Controladores de gráfica Gretl"
+msgstr "Controladores de gráfica GRETL"
 
 #: gui/graph_page.c:288
 msgid "The graph page is full"
@@ -12123,7 +12123,7 @@ msgstr "Forzar o uso do euskera"
 
 #: gui/gretl.c:143
 msgid "dump gretl configuration to file"
-msgstr "Gardar a configuración de Gretl nun ficheiro"
+msgstr "Gardar a configuración de GRETL nun ficheiro"
 
 #: gui/gretl.c:146
 msgid "send debugging info to console"
@@ -12135,7 +12135,7 @@ msgstr "Amosar a información da versión"
 
 #: gui/gretl.c:605
 msgid "Start a new gretl instance?"
-msgstr "Comezar unha nova instancia de Gretl?"
+msgstr "Comezar unha nova instancia de GRETL?"
 
 #: gui/gretl.c:1379
 msgid "No lists are currently defined"
@@ -12215,7 +12215,7 @@ msgstr "_Novo guión de instrucións"
 
 #: gui/gretl.c:1689
 msgid "gretl script"
-msgstr "Guión de Gretl"
+msgstr "Guión de GRETL"
 
 #: gui/gretl.c:1690
 msgid "gnuplot script"
@@ -12267,7 +12267,7 @@ msgstr "_Bancos de datos"
 
 #: gui/gretl.c:1706
 msgid "_Gretl native..."
-msgstr "Propio de _Gretl..."
+msgstr "Propio de _GRETL..."
 
 #: gui/gretl.c:1707
 msgid "_RATS 4..."
@@ -12371,7 +12371,7 @@ msgstr "Rexistro de _instrucións"
 
 #: gui/gretl.c:1744
 msgid "_Gretl console"
-msgstr "C_onsola de Gretl"
+msgstr "C_onsola de GRETL"
 
 #: gui/gretl.c:1745
 msgid "_Gnuplot"
@@ -13047,15 +13047,15 @@ msgstr "Manual de _paquetes de funcións"
 
 #: gui/gretl.c:1950
 msgid "_gretl + MPI"
-msgstr "_Gretl + MPI"
+msgstr "_GRETL + MPI"
 
 #: gui/gretl.c:1951
 msgid "_gretl + SVM"
-msgstr "_Gretl + SVM"
+msgstr "_GRETL + SVM"
 
 #: gui/gretl.c:1952
 msgid "_gretl + DB.NOMICS"
-msgstr "_Gretl + DB.NOMICS"
+msgstr "_GRETL + DB.NOMICS"
 
 #: gui/gretl.c:1953
 msgid "Check for _updates"
@@ -13067,7 +13067,7 @@ msgstr "Buscar _complementos"
 
 #: gui/gretl.c:1955
 msgid "_About gretl"
-msgstr "_Sobre Gretl"
+msgstr "_Sobre GRETL"
 
 #: gui/gretl.c:2040 gui/gui_utils.c:237 gui/gui_utils.c:362
 msgid "_Analysis"
@@ -13079,7 +13079,7 @@ msgstr "Inserir un nome para a lista de series"
 
 #: gui/gretl.c:2297
 msgid "gretl: name list"
-msgstr "Gretl: Nome de lista"
+msgstr "GRETL: Nome de lista"
 
 #: gui/gretl.c:2348
 msgid "sample status"
@@ -13389,7 +13389,7 @@ msgstr "Eliminar todas as filas en branco"
 
 #: gui/gui_utils.c:1116 gui/gui_utils.c:1418 gui/library.c:8330
 msgid "gretl: open data"
-msgstr "Gretl: Abrir datos"
+msgstr "GRETL: Abrir datos"
 
 #: gui/gui_utils.c:1117
 msgid ""
@@ -13404,7 +13404,7 @@ msgstr ""
 #: gui/gui_utils.c:1273 gui/gui_utils.c:1276
 #, c-format
 msgid "gretl: import %s data"
-msgstr "Gretl: Importar datos %s"
+msgstr "GRETL: Importar datos %s"
 
 #: gui/gui_utils.c:1350
 msgid "simple append"
@@ -13416,7 +13416,7 @@ msgstr "\"join\" (avanzado)"
 
 #: gui/gui_utils.c:1354
 msgid "gretl: append data"
-msgstr "Gretl: Engadir datos"
+msgstr "GRETL: Engadir datos"
 
 #: gui/gui_utils.c:1419 gui/library.c:8331
 msgid ""
@@ -13431,7 +13431,7 @@ msgstr ""
 
 #: gui/gui_utils.c:1446
 msgid "gretl: open session"
-msgstr "Gretl: Abrir sesión"
+msgstr "GRETL: Abrir sesión"
 
 #: gui/gui_utils.c:1447
 msgid ""
@@ -13450,78 +13450,78 @@ msgstr "O búfer está baldeiro"
 
 #: gui/gui_utils.c:1787
 msgid "gretl: edit plot commands"
-msgstr "Gretl: Editar instrucións de gráfica"
+msgstr "GRETL: Editar instrucións de gráfica"
 
 #: gui/gui_utils.c:1789
 msgid "gretl: edit R script"
-msgstr "Gretl: Editar un guión de R"
+msgstr "GRETL: Editar un guión de R"
 
 #: gui/gui_utils.c:1791
 msgid "gretl: edit Ox program"
-msgstr "Gretl: Editar programa Ox"
+msgstr "GRETL: Editar programa Ox"
 
 #: gui/gui_utils.c:1793
 msgid "gretl: edit Octave script"
-msgstr "Gretl: Editar un guión de Octave"
+msgstr "GRETL: Editar un guión de Octave"
 
 #: gui/gui_utils.c:1795
 msgid "gretl: edit Python script"
-msgstr "Gretl: Editar un guión de Python"
+msgstr "GRETL: Editar un guión de Python"
 
 #: gui/gui_utils.c:1797
 msgid "gretl: edit Julia program"
-msgstr "Gretl: Editar programa Julia"
+msgstr "GRETL: Editar programa Julia"
 
 #: gui/gui_utils.c:1799
 msgid "gretl: edit Stata program"
-msgstr "Gretl: Editar programa Stata"
+msgstr "GRETL: Editar programa Stata"
 
 #: gui/gui_utils.c:1801
 msgid "gretl: edit Dynare script"
-msgstr "Gretl: Editar un guión Dynare"
+msgstr "GRETL: Editar un guión Dynare"
 
 #: gui/gui_utils.c:1803
 msgid "gretl: edit package spec file"
-msgstr "Gretl: Editar ficheiro específico de paquete"
+msgstr "GRETL: Editar ficheiro específico de paquete"
 
 #: gui/gui_utils.c:1805
 msgid "gretl: untitled"
-msgstr "Gretl: Sen nome"
+msgstr "GRETL: Sen nome"
 
 #: gui/gui_utils.c:1836
 #, c-format
 msgid "gretl: script output %d"
-msgstr "Gretl: Resultado de guión %d"
+msgstr "GRETL: Resultado de guión %d"
 
 #: gui/gui_utils.c:1838 gui/gui_utils.c:5790 gui/gui_utils.c:5854
 #: gui/gui_utils.c:6027
 msgid "gretl: script output"
-msgstr "Gretl: Resultados de guión"
+msgstr "GRETL: Resultados de guión"
 
 #: gui/gui_utils.c:1848
 msgid "gretl: command reference"
-msgstr "Gretl: Instrucións"
+msgstr "GRETL: Instrucións"
 
 #: gui/gui_utils.c:1850
 msgid "gretl: help"
-msgstr "Gretl: Axuda"
+msgstr "GRETL: Axuda"
 
 #: gui/gui_utils.c:1852
 msgid "gretl: function reference"
-msgstr "Gretl: Guía de funcións"
+msgstr "GRETL: Guía de funcións"
 
 #: gui/gui_utils.c:1860
 msgid "gretl: command log"
-msgstr "Gretl: Historial de instrucións"
+msgstr "GRETL: Historial de instrucións"
 
 #: gui/gui_utils.c:1878 gui/session.c:546
 msgid "gretl: session notes"
-msgstr "Gretl: Notas de sesión"
+msgstr "GRETL: Notas de sesión"
 
 #: gui/gui_utils.c:1884 gui/library.c:7254 gui/library.c:7288
 #: gui/library.c:7292
 msgid "gretl: display data"
-msgstr "Gretl: Amosar datos"
+msgstr "GRETL: Amosar datos"
 
 #: gui/gui_utils.c:2212
 #, c-format
@@ -13530,7 +13530,7 @@ msgstr "Non pode abrirse *%s* para lectura"
 
 #: gui/gui_utils.c:2327
 msgid "gretl console"
-msgstr "Consola de Gretl"
+msgstr "Consola de GRETL"
 
 #: gui/gui_utils.c:2629
 #, c-format
@@ -13540,7 +13540,7 @@ msgstr "modelo %d"
 #: gui/gui_utils.c:2635 gui/tabwin.c:888
 #, c-format
 msgid "gretl: model %d"
-msgstr "Gretl: Modelo %d"
+msgstr "GRETL: Modelo %d"
 
 #: gui/gui_utils.c:2738 gui/gui_utils.c:2751
 msgid "Outcome probabilities"
@@ -13663,11 +13663,11 @@ msgstr "Secuencia tau"
 
 #: gui/gui_utils.c:3651
 msgid "gretl: VAR covariance matrix"
-msgstr "Gretl: Matriz de covarianzas do VAR"
+msgstr "GRETL: Matriz de covarianzas do VAR"
 
 #: gui/gui_utils.c:3654
 msgid "gretl: system covariance matrix"
-msgstr "Gretl: Matriz de covarianzas do sistema"
+msgstr "GRETL: Matriz de covarianzas do sistema"
 
 #: gui/gui_utils.c:3660
 msgid "System fitted values"
@@ -13711,17 +13711,17 @@ msgstr "Descomposición da varianza"
 
 #: gui/gui_utils.c:4412 gui/library.c:2144
 msgid "gretl: forecasts"
-msgstr "Gretl: Predicións"
+msgstr "GRETL: Predicións"
 
 #: gui/gui_utils.c:4468 gui/gui_utils.c:4479 gui/library.c:3309
 #: gui/library.c:3330
 msgid "gretl: autocorrelation"
-msgstr "Gretl: Autocorrelación"
+msgstr "GRETL: Autocorrelación"
 
 #: gui/gui_utils.c:4469 gui/gui_utils.c:4490 gui/library.c:2687
 #: gui/library.c:2706
 msgid "gretl: ARCH test"
-msgstr "Gretl: Proba ARCH"
+msgstr "GRETL: Proba ARCH"
 
 #: gui/gui_utils.c:4470 gui/library.c:3310
 msgid "Lag order for test:"
@@ -13919,7 +13919,7 @@ msgstr "Enviar datos como"
 
 #: gui/guiprint.c:73 gui/guiprint.c:75
 msgid "gretl output"
-msgstr "resultado Gretl"
+msgstr "resultado GRETL"
 
 #: gui/guiprint.c:73
 msgid "for"
@@ -14158,7 +14158,7 @@ msgstr "Accesorios"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2334
 msgid "Built-in strings"
-msgstr ""
+msgstr "Cadeas de texto internas predefinidas"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
@@ -14169,9 +14169,8 @@ msgid "Mathematical"
 msgstr "Matemática"
 
 #: gui/helpfiles.c:335
-#, fuzzy
 msgid "Matrix manipulation"
-msgstr "Dar forma a matriz"
+msgstr "Manexo de matrices"
 
 #: gui/helpfiles.c:337
 msgid "Linear algebra"
@@ -14190,18 +14189,16 @@ msgid "Calendar"
 msgstr "Calendario"
 
 #: gui/helpfiles.c:349
-#, fuzzy
 msgid "Time-series"
-msgstr "Series temporais"
+msgstr "Serie temporal"
 
 #: gui/helpfiles.c:351
 msgid "Statistical"
-msgstr "Estatística"
+msgstr "Estatísticas"
 
 #: gui/helpfiles.c:353
-#, fuzzy
 msgid "Non-parametric"
-msgstr "Pro_bas non paramétricas"
+msgstr "Estatística non paramétrica"
 
 #: gui/helpfiles.c:357
 msgid "State space"
@@ -14257,7 +14254,7 @@ msgstr "Non se atopou a axuda"
 
 #: gui/helpfiles.c:1958
 msgid "gretl: find"
-msgstr "Gretl: Buscar"
+msgstr "GRETL: Buscar"
 
 #: gui/helpfiles.c:1966
 msgid " Find what:"
@@ -14286,7 +14283,7 @@ msgstr "Importar datos dende %s"
 
 #: gui/join-gui.c:326 gui/join-gui.c:334
 msgid "gretl: join data"
-msgstr "Gretl: Xuntar datos"
+msgstr "GRETL: Xuntar datos"
 
 #: gui/join-gui.c:427
 msgid "import series"
@@ -14425,19 +14422,19 @@ msgstr "Amosar os resultados individuais"
 
 #: gui/library.c:1299
 msgid "gretl: ADF test"
-msgstr "Gretl: Proba ADF"
+msgstr "GRETL: Proba ADF"
 
 #: gui/library.c:1300
 msgid "gretl: ADF-GLS test"
-msgstr "Gretl: Proba ADF-MCX"
+msgstr "GRETL: Proba ADF-MCX"
 
 #: gui/library.c:1301
 msgid "gretl: KPSS test"
-msgstr "Gretl: Proba KPSS"
+msgstr "GRETL: Proba KPSS"
 
 #: gui/library.c:1302
 msgid "gretl: Levin-Lin-Chu test"
-msgstr "Gretl: Proba Levin-Lin-Chu"
+msgstr "GRETL: Proba Levin-Lin-Chu"
 
 #: gui/library.c:1448 gui/library.c:6065
 msgid "Lag order:"
@@ -14445,7 +14442,7 @@ msgstr "Nivel de retardo:"
 
 #: gui/library.c:1487
 msgid "gretl: add info"
-msgstr "Gretl: Engadir información"
+msgstr "GRETL: Engadir información"
 
 #: gui/library.c:1488
 msgid ""
@@ -14457,11 +14454,11 @@ msgstr ""
 
 #: gui/library.c:1491 gui/library.c:1503
 msgid "gretl: edit data info"
-msgstr "Gretl: Editar información de datos"
+msgstr "GRETL: Editar información de datos"
 
 #: gui/library.c:1500
 msgid "gretl: data info"
-msgstr "Gretl: Información dos datos"
+msgstr "GRETL: Información dos datos"
 
 #: gui/library.c:1520
 msgid "Unspecified error"
@@ -14478,9 +14475,9 @@ msgid ""
 "Do you want to go ahead with the subsampling now?"
 msgstr ""
 "Modificando así o conxunto de datos eliminaranse\n"
-"%d modelo(s) desta sesión de Gretl.\n"
+"%d modelo(s) desta sesión de GRETL.\n"
 "\n"
-"Queres dicir 'Non' aquí e gardar primeiro a sesión.\n"
+"Queres dicir aquí 'Non', e gardar primeiro a sesión.\n"
 "\n"
 "Queres continuar agora coa submostra?"
 
@@ -14519,7 +14516,7 @@ msgstr "Amosar a conta de valores ausentes en cada observación"
 
 #: gui/library.c:1784 gui/library.c:1795
 msgid "gretl: missing values info"
-msgstr "Gretl: Información de valores ausentes"
+msgstr "GRETL: Información de valores ausentes"
 
 #: gui/library.c:1855
 msgid "Export the markers to file"
@@ -14596,23 +14593,23 @@ msgstr "Non se escolleu ningunha variable"
 
 #: gui/library.c:2404
 msgid "gretl: sequential omit test"
-msgstr "Gretl: Proba de omisión secuencial"
+msgstr "GRETL: Proba de omisión secuencial"
 
 #: gui/library.c:2407 gui/library.c:2464 gui/library.c:2508
 msgid "gretl: Wald omit test"
-msgstr "Gretl: Proba de omisión de Wald"
+msgstr "GRETL: Proba de omisión de Wald"
 
 #: gui/library.c:2411
 msgid "gretl: LM test"
-msgstr "Gretl: Proba ML"
+msgstr "GRETL: Proba ML"
 
 #: gui/library.c:2469 gui/library.c:4804
 msgid "gretl: vector autoregression"
-msgstr "Gretl: Autorregresión vectorial"
+msgstr "GRETL: Autorregresión vectorial"
 
 #: gui/library.c:2618
 msgid "gretl: LM test "
-msgstr "Gretl: Proba ML "
+msgstr "GRETL: Proba ML "
 
 #: gui/library.c:2621 gui/library.c:2625 gui/library.c:2629
 msgid "(heteroskedasticity)"
@@ -14620,7 +14617,7 @@ msgstr "(heterocedasticidade)"
 
 #: gui/library.c:2637
 msgid "gretl: groupwise heteroskedasticity"
-msgstr "Gretl: Heterocedasticidade por grupos"
+msgstr "GRETL: Heterocedasticidade por grupos"
 
 #: gui/library.c:2643
 msgid "(non-linearity)"
@@ -14628,11 +14625,11 @@ msgstr "(non linearidade)"
 
 #: gui/library.c:2651
 msgid "gretl: common factor test"
-msgstr "Gretl: Proba de factor común"
+msgstr "GRETL: Proba de factor común"
 
 #: gui/library.c:2655
 msgid "gretl: cross-sectional dependence"
-msgstr "Gretl: Dependencia de sección cruzada"
+msgstr "GRETL: Dependencia de sección cruzada"
 
 #: gui/library.c:2688
 msgid "Lag order for ARCH test:"
@@ -14640,15 +14637,15 @@ msgstr "Nivel de retardo para a proba ARCH:"
 
 #: gui/library.c:2735
 msgid "gretl: panel model diagnostics"
-msgstr "Gretl: Diagnósticos do modelo de panel"
+msgstr "GRETL: Diagnósticos do modelo de panel"
 
 #: gui/library.c:2809
 msgid "gretl: leverage and influence"
-msgstr "Gretl: Pancamento e influencia"
+msgstr "GRETL: Pancamento e influencia"
 
 #: gui/library.c:2874
 msgid "gretl: collinearity"
-msgstr "Gretl: Multicolinearidade"
+msgstr "GRETL: Multicolinearidade"
 
 #: gui/library.c:2902
 msgid "Gini coefficient"
@@ -14676,7 +14673,7 @@ msgstr "Debes de elixir cando menos un regresor"
 
 #: gui/library.c:3090 gui/library.c:3201
 msgid "gretl: Chow test output"
-msgstr "Gretl: Resultado da proba de Chow"
+msgstr "GRETL: Resultado da proba de Chow"
 
 #: gui/library.c:3113
 msgid "This test only implemented for OLS models"
@@ -14684,19 +14681,19 @@ msgstr "Esta proba só está preparada para modelos de MCO"
 
 #: gui/library.c:3144
 msgid "gretl: chow test"
-msgstr "Gretl: Proba de Chow"
+msgstr "GRETL: Proba de Chow"
 
 #: gui/library.c:3203
 msgid "gretl: QLR test output"
-msgstr "Gretl: Resultado da proba QLR"
+msgstr "GRETL: Resultado da proba QLR"
 
 #: gui/library.c:3205
 msgid "gretl: CUSUM test output"
-msgstr "Gretl: Resultado da proba CUSUM"
+msgstr "GRETL: Resultado da proba CUSUM"
 
 #: gui/library.c:3206
 msgid "gretl: CUSUMSQ test output"
-msgstr "Gretl: Resultado da proba CUSUMSQ"
+msgstr "GRETL: Resultado da proba CUSUMSQ"
 
 #: gui/library.c:3221
 msgid "all variants"
@@ -14704,7 +14701,7 @@ msgstr "Todas as variantes"
 
 #: gui/library.c:3232 gui/library.c:3283
 msgid "gretl: RESET test"
-msgstr "Gretl: Proba RESET"
+msgstr "GRETL: Proba RESET"
 
 #: gui/library.c:3233
 msgid "RESET specification test"
@@ -14740,7 +14737,7 @@ msgstr "Aínda non preparado!"
 
 #: gui/library.c:4243
 msgid "gretl: GARCH"
-msgstr "Gretl: GARCH"
+msgstr "GRETL: GARCH"
 
 #: gui/library.c:4581
 msgid "loess"
@@ -14772,7 +14769,7 @@ msgstr "Poñer %d observacións como \"ausentes\""
 
 #: gui/library.c:5415
 msgid "gretl: residual dist."
-msgstr "Gretl: Dist. dos erros"
+msgstr "GRETL: Dist. dos erros"
 
 #: gui/library.c:5480
 #, c-format
@@ -14790,11 +14787,11 @@ msgstr "Distribución de frecuencias"
 
 #: gui/library.c:5664
 msgid "gretl: TRAMO analysis"
-msgstr "Gretl: Análise con TRAMO"
+msgstr "GRETL: Análise con TRAMO"
 
 #: gui/library.c:5665
 msgid "gretl: X-12-ARIMA analysis"
-msgstr "Gretl: Análise ARIMA X-12"
+msgstr "GRETL: Análise ARIMA X-12"
 
 #: gui/library.c:5792
 msgid "Trim maximum and minimum in sub-samples"
@@ -14802,15 +14799,15 @@ msgstr "Descartar o máximo e o mínimo nas submostras"
 
 #: gui/library.c:5800
 msgid "gretl: range-mean graph"
-msgstr "Gretl: Gráfica Rango-Media"
+msgstr "GRETL: Gráfica Rango-Media"
 
 #: gui/library.c:5829
 msgid "gretl: range-mean statistics"
-msgstr "Gretl: Estatísticos da análise Rango-Media"
+msgstr "GRETL: Estatísticos da análise Rango-Media"
 
 #: gui/library.c:5859
 msgid "gretl: Hurst exponent"
-msgstr "Gretl: Expoñente de Hurst"
+msgstr "GRETL: Expoñente de Hurst"
 
 #: gui/library.c:5880
 msgid "correlogram"
@@ -14826,11 +14823,11 @@ msgstr "Retardo máximo:"
 
 #: gui/library.c:6057
 msgid "gretl: fractional integration"
-msgstr "Gretl: Integración fraccional"
+msgstr "GRETL: Integración fraccional"
 
 #: gui/library.c:6132 gui/toolbar.c:612
 msgid "gretl: coefficient confidence intervals"
-msgstr "Gretl: Intervalos de confianza para os coeficientes"
+msgstr "GRETL: Intervalos de confianza para os coeficientes"
 
 #: gui/library.c:6145
 msgid "Data set is gone"
@@ -14842,7 +14839,7 @@ msgstr "Fallo ao xerar a matriz de covarianza"
 
 #: gui/library.c:6158
 msgid "gretl: coefficient covariances"
-msgstr "Gretl: Covarianzas dos coeficientes"
+msgstr "GRETL: Covarianzas dos coeficientes"
 
 #: gui/library.c:6207 gui/library.c:6234
 msgid "Encode all values"
@@ -14871,7 +14868,7 @@ msgstr "Codificar as variables como variables ficticias"
 
 #: gui/library.c:6248
 msgid "gretl: create dummy variables"
-msgstr "Gretl: Crear variables ficticias"
+msgstr "GRETL: Crear variables ficticias"
 
 #: gui/library.c:6408
 msgid "in the cross-sectional dimension"
@@ -14888,7 +14885,7 @@ msgstr "Eliminar realmente as últimas %d observacións?"
 
 #: gui/library.c:6452
 msgid "gretl: drop observations"
-msgstr "Gretl: Prescindir de observacións"
+msgstr "GRETL: Prescindir de observacións"
 
 #: gui/library.c:6466
 msgid "There are no extra observations to drop"
@@ -14917,11 +14914,11 @@ msgstr "Tipificando variables"
 
 #: gui/library.c:6488
 msgid "gretl: create standardized variables"
-msgstr "Gretl: Crear variables tipificadas"
+msgstr "GRETL: Crear variables tipificadas"
 
 #: gui/library.c:6525
 msgid "gretl: generate lags"
-msgstr "Gretl: Xerar retardos"
+msgstr "GRETL: Xerar retardos"
 
 #: gui/library.c:6526
 msgid "Number of lags to create:"
@@ -14998,7 +14995,7 @@ msgstr "Desexas realmente borrar as variables seleccionadas?"
 
 #: gui/library.c:7390 gui/session.c:2562
 msgid "gretl: delete"
-msgstr "Gretl: Borrar"
+msgstr "GRETL: Borrar"
 
 #: gui/library.c:7402
 msgid "Cannot delete the specified variables"
@@ -15068,7 +15065,7 @@ msgstr "precargar os datos"
 
 #: gui/library.c:8762 plugin/leverage.c:106 plugin/pca.c:104
 msgid "gretl: save data"
-msgstr "Gretl: Gardar datos"
+msgstr "GRETL: Gardar datos"
 
 #: gui/library.c:8763
 msgid ""
@@ -15080,7 +15077,7 @@ msgstr ""
 
 #: gui/library.c:8767
 msgid "gretl: Compact data"
-msgstr "Gretl: Compactar datos"
+msgstr "GRETL: Compactar datos"
 
 #: gui/library.c:8768
 msgid ""
@@ -15094,7 +15091,7 @@ msgstr ""
 
 #: gui/library.c:8772
 msgid "gretl: Expand data"
-msgstr "Gretl: Expandir os datos"
+msgstr "GRETL: Expandir os datos"
 
 #: gui/library.c:8773
 msgid ""
@@ -15108,7 +15105,7 @@ msgstr ""
 
 #: gui/library.c:8792
 msgid "gretl: transpose data"
-msgstr "Gretl: Traspor os datos"
+msgstr "GRETL: Traspor os datos"
 
 #: gui/library.c:8793
 msgid ""
@@ -15154,7 +15151,7 @@ msgstr "Sobrescribir?"
 
 #: gui/library.c:8933
 msgid "gretl: revised data set"
-msgstr "Gretl: Conxunto de datos revisado"
+msgstr "GRETL: Conxunto de datos revisado"
 
 #: gui/library.c:8934
 msgid ""
@@ -15170,7 +15167,7 @@ msgstr "Estilo novo (máis rápido)"
 
 #: gui/library.c:8977
 msgid "old style (compatible with gretl < 2018c)"
-msgstr "Estilo antigo (compatible con Gretl < 2018c)"
+msgstr "Estilo antigo (compatible con GRETL < 2018c)"
 
 #: gui/library.c:8979
 msgid "Missing values should be stored:"
@@ -15476,7 +15473,7 @@ msgstr "A táboa de modelos está baldeira"
 
 #: gui/model_table.c:1172
 msgid "gretl: model table"
-msgstr "Gretl: Táboa de modelos"
+msgstr "GRETL: Táboa de modelos"
 
 #: gui/model_table.c:1245
 msgid "$p$-values in brackets"
@@ -15502,7 +15499,7 @@ msgstr "%s substituído\n"
 
 #: gui/selector.c:562 gui/toolbar.c:1447
 msgid "gretl: specify model"
-msgstr "Gretl: Especificar modelo"
+msgstr "GRETL: Especificar modelo"
 
 #: gui/selector.c:961
 msgid "U"
@@ -16196,11 +16193,11 @@ msgstr "CSV"
 
 #: gui/selector.c:6887
 msgid "gretl datafile (.gdt)"
-msgstr "Ficheiro de datos Gretl (.gdt)"
+msgstr "Ficheiro de datos GRETL (.gdt)"
 
 #: gui/selector.c:6888
 msgid "gretl binary datafile (.gdtb)"
-msgstr "Ficheiro de datos binarios Gretl (.gdtb)"
+msgstr "Ficheiro de datos binarios GRETL (.gdtb)"
 
 #: gui/selector.c:6889
 msgid "gretl database (.bin)"
@@ -16400,7 +16397,7 @@ msgstr "Variable de ordenación"
 
 #: gui/series_view.c:728 gui/ssheet.c:4188
 msgid "gretl: data format"
-msgstr "Gretl: Formato dos datos"
+msgstr "GRETL: Formato dos datos"
 
 #: gui/series_view.c:742 gui/ssheet.c:4202
 msgid "Select data format"
@@ -16537,11 +16534,11 @@ msgstr ""
 
 #: gui/session.c:2809
 msgid "gretl: copy object"
-msgstr "Gretl: Copiar obxecto"
+msgstr "GRETL: Copiar obxecto"
 
 #: gui/session.c:2852
 msgid "gretl: rename object"
-msgstr "Gretl: Cambiar o nome do obxecto"
+msgstr "GRETL: Cambiar o nome do obxecto"
 
 #: gui/session.c:3753
 msgid "Data set"
@@ -16666,11 +16663,11 @@ msgstr "Valores propios"
 
 #: gui/settings.c:200
 msgid "Main gretl directory"
-msgstr "Cartafol principal de Gretl"
+msgstr "Cartafol principal de GRETL"
 
 #: gui/settings.c:202
 msgid "User's gretl directory"
-msgstr "Cartafol de usuario de Gretl"
+msgstr "Cartafol de usuario de GRETL"
 
 #: gui/settings.c:205
 msgid "Remember main window size"
@@ -16892,12 +16889,12 @@ msgstr "Este cambio aplicarase a xanelas abertas recentemente"
 #: gui/settings.c:948
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
 msgstr ""
-"Semella que estás executando Gretl como 'root'. Estás seguro de querer facer "
+"Semella que estás executando GRETL como 'root'. Estás seguro de querer facer "
 "isto?"
 
 #: gui/settings.c:1033
 msgid "gretl: preferences"
-msgstr "Gretl: Preferencias"
+msgstr "GRETL: Preferencias"
 
 #: gui/settings.c:1227
 msgid "English (US letter paper)"
@@ -16941,7 +16938,7 @@ msgstr "HCCME"
 
 #: gui/settings.c:1896
 msgid "This change will take effect when you restart gretl"
-msgstr "Este cambio terá efecto cando reinicies Gretl"
+msgstr "Este cambio terá efecto cando reinicies GRETL"
 
 #: gui/settings.c:2540
 msgid "Select a specific font"
@@ -16949,7 +16946,7 @@ msgstr "Seleccionar un tipo de letra específico"
 
 #: gui/settings.c:2674 gui/settings.c:2784
 msgid "Font for gretl output windows"
-msgstr "Tipo de letra para a xanela de resultados Gretl"
+msgstr "Tipo de letra para a xanela de resultados GRETL"
 
 #: gui/settings.c:2678 gui/settings.c:2788
 msgid "Font for menus and labels"
@@ -16961,7 +16958,7 @@ msgstr "Lembrar esta configuración"
 
 #: gui/settings.c:2879
 msgid "gretl: font scale"
-msgstr "Gretl: Escala da fonte"
+msgstr "GRETL: Escala da fonte"
 
 #: gui/settings.c:2884
 msgid "Scale for monospaced and menu fonts"
@@ -16973,7 +16970,7 @@ msgstr "Cartafol de traballo:"
 
 #: gui/settings.c:3061
 msgid "On start-up, gretl should use:"
-msgstr "Ao iniciar, Gretl debe usarse:"
+msgstr "Ao iniciar, GRETL debe usarse:"
 
 #: gui/settings.c:3068
 msgid "the directory selected above"
@@ -17007,7 +17004,7 @@ msgstr "Abrir o cartafol de traballo"
 
 #: gui/settings.c:3182
 msgid "gretl: working directory"
-msgstr "Gretl: Cartafol de traballo"
+msgstr "GRETL: Cartafol de traballo"
 
 #: gui/ssheet.c:141
 msgid "Apply"
@@ -17076,11 +17073,11 @@ msgstr ""
 
 #: gui/ssheet.c:1017
 msgid "gretl: case marker"
-msgstr "Gretl: Marcador de caso"
+msgstr "GRETL: Marcador de caso"
 
 #: gui/ssheet.c:1057
 msgid "gretl: name column"
-msgstr "Gretl: Nomear a columna"
+msgstr "GRETL: Nomear a columna"
 
 #: gui/ssheet.c:1058
 msgid ""
@@ -17092,7 +17089,7 @@ msgstr ""
 
 #: gui/ssheet.c:1188
 msgid "gretl: specify scalar"
-msgstr "Gretl: Especificar escalar"
+msgstr "GRETL: Especificar escalar"
 
 #: gui/ssheet.c:1189
 msgid "Enter a numerical value"
@@ -17116,7 +17113,7 @@ msgstr "Aviso: Había observacións ausentes"
 
 #: gui/ssheet.c:1676 gui/toolbar.c:436
 msgid "gretl: save matrix"
-msgstr "Gretl: Gardar matriz"
+msgstr "GRETL: Gardar matriz"
 
 #: gui/ssheet.c:1677 gui/toolbar.c:437
 msgid "Enter a name"
@@ -17137,15 +17134,15 @@ msgstr "Aviso: A serie *%s* está baldeira"
 
 #: gui/ssheet.c:3226
 msgid "gretl: edit matrix"
-msgstr "Gretl: Editar unha matriz"
+msgstr "GRETL: Editar unha matriz"
 
 #: gui/ssheet.c:3229
 msgid "gretl: scalars"
-msgstr "Gretl: Escalares"
+msgstr "GRETL: Escalares"
 
 #: gui/ssheet.c:3231
 msgid "gretl: edit data"
-msgstr "Gretl: Editar datos"
+msgstr "GRETL: Editar datos"
 
 #: gui/ssheet.c:3423
 msgid "Please add a variable to the dataset first"
@@ -17208,7 +17205,7 @@ msgstr "Editando %d guións. Realmente queres deixalo?"
 
 #: gui/tabwin.c:102 gui/tabwin.c:576
 msgid "gretl: script editor"
-msgstr "Gretl: Editor de guións"
+msgstr "GRETL: Editor de guións"
 
 #: gui/tabwin.c:438 gui/tabwin.c:440
 msgid "untitled"
@@ -17216,11 +17213,11 @@ msgstr "sen nome"
 
 #: gui/tabwin.c:581
 msgid "gretl: foreign script editor"
-msgstr "Gretl: Editor externo de guións"
+msgstr "GRETL: Editor externo de guións"
 
 #: gui/tabwin.c:585
 msgid "gretl: models"
-msgstr "Gretl: Modelos"
+msgstr "GRETL: Modelos"
 
 #: gui/tabwin.c:1162
 msgid "Move to new window"
@@ -17252,15 +17249,15 @@ msgstr "Procesando...\n"
 
 #: gui/textbuf.c:1673
 msgid "gretl + MPI"
-msgstr "Gretl + MPI"
+msgstr "GRETL + MPI"
 
 #: gui/textbuf.c:1675
 msgid "gretl + SVM"
-msgstr "Gretl + SVM"
+msgstr "GRETL + SVM"
 
 #: gui/textbuf.c:1679
 msgid "dbnomics for gretl"
-msgstr "DBNOMICS para Gretl"
+msgstr "DBNOMICS para GRETL"
 
 #: gui/textbuf.c:1822
 #, c-format
@@ -17269,16 +17266,15 @@ msgstr "Non puido lerse %s"
 
 #: gui/textbuf.c:2287
 msgid "Gretl Command Reference"
-msgstr "Instrucións de Gretl"
+msgstr "Instrucións de GRETL"
 
 #: gui/textbuf.c:2331
 msgid "Gretl Function Reference"
-msgstr "Guía de Funcións de Gretl"
+msgstr "Guía de funcións de GRETL"
 
 #: gui/textbuf.c:2335
-#, fuzzy
 msgid "Functions proper"
-msgstr "Guía de _funcións"
+msgstr "Funcións propias"
 
 #: gui/textbuf.c:2433
 msgid "Back"
@@ -17321,9 +17317,8 @@ msgid "Unindent region"
 msgstr "Eliminar a sangría da rexión"
 
 #: gui/textbuf.c:3936
-#, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
-msgstr "Sangrar automaticamente o guión"
+msgstr "Sangrar automaticamente o guión (Ctrl+I)"
 
 #: gui/textbuf.c:3947 gui/toolbar.c:820
 msgid "Preferences..."
@@ -17331,7 +17326,7 @@ msgstr "Preferencias..."
 
 #: gui/textutil.c:282
 msgid "gretl: replace"
-msgstr "Gretl: Substituír"
+msgstr "GRETL: Substituír"
 
 #: gui/textutil.c:296
 msgid "Replace with:"
@@ -17359,7 +17354,7 @@ msgstr "Gardar nun ficheiro"
 
 #: gui/toolbar.c:237
 msgid "gretl: save text"
-msgstr "Gretl: Gardar texto"
+msgstr "GRETL: Gardar texto"
 
 #: gui/toolbar.c:237
 msgid "Save text"
@@ -17536,7 +17531,7 @@ msgstr "Guión novo"
 
 #: gui/toolbar.c:1468
 msgid "open gretl console"
-msgstr "Abrir consola de Gretl"
+msgstr "Abrir consola de GRETL"
 
 #: gui/toolbar.c:1469
 msgid "session icon view"
@@ -17571,27 +17566,25 @@ msgid "Stop"
 msgstr "Parar"
 
 #: gui/update.c:33
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "Version %s is available at http://gretl.sourceforge.net/\n"
 msgstr ""
-"Estás executando Gretl %s.\n"
-"A versión %s está dispoñible en http://ricardo.ecn.wfu.edu/pub/gretl/\n"
-"(Se esta versión aínda non está en http://gretl.sourceforge.net/\n"
-"debería estalo axiña.)"
+"Estás executando GRETL %s.\n"
+"A versión %s está dispoñible en http://gretl.sourceforge.net/\n"
 
 #: gui/update.c:37
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "This seems to be a pre-release; the latest version available at\n"
 "http://gretl.sourceforge.net/ is %s"
 msgstr ""
-"Estás executando Gretl %s.\n"
+"Estás executando GRETL %s.\n"
 "Esta semella ser unha versión preliminar; a derradeira versión dispoñible "
 "en\n"
-"http://ricardo.ecn.wfu.edu/pub/gretl/ é %s"
+"http://gretl.sourceforge.net/ é %s"
 
 #: gui/update.c:42
 #, c-format
@@ -17599,7 +17592,7 @@ msgid ""
 "You are running gretl %s.\n"
 "This is the current version."
 msgstr ""
-"Estás executando Gretl %s.\n"
+"Estás executando GRETL %s.\n"
 "Esta é a versión vixente."
 
 #: gui/update.c:68
@@ -17652,7 +17645,7 @@ msgstr "Número de ID:"
 
 #: gui/varinfo.c:789
 msgid "gretl: variable attributes"
-msgstr "Gretl: Atributos de variable"
+msgstr "GRETL: Atributos de variable"
 
 #: gui/varinfo.c:871 gui/varinfo.c:876 gui/varinfo.c:883 gui/varinfo.c:1101
 msgid "Description:"
@@ -17680,7 +17673,7 @@ msgstr "Os valores numéricos representan unha codificación"
 
 #: gui/varinfo.c:1068
 msgid "gretl: save series"
-msgstr "Gretl: Gardar serie"
+msgstr "GRETL: Gardar serie"
 
 #: gui/winstack.c:300
 msgid "Main window"
@@ -18257,7 +18250,7 @@ msgstr "Folla a importar:"
 
 #: plugin/import_common.c:704
 msgid "gretl: spreadsheet import"
-msgstr "Gretl: Importación de folla de cálculo"
+msgstr "GRETL: Importación de folla de cálculo"
 
 #: plugin/import_common.c:717
 msgid "Start import at:"
@@ -18513,7 +18506,7 @@ msgstr "Nota:"
 
 #: plugin/mailer.c:800
 msgid "gretl: send mail"
-msgstr "Gretl: Enviar correo"
+msgstr "GRETL: Enviar correo"
 
 #: plugin/mailer.c:838
 msgid "Message"
@@ -18522,12 +18515,12 @@ msgstr "Mensaxe"
 #: plugin/mailer.c:873
 #, c-format
 msgid "Please find the gretl data file %s attached."
-msgstr "Busca o ficheiro de datos de Gretl %s anexado."
+msgstr "Busca o ficheiro de datos de GRETL %s anexado."
 
 #: plugin/mailer.c:876
 #, c-format
 msgid "Please find the gretl script %s attached."
-msgstr "Busca o guión de Gretl %s anexado."
+msgstr "Busca o guión de GRETL %s anexado."
 
 #: plugin/mailer.c:900
 msgid "Append signature"
@@ -18635,15 +18628,15 @@ msgstr "Compoñente con autovalor = %.4f"
 
 #: plugin/progress_bar.c:60
 msgid "gretl: loading data"
-msgstr "Gretl: Cargando datos"
+msgstr "GRETL: Cargando datos"
 
 #: plugin/progress_bar.c:62
 msgid "gretl: storing data"
-msgstr "Gretl: Almacenando datos"
+msgstr "GRETL: Almacenando datos"
 
 #: plugin/progress_bar.c:64
 msgid "gretl: scanning fonts"
-msgstr "Gretl: Explorando fontes"
+msgstr "GRETL: Explorando fontes"
 
 #: plugin/progress_bar.c:135
 msgid "Retrieving"
@@ -19010,7 +19003,7 @@ msgstr ""
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
 msgstr ""
 "Este ficheiro non é un ficheiro 'OLE' -- pode ser antigo de máis para que "
-"Gretl o poda ler\n"
+"GRETL o poda ler\n"
 
 #: plugin/workbook.c:561
 msgid "Unexpected error reading the file\n"
