@@ -119,7 +119,8 @@ endloop
 
 var p X
 \end{scodebit}
-%$
+% $
+\scriptURL
 Output (selected portions):
 \begin{outbit}
 Model 1: OLS, using observations 1960:3-1999:4 (T = 158)
@@ -266,7 +267,7 @@ list Y = 1 2 3 4
 var 4 Y --lagselect
 var 6 Y --lagselect
 \end{scodebit}
-%$
+% $
 Output (selected portions):
 \begin{outbit}
 VAR system, maximum lag order 4
@@ -555,7 +556,7 @@ eval $test ~ $pvalue
 modtest 4 --autocorr --univariate
 eval $test ~ $pvalue
 \end{scodebit}
-%$
+% $
 Output from tests:
 \begin{outbit}
 ? modtest 4 --autocorr
