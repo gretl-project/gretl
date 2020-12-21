@@ -15523,8 +15523,33 @@
 	Calcula o estatístico <math>F</math> para probar a hipótese nula de
 	que as varianzas poboacionais das variables <repl>serie1</repl> e
 	<repl>serie2</repl> son iguais, e amosa a súa probabilidade asociada
-	(valor p).
+	(valor p). Podes obter as estatísticas da proba e a probabilidade asociada
+	mediante os accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/>,
+	respectivamente. O seguinte código
       </para>
+      <code>
+		open AWM18.gdt
+		vartest EEN EXR
+		eval $test
+		eval $pvalue
+      </code>
+    <para>
+      calcula a proba, e amosa como recuperar máis tarde o estatístico de
+      proba e a probabilidade asociada correspondente:
+  	</para>
+  	<code>
+		Proba de igualdade de varianzas
+
+		EEN: Número de observacións = 192
+		EXR: Número de observacións = 188
+		Cociente entre varianzas mostrais = 3.70707
+		Hipótese nula: As dúas varianzas das poboacións son iguais
+		Estatístico de proba: F(191,187) = 3.70707
+		valor p (con dúas colas) = 1.94866e-18
+
+		3.7070716
+		1.9486605e-18
+	</code>
       <para context="gui">
 	Calcula o estatístico <math>F</math> para probar a hipótese nula de
 	que as varianzas poboacionais das dúas series elixidas son iguais, e

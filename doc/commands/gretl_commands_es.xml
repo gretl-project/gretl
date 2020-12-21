@@ -15523,8 +15523,33 @@
 	Calcula el estadístico <math>F</math> para contrastar la hipótesis nula de
 	que las varianzas poblacionales de las variables <repl>serie1</repl> y
 	<repl>serie2</repl> son iguales, y muestra su probabilidad asociada
-	(valor p).
+	(valor p). Puedes obtener las estadísticas del contraste y el valor p
+	mediante los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>,
+	respectivamente. El siguiente código
       </para>
+      <code>
+		open AWM18.gdt
+		vartest EEN EXR
+		eval $test
+		eval $pvalue
+      </code>
+    <para>
+      calcula el contraste, y muestra como recuperar más tarde el estadístico
+      de contraste y el valor p correspondiente:
+  	</para>
+  	<code>
+		Contraste de igualdad de varianzas
+
+		EEN: Número de observaciones = 192
+		EXR: Número de observaciones = 188
+		Cociente entre varianzas muestrales = 3.70707
+		Hipótesis nula: Las dos varianzas poblacionales son iguales
+		Estadístico de contraste: F(191,187) = 3.70707
+		valor p (a dos colas) = 1.94866e-18
+
+		3.7070716
+		1.9486605e-18
+	</code>
       <para context="gui">
 	Calcula el estadístico <math>F</math> para contrastar la hipótesis nula de
 	que las varianzas poblacionales de las dos series elegidas son iguales, y

@@ -190,7 +190,7 @@
 	  Debido a la limitada precisión de la aritmética digital, el resultado
 	  del cálculo de la integral del método Imhof puede volverse negativo cuando
 	  el estadístico de Durbin-Watson está próximo a su límite inferior;
-	  por eso este acceso devuelve <lit>NA</lit> en esa situación. Dado que
+	  por eso este accesor devuelve <lit>NA</lit> en esa situación. Dado que
 	  cualquier otra modalidad de fallo tiene como resultado un error que se
 	  señaliza, posiblemente sea seguro asumir que un resultado NA indica que
 	  la verdadera probabilidad asociada es <quote>muy pequeña</quote>,
@@ -216,7 +216,7 @@
 	  Devuelve un escalar con uno de los códigos internos de fallo del programa. Ese
 	  código es un valor no nulo cuando ocurre un fallo pero es capturado usando
 	  la función <cmdref targ="catch"/>. Ten en cuenta que, al utilizar este
-	  acceso, el código interno de fallo se vuelve nuevamente cero. Si deseas
+	  accesor, el código interno de fallo se vuelve nuevamente cero. Si deseas
 	  obtener el mensaje de fallo asociado a un <lit>$error</lit> en concreto,
 	  es preciso guardar su valor en una variable provisional, por ejemplo
 	  utilizando el código:
@@ -810,7 +810,7 @@
       </fnargs>
       <description>
 	<para>
-	  Sin argumentos, este acceso devuelve el coeficiente de autocorrelación
+	  Sin argumentos, este accesor devuelve el coeficiente de autocorrelación
 	  de primer orden para los errores del último modelo estimado. Ahora bien,
 	  con la sintaxis <lit>$rho(n)</lit> después de la estimación de un modelo por medio
 	  de la instrucción <lit>ar</lit>, devuelve el valor estimado correspondiente
@@ -920,7 +920,7 @@
       <description>
 	<para>
 	  Debe ejecutarse después de la instrucción <lit>set stopwatch</lit> que activa
-	  la medición de tiempo de la CPU. Al usar este acceso por primera vez
+	  la medición de tiempo de la CPU. Al usar este accesor por primera vez
 	  se obtiene un escalar con la cantidad de segundos de CPU que pasaron desde
 	  la instrucción <lit>set stopwatch</lit>. Con cada acceso, se reinicia el
 	  reloj, por lo que las sucesivas utilizaciones de <lit>$stopwatch</lit>
@@ -1194,7 +1194,7 @@
 	  </seelist>
 	</para>
 	<para>
-	  Este acceso no está disponible para VARs o VECMs. Para modelos
+	  Este accesor no está disponible para VARs o VECMs. Para modelos
 	  de ese tipo <fncref targ="$sigma"/> y <fncref targ="$xtxinv"/>.
 	</para>
       </description>
@@ -1219,7 +1219,7 @@
 	  La versión actual de Gretl está formada por una cadena de texto que
 	  indica el año con formato de 4 dígitos seguido de una letra desde a hasta
 	  j, que representa las sucesivas actualizaciones dentro de cada año (por
-	  ejemplo, 2015d). El valor devuelto por este acceso está calculado
+	  ejemplo, 2015d). El valor devuelto por este accesor está calculado
 	  multiplicando el año por 10, y sumándole un número que representa a la
 	  letra, en el orden léxico en base cero. Así, 2015d se representa mediante
 	  20153.
@@ -1274,12 +1274,14 @@
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
-	  Si el último modelo estimado era uniecuacional, el acceso devuelve
-	  una lista con sus regresores. Si el último modelo era un sistema de
-	  ecuaciones, devuelve una lista <quote>global</quote> con las variables
-	  exógenas y predeterminadas (en el mismo orden en el que aparecen con el acceso
-	  <fncref targ="$sysB"/>). Si el último modelo era un VAR, devuelve una
-	  lista con los regresores exógenos, si hay alguno.
+	  Si el último modelo estimado era uniecuacional, este accesor va a
+	  devolver una lista con sus regresores. Si el último modelo era un
+	  sistema de ecuaciones, devuelve una lista <quote>global</quote> con
+	  las variables exógenas y predeterminadas (en el mismo orden en el que
+	  aparecen con el accesor <fncref targ="$sysB"/>). Si el último modelo
+	  era un VAR, devuelve una lista con los regresores exógenos (si hay
+	  alguno), con excepción de los términos determinísticos habituales
+	  (la constante, la tendencia y los elementos estacionales).
 	</para>
       </description>
     </function>
@@ -1290,7 +1292,7 @@
 	  Debe ejecutarse después de la estimación de un VAR o VECM (únicamente), y
 	  devuelve la matriz <math>X'X</math><sup>-1</sup>, donde <math>X</math> es
 	  la matriz habitual con los regresores utilizados en cada ecuación. Este
-	  acceso no está disponible para un VECM estimado con restricciones
+	  accesor no está disponible para un VECM estimado con restricciones
 	  impuestas sobre la matriz de cargas (&agr;).
 	</para>
       </description>
@@ -1308,9 +1310,9 @@
       <description>
 	<para>
 	  Si el último modelo estimado fue un VAR, un VECM o un sistema
-	  de ecuaciones simultáneas, el acceso devuelve una lista con las
+	  de ecuaciones simultáneas, este accesor devuelve una lista con las
 	  variables endógenas. Si el último modelo estimado fue uniecuacional,
-	  el acceso devuelve una lista con un único elemento, la variable dependiente.
+	  el accesor devuelve una lista con un único elemento, la variable dependiente.
 	  En el caso especial del modelo biprobit, la lista contiene dos
 	  elementos.
 	</para>
@@ -1364,16 +1366,6 @@
         <para>
           Proporciona una cadena de texto con la ruta hasta el directorio de datos de 'tramo'. Para
           usarla en modo de sustitución para cadenas, antepón el símbolo arroba (@tramodir).
-        </para>
-        </description>
-    </function>
-
-    <function name="$workdir" section="straccess" output="string">
-        <description>
-        <para>
-          Proporciona una cadena de texto con la ruta hasta el directorio
-          de trabajo vigente en Gretl. Para usarla en modo de sustitución
-          para cadenas de texto , antepón el símbolo arroba (@workdir).
         </para>
         </description>
     </function>
@@ -4172,13 +4164,13 @@
       <description>
 	<para>
 	  Esta función proporciona una alternativa más flexible que el
-	  acceso <fncref targ="$fevd"/> para obtener una matriz
+	  accesor <fncref targ="$fevd"/> para obtener una matriz
 	  de descomposición de la varianza del error de predicción (FEVD),
 	  después de estimar un VAR o un VECM. Si el argumento final
 	  (opcional), solo está disponible cuando el último modelo estimado
 	  fue un VAR o un VECM. Como alternativa, puedes guardar en un
 	  'bundle' la información sobre estos tipos de sistemas, mediante el
-	  acceso <fncref targ="$system"/>, y posteriormente pasarle
+	  accesor <fncref targ="$system"/>, y posteriormente pasarle
 	  la función <lit>fevd</lit>.
 	</para>
 	<para>
@@ -7450,13 +7442,32 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve una variable binaria (del mismo tipo que el argumento) que
-	  toma el valor 1 cuando <argname>x</argname> es <lit>NA</lit>. Cuando
-	  <argname>x</argname> es una serie, se hace la comprobación para cada
-	  elemento. Cuando <argname>x</argname> es una lista de series, devuelve
-	  una serie que toma el valor 1 en las observaciones en las que al menos una
-	  de las series presenta un valor ausente, y el valor 0 en otro caso.
+	  Devuelve una variable binaria (del mismo tipo que el argumento) que toma
+	  el valor 1 cuando <argname>x</argname> es <lit>NA</lit>. Si ese argumento
+	  es una serie, se hace la comprobación para cada elemento. Cuando sea
+	  <argname>x</argname> una lista de series, devuelve una serie que toma el
+	  valor 1 en las observaciones en las que al menos una de las series presenta
+	  un valor ausente, y el 0 en otro caso. Por ejemplo, el siguiente código
 	</para>
+	<code>
+    nulldata 3
+    series x = normal()
+    x[2] = NA
+		series x_ismiss = missing(x)
+		print x x_ismiss --byobs
+	</code>
+	<para>
+	  establece un valor ausente en la segunda observación de <argname>x</argname>,
+    y crea una nueva serie booleana <argname>x_ismiss</argname> que
+	  identifica la observación ausente.
+	</para>
+	<code>
+		             y     y_ismiss
+
+		1    -1.551247            0
+		2                         1
+		3    -2.244616            0
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="misszero"/>
@@ -7473,8 +7484,30 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve un resultado del tipo del argumento, cambiando los <lit>NA</lit>s
-	  por ceros. Si <argname>x</argname> es una serie, se cambia cada elemento.
+	  Devuelve un resultado del tipo del argumento, cambiando los
+	  <lit>NA</lit>s por ceros. Si <argname>x</argname> es una serie,
+	  se cambia elemento a elemento. Por ejemplo, el siguiente código
+	</para>
+	<code>
+		nulldata 3
+		series x = normal()
+		x[2] = NA
+		y = misszero(x)
+		print x y --byobs
+	</code>
+	<para>
+	  establece un valor ausente en la segunda observación de
+	  <argname>x</argname>, y crea una nueva serie <argname>y</argname>
+	  en la que se sustituye la observación ausente por un cero:
+	</para>
+	<code>
+	             x            y
+
+		1    0.7355250    0.7355250
+		2                     0.000
+		3   -0.2465936   -0.2465936
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="missing"/>
             <fncref targ="ok"/>
@@ -8089,7 +8122,7 @@
 	  valores binarios se convierten a extremo menor cuando se escriben,
 	  y se convierten a extremo mayor cuando se leen.
 	</para>
-	  
+
 	<subhead>Archivos con texto delimitado</subhead>
 	<para>
 	  Si el nombre del archivo que se va a leer tiene la extensión
@@ -8115,7 +8148,7 @@
 	  Ten en cuenta que las series con valores en cadenas de texto no se leen
 	  como tales; la matriz solo va a contener sus codificaciones numéricas.
 	</para>
-	  
+
 	<para>
 	  <seelist>
             <fncref targ="bread"/>
@@ -10618,7 +10651,7 @@
       </description>
     </function>
 
-	  <function name="rnameset" section="matrix" output="int">
+    <function name="rnameset" section="matrix" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -12480,6 +12513,51 @@
 	  puede revertirse a través de la función <fncref targ="unvech"/>.
 	  <seelist>
             <fncref targ="vec"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+
+    <function name="vma" section="timeseries" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix" optional="true">K</fnarg>
+	<fnarg type="int" optional="true">horizonte</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función genera una matriz con la representación VMA de un
+	  sistema VAR: si
+	  <equation status="inline"
+		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
+		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
+	  entonces la correspondiente representación VMA es
+	  <equation status="inline"
+		    ascii="y(t) = e(t) + C1 e(t-1) + ..."
+		    tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>,
+	  donde
+	  <equation status="inline" ascii="u(t) = K e(t)" tex="$u_t = K e_t$"/>.
+	</para>
+	<para>
+	  La matriz <argname>A</argname> de coeficientes del primer argumento,
+	  se forma apilando las matrices <math>A</math><sub>i</sub> de forma
+	  horizontal; tendrá rango <by r="n" c="np"/>, con una fila por cada
+	  ecuación. Esto se corresponde con las primeras <math>n</math> filas
+	  de la matriz <lit>$compan</lit> que proporcionan las instrucciones
+	  <lit>var</lit> y <lit>vecm</lit> de GRETL. La matriz <argname>K</argname>
+	  es opcional, indicando por defecto la matriz identidad.
+	</para>
+	<para>
+	  La matriz que devuelve esta función tiene un número de filas igual a
+	  <argname>horizonte</argname>, y <math>n</math><sup>2</sup> columnas:
+	  cada <math>i</math>-ésima fila contiene <math>C</math><sub>i-1</sub>
+	  en formato vectorial. El parámetro <argname>horizonte</argname> se
+	  establece por defecto igual a 24, cuando no se indique.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="irf"/>
 	  </seelist>
 	</para>
       </description>
