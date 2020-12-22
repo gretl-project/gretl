@@ -1684,7 +1684,7 @@ GtkActionEntry main_entries[] = {
     { "WorkingDir", NULL, N_("_Working directory..."), NULL, NULL, G_CALLBACK(workdir_dialog0) },
     { "ScriptFiles", NULL, N_("_Script files"), NULL, NULL, NULL },
     { "OpenScript", GTK_STOCK_OPEN, N_("_User file..."), "", NULL, G_CALLBACK(open_script_callback) },
-    { "DisplayScripts", GTK_STOCK_OPEN, N_("_Practice file..."), "", NULL, G_CALLBACK(show_files) },
+    { "DisplayScripts", GTK_STOCK_OPEN, N_("_Example scripts..."), "", NULL, G_CALLBACK(show_files) },
     { "NewScript", GTK_STOCK_NEW, N_("_New script"), "", NULL, NULL },
     { "GretlScript", NULL, N_("gretl script"), NULL, NULL, G_CALLBACK(new_script_callback) },
     { "GnuplotScript", NULL, N_("gnuplot script"), NULL, NULL, G_CALLBACK(new_script_callback) },

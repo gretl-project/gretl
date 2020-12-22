@@ -2078,7 +2078,7 @@ void display_files (int role, const gchar *path)
     if (role == FUNC_FILES || role == NATIVE_DB) {
 	title = files_title(role);
     } else if (role == PS_FILES) {
-	title = g_strdup(_("gretl: practice files"));
+	title = g_strdup(_("gretl: example scripts"));
     } else if (role == TEXTBOOK_DATA) {
 	title = g_strdup(_("gretl: data files"));
     } else if (role == REMOTE_DB) {
@@ -2237,7 +2237,7 @@ static int display_files_code (const gchar *s)
 }
 
 /* make a browser window to display a set of files: textbook
-   data files, practice scripts, databases...
+   data files, example (formerly: practice) scripts, databases...
 */
 
 void show_files (GtkAction *action, gpointer p)
@@ -3069,7 +3069,7 @@ static void switch_files_page (GtkNotebook *notebook,
 }
 
 /* below: construct a set of notebook pages for either data file
-   collections (Ramanathan, Wooldridge, etc.) or practice scripts.
+   collections (Ramanathan, Wooldridge, etc.) or example scripts.
    The function creates the pages but does not yet fill them out.
 */
 
