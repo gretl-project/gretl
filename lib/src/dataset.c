@@ -23,6 +23,7 @@
 #include "gretl_string_table.h"
 #include "libset.h"
 #include "dbread.h"
+#include "varinfo_priv.h"
 
 #define DDEBUG 0
 #define FULLDEBUG 0
@@ -30,22 +31,6 @@
 #define Z_COLS_BORROWED 2
 
 #define dset_zcols_borrowed(d) (d->auxiliary == Z_COLS_BORROWED)
-
-struct VARINFO_ {
-    char *label;
-    char display_name[MAXDISP];
-    char parent[VNAMELEN];
-    VarFlags flags;
-    char compact_method;
-    gint64 mtime;
-    short transform;    /* note: command index of transform */
-    short lag;
-    short stack_level;
-    short midas_period;
-    char midas_freq;
-    short orig_pd;
-    series_table *st;
-};
 
 static int pad_daily_data (DATASET *dset, int pd, PRN *prn);
 

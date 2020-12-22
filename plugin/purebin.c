@@ -18,15 +18,75 @@
  */
 
 #include "libgretl.h"
+#include "varinfo_priv.h"
 
 /* Writing and reading of gretl-native "pure binary" data files */
 
-#define PBDEBUG 1
+#define PBDEBUG 0
+#define VIDEBUG 0
+
+#if VIDEBUG
+
+static void print_varinfo (const DATASET *dset, int i,
+			   const char *s)
+{
+    VARINFO *V = dset->varinfo[i];
+
+    fprintf(stderr, "varinfo for %s, %s\n", dset->varname[i], s);
+    if (V->display_name[0]) {
+	fprintf(stderr, " display name '%s'\n", V->display_name);
+    }
+    if (V->parent[0]) {
+	fprintf(stderr, " parent '%s'\n", V->parent);
+    }
+    if (V->flags) {
+	fprintf(stderr, " flags %d\n", (int) V->flags);
+    }
+    if (V->transform) {
+	fprintf(stderr, " transform %d\n", (int) V->transform);
+    }
+    if (V->lag) {
+	fprintf(stderr, " lag %d\n", (int) V->lag);
+    }
+}
+
+#endif
+
+static void varinfo_write (const DATASET *dset, int i, FILE *fp)
+{
+    VARINFO V = *dset->varinfo[i]; /* shallow copy */
+
+#if VIDEBUG
+    print_varinfo(dset, i, "writing");
+#endif
+
+    V.label = NULL;
+    V.st = NULL;
+    fwrite(&V, sizeof V, 1, fp);
+}
+
+static int varinfo_read (DATASET *dset, int i, FILE *fp)
+{
+    VARINFO V;
+
+    if (fread(&V, sizeof V, 1, fp)) {
+	/* shallow copy */
+	*dset->varinfo[i] = V;
+#if VIDEBUG
+	print_varinfo(dset, i, "reading");
+#endif
+	return 0;
+    } else {
+	fprintf(stderr, "failed to read varinfo\n");
+	return E_DATA;
+    }
+}
 
 typedef struct gbin_header_ gbin_header;
 
 struct gbin_header_ {
     int gbin_version;
+    int bigendian;
     int nvars;
     int nobs;
     int markers;
@@ -220,6 +280,24 @@ static void emit_var_labels (const DATASET *dset,
     }
 }
 
+/* FIXME, should be able to handle this! */
+
+static int check_byte_order (gbin_header *gh, PRN *prn)
+{
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    if (!gh->bigendian) {
+	pputs(prn, "can't read little-endian data\n");
+	return E_DATA;
+    }
+#else
+    if (gh->bigendian) {
+	pputs(prn, "can't read big-endian data\n");
+	return E_DATA;
+    }
+#endif
+    return 0;
+}
+
 int gretl_read_purebin (const char *fname, DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
@@ -246,8 +324,13 @@ int gretl_read_purebin (const char *fname, DATASET *dset,
 
     /* header */
     if (fread(&gh, sizeof gh, 1, fp) != 1) {
-	pputs(prn, "didn't get gbin dimensions\n");
+	pputs(prn, "didn't get dataset dimensions\n");
 	err = E_DATA;
+	goto bailout;
+    }
+
+    err = check_byte_order(&gh, prn);
+    if (err) {
 	goto bailout;
     }
 
@@ -277,6 +360,11 @@ int gretl_read_purebin (const char *fname, DATASET *dset,
 		break;
 	    }
 	}
+    }
+
+    /* varinfo stuff */
+    for (i=1; i<bset->v; i++) {
+	varinfo_read(bset, i, fp);
     }
 
     /* numerical values */
@@ -362,6 +450,9 @@ int gretl_write_purebin (const char *fname,
 
     /* fill out header struct */
     gh.gbin_version = 1;
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    gh.bigendian = 1;
+#endif
     gh.nvars = nv + 1;
     gh.nobs = nobs;
     gh.markers = dset->S != NULL ? 1 : 0;
@@ -383,6 +474,11 @@ int gretl_write_purebin (const char *fname,
     for (i=1; i<=nv; i++) {
 	fputs(dset->varname[list[i]], fp);
 	fputc(0, fp);
+    }
+
+    /* varinfo stuff */
+    for (i=1; i<=nv; i++) {
+	varinfo_write(dset, list[i], fp);
     }
 
     /* numerical values */
