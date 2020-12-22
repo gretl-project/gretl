@@ -66,6 +66,7 @@ set max_verbose on
 M = BFGSmax(&theta, Rosenbrock(theta))
 print theta
 \end{scode}
+\scriptURL
 \end{script}
 
 The operation of BFGS can be adjusted using the \texttt{set} variables
@@ -151,6 +152,7 @@ M = BFGSmax(&theta, Rosenbrock(theta), Rosen_grad(&grad, theta))
 print theta
 print grad
 \end{scode}
+\scriptURL
 \end{script}
 
 \subsubsection{Limited-memory variant and constrained optimization}
@@ -187,6 +189,7 @@ fourth must lie between 0 and 1:
 \begin{code}
 matrix bounds = {2, 0, $huge; 4, 0, 1}
 \end{code}
+% $
 
 \subsection{Newton--Raphson}
 \label{sec:newton-raphson}
@@ -251,6 +254,7 @@ M = NRmax(&theta, Rosenbrock(theta), Rosen_grad(&grad, theta),
 print theta
 print grad
 \end{scode}
+\scriptURL
 \end{script}
 
 The idea behind Newton--Raphson is to exploit a quadratic
@@ -288,6 +292,7 @@ A = BFGSmax(&x, ND(x))
 x = {1.5}
 A = NRmax(&x, ND(x))
 \end{scode}
+\scriptURL
 \end{script}
 
 \section{Derivative-free optimization methods}
@@ -425,6 +430,7 @@ print x
 u = BFGSmax(&x, bimodal(x, A))
 print x
 \end{scode}
+\scriptURL
 \end{script}
 
 \subsection{Nelder--Mead}
@@ -581,8 +587,9 @@ Sigma = qform(Jac, V)
 printf "\nmpc = %g, std.err = %g\n", mpc, sqrt(Sigma)
 scalar teststat = (mpc-1)/sqrt(Sigma)
 printf "\nTest for MPC = 1: %g (p-value = %g)\n", \
-	teststat, pvalue(n,abs(teststat))
+      teststat, pvalue(n,abs(teststat))
 \end{scode}
+\scriptURL
 \end{script}
 
 Script \ref{delta-method} exemplifies such a case: the example is

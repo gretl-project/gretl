@@ -796,6 +796,7 @@ open arma.gdt        # open the "arma" example dataset
 arma11_via_kalman(y) # estimate an arma(1,1) model
 arma 1 1 ; y --nc    # check via native command
 \end{scode}
+\scriptURL
 \end{script}
 
 As is well known, the Kalman filter provides a very efficient way to
@@ -912,7 +913,8 @@ n2c = hpfilt(y, 1600)
 series h2c = hp_via_kalman(y, 1600)
 ols n2c const h2c --simple-print
 \end{scode}
-%$
+% $
+\scriptURL
 \end{script}
 
 The Hodrick--Prescott filter (HP for short) can be obtained as the
@@ -1009,6 +1011,7 @@ end mle
 ksmooth(&kb)
 series muhat = kb.state
 \end{scode}
+\scriptURL
 \end{script}
 
 Suppose we have a series $y_t = \mu_t + \varepsilon_t$, where $\mu_t$
@@ -1134,6 +1137,7 @@ series tvar_b1se = sqrt(B.stvar[,1])
 gnuplot tvar_b1hat --time-series --with-lines --output=display \
     --band=tvar_b1hat,tvar_b1se,1.96 --band-style=fill
 \end{scode}
+\scriptURL
 \end{script}
 
 \subsection{Disturbance smoothing}
@@ -1208,6 +1212,7 @@ plot etahat
     literal set title 'State disturbance with 90% confidence band'
 end plot --output=display
 \end{scode}
+\scriptURL
 \end{script}
 
 \begin{figure}[htbp]
