@@ -110,6 +110,8 @@ series y = sin(2*pi*x/n) + uniform(-1, 1)
 series yh = loess(y, x, 2, 0.75, 0)
 gnuplot y yh x --output=display --with-lines=yh
 \end{scode}
+% $
+\scriptURL
 \end{script}
 
 \begin{figure}[htbp]
@@ -206,6 +208,8 @@ series m2 = nadarwat(HA, WA, h * 10)
 dataset sortby WA
 gnuplot HA m0 m1 m2 WA --output=display --with-lines=m0,m1,m2
 \end{scode}
+% $
+\scriptURL
 \end{script}
 
 \begin{figure}[htbp]

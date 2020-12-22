@@ -833,6 +833,7 @@ restrict --full
 end restrict
 ll1 = $rlnl
 \end{scodebit}
+\scriptURL
 Partial output:
 \begin{outbit}
 Unrestricted loglikelihood (lu) = 116.60268
@@ -901,6 +902,7 @@ printf "Homogeneity in the Fisher hypothesis:\n"
 printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 	pvalue(X, 4, 2*(ll0-ll_hfh))
 \end{scodebit}
+\scriptURL      
 Output:
 \begin{outbit}
 Testing zero restrictions in cointegration space:
@@ -959,6 +961,7 @@ loop foreach i m p l s y
   printf "Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 endloop
 \end{scodebit}
+\scriptURL
 Output (variable, LR test, p-value):
 \begin{outbit}
 Delta m	18.111 [0.0060]
