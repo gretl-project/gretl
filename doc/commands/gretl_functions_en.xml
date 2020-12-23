@@ -7116,8 +7116,8 @@
 	</para>
 	<code>
 	  set seed 123
-	  X    = mnormal(6,2)
-	  Lag  = mlag(X,1)
+	  X = mnormal(6,2)
+	  Lag = mlag(X,1)
 	  Lead = mlag(X,-1)
 	  print X Lag Lead
 	  eval X'X
@@ -7556,26 +7556,19 @@
 	  <argname>m</argname> is omitted, it is understood to be
 	  zero.
 	</para>
-	<para context="notex">
-	  If <argname>p</argname> is a vector, the above operation is
-	  carried out for each element in <argname>p</argname>,
-	  joining the resulting matrices horizontally. The following code
-	  computes the first and second lag for each of the two columns of
-	  matrix <argname>x</argname>, and concatenates the resulting
-	  vectors. Missing values are replaced by NA.
-	</para>
-	<para context="tex">
-	  If $p$ is a vector, the above operation is carried out for
-	  each element in $p$, joining the resulting matrices
-	  horizontally. The following code computes the first and second lag
-	  for each of the two columns of matrix <argname>x</argname>, and
-	  concatenates the resulting vectors. Missing values are replaced by
-	  NA.
+	<para>
+	  If <argname>p</argname> is a vector the operation described
+	  above is carried out for each element in
+	  <argname>p</argname> and the resulting matrices are joined
+	  horizontally. The following code illustrates this usage, for
+	  input <argname>X</argname> with two columns and input
+	  <argname>p</argname> calling for lags 1 and 2. Missing
+	  values are set to NA as opposed to the default of 0.
 	</para>
 	<code>
-	matrix m = mnormal(5, 2)
-	print m
-	eval mlag(m, {1, 2}, NA)
+	matrix X = mnormal(5, 2)
+	print X
+	eval mlag(X, {1, 2}, NA)
 	</code>
 	<code>
 	m (5 x 2)
