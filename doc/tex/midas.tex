@@ -253,7 +253,7 @@ pseudo-out-of-sample forecasts are recorded so that their Root Mean
 Square Errors can be compared.
 
 \begin{script}[p]
-  \caption{Script to replicate results given by Ghysels}
+  \scriptcaption{Script to replicate results given by Ghysels}
   \label{lst:midasreg-ghysels}
 \begin{scode}
 set verbose off
@@ -304,8 +304,6 @@ printf "  betan   %.4f\n", fcstats(my, FC[,3])[2]
 printf "  nealmon %.4f\n", fcstats(my, FC[,4])[2]
 printf "  almonp  %.4f\n", fcstats(my, FC[,5])[2]
 \end{scode}
-%$
-\scriptURL
 \end{script}
 
 \begin{script}[p]
@@ -531,7 +529,7 @@ calculating the Gauss--Newton regression for an ADL(1) MIDAS
 model, and it could be generalized further without much difficulty.
 
 \begin{script}[p]
-  \caption{Manual MIDAS: one-parameter beta specification}
+  \scriptcaption{Manual MIDAS: one-parameter beta specification}
   \label{lst:manual-beta1}
 \begin{scode}
 set verbose off
@@ -581,8 +579,6 @@ matrix bse = midas_GNR(theta, dy, dy1, dXL, 2)
 bse[4,2] = $nan # mask std error of clamped coefficient
 modprint bse "const dy(-1) HF_slope Beta1 Beta2"
 \end{scode}
-%$
-\scriptURL
 \end{script}
 
 \subsection{Plot of coefficients}

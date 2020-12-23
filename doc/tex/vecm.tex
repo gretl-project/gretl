@@ -800,7 +800,7 @@ postulated long-run relationships feature only three free parameters,
 so the over-identification rank is 3.
 
 \begin{script}[htbp]
-  \caption{Estimation of a money demand system with constraints on $\beta$}
+  \scriptcaption{Estimation of a money demand system with constraints on $\beta$}
   \label{brand-cassola-script}
 Input:
 \begin{scodebit}
@@ -833,7 +833,7 @@ restrict --full
 end restrict
 ll1 = $rlnl
 \end{scodebit}
-\scriptURL
+
 Partial output:
 \begin{outbit}
 Unrestricted loglikelihood (lu) = 116.60268
@@ -875,7 +875,7 @@ turns out that both of the additional hypotheses are rejected by the
 data, with p-values of $0.002$ and $0.004$.
 
 \begin{script}[htbp]
-  \caption{Further testing of money demand system}
+  \scriptcaption{Further testing of money demand system}
   \label{brand-cassola-tab5}
 Input:
 \begin{scodebit}
@@ -902,7 +902,7 @@ printf "Homogeneity in the Fisher hypothesis:\n"
 printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 	pvalue(X, 4, 2*(ll0-ll_hfh))
 \end{scodebit}
-\scriptURL      
+
 Output:
 \begin{outbit}
 Testing zero restrictions in cointegration space:
@@ -928,7 +928,7 @@ exogeneity might perhaps be accepted for the long-term interest rate
 and real GDP (p-values $0.07$ and $0.08$ respectively).
 
 \begin{script}[htbp]
-  \caption{Testing for weak exogeneity}
+  \scriptcaption{Testing for weak exogeneity}
   \label{brand-cassola-exog}
 Input:
 \begin{scodebit}
@@ -961,7 +961,7 @@ loop foreach i m p l s y
   printf "Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 endloop
 \end{scodebit}
-\scriptURL
+
 Output (variable, LR test, p-value):
 \begin{outbit}
 Delta m	18.111 [0.0060]

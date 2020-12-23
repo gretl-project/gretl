@@ -289,13 +289,13 @@
 
 %% Script URLS
 
-\newcommand{\scriptURL}{%
-  \smallskip\centering
+\newcommand{\scriptcaption}[1]{%
   \def\@scriptname{%
     example-\ifnum\value{chapter}<10 0\fi\arabic{chapter}.\arabic{script}%
   }
+  \caption{#1 %
   \href{http://gretl.sourceforge.net/guidefiles/\@scriptname.inp}%
-  {Click here to download this script from SourceForge}\par\medskip%
+  {[Download $\blacktriangledown$]}}%
 }
 
 \endinput

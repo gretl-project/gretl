@@ -29,7 +29,7 @@ retrieved using the \texttt{mread()} function.\footnote{We do not
 \option{quiet} flag to the \texttt{foreign} block.
 
 \begin{script}[htbp]
-  \caption{Comparison of clustered standard errors with \app{Stata}}
+  \scriptcaption{Comparison of clustered standard errors with \app{Stata}}
   \label{Stata-test}
 \begin{scode}
 function matrix stata_reorder (matrix se)
@@ -53,8 +53,6 @@ stata_se = stata_reorder(sqrt(diag(stata_vcv)))
 matrix check = se - stata_se
 print check
 \end{scode}
-%$
-\scriptURL
 \end{script}
 
 In addition you can edit ``pure'' \app{Stata} scripts in the gretl GUI

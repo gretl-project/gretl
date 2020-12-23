@@ -257,7 +257,7 @@ calendar. We can then construct a series, \texttt{hcal}, which
 switches calendar at the right historical point.
 
 \begin{script}[htbp]
-  \caption{Historical calendar for Britain in 1752}
+  \scriptcaption{Historical calendar for Britain in 1752}
   \label{ex:britain-1752}
 \begin{scodebit}
 # 1752 was a short year on the British calendar!
@@ -275,7 +275,7 @@ series hcal = ed > epochday(-1752,9,2) ? gdate : jdate
 # And let's take a look
 print ed jdate gdate hcal -o
 \end{scodebit}
-\scriptURL
+  
 Partial output:
 \begin{outbit}
               ed        jdate        gdate         hcal
@@ -302,7 +302,7 @@ chapter~\ref{chap:datafiles}). Suitable code along with partial output
 is shown in Listing~\ref{ex:britain-1752a}.
 
 \begin{script}[htbp]
-  \caption{Continuation of Britain 1752 example}
+  \scriptcaption{Continuation of Britain 1752 example}
   \label{ex:britain-1752a}
 Additional input:
 \begin{scodebit}
@@ -311,7 +311,7 @@ isoconv(hcal, &y, &m, &d)
 genr markers = "%04d-%02d-%02d", y, m, d
 print ed jdate gdate hcal -o
 \end{scodebit}
-\scriptURL
+
 Partial output:
 \begin{outbit}
                      ed        jdate        gdate         hcal
@@ -341,7 +341,7 @@ illustrated for the year 1751 (as we would now call it) in
 Listing~\ref{ex:britain-1751}.
 
 \begin{script}[htbp]
-  \caption{Historical calendar for England in 1751}
+  \scriptcaption{Historical calendar for England in 1751}
   \label{ex:britain-1751}
 Input:
 \begin{scodebit}
@@ -356,7 +356,7 @@ y = ed < ed1 ? y-1 : y
 genr markers = "%04d-%02d-%02d", y, m, d
 print index -o
 \end{scodebit}
-\scriptURL
+
 Partial output:
 \begin{outbit}
 1750-01-01            1

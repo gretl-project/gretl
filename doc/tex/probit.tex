@@ -90,7 +90,7 @@ convergence. The \option{verbose} switch can be used to track the
 maximization algorithm.
 
 \begin{script}[htbp]
-  \caption{Estimation of simple logit and probit models}
+  \scriptcaption{Estimation of simple logit and probit models}
   \label{simple-QR}
 \begin{scode}
 open greene19_1
@@ -98,7 +98,6 @@ open greene19_1
 logit GRADE const GPA TUCE PSI
 probit GRADE const GPA TUCE PSI
 \end{scode}
-\scriptURL
 \end{script}
 
 As an example, we reproduce the results given in chapter 21 of
@@ -195,7 +194,7 @@ regression; example \ref{QR-add} shows how to perform a variable
 addition test.
 
 \begin{script}[htbp]
-  \caption{Variable addition test in a probit model}
+  \scriptcaption{Variable addition test in a probit model}
   \label{QR-add}
 \begin{scode}
 open greene19_1
@@ -206,8 +205,6 @@ ols u const GPA PSI TUCE -q
 printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
 \end{scode}
-% $
-\scriptURL
 \end{script}
 
 \subsection{The perfect prediction problem}
@@ -317,7 +314,7 @@ separate command for ordered models: the \texttt{logit} and
 the dependent variable is acceptable, but not binary.
 
 \begin{script}[htbp]
-  \caption{Ordered probit model}
+  \scriptcaption{Ordered probit model}
   \label{ex:oprobit}
 \begin{scodebit}
 /*
@@ -379,7 +376,6 @@ printf "\nWith choice, E(y) = %.2f, without E(y) = %.2f\n", E1, E0
 printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
   choice_ols
 \end{scodebit}
-\scriptURL
 \end{script}
 
 Listing \ref{ex:oprobit} reproduces the results presented in section
@@ -745,7 +741,7 @@ above).  An example is contained in the sample script
 \texttt{wtp.inp}, provided with the gretl distribution.
 
 \begin{script}[ht]
-  \caption{Interval model on artificial data}
+  \scriptcaption{Interval model on artificial data}
   \label{ex:interval}
 Input:
 \begin{scodebit}
@@ -766,7 +762,7 @@ gen_resid = $uhat
 yhat = $yhat + gen_resid
 corr ystar yhat 
 \end{scodebit}
-\scriptURL
+
 Output (selected portions):
 \begin{outbit}
 Model 1: Interval estimates using the 100 observations 1-100
@@ -890,7 +886,7 @@ equal the difference between actual and fitted $y_i$ only for
 uncensored observations (those for which $d_i = 1$).
 
 \begin{script}[htbp]
-  \caption{Heckit model}
+  \scriptcaption{Heckit model}
   \label{ex:heckit}
 \begin{scode}
 open mroz87.gdt
@@ -916,7 +912,6 @@ list Z = X NWINC WA KL6 K618
 
 heckit lww X ; LFP Z --two-step 
 \end{scode}
-\scriptURL
 \end{script}
 
 Listing \ref{ex:heckit} shows two estimates from the dataset used in
@@ -1285,7 +1280,7 @@ crime again diminishes. (The exponential model would therefore not be
 appropriate in this case.)
 
 \begin{script}[htbp]
-  \caption{Models for recidivism data}
+  \scriptcaption{Models for recidivism data}
   \label{ex:duration1}
 Input:
 \begin{scodebit}
@@ -1295,7 +1290,7 @@ list X = workprg priors tserved felon alcohol drugs \
 duration durat 0 X ; cens
 duration durat 0 X ; cens --lognormal
 \end{scodebit}
-\scriptURL
+
 Partial output:
 \begin{outbit}
 Model 1: Duration (Weibull), using observations 1-1445
@@ -1389,7 +1384,7 @@ gradually declines from 1.6703 at one month to 1.1766 at 100 months.
 
 
 \begin{script}[htbp]
-  \caption{Create plots showing conditional hazards}
+  \scriptcaption{Create plots showing conditional hazards}
   \label{ex:hazard-plots}
 \begin{scode}
 open recid.gdt -q
@@ -1443,7 +1438,6 @@ cnameset(mat_n, "months unmarried married")
 gnuplot 2 3 1 --with-lines --supp --matrix=mat_w --output=weibull.plt
 gnuplot 2 3 1 --with-lines --supp --matrix=mat_n --output=lognorm.plt
 \end{scode}
-\scriptURL
 \end{script}
 
 \begin{figure}[htbp]

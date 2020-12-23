@@ -148,7 +148,7 @@ In the script this is sent to the screen; Figure~\ref{fig:coherence}
 shows the same graph in PDF format.
 
 \begin{script}[htbp]
-  \caption{Estimation of spectral coherence via \app{Octave}}
+  \scriptcaption{Estimation of spectral coherence via \app{Octave}}
   \label{Octave-coher}
 \begin{scode}
 open data9-7
@@ -171,7 +171,6 @@ h = mread("h.mat", 1)
 cnameset(h, "coherence")
 gnuplot 1 --time-series --with-lines --matrix=h --output=display
 \end{scode}
-\scriptURL
 \end{script}
 
 \begin{figure}[htbp]

@@ -149,7 +149,7 @@ Generated matrix oxparm
 \end{code}
 
 \begin{script}[htbp]
-  \caption{Estimation of dynamic panel data model via gretl and \app{Ox}}
+  \scriptcaption{Estimation of dynamic panel data model via gretl and \app{Ox}}
   \label{script:Ox-DPD}
 \begin{scode}
 open abdata.gdt
@@ -192,8 +192,6 @@ end foreign
 matrix oxparm = mread("oxparm.mat", 1)
 eval abs((parm - oxparm) ./ oxparm)
 \end{scode}
-% $
-\scriptURL
 \end{script}
 
 %%% Local Variables: 

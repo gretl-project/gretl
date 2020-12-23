@@ -490,7 +490,7 @@ of the \app{R} script in a \texttt{foreign}\ldots\texttt{end foreign}
 block; see Listing~\ref{RStructTS-simple}.
 
 \begin{script}[htbp]
-  \caption{Estimation of the Basic Structural Model -- simple}
+  \scriptcaption{Estimation of the Basic Structural Model -- simple}
   \label{RStructTS-simple}
 \begin{scode}
 open bjg.gdt
@@ -511,8 +511,6 @@ rename sea lg_seas
 
 vars = mread("vars.mat", 1)
 \end{scode}
-%$
-\scriptURL
 \end{script}
 
 The above syntax, despite being already quite useful by itself, shows
@@ -521,7 +519,7 @@ functions.  Listing~\ref{RStructTS-func} shows how to define a
 gretl function that calls \app{R} internally.
 
 \begin{script}[htbp]
-  \caption{Estimation of the Basic Structural Model -- via a function}
+  \scriptcaption{Estimation of the Basic Structural Model -- via a function}
   \label{RStructTS-func}
 \begin{scode}
 function list RStructTS(series myseries)
@@ -549,7 +547,6 @@ end function
 open bjg.gdt
 list X = RStructTS(lg)
 \end{scode}
-\scriptURL
 \end{script}
 
 \section{Performance issues with \app{R}}

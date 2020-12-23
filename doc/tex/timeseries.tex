@@ -461,7 +461,7 @@ the variable \texttt{fcdiff} emulates the ARMA forecast (static,
 one step ahead within the sample range, and dynamic out of sample).
 
 \begin{script}[htbp]
-  \caption{ARIMA forecasting}
+  \scriptcaption{ARIMA forecasting}
   \label{arima-fcast-script}
 \begin{scode}
 open greene18_2.gdt
@@ -486,7 +486,6 @@ series fcdiff = (t<=1982:1)? (fc1 - y(-1)) : (fc1 - fc1(-1))
 smpl 1981:1 1983:4
 print y fc1 fc2 fcdiff --byobs
 \end{scode}
-\scriptURL
 The output from the last command is:
 %
 \begin{code}

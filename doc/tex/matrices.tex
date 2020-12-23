@@ -833,7 +833,7 @@ widely-used programs.\footnote{Matlab users may find the Octave
 
 
 \begin{script}[htbp]
-  \caption{Matrix input/output via text files}
+  \scriptcaption{Matrix input/output via text files}
   \label{matrix-rw}
   \begin{scode}
 nulldata 64
@@ -862,7 +862,6 @@ else
   print a
 endif
   \end{scode}
-  \scriptURL
 \end{script}
 
 Optionally, the \texttt{mwrite} and \texttt{mread} functions can use
@@ -1059,7 +1058,7 @@ conversion to ``normalize'' a list, moving the constant (variable 0)
 to first position.
 
 \begin{script}[htbp]
-  \caption{Manipulating a list}
+  \scriptcaption{Manipulating a list}
   \label{normalize-list}
 \begin{scode}
 function void normalize_list (matrix *x)
@@ -1084,7 +1083,6 @@ normalize_list(&x)
 list Xl = x
 list Xl print
 \end{scode}
-  \scriptURL
 \end{script}
 
 
@@ -1156,7 +1154,7 @@ Listing~\ref{matrixOLS} shows how matrix methods can be used to
 replicate gretl's built-in OLS functionality.
 
 \begin{script}[htbp]
-  \caption{OLS via matrix methods}
+  \scriptcaption{OLS via matrix methods}
   \label{matrixOLS}
 \begin{scode}
 open data4-1
@@ -1176,7 +1174,6 @@ se
 # compare with built-in function
 ols price const sqft --vcv
 \end{scode}
-\scriptURL
 \end{script}
 
 %%% Local Variables: 

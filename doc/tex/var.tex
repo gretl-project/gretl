@@ -102,7 +102,7 @@ these models is the cointegrated VAR model, discussed in chapter
 \label{sec:var-estim}
 
 \begin{script}[htbp]
-  \caption{Estimation of a VAR via OLS}
+  \scriptcaption{Estimation of a VAR via OLS}
   \label{script:var-ols}
 Input:
 \begin{scodebit}
@@ -119,8 +119,7 @@ endloop
 
 var p X
 \end{scodebit}
-% $
-\scriptURL
+
 Output (selected portions):
 \begin{outbit}
 Model 1: OLS, using observations 1960:3-1999:4 (T = 158)
@@ -542,7 +541,7 @@ also exposes what exactly is returned by the \dollar{test} and
 \dollar{pvalue} accessors in the two variants.
 
 \begin{script}[htbp]
-  \caption{VAR autocorrelation test from L\"utkepohl}
+  \scriptcaption{VAR autocorrelation test from L\"utkepohl}
   \label{script:var-autocorr}
 Input:
 \begin{scodebit}
@@ -556,7 +555,7 @@ eval $test ~ $pvalue
 modtest 4 --autocorr --univariate
 eval $test ~ $pvalue
 \end{scodebit}
-% $
+
 Output from tests:
 \begin{outbit}
 ? modtest 4 --autocorr
@@ -591,7 +590,6 @@ Ljung-Box Q' = 1.59931 with p-value = P(Chi-square(4) > 1.59931) = 0.809
       1.6714      0.79591 
       1.5993      0.80892 
 \end{outbit}
-\scriptURL
 \end{script}
 
 %%% Local Variables: 

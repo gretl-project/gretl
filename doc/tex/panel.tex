@@ -477,7 +477,7 @@ method to ``OLS plus centered dummies''. (Note that in this case the
 standard errors agree with the initial estimates.)
 
 \begin{script}[htbp]
-  \caption{Calculating the intercept in the fixed effects model}
+  \scriptcaption{Calculating the intercept in the fixed effects model}
   \label{fe-intercept}
 \begin{scode}
 open abdata.gdt
@@ -514,8 +514,6 @@ smpl n X --no-missing            # adjust to perform centering correctly
 list D = stdize(C, -1)           # center the unit dummies
 ols n const X D                  # perform estimation
 \end{scode}
-%$
-\scriptURL
 \end{script}
 
 \subsection{R-squared in the fixed effects model}
@@ -690,7 +688,7 @@ which is based on a study of country growth rates by
   \url{http://www.stanford.edu/~clint/bench/}.}
  
 \begin{script}[htbp]
-  \caption{The Anderson--Hsiao estimator for a dynamic panel model}
+  \scriptcaption{The Anderson--Hsiao estimator for a dynamic panel model}
   \label{script:anderson-hsiao}
 \begin{scode}
 # Penn World Table data as used by Nerlove
@@ -706,7 +704,6 @@ tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
 # Anderson-Hsiao, using d_Y(-2) as instrument
 tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
 \end{scode}
-\scriptURL
 \end{script}
 
 Although the Anderson--Hsiao estimator is consistent, it is not most

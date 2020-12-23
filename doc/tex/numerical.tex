@@ -52,7 +52,7 @@ utility of a consumer, the first argument might contain the quantities
 of goods and the second one their prices and disposable income.
 
 \begin{script}[htbp]
-  \caption{Finding the minimum of the Rosenbrock function}
+  \scriptcaption{Finding the minimum of the Rosenbrock function}
   \label{rosenbrock}
 \begin{scode}
 function scalar Rosenbrock(const matrix param)
@@ -66,7 +66,6 @@ set max_verbose on
 M = BFGSmax(&theta, Rosenbrock(theta))
 print theta
 \end{scode}
-\scriptURL
 \end{script}
 
 The operation of BFGS can be adjusted using the \texttt{set} variables
@@ -129,7 +128,7 @@ since this is a minimization problem the values written into
 in fact the derivatives of the negative of the Rosenbrock function.)
 
 \begin{script}[htbp]
-  \caption{Rosenbrock function with analytical gradient}
+  \scriptcaption{Rosenbrock function with analytical gradient}
   \label{rosen-analytical}
 \begin{scode}
 function scalar Rosenbrock (const matrix param)
@@ -152,7 +151,6 @@ M = BFGSmax(&theta, Rosenbrock(theta), Rosen_grad(&grad, theta))
 print theta
 print grad
 \end{scode}
-\scriptURL
 \end{script}
 
 \subsubsection{Limited-memory variant and constrained optimization}
@@ -233,7 +231,7 @@ just the same as in Listing~\ref{rosen-analytical} and are omitted for
 brevity.
 
 \begin{script}[htbp]
-  \caption{Rosenbrock function via Newton--Raphson}
+  \scriptcaption{Rosenbrock function via Newton--Raphson}
   \label{rosen-newton}
 \begin{scode}
 function void Rosen_hess (matrix *H, const matrix param)
@@ -254,7 +252,6 @@ M = NRmax(&theta, Rosenbrock(theta), Rosen_grad(&grad, theta),
 print theta
 print grad
 \end{scode}
-\scriptURL
 \end{script}
 
 The idea behind Newton--Raphson is to exploit a quadratic
@@ -270,7 +267,7 @@ Hessian is positive at the starting point BFGS converges with only
 little more difficulty, while Newton--Raphson fails.
 
 \begin{script}[htbp]
-  \caption{Maximization of a Gaussian density}
+  \scriptcaption{Maximization of a Gaussian density}
   \label{ex:BFGS-vs-NR}
 \begin{scode}
 function scalar ND(matrix x)
@@ -292,7 +289,6 @@ A = BFGSmax(&x, ND(x))
 x = {1.5}
 A = NRmax(&x, ND(x))
 \end{scode}
-\scriptURL
 \end{script}
 
 \section{Derivative-free optimization methods}
@@ -404,7 +400,7 @@ of the gradient.\footnote{Your mileage may vary: these figures
 are somewhat compiler- and machine-dependent.}
 
 \begin{script}[htbp]
-  \caption{BFGS with initialization via Simulated Annealing}
+  \scriptcaption{BFGS with initialization via Simulated Annealing}
   \label{ex:simann}
 \begin{scode}
 function scalar bimodal (matrix x, matrix A)
@@ -430,7 +426,6 @@ print x
 u = BFGSmax(&x, bimodal(x, A))
 print x
 \end{scode}
-\scriptURL
 \end{script}
 
 \subsection{Nelder--Mead}
@@ -548,7 +543,7 @@ where $T$ is the sample size and $J$ is the Jacobian
 $\left.\pder{g(x)}{x}\right|_{x = \theta}$.
 
 \begin{script}[htbp]
-  \caption{Delta Method}
+  \scriptcaption{Delta Method}
   \label{delta-method}
 \begin{scode}
 function matrix MPC(matrix *param, matrix *Y)
@@ -589,7 +584,6 @@ scalar teststat = (mpc-1)/sqrt(Sigma)
 printf "\nTest for MPC = 1: %g (p-value = %g)\n", \
       teststat, pvalue(n,abs(teststat))
 \end{scode}
-\scriptURL
 \end{script}
 
 Script \ref{delta-method} exemplifies such a case: the example is

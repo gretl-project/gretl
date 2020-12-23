@@ -363,7 +363,7 @@ described so far. The \texttt{banks91} file contains part of the data
 used in \citet*{lucchetti01}.
 
 \begin{script}[htbp]
-  \caption{Estimation of stochastic frontier cost function (with
+  \scriptcaption{Estimation of stochastic frontier cost function (with
     scalar parameters)}
   \label{cost-estimation}
 \begin{scode}
@@ -404,8 +404,6 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   params b0 b1 b2 b3 b4 su sv
 end mle
 \end{scode}
-%$
-\scriptURL
 \end{script}
 
 The script in example \ref{cost-estimation} is relatively easy to
@@ -417,7 +415,7 @@ vector. Of course, this makes also possible to use variable lists and
 other refinements which make the code more compact and readable.
 
 \begin{script}[htbp]
-  \caption{Estimation of stochastic frontier cost function (with
+  \scriptcaption{Estimation of stochastic frontier cost function (with
     matrix parameters)}
   \label{cost-estimation-vec}
 \begin{scode}
@@ -454,8 +452,6 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   params b su sv
 end mle
 \end{scode}
-%$
-\scriptURL
 \end{script}
 
 \section{GARCH models}
@@ -741,7 +737,7 @@ zip(y, X)
 \end{code}
 
 \begin{script}[htbp]
-  \caption{Zero-inflated Poisson Model --- user-level function}
+  \scriptcaption{Zero-inflated Poisson Model -- user-level function}
   \label{mle-zip-main}
 \begin{scode}
 /*
@@ -756,9 +752,7 @@ function void zip(series y, list X)
     modprint coef_stde parnames
 end function
 \end{scode}
-\scriptURL
 \end{script}
-%$
 
 Let's see how this can be done.  First we need to define a function
 called \texttt{zip()} that will take two arguments: a dependent
@@ -771,7 +765,7 @@ coming from another user-written function, namely
 \texttt{zip\_estimate()}.
 
 \begin{script}[htbp]
-  \caption{Zero-inflated Poisson Model --- internal functions}
+  \scriptcaption{Zero-inflated Poisson Model --- internal functions}
   \label{mle-zip-inc}
 \begin{scode}
 /* compute log probabilities for the plain Poisson model */
@@ -808,9 +802,7 @@ function matrix zip_estimate(series y, list X)
     return $coeff ~ $stderr
 end function
 \end{scode}
-\scriptURL
 \end{script}
-%$
 
 The function \texttt{zip\_estimate()} is not meant to be executed
 directly; it just contains the number-crunching part of the job, whose
@@ -1247,7 +1239,7 @@ $\theta$ can be recovered by computing the Jacobian as
 and applying formula \eqref{eq:mle-constvar}.
 
 \begin{script}[htbp]
-  \caption{Example of ML estimation of a model under constraints}
+  \scriptcaption{Example of ML estimation of a model under constraints}
   \label{ex:mle-constr}
   \begin{scode}
 set verbose off
@@ -1303,10 +1295,7 @@ matrix vpar = qform(anJacob(psi)', $vcv)
 
 matrix cs = par ~ sqrt(diag(vpar))
 modprint cs "mean variance"
-    
 \end{scode}
-\scriptURL
-%$
 \end{script}
 
 Running the example script should produce the following output:
@@ -1367,7 +1356,7 @@ may be of your interest, including the total number of function
 evaluations.
 
 \begin{script}[htbp]
-  \caption{Handling non-convergence via \cmd{catch}}
+  \scriptcaption{Handling non-convergence via \cmd{catch}}
   \label{ex:catch-mle}
 \begin{scode}
 set verbose off
@@ -1401,10 +1390,7 @@ else
     modprint cs pn
 endif
 \end{scode}
-\scriptURL
 \end{script}
-
-
 
 %%% Local Variables: 
 %%% mode: latex
