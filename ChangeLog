@@ -11,14 +11,15 @@ version 2020f, in progress
 - $system bundle: ensure presence of xlist member, and
   include the command-word (var, vecm or system)
 - mread(): support reading gdt and gdtb files as matrices
-- readfile(): support reading gzipped files
+- readfile(): support reading gzipped files transparently
 - "open" command: support reading selected series from
   native gretl datafiles (gdt, gdtb)
-- "join" command: support $obsmajor as an outer key
+- "join" command: support $obsmajor, $obsminor as outer keys
 - "coint2" command: rename as "johansen"
 - "freq" and "xtab" for string-valued series: don't let
   non-ASCII characters break the formatting
-- reorganization of the categories for the functions help file
+- Gretl User's Guide: add links to download example scripts
+- reorganize the categories for the functions help file
 - Fix obscure problem with plots: inability to show markers
   for observations in some cases where this should be OK
 - Fix bug: potential crash on "Save as icon and close" for
@@ -28,8 +29,8 @@ version 2020f, in progress
 - Fix bug: crash after setting "specific lags" for a VAR in
   the GUI model selection dialog
 - Fix: memory leaks associated with GUI window lists
-- Fix bug: buggy completion proposals in script editor
-  when using gtksourceview-2.0
+- Fix: buggy completion proposals in script editor when
+  using gtksourceview-2.0
 - Fix Windows-specific bug: gretlcli and gretlmpi could
   fail on parsing command-line arguments
 
