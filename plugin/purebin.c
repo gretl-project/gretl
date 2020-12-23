@@ -59,7 +59,6 @@ static void varinfo_write (const DATASET *dset, int i, FILE *fp)
 #if VIDEBUG
     print_varinfo(dset, i, "writing");
 #endif
-
     V.label = NULL;
     V.st = NULL;
     fwrite(&V, sizeof V, 1, fp);
@@ -70,11 +69,12 @@ static int varinfo_read (DATASET *dset, int i, FILE *fp)
     VARINFO V;
 
     if (fread(&V, sizeof V, 1, fp)) {
-	/* shallow copy */
-	*dset->varinfo[i] = V;
+	if (dset != NULL) {
+	    *dset->varinfo[i] = V;
 #if VIDEBUG
-	print_varinfo(dset, i, "reading");
+	    print_varinfo(dset, i, "reading");
 #endif
+	}
 	return 0;
     } else {
 	fprintf(stderr, "failed to read varinfo\n");
@@ -159,14 +159,20 @@ static void read_string (char *targ, int len, FILE *fp)
    string into the storage.
 */
 
-static char *read_string_with_size (FILE *fp, int *err)
+static char *read_string_with_size (FILE *fp, int skip, int *err)
 {
     char *ret = NULL;
     int len;
 
     if (fread(&len, sizeof len, 1, fp)) {
-	ret = malloc(len + 1);
-	read_string(ret, len, fp);
+	if (skip) {
+	    if (fseek(fp, len + 1, SEEK_CUR) != 0) {
+		*err = E_DATA;
+	    }
+	} else {
+	    ret = malloc(len + 1);
+	    read_string(ret, len, fp);
+	}
     } else {
 	fprintf(stderr, "purebin: read_string_with_size failed\n");
 	*err = E_DATA;
@@ -189,7 +195,7 @@ static void emit_string_with_size (const char *s, FILE *fp)
 }
 
 static int read_string_tables (DATASET *dset, int nsv,
-			       FILE *fp)
+			       const int *sel, FILE *fp)
 {
     char **S;
     int i, vi, j, ns;
@@ -204,12 +210,19 @@ static int read_string_tables (DATASET *dset, int nsv,
 #if PBDEBUG
 	fprintf(stderr, "read strs: vi=%d, ns=%d\n", vi, ns);
 #endif
-	S = calloc(ns, sizeof *S);
-	for (j=0; j<ns; j++) {
-	    S[j] = read_string_with_size(fp, &err);
-	}
-	if (!err) {
-	    err = series_set_string_vals_direct(dset, vi, S, ns);
+	if (sel == NULL || sel[vi]) {
+	    S = calloc(ns, sizeof *S);
+	    for (j=0; j<ns; j++) {
+		S[j] = read_string_with_size(fp, 0, &err);
+	    }
+	    if (!err) {
+		if (sel != NULL) vi = sel[vi];
+		err = series_set_string_vals_direct(dset, vi, S, ns);
+	    }
+	} else {
+	    for (j=0; j<ns; j++) {
+		read_string_with_size(fp, 1, &err);
+	    }
 	}
     }
 
@@ -242,22 +255,27 @@ static void emit_string_tables (const DATASET *dset,
 }
 
 static int read_var_labels (DATASET *dset, int labels,
-			    FILE *fp)
+			    const int *sel, FILE *fp)
 {
     char *s;
     int i, vi;
     int err = 0;
 
     for (i=0; i<labels && !err; i++) {
-	if (!fread(&vi, sizeof vi, 1, fp)) {
+	if (!fread(&vi, sizeof(int), 1, fp)) {
 	    err = E_DATA;
 	    break;
 	}
-	s = read_string_with_size(fp, &err);
-	if (!err) {
-	    series_set_label(dset, vi, s);
+	if (sel == NULL || sel[vi]) {
+	    s = read_string_with_size(fp, 0, &err);
+	    if (!err) {
+		if (sel != NULL) vi = sel[vi];
+		series_set_label(dset, vi, s);
+	    }
+	    free(s);
+	} else {
+	    read_string_with_size(fp, 1, &err);
 	}
-	free(s);
     }
 
     return err;
@@ -274,7 +292,7 @@ static void emit_var_labels (const DATASET *dset,
 	s = series_get_label(dset, list[i]);
 	if (s != NULL && *s != '\0') {
 	    /* series ID */
-	    fwrite(&i, sizeof i, 1, fp);
+	    fwrite(&i, sizeof(int), 1, fp);
 	    emit_string_with_size(s, fp);
 	}
     }
@@ -298,40 +316,60 @@ static int check_byte_order (gbin_header *gh, PRN *prn)
     return 0;
 }
 
-int gretl_read_purebin (const char *fname, DATASET *dset,
-			gretlopt opt, PRN *prn)
+static int read_purebin_basics (const char *fname,
+				gbin_header *gh,
+				FILE **fpp,
+				PRN *prn)
 {
-    gbin_header gh = {0};
-    FILE *fp;
-    DATASET *bset = NULL;
-    int i, j;
-    char c, buf[16];
-    size_t sz;
+    FILE *fp = gretl_fopen(fname, "rb");
+    char buf[16];
     int err = 0;
 
-    fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
     /* "gretl-purebin" */
-    sz = fread(buf, 1, 14, fp);
-    if (sz != 14 || strcmp(buf, "gretl-purebin")) {
+    if (fread(buf, 1, 14, fp) != 14 || strcmp(buf, "gretl-purebin")) {
 	pputs(prn, "not gretl-purebin\n");
 	err = E_DATA;
-	goto bailout;
     }
 
     /* header */
-    if (fread(&gh, sizeof gh, 1, fp) != 1) {
-	pputs(prn, "didn't get dataset dimensions\n");
-	err = E_DATA;
-	goto bailout;
+    if (!err) {
+	if (fread(gh, sizeof *gh, 1, fp) != 1) {
+	    pputs(prn, "didn't get dataset dimensions\n");
+	    err = E_DATA;
+	}
     }
 
-    err = check_byte_order(&gh, prn);
+    if (!err) {
+	err = check_byte_order(gh, prn);
+    }
+
     if (err) {
-	goto bailout;
+	fclose(fp);
+    } else {
+	*fpp = fp;
+    }
+
+    return err;
+}
+
+int purebin_read_data (const char *fname, DATASET *dset,
+		       gretlopt opt, PRN *prn)
+{
+    gbin_header gh = {0};
+    FILE *fp = NULL;
+    DATASET *bset = NULL;
+    int i, j;
+    char c;
+    size_t sz;
+    int err;
+
+    err = read_purebin_basics(fname, &gh, &fp, prn);
+    if (err) {
+	return err;
     }
 
     /* allocate dataset */
@@ -391,22 +429,22 @@ int gretl_read_purebin (const char *fname, DATASET *dset,
 
     /* variable labels? */
     if (!err && gh.labels > 0) {
-	read_var_labels(bset, gh.labels, fp);
+	err = read_var_labels(bset, gh.labels, NULL, fp);
     }
 
     /* string tables? */
     if (!err && gh.nsv > 0) {
-	read_string_tables(bset, gh.nsv, fp);
+	err = read_string_tables(bset, gh.nsv, NULL, fp);
     }
 
     /* description? */
     if (!err && gh.descrip) {
-	bset->descrip = read_string_with_size(fp, &err);
+	bset->descrip = read_string_with_size(fp, 0, &err);
     }
 
     /* panels groups series? */
     if (!err && gh.pangrps) {
-	bset->pangrps = read_string_with_size(fp, &err);
+	bset->pangrps = read_string_with_size(fp, 0, &err);
     }
 
  bailout:
@@ -425,12 +463,177 @@ int gretl_read_purebin (const char *fname, DATASET *dset,
     return err;
 }
 
-int gretl_write_purebin (const char *fname,
-			 const int *list,
-			 const DATASET *dset,
-			 gretlopt opt)
+static int *make_selection_array (int nv, int *vlist)
+{
+    int i, *ret = malloc(nv * sizeof *ret);
+
+    ret[0] = 0;
+    for (i=1; i<nv; i++) {
+	ret[i] = in_gretl_list(vlist, i);
+    }
+
+    return ret;
+}
+
+int purebin_read_subset (const char *fname, DATASET *dset,
+			 int *vlist, gretlopt opt)
 {
     gbin_header gh = {0};
+    FILE *fp = NULL;
+    DATASET *bset = NULL;
+    int *sel = NULL;
+    int i, j, k, nv;
+    char c;
+    size_t sz, slen;
+    int err;
+
+    err = read_purebin_basics(fname, &gh, &fp, NULL);
+    if (err) {
+	return err;
+    }
+
+    nv = vlist[0];
+
+    /* allocate dataset */
+    bset = create_new_dataset(nv + 1, gh.nobs, gh.markers);
+    if (bset == NULL) {
+	gretl_errmsg_set("gdtb: create_new_dataset failed");
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    bset->pd = gh.pd;
+    bset->sd0 = gh.sd0;
+    bset->panel_pd = gh.panel_pd;
+    bset->panel_sd0 = gh.panel_sd0;
+
+    sel = make_selection_array(gh.nvars, vlist);
+
+    /* variable names */
+    for (i=1, k=1; i<gh.nvars; i++) {
+	j = 0;
+	while ((c = fgetc(fp)) != '\0') {
+	    if (sel[i]) {
+		bset->varname[k][j++] = c;
+	    }
+	}
+	if (sel[i]) {
+	    bset->varname[k][j] = 0;
+	    k++;
+	}
+    }
+
+    /* varinfo stuff */
+    for (i=1, k=1; i<gh.nvars; i++) {
+	if (sel[i]) {
+	    varinfo_read(bset, k++, fp);
+	} else {
+	    varinfo_read(NULL, 0, fp);
+	}
+    }
+
+    slen = bset->n * sizeof(double);
+
+    /* numerical values */
+    for (i=1, k=1; i<gh.nvars && !err; i++) {
+	if (sel[i]) {
+	    sz = fread(bset->Z[k++], sizeof(double), bset->n, fp);
+	    if (sz != (size_t) bset->n) {
+		gretl_errmsg_sprintf("failed reading variable %d", i);
+		err = E_DATA;
+	    }
+	} else if (fseek(fp, slen, SEEK_CUR) != 0) {
+	    gretl_errmsg_sprintf("failed reading variable %d", i);
+	    err = E_DATA;
+	}
+    }
+
+    /* observation markers? */
+    if (!err && bset->S != NULL) {
+	for (i=0; i<bset->n; i++) {
+	    j = 0;
+	    while ((c = fgetc(fp)) != '\0') {
+		bset->S[i][j++] = c;
+	    }
+	    bset->S[i][j] = '\0';
+	}
+    }
+
+    /* variable labels? */
+    if (!err && gh.labels > 0) {
+	err = read_var_labels(bset, gh.labels, sel, fp);
+    }
+
+    /* string tables? */
+    if (!err && gh.nsv > 0) {
+	err = read_string_tables(bset, gh.nsv, sel, fp);
+    }
+
+    /* description? */
+    if (!err && gh.descrip) {
+	bset->descrip = read_string_with_size(fp, 0, &err);
+    }
+
+    /* panels groups series? */
+    if (!err && gh.pangrps) {
+	bset->pangrps = read_string_with_size(fp, 0, &err);
+    }
+
+ bailout:
+
+    fclose(fp);
+
+    if (err) {
+	destroy_dataset(bset);
+    } else {
+	gretlopt mopt = get_merge_opts(opt);
+
+	err = merge_or_replace_data(dset, &bset, mopt, NULL);
+    }
+
+    return err;
+}
+
+int purebin_read_varnames (const char *fname,
+			   char ***pS, int *pns)
+{
+    gbin_header gh = {0};
+    char vname[VNAMELEN];
+    FILE *fp = NULL;
+    char c, **S = NULL;
+    int i, j, err;
+
+    err = read_purebin_basics(fname, &gh, &fp, NULL);
+    if (err) {
+	return err;
+    }
+
+    S = strings_array_new(gh.nvars);
+
+    for (i=1; i<gh.nvars; i++) {
+	for (j=0; ; j++) {
+	    c = fgetc(fp);
+	    vname[j] = c;
+	    if (c == '\0') {
+		break;
+	    }
+	}
+	S[i] = gretl_strdup(vname);
+    }
+
+    *pS = S;
+    *pns = gh.nvars;
+
+    return err;
+}
+
+int purebin_write_data (const char *fname,
+			const int *list,
+			const DATASET *dset,
+			gretlopt opt)
+{
+    gbin_header gh = {0};
+    const char magic[] = "gretl-purebin";
     FILE *fp;
     double *x;
     int nobs, nv;
@@ -441,9 +644,6 @@ int gretl_write_purebin (const char *fname,
     if (fp == NULL) {
 	return E_FOPEN;
     }
-
-    fputs("gretl-purebin", fp);
-    fputc(0, fp);
 
     nv = list[0];
     nobs = sample_size(dset);
@@ -468,6 +668,8 @@ int gretl_write_purebin (const char *fname,
     gh.panel_sd0 = dset->panel_sd0;
 
     /* write header */
+    fwrite(magic, 1, strlen(magic), fp);
+    fputc(0, fp);
     fwrite(&gh, sizeof gh, 1, fp);
 
     /* variable names */
@@ -484,7 +686,7 @@ int gretl_write_purebin (const char *fname,
     /* numerical values */
     for (i=1; i<=nv; i++) {
 	x = dset->Z[list[i]] + dset->t1;
-	fwrite(x, sizeof(double), nobs, fp);
+	fwrite(x, sizeof *x, nobs, fp);
     }
 
     /* observation markers? */
