@@ -1053,8 +1053,8 @@
 	  minus the leading dollar sign. So for example the residuals
 	  appear under the key <lit>uhat</lit> and the coefficients
 	  under <lit>coeff</lit>. (Exceptions are the keys <lit>A</lit>,
-	  <lit>B</lit>, and <lit>Gamma</lit>, which correspond to the 
-	  regular dollar accessors sysA, sysB, and sysGamma.) The 
+	  <lit>B</lit>, and <lit>Gamma</lit>, which correspond to the
+	  regular dollar accessors sysA, sysB, and sysGamma.) The
 	  keys for additional information
 	  should hopefully be fairly self-explanatory. To see what's
 	  available you can get a copy of the bundle and print its
@@ -7559,13 +7559,39 @@
 	<para context="notex">
 	  If <argname>p</argname> is a vector, the above operation is
 	  carried out for each element in <argname>p</argname>,
-	  joining the resulting matrices horizontally.
+	  joining the resulting matrices horizontally. The following code
+	  computes the first and second lag for each of the two columns of
+	  matrix <argname>x</argname>, and concatenates the resulting
+	  vectors. Missing values are replaced by NA.
 	</para>
 	<para context="tex">
 	  If $p$ is a vector, the above operation is carried out for
 	  each element in $p$, joining the resulting matrices
-	  horizontally.
+	  horizontally. The following code computes the first and second lag
+	  for each of the two columns of matrix <argname>x</argname>, and
+	  concatenates the resulting vectors. Missing values are replaced by
+	  NA.
 	</para>
+	<code>
+	matrix m = mnormal(5, 2)
+	print m
+	eval mlag(m, {1, 2}, NA)
+	</code>
+	<code>
+	m (5 x 2)
+
+      1.5953    -0.070740
+    -0.52713     -0.47669
+     -2.2056     -0.28112
+     0.97753       1.4280
+     0.49654      0.18532
+
+         nan          nan          nan          nan
+      1.5953    -0.070740          nan          nan
+    -0.52713     -0.47669       1.5953    -0.070740
+     -2.2056     -0.28112     -0.52713     -0.47669
+     0.97753       1.4280      -2.2056     -0.28112
+	</code>
 	<para>
 	  See also <fncref targ="lags"/>.
 	</para>
