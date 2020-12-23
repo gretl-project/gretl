@@ -23,42 +23,11 @@
 /* Writing and reading of gretl-native "pure binary" data files */
 
 #define PBDEBUG 0
-#define VIDEBUG 0
-
-#if VIDEBUG
-
-static void print_varinfo (const DATASET *dset, int i,
-			   const char *s)
-{
-    VARINFO *V = dset->varinfo[i];
-
-    fprintf(stderr, "varinfo for %s, %s\n", dset->varname[i], s);
-    if (V->display_name[0]) {
-	fprintf(stderr, " display name '%s'\n", V->display_name);
-    }
-    if (V->parent[0]) {
-	fprintf(stderr, " parent '%s'\n", V->parent);
-    }
-    if (V->flags) {
-	fprintf(stderr, " flags %d\n", (int) V->flags);
-    }
-    if (V->transform) {
-	fprintf(stderr, " transform %d\n", (int) V->transform);
-    }
-    if (V->lag) {
-	fprintf(stderr, " lag %d\n", (int) V->lag);
-    }
-}
-
-#endif
 
 static void varinfo_write (const DATASET *dset, int i, FILE *fp)
 {
     VARINFO V = *dset->varinfo[i]; /* shallow copy */
 
-#if VIDEBUG
-    print_varinfo(dset, i, "writing");
-#endif
     V.label = NULL;
     V.st = NULL;
     fwrite(&V, sizeof V, 1, fp);
@@ -71,9 +40,6 @@ static int varinfo_read (DATASET *dset, int i, FILE *fp)
     if (fread(&V, sizeof V, 1, fp)) {
 	if (dset != NULL) {
 	    *dset->varinfo[i] = V;
-#if VIDEBUG
-	    print_varinfo(dset, i, "reading");
-#endif
 	}
 	return 0;
     } else {
@@ -150,9 +116,6 @@ static void read_string (char *targ, int len, FILE *fp)
 	}
     }
     targ[i] = '\0';
-#if PBDEBUG > 1
-    fprintf(stderr, "read strval: '%s'\n", targ);
-#endif
 }
 
 /* Read length of string, allocate storage, then read the
@@ -298,7 +261,7 @@ static void emit_var_labels (const DATASET *dset,
     }
 }
 
-/* FIXME, should be able to handle this! */
+/* FIXME, should be able to handle this (at a cost) */
 
 static int check_byte_order (gbin_header *gh, PRN *prn)
 {
