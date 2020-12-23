@@ -20,9 +20,35 @@
 #include "libgretl.h"
 #include "varinfo_priv.h"
 
-/* Writing and reading of gretl-native "pure binary" data files */
+/* Writing and reading of gretl-native "pure binary" data files,
+   developed in December 2020 as an alterative to the original
+   gdtb format: this is _much_ faster for huge datasets.
+*/
 
 #define PBDEBUG 0
+
+#define GBIN_VERSION 1 /* allow for future extension */
+
+typedef struct gbin_header_ gbin_header;
+
+struct gbin_header_ {
+    int gbin_version; /* file format version number */
+    int bigendian;    /* is the writer big-endian? */
+    int nvars;        /* number of series in dataset */
+    int nobs;         /* number of observations */
+    int markers;      /* observation markers present? (0/1) */
+    int structure;    /* cross-section, time-series, panel */
+    int pd;           /* "frequency" of data */
+    double sd0;       /* first obs as double */
+    int nsv;          /* number of string-valued series */
+    int labels;       /* number of series with labels */
+    int descrip;      /* dataset description, if any */
+    int panel_pd;     /* panel time-series frequency */
+    int panel_sd0;    /* panel time first obs */
+    int pangrps;      /* panel group-names present? (0/1) */
+};
+
+/* Write the VARINFO struct for series @i */
 
 static void varinfo_write (const DATASET *dset, int i, FILE *fp)
 {
@@ -32,6 +58,10 @@ static void varinfo_write (const DATASET *dset, int i, FILE *fp)
     V.st = NULL;
     fwrite(&V, sizeof V, 1, fp);
 }
+
+/* Read the VARINFO struct for series @i, recording it on
+   @dset if non-NULL (otherwise just skipping forward).
+*/
 
 static int varinfo_read (DATASET *dset, int i, FILE *fp)
 {
@@ -43,29 +73,10 @@ static int varinfo_read (DATASET *dset, int i, FILE *fp)
 	}
 	return 0;
     } else {
-	fprintf(stderr, "failed to read varinfo\n");
+	fprintf(stderr, "failed to read varinfo %d\n", i);
 	return E_DATA;
     }
 }
-
-typedef struct gbin_header_ gbin_header;
-
-struct gbin_header_ {
-    int gbin_version;
-    int bigendian;
-    int nvars;
-    int nobs;
-    int markers;
-    int structure;
-    int pd;
-    double sd0;
-    int nsv;
-    int labels;
-    int descrip;
-    int panel_pd;
-    int panel_sd0;
-    int pangrps;
-};
 
 static void gbin_read_message (const char *fname,
 			       DATASET *dset,
@@ -79,7 +90,9 @@ static void gbin_read_message (const char *fname,
     pputc(prn, '\n');
 }
 
-/* get counts of various strings attached to @dset */
+/* Get counts of various strings that may or may not
+   be attached to @dset.
+*/
 
 static void get_string_counts (const DATASET *dset,
 			       const int *list,
@@ -104,8 +117,6 @@ static void get_string_counts (const DATASET *dset,
     gh->pangrps = dset->pangrps != NULL ? 1 : 0;
 }
 
-/* used for both fixed- and variable-length strings */
-
 static void read_string (char *targ, int len, FILE *fp)
 {
     int c, i = 0;
@@ -118,8 +129,9 @@ static void read_string (char *targ, int len, FILE *fp)
     targ[i] = '\0';
 }
 
-/* Read length of string, allocate storage, then read the
-   string into the storage.
+/* First read length of string. If @skip is non-zero, just
+   move the read position beyond the string; otherwise
+   allocate storage and read it in.
 */
 
 static char *read_string_with_size (FILE *fp, int skip, int *err)
@@ -144,7 +156,7 @@ static char *read_string_with_size (FILE *fp, int skip, int *err)
     return ret;
 }
 
-/* Write the length of the string folloqwed by the string
+/* Write the length of the string, followed by the string
    itself; we use this for strings of variable length.
 */
 
@@ -261,7 +273,7 @@ static void emit_var_labels (const DATASET *dset,
     }
 }
 
-/* FIXME, should be able to handle this (at a cost) */
+/* FIXME? Should be able to handle this (at a cost). */
 
 static int check_byte_order (gbin_header *gh, PRN *prn)
 {
@@ -279,6 +291,11 @@ static int check_byte_order (gbin_header *gh, PRN *prn)
     return 0;
 }
 
+/* Common function used by both the full data reader
+   and the subset version: perform basic checks and
+   read basic dataset parameters.
+*/
+
 static int read_purebin_basics (const char *fname,
 				gbin_header *gh,
 				FILE **fpp,
@@ -292,13 +309,13 @@ static int read_purebin_basics (const char *fname,
 	return E_FOPEN;
     }
 
-    /* "gretl-purebin" */
+    /* check magic bytes */
     if (fread(buf, 1, 14, fp) != 14 || strcmp(buf, "gretl-purebin")) {
 	pputs(prn, "not gretl-purebin\n");
 	err = E_DATA;
     }
 
-    /* header */
+    /* read header struct */
     if (!err) {
 	if (fread(gh, sizeof *gh, 1, fp) != 1) {
 	    pputs(prn, "didn't get dataset dimensions\n");
@@ -306,6 +323,7 @@ static int read_purebin_basics (const char *fname,
 	}
     }
 
+    /* check for mixed endianness */
     if (!err) {
 	err = check_byte_order(gh, prn);
     }
@@ -314,6 +332,52 @@ static int read_purebin_basics (const char *fname,
 	fclose(fp);
     } else {
 	*fpp = fp;
+    }
+
+    return err;
+}
+
+/* Common function used by both the full data reader
+   and the subset version: write trailing metadata.
+*/
+
+static int read_purebin_tail (DATASET *bset,
+			      gbin_header *gh,
+			      const int *sel,
+			      FILE *fp)
+{
+    int i, j, err = 0;
+    char c;
+
+    /* observation markers? */
+    if (!err && bset->S != NULL) {
+	for (i=0; i<bset->n; i++) {
+	    j = 0;
+	    while ((c = fgetc(fp)) != '\0') {
+		bset->S[i][j++] = c;
+	    }
+	    bset->S[i][j] = '\0';
+	}
+    }
+
+    /* variable labels? */
+    if (!err && gh->labels > 0) {
+	err = read_var_labels(bset, gh->labels, sel, fp);
+    }
+
+    /* string tables? */
+    if (!err && gh->nsv > 0) {
+	err = read_string_tables(bset, gh->nsv, sel, fp);
+    }
+
+    /* description? */
+    if (!err && gh->descrip) {
+	bset->descrip = read_string_with_size(fp, 0, &err);
+    }
+
+    /* panels groups series? */
+    if (!err && gh->pangrps) {
+	bset->pangrps = read_string_with_size(fp, 0, &err);
     }
 
     return err;
@@ -354,13 +418,11 @@ int purebin_read_data (const char *fname, DATASET *dset,
 
     /* variable names */
     for (i=1; i<bset->v; i++) {
-	for (j=0; ; j++) {
-	    c = fgetc(fp);
-	    bset->varname[i][j] = c;
-	    if (c == '\0') {
-		break;
-	    }
+	j = 0;
+	while ((c = fgetc(fp)) != '\0') {
+	    bset->varname[i][j++] = c;
 	}
+	bset->varname[i][j] = '\0';
     }
 
     /* varinfo stuff */
@@ -377,38 +439,8 @@ int purebin_read_data (const char *fname, DATASET *dset,
 	}
     }
 
-    /* observation markers? */
-    if (!err && bset->S != NULL) {
-	for (i=0; i<bset->n; i++) {
-	    for (j=0; ; j++) {
-		c = fgetc(fp);
-		bset->S[i][j] = c;
-		if (c == '\0') {
-		    break;
-		}
-	    }
-	}
-    }
-
-    /* variable labels? */
-    if (!err && gh.labels > 0) {
-	err = read_var_labels(bset, gh.labels, NULL, fp);
-    }
-
-    /* string tables? */
-    if (!err && gh.nsv > 0) {
-	err = read_string_tables(bset, gh.nsv, NULL, fp);
-    }
-
-    /* description? */
-    if (!err && gh.descrip) {
-	bset->descrip = read_string_with_size(fp, 0, &err);
-    }
-
-    /* panels groups series? */
-    if (!err && gh.pangrps) {
-	bset->pangrps = read_string_with_size(fp, 0, &err);
-    }
+    /* read remaining metadata */
+    err = read_purebin_tail(bset, &gh, NULL, fp);
 
  bailout:
 
@@ -426,17 +458,27 @@ int purebin_read_data (const char *fname, DATASET *dset,
     return err;
 }
 
+/* Given a subset of series to import, @vlist, construct
+   an array mapping from the original series IDs to their
+   position in the subset -- or 0 if a series is not
+   selected.
+*/
+
 static int *make_selection_array (int nv, int *vlist)
 {
-    int i, *ret = malloc(nv * sizeof *ret);
+    int i, *sel = malloc(nv * sizeof *sel);
 
-    ret[0] = 0;
+    sel[0] = 0;
     for (i=1; i<nv; i++) {
-	ret[i] = in_gretl_list(vlist, i);
+	sel[i] = in_gretl_list(vlist, i);
     }
 
-    return ret;
+    return sel;
 }
+
+/* Support reading a subset of the series contained in
+   the data file identified by @fname.
+*/
 
 int purebin_read_subset (const char *fname, DATASET *dset,
 			 int *vlist, gretlopt opt)
@@ -511,36 +553,8 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 	}
     }
 
-    /* observation markers? */
-    if (!err && bset->S != NULL) {
-	for (i=0; i<bset->n; i++) {
-	    j = 0;
-	    while ((c = fgetc(fp)) != '\0') {
-		bset->S[i][j++] = c;
-	    }
-	    bset->S[i][j] = '\0';
-	}
-    }
-
-    /* variable labels? */
-    if (!err && gh.labels > 0) {
-	err = read_var_labels(bset, gh.labels, sel, fp);
-    }
-
-    /* string tables? */
-    if (!err && gh.nsv > 0) {
-	err = read_string_tables(bset, gh.nsv, sel, fp);
-    }
-
-    /* description? */
-    if (!err && gh.descrip) {
-	bset->descrip = read_string_with_size(fp, 0, &err);
-    }
-
-    /* panels groups series? */
-    if (!err && gh.pangrps) {
-	bset->pangrps = read_string_with_size(fp, 0, &err);
-    }
+    /* read remaining metadata */
+    err = read_purebin_tail(bset, &gh, sel, fp);
 
     free(sel);
 
@@ -559,6 +573,8 @@ int purebin_read_subset (const char *fname, DATASET *dset,
     return err;
 }
 
+/* Just read the variable names from data file */
+
 int purebin_read_varnames (const char *fname,
 			   char ***pS, int *pns)
 {
@@ -576,13 +592,11 @@ int purebin_read_varnames (const char *fname,
     S = strings_array_new(gh.nvars);
 
     for (i=1; i<gh.nvars; i++) {
-	for (j=0; ; j++) {
-	    c = fgetc(fp);
-	    vname[j] = c;
-	    if (c == '\0') {
-		break;
-	    }
+	j = 0;
+	while ((c = fgetc(fp)) != '\0') {
+	    vname[j++] = c;
 	}
+	vname[j] = '\0';
 	S[i] = gretl_strdup(vname);
     }
 
@@ -614,7 +628,7 @@ int purebin_write_data (const char *fname,
     nobs = sample_size(dset);
 
     /* fill out header struct */
-    gh.gbin_version = 1;
+    gh.gbin_version = GBIN_VERSION;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     gh.bigendian = 1;
 #endif
@@ -662,7 +676,7 @@ int purebin_write_data (const char *fname,
 	}
     }
 
-    /* variable labels */
+    /* variable labels? */
     if (gh.labels > 0) {
 	emit_var_labels(dset, list, fp);
     }
@@ -678,7 +692,7 @@ int purebin_write_data (const char *fname,
     }
 
     /* panels groups series? */
-    if (!err && gh.pangrps) {
+    if (gh.pangrps) {
 	emit_string_with_size(dset->pangrps, fp);
     }
 
