@@ -21,6 +21,9 @@
    lib/src/dataset.c and plugin/purebin.c
 */
 
+#ifndef VARINFO_PRIV_H
+#define VARINFO_PRIV_H
+
 struct VARINFO_ {
     char *label;
     char display_name[MAXDISP];
@@ -36,3 +39,5 @@ struct VARINFO_ {
     short orig_pd;
     series_table *st;
 };
+
+#endif /* VARINFO_PRIV_H */

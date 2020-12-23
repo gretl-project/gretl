@@ -287,6 +287,9 @@ int dataset_allocate_obs_markers (DATASET *dset)
 
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
+    memset(vinfo, 0, sizeof *vinfo);
+    vinfo->stack_level = gretl_function_depth();
+#if 0 /* prior to 2020-12-23 */
     vinfo->label = NULL;
     vinfo->display_name[0] = '\0';
     vinfo->parent[0] = '\0';
@@ -300,6 +303,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->mtime = 0;
     vinfo->stack_level = gretl_function_depth();
     vinfo->st = NULL;
+#endif
 }
 
 static void copy_label (char **targ, const char *src)

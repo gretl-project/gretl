@@ -542,6 +542,8 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 	bset->pangrps = read_string_with_size(fp, 0, &err);
     }
 
+    free(sel);
+
  bailout:
 
     fclose(fp);
