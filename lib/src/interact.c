@@ -2087,6 +2087,7 @@ static int handle_gdt_selection (const char *fname,
 	} else {
 	    err = gretl_read_gdt_subset(fname, dset, list, opt);
 	}
+	free(list);
     }
 
     strings_array_free(S_ok, n_ok);
