@@ -618,6 +618,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_R, "gnu-R", 0 },
     { STORE,    OPT_X, "omit-obs", 0 },
     { STORE,    OPT_Z, "gzipped", 1 },
+    { STORE,    OPT_U, "purebin", 0 }, /* temporary thing */
     { SUMMARY,  OPT_B, "by", 2 },
     { SUMMARY,  OPT_S, "simple", 0 },
     { SUMMARY,  OPT_W, "weights", 2 },

@@ -2618,6 +2618,24 @@ static int real_write_gdt (const char *fname, const int *inlist,
     return err;
 }
 
+static int write_purebin (const char *fname, const int *list,
+			  gretlopt opt, const DATASET *dset)
+{
+    int (*writer) (const char *, const int *, const DATASET *,
+		   gretlopt);
+    int err = 0;
+
+    writer = get_plugin_function("purebin_write_data");
+
+    if (writer == NULL) {
+        err = 1;
+    } else {
+	err = (*writer)(fname, list, dset, opt);
+    }
+
+    return err;
+}
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -2637,9 +2655,12 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     const DATASET *dset, gretlopt opt,
 		     int progress)
 {
+    int gdtb = has_suffix(fname, ".gdtb");
     int err = 0;
 
-    if (has_suffix(fname, ".gdtb")) {
+    if (gdtb && (opt & OPT_U)) {
+	err = write_purebin(fname, list, opt, dset);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 
@@ -4308,7 +4329,7 @@ static int read_gbin (const char *fname, DATASET *dset,
 		   PRN *prn);
     int err = 0;
 
-    reader = get_plugin_function("gretl_read_purebin");
+    reader = get_plugin_function("purebin_read_data");
 
     if (reader == NULL) {
         err = 1;
@@ -4317,6 +4338,58 @@ static int read_gbin (const char *fname, DATASET *dset,
     }
 
     return err;
+}
+
+static int read_gbin_subset (const char *fname, DATASET *dset,
+			     int *vlist, gretlopt opt)
+{
+    int (*reader) (const char *, DATASET *, int *, gretlopt);
+    int err = 0;
+
+    reader = get_plugin_function("purebin_read_subset");
+
+    if (reader == NULL) {
+        err = 1;
+    } else {
+	err = (*reader)(fname, dset, vlist, opt);
+    }
+
+    return err;
+}
+
+static int read_gbin_varnames (const char *fname, char ***pS,
+			       int *pns)
+{
+    int (*reader) (const char *, char ***, int *);
+    int err = 0;
+
+    reader = get_plugin_function("purebin_read_varnames");
+
+    if (reader == NULL) {
+        err = 1;
+    } else {
+	err = (*reader)(fname, pS, pns);
+    }
+
+    return err;
+}
+
+static int is_purebin_file (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "rb");
+    int ret = 0;
+
+    if (fp != NULL) {
+	char buf[16];
+
+	if (fread(buf, 1, 14, fp) == 14 &&
+	    !strcmp(buf, "gretl-purebin")) {
+	    ret = 1;
+	}
+	fclose(fp);
+    }
+
+    return ret;
 }
 
 /**
@@ -4336,7 +4409,11 @@ static int read_gbin (const char *fname, DATASET *dset,
 int gretl_read_gdt (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
-    if (has_suffix(fname, ".gdtb")) {
+    int gdtb = has_suffix(fname, ".gdtb");
+
+    if (gdtb && is_purebin_file(fname)) {
+	return read_gbin(fname, dset, opt, prn);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 	int id = -1;
@@ -4369,9 +4446,6 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 
 	g_free(zdir);
 	return err;
-    } else if (has_suffix(fname, ".gbin")) {
-	/* a temporary thing */
-	return read_gbin(fname, dset, opt, prn);
     } else {
 	/* plain XML file */
 	return real_read_gdt(fname, NULL, dset, opt, prn);
@@ -4395,9 +4469,12 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 			   int *vlist, gretlopt opt)
 {
+    int gdtb = has_suffix(fname, ".gdtb");
     int err = 0;
 
-    if (has_suffix(fname, ".gdtb")) {
+    if (gdtb && is_purebin_file(fname)) {
+	err = read_gbin_subset(fname, dset, vlist, opt);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 	int err;
@@ -4446,9 +4523,12 @@ int gretl_read_gdt_varnames (const char *fname,
 			     char ***vnames,
 			     int *nvars)
 {
+    int gdtb = has_suffix(fname, ".gdtb");
     int err = 0;
 
-    if (has_suffix(fname, ".gdtb")) {
+    if (gdtb && is_purebin_file(fname)) {
+	err = read_gbin_varnames(fname, vnames, nvars);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 	int err;

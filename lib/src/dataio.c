@@ -52,15 +52,14 @@
 
 typedef enum {
     GRETL_FMT_GDT,       /* standard gretl XML data */
-    GRETL_FMT_BINARY,    /* native XML + binary data */
+    GRETL_FMT_BINARY,    /* native gretl binary data */
     GRETL_FMT_OCTAVE,    /* data in Gnu Octave format */
     GRETL_FMT_CSV,       /* data in Comma Separated Values format */
     GRETL_FMT_R,         /* data in Gnu R format */
     GRETL_FMT_DAT,       /* data in PcGive format */
     GRETL_FMT_DB,        /* gretl native database format */
     GRETL_FMT_JM,        /* JMulti ascii data */
-    GRETL_FMT_DTA,       /* Stata .dta format */
-    GRETL_FMT_PUREBIN    /* native "pure" binary data */
+    GRETL_FMT_DTA        /* Stata .dta format */
 } GretlDataFormat;
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
@@ -753,8 +752,7 @@ static struct extmap data_ftype_map[] = {
     { GRETL_DTA,          ".dta" },
     { GRETL_SAV,          ".sav" },
     { GRETL_SAS,          ".xpt" },
-    { GRETL_JMULTI,       ".dat" },
-    { GRETL_PUREBIN,      ".gbin" }
+    { GRETL_JMULTI,       ".dat" }
 };
 
 static const char *map_suffixes[] = {
@@ -851,11 +849,6 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	    *err = E_BADOPT;
 	}
 	return GRETL_FMT_BINARY;
-    } else if (has_suffix(fname, ".gbin")) {
-	if (non_native(opt)) {
-	    *err = E_BADOPT;
-	}
-	return GRETL_FMT_PUREBIN;
     }
 
     if (opt & OPT_M) {
@@ -1084,24 +1077,6 @@ static int write_dta_data (const char *fname, const int *list,
     return err;
 }
 
-static int write_purebin (const char *fname, const int *list,
-			  gretlopt opt, const DATASET *dset)
-{
-    int (*exporter) (const char *, const int *, const DATASET *,
-		     gretlopt);
-    int err = 0;
-
-    exporter = get_plugin_function("gretl_write_purebin");
-
-    if (exporter == NULL) {
-        err = 1;
-    } else {
-	err = (*exporter)(fname, list, dset, opt);
-    }
-
-    return err;
-}
-
 #define DEFAULT_CSV_DIGITS 15
 
 static int real_write_data (const char *fname, int *list,
@@ -1152,12 +1127,6 @@ static int real_write_data (const char *fname, int *list,
     if (fmt == GRETL_FMT_GDT || fmt == GRETL_FMT_BINARY) {
 	/* write native data file (.gdt or .gdtb) */
 	err = gretl_write_gdt(fname, list, dset, opt, progress);
-	goto write_exit;
-    }
-
-    if (fmt == GRETL_FMT_PUREBIN) {
-	/* write native "pure binary" data file (.gbin) */
-	err = write_purebin(fname, list, opt, dset);
 	goto write_exit;
     }
 

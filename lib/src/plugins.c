@@ -317,8 +317,10 @@ struct plugin_function_info plugin_functions[] = {
     { "geoplot", P_GEOPLOT},
 
     /* "pure" binary data read/write */
-    { "gretl_read_purebin",  P_PUREBIN},
-    { "gretl_write_purebin", P_PUREBIN},
+    { "purebin_read_data",  P_PUREBIN},
+    { "purebin_write_data", P_PUREBIN},
+    { "purebin_read_subset",   P_PUREBIN},
+    { "purebin_read_varnames", P_PUREBIN},
 
     /* sentinel */
     { NULL, 0 }
