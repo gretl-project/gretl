@@ -8326,6 +8326,7 @@ static NODE *atof_node (NODE *l, parser *p)
         }
     } else if (l->t == SERIES) {
         int v = l->vnum;
+	double x;
 
         if (!is_string_valued(p->dset, v)) {
             p->err = E_TYPES;
@@ -8339,12 +8340,15 @@ static NODE *atof_node (NODE *l, parser *p)
             gretl_push_c_numeric_locale();
             for (t=p->dset->t1; t<=p->dset->t2; t++) {
                 st = series_get_string_for_obs(p->dset, v, t);
-                ret->v.xvec[t] = strtod(st, &endptr);
-                if (errno || endptr == st) {
-                    errno = 0;
-                    ret->v.xvec[t] = NADBL;
-                }
-            }
+		ret->v.xvec[t] = NADBL;
+		if (st != NULL) {
+		    errno = 0;
+		    x = strtod(st, &endptr);
+		    if (!errno && endptr != st) {
+			ret->v.xvec[t] = x;
+		    }
+		}
+	    }
             gretl_pop_c_numeric_locale();
         }
     }
