@@ -2,7 +2,7 @@
 %% To be used when generating the Gretl manuals from LaTeX source.
 
 @FONTREQ@
-\RequirePackage{amsmath,xcolor}
+\RequirePackage{amsmath,xcolor,amssymb}
 \ProvidesPackage{gretl}
 
 \newcommand{\scriptname}{Listing}
