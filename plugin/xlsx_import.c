@@ -191,7 +191,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 			pprintf(prn, "failed reading string %d\n", i);
 			err = E_DATA;
 		    } else {
-			xinfo->strings[i++] = tmp;
+			xinfo->strings[i++] = g_strstrip(tmp);
 			gotstr = 1;
 		    }
 		} else if (!xmlStrcmp(val->name, (XUC) "r")) {
@@ -205,7 +205,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 				pprintf(prn, "failed reading string %d\n", i);
 				err = E_DATA;
 			    } else {
-				xinfo->strings[i++] = tmp;
+				xinfo->strings[i++] = g_strstrip(tmp);
 				gotstr = 1;
 			    }
 			}
@@ -625,7 +625,7 @@ static char *node_get_inline_string (xmlNodePtr val)
 	char *tmp = (char *) xmlNodeGetContent(ist);
 
 	if (tmp != NULL) {
-	    ret = gretl_strdup(tmp);
+	    ret = gretl_strdup(g_strstrip(tmp));
 	    free(tmp);
 	}
     }
