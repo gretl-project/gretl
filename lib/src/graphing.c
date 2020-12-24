@@ -5084,39 +5084,38 @@ FILE *open_3d_plot_input_file (int *iact)
     return fp;
 }
 
-static void print_freq_test_label (char *s, int teststat,
-				   double v, double pv)
+static gchar *make_freq_test_label (int teststat, double v, double pv)
 {
+    gchar *s;
+
     gretl_pop_c_numeric_locale();
     if (teststat == GRETL_STAT_Z) {
-	sprintf(s, "z = %.3f [%.4f]", v, pv);
+	s = g_strdup_printf("z = %.3f [%.4f]", v, pv);
     } else if (teststat == GRETL_STAT_NORMAL_CHISQ) {
-	sprintf(s, "%s(2) = %.3f [%.4f]", _("Chi-square"), v, pv);
+	s = g_strdup_printf("%s(2) = %.3f [%.4f]", _("Chi-square"), v, pv);
     }
     gretl_push_c_numeric_locale();
+
+    return s;
 }
 
-static void print_freq_dist_label (char *s, int dist, double x, double y)
+static gchar *make_freq_dist_label (int dist, double x, double y)
 {
-    int dcomma = 0;
-    char test[10];
+    gchar *s;
+    char c, test[10];
 
     gretl_pop_c_numeric_locale();
-
     sprintf(test, "%g", 0.5);
-    if (strchr(test, ',')) {
-	dcomma = 1;
-    }
+    c = strchr(test, ',') ? ' ' : ',';
 
     if (dist == D_NORMAL) {
-	sprintf(s, "N(%.5g%c%.5g)", x,
-		((dcomma)? ' ' : ','), y);
+	s = g_strdup_printf("N(%.5g%c%.5g)", x, c, y);
     } else if (dist == D_GAMMA) {
-	sprintf(s, "gamma(%.5g%c%.5g)", x,
-		((dcomma)? ' ' : ','), y);
+	s = g_strdup_printf("gamma(%.5g%c%.5g)", x, c, y);
     }
-
     gretl_push_c_numeric_locale();
+
+    return s;
 }
 
 /* Below: a fix for the case where the y-range is by default
@@ -5179,7 +5178,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     FILE *fp = NULL;
     int i, K = freq->numbins;
     char withstr[32] = {0};
-    char label[80] = {0};
+    gchar *label = NULL;
     double plotmin = 0.0, plotmax = 0.0;
     double barwidth;
     const double *endpt;
@@ -5250,21 +5249,19 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	    if (plotmin > freq->xbar - 3.3 * freq->sdx) {
 		plotmin = freq->xbar - 3.3 * freq->sdx;
 	    }
-
 	    plotmax = endpt[K-1] + barwidth;
 	    if (plotmax < freq->xbar + 3.3 * freq->sdx) {
 		plotmax = freq->xbar + 3.3 * freq->sdx;
 	    }
-
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label \"%s:\" at graph .03, graph .97 front\n",
 			_("Test statistic for normality"));
-		print_freq_test_label(label, GRETL_STAT_NORMAL_CHISQ, freq->test,
-				      chisq_cdf_comp(2, freq->test));
+		label = make_freq_test_label(GRETL_STAT_NORMAL_CHISQ, freq->test,
+					     chisq_cdf_comp(2, freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n",
 			label);
+		g_free(label);
 	    }
-
 	    if (real_ns > 0) {
 		print_extra_literal_lines(S, ns, fp);
 	    }
@@ -5285,12 +5282,12 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label '%s:' at graph .03, graph .97 front\n",
 			_("Test statistic for gamma"));
-		print_freq_test_label(label, GRETL_STAT_Z, freq->test,
-				      normal_pvalue_2(freq->test));
+		label = make_freq_test_label(GRETL_STAT_Z, freq->test,
+					     normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n",
 			label);
+		g_free(label);
 	    }
-
 	    if (real_ns > 0) {
 		print_extra_literal_lines(S, ns, fp);
 	    }
@@ -5346,17 +5343,16 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     }
 
     if (freq->strvals) {
-	char label[32];
-
 	fputs("set xtics rotate by -45\n", fp);
 	fputs("set xtics (", fp);
 	for (i=0; i<K; i++) {
-	    strcpy(label, freq->S[i]);
+	    label = g_strdup(freq->S[i]);
 	    gretl_utf8_truncate(label, 6);
 	    fprintf(fp, "\"%s\" %d", label, i+1);
 	    if (i < K-1) {
 		fputs(", ", fp);
 	    }
+	    g_free(label);
 	}
 	fputs(")\n", fp);
     } else if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 1000) {
@@ -5376,19 +5372,21 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:2 %s\n", withstr);
     } else if (dist == D_NORMAL) {
-	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
+	label = make_freq_dist_label(dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title \"%s\" %s, \\\n"
 		"1.0/(sqrt(2.0*pi)*sigma)*exp(-.5*((x-mu)/sigma)**2) "
 		"title \"%s\" w lines\n",
 		_("relative frequency"), withstr, label);
+	g_free(label);
     } else if (dist == D_GAMMA) {
-	print_freq_dist_label(label, dist, alpha, beta);
+	label = make_freq_dist_label(dist, alpha, beta);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title '%s' %s, \\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
 		"title \"%s\" w lines\n",
 		_("relative frequency"), withstr, label);
+	g_free(label);
     }
 
     for (i=0; i<K; i++) {
