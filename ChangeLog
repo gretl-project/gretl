@@ -28,6 +28,8 @@ version 2020f, in progress
   array and array element within a loop
 - Fix bug: crash after setting "specific lags" for a VAR in
   the GUI model selection dialog
+- Fix bug: possible crash on frequency plot for series with
+  long string values
 - Fix: memory leaks associated with GUI window lists
 - Fix: buggy completion proposals in script editor when
   using gtksourceview-2.0
