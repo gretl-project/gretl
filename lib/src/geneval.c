@@ -8812,7 +8812,11 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
                 const char *s =
                     series_get_string_for_obs(p->dset, l->vnum, t);
 
-                ret->v.str = gretl_strdup(s);
+		if (s == NULL) {
+		    ret->v.str = gretl_strdup("");
+		} else {
+		    ret->v.str = gretl_strdup(s);
+		}
             } else {
                 ret->v.xval = l->v.xvec[t];
             }

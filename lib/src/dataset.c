@@ -4197,6 +4197,7 @@ series_table *series_get_string_table (const DATASET *dset, int i)
  *
  * Returns: the string associated with the numerical value of
  * series @i at observation @t, or NULL if there is no such string.
+ * Note that NULL will be returned if the observation is missing.
  */
 
 const char *series_get_string_for_obs (const DATASET *dset, int i,

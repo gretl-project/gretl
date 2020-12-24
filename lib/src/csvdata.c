@@ -4321,9 +4321,9 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     int tcol = jr->auto_keys->keycol;
     int pd = jr->l_dset->pd;
     struct tm t = {0};
+    const char *s = NULL;
+    char *test = NULL;
     char sconv[32];
-    const char *s;
-    char *test;
     int s_src = 0;
     int err = 0;
 
@@ -4350,12 +4350,14 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
 	s_src = 3;
     }
 
-    /* note: with strptime, a NULL return means that an error
-       occurred while a non-NULL and non-empty return string
-       means a trailing portion of the input was not
-       processed.
-    */
-    test = strptime(s, tfmt, &t);
+    if (s != NULL) {
+	/* note: with strptime, a NULL return means that an error
+	   occurred while a non-NULL and non-empty return string
+	   means a trailing portion of the input was not
+	   processed.
+	*/
+	test = strptime(s, tfmt, &t);
+    }
 
     if (test == NULL || *test != '\0') {
 	err = E_DATA;
