@@ -4547,8 +4547,8 @@ static joiner *build_joiner (joinspec *jspec,
     int i, nrows = r_dset->n;
 
 #if CDEBUG
-    fprintf(stderr, "joiner columns:\n"
-	    "KEY=%d, VAL=%d, F1=%d, F2=%d, F3=%d, KEY2=%d, AUX=%d\n",
+    fprintf(stderr, "joiner column numbers:\n"
+	    "KEY %d, VAL %d, F1 %d, F2 %d, F3 %d, KEY2 %d, AUX %d\n",
 	    keycol, valcol, jspec->colnums[JOIN_F1],
 	    jspec->colnums[JOIN_F2], jspec->colnums[JOIN_F3],
 	    key2col, auxcol);
@@ -4600,6 +4600,10 @@ static joiner *build_joiner (joinspec *jspec,
 		}
 	    }
 	}
+
+#if CDEBUG
+	fprintf(stderr, "use_iso_basic = %d\n", use_iso_basic);
+#endif
 
 	/* Now transcribe the data we want: we're pulling from the
 	   full outer dataset and writing into the array of joiner row
@@ -5415,19 +5419,31 @@ static int join_transcribe_data (joiner *jr, int lv, int newvar,
     return err;
 }
 
+#include "tsjoin.c"
+
 static int join_transcribe_multi_data (DATASET *l_dset,
 				       DATASET *r_dset,
 				       int *targlist,
 				       int orig_v,
 				       joinspec *jspec,
+				       ts_joiner *tjr,
 				       int *modified)
 {
     series_table *rst = NULL;
     series_table *lst = NULL;
     int i, s, t, lv, rv;
+    int t1, t2, m = 0;
     int strcheck, newvar;
     double xit;
     int err = 0;
+
+    if (tjr == NULL) {
+	t1 = l_dset->t1;
+	t2 = l_dset->t2;
+    } else {
+	t1 = tjr->t1;
+	t2 = tjr->t2;
+    }
 
     for (i=1; i<=targlist[0] && !err; i++) {
 	lv = targlist[i];
@@ -5444,9 +5460,13 @@ static int join_transcribe_multi_data (DATASET *l_dset,
 		lst = series_get_string_table(l_dset, lv);
 		strcheck = (rst != NULL && lst != NULL);
 	    }
-	    s = 0;
-	    for (t=l_dset->t1; t<=l_dset->t2 && !err; t++) {
-		xit = r_dset->Z[rv][s++];
+	    if (tjr != NULL) {
+		s = tj_init(tjr, l_dset, lv, newvar, &m);
+	    } else {
+		s = 0;
+	    }
+	    for (t=t1; t<=t2 && !err; t++) {
+		xit = r_dset->Z[rv][s];
 		if (strcheck && !na(xit)) {
 		    xit = maybe_adjust_string_code(rst, lst, xit, &err);
 		}
@@ -5455,6 +5475,11 @@ static int join_transcribe_multi_data (DATASET *l_dset,
 		} else if (xit != l_dset->Z[lv][t]) {
 		    l_dset->Z[lv][t] = xit;
 		    *modified += 1;
+		}
+		if (tjr != NULL) {
+		    m = tj_continue(tjr, m, &s);
+		} else {
+		    s++;
 		}
 	    }
 	}
@@ -5763,7 +5788,8 @@ static int auto_keys_check (const DATASET *l_dset,
 			    gretlopt opt,
 			    const char *tkeyfmt,
 			    obskey *auto_keys,
-			    int *n_keys)
+			    int *n_keys,
+			    int *do_tsjoin)
 {
     int pd = l_dset->pd;
     int err = 0;
@@ -5774,9 +5800,11 @@ static int auto_keys_check (const DATASET *l_dset,
 	goto bailout;
     }
 
-    /* was: if ((opt & OPT_G) && dataset_is_time_series(r_dset)) */
-
     if (dataset_is_time_series(r_dset)) {
+	if (use_tsjoin(l_dset, r_dset)) {
+	    *do_tsjoin = 1;
+	    return 0;
+	}
 	auto_keys->native = 1;
     } else if (r_dset->S == NULL && auto_keys->keycol < 0) {
 	/* On the right, we need either obs strings or a specified
@@ -6863,6 +6891,7 @@ int gretl_join_data (const char *fname,
     char tkeyfmt[32] = {0};
     obskey auto_keys;
     int *targvars = NULL;
+    int do_tsjoin = 0;
     int orig_v = dset->v;
     int add_v = 0;
     int modified = 0;
@@ -7092,7 +7121,10 @@ int gretl_join_data (const char *fname,
 
     if (!err && n_keys == 0 && dataset_is_time_series(dset)) {
 	err = auto_keys_check(dset, outer_dset, opt, tkeyfmt,
-			      &auto_keys, &n_keys);
+			      &auto_keys, &n_keys, &do_tsjoin);
+	if (do_tsjoin) {
+	    goto transcribe;
+	}
     }
 
     if (!err && n_keys == 0 && filter == NULL && aggr == 0 &&
@@ -7172,9 +7204,17 @@ int gretl_join_data (const char *fname,
     }
 
     if (!err) {
-	if (jr == NULL) {
+	if (jr == NULL && do_tsjoin) {
+	    ts_joiner tjr = {0};
+
+	    fill_ts_joiner(dset, outer_dset, &tjr);
 	    err = join_transcribe_multi_data(dset, outer_dset, targvars,
-					     orig_v, &jspec, &modified);
+					     orig_v, &jspec, &tjr,
+					     &modified);
+	} else if (jr == NULL) {
+	    err = join_transcribe_multi_data(dset, outer_dset, targvars,
+					     orig_v, &jspec, NULL,
+					     &modified);
 	} else if (jr->n_keys == 0) {
 	    err = join_transcribe_data(jr, targvars[1], add_v,
 				       &jspec, &modified);
