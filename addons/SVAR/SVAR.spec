@@ -9,12 +9,12 @@ public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     GetShock IRFplot IRFsave FEVD \
     GUI_SVAR GUI_plot FEVDplot FEVDsave HDplot HDsave \
     SVAR_bundle_print \
-    SVAR_SRplain IRF_plotdata \
+    SVAR_SRplain \
     SVAR_SRexotic SVAR_spagplot SVAR_SRfull \
     SVAR_SRirf SVAR_SRdraw SRgetbest \
     SVAR_getshock SVAR_HD \
     SVAR_SRresetalpha
-   # SVAR_setidIRF
+   # SVAR_setidIRF IRF_plotdata 
 gui-main = GUI_SVAR
 
 bundle-plot = GUI_plot

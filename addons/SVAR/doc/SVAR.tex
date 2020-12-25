@@ -2847,14 +2847,14 @@ int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
-   \noindent [Function name and usage subject to change.]
- Relating to a set identified (sign restricted) model, this function uses 
- all accepted draws to construct some summary measures needed for the 
- (standard) IRF plots, like horizon-by-horizon means and quantiles.
- Although it is by nature more like a private function, it is formally public to 
- enable certain kinds of unsupported hacks (see elsewhere).
-\end{funcdoc}
+% \begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
+%    \noindent [Function name and usage subject to change.]
+%  Relating to a set identified (sign restricted) model, this function uses 
+%  all accepted draws to construct some summary measures needed for the 
+%  (standard) IRF plots, like horizon-by-horizon means and quantiles.
+%  Although it is by nature more like a private function, it is formally public to 
+%  enable certain kinds of unsupported hacks (see elsewhere).
+% \end{funcdoc}
 
 \begin{funcdoc}{IRFsave (string outfilename, bundle *Smod, int snum, int vnum, 
 int keypos[0:2:1], int drawix[0])}
@@ -3412,6 +3412,12 @@ typically be called before \texttt{SVAR\_SRirf}.
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 1.93, December 2020}
+\begin{itemize}
+\item Add helper function SVAR\_SRresetalpha. (Hide IRF\_plotdata as 
+ redundant because of that.)
+\end{itemize}
 
 \subsection*{Version 1.92, August/September 2020}
 \begin{itemize}
