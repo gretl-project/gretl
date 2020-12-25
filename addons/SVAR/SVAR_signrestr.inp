@@ -419,7 +419,10 @@ end function
 ###
 
 function void SVAR_spagplot(const bundle mod,
-                            string vname, string sname)
+                            string vname, string sname,
+                            string fname[null])
+                            
+    string out = exists(fname) ? fname : "display"
 
     if !inbundle(mod, "acc_draws")
         funcerr "Need collection acc_draws as model bundle member"
@@ -460,7 +463,7 @@ function void SVAR_spagplot(const bundle mod,
         literal set xlabel 'lags'
         literal set nokey
         printf "set title '%s -> %s'\n", sname, vname
-    end plot --output=display
+    end plot --output=@out
 end function
 
 
@@ -520,6 +523,7 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
                          bool meanormed[0] "choose 1 for medians")
 
     # TODO: make the function return the plot code as string
+    # (but how exactly? Use 'plot' with a temporary file?)                       
     # TODO: check if it makes sense to use the existing IRFgrph and
     #       IRFsave functions internally
     #       (perhaps the code here is actually better (more modern))
@@ -531,8 +535,6 @@ function void SVAR_SRirf(const bundle mod "the model bundle",
     elif !inbundle(mod, "SRirfmeans")
         funcerr "No SR IRF results found - did you run SVAR_SRdraw?"
     endif
-
-    # bundle IrfData = IRF_plotdata(SR_IRFs, coveralpha)
 
     # Which variables:
     if !exists(whichvars)
