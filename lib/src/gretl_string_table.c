@@ -670,7 +670,6 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     }
 
     if (n_strvars > 0) {
-	/* FIXME print something about coded integer series */
 	strcpy(stname, "string_table.txt");
 	gretl_path_prepend(stname, gretl_workdir());
 
