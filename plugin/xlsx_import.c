@@ -580,17 +580,14 @@ static void xlsx_maybe_handle_formula (xlsx_info *xinfo,
 		/* we'll only only handle +/- */
 		return;
 	    }
-
 	    err = xlsx_cell_get_coordinates(cref, &st, &col);
 	    if (err || col != xinfo->xoffset + 1) {
 		return;
 	    }
-
 	    st = st - xinfo->yoffset - 1;
 	    if (!(xinfo->flags & BOOK_AUTO_VARNAMES)) {
 		st--;
 	    }
-
 	    if (st >= 0 && st < t) {
 		const char *s = xinfo->dset->S[st];
 
@@ -610,7 +607,6 @@ static void xlsx_set_dims (xlsx_info *xinfo, int r, int c)
     if (r > xinfo->maxrow) {
 	xinfo->maxrow = r;
     }
-
     if (c > xinfo->maxcol) {
 	xinfo->maxcol = c;
     }
@@ -679,7 +675,7 @@ static int get_cell_basics (xmlNodePtr cur,
     pprintf(prn, "(%d, %d; type %s)", *row, *col, ctype);
 
     if (!strcmp(ctype, "n") || !strcmp(ctype, "b")) {
-	/* numeric of boolean (0/1) */
+	/* numeric or boolean (0/1) */
 	*celltype = CELL_NUMBER;
     } else if (!strcmp(ctype, "d")) {
 	/* date: try numeric? */
@@ -1052,7 +1048,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
 		c1 = c1->next;
 	    }
 	    if (!err) {
-		err = gretl_string_table_validate(xinfo->st);
+		err = gretl_string_table_validate(xinfo->st, OPT_S);
 		if (err) {
 		    pputs(prn, A_("Failed to interpret the data as numeric\n"));
 		} else {
@@ -1466,10 +1462,10 @@ static void xlsx_dates_check (DATASET *dset)
     int t, maybe_dates = 1;
     int date_min = 0, date_max = 0;
     int d, delta_min = 0, delta_max = 0;
-    int t_delta_max = 0;
     int dzero_count = 0;
 
 #if DATE_DEBUG
+    int t_delta_max = 0;
     fprintf(stderr, "xlsx_dates_check: starting\n");
 #endif
 

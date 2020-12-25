@@ -26,11 +26,13 @@
 # include "gretl_www.h"
 #endif
 
+#include <errno.h>
 #include <glib.h>
 
 enum {
     ST_QUOTED  = 1 << 0,
-    ST_ALLINTS = 1 << 1
+    ST_ALLINTS = 1 << 1,
+    ST_ALLDBLS = 1 << 2
 };
 
 struct _series_table {
@@ -48,6 +50,8 @@ struct _gretl_string_table {
 
 #define st_quoted(t) (t->flags & ST_QUOTED)
 #define all_ints(t)  (t->flags & ST_ALLINTS)
+#define all_dbls(t)  (t->flags & ST_ALLDBLS)
+#define all_num(t)   (t->flags & (ST_ALLINTS | ST_ALLDBLS))
 
 static series_table *series_table_alloc (void)
 {
@@ -587,7 +591,8 @@ void gretl_string_table_destroy (gretl_string_table *gst)
 /* Given a series_table in which all the strings are just
    representations of integers, write the integer values
    into the series and destroy the table, while marking
-   the series as "coded."
+   the series as "coded". Or, if all the strings are valid
+   doubles, convert to numeric.
 */
 
 static void series_commute_string_table (DATASET *dset, int i,
@@ -602,14 +607,22 @@ static void series_commute_string_table (DATASET *dset, int i,
 	    val = dset->Z[i][t];
 	    if (!na(val)) {
 		s = series_table_get_string(st, val);
-		dset->Z[i][t] = (double) atoi(s);
+		if (all_ints(st)) {
+		    dset->Z[i][t] = (double) atoi(s);
+		} else {
+		    dset->Z[i][t] = atof(s);
+		}
 	    }
 	}
-	series_table_destroy(st);
-	series_set_flag(dset, i, VAR_DISCRETE);
-	if (!gretl_isdummy(0, dset->n - 1, dset->Z[i])) {
-	    series_set_flag(dset, i, VAR_CODED);
+	if (all_ints(st)) {
+	    series_set_flag(dset, i, VAR_DISCRETE);
+	    if (!gretl_isdummy(0, dset->n - 1, dset->Z[i])) {
+		series_set_flag(dset, i, VAR_CODED);
+	    }
+	} else {
+	    series_unset_flag(dset, i, VAR_DISCRETE);
 	}
+	series_table_destroy(st);
     }
 }
 
@@ -620,8 +633,12 @@ static void series_commute_string_table (DATASET *dset, int i,
  * @fname: name of the datafile to which the table pertains.
  * @prn: gretl printer (or %NULL).
  *
- * Prints table @gst to a file named string_table.txt in the
- * user's working directory.
+ * In basic usage, prints table @gst to string_table.txt in
+ * the user's working directory. However, if one or more of
+ * the series referenced by @gst are deemed to be integer codes
+ * or misclassified numeric data, their "series tables" are
+ * commuted into numeric form. If all series are handled in
+ * this way, the string_table is not printed.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -647,7 +664,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     /* first examine the string table for numeric codings */
     for (i=0; i<ncols; i++) {
 	st = gst->cols[i];
-	if (st == NULL || all_ints(st)) {
+	if (st == NULL || all_num(st)) {
 	    n_strvars--;
 	}
     }
@@ -682,7 +699,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	int vi = gst->cols_list[i+1];
 
 	st = gst->cols[i];
-	if (fp != NULL && !all_ints(st)) {
+	if (fp != NULL && st != NULL && !all_num(st)) {
 	    if (i > 0) {
 		fputc('\n', fp);
 	    }
@@ -693,7 +710,8 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	    }
 	}
 	if (dset->varinfo != NULL) {
-	    if (all_ints(st)) {
+	    if (all_num(st)) {
+		pputs(prn, "commuting series table\n");
 		series_commute_string_table(dset, vi, st);
 	    } else {
 		series_attach_string_table(dset, vi, st);
@@ -714,21 +732,39 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     return err;
 }
 
+static int string_is_double (const char *s)
+{
+    char *test;
+
+    errno = 0;
+    strtod(s, &test);
+    return errno == 0 && *test == '\0';
+}
+
 /**
  * gretl_string_table_validate:
  * @gst: gretl string table.
+ * @opt: may include OPT_S to indicate that the string
+ * table was constructed from a spreadsheet file, in which
+ * case certain cells may be explicitly marked as holding
+ * strings, which information may be not be reliable.
  *
  * Checks that the "string values" in @gst are not in fact
  * undigested quasi-numerical values. We run this on
- * imported "CSV" data to ensure we don't produce
- * misleading results.
+ * imported CSV data to ensure we don't produce
+ * misleading results. In the spreadsheet case we're on
+ * the lookout for purely numerical data wrongly identified
+ * as strings; we don't treat that as fatal but mark the
+ * series table(s) for conversion to numeric.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_string_table_validate (gretl_string_table *gst)
+int gretl_string_table_validate (gretl_string_table *gst,
+				 gretlopt opt)
 {
     const char *test = "0123456789.,";
+    int ssheet = (opt & OPT_S);
     int i, ncols = 0;
     int err = 0;
 
@@ -740,6 +776,7 @@ int gretl_string_table_validate (gretl_string_table *gst)
 	series_table *st = gst->cols[i];
 	const char *s;
 	int nint = 0;
+	int ndbl = 0;
 	int j, myerr = E_DATA;
 
 	if (st_quoted(st)) {
@@ -753,8 +790,12 @@ int gretl_string_table_validate (gretl_string_table *gst)
 		    nint++;
 		}
 	    } else {
-		/* field is not quoted */
-		if (*s == '-' || *s == '+') {
+		/* not quoted */
+		if (ssheet && (*s == '\0' || string_is_double(s))) {
+		    /* could really be numeric? (2020-12-25) */
+		    ndbl++;
+		    continue;
+		} else if (*s == '-' || *s == '+') {
 		    s++;
 		}
 		if (strspn(s, test) < strlen(s)) {
@@ -766,7 +807,12 @@ int gretl_string_table_validate (gretl_string_table *gst)
 	}
 
 	if (nint == st->n_strs) {
+	    /* treat as integer codes */
 	    st->flags |= ST_ALLINTS;
+	} else if (ndbl == st->n_strs) {
+	    /* all really numeric */
+	    st->flags |= ST_ALLDBLS;
+	    myerr = 0;
 	}
 
 	if (myerr) {

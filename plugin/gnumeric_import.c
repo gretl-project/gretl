@@ -700,7 +700,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
     }
 
     if (!err && sheet->st != NULL) {
-	err = gretl_string_table_validate(sheet->st);
+	err = gretl_string_table_validate(sheet->st, OPT_S);
 	if (err) {
 	    pputs(prn, A_("Failed to interpret the data as numeric\n"));
 	} else {

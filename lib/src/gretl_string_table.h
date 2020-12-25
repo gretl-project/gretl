@@ -30,7 +30,8 @@ int gretl_string_table_index (gretl_string_table *gst, const char *s,
 int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 			      const char *fname, PRN *prn);
 
-int gretl_string_table_validate (gretl_string_table *gst);
+int gretl_string_table_validate (gretl_string_table *gst,
+				 gretlopt opt);
 
 int gretl_string_table_save (gretl_string_table *gst, DATASET *dset);
 

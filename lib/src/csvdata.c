@@ -2198,17 +2198,17 @@ int non_numeric_check (DATASET *dset, int **plist,
 	/* check each member of @list */
 	double nnfrac;
 	int nnon = 0;
+	int tnon = -1;
 	int nok = 0;
-	int tn = 0;
 	int v = list[i];
 
 	series_set_flag(dset, v, VAR_DISCRETE);
 
 	for (t=0; t<dset->n; t++) {
 	    if (dset->Z[v][t] == NON_NUMERIC) {
-		if (tn == 0) {
+		if (tnon < 0) {
 		    /* record the first non-numeric obs */
-		    tn = t + 1;
+		    tnon = t + 1;
 		}
 		nnon++;
 	    } else if (!na(dset->Z[v][t])) {
@@ -2226,7 +2226,7 @@ int non_numeric_check (DATASET *dset, int **plist,
 	    */
 	    pprintf(prn, A_("ERROR: variable %d (%s), observation %d, "
 			    "expected numeric value\n"),
-		    v, dset->varname[v], tn);
+		    v, dset->varname[v], tnon);
 	    err = E_DATA;
 	    break;
 	}
@@ -3838,7 +3838,7 @@ static int real_import_csv (const char *fname,
     }
 
     if (c->st != NULL) {
-	err = gretl_string_table_validate(c->st);
+	err = gretl_string_table_validate(c->st, OPT_NONE);
 	if (err) {
 	    pputs(prn, A_("Failed to interpret the data as numeric\n"));
 	    goto csv_bailout;
