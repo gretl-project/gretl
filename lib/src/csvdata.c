@@ -5461,7 +5461,8 @@ static int join_transcribe_multi_data (DATASET *l_dset,
 		strcheck = (rst != NULL && lst != NULL);
 	    }
 	    if (tjr != NULL) {
-		s = tj_init(tjr, l_dset, lv, newvar, &m);
+		m = tjr->rminor;
+		s = tjr->rt1;
 	    } else {
 		s = 0;
 	    }

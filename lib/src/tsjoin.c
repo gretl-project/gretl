@@ -121,21 +121,6 @@ static int use_tsjoin (const DATASET *l_dset,
     }
 }
 
-static int tj_init (ts_joiner *tjr, DATASET *dset,
-		    int lv, int newvar, int *pm)
-{
-    *pm = tjr->rminor;
-    if (newvar) {
-	int t;
-
-	for (t=dset->t1; t<tjr->t1; t++) {
-	    dset->Z[lv][t] = NADBL;
-	}
-    }
-
-    return tjr->rt1;
-}
-
 static int tj_continue (ts_joiner *tjr, int m, int *ps)
 {
     if (m == tjr->pdr) {
