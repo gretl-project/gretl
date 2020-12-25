@@ -3107,11 +3107,12 @@ a warning will be printed.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_spagplot (bundle Smod, string vname, string sname)}
- \noindent Relating to a set identified (sign restricted) model, does a "spaghetti" plot of the IRFs, 
- i.e. simply plotting the IRF of each accepted draw as a thin line. This complementary analysis
- avoids the criticism of aggregating horizon-per-horizon. 
- In order to work the data of the draws must have been stored inside the model bundle (which
- is the default).
+ \noindent Relating to a set identified (sign restricted) model, does a 
+  "spaghetti" plot of the IRFs, i.e. simply plotting the IRF of each accepted
+  draw as a thin line. This complementary analysis avoids the criticism of 
+  aggregating horizon-per-horizon. 
+ In order to work the data of the draws must have been stored inside the model
+  bundle (which is the default).
  
  \noindent Arguments:
  \begin{enumerate}
@@ -3127,8 +3128,8 @@ The plot will be displayed in interactive mode.
     DO\_BAYES[0], scalar coveralpha[0.9],\\
     int maxiter[10000])}
   
-  \noindent Relating to a set identified (sign restricted) model, this function draws random 
-  rotations of the arbitrary baseline Cholesky model
+  \noindent Relating to a set identified (sign restricted) model, this function
+   draws random rotations of the arbitrary baseline Cholesky model
   until \texttt{rep} draws satisfying the sign restrictions have come up,
   or until the \texttt{maxiter} limit is hit. Therefore the number of good 
   draws can be anything between zero and \texttt{rep}.
@@ -3213,21 +3214,22 @@ The plot will be displayed in interactive mode.
 
 \begin{funcdoc}{SVAR\_SRirf (bundle Smod, strings whichvars [optional], \\
       strings whichshocks [optional], bool meanormed[0])}
-\noindent Relating to a set identified (sign restricted) model, does IRF plots based on all
-accepted draws. The empirical coverage level of the plotted confidence bands (or credible sets,
-if you like) must have been chosen previously at the stage of getting the draws (see 
-\texttt{SVAR\_SRdraw}).\footnote{%
-If you change your mind about the desired coverage level 
-but want to avoid re-running the computationally intensive drawing stage, the following hack 
-should work in theory: (1) Set the bundle element \texttt{Smod.SRcoveralpha} to the desired level.
-(2) Call the relevant helper function like this: 
-\texttt{ bundle newIrfdata = IRF\_plotdata(Smod.acc\_draws, Smod.SRcoveralpha)}. 
-(3) Copy over the following 
-elements from \texttt{newIrfdata} to \texttt{Smod} and observe the internally different names:
-\texttt{irfSRmeans $\rightarrow$ SRirfmeans, lo\_cb $\rightarrow$ SRlo\_cb,
-hi\_cb $\rightarrow$ SRhi\_cb, irfSRmeds $\rightarrow$ SRirfmeds.}
-This hack is not
-guaranteed to work in the future. (We should probably add a helper function to automate this.) }
+\noindent Relating to a set identified (sign restricted) model, does IRF plots
+ based on all accepted draws. The empirical coverage level of the plotted
+ confidence bands (or credible sets, if you like) must have been chosen
+ previously at the stage of getting the draws (see 
+ \texttt{SVAR\_SRdraw}, but also see \texttt{SVAR\_SRresetalpha}).% \footnote{%
+% If you change your mind about the desired coverage level 
+% but want to avoid re-running the computationally intensive drawing stage, the following hack 
+% should work in theory: (1) Set the bundle element \texttt{Smod.SRcoveralpha} to the desired level.
+% (2) Call the relevant helper function like this: 
+% \texttt{ bundle newIrfdata = IRF\_plotdata(Smod.acc\_draws, Smod.SRcoveralpha)}. 
+% (3) Copy over the following 
+% elements from \texttt{newIrfdata} to \texttt{Smod} and observe the internally different names:
+% \texttt{irfSRmeans $\rightarrow$ SRirfmeans, lo\_cb $\rightarrow$ SRlo\_cb,
+% hi\_cb $\rightarrow$ SRhi\_cb, irfSRmeds $\rightarrow$ SRirfmeds.}
+% This hack is not
+% guaranteed to work in the future. (We should probably add a helper function to automate this.) }
 
 \noindent Arguments:
 
@@ -3261,6 +3263,20 @@ int length[0], int ini[0])}
   trailing argument \texttt{ini} is omitted, then the restriction must hold up to horizon \texttt{length}.
   \end{funcdoc}
 
+\begin{funcdoc}{SVAR\_SRresetalpha (bundle *Smod, scalar alpha)}
+\noindent Relating to a set identified model, this function allows to redefine the 
+desired coverage level of the pointwise confidence intervals without having to 
+repeat the time-consuming model drawing stage. If necessary, this function would
+typically be called before \texttt{SVAR\_SRirf}. 
+
+\noindent Arguments:
+ 
+ \begin{enumerate}
+ \item model bundle in pointerized form
+ \item desired new coverage probability of IRF confidence intervals 
+\end{enumerate}
+
+\end{funcdoc}
 
 %---------------------------------------------------------------------------------------------------
 
