@@ -4222,9 +4222,11 @@ static joiner *joiner_new (int nrows)
 static int real_set_outer_auto_keys (joiner *jr, const char *s,
 				     int j, struct tm *tp)
 {
+    DATASET *l_dset = jr->l_dset;
+    DATASET *r_dset = jr->r_dset;
     int err = 0;
 
-    if (calendar_data(jr->l_dset)) {
+    if (calendar_data(l_dset)) {
 	int y, m, d, eday;
 
 	y = tp->tm_year + 1900;
@@ -4236,15 +4238,22 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 		gretl_errmsg_sprintf("'%s' is not a valid date", s);
 	    }
 	    err = E_DATA;
+	} else if (jr->n_keys == 2) {
+	    /* use year and month */
+	    jr->rows[j].n_keys = 2;
+	    jr->rows[j].keyval = y;
+	    jr->rows[j].keyval2 = m;
+	    jr->rows[j].micro = 0;
 	} else {
+	    /* use epoch day */
 	    jr->rows[j].n_keys = 1;
 	    jr->rows[j].keyval = eday;
 	    jr->rows[j].keyval2 = 0;
 	    jr->rows[j].micro = 0;
 	}
     } else {
-	int lpd = jr->l_dset->pd;
-	int rpd = jr->r_dset->pd;
+	int lpd = l_dset->pd;
+	int rpd = r_dset->pd;
 	int major = tp->tm_year + 1900;
 	int minor = tp->tm_mon + 1;
 	int micro = 0;
@@ -4536,6 +4545,7 @@ static joiner *build_joiner (joinspec *jspec,
 			     AggrType aggr,
 			     int seqval,
 			     obskey *auto_keys,
+			     int n_keys,
 			     int *err)
 {
     joiner *jr = NULL;
@@ -4584,6 +4594,7 @@ static joiner *build_joiner (joinspec *jspec,
 	jr->l_dset = l_dset;
 	jr->r_dset = r_dset;
 	jr->auto_keys = auto_keys;
+	jr->n_keys = n_keys;
 	jr->midas_m = 0;
 
 	if (using_auto_keys(jr)) {
@@ -4839,6 +4850,7 @@ static void joiner_print (joiner *jr)
     }
 }
 
+# if CDEBUG > 2
 static void print_outer_dataset (const DATASET *dset, const char *fname)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
@@ -4847,6 +4859,7 @@ static void print_outer_dataset (const DATASET *dset, const char *fname)
     printdata(NULL, NULL, dset, OPT_O, prn);
     gretl_print_destroy(prn);
 }
+# endif
 
 #endif
 
@@ -4982,7 +4995,8 @@ static double aggr_value (joiner *jr,
     n = jr->key_freq[pos];
 
 #if AGGDEBUG
-    fprintf(stderr, "  number of primary matches = %d\n", n);
+    fprintf(stderr, "  number of primary matches = %d (n_keys=%d)\n",
+	    n, jr->n_keys);
 #endif
 
     if (jr->n_keys == 1) {
@@ -5177,20 +5191,31 @@ static int get_inner_key_values (joiner *jr, int i,
 				 keynum *pk1, keynum *pk2,
 				 int *missing)
 {
-    DATASET *dset = jr->l_dset;
+    DATASET *l_dset = jr->l_dset;
     int err = 0;
 
     *pk1 = *pk2 = 0;
 
     if (using_auto_keys(jr)) {
 	/* using the LHS dataset obs info */
-	char obs[12];
+	char obs[OBSLEN];
 
-	ntolabel(obs, i, dset);
-	if (calendar_data(dset)) {
-	    *pk1 = get_epoch_day(obs);
+	ntolabel(obs, i, l_dset);
+	if (calendar_data(l_dset)) {
+	    guint32 ed = get_epoch_day(obs);
+
+	    if (jr->n_keys == 2) {
+		/* inner daily, outer monthly */
+		int y, m, d;
+
+		ymd_bits_from_epoch_day(ed, &y, &m, &d);
+		*pk1 = y;
+		*pk2 = m;
+	    } else {
+		*pk1 = ed;
+	    }
 	} else {
-	    /* monthly or quarterly (FIXME others?) */
+	    /* monthly or quarterly (FIXME any others?) */
 	    *pk1 = atoi(obs);
 	    *pk2 = atoi(obs + 5);
 	}
@@ -5199,9 +5224,9 @@ static int get_inner_key_values (joiner *jr, int i,
 	double dk1, dk2 = 0;
 	keynum k1 = 0, k2 = 0;
 
-	dk1 = dset->Z[ikeyvars[1]][i];
+	dk1 = l_dset->Z[ikeyvars[1]][i];
 	if (jr->n_keys == 2) {
-	    dk2 = dset->Z[ikeyvars[2]][i];
+	    dk2 = l_dset->Z[ikeyvars[2]][i];
 	}
 	if (na(dk1) || na(dk2)) {
 	    *missing = 1;
@@ -5782,6 +5807,10 @@ static int check_for_quarterly_format (obskey *auto_keys, int pd)
     return err;
 }
 
+/* for use in determining optimal auto keys */
+#define daily(d) (d->pd >= 5 && d->pd <= 7)
+#define monthly(d) (d->pd == 12)
+
 /* time-series data on the left, and no explicit keys supplied */
 
 static int auto_keys_check (const DATASET *l_dset,
@@ -5792,7 +5821,7 @@ static int auto_keys_check (const DATASET *l_dset,
 			    int *n_keys,
 			    int *do_tsjoin)
 {
-    int pd = l_dset->pd;
+    int lpd = l_dset->pd;
     int err = 0;
 
     if (!dataset_is_time_series(l_dset)) {
@@ -5819,7 +5848,7 @@ static int auto_keys_check (const DATASET *l_dset,
 	/* the user supplied a time-format spec */
 	err = set_time_format(auto_keys, tkeyfmt);
 	if (!err) {
-	    err = check_for_quarterly_format(auto_keys, pd);
+	    err = check_for_quarterly_format(auto_keys, lpd);
 	}
 	if (!err) {
 	    if (annual_data(l_dset)) {
@@ -5834,10 +5863,12 @@ static int auto_keys_check (const DATASET *l_dset,
 	/* default formats */
 	if (calendar_data(l_dset)) {
 	    err = set_time_format(auto_keys, "%Y-%m-%d");
-	    if (!err) {
-		*n_keys = 1;
+	    if (daily(l_dset) && monthly(r_dset)) {
+		*n_keys = 2; /* use year and month */
+	    } else if (!err) {
+		*n_keys = 1; /* use epoch day */
 	    }
-	} else if (pd == 12) {
+	} else if (lpd == 12) {
 	    err = set_time_format(auto_keys, "%Y-%m");
 	    if (!err) {
 		*n_keys = 2;
@@ -5847,7 +5878,7 @@ static int auto_keys_check (const DATASET *l_dset,
 	    if (!err) {
 		*n_keys = 1;
 	    }
-	} else if (pd == 4) {
+	} else if (lpd == 4) {
 	    /* try "excess precision" ISO daily? */
 	    err = set_time_format(auto_keys, "%Y-%m-%d");
 	    if (!err) {
@@ -7087,7 +7118,7 @@ int gretl_join_data (const char *fname,
 	if (!err) {
 	    outer_dset = outer_dataset(&jspec);
 	}
-#if CDEBUG > 1
+#if CDEBUG > 2
 	if (!err) {
 	    print_outer_dataset(outer_dset, fname);
 	}
@@ -7141,7 +7172,7 @@ int gretl_join_data (const char *fname,
 
     if (!err) {
 	jr = build_joiner(&jspec, dset, filter, aggr, seqval,
-			  &auto_keys, &err);
+			  &auto_keys, n_keys, &err);
 	if (!err && jr == NULL) {
 	    /* no matching data to join */
 	    goto bailout;
