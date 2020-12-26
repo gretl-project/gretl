@@ -2408,8 +2408,6 @@ static int print_by_obs (int *list, const DATASET *dset,
     int i, j, j0, k, t, nrem;
     int *colwidths = NULL;
     int obslen = 0;
-    int start = 0, stop = 0;
-    int tmin, tmax;
     int *pmax = NULL;
     char buf[128];
     int blist[BMAX+1];
@@ -2418,21 +2416,6 @@ static int print_by_obs (int *list, const DATASET *dset,
     int vi, wi;
     double x;
     int err = 0;
-
-    if (opt & OPT_R) {
-	/* --range */
-	err = get_print_range(sample_size(dset), &start, &stop);
-	if (err) {
-	    return err;
-	} else if (stop < start) {
-	    return 0;
-	}
-	tmin = dset->t1 + start;
-	tmax = dset->t1 + stop;
-    } else {
-	tmin = dset->t1;
-	tmax = dset->t2;
-    }
 
     if (!(opt & OPT_S)) {
 	pmax = get_pmax_array(list, dset);
@@ -2467,7 +2450,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 
 	varheading(blist, obslen, wlist, dset, 0, prn);
 
-	for (t=tmin; t<=tmax; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (screenvar && dset->Z[screenvar][t] == 0.0) {
 		/* screened out by boolean */
 		continue;
@@ -2575,10 +2558,12 @@ static int midas_print_list (const int *list,
  */
 
 int printdata (const int *list, const char *mstr,
-	       const DATASET *dset,
-	       gretlopt opt, PRN *prn)
+	       DATASET *dset, gretlopt opt,
+	       PRN *prn)
 {
     int screenvar = 0;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int *plist = NULL;
     int err = 0;
 
@@ -2638,11 +2623,28 @@ int printdata (const int *list, const char *mstr,
 	}
     }
 
+    if (opt & OPT_R) {
+	/* --range */
+	int start = 0, stop = 0;
+
+	err = get_print_range(sample_size(dset), &start, &stop);
+	if (err) {
+	    return err;
+	} else if (stop < start) {
+	    goto endprint;
+	}
+	dset->t2 = dset->t1 + stop;
+	dset->t1 = dset->t1 + start;
+    }
+
     if (opt & OPT_O) {
 	err = print_by_obs(plist, dset, opt, screenvar, prn);
     } else {
 	err = print_by_var(plist, dset, opt, prn);
     }
+
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
  endprint:
 

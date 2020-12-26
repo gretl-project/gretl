@@ -64,8 +64,8 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn);
 void maybe_list_series (const DATASET *dset, PRN *prn);
 
 int printdata (const int *list, const char *mstr,
-	       const DATASET *dset, 
-	       gretlopt opt, PRN *prn);
+	       DATASET *dset, gretlopt opt,
+	       PRN *prn);
 
 int print_data_in_columns (const int *list, const int *obsvec, 
 			   const DATASET *dset, gretlopt opt,
