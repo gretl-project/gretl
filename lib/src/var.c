@@ -5060,6 +5060,11 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "T", var->T);
     gretl_bundle_set_int(b, "ifc", var->ifc);
 
+    if (var->models != NULL && var->models[0] != NULL) {
+	gretl_bundle_set_int(b, "sample_t1", var->models[0]->smpl.t1 + 1);
+	gretl_bundle_set_int(b, "sample_t2", var->models[0]->smpl.t2 + 1);
+    }
+
     gretl_bundle_set_scalar(b, "lnl", var->ll);
     gretl_bundle_set_scalar(b, "ldet", var->ldet);
 
