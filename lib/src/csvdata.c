@@ -5809,7 +5809,6 @@ static int check_for_quarterly_format (obskey *auto_keys, int pd)
 
 /* for use in determining optimal auto keys */
 #define daily(d) (d->pd >= 5 && d->pd <= 7)
-#define monthly(d) (d->pd == 12)
 
 /* time-series data on the left, and no explicit keys supplied */
 
@@ -5822,6 +5821,7 @@ static int auto_keys_check (const DATASET *l_dset,
 			    int *do_tsjoin)
 {
     int lpd = l_dset->pd;
+    int rpd = 0;
     int err = 0;
 
     if (!dataset_is_time_series(l_dset)) {
@@ -5831,6 +5831,7 @@ static int auto_keys_check (const DATASET *l_dset,
     }
 
     if (dataset_is_time_series(r_dset)) {
+	rpd = r_dset->pd;
 	if (use_tsjoin(l_dset, r_dset)) {
 	    *do_tsjoin = 1;
 	    return 0;
@@ -5863,7 +5864,7 @@ static int auto_keys_check (const DATASET *l_dset,
 	/* default formats */
 	if (calendar_data(l_dset)) {
 	    err = set_time_format(auto_keys, "%Y-%m-%d");
-	    if (daily(l_dset) && monthly(r_dset)) {
+	    if (daily(l_dset) && rpd == 12) {
 		*n_keys = 2; /* use year and month */
 	    } else if (!err) {
 		*n_keys = 1; /* use epoch day */
