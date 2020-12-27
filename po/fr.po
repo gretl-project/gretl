@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2020-11-20 11:41+0100\n"
+"PO-Revision-Date: 2020-12-27 14:19+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -938,7 +938,7 @@ msgstr "   les dates seraient-elles renversées ?\n"
 #: lib/src/csvdata.c:1485
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr "   première étiquette de rangée \"%s\", dernière étiquette \"%s\"\n"
+msgstr "   première étiquette de ligne \"%s\", dernière étiquette \"%s\"\n"
 
 #: lib/src/csvdata.c:1509
 msgid "trying to parse row labels as dates...\n"
@@ -1049,7 +1049,7 @@ msgstr "   nombre de colonnes = %d\n"
 #: lib/src/csvdata.c:2733
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr "   ...mais la rangée %d a %d champs: arrêt\n"
+msgstr "   ...mais la ligne %d a %d champs: arrêt\n"
 
 #: lib/src/csvdata.c:2811
 #, c-format
@@ -1100,7 +1100,7 @@ msgstr "recherche de données...\n"
 
 #: lib/src/csvdata.c:3412
 msgid "scanning for row labels and data...\n"
-msgstr "recherche des étiquettes de rangée et des données...\n"
+msgstr "recherche des données et des étiquettes des lignes...\n"
 
 #: lib/src/csvdata.c:3436 lib/src/csvdata.c:3439 lib/src/dataio.c:3236
 msgid "parsing"
@@ -1152,7 +1152,7 @@ msgid ""
 "taking date information from row labels\n"
 "\n"
 msgstr ""
-"prise des informations de date à partir des étiquettes de rangées\n"
+"l’information sur la date est récupérée à partir des étiquettes des lignes\n"
 "\n"
 
 #: lib/src/csvdata.c:3832
@@ -1370,7 +1370,7 @@ msgstr ""
 #: lib/src/dataio.c:3291
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
-msgstr "   Matrice '%s' repérée, avec %d rangées, %d colonnes\n"
+msgstr "   Matrice '%s' repérée, avec %d lignes, %d colonnes\n"
 
 #: lib/src/dataio.c:3334
 #, c-format
@@ -5767,7 +5767,7 @@ msgstr "%s, obs. %s%s%s"
 
 #: lib/src/modelprint.c:2092
 msgid "Missing or incomplete observations dropped"
-msgstr "Éliminiation d'observations manquantes ou incomplètes"
+msgstr "Observations manquantes ou incomplètes éliminées"
 
 #: lib/src/modelprint.c:2101 plugin/panurc.c:576
 #, c-format
@@ -5838,7 +5838,7 @@ msgstr "Les pondérations sont basées sur la variance individuelle des erreurs"
 
 #: lib/src/modelprint.c:2298 lib/src/modelprint.c:2305
 msgid "Variable used as weight"
-msgstr "Variable utilisée comme pondération"
+msgstr "Variable de pondération"
 
 #: lib/src/modelprint.c:2353
 msgid "Weight var is a dummy variable, effective obs ="
@@ -6685,7 +6685,7 @@ msgstr "Nombre de différences : n = %d\n"
 #: lib/src/nonparam.c:1289
 #, c-format
 msgid "Number of cases with %s > %s: w = %d (%.2f%%)\n"
-msgstr "Nombre d'observations (rangées) avec %s > %s : w = %d (%.2f%%)\n"
+msgstr "Nombre d'observations (lignes) avec %s > %s : w = %d (%.2f%%)\n"
 
 #: lib/src/nonparam.c:1293
 #, c-format
@@ -11737,7 +11737,7 @@ msgstr "Effacer les étiquettes de données"
 
 #: gui/gpt_control.c:4441 gui/gpt_control.c:4526
 msgid "All data labels"
-msgstr "Toutes les étiquettes de données"
+msgstr "Afficher les étiquettes de données"
 
 #: gui/gpt_control.c:4443 gui/gpt_control.c:4528
 msgid "Zoom..."
@@ -14188,9 +14188,8 @@ msgid "Accessors"
 msgstr "Accessors"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2334
-#, fuzzy
 msgid "Built-in strings"
-msgstr "Chaîne %s supprimée"
+msgstr "Chaînes de caractères dédiées"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
@@ -14201,9 +14200,8 @@ msgid "Mathematical"
 msgstr "Mathématique"
 
 #: gui/helpfiles.c:335
-#, fuzzy
 msgid "Matrix manipulation"
-msgstr "Mise en forme de matrice"
+msgstr "Opérations sur matrices"
 
 #: gui/helpfiles.c:337
 msgid "Linear algebra"
@@ -14222,18 +14220,16 @@ msgid "Calendar"
 msgstr "Calendrier"
 
 #: gui/helpfiles.c:349
-#, fuzzy
 msgid "Time-series"
-msgstr "séries temporelles"
+msgstr "Séries temporelles"
 
 #: gui/helpfiles.c:351
 msgid "Statistical"
 msgstr "Statistique"
 
 #: gui/helpfiles.c:353
-#, fuzzy
 msgid "Non-parametric"
-msgstr "Tests non-paramétriques"
+msgstr "Non-paramétrique"
 
 #: gui/helpfiles.c:357
 msgid "State space"
@@ -17311,9 +17307,8 @@ msgid "Gretl Function Reference"
 msgstr "Référence des fonctions gretl"
 
 #: gui/textbuf.c:2335
-#, fuzzy
 msgid "Functions proper"
-msgstr "Référence des _fonctions"
+msgstr "Fonctions spécifiques"
 
 #: gui/textbuf.c:2433
 msgid "Back"
@@ -17356,9 +17351,8 @@ msgid "Unindent region"
 msgstr "Supprimer l'indentation pour la région"
 
 #: gui/textbuf.c:3936
-#, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
-msgstr "Indentation automatique du code"
+msgstr "Indentation automatique du code (Ctrl+I)"
 
 #: gui/textbuf.c:3947 gui/toolbar.c:820
 msgid "Preferences..."
@@ -17606,18 +17600,16 @@ msgid "Stop"
 msgstr "Arrêt"
 
 #: gui/update.c:33
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "Version %s is available at http://gretl.sourceforge.net/\n"
 msgstr ""
 "Vous travaillez sur la version %s de gretl.\n"
-"La version % s est disponible sur http://ricardo.ecn.wfu.edu/pub/gretl/\n"
-"(Si ce n’est pas encore sur http://gretl.sourceforge.net/\n"
-"ça le sera sous peu.)"
+"La version % s est disponible surhttp://gretl.sourceforge.net\n"
 
 #: gui/update.c:37
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "This seems to be a pre-release; the latest version available at\n"
@@ -17626,7 +17618,7 @@ msgstr ""
 "Vous travaillez sur la version %s de gretl.\n"
 "Cela semble être une pré-version ; %s est la dernière version disponible "
 "sur\n"
-"http://ricardo.ecn.wfu.edu/pub/gretl/"
+"http://gretl.sourceforge.net"
 
 #: gui/update.c:42
 #, c-format
@@ -18099,11 +18091,11 @@ msgstr "de petites valeurs MA"
 
 #: plugin/arma.c:1380
 msgid "using nonlinear AR model"
-msgstr "en utilisant un modèle non linéaire AR"
+msgstr "en utilisant un modèle AR non linéaire"
 
 #: plugin/arma.c:1382
 msgid "using linear AR model"
-msgstr "en utilisant un modèle linéaire AR"
+msgstr "en utilisant un modèle AR linéaire"
 
 #: plugin/arma_cml.c:701
 msgid "BHHH iteration"
@@ -18170,7 +18162,7 @@ msgstr "Échec de traitement du fichier Excel"
 
 #: plugin/excel_import.c:1705 plugin/gnumeric_import.c:360
 msgid "Starting row is out of bounds.\n"
-msgstr "La rangée de départ est hors limite.\n"
+msgstr "La ligne de départ est hors limite.\n"
 
 #: plugin/excel_import.c:1708 plugin/gnumeric_import.c:365
 msgid "Starting column is out of bounds.\n"
@@ -18277,7 +18269,7 @@ msgid ""
 "Couldn't get value for col %d, row %d.\n"
 "Maybe there's a formula in the sheet?"
 msgstr ""
-"Ne peut obtenir la valeur pour la colonne %d, rangée %d.\n"
+"Ne peut obtenir la valeur pour la colonne %d, ligne %d.\n"
 "Peut-être qu'il y a une formule dans la feuille?"
 
 #: plugin/heckit.c:1072
