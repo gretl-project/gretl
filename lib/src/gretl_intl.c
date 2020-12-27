@@ -167,12 +167,11 @@ int get_local_decpoint (void)
 
 static int gretl_cset_maj;
 static int gretl_cset_min;
-#ifdef WIN32
-static int gretl_cpage;
-#endif
 static int native_utf8;
 
 #ifdef WIN32
+
+static int gretl_cpage;
 
 int get_gretl_cpage (void)
 {
@@ -504,6 +503,16 @@ void set_alt_gettext_mode (PRN *prn)
     */
 
     if (prn != NULL && !native_utf8) {
+#if 1 /* 2020-12-26 */
+	if (tex_format(prn) || rtf_format(prn)) {
+	    gettext_mode = GETTEXT_FORCE_UTF8;
+	} else if (gretl_in_gui_mode()) {
+	    /* ?? */
+	    if (printing_to_standard_stream(prn)) {
+		gettext_mode = GETTEXT_FORCE_LOCALE;
+	    }
+	}
+#else
 	if (gretl_in_gui_mode()) {
 	    if (printing_to_standard_stream(prn)) {
 		gettext_mode = GETTEXT_FORCE_LOCALE;
@@ -512,6 +521,7 @@ void set_alt_gettext_mode (PRN *prn)
 	    /* CLI mode, writing TeX or RTF */
 	    gettext_mode = GETTEXT_FORCE_UTF8;
 	}
+#endif
     }
 }
 
