@@ -9077,16 +9077,26 @@
       </description>
     </function>
 
-    <function name="obslabel" section="data-utils" output="string">
+    <function name="obslabel" section="data-utils" output="string-or-strings">
       <fnargs>
-	<fnarg type="int">t</fnarg>
+	<fnarg type="scalar-or-vec">t</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the observation label for observation
-	  <argname>t</argname>, where <argname>t</argname> is a
-	  1-based index.  The inverse function is provided by <fncref
-	  targ="obsnum"/>.
+	  If <argname>t</argname> is a scalar, returns a single
+	  string, the observation label for observation
+	  <argname>t</argname>. The inverse function is provided by
+	  <fncref targ="obsnum"/>.
+	</para>
+	<para>
+	  If <argname>t</argname> is a vector, returns an array of
+	  strings, the observation labels for the observations given
+	  by the elements of <argname>t</argname>.
+	</para>
+	<para>
+	  In either case the <argname>t</argname> values must be
+	  integers, valid as 1-based indices of observations in the
+	  current dataset, otherwise an error is flagged.
 	</para>
       </description>
     </function>

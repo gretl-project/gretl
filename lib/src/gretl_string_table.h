@@ -86,6 +86,10 @@ char *gretl_getenv (const char *key, int *defined, int *err);
 
 char *retrieve_date_string (int t, const DATASET *dset, int *err);
 
+void *retrieve_date_strings (const gretl_vector *v,
+			     const DATASET *dset,
+			     int *err);
+
 char *retrieve_file_content (const char *fname, const char *codset,
 			     int *err);
 

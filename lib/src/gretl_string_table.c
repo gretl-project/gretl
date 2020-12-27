@@ -21,6 +21,7 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "uservar.h"
+#include "gretl_array.h"
 #include "gretl_string_table.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -1106,6 +1107,41 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	}
+    }
+
+    return ret;
+}
+
+/* returns a gretl_array of strings on success */
+
+void *retrieve_date_strings (const gretl_vector *v,
+			     const DATASET *dset,
+			     int *err)
+{
+    gretl_array *ret = NULL;
+    char *s = NULL;
+    int i, t, n;
+
+    n = gretl_vector_get_length(v);
+    if (n == 0) {
+	*err = E_INVARG;
+    } else {
+	ret = gretl_array_new(GRETL_TYPE_STRINGS, n, err);
+    }
+
+    for (i=0; i<n && !*err; i++) {
+	t = gretl_int_from_double(v->val[i], err);
+	if (!*err) {
+	    s = retrieve_date_string(t, dset, err);
+	}
+	if (!*err) {
+	    gretl_array_set_data(ret, i, s);
+	}
+    }
+
+    if (*err && ret != NULL) {
+	gretl_array_destroy(ret);
+	ret = NULL;
     }
 
     return ret;

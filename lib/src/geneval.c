@@ -7403,35 +7403,47 @@ static NODE *varnum_node (NODE *n, parser *p)
 
 static NODE *int_to_string_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_string_node(p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
-        int i;
+    if (starting(p)) {
+	gretl_matrix *v = NULL;
+        int i = 0;
 
         if (scalar_node(n)) {
             i = node_get_int(n, p);
         } else if (n->t == SERIES && f == F_VARNAME) {
             i = n->vnum;
+	} else if (n->t == MAT && f == F_OBSLABEL) {
+	    v = n->v.m;
         } else {
             node_type_error(f, 0, NUM, n, p);
-            return NULL;
         }
 
-        if (f == F_OBSLABEL) {
+	if (!p->err && v != NULL) {
+	    ret = aux_array_node(p);
+	} else if (!p->err) {
+	    ret = aux_string_node(p);
+	}
+
+        if (f == F_OBSLABEL && v != NULL) {
+	    ret->v.a = retrieve_date_strings(v, p->dset, &p->err);
+	} else if (f == F_OBSLABEL) {
             ret->v.str = retrieve_date_string(i, p->dset, &p->err);
         } else if (f == F_VARNAME) {
             if (i >= 0 && i < p->dset->v) {
                 ret->v.str = gretl_strdup(p->dset->varname[i]);
             } else {
-                p->err = E_DATA;
+                p->err = E_INVARG;
             }
         } else {
             p->err = E_DATA;
         }
 
-        if (!p->err && ret->v.str == NULL) {
+        if (!p->err && v == NULL && ret->v.str == NULL) {
             p->err = E_ALLOC;
         }
+    } else {
+	ret = aux_any_node(p);
     }
 
     return ret;
