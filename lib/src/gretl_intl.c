@@ -1437,6 +1437,8 @@ char *utf8_to_rtf (const char *s)
 	return NULL;
     }
 
+    fprintf(stderr, "*** HERE utf8_to_rtf ***\n");
+
     while (*p) {
 	nextp = g_utf8_next_char(p);
 	if (nextp - p > 1) {
