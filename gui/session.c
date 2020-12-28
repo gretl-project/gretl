@@ -1429,7 +1429,7 @@ gboolean do_open_session (void)
     /* close existing session, if any, and initialize */
     close_session(OPT_NONE);
 
-    fprintf(stderr, I_("\nReading session file %s\n"), tryname);
+    fprintf(stderr, "\nReading session file %s\n", tryname);
 
     /* we're about to change directory: if tryfile is not
        an absolute path we'll lose track of it

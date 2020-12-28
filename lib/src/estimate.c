@@ -3979,7 +3979,6 @@ MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
     lad_driver = get_plugin_function("lad_driver");
 
     if (lad_driver == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	mod.errcode = E_FOPEN;
 	return mod;
     }
@@ -4033,7 +4032,6 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
     rq_driver = get_plugin_function("rq_driver");
 
     if (rq_driver == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	mod.errcode = E_FOPEN;
 	return mod;
     }
@@ -4190,7 +4188,6 @@ MODEL arma (const int *list, const int *pqlags,
     }
 
     if (err) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	armod.errcode = err;
 	return armod;
     }

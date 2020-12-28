@@ -1823,7 +1823,6 @@ int levin_lin_test (int vnum, const int *plist,
     real_levin_lin = get_plugin_function("real_levin_lin");
 
     if (real_levin_lin == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	err = E_FOPEN;
     } else {
 	int save_t1 = dset->t1;

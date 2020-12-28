@@ -2075,9 +2075,7 @@ double johansen_trace_pval (int N, int det, int T, double tr)
 
     pvfunc = get_plugin_function("trace_pvalue");
 
-    if (pvfunc == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
-    } else {
+    if (pvfunc != NULL) {
 	pv = (*pvfunc) (tr, N, det, T);
     }
 

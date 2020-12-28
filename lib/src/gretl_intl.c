@@ -462,19 +462,18 @@ static char *force_utf8_gettext (const char *msgid)
    should be in UTF-8, with the possible exception of RTF; and all
    output _will_ be in UTF-8 if we just call plain gettext().
 
-   (2) The system-native encoding is not UTF-8 (this means
-   MS Windows -- or possibly ancient Linux?). Then we have two
-   sub-cases.
+   (2) The system-native encoding is not UTF-8 (MS Windows).
+   Then we have two sub-cases.
 
    (2a) We're in the GUI program: plain gettext() will have been
    coerced to produce UTF-8 for the sake of GTK. But we should
-   probably arrange for RTF and CSV output to be in the locale
-   encoding, and also any output going to the console.
+   probably arrange for CSV output to be in the locale  encoding,
+   and also any output going to the console.
 
    (2b) We're at the command line (gretlcli): gettext() output will
    be in the system locale, but under the "new scheme" (December
    2011) TeX output should be coerced to UTF-8. All other output
-   should use plain gettext().
+   should use plain gettext(). FIXME is this right any more??
 */
 
 enum {
@@ -503,16 +502,6 @@ void set_alt_gettext_mode (PRN *prn)
     */
 
     if (prn != NULL && !native_utf8) {
-#if 1 /* 2020-12-26 */
-	if (tex_format(prn) || rtf_format(prn)) {
-	    gettext_mode = GETTEXT_FORCE_UTF8;
-	} else if (gretl_in_gui_mode()) {
-	    /* ?? */
-	    if (printing_to_standard_stream(prn)) {
-		gettext_mode = GETTEXT_FORCE_LOCALE;
-	    }
-	}
-#else
 	if (gretl_in_gui_mode()) {
 	    if (printing_to_standard_stream(prn)) {
 		gettext_mode = GETTEXT_FORCE_LOCALE;
@@ -521,7 +510,6 @@ void set_alt_gettext_mode (PRN *prn)
 	    /* CLI mode, writing TeX or RTF */
 	    gettext_mode = GETTEXT_FORCE_UTF8;
 	}
-#endif
     }
 }
 
@@ -1446,8 +1434,6 @@ char *utf8_to_rtf (const char *s)
     if (prn == NULL) {
 	return NULL;
     }
-
-    fprintf(stderr, "*** HERE utf8_to_rtf ***\n");
 
     while (*p) {
 	nextp = g_utf8_next_char(p);

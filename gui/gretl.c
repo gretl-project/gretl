@@ -306,7 +306,7 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
 
 static void noalloc (void)
 {
-    fputs(I_("Out of memory!\n"), stderr);
+    fputs("Out of memory!\n", stderr);
     exit(EXIT_FAILURE);
 }
 

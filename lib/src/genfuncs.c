@@ -2511,7 +2511,6 @@ static int mp_butterworth (const double *x, double *bw, int T,
     mpfun = get_plugin_function("mp_bw_filter");
 
     if (mpfun == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
 
@@ -4472,7 +4471,6 @@ static int try_mp_midas_weights (const double *theta, int k,
     mpfun = get_plugin_function("mp_midas_weights");
 
     if (mpfun == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
 
@@ -4691,7 +4689,6 @@ static int try_mp_midas_grad (const double *theta,
     mpfun = get_plugin_function("mp_midas_gradient");
 
     if (mpfun == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
 

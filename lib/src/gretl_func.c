@@ -8918,7 +8918,6 @@ static int handle_plugin_call (fncall *call,
     cfunc = get_packaged_C_function(u->pkg->name, u->name, &handle);
 
     if (cfunc == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
 

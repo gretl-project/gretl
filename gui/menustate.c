@@ -49,7 +49,7 @@ void flip (GtkUIManager *ui, const char *path, gboolean s)
         if (a != NULL) {
             gtk_action_set_sensitive(a, s);
         } else {
-            fprintf(stderr, I_("Failed to flip state of \"%s\"\n"), path);
+            fprintf(stderr, "Failed to flip state of \"%s\"\n", path);
         }
     }
 }

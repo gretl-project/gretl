@@ -4266,18 +4266,14 @@ static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
     if (param != NULL) {
 	if (plain_format(prn)) {
 	    pprintf(prn, _(descrip), param);
-	} else if (tex_format(prn)) {
-	    pprintf(prn, A_(descrip), param);
 	} else {
-	    pprintf(prn, I_(descrip), param);
+	    pprintf(prn, A_(descrip), param);
 	}
     } else {
 	if (plain_format(prn)) {
 	    pputs(prn, _(descrip));
-	} else if (tex_format(prn)) {
-	    pputs(prn, A_(descrip));
 	} else {
-	    pputs(prn, I_(descrip));
+	    pputs(prn, A_(descrip));
 	}
     }
 
@@ -4366,11 +4362,11 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	if (!strcmp(H0, "rho = 0")) {
 	    pputs(prn, "$\\rho = 0$");
 	} else {
-	    pputs(prn, I_(H0));
+	    pputs(prn, A_(H0));
 	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, "\\par\n %s: ", A_("Null hypothesis"));
-	pputs(prn, I_(H0));
+	pputs(prn, A_(H0));
     }
 
     if (test->type == GRETL_TEST_ADD || test->type == GRETL_TEST_OMIT) {
@@ -4622,9 +4618,9 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
     if (plain_format(prn)) {
 	pprintf(prn, "\n  %s: %s\n", _(tstr), buf);
     } else if (tex_format(prn)) {
-	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", I_(tstr), buf);
+	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", A_(tstr), buf);
     } else if (rtf_format(prn)) {
-	pprintf(prn, "\\par\n %s: %s\\par\n", I_(tstr), buf);
+	pprintf(prn, "\\par\n %s: %s\\par\n", A_(tstr), buf);
     }
 
     get_test_pval_string(test, buf, prn);
