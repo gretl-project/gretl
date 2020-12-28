@@ -2562,8 +2562,6 @@ int printdata (const int *list, const char *mstr,
 	       PRN *prn)
 {
     int screenvar = 0;
-    int save_t1 = dset->t1;
-    int save_t2 = dset->t2;
     int *plist = NULL;
     int err = 0;
 
@@ -2625,6 +2623,8 @@ int printdata (const int *list, const char *mstr,
 
     if (opt & OPT_R) {
 	/* --range */
+	int save_t1 = dset->t1;
+	int save_t2 = dset->t2;
 	int start = 0, stop = 0;
 
 	err = get_print_range(sample_size(dset), &start, &stop);
@@ -2633,18 +2633,22 @@ int printdata (const int *list, const char *mstr,
 	} else if (stop < start) {
 	    goto endprint;
 	}
-	dset->t2 = dset->t1 + stop;
-	dset->t1 = dset->t1 + start;
-    }
-
-    if (opt & OPT_O) {
-	err = print_by_obs(plist, dset, opt, screenvar, prn);
+	dset->t1 = save_t1 + start;
+	dset->t2 = save_t1 + stop;
+	if (opt & OPT_O) {
+	    err = print_by_obs(plist, dset, opt, screenvar, prn);
+	} else {
+	    err = print_by_var(plist, dset, opt, prn);
+	}
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
     } else {
-	err = print_by_var(plist, dset, opt, prn);
+	if (opt & OPT_O) {
+	    err = print_by_obs(plist, dset, opt, screenvar, prn);
+	} else {
+	    err = print_by_var(plist, dset, opt, prn);
+	}
     }
-
-    dset->t1 = save_t1;
-    dset->t2 = save_t2;
 
  endprint:
 
