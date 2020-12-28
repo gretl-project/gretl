@@ -1983,6 +1983,7 @@ static int open_append_stage_1 (CMD *cmd,
         /* --frompkg=whatever */
         pkgdata = 1;
     } else if (!strcmp(cmd->param, "dbnomics")) {
+	strcpy(op->fname, "dbnomics");
         op->ftype = GRETL_DBNOMICS;
         op->dbdata = 1;
     } else if (is_http(cmd->param)) {
@@ -2103,7 +2104,7 @@ static int lib_open_append (ExecState *s,
 {
     CMD *cmd = s->cmd;
     gretlopt opt = cmd->opt;
-    OpenOp op;
+    OpenOp op = {0};
     PRN *vprn = prn;
     int err;
 
