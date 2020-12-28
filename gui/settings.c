@@ -2554,6 +2554,7 @@ static void windows_font_selector (GtkAction *action)
     resp = choose_fontsel_action();
 
     if (resp == 0) {
+	/* actually choose a font */
 	if (which == FIXED_FONT_SELECTION) {
 	    strcpy(fontname, fixedfontname);
 	} else {
@@ -2561,6 +2562,7 @@ static void windows_font_selector (GtkAction *action)
 	}
 	win32_font_selector(fontname, which);
     } else if (resp == 1) {
+	/* reset the default font */
 	if (which == FIXED_FONT_SELECTION) {
 	    strcpy(fontname, default_fixedfont);
 	} else {
