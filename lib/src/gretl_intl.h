@@ -78,8 +78,6 @@ int lang_id_from_name (const char *s);
 
 int lang_id_from_code (const char *s);
 
-void set_alt_gettext_mode (PRN *prn);
-
 void set_lcnumeric (int langid, int lcnumeric);
 
 int gretl_is_ascii (const char *buf);
@@ -102,17 +100,19 @@ int east_asian_locale (void);
 
 int get_utf_width (const char *str, int width);
 
+void set_alt_gettext_mode (PRN *prn);
+
 #ifdef WIN32
 
 int get_gretl_cpage (void);
 
+char *locale_gettext (const char *msgid);
+
+char *alt_gettext (const char *msgid);
+
 #endif
 
 #ifdef ENABLE_NLS
-
-char *iso_gettext (const char *msgid);
-
-char *alt_gettext (const char *msgid);
 
 void set_gretl_charset (void);
 
@@ -128,8 +128,6 @@ int get_translated_width (const char *str);
 #else /* !ENABLE_NLS */
 
 #define gettext(s) s
-#define iso_gettext(s) s
-#define alt_gettext(s) s
 
 # define UTF_WIDTH(s, w) w
 # define TRANSLATED_WIDTH(s) strlen(s)
