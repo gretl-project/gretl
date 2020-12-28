@@ -459,21 +459,22 @@ static char *force_utf8_gettext (const char *msgid)
 /* Cases to consider below:
 
    (1) The system-native encoding is UTF-8: in that case all output
-   should be in UTF-8, with the possible exception of RTF; and all
-   output _will_ be in UTF-8 if we just call plain gettext().
+   should be in UTF-8; and all output _will_ be in UTF-8 if we just
+   call plain gettext(). In this context we get RTF right by post-
+   processing, UTF-8 characters -> "\u<num>?" as per RTF spec.
 
    (2) The system-native encoding is not UTF-8 (MS Windows).
    Then we have two sub-cases.
 
    (2a) We're in the GUI program: plain gettext() will have been
    coerced to produce UTF-8 for the sake of GTK. But we should
-   probably arrange for CSV output to be in the locale  encoding,
-   and also any output going to the console.
+   maybe arrange for CSV output to be in the locale encoding,
+   or UTF-16, and any output going to the console should be...
+   FIXME.
 
    (2b) We're at the command line (gretlcli): gettext() output will
-   be in the system locale, but under the "new scheme" (December
-   2011) TeX output should be coerced to UTF-8. All other output
-   should use plain gettext(). FIXME is this right any more??
+   be in the system locale, but TeX and RTF output should be coerced
+   to UTF-8. FIXME is this right any more?
 */
 
 enum {
