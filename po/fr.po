@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2020-12-27 14:19+0100\n"
+"PO-Revision-Date: 2020-12-28 10:40-0500\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -5923,7 +5923,7 @@ msgstr "tau"
 
 #: lib/src/modelprint.c:2479
 msgid "Std.\\ Error"
-msgstr "Erreur std.\\"
+msgstr "Erreur std."
 
 #: lib/src/modelprint.c:2479
 msgid "Std. Error"
