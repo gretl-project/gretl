@@ -218,12 +218,12 @@ static void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
-    iso_gettext("@CLI_INIT");
 
     gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
 # ifdef WIN32
+    locale_gettext(NULL);
     win32_set_console_charset(PACKAGE);
 # endif
 }

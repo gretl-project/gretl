@@ -276,7 +276,6 @@ static void nls_init (void)
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
-    iso_gettext("@CLI_INIT");
 
     gretl_setenv("LC_NUMERIC", "");
     setlocale(LC_NUMERIC, "");
@@ -285,6 +284,7 @@ static void nls_init (void)
     if (getenv("CLI_DEBUG")) {
         set_windebug(2);
     }
+    locale_gettext(NULL);
     win32_set_console_charset(PACKAGE);
 # endif
 }
