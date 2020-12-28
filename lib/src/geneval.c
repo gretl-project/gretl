@@ -4920,7 +4920,8 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
                 if (!p->err) {
                     ret->v.m = matrix_get_chunk(m, spec, &p->err);
                 }
-            } else if (spec->ltype == SEL_ELEMENT) {
+            } else if (spec->ltype == SEL_ELEMENT &&
+		       !(p->flags & P_LHEVAL)) {
                 int i = mspec_get_element(spec);
 
                 if (m->is_complex) {
@@ -4928,7 +4929,7 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
                     if (!p->err) {
                         ret->v.m = cmatrix_get_element(m, i, &p->err);
                     }
-                } else {
+ 		} else {
                     ret = aux_scalar_node(p);
                     if (!p->err) {
                         ret->v.xval = m->val[i];
@@ -4940,8 +4941,7 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
             } else {
                 ret = aux_matrix_node(p);
                 if (!p->err) {
-                    ret->v.m = matrix_get_submatrix(m, spec, 1,
-                                                    &p->err);
+                    ret->v.m = matrix_get_submatrix(m, spec, 1, &p->err);
                 }
             }
         }
@@ -19620,7 +19620,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	int compound_t;
 
 	p->lhtree->flags |= LHT_NODE;
-	p->flags |= P_START;
+	p->flags |= (P_START | P_LHEVAL);
 #if LHDEBUG
 	fprintf(stderr, "\n*** eval lhtree before eval ***\n");
 	print_tree(p->lhtree, p, 0, 0);
@@ -19634,6 +19634,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    print_tree(p->lhtree, p, 0, 0);
 	}
 #endif
+	p->flags &= ~P_LHEVAL;
 	if (p->err) {
 	    return p->err;
 	}
