@@ -5333,9 +5333,14 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
         } else if (l->t == ARRAY) {
             int n = gretl_array_get_length(l->v.a);
             matrix_subspec *spec = r->v.mspec;
-            int *vlist = mspec_make_list(spec->ltype, &spec->lsel,
-                                         n, &p->err);
+            int *vlist = NULL;
 
+	    if (spec->rtype != SEL_NULL) {
+		p->err = E_INVARG;
+	    } else {
+		vlist = mspec_make_list(spec->ltype, &spec->lsel,
+					n, &p->err);
+	    }
             if (!p->err) {
                 if (vlist[0] == 1) {
 		    if (p->aux != NULL && p->aux->t == ARRAY) {
