@@ -4264,7 +4264,7 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 	    if (rpd == 1) {
 		/* repeat the lower frequency values */
 		minor = TS_WILDCARD;
-	    } else if (rpd == 12) {
+	    } else {
 		/* map from month on right to quarter on left, but
 		   preserve the month info in case we need it
 		*/
