@@ -4920,7 +4920,7 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
                 if (!p->err) {
                     ret->v.m = matrix_get_chunk(m, spec, &p->err);
                 }
-            } else if (spec->ltype == SEL_ELEMENT &&
+            } else if (spec->ltype == SEL_ELEMENT && /* FIXME? */
 		       !(p->flags & P_LHEVAL)) {
                 int i = mspec_get_element(spec);
 
@@ -4930,11 +4930,17 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
                         ret->v.m = cmatrix_get_element(m, i, &p->err);
                     }
  		} else {
+#if 0 /* try it? */
+		    ret = aux_matrix_node();
+		    ret->v.m = gretl_matrix_alloc(1,1);
+		    ret->v.m->val[0] = m->val[i];
+#else
                     ret = aux_scalar_node(p);
                     if (!p->err) {
                         ret->v.xval = m->val[i];
                         ret->flags |= MSL_NODE;
                     }
+#endif
                 }
             } else if (spec->ltype == SEL_STR) {
                 p->err = E_TYPES;
