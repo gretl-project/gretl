@@ -5350,7 +5350,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
             if (!p->err) {
                 if (vlist[0] == 1) {
 		    if (p->aux != NULL && p->aux->t == ARRAY) {
-			/* produce a singleton array */
+			/* produce a singleton array (FIXME breaks geoplot!) */
 			ret = array_subspec_node(l->v.a, vlist, p);
 		    } else {
 			/* produce an array element */
