@@ -4920,8 +4920,7 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
                 if (!p->err) {
                     ret->v.m = matrix_get_chunk(m, spec, &p->err);
                 }
-            } else if (spec->ltype == SEL_ELEMENT && /* FIXME? */
-		       !(p->flags & P_LHEVAL)) {
+            } else if (spec->ltype == SEL_ELEMENT) {
                 int i = mspec_get_element(spec);
 
                 if (m->is_complex) {
@@ -4930,8 +4929,8 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
                         ret->v.m = cmatrix_get_element(m, i, &p->err);
                     }
  		} else {
-#if 0 /* try it? */
-		    ret = aux_matrix_node();
+#if 1 /* 2020-12-29 */
+		    ret = aux_matrix_node(p);
 		    ret->v.m = gretl_matrix_alloc(1,1);
 		    ret->v.m->val[0] = m->val[i];
 #else
@@ -5327,6 +5326,40 @@ static NODE *process_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static int want_singleton_array (NODE *n, parser *p)
+{
+    if (p->aux != NULL && p->aux->t == ARRAY) {
+	GretlType t = gretl_array_get_type(n->v.a);
+
+	/* We want to preserve the ARRAY type of the aux
+	   node associated with @n: this requires producing
+	   a singleton array unless we're looking at an
+	   array of arrays.
+	*/
+	return t != GRETL_TYPE_ARRAYS;
+    }
+
+    return 0;
+}
+
+static int *array_subspec_list (NODE *l, NODE *r, parser *p)
+{
+    int len = gretl_array_get_length(l->v.a);
+    matrix_subspec *spec = r->v.mspec;
+    int *list = NULL;
+
+    if (spec->rtype != SEL_NULL) {
+	/* array selection must be one-dimensional */
+	p->err = E_INVARG;
+    } else {
+	/* convert spec to list of elements */
+	list = mspec_make_list(spec->ltype, &spec->lsel,
+			       len, &p->err);
+    }
+
+    return list;
+}
+
 static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -5337,29 +5370,19 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
         } else if (l->t == MAT || matrix_element_node(l)) {
             return submatrix_node(l, r, p);
         } else if (l->t == ARRAY) {
-            int n = gretl_array_get_length(l->v.a);
-            matrix_subspec *spec = r->v.mspec;
-            int *vlist = NULL;
+	    int *vlist = array_subspec_list(l, r, p);
 
-	    if (spec->rtype != SEL_NULL) {
-		p->err = E_INVARG;
-	    } else {
-		vlist = mspec_make_list(spec->ltype, &spec->lsel,
-					n, &p->err);
+            if (!p->err && vlist[0] == 1) {
+		if (want_singleton_array(l, p)) {
+		    /* produce a 1-element array */
+		    ret = array_subspec_node(l->v.a, vlist, p);
+		} else {
+		    /* extract an array element */
+		    ret = array_element_node(l->v.a, vlist[1], p);
+		}
+	    } else if (!p->err) {
+		ret = array_subspec_node(l->v.a, vlist, p);
 	    }
-            if (!p->err) {
-                if (vlist[0] == 1) {
-		    if (p->aux != NULL && p->aux->t == ARRAY) {
-			/* produce a singleton array (FIXME breaks geoplot!) */
-			ret = array_subspec_node(l->v.a, vlist, p);
-		    } else {
-			/* produce an array element */
-			ret = array_element_node(l->v.a, vlist[1], p);
-		    }
-                } else {
-                    ret = array_subspec_node(l->v.a, vlist, p);
-                }
-            }
             free(vlist);
         } else if (l->t == LIST || l->t == STR) {
             int i = test_for_single_range(r->v.mspec, p);
@@ -19494,23 +19517,41 @@ static int do_incr_decr (parser *p)
 #define has_aux_mat(n) (n->aux != NULL && n->aux->t == MAT)
 #define has_aux_mspec(n) (n->aux != NULL && n->aux->t == MSPEC)
 
+#define PMS_DEBUG 0
+
+#if PMS_DEBUG
+static void pms_printsyms (NODE *n, int level)
+{
+    fprintf(stderr, "pms level %d: %s, L=%s, R=%s, aux=%s\n",
+	    level, getsymb(n->t),
+	    n->L==NULL ? "0" : getsymb(n->L->t),
+	    n->R==NULL ? "0" : getsymb(n->R->t),
+	    n->aux==NULL ? "0" : getsymb(n->aux->t));
+}
+#endif
+
 static void get_primary_matrix_slice (NODE *t,
                                       NODE *pms,
                                       int level,
                                       int *err)
 {
-    if (level == 1 && t->t == MSL) {
-        pms->L = t->L;
-        pms->R = t->R->aux;
+#if PMS_DEBUG
+    pms_printsyms(t, level);
+#endif
+    if (level == 1) {
+	if (t->t == MSL) {
+	    pms->L = t->L;
+	    pms->R = t->R->aux;
+	}
     } else if (level == 2 && (t->t == BMEMB || t->t == OSL) && has_aux_mat(t)) {
         pms->L = t->aux;
     } else if (level == 2 && t->t == MSLRAW && has_aux_mspec(t)) {
         pms->R = t->aux;
     } else if (level > 2 && t->t != BMEMB && has_aux_mat(t)) {
-        /* only two levels of matrix slicing are allowed */
-        fprintf(stderr, "LHS: found aux MAT on %s at level %d\n",
-                getsymb(t->t), level);
-        *err = E_DATA;
+	/* only two levels of matrix slicing are allowed */
+	fprintf(stderr, "LHS: found aux MAT on %s at level %d\n",
+		getsymb(t->t), level);
+	*err = E_DATA;
     }
     if (!*err && t->L != NULL) {
         get_primary_matrix_slice(t->L, pms, level+1, err);
@@ -19626,7 +19667,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	int compound_t;
 
 	p->lhtree->flags |= LHT_NODE;
-	p->flags |= (P_START | P_LHEVAL);
+	p->flags |= P_START;
 #if LHDEBUG
 	fprintf(stderr, "\n*** eval lhtree before eval ***\n");
 	print_tree(p->lhtree, p, 0, 0);
@@ -19640,7 +19681,6 @@ static int save_generated_var (parser *p, PRN *prn)
 	    print_tree(p->lhtree, p, 0, 0);
 	}
 #endif
-	p->flags &= ~P_LHEVAL;
 	if (p->err) {
 	    return p->err;
 	}
