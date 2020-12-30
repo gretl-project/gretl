@@ -11251,6 +11251,8 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     gretl_matrix_print(m1, "m1, in set_matrix_value");
     fprintf(stderr, "op = '%s'\n", getsymb(p->op));
     print_mspec(spec);
+    fprintf(stderr, "rhs type %s\n", getsymb(rhs->t));
+    if (rhs->t == NUM) fprintf(stderr, " value %g\n", rhs->v.xval);
 #endif
 
     /* Is the assignment straight or inflected?  Note that in
@@ -19517,27 +19519,11 @@ static int do_incr_decr (parser *p)
 #define has_aux_mat(n) (n->aux != NULL && n->aux->t == MAT)
 #define has_aux_mspec(n) (n->aux != NULL && n->aux->t == MSPEC)
 
-#define PMS_DEBUG 0
-
-#if PMS_DEBUG
-static void pms_printsyms (NODE *n, int level)
-{
-    fprintf(stderr, "pms level %d: %s, L=%s, R=%s, aux=%s\n",
-	    level, getsymb(n->t),
-	    n->L==NULL ? "0" : getsymb(n->L->t),
-	    n->R==NULL ? "0" : getsymb(n->R->t),
-	    n->aux==NULL ? "0" : getsymb(n->aux->t));
-}
-#endif
-
 static void get_primary_matrix_slice (NODE *t,
                                       NODE *pms,
                                       int level,
                                       int *err)
 {
-#if PMS_DEBUG
-    pms_printsyms(t, level);
-#endif
     if (level == 1) {
 	if (t->t == MSL) {
 	    pms->L = t->L;
@@ -19547,6 +19533,8 @@ static void get_primary_matrix_slice (NODE *t,
         pms->L = t->aux;
     } else if (level == 2 && t->t == MSLRAW && has_aux_mspec(t)) {
         pms->R = t->aux;
+    } else if (level == 3) {
+	; /* experiment */
     } else if (level > 2 && t->t != BMEMB && has_aux_mat(t)) {
 	/* only two levels of matrix slicing are allowed */
 	fprintf(stderr, "LHS: found aux MAT on %s at level %d\n",
@@ -19620,12 +19608,21 @@ static int set_nested_matrix_value (NODE *lhs,
         if (err) {
             gretl_errmsg_set(_("Invalid left-hand side expression"));
         } else if (pms.L != NULL && pms.R != NULL) {
-            int save_op = p->op;
+	    if (pms.L->flags & TMP_NODE) {
+		/* 2020-12-30: if pms.L is a TMP_NODE we've gone
+		   too deep in indexing?
+		*/
+		gretl_errmsg_set(_("Invalid left-hand side expression"));
+		fprintf(stderr, "nested matrix: too deep\n");
+		err = E_PARSE;
+	    } else {
+		int save_op = p->op;
 
-            pms.t = MSL;
-            p->op = B_ASN;
-            err = set_matrix_value(&pms, lhs->L, p);
-            p->op = save_op;
+		pms.t = MSL;
+		p->op = B_ASN;
+		err = set_matrix_value(&pms, lhs->L, p);
+		p->op = save_op;
+	    }
         }
     }
 
