@@ -39,7 +39,7 @@ There are two main mailing lists dedicated to gretl.
 <variablelist>
 
 <varlistentry>
-<term><ulink url="http://lists.wfu.edu/mailman/listinfo/gretl-users">gretl-users@lists.wfu.edu</ulink></term>
+<term><ulink url="https://gretlml.univpm.it/hyperkitty/list/gretl-users@gretlml.univpm.it/">gretl-users@gretlml.univpm.it</ulink></term>
 <listitem><para>
 gretl-users covers general gretl topics from the standpoint of users of the programs
 <application>gretl</application> and <application>gretlcli</application>.
@@ -47,11 +47,11 @@ gretl-users covers general gretl topics from the standpoint of users of the prog
 </varlistentry>
 
 <varlistentry>
-<term><ulink url="http://lists.wfu.edu/mailman/listinfo/gretl-devel">gretl-devel@lists.wfu.edu</ulink></term>
+<term><ulink url="https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/">gretl-devel@gretlml.univpm.it</ulink></term>
 <listitem><para>
 gretl-devel is for discussion of work on gretl itself. It is 
 <emphasis>not</emphasis> for asking questions about how to use gretl,
-but is (for the present) the right place for asking questions about developing
+but is the right place for asking questions about developing
 and running programs that use libgretl.
 </para></listitem>
 </varlistentry>

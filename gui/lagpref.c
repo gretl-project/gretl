@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* Mechanism for recording and retrieving the preferred set of lags
@@ -53,13 +53,13 @@ static int n_prefs;
 void destroy_lag_preferences (void)
 {
     int i;
-    
+
     for (i=0; i<n_prefs; i++) {
 	if (lprefs[i]->spectype == LAGS_LIST) {
 	    free(lprefs[i]->lspec.laglist);
 	}
 	free(lprefs[i]);
-    } 
+    }
 
     free(lprefs);
     lprefs = NULL;
@@ -86,7 +86,7 @@ static int add_lpref_to_stack (lagpref *lpref)
 static lagpref *lpref_new (int v, char context, int type)
 {
     lagpref *lpref = malloc(sizeof *lpref);
-    
+
     if (lpref == NULL) {
 	return NULL;
     }
@@ -121,17 +121,18 @@ static void print_lpref (lagpref *lpref)
 	return;
     }
 
-    fprintf(stderr, "lagpref at %p: v = %d, context = %d\n",
+    fprintf(stderr, "print_lpref: lagpref at %p: v = %d, context = %d\n",
 	    (void *) lpref, lpref->v, lpref->context);
 
     if (lpref->spectype == LAGS_NONE) {
-	fprintf(stderr, "type == LAGS_NONE (%d)\n", LAGS_NONE);
+	fprintf(stderr, "  type == LAGS_NONE (%d)\n", LAGS_NONE);
     } else if (lpref->spectype == LAGS_MINMAX) {
-	fprintf(stderr, "type == LAGS_MINMAX (%d), min=%d, max=%d\n",
+	fprintf(stderr, "  type == LAGS_MINMAX (%d), min=%d, max=%d\n",
 		LAGS_MINMAX, lpref->lspec.lminmax[0], lpref->lspec.lminmax[1]);
     } else if (lpref->spectype == LAGS_LIST) {
-	printlist(lpref->lspec.laglist, "type == LAGS_LIST");
-    } 
+	fprintf(stderr, "  laglist at %p\n", (void *) lpref->lspec.laglist);
+	printlist(lpref->lspec.laglist, "  type == LAGS_LIST");
+    }
 }
 #endif
 
@@ -141,7 +142,7 @@ static void print_lpref (lagpref *lpref)
    in fact changed, otherwise 0.
 */
 
-static int 
+static int
 modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 {
     int mod = 1;
@@ -156,8 +157,8 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 	return 1;
     }
 
-    /* if we got something presented as a list of specific lags, but 
-       actually it's a consecutive list, convert to "minmax" form 
+    /* if we got something presented as a list of specific lags, but
+       actually it's a consecutive list, convert to "minmax" form
     */
     if (spectype == LAGS_LIST) {
 	gretl_list_sort(laglist);
@@ -182,7 +183,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 	    }
 	} else if (spectype == LAGS_NONE) {
 	    mod = 0;
-	} 
+	}
     }
 
     if (mod == 0) {
@@ -196,7 +197,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
     if (lpref->spectype == LAGS_LIST) {
 	free(lpref->lspec.laglist);
 	lpref->lspec.laglist = NULL;
-    }    
+    }
 
     if (spectype == LAGS_MINMAX) {
 	lpref->lspec.lminmax[0] = lmin;
@@ -211,10 +212,10 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
     lpref->spectype = spectype;
 
 #if LDEBUG > 1
-    fprintf(stderr, "modify_lpref: type=%d, lmin=%d, lmax=%d list=%p\n", 
+    fprintf(stderr, "did modify_lpref: type=%d, lmin=%d, lmax=%d list=%p\n",
 	    spectype, lmin, lmax, (void *) laglist);
     print_lpref(lpref);
-#endif    
+#endif
 
     return mod;
 }
@@ -224,6 +225,11 @@ static lagpref *get_saved_lpref (int v, char context)
     lagpref *lpref = NULL;
     int i;
 
+#if LDEBUG > 1
+    fprintf(stderr, "get_saved_lpref: v=%d, context=%d, n_prefs=%d\n",
+	    v, context, n_prefs);
+#endif
+
     for (i=0; i<n_prefs; i++) {
 	if (lprefs[i]->v == v && lprefs[i]->context == context) {
 	    lpref = lprefs[i];
@@ -232,9 +238,10 @@ static lagpref *get_saved_lpref (int v, char context)
     }
 
 #if LDEBUG > 1
-    fprintf(stderr, "get_saved_lpref: v=%d, context=%d\n", v, context);
-    print_lpref(lpref);
-#endif    
+    if (lpref != NULL) {
+	print_lpref(lpref);
+    }
+#endif
 
     return lpref;
 }
@@ -254,7 +261,7 @@ void set_VAR_max_lag (int lmax)
 {
     lagpref *lp = get_saved_lpref(VDEFLT, LAG_Y_V);
 
-    if (lp != NULL) {
+    if (lp != NULL && lp->spectype == LAGS_MINMAX) {
 	lp->lspec.lminmax[1] = lmax;
     }
 }
@@ -295,7 +302,7 @@ static void maybe_destroy_depvar_lags (lagpref *lpref, char context)
 	}
     } else {
 	enable_lags_for_context(context, FALSE);
-    }	    
+    }
 }
 
 /* called when a specific lag, e.g. foo(-3), is removed from
@@ -460,8 +467,8 @@ int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
 	mod = modify_lpref(lpref, LAGS_MINMAX, lmin, lmax, NULL);
 	if (mod) {
 	    *changed = 1;
-	}	
-    } 
+	}
+    }
 
     return err;
 }
@@ -475,7 +482,7 @@ static int set_lag_pref_from_lag (int v, int lag, char context)
 
     if (lpref == NULL) {
 	lpref = lpref_add(v, context, LAGS_LIST);
-    } 
+    }
 
     if (lpref == NULL) {
 	err = E_ALLOC;
@@ -484,7 +491,7 @@ static int set_lag_pref_from_lag (int v, int lag, char context)
 	if (lpref->lspec.laglist == NULL) {
 	    err = E_ALLOC;
 	}
-    } 
+    }
 
     return err;
 }
@@ -526,7 +533,7 @@ static int set_lag_prefs_from_xlist (int *list, int dv, char cbase,
 	lag = series_get_lag(dataset, vi);
 	if (lag) {
 	    pv = series_get_parent_id(dataset, vi);
-	}	
+	}
 	if (pv > 0) {
 	    context = (pv == dv)? cbase + 1 : cbase;
 	    err = set_lag_pref_from_lag(pv, lag, context);
@@ -540,7 +547,7 @@ static int set_lag_prefs_from_xlist (int *list, int dv, char cbase,
 		}
 		enable_lags_for_context(context, TRUE);
 		nset++;
-	    } 
+	    }
 	}
     }
 
@@ -583,7 +590,7 @@ static int set_lag_prefs_from_xlist (int *list, int dv, char cbase,
 }
 
 /* convert any singleton or consecutive lists of lags (produced
-   piecewise from a model's lists) to min/max form 
+   piecewise from a model's lists) to min/max form
 */
 
 static void clean_up_model_prefs (void)
@@ -598,7 +605,7 @@ static void clean_up_model_prefs (void)
 	if (lmax - lmin == list[0] - 1) {
 	    /* singleton or consecutive */
 	    modify_lpref(lprefs[i], LAGS_MINMAX, lmin, lmax, NULL);
-	} 
+	}
     }
 
 }
@@ -639,7 +646,7 @@ int set_lag_prefs_from_model (int dv, int *xlist, int *zlist)
 
 int set_lag_prefs_from_VAR (const int *lags, int *xlist)
 {
-    int err = 0;    
+    int err = 0;
 
     /* start with a clean slate */
     destroy_lag_preferences();
@@ -705,8 +712,8 @@ get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
     if ((context == LAG_Y_X || context == LAG_Y_W) && lpref == NULL) {
 	*lmin = *lmax = 1;
 	return;
-    }  
-    
+    }
+
     if (lpref == NULL || v >= dataset->v) {
 	return;
     }
@@ -716,7 +723,7 @@ get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
     } else if (lpref->spectype == LAGS_MINMAX) {
 	*lmin = lpref->lspec.lminmax[0];
 	*lmax = lpref->lspec.lminmax[1];
-    } 
+    }
 }
 
 int *get_lag_pref_as_list (int v, char context)
@@ -741,7 +748,7 @@ int *get_lag_pref_as_list (int v, char context)
 	return list;
     }
 
-    if (lpref != NULL) { 
+    if (lpref != NULL) {
 	if (lpref->spectype == LAGS_LIST) {
 	    list = gretl_list_copy(lpref->lspec.laglist);
 	} else if (lpref->spectype == LAGS_MINMAX) {

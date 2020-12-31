@@ -2518,3 +2518,184 @@ const char *get_listname_by_consecutive_content (int l0, int l1)
 
     return ret;
 }
+
+/* Dropping terms from the list @targ inside a function:
+   this is tricky with regard to the auto-generated
+   "time" variable, which may be a member of a list that
+   was passed as an argument yet not "visible" by name
+   within the function. Here we attempt to fix this by
+   transcribing the ID number for "time" from the caller's
+   namespace into the @drop list -- if the latter is
+   trying to drop this variable.
+*/
+
+static void check_auto_time_var (const int *targ, int *drop,
+				 const DATASET *dset)
+{
+    int i, vi, tnum = 0;
+
+    for (i=1; i<=targ[0]; i++) {
+	vi = targ[i];
+	if (!strcmp(dset->varname[vi], "time")) {
+	    tnum = vi;
+	    break;
+	}
+    }
+
+    if (tnum > 0) {
+	for (i=drop[0]; i>0; i--) {
+	    vi = drop[i];
+	    if (!strcmp(dset->varname[vi], "time")) {
+		drop[i] = tnum;
+	    }
+	}
+    }
+}
+
+/* functions called from geneval.c when "editing" a named list */
+
+int user_list_append (user_var *uvar, const int *add)
+{
+    int err = 0;
+
+    if (uvar == NULL || user_var_get_type(uvar) != GRETL_TYPE_LIST) {
+	err = E_DATA;
+    } else {
+	const int *list = user_var_get_value(uvar);
+	int *tmp = gretl_list_copy(list);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_list_add_list(&tmp, add);
+	    if (!err) {
+		user_var_replace_value(uvar, tmp, GRETL_TYPE_LIST);
+	    }
+	}
+    }
+
+    return err;
+}
+
+int user_list_subtract (user_var *uvar, int *sub,
+			const DATASET *dset)
+{
+    int err = 0;
+
+    if (uvar == NULL || user_var_get_type(uvar) != GRETL_TYPE_LIST) {
+	err = E_DATA;
+    } else {
+	const int *list = user_var_get_value(uvar);
+	int *tmp;
+
+	if (gretl_function_depth() > 0) {
+	    check_auto_time_var(list, sub, dset);
+	}
+	tmp = gretl_list_drop(list, sub, &err);
+	if (!err) {
+	    user_var_replace_value(uvar, tmp, GRETL_TYPE_LIST);
+	}
+    }
+
+    return err;
+}
+
+int user_list_replace (user_var *uvar, const int *src)
+{
+    int err = 0;
+
+    if (uvar == NULL || user_var_get_type(uvar) != GRETL_TYPE_LIST) {
+	err = E_DATA;
+    } else {
+	int *tmp = gretl_list_copy(src);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    user_var_replace_value(uvar, tmp, GRETL_TYPE_LIST);
+	}
+    }
+
+    return err;
+}
+
+/**
+ * remember_list:
+ * @list: array of integers, the first element being a count
+ * of the following elements.
+ * @name: name to be given to the list.
+ * @prn: printing struct.
+ *
+ * Adds a copy of @list to the stack of saved lists and associates
+ * it with @name, unless there is already a list with the given
+ * name in which case the original list is replaced.  A status
+ * message is printed to @prn.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int remember_list (const int *list, const char *name, PRN *prn)
+{
+    int *lcpy = gretl_list_copy(list);
+    int err = 0;
+
+    if (lcpy == NULL) {
+	err = (list == NULL)? E_DATA : E_ALLOC;
+    } else {
+	user_var *orig;
+
+	orig = get_user_var_of_type_by_name(name, GRETL_TYPE_LIST);
+
+	if (orig != NULL) {
+	    /* replace existing list of same name */
+	    user_var_replace_value(orig, lcpy, GRETL_TYPE_LIST);
+	    if (prn != NULL && gretl_messages_on()) {
+		pprintf(prn, _("Replaced list '%s'\n"), name);
+	    }
+	} else {
+	    err = user_var_add(name, GRETL_TYPE_LIST, lcpy);
+	    if (!err && prn != NULL && gretl_messages_on()) {
+		pprintf(prn, _("Added list '%s'\n"), name);
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
+ * get_list_by_name:
+ * @name: the name of the list to be found.
+ *
+ * Looks up @name in the stack of saved variables, at the current level
+ * of function execution, and retrieves the associated list.
+ *
+ * Returns: the list, or NULL if the lookup fails.
+ */
+
+int *get_list_by_name (const char *name)
+{
+    user_var *u;
+    int *ret = NULL;
+
+    u = get_user_var_of_type_by_name(name, GRETL_TYPE_LIST);
+
+    if (u != NULL) {
+	ret = user_var_get_value(u);
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_is_list:
+ * @name: the name to test.
+ *
+ * Returns: 1 if @name is the name of a saved list, 0
+ * otherwise.
+ */
+
+int gretl_is_list (const char *name)
+{
+    return get_user_var_of_type_by_name(name, GRETL_TYPE_LIST) != NULL;
+}

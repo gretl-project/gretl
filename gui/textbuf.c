@@ -107,6 +107,7 @@ static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
+static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -542,17 +543,58 @@ static void sourceview_apply_language (windata_t *vwin)
 
 #if COMPLETION_OK
 
+#include "genparse.h"
+
+/* Create a GtkTextBuffer holing the names of built-in
+   gretl functions, to serve as a completion provider.
+*/
+
+static GtkTextBuffer *function_names_buffer (void)
+{
+    GtkTextBuffer *tbuf;
+    GString *str;
+    gchar *fnames;
+    const char *s;
+    int i, nf;
+
+    nf = gen_func_count();
+    tbuf = gtk_text_buffer_new(NULL);
+    str = g_string_new(NULL);
+
+    for (i=0; i<nf; i++) {
+	s = gen_func_name(i);
+	if (*s != '_') {
+	    g_string_append(str, s);
+	    g_string_append_c(str, ' ');
+	}
+    }
+
+    fnames = g_string_free(str, FALSE);
+    gtk_text_buffer_set_text(tbuf, fnames, -1);
+    g_free(fnames);
+
+    return tbuf;
+}
+
+#define AC_DEBUG 0
+
 static void set_sv_auto_complete (windata_t *vwin)
 {
+    static GtkTextBuffer *funcs_buf;
     GtkSourceCompletionWords *words;
+    GtkSourceCompletionWords *funcs;
     GtkSourceCompletion *comp;
 
     words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
 
     if (script_auto_complete && words == NULL) {
 	/* set up and activate */
+#if AC_DEBUG
+	fprintf(stderr, "auto_complete set-up\n");
+#endif
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-	words = gtk_source_completion_words_new(NULL, NULL);
+	/* provider: all previously typed words */
+	words = gtk_source_completion_words_new("words", NULL);
 	g_object_set(words, "priority", 1, NULL);
 	gtk_source_completion_words_register(words,
 					     gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
@@ -560,9 +602,21 @@ static void set_sv_auto_complete (windata_t *vwin)
 					   GTK_SOURCE_COMPLETION_PROVIDER(words),
 					   NULL);
 	g_object_set_data(G_OBJECT(vwin->text), "prov_words", words);
+	/* provider: names of built-in functions */
+	funcs = gtk_source_completion_words_new("functions", NULL);
+	funcs_buf = function_names_buffer();
+	gtk_source_completion_words_register(funcs, funcs_buf);
+	gtk_source_completion_add_provider(comp,
+					   GTK_SOURCE_COMPLETION_PROVIDER(funcs),
+					   NULL);
+	g_object_set_data(G_OBJECT(vwin->text), "prov_funcs", funcs);
     } else if (!script_auto_complete && words != NULL) {
 	/* de-activate and clean up */
+#if AC_DEBUG
+	fprintf(stderr, "auto_complete tear-down\n");
+#endif
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+	/* destroy the "words" provider */
 	gtk_source_completion_words_unregister(words,
 					       gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
 	gtk_source_completion_remove_provider(comp,
@@ -570,15 +624,55 @@ static void set_sv_auto_complete (windata_t *vwin)
 					      NULL);
 	g_object_unref(G_OBJECT(words));
 	g_object_set_data(G_OBJECT(vwin->text), "prov_words", NULL);
+	/* destroy the "funcs" provider, if present */
+	funcs = g_object_get_data(G_OBJECT(vwin->text), "prov_funcs");
+	if (funcs != NULL) {
+	    gtk_source_completion_words_unregister(funcs, funcs_buf);
+	    gtk_source_completion_remove_provider(comp,
+						  GTK_SOURCE_COMPLETION_PROVIDER(funcs),
+						  NULL);
+	    g_object_unref(G_OBJECT(funcs));
+	    g_object_set_data(G_OBJECT(vwin->text), "prov_funcs", NULL);
+	    g_object_unref(G_OBJECT(funcs_buf));
+	    funcs_buf = NULL;
+	}
     }
 
-#if 0
-    fprintf(stderr, "set_sv_auto_complete: comp=%p, prov=%p, auto_complete=%d, ok=%d\n",
-	    (void *) comp, (void *) words, script_auto_complete, ok);
+#if AC_DEBUG
+    fprintf(stderr, "set_sv_auto_complete: auto_complete=%d, comp=%p, prov=%p,%p\n",
+	    script_auto_complete, (void *) comp, (void *) words, (void *) funcs);
 #endif
 }
 
 #endif /* COMPLETION_OK */
+
+#define SV_PRINT_DEBUG 0
+
+#if SV_PRINT_DEBUG
+
+static void show_print_context (GtkPrintContext *context)
+{
+    gdouble x = gtk_print_context_get_width(context);
+    gdouble y = gtk_print_context_get_height(context);
+    GtkPageSetup *psu;
+
+    fprintf(stderr, "begin_print: context pixel size: %g x %g\n", x, y);
+    x = gtk_print_context_get_dpi_x(context);
+    y = gtk_print_context_get_dpi_y(context);
+    fprintf(stderr, "  context dpi: %g, %g\n", x, y);
+
+    psu = gtk_print_context_get_page_setup(context);
+    if (psu != NULL) {
+	x = gtk_page_setup_get_paper_width(psu, GTK_UNIT_INCH);
+	y = gtk_page_setup_get_paper_width(psu, GTK_UNIT_POINTS);
+	fprintf(stderr, "  paper width: %g in, %g points\n", x, y);
+	x = gtk_page_setup_get_paper_height(psu, GTK_UNIT_INCH);
+	y = gtk_page_setup_get_paper_height(psu, GTK_UNIT_POINTS);
+	fprintf(stderr, "  paper height: %g in, %g points\n", x, y);
+    }
+}
+
+#endif
 
 static void begin_print (GtkPrintOperation *operation,
                          GtkPrintContext *context,
@@ -588,6 +682,17 @@ static void begin_print (GtkPrintOperation *operation,
     int n_pages;
 
     comp = GTK_SOURCE_PRINT_COMPOSITOR(data);
+
+#if SV_PRINT_DEBUG
+    GtkPrintSettings *st = gtk_print_operation_get_print_settings(operation);
+    if (st != NULL) {
+	int rx = gtk_print_settings_get_resolution_x(st);
+	int ry = gtk_print_settings_get_resolution_y(st);
+
+        fprintf(stderr, "settings: resolution %d,%d\n", rx, ry);
+    }
+    show_print_context(context);
+#endif
 
     while (!gtk_source_print_compositor_paginate(comp, context));
 
@@ -607,8 +712,6 @@ static void draw_page (GtkPrintOperation *operation,
 					  page_nr);
 }
 
-static GtkPrintSettings *settings = NULL;
-
 void sourceview_print (windata_t *vwin)
 {
     GtkSourceView *view = GTK_SOURCE_VIEW(vwin->text);
@@ -621,25 +724,22 @@ void sourceview_print (windata_t *vwin)
     comp = gtk_source_print_compositor_new_from_view(view);
     print = gtk_print_operation_new();
 
-    if (settings != NULL) {
-	gtk_print_operation_set_print_settings(print, settings);
-    }
+#ifdef G_OS_WIN32
+    /* the units are wacky if we don't set this */
+    gtk_print_operation_set_unit(print, GTK_UNIT_POINTS);
+#endif
 
-    /* should put up a dialog for these things? */
-#ifndef G_OS_WIN32
     gtk_source_print_compositor_set_right_margin(comp, 60, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_left_margin(comp, 60, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_top_margin(comp, 54, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_bottom_margin(comp, 72, GTK_UNIT_POINTS);
     gtk_source_print_compositor_set_wrap_mode(comp, GTK_WRAP_WORD);
-#endif
     gtk_source_print_compositor_set_body_font_name(comp, "Monospace 9");
 
     g_signal_connect(G_OBJECT(print), "begin_print", G_CALLBACK(begin_print), comp);
     g_signal_connect(G_OBJECT(print), "draw_page", G_CALLBACK(draw_page), comp);
 
     mainwin = vwin_toplevel(vwin);
-
     res = gtk_print_operation_run(print,
 				  GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
 				  GTK_WINDOW(mainwin),
@@ -659,14 +759,12 @@ void sourceview_print (windata_t *vwin)
 	gtk_widget_show(dlg);
 	g_error_free(error);
     } else if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
-	if (settings != NULL) {
-	    g_object_unref(settings);
-	}
-	settings = g_object_ref(gtk_print_operation_get_print_settings(print));
+	; /* OK: maybe save the settings? */
     }
 
-    g_object_unref(print);
-    /* g_object_unref(comp); ?? */
+    if (print != NULL) {
+	g_object_unref(print);
+    }
 }
 
 void sourceview_insert_file (windata_t *vwin, const char *fname)
@@ -736,6 +834,8 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 		g_free(str);
 	    }
 	    ret = TRUE;
+	} else if (keyval == GDK_i) {
+	    auto_indent_script(w, vwin);
 	}
     } else {
 	if (keyval == GDK_F1) {
@@ -1130,6 +1230,13 @@ static GtkTextTagTable *gretl_tags_new (void)
     tag = gtk_text_tag_new("heading");
     g_object_set(tag, "family", helpfont,
 		 "weight", PANGO_WEIGHT_BOLD,
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("grayhead");
+    g_object_set(tag, "family", helpfont,
+		 "foreground", "gray",
+		 "pixels_below_lines", 5,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
@@ -2222,11 +2329,17 @@ static void cmdref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Function Reference");
+    const char *heads[] = {
+	N_("Accessors"),
+	N_("Built-in strings"),
+	N_("Functions proper")
+    };
     const gchar *s = (const gchar *) hwin->data;
+    gchar *hstr;
     GtkTextIter iter;
     char word[12];
     int llen, llen_max = 5;
-    int i, j, n;
+    int i, j, k, n;
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
@@ -2235,22 +2348,26 @@ static void funcref_index_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 
     i = 1;
+    k = 0;
     llen = 0;
 
     while (*s) {
-	if (*s == '\n' && *(s+1) == '#' && *(s+2) != '\0') {
-	    if (*(s+2) == '#') {
-		/* category divider */
+	if (*s == '\n' && s[1] == '#' && s[2] != '\0') {
+	    if (s[2] == '#') {
+		/* insert section heading */
 		if (i > 1) {
-		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-		    if (llen < llen_max) {
-			gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
-			llen = 0;
-		    }
+		    gtk_text_buffer_insert(tbuf, &iter, "\n\n", -1);
 		}
+		hstr = g_strdup_printf("%s\n", en ? heads[k] : _(heads[k]));
+		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+							 hstr, -1,
+							 "grayhead", NULL);
+		g_free(hstr);
+		llen = 0;
 		s += 2;
+		k++;
 	    } else if (sscanf(s + 2, "%10s", word)) {
-		/* function name */
+		/* got a function name */
 		insert_link(tbuf, &iter, word, i, NULL);
 		if (++llen == llen_max) {
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
@@ -2831,8 +2948,8 @@ static void check_for_comment (const char *s, int *incomm)
 }
 
 /* determine whether a given line is subject to
-   continuation (i.e. ends with backslash or comma,
-   other then in a comment)
+   continuation (i.e. ends with backslash, comma
+   or semicolon, other than in a comment)
 */
 
 static int line_broken (const char *s)
@@ -3054,7 +3171,6 @@ static void indent_region (GtkWidget *w, gpointer p)
 
 void indent_hansl (GtkWidget *w, windata_t *vwin)
 {
-    /* make this work on just the selection if wanted? */
     auto_indent_script(w, vwin);
 }
 
@@ -3817,7 +3933,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 	}
 
-	item = gtk_menu_item_new_with_label(_("Auto-indent script"));
+	item = gtk_menu_item_new_with_label(_("Auto-indent script (Ctrl+I)"));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(auto_indent_script),
 			 vwin);

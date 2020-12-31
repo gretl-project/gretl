@@ -1538,8 +1538,8 @@ static int ends_in_comment (const char *s, int n)
  * @maxlen, and @err is not NULL, then E_TOOLONG is written
  * to @err.
  *
- * Returns: 1 if a trailing backslash, comma or left parenthesis
- * was found, otherwise 0.
+ * Returns: 1 if a trailing backslash, comma, semicolon, or left
+ * parenthesis was found, otherwise 0.
  */
 
 #include <assert.h>
@@ -2694,13 +2694,8 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
     int unique = 1;
 
     /* first off: see if the series name is already unique! */
-    for (vi = 1; vi < dset->v; vi++) {
-	if (vi != v && !strcmp(vname, dset->varname[vi])) {
-	    unique = 0;
-	    break;
-	}
-    }
-    if (unique) {
+    vi = current_series_index(dset, vname);
+    if (vi == v) {
 	return vname;
     }
 

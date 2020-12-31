@@ -1,7 +1,21 @@
-version 2020e, in progress
+version 2020f, in progress
+
+The command formerly known as "coint2" has been renamed as
+"johansen". The old name is accepted as an alias for now, but
+should not be used in new hansl code.
+
+2020-11-21 version 2020e
+
+The chowlin() function is now deprecated in favor of tdisagg(),
+and the --interpolate option to the "data" command has been
+removed, again in favor of use of tdisagg.
 
 The obsolete usage of '=' to test for equality now provokes
 an error: "==" must be used instead.
+
+The $uhat accessor available after the negbin command now
+returns generalized residuals instead of the difference between
+y and $yhat.
 
 2020-08-06 version 2020d
 

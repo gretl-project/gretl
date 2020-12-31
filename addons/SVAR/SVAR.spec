@@ -1,19 +1,20 @@
 author = Riccardo "Jack" Lucchetti and Sven Schreiber
 email = r.lucchetti@univpm.it
 tags = C32
-version = 1.92
-date = 2020-09-17
+version = 1.93
+date = 2020-12-25
 description = Structural VARs
 public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     SVAR_cumulate SVAR_boot SVAR_hd SVAR_coint \
     GetShock IRFplot IRFsave FEVD \
     GUI_SVAR GUI_plot FEVDplot FEVDsave HDplot HDsave \
     SVAR_bundle_print \
-    SVAR_SRplain IRF_plotdata \
+    SVAR_SRplain \
     SVAR_SRexotic SVAR_spagplot SVAR_SRfull \
     SVAR_SRirf SVAR_SRdraw SRgetbest \
-    SVAR_getshock SVAR_HD
-   # SVAR_setidIRF
+    SVAR_getshock SVAR_HD \
+    SVAR_SRresetalpha
+   # SVAR_setidIRF IRF_plotdata 
 gui-main = GUI_SVAR
 
 bundle-plot = GUI_plot

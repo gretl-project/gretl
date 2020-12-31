@@ -3447,14 +3447,21 @@ static int
 panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset,
 		int ntdum, gretlopt opt)
 {
+    int nobs, dsetT = sample_size(dset);
     int err = 0;
 
     pan->opt = opt;
     pan->pooled = pmod;
 
     /* assumes (possibly padded) balanced panel dataset */
-    pan->nunits = (dset->t2 - dset->t1 + 1) / dset->pd;
+    pan->nunits = dsetT / dset->pd;
     pan->T = dset->pd;
+    nobs = pan->nunits * pan->T;
+
+    if (nobs < dsetT) {
+	fprintf(stderr, "dataset nobs = %d, but panel nobs = %d\n",
+		dsetT, nobs);
+    }
 
     panel_index_init(dset, pan->nunits, pan->T);
     pan->ntdum = ntdum;
@@ -6078,11 +6085,9 @@ int set_panel_group_strings (const char *vname,
     }
 
     if (!err) {
-	series_table *st = series_table_new(S, ng);
+	series_table *st = series_table_new(S, ng, &err);
 
-	if (st == NULL) {
-	    err = E_ALLOC;
-	} else {
+	if (!err) {
 	    int i, g = 0;
 
 	    series_attach_string_table(dset, v, st);

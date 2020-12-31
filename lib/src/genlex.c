@@ -87,9 +87,8 @@ struct str_table dummies[] = {
 };
 
 /* Identify matrix-selection dummy constants:
-   these can be valid only brtween '[' and ']'.
+   these can be valid only between '[' and ']'.
 */
-//#define MSEL_DUM(d) (d==DUM_DIAG || d==DUM_REAL || d==DUM_IMAG)
 #define MSEL_DUM(d) (d >= DUM_DIAG && d <= DUM_IMAG)
 
 /* dvars: dataset- and test-related accessors */
@@ -531,6 +530,7 @@ struct str_table funcs[] = {
     { F_MWEIGHTS,  "mweights" },
     { F_MGRADIENT, "mgradient" },
     { F_MLINCOMB,  "mlincomb" },
+    { F_MMULT,     "mmults" },
     { F_HFDIFF,    "hfdiff" },
     { F_HFLDIFF,   "hfldiff" },
     { F_HFLIST,    "hflist" },
@@ -572,7 +572,9 @@ struct str_table funcs[] = {
     { F_STACK,     "stack" },
     { F_GEOPLOT,   "geoplot" },
     { F_BINCOEFF,  "bincoeff" },
+    { F_TDISAGG,   "tdisagg" },
     { F_ASSERT,    "assert" },
+    { F_VMA,       "vma" },
     { 0,           NULL }
 };
 
@@ -602,7 +604,6 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
-    { HF_TDISAGG,  "_tdisagg" },
     { 0,           NULL }
 };
 
@@ -799,6 +800,19 @@ int is_function_alias (const char *s)
     }
 
     return 0;
+}
+
+void *get_genr_function_pointer (int f)
+{
+    int i;
+
+    for (i=0; ptrfuncs[i].str != NULL; i++) {
+	if (ptrfuncs[i].id == f) {
+	    return ptrfuncs[i].ptr;
+	}
+    }
+
+    return NULL;
 }
 
 static int function_lookup_with_alias (const char *s,
@@ -1634,6 +1648,10 @@ static void look_up_word (const char *s, parser *p)
 	    } else if (p->flags & P_AND) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
+	    } else if (!strcmp(s, "pi")) {
+		/* deprecated */
+		p->idnum = CONST_PI;
+		p->sym = CON;
 	    } else {
 		err = E_UNKVAR;
 	    }

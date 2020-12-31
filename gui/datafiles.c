@@ -1787,6 +1787,8 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(pkg_info_from_server);
 	} else if (role == REMOTE_ADDONS) {
 	    item->func = G_CALLBACK(show_addon_info);
+	} else if (role == DBNOMICS_DB) {
+	    item->func = G_CALLBACK(show_dbnomics_dimensions);
 	}
     } else if (item->flag == BTN_INDX) {
 	/* index: databases only */

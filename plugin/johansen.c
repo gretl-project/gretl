@@ -606,23 +606,6 @@ static int OLS_to_alpha (GRETL_VAR *v)
     return 0;
 }
 
-/* VAR representation: transcribe the coefficient matrix A_i (for lag
-   i) into its place in the full VAR coefficient matrix, A
-*/
-
-static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm, int k)
-{
-    int i, j, offset = k * vecm->neqns;
-    double x;
-
-    for (i=0; i<vecm->neqns; i++) {
-	for (j=0; j<vecm->neqns; j++) {
-	    x = gretl_matrix_get(Ai, i, j);
-	    gretl_matrix_set(vecm->A, i, j + offset, x);
-	}
-    }
-}
-
 /* flags for controlling "full" estimation of VECM */
 
 enum {
@@ -633,6 +616,29 @@ enum {
 #define bootstrap(f)        (f & BOOTSTRAPPING)
 #define alpha_restricted(f) (f & ALPHA_RESTRICTED)
 #define estimate_alpha(f)   (!(f & ALPHA_RESTRICTED))
+
+/* VAR representation: transcribe the coefficient matrix A_i (for lag
+   i) into its place in the full VAR coefficient matrix, A
+*/
+
+static void add_Ai_to_VAR_A (gretl_matrix *Ai, GRETL_VAR *vecm,
+			     int k, int flags)
+{
+    int i, j, offset = k * vecm->neqns;
+    int tr = bootstrap(flags);
+    double x;
+
+    for (i=0; i<vecm->neqns; i++) {
+	for (j=0; j<vecm->neqns; j++) {
+	    x = gretl_matrix_get(Ai, i, j);
+	    if (tr) {
+		gretl_matrix_set(vecm->A, j + offset, i, x);
+	    } else {
+		gretl_matrix_set(vecm->A, i, j + offset, x);
+	    }
+	}
+    }
+}
 
 /* write pre-computed ML alpha into model structs */
 
@@ -1043,7 +1049,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     if (order == 0) {
 	gretl_matrix_I(Ai, n);
 	gretl_matrix_add_to(Ai, Pi);
-	add_Ai_to_VAR_A(Ai, v, 0);
+	add_Ai_to_VAR_A(Ai, v, 0, flags);
     } else {
 	for (i=0; i<=order; i++) {
 	    if (i == 0) {
@@ -1061,7 +1067,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	    fprintf(stderr, "Ai matrix, lag %d\n\n", i+1);
 	    gretl_matrix_print(Ai, NULL);
 #endif
-	    add_Ai_to_VAR_A(Ai, v, i);
+	    add_Ai_to_VAR_A(Ai, v, i, flags);
 	}
     }
 

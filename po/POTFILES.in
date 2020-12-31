@@ -1,3 +1,4 @@
+lib/src/addons_utils.c
 lib/src/adf_kpss.c
 lib/src/bhhh_max.c
 lib/src/bootstrap.c

@@ -465,6 +465,7 @@ enum {
     F_RESAMPLE,
     F_STACK,
     F_GEOPLOT,
+    F_VMA,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
@@ -498,9 +499,10 @@ enum {
     F_NADARWAT,
     F_FEVAL,
     F_CHOWLIN,
+    F_TDISAGG,
     F_HYP2F1,
+    F_MMULT,
     HF_CLOGFI,
-    HF_TDISAGG,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
@@ -667,7 +669,8 @@ enum parser_flags {
     P_AND     = 1 << 25, /* state: working on right-hand term of B_AND */
     P_STACK   = 1 << 26, /* executing stack() */
     P_ALTINP  = 1 << 27, /* the input string has been substituted */
-    P_OBJQRY  = 1 << 28  /* querying the existence of an object */
+    P_OBJQRY  = 1 << 28, /* querying the existence of an object */
+    P_STRVEC  = 1 << 29  /* "complex" calc with string-valued series */
 };
 
 struct lhinfo {
@@ -774,6 +777,9 @@ int *node_get_list (NODE *n, parser *p);
 
 /* in genmain.c, used only internally */
 int stack_update_parser_input (parser *p);
+
+/* in genlex.c, used only internally */
+void *get_genr_function_pointer (int f);
 
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);

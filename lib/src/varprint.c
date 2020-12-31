@@ -242,7 +242,7 @@ static int varprint_namelen (const GRETL_VAR *var,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int
+static int
 gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATASET *dset,
 				  PRN *prn)
@@ -316,7 +316,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	    VAR_info_print_period(t + 1, prn);
 	    if (t == 0) {
 		/* calculate initial estimated responses */
-		err = gretl_matrix_copy_values(rtmp, C);
+		copy_north_west(rtmp, C, 0);
 	    } else {
 		/* calculate further estimated responses */
 		err = gretl_matrix_multiply(var->A, rtmp, ctmp);
@@ -324,8 +324,6 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	    }
 
 	    if (err) break;
-
-	    /* matrix rtmp holds the responses */
 
 	    for (i=0; i<IRF_ROW_MAX; i++) {
 		k = IRF_ROW_MAX * block + i;

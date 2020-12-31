@@ -729,13 +729,15 @@
 
     <description>
       <para>
+	This command is deprecated in favor of the updated and
+	more flexible <cmdref targ="dpanel"/>. It is likely to be
+	removed, and should not be used in newly written scripts.
+      </para>
+      <para>
 	Carries out estimation of dynamic panel data models (that is,
 	panel models including one or more lags of the dependent
 	variable) using the GMM-DIF method set out by <cite
 	key="arellano-bond91">Arellano and Bond (1991)</cite>.
-	Please see <cmdref targ="dpanel"/> for an updated and
-	more flexible version of this command which handles GMM-SYS
-	as well as GMM-DIF.
       </para>
       <para>
 	The parameter <repl>p</repl> represents the order of the
@@ -1232,7 +1234,9 @@
       <para>
 	The output includes a likelihood ratio test of the null
 	hypothesis that the disturbances in the two equations are
-	uncorrelated.
+	uncorrelated. Note that if this estimator is meant as a QMLE
+	estimator and the <opt>robust</opt> option is used, this test
+	may not be valid, even asymptotically.
       </para>
     </description>
   </command>
@@ -1828,208 +1832,10 @@
 	key="mackinnon96">MacKinnon (1996)</cite>.  The relevant code
 	is included by kind permission of the author.
       </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Model/Multivariate time series</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="coint2" section="Tests" label="Johansen cointegration test">
-
-    <usage>
-      <arguments>
-        <argument>order</argument>
-        <argument>ylist</argument>
-	<argblock optional="true" separated="true">
-	  <argument>xlist</argument>
-	</argblock>
-	<argblock optional="true" separated="true">
-	  <argument>rxlist</argument>
-	</argblock>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--nc</flag>
-	  <effect>no constant</effect>
-        </option>
-        <option>
-	  <flag>--rc</flag>
-	  <effect>restricted constant</effect>
-        </option>
-        <option>
-	  <flag>--uc</flag>
-	  <effect>unrestricted constant</effect>
-        </option>
-        <option>
-	  <flag>--crt</flag>
-	  <effect>constant and restricted trend</effect>
-        </option>
-        <option>
-	  <flag>--ct</flag>
-	  <effect>constant and unrestricted trend</effect>
-        </option>
-        <option>
-	  <flag>--seasonals</flag>
-	  <effect>include centered seasonal dummies</effect>
-        </option>
-        <option>
-	  <flag>--asy</flag>
-	  <effect>record asymptotic p-values</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>print just the tests</effect>
-        </option>
-        <option>
-	  <flag>--silent</flag>
-	  <effect>don't print anything</effect>
-        </option>
-        <option>
-	  <flag>--verbose</flag>
-	  <effect>print details of auxiliary regressions</effect>
-        </option>
-      </options>
-      <examples>
-        <example>coint2 2 y x</example>
-	<example>coint2 4 y x1 x2 --verbose</example>
-	<example>coint2 3 y x1 x2 --rc</example>
-	<demos>
-	  <demo>hamilton.inp</demo>
-	  <demo>denmark.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Carries out the Johansen test for cointegration among the
-	variables in <repl>ylist</repl> for the given lag order.  For
-	details of this test see <guideref targ="chap:vecm"/> or <cite
-	key="hamilton94">Hamilton (1994)</cite>, Chapter 20. P-values
-	are computed via Doornik's gamma approximation <cite
-	key="doornik98" p="true">(Doornik, 1998)</cite>. Two sets of
-	p-values are shown for the trace test, straight asymptotic
-	values and values adjusted for the sample size. By default the
-	<fncref targ="$pvalue"/> accessor gets the adjusted variant,
-	but the <opt>asy</opt> flag may be used to record the
-	asymptotic values instead.
-      </para>
-
-      <para context="gui">
-	Carries out the Johansen test for cointegration among the
-	listed variables for the selected lag order.  For details of
-	this test see, for example, Hamilton, <book>Time Series
-	Analysis</book> (1994), Chapter 20.  P-values are computed via
-	Doornik's (1998) gamma approximation. Two sets of
-	p-values are shown for the trace test, straight asymptotic
-	values and values adjusted for the sample size.
-      </para>
-
-      <para context="cli">
-	The inclusion of deterministic terms in the model is controlled by
-	the option flags.  The default if no option is specified is to
-	include an <quote>unrestricted constant</quote>, which allows for
-	the presence of a non-zero intercept in the cointegrating
-	relations as well as a trend in the levels of the endogenous
-	variables.  In the literature stemming from the work of Johansen
-	(see for example his 1995 book) this is often referred to as
-	<quote>case 3</quote>.  The first four options given above, which
-	are mutually exclusive, produce cases 1, 2, 4 and 5 respectively.
-	The meaning of these cases and the criteria for selecting a case
-	are explained in <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="gui">
-	The inclusion of deterministic terms in the model is controlled by
-	the drop-down option list.  The default is to include an
-	<quote>unrestricted constant</quote>, which allows for the
-	presence of a non-zero intercept in the cointegrating relations as
-	well as a trend in the levels of the endogenous variables.  In the
-	literature stemming from the work of Johansen (see for example his
-	1995 book) this is often referred to as <quote>case 3</quote>. The
-	other four options produce cases 1, 2, 4 and 5 respectively. The
-	meaning of these cases and the criteria for selecting a case are
-	explained in <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="cli">
-	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
-	allow you to control for specified exogenous variables: these
-	enter the system either unrestrictedly (<repl>xlist</repl>) or
-	restricted to the cointegration space (<repl>rxlist</repl>). These
-	lists are separated from <repl>ylist</repl> and from each other by
-	semicolons.
-      </para>
-
-      <para context="gui">
-	You may control for exogenous variables by adding them to the
-	lower list box.  By default these enter the model in unrestricted
-	form (indicated by a <lit>U</lit> next to the name of the
-	variable).  If you want a certain exogenous variable to be
-	restricted to the cointegrating space, right-click on it and
-	select <quote>Restricted</quote> from the pop-up menu.  The symbol
-	next to the variable will change to R.
-      </para>
-
-      <para context="cli">
-	The <opt>seasonals</opt> option, which may be combined with any of the
-	other options, specifies the inclusion of a set of centered seasonal
-	dummy variables.  This option is available only for quarterly or monthly
-	data.
-      </para>
-
-      <para context="gui">
-	If the data are quarterly or monthly, a check box is shown that allows
-	you to include a set of centered seasonal dummy variables.  In all
-	cases, an additional check box (<quote>Show details</quote>) allows
-	for the printing of the auxiliary regressions that form the starting
-	point of the Johansen maximum likelihood estimation procedure.
-      </para>
-
-      <para context="notex">
-	The following table is offered as a guide to the
-	interpretation of the results shown for the test, for the
-	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
-	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
-	number of cointegrating relations.
-      </para>
-      <mono context="notex">
-         Rank     Trace test         Lmax test
-                  H0     H1          H0     H1
-         ---------------------------------------
-          0      c = 0  c = 3       c = 0  c = 1
-          1      c = 1  c = 3       c = 1  c = 2
-          2      c = 2  c = 3       c = 2  c = 3
-         ---------------------------------------
-      </mono>
-      <para context="tex">
-	The following table is offered as a guide to the
-	interpretation of the results shown for the test, for the
-	3-variable case.  $H_0$ denotes the null hypothesis,
-	$H_1$ the alternative hypothesis, and $c$ the
-	number of cointegrating relations.
-
-	\begin{center}
-	\begin{tabular}{cllll}
-	&amp; \multicolumn{2}{c}{Trace test} &amp;
-	   \multicolumn{2}{c}{$\lambda$-max test} \\
-	Rank &amp;  \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} &amp;
-	       \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
- 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
-	\end{tabular}
-	\end{center}
-      </para>
-
       <para>
-	See also the <cmdref targ="vecm"/> command.
+	For the cointegration tests due to Søren Johansen, see <cmdref
+	targ="johansen"/>.
       </para>
-
     </description>
 
     <gui-access>
@@ -2153,11 +1959,17 @@
 	  <flag>--verbose</flag>
 	  <effect>print rankings</effect>
 	</option>
-        <option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>see below</effect>
-        </option>
+     </option>
+
+	<option>
+	  <flag>--triangle</flag>
+	  <effect>only plot lower half, see below</effect>
+     </option>
+
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -2216,8 +2028,8 @@
 	mode); or a file name. The effect of providing a file name is
 	as described for the <opt>output</opt> option of the <cmdref
 	targ="gnuplot"/> command. When plotting is active the
-	additional option <opt>triangle</opt> can be used to show only
-	the lower triangle of the matrix.
+	option <opt>triangle</opt> can be used to show only
+	the lower triangle of the matrix plot.
       </para>
       <para>
 	If the alternative form is given, using a named matrix rather
@@ -2515,10 +2327,6 @@
 	  <effect>specify compaction method</effect>
 	</option>
 	<option>
-	  <flag>--interpolate</flag>
-	  <effect>do interpolation for low-frequency data</effect>
-	</option>
-	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't report results except on error</effect>
 	</option>
@@ -2592,15 +2400,12 @@
 	and <lit>m03</lit>.
       </para>
       <para>
-	If the series to be read are of lower frequency than the
-	working dataset, the default is to repeat the values of the
-	added data as required, but the <opt>interpolate</opt> option
-	can be used to request interpolation using the method of <cite
-	key="chowlin71">Chow and Lin (1971)</cite>: the regressors are
-	a constant and quadratic trend and an AR(1) disturbance
-	process is assumed. Note, however, that this option is
-	available only for conversion from quarterly data to monthly
-	or annual data to quarterly.
+	If the series to be read are of <emphasis>lower</emphasis>
+	frequency than the working dataset the values of the added
+	data are simply repeated as required, but note that the
+	<fncref targ="tdisagg"/> function can then be used to
+	distribution or interpolation (<quote>temporal
+	disaggregation</quote>).
       </para>
       <para>
 	In the case of native gretl databases (only), the
@@ -2712,7 +2517,7 @@
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2778,14 +2583,12 @@
       <para>
 	<lit>expand</lit>: This command is only available for annual
 	or quarterly time series data: annual data can be expanded to
-	quarterly, and quarterly data to monthly frequency. By default
-	all the series in the data set are padded out to the new
-	frequency by repeating the existing values, but if the
-	modifier <lit>interp</lit> is appended then the series are
-	expanded using Chow&ndash;Lin interpolation (see <cite
-	key="chowlin71">Chow and Lin, 1971</cite>): the regressors are
-	a constant and quadratic trend and an AR(1) disturbance
-	process is assumed.
+	quarterly or monthly, and quarterly data to monthly.  All
+	series in the data set are padded out to the new frequency by
+	repeating the existing values. If the original dataset is
+	annual the default expansion is to quarterly but
+	<lit>expand</lit> can be followed by <lit>12</lit> to request
+	monthly.
       </para>
       <para>
 	<lit>transpose</lit>: No additional parameter required.
@@ -3925,43 +3728,28 @@
 
     <description>
       <para>
-	If you wish to add to a dataset a series that is of lower
-	frequency, it is necessary to <quote>expand</quote> the new
-	series.  For instance, a quarterly series will have to be expanded
-	to fit into a monthly dataset. In addition, you may sometimes want
-	to expand an entire dataset to a higher frequency (perhaps, prior
-	to adding a higher-frequency variable to the dataset).
+	<quote>Expansion</quote> of a dataset or series from a lower
+	to a higher frequency should be considered an expert option;
+	you need to know what you are doing. When combining series of
+	differing original frequencies within one dataset, you should
+	probably consider compacting the higher-frequency data rather
+	than expanding the lower-frequency series.
       </para>
       <para>
-	Expansion of data should be considered an
-	<quote>expert</quote> option; you need to know what you are
-	doing. When combining series of differing original frequencies
-	within one dataset, you should probably consider compacting
-	the higher-frequency data rather than expanding the
-	lower-frequency series.
+	That said, gretl supports expansion by simple repetition of
+	the low frequency values. For example, in expanding from
+	quarterly to monthly the quarterly values are repeated for
+	each month of the quarter. Series constructed in this way are
+	unlikely to be usable as is for econometric analysis, but
+	after expansion the <fncref targ="tdisagg"/> function can be
+	used to produce a distributed or interpolated version of the
+	data (<quote>temporal disaggregation</quote>).
       </para>
       <para>
-	That said, gretl offers two options: higher-frequency values
-	can be interpolated using the method of <cite
-	key="chowlin71">Chow and Lin (1971)</cite>, or the values of
-	the lower-frequency series can be repeated as many times as
-	required.
-      </para>
-      <para>
-	The Chow&ndash;Lin method is regression-based, using a constant and
-	quadratic trend and assuming a first-order autoregressive
-	process for the disturbances. Four degrees of freedom are used
-	up by this procedure.
-      </para>
-      <para>
-	As for the repetition of values, suppose we have a quarterly
-	series with the value 35.5 in 1990:1, the first quarter of
-	1990.  On expansion to monthly, the value 35.5 will be
-	assigned to the observations for January, February and March
-	of 1990.  The expanded variable is therefore useless for
-	fine-grained time-series analysis, outside of the special case
-	where you know that the variable in question does in fact
-	remain constant over the sub-periods.
+	Some of the functionality of the <lit>tdisagg</lit> function
+	can be accessed via the graphical interface: select a
+	candidate series in the main gretl window, then under the
+	Variable menu look for <quote>Disaggregate</quote>.
       </para>
     </description>
   </command>
@@ -6412,7 +6200,7 @@
 	Calculates the Hurst exponent (a measure of persistence or
 	long memory) for a time-series variable having at least 128
 	observations. The result (together with its standard error)
-	can be retrieved via the <fncref targ="$result"/> accessor.  
+	can be retrieved via the <fncref targ="$result"/> accessor.
       </para>
       <para>
 	The Hurst exponent is discussed by <cite
@@ -6695,6 +6483,210 @@
 	  and more bootstrap options.)
 	  </para>
     </description>
+
+  </command>
+
+  <command name="johansen" section="Tests" label="Johansen cointegration test">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>ylist</argument>
+	<argblock optional="true" separated="true">
+	  <argument>xlist</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>rxlist</argument>
+	</argblock>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>no constant</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>restricted constant</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>unrestricted constant</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>constant and restricted trend</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>constant and unrestricted trend</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include centered seasonal dummies</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>record asymptotic p-values</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>print just the tests</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print details of auxiliary regressions</effect>
+        </option>
+      </options>
+      <examples>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Carries out the Johansen test for cointegration among the
+	variables in <repl>ylist</repl> for the given lag order.  For
+	details of this test see <guideref targ="chap:vecm"/> or <cite
+	key="hamilton94">Hamilton (1994)</cite>, Chapter 20. P-values
+	are computed via Doornik's gamma approximation <cite
+	key="doornik98" p="true">(Doornik, 1998)</cite>. Two sets of
+	p-values are shown for the trace test, straight asymptotic
+	values and values adjusted for the sample size. By default the
+	<fncref targ="$pvalue"/> accessor gets the adjusted variant,
+	but the <opt>asy</opt> flag may be used to record the
+	asymptotic values instead.
+      </para>
+
+      <para context="gui">
+	Carries out the Johansen test for cointegration among the
+	listed variables for the selected lag order.  For details of
+	this test see, for example, Hamilton, <book>Time Series
+	Analysis</book> (1994), Chapter 20.  P-values are computed via
+	Doornik's (1998) gamma approximation. Two sets of
+	p-values are shown for the trace test, straight asymptotic
+	values and values adjusted for the sample size.
+      </para>
+
+      <para context="cli">
+	The inclusion of deterministic terms in the model is controlled by
+	the option flags.  The default if no option is specified is to
+	include an <quote>unrestricted constant</quote>, which allows for
+	the presence of a non-zero intercept in the cointegrating
+	relations as well as a trend in the levels of the endogenous
+	variables.  In the literature stemming from the work of Johansen
+	(see for example his 1995 book) this is often referred to as
+	<quote>case 3</quote>.  The first four options given above, which
+	are mutually exclusive, produce cases 1, 2, 4 and 5 respectively.
+	The meaning of these cases and the criteria for selecting a case
+	are explained in <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="gui">
+	The inclusion of deterministic terms in the model is controlled by
+	the drop-down option list.  The default is to include an
+	<quote>unrestricted constant</quote>, which allows for the
+	presence of a non-zero intercept in the cointegrating relations as
+	well as a trend in the levels of the endogenous variables.  In the
+	literature stemming from the work of Johansen (see for example his
+	1995 book) this is often referred to as <quote>case 3</quote>. The
+	other four options produce cases 1, 2, 4 and 5 respectively. The
+	meaning of these cases and the criteria for selecting a case are
+	explained in <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="cli">
+	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
+	allow you to control for specified exogenous variables: these
+	enter the system either unrestrictedly (<repl>xlist</repl>) or
+	restricted to the cointegration space (<repl>rxlist</repl>). These
+	lists are separated from <repl>ylist</repl> and from each other by
+	semicolons.
+      </para>
+
+      <para context="gui">
+	You may control for exogenous variables by adding them to the
+	lower list box.  By default these enter the model in unrestricted
+	form (indicated by a <lit>U</lit> next to the name of the
+	variable).  If you want a certain exogenous variable to be
+	restricted to the cointegrating space, right-click on it and
+	select <quote>Restricted</quote> from the pop-up menu.  The symbol
+	next to the variable will change to R.
+      </para>
+
+      <para context="cli">
+	The <opt>seasonals</opt> option, which may be combined with any of the
+	other options, specifies the inclusion of a set of centered seasonal
+	dummy variables.  This option is available only for quarterly or monthly
+	data.
+      </para>
+
+      <para context="gui">
+	If the data are quarterly or monthly, a check box is shown that allows
+	you to include a set of centered seasonal dummy variables.  In all
+	cases, an additional check box (<quote>Show details</quote>) allows
+	for the printing of the auxiliary regressions that form the starting
+	point of the Johansen maximum likelihood estimation procedure.
+      </para>
+
+      <para context="notex">
+	The following table is offered as a guide to the
+	interpretation of the results shown for the test, for the
+	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
+	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
+	number of cointegrating relations.
+      </para>
+      <mono context="notex">
+         Rank     Trace test         Lmax test
+                  H0     H1          H0     H1
+         ---------------------------------------
+          0      c = 0  c = 3       c = 0  c = 1
+          1      c = 1  c = 3       c = 1  c = 2
+          2      c = 2  c = 3       c = 2  c = 3
+         ---------------------------------------
+      </mono>
+      <para context="tex">
+	The following table is offered as a guide to the
+	interpretation of the results shown for the test, for the
+	3-variable case.  $H_0$ denotes the null hypothesis,
+	$H_1$ the alternative hypothesis, and $c$ the
+	number of cointegrating relations.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Trace test} &amp;
+	   \multicolumn{2}{c}{$\lambda$-max test} \\
+	Rank &amp;  \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} &amp;
+	       \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
+	\end{tabular}
+	\end{center}
+      </para>
+
+      <para>
+	See also the <cmdref targ="vecm"/> command, and <cmdref
+	targ="coint"/> if you want the Engle&ndash;Granger
+	cointegration test.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Multivariate time series</menu-path>
+    </gui-access>
 
   </command>
 
@@ -8393,6 +8385,10 @@
 	requires at least one parameter
       </para>
       <para context="cli">
+	5 or <lit>"beta1"</lit>: as <lit>beta0</lit>, but with the
+	first parameter fixed at 1, leaving a single free parameter.
+      </para>
+      <para context="cli">
 	When the parameterization is U-MIDAS, the final initializer
 	argument is not required. In other cases you can request an
 	automatic initialization by substituting one or other of these
@@ -8898,6 +8894,11 @@
 	<repl>names</repl> should contain <math>k + p</math> names,
 	the additional <math>p</math> names to be associated with
 	the extra statistics.
+      </para>
+      <para>
+	If <repl>addstats</repl> is not provided and the
+	<repl>coeffmat</repl> matrix has row names attached, then
+	the <repl>names</repl> argument can be omitted.
       </para>
       <para>
 	To put the output into a file, use the flag <opt>output=</opt>
@@ -9874,6 +9875,11 @@
 	  <effect>preserve variables other than series</effect>
 	</option>
 	<option>
+	  <flag>--select</flag>
+	  <optparm>selection</optparm>
+	  <effect>read only the specified series, see below</effect>
+	</option>
+	<option>
 	  <flag>--frompkg</flag>
 	  <optparm>pkgname</optparm>
 	  <effect>see below</effect>
@@ -9906,7 +9912,7 @@
 	targ="chap:datafiles"/> for an explanation of this
 	distinction. The effect is somewhat different in the two
 	cases. When a <emphasis>data file</emphasis> is opened, its
-	entire content is read into gretl's workspace, replacing the
+	content is read into gretl's workspace, replacing the
 	current dataset (if any). To add data to the current dataset
 	instead of replacing, see <cmdref targ="append"/> or (for
 	greater flexibility) <cmdref targ="join"/>. When a
@@ -10017,7 +10023,29 @@
 	mapping between strings and their numeric coding. You can
 	suppress this behavior via the <opt>quiet</opt> option.
       </para>
-      <subhead context="cli">Opening a database</subhead>
+      <subhead context="cli">Loading selected series</subhead>
+      <para>
+	Use of <lit>open</lit> with a data file argument (as opposed
+	to the database case, see below) generally implies loading all
+	series from the specified file. However, in the case of native
+	gretl files (<lit>gdt</lit> and <lit>gdtb</lit>) only, it is
+	possible to specify by name a subset of series to load. This
+	is done via the <opt>select</opt> option, which requires
+	an accompanying argument in one of three forms: the name of a
+	single series; a list of names, separated by spaces and
+	enclosed in double quotes; or the name of an array of strings.
+	Examples:
+      </para>
+      <code>
+	# single series
+	open somefile.gdt --select=x1
+	# more than one series
+	open somefile.gdt --select="x1 x5 x27"
+	# alternative method
+	strings Sel = defarray("x1", "x5", "x27")
+	open somefile.gdt --select=Sel
+	</code>
+       <subhead context="cli">Opening a database</subhead>
       <para>
 	As mentioned above, the <lit>open</lit> command can be used to
 	open a database file for subsequent reading via the <cmdref
@@ -10530,8 +10558,8 @@
 
   </command>
 
-    <command name="panplot" section="Graphs"
-    label="plot a panel series" context="cli">
+  <command name="panplot" section="Graphs"
+   label="plot a panel series" context="cli">
 
     <usage>
       <arguments>
@@ -11065,7 +11093,7 @@
 	matrix with at least 2 columns (or a list with at least two
 	members).  Note that it is considered good practice to place
 	the <opt>output</opt> option (only) on the last line of the
-	block.
+	block; other options should be placed within the block.
       </para>
       <subhead>Plotting a band with matrix data</subhead>
       <para>
@@ -13137,9 +13165,25 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>quantile_type</lit>: must be one of <lit>Q6</lit>
+	  (the default), <lit>Q7</lit> or <lit>Q8</lit>. Selects the
+	  specific method used by the <fncref targ="quantile"/>
+	  function. For details see <cite key="hyndman96">Hyndman and
+	  Fan (1996)</cite> or the Wikipedia entry at
+	  <url>https://en.wikipedia.org/wiki/Quantile</url>.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>huge</lit>: a large positive number (by default,
 	  1.0E100). This setting controls the value returned by the
 	  accessor <fncref targ="$huge"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (the default),
+	  <lit>warn</lit> or <lit>stop</lit>. Controls the
+	  consequences of failure (return value of 0) from the
+	  <fncref targ="assert"/> function.
 	  </para>
 	</li>
       </ilist>
@@ -13591,9 +13635,11 @@
       <para>
 	If one or other of the <opt>discrete</opt> or
 	<opt>continuous</opt> option flags is given, the variable's
-	numerical character is set accordingly.  The default is to treat
-	all series as continuous; setting a series as discrete
-	affects the way the variable is handled in frequency plots.
+	numerical character is set accordingly.  The default is to
+	treat all series as continuous; setting a series as discrete
+	affects the way the variable is handled in other commands and
+	functions, such as for example <cmdref targ="freq"/> or
+	<fncref targ="dummify"/> .
       </para>
       <para>
 	If one or other of the <opt>coded</opt> or <opt>numeric</opt>
@@ -14846,6 +14892,52 @@
 
   </command>
 
+  <command name="tdisagg" section="Dataset" context="gui"
+    label="Temporal disaggregation">
+
+    <description>
+      <para>
+	Here's a walk-through of the main choices in the temporal
+	disaggregation dialog box. For detailed explanation see
+	<guideref targ="chap:tdisagg"/>.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Output name: You can choose to overwrite an existing
+	    series with the disaggregated version, or give a new name
+	    to the output.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Aggregation type: Choose <lit>sum</lit> if the high
+	    frequency values should sum to the given low frequency
+	    value (flows, such as GDP and its components).  Choose
+	    <lit>avg</lit> if the high frequency values should have
+	    mean equal to the given low frequency value (index
+	    variables, ratios, or flows <quote>at an annual
+	    rate</quote>). Choose <lit>last</lit> or <lit>first</lit>
+	    if the last or first high frequency value should equal the
+	    low frequency value (which may be the case with stock
+	    variables, such as money stock).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Regression based versus Denton: The first is generally
+	    recommended.  If you choose <quote>Regression
+	    based</quote> you can select the Fernández method if you
+	    believe the series in question has a unit root; otherwise
+	    go with Chow&ndash;Lin. If you choose Denton we assume you
+	    know what you're doing. The Denton methods are in first
+	    differences, as modified by Cholette.
+	  </para>
+	</li>
+      </ilist>
+    </description>
+  </command>
+
   <command name="textplot" section="Graphs"
     label="ASCII plot" context="cli">
 
@@ -15223,11 +15315,11 @@
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
-		<example>var 4 x1 x2 x3 --seasonals</example>
-		<example>var 12 x1 x2 x3 --lagselect</example>
-	  <demos>
+	<example>var 4 x1 x2 x3 --seasonals</example>
+	<example>var 12 x1 x2 x3 --lagselect</example>
+	<demos>
 	  <demo>sw_ch14.inp</demo>
-	  </demos>
+	</demos>
       </examples>
     </usage>
 
@@ -15436,8 +15528,33 @@
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances for the variables
 	<repl>series1</repl> and <repl>series2</repl> are equal, and
-	shows its p-value.
+	shows its p-value. The test statistics and the p-value can be
+	retrieved through the accessors <fncref targ="$test"/>
+	and <fncref targ="$pvalue"/>, respectively. The following code
       </para>
+      <code>
+      	open AWM18.gdt
+		vartest EEN EXR
+		eval $test
+		eval $pvalue
+      </code>
+    <para>
+      computes the test and shows how to retrieve the test statistics and
+      corresponding p-value afterwards:
+  	</para>
+  	<code>
+		Equality of variances test
+
+		EEN: Number of observations = 192
+		EXR: Number of observations = 188
+		Ratio of sample variances = 3.70707
+		Null hypothesis: The two population variances are equal
+		Test statistic: F(191,187) = 3.70707
+		p-value (two-tailed) = 1.94866e-18
+
+		3.7070716
+		1.9486605e-18
+	</code>
       <para context="gui">
 	Calculates the <math>F</math> statistic for the null
 	hypothesis that the population variances are equal for the
@@ -15526,7 +15643,7 @@
 	individually integrated of order 1 (that is, are random walks, with or
 	without drift), but exhibit cointegration.  This command is closely
 	related to the Johansen test for cointegration (see <cmdref
-	  targ="coint2"/>).
+	  targ="johansen"/>).
       </para>
 
       <para context="cli">

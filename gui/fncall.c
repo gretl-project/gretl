@@ -92,6 +92,7 @@ struct call_info_ {
 #define array_arg(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
 
 #define AUTOLIST "LTmp___"
+#define DUMLIST  "LRetTmp___"
 #define SELNAME "selected series"
 
 static GtkWidget *open_fncall_dlg;
@@ -210,8 +211,8 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     if (cinfo->flags & MODEL_CALL) {
 	set_genr_model_from_vwin(cinfo->vwin);
     }
-    err = gretl_function_exec(fcall, GRETL_TYPE_LIST,
-			      dataset, &list, NULL, prn);
+    err = gretl_function_exec(fcall, GRETL_TYPE_LIST, dataset,
+			      &list, NULL, prn);
     if (cinfo->flags & MODEL_CALL) {
 	unset_genr_model();
     }
@@ -1933,7 +1934,8 @@ static void compose_fncall_line (char *line,
 				 call_info *cinfo,
 				 const char *funname,
 				 char **tmpname,
-				 int *grab_bundle)
+				 int *grab_bundle,
+				 int *dummy_list)
 {
     arglist *alist;
 
@@ -1946,7 +1948,10 @@ static void compose_fncall_line (char *line,
 
     *line = '\0';
 
-    if (cinfo->ret != NULL) {
+    if (cinfo->rettype == GRETL_TYPE_LIST && cinfo->ret == NULL) {
+	strcpy(line, "list " DUMLIST " = ");
+	*dummy_list = 1;
+    } else if (cinfo->ret != NULL) {
 	strcat(line, cinfo->ret);
 	strcat(line, " = ");
     } else if (cinfo->rettype == GRETL_TYPE_BUNDLE) {
@@ -1990,6 +1995,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     const char *title;
     gretl_bundle *bundle = NULL;
     int grab_bundle = 0;
+    int dummy_list = 0;
     int show = 1;
     int err = 0;
 
@@ -1997,7 +2003,8 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     title = cinfo->label != NULL ? cinfo->label : funname;
 
     compose_fncall_line(fnline, cinfo, funname,
-			&tmpname, &grab_bundle);
+			&tmpname, &grab_bundle,
+			&dummy_list);
 
     /* FIXME: the following conditionality may be wrong? */
 
@@ -2064,6 +2071,16 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	}
     }
 
+    if (dummy_list) {
+	/* handle use of dummy list to get series saved */
+	int *L = get_list_by_name(DUMLIST);
+
+	if (L != NULL && L[0] > 0) {
+	    set_dataset_is_changed(dataset, 1);
+	}
+	user_var_delete_by_name(DUMLIST, NULL);
+    }
+
     if (!err && strstr(fnline, AUTOLIST) == NULL) {
 	int ID = 0;
 
@@ -2079,6 +2096,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	} else {
 	    lib_command_strcpy(fnline);
 	    record_command_verbatim();
+	    if (dummy_list) {
+		lib_command_strcpy("list " DUMLIST " delete");
+		record_command_verbatim();
+	    }
 	}
     }
 
@@ -2641,8 +2662,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
-	err = gretl_function_exec(fc, GRETL_TYPE_NONE,
-				  dataset, NULL, NULL, prn);
+	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+				  NULL, NULL, prn);
 	gretl_print_destroy(prn);
     } else {
 	fncall_destroy(fc);
@@ -4271,7 +4292,7 @@ int dbnomics_get_series_call (const char *datacode)
 
     err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) datacode);
     if (!err) {
-	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
+	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
 				  &b, NULL, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -4296,7 +4317,7 @@ int dbnomics_get_series_call (const char *datacode)
 	    if (fc != NULL) {
 		err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE, (void *) b);
 		if (!err) {
-		    err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL,
+		    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 					      NULL, NULL, prn);
 		    if (err) {
 			gui_errmsg(err);
@@ -4315,6 +4336,67 @@ int dbnomics_get_series_call (const char *datacode)
     return err;
 }
 
+int dbnomics_get_dimensions_call (const char *provider,
+				  const char *dsname)
+{
+    fncall *fc = NULL;
+    double one = 1;
+    PRN *prn = NULL;
+    int err;
+
+    err = bufopen(&prn);
+
+    if (!err) {
+	fc = get_addon_function_call("dbnomics", "dbnomics_get_dataset_dimensions");
+	if (fc == NULL) {
+	    gretl_print_destroy(prn);
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    pprintf(prn, "Information on dbnomics dataset %s/%s (may be quite voluminous)\n\n",
+	    provider, dsname);
+    pputs(prn, "This may indicate (as applicable):\n"
+	  " * topics covered by the dataset\n"
+	  " * countries included\n"
+	  " * units of measurement\n"
+	  " * other information\n\n");
+
+    err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
+    if (!err) {
+	err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) dsname);
+    }
+    if (!err) {
+	/* verbosity */
+	err = push_anon_function_arg(fc, GRETL_TYPE_DOUBLE, (void *) &one);
+    }
+    if (!err) {
+	GdkWindow *cwin = NULL;
+
+	set_wait_cursor(&cwin);
+	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+				  NULL, NULL, prn);
+	unset_wait_cursor(cwin);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	gchar *title;
+
+	title = g_strdup_printf("gretl: %s/%s", provider, dsname);
+	view_buffer(prn, 80, 500, title, PRINT, NULL);
+	g_free(title);
+    }
+
+    return err;
+}
+
 void *dbnomics_get_providers_call (int *err)
 {
     gretl_array *A = NULL;
@@ -4328,7 +4410,7 @@ void *dbnomics_get_providers_call (int *err)
     }
 
     set_wait_cursor(&cwin);
-    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, dataset,
 			       &A, NULL, NULL);
     unset_wait_cursor(cwin);
     if (*err) {
@@ -4375,7 +4457,7 @@ void *dbnomics_search_call (const char *key,
 	GdkWindow *cwin = NULL;
 
 	set_wait_cursor(&cwin);
-	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, dataset,
 				   &A, NULL, NULL);
 	unset_wait_cursor(cwin);
     }
@@ -4404,7 +4486,7 @@ void *dbnomics_dataset_list (const char *provider, int *err)
 	GdkWindow *cwin = NULL;
 
 	set_wait_cursor(&cwin);
-	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
 				   &b, NULL, NULL);
 	unset_wait_cursor(cwin);
     }
@@ -4438,7 +4520,7 @@ void *dbnomics_probe_series (const char *prov,
 	GdkWindow *cwin = NULL;
 
 	set_wait_cursor(&cwin);
-	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, dataset,
 				   &A, NULL, NULL);
 	unset_wait_cursor(cwin);
     }

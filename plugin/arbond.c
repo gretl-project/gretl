@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "version.h"
 #include "matrix_extra.h"
+#include "uservar.h"
 
 #define ADEBUG 0
 #define WRITE_MATRICES 0

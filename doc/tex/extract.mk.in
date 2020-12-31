@@ -1,0 +1,13 @@
+topsrc = @top_srcdir@
+auxdir = @abs_builddir@
+CC = @CC@
+
+texdir = $(topsrc)/doc/tex
+vpath %.c = $(texdir)
+
+scripts: extract_scripts
+	./extract_scripts $(texdir) $(auxdir)
+
+extract_scripts: extract_scripts.c
+	$(CC) -W -o $@ $<
+

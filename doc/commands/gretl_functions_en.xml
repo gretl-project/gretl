@@ -154,6 +154,16 @@
       </description>
     </function>
 
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  This accessor returns the path where gretl stores temporary
+	  files, for example when using the <fncref targ="mwrite"/>
+	  function with a non-zero third argument.
+	</para>
+      </description>
+    </function>
+
     <function name="$dw" section="access" output="scalar">
       <description>
 	<para>
@@ -166,12 +176,18 @@
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
-	  Returns the p-value for the Durbin&ndash;Watson statistic
-	  for the model last estimated (if available), computed using
-	  the Imhof procedure.
+	  Returns the CDF of the Durbin&ndash;Watson distribution
+	  evaluated at the DW statistic for the model last estimated
+	  (if available), computed using the <cite
+	  key="imhof61">Imhof</cite> procedure. This is the p-value
+	  for a one-sided test with an alternative of positive
+	  first-order autocorrelation. If you want the p-value for
+	  a two-sided test, take 2<math>P</math> if DW &lt; 2 or
+	  2(1 &minus; <math>P</math>) if DW &gt; 2, where <math>P</math>
+	  is the value returned by the accessor.
 	</para>
 	<para>
-	  Due to the limited precision of computer arithmetic, the
+	  Due to the limited precision of digital arithmetic, the
 	  Imhof integral can go negative when the Durbin&ndash;Watson
 	  statistic is close to its lower bound. In that case the
 	  accessor returns <lit>NA</lit>. Since any other failure mode
@@ -560,6 +576,14 @@
 	<para>
 	  Returns the number of observations in the currently selected
 	  sample. Related: <fncref targ="$tmax"/>.
+	</para>
+	<para>
+	  In the case of panel data the value returned is the number
+	  of pooled observations (number of units times number of
+	  observations per unit). If you want the time-series length
+	  of a panel use <fncref targ="$pd"/>, and the number of
+	  included units can be found as <lit>$nobs</lit> divided by
+	  <lit>$pd</lit>.
 	</para>
       </description>
     </function>
@@ -1028,7 +1052,10 @@
 	  by keys that are the same as the regular accessor names,
 	  minus the leading dollar sign. So for example the residuals
 	  appear under the key <lit>uhat</lit> and the coefficients
-	  under <lit>coeff</lit>. The keys for additional information
+	  under <lit>coeff</lit>. (Exceptions are the keys <lit>A</lit>,
+	  <lit>B</lit>, and <lit>Gamma</lit>, which correspond to the
+	  regular dollar accessors sysA, sysB, and sysGamma.) The
+	  keys for additional information
 	  should hopefully be fairly self-explanatory. To see what's
 	  available you can get a copy of the bundle and print its
 	  content, as in
@@ -1235,6 +1262,18 @@
       </description>
     </function>
 
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  This accessor returns the path which gretl reads from and
+	  writes to by default. A fuller discussion is provided in the
+	  Command Reference under <cmdref targ="workdir"/>. Note that
+	  this string can be set by the user via the <cmdref
+	  targ="set"/> command.
+        </para>
+      </description>
+    </function>
+
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
@@ -1243,7 +1282,9 @@
 	  returns the <quote>global</quote> list of exogenous and
 	  predetermined variables (in the same order in which they
 	  appear in <fncref targ="$sysB"/>). If the last model was a
-	  VAR, returns the list of exogenous regressors, if any.
+	  VAR, returns the list of exogenous regressors, if any,
+	  except for standard deterministic terms (constant, trend,
+	  seasonals).
 	</para>
       </description>
     </function>
@@ -1279,6 +1320,75 @@
 	  elements.
 	</para>
       </description>
+    </function>
+
+  </funclist>
+
+  <funclist name="String constants" ref="string_constants">
+
+    <function name="$dotdir" section="straccess" output="string">
+      <description>
+        <para>
+	  Yields the full path of the directory gretl uses for
+	  temporary files. To use it in string-substitution mode,
+	  prepend the at-sign (@dotdir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gnuplot" section="straccess" output="string">
+        <description>
+        <para>
+          Yields the path to the gnuplot executable. To use it in
+          string-substitution mode, prepend the at-sign (@gnuplot).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gretldir" section="straccess" output="string">
+        <description>
+        <para>
+          Yields the full path of the gretl installation directory. To
+          use it in string-substitution mode, prepend the at-sign
+          (@gretldir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramo" section="straccess" output="string">
+        <description>
+        <para>
+          Yields the path to the tramo executable. To use it in
+          string-substitution mode, prepend the at-sign (@tramo)
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramodir" section="straccess" output="string">
+        <description>
+        <para>
+         Yields the path string of the tramo data directory. To use it
+         in string-substitution mode, prepend the at-sign (@tramodir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12a" section="straccess" output="string">
+        <description>
+        <para>
+          Yields the path to the x-12-arima executable. To use it in
+          string-substitution mode, prepend the at-sign (@x12a).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12adir" section="straccess" output="string">
+        <description>
+        <para>
+          Yields the path of the x-12-arima data directory. To use it
+          in string-substitution mode, prepend the at-sign (@x12adir).
+        </para>
+        </description>
     </function>
 
   </funclist>
@@ -1516,6 +1626,51 @@
       </description>
     </function>
 
+    <function name="assert" section="programming" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function is intended for testing or debugging of hansl
+	  code. The argument should be an expression which evaluates
+	  to a scalar. The return value is 1 if
+	  <argname>expr</argname> evaluates to a non-zero value
+	  (boolean <quote>true</quote>, or <quote>success</quote>) or
+	  0 if it evaluates to zero (boolean <quote>false</quote>, or
+	  <quote>failure</quote>).
+	</para>
+	<para>
+	  By default there are no consequences of a call to
+	  <lit>assert</lit> failing other than the return value being
+	  zero. However, the <cmdref targ="set"/> command can be used
+	  to make failure of an assertion more consequential. There
+	  are two levels:
+	</para>
+	<code>
+	  # print a warning message but continue execution
+	  set assert warn
+	  # print an error message and stop execution
+	  set assert stop
+	</code>
+	<para>
+	  The default behavior can be restored via
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  By way of a simple example, if at a certain point in a hansl
+	  script a scalar <lit>x</lit> ought to be non-negative, the
+	  following will flag an error if that is not the case:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
+      </description>
+    </function>
+
     <function name="atan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -1590,7 +1745,7 @@
 	  Returns the result of converting the string
 	  <argname>s</argname> (or the leading portion thereof, after
 	  discarding any initial white space) to a floating-point
-	  number.  Unlike C's <lit>atof</lit>, however, the decimal
+	  number.  Unlike <lit>atof</lit> in C, however, the decimal
 	  character is always assumed (for reasons of portability) to
 	  be <quote><lit>.</lit></quote>. Any characters that follow
 	  the portion of <argname>s</argname> that converts to a
@@ -1831,7 +1986,7 @@
       </description>
     </function>
 
-    <function name="bkfilt" section="filters" output="series">
+    <function name="bkfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="int" optional="true">f1</fnarg>
@@ -1909,7 +2064,7 @@
       </description>
     </function>
 
-    <function name="boxcox" section="filters" output="asinput">
+    <function name="boxcox" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
@@ -2031,7 +2186,7 @@
       </description>
     </function>
 
-    <function name="bwfilt" section="filters" output="series">
+    <function name="bwfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="int">n</fnarg>
@@ -2122,7 +2277,7 @@
       </description>
     </function>
 
-    <function name="cdemean" section="stats" output="matrix">
+    <function name="cdemean" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">standardize</fnarg>
@@ -2317,7 +2472,7 @@
       </description>
     </function>
 
-    <function name="cdiv" section="linalg" output="matrix">
+    <function name="cdiv" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
@@ -2410,7 +2565,8 @@
 	  If <argname>A</argname> is complex it must be Hermitian and
 	  positive definite, and the result is a lower-triangular
 	  complex matrix such that <equation status="inline" ascii="A
-	  = LL^H" tex="$A = LL^{\mathrm H}$"/>.
+	  = LL^H" tex="$A = LL^{\mathrm H}$"/>. Otherwise, the
+	  function will return an error.
 	</para>
 	<para>
 	  For the real case, see also <fncref targ="psdroot"/> and
@@ -2419,7 +2575,7 @@
       </description>
     </function>
 
-    <function name="chowlin" section="transforms" output="matrix">
+    <function name="chowlin" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="int">xfac</fnarg>
@@ -2427,26 +2583,31 @@
       </fnargs>
       <description>
 	<para>
+	  We no longer recommend use of this function; please use
+	  <fncref targ="tdisagg"/> instead.
+	</para>
+	<para>
 	  Expands the input data, <argname>Y</argname>, to a higher
-	  frequency, using the interpolation method of <cite
-	  key="chowlin71">Chow and Lin (1971)</cite>. It is
-	  assumed that the columns of <argname>Y</argname>
-	  represent data series; the returned matrix has as many columns
-	  as <argname>Y</argname> and <argname>xfac</argname> times
-	  as many rows.
+	  frequency, using the method of <cite key="chowlin71">Chow
+	  and Lin (1971)</cite>. It is assumed that the columns of
+	  <argname>Y</argname> represent data series; the returned
+	  matrix has as many columns as <argname>Y</argname> and
+	  <argname>xfac</argname> times as many rows. It is also
+	  assumed that each low-frequency value should be treated as
+	  the average of <argname>xfac</argname> high-frequency
+	  values.
 	</para>
 	<para>
-	  The second argument represents the expansion factor: it should
-	  be 3 for expansion from quarterly to monthly or 4 for expansion
-	  from annual to quarterly, these being the only supported
-	  factors. The optional third argument may be used to provide a
-	  matrix of covariates at the higher (target) frequency.
+	  The <argname>xfac</argname> value should be 3 for quarterly
+	  to monthly, 4 for annual to quarterly or 12 for annual to
+	  monthly. The optional third argument may be used to provide
+	  a matrix of covariates at the higher (target) frequency.
 	</para>
 	<para>
-	  The regressors used by default are a constant and quadratic
-	  trend. If <argname>X</argname> is provided, its columns are
-	  used as additional regressors; it is an error if the number of
-	  rows in <argname>X</argname> does not equal
+	  The regressors used by default are a constant and trend.  If
+	  <argname>X</argname> is provided, its columns are used as
+	  additional regressors; it is an error if the number of rows
+	  in <argname>X</argname> does not equal
 	  <argname>xfac</argname> times the number of rows in
 	  <argname>Y</argname>.
 	</para>
@@ -2474,7 +2635,7 @@
       </description>
     </function>
 
-    <function name="cmult" section="linalg" output="matrix">
+    <function name="cmult" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
@@ -2583,7 +2744,7 @@
       </description>
     </function>
 
-    <function name="cnameset" section="matbuild" output="scalar">
+    <function name="cnameset" section="matrix" output="scalar">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -2618,7 +2779,7 @@
       </description>
     </function>
 
-    <function name="cols" section="matshape" output="int">
+    <function name="cols" section="matrix" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2732,7 +2893,7 @@
       </description>
     </function>
 
-    <function name="corrgm" section="stats" output="matrix">
+    <function name="corrgm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
 	<fnarg type="int">p</fnarg>
@@ -2965,7 +3126,7 @@
 	<para>
 	  Returns an <by r="n" c="m"/> complex matrix holding the
 	  conjugate transpose of the <by r="m" c="n"/> complex matrix
-	  <argname>C</argname>. The <lit>'</lit> (prime) operator also
+	  <argname>C</argname>. The <lit>&apos;</lit> (prime) operator also
 	  performs conjugate transposition for complex matrices. The
 	  <fncref targ="transp"/> function can be used on complex
 	  matrices but it performs <quote>straight</quote>
@@ -3187,6 +3348,49 @@
 	<code>
 	  bundle b = null
 	</code>
+	<subhead>Variant syntax</subhead>
+	<para>
+	  Two alternative forms of syntax are available for defining
+	  bundles. In each case the keyword <lit>defbundle</lit> is
+	  replaced by a single underscore. In the first variant the
+	  comma-separated arguments take the form
+	  <lit>key=value</lit>, where the key is taken to be a literal
+	  string and does not require quotation. Here is an example:
+	</para>
+	<code>
+	  bundle b = _(x=5, strval="some string", m=I(3))
+	</code>
+	<para>
+	  This form is particularly convenient for constructing an
+	  anonymous bundle on the fly as a function argument, as in
+	</para>
+	<code>
+	  b = regls(ys, LX, _(lfrac=0.35, stdize=0))
+	</code>
+	<para>
+	  where the <lit>regls</lit> function takes an optional bundle
+	  argument holding various parameters.
+	</para>
+	<para>
+	  The second variant is designed for the case where you wish to
+	  pack several pre-existing named objects into a bundle: you
+	  just give their names, unquoted:
+	</para>
+	<code>
+	  bundle b = _(x, y, z)
+	</code>
+	<para>
+	  Here the object <lit>x</lit> is copied into the bundle under
+	  the key <quote><lit>x</lit></quote>, and similarly for
+	  <lit>y</lit> and <lit>z</lit>.
+	</para>
+	<para>
+	  These alternative forms involve less typing than the full
+	  <lit>defbundle()</lit> version and are likely to be more
+	  convenient in many cases, but note that they are less
+	  flexible. Only the full version can handle keys given as
+	  string variables rather than literal strings.
+	</para>
       </description>
     </function>
 
@@ -3212,7 +3416,7 @@
       </description>
     </function>
 
-    <function name="deseas" section="filters" output="series">
+    <function name="deseas" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg optional="true" type="char">c</fnarg>
@@ -3258,7 +3462,7 @@
       </description>
     </function>
 
-    <function name="diag" section="matbuild" output="matrix">
+    <function name="diag" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -3275,7 +3479,7 @@
       </description>
     </function>
 
-    <function name="diagcat" section="matbuild" output="matrix">
+    <function name="diagcat" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">B</fnarg>
@@ -3424,7 +3628,7 @@
       </description>
     </function>
 
-    <function name="dsort" section="matshape" output="asinput">
+    <function name="dsort" section="matrix" output="asinput">
       <fnargs>
 	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
@@ -3726,7 +3930,7 @@
       </description>
     </function>
 
-    <function name="errmsg" section="strings" output="string">
+    <function name="errmsg" section="programming" output="string">
       <fnargs>
 	<fnarg type="int">errno</fnarg>
       </fnargs>
@@ -3739,7 +3943,7 @@
       </description>
     </function>
 
-    <function name="errorif" section="data-utils" output="scalar">
+    <function name="errorif" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="bool">condition</fnarg>
 	<fnarg type="string">msg</fnarg>
@@ -3909,7 +4113,7 @@
       </description>
     </function>
 
-    <function name="feval" section="data-utils" output="seebelow">
+    <function name="feval" section="programming" output="seebelow">
       <fnargs>
 	<fnarg type="string">funcname</fnarg>
 	<fnarg type="varargs"/>
@@ -3954,7 +4158,7 @@
       </description>
     </function>
 
-    <function name="fevd" section="stats" output="matrix">
+    <function name="fevd" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
 	<fnarg type="int">shock</fnarg>
@@ -3974,7 +4178,7 @@
 	</para>
 	<para>
 	  The <argname>target</argname> and <argname>shock</argname>
-	  argument take the form of 1-based indices of endogenous
+	  arguments take the form of 1-based indices of the endogenous
 	  variables in the system, with 0 taken to mean
 	  <quote>all</quote>. The following code fragment illustrates
 	  usage. In the first example the matrix <lit>fe1</lit> holds
@@ -4084,7 +4288,7 @@
       </description>
     </function>
 
-    <function name="filter" section="filters" output="seebelow">
+    <function name="filter" section="timeseries" output="seebelow">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
@@ -4306,7 +4510,7 @@
       </description>
     </function>
 
-    <function name="fracdiff" section="filters" output="series">
+    <function name="fracdiff" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
@@ -4491,7 +4695,7 @@
       </description>
     </function>
 
-    <function name="getenv" section="strings" output="string">
+    <function name="getenv" section="programming" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -4812,7 +5016,7 @@
       </description>
     </function>
 
-    <function name="halton" section="stats" output="matrix">
+    <function name="halton" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">m</fnarg>
 	<fnarg type="int">r</fnarg>
@@ -4966,7 +5170,7 @@
       </description>
     </function>
 
-    <function name="hpfilt" section="filters" output="series">
+    <function name="hpfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar" optional="true">lambda</fnarg>
@@ -5031,7 +5235,7 @@
       </description>
     </function>
 
-    <function name="I" section="matbuild" output="matrix">
+    <function name="I" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">n</fnarg>
 	<fnarg optional="true" type="int">m</fnarg>
@@ -5526,7 +5730,7 @@
       </description>
     </function>
 
-    <function name="irf" section="stats" output="matrix">
+    <function name="irf" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
 	<fnarg type="int">shock</fnarg>
@@ -5535,33 +5739,46 @@
       </fnargs>
       <description>
 	<para>
-	  Without the final optional argument, this function is
-	  available only when the last model estimated was a VAR or
-	  VECM. Alternatively, information on a VAR or VECM can be
-	  stored in a bundle via the <fncref targ="$system"/> accessor
+	  Provides estimated impulse response functions pertaining to
+	  a VAR or VECM, traced out over a certain forecast
+	  horizon. Without the final optional argument, this function
+	  works only when the last model estimated was a VAR or
+	  VECM. Alternatively, information on such a system can be
+	  saved as a bundle via the <fncref targ="$system"/> accessor
 	  and subsequently passed to <lit>irf</lit>.
 	</para>
 	<para>
-	  The return value is a matrix containing the estimated
-	  response of the <argname>target</argname> variable to an
-	  impulse of one standard deviation in the
-	  <argname>shock</argname> variable. These variables are
-	  identified by their position in the model specification: for
-	  example, if <argname>target</argname> and
-	  <argname>shock</argname> are given as 1 and 3 respectively,
-	  the returned matrix gives the response of the first variable
-	  in the system for a shock to the third variable.
+	  The <argname>target</argname> and <argname>shock</argname>
+	  arguments take the form of 1-based indices of the endogenous
+	  variables in the system, with 0 taken to mean
+	  <quote>all</quote>. The responses (expressed in the units of
+	  the <argname>target</argname> variable) are to an innovation
+	  of one standard deviation in the <argname>shock</argname>
+	  variable.  If <argname>alpha</argname> is given a suitable
+	  positive value the estimates include a 1 &minus; &agr;
+	  confidence interval (so, for example, give 0.1 for a 90
+	  percent interval).
 	</para>
 	<para>
-	  If the optional <argname>alpha</argname> argument is given,
-	  the returned matrix has three columns: the point estimate of
-	  the responses, followed by the lower and upper limits of a 1
-	  &minus; &agr; confidence interval obtained via
-	  bootstrapping.  (So <argname>alpha</argname> = 0.1
-	  corresponds to 90 percent confidence.) If
-	  <argname>alpha</argname> is omitted or set to zero, only the
-	  point estimate is provided.
+	  The following code fragment illustrates usage. In the first
+	  example the matrix <lit>ir1</lit> holds the responses of
+	  <lit>y1</lit> to innovations in each of <lit>y1</lit>,
+	  <lit>y2</lit> and <lit>y3</lit> (point estimates only since
+	  <argname>alpha</argname> is omitted).  In the second,
+	  <lit>ir2</lit> holds the responses of all targets to an
+	  innovation in <lit>y2</lit>, with 90 percent confidence
+	  intervals. In this case the returned matrix will have 9
+	  columns: each response path occupies 3 adjacent columns
+	  giving point estimate, lower bound and upper bound.  The
+	  last example produces a matrix with 27 columns: 3 per
+	  response for each target times each shock.
 	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  matrix ir1 = irf(1, 0)
+	  matrix ir2 = irf(0, 2, 0.1)
+	  matrix ir3 = irf(0, 0, 0.1)
+	</code>
 	<para>
 	  The number of periods (rows) over which the response is
 	  traced is determined automatically based on the frequency
@@ -5569,7 +5786,22 @@
 	  targ="set"/> command, as in <lit>set horizon 10</lit>.
 	</para>
 	<para>
-	  <seelist><fncref targ="fevd"/></seelist>
+	  When confidence intervals are produced they are derived via
+	  bootstrapping, with resampling of the original residuals.
+	  It is assumed that the lag order of the VAR or VECM is
+	  sufficient to eliminate serial correlation of the
+	  residuals. By default the number of bootstrap replications
+	  is 1999, but that can be adjusted via <cmdref targ="set"/>,
+	  as in
+	</para>
+	<code>
+	  set boot_iters 2999
+	</code>
+	<para>
+	  <seelist>
+	    <fncref targ="fevd"/>
+	    <fncref targ="vma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -5785,11 +6017,11 @@
 	  The argument <argname>ed</argname> is interpreted as an
 	  epoch day, which equals 1 for the first of January in the
 	  year AD 1 on the proleptic Gregorian calendar. The default
-	  return value&mdash;of the same type as
-	  <argname>ed</argname>&mdash;is an 8-digit number, or a
-	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
-	  (ISO 8601 <quote>basic</quote> format), giving the Gregorian
-	  calendar date corresponding to the epoch day.
+	  return value (of the same type as <argname>ed</argname>) is
+	  an 8-digit number, or a series of such numbers, on the
+	  pattern <lit>YYYYMMDD</lit> (ISO 8601 <quote>basic</quote>
+	  format), giving the Gregorian calendar date corresponding to
+	  the epoch day.
 	</para>
 	<para>
 	  If <argname>ed</argname> is a scalar (only) and the optional
@@ -5829,7 +6061,7 @@
       </description>
     </function>
 
-    <function name="iwishart" section="stats" output="matrix">
+    <function name="iwishart" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="symmat">S</fnarg>
 	<fnarg type="int">v</fnarg>
@@ -6031,7 +6263,7 @@
       </description>
     </function>
 
-    <function name="kdensity" section="stats" output="matrix">
+    <function name="kdensity" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-list-or-mat">x</fnarg>
 	<fnarg type="scalar" optional="true">scale</fnarg>
@@ -6145,7 +6377,7 @@
       </description>
     </function>
 
-    <function name="kmeier" section="stats" output="matrix">
+    <function name="kmeier" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
 	<fnarg type="series-or-vec" optional="true">cens</fnarg>
@@ -6458,7 +6690,7 @@
       </description>
     </function>
 
-    <function name="linearize" section="filters" output="series">
+    <function name="linearize" section="transforms" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
       </fnargs>
@@ -6518,7 +6750,7 @@
       </description>
     </function>
 
-    <function name="loess" section="stats" output="series">
+    <function name="loess" section="nonparam" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
@@ -6629,7 +6861,7 @@
       </description>
     </function>
 
-    <function name="lower" section="matbuild" output="smatrix">
+    <function name="lower" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
       </fnargs>
@@ -6651,7 +6883,7 @@
       </description>
     </function>
 
-    <function name="lrcovar" section="filters" output="matrix">
+    <function name="lrcovar" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="bool" optional="true">demean</fnarg>
@@ -6677,7 +6909,7 @@
       </description>
     </function>
 
-    <function name="lrvar" section="filters" output="scalar">
+    <function name="lrvar" section="timeseries" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="int" optional="true">k</fnarg>
@@ -6884,8 +7116,8 @@
 	</para>
 	<code>
 	  set seed 123
-	  X    = mnormal(6,2)
-	  Lag  = mlag(X,1)
+	  X = mnormal(6,2)
+	  Lag = mlag(X,1)
 	  Lead = mlag(X,-1)
 	  print X Lag Lead
 	  eval X'X
@@ -6960,6 +7192,30 @@
 	  observation <math>t</math>, or <lit>NA</lit> if there are
 	  any missing values at <math>t</math>.
 	</para>
+	<para>
+	  The following example illustrates the working of the function
+	</para>
+	<code>
+		open denmark.gdt
+		eval mean(LRM)
+		list L = dataset
+		eval mean(L)
+	</code>
+	<para>
+	  The first call will return the scalar mean value (scalar) of the
+	  series <lit>LRM</lit>, and the second one returns a
+	  series.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="median"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -6969,11 +7225,42 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the columns of <argname>X</argname>.
+	  Returns the means of the columns of <argname>X</argname>, not
+	  skipping any missing observations.
+	</para>
+	<para>
+	  For example, the following piece of code
+	</para>
+	<code>
+		matrix m = mnormal(5, 2)
+		m[1,2] = NA
+		print m
+		eval meanc(m)
+	</code>
+	<para>
+	  produces this output:
+	</para>
+	<code>
+		? print m
+		m (5 x 2)
+
+	   -0.098299          nan
+	      1.1829      -1.2817
+	     0.46037     -0.92947
+	      1.4896     -0.91970
+	     0.91918      0.47748
+
+		? eval meanc(m)
+	     0.79075          nan
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
+            <fncref targ="maxc"/>
+            <fncref targ="minc"/>
             <fncref targ="sdc"/>
+            <fncref targ="prodc"/>
 	  </seelist>
 	</para>
       </description>
@@ -7010,6 +7297,31 @@
 	  observation <math>t</math>, or <lit>NA</lit> if there are
 	  any missing values at <math>t</math>.
 	</para>
+	<para>
+	  The following example illustrates the working of the function
+	</para>
+	<code>
+	  set verbose off
+	  open denmark.gdt
+	  eval median(LRM)
+	  list L = dataset
+	  series m = median(L)
+	</code>
+	<para>
+	  The first call will return the scalar median value (scalar)
+	  of the series <lit>LRM</lit>, and the second one returns a
+	  series.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mean"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -7020,7 +7332,7 @@
       <description>
 	<para context="notex">
 	  Computes the matrix exponential of <argname>A</argname>.  If
-	  <argname>A</argname> is a real matrix algorithm 11.3.1 from
+	  <argname>A</argname> is a real matrix, algorithm 11.3.1 from
 	  <cite key="golub96">Golub and Van Loan (1996)</cite> is
 	  used. If <argname>A</argname> is complex the algorithm uses
 	  eigendecomposition and <argname>A</argname> must be
@@ -7141,8 +7453,27 @@
 	  is done element by element; if <argname>x</argname> is a list of
 	  series, the output is a series with 1 at observations for which
 	  at least one series in the list has a missing value, and 0
-	  otherwise.
+	  otherwise. For example, the following code
 	</para>
+	<code>
+		nulldata 3
+		series x = normal()
+		x[2] = NA
+		series x_ismiss = missing(x)
+		print x x_ismiss --byobs
+	</code>
+	<para>
+	 sets a missing value at the second observation of <argname>x</argname>,
+	 and creates a new boolean series <argname>x_ismiss</argname> which
+	 identifies the missing observation
+	</para>
+	<code>
+		             y     y_ismiss
+
+		1    -1.551247            0
+		2                         1
+		3    -2.244616            0
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="misszero"/>
@@ -7159,8 +7490,30 @@
       </fnargs>
       <description>
 	<para>
-	  Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is a
-	  series, the conversion is done element by element.
+	 Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is a
+	 series, the conversion is done element by element. For example,
+	 the following code
+	</para>
+	<code>
+		nulldata 3
+		series x = normal()
+		x[2] = NA
+		y = misszero(x)
+		print x y --byobs
+	</code>
+	<para>
+	 sets a missing value at the second observation of <argname>x</argname>,
+	 and creates a new series <argname>y</argname> for which the missing
+	 observation is replaced by zero:
+	</para>
+	<code>
+	             x            y
+
+		1    0.7355250    0.7355250
+		2                     0.000
+		3   -0.2465936   -0.2465936
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="missing"/>
             <fncref targ="ok"/>
@@ -7170,7 +7523,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="transforms" output="matrix">
+    <function name="mlag" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
@@ -7203,16 +7556,35 @@
 	  <argname>m</argname> is omitted, it is understood to be
 	  zero.
 	</para>
-	<para context="notex">
-	  If <argname>p</argname> is a vector, the above operation is
-	  carried out for each element in <argname>p</argname>,
-	  joining the resulting matrices horizontally.
+	<para>
+	  If <argname>p</argname> is a vector the operation described
+	  above is carried out for each element in
+	  <argname>p</argname> and the resulting matrices are joined
+	  horizontally. The following code illustrates this usage, for
+	  input <argname>X</argname> with two columns and input
+	  <argname>p</argname> calling for lags 1 and 2. Missing
+	  values are set to NA as opposed to the default of 0.
 	</para>
-	<para context="tex">
-	  If $p$ is a vector, the above operation is carried out for
-	  each element in $p$, joining the resulting matrices
-	  horizontally.
-	</para>
+	<code>
+	matrix X = mnormal(5, 2)
+	print X
+	eval mlag(X, {1, 2}, NA)
+	</code>
+	<code>
+	m (5 x 2)
+
+      1.5953    -0.070740
+    -0.52713     -0.47669
+     -2.2056     -0.28112
+     0.97753       1.4280
+     0.49654      0.18532
+
+         nan          nan          nan          nan
+      1.5953    -0.070740          nan          nan
+    -0.52713     -0.47669       1.5953    -0.070740
+     -2.2056     -0.28112     -0.52713     -0.47669
+     0.97753       1.4280      -2.2056     -0.28112
+	</code>
 	<para>
 	  See also <fncref targ="lags"/>.
 	</para>
@@ -7271,7 +7643,7 @@
       </description>
     </function>
 
-    <function name="mnormal" section="matbuild" output="matrix">
+    <function name="mnormal" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -7362,7 +7734,7 @@
       </description>
     </function>
 
-    <function name="movavg" section="filters" output="series">
+    <function name="movavg" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar">p</fnarg>
@@ -7657,7 +8029,7 @@
       </description>
     </function>
 
-    <function name="mrandgen" section="probdist" output="matrix">
+    <function name="mrandgen" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="string">d</fnarg>
 	<fnarg type="scalar-or-matrix">p1</fnarg>
@@ -7705,22 +8077,33 @@
       </fnargs>
       <description>
 	<para>
-	  Reads a matrix from a file named
-	  <argname>fname</argname>. This is mostly intended for
-	  reading files with a specific format described below, but it
-	  can also be used on generic delimited text files.  For the
-	  latter usage see the section titled <quote>Delimited text
-	  files</quote> below.
+	  Reads a matrix from a file named <argname>fname</argname>.
+	  If the file name does not contain a full path specification,
+	  it will be looked for in several <quote>likely</quote>
+	  locations, beginning with the currently set <cmdref
+	  targ="workdir"/>. However, if a non-zero value is given for
+	  the optional <argname>import</argname> argument, the input
+	  file is looked for in the user's <quote>dot</quote>
+	  directory. This is intended for use with the
+	  matrix-exporting functions offered in the context of the
+	  <cmdref targ="foreign"/> command. In this case the
+	  <argname>fname</argname> argument should be a plain
+	  filename, without any path component.
 	</para>
+
+	<para>Currently, the function recognizes four file formats:
+	</para>
+
+	<subhead>Native text format</subhead>
 	<para>
-	  If the filename has the suffix <quote><lit>.gz</lit></quote>
-	  it is assumed that gzip compression has been applied in
-	  writing the data; if it has the suffix
-	  <quote><lit>.bin</lit></quote> the file is assumed to be in
-	  binary format (see <fncref targ="mwrite"/> for
-	  details). Otherwise if the filename has suffix
-	  <quote><lit>.mat</lit></quote> it is assumed to be plain
-	  text, conforming to the following specification:
+	  These files are identified by the extension
+	  <quote><lit>.mat</lit></quote>, and are fully compatible
+	  with the Ox matrix file format. If the filename has the
+	  suffix <quote><lit>.gz</lit></quote> it is assumed that
+	  gzip compression has been applied in writing the data.
+
+	  The file is assumed to be plain text, conforming to the
+	  following specification:
 	</para>
 	<ilist>
 	  <li>
@@ -7749,19 +8132,22 @@
             </para>
 	  </li>
 	</ilist>
+
+	<subhead>Binary files</subhead>
 	<para>
-	  If the file name does not contain a full path specification,
-	  it will be looked for in several <quote>likely</quote>
-	  locations, beginning with the currently set <cmdref
-	  targ="workdir"/>. However, if a non-zero value is given for
-	  the optional <argname>import</argname> argument, the input
-	  file is looked for in the user's <quote>dot</quote>
-	  directory. This is intended for use with the
-	  matrix-exporting functions offered in the context of the
-	  <cmdref targ="foreign"/> command. In this case the
-	  <argname>fname</argname> argument should be a plain
-	  filename, without any path component.
+	  Files with the suffix <quote><lit>.bin</lit></quote> are
+	  assumed to be in binary format. The
+	  <quote><lit>.gz</lit></quote> suffix, for gzip compression,
+	  is also recognized. The first 19 bytes contain the
+	  characters <lit>gretl_binary_matrix</lit>, the next 8 bytes
+	  contain two 32-bit integers giving the number of rows and
+	  columns, and the remainder of the file contains the matrix
+	  elements as little-endian <quote>doubles</quote>, in
+	  column-major order. If gretl is run on a big-endian system,
+	  the binary values are converted to little endian on writing,
+	  and converted to big endian on reading.
 	</para>
+
 	<subhead>Delimited text files</subhead>
 	<para>
 	  If the name of the file to be read has extension
@@ -7776,6 +8162,18 @@
 	  pain of confusing such files with those in gretl's
 	  <quote>native</quote> matrix format.
 	</para>
+
+	<subhead>Gretl dataset files</subhead>
+	<para>
+	  Files with extension <quote><lit>.gdt</lit></quote> or
+	  <quote><lit>.gdtb</lit></quote> are treated as gretl native
+	  data files, as created by the <cmdref targ="store"/>
+	  command. In this case, the matrix returned contains the
+	  numerical values of the series of the dataset, arranged by
+	  column.  Note that string-valued series are not read as
+	  such; the matrix will just contain their numeric encodings.
+	</para>
+
 	<para>
 	  <seelist>
             <fncref targ="bread"/>
@@ -7785,7 +8183,7 @@
       </description>
     </function>
 
-    <function name="mreverse" section="matshape" output="matrix">
+    <function name="mreverse" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">bycol</fnarg>
@@ -7836,7 +8234,7 @@
       </description>
     </function>
 
-    <function name="mshape" section="matshape" output="matrix">
+    <function name="mshape" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
@@ -7874,7 +8272,7 @@
       </description>
     </function>
 
-    <function name="msortby" section="matshape" output="matrix">
+    <function name="msortby" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">j</fnarg>
@@ -7890,7 +8288,7 @@
       </description>
     </function>
 
-    <function name="msplitby" section="matshape" output="matrices">
+    <function name="msplitby" section="matrix" output="matrices">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="vector">v</fnarg>
@@ -7933,7 +8331,7 @@
       </description>
     </function>
 
-    <function name="muniform" section="matbuild" output="matrix">
+    <function name="muniform" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -8123,7 +8521,7 @@
       </description>
     </function>
 
-    <function name="naalen" section="stats" output="matrix">
+    <function name="naalen" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
 	<fnarg type="series-or-vec" optional="true">cens</fnarg>
@@ -8160,7 +8558,7 @@
       </description>
     </function>
 
-    <function name="nadarwat" section="stats" output="series">
+    <function name="nadarwat" section="nonparam" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
@@ -8258,7 +8656,7 @@
       </description>
     </function>
 
-    <function name="ngetenv" section="strings" output="scalar">
+    <function name="ngetenv" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -8355,6 +8753,12 @@
 	<para>
 	  Returns the number of non-missing observations for the variable
 	  <argname>y</argname> in the currently selected sample.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="pnobs"/>
+            <fncref targ="pxnobs"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -8673,16 +9077,26 @@
       </description>
     </function>
 
-    <function name="obslabel" section="data-utils" output="string">
+    <function name="obslabel" section="data-utils" output="string-or-strings">
       <fnargs>
-	<fnarg type="int">t</fnarg>
+	<fnarg type="scalar-or-vec">t</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the observation label for observation
-	  <argname>t</argname>, where <argname>t</argname> is a
-	  1-based index.  The inverse function is provided by <fncref
-	  targ="obsnum"/>.
+	  If <argname>t</argname> is a scalar, returns a single
+	  string, the observation label for observation
+	  <argname>t</argname>. The inverse function is provided by
+	  <fncref targ="obsnum"/>.
+	</para>
+	<para>
+	  If <argname>t</argname> is a vector, returns an array of
+	  strings, the observation labels for the observations given
+	  by the elements of <argname>t</argname>.
+	</para>
+	<para>
+	  In either case the <argname>t</argname> values must be
+	  integers, valid as 1-based indices of observations in the
+	  current dataset, otherwise an error is flagged.
 	</para>
       </description>
     </function>
@@ -8772,7 +9186,7 @@
       </description>
     </function>
 
-    <function name="ones" section="matbuild" output="matrix">
+    <function name="ones" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -8792,7 +9206,7 @@
       </description>
     </function>
 
-    <function name="orthdev" section="transforms" output="series">
+    <function name="orthdev" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -8860,7 +9274,7 @@
       </description>
     </function>
 
-    <function name="pergm" section="stats" output="matrix">
+    <function name="pergm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
 	<fnarg optional="true" type="scalar">bandwidth</fnarg>
@@ -8882,7 +9296,7 @@
       </description>
     </function>
 
-    <function name="pexpand" section="data-utils" output="series">
+    <function name="pexpand" section="panel" output="series">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
       </fnargs>
@@ -8900,7 +9314,7 @@
       </description>
     </function>
 
-    <function name="pmax" section="stats" output="series">
+    <function name="pmax" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -8931,7 +9345,7 @@
       </description>
     </function>
 
-    <function name="pmean" section="stats" output="series">
+    <function name="pmean" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -8971,7 +9385,7 @@
       </description>
     </function>
 
-    <function name="pmin" section="stats" output="series">
+    <function name="pmin" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -9001,7 +9415,7 @@
       </description>
     </function>
 
-    <function name="pnobs" section="stats" output="series">
+    <function name="pnobs" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -9031,7 +9445,7 @@
       </description>
     </function>
 
-    <function name="polroots" section="linalg" output="matrix">
+    <function name="polroots" section="math" output="matrix">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
       </fnargs>
@@ -9052,7 +9466,7 @@
       </description>
     </function>
 
-    <function name="polyfit" section="filters" output="series">
+    <function name="polyfit" section="transforms" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="int">q</fnarg>
@@ -9156,7 +9570,7 @@
       </description>
     </function>
 
-    <function name="psd" section="stats" output="series">
+    <function name="psd" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -9241,7 +9655,7 @@
       </description>
     </function>
 
-    <function name="pshrink" section="data-utils" output="matrix">
+    <function name="pshrink" section="panel" output="matrix">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -9267,7 +9681,7 @@
       </description>
     </function>
 
-    <function name="psum" section="stats" output="series">
+    <function name="psum" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -9343,7 +9757,7 @@
       </description>
     </function>
 
-    <function name="pxnobs" section="stats" output="series">
+    <function name="pxnobs" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -9367,7 +9781,7 @@
       </description>
     </function>
 
-    <function name="pxsum" section="stats" output="series">
+    <function name="pxsum" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">mask</fnarg>
@@ -9635,14 +10049,50 @@
 	  in <argname>p</argname> and <repl>n</repl> is the number of
 	  columns in <argname>y</argname>.
 	</para>
-	<para context="tex">
-	  For a series of length $n$, the $p$-quantile, $q$, is defined
-	  as:
-	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\]
-	  where $k$ is the integer part of $(n+1) \cdot p$ and
-	  $y_{[i]}$ is the $i$-th element of the series when
-	  sorted from smallest to largest.
+	<para>
+	  <cite key="hyndman96">Hyndman and Fan (1996)</cite> describe
+	  nine variant methods for calculating sample quantiles. The
+	  default method in gretl is the one they call
+	  <math>Q</math><sub>6</sub> (which is also the default in
+	  Python). Method <math>Q</math><sub>7</sub> (the default in
+	  R) or <math>Q</math><sub>8</sub> (the one recommended by
+	  Hyndman and Fan) can be selected instead via the <cmdref
+	  targ="set"/> command, as in
 	</para>
+	<code>
+	  set quantile_type Q7 # or Q8
+	</code>
+	<para context="tex">
+	  The $p$-quantile, $Q_p$, for a series $y$ of length $n$ is
+	  defined as:
+	  \[Q_p = y_{[k]} + (h - k) (y_{[k+1]} - y_{[k]})\]
+	  where $k$ is the integer part of $h$, a term that
+	  differs by method---$h=(n+1)p$ for $Q_6$, $(n-1)p+1$
+	  for $Q_7$ and $(n+1/3)p + 1/3$ for $Q_8$---and $y_{[i]}$ is the
+	  $i$-th element of the series when sorted from smallest to
+	  largest.
+	</para>
+	<para>
+	For example, the code
+	</para>
+	<code>
+	  set verbose off
+	  matrix x = seq(1,7)'
+	  set quantile_type Q6
+	  printf "Q6: %g\n", quantile(x, 0.45)
+	  set quantile_type Q7
+	  printf "Q7: %g\n", quantile(x, 0.45)
+	  set quantile_type Q8
+	  printf "Q8: %g\n", quantile(x, 0.45)
+	</code>
+	<para>
+	produces the following output:
+	</para>
+	<code>
+	  Q6: 3.6
+	  Q7: 3.7
+	  Q8: 3.63333
+	</code>
       </description>
     </function>
 
@@ -9984,6 +10434,8 @@
 	  does not contain a full path specification, it will be
 	  looked for in several <quote>likely</quote> locations,
 	  beginning with the currently set <cmdref targ="workdir"/>.
+	  If the file in question is gzip-compressed, this is handled
+	  transparently.
 	</para>
 	<para>
 	  If <argname>fname</argname> starts with the identifier of a
@@ -10234,7 +10686,7 @@
       </description>
     </function>
 
-    <function name="rnameset" section="matbuild" output="int">
+    <function name="rnameset" section="matrix" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -10270,7 +10722,7 @@
       </description>
     </function>
 
-    <function name="rows" section="matshape" output="int">
+    <function name="rows" section="matrix" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -10431,7 +10883,7 @@
       </description>
     </function>
 
-    <function name="selifc" section="matshape" output="matrix">
+    <function name="selifc" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="rvec">b</fnarg>
@@ -10451,7 +10903,7 @@
       </description>
     </function>
 
-    <function name="selifr" section="matshape" output="matrix">
+    <function name="selifr" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="cvec">b</fnarg>
@@ -10472,7 +10924,7 @@
       </description>
     </function>
 
-    <function name="seq" section="matbuild" output="rvec">
+    <function name="seq" section="matrix" output="rvec">
       <fnargs>
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
@@ -10620,7 +11072,7 @@
       </description>
     </function>
 
-    <function name="sleep" section="data-utils" output="scalar">
+    <function name="sleep" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="int">ns</fnarg>
       </fnargs>
@@ -10702,7 +11154,7 @@
       </description>
     </function>
 
-    <function name="sort" section="matshape" output="asinput">
+    <function name="sort" section="matrix" output="asinput">
       <fnargs>
 	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
@@ -10973,7 +11425,7 @@
       </description>
     </function>
 
-    <function name="stack" section="data-utils" output="series">
+    <function name="stack" section="panel" output="series">
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="int">n</fnarg>
@@ -11007,7 +11459,7 @@
       </description>
     </function>
 
-    <function name="stdize" section="stats" output="asinput">
+    <function name="stdize" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
 	<fnarg type="int" optional="true">v</fnarg>
@@ -11092,23 +11544,33 @@
 
     <function name="strlen" section="strings" output="int">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string-or-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the number of characters in the string
-	  <argname>s</argname>. Note that this does not necessarily
-	  equal the number of bytes if some characters are outside
-	  of the printable-ASCII range.
+	  If <argname>s</argname> is a single string, returns the
+	  number of UTF-8 characters it contains.  Note that this does
+	  not equal the number of bytes if some characters are outside
+	  of the printable-ASCII range; if you want the number of
+	  bytes, you can use the <fncref targ="nelem"/> function. For example:
 	</para>
-    <para>
-        Example:
-    </para>
-    <code>
-        string s = "regression"
-        scalar number = strlen(s)
-        print number
-    </code>
+	<code>
+	  string s = "¡Olé!"
+	  printf "strlen(s) = %d, nelem(s) = %d\n", strlen(s), nelem(s)
+	</code>
+	<para>
+	  should return
+	</para>
+	<code>
+	  strlen(s) = 5, nelem(s) = 7
+	</code>
+	<para>
+	  If the argument is an array of strings the return value is a
+	  column vector holding the number of characters in each string.
+	  A string-valued series is also an acceptable argument: in
+	  this case the return value is a series holding the length of
+	  the string values over the current sample range.
+	</para>
       </description>
     </function>
 
@@ -11499,7 +11961,7 @@
       </description>
     </function>
 
-    <function name="svm" section="stats" output="series">
+    <function name="svm" section="nonparam" output="series">
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="bundle">bparms</fnarg>
@@ -11558,6 +12020,32 @@
             <fncref targ="cosh"/>
             <fncref targ="sinh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="tdisagg" section="transforms" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-mat">Y</fnarg>
+	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
+	<fnarg type="scalar">s</fnarg>
+	<fnarg optional="true" type="bundle">opts</fnarg>
+	<fnarg optional="true" type="bundle">results</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs temporal disaggregation (conversion to higher
+	  frequency) of the time-series data in
+	  <argname>Y</argname>. The argument <argname>s</argname>
+	  gives the expansion factor (for example, 3 for quarterly
+	  to monthly). The argument <argname>X</argname> may contain
+	  one or more covariates at the higher frequency to aid in
+	  the disaggregation. Several options may be passed in
+	  <argname>opts</argname>, and details of the disaggregation
+	  may be retrieved via <argname> results</argname>.
+	</para>
+	<para>
+	  See <guideref targ="chap:tdisagg"/> for details.
 	</para>
       </description>
     </function>
@@ -11671,7 +12159,7 @@
       </description>
     </function>
 
-    <function name="trimr" section="matshape" output="matrix">
+    <function name="trimr" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">ttop</fnarg>
@@ -11779,7 +12267,7 @@
       </description>
     </function>
 
-    <function name="unvech" section="matbuild" output="smatrix">
+    <function name="unvech" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
       </fnargs>
@@ -11803,7 +12291,7 @@
       </description>
     </function>
 
-    <function name="upper" section="matbuild" output="smatrix">
+    <function name="upper" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -11981,7 +12469,7 @@
       </description>
     </function>
 
-    <function name="varsimul" section="linalg" output="matrix">
+    <function name="varsimul" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">U</fnarg>
@@ -12032,7 +12520,7 @@
       </description>
     </function>
 
-    <function name="vec" section="matbuild" output="cvec">
+    <function name="vec" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -12048,7 +12536,7 @@
       </description>
     </function>
 
-    <function name="vech" section="matbuild" output="cvec">
+    <function name="vech" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -12056,10 +12544,60 @@
 	<para>
 	  Returns in a column vector the elements of <argname>A</argname>
 	  on and above the diagonal. Typically, this function is used on
-	  symmetric matrices; in this case, it can be undone by the
-	  function <fncref targ="unvech"/>.
+	  symmetric matrices, in which case it can be undone by the
+	  function <fncref targ="unvech"/>. If the input matrix is not
+	  symmetric and it's the lower triangle that contains the
+	  <quote>right</quote> values, <lit>vech(A')</lit> will give
+	  the desired answer.
 	  <seelist>
             <fncref targ="vec"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+
+    <function name="vma" section="timeseries" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix" optional="true">K</fnarg>
+	<fnarg type="int" optional="true">horizon</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function yields the VMA representation for a VAR
+	  system. If <equation status="inline" ascii="y(t) = A1 y(t-1)
+	  + ... + Ap y(t-p) + u(t)" tex="$y_t = \sum_{i=1}^p A_i
+	  y_{t-i} + u_t$"/>, where <math>u</math><sub>t</sub> are the
+	  one-step-ahead prediction errors, the corresponding VMA
+	  representation is <equation status="inline" ascii="y(t) = C0
+	  e(t) + C1 e(t-1) + ..."  tex="$y_t = C_0 e_t + C_1 e_{t-1} +
+	  \ldots$."/>. The relationship between the forecast errors
+	  <math>u</math><sub>t</sub> and the structural shocks
+	  <math>e</math><sub>t</sub> is given by <equation
+	  status="inline" ascii="u(t) = K e(t)" tex="$u_t = K
+	  e_t$"/>. (Note that <math>C</math><sub>0</sub> =
+	  <math>K</math>.)
+        </para>
+        <para>
+          The coefficient matrix <argname>A</argname> is composed by
+	  stacking the <math>A</math><sub>i</sub> matrices horizontally;
+	  it is <by r="n" c="np"/>, with one row per equation. This
+	  corresponds to the first <math>n</math> rows of the matrix
+	  <lit>$compan</lit> provided by gretl's <lit>var</lit> and
+	  <lit>vecm</lit> commands. The <argname>K</argname> matrix is
+	  optional, and defaults to the identity matrix if omitted.
+	</para>
+        <para>
+          The returned matrix will have <argname>horizon</argname>
+	  rows and <math>n</math><sup>2</sup> columns: its
+	  <math>i</math>-th row contains <math>C</math><sub>i-1</sub>
+	  in vectorized form. The <argname>horizon</argname> value
+	  defaults to 24 if omitted.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="irf"/>
 	  </seelist>
 	</para>
       </description>
@@ -12082,7 +12620,7 @@
       </description>
     </function>
 
-    <function name="wmean" section="stats" output="series">
+    <function name="wmean" section="transforms" output="series">
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -12108,7 +12646,7 @@
       </description>
     </function>
 
-    <function name="wsd" section="stats" output="series">
+    <function name="wsd" section="transforms" output="series">
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -12134,7 +12672,7 @@
       </description>
     </function>
 
-    <function name="wvar" section="stats" output="series">
+    <function name="wvar" section="transforms" output="series">
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -12213,6 +12751,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">path</fnarg>
+	<fnarg optional="true" type="scalarref">matches</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12266,7 +12805,7 @@
       </description>
     </function>
 
-    <function name="zeromiss" section="data-utils" output="asinput">
+    <function name="zeromiss" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
       </fnargs>
@@ -12283,7 +12822,7 @@
       </description>
     </function>
 
-    <function name="zeros" section="matbuild" output="matrix">
+    <function name="zeros" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -12303,3 +12842,4 @@
 
   </funclist>
 </funcref>
+

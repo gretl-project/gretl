@@ -21,12 +21,16 @@
 #define VARTEST_H_
 
 #define N_IVALS 3
+#define VAR_S_DFCORR 0
 
 void gretl_VAR_clear (GRETL_VAR *var);
 
 void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset);
 
-void VAR_write_A_matrix (GRETL_VAR *v);
+void VAR_write_A_matrix (GRETL_VAR *v, GretlMatrixMod mod);
+
+gretl_matrix *decompanionize (const gretl_matrix *A, int neqns,
+			      GretlMatrixMod mod);
 
 int johansen_stage_1 (GRETL_VAR *jvar, const DATASET *dset,
 		      gretlopt opt, PRN *prn);
@@ -47,9 +51,14 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var);
 
 gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err);
 
+void copy_north_west (gretl_matrix *targ,
+		      const gretl_matrix *src,
+		      int add);
+
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
 			     int targ, int shock,
 			     int periods, double alpha,
+			     gretl_matrix *point,
 			     const DATASET *dset,
 			     int *err);
 

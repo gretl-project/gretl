@@ -100,7 +100,7 @@ genr unitdum
 ols y x du_*
 \end{code}
 %
-(See Chapter~\ref{chap:genr} for details on \texttt{unitdum}).
+(See Chapter~\ref{chap:genr} for details on \cmd{unitdum}).
 
 The $\hat{\alpha}_i$ estimates are not printed as part of the standard
 model output in gretl (there may be a large number of these, and
@@ -459,30 +459,60 @@ method of calculation of this term is a matter of convention, but the
 gretl authors decided to follow the convention employed by
 \app{Stata}; this involves adding the global mean back into the
 variables from which the group means have been removed.\footnote{See
-  \cite{gould13} for an extended explanation.}
+  \cite{gould13} for an extended explanation.} If you prefer to
+interpret the fixed effects model as ``OLS plus unit dummies
+throughout'', it can be proven the this approach is equivalent to
+using centered unit dummies instead of plain 0/1 dummies.
 
 The method that gretl uses internally is exemplified in
-Listing~\ref{fe-intercept}. The coefficients in the final OLS
+Listing~\ref{fe-intercept}. The coefficients in the second OLS
 estimation, including the intercept, agree with those in the initial
 fixed effects model, though the standard errors differ due to a
 degrees of freedom correction in the fixed-effects covariance matrix.
-(Note that the \texttt{pmean} function returns the group mean of a
-series.)
+(Note that the \cmd{pmean} function returns the group mean of a
+series.) The third estimator---which produces quite a lot of
+output---instead uses the \cmd{stdize} function to create the centered
+dummies. It thereby shows the equivalence of the internally-used
+method to ``OLS plus centered dummies''. (Note that in this case the
+standard errors agree with the initial estimates.)
 
 \begin{script}[htbp]
-  \caption{Calculating the intercept in the fixed effects model}
+  \scriptcaption{Calculating the intercept in the fixed effects model}
   \label{fe-intercept}
 \begin{scode}
 open abdata.gdt
-panel n const w k ys --fixed-effects
 
-depvar = n - pmean(n) + mean(n)
+list X = w k ys                  # list of explanatory variables
+
+###
+### built-in method
+###
+
+panel n const X --fixed-effects
+
+###
+### recentering "by hand"
+###
+
+depvar = n - pmean(n) + mean(n)  # redefine the dependent variable
+
 list indepvars = const
-loop foreach i w k ys
-  x_$i = $i - pmean($i) + mean($i)
-  indepvars += x_$i
+loop foreach i X
+    # redefine the explanatory variables
+    x_$i = $i - pmean($i) + mean($i)
+    indepvars += x_$i
 endloop
-ols depvar indepvars
+
+ols depvar indepvars             # perform estimation
+
+###
+### using centered dummies
+###
+
+list C = dummify(unit)           # create the unit dummies
+smpl n X --no-missing            # adjust to perform centering correctly
+list D = stdize(C, -1)           # center the unit dummies
+ols n const X D                  # perform estimation
 \end{scode}
 \end{script}
 
@@ -542,11 +572,11 @@ fixed-effects estimation as follows:
 \begin{code}
 series ue_fe = $uhat + $ahat - $coeff[1]
 \end{code}
-%
+%$
 where \dollar{ahat} gives the unit-specific intercept (as it would be
 calculated if one included all
 $N$ unit dummies and omitted a common
-$y$-intercept), and \verb|$coeff[1]| gives the ``global''
+$y$-intercept), and \dollar{coeff[1]} gives the ``global''
 $y$-intercept.\footnote{For anyone used to Stata, gretl's
   fixed-effects \dollar{uhat} corresponds to what you get from Stata's
   ``\texttt{predict, e}'' after \texttt{xtreg}, while the second
@@ -652,14 +682,14 @@ correlated.
 The Anderson--Hsiao estimator is not provided as a built-in function
 in gretl, since gretl's sensible handling of lags and
 differences for panel data makes it a simple application of regression
-with instrumental variables---see Listing~\ref{anderson-hsiao},
+with instrumental variables---see Listing~\ref{script:anderson-hsiao},
 which is based on a study of country growth rates by
 \cite{nerlove99}.\footnote{Also see Clint Cummins' benchmarks page,
   \url{http://www.stanford.edu/~clint/bench/}.}
  
 \begin{script}[htbp]
-  \caption{The Anderson--Hsiao estimator for a dynamic panel model}
-  \label{anderson-hsiao}
+  \scriptcaption{The Anderson--Hsiao estimator for a dynamic panel model}
+  \label{script:anderson-hsiao}
 \begin{scode}
 # Penn World Table data as used by Nerlove
 open penngrow.gdt

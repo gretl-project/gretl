@@ -3982,20 +3982,20 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 		       GtkWidget *parent)
 {
     const char *opts[] = {
+	N_("stacked bar graph"),
 	N_("line graph"),
-	N_("stacked bar graph")
     };
     gchar *title;
     int h = default_VAR_horizon(dataset);
     GtkWidget *dlg;
-    int histo = 0;
+    int lines = 0;
     int resp = -1;
 
     title = g_strdup_printf("gretl: %s", _("Forecast variance decomposition"));
 
     dlg = build_checks_dialog(title, NULL, opts,
 			      0, NULL, 0, 0, /* no checks */
-			      2, &histo, /* two radio buttons */
+			      2, &lines, /* two radio buttons */
 			      &h, _("forecast horizon (periods):"),
 			      2, dataset->n / 2, 0,
 			      parent, &resp);
@@ -4017,7 +4017,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 	*horizon = 0;
     } else {
 	*horizon = h;
-	if (histo) {
+	if (!lines) {
 	    *opt = OPT_H;
 	}
     }
@@ -4368,8 +4368,6 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	pre_n = 0;
 	dyn_ok = 0;
     }
-
-    /* FIXME pre_n with static fcast? */
 
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2, NULL,
@@ -6168,32 +6166,17 @@ void verbose_gerror_report (GError *gerr, const char *src)
 	    src, gerr->message, gerr->domain, gerr->code);
 }
 
-/* Note: simplified 2018-09-15 on the assumption that filenames
-   will be in UTF-8 on all platforms other than MS Windows.
+/* Note: simplified 2020-12-08 on the assumption that filenames
+   within gretl will be in UTF-8 on all platforms.
 */
 
 int gretl_file_get_contents (const gchar *fname, gchar **contents,
 			     gsize *size)
 {
     GError *gerr = NULL;
-    gboolean u8 = g_utf8_validate(fname, -1, NULL);
     gboolean ok = 0;
 
-    if (u8) {
-	ok = g_file_get_contents(fname, contents, size, &gerr);
-    }
-
-#ifdef G_OS_WIN32
-    if (!u8) {
-	gsize bytes;
-	gchar *fconv = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
-
-	if (fconv != NULL) {
-	    ok = g_file_get_contents(fconv, contents, size, &gerr);
-	    g_free(fconv);
-	}
-    }
-#endif
+    ok = g_file_get_contents(fname, contents, size, &gerr);
 
     if (gerr != NULL) {
 	verbose_gerror_report(gerr, "g_file_get_contents");

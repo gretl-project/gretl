@@ -45,11 +45,11 @@ functional enough to allow a savvy user to address these questions
 from scratch, but of course it's helpful to have some built-in
 high-level functionality. At present gretl can handle natively four
 commonly used parameterizations: normalized exponential Almon,
-normalized beta (with or without a zero last coefficient) and plain
+normalized beta (with or without a zero last coefficient), and plain
 (non-normalized) Almon polynomial. The Almon variants take one or more
-parameters (two being a common choice), and the beta takes either two
-or three parameters. Full details on the forms taken by the $W(\cdot)$
-function are provided in section \ref{sec:midas-param}.
+parameters (two being a common choice). The beta variants take either
+two or three parameters. Full details on the forms taken by the
+$W(\cdot)$ function are provided in section \ref{sec:midas-param}.
 
 All variants are handled by the functions \texttt{mweights} and
 \texttt{mgradient}. These functions work as follows.
@@ -74,12 +74,19 @@ All variants are handled by the functions \texttt{mweights} and
     Normalized beta, zero last lag & 2 & \verb|"beta0"| \\
     Normalized beta, non-zero last lag & 3 & \verb|"betan"| \\
     Almon polynomial & 4 & \verb|"almonp"| \\
+    One-parameter beta & 5 & \verb|"beta1"|
   \end{tabular}
   \caption{MIDAS parameterizations}
   \label{tab:midas-parm}
 \end{table}
 In the case of the non-normalized Almon polynomial the $\gamma$
-coefficient is identically 1.0 and is omitted.
+coefficient in (\ref{eq:MIDAS}) is identically 1.0 and is omitted.
+The \verb|"beta1"| case is the the same as the two-parameter
+\verb|"beta0"| except that $\theta_1$ is constrained to equal 1,
+leaving $\theta_2$ as the only free parameter. \cite{ghysels-qian16}
+make a case for use of this particularly parsimonious
+version.\footnote{Note, however, that at present \verb|"beta1"| cannot
+  be mixed with other parameterizations in a single model.}
 
 An additional function is provided for convenience: it is named
 \texttt{mlincomb} and it combines \texttt{mweights} with the
@@ -246,7 +253,7 @@ pseudo-out-of-sample forecasts are recorded so that their Root Mean
 Square Errors can be compared.
 
 \begin{script}[p]
-  \caption{Script to replicate results given by Ghysels}
+  \scriptcaption{Script to replicate results given by Ghysels}
   \label{lst:midasreg-ghysels}
 \begin{scode}
 set verbose off
@@ -298,12 +305,11 @@ printf "  nealmon %.4f\n", fcstats(my, FC[,4])[2]
 printf "  almonp  %.4f\n", fcstats(my, FC[,5])[2]
 \end{scode}
 \end{script}
-%$
 
 \begin{script}[p]
   \caption{Replication of Ghysels' results, partial output}
   \label{ghysels-out}
-\begin{scode}
+\begin{outbit}
 === normalized beta, non-zero last lag (betan) ===
 Model 3: MIDAS (NLS), using observations 1985:1-2009:1 (T = 97)
 Using L-BFGS-B with conditional OLS
@@ -354,7 +360,7 @@ Forecast RMSEs:
   betan   0.5210
   nealmon 0.5642
   almonp  0.5329
-\end{scode}
+\end{outbit}
 \end{script}
 
 The data file used in the replication, \texttt{gdp\_midas.gdt}, was
@@ -444,41 +450,19 @@ hyperparameter vector we optimize the remaining parameters
 (coefficients on base-frequency regressors, slopes with respect to
 MIDAS terms) via OLS.
 
+\subsection{Testing for a structural break}
 
-\subsection{Other specialized options}
-
-We mentioned above the standard options that are supported by the
-\texttt{midasreg} command, plus the \option{levenberg} option; here we
-explain two additional options, \option{clamp-beta} and
-\option{breaktest}.
-
-First, a case can be made for a variant of the normalized beta
-parameterization that is even more parsimonious than those discussed
-above: we take as a basis the two-parameter case (which implies a zero
-coefficient on the last lag) and ``clamp'' the first parameter,
-$\theta_1$, at 1.0; the second parameter is then optimized, subject to
-the constraint $\theta_2 \ge 1.0$. This variant allows for a wide
-range of patterns of declining weights while arguably avoiding
-over-fitting of the weighting function to the estimation sample.
-Although it is bound to fit somewhat less well than the more general
-beta specifications in-sample it may be more effective in
-out-of-sample forecasting \citep{ghysels-qian16}. This is supported
-under \texttt{midasreg} as follows: you specify the two-parameter beta
-option (\textsl{type} = 2, see section~\ref{sec:hparams}) but add the
-option flag \option{clamp-beta}. At present this option is valid only
-if the regression contains a single MIDAS specification.
-
-Second, the \option{breaktest} option can be used to carry out the
-Quandt Likelihood Ratio (QLR) test for a structural break at the stage
-of running the final Gauss--Newton regression (to check for
-convergence and calculate the covariance matrix of the parameter
-estimates).  This can be a useful aid to diagnosis, since
-non-homogeneity of the data over the estimation period can lead to
-numerical problems in nonlinear estimation, besides compromising the
-forecasting capacity of the resulting equation. For example, when this
-option is given with the command to estimate the ``\texttt{BetaNZ}''
-model shown in Listing~\ref{ghysels-out}, the following result is
-appended to the standard output:
+The \option{breaktest} option can be used to carry out the Quandt
+Likelihood Ratio (QLR) test for a structural break at the stage of
+running the final Gauss--Newton regression (to check for convergence
+and calculate the covariance matrix of the parameter estimates).  This
+can be a useful aid to diagnosis, since non-homogeneity of the data
+over the estimation period can lead to numerical problems in nonlinear
+estimation, besides compromising the forecasting capacity of the
+resulting equation. For example, when this option is given with the
+command to estimate the ``\texttt{betan}'' model shown in
+Listing~\ref{ghysels-out}, the following result is appended to the
+standard output:
 %
 \begin{code}
 QLR test for structural break -
@@ -488,7 +472,7 @@ QLR test for structural break -
 \end{code}
 %
 Despite the strong evidence for a structural break, in this case the
-nonlinear estimator appears to converge successfully, but one might
+nonlinear estimator appears to converge successfully. But one might
 wonder if a shorter estimation period could provide better
 out-of-sample forecasts.
 
@@ -534,7 +518,6 @@ nls dy = b[1] + b[2]*dy1 + b[3]*mdx
   param_names "const dy(-1) HF_slope Almon1 Almon2"
 end nls
 \end{code}
-%$
 
 Listing~\ref{lst:manual-beta1} presents a more ambitious example: we
 use \texttt{GSSmin} (Golden Section minimizer) to estimate a MIDAS
@@ -546,7 +529,7 @@ calculating the Gauss--Newton regression for an ADL(1) MIDAS
 model, and it could be generalized further without much difficulty.
 
 \begin{script}[p]
-  \caption{Manual MIDAS: one-parameter beta specification}
+  \scriptcaption{Manual MIDAS: one-parameter beta specification}
   \label{lst:manual-beta1}
 \begin{scode}
 set verbose off
@@ -598,23 +581,27 @@ modprint bse "const dy(-1) HF_slope Beta1 Beta2"
 \end{scode}
 \end{script}
 
+\subsection{Plot of coefficients}
+
 At times, it may be useful to plot the ``gross'' coefficients on the
 lags of the high-frequency series in a MIDAS regression---that is, the
-normalized weights multiplied by the \texttt{HF\_slope}
-coefficient. After estimation of a MIDAS model in the gretl GUI this
-is available via the item \textsf{MIDAS coefficients} under the
-\textsf{Graphs} menu in the model window. It is also easily generated
-via script, since the \dollar{model} bundle that becomes available
-following the \texttt{midasreg} command contains a matrix,
-\texttt{midas\_coeffs}, holding these coefficients. So the following
-is sufficient to display the plot:
+normalized weights multiplied by the \texttt{HF\_slope} coefficient
+(the $\gamma$ in \ref{eq:MIDAS}). After estimation of a MIDAS model in
+the gretl GUI this is available via the item \textsf{MIDAS
+  coefficients} under the \textsf{Graphs} menu in the model window. It
+is also easily generated via script, since the \dollar{model} bundle
+that becomes available following the \texttt{midasreg} command
+contains a matrix, \texttt{midas\_coeffs}, holding these
+coefficients. So the following is sufficient to display the plot:
 %
 \begin{code}
 matrix m = $model.midas_coeffs
-gnuplot --matrix=m --with-lp --fit=none --output=display \
-  { set title "MIDAS coefficients"; set ylabel ''; }
+plot m
+   options with-lp fit=none
+   literal set title "MIDAS coefficients"
+   literal set ylabel ''
+end plot --output=display
 \end{code}
-% $
 
 Caveat: this feature is at present available only for models with a
 single MIDAS specification.

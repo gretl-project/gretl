@@ -64,6 +64,7 @@
 #endif
 
 #define GUI_DEBUG 0
+#define WIN32_DEBUG 0
 
 #if GUI_DEBUG
 # include "version.h"
@@ -216,6 +217,11 @@ static void varinfo_callback (void)
     varinfo_dialog(mdata->active_var);
 }
 
+static void tdisagg_callback (void)
+{
+    tdisagg_dialog(mdata->active_var);
+}
+
 static void prefs_dialog_callback (void)
 {
     preferences_dialog(0, NULL, mdata->main);
@@ -300,7 +306,7 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
 
 static void noalloc (void)
 {
-    fputs(I_("Out of memory!\n"), stderr);
+    fputs("Out of memory!\n", stderr);
     exit(EXIT_FAILURE);
 }
 
@@ -369,7 +375,7 @@ static void real_nls_init (void)
     char localedir[MAXSTR];
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
-    setlocale(LC_ALL, "");
+    record_win32_locale(setlocale(LC_ALL, ""));
     set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
@@ -692,16 +698,13 @@ static int have_data (void)
 
 int main (int argc, char **argv)
 {
-#ifdef G_OS_WIN32
-    char *callname = argv[0];
-#endif
     char auxname[MAXLEN];
     char filearg[MAXLEN];
     GError *opterr = NULL;
 
 #if defined(G_OS_WIN32)
     /* this must come before NLS initialization */
-    win32_set_gretldir(callname);
+    win32_set_gretldir();
 #elif defined(ALT_MAC_STARTUP)
     osx_setup_paths();
 #elif !defined(OS_OSX)
@@ -740,7 +743,11 @@ int main (int argc, char **argv)
 
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
+# if WIN32_DEBUG
+    gretl_win32_debug_init(1);
+# else
     gretl_win32_debug_init(optdebug);
+# endif
 #elif GTK_MAJOR_VERSION == 3
     quell_glib_spew();
 #endif
@@ -749,7 +756,7 @@ int main (int argc, char **argv)
     gretl_set_gui_mode();
 
 #ifdef G_OS_WIN32
-    gretl_win32_init(callname, optdebug);
+    gretl_win32_init(optdebug);
 #else
     gretl_config_init();
 #endif
@@ -785,6 +792,7 @@ int main (int argc, char **argv)
     set_show_activity_func(gui_show_activity);
     set_query_stop_func(gui_query_stop);
     set_gui_model_list_callback(get_or_send_gui_models);
+    gui_exec_callback_init(); /* see library.c */
 
     /* allocate dataset struct */
     dataset = datainfo_new();
@@ -1859,7 +1867,6 @@ GtkActionEntry main_entries[] = {
     { "FilterBW", NULL, N_("_Butterworth"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterPoly", NULL, N_("_Polynomial trend"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterFD", NULL, N_("_Fractional difference"), NULL, NULL, G_CALLBACK(filter_callback) },
-
 #ifdef HAVE_X12A
     { "X12A", NULL, N_("_X-12-ARIMA analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
 #endif
@@ -1867,6 +1874,7 @@ GtkActionEntry main_entries[] = {
     { "Tramo", NULL, N_("_TRAMO analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
 #endif
     { "Hurst", NULL, N_("_Hurst exponent"), NULL, NULL, G_CALLBACK(do_hurst) },
+    { "tdisagg", NULL, N_("Disaggregate..."), NULL, NULL, G_CALLBACK(tdisagg_callback) },
     { "EditAttrs", NULL, N_("_Edit attributes"), NULL, NULL, G_CALLBACK(varinfo_callback) },
     { "VSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "GENR", NULL, N_("Define _new variable..."), NULL, NULL, G_CALLBACK(gretl_callback) },

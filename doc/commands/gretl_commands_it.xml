@@ -216,7 +216,7 @@
 	che la rimozione della media o del trend lineare dalla
 	variabile che deve essere testata è fatta utilizzando la
 	procedura GLS suggerita da <cite key="ERS96">Elliott,
-	Rothenberg and Stock (1996)</cite>, la quale restituisce un
+	Rothenberg e Stock (1996)</cite>, la quale restituisce un
 	test di potenza superiore al test standard di
 	Dickey&ndash;Fuller.  Questa opzione non è compatibile con
 	<opt>nc</opt>,<opt>ctt</opt> o <opt>seasonals</opt>.
@@ -254,7 +254,7 @@
         all'indietro può essere selezionato usando il parametro
         opzionale e deve essere uno fra <lit>MAIC</lit>,
         <lit>MBIC</lit> o <lit>tstat</lit>.  I metodi MAIC e MBIC sono
-        descritti in <cite key="ng-perron01">Ng and Perron
+        descritti in <cite key="ng-perron01">Ng e Perron
         (2001)</cite>; l'ordine dei ritardi viene scelto in modo da
         ottimizzare rispettivamente una versione modificata del
         Criterio di Informazione di Akaike o del Criterio Bayesiano di
@@ -274,7 +274,7 @@
         ricavato applicando la seguente procedura di test
         "all'indietro", usando il criterio scelto tramite la tendina
         associata. I metodi AIC e BIC modificati sono descritti in
-        <cite key="ng-perron01">Ng and Perron (2001)</cite>; l'ordine
+        <cite key="ng-perron01">Ng e Perron (2001)</cite>; l'ordine
         dei ritardi viene scelto in modo da ottimizzare
         rispettivamente una versione modificata del Criterio di
         Informazione di Akaike o del Criterio Bayesiano di
@@ -309,7 +309,7 @@
         modello con costante o quello con costante e trend). L'effetto
         di questa opzione è di rimuovere la media o il trend della
         variabile da testare, usando la procedura GLS suggerita da
-        <cite key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>,
+        <cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>,
         che fornisce un test di potenza maggiore rispetto a
         quell'approccio standard di Dickey&ndash;Fuller. Questa
         opzione non è compatibile con le opzioni <opt>nc</opt>,
@@ -322,7 +322,7 @@
         usando la procedura GLS questi <emphasis>P</emphasis>-value
         non sono utilizzabili; vengono usati i valori critici
         contenuti nella Tabella 1 di <cite key="ERS96">Elliott,
-        Rothenberg and Stock (1996)</cite>.
+        Rothenberg e Stock (1996)</cite>.
       </para>
 
       <subhead context="cli">Dati panel</subhead>
@@ -496,10 +496,10 @@
       <para>
 	Attenzione: non è supportato il caso i nuovo dati inizino
 	prima e finiscano dopo quelli originali. Per aggiungere nuove
-	serie in tal caso bisogna usare l'opzione <opt>fixed-sample</opt>
-	option; ciò ha l'effetto di di sopprimere l'aggiunta di
-	osservazioni, e quindi restringere l'operazione all'aggiunta
-	di nuove serie.
+	serie in tal caso bisogna usare l'opzione
+	<opt>fixed-sample</opt>; ciò ha l'effetto di di sopprimere
+	l'aggiunta di osservazioni, e quindi restringere l'operazione
+	all'aggiunta di nuove serie.
       </para>
       <para>
 	Nel caso di aggiunta di dati a un dataset panel, c'è una
@@ -743,7 +743,7 @@
 	Esegue la stima di modelli panel dinamici (ossia, modelli
 	panel che includono uno o più ritardi della variabile
 	dipendente) usando il metodo GMM proposto da <cite
-	key="arellano-bond91">Arellano and Bond (1991)</cite>.  Vedi,
+	key="arellano-bond91">Arellano e Bond (1991)</cite>.  Vedi,
 	tuttavia, il comando <cmdref targ="dpanel"/> per una
 	alternativa più avanzata e più flessibile, che offre lo
 	stimatore GMM-SYS oltre al GMM-DIF.
@@ -1269,7 +1269,10 @@
       <para>
 	L'output comprende un test del rapporto di verosimiglianza
 	dell'ipotesi nulla che gli errori delle due equazioni siano
-	incorrelati fra loro.
+	incorrelati fra loro. Si noti che, se lo stimatore è inteso
+	come stimatore QMLE e quindi viene usata l'opzione
+	<opt>robust</opt>, il test potrebbe non essere valido, anche
+	asintoticamente.
       </para>
     </description>
   </command>
@@ -1888,202 +1891,6 @@
 
   </command>
 
-  <command name="coint2" section="Tests" label="Test di cointegrazione di Johansen">
-
-    <usage>
-      <arguments>
-        <argument>ordine</argument>
-        <argument>lista-y</argument>
-	<argblock optional="true" separated="true">
-	  <argument>lista-x</argument>
-	</argblock>
-	<argblock optional="true" separated="true">
-	  <argument>lista-rx</argument>
-	</argblock>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--nc</flag>
-	  <effect>senza costante</effect>
-        </option>
-        <option>
-	  <flag>--rc</flag>
-	  <effect>costante vincolata</effect>
-        </option>
-        <option>
-	  <flag>--uc</flag>
-	  <effect>costante non vincolata</effect>
-        </option>
-        <option>
-	  <flag>--crt</flag>
-	  <effect>costante e trend vincolato</effect>
-        </option>
-        <option>
-	  <flag>--ct</flag>
-	  <effect>costante e trend non vincolato</effect>
-        </option>
-        <option>
-	  <flag>--seasonals</flag>
-	  <effect>include dummy stagionali centrate</effect>
-        </option>
-        <option>
-	  <flag>--asy</flag>
-	  <effect>registra i p-value asintotici</effect>
-        </option>
-        <option>
-	  <flag>--silent</flag>
-	  <effect>non mostra nulla</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>mostra solo i test</effect>
-        </option>
-        <option>
-	  <flag>--verbose</flag>
-	  <effect>mostra i dettagli delle regressioni ausiliarie</effect>
-        </option>
-      </options>
-      <examples>
-        <example>coint2 2 y x</example>
-	<example>coint2 4 y x1 x2 --verbose</example>
-	<example>coint2 3 y x1 x2 --rc</example>
-	<demos>
-	  <demo>hamilton.inp</demo>
-	  <demo>denmark.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-        Esegue il test di Johansen per la cointegrazione tra le
-        variabili della <repl>lista-y</repl> per l'ordine specificato
-        di ritardi. Per dettagli, si veda <guideref targ="chap:vecm"/>
-        oppure <cite key="hamilton94">Hamilton (1994)</cite>, capitolo
-        20. I valori critici sono calcolati con l'approssimazione
-        gamma di J. Doornik <cite key="doornik98" p="true">(Doornik,
-        1998)</cite>. Per il test traccia, vengono formiti due set di
-        valori critici: asintotici e aggiustati per l'ampiezza
-        campionaria.  Di default, l'accessore <fncref targ="$pvalue"/>
-        riporta la variante aggiustata, ma i valori asintotici possono
-        essere ottenuti usando l'opzione <opt>asy</opt>.
-      </para>
-      <para context="gui">
-        Esegue il test di Johansen per la cointegrazione tra le variabili
-        elencate per l'ordine specificato di ritardi. I valori critici
-        sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
-        1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
-        Series Analysis</book> (1994), Cap. 20. Per il test traccia,
-        vengono formiti due set di valori critici: asintotici e
-        aggiustati per l'ampiezza campionaria.
-      </para>
-      <para context="cli">
-	L'inclusione di trend deterministici nel modello è controllata dalle
-        opzioni del comando. Se non si indica alcuna opzione, viene inclusa una
-	<quote>costante non vincolata</quote>, che permette la presenza di
-        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
-        trend nei livelli delle variabili endogene. Nella letteratura originata
-        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
-        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
-        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
-        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-        casi e i criteri per scegliere tra di essi sono spiegati nella
-	<guideref targ="chap:vecm"/>.
-      </para>
-      <para context="gui">
-	L'inclusione di termini deterministici nel modello è controllata dai
-        pulsanti delle opzioni. L'opzione predefinita è di includere una
-	<quote>costante non vincolata</quote>, che permette la presenza di
-        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
-        trend nei livelli delle variabili endogene. Nella letteratura originata
-        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
-        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
-        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
-        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-        casi e i criteri per scegliere tra di essi sono spiegati nella
-	<guideref targ="chap:vecm"/>.
-      </para>
-      <para context="cli">
-	Le liste opzionali <repl>lista-x</repl> e
-	<repl>lista-rx</repl> permettono di controllare per specifiche
-	variabili esogene che entrano nel sistema in modo non
-	vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
-	cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
-	separate tra di loro e dalla <repl>lista-y</repl> usando il
-	carattere punto e virgola.
-      </para>
-      <para context="gui">
-	È possibile controllare per le variabili esogene aggiungendole
-	nel campo inferiore. Per impostazione predefinita, le
-	variabili vengono aggiunte al modello in forma non vincolata
-	(indicata da una lettera <lit>U</lit> vicino al nome della
-	variabile). Se si vuole che una certa variabile esogena sia
-	vincolata allo spazio di cointegrazione, basta fare clic col
-	tasto destro e selezionare <quote>Vincolata</quote> dal menu
-	pop-up. Il simbolo vicino alla variabile diventerà una V.
-      </para>
-      <para context="cli">
-        L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
-        delle altre opzioni, specifica l'inclusione di un gruppo di variabili
-        dummy stagionali centrate. Questa opzione è disponibile solo per dati
-        trimestrali o mensili.
-      </para>
-      <para context="gui">
-	Se i dati sono trimestrali o mensili, è presente anche una casella che
-        permette di includere un gruppo di variabili dummy stagionali centrate.
-	In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
-        vedere il risultato delle regressioni ausiliarie che sono il punto di
-        partenza per la procedura di stima di massima verosimiglianza di
-        Johansen.
-      </para>
-      <para context="notex">
-	La tabella seguente fornisce un esempio di interpretazione dei
-	risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
-        l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
-        il numero delle relazioni di cointegrazione.
-      </para>
-      <code context="notex">
-                 Rango    Test traccia       Test Lmax
-                          H0     H1          H0     H1
-                 ---------------------------------------
-                  0      c = 0  c = 3       c = 0  c = 1
-                  1      c = 1  c = 3       c = 1  c = 2
-                  2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------
-      </code>
-
-      <para context="tex">
-	La tabella seguente fornisce un esempio di interpretazione dei
-	risultati del test nel caso di 3 variabili. $H_0$ denota
-        l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
-        il numero delle relazioni di cointegrazione.
-
-	\begin{center}
-	\begin{tabular}{cllll}
-	&amp; \multicolumn{2}{c}{Test traccia} &amp;
-	   \multicolumn{2}{c}{Test $\lambda$-max} \\
-	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
-	       \multicolumn{1}{c}{$H_1$} &amp; 
-	       \multicolumn{1}{c}{$H_0$} &amp; 
-	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
- 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
-	\end{tabular}
-	\end{center}
-      </para>      
- 
-      <para>
-	Si veda anche il comando <cmdref targ="vecm"/>.
-      </para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/Serie storiche/Test di cointegrazione/Johansen</menu-path>
-    </gui-access>
-
-  </command>
 
   <command name="compact" section="Dataset" context="gui"
     label="Compattamento dei dati">
@@ -2759,7 +2566,7 @@
         <example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
         <example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2818,14 +2625,9 @@
       <para>
 	<lit>expand</lit>: Questo comando è disponibile solo per serie
 	storiche annuali o trimestrali. I dati annuali vengono espansi
-	a trimestrali, quelli trimestrali a mensili. Per default,
-	tutte le serie nel dataset verranno espanse assegnando alle
-	nuove osservazioni i valori del periodo corrispondente nel
-	vecchio dataset, ma con il modificatore <lit>interp</lit> le
-	serie vengono espanse usando l'interpolazione di
-	Chow&ndash;Lin (si veda <cite key="chowlin71">Chow e Lin,
-	1971</cite>): i regressori sono una costante ed un trend quadratico;
-	il disturbo è assunto AR(1).
+	a trimestrali, quelli trimestrali a mensili. Tutte le serie
+	nel dataset verranno espanse ripetendo il valore a bassa
+	frequenza.
       </para>
       <para>
 	<lit>transpose</lit>: non richiede parametri aggiuntivi. Traspone il
@@ -3986,16 +3788,6 @@
     label="Espansione dei dati">
 
     <description>
-
-      <para>
-	Se si vuole aggiungere a un dataset una serie di frequenza
-	inferiore, è necessario <quote>espandere</quote> la nuova
-	serie. Ad esempio, una serie trimestrale dovrà essere espansa
-	per essere aggiunta a un dataset mensile. Altre volte
-	occorrerà espandere un intero dataset a una frequenza
-	superiore prima di aggiungervi una serie che ha una frequenza
-	superiore.
-      </para>
       <para>
         L'operazione di espansione dei dati è riservata gli utenti
         <quote>esperti</quote>: occorre sapere bene cosa si sta
@@ -4005,30 +3797,22 @@
         frequenza
       </para>
       <para>
-	Ciò premesso, gretl offre due opzioni: valori ad alta
-	frequenza possono essere espansi usando il metodo di <cite
-	key="chowlin71">Chow e Lin (1971)</cite> oppure per valori di
-	dati a frequenza più bassa si procede ripetendo per il
-	numero necessario di volte.
+	Ciò premesso, gretl può espandere una serie ripetendo il
+	valore a bassa frequuenza per il numero necessario di
+	volte. Si consideri la conversione da trimestrale a mensile fa
+	sì che il valore del trimestre venga ripetuto in tutti e tre i
+	mesi. È improbabile che la seri risultante sia di una qualche
+	utilità, ma dopo l'espansione si può usare la funzione <fncref
+	targ="tdisagg"/> per produrre una versione dei dati interpolata
+	o distribuita.
       </para>
       <para>
-	Il metodo di Chow&ndash;Lin è basato su una regressione avente
-	una costante, trend quadratico ed assumendo che il disturbo è
-	assunto AR(1). Questa procedura richiede 4 gradi di libertà.
+	Alcune funzionalità di <lit>tdisagg</lit> sono accessibili
+	attraverso l'interfaccia grafica: basta selezionare la serie
+	candidata nella finestra principale e scegliere la voce
+	<quote>Disaggregazione</quote> sotto il menu
+	<quote>Variabile</quote>.
       </para>
-      <para>
-	Per quanto riguarda il metodo della ripetizione del dato,
-	invece, diamo un esempio. Se si ha una serie trimestrale con
-	il valore 35.5 per l'osservazione 1990:1 (il primo trimestre
-	del 1990), espandendo la serie, il valore 35.5 verrà assegnato
-	alle osservazioni per gennaio, febbraio e marzo del 1990. La
-	variabile espansa non potrà quindi essere utilizzata per
-	analisi temporali "a grana fine", tranne nel caso si abbia
-	ragione di ritenere che la variabile in questione rimanga
-	costante nei vari sotto-periodi.
-      </para>
-
-
     </description>
   </command>
 
@@ -4427,7 +4211,7 @@
 	sia zero. Di default viene utilizzato lo stimatore locale di 
 	Whittle <cite key="robinson95" p="true">(Robinson,
 	1995)</cite>, ma se si indica l'opzione <opt>gph</opt> il comando 
-	usa il test GPH <cite key="GPH83" p="true">(Geweke and
+	usa il test GPH <cite key="GPH83" p="true">(Geweke e
 	Porter-Hudak, 1983)</cite>. L'opzione 
 	<opt>all</opt> permette di ottenere i risultati di 
 	entrambi i test.
@@ -6754,13 +6538,210 @@
 	una variabile selezionata.
       </para>
       <para>
-	In riferimento alla scala delle risposte di impulso,: lo
+	In riferimento alla scala delle risposte di impulso: lo
 	<quote>shock</quote> è porporzionato alla deviazione standard
 	delle innovazioni stimate nella variabile sorgente, e la
 	risposta è data in qualunque sia l'unità di misura
 	<quote>naturale</quote> della variabile obiettivo.
       </para>
     </description>
+
+  </command>
+
+  <command name="johansen" section="Tests" label="Test di cointegrazione di Johansen">
+
+    <usage>
+      <arguments>
+        <argument>ordine</argument>
+        <argument>lista-y</argument>
+	<argblock optional="true" separated="true">
+	  <argument>lista-x</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>lista-rx</argument>
+	</argblock>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>senza costante</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>costante vincolata</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>costante non vincolata</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>costante e trend vincolato</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>costante e trend non vincolato</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include dummy stagionali centrate</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>registra i p-value asintotici</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>non mostra nulla</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>mostra solo i test</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle regressioni ausiliarie</effect>
+        </option>
+      </options>
+      <examples>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Esegue il test di Johansen per la cointegrazione tra le
+        variabili della <repl>lista-y</repl> per l'ordine specificato
+        di ritardi. Per dettagli, si veda <guideref targ="chap:vecm"/>
+        oppure <cite key="hamilton94">Hamilton (1994)</cite>, capitolo
+        20. I valori critici sono calcolati con l'approssimazione
+        gamma di J. Doornik <cite key="doornik98" p="true">(Doornik,
+        1998)</cite>. Per il test traccia, vengono formiti due set di
+        valori critici: asintotici e aggiustati per l'ampiezza
+        campionaria.  Di default, l'accessore <fncref targ="$pvalue"/>
+        riporta la variante aggiustata, ma i valori asintotici possono
+        essere ottenuti usando l'opzione <opt>asy</opt>.
+      </para>
+      <para context="gui">
+        Esegue il test di Johansen per la cointegrazione tra le variabili
+        elencate per l'ordine specificato di ritardi. I valori critici
+        sono calcolati con l'approssimazione gamma di J. Doornik (Doornik,
+        1998). Per i dettagli su questo test, si veda Hamilton, <book>Time
+        Series Analysis</book> (1994), Cap. 20. Per il test traccia,
+        vengono formiti due set di valori critici: asintotici e
+        aggiustati per l'ampiezza campionaria.
+      </para>
+      <para context="cli">
+	L'inclusione di trend deterministici nel modello è controllata dalle
+        opzioni del comando. Se non si indica alcuna opzione, viene inclusa una
+	<quote>costante non vincolata</quote>, che permette la presenza di
+        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
+        trend nei livelli delle variabili endogene. Nella letteratura originata
+        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
+        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
+        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
+        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+        casi e i criteri per scegliere tra di essi sono spiegati nella
+	<guideref targ="chap:vecm"/>.
+      </para>
+      <para context="gui">
+	L'inclusione di termini deterministici nel modello è controllata dai
+        pulsanti delle opzioni. L'opzione predefinita è di includere una
+	<quote>costante non vincolata</quote>, che permette la presenza di
+        un'intercetta diversa da zero nelle relazioni di cointegrazione e di un
+        trend nei livelli delle variabili endogene. Nella letteratura originata
+        dal lavoro di Johansen (si veda ad esempio il suo libro del 1995),
+        si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
+        quattro opzioni mostrate sopra, che sono mutualmente esclusive,
+        producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+        casi e i criteri per scegliere tra di essi sono spiegati nella
+	<guideref targ="chap:vecm"/>.
+      </para>
+      <para context="cli">
+	Le liste opzionali <repl>lista-x</repl> e
+	<repl>lista-rx</repl> permettono di controllare per specifiche
+	variabili esogene che entrano nel sistema in modo non
+	vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
+	cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
+	separate tra di loro e dalla <repl>lista-y</repl> usando il
+	carattere punto e virgola.
+      </para>
+      <para context="gui">
+	È possibile controllare per le variabili esogene aggiungendole
+	nel campo inferiore. Per impostazione predefinita, le
+	variabili vengono aggiunte al modello in forma non vincolata
+	(indicata da una lettera <lit>U</lit> vicino al nome della
+	variabile). Se si vuole che una certa variabile esogena sia
+	vincolata allo spazio di cointegrazione, basta fare clic col
+	tasto destro e selezionare <quote>Vincolata</quote> dal menu
+	pop-up. Il simbolo vicino alla variabile diventerà una V.
+      </para>
+      <para context="cli">
+        L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
+        delle altre opzioni, specifica l'inclusione di un gruppo di variabili
+        dummy stagionali centrate. Questa opzione è disponibile solo per dati
+        trimestrali o mensili.
+      </para>
+      <para context="gui">
+	Se i dati sono trimestrali o mensili, è presente anche una casella che
+        permette di includere un gruppo di variabili dummy stagionali centrate.
+	In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
+        vedere il risultato delle regressioni ausiliarie che sono il punto di
+        partenza per la procedura di stima di massima verosimiglianza di
+        Johansen.
+      </para>
+      <para context="notex">
+	La tabella seguente fornisce un esempio di interpretazione dei
+	risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
+        l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
+        il numero delle relazioni di cointegrazione.
+      </para>
+      <code context="notex">
+                 Rango    Test traccia       Test Lmax
+                          H0     H1          H0     H1
+                 ---------------------------------------
+                  0      c = 0  c = 3       c = 0  c = 1
+                  1      c = 1  c = 3       c = 1  c = 2
+                  2      c = 2  c = 3       c = 2  c = 3
+                 ---------------------------------------
+      </code>
+
+      <para context="tex">
+	La tabella seguente fornisce un esempio di interpretazione dei
+	risultati del test nel caso di 3 variabili. $H_0$ denota
+        l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
+        il numero delle relazioni di cointegrazione.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Test traccia} &amp;
+	   \multicolumn{2}{c}{Test $\lambda$-max} \\
+	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} &amp; 
+	       \multicolumn{1}{c}{$H_0$} &amp; 
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3 
+	\end{tabular}
+	\end{center}
+      </para>      
+ 
+      <para>
+	Si veda anche il comando <cmdref targ="vecm"/>.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Serie storiche/Test di cointegrazione/Johansen</menu-path>
+    </gui-access>
 
   </command>
 
@@ -9101,7 +9082,7 @@
 	termine di errore; test dei moltiplicatori di Lagrange per la
 	non-linearità (logaritmi o quadrati); test di White (con o
 	senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
-	l'eteroschedasticità (<cite key="breusch-pagan79">Breusch and
+	l'eteroschedasticità (<cite key="breusch-pagan79">Breusch e
 	Pagan, 1979</cite>), test LMF per la correlazione seriale (si
 	veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
 	test per il modello ARCH (Autoregressive Conditional
@@ -9642,23 +9623,22 @@
 
     <description>
       <para>
-	     Crea un dataset <quote>vuoto</quote>, che contiene solo
-	     una costante e una variabile indice, con periodicità 1 e
-	     il numero indicato di osservazioni. Ad esempio, è
-	     possibile creare un dataset a scopo di simulazione usando
-	     alcuni comandi come <cmd>uniform()</cmd> e
-	     <cmd>normal()</cmd>) i quali genereranno serie di dati ex
-	     nihilo che dovranno poi venir riempiti con dati. Questo
-	     comando può risultare particolarmente comodo se
-	     utilizzato assieme a <cmd>loop</cmd>.  Si veda anche
-	     l'opzione <quote>seed</quote> del comando <cmdref
-	     targ="set"/>.
+	Crea un dataset <quote>vuoto</quote>, che contiene solo una
+	costante e una variabile indice, con periodicità 1 e il numero
+	indicato di osservazioni. Ad esempio, è possibile creare un
+	dataset a scopo di simulazione usando alcuni comandi come
+	<cmd>uniform()</cmd> e <cmd>normal()</cmd>) i quali
+	genereranno serie di dati ex nihilo che dovranno poi venir
+	riempiti con dati. Questo comando può risultare
+	particolarmente comodo se utilizzato assieme a
+	<cmd>loop</cmd>.  Si veda anche l'opzione <quote>seed</quote>
+	del comando <cmdref targ="set"/>.
       </para>
       <para>
-	     Per impostazione predefinita, questo comando cancella tutti i dati
-        presenti nell'ambiente di lavoro di gretl. Usando l'opzione
-        <opt>preserve</opt>, verranno mantenute tutte le matrici attualmente
-        definite.
+	Per impostazione predefinita, questo comando cancella tutti i
+	dati presenti nell'ambiente di lavoro di gretl. Usando
+	l'opzione <opt>preserve</opt>, verranno mantenute tutte le
+	matrici attualmente definite.
       </para>
     </description>
 
@@ -10000,6 +9980,11 @@
 	  <effect>mantieni in memoria le variabili non-serie</effect>
 	</option>
 	<option>
+	  <flag>--select</flag>
+	  <optparm>selezione</optparm>
+	  <effect>leggi solo le serie specificate, vedi sotto</effect>
+	</option>
+	<option>
 	  <flag>--frompkg</flag>
 	  <optparm>pkgname</optparm>
 	  <effect>vedi sotto</effect>
@@ -10023,10 +10008,19 @@
 
     <description>
       <para>
-        Apre un file di dati. Se è già stato aperto un file di dati,
-        esso viene sostituito da quello selezionato. Per aggiungere
+        Apre un file di dati o un database (vedi <guideref
+	targ="chap:datafiles"/> per una spiegazione sulla differenza
+	fra le due possibilità). L'effetto del comando è abbastanza
+	diverso nei due casi: quando si apre un file di dati, il suo
+	contenuto viene letto in memoria, sostituendo i dati
+	eventualmente già presenti. Per aggiungere
 	dati al dataset aperto, vedi <cmdref targ="append"/> o, per
-	maggiore flessibilità, <cmdref targ="join"/>.
+	maggiore flessibilità, <cmdref targ="join"/>. Se invece viene
+	aperto un database, nessun dato viene letto immediatamente. Il
+	comando si limita a impostare la fonte per i susseguenti
+	comandi <cmdref targ="data"/>, usati per effettuare
+	l'importazione vera e propria. Si veda <quote>Apertura di un
+	database</quote> più sotto.
       </para>
       <para>
 	Se non si specifica un percorso completo, il programma
@@ -10037,7 +10031,7 @@
 	di un file di dati standard, con estensione <lit>.gdt</lit>. A
 	seconda del nome del file e di alcune sue caratteristiche,
 	gretl cerca di indovinare il formato dei dati (standard, testo
-	semplice, CSV, MS Excel, Stata, ecc).
+	semplice, CSV, MS Excel, Stata, SPSS, ecc.).
       </para>
       <para>
 	Usando l'opzione <opt>frompkg</opt>, <program>gretl</program>
@@ -10046,8 +10040,9 @@
       </para>
       <para>
 	Se l'argomento <repl>nome-file</repl> è un URI che inizia con
-	<lit>http://</lit>, allora <program>gretl</program> cercherà
-	di scaricare il file dalla rete prima di aprirlo.
+	<lit>http://</lit> o <lit>https://</lit>, allora
+	<program>gretl</program> cercherà di scaricare il file dalla
+	rete prima di aprirlo.
       </para>
       <para>
 	Come impostazione predefinita, l'apertura di un nuovo file di
@@ -10056,17 +10051,6 @@
 	si vuole preservare tali variabili (con l'eccezione delle
 	serie, che sono necessariamente eliminate), va usata l'opzione
 	<opt>preserve</opt>.
-      </para>
-      <subhead context="cli">Apertura di un database</subhead>
-      <para>
-	Questo comando può essere usato anche per aprire un database
-	(gretl, RATS 4.0 o PcGive) per la lettura. In questo caso,
-	dev'essere seguito dal comando <cmdref targ="data"/> per
-	estrarre una particolare serie dal database.  Se si usa
-	l'opzione <lit>www</lit>, il programma cercherà di accedere al
-	database specificato sul server di gretl &mdash; ad esempio il
-	database "Federal Reserve interest rates" nel terzo degli
-	esempi visti sopra.
       </para>
       <subhead context="cli">Fogli elettronici</subhead>
       <para>
@@ -10077,7 +10061,7 @@
 	all'interno del file, indicando il suo numero con la sintassi
 	<opt>sheet=2</opt>, oppure indicando il suo nome tra
 	virgolette doppie, usando la sintassi
-	<opt>--sheet="MacroData"</opt>.  L'impostazione predefinita
+	<opt>sheet="MacroData"</opt>.  L'impostazione predefinita
 	consiste nel leggere il primo foglio di lavoro del file. È
 	anche possibile specificare la riga/colonna da cui iniziare a
 	leggere, usando la sintassi
@@ -10142,6 +10126,49 @@
 	contiene una legenda sull'associazione fra le stringhe ed i
 	valori numerici corrispondenti. Per far sì che ciò non accada,
 	si usi l'opzione <opt>quiet</opt>.
+      </para>
+      <subhead context="cli">Apertura di una selezione</subhead>
+      <para>
+	In generale, l'uso di <lit>open</lit> con un file di dati (al
+	contrario di ciò che accade con un database) implica la
+	lettura di tutte le serie che esso contiene. Tuttavia, per
+	dati in formato gretl nativo (<lit>gdt</lit> e
+	<lit>gdtb</lit>) è possibile indicare un sottinsieme delle
+	serie da leggere. L'opzione da usare a questo scopo è
+	<opt>select</opt>, che richiede un argomento. Quest'ultimo può
+	prendere tre forme: il nome di una serie singola, una lista di
+	nomi, comppresa fra virgolette doppie e separati da spazi, o
+	un array di stringhe preesistente. Ad esempio:
+      </para>
+      <code>
+	# serie singola
+	open somefile.gdt --select=x1
+	# più serie
+	open somefile.gdt --select="x1 x5 x27"
+	# metodo alternativo
+	strings Sel = defarray("x1", "x5", "x27")
+	open somefile.gdt --select=Sel
+	</code>
+      <subhead context="cli">Apertura di un database</subhead>
+      <para>
+	Come si diceva sopra, questo comando può essere usato anche
+	per aprire un database (gretl, RATS 4.0 o PcGive) per la
+	lettura. In questo caso, dev'essere seguito dal comando
+	<cmdref targ="data"/> per estrarre una particolare serie dal
+	database.
+      </para>
+      <para>
+	Sono ammessi anche altri casi: in primo luogo, se si usa
+	l'opzione <lit>www</lit>, il programma cercherà di accedere al
+	database specificato sul server di gretl &mdash; ad esempio il
+	database "Federal Reserve interest rates" nel terzo degli
+	esempi visti sopra. Un altra possibilità è quella di usare il
+	comando nella forma <quote><lit>open dbnomics</lit></quote>,
+	che userà DB.NOMICS come fonte dei dati; su questo argomento,
+	vedi <mnu targ="gretlDBN">dbnomics per gretl</mnu>.  Infine,
+	se viene date l'opzione <opt>odbc</opt> gretl prenderà i dati
+	da un database ODBC. Per spiegazioni dettagliate, si veda
+	<guideref targ="chap:odbc"/>.
       </para>
     </description>
 
@@ -11995,10 +12022,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         Senza l'opzione <opt>intervals</opt>, vengono mostrati gli errori
         standard per le stime quantili; per impostazione predefinita
         questi sono calcolati con la formula asintotica di
-        <cite key="koenker-bassett78">Koenker and Bassett (1978)</cite>, ma
+        <cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>, ma
         se si usa l'opzione <opt>robust</opt>, verrà usata la variante robusta
         per l'eteroschedasticità utilizzando il metodo di <cite key="koenker-zhao94">Koenker
-        and Zhao (1994)</cite>.
+        e Zhao (1994)</cite>.
       </para>
       <para>
         Se si usa l'opzione <opt>intervals</opt>, gretl calcolerà gli
@@ -12927,14 +12954,14 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	Highlighting style).
       </para>
       <para>
-	<emphasis>Smart Tab and Enter</emphasis>: If
-	this is turned on, then when you press the <lit>Tab</lit> key
-	at the start of a line in a hansl script, instead of just
-	entering a tab stop the program will try to adjust the
-	indentation level of the line consistently with other lines
-	that have been entered. Simlarly, when you press the
-	<lit>Enter</lit> key the program will try to ensure that the
-	indentation of the completed line is correct.
+	<emphasis>Tab e Invio intelligenti</emphasis>: Se questo
+	settaggio è abilitato, premere il tasto <lit>Tab</lit>
+	all'inizio della linea in uno script hansl farà sì che il
+	programma, anziché inserire una tabulazione, cercherà di
+	aggiustare il livello di indentazione rispetto alle alter
+	linee dello script. Nello stesso modo, premendo
+	<lit>Invio</lit> il programma cercherà di far si che
+	l'indentazione della linea sia corretta.
       </para>
       <para>
 	<emphasis>Mostra i numeri di linea</emphasis>: Mostra i numeri di
@@ -13088,8 +13115,8 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <para><lit>verbose</lit>: <lit>off</lit> oppure
 	  <lit>on</lit> (valore predefinito). Funziona come
 	  <quote>interruttore doppio</quote> per <lit>echo</lit> e
-	  <lit>messages</lit> (vedi sopra), ponenendoli ambedue accesi
-	  o spenti. 
+	  <lit>messages</lit> (vedi sopra), ponendoli ambedue accesi o
+	  spenti.
          </para>
 	</li>
 	<li>
@@ -13244,6 +13271,13 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <para><lit>huge</lit>: un numero grande positivo (di default,
 	  1.0E100). Questo settaggio controlla il valore ritornato
 	  dall'accessore <fncref targ="$huge"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (default),
+	  <lit>warn</lit> oppure <lit>stop</lit>. Controlla cosa
+	  succede se la funzione <fncref targ="assert"/> fallisce,
+	  ossia ritorna 0.
 	  </para>
 	</li>
       </ilist>
@@ -13402,6 +13436,15 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <para><lit>fdjac_quality</lit>: un intero fra 0 e 2,
 	  corrsipondente all'algoritmo usato nella funzione <fncref
 	  targ="fdjac"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>quantile_type</lit>: una stringa
+	  (<quote>Q6</quote>, <quote>Q7</quote> o <quote>Q8</quote>),
+	  corrispondente al metodo usato per calcolare i quantili
+	  campionari secondo la classificazione di <cite
+	  key="hyndman96">Hyndman e Fan (1996)</cite>. Il default è
+	  <quote>Q6</quote>.
 	  </para>
 	</li>
       </ilist>
@@ -13628,10 +13671,18 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
     <usage>
       <arguments>
         <argument>nome-variabile</argument>
-        <argument flag="-d ">descrizione</argument>
-        <argument flag="-n ">nome-grafici</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--description</flag>
+	  <optparm>stringa</optparm>
+	  <effect>imposta la descrizione</effect>
+	</option>
+	<option>
+	  <flag>--graph-name</flag>
+	  <optparm>stringa</optparm>
+	  <effect>imposta il nome per i grafici</effect>
+	</option>
 	<option>
 	  <flag>--discrete</flag>
 	  <effect>marca la variabile come discreta</effect>
@@ -13640,34 +13691,70 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <flag>--continuous</flag>
 	  <effect>marca la variabile come continua</effect>
 	</option>
+	<option>
+	  <flag>--coded</flag>
+	  <effect>mark come codifica</effect>
+	</option>
+	<option>
+	  <flag>--numeric</flag>
+	  <effect>marca come numerica</effect>
+	</option>
+	<option>
+	  <flag>--midas</flag>
+	  <effect>mark come componente di dati ad alta frequenza</effect>
+	</option>
       </options>
       <examples>
-        <example>setinfo x1 -d "Descrizione di x1" -n "Nome nei grafici"</example>
+        <example>setinfo x1 --description "Descrizione di x1"</example>
+        <example>setinfo y --graph-name="Nome nei grafici"</example>
 	<example>setinfo z --discrete</example>
       </examples>
     </usage>
 
     <description context="cli">
       <para>
-        Imposta fino a tre attributi di una variabile, nel modo seguente.
+	Se sono usate le opzioni <opt>description</opt> o <opt>graph-name</opt>
+	l'argomento deve essere una serie singola. Altrimenti, può
+	essere una lista, nel qual caso il comando opera su ognuna
+	delle variabile. Questo comando imposta fino a quattro
+	attributi, come segue.
       </para>
       <para>
-        Usando l'opzione <lit>-d</lit> seguita da una stringa tra
-        virgolette doppie, la stringa verrà usata come etichetta descrittiva per
-        la variabile indicata, che viene mostrata dal comando <cmdref
-        targ="labels"/> e anche nella finestra principale del programma.
+        Usando l'opzione <opt>description</opt> seguita da una stringa
+        tra virgolette doppie, la stringa verrà usata come etichetta
+        descrittiva per la variabile indicata, che viene mostrata dal
+        comando <cmdref targ="labels"/> e anche nella finestra
+        principale del programma.
       </para>
       <para>
-        Usando l'opzione <lit>-n</lit> seguita da una stringa tra
-        virgolette doppie, la stringa verrà usata nei grafici al posto del nome
-        della variabile.
+        Usando l'opzione <opt>graph-name</opt> seguita da una stringa
+        tra virgolette doppie, la stringa verrà usata nei grafici al
+        posto del nome della variabile.
       </para>
       <para>
         Usando una delle opzioni <opt>discrete</opt> o
-        <opt>continuous</opt>, viene impostato il carattere numerico della
-        variabile.  In modalità predefinita, tutte le variabili sono considerate come
-        continue; marcando una variabile come discreta, essa viene trattata in
-        modo speciale nei diagrammi di frequenza.
+        <opt>continuous</opt>, viene impostato il carattere numerico
+        della variabile.  In modalità predefinita, tutte le variabili
+        sono considerate come continue; marcando una variabile come
+        discreta, essa viene trattata in modo speciale in certi
+	comandi e funzioni, come ad esempio <cmdref targ="freq"/> o
+	<fncref targ="dummify"/> .
+      </para>
+      <para>
+	Se viene data una fra le opzioni <opt>coded</opt> o
+	<opt>numeric</opt>,lo stato della serie è impostato di
+	conseguenza. L'impostazione di default è di trattare tutti i
+	valori numerici come tali, per lo meno in un senso ordinale;
+	se una variabile viene impostata come <lit>coded</lit>, i
+	valori numerici sono considerati una codifica arbitraria di
+	qualche caratteristica qualitativa.
+      </para>
+      <para>
+	L'opzione <opt>midas</opt> imposta l'indicazione che una data
+	serie contiene dati a frequenza più alta di quella base del
+	dataset; per esempio, il dataset è trimestrale e la serie
+	contiene valori per il mese 1, 2 o 3 del trimestre. (MIDAS =
+	Mixed Data Sampling.)
       </para>
     </description>
 
@@ -13700,9 +13787,6 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       <para>* Marcare una variabile come discreta (per serie che contengono
         solo valori discreti). In questo modo, essa viene
         trattata in modo speciale nei diagrammi di frequenza.
-      </para>
-
-      <para>* Impostare il valore di una variabile (per variabili discrete).
       </para>
 
     </description>
@@ -14858,8 +14942,40 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
   </command>
 
+  <command name="tdisagg" section="Dataset" label="Disaggregazione temporale"
+	   context="gui">
+    <description>
+      <para>
+	Queste sono le opzioni disponibili nella finestra di dialogo
+	per la disaggregazione temporale
+      </para>
+      <ilist>
+       <li>
+	 <para>
+	   <lit>nome di output</lit> (se applicabile): Qui si sceglie
+	   se sovrascrivere una serie esistente con i dati
+	   disaggregati o crearne una nuova.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   <lit>tipo di aggregazione</lit>: Se si andasse nella
+	   direzione opposta, (aggregando anziché disaggregando) come
+	   sarebbe definita la serie a bassa frequenza? Somma, media,
+	   periodo iniziale o periodo finale? La disaggregazione
+	   dipende anche da questo.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   CONTINUA
+	 </para>
+       </li>
+      </ilist>
+    </description>
+  </command>
+    
   <command name="textplot" section="Graphs" label="Grafici ASCII" context="cli">
-
     <usage>
       <arguments>
         <argument>lista-variabili</argument>
@@ -15020,14 +15136,31 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </arguments>
       <options>
         <option>
+	  <flag>--no-tests</flag>
+	  <effect>omette i test diagnostici</effect>
+        </option>
+        <option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampare i risultati</effect>
+        </option>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>omette la correzione per gradi di libertà</effect>
         </option>
 	<option>
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>
  	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>standard error clusterizzati</effect>
+        </option>
+	<option>
  	  <flag>--liml</flag>
  	  <effect>usa massima verosimiglianza a informazione limitata</effect>
          </option>
@@ -15062,12 +15195,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </para>
 
       <para context="gui">
-	Questo comando richiede la scelta di due liste di variabili; le
-        variabili indipendenti che appaiono nel modello e un elenco di
-        strumenti. Questi ultimi comprendono le variabili esogene e/o
-        altre variabili predeterminate che possono essere usate per
-        derivare valori stimati dei regressori endogeni. Si noti che eventuali
-        regressori esogeni devono essere inclusi in entrambe le liste.
+	Questo comando richiede la scelta di due liste di variabili;
+	le variabili indipendenti che appaiono nel modello e un elenco
+	di strumenti. Si noti che eventuali regressori esogeni devono
+	essere inclusi in entrambe le liste.
       </para>
       
       <para>
@@ -15087,10 +15218,34 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	di entrambi i test.
       </para>
 
-      <para>
+       <para>
+	Per gli stimatori TSLS e LIML, viene mostrata una statistica
+	aggiuntiva se il modello è stimato senza l'opzione
+	<opt>robust</opt>, che riguarda la presenza di strumenti
+	deboli. Con sttrumenti deboli, possono esserci seri problemi
+	inferenziali: stime distorte e/o livelli di significatività
+	sbagliati per le statistiche test basate sulla matrice di
+	covarianze, con tassi ti rifiuto ben più grandi del livello di
+	significatività nominale <cite key="stock-wright-yogo02"
+	p="true">(Stock, Wright and Yogo, 2002)</cite>.  La statistica
+	è la <math>F</math> di primo stadio se il modello contiene un
+	solo regressore endogeno, o il più piccolo autovalore della
+	matrice corrispondente in caso contrario. Quando disponibili,
+	sono mostrati i valori critici derivati dall'analisi di Monte
+	Carlo contenuta in <cite key="stock-yogo03">Stock e Yogo
+	(2003)</cite>.
+      </para>
+
+     <para>
 	Il valore R-quadro mostrato i modelli stimati con i minimi quadrati a
         due stadi è il quadrato della correlazione tra la variabile dipendente
         e i valori stimati.
+      </para>
+
+      <para context="cli">
+	Per dettagli sull'effetto delle opzioni <opt>robust</opt> e
+	<opt>cluster</opt> si veda la documentazione per il comando
+	<cmdref targ="ols"/>.
       </para>
 
       <para context="cli">
@@ -15164,12 +15319,20 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <effect>errori standard robusti</effect>
         </option>
         <option>
+	  <flag>--quiet</flag>
+	  <effect>omette l'output delle singole equazioni</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
+        <option>
 	  <flag>--impulse-responses</flag>
-	  <effect>mostra impulso-risposta</effect>
+	  <effect>mostra le risposte di impulse</effect>
         </option>
         <option>
 	  <flag>--variance-decomp</flag>
-	  <effect>mostra decomposizioni della varianza della previsione</effect>
+	  <effect>mostra scomposizioni della varianza</effect>
         </option>
         <option>
 	  <flag>--lagselect</flag>
@@ -15180,6 +15343,9 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         <example>var 4 x1 x2 x3 ; time mydum</example>
 	<example>var 4 x1 x2 x3 --seasonals</example>
 	<example>var 12 x1 x2 x3 --lagselect</example>
+	<demos>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -15190,23 +15356,20 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
       <ilist context="gui">
 	<li><para context="gui">- L'ordine di ritardi, ossia il numero
-        di ritardi di ogni variabile presente nel sistema;</para>
+            di ritardi di ogni variabile presente nel sistema;</para>
 	</li>
-
-        <li><para context="gui">- Eventuali termini esogeni
-        (ma si noti che una costante viene inclusa automaticamente, a meno che
-        non si richieda altrimenti; inoltre è possibile includere variabili
-        dummy stagionali con l'apposita casella); e
+        <li><para context="gui">- Eventuali termini esogeni (ma si
+            noti che una costante viene inclusa automaticamente, a meno
+            che non si richieda altrimenti; inoltre è possibile includere
+            variabili dummy stagionali con l'apposita casella); e
         </para>
 	</li>
-
 	<li><para context="gui">- Una lista di variabili esogene,
-        i cui ritardi saranno inclusi a destra delle equazioni (nota:
-        non includere variabili ritardate in questa lista, verranno
-        aggiunte automaticamente).</para>
+             i cui ritardi saranno inclusi a destra delle equazioni (nota:
+             non includere variabili ritardate in questa lista, verranno
+             aggiunte automaticamente).</para>
 	</li>
       </ilist>
-
       <para context="gui">Viene calcolata una regressione separata per
       ogni variabile del sistema; i risultati comprendono i test F per i
       vincoli di uguaglianza a zero su tutti i ritardi della variabili e
@@ -15234,7 +15397,7 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </para>
 
       <para context="cli">
-	Viene calcolata una regressione separata per ognuna delle
+	Viene stampata una regressione separata per ognuna delle
         variabili nella <repl>lista-variabili</repl>. Il risultato di
         ogni equazione include i test <math>F</math> per i vincoli
         di uguaglianza a zero su tutti i ritardi delle variabili, un
@@ -15251,8 +15414,11 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	La prima variabile nella lista viene considerata come la
 	<quote>più esogena</quote> all'interno del periodo. L'orizzonte
         per le decomposizioni della varianza e le funzioni di impulso-risposta
-        può essere impostato usando il comando <cmdref targ="set"/>.
-      </para> 
+        può essere impostato usando il comando <cmdref
+	targ="set"/>. Per salvare una specifica risposta di impulso
+	sotto forma di matrice, si veda la funzione <fncref targ="irf"/>.
+      </para>
+      
       <para context="cli">
         Se si usa l'opzione <opt>lagselect</opt>, il primo parametro
         del comando <lit>var</lit> viene interpretato come il massimo
@@ -15434,12 +15600,13 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
     <description>
       <para>
-	Un VECM è un tipo di autoregressione vettoriale, o VAR (si veda <cmdref
-	  targ="var"/>), applicabile quando le variabili del modello sono
-        individualmente integrate di ordine 1 (ossia, sono <quote>random walk</quote>
-        con o senza deriva), ma esibiscono cointegrazione. Questo comando è
-        strettamente connesso al test di Johansen per la cointegrazione (si veda
-	<cmdref targ="coint2"/>).
+	Un VECM è un tipo di autoregressione vettoriale, o VAR (si
+	veda <cmdref targ="var"/>), applicabile quando le variabili
+	del modello sono individualmente integrate di ordine 1 (ossia,
+	sono <quote>random walk</quote> con o senza deriva), ma
+	esibiscono cointegrazione. Questo comando è strettamente
+	connesso al test di Johansen per la cointegrazione (si veda
+	<cmdref targ="johansen"/>).
       </para>
       <para context="cli">
         Il parametro <repl>ordine</repl> rappresenta l'ordine di ritardo del
@@ -15578,12 +15745,12 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       <subhead>Matrice BKW</subhead>
       <para>
 	Questa tabella, basata sul lavoro di <cite
-	key="belsley-etal80">Belsley, Kuh and Welsch (1980)</cite>,
+	key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>,
 	presenta un'analisi più sofisticata del grado di collinearità
 	e delle sue cause per mezzo dell'analisi spettrale della
 	matrice <math>X'X</math>. Per una descrizione completa della
 	tavola BKW in riferimento a gretl, si veda <cite
-	key="adkins15">Adkins, Waters and Hill (2015)</cite>.
+	key="adkins15">Adkins, Waters e Hill (2015)</cite>.
       </para>
 
       <para>

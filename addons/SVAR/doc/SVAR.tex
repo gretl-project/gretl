@@ -2847,14 +2847,14 @@ int drawix[0])}
    The \texttt{drawix} argument can typically be omitted, see \texttt{GetShock}.
 \end{funcdoc}
 
-\begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
-   \noindent [Function name and usage subject to change.]
- Relating to a set identified (sign restricted) model, this function uses 
- all accepted draws to construct some summary measures needed for the 
- (standard) IRF plots, like horizon-by-horizon means and quantiles.
- Although it is by nature more like a private function, it is formally public to 
- enable certain kinds of unsupported hacks (see elsewhere).
-\end{funcdoc}
+% \begin{funcdoc}{IRF\_plotdata (bundles bs, scalar coveralpha[0.9])}
+%    \noindent [Function name and usage subject to change.]
+%  Relating to a set identified (sign restricted) model, this function uses 
+%  all accepted draws to construct some summary measures needed for the 
+%  (standard) IRF plots, like horizon-by-horizon means and quantiles.
+%  Although it is by nature more like a private function, it is formally public to 
+%  enable certain kinds of unsupported hacks (see elsewhere).
+% \end{funcdoc}
 
 \begin{funcdoc}{IRFsave (string outfilename, bundle *Smod, int snum, int vnum, 
 int keypos[0:2:1], int drawix[0])}
@@ -3106,29 +3106,37 @@ a warning will be printed.
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_spagplot (bundle Smod, string vname, string sname)}
- \noindent Relating to a set identified (sign restricted) model, does a "spaghetti" plot of the IRFs, 
- i.e. simply plotting the IRF of each accepted draw as a thin line. This complementary analysis
- avoids the criticism of aggregating horizon-per-horizon. 
- In order to work the data of the draws must have been stored inside the model bundle (which
- is the default).
+\begin{funcdoc}{SVAR\_spagplot (bundle Smod, string vname, string sname, 
+ string fname (optional))}
+ \noindent Relating to a set identified (sign restricted) model, does a 
+  ``spaghetti'' plot of the IRFs, i.e. simply plotting the IRF of each accepted
+  draw as a thin line. This complementary analysis avoids the criticism of 
+  aggregating horizon-per-horizon. 
+ In order to work the data of the draws must have been stored inside the model
+  bundle (which is the default).
+
+  The plot will be displayed in interactive mode unless a file name or path
+  location in the ``fname'' argument, in which case the file extension determines
+  the output graphics format produced by gnuplot.
  
  \noindent Arguments:
  \begin{enumerate}
   \item the model bundle (not pointerized, since nothing will be stored)
   \item the name of the target variable
   \item the name of the shock of interest
+  \item optional file name (inside the current workdir) or full path of the output file 
+   (default: display plot on screen)
  \end{enumerate}
-The plot will be displayed in interactive mode.
-(TODO: Allow directly saving the plot to a file.)
+
+
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_SRdraw (bundle *Smod, int rep, bool
     DO\_BAYES[0], scalar coveralpha[0.9],\\
     int maxiter[10000])}
   
-  \noindent Relating to a set identified (sign restricted) model, this function draws random 
-  rotations of the arbitrary baseline Cholesky model
+  \noindent Relating to a set identified (sign restricted) model, this function
+   draws random rotations of the arbitrary baseline Cholesky model
   until \texttt{rep} draws satisfying the sign restrictions have come up,
   or until the \texttt{maxiter} limit is hit. Therefore the number of good 
   draws can be anything between zero and \texttt{rep}.
@@ -3213,21 +3221,22 @@ The plot will be displayed in interactive mode.
 
 \begin{funcdoc}{SVAR\_SRirf (bundle Smod, strings whichvars [optional], \\
       strings whichshocks [optional], bool meanormed[0])}
-\noindent Relating to a set identified (sign restricted) model, does IRF plots based on all
-accepted draws. The empirical coverage level of the plotted confidence bands (or credible sets,
-if you like) must have been chosen previously at the stage of getting the draws (see 
-\texttt{SVAR\_SRdraw}).\footnote{%
-If you change your mind about the desired coverage level 
-but want to avoid re-running the computationally intensive drawing stage, the following hack 
-should work in theory: (1) Set the bundle element \texttt{Smod.SRcoveralpha} to the desired level.
-(2) Call the relevant helper function like this: 
-\texttt{ bundle newIrfdata = IRF\_plotdata(Smod.acc\_draws, Smod.SRcoveralpha)}. 
-(3) Copy over the following 
-elements from \texttt{newIrfdata} to \texttt{Smod} and observe the internally different names:
-\texttt{irfSRmeans $\rightarrow$ SRirfmeans, lo\_cb $\rightarrow$ SRlo\_cb,
-hi\_cb $\rightarrow$ SRhi\_cb, irfSRmeds $\rightarrow$ SRirfmeds.}
-This hack is not
-guaranteed to work in the future. (We should probably add a helper function to automate this.) }
+\noindent Relating to a set identified (sign restricted) model, does IRF plots
+ based on all accepted draws. The empirical coverage level of the plotted
+ confidence bands (or credible sets, if you like) must have been chosen
+ previously at the stage of getting the draws (see 
+ \texttt{SVAR\_SRdraw}, but also see \texttt{SVAR\_SRresetalpha}).% \footnote{%
+% If you change your mind about the desired coverage level 
+% but want to avoid re-running the computationally intensive drawing stage, the following hack 
+% should work in theory: (1) Set the bundle element \texttt{Smod.SRcoveralpha} to the desired level.
+% (2) Call the relevant helper function like this: 
+% \texttt{ bundle newIrfdata = IRF\_plotdata(Smod.acc\_draws, Smod.SRcoveralpha)}. 
+% (3) Copy over the following 
+% elements from \texttt{newIrfdata} to \texttt{Smod} and observe the internally different names:
+% \texttt{irfSRmeans $\rightarrow$ SRirfmeans, lo\_cb $\rightarrow$ SRlo\_cb,
+% hi\_cb $\rightarrow$ SRhi\_cb, irfSRmeds $\rightarrow$ SRirfmeds.}
+% This hack is not
+% guaranteed to work in the future. (We should probably add a helper function to automate this.) }
 
 \noindent Arguments:
 
@@ -3261,6 +3270,20 @@ int length[0], int ini[0])}
   trailing argument \texttt{ini} is omitted, then the restriction must hold up to horizon \texttt{length}.
   \end{funcdoc}
 
+\begin{funcdoc}{SVAR\_SRresetalpha (bundle *Smod, scalar alpha)}
+\noindent Relating to a set identified model, this function allows to redefine the 
+desired coverage level of the pointwise confidence intervals without having to 
+repeat the time-consuming model drawing stage. If necessary, this function would
+typically be called before \texttt{SVAR\_SRirf}. 
+
+\noindent Arguments:
+ 
+ \begin{enumerate}
+ \item model bundle in pointerized form
+ \item desired new coverage probability of IRF confidence intervals 
+\end{enumerate}
+
+\end{funcdoc}
 
 %---------------------------------------------------------------------------------------------------
 
@@ -3396,6 +3419,13 @@ int length[0], int ini[0])}
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 1.93, December 2020}
+\begin{itemize}
+\item Add helper function SVAR\_SRresetalpha. (Hide IRF\_plotdata as 
+ redundant because of that.)
+ \item Enable saving sign-restriction spaghetti plot to file.
+\end{itemize}
 
 \subsection*{Version 1.92, August/September 2020}
 \begin{itemize}

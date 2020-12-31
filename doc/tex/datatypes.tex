@@ -149,7 +149,6 @@ Such variables can be created and modified via the command-line in
 the gretl console or via script; there is no means of editing them
 via the gretl GUI.
 
-
 \section{Bundles}
 \label{sec:Bundles}
 
@@ -164,24 +163,31 @@ item placed in the bundle is associated with a key which can used to
 retrieve it subsequently. We begin by explaining the mechanics of
 bundles then offer some thoughts on what they are good for.
 
-To use a bundle you first either ``declare'' it, as in
-%
+There are three ways of creating a bundle:
+\begin{itemize}
+\item Just ``declare'' it, as in
 \begin{code}
 bundle foo
 \end{code}
-%
-or define an empty bundle using the \texttt{null} keyword:
-%
+\item or define an empty bundle using the \texttt{null} keyword:
 \begin{code}
 bundle foo = null
 \end{code}
-%
-These two formulations are basically equivalent, in that they both
+\item or use the \texttt{defbundle} function, which allows you to
+  populate a new bundle (or revise an existing one), as in
+\begin{code}
+bundle foo = defbundle("x", 13, "mat", I(3), "str", "some string")
+\end{code}
+\end{itemize}
+
+The first two formulations are basically equivalent, in that they both
 create an empty bundle. The difference is that the second variant may
 be reused---if a bundle named \texttt{foo} already exists the effect
 is to empty it---while the first may only be used once in a given
 gretl session; it is an error to attempt to declare a variable that
-already exists.
+already exists. For details on the \texttt{defbundle} function, see
+the \GCR\ or the \textsf{Function Reference} under \textsf{Help} in
+the GUI program.
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key. Two forms of syntax are
@@ -388,7 +394,7 @@ reference to the data that might ``go bad''. See
 chapter~\ref{chap:matrices} for more on this.
 
 \begin{script}[htbp]
-  \caption{Series and lists in bundles}
+  \scriptcaption{Series and lists in bundles}
   \label{bunlimits}
 \begin{scode}
 # Case 1: store and retrieve series, OK?

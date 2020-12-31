@@ -25,7 +25,7 @@
 
 typedef enum {
     GRETL_XML_DATA,       /* gretl XML data file (.gdt) */
-    GRETL_BINARY_DATA,    /* zip file with binary component (.gdtb) */
+    GRETL_BINARY_DATA,    /* gretl_binary data file (.gdtb) */
     GRETL_CSV,            /* comma-separated or other plain text data */
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
@@ -124,6 +124,9 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 int import_other (const char *fname, GretlFileType ftype,
 		  DATASET *dset, gretlopt opt, PRN *prn);
 
+int gretl_read_purebin (const char *fname, DATASET *dset,
+			gretlopt opt, PRN *prn);
+
 int add_obs_markers_from_file (DATASET *dset, const char *fname);
 
 int add_var_labels_from_file (DATASET *dset, const char *fname);
@@ -156,5 +159,9 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
 			      GretlFileType type);
 
 int analyse_daily_import (const DATASET *dset, PRN *prn);
+
+void set_dset_matrix_target (gretl_matrix **pm);
+
+void *get_dset_matrix_target (void);
 
 #endif /* DATAIO_H */

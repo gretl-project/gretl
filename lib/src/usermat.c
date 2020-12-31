@@ -951,16 +951,6 @@ int matrix_replace_submatrix (gretl_matrix *M,
     return err;
 }
 
-static void matrix_transcribe_dates (gretl_matrix *targ,
-				     const gretl_matrix *src)
-{
-    int mt1 = gretl_matrix_get_t1(src);
-    int mt2 = gretl_matrix_get_t2(src);
-
-    gretl_matrix_set_t1(targ, mt1);
-    gretl_matrix_set_t2(targ, mt2);
-}
-
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 				    matrix_subspec *spec,
 				    int prechecked,
@@ -1076,7 +1066,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     if (S != NULL) {
 	/* try transcribing metadata on @M if applicable */
 	if (S->rows == M->rows && gretl_matrix_is_dated(M)) {
-	    matrix_transcribe_dates(S, M);
+	    gretl_matrix_transcribe_obs_info(S, M);
 	}
 	if (S->cols == M->cols) {
 	    const char **cnames = gretl_matrix_get_colnames(M);
@@ -1158,9 +1148,9 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	    sz = nelem * sizeof *M->val;
 	    memcpy(ret->val, M->val + offset, sz);
 	}
-	if (M->rows > 1 && rows == M->rows && offset == 0 &&
+	if (M->rows > 1 && rows == M->rows && offset % rows == 0 &&
 	    gretl_matrix_is_dated(M)) {
-	    matrix_transcribe_dates(ret, M);
+	    gretl_matrix_transcribe_obs_info(ret, M);
 	}
     }
 

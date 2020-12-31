@@ -46,10 +46,13 @@ void print_tabsep (int cols, int *n)
     }
 }
 
-void print_tabtop (int cols)
+void print_tabtop (int cols, int small)
 {
     int i;
 
+    if (small) {
+	fputs("{\\small\n", stdout);
+    }
     fputs("\\begin{tabular}{", stdout);
     for (i=0; i<cols; i++) {
 	putchar('l');
@@ -57,13 +60,16 @@ void print_tabtop (int cols)
     fputs("}\n", stdout);
 }
 
-void print_tabfoot (int cols, int n)
+void print_tabfoot (int cols, int n, int small)
 {
     if (n < cols) {
 	fputs("\\\\\n", stdout);
     }
-
-    fputs("\\end{tabular}\n\n", stdout);
+    if (small) {
+	fputs("\\end{tabular}\n}\n\n", stdout);
+    } else {
+	fputs("\\end{tabular}\n\n", stdout);
+    }
 }
 
 void sort_and_print_text (char **S, int n)
@@ -122,7 +128,8 @@ char *tex_escape (char *targ, const char *src)
     return ret;
 }
 
-void sort_and_print_tabular (char **S, int n, int cols)
+void sort_and_print_tabular (char **S, int n, int cols,
+			     int small)
 {
     char tmp[32];
     int i, t = 0;
@@ -133,12 +140,12 @@ void sort_and_print_tabular (char **S, int n, int cols)
 	cols = n;
     }
 
-    print_tabtop(cols);
+    print_tabtop(cols, small);
     for (i=0; i<n; i++) {
 	printf("\\texttt{%s}", tex_escape(tmp, S[i]));
 	print_tabsep(cols, &t);
     }
-    print_tabfoot(cols, t);
+    print_tabfoot(cols, t, small);
 
     strings_array_free(S, n);
 }
@@ -162,16 +169,21 @@ void print_internals (void)
 void print_func_words (void)
 {
     char **S = NULL;
-    int i, n, err = 0;
+    const char *s;
+    int i, n, nf;
+    int err = 0;
 
-    n = gen_func_count();
+    nf = gen_func_count();
 
-    for (i=0; i<n && !err; i++) {
-	err = push_string_on_array(&S, gen_func_name(i), i);
+    for (i=0, n=0; i<nf && !err; i++) {
+	s = gen_func_name(i);
+	if (*s != '_') {
+	    err = push_string_on_array(&S, s, n++);
+	}
     }
 
     if (!err) {
-	sort_and_print_tabular(S, n, 8);
+	sort_and_print_tabular(S, n, 8, 1);
     }
 }
 
@@ -188,7 +200,7 @@ int print_loop_commands (void)
     }
 
     if (!err) {
-	sort_and_print_tabular(S, n, 8);
+	sort_and_print_tabular(S, n, 8, 0);
     }
 
     return err;
@@ -207,7 +219,7 @@ int print_non_loop_commands (void)
     }
 
     if (!err) {
-	sort_and_print_tabular(S, n, 8);
+	sort_and_print_tabular(S, n, 8, 0);
     }
 
     return err;

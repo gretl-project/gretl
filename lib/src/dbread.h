@@ -134,8 +134,7 @@ int check_db_import_conversion (int pd, DATASET *dset);
 int transcribe_db_data (DATASET *dset, int targv,
 			const double *src, int pd,
 			int nobs, char *stobs,
-			CompactMethod cmethod,
-			int interpolate);
+			CompactMethod cmethod);
 
 int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
 			DATASET *dset, PRN *prn);
@@ -147,8 +146,7 @@ int compact_data_set (DATASET *dset, int newpd,
 		      CompactMethod default_method,
 		      int monstart, int repday);
 
-int expand_data_set (DATASET *dset, int newpd,
-		     int interpol);
+int expand_data_set (DATASET *dset, int newpd);
 
 int midas_days_per_period (int days_per_week, int pd);
 

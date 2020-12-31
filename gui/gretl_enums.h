@@ -28,6 +28,7 @@ enum extra_cmds {
     GR_3D,
     COMPACT,
     EXPAND,
+    TDISAGG,
     COEFFINT,
     COVAR,
     STAT_TABLE,

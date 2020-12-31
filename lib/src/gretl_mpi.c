@@ -1905,17 +1905,25 @@ gretl_bundle *gretl_bundle_receive (int source, int *err)
 
 static void fill_tmp (double * restrict tmp,
 		      const gretl_matrix *m,
-		      int nr, int *offset)
+		      int nr, int cmplx,
+		      int *offset)
 {
     double x;
+    double complex z;
     int imin = *offset;
     int imax = imin + nr;
     int i, j, k = 0;
 
     for (j=0; j<m->cols; j++) {
 	for (i=imin; i<imax; i++) {
-	    x = gretl_matrix_get(m, i, j);
-	    tmp[k++] = x;
+	    if (cmplx) {
+		z = gretl_cmatrix_get(m, i, j);
+		tmp[k++] = creal(z);
+		tmp[k++] = cimag(z);
+	    } else {
+		x = gretl_matrix_get(m, i, j);
+		tmp[k++] = x;
+	    }
 	}
     }
 
@@ -1925,25 +1933,57 @@ static void fill_tmp (double * restrict tmp,
 static int scatter_to_self (int *rc, double *val,
 			    gretl_matrix **pm)
 {
+    int cmplx = rc[2];
     int err = 0;
 
-    *pm = gretl_matrix_alloc(rc[0], rc[1]);
+    if (cmplx) {
+	*pm = gretl_cmatrix_new(rc[0], rc[1]);
+    } else {
+	*pm = gretl_matrix_alloc(rc[0], rc[1]);
+    }
 
     if (*pm == NULL) {
 	err = E_ALLOC;
     } else {
 	size_t n = rc[0] * rc[1] * sizeof *val;
 
+	if (cmplx) {
+	    n *= 2;
+	}
 	memcpy((*pm)->val, val, n);
     }
 
     return err;
 }
 
+static void matsplit_rule (int n, int np, int *k1, int *n1,
+			   int *k2, int *n2)
+{
+    if (n <= np) {
+	*k1 = n;
+	*n1 = 1;
+	*k2 = np - n;
+	*n2 = 0;
+    } else if (n % np == 0) {
+	*k1 = np;
+	*n1 = n / np;
+	*k2 = 0;
+	*n2 = 0;
+    } else {
+	int a = ceil(1.0e-12 + n / (double) np);
+	int head = n % np;
+
+        *k1 = head;
+        *n1 = a;
+        *k2 = np - head;
+        *n2 = a - 1;
+    }
+}
+
 int gretl_matrix_mpi_scatter (const gretl_matrix *m,
-			      gretl_matrix **recvm,
-			      Gretl_MPI_Op op,
-			      int root)
+                              gretl_matrix **recvm,
+                              Gretl_MPI_Op op,
+                              int root)
 {
     double *tmp = NULL;
     int id, np;
@@ -1954,75 +1994,90 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
     mpi_comm_size(mpi_comm_world, &np);
 
     if (root < 0 || root >= np) {
-	return invalid_rank_error(root);
+        return invalid_rank_error(root);
     }
 
     if (id == root) {
-	int i, n;
+        int cmplx = m->is_complex;
+        int k1, n1, k2, n2;
+        int i, n;
 
-	if (op == GRETL_MPI_VSPLIT) {
-	    /* scatter by rows */
-	    int nr = m->rows / np;
-	    int rem = m->rows % np;
-	    int offset = 0;
+        if (op == GRETL_MPI_VSPLIT) {
+            /* scatter by rows */
+            int offset = 0;
 
-	    /* we'll need a working buffer */
-	    tmp = malloc(m->cols * (nr + rem) * sizeof *tmp);
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    }
+            matsplit_rule(m->rows, np, &k1, &n1, &k2, &n2);
 
-	    n = nr * m->cols;
-	    rc[0] = nr;
-	    rc[1] = m->cols;
+            n = n1 * m->cols;
+            rc[0] = n1;
+            rc[1] = m->cols;
+            if (cmplx) {
+                rc[2] = 1;
+                n *= 2;
+            }
 
-	    for (i=0; i<np; i++) {
-		if (i == np - 1 && rem > 0) {
-		    rc[0] += rem;
-		    n += m->cols * rem;
-		}
-		fill_tmp(tmp, m, rc[0], &offset);
-		if (i == root) {
-		    err = scatter_to_self(rc, tmp, recvm);
-		} else {
-		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-				   mpi_comm_world);
-		    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
-				   mpi_comm_world);
-		}
-	    }
-	} else {
-	    /* scatter by columns */
-	    int nc = m->cols / np;
-	    int rem = m->cols % np;
-	    double *val = m->val;
+            /* we'll need a working buffer */
+            tmp = malloc(n * sizeof *tmp);
+            if (tmp == NULL) {
+                err = E_ALLOC;
+            }
 
-	    n = m->rows * nc;
-	    fill_matrix_info(rc, m);
+            for (i=0; i<np; i++) {
+                if (i == k1) {
+                    rc[0] = n2;
+                    n = n2 * m->cols;
+                    if (cmplx) n *= 2;
+                }
+                if (rc[0] > 0) {
+                    fill_tmp(tmp, m, rc[0], cmplx, &offset);
+                }
+                if (i == root) {
+                    err = scatter_to_self(rc, tmp, recvm);
+                } else {
+                    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+                                   mpi_comm_world);
+                    err = mpi_send(tmp, n, mpi_double, i, TAG_MATRIX_VAL,
+                                   mpi_comm_world);
+                }
+            }
+        } else {
+            /* scatter by columns */
+            double *val = m->val;
 
-	    for (i=0; i<np; i++) {
-		if (i == np - 1 && rem > 0) {
-		    rc[1] += rem;
-		    n += m->rows * rem;
-		}
-		if (i == root) {
-		    err = scatter_to_self(rc, val, recvm);
-		} else {
-		    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
-				   mpi_comm_world);
-		    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
-				   mpi_comm_world);
-		}
-		val += n;
-	    }
-	}
+            matsplit_rule(m->cols, np, &k1, &n1, &k2, &n2);
+
+            n = n1 * m->rows;
+            if (cmplx) {
+                n *= 2;
+            }
+            fill_matrix_info(rc, m);
+            rc[1] = n1;
+
+            for (i=0; i<np; i++) {
+                if (i == k1) {
+                    rc[1] = n2;
+                    n = n2 * m->rows;
+                    if (cmplx) n *= 2;
+                }
+                if (i == root) {
+                    err = scatter_to_self(rc, val, recvm);
+                } else {
+                    err = mpi_send(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
+                                   mpi_comm_world);
+                    err = mpi_send(val, n, mpi_double, i, TAG_MATRIX_VAL,
+                                   mpi_comm_world);
+                }
+                /* advance the read pointer */
+                val += n;
+            }
+        }
     } else {
-	/* non-root processes get their share-out */
-	*recvm = gretl_matrix_mpi_receive(root, &err);
+        /* non-root processes get their share-out */
+        *recvm = gretl_matrix_mpi_receive(root, &err);
     }
 
     if (id == root) {
-	free(tmp);
+        free(tmp);
     }
 
     return err;

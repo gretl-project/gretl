@@ -40,8 +40,14 @@
 
 #define MAX_CONSOLE_LINES 500
 
+#define SET_FONT 0
+
 void redirect_io_to_console (void)
 {
+#if SET_FONT
+    CONSOLE_FONT_INFOEX cfie = {0};
+    int font_ok;
+#endif
     CONSOLE_SCREEN_BUFFER_INFO coninfo;
     int conhandle;
     HANDLE stdhandle;
@@ -56,8 +62,17 @@ void redirect_io_to_console (void)
     SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),
 			       coninfo.dwSize);
 
+#if SET_FONT
+    /* try to ensure TrueType font */
+    cfie.cbSize = sizeof(cfie);
+    lstrcpyW(cfie.FaceName, L"Lucida Console"); /* maybe Consolas? */
+#endif
+
     /* redirect unbuffered STDOUT to the console */
     stdhandle = GetStdHandle(STD_OUTPUT_HANDLE);
+#if SET_FONT
+    font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
+#endif
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stdout = *fp;
@@ -65,10 +80,18 @@ void redirect_io_to_console (void)
 
     /* redirect unbuffered STDERR to the console */
     stdhandle = GetStdHandle(STD_ERROR_HANDLE);
+#if SET_FONT
+    font_ok = SetCurrentConsoleFontEx(stdhandle, 0, &cfie);
+#endif
     conhandle = _open_osfhandle((intptr_t) stdhandle, _O_TEXT);
     fp = _fdopen(conhandle, "w");
     *stderr = *fp;
     setvbuf(stderr, NULL, _IONBF, 0);
+
+    if (IsValidCodePage(65001) && SetConsoleOutputCP(65001)) {
+	/* flag successful switch */
+	set_native_utf8(1);
+    }
 }
 
 /* Asynchronous execution of child process. We'll be ready
@@ -123,7 +146,7 @@ static int real_create_child_process (const char *prog,
 			NULL,          /* primary thread security attributes */
 			FALSE,         /* handles are inherited?  */
 			0,             /* creation flags  */
-			(LPVOID) NULL, /* NULL => use parent's environment  */
+			NULL,          /* NULL => use parent's environment  */
 			NULL,          /* use parent's current directory  */
 			&start_info,   /* receives STARTUPINFO */
 			&proc_info);   /* receives PROCESS_INFORMATION  */
@@ -254,10 +277,21 @@ void get_default_windows_app_font (char *target)
     }
 }
 
+static char *winlocale;
+
+void record_win32_locale (char *s)
+{
+    if (s != NULL) {
+	winlocale = gretl_strdup(s);
+    }
+}
+
 void gretl_win32_debug_init (int debug)
 {
     if (debug) {
 	char *s = getenv("OSTYPE");
+	const char *charset = NULL;
+	gchar *pkgdir;
 
 	if (s == NULL || strcmp(s, "msys")) {
 	    /* This doesn't work if gretl is launched
@@ -268,6 +302,14 @@ void gretl_win32_debug_init (int debug)
 	    redirect_io_to_console();
 	}
 	set_windebug(1);
+	fprintf(stderr, "Windows locale = %s\n",
+		winlocale == NULL ? "NULL" : winlocale);
+	fprintf(stderr, "codepage = %d\n", get_gretl_cpage());
+	g_get_charset(&charset);
+	fprintf(stderr, "charset = %s\n", charset);
+	pkgdir = g_win32_get_package_installation_directory_of_module(NULL);
+	fprintf(stderr, "pkgdir = '%s'\n", pkgdir);
+	g_free(pkgdir);
     }
 
     set_g_logging(debug);
@@ -277,11 +319,9 @@ void gretl_win32_debug_init (int debug)
    call read_rc to get the per-user configuration info.
 */
 
-void gretl_win32_init (const char *progname, int debug)
+void gretl_win32_init (int debug)
 {
     char tmp[4] = {0};
-
-    set_gretlnet_filename(progname);
 
 #if GTK_MAJOR_VERSION < 3
     /* Are we using the XP theme (as opposed to "classic")?
@@ -568,18 +608,19 @@ static int get_pdf_service_name (char *service, const char *exe)
     return err;
 }
 
+static int coinitted;
+
 /* If and when win32_open_arg() gets called, @arg should
    already be re-encoded to the locale if necessary.
 */
 
 static int win32_open_arg (const char *arg, char *ext)
 {
-    static int initted;
     int err = 0;
 
-    if (!initted) {
+    if (!coinitted) {
 	CoInitialize(NULL);
-	initted = 1;
+	coinitted = 1;
     }
 
     /* From the MSDN doc: "If the function succeeds, it returns a

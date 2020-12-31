@@ -765,7 +765,7 @@ Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter}.
 
 
 \begin{script}[htbp]
-  \caption{ARMA estimation}
+  \scriptcaption{ARMA estimation}
   \label{script:armaest}
 \begin{scode}
 function void arma11_via_kalman (series y)
@@ -856,7 +856,7 @@ Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter},
 \cmd{ksmooth}.
 
 \begin{script}[htbp]
-  \caption{HP filter}
+  \scriptcaption{HP filter}
   \label{script:hp}
 \begin{scode}
 function series hp_via_kalman(series y, scalar lambda[0], bool oneside[0])
@@ -912,7 +912,6 @@ n2c = hpfilt(y, 1600)
 series h2c = hp_via_kalman(y, 1600)
 ols n2c const h2c --simple-print
 \end{scode}
-%$
 \end{script}
 
 The Hodrick--Prescott filter (HP for short) can be obtained as the
@@ -973,7 +972,7 @@ Functions illustrated in this example: \cmd{ksetup}, \cmd{kfilter},
 \cmd{ksmooth}.
 
 \begin{script}[htbp]
-  \caption{Local level model}
+  \scriptcaption{Local level model}
   \label{script:loclev}
 \begin{scode}
 nulldata 200
@@ -1096,7 +1095,7 @@ the slope coefficient is plotted together with a 95\% confidence
 band---see Figure~\ref{fig:tvar}.
 
 \begin{script}[htbp]
-  \caption{Phillips curve on Euro data with time-varying slope}
+  \scriptcaption{Phillips curve on Euro data with time-varying slope}
   \label{script:PhCurve}
 \begin{scode}
 function void at_each_step(bundle *b)
@@ -1174,7 +1173,7 @@ not really applicable to the data.
 
 
 \begin{script}[htbp]
-  \caption{Working with smoothed disturbances -- Nile data}
+  \scriptcaption{Working with smoothed disturbances -- Nile data}
   \label{script:auxres}
 \begin{scode}
 open nile.gdt

@@ -167,10 +167,18 @@ int get_local_decpoint (void)
 
 static int gretl_cset_maj;
 static int gretl_cset_min;
-#ifdef WIN32
-static int gretl_cpage;
-#endif
 static int native_utf8;
+
+#ifdef WIN32
+
+static int gretl_cpage;
+
+int get_gretl_cpage (void)
+{
+    return gretl_cpage;
+}
+
+#endif
 
 void set_native_utf8 (int s)
 {
@@ -224,7 +232,9 @@ void set_gretl_charset (void)
 	}
 #ifdef WIN32
 	if (p == NULL) {
-	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
+	    if (sscanf(gretl_charset, "cp%d", &gretl_cpage) == 0) {
+		sscanf(gretl_charset, "CP%d", &gretl_cpage);
+	    }
 	}
 #endif
     }
@@ -254,30 +264,19 @@ static void set_cp_from_locale (const char *loc)
     }
 }
 
-#endif /* WIN32 */
-
-#ifdef ENABLE_NLS
-
 static const char *get_gretl_charset (void)
 {
     static char cset[24];
 
-# ifdef WIN32
     if (gretl_cpage > 0) {
 	sprintf(cset, "CP%d", gretl_cpage);
-	return cset;
-    }
-# endif
-
-    if (gretl_cset_maj > 0 && gretl_cset_min > 0 && gretl_cset_min < 99) {
-	sprintf(cset, "ISO-%d-%d", gretl_cset_maj, gretl_cset_min);
 	return cset;
     }
 
     return NULL;
 }
 
-#endif /* ENABLE_NLS */
+#endif /* WIN32 */
 
 int iso_latin_version (void)
 {
@@ -371,21 +370,29 @@ int east_asian_locale (void)
 #endif
 }
 
-#ifdef ENABLE_NLS
+#ifndef WIN32
 
-char *iso_gettext (const char *msgid)
+void set_alt_gettext_mode (PRN *prn)
 {
-    static int iso_switch = -1;
+    return;
+}
+
+#else /* WIN32-specific block */
+
+/* Provides a means of forcing gretl.exe on Windows to
+   emit non-ASCII text in the locale encoding rather than
+   in UTF-8, possibly required under certain conditions.
+*/
+
+char *locale_gettext (const char *msgid)
+{
+    static int locale_switch = -1;
     static const char *cset;
     static int cli;
     char *ret;
 
-    /* command line program: switching of codesets should not be
-       required, since unlike the GUI program there's no need
-       to force UTF-8 as the default.
-    */
-
-    if (!strcmp(msgid, "@CLI_INIT")) {
+    if (msgid == NULL) {
+	/* initialization */
 	cli = 1;
 	return NULL;
     }
@@ -394,17 +401,7 @@ char *iso_gettext (const char *msgid)
 	return gettext(msgid);
     }
 
-    /* iso_switch: we'll reckon that if the system character set is
-       not UTF-8, and is an ISO-8859-N or Windows CP12NN 8-bit set,
-       then we should probably recode when printing translated strings
-       in the context of writing CSV files.
-
-       If iso_switch is non-zero (once it's determinate) this makes the
-       I_() gettext macro use the system encoding, otherwise I_() is
-       equivalent to plain _(), which always spits out UTF-8.
-    */
-
-    if (iso_switch < 0) {
+    if (locale_switch < 0) {
 	/* not yet determined */
 	cset = get_gretl_charset();
 	if (cset == NULL) {
@@ -412,10 +409,10 @@ char *iso_gettext (const char *msgid)
 	} else {
 	    fprintf(stderr, "get_gretl_charset gave %s\n", cset);
 	}
-	iso_switch = (cset != NULL);
+	locale_switch = (cset != NULL);
     }
 
-    if (iso_switch) {
+    if (locale_switch) {
 	bind_textdomain_codeset(PACKAGE, cset);
 	ret = gettext(msgid);
 	bind_textdomain_codeset(PACKAGE, "UTF-8");
@@ -426,11 +423,12 @@ char *iso_gettext (const char *msgid)
     return ret;
 }
 
-/* return translated @msgid in UTF-8, when this is not
-   the default operation for plain gettext()
+/* Return translated @msgid in UTF-8, when this is not
+   the default operation for plain gettext(). This is
+   wanted only when writing TeX or RTF via gretlcli.exe.
 */
 
-static char *force_utf8_gettext (const char *msgid)
+static char *u8_gettext (const char *msgid)
 {
     static const char *cset;
     char *ret;
@@ -446,31 +444,9 @@ static char *force_utf8_gettext (const char *msgid)
     return ret;
 }
 
-/* Cases to consider below:
-
-   (1) The system-native encoding is UTF-8: in that case all output
-   should be in UTF-8, with the possible exception of RTF; and all
-   output _will_ be in UTF-8 if we just call plain gettext().
-
-   (2) The system-native encoding is not UTF-8 (this means
-   MS Windows -- or possibly ancient Linux?). Then we have two
-   sub-cases.
-
-   (2a) We're in the GUI program: plain gettext() will have been
-   coerced to produce UTF-8 for the sake of GTK. But we should
-   probably arrange for RTF and CSV output to be in the locale
-   encoding, and also any output going to the console.
-
-   (2b) We're at the command line (gretlcli): gettext() output will
-   be in the system locale, but under the "new scheme" (December
-   2011) TeX output should be coerced to UTF-8. All other output
-   should use plain gettext().
-*/
-
 enum {
     GETTEXT_DEFAULT,
-    GETTEXT_FORCE_UTF8,
-    GETTEXT_FORCE_LOCALE
+    GETTEXT_FORCE_UTF8
 };
 
 static int gettext_mode;
@@ -479,26 +455,8 @@ void set_alt_gettext_mode (PRN *prn)
 {
     gettext_mode = GETTEXT_DEFAULT;
 
-    /* As of 2014-09-07, we'll handle RTF by (a) getting
-       gettext to write UTF-8 (forcing it if necessary)
-       then (b) using utf8_to_rtf() to convert to ASCII
-       plus \uXXXX codes, as per the spec for RTF >= 1.5.
-       (It would be nice if gettext were able to generate
-       the latter directly, but it can't.)
-
-       Note: this means that RTF should not be written to
-       file directly: a bufferized PRN should be used
-       first so that the buffer can be sent through
-       utf8_to_rtf(); then it can be written to file.
-    */
-
-    if (prn != NULL && !native_utf8) {
-	if (gretl_in_gui_mode()) {
-	    if (printing_to_standard_stream(prn)) {
-		gettext_mode = GETTEXT_FORCE_LOCALE;
-	    }
-	} else if (tex_format(prn) || rtf_format(prn)) {
-	    /* CLI mode, writing TeX or RTF */
+    if (!native_utf8 && !gretl_in_gui_mode()) {
+	if (tex_format(prn) || rtf_format(prn)) {
 	    gettext_mode = GETTEXT_FORCE_UTF8;
 	}
     }
@@ -506,27 +464,12 @@ void set_alt_gettext_mode (PRN *prn)
 
 char *alt_gettext (const char *msgid)
 {
-    if (gettext_mode == GETTEXT_DEFAULT) {
-	return gettext(msgid);
-    } else if (gettext_mode == GETTEXT_FORCE_UTF8) {
-	return force_utf8_gettext(msgid);
-    } else if (gettext_mode == GETTEXT_FORCE_LOCALE) {
-	return iso_gettext(msgid);
+    if (gettext_mode == GETTEXT_FORCE_UTF8) {
+	return u8_gettext(msgid);
     } else {
 	return gettext(msgid);
     }
 }
-
-#else /* !ENABLE_NLS */
-
-void set_alt_gettext_mode (PRN *prn)
-{
-    return;
-}
-
-#endif /* ENABLE_NLS or not */
-
-#ifdef WIN32
 
 struct localeinfo {
     int id;
@@ -1495,24 +1438,9 @@ static gchar *file_get_content (const char *fname,
 {
     GError *gerr = NULL;
     gchar *buf = NULL;
-    int ok = 0;
+    int ok;
 
-#ifdef WIN32
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gchar *tmp = NULL;
-	gsize wrote = 0;
-
-	tmp = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
-	if (tmp != NULL) {
-	    ok = g_file_get_contents(tmp, &buf, bytes, &gerr);
-	    g_free(tmp);
-	}
-    } else {
-	ok = g_file_get_contents(fname, &buf, bytes, &gerr);
-    }
-#else
     ok = g_file_get_contents(fname, &buf, bytes, &gerr);
-#endif
 
     if (ok) {
 	pprintf(prn, "got content, %" G_GSIZE_FORMAT " bytes\n", *bytes);
@@ -1532,25 +1460,9 @@ static int file_set_content (const char *fname,
 			     gsize buflen)
 {
     GError *gerr = NULL;
-    int ok = 0;
-    int err = 0;
+    int ok, err = 0;
 
-#ifdef WIN32
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gchar *tmp = NULL;
-	gsize wrote = 0;
-
-	tmp = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
-	if (tmp != NULL) {
-	    ok = g_file_set_contents(tmp, buf, buflen, &gerr);
-	    g_free(tmp);
-	}
-    } else {
-	ok = g_file_set_contents(fname, buf, buflen, &gerr);
-    }
-#else
     ok = g_file_set_contents(fname, buf, buflen, &gerr);
-#endif
 
     if (!ok) {
 	err = E_FOPEN;

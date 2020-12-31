@@ -6,11 +6,13 @@
 # lin_int (private helper)
 # winsor
 # correspondence
-
+# fracorder
+# mat2list
 
 function series gap_filler (series x "Series to fill",
                             int method[0:2:2] "Fill method" {"Don't", "Repetition", "Linear interpolation"})
     string lbl = argname(x)
+
     if method == 0 # do nothing
         series ret = x
     elif method == 1 # get previous value
@@ -20,20 +22,26 @@ function series gap_filler (series x "Series to fill",
         series tmp = OK ? time : NA
         scalar ini = min(tmp)
         scalar fin = max(tmp)
+
         smpl ini fin
+
         ret = OK ? x : ret(-1)
         string lbl = sprintf("gap-filled version of %s (with repetition)", argname(x))
         setinfo ret --description="@lbl"
+
     elif method == 2 # interpolate_linearly
         set warnings off
+
         series ret = lin_int(x)
         string lbl = sprintf("gap-filled version of %s (with interpolation)", argname(x))
         setinfo ret --description="@lbl"
     endif
+
     return ret
 end function
 
-function series lin_int (series y)
+
+function series lin_int (const series y)
     # originally from Jack's yahoo_get function
     # (helper for gap_filler)
 
@@ -42,14 +50,17 @@ function series lin_int (series y)
     series End = DOK(+1) == 1
     series splen = 0
     splen = DOK == -1 ? 1 : DOK==1 ? 0 : (splen(-1) == 0 ? 0 : splen(-1) + 1)
+
     series y0 = NA
     series y0 = Beg ? y(-1) : y0(-1)
     series y1 = NA
     series y1 = End ? y(+1) : y1(-1)
+
     set skip_missing off
     matrix A = {y, y0, y1, splen}
     scalar t = lastobs(y)
-    loop while t>firstobs(y) --quiet
+
+    loop while t > firstobs(y) --quiet
         if ok(End[t]) && (End[t] == 1)
             scalar l = A[t, 4]
             dy = (A[t,3] - A[t,2]) / (l + 1)
@@ -60,6 +71,7 @@ function series lin_int (series y)
             t--
         endif
     endloop
+
     return A[,1]
 end function
 
@@ -75,6 +87,7 @@ function series winsor (series x,
     # (originally by JoshuaHe2015@163.com)
 
     smpl --no-missing x
+
     # standard symmetric or asymmetric case?
     phi = !phi ? 1 - p : phi
     # determine bounds
@@ -85,15 +98,17 @@ function series winsor (series x,
     # upper end
     scalar hi = ok(lowhi[2]) ? lowhi[2] : max(x)
     x = (x > hi) ? hi : x
+
     # prepare output
     string label = sprintf("winsorized %s (%g,%g)", argname(x), p, phi)
     setinfo x --description="@label"
+
     return x
 end function
 
 #######################
 
-function scalar correspondence(series x, series y)
+function scalar correspondence (series x, series y)
     # This function takes two series and establishes if there's a
     # 1-to-1 relationship between them, in which case it returns 2.
     # If there's a 1-to-n relationship, it returns 1. If there's
@@ -114,13 +129,13 @@ function scalar correspondence(series x, series y)
     else
         ret = 0
     endif
-    return ret
 
+    return ret
 end function
 
 ######################
 
-function matrix fracorder(const series x, int order[0::0], bool verbosity[0])
+function matrix fracorder (const series x, int order[0::0], bool verbosity[0])
     # order == 0 means to leave gretl's default;
     # Applies all available estimators in gretl:
     # - Local Whittle
@@ -138,7 +153,8 @@ function matrix fracorder(const series x, int order[0::0], bool verbosity[0])
 
     # Local Whittle and Geweke Porter-Hudak
     fractint x @sorder @sverb
-    matrix LocWhit    = vec($result)' ~ $test ~ $pvalue	# point, se, teststat, pv
+    # point, se, teststat, pv
+    matrix LocWhit    = vec($result)' ~ $test ~ $pvalue
     fractint x @sorder --gph @sverb
     matrix GewPorthud = vec($result)' ~ $test ~ $pvalue
 
@@ -147,18 +163,57 @@ function matrix fracorder(const series x, int order[0::0], bool verbosity[0])
     if $nobs < 128 && verbosity
         print "Warning: not enough obs for Hurst, leaving result row as NA."
     elif $nobs >= 128
-		if verbosity
-			hurst x --plot=none
-		else
-        	outfile null	# workaround for the missing quiet option of hurst
-            	hurst x --plot=none
-        	end outfile 	# This is in >=2018b, so OK here.
-		endif
-		Hurst[1:2] = ($result[1] - 0.5) ~ $result[2] # shifted to be comparable to d 
+                if verbosity
+                        hurst x --plot=none
+                else
+                outfile null    # workaround for the missing quiet option of hurst
+                hurst x --plot=none
+                end outfile     # This is in >=2018b, so OK here.
+                endif
+        # shifted to be comparable to d
+                Hurst[1:2] = ($result[1] - 0.5) ~ $result[2]
     endif
-	
-	matrix ret = LocWhit | GewPorthud | Hurst
-	cnameset(ret, "estim SE teststat pval") # is in >= 2018a
-	rnameset(ret, "LocalWh GPH Hurst")
-	return ret
+
+        matrix ret = LocWhit | GewPorthud | Hurst
+        cnameset(ret, "estim SE teststat pval") # is in >= 2018a
+        rnameset(ret, "LocalWh GPH Hurst")
+
+        return ret
+end function
+
+######################
+
+function list mat2list (const matrix m, string prefix[null])
+    list ret = null
+    if cols(m) == 0
+        return ret
+    endif
+
+    catch series tmp = m[,1]
+    if $error
+        printf "Rows don't match current sample; returning empty list\n"
+        return ret
+    endif
+
+    if !exists(prefix)
+        strings S = cnameget(m)
+        if nelem(S) == 0
+            prefix = "col"
+        endif
+    endif
+    nc = cols(m)
+    digits = exists(prefix) ? ceil(log10(nc+0.1)) : 0
+    descfmt = sprintf("Matrix %s, column %%d", argname(m))
+
+    loop i = 1 .. nc
+        if digits > 0
+            sname = sprintf("%s%0*d", prefix, digits, i)
+        else
+            sname = S[i]
+        endif
+        ret += genseries(sname, m[,i])
+        desc = sprintf(descfmt, i)
+        setinfo @sname --description="@desc"
+    endloop
+    return ret
 end function

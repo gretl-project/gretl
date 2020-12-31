@@ -49,7 +49,7 @@ const char *get_gretlnet_filename (void);
 
 int set_gretlnet_filename (const char *prog);
 
-void win32_cli_read_rc (char *callname);
+void win32_cli_read_rc (void);
 
 void win_show_last_error (void);
 
@@ -82,11 +82,7 @@ char *program_files_path (void);
 
 char *program_files_x86_path (void);
 
-int win32_write_access (char *apath, gunichar2 *wpath);
-
-int win32_delete_recursive (const char *path);
-
-int win32_uses_virtual_store (void);
+int win32_write_access (const char *path);
 
 int R_path_from_registry (char *s, int which);
 

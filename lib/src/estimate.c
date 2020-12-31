@@ -1292,9 +1292,10 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
  lsq_abort:
 
-    if (!(opt & OPT_A)) {
-	/* if it's not an auxiliary regression, set an ID number
-	   on the model */
+    if (!(opt & (OPT_A | OPT_S))) {
+	/* if it's not an auxiliary regression, or part of
+	   a system, set an ID number on the model
+	*/
 	set_model_id(&mdl, opt);
     }
 
@@ -1319,6 +1320,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
  *   OPT_I: compute Durbin-Watson p-value.
  *   OPT_U: treat null model as OK.
  *   OPT_P: (ar1 only): use Prais-Winsten.
+ *   OPT_S: estimation as part of system.
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
@@ -3977,7 +3979,6 @@ MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
     lad_driver = get_plugin_function("lad_driver");
 
     if (lad_driver == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	mod.errcode = E_FOPEN;
 	return mod;
     }
@@ -4031,7 +4032,6 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
     rq_driver = get_plugin_function("rq_driver");
 
     if (rq_driver == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	mod.errcode = E_FOPEN;
 	return mod;
     }
@@ -4188,7 +4188,6 @@ MODEL arma (const int *list, const int *pqlags,
     }
 
     if (err) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	armod.errcode = err;
 	return armod;
     }

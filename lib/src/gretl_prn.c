@@ -69,9 +69,10 @@ struct PRN_ {
 };
 
 struct fpinfo_ {
-    FILE *fp;
-    int level;
-    gchar *strvar;
+    FILE *fp;      /* stream to which we're printing */
+    int level;     /* level of depth of redicrection */
+    gchar *fname;  /* name of file or NULL */
+    gchar *strvar; /* associated string variable or NULL */
 };
 
 typedef struct fpinfo_ fpinfo;
@@ -89,6 +90,9 @@ static void prn_destroy_fp_list (PRN *prn)
 	    if (fi->fp != NULL && fi->fp != prn->fp &&
 		fi->fp != stdout && fi->fp != stderr) {
 		fclose(fi->fp);
+	    }
+	    if (fi->fname != NULL) {
+		g_free(fi->fname);
 	    }
 	    if (fi->strvar != NULL) {
 		g_free(fi->strvar);
@@ -1367,7 +1371,8 @@ int printing_to_standard_stream (PRN *prn)
     return ret;
 }
 
-static void prn_push_stream (PRN *prn, FILE *fp, const char *strvar)
+static void prn_push_stream (PRN *prn, FILE *fp, const char *fname,
+			     const char *strvar)
 {
     fpinfo fi = {prn->fp, 0, NULL};
 
@@ -1375,6 +1380,9 @@ static void prn_push_stream (PRN *prn, FILE *fp, const char *strvar)
 	prn->fplist = g_array_new(FALSE, FALSE, sizeof(fpinfo));
     }
     fi.level = gretl_function_depth();
+    if (fname != NULL) {
+	fi.fname = g_strdup(fname);
+    }
     if (strvar != NULL) {
 	fi.strvar = g_strdup(strvar);
     }
@@ -1491,6 +1499,29 @@ int print_redirection_level (PRN *prn)
     return ret;
 }
 
+/**
+ * print_redirection_filename:
+ * @prn: gretl printing struct.
+ *
+ * Returns: the name of the file to which output is currently
+ * redirected, if applicable, otherwise NULL.
+ */
+
+const char *print_redirection_filename (PRN *prn)
+{
+    if (prn != NULL && prn_fp_list_active(prn)) {
+	int i = prn->fplist->len - 1;
+	fpinfo *fi;
+
+	fi = &g_array_index(prn->fplist, fpinfo, i);
+	if (fi != NULL && fi->fname != NULL) {
+	    return fi->fname;
+	}
+    }
+
+    return NULL;
+}
+
 int print_redirected_at_level (PRN *prn, int level)
 {
     if (prn->fplist != NULL) {
@@ -1512,6 +1543,7 @@ int print_redirected_at_level (PRN *prn, int level)
  * print_start_redirection:
  * @prn: gretl printing struct.
  * @fp: stream to which output should be redirected.
+ * @fname: name of the file or NULL.
  * @strvar: name of associated string variable, or NULL.
  *
  * Redirects output of @prn to @fp.
@@ -1520,6 +1552,7 @@ int print_redirected_at_level (PRN *prn, int level)
  */
 
 int print_start_redirection (PRN *prn, FILE *fp,
+			     const char *fname,
 			     const char *strvar)
 {
     if (prn == NULL || prn->fixed) {
@@ -1537,7 +1570,7 @@ int print_start_redirection (PRN *prn, FILE *fp,
 	/* record current stream in prn->fplist, and
 	   hook output to specified stream
 	*/
-	prn_push_stream(prn, fp, strvar);
+	prn_push_stream(prn, fp, fname, strvar);
     }
 
     return 0;

@@ -11,12 +11,12 @@ matrix mc = {1, -1.2; -1.2, 1}	# eigenvalues -0.2 and 2.2
 eval nearPSD(&mc)
 print mc
 
-print "---- zeroifclose -----" 
+print "---- zeroifclose -----"
 mc = {1, 1e-12}
 eval zeroifclose(&mc, 1e-10)
 print mc
 
-print "---- truncnorm -----" 
+print "---- truncnorm -----"
 m = 0.5
 s = 1
 matrix left = truncnorm(20, m, s, NA, 1)
@@ -24,26 +24,26 @@ matrix right = truncnorm(20, m, s, -1, NA)
 matrix both = truncnorm(20, m, s, -1, 1)
 print left right both
 
-print "---- commute -----" ## 
+print "---- commute -----" ##
 # vec application
 eval commute( vec( I(2) ~ ones(2,1) ), 2, 3)
 # commutation of the Kronecker product
 matrix A = mnormal(4,1)
 matrix B = mnormal(1,5)
 eval B**A
-matrix temp = commute(A**B, rows(B), rows(A))	
+matrix temp = commute(A**B, rows(B), rows(A))
 eval commute(temp, cols(B), cols(A), 1) # post-multipl.; should give B**A
 
-print "---- eliminate -----" 
+print "---- eliminate -----"
 eval eliminate(vec(I(3)))
 
-print "---- duplicate -----" 
+print "---- duplicate -----"
 eval duplicate(vech(I(3)))
 
-print "---- scores2x2 -----"## 
+print "---- scores2x2 -----"##
 eval scores2x2({24, 4; 12, 9})
 
-print "---- WSRpvalue -----" 
+print "---- WSRpvalue -----"
 print "============================="
 print "Some examples for WSRpvalue()"
 loop N=11..14 -q            # loop over n
@@ -51,16 +51,16 @@ loop N=11..14 -q            # loop over n
     printf "n=$N, W=$i\n"
     printf "try exact: %g, approx: %g\n", WSRpvalue(N, i), WSRpvalue(N, i, 1)
   endloop
-      
+
   Wmax = N * (N + 1) / 2
-  loop i = (Wmax - 7)..(Wmax - 6) -q 
+  loop i = (Wmax - 7)..(Wmax - 6) -q
     printf "n=$N, W=$i\n"
     printf "try exact: %g, approx: %g\n", WSRpvalue(N, i), WSRpvalue(N, i, 1)
   endloop
-      
-endloop 
 
-print "---- WSRcritical -----"  
+endloop
+
+print "---- WSRcritical -----"
 print "----------------------------------------"
 print "Some examples for WSRcritical()"
 loop N=11..13 -q            # loop over n
@@ -68,22 +68,22 @@ loop N=11..13 -q            # loop over n
   loop i=3..4 -q        # loop over W
     printf "n = $N, Pr = %g\n", i/100
     printf "try exact:"
-    eval WSRcritical(N, i/100)' 
+    eval WSRcritical(N, i/100)'
     printf "approx:"
-    eval WSRcritical(N, i/100, 1)' 
+    eval WSRcritical(N, i/100, 1)'
   endloop
 endloop
 
-print "---- powerset -----"   
-strings pp =  powerset(defarray("a", "b", "c", "x", "y", "z"))  
+print "---- powerset -----"
+strings pp =  powerset(defarray("a", "b", "c", "x", "y", "z"))
 loop i=1..nelem(pp) -q
   eval pp[i]
 endloop
 
-print "---- onemode -----"   
+print "---- onemode -----"
 eval onemode({1,2,3,1,1,2})
 
-print "---- drill -----"  
+print "---- drill -----"
 matrix A = mshape(seq(1,9),3,3)
 matrix B = A
 matrices x = defarray(A, B)
@@ -93,20 +93,10 @@ eval drill(x, 2, 1)			# one row & one column
 eval drill(x, {1,3}, 2)		# multiple rows
 eval drill(x, 2, {1,3})		# multiple columns
 
-print "---- splitfname -----"  ## 
+print "---- splitfname -----"  ##
 eval splitfname(sprintf("\\do\\.you\\believe.input"))
 
-print "---- bwritejson -----"  ## 
-bundle bin = defbundle("a", "heyho", "b", $pi, \
-"mm", mnormal(5,2), "m2", ones(1,3))
-bin.mm[2,2] = NA	# try a missing/non-ok value
-
-eval bwritejson(bin, "out.json", 1)
-string strtemp = ""
-eval bwritejson(bin, , , &strtemp)
-print strtemp
-
-print "---- multi_instrings -----"  ## 
+print "---- multi_instrings -----"  ##
 strings AA = defarray("an","apple","and","an","egg")
 strings BB = defarray("an","dog","egg")
 eval multi_instrings(AA, BB)
@@ -115,18 +105,18 @@ eval multi_instrings(AA, BB)
 
 open denmark	# get some data
 
-print "---- gap_filler -----"  # 
+print "---- gap_filler -----"  #
 series play = LRM
 play[10] = NA	# insert missing
 series playout = gap_filler(play, 2)
 print playout
 
-print "---- winsor -----"  # 
+print "---- winsor -----"  #
 series winDM = winsor(ldiff(LRM))
 series winDM_asy = winsor(ldiff(LRM), 0.01, 0.8)
 print winDM_asy
 
-print "---- correspondence -----"  ## 
+print "---- correspondence -----"  ##
 
 x = $obsminor == 4
 C = seasonals(1,1)
@@ -137,3 +127,14 @@ print "---- fracorder ------"
 open djclose.gdt --quiet	# need longer data here
 matrix M = fracorder(ldiff(djclose), 20)
 print M
+
+print "---- mat2list ------"
+
+nulldata 20
+matrix M = mnormal($nobs, 2)
+list X = mat2list(M)
+matrix M = muniform($nobs, 3)
+cnameset(M, defarray("foo", "bar", "baz"))
+list X = mat2list(M)
+
+print --byobs

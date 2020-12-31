@@ -61,7 +61,7 @@ foreign language=Octave
    gretl_export(gmat, "octave.mat")
 end foreign
 
-matric chk = mread("octave.mat", 1)
+matrix chk = mread("octave.mat", 1)
 eval maxr(maxc(abs(m - chk)))
 \end{code}
 
@@ -148,13 +148,15 @@ In the script this is sent to the screen; Figure~\ref{fig:coherence}
 shows the same graph in PDF format.
 
 \begin{script}[htbp]
-  \caption{Estimation of spectral coherence via \app{Octave}}
+  \scriptcaption{Estimation of spectral coherence via \app{Octave}}
+  \label{Octave-coher}
 \begin{scode}
 open data9-7
 matrix xy = { PRIME, UNEMP }
 mwrite(xy, "xy.mat", 1)
 
 foreign language=Octave
+ pkg load signal
  # uncomment and modify the following if necessary
  # addpath("~/stats/octave/forni");
  xy = gretl_loadmat("xy.mat");
@@ -169,7 +171,6 @@ h = mread("h.mat", 1)
 cnameset(h, "coherence")
 gnuplot 1 --time-series --with-lines --matrix=h --output=display
 \end{scode}
-\label{Octave-coher}
 \end{script}
 
 \begin{figure}[htbp]

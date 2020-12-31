@@ -1,229 +1,128 @@
 set warnings off
 set verbose off
+set assert stop
 clear
 
 include "../extra.inp" --force
-# This won't work with the package extra.gfn, as it uses private functions.
-# So you need to run extra.inp manually to have all the functions available,
-# or even _better_: just run the shell script "run_tests.sh"
+include assertion.gfn
 
 
-string MISSCODE = "NaN"
+function void test_splitfname (void)
+  print "Start with splitfname()"
 
-print "Start with bundle2json()"
-bundle bin = null
-scalar bin.scalar_1 = 2.4
-scalar bin.scalar_2 = -3.9
-scalar bin.int_1 = 0
-scalar bin.int_2 = -3
-scalar bin.int_3 = 2
-#scalar bin.int_4 = NA		# causes trouble as json-glib does not handle a non-string NaN
-string sout = bundle2json(bin, MISSCODE)
-if strlen(sout) == 0
-    stop
-endif
-if instring(sout, "int_1") != 1 || instring(sout, "int_2") != 1 || \
-      instring(sout, "int_3") != 1 || \
-      instring(sout, "scalar_1") != 1 || instring(sout, "scalar_2") != 1
-    #instring(sout, "int_4") != 1 ||
-    stop
-endif
+  strings S = splitfname("/what/on/earth/isthisfile.gdt")
+
+  assert(nelem(S) == 3)
+
+  assert(S[1] == "/what/on/earth")
+  assert(S[2] == "isthisfile")
+  assert(S[3] == "gdt")
+end function
+test_splitfname()
 
 
-print "Start with bundle2json() with numeric and string values"
-bundle bin = null
-scalar bin.scalar_1 = 2.4
-scalar bin.int_1 = -3
-string bin.str_1 = "foo"
-string bin.str_2 = "_foo"
-string bin.str_3 = ""
-string bin.str_4 = " "
-string sout = bundle2json(bin, MISSCODE)
-if strlen(sout) == 0
-    stop
-endif
-if instring(sout, "int_1") != 1 || instring(sout, "scalar_1") != 1 || \
-      instring(sout, "str_1") != 1 || instring(sout, "str_2") != 1 || \
-      instring(sout, "str_3") != 1 || instring(sout, "str_4") != 1
-    stop
-endif
-if atof(jsonget(sout, "$.int_1")) != -3 || atof(jsonget(sout, "$.scalar_1")) != 2.4 || \
-      jsonget(sout, "$.str_1") != "foo" || jsonget(sout, "$.str_2") != "_foo" || \
-      jsonget(sout, "$.str_3") != "" || jsonget(sout, "$.str_4") != " "
-    stop
-endif
+function void test_splitfname_spec_chars (void)
+  print "Start with splitfname() + special chars"
+
+  strings S = splitfname("../what/on_=65/earth/is_this-file.gdt")
+
+  assert(nelem(S) == 3)
+
+  assert(S[1] == "../what/on_=65/earth")
+  assert(S[2] == "is_this-file")
+  assert(S[3] == "gdt")
+end function
+test_splitfname_spec_chars()
 
 
-# FIXME: It seems that gretl (or rather json-glib) does not handle list-of-lists
-# as matrices or series as gretl would do. hence, trying to read arrays for testing
-# via jsonget() or jsongetb() is currently tricky
+function void test_splitfname_wo_file_ext (void)
+  print "Start with splitfname() + special chars w/o file extension"
 
-print "Start with bundle2json() with series"
-nulldata 4 -p
-series ser_1 = seq(1,4)'
-series ser_2 = NA
+  strings S = splitfname("../what/on_=65/earth/is_this-file")
 
-bundle bin = null
-scalar bin.scalar_1 = 2.4
-scalar bin.int_1 = -3
-string bin.str_1 = "foo"
-string bin.str_2 = "_foo"
-series bin.ser_1 = ser_1
-series bin.ser_2 = ser_2
-string sout = bundle2json(bin, MISSCODE)
-if strlen(sout) == 0
-    stop
-endif
-if instring(sout, "int_1") != 1 || instring(sout, "scalar_1") != 1 || \
-      instring(sout, "str_1") != 1 || instring(sout, "str_2") != 1 || \
-      instring(sout, "ser_1") != 1 || instring(sout, "ser_2") != 1
-    stop
-endif
-if atof(jsonget(sout, "$.int_1")) != -3 || atof(jsonget(sout, "$.scalar_1")) != 2.4 || \
-      jsonget(sout, "$.str_1") != "foo" || jsonget(sout, "$.str_2") != "_foo"
-    stop
-endif
+  assert(nelem(S) == 3)
+
+  assert(S[1] == "../what/on_=65/earth")
+  assert(S[2] == "is_this-file")
+  assert(S[3] == "")
+
+end function
+test_splitfname_wo_file_ext()
 
 
-print "Start with bundle2json() with matrix instead of series"
-bundle bin = null
-scalar bin.scalar_1 = 2.4
-scalar bin.int_1 = -3
-string bin.str_1 = "foo"
-string bin.str_2 = "_foo"
-matrix bin.mat_1 = mshape(seq(1,4),2,2)
-matrix bin.mat_2 = {}
-string sout = bundle2json(bin, MISSCODE)
-if strlen(sout) == 0
-    stop
-endif
-if instring(sout, "int_1") != 1 || instring(sout, "scalar_1") != 1 || \
-      instring(sout, "str_1") != 1 || instring(sout, "str_2") != 1 || \
-      instring(sout, "mat_1") != 1 || instring(sout, "mat_2") != 1
-    stop
-endif
-if atof(jsonget(sout, "$.int_1")) != -3 || atof(jsonget(sout, "$.scalar_1")) != 2.4 || \
-      jsonget(sout, "$.str_1") != "foo" || jsonget(sout, "$.str_2") != "_foo"
-    stop
-endif
+function void test_splitfname_wo_dir_file_ext (void)
+  print "Start with splitfname() + special chars w/o dir and file extension"
+
+  strings S = splitfname("is_this-file=67?")
+
+  assert(nelem(S) == 3)
+
+  assert(S[1] == "")
+  assert(S[2] == "is_this-file=67?")
+  assert(S[3] == "")
+end function
+test_splitfname_wo_dir_file_ext()
 
 
+function void test_splitfname_dir_file_ext (void)
+  print "Start with splitfname() + special chars w/o filename and file extension"
+  strings S = splitfname("../what/on_=65/earth/")
+
+  assert(nelem(S) == 3)
+
+  assert(S[1] == "../what/on_=65/earth")
+  assert(S[2] == "")
+  assert(S[3] == "")
+end function
+test_splitfname_dir_file_ext()
 
 
-print "Start with bwritejson()"
-/*
-   bwritejson(const bundle b, string fname[null],
-   bool export[0],
-   string *jsonresult[null],
-   string misscode[null])
-*/
-bundle bin = null
-scalar bin.scalar_1 = 2.4
-scalar bin.int_1 = -3
-string bin.str_1 = "foo"
-string bin.str_2 = "_foo"
-matrix bin.mat_1 = mshape(seq(1,4),2,2)
-matrix bin.mat_2 = {}
+function void test_onemode (void)
+  print "Start testing onemode()."
 
-print "bwritejson() and write to external json-file"
-string fname = "foo.json"
+  matrix m = seq(1,5)
+  assert(onemode(m) == 4)
 
-if bwritejson(bin, fname) != 0
-    stop
-endif
-string json = readfile("@fname")
-if instring(json, "mat_1") != 1 || instring(json, "mat_2") != 1 || \
-  instring(json, "str_1") != 1 || instring(json, "str_2") != 1 || \
-  instring(json, "int_1") != 1 || instring(json, "scalar_1") != 1
-    stop
-endif
-if instring(json, "[[1,3],\n[2,4]]") != 1 || instring(json, "[[]],") != 1 || \
-  instring(json, "foo") != 1 || instring(json, "_foo") != 1 || \
-  instring(json, "-3") != 1 || instring(json, "2.4") != 1
-    stop
-endif
+  matrix m = seq(1,5) ~ NA
+  assert(onemode(m) == 4)
 
-print "bwritejson() and write to external json-file but fname is invalid"
-delete fname
-catch bwritejson(bin)
-if $error != 47
-    stop
-endif
+  matrix m = {1, 2, 3, 2}
+  assert(onemode(m) == 2)
+
+  matrix m = {1, 2, 3, 2, 3}
+  assert(onemode(m) == 3)     # Why 3? Expected?
+
+  matrix m = {1, 3, 2, 3, 2}
+  assert(onemode(m) == 2)     # Why 2? Expected?
+
+  matrix m = {NA, NA}
+  assert(sum(ok(onemode(m))) == 0)
+end function
 
 
-print "bwritejson() and copy to string variable"
-string json = ""
-if bwritejson(bin, , , &json) != 0
-    stop
-endif
-if instring(json, "mat_1") != 1 || instring(json, "mat_2") != 1 || \
-  instring(json, "str_1") != 1 || instring(json, "str_2") != 1 || \
-  instring(json, "int_1") != 1 || instring(json, "scalar_1") != 1
-    stop
-endif
-if instring(json, "[[1,3],\n[2,4]]") != 1 || instring(json, "[[]],") != 1 || \
-  instring(json, "foo") != 1 || instring(json, "_foo") != 1 || \
-  instring(json, "-3") != 1 || instring(json, "2.4") != 1
-    stop
-endif
+set seed 12345
+function void test_truncnorm (void)
+  print "Start testing truncnorm()."
+
+  matrix m = truncnorm(5, 1, 5, 0.1, 1.5)
+
+  assert_almost_equal_num(m[1], 0.69278, 1e-5)
+  assert_almost_equal_num(m[2], 1.4910, 1e-4)
+  assert_almost_equal_num(m[3], 0.13854, 1e-5)
+  assert_almost_equal_num(m[4], 0.81192, 1e-5)
+  assert_almost_equal_num(m[5], 0.54419, 1e-5)
 
 
+  matrix m = truncnorm(5, 1, 5, NA, NA)
 
-print "Start with splitfname()"
-string fn = "/what/on/earth/isthisfile.gdt"
-strings S = splitfname(fn)
-if nelem(S) != 3
-    stop
-endif
-if S[1] != "/what/on/earth" || S[2] != "isthisfile" || S[3] != "gdt"
-    stop
-endif
-
-print "Start with splitfname() + special chars"
-string fn = "../what/on_=65/earth/is_this-file.gdt"
-strings S = splitfname(fn)
-if nelem(S) != 3
-    stop
-endif
-if S[1] != "../what/on_=65/earth" || S[2] != "is_this-file" || S[3] != "gdt"
-    stop
-endif
-
-
-print "Start with splitfname() + special chars w/o file extension"
-string fn = "../what/on_=65/earth/is_this-file"
-strings S = splitfname(fn)
-if nelem(S) != 3
-    stop
-endif
-if S[1] != "../what/on_=65/earth" || S[2] != "is_this-file" || S[3] != ""
-    stop
-endif
-    
-print "Start with splitfname() + special chars w/o dir and file extension"
-string fn = "is_this-file=67?"
-strings S = splitfname(fn)
-if nelem(S) != 3
-    stop
-endif
-if S[1] != "" || S[2] != "is_this-file=67?" || S[3] != ""
-    stop
-endif
-
-print "Start with splitfname() + special chars w/o filename and file extension"
-string fn = "../what/on_=65/earth/"
-strings S = splitfname(fn)
-if nelem(S) != 3
-    stop
-endif
-if S[1] != "../what/on_=65/earth" || S[2] != "" || S[3] != ""
-    stop
-endif
-
+  assert_almost_equal_num(m[1], -6.4419, 1e-4)
+  assert_almost_equal_num(m[2], 5.7794, 1e-4)
+  assert_almost_equal_num(m[3], -4.5460, 1e-4)
+  assert_almost_equal_num(m[4], -0.79578, 1e-5)
+  assert_almost_equal_num(m[5], 5.4342, 1e-4)
+end function
+test_truncnorm()
 
 
 
 printf "\nInfo: All tests passed.\n"
-
-
-

@@ -21,16 +21,19 @@
 #include "libset.h"
 #include "gretl_func.h"
 #include "uservar.h"
+#include "gretl_array.h"
 #include "gretl_string_table.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
 
+#include <errno.h>
 #include <glib.h>
 
 enum {
     ST_QUOTED  = 1 << 0,
-    ST_ALLINTS = 1 << 1
+    ST_ALLINTS = 1 << 1,
+    ST_ALLDBLS = 1 << 2
 };
 
 struct _series_table {
@@ -48,6 +51,8 @@ struct _gretl_string_table {
 
 #define st_quoted(t) (t->flags & ST_QUOTED)
 #define all_ints(t)  (t->flags & ST_ALLINTS)
+#define all_dbls(t)  (t->flags & ST_ALLDBLS)
+#define all_num(t)   (t->flags & (ST_ALLINTS | ST_ALLDBLS))
 
 static series_table *series_table_alloc (void)
 {
@@ -311,17 +316,24 @@ int series_table_add_string (series_table *st, const char *s)
     return n;
 }
 
-series_table *series_table_new (char **strs, int n_strs)
+series_table *series_table_new (char **strs, int n_strs, int *err)
 {
     series_table *st = series_table_alloc();
     int i;
 
-    if (st != NULL) {
+    if (st == NULL) {
+	*err = E_ALLOC;
+    } else {
 	st->n_strs = n_strs;
 	st->strs = strs;
 	for (i=0; i<n_strs; i++) {
-	    g_hash_table_insert(st->ht, (gpointer) st->strs[i],
-				GINT_TO_POINTER(i+1));
+	    if (st->strs[i] == NULL) {
+		fprintf(stderr, "series_table_new: str %d is NULL\n", i);
+		*err = E_DATA;
+	    } else {
+		g_hash_table_insert(st->ht, (gpointer) st->strs[i],
+				    GINT_TO_POINTER(i+1));
+	    }
 	}
     }
 
@@ -485,10 +497,15 @@ series_table *gretl_string_table_detach_col (gretl_string_table *gst,
 
     if (gst != NULL) {
 	int pos = in_gretl_list(gst->cols_list, col);
+	int i, n = gst->cols_list[0];
 
 	if (pos > 0) {
 	    st = gst->cols[pos-1];
-	    gst->cols[pos-1] = NULL;
+	    for (i=pos-1; i<n-1; i++) {
+		gst->cols[i] = gst->cols[i+1];
+	    }
+	    gst->cols[n-1] = NULL;
+	    gretl_list_delete_at_pos(gst->cols_list, pos);
 	}
     }
 
@@ -511,6 +528,18 @@ int *string_table_copy_list (gretl_string_table *gst)
     } else {
 	return NULL;
     }
+}
+
+int string_table_replace_list (gretl_string_table *gst,
+			       int *newlist)
+{
+    if (gst != NULL) {
+	/* FIXME pruning? */
+	free(gst->cols_list);
+	gst->cols_list = newlist;
+    }
+
+    return E_DATA;
 }
 
 /**
@@ -563,7 +592,8 @@ void gretl_string_table_destroy (gretl_string_table *gst)
 /* Given a series_table in which all the strings are just
    representations of integers, write the integer values
    into the series and destroy the table, while marking
-   the series as "coded."
+   the series as "coded". Or, if all the strings are valid
+   doubles, convert to numeric.
 */
 
 static void series_commute_string_table (DATASET *dset, int i,
@@ -578,14 +608,22 @@ static void series_commute_string_table (DATASET *dset, int i,
 	    val = dset->Z[i][t];
 	    if (!na(val)) {
 		s = series_table_get_string(st, val);
-		dset->Z[i][t] = (double) atoi(s);
+		if (all_ints(st)) {
+		    dset->Z[i][t] = (double) atoi(s);
+		} else {
+		    dset->Z[i][t] = atof(s);
+		}
 	    }
 	}
-	series_table_destroy(st);
-	series_set_flag(dset, i, VAR_DISCRETE);
-	if (!gretl_isdummy(0, dset->n - 1, dset->Z[i])) {
-	    series_set_flag(dset, i, VAR_CODED);
+	if (all_ints(st)) {
+	    series_set_flag(dset, i, VAR_DISCRETE);
+	    if (!gretl_isdummy(0, dset->n - 1, dset->Z[i])) {
+		series_set_flag(dset, i, VAR_CODED);
+	    }
+	} else {
+	    series_unset_flag(dset, i, VAR_DISCRETE);
 	}
+	series_table_destroy(st);
     }
 }
 
@@ -596,8 +634,12 @@ static void series_commute_string_table (DATASET *dset, int i,
  * @fname: name of the datafile to which the table pertains.
  * @prn: gretl printer (or %NULL).
  *
- * Prints table @gst to a file named string_table.txt in the
- * user's working directory.
+ * In basic usage, prints table @gst to string_table.txt in
+ * the user's working directory. However, if one or more of
+ * the series referenced by @gst are deemed to be integer codes
+ * or misclassified numeric data, their "series tables" are
+ * commuted into numeric form. If all series are handled in
+ * this way, the string_table is not printed.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -623,13 +665,12 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     /* first examine the string table for numeric codings */
     for (i=0; i<ncols; i++) {
 	st = gst->cols[i];
-	if (st == NULL || all_ints(st)) {
+	if (st == NULL || all_num(st)) {
 	    n_strvars--;
 	}
     }
 
     if (n_strvars > 0) {
-	/* FIXME print something about coded integer series */
 	strcpy(stname, "string_table.txt");
 	gretl_path_prepend(stname, gretl_workdir());
 
@@ -658,7 +699,7 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	int vi = gst->cols_list[i+1];
 
 	st = gst->cols[i];
-	if (fp != NULL && !all_ints(st)) {
+	if (fp != NULL && st != NULL && !all_num(st)) {
 	    if (i > 0) {
 		fputc('\n', fp);
 	    }
@@ -669,7 +710,8 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 	    }
 	}
 	if (dset->varinfo != NULL) {
-	    if (all_ints(st)) {
+	    if (all_num(st)) {
+		pputs(prn, "commuting series table\n");
 		series_commute_string_table(dset, vi, st);
 	    } else {
 		series_attach_string_table(dset, vi, st);
@@ -690,21 +732,39 @@ int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
     return err;
 }
 
+static int string_is_double (const char *s)
+{
+    char *test;
+
+    errno = 0;
+    strtod(s, &test);
+    return errno == 0 && *test == '\0';
+}
+
 /**
  * gretl_string_table_validate:
  * @gst: gretl string table.
+ * @opt: may include OPT_S to indicate that the string
+ * table was constructed from a spreadsheet file, in which
+ * case certain cells may be explicitly marked as holding
+ * strings, which information may be not be reliable.
  *
  * Checks that the "string values" in @gst are not in fact
  * undigested quasi-numerical values. We run this on
- * imported "CSV" data to ensure we don't produce
- * misleading results.
+ * imported CSV data to ensure we don't produce
+ * misleading results. In the spreadsheet case we're on
+ * the lookout for purely numerical data wrongly identified
+ * as strings; we don't treat that as fatal but mark the
+ * series table(s) for conversion to numeric.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_string_table_validate (gretl_string_table *gst)
+int gretl_string_table_validate (gretl_string_table *gst,
+				 gretlopt opt)
 {
     const char *test = "0123456789.,";
+    int ssheet = (opt & OPT_S);
     int i, ncols = 0;
     int err = 0;
 
@@ -716,6 +776,7 @@ int gretl_string_table_validate (gretl_string_table *gst)
 	series_table *st = gst->cols[i];
 	const char *s;
 	int nint = 0;
+	int ndbl = 0;
 	int j, myerr = E_DATA;
 
 	if (st_quoted(st)) {
@@ -729,8 +790,12 @@ int gretl_string_table_validate (gretl_string_table *gst)
 		    nint++;
 		}
 	    } else {
-		/* field is not quoted */
-		if (*s == '-' || *s == '+') {
+		/* not quoted */
+		if (ssheet && (*s == '\0' || string_is_double(s))) {
+		    /* could really be numeric? (2020-12-25) */
+		    ndbl++;
+		    continue;
+		} else if (*s == '-' || *s == '+') {
 		    s++;
 		}
 		if (strspn(s, test) < strlen(s)) {
@@ -742,7 +807,12 @@ int gretl_string_table_validate (gretl_string_table *gst)
 	}
 
 	if (nint == st->n_strs) {
+	    /* treat as integer codes */
 	    st->flags |= ST_ALLINTS;
+	} else if (ndbl == st->n_strs) {
+	    /* all really numeric */
+	    st->flags |= ST_ALLDBLS;
+	    myerr = 0;
 	}
 
 	if (myerr) {
@@ -1042,6 +1112,41 @@ char *retrieve_date_string (int t, const DATASET *dset, int *err)
     return ret;
 }
 
+/* returns a gretl_array of strings on success */
+
+void *retrieve_date_strings (const gretl_vector *v,
+			     const DATASET *dset,
+			     int *err)
+{
+    gretl_array *ret = NULL;
+    char *s = NULL;
+    int i, t, n;
+
+    n = gretl_vector_get_length(v);
+    if (n == 0) {
+	*err = E_INVARG;
+    } else {
+	ret = gretl_array_new(GRETL_TYPE_STRINGS, n, err);
+    }
+
+    for (i=0; i<n && !*err; i++) {
+	t = gretl_int_from_double(v->val[i], err);
+	if (!*err) {
+	    s = retrieve_date_string(t, dset, err);
+	}
+	if (!*err) {
+	    gretl_array_set_data(ret, i, s);
+	}
+    }
+
+    if (*err && ret != NULL) {
+	gretl_array_destroy(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 static int is_web_resource (const char *s)
 {
     if (!strncmp(s, "http://", 7) ||
@@ -1051,6 +1156,77 @@ static int is_web_resource (const char *s)
     } else {
 	return 0;
     }
+}
+
+static gchar *gzipped_file_get_content (const char *fname,
+					int *err)
+{
+    gzFile fz = gretl_gzopen(fname, "rb");
+    gchar *ret = NULL;
+
+    if (fz == NULL) {
+	*err = E_FOPEN;
+    } else {
+	size_t len = 0;
+	int chk;
+
+	while (gzgetc(fz) > 0) {
+	    len++;
+	}
+	if (len > 0) {
+	    gzrewind(fz);
+	    ret = g_try_malloc(len + 1);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		chk = gzread(fz, ret, len);
+		if (chk <= 0) {
+		    *err = E_DATA;
+		}
+		ret[len] = '\0';
+	    }
+	} else {
+	    ret = g_strdup("");
+	}
+	gzclose(fz);
+    }
+
+    return ret;
+}
+
+static gchar *regular_file_get_content (const char *fname,
+					int *err)
+{
+    GError *gerr = NULL;
+    gchar *ret = NULL;
+    size_t len = 0;
+    int done = 0;
+
+#ifdef WIN32
+    /* g_file_get_contents() requires a UTF-8 filename */
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gchar *fconv;
+	gsize wrote = 0;
+
+	fconv = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
+	if (fconv != NULL) {
+	    g_file_get_contents(fconv, &ret, &len, &gerr);
+	    g_free(fconv);
+	}
+	done = 1;
+    }
+#endif
+    if (!done) {
+	g_file_get_contents(fname, &ret, &len, &gerr);
+    }
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	*err = E_FOPEN;
+	g_error_free(gerr);
+    }
+
+    return ret;
 }
 
 char *retrieve_file_content (const char *fname, const char *codeset,
@@ -1069,35 +1245,14 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	*err = E_DATA;
 #endif
     } else {
-	char fullname[FILENAME_MAX];
-	GError *gerr = NULL;
-	int done = 0;
+	char fullname[FILENAME_MAX] = {0};
 
-	*fullname = '\0';
 	strncat(fullname, fname, FILENAME_MAX - 1);
 	gretl_addpath(fullname, 0);
-#ifdef WIN32
-	/* g_file_get_contents() requires a UTF-8 filename */
-	if (!g_utf8_validate(fullname, -1, NULL)) {
-	    gchar *conv;
-	    gsize wrote = 0;
-
-	    conv = g_locale_to_utf8(fullname, -1, NULL, &wrote, &gerr);
-	    if (conv != NULL) {
-		g_file_get_contents(conv, &content, &len, &gerr);
-		g_free(conv);
-	    }
-	    done = 1;
-	}
-#endif
-	if (!done) {
-	    g_file_get_contents(fullname, &content, &len, &gerr);
-	}
-
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    *err = E_FOPEN;
-	    g_error_free(gerr);
+	if (is_gzipped(fullname)) {
+	    content = gzipped_file_get_content(fullname, err);
+	} else {
+	    content = regular_file_get_content(fullname, err);
 	}
     }
 

@@ -41,6 +41,8 @@ int osx_open_pdf (const char *path, const char *dest);
 
 typedef struct _selector selector;
 
+void gui_exec_callback_init (void);
+
 void library_command_init (void);
 
 void library_command_free (void);

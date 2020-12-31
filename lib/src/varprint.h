@@ -25,11 +25,6 @@ int gretl_VAR_print_sigma (const GRETL_VAR *var, PRN *prn);
 int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		     PRN *prn);
 
-int 
-gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
-				  int periods, const DATASET *dset, 
-				  PRN *prn);
-
 int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATASET *dset, 
 				       int horizon, PRN *prn);
 

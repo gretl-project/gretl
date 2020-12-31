@@ -926,7 +926,7 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
 	       name to @fname */
 	    maybe_move_plot_datafile(fname, fullname, &has_datafile);
 	    gretl_remove(fname);
-	    strcpy(fname, fullname); /* was @shortname */
+	    strcpy(fname, fullname);
 	}
     }
 
@@ -1429,7 +1429,7 @@ gboolean do_open_session (void)
     /* close existing session, if any, and initialize */
     close_session(OPT_NONE);
 
-    fprintf(stderr, I_("\nReading session file %s\n"), tryname);
+    fprintf(stderr, "\nReading session file %s\n", tryname);
 
     /* we're about to change directory: if tryfile is not
        an absolute path we'll lose track of it
@@ -2528,6 +2528,9 @@ static void maybe_delete_session_object (gui_obj *obj)
 
 	    session_file_make_path(fullname, graph->fname);
 	    busywin = vwin_toplevel(get_editor_for_file(fullname));
+	    if (busywin == NULL) {
+		busywin = get_viewer_for_plot(fullname);
+	    }
 	}
     } else {
 	gpointer p = NULL;

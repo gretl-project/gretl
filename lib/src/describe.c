@@ -36,8 +36,6 @@
 
 #include <glib.h>
 
-#define USE_ORIG_XTAB 0 /* testing wanted */
-
 /**
  * SECTION:describe
  * @short_description: descriptive statistics plus some tests
@@ -304,15 +302,15 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 }
 
 /*
-   For an array a with n elements, find the element which would be a[k]
+   For an array a with n elements, find the element which would be a[h]
    if the array were sorted from smallest to largest (without the need
    to do a full sort).  The algorithm is due to C. A. R. Hoare; the C
    implementation is shamelessly copied, with minor adaptations, from
    http://www.astro.northwestern.edu/~ato/um/programming/sorting.html
-   (Atakan G\"urkan).
+   (Atakan G\"urkan: link now dead).
 */
 
-static double find_hoare (double *a, int n, int k)
+static double find_hoare (double *a, int n, int h)
 {
     double w, x;
     int l = 0;
@@ -320,7 +318,7 @@ static double find_hoare (double *a, int n, int k)
     int i, j;
 
     while (l < r) {
-	x = a[k];
+	x = a[h];
 	i = l;
 	j = r;
 	while (j >= i) {
@@ -332,34 +330,34 @@ static double find_hoare (double *a, int n, int k)
 		a[j--] = w;
 	    }
 	}
-	if (j < k) l = i;
-	if (k < i) r = j;
+	if (j < h) l = i;
+	if (h < i) r = j;
     }
 
-    return a[k];
+    return a[h];
 }
 
 static double find_hoare_inexact (double *a, double p,
 				  double xmin, double xmax,
 				  double frac, int n,
-				  int nl, int nh)
+				  int hf, int hc)
 {
     double tmp, high, low;
     int i;
 
     if (p < 0.5) {
-	high = find_hoare(a, n, nh);
+	high = find_hoare(a, n, hc);
 	tmp = xmin;
-	for (i=0; i<nh; i++) {
+	for (i=0; i<hc; i++) {
 	    if (a[i] > tmp) {
 		tmp = a[i];
 	    }
 	}
 	low = tmp;
     } else {
-	low = find_hoare(a, n, nl);
+	low = find_hoare(a, n, hf);
 	tmp = xmax;
-	for (i=nh; i<n; i++) {
+	for (i=hc; i<n; i++) {
 	    if (a[i] < tmp) {
 		tmp = a[i];
 	    }
@@ -368,6 +366,32 @@ static double find_hoare_inexact (double *a, double p,
     }
 
     return low + frac * (high - low);
+}
+
+/* See https://en.wikipedia.org/wiki/Quantile, also
+   Hyndman and Fan, "Sample Quantiles in Statistical
+   Packages" (The American Statistician, 1996).
+   Return the "index" of the @p-quantile for a sample
+   of size @n (which may not be an integer).
+*/
+
+static double quantile_index (int n, double p)
+{
+    int Qtype = libset_get_int(QUANTILE_TYPE);
+    double h;
+
+    if (Qtype == 0) {
+	/* \hat{Q}_6 */
+	h = (n + 1) * p;
+    } else if (Qtype == 1) {
+	/* \hat{Q}_7 */
+	h = (n - 1) * p + 1;
+    } else {
+	/* \hat{Q}_8 */
+	h = (n + 1.0/3) * p + 1.0/3;
+    }
+
+    return h - 1; /* 0-based */
 }
 
 /**
@@ -390,40 +414,43 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 {
     double *a = NULL;
     double xmin, xmax;
-    double N, ret;
-    int nl, nh;
+    double h, ret;
+    int hf, hc;
     int t, n = 0;
+
+    if (*err) {
+	/* don't compound a prior error */
+	return NADBL;
+    }
 
     if (p <= 0 || p >= 1) {
 	/* sanity check */
 	*err = E_DATA;
-	return NADBL;
-    }
-
-    n = gretl_minmax(t1, t2, x, &xmin, &xmax);
-    if (n == 0) {
-	*err = E_DATA;
-	return NADBL;
-    }
-
-    N = (n + 1) * p - 1;
-    nl = floor(N);
-    nh = ceil(N);
-
-    if (nh == 0 || nh == n) {
-	/* too few usable observations for such an extreme
-	   quantile */
-	*err = E_DATA;
-	if (!(opt & OPT_Q)) {
-	    fprintf(stderr, "n = %d: not enough data for %g quantile\n",
-		    n, p);
+    } else {
+	n = gretl_minmax(t1, t2, x, &xmin, &xmax);
+	if (n == 0) {
+	    *err = E_DATA;
 	}
-	return NADBL;
     }
 
-    a = malloc(n * sizeof *a);
-    if (a == NULL) {
-	*err = E_ALLOC;
+    if (!*err) {
+	h = quantile_index(n, p);
+	hf = floor(h);
+	hc = ceil(h);
+
+	if (hc == 0 || hc == n) {
+	    /* too few usable observations for the specified
+	       quantile; don't treat as fatal error */
+	    return NADBL;
+	} else {
+	    a = malloc(n * sizeof *a);
+	    if (a == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+
+    if (*err) {
 	return NADBL;
     }
 
@@ -434,17 +461,12 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
 	}
     }
 
-#if 0
-    fprintf(stderr, "\tp = %12.10f, n = %d, N = %12.10f, nl = %d, nh = %d\n",
-	    p, n, N, nl, nh);
-#endif
-
-    if (nl == nh) {
+    if (hf == hc) {
 	/* "exact" */
-	ret = find_hoare(a, n, nl);
+	ret = find_hoare(a, n, hf);
     } else {
-	ret = find_hoare_inexact(a, p, xmin, xmax, N - nl,
-				 n, nl, nh);
+	ret = find_hoare_inexact(a, p, xmin, xmax, h - hf,
+				 n, hf, hc);
     }
 
     free(a);
@@ -461,15 +483,15 @@ double gretl_quantile (int t1, int t2, const double *x, double p,
  *
  * Computes @k quantiles (given by the elements of @p) for the
  * first n elements of the array @a, which is re-ordered in
- * the process.  On successful exit, @p contains the quantiles.
+ * the process. On successful exit, @p contains the quantiles.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
 int gretl_array_quantiles (double *a, int n, double *p, int k)
 {
-    double N, xmin = 0, xmax = NADBL;
-    int nl, nh, i;
+    double h, xmin = 0, xmax = NADBL;
+    int hf, hc, i;
     int err = 0;
 
     if (n <= 0 || k <= 0) {
@@ -483,20 +505,20 @@ int gretl_array_quantiles (double *a, int n, double *p, int k)
 	    continue;
 	}
 
-	N = (n + 1) * p[i] - 1;
-	nl = floor(N);
-	nh = ceil(N);
+	h = quantile_index(n, p[i]);
+	hf = floor(h);
+	hc = ceil(h);
 
-	if (nh == 0 || nh == n) {
+	if (hc == 0 || hc == n) {
 	    p[i] = NADBL;
-	} else if (nl == nh) {
-	    p[i] = find_hoare(a, n, nl);
+	} else if (hf == hc) {
+	    p[i] = find_hoare(a, n, hf);
 	} else {
 	    if (na(xmax)) {
 		gretl_minmax(0, n-1, a, &xmin, &xmax);
 	    }
-	    p[i] = find_hoare_inexact(a, p[i], xmin, xmax, N - nl,
-				      n, nl, nh);
+	    p[i] = find_hoare_inexact(a, p[i], xmin, xmax, h - hf,
+				      n, hf, hc);
 	}
     }
 
@@ -2716,131 +2738,6 @@ static Xtab *get_new_xtab (int rv, int cv, const DATASET *dset,
     return tab;
 }
 
-#if USE_ORIG_XTAB
-
-static Xtab *get_numeric_xtab (int rv, int cv, const DATASET *dset,
-			       int *err)
-{
-    FreqDist *rowfreq = NULL, *colfreq = NULL;
-    Xtab *tab = NULL;
-    double **X = NULL;
-    int ri = 0, cj = 0;
-    int rows, cols;
-    double xr = 0.0, xc = 0.0;
-    int t1 = dset->t1;
-    int t2 = dset->t2;
-    int i, t, n = 0;
-
-    /* count non-missing values */
-    for (t=t1; t<=t2; t++) {
-	if (complete_obs(dset->Z[rv], dset->Z[cv], t)) {
-	    n++;
-	}
-    }
-    if (n == 0) {
-	fprintf(stderr, "All values invalid!\n");
-	*err = E_MISSDATA;
-	return NULL;
-    }
-
-    tab = xtab_new(n, t1, t2);
-    if (tab == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    tab->missing = (t2 - t1 + 1) - n;
-    strcpy(tab->rvarname, dset->varname[rv]);
-    strcpy(tab->cvarname, dset->varname[cv]);
-
-    /* start allocating stuff; we use temporary FreqDists for rows
-       and columns to retrieve values with non-zero frequencies
-       and get dimensions for the cross table
-    */
-
-    X = doubles_array_new(n, 2);
-    if (X == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    rowfreq = get_freq(rv, dset, NADBL, NADBL, 0,
-		       0, OPT_D | OPT_X, err);
-    if (!*err) {
-	colfreq = get_freq(cv, dset, NADBL, NADBL, 0,
-			   0, OPT_D | OPT_X, err);
-    }
-    if (*err) {
-	goto bailout;
-    }
-
-    tab->rows = rows = rowfreq->numbins;
-    tab->cols = cols = colfreq->numbins;
-
-    if (xtab_allocate_arrays(tab)) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    for (i=0; i<rows; i++) {
-	tab->rval[i] = rowfreq->midpt[i];
-    }
-    for (i=0; i<cols; i++) {
-	tab->cval[i] = colfreq->midpt[i];
-    }
-
-    /* matrix X holds the values to be sorted */
-    i = 0;
-    for (t=t1; t<=t2 && i<n; t++) {
-	if (complete_obs(dset->Z[rv], dset->Z[cv], t)) {
-	    X[i][0] = dset->Z[rv][t];
-	    X[i][1] = dset->Z[cv][t];
-	    i++;
-	}
-    }
-
-    qsort(X, n, sizeof *X, compare_xtab_rows);
-    ri = cj = 0;
-    xr = tab->rval[0];
-    xc = tab->cval[0];
-
-    /* compute frequencies by going through sorted X */
-    for (i=0; i<n; i++) {
-	while (X[i][0] > xr) {
-	    /* skip row */
-	    xr = tab->rval[++ri];
-	    cj = 0;
-	    xc = tab->cval[0];
-	}
-	while (X[i][1] > xc) {
-	    /* skip column */
-	    xc = tab->cval[++cj];
-	}
-#if XTAB_DEBUG
-	fprintf(stderr,"%d: (%d,%d) [%g,%g] %g,%g\n",
-		i, ri, cj, xr, xc, X[i][0], X[i][1]);
-#endif
-	tab->f[ri][cj] += 1;
-	tab->rtotal[ri] += 1;
-	tab->ctotal[cj] += 1;
-    }
-
- bailout:
-
-    doubles_array_free(X, n);
-    free_freq(rowfreq);
-    free_freq(colfreq);
-
-    if (*err) {
-	free_xtab(tab);
-	tab = NULL;
-    }
-
-    return tab;
-}
-
-#endif /* USE_ORIG_XTAB */
-
 static void record_xtab (const Xtab *tab, const DATASET *dset,
 			 gretlopt opt)
 {
@@ -3145,15 +3042,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (j=1; j<i && !err; j++) {
 		vj = rowvar[j];
 		vi = rowvar[i];
-#if USE_ORIG_XTAB
-		if (is_string_valued(dset, vj) || is_string_valued(dset, vi)) {
-		    tab = get_new_xtab(vj, vi, dset, &err);
-		} else {
-		    tab = get_numeric_xtab(vj, vi, dset, &err);
-		}
-#else
 		tab = get_new_xtab(vj, vi, dset, &err);
-#endif
 		if (!err) {
 		    if (opt & OPT_Q) {
 			/* --quiet: no printing */
@@ -3175,15 +3064,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    for (j=1; j<=colvar[0] && !err; j++) {
 		vi = rowvar[i];
 		vj = colvar[j];
-#if USE_ORIG_XTAB
-		if (is_string_valued(dset, vi) || is_string_valued(dset, vj)) {
-		    tab = get_new_xtab(vi, vj, dset, &err);
-		} else {
-		    tab = get_numeric_xtab(vi, vj, dset, &err);
-		}
-#else
 		tab = get_new_xtab(vi, vj, dset, &err);
-#endif
 		if (!err) {
 		    print_xtab(tab, dset, opt, prn);
 		    free_xtab(tab);
@@ -3224,15 +3105,7 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
 	return NULL;
     }
 
-#if USE_ORIG_XTAB
-    if (is_string_valued(dset, rv) || is_string_valued(dset, cv)) {
-	tab = get_new_xtab(rv, cv, dset, err);
-    } else {
-	tab = get_numeric_xtab(rv, cv, dset, err);
-    }
-#else
     tab = get_new_xtab(rv, cv, dset, err);
-#endif
 
     if (!*err) {
 	print_xtab(tab, dset, opt, prn);
@@ -5672,6 +5545,34 @@ Summary *get_summary_weighted (const int *list, const DATASET *dset,
     return s;
 }
 
+/* Get the additional statistics wanted if the --simple
+   flag was not given to the summary command.
+*/
+
+static int get_extra_stats (Summary *s, int i,
+			    int t1, int t2,
+			    const double *x)
+{
+    int err = 0;
+
+    if (floateq(s->mean[i], 0.0)) {
+	s->cv[i] = NADBL;
+    } else if (floateq(s->sd[i], 0.0)) {
+	s->cv[i] = 0.0;
+    } else {
+	s->cv[i] = fabs(s->sd[i] / s->mean[i]);
+    }
+
+    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
+    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
+    s->iqr[i] = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
+    if (!na(s->iqr[i])) {
+	s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
+    }
+
+    return err;
+}
+
 /**
  * get_summary_restricted:
  * @list: list of variables to process.
@@ -5773,21 +5674,7 @@ Summary *get_summary_restricted (const int *list, const DATASET *dset,
 	s->median[i] = gretl_median(t1, t2, x);
 
 	if (!(opt & OPT_S)) {
-	    int err;
-
-	    if (floateq(s->mean[i], 0.0)) {
-		s->cv[i] = NADBL;
-	    } else if (floateq(s->sd[i], 0.0)) {
-		s->cv[i] = 0.0;
-	    } else {
-		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
-	    }
-	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
-	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
-	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
-	    if (!na(s->iqr[i])) {
-		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
-	    }
+	    *err = get_extra_stats(s, i, t1, t2, x);
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {
@@ -5887,21 +5774,7 @@ Summary *get_summary (const int *list, const DATASET *dset,
 	s->median[i] = gretl_median(t1, t2, x);
 
 	if (!(opt & OPT_S)) {
-	    int err;
-
-	    if (floateq(s->mean[i], 0.0)) {
-		s->cv[i] = NADBL;
-	    } else if (floateq(s->sd[i], 0.0)) {
-		s->cv[i] = 0.0;
-	    } else {
-		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
-	    }
-	    s->perc05[i] = gretl_quantile(t1, t2, x, 0.05, OPT_Q, &err);
-	    s->perc95[i] = gretl_quantile(t1, t2, x, 0.95, OPT_Q, &err);
-	    s->iqr[i]    = gretl_quantile(t1, t2, x, 0.75, OPT_NONE, &err);
-	    if (!na(s->iqr[i])) {
-		s->iqr[i] -= gretl_quantile(t1, t2, x, 0.25, OPT_NONE, &err);
-	    }
+	    *err = get_extra_stats(s, i, t1, t2, x);
 	}
 
 	if (dataset_is_panel(dset) && list[0] == 1) {

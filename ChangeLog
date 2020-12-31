@@ -1,10 +1,107 @@
-version 2020e, in progress
-- Fix "join" GUI dialog window: was not working on Windows
+version 2020f, in progress
+- New function vma() for multiple time series
+- quantile(): support variant methods Q7 and Q8 described
+  in Hyndman and Fan (1996)
+- irf(): support calculation of multiple impulse responses
+  in a single call (with internal speed-up)
+- irf() bug-fix: failing to compute bootstrap confidence band
+  correctly when passed a $system bundle argument
+- VAR internals: scrap augmented Cholesky matrix; so the
+  $system.C accessor is now a square matrix
+- $system bundle: ensure presence of xlist member, and
+  include the command-word (var, vecm or system)
+- mread(): support reading gdt and gdtb files as matrices
+- readfile(): support reading gzipped files transparently
+- obslabel(): support a vector of observations
+- "open" command: support reading selected series from
+  native gretl datafiles (gdt, gdtb)
+- "join" command: support $obsmajor, $obsminor as outer keys
+- "coint2" command: rename as "johansen"
+- "freq" and "xtab" for string-valued series: don't let
+  non-ASCII characters break the formatting
+- Gretl User's Guide: add links to download example scripts
+- reorganize the categories for the functions help file
+- Fix obscure problem with plots: inability to show markers
+  for observations in some cases where this should be OK
+- Fix bug: potential crash on "Save as icon and close" for
+  a model displayed in tabbed model viewer
+- Fix bug: possible crash on confusion between singleton
+  array and array element within a loop
+- Fix bug: crash after setting "specific lags" for a VAR in
+  the GUI model selection dialog
+- Fix bug: possible crash on frequency plot for series with
+  long string values
+- Fix: memory leaks associated with GUI window lists
+- Fix: buggy completion proposals in script editor when
+  using gtksourceview-2.0
+- Fix Windows-specific bug: gretlcli and gretlmpi could
+  fail on parsing command-line arguments
+
+2020-11-21 version 2020e
+- New function tdisagg() for temporal disaggregation
+  (distribution and interpolation)
+- New addon package "regls": supports LASSO, Ridge regression
+  and Elastic net
+- New function assert() for debugging purposes
 - MPI: update documentation and support transfer of more
   data types
 - kdensity() function: generalize to allow as argument a
   list or matrix with more than one column
 - "dataset sortby": handle sorting by string-valued series
+- OLS output: don't print out DW statistic when calculation of
+  Durbin's h fails
+- Fix: when extracting a column of a "dated" matrix, copy
+  across the dates information
+- Documentation: add material on forecasting for VARs and
+  other multi-equation systems
+- Improve format of panel plot when there are many unnamed
+  individuals
+- gretlcli and gretlmpi on MS Windows: accept unicode filenames
+  on the command line
+- "midasreg" command: be more flexible in parsing arguments to
+  mds() terms
+- Add to practice scripts: simulation using Klein model
+- Implement the '^' operator (logical product) for string-
+  valued series
+- xlsx data importer: handle correctly the case where a given
+  column is "partially" string-valued
+- dbnomics data importer: handle absence of dimensions_labels
+  in some cases
+- mpiscatter() function: revise rule for dividing matrices
+  for greater efficiency
+- Fix bug: possibility of invalid XML when saving a model to
+  session file
+- Fix bug: "smpl" command rejects the combination of "full"
+  and --quiet
+- Fix: --single-yaxis option not respected by "gnuplot" and
+  "plot" when a band is specified
+- Fix: GUI dialog for "join" was not working on Windows
+- Fix: work around bug in Apple's LAPACK that could lead to
+  a crash when computing eigenvalues
+- Fix: the Preview button in print dialogs was not working
+  in macOS build
+- Fix: prune correctly the regressor list in the "perfect
+  prediction" case in RE probit
+- Fix: incorrect $vcv matrix for bivariate probit models
+- Fix: dbnomics import misaligning data of different
+  frequencies in certain cases
+- Fix: $obsmajor and friends not working for daily data
+  with non-trading days omitted and dates given in the old
+  form of YYYY/MM/DD; also "dataset pad-daily" not working
+  with such old-style dates
+- Fix: potential crash on closing a maximized window on
+  recent macOS (a GDK problem)
+- MS Windows build: support printing scripts with syntax
+  highlighting
+- MS Windows build (64-bit): update pixman, cairo and pango
+  libraries (DLLs)
+- MS Windows build: update libeay.dll so as to prevent
+  crashes on certain CPUs
+- MS Windows: give up on trying to write downloaded PDFs
+  and function packages to "system" location -- go straight
+  to the user's filespace
+- Update packaged fedstl database
+- Update several translations
 
 2020-08-06 version 2020d
 - Fix GUI bug: crash on copying data series to clipboard

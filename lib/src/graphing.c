@@ -1307,7 +1307,7 @@ int write_plot_bounding_box_request (FILE *fp)
 
 static int do_plot_bounding_box (void)
 {
-    FILE *fp = gretl_fopen(gretl_plotfile(), "a");
+    FILE *fp = gretl_fopen(gretl_plotfile(), "ab");
     int err = 0;
 
     if (fp != NULL) {
@@ -1832,6 +1832,8 @@ static int set_term_type_from_fname (const char *fname)
 	this_term_type = GP_TERM_SVG;
     } else if (has_suffix(fname, ".tex")) {
 	this_term_type = GP_TERM_TEX;
+    } else if (!strcmp(fname, "gnuplot")) {
+	this_term_type = GP_TERM_VAR;
     }
 
     return this_term_type;
@@ -2220,6 +2222,13 @@ int graph_written_to_file (void)
     return graph_file_written;
 }
 
+static int graph_file_shown;
+
+int graph_displayed (void)
+{
+    return graph_file_shown;
+}
+
 static void remove_old_png (void)
 {
     gchar *tmp = gretl_make_dotpath("gretltmp.png");
@@ -2249,6 +2258,7 @@ static int gnuplot_make_graph (void)
     int fmt, err = 0;
 
     graph_file_written = 0;
+    graph_file_shown = 0;
     fmt = specified_gp_output_format();
 
     if (fmt == GP_TERM_PLT) {
@@ -2292,8 +2302,12 @@ static int gnuplot_make_graph (void)
 	} else {
 	    /* remove the temporary input file */
 	    gretl_remove(fname);
-	    gretl_set_path_by_name("plotfile", gnuplot_outname);
-	    graph_file_written = 1;
+	    if (fmt == GP_TERM_VAR) {
+		graph_file_shown = 1;
+	    } else {
+		gretl_set_path_by_name("plotfile", gnuplot_outname);
+		graph_file_written = 1;
+	    }
 	}
     }
 
@@ -2686,7 +2700,7 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
 static int get_fitted_line (gnuplot_info *gi,
 			    const DATASET *dset,
-			    char *targ)
+			    gchar **targ)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
@@ -2770,7 +2784,8 @@ static int get_fitted_line (gnuplot_info *gi,
 	}
 
 	set_plotfit_line(title, formula, gi->fit, b->val, x0, pd);
-	sprintf(targ, "%s title \"%s\" w lines\n", formula, title);
+	*targ = g_strdup_printf("%s title \"%s\" w lines\n",
+				formula, title);
 	gi->flags |= GPT_AUTO_FIT;
     }
 
@@ -2793,8 +2808,8 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 {
     int yno = gi->list[1];
     const double *yvar = dset->Z[yno];
+    gchar *fitline = NULL;
     FILE *fp = NULL;
-    char fitline[128] = {0};
     PRN *prn;
     int t, err = 0;
 
@@ -2807,7 +2822,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 	return err;
     }
 
-    err = get_fitted_line(gi, dset, fitline);
+    err = get_fitted_line(gi, dset, &fitline);
     if (err) {
 	return err;
     }
@@ -2816,6 +2831,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     fp = open_plot_input_file(PLOT_REGULAR, gi->flags, &err);
     if (err) {
+	g_free(fitline);
 	return err;
     }
 
@@ -2829,9 +2845,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
 
     print_keypos_string(GP_KEY_LEFT_TOP, fp);
     print_axis_label('y', series_get_graph_name(dset, yno), fp);
-
     print_auto_fit_string(gi->fit, fp);
-
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
     fputs("plot \\\n", fp);
@@ -2840,6 +2854,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     gretl_push_c_numeric_locale();
 
     fprintf(fp, " %s", fitline);
+    g_free(fitline);
 
     for (t=gi->t1; t<=gi->t2; t++) {
 	if (gi->flags & GPT_TIMEFMT) {
@@ -2853,7 +2868,6 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     gretl_pop_c_numeric_locale();
 
     err = finalize_plot_input_file(fp);
-
     clear_gpinfo(gi);
 
     return err;
@@ -3299,7 +3313,7 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
     if ((l0 > 2 || (l0 > 1 && (gi->flags & GPT_IDX))) &&
 	l0 < 7 && !(gi->flags & GPT_RESIDS) && !(gi->flags & GPT_FA)
-	&& !(gi->flags & GPT_DUMMY)  & !(opt & OPT_Y)) {
+	&& !(gi->flags & GPT_DUMMY) && !(opt & OPT_Y)) {
 	/* FIXME GPT_XYZ ? */
 	/* allow probe for using two y axes */
 #if GP_DEBUG
@@ -3954,13 +3968,13 @@ int gnuplot (const int *plotlist, const char *literal,
     char withstr[16] = {0};
     char lwstr[8] = {0};
     char keystr[48] = {0};
-    char fit_line[128] = {0};
+    gchar *fitline = NULL;
     int time_fit = 0;
     int oddman = 0;
     int many = 0;
     int set_xrange = 1;
     PlotType ptype;
-    gnuplot_info gi;
+    gnuplot_info gi = {0};
     int i, err = 0;
 
     gretl_error_clear();
@@ -3979,6 +3993,9 @@ int gnuplot (const int *plotlist, const char *literal,
 
     if (dataset_is_panel(dset) &&
 	plotlist_is_group_invariant(plotlist, dset)) {
+#if GP_DEBUG
+	fprintf(stderr, "doing panel_group_invariant_plot\n");
+#endif
 	return panel_group_invariant_plot(plotlist, literal,
 					  (DATASET *) dset, opt);
     }
@@ -4043,7 +4060,7 @@ int gnuplot (const int *plotlist, const char *literal,
     /* add a regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 &&
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
-	err = get_fitted_line(&gi, dset, fit_line);
+	err = get_fitted_line(&gi, dset, &fitline);
 	if (err) {
 	    goto bailout;
 	} else {
@@ -4274,8 +4291,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     }
 
-    if (*fit_line != '\0') {
-        fputs(fit_line, fp);
+    if (fitline != NULL) {
+        fputs(fitline, fp);
     }
 
     /* print the data to be graphed */
@@ -4291,6 +4308,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
  bailout:
 
+    g_free(fitline);
     clear_gpinfo(&gi);
 
     return err;
@@ -5066,39 +5084,38 @@ FILE *open_3d_plot_input_file (int *iact)
     return fp;
 }
 
-static void print_freq_test_label (char *s, int teststat,
-				   double v, double pv)
+static gchar *make_freq_test_label (int teststat, double v, double pv)
 {
+    gchar *s;
+
     gretl_pop_c_numeric_locale();
     if (teststat == GRETL_STAT_Z) {
-	sprintf(s, "z = %.3f [%.4f]", v, pv);
+	s = g_strdup_printf("z = %.3f [%.4f]", v, pv);
     } else if (teststat == GRETL_STAT_NORMAL_CHISQ) {
-	sprintf(s, "%s(2) = %.3f [%.4f]", _("Chi-square"), v, pv);
+	s = g_strdup_printf("%s(2) = %.3f [%.4f]", _("Chi-square"), v, pv);
     }
     gretl_push_c_numeric_locale();
+
+    return s;
 }
 
-static void print_freq_dist_label (char *s, int dist, double x, double y)
+static gchar *make_freq_dist_label (int dist, double x, double y)
 {
-    int dcomma = 0;
-    char test[10];
+    gchar *s;
+    char c, test[10];
 
     gretl_pop_c_numeric_locale();
-
     sprintf(test, "%g", 0.5);
-    if (strchr(test, ',')) {
-	dcomma = 1;
-    }
+    c = strchr(test, ',') ? ' ' : ',';
 
     if (dist == D_NORMAL) {
-	sprintf(s, "N(%.5g%c%.5g)", x,
-		((dcomma)? ' ' : ','), y);
+	s = g_strdup_printf("N(%.5g%c%.5g)", x, c, y);
     } else if (dist == D_GAMMA) {
-	sprintf(s, "gamma(%.5g%c%.5g)", x,
-		((dcomma)? ' ' : ','), y);
+	s = g_strdup_printf("gamma(%.5g%c%.5g)", x, c, y);
     }
-
     gretl_push_c_numeric_locale();
+
+    return s;
 }
 
 /* Below: a fix for the case where the y-range is by default
@@ -5161,7 +5178,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     FILE *fp = NULL;
     int i, K = freq->numbins;
     char withstr[32] = {0};
-    char label[80] = {0};
+    gchar *label = NULL;
     double plotmin = 0.0, plotmax = 0.0;
     double barwidth;
     const double *endpt;
@@ -5232,21 +5249,19 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	    if (plotmin > freq->xbar - 3.3 * freq->sdx) {
 		plotmin = freq->xbar - 3.3 * freq->sdx;
 	    }
-
 	    plotmax = endpt[K-1] + barwidth;
 	    if (plotmax < freq->xbar + 3.3 * freq->sdx) {
 		plotmax = freq->xbar + 3.3 * freq->sdx;
 	    }
-
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label \"%s:\" at graph .03, graph .97 front\n",
 			_("Test statistic for normality"));
-		print_freq_test_label(label, GRETL_STAT_NORMAL_CHISQ, freq->test,
-				      chisq_cdf_comp(2, freq->test));
+		label = make_freq_test_label(GRETL_STAT_NORMAL_CHISQ, freq->test,
+					     chisq_cdf_comp(2, freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n",
 			label);
+		g_free(label);
 	    }
-
 	    if (real_ns > 0) {
 		print_extra_literal_lines(S, ns, fp);
 	    }
@@ -5267,12 +5282,12 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label '%s:' at graph .03, graph .97 front\n",
 			_("Test statistic for gamma"));
-		print_freq_test_label(label, GRETL_STAT_Z, freq->test,
-				      normal_pvalue_2(freq->test));
+		label = make_freq_test_label(GRETL_STAT_Z, freq->test,
+					     normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n",
 			label);
+		g_free(label);
 	    }
-
 	    if (real_ns > 0) {
 		print_extra_literal_lines(S, ns, fp);
 	    }
@@ -5328,17 +5343,16 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     }
 
     if (freq->strvals) {
-	char label[32];
-
 	fputs("set xtics rotate by -45\n", fp);
 	fputs("set xtics (", fp);
 	for (i=0; i<K; i++) {
-	    strcpy(label, freq->S[i]);
+	    label = g_strdup(freq->S[i]);
 	    gretl_utf8_truncate(label, 6);
 	    fprintf(fp, "\"%s\" %d", label, i+1);
 	    if (i < K-1) {
 		fputs(", ", fp);
 	    }
+	    g_free(label);
 	}
 	fputs(")\n", fp);
     } else if (freq->discrete > 1 && K < 10 && fabs(freq->midpt[K-1]) < 1000) {
@@ -5358,19 +5372,21 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:2 %s\n", withstr);
     } else if (dist == D_NORMAL) {
-	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
+	label = make_freq_dist_label(dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title \"%s\" %s, \\\n"
 		"1.0/(sqrt(2.0*pi)*sigma)*exp(-.5*((x-mu)/sigma)**2) "
 		"title \"%s\" w lines\n",
 		_("relative frequency"), withstr, label);
+	g_free(label);
     } else if (dist == D_GAMMA) {
-	print_freq_dist_label(label, dist, alpha, beta);
+	label = make_freq_dist_label(dist, alpha, beta);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title '%s' %s, \\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
 		"title \"%s\" w lines\n",
 		_("relative frequency"), withstr, label);
+	g_free(label);
     }
 
     for (i=0; i<K; i++) {
@@ -5457,6 +5473,10 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
 	}
     }
 
+    if (opt & OPT_T) {
+	fputs("set border 3\n", fp);
+    }
+
     /* for grid lines */
     fputs("set x2tics 1 format '' scale 0,0.001\n", fp);
     fputs("set y2tics 1 format '' scale 0,0.001\n", fp);
@@ -5509,8 +5529,12 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("EOD\n", fp);
     fputs("# end inline data\n", fp);
     fputs("if (printcorr) {\n", fp);
-    fputs("plot $data matrix with image, ", fp);
-    fputs("$data matrix using 1:2:(sprintf(\"%.1f\",$3)) with labels\n", fp);
+    fputs("plot $data matrix with image, $data matrix using 1:2:", fp);
+    if (opt & OPT_T) {
+	fputs("($3!=$3 ? \"\" : sprintf(\"%.1f\",$3)) with labels\n", fp);
+    } else {
+	fputs("(sprintf(\"%.1f\",$3)) with labels\n", fp);
+    }
     fputs("} else {\n", fp);
     fputs("plot $data matrix with image\n", fp);
     fputs("}\n", fp);
@@ -6452,10 +6476,12 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     if (pm.bdummy) {
 	int oddman = 0;
 
-	check_for_yscale(gi, (const double **) dset->Z, &oddman);
-	if (gi->flags & GPT_Y2AXIS) {
-	    fputs("set ytics nomirror\n", fp);
-	    fputs("set y2tics\n", fp);
+	if (!(opt & OPT_Y)) {
+	    check_for_yscale(gi, (const double **) dset->Z, &oddman);
+	    if (gi->flags & GPT_Y2AXIS) {
+		fputs("set ytics nomirror\n", fp);
+		fputs("set y2tics\n", fp);
+	    }
 	}
 
 	fputs("plot \\\n", fp);
@@ -7030,27 +7056,28 @@ static int panel_means_ts_plot (const int vnum,
 {
     DATASET *gset;
     int nunits, T = dset->pd;
-    int list[3] = {2, 1, 2};
+    int list[2] = {1, 1};
     gchar *literal = NULL;
     gchar *title = NULL;
-    const double *obs;
     int i, t, s, s0;
     int err = 0;
 
     nunits = panel_sample_size(dset);
 
-    obs = gretl_plotx(dset, OPT_P);
-    if (obs == NULL) {
-	return E_ALLOC;
-    }
-
-    gset = create_auxiliary_dataset(3, T, 0);
+    gset = create_auxiliary_dataset(2, T, 0);
     if (gset == NULL) {
 	return E_ALLOC;
     }
 
     strcpy(gset->varname[1], dset->varname[vnum]);
     series_set_display_name(gset, 1, series_get_display_name(dset, vnum));
+
+    if (dset->panel_pd > 0) {
+	/* add time series info to @gset */
+	gset->structure = TIME_SERIES;
+	gset->pd = dset->panel_pd;
+	gset->sd0 = dset->panel_sd0;
+    }
 
     s0 = dset->t1;
 
@@ -7066,15 +7093,10 @@ static int panel_means_ts_plot (const int vnum,
 		n++;
 	    }
 	}
-	if (n == 0) {
-	    gset->Z[1][t] = NADBL;
-	} else {
-	    gset->Z[1][t] = xsum / n;
-	}
-	gset->Z[2][t] = obs[t];
+	gset->Z[1][t] = (n == 0)? NADBL : xsum / n;
     }
 
-    opt |= OPT_O; /* use lines */
+    opt |= (OPT_O | OPT_T); /* use lines, time series */
 
     title = g_strdup_printf(_("mean %s"),
 			    series_get_graph_name(dset, vnum));
@@ -7396,7 +7418,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	    if (sval != NULL) {
 		strncat(gset->varname[i+1], sval, VNAMELEN-1);
 	    } else {
-		sprintf(gset->varname[i+1], "group %d", u0+i+1);
+		sprintf(gset->varname[i+1], "%d", u0+i+1);
 	    }
 	} else if (panel_labels) {
 	    if (use > 0) {
@@ -7407,7 +7429,7 @@ static int panel_overlay_ts_plot (const int vnum,
 		strcpy(gset->varname[i+1], dset->S[s]);
 	    }
 	} else {
-	    sprintf(gset->varname[i+1], "group %d", u0+i+1);
+	    sprintf(gset->varname[i+1], "%d", u0+i+1);
 	}
 	for (t=0; t<T; t++) {
 	    gset->Z[i+1][t] = dset->Z[vnum][s++];
@@ -7946,6 +7968,8 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     return finalize_plot_input_file(fp);
 }
 
+#define NEW_IRF 1
+
 int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 				 int periods, double alpha,
 				 const DATASET *dset,
@@ -7958,6 +7982,11 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
     char title[128];
     int n = var->neqns;
     int nplots = n * n;
+    int vtarg, vshock;
+#if NEW_IRF
+    gretl_matrix *R = NULL;
+    int Rcol, Rstep;
+#endif
     int t, i, j;
     int err = 0;
 
@@ -7987,12 +8016,80 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 
     gretl_push_c_numeric_locale();
 
+    /* Use facility to get all impulse responses
+       via one call
+    */
+#if NEW_IRF
+    R = gretl_VAR_get_impulse_response(var, -1, -1, periods,
+				       alpha, dset, &err);
+    if (!err && R->cols > nplots) {
+	confint = 1;
+    }
+    Rcol = 0;
+    Rstep = confint ? 3 : 1;
+
     for (i=0; i<n && !err; i++) {
-	int vtarg = gretl_VAR_get_variable_number(var, i);
+	vtarg = gretl_VAR_get_variable_number(var, i);
+
+	for (j=0; j<n; j++) {
+	    vshock = gretl_VAR_get_variable_number(var, j);
+
+	    if (i == 0 && j == 0) {
+		/* the first plot */
+		if (confint) {
+		    fputs("set key left top\n", fp);
+		} else {
+		    fputs("set nokey\n", fp);
+		}
+	    }
+	    sprintf(title, "%s -> %s", dset->varname[vshock],
+		    dset->varname[vtarg]);
+	    fprintf(fp, "set title '%s'\n", title);
+
+	    fputs("plot \\\n", fp);
+	    if (confint && use_fill) {
+		print_filledcurve_line(NULL, NULL, fp);
+		fputs("'-' using 1:2 notitle w lines lt 1\n", fp);
+	    } else if (confint) {
+		fputs("'-' using 1:2 notitle w lines, \\\n", fp);
+		fputs("'-' using 1:2:3:4 notitle w errorbars\n", fp);
+	    } else {
+		fputs("'-' using 1:2 notitle w lines\n", fp);
+	    }
+
+	    if (confint && use_fill) {
+		for (t=0; t<periods; t++) {
+		    fprintf(fp, "%d %.10g %.10g\n", t,
+			    gretl_matrix_get(R, t, Rcol+1),
+			    gretl_matrix_get(R, t, Rcol+2));
+		}
+		fputs("e\n", fp);
+	    }
+
+	    for (t=0; t<periods; t++) {
+		fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(R, t, Rcol));
+	    }
+	    fputs("e\n", fp);
+
+	    if (confint && !use_fill) {
+		for (t=0; t<periods; t++) {
+		    fprintf(fp, "%d %.10g %.10g %.10g\n", t,
+			    gretl_matrix_get(R, t, Rcol),
+			    gretl_matrix_get(R, t, Rcol+1),
+			    gretl_matrix_get(R, t, Rcol+2));
+		}
+		fputs("e\n", fp);
+	    }
+	    Rcol += Rstep;
+	}
+    }
+    gretl_matrix_free(R);
+#else /* old IRF method */
+    for (i=0; i<n && !err; i++) {
+	vtarg = gretl_VAR_get_variable_number(var, i);
 
 	for (j=0; j<n; j++) {
 	    gretl_matrix *resp;
-	    int vshock;
 
 	    resp = gretl_VAR_get_impulse_response(var, i, j, periods,
 						  alpha, dset, &err);
@@ -8054,6 +8151,7 @@ int gretl_VAR_plot_multiple_irf (GRETL_VAR *var,
 	    gretl_matrix_free(resp);
 	}
     }
+#endif /* NEW_IRF or not */
 
     gretl_pop_c_numeric_locale();
 
@@ -10073,10 +10171,9 @@ int write_tdisagg_plot (const gretl_matrix *YY, int mult,
 	    _("final series"), mstr);
 
     err = finalize_plot_input_file(fp);
-    if (!err) {
-	if (gretl_in_gui_mode()) {
-	    manufacture_gui_callback(GNUPLOT);
-	}
+
+    if (!err && gretl_in_gui_mode()) {
+	manufacture_gui_callback(GNUPLOT);
     }
 
     gretl_pop_c_numeric_locale();

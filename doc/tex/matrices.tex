@@ -833,7 +833,7 @@ widely-used programs.\footnote{Matlab users may find the Octave
 
 
 \begin{script}[htbp]
-  \caption{Matrix input/output via text files}
+  \scriptcaption{Matrix input/output via text files}
   \label{matrix-rw}
   \begin{scode}
 nulldata 64
@@ -1058,19 +1058,18 @@ conversion to ``normalize'' a list, moving the constant (variable 0)
 to first position.
 
 \begin{script}[htbp]
-  \caption{Manipulating a list}
+  \scriptcaption{Manipulating a list}
   \label{normalize-list}
 \begin{scode}
 function void normalize_list (matrix *x)
   # If the matrix (representing a list) contains var 0,
   # but not in first position, move it to first position
-
   if (x[1] != 0)
      scalar k = cols(x)
      loop for (i=2; i<=k; i++)
         if (x[i] == 0)
-            x[i] == x[1]
-            x[1] == 0
+            x[i] = x[1]
+            x[1] = 0
             break
          endif
      endloop
@@ -1082,6 +1081,7 @@ list Xl = 2 3 0 4
 matrix x = Xl
 normalize_list(&x)
 list Xl = x
+list Xl print
 \end{scode}
 \end{script}
 
@@ -1154,7 +1154,7 @@ Listing~\ref{matrixOLS} shows how matrix methods can be used to
 replicate gretl's built-in OLS functionality.
 
 \begin{script}[htbp]
-  \caption{OLS via matrix methods}
+  \scriptcaption{OLS via matrix methods}
   \label{matrixOLS}
 \begin{scode}
 open data4-1

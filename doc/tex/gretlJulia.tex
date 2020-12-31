@@ -13,9 +13,10 @@ function library.'' \app{Julia} is well known for being very fast;
 however, you should be aware that by default starting \app{Julia}
 takes some time due to Just-in-Time compilation of the input. This
 fixed cost is well worth bearing if you are asking \app{Julia} to
-perform a big computation, but small jobs are likely to run faster
-if you use the (\app{Julia}-specific) \option{no-compile} option
-with the \texttt{foreign} command.
+perform a big computation, but small jobs are likely to run faster if
+you use the (\app{Julia}-specific) \option{no-compile} option with the
+\texttt{foreign} command.\footnote{Caveat: it seems that this option
+  is not supported by all builds of \app{Julia}.}
 
 \section{Julia support in gretl}
 \label{sec:Julia-support}
@@ -58,7 +59,8 @@ Listing~\ref{Julia-example} shows a minimal example of how to interact
 with Julia from a gretl script.
 
 \begin{script}[htbp]
-  \caption{Simple \app{Julia} I/O example}
+  \scriptcaption{Simple \app{Julia} I/O example}
+  \label{Julia-example}
 \begin{scode}
 set verbose off
 
@@ -86,7 +88,6 @@ check (4 x 4)
  -4.4409e-16  -8.3267e-17       1.0000  -6.6613e-16 
  -4.4409e-16  -1.3878e-17  -1.1102e-16       1.0000 
 \end{code}
-\label{Julia-example}
 \end{script}
 
 Since this is a very small job JIT compilation is not worthwhile; in

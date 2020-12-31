@@ -147,11 +147,11 @@ Estimation typically proceeds in two stages: first, a sequence of
 tests is run to determine $r$, the cointegration rank. Then, for a
 given rank the parameters in equation (\ref{eq:VECMab}) are estimated.
 The two commands that gretl offers for estimating these systems
-are \texttt{coint2} and \texttt{vecm}, respectively. 
+are \texttt{johansen} and \texttt{vecm}, respectively.
 
-The syntax for \texttt{coint2} is 
+The syntax for \texttt{johansen} is
 \begin{code}
-  coint2 p ylist [ ; xlist [ ; zlist ] ]
+  johansen p ylist [ ; xlist [ ; zlist ] ]
 \end{code}
 where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR});
 \texttt{ylist} is a list containing the $y_t$ variables;
@@ -166,7 +166,7 @@ The syntax for \texttt{vecm} is
 where \texttt{p} is the number of lags in (\ref{eq:VECM-VAR});
 \texttt{r} is the cointegration rank; and the lists
 \texttt{ylist}, \texttt{xlist} and \texttt{zlist} have the
-same interpretation as in \texttt{coint2}.
+same interpretation as in \texttt{johansen}.
 
 Both commands can be given specific options to handle the treatment of
 the deterministic component $\mu_t$. These are discussed in the
@@ -358,7 +358,7 @@ The previous example can be generalized in three directions:
 \end{enumerate}
 
 In order to accommodate the five cases, gretl provides the
-following options to the \texttt{coint2} and \texttt{vecm} commands:
+following options to the \texttt{johansen} and \texttt{vecm} commands:
 \begin{center}
   \begin{tabular}{ccl}
     $\mu_t$ & \textit{option flag} & \textit{description} \\ [4pt]
@@ -390,7 +390,7 @@ smallest. The null hypothesis for the $\lambda$-max test on the $i$-th
 eigenvalue is that $\lambda_i = 0$. The corresponding trace test,
 instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge i$.
 
-The gretl command \cmd{coint2} performs these two
+The gretl command \cmd{johansen} performs these two
 tests. The corresponding menu entry in the GUI is ``Model, Time
 Series, Cointegration Test, Johansen''.
 
@@ -402,7 +402,7 @@ Johansen's example found in his 1995 book.
 %
 \begin{code}
 open denmark
-coint2 2 LRM LRY IBO IDE --rc --seasonals
+johansen 2 LRM LRY IBO IDE --rc --seasonals
 \end{code}
 %
 In this case, the vector $y_t$ in equation (\ref{eq:VECM}) comprises
@@ -546,6 +546,7 @@ tbr       -0.54293       24.786
 const      -3.7483       16.751 
           (0.78082)     (30.909) 
 \end{code}
+%
 Interpretation of the coefficients of the cointegration matrix $\beta$
 would be easier if a meaning could be attached to each of its
 columns. This is possible by hypothesizing the existence of two
@@ -799,7 +800,7 @@ postulated long-run relationships feature only three free parameters,
 so the over-identification rank is 3.
 
 \begin{script}[htbp]
-  \caption{Estimation of a money demand system with constraints on $\beta$}
+  \scriptcaption{Estimation of a money demand system with constraints on $\beta$}
   \label{brand-cassola-script}
 Input:
 \begin{scodebit}
@@ -832,8 +833,9 @@ restrict --full
 end restrict
 ll1 = $rlnl
 \end{scodebit}
+
 Partial output:
-\begin{scodebit}
+\begin{outbit}
 Unrestricted loglikelihood (lu) = 116.60268
 Restricted loglikelihood (lr) = 115.86451
 2 * (lu - lr) = 1.47635
@@ -851,8 +853,7 @@ rs         0.0000       0.0000      -1.0000
           (0.0000)     (0.0000)     (0.0000) 
 y         -1.3304       0.0000       0.0000 
         (0.030533)     (0.0000)     (0.0000) 
-\end{scodebit}
-%$
+\end{outbit}
 \end{script}
 
 Listing \ref{brand-cassola-script} replicates Table 4 on page 824 of
@@ -874,7 +875,7 @@ turns out that both of the additional hypotheses are rejected by the
 data, with p-values of $0.002$ and $0.004$.
 
 \begin{script}[htbp]
-  \caption{Further testing of money demand system}
+  \scriptcaption{Further testing of money demand system}
   \label{brand-cassola-tab5}
 Input:
 \begin{scodebit}
@@ -901,15 +902,16 @@ printf "Homogeneity in the Fisher hypothesis:\n"
 printf "  LR-test, rank = 3: chi^2(4) = %6.3f [%6.4f]\n", 2*(ll0-ll_hfh), \
 	pvalue(X, 4, 2*(ll0-ll_hfh))
 \end{scodebit}
+
 Output:
-\begin{scodebit}
+\begin{outbit}
 Testing zero restrictions in cointegration space:
   LR-test, rank = 3: chi^2(3) = 1.4763 [0.6877]
 Unit income elasticity: LR-test, rank = 3:
   chi^2(4) = 17.2071 [0.0018]
 Homogeneity in the Fisher hypothesis:
   LR-test, rank = 3: chi^2(4) = 15.547 [0.0037]  
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 Another type of test that is commonly performed is the ``weak
@@ -926,7 +928,7 @@ exogeneity might perhaps be accepted for the long-term interest rate
 and real GDP (p-values $0.07$ and $0.08$ respectively).
 
 \begin{script}[htbp]
-  \caption{Testing for weak exogeneity}
+  \scriptcaption{Testing for weak exogeneity}
   \label{brand-cassola-exog}
 Input:
 \begin{scodebit}
@@ -959,15 +961,15 @@ loop foreach i m p l s y
   printf "Delta $i\t%6.3f [%6.4f]\n", ts_$i, pvalue(X, 6, ts_$i)
 endloop
 \end{scodebit}
+
 Output (variable, LR test, p-value):
-\begin{scodebit}
+\begin{outbit}
 Delta m	18.111 [0.0060]
 Delta p	21.067 [0.0018]
 Delta l	11.819 [0.0661]
 Delta s	16.000 [0.0138]
 Delta y	11.335 [0.0786]
-\end{scodebit}
-%$
+\end{outbit}
 \end{script}
 
 \subsection{Identification and testability}

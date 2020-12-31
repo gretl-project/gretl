@@ -2,7 +2,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
                "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 ]>
-<refentry id="libgretl-building" revision="21 Jun 2010">
+<refentry id="libgretl-building" revision="26 November 2020">
 <refmeta>
 <refentrytitle>Compiling libgretl</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -90,13 +90,20 @@ How to compile libgretl itself
       <itemizedlist>
        <listitem>
 	<para>
+	  GLib; see <ulink url="https://wiki.gnome.org/Projects/GLib/">wiki.gnome.org</ulink>.
+	</para>
+      </listitem>
+       <listitem>
+	<para>
 	  Libxml2; see <ulink url="http://www.xmlsoft.org/">www.xmlsoft.org</ulink>.
 	</para>
       </listitem>     
       <listitem>
 	<para>
 	  The LAPACK and BLAS libraries; see 
-	  <ulink url="http://www.netlib.org/lapack/">www.netlib.org</ulink>.
+	  <ulink url="http://www.netlib.org/lapack/">www.netlib.org</ulink>
+	  or (preferably)
+	  <ulink url="https://www.openblas.net/">www.openblas.net</ulink>
 	</para>
       </listitem>
       <listitem>

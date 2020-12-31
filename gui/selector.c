@@ -3825,23 +3825,22 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 static void vec_get_spinner_data (selector *sr, int *order)
 {
     const int *llist;
-    char *dvlags;
-    char numstr[8];
+    char numstr[16];
 
-    /* lag order from global spinner */
-    *order = spinner_get_int(sr->extra[0]);
-
-    /* possible list of specific lags */
+    /* check for list of specific lags */
     llist = get_VAR_lags_list();
 
     if (llist != NULL) {
 	/* "gappy" lag specification for VAR */
+	char *dvlags;
+
 	dvlags = gretl_list_to_lags_string(llist, &sr->error);
 	if (dvlags != NULL) {
 	    add_to_cmdlist(sr, dvlags);
 	    free(dvlags);
 	}
     } else {
+	*order = spinner_get_int(sr->extra[0]);
 	sprintf(numstr, "%d", *order);
 	add_to_cmdlist(sr, numstr);
     }
@@ -6341,8 +6340,8 @@ static GtkWidget *single_lambda_spinner (void)
     GtkAdjustment *adj;
 
     adj = (GtkAdjustment *) gtk_adjustment_new(0.5, 0, 1,
-					       0.01, 0.1, 0);
-    return gtk_spin_button_new(adj, 1, 2);
+					       0.001, 0.1, 0);
+    return gtk_spin_button_new(adj, 1, 3);
 }
 
 static GtkWidget *multi_lambda_spinner (void)
@@ -8664,10 +8663,12 @@ static void activate_specific_lags (GtkWidget *w, var_lag_info *vlinfo)
 	gtk_widget_set_sensitive(vlinfo->entry, TRUE);
 	gtk_widget_set_sensitive(vlinfo->spin1, FALSE);
 	gtk_widget_set_sensitive(vlinfo->spin2, FALSE);
+	gtk_widget_grab_focus(vlinfo->entry);
     } else {
 	gtk_widget_set_sensitive(vlinfo->entry, FALSE);
 	gtk_widget_set_sensitive(vlinfo->spin1, TRUE);
 	gtk_widget_set_sensitive(vlinfo->spin2, TRUE);
+	gtk_widget_grab_focus(vlinfo->spin1);
     }
 
     if (vlinfo->v == VDEFLT) {

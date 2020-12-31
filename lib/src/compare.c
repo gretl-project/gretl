@@ -27,6 +27,7 @@
 #include "matrix_extra.h"
 #include "plotspec.h"
 #include "tsls.h"
+#include "uservar.h"
 
 /**
  * SECTION:compare
@@ -1519,6 +1520,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    /* not printing @omod, so pass along OPT_Q */
 	    ropt |= OPT_Q;
 	}
+	set_reference_missmask_from_model(orig);
 	omod = replicate_estimator(orig, tmplist, dset, ropt, prn);
     }
 
@@ -2723,7 +2725,6 @@ static double get_QLR_pval (double test, int df,
     qlr_asy_pvalue = get_plugin_function("qlr_asy_pvalue");
 
     if (qlr_asy_pvalue == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return NADBL;
     }
 
@@ -2757,7 +2758,6 @@ double QLR_pval (double X2, int df, double p1, double p2)
     qlr_asy_pvalue = get_plugin_function("qlr_asy_pvalue");
 
     if (qlr_asy_pvalue == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return NADBL;
     }
 
@@ -3818,6 +3818,8 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	make_varname_unique(dset->varname[v], v, dset);
 	series_set_label(dset, v, "DFFITS values");
     }
+
+    set_dataset_is_changed(dset, 1);
 
     return 0;
 }

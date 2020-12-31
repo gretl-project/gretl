@@ -13,10 +13,7 @@ smpl 1 1000
 printf "Sample range %d to %d\n", $t1, $t2
 sdy = sdc({murdPerPop})
 
-lamseq = lambda_sequence(1, 20)
-bundle parms = defbundle("lfrac", lamseq)
-parms.xvalidate = 1
-parms.nfolds = 10
+bundle parms = _(nlambda=20, xvalidate=1, nfolds=10)
 parms.single_b = 1
 
 # gretl, ADMM
@@ -55,7 +52,6 @@ smpl 1001 1200
 series pred = lincomb(lb.nzX, lb.nzb)
 m = regls_get_stats(murdPerPop, pred)
 printf "Out of sample R-squared %.4f\n\n", m[2]
-
 
 # supply glmnet with a fixed set of folds
 matrix foldvec = regls_foldvec(1000, 10)

@@ -30,7 +30,8 @@ int gretl_string_table_index (gretl_string_table *gst, const char *s,
 int gretl_string_table_print (gretl_string_table *gst, DATASET *dset,
 			      const char *fname, PRN *prn);
 
-int gretl_string_table_validate (gretl_string_table *gst);
+int gretl_string_table_validate (gretl_string_table *gst,
+				 gretlopt opt);
 
 int gretl_string_table_save (gretl_string_table *gst, DATASET *dset);
 
@@ -48,7 +49,10 @@ int in_string_table (gretl_string_table *gst, int id);
 
 int *string_table_copy_list (gretl_string_table *gst);
 
-series_table *series_table_new (char **strs, int n_strs);
+int string_table_replace_list (gretl_string_table *gst,
+			       int *newlist);
+
+series_table *series_table_new (char **strs, int n_strs, int *err);
 
 series_table *series_table_copy (series_table *st);
 
@@ -81,6 +85,10 @@ int substitute_named_strings (char *line, int *subst);
 char *gretl_getenv (const char *key, int *defined, int *err);
 
 char *retrieve_date_string (int t, const DATASET *dset, int *err);
+
+void *retrieve_date_strings (const gretl_vector *v,
+			     const DATASET *dset,
+			     int *err);
 
 char *retrieve_file_content (const char *fname, const char *codset,
 			     int *err);

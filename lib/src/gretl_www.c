@@ -49,13 +49,22 @@ enum {
 
 #define DBHLEN 64
 
+#define SF_CGI 0
+
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
 static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
-static char updatecgi[DBHLEN]    = "/gretl/cgi-bin/gretl_update.cgi";
+static char updatecgi[DBHLEN]    = "/cgi-bin/gretl_update.cgi";
 static char manual_path[DBHLEN]  = "/project/gretl/manual/";
 static char dataset_path[DBHLEN] = "/project/gretl/datafiles/";
 static char datapkg_list[DBHLEN] = "/addons-data/datapkgs.txt";
+
+#if SF_CGI
+static char dbserver[DBHLEN]     = "gretl.sourceforge.net";
+static char dbcgi[DBHLEN]        = "/cgi-bin/gretldata.cgi";
+#else
+static char dbserver[DBHLEN]     = "ricardo.ecn.wfu.edu";
+#endif
 
 static int wproxy;
 static char proxyhost[128];
@@ -92,7 +101,7 @@ static void urlinfo_init (urlinfo *u,
 			  int saveopt,
 			  const char *localfile)
 {
-    u->url[0] = '\0';
+    memset(u->url, 0, URLLEN);
 
     if (hostname != NULL) {
 	sprintf(u->url, "http://%s", hostname);
@@ -108,7 +117,11 @@ static void urlinfo_init (urlinfo *u,
     u->datalen = 0;
     u->err = 0;
 
+#if WDEBUG
+    u->verbose = 1;
+#else
     u->verbose = getenv("GRETL_WWW_VERBOSE") != NULL;
+#endif
 
     u->progfunc = NULL;
     u->pstarted = 0;
@@ -129,7 +142,7 @@ static void urlinfo_init (urlinfo *u,
 
 static void urlinfo_set_url (urlinfo *u, const char *url)
 {
-    u->url[0] = '\0';
+    memset(u->url, 0, URLLEN);
     strncat(u->url, url, URLLEN - 1);
 }
 
@@ -268,6 +281,19 @@ static size_t gretl_write_func (void *buf, size_t size, size_t nmemb,
     return ret;
 }
 
+#if SF_CGI
+
+static int is_db_transaction (int opt)
+{
+    return (opt == LIST_DBS ||
+	    opt == CHECK_DB ||
+	    opt == GRAB_IDX ||
+	    opt == GRAB_DATA ||
+	    opt == GRAB_NBO_DATA);
+}
+
+#endif
+
 static int progress_bar_wanted (int opt)
 {
     if (gretl_in_gui_mode()) {
@@ -351,17 +377,6 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
 	sprintf(fstr, "%d", filter);
 	strcat(u->url, "&filter=");
 	strcat(u->url, fstr);
-    }
-}
-
-static void maybe_revise_www_paths (void)
-{
-    if (!strcmp(dbhost, "localhost")) {
-	strcpy(gretlhost, "localhost");
-    } else if (!strcmp(dbhost, "www.wfu.edu")) {
-	strcpy(gretlhost, "www.wfu.edu");
-	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
-	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
     }
 }
 
@@ -460,9 +475,15 @@ static int common_curl_setup (CURL **pcurl)
 	gretl_errmsg_set("curl_easy_init failed");
 	err = 1;
     } else {
+#if WDEBUG
+	curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1);
+#else
 	curl_easy_setopt(*pcurl, CURLOPT_VERBOSE,
 			 getenv("GRETL_WWW_VERBOSE") != NULL);
+#endif
 #ifdef WIN32
+	/* be on the safe side: 'http' can turn into 'https'
+	   at the server */
 	curl_easy_setopt(*pcurl, CURLOPT_CAINFO, certs_path);
 #endif
     }
@@ -491,18 +512,12 @@ static int curl_get (urlinfo *u)
     curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
 
     if (u->timeout > 0) {
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) u->timeout);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, u->timeout);
     }
 
     if (wproxy && *proxyhost != '\0') {
 	set_curl_proxy(u, curl);
     }
-
-#ifdef WIN32
-    /* be on the safe side: 'http' can turn into 'https'
-       at the server */
-    curl_easy_setopt(curl, CURLOPT_CAINFO, certs_path);
-#endif
 
     if (u->progfunc != NULL) {
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);
@@ -514,9 +529,14 @@ static int curl_get (urlinfo *u)
 
     res = curl_easy_perform(curl);
 
-#ifdef WIN32
+    if (res == CURLE_SSL_CACERT) {
+	fprintf(stderr, "Error CURLE_SSL_CACERT from curl_easy_perform()\n");
+    }
+
+#if 0 // def WIN32
     if (res == CURLE_SSL_CACERT) {
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+	/* does this re-run provoke a crash? */
 	res = curl_easy_perform(curl);
     }
 #endif
@@ -567,10 +587,8 @@ static int retrieve_url (const char *hostname,
 			 char **getbuf)
 {
     int saveopt = SAVE_NONE;
-    urlinfo u;
+    urlinfo u = {0};
     int err = 0;
-
-    maybe_revise_www_paths();
 
     if (getbuf != NULL) {
 	*getbuf = NULL;
@@ -584,6 +602,13 @@ static int retrieve_url (const char *hostname,
 #endif
 
     urlinfo_init(&u, hostname, saveopt, localfile);
+
+#if SF_CGI
+    if (is_db_transaction(opt)) {
+	strcat(u.url, dbcgi);
+	goto url_next;
+    }
+#endif
 
     if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
 	strcat(u.url, fname);
@@ -600,6 +625,10 @@ static int retrieve_url (const char *hostname,
     } else {
 	strcat(u.url, datacgi);
     }
+
+#if SF_CGI
+ url_next:
+#endif
 
     if (strstr(gretlhost, "ricardo") == NULL) {
 	fprintf(stderr, "using gretlhost = '%s'\n", gretlhost);
@@ -656,7 +685,7 @@ int get_update_info (char **saver, int verbose)
     urlinfo u;
     int err = 0;
 
-    urlinfo_init(&u, gretlhost, SAVE_TO_BUFFER, NULL);
+    urlinfo_init(&u, sfweb, SAVE_TO_BUFFER, NULL);
     strcat(u.url, updatecgi);
 
     if (verbose) {
@@ -690,8 +719,6 @@ int upload_function_package (const char *login, const char *pass,
     int saveopt = SAVE_NONE;
     urlinfo u;
     int err = 0;
-
-    maybe_revise_www_paths();
 
     if (retbuf != NULL) {
 	*retbuf = NULL;
@@ -884,7 +911,7 @@ int curl_does_smtp (void)
 
 int list_remote_dbs (char **getbuf)
 {
-    return retrieve_url(dbhost, LIST_DBS, NULL, NULL,
+    return retrieve_url(dbserver, LIST_DBS, NULL, NULL,
 			NULL, 0, getbuf);
 }
 
@@ -916,7 +943,7 @@ int list_remote_data_packages (char **getbuf)
 
 int retrieve_remote_db_index (const char *dbname, char **getbuf)
 {
-    return retrieve_url(dbhost, GRAB_IDX, dbname, NULL,
+    return retrieve_url(dbserver, GRAB_IDX, dbname, NULL,
 			NULL, 0, getbuf);
 }
 
@@ -924,7 +951,7 @@ int retrieve_remote_db (const char *dbname,
 			const char *localname,
 			int opt)
 {
-    return retrieve_url(dbhost, opt, dbname, NULL,
+    return retrieve_url(dbserver, opt, dbname, NULL,
 			localname, 0, NULL);
 }
 
@@ -933,7 +960,7 @@ int check_remote_db (const char *dbname)
     char *getbuf = NULL;
     int err;
 
-    err = retrieve_url(dbhost, CHECK_DB, dbname, NULL,
+    err = retrieve_url(dbserver, CHECK_DB, dbname, NULL,
 		       NULL, 0, &getbuf);
 
     if (!err && getbuf != NULL) {
@@ -1169,7 +1196,7 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
-    return retrieve_url(dbhost, opt, dbname, varname,
+    return retrieve_url(dbserver, opt, dbname, varname,
 			NULL, 0, getbuf);
 }
 

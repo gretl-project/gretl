@@ -138,7 +138,8 @@ SRCS = excel_import.c \
 	interpolate.c \
 	iso3166.c \
 	regls.c \
-	geoplot.c
+	geoplot.c \
+	purebin.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -181,7 +182,8 @@ PLUGINS = arbond.la \
 	xml_get.la \
 	svm.la \
 	regls.la \
-	geoplot.la
+	geoplot.la \
+	purebin.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -340,6 +342,9 @@ gretlzip.la: gretlzip.lo $(ZIPOBJ)
 	$(LINK) -o $@ $^ $(ZIP_LIBS) $(GRETLLIB)
 
 geoplot.la: geoplot.lo $(SHPOBJ)
+	$(LINK) -o $@ $^ $(GRETLLIB)
+
+purebin.la: purebin.lo $(SHPOBJ)
 	$(LINK) -o $@ $^ $(GRETLLIB)
 
 odbc_import.la: odbc_import.lo

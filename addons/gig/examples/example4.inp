@@ -3,8 +3,8 @@
 # EGARCH(1,1) with several conditional distributions. Results are
 # stored and printed later.
 
-set echo off
-set messages off
+
+set verbose off
 include gig.gfn
 
 open djclose

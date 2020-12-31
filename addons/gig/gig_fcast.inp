@@ -1,5 +1,3 @@
-# include ~/src/gretl-git/addons/gig/gig_printout.inp
-
 function matrix aparch_fcast(matrix e, matrix e0, matrix h0, 
       scalar omega, matrix alpha, matrix gamma, matrix beta, scalar delta)
 
@@ -64,7 +62,7 @@ function matrix gig_var_fcast(bundle *mod, scalar horizon, scalar rep)
     endif
 
     # fetch stuff from the bundle first
-    loop foreach i p q mk --quiet
+    loop foreach i p q mk
         scalar $i = mod.$i
     endloop 
 
@@ -111,7 +109,7 @@ function matrix gig_var_fcast(bundle *mod, scalar horizon, scalar rep)
     
     matrix ret = zeros(rep, horizon)
 
-    loop i=1..rep --quiet
+    loop i = 1 .. rep
 	if horizon > 1
             matrix ei = e[sel[,i]]
             scalar chk = sumc(ei)

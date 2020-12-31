@@ -37,6 +37,8 @@ gboolean window_list_exit_check (void);
 
 windata_t *get_editor_for_file (const char *filename);
 
+windata_t *get_viewer_for_file (const char *filename);
+
 windata_t *get_browser_for_database (const char *filename);
 
 windata_t *get_browser_for_gretl_database (const char *filename);
@@ -48,6 +50,11 @@ windata_t *get_viewer_for_data (const gpointer data);
 GtkWidget *get_window_for_data (const gpointer data);
 
 GtkWidget *get_window_for_plot (void *session_plot);
+
+GtkWidget *get_viewer_for_plot (const char *filename);
+
+gboolean is_shell_for_plotfile (GtkWidget *w,
+				const char *fname);
 
 gboolean package_being_edited (const char *pkgname,
 			       GtkWidget **pw);

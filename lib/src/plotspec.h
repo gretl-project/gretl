@@ -255,4 +255,6 @@ void plotspec_set_bars_limits (GPT_SPEC *spec,
 
 void plotspec_remove_bars (GPT_SPEC *spec);
 
+int plotspec_line_is_formula (const GPT_SPEC *spec, int i);
+
 #endif /* PLOTSPEC_H */

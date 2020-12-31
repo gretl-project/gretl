@@ -81,14 +81,19 @@ extern "C" {
 # define gettext_noop(String) String
 # define _(String) gettext (String)
 # define N_(String) gettext_noop (String)
-# define I_(String) iso_gettext (String) 
-# define A_(String) alt_gettext (String)
-#else
+# ifdef WIN32
+#  define I_(String) locale_gettext (String)
+#  define A_(String) alt_gettext (String)
+# else
+#  define I_(String) gettext (String)
+#  define A_(String) gettext (String)
+# endif
+#else /* no NLS */
 # define _(String)  ((char *) String)
 # define N_(String) String
 # define I_(String) ((char *) String)
 # define A_(String) ((char *) String)
-#endif /* ENABLE_NLS */
+#endif /* NLS or not */
 
 #define MAXLINE 65536  /* maximum length of command line */
 #define MAXLABEL  128  /* maximum length of descriptive labels for variables */

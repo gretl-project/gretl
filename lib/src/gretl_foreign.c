@@ -23,6 +23,8 @@
 #include "gretl_foreign.h"
 #include "matrix_extra.h"
 #include "gretl_typemap.h"
+#include "uservar.h"
+
 #include <unistd.h>
 
 #ifdef HAVE_MPI
@@ -2722,7 +2724,11 @@ static int R_function_add_factor (const DATASET *dset, int v)
 
     for (i=dset->t1; i<=dset->t2; i++) {
 	si = series_get_string_for_obs(dset, v, i);
-	R_STRING_PTR(res)[i-dset->t1] = R_mkChar(si);
+	if (si == NULL) {
+	    R_STRING_PTR(res)[i-dset->t1] = R_mkChar("");
+	} else {
+	    R_STRING_PTR(res)[i-dset->t1] = R_mkChar(si);
+	}
     }
 
     R_SETCAR(current_arg, res);

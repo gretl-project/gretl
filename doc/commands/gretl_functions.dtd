@@ -43,9 +43,9 @@
 <!ATTLIST function
    name    CDATA #REQUIRED
    targ    CDATA #IMPLIED
-   section (data-utils | filters | linalg | math | matbuild | 
-            matshape | numerical | probdist | stats | sspace | strings | 
-            transforms | access | calendar | midas | complex | mpi) "math"
+   section (access | straccess | data-utils | math | transforms | matrix | linalg |
+            complex | numerical | probdist | panel | calendar | timeseries | stats |
+            nonparam | midas | sspace | programming | strings | mpi) "math"
    output  (scalar | series | matrix | smatrix | vector | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int | object |
             scalar-or-matrix | matrix-or-bundle | bundle | cmatrix | none |

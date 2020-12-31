@@ -352,17 +352,13 @@ section \ref{sec:gmm-intro} therefore specialize here to:
   the special case of a perfect linear fit.
 \end{itemize}
 
-The code snippet contained in Listing~\ref{gmm-ols-ex} uses gretl's
-\texttt{gmm} command to make the above operational.  In
-example~\ref{gmm-ols-ex}, the series \texttt{e} holds the
-``residuals'' and the series \texttt{x} holds the regressor.  If
-\texttt{x} had been a list (a matrix), the \texttt{orthog} statement
-would have generated one orthogonality condition for each element
-(column) of \texttt{x}.
-
-\begin{script}[htbp]
-  \caption{OLS via GMM}
-  \label{gmm-ols-ex}
+The code snippet below uses gretl's \texttt{gmm} command to make the
+above operational.  The series \texttt{e} holds the ``residuals'' and
+the series \texttt{x} holds the regressor.  If \texttt{x} had been a
+list (or a matrix), the \texttt{orthog} statement would have generated
+one orthogonality condition for each element (or column) of
+\texttt{x}.
+%
 \begin{code}
 /* initialize stuff */
 series e = 0
@@ -377,7 +373,6 @@ gmm
   params beta
 end gmm
 \end{code}
-\end{script}
 
 
 \section{TSLS as GMM}
@@ -437,7 +432,7 @@ exclusive options can be specified: \option{two-step} or
 \option{iterate}, whose meaning should be obvious.
 
 \begin{script}[htbp]
-  \caption{TSLS via GMM}
+  \scriptcaption{TSLS via GMM}
   \label{gmm-tsls-ex}
 \begin{scode}
 open cig_ch10.gdt
@@ -555,8 +550,6 @@ further discussion of HAC estimation.  You can also ask gretl
 \begin{code}
 set force_hc on
 \end{code}
-%
-
 
 \section{A real example: the Consumption Based Asset Pricing Model}
 \label{sec:gmm-CBAPM}
@@ -620,7 +613,7 @@ an instrument.
 
 
 \begin{script}[htbp]
-  \caption{Estimation of the Consumption Based Asset Pricing Model}
+  \scriptcaption{Estimation of the Consumption Based Asset Pricing Model}
   \label{gmm-CBAPM-script}
 \begin{scode}
 open hall.gdt
@@ -660,14 +653,13 @@ gmm e = delta*ewr*consrat^(alpha-1) - 1
   params alpha delta
 end gmm --iterate
 \end{scode}
-%$
 \end{script}
 
 \begin{script}[htbp]
-  \caption{Estimation of the Consumption Based Asset Pricing Model ---
+  \caption{Estimation of the Consumption Based Asset Pricing Model --
   output}
   \label{gmm-CBAPM-out}
-\begin{scode}
+\begin{outbit}
 Model 1: 1-step GMM estimates using the 465 observations 1959:04-1997:12
 e = d*ewr*consrat^(alpha-1) - 1
 
@@ -709,7 +701,7 @@ e = d*ewr*consrat^(alpha-1) - 1
 
   GMM criterion = 5491.78
   J test: Chi-square(3) = 11.8103 (p-value 0.0081)
-\end{scode}
+\end{outbit}
 \end{script}
 
 In the example code given in \ref{gmm-CBAPM-script}, we replicate

@@ -4,8 +4,7 @@
 # constant as mean regressor and minimal output.
 # Also show how to retrieve stuff from the estimated model
 
-set echo off
-set messages off
+set verbose off
 include gig.gfn
 
 open djclose

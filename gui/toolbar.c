@@ -375,10 +375,6 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
-#if 0 // def G_OS_WIN32
-    /* gtksourceview printing is screwed on Windows (FIXME?) */
-    window_print(NULL, vwin);
-#else
     if (textview_use_highlighting(vwin->role)) {
 	int resp = yes_no_cancel_dialog(NULL,
 					_("Print with syntax highlighting?"),
@@ -392,7 +388,6 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
     } else {
 	window_print(NULL, vwin);
     }
-#endif
 }
 
 static void window_help (GtkWidget *w, windata_t *vwin)
@@ -1178,13 +1173,13 @@ static void gretl_tool_item_set_tip (GtkWidget *item,
     const char *accel = NULL;
 
     if (tool->flag == EXEC_ITEM) {
-	accel = "Ctrl-R";
+	accel = "Ctrl+R";
     } else if (tool->flag == COPY_ITEM) {
-	accel = "Ctrl-C";
+	accel = "Ctrl+C";
     } else if (tool->flag == SAVE_ITEM) {
-	accel = "Ctrl-S";
+	accel = "Ctrl+S";
     } else if (tool->flag == FIND_ITEM) {
-	accel = "Ctrl-F";
+	accel = "Ctrl+F";
     }
 
     if (accel != NULL) {

@@ -4,6 +4,31 @@
 
 #############################
 
+function void SVAR_SRresetalpha(bundle *Smod, scalar alpha[0:1:])
+    # Public convenience function to implement the hack described
+    # previously in fn 33 of the SVAR doc; allows to redefine 
+    # the confidence band coverage level after getting the draws.
+    
+    errorif( !inbundle(Smod, "acc_draws"), "no accepted draws found")
+    
+    if Smod.SRcoveralpha == alpha
+        print "Warning: desired coverage level already active"
+    else
+        Smod.SRcoveralpha = alpha
+    endif
+    
+    bundle newIrfdata = IRF_plotdata(Smod.acc_draws, Smod.SRcoveralpha)    
+    matrix Smod.SRlo_cb    = newIrfdata.lo_cb
+    matrix Smod.SRhi_cb    = newIrfdata.hi_cb
+    
+    # are the following two actually necessary or shouldn't 
+    # their contents really be the same before and after?
+    matrix Smod.SRirfmeans = newIrfdata.irfSRmeans 
+    matrix Smod.SRirfmeds  = newIrfdata.irfSRmeds
+end function
+
+# ------------------------------
+
 function void putIrf_to_accdraw(bundle *SVARobj, int whichdraw[0::0] )
     # Only for SR (type 10)
     # to transfer the IRFs to the old format
@@ -28,7 +53,7 @@ function void putIrf_to_accdraw(bundle *SVARobj, int whichdraw[0::0] )
     
 end function 
 
-###########################
+# ------------------------------
 
 function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null])
     # Retrieves all the quantities that perhaps are redrawn 
@@ -62,6 +87,8 @@ function matrices muVARparE_mayberedr(const bundle Smod, matrix Bofonedraw[null]
 
     return defarray(mu, VARpar, resids) 
 end function     
+
+# ------------------------------
 
 function void errchkSRhisto(bundle *Smod, int drawix)
     if !inbundle(Smod, "bestdraw")

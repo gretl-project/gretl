@@ -1234,8 +1234,16 @@ static int geojson_to_csv (const char *fname,
 		key = gretl_array_get_data(keys, j);
 		ptr = gretl_bundle_get_data(pp, key, &type, NULL, &err);
 		if (err) {
+#if 0
+		    /* 2020-09-23: this is too stringent? */
 		    fprintf(stderr, "error at feature %d, propkey %d\n", i, j);
 		    break;
+#else
+		    /* ignore the missing data */
+		    err = 0;
+		    fputc(j < nk-1 ? ',' : '\n', fp);
+		    continue;
+#endif
 		}
 		if (type == GRETL_TYPE_STRING) {
 		    fprintf(fp, "\"%s\"", (char *) ptr);

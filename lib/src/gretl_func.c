@@ -1802,10 +1802,8 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     while (bufgets(line, sizeof line, buf) && !err) {
 	s = line;
 	while (isspace(*s)) s++;
-	if (!(fun->flags & UFUN_USES_SET)) {
-	    if (!strncmp(s, "set ", 4)) {
-		fun->flags |= UFUN_USES_SET;
-	    }
+	if (!(fun->flags & UFUN_USES_SET) && !strncmp(s, "set ", 4)) {
+	    fun->flags |= UFUN_USES_SET;
 	}
 	tailstrip(s);
 	err = push_function_line(fun, s, 0);
@@ -6567,9 +6565,9 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 	gretl_errmsg_set("'null' is not a valid default for scalars");
 	err = E_TYPES;
     } else if (param->type == GRETL_TYPE_BOOL) {
-	if (!strcmp(p, "[TRUE]")) {
+	if (!strncmp(p, "[TRUE]", 6)) {
 	    param->deflt = 1;
-	} else if (!strcmp(p, "[FALSE]")) {
+	} else if (!strncmp(p, "[FALSE]", 7)) {
 	    param->deflt = 0;
 	} else if (sscanf(p, "[%lf]", &param->deflt) != 1) {
 	    err = E_PARSE;
@@ -6617,12 +6615,10 @@ static int read_min_max_deflt (char **ps, fn_param *param,
 		param->deflt = x[2];
 		param->step = x[3];
 	    }
-
 #if VALDEBUG
 	    fprintf(stderr, "min %g, max %g, deflt %g, step %g\n",
 		    param->min, param->max, param->deflt, param->step);
 #endif
-
 	    err = check_parm_min_max(param, name, nvals);
 	}
     }
@@ -8546,8 +8542,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     return 0;
 }
 
-static void func_exec_callback (ExecState *s, void *ptr,
-				GretlObjType type)
+static int func_exec_callback (ExecState *s, void *ptr,
+			       GretlObjType type)
 {
     if (s->cmd->ci == FLUSH || is_plotting_command(s->cmd)) {
 	/* we permit "reach-back" into the GUI for these */
@@ -8557,6 +8553,8 @@ static void func_exec_callback (ExecState *s, void *ptr,
 	    gc(s, NULL, 0);
 	}
     }
+
+    return 0;
 }
 
 static double arg_get_double_val (fn_arg *arg)
@@ -8920,7 +8918,6 @@ static int handle_plugin_call (fncall *call,
     cfunc = get_packaged_C_function(u->pkg->name, u->name, &handle);
 
     if (cfunc == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
 	return E_FOPEN;
     }
 

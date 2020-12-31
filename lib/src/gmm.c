@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "qr_estimate.h"
 #include "gretl_bfgs.h"
+#include "uservar.h"
 
 #include "../../minpack/minpack.h"
 

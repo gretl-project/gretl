@@ -754,6 +754,7 @@ void set_gretl_startdir (void)
 
 static void get_pkg_save_dir (char *dirname, int action)
 {
+
     const char *subdir = NULL;
     int try_sysdir = 1;
     int ok = 0;
@@ -769,10 +770,7 @@ static void get_pkg_save_dir (char *dirname, int action)
     }
 
 #ifdef G_OS_WIN32
-    if (win32_uses_virtual_store()) {
-	/* don't write to virtualized location */
-	try_sysdir = 0;
-    }
+    try_sysdir = 0;
 #endif
 
     if (try_sysdir) {
@@ -891,8 +889,7 @@ static void set_tramo_status (void)
     tramo_ok = ok;
 
     if (gui_up) {
-	flip(mdata->ui, "/menubar/Variable/Tramo",
-	     get_tramo_ok());
+	flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
     }
 }
 
@@ -2557,6 +2554,7 @@ static void windows_font_selector (GtkAction *action)
     resp = choose_fontsel_action();
 
     if (resp == 0) {
+	/* actually choose a font */
 	if (which == FIXED_FONT_SELECTION) {
 	    strcpy(fontname, fixedfontname);
 	} else {
@@ -2564,6 +2562,7 @@ static void windows_font_selector (GtkAction *action)
 	}
 	win32_font_selector(fontname, which);
     } else if (resp == 1) {
+	/* reset the default font */
 	if (which == FIXED_FONT_SELECTION) {
 	    strcpy(fontname, default_fixedfont);
 	} else {

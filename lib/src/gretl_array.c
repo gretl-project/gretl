@@ -38,6 +38,7 @@ struct gretl_array_ {
     GretlType type;  /* type of data */
     int n;           /* number of elements */
     void **data;     /* actual data array */
+    double *mdata;   /* for matrix block */
 };
 
 static void gretl_array_destroy_data (gretl_array *A)
@@ -52,8 +53,15 @@ static void gretl_array_destroy_data (gretl_array *A)
 		free(A->data[i]);
 	    }
 	} else if (A->type == GRETL_TYPE_MATRICES) {
-	    for (i=0; i<A->n; i++) {
-		gretl_matrix_free(A->data[i]);
+	    if (A->mdata != NULL) {
+		free(A->mdata);
+		for (i=0; i<A->n; i++) {
+		    free(A->data[i]);
+		}
+	    } else {
+		for (i=0; i<A->n; i++) {
+		    gretl_matrix_free(A->data[i]);
+		}
 	    }
 	} else if (A->type == GRETL_TYPE_BUNDLES) {
 	    for (i=0; i<A->n; i++) {
@@ -199,6 +207,7 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
 	A->type = type;
 	A->n = n;
 	A->data = NULL;
+	A->mdata = NULL;
 	if (n > 0) {
 	    *err = array_allocate_storage(A);
 	    if (*err) {
@@ -230,6 +239,62 @@ gretl_array *gretl_array_from_strings (char **S, int n,
 	if (!*err) {
 	    A->n = n;
 	}
+    }
+
+    return A;
+}
+
+#define COMMON_BLOCK 1
+
+gretl_array *gretl_matrix_array_sized (int n, int r, int c,
+				       int *err)
+{
+    gretl_array *A;
+
+    A = gretl_array_new(GRETL_TYPE_MATRICES, n, err);
+
+#if COMMON_BLOCK
+    if (A != NULL && n > 0) {
+	size_t msize = n * r * c * sizeof(double);
+	double *ai_val;
+	gretl_matrix *ai;
+	int i, rc = r * c;
+
+	/* common block for matrix data */
+	ai_val = A->mdata = malloc(msize);
+	if (A->mdata == NULL) {
+	    *err = E_ALLOC;
+	}
+
+	for (i=0; i<n && !*err; i++) {
+	    ai = gretl_null_matrix_new();
+	    if (ai == NULL) {
+		*err = E_ALLOC;
+		break;
+	    }
+	    ai->val = ai_val;
+	    ai->rows = r;
+	    ai->cols = c;
+	    A->data[i] = ai;
+	    ai_val += rc;
+	}
+    }
+#else
+    if (A != NULL && n > 0) {
+	int i;
+
+	for (i=0; i<n && !*err; i++) {
+	    A->data[i] = gretl_matrix_alloc(r, c);
+	    if (A->data[i] == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+    }
+#endif
+
+    if (*err && A != NULL) {
+	gretl_array_destroy(A);
+	A = NULL;
     }
 
     return A;

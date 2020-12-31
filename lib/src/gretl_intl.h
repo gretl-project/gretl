@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef GRETL_INTL_H
@@ -78,8 +78,6 @@ int lang_id_from_name (const char *s);
 
 int lang_id_from_code (const char *s);
 
-void set_alt_gettext_mode (PRN *prn);
-
 void set_lcnumeric (int langid, int lcnumeric);
 
 int gretl_is_ascii (const char *buf);
@@ -88,9 +86,9 @@ int force_language (int langid);
 
 int test_locale (const char *langstr);
 
-int gretl_recode_file (const char *path1, 
+int gretl_recode_file (const char *path1,
 		       const char *path2,
-		       const char *from_set, 
+		       const char *from_set,
 		       const char *to_set,
 		       PRN *prn);
 
@@ -102,11 +100,19 @@ int east_asian_locale (void);
 
 int get_utf_width (const char *str, int width);
 
-#ifdef ENABLE_NLS
+void set_alt_gettext_mode (PRN *prn);
 
-char *iso_gettext (const char *msgid);
+#ifdef WIN32
+
+int get_gretl_cpage (void);
+
+char *locale_gettext (const char *msgid);
 
 char *alt_gettext (const char *msgid);
+
+#endif
+
+#ifdef ENABLE_NLS
 
 void set_gretl_charset (void);
 
@@ -116,14 +122,12 @@ char *sprint_l2_to_ascii (char *targ, const char *s, size_t len);
 
 int get_translated_width (const char *str);
 
-# define UTF_WIDTH(s, w) get_utf_width(s, w) 
+# define UTF_WIDTH(s, w) get_utf_width(s, w)
 # define TRANSLATED_WIDTH(s) get_translated_width(s)
 
 #else /* !ENABLE_NLS */
 
 #define gettext(s) s
-#define iso_gettext(s) s
-#define alt_gettext(s) s
 
 # define UTF_WIDTH(s, w) w
 # define TRANSLATED_WIDTH(s) strlen(s)

@@ -94,4 +94,10 @@ int iso_week_number (int y, int m, int d, int *err);
 
 int iso_week_from_date (const char *datestr);
 
+int fill_monthlen_array (double *mlen, int t1, int t2,
+			 int wkdays, int mo, int yr,
+			 const double *movec,
+			 const double *yrvec,
+			 int julian);
+
 #endif /* CALENDAR_H */ 

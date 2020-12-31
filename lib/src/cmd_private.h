@@ -43,7 +43,7 @@ struct CMD_ {
     char savename[MAXSAVENAME]; /* for object-saving mechanism */
 }; 
 
-typedef void (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
+typedef int (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
 
 struct ExecState_ {
     ExecFlags flags;
@@ -66,6 +66,16 @@ struct ExecState_ {
     EXEC_CALLBACK callback;
 };
 
+struct OpenOp_ {
+    char fname[MAXLEN];
+    int quiet;
+    int http;
+    int dbdata;
+    int ftype;
+};
+
+typedef struct OpenOp_ OpenOp;
+
 void gretl_exec_state_init (ExecState *s,
 			    ExecFlags flags,
 			    char *line,
@@ -79,6 +89,8 @@ void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback,
 				    gretlopt opt);
 
 EXEC_CALLBACK get_gui_callback (void);
+
+void set_gui_callback (EXEC_CALLBACK callback);
 
 void gretl_exec_state_clear (ExecState *s);
 

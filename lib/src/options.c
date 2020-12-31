@@ -35,49 +35,49 @@
 
 #define yields_result(c) (c == CORR || c == FREQ || c == SUMMARY)
 
-#define quiet_opt_ok(c) (MODEL_COMMAND(c) ||	\
-			 yields_result(c) ||	\
-			 c == ADD ||		\
-			 c == ADF ||		\
-			 c == ANOVA ||		\
-			 c == APPEND ||		\
-			 c == BKW ||		\
-			 c == COEFFSUM ||       \
-			 c == CHOW ||		\
-			 c == COINT2 ||		\
-			 c == CORRGM ||		\
-			 c == CUSUM ||		\
-			 c == DATA ||		\
-			 c == DIFFTEST ||	\
-			 c == ESTIMATE ||	\
-			 c == FCAST ||		\
-			 c == FOREIGN ||	\
+#define quiet_opt_ok(c) (MODEL_COMMAND(c) ||    \
+                         yields_result(c) ||    \
+                         c == ADD ||            \
+                         c == ADF ||            \
+                         c == ANOVA ||          \
+                         c == APPEND ||         \
+                         c == BKW ||            \
+                         c == COEFFSUM ||       \
+                         c == CHOW ||           \
+                         c == COINT2 ||         \
+                         c == CORRGM ||         \
+                         c == CUSUM ||          \
+                         c == DATA ||           \
+                         c == DIFFTEST ||       \
+                         c == ESTIMATE ||       \
+                         c == FCAST ||          \
+                         c == FOREIGN ||        \
                          c == FRACTINT ||       \
-			 c == FREQ ||		\
-			 c == KPSS ||		\
-			 c == MAKEPKG ||	\
-			 c == MODTEST ||	\
-			 c == LEVERAGE ||	\
+                         c == FREQ ||           \
+                         c == KPSS ||           \
+                         c == MAKEPKG ||        \
+                         c == MODTEST ||        \
+                         c == LEVERAGE ||       \
                          c == LEVINLIN ||       \
-			 c == LOOP ||		\
+                         c == LOOP ||           \
                          c == MAHAL ||          \
-			 c == NORMTEST ||	\
-			 c == OLS ||		\
-			 c == OMIT ||		\
-			 c == OPEN ||		\
-			 c == PKG ||		\
-			 c == QLRTEST ||        \
-			 c == RENAME ||		\
-			 c == RESET ||		\
-			 c == RESTRICT ||	\
-			 c == RMPLOT ||		\
-			 c == SMPL ||		\
-			 c == SYSTEM ||		\
-			 c == VAR ||		\
-			 c == VECM ||		\
-			 c == VIF ||		\
-			 c == XCORRGM ||	\
-			 c == XTAB)
+                         c == NORMTEST ||       \
+                         c == OLS ||            \
+                         c == OMIT ||           \
+                         c == OPEN ||           \
+                         c == PKG ||            \
+                         c == QLRTEST ||        \
+                         c == RENAME ||         \
+                         c == RESET ||          \
+                         c == RESTRICT ||       \
+                         c == RMPLOT ||         \
+                         c == SMPL ||           \
+                         c == SYSTEM ||         \
+                         c == VAR ||            \
+                         c == VECM ||           \
+                         c == VIF ||            \
+                         c == XCORRGM ||        \
+                         c == XTAB)
 
 struct gretl_option {
     int ci;              /* command index (gives context) */
@@ -86,7 +86,7 @@ struct gretl_option {
     char parminfo;       /* 0 = option can never take a parameter,
                             1 = option may take a parameter,
                             2 = option requires a parameter
-			 */
+                         */
 };
 
 struct flag_match {
@@ -193,7 +193,6 @@ struct gretl_option gretl_opts[] = {
     { CUSUM,    OPT_R, "squares", 0 },
     { CUSUM,    OPT_U, "plot", 2 },
     { DATA,     OPT_C, "compact", 2 },
-    { DATA,     OPT_I, "interpolate", 0 },
     { DATA,     OPT_O, "odbc", 0 },
     { DATA,     OPT_N, "name", 2 },
     { DATA,     OPT_V, "verbose", 0 },
@@ -341,7 +340,7 @@ struct gretl_option gretl_opts[] = {
     { JOIN,     OPT_X, "tconvert", 2 },
     { JOIN,     OPT_H, "no-header", 0 },
     { JOIN,     OPT_V, "verbose", 0 },
-    { JOIN,     OPT_P, "pd", 2 },
+    { JOIN,     OPT_P, "pd", 2 }, /* undocumented: is it wanted? */
     { KPSS,     OPT_T, "trend", 0 },
     { KPSS,     OPT_D, "seasonals", 0 },
     { KPSS,     OPT_V, "verbose", 0 },
@@ -406,7 +405,7 @@ struct gretl_option gretl_opts[] = {
     { MIDASREG, OPT_L, "levenberg", 0 },
     { MIDASREG, OPT_P, "print-spec", 0 },
     { MIDASREG, OPT_B, "breaktest", 0 },
-    { MIDASREG, OPT_C, "clamp-beta", 0 },
+    { MIDASREG, OPT_C, "clamp-beta", 0 }, /* legacy */
     { MLE,      OPT_A, "auxiliary", 0 },
     { MLE,      OPT_G, "opg", 0 },
     { MLE,      OPT_H, "hessian", 0 },
@@ -458,6 +457,7 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_A, "all-cols", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
+    { OPEN,     OPT_E, "select", 2 },
     { OPEN,     OPT_F, "fixed-cols", 2 },
     { OPEN,     OPT_O, "odbc", 0 },
     { OPEN,     OPT_P, "preserve", 0 },
@@ -618,6 +618,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_R, "gnu-R", 0 },
     { STORE,    OPT_X, "omit-obs", 0 },
     { STORE,    OPT_Z, "gzipped", 1 },
+    { STORE,    OPT_U, "purebin", 0 }, /* temporary thing */
     { SUMMARY,  OPT_B, "by", 2 },
     { SUMMARY,  OPT_S, "simple", 0 },
     { SUMMARY,  OPT_W, "weights", 2 },
@@ -677,14 +678,14 @@ static const char *get_longopt (int ci, gretlopt opt)
     int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci; i++) {
-	if (gretl_opts[i].ci == ci) {
-	    if (gretl_opts[i].o == opt) {
-		return gretl_opts[i].longopt;
-	    }
-	    got_ci = 1;
-	} else if (got_ci) {
-	    break;
-	}
+        if (gretl_opts[i].ci == ci) {
+            if (gretl_opts[i].o == opt) {
+                return gretl_opts[i].longopt;
+            }
+            got_ci = 1;
+        } else if (got_ci) {
+            break;
+        }
     }
 
     return "??";
@@ -695,15 +696,15 @@ int cluster_option_ok (int ci)
     int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci; i++) {
-	if (gretl_opts[i].ci == ci) {
-	    if (gretl_opts[i].o == OPT_C &&
-		!strcmp(gretl_opts[i].longopt, "cluster")) {
-		return 1;
-	    }
-	    got_ci = 1;
-	} else if (got_ci) {
-	    break;
-	}
+        if (gretl_opts[i].ci == ci) {
+            if (gretl_opts[i].o == OPT_C &&
+                !strcmp(gretl_opts[i].longopt, "cluster")) {
+                return 1;
+            }
+            got_ci = 1;
+        } else if (got_ci) {
+            break;
+        }
     }
 
     return 0;
@@ -719,19 +720,19 @@ int cluster_option_ok (int ci)
 int matrix_data_option (int ci, gretlopt opt)
 {
     if (opt & OPT_X) {
-	int i, got_ci = 0;
+        int i, got_ci = 0;
 
-	for (i=0; gretl_opts[i].ci; i++) {
-	    if (gretl_opts[i].ci == ci) {
-		if (gretl_opts[i].o == OPT_X &&
-		    !strcmp(gretl_opts[i].longopt, "matrix")) {
-		    return 1;
-		}
-		got_ci = 1;
-	    } else if (got_ci) {
-		break;
-	    }
-	}
+        for (i=0; gretl_opts[i].ci; i++) {
+            if (gretl_opts[i].ci == ci) {
+                if (gretl_opts[i].o == OPT_X &&
+                    !strcmp(gretl_opts[i].longopt, "matrix")) {
+                    return 1;
+                }
+                got_ci = 1;
+            } else if (got_ci) {
+                break;
+            }
+        }
     }
 
     return 0;
@@ -746,25 +747,25 @@ char **get_all_option_strings (int *pn)
     int i, n = 0;
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	n++;
+        n++;
     }
 
     optstrs = strings_array_new(n);
 
     if (optstrs != NULL) {
-	for (i=0; i<n; i++) {
-	    optstrs[i] = gretl_strdup(gretl_opts[i].longopt);
-	    if (optstrs[i] == NULL) {
-		strings_array_free(optstrs, n);
-		optstrs = NULL;
-		break;
-	    }
-	}
+        for (i=0; i<n; i++) {
+            optstrs[i] = gretl_strdup(gretl_opts[i].longopt);
+            if (optstrs[i] == NULL) {
+                strings_array_free(optstrs, n);
+                optstrs = NULL;
+                break;
+            }
+        }
     }
 
     if (optstrs != NULL) {
-	strings_array_sort(&optstrs, &n, OPT_U);
-	*pn = n;
+        strings_array_sort(&optstrs, &n, OPT_U);
+        *pn = n;
     }
 
     return optstrs;
@@ -778,19 +779,19 @@ const char **get_opts_for_command (int ci, int *nopt)
     const char **ret = NULL;
 
     if (ci != OLS) {
-	/* widely applicable options which are "attached" to OLS */
-	n += vcv_opt_ok(ci);
-	n += quiet_opt_ok(ci);
-	n += window_opt_ok(ci);
+        /* widely applicable options which are "attached" to OLS */
+        n += vcv_opt_ok(ci);
+        n += quiet_opt_ok(ci);
+        n += window_opt_ok(ci);
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	n += (gretl_opts[i].ci == ci);
+        n += (gretl_opts[i].ci == ci);
     }
 
     if (n == 0) {
-	*nopt = 0;
-	return NULL;
+        *nopt = 0;
+        return NULL;
     }
 
     ret = malloc(n * sizeof *ret);
@@ -798,24 +799,24 @@ const char **get_opts_for_command (int ci, int *nopt)
 
     j = got_ci = 0;
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (gretl_opts[i].ci == ci) {
-	    ret[j++] = gretl_opts[i].longopt;
-	    got_ci = 1;
-	} else if (got_ci) {
-	    break;
-	}
+        if (gretl_opts[i].ci == ci) {
+            ret[j++] = gretl_opts[i].longopt;
+            got_ci = 1;
+        } else if (got_ci) {
+            break;
+        }
     }
 
     if (ci != OLS) {
-	if (vcv_opt_ok(ci)) {
-	    ret[j++] = "vcv";
-	}
-	if (quiet_opt_ok(ci)) {
-	    ret[j++] = "quiet";
-	}
-	if (window_opt_ok(ci)) {
-	    ret[j++] = "window";
-	}
+        if (vcv_opt_ok(ci)) {
+            ret[j++] = "vcv";
+        }
+        if (quiet_opt_ok(ci)) {
+            ret[j++] = "quiet";
+        }
+        if (window_opt_ok(ci)) {
+            ret[j++] = "window";
+        }
     }
 
     *nopt = n;
@@ -866,9 +867,9 @@ gretlopt opt_from_flag (unsigned char c)
     int i;
 
     for (i=0; flag_matches[i].c != '\0'; i++) {
-	if (c == flag_matches[i].c) {
-	    return flag_matches[i].o;
-	}
+        if (c == flag_matches[i].c) {
+            return flag_matches[i].o;
+        }
     }
 
     return OPT_NONE;
@@ -879,26 +880,26 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     int i, got_ci = 0;
 
     if (opt == OPT_O && vcv_opt_ok(ci)) {
-	return 1;
+        return 1;
     } else if (opt == OPT_Q && quiet_opt_ok(ci)) {
-	return 1;
+        return 1;
     } else if (opt == OPT_W && window_opt_ok(ci)) {
-	return 1;
+        return 1;
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (ci == gretl_opts[i].ci) {
-	    if (opt == gretl_opts[i].o) {
-		return 1;
-	    }
-	    got_ci = 1;
-	} else if (got_ci) {
-	    break;
-	}
+        if (ci == gretl_opts[i].ci) {
+            if (opt == gretl_opts[i].o) {
+                return 1;
+            }
+            got_ci = 1;
+        } else if (got_ci) {
+            break;
+        }
     }
 
     if (c != 0) {
-	gretl_errmsg_sprintf("Invalid option '-%c'", c);
+        gretl_errmsg_sprintf("Invalid option '-%c'", c);
     }
 
     return 0;
@@ -955,14 +956,14 @@ void clear_stored_options_for_command (int ci)
 
 #if OPTDEBUG > 1
     fprintf(stderr, "clearing stored options for %s\n",
-	    gretl_command_word(ci));
+            gretl_command_word(ci));
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].fd == fd && optinfo[i].ci == ci &&
-	    !(optinfo[i].flags & OPT_PERSIST)) {
-	    clear_one_option(&optinfo[i]);
-	}
+        if (optinfo[i].fd == fd && optinfo[i].ci == ci &&
+            !(optinfo[i].flags & OPT_PERSIST)) {
+            clear_one_option(&optinfo[i]);
+        }
     }
 }
 
@@ -977,15 +978,15 @@ void destroy_option_params_at_level (int level)
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].fd == level) {
-	    clear_one_option(&optinfo[i]);
-	    n--;
-	}
+        if (optinfo[i].fd == level) {
+            clear_one_option(&optinfo[i]);
+            n--;
+        }
     }
 
     if (n == 0) {
-	free(optinfo);
-	optinfo = NULL;
+        free(optinfo);
+        optinfo = NULL;
     }
 
     n_stored_opts = n;
@@ -1002,7 +1003,7 @@ void stored_options_cleanup (void)
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-	free(optinfo[i].val);
+        free(optinfo[i].val);
     }
 
     free(optinfo);
@@ -1021,15 +1022,15 @@ void setopt_cleanup (void)
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].flags & OPT_SETOPT) {
-	    clear_one_option(&optinfo[i]);
-	    n--;
-	}
+        if (optinfo[i].flags & OPT_SETOPT) {
+            clear_one_option(&optinfo[i]);
+            n--;
+        }
     }
 
     if (n == 0) {
-	free(optinfo);
-	optinfo = NULL;
+        free(optinfo);
+        optinfo = NULL;
     }
 
     n_stored_opts = n;
@@ -1041,15 +1042,15 @@ static stored_opt *matching_stored_opt (int ci, gretlopt opt)
 
 #if OPTDEBUG
     fprintf(stderr, "matching_stored_opt? ci=%d, fd=%d, opt=%d, n_stored=%d\n",
-	    ci, fd, opt, n_stored_opts);
+            ci, fd, opt, n_stored_opts);
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].ci == ci &&
-	    optinfo[i].opt == opt &&
-	    optinfo[i].fd == fd) {
-	    return &optinfo[i];
-	}
+        if (optinfo[i].ci == ci &&
+            optinfo[i].opt == opt &&
+            optinfo[i].fd == fd) {
+            return &optinfo[i];
+        }
     }
 
     return NULL;
@@ -1060,9 +1061,9 @@ static stored_opt *empty_stored_opt_slot (void)
     int i;
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].ci == 0) {
-	    return &optinfo[i];
-	}
+        if (optinfo[i].ci == 0) {
+            return &optinfo[i];
+        }
     }
 
     return NULL;
@@ -1077,14 +1078,14 @@ static int option_parm_status (int ci, gretlopt opt)
     int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (gretl_opts[i].ci == ci) {
-	    if (gretl_opts[i].o == opt) {
-		return gretl_opts[i].parminfo;
-	    }
-	    got_ci = 1;
-	} else if (got_ci) {
-	    break;
-	}
+        if (gretl_opts[i].ci == ci) {
+            if (gretl_opts[i].o == opt) {
+                return gretl_opts[i].parminfo;
+            }
+            got_ci = 1;
+        } else if (got_ci) {
+            break;
+        }
     }
 
     return 0;
@@ -1106,24 +1107,24 @@ static int maybe_evaluate_optval (stored_opt *so)
     int err = 0;
 
     if (!strncmp(s, "eval(", 5) && s[n-1] == ')') {
-	char *sname = gretl_strndup(s + 5, n - 6);
+        char *sname = gretl_strndup(s + 5, n - 6);
 
-	if (sname != NULL) {
-	    char *tmp = generate_string(sname, NULL, &err);
+        if (sname != NULL) {
+            char *tmp = generate_string(sname, NULL, &err);
 
-	    if (tmp != NULL) {
-		free(so->val);
-		so->val = tmp;
-	    }
-	    free(sname);
-	}
+            if (tmp != NULL) {
+                free(so->val);
+                so->val = tmp;
+            }
+            free(sname);
+        }
     }
 
     return err;
 }
 
 static int real_push_option (int ci, gretlopt opt, char *val,
-			     int checked, int flags)
+                             int checked, int flags)
 {
     int fd = gretl_function_depth();
     int n, err = 0;
@@ -1131,44 +1132,44 @@ static int real_push_option (int ci, gretlopt opt, char *val,
     stored_opt *so;
 
     if (!checked && ci > 0 && option_parm_status(ci, opt) == OPT_NO_PARM)  {
-	return E_DATA;
+        return E_DATA;
     }
 
 #if OPTDEBUG
     fprintf(stderr, "push_option_param: ci=%d (%s), fd=%d, opt=%d,"
-	    " val='%s'\n", ci, gretl_command_word(ci), fd, opt, val);
+            " val='%s'\n", ci, gretl_command_word(ci), fd, opt, val);
 #endif
 
     so = matching_stored_opt(ci, opt);
 
     if (so != NULL) {
-	/* got a match for the (ci, opt) pair already */
+        /* got a match for the (ci, opt) pair already */
 #if OPTDEBUG
-	fprintf(stderr, " push_option_param: replacing\n");
+        fprintf(stderr, " push_option_param: replacing\n");
 #endif
-	if (!(flags & OPT_SETOPT)) {
-	    free(so->val);
-	    so->val = val;
-	    val_set = 1;
-	}
-	so->flags = flags;
-	goto finish;
+        if (!(flags & OPT_SETOPT)) {
+            free(so->val);
+            so->val = val;
+            val_set = 1;
+        }
+        so->flags = flags;
+        goto finish;
     }
 
     so = empty_stored_opt_slot();
 
     if (so != NULL) {
-	/* re-use a vacant slot */
+        /* re-use a vacant slot */
 #if OPTDEBUG
-	fprintf(stderr, " push_option_param: reusing empty\n");
+        fprintf(stderr, " push_option_param: reusing empty\n");
 #endif
-	so->ci = ci;
-	so->opt = opt;
-	so->val = val;
-	val_set = 1;
-	so->flags = flags;
-	so->fd = fd;
-	goto finish;
+        so->ci = ci;
+        so->opt = opt;
+        so->val = val;
+        val_set = 1;
+        so->flags = flags;
+        so->fd = fd;
+        goto finish;
     }
 
     /* so we have to extend the array */
@@ -1176,26 +1177,26 @@ static int real_push_option (int ci, gretlopt opt, char *val,
     so = realloc(optinfo, n * sizeof *so);
 
     if (so == NULL) {
-	err = E_ALLOC;
+        err = E_ALLOC;
     } else {
 #if OPTDEBUG
-	fprintf(stderr, " push_option_param: appending\n");
+        fprintf(stderr, " push_option_param: appending\n");
 #endif
-	optinfo = so;
-	so = &optinfo[n-1];
-	so->ci = ci;
-	so->opt = opt;
-	so->val = val;
-	val_set = 1;
-	so->flags = flags;
-	so->fd = fd;
-	n_stored_opts = n;
+        optinfo = so;
+        so = &optinfo[n-1];
+        so->ci = ci;
+        so->opt = opt;
+        so->val = val;
+        val_set = 1;
+        so->flags = flags;
+        so->fd = fd;
+        n_stored_opts = n;
     }
 
  finish:
 
     if (val_set && so->val != NULL) {
-	maybe_evaluate_optval(so);
+        maybe_evaluate_optval(so);
     }
 
     return err;
@@ -1258,14 +1259,14 @@ double get_optval_double (int ci, gretlopt opt, int *err)
     double ret = NADBL;
 
     if (so != NULL && so->val != NULL) {
-	ret = gretl_double_from_string(so->val, err);
-	if (err) {
-	    ret = generate_scalar(so->val, NULL, err);
-	}
-	if (*err) {
-	    gretl_errmsg_sprintf(_("%s: invalid option argument"), so->val);
-	    *err = E_INVARG;
-	}
+        ret = gretl_double_from_string(so->val, err);
+        if (err) {
+            ret = generate_scalar(so->val, NULL, err);
+        }
+        if (*err) {
+            gretl_errmsg_sprintf(_("%s: invalid option argument"), so->val);
+            *err = E_INVARG;
+        }
     }
 
     return ret;
@@ -1291,20 +1292,20 @@ int get_optval_int (int ci, gretlopt opt, int *err)
     int ret = 0;
 
     if (so != NULL && so->val != NULL) {
-	ret = gretl_int_from_string(so->val, err);
-	if (*err) {
-	    ret = generate_int(so->val, NULL, err);
-	}
-	if (*err) {
-	    gretl_errmsg_sprintf(_("%s: invalid option argument"), so->val);
-	    *err = E_INVARG;
-	}
+        ret = gretl_int_from_string(so->val, err);
+        if (*err) {
+            ret = generate_int(so->val, NULL, err);
+        }
+        if (*err) {
+            gretl_errmsg_sprintf(_("%s: invalid option argument"), so->val);
+            *err = E_INVARG;
+        }
     } else if (status == 2 && err != NULL) {
-	const char *longopt = get_longopt(ci, opt);
+        const char *longopt = get_longopt(ci, opt);
 
-	gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"),
-			     longopt);
-	*err = E_DATA;
+        gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"),
+                             longopt);
+        *err = E_DATA;
     }
 
     return ret;
@@ -1315,9 +1316,9 @@ static void clear_options_for_command (int ci)
     int i, fd = gretl_function_depth();
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].fd == fd && optinfo[i].ci == ci) {
-	    clear_one_option(&optinfo[i]);
-	}
+        if (optinfo[i].fd == fd && optinfo[i].ci == ci) {
+            clear_one_option(&optinfo[i]);
+        }
     }
 }
 
@@ -1327,38 +1328,38 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
 
 #if OPTDEBUG
     fprintf(stderr, "setting stored options for %s (%d): ",
-	    gretl_command_word(ci), ci);
+            gretl_command_word(ci), ci);
     debug_print_option_flags(NULL, opt);
 #endif
 
     if (vcv_opt_ok(ci) && (opt & OPT_O)) {
-	real_push_option(ci, OPT_O, NULL, 1, flags);
-	opt &= ~OPT_O; /* handled */
+        real_push_option(ci, OPT_O, NULL, 1, flags);
+        opt &= ~OPT_O; /* handled */
     }
 
     if (quiet_opt_ok(ci) && (opt & OPT_Q)) {
-	real_push_option(ci, OPT_Q, NULL, 1, flags);
-	opt &= ~OPT_Q; /* handled */
+        real_push_option(ci, OPT_Q, NULL, 1, flags);
+        opt &= ~OPT_Q; /* handled */
     }
 
     if (window_opt_ok(ci) && (opt & OPT_W)) {
-	real_push_option(ci, OPT_W, NULL, 1, flags);
-	opt &= ~OPT_W; /* handled */
+        real_push_option(ci, OPT_W, NULL, 1, flags);
+        opt &= ~OPT_W; /* handled */
     }
 
     if (opt == 0) {
-	return;
+        return;
     }
 
     for (i=0; gretl_opts[i].o != 0; i++) {
-	if (ci == gretl_opts[i].ci) {
-	    if (opt & gretl_opts[i].o) {
-		real_push_option(ci, gretl_opts[i].o, NULL, 1, flags);
-	    }
-	    got_ci = ci;
-	} else if (got_ci > 0 && ci != got_ci) {
-	    break;
-	}
+        if (ci == gretl_opts[i].ci) {
+            if (opt & gretl_opts[i].o) {
+                real_push_option(ci, gretl_opts[i].o, NULL, 1, flags);
+            }
+            got_ci = ci;
+        } else if (got_ci > 0 && ci != got_ci) {
+            break;
+        }
     }
 }
 
@@ -1366,8 +1367,8 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
    using "setopt" */
 
 int set_options_for_command (const char *cmdword,
-			     const char *param,
-			     gretlopt opt)
+                             const char *param,
+                             gretlopt opt)
 {
     int target_ci = gretl_command_number(cmdword);
     int flags = OPT_SETOPT;
@@ -1375,29 +1376,29 @@ int set_options_for_command (const char *cmdword,
     int err = 0;
 
     if (target_ci == 0 || target_ci == SETOPT) {
-	gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
-			     cmdword);
-	return E_DATA;
+        gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
+                             cmdword);
+        return E_DATA;
     }
 
     if (param != NULL && *param != '\0') {
-	if (!strcmp(param, "persist")) {
-	    flags |= OPT_PERSIST;
-	} else if (!strcmp(param, "clear")) {
-	    clear = 1;
-	} else {
-	    gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
-				 param);
-	    return E_DATA;
-	}
+        if (!strcmp(param, "persist")) {
+            flags |= OPT_PERSIST;
+        } else if (!strcmp(param, "clear")) {
+            clear = 1;
+        } else {
+            gretl_errmsg_sprintf(_("field '%s' in command is invalid"),
+                                 param);
+            return E_DATA;
+        }
     }
 
     if (clear) {
-	clear_options_for_command(target_ci);
+        clear_options_for_command(target_ci);
     } else if (opt == 0) {
-	err = E_ARGS;
+        err = E_ARGS;
     } else {
-	set_stored_options(target_ci, opt, flags);
+        set_stored_options(target_ci, opt, flags);
     }
 
     return err;
@@ -1411,10 +1412,10 @@ static char option_flag_char (gretlopt opt)
     int i;
 
     for (i=OPT_A; i<=OPT_Y; i*=2) {
-	if (opt == i) {
-	    return c;
-	}
-	c++;
+        if (opt == i) {
+            return c;
+        }
+        c++;
     }
 
     return '?';
@@ -1427,14 +1428,14 @@ void maybe_get_stored_options (int ci, gretlopt *popt)
     int i, fd = gretl_function_depth();
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].fd == fd && optinfo[i].ci == ci &&
-	    (optinfo[i].flags & OPT_SETOPT)) {
+        if (optinfo[i].fd == fd && optinfo[i].ci == ci &&
+            (optinfo[i].flags & OPT_SETOPT)) {
 #if OPTDEBUG
-	    fprintf(stderr, "ci %d: got stored OPT_%c\n",
-		    ci, option_flag_char(optinfo[i].opt));
+            fprintf(stderr, "ci %d: got stored OPT_%c\n",
+                    ci, option_flag_char(optinfo[i].opt));
 #endif
-	    *popt |= optinfo[i].opt;
-	}
+            *popt |= optinfo[i].opt;
+        }
     }
 }
 
@@ -1457,15 +1458,15 @@ int get_compression_option (int ci)
     int level = 0;
 
     if (so == NULL || so->val == NULL) {
-	/* use zlib level 1 by default */
-	level = 1;
+        /* use zlib level 1 by default */
+        level = 1;
     } else {
-	level = atoi(so->val);
-	if (level < 0) {
-	    level = 0;
-	} else if (level > 9) {
-	    level = 9;
-	}
+        level = atoi(so->val);
+        if (level < 0) {
+            level = 0;
+        } else if (level > 9) {
+            level = 9;
+        }
     }
 
     return level;
@@ -1532,9 +1533,9 @@ int set_optval_string (int ci, gretlopt opt, const char *s)
     char *scpy = gretl_strdup(s);
 
     if (scpy == NULL) {
-	return E_ALLOC;
+        return E_ALLOC;
     } else {
-	return real_push_option(ci, opt, scpy, 1, 0);
+        return real_push_option(ci, opt, scpy, 1, 0);
     }
 }
 
@@ -1550,68 +1551,68 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
     *status = 0;
 
     if (*s == '\0') {
-	return 0;
+        return 0;
     }
 
     if (vcv_opt_ok(ci) && !strcmp(s, "vcv")) {
-	return OPT_O;
+        return OPT_O;
     }
 
     if (quiet_opt_ok(ci) && !strcmp(s, "quiet")) {
-	return OPT_Q;
+        return OPT_Q;
     }
 
     if (window_opt_ok(ci) && !strcmp(s, "window")) {
-	return OPT_W;
+        return OPT_W;
     }
 
     /* start by looking for an exact match */
     for (i=0; gretl_opts[i].o != 0; i++) {
-	if (ci == gretl_opts[i].ci) {
-	    if (!strcmp(s, gretl_opts[i].longopt)) {
-		opt = gretl_opts[i].o;
-		*status = gretl_opts[i].parminfo;
-		break;
-	    }
-	    got_ci = 1;
-	} else if (got_ci) {
-	    break;
-	}
+        if (ci == gretl_opts[i].ci) {
+            if (!strcmp(s, gretl_opts[i].longopt)) {
+                opt = gretl_opts[i].o;
+                *status = gretl_opts[i].parminfo;
+                break;
+            }
+            got_ci = 1;
+        } else if (got_ci) {
+            break;
+        }
     }
 
     /* if this failed, try for a unique abbreviation */
     if (opt == OPT_NONE) {
-	int optlen, slen = strlen(s);
-	int nmatch = 0;
+        int optlen, slen = strlen(s);
+        int nmatch = 0;
 
-	got_ci = 0;
-	for (i=0; gretl_opts[i].o != 0; i++) {
-	    if (ci == gretl_opts[i].ci) {
-		optlen = strlen(gretl_opts[i].longopt);
-		if (optlen > slen && !strncmp(s, gretl_opts[i].longopt, slen)) {
-		    opt = gretl_opts[i].o;
-		    *status = gretl_opts[i].parminfo;
-		    nmatch++;
-		}
-		got_ci = 1;
-	    } else if (got_ci) {
-		break;
-	    }
-	}
-	if (nmatch > 1) {
-	    if (ci == SETOBS && !strcmp(s, "panel")) {
-		/* backward compatibility: --panel-vars was there first */
-		return OPT_P;
-	    }
-	    *status = OPT_AMBIGUOUS;
-	    return OPT_NONE;
-	}
+        got_ci = 0;
+        for (i=0; gretl_opts[i].o != 0; i++) {
+            if (ci == gretl_opts[i].ci) {
+                optlen = strlen(gretl_opts[i].longopt);
+                if (optlen > slen && !strncmp(s, gretl_opts[i].longopt, slen)) {
+                    opt = gretl_opts[i].o;
+                    *status = gretl_opts[i].parminfo;
+                    nmatch++;
+                }
+                got_ci = 1;
+            } else if (got_ci) {
+                break;
+            }
+        }
+        if (nmatch > 1) {
+            if (ci == SETOBS && !strcmp(s, "panel")) {
+                /* backward compatibility: --panel-vars was there first */
+                return OPT_P;
+            }
+            *status = OPT_AMBIGUOUS;
+            return OPT_NONE;
+        }
     }
 
     /* backward compatibility */
     if (opt == OPT_NONE && !strcmp(s, "wald")) {
-	opt = OPT_W;
-	*status = 0;
+        opt = OPT_W;
+        *status = 0;
     }
 
     return opt;
@@ -1625,17 +1626,17 @@ gretlopt valid_short_opt (int ci, char c)
     int i, ok;
 
     for (i=0; flag_matches[i].c != '\0'; i++) {
-	if (c == flag_matches[i].c) {
-	    opt = flag_matches[i].o;
-	    break;
-	}
+        if (c == flag_matches[i].c) {
+            opt = flag_matches[i].o;
+            break;
+        }
     }
 
     if (opt) {
-	ok = opt_is_valid(opt, ci, c);
-	if (!ok) {
-	    opt = 0;
-	}
+        ok = opt_is_valid(opt, ci, c);
+        if (!ok) {
+            opt = 0;
+        }
     }
 
     return opt;
@@ -1649,31 +1650,31 @@ static void print_option_param (const char *s, PRN *prn)
     int escape = 0;
 
     while (*p) {
-	if (strspn(p, qchars)) {
-	    wrap = 1;
-	} else if (*p == '"') {
-	    escape = 1;
-	}
-	p++;
+        if (strspn(p, qchars)) {
+            wrap = 1;
+        } else if (*p == '"') {
+            escape = 1;
+        }
+        p++;
     }
 
     if (wrap) {
-	if (escape) {
-	    pputs(prn, "=\"");
-	    while (*s) {
-		if (*s == '"') {
-		    pputs(prn, "\\\"");
-		} else {
-		    pputc(prn, *s);
-		}
-		s++;
-	    }
-	    pputs(prn, "\"\n");
-	} else {
-	    pprintf(prn, "=\"%s\"", s);
-	}
+        if (escape) {
+            pputs(prn, "=\"");
+            while (*s) {
+                if (*s == '"') {
+                    pputs(prn, "\\\"");
+                } else {
+                    pputc(prn, *s);
+                }
+                s++;
+            }
+            pputs(prn, "\"\n");
+        } else {
+            pprintf(prn, "=\"%s\"", s);
+        }
     } else {
-	pprintf(prn, "=%s", s);
+        pprintf(prn, "=%s", s);
     }
 }
 
@@ -1696,60 +1697,60 @@ const char *print_flags (gretlopt oflags, int ci)
     int i, got_ci;
 
     if (ci == FUNDEBUG) {
-	/* options are for internal use only */
-	return "";
+        /* options are for internal use only */
+        return "";
     }
 
     if (flagprn == NULL) {
-	int err = 0;
+        int err = 0;
 
-	flagprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
-	if (err) {
-	    return "";
-	}
+        flagprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+        if (err) {
+            return "";
+        }
     } else {
-	gretl_print_reset_buffer(flagprn);
+        gretl_print_reset_buffer(flagprn);
     }
 
     if (oflags == OPT_NONE || ci == QUIT || ci == GENR) {
-	/* no options, or only hidden ones */
-	return "";
+        /* no options, or only hidden ones */
+        return "";
     }
 
     /* special: -o (--vcv) can be used with several model
        commands */
     if ((oflags & OPT_O) && vcv_opt_ok(ci)) {
-	pputs(flagprn, " --vcv");
-	oflags &= ~OPT_O; /* handled */
+        pputs(flagprn, " --vcv");
+        oflags &= ~OPT_O; /* handled */
     }
 
     if ((oflags & OPT_Q) && quiet_opt_ok(ci)) {
-	pputs(flagprn, " --quiet");
-	oflags &= ~OPT_Q; /* handled */
+        pputs(flagprn, " --quiet");
+        oflags &= ~OPT_Q; /* handled */
     }
 
     if ((oflags & OPT_W) && window_opt_ok(ci)) {
-	pputs(flagprn, " --window");
-	oflags &= ~OPT_W; /* handled */
+        pputs(flagprn, " --window");
+        oflags &= ~OPT_W; /* handled */
     }
 
     got_ci = 0;
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (ci == gretl_opts[i].ci) {
-	    opt = gretl_opts[i].o;
-	    if (oflags & opt) {
-		pprintf(flagprn, " --%s", gretl_opts[i].longopt);
-		if (gretl_opts[i].parminfo) {
-		    parm = get_optval_string(ci, opt);
-		    if (parm != NULL && *parm != '\0') {
-			print_option_param(parm, flagprn);
-		    }
-		}
-	    }
-	    got_ci = 1;
-	} else if (got_ci) {
-	    break;
-	}
+        if (ci == gretl_opts[i].ci) {
+            opt = gretl_opts[i].o;
+            if (oflags & opt) {
+                pprintf(flagprn, " --%s", gretl_opts[i].longopt);
+                if (gretl_opts[i].parminfo) {
+                    parm = get_optval_string(ci, opt);
+                    if (parm != NULL && *parm != '\0') {
+                        print_option_param(parm, flagprn);
+                    }
+                }
+            }
+            got_ci = 1;
+        } else if (got_ci) {
+            break;
+        }
     }
 
     return gretl_print_get_buffer(flagprn);
@@ -1777,12 +1778,12 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
     int ret = 0;
 
     if (ci == OLS && (opt & OPT_P)) {
-	const char *flagstr = print_flags(OPT_P, OLS);
+        const char *flagstr = print_flags(OPT_P, OLS);
 
-	pprintf(prn, _("Warning: option%s ignored outside of loop"),
-		flagstr);
-	pputc(prn, '\n');
-	ret = 1;
+        pprintf(prn, _("Warning: option%s ignored outside of loop"),
+                flagstr);
+        pputc(prn, '\n');
+        ret = 1;
     }
 
     return ret;
@@ -1801,7 +1802,7 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
  */
 
 gretlopt transcribe_option_flags (gretlopt *targ, gretlopt src,
-				  gretlopt test)
+                                  gretlopt test)
 {
     *targ |= (src & test);
 
@@ -1841,12 +1842,12 @@ int incompatible_options (gretlopt opt, gretlopt test)
     gretlopt o;
 
     for (o=OPT_A; o<=OPT_Z; o=o<<1) {
-	if ((opt & o) && (test & o)) {
-	    optcount++;
-	    if (optcount > 1) {
-		return E_BADOPT;
-	    }
-	}
+        if ((opt & o) && (test & o)) {
+            optcount++;
+            if (optcount > 1) {
+                return E_BADOPT;
+            }
+        }
     }
 
     return 0;
@@ -1863,12 +1864,12 @@ int incompatible_options (gretlopt opt, gretlopt test)
  */
 
 int options_incompatible_with (gretlopt opt, gretlopt base,
-			       gretlopt test)
+                               gretlopt test)
 {
     if (opt & base) {
-	if (opt & test) {
-	    return E_BADOPT;
-	}
+        if (opt & test) {
+            return E_BADOPT;
+        }
     }
 
     return 0;
@@ -1885,12 +1886,12 @@ int options_incompatible_with (gretlopt opt, gretlopt base,
  */
 
 int option_prereq_missing (gretlopt opt, gretlopt test,
-			   gretlopt prereq)
+                           gretlopt prereq)
 {
     if (opt & test) {
-	if (!(opt & prereq)) {
-	    return E_BADOPT;
-	}
+        if (!(opt & prereq)) {
+            return E_BADOPT;
+        }
     }
 
     return 0;
@@ -1918,28 +1919,28 @@ int inapplicable_option_error (int ci, gretlopt opt)
 void debug_print_option_flags (const char *msg, gretlopt opt)
 {
     if (msg != NULL && *msg != '\0') {
-	fprintf(stderr, "%s: ", msg);
+        fprintf(stderr, "%s: ", msg);
     }
 
     if (opt == 0) {
-	fprintf(stderr, "opt=0\n");
+        fprintf(stderr, "opt=0\n");
     } else {
-	char c = 'A';
-	int i, started = 0;
+        char c = 'A';
+        int i, started = 0;
 
-	fprintf(stderr, "opt=%d (", opt);
+        fprintf(stderr, "opt=%d (", opt);
 
-	for (i=OPT_A; i<=OPT_Y; i*=2) {
-	    if (opt & i) {
-		if (started) {
-		    fputc('|', stderr);
-		}
-		fprintf(stderr, "OPT_%c", c);
-		started = 1;
-	    }
-	    c++;
-	}
+        for (i=OPT_A; i<=OPT_Y; i*=2) {
+            if (opt & i) {
+                if (started) {
+                    fputc('|', stderr);
+                }
+                fprintf(stderr, "OPT_%c", c);
+                started = 1;
+            }
+            c++;
+        }
 
-	fputs(")\n", stderr);
+        fputs(")\n", stderr);
     }
 }

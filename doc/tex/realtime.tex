@@ -431,16 +431,16 @@ to avoid having to copy them (see chapter~\ref{chap:functions}).
 \end{figure}
 
 \begin{script}[htbp]
-  \caption{Retrieving successive realtime lags of US industrial
+  \scriptcaption{Retrieving successive realtime lags of US industrial
     production}
   \label{ex:revisions}
 \begin{scode}
 function series rel_ok (series *obsdate, series *reldate, int p)
-  series y_obs, m_obs, y_rel, m_rel
-  isoconv(obsdate, &y_obs, &m_obs)
-  isoconv(reldate, &y_rel, &m_rel)
+  series y_obs, m_obs, d_obs, y_rel, m_rel, d_rel
+  isoconv(obsdate, &y_obs, &m_obs, &d_obs)
+  isoconv(reldate, &y_rel, &m_rel, &d_rel)
   series dm = (12*y_rel + m_rel) - (12*y_obs + m_obs)
-  return dm <= p
+  return dm < p || (dm == p && d_rel <= d_obs)
 end function
 
 nulldata 45
@@ -475,8 +475,9 @@ setinfo plus3 --graph-name="Plus 3 months"
 setinfo plus6 --graph-name="Plus 6 months"
 setinfo plus12 --graph-name="Plus 12 months"
 
+# set --output=realtime.pdf for PDF
 gnuplot firstpub plus3 plus6 plus12 --time --with-lines \
- --output=realtime.pdf { set key left bottom; }
+ --output=display { set key left bottom; }
 \end{scode}
 \end{script}
 
@@ -504,7 +505,7 @@ Recall from section~\ref{sec:realtime-atomic} that Alfred records a
 new revision only when the data-point in question actually
 changes. This means that our imported series will contain missing
 values for all months when no real revision took place. However, we
-can apply a simple autoregressive procedure to fill in the data: each
+can apply a simple autoregressive rule to fill in the blanks: each
 missing value equals the prior non-missing value.
 
 Figure~\ref{fig:realtime-revhist} displays the revision history. Over
@@ -512,7 +513,7 @@ this sample period the periodic re-basing of the index overshadows
 amendments due to accrual of new information.
 
 \begin{script}[htbp]
-  \caption{Retrieving a revision history}
+  \scriptcaption{Retrieving a revision history}
   \label{ex:revhistory}
 \begin{scode}
 # choose the observation to track here (YYYYMMDD)
@@ -526,6 +527,7 @@ join INDPRO.txt ip_jan70 --data=INDPRO --tkey=realtime_start_date \
 --filter="observation_date==target" --aggr=seq:-1
 
 ip_jan70 = ok(ip_jan70) ? ip_jan70 : ip_jan70(-1)
+gnuplot ip_jan70 --time --with-lines --output=display
 \end{scode}
 \end{script}
 

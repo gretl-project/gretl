@@ -3,8 +3,8 @@
 # GARCH(1,1) with Normal conditional distribution, 
 # constant and lagged variable as mean regressors 
 
-set echo off
-set messages off
+
+set verbose off
 
 include gig.gfn
 open djclose

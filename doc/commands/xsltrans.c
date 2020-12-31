@@ -84,9 +84,14 @@ static void build_params (char const **params, int content,
 	params[i++] = "\"gui\"";
     }
 
-    if (content == CONTENT_FUNCS && format == FORMAT_PANGO) {
+    if (content == CONTENT_FUNCS) {
 	params[i++] = "topic";
 	params[i++] = "\"funcs\"";
+    }
+
+    if (content == CONTENT_CMDS) {
+	params[i++] = "topic";
+	params[i++] = "\"cmds\"";
     }
 
     if (format == FORMAT_PANGO) {

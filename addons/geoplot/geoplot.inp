@@ -27,13 +27,13 @@ function bundle geoplot_describe_json (const bundle jb, int verbose[1])
         props = feat[i].properties
 	
         if i == 1
-            ids = create_ids(props, nf, verbose)
+            ids = create_ids(props, nf)
         endif
 	
         fill_ids(props, &ids, i)
 
         if verbose
-	    describe_feature(feat[i], i)
+	    describe_feature(feat[i], i, 0)
         endif
     endloop
 

@@ -271,6 +271,8 @@ AC_ARG_WITH(gsf,
 if test "x${withval}" = "xno"
 then
   try_gsf=no
+else
+  try_gsf=yes
 fi,
 try_gsf=yes)
 
@@ -758,8 +760,8 @@ dnl Mac: if using Quartz GTK, require mac-integration
 dnl
 if test "$mac_native" = "yes" ; then
     PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.1,
-      mac_integration="no",
       mac_integration="yes",
+      mac_integration="no",
     )
 fi
 
@@ -988,7 +990,7 @@ po/Makefile.in
 share/Makefile
 share/bcih/Makefile
 tests/Makefile
-extra/Makefile
+apidemo/Makefile
 redhat/gretl.spec
 utils/emacs/Makefile
 doc/gretl.sty
@@ -1054,6 +1056,7 @@ if test "${build_docs}" = "yes" ; then
     doc/tex_es/Makefile
     doc/tex_pt/Makefile
     doc/tex_gl/Makefile
+    doc/tex/extract.mk
     doc/reference/Makefile
   ])
 fi

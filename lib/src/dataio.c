@@ -25,6 +25,7 @@
 #include "gretl_xml.h"
 #include "gretl_panel.h"
 #include "gretl_string_table.h"
+#include "matrix_extra.h"
 #include "csvdata.h"
 #include "usermat.h"
 
@@ -51,7 +52,7 @@
 
 typedef enum {
     GRETL_FMT_GDT,       /* standard gretl XML data */
-    GRETL_FMT_BINARY,    /* native XML + binary data */
+    GRETL_FMT_BINARY,    /* native gretl binary data */
     GRETL_FMT_OCTAVE,    /* data in Gnu Octave format */
     GRETL_FMT_CSV,       /* data in Comma Separated Values format */
     GRETL_FMT_R,         /* data in Gnu R format */
@@ -522,6 +523,9 @@ char *ntolabel (char *datestr, int t, const DATASET *dset)
 	/* handles both daily and dated weekly data */
 	if (dataset_has_markers(dset)) {
 	    strcpy(datestr, dset->S[t]);
+	    if (strchr(datestr, '/')) {
+		gretl_charsub(datestr, '/', '-');
+	    }
 	} else {
 	    calendar_date_string(datestr, t, dset);
 	}
@@ -1518,8 +1522,8 @@ int open_nulldata (DATASET *dset, int data_status, int length,
 
     if (prn != NULL && gretl_messages_on()) {
 	/* print basic info */
-	pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-			"observations range: %s to %s\n"),
+	pprintf(prn, _("periodicity: %d, maxobs: %d\n"
+		       "observations range: %s to %s\n"),
 		dset->pd, dset->n, dset->stobs, dset->endobs);
     }
 
@@ -2379,6 +2383,23 @@ gretlopt get_merge_opts (gretlopt opt)
     return merge_opt;
 }
 
+/* Apparatus for converting a dataset read from file
+   into a gretl matrix, as opposed to replacing an
+   existing dataset or merging with it.
+*/
+
+static gretl_matrix **dset_matrix;
+
+void set_dset_matrix_target (gretl_matrix **pm)
+{
+    dset_matrix = pm;
+}
+
+void *get_dset_matrix_target (void)
+{
+    return dset_matrix;
+}
+
 /**
  * merge_or_replace_data:
  * @dset0: original dataset struct.
@@ -2403,6 +2424,21 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 {
     int keep = (opt & OPT_K);
     int err = 0;
+
+    if (dset_matrix != NULL) {
+	/* Convert the new dataset to matrix; don't touch
+	   the existing dataset, if any.
+	*/
+	const DATASET *dset = *pdset1;
+
+	*dset_matrix = gretl_matrix_data_subset(NULL, dset,
+						0, dset->n - 1,
+						M_MISSING_OK,
+						&err);
+	destroy_dataset(*pdset1);
+	*pdset1 = NULL;
+	return err;
+    }
 
     if (dset0->Z != NULL) {
 	/* we have an existing dataset into which the new data
@@ -2980,7 +3016,7 @@ static int get_max_line_length (FILE *fp, PRN *prn)
 	}
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
 	    !(c == CTRLZ)) {
-	    pprintf(prn, A_("Binary data (%d) encountered: this is not a valid "
+	    pprintf(prn, _("Binary data (%d) encountered: this is not a valid "
 			   "text file\n"), c);
 	    return -1;
 	}
@@ -2988,7 +3024,7 @@ static int get_max_line_length (FILE *fp, PRN *prn)
     }
 
     if (maxlen == 0) {
-	pprintf(prn, A_("Data file is empty\n"));
+	pprintf(prn, _("Data file is empty\n"));
     }
 
     if (maxlen > 0) {
@@ -3016,7 +3052,7 @@ static int import_octave (const char *fname, DATASET *dset,
 	return E_FOPEN;
     }
 
-    pprintf(prn, "%s %s...\n", A_("parsing"), fname);
+    pprintf(prn, "%s %s...\n", _("parsing"), fname);
 
     maxlen = get_max_line_length(fp, prn);
     if (maxlen <= 0) {
@@ -3030,7 +3066,7 @@ static int import_octave (const char *fname, DATASET *dset,
 	goto oct_bailout;
     }
 
-    pprintf(prn, A_("   longest line: %d characters\n"), maxlen - 1);
+    pprintf(prn, _("   longest line: %d characters\n"), maxlen - 1);
 
     rewind(fp);
 
@@ -3071,8 +3107,8 @@ static int import_octave (const char *fname, DATASET *dset,
 			err = 1;
 		    } else {
 			ncols += bcols;
-			pprintf(prn, A_("   Found matrix '%s' with "
-					"%d rows, %d columns\n"), name, brows, bcols);
+			pprintf(prn, _("   Found matrix '%s' with "
+				       "%d rows, %d columns\n"), name, brows, bcols);
 		    }
 		    continue;
 		}
@@ -3088,7 +3124,7 @@ static int import_octave (const char *fname, DATASET *dset,
     }
 
     if (err || nrows == 0 || ncols == 0) {
-	pputs(prn, A_("Invalid data file\n"));
+	pputs(prn, _("Invalid data file\n"));
 	err = E_DATA;
 	goto oct_bailout;
     }
@@ -3097,7 +3133,7 @@ static int import_octave (const char *fname, DATASET *dset,
 
     octset = datainfo_new();
     if (octset == NULL) {
-	pputs(prn, A_("Out of memory!\n"));
+	pputs(prn, _("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
     }
@@ -3106,16 +3142,16 @@ static int import_octave (const char *fname, DATASET *dset,
     octset->v = ncols + 1;
 
     if (start_new_Z(octset, 0)) {
-	pputs(prn, A_("Out of memory!\n"));
+	pputs(prn, _("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
     }
 
     rewind(fp);
 
-    pprintf(prn, A_("   number of variables: %d\n"), ncols);
-    pprintf(prn, A_("   number of observations: %d\n"), nrows);
-    pprintf(prn, A_("   number of data blocks: %d\n"), nblocks);
+    pprintf(prn, _("   number of variables: %d\n"), ncols);
+    pprintf(prn, _("   number of observations: %d\n"), nrows);
+    pprintf(prn, _("   number of data blocks: %d\n"), nblocks);
 
     i = 1;
     t = 0;
@@ -3168,7 +3204,7 @@ static int import_octave (const char *fname, DATASET *dset,
     }
 
     if (err) {
-	pputs(prn, A_("Invalid data file\n"));
+	pputs(prn, _("Invalid data file\n"));
 	err = E_DATA;
     } else {
 	int merge = dset->Z != NULL;
@@ -3218,11 +3254,9 @@ int import_other (const char *fname, GretlFileType ftype,
 		     gretlopt, PRN *);
     int err = 0;
 
-    set_alt_gettext_mode(prn);
-
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
-	pprintf(prn, A_("Couldn't open %s\n"), fname);
+	pprintf(prn, _("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
 	goto bailout;
     }
@@ -3247,7 +3281,7 @@ int import_other (const char *fname, GretlFileType ftype,
     } else if (ftype == GRETL_MAP) {
 	importer = get_plugin_function("map_get_data");
     } else {
-	pprintf(prn, A_("Unrecognized data type"));
+	pprintf(prn, _("Unrecognized data type"));
 	pputc(prn, '\n');
 	return E_DATA;
     }
@@ -3290,12 +3324,11 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     int err = 0;
 
     import_na_init();
-    set_alt_gettext_mode(prn);
 
     fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
-	pprintf(prn, A_("Couldn't open %s\n"), fname);
+	pprintf(prn, _("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
 	goto bailout;
     }
@@ -3311,7 +3344,7 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     } else if (ftype == GRETL_ODS) {
 	importer = get_plugin_function("ods_get_data");
     } else {
-	pprintf(prn, A_("Unrecognized data type"));
+	pprintf(prn, _("Unrecognized data type"));
 	pputc(prn, '\n');
 	return E_DATA;
     }

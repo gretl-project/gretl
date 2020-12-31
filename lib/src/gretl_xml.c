@@ -50,82 +50,6 @@
 
 #define GDT_DEBUG 0
 
-#ifdef WIN32
-
-#define BUFLEN 131072
-
-static xmlDocPtr transcribe_and_parse (const char *fname)
-{
-    xmlDocPtr ptr = NULL;
-    gchar *xmltmp = gretl_make_dotpath("xmldoc.XXXXXX");
-    FILE *fz, *ftmp;
-
-    fz = g_fopen(fname, "rb");
-    if (fz != NULL) {
-	ftmp = gretl_mktemp(xmltmp, "wb");
-	if (ftmp != NULL) {
-	    char buf[BUFLEN];
-	    int len;
-
-	    while ((len = fread(buf, 1, BUFLEN, fz)) > 0) {
-		fwrite(buf, 1, len, ftmp);
-	    }
-	    fclose(ftmp);
-	    ptr = xmlParseFile(xmltmp);
-	}
-	fclose(fz);
-    }
-
-    gretl_remove(xmltmp);
-    g_free(xmltmp);
-
-    return ptr;
-}
-
-static xmlDocPtr gretl_xmlParseFile (const char *fname)
-{
-    xmlDocPtr ptr = NULL;
-    FILE *fp = fopen(fname, "r");
-
-    if (fp != NULL) {
-	fclose(fp);
-	ptr = xmlParseFile(fname);
-    } else {
-	int save_errno = errno;
-	gchar *fconv;
-	gsize wrote;
-
-	fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
-	if (fconv != NULL) {
-	    ptr = xmlParseFile(fconv);
-	    g_free(fconv);
-	} else if (is_gzipped(fname)) {
-	    /* fallback for gzipped case: try transcribing the data
-	       to a file that can be accessed by libxml2
-	    */
-	    ptr = transcribe_and_parse(fname);
-	} else {
-	    /* fallback, non-gzipped case: use GLib to grab the
-	       content to pass to libxml2
-	    */
-	    gchar *buf = NULL;
-	    gsize len = 0;
-
-	    if (g_file_get_contents(fname, &buf, &len, NULL)) {
-		ptr = xmlParseMemory(buf, len);
-		g_free(buf);
-	    }
-	}
-	errno = save_errno;
-    }
-
-    return ptr;
-}
-
-#else /* not WIN32 */
-# define gretl_xmlParseFile(f) xmlParseFile(f)
-#endif
-
 int gretl_xml_open_doc_root (const char *fname,
 			     const char *rootname,
 			     xmlDocPtr *pdoc,
@@ -143,7 +67,7 @@ int gretl_xml_open_doc_root (const char *fname,
 	*pnode = NULL;
     }
 
-    doc = gretl_xmlParseFile(fname);
+    doc = xmlParseFile(fname);
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
 	err = 1;
@@ -2346,7 +2270,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     }
 
     if (nvars <= 0) {
-	gretl_errmsg_sprintf("No data to save!");
+	gretl_errmsg_set("No data to save!");
 	free(list);
 	return E_DATA;
     }
@@ -2465,10 +2389,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     if (dset->descrip != NULL) {
 	char *dbuf = gretl_xml_encode(dset->descrip);
 
-	if (dbuf == NULL) {
-	    err = 1;
-	    goto cleanup;
-	} else {
+	if (dbuf != NULL) {
 	    pputs(prn, "<description>");
 	    pputs(prn, dbuf);
 	    pputs(prn, "</description>\n");
@@ -2563,6 +2484,10 @@ static int real_write_gdt (const char *fname, const int *inlist,
 
 	if ((mpd = series_get_midas_freq(dset, v)) > 0) {
 	    pprintf(prn, "\n midas_freq=\"%d\"", mpd);
+	}
+
+	if ((mpd = series_get_orig_pd(dset, v)) > 0) {
+	    pprintf(prn, "\n orig_pd=\"%d\"", mpd);
 	}
 
 	pputs(prn, "\n/>\n");
@@ -2675,8 +2600,6 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	strval_saver_destroy(ss);
     }
 
- cleanup:
-
     if (in_c_locale) {
 	gretl_pop_c_numeric_locale();
     }
@@ -2685,10 +2608,30 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
     }
 
-    if (p15) free(p15);
+    if (p15 != NULL) {
+	free(p15);
+    }
     free(list);
 
     gretl_print_destroy(prn);
+
+    return err;
+}
+
+static int write_purebin (const char *fname, const int *list,
+			  gretlopt opt, const DATASET *dset)
+{
+    int (*writer) (const char *, const int *, const DATASET *,
+		   gretlopt);
+    int err = 0;
+
+    writer = get_plugin_function("purebin_write_data");
+
+    if (writer == NULL) {
+        err = 1;
+    } else {
+	err = (*writer)(fname, list, dset, opt);
+    }
 
     return err;
 }
@@ -2712,9 +2655,12 @@ int gretl_write_gdt (const char *fname, const int *list,
 		     const DATASET *dset, gretlopt opt,
 		     int progress)
 {
+    int gdtb = has_suffix(fname, ".gdtb");
     int err = 0;
 
-    if (has_suffix(fname, ".gdtb")) {
+    if (gdtb && (opt & OPT_U)) {
+	err = write_purebin(fname, list, opt, dset);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 
@@ -2897,6 +2843,15 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 
 		if (mpc > 0) {
 		    series_set_midas_freq(dset, i, mpc);
+		}
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (XUC) "orig_pd");
+	    if (tmp != NULL) {
+		int opd = atoi((char *) tmp);
+
+		if (opd > 0) {
+		    series_set_orig_pd(dset, i, opd);
 		}
 		free(tmp);
 	    }
@@ -3506,10 +3461,9 @@ static int process_string_tables (xmlDocPtr doc,
 		    fprintf(stderr, "process_string_tables: get_strings_array "
 			    "gave error %d\n", err);
 		} else {
-		    st = series_table_new(strs, n_strs);
-		    if (st == NULL) {
+		    st = series_table_new(strs, n_strs, &err);
+		    if (err) {
 			strings_array_free(strs, n_strs);
-			err = E_ALLOC;
 		    } else {
 			series_attach_string_table(dset, v, st);
 		    }
@@ -4087,19 +4041,21 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	xmlFreeDoc(doc);
     }
 
-    /* pre-process stacked cross-sectional panels: put into canonical
-       stacked time series form
-    */
-    if (!err && dset->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(dset);
-    }
+    if (dset != NULL) {
+	/* pre-process stacked cross-sectional panels: put into canonical
+	   stacked time series form
+	*/
+	if (!err && dset->structure == STACKED_CROSS_SECTION) {
+	    err = switch_panel_orientation(dset);
+	}
 
-    if (!err && dset->v == 1) {
-	err = remedy_empty_data(dset);
-    }
+	if (!err && dset->v == 1) {
+	    err = remedy_empty_data(dset);
+	}
 
-    if (!err && gdtversion < 1.2) {
-	record_transform_info(dset, gdtversion);
+	if (!err && gdtversion < 1.2) {
+	    record_transform_info(dset, gdtversion);
+	}
     }
 
     if (err && tmpset != NULL) {
@@ -4366,6 +4322,76 @@ static int real_read_gdt_varnames (const char *fname,
     return err;
 }
 
+static int read_gbin (const char *fname, DATASET *dset,
+		      gretlopt opt, PRN *prn)
+{
+    int (*reader) (const char *, DATASET *, gretlopt,
+		   PRN *prn);
+    int err = 0;
+
+    reader = get_plugin_function("purebin_read_data");
+
+    if (reader == NULL) {
+        err = 1;
+    } else {
+	err = (*reader)(fname, dset, opt, prn);
+    }
+
+    return err;
+}
+
+static int read_gbin_subset (const char *fname, DATASET *dset,
+			     int *vlist, gretlopt opt)
+{
+    int (*reader) (const char *, DATASET *, int *, gretlopt);
+    int err = 0;
+
+    reader = get_plugin_function("purebin_read_subset");
+
+    if (reader == NULL) {
+        err = 1;
+    } else {
+	err = (*reader)(fname, dset, vlist, opt);
+    }
+
+    return err;
+}
+
+static int read_gbin_varnames (const char *fname, char ***pS,
+			       int *pns)
+{
+    int (*reader) (const char *, char ***, int *);
+    int err = 0;
+
+    reader = get_plugin_function("purebin_read_varnames");
+
+    if (reader == NULL) {
+        err = 1;
+    } else {
+	err = (*reader)(fname, pS, pns);
+    }
+
+    return err;
+}
+
+static int is_purebin_file (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "rb");
+    int ret = 0;
+
+    if (fp != NULL) {
+	char buf[16];
+
+	if (fread(buf, 1, 14, fp) == 14 &&
+	    !strcmp(buf, "gretl-purebin")) {
+	    ret = 1;
+	}
+	fclose(fp);
+    }
+
+    return ret;
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to open for reading.
@@ -4383,7 +4409,11 @@ static int real_read_gdt_varnames (const char *fname,
 int gretl_read_gdt (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
-    if (has_suffix(fname, ".gdtb")) {
+    int gdtb = has_suffix(fname, ".gdtb");
+
+    if (gdtb && is_purebin_file(fname)) {
+	return read_gbin(fname, dset, opt, prn);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 	int id = -1;
@@ -4439,9 +4469,12 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 			   int *vlist, gretlopt opt)
 {
+    int gdtb = has_suffix(fname, ".gdtb");
     int err = 0;
 
-    if (has_suffix(fname, ".gdtb")) {
+    if (gdtb && is_purebin_file(fname)) {
+	err = read_gbin_subset(fname, dset, vlist, opt);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 	int err;
@@ -4490,9 +4523,12 @@ int gretl_read_gdt_varnames (const char *fname,
 			     char ***vnames,
 			     int *nvars)
 {
+    int gdtb = has_suffix(fname, ".gdtb");
     int err = 0;
 
-    if (has_suffix(fname, ".gdtb")) {
+    if (gdtb && is_purebin_file(fname)) {
+	err = read_gbin_varnames(fname, vnames, nvars);
+    } else if (gdtb) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
 	int err;
@@ -4577,7 +4613,7 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
     xmlNodePtr node;
     char *ret = NULL;
 
-    doc = gretl_xmlParseFile(fname);
+    doc = xmlParseFile(fname);
 
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);

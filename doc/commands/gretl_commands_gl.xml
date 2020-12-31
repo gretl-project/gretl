@@ -729,13 +729,15 @@
 
     <description>
       <para>
+	Se desaconsella esta instrución en favor da instrución actualizada e
+	máis flexible <cmdref targ="dpanel"/>. Probablemente será eliminada,
+	polo que non deberas utilizala nos novos guións que redactes.
+      </para>
+      <para>
 	Realiza a estimación de modelos dinámicos con datos de panel
 	(é dicir, modelos de panel que inclúen un ou máis retardos da
 	variable dependente) utilizando o método MXM-DIF establecido
 	por <cite key="arellano-bond91">Arellano e Bond (1991)</cite>.
-	Consulta <cmdref targ="dpanel"/> para ver os detalles dunha
-	versión actualizada e máis flexible desta instrución, que permite
-	manexar tanto MXM-SIS coma MXM-DIF.
       </para>
       <para>
 	O parámetro <repl>p</repl> representa o alcance da autorregresión da
@@ -1230,9 +1232,11 @@
 	e contén os valores das funcións índice das ecuacións respectivas.
       </para>
       <para>
-	O resultado inclúe unha proba de Razón de Verosimilitudes respecto
-	á hipótese nula de que as perturbacións das dúas ecuacións non
-	están correlacionadas.
+	O resultado inclúe unha proba de Razón de Verosimilitudes respecto á
+	hipótese nula de que as perturbacións das dúas ecuacións non están
+	correlacionadas. Ten en conta que cando se designa este estimador como
+	estimador case que máximo verosímil (QMLE) e se utiliza a opción
+	<opt>robust</opt>, esta proba pode non ser válida, mesmo asintoticamente.
       </para>
     </description>
   </command>
@@ -1828,208 +1832,10 @@
 	proba baséanse en <cite key="mackinnon96">MacKinnon (1996)</cite>.
 	O código relevante inclúese co amable permiso do propio autor.
       </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelar/Series temporais multivariantes</menu-path>
-    </gui-access>
-
-  </command>
-
-  <command name="coint2" section="Tests" label="Proba de cointegración de Johansen">
-
-    <usage>
-      <arguments>
-        <argument>nivel</argument>
-        <argument>ylista</argument>
-	     <argblock optional="true" separated="true">
-	      <argument>xlista</argument>
-	     </argblock>
-	     <argblock optional="true" separated="true">
-	      <argument>rxlista</argument>
-	     </argblock>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--nc</flag>
-	  <effect>Sen constante</effect>
-        </option>
-        <option>
-	  <flag>--rc</flag>
-	  <effect>Constante restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--uc</flag>
-	  <effect>Constante non restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--crt</flag>
-	  <effect>Constante e tendencia restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--ct</flag>
-	  <effect>Constante e tendencia non restrinxida</effect>
-        </option>
-        <option>
-	  <flag>--seasonals</flag>
-	  <effect>Inclúe variables ficticias estacionais centradas</effect>
-        </option>
-        <option>
-	  <flag>--asy</flag>
-	  <effect>Garda os valores p asintóticos</effect>
-        </option>
-        <option>
-	  <flag>--quiet</flag>
-	  <effect>Presenta só as probas</effect>
-        </option>
-        <option>
-	  <flag>--silent</flag>
-	  <effect>Non presenta nada</effect>
-        </option>
-        <option>
-	  <flag>--verbose</flag>
-	  <effect>Presenta detalles das regresións auxiliares</effect>
-        </option>
-      </options>
-      <examples>
-        <example>coint2 2 y x</example>
-	<example>coint2 4 y x1 x2 --verbose</example>
-	<example>coint2 3 y x1 x2 --rc</example>
-	<demos>
-	  <demo>hamilton.inp</demo>
-	  <demo>denmark.inp</demo>
-	</demos>
-      </examples>
-    </usage>
-
-    <description>
-      <para context="cli">
-	Leva a cabo a proba de cointegración de Johansen entre as variables
-	de <repl>ylista</repl> para o nivel de retardos seleccionado. Para obter
-	máis detalles sobre esta proba, consulta o <guideref targ="chap:vecm"/>
-	ou o capítulo 20 de <cite key="hamilton94">Hamilton (1994)</cite>. As
-	probabilidades asociadas (valores p) calcúlanse mediante a aproximación
-	Gamma de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
-	Amósanse dous conxuntos de valores p para a proba da traza: valores
-	asintóticos directos e valores axustados polo tamaño da mostra. Por
-	defecto, o accesorio <fncref targ="$pvalue"/> xera a variante axustada,
-	pero podes utilizar a opción <opt>asy</opt> para obter no seu lugar
-	os valores asintóticos.
-      </para>
-
-      <para context="gui">
-	Leva a cabo a proba de cointegración de Johansen entre as variables
-	indicadas para o nivel de retardos seleccionado. Para obter máis detalles
-	sobre esta proba consulta, por exemplo, o capítulo 20 do libro
-	<book>Time Series Analysis</book> (1994) de Hamilton. As probabilidades
-	asociadas (valores p) calcúlanse mediante a aproximación Gamma de Doornik
-	(1998). Amósanse dous conxuntos de valores p para a proba da traza:
-	valores asintóticos directos e valores axustados polo tamaño da mostra.
-      </para>
-
-      <para context="cli">
-	A inclusión de termos determinísticos no modelo contrólase mediante
-	os indicadores de opción. Por defecto, se non especificas ningunha
-	opción, inclúese unha <quote>constante non restrinxida</quote>, que
-	permite a presenza dunha ordenada na orixe non nula nas relacións
-	de cointegración, así como unha tendencia nos niveis das variables
-	endóxenas. Na literatura xerada a partir do traballo de Johansen
-	(por exemplo, consulta o seu libro de 1995) refírese esta situación
-	como o <quote>caso 3</quote>. As 4 primeiras opcións indicadas arriba,
-	que son mutuamente excluíntes, producen respectivamente os casos 1,
-	2, 4 e 5. Tanto o significado destes casos como o criterio para
-	seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="gui">
-	A inclusión de termos determinísticos no modelo contrólase por medio
-	dunha lista despregable de opcións. Por defecto, inclúese unha
-	<quote>constante non restrinxida</quote>, que permite a presenza
-	dunha ordenada na orixe non nula nas relacións de cointegración, así
-	como unha tendencia nos niveis das variables endóxenas. Na literatura
-	xerada a partir do traballo de Johansen (por exemplo, consulta o seu
-	libro de 1995) refírese esta situación como o <quote>caso 3</quote>.
-	As 4 primeiras opcións indicadas arriba producen respectivamente os
-	casos 1, 2, 4 e 5. Tanto o significado destes casos como o criterio
-	para seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
-      </para>
-
-      <para context="cli">
-	As listas <repl>xlista</repl> e <repl>rxlista</repl> (opcionais) te permiten
-	controlar as variables esóxenas especificadas, e así estas entran
-	no sistema ben sen restricións (<repl>xlista</repl>) ou ben restrinxidas
-	ao espazo de cointegración (<repl>rxlista</repl>). Estas listas
-	sepáranse de <repl>ylista</repl> e unhas das outras mediante un
-	punto e coma.
-      </para>
-
-      <para context="gui">
-	Podes controlar as variables esóxenas engadíndoas á caixa da lista
-	inferior. Por defecto, estas entran a formar parte do modelo de forma
-	non restrinxida (indicada por un <lit>U</lit> á beira do nome da
-	variable). Se queres que unha determinada variable esóxena estea
-	restrinxida ao espazo de cointegración, preme co botón dereito do
-	rato sobre ela e escolle <quote>Restrinxido</quote> no menú emerxente;
-	e o símbolo á beira da variable vaise mudar a R.
-      </para>
-
-      <para context="cli">
-	A opción <opt>seasonals</opt>, que podes combinar con calquera das
-	outras opcións, especifica a inclusión dun conxunto de variables
-	ficticias estacionais centradas. Esta opción está dispoñible só
-	para datos trimestrais ou mensuais.
-      </para>
-
-      <para context="gui">
-	Se os datos son trimestrais ou mensuais, amósase un cadriño de verificación que
-	te permite incluír un conxunto de variables ficticias estacionais centradas. En
-	tódolos casos, un cadriño de verificación adicional (<quote>Amosar os detalles</quote>)
-	permite a presentación das regresións auxiliares que forman o punto de comezo
-	do procedemento de estimación máximo verosímil de Johansen.
-      </para>
-
-      <para context="notex">
-	A seguinte táboa ofrécese como guía para a interpretación
-	dos resultados da proba que se amosan, para o caso con
-	3 variables. <lit>H0</lit> denota a hipótese nula, <lit>H1</lit>
-	a hipótese alternativa, e <lit>c</lit> o número de relacións
-	de cointegración.
-      </para>
-      <mono context="notex">
-         Rango    Proba traza        Proba Lmáx
-                  H0     H1          H0     H1
-         ---------------------------------------
-          0      c = 0  c = 3       c = 0  c = 1
-          1      c = 1  c = 3       c = 1  c = 2
-          2      c = 2  c = 3       c = 2  c = 3
-         ---------------------------------------
-      </mono>
-      <para context="tex">
-	A seguinte táboa ofrécese como guía para a interpretación
-	dos resultados da proba que se amosan, para o caso con
-	3 variables. $H_0$ denota a hipótese nula, $H_1$ a
-	hipótese alternativa, e $c$ o número de relacións de
-	cointegración.
-
-	\begin{center}
-	\begin{tabular}{cllll}
-	&amp; \multicolumn{2}{c}{Proba traza} &amp;
-	   \multicolumn{2}{c}{Proba $\lambda$-máx} \\
-	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} &amp;
-	       \multicolumn{1}{c}{$H_0$} &amp;
-	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
- 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
-	\end{tabular}
-	\end{center}
-      </para>
-
       <para>
-	Consulta tamén a instrución <cmdref targ="vecm"/>.
+	Para obter as probas de cointegración de Søren Johansen,
+	consulta <cmdref targ="johansen"/>.
       </para>
-
     </description>
 
     <gui-access>
@@ -2153,11 +1959,17 @@
 	  <flag>--verbose</flag>
 	  <effect>Presenta xerarquías</effect>
 	</option>
-        <option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>modo-ou-nomeficheiro</optparm>
 	  <effect>Mira abaixo</effect>
-        </option>
+	</option>
+	
+	<option>
+	  <flag>--triangle</flag>
+	  <effect>Representa só a metade inferior, mira abaixo</effect>
+	</option>
+	
       </options>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -2216,8 +2028,8 @@
 	por lotes), ou un nome de ficheiro. O efecto de indicar un nome de
 	ficheiro é como o descrito para a opción <opt>output</opt> da instrución
 	<cmdref targ="gnuplot"/>. Cando activas a representación da gráfica,
-	podes utilizar a opción adicional <opt>triangle</opt> para amosar só
-	o mapa de calor do triángulo inferior da matriz.
+	podes utilizar a opción <opt>triangle</opt> para amosar só o mapa de
+	calor do triángulo inferior da matriz.
       </para>
       <para>
 	Cando indicas unha forma alternativa, utilizando unha matriz xa
@@ -2515,10 +2327,6 @@
 	  <effect>Especifica o método para compactar</effect>
 	</option>
 	<option>
-	  <flag>--interpolate</flag>
-	  <effect>Fai a interpolación para datos de baixa frecuencia</effect>
-	</option>
-	<option>
 	  <flag>--quiet</flag>
 	  <effect>Non amosa os resultados agás no caso de fallo</effect>
 	</option>
@@ -2592,15 +2400,12 @@
 	<lit>m01</lit>, <lit>m02</lit> e <lit>m03</lit>.
       </para>
       <para>
-	Cando as series que se len son de frecuencia menor que a do
-	conxunto de datos de traballo, por defecto repítense os valores dos
-	datos engadidos segundo se necesite. Pero podes utilizar a opción
-	<opt>interpolate</opt> para solicitar que se faga a interpolación
-	utilizando o método de <cite key="chowlin71">Chow e Lin (1971)</cite>
-	no que os regresores son unha constante máis unha tendencia linear e
-	cadrada, e asúmese que a perturbación segue un AR(1). Porén, ten en
-	conta que dispós desta opción só para converter datos trimestrais en
-	mensuais, ou datos anuais en trimestrais.
+	Cando as series que se len son de frecuencia <emphasis>menor</emphasis>
+	que a do conxunto de datos de traballo, os valores dos datos engadidos
+	sinxelamente repítense segundo se necesite; pero cae na conta de
+	que podes utilizar a función <fncref targ="tdisagg"/> para solicitar
+	que se faga unha distribución ou unha interpolación
+	(<quote>desagregación temporal </quote>).
       </para>
       <para>
 	No caso de bancos de datos propios (unicamente) de Gretl, podes
@@ -2712,7 +2517,7 @@
 	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand interp</example>
+        <example>dataset expand</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2776,16 +2581,14 @@
 	(unha por cada subperíodo), pois por defecto faise usando a media.
       </para>
       <para>
-	<lit>expand</lit>: Esta instrución só está dispoñible para datos de
-	series temporais anuais ou trimestrais, pois os datos anuais pódense
-	estender a trimestrais e os datos trimestrais a frecuencia mensual.
-	Por defecto, todas as series do conxunto de datos énchense coa nova
-	frecuencia repetindo os valores existentes, pero se engades o
-	parámetro <lit>interp</lit>, entón a serie esténdese utilizando a
-	interpolación de Chow&ndash;Lin  (para os detalles, consulta
-	<cite key="chowlin71">Chow e Lin, 1971</cite>) na que os regresores
-	son unha constante máis unha tendencia linear e cadrada, e asúmese
-	que a perturbación segue un AR(1).
+	<lit>expand</lit>: Esta instrución só está dispoñible para datos
+	de series temporais anuais ou trimestrais, pois os datos anuais
+	pódense estender a trimestrais ou mensuais, e os datos trimestrais
+	a mensuais. Todas as series do conxunto de datos énchense coa nova
+	frecuencia repetindo os valores existentes. Se o banco de datos
+	orixinal é anual, a extensión por defecto é a trimestral, pero a función
+	<lit>expand</lit> pode estar seguida de <lit>12</lit> para solicitar
+	que sexa a mensual.
       </para>
       <para>
 	<lit>transpose</lit>: Non necesita ningún parámetro adicional.
@@ -3925,43 +3728,28 @@
 
     <description>
       <para>
-	Se queres engadir a un conxunto de datos, unha serie que é de frecuencia
-	menor, é necesario <quote>expandir</quote> a nova serie. Por exemplo,
-	terás que expandir unha serie trimestral para axustala a un conxunto
-	de datos mensual. Ademais, ás veces podes querer expandir un conxunto
-	de datos enteiro a outro de frecuencia maior (quizais antes de engadir
-	unha variable de frecuencia maior ao conxunto de datos).
+	Debes considerar a <quote>expansión</quote> desde unha frecuencia
+	menor a unha maior dun conxunto de datos ou dunha serie, como unha
+	opción para expertos, pois necesitas saber que estás facendo. Cando
+	combinas series de diferentes frecuencias orixinais dentro dun conxunto
+	de datos, probablemente deberías de considerar como compactar os datos
+	de frecuencia maior, máis ca expandir as series de frecuencia menor.
       </para>
       <para>
-	Debes considerar a expansión dos datos como unha opción para
-	<quote>expertos</quote> pois necesitas saber que estás facendo.
-	Cando combinas series de diferentes frecuencias orixinais dentro
-	dun conxunto de datos, probablemente deberías de considerar como
-	compactar os datos de frecuencia maior, máis ca expandir as series
-	de frecuencia menor.
+	Aclarado isto, Gretl admite a expansión mediante a simple repetición
+	dos valores de baixa frecuencia. Por exemplo, ao expandir desde
+	frecuencia trimestral a mensual, os valores trimestrais se repiten
+	para cada mes do trimestre. As series xeradas deste xeito non é
+	probable que se podan usar así para a análise econométrica, pero
+	despois da expansión podes usar a función <fncref targ="tdisagg"/>
+	para producir unha versión distribuída ou interpolada dos datos
+	(<quote>desagregación temporal</quote>).
       </para>
       <para>
-	Dito isto, Gretl permíteche dúas opcións para a expansión: (a)
-	podes interpolar valores de alta frecuencia utilizando o método de
-	<cite key="chowlin71">Chow e Lin (1971)</cite>, ou (b) podes
-	repetir valores das series de frecuencia menor tantas veces
-	como sexa necesario.
-      </para>
-      <para>
-	O método de Chow&ndash;Lin está baseado na regresión, e utiliza
-	unha constante máis unha tendencia linear e cadrada, asumindo
-	un proceso autorregresivo de primeira orde para as perturbacións.
-	Gástanse catro graos de liberdade con este procedemento.
-      </para>
-      <para>
-	Respecto ao método de repetición de valores, supón que tes unha serie
-	trimestral co valor 35.5 en 1990:1 (o primeiro trimestre de
-	1990). Na expansión a mensual, vaise asignar o valor 35.5
-	ás observacións de xaneiro, febreiro e marzo de 1990. En
-	consecuencia, a variable expandida é inútil para una análise
-	pormenorizada de series temporais, agás no caso especial no
-	que xa sabes de feito que a variable en cuestión se mantén
-	constante durante os subperíodos.
+	Podes acceder a algunhas das prestacións da función <lit>tdisagg</lit>
+	mediante a interface gráfica, seleccionando unha serie na xanela
+	principal de Gretl, e a continuación procurar <quote>Desagregar</quote>
+	baixo o menú Variable.
       </para>
     </description>
   </command>
@@ -6698,6 +6486,210 @@
 
   </command>
 
+  <command name="johansen" section="Tests" label="Proba de cointegración de Johansen">
+
+    <usage>
+      <arguments>
+        <argument>nivel</argument>
+        <argument>ylista</argument>
+	     <argblock optional="true" separated="true">
+	      <argument>xlista</argument>
+	     </argblock>
+	     <argblock optional="true" separated="true">
+	      <argument>rxlista</argument>
+	     </argblock>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--nc</flag>
+	  <effect>Sen constante</effect>
+        </option>
+        <option>
+	  <flag>--rc</flag>
+	  <effect>Constante restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>Constante non restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--crt</flag>
+	  <effect>Constante e tendencia restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--ct</flag>
+	  <effect>Constante e tendencia non restrinxida</effect>
+        </option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>Inclúe variables ficticias estacionais centradas</effect>
+        </option>
+        <option>
+	  <flag>--asy</flag>
+	  <effect>Garda os valores p asintóticos</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Presenta só as probas</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>Non presenta nada</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>Presenta detalles das regresións auxiliares</effect>
+        </option>
+      </options>
+      <examples>
+        <example>johansen 2 y x</example>
+	<example>johansen 4 y x1 x2 --verbose</example>
+	<example>johansen 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Leva a cabo a proba de cointegración de Johansen entre as variables
+	de <repl>ylista</repl> para o nivel de retardos seleccionado. Para obter
+	máis detalles sobre esta proba, consulta o <guideref targ="chap:vecm"/>
+	ou o capítulo 20 de <cite key="hamilton94">Hamilton (1994)</cite>. As
+	probabilidades asociadas (valores p) calcúlanse mediante a aproximación
+	Gamma de Doornik <cite key="doornik98" p="true">(Doornik, 1998)</cite>.
+	Amósanse dous conxuntos de valores p para a proba da traza: valores
+	asintóticos directos e valores axustados polo tamaño da mostra. Por
+	defecto, o accesorio <fncref targ="$pvalue"/> xera a variante axustada,
+	pero podes utilizar a opción <opt>asy</opt> para obter no seu lugar
+	os valores asintóticos.
+      </para>
+
+      <para context="gui">
+	Leva a cabo a proba de cointegración de Johansen entre as variables
+	indicadas para o nivel de retardos seleccionado. Para obter máis detalles
+	sobre esta proba consulta, por exemplo, o capítulo 20 do libro
+	<book>Time Series Analysis</book> (1994) de Hamilton. As probabilidades
+	asociadas (valores p) calcúlanse mediante a aproximación Gamma de Doornik
+	(1998). Amósanse dous conxuntos de valores p para a proba da traza:
+	valores asintóticos directos e valores axustados polo tamaño da mostra.
+      </para>
+
+      <para context="cli">
+	A inclusión de termos determinísticos no modelo contrólase mediante
+	os indicadores de opción. Por defecto, se non especificas ningunha
+	opción, inclúese unha <quote>constante non restrinxida</quote>, que
+	permite a presenza dunha ordenada na orixe non nula nas relacións
+	de cointegración, así como unha tendencia nos niveis das variables
+	endóxenas. Na literatura xerada a partir do traballo de Johansen
+	(por exemplo, consulta o seu libro de 1995) refírese esta situación
+	como o <quote>caso 3</quote>. As 4 primeiras opcións indicadas arriba,
+	que son mutuamente excluíntes, producen respectivamente os casos 1,
+	2, 4 e 5. Tanto o significado destes casos como o criterio para
+	seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="gui">
+	A inclusión de termos determinísticos no modelo contrólase por medio
+	dunha lista despregable de opcións. Por defecto, inclúese unha
+	<quote>constante non restrinxida</quote>, que permite a presenza
+	dunha ordenada na orixe non nula nas relacións de cointegración, así
+	como unha tendencia nos niveis das variables endóxenas. Na literatura
+	xerada a partir do traballo de Johansen (por exemplo, consulta o seu
+	libro de 1995) refírese esta situación como o <quote>caso 3</quote>.
+	As 4 primeiras opcións indicadas arriba producen respectivamente os
+	casos 1, 2, 4 e 5. Tanto o significado destes casos como o criterio
+	para seleccionar un caso explícanse no <guideref targ="chap:vecm"/>.
+      </para>
+
+      <para context="cli">
+	As listas <repl>xlista</repl> e <repl>rxlista</repl> (opcionais) te permiten
+	controlar as variables esóxenas especificadas, e así estas entran
+	no sistema ben sen restricións (<repl>xlista</repl>) ou ben restrinxidas
+	ao espazo de cointegración (<repl>rxlista</repl>). Estas listas
+	sepáranse de <repl>ylista</repl> e unhas das outras mediante un
+	punto e coma.
+      </para>
+
+      <para context="gui">
+	Podes controlar as variables esóxenas engadíndoas á caixa da lista
+	inferior. Por defecto, estas entran a formar parte do modelo de forma
+	non restrinxida (indicada por un <lit>U</lit> á beira do nome da
+	variable). Se queres que unha determinada variable esóxena estea
+	restrinxida ao espazo de cointegración, preme co botón dereito do
+	rato sobre ela e escolle <quote>Restrinxido</quote> no menú emerxente;
+	e o símbolo á beira da variable vaise mudar a R.
+      </para>
+
+      <para context="cli">
+	A opción <opt>seasonals</opt>, que podes combinar con calquera das
+	outras opcións, especifica a inclusión dun conxunto de variables
+	ficticias estacionais centradas. Esta opción está dispoñible só
+	para datos trimestrais ou mensuais.
+      </para>
+
+      <para context="gui">
+	Se os datos son trimestrais ou mensuais, amósase un cadriño de verificación que
+	te permite incluír un conxunto de variables ficticias estacionais centradas. En
+	tódolos casos, un cadriño de verificación adicional (<quote>Amosar os detalles</quote>)
+	permite a presentación das regresións auxiliares que forman o punto de comezo
+	do procedemento de estimación máximo verosímil de Johansen.
+      </para>
+
+      <para context="notex">
+	A seguinte táboa ofrécese como guía para a interpretación
+	dos resultados da proba que se amosan, para o caso con
+	3 variables. <lit>H0</lit> denota a hipótese nula, <lit>H1</lit>
+	a hipótese alternativa, e <lit>c</lit> o número de relacións
+	de cointegración.
+      </para>
+      <mono context="notex">
+         Rango    Proba traza        Proba Lmáx
+                  H0     H1          H0     H1
+         ---------------------------------------
+          0      c = 0  c = 3       c = 0  c = 1
+          1      c = 1  c = 3       c = 1  c = 2
+          2      c = 2  c = 3       c = 2  c = 3
+         ---------------------------------------
+      </mono>
+      <para context="tex">
+	A seguinte táboa ofrécese como guía para a interpretación
+	dos resultados da proba que se amosan, para o caso con
+	3 variables. $H_0$ denota a hipótese nula, $H_1$ a
+	hipótese alternativa, e $c$ o número de relacións de
+	cointegración.
+
+	\begin{center}
+	\begin{tabular}{cllll}
+	&amp; \multicolumn{2}{c}{Proba traza} &amp;
+	   \multicolumn{2}{c}{Proba $\lambda$-máx} \\
+	Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} &amp;
+	       \multicolumn{1}{c}{$H_0$} &amp;
+	       \multicolumn{1}{c}{$H_1$} \\ [4pt]
+ 	0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+	1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+	2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
+	\end{tabular}
+	\end{center}
+      </para>
+
+      <para>
+	Consulta tamén a instrución <cmdref targ="vecm"/>; e a instrución
+	<cmdref targ="coint"/> se queres obter a proba de cointegración de
+	Engle&ndash;Granger.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelar/Series temporais multivariantes</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="join" section="Dataset" label="Manexar fontes de datos"
 	   context="cli">
 
@@ -8393,6 +8385,10 @@
 	que require polo menos un parámetro.
       </para>
       <para context="cli">
+	5 or <lit>"beta1"</lit>: Similar a <lit>beta0</lit>, mais co primeiro
+	parámetro fixado en 1 (deixando un único parámetro libre).
+      </para>
+      <para context="cli">
 	Cando a disposición de parámetros é U-MIDAS, non é necesario o
 	vector de inicio do último argumento. Noutros casos, podes solicitar
 	unha iniciación automática substituíndo o nome do vector de
@@ -8898,6 +8894,11 @@
 	entón <repl>nomes</repl> debe de conter <math>k + p</math>
 	nomes, de forma que os <math>p</math> nomes agregados
 	se asocien aos estatísticos adicionais.
+      </para>
+      <para>
+	Se non indicas o argumento <repl>estadicionais</repl> e a matriz
+	<repl>matrizcoef</repl> ten adxuntos os nomes das filas, entón podes
+	omitir o argumento <repl>nomes</repl>.
       </para>
       <para>
 	Para colocar o resultado nun ficheiro, utiliza a opción
@@ -10017,6 +10018,28 @@
 	correspondencia entre as cadeas e a súa codificación numérica.
 	Podes eliminar este proceder mediante a opción<opt>quiet</opt>.
       </para>
+      <subhead context="cli">Cargando series seleccionadas</subhead>
+      <para>
+	O uso de <lit>open</lit> cun ficheiro de datos como argumento (ao
+	contrario do caso cun banco de datos, mira abaixo) xeralmente implica
+	cargar todas as series do ficheiro indicado. Porén, unicamente no
+	caso de ficheiros orixinais de Gretl (<lit>gdt</lit> e <lit>gdtb</lit>)
+	é posible especificar un subconxunto de series a cargar, mediante o
+	seu nome. Isto se consegue por medio da opción <opt>select</opt>, o
+	que require un argumento adxunto con algún destes tres formatos: o
+	nome dunha única serie; unha lista de nomes, separados mediante espazos
+	e contornados entre comiñas; ou o nome dun arranxo de cadeas de texto.
+	Exemplos:
+      </para>
+      <code>
+	# Serie única
+	open somefile.gdt --select=x1
+	# Máis dunha serie
+	open somefile.gdt --select="x1 x5 x27"
+	# Método alternativo
+	strings Sel = defarray("x1", "x5", "x27")
+	open somefile.gdt --select=Sel
+	</code>
       <subhead context="cli">Abrindo un banco de datos</subhead>
       <para>
 	Como se comentou antes, podes utilizar a instrución <lit>open</lit>
@@ -10530,8 +10553,8 @@
 
   </command>
 
-    <command name="panplot" section="Graphs"
-    label="Debuxa unha serie de panel" context="cli">
+  <command name="panplot" section="Graphs"
+   label="Debuxa unha serie de panel" context="cli">
 
     <usage>
       <arguments>
@@ -11061,11 +11084,11 @@
 	end plot --output=display
       </code>
       <para>
-	Este exemplo asume que <lit>plotmat</lit> é o nome dunha
-	matriz que ten 2 columnas polo menos (ou unha lista que ten
-	2 elementos polo menos). Cae na conta de que se considera
-	unha boa praxe colocar (unicamente) a opción <opt>output</opt>
-	na derradeira liña do bloque.
+	Este exemplo asume que <lit>plotmat</lit> é o nome dunha matriz que
+	ten 2 columnas polo menos (ou unha lista que ten 2 elementos polo
+	menos). Cae na conta de que se considera unha boa praxe colocar
+	(unicamente) a opción <opt>output</opt> na derradeira liña do bloque;
+	outras opcións deberías colocalas dentro do bloque.
       </para>
       <subhead>Debuxar unha franxa con datos de matrices</subhead>
       <para>
@@ -11949,7 +11972,37 @@
     <gui-access>
       <menu-path>/Ficheiro/Saír</menu-path>
     </gui-access>
+  </command>
 
+  <command name="regls" section="Estimation"
+	   label="Mínimos cadrados regularizados" context="gui">
+    <description>
+      <para>
+	Este diálogo te permite un grao limitado de acceso á función
+	<lit>regls</lit> para mínimos cadrados regularizados.
+      </para>
+      <para>
+	Se toleran tres variantes: LASSO, que limita a suma dos valores absolutos
+	dos coeficientes; Ridge (crista), que limita a suma dos coeficientes
+	cadrados; e Elastic net (malla elástica), que é unha combinación das
+	dúas primeiras, rexida polo 'hiperparámetro' &alpha; de xeito que
+	&alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona Ridge, e
+	valores intermedios proporcionan unha combinación ponderada.
+      </para>
+      <para>
+	O termo &lgr; especifica o grao ata o que se penaliza a suma de
+	coeficientes absolutos ou cadrados. Podes ben indicar unha única
+	fracción &lgr; desde 0 (sen penalización) ata 1 (máxima penalización),
+	ou ben un número de valores &lgr;. No segundo caso, os valores de
+	penalización escálanse automaticamente.
+      </para>
+      <para>
+	Podes exercer un control moito maior sobre a funcionalidade de Mínimos
+	Cadrados Regularizados de GRETL apelando á función <lit>regls</lit>
+	mediante o uso de guións. En particular, tes a potestade de especificar a
+	validación cruzada; consulta <doc>regls.pdf</doc> para ter máis detalles.
+      </para>
+    </description>
   </command>
 
   <command name="rename" section="Dataset"
@@ -12048,9 +12101,7 @@
 	<opt>random-effects</opt>.
       </para>
     </description>
-
   </command>
-
 
   <command name="reset" section="Tests" label="RESET de Ramsey">
 
@@ -13109,9 +13160,25 @@
 	  </para>
 	</li>
 	<li>
+	  <para><lit>quantile_type</lit>: Debes escoller entre <lit>Q6</lit> (por
+	  defecto), <lit>Q7</lit> ou <lit>Q8</lit>. Selecciona o método concreto
+	  que utiliza a función <fncref targ="quantile"/>. Para obter máis
+	  detalles, consulta <cite key="hyndman96">Hyndman e Fan (1996)</cite>
+	  ou a entrada da Wikipedia dispoñible en
+	  <url>https://en.wikipedia.org/wiki/Quantile</url>.
+	  </para>
+	</li>
+	<li>
 	  <para><lit>huge</lit>: Un número positivo moi grande (por
 	  defecto, 1.0E100). Esta configuración controla o valor que
 	  devolve o accesorio <fncref targ="$huge"/>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>assert</lit>: <lit>off</lit> (por defecto), <lit>warn</lit>
+	  ou <lit>stop</lit>. Controla as consecuencias dun fallo
+	  (que o valor que se devolva sexa igual a 0) da función
+	  <fncref targ="assert"/>.
 	  </para>
 	</li>
       </ilist>
@@ -13565,7 +13632,9 @@
 	ou <opt>continuous</opt>, o carácter numérico da variable establécese
 	en consonancia con iso. Por defecto, trátanse todas as series como
 	continuas, entón determinar que unha serie sexa discreta vai afectar
-	ao xeito no que se manexa a variable nas gráficas de frecuencia.
+	ao xeito no que se manexa a variable en outras instrucións e
+	funcións, como por exemplo con <cmdref targ="freq"/> ou con
+	<fncref targ="dummify"/>.
       </para>
       <para>
 	Cando indicas algunha das dúas opcións <opt>coded</opt> ou <opt>numeric</opt>,
@@ -14818,6 +14887,52 @@
 
   </command>
 
+  <command name="tdisagg" section="Dataset" context="gui"
+    label="Desagregación temporal">
+
+    <description>
+      <para>
+	Aquí tes un repaso das principais opcións no cadro de diálogo da
+	desagregación temporal. Para obter unha explicación detallada,
+	consulta o <guideref targ="chap:tdisagg"/>.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Nome do resultado: Podes elixir entre sobrescribir unha serie
+	    xa existente coa versión desagregada, ou dar un nome novo ao
+	    resultado.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Tipo de agregación: Escolle <lit>sum</lit> se a suma dos valores
+	    de alta frecuencia debe resultar igual ao valor de baixa frecuencia
+	    proporcionado (ex. fluxos como o PIB e as súas compoñentes).
+	    Elixe <lit>avg</lit> se a media dos valores de alta frecuencia
+	    debe resultar igual ao valor de baixa frecuencia proporcionado
+	    (ex. índices, cocientes, ou fluxos <quote>en taxas anuais</quote>).
+	    Opta por <lit>last</lit> ou <lit>first</lit> se o derradeiro ou
+	    primeiro valor de alta frecuencia debe ser igual ao valor de
+	    baixa frecuencia (como pode ser o caso das variables de stock,
+	    como a cantidade de diñeiro).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Baseado en regresión fronte a Denton: En xeral, recoméndase o
+	    primeiro. Se escolles <quote>Baseado en regresión</quote>, vas
+	    poder seleccionar o método de Fernández se pensas que a serie
+	    que te interesa ten unha raíz unitaria; en caso contrario, opta
+	    por Chow&ndash;Lin. Se escolles Denton, asúmese que sabes o que
+	    estás facendo pois os métodos Denton son en primeiras diferenzas,
+	    tal como os modificou Cholette.
+	  </para>
+	</li>
+      </ilist>
+    </description>
+  </command>
+
   <command name="textplot" section="Graphs"
     label="Gráfica ASCII" context="cli">
 
@@ -15408,8 +15523,33 @@
 	Calcula o estatístico <math>F</math> para probar a hipótese nula de
 	que as varianzas poboacionais das variables <repl>serie1</repl> e
 	<repl>serie2</repl> son iguais, e amosa a súa probabilidade asociada
-	(valor p).
+	(valor p). Podes obter as estatísticas da proba e a probabilidade asociada
+	mediante os accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/>,
+	respectivamente. O seguinte código
       </para>
+      <code>
+		open AWM18.gdt
+		vartest EEN EXR
+		eval $test
+		eval $pvalue
+      </code>
+    <para>
+      calcula a proba, e amosa como recuperar máis tarde o estatístico de
+      proba e a probabilidade asociada correspondente:
+  	</para>
+  	<code>
+		Proba de igualdade de varianzas
+
+		EEN: Número de observacións = 192
+		EXR: Número de observacións = 188
+		Cociente entre varianzas mostrais = 3.70707
+		Hipótese nula: As dúas varianzas das poboacións son iguais
+		Estatístico de proba: F(191,187) = 3.70707
+		valor p (con dúas colas) = 1.94866e-18
+
+		3.7070716
+		1.9486605e-18
+	</code>
       <para context="gui">
 	Calcula o estatístico <math>F</math> para probar a hipótese nula de
 	que as varianzas poboacionais das dúas series elixidas son iguais, e
@@ -15498,7 +15638,7 @@
 	individualmente integradas de orde 1 (polo tanto son paseos aleatorios,
 	con ou sen deriva) pero presentan cointegración. Esta instrución está
 	intimamente relacionada coa proba de cointegración de Johansen
-	(consulta <cmdref targ="coint2"/>).
+	(consulta <cmdref targ="johansen"/>).
       </para>
 
       <para context="cli">

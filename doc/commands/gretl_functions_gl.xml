@@ -154,6 +154,16 @@
       </description>
     </function>
 
+    <function name="$dotdir" section="access" output="string">
+      <description>
+	<para>
+	  Este accesorio devolve unha cadea de texto coa ruta onde Gretl
+	  garda ficheiros temporalmente, por exemplo cando usa a función
+	  <fncref targ="mwrite"/> cun terceiro argumento distinto de cero.
+	</para>
+      </description>
+    </function>
+
     <function name="$dw" section="access" output="scalar">
       <description>
 	<para>
@@ -166,13 +176,19 @@
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
-	  Se pode calcularse, devolve un escalar coa probabilidade asociada ao
-	  valor do estatístico de Durbin-Watson do último modelo estimado.
-	  Calcúlase utilizando o método Imhof.
+	  Se pode calcularse, devolve un escalar co valor da función de distribución
+	  acumulada (CDF) de Durbin&ndash;Watson, avaliada no valor do estatístico
+	  de DW para o derradeiro modelo estimado; para isto úsase o procedemento
+	  de cálculo <cite key="imhof61">Imhof</cite>. Este é o valor p (probabilidade
+	  asociada) para unha proba dunha cola na que a hipótese alternativa
+	  é que existe autocorrelación positiva de primeira orde. Se queres o
+	  valor p para unha proba de dúas colas, colle 2<math>P</math> cando
+	  DW &lt; 2, ou 2(1 &minus; <math>P</math>) cando DW &gt; 2, onde
+	  <math>P</math> é o valor que devolve este accesorio.
 	</para>
 	<para>
-	  Debido á limitada precisión da aritmética das computadoras, o resultado
-	  do cálculo da integral do método Imhof pode volverse negativo cando
+	  Debido á limitada precisión da aritmética dixital, o resultado do
+	  cálculo da integral do método Imhof pode volverse negativo cando
 	  o estatístico de Durbin-Watson está próximo ao seu límite inferior;
 	  por iso este accesorio devolve <lit>NA</lit> nesa situación. Dado que
 	  calquera outra modalidade de fallo ten como resultado un erro que se
@@ -560,6 +576,14 @@
 	<para>
 	  Devolve un número enteiro coa cantidade total de observacións que están
 	  seleccionadas na mostra vixente. Relacionado: <fncref targ="$tmax"/>.
+	</para>
+	<para>
+	  No caso de datos de panel, o valor que se devolve é o número de
+	  observacións combinadas (o número de unidades de sección cruzada
+	  multiplicado polo número de períodos de tempo). Se queres saber o
+	  número de unidades tempo dun panel, utiliza <fncref targ="$pd"/>.
+	  E o número de unidades de sección cruzada incluídas pode obterse
+	  mediante <lit>$nobs</lit> dividido por <lit>$pd</lit>.
 	</para>
       </description>
     </function>
@@ -1235,15 +1259,29 @@
       </description>
     </function>
 
+    <function name="$workdir" section="access" output="string">
+      <description>
+	<para>
+	  Este accesorio devolve unha cadea de texto coa ruta desde a que le e
+	  na que escribe Gretl por defecto. Ofrécese unha discusión máis cumprida
+	  no manual de Instrucións, na referencia <cmdref targ="workdir"/>. Cae
+	  na conta de que o usuario pode determinar esta cadea por medio da
+	  instrución <cmdref targ="set"/>.
+        </para>
+      </description>
+    </function>
+
     <function name="$xlist" section="access" output="list">
       <description>
 	<para>
-	  Se o último modelo estimado era uniecuacional, o accesorio devolve
-	  unha lista cos seus regresores. Se o último modelo era un sistema de
-	  ecuacións, devolve unha lista <quote>global</quote> coas variables
-	  esóxenas e predeterminadas (na mesma orde na que aparecen co accesorio
-	  <fncref targ="$sysB"/>). Se o último modelo era un VAR, devolve unha
-	  lista cos regresores esóxenos, se hai algún.
+	  Se o último modelo estimado era uniecuacional, este accesorio vai
+	  devolver unha lista cos seus regresores. Se o último modelo era un
+	  sistema de ecuacións, devolve unha lista <quote>global</quote> coas
+	  variables esóxenas e predeterminadas (na mesma orde na que aparecen
+	  co accesorio <fncref targ="$sysB"/>). Se o último modelo era un VAR,
+	  devolve unha lista cos regresores esóxenos (se hai algún), excepción
+	  feita dos termos determinísticos habituais (a constante, a tendencia
+	  e os elementos estacionais).
 	</para>
       </description>
     </function>
@@ -1279,6 +1317,75 @@
 	  elementos.
 	</para>
       </description>
+    </function>
+
+  </funclist>
+
+  <funclist name="String constants" ref="string_constants">
+
+    <function name="$dotdir" section="straccess" output="string">
+      <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta completa ao directorio que usa
+          Gretl para os ficheiros temporais. Para usala en modo de substitución
+          para cadeas de texto, antepón o símbolo arroba (@dotdir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gnuplot" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta ata o executable 'gnuplot'. Para usala
+          en modo de substitución para cadeas, antepón o símbolo arroba (@gnuplot).
+        </para>
+        </description>
+    </function>
+
+    <function name="$gretldir" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta completa ao directorio
+          de instalación de Gretl. Para usala en modo de substitución para
+          cadeas de texto, antepón o símbolo arroba (@gretldir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramo" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta ata o executable 'tramo'. Para usala
+          en modo de substitución para cadeas, antepón o símbolo arroba (@tramo).
+        </para>
+        </description>
+    </function>
+
+    <function name="$tramodir" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta ata o directorio de datos de 'tramo'. Para
+          usala en modo de substitución para cadeas, antepón o símbolo arroba (@tramodir).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12a" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta ata o executable 'x-12-arima'. Para usala
+          en modo de substitución para cadeas, antepón o símbolo arroba (@x12a).
+        </para>
+        </description>
+    </function>
+
+    <function name="$x12adir" section="straccess" output="string">
+        <description>
+        <para>
+          Proporciona unha cadea de texto coa ruta ata o directorio de datos de 'x-12-arima'. Para
+          usala en modo de substitución para cadeas, antepón o símbolo arroba (@x12adir).
+        </para>
+        </description>
     </function>
 
   </funclist>
@@ -1513,6 +1620,51 @@
             <fncref targ="sinh"/>
 	  </seelist>
 	</para>
+      </description>
+    </function>
+
+    <function name="assert" section="programming" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">expr</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función está dirixida a comprobar e depurar código HANSL.
+	  O seu argumento deberá ser unha expresión cuxo valor sexa un
+	  escalar. O valor que devolve esta función é ou ben 1 cando o
+	  valor do argumento <argname>expr</argname> non é cero
+	  (<quote>verdadeiro</quote> booleano ou <quote>éxito</quote>),
+	  ou ben 0 se o valor do argumento é cero (<quote>falso</quote>
+	  booleano ou <quote>fallo</quote>).
+	</para>
+	<para>
+	  Por defecto, non hai outras consecuencias de que falle unha
+	  chamada a <lit>assert</lit>, máis que o feito de que o valor
+	  que se devolve é cero. Porén, podes utilizar a instrución
+	  <cmdref targ="set"/> para facer que o fallo dunha afirmación
+	  teña máis consecuencias. Hai dous niveles:
+	</para>
+	<code>
+	  # Amosar unha mensaxe de aviso, mais continuar coa execución
+	  set assert warn
+	  # Amosar unha mensaxe de aviso e deter a execución
+	  set assert stop
+	</code>
+	<para>
+	  Podes restablecer o funcionamento por defecto mediante
+	</para>
+	<code>
+	  set assert off
+	</code>
+	<para>
+	  A xeito de exemplo sinxelo:
+	  Se en certo punto dun guión HANSL, un escalar <lit>x</lit> debera ser
+	  non negativo, o seguinte código amosará un erro se este non é o caso:
+	</para>
+	<code>
+	  set assert stop
+	  assert(x >= 0)
+	</code>
       </description>
     </function>
 
@@ -1831,7 +1983,7 @@
       </description>
     </function>
 
-    <function name="bkfilt" section="filters" output="series">
+    <function name="bkfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="int" optional="true">f1</fnarg>
@@ -1909,7 +2061,7 @@
       </description>
     </function>
 
-    <function name="boxcox" section="filters" output="asinput">
+    <function name="boxcox" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
@@ -2031,7 +2183,7 @@
       </description>
     </function>
 
-    <function name="bwfilt" section="filters" output="series">
+    <function name="bwfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="int">n</fnarg>
@@ -2122,7 +2274,7 @@
       </description>
     </function>
 
-    <function name="cdemean" section="stats" output="matrix">
+    <function name="cdemean" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">tipificar</fnarg>
@@ -2317,7 +2469,7 @@
       </description>
     </function>
 
-    <function name="cdiv" section="linalg" output="matrix">
+    <function name="cdiv" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
@@ -2411,6 +2563,7 @@
 	  Hermitiana e definida positiva; e o resultado será unha matriz
 	  complexa triangular inferior de xeito que
 	  <equation status="inline" ascii="A = LL^H" tex="$A = LL^{\mathrm H}$"/>.
+	  En caso contrario, a función devolverá un fallo.
 	</para>
 	<para>
 	  Para o caso real, consulta tamén <fncref targ="psdroot"/> e
@@ -2419,7 +2572,7 @@
       </description>
     </function>
 
-    <function name="chowlin" section="transforms" output="matrix">
+    <function name="chowlin" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="int">factorx</fnarg>
@@ -2427,24 +2580,29 @@
       </fnargs>
       <description>
 	<para>
+	  Non se recomenda seguir utilizando esta función; en troques,
+	  utiliza <fncref targ="tdisagg"/>.
+	</para>
+	<para>
 	  Devolve unha matriz como resultado de expandir os datos de
 	  entrada, <argname>Y</argname>, a unha frecuencia maior, co método
 	  de <cite key="chowlin71">Chow e Lin (1971)</cite>. Asúmese que as
 	  columnas de <argname>Y</argname> representan series de datos.
 	  A matriz que se devolve ten o mesmo número de columnas que
 	  <argname>Y</argname> e <argname>factorx</argname> veces o seu
-	  número de filas.
+	  número de filas. Tamén se asume que cada valor de baixa frecuencia
+	  debe tratarse como a media de <argname>factorx</argname> valores
+	  de alta frecuencia.
 	</para>
 	<para>
-	  O segundo argumento representa o factor de expansión: debe de ser
-	  igual a 3 para expandir datos trimestrais a mensuais, ou igual a 4 para
-	  facelo de datos anuais a trimestrais (estes son os únicos factores
-	  admitidos actualmente). O terceiro argumento (opcional) pode usarse
-	  para prover unha matriz de covariables con maior frecuencia obxectivo.
+	  O valor de <argname>factorx</argname> debe ser igual a 3 para expandir
+	  datos trimestrais a mensuais, 4 para facelo de anuais a trimestrais, ou
+	  12 de anuais a mensuais. Podes usar o terceiro argumento (opcional)
+	  para prover unha matriz de covariables cun obxectivo de maior frecuencia.
 	</para>
 	<para>
-	  Os regresores que se utilizan por defecto son unha constante e unha
-	  tendencia cadrada. Cando se proporciona <argname>X</argname>, as
+	  Os regresores que se utilizan por defecto son unha constante e
+	  unha tendencia. Cando se proporciona <argname>X</argname>, as
 	  súas columnas utilízanse como regresores adicionais. A función
 	  devolve un fallo se o número de filas de <argname>X</argname> non
 	  é igual a <argname>factorx</argname> veces o número de filas de
@@ -2474,7 +2632,7 @@
       </description>
     </function>
 
-    <function name="cmult" section="linalg" output="matrix">
+    <function name="cmult" section="complex" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
@@ -2583,7 +2741,7 @@
       </description>
     </function>
 
-    <function name="cnameset" section="matbuild" output="scalar">
+    <function name="cnameset" section="matrix" output="scalar">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -2618,7 +2776,7 @@
       </description>
     </function>
 
-    <function name="cols" section="matshape" output="int">
+    <function name="cols" section="matrix" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -2732,7 +2890,7 @@
       </description>
     </function>
 
-    <function name="corrgm" section="stats" output="matrix">
+    <function name="corrgm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
 	<fnarg type="int">p</fnarg>
@@ -2965,7 +3123,7 @@
 	<para>
 	  Devolve unha matriz complexa de dimensión <by r="n" c="m"/> que
 	  contén a trasposta conxugada da matriz complexa <argname>C</argname>
-	  de dimensión <by r="m" c="n"/>. O operador <lit>'</lit> (traspoñer)
+	  de dimensión <by r="m" c="n"/>. O operador <lit>&apos;</lit> (traspoñer)
 	  fai tamén a transposición conxugada de matrices complexas. Podes
 	  utilizar a función <fncref targ="transp"/> con matrices complexas,
 	  pero iso vai realizar a transposición <quote>directa</quote>
@@ -3187,6 +3345,49 @@
 	<code>
 	  bundle b = null
 	</code>
+	<subhead>Variantes de sintaxe</subhead>
+	<para>
+	  Dispós de dúas formas alternativas de sintaxe para definir feixes.
+	  En ambos casos, a palabra chave <lit>defbundle</lit> substitúese
+	  por un carácter de barra baixa. Na primeira variante, os elementos
+	  separados por comas teñen a forma <lit>chave=valor</lit>, onde a
+	  chave se entende que debe ser unha cadea de texto literal e non
+	  require que a poñas entre comiñas. Este é un exemplo:
+	</para>
+	<code>
+	  bundle b = _(x=5, strval="Algunha cadea", m=I(3))
+	</code>
+	<para>
+	  Esta forma resulta particularmente conveniente para producir un feixe
+	  anónimo improvisadamente como argumento dunha función, como en
+	</para>
+	<code>
+	  b = regls(ys, LX, _(lfrac=0.35, stdize=0))
+	</code>
+	<para>
+	  onde a función <lit>regls</lit> ten un argumento opcional de tipo
+	  feixe que contén varios parámetros.
+	</para>
+	<para>
+	  A segunda variante está pensada para o caso no que queiras empaquetar
+	  varios obxectos xa existentes nun feixe: simplemente indica os seus
+	  nomes sen comiñas:
+	</para>
+	<code>
+	  bundle b = _(x, y, z)
+	</code>
+	<para>
+	  Neste caso, o obxecto <lit>x</lit> se copia nun feixe coa chave
+	  <quote><lit>x</lit></quote>. De xeito similar faise tanto para
+	  <lit>y</lit> como para <lit>z</lit>.
+	</para>
+	<para>
+	  Estas formas alternativas implican teclear menos que na versión
+	  cumprida de <lit>defbundle()</lit>, e probablemente moitas veces
+	  son máis convenientes, pero ten en conta que son menos flexibles.
+	  Só na versión cumprida podes manexar as chaves indicándoas como
+	  variables de cadea de texto en troques de cadeas literais.
+	</para>
       </description>
     </function>
 
@@ -3212,7 +3413,7 @@
       </description>
     </function>
 
-    <function name="deseas" section="filters" output="series">
+    <function name="deseas" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg optional="true" type="char">c</fnarg>
@@ -3258,7 +3459,7 @@
       </description>
     </function>
 
-    <function name="diag" section="matbuild" output="matrix">
+    <function name="diag" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -3275,7 +3476,7 @@
       </description>
     </function>
 
-    <function name="diagcat" section="matbuild" output="matrix">
+    <function name="diagcat" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">B</fnarg>
@@ -3424,7 +3625,7 @@
       </description>
     </function>
 
-    <function name="dsort" section="matshape" output="asinput">
+    <function name="dsort" section="matrix" output="asinput">
       <fnargs>
 	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
@@ -3726,7 +3927,7 @@
       </description>
     </function>
 
-    <function name="errmsg" section="strings" output="string">
+    <function name="errmsg" section="programming" output="string">
       <fnargs>
 	<fnarg type="int">errno</fnarg>
       </fnargs>
@@ -3739,7 +3940,7 @@
       </description>
     </function>
 
-    <function name="errorif" section="data-utils" output="scalar">
+    <function name="errorif" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="bool">condicion</fnarg>
 	<fnarg type="string">mensaxe</fnarg>
@@ -3909,7 +4110,7 @@
       </description>
     </function>
 
-    <function name="feval" section="data-utils" output="seebelow">
+    <function name="feval" section="programming" output="seebelow">
       <fnargs>
 	<fnarg type="string">nomefuncion</fnarg>
 	<fnarg type="varargs"/>
@@ -3954,7 +4155,7 @@
       </description>
     </function>
 
-    <function name="fevd" section="stats" output="matrix">
+    <function name="fevd" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">efecto</fnarg>
 	<fnarg type="int">motivo</fnarg>
@@ -4084,7 +4285,7 @@
       </description>
     </function>
 
-    <function name="filter" section="filters" output="seebelow">
+    <function name="filter" section="timeseries" output="seebelow">
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
@@ -4306,7 +4507,7 @@
       </description>
     </function>
 
-    <function name="fracdiff" section="filters" output="series">
+    <function name="fracdiff" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
@@ -4491,7 +4692,7 @@
       </description>
     </function>
 
-    <function name="getenv" section="strings" output="string">
+    <function name="getenv" section="programming" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -4812,7 +5013,7 @@
       </description>
     </function>
 
-    <function name="halton" section="stats" output="matrix">
+    <function name="halton" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">m</fnarg>
 	<fnarg type="int">r</fnarg>
@@ -4966,7 +5167,7 @@
       </description>
     </function>
 
-    <function name="hpfilt" section="filters" output="series">
+    <function name="hpfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar" optional="true">lambda</fnarg>
@@ -5031,7 +5232,7 @@
       </description>
     </function>
 
-    <function name="I" section="matbuild" output="matrix">
+    <function name="I" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">n</fnarg>
 	<fnarg optional="true" type="int">m</fnarg>
@@ -5526,48 +5727,73 @@
       </description>
     </function>
 
-    <function name="irf" section="stats" output="matrix">
+    <function name="irf" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="int">efecto</fnarg>
-	<fnarg type="int">motivo</fnarg>
-	<fnarg type="pscalar" optional="true">alpha</fnarg>
+	<fnarg type="int">choque</fnarg>
+	<fnarg type="pscalar" optional="true">alfa</fnarg>
 	<fnarg type="bundle" optional="true">sys</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Sen o argumento final (opcional), esta función só está
-	  dispoñible cando o último modelo estimado foi un VAR ou un
-	  VECM. Como alternativa, podes gardar nun feixe a información
-	  sobre un VAR ou un VECM co accesorio <fncref targ="$system"/>,
-	  e posteriormente pasarlle a función <lit>irf</lit>.
+	  Proporciona unha matriz coas funcións estimadas de resposta ao
+	  impulso que corresponden a un VAR ou un VECM, trazadas sobre un
+	  determinado horizonte de predición. Sen o argumento final (opcional),
+	  esta función serve só cando o último modelo estimado foi un VAR ou un
+	  VECM. Como alternativa, podes gardar a información sobre un deses
+	  sistemas como feixe, mediante o accesorio <fncref targ="$system"/>, e
+	  posteriormente aplicarlle a función <lit>irf</lit>.
 	</para>
 	<para>
-	  Como resultado, devolve unha matriz que contén
-	  a resposta estimada da variable <argname>efecto</argname> ante un
-	  impulso na variable <argname>motivo</argname> de magnitude igual
-	  á súa desviación padrón. Estas dúas variables identifícanse
-	  tendo en conta as súas posicións na especificación do modelo: por
-	  exemplo, cando indicas os argumentos <argname>efecto</argname>
-	  e <argname>motivo</argname> cos valores 1 e 3, respectivamente, a
-	  matriz que se devolve proporciona a resposta da primeira variable
-	  do sistema, ante un impulso da terceira variable.
+	  Os argumentos <argname>efecto</argname> e <argname>choque</argname>
+	  son índices, con formato de números enteiros, das variables endóxenas
+	  do sistema; e se usa 0 para indicar <quote>todas</quote>. As respostas
+	  (expresadas nas unidades da variable <argname>efecto</argname>) o
+	  son ante unha innovación de unha desviación padrón na variable
+	  <argname>choque</argname>. Cando lle das un valor positivo que
+	  sexa axeitado a <argname>alfa</argname>, as estimacións inclúen
+	  un intervalo de confianza de 1 &minus; &agr; (deste xeito, por
+	  exemplo, indica 0.1 se queres obter un intervalo do 90 por
+	  cen).
 	</para>
 	<para>
-	  Se indicas o terceiro argumento <argname>alpha</argname> (opcional),
-	  a matriz que te devolve a función ten tres columnas: a primeira coa
-	  estimación por punto das respostas, e as outras cos límites inferior e
-	  superior do intervalo con confianza (1 &minus; &agr;) para as mesmas,
-	  obtidas mediante autosuficiencia (<quote>bootstrapping</quote>).
-	  Se <argname>alpha</argname> = 0.1, a confianza será do 90 por cento.
-	  Cando <argname>alpha</argname> se omite ou se iguala a cero, tan só
-	  se proporciona a estimación por punto.
+	  O seguinte anaco de código ilustra o seu uso. No primeiro exemplo,
+	  a matriz <lit>ir1</lit> contén as respostas de <lit>y1</lit> ante as
+	  innovacións en cada unha das <lit>y1</lit>, <lit>y2</lit> e <lit>y3</lit>
+	  (son estimacións por punto xa que se omite <argname>alfa</argname>).
+	  No segundo exemplo, <lit>ir2</lit> contén as respostas de todas as
+	  variables de efecto a unha innovación en <lit>y2</lit>, con intervalos
+	  de confianza do 90 por cen. Neste caso, a matriz que se devolve terá
+	  9 columnas: cada vía de resposta ocupa 3 columnas contiguas que
+	  indican a estimación por punto, o límite inferior e o límite superior.
+	  O derradeiro exemplo produce unha matriz con 27 columnas: 3 columnas
+	  para cada resposta ante cada variable de efecto, multiplicadas por
+	  cada unha das tres variables de choque.
 	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  matrix ir1 = irf(1, 0)
+	  matrix ir2 = irf(0, 2, 0.1)
+	  matrix ir3 = irf(0, 0, 0.1)
+	</code>
 	<para>
 	  O número de períodos (filas) sobre os que se traza a resposta se
 	  determina automaticamente dependendo da frecuencia dos datos; mais
 	  iso pode axustarse por medio da instrución <cmdref targ="set"/>,
 	  como por exemplo con <lit>set horizon 10</lit>.
 	</para>
+	<para>
+	  Cando se presentan os intervalos de confianza, estes xéranse
+	  mediante a técnica de mostraxe repetida 'bootstrapping' dos erros
+	  orixinais. Asúmese que o nivel de retardo do VAR ou do VECM xa
+	  é suficiente como para eliminar a autocorrelación dos erros. Por
+	  defecto, o número de repeticións da mostraxe 'bootstrap' é de 1999,
+	  pero podes axustar isto mediante a instrución <cmdref targ="set"/>,
+	  como en
+	</para>
+	<code>
+	  set boot_iters 2999
+	</code>
 	<para>
 	  <seelist><fncref targ="fevd"/></seelist>
 	</para>
@@ -5829,7 +6055,7 @@
       </description>
     </function>
 
-    <function name="iwishart" section="stats" output="matrix">
+    <function name="iwishart" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="symmat">S</fnarg>
 	<fnarg type="int">v</fnarg>
@@ -6031,7 +6257,7 @@
       </description>
     </function>
 
-    <function name="kdensity" section="stats" output="matrix">
+    <function name="kdensity" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-list-or-mat">x</fnarg>
 	<fnarg type="scalar" optional="true">escala</fnarg>
@@ -6145,7 +6371,7 @@
       </description>
     </function>
 
-    <function name="kmeier" section="stats" output="matrix">
+    <function name="kmeier" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
 	<fnarg type="series-or-vec" optional="true">cens</fnarg>
@@ -6458,7 +6684,7 @@
       </description>
     </function>
 
-    <function name="linearize" section="filters" output="series">
+    <function name="linearize" section="transforms" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
       </fnargs>
@@ -6518,7 +6744,7 @@
       </description>
     </function>
 
-    <function name="loess" section="stats" output="series">
+    <function name="loess" section="nonparam" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
@@ -6629,7 +6855,7 @@
       </description>
     </function>
 
-    <function name="lower" section="matbuild" output="smatrix">
+    <function name="lower" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
       </fnargs>
@@ -6651,7 +6877,7 @@
       </description>
     </function>
 
-    <function name="lrcovar" section="filters" output="matrix">
+    <function name="lrcovar" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="bool" optional="true">senmedia</fnarg>
@@ -6677,7 +6903,7 @@
       </description>
     </function>
 
-    <function name="lrvar" section="filters" output="scalar">
+    <function name="lrvar" section="timeseries" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="int" optional="true">k</fnarg>
@@ -6960,6 +7186,30 @@
 	  ou <lit>NA</lit> no caso de que exista algún valor ausente en
 	  <math>t</math>.
 	</para>
+	<para>
+	  O seguinte exemplo ilustra o funcionamento da función:
+	</para>
+	<code>
+	  open denmark.gdt
+	  eval mean(LRM)
+	  list L = dataset
+	  eval mean(L)
+	</code>
+	<para>
+    A primeira solicitude devolverá un escalar co valor medio da serie
+    <argname>LRM</argname>, e a segunda devolverá unha
+    serie.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="median"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -6969,11 +7219,42 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un vector fila coa media de cada columna de <argname>X</argname>.
+	  Devolve as medias das columnas de <argname>X</argname>, sen omitir
+	  as observacións perdidas.
+	</para>
+	<para>
+	  Por exemplo, o seguinte anaco de código...
+	</para>
+	<code>
+	  matrix m = mnormal(5, 2)
+	  m[1,2] = NA
+	  print m
+	  eval meanc(m)
+	</code>
+	<para>
+	  xera este resultado:
+	</para>
+	<code>
+	  ? print m
+	  m (5 x 2)
+
+	   -0.098299          nan
+	      1.1829      -1.2817
+	     0.46037     -0.92947
+	      1.4896     -0.91970
+	     0.91918      0.47748
+
+	  ? eval meanc(m)
+	     0.79075          nan
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
+            <fncref targ="maxc"/>
+            <fncref targ="minc"/>
             <fncref targ="sdc"/>
+            <fncref targ="prodc"/>
 	  </seelist>
 	</para>
       </description>
@@ -7009,6 +7290,31 @@
 	  dos valores das variables desa lista na observación <math>t</math>,
 	  ou <lit>NA</lit> no caso de que exista algún valor ausente en
 	  <math>t</math>.
+	</para>
+	<para>
+	  O seguinte exemplo ilustra o funcionamento da función:
+	</para>
+	<code>
+	  set verbose off
+	  open denmark.gdt
+	  eval median(LRM)
+	  list L = dataset
+	  series m = median(L)
+	</code>
+	<para>
+    A primeira solicitude devolverá un escalar co valor mediano da
+    serie <argname>LRM</argname>, e a segunda devolverá unha
+    serie.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mean"/>
+            <fncref targ="sum"/>
+            <fncref targ="max"/>
+            <fncref targ="min"/>
+            <fncref targ="sd"/>
+            <fncref targ="var"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -7136,13 +7442,32 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve unha variable binaria (do mesmo tipo que o argumento) que
-	  toma o valor 1 cando <argname>x</argname> é <lit>NA</lit>. Cando
-	  <argname>x</argname> é unha serie, faise a comprobación para cada
-	  elemento. Cando <argname>x</argname> é unha lista de series, devolve
-	  unha serie que toma o valor 1 nas observacións nas que ao menos unha
-	  das series presenta un valor ausente, e o valor 0 noutro caso.
+	  Devolve unha variable binaria (do mesmo tipo que o argumento) que toma
+	  o valor 1 cando <argname>x</argname> é <lit>NA</lit>. Se ese argumento
+	  é unha serie, faise a comprobación para cada elemento. No caso de que
+	  <argname>x</argname> sexa unha lista de series, devolve unha serie que
+	  toma o valor 1 nas observacións nas que ao menos unha das series presenta
+	  un valor ausente, e o valor 0 noutro caso. Por exemplo, o seguinte código
 	</para>
+	<code>
+    nulldata 3
+    series x = normal()
+    x[2] = NA
+		series x_ismiss = missing(x)
+		print x x_ismiss --byobs
+	</code>
+	<para>
+	  establece un valor ausente na segunda observación de <argname>x</argname>,
+    e xera unha nova serie booleana <argname>x_ismiss</argname> que
+	  identifica a observación ausente.
+	</para>
+	<code>
+		             y     y_ismiss
+
+		1    -1.551247            0
+		2                         1
+		3    -2.244616            0
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="misszero"/>
@@ -7160,7 +7485,29 @@
       <description>
 	<para>
 	  Devolve un resultado do tipo do argumento, mudando os <lit>NA</lit>s
-	  en ceros. Se <argname>x</argname> é unha serie, múdase cada elemento.
+	  en ceros. Se <argname>x</argname> é unha serie, múdase elemento
+	  a elemento. Por exemplo, o seguinte código
+	</para>
+	<code>
+		nulldata 3
+		series x = normal()
+		x[2] = NA
+		y = misszero(x)
+		print x y --byobs
+	</code>
+	<para>
+	  establece un valor ausente na segunda observación de
+	  <argname>x</argname>, e xera unha nova serie <argname>y</argname>
+	  na que se substitúe a observación ausente por un cero:
+	</para>
+	<code>
+	             x            y
+
+		1    0.7355250    0.7355250
+		2                     0.000
+		3   -0.2465936   -0.2465936
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="missing"/>
             <fncref targ="ok"/>
@@ -7170,7 +7517,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="transforms" output="matrix">
+    <function name="mlag" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
@@ -7271,7 +7618,7 @@
       </description>
     </function>
 
-    <function name="mnormal" section="matbuild" output="matrix">
+    <function name="mnormal" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -7362,7 +7709,7 @@
       </description>
     </function>
 
-    <function name="movavg" section="filters" output="series">
+    <function name="movavg" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>
 	<fnarg type="scalar">p</fnarg>
@@ -7657,7 +8004,7 @@
       </description>
     </function>
 
-    <function name="mrandgen" section="probdist" output="matrix">
+    <function name="mrandgen" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="string">d</fnarg>
 	<fnarg type="scalar-or-matrix">p1</fnarg>
@@ -7706,21 +8053,32 @@
       <description>
 	<para>
 	  Le unha matriz gardada no ficheiro chamado
-	  <argname>nomeficheiro</argname>. Isto está pensado principalmente
-	  para ler ficheiros cun formato específico, como se describe máis
-	  abaixo; pero tamén podes usalo con ficheiros xenéricos de texto
-	  delimitado. Para este último tipo de uso, consulta máis abaixo a
-	  sección titulada <quote>Ficheiros con texto delimitado</quote>.
+	  <argname>nomeficheiro</argname>. Se no nome non está especificado o
+	  camiño completo ata o ficheiro, vaise procurar en algunhas localizacións
+	  que se consideren <quote>probables</quote>, empezando polo cartafol
+	  de traballo establecido nese momento en <cmdref targ="workdir"/>. Non
+	  obstante, cando se indica un valor non nulo para o segundo argumento
+	  <argname>importar</argname> (opcional) da función, o ficheiro procúrase
+	  no cartafol <quote>punto</quote> do usuario. Isto ten a intención de
+	  que se use esta función xunto coas que exportan matrices, e que se
+	  ofrecen no contexto da instrución <cmdref targ="foreign"/>. Nese caso,
+	  o argumento <argname>nomeficheiro</argname> debe de ser un nome de
+	  ficheiro simple, sen indicar o camiño ata o ficheiro.
 	</para>
+	
+	<para>Polo de agora, a función recoñece catro formatos de ficheiro:
+	</para>
+
+	<subhead>Formato de texto orixinal</subhead>
 	<para>
-	  Se o ficheiro posúe a extensión <quote><lit>.gz</lit></quote> asúmese
-	  que se aplicou a compresión gzip ao gardar os datos. Se ten a
-	  extensión <quote><lit>.bin</lit></quote> asúmese que o ficheiro
-	  está en formato binario (consulta a función <fncref targ="mwrite"/>
-	  para ter máis detalles). Noutro caso, se o nome do ficheiro inclúe
-	  o sufixo <quote><lit>.mat</lit></quote>, asúmese que o ficheiro
-	  ten un formato de texto simple, de acordo coas seguintes
-	  especificacións:
+	  Estes ficheiros identifícanse grazas á extensión
+	  <quote><lit>.mat</lit></quote>, e son completamente compatibles co
+	  formato de ficheiro de matriz Ox. Cando o nome do ficheiro ten a
+	  extensión <quote><lit>.gz</lit></quote>, asúmese que ao gardar
+	  os datos se aplicou a compresión gzip.
+
+	  O ficheiro asúmese que é de texto plano, de acordo coa seguinte
+	  especificación:
 	</para>
 	<ilist>
 	  <li>
@@ -7749,19 +8107,22 @@
             </para>
 	  </li>
 	</ilist>
+
+	<subhead>Ficheiros binarios</subhead>
 	<para>
-	  Se no primeiro argumento non está especificado o camiño completo
-	  ata o ficheiro, vaise procurar en algunhas localizacións que se
-	  consideren <quote>probables</quote>, empezando polo cartafol de
-	  traballo establecido nese momento en <cmdref targ="workdir"/>. Non
-	  obstante, cando se indica un valor non nulo para o segundo argumento
-	  <argname>importar</argname> (opcional) da función, o ficheiro
-	  procúrase no cartafol <quote>punto</quote> do usuario. Isto ten a
-	  intención de que se use esta función xunto coas que exportan matrices,
-	  e que se ofrecen no contexto da instrución <cmdref targ="foreign"/>.
-	  Nese caso, o argumento <argname>nomeficheiro</argname> debe de ser un nome
-	  de ficheiro simple, sen indicar o camiño ata o ficheiro.
+	  Os ficheiros coa extensión <quote><lit>.bin</lit></quote> asúmese
+	  que están en formato binario. A extensión <quote><lit>.gz</lit></quote>
+	  tamén se recoñece para a compresión gzip. Os primeiros 19 bytes
+	  conteñen os caracteres <lit>gretl_binary_matrix</lit>; os seguintes
+	  8 bytes conteñen dous enteiros de 32 bits que proporcionan
+	  o número de filas e de columnas; e o que resta do ficheiro contén
+	  os elementos da matriz ordenados por orde de maior columna, con
+	  formato de <quote>dobres</quote> en extremo menor (little-endian).
+	  Se executas Gretl nun sistema de extremo maior (big-endian), os
+	  valores binarios convértense a extremo menor cando se escriben, e
+	  convértense a extremo maior cando se len.
 	</para>
+
 	<subhead>Ficheiros con texto delimitado</subhead>
 	<para>
 	  Se o nome do ficheiro que se vai ler ten a extensión
@@ -7774,8 +8135,20 @@
 	  importar a matriz, permitindo o uso da coma como separador decimal,
 	  se é necesario. Cae na conta de que o delimitador non debe ser o
 	  carácter do tabulador, polo risco de confundir ese tipo de ficheiros
-	  cos que teñen o formato <quote>orixinal</quote> de Gretl.
+	  cos que teñen o formato de matrices <quote>orixinal</quote> de Gretl.
 	</para>
+
+	<subhead>Ficheiros de conxuntos de datos de Gretl</subhead>
+	<para>
+	  Os ficheiros que teñan extensión <quote><lit>.gdt</lit></quote> ou
+	  <quote><lit>.gdtb</lit></quote> trátanse como ficheiros orixinais de
+	  datos de Gretl, tal como os crea a instrución <cmdref targ="store"/>
+	  (gardar). En tal caso, a matriz que se vai devolver contén os valores
+	  numéricos das series do conxunto de datos, ordenadas en columnas. Cae
+	  na conta de que as series con valores en cadeas de texto non se len
+	  como tales; a matriz só vai conter as súas codificacións numéricas.
+	</para>
+
 	<para>
 	  <seelist>
             <fncref targ="bread"/>
@@ -7785,7 +8158,7 @@
       </description>
     </function>
 
-    <function name="mreverse" section="matshape" output="matrix">
+    <function name="mreverse" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">porcolumna</fnarg>
@@ -7836,7 +8209,7 @@
       </description>
     </function>
 
-    <function name="mshape" section="matshape" output="matrix">
+    <function name="mshape" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">r</fnarg>
@@ -7874,7 +8247,7 @@
       </description>
     </function>
 
-    <function name="msortby" section="matshape" output="matrix">
+    <function name="msortby" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">j</fnarg>
@@ -7890,7 +8263,7 @@
       </description>
     </function>
 
-    <function name="msplitby" section="matshape" output="matrices">
+    <function name="msplitby" section="matrix" output="matrices">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="vector">v</fnarg>
@@ -7933,7 +8306,7 @@
       </description>
     </function>
 
-    <function name="muniform" section="matbuild" output="matrix">
+    <function name="muniform" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -8057,17 +8430,17 @@
 	  </li>
 	  <li>
 	    <para>
-	      Se o argumento <argname>nomeficheiro</argname> ten a extensión
-	      <quote><lit>.bin</lit></quote>, entón a matriz gárdase con
-	      formato binario. Neste caso, os primeiros 19 bytes conteñen
-	      os caracteres <lit>gretl_binary_matrix</lit>; os seguintes
+	      Se o argumento <argname>nomeficheiro</argname> ten a
+	      extensión <quote><lit>.bin</lit></quote>, entón a matriz gárdase
+	      con formato binario. Neste caso, os primeiros 19 bytes
+	      conteñen os caracteres <lit>gretl_binary_matrix</lit>; os seguintes
 	      8 bytes conteñen dous enteiros de 32 bits que proporcionan
-	      o número de filas e de columnas; e o que resta do ficheiro
-	      contén os elementos da matriz ordenados por columnas, en
-	      formato <quote>little-endian doubles</quote>. Cando executas
-	      Gretl nun sistema <quote>big-endian</quote>, os valores
-	      binarios convértense a <quote>little-endian</quote> ao
-	      escribilos, e a <quote>big-endian</quote> aos ler.
+	      o número de filas e de columnas; e o que resta do ficheiro contén
+	      os elementos da matriz ordenados por orde de maior columna, con
+	      formato de <quote>dobres</quote> en extremo menor (little-endian).
+	      Se executas Gretl nun sistema de extremo maior (big-endian), os
+	      valores binarios convértense a extremo menor cando se escriben, e
+	      convértense a extremo maior cando se len.
 	    </para>
 	  </li>
 	  <li>
@@ -8123,7 +8496,7 @@
       </description>
     </function>
 
-    <function name="naalen" section="stats" output="matrix">
+    <function name="naalen" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
 	<fnarg type="series-or-vec" optional="true">cens</fnarg>
@@ -8160,7 +8533,7 @@
       </description>
     </function>
 
-    <function name="nadarwat" section="stats" output="series">
+    <function name="nadarwat" section="nonparam" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
@@ -8258,7 +8631,7 @@
       </description>
     </function>
 
-    <function name="ngetenv" section="strings" output="scalar">
+    <function name="ngetenv" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
       </fnargs>
@@ -8354,7 +8727,13 @@
       <description>
 	<para>
 	  Devolve o número de observacións non ausentes da variable
-	  <argname>y</argname> na mostra vixente seleccionada.
+	  (<argname>y</argname>) na mostra vixente seleccionada.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="pnobs"/>
+            <fncref targ="pxnobs"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -8772,7 +9151,7 @@
       </description>
     </function>
 
-    <function name="ones" section="matbuild" output="matrix">
+    <function name="ones" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -8792,7 +9171,7 @@
       </description>
     </function>
 
-    <function name="orthdev" section="transforms" output="series">
+    <function name="orthdev" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -8860,7 +9239,7 @@
       </description>
     </function>
 
-    <function name="pergm" section="stats" output="matrix">
+    <function name="pergm" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
 	<fnarg optional="true" type="scalar">anchobanda</fnarg>
@@ -8882,7 +9261,7 @@
       </description>
     </function>
 
-    <function name="pexpand" section="data-utils" output="series">
+    <function name="pexpand" section="panel" output="series">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
       </fnargs>
@@ -8900,7 +9279,7 @@
       </description>
     </function>
 
-    <function name="pmax" section="stats" output="series">
+    <function name="pmax" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -8931,7 +9310,7 @@
       </description>
     </function>
 
-    <function name="pmean" section="stats" output="series">
+    <function name="pmean" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -8971,7 +9350,7 @@
       </description>
     </function>
 
-    <function name="pmin" section="stats" output="series">
+    <function name="pmin" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -9001,7 +9380,7 @@
       </description>
     </function>
 
-    <function name="pnobs" section="stats" output="series">
+    <function name="pnobs" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -9031,7 +9410,7 @@
       </description>
     </function>
 
-    <function name="polroots" section="linalg" output="matrix">
+    <function name="polroots" section="math" output="matrix">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
       </fnargs>
@@ -9052,7 +9431,7 @@
       </description>
     </function>
 
-    <function name="polyfit" section="filters" output="series">
+    <function name="polyfit" section="transforms" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="int">q</fnarg>
@@ -9156,7 +9535,7 @@
       </description>
     </function>
 
-    <function name="psd" section="stats" output="series">
+    <function name="psd" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -9241,7 +9620,7 @@
       </description>
     </function>
 
-    <function name="pshrink" section="data-utils" output="matrix">
+    <function name="pshrink" section="panel" output="matrix">
       <fnargs>
 	<fnarg type="series">y</fnarg>
       </fnargs>
@@ -9267,7 +9646,7 @@
       </description>
     </function>
 
-    <function name="psum" section="stats" output="series">
+    <function name="psum" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -9343,7 +9722,7 @@
       </description>
     </function>
 
-    <function name="pxnobs" section="stats" output="series">
+    <function name="pxnobs" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -9367,7 +9746,7 @@
       </description>
     </function>
 
-    <function name="pxsum" section="stats" output="series">
+    <function name="pxsum" section="panel" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series" optional="true">máscara</fnarg>
@@ -9635,14 +10014,50 @@
 	  elementos de <argname>p</argname> e <repl>n</repl> indica o número
 	  de columnas de <argname>y</argname>.
 	</para>
-	<para context="tex">
-	  Para unha serie de longura $n$, $q$ é o cuantil $p$ se cumpre a
-	  igualdade:
-	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\]
-	  onde $k$ é a parte enteira de $(n+1) \cdot p$, e $y_{[i]}$
-	  é o elemento $i$-ésimo da serie cando se ordena de menor a
-	  maior.
+	<para>
+	  <cite key="hyndman96">Hyndman e Fan (1996)</cite> describen nove
+	  métodos distintos para calcular os cuantís da mostra. En Gretl, por
+	  defecto, o método é o que eles denominan <math>Q</math><sub>6</sub>
+	  (que tamén o é en Python, por defecto). En troques, podes seleccionar
+	  os métodos <math>Q</math><sub>7</sub> (que é o usado por defecto
+	  en R) ou <math>Q</math><sub>8</sub> (que é o recomendado por
+	  Hyndman e Fan) mediante a instrución <cmdref targ="set"/>,
+	  como en
 	</para>
+	<code>
+	  set quantile_type Q7 # ou Q8
+	</code>
+	<para context="tex">
+	  O cuantil $p$ ($Q_p$) dunha serie $y$ que ten longura igual
+	  a $n$ defínese como:
+	  \[Q_p = y_{[k]} + (h - k) (y_{[k+1]} - y_{[k]})\]
+	  onde $k$ representa a parte enteira de $h$, un termo que difire
+	  segundo o método
+	  ---$h=(n+1)p$ para $Q_6$, $(n-1)p+1$ para $Q_7$ e $(n+1/3)p + 1/3$ para $Q_8$---
+	  onde $y_{[i]}$ representa o elemento $i$-ésimo da serie cando se
+	  ordena de menor a maior.
+	</para>
+	<para>
+	Por exemplo, o código
+	</para>
+	<code>
+	  set verbose off
+	  matrix x = seq(1,7)'
+	  set quantile_type Q6
+	  printf "Q6: %g\n", quantile(x, 0.45)
+	  set quantile_type Q7
+	  printf "Q7: %g\n", quantile(x, 0.45)
+	  set quantile_type Q8
+	  printf "Q8: %g\n", quantile(x, 0.45)
+	</code>
+	<para>
+	produce o seguinte resultado:
+	</para>
+	<code>
+	  Q6: 3.6
+	  Q7: 3.7
+	  Q8: 3.63333
+	</code>
       </description>
     </function>
 
@@ -9978,12 +10393,14 @@
       </fnargs>
       <description>
 	<para>
-	  Se existe un ficheiro co nome do argumento <argname>nomeficheiro</argname>, e
-	  pode lerse, a función devolve unha cadea de texto que inclúe o contido
-	  dese ficheiro; noutro caso amosa un fallo. Se <argname>nomeficheiro</argname>
-	  non indica unha especificación da ruta completa ao ficheiro, vaise
-	  procurar en distintas localizacións <quote>probables</quote>, comezando
-	  polo cartafol vixente nese momento, <cmdref targ="workdir"/>.
+	  Se existe (e pode lerse) un ficheiro co nome do argumento
+	  <argname>nomeficheiro</argname>, a función devolve unha cadea de
+	  texto que inclúe o contido dese ficheiro; noutro caso amosa un fallo.
+	  Se <argname>nomeficheiro</argname> non indica unha especificación
+	  da ruta completa ao ficheiro, vaise procurar en distintas localizacións
+	  <quote>probables</quote>, comezando polo cartafol vixente nese
+	  momento, <cmdref targ="workdir"/>. Cando o ficheiro en cuestión
+	  está comprimido con gzip, manéxase do xeito evidente.
 	</para>
 	<para>
 	  Se <argname>nomeficheiro</argname> comeza cun identificador dun protocolo
@@ -10234,7 +10651,7 @@
       </description>
     </function>
 
-	  <function name="rnameset" section="matbuild" output="int">
+    <function name="rnameset" section="matrix" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="strings-or-list">S</fnarg>
@@ -10270,7 +10687,7 @@
       </description>
     </function>
 
-    <function name="rows" section="matshape" output="int">
+    <function name="rows" section="matrix" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -10431,7 +10848,7 @@
       </description>
     </function>
 
-    <function name="selifc" section="matshape" output="matrix">
+    <function name="selifc" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="rvec">b</fnarg>
@@ -10451,7 +10868,7 @@
       </description>
     </function>
 
-    <function name="selifr" section="matshape" output="matrix">
+    <function name="selifr" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="cvec">b</fnarg>
@@ -10472,7 +10889,7 @@
       </description>
     </function>
 
-    <function name="seq" section="matbuild" output="rvec">
+    <function name="seq" section="matrix" output="rvec">
       <fnargs>
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
@@ -10620,7 +11037,7 @@
       </description>
     </function>
 
-    <function name="sleep" section="data-utils" output="scalar">
+    <function name="sleep" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="int">ns</fnarg>
       </fnargs>
@@ -10702,7 +11119,7 @@
       </description>
     </function>
 
-    <function name="sort" section="matshape" output="asinput">
+    <function name="sort" section="matrix" output="asinput">
       <fnargs>
 	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
@@ -10973,7 +11390,7 @@
       </description>
     </function>
 
-    <function name="stack" section="data-utils" output="series">
+    <function name="stack" section="panel" output="series">
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="int">n</fnarg>
@@ -11007,7 +11424,7 @@
       </description>
     </function>
 
-    <function name="stdize" section="stats" output="asinput">
+    <function name="stdize" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
 	<fnarg type="int" optional="true">v</fnarg>
@@ -11092,23 +11509,33 @@
 
     <function name="strlen" section="strings" output="int">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="string-or-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve un número enteiro coa cantidade de caracteres que ten a
-	  cadea de texto <argname>s</argname>. Ten en conta que iso non é
-	  necesariamente igual ao número de bytes, se algúns caracteres están
-	  fóra do intervalo de impresión ASCII.
+	  Se <argname>s</argname> é unha cadea de texto simple, devolve
+	  a cantidade de caracteres UTF-8 que contén. Ten en conta que
+	  iso non é igual ao número de bytes, se algúns caracteres están
+	  fóra do intervalo de impresión ASCII. Cando desexes obter o número
+	  de bytes, podes usar a función <fncref targ="nelem"/>. Por exemplo:
 	</para>
-    <para>
-        Exemplo:
-    </para>
-    <code>
-        string s = "Regresión"
-        scalar number = strlen(s)
-        print number
-    </code>
+	<code>
+	  string s = "Olé!"
+	  printf "strlen(s) = %d, nelem(s) = %d\n", strlen(s), nelem(s)
+	</code>
+	<para>
+	  debera devolver
+	</para>
+	<code>
+	  strlen(s) = 5, nelem(s) = 7
+	</code>
+	<para>
+	  Se o argumento é un arranxo de cadeas de texto, o valor que se devolve
+	  é un vector columna que contén o número de caracteres de cada cadea.
+	  Tamén se acepta que uses como argumento unha serie con cadeas de
+	  valores; nese caso, o valor que se devolve é unha serie que contén a
+	  longura das cadeas de valores ao longo do rango mostral vixente.
+	</para>
       </description>
     </function>
 
@@ -11499,7 +11926,7 @@
       </description>
     </function>
 
-    <function name="svm" section="stats" output="series">
+    <function name="svm" section="nonparam" output="series">
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="bundle">bparms</fnarg>
@@ -11558,6 +11985,32 @@
             <fncref targ="cosh"/>
             <fncref targ="sinh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="tdisagg" section="transforms" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-mat">Y</fnarg>
+	<fnarg optional="true" type="series-list-or-mat">X</fnarg>
+	<fnarg type="scalar">s</fnarg>
+	<fnarg optional="true" type="bundle">opcions</fnarg>
+	<fnarg optional="true" type="bundle">resultados</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza a desagregación temporal (conversión a unha frecuencia maior)
+	  dos datos de tipo serie temporal que haxa en <argname>Y</argname>.
+	  O argumento <argname>s</argname> proporciona o factor de expansión
+	  (por exemplo, 3 para pasar de trimestrais a mensuais). O argumento
+	  <argname>X</argname> pode conter unha ou máis covariantes (que teñan
+	  a frecuencia maior) para axudar no proceso de desagregación. Podes
+	  asumir diversas opcións no argumento <argname>opcions</argname>,
+	  e podes recoller os detalles da desagregación por medio de
+	  <argname> resultados</argname>.
+	</para>
+	<para>
+	  Consulta o <guideref targ="chap:tdisagg"/> para obter máis detalles.
 	</para>
       </description>
     </function>
@@ -11671,7 +12124,7 @@
       </description>
     </function>
 
-    <function name="trimr" section="matshape" output="matrix">
+    <function name="trimr" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">tsup</fnarg>
@@ -11779,7 +12232,7 @@
       </description>
     </function>
 
-    <function name="unvech" section="matbuild" output="smatrix">
+    <function name="unvech" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
       </fnargs>
@@ -11803,7 +12256,7 @@
       </description>
     </function>
 
-    <function name="upper" section="matbuild" output="smatrix">
+    <function name="upper" section="matrix" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -11981,7 +12434,7 @@
       </description>
     </function>
 
-    <function name="varsimul" section="linalg" output="matrix">
+    <function name="varsimul" section="timeseries" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">U</fnarg>
@@ -12032,7 +12485,7 @@
       </description>
     </function>
 
-    <function name="vec" section="matbuild" output="cvec">
+    <function name="vec" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -12048,7 +12501,7 @@
       </description>
     </function>
 
-    <function name="vech" section="matbuild" output="cvec">
+    <function name="vech" section="matrix" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
       </fnargs>
@@ -12060,6 +12513,51 @@
 	  pode reverterse a través da función <fncref targ="unvech"/>.
 	  <seelist>
             <fncref targ="vec"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+
+    <function name="vma" section="timeseries" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix" optional="true">K</fnarg>
+	<fnarg type="int" optional="true">horizonte</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función xera unha matriz coa representación VMA dun sistema
+	  VAR: se
+	  <equation status="inline"
+		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
+		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
+	  entón a correspondente representación VMA é
+	  <equation status="inline"
+		    ascii="y(t) = e(t) + C1 e(t-1) + ..."
+		    tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>,
+	  onde
+	  <equation status="inline" ascii="u(t) = K e(t)" tex="$u_t = K e_t$"/>.
+	</para>
+	<para>
+	  A matriz <argname>A</argname> de coeficientes do primeiro argumento,
+	  fórmase encastelando as matrices <math>A</math><sub>i</sub> de xeito
+	  horizontal; terá rango <by r="n" c="np"/>, con unha fila por cada
+	  ecuación. Isto correspóndese coas primeiras <math>n</math> filas da
+	  matriz <lit>$compan</lit> que proporcionan as instrucións <lit>var</lit>
+	  e <lit>vecm</lit> de GRETL. A matriz <argname>K</argname> é opcional,
+	  indicando por defecto a matriz identidade. 
+	</para>
+	<para>
+	  A matriz que devolve esta función ten un número de filas igual a
+	  <argname>horizonte</argname>, e <math>n</math><sup>2</sup> columnas:
+	  cada <math>i</math>-ésima fila contén <math>C</math><sub>i-1</sub>
+	  en formato vectorial. O parámetro <argname>horizonte</argname> se
+	  establece por defecto igual a 24, cando non se indique.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="irf"/>
 	  </seelist>
 	</para>
       </description>
@@ -12082,7 +12580,7 @@
       </description>
     </function>
 
-    <function name="wmean" section="stats" output="series">
+    <function name="wmean" section="transforms" output="series">
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -12108,7 +12606,7 @@
       </description>
     </function>
 
-    <function name="wsd" section="stats" output="series">
+    <function name="wsd" section="transforms" output="series">
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -12134,7 +12632,7 @@
       </description>
     </function>
 
-    <function name="wvar" section="stats" output="series">
+    <function name="wvar" section="transforms" output="series">
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
@@ -12213,6 +12711,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string-or-strings">ruta</fnarg>
+	<fnarg optional="true" type="scalarref">coincidencias</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12266,7 +12765,7 @@
       </description>
     </function>
 
-    <function name="zeromiss" section="data-utils" output="asinput">
+    <function name="zeromiss" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
       </fnargs>
@@ -12283,7 +12782,7 @@
       </description>
     </function>
 
-    <function name="zeros" section="matbuild" output="matrix">
+    <function name="zeros" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg optional="true" type="int">c</fnarg>
@@ -12303,3 +12802,4 @@
 
   </funclist>
 </funcref>
+

@@ -62,7 +62,7 @@ struct GRETL_VAR_ {
     gretl_matrix *A;     /* augmented coefficient matrix (companion form) */
     gretl_matrix *L;     /* lambda: inverse roots of A(L) polynomial */
     gretl_matrix *E;     /* residuals matrix */
-    gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
+    gretl_matrix *C;     /* Cholesky-decomposed covariance matrix */
     gretl_matrix *S;     /* cross-equation variance matrix */
     gretl_matrix *F;     /* optional forecast matrix */
     gretl_matrix *V;     /* full parameter covariance matrix */
@@ -134,10 +134,9 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
 				     const DATASET *dset,
 				     int *err);
 
-gretl_matrix *
-VECM_get_EC_matrix (const GRETL_VAR *v,
-		    const DATASET *dset,
-		    int *err);
+gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v,
+				  const DATASET *dset,
+				  int *err);
 
 int
 gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C,
@@ -282,5 +281,8 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
 			       int *err);
 
 #endif
+
+gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
+		       int horizon, int *err);
 
 #endif /* VAR_H_ */

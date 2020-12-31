@@ -90,7 +90,7 @@ convergence. The \option{verbose} switch can be used to track the
 maximization algorithm.
 
 \begin{script}[htbp]
-  \caption{Estimation of simple logit and probit models}
+  \scriptcaption{Estimation of simple logit and probit models}
   \label{simple-QR}
 \begin{scode}
 open greene19_1
@@ -103,7 +103,7 @@ probit GRADE const GPA TUCE PSI
 As an example, we reproduce the results given in chapter 21 of
 \cite{greene00}, where the effectiveness of a program for teaching
 economics is evaluated by the improvements of students' grades.
-Running the code in example \ref{simple-QR} gives the output reported
+Running the code in Listing~\ref{simple-QR} gives the output reported
 in Table \ref{tab:logit-probit}. Note that for the probit model a
 conditional moment test on skewness and kurtosis \citep*{JBL84} is
 printed automatically as a test for normality.
@@ -166,7 +166,7 @@ Test for normality of residual -
   Test statistic: Chi-square(2) = 3.61059
   with p-value = 0.164426
 \end{code}
-  \caption{Example logit and probit}
+  \caption{Example logit and probit output}
   \label{tab:logit-probit}
 \end{table}
 
@@ -194,7 +194,7 @@ regression; example \ref{QR-add} shows how to perform a variable
 addition test.
 
 \begin{script}[htbp]
-  \caption{Variable addition test in a probit model}
+  \scriptcaption{Variable addition test in a probit model}
   \label{QR-add}
 \begin{scode}
 open greene19_1
@@ -206,7 +206,6 @@ printf "Variable addition test for TUCE:\n"
 printf "Rsq * T = %g (p. val. = %g)\n", $trsq, pvalue(X,1,$trsq) 
 \end{scode}
 \end{script}
-%$
 
 \subsection{The perfect prediction problem}
 \label{sec:perfpred}
@@ -315,9 +314,9 @@ separate command for ordered models: the \texttt{logit} and
 the dependent variable is acceptable, but not binary.
 
 \begin{script}[htbp]
-  \caption{Ordered probit model}
+  \scriptcaption{Ordered probit model}
   \label{ex:oprobit}
-\begin{scode}
+\begin{scodebit}
 /*
   Replicate the results in Wooldridge, Econometric Analysis of Cross
   Section and Panel Data, section 15.10, using pension-plan data from
@@ -376,7 +375,7 @@ E1 = 50 * P50 + 100 * P100
 printf "\nWith choice, E(y) = %.2f, without E(y) = %.2f\n", E1, E0
 printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
   choice_ols
-\end{scode}
+\end{scodebit}
 \end{script}
 
 Listing \ref{ex:oprobit} reproduces the results presented in section
@@ -401,7 +400,7 @@ $y^*_i$ simply by adding the two together.
 
 When the dependent variable is not binary and does not have a natural
 ordering, \emph{multinomial} models are used.  Multinomial logit is
-supported in gretl via the \verb|--multinomial| option to the
+supported in gretl via the \option{multinomial} option to the
 \texttt{logit} command.  Simple models can also be handled via the
 \texttt{mle} command (see chapter \ref{chap:mle}). We give here an
 example of such a model.  Let the dependent variable, $y_i$, take on
@@ -430,7 +429,7 @@ smpl year==87 --restrict
 logit status 0 educ exper expersq black --multinomial
 \end{scodebit}
 Output (selected portions):
-\begin{scodebit}
+\begin{outbit}
 Model 1: Multinomial Logit, using observations 1-1738 (n = 1717)
 Missing or incomplete observations dropped: 21
 Dependent variable: status
@@ -457,7 +456,7 @@ Schwarz criterion    1890.198   Hannan-Quinn         1855.874
 
 Number of cases 'correctly predicted' = 1366 (79.6%)
 Likelihood ratio test: Chi-square(8) = 583.722 [0.0000]  
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 Listing~\ref{ex:mlogit} reproduces Table 15.2 in
@@ -472,30 +471,62 @@ cross-section for 1987.
 \section{Bivariate probit}
 \label{sec:biprobit}
 
-The bivariate probit model is simply a two-equation system in which
-each equation is a probit model, but the two disturbance terms may not
-be independent. In formulae,
+The bivariate probit model is a two-equation system in which each
+equation is a probit model and the two disturbance terms may not be
+independent. In formulae,
 \begin{eqnarray}
   y^*_{1,i} = \sum_{j=1}^{k_1} x_{ij} \beta_j + \varepsilon_{1,i}  & \qquad &
   y_{1,i}=1  \Longleftrightarrow y^*_{1,i}>0 \\
   y^*_{2,i} = \sum_{j=1}^{k_2} z_{ij} \gamma_j + \varepsilon_{2,i} & \qquad &
   y_{2,i}=1  \Longleftrightarrow y^*_{2,i}>0 \\
   \left[ \begin{array}{c}
-      \varepsilon_{2,i} \\ \varepsilon_{2,i}
+      \varepsilon_{1,i} \\ \varepsilon_{2,i}
     \end{array} \right] \sim 
   N \left[ 0, \left( \begin{array}{cc}
       1 & \rho \\ \rho & 1
     \end{array} \right) \right] 
 \end{eqnarray}
 
-\begin{itemize}
-\item The explanatory variables for the first equation $x$ and for the
-  second equation $z$ may overlap
-\item example contained in the \texttt{biprobit.inp} sample script.
-\item \dollar{uhat} and \dollar{yhat} are matrices
-\end{itemize}
+If $\rho$ were 0, ML estimation of the parameters $\beta_j$ and
+$\gamma_j$ could be accomplished by estimating the two equations
+separately. In the general case, however, joint estimation is required
+for maximal efficiency.
 
-FIXME: expand.
+The gretl command for this model is \cmd{biprobit}, which performs ML
+estimation via numerical optimization using the Newton--Raphson method
+with analytical derivatives. An example of usage is provided in the
+\texttt{biprobit.inp} sample script.  The command takes either three
+or four arguments, the first three being series names for $y_{1}$ and
+$y_{2}$ and a list of explanatory variables. In the common case when
+the regressors are the same for the two equations this is sufficient,
+but if $z$ differs from $x$ a second list should be appended following
+a semicolon, as in:
+\begin{code}
+  biprobit y1 y2 X ; Z
+\end{code}
+Output from estimation includes a Likelihood Ratio test for the
+hypothesis $\rho = 0$.\footnote{Note that if the \option{robust}
+  option is given to \cmd{biprobit}---and therefore the estimator is
+  meant to be QMLE---this test may not be valid, even asymptotically.}
+This can be retrieved in the form of a bundle named
+\texttt{independence\_test} under the \dollar{model} accessor, as in
+\begin{code}
+? eval $model.independence_test
+bundle:
+  dfn = 1
+  test = 204.066
+  pvalue = 2.70739e-46
+\end{code}
+%$
+
+Since \cmd{biprobit} estimates a two-equation system, the
+\dollar{uhat} and \dollar{yhat} accessors provide matrices rather than
+series as usual. Specifically, \dollar{uhat} gives a two-column matrix
+containing the generalized residuals, while \dollar{yhat} contains
+four columns holding the estimated probabilities of the possible
+joint outcomes: $(y_{1,i}, y_{1,i}) = (1,1)$ in column 1, $(y_{1,i},
+y_{2,i}) = (1,0)$ in column 2, $(y_{1,i}, y_{2,i}) =
+(0,1)$ in column 3 and $(y_{1,i}, y_{2,i}) = (0,0)$ in column 4.
 
 
 \section{Panel estimators}
@@ -505,14 +536,16 @@ When your dataset is a panel, the traditional choice for binary
 dependent variable models was, for many years, to use logit with fixed
 effects and probit with random effects (see \ref{sec:FE-vs-RE} for a
 brief discussion of this dichotomy in the context of linear
-models). Nowadays, the choice is somewhat wider, but the two
+models). Nowadays the choice is somewhat wider but the two
 traditional models are by and large what practitioners use as routine
 tools.
 
-Gretl provides FE logit as a function package\footnote{Although this
-  may change in the near future.} and RE probit natively. Provided
-your dataset has a panel structure, the latter option can be obtained
-by adding the \option{random} option to the \cmd{probit} command:
+Gretl provides FE logit via the function package
+\textsf{felogit},\footnote{See
+  \url{http://ricardo.ecn.wfu.edu/gretl/cgi-bin/current_fnfiles/felogit.gfn}.}
+RE probit natively. Provided your dataset has a panel structure, the
+latter option can be obtained by adding the \option{random} option to
+the \cmd{probit} command:
 \begin{code}
   probit depvar const indvar1 indvar2 --random
 \end{code}
@@ -708,7 +741,7 @@ above).  An example is contained in the sample script
 \texttt{wtp.inp}, provided with the gretl distribution.
 
 \begin{script}[ht]
-  \caption{Interval model on artificial data}
+  \scriptcaption{Interval model on artificial data}
   \label{ex:interval}
 Input:
 \begin{scodebit}
@@ -729,8 +762,9 @@ gen_resid = $uhat
 yhat = $yhat + gen_resid
 corr ystar yhat 
 \end{scodebit}
+
 Output (selected portions):
-\begin{scodebit}
+\begin{outbit}
 Model 1: Interval estimates using the 100 observations 1-100
 Lower limit: lo_bound, Upper limit: hi_bound
 
@@ -754,7 +788,7 @@ Point observations: 0
 corr(ystar, yhat) = 0.98960092
 Under the null hypothesis of no correlation:
  t(98) = 68.1071, with two-tailed p-value 0.0000
-\end{scodebit}
+\end{outbit}
 \end{script}
 
 As with the probit and Tobit models, after a model has been estimated
@@ -852,7 +886,7 @@ equal the difference between actual and fitted $y_i$ only for
 uncensored observations (those for which $d_i = 1$).
 
 \begin{script}[htbp]
-  \caption{Heckit model}
+  \scriptcaption{Heckit model}
   \label{ex:heckit}
 \begin{scode}
 open mroz87.gdt
@@ -999,6 +1033,11 @@ invoked in gretl by appending the option \option{model1} to the
 \texttt{negbin} command.\footnote{The ``1'' and ``2'' in these labels
   indicate the power to which $\lambda_i$ is raised in the conditional
   variance expression.}
+
+The two accessors \dollar{yhat} and \dollar{uhat} return the predicted
+values and generalized residuals, respectively. Note that
+\dollar{uhat} is \emph{not} equal to the difference between the
+dependent variable and \dollar{yhat}.
 
 \subsection{Examples}
 
@@ -1208,8 +1247,8 @@ list of regressors, and \texttt{cens} is the censoring dummy.
 
 By default the Weibull distribution is used; you can substitute any of
 the other three distributions discussed here by appending one of the
-option flags \verb|--exponential|, \verb|--loglogistic| or 
-\verb|--lognormal|.
+option flags \option{exponential}, \option{loglogistic} or 
+\option{lognormal}.
 
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
@@ -1241,7 +1280,8 @@ crime again diminishes. (The exponential model would therefore not be
 appropriate in this case.)
 
 \begin{script}[htbp]
-  \caption{Models for recidivism data}
+  \scriptcaption{Models for recidivism data}
+  \label{ex:duration1}
 Input:
 \begin{scodebit}
 open recid.gdt
@@ -1250,8 +1290,9 @@ list X = workprg priors tserved felon alcohol drugs \
 duration durat 0 X ; cens
 duration durat 0 X ; cens --lognormal
 \end{scodebit}
+
 Partial output:
-\begin{scodebit}
+\begin{outbit}
 Model 1: Duration (Weibull), using observations 1-1445
 Dependent variable: durat
 
@@ -1293,9 +1334,7 @@ Dependent variable: durat
 
 Chi-square(10)       166.7361   p-value              1.31e-30
 Log-likelihood      -1597.059   Akaike criterion     3218.118
-
-\end{scodebit}
-\label{ex:duration1}
+\end{outbit}
 \end{script}
 
 On a priori grounds, however, we may doubt the monotonic decline in
@@ -1305,7 +1344,7 @@ would do so straight out of prison. In the data, we find that only 2.6
 percent of those followed were rearrested within 3 months. The
 log-normal specification, which allows the hazard to rise and then
 fall, may be more appropriate.  Using the \texttt{duration} command
-again with the same covariates but the \verb|--lognormal| flag, we get
+again with the same covariates but the \option{lognormal} flag, we get
 a log-likelihood of $-1597$ as against $-1633$ for the Weibull,
 confirming that the log-normal gives a better fit.
 
@@ -1330,9 +1369,9 @@ that does this, and the resulting plots are shown in
 Figure~\ref{fig:hazard-plots}. Note that when computing the hazards we
 need to multiply by the Jacobian of the transformation from $t_i$ to
 $w_i = \log (t_i - x_i\beta)/\sigma$, namely $1/t$.  Note also that
-the estimate of $\sigma$ is available via the accessor \verb|$sigma|,
+the estimate of $\sigma$ is available via the accessor \dollar{sigma},
 but it is also present as the last element in the coefficient vector
-obtained via \verb|$coeff|.
+obtained via \dollar{coeff}.
 
 A further difference between the Weibull and log-normal specifications
 is illustrated in the plots. The Weibull is an instance of a
@@ -1345,7 +1384,8 @@ gradually declines from 1.6703 at one month to 1.1766 at 100 months.
 
 
 \begin{script}[htbp]
-  \caption{Create plots showing conditional hazards}
+  \scriptcaption{Create plots showing conditional hazards}
+  \label{ex:hazard-plots}
 \begin{scode}
 open recid.gdt -q
 
@@ -1398,7 +1438,6 @@ cnameset(mat_n, "months unmarried married")
 gnuplot 2 3 1 --with-lines --supp --matrix=mat_w --output=weibull.plt
 gnuplot 2 3 1 --with-lines --supp --matrix=mat_n --output=lognorm.plt
 \end{scode}
-\label{ex:hazard-plots}
 \end{script}
 
 \begin{figure}[htbp]
@@ -1449,7 +1488,7 @@ is not noted in all software.\footnote{The \texttt{predict} adjunct to
   produces large negative values for the log-logistic mean in duration
   models with $\sigma > 1$.}
 
-Alternatively, if the \verb|--medians| option is given, gretl's
+Alternatively, if the \option{medians} option is given, gretl's
 \texttt{duration} command will produce conditional medians as the
 content of \dollar{yhat}.  For the Weibull the median is
 $\exp(X\beta)(\log 2)^\sigma$; for the log-logistic and log-normal it

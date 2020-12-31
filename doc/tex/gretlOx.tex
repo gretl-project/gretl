@@ -108,7 +108,7 @@ expects to find the named file in the user's dotdir.
 \section{Illustration: replication of DPD model}
 \label{sec:dpd-replication}
 
-Listing~\ref{Ox-DPD} shows a more ambitious case.  This script
+Listing~\ref{script:Ox-DPD} shows a more ambitious case.  This script
 replicates one of the dynamic panel data models in
 \cite{arellano-bond91}, first using gretl and then using \app{Ox}; we
 then check the relative differences between the parameter estimates
@@ -124,11 +124,10 @@ to get the right representation of missing values for use with
 
 We get the parameter estimates back from \app{Ox} using
 \verb|gretl_export| on the \app{Ox} side and \texttt{mread} on the
-gretl side.  The \verb|gretl_export| function takes two
-arguments, a matrix and a file name.  The file is written into the
-user's dotdir, from where it can be picked up using \texttt{mread}.
-The final portion of the output from Listing~\ref{Ox-DPD} is shown
-below:
+gretl side.  The \verb|gretl_export| function takes two arguments, a
+matrix and a file name.  The file is written into the user's dotdir,
+from where it can be picked up using \texttt{mread}.  The final
+portion of the output from Listing~\ref{script:Ox-DPD} is shown below:
 %
 \begin{code}
 ? matrix oxparm = mread("oxparm.mat", 1)
@@ -150,17 +149,13 @@ Generated matrix oxparm
 \end{code}
 
 \begin{script}[htbp]
-  \caption{Estimation of dynamic panel data model via gretl and \app{Ox}}
+  \scriptcaption{Estimation of dynamic panel data model via gretl and \app{Ox}}
+  \label{script:Ox-DPD}
 \begin{scode}
 open abdata.gdt
 
-# Take first differences of the independent variables
-genr Dw = diff(w)
-genr Dk = diff(k)
-genr Dys = diff(ys)
-
 # 1-step GMM estimation
-arbond 2 ; n Dw Dw(-1) Dk Dys Dys(-1) 0 --time-dummies
+dpanel 2 ; n w w(-1) k ys ys(-1) 0 --time-dummies --dpdstyle
 matrix parm = $coeff
 
 # Write CSV file for Ox
@@ -197,7 +192,6 @@ end foreign
 matrix oxparm = mread("oxparm.mat", 1)
 eval abs((parm - oxparm) ./ oxparm)
 \end{scode}
-\label{Ox-DPD}
 \end{script}
 
 %%% Local Variables: 

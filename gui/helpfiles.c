@@ -106,6 +106,7 @@ static struct gui_help_item gui_help_items[] = {
     { SMPLDUM,        "sampling" },
     { COMPACT,        "compact" },
     { EXPAND,         "expand" },
+    { TDISAGG,        "tdisagg" },
     { VSETMISS,       "missing" },
     { GSETMISS,       "missing" },
     { GUI_HELP,       "dialog" },
@@ -322,36 +323,42 @@ static const char *real_funcs_heading (const char *s)
 {
     if (!strcmp(s, "access")) {
 	return _("Accessors");
-    } else if (!strcmp(s, "math")) {
-	return _("Mathematical");
-    } else if (!strcmp(s, "numerical")) {
-	return _("Numerical methods");
-    } else if (!strcmp(s, "filters")) {
-	return _("Filters");
-    } else if (!strcmp(s, "stats")) {
-	return _("Statistical");
-    } else if (!strcmp(s, "probdist")) {
-	return _("Probability");
-    } else if (!strcmp(s, "linalg")) {
-	return _("Linear algebra");
-    } else if (!strcmp(s, "matbuild")) {
-	return _("Matrix building");
-    } else if (!strcmp(s, "matshape")) {
-	return _("Matrix shaping");
-    } else if (!strcmp(s, "transforms")) {
-	return _("Transformations");
+    } else if (!strcmp(s, "straccess")) {
+	return _("Built-in strings");
     } else if (!strcmp(s, "data-utils")) {
 	return _("Data utilities");
-    } else if (!strcmp(s, "strings")) {
-	return _("Strings");
-    } else if (!strcmp(s, "sspace")) {
-	return _("State space");
-    } else if (!strcmp(s, "calendar")) {
-	return _("Calendar");
-    } else if (!strcmp(s, "midas")) {
-	return _("MIDAS");
+    } else if (!strcmp(s, "math")) {
+	return _("Mathematical");
+    } else if (!strcmp(s, "transforms")) {
+	return _("Transformations");
+    } else if (!strcmp(s, "matrix")) {
+	return _("Matrix manipulation");
+    } else if (!strcmp(s, "linalg")) {
+	return _("Linear algebra");
     } else if (!strcmp(s, "complex")) {
 	return _("Complex numbers");
+    } else if (!strcmp(s, "numerical")) {
+	return _("Numerical methods");
+    } else if (!strcmp(s, "probdist")) {
+	return _("Probability");
+    } else if (!strcmp(s, "panel")) {
+	return _("Panel data");
+    } else if (!strcmp(s, "calendar")) {
+	return _("Calendar");
+    } else if (!strcmp(s, "timeseries")) {
+	return _("Time-series");
+    } else if (!strcmp(s, "stats")) {
+	return _("Statistical");
+    } else if (!strcmp(s, "nonparam")) {
+	return _("Non-parametric");
+    } else if (!strcmp(s, "midas")) {
+	return _("MIDAS");
+    } else if (!strcmp(s, "sspace")) {
+	return _("State space");
+    } else if (!strcmp(s, "programming")) {
+	return _("Programming");
+    } else if (!strcmp(s, "strings")) {
+	return _("Strings");
     } else if (!strcmp(s, "mpi")) {
 	return _("MPI");
     } else {
@@ -1461,7 +1468,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 		}
 	    }
 
-	    /* special: "coint2" command */
+	    /* special: "coint2" command alias (remove?) */
 	    if (!got_dollar && text != NULL && !strcmp(text, "coint")) {
 		if (gtk_text_iter_forward_char(&w_end)) {
 		    gchar *s = gtk_text_buffer_get_text(buf, &w_start,
@@ -2033,6 +2040,10 @@ static int get_writable_doc_path (char *path, const char *fname)
     FILE *fp;
     int err = 0;
 
+#ifdef G_OS_WIN32
+    sysdoc_writable = 0;
+#endif
+
     if (sysdoc_writable == 1) {
 	sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
 	return 0;
@@ -2040,13 +2051,6 @@ static int get_writable_doc_path (char *path, const char *fname)
 	sprintf(path, "%sdoc%c%s", dotdir, SLASH, fname);
 	return 0;
     }
-
-#ifdef G_OS_WIN32
-    if (sysdoc_writable < 0 && win32_uses_virtual_store()) {
-	/* don't write to virtualized location */
-	sysdoc_writable = 0;
-    }
-#endif
 
     if (sysdoc_writable < 0) {
 	sysdoc_writable = 0;

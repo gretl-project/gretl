@@ -287,7 +287,7 @@ example. Listing~\ref{scr:pergm-fft} shows how to compute the
 periodogram of a time series via the \texttt{fft} function.
 
 \begin{script}[htbp]
-  \caption{Periodogram via the Fourier transform}
+  \scriptcaption{Periodogram via the Fourier transform}
   \label{scr:pergm-fft}
 \begin{scode}
 nulldata 50
@@ -297,7 +297,7 @@ series x = 0
 x = 0.9*x(-1) + e
 # compute the periodogram
 scale = 2*$pi*$nobs
-X = { x }
+X = {x}
 F = fft(X)
 S = sumr(F.^2)
 S = S[2:($nobs/2)+1]/scale
@@ -308,7 +308,6 @@ pergm x
 print omega
 \end{scode}
 \end{script}
-
 
 %%% Local Variables:
 %%% mode: latex

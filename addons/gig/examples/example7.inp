@@ -3,8 +3,8 @@
 # Compares the results 
 # between Gretl (native and gig) and R (fGarch).
 
-set echo off
-set messages off
+
+set verbose off
 
 include gig.gfn
 open b-g.gdt

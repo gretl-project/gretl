@@ -18,17 +18,17 @@
 {altcode}%
 {\vspace{1ex}\small\leftmargin 1em}{\vspace{1ex}}
 
-The primary command for estimating dynamic panel models in gretl is
-\texttt{dpanel}. The closely related \texttt{arbond} command predated
-\texttt{dpanel}, and is still present, but whereas \texttt{arbond}
-only supports the so-called ``difference'' estimator
-\citep{arellano-bond91}, \texttt{dpanel} in addition offers the
-``system'' estimator \citep{blundell-bond98}, which has become the
-method of choice in the applied literature.
+The command for estimating dynamic panel models in gretl is
+\texttt{dpanel}. This command supports both the ``difference''
+estimator \citep{arellano-bond91} and the ``system'' estimator
+\citep{blundell-bond98}, which has become the method of choice in the
+applied literature.
 
 \section{Introduction}
+\label{sec:dpanel-intro}
+
 \subsection{Notation}
-\label{sec:notation}
+\label{sec:dpanel-notation}
 
 A dynamic linear panel data model can be represented as follows
 (in notation based on \cite{arellano03}):
@@ -247,6 +247,7 @@ replicating published results may prove tricky if your dataset
 contains individuals with gaps between valid observations.
 
 \section{Usage}
+\label{sec:dpanel-usage}
 
 One of the concepts underlying the syntax of \texttt{dpanel} is that
 you get default values for several choices you may want to make, so
@@ -267,8 +268,7 @@ conditions as possible.  The scalar \texttt{1} between \texttt{dpanel}
 and the semicolon indicates that only one lag of \texttt{y} is
 included as an explanatory variable; using \texttt{2} would give an
 AR(2) model. The syntax that gretl uses for the non-seasonal AR and MA
-lags in an ARMA model is also supported in this context.\footnote{This
-  represents an enhancement over the \texttt{arbond} command.} For
+lags in an ARMA model is also supported in this context. For
 example, if you want the first and third lags of \texttt{y} (but not
 the second) included as explanatory variables you can say
 \begin{code}
@@ -298,13 +298,9 @@ are appended automatically (see eq.\ \ref{eq:sys-gmm}).
 
 If we want to introduce additional regressors, we list them after the
 dependent variable in the same way as other gretl commands, such as
-\texttt{ols}.
-
-For the difference orthogonality relations, \texttt{dpanel} takes care
-of transforming the regressors in parallel with the dependent
-variable. Note that this differs from gretl's \texttt{arbond} command,
-where only the dependent variable is differenced automatically; it
-brings us more in line with other software.
+\texttt{ols}.  For the difference orthogonality relations,
+\texttt{dpanel} takes care of transforming the regressors in parallel
+with the dependent variable.
 
 One case of potential ambiguity is when an intercept is specified but
 the difference-only estimator is selected, as in
@@ -830,6 +826,7 @@ used, which in turn depends on the details of the implementation of
 the estimator.
 
 \section{Auxiliary test statistics}
+\label{sec:dpanel-aux}
 
 We have concentrated above on the parameter estimates and standard
 errors. It may be worth adding a few words on the additional test
@@ -897,13 +894,14 @@ self-explanatory, but here's a partial list:
 Note, however, that \texttt{GMMinst} and \texttt{wgtmat} (which may be
 quite large matrices) are not saved in the \dollar{model} bundle by
 default; that requires use of the \option{keep-extra} option with the
-\cmd{dpanel} command. The script in Table \ref{tab:dpanel-rep}
-illustrates use of these matrices to replicate via hansl commands the
-calculation of the GMM estimator.
+\cmd{dpanel} command. Listing~\ref{ex:dpanel-rep} illustrates use
+of these matrices to replicate via hansl commands the calculation of
+the GMM estimator.
 
-\begin{table}[htbp]
-\label{tab:dpanel-rep}
-  \begin{scode}
+\begin{script}[p]
+  \scriptcaption{replication of built-in command via hansl commands}
+  \label{ex:dpanel-rep}
+\begin{scode}
 set verbose off
 open abdata.gdt
 
@@ -937,11 +935,11 @@ matrix coef = due\tre
 
 print coef
 \end{scode}
-  \caption{replication of built-in command via hansl commands}
-\end{table}
+\end{script}
+
 
 \section{Memo: \texttt{dpanel} options}
-\label{sec:options}
+\label{sec:dpanel-options}
 
 \begin{center}
 \begin{tabular}{lp{.7\textwidth}}

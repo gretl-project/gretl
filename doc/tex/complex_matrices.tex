@@ -177,7 +177,7 @@ parameter estimates for a least-squares regression of complex $Y$
 \section{Functions}
 \label{sec:cmplx-funcs}
 
-To give an idea of what works, and what doesn't work, for complex
+To give an idea of what works, and what doesn't, for complex
 matrices, we'll walk through the hansl function-space using the
 categories employed in gretl's online ``Function reference'' (under the
 \textsf{Help} menu in the GUI program).
@@ -251,7 +251,7 @@ y\,i$. Listing~\ref{cmplx-modes} illustrates usage of \cmd{cmod}
 and \cmd{carg}.
 
 \begin{script}[htbp]
-  \caption{Variant representations of complex numbers. We picked 8
+  \scriptcaption{Variant representations of complex numbers. We picked 8
     points on the unit circle in the complex plane, so their modulus
     is constant and equal to 1. The \texttt{Polar} matrix below shows
     that the complex argument is expressed in radians; multiplying by
@@ -261,7 +261,7 @@ and \cmd{carg}.
     start of the chapter: $z = |z|\,(\cos \theta + i\,\sin \theta)$ or
     $z = |z|\,e^{i\theta}$.}
   \label{cmplx-modes}
-\begin{scode}
+\begin{scodebit}
 # complex values in a + b*i form
 scalar rp5 = sqrt(0.5)
 matrix A = {1, rp5, 0, -rp5, -1, -rp5,  0,  rp5}'
@@ -280,9 +280,11 @@ matrix Z1 = zmod .* complex(cos(theta), sin(theta))
 matrix Z2 = zmod .* exp(complex(0, theta))
 matrix chk = Z ~ Z1 ~ Z2
 print chk
-\end{scode}
+\end{scodebit}
+
+
   Printing of \texttt{Polar} and \texttt{chk}
-\begin{scode}
+\begin{outbit}
      modulus     radians     degrees
       1.0000      0.0000      0.0000
       1.0000      0.7854     45.0000
@@ -301,14 +303,13 @@ print chk
 -0.70711 - 0.70711i  -0.70711 - 0.70711i  -0.70711 - 0.70711i
  0.00000 - 1.00000i   0.00000 - 1.00000i   0.00000 - 1.00000i
  0.70711 - 0.70711i   0.70711 - 0.70711i   0.70711 - 0.70711i
-\end{scode}
-%$
+\end{outbit}
 \end{script}
 
 \subsection{Transformations}
 
-The functions \cmd{cum} and \cmd{diff} may be applied to complex
-matrices, but no others.
+In this category only two functions can be applied to complex
+matrices, namely \cmd{cum} and \cmd{diff}.
 
 \section{File input/output}
 
@@ -337,7 +338,7 @@ foreign program; then verify that the result as imported back into
 gretl is the same as that calculated in gretl.
 
 \begin{script}[htbp]
-  \caption{Exporting and importing complex matrices}
+  \scriptcaption{Exporting and importing complex matrices}
   \label{cmplx-io}
 \begin{scode}
 set seed 34756

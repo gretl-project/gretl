@@ -401,7 +401,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	    *word = '\0';
 	    gretl_utf8_strncat(word, freq->S[k], len-2);
 	    pputs(prn, word);
-	    nlw = len - strlen(word);
+	    nlw = len - g_utf8_strlen(word, -1);
 	    bufspace(nlw, prn);
 	    pprintf(prn, "%6d   ", freq->f[k]);
 	    f = 100.0 * freq->f[k] / valid;
@@ -573,7 +573,7 @@ static int row_strlen (const Xtab *tab)
     int i, n, nmax = 0;
 
     for (i=0; i<tab->rows; i++) {
-	n = strlen(tab->Sr[i]);
+	n = g_utf8_strlen(tab->Sr[i], -1);
 	if (n > nmax) {
 	    nmax = n;
 	}
@@ -587,7 +587,7 @@ static int col_strlen (const Xtab *tab)
     int j, n, nmax = 0;
 
     for (j=0; j<tab->cols; j++) {
-	n = strlen(tab->Sc[j]);
+	n = g_utf8_strlen(tab->Sc[j], -1);
 	if (n > nmax) {
 	    nmax = n;
 	}
@@ -688,7 +688,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    if (tex) {
 		pputs(prn, lbl);
 	    } else {
-		pprintf(prn, "%*s", clen, lbl);
+		bufspace(clen - g_utf8_strlen(lbl, -1), prn);
+		pputs(prn, lbl);
 	    }
 	} else {
 	    cj = tab->cval[j];
@@ -727,10 +728,9 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    *lbl = '\0';
 	    strncat(lbl, tab->Sr[i], 63);
 	    gretl_utf8_truncate(lbl, rlen-2);
-	    if (tex) {
-		pputs(prn, lbl);
-	    } else {
-		pprintf(prn, "%-*s", rlen, lbl);
+	    pputs(prn, lbl);
+	    if (!tex) {
+		bufspace(rlen - g_utf8_strlen(lbl, -1), prn);
 	    }
 	} else {
 	    ri = tab->rval[i];
@@ -2408,8 +2408,6 @@ static int print_by_obs (int *list, const DATASET *dset,
     int i, j, j0, k, t, nrem;
     int *colwidths = NULL;
     int obslen = 0;
-    int start = 0, stop = 0;
-    int tmin, tmax;
     int *pmax = NULL;
     char buf[128];
     int blist[BMAX+1];
@@ -2418,21 +2416,6 @@ static int print_by_obs (int *list, const DATASET *dset,
     int vi, wi;
     double x;
     int err = 0;
-
-    if (opt & OPT_R) {
-	/* --range */
-	err = get_print_range(sample_size(dset), &start, &stop);
-	if (err) {
-	    return err;
-	} else if (stop < start) {
-	    return 0;
-	}
-	tmin = dset->t1 + start;
-	tmax = dset->t1 + stop;
-    } else {
-	tmin = dset->t1;
-	tmax = dset->t2;
-    }
 
     if (!(opt & OPT_S)) {
 	pmax = get_pmax_array(list, dset);
@@ -2467,7 +2450,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 
 	varheading(blist, obslen, wlist, dset, 0, prn);
 
-	for (t=tmin; t<=tmax; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (screenvar && dset->Z[screenvar][t] == 0.0) {
 		/* screened out by boolean */
 		continue;
@@ -2575,8 +2558,8 @@ static int midas_print_list (const int *list,
  */
 
 int printdata (const int *list, const char *mstr,
-	       const DATASET *dset,
-	       gretlopt opt, PRN *prn)
+	       DATASET *dset, gretlopt opt,
+	       PRN *prn)
 {
     int screenvar = 0;
     int *plist = NULL;
@@ -2638,10 +2621,33 @@ int printdata (const int *list, const char *mstr,
 	}
     }
 
-    if (opt & OPT_O) {
-	err = print_by_obs(plist, dset, opt, screenvar, prn);
+    if (opt & OPT_R) {
+	/* --range */
+	int save_t1 = dset->t1;
+	int save_t2 = dset->t2;
+	int start = 0, stop = 0;
+
+	err = get_print_range(sample_size(dset), &start, &stop);
+	if (err) {
+	    return err;
+	} else if (stop < start) {
+	    goto endprint;
+	}
+	dset->t1 = save_t1 + start;
+	dset->t2 = save_t1 + stop;
+	if (opt & OPT_O) {
+	    err = print_by_obs(plist, dset, opt, screenvar, prn);
+	} else {
+	    err = print_by_var(plist, dset, opt, prn);
+	}
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
     } else {
-	err = print_by_var(plist, dset, opt, prn);
+	if (opt & OPT_O) {
+	    err = print_by_obs(plist, dset, opt, screenvar, prn);
+	} else {
+	    err = print_by_var(plist, dset, opt, prn);
+	}
     }
 
  endprint:
