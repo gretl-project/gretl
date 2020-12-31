@@ -1460,12 +1460,17 @@ static int mask_leaves_balanced_panel (char *mask, const DATASET *dset)
 		}
 		Ti[0] = 1;
 		Ti[1] = i % T;
+		ubak = u;
 	    } else {
 		Ti[0] += 1;
 		Ti[Ti[0]] = i % T;
 	    }
-	    ubak = u;
 	}
+    }
+
+    if (gretl_list_cmp(Ti, T0)) {
+	/* check the last unit */
+	ret = 0;
     }
 
     free(T0);
@@ -2636,9 +2641,8 @@ int set_sample (const char *start,
 	if (new_t1 < tmin || new_t1 > tmax) {
 	    maybe_clear_range_error(new_t1, dset);
 	    gretl_errmsg_set(_("error in new starting obs"));
-	    return 1;
+	    return E_INVARG;
 	}
-	dset->t1 = new_t1;
 	goto finish;
     }
 
@@ -2668,12 +2672,21 @@ int set_sample (const char *start,
 	err = E_DATA;
     }
 
+ finish:
+
+    if (!err && dataset_is_panel(dset)) {
+	int T = dset->pd;
+
+	if (new_t1 % T != 0 || (new_t2 + 1) % T != 0) {
+	    gretl_errmsg_set("Invalid panel sample range");
+	    err = E_INVARG;
+	}
+    }
+
     if (!err) {
 	dset->t1 = new_t1;
 	dset->t2 = new_t2;
     }
-
- finish:
 
     if (!err && (opt & OPT_T)) {
 	err = perma_sample(dset, opt, NULL, NULL);
