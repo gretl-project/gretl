@@ -18663,10 +18663,6 @@ static void gen_preprocess (parser *p, int flags)
         p->ch = parser_getc(p);
         lex(p);
         p->lhtree = expr(p);
-#if LHDEBUG
-        fprintf(stderr, "parsed lhtree, err=%d\n", p->err);
-        print_tree(p->lhtree, p, 0, 0);
-#endif
         p->point = savepoint;
         p->ch = 0;
         if (!p->err) {
@@ -19666,7 +19662,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
 #if LHDEBUG
-	fprintf(stderr, "\n*** eval lhtree before eval ***\n");
+	fprintf(stderr, "\n*** lhtree before eval ***\n");
 	print_tree(p->lhtree, p, 0, 0);
 #endif
 	p->lhres = eval(p->lhtree, p);
