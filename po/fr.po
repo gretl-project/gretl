@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2020-12-28 10:40-0500\n"
+"PO-Revision-Date: 2020-12-31 16:36+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -14233,7 +14233,7 @@ msgstr "Non-paramétrique"
 
 #: gui/helpfiles.c:357
 msgid "State space"
-msgstr "Territoire d’Etat"
+msgstr "Modèle état-espace"
 
 #: gui/helpfiles.c:361
 msgid "Strings"
