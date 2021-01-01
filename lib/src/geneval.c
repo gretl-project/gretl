@@ -67,7 +67,7 @@
 # define LHDEBUG 0
 #endif
 
-#if EDEBUG > 1
+#if LHDEBUG || EDEBUG > 1
 # define IN_GENEVAL
 # include "mspec_debug.c"
 #endif
@@ -11198,12 +11198,16 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
-/* Here we're replacing a submatrix of the original LHS matrix, by
-   either straight or inflected assignment. The value that we're
-   using for replacement will be either a matrix or a scalar.
+/* Here we're replacing a submatrix, by either straight or
+   inflected assignment.
+
+   @lhs must be a binary node holding the target matrix
+   on its L branch and a matrix subspec on its R branch.
+   @rhs must hold the replacement value: either a matrix
+   or a scalar (or a series standing in for a matrix).
 */
 
-static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
+static int set_matrix_chunk (NODE *lhs, NODE *rhs, parser *p)
 {
     NODE *lh1 = lhs->L;
     NODE *lh2 = lhs->R;
@@ -11223,14 +11227,14 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
         return E_TYPES;
     } else if (lh1->t != MAT) {
         /* is this ever possible? */
-        fprintf(stderr, "set_matrix_value: got %s, not matrix!\n",
+        fprintf(stderr, "set_matrix_chunk: got %s, not matrix!\n",
                 getsymb(lh1->t));
         return E_DATA;
     }
 
+    /* set up the target */
     m1 = lh1->v.m;
     spec = lh2->v.mspec;
-
     if (m1 == NULL || spec == NULL) {
         return E_DATA;
     }
@@ -11242,13 +11246,13 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     if (!spec->checked) {
         p->err = check_matrix_subspec(spec, m1);
         if (p->err) {
-            fprintf(stderr, "set_matrix_value: check_matrix_subspec failed\n");
+            fprintf(stderr, "set_matrix_chunk: check_matrix_subspec failed\n");
             return p->err;
         }
     }
 
 #if EDEBUG > 1
-    gretl_matrix_print(m1, "m1, in set_matrix_value");
+    gretl_matrix_print(m1, "m1, in set_matrix_chunk");
     fprintf(stderr, "op = '%s'\n", getsymb(p->op));
     print_mspec(spec);
     fprintf(stderr, "rhs type %s\n", getsymb(rhs->t));
@@ -19513,53 +19517,89 @@ static int do_incr_decr (parser *p)
 }
 
 #define has_aux_mat(n) (n->aux != NULL && n->aux->t == MAT)
-#define has_aux_mspec(n) (n->aux != NULL && n->aux->t == MSPEC)
 
-static void get_primary_matrix_slice (NODE *t,
-                                      NODE *pms,
-                                      int level,
-                                      int *err)
+static int explore_node (NODE *t, int lev, NODE *prev,
+			 parser *p)
 {
-    if (level == 1) {
-	if (t->t == MSL) {
-	    pms->L = t->L;
-	    pms->R = t->R->aux;
+    NODE pms = {0};
+    int save_op;
+    int err = 0;
+
+#if LHDEBUG
+    fprintf(stderr, "%d: %s", lev, getsymb(t->t));
+    fprintf(stderr, " (aux %s)", (t->aux != NULL)? getsymb(t->aux->t) : "null");
+    if (t->R != NULL) {
+	fprintf(stderr, ", R %s", getsymb(t->R->t));
+	if (t->R->aux != NULL) {
+	    fprintf(stderr, " (aux %s)", getsymb(t->R->aux->t));
+	    if (t->R->aux->t == MSPEC) {
+		fputc('\n', stderr);
+		print_mspec(t->R->aux->v.mspec);
+	    }
 	}
-    } else if (level == 2 && (t->t == BMEMB || t->t == OSL) && has_aux_mat(t)) {
-        pms->L = t->aux;
-    } else if (level == 2 && t->t == MSLRAW && has_aux_mspec(t)) {
-        pms->R = t->aux;
-    } else if (level == 3) {
-	; /* experiment */
-    } else if (level > 2 && t->t != BMEMB && has_aux_mat(t)) {
-	/* only two levels of matrix slicing are allowed */
-	fprintf(stderr, "LHS: found aux MAT on %s at level %d\n",
-		getsymb(t->t), level);
-	*err = E_DATA;
     }
-    if (!*err && t->L != NULL) {
-        get_primary_matrix_slice(t->L, pms, level+1, err);
+    if (t->t == MAT) {
+	fputc('\n', stderr);
+	gretl_matrix_print(t->v.m, "t->v.m");
+    } else if (t->aux != NULL && t->aux->t == MAT) {
+	gretl_matrix_print(t->aux->v.m, "t->aux->v.m");
+    } else {
+	fputc('\n', stderr);
     }
-    if (!*err && t->R != NULL) {
-        get_primary_matrix_slice(t->R, pms, level+1, err);
+#endif
+    if (prev != NULL && (t->t == MAT || has_aux_mat(t))) {
+	/* fprintf(stderr, "got prior MSL\n"); */
+	pms.t = MSL;
+	/* pms.L: node holding target matrix */
+	pms.L = t->t == MAT ? t : t->aux;
+	/* pms.L: node holding mspec */
+	pms.R = prev->R->aux;
+	save_op = p->op;
+	p->op = B_ASN;
+	err = set_matrix_chunk(&pms, prev->aux, p);
+	p->op = save_op;
     }
+
+    return err;
+}
+
+static int traverse_left (parser *p)
+{
+    NODE *t = p->lhtree;
+    NODE *prev = NULL;
+    int level = 0;
+    int err = 0;
+
+    while (t && !err) {
+	err = explore_node(t, level, prev, p);
+	if (t->aux != NULL && t->aux->t == MAT) {
+	    prev = t;
+	} else {
+	    prev = NULL;
+	}
+	t = t->L;
+	level++;
+    }
+
+    return err;
 }
 
 /* set_nested_matrix_value(): this and its helper above,
-   get_primary_matrix_slice(), require a little comment.
-   We come here when a hansl statement modifies a matrix
-   that is "under" something else. Original usage was for
-   matrices in bundles or arrays, as in
+   traverse_left(), require a little comment.
+
+   We come here when a hansl statement modifies a matrix that
+   is "under" something else. That something could be a
+   bundle or array, as in
 
    # Case 0
    b.m[diag] = x     # under bundle b
    a[3][1:2,1:2] = y # under array a
 
-   In those cases the first invocation of set_matrix_value
-   below is sufficient. However, as of August 2019 we also
-   come here when the matrix is "under" another matrix, or
-   in other words we have a double index or subspec, as in
-   these two examples for a complex matrix, C:
+   In such cases the first invocation of set_matrix_chunk
+   below is sufficient. However, we also come here when the
+   matrix is "under" another matrix -- that is, we have a
+   double index or subspec, as in these examples for a complex
+   matrix, C:
 
    # Case 1
    C[real][1:2,1:2] = x
@@ -19574,52 +19614,26 @@ static void get_primary_matrix_slice (NODE *t,
 
    To handle such cases we have to crawl the parser's
    "lhtree" (left-hand side tree) to find the matrix that
-   ultimately has to be modified, and execute a second
-   call to set_matrix_value(). In Case 1 above, the matrix
+   ultimately has to be modified, executing further calls
+   to set_matrix_chunk(). In Case 1 above, the matrix
    we're looking for will be at depth 1 in the lhtree,
    while in Case 2 it will be at depth 2.
-
-   If we don't find a matrix at depths 1 or 2, that's
-   not an error -- we're presumably in Case 0 -- but it
-   is an error if we find a matrix at depth greater than
-   2; that's a sign of a malformed left-hand side.
 */
 
 static int set_nested_matrix_value (NODE *lhs,
                                     NODE *rhs,
                                     parser *p)
 {
-    int err = set_matrix_value(lhs, rhs, p);
+    int err = set_matrix_chunk(lhs, rhs, p);
 
 #if LHDEBUG
+    gretl_matrix_print(lhs->L->v.m, "LVM0");
     fprintf(stderr, "set_nested_matrix_value: lhtree\n");
     print_tree(p->lhtree, p, 0, 0);
 #endif
 
     if (!err) {
-        /* maybe we have to carry the result back a step? */
-        NODE pms = {0};
-
-        get_primary_matrix_slice(p->lhtree, &pms, 0, &err);
-        if (err) {
-            gretl_errmsg_set(_("Invalid left-hand side expression"));
-        } else if (pms.L != NULL && pms.R != NULL) {
-	    if (pms.L->flags & TMP_NODE) {
-		/* 2020-12-30: if pms.L is a TMP_NODE we've gone
-		   too deep in indexing?
-		*/
-		gretl_errmsg_set(_("Invalid left-hand side expression"));
-		fprintf(stderr, "nested matrix: too deep\n");
-		err = E_PARSE;
-	    } else {
-		int save_op = p->op;
-
-		pms.t = MSL;
-		p->op = B_ASN;
-		err = set_matrix_value(&pms, lhs->L, p);
-		p->op = save_op;
-	    }
-        }
+	err = traverse_left(p);
     }
 
     return err;
@@ -19685,7 +19699,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (compound_t == BMEMB) {
 	    p->err = set_bundle_value(p->lhres, r, p);
 	} else if (compound_t == MSL) {
-	    p->err = set_matrix_value(p->lhres, r, p);
+	    p->err = set_matrix_chunk(p->lhres, r, p);
 	} else if (compound_t == OBS) {
 	    p->err = set_series_obs_value(p->lhres, r, p);
 	} else if (compound_t == OSL) {
