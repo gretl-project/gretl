@@ -18563,6 +18563,10 @@ static int check_existing_lhs_type (parser *p, int *newvar)
     user_var *uvar;
     int v, err = 0;
 
+    if ((err = gretl_reserved_word(p->lh.name))) {
+	return err;
+    }
+
     v = current_series_index(p->dset, p->lh.name);
     if (v >= 0) {
         p->lh.vnum = v;

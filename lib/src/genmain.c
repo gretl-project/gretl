@@ -313,7 +313,7 @@ int gretl_reserved_word (const char *str)
 
     for (i=0; i<n && !ret; i++) {
 	if (!strcmp(str, reswords[i])) {
-	    ret = 1;
+	    ret = E_INVARG;
 	}
     }
 
