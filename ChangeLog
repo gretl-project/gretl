@@ -20,7 +20,7 @@ version 2020f, in progress
 - "freq" and "xtab" for string-valued series: don't let
   non-ASCII characters break the formatting
 - Gretl User's Guide: add links to download example scripts
-- reorganize the categories for the functions help file
+- Reorganize the categories for the functions help file
 - Fix obscure problem with plots: inability to show markers
   for observations in some cases where this should be OK
 - Fix bug: potential crash on "Save as icon and close" for
@@ -31,6 +31,8 @@ version 2020f, in progress
   the GUI model selection dialog
 - Fix bug: possible crash on frequency plot for series with
   long string values
+- Fix: text encoding for RTF printing of model output broken
+  in some cases under translation
 - Fix: memory leaks associated with GUI window lists
 - Fix: buggy completion proposals in script editor when
   using gtksourceview-2.0

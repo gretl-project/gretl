@@ -19552,14 +19552,14 @@ static int explore_node (NODE *t, int lev, NODE *prev,
     }
 #endif
     if (prev != NULL && (t->t == MAT || has_aux_mat(t))) {
-	/* fprintf(stderr, "got prior MSL\n"); */
 	pms.t = MSL;
 	/* pms.L: node holding target matrix */
 	pms.L = t->t == MAT ? t : t->aux;
-	/* pms.L: node holding mspec */
+	/* pms.R: node holding mspec */
 	pms.R = prev->R->aux;
 	save_op = p->op;
 	p->op = B_ASN;
+	/* prev->aux holds the replacement matrix */
 	err = set_matrix_chunk(&pms, prev->aux, p);
 	p->op = save_op;
     }
