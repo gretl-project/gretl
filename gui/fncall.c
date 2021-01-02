@@ -726,6 +726,12 @@ static int do_make_list (selector *sr)
 	return 1;
     }
 
+    err = gui_validate_varname(lname, GRETL_TYPE_LIST,
+			       selector_get_window(sr));
+    if (err) {
+	return err;
+    }
+
     if (data != NULL) {
 	/* called from elsewhere in fncall.c */
 	GtkWidget *entry = GTK_WIDGET(data);
