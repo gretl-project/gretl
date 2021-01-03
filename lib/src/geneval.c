@@ -7613,31 +7613,29 @@ static NODE *do_errorif (NODE *l, NODE *r, parser *p)
 static NODE *do_assert (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
-    int assert_val;
+    int assert_val = libset_get_int(GRETL_ASSERT);
 
     if (ret == NULL) {
         p->err = E_ALLOC;
         return NULL;
     }
 
-    assert_val = libset_get_int(GRETL_ASSERT);
-
-    if (assert_val == 0) {
-        ret->v.xval = 1;
+    if (l->v.xval != 0 && !na(l->v.xval)) {
+	/* non-zero, non-missing: success */
+	ret->v.xval = 1;
+    } else if (assert_val == 0) {
+	/* flag but ignore failure */
+	ret->v.xval = 0;
+    } else if (assert_val == 1) {
+	/* warn about failure */
+	pprintf(p->prn, _("Warning: assertion '%s' failed"), r->v.str);
+	pputc(p->prn, '\n');
+	ret->v.xval = 0;
     } else {
-        double c = l->v.xval;
-
-        if (c == 0 || na(c)) {
-            if (assert_val == 1) {
-                pprintf(p->prn, _("Warning: assertion '%s' failed"), r->v.str);
-                pputc(p->prn, '\n');
-                ret->v.xval = 0;
-            } else {
-                p->err = 1;
-                gretl_errmsg_sprintf(_("Assertion '%s' failed"), r->v.str);
-                ret->v.xval = c;
-            }
-        }
+	/* complain and halt on failure */
+	p->err = 1;
+	gretl_errmsg_sprintf(_("Assertion '%s' failed"), r->v.str);
+	ret->v.xval = l->v.xval;
     }
 
     return ret;
