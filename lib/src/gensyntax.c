@@ -1348,7 +1348,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    */
 	    t = newb2(OSL, l, NULL);
 	    if (t != NULL) {
-		t->R = newb2(MSLRAW, NULL, NULL);
+		t->R = newb2(SLRAW, NULL, NULL);
 		if (t->R != NULL) {
 		    get_slice_parts(t->R, p);
 		}
@@ -1467,7 +1467,7 @@ static NODE *powterm (parser *p, NODE *l)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, p->upsym);
-	    t->R = newb2(MSLRAW, NULL, NULL);
+	    t->R = newb2(SLRAW, NULL, NULL);
 	    if (t->R != NULL) {
 		lex(p);
 		get_slice_parts(t->R, p);
@@ -1528,7 +1528,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    if (sub) {
 		t = newb2(MSL, t, NULL);
 		if (t != NULL) {
-		    t->R = newb2(MSLRAW, NULL, NULL);
+		    t->R = newb2(SLRAW, NULL, NULL);
 		    if (t->R != NULL) {
 			lex(p);
 			get_slice_parts(t->R, p);
@@ -1596,7 +1596,7 @@ static NODE *powterm (parser *p, NODE *l)
 	/* support func(args)[slice], etc. */
 	t = newb2(OSL, t, NULL);
 	if (t != NULL) {
-	    t->R = newb2(MSLRAW, NULL, NULL);
+	    t->R = newb2(SLRAW, NULL, NULL);
 	    if (t->R != NULL) {
 		get_slice_parts(t->R, p);
 	    }

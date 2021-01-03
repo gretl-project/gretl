@@ -2380,8 +2380,8 @@ const char *getsymb_full (int t, const parser *p)
 	return "SUB_ADDR";
     } else if (t == DMSTR) {
 	return "DMSTR";
-    } else if (t == MSLRAW) {
-	return "MSLRAW";
+    } else if (t == SLRAW) {
+	return "SLRAW";
     } else if (t == MSPEC) {
 	return "MSPEC";
     } else if (t == SUBSL) {

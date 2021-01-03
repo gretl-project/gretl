@@ -100,7 +100,7 @@ enum {
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
   /* 70 */    DMSTR,	  /* "dollar" matrix plus string subspec */
-	      MSLRAW,	  /* unevaluated matrix subspec */
+	      SLRAW,	  /* unevaluated "slice" specification */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */

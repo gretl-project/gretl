@@ -16723,8 +16723,8 @@ static NODE *eval (NODE *t, parser *p)
             ret = subobject_node(l, r, p);
         }
         break;
-    case MSLRAW:
-        /* unevaluated matrix (or object) subspec */
+    case SLRAW:
+        /* unevaluated object slice spec */
         ret = mspec_node(l, r, p);
         break;
     case SUBSL:
@@ -18045,8 +18045,8 @@ static void printnode (NODE *t, parser *p, int value)
         pputc(p->prn, '[');
         printnode(t->R, p, 0);
         pputc(p->prn, ']');
-    } else if (t->t == MSLRAW) {
-        pputs(p->prn, "MSLRAW");
+    } else if (t->t == SLRAW) {
+        pputs(p->prn, "SLRAW");
     } else if (t->t == SUBSL) {
         pputs(p->prn, "SUBSL");
     } else if (func1_symb(t->t)) {
