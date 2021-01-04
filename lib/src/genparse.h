@@ -623,9 +623,8 @@ enum node_flags {
     SVL_NODE = 1 << 2, /* holds string-valued series */
     PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
     LHT_NODE = 1 << 4, /* node holds terminal of LHS */
-    MSL_NODE = 1 << 5, /* (scalar) node is matrix element */
-    MUT_NODE = 1 << 6, /* node is inherently mutable in type */
-    ALS_NODE = 1 << 7  /* function subject to "reversing" alias */
+    MUT_NODE = 1 << 5, /* node is inherently mutable in type */
+    ALS_NODE = 1 << 6  /* function subject to "reversing" alias */
 };
 
 struct node {

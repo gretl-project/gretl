@@ -126,7 +126,6 @@ enum {
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
 #define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))
 #define ok_matrix_node(n) (n->t == MAT || n->t == NUM)
-#define matrix_element_node(n) (n->t == NUM && (n->flags & MSL_NODE))
 #define complex_node(n) (n->t == MAT && n->v.m->is_complex)
 #define cscalar_node(n) (n->t == MAT && gretl_matrix_is_cscalar(n->v.m))
 
@@ -248,6 +247,26 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
 
 #if EDEBUG || LHDEBUG
 
+static char *flagstr (guint8 flags)
+{
+    static char ret[16];
+
+    if (flags & AUX_NODE) {
+	strcpy(ret, "aux");
+	if (flags & TMP_NODE) {
+	    strcat(ret, ",tmp");
+	}
+    } else if (flags & TMP_NODE) {
+	strcpy(ret, "tmp");
+    } else if (flags & LHT_NODE) {
+	strcpy(ret, "lht");
+    } else {
+	sprintf(ret, "%d", (int) flags);
+    }
+
+    return ret;
+}
+
 static void print_tree (NODE *t, parser *p, int level, char pos)
 {
     if (t == NULL) {
@@ -280,27 +299,28 @@ static void print_tree (NODE *t, parser *p, int level, char pos)
     }
 
     if (t->vname != NULL) {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %d), vname='%s'",
-		(void *) t, t->t, getsymb(t->t), t->flags, t->vname);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %s), vname='%s'",
+		(void *) t, t->t, getsymb(t->t), flagstr(t->flags), t->vname);
 	if (t->t == NUM) {
 	    fprintf(stderr, ", val %g\n", t->v.xval);
 	} else {
 	    fputc('\n', stderr);
 	}
     } else if (t->t == STR) {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %d, val '%s')\n",
-		(void *) t, t->t, getsymb(t->t), t->flags, t->v.str);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %s, val '%s')\n",
+		(void *) t, t->t, getsymb(t->t), flagstr(t->flags), t->v.str);
     } else if (t->t == NUM) {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %d, val %g)\n",
-		(void *) t, t->t, getsymb(t->t), t->flags, t->v.xval);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %s, val %g)\n",
+		(void *) t, t->t, getsymb(t->t), flagstr(t->flags), t->v.xval);
     } else {
-	fprintf(stderr, "node at %p (type %03d, %s, flags %d)\n",
-		(void *) t, t->t, getsymb(t->t), t->flags);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %s)\n",
+		(void *) t, t->t, getsymb(t->t), flagstr(t->flags));
     }
 
     if (t->aux != NULL) {
-	fprintf(stderr, "  aux node at %p (type %03d, %s, flags %d)\n",
-		(void *) t->aux, t->aux->t, getsymb(t->aux->t), t->aux->flags);
+	fprintf(stderr, "  aux node at %p (type %03d, %s, flags %s)\n",
+		(void *) t->aux, t->aux->t, getsymb(t->aux->t),
+		flagstr(t->aux->flags));
     }
 }
 
@@ -4929,17 +4949,10 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
                         ret->v.m = cmatrix_get_element(m, i, &p->err);
                     }
  		} else {
-#if 1 /* 2020-12-29 */
+		    /* 2020-12-29: don't collapse to scalar here */
 		    ret = aux_matrix_node(p);
 		    ret->v.m = gretl_matrix_alloc(1,1);
 		    ret->v.m->val[0] = m->val[i];
-#else
-                    ret = aux_scalar_node(p);
-                    if (!p->err) {
-                        ret->v.xval = m->val[i];
-                        ret->flags |= MSL_NODE;
-                    }
-#endif
                 }
             } else if (spec->ltype == SEL_STR) {
                 p->err = E_TYPES;
@@ -5367,7 +5380,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
     if (starting(p)) {
         if (r == NULL || r->t != MSPEC) {
             p->err = E_TYPES;
-        } else if (l->t == MAT || matrix_element_node(l)) {
+        } else if (l->t == MAT) {
             return submatrix_node(l, r, p);
         } else if (l->t == ARRAY) {
 	    int *vlist = array_subspec_list(l, r, p);
@@ -19528,7 +19541,8 @@ static int explore_node (NODE *t, int lev, NODE *prev,
     int err = 0;
 
 #if LHDEBUG
-    fprintf(stderr, "%d: %s", lev, getsymb(t->t));
+    fprintf(stderr, "%d: %s %p, prev %p", lev, getsymb(t->t), (void *) t,
+	    (void *) prev);
     fprintf(stderr, " (aux %s)", (t->aux != NULL)? getsymb(t->aux->t) : "null");
     if (t->R != NULL) {
 	fprintf(stderr, ", R %s", getsymb(t->R->t));
@@ -19550,6 +19564,10 @@ static int explore_node (NODE *t, int lev, NODE *prev,
     }
 #endif
     if (prev != NULL && (t->t == MAT || has_aux_mat(t))) {
+#if LHDEBUG
+	fprintf(stderr, "doing ASSIGN to %s\n\n",
+		t->t == MAT ? "MAT" : "aux MAT");
+#endif
 	pms.t = MSL;
 	/* pms.L: node holding target matrix */
 	pms.L = t->t == MAT ? t : t->aux;
@@ -19626,12 +19644,13 @@ static int set_nested_matrix_value (NODE *lhs,
                                     NODE *rhs,
                                     parser *p)
 {
-    int err = set_matrix_chunk(lhs, rhs, p);
-
 #if LHDEBUG
-    gretl_matrix_print(lhs->L->v.m, "LVM0");
-    fprintf(stderr, "set_nested_matrix_value: lhtree\n");
-    print_tree(p->lhtree, p, 0, 0);
+    int err;
+    gretl_matrix_print(lhs->L->v.m, "LVM, before set matrix chunk");
+    err = set_matrix_chunk(lhs, rhs, p);
+    gretl_matrix_print(lhs->L->v.m, "LVM, after set matrix chunk");
+#else
+    int err = set_matrix_chunk(lhs, rhs, p);
 #endif
 
     if (!err) {
@@ -19684,10 +19703,11 @@ static int save_generated_var (parser *p, PRN *prn)
 	p->lhres = eval(p->lhtree, p);
 #if LHDEBUG
 	if (p->lhres != NULL) {
-	    fprintf(stderr, "*** lhres post-eval ***\n");
+	    fprintf(stderr, "\n*** lhres post-eval ***\n");
 	    print_tree(p->lhres, p, 0, 0);
-	    fprintf(stderr, "*** lhtree post-eval ***\n");
+	    fprintf(stderr, "\n*** lhtree post-eval ***\n");
 	    print_tree(p->lhtree, p, 0, 0);
+	    fputc('\n', stderr);
 	}
 #endif
 	if (p->err) {
@@ -19750,9 +19770,6 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (scalar_matrix_node(r)) {
 	    /* "cast" 1 x 1 matrix to scalar */
 	    no_decl = 1;
-	    p->targ = NUM;
-	    p->flags |= P_NODECL;
-	} else if (matrix_element_node(r)) {
 	    p->targ = NUM;
 	    p->flags |= P_NODECL;
 	} else {
