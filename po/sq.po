@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2020-11-20 11:45+0100\n"
+"PO-Revision-Date: 2021-01-05 17:26+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -171,7 +171,7 @@ msgstr "tregues kuadratik për periudhat"
 
 #: lib/src/adf_kpss.c:1070 lib/src/genfuncs.c:3458
 msgid "time trend variable"
-msgstr "tregues për periudhat"
+msgstr "tregues kohor"
 
 #: lib/src/adf_kpss.c:1100
 #, c-format
@@ -662,7 +662,7 @@ msgstr "%s ndodhet qëparë në model"
 
 #: lib/src/compare.c:2581
 msgid "dummy variable for Chow test"
-msgstr "ndryshore treguese për testin Chow"
+msgstr "ndryshore memece për testin Chow"
 
 # BSH: 2011 - Pozicioni konkurrues i ekonomise shqiptare e terma te produktivitetit e te kostos se punes
 # (thyerje të strukturës)
@@ -2868,11 +2868,11 @@ msgstr "‘%s’ është fjalë e rezervuar"
 
 #: lib/src/genmain.c:599
 msgid "Periodic dummy variables generated.\n"
-msgstr "Ndryshoret treguese periodike u krijuan.\n"
+msgstr "Memecet e periudhave u krijuan.\n"
 
 #: lib/src/genmain.c:604 lib/src/genmain.c:609
 msgid "Panel dummy variables generated.\n"
-msgstr "Ndryshoret treguese për panelin u krijuan.\n"
+msgstr "Memecet e panelit u krijuan.\n"
 
 #: lib/src/genmpi.c:110 lib/src/gretl_errors.c:88
 msgid "complex arguments/operands not supported"
@@ -4639,7 +4639,7 @@ msgstr "Analiza e \"endobs\" dështoi"
 #: lib/src/gretl_xml.c:3715
 #, c-format
 msgid "dummy for %s = %lf"
-msgstr "ndryshore treguese për %s = %lf"
+msgstr "memece për %s = %lf"
 
 #: lib/src/gretl_xml.c:3832
 #, c-format
@@ -5504,7 +5504,7 @@ msgstr "Gabimi std. Beck--Katz"
 #: lib/src/modelprint.c:1435
 #, c-format
 msgid "Standard errors clustered by %d values of %s"
-msgstr "Gabimet std. të grupuar sipas %d vlerave te %s"
+msgstr "Gabimet std. të grupuar sipas %d vlerave të %s"
 
 #: lib/src/modelprint.c:1438
 msgid "Clustered standard errors"
@@ -5558,7 +5558,7 @@ msgstr "Gabimet std. sipas matricës Hesiane"
 
 #: lib/src/modelprint.c:1525
 msgid "Standard errors based on Information Matrix"
-msgstr "Gabimet std. sipas matricës së informacionit"
+msgstr "Gabimet std. sipas Matricës së Informacionit"
 
 #: lib/src/modelprint.c:1528
 msgid "Standard errors based on Outer Products matrix"
@@ -5820,7 +5820,7 @@ msgstr "Ndryshorja ponderuese"
 
 #: lib/src/modelprint.c:2353
 msgid "Weight var is a dummy variable, effective obs ="
-msgstr "Një ndryshore treguese shërben si ponderues; vrojtimet efektivë ="
+msgstr "Ndryshorja ponderuese është memece; vrojtimet efektivë ="
 
 #: lib/src/modelprint.c:2417
 msgid "$z$"
@@ -7263,7 +7263,7 @@ msgstr "Asnjë vrojtim nuk do të mbetej!"
 #: lib/src/subsample.c:1011 lib/src/subsample.c:1061
 #, c-format
 msgid "'%s' is not a dummy variable"
-msgstr "« %s » nuk është ndryshore treguese"
+msgstr "« %s » nuk është ndryshore memece"
 
 #: lib/src/subsample.c:1051
 #, c-format
@@ -7726,12 +7726,12 @@ msgstr "= %s shumëzuar me %s"
 #: lib/src/transforms.c:820
 #, c-format
 msgid "dummy for %s = '%s'"
-msgstr "ndryshorja treguese për %s = '%s'"
+msgstr "memece për %s = '%s'"
 
 #: lib/src/transforms.c:822 lib/src/transforms.c:825
 #, c-format
 msgid "dummy for %s = %g"
-msgstr "ndryshore treguese për %s = %g"
+msgstr "memece për %s = %g"
 
 #: lib/src/transforms.c:2036
 #, c-format
@@ -7740,7 +7740,7 @@ msgstr "Nevojiten të paktën %d vrojtime"
 
 #: lib/src/transforms.c:2155
 msgid "dummify: no suitable variables were found"
-msgstr "ndryshore treguese: asnjë ndryshore e përshtatshme"
+msgstr "krijo ndryshore meemce: nuk ka asnjë ndryshore e përshtatshme"
 
 #: lib/src/tsls.c:771
 #, c-format
@@ -7762,8 +7762,8 @@ msgid ""
 "The order condition for identification is not satisfied.\n"
 "At least %d more instruments are needed."
 msgstr ""
-"Kushti i rendit për identifikimin nuk është përmbushur.\n"
-"Duhen të paktën edhe %d instrumentë të tjerë."
+"Kushti i rendit për identifikimin nuk përmbushet.\n"
+"Nevojiten instrumentë shtesë; të paktën edhe %d."
 
 #: lib/src/usermat.c:268 gui/calculator.c:1382
 msgid "Range is non-positive!"
@@ -8820,7 +8820,7 @@ msgstr "gretl: grafiku CDF"
 
 #: gui/calculator.c:3429
 msgid "standard normal"
-msgstr "normale e normuar"
+msgstr "normal standart"
 
 #: gui/calculator.c:3437
 msgid "logistic"
@@ -9745,7 +9745,7 @@ msgstr "Ndryshoret e zgjedhura nuk përcaktojnë dot një strukturë paneli"
 
 #: gui/datawiz.c:858
 msgid "The unit and time index variables must be distinct"
-msgstr "Treguesi i individëve duhet të jetë i ndryshëm nga ai i periudhave"
+msgstr "Treguesi i individëve duhet të jetë i ndryshëm nga treguesi kohor"
 
 #: gui/datawiz.c:993
 msgid "This dataset cannot be interpreted as a panel"
@@ -9984,7 +9984,7 @@ msgstr "Fillimi:"
 
 #: gui/dialogs.c:1906 gui/dialogs.c:2339 gui/dialogs.c:2459
 msgid "End:"
-msgstr "Mbarimi:"
+msgstr "Fundi:"
 
 #: gui/dialogs.c:1948 gui/dialogs.c:2307
 msgid "gretl: set sample"
@@ -10021,11 +10021,11 @@ msgstr "Përcakto kufijtë e kampionit"
 
 #: gui/dialogs.c:2448
 msgid "gretl: define dummy"
-msgstr "gretl: përcaktimi i ndryshores treguese"
+msgstr "gretl: përcaktimi i ndryshores memece"
 
 #: gui/dialogs.c:2458
 msgid "Set dummy range"
-msgstr "Përcakto kufijtë e ndryshores treguese"
+msgstr "Përcakto kufijtë e ndryshores memece"
 
 #: gui/dialogs.c:2477
 msgid "Name of variable:"
@@ -10075,7 +10075,7 @@ msgstr "gretl: kufizimi i kampionit"
 
 #: gui/dialogs.c:2741
 msgid "Use dummy variable:"
-msgstr "Përdor ndryshore treguese:"
+msgstr "Përdor ndryshore memece:"
 
 #: gui/dialogs.c:2759
 msgid "add to current restriction"
@@ -10091,7 +10091,7 @@ msgstr "Vrojtimi ku kampioni ndahet më dysh:"
 
 #: gui/dialogs.c:2840
 msgid "Name of dummy variable to use:"
-msgstr "Ndryshorja treguese që do të përdoret:"
+msgstr "Ndryshorja memece që do të përdoret:"
 
 #: gui/dialogs.c:2850
 msgid "gretl: Chow test"
@@ -11232,7 +11232,7 @@ msgstr "_Telengarko në server…"
 
 #: gui/fnsave.c:634
 msgid "Save the file to its standard \"installed\" location"
-msgstr "Ruaj skedën në skedarin standard « installed »"
+msgstr "Ruaj skedën në skedarin standart « installed »"
 
 #: gui/fnsave.c:635
 msgid "Save it to a location of your own choosing"
@@ -12347,7 +12347,7 @@ msgstr "Vi_zato një grafik"
 
 #: gui/gretl.c:1740
 msgid "_Test statistic calculator"
-msgstr "_Teste statistikë"
+msgstr "Llogaritës i _testeve statistikë"
 
 #: gui/gretl.c:1741
 msgid "_Nonparametric tests"
@@ -12563,7 +12563,7 @@ msgstr "_Katrorin e ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1800
 msgid "_Lags of selected variables"
-msgstr "_Vonesat e ndryshoreve të zgjedhura"
+msgstr "_Vonesa të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1801
 msgid "_First differences of selected variables"
@@ -12579,7 +12579,7 @@ msgstr "Di_ferencën stinore të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1807
 msgid "_Percentage change of selected variables"
-msgstr "Ndryshimi në _përqindje i ndryshoreve të zgjedhura"
+msgstr "Luhatjen në _përqindje të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1809
 msgid "_100-based indices of selected variables"
@@ -12587,19 +12587,19 @@ msgstr "Indekse bazë _100 të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1811
 msgid "_Standardize selected variables"
-msgstr "_Standardizo ndryshoret e zgjedhura"
+msgstr "_Standartizim të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1813
 msgid "_Index variable"
-msgstr "Tregues _vrojtimi"
+msgstr "Tregues _vrojtimesh"
 
 #: gui/gretl.c:1814
 msgid "_Time trend"
-msgstr "Tregues p_eriudhe"
+msgstr "Tr_egues kohor"
 
 #: gui/gretl.c:1815
 msgid "_Panel unit index"
-msgstr "Ndryshore treguese për _panelin"
+msgstr "Tregues individësh (_panel)"
 
 #: gui/gretl.c:1816
 msgid "_Random variable..."
@@ -12607,11 +12607,11 @@ msgstr "_Ndryshore të rastit..."
 
 #: gui/gretl.c:1817
 msgid "_Periodic dummies"
-msgstr "Memece peri_odike"
+msgstr "Memece peri_udhash"
 
 #: gui/gretl.c:1818
 msgid "_Unit dummies"
-msgstr "Memece _individuale"
+msgstr "Memece _individësh"
 
 #: gui/gretl.c:1819
 msgid "_Time dummies"
@@ -12619,7 +12619,7 @@ msgstr "Memece _kohore"
 
 #: gui/gretl.c:1820
 msgid "_Observation range dummy"
-msgstr "Kufijtë e kampi_onit sipas ndryshores treguese"
+msgstr "Memece për një kampi_on të caktuar…"
 
 #: gui/gretl.c:1821
 msgid "Dummies for _discrete variable..."
@@ -12711,7 +12711,7 @@ msgstr "Grafik _paneli..."
 
 #: gui/gretl.c:1854
 msgid "_Unit root tests"
-msgstr "T_estet e rrënjës së njësishme"
+msgstr "T_este për rrënjë të njësishme"
 
 #: gui/gretl.c:1855
 msgid "_Augmented Dickey-Fuller test"
@@ -12743,7 +12743,7 @@ msgstr "_Periodogram"
 
 #: gui/gretl.c:1862
 msgid "_Filter"
-msgstr "_Filtër"
+msgstr "_Filtrim"
 
 #: gui/gretl.c:1863
 msgid "_Simple moving average"
@@ -12815,7 +12815,7 @@ msgstr "Katrorët më të Vegjël të Dyfishtë (_TSLS)"
 
 #: gui/gretl.c:1887
 msgid "_LIML"
-msgstr "Maksimumi i përgjasisë me informacion të kufizuar (_LIML)"
+msgstr "Maksimumi i Përgjasisë me Informacion të Kufizuar (_LIML)"
 
 #: gui/gretl.c:1888 gui/gretl.c:1937
 msgid "_GMM"
@@ -12871,7 +12871,7 @@ msgstr "_AR (i përgjithshëm)"
 
 #: gui/gretl.c:1902
 msgid "_Multivariate time series"
-msgstr "Seri kohore _multivariate"
+msgstr "Seri kohore ‘_multivariate’"
 
 #: gui/gretl.c:1903
 msgid "_Vector Autoregression"
@@ -13349,7 +13349,7 @@ msgstr "Opsjone për _tabelat…"
 
 #: gui/gui_utils.c:339
 msgid "Show _standard errors"
-msgstr "Shfaq gabimet standarde"
+msgstr "Shfaq gabimet standarte"
 
 #: gui/gui_utils.c:340
 msgid "Show _t-ratios"
@@ -14032,7 +14032,7 @@ msgstr ""
 
 #: gui/guiprint.c:1660
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "Shënim: * tregon një mbetje 2,5 herë më të madhe se gabimi standard"
+msgstr "Shënim: * tregon një mbetje 2,5 herë më të madhe se gabimi standart"
 
 #: gui/guiprint.c:1708 gui/guiprint.c:1770 gui/guiprint.c:1826
 #: gui/guiprint.c:1867
@@ -14654,7 +14654,7 @@ msgstr "llogarit kuantilet normalë me mesataren dhe variancën e kampionit"
 
 #: gui/library.c:2914
 msgid "standardize the data"
-msgstr "përdor të dhënat e normuara"
+msgstr "standartizim i të dhënave"
 
 #: gui/library.c:2915
 msgid "raw quantiles versus N(0, 1)"
@@ -14865,7 +14865,7 @@ msgstr "Kodifiko ndryshoret si memece"
 
 #: gui/library.c:6248
 msgid "gretl: create dummy variables"
-msgstr "gretl: ndryshore treguese"
+msgstr "gretl: krijo ndryshore memece"
 
 #: gui/library.c:6408
 msgid "in the cross-sectional dimension"
@@ -14903,15 +14903,15 @@ msgstr "Përdor vetëm normim"
 #: gui/library.c:6482
 #, c-format
 msgid "Standardizing %s"
-msgstr "Standardizimi i %s"
+msgstr "Standartizimi i %s"
 
 #: gui/library.c:6485
 msgid "Standardizing variables"
-msgstr "Reduktim i ndryshoreve"
+msgstr "Standartizimi i ndryshoreve"
 
 #: gui/library.c:6488
 msgid "gretl: create standardized variables"
-msgstr "gretl: krijo ndryshore të standardizuara"
+msgstr "gretl: krijo ndryshore të standartizuara"
 
 #: gui/library.c:6525
 msgid "gretl: generate lags"
@@ -15456,7 +15456,7 @@ msgstr "Në kllapa, statistika t-Student"
 
 #: gui/model_table.c:1121 gui/model_table.c:1241 gui/model_table.c:1328
 msgid "Standard errors in parentheses"
-msgstr "Në kllapa, gabimi standard"
+msgstr "Në kllapa, gabimi standart"
 
 #: gui/model_table.c:1125 gui/model_table.c:1332
 msgid "p-values in brackets"
@@ -18334,7 +18334,7 @@ msgstr "përfshirë konstanten"
 
 #: plugin/johansen.c:1604
 msgid "Cointegration tests, ignoring exogenous variables"
-msgstr "Testet e kointegrimit pa përfshirjen e ndryshoreve të pavarura"
+msgstr "Teste kointegrimi, duke lënë jashtë ndryshoret e pavarura"
 
 #: plugin/johansen.c:1607 plugin/johansen.c:1627
 msgid "Eigenvalue"
@@ -18351,7 +18351,7 @@ msgstr "Testi Lmax"
 #: plugin/johansen.c:1625
 #, c-format
 msgid "Cointegration tests conditional on %d I(1) variable(s)"
-msgstr "Testet e kointegrimit të kushtëzuar ndaj %d I(1) ndryshore(ve)"
+msgstr "Teste kointegrimi të kushtëzuar nga %d I(1) ndryshore"
 
 #: plugin/johansen.c:1628
 msgid "pval(T)"
