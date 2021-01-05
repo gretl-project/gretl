@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2021-01-05 17:26+0100\n"
+"PO-Revision-Date: 2021-01-05 17:37+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -5977,7 +5977,7 @@ msgstr "Kriteri informues Hannan-Quinn"
 #.
 #: lib/src/modelprint.c:3055
 msgid "note on model statistics abbreviations here"
-msgstr " "
+msgstr "note on model statistics abbreviations here"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3062
@@ -7740,7 +7740,7 @@ msgstr "Nevojiten të paktën %d vrojtime"
 
 #: lib/src/transforms.c:2155
 msgid "dummify: no suitable variables were found"
-msgstr "krijo ndryshore meemce: nuk ka asnjë ndryshore e përshtatshme"
+msgstr "krijo ndryshore memece: nuk gjendet asnjë ndryshore e përshtatshme"
 
 #: lib/src/tsls.c:771
 #, c-format
