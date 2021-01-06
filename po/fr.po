@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2020-12-31 16:36+0100\n"
+"PO-Revision-Date: 2021-01-06 08:44+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -1535,7 +1535,7 @@ msgstr "%s : aucune donnée trouvée"
 
 #: lib/src/dbread.c:406 lib/src/dbread.c:690
 msgid "Couldn't open database index file"
-msgstr "Ne peut ouvrire le fichier index de la base de données"
+msgstr "Ne peut ouvrir le fichier index de la base de données"
 
 #: lib/src/dbread.c:426
 msgid "Couldn't open database binary file"
@@ -4312,12 +4312,12 @@ msgstr "gretl_gui_fnref.en"
 #: lib/src/gretl_paths.c:1277
 #, c-format
 msgid "Couldn't find package %s"
-msgstr "Ne peut pas trouver le paquetage %s"
+msgstr "Ne peut trouver le paquetage %s"
 
 #: lib/src/gretl_paths.c:1297
 #, c-format
 msgid "Couldn't find file %s for package %s"
-msgstr "Ne peut pas trouver le fichier %s pour le paquetage %s"
+msgstr "Ne peut trouver le fichier %s pour le paquetage %s"
 
 #: lib/src/gretl_paths.c:2012
 msgid "User directory is not set"
@@ -4326,12 +4326,13 @@ msgstr "Le dossier utilisateur n'est pas défini"
 #: lib/src/gretl_paths.c:2018
 #, c-format
 msgid "Couldn't create directory '%s'"
-msgstr "Ne peut pas créer le dossier '%s'"
+msgstr "Ne peut créer le dossier '%s'"
 
 #: lib/src/gretl_paths.c:2029
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
-msgstr "N'a pas pu écrire dans '%s' : gretl ne fonctionnera pas correctement !"
+msgstr ""
+"Impossible d’écrire dans '%s' : gretl ne fonctionnera pas correctement !"
 
 #: lib/src/gretl_paths.c:2276
 #, c-format
@@ -4566,7 +4567,7 @@ msgstr "Ne peut écrire dans %s"
 #: lib/src/gretl_www.c:1147
 #, c-format
 msgid "Couldn't find %s for gretl %s"
-msgstr "Ne peut pas trouver %s pour gretl %s"
+msgstr "Ne peut as trouver %s pour gretl %s"
 
 #: lib/src/gretl_xml.c:72 lib/src/gretl_xml.c:4518
 #, c-format
@@ -4703,7 +4704,7 @@ msgstr "‘% s’: fichier gdt incohérent"
 #: lib/src/gretl_xml.c:4051 gui/gpt_control.c:5653 plugin/geoplot.c:1207
 #, c-format
 msgid "Couldn't read '%s'"
-msgstr "Ne peut pas lire '%s'"
+msgstr "Ne peut lire '%s'"
 
 #: lib/src/gretl_zip.c:495 lib/src/gretl_zip.c:503
 msgid "not found"
@@ -4798,7 +4799,7 @@ msgstr "Statistiques descriptives de %s, groupées selon %s"
 
 #: lib/src/interact.c:2517 lib/src/monte_carlo.c:3322
 msgid "You cannot delete series in this context\n"
-msgstr "Ne peut suuprimer des variables dans ce contexte\n"
+msgstr "Ne peut suprimer des variables dans ce contexte\n"
 
 #: lib/src/interact.c:2641
 #, c-format
@@ -4929,7 +4930,7 @@ msgstr "Pose %d valeurs comme \"manquantes\"\n"
 
 #: lib/src/missing.c:574
 msgid "Didn't find any matching observations\n"
-msgstr "N'a pu retrouver d'observations concordantes\n"
+msgstr "Impossible de trouver des observations concordantes\n"
 
 #: lib/src/missing.c:587
 #, c-format
@@ -5532,11 +5533,11 @@ msgstr "Écarts-types groupés"
 
 #: lib/src/modelprint.c:1454
 msgid "Could not compute Beck-Katz standard errors"
-msgstr "Ne peut pas calculer les écarts-types Beck-Katz"
+msgstr "Ne peut calculer les écarts-types Beck-Katz"
 
 #: lib/src/modelprint.c:1462
 msgid "Could not compute robust standard errors"
-msgstr "Ne peut pas calculer des écarts-types robustes"
+msgstr "Ne peut calculer des écarts-types robustes"
 
 #: lib/src/modelprint.c:1470
 msgid "Bartlett kernel"
@@ -8922,7 +8923,7 @@ msgid ""
 "(or just a name, to enter data manually)"
 msgstr ""
 "Entrer la formule pour la nouvelle variable\n"
-"(ou juste le nom, pour saisir manuellement les donnée)"
+"(ou juste le nom, pour saisir manuellement les données)"
 
 #: gui/callbacks.c:592 gui/callbacks.c:599
 msgid "gretl: missing code"
@@ -11182,7 +11183,7 @@ msgstr "Le  paquetage de function est corrompu"
 
 #: gui/fncall.c:2467 gui/fncall.c:2480
 msgid "Couldn't get function package information"
-msgstr "Ne trouve pas d'information sur le  paquetage de fonction"
+msgstr "Ne peut trouver d'information sur le paquetage de fonction"
 
 #: gui/fncall.c:2508
 msgid "This package needs time series data."
@@ -11491,7 +11492,7 @@ msgstr "Pour créer un descriptif de menu il faut fournir une étiquette."
 #: gui/fnsave.c:3206 gui/textbuf.c:1818
 #, c-format
 msgid "Couldn't find %s"
-msgstr "Ne peut pas trouver %s"
+msgstr "Ne peut trouver %s"
 
 #: gui/fnsave.c:3405 gui/fnsave.c:3424
 msgid "Apply changes?"
@@ -14794,7 +14795,7 @@ msgstr "Définir les valeurs %d comme \"manquantes\""
 
 #: gui/library.c:5253 gui/library.c:5281
 msgid "Didn't find any matching observations"
-msgstr "N'a pas trouvé d'observations concordantes"
+msgstr "Impossible de trouver des observations concordantes"
 
 #: gui/library.c:5278
 #, c-format
@@ -14881,11 +14882,11 @@ msgstr "Coder toutes les valeurs"
 
 #: gui/library.c:6208 gui/library.c:6235
 msgid "Skip the lowest value"
-msgstr "Négliger la valeur la plus faible"
+msgstr "Exclure la valeur la plus faible"
 
 #: gui/library.c:6209 gui/library.c:6236
 msgid "Skip the highest value"
-msgstr "Négliger la valeur la plus forte"
+msgstr "Exclure la valeur la plus élevée"
 
 #: gui/library.c:6223
 msgid "Variable to dummify"
@@ -17296,7 +17297,7 @@ msgstr "dbnomics pour gretl"
 #: gui/textbuf.c:1822
 #, c-format
 msgid "Couldn't read %s"
-msgstr "Ne peut pas lire '%s'"
+msgstr "Ne peut lire '%s'"
 
 #: gui/textbuf.c:2287
 msgid "Gretl Command Reference"
@@ -18762,7 +18763,7 @@ msgstr ""
 
 #: plugin/stata_import.c:2119
 msgid "cannot read Stata .dta on this platform"
-msgstr "ne peut pas lire les fichiers .dta de Stata sur cette plateforme"
+msgstr "ne peut lire les fichiers .dta de Stata sur cette plateforme"
 
 #: plugin/stata_import.c:2150
 msgid "This file does not seem to be a valid Stata data file"
