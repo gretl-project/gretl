@@ -3060,6 +3060,10 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+#define comparison_op(o) (o == B_EQ  || o == B_NEQ || \
+                          o == B_LT  || o == B_GT ||  \
+                          o == B_LTE || o == B_GTE)
+
 /* Here we know have a scalar and a 1 x 1 matrix to work with,
    in either order */
 
@@ -3068,7 +3072,9 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 {
     NODE *ret;
 
-    if (l->t == NUM && (op == B_MOD || op == B_POW)) {
+    if (scalar_node(l) && scalar_node(r) && comparison_op(op)) {
+	ret = aux_scalar_node(p);
+    } else if (l->t == NUM && (op == B_MOD || op == B_POW)) {
         /* the matrix on the right is functioning as
            a scalar argument, so produce a scalar
         */
@@ -3100,10 +3106,6 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 
     return ret;
 }
-
-#define comparison_op(o) (o == B_EQ  || o == B_NEQ || \
-                          o == B_LT  || o == B_GT ||  \
-                          o == B_LTE || o == B_GTE)
 
 /* Mixed types: one of the operands is a matrix, the other a scalar,
    giving a matrix result unless we're looking at a comparison
