@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-12-17 09:46+0100\n"
-"PO-Revision-Date: 2021-01-06 08:44+0100\n"
+"PO-Revision-Date: 2021-01-06 08:47+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -4567,7 +4567,7 @@ msgstr "Ne peut écrire dans %s"
 #: lib/src/gretl_www.c:1147
 #, c-format
 msgid "Couldn't find %s for gretl %s"
-msgstr "Ne peut as trouver %s pour gretl %s"
+msgstr "Ne peut trouver %s pour gretl %s"
 
 #: lib/src/gretl_xml.c:72 lib/src/gretl_xml.c:4518
 #, c-format
