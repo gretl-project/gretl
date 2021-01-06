@@ -164,7 +164,7 @@ static int GLS_demean_detrend (DATASET *dset, int v,
 	pprintf(prn, "\nGLS demean/detrend: using %s-%s (T = %d)\n",
 		date1, date2, yd->rows);
 	for (i=0; i<xcols; i++) {
-	    pprintf(prn, "  %s = %g\n", (i==0)? "mean" : "trend", b->val[i]);
+	    pprintf(prn, "  %s = %#.8g\n", (i==0)? "mean" : "trend", b->val[i]);
 	}
     }
 
@@ -194,7 +194,8 @@ static int GLS_demean_detrend (DATASET *dset, int v,
 /* replace @y with demeaned or detrended y via OLS */
 
 static int OLS_demean_detrend (double *y, int offset,
-			       int T, DetCode det)
+			       int T, DetCode det,
+			       PRN *prn)
 {
     gretl_matrix *yd = NULL;
     gretl_matrix *Xd = NULL;
@@ -239,6 +240,13 @@ static int OLS_demean_detrend (double *y, int offset,
     }
 
     err = gretl_matrix_ols(yd, Xd, b, NULL, NULL, NULL);
+
+    if (!err && prn != NULL) {
+	pprintf(prn, "\nOLS demean/detrend: (T = %d)\n", yd->rows);
+	for (t=0; t<xcols; t++) {
+	    pprintf(prn, "  %s = %#.8g\n", (t==0)? "mean" : "trend", b->val[t]);
+	}
+    }
 
     if (!err) {
 	for (t=0; t<T; t++) {
@@ -388,10 +396,11 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	err = dataset_add_series(dset, 1);
 
 	if (!err) {
+	    PRN *vprn = ainfo->verbosity > 1 ? prn : NULL;
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
 
-	    err = OLS_demean_detrend(dset->Z[v], offset, T, det);
+	    err = OLS_demean_detrend(dset->Z[v], offset, T, det, vprn);
 	}
 
 	if (!err) {

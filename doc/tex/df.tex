@@ -428,10 +428,11 @@ where degrees-of-freedom corrections are not available.
 
 But as soon as the loading coefficients attached to the EC terms are restricted, there is 
 no common set of regressors with freely varying coefficients in the VECM system anymore,
-and therefore in these cases the formulas above are misleading and the \dollar{xtxinv} 
-accessor cannot be retrieved. The notion of system degrees 
-of freedom then also becomes fuzzier since the number of regressors can vary across 
-equations.
+and therefore in these cases the formulas above are misleading. The \dollar{xtxinv} 
+accessor can still be retrieved (because it does not involve the coefficients), but in 
+the restricted $\alpha$ case it should no longer be used as shown above. 
+The notion of system degrees of freedom then also becomes fuzzier since the number of 
+regressors can vary across equations.
 
 %%% Local Variables:
 %%% mode: latex

@@ -904,7 +904,7 @@
         </option>
         <option>
 	  <flag>--x-12-arima</flag>
-	  <effect>use X-12-ARIMA for estimation</effect>
+	  <effect>use X-12-ARIMA, or X13, for estimation</effect>
         </option>
 	<option>
 	  <flag>--lbfgs</flag>
@@ -1008,7 +1008,9 @@
 	functionality, with estimation by exact ML; estimation via
 	conditional ML is available as an option.  (If
 	<program>X-12-ARIMA</program> is installed you have the option
-	of using it instead of native code.)  For details regarding
+	of using it instead of native code. Note that the newer
+	<program>X13</program> works as a drop-in replacement in 
+	exactly the same way.) For details regarding
 	these options, please see <guideref targ="chap:timeseries"/>.
       </para>
 

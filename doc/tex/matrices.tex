@@ -921,7 +921,10 @@ referenced, as follows:
   for other system estimators they return a big column vector.
 \item VARs and VECMs: \dollar{vcv} is not available, but 
   $X'X^{-1}$ (where $X$ is the common matrix of regressors) is
-  available as \dollar{xtxinv}.
+  available as \dollar{xtxinv}, 
+  such that for VARs and VECMs (without restrictions on $\alpha$) a vcv
+  equivalent can be easily and efficiently constructed as 
+  \dollar{sigma} ** \dollar{xtxinv}.
 \end{itemize}
 
 If the accessors are given without any prefix, they retrieve results
