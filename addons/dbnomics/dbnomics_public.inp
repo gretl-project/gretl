@@ -113,7 +113,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 
    tmpfile = sprintf("%s/tmp%04d.csv", $dotdir, randgen1(i, 0, 9999))
    # n = b.totobs
-   outfile @tmpfile
+   outfile @tmpfile --quiet
       printf "obs\tdbseries\n"
       set warnings off
       loop i=1 .. b.T -q
@@ -168,10 +168,10 @@ end function
 function bundle dbnomics_get_series (const string datacode, bool verbose[0])
 
    bundle ret
+   string json
    ret.error = 0
    ret.has_data = 0
-   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1&complete_missing_periods=1"
-   string json
+   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1&align_periods=1"
    ret.error = dbn_get_json(parms, verbose, &json)
    if ret.error
       return ret
