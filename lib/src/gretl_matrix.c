@@ -713,18 +713,11 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 {
-    if (rows > 0) {
-        m->rows = rows;
-    }
+    int r = rows > 0 ? rows : m->rows;
+    int c = cols > 0 ? cols : m->cols;
 
-    if (cols > 0) {
-        m->cols = cols;
-    }
-
-#if 0
-    /* this shouldn't be necessary? */
-    gretl_matrix_destroy_info(m);
-#endif
+    m->rows = r;
+    m->cols = c;
 
     return m;
 }
