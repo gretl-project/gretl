@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-17 09:46+0100\n"
+"POT-Creation-Date: 2021-01-07 10:29-0500\n"
 "PO-Revision-Date: 2015-07-30 11:50+0100\n"
 "Last-Translator: Mihaela Nicolau <m.nicolau@univ-danubius.ro>\n"
 "Language-Team: Romanian\n"
@@ -17,230 +17,223 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.5.5\n"
 
-#: lib/src/adf_kpss.c:511
+#: lib/src/adf_kpss.c:520
 msgid "lagged differences"
 msgstr "diferenţe întârziate"
 
-#: lib/src/adf_kpss.c:524
+#: lib/src/adf_kpss.c:533
 msgid "modified BIC, Perron-Qu"
 msgstr "BIC modificat, Perron-Qu"
 
-#: lib/src/adf_kpss.c:526
+#: lib/src/adf_kpss.c:535
 msgid "modified AIC, Perron-Qu"
 msgstr "AIC modificat, Perron-Qu"
 
-#: lib/src/adf_kpss.c:532 gui/library.c:1004
+#: lib/src/adf_kpss.c:541 gui/library.c:1004
 msgid "modified BIC"
 msgstr "BIC modificat"
 
-#: lib/src/adf_kpss.c:532 lib/src/modelprint.c:3359 lib/src/texprint.c:1108
+#: lib/src/adf_kpss.c:541 lib/src/modelprint.c:3359 lib/src/texprint.c:1108
 #: lib/src/varprint.c:1096 lib/src/varprint.c:1104 gui/library.c:1007
-#: gui/selector.c:5992
+#: gui/selector.c:5991
 msgid "BIC"
 msgstr "BIC"
 
-#: lib/src/adf_kpss.c:534 gui/library.c:1008 gui/selector.c:5993
+#: lib/src/adf_kpss.c:543 gui/library.c:1008 gui/selector.c:5992
 msgid "t-statistic"
 msgstr "Statistica-t"
 
-#: lib/src/adf_kpss.c:537 gui/library.c:1003
+#: lib/src/adf_kpss.c:546 gui/library.c:1003
 msgid "modified AIC"
 msgstr "AIC modificat"
 
-#: lib/src/adf_kpss.c:537 lib/src/modelprint.c:3359 lib/src/texprint.c:1107
+#: lib/src/adf_kpss.c:546 lib/src/modelprint.c:3359 lib/src/texprint.c:1107
 #: lib/src/varprint.c:1095 lib/src/varprint.c:1103 gui/library.c:1006
-#: gui/selector.c:5991
+#: gui/selector.c:5990
 msgid "AIC"
 msgstr "AIC"
 
-#: lib/src/adf_kpss.c:550
+#: lib/src/adf_kpss.c:559
 #, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
 msgstr "Testul Dickey-Fuller (GSL) pentru %s\n"
 
-#: lib/src/adf_kpss.c:552
+#: lib/src/adf_kpss.c:561
 #, c-format
 msgid "Dickey-Fuller test for %s\n"
 msgstr "Testul Dickey-Fuller pentru %s\n"
 
-#: lib/src/adf_kpss.c:556
+#: lib/src/adf_kpss.c:565
 #, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
 msgstr "Testul Dickey-Fuller extins (ADF) (GLS) pentru %s\n"
 
-#: lib/src/adf_kpss.c:558
+#: lib/src/adf_kpss.c:567
 #, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "Testul Dickey-Fuller extins (ADF) pentru %s\n"
 
-#: lib/src/adf_kpss.c:563
+#: lib/src/adf_kpss.c:572
 #, fuzzy, c-format
 msgid "testing down from %d lags, criterion %s"
 msgstr "test de la ordinul maxim de întârziere în jos"
 
-#: lib/src/adf_kpss.c:567 lib/src/adf_kpss.c:670 lib/src/adf_kpss.c:689
+#: lib/src/adf_kpss.c:576 lib/src/adf_kpss.c:679 lib/src/adf_kpss.c:698
 #: plugin/panurc.c:568
 #, c-format
 msgid "including one lag of (1-L)%s"
 msgstr "incluzând o întârziere de (1-L) %s"
 
-#: lib/src/adf_kpss.c:569 lib/src/adf_kpss.c:672 lib/src/adf_kpss.c:691
+#: lib/src/adf_kpss.c:578 lib/src/adf_kpss.c:681 lib/src/adf_kpss.c:700
 #: plugin/panurc.c:570
 #, c-format
 msgid "including %d lags of (1-L)%s"
 msgstr "incluzând %d întârzieri de (1-L)%s"
 
-#: lib/src/adf_kpss.c:611 gui/library.c:1025 gui/library.c:1267
-#: gui/selector.c:6821 plugin/panurc.c:227
+#: lib/src/adf_kpss.c:620 gui/library.c:1025 gui/library.c:1267
+#: gui/selector.c:6820 plugin/panurc.c:227
 msgid "test without constant"
 msgstr "test fără constantă"
 
-#: lib/src/adf_kpss.c:612 gui/selector.c:6822 plugin/panurc.c:228
+#: lib/src/adf_kpss.c:621 gui/selector.c:6821 plugin/panurc.c:228
 msgid "test with constant"
 msgstr "test cu constantă"
 
-#: lib/src/adf_kpss.c:613 gui/library.c:1027 gui/library.c:1038
-#: gui/library.c:1269 gui/selector.c:6823 plugin/panurc.c:229
+#: lib/src/adf_kpss.c:622 gui/library.c:1027 gui/library.c:1038
+#: gui/library.c:1269 gui/selector.c:6822 plugin/panurc.c:229
 msgid "with constant and trend"
 msgstr "cu constantă şi trend"
 
-#: lib/src/adf_kpss.c:614
+#: lib/src/adf_kpss.c:623
 #, fuzzy
 msgid "with constant, linear and quadratic trend"
 msgstr "cu constantă şi trend pătratic"
 
-#: lib/src/adf_kpss.c:641 lib/src/adf_kpss.c:646 lib/src/adf_kpss.c:2266
-#: lib/src/adf_kpss.c:2268 lib/src/bootstrap.c:694 lib/src/compare.c:369
+#: lib/src/adf_kpss.c:650 lib/src/adf_kpss.c:655 lib/src/adf_kpss.c:2274
+#: lib/src/adf_kpss.c:2276 lib/src/bootstrap.c:694 lib/src/compare.c:369
 #: lib/src/compare.c:376 lib/src/compare.c:383 lib/src/compare.c:389
-#: lib/src/compare.c:394 lib/src/compare.c:398 lib/src/gretl_model.c:4577
+#: lib/src/compare.c:394 lib/src/compare.c:398 lib/src/gretl_model.c:4573
 #: lib/src/modelprint.c:2446 lib/src/modelprint.c:2462
 #: lib/src/modelprint.c:2482 lib/src/modelprint.c:3159
 #: lib/src/modelprint.c:4365 lib/src/modelprint.c:4702
 #: lib/src/modelprint.c:5566 lib/src/modelprint.c:5568 lib/src/vartest.c:1495
 #: gui/dialogs.c:5761 gui/library.c:3366 plugin/anova.c:153 plugin/anova.c:155
-#: plugin/johansen.c:1608 plugin/johansen.c:1609 plugin/johansen.c:1628
-#: plugin/johansen.c:1654
+#: plugin/johansen.c:1614 plugin/johansen.c:1615 plugin/johansen.c:1634
+#: plugin/johansen.c:1660
 msgid "p-value"
 msgstr "p-value"
 
-#: lib/src/adf_kpss.c:641 lib/src/modelprint.c:3750 lib/src/modelprint.c:3819
-#: lib/src/subsample.c:3138
+#: lib/src/adf_kpss.c:650 lib/src/modelprint.c:3750 lib/src/modelprint.c:3819
+#: lib/src/subsample.c:3151
 msgid "unknown"
 msgstr "necunoscut"
 
-#: lib/src/adf_kpss.c:646
+#: lib/src/adf_kpss.c:655
 msgid "asymptotic p-value"
 msgstr "p-value asimptotic"
 
-#: lib/src/adf_kpss.c:653
+#: lib/src/adf_kpss.c:662
 #, c-format
 msgid "sample size %d\n"
 msgstr "mărimea eşantionului %d\n"
 
-#: lib/src/adf_kpss.c:657
+#: lib/src/adf_kpss.c:666
 msgid "unit-root null hypothesis: a = 1"
 msgstr "rădăcina unitară ipoteza nulă: a=1"
 
-#: lib/src/adf_kpss.c:677 lib/src/adf_kpss.c:696 lib/src/adf_kpss.c:1711
+#: lib/src/adf_kpss.c:686 lib/src/adf_kpss.c:705 lib/src/adf_kpss.c:1720
 #: gui/cmdstack.c:418
 msgid "model"
 msgstr "model"
 
-#: lib/src/adf_kpss.c:683
+#: lib/src/adf_kpss.c:692
 msgid "plus seasonal dummies"
 msgstr "cu dummy sezoniere"
 
-#: lib/src/adf_kpss.c:709 lib/src/adf_kpss.c:1660
+#: lib/src/adf_kpss.c:718 lib/src/adf_kpss.c:1669
 msgid "estimated value of (a - 1)"
 msgstr "valoarea estimată a (a-1)"
 
-#: lib/src/adf_kpss.c:710 lib/src/adf_kpss.c:1661 lib/src/describe.c:4502
-#: lib/src/describe.c:4530 lib/src/gretl_model.c:4575 gui/calculator.c:593
+#: lib/src/adf_kpss.c:719 lib/src/adf_kpss.c:1670 lib/src/describe.c:4507
+#: lib/src/describe.c:4535 lib/src/gretl_model.c:4571 gui/calculator.c:593
 msgid "test statistic"
 msgstr "test statistic"
 
-#: lib/src/adf_kpss.c:716 lib/src/adf_kpss.c:719 lib/src/adf_kpss.c:1498
+#: lib/src/adf_kpss.c:725 lib/src/adf_kpss.c:728 lib/src/adf_kpss.c:1507
 #: plugin/stats_tables.c:239
 msgid "Critical values"
 msgstr "Valori critice"
 
-#: lib/src/adf_kpss.c:725
+#: lib/src/adf_kpss.c:734
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "coefic. de autocorelaţie de prim ordin pentru e"
 
-#: lib/src/adf_kpss.c:1067
+#: lib/src/adf_kpss.c:1076
 msgid "squared time trend variable"
 msgstr "variabilă pentru trendul temporal pătratic"
 
-#: lib/src/adf_kpss.c:1070 lib/src/genfuncs.c:3458
+#: lib/src/adf_kpss.c:1079 lib/src/genfuncs.c:3457
 msgid "time trend variable"
 msgstr "variabilă pentru trend temporal"
 
-#: lib/src/adf_kpss.c:1100
+#: lib/src/adf_kpss.c:1109
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
 msgstr "Eliminare trend cu GLS: b0 = %g, b1 = %g\n"
 
-#: lib/src/adf_kpss.c:1103
+#: lib/src/adf_kpss.c:1112
 #, c-format
 msgid "GLS estimate of b0: %g\n"
 msgstr "Estimare GLS a b0: %g\n"
 
-#: lib/src/adf_kpss.c:1199
+#: lib/src/adf_kpss.c:1208
 msgid "Invalid option"
 msgstr "Opţiune nevalidă"
 
-#: lib/src/adf_kpss.c:1271 lib/src/adf_kpss.c:2048 lib/src/boxplots.c:874
-#: lib/src/describe.c:1724 lib/src/describe.c:3505 lib/src/describe.c:4059
-#: lib/src/describe.c:4655 lib/src/graphing.c:9064
+#: lib/src/adf_kpss.c:1280 lib/src/adf_kpss.c:2056 lib/src/boxplots.c:874
+#: lib/src/describe.c:1729 lib/src/describe.c:3510 lib/src/describe.c:4064
+#: lib/src/describe.c:4660 lib/src/graphing.c:9062
 #, c-format
 msgid "%s is a constant"
 msgstr "%s este o constantă"
 
-#: lib/src/adf_kpss.c:1645
+#: lib/src/adf_kpss.c:1654
 msgid "Choi meta-tests:"
 msgstr "Choi meta-tests:"
 
-#: lib/src/adf_kpss.c:1646
+#: lib/src/adf_kpss.c:1655
 msgid "Inverse chi-square"
 msgstr "Hi-pătrat invers"
 
-#: lib/src/adf_kpss.c:1648
+#: lib/src/adf_kpss.c:1657
 msgid "Inverse normal test"
 msgstr "Test normală invers"
 
-#: lib/src/adf_kpss.c:1650
+#: lib/src/adf_kpss.c:1659
 msgid "Logit test"
 msgstr "Test logit"
 
-#: lib/src/adf_kpss.c:1656
+#: lib/src/adf_kpss.c:1665
 msgid "Unit"
 msgstr "Unitate"
 
-#: lib/src/adf_kpss.c:1657 lib/src/gretl_model.c:4573 gui/selector.c:8770
+#: lib/src/adf_kpss.c:1666 lib/src/gretl_model.c:4569 gui/selector.c:8771
 msgid "lag order"
 msgstr "ordin întârziere"
 
-#: lib/src/adf_kpss.c:1764
+#: lib/src/adf_kpss.c:1773
 msgid "H0: all groups have unit root"
 msgstr "H0: toate grupurile au rădăcină unitară"
 
-#: lib/src/adf_kpss.c:1826 lib/src/compare.c:2728 lib/src/compare.c:2762
-#: lib/src/estimate.c:3980 lib/src/estimate.c:4034 lib/src/estimate.c:4191
-#: lib/src/genfuncs.c:2514 lib/src/genfuncs.c:4475 lib/src/genfuncs.c:4694
-#: lib/src/gretl_func.c:8921 lib/src/pvalues.c:2079
-msgid "Couldn't load plugin function\n"
-msgstr "Imposibil de încărcat funcţia plugin\n"
-
-#: lib/src/adf_kpss.c:2174
+#: lib/src/adf_kpss.c:2182
 msgid "Robust estimate of variance"
 msgstr "Estimarea robustă a varianţei"
 
-#: lib/src/adf_kpss.c:2175
+#: lib/src/adf_kpss.c:2183
 msgid "Sum of squares of cumulated residuals"
 msgstr "Suma pătratelor reziduurilor cumulate"
 
-#: lib/src/adf_kpss.c:2188
+#: lib/src/adf_kpss.c:2196
 #, c-format
 msgid ""
 "\n"
@@ -249,7 +242,7 @@ msgstr ""
 "\n"
 "Testul KPSS pentru %s"
 
-#: lib/src/adf_kpss.c:2191
+#: lib/src/adf_kpss.c:2199
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
@@ -257,7 +250,7 @@ msgstr ""
 "(incluzând trend şi sezonalităţi)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2193
+#: lib/src/adf_kpss.c:2201
 msgid ""
 " (including trend)\n"
 "\n"
@@ -265,7 +258,7 @@ msgstr ""
 "(incluzând trend)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2197
+#: lib/src/adf_kpss.c:2205
 msgid ""
 " (including seasonals)\n"
 "\n"
@@ -273,17 +266,17 @@ msgstr ""
 "(incluzând sezonalităţi)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2204 lib/src/adf_kpss.c:2250
+#: lib/src/adf_kpss.c:2212 lib/src/adf_kpss.c:2258
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "Parametru de trunchiere a întârzierii = %d\n"
 
-#: lib/src/adf_kpss.c:2205 lib/src/compare.c:391 lib/src/compare.c:985
+#: lib/src/adf_kpss.c:2213 lib/src/compare.c:391 lib/src/compare.c:985
 #: lib/src/compare.c:1968 lib/src/compare.c:2187 lib/src/compare.c:2392
-#: lib/src/compare.c:3653 lib/src/describe.c:6662 lib/src/estimate.c:2743
-#: lib/src/estimate.c:2756 lib/src/estimate.c:2764 lib/src/estimate.c:3591
-#: lib/src/estimate.c:3594 lib/src/gretl_intl.c:103 lib/src/gretl_model.c:4618
-#: lib/src/gretl_panel.c:4919 lib/src/gretl_restrict.c:2378
+#: lib/src/compare.c:3651 lib/src/describe.c:6665 lib/src/estimate.c:2745
+#: lib/src/estimate.c:2758 lib/src/estimate.c:2766 lib/src/estimate.c:3593
+#: lib/src/estimate.c:3596 lib/src/gretl_intl.c:103 lib/src/gretl_model.c:4614
+#: lib/src/gretl_panel.c:4926 lib/src/gretl_restrict.c:2378
 #: lib/src/gretl_restrict.c:2387 lib/src/modelprint.c:2609
 #: lib/src/modelprint.c:2613 lib/src/modelprint.c:2618
 #: lib/src/modelprint.c:2636 lib/src/modelprint.c:2640
@@ -292,15 +285,15 @@ msgstr "Parametru de trunchiere a întârzierii = %d\n"
 msgid "Test statistic"
 msgstr "Test statistic"
 
-#: lib/src/adf_kpss.c:2208 lib/src/adf_kpss.c:2210 gui/dialogs.c:1079
+#: lib/src/adf_kpss.c:2216 lib/src/adf_kpss.c:2218 gui/dialogs.c:1079
 msgid "P-value"
 msgstr "P-value"
 
-#: lib/src/adf_kpss.c:2212
+#: lib/src/adf_kpss.c:2220
 msgid "Interpolated p-value"
 msgstr "P-value interpolată"
 
-#: lib/src/adf_kpss.c:2248
+#: lib/src/adf_kpss.c:2256
 #, c-format
 msgid ""
 "\n"
@@ -309,33 +302,33 @@ msgstr ""
 "\n"
 "Testul KPSS pentru %s %s\n"
 
-#: lib/src/adf_kpss.c:2249
+#: lib/src/adf_kpss.c:2257
 msgid "(including trend)"
 msgstr "(incluzând trend)"
 
-#: lib/src/adf_kpss.c:2249
+#: lib/src/adf_kpss.c:2257
 msgid "(without trend)"
 msgstr "(fără trend)"
 
-#: lib/src/adf_kpss.c:2270
+#: lib/src/adf_kpss.c:2278
 msgid "interpolated p-value"
 msgstr "P-value interpolată"
 
-#: lib/src/adf_kpss.c:2311
+#: lib/src/adf_kpss.c:2319
 msgid "H0: all groups are stationary"
 msgstr "H0: toate grupurile sunt staţionare"
 
-#: lib/src/adf_kpss.c:2636 lib/src/adf_kpss.c:2679
+#: lib/src/adf_kpss.c:2644 lib/src/adf_kpss.c:2687
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Pasul %d: testare pentru rădăcină unitară în %s\n"
 
-#: lib/src/adf_kpss.c:2646
+#: lib/src/adf_kpss.c:2654
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Pasul %d: regresie de cointegrare\n"
 
-#: lib/src/adf_kpss.c:2697
+#: lib/src/adf_kpss.c:2705
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -413,7 +406,7 @@ msgstr "Sinteză numerică cu interval de confidenţă bootstrap pentru mediană
 msgid "Numerical summary for %s"
 msgstr "Sinteză numerică pentru %s"
 
-#: lib/src/boxplots.c:317 gui/gpt_control.c:4457 gui/gpt_control.c:4535
+#: lib/src/boxplots.c:317 gui/gpt_control.c:4466 gui/gpt_control.c:4544
 msgid "Numerical summary"
 msgstr "Sinteza numerică"
 
@@ -464,8 +457,8 @@ msgid "Null hypothesis: the regression parameter is zero for %s"
 msgstr "Ipoteza nulă: parametrul regresiei este zero pentru %s"
 
 #: lib/src/compare.c:283 lib/src/compare.c:286 lib/src/compare.c:289
-#: lib/src/describe.c:6660 lib/src/gretl_model.c:4362
-#: lib/src/gretl_model.c:4365 lib/src/gretl_model.c:4372
+#: lib/src/describe.c:6663 lib/src/gretl_model.c:4358
+#: lib/src/gretl_model.c:4361 lib/src/gretl_model.c:4368
 #: lib/src/nonparam.c:1047 lib/src/nonparam.c:1199 lib/src/varprint.c:1249
 #: lib/src/varprint.c:1255 lib/src/varprint.c:1263
 msgid "Null hypothesis"
@@ -506,23 +499,23 @@ msgstr "Testul Wald"
 
 #: lib/src/compare.c:368 lib/src/compare.c:375 lib/src/compare.c:388
 #: lib/src/compare.c:397 lib/src/compare.c:987 lib/src/compare.c:2252
-#: lib/src/compare.c:2399 lib/src/compare.c:2405 lib/src/compare.c:3071
-#: lib/src/describe.c:1637 lib/src/estimate.c:2768 lib/src/estimate.c:3597
-#: lib/src/graphing.c:5094 lib/src/gretl_model.c:4428
-#: lib/src/gretl_model.c:4442 lib/src/gretl_model.c:4445
-#: lib/src/gretl_model.c:4477 lib/src/gretl_panel.c:4474
+#: lib/src/compare.c:2399 lib/src/compare.c:2405 lib/src/compare.c:3069
+#: lib/src/describe.c:1642 lib/src/estimate.c:2770 lib/src/estimate.c:3599
+#: lib/src/graphing.c:5095 lib/src/gretl_model.c:4424
+#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4441
+#: lib/src/gretl_model.c:4473 lib/src/gretl_panel.c:4481
 #: lib/src/modelprint.c:223 lib/src/modelprint.c:402 lib/src/modelprint.c:406
 #: lib/src/modelprint.c:496 lib/src/modelprint.c:499 lib/src/modelprint.c:520
 #: lib/src/modelprint.c:523 lib/src/modelprint.c:2611 lib/src/modelprint.c:2616
 #: lib/src/modelprint.c:2638 lib/src/modelprint.c:2643
 #: lib/src/modelprint.c:3156 lib/src/modelprint.c:5429
-#: lib/src/modelprint.c:5452 lib/src/printout.c:332 lib/src/pvalues.c:3048
-#: lib/src/pvalues.c:3780 lib/src/system.c:1306 lib/src/system.c:1380
-#: lib/src/system.c:3622 lib/src/system.c:3644 lib/src/system.c:3716
-#: lib/src/system.c:3744 lib/src/system.c:4904 lib/src/varprint.c:851
+#: lib/src/modelprint.c:5452 lib/src/printout.c:332 lib/src/pvalues.c:3046
+#: lib/src/pvalues.c:3778 lib/src/system.c:1306 lib/src/system.c:1380
+#: lib/src/system.c:3609 lib/src/system.c:3631 lib/src/system.c:3703
+#: lib/src/system.c:3731 lib/src/system.c:4891 lib/src/varprint.c:851
 #: lib/src/varprint.c:855 lib/src/varprint.c:1258 lib/src/varprint.c:1266
 #: lib/src/vartest.c:253 lib/src/vartest.c:1207 lib/src/vartest.c:1494
-#: plugin/johansen.c:1842 plugin/jrestrict.c:2832
+#: plugin/johansen.c:1848 plugin/jrestrict.c:2832
 msgid "Chi-square"
 msgstr "Hi pătrat"
 
@@ -530,7 +523,7 @@ msgstr "Hi pătrat"
 msgid "LR test"
 msgstr "Testul LR"
 
-#: lib/src/compare.c:382 lib/src/compare.c:3073
+#: lib/src/compare.c:382 lib/src/compare.c:3071
 msgid "F-form"
 msgstr "Forma F"
 
@@ -553,7 +546,7 @@ msgid "Omitting variables improved %d of %d information criteria.\n"
 msgstr "Omițând variabile se îmbunătățesc %d din %d criterii informative.\n"
 
 #: lib/src/compare.c:927 lib/src/compare.c:2336 lib/src/graphing.c:4140
-#: lib/src/graphing.c:4152 lib/src/graphing.c:4238 lib/src/graphing.c:6952
+#: lib/src/graphing.c:4152 lib/src/graphing.c:4238 lib/src/graphing.c:6950
 #: lib/src/printout.c:1563 gui/guiprint.c:1570 gui/guiprint.c:1630
 #: gui/library.c:6973 plugin/leverage.c:306
 msgid "residual"
@@ -569,12 +562,12 @@ msgstr "Test de neliniaritate (termeni logaritmici)"
 
 #: lib/src/compare.c:987 lib/src/compare.c:1969 lib/src/compare.c:2188
 #: lib/src/compare.c:2251 lib/src/compare.c:2393 lib/src/compare.c:2398
-#: lib/src/compare.c:2404 lib/src/compare.c:3072 lib/src/compare.c:3074
-#: lib/src/compare.c:3078 lib/src/describe.c:4503 lib/src/describe.c:4531
-#: lib/src/describe.c:7617 lib/src/describe.c:7620 lib/src/estimate.c:2745
-#: lib/src/estimate.c:2768 lib/src/estimate.c:3597 lib/src/gretl_model.c:4636
-#: lib/src/gretl_panel.c:1598 lib/src/gretl_panel.c:4475
-#: lib/src/gretl_panel.c:4920 lib/src/modelprint.c:2611
+#: lib/src/compare.c:2404 lib/src/compare.c:3070 lib/src/compare.c:3072
+#: lib/src/compare.c:3076 lib/src/describe.c:4508 lib/src/describe.c:4536
+#: lib/src/describe.c:7620 lib/src/describe.c:7623 lib/src/estimate.c:2747
+#: lib/src/estimate.c:2770 lib/src/estimate.c:3599 lib/src/gretl_model.c:4632
+#: lib/src/gretl_panel.c:1598 lib/src/gretl_panel.c:4482
+#: lib/src/gretl_panel.c:4927 lib/src/modelprint.c:2611
 #: lib/src/modelprint.c:2616 lib/src/modelprint.c:2620
 #: lib/src/modelprint.c:2638 lib/src/modelprint.c:2643
 #: lib/src/modelprint.c:2647 lib/src/modelprint.c:2660
@@ -598,7 +591,7 @@ msgstr "Abandonează %-16s (p-value %.3f)\n"
 msgid "No coefficient has a p-value less than %g"
 msgstr ""
 
-#: lib/src/compare.c:1878 lib/src/estimate.c:2760 lib/src/gretl_model.c:4222
+#: lib/src/compare.c:1878 lib/src/estimate.c:2762 lib/src/gretl_model.c:4222
 #: lib/src/gretl_model.c:4228 lib/src/modelprint.c:898 gui/library.c:3219
 msgid "squares only"
 msgstr "numai pătratele"
@@ -665,7 +658,7 @@ msgstr "Testul F al lui Chow pentru break"
 msgid "Robust Wald test for break"
 msgstr "Testul Wald robust pentru break"
 
-#: lib/src/compare.c:2779
+#: lib/src/compare.c:2777
 msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
@@ -674,50 +667,50 @@ msgstr ""
 "un punct necunoscut,\n"
 "cu ecluzând  15 procente inițiale și finale"
 
-#: lib/src/compare.c:2783
+#: lib/src/compare.c:2781
 #, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
 msgstr "Maximul testului Wald = %g corespunde observației %s"
 
-#: lib/src/compare.c:2786
+#: lib/src/compare.c:2784
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
 msgstr "Maximul F(%d, %d) = %g corespunde observației %s"
 
-#: lib/src/compare.c:2793
+#: lib/src/compare.c:2791
 #, c-format
 msgid "Asymptotic p-value = %.6g for chi-square(%d) = %g"
 msgstr "p-value asimptotic = %.6g pentri hi-pătrat(%d) = %g"
 
-#: lib/src/compare.c:3061 lib/src/gretl_model.c:4117
+#: lib/src/compare.c:3059 lib/src/gretl_model.c:4117
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Testul Chow pentru diferențe structurale față de %s"
 
-#: lib/src/compare.c:3065 lib/src/gretl_model.c:4114
+#: lib/src/compare.c:3063 lib/src/gretl_model.c:4114
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr "Testul Chow pentru rupturi structurale la observația %s"
 
-#: lib/src/compare.c:3128 lib/src/compare.c:3159
+#: lib/src/compare.c:3126 lib/src/compare.c:3157
 msgid "Invalid sample split for Chow test"
 msgstr "Divizare eșantion nevalidă pentru testul Chow"
 
-#: lib/src/compare.c:3311
+#: lib/src/compare.c:3309
 msgid "Observation"
 msgstr "Observaţie"
 
-#: lib/src/compare.c:3317
+#: lib/src/compare.c:3315
 #, no-c-format
 msgid "CUSUMSQ plot with 95% confidence band"
 msgstr "Graficul CUSUMSQ cu 95% interval de confidență"
 
-#: lib/src/compare.c:3325
+#: lib/src/compare.c:3323
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
 msgstr "Graficul CUSUM cu 95% interval de confidență"
 
-#: lib/src/compare.c:3356
+#: lib/src/compare.c:3354
 #, c-format
 msgid ""
 "\n"
@@ -727,24 +720,24 @@ msgstr ""
 "\n"
 "Harvey-Collier t(%d) = %g cu p-value %.4g\n"
 
-#: lib/src/compare.c:3439
+#: lib/src/compare.c:3437
 msgid "CUSUMSQ test for stability of parameters"
 msgstr "Testul CUSUMSQ pentru stabilitatea parametrilor"
 
-#: lib/src/compare.c:3456
+#: lib/src/compare.c:3454
 msgid "Cumulated sum of squared residuals"
 msgstr "Suma cumulată a pătratelor reziduurilor"
 
-#: lib/src/compare.c:3460
+#: lib/src/compare.c:3458
 msgid "CUSUM test for stability of parameters"
 msgstr "Testul CUSUM pentru stabilitatea parametrilor"
 
-#: lib/src/compare.c:3461
+#: lib/src/compare.c:3459
 #, c-format
 msgid "mean of scaled residuals = %g\n"
 msgstr "media reziduurilor scalate = %g\n"
 
-#: lib/src/compare.c:3468
+#: lib/src/compare.c:3466
 #, c-format
 msgid ""
 "sigmahat                 = %g\n"
@@ -753,35 +746,35 @@ msgstr ""
 "sigmahat                 = %g\n"
 "\n"
 
-#: lib/src/compare.c:3475
+#: lib/src/compare.c:3473
 msgid "Cumulated sum of scaled residuals"
 msgstr "Suma cumulată a reziduurilor scalate"
 
-#: lib/src/compare.c:3481
+#: lib/src/compare.c:3479
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' indică o valoare in afara intervalului de confidență de 95%)"
 
-#: lib/src/compare.c:3650 lib/src/gretl_model.c:4171
+#: lib/src/compare.c:3648 lib/src/gretl_model.c:4171
 msgid "Test of common factor restriction"
 msgstr "Testul de restricție a factorului comun"
 
-#: lib/src/compare.c:3655 lib/src/gretl_restrict.c:2394
+#: lib/src/compare.c:3653 lib/src/gretl_restrict.c:2394
 #: lib/src/gretl_restrict.c:2998 lib/src/gretl_restrict.c:3006
 #: lib/src/vartest.c:1208
 #, c-format
 msgid "with p-value = %g\n"
 msgstr "cu p-value = %g\n"
 
-#: lib/src/compare.c:3708
+#: lib/src/compare.c:3706
 msgid "This test is only relevant for pooled models\n"
 msgstr "Acest test este relevant numai pentru modelele combinate (pooled)\n"
 
-#: lib/src/compare.c:3713
+#: lib/src/compare.c:3711
 msgid "This test requires that the model contains a constant\n"
 msgstr "Acest test impune ca modelul să conțină o constantă\n"
 
-#: lib/src/compare.c:3718
+#: lib/src/compare.c:3716
 msgid ""
 "Sorry, can't do this test on an unbalanced panel.\n"
 "You need to have the same number of observations\n"
@@ -950,7 +943,7 @@ msgid ""
 msgstr ""
 "Găsite date binare (%d) (linia %d:%d): acesta nu este un fișier text valid\n"
 
-#: lib/src/csvdata.c:1777 lib/src/dataio.c:3208
+#: lib/src/csvdata.c:1777 lib/src/dataio.c:3027
 msgid "Data file is empty\n"
 msgstr "Fişierul de date este gol\n"
 
@@ -1070,7 +1063,7 @@ msgstr "se pare că nu există nume pentru variabile\n"
 msgid "At row %d, column %d:\n"
 msgstr "La rândul %d, coloana %d:\n"
 
-#: lib/src/csvdata.c:3186 lib/src/dataio.c:3717 lib/src/dataio.c:3760
+#: lib/src/csvdata.c:3186 lib/src/dataio.c:3533 lib/src/dataio.c:3576
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- nicio conversie numerică efectuată!"
@@ -1089,50 +1082,50 @@ msgstr "căutare etichete de rând și date...\n"
 msgid "scanning for row labels and data...\n"
 msgstr "căutare etichete de rând și date...\n"
 
-#: lib/src/csvdata.c:3436 lib/src/csvdata.c:3439 lib/src/dataio.c:3236
+#: lib/src/csvdata.c:3436 lib/src/csvdata.c:3439 lib/src/dataio.c:3055
 msgid "parsing"
 msgstr "citind"
 
-#: lib/src/csvdata.c:3587 lib/src/dataio.c:3442 lib/src/dataio.c:3515
+#: lib/src/csvdata.c:3583 lib/src/dataio.c:3259 lib/src/dataio.c:3331
 #: lib/src/dbread.c:1743
 #, c-format
 msgid "Couldn't open %s\n"
 msgstr "Nu s-a putut deschide %s\n"
 
-#: lib/src/csvdata.c:3611
+#: lib/src/csvdata.c:3607
 msgid "using fixed column format\n"
 msgstr "folosind coloane cu format fix\n"
 
-#: lib/src/csvdata.c:3694
+#: lib/src/csvdata.c:3690
 #, c-format
 msgid "using delimiter '%c'\n"
 msgstr "folosind delimitator '%c'\n"
 
-#: lib/src/csvdata.c:3696 lib/src/dataio.c:3250
+#: lib/src/csvdata.c:3692 lib/src/dataio.c:3069
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr "   cea mai lungă linie: %d caractere\n"
 
-#: lib/src/csvdata.c:3723 lib/src/dataio.c:3333
+#: lib/src/csvdata.c:3719 lib/src/dataio.c:3152
 #, c-format
 msgid "   number of variables: %d\n"
 msgstr "   numărul variabilelor: %d\n"
 
-#: lib/src/csvdata.c:3724
+#: lib/src/csvdata.c:3720
 #, c-format
 msgid "   number of non-blank lines: %d\n"
 msgstr "   numărul liniilor ne-goale: %d\n"
 
-#: lib/src/csvdata.c:3727 lib/src/dataio.c:3308 lib/src/dataio.c:3388
+#: lib/src/csvdata.c:3723 lib/src/dataio.c:3127 lib/src/dataio.c:3207
 msgid "Invalid data file\n"
 msgstr "Fișier de date nevalid\n"
 
-#: lib/src/csvdata.c:3781
+#: lib/src/csvdata.c:3777
 #, c-format
 msgid "WARNING: it seems '%c' is being used as thousands separator\n"
 msgstr "ATENȚIE: se pare că '%c' este folosit ca separator de mii\n"
 
-#: lib/src/csvdata.c:3824 plugin/import_common.c:122
+#: lib/src/csvdata.c:3820 plugin/import_common.c:122
 msgid ""
 "taking date information from row labels\n"
 "\n"
@@ -1140,25 +1133,25 @@ msgstr ""
 "preluând informații dată din etichetele de rând\n"
 "\n"
 
-#: lib/src/csvdata.c:3832
+#: lib/src/csvdata.c:3828
 msgid ""
 "treating these as undated data\n"
 "\n"
 msgstr "considerând acestea ca date nedatate\n"
 
-#: lib/src/csvdata.c:3843 plugin/excel_import.c:1827
+#: lib/src/csvdata.c:3839 plugin/excel_import.c:1827
 #: plugin/gnumeric_import.c:705 plugin/ods_import.c:1294
-#: plugin/xlsx_import.c:1057
+#: plugin/xlsx_import.c:1053
 msgid "Failed to interpret the data as numeric\n"
 msgstr "Eroare în interpretarea datelor ca fiind numerice\n"
 
-#: lib/src/csvdata.c:3886 plugin/eviews_import.c:557 plugin/excel_import.c:1802
+#: lib/src/csvdata.c:3882 plugin/eviews_import.c:557 plugin/excel_import.c:1802
 #: plugin/jmulti_import.c:379 plugin/sas_import.c:686 plugin/spss_import.c:2013
-#: plugin/stata_import.c:2204 plugin/xlsx_import.c:1622
+#: plugin/stata_import.c:2204 plugin/xlsx_import.c:1618
 msgid "warning: some variable names were duplicated\n"
 msgstr "atenție: numele anumitor variabile a fost dublat\n"
 
-#: lib/src/csvdata.c:3928 plugin/eviews_import.c:523 plugin/eviews_import.c:538
+#: lib/src/csvdata.c:3924 plugin/eviews_import.c:523 plugin/eviews_import.c:538
 #: plugin/excel_import.c:1636 plugin/jmulti_import.c:350
 #: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
 #: plugin/spss_import.c:1918 plugin/spss_import.c:1939
@@ -1166,68 +1159,68 @@ msgstr "atenție: numele anumitor variabile a fost dublat\n"
 msgid "Out of memory\n"
 msgstr "Memorie insuficientă\n"
 
-#: lib/src/csvdata.c:4546
+#: lib/src/csvdata.c:4554
 msgid "No matching data after filtering"
 msgstr "Nicio potrivire de date după filtrare"
 
-#: lib/src/csvdata.c:4886
+#: lib/src/csvdata.c:4901
 msgid "You need to specify an aggregation method for a 1:n join"
 msgstr "Trebuie să specificați o metodă de agregare pentru o alăturare 1:n"
 
-#: lib/src/csvdata.c:6039
+#: lib/src/csvdata.c:6098
 #, c-format
 msgid "%s: column '%s' was not found"
 msgstr "%s: coloana '%s' nu a fost găsită"
 
-#: lib/src/csvdata.c:6060
+#: lib/src/csvdata.c:6119
 #, c-format
 msgid "%s: string key on left but numeric on right"
 msgstr "%s: cheie alfabetică la stânga dar numeric la dreapta"
 
-#: lib/src/csvdata.c:6062
+#: lib/src/csvdata.c:6121
 #, c-format
 msgid "%s: string key on right but numeric on left"
 msgstr "%s: cheie alfabetică la dreapta dar numerică la stânga"
 
-#: lib/src/csvdata.c:6429 lib/src/csvdata.c:6434 gui/library.c:4608
+#: lib/src/csvdata.c:6504 lib/src/csvdata.c:6509 gui/library.c:4608
 msgid "Series length does not match the dataset"
 msgstr "Lungimea seriei nu se potrivește cu setul de date"
 
-#: lib/src/csvdata.c:6473 lib/src/csvdata.c:6770 lib/src/csvdata.c:6860
+#: lib/src/csvdata.c:6548 lib/src/csvdata.c:6845 lib/src/csvdata.c:6937
 #, fuzzy
 msgid "Invalid join specification"
 msgstr "Specificare coloană nevalidă"
 
-#: lib/src/csvdata.c:7044
+#: lib/src/csvdata.c:7121
 #, c-format
 msgid "Outer dataset: read %d columns and %d rows\n"
 msgstr "Set de date externe: citire %d coloane și %d rânduri\n"
 
-#: lib/src/csvdata.c:7176 lib/src/dataio.c:2510 gui/gui_utils.c:1337
+#: lib/src/csvdata.c:7265 lib/src/dataio.c:2329 gui/gui_utils.c:1337
 #: gui/join-gui.c:951
 msgid "Data appended OK\n"
 msgstr "Date adăugate OK\n"
 
-#: lib/src/csvdata.c:7178
+#: lib/src/csvdata.c:7267
 #, fuzzy
 msgid "Data modified OK\n"
 msgstr "Date adăugate OK\n"
 
-#: lib/src/csvdata.c:7180
+#: lib/src/csvdata.c:7269
 #, fuzzy
 msgid "No changes were made to the dataset\n"
 msgstr "%d medii ale grupului au fost scăzute din date"
 
-#: lib/src/dataio.c:111
+#: lib/src/dataio.c:110
 msgid "Varname exceeds the maximum of 31 characters"
 msgstr "Numele variabilei depășește maximul de 31 caractere"
 
-#: lib/src/dataio.c:122 lib/src/geneval.c:19357 lib/src/geneval.c:19360
+#: lib/src/dataio.c:121 lib/src/geneval.c:19435 lib/src/geneval.c:19438
 #, c-format
 msgid "'%s' shadows a function of the same name"
 msgstr ""
 
-#: lib/src/dataio.c:145
+#: lib/src/dataio.c:144
 #, c-format
 msgid ""
 "First char of varname '%s' is bad\n"
@@ -1236,7 +1229,7 @@ msgstr ""
 "Primul caracter al numelui variabile '%s' nu este bun\n"
 "(primul trebuie să fie alfabetic)"
 
-#: lib/src/dataio.c:149
+#: lib/src/dataio.c:148
 #, c-format
 msgid ""
 "Varname '%s' contains illegal character '%c'\n"
@@ -1245,7 +1238,7 @@ msgstr ""
 "Numele variabilei '%s' conține caracterul nepermis '%c'\n"
 "A se folosi numai litere, numere sau liniuță jos (_)"
 
-#: lib/src/dataio.c:155
+#: lib/src/dataio.c:154
 #, c-format
 msgid ""
 "First char of varname (0x%x) is bad\n"
@@ -1254,7 +1247,7 @@ msgstr ""
 "Primul caracter al numelui variabilei (0x%x) nu este corect\n"
 "(primul trebuie să fie alfabetic)"
 
-#: lib/src/dataio.c:159
+#: lib/src/dataio.c:158
 #, c-format
 msgid ""
 "Varname contains illegal character 0x%x\n"
@@ -1263,35 +1256,40 @@ msgstr ""
 "Numele variabilei conține caracterul nepermis 0x%x\n"
 "A se folosi numai litere, numere sau liniuță jos (_)"
 
-#: lib/src/dataio.c:200
+#: lib/src/dataio.c:199
 #, c-format
 msgid "Bad character '%c' in date string"
 msgstr "Caracterul nepermis '%c' în șirul dată"
 
-#: lib/src/dataio.c:202
+#: lib/src/dataio.c:201
 #, c-format
 msgid "Bad character %d in date string"
 msgstr "Caracterul nepermis %d în șirul dată"
 
-#: lib/src/dataio.c:402 lib/src/dataio.c:407 lib/src/dataio.c:420
+#: lib/src/dataio.c:401 lib/src/dataio.c:406 lib/src/dataio.c:419
 #, c-format
 msgid "'%s': invalid observation index"
 msgstr "'%s': indice observație nevalid"
 
-#: lib/src/dataio.c:439 lib/src/forecast.c:3000 lib/src/genfuncs.c:4039
+#: lib/src/dataio.c:438 lib/src/forecast.c:3000 lib/src/genfuncs.c:4038
 msgid "Observation number out of bounds"
 msgstr "Număr observații în afara limitelor"
 
-#: lib/src/dataio.c:1095 lib/src/gretl_xml.c:3750
+#: lib/src/dataio.c:1339
 #, c-format
-msgid ""
-"\n"
-"Read datafile %s\n"
-msgstr ""
-"\n"
-"Citire fișier date %s\n"
+msgid "wrote %s.gdt\n"
+msgstr "scrie %s.gdt\n"
 
-#: lib/src/dataio.c:1096 lib/src/dataio.c:1706 lib/src/gretl_xml.c:3751
+#: lib/src/dataio.c:1341 lib/src/gretl_paths.c:2082 gui/model_table.c:1460
+#, c-format
+msgid "wrote %s\n"
+msgstr "scrie %s\n"
+
+#: lib/src/dataio.c:1517 lib/src/dataio.c:2630 lib/src/gretl_xml.c:3797
+msgid "index variable"
+msgstr "variabilă indice"
+
+#: lib/src/dataio.c:1525 lib/src/gretl_xml.c:3772
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1300,216 +1298,202 @@ msgstr ""
 "periodicitate: %d, obs. max.: %d\n"
 "interval observații: de la %s la %s\n"
 
-#: lib/src/dataio.c:1520
-#, c-format
-msgid "wrote %s.gdt\n"
-msgstr "scrie %s.gdt\n"
-
-#: lib/src/dataio.c:1522 lib/src/gretl_paths.c:2082 gui/model_table.c:1460
-#, c-format
-msgid "wrote %s\n"
-msgstr "scrie %s\n"
-
-#: lib/src/dataio.c:1698 lib/src/dataio.c:2811 lib/src/gretl_xml.c:3776
-msgid "index variable"
-msgstr "variabilă indice"
-
-#: lib/src/dataio.c:1889
+#: lib/src/dataio.c:1708
 msgid "append: don't know how to align the new series!"
 msgstr "adăugare: nu se știe cum să se alinieze noua serie!"
 
-#: lib/src/dataio.c:2042 lib/src/dataio.c:2415 lib/src/dataio.c:2427
-#: lib/src/dataio.c:3317 lib/src/dataio.c:3326 cli/gretlcli-mpi.c:170
-#: cli/gretlcli.c:228 gui/gretl.c:309
+#: lib/src/dataio.c:1861 lib/src/dataio.c:2234 lib/src/dataio.c:2246
+#: lib/src/dataio.c:3136 lib/src/dataio.c:3145 cli/gretlcli-mpi.c:170
+#: cli/gretlcli.c:228
 msgid "Out of memory!\n"
 msgstr "Memorie insuficientă!\n"
 
-#: lib/src/dataio.c:2346
+#: lib/src/dataio.c:2165
 msgid "Data frequency does not match\n"
 msgstr "Frecvența datelor nu coincide\n"
 
-#: lib/src/dataio.c:2380
+#: lib/src/dataio.c:2199
 msgid "New data not conformable for appending\n"
 msgstr "Date noi neconforme pentru adăugare\n"
 
-#: lib/src/dataio.c:2393
+#: lib/src/dataio.c:2212
 msgid "Inconsistency in observation markers\n"
 msgstr "Inconsistență în markerii de observare\n"
 
-#: lib/src/dataio.c:2463
+#: lib/src/dataio.c:2282
 msgid "Can't concatenate string-valued and numeric series"
 msgstr ""
 
-#: lib/src/dataio.c:3119
+#: lib/src/dataio.c:2938
 msgid "No markers are available for writing"
 msgstr "Nu sunt disponibili markeri pentru scriere"
 
-#: lib/src/dataio.c:3200
+#: lib/src/dataio.c:3019
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr "Întâlnite date binare (%d): acesta nu este un fișier text valid\n"
 
-#: lib/src/dataio.c:3291
+#: lib/src/dataio.c:3110
 #, c-format
 msgid "   Found matrix '%s' with %d rows, %d columns\n"
 msgstr "   Găsită matricea '%s' cu %d rânduri, %d coloane\n"
 
-#: lib/src/dataio.c:3334
+#: lib/src/dataio.c:3153
 #, c-format
 msgid "   number of observations: %d\n"
 msgstr "   numărul observațiilor: %d\n"
 
-#: lib/src/dataio.c:3335
+#: lib/src/dataio.c:3154
 #, c-format
 msgid "   number of data blocks: %d\n"
 msgstr "   numărul blocurilor de date: %d\n"
 
-#: lib/src/dataio.c:3467 lib/src/dataio.c:3531 gui/gui_utils.c:1192
+#: lib/src/dataio.c:3284 lib/src/dataio.c:3347 gui/gui_utils.c:1192
 msgid "Unrecognized data type"
 msgstr "Tip de dată nerecunoscut"
 
-#: lib/src/dataio.c:3723 lib/src/dataio.c:3766
+#: lib/src/dataio.c:3539 lib/src/dataio.c:3582
 #, c-format
 msgid "Extraneous character '%c' in data"
 msgstr "Caracter străini '%c' în date"
 
-#: lib/src/dataio.c:3725 lib/src/dataio.c:3768
+#: lib/src/dataio.c:3541 lib/src/dataio.c:3584
 #, c-format
 msgid "Extraneous character (0x%x) in data"
 msgstr "Caracter străin(0x%x) în date"
 
-#: lib/src/dataio.c:3731 lib/src/dataio.c:3774
+#: lib/src/dataio.c:3547 lib/src/dataio.c:3590
 #, c-format
 msgid "'%s' -- number out of range!"
 msgstr "'%s' -- număr în afara intervalului!"
 
-#: lib/src/dataio.c:3927
+#: lib/src/dataio.c:3743
 #, c-format
 msgid "Data imported from %s file '%s', %s\n"
 msgstr "Date importate din fișierul %s '%s', %s\n"
 
-#: lib/src/dataio.c:3930
+#: lib/src/dataio.c:3746
 #, c-format
 msgid "Data imported from %s, %s\n"
 msgstr "Date importate din %s, %s\n"
 
-#: lib/src/dataset.c:456
+#: lib/src/dataset.c:445
 msgid "auto-generated constant"
 msgstr "constantă auto-generată"
 
-#: lib/src/dataset.c:1560 gui/gui_utils.c:6106 gui/toolbar.c:1440
+#: lib/src/dataset.c:1549 gui/gui_utils.c:6106 gui/toolbar.c:1440
 #: gui/toolbar.c:1449
 msgid "Please open a data file first"
 msgstr "Vă rugăm deschideți mai întâi un fișier de date"
 
-#: lib/src/dataset.c:1697 lib/src/gretl_utils.c:2027 lib/src/missing.c:580
+#: lib/src/dataset.c:1686 lib/src/gretl_utils.c:2027 lib/src/missing.c:580
 #, c-format
 msgid "The variable %s is read-only"
 msgstr "Variabila %s poate fi doar citită"
 
-#: lib/src/dataset.c:1990 lib/src/dataset.c:2000 lib/src/uservar.c:452
+#: lib/src/dataset.c:1979 lib/src/dataset.c:1989 lib/src/uservar.c:452
 #, c-format
 msgid "Deleted %s"
 msgstr "Șters %s"
 
-#: lib/src/dataset.c:1992 lib/src/dataset.c:2002
+#: lib/src/dataset.c:1981 lib/src/dataset.c:1991
 #, c-format
 msgid "Deleted %d variables"
 msgstr "Șterse %d variabile"
 
-#: lib/src/dataset.c:1998
+#: lib/src/dataset.c:1987
 msgid "No variables were deleted"
 msgstr "Nicio variabilă nu a fost ștearsă"
 
-#: lib/src/dataset.c:2004
+#: lib/src/dataset.c:1993
 msgid "some data were in use"
 msgstr "anumite date erau în uz"
 
-#: lib/src/dataset.c:2084 lib/src/system.c:712 lib/src/system.c:728
+#: lib/src/dataset.c:2073 lib/src/system.c:712 lib/src/system.c:728
 #: lib/src/tokenize.c:3354 plugin/arbond.c:2701
 #, c-format
 msgid "variable %d duplicated in the command list."
 msgstr ""
 
-#: lib/src/dataset.c:2163 gui/gui_utils.c:5540
+#: lib/src/dataset.c:2152 gui/gui_utils.c:5540
 msgid "dataset is subsampled"
 msgstr "setul de date este subeșantionat"
 
-#: lib/src/dataset.c:2300 lib/src/dataset.c:2312 lib/src/graphing.c:8756
+#: lib/src/dataset.c:2289 lib/src/dataset.c:2301 lib/src/graphing.c:8754
 #: lib/src/gretl_utils.c:1209 lib/src/gretl_utils.c:1298
 msgid "periods"
 msgstr "perioade"
 
-#: lib/src/dataset.c:2302
+#: lib/src/dataset.c:2291
 msgid "quarters"
 msgstr "trimestre"
 
-#: lib/src/dataset.c:2302
+#: lib/src/dataset.c:2291
 msgid "months"
 msgstr "luni"
 
-#: lib/src/dataset.c:2304
+#: lib/src/dataset.c:2293
 msgid "years"
 msgstr "ani"
 
-#: lib/src/dataset.c:2306
+#: lib/src/dataset.c:2295
 msgid "weeks"
 msgstr "săptămâni"
 
-#: lib/src/dataset.c:2308
+#: lib/src/dataset.c:2297
 msgid "days"
 msgstr "zile"
 
-#: lib/src/dataset.c:2310
+#: lib/src/dataset.c:2299
 msgid "hours"
 msgstr "ore"
 
-#: lib/src/dataset.c:3021 lib/src/dataset.c:3049 gui/library.c:6440
+#: lib/src/dataset.c:3010 lib/src/dataset.c:3038 gui/library.c:6440
 msgid "The data set is currently sub-sampled.\n"
 msgstr "Setul de date este în prezent subeșantionat.\n"
 
-#: lib/src/dataset.c:3029
+#: lib/src/dataset.c:3018
 #, fuzzy, c-format
 msgid "Panel time extended by %d observations"
 msgstr "Set de date extins cu %d observații "
 
-#: lib/src/dataset.c:3035
+#: lib/src/dataset.c:3024
 #, c-format
 msgid "Dataset extended by %d observations"
 msgstr "Set de date extins cu %d observații "
 
-#: lib/src/dataset.c:3356
+#: lib/src/dataset.c:3345
 #, c-format
 msgid "Variable %s cannot be renumbered"
 msgstr "Variabila %s nu poate fi renumerotată"
 
-#: lib/src/dataset.c:3359
+#: lib/src/dataset.c:3348
 #, c-format
 msgid "Target ID %d is not available"
 msgstr "Obiectivul ID %d nu este disponibil"
 
-#: lib/src/dataset.c:3366
+#: lib/src/dataset.c:3355
 #, c-format
 msgid "Renumbered %s as variable %d\n"
 msgstr "Renumerotat %s ca variabilă %d\n"
 
-#: lib/src/dataset.c:3419
+#: lib/src/dataset.c:3408
 msgid "The 'dataset' command is not available within functions"
 msgstr "Comanda 'set de date' nu este dispobiliă în cadrul funcțiilor"
 
-#: lib/src/dataset.c:3427
+#: lib/src/dataset.c:3416
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Ne pare rău, această comandă nu este valabilă în modul buclă\n"
 
-#: lib/src/dataset.c:3442
+#: lib/src/dataset.c:3431
 msgid "The data set is currently sub-sampled"
 msgstr "Setul de date este în prezent subeșantionat"
 
-#: lib/src/dataset.c:3500
+#: lib/src/dataset.c:3489
 msgid "dataset restore: dataset is not resampled\n"
 msgstr "set de date restabilit: setul de date nu este re-eșantionat\n"
 
-#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4260
+#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4266
 #, fuzzy, c-format
 msgid "%s: no data found"
 msgstr "Nu am găsit date.\n"
@@ -1556,19 +1540,19 @@ msgstr "Nu au fost găsite serii valide"
 msgid "Out of memory!"
 msgstr "Memorie plină!"
 
-#: lib/src/dbread.c:1708 lib/src/geneval.c:10119
-#: lib/src/gretl_string_table.c:1163 lib/src/gretl_www.c:1480
+#: lib/src/dbread.c:1708 lib/src/geneval.c:10191
+#: lib/src/gretl_string_table.c:1244 lib/src/gretl_www.c:1480
 #: lib/src/interact.c:2969
 msgid "Internet access not supported"
 msgstr "Acces internet nepermis"
 
-#: lib/src/dbread.c:1898 lib/src/subsample.c:2667
+#: lib/src/dbread.c:1898 lib/src/subsample.c:2671
 msgid "Invalid null sample"
 msgstr "Eșantion nul nevalid"
 
 #: lib/src/dbread.c:1998 lib/src/gretl_errors.c:620
-#: lib/src/gretl_restrict.c:2605 lib/src/interact.c:1623 lib/src/options.c:1378
-#: lib/src/options.c:1389
+#: lib/src/gretl_restrict.c:2605 lib/src/interact.c:1623 lib/src/options.c:1379
+#: lib/src/options.c:1390
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "câmpul '%s' nu este valid în comandă"
@@ -1618,117 +1602,117 @@ msgstr "Nu a putut fi deschis %s pentru scriere"
 msgid "Of the variables to be saved, %d were already present in the database."
 msgstr "Dintre variabilele de salvat, %d era deja prezent în baza de date."
 
-#: lib/src/describe.c:1242
+#: lib/src/describe.c:1247
 msgid "Insufficient data"
 msgstr "Date insuficiente"
 
-#: lib/src/describe.c:1545
+#: lib/src/describe.c:1550
 msgid "Residual correlation matrix, C"
 msgstr "Matricea de corelație a reziduurilor, C"
 
-#: lib/src/describe.c:1554
+#: lib/src/describe.c:1559
 msgid "Eigenvalues of C"
 msgstr "Valorile proprii ale lui C"
 
-#: lib/src/describe.c:1636 lib/src/describe.c:7606
+#: lib/src/describe.c:1641 lib/src/describe.c:7609
 msgid "Doornik-Hansen test"
 msgstr "Testul Doornik-Hansen"
 
-#: lib/src/describe.c:1716 lib/src/describe.c:1890
+#: lib/src/describe.c:1721 lib/src/describe.c:1895
 #, c-format
 msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr ""
 "Date insuficiente pentru a construi distribuția frecvențelor pentru "
 "variabila %s"
 
-#: lib/src/describe.c:2296
+#: lib/src/describe.c:2301
 msgid "gnuplot command failed\n"
 msgstr "comanda gnuplot eșuată\n"
 
-#: lib/src/describe.c:2912
+#: lib/src/describe.c:2917
 #, c-format
 msgid "Matrix %s does not represent a contingency table"
 msgstr "Matricea %s nu reprezintă un tabel de contingență"
 
-#: lib/src/describe.c:3000
+#: lib/src/describe.c:3005
 #, fuzzy, c-format
 msgid "dropping %s: not a discrete variable\n"
 msgstr "%s: nu o variabilă tip șir de caractere"
 
-#: lib/src/describe.c:3306 lib/src/describe.c:3491 lib/src/describe.c:4039
-#: lib/src/geneval.c:8827 lib/src/transforms.c:900 lib/src/transforms.c:1499
-#: lib/src/var.c:687
+#: lib/src/describe.c:3311 lib/src/describe.c:3496 lib/src/describe.c:4044
+#: lib/src/geneval.c:8899 lib/src/transforms.c:900 lib/src/transforms.c:1499
+#: lib/src/var.c:773
 #, c-format
 msgid "Invalid lag order %d"
 msgstr "Ordin întârziere nevalid %d"
 
-#: lib/src/describe.c:3391 gui/menustate.c:582
+#: lib/src/describe.c:3396 gui/menustate.c:582
 msgid "Correlogram"
 msgstr "Corelograma"
 
-#: lib/src/describe.c:3392 lib/src/describe.c:3804 lib/src/describe.c:3849
-#: lib/src/graphing.c:8643
+#: lib/src/describe.c:3397 lib/src/describe.c:3809 lib/src/describe.c:3854
+#: lib/src/graphing.c:8641
 msgid "lag"
 msgstr "întârziere"
 
-#: lib/src/describe.c:3558
+#: lib/src/describe.c:3563
 msgid "Residual autocorrelation function"
 msgstr "Funcția de autocorelație a reziduurilor"
 
-#: lib/src/describe.c:3561
+#: lib/src/describe.c:3566
 #, c-format
 msgid "Autocorrelation function for %s"
 msgstr "Funcția de autocorelație pentru %s"
 
-#: lib/src/describe.c:3565
+#: lib/src/describe.c:3570
 msgid "***, **, * indicate significance at the 1%, 5%, 10% levels\n"
 msgstr "***, **, * indică semnificativitate la pragurile 1%, 5%, 10%\n"
 
-#: lib/src/describe.c:3568
+#: lib/src/describe.c:3573
 msgid "using Bartlett standard errors for ACF"
 msgstr "folosind erorile standard Bartlett pentru ACF"
 
-#: lib/src/describe.c:3570
+#: lib/src/describe.c:3575
 #, c-format
 msgid "using standard error 1/T^%.1f"
 msgstr "folosind eroarea standard 1/T^%.1f"
 
-#: lib/src/describe.c:3588
+#: lib/src/describe.c:3593
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr "  LAG      FAC          FACP         Q-stat. [p-value]"
 
-#: lib/src/describe.c:3725
+#: lib/src/describe.c:3730
 msgid "Argument is a constant"
 msgstr "Argumentul este o constantă"
 
-#: lib/src/describe.c:3810
+#: lib/src/describe.c:3815
 #, c-format
 msgid "Correlations of %s and lagged %s"
 msgstr "Corelații ale %s și  %s întârziate "
 
-#: lib/src/describe.c:3848 gui/menustate.c:587
+#: lib/src/describe.c:3853 gui/menustate.c:587
 msgid "Cross-correlogram"
 msgstr "Corelograma încrucișată"
 
-#: lib/src/describe.c:3997
+#: lib/src/describe.c:4002
 #, c-format
 msgid "Argument %d is a constant"
 msgstr "Argumentul %d este o constantă"
 
-#: lib/src/describe.c:4093
+#: lib/src/describe.c:4098
 #, c-format
 msgid "Cross-correlation function for %s and %s"
 msgstr "Funcția de corelație încrucișată pentru %s și %s"
 
-#: lib/src/describe.c:4096
+#: lib/src/describe.c:4101
 msgid "  LAG      XCF"
 msgstr "  LAG      XCF"
 
-#: lib/src/describe.c:4410
+#: lib/src/describe.c:4415
 msgid "Residual periodogram"
 msgstr "Periodograma reziduurilor"
 
-#: lib/src/describe.c:4412
+#: lib/src/describe.c:4417
 #, c-format
 msgid ""
 "\n"
@@ -1737,13 +1721,13 @@ msgstr ""
 "\n"
 "Periodograma pentru %s\n"
 
-#: lib/src/describe.c:4415 lib/src/describe.c:6572 lib/src/describe.c:6574
-#: lib/src/describe.c:6656 lib/src/describe.c:6658 lib/src/describe.c:7112
+#: lib/src/describe.c:4420 lib/src/describe.c:6575 lib/src/describe.c:6577
+#: lib/src/describe.c:6659 lib/src/describe.c:6661 lib/src/describe.c:7115
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr "Numărul observațiilor = %d\n"
 
-#: lib/src/describe.c:4417
+#: lib/src/describe.c:4422
 #, c-format
 msgid ""
 "Using Bartlett lag window, length %d\n"
@@ -1752,7 +1736,7 @@ msgstr ""
 "Folosind fereastra de întârziere Bartlett, întindere %d\n"
 "\n"
 
-#: lib/src/describe.c:4423
+#: lib/src/describe.c:4428
 msgid ""
 " omega  scaled frequency  periods  log spectral density\n"
 "\n"
@@ -1760,7 +1744,7 @@ msgstr ""
 " omega  frecvență scalată  perioade  log densitate spectrală\n"
 "\n"
 
-#: lib/src/describe.c:4425
+#: lib/src/describe.c:4430
 msgid ""
 " omega  scaled frequency  periods  spectral density\n"
 "\n"
@@ -1768,177 +1752,177 @@ msgstr ""
 " omega  frecvență scalată  perioade  densitate spectrală\n"
 "\n"
 
-#: lib/src/describe.c:4500
+#: lib/src/describe.c:4505
 msgid "Local Whittle Estimator"
 msgstr "Estimatorul local Whittle"
 
-#: lib/src/describe.c:4501 lib/src/describe.c:4529
+#: lib/src/describe.c:4506 lib/src/describe.c:4534
 msgid "Estimated degree of integration"
 msgstr "Ordinul de integrare estimat"
 
-#: lib/src/describe.c:4528
+#: lib/src/describe.c:4533
 msgid "GPH test"
 msgstr "Testul GPH"
 
-#: lib/src/describe.c:4835 lib/src/describe.c:4851 lib/src/describe.c:4900
+#: lib/src/describe.c:4840 lib/src/describe.c:4856 lib/src/describe.c:4905
 #: lib/src/printout.c:1391 lib/src/printout.c:1392
 msgid "NA"
 msgstr "NA"
 
-#: lib/src/describe.c:4884 lib/src/describe.c:6366
+#: lib/src/describe.c:4889 lib/src/describe.c:6369
 #, c-format
 msgid "%s, using the observations %s - %s"
 msgstr "%s, folosind observațiile %s - %s"
 
-#: lib/src/describe.c:4890 lib/src/describe.c:6371 gui/guiprint.c:608
+#: lib/src/describe.c:4895 lib/src/describe.c:6374 gui/guiprint.c:608
 #: gui/guiprint.c:662 gui/guiprint.c:1017 gui/guiprint.c:1076
 #: gui/guiprint.c:1257 gui/guiprint.c:1350
 msgid "(missing values were skipped)"
 msgstr "(valorile lipsă au fost sărite)"
 
-#: lib/src/describe.c:4926 lib/src/describe.c:5111 lib/src/describe.c:5140
-#: lib/src/describe.c:5804 lib/src/describe.c:5830 gui/guiprint.c:621
+#: lib/src/describe.c:4931 lib/src/describe.c:5116 lib/src/describe.c:5145
+#: lib/src/describe.c:5807 lib/src/describe.c:5833 gui/guiprint.c:621
 #: gui/guiprint.c:679 gui/guiprint.c:1030 gui/guiprint.c:1093
 msgid "Mean"
 msgstr "Media"
 
-#: lib/src/describe.c:4927 lib/src/describe.c:5112 lib/src/describe.c:5141
-#: lib/src/describe.c:5805 lib/src/describe.c:5831 gui/guiprint.c:621
+#: lib/src/describe.c:4932 lib/src/describe.c:5117 lib/src/describe.c:5146
+#: lib/src/describe.c:5808 lib/src/describe.c:5834 gui/guiprint.c:621
 #: gui/guiprint.c:679 gui/guiprint.c:1030 gui/guiprint.c:1093
 msgid "Median"
 msgstr "Mediana"
 
-#: lib/src/describe.c:4928 lib/src/describe.c:5142 lib/src/describe.c:5832
+#: lib/src/describe.c:4933 lib/src/describe.c:5147 lib/src/describe.c:5835
 #: gui/guiprint.c:679 gui/guiprint.c:1093
 msgid "Minimum"
 msgstr "Minim"
 
-#: lib/src/describe.c:4929 lib/src/describe.c:5143 lib/src/describe.c:5833
+#: lib/src/describe.c:4934 lib/src/describe.c:5148 lib/src/describe.c:5836
 #: gui/guiprint.c:679 gui/guiprint.c:1093
 msgid "Maximum"
 msgstr "Maxim"
 
-#: lib/src/describe.c:4930
+#: lib/src/describe.c:4935
 msgid "Standard deviation"
 msgstr "Deviația standard"
 
-#: lib/src/describe.c:4931 lib/src/describe.c:5147 lib/src/describe.c:5835
+#: lib/src/describe.c:4936 lib/src/describe.c:5152 lib/src/describe.c:5838
 #: gui/guiprint.c:701 gui/guiprint.c:1120
 msgid "C.V."
 msgstr "C.V."
 
-#: lib/src/describe.c:4932 lib/src/describe.c:5148 lib/src/describe.c:5836
+#: lib/src/describe.c:4937 lib/src/describe.c:5153 lib/src/describe.c:5839
 #: gui/guiprint.c:701 gui/guiprint.c:1120
 msgid "Skewness"
 msgstr "Asimetria"
 
-#: lib/src/describe.c:4933 lib/src/describe.c:5149 lib/src/describe.c:5837
+#: lib/src/describe.c:4938 lib/src/describe.c:5154 lib/src/describe.c:5840
 #: gui/guiprint.c:701
 msgid "Ex. kurtosis"
 msgstr "Ex. aplatizare"
 
-#: lib/src/describe.c:4935
+#: lib/src/describe.c:4940
 #, no-c-format
 msgid "5% percentile"
 msgstr "procent 5%"
 
-#: lib/src/describe.c:4937
+#: lib/src/describe.c:4942
 #, no-c-format
 msgid "95% percentile"
 msgstr "procent 95%"
 
-#: lib/src/describe.c:4938
+#: lib/src/describe.c:4943
 msgid "Interquartile range"
 msgstr "Amplitudinea intercuartilică"
 
-#: lib/src/describe.c:4939 lib/src/describe.c:5157 lib/src/describe.c:5843
+#: lib/src/describe.c:4944 lib/src/describe.c:5162 lib/src/describe.c:5846
 #: gui/guiprint.c:723 gui/guiprint.c:1152
 msgid "Missing obs."
 msgstr "Obs. lipsă"
 
-#: lib/src/describe.c:4941
+#: lib/src/describe.c:4946
 msgid "Within s.d."
 msgstr "În d.s."
 
-#: lib/src/describe.c:4942
+#: lib/src/describe.c:4947
 msgid "Between s.d."
 msgstr "Între d.s."
 
-#: lib/src/describe.c:4959 lib/src/describe.c:5102 gui/menustate.c:576
+#: lib/src/describe.c:4964 lib/src/describe.c:5107 gui/menustate.c:576
 msgid "Summary statistics"
 msgstr "Statistici descriptive"
 
-#: lib/src/describe.c:4965
+#: lib/src/describe.c:4970
 #, c-format
 msgid "for column %d of %s (%d valid observations)"
 msgstr "pentru coloana %d din %s (%d observații valide)"
 
-#: lib/src/describe.c:4968
+#: lib/src/describe.c:4973
 #, c-format
 msgid "for column %d (%d valid observations)"
 msgstr "pentru coloana %d (%d observații valide)"
 
-#: lib/src/describe.c:4972
+#: lib/src/describe.c:4977
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "pentru variabila '%s' (%d observații valide)"
 
-#: lib/src/describe.c:5082
+#: lib/src/describe.c:5087
 #, c-format
 msgid "Weighting variable: %s\n"
 msgstr "Variabilă de ponderare: %s\n"
 
 #. TRANSLATORS: 'S.D.' means Standard Deviation
-#: lib/src/describe.c:5114 lib/src/describe.c:5806 gui/guiprint.c:621
+#: lib/src/describe.c:5119 lib/src/describe.c:5809 gui/guiprint.c:621
 #: gui/guiprint.c:1030
 msgid "S.D."
 msgstr ""
 
-#: lib/src/describe.c:5115 lib/src/describe.c:5807 gui/guiprint.c:621
+#: lib/src/describe.c:5120 lib/src/describe.c:5810 gui/guiprint.c:621
 #: gui/guiprint.c:1030
 #, fuzzy
 msgid "Min"
 msgstr "Mediana"
 
-#: lib/src/describe.c:5116 lib/src/describe.c:5808 gui/guiprint.c:621
+#: lib/src/describe.c:5121 lib/src/describe.c:5811 gui/guiprint.c:621
 #: gui/guiprint.c:1030
 #, fuzzy
 msgid "Max"
 msgstr "Maxim"
 
-#: lib/src/describe.c:5146 lib/src/describe.c:5834 gui/guiprint.c:701
+#: lib/src/describe.c:5151 lib/src/describe.c:5837 gui/guiprint.c:701
 msgid "Std. Dev."
 msgstr "Dev. Stand."
 
-#: lib/src/describe.c:5153 lib/src/describe.c:5839
+#: lib/src/describe.c:5158 lib/src/describe.c:5842
 #, no-c-format
 msgid "5% perc."
 msgstr "5% proc. "
 
-#: lib/src/describe.c:5155 lib/src/describe.c:5841
+#: lib/src/describe.c:5160 lib/src/describe.c:5844
 #, no-c-format
 msgid "95% perc."
 msgstr "95% proc. "
 
-#: lib/src/describe.c:5156 lib/src/describe.c:5842 gui/guiprint.c:723
+#: lib/src/describe.c:5161 lib/src/describe.c:5845 gui/guiprint.c:723
 msgid "IQ range"
 msgstr "Amplitudinea IQ"
 
-#: lib/src/describe.c:5479 lib/src/describe.c:5618 lib/src/describe.c:5724
+#: lib/src/describe.c:5484 lib/src/describe.c:5651 lib/src/describe.c:5741
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "Renunțare %s: intervalul de eșantion conține observații nevalide\n"
 
-#: lib/src/describe.c:5615 lib/src/describe.c:5721
+#: lib/src/describe.c:5648 lib/src/describe.c:5738
 #, fuzzy, c-format
 msgid "Dropping %s: string-valued series\n"
 msgstr "Renunțare %s: intervalul de eșantion conține observații nevalide\n"
 
-#: lib/src/describe.c:6257
+#: lib/src/describe.c:6260
 msgid "corr: needs at least two non-constant arguments"
 msgstr "cor: necesare cel puțin două argumente ne-constante"
 
-#: lib/src/describe.c:6326 lib/src/modelprint.c:3713 lib/src/modelprint.c:3725
+#: lib/src/describe.c:6329 lib/src/modelprint.c:3713 lib/src/modelprint.c:3725
 #: lib/src/modelprint.c:3726 lib/src/modelprint.c:3727
 #: lib/src/modelprint.c:3742 lib/src/modelprint.c:3752
 #: lib/src/modelprint.c:3786 lib/src/modelprint.c:3799
@@ -1954,7 +1938,7 @@ msgstr "cor: necesare cel puțin două argumente ne-constante"
 msgid "undefined"
 msgstr "nedefinit"
 
-#: lib/src/describe.c:6333 lib/src/nonparam.c:359 lib/src/nonparam.c:365
+#: lib/src/describe.c:6336 lib/src/nonparam.c:359 lib/src/nonparam.c:365
 #: lib/src/nonparam.c:644
 msgid ""
 "Under the null hypothesis of no correlation:\n"
@@ -1963,29 +1947,29 @@ msgstr ""
 "Sub ipoteza nulă de necorelație:\n"
 " "
 
-#: lib/src/describe.c:6334 lib/src/nonparam.c:366
+#: lib/src/describe.c:6337 lib/src/nonparam.c:366
 #, c-format
 msgid "t(%d) = %g, with two-tailed p-value %.4f\n"
 msgstr "t(%d) = %g, cu p-value două cozi %.4f\n"
 
-#: lib/src/describe.c:6338 lib/src/describe.c:6376 gui/guiprint.c:1259
+#: lib/src/describe.c:6341 lib/src/describe.c:6379 gui/guiprint.c:1259
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr "5%% valuare critică (două cozi) = %.4f pentru n = %d"
 
-#: lib/src/describe.c:6367
+#: lib/src/describe.c:6370
 msgid "Correlation Coefficients"
 msgstr "Coeficienţi de corelaţie"
 
-#: lib/src/describe.c:6533 lib/src/describe.c:6626
+#: lib/src/describe.c:6536 lib/src/describe.c:6629
 msgid "Sample range has no valid observations."
 msgstr "Intervalul din eșantion are observații nevalide"
 
-#: lib/src/describe.c:6539 lib/src/describe.c:6632
+#: lib/src/describe.c:6542 lib/src/describe.c:6635
 msgid "Sample range has only one observation."
 msgstr "Intervalul din eșantion are doar o observație."
 
-#: lib/src/describe.c:6569
+#: lib/src/describe.c:6572
 #, c-format
 msgid ""
 "\n"
@@ -1996,41 +1980,41 @@ msgstr ""
 " Test de egalitate a mediilor (presupunând  varianțele %s)\n"
 "\n"
 
-#: lib/src/describe.c:6570
+#: lib/src/describe.c:6573
 msgid "unequal"
 msgstr "inegal"
 
-#: lib/src/describe.c:6570
+#: lib/src/describe.c:6573
 msgid "equal"
 msgstr "egal"
 
-#: lib/src/describe.c:6575
+#: lib/src/describe.c:6578
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
 msgstr "   Diferența dintre mediile eșantionului = %g - %g = %g\n"
 
-#: lib/src/describe.c:6577
+#: lib/src/describe.c:6580
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr "   Ipoteza nulă: mediile celor două populații sunt egale.\n"
 
-#: lib/src/describe.c:6578
+#: lib/src/describe.c:6581
 #, c-format
 msgid "   Estimated standard error = %g\n"
 msgstr "   Eroarea standard estimată = %g\n"
 
-#: lib/src/describe.c:6579
+#: lib/src/describe.c:6582
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
 msgstr "   Testul statistic: t(%d) = %g\n"
 
-#: lib/src/describe.c:6580 lib/src/describe.c:6663
+#: lib/src/describe.c:6583 lib/src/describe.c:6666
 #, c-format
 msgid ""
 "   p-value (two-tailed) = %g\n"
 "\n"
 msgstr "   p-value (două cozi) = %g\n"
 
-#: lib/src/describe.c:6582 lib/src/describe.c:6665
+#: lib/src/describe.c:6585 lib/src/describe.c:6668
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
@@ -2038,7 +2022,7 @@ msgstr ""
 "Diferența nu este semnificativă statistic.\n"
 "\n"
 
-#: lib/src/describe.c:6654
+#: lib/src/describe.c:6657
 msgid ""
 "\n"
 "Equality of variances test\n"
@@ -2048,79 +2032,79 @@ msgstr ""
 " Testde egalitate a varianțelor\n"
 "\n"
 
-#: lib/src/describe.c:6659
+#: lib/src/describe.c:6662
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
 msgstr "Raportul varianțelor eșantionului = %g\n"
 
-#: lib/src/describe.c:6661
+#: lib/src/describe.c:6664
 msgid "The two population variances are equal"
 msgstr "Varianțele celor două populații sunt egale"
 
-#: lib/src/describe.c:6752 gui/library.c:511 gui/library.c:742
+#: lib/src/describe.c:6755 gui/library.c:511 gui/library.c:742
 #: gui/library.c:890
 msgid "Mahalanobis distances"
 msgstr "Distanțe Mahalanobis"
 
-#: lib/src/describe.c:6791
+#: lib/src/describe.c:6794
 msgid "Covariance matrix"
 msgstr "Matricea covarianței"
 
-#: lib/src/describe.c:6797
+#: lib/src/describe.c:6800
 msgid "Inverse of covariance matrix"
 msgstr "Inversa matricei covarianței"
 
-#: lib/src/describe.c:6813
+#: lib/src/describe.c:6816
 msgid "Mahalanobis distances from the centroid"
 msgstr "Distanțele lui Mahalanobis față de centroid"
 
-#: lib/src/describe.c:6814
+#: lib/src/describe.c:6817
 msgid "using the variables:"
 msgstr "folosind variabilele:"
 
-#: lib/src/describe.c:6868
+#: lib/src/describe.c:6871
 #, c-format
 msgid "Distances saved as '%s'"
 msgstr "Distanțele salvate ca '%s'"
 
-#: lib/src/describe.c:6945
+#: lib/src/describe.c:6948
 msgid "illegal negative value"
 msgstr "valoare negativă nepermisă"
 
-#: lib/src/describe.c:7052
+#: lib/src/describe.c:7055
 msgid "Lorenz curve"
 msgstr "Curba Lorenz"
 
-#: lib/src/describe.c:7115 plugin/excel_import.c:1748
+#: lib/src/describe.c:7118 plugin/excel_import.c:1748
 msgid "Warning: there were missing values\n"
 msgstr "Atenție: au fost valori lipsă\n"
 
-#: lib/src/describe.c:7120
+#: lib/src/describe.c:7123
 msgid "Sample Gini coefficient"
 msgstr "Coeficientul Gini al eșantionului"
 
-#: lib/src/describe.c:7121
+#: lib/src/describe.c:7124
 msgid "Estimate of population value"
 msgstr "Estimarea valorii populației"
 
-#: lib/src/describe.c:7603
+#: lib/src/describe.c:7606
 msgid "Shapiro-Wilk W"
 msgstr "Shapiro-Wiki W"
 
-#: lib/src/describe.c:7604
+#: lib/src/describe.c:7607
 msgid "Jarque-Bera test"
 msgstr "Testul Jarque-Bera"
 
-#: lib/src/describe.c:7605
+#: lib/src/describe.c:7608
 msgid "Lilliefors test"
 msgstr "Testul Lilliefors"
 
-#: lib/src/describe.c:7669
+#: lib/src/describe.c:7672
 #, c-format
 msgid "Test for normality of %s:"
 msgstr "Test pentru normalitatea lui %s"
 
-#: lib/src/discrete.c:1332 lib/src/geneval.c:11460 lib/src/gretl_list.c:1572
+#: lib/src/discrete.c:1332 lib/src/geneval.c:11538 lib/src/gretl_list.c:1572
 #: lib/src/interact.c:2376
 #, c-format
 msgid "The variable '%s' is not discrete"
@@ -2198,16 +2182,16 @@ msgstr "Variabila de ponderare conține valori negative"
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "Întâlnite valori lipsă pentru variabila %d, obs %d"
 
-#: lib/src/estimate.c:1744
+#: lib/src/estimate.c:1746
 #, c-format
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Suma pătratelor reziduurilor (%g) nu este >0"
 
-#: lib/src/estimate.c:2043 lib/src/estimate.c:2144
+#: lib/src/estimate.c:2045 lib/src/estimate.c:2146
 msgid "ESS"
 msgstr "SPR"
 
-#: lib/src/estimate.c:2240
+#: lib/src/estimate.c:2242
 #, c-format
 msgid ""
 "\n"
@@ -2220,7 +2204,7 @@ msgstr ""
 "SPR este minimizată pentru rho = %g\n"
 "\n"
 
-#: lib/src/estimate.c:2258
+#: lib/src/estimate.c:2260
 msgid ""
 "\n"
 "Fine-tune rho using the CORC procedure...\n"
@@ -2230,7 +2214,7 @@ msgstr ""
 "Ajustare precisă rho folosind procedura CORC...\n"
 "\n"
 
-#: lib/src/estimate.c:2260
+#: lib/src/estimate.c:2262
 msgid ""
 "\n"
 "Performing iterative calculation of rho...\n"
@@ -2240,55 +2224,55 @@ msgstr ""
 " Realizând calculul iterativ al lui rho...\n"
 "\n"
 
-#: lib/src/estimate.c:2263
+#: lib/src/estimate.c:2265
 msgid "                 ITER       RHO        ESS"
 msgstr "                ITER       RHO        ESS"
 
-#: lib/src/estimate.c:2274
+#: lib/src/estimate.c:2276
 #, c-format
 msgid "Prais-Winsten: invalid rho value %g (explosive error)"
 msgstr " Prais-Wisten: valoare rho nevalidă %g (eroare explozivă)"
 
-#: lib/src/estimate.c:2386
+#: lib/src/estimate.c:2388
 #, c-format
 msgid "%s: rho = %g, error is unbounded"
 msgstr "%s: rho = %g, eroarea este nelimitată"
 
-#: lib/src/estimate.c:2742 lib/src/gretl_model.c:4168 lib/src/modelprint.c:903
+#: lib/src/estimate.c:2744 lib/src/gretl_model.c:4168 lib/src/modelprint.c:903
 msgid "Pesaran-Taylor test for heteroskedasticity"
 msgstr "Testul Pesaran-Taylor pentru heteroskedasticitate"
 
-#: lib/src/estimate.c:2752 lib/src/gretl_model.c:4147 lib/src/modelprint.c:901
+#: lib/src/estimate.c:2754 lib/src/gretl_model.c:4147 lib/src/modelprint.c:901
 msgid "Breusch-Pagan test for heteroskedasticity"
 msgstr "Testul Breusch-Pagan pentru heteroskedasticitate"
 
-#: lib/src/estimate.c:2754
+#: lib/src/estimate.c:2756
 msgid "with Koenker robust variance estimator"
 msgstr "cu estimatorul de varianță robustă Koenker"
 
-#: lib/src/estimate.c:2758 lib/src/gretl_model.c:4144 lib/src/modelprint.c:896
+#: lib/src/estimate.c:2760 lib/src/gretl_model.c:4144 lib/src/modelprint.c:896
 msgid "White's test for heteroskedasticity"
 msgstr "Testul lui White pentru heteroskedasticitate"
 
-#: lib/src/estimate.c:3295
+#: lib/src/estimate.c:3297
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Estimarea generalizată Cochrane-Orcutt"
 
-#: lib/src/estimate.c:3298
+#: lib/src/estimate.c:3300
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr "ITER             ESS           % MODIF"
 
-#: lib/src/estimate.c:3593 lib/src/vartest.c:500
+#: lib/src/estimate.c:3595 lib/src/vartest.c:500
 msgid "Test for ARCH of order"
 msgstr "Test pentru ARCH de ordin"
 
-#: lib/src/estimate.c:3616 lib/src/modelprint.c:2006
+#: lib/src/estimate.c:3618 lib/src/modelprint.c:2006
 #, c-format
 msgid "Test for ARCH of order %d"
 msgstr "Test pentru ARCH de ordin %d"
 
-#: lib/src/estimate.c:3695 lib/src/estimate.c:3839
+#: lib/src/estimate.c:3697 lib/src/estimate.c:3841
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "Ordin de întârziere nevalid pentru arch (%d)"
@@ -2319,7 +2303,7 @@ msgstr "\"%s\" desperechiat"
 msgid "predicted values"
 msgstr "valori estimate"
 
-#: lib/src/forecast.c:1150 lib/src/printout.c:3216 gui/guiprint.c:1708
+#: lib/src/forecast.c:1150 lib/src/printout.c:3222 gui/guiprint.c:1708
 #: gui/guiprint.c:1771 gui/guiprint.c:1826 gui/guiprint.c:1867
 msgid "prediction"
 msgstr "predicție"
@@ -2353,36 +2337,36 @@ msgstr "Generată seria %s (ID %d)"
 msgid "Forecast plot not implemented for panel data"
 msgstr "'%s': neimplementat pentru liste"
 
-#: lib/src/geneval.c:1320
+#: lib/src/geneval.c:1340
 #, fuzzy
 msgid "complex operands are not supported"
 msgstr "Acces internet nepermis"
 
-#: lib/src/geneval.c:1327
+#: lib/src/geneval.c:1347
 #, fuzzy
 msgid "complex arguments are not supported"
 msgstr "Acces internet nepermis"
 
-#: lib/src/geneval.c:1637
+#: lib/src/geneval.c:1657
 #, c-format
 msgid "arg %d is missing or of invalid type"
 msgstr ""
 
-#: lib/src/geneval.c:2232 lib/src/geneval.c:2239 lib/src/gretl_foreign.c:215
+#: lib/src/geneval.c:2252 lib/src/geneval.c:2259 lib/src/gretl_foreign.c:215
 msgid "MPI is not supported in this gretl build"
 msgstr "MPI nu este suportată în această construcție gretl"
 
-#: lib/src/geneval.c:2358 lib/src/gretl_func.c:6652 lib/src/gretl_win32.c:1801
+#: lib/src/geneval.c:2378 lib/src/gretl_func.c:6652 lib/src/gretl_win32.c:1801
 #: lib/src/matrix_extra.c:1234
 #, c-format
 msgid "got invalid field '%s'"
 msgstr "s-a obținut câmp nevalid '%s\""
 
-#: lib/src/geneval.c:2851 lib/src/geneval.c:4143
+#: lib/src/geneval.c:2871 lib/src/geneval.c:4169
 msgid "Matrix is not symmetric"
 msgstr ""
 
-#: lib/src/geneval.c:3326 lib/src/geneval.c:9602
+#: lib/src/geneval.c:3352 lib/src/geneval.c:9674
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2391,10 +2375,10 @@ msgstr ""
 "Numărul argumentelor (%d) nu corespunde numărului\n"
 " parametrilor pentru funcția %s (%d)"
 
-#: lib/src/geneval.c:4789 lib/src/geneval.c:4803 lib/src/geneval.c:4993
-#: lib/src/geneval.c:5064 lib/src/geneval.c:5071 lib/src/geneval.c:5133
-#: lib/src/geneval.c:8795 lib/src/geneval.c:10806 lib/src/geneval.c:10954
-#: lib/src/geneval.c:11025 lib/src/gretl_array.c:1099
+#: lib/src/geneval.c:4815 lib/src/geneval.c:4829 lib/src/geneval.c:5017
+#: lib/src/geneval.c:5088 lib/src/geneval.c:5095 lib/src/geneval.c:5157
+#: lib/src/geneval.c:8863 lib/src/geneval.c:10878 lib/src/geneval.c:11026
+#: lib/src/geneval.c:11097 lib/src/gretl_array.c:1099
 #: lib/src/gretl_array.c:1144 lib/src/gretl_array.c:1189
 #: lib/src/gretl_array.c:1210 lib/src/gretl_array.c:1274
 #: lib/src/gretl_cmatrix.c:2450 lib/src/usermat.c:162 lib/src/usermat.c:217
@@ -2404,16 +2388,16 @@ msgstr ""
 msgid "Index value %d is out of bounds"
 msgstr "Valoarea indice %d este în afara limitelor"
 
-#: lib/src/geneval.c:5138 lib/src/geneval.c:6359
+#: lib/src/geneval.c:5162 lib/src/geneval.c:6412
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Numărul variabil %d este în afara limitelor"
 
-#: lib/src/geneval.c:5314 lib/src/gensyntax.c:406
+#: lib/src/geneval.c:5338 lib/src/gensyntax.c:406
 msgid "Wrong type of operand for unary '&'"
 msgstr "Tip de operand greșit pentru unarul '&'"
 
-#: lib/src/geneval.c:7523 lib/src/geneval.c:7550 lib/src/gretl_func.c:8763
+#: lib/src/geneval.c:7588 lib/src/geneval.c:7615 lib/src/gretl_func.c:8763
 #, c-format
 msgid ""
 "Error message from %s():\n"
@@ -2422,178 +2406,178 @@ msgstr ""
 "Mesaj eroare de la %s ():\n"
 "%s"
 
-#: lib/src/geneval.c:7582
+#: lib/src/geneval.c:7646
 #, c-format
 msgid "Warning: assertion '%s' failed"
 msgstr ""
 
-#: lib/src/geneval.c:7587
+#: lib/src/geneval.c:7652
 #, c-format
 msgid "Assertion '%s' failed"
 msgstr ""
 
-#: lib/src/geneval.c:8783
+#: lib/src/geneval.c:8851
 #, fuzzy, c-format
 msgid "Invalid observation specifier \"%s\""
 msgstr "'%s': indice observație nevalid"
 
-#: lib/src/geneval.c:8867 lib/src/transforms.c:903 lib/src/transforms.c:1222
+#: lib/src/geneval.c:8939 lib/src/transforms.c:903 lib/src/transforms.c:1222
 #, fuzzy
 msgid "The constant cannot be lagged"
 msgstr "cu constantă şi trend"
 
-#: lib/src/geneval.c:9388
+#: lib/src/geneval.c:9460
 msgid "Matrix specification is not coherent"
 msgstr "Specificarea matricei nu este coerentă"
 
-#: lib/src/geneval.c:9591
+#: lib/src/geneval.c:9663
 #, fuzzy, c-format
 msgid "The function %s does not return any value"
 msgstr "Matricea %s nu reprezintă un tabel de contingență"
 
-#: lib/src/geneval.c:9617
+#: lib/src/geneval.c:9689
 msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
-#: lib/src/geneval.c:10371
+#: lib/src/geneval.c:10443
 #, fuzzy, c-format
 msgid "Expected %s but got %s"
 msgstr "Așteptat '%c', dar găsit '%s'\n"
 
-#: lib/src/geneval.c:10375
+#: lib/src/geneval.c:10447
 #, fuzzy, c-format
 msgid "Specified type %s does not match array type %s"
 msgstr "Lungimea seriei nu se potrivește cu setul de date"
 
-#: lib/src/geneval.c:10936 lib/src/geneval.c:11004 lib/src/geneval.c:18434
-#: lib/src/geneval.c:18442
+#: lib/src/geneval.c:11008 lib/src/geneval.c:11076 lib/src/geneval.c:18512
+#: lib/src/geneval.c:18520
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s' : neimplementat pentru acest tip"
 
-#: lib/src/geneval.c:10973
+#: lib/src/geneval.c:11045
 #, fuzzy
 msgid "Invalid list element"
 msgstr "Argument nevalid"
 
-#: lib/src/geneval.c:11162
+#: lib/src/geneval.c:11238
 #, fuzzy, c-format
 msgid "The operator '%s' is not valid in this context"
 msgstr "Simbolul '%s' nu este valabil +n acest context\n"
 
-#: lib/src/geneval.c:12334
+#: lib/src/geneval.c:12412
 msgid "non-existent date"
 msgstr ""
 
-#: lib/src/geneval.c:13919
+#: lib/src/geneval.c:13997
 msgid "Bandwidth must be non-negative"
 msgstr ""
 
-#: lib/src/geneval.c:14905
+#: lib/src/geneval.c:14983
 msgid "array: no type was specified"
 msgstr "array: nu a fost specificat niciun tip"
 
-#: lib/src/geneval.c:15615
+#: lib/src/geneval.c:15693
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': argument nevalid pentru %s()\n"
 
-#: lib/src/geneval.c:15827
+#: lib/src/geneval.c:15905
 #, fuzzy, c-format
 msgid "The result for %s is not well defined"
 msgstr "Simbolul '%s' nu este definit"
 
-#: lib/src/geneval.c:16026
+#: lib/src/geneval.c:16104
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: argumente insuficiente"
 
-#: lib/src/geneval.c:16028
+#: lib/src/geneval.c:16106
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "%s: argument nevalid tip %s"
 
-#: lib/src/geneval.c:16031
+#: lib/src/geneval.c:16109
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: argument %d: tip invalid %s"
 
-#: lib/src/geneval.c:16041
+#: lib/src/geneval.c:16119
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: operandul ar trebui să fie %s"
 
-#: lib/src/geneval.c:16044
+#: lib/src/geneval.c:16122
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s: operandul %d ar trebui să fie %s"
 
-#: lib/src/geneval.c:16049
+#: lib/src/geneval.c:16127
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: argumentul ar trebui să fie %s"
 
-#: lib/src/geneval.c:16052
+#: lib/src/geneval.c:16130
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: argumentul %d ar trebui să fie %s"
 
-#: lib/src/geneval.c:16058
+#: lib/src/geneval.c:16136
 #, c-format
 msgid ", is %s"
 msgstr ", este %s"
 
-#: lib/src/geneval.c:18262
+#: lib/src/geneval.c:18340
 #, c-format
 msgid "'%s': name is too long (max %d characters)\n"
 msgstr "'%s': numele este prea lung (max %d caractere)\n"
 
-#: lib/src/geneval.c:18306
+#: lib/src/geneval.c:18384
 #, c-format
 msgid "The variable %s is of type %s, not acceptable in context"
 msgstr "Variabila %s este de tip %s, neacceptabil în context"
 
-#: lib/src/geneval.c:18310
+#: lib/src/geneval.c:18388
 #, fuzzy, c-format
 msgid "A variable of type %s is not acceptable in context"
 msgstr "Variabila %s este de tip %s, neacceptabil în context"
 
-#: lib/src/geneval.c:18323
+#: lib/src/geneval.c:18401
 #, c-format
 msgid "Incompatible types in assignment: %s %s %s"
 msgstr ""
 
-#: lib/src/geneval.c:18418
+#: lib/src/geneval.c:18496
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s': neimplementat pentru matrici"
 
-#: lib/src/geneval.c:18422
+#: lib/src/geneval.c:18500
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s': neimplementat pentru liste"
 
-#: lib/src/geneval.c:18426
+#: lib/src/geneval.c:18504
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s' : neimplementat pentru șiruri de caractere"
 
-#: lib/src/geneval.c:18430
+#: lib/src/geneval.c:18508
 #, c-format
 msgid "'%s' : not implemented for arrays"
 msgstr "'%s' : neimplementat pentru array"
 
-#: lib/src/geneval.c:18438
+#: lib/src/geneval.c:18516
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s' : denfinit numai pentru matrici"
 
-#: lib/src/geneval.c:19544 lib/src/geneval.c:19640 lib/src/geneval.c:19644
+#: lib/src/geneval.c:19748 lib/src/geneval.c:19752
 #, fuzzy
 msgid "Invalid left-hand side expression"
 msgstr "Regresie pe intervale"
 
-#: lib/src/geneval.c:20257
+#: lib/src/geneval.c:20362
 msgid "Bare declarations are not allowed here"
 msgstr "Aici nu sunt permise declarații generice"
 
@@ -2609,105 +2593,105 @@ msgstr ""
 "TRAMO nu poate gestiona mai mult de 600 observații. \n"
 "Selectați un eșantion mai mic."
 
-#: lib/src/genfuncs.c:2939
+#: lib/src/genfuncs.c:2938
 #, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
 msgstr "= 1 dacă trimestrul =%d, altfel 0"
 
-#: lib/src/genfuncs.c:2942
+#: lib/src/genfuncs.c:2941
 #, c-format
 msgid "= 1 if month = %d, 0 otherwise"
 msgstr "= 1 dacă luna = %d, altfel 0"
 
-#: lib/src/genfuncs.c:2952
+#: lib/src/genfuncs.c:2951
 #, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
 msgstr "%s = 1 dacă perioada este %d, altfel 0"
 
-#: lib/src/genfuncs.c:3301 lib/src/genfuncs.c:3332
+#: lib/src/genfuncs.c:3300 lib/src/genfuncs.c:3331
 #, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
 msgstr "%s = 1 dacă %s este %d, altfel 0"
 
-#: lib/src/genfuncs.c:3302 lib/src/varprint.c:137 lib/src/varprint.c:139
+#: lib/src/genfuncs.c:3301 lib/src/varprint.c:137 lib/src/varprint.c:139
 #: lib/src/varprint.c:141
 msgid "period"
 msgstr "perioadă"
 
-#: lib/src/genfuncs.c:3333
+#: lib/src/genfuncs.c:3332
 msgid "unit"
 msgstr "unitate"
 
-#: lib/src/genfuncs.c:3373
+#: lib/src/genfuncs.c:3372
 msgid "cross-sectional unit index"
 msgstr "indicele unităților cross-section"
 
-#: lib/src/genfuncs.c:3461
+#: lib/src/genfuncs.c:3460
 msgid "data index variable"
 msgstr "variabila indice date"
 
-#: lib/src/genfuncs.c:3509
+#: lib/src/genfuncs.c:3508
 msgid "day of week (1 = Monday)"
 msgstr "ziua săptămânii (1 = Luni)"
 
-#: lib/src/genfuncs.c:3841
+#: lib/src/genfuncs.c:3840
 #, c-format
 msgid "standardized residual from model %d"
 msgstr "reziduuri standardizate din modelul %d"
 
-#: lib/src/genfuncs.c:3843
+#: lib/src/genfuncs.c:3842
 #, c-format
 msgid "residual from model %d"
 msgstr "reziduu din modelul %d"
 
-#: lib/src/genfuncs.c:3847
+#: lib/src/genfuncs.c:3846
 #, c-format
 msgid "fitted value from model %d"
 msgstr "valoarea potrivită din modelul %d"
 
-#: lib/src/genfuncs.c:3852
+#: lib/src/genfuncs.c:3851
 #, c-format
 msgid "squared standardized residual from model %d"
 msgstr "reziduuri pătratice standardizate din modelul %d"
 
-#: lib/src/genfuncs.c:3854
+#: lib/src/genfuncs.c:3853
 #, c-format
 msgid "squared residual from model %d"
 msgstr "reziduuri pătratice din modelul %d"
 
-#: lib/src/genfuncs.c:3859
+#: lib/src/genfuncs.c:3858
 #, c-format
 msgid "fitted variance from model %d"
 msgstr "varianța potrivită din modelul %d"
 
-#: lib/src/genfuncs.c:3863
+#: lib/src/genfuncs.c:3862
 #, fuzzy, c-format
 msgid "individual effects from model %d"
 msgstr "reziduu din modelul %d"
 
-#: lib/src/genfuncs.c:3865
+#: lib/src/genfuncs.c:3864
 #, c-format
 msgid "per-unit constants from model %d"
 msgstr "Constante pe unitate din modelul %d"
 
-#: lib/src/genfuncs.c:4106
+#: lib/src/genfuncs.c:4105
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
 msgstr "Declarație nevalidă: poate aveți nevoie de comanda \"elimină\" ?"
 
-#: lib/src/genfuncs.c:4109
+#: lib/src/genfuncs.c:4108
 msgid "Invalid declaration"
 msgstr "Declarație nevalidă"
 
-#: lib/src/genfuncs.c:4437
+#: lib/src/genfuncs.c:4436
 #, c-format
 msgid "List has %d members, but length of vector b is %d"
 msgstr "Lista are %d elemente, dar lungimea vectorului b este %d"
 
-#: lib/src/genfuncs.c:6674
+#: lib/src/genfuncs.c:6671
 msgid "model-related"
 msgstr "legat de model"
 
-#: lib/src/genfuncs.c:6727 lib/src/gretl_func.c:5152 lib/src/plotspec.c:327
+#: lib/src/genfuncs.c:6724 lib/src/gretl_func.c:5152 lib/src/plotspec.c:327
 #: lib/src/plotspec.c:346 lib/src/uservar.c:1533 lib/src/uservar.c:2437
 #: gui/fnsave.c:2360 gui/fnsave.c:2890 gui/gpt_dialog.c:140
 #: gui/gui_utils.c:3388 gui/join-gui.c:229 gui/join-gui.c:232
@@ -2715,11 +2699,11 @@ msgstr "legat de model"
 msgid "none"
 msgstr "niciunul"
 
-#: lib/src/genfuncs.c:6730
+#: lib/src/genfuncs.c:6727
 msgid "other"
 msgstr "altele"
 
-#: lib/src/genfuncs.c:8065
+#: lib/src/genfuncs.c:8062
 #, fuzzy, c-format
 msgid "Invalid number of draws %d"
 msgstr "Ordin întârziere nevalid %d"
@@ -2979,13 +2963,13 @@ msgstr "estimare loess, d = %d, q = %g"
 msgid "time series by group"
 msgstr "serii de timp pe grup"
 
-#: lib/src/graphing.c:4227 lib/src/graphing.c:6499 lib/src/plotspec.c:734
+#: lib/src/graphing.c:4227 lib/src/graphing.c:6497 lib/src/plotspec.c:734
 #: lib/src/plotspec.c:1580 gui/gpt_dialog.c:969 gui/gpt_dialog.c:1389
 #: gui/gpt_dialog.c:2869
 msgid "right"
 msgstr "dreapta"
 
-#: lib/src/graphing.c:4227 lib/src/graphing.c:6499 lib/src/plotspec.c:730
+#: lib/src/graphing.c:4227 lib/src/graphing.c:6497 lib/src/plotspec.c:730
 #: lib/src/plotspec.c:736 lib/src/plotspec.c:1578 gui/gpt_dialog.c:1384
 #: gui/gpt_dialog.c:2868
 msgid "left"
@@ -3005,241 +2989,241 @@ msgstr "potrivit"
 msgid "actual = predicted"
 msgstr "efectiv = previzionat"
 
-#: lib/src/graphing.c:5196
+#: lib/src/graphing.c:5195
 #, c-format
 msgid "'%s' is a constant"
 msgstr "'%s' este o constantă"
 
-#: lib/src/graphing.c:5261
+#: lib/src/graphing.c:5258
 msgid "Test statistic for normality"
 msgstr "Testul statistic pentru normalitate"
 
-#: lib/src/graphing.c:5287
+#: lib/src/graphing.c:5284
 msgid "Test statistic for gamma"
 msgstr "Testul statististic pentru gama"
 
-#: lib/src/graphing.c:5342 plugin/addons-i18n.c:10
+#: lib/src/graphing.c:5339 plugin/addons-i18n.c:10
 msgid "Density"
 msgstr "Densitate"
 
-#: lib/src/graphing.c:5344
+#: lib/src/graphing.c:5341
 msgid "Relative frequency"
 msgstr "Frecvența relativă"
 
-#: lib/src/graphing.c:5384 lib/src/graphing.c:5391
+#: lib/src/graphing.c:5380 lib/src/graphing.c:5388
 #, fuzzy
 msgid "relative frequency"
 msgstr "Frecvența relativă"
 
-#: lib/src/graphing.c:5456 gui/menustate.c:585
+#: lib/src/graphing.c:5454 gui/menustate.c:585
 msgid "Correlation matrix"
 msgstr "Matricea de corelație"
 
-#: lib/src/graphing.c:5856 lib/src/graphing.c:6755
+#: lib/src/graphing.c:5854 lib/src/graphing.c:6753
 #, c-format
 msgid "%g percent interval"
 msgstr "interval de %g la sută"
 
-#: lib/src/graphing.c:5869 lib/src/graphing.c:5876 lib/src/printout.c:1559
+#: lib/src/graphing.c:5867 lib/src/graphing.c:5874 lib/src/printout.c:1559
 msgid "forecast"
 msgstr "prognoză"
 
-#: lib/src/graphing.c:6753
+#: lib/src/graphing.c:6751
 #, c-format
 msgid "%g%% interval for mean"
 msgstr "interval %g%% pentru medie"
 
-#: lib/src/graphing.c:6857
+#: lib/src/graphing.c:6855
 #, c-format
 msgid "Coefficient on %s"
 msgstr "Coeficientul lui %s"
 
-#: lib/src/graphing.c:6881
+#: lib/src/graphing.c:6879
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "Cuantilă estimată cu intervalul %g%%"
 
-#: lib/src/graphing.c:6889
+#: lib/src/graphing.c:6887
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr "OLS estimat cu intervalul %g%%"
 
-#: lib/src/graphing.c:6952
+#: lib/src/graphing.c:6950
 msgid "+- sqrt(h(t))"
 msgstr "+- sqrt(h(t))"
 
-#: lib/src/graphing.c:7103
+#: lib/src/graphing.c:7101
 #, c-format
 msgid "mean %s"
 msgstr "mean %s"
 
-#: lib/src/graphing.c:7183
+#: lib/src/graphing.c:7181
 msgid "Group means"
 msgstr "Grup medii"
 
-#: lib/src/graphing.c:7571
+#: lib/src/graphing.c:7569
 msgid "time"
 msgstr "timp"
 
-#: lib/src/graphing.c:7662
+#: lib/src/graphing.c:7660
 #, fuzzy
 msgid "This command needs panel data"
 msgstr "Acest estimator necesită date panel"
 
-#: lib/src/graphing.c:7792
+#: lib/src/graphing.c:7790
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr "răspunsul lui %s la un șoc în %s, cu interval de confidență bootstrap"
 
-#: lib/src/graphing.c:7797
+#: lib/src/graphing.c:7795
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr "răspunsul lui %s la un șoc în %s"
 
-#: lib/src/graphing.c:7812
+#: lib/src/graphing.c:7810
 #, c-format
 msgid "%g percent confidence band"
 msgstr "interval de confidență de %g la sută"
 
-#: lib/src/graphing.c:7817 lib/src/graphing.c:7820
+#: lib/src/graphing.c:7815 lib/src/graphing.c:7818
 msgid "point estimate"
 msgstr "estimare punctuală"
 
-#: lib/src/graphing.c:7821
+#: lib/src/graphing.c:7819
 #, c-format
 msgid "%g and %g quantiles"
 msgstr "cuantilele %g și %g"
 
-#: lib/src/graphing.c:7923
+#: lib/src/graphing.c:7921
 #, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "descompunerea varianței estimării pentru %s"
 
-#: lib/src/graphing.c:8228
+#: lib/src/graphing.c:8226
 msgid "VAR residuals"
 msgstr "Reziduuri VAR"
 
-#: lib/src/graphing.c:8230 gui/gui_utils.c:3659
+#: lib/src/graphing.c:8228 gui/gui_utils.c:3659
 msgid "System residuals"
 msgstr "Reziduurile sistemului"
 
-#: lib/src/graphing.c:8306
+#: lib/src/graphing.c:8304
 msgid "EC terms"
 msgstr "Termeni EC"
 
-#: lib/src/graphing.c:8308 gui/gui_utils.c:4905
+#: lib/src/graphing.c:8306 gui/gui_utils.c:4905
 msgid "EC term"
 msgstr "Termen EC"
 
-#: lib/src/graphing.c:8455
+#: lib/src/graphing.c:8453
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr "Rădăcini inverse VAR în relație cu cercul unitate"
 
-#: lib/src/graphing.c:8539
+#: lib/src/graphing.c:8537
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "elipsă de confidență %g%% și intervale marginale de confidență %g%%"
 
-#: lib/src/graphing.c:8626
+#: lib/src/graphing.c:8624
 #, no-c-format
 msgid "95% interval"
 msgstr "interval 95%"
 
-#: lib/src/graphing.c:8652
+#: lib/src/graphing.c:8650
 msgid "Residual ACF"
 msgstr "FAC a reziduurilor"
 
-#: lib/src/graphing.c:8654
+#: lib/src/graphing.c:8652
 msgid "ACF for"
 msgstr "FAC pentru"
 
-#: lib/src/graphing.c:8688
+#: lib/src/graphing.c:8686
 msgid "Residual PACF"
 msgstr "FACP a reziduurilor"
 
-#: lib/src/graphing.c:8690
+#: lib/src/graphing.c:8688
 msgid "PACF for"
 msgstr "FACP pentru"
 
-#: lib/src/graphing.c:8767
+#: lib/src/graphing.c:8765
 msgid "radians"
 msgstr "radiani"
 
-#: lib/src/graphing.c:8769
+#: lib/src/graphing.c:8767
 msgid "degrees"
 msgstr "grade"
 
-#: lib/src/graphing.c:8771
+#: lib/src/graphing.c:8769
 msgid "scaled frequency"
 msgstr "frecvență scalată"
 
-#: lib/src/graphing.c:8781
+#: lib/src/graphing.c:8779
 msgid "Residual spectrum"
 msgstr "Spectru rezidual"
 
-#: lib/src/graphing.c:8783
+#: lib/src/graphing.c:8781
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Spectrul lui %s"
 
-#: lib/src/graphing.c:8789
+#: lib/src/graphing.c:8787
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Fereastra Bartlett, întindere %d"
 
-#: lib/src/graphing.c:8795 lib/src/graphing.c:8901 gui/dialogs.c:4861
+#: lib/src/graphing.c:8793 lib/src/graphing.c:8899 gui/dialogs.c:4861
 msgid "log scale"
 msgstr "scara logaritmică"
 
-#: lib/src/graphing.c:8900
+#: lib/src/graphing.c:8898
 #, fuzzy
 msgid "Sample periodogram vs ARMA Spectrum"
 msgstr "Periodogramă eșantion"
 
-#: lib/src/graphing.c:8902
+#: lib/src/graphing.c:8900
 #, fuzzy
 msgid "spectrum"
 msgstr "Spectru rezidual"
 
-#: lib/src/graphing.c:8903 gui/library.c:6022
+#: lib/src/graphing.c:8901 gui/library.c:6022
 msgid "periodogram"
 msgstr "periodograma"
 
-#: lib/src/graphing.c:9006 gui/library.c:896 gui/library.c:2922
+#: lib/src/graphing.c:9004 gui/library.c:896 gui/library.c:2922
 msgid "Q-Q plot"
 msgstr "Grafic Q-Q"
 
-#: lib/src/graphing.c:9099
+#: lib/src/graphing.c:9097
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Grafic Q-Q pentru %s"
 
-#: lib/src/graphing.c:9102
+#: lib/src/graphing.c:9100
 msgid "Normal quantiles"
 msgstr "Cuantile normale"
 
-#: lib/src/graphing.c:9422 lib/src/graphing.c:9425
+#: lib/src/graphing.c:9420 lib/src/graphing.c:9423
 #, c-format
 msgid "adjusted %s"
 msgstr "%s ajustat"
 
-#: lib/src/graphing.c:9488 plugin/range-mean.c:112
+#: lib/src/graphing.c:9486 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "cu estimare cele mai mici pătrate"
 
-#: lib/src/graphing.c:9605 lib/src/gretl_func.c:2739 lib/src/gretl_utils.c:1964
+#: lib/src/graphing.c:9603 lib/src/gretl_func.c:2739 lib/src/gretl_utils.c:1964
 #: lib/src/interact.c:1501 gui/dialogs.c:5547 gui/fnsave.c:5291
 #: gui/textbuf.c:2012 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Nu s-a putut deschide %s"
 
-#: lib/src/graphing.c:10171
+#: lib/src/graphing.c:10169
 #, fuzzy
 msgid "original data"
 msgstr "Ordin original"
 
-#: lib/src/graphing.c:10173
+#: lib/src/graphing.c:10171
 #, fuzzy
 msgid "final series"
 msgstr "Adaugă serie"
@@ -3367,7 +3351,7 @@ msgstr "Suma totală a pătratelor nu era pozitivă"
 msgid "Sum of squared residuals negative!"
 msgstr "Suma pătratelor reziduurilor negativă!"
 
-#: lib/src/gretl_errors.c:46 lib/src/system.c:1671
+#: lib/src/gretl_errors.c:46 lib/src/system.c:1659
 msgid "Sorry, command not available for this estimator"
 msgstr "Ne pare rău, comandă nedisponibilă pentru acest estimator"
 
@@ -3706,17 +3690,17 @@ msgstr "%s: argumentul %d: valoarea %g a depășit limitele\n"
 msgid "%s: not enough arguments\n"
 msgstr "%s: argumente insuficiente\n"
 
-#: lib/src/gretl_func.c:9800
+#: lib/src/gretl_func.c:9799
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" nu este definit.\n"
 
-#: lib/src/gretl_func.c:9956
+#: lib/src/gretl_func.c:9955
 #, fuzzy, c-format
 msgid "Removed %s\n"
 msgstr "scrie %s\n"
 
-#: lib/src/gretl_func.c:9958
+#: lib/src/gretl_func.c:9957
 #, fuzzy, c-format
 msgid "Unloaded %s\n"
 msgstr "Editare pachet..."
@@ -3781,16 +3765,16 @@ msgstr "\"%s\" nu este o comandă gretl.\n"
 msgid "_Open data"
 msgstr "_Deschidere date"
 
-#: lib/src/gretl_intl.c:104 lib/src/subsample.c:3120
+#: lib/src/gretl_intl.c:104 lib/src/subsample.c:3133
 msgid "annual"
 msgstr "anual"
 
-#: lib/src/gretl_intl.c:805 gui/gretl.c:1672 gui/gui_utils.c:218
+#: lib/src/gretl_intl.c:737 gui/gretl.c:1672 gui/gui_utils.c:218
 #: gui/gui_utils.c:349
 msgid "_File"
 msgstr "_Fişier"
 
-#: lib/src/gretl_intl.c:851
+#: lib/src/gretl_intl.c:783
 #, c-format
 msgid "%s: locale is not supported on this system"
 msgstr "%s: localizarea nu este suportată pe acest sistem"
@@ -3805,12 +3789,12 @@ msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
 "Nu se poate face: anumite variabile din modelul original au fost redefinite"
 
-#: lib/src/gretl_midas.c:208 lib/src/subsample.c:3122 gui/dialogs.c:3959
+#: lib/src/gretl_midas.c:208 lib/src/subsample.c:3135 gui/dialogs.c:3959
 #: gui/dialogs.c:4089
 msgid "quarterly"
 msgstr "trimestrial"
 
-#: lib/src/gretl_midas.c:209 lib/src/subsample.c:3124 gui/dialogs.c:3959
+#: lib/src/gretl_midas.c:209 lib/src/subsample.c:3137 gui/dialogs.c:3959
 #: gui/dialogs.c:4090
 msgid "monthly"
 msgstr "lunar"
@@ -3984,7 +3968,7 @@ msgstr "Test comun asupra regresorilor numiți"
 msgid "Robust test for differing group intercepts"
 msgstr "Test pentru diferențierea interceptelor grupului"
 
-#: lib/src/gretl_model.c:4189 lib/src/gretl_panel.c:4918
+#: lib/src/gretl_model.c:4189 lib/src/gretl_panel.c:4925
 msgid "Pesaran CD test for cross-sectional dependence"
 msgstr ""
 
@@ -4003,7 +3987,7 @@ msgstr "Test LM pentru autocorelație până la ordinul %s"
 msgid "No first-order autocorrelation (rho = -0.5)"
 msgstr "autocorelaţie de prim ordin"
 
-#: lib/src/gretl_model.c:4200 lib/src/gretl_panel.c:4473
+#: lib/src/gretl_model.c:4200 lib/src/gretl_panel.c:4480
 msgid "Distribution free Wald test for heteroskedasticity"
 msgstr ""
 "Testul lui Wald pentru heteroskedasticitate fără ipoteza referitoare la "
@@ -4013,76 +3997,76 @@ msgstr ""
 msgid "robust variant"
 msgstr "varianta robustă"
 
-#: lib/src/gretl_model.c:4336
+#: lib/src/gretl_model.c:4332
 #, fuzzy
 msgid "No first-order autocorrelation (rho = 0)"
 msgstr "autocorelaţie de prim ordin"
 
-#: lib/src/gretl_model.c:4403
+#: lib/src/gretl_model.c:4399
 #, c-format
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "hi-pătrat(%d) = %g la observația %s"
 
-#: lib/src/gretl_model.c:4436 lib/src/gretl_model.c:4443 gui/textbuf.c:1414
+#: lib/src/gretl_model.c:4432 lib/src/gretl_model.c:4439 gui/textbuf.c:1414
 msgid "failed"
 msgstr "eşuat"
 
-#: lib/src/gretl_model.c:4563
+#: lib/src/gretl_model.c:4559
 msgid "parameter"
 msgstr "parametru"
 
-#: lib/src/gretl_model.c:4567 gui/calculator.c:2045
+#: lib/src/gretl_model.c:4563 gui/calculator.c:2045
 msgid "dfn"
 msgstr "gln"
 
-#: lib/src/gretl_model.c:4568 gui/calculator.c:2046
+#: lib/src/gretl_model.c:4564 gui/calculator.c:2046
 msgid "dfd"
 msgstr "gld"
 
-#: lib/src/gretl_model.c:4570 lib/src/modelprint.c:5498
+#: lib/src/gretl_model.c:4566 lib/src/modelprint.c:5498
 #: lib/src/modelprint.c:5509 lib/src/modelprint.c:5511 lib/src/varprint.c:944
 #: lib/src/varprint.c:948 lib/src/varprint.c:952 gui/calculator.c:2039
 #: gui/calculator.c:2042 plugin/anova.c:85 plugin/anova.c:96 plugin/anova.c:98
 msgid "df"
 msgstr "gl"
 
-#: lib/src/gretl_model.c:4584 lib/src/gretl_model.c:4649
-#: lib/src/gretl_model.c:4652 lib/src/gretl_model.c:4655
+#: lib/src/gretl_model.c:4580 lib/src/gretl_model.c:4645
+#: lib/src/gretl_model.c:4648 lib/src/gretl_model.c:4651
 #, c-format
 msgid "%g percent critical value"
 msgstr "valoare critică la %g la sută"
 
-#: lib/src/gretl_model.c:4617
+#: lib/src/gretl_model.c:4613
 msgid "Asymptotic test statistic"
 msgstr "Test statistic asimptotic"
 
-#: lib/src/gretl_model.c:4634
+#: lib/src/gretl_model.c:4630
 msgid "with asymptotic p-value"
 msgstr "cu p-value asimptotic"
 
-#: lib/src/gretl_model.c:4635
+#: lib/src/gretl_model.c:4631
 #, fuzzy
 msgid "with bootstrap p-value"
 msgstr "cu p-value"
 
-#: lib/src/gretl_model.c:7081
+#: lib/src/gretl_model.c:7077
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "Nu se pot recupera reziduurile (uhat): setul de date s-a schimbat"
 
-#: lib/src/gretl_model.c:7083
+#: lib/src/gretl_model.c:7079
 msgid "Can't retrieve yhat: data set has changed"
 msgstr ""
 "Nu se pot recupera valorile estimate (yhat): setul de date s-a schimbat"
 
-#: lib/src/gretl_model.c:7085
+#: lib/src/gretl_model.c:7081
 msgid "Can't retrieve ht: data set has changed"
 msgstr "Nu se poate recupera ht: setul de date s-a schimbat"
 
-#: lib/src/gretl_model.c:7086
+#: lib/src/gretl_model.c:7082
 msgid "Can't retrieve series: data set has changed"
 msgstr "Nu se poate recupera seria: setul de date s-a schimbat"
 
-#: lib/src/gretl_model.c:7565 gui/library.c:405
+#: lib/src/gretl_model.c:7561 gui/library.c:405
 msgid "The model exhibits an exact linear fit"
 msgstr "Modelul prezintă o potrivire liniară exactă"
 
@@ -4213,57 +4197,57 @@ msgstr ""
 msgid "Hausman test matrix is not positive definite"
 msgstr "Matricea testului Hausman nu este definită pozitiv"
 
-#: lib/src/gretl_panel.c:3491 lib/src/options.c:1266 lib/src/options.c:1299
+#: lib/src/gretl_panel.c:3498 lib/src/options.c:1267 lib/src/options.c:1300
 #, fuzzy, c-format
 msgid "%s: invalid option argument"
 msgstr "%s: argument nevalid tip %s"
 
-#: lib/src/gretl_panel.c:3586
+#: lib/src/gretl_panel.c:3593
 #, c-format
 msgid "Diagnostics: using n = %d cross-sectional units\n"
 msgstr ""
 
-#: lib/src/gretl_panel.c:3612 lib/src/gretl_panel.c:3973
+#: lib/src/gretl_panel.c:3619 lib/src/gretl_panel.c:3980
 msgid "Couldn't estimate group means regression\n"
 msgstr "Imposibil de estimat regresia mediilor grupurilor\n"
 
-#: lib/src/gretl_panel.c:3943
+#: lib/src/gretl_panel.c:3950
 #, fuzzy
 msgid "Couldn't estimate group means regression"
 msgstr "Imposibil de estimat regresia mediilor grupurilor\n"
 
-#: lib/src/gretl_panel.c:4339
+#: lib/src/gretl_panel.c:4346
 msgid "Can't produce ML estimates: some units have only one observation"
 msgstr ""
 "Nu pot fi realizate estimări MV: anumite unități au doar o singură observație"
 
-#: lib/src/gretl_panel.c:4392
+#: lib/src/gretl_panel.c:4399
 msgid "iteration"
 msgstr "iterație"
 
-#: lib/src/gretl_panel.c:4478
+#: lib/src/gretl_panel.c:4485
 msgid "Pooled error variance"
 msgstr "Varianța combinată (pooled) a erorilor"
 
-#: lib/src/gretl_panel.c:4569
+#: lib/src/gretl_panel.c:4576
 msgid "First differenced equation (dependent, d_y)"
 msgstr ""
 
-#: lib/src/gretl_panel.c:4570
+#: lib/src/gretl_panel.c:4577
 #, fuzzy
 msgid "Autoregression of residuals (dependent, uhat)"
 msgstr "Reziduurile regresiei (= observate - potrivite %s)"
 
-#: lib/src/gretl_panel.c:4571
+#: lib/src/gretl_panel.c:4578
 msgid "Auxiliary regression including lagged residual"
 msgstr ""
 
-#: lib/src/gretl_panel.c:5253
+#: lib/src/gretl_panel.c:5260
 #, c-format
 msgid "Error: unit %g, period %g: duplicated observation"
 msgstr "Eroare: unitatea %g, perioada %g: observații duble "
 
-#: lib/src/gretl_panel.c:5800
+#: lib/src/gretl_panel.c:5807
 msgid "Sorry, can't do this with a sub-sampled dataset"
 msgstr ""
 "Ne pare rău, acest lucru nu se poate face cu un set de date subeșantionat"
@@ -4469,12 +4453,12 @@ msgstr "Suma coeficienţilor"
 msgid "Standard error"
 msgstr "Eroarea standard"
 
-#: lib/src/gretl_string_table.c:451
+#: lib/src/gretl_string_table.c:456
 #, c-format
 msgid "variable %d: translating from strings to code numbers\n"
 msgstr "variabile %d: transformare din șir de caractere în cod numeric\n"
 
-#: lib/src/gretl_string_table.c:673
+#: lib/src/gretl_string_table.c:690
 msgid ""
 "One or more non-numeric variables were found.\n"
 "These variables have been given numeric codes as follows.\n"
@@ -4484,7 +4468,7 @@ msgstr ""
 "Acestor variabile le-au fost atribuite coduri numerice după cum urmează.\n"
 "\n"
 
-#: lib/src/gretl_string_table.c:676
+#: lib/src/gretl_string_table.c:693
 msgid ""
 "In addition, some mappings from numerical values to string\n"
 "labels were found, and are printed below.\n"
@@ -4494,12 +4478,12 @@ msgstr ""
 "numerice cu etichete, arătate mai jos.\n"
 "\n"
 
-#: lib/src/gretl_string_table.c:689
+#: lib/src/gretl_string_table.c:706
 #, c-format
 msgid "String code table for variable %d (%s):\n"
 msgstr "Tabelul de coduri șir pentru variabila %d (%s):\n"
 
-#: lib/src/gretl_string_table.c:709
+#: lib/src/gretl_string_table.c:727
 #, c-format
 msgid ""
 "String code table written to\n"
@@ -4508,12 +4492,12 @@ msgstr ""
 "Tabelul de coduri șir scrise pentru\n"
 " %s\n"
 
-#: lib/src/gretl_string_table.c:982 lib/src/gretl_win32.c:966
+#: lib/src/gretl_string_table.c:1028 lib/src/gretl_win32.c:966
 #: lib/src/interact.c:451
 msgid "The shell command is not activated."
 msgstr "Comanda shell nu este activată"
 
-#: lib/src/gretl_string_table.c:1257
+#: lib/src/gretl_string_table.c:1338
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Lungimea maximă a liniei de comandă (%d octeți) este depășită\n"
@@ -4573,12 +4557,12 @@ msgstr "Nu se poate scrie în %s"
 msgid "Couldn't find %s for gretl %s"
 msgstr "Nu s-a putut deschide %s"
 
-#: lib/src/gretl_xml.c:72 lib/src/gretl_xml.c:4518
+#: lib/src/gretl_xml.c:72 lib/src/gretl_xml.c:4619
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "xmlParseFile eșuat pentru %s"
 
-#: lib/src/gretl_xml.c:79 lib/src/gretl_xml.c:4523
+#: lib/src/gretl_xml.c:79 lib/src/gretl_xml.c:4624
 #, c-format
 msgid "%s: empty document"
 msgstr "%s: document gol"
@@ -4593,81 +4577,90 @@ msgstr "Fișier de tip greșit, nodul rădăcină nu este %s"
 msgid "Writing %.0f Kbytes of data\n"
 msgstr "Scriind %.0f Kbytes de date\n"
 
-#: lib/src/gretl_xml.c:2698
+#: lib/src/gretl_xml.c:2719
 msgid "Failed to parse count of variables"
 msgstr "Eșuată numărarea variabilelor"
 
-#: lib/src/gretl_xml.c:2712 lib/src/gretl_xml.c:2730 lib/src/gretl_xml.c:2883
+#: lib/src/gretl_xml.c:2733 lib/src/gretl_xml.c:2751 lib/src/gretl_xml.c:2904
 msgid "Got no variables"
 msgstr "Nu s-au obținut variabile"
 
-#: lib/src/gretl_xml.c:2751
+#: lib/src/gretl_xml.c:2772
 #, c-format
 msgid "Variable %d has no name"
 msgstr "Variabila %d nu are nume"
 
-#: lib/src/gretl_xml.c:2843
+#: lib/src/gretl_xml.c:2864
 msgid "Number of variables does not match declaration"
 msgstr "Numărul de variabile nu corespunde cu numărul declarat"
 
-#: lib/src/gretl_xml.c:3015
+#: lib/src/gretl_xml.c:3036
 #, fuzzy, c-format
 msgid "Data file contains %d subnormal values"
 msgstr "Variabila de ponderare conține valori negative"
 
-#: lib/src/gretl_xml.c:3074
+#: lib/src/gretl_xml.c:3095
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr "Eșuată citirea datelor valoare la obs %d"
 
-#: lib/src/gretl_xml.c:3102 lib/src/gretl_xml.c:3259
+#: lib/src/gretl_xml.c:3123 lib/src/gretl_xml.c:3280
 msgid "Failed to parse number of observations"
 msgstr "Nu s-a reușit citirea numărului de obrservații"
 
-#: lib/src/gretl_xml.c:3158 lib/src/gretl_xml.c:3310
+#: lib/src/gretl_xml.c:3179 lib/src/gretl_xml.c:3331
 msgid "Got no observations\n"
 msgstr "Nu s-au obținut observații\n"
 
-#: lib/src/gretl_xml.c:3179 lib/src/gretl_xml.c:3323
+#: lib/src/gretl_xml.c:3200 lib/src/gretl_xml.c:3344
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr "Marcator lipsă la obs %d"
 
-#: lib/src/gretl_xml.c:3189 lib/src/gretl_xml.c:3333
+#: lib/src/gretl_xml.c:3210 lib/src/gretl_xml.c:3354
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "Valori lipsă la observația %d"
 
-#: lib/src/gretl_xml.c:3223 lib/src/gretl_xml.c:3356
+#: lib/src/gretl_xml.c:3244 lib/src/gretl_xml.c:3377
 msgid "Number of observations does not match declaration"
 msgstr "Numărul de observații nu corespunde cu numărul declarat"
 
-#: lib/src/gretl_xml.c:3518
+#: lib/src/gretl_xml.c:3539
 msgid "Required attribute 'type' is missing from data file"
 msgstr "Atributul solicitat 'tip' lipsește din fișierul de date "
 
-#: lib/src/gretl_xml.c:3530
+#: lib/src/gretl_xml.c:3551
 msgid "Unrecognized type attribute for data file"
 msgstr "Atribut tip nerecunoscut pentru fișierul de date"
 
-#: lib/src/gretl_xml.c:3555
+#: lib/src/gretl_xml.c:3576
 msgid "Failed to parse data frequency"
 msgstr "Eșuată citirea frecvenței datelor"
 
-#: lib/src/gretl_xml.c:3607
+#: lib/src/gretl_xml.c:3628
 msgid "Failed to parse startobs"
 msgstr "Eșuată citirea startobs"
 
-#: lib/src/gretl_xml.c:3654
+#: lib/src/gretl_xml.c:3675
 msgid "Failed to parse endobs"
 msgstr "Eșuată citirea endobs"
 
-#: lib/src/gretl_xml.c:3715
+#: lib/src/gretl_xml.c:3736
 #, c-format
 msgid "dummy for %s = %lf"
 msgstr "dummy pentru %s = %If"
 
-#: lib/src/gretl_xml.c:3832
+#: lib/src/gretl_xml.c:3771
+#, c-format
+msgid ""
+"\n"
+"Read datafile %s\n"
+msgstr ""
+"\n"
+"Citire fișier date %s\n"
+
+#: lib/src/gretl_xml.c:3853
 #, c-format
 msgid ""
 "The version of this datafile (%g) is higher than that fully\n"
@@ -4675,34 +4668,34 @@ msgid ""
 "correctly recognized.\n"
 msgstr ""
 
-#: lib/src/gretl_xml.c:3861
+#: lib/src/gretl_xml.c:3882
 msgid "Uncompressing"
 msgstr "Decomprimare"
 
-#: lib/src/gretl_xml.c:3861
+#: lib/src/gretl_xml.c:3882
 msgid "Reading"
 msgstr "Citire"
 
-#: lib/src/gretl_xml.c:3862
+#: lib/src/gretl_xml.c:3883
 msgid "of data"
 msgstr "de date"
 
-#: lib/src/gretl_xml.c:3943 lib/src/gretl_xml.c:3958 lib/src/gretl_xml.c:3968
-#: lib/src/gretl_xml.c:3987 lib/src/gretl_xml.c:4143 lib/src/gretl_xml.c:4156
-#: lib/src/gretl_xml.c:4172 lib/src/gretl_xml.c:4279
+#: lib/src/gretl_xml.c:3964 lib/src/gretl_xml.c:3979 lib/src/gretl_xml.c:3989
+#: lib/src/gretl_xml.c:4008 lib/src/gretl_xml.c:4164 lib/src/gretl_xml.c:4177
+#: lib/src/gretl_xml.c:4193 lib/src/gretl_xml.c:4300
 msgid "Variables information is missing"
 msgstr "Informațiile despre variabile lipsesc"
 
-#: lib/src/gretl_xml.c:3992 lib/src/gretl_xml.c:4177
+#: lib/src/gretl_xml.c:4013 lib/src/gretl_xml.c:4198
 msgid "No observations were found"
 msgstr "Nicio observație nu a fost găsită"
 
-#: lib/src/gretl_xml.c:4049
+#: lib/src/gretl_xml.c:4070
 #, c-format
 msgid "'%s': malformed gdt file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:4051 gui/gpt_control.c:5653 plugin/geoplot.c:1207
+#: lib/src/gretl_xml.c:4072 gui/gpt_control.c:5663 plugin/geoplot.c:1207
 #, fuzzy, c-format
 msgid "Couldn't read '%s'"
 msgstr "Nu se poate deschide '%s' "
@@ -4786,7 +4779,7 @@ msgstr "%s: input nevalid '%s'\n"
 msgid "Inner key is missing"
 msgstr "Cheia internă lipsește"
 
-#: lib/src/interact.c:2038 lib/src/interact.c:2208 lib/src/interact.c:4040
+#: lib/src/interact.c:2039 lib/src/interact.c:2208 lib/src/interact.c:4040
 #, c-format
 msgid "The \"%s\" command cannot be used in this context"
 msgstr "Comanda \"%s\" nu poate fi folosită în acest context"
@@ -4876,7 +4869,7 @@ msgstr "\"help set\" pentru detalii"
 msgid "Program interaction and behavior"
 msgstr "Interacțiunea și comportamentul programului"
 
-#: lib/src/libset.c:1700 gui/helpfiles.c:341 doc/commands/matfuncs.c:48
+#: lib/src/libset.c:1700 gui/helpfiles.c:341 doc/commands/matfuncs.c:46
 msgid "Numerical methods"
 msgstr "Metode numerice"
 
@@ -5008,7 +5001,7 @@ msgid "Smallest eigenvalue"
 msgstr "Cea mai mică valoare proprie"
 
 #: lib/src/modelprint.c:399 lib/src/modelprint.c:401 lib/src/modelprint.c:405
-#: lib/src/system.c:3604 lib/src/system.c:3619
+#: lib/src/system.c:3591 lib/src/system.c:3606
 msgid "LR over-identification test"
 msgstr "Testul LR pentru supra-identificare"
 
@@ -5042,7 +5035,7 @@ msgid "Sargan test"
 msgstr "Testul Sargan"
 
 #: lib/src/modelprint.c:535 lib/src/modelprint.c:538 lib/src/modelprint.c:546
-#: lib/src/modelprint.c:548 lib/src/printout.c:3341
+#: lib/src/modelprint.c:548 lib/src/printout.c:3347
 msgid "GMM criterion"
 msgstr "Criteriul GMM"
 
@@ -5168,7 +5161,7 @@ msgid "Augmented regression for common factor test"
 msgstr ""
 
 #: lib/src/modelprint.c:949 lib/src/system.c:96 lib/src/varprint.c:1055
-#: lib/src/varprint.c:1064 lib/src/varprint.c:1072 gui/selector.c:4231
+#: lib/src/varprint.c:1064 lib/src/varprint.c:1072 gui/selector.c:4230
 msgid "OLS"
 msgstr ""
 
@@ -5185,11 +5178,11 @@ msgstr ""
 msgid "Heteroskedasticity-corrected"
 msgstr ""
 
-#: lib/src/modelprint.c:953 lib/src/modelprint.c:5250 gui/selector.c:5609
+#: lib/src/modelprint.c:953 lib/src/modelprint.c:5250 gui/selector.c:5608
 msgid "AR"
 msgstr "AR"
 
-#: lib/src/modelprint.c:954 lib/src/modelprint.c:1074 gui/selector.c:4293
+#: lib/src/modelprint.c:954 lib/src/modelprint.c:1074 gui/selector.c:4292
 msgid "LAD"
 msgstr "LAD"
 
@@ -5197,23 +5190,23 @@ msgstr "LAD"
 msgid "High-Precision OLS"
 msgstr ""
 
-#: lib/src/modelprint.c:956 lib/src/modelprint.c:1056 gui/selector.c:4243
+#: lib/src/modelprint.c:956 lib/src/modelprint.c:1056 gui/selector.c:4242
 msgid "Probit"
 msgstr "Probit"
 
-#: lib/src/modelprint.c:957 lib/src/modelprint.c:1048 gui/selector.c:4237
+#: lib/src/modelprint.c:957 lib/src/modelprint.c:1048 gui/selector.c:4236
 msgid "Logit"
 msgstr "Logit"
 
-#: lib/src/modelprint.c:958 gui/selector.c:4249
+#: lib/src/modelprint.c:958 gui/selector.c:4248
 msgid "Tobit"
 msgstr "Tobit"
 
-#: lib/src/modelprint.c:959 gui/selector.c:4251
+#: lib/src/modelprint.c:959 gui/selector.c:4250
 msgid "Heckit"
 msgstr "Heckit"
 
-#: lib/src/modelprint.c:960 gui/selector.c:4403
+#: lib/src/modelprint.c:960 gui/selector.c:4402
 msgid "Poisson"
 msgstr ""
 
@@ -5237,11 +5230,11 @@ msgstr ""
 msgid "GMM"
 msgstr "GMM"
 
-#: lib/src/modelprint.c:966 lib/src/modelprint.c:1062 gui/selector.c:4255
+#: lib/src/modelprint.c:966 lib/src/modelprint.c:1062 gui/selector.c:4254
 msgid "Logistic"
 msgstr "Logistic"
 
-#: lib/src/modelprint.c:967 gui/selector.c:4285 plugin/addons-i18n.c:15
+#: lib/src/modelprint.c:967 gui/selector.c:4284 plugin/addons-i18n.c:15
 msgid "GARCH"
 msgstr "GARCH"
 
@@ -5253,7 +5246,7 @@ msgstr ""
 msgid "Dynamic panel"
 msgstr ""
 
-#: lib/src/modelprint.c:970 gui/selector.c:4253
+#: lib/src/modelprint.c:970 gui/selector.c:4252
 msgid "Bivariate probit"
 msgstr "Probit bivariat"
 
@@ -5273,7 +5266,7 @@ msgstr "Arellano--Bond"
 msgid "Hildreth--Lu"
 msgstr ""
 
-#: lib/src/modelprint.c:985 gui/selector.c:6742
+#: lib/src/modelprint.c:985 gui/selector.c:6741
 msgid "Hildreth-Lu"
 msgstr ""
 
@@ -5281,7 +5274,7 @@ msgstr ""
 msgid "Prais--Winsten"
 msgstr ""
 
-#: lib/src/modelprint.c:988 gui/selector.c:6738
+#: lib/src/modelprint.c:988 gui/selector.c:6737
 msgid "Prais-Winsten"
 msgstr ""
 
@@ -5289,7 +5282,7 @@ msgstr ""
 msgid "Cochrane--Orcutt"
 msgstr ""
 
-#: lib/src/modelprint.c:991 gui/selector.c:6734
+#: lib/src/modelprint.c:991 gui/selector.c:6733
 msgid "Cochrane-Orcutt"
 msgstr ""
 
@@ -5297,7 +5290,7 @@ msgstr ""
 msgid "ARMAX"
 msgstr ""
 
-#: lib/src/modelprint.c:998 gui/selector.c:4281 plugin/tramo_options.c:724
+#: lib/src/modelprint.c:998 gui/selector.c:4280 plugin/tramo_options.c:724
 msgid "ARIMA"
 msgstr "ARIMA"
 
@@ -5353,11 +5346,11 @@ msgstr "GMM iterat"
 msgid "1-step GMM"
 msgstr "GMM în 1 etapă"
 
-#: lib/src/modelprint.c:1044 gui/selector.c:4239
+#: lib/src/modelprint.c:1044 gui/selector.c:4238
 msgid "Ordered Logit"
 msgstr "Logit ordinală"
 
-#: lib/src/modelprint.c:1046 gui/selector.c:4241
+#: lib/src/modelprint.c:1046 gui/selector.c:4240
 msgid "Multinomial Logit"
 msgstr "Logit multinomială"
 
@@ -5365,7 +5358,7 @@ msgstr "Logit multinomială"
 msgid "Random-effects probit"
 msgstr "Efecte aleatoare probit"
 
-#: lib/src/modelprint.c:1054 gui/selector.c:4245
+#: lib/src/modelprint.c:1054 gui/selector.c:4244
 msgid "Ordered Probit"
 msgstr "Probit ordinală"
 
@@ -5500,12 +5493,12 @@ msgstr ""
 msgid "Instrumented"
 msgstr ""
 
-#: lib/src/modelprint.c:1325 gui/selector.c:5065 gui/selector.c:8827
+#: lib/src/modelprint.c:1325 gui/selector.c:5064 gui/selector.c:8828
 #: plugin/addons-i18n.c:104
 msgid "Instruments"
 msgstr ""
 
-#: lib/src/modelprint.c:1398 lib/src/modelprint.c:1400 gui/selector.c:6161
+#: lib/src/modelprint.c:1398 lib/src/modelprint.c:1400 gui/selector.c:6160
 msgid "Asymptotic standard errors"
 msgstr "Erori standard asimptotice"
 
@@ -5639,7 +5632,7 @@ msgstr ""
 #: lib/src/modelprint.c:1787 lib/src/modelprint.c:2158
 #: lib/src/modelprint.c:2161 lib/src/modelprint.c:2171
 #: lib/src/modelprint.c:2174 lib/src/modelprint.c:2209 gui/model_table.c:1210
-#: gui/model_table.c:1307 gui/selector.c:4732 plugin/addons-i18n.c:100
+#: gui/model_table.c:1307 gui/selector.c:4731 plugin/addons-i18n.c:100
 #: plugin/interpolate.c:192
 msgid "Dependent variable"
 msgstr ""
@@ -5744,7 +5737,7 @@ msgid "Using Swamy-Arora as per Baltagi-Chang"
 msgstr ""
 
 #: lib/src/modelprint.c:2010 lib/src/modelprint.c:2013
-#: lib/src/modelprint.c:2016 lib/src/system.c:4898 lib/src/system.c:4924
+#: lib/src/modelprint.c:2016 lib/src/system.c:4885 lib/src/system.c:4911
 #: lib/src/vartest.c:245 lib/src/vartest.c:505
 msgid "Equation"
 msgstr "Ecuaţie"
@@ -5814,7 +5807,7 @@ msgstr ""
 msgid "scaled %s"
 msgstr ""
 
-#: lib/src/modelprint.c:2250 gui/selector.c:4327
+#: lib/src/modelprint.c:2250 gui/selector.c:4326
 msgid "Selection variable"
 msgstr ""
 
@@ -6033,9 +6026,9 @@ msgid "P-value(F)"
 msgstr ""
 
 #. TRANSLATORS: maximum length of string is 22 characters
-#: lib/src/modelprint.c:3077 lib/src/system.c:4803 lib/src/system.c:4810
+#: lib/src/modelprint.c:3077 lib/src/system.c:4790 lib/src/system.c:4797
 #: lib/src/texprint.c:1099 lib/src/varprint.c:1091 lib/src/varprint.c:1100
-#: gui/library.c:6841 plugin/johansen.c:1596
+#: gui/library.c:6841 plugin/johansen.c:1602
 msgid "Log-likelihood"
 msgstr ""
 
@@ -6141,7 +6134,7 @@ msgstr ""
 msgid "Durbin's h"
 msgstr ""
 
-#: lib/src/modelprint.c:3343 lib/src/system.c:4795 lib/src/system.c:4797
+#: lib/src/modelprint.c:3343 lib/src/system.c:4782 lib/src/system.c:4784
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr ""
@@ -6151,7 +6144,7 @@ msgstr ""
 msgid "HQC"
 msgstr ""
 
-#: lib/src/modelprint.c:3489 lib/src/printout.c:3342
+#: lib/src/modelprint.c:3489 lib/src/printout.c:3348
 msgid "SSR"
 msgstr ""
 
@@ -6184,8 +6177,8 @@ msgstr "Imaginar"
 msgid "Modulus"
 msgstr "Modulul"
 
-#: lib/src/modelprint.c:5237 lib/src/modelprint.c:5245 lib/src/subsample.c:3164
-#: lib/src/subsample.c:3186 lib/src/subsample.c:3245
+#: lib/src/modelprint.c:5237 lib/src/modelprint.c:5245 lib/src/subsample.c:3177
+#: lib/src/subsample.c:3199 lib/src/subsample.c:3258
 msgid "Frequency"
 msgstr "Frecvenţa"
 
@@ -6193,7 +6186,7 @@ msgstr "Frecvenţa"
 msgid "AR (seasonal)"
 msgstr "AR (sezonier)"
 
-#: lib/src/modelprint.c:5278 gui/selector.c:5611
+#: lib/src/modelprint.c:5278 gui/selector.c:5610
 msgid "MA"
 msgstr "MA"
 
@@ -6654,11 +6647,11 @@ msgstr ""
 msgid "Prob"
 msgstr ""
 
-#: lib/src/objstack.c:692 lib/src/objstack.c:727 gui/selector.c:4287
+#: lib/src/objstack.c:692 lib/src/objstack.c:727 gui/selector.c:4286
 msgid "VAR"
 msgstr "VAR"
 
-#: lib/src/objstack.c:694 lib/src/objstack.c:738 gui/selector.c:4291
+#: lib/src/objstack.c:694 lib/src/objstack.c:738 gui/selector.c:4290
 msgid "VECM"
 msgstr "VECM"
 
@@ -6681,17 +6674,17 @@ msgid ""
 "the reference model was estimated\n"
 msgstr ""
 
-#: lib/src/options.c:1305 lib/src/tokenize.c:1136
+#: lib/src/options.c:1306 lib/src/tokenize.c:1136
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr ""
 
-#: lib/src/options.c:1782
+#: lib/src/options.c:1783
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr ""
 
-#: lib/src/options.c:1914 lib/src/subsample.c:2691
+#: lib/src/options.c:1915 lib/src/subsample.c:2704
 #, c-format
 msgid "%s: inapplicable option"
 msgstr "%s: opțiune neaplicabilă"
@@ -6786,12 +6779,12 @@ msgstr "creştere anuală"
 msgid "Dates file does not conform to the specification"
 msgstr ""
 
-#: lib/src/plugins.c:391
+#: lib/src/plugins.c:399
 #, c-format
 msgid "Failed to load plugin: %s"
 msgstr ""
 
-#: lib/src/plugins.c:525 lib/src/plugins.c:556
+#: lib/src/plugins.c:533 lib/src/plugins.c:564
 msgid "Couldn't load plugin function"
 msgstr ""
 
@@ -6929,7 +6922,7 @@ msgstr ""
 msgid "Full data range"
 msgstr ""
 
-#: lib/src/printout.c:1000 lib/src/subsample.c:3150
+#: lib/src/printout.c:1000 lib/src/subsample.c:3163
 msgid "Current sample"
 msgstr ""
 
@@ -6980,109 +6973,109 @@ msgstr "eroare"
 msgid "Listing %d variables:\n"
 msgstr ""
 
-#: lib/src/printout.c:2990 gui/guiprint.c:1443
+#: lib/src/printout.c:2996 gui/guiprint.c:1443
 msgid "Mean Error"
 msgstr "Eroare Medie"
 
-#: lib/src/printout.c:2991 gui/guiprint.c:1445
+#: lib/src/printout.c:2997 gui/guiprint.c:1445
 msgid "Root Mean Squared Error"
 msgstr ""
 
-#: lib/src/printout.c:2992 gui/guiprint.c:1446
+#: lib/src/printout.c:2998 gui/guiprint.c:1446
 msgid "Mean Absolute Error"
 msgstr "Eroare Medie Absolută"
 
-#: lib/src/printout.c:2993 gui/guiprint.c:1447
+#: lib/src/printout.c:2999 gui/guiprint.c:1447
 msgid "Mean Percentage Error"
 msgstr ""
 
-#: lib/src/printout.c:2994 gui/guiprint.c:1448
+#: lib/src/printout.c:3000 gui/guiprint.c:1448
 msgid "Mean Absolute Percentage Error"
 msgstr ""
 
-#: lib/src/printout.c:2995
+#: lib/src/printout.c:3001
 msgid "Theil's U"
 msgstr ""
 
-#: lib/src/printout.c:2996
+#: lib/src/printout.c:3002
 msgid "Bias proportion, UM"
 msgstr ""
 
-#: lib/src/printout.c:2997
+#: lib/src/printout.c:3003
 msgid "Regression proportion, UR"
 msgstr ""
 
-#: lib/src/printout.c:2998
+#: lib/src/printout.c:3004
 msgid "Disturbance proportion, UD"
 msgstr ""
 
-#: lib/src/printout.c:3019 gui/guiprint.c:1474
+#: lib/src/printout.c:3025 gui/guiprint.c:1474
 msgid "Forecast evaluation statistics"
 msgstr ""
 
-#: lib/src/printout.c:3021
+#: lib/src/printout.c:3027
 #, fuzzy, c-format
 msgid "using %d observations"
 msgstr "Observații mărginite"
 
-#: lib/src/printout.c:3123
+#: lib/src/printout.c:3129
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr ""
 
-#: lib/src/printout.c:3192
+#: lib/src/printout.c:3198
 #, c-format
 msgid " For %g%% confidence intervals, z(%g) = %.2f\n"
 msgstr ""
 
-#: lib/src/printout.c:3195
+#: lib/src/printout.c:3201
 #, c-format
 msgid " For %g%% confidence intervals, t(%d, %g) = %.3f\n"
 msgstr ""
 
-#: lib/src/printout.c:3219
+#: lib/src/printout.c:3225
 msgid " std. error"
 msgstr ""
 
-#: lib/src/printout.c:3220
+#: lib/src/printout.c:3226
 #, c-format
 msgid "        %g%% interval\n"
 msgstr ""
 
-#: lib/src/printout.c:3340 gui/guiprint.c:871 plugin/jrestrict.c:2819
+#: lib/src/printout.c:3346 gui/guiprint.c:871 plugin/jrestrict.c:2819
 msgid "loglikelihood"
 msgstr ""
 
-#: lib/src/printout.c:3343
+#: lib/src/printout.c:3349
 msgid "Criterion"
 msgstr ""
 
-#: lib/src/printout.c:3360
+#: lib/src/printout.c:3366
 msgid "FINAL VALUES"
 msgstr ""
 
-#: lib/src/printout.c:3362 lib/src/printout.c:3366
+#: lib/src/printout.c:3368 lib/src/printout.c:3372
 msgid "Iteration"
 msgstr ""
 
-#: lib/src/printout.c:3381
+#: lib/src/printout.c:3387
 #, c-format
 msgid " (steplength = %g)"
 msgstr ""
 
-#: lib/src/printout.c:3383
+#: lib/src/printout.c:3389
 #, c-format
 msgid " (step %g"
 msgstr ""
 
-#: lib/src/printout.c:3391 plugin/fcp.c:249
+#: lib/src/printout.c:3397 plugin/fcp.c:249
 msgid "Parameters: "
 msgstr ""
 
-#: lib/src/printout.c:3401 plugin/fcp.c:262
+#: lib/src/printout.c:3407 plugin/fcp.c:262
 msgid "Gradients:  "
 msgstr ""
 
-#: lib/src/printout.c:3411 lib/src/printout.c:3413 lib/src/printout.c:3415
+#: lib/src/printout.c:3417 lib/src/printout.c:3419 lib/src/printout.c:3421
 msgid "norm"
 msgstr ""
 
@@ -7096,108 +7089,108 @@ msgstr ""
 msgid "%s: not a string variable"
 msgstr "%s: nu o variabilă tip șir de caractere"
 
-#: lib/src/pvalues.c:3042 gui/calculator.c:1208
+#: lib/src/pvalues.c:3040 gui/calculator.c:1208
 msgid "Standard normal distribution"
 msgstr "Distribuție normală standard"
 
-#: lib/src/pvalues.c:3068 gui/calculator.c:1215
+#: lib/src/pvalues.c:3066 gui/calculator.c:1215
 #, c-format
 msgid "right-tail probability = %g"
 msgstr ""
 
-#: lib/src/pvalues.c:3070 gui/calculator.c:1217
+#: lib/src/pvalues.c:3068 gui/calculator.c:1217
 #, c-format
 msgid "complementary probability = %g"
 msgstr ""
 
-#: lib/src/pvalues.c:3073 gui/calculator.c:1220
+#: lib/src/pvalues.c:3071 gui/calculator.c:1220
 #, c-format
 msgid "two-tailed probability = %g"
 msgstr ""
 
-#: lib/src/pvalues.c:3076 gui/calculator.c:1223
+#: lib/src/pvalues.c:3074 gui/calculator.c:1223
 #, c-format
 msgid "Critical value = %g"
 msgstr ""
 
-#: lib/src/pvalues.c:3715
+#: lib/src/pvalues.c:3713
 #, c-format
 msgid "area to the right of %g: NA\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3722
+#: lib/src/pvalues.c:3720
 #, c-format
 msgid "area to the right of %g =~ %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3724
+#: lib/src/pvalues.c:3722
 #, c-format
 msgid "area to the right of %g = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3750
+#: lib/src/pvalues.c:3748
 msgid "Standard normal"
 msgstr "Normală standard"
 
-#: lib/src/pvalues.c:3754 lib/src/pvalues.c:3759 lib/src/pvalues.c:3769
-#: lib/src/pvalues.c:3774
+#: lib/src/pvalues.c:3752 lib/src/pvalues.c:3757 lib/src/pvalues.c:3767
+#: lib/src/pvalues.c:3772
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3758 lib/src/pvalues.c:3773 lib/src/pvalues.c:3784
-#: lib/src/pvalues.c:3792 lib/src/pvalues.c:3836 lib/src/pvalues.c:3845
-#: lib/src/pvalues.c:3853 lib/src/pvalues.c:3861
+#: lib/src/pvalues.c:3756 lib/src/pvalues.c:3771 lib/src/pvalues.c:3782
+#: lib/src/pvalues.c:3790 lib/src/pvalues.c:3834 lib/src/pvalues.c:3843
+#: lib/src/pvalues.c:3851 lib/src/pvalues.c:3859
 #, c-format
 msgid "(to the left: %g)\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3796
+#: lib/src/pvalues.c:3794
 #, c-format
 msgid ""
 "Gamma (shape %g, scale %g, mean %g, variance %g):\n"
 " area to the right of %g = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3804
+#: lib/src/pvalues.c:3802
 #, c-format
 msgid ""
 "Binomial (p = %g, n = %d):\n"
 " Prob(x > %d) = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3809 lib/src/pvalues.c:3823
+#: lib/src/pvalues.c:3807 lib/src/pvalues.c:3821
 #, c-format
 msgid " Prob(x <= %d) = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3810 lib/src/pvalues.c:3813 lib/src/pvalues.c:3824
-#: lib/src/pvalues.c:3827
+#: lib/src/pvalues.c:3808 lib/src/pvalues.c:3811 lib/src/pvalues.c:3822
+#: lib/src/pvalues.c:3825
 #, c-format
 msgid " Prob(x = %d) = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:3818
+#: lib/src/pvalues.c:3816
 #, c-format
 msgid "Poisson (mean = %g): "
 msgstr ""
 
-#: lib/src/pvalues.c:3832
+#: lib/src/pvalues.c:3830
 #, c-format
 msgid "Exponential (scale = %g): "
 msgstr ""
 
-#: lib/src/pvalues.c:3840
+#: lib/src/pvalues.c:3838
 #, c-format
 msgid "Weibull (shape = %g, scale = %g): "
 msgstr ""
 
-#: lib/src/pvalues.c:3849
+#: lib/src/pvalues.c:3847
 #, c-format
 msgid "GED (shape = %g): "
 msgstr ""
 
-#: lib/src/pvalues.c:3857
+#: lib/src/pvalues.c:3855
 #, c-format
 msgid "Laplace (mean = %g, scale = %g): "
 msgstr ""
@@ -7215,7 +7208,7 @@ msgstr ""
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr ""
 
-#: lib/src/subsample.c:1009 lib/src/subsample.c:1652
+#: lib/src/subsample.c:1009 lib/src/subsample.c:1657
 msgid "No observations would be left!"
 msgstr ""
 
@@ -7234,183 +7227,183 @@ msgstr ""
 msgid "Invalid number of cases %d"
 msgstr ""
 
-#: lib/src/subsample.c:1657
+#: lib/src/subsample.c:1662
 msgid "No observations were dropped!"
 msgstr ""
 
-#: lib/src/subsample.c:1708
+#: lib/src/subsample.c:1713
 msgid "Sub-sample command failed mysteriously"
 msgstr ""
 
-#: lib/src/subsample.c:1786
+#: lib/src/subsample.c:1791
 msgid "--balanced option is invalid: the (full) dataset is not a panel"
 msgstr ""
 
-#: lib/src/subsample.c:2131 lib/src/subsample.c:2393 gui/ssheet.c:4115
+#: lib/src/subsample.c:2136 lib/src/subsample.c:2398 gui/ssheet.c:4115
 msgid "The dataset cannot be modified at present"
 msgstr ""
 
-#: lib/src/subsample.c:2141
+#: lib/src/subsample.c:2146
 msgid ""
 "The full dataset must be restored before imposing a permanent sample "
 "restriction"
 msgstr ""
 
-#: lib/src/subsample.c:2508
+#: lib/src/subsample.c:2513
 #, fuzzy, c-format
 msgid "'%s': invalid starting observation"
 msgstr "'%s': indice observație nevalid"
 
-#: lib/src/subsample.c:2511
+#: lib/src/subsample.c:2516
 #, fuzzy, c-format
 msgid "'%s': invalid ending observation"
 msgstr "'%s': indice observație nevalid"
 
-#: lib/src/subsample.c:2638 lib/src/subsample.c:2651
+#: lib/src/subsample.c:2643 lib/src/subsample.c:2655
 msgid "error in new starting obs"
 msgstr ""
 
-#: lib/src/subsample.c:2660
+#: lib/src/subsample.c:2664
 msgid "error in new ending obs"
 msgstr ""
 
-#: lib/src/subsample.c:2706
+#: lib/src/subsample.c:2719
 #, fuzzy, c-format
 msgid "invalid first unit %d"
 msgstr "Argument nevalid"
 
-#: lib/src/subsample.c:2709
+#: lib/src/subsample.c:2722
 #, fuzzy, c-format
 msgid "invalid last unit %d"
 msgstr "Ordin întârziere nevalid %d"
 
-#: lib/src/subsample.c:2712
+#: lib/src/subsample.c:2725
 #, fuzzy
 msgid "invalid null sample"
 msgstr "Eșantion nul nevalid"
 
-#: lib/src/subsample.c:2808 lib/src/subsample.c:2814 lib/src/subsample.c:2836
+#: lib/src/subsample.c:2821 lib/src/subsample.c:2827 lib/src/subsample.c:2849
 msgid "missing values"
 msgstr "valori lipsă"
 
-#: lib/src/subsample.c:2823
+#: lib/src/subsample.c:2836
 #, c-format
 msgid ""
 "\n"
 "Number of observations (rows) with missing data values = %d (%.2f%%)\n"
 msgstr ""
 
-#: lib/src/subsample.c:2826
+#: lib/src/subsample.c:2839
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
-#: lib/src/subsample.c:2837
+#: lib/src/subsample.c:2850
 msgid "valid values"
 msgstr ""
 
-#: lib/src/subsample.c:3019 lib/src/subsample.c:3020 lib/src/subsample.c:3057
+#: lib/src/subsample.c:3032 lib/src/subsample.c:3033 lib/src/subsample.c:3070
 msgid "dataset is subsampled, model is not\n"
 msgstr ""
 
-#: lib/src/subsample.c:3026 lib/src/subsample.c:3027 lib/src/subsample.c:3068
+#: lib/src/subsample.c:3039 lib/src/subsample.c:3040 lib/src/subsample.c:3081
 msgid "model is subsampled, dataset is not\n"
 msgstr ""
 
-#: lib/src/subsample.c:3034 lib/src/subsample.c:3083
+#: lib/src/subsample.c:3047 lib/src/subsample.c:3096
 msgid "model and dataset subsamples not the same\n"
 msgstr ""
 
-#: lib/src/subsample.c:3105
+#: lib/src/subsample.c:3118
 msgid "time series"
 msgstr "serii de timp"
 
-#: lib/src/subsample.c:3107
+#: lib/src/subsample.c:3120
 msgid "panel"
 msgstr "panel"
 
-#: lib/src/subsample.c:3109
+#: lib/src/subsample.c:3122
 msgid "undated"
 msgstr ""
 
-#: lib/src/subsample.c:3116
+#: lib/src/subsample.c:3129
 msgid "special"
 msgstr ""
 
-#: lib/src/subsample.c:3126
+#: lib/src/subsample.c:3139
 msgid "hourly"
 msgstr "orar"
 
-#: lib/src/subsample.c:3128
+#: lib/src/subsample.c:3141
 msgid "weekly"
 msgstr "săptămânal"
 
-#: lib/src/subsample.c:3130
+#: lib/src/subsample.c:3143
 msgid "daily (5 days)"
 msgstr "zilnic (5 zile)"
 
-#: lib/src/subsample.c:3132
+#: lib/src/subsample.c:3145
 msgid "daily (6 days)"
 msgstr "zilnic (6 zile)"
 
-#: lib/src/subsample.c:3134
+#: lib/src/subsample.c:3147
 msgid "daily (7 days)"
 msgstr "zilnic (7 zile)"
 
-#: lib/src/subsample.c:3136
+#: lib/src/subsample.c:3149
 msgid "decennial"
 msgstr ""
 
-#: lib/src/subsample.c:3159 lib/src/subsample.c:3179
+#: lib/src/subsample.c:3172 lib/src/subsample.c:3192
 msgid "Full dataset"
 msgstr ""
 
-#: lib/src/subsample.c:3161 lib/src/subsample.c:3183 gui/datafiles.c:2872
+#: lib/src/subsample.c:3174 lib/src/subsample.c:3196 gui/datafiles.c:2872
 msgid "Type"
 msgstr "Tip"
 
-#: lib/src/subsample.c:3168 lib/src/subsample.c:3190 gui/datawiz.c:1294
+#: lib/src/subsample.c:3181 lib/src/subsample.c:3203 gui/datawiz.c:1294
 msgid "Number of cross-sectional units"
 msgstr ""
 
-#: lib/src/subsample.c:3169 lib/src/subsample.c:3191 gui/datawiz.c:1295
+#: lib/src/subsample.c:3182 lib/src/subsample.c:3204 gui/datawiz.c:1295
 msgid "Number of time periods"
 msgstr ""
 
-#: lib/src/subsample.c:3171 lib/src/subsample.c:3194 lib/src/subsample.c:3197
-#: lib/src/subsample.c:3248
+#: lib/src/subsample.c:3184 lib/src/subsample.c:3207 lib/src/subsample.c:3210
+#: lib/src/subsample.c:3261
 msgid "Range"
 msgstr "Interval"
 
-#: lib/src/subsample.c:3174
+#: lib/src/subsample.c:3187
 msgid "Subsampled data"
 msgstr ""
 
-#: lib/src/subsample.c:3176 lib/src/subsample.c:3201
+#: lib/src/subsample.c:3189 lib/src/subsample.c:3214
 msgid "restriction"
 msgstr "restricție"
 
-#: lib/src/subsample.c:3228
+#: lib/src/subsample.c:3241
 #, c-format
 msgid ""
 "Data file %s\n"
 "as of"
 msgstr ""
 
-#: lib/src/subsample.c:3229
+#: lib/src/subsample.c:3242
 msgid "(unsaved)"
 msgstr ""
 
-#: lib/src/subsample.c:3235 gui/database.c:1720 gui/datafiles.c:2903
+#: lib/src/subsample.c:3248 gui/database.c:1720 gui/datafiles.c:2903
 msgid "Description"
 msgstr ""
 
-#: lib/src/subsample.c:3241
+#: lib/src/subsample.c:3254
 msgid "Type of data"
 msgstr ""
 
-#: lib/src/subsample.c:3251
+#: lib/src/subsample.c:3264
 msgid "Listing of variables"
 msgstr ""
 
@@ -7466,8 +7459,8 @@ msgstr ""
 msgid "An equation system must have at least two equations"
 msgstr ""
 
-#: lib/src/system.c:284 lib/src/system.c:4773 lib/src/system.c:4777
-#: lib/src/system.c:4783 lib/src/system.c:4787
+#: lib/src/system.c:284 lib/src/system.c:4760 lib/src/system.c:4764
+#: lib/src/system.c:4770 lib/src/system.c:4774
 msgid "Equation system"
 msgstr ""
 
@@ -7500,75 +7493,75 @@ msgstr ""
 msgid "LR test for the specified restrictions"
 msgstr ""
 
-#: lib/src/system.c:1378 lib/src/system.c:3606 lib/src/system.c:3608
-#: lib/src/system.c:3620
+#: lib/src/system.c:1378 lib/src/system.c:3593 lib/src/system.c:3595
+#: lib/src/system.c:3607
 msgid "Restricted log-likelihood"
 msgstr ""
 
-#: lib/src/system.c:1379 lib/src/system.c:3612 lib/src/system.c:3614
-#: lib/src/system.c:3621
+#: lib/src/system.c:1379 lib/src/system.c:3599 lib/src/system.c:3601
+#: lib/src/system.c:3608
 msgid "Unrestricted log-likelihood"
 msgstr ""
 
-#: lib/src/system.c:1562 lib/src/tokenize.c:1343
+#: lib/src/system.c:1556 lib/src/tokenize.c:1343
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr ""
 
-#: lib/src/system.c:2310
+#: lib/src/system.c:2297
 #, c-format
 msgid "'%s': unrecognized name"
 msgstr ""
 
-#: lib/src/system.c:2320
+#: lib/src/system.c:2307
 #, c-format
 msgid "%s: no system was specified"
 msgstr ""
 
-#: lib/src/system.c:2521 lib/src/system.c:2523
+#: lib/src/system.c:2508 lib/src/system.c:2510
 #, c-format
 msgid "iterated %s"
 msgstr ""
 
-#: lib/src/system.c:3628
+#: lib/src/system.c:3615
 msgid ""
 "Warning: the Hansen-Sargan over-identification test failed.\n"
 "This probably indicates that the estimation problem is ill-conditioned.\n"
 msgstr ""
 
-#: lib/src/system.c:3640
+#: lib/src/system.c:3627
 msgid "Hansen--Sargan over-identification test"
 msgstr ""
 
-#: lib/src/system.c:3643
+#: lib/src/system.c:3630
 msgid "Hansen-Sargan over-identification test"
 msgstr ""
 
-#: lib/src/system.c:3711 lib/src/system.c:3715
+#: lib/src/system.c:3698 lib/src/system.c:3702
 msgid "LR test for diagonal covariance matrix"
 msgstr ""
 
-#: lib/src/system.c:3722
+#: lib/src/system.c:3709
 msgid "Breusch--Pagan test for diagonal covariance matrix"
 msgstr ""
 
-#: lib/src/system.c:3723
+#: lib/src/system.c:3710
 msgid "Robust Breusch--Pagan test for diagonal covariance matrix"
 msgstr ""
 
-#: lib/src/system.c:3724
+#: lib/src/system.c:3711
 msgid "Breusch-Pagan test for diagonal covariance matrix"
 msgstr ""
 
-#: lib/src/system.c:3725
+#: lib/src/system.c:3712
 msgid "Robust Breusch-Pagan test for diagonal covariance matrix"
 msgstr ""
 
-#: lib/src/system.c:4774 lib/src/system.c:4784 gui/dlgutils.c:1119
+#: lib/src/system.c:4761 lib/src/system.c:4771 gui/dlgutils.c:1119
 msgid "Estimator"
 msgstr ""
 
-#: lib/src/system.c:4904
+#: lib/src/system.c:4891
 msgid "Ljung-Box Q'"
 msgstr ""
 
@@ -7743,40 +7736,40 @@ msgstr "Lista înlocuită '%s'\n"
 msgid "Added list '%s'\n"
 msgstr "Lista adăugată '%s'\n"
 
-#: lib/src/var.c:715 lib/src/var.c:3421
+#: lib/src/var.c:801 lib/src/var.c:3461
 #, c-format
 msgid "vecm: rank %d is out of bounds"
 msgstr "vecm: rangul %d este în afara limitelor"
 
-#: lib/src/var.c:2773
+#: lib/src/var.c:2813
 msgid "Sample variance-covariance matrices for residuals"
 msgstr ""
 
-#: lib/src/var.c:2775
+#: lib/src/var.c:2815
 msgid "VAR system in first differences"
 msgstr "Sistem VAR în diferențe prime"
 
-#: lib/src/var.c:2783
+#: lib/src/var.c:2823
 msgid "System with levels as dependent variable"
 msgstr ""
 
-#: lib/src/var.c:2791
+#: lib/src/var.c:2831
 msgid "Cross-products"
 msgstr ""
 
-#: lib/src/var.c:3241
+#: lib/src/var.c:3281
 msgid "Johansen test"
 msgstr ""
 
-#: lib/src/var.c:3242
+#: lib/src/var.c:3282
 msgid "Number of equations"
 msgstr "Numărul de ecuaţii"
 
-#: lib/src/var.c:3243
+#: lib/src/var.c:3283
 msgid "Lag order"
 msgstr "Ordin de întârziere"
 
-#: lib/src/var.c:3244
+#: lib/src/var.c:3284
 msgid "Estimation period"
 msgstr ""
 
@@ -8490,7 +8483,7 @@ msgstr ""
 #: gui/calculator.c:2396 gui/guiprint.c:612 gui/guiprint.c:666
 #: gui/guiprint.c:693 gui/guiprint.c:715 gui/guiprint.c:1023
 #: gui/guiprint.c:1082 gui/guiprint.c:1113 gui/guiprint.c:1140
-#: gui/guiprint.c:1961 gui/guiprint.c:2013 gui/selector.c:8805
+#: gui/guiprint.c:1961 gui/guiprint.c:2013 gui/selector.c:8806
 msgid "Variable"
 msgstr ""
 
@@ -8675,7 +8668,7 @@ msgstr "gretl: grafice distribuție"
 msgid "gretl: add random variable"
 msgstr "gretl: adăugare variabilă aleatoare"
 
-#: gui/calculator.c:3096 gui/selector.c:8091
+#: gui/calculator.c:3096 gui/selector.c:8090
 msgid "No suitable data are available"
 msgstr "Nu sunt disponibile date adecvate"
 
@@ -8732,7 +8725,7 @@ msgid "No MIDAS data were found in the current dataset"
 msgstr ""
 
 #: gui/callbacks.c:416 gui/callbacks.c:581 gui/callbacks.c:739
-#: gui/selector.c:7139
+#: gui/selector.c:7138
 msgid "gretl: add var"
 msgstr "gretl: adaugă variabilă"
 
@@ -8767,15 +8760,15 @@ msgstr "gretl: definește grafic"
 msgid "gretl: model tests"
 msgstr "gretl: testele modelului"
 
-#: gui/callbacks.c:530 gui/selector.c:4305
+#: gui/callbacks.c:530 gui/selector.c:4304
 msgid "Loess"
 msgstr "Loess"
 
-#: gui/callbacks.c:530 gui/library.c:4582 gui/selector.c:4307
+#: gui/callbacks.c:530 gui/library.c:4582 gui/selector.c:4306
 msgid "Nadaraya-Watson"
 msgstr "Nadaraya-Watson"
 
-#: gui/callbacks.c:583 gui/callbacks.c:733 gui/selector.c:7140
+#: gui/callbacks.c:583 gui/callbacks.c:733 gui/selector.c:7139
 msgid "Enter formula for new variable"
 msgstr "Introducere formulă pentru variabila nouă"
 
@@ -9001,7 +8994,7 @@ msgid "Couldn't access binary datafile"
 msgstr ""
 
 #: gui/database.c:1107 gui/session.c:159 gui/session.c:167 gui/session.c:173
-#: gui/session.c:180 gui/session.c:186 gui/session.c:3517
+#: gui/session.c:180 gui/session.c:186 gui/session.c:3520
 msgid "Display"
 msgstr ""
 
@@ -9015,7 +9008,7 @@ msgstr "Import"
 
 #: gui/database.c:1117 gui/database.c:1140 gui/menustate.c:590
 #: gui/session.c:162 gui/session.c:182 gui/session.c:190 gui/session.c:217
-#: gui/session.c:224 gui/session.c:3456 gui/session.c:3472 gui/session.c:3571
+#: gui/session.c:224 gui/session.c:3459 gui/session.c:3475 gui/session.c:3574
 #: gui/ssheet.c:2715
 msgid "Delete"
 msgstr ""
@@ -9081,7 +9074,7 @@ msgstr ""
 
 #: gui/database.c:2868 gui/database.c:2892 gui/database.c:2951
 #: gui/database.c:3185 gui/datafiles.c:1228 gui/datafiles.c:1264
-#: gui/fncall.c:4193
+#: gui/fncall.c:4199
 msgid "Up to date"
 msgstr ""
 
@@ -9093,7 +9086,7 @@ msgstr ""
 msgid "Unknown: access error"
 msgstr ""
 
-#: gui/database.c:3183 gui/datafiles.c:1220 gui/fncall.c:4195
+#: gui/database.c:3183 gui/datafiles.c:1220 gui/fncall.c:4201
 msgid "Not up to date"
 msgstr ""
 
@@ -9138,7 +9131,7 @@ msgstr ""
 msgid "data info"
 msgstr ""
 
-#: gui/datafiles.c:825 gui/session.c:2557
+#: gui/datafiles.c:825 gui/session.c:2560
 #, c-format
 msgid "%s: please close this object's window first"
 msgstr ""
@@ -9166,7 +9159,7 @@ msgstr ""
 msgid "Unload package %s?"
 msgstr "Editare pachet..."
 
-#: gui/datafiles.c:874 gui/library.c:7374 gui/session.c:2560
+#: gui/datafiles.c:874 gui/library.c:7374 gui/session.c:2563
 #, c-format
 msgid "Really delete %s?"
 msgstr ""
@@ -9216,9 +9209,9 @@ msgstr ""
 msgid "Add to menu"
 msgstr "Adaugă la meniu"
 
-#: gui/datafiles.c:1491 gui/datafiles.c:1714 gui/gpt_control.c:4432
-#: gui/gpt_control.c:4434 gui/gpt_control.c:4538 gui/session.c:169
-#: gui/session.c:176 gui/session.c:3592 gui/toolbar.c:837 gui/toolbar.c:838
+#: gui/datafiles.c:1491 gui/datafiles.c:1714 gui/gpt_control.c:4441
+#: gui/gpt_control.c:4443 gui/gpt_control.c:4547 gui/session.c:169
+#: gui/session.c:176 gui/session.c:3595 gui/toolbar.c:837 gui/toolbar.c:838
 #: gui/toolbar.c:839
 msgid "Help"
 msgstr "Ajutor"
@@ -9232,7 +9225,7 @@ msgstr ""
 msgid "Install"
 msgstr ""
 
-#: gui/datafiles.c:1514 gui/gpt_dialog.c:2303 gui/selector.c:5028
+#: gui/datafiles.c:1514 gui/gpt_dialog.c:2303 gui/selector.c:5027
 msgid "Remove"
 msgstr ""
 
@@ -9254,7 +9247,7 @@ msgid "Revert to installed packages"
 msgstr ""
 
 #: gui/datafiles.c:1663 gui/gretl.c:1711 gui/settings.c:1158
-#: gui/settings.c:3052
+#: gui/settings.c:3054
 msgid "Browse..."
 msgstr "Caută..."
 
@@ -9381,7 +9374,7 @@ msgid "File"
 msgstr "Fișier"
 
 #: gui/datafiles.c:2871 gui/datafiles.c:2910 gui/datafiles.c:2917
-#: gui/session.c:3768
+#: gui/session.c:3771
 msgid "Summary"
 msgstr ""
 
@@ -9440,7 +9433,7 @@ msgstr ""
 msgid "Window"
 msgstr ""
 
-#: gui/datafiles.c:2929 gui/gpt_control.c:286
+#: gui/datafiles.c:2929 gui/gpt_control.c:295
 msgid "Menu"
 msgstr ""
 
@@ -9875,7 +9868,7 @@ msgstr ""
 msgid "Periods"
 msgstr ""
 
-#: gui/dialogs.c:2076 gui/dialogs.c:6637 gui/selector.c:8861
+#: gui/dialogs.c:2076 gui/dialogs.c:6637 gui/selector.c:8862
 msgid "to"
 msgstr ""
 
@@ -10254,7 +10247,7 @@ msgstr ""
 msgid "column headings"
 msgstr ""
 
-#: gui/dialogs.c:5331 gui/selector.c:6499
+#: gui/dialogs.c:5331 gui/selector.c:6498
 msgid "Show p-values"
 msgstr "Vizualizează p-value"
 
@@ -10475,19 +10468,19 @@ msgstr "Adaugă lista variabilelor endogene"
 msgid "Add list of instruments"
 msgstr "Adaugă lista instrumentelor"
 
-#: gui/dlgutils.c:896 gui/dlgutils.c:1061 gui/selector.c:4509
+#: gui/dlgutils.c:896 gui/dlgutils.c:1061 gui/selector.c:4508
 msgid "Iterated estimation"
 msgstr "Estimarea iterată"
 
-#: gui/dlgutils.c:902 gui/selector.c:6098 gui/selector.c:6109
+#: gui/dlgutils.c:902 gui/selector.c:6097 gui/selector.c:6108
 msgid "Show details of iterations"
 msgstr "Vizualizare detalii iterații"
 
-#: gui/dlgutils.c:905 gui/selector.c:6040
+#: gui/dlgutils.c:905 gui/selector.c:6039
 msgid "Robust standard errors"
 msgstr "Erori standard robuste"
 
-#: gui/dlgutils.c:911 gui/selector.c:6262
+#: gui/dlgutils.c:911 gui/selector.c:6261
 msgid "Use bootstrap"
 msgstr ""
 
@@ -10495,11 +10488,11 @@ msgstr ""
 msgid "Show full restricted estimates"
 msgstr ""
 
-#: gui/dlgutils.c:1059 gui/selector.c:4507 gui/selector.c:6686
+#: gui/dlgutils.c:1059 gui/selector.c:4506 gui/selector.c:6685
 msgid "One-step estimation"
 msgstr "Estimare în 1 etapă"
 
-#: gui/dlgutils.c:1060 gui/selector.c:4508 gui/selector.c:6690
+#: gui/dlgutils.c:1060 gui/selector.c:4507 gui/selector.c:6689
 msgid "Two-step estimation"
 msgstr "Estimare în 2 etape"
 
@@ -10979,113 +10972,113 @@ msgstr ""
 msgid "No name was given for the list"
 msgstr ""
 
-#: gui/fncall.c:743
+#: gui/fncall.c:749
 msgid "Really create an empty list?"
 msgstr ""
 
-#: gui/fncall.c:811 gui/fncall.c:818 gui/fncall.c:1386 gui/menustate.c:604
+#: gui/fncall.c:817 gui/fncall.c:824 gui/fncall.c:1392 gui/menustate.c:604
 #: gui/menustate.c:619
 msgid "Define list"
 msgstr ""
 
-#: gui/fncall.c:863
+#: gui/fncall.c:869
 msgid "add series"
 msgstr "Adaugă serie"
 
-#: gui/fncall.c:864
+#: gui/fncall.c:870
 msgid "Enter name=formula for new series"
 msgstr ""
 
-#: gui/fncall.c:873 gui/library.c:6883
+#: gui/fncall.c:879 gui/library.c:6883
 msgid "add scalar"
 msgstr "Adaugă scalar"
 
-#: gui/fncall.c:874
+#: gui/fncall.c:880
 msgid "Enter name=formula for new scalar"
 msgstr ""
 
-#: gui/fncall.c:1382 gui/selector.c:7152
+#: gui/fncall.c:1388 gui/selector.c:7151
 msgid "New variable"
 msgstr ""
 
-#: gui/fncall.c:1384 gui/ssheet.c:3996
+#: gui/fncall.c:1390 gui/ssheet.c:3996
 msgid "Define matrix"
 msgstr "Definire matrice"
 
-#: gui/fncall.c:1496
+#: gui/fncall.c:1502
 msgid "Select arguments:"
 msgstr "Selectează argumentele:"
 
-#: gui/fncall.c:1625
+#: gui/fncall.c:1631
 msgid "Assign return value (optional):"
 msgstr ""
 
-#: gui/fncall.c:1628
+#: gui/fncall.c:1634
 msgid "selection (or new variable)"
 msgstr ""
 
-#: gui/fncall.c:1660
+#: gui/fncall.c:1666
 msgid "allow access to out-of-sample data"
 msgstr ""
 
-#: gui/fncall.c:1671
+#: gui/fncall.c:1677
 msgid "close this dialog on \"OK\""
 msgstr ""
 
-#: gui/fncall.c:2238 gui/fncall.c:2249
+#: gui/fncall.c:2244 gui/fncall.c:2255
 msgid "Select function"
 msgstr "Selectare funcție"
 
-#: gui/fncall.c:2359
+#: gui/fncall.c:2365
 msgid "This function needs a model in place"
 msgstr ""
 
-#: gui/fncall.c:2410
+#: gui/fncall.c:2416
 msgid "Function package is broken"
 msgstr ""
 
-#: gui/fncall.c:2467 gui/fncall.c:2480
+#: gui/fncall.c:2473 gui/fncall.c:2486
 msgid "Couldn't get function package information"
 msgstr ""
 
-#: gui/fncall.c:2508
+#: gui/fncall.c:2514
 #, fuzzy
 msgid "This package needs time series data."
 msgstr "serii de timp stratificate"
 
-#: gui/fncall.c:2509
+#: gui/fncall.c:2515
 msgid "This package needs quarterly or monthly data."
 msgstr ""
 
-#: gui/fncall.c:2510
+#: gui/fncall.c:2516
 #, fuzzy
 msgid "This package needs panel data."
 msgstr "Acest estimator necesită date panel"
 
-#: gui/fncall.c:2511
+#: gui/fncall.c:2517
 msgid "This package needs a dataset in place."
 msgstr ""
 
-#: gui/fncall.c:2512
+#: gui/fncall.c:2518
 msgid "Would you like to open its sample script?"
 msgstr ""
 
-#: gui/fncall.c:3117
+#: gui/fncall.c:3123
 #, c-format
 msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
 
-#: gui/fncall.c:3910 gui/fnsave.c:2891
+#: gui/fncall.c:3916 gui/fnsave.c:2891
 msgid "main window"
 msgstr ""
 
-#: gui/fncall.c:3911 gui/fnsave.c:2892
+#: gui/fncall.c:3917 gui/fnsave.c:2892
 msgid "model window"
 msgstr ""
 
-#: gui/fncall.c:3916
+#: gui/fncall.c:3922
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -11093,16 +11086,16 @@ msgid ""
 "Do you want to do this?"
 msgstr ""
 
-#: gui/fncall.c:4197
+#: gui/fncall.c:4203
 #, c-format
 msgid "Requires gretl %s"
 msgstr ""
 
-#: gui/fncall.c:4203
+#: gui/fncall.c:4209
 msgid "Error reading package"
 msgstr ""
 
-#: gui/fncall.c:4623
+#: gui/fncall.c:4629
 #, fuzzy
 msgid "No mapfile is present"
 msgstr "nu este prezent niciun efect ARCH"
@@ -11449,7 +11442,7 @@ msgid ""
 "ASCII letters, numbers and '_', and must end with \".gfn\"."
 msgstr ""
 
-#: gui/fnsave.c:4422 gui/selector.c:8254
+#: gui/fnsave.c:4422 gui/selector.c:8253
 msgid ""
 "Invalid package name: the name must start with a letter,\n"
 "must be less than 32 characters in length, and must include\n"
@@ -11470,156 +11463,156 @@ msgstr ""
 msgid "build gfn file"
 msgstr ""
 
-#: gui/gpt_control.c:287
+#: gui/gpt_control.c:296
 msgid "Bigger"
 msgstr ""
 
-#: gui/gpt_control.c:288 gui/helpfiles.c:79
+#: gui/gpt_control.c:297 gui/helpfiles.c:79
 msgid "Smaller"
 msgstr ""
 
-#: gui/gpt_control.c:289 gui/session.c:154 gui/session.c:3414
-#: gui/winstack.c:1359
+#: gui/gpt_control.c:298 gui/session.c:154 gui/session.c:3417
+#: gui/winstack.c:1381
 msgid "Windows"
 msgstr ""
 
-#: gui/gpt_control.c:374
+#: gui/gpt_control.c:383
 msgid " Click to set position"
 msgstr ""
 
-#: gui/gpt_control.c:1119
+#: gui/gpt_control.c:1128
 msgid "gnuplot command failed"
 msgstr ""
 
-#: gui/gpt_control.c:1196 gui/gpt_control.c:1287
+#: gui/gpt_control.c:1205 gui/gpt_control.c:1296
 msgid "Gnuplot error creating graph"
 msgstr ""
 
-#: gui/gpt_control.c:3245 gui/gpt_control.c:3256
+#: gui/gpt_control.c:3254 gui/gpt_control.c:3265
 msgid "Plot file is corrupted"
 msgstr ""
 
-#: gui/gpt_control.c:4037
+#: gui/gpt_control.c:4046
 msgid "Couldn't access graph info"
 msgstr ""
 
-#: gui/gpt_control.c:4167 gui/gpt_control.c:4479 gui/graph_page.c:698
+#: gui/gpt_control.c:4176 gui/gpt_control.c:4488 gui/graph_page.c:698
 #: gui/graphics.c:262
 msgid "monochrome"
 msgstr ""
 
-#: gui/gpt_control.c:4171 gui/gpt_control.c:4515 gui/gpt_control.c:4521
+#: gui/gpt_control.c:4180 gui/gpt_control.c:4524 gui/gpt_control.c:4530
 msgid "Save as Windows metafile (EMF)..."
 msgstr ""
 
-#: gui/gpt_control.c:4175 gui/gpt_control.c:4523 gui/menustate.c:589
+#: gui/gpt_control.c:4184 gui/gpt_control.c:4532 gui/menustate.c:589
 msgid "Copy to clipboard"
 msgstr ""
 
-#: gui/gpt_control.c:4184 gui/gpt_control.c:4530
+#: gui/gpt_control.c:4193 gui/gpt_control.c:4539
 msgid "Print"
 msgstr ""
 
-#: gui/gpt_control.c:4209
+#: gui/gpt_control.c:4218
 msgid "roots (real, imaginary, modulus, frequency)"
 msgstr ""
 
-#: gui/gpt_control.c:4243
+#: gui/gpt_control.c:4252
 msgid "roots"
 msgstr ""
 
-#: gui/gpt_control.c:4265
+#: gui/gpt_control.c:4274
 msgid "gretl: boxplot data"
 msgstr "gretl: date grafic boxplot"
 
-#: gui/gpt_control.c:4407
+#: gui/gpt_control.c:4416
 msgid " Drag to define zoom rectangle"
 msgstr ""
 
-#: gui/gpt_control.c:4418 gui/gpt_control.c:4513
+#: gui/gpt_control.c:4427 gui/gpt_control.c:4522
 msgid "Add another curve..."
 msgstr "Adăugă o altă curbă..."
 
-#: gui/gpt_control.c:4420 gui/gpt_control.c:4517
+#: gui/gpt_control.c:4429 gui/gpt_control.c:4526
 msgid "Save as PNG..."
 msgstr ""
 
-#: gui/gpt_control.c:4424 gui/gpt_control.c:4519
+#: gui/gpt_control.c:4433 gui/gpt_control.c:4528
 msgid "Save as PDF..."
 msgstr ""
 
-#: gui/gpt_control.c:4427 gui/gpt_control.c:4518
+#: gui/gpt_control.c:4436 gui/gpt_control.c:4527
 msgid "Save as postscript (EPS)..."
 msgstr ""
 
-#: gui/gpt_control.c:4430 gui/gpt_control.c:4524 gui/toolbar.c:233
+#: gui/gpt_control.c:4439 gui/gpt_control.c:4533 gui/toolbar.c:233
 msgid "Save to session as icon"
 msgstr ""
 
-#: gui/gpt_control.c:4436 gui/gpt_control.c:4525
+#: gui/gpt_control.c:4445 gui/gpt_control.c:4534
 msgid "Freeze data labels"
 msgstr ""
 
-#: gui/gpt_control.c:4439 gui/gpt_control.c:4527
+#: gui/gpt_control.c:4448 gui/gpt_control.c:4536
 msgid "Clear data labels"
 msgstr ""
 
-#: gui/gpt_control.c:4441 gui/gpt_control.c:4526
+#: gui/gpt_control.c:4450 gui/gpt_control.c:4535
 msgid "All data labels"
 msgstr ""
 
-#: gui/gpt_control.c:4443 gui/gpt_control.c:4528
+#: gui/gpt_control.c:4452 gui/gpt_control.c:4537
 msgid "Zoom..."
 msgstr ""
 
-#: gui/gpt_control.c:4445 gui/gpt_control.c:4543
+#: gui/gpt_control.c:4454 gui/gpt_control.c:4552
 msgid "Restore full view"
 msgstr ""
 
-#: gui/gpt_control.c:4447 gui/gpt_control.c:4544
+#: gui/gpt_control.c:4456 gui/gpt_control.c:4553
 msgid "Replace full view"
 msgstr ""
 
-#: gui/gpt_control.c:4449 gui/gpt_control.c:4532
+#: gui/gpt_control.c:4458 gui/gpt_control.c:4541
 msgid "Display PDF"
 msgstr ""
 
-#: gui/gpt_control.c:4451 gui/gpt_control.c:4533 plugin/interpolate.c:260
+#: gui/gpt_control.c:4460 gui/gpt_control.c:4542 plugin/interpolate.c:260
 msgid "OLS estimates"
 msgstr "Estimatorii OLS"
 
-#: gui/gpt_control.c:4455 gui/gpt_control.c:4534
+#: gui/gpt_control.c:4464 gui/gpt_control.c:4543
 msgid "Numerical values"
 msgstr ""
 
-#: gui/gpt_control.c:4459 gui/gpt_control.c:4536 gui/session.c:197
-#: gui/session.c:203 gui/session.c:213 gui/session.c:3442 gui/session.c:3481
-#: gui/session.c:3494
+#: gui/gpt_control.c:4468 gui/gpt_control.c:4545 gui/session.c:197
+#: gui/session.c:203 gui/session.c:213 gui/session.c:3445 gui/session.c:3484
+#: gui/session.c:3497
 msgid "Edit"
 msgstr ""
 
-#: gui/gpt_control.c:4461 gui/gpt_control.c:4537
+#: gui/gpt_control.c:4470 gui/gpt_control.c:4546
 msgid "Font"
 msgstr ""
 
-#: gui/gpt_control.c:4463 gui/gpt_control.c:4539 gui/gpt_control.c:4545
+#: gui/gpt_control.c:4472 gui/gpt_control.c:4548 gui/gpt_control.c:4554
 #: gui/gui_utils.c:2000
 msgid "Close"
 msgstr "Închide"
 
-#: gui/gpt_control.c:4478 gui/graph_page.c:697 gui/graphics.c:258
+#: gui/gpt_control.c:4487 gui/graph_page.c:697 gui/graphics.c:258
 msgid "color"
 msgstr ""
 
-#: gui/gpt_control.c:5142
+#: gui/gpt_control.c:5151
 msgid "Malformed PNG file for graph"
 msgstr ""
 
-#: gui/gpt_control.c:5388
+#: gui/gpt_control.c:5398
 msgid "gretl: graph"
 msgstr ""
 
-#: gui/gpt_control.c:5937
+#: gui/gpt_control.c:5947
 msgid "Couldn't find a usable terminal program"
 msgstr ""
 
@@ -11683,8 +11676,8 @@ msgstr ""
 msgid "Font for graphs"
 msgstr ""
 
-#: gui/gpt_dialog.c:1431 gui/settings.c:2541 gui/settings.c:2721
-#: gui/settings.c:2803 gui/settings.c:2890
+#: gui/gpt_dialog.c:1431 gui/settings.c:2541 gui/settings.c:2723
+#: gui/settings.c:2805 gui/settings.c:2892
 msgid "Reset to default"
 msgstr ""
 
@@ -11750,7 +11743,7 @@ msgstr ""
 msgid "NBER recessions"
 msgstr ""
 
-#: gui/gpt_dialog.c:1914 gui/selector.c:4751
+#: gui/gpt_dialog.c:1914 gui/selector.c:4750
 msgid "Set as default"
 msgstr "Setează ca implicit"
 
@@ -11907,7 +11900,7 @@ msgstr ""
 msgid "Failed to process TeX file"
 msgstr ""
 
-#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3304
+#: gui/graph_page.c:705 gui/graph_page.c:829 gui/session.c:3307
 msgid "The graph page is empty"
 msgstr ""
 
@@ -12725,7 +12718,7 @@ msgstr "Cele mai mici pătrate ponderate"
 msgid "High _precision OLS"
 msgstr "OLS de înaltă _precizie..."
 
-#: gui/gretl.c:1894 gui/library.c:4109 gui/library.c:6177 gui/selector.c:7207
+#: gui/gretl.c:1894 gui/library.c:4109 gui/library.c:6177 gui/selector.c:7206
 msgid "ANOVA"
 msgstr "ANOVA"
 
@@ -13000,11 +12993,11 @@ msgstr ""
 msgid "sample status"
 msgstr ""
 
-#: gui/gretlwin32.c:348
+#: gui/gretlwin32.c:349
 msgid "Copy buffer was empty"
 msgstr ""
 
-#: gui/gretlwin32.c:353 gui/gretlwin32.c:445
+#: gui/gretlwin32.c:354 gui/gretlwin32.c:446
 msgid "Cannot open the clipboard"
 msgstr ""
 
@@ -14064,7 +14057,7 @@ msgstr ""
 msgid "Mathematical"
 msgstr ""
 
-#: gui/helpfiles.c:335
+#: gui/helpfiles.c:335 doc/commands/matfuncs.c:43
 #, fuzzy
 msgid "Matrix manipulation"
 msgstr "Algebra matricilor"
@@ -14477,7 +14470,7 @@ msgid ""
 "range over which the model is estimated (Sample menu)."
 msgstr ""
 
-#: gui/library.c:2328 gui/selector.c:8303
+#: gui/library.c:2328 gui/selector.c:8302
 msgid "No variables are selected"
 msgstr ""
 
@@ -14880,7 +14873,7 @@ msgstr ""
 msgid "Really delete the selected variables?"
 msgstr ""
 
-#: gui/library.c:7390 gui/session.c:2562
+#: gui/library.c:7390 gui/session.c:2565
 msgid "gretl: delete"
 msgstr ""
 
@@ -14896,7 +14889,7 @@ msgstr ""
 msgid "You must supply three variables"
 msgstr ""
 
-#: gui/library.c:7856 gui/selector.c:4368 gui/selector.c:4689
+#: gui/library.c:7856 gui/selector.c:4367 gui/selector.c:4688
 msgid "X-axis variable"
 msgstr ""
 
@@ -15078,12 +15071,7 @@ msgstr ""
 msgid "Script done\n"
 msgstr ""
 
-#: gui/menustate.c:52
-#, c-format
-msgid "Failed to flip state of \"%s\"\n"
-msgstr ""
-
-#: gui/menustate.c:411 gui/selector.c:6167
+#: gui/menustate.c:411 gui/selector.c:6166
 msgid "Ensure uniform sample size"
 msgstr ""
 
@@ -15125,7 +15113,7 @@ msgstr ""
 msgid "Collinearity"
 msgstr "non-linearitate"
 
-#: gui/menustate.c:588 gui/selector.c:7193
+#: gui/menustate.c:588 gui/selector.c:7192
 msgid "XY scatterplot"
 msgstr ""
 
@@ -15264,7 +15252,7 @@ msgstr ""
 msgid "HSK"
 msgstr "HSK"
 
-#: gui/model_table.c:455 gui/selector.c:4283 plugin/addons-i18n.c:7
+#: gui/model_table.c:455 gui/selector.c:4282 plugin/addons-i18n.c:7
 msgid "ARCH"
 msgstr "ARCH"
 
@@ -15424,15 +15412,15 @@ msgstr ""
 msgid "You must select a lower bound variable"
 msgstr "Trebuie specificată o variabilă pentru limita inferioară"
 
-#: gui/selector.c:2781 gui/selector.c:4068
+#: gui/selector.c:2781 gui/selector.c:4067
 msgid "You must select a dependent variable"
 msgstr ""
 
-#: gui/selector.c:3461 gui/selector.c:6422
+#: gui/selector.c:3461 gui/selector.c:6421
 msgid "Elastic net"
 msgstr ""
 
-#: gui/selector.c:3472 gui/selector.c:6393 gui/selector.c:6421
+#: gui/selector.c:3472 gui/selector.c:6392 gui/selector.c:6420
 msgid "Ridge"
 msgstr ""
 
@@ -15444,7 +15432,7 @@ msgstr ""
 msgid "Invalid quantile specification"
 msgstr ""
 
-#: gui/selector.c:3656 gui/selector.c:5758
+#: gui/selector.c:3656 gui/selector.c:5757
 msgid "Cluster"
 msgstr ""
 
@@ -15472,324 +15460,324 @@ msgstr "Trebuie specificată o variabilă pentru limita superioară"
 msgid "You must specify a treatment variable"
 msgstr "Trebuie specificată o variabilă de tratament"
 
-#: gui/selector.c:3763 gui/selector.c:4072
+#: gui/selector.c:3763 gui/selector.c:4071
 msgid "You must specify an independent variable"
 msgstr ""
 
-#: gui/selector.c:3905
+#: gui/selector.c:3904
 msgid "You must select a Z-axis variable"
 msgstr ""
 
-#: gui/selector.c:3907
+#: gui/selector.c:3906
 msgid "You must select a factor variable"
 msgstr ""
 
-#: gui/selector.c:3909
+#: gui/selector.c:3908
 msgid "You must select a control variable"
 msgstr ""
 
-#: gui/selector.c:4064
+#: gui/selector.c:4063
 msgid "You must select two or more endogenous variables"
 msgstr "Trebuie selectate două sau mai multe variabile endogene"
 
-#: gui/selector.c:4120
+#: gui/selector.c:4119
 msgid "You must specify a set of instrumental variables"
 msgstr "Trebuie specificat un set de variabile instrumentale"
 
-#: gui/selector.c:4123
+#: gui/selector.c:4122
 msgid "You must specify regressors for the selection equation"
 msgstr "Trebuie specificați regresorii pentru ecuația selectată"
 
-#: gui/selector.c:4233
+#: gui/selector.c:4232
 msgid "Heteroskedasticity corrected"
 msgstr "Heteroskedasticitate corectată"
 
-#: gui/selector.c:4235
+#: gui/selector.c:4234
 #, fuzzy
 msgid "AR(1) errors"
 msgstr "Test pentru erorile AR(%d):"
 
-#: gui/selector.c:4247
+#: gui/selector.c:4246
 msgid "Random effects (binary) probit"
 msgstr "Efecte aleatoare (binare) probit"
 
-#: gui/selector.c:4257
+#: gui/selector.c:4256
 #, fuzzy
 msgid "Fixed effects logistic model"
 msgstr "Efecte fixe"
 
-#: gui/selector.c:4259
+#: gui/selector.c:4258
 msgid "Count data model"
 msgstr "Modelul date count"
 
-#: gui/selector.c:4261
+#: gui/selector.c:4260
 msgid "Duration model"
 msgstr "Model de durată"
 
-#: gui/selector.c:4263
+#: gui/selector.c:4262
 msgid "Panel model"
 msgstr "Model panel"
 
-#: gui/selector.c:4265
+#: gui/selector.c:4264
 msgid "Groupwise WLS"
 msgstr "WLP pe grupe"
 
-#: gui/selector.c:4267
+#: gui/selector.c:4266
 msgid "Between-groups model"
 msgstr "Model între grupuri"
 
-#: gui/selector.c:4269
+#: gui/selector.c:4268
 msgid "Dynamic panel model"
 msgstr "Model panel dinamic"
 
-#: gui/selector.c:4271
+#: gui/selector.c:4270
 msgid "Weighted least squares"
 msgstr "Cele mai mici pătrate ponderate"
 
-#: gui/selector.c:4273
+#: gui/selector.c:4272
 msgid "Two-stage least squares"
 msgstr "Cele mai mici pătrate în două faze"
 
-#: gui/selector.c:4275
+#: gui/selector.c:4274
 msgid "Limited information maximum likelihood"
 msgstr "Verosimilitatea maximă cu informație limitată"
 
-#: gui/selector.c:4277
+#: gui/selector.c:4276
 msgid "Generalized method of moments"
 msgstr "Metoda momentelor generalizată"
 
-#: gui/selector.c:4279
+#: gui/selector.c:4278
 #, fuzzy
 msgid "Autoregressive errors"
 msgstr "Modelul autoregresiv"
 
-#: gui/selector.c:4289
+#: gui/selector.c:4288
 msgid "VAR lag selection"
 msgstr "selectare întârziere VAR"
 
-#: gui/selector.c:4295
+#: gui/selector.c:4294
 msgid "Quantile regression"
 msgstr "Regresie cuantilă"
 
-#: gui/selector.c:4297
+#: gui/selector.c:4296
 msgid "Interval regression"
 msgstr "Regresie pe intervale"
 
-#: gui/selector.c:4299
+#: gui/selector.c:4298
 #, fuzzy
 msgid "Cointegration (Engle-Granger)"
 msgstr "Rangul cointegrării"
 
-#: gui/selector.c:4301
+#: gui/selector.c:4300
 #, fuzzy
 msgid "Cointegration (Johansen)"
 msgstr "Rangul cointegrării"
 
-#: gui/selector.c:4303
+#: gui/selector.c:4302
 msgid "Multiple precision OLS"
 msgstr "Precizie multiplă OLS"
 
-#: gui/selector.c:4309
+#: gui/selector.c:4308
 #, fuzzy
 msgid "MIDAS regression"
 msgstr "Regresie pe intervale"
 
-#: gui/selector.c:4311
+#: gui/selector.c:4310
 #, fuzzy
 msgid "Regularized least squares"
 msgstr "Cele mai mici pătrate ponderate"
 
-#: gui/selector.c:4321
+#: gui/selector.c:4320
 msgid "Weight variable"
 msgstr "Variabilă de ponderare"
 
-#: gui/selector.c:4323
+#: gui/selector.c:4322
 msgid "Offset variable"
 msgstr "Variabilă offset"
 
-#: gui/selector.c:4325
+#: gui/selector.c:4324
 msgid "Censoring variable"
 msgstr "Variabilă de cenzură"
 
-#: gui/selector.c:4329
+#: gui/selector.c:4328
 msgid "Dependent variable 2"
 msgstr "Variabila dependentă 2"
 
-#: gui/selector.c:4331
+#: gui/selector.c:4330
 msgid "List of AR lags"
 msgstr "Lista întârzierilor AR"
 
-#: gui/selector.c:4333
+#: gui/selector.c:4332
 msgid "Desired quantile(s)"
 msgstr "Cuantila dorită"
 
-#: gui/selector.c:4335
+#: gui/selector.c:4334
 msgid "Upper bound variable"
 msgstr "Variabilă limita superioară"
 
-#: gui/selector.c:4339 gui/selector.c:4367
+#: gui/selector.c:4338 gui/selector.c:4366
 msgid "Y-axis variable"
 msgstr ""
 
-#: gui/selector.c:4341
+#: gui/selector.c:4340
 msgid "Treatment variable"
 msgstr "Variabilă de tratament"
 
-#: gui/selector.c:4344
+#: gui/selector.c:4343
 msgid "Independent variable"
 msgstr ""
 
-#: gui/selector.c:4355 gui/selector.c:7248
+#: gui/selector.c:4354 gui/selector.c:7247
 msgid "Y-axis variables"
 msgstr ""
 
-#: gui/selector.c:4357 gui/selector.c:7250
+#: gui/selector.c:4356 gui/selector.c:7249
 msgid "X-axis variables"
 msgstr ""
 
-#: gui/selector.c:4404
+#: gui/selector.c:4403
 msgid "NegBin 2"
 msgstr ""
 
-#: gui/selector.c:4405
+#: gui/selector.c:4404
 msgid "NegBin 1"
 msgstr ""
 
-#: gui/selector.c:4411 gui/selector.c:4465
+#: gui/selector.c:4410 gui/selector.c:4464
 msgid "Distribution:"
 msgstr "Distribuție:"
 
-#: gui/selector.c:4456
+#: gui/selector.c:4455
 msgid "Weibull"
 msgstr ""
 
-#: gui/selector.c:4457
+#: gui/selector.c:4456
 msgid "Exponential"
 msgstr ""
 
-#: gui/selector.c:4458
+#: gui/selector.c:4457
 msgid "Log-logistic"
 msgstr ""
 
-#: gui/selector.c:4459
+#: gui/selector.c:4458
 msgid "Log-normal"
 msgstr "Log-normală"
 
-#: gui/selector.c:4663 gui/selector.c:4737
+#: gui/selector.c:4662 gui/selector.c:4736
 msgid "Choose"
 msgstr "Alege"
 
-#: gui/selector.c:4686
+#: gui/selector.c:4685
 msgid "Variable to plot"
 msgstr ""
 
-#: gui/selector.c:4726
+#: gui/selector.c:4725
 msgid "Lower bound variable"
 msgstr "Variabilă limita inferioară"
 
-#: gui/selector.c:4728
+#: gui/selector.c:4727
 msgid "Response variable"
 msgstr "Variabilă de răspuns"
 
-#: gui/selector.c:4730
+#: gui/selector.c:4729
 msgid "Dependent variable 1"
 msgstr "Variabila dependentă 1"
 
-#: gui/selector.c:4790
+#: gui/selector.c:4789
 msgid "lag order:"
 msgstr "ordin întârziere:"
 
-#: gui/selector.c:4791
+#: gui/selector.c:4790
 msgid "rank:"
 msgstr ""
 
-#: gui/selector.c:4815
+#: gui/selector.c:4814
 msgid "maximum lag:"
 msgstr "întârziere maximă:"
 
-#: gui/selector.c:4830
+#: gui/selector.c:4829
 msgid "Number of cointegrating vectors"
 msgstr ""
 
-#: gui/selector.c:4856
+#: gui/selector.c:4855
 msgid "ARCH order:"
 msgstr ""
 
-#: gui/selector.c:4861 gui/selector.c:4867
+#: gui/selector.c:4860 gui/selector.c:4866
 msgid "AR order:"
 msgstr "AR de ordin:"
 
-#: gui/selector.c:4894
+#: gui/selector.c:4893
 msgid "Z-axis variable"
 msgstr ""
 
-#: gui/selector.c:4896
+#: gui/selector.c:4895
 msgid "Factor (discrete)"
 msgstr ""
 
-#: gui/selector.c:4898
+#: gui/selector.c:4897
 msgid "Control variable"
 msgstr ""
 
-#: gui/selector.c:4900
+#: gui/selector.c:4899
 msgid "Block variable (optional)"
 msgstr "Variabilă de blocare (opțională)"
 
-#: gui/selector.c:5009
+#: gui/selector.c:5008
 msgid "Add"
 msgstr "Adaugă"
 
-#: gui/selector.c:5021
+#: gui/selector.c:5020
 msgid "All ->"
 msgstr "Totul ->"
 
-#: gui/selector.c:5040 gui/selector.c:6986
+#: gui/selector.c:5039 gui/selector.c:6985
 msgid "lags..."
 msgstr "întârzieri..."
 
-#: gui/selector.c:5063 plugin/addons-i18n.c:102
+#: gui/selector.c:5062 plugin/addons-i18n.c:102
 msgid "Exogenous variables"
 msgstr "Variabile exogene"
 
-#: gui/selector.c:5067
+#: gui/selector.c:5066
 msgid "Selection regressors"
 msgstr "Selecție regresori"
 
-#: gui/selector.c:5069
+#: gui/selector.c:5068
 msgid "Equation 2 regressors"
 msgstr "Regresorii ecuației 2"
 
-#: gui/selector.c:5071
+#: gui/selector.c:5070
 #, fuzzy
 msgid "High-frequency"
 msgstr "Frecvenţa"
 
-#: gui/selector.c:5073
+#: gui/selector.c:5072
 msgid "Helper functions"
 msgstr ""
 
-#: gui/selector.c:5136
+#: gui/selector.c:5135
 msgid "left bound"
 msgstr "limită la stânga"
 
-#: gui/selector.c:5137
+#: gui/selector.c:5136
 msgid "right bound"
 msgstr "limită la dreapta"
 
-#: gui/selector.c:5173
+#: gui/selector.c:5172
 msgid "Polynomial order"
 msgstr "Ordin polinomial"
 
-#: gui/selector.c:5185
+#: gui/selector.c:5184
 msgid "Bandwidth"
 msgstr "Lățimea benzii"
 
-#: gui/selector.c:5198
+#: gui/selector.c:5197
 #, fuzzy
 msgid "Automatic bandwidth"
 msgstr "Maxim automatic"
 
-#: gui/selector.c:5204
+#: gui/selector.c:5203
 #, fuzzy
 msgid "User-specified"
 msgstr ""
@@ -15797,486 +15785,486 @@ msgstr ""
 "\n"
 "*** Valori inițiale specificate de utilizator:\n"
 
-#: gui/selector.c:5215
+#: gui/selector.c:5214
 msgid "Use robust weights"
 msgstr "Utilizare ponderi robuste"
 
-#: gui/selector.c:5216
+#: gui/selector.c:5215
 msgid "Use \"leave one out\""
 msgstr "Utilizare \"exclude unul\""
 
-#: gui/selector.c:5542
+#: gui/selector.c:5541
 msgid "GARCH p:"
 msgstr "GARCH p:"
 
-#: gui/selector.c:5543
+#: gui/selector.c:5542
 msgid "ARCH q:"
 msgstr ""
 
-#: gui/selector.c:5568
+#: gui/selector.c:5567
 msgid "Non-seasonal"
 msgstr "Non-sezoniere"
 
-#: gui/selector.c:5569
+#: gui/selector.c:5568
 msgid "Seasonal"
 msgstr ""
 
-#: gui/selector.c:5570
+#: gui/selector.c:5569
 #, fuzzy
 msgid "Orders"
 msgstr "_Ordinală..."
 
-#: gui/selector.c:5610
+#: gui/selector.c:5609
 msgid "I"
 msgstr ""
 
-#: gui/selector.c:5646 gui/selector.c:8815
+#: gui/selector.c:5645 gui/selector.c:8816
 msgid "specific lags"
 msgstr "întârzieri specifice"
 
-#: gui/selector.c:5963
+#: gui/selector.c:5962
 msgid "Bits per floating-point value"
 msgstr "Biți pe valoare în virgulă mobilă"
 
-#: gui/selector.c:6014
+#: gui/selector.c:6013
 msgid "Quadrature points"
 msgstr ""
 
-#: gui/selector.c:6038
+#: gui/selector.c:6037
 msgid "Robust standard errors/intervals"
 msgstr "Erori standard robuste/intervale"
 
-#: gui/selector.c:6096 gui/selector.c:6106 gui/selector.c:6114
+#: gui/selector.c:6095 gui/selector.c:6105 gui/selector.c:6113
 msgid "Include a constant"
 msgstr "Include o constantă"
 
-#: gui/selector.c:6116
+#: gui/selector.c:6115
 msgid "Include a trend"
 msgstr "Include un trend"
 
-#: gui/selector.c:6119 gui/selector.c:6141
+#: gui/selector.c:6118 gui/selector.c:6140
 msgid "Show details of regressions"
 msgstr ""
 
-#: gui/selector.c:6122 gui/selector.c:6143
+#: gui/selector.c:6121 gui/selector.c:6142
 msgid "Include seasonal dummies"
 msgstr "Include dammy sezoniere"
 
-#: gui/selector.c:6133
+#: gui/selector.c:6132
 msgid "Test down from maximum lag order"
 msgstr "Test de la ordinul maxim de întârziere în jos"
 
-#: gui/selector.c:6139
+#: gui/selector.c:6138
 msgid "Skip initial DF tests"
 msgstr "Sare peste testele inițiale DF"
 
-#: gui/selector.c:6151
+#: gui/selector.c:6150
 msgid "Iterated weighted least squares"
 msgstr "Cele mai mici pătrate ponderate iterate"
 
-#: gui/selector.c:6154 gui/selector.c:6157
+#: gui/selector.c:6153 gui/selector.c:6156
 msgid "Include time dummies"
 msgstr "Include dummy de timp"
 
-#: gui/selector.c:6159
+#: gui/selector.c:6158
 msgid "Include levels equations (GMM-SYS)"
 msgstr "Include ecuații în nivele (GMM-SYS)"
 
-#: gui/selector.c:6164
+#: gui/selector.c:6163
 msgid "Show zeros explicitly"
 msgstr ""
 
-#: gui/selector.c:6171
+#: gui/selector.c:6170
 msgid "Make plot interactive"
 msgstr ""
 
-#: gui/selector.c:6174
+#: gui/selector.c:6173
 msgid "Show interval for median"
 msgstr ""
 
-#: gui/selector.c:6177
+#: gui/selector.c:6176
 msgid "Variance equation includes squares"
 msgstr ""
 
-#: gui/selector.c:6183
+#: gui/selector.c:6182
 msgid "Parameter covariance matrix via Hessian"
 msgstr "Matricea covarianței parametrului via Hessian"
 
-#: gui/selector.c:6185
+#: gui/selector.c:6184
 msgid "Difference the independent variables"
 msgstr "Diferențiază variabilele independente"
 
-#: gui/selector.c:6189
+#: gui/selector.c:6188
 msgid "Use X-12-ARIMA"
 msgstr "Utilizare X-12-ARIMA"
 
-#: gui/selector.c:6195
+#: gui/selector.c:6194
 msgid "Standardize the residuals"
 msgstr "Standardizare reziduuri"
 
-#: gui/selector.c:6197
+#: gui/selector.c:6196
 msgid "Use Fiorentini et al algorithm"
 msgstr "Utilizare algoritm Fiorentini et al"
 
-#: gui/selector.c:6203
+#: gui/selector.c:6202
 msgid "Prefer NLS via Levenberg-Marquardt"
 msgstr ""
 
-#: gui/selector.c:6235
+#: gui/selector.c:6234
 msgid "Show lagged variables"
 msgstr "Arată variabilele întârziate"
 
-#: gui/selector.c:6318
+#: gui/selector.c:6317
 msgid "Compute standard errors"
 msgstr "Calculare erori standard"
 
-#: gui/selector.c:6323
+#: gui/selector.c:6322
 msgid "Compute confidence intervals"
 msgstr "Calculare intervale de confidență"
 
-#: gui/selector.c:6373
+#: gui/selector.c:6372
 msgid "Automatic maximum"
 msgstr "Maxim automatic"
 
-#: gui/selector.c:6378
+#: gui/selector.c:6377
 msgid "Specified maximum"
 msgstr "Maxim specificat"
 
-#: gui/selector.c:6390 gui/selector.c:6420
+#: gui/selector.c:6389 gui/selector.c:6419
 msgid "LASSO"
 msgstr ""
 
-#: gui/selector.c:6437
+#: gui/selector.c:6436
 #, fuzzy
 msgid "Single λ-fraction"
 msgstr "Selectare funcție"
 
-#: gui/selector.c:6446
+#: gui/selector.c:6445
 #, fuzzy
 msgid "Multiple λ values"
 msgstr "Grafice multiple"
 
-#: gui/selector.c:6465 gui/toolbar.c:617
+#: gui/selector.c:6464 gui/toolbar.c:617
 msgid "Confidence level"
 msgstr ""
 
-#: gui/selector.c:6482
+#: gui/selector.c:6481
 msgid "Use correlation matrix"
 msgstr "Utilizare matricea de corelație"
 
-#: gui/selector.c:6486
+#: gui/selector.c:6485
 msgid "Use covariance matrix"
 msgstr "Utilizare matricea de covarianță"
 
-#: gui/selector.c:6495
+#: gui/selector.c:6494
 msgid "Show slopes at mean"
 msgstr "Vizualizează pantele la medie"
 
-#: gui/selector.c:6514
+#: gui/selector.c:6513
 msgid "Use points"
 msgstr ""
 
-#: gui/selector.c:6518
+#: gui/selector.c:6517
 msgid "Use lines"
 msgstr ""
 
-#: gui/selector.c:6573
+#: gui/selector.c:6572
 msgid "Estimate augmented model"
 msgstr ""
 
-#: gui/selector.c:6577
+#: gui/selector.c:6576
 msgid "LM test using auxiliary regression"
 msgstr ""
 
-#: gui/selector.c:6590
+#: gui/selector.c:6589
 msgid "Estimate reduced model"
 msgstr ""
 
-#: gui/selector.c:6594
+#: gui/selector.c:6593
 msgid "Wald test, based on covariance matrix"
 msgstr ""
 
-#: gui/selector.c:6607
+#: gui/selector.c:6606
 msgid ""
 "Sequential elimination of variables\n"
 "using two-sided p-value:"
 msgstr ""
 
-#: gui/selector.c:6616
+#: gui/selector.c:6615
 msgid "Test only selected variables"
 msgstr ""
 
-#: gui/selector.c:6656 plugin/addons-i18n.c:38
+#: gui/selector.c:6655 plugin/addons-i18n.c:38
 msgid "Fixed effects"
 msgstr "Efecte fixe"
 
-#: gui/selector.c:6660
+#: gui/selector.c:6659
 msgid "Random effects"
 msgstr "Efecte aleatoare"
 
-#: gui/selector.c:6665
+#: gui/selector.c:6664
 msgid "Swamy-Arora"
 msgstr ""
 
-#: gui/selector.c:6666
+#: gui/selector.c:6665
 msgid "Swamy-Arora / Baltagi-Chang"
 msgstr ""
 
-#: gui/selector.c:6667
+#: gui/selector.c:6666
 msgid "Nerlove"
 msgstr ""
 
-#: gui/selector.c:6704
+#: gui/selector.c:6703
 msgid "Maximum likelihood estimation"
 msgstr "Estimarea verosimilității maxime (EVM)"
 
-#: gui/selector.c:6708
+#: gui/selector.c:6707
 msgid "2-step estimation"
 msgstr "Estimare în 2 etape"
 
-#: gui/selector.c:6717
+#: gui/selector.c:6716
 msgid "Plain numerical values"
 msgstr ""
 
-#: gui/selector.c:6721
+#: gui/selector.c:6720
 msgid "Show row percentages"
 msgstr ""
 
-#: gui/selector.c:6725
+#: gui/selector.c:6724
 msgid "Show column percentages"
 msgstr ""
 
-#: gui/selector.c:6745
+#: gui/selector.c:6744
 msgid "Fine-tune using Cochrane-Orcutt"
 msgstr "Ajustare precisă folosing Cochrane-Orcutt"
 
-#: gui/selector.c:6770 gui/selector.c:6782
+#: gui/selector.c:6769 gui/selector.c:6781
 msgid "Exact Maximum Likelihood"
 msgstr "Verosimilitatea maximă exactă"
 
-#: gui/selector.c:6783
+#: gui/selector.c:6782
 msgid "Conditional Maximum Likelihood"
 msgstr "Verosimilitatea maximă condițională"
 
-#: gui/selector.c:6824
+#: gui/selector.c:6823
 msgid "with constant and quadratic trend"
 msgstr "cu constantă şi trend pătratic"
 
-#: gui/selector.c:6851
+#: gui/selector.c:6850
 msgid "No constant"
 msgstr "Fără constantă"
 
-#: gui/selector.c:6852
+#: gui/selector.c:6851
 msgid "Restricted constant"
 msgstr "Constantă restricționată"
 
-#: gui/selector.c:6853
+#: gui/selector.c:6852
 msgid "Unrestricted constant"
 msgstr "Constantă nerestricționată"
 
-#: gui/selector.c:6854
+#: gui/selector.c:6853
 msgid "Restricted trend"
 msgstr "Trend restricționat"
 
-#: gui/selector.c:6855
+#: gui/selector.c:6854
 msgid "Unrestricted trend"
 msgstr "Trend nerestricționat"
 
-#: gui/selector.c:6886
+#: gui/selector.c:6885
 msgid "CSV"
 msgstr "CSV"
 
-#: gui/selector.c:6887
+#: gui/selector.c:6886
 msgid "gretl datafile (.gdt)"
 msgstr ""
 
-#: gui/selector.c:6888
+#: gui/selector.c:6887
 msgid "gretl binary datafile (.gdtb)"
 msgstr ""
 
-#: gui/selector.c:6889
+#: gui/selector.c:6888
 msgid "gretl database (.bin)"
 msgstr ""
 
-#: gui/selector.c:6890
+#: gui/selector.c:6889
 msgid "space separated (R-friendly)"
 msgstr ""
 
-#: gui/selector.c:6891
+#: gui/selector.c:6890
 msgid "Octave"
 msgstr "Octave"
 
-#: gui/selector.c:6892
+#: gui/selector.c:6891
 msgid "Stata"
 msgstr ""
 
-#: gui/selector.c:6893
+#: gui/selector.c:6892
 msgid "JMulTi"
 msgstr ""
 
-#: gui/selector.c:6894
+#: gui/selector.c:6893
 msgid "PcGive"
 msgstr ""
 
-#: gui/selector.c:6917
+#: gui/selector.c:6916
 msgid "Select format"
 msgstr ""
 
-#: gui/selector.c:7182
+#: gui/selector.c:7181
 #, fuzzy
 msgid "Name for package:"
 msgstr "Pachet _nou..."
 
-#: gui/selector.c:7195
+#: gui/selector.c:7194
 msgid "plot with impulses"
 msgstr ""
 
-#: gui/selector.c:7197
+#: gui/selector.c:7196
 msgid "3D plot"
 msgstr "Grafic 3D"
 
-#: gui/selector.c:7199
+#: gui/selector.c:7198
 msgid "multiple scatterplots"
 msgstr ""
 
-#: gui/selector.c:7201
+#: gui/selector.c:7200
 msgid "factorized plot"
 msgstr ""
 
-#: gui/selector.c:7203
+#: gui/selector.c:7202
 msgid "factorized boxplot"
 msgstr "grafic boxplot cu factor"
 
-#: gui/selector.c:7205
+#: gui/selector.c:7204
 msgid "scatterplot with control"
 msgstr ""
 
-#: gui/selector.c:7240
+#: gui/selector.c:7239
 msgid "Variables to test"
 msgstr "Variabile de testat"
 
-#: gui/selector.c:7242 plugin/addons-i18n.c:101
+#: gui/selector.c:7241 plugin/addons-i18n.c:101
 msgid "Endogenous variables"
 msgstr "Variabile endogene"
 
-#: gui/selector.c:7244
+#: gui/selector.c:7243
 msgid "Equation 1 regressors"
 msgstr "Regresorii ecuatiei 1"
 
-#: gui/selector.c:7246 gui/selector.c:8801
+#: gui/selector.c:7245 gui/selector.c:8802
 msgid "Regressors"
 msgstr "Regresori"
 
-#: gui/selector.c:7252
+#: gui/selector.c:7251
 msgid "Public functions"
 msgstr ""
 
-#: gui/selector.c:7573
+#: gui/selector.c:7572
 msgid "Select variables for logging"
 msgstr ""
 
-#: gui/selector.c:7575
+#: gui/selector.c:7574
 msgid "Select variables for lagging"
 msgstr "Selectare variabile pentru întârziere"
 
-#: gui/selector.c:7577
+#: gui/selector.c:7576
 msgid "Select variables to square"
 msgstr ""
 
-#: gui/selector.c:7579
+#: gui/selector.c:7578
 msgid "Select variables to difference"
 msgstr ""
 
-#: gui/selector.c:7581
+#: gui/selector.c:7580
 msgid "Select variables to log-difference"
 msgstr ""
 
-#: gui/selector.c:7583
+#: gui/selector.c:7582
 msgid "Select variables to add"
 msgstr ""
 
-#: gui/selector.c:7586
+#: gui/selector.c:7585
 msgid "Select variables to omit"
 msgstr ""
 
-#: gui/selector.c:7588
+#: gui/selector.c:7587
 msgid "Select coefficients to sum"
 msgstr ""
 
-#: gui/selector.c:7590
+#: gui/selector.c:7589
 msgid "Select one or two variables"
 msgstr ""
 
-#: gui/selector.c:7592
+#: gui/selector.c:7591
 msgid "Confidence region: select two variables"
 msgstr ""
 
-#: gui/selector.c:7594
+#: gui/selector.c:7593
 msgid "Select variables to display"
 msgstr ""
 
-#: gui/selector.c:7598
+#: gui/selector.c:7597
 msgid "Select variables to plot"
 msgstr ""
 
-#: gui/selector.c:7607
+#: gui/selector.c:7606
 msgid "Select variables to save"
 msgstr ""
 
-#: gui/selector.c:7609
+#: gui/selector.c:7608
 msgid "Select variables to copy"
 msgstr ""
 
-#: gui/selector.c:7611
+#: gui/selector.c:7610
 msgid "Select variables to test"
 msgstr "Selectare variabile de testat"
 
-#: gui/selector.c:7613
+#: gui/selector.c:7612
 msgid "Define named list"
 msgstr "Definire listă denumită"
 
-#: gui/selector.c:7869
+#: gui/selector.c:7868
 msgid "Name of list"
 msgstr "Numele listei"
 
-#: gui/selector.c:8199
+#: gui/selector.c:8198
 msgid "You must specify a public interface"
 msgstr ""
 
-#: gui/selector.c:8363
+#: gui/selector.c:8362
 msgid "Copy data"
 msgstr ""
 
-#: gui/selector.c:8363
+#: gui/selector.c:8362
 msgid "Export data"
 msgstr "Exportă datele"
 
-#: gui/selector.c:8381
+#: gui/selector.c:8380
 #, fuzzy
 msgid "Select functions"
 msgstr "Selectare funcție"
 
-#: gui/selector.c:8403
+#: gui/selector.c:8402
 msgid "Edit package list"
 msgstr ""
 
-#: gui/selector.c:8785
+#: gui/selector.c:8786
 msgid "Lags of endogenous variables"
 msgstr "Întârzieri ale variabilelor endogene"
 
-#: gui/selector.c:8807
+#: gui/selector.c:8808
 msgid "lags"
 msgstr "întârzieri"
 
-#: gui/selector.c:8813
+#: gui/selector.c:8814
 msgid "or"
 msgstr "sau"
 
-#: gui/selector.c:8830
+#: gui/selector.c:8831
 msgid "Lags of dependent variable"
 msgstr "Întârzieri ale variabilei dependente"
 
-#: gui/selector.c:8841
+#: gui/selector.c:8842
 msgid "default"
 msgstr ""
 
@@ -16300,68 +16288,68 @@ msgstr ""
 msgid "Select data format"
 msgstr ""
 
-#: gui/session.c:151 gui/session.c:3400 gui/session.c:3848
+#: gui/session.c:151 gui/session.c:3403 gui/session.c:3851
 msgid "Save session"
 msgstr ""
 
-#: gui/session.c:152 gui/session.c:3410
+#: gui/session.c:152 gui/session.c:3413
 msgid "Arrange icons"
 msgstr ""
 
-#: gui/session.c:153 gui/session.c:3412
+#: gui/session.c:153 gui/session.c:3415
 msgid "Add matrix..."
 msgstr "Adăugare matrice..."
 
-#: gui/session.c:155 gui/session.c:3416
+#: gui/session.c:155 gui/session.c:3419
 msgid "Close window"
 msgstr ""
 
-#: gui/session.c:160 gui/session.c:3580
+#: gui/session.c:160 gui/session.c:3583
 msgid "Add to model table"
 msgstr ""
 
 #: gui/session.c:161 gui/session.c:181 gui/session.c:189 gui/session.c:216
-#: gui/session.c:223 gui/session.c:3454 gui/session.c:3470 gui/session.c:3569
+#: gui/session.c:223 gui/session.c:3457 gui/session.c:3473 gui/session.c:3572
 msgid "Rename"
 msgstr "Redenumeşte"
 
-#: gui/session.c:168 gui/session.c:175 gui/session.c:3586
+#: gui/session.c:168 gui/session.c:175 gui/session.c:3589
 msgid "Clear"
 msgstr "Elimină"
 
-#: gui/session.c:174 gui/session.c:3598
+#: gui/session.c:174 gui/session.c:3601
 msgid "Save as TeX..."
 msgstr "Salvează ca TeX..."
 
-#: gui/session.c:187 gui/session.c:3532
+#: gui/session.c:187 gui/session.c:3535
 msgid "Edit plot commands"
 msgstr ""
 
-#: gui/session.c:188 gui/session.c:3561
+#: gui/session.c:188 gui/session.c:3564
 #, fuzzy
 msgid "Add to graph page"
 msgstr "Adaugă la setul de date"
 
-#: gui/session.c:191 gui/session.c:218 gui/session.c:3458 gui/session.c:3602
+#: gui/session.c:191 gui/session.c:218 gui/session.c:3461 gui/session.c:3605
 #: gui/textutil.c:490 gui/toolbar.c:812
 msgid "Copy"
 msgstr ""
 
-#: gui/session.c:198 gui/session.c:3483
+#: gui/session.c:198 gui/session.c:3486
 msgid "Export as CSV..."
 msgstr ""
 
-#: gui/session.c:199 gui/session.c:204 gui/session.c:215 gui/session.c:3447
-#: gui/session.c:3485 gui/session.c:3496
+#: gui/session.c:199 gui/session.c:204 gui/session.c:215 gui/session.c:3450
+#: gui/session.c:3488 gui/session.c:3499
 msgid "Copy as CSV..."
 msgstr "Copiază ca CSV..."
 
-#: gui/session.c:208 gui/session.c:212 gui/session.c:222 gui/session.c:3434
-#: gui/session.c:3468 gui/textutil.c:489
+#: gui/session.c:208 gui/session.c:212 gui/session.c:222 gui/session.c:3437
+#: gui/session.c:3471 gui/textutil.c:489
 msgid "View"
 msgstr ""
 
-#: gui/session.c:214 gui/session.c:3444
+#: gui/session.c:214 gui/session.c:3447
 msgid "Properties"
 msgstr "Proprietăţi"
 
@@ -16376,13 +16364,6 @@ msgstr ""
 
 #: gui/session.c:1217
 msgid "Model is already saved"
-msgstr ""
-
-#: gui/session.c:1432
-#, c-format
-msgid ""
-"\n"
-"Reading session file %s\n"
 msgstr ""
 
 #: gui/session.c:1531
@@ -16407,148 +16388,148 @@ msgstr ""
 msgid "Bundle is empty"
 msgstr ""
 
-#: gui/session.c:2700 gui/session.c:2726
+#: gui/session.c:2703 gui/session.c:2729
 #, c-format
 msgid "'%s': there is already an object of this name"
 msgstr ""
 
-#: gui/session.c:2781
+#: gui/session.c:2784
 msgid "Failed to copy object"
 msgstr ""
 
-#: gui/session.c:2807 gui/session.c:2850
+#: gui/session.c:2810 gui/session.c:2853
 #, c-format
 msgid ""
 "Enter new name\n"
 "(max. %d characters)"
 msgstr ""
 
-#: gui/session.c:2809
+#: gui/session.c:2812
 msgid "gretl: copy object"
 msgstr ""
 
-#: gui/session.c:2852
+#: gui/session.c:2855
 msgid "gretl: rename object"
 msgstr "gretl: redenumeşte obiectul"
 
-#: gui/session.c:3753
+#: gui/session.c:3756
 msgid "Data set"
 msgstr "Setul de date"
 
-#: gui/session.c:3756
+#: gui/session.c:3759
 msgid "Scalars"
 msgstr ""
 
-#: gui/session.c:3759
+#: gui/session.c:3762
 msgid "Data info"
 msgstr ""
 
-#: gui/session.c:3762
+#: gui/session.c:3765
 msgid "Notes"
 msgstr "Note"
 
-#: gui/session.c:3765
+#: gui/session.c:3768
 msgid "Correlations"
 msgstr ""
 
-#: gui/session.c:3771
+#: gui/session.c:3774
 msgid "Model table"
 msgstr ""
 
-#: gui/session.c:3774
+#: gui/session.c:3777
 msgid "Graph page"
 msgstr ""
 
-#: gui/session.c:4006 gui/winstack.c:538
+#: gui/session.c:4009 gui/winstack.c:538
 msgid "icon view"
 msgstr "vizualizează pictograma"
 
-#: gui/session.c:4249
+#: gui/session.c:4252
 #, c-format
 msgid "Properties of matrix %s"
 msgstr ""
 
-#: gui/session.c:4253 gui/session.c:4262
+#: gui/session.c:4256 gui/session.c:4265
 #, c-format
 msgid "Null matrix, %d x %d\n"
 msgstr ""
 
-#: gui/session.c:4256
+#: gui/session.c:4259
 #, c-format
 msgid "Scalar matrix, value %g\n"
 msgstr ""
 
-#: gui/session.c:4259
+#: gui/session.c:4262
 #, c-format
 msgid "Identity matrix, order %d\n"
 msgstr ""
 
-#: gui/session.c:4266
+#: gui/session.c:4269
 msgid "Rows"
 msgstr "Rânduri"
 
-#: gui/session.c:4267
+#: gui/session.c:4270
 msgid "Columns"
 msgstr "Coloane"
 
-#: gui/session.c:4268 plugin/johansen.c:1607 plugin/johansen.c:1627
-#: plugin/johansen.c:1653
+#: gui/session.c:4271 plugin/johansen.c:1613 plugin/johansen.c:1633
+#: plugin/johansen.c:1659
 msgid "Rank"
 msgstr ""
 
-#: gui/session.c:4273
+#: gui/session.c:4276
 msgid "Square"
 msgstr "Pătrat"
 
-#: gui/session.c:4277
+#: gui/session.c:4280
 msgid "Diagonal"
 msgstr ""
 
-#: gui/session.c:4279
+#: gui/session.c:4282
 msgid "Lower triangular"
 msgstr ""
 
-#: gui/session.c:4281
+#: gui/session.c:4284
 msgid "Upper triangular"
 msgstr ""
 
-#: gui/session.c:4283
+#: gui/session.c:4286
 msgid "Symmetric"
 msgstr ""
 
-#: gui/session.c:4288
+#: gui/session.c:4291
 msgid "Positive definite"
 msgstr ""
 
-#: gui/session.c:4290
+#: gui/session.c:4293
 msgid "Not positive definite"
 msgstr ""
 
-#: gui/session.c:4304
+#: gui/session.c:4307
 msgid "Idempotent"
 msgstr ""
 
-#: gui/session.c:4306
+#: gui/session.c:4309
 msgid "Not idempotent"
 msgstr ""
 
-#: gui/session.c:4312
+#: gui/session.c:4315
 msgid "1-norm"
 msgstr ""
 
-#: gui/session.c:4313
+#: gui/session.c:4316
 msgid "Infinity-norm"
 msgstr ""
 
-#: gui/session.c:4318
+#: gui/session.c:4321
 msgid "Trace"
 msgstr ""
 
-#: gui/session.c:4327
+#: gui/session.c:4330
 msgid "Determinant"
 msgstr ""
 
-#: gui/session.c:4335
+#: gui/session.c:4338
 msgid "Eigenvalues"
 msgstr ""
 
@@ -16646,7 +16627,7 @@ msgid "Calculator"
 msgstr "Calculator"
 
 #: gui/settings.c:265
-msgid "Path to x12arima"
+msgid "Path to x12arima (or x13)"
 msgstr ""
 
 #: gui/settings.c:269
@@ -16838,66 +16819,66 @@ msgstr ""
 msgid "Select a specific font"
 msgstr ""
 
-#: gui/settings.c:2674 gui/settings.c:2784
+#: gui/settings.c:2676 gui/settings.c:2786
 msgid "Font for gretl output windows"
 msgstr ""
 
-#: gui/settings.c:2678 gui/settings.c:2788
+#: gui/settings.c:2680 gui/settings.c:2790
 msgid "Font for menus and labels"
 msgstr ""
 
-#: gui/settings.c:2869
+#: gui/settings.c:2871
 msgid "Remember this setting"
 msgstr ""
 
-#: gui/settings.c:2879
+#: gui/settings.c:2881
 #, fuzzy
 msgid "gretl: font scale"
 msgstr "gretl: stabilire eșantion"
 
-#: gui/settings.c:2884
+#: gui/settings.c:2886
 msgid "Scale for monospaced and menu fonts"
 msgstr ""
 
-#: gui/settings.c:3035
+#: gui/settings.c:3037
 msgid "Working directory:"
 msgstr "Director de lucru:"
 
-#: gui/settings.c:3061
+#: gui/settings.c:3063
 msgid "On start-up, gretl should use:"
 msgstr "La iniţiere, gretl ar trebui să utilizeze:"
 
-#: gui/settings.c:3068
+#: gui/settings.c:3070
 msgid "the directory selected above"
 msgstr "directorul selectat mai sus"
 
-#: gui/settings.c:3075
+#: gui/settings.c:3077
 msgid "the current directory as determined via the shell"
 msgstr "directorul curent, determinat prin intermediul shell"
 
-#: gui/settings.c:3085
+#: gui/settings.c:3087
 msgid "The file selection dialog should:"
 msgstr "Fereastra de selectare a fişierelor ar trebui:"
 
-#: gui/settings.c:3092
+#: gui/settings.c:3094
 msgid "remember the last-opened folder"
 msgstr "amintește ultimul dosar deschis"
 
-#: gui/settings.c:3100
+#: gui/settings.c:3102
 msgid "always start in the working directory"
 msgstr "deschide întotdeauna în directorul de lucru"
 
-#: gui/settings.c:3109
+#: gui/settings.c:3111
 #, fuzzy
 msgid "Show working directory in main window"
 msgstr "Setați directorul de lucru din shell"
 
-#: gui/settings.c:3119
+#: gui/settings.c:3121
 #, fuzzy
 msgid "Open working directory"
 msgstr "gretl: director de lucru"
 
-#: gui/settings.c:3182
+#: gui/settings.c:3184
 msgid "gretl: working directory"
 msgstr "gretl: director de lucru"
 
@@ -18025,7 +18006,7 @@ msgid "No worksheets found"
 msgstr ""
 
 #: plugin/excel_import.c:1669 plugin/gnumeric_import.c:676
-#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1365 plugin/xlsx_import.c:1425
+#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1361 plugin/xlsx_import.c:1421
 msgid "Invalid argument for worksheet import"
 msgstr ""
 
@@ -18222,49 +18203,49 @@ msgstr ""
 msgid "long-run matrix (alpha * beta')"
 msgstr ""
 
-#: plugin/johansen.c:1108
+#: plugin/johansen.c:1114
 msgid "eigenvalue"
 msgstr ""
 
-#: plugin/johansen.c:1534
+#: plugin/johansen.c:1540
 msgid "Exogenous regressor(s)"
 msgstr ""
 
-#: plugin/johansen.c:1597
+#: plugin/johansen.c:1603
 msgid "including constant term"
 msgstr ""
 
-#: plugin/johansen.c:1604
+#: plugin/johansen.c:1610
 msgid "Cointegration tests, ignoring exogenous variables"
 msgstr "Teste de cointegrare, ignorând variabilele exogene"
 
-#: plugin/johansen.c:1607 plugin/johansen.c:1627
+#: plugin/johansen.c:1613 plugin/johansen.c:1633
 msgid "Eigenvalue"
 msgstr ""
 
-#: plugin/johansen.c:1608 plugin/johansen.c:1628 plugin/johansen.c:1653
+#: plugin/johansen.c:1614 plugin/johansen.c:1634 plugin/johansen.c:1659
 msgid "Trace test"
 msgstr ""
 
-#: plugin/johansen.c:1609
+#: plugin/johansen.c:1615
 msgid "Lmax test"
 msgstr ""
 
-#: plugin/johansen.c:1625
+#: plugin/johansen.c:1631
 #, c-format
 msgid "Cointegration tests conditional on %d I(1) variable(s)"
 msgstr "Teste de cointegrare condiționate pe %d variabile I(1) "
 
-#: plugin/johansen.c:1628
+#: plugin/johansen.c:1634
 msgid "pval(T)"
 msgstr ""
 
-#: plugin/johansen.c:1652
+#: plugin/johansen.c:1658
 #, c-format
 msgid "Corrected for sample size (df = %d)"
 msgstr ""
 
-#: plugin/johansen.c:1670
+#: plugin/johansen.c:1676
 msgid ""
 "Warning: the p-values shown are for the case of\n"
 "a restricted trend"
@@ -18272,7 +18253,7 @@ msgstr ""
 "Atenție: valorile p-value indicate sunt pentru cazul\n"
 "unui trend restricționat"
 
-#: plugin/johansen.c:1674
+#: plugin/johansen.c:1680
 msgid ""
 "Note: in general, the test statistics above are valid only in the\n"
 "absence of additional regressors."
@@ -18280,31 +18261,31 @@ msgstr ""
 "Notă: în general, statisticile de mai sus sunt valabile numai în\n"
 "absența regresorilor adiționali."
 
-#: plugin/johansen.c:1755
+#: plugin/johansen.c:1761
 msgid "Failed to find eigenvalues\n"
 msgstr ""
 
-#: plugin/johansen.c:1808
+#: plugin/johansen.c:1814
 #, c-format
 msgid "eigenvalue %d = %g\n"
 msgstr ""
 
-#: plugin/johansen.c:1832 plugin/jrestrict.c:2814
+#: plugin/johansen.c:1838 plugin/jrestrict.c:2814
 #, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g\n"
 msgstr ""
 
-#: plugin/johansen.c:1833 plugin/jrestrict.c:2815
+#: plugin/johansen.c:1839 plugin/jrestrict.c:2815
 #, c-format
 msgid "Restricted loglikelihood (lr) = %.8g\n"
 msgstr ""
 
-#: plugin/johansen.c:1840 plugin/jrestrict.c:1887
+#: plugin/johansen.c:1846 plugin/jrestrict.c:1887
 #, c-format
 msgid "Allowing for prior restriction, df = %d\n"
 msgstr ""
 
-#: plugin/johansen.c:2599
+#: plugin/johansen.c:2605
 msgid "Test of restrictions on cointegrating relations"
 msgstr ""
 
@@ -18914,25 +18895,25 @@ msgstr ""
 msgid "Unexpected error reading the file\n"
 msgstr ""
 
-#: plugin/xlsx_import.c:927
+#: plugin/xlsx_import.c:923
 #, c-format
 msgid "Found %d variables and %d observations\n"
 msgstr "Am găsit %d variabile şi %d observaţii\n"
 
-#: plugin/xlsx_import.c:930
+#: plugin/xlsx_import.c:926
 msgid "File contains no data\n"
 msgstr "Fişierul nu conţine date\n"
 
-#: plugin/xlsx_import.c:1316
+#: plugin/xlsx_import.c:1312
 msgid "Found no sheets\n"
 msgstr ""
 
-#: plugin/xlsx_import.c:1363
+#: plugin/xlsx_import.c:1359
 #, c-format
 msgid "'%s': no such worksheet"
 msgstr ""
 
-#: plugin/xlsx_import.c:1381
+#: plugin/xlsx_import.c:1377
 #, c-format
 msgid ""
 "\n"
@@ -18940,25 +18921,20 @@ msgid ""
 msgstr ""
 
 #: doc/commands/matfuncs.c:44
-msgid "Creation and I/O"
-msgstr ""
-
-#: doc/commands/matfuncs.c:45
-msgid "Shape/size/arrangement"
-msgstr ""
-
-#: doc/commands/matfuncs.c:46
 msgid "Matrix algebra"
 msgstr "Algebra matricilor"
 
-#: doc/commands/matfuncs.c:47
+#: doc/commands/matfuncs.c:45
 msgid "Statistics/transformations"
 msgstr "Statistici/transformări"
 
-#: doc/commands/matfuncs.c:49
+#: doc/commands/matfuncs.c:47
 #, fuzzy
 msgid "Decoration"
 msgstr "iterație"
+
+#~ msgid "Couldn't load plugin function\n"
+#~ msgstr "Imposibil de încărcat funcţia plugin\n"
 
 #~ msgid ""
 #~ "Do you really want to add a lower frequency series\n"
