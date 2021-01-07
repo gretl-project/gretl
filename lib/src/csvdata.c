@@ -4213,13 +4213,10 @@ static joiner *joiner_new (int nrows)
     return jr;
 }
 
-#define TS_WILDCARD -888
-
 static int real_set_outer_auto_keys (joiner *jr, const char *s,
 				     int j, struct tm *tp)
 {
     DATASET *l_dset = jr->l_dset;
-    DATASET *r_dset = jr->r_dset;
     int err = 0;
 
     if (calendar_data(l_dset)) {
@@ -4249,7 +4246,6 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 	}
     } else {
 	int lpd = l_dset->pd;
-	int rpd = r_dset->pd;
 	int major = tp->tm_year + 1900;
 	int minor = tp->tm_mon + 1;
 	int micro = 0;
@@ -4261,21 +4257,11 @@ static int real_set_outer_auto_keys (joiner *jr, const char *s,
 		err = E_DATA;
 	    }
 	} else if (lpd == 4) {
-	    if (rpd == 1) {
-		/* repeat the lower frequency values */
-		minor = TS_WILDCARD;
-	    } else {
-		/* map from month on right to quarter on left, but
-		   preserve the month info in case we need it
-		*/
-		micro = minor;
-		minor = (int) ceil(minor / 3.0);
-	    }
-	} else if (lpd == 12) {
-	    if (rpd == 1) {
-		/* repeat the lower frequency values */
-		minor = TS_WILDCARD;
-	    }
+	    /* map from month on right to quarter on left, but
+	       preserve the month info in case we need it
+	    */
+	    micro = minor;
+	    minor = (int) ceil(minor / 3.0);
 	}
 	if (!err && micro == 0) {
 	    micro = tp->tm_mday;
@@ -4937,8 +4923,6 @@ static int midas_day_index (int t, DATASET *dset)
     return idx;
 }
 
-#define k2_matches(lk2, rk2) (rk2==lk2 || rk2==TS_WILDCARD)
-
 #define midas_daily(j) (j->midas_m > 20)
 
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
@@ -5075,7 +5059,7 @@ static double aggr_value (joiner *jr,
     for (i=imin; i<imax; i++) {
 	jr_row *r = &jr->rows[i];
 
-	if (jr->n_keys == 1 || k2_matches(key2, r->keyval2)) {
+	if (jr->n_keys == 1 || key2 == r->keyval2) {
 	    ntotal++;
 	    x = jr->r_dset->Z[v][r->dset_row];
 	    if (jr->auxcol) {
