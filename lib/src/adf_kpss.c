@@ -448,6 +448,67 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     return err;
 }
 
+#if 0 /* not yet? */
+
+/* Peter Sephton's response-surface based critical values for
+   ADF-GLS with testing down of lag order as per Ng and Perron,
+   or Perron and Qu. See PS's paper in Computational Economics,
+   https://doi.org/10.1007/s10614-020-10082-6
+*/
+
+static void sephton_adf_critvals (int T, int pmax, int trend,
+				  int PQ, double *c)
+{
+    /* Each row contains 6 coeffs: const, 4 powers of 1/T,
+       and maxlag / T. The rows are in blocks of four:
+       (1) Ng-Perron constant; (2) Perron-Qu constant;
+       (3) Ng-Perron trend;    (3) Perron-Qu trend.
+       Within each block are coefficients for 4 critical
+       values: 0.01, 0.025, 0.05 and 0.1.
+    */
+    const double coef[16][6] = {
+	/* Ng-Perron constant */
+	{-2.5512, 1.084, -720.43, 18279, -175060, 0.3174},
+	{-2.2186, -3.7919, -333.25, 6665.6, -52297, 0.31557},
+	{-1.9341, -4.7232, -124.1, 1441.1, -6754.7, 0.0096449},
+	{-1.6136, -8.9613, 120.77, -3103.9, 24355, -0.15212},
+	/* Perron-Qu constant */
+	{-2.5449, -3.2252,  -626, 14049, -107060, 0.33716},
+	{-2.2154, -9.9681, -250.85, 3955.5, -12315, 0.5985},
+	{-1.932, -7.5717, -259.69, 5407.7, -31513, 0.2145},
+	{-1.6108, -8.9303, -83.401, 2341.3, -13132, -0.10669},
+	/* Ng-Perron trend */
+	{-3.3772, -0.2059, -1809.6, 46527, -415670,  1.27},
+	{-3.0761, 2.9114, -1466.4, 35993, -312430, 0.7397},
+	{-2.828, 7.4946, -1579.2, 39383, -341880, 0.47643},
+	{-2.545, 5.5607, -1133.2, 26203, -213800, 0.24246},
+	/* Perron-Qu trend */
+	{-3.3719, -14.027, -1194.7, 32450, -301000, 1.6079},
+	{-3.0688, -4.2253, -1135, 29133, -257020, 0.73835},
+	{-2.8196, 2.4706, -1346.6, 35398, -314840, 0.37564},
+	{-2.5401, -2.7442, -950.57, 25683, -233160, 0.52035}
+    };
+    int r, i, j, rmin = 4 * PQ + trend ? 8 : 0;
+    double *b, X[6];
+
+    X[0] = 1.0;
+    X[1] = 1.0/T;
+    X[2] = X[1] * X[1];
+    X[3] = X[2] * X[1];
+    X[4] = X[3] * X[1];
+    X[5] = pmax * X[1];
+
+    for (i=0; i<4; i++) {
+	b = coeff[rmin+i];
+	c[i] = 0;
+	for (j=0; j<6; j++) {
+	    c[i] += X[j] * b[j];
+	}
+    }
+}
+
+#endif
+
 #if 0 /* based on a much larger replication of ERS:
 	 activate this after putting an account of
 	 the simulation in place */
@@ -720,6 +781,8 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 
     if ((opt & OPT_G) && i+1 == UR_TREND) {
 	double c[4];
+
+	/* FIXME distinguish GLS cases with testing down */
 
 	get_df_gls_ct_cval(ainfo->T, c);
 	pprintf(prn, "\n  %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
