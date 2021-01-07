@@ -262,7 +262,7 @@ RCVAR rc_vars[] = {
     { "calculator", N_("Calculator"), NULL, calculator,
       USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
-    { "x12a", N_("Path to x12arima"), NULL, paths.x12a,
+    { "x12a", N_("Path to x12arima (or x13)"), NULL, paths.x12a,
       MACHSET | BROWSER, sizeof paths.x12a, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO

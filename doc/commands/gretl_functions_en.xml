@@ -1294,9 +1294,11 @@
 	<para>
 	  Following estimation of a VAR or VECM (only), returns
 	  <math>X'X</math><sup>-1</sup>, where <math>X</math> is the common
-	  matrix of regressors used in each of the equations.  This accessor
-	  is not available for a VECM estimated with a restriction imposed on
-	  &agr;, the <quote>loadings</quote> matrix.
+	  matrix of regressors used in each of the equations. 
+	  While this accessor is still available for a VECM estimated with a
+	  restriction imposed on &agr; (the <quote>loadings</quote> matrix), 
+	  it should be borne in mind that in that case not all coefficients of the 
+	  <math>X</math>es are freely varying anymore.
 	</para>
       </description>
     </function>
