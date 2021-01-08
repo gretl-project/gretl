@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-07 10:29-0500\n"
+"POT-Creation-Date: 2021-01-08 09:00-0500\n"
 "PO-Revision-Date: 2019-01-21 19:15-0500\n"
 "Last-Translator: Plamen Petkov <ppet@uni-svishtov.bg>\n"
 "Language-Team: bulgarian <LL@li.org>\n"
@@ -18,106 +18,106 @@ msgstr ""
 "X-Generator: Poedit 1.8.11\n"
 
 # Изчислява разликите на лаговите величини
-#: lib/src/adf_kpss.c:520
+#: lib/src/adf_kpss.c:581
 msgid "lagged differences"
 msgstr "лагови величини на разликите"
 
 # Изчислява модифициран бейсов информационен критерий на Шварц
-#: lib/src/adf_kpss.c:533
+#: lib/src/adf_kpss.c:594
 msgid "modified BIC, Perron-Qu"
 msgstr "модифициран BIC, Перон-Ку"
 
 # Изчислява модифициран вариант на информационния критерий на Акайке
-#: lib/src/adf_kpss.c:535
+#: lib/src/adf_kpss.c:596
 msgid "modified AIC, Perron-Qu"
 msgstr "модифициран AIC, Перон-Ку"
 
 # Изчислява модифициран бейсов информационен критерий на Шварц
-#: lib/src/adf_kpss.c:541 gui/library.c:1004
+#: lib/src/adf_kpss.c:602 gui/library.c:1004
 msgid "modified BIC"
 msgstr "модифициран BIC"
 
-#: lib/src/adf_kpss.c:541 lib/src/modelprint.c:3359 lib/src/texprint.c:1108
+#: lib/src/adf_kpss.c:602 lib/src/modelprint.c:3359 lib/src/texprint.c:1108
 #: lib/src/varprint.c:1096 lib/src/varprint.c:1104 gui/library.c:1007
 #: gui/selector.c:5991
 msgid "BIC"
 msgstr "BIC - Критерий на Шварц"
 
 # Теоретични значения на t-критерия на Стюдънт
-#: lib/src/adf_kpss.c:543 gui/library.c:1008 gui/selector.c:5992
+#: lib/src/adf_kpss.c:604 gui/library.c:1008 gui/selector.c:5992
 msgid "t-statistic"
 msgstr "t-критерий"
 
 # Изчислява модифициран вариант на информационния критерий на Акайке
-#: lib/src/adf_kpss.c:546 gui/library.c:1003
+#: lib/src/adf_kpss.c:607 gui/library.c:1003
 msgid "modified AIC"
 msgstr "модифициран AIC"
 
-#: lib/src/adf_kpss.c:546 lib/src/modelprint.c:3359 lib/src/texprint.c:1107
+#: lib/src/adf_kpss.c:607 lib/src/modelprint.c:3359 lib/src/texprint.c:1107
 #: lib/src/varprint.c:1095 lib/src/varprint.c:1103 gui/library.c:1006
 #: gui/selector.c:5990
 msgid "AIC"
 msgstr "AIC-Критерий на Акайке"
 
-#: lib/src/adf_kpss.c:559
+#: lib/src/adf_kpss.c:620
 #, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
 msgstr "Критерий на Дики-Фулър (GLS) за %s\n"
 
-#: lib/src/adf_kpss.c:561
+#: lib/src/adf_kpss.c:622
 #, c-format
 msgid "Dickey-Fuller test for %s\n"
 msgstr "Критерий на Дики-Фулър за %s\n"
 
-#: lib/src/adf_kpss.c:565
+#: lib/src/adf_kpss.c:626
 #, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
 msgstr "Разширен критерий на Дики-Фулър (GLS) за  %s\n"
 
-#: lib/src/adf_kpss.c:567
+#: lib/src/adf_kpss.c:628
 #, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "Разширен критерий на Дики-Фулър за %s\n"
 
-#: lib/src/adf_kpss.c:572
+#: lib/src/adf_kpss.c:633
 #, fuzzy, c-format
 msgid "testing down from %d lags, criterion %s"
 msgstr "автоматично определяне на лаговия порядък"
 
-#: lib/src/adf_kpss.c:576 lib/src/adf_kpss.c:679 lib/src/adf_kpss.c:698
+#: lib/src/adf_kpss.c:637 lib/src/adf_kpss.c:740 lib/src/adf_kpss.c:759
 #: plugin/panurc.c:568
 #, c-format
 msgid "including one lag of (1-L)%s"
 msgstr "включване на един лаг на (1-L)%s"
 
-#: lib/src/adf_kpss.c:578 lib/src/adf_kpss.c:681 lib/src/adf_kpss.c:700
+#: lib/src/adf_kpss.c:639 lib/src/adf_kpss.c:742 lib/src/adf_kpss.c:761
 #: plugin/panurc.c:570
 #, c-format
 msgid "including %d lags of (1-L)%s"
 msgstr "включване на %d лагове на (1-L)%s"
 
-#: lib/src/adf_kpss.c:620 gui/library.c:1025 gui/library.c:1267
+#: lib/src/adf_kpss.c:681 gui/library.c:1025 gui/library.c:1267
 #: gui/selector.c:6820 plugin/panurc.c:227
 msgid "test without constant"
 msgstr "проверка без константа"
 
-#: lib/src/adf_kpss.c:621 gui/selector.c:6821 plugin/panurc.c:228
+#: lib/src/adf_kpss.c:682 gui/selector.c:6821 plugin/panurc.c:228
 msgid "test with constant"
 msgstr "проверка с константа"
 
-#: lib/src/adf_kpss.c:622 gui/library.c:1027 gui/library.c:1038
+#: lib/src/adf_kpss.c:683 gui/library.c:1027 gui/library.c:1038
 #: gui/library.c:1269 gui/selector.c:6822 plugin/panurc.c:229
 msgid "with constant and trend"
 msgstr "с константа и тренд"
 
-#: lib/src/adf_kpss.c:623
+#: lib/src/adf_kpss.c:684
 #, fuzzy
 msgid "with constant, linear and quadratic trend"
 msgstr "с константа и параболичен тренд"
 
 # равнище на значимост, при което се отхвърля нулевата хипотеза в полза на алтернативната хипотеза
-#: lib/src/adf_kpss.c:650 lib/src/adf_kpss.c:655 lib/src/adf_kpss.c:2274
-#: lib/src/adf_kpss.c:2276 lib/src/bootstrap.c:694 lib/src/compare.c:369
+#: lib/src/adf_kpss.c:711 lib/src/adf_kpss.c:716 lib/src/adf_kpss.c:2337
+#: lib/src/adf_kpss.c:2339 lib/src/bootstrap.c:694 lib/src/compare.c:369
 #: lib/src/compare.c:376 lib/src/compare.c:383 lib/src/compare.c:389
 #: lib/src/compare.c:394 lib/src/compare.c:398 lib/src/gretl_model.c:4573
 #: lib/src/modelprint.c:2446 lib/src/modelprint.c:2462
@@ -130,118 +130,118 @@ msgstr "с константа и параболичен тренд"
 msgid "p-value"
 msgstr "p-value"
 
-#: lib/src/adf_kpss.c:650 lib/src/modelprint.c:3750 lib/src/modelprint.c:3819
+#: lib/src/adf_kpss.c:711 lib/src/modelprint.c:3750 lib/src/modelprint.c:3819
 #: lib/src/subsample.c:3151
 msgid "unknown"
 msgstr "неизвестен/неизвестна"
 
-#: lib/src/adf_kpss.c:655
+#: lib/src/adf_kpss.c:716
 msgid "asymptotic p-value"
 msgstr "асимптотично p-value"
 
-#: lib/src/adf_kpss.c:662
+#: lib/src/adf_kpss.c:723
 #, c-format
 msgid "sample size %d\n"
 msgstr "обем на извадката %d\n"
 
-#: lib/src/adf_kpss.c:666
+#: lib/src/adf_kpss.c:727
 msgid "unit-root null hypothesis: a = 1"
 msgstr "нулева хипотеза за единичен корен: a = 1"
 
-#: lib/src/adf_kpss.c:686 lib/src/adf_kpss.c:705 lib/src/adf_kpss.c:1720
+#: lib/src/adf_kpss.c:747 lib/src/adf_kpss.c:766 lib/src/adf_kpss.c:1783
 #: gui/cmdstack.c:418
 msgid "model"
 msgstr "модел"
 
-#: lib/src/adf_kpss.c:692
+#: lib/src/adf_kpss.c:753
 msgid "plus seasonal dummies"
 msgstr "с включване на сезонни фиктивни променливи"
 
-#: lib/src/adf_kpss.c:718 lib/src/adf_kpss.c:1669
+#: lib/src/adf_kpss.c:779 lib/src/adf_kpss.c:1732
 msgid "estimated value of (a - 1)"
 msgstr "оценка на (a - 1)"
 
-#: lib/src/adf_kpss.c:719 lib/src/adf_kpss.c:1670 lib/src/describe.c:4507
+#: lib/src/adf_kpss.c:780 lib/src/adf_kpss.c:1733 lib/src/describe.c:4507
 #: lib/src/describe.c:4535 lib/src/gretl_model.c:4571 gui/calculator.c:593
 msgid "test statistic"
 msgstr "емпирично значение на критерия"
 
-#: lib/src/adf_kpss.c:725 lib/src/adf_kpss.c:728 lib/src/adf_kpss.c:1507
+#: lib/src/adf_kpss.c:788 lib/src/adf_kpss.c:791 lib/src/adf_kpss.c:1570
 #: plugin/stats_tables.c:239
 msgid "Critical values"
 msgstr "Теоретични (критични) значения"
 
-#: lib/src/adf_kpss.c:734
+#: lib/src/adf_kpss.c:797
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "автокорелационен коефицент от първи порядък за остатъчните значения"
 
-#: lib/src/adf_kpss.c:1076
+#: lib/src/adf_kpss.c:1139
 msgid "squared time trend variable"
 msgstr "повдигнати на втора степен значения на променливата \"време\""
 
-#: lib/src/adf_kpss.c:1079 lib/src/genfuncs.c:3457
+#: lib/src/adf_kpss.c:1142 lib/src/genfuncs.c:3457
 msgid "time trend variable"
 msgstr "променлива, отразяваща влинието на времевия тренд"
 
-#: lib/src/adf_kpss.c:1109
+#: lib/src/adf_kpss.c:1172
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
 msgstr "Елиминиране на тренда с Обобщен МНМК: b0 = %g, b1 = %g\n"
 
-#: lib/src/adf_kpss.c:1112
+#: lib/src/adf_kpss.c:1175
 #, c-format
 msgid "GLS estimate of b0: %g\n"
 msgstr "Оценки за  b0с обобщения МНМК: %g\n"
 
-#: lib/src/adf_kpss.c:1208
+#: lib/src/adf_kpss.c:1271
 msgid "Invalid option"
 msgstr "Невалидна опция"
 
-#: lib/src/adf_kpss.c:1280 lib/src/adf_kpss.c:2056 lib/src/boxplots.c:874
+#: lib/src/adf_kpss.c:1343 lib/src/adf_kpss.c:2119 lib/src/boxplots.c:874
 #: lib/src/describe.c:1729 lib/src/describe.c:3510 lib/src/describe.c:4064
 #: lib/src/describe.c:4660 lib/src/graphing.c:9062
 #, c-format
 msgid "%s is a constant"
 msgstr "%s е константа"
 
-#: lib/src/adf_kpss.c:1654
+#: lib/src/adf_kpss.c:1717
 msgid "Choi meta-tests:"
 msgstr "мета-критерий на Чой"
 
-#: lib/src/adf_kpss.c:1655
+#: lib/src/adf_kpss.c:1718
 msgid "Inverse chi-square"
 msgstr "Инверсна функция на хи-квадрат разпределението"
 
-#: lib/src/adf_kpss.c:1657
+#: lib/src/adf_kpss.c:1720
 msgid "Inverse normal test"
 msgstr "Инверсна функция на нормалното разпределение "
 
-#: lib/src/adf_kpss.c:1659
+#: lib/src/adf_kpss.c:1722
 msgid "Logit test"
 msgstr "Logit критерий"
 
-#: lib/src/adf_kpss.c:1665
+#: lib/src/adf_kpss.c:1728
 msgid "Unit"
 msgstr "Единица"
 
-#: lib/src/adf_kpss.c:1666 lib/src/gretl_model.c:4569 gui/selector.c:8771
+#: lib/src/adf_kpss.c:1729 lib/src/gretl_model.c:4569 gui/selector.c:8771
 msgid "lag order"
 msgstr "лагов порядък"
 
-#: lib/src/adf_kpss.c:1773
+#: lib/src/adf_kpss.c:1836
 msgid "H0: all groups have unit root"
 msgstr "H0: всички групи имат единичен корен"
 
-#: lib/src/adf_kpss.c:2182
+#: lib/src/adf_kpss.c:2245
 msgid "Robust estimate of variance"
 msgstr "Устойчива оценка на дисперсията"
 
-#: lib/src/adf_kpss.c:2183
+#: lib/src/adf_kpss.c:2246
 msgid "Sum of squares of cumulated residuals"
 msgstr "Сума от квадратите на кумулираните остатъчни значения"
 
 # Критерий на Квятковски, Филипс, Шмит и Шин
-#: lib/src/adf_kpss.c:2196
+#: lib/src/adf_kpss.c:2259
 #, c-format
 msgid ""
 "\n"
@@ -250,7 +250,7 @@ msgstr ""
 "\n"
 "KPSS критерий за %s"
 
-#: lib/src/adf_kpss.c:2199
+#: lib/src/adf_kpss.c:2262
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
@@ -258,7 +258,7 @@ msgstr ""
 "(включване на тренд и сезонни колебания)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2201
+#: lib/src/adf_kpss.c:2264
 msgid ""
 " (including trend)\n"
 "\n"
@@ -266,7 +266,7 @@ msgstr ""
 "(включване на тренд)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2205
+#: lib/src/adf_kpss.c:2268
 msgid ""
 " (including seasonals)\n"
 "\n"
@@ -274,12 +274,12 @@ msgstr ""
 "(включване на сезонни колебания)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2212 lib/src/adf_kpss.c:2258
+#: lib/src/adf_kpss.c:2275 lib/src/adf_kpss.c:2321
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "Параметър за определяне на отсечен лагов порядък = %d\n"
 
-#: lib/src/adf_kpss.c:2213 lib/src/compare.c:391 lib/src/compare.c:985
+#: lib/src/adf_kpss.c:2276 lib/src/compare.c:391 lib/src/compare.c:985
 #: lib/src/compare.c:1968 lib/src/compare.c:2187 lib/src/compare.c:2392
 #: lib/src/compare.c:3651 lib/src/describe.c:6665 lib/src/estimate.c:2745
 #: lib/src/estimate.c:2758 lib/src/estimate.c:2766 lib/src/estimate.c:3593
@@ -294,15 +294,15 @@ msgid "Test statistic"
 msgstr "Тестови критерий"
 
 # Равнище на значимост, при което се отхвърля нулевата хипотеза в полза на алтернативната хипотеза
-#: lib/src/adf_kpss.c:2216 lib/src/adf_kpss.c:2218 gui/dialogs.c:1079
+#: lib/src/adf_kpss.c:2279 lib/src/adf_kpss.c:2281 gui/dialogs.c:1079
 msgid "P-value"
 msgstr "P-value"
 
-#: lib/src/adf_kpss.c:2220
+#: lib/src/adf_kpss.c:2283
 msgid "Interpolated p-value"
 msgstr "Интерполирано  p-value"
 
-#: lib/src/adf_kpss.c:2256
+#: lib/src/adf_kpss.c:2319
 #, c-format
 msgid ""
 "\n"
@@ -311,33 +311,33 @@ msgstr ""
 "\n"
 "KPSS критерий за %s %s\n"
 
-#: lib/src/adf_kpss.c:2257
+#: lib/src/adf_kpss.c:2320
 msgid "(including trend)"
 msgstr "(включване на тренд)"
 
-#: lib/src/adf_kpss.c:2257
+#: lib/src/adf_kpss.c:2320
 msgid "(without trend)"
 msgstr "(без тренд)"
 
-#: lib/src/adf_kpss.c:2278
+#: lib/src/adf_kpss.c:2341
 msgid "interpolated p-value"
 msgstr "интерполирано p-value"
 
-#: lib/src/adf_kpss.c:2319
+#: lib/src/adf_kpss.c:2382
 msgid "H0: all groups are stationary"
 msgstr "H0: всички групи са стационарни величини "
 
-#: lib/src/adf_kpss.c:2644 lib/src/adf_kpss.c:2687
+#: lib/src/adf_kpss.c:2707 lib/src/adf_kpss.c:2750
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Етап %d: проверка за единичен корен в %s\n"
 
-#: lib/src/adf_kpss.c:2654
+#: lib/src/adf_kpss.c:2717
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Етап %d: коинтеграционна регресия\n"
 
-#: lib/src/adf_kpss.c:2705
+#: lib/src/adf_kpss.c:2768
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -1282,7 +1282,7 @@ msgstr "Забранен символ '%d' в  датите"
 msgid "'%s': invalid observation index"
 msgstr "%s': неверен индекс на наблюденията"
 
-#: lib/src/dataio.c:438 lib/src/forecast.c:3000 lib/src/genfuncs.c:4038
+#: lib/src/dataio.c:438 lib/src/forecast.c:3007 lib/src/genfuncs.c:4038
 msgid "Observation number out of bounds"
 msgstr "Броят на наблюденията превишава установените граници"
 
@@ -2310,40 +2310,40 @@ msgstr "неправилно условие за команда 'if'"
 msgid "Unmatched \"%s\""
 msgstr "Несъответствие в \"%s\""
 
-#: lib/src/forecast.c:1131 lib/src/forecast.c:3575
+#: lib/src/forecast.c:1132 lib/src/forecast.c:3582
 msgid "predicted values"
 msgstr "изгладени значения"
 
-#: lib/src/forecast.c:1150 lib/src/printout.c:3222 gui/guiprint.c:1708
+#: lib/src/forecast.c:1151 lib/src/printout.c:3222 gui/guiprint.c:1708
 #: gui/guiprint.c:1771 gui/guiprint.c:1826 gui/guiprint.c:1867
 msgid "prediction"
 msgstr "прогноза"
 
-#: lib/src/forecast.c:3024
+#: lib/src/forecast.c:3031
 msgid "Specification includes time dummies: cannot forecast out of sample"
 msgstr ""
 
-#: lib/src/forecast.c:3061
+#: lib/src/forecast.c:3068
 #, fuzzy
 msgid "No out-of-sample observations are available"
 msgstr "Липсват подходящи данни"
 
-#: lib/src/forecast.c:3064
+#: lib/src/forecast.c:3071
 msgid "The --out-of-sample option is only supported in the time dimension"
 msgstr ""
 
-#: lib/src/forecast.c:3579 lib/src/genmain.c:102
+#: lib/src/forecast.c:3586 lib/src/genmain.c:102
 #, c-format
 msgid "Replaced series %s (ID %d)"
 msgstr "Променена променлива %s (ID %d)"
 
-#: lib/src/forecast.c:3582 lib/src/genmain.c:100 lib/src/genmain.c:104
+#: lib/src/forecast.c:3589 lib/src/genmain.c:100 lib/src/genmain.c:104
 #: gui/calculator.c:1433
 #, c-format
 msgid "Generated series %s (ID %d)"
 msgstr "Създадена е променлива %s (ID %d)"
 
-#: lib/src/forecast.c:3883
+#: lib/src/forecast.c:3890
 #, fuzzy
 msgid "Forecast plot not implemented for panel data"
 msgstr "'%s' : не е приложимо за списъци"
@@ -2703,9 +2703,10 @@ msgstr "свързан с модела"
 
 #: lib/src/genfuncs.c:6724 lib/src/gretl_func.c:5152 lib/src/plotspec.c:327
 #: lib/src/plotspec.c:346 lib/src/uservar.c:1533 lib/src/uservar.c:2437
-#: gui/fnsave.c:2360 gui/fnsave.c:2890 gui/gpt_dialog.c:140
-#: gui/gui_utils.c:3388 gui/join-gui.c:229 gui/join-gui.c:232
-#: gui/join-gui.c:405 gui/join-gui.c:460 gui/join-gui.c:787
+#: gui/dialogs.c:6937 gui/dialogs.c:7178 gui/dialogs.c:7184 gui/fnsave.c:2360
+#: gui/fnsave.c:2890 gui/gpt_dialog.c:140 gui/gui_utils.c:3388
+#: gui/join-gui.c:229 gui/join-gui.c:232 gui/join-gui.c:405 gui/join-gui.c:460
+#: gui/join-gui.c:787
 msgid "none"
 msgstr "няма"
 
@@ -10440,7 +10441,7 @@ msgstr "Проверка за нормално разпределение"
 msgid "Test against gamma distribution"
 msgstr "Проверка за гама разпределение"
 
-#: gui/dialogs.c:5162
+#: gui/dialogs.c:5162 gui/dialogs.c:7228
 msgid "show plot"
 msgstr "покажи графиката"
 
@@ -10664,10 +10665,63 @@ msgstr "Лагове"
 msgid "series code:"
 msgstr "редове"
 
+#: gui/dialogs.c:6944 gui/dialogs.c:7179
+#, fuzzy
+msgid "constant"
+msgstr "Константа"
+
 #: gui/dialogs.c:7088
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
 msgstr ""
+
+#: gui/dialogs.c:7133
+#, fuzzy
+msgid "Output name:"
+msgstr "Прозорец с резултати:"
+
+#: gui/dialogs.c:7146
+#, fuzzy
+msgid "Aggregation type:"
+msgstr "Равнище"
+
+#: gui/dialogs.c:7159
+#, fuzzy
+msgid "Regression based"
+msgstr "Регресия"
+
+#: gui/dialogs.c:7174
+msgid "Deterministic terms:"
+msgstr ""
+
+#: gui/dialogs.c:7180
+#, fuzzy
+msgid "constant plus trend"
+msgstr "с константа и тренд"
+
+#: gui/dialogs.c:7186
+#, fuzzy
+msgid "Covariate:"
+msgstr "вариант"
+
+#: gui/dialogs.c:7203
+#, fuzzy
+msgid "proportional"
+msgstr "относителен дял"
+
+#: gui/dialogs.c:7204
+#, fuzzy
+msgid "additive"
+msgstr "Добави производна"
+
+#: gui/dialogs.c:7210
+#, fuzzy
+msgid "Preliminary series:"
+msgstr "Предходни променливи"
+
+#: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
+msgid "show regression results"
+msgstr "покажи резултатите от регресията"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -14561,10 +14615,6 @@ msgstr "с константа, тренд и параболичен тренд"
 #: gui/library.c:1029 gui/library.c:1202
 msgid "include seasonal dummies"
 msgstr "включване на сезонни фиктивни променливи"
-
-#: gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
-msgid "show regression results"
-msgstr "покажи резултатите от регресията"
 
 #: gui/library.c:1032 gui/library.c:1129 gui/library.c:1205
 msgid "use level of variable"
