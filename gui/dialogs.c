@@ -6934,14 +6934,14 @@ static void do_tdisagg (GtkWidget *w, struct tdisagg_info *tdi)
         g_string_append_printf(GSB, ", det=%d", idx);
         if (gtk_widget_is_sensitive(tdi->cov_combo)) {
             xname = combo_box_get_active_text(tdi->cov_combo);
-	    discard_x = strcmp(xname, "none") == 0;
+	    discard_x = strcmp(xname, _("none")) == 0;
         }
     } else {
         idx = gtk_combo_box_get_active(GTK_COMBO_BOX(tdi->dn_combo));
         str = idx == 1 ? "denton-afd" : "denton-pfd";
         g_string_append_printf(GSB, ", method=\"%s\"", str);
         xname = combo_box_get_active_text(tdi->dp_combo);
-	discard_x = strcmp(xname, "constant") == 0;
+	discard_x = strcmp(xname, _("constant")) == 0;
     }
 
     if (xname != NULL) {
@@ -7130,7 +7130,7 @@ void tdisagg_dialog (int v)
 
     /* output name */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("Output name:");
+    tmp = gtk_label_new(_("Output name:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.name_entry = entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
@@ -7143,7 +7143,7 @@ void tdisagg_dialog (int v)
 
     /* aggregation type */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("Aggregation type:");
+    tmp = gtk_label_new(_("Aggregation type:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.agg_combo = com = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
@@ -7156,7 +7156,7 @@ void tdisagg_dialog (int v)
     gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 
     /* Regression vs Denton radio buttons */
-    rb1 = gtk_radio_button_new_with_label(group, "Regression based");
+    rb1 = gtk_radio_button_new_with_label(group, _("Regression based"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb1));
     rb2 = gtk_radio_button_new_with_label(group, "Denton");
 
@@ -7171,19 +7171,19 @@ void tdisagg_dialog (int v)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("Deterministic terms:");
+    tmp = gtk_label_new(_("Deterministic terms:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.det_combo = com = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
-    combo_box_append_text(com, "none");
-    combo_box_append_text(com, "constant");
-    combo_box_append_text(com, "constant plus trend");
+    combo_box_append_text(com, _("none"));
+    combo_box_append_text(com, _("constant"));
+    combo_box_append_text(com, _("constant plus trend"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(com), 1);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    xlist = g_list_prepend(xlist, (gpointer) "none");
+    xlist = g_list_prepend(xlist, (gpointer) _("none"));
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("Covariate:");
+    tmp = gtk_label_new(_("Covariate:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.cov_combo = com = gtk_combo_box_text_new();
     set_combo_box_strings_from_list(com, xlist);
@@ -7200,14 +7200,14 @@ void tdisagg_dialog (int v)
     gtk_box_pack_start(GTK_BOX(hbox), rb2, FALSE, FALSE, 5);
     tdi.dn_combo = com = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com, FALSE, FALSE, 5);
-    combo_box_append_text(com, "proportional");
-    combo_box_append_text(com, "additive");
+    combo_box_append_text(com, _("proportional"));
+    combo_box_append_text(com, _("additive"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(com), 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     xlist = g_list_prepend(xlist, (gpointer) "constant");
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("Preliminary series:");
+    tmp = gtk_label_new(_("Preliminary series:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tdi.dp_combo = com = gtk_combo_box_text_new();
     set_combo_box_strings_from_list(com, xlist);
@@ -7225,7 +7225,7 @@ void tdisagg_dialog (int v)
 
     /* show plot? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tdi.plot_check = tmp = gtk_check_button_new_with_label("show plot");
+    tdi.plot_check = tmp = gtk_check_button_new_with_label(_("show plot"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -7233,7 +7233,7 @@ void tdisagg_dialog (int v)
     /* show regression results? (Not for Denton) */
     hbox = gtk_hbox_new(FALSE, 5);
     tdi.reg_check = tmp =
-        gtk_check_button_new_with_label("show regression results");
+        gtk_check_button_new_with_label(_("show regression results"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
