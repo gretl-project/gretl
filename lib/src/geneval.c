@@ -1715,6 +1715,17 @@ static int node_get_int (NODE *n, parser *p)
     }
 }
 
+static guint32 node_get_guint32 (NODE *n, parser *p)
+{
+    double x = node_get_scalar(n, p);
+
+    if (p->err) {
+	return 0;
+    } else {
+	return gretl_unsigned_from_double(x, &p->err);
+    }
+}
+
 static int node_get_bool (NODE *n, parser *p, int deflt)
 {
     int ret = -1;
@@ -11769,7 +11780,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         }
     } else if (f == F_WEEKDAY || f == F_ISOWEEK) {
         post_process = 0;
-        if (l->t == NUM && m->t == NUM && r->t == NUM) {
+        if (scalar_node(l) && scalar_node(m) && scalar_node(r)) {
             ret = aux_scalar_node(p);
             if (ret != NULL) {
                 int yr = node_get_int(l, p);
@@ -11808,19 +11819,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             p->err = E_TYPES;
         }
     } else if (f == F_DAYSPAN) {
-        post_process = 0;
-        if (l->t == NUM && m->t == NUM && r->t == NUM) {
-            ret = aux_scalar_node(p);
-            if (ret != NULL) {
-                int ed1 = l->v.xval;
-                int ed2 = m->v.xval;
-                int wkdays = r->v.xval;
+	guint32 ed1 = node_get_guint32(l, p);
+	guint32 ed2 = node_get_guint32(m, p);
+	int wkdays = node_get_int(r, p);
 
-                ret->v.xval = day_span(ed1, ed2, wkdays, &p->err);
-            }
-        } else {
-            p->err = E_TYPES;
-        }
+	post_process = 0;
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    ret->v.xval = day_span(ed1, ed2, wkdays, &p->err);
+	}
     } else if (f == F_SMPLSPAN) {
         post_process = 0;
         if (l->t == STR && m->t == STR && r->t == NUM) {
