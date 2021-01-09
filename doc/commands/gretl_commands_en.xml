@@ -2709,11 +2709,11 @@
 
     <description>
       <para>
-	Experimental debugger for user-defined functions, available in the
-	command-line program, gretlcli, and in the GUI console.  The
-	<lit>debug</lit> command should be invoked after the function in
-	question is defined but before it is called.  The effect is that
-	execution pauses when the function is called and a special prompt is
+	Experimental debugger for user-defined functions, available in
+	the command-line program, gretlcli.  The <lit>debug</lit>
+	command should be invoked after the function in question is
+	defined but before it is called.  The effect is that execution
+	pauses when the function is called and a special prompt is
 	shown.
       </para>
       <para>
