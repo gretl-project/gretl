@@ -1607,10 +1607,44 @@ int gretl_int_from_double (double x, int *err)
     if (na(x) || fabs(x) > INT_MAX || fabs(x - nearbyint(x)) > 0.001) {
 	*err = E_INVARG;
     } else {
-	k = lrint(x);
+	k = (int) lrint(x);
     }
 
     return k;
+}
+
+/**
+ * gretl_unsigned_from_double:
+ * @x: double-precision floating point value
+ * @err: location to receive error code.
+ *
+ * Returns: the value of @x converted to an integer, if
+ * possible. Otherwise returns -1 with @err set to a
+ * non-zero value. Note that it is considered an
+ * error if @x is "too far" from the nearest integer;
+ * it must be "almost integral", with tolerance 0.001.
+ */
+
+guint32 gretl_unsigned_from_double (double x, int *err)
+{
+    guint32 u = 0;
+
+    if (na(x) || x < 0 || fabs(x) > UINT_MAX) {
+	*err = E_INVARG;
+    } else {
+	double f = floor(x);
+	double c = ceil(x);
+
+	if (x - f < 1e-6) {
+	    u = f;
+	} else if (c - x < 1e-6) {
+	    u = c;
+	} else {
+	    *err = E_INVARG;
+	}
+    }
+
+    return u;
 }
 
 /**
