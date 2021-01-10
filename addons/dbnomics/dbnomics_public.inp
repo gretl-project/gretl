@@ -108,6 +108,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
    endif
 
    if !match
+      # FIXME: maybe allow join to handle this?
       funcerr "frequency does not match!"
    endif
 
@@ -117,7 +118,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
       printf "obs\tdbseries\n"
       set warnings off
       loop i=1 .. b.T -q
-         printf "%s\t%20.15f\n", b.period[i], b.value[i]
+         printf "%s\t%.15g\n", b.period[i], b.value[i]
       endloop
    end outfile
 
