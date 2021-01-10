@@ -33,6 +33,7 @@ const char *special_keyword[] = {
     "identity",
     "endog",
     "instr",
+    "equations",
     NULL
 };
 

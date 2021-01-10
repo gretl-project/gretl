@@ -1715,6 +1715,17 @@ static int node_get_int (NODE *n, parser *p)
     }
 }
 
+static guint32 node_get_guint32 (NODE *n, parser *p)
+{
+    double x = node_get_scalar(n, p);
+
+    if (p->err) {
+	return 0;
+    } else {
+	return gretl_unsigned_from_double(x, &p->err);
+    }
+}
+
 static int node_get_bool (NODE *n, parser *p, int deflt)
 {
     int ret = -1;
@@ -11769,7 +11780,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         }
     } else if (f == F_WEEKDAY || f == F_ISOWEEK) {
         post_process = 0;
-        if (l->t == NUM && m->t == NUM && r->t == NUM) {
+        if (scalar_node(l) && scalar_node(m) && scalar_node(r)) {
             ret = aux_scalar_node(p);
             if (ret != NULL) {
                 int yr = node_get_int(l, p);
@@ -11808,19 +11819,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             p->err = E_TYPES;
         }
     } else if (f == F_DAYSPAN) {
-        post_process = 0;
-        if (l->t == NUM && m->t == NUM && r->t == NUM) {
-            ret = aux_scalar_node(p);
-            if (ret != NULL) {
-                int ed1 = l->v.xval;
-                int ed2 = m->v.xval;
-                int wkdays = r->v.xval;
+	guint32 ed1 = node_get_guint32(l, p);
+	guint32 ed2 = node_get_guint32(m, p);
+	int wkdays = node_get_int(r, p);
 
-                ret->v.xval = day_span(ed1, ed2, wkdays, &p->err);
-            }
-        } else {
-            p->err = E_TYPES;
-        }
+	post_process = 0;
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    ret->v.xval = day_span(ed1, ed2, wkdays, &p->err);
+	}
     } else if (f == F_SMPLSPAN) {
         post_process = 0;
         if (l->t == STR && m->t == STR && r->t == NUM) {
@@ -12836,26 +12845,6 @@ static NODE *isoconv_node (NODE *t, parser *p)
     return ret;
 }
 
-static GretlType lh_array_type (parser *p)
-{
-    GretlType gtype = p->lh.gtype;
-
-    if (gtype == GRETL_TYPE_NONE) {
-        /* shouldn't happen? */
-        if (p->lh.t == ARRAY) {
-            gretl_array *a = gen_get_lhs_var(p, GRETL_TYPE_ARRAY);
-
-            gtype = gretl_array_get_type(a);
-        }
-    }
-
-    if (gtype != GRETL_TYPE_NONE && !gretl_is_array_type(gtype)) {
-        p->err = E_TYPES;
-    }
-
-    return gtype;
-}
-
 static int check_array_element_type (NODE *n, GretlType *pt, int i)
 {
     GretlType t = *pt;
@@ -13777,20 +13766,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
             ret->v.xval = clogit_fi(T, K, z, df, &p->err);
         }
     } else if (t->t == F_DEFARRAY) {
-        GretlType gtype = lh_array_type(p);
-        gretl_array *A = NULL;
-        int anon = 0;
+        GretlType gtype = GRETL_TYPE_ANY;
+        gretl_array *A;
         void *ptr;
 
-        if (gtype == GRETL_TYPE_NONE) {
-            /* type remains to be determined */
-            gtype = GRETL_TYPE_ANY;
-            anon = 1;
-        }
-
-        if (!p->err) {
-            A = gretl_array_new(gtype, 0, &p->err);
-        }
+	A = gretl_array_new(gtype, 0, &p->err);
 
         if (!p->err) {
             for (i=0; i<k && !p->err; i++) {
@@ -13801,10 +13781,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
                     p->err = check_array_element_type(e, &gtype, i);
                 }
                 if (!p->err) {
-                    if (anon) {
+                    if (i == 0) {
                         gretl_array_set_type(A, gtype);
-                        anon = 0;
-                    }
+		    }
                     if (e->t == NUM) {
                         ptr = gretl_matrix_from_scalar(e->v.xval);
                         donate = 1;

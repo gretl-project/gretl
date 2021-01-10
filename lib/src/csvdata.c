@@ -1244,6 +1244,7 @@ static int time_series_label_check (DATASET *dset, int reversed,
 	    strcpy(dset->stobs, year);
 	    dset->sd0 = atof(dset->stobs);
 	    strcpy(dset->endobs, lbl2);
+	    dset->structure = TIME_SERIES;
 	} else {
 	    pputs(prn, _("   but the dates are not complete and consistent\n"));
 	    pd = -1;
@@ -6471,6 +6472,7 @@ static int join_import_csv (const char *fname,
 	err = real_import_csv(fname, NULL, NULL, NULL, jspec,
 			      NULL, NULL, opt, prn);
 	if (0 && !err) {
+	    /* question, 2021-01-09: this is zeroed out: why? */
 	    DATASET *dset = jspec->c->dset;
 	    int pd, reversed = 0;
 

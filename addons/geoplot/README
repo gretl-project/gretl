@@ -1,9 +1,0 @@
-When the time comes to expost geoplot for general consumption
-
-* Uncomment the MapOutlines entry in gui/gretlmain.xml
-
-* Define back in the MapOutlines reference in gui/gretl.c
-
-* Define SHOW_GEOPLOT to 1 in gui/menustate.c
-
-* Activate geoplot in addons/Makefile.in

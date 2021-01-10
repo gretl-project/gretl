@@ -2971,7 +2971,8 @@ static int nlspec_add_hessian (nlspec *spec, const char *hesscall)
     return err;
 }
 
-static int screen_bad_aux (const char *line, const DATASET *dset)
+static int screen_bad_aux (const char *line, const DATASET *dset,
+			   int *pci)
 {
     int n = gretl_namechar_spn(line);
     char word[FN_NAMELEN];
@@ -2986,7 +2987,7 @@ static int screen_bad_aux (const char *line, const DATASET *dset)
 	strncat(word, line, n);
     }
 
-    ci = gretl_command_number(word);
+    *pci = ci = gretl_command_number(word);
 
     if (ci == GENR || ci == PRINT || ci == PRINTF || ci == EVAL) {
 	err = 0;
@@ -3007,6 +3008,21 @@ static int screen_bad_aux (const char *line, const DATASET *dset)
     return err;
 }
 
+/* convert printf from command to function form, if needed */
+
+static gchar *revise_aux_printf (const char *s)
+{
+    gchar *tmp = NULL;
+
+    if (!strncmp(s, "printf ", 7)) {
+	tmp = g_strdup_printf("printf(%s)", s + 7);
+    } else {
+	tmp = g_strdup(s);
+    }
+
+    return tmp;
+}
+
 /**
  * nlspec_add_aux:
  * @spec: pointer to nls specification.
@@ -3023,16 +3039,24 @@ static int screen_bad_aux (const char *line, const DATASET *dset)
 
 int nlspec_add_aux (nlspec *spec, const char *s, const DATASET *dset)
 {
-    int err;
+    int ci, err;
 
 #if NLS_DEBUG
     fprintf(stderr, "nlspec_add_aux: s = '%s'\n", s);
 #endif
 
-    err = screen_bad_aux(s, dset);
-
+    err = screen_bad_aux(s, dset, &ci);
     if (!err) {
-	err = strings_array_add(&spec->aux, &spec->naux, s);
+	if (ci == PRINTF) {
+	    gchar *tmp = revise_aux_printf(s);
+
+	    if (tmp != NULL) {
+		err = strings_array_add(&spec->aux, &spec->naux, tmp);
+		g_free(tmp);
+	    }
+	} else {
+	    err = strings_array_add(&spec->aux, &spec->naux, s);
+	}
     }
 
     return err;

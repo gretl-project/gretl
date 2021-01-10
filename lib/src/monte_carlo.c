@@ -1162,7 +1162,8 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
    may be an @-string that cashes out into one or more "words".
 */
 
-static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
+static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
+			    int *idxmax)
 {
     GretlType t = 0;
     gretl_array *a = NULL;
@@ -1189,9 +1190,13 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
     if ((list = get_list_by_name(s)) != NULL) {
 	t = GRETL_TYPE_LIST;
 	len = list[0];
-    } else if ((a = get_strings_array_by_name(s)) != NULL) {
-	t = GRETL_TYPE_STRINGS;
+    } else if ((a = get_array_by_name(s)) != NULL) {
+	t = gretl_array_get_type(a);
 	len = gretl_array_get_length(a);
+	if (t != GRETL_TYPE_STRINGS) {
+	    *idxmax = len;
+	    return 0;
+	}
     } else if ((b = get_bundle_by_name(s)) != NULL) {
 	t = GRETL_TYPE_BUNDLE;
 	len = gretl_bundle_get_n_keys(b);
@@ -1312,6 +1317,20 @@ static int count_each_fields (const char *s)
     return nf;
 }
 
+/* Implement "foreach" for arrays other than strings:
+   convert to index loop with automatic max value set
+   to the length of the array.
+*/
+
+static int set_alt_each_loop (LOOPSET *loop, DATASET *dset,
+			      const char *ivar, int len)
+{
+    loop->type = INDEX_LOOP;
+    loop->init.val = 1;
+    loop->final.val = len;
+    return loop_attach_index_var(loop, ivar, dset);
+}
+
 static int
 parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 {
@@ -1359,7 +1378,13 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 
     if (!done && nf == 1) {
 	/* try for a named list or array? */
-	err = list_loop_setup(loop, s, &nf);
+	int nelem = -1;
+
+	err = list_loop_setup(loop, s, &nf, &nelem);
+	if (!err && nelem >= 0) {
+	    /* got an array, but not of strings */
+	    return set_alt_each_loop(loop, dset, ivar, nelem);
+	}
 	done = (err == 0);
     }
 

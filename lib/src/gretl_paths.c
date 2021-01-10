@@ -1015,6 +1015,15 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 
     *n_dirs = 0;
 
+    if (stype == FUNCS_SEARCH) {
+	/* for testing of gfns */
+	char *forcepath = getenv("FORCE_GFN_PATH");
+
+	if (forcepath != NULL) {
+	    err = strings_array_add(&dirs, n_dirs, forcepath);
+	}
+    }
+
     if (stype == DATA_SEARCH) {
         subdir = "data";
     } else if (stype == DB_SEARCH) {

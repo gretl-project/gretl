@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 2020a\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-07 10:29-0500\n"
+"POT-Creation-Date: 2021-01-08 09:00-0500\n"
 "PO-Revision-Date: 2020-02-27 00:16+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
@@ -18,99 +18,99 @@ msgstr ""
 "X-Generator: Poedit 2.0.6\n"
 "X-Poedit-SearchPath-0: zh_CN.po\n"
 
-#: lib/src/adf_kpss.c:520
+#: lib/src/adf_kpss.c:581
 msgid "lagged differences"
 msgstr "lagged differences"
 
-#: lib/src/adf_kpss.c:533
+#: lib/src/adf_kpss.c:594
 msgid "modified BIC, Perron-Qu"
 msgstr "modified BIC, Perron-Qu"
 
-#: lib/src/adf_kpss.c:535
+#: lib/src/adf_kpss.c:596
 msgid "modified AIC, Perron-Qu"
 msgstr "modified AIC, Perron-Qu"
 
-#: lib/src/adf_kpss.c:541 gui/library.c:1004
+#: lib/src/adf_kpss.c:602 gui/library.c:1004
 msgid "modified BIC"
 msgstr "modified BIC"
 
-#: lib/src/adf_kpss.c:541 lib/src/modelprint.c:3359 lib/src/texprint.c:1108
+#: lib/src/adf_kpss.c:602 lib/src/modelprint.c:3359 lib/src/texprint.c:1108
 #: lib/src/varprint.c:1096 lib/src/varprint.c:1104 gui/library.c:1007
 #: gui/selector.c:5991
 msgid "BIC"
 msgstr "BIC"
 
-#: lib/src/adf_kpss.c:543 gui/library.c:1008 gui/selector.c:5992
+#: lib/src/adf_kpss.c:604 gui/library.c:1008 gui/selector.c:5992
 msgid "t-statistic"
 msgstr "t-值"
 
-#: lib/src/adf_kpss.c:546 gui/library.c:1003
+#: lib/src/adf_kpss.c:607 gui/library.c:1003
 msgid "modified AIC"
 msgstr "modified AIC"
 
-#: lib/src/adf_kpss.c:546 lib/src/modelprint.c:3359 lib/src/texprint.c:1107
+#: lib/src/adf_kpss.c:607 lib/src/modelprint.c:3359 lib/src/texprint.c:1107
 #: lib/src/varprint.c:1095 lib/src/varprint.c:1103 gui/library.c:1006
 #: gui/selector.c:5990
 msgid "AIC"
 msgstr "AIC"
 
-#: lib/src/adf_kpss.c:559
+#: lib/src/adf_kpss.c:620
 #, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
 msgstr "%s 之 DF-GLS 检定\n"
 
-#: lib/src/adf_kpss.c:561
+#: lib/src/adf_kpss.c:622
 #, c-format
 msgid "Dickey-Fuller test for %s\n"
 msgstr "%s 之 DF 检定 (Dickey-Fuller test)\n"
 
-#: lib/src/adf_kpss.c:565
+#: lib/src/adf_kpss.c:626
 #, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
 msgstr "%s 之 ADF-GLS 检定\n"
 
-#: lib/src/adf_kpss.c:567
+#: lib/src/adf_kpss.c:628
 #, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
 msgstr "%s 之 ADF 检定 (Augmented Dickey-Fuller test)\n"
 
-#: lib/src/adf_kpss.c:572
+#: lib/src/adf_kpss.c:633
 #, c-format
 msgid "testing down from %d lags, criterion %s"
 msgstr "自动选择 (从指定的最大落后 %d 期往下选, 准则为: %s)"
 
-#: lib/src/adf_kpss.c:576 lib/src/adf_kpss.c:679 lib/src/adf_kpss.c:698
+#: lib/src/adf_kpss.c:637 lib/src/adf_kpss.c:740 lib/src/adf_kpss.c:759
 #: plugin/panurc.c:568
 #, c-format
 msgid "including one lag of (1-L)%s"
 msgstr "包含落后 1 期 的 (1-L)%s"
 
-#: lib/src/adf_kpss.c:578 lib/src/adf_kpss.c:681 lib/src/adf_kpss.c:700
+#: lib/src/adf_kpss.c:639 lib/src/adf_kpss.c:742 lib/src/adf_kpss.c:761
 #: plugin/panurc.c:570
 #, c-format
 msgid "including %d lags of (1-L)%s"
 msgstr "包含落后 %d 期 的 (1-L)%s"
 
-#: lib/src/adf_kpss.c:620 gui/library.c:1025 gui/library.c:1267
+#: lib/src/adf_kpss.c:681 gui/library.c:1025 gui/library.c:1267
 #: gui/selector.c:6820 plugin/panurc.c:227
 msgid "test without constant"
 msgstr "不含常数项 (without constant)"
 
-#: lib/src/adf_kpss.c:621 gui/selector.c:6821 plugin/panurc.c:228
+#: lib/src/adf_kpss.c:682 gui/selector.c:6821 plugin/panurc.c:228
 msgid "test with constant"
 msgstr "含常数项 (constant)"
 
-#: lib/src/adf_kpss.c:622 gui/library.c:1027 gui/library.c:1038
+#: lib/src/adf_kpss.c:683 gui/library.c:1027 gui/library.c:1038
 #: gui/library.c:1269 gui/selector.c:6822 plugin/panurc.c:229
 msgid "with constant and trend"
 msgstr "含常数项及趋势项 (trend)"
 
-#: lib/src/adf_kpss.c:623
+#: lib/src/adf_kpss.c:684
 msgid "with constant, linear and quadratic trend"
 msgstr "含常数项, 一次及二次趋势项 (linear and quadratic trend)"
 
-#: lib/src/adf_kpss.c:650 lib/src/adf_kpss.c:655 lib/src/adf_kpss.c:2274
-#: lib/src/adf_kpss.c:2276 lib/src/bootstrap.c:694 lib/src/compare.c:369
+#: lib/src/adf_kpss.c:711 lib/src/adf_kpss.c:716 lib/src/adf_kpss.c:2337
+#: lib/src/adf_kpss.c:2339 lib/src/bootstrap.c:694 lib/src/compare.c:369
 #: lib/src/compare.c:376 lib/src/compare.c:383 lib/src/compare.c:389
 #: lib/src/compare.c:394 lib/src/compare.c:398 lib/src/gretl_model.c:4573
 #: lib/src/modelprint.c:2446 lib/src/modelprint.c:2462
@@ -123,120 +123,120 @@ msgstr "含常数项, 一次及二次趋势项 (linear and quadratic trend)"
 msgid "p-value"
 msgstr "p-value"
 
-#: lib/src/adf_kpss.c:650 lib/src/modelprint.c:3750 lib/src/modelprint.c:3819
+#: lib/src/adf_kpss.c:711 lib/src/modelprint.c:3750 lib/src/modelprint.c:3819
 #: lib/src/subsample.c:3151
 msgid "unknown"
 msgstr "未知 (unknown)"
 
-#: lib/src/adf_kpss.c:655
+#: lib/src/adf_kpss.c:716
 msgid "asymptotic p-value"
 msgstr "渐进 p值"
 
-#: lib/src/adf_kpss.c:662
+#: lib/src/adf_kpss.c:723
 #, c-format
 msgid "sample size %d\n"
 msgstr "样本大小 %d\n"
 
-#: lib/src/adf_kpss.c:666
+#: lib/src/adf_kpss.c:727
 msgid "unit-root null hypothesis: a = 1"
 msgstr "单根检定之虚无假设 H0: a = 1"
 
-#: lib/src/adf_kpss.c:686 lib/src/adf_kpss.c:705 lib/src/adf_kpss.c:1720
+#: lib/src/adf_kpss.c:747 lib/src/adf_kpss.c:766 lib/src/adf_kpss.c:1783
 #: gui/cmdstack.c:418
 msgid "model"
 msgstr "模型"
 
-#: lib/src/adf_kpss.c:692
+#: lib/src/adf_kpss.c:753
 msgid "plus seasonal dummies"
 msgstr "加季节虚拟变数 seasonal dummies"
 
-#: lib/src/adf_kpss.c:718 lib/src/adf_kpss.c:1669
+#: lib/src/adf_kpss.c:779 lib/src/adf_kpss.c:1732
 msgid "estimated value of (a - 1)"
 msgstr "(a - 1) 的估计值"
 
-#: lib/src/adf_kpss.c:719 lib/src/adf_kpss.c:1670 lib/src/describe.c:4507
+#: lib/src/adf_kpss.c:780 lib/src/adf_kpss.c:1733 lib/src/describe.c:4507
 #: lib/src/describe.c:4535 lib/src/gretl_model.c:4571 gui/calculator.c:593
 msgid "test statistic"
 msgstr "检定统计值"
 
-#: lib/src/adf_kpss.c:725 lib/src/adf_kpss.c:728 lib/src/adf_kpss.c:1507
+#: lib/src/adf_kpss.c:788 lib/src/adf_kpss.c:791 lib/src/adf_kpss.c:1570
 #: plugin/stats_tables.c:239
 msgid "Critical values"
 msgstr "临界值"
 
-#: lib/src/adf_kpss.c:734
+#: lib/src/adf_kpss.c:797
 msgid "1st-order autocorrelation coeff. for e"
 msgstr "1 阶自我相关系数 for e"
 
-#: lib/src/adf_kpss.c:1076
+#: lib/src/adf_kpss.c:1139
 msgid "squared time trend variable"
 msgstr "squared time trend variable"
 
-#: lib/src/adf_kpss.c:1079 lib/src/genfuncs.c:3457
+#: lib/src/adf_kpss.c:1142 lib/src/genfuncs.c:3457
 msgid "time trend variable"
 msgstr "time trend 变数"
 
-#: lib/src/adf_kpss.c:1109
+#: lib/src/adf_kpss.c:1172
 #, c-format
 msgid "GLS detrending: b0 = %g, b1 = %g\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:1112
+#: lib/src/adf_kpss.c:1175
 #, c-format
 msgid "GLS estimate of b0: %g\n"
 msgstr "GLS 估计值 b0: %g\n"
 
-#: lib/src/adf_kpss.c:1208
+#: lib/src/adf_kpss.c:1271
 msgid "Invalid option"
 msgstr "错误的选项"
 
-#: lib/src/adf_kpss.c:1280 lib/src/adf_kpss.c:2056 lib/src/boxplots.c:874
+#: lib/src/adf_kpss.c:1343 lib/src/adf_kpss.c:2119 lib/src/boxplots.c:874
 #: lib/src/describe.c:1729 lib/src/describe.c:3510 lib/src/describe.c:4064
 #: lib/src/describe.c:4660 lib/src/graphing.c:9062
 #, c-format
 msgid "%s is a constant"
 msgstr "%s 是一个常数"
 
-#: lib/src/adf_kpss.c:1654
+#: lib/src/adf_kpss.c:1717
 msgid "Choi meta-tests:"
 msgstr "Choi meta-检定:"
 
-#: lib/src/adf_kpss.c:1655
+#: lib/src/adf_kpss.c:1718
 #, fuzzy
 msgid "Inverse chi-square"
 msgstr "共变数矩阵的反矩阵"
 
-#: lib/src/adf_kpss.c:1657
+#: lib/src/adf_kpss.c:1720
 #, fuzzy
 msgid "Inverse normal test"
 msgstr "基本假设检定(_T)"
 
-#: lib/src/adf_kpss.c:1659
+#: lib/src/adf_kpss.c:1722
 msgid "Logit test"
 msgstr "Logit 检定"
 
-#: lib/src/adf_kpss.c:1665
+#: lib/src/adf_kpss.c:1728
 #, fuzzy
 msgid "Unit"
 msgstr "横断面单位指标 (unit index)"
 
-#: lib/src/adf_kpss.c:1666 lib/src/gretl_model.c:4569 gui/selector.c:8771
+#: lib/src/adf_kpss.c:1729 lib/src/gretl_model.c:4569 gui/selector.c:8771
 msgid "lag order"
 msgstr "落后期"
 
-#: lib/src/adf_kpss.c:1773
+#: lib/src/adf_kpss.c:1836
 msgid "H0: all groups have unit root"
 msgstr "H0: 所有的变数皆有单根 (all groups have unit root)"
 
-#: lib/src/adf_kpss.c:2182
+#: lib/src/adf_kpss.c:2245
 msgid "Robust estimate of variance"
 msgstr "稳健变异数估计值 (Robust estimate of variance)"
 
-#: lib/src/adf_kpss.c:2183
+#: lib/src/adf_kpss.c:2246
 msgid "Sum of squares of cumulated residuals"
 msgstr "累计残差平方和 (Sum of sq. of cum. residuals)"
 
-#: lib/src/adf_kpss.c:2196
+#: lib/src/adf_kpss.c:2259
 #, c-format
 msgid ""
 "\n"
@@ -245,7 +245,7 @@ msgstr ""
 "\n"
 "变数 %s 的KPSS 检定结果"
 
-#: lib/src/adf_kpss.c:2199
+#: lib/src/adf_kpss.c:2262
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
@@ -253,7 +253,7 @@ msgstr ""
 " (含趋势项及季节性)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2201
+#: lib/src/adf_kpss.c:2264
 msgid ""
 " (including trend)\n"
 "\n"
@@ -261,7 +261,7 @@ msgstr ""
 " (含趋势项)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2205
+#: lib/src/adf_kpss.c:2268
 msgid ""
 " (including seasonals)\n"
 "\n"
@@ -269,12 +269,12 @@ msgstr ""
 " (含季节项)\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2212 lib/src/adf_kpss.c:2258
+#: lib/src/adf_kpss.c:2275 lib/src/adf_kpss.c:2321
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr "落后期 (lag truncation parameter) = %d\n"
 
-#: lib/src/adf_kpss.c:2213 lib/src/compare.c:391 lib/src/compare.c:985
+#: lib/src/adf_kpss.c:2276 lib/src/compare.c:391 lib/src/compare.c:985
 #: lib/src/compare.c:1968 lib/src/compare.c:2187 lib/src/compare.c:2392
 #: lib/src/compare.c:3651 lib/src/describe.c:6665 lib/src/estimate.c:2745
 #: lib/src/estimate.c:2758 lib/src/estimate.c:2766 lib/src/estimate.c:3593
@@ -288,15 +288,15 @@ msgstr "落后期 (lag truncation parameter) = %d\n"
 msgid "Test statistic"
 msgstr "Test statistic"
 
-#: lib/src/adf_kpss.c:2216 lib/src/adf_kpss.c:2218 gui/dialogs.c:1079
+#: lib/src/adf_kpss.c:2279 lib/src/adf_kpss.c:2281 gui/dialogs.c:1079
 msgid "P-value"
 msgstr "p值 (p-value)"
 
-#: lib/src/adf_kpss.c:2220
+#: lib/src/adf_kpss.c:2283
 msgid "Interpolated p-value"
 msgstr "内插(Interpolated) P 值"
 
-#: lib/src/adf_kpss.c:2256
+#: lib/src/adf_kpss.c:2319
 #, c-format
 msgid ""
 "\n"
@@ -306,33 +306,33 @@ msgstr ""
 "变数 %s %s 之 KPSS 检定结果\n"
 "\n"
 
-#: lib/src/adf_kpss.c:2257
+#: lib/src/adf_kpss.c:2320
 msgid "(including trend)"
 msgstr "(包含趋势项)"
 
-#: lib/src/adf_kpss.c:2257
+#: lib/src/adf_kpss.c:2320
 msgid "(without trend)"
 msgstr "(无趋势项)"
 
-#: lib/src/adf_kpss.c:2278
+#: lib/src/adf_kpss.c:2341
 msgid "interpolated p-value"
 msgstr "内插(Interpolated) P 值"
 
-#: lib/src/adf_kpss.c:2319
+#: lib/src/adf_kpss.c:2382
 msgid "H0: all groups are stationary"
 msgstr "H0: 所有变数皆为定态 (all groups are stationary)"
 
-#: lib/src/adf_kpss.c:2644 lib/src/adf_kpss.c:2687
+#: lib/src/adf_kpss.c:2707 lib/src/adf_kpss.c:2750
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "步骤 %d: 对变数 %s 进行单根检定(unit root test)\n"
 
-#: lib/src/adf_kpss.c:2654
+#: lib/src/adf_kpss.c:2717
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "步骤 %d: 跑共整合回归 (cointegrating regression)\n"
 
-#: lib/src/adf_kpss.c:2705
+#: lib/src/adf_kpss.c:2768
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -1272,7 +1272,7 @@ msgstr "日期中有错误的字符: %d"
 msgid "'%s': invalid observation index"
 msgstr "'%s':样本指标错误"
 
-#: lib/src/dataio.c:438 lib/src/forecast.c:3000 lib/src/genfuncs.c:4038
+#: lib/src/dataio.c:438 lib/src/forecast.c:3007 lib/src/genfuncs.c:4038
 msgid "Observation number out of bounds"
 msgstr "样本数超出范围 (out of bounds)"
 
@@ -2290,41 +2290,41 @@ msgstr "'if' 没有确定其条件"
 msgid "Unmatched \"%s\""
 msgstr "\"%s\" 未成对出现"
 
-#: lib/src/forecast.c:1131 lib/src/forecast.c:3575
+#: lib/src/forecast.c:1132 lib/src/forecast.c:3582
 msgid "predicted values"
 msgstr "预测值 (predicted values)"
 
-#: lib/src/forecast.c:1150 lib/src/printout.c:3222 gui/guiprint.c:1708
+#: lib/src/forecast.c:1151 lib/src/printout.c:3222 gui/guiprint.c:1708
 #: gui/guiprint.c:1771 gui/guiprint.c:1826 gui/guiprint.c:1867
 #, fuzzy
 msgid "prediction"
 msgstr "预测"
 
-#: lib/src/forecast.c:3024
+#: lib/src/forecast.c:3031
 msgid "Specification includes time dummies: cannot forecast out of sample"
 msgstr ""
 
-#: lib/src/forecast.c:3061
+#: lib/src/forecast.c:3068
 #, fuzzy
 msgid "No out-of-sample observations are available"
 msgstr "没有适合的资料"
 
-#: lib/src/forecast.c:3064
+#: lib/src/forecast.c:3071
 msgid "The --out-of-sample option is only supported in the time dimension"
 msgstr ""
 
-#: lib/src/forecast.c:3579 lib/src/genmain.c:102
+#: lib/src/forecast.c:3586 lib/src/genmain.c:102
 #, c-format
 msgid "Replaced series %s (ID %d)"
 msgstr "变数 %s 已被置换 (变数代码 %d)"
 
-#: lib/src/forecast.c:3582 lib/src/genmain.c:100 lib/src/genmain.c:104
+#: lib/src/forecast.c:3589 lib/src/genmain.c:100 lib/src/genmain.c:104
 #: gui/calculator.c:1433
 #, c-format
 msgid "Generated series %s (ID %d)"
 msgstr "已产生变数 %s (变数代码 %d)"
 
-#: lib/src/forecast.c:3883
+#: lib/src/forecast.c:3890
 #, fuzzy
 msgid "Forecast plot not implemented for panel data"
 msgstr "'%s' : 尚不能用在变数集 (lists)"
@@ -2685,9 +2685,10 @@ msgstr "model-related"
 
 #: lib/src/genfuncs.c:6724 lib/src/gretl_func.c:5152 lib/src/plotspec.c:327
 #: lib/src/plotspec.c:346 lib/src/uservar.c:1533 lib/src/uservar.c:2437
-#: gui/fnsave.c:2360 gui/fnsave.c:2890 gui/gpt_dialog.c:140
-#: gui/gui_utils.c:3388 gui/join-gui.c:229 gui/join-gui.c:232
-#: gui/join-gui.c:405 gui/join-gui.c:460 gui/join-gui.c:787
+#: gui/dialogs.c:6937 gui/dialogs.c:7178 gui/dialogs.c:7184 gui/fnsave.c:2360
+#: gui/fnsave.c:2890 gui/gpt_dialog.c:140 gui/gui_utils.c:3388
+#: gui/join-gui.c:229 gui/join-gui.c:232 gui/join-gui.c:405 gui/join-gui.c:460
+#: gui/join-gui.c:787
 msgid "none"
 msgstr "无"
 
@@ -10431,7 +10432,7 @@ msgstr "检定是否服从常态分配"
 msgid "Test against gamma distribution"
 msgstr "检定是否服从 Gamma 分配"
 
-#: gui/dialogs.c:5162
+#: gui/dialogs.c:5162 gui/dialogs.c:7228
 msgid "show plot"
 msgstr "划图"
 
@@ -10653,10 +10654,63 @@ msgstr "落后期数"
 msgid "series code:"
 msgstr "资料 (series)"
 
+#: gui/dialogs.c:6944 gui/dialogs.c:7179
+#, fuzzy
+msgid "constant"
+msgstr "加入常数"
+
 #: gui/dialogs.c:7088
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
 msgstr ""
+
+#: gui/dialogs.c:7133
+#, fuzzy
+msgid "Output name:"
+msgstr "显示分析结果:"
+
+#: gui/dialogs.c:7146
+#, fuzzy
+msgid "Aggregation type:"
+msgstr "相关性检定"
+
+#: gui/dialogs.c:7159
+#, fuzzy
+msgid "Regression based"
+msgstr "KPSS 检定回归"
+
+#: gui/dialogs.c:7174
+msgid "Deterministic terms:"
+msgstr ""
+
+#: gui/dialogs.c:7180
+#, fuzzy
+msgid "constant plus trend"
+msgstr "含常数项及趋势项 (trend)"
+
+#: gui/dialogs.c:7186
+#, fuzzy
+msgid "Covariate:"
+msgstr "Bi_variate"
+
+#: gui/dialogs.c:7203
+#, fuzzy
+msgid "proportional"
+msgstr "样本比例"
+
+#: gui/dialogs.c:7204
+#, fuzzy
+msgid "additive"
+msgstr "增加样本(_A)"
+
+#: gui/dialogs.c:7210
+#, fuzzy
+msgid "Preliminary series:"
+msgstr "前一个变数"
+
+#: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
+msgid "show regression results"
+msgstr "显示回归估计结果"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -14517,10 +14571,6 @@ msgstr "含常数项, 趋势项, 及二次趋势项 (trend squared) "
 #: gui/library.c:1029 gui/library.c:1202
 msgid "include seasonal dummies"
 msgstr "含季节虚拟变数 (seasonal dummies)"
-
-#: gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
-msgid "show regression results"
-msgstr "显示回归估计结果"
 
 #: gui/library.c:1032 gui/library.c:1129 gui/library.c:1205
 msgid "use level of variable"

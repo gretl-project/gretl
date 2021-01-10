@@ -578,10 +578,6 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 	double yhat = fc->yhat[p];
 	int fc_ok = !na(yhat);
 
-	/* FIXME: may need to forecast some intermediate
-	   observations if fc->t1 > fc->model_t2
-	*/
-
 	if (fc->method == FC_DYNAMIC) {
 	    if (fc_ok) {
 		ldv = yhat;
@@ -2714,6 +2710,13 @@ static int get_forecast_method (Forecast *fc,
     } else if ((dyn_ok || dyn_errs_ok) && fc->t2 > pmod->t2) {
 	/* do dynamic f'cast out of sample */
 	fc->method = FC_AUTO;
+    }
+
+    if (fc->method == FC_DYNAMIC || fc->method == FC_AUTO) {
+	if (fc->t1 > fc->model_t2 + 1) {
+	    /* we'll probably need intervening forecasts */
+	    fc->t1 = fc->model_t2 + 1;
+	}
     }
 
     return err;

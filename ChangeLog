@@ -2,6 +2,7 @@ version 2020f, in progress
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
+- defbundle(): add two shorthand variants of this function
 - irf(): support calculation of multiple impulse responses
   in a single call (with internal speed-up)
 - irf() bug-fix: failing to compute bootstrap confidence band
@@ -13,6 +14,7 @@ version 2020f, in progress
 - mread(): support reading gdt and gdtb files as matrices
 - readfile(): support reading gzipped files transparently
 - obslabel(): support a vector of observations
+- nls/mle/gmm blocks: support use of printf statements
 - "open" command: support reading selected series from
   native gretl datafiles (gdt, gdtb)
 - "join" command: support $obsmajor, $obsminor as outer keys
