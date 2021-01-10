@@ -14,6 +14,7 @@ version 2020f, in progress
 - mread(): support reading gdt and gdtb files as matrices
 - readfile(): support reading gzipped files transparently
 - obslabel(): support a vector of observations
+- nls/mle/gmm blocks: support use of printf statements
 - "open" command: support reading selected series from
   native gretl datafiles (gdt, gdtb)
 - "join" command: support $obsmajor, $obsminor as outer keys
