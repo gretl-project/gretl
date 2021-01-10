@@ -2955,7 +2955,7 @@ static int process_command_list (CMD *c, DATASET *dset)
 
     if (!c->err && dset != NULL && *lstr != '\0') {
 	vlist = generate_list(lstr, dset, &c->err);
-	if (c->err && (c->ci == PRINT || c->ci == DELEET)) {
+	if (c->err && c->ci == DELEET) {
 	    /* we got something that looked like a list string,
 	       but list generation failed: again, maybe the
 	       the terms are names of non-series variables
