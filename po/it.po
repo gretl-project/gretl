@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-07 10:29-0500\n"
-"PO-Revision-Date: 2020-12-17 09:53+0100\n"
+"PO-Revision-Date: 2021-01-08 09:29+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -16743,9 +16743,8 @@ msgid "Calculator"
 msgstr "Calcolatrice"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "Comando per eseguire X-12-ARIMA"
+msgstr "Comando per eseguire X-12-ARIMA (oppure X13)"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
