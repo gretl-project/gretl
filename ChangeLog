@@ -2,7 +2,7 @@ version 2020f, in progress
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
-- defarray(): add two shorthand variants of this function
+- defbundle(): add two shorthand variants of this function
 - irf(): support calculation of multiple impulse responses
   in a single call (with internal speed-up)
 - irf() bug-fix: failing to compute bootstrap confidence band
