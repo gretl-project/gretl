@@ -410,7 +410,7 @@
       <para>
 	Ten en cuenta que los resultados que muestra esta instrucción son de hecho un
 	subconjunto de la información ofrecida por el siguiente procedimiento, que puedes
-	preparar fácilmente en el Gretl. (1) Genera un conjunto de variables ficticias que
+	preparar fácilmente en el GRETL. (1) Genera un conjunto de variables ficticias que
 	codifiquen todos los tipos de tratamiento excepto uno. Para un ANOVA de dos factores,
 	genera además un conjunto de variables ficticias que codifiquen todos los bloques
 	de <quote>control</quote> excepto uno. (2) Haz la regresión de <repl>respuesta</repl>
@@ -480,7 +480,7 @@
 	compatibilidad requiere (a) que el número de observaciones de los
 	nuevos datos sea igual al número de datos actuales, o (b) que
 	los nuevos datos conlleven clara información de las observaciones de
-	modo que Gretl pueda deducir como colocar los valores.
+	modo que GRETL pueda deducir como colocar los valores.
       </para>
       <para>
 	Un caso que no se admite es aquel en el que los nuevos datos comienzan
@@ -503,7 +503,7 @@
 	atemporal. Si el panel es <quote>cuadrado</quote>, y <math>m</math>
 	es igual tanto a <math>n</math> como a <math>T</math>, aparece una
 	ambigüedad. Por defecto, en este caso se tratan los nuevos datos como
-	invariantes en el tiempo, pero puedes forzar a que Gretl trate los nuevos
+	invariantes en el tiempo, pero puedes forzar a que GRETL trate los nuevos
 	datos como series temporales con la opción <opt>time-series</opt>.
 	(Esta posibilidad se ignora en todos los otros casos.)
       </para>
@@ -904,7 +904,7 @@
         </option>
         <option>
 	  <flag>--x-12-arima</flag>
-	  <effect>Utiliza ARIMA X-12 en la estimación</effect>
+	  <effect>Utiliza ARIMA X-12 o X-13 en la estimación</effect>
         </option>
 	<option>
 	  <flag>--lbfgs</flag>
@@ -1004,12 +1004,14 @@
       </para>
 
       <para>
-	Por defecto, se utiliza la funcionalidad ARMA <quote>propia</quote> de Gretl,
-	con la estimación Máximo Verosímil (MV) exacta; pero dispones de la opción de hacer
-	la estimación mediante MV condicional. (Si el programa <program>ARIMA X-12</program>
-	está instalado en el ordenador, tienes la posibilidad de utilizarlo en vez del
-	código propio.) Para otros detalles relacionados con estas opciones,
-	consulta <guideref targ="chap:timeseries"/>.
+	Por defecto, se utiliza la funcionalidad ARMA <quote>propia</quote> de
+	GRETL, con la estimación Máximo Verosímil (MV) exacta; pero dispones de
+	la opción de hacer la estimación mediante MV condicional. (Si el programa
+	<program>ARIMA X-12</program> está instalado en el ordenador, tienes la
+	posibilidad de utilizarlo en vez del código propio. Ten en cuenta que,
+	de igual modo, el más reciente <program>X13</program> puede funcionar
+	como un recambio automático.) Para otros detalles relacionados con
+	estas opciones, consulta <guideref targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
@@ -1038,7 +1040,7 @@
 	La opción <opt>y-diff-only</opt> es específica de la estimación de modelos
 	ARIMAX (modelos con orden de integración no nulo, en los que se incluyen
 	regresores exógenos) y se aplica solo cuando se utiliza la Máxima Verosimilitud
-	exacta propia de Gretl. Para esos modelos, el comportamiento por defecto
+	exacta propia de GRETL. Para esos modelos, el comportamiento por defecto
 	consiste en calcular las primeras diferencias tanto de la variable dependiente
 	como de los regresores; pero cuando indicas esta opción, solo se calcula para
 	la variable dependiente, quedando los regresores en niveles.
@@ -1267,7 +1269,7 @@
 	Esta tabla presenta un sofisticado análisis del grado y de las causas de
 	la multicolinealidad, mediante el examen de los autovalores de la inversa
 	de la matriz de correlaciones. Para tener una explicación en detalle del
-	enfoque BKW en relación a Gretl, y con diversos ejemplos, consulta
+	enfoque BKW en relación a GRETL, y con diversos ejemplos, consulta
 	<cite key="adkins15">Adkins, Waters y Hill (2015)</cite>.
       </para>
       <para>
@@ -1344,7 +1346,7 @@
 	    El número de repeticiones a realizar. Ten en cuenta que cuando
 	    estás construyendo un intervalo con el 95 por ciento de confianza,
 	    es deseable que 0.05(<math>B</math> + 1)/2 sea un entero
-	    (donde <math>B</math> es el número de repeticiones). Así, Gretl
+	    (donde <math>B</math> es el número de repeticiones). Así, GRETL
 	    puede ajustar el número de repeticiones que escojas para
 	    garantizar que este es el caso.
 	    </para>
@@ -1353,7 +1355,7 @@
 	    <para>
 	    Produce o no un gráfico de la distribución bootstrap. Esta
 	    opción utiliza el servicio de estimación de la densidad del
-	    kernel de Gretl.
+	    kernel de GRETL.
 	    </para>
 	</li>
       </ilist>
@@ -1452,7 +1454,7 @@
       </para>
 
       <para context="cli">
-	Los gráficos de cajas en Gretl se generan utilizando la instrucción
+	Los gráficos de cajas en GRETL se generan utilizando la instrucción
 	<program>gnuplot</program>, y resulta posible especificar con
 	mayor detalle el gráfico añadiendo instrucciones adicionales de Gnuplot,
 	puestas entre llaves. Para obtener más detalles, consulta la ayuda
@@ -1544,7 +1546,7 @@
 	No puedes utilizar la palabra clave <lit>catch</lit> antes de
 	<lit>if</lit>, <lit>elif</lit> o <lit>endif</lit>. Además, no
 	debe utilizarse en peticiones a funciones definidas por el usuario,
-	pues se pretende utilizarla solo con las instrucciones de Gretl y con las
+	pues se pretende utilizarla solo con las instrucciones de GRETL y con las
 	peticiones a los operadores o funciones <quote>internos</quote>.
       </para>
     </description>
@@ -1859,7 +1861,7 @@
 	datos para que tengan una frecuencia menor (quizás antes de añadir una
 	variable de baja frecuencia al conjunto de datos).
       </para>
-      <para>Gretl ofrece 5 opciones para compactar:</para>
+      <para>GRETL ofrece 5 opciones para compactar:</para>
       <ilist>
 	<li><para>Con la media: El valor que se escribe en el conjunto de datos va a ser la
 	    media aritmética de los valores de las series relevantes. Por ejemplo, el valor
@@ -2305,7 +2307,7 @@
       </para>
       <para>
 	Ten en cuenta que si coges cualquiera de estas opciones, aun así
-	Gretl va a preservar la información de la fecha, y te va a ser posible
+	GRETL va a preservar la información de la fecha, y te va a ser posible
 	reconstruir el conjunto de datos de calendario completo más
 	tarde, si lo necesitas. Puedes hacer esto utilizando la instrucción
 	<cmdref targ="dataset"/> con la opción <lit>pad-daily</lit>.
@@ -2349,7 +2351,7 @@
     <description>
       <para>
 	Lee las variables de <repl>listavariables</repl> de un archivo de base
-	de datos (propio de Gretl, RATS 4.0 o PcGive) que debe abrirse
+	de datos (propio de GRETL, RATS 4.0 o PcGive) que debe abrirse
 	previamente utilizando la instrucción <cmdref targ="open"/>. Puedes usar
 	la instrucción <lit>data</lit> para importar series de DB.NOMICS o de
 	una base de datos ODBC; para obtener detalles sobre estas variantes
@@ -2369,7 +2371,7 @@
       </code>
       <para>
 	Las instrucciones de arriba abren una base de datos (que se ofrece con
-	Gretl) llamada <filename>fedstl.bin</filename>, determinan que los
+	GRETL) llamada <filename>fedstl.bin</filename>, determinan que los
 	datos son mensuales, que empiezan en enero de 2000, que la muestra
 	finaliza en diciembre de 2019, y que se importan las series denominadas
 	<lit>unrate</lit> (tasa de desempleo) y <lit>cpiaucsl</lit> (IPC de todos).
@@ -2408,7 +2410,7 @@
 	(<quote>desagregación temporal </quote>).
       </para>
       <para>
-	En el caso de bases de datos propias (únicamente) de Gretl, puedes
+	En el caso de bases de datos propias (únicamente) de GRETL, puedes
 	utilizar los caracteres <quote>genéricos</quote>, <lit>*</lit>
 	y <lit>?</lit> en <repl>listavariables</repl> para importar series que
 	coincidan con el patrón indicado. Por ejemplo, la siguiente expresión
@@ -2421,14 +2423,14 @@
       <para>
 	Puedes usar la opción <opt>name</opt> para determinar un nombre
 	distinto del nombre original en la base de datos, para la seire importada.
-	El parámetro debe ser un identificador válido de Gretl. Esta opción
+	El parámetro debe ser un identificador válido de GRETL. Esta opción
 	se restringe al caso en el que especificas una única serie a
 	importar.
       </para>
       <para>
 	La opción <opt>no-align</opt> se aplica solo para importar series mediante
 	ODBC. Por defecto, se necesita que la solicitud ODBC devuelva información
-	que indique a Gretl en qué filas del conjunto de datos situar los datos que
+	que indique a GRETL en qué filas del conjunto de datos situar los datos que
 	se reciben (o que el número de valores que se reciben coincida, al menos,
 	bien con la extensión del conjunto de datos o bien con la extensión del
 	rango de la muestra vigente). Determinando la opción <opt>no-align</opt>
@@ -2455,7 +2457,7 @@
 	Este diálogo te permite especificar archivos adicionales para
 	incluir con un paquete de funciones. Si incluyes ese material, eso
 	implica que el paquete va a tomar la forma de un archivo zip. Cuando
-	Gretl vaya a crear el archivo zip para ti, todos los archivos
+	GRETL vaya a crear el archivo zip para ti, todos los archivos
 	a los que se hace referencia aquí deben estar presentes en el mismo
 	directorio que el archivo gfn. Los subdirectorios pueden indicarse
 	igual que archivos normales y, en ese caso, eso implica que todo
@@ -2465,13 +2467,13 @@
 	Hay dos intenciones principales para usar este servicio. En primer
 	lugar, puedes incluir un archivo de datos para utilizar con el guion de
 	muestra del paquete, si no es adecuado ninguno de los archivos de datos
-	ofrecidos con la distribución de Gretl. En este caso, los datos deben
-	estar en el formato propio de Gretl (<lit>gdt</lit> o <lit>gdtb</lit>
+	ofrecidos con la distribución de GRETL. En este caso, los datos deben
+	estar en el formato propio de GRETL (<lit>gdt</lit> o <lit>gdtb</lit>
 	binario). Segundo, si tu paquete precisa una matriz grande (por
 	ejemplo, que contenga todos los puntos críticos de un estadístico de
 	prueba especial), podrá ser más conveniente incluirla como un archivo
-	matricial de Gretl (<lit>mat</lit>) que integrar la matriz mediante
-	múltiples expresiones del lenguaje Hansl de Gretl.
+	matricial de GRETL (<lit>mat</lit>) que integrar la matriz mediante
+	múltiples expresiones del lenguaje HANSL de GRETL.
       </para>
       <para>
 	Para acceder a un archivo empaquetado <lit>gdt</lit> o
@@ -2563,7 +2565,7 @@
       </para>
       <para>
 	<lit>clear</lit>: No necesita ningún parámetro. Vacía todos los datos
-	vigentes, devolviendo el Gretl a su estado <quote>vacío</quote> inicial.
+	vigentes, devolviendo el GRETL a su estado <quote>vacío</quote> inicial.
       </para>
       <para>
 	<lit>compact</lit>: Debe estar seguido de un entero positivo que
@@ -2707,12 +2709,12 @@
 
     <description>
       <para>
-	Depurador experimental para funciones definidas por el usuario, que está disponible
-	en el programa Gretlcli de líneas de instrucciones y en la consola de Interface
-	Gráfica de Usuario (GUI). Debes invocar esta instrucción <lit>debug</lit>
-	después de que esté definida la función en cuestión, pero antes de llamar
-	por ella. El efecto de esta instrucción consiste en que la ejecución se detiene
-	cuando se llama por la función y se muestra un indicador especial.
+	Depurador experimental para funciones definidas por el usuario, que
+	está disponible en el programa gretlcli de líneas de instrucciones.
+	Debes invocar esta instrucción <lit>debug</lit> después de que esté
+	definida la función en cuestión, pero antes de invocarla. El efecto
+	de esta instrucción consiste en que la ejecución se detiene cuando
+	se invoca la función y se muestra un indicador especial.
       </para>
       <para>
 	Ante el indicador de depuración puedes teclear <lit>next</lit> para
@@ -2759,7 +2761,7 @@
 	eliminas series, se vuelve a numerar cualquier serie cuyo número ID sea
 	mayor que los de las series de la lista que se elimina. Si indicas la opción
 	<opt>db</opt>, las series de la lista no se eliminan con esta instrucción
-	del conjunto vigente de datos, pero sí de la base de datos de Gretl
+	del conjunto vigente de datos, pero sí de la base de datos de GRETL
 	(suponiendo que se abrió una de ellas y que el usuario tiene permisos para
 	escribir en el archivo en cuestión). Consulta también la instrucción
 	<cmdref targ="open"/>.
@@ -3454,7 +3456,7 @@
 
     <description>
       <para>
-	La fórmula que emplea Gretl para calcular la media móvil exponencial
+	La fórmula que emplea GRETL para calcular la media móvil exponencial
 	(MME o EMA) es la de <cite key="roberts59">Roberts (1959)</cite>,
 	concretamente
       </para>
@@ -3692,7 +3694,7 @@
     </usage>
     <description>
       <para>
-	Esta instrucción hace que Gretl funcione como una sofisticada
+	Esta instrucción hace que GRETL funcione como una sofisticada
 	calculadora. El programa evalúa <repl>expresión</repl> y
 	presenta su valor. El argumento puede ser el nombre de una
 	variable, o algo más complicado. En cualquier caso, debe
@@ -3706,7 +3708,7 @@
 	print x^2
       </code>
       <para>
-	no funcionará en Gretl puesto que <lit>x^2</lit> no es (no puede ser)
+	no funcionará en GRETL puesto que <lit>x^2</lit> no es (no puede ser)
 	el nombre de una variable, pero (dada una variable escalar denominada
 	<lit>x</lit>)
       </para>
@@ -3736,7 +3738,7 @@
 	de frecuencia mayor, en lugar de expandir las series de frecuencia menor.
       </para>
       <para>
-	Dicho esto, Gretl admite la expansión mediante la simple repetición
+	Dicho esto, GRETL admite la expansión mediante la simple repetición
 	de los valores de baja frecuencia. Por ejemplo, al expandir desde
 	frecuencia trimestral a mensual, los valores trimestrales se repiten
 	para cada mes del trimestre. Las series generadas de este modo no es
@@ -3748,7 +3750,7 @@
       <para>
 	Puedes acceder a algunas de las prestaciones de la función
 	<lit>tdisagg</lit> por medio de la interface gráfica, seleccionando
-	una serie en la ventana principal de Gretl, y a continuación buscar
+	una serie en la ventana principal de GRETL, y a continuación buscar
 	<quote>Desagregar</quote> bajo el menú Variable.
       </para>
     </description>
@@ -3766,10 +3768,10 @@
       </para>
       <para>
 	También tienes la opción de exportar datos con el formato de un archivo
-	de datos <quote>propio</quote> de Gretl, o de exportarlos a
-	una base de datos de Gretl (si los datos son adecuados). Consulta
+	de datos <quote>propio</quote> de GRETL, o de exportarlos a
+	una base de datos de GRETL (si los datos son adecuados). Consulta
 	<url>gretl.sourceforge.net/gretl_data.html</url> para ver una
-	relación de las bases de datos de Gretl.
+	relación de las bases de datos de GRETL.
       </para>
       <para>
 	Puedes también exportar datos en un formato de texto plano adecuado para
@@ -3983,7 +3985,7 @@
       <para context="cli">
 	va a generar un gráfico con formato PDF. Se respetan los nombres de
 	rutas que no ofrezcan dudas; en otro caso, los archivos se escriben
-	en el directorio de trabajo de Gretl.
+	en el directorio de trabajo de GRETL.
       </para>
       <para>
 	La naturaleza de las desviaciones típicas de las predicciones (si están disponibles)
@@ -4013,9 +4015,9 @@
       <para>
 	Esta sencilla instrucción (sin argumentos, sin opciones) está ideada para
 	ser usada en guiones que llevan algo de tiempo, y que deben ejecutarse con la
-	Interface Gráfica de Usuario (GUI) de Gretl (el programa de líneas de
+	Interface Gráfica de Usuario (GUI) de GRETL (el programa de líneas de
 	instrucción lo ignora), para darle al usuario un indicio visual de que
-	las cosas se están moviendo y Gretl no está <quote>parado</quote>.
+	las cosas se están moviendo y GRETL no está <quote>parado</quote>.
       </para>
       <para>
 	Generalmente, si lanzas un guion en la Interface Gráfica de Usuario (GUI),
@@ -4025,7 +4027,7 @@
       <ilist>
        <li>
 	    <para>
-	   En la primera llamada, Gretl abre una ventana, muestra los resultados
+	   En la primera llamada, GRETL abre una ventana, muestra los resultados
 	   hasta el presente y añade el mensaje
 	   <quote>Procesando...</quote>.
 	    </para>
@@ -4108,7 +4110,7 @@
       <para>
 	Junto con R, Octave y Stata, la opción <opt>send-data</opt>
 	tiene como efecto el hacer accesibles los datos del espacio de
-	trabajo del Gretl dentro del programa señalado. Por defecto, se
+	trabajo del GRETL dentro del programa señalado. Por defecto, se
 	envía el conjunto completo de datos, pero puedes limitar los
 	datos que se van a enviar indicando el nombre de una lista de series
 	definida previamente. Por ejemplo:
@@ -4274,7 +4276,7 @@
 	nula de que una variable sigue una distribución Gamma; consulta
 	<cite key="locke76">Locke (1976)</cite>, y también
 	<cite key="shapiro-chen01">Shapiro y Chen (2001)</cite>. Ten en
-	cuenta que la forma en la que se indican en Gretl los parámetros de la
+	cuenta que la forma en la que se indican en GRETL los parámetros de la
 	distribución Gamma utilizada es (forma, escala).
       </para>
       <para>
@@ -4297,7 +4299,7 @@
 	histograma y no te interesa mirar el texto que lo acompaña.
       </para>
       <para>
-	Ten en cuenta que Gretl no tiene una función que se corresponda
+	Ten en cuenta que GRETL no tiene una función que se corresponda
 	con esta instrucción, pero resulta posible utilizar la función
 	<fncref targ="aggregate"/> para lograr el mismo objetivo.
 	Además, puedes obtener la distribución de frecuencias que se
@@ -4333,10 +4335,10 @@
 	Este diálogo también permite elegir una distribución teórica para representar
 	frente a los datos: la Normal o la Gamma. Cuando escoges la opción Normal,
 	se calcula el estadístico del contraste de Normalidad de Doornik&ndash;Hansen.
-	Cuando seleccionas la opción Gamma, Gretl calcula el estadístico del contraste no
+	Cuando seleccionas la opción Gamma, GRETL calcula el estadístico del contraste no
 	paramétrico de Locke respecto a la hipótesis nula que sostiene que la variable
 	sigue una distribución Gamma. Ten en cuenta que la forma en la que se
-	indican en Gretl los parámetros de la distribución Gamma es (forma, escala).
+	indican en GRETL los parámetros de la distribución Gamma es (forma, escala).
       </para>
     </description>
 
@@ -4497,7 +4499,7 @@
       </para>
 
       <para>
-	Por defecto, se utiliza el propio código de Gretl para estimar los
+	Por defecto, se utiliza el propio código de GRETL para estimar los
 	modelos GARCH, pero también tienes la opción de usar el algoritmo de
 	<cite key="fiorentini96">Fiorentini, Calzolari y Panattoni (1996)</cite>.
 	El primero utiliza el maximizador BFGS mientras que el último usa
@@ -4731,7 +4733,7 @@
 	las instrucciones <cmd>genr</cmd> que recuperan datos relacionados con un
 	modelo, siempre se refieren al modelo que se estimó más recientemente.
 	Esto también es cierto en el programa de Interface Gráfica de Usuario (GUI),
-	cuando utilizas <cmd>genr</cmd> en la <quote>consola de Gretl</quote>o si
+	cuando utilizas <cmd>genr</cmd> en la <quote>consola de GRETL</quote>o si
 	introduces una fórmula usando la opción <quote>Definir nueva variable</quote>
 	bajo el menú Añadir en la ventana principal. Con la GUI, sin embargo, tienes la opción
 	de recuperar datos de cualquiera de los modelos que se muestran en ese momento
@@ -4952,7 +4954,7 @@
     <description>
       <para>
 	La 'semilla' controla el punto de inicio para la secuencia de números
-	pseudoaleatorios generados en una sesión determinada de Gretl. Por defecto,
+	pseudoaleatorios generados en una sesión determinada de GRETL. Por defecto,
 	la semilla se establece cuando se inicia el programa, utilizando el
 	reloj del sistema. Esto te asegura que obtienes una secuencia distinta
 	de números aleatorios cada vez que ejecutas el programa. Si quieres
@@ -5308,7 +5310,7 @@
 	valores RGB hexadecimales, o bien por el nombre; y puedes acceder a la lista
 	de nombres de colores reconocidos por Gnuplot dando la instrucción
 	<quote><lit>show colornames</lit></quote> en el propio Gnuplot
-	o, en la propia consola de Gretl, haciendo
+	o, en la propia consola de GRETL, haciendo
       </para>
       <code>
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
@@ -5414,10 +5416,10 @@
     <description>
 
       <para>
-	Gretl solicita que un programa distinto, concretamente Gnuplot,
+	GRETL solicita que un programa distinto, concretamente Gnuplot,
 	genere gráficos. Gnuplot es un programa de representación gráfica muy
 	completo con miles de opciones. Mediante una interface gráfica,
-	Gretl te da acceso directo a un subconjunto de estas opciones y trata
+	GRETL te da acceso directo a un subconjunto de estas opciones y trata
 	de elegir valores sensatos para ti; si quieres, también te permite
 	que tengas un control completo sobre los detalles del gráfico.
       </para>
@@ -5500,7 +5502,7 @@
 
   </command>
 
-  <command name="graphpg" section="Graphs" label="Página de gráficos de Gretl">
+  <command name="graphpg" section="Graphs" label="Página de gráficos de GRETL">
 
     <usage>
       <altforms>
@@ -5534,7 +5536,7 @@
 	Ten en cuenta que en sistemas diferentes a MS Windows, podrías tener
 	que ajustar la configuración del programa utilizado para ver archivos
 	PDF o PostScript. Encuéntralo bajo la pestaña <quote>Programas</quote>
-	en la caja de diálogo de las Preferencias generales de Gretl (bajo el menú
+	en la caja de diálogo de las Preferencias generales de GRETL (bajo el menú
 	Herramientas de la ventana principal).
       </para>
       <para>
@@ -5608,9 +5610,9 @@
 	independientes en los ejes X e Y.
       </para>
       <para>
-	Al contrario de la mayoría de los gráficos de Gretl, un gráfico interactivo
-	3-D se controla mediante Gnuplot y no con el propio Gretl. El menú de
-	edición de gráficos de Gretl no está disponible.
+	Al contrario de la mayoría de los gráficos de GRETL, un gráfico interactivo
+	3-D se controla mediante Gnuplot y no con el propio GRETL. El menú de
+	edición de gráficos de GRETL no está disponible.
       </para>
     </description>
   </command>
@@ -5671,13 +5673,13 @@
       <para>
 	Además, ciertas funciones pueden indicarse con <quote>no-print</quote>. En
 	general, cuando se llama a una función mediante el programa de Interface
-	Gráfica de Usuario (GUI), Gretl abre una ventana para mostrar su
-	resultado en texto. Al marcar este cuadradito estás indicándole a Gretl
+	Gráfica de Usuario (GUI), GRETL abre una ventana para mostrar su
+	resultado en texto. Al marcar este cuadradito estás indicándole a GRETL
 	que no haga esto, de ahí que no debas esperar resultados en texto.
       </para>
       <para>
 	Finalmente, puedes marcar la función <lit>gui-main</lit> (si existe)
-	como <quote>menu-only</quote>. Esto le indica a Gretl que la función
+	como <quote>menu-only</quote>. Esto le indica a GRETL que la función
 	en cuestión está diseñada específicamente para que se invoque desde
 	el menú de la Interface Gráfica de Usuario (GUI) a la que está unida, y no
 	debe presentarse a los usuarios, a no ser en ese caso.
@@ -5690,13 +5692,13 @@
 
     <description>
       <para>
-	La calculadora de contrastes de Gretl encuentra los valores de los estadísticos
+	La calculadora de contrastes de GRETL encuentra los valores de los estadísticos
 	de contraste y de sus probabilidades asociadas (valores p) en varios
 	contrastes habituales de hipótesis, relativas a una o dos poblaciones.
 	Las entradas que se requieren consisten en estadísticos muestrales obtenidos
 	de una o dos muestras, en función del contraste escogido; y puedes escribir
 	estos estadísticos con valores numéricos. Alternativamente, si tienes
-	abierto un archivo de datos, puedes lograr que Gretl calcule los
+	abierto un archivo de datos, puedes lograr que GRETL calcule los
 	estadísticos muestrales para una o varias variables escogidas
 	(en caso de medias y varianzas, pero no en caso de proporciones).
       </para>
@@ -5929,7 +5931,7 @@
       <para>
 	Si utilizas el estimador HAC para MCO con datos de series temporales,
 	puedes afinar la longitud del retardo utilizando la instrucción <cmd>set</cmd>.
-	Consulta el manual de Gretl o el archivo de ayuda de las instrucciones de un
+	Consulta el manual de GRETL o el archivo de ayuda de las instrucciones de un
 	guion para obtener más detalles.
       </para>
       <para>
@@ -5945,7 +5947,7 @@
 	y BW es el estimador de Bollerslev-Wooldridge.
       </para>
       <para>
-	Por defecto, Gretl usa la distribución <math>t</math>-Student al calcular
+	Por defecto, GRETL usa la distribución <math>t</math>-Student al calcular
 	las probabilidades asociadas (valores p) basadas en desviaciones típicas
 	robustas en el contexto de estimadores de mínimos cuadrados. La opción titulada
 	<quote>Utilizar la distribución Normal para obtener valores p robustos</quote>
@@ -6229,7 +6231,7 @@
 	en muestras finitas es posible obtener un exponente estimado mayor que 1.
       </para>
       <para>
-	En Gretl, el exponente se estima utilizando submuestreo binario:
+	En GRETL, el exponente se estima utilizando submuestreo binario:
 	se empieza con el rango completo de datos, después con las dos mitades
 	del rango, después con los 4 cuartos, etcétera. Para tamaños de la muestra
 	menores que el rango de datos, el valor RS es la media entre las
@@ -6319,12 +6321,12 @@
 	para incluir definiciones de funciones. El nombre del archivo
 	(<repl>nombrearchivo</repl>) debería tener la extensión <lit>inp</lit>
 	(un guion de texto plano) o <lit>gfn</lit> (un paquete de funciones
-	de Gretl). Las instrucciones de <repl>nombrearchivo</repl> se ejecutan
+	de GRETL). Las instrucciones de <repl>nombrearchivo</repl> se ejecutan
 	y luego el control se devuelve al guion principal.
       </para>
       <para>
 	La opción <opt>force</opt> es específica de los archivos <lit>gfn</lit> y
-	su efecto consiste en forzar a Gretl a que vuelva a leer el paquete de
+	su efecto consiste en forzar a GRETL a que vuelva a leer el paquete de
 	funciones desde el archivo, incluso aunque ya esté cargado en la memoria.
 	(Los archivos de texto plano <lit>inp</lit> siempre se leen y se procesan
 	en respuesta a esta instrucción.)
@@ -6453,7 +6455,7 @@
     <description>
       <para>
 	Si escoges la opción 'bootstrap' cuando representas respuestas al
-	impulso, Gretl calcula un intervalo de confianza para las respuestas
+	impulso, GRETL calcula un intervalo de confianza para las respuestas
 	utilizando el método bootstrap. Se vuelve a hacer el muestreo con los
 	errores del VAR (o VECM) original, con substitución; se construye
 	un conjunto de datos artificial basado en las estimaciones originales
@@ -6741,7 +6743,7 @@
 	Esta instrucción incorpora una o más series desde el origen
 	<repl>nombrearchivo</repl> (que debe ser bien un archivo de datos con
 	el texto delimitado, o bien un archivo de datos <quote>propio</quote>
-	de Gretl), con el nombre <repl>nombrevar</repl>. Para obtener más
+	de GRETL), con el nombre <repl>nombrevar</repl>. Para obtener más
 	detalles, consulta <guideref targ="chap:join"/> pues aquí damos solo
 	un breve resumen de las opciones disponibles. Consulta también
 	<cmdref targ="append"/> para operaciones de anexión más simples.
@@ -6749,7 +6751,7 @@
       <para>
 	Puedes utilizar la opción <opt>data</opt> para especificar el
 	encabezamiento de los datos del archivo de origen, si difiere del
-	nombre por el que los datos debieran de conocerse en Gretl.
+	nombre por el que los datos debieran de conocerse en GRETL.
       </para>
       <para>
 	Puedes usar la opción <opt>filter</opt> para especificar un
@@ -7754,7 +7756,7 @@
 	Consulta <guideref targ="chap:looping"/> para obtener otros detalles
 	y ejemplos. Ahí se explica el efecto de la opción <opt>progressive</opt>
 	(que está diseñada para ser utilizada con simulaciones de tipo Monte
-	Carlo). No puedes utilizar todas las instrucciones de Gretl dentro de un
+	Carlo). No puedes utilizar todas las instrucciones de GRETL dentro de un
 	bucle; por eso las instrucciones disponibles en este contexto también se
 	exponen ahí.
       </para>
@@ -7847,7 +7849,7 @@
     <description>
       <para>
 	Puedes enviar una base de datos (o un guion de instrucciones) como añadido
-	de correo desde dentro de Gretl, usando el SMTP (Simple Mail Transfer
+	de correo desde dentro de GRETL, usando el SMTP (Simple Mail Transfer
 	Protocol). A continuación, se explica cómo interpretar las dos tablas
 	(<quote>Configuración de correo</quote> y <quote>Mensaje</quote>) de la caja
 	de diálogo del correo. También se comentan los requerimientos de contraseña.
@@ -7885,7 +7887,7 @@
       </ilist>
       <para>
 	Tu información de servidor y de usuario se recuerda de una sesión de
-	Gretl hasta la siguiente, de forma que solo tienes que introducirla una
+	GRETL hasta la siguiente, de forma que solo tienes que introducirla una
 	vez. De igual modo que con la contraseña, es elección tuya el guardarla
 	o no; consulta la sección <emphasis>Contraseña de correo</emphasis>
 	de más abajo para obtener más detalles.
@@ -7899,7 +7901,7 @@
        <li>
 	 <para>
 	   A: es la dirección de correo del destinatario. La primera vez
-	   tendrás que introducirla por tu cuenta, pues Gretl no tiene acceso
+	   tendrás que introducirla por tu cuenta, pues GRETL no tiene acceso
 	   a tu agenda de direcciones. Ahora bien, una vez introducida una
 	   dirección, esta se recuerda y puedes seleccionarla más adelante
 	   mediante una lista desplegable. Puedes guardar hasta diez
@@ -7909,7 +7911,7 @@
        <li>
 	 <para>
 	   De: es tu propia dirección de correo. Esta se recuerda de una
-	   sesión de Gretl hasta la siguiente.
+	   sesión de GRETL hasta la siguiente.
 	 </para>
        </li>
        <li>
@@ -7931,7 +7933,7 @@
       <subhead>Contraseña de correo</subhead>
       <para>
 	Si se necesita una contraseña para enviar el correo, puedes elegir
-	que Gretl tenga guardada esta contraseña. En ese caso, se guarda en
+	que GRETL tenga guardada esta contraseña. En ese caso, se guarda en
 	formato enrevesado en un directorio que está reservado para ti, en tu
 	ordenador (en ningún servidor de internet). Sin embrago, no podemos
 	garantizar su seguridad.
@@ -7940,7 +7942,7 @@
 	Si eres usuario de gmail y utilizas la autentificación en 2-pasos,
 	ten en cuenta que tu contraseña habitual de gmail no va a funcionar
 	en este contexto. Vas a necesitar una
-	<quote>App de contraseña</quote> para utilizarla con Gretl; consulta
+	<quote>App de contraseña</quote> para utilizarla con GRETL; consulta
 	<url>https://support.google.com/accounts/answer/185833</url>.
       </para>
     </description>
@@ -7972,7 +7974,7 @@
 
     <description>
       <para>
-	Da soporte a la creación de un paquete de funciones de Gretl mediante la línea
+	Da soporte a la creación de un paquete de funciones de GRETL mediante la línea
 	de instrucciones. El modo de funcionamiento de esta instrucción depende de la
 	extensión del <repl>nombrearchivo</repl>, que debe ser
 	<lit>.gfn</lit> o <lit>.zip</lit>.
@@ -7989,16 +7991,16 @@
       <para>
 	Escribe un archivo comprimido zip de un paquete (un gfn más otros
 	elementos). En caso de encontrarse un archivo gfn con el mismo nombre base
-	que <repl>nombrearchivo</repl>, Gretl comprueba los archivos correspondientes
+	que <repl>nombrearchivo</repl>, GRETL comprueba los archivos correspondientes
 	<lit>inp</lit> y <lit>spec</lit>, y si los encuentra a ambos, siendo por lo
 	menos uno de ellos más nuevo que el archivo gfn, entonces se vuelve a generar
 	el gfn; en otro caso, se utiliza el gfn existente. Cuando no se encuentra
-	ese archivo, Gretl intenta primero generar el gfn.
+	ese archivo, GRETL intenta primero generar el gfn.
       </para>
       <subhead>Opciones de gfn</subhead>
       <para>
 	Los indicadores de opciones admiten la escritura de archivos auxiliares,
-	pensados para utilizar con los <quote>añadidos</quote> de Gretl. El
+	pensados para utilizar con los <quote>añadidos</quote> de GRETL. El
 	archivo índice es un corto documento XML que contiene información
 	básica sobre el paquete, y que tiene su mismo nombre como base
 	además de la extensión <lit>.xml</lit>. El archivo de traducciones contiene
@@ -8010,7 +8012,7 @@
       </para>
       <para>
 	Para obtener más detalles sobre todo esto, consulta la
-	<mnu targ="Pkgbook">Guía para paquetes de funciones</mnu> de Gretl.
+	<mnu targ="Pkgbook">Guía para paquetes de funciones</mnu> de GRETL.
       </para>
     </description>
 
@@ -8448,13 +8450,13 @@
 	datos (bajo el menú Datos).
       </para>
       <para>
-	Gretl tiene su propia codificación interna para los valores ausentes,
+	GRETL tiene su propia codificación interna para los valores ausentes,
 	pero a veces los datos que se importan pueden emplear otro código
 	distinto. Por ejemplo, si una serie concreta está codificada de modo
 	que el valor '-1' indica <quote>no aplicable</quote>, puedes escoger
 	<quote>Establecer código de valor ausente</quote> bajo el menú
 	Variable y teclear el valor <quote>-1</quote> (sin las comillas). Entonces
-	Gretl va a leer esos (-1) como observaciones ausentes.
+	GRETL va a leer esos (-1) como observaciones ausentes.
       </para>
     </description>
   </command>
@@ -8475,8 +8477,8 @@
       <subhead>2. Ventana</subhead>
       <para>
 	Selecciona <quote>Ventana de modelo</quote> para un paquete de
-	funciones que hace algo con un modelo de Gretl, y deba aparecer
-	en la barra de menús de una ventana de modelos de Gretl. En otro caso,
+	funciones que hace algo con un modelo de GRETL, y deba aparecer
+	en la barra de menús de una ventana de modelos de GRETL. En otro caso,
 	selecciona <quote>Ventana principal</quote>.
       </para>
       <subhead>3. Árbol del menú</subhead>
@@ -8492,7 +8494,7 @@
 	de Usuario (GUI) para que se muestre cuando se invoque el paquete desde
 	un menú. Y si el paquete está pensado para invocarlo desde la ventana de un
 	modelo, puedes especificar un cierto tipo de modelo (identificado por su
-	palabra clave como instrucción de Gretl) como requisito.
+	palabra clave como instrucción de GRETL) como requisito.
       </para>
     </description>
   </command>
@@ -8697,7 +8699,7 @@
       </para>
       <subhead>Comprobando las derivadas analíticas</subhead>
       <para>
-	Si proporcionas las derivadas analíticas, por defecto Gretl ejecuta
+	Si proporcionas las derivadas analíticas, por defecto GRETL ejecuta
 	una verificación numérica de su credibilidad. Algunas veces esto
 	puede producir falsos positivos, por situaciones en las que las derivadas
 	correctas parecen ser incorrectas y la estimación se rechaza. Para
@@ -8755,7 +8757,7 @@
       </para>
 
       <para>
-	Gretl proporciona un medio para elaborar una tabla de este tipo
+	GRETL proporciona un medio para elaborar una tabla de este tipo
 	(y de copiarla en texto plano, &latex; o Rich Text Format).
 	Aquí tienes como hacerlo:
       </para>
@@ -8778,10 +8780,10 @@
 	<li>
 	  <para>
 	    Cuando ya tengas hecha la estimación de los modelos, abre el visor de
-	    iconos de tu sesión de Gretl (escogiendo <quote>Vista de iconos</quote>
-	    bajo el menú de Ver en la ventana principal de Gretl, o pulsando en el
+	    iconos de tu sesión de GRETL (escogiendo <quote>Vista de iconos</quote>
+	    bajo el menú de Ver en la ventana principal de GRETL, o pulsando en el
 	    icono titulado <quote>Vista de iconos de sesión</quote> en la barra de
-	    herramientas de Gretl).
+	    herramientas de GRETL).
     </para>
 	</li>
 	<li>
@@ -8823,7 +8825,7 @@
 
     <description context="cli">
       <para>
-	Permite manejar la <quote>Tabla de modelos</quote> de Gretl;
+	Permite manejar la <quote>Tabla de modelos</quote> de GRETL;
 	consulta <guideref targ="chap:modes"/> para obtener más
 	detalles. Las instrucciones subordinadas tienen los siguientes efectos:
 	<cmd>add</cmd> añade el último modelo estimado a la tabla
@@ -9064,7 +9066,7 @@
       <para>
 	Cuando un modelo se estima por Mínimos Cuadrados en 2 Etapas (consulta
 	<cmdref targ="tsls"/>), se rompe el principio de Máxima Verosimilitud y
-	Gretl ofrece algunos equivalentes: la opción <flag>--autocorr</flag>
+	GRETL ofrece algunos equivalentes: la opción <flag>--autocorr</flag>
 	calcula el estadístico de Godfrey para contrastar autocorrelación
 	<cite key="godfrey94" p="true">(Godfrey, 1994)</cite> mientras que la opción
 	<flag>--white</flag> produce el estadístico del contraste HET1 de heterocedasticidad
@@ -9114,7 +9116,7 @@
 	bits de precisión en los cálculos, pero puedes aumentar esto mediante la
 	variable de entorno <lit>GRETL_MP_BITS</lit>. Por ejemplo, cuando
 	utilizas el intérprete Bash se te podría ocurrir la siguiente instrucción
-	para establecer una precisión de 1024 bits antes de comenzar Gretl.
+	para establecer una precisión de 1024 bits antes de comenzar GRETL.
       </para>
       <code>
 	export GRETL_MP_BITS=1024
@@ -9422,7 +9424,7 @@
 	la estimación. Cualquier opción deberás de añadirla a esta línea.
       </para>
       <para>
-	Si proporcionas las derivadas analíticas, por defecto Gretl ejecuta
+	Si proporcionas las derivadas analíticas, por defecto GRETL ejecuta
 	una verificación numérica de su credibilidad. Algunas veces esto
 	puede producir falsos positivos, por situaciones en las que las derivadas
 	correctas parecen ser incorrectas y la estimación se rechaza. Para
@@ -9544,7 +9546,7 @@
       </para>
       <para>
 	Por defecto, esta instrucción vacía todos los datos del espacio vigente
-	de trabajo de Gretl, no solo las series sino también las matrices, los
+	de trabajo de GRETL, no solo las series sino también las matrices, los
 	escalares, las cadenas de texto, etc. Ahora bien, cuando indicas la opción
 	<opt>preserve</opt>, se retiene cualquier variable que no sea una serie
 	y esté definida en ese momento.
@@ -9659,7 +9661,7 @@
       </code>
       <para context="cli">
 	guarda los errores de la estimación bajo el nombre <lit>uh</lit>. Consulta la
-	sección <quote>Accesores</quote> de la Guía de funciones de Gretl para
+	sección <quote>Accesores</quote> de la Guía de funciones de GRETL para
 	obtener más detalles.
       </para>
 
@@ -9814,7 +9816,7 @@
 
     <description>
       <para>
-	Gretl es capaz de acceder a bases de datos de la Universidad Wake
+	GRETL es capaz de acceder a bases de datos de la Universidad Wake
 	Forest (tu ordenador debe estar conectado a Internet para
 	que esto funcione).
       </para>
@@ -9822,7 +9824,7 @@
 	Bajo el menú <quote>Archivo: Bases de datos</quote>, escoge la
 	opción <quote>Sobre servidor</quote>. Debiera de
 	aparecer una ventana, mostrando un listado de las bases de datos
-	de Gretl disponibles en la Wake Forest. (Dependiendo de tu localización
+	de GRETL disponibles en la Wake Forest. (Dependiendo de tu localización
 	y de la velocidad de tu conexión a Internet, esto puede demorar unos
 	pocos segundos.) Junto con el nombre de la base de datos y una corta
 	descripción, aparece una anotación <quote>Estado local</quote>:
@@ -9839,7 +9841,7 @@
 	de datos; entonces pulsa un clic sobre <quote>Listar las series</quote>.
 	Esto abre una ventana más, desde la que puedes representar los valores
 	de una de las series de datos que elijas, dibujar esos valores o incluso
-	importarlos al espacio de trabajo de Gretl. Puedes completar estas
+	importarlos al espacio de trabajo de GRETL. Puedes completar estas
 	tareas utilizando el menú <quote>Series</quote>, o mediante el menú
 	emergente que aparece cuando pulsas el botón derecho del ratón sobre
 	una determinada serie. También puedes buscar el listado de una variable
@@ -9852,7 +9854,7 @@
 	el botón <quote>Instalar</quote>. Esto va a descargar la base de
 	datos en formato comprimido, luego descomprimirlo e instalarlo en
 	tu disco duro. En adelante ya deberías ser capaz de encontrarlo
-	bajo <quote>Archivo, Bases de datos, Nativa Gretl</quote>
+	bajo <quote>Archivo, Bases de datos, Nativa GRETL</quote>
 	en el menú.
       </para>
     </description>
@@ -9875,6 +9877,11 @@
 	  <effect>Retiene las variables que no son series</effect>
 	</option>
 	<option>
+	  <flag>--select</flag>
+	  <optparm>seleccion</optparm>
+	  <effect>Leer solo las series indicadas, mira abajo</effect>
+	</option>
+	<option>
 	  <flag>--frompkg</flag>
 	  <optparm>nombrepaquete</optparm>
 	  <effect>Mira abajo</effect>
@@ -9885,7 +9892,7 @@
 	</option>
 	<option>
 	  <flag>--www</flag>
-	  <effect>Utiliza una base de datos del servidor de Gretl</effect>
+	  <effect>Utiliza una base de datos del servidor de GRETL</effect>
 	</option>
 	<option>
 	  <flag>--odbc</flag>
@@ -9906,8 +9913,8 @@
 	Abre un archivo de datos o una base de datos (consulta
 	<guideref targ="chap:datafiles"/> para ver una explicación de esta
 	distinción). Las consecuencias son algo diferentes en los dos casos.
-	Cuando abres un <emphasis>archivo de datos</emphasis>, se lee todo su
-	contenido en el espacio de trabajo de Gretl, substituyendo la base de
+	Cuando abres un <emphasis>archivo de datos</emphasis>, se lee su
+	contenido en el espacio de trabajo de GRETL, substituyendo la base de
 	datos vigente (si la hay). Para añadir datos al conjunto vigente, en
 	lugar de sustituirlo, consulta <cmdref targ="append"/> o (para tener
 	mayor flexibilidad) <cmdref targ="join"/>. Cuando abres una
@@ -9919,29 +9926,29 @@
 	más abajo.
       </para>
       <para>
-	Si no indicas <repl>nombrearchivo</repl> con una ruta completa, Gretl
+	Si no indicas <repl>nombrearchivo</repl> con una ruta completa, GRETL
 	busca en algunas rutas destacadas para tratar de encontrar el archivo, de
 	las que el directorio vigente (<cmdref targ="workdir"/>) es la primera
 	elección. Si no indicas el sufijo en el nombre de archivo (como en el
-	primer ejemplo de arriba), Gretl asume que es un archivo de datos propio
+	primer ejemplo de arriba), GRETL asume que es un archivo de datos propio
 	con sufijo <lit>.gdt</lit>. Basándose en el nombre del archivo y varias
-	reglas heurísticas, Gretl tratará de detectar el formato del archivo de
+	reglas heurísticas, GRETL tratará de detectar el formato del archivo de
 	datos (propio, texto plano, CSV, MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
-	Cuando se utiliza la opción <opt>frompkg</opt>, Gretl va a buscar el
+	Cuando se utiliza la opción <opt>frompkg</opt>, GRETL va a buscar el
 	archivo especificado de datos en el subdirectorio asociado al paquete
 	de funciones especificado por <repl>nombrepaquete</repl>.
       </para>
       <para>
 	Si el argumento <repl>nombrearchivo</repl> toma la forma de
 	un identificador de recursos uniforme (URI) que comienza por
-	<lit>http://</lit> o por <lit>https://</lit>, entonces Gretl tratará
+	<lit>http://</lit> o por <lit>https://</lit>, entonces GRETL tratará
 	de descargar el archivo de datos indicado, antes de abrirlo.
       </para>
       <para>
 	Por defecto, al abrir un nuevo archivo de datos se vacía la sesión vigente
-	de Gretl, lo que incluye la eliminación de todas las variables definidas,
+	de GRETL, lo que incluye la eliminación de todas las variables definidas,
 	incluyendo matrices, escalares y cadenas de texto. Si quieres mantener las
 	variables que tengas definidas en ese momento (que no sean series, pues
 	estas se eliminan obligatoriamente), utiliza la opción <opt>preserve</opt>.
@@ -9963,20 +9970,20 @@
 	--coloffset=3 --rowoffset=2
       </code>
       <para>
-	lo que va a provocar que Gretl ignore las 3 primeras columnas y las 2
+	lo que va a provocar que GRETL ignore las 3 primeras columnas y las 2
 	primeras filas. Por defecto, hay un desplazamiento de 0 en ambas
 	dimensiones, es decir, se empieza a leer en la celda de arriba a la izquierda.
       </para>
       <subhead context="cli">Archivos de texto delimitado</subhead>
       <para>
-	Con archivos de texto plano, Gretl habitualmente espera encontrar
+	Con archivos de texto plano, GRETL habitualmente espera encontrar
 	las columnas de datos delimitadas de algún modo estándar (en general
 	mediante coma, tabulador, espacio, o punto y coma). Por defecto,
-	Gretl busca en la primera columna las etiquetas o las fechas de
+	GRETL busca en la primera columna las etiquetas o las fechas de
 	las observaciones, si su encabezado está vacío o bien contiene
 	una cadena de texto sugerente tal como <quote>year</quote>,
 	<quote>date</quote> o <quote>obs</quote>. Puedes evitar que
-	Gretl trate de forma especial la primera columna indicando la opción 
+	GRETL trate de forma especial la primera columna indicando la opción 
 	<opt>all-cols</opt>.
       </para>
       <subhead context="cli">Texto de formato fijo</subhead>
@@ -9999,7 +10006,7 @@
 	open fixed.txt --fixed-cols=1,6,20,3
       </code>
       <para>
-	entonces Gretl va a leer 6 bytes comenzando en la columna 1 para
+	entonces GRETL va a leer 6 bytes comenzando en la columna 1 para
 	la variable 1; y para la variable 2, va a leer 3 bytes comenzando
 	en la columna 20. Las líneas que están en blanco, o que comienzan
 	con <lit>#</lit> se ignoran; pero en caso contrario se aplica el
@@ -10023,7 +10030,7 @@
 	El uso de <lit>open</lit> con un archivo de datos como argumento (en
 	contraposición al caso con una base de datos, mira abajo) generalmente
 	implica cargar todas las series del archivo indicado. Sin embargo, solo en
-	el caso de archivos originales de Gretl (<lit>gdt</lit> e <lit>gdtb</lit>)
+	el caso de archivos originales de GRETL (<lit>gdt</lit> e <lit>gdtb</lit>)
 	es posible especificar un subconjunto de series a cargar, mediante su
 	nombre. Esto se consigue mediante la opción <opt>select</opt>, lo que
 	requiere un argumento adjunto con uno de estos formatos: el nombre de
@@ -10045,20 +10052,20 @@
 	Como se comentó antes, puedes utilizar la instrucción <lit>open</lit>
 	para abrir un archivo con una base de datos, y a continuación leerlo con
 	la instrucción <cmdref targ="data"/>. Los tipos de archivos que se admiten
-	son las bases de datos propias de Gretl, RATS 4.0 y PcGive.
+	son las bases de datos propias de GRETL, RATS 4.0 y PcGive.
       </para>
       <para>
 	Además de la lectura de estos tipos de archivos en la máquina local,
 	se admiten otros tres casos más. Primero, cuando indicas la opción
-	<lit>www</lit>, Gretl va a tratar de acceder a una base de datos
-	propia de Gretl con el nombre que proporciones, en el servidor de
-	Gretl (por ejemplo, la base de datos <lit>fedbog.bin</lit> con los
+	<lit>www</lit>, GRETL va a tratar de acceder a una base de datos
+	propia de GRETL con el nombre que proporciones, en el servidor de
+	GRETL (por ejemplo, la base de datos <lit>fedbog.bin</lit> con los
 	tipos de interés de la Reserva Federal del tercer ejemplo que se
 	ha indicado más arriba). En segundo lugar, puedes usar la instrucción
 	<quote><lit>open dbnomics</lit></quote> para establecer que
 	DB.NOMICS sea el origen para leer bases de datos; sobre esto
 	consulta <mnu targ="gretlDBN">dbnomics for gretl</mnu>. En
-	tercer lugar, si indicas la opción <opt>odbc</opt>, Gretl va a
+	tercer lugar, si indicas la opción <opt>odbc</opt>, GRETL va a
 	tratar de acceder a un banco de datos ODBC. Esta opción se explica
 	detalladamente en <guideref targ="chap:odbc"/>.
       </para>
@@ -10066,7 +10073,7 @@
 
     <gui-access>
       <menu-path>/Archivo/Abrir archivo de datos</menu-path>
-      <other-access>Arrastrar un archivo de datos hasta la ventana principal de Gretl</other-access>
+      <other-access>Arrastrar un archivo de datos hasta la ventana principal de GRETL</other-access>
     </gui-access>
 
   </command>
@@ -10196,7 +10203,7 @@
 	Atención: los archivos que se guardan en el directorio 'punto', se
 	van a depurar al salir del programa, por lo que no uses esta modalidad
 	si deseas que los resultados se conserven después de tu sesión
-	de Gretl.
+	de GRETL.
       </para>
       <para>
 	Repetimos el sencillo ejemplo de arriba, con un par de líneas extra
@@ -10275,18 +10282,18 @@
   <command name="packages" section="Utilities" label="Paquetes de funciones" context="gui">
     <description>
       <para>
-	Puedes ampliar las prestaciones de Gretl mediante la utilización de
+	Puedes ampliar las prestaciones de GRETL mediante la utilización de
 	paquetes de funciones que son de dos tipos: los <quote>Complementos</quote>
 	oficiales y los paquetes de contribuciones. En conjunto, cubren muchos
 	estimadores y utilidades que no están disponibles como instrucciones
 	o funciones integradas en el programa.
       </para>
       <para>
-	Los 'Complementos' oficiales están incluidos en los instaladores de Gretl
+	Los 'Complementos' oficiales están incluidos en los instaladores de GRETL
 	para Windows y para Mac. Para Linux, si no se instalan previamente,
 	entonces se descargan cuando se solicite (por ejemplo, si escoges el
 	elemento del menú /Modelo/Series temporales univariantes/GARCH, entonces
-	Gretl va a descargar el 'Complemento' <lit>gig</lit> (GARCH in Gretl).
+	GRETL va a descargar el 'Complemento' <lit>gig</lit> (GARCH in GRETL).
 	Puedes verificar que tus 'Complementos' están actualizados mediante
 	<mnu targ="SFAddons">Revisar complementos</mnu> en el menú Ayuda.
       </para>
@@ -10313,7 +10320,7 @@
 	<url>http://gretl.sf.net/gfnguide/gfn_for_dummies.html</url>.
       </para>
       <para>
-	Para lidiar con paquetes mediante la línea de instrucciones de Gretl,
+	Para lidiar con paquetes mediante la línea de instrucciones de GRETL,
 	consulta la instrucción <cmdref targ="pkg"/>.
       </para>
     </description>
@@ -10448,7 +10455,7 @@
       <para context="cli">
 	La opción <opt>unbalanced</opt> está disponible solo para modelos
 	con efectos aleatorios, y puedes usarla para elegir el método ANOVA
-	que emplear con un panel desequilibrado. Por defecto, Gretl emplea
+	que emplear con un panel desequilibrado. Por defecto, GRETL emplea
 	el método de Swamy&ndash;Arora igual que se hace para los paneles
 	equilibrados, excepto que utiliza la media armónica de las longitudes de las
 	series de tiempo individuales en lugar de la <math>T</math> habitual.
@@ -10492,7 +10499,7 @@
       <para>
 	Este diálogo ofrece hasta 3 opciones con respecto a la definición de un conjunto
 	de datos como un panel. Las dos primeras opciones requieren que el conjunto
-	de datos esté ya organizado en el formato de un panel (incluso aunque Gretl
+	de datos esté ya organizado en el formato de un panel (incluso aunque GRETL
 	todavía no lo tenga reconocido). La tercera opción requiere que el conjunto
 	de datos contenga variables que representen la estructura de un panel.
       </para>
@@ -10500,14 +10507,14 @@
 	<emphasis>Series temporales apiladas</emphasis>: Supón que <repl>N</repl>
 	es el total de unidades de sección cruzada del conjunto de datos, y que
 	<repl>T</repl> = el número observaciones de las series temporales por unidad.
-	Escogiendo esta opción le estás indicando a Gretl que el conjunto de datos
+	Escogiendo esta opción le estás indicando a GRETL que el conjunto de datos
 	se compone en ese momento de <repl>N</repl> bloques consecutivos de
 	<repl>T</repl> observaciones de series temporales, uno por cada unidad de
 	sección cruzada. La siguiente etapa será especificar el valor de <repl>N</repl>.
       </para>
       <para>
 	<emphasis>Secciones cruzadas apiladas</emphasis>: Le estás indicando a
-	Gretl que el conjunto de datos se compone en ese momento de <repl>T</repl>
+	GRETL que el conjunto de datos se compone en ese momento de <repl>T</repl>
 	bloques consecutivos de <repl>N</repl> observaciones de sección cruzada,
 	uno por cada período de tiempo. La siguiente etapa, de nuevo, será especificar
 	el valor de <repl>N</repl>.
@@ -10827,7 +10834,7 @@
     <description>
       <para>
 	Esta instrucción proporciona una manera de instalar, consultar, descargar,
-	eliminar o indexar paquetes de funciones de Gretl. El argumento
+	eliminar o indexar paquetes de funciones de GRETL. El argumento
 	<repl>acción</repl> debe ser alguno de entre <lit>install</lit>,
 	<lit>query</lit>, <lit>unload</lit>, <lit>remove</lit> o <lit>index</lit>,
 	respectivamente.
@@ -10835,9 +10842,9 @@
       <para>
 	<lit>install</lit>: En su forma más elemental, sin ningún indicador de
 	opción y con el argumento <repl>nombrepaquete</repl> expresado como
-	el nombre <quote>plano</quote> de un paquete de funciones de Gretl (como
+	el nombre <quote>plano</quote> de un paquete de funciones de GRETL (como
 	en el primer ejemplo de arriba), el efecto de esta opción consiste
-	en descargar el paquete que se especifica del servidor de Gretl,
+	en descargar el paquete que se especifica del servidor de GRETL,
 	(excepto que <repl>nombrepaquete</repl> comience con <lit>http://</lit>),
 	e instalarlo en la máquina local. En este caso, no es necesario expresar
 	una extensión en el nombre del archivo. Sin embargo, cuando indicas
@@ -10854,14 +10861,14 @@
 	presentación de información básica sobre el paquete especificado
 	(autor, versión, etc.). Pero si añades la opción <opt>quiet</opt>, no
 	se presenta nada; en su lugar, se guarda la información del paquete
-	en forma de un 'bundle' de Gretl, al que se puede acceder mediante
+	en forma de un 'bundle' de GRETL, al que se puede acceder mediante
 	<fncref targ="$result"/>.
       </para>
       <para>
 	<lit>unload</lit>: Debes indicar el argumento <repl>pkgname</repl> en
 	modo 'plano', sin ruta ni extensión, como en el último ejemplo de arriba.
 	La consecuencia de esto es la descarga de ese paquete en cuestión de la
-	memoria de Gretl (si está cargado en ese momento), y también eliminarlo del
+	memoria de GRETL (si está cargado en ese momento), y también eliminarlo del
 	menú de la Interface Gráfica (GUI) al que esté añadido, si lo está a alguno.
       </para>
       <para>
@@ -10877,7 +10884,7 @@
 	realiza automáticamente de vez en cuando, pero en algún caso puede
 	resultar útil una actualización manual. En tal caso, la opción
 	<opt>verbose</opt> provoca un resultado impreso sobre donde ha hecho
-	Gretl la búsqueda, y lo que ha encontrado. Siendo claros, aquí tienes
+	GRETL la búsqueda, y lo que ha encontrado. Siendo claros, aquí tienes
 	un modo de conseguir un resultado con el índice completo:
       </para>
       <code>
@@ -10903,7 +10910,7 @@
       <para>
 	Por ejemplo, supón que utilizas una o más funciones del paquete
 	<lit>extra</lit>, que contiene varias utilidades para la redacción con
-	Hansl. En ese caso, podrías escribir
+	HANSL. En ese caso, podrías escribir
       </para>
       <code>
 	extra
@@ -11227,7 +11234,7 @@
 	de regresión de Poisson, el parámetro <math>v</math> está
 	representado como una función de una o más variables
 	independientes. La versión más habitual (y la única que admite
-	Gretl) cumple
+	GRETL) cumple
         <equation status="display"
           tex="\[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]"
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
@@ -11343,7 +11350,7 @@
       <para>
 	La tercera variante (con el argumento <repl>nombresobjetos</repl>;
 	mira el segundo ejemplo) espera una lista de nombres, separados
-	por espacios, de objetos básicos de Gretl que no sean
+	por espacios, de objetos básicos de GRETL que no sean
 	series (escalares, matrices, cadenas de texto, bundles, arrays);
 	y se muestra el valor de estos objetos.
       </para>
@@ -11372,7 +11379,7 @@
       </para>
       <para>
 	La opción <opt>tree</opt> es específica para presentar un
-	bundle de Gretl. El efecto de ello es que, si el paquete especificado
+	bundle de GRETL. El efecto de ello es que, si el paquete especificado
 	contiene otros bundles o arrays de ellos, se presentan sus
 	contenidos. De lo contrario, solo se presentan los elementos del nivel superior
 	del bundle.
@@ -11415,7 +11422,7 @@
 	reguladores disponibles en C. Ejemplos: el formato <lit>%.10g</lit>
 	presenta un valor con 10 cifras significativas, y <lit>%12.6f</lit>
 	presenta un valor con un ancho de 12 caracteres de los que 6 son
-	decimales. Sin embargo, ten en cuenta que en Gretl el formato <lit>%g</lit>
+	decimales. Sin embargo, ten en cuenta que en GRETL el formato <lit>%g</lit>
 	es una buena elección por defecto para todos los valores numéricos,
 	y no tienes necesidad de complicarte demasiado. Debes
 	utilizar el formato <lit>%s</lit> para las cadenas de texto.
@@ -11884,11 +11891,11 @@
       </para>
       <para>
 	Si marcas la opción <quote>Calcular los intervalos de confianza</quote>,
-	Gretl calcula los intervalos de confianza para los coeficientes
+	GRETL calcula los intervalos de confianza para los coeficientes
 	en lugar de las desviaciones típicas. Y el cuadradito de validación
 	de <quote>Desviaciones típicas robustas</quote> tiene otro efecto:
 	si no se marca, los intervalos se calculan bajo el supuesto de
-	perturbaciones IID; y al marcarlo, Gretl utiliza el estimador
+	perturbaciones IID; y al marcarlo, GRETL utiliza el estimador
 	robusto desarrollado por
 	<cite key="koenker-machado99">Koenker y Machado (1999)</cite>.
 	Ten en cuenta que estos intervalos no son exactamente
@@ -11897,7 +11904,7 @@
 	    </para>
       <para>
 	Puedes indicar una lista de cuantiles (consulta la lista desplegable para
-	algunas posibilidades ya definidas con anterioridad). En ese caso, Gretl
+	algunas posibilidades ya definidas con anterioridad). En ese caso, GRETL
 	calcula las estimaciones de cuantiles y, o bien las desviaciones típicas o
 	bien los intervalos de confianza para cada uno de los valores especificados.
       </para>
@@ -12309,7 +12316,7 @@
 	devolver un vector que es cero bajo la hipótesis nula, y no nulo
 	en otro caso. La dimensión del vector es igual al número de restricciones.
 	Esta función se utiliza como una <quote>rellamada</quote> de la
-	rutina numérica para el Jacobiano, de Gretl, que calcula el estadístico
+	rutina numérica para el Jacobiano, de GRETL, que calcula el estadístico
 	de contraste de Wald mediante el método delta.
       </para>
       <para>
@@ -12498,7 +12505,7 @@
 	negativa, esto sugiere que la varianza decrece al aumentar la media.
       </para>
       <para>
-	Además del gráfico, Gretl muestra las medias y rangos para cada
+	Además del gráfico, GRETL muestra las medias y rangos para cada
 	submuestra, junto con el coeficiente de la pendiente de una regresión MCO
 	do rango sobre la media, y con la probabilidad asociada al estadístico
 	para contrastar la hipótesis nula de que esta pendiente es cero. Si el
@@ -12544,7 +12551,7 @@
 	Ejecuta las instrucciones de <repl>nombrearchivo</repl> y luego devuelve
 	el control al indicador interactivo. Esta instrucción está pensada
 	para que la utilices con el programa de líneas de instrucción
-	<program>gretlcli</program> o con la <quote>consola de Gretl</quote>
+	<program>gretlcli</program> o con la <quote>consola de GRETL</quote>
 	en el programa de Interface Gráfica de Usuario (GUI).
       </para>
       <para>
@@ -12667,7 +12674,7 @@
     label="Guardar o eliminar etiquetas de las series" context="gui">
     <description>
       <para>
-	Si escoges aquí 'Exportar', Gretl escribe un archivo que contiene las
+	Si escoges aquí 'Exportar', GRETL escribe un archivo que contiene las
 	etiquetas descriptivas de cualquier serie (que tenga etiquetas) del
 	conjunto vigente de datos. Ese archivo es de texto plano con una línea
 	por variable, pero la línea estará vacía para las variables que no
@@ -12690,7 +12697,7 @@
 	abrir archivos, con el fin de que selecciones uno de texto plano que contenga
 	las etiquetas descriptivas para las series del conjunto vigente de datos. El
 	archivo deberá contener una etiqueta por línea, y una línea en blanco
-	significará que no hay etiqueta. Gretl tratará de leer tantas etiquetas
+	significará que no hay etiqueta. GRETL tratará de leer tantas etiquetas
 	como series haya en el conjunto de datos, excluyendo la constante.
       </para>
     </description>
@@ -12700,12 +12707,12 @@
     label="¿Guardar instrucciones?" context="gui">
     <description>
       <para>
-	Si aquí escoges 'Si', Gretl escribe un archivo que contiene un registro
+	Si aquí escoges 'Si', GRETL escribe un archivo que contiene un registro
 	de las instrucciones que ejecutaste en la sesión vigente. La mayor parte de las
 	instrucciones que ejecutas mediante <quote>apuntar y hacer clic</quote>
 	tienen una contrapartida de <quote>guion</quote>, y estas instrucciones
 	de guion son las que se guardarán. Así podrás coger el archivo como base
-	para escribir un guion de instrucciones de Gretl.
+	para escribir un guion de instrucciones de GRETL.
       </para>
       <para>
 	Si no te importa que se te avise para guardar un registro de las instrucciones
@@ -12715,18 +12722,18 @@
   </command>
 
   <command name="save-session" section="Utilities"
-    label="¿Guardar esta sesión de Gretl?" context="gui">
+    label="¿Guardar esta sesión de GRETL?" context="gui">
     <description>
       <para>
-	Si aquí escoges 'Sí', Gretl escribe un archivo que contiene una
+	Si aquí escoges 'Sí', GRETL escribe un archivo que contiene una
 	<quote>foto instantánea</quote> de la sesión vigente, incluyendo una copia
 	del conjunto de datos con el que se trabaja, junto con cualquier modelo, gráfico
 	u otro objeto que guardaras <quote>como icono</quote>. Puedes volver a abrir este
-	archivo más tarde para recrear el estado de Gretl tal como era en el momento en el que
+	archivo más tarde para recrear el estado de GRETL tal como era en el momento en el que
 	saliste de la sesión (consulta el menú <quote>Archivo/Archivos de sesión</quote>).
       </para>
       <para>
-	Si trabajas con Gretl utilizando la mayoría de las veces guiones de
+	Si trabajas con GRETL utilizando la mayoría de las veces guiones de
 	instrucciones (lo que se recomienda para un trabajo econométrico
 	<quote>serio</quote>), probablemente no necesites guardar la
 	sesión, pero debes asegurarte de guardar cualquier cambio en
@@ -12832,14 +12839,14 @@
     <description>
       <para>
 	Ten en cuenta que algunas de estas preferencias solo se aplican cuando
-	se editan guiones de Gretl originales (Tabulador e Intro inteligentes, Usar
+	se editan guiones de GRETL originales (Tabulador e Intro inteligentes, Usar
 	pestañas en el editor de guiones), y que otras también se aplican cuando se edita
 	o mira cualquier guion (Mostrar los números de línea, Estilo de resaltado).
       </para>
       <para>
 	<emphasis>Tabulador e Intro inteligentes</emphasis>: Si marcas
 	esta opción, entonces cuando pulsas la tecla <lit>Tabulador</lit> al
-	comienzo de una línea en un guion de Hansl, en lugar de introducir tan
+	comienzo de una línea en un guion de HANSL, en lugar de introducir tan
 	solo un salto de tabulación, el programa va a tratar de ajustar el
 	nivel de sangrado de la línea consistentemente con otras líneas que
 	ya se hayan introducido antes. Igualmente, cuando pulsas la tecla
@@ -12940,14 +12947,14 @@
 	de los parámetros; con <opt>from-file</opt> para leer un archivo
 	de guion que contenga las configuraciones de los parámetros y para
 	aplicarlas a la sesión vigente; con <lit>stopwatch</lit> para poner
-	a cero el <quote>cronómetro</quote> de Gretl que puedes usar para
+	a cero el <quote>cronómetro</quote> de GRETL que puedes usar para
 	medir el tiempo de CPU (consulta los comentarios para el accesor
 	<fncref targ="$stopwatch"/>); o para presentar las configuraciones
 	actuales, cuando indicas solo la palabra <lit>set</lit>.
       </para>
       <para>
 	Los valores establecidos mediante esta instrucción siguen vigentes
-	durante la duración de la sesión de Gretl, excepto que los cambies por
+	durante la duración de la sesión de GRETL, excepto que los cambies por
 	medio de una llamada posterior a <cmd>set</cmd>. Los parámetros
 	que puedes establecer de este modo se enumeran más abajo. Ten en
 	cuenta que se utilizan las configuraciones de <lit>hc_version</lit>,
@@ -12965,7 +12972,7 @@
 
       <para>
 	Estas configuraciones se utilizan para controlar diversos aspectos
-	del modo en el que Gretl interactúa con el usuario.
+	del modo en el que GRETL interactúa con el usuario.
       </para>
       <ilist>
 	<li>
@@ -12979,13 +12986,13 @@
 	  Maneja la configuración del directorio de trabajo (<lit>workdir</lit>)
 	  inicial: si está en <lit>on</lit>, se hereda el directorio de trabajo
 	  desde el intérprete; en otro caso, se establece donde quiera que se
-	  seleccionó en la sesión previa de Gretl.
+	  seleccionó en la sesión previa de GRETL.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>echo</lit>: <lit>off</lit> u <lit>on</lit> (por defecto).
 	  Elimina (o acorta) la resonancia de los textos de las instrucciones en los
-	  resultados de Gretl.
+	  resultados de GRETL.
 	  </para>
 	</li>
 	<li>
@@ -13065,7 +13072,7 @@
 	</li>
 	<li>
 	  <para><lit>mwrite_g</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
-	  Cuando se escribe una matriz como texto en un archivo, Gretl
+	  Cuando se escribe una matriz como texto en un archivo, GRETL
 	  por defecto utiliza notación científica con 18 dígitos de
 	  precisión, asegurando de este modo que los valores guardados
 	  son una representación fiable de los números en memoria.
@@ -13077,7 +13084,7 @@
 	</li>
 	<li>
 	  <para><lit>force_decpoint</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
-	  Fuerza a Gretl a utilizar el carácter de punto decimal, en un
+	  Fuerza a GRETL a utilizar el carácter de punto decimal, en un
 	  escenario donde otro carácter (probablemente la coma) es el
 	  separador decimal estándar.
 	  </para>
@@ -13123,7 +13130,7 @@
 	</li>
 	<li>
 	  <para><lit>shell_ok</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
-	  Permite ejecutar programas externos desde Gretl mediante el
+	  Permite ejecutar programas externos desde GRETL mediante el
 	  intérprete de sistema. Esto no está habilitado por defecto
 	  por razones de seguridad, y solo puedes habilitarlo mediante la
 	  Interface Gráfica de Usuario (Herramientas/Preferencias/General).
@@ -13142,7 +13149,7 @@
 	</li>
 	<li>
 	  <para><lit>skip_missing</lit>: <lit>on</lit> (por defecto)
-	  u <lit>off</lit>. Controla el comportamiento de Gretl cuando
+	  u <lit>off</lit>. Controla el comportamiento de GRETL cuando
 	  se construye una matriz a partir de series de datos: por
 	  defecto se saltan las filas de datos que contienen uno o más
 	  valores ausentes, pero cuando se pone <lit>skip_missing</lit>
@@ -13187,7 +13194,7 @@
 
       <para>
 	Estas configuraciones se utilizan para controlar los algoritmos
-	numéricos que utiliza Gretl para la estimación.
+	numéricos que utiliza GRETL para la estimación.
 	</para>
       <ilist>
 	<li>
@@ -13201,7 +13208,7 @@
 	</li>
 	<li>
 	  <para><lit>bhhh_maxiter</lit>: Un entero, el número máximo de
-	  iteraciones para la rutina interna BHHH de Gretl, que se utiliza en la
+	  iteraciones para la rutina interna BHHH de GRETL, que se utiliza en la
 	  instrucción <cmd>arma</cmd> para la estimación MV condicional.
 	  Si la convergencia no se alcanza luego de <lit>bhhh_maxiter</lit>,
 	  el programa devuelve un fallo. Por defecto, se establece en 500.
@@ -13210,7 +13217,7 @@
 	<li>
 	  <para><lit>bhhh_toler</lit>: Un valor de punto flotante o la
 	  cadena <lit>default</lit>. Esto se utiliza en la rutina interna
-	  BHHH de Gretl para verificar si la convergencia se alcanzó.
+	  BHHH de GRETL para verificar si la convergencia se alcanzó.
 	  El algoritmo termina de repetirse tan pronto como el incremento
 	  en el logaritmo de la verosimilitud entre iteraciones sea menor que
 	  <lit>bhhh_toler</lit>. El valor por defecto es 1.0E&minus;06,
@@ -13220,7 +13227,7 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_maxiter</lit>: Un entero, el número máximo de
-	  iteraciones para la rutina BFGS de Gretl, que se utiliza para
+	  iteraciones para la rutina BFGS de GRETL, que se utiliza para
 	  <cmd>mle</cmd> (EMV), <cmd>gmm</cmd> (MXM) y varios
 	  estimadores específicos. Si no se alcanza la convergencia en el
 	  número indicado de iteraciones, el programa devuelve un fallo.
@@ -13231,7 +13238,7 @@
 	<li>
 	  <para><lit>bfgs_toler</lit>: Un valor de punto flotante o la
 	  cadena <lit>default</lit>. Esto se utiliza en la rutina interna BFGS
-	  de Gretl para verificar si la convergencia se alcanzó. El
+	  de GRETL para verificar si la convergencia se alcanzó. El
 	  algoritmo termina de repetirse tan pronto como la mejoría
 	  relativa en la función objetivo entre iteraciones sea menor que
 	  <lit>bfgs_toler</lit>. El valor por defecto es igual a la precisión
@@ -13241,7 +13248,7 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_maxgrad</lit>: Un valor de punto flotante. Esto
-	  se utiliza en la rutina interna BFGS de Gretl, para verificar si la norma
+	  se utiliza en la rutina interna BFGS de GRETL, para verificar si la norma
 	  del vector gradiente está razonablemente cerca de cero cuando se
 	  alcanza el criterio <lit>bfgs_toler</lit>. Se va a presentar una
 	  advertencia cuando la norma del vector gradiente exceda de 1; y
@@ -13320,12 +13327,12 @@
 	<li>
 	  <para><lit>fcp</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
 	  Utiliza el algoritmo de Fiorentini, Calzolari y Panattoni en vez del
-	  código propio de Gretl, cuando se calculan las estimaciones GARCH.
+	  código propio de GRETL, cuando se calculan las estimaciones GARCH.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>gmm_maxiter</lit>: Un entero, el número máximo de
-	  iteraciones de la instrucción <cmdref targ="gmm"/> de Gretl cuando
+	  iteraciones de la instrucción <cmdref targ="gmm"/> de GRETL cuando
 	  se está en modo iterativo (en contraposición al de un paso o
 	  al de dos pasos). El valor por defecto es 250.
 	  </para>
@@ -13401,7 +13408,7 @@
 	  Esto controla la distribución que se utiliza cuando se calculan las
 	  probabilidades asociadas (valores p) basadas en las desviaciones
 	  típicas robustas, en el contexto de los estimadores de mínimos cuadrados.
-	  Por defecto, Gretl utiliza la distribución <math>t</math> de Student
+	  Por defecto, GRETL utiliza la distribución <math>t</math> de Student
 	  pero si activas <lit>robust_z</lit>, se utiliza una distribución
 	  Normal.
 	  </para>
@@ -13552,9 +13559,9 @@
 	    <lit>altpoints</lit>, <lit>classic</lit>, <lit>dark2</lit>
 	    (la vigente por defecto), <lit>ethan</lit>, <lit>iwanthue</lit>
 	    o <lit>sober</lit>. Esto establece el <quote>tema</quote> que
-	    se utiliza para los gráficos que genera Gretl. La opción
+	    se utiliza para los gráficos que genera GRETL. La opción
 	    <lit>classic</lit> supone volver al sencillo tema que estaba
-	    vigente con antelación a la versión 2020c de Gretl.
+	    vigente con antelación a la versión 2020c de GRETL.
 	  </para>
 	</li>
       </ilist>
@@ -13660,7 +13667,7 @@
 
 	<para>* Renombrar una variable (tipo serie).</para>
 
-	    <para>* Añadir o editar la descripción de la variable que aparece al lado del nombre de estas, en la ventana principal de Gretl.
+	    <para>* Añadir o editar la descripción de la variable que aparece al lado del nombre de estas, en la ventana principal de GRETL.
 	    </para>
 
 	    <para>* Añadir o editar el 'nombre a mostrar' de una variable (si la variable
@@ -13728,12 +13735,12 @@
 	    </para>
 
       <para context="gui">
-	Gretl tiene su propia codificación interna para los valores ausentes,
+	GRETL tiene su propia codificación interna para los valores ausentes,
 	pero a veces con los datos que se importan se pudo emplear un código
 	diferente. Por ejemplo, si una serie en concreto está codificada de
 	modo que el valor -1 significa 'no aplicable', puedes seleccionar
 	'Establecer código de valor ausente' bajo el menú Variable, y
-	teclear el valor '-1' (sin comillas). Entonces Gretl leerá los valores -1
+	teclear el valor '-1' (sin comillas). Entonces GRETL leerá los valores -1
 	como observaciones ausentes.
       </para>
 
@@ -13827,7 +13834,7 @@
 	estándar (por ejemplo, 12 = mensuales y 4 = trimestrales). Pero si
 	tienes datos de series temporales poco habituales para las que no se
 	aplica la interpretación estándar, puedes señalar esto indicando la
-	opción <opt>special-time-series</opt>. En ese caso, Gretl no va a
+	opción <opt>special-time-series</opt>. En ese caso, GRETL no va a
 	advertir de que tus datos de (por ejemplo) frecuencia igual
 	a 12, sean mensuales.
       </para>
@@ -13929,7 +13936,7 @@
       <para>
 	Esta instrucción permite la configuración previa de opciones para una
 	instrucción concreta. Normalmente esto no hace falta, pero puede ser
-	útil para los autores de funciones en Hansl, cuando quieren hacer que
+	útil para los autores de funciones en HANSL, cuando quieren hacer que
 	algunas opciones de las instrucciones estén condicionadas al valor de un
 	argumento que proporcione quien las solicita.
       </para>
@@ -14415,7 +14422,7 @@
         </option>
         <option>
 	  <flag>--database</flag>
-	  <effect>Utiliza el formato de base de datos de Gretl</effect>
+	  <effect>Utiliza el formato de base de datos de GRETL</effect>
         </option>
         <option>
 	  <flag>--overwrite</flag>
@@ -14456,13 +14463,13 @@
 	<li>
 	  <para>
 	    <lit>.gdt</lit> (o sin extensión): Formato de datos XML propio
-	    de Gretl. (Si no indicas ninguna extensión, automáticamente
+	    de GRETL. (Si no indicas ninguna extensión, automáticamente
 	    se añade <quote><lit>.gdt</lit></quote>)
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>.gtdb</lit>: Formato de datos binario propio de Gretl.
+	    <lit>.gtdb</lit>: Formato de datos binario propio de GRETL.
 	  </para>
 	</li>
 	<li>
@@ -14490,7 +14497,7 @@
       <para>
 	Puedes usar los indicadores de opción relacionados con el formato que se
 	muestran arriba para forzar la cuestión del formato cuando se guarda, con
-	independencia del nombre del archivo (o para lograr que Gretl escriba
+	independencia del nombre del archivo (o para lograr que GRETL escriba
 	en los formatos de PcGive o JMulTi). Sin embargo, si <repl>nombrearchivo</repl>
 	tiene una extensión <lit>.gdt</lit> o <lit>.gdtb</lit>, esto implica
 	utilizar necesariamente el formato propio, y si añades un indicador
@@ -14522,7 +14529,7 @@
 	se fuerza a que el separador de columnas sea el punto y coma.
       </para>
       <para>
-	La posibilidad de guardar en el formato de base de datos de Gretl está
+	La posibilidad de guardar en el formato de base de datos de GRETL está
 	pensada para ayudar a construir conjuntos largos de series, tal vez
 	mezclando frecuencias y rangos de observaciones. En este momento, esta
 	opción solo está disponible para datos de series temporales de tipo
@@ -14875,7 +14882,7 @@
       </para>
       <para>
 	Una vez que estableces un formato personalizado de este modo,
-	este se recuerda y se utiliza a lo largo de lo que dure la sesión de Gretl.
+	este se recuerda y se utiliza a lo largo de lo que dure la sesión de GRETL.
 	Para revertir esto al formato por defecto, puedes utilizar la variante
 	especial <opt>format=default</opt>.
       </para>
@@ -15891,7 +15898,7 @@
 
     <description>
       <para>
-	El directorio de trabajo (o <quote>workdir</quote>) es donde Gretl hace
+	El directorio de trabajo (o <quote>workdir</quote>) es donde GRETL hace
 	la búsqueda por defecto al leer o escribir archivos de datos o guiones,
 	mediante los diálogos 'Abrir archivo de datos' y 'Guardar datos'.
 	Además, es la localización por defecto para
@@ -15930,8 +15937,8 @@
       </code>
       <para>
 	Por defecto, el valor de <lit>workdir</lit> se mantiene a lo largo de las sesiones
-	de Gretl. Sin embargo, los usuarios que quieran trabajar con el indicador de
-	instrucciones (lanzando Gretl desde una ventana de un terminal) pueden
+	de GRETL. Sin embargo, los usuarios que quieran trabajar con el indicador de
+	instrucciones (lanzando GRETL desde una ventana de un terminal) pueden
 	preferir tener el directorio de trabajo determinado automáticamente,
 	desde el principio, como directorio vigente (de acuerdo con el intérprete).
 	Puedes escoger esta opción en el diálogo o mediante la instrucción
@@ -15967,21 +15974,21 @@
       </para>
       <para>
 	Si escoges <quote>Ejecutar directamente ARIMA-X-12 </quote> entonces
-	Gretl escribe un archivo de instrucciones para ARIMA X-12, y solicita
+	GRETL escribe un archivo de instrucciones para ARIMA X-12, y solicita
 	que el programa 'x12a' ejecute las instrucciones. En este caso, tienes la
 	posibilidad de generar un gráfico, y/o guardar series escogidas del
-	resultado en el conjunto de datos de Gretl.
+	resultado en el conjunto de datos de GRETL.
       </para>
       <para>
 	Si escoges <quote>Preparar un archivo de instrucciones de ARIMA X-12</quote>,
-	Gretl escribe un archivo de instrucciones para ARIMA X-12 (igual que en el
+	GRETL escribe un archivo de instrucciones para ARIMA X-12 (igual que en el
 	caso de arriba), pero entonces abre este archivo en una ventana del editor.
 	En esta ventana puedes hacer cambios y guardar el archivo con el nombre que tú
 	elijas. También puedes enviar el archivo para que lo ejecute 'x12a' (pulsando
 	un clic en el botón <quote>Ejecutar</quote> en la barra de herramientas de la
 	ventana del editor) y comprobar el resultado. Pero en este caso, no tienes la
 	posibilidad de guardar los datos como series, ni de generar un gráfico
-	de Gretl.
+	de GRETL.
       </para>
     </description>
 
