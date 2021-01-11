@@ -6850,6 +6850,11 @@ static int initial_midas_check (int nvars, int any_wild, int pd,
     return err;
 }
 
+static int has_native_suffix (const char *fname)
+{
+    return has_suffix(fname, ".gdt") || has_suffix(fname, ".gdtb");
+}
+
 /**
  * gretl_join_data:
  * @fname: name of data file.
@@ -7087,7 +7092,7 @@ int gretl_join_data (const char *fname,
     if (!err) {
 	PRN *vprn = verbose ? prn : NULL;
 
-	if (opt & OPT_G) {
+	if ((opt & OPT_G) || has_native_suffix(fname)) {
 	    gretlopt gdt_opt = OPT_NONE;
 
 	    if (dataset_is_time_series(dset)) {
