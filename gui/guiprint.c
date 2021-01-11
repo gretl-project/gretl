@@ -743,10 +743,17 @@ int text_equation_ok (const MODEL *pmod)
     if (pmod->ci == OLS || pmod->ci == WLS ||
 	pmod->ci == HSK || pmod->ci == AR1 ||
 	pmod->ci == ARCH || pmod->ci == IVREG ||
-	pmod->ci == LAD || pmod->ci == PANEL ||
-	pmod->ci == LOGIT || pmod->ci == PROBIT ||
-	pmod->ci == TOBIT || pmod->ci == LOGISTIC) {
+	pmod->ci == PANEL || pmod->ci == LOGIT ||
+	pmod->ci == PROBIT || pmod->ci == TOBIT ||
+	pmod->ci == LOGISTIC) {
 	return 1;
+    } else if (pmod->ci == LAD) {
+	if (gretl_model_get_data(pmod, "rq_tauvec") != NULL) {
+	    /* multi-tau estimation: can't show equation */
+	    return 0;
+	} else {
+	    return 1;
+	}
     } else {
 	return 0;
     }
