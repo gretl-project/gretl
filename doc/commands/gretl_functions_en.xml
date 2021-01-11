@@ -1279,8 +1279,8 @@
 	<para>
 	  If the last model was a single equation, returns the list of
 	  regressors. If the last model was a system of equations,
-	  returns the <quote>global</quote> list of exogenous and
-	  predetermined variables (in the same order in which they
+	  returns the <quote>global</quote> list of exogenous 
+	  variables (in the same order in which they
 	  appear in <fncref targ="$sysB"/>). If the last model was a
 	  VAR, returns the list of exogenous regressors, if any,
 	  except for standard deterministic terms (constant, trend,
