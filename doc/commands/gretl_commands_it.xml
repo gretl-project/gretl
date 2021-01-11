@@ -14429,53 +14429,53 @@ qual caso viene usato QML.
 
 </command>
 
-<command name="sprintf" section="Printing" context="cli">
-  <description>
-    <para>
-      Questo comando è obsoleto: al suo posto, usare la funzione
-      <fncref targ="sprintf"/>.
-    </para>
-  </description>
-</command>
+  <command name="sprintf" section="Printing" context="cli">
+    <description>
+      <para>
+	Questo comando è obsoleto: al suo posto, usare la funzione
+	<fncref targ="sprintf"/>.
+      </para>
+    </description>
+  </command>
 
-<command name="square" section="Transformations" label="Crea quadrati delle
-							variabili" context="cli">
+  <command name="square" section="Transformations" label="Crea quadrati delle
+							  variabili" context="cli">
 
-  <usage>
-    <arguments>
-      <argument>lista-variabili</argument>
-    </arguments>
-    <options>
-      <option>
-	<flag>--cross</flag>
-	<effect>genera anche i prodotti incrociati, oltre ai quadrati</effect>
-      </option>
-    </options>
-  </usage>
+    <usage>
+      <arguments>
+	<argument>lista-variabili</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--cross</flag>
+	  <effect>genera anche i prodotti incrociati, oltre ai quadrati</effect>
+	</option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Genera nuove variabili che sono i quadrati delle variabili nella
+	<repl>lista-variabili</repl> (con anche i prodotti incrociati,
+	se si usa l'opzione <opt>cross</opt>). Ad esempio, <cmd>square
+	x y</cmd> genera <lit>sq_x</lit> = <lit>x</lit> al quadrato,
+	<lit>sq_y</lit> = <lit>y</lit> al quadrato e (opzionalmente)
+	<lit>x_y</lit> = <lit>x</lit> per <lit>y</lit>.
+	Se una particolare variabile è una dummy, non ne viene fatto il
+	quadrato, visto che si otterrebbe la stessa variabile.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>/Aggiungi/Quadrati delle variabili selezionate</menu-path>
+    </gui-access>
+    
+  </command>
 
-  <description>
-    <para>
-      Genera nuove variabili che sono i quadrati delle variabili nella
-      <repl>lista-variabili</repl> (con anche i prodotti incrociati,
-      se si usa l'opzione <opt>cross</opt>). Ad esempio, <cmd>square
-      x y</cmd> genera <lit>sq_x</lit> = <lit>x</lit> al quadrato,
-      <lit>sq_y</lit> = <lit>y</lit> al quadrato e (opzionalmente)
-      <lit>x_y</lit> = <lit>x</lit> per <lit>y</lit>.
-      Se una particolare variabile è una dummy, non ne viene fatto il
-      quadrato, visto che si otterrebbe la stessa variabile.
-    </para>
-  </description>
-
-  <gui-access>
-    <menu-path>/Aggiungi/Quadrati delle variabili selezionate</menu-path>
-  </gui-access>
-
-</command>
-
-<command name="stdize" section="Transformations"
-	 label="Standardize series">
-
-  <usage>
+  <command name="stdize" section="Transformations"
+	   label="Standardize series">
+    
+    <usage>
     <arguments>
       <argument>varlist</argument>
     </arguments>
@@ -14489,488 +14489,532 @@ qual caso viene usato QML.
 	<effect>non divide per lo sqm</effect>
       </option>
     </options>
-  </usage>
-
-  <description context="gui">
-    <para>
-      Per impostazione predefinita, quest'azione aggiunge al dataset
-      come nuove serie la versione standardizzata di quelle
-      originali, col prefisso <lit>s_</lit>. Ad esempio,
-      <lit>s_x</lit> viene formata sottraendo da 
-      <lit>x</lit> la sua media, dopodiché il risultato viene diviso
-      per il suo scarto quadratico medio (con una correzione per
-      gradi di libertà pari a 1). Tuttavia, è anche possibile usare
-      come divisore la deviazione standard senza correzione per
-      gradi di libertà (il cosiddetto stimatore ML).
-    </para>
-    <para>
-      Volendo, si possono costruire serie che sono soltanto centrate
-      (la media viene sottratta ma i dati non vengono scalati).  In
-      questo caso, il prefisso sarà <lit>c_</lit> anziché
-      <lit>s_</lit>.
-    </para>
-  </description>
-
-  <description context="cli">
-    <para>
-      Per impostazione predefinita, questo comando aggiunge al
-      dataset come nuove serie la versione standardizzata di quelle
-      originali, col prefisso <lit>s_</lit>. Ad esempio, <cmd>stdize
-      x y</cmd> crea le nuove serie <lit>s_x</lit> e <lit>s_y</lit>,
-      <lit>s_x</lit> ognuna delle quali viene formata sottraendo la
-      rispettiva media, dopodiché il risultato viene diviso per il
-      suo scarto quadratico medio (con una correzione per gradi di
-      libertà pari a 1).
-    </para>
-    <para>
-      Con l'opzione <opt>no-df-corr</opt> non si ha la correzione
-      per gradi di libertà, e si usa il cosiddetto stimatore ML.
-      Con l'opzione <opt>center-only</opt> verranno prodotte serie
-      che sono soltanto centrate (la media viene sottratta ma i dati
-      non vengono scalati).  In questo caso, il prefisso sarà
-      <lit>c_</lit> anziché <lit>s_</lit>.
-    </para>
-    <para>
-      La funzione <fncref targ="stdize"/> produce lo stesso
-      risultato, ma la sua sintassi è un po' più flessibile.
-</para>
-</description>
-
-<gui-access>
-<menu-path>/Aggiungi/Standardizza le variabili selezionate</menu-path>
-</gui-access>
-
-</command>
-
-<command name="store" section="Dataset"
-	 label="Salvataggio dei dati">
-
-  <usage>
-    <arguments>
-<argument>file-dati</argument>
-<argument optional="true">lista-variabili</argument>
-</arguments>
-<options>
-  <option>
-<flag>--csv</flag>
-<effect>usa il formato CSV</effect>
-</option>
-<option>
-<flag>--omit-obs</flag>
-<effect>si veda oltre, a proposito del formato CSV</effect>
-</option>
-<option>
-<flag>--gnu-octave</flag>
-<effect>usa il formato GNU Octave</effect>
-</option>
-<option>
-<flag>--gnu-R</flag>
-<effect>usa il formato GNU R</effect>
-</option>
-<option>
-<flag>--gzipped</flag>
-<effect>comprime con gzip</effect>
-</option>
-<option>
-<flag>--jmulti</flag>
-<effect>usa il formato ASCII di JMulti</effect>
-</option>
-<option>
-<flag>--dat</flag>
-<effect>usa il formato ASCII di PcGive</effect>
-</option>
-<option>
-<flag>--database</flag>
-<effect>usa il formato database di gretl</effect>
-</option>
-<option>
-<flag>--overwrite</flag>
-<effect>cfr oltre, a proposito del formato dei database</effect>
-</option>
-</options>
-</usage>
-
-<description>
-  <para>
-    Save data to <repl>filename</repl>. By default all currently
-defined series are saved but the optional <repl>varlist</repl>
-argument can be used to select a subset of series. If the
-dataset is sub-sampled, only the observations in the current
-sample range are saved.
-</para>
-<para>
-  Il file di output verrà scritto nella directory corrispondente
-  al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
-  di file contenga un percorso completo. 
-</para>
-<para>
-  The format in which the data are written may be controlled in
-  the first instance by the extension or suffix of
-  <repl>filename</repl>, as follows:
-</para>
-<ilist>
-  <li>
-    <para>
-      <lit>.gdt</lit>, or no extension: gretl's native XML
-      data format. (If no extension is provided,
-      <quote><lit>.gdt</lit></quote> is added automatically.)
-</para>
-</li>
-<li>
-  <para>
-    <lit>.gtdb</lit>: gretl's native binary data format.
-</para>
-</li>
-<li>
-  <para>
-    <lit>.csv</lit>: comma-separated values (CSV).
-</para>
-</li>
-<li>
-  <para>
-    <lit>.txt</lit> or <lit>.asc</lit>: space-separated
-    values.
-</para>
-</li>	
-<li>
-  <para>
-    <lit>.R</lit>: GNU R format.
-</para>
-</li>
-<li>
-  <para>
-    <lit>.m</lit>: GNU Octave format.
-</para>
-</li>
-<li>
-  <para>
-    <lit>.dta</lit>: Stata dta format (version 113).
-</para>
-</li>	
-</ilist>
-<para>
-  The format-related option flags shown above can be used to
-  force the issue of the save format independently of the
-  filename (or to get gretl to write in the formats of PcGive or
-  JMulTi). However, if <repl>filename</repl> has extension
-  <lit>.gdt</lit> or <lit>.gdtb</lit> this necessarily implies
-  use of native format and the addition of a conflicting
-  option flag will generate an error.
-</para>
-<para>
-  When data are saved in native format (only), the
-  <opt>gzipped</opt> option may be used for data compression,
-  which can be useful for large datasets. The optional parameter
-  for this flag controls the level of compression (from 0 to 9):
-  higher levels produce a smaller file, but compression takes
-  longer. The default level is 1; a level of 0 means that no
-  compression is applied.
-</para>
-
-<para>
-  L'opzione <opt>omit-obs</opt> è applicabile solo quando si salvano
-  dati in formato CSV. In modalità predefinita, se i dati sono serie
-  storiche o panel, o se il dataset include marcatori per osservazioni
-  specifiche, il file CSV comprende una prima colonna che identifica le
-  osservazioni (ad esempio per data). Se si usa <opt>omit-obs</opt>,
-  questa colonna verrà omessa e verranno salvati solo i dati effettivi.
-</para>
-
-<para>
-  Si noti che le variabili scalari non saranno salvate
-  automaticamente: per salvarle occorre includerle esplicitamente
-  nella <repl>lista-variabili</repl>.
-</para>  
-
-<para>
-  L'opzione di salvataggio in formato database di gretl è indicata se
-  occorre costruire dei grandi dataset di serie, magari con frequenze
-  diverse e diversi intervalli di osservazioni. Al momento questa opzione
-  è disponibile solo per dati annuali, trimestrali o mensili. Salvando su
-  un file che esiste già, il comportamento predefinito è quello di
-  accodare le nuove serie al contenuto del database preesistente. In
-  questo contesto, se una o più delle variabili da salvare hanno lo stesso
-  nome di una delle variabili già presenti nel database si otterrà un
-  messaggio di errore. L'opzione <opt>overwrite</opt> permette invece di
-  sovrascrivere eventuali variabili del dataset che hanno lo stesso nome
-  delle nuove variabili, in modo che queste ultime rimpiazzino le
-  variabili preesistenti.
-</para>
-<para>
-  The <opt>comment</opt> option is available when saving data
-  as a database or in CSV format. The required parameter is a
-  double-quoted one-line string, attached to the option flag
-  with an equals sign. The string is inserted as a comment into
-  the database index file or at the top of the CSV output.
-</para>
-<para>
-  Il comando <lit>store</lit> funziona in modo speciale se è
-  compreso in un <quote>progressive loop</quote>.  Vedi
-  <guideref targ="chap:looping"/> per dettagli.
-</para>
-</description>
-
-<gui-access>
-<menu-path>/File/Salva dati; /File/Esporta dati</menu-path>
-</gui-access>
-
-</command>
-
-<command name="summary" section="Statistics" 
-	 label="Statistiche descrittive" context="cli">
-
-  <usage>
-    <altforms>
-<altform><lit>summary [</lit> <repl>lista</repl> ]</altform>
-<altform><lit>summary --matrix=</lit><repl>nomematrice</repl></altform>
-</altforms>
-<options>
-  <option>
-<flag>--simple</flag>
-<effect>solo statistiche di base</effect>
-</option>
-<option>
-<flag>--weight</flag>
-<optparm>wvar</optparm>
-<effect>variabile peso</effect>
-</option>
-<option>
-<flag>--by</flag>
-<optparm>byvar</optparm>
-<effect>vedi sotto</effect>
-</option>
-</options>
-
-</usage>
-
-<description>
-  <para>
-    Nella prima forma, mostra le statistiche descrittive per le
-    variabili nella <repl>lista-variabili</repl>, o per tutte le
-    variabili nel dataset, se non si indica una
-    <repl>lista-variabili</repl>.  L'output comprende media,
-    scarto quadratico medio, coefficiente di variazione (= scarto
-    quadratico medio / media), mediana, minimo, massimo,
-    coefficiente di asimmetria, curtosi in eccesso. Dando
-    l'opzione <opt>simple</opt>, si avranno soltanto media,
-    minimo, massimo e scarto quadratico medio.
-</para>
-<para>
-  L'opzione <opt>by</opt> (dove il parametro
-  <repl>byvar</repl> dev'essere il nome di una variabile
-  discreta), provoca la stampa delle statistiche per
-  sottocampioni definiti dai diversi valori di
-  <repl>byvar</repl>.  Ad esempio, se <repl>byvar</repl> è una
-  variabile binaria (dummy), verranno riportate separatamente le
-  statistiche relative ai sottocampioni definitia dai due casi
-  <lit>byvar = 0</lit> e <lit>byvar = 1</lit>. Nota: al momento,
-  questa opzione è incompatibile con l'altra opzione
-  <opt>weight</opt>.
-</para>
-</description>
-
-<gui-access>
-  <menu-path>/Visualizza/Statistiche descrittive</menu-path>
-  <other-access>Menù pop-up nella finestra principale</other-access>
-</gui-access>
-
-</command>
-
-<command name="system" section="Estimation" label="Sistemi di equazioni">
-
-  <usage>
-    <altforms>
-      <altform><lit>system method=</lit><repl>stimatore</repl></altform>
-      <altform><repl>nome-sistema</repl><lit> &lt;- system</lit></altform>
-    </altforms>
-    <examples>
-      <example>"Klein Model 1" &lt;- system</example>
-      <example>system method=sur</example>
-      <example>system method=3sls</example>
-      <demos>
-	<demo>klein.inp</demo>
-	<demo>kmenta.inp</demo>
-	<demo>greene14_2.inp</demo>
-      </demos>
-    </examples>
-  </usage>
-
-  <description>
-
-    <para context="gui">In questa finestra, è possibile stimare sistemi di
-    equazioni e scegliere uno stimatore per il sistema. È possibile indicare
-    i seguenti quattro tipi di comandi:
-    </para>
-
-    <para context="cli">
-      Inizia un sistema di equazioni. Esistono due versioni del comando,
-      a seconda che si voglia salvare il sistema per poterlo stimare in
-      più modi diversi, oppure stimare il sistema una volta sola.
-    </para>
-
-    <para context="cli">
-      Per salvare il sistema occorre dargli un nome, come nel primo esempio
-      proposto (se il nome contiene spazi, occorre racchiuderlo tra virgolette).
-      In questo caso, è possibile stimare il sistema con il comando
-      <cmdref targ="estimate"/>. Una volta che il sistema è stato salvato, è
-      possibile imporre dei vincoli su di esso (compresi vincoli incrociati
-      tra equazioni) usando il comando <cmdref targ="restrict"/>.
-    </para>
-
-    <para context="cli">
-      In alternativa, è possibile indicare uno stimatore per il sistema
-      usando <lit>method=</lit> seguito da una stringa che identifica uno
-      degli stimatori supportati: <cmd>ols</cmd> (ordinary least squares -
-      minimi quadrati ordinari), <cmd>tsls</cmd> (two-stage least squares -
-      minimi quadrati a due stadi), <cmd>sur</cmd> (seemingly unrelated
-      regressions - regressioni apparentemente non collegate), <cmd>3sls</cmd>
-      (three-stage least squares - minimi quadrati a tre stadi),
-      <cmd>fiml</cmd> (full information maximum likelihood - massima
-      verosimiglianza con informazione completa) o <cmd>liml</cmd> (limited
-      information maximum likelihood - massima verosimiglianza con
-      informazione limitata). In questo caso, il sistema viene stimato appena
-      completata la sua definizione.
-    </para>
-
-    <para context="cli">Un sistema di equazioni termina con la riga
-    <cmd>end system</cmd>.  All'interno del sistema possono essere
-    definiti i quattro tipi di istruzioni seguenti.</para>
-
-    <ilist>
-      <li><para><cmdref targ="equation"/>: specifica un'equazione del sistema.
-      Occorre indicarne almeno due.</para>
-      </li>
-      <li><para><cmd>instr</cmd>: per i sistemi da stimare con i minimi
-      quadrati a tre stadi, indica la lista degli strumenti (indicati
-      dal nome o dal numero della variabile). In alternativa, è possibile
-      fornire questa informazione nella riga <cmd>equation</cmd> usando la
-      stessa sintassi accettata dal comando <cmdref targ="tsls"/>.</para>
-      </li>
-      <li><para><cmd>endog</cmd>: per i sistemi di equazioni
-      simultanee, indica la lista delle variabili endogene. È
-      indicato principalmente per la stima FIML, ma può essere usato
-      anche nella stima minimi quadrati a tre stadi al posto
-      dell'istruzione <cmd>instr</cmd>: in questo modo tutte le
-      variabili non identificate come endogene verranno usate come
-      strumenti.</para>
-      </li>
-      <li><para><cmd>identity</cmd>: per la stima FIML, un'identità
-      che collega due o più variabili del sistema. Questo tipo di
-      istruzione è ignorata se viene usato uno stimatore diverso da
-      FIML.
-    </para>
-      </li>
-    </ilist>
+    </usage>
     
-    <para context="cli">
-      Dopo la stima eseguita con i comandi <cmd>system</cmd> o
-      <cmd>estimate</cmd> è possibile recuperare informazioni aggiuntive dalle
-      seguenti variabili accessorie:
-    </para>
+    <description context="gui">
+      <para>
+	Per impostazione predefinita, quest'azione aggiunge al dataset
+	come nuove serie la versione standardizzata di quelle
+	originali, col prefisso <lit>s_</lit>. Ad esempio,
+	<lit>s_x</lit> viene formata sottraendo da 
+	<lit>x</lit> la sua media, dopodiché il risultato viene diviso
+	per il suo scarto quadratico medio (con una correzione per
+	gradi di libertà pari a 1). Tuttavia, è anche possibile usare
+	come divisore la deviazione standard senza correzione per
+	gradi di libertà (il cosiddetto stimatore ML).
+      </para>
+      <para>
+	Volendo, si possono costruire serie che sono soltanto centrate
+	(la media viene sottratta ma i dati non vengono scalati).  In
+	questo caso, il prefisso sarà <lit>c_</lit> anziché
+	<lit>s_</lit>.
+      </para>
+    </description>
 
-    <ilist context="cli">
-      <li>
-        <para><fncref targ="$uhat"/>: la matrice dei residui, una colonna per
-        equazione.
-	</para>
-      </li>
-      <li>
-        <para><fncref targ="$yhat"/>: la matrice dei valori stimati, una colonna
-        per equazione.
-	</para>
-      </li>
-      <li>
-        <para><fncref targ="$coeff"/>: il vettore colonna dei coefficienti
-        (tutti i coefficienti della prima equazione, seguiti da
-        quelli della seconda equazione, e così via).
-	</para>
-      </li>
-      <li>
-        <para><fncref targ="$vcv"/>: la matrice di covarianza dei coefficienti.
-        Se il vettore <fncref targ="$coeff"/> ha <math>k</math> elementi,
-        questa matrice ha dimensione <math>k</math> per <math>k</math>.
-	</para>
-      </li>
-      <li>
-        <para><fncref targ="$sigma"/>: la matrice di covarianza dei residui
-        incrociata tra equazioni.
-	</para>
-      </li>
-      <li><para><fncref targ="$sysGamma"/>, <fncref targ="$sysA"/> e
-      <fncref targ="$sysB"/>: matrici dei coefficienti in forma
-      strutturale (si veda oltre).
-    </para>
-      </li>
-    </ilist>
+    <description context="cli">
+      <para>
+	Per impostazione predefinita, questo comando aggiunge al
+	dataset come nuove serie la versione standardizzata di quelle
+	originali, col prefisso <lit>s_</lit>. Ad esempio, <cmd>stdize
+	x y</cmd> crea le nuove serie <lit>s_x</lit> e <lit>s_y</lit>,
+	<lit>s_x</lit> ognuna delle quali viene formata sottraendo la
+	rispettiva media, dopodiché il risultato viene diviso per il
+	suo scarto quadratico medio (con una correzione per gradi di
+	libertà pari a 1).
+      </para>
+      <para>
+	Con l'opzione <opt>no-df-corr</opt> non si ha la correzione
+	per gradi di libertà, e si usa il cosiddetto stimatore ML.
+	Con l'opzione <opt>center-only</opt> verranno prodotte serie
+	che sono soltanto centrate (la media viene sottratta ma i dati
+	non vengono scalati).  In questo caso, il prefisso sarà
+	<lit>c_</lit> anziché <lit>s_</lit>.
+      </para>
+      <para>
+	La funzione <fncref targ="stdize"/> produce lo stesso
+	risultato, ma la sua sintassi è un po' più flessibile.
+      </para>
+    </description>
 
-    <para context="cli">
-      Se si vuole salvare i residui o i valori stimati per una specifica
-      equazione come serie di dati, basta selezionare la colonna dalla matrice
-      <fncref targ="$uhat"/> o <fncref targ="$yhat"/> e assegnarla a una serie, come in
-    </para>
-    <code context="cli">
-      series uh1 = $uhat[,1]
-    </code>
+    <gui-access>
+      <menu-path>/Aggiungi/Standardizza le variabili selezionate</menu-path>
+    </gui-access>
 
-    <para context="cli">
-      Le matrici in forma strutturale corrispondono alla seguente
-      rappresentazione di un modello ad equazioni simultanee:
-      <equation status="display"
-		tex="\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]"
-		ascii="Gamma y(t) = A y(t-1) + B x(t) + e(t)"
-		graphic="structural"/> Se ci sono <math>n</math> variabili endogene e
-      <math>k</math> variabili esogene,
-      <equation status="inline"
-		tex="$\Gamma$"
-		ascii="Gamma"
-		graphic="Gamma"/> è una matrice <by r="n" c="n"/> e <math>B</math> è
-      <by r="n" c="k"/>. Se il sistema non contiene ritardi delle variabili
-      endogene, la matrice <math>A</math> non è presente. Se il massimo
-      ritardo di un regressore endogeno è <math>p</math>, la matrice
-      <math>A</math> è <by r="n" c="np"/>.
-    </para>
+  </command>
+
+  <command name="store" section="Dataset"
+	   label="Salvataggio dei dati">
+
+    <usage>
+      <arguments>
+	<argument>file-dati</argument>
+	<argument optional="true">lista-variabili</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--csv</flag>
+	  <effect>usa il formato CSV</effect>
+	</option>
+	<option>
+	  <flag>--omit-obs</flag>
+	  <effect>si veda oltre, a proposito del formato CSV</effect>
+	</option>
+        <option>
+	  <flag>--no-header</flag>
+	  <effect>si veda oltre, a proposito del formato CSV</effect>
+        </option>
+	<option>
+	  <flag>--gnu-octave</flag>
+	  <effect>usa il formato GNU Octave</effect>
+	</option>
+	<option>
+	  <flag>--gnu-R</flag>
+	  <effect>usa il formato GNU R</effect>
+	</option>
+	<option>
+	  <flag>--gzipped</flag>
+	  <effect>comprime con gzip</effect>
+	</option>
+	<option>
+	  <flag>--jmulti</flag>
+	  <effect>usa il formato ASCII di JMulti</effect>
+	</option>
+	<option>
+	  <flag>--dat</flag>
+	  <effect>usa il formato ASCII di PcGive</effect>
+	</option>
+	<option>
+	  <flag>--database</flag>
+	  <effect>usa il formato database di gretl</effect>
+	</option>
+	<option>
+	  <flag>--overwrite</flag>
+	  <effect>cfr oltre, a proposito del formato dei database</effect>
+	</option>
+        <option>
+	  <flag>--comment</flag>
+	  <optparm>string</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
+        <option>
+	  <flag>--matrix</flag>
+	  <optparm>nome-matrice</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Salva i dati nel file <repl>filename</repl>. Per default,
+	vengono salvate tutte le serie attualmente definite, ma usando
+	l'argomento opzionale <repl>varlist</repl> è possibile
+	salvarne solo una parte. Se il dataset è sottocampionato,
+	verranno salvate solo le osservazioni attualmente attive.
+      </para>
+      <para>
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
+	di file contenga un percorso completo. 
+      </para>
+      <para>
+	Il formato in cui i dati vengono salvati è controllato, in
+	primo luogo dall'estensione di <repl>filename</repl>, come segue:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    <lit>.gdt</lit>, o senza estensione: formato XML nativo di
+	    gretl. (Se non viene specificata un'estensione,
+	    <quote><lit>.gdt</lit></quote> viane aggiunta
+	    automaticamente.)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.gtdb</lit>: formato nativo binario di gretl.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.csv</lit>: testo separato da virgole (CSV).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.txt</lit> o <lit>.asc</lit>: testo separato da
+	    spazi.
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	    <lit>.m</lit>: formato GNU Octave.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>.dta</lit>: formato Stata (version 113).
+	  </para>
+	</li>	
+      </ilist>
+      <para>
+	Le opzioni di formato mostrate sopra possono essere usate per
+	forzare un certo formato indipendentemente dall'estensione
+	data al file. Tuttavia, se <repl>nome-file</repl> ha estensione
+	<lit>.gdt</lit> o <lit>.gdtb</lit>, il formato usato sarà
+	comunque quello nativo e l'uso delle opzioni di formato
+	genererà un errore.
+      </para>
+      <para>
+	Quando si salva in formato nativo, l'opzione
+	<opt>gzipped</opt> abilita la compressione, cosa che può
+	essere utile per grandi dataset. Pewr questa opzione, il
+	parametro opzione controla il livello di compressione (da 0 a
+	9): livelli più alti producono file più piccoli, ma in tempi
+	più lunghi. Il valore di default è 1; col livello 0 non c'è
+	alcuna compressione.
+      </para>
+      <para>
+	L'opzione <opt>omit-obs</opt> è applicabile solo quando si
+	salvano dati in formato CSV. In modalità predefinita, se i
+	dati sono serie storiche o panel, o se il dataset include
+	marcatori per osservazioni specifiche, il file CSV comprende
+	una prima colonna che identifica le osservazioni (ad esempio
+	per data). Se si usa <opt>omit-obs</opt>, questa colonna verrà
+	omessa e verranno salvati solo i dati effettivi. L'opzione
+	<opt>no-header</opt> fa sì che venga omessa la stampa dei nomi
+	di variabile in cima al file.
+      </para>
+      <para>
+	L'opzione <opt>decimal-comma</opt> è anch'essa specifica al
+	salvgataggio in formato CSV, e fa sì che venga usata la
+	virgola come separatore decimale e il punto e virgola come
+	separatore di campo.
+      </para>  
+
+      <para>
+	L'opzione di salvataggio in formato database di gretl è indicata se
+	occorre costruire dei grandi dataset di serie, magari con frequenze
+	diverse e diversi intervalli di osservazioni. Al momento questa opzione
+	è disponibile solo per dati annuali, trimestrali o mensili. Salvando su
+	un file che esiste già, il comportamento predefinito è quello di
+	accodare le nuove serie al contenuto del database preesistente. In
+	questo contesto, se una o più delle variabili da salvare hanno lo stesso
+	nome di una delle variabili già presenti nel database si otterrà un
+	messaggio di errore. L'opzione <opt>overwrite</opt> permette invece di
+	sovrascrivere eventuali variabili del dataset che hanno lo stesso nome
+	delle nuove variabili, in modo che queste ultime rimpiazzino le
+	variabili preesistenti.
+      </para>
+      <para>
+	L'opzione <opt>comment</opt> è disponibile quando si salva
+	come database o come CSV. Il parametro richiesto consta du una
+	linea, racchiusa da virgolette doppie, passata all'opzone dopo
+	un segno di uguale. Tale stringa verrà inserita come commento
+	nel file indice del database o all'inizio del file CSV.
+      </para>
+      <para>
+	Il comando <lit>store</lit> funziona in modo speciale se è
+	compreso in un <quote>progressive loop</quote>.  Vedi
+	<guideref targ="chap:looping"/> per dettagli.
+      </para>
+      <subhead>Salvare una matrice come dataset</subhead>
+      <para>
+	L'opzione <opt>matrix</opt> richiede, come parametro, il nome
+	di una matrice non vuota. L'effetto del comando
+	<lit>store</lit> sarà quello di trasformare la matrice in un
+	dataset <quote>dietro le quinte</quote> e salvarlo su file
+	come tale. Le colonne della matrice diventano serie, e i loro
+	nomi sono dati dai nomi di colonn, se presenti; altrimenti,
+	saranno dati da <lit>v1</lit>, <lit>v2</lit> e così via. Se la
+	matrice ha nomi di riga, questi verranno convertiti in
+	<quote>etichette di osservazione</quote>.
+      </para>
+      <para>
+	Si noti che la funzione <fncref targ="mwrite"/> permette di
+	salvare su file matrici in quanto tali, ma a volte può essere
+	più utile salvarle come dataset.
+      </para>
+    </description>
     
-  </description>
+    <gui-access>
+      <menu-path>/File/Salva dati; /File/Esporta dati</menu-path>
+    </gui-access>
+    
+  </command>
+
+  <command name="summary" section="Statistics" 
+	   label="Statistiche descrittive" context="cli">
+    
+    <usage>
+      <altforms>
+	<altform><lit>summary [</lit> <repl>lista</repl> ]</altform>
+	<altform><lit>summary --matrix=</lit><repl>nomematrice</repl></altform>
+      </altforms>
+      <options>
+	<option>
+	  <flag>--simple</flag>
+	  <effect>solo statistiche di base</effect>
+	</option>
+	<option>
+	  <flag>--weight</flag>
+	  <optparm>wvar</optparm>
+	  <effect>variabile peso</effect>
+	</option>
+	<option>
+	  <flag>--by</flag>
+	  <optparm>byvar</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+      </options>
+      <examples>
+	<demos>
+	  <demo>frontier.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    
+    <description>
+      <para>
+	Nella prima forma, mostra le statistiche descrittive per le
+	variabili nella <repl>lista-variabili</repl>, o per tutte le
+	variabili nel dataset, se non si indica una
+	<repl>lista-variabili</repl>.  L'output comprende media,
+	scarto quadratico medio, coefficiente di variazione (= scarto
+	quadratico medio / media), mediana, minimo, massimo,
+	coefficiente di asimmetria, curtosi in eccesso. Dando
+	l'opzione <opt>simple</opt>, si avranno soltanto media,
+	minimo, massimo e scarto quadratico medio.
+      </para>
+      <para>
+	L'opzione <opt>by</opt> (dove il parametro
+	<repl>byvar</repl> dev'essere il nome di una variabile
+	discreta), provoca la stampa delle statistiche per
+	sottocampioni definiti dai diversi valori di
+	<repl>byvar</repl>.  Ad esempio, se <repl>byvar</repl> è una
+	variabile binaria (dummy), verranno riportate separatamente le
+	statistiche relative ai sottocampioni definitia dai due casi
+	<lit>byvar = 0</lit> e <lit>byvar = 1</lit>. Nota: al momento,
+	questa opzione è incompatibile con l'altra opzione
+	<opt>weight</opt>.
+      </para>
+      <para>
+	Se si usa la forma alternativa in cui il parametro è una
+	matrice, allora le statistiche descrittive sono calcolate per
+	le colonne della matrice. L'opzione <opt>by</opt> non è
+	disponibile per questo caso.
+      </para>
+      <para>
+	La tavola prodotta dal comando <lit>summary</lit> è
+	disponibile sotto forma di matrice con l'accessore <fncref targ="$result"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Visualizza/Statistiche descrittive</menu-path>
+      <other-access>Menù pop-up nella finestra principale</other-access>
+    </gui-access>
+    
+  </command>
+
+  <command name="system" section="Estimation" label="Sistemi di equazioni">
+
+    <usage>
+      <altforms>
+	<altform><lit>system method=</lit><repl>stimatore</repl></altform>
+	<altform><repl>nome-sistema</repl><lit> &lt;- system</lit></altform>
+      </altforms>
+      <examples>
+	<example>"Klein Model 1" &lt;- system</example>
+	<example>system method=sur</example>
+	<example>system method=3sls</example>
+	<demos>
+	  <demo>klein.inp</demo>
+	  <demo>kmenta.inp</demo>
+	  <demo>greene14_2.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    
+    <description>
+
+      <para context="gui">
+	In questa finestra, è possibile stimare sistemi di
+	equazioni e scegliere uno stimatore per il sistema. È possibile indicare
+	i seguenti quattro tipi di comandi:
+      </para>
+
+      <para context="cli">
+	Inizia un sistema di equazioni. Esistono due versioni del comando,
+	a seconda che si voglia salvare il sistema per poterlo stimare in
+	più modi diversi, oppure stimare il sistema una volta sola.
+      </para>
+
+      <para context="cli">
+	Per salvare il sistema occorre dargli un nome, come nel primo esempio
+	proposto (se il nome contiene spazi, occorre racchiuderlo tra virgolette).
+	In questo caso, è possibile stimare il sistema con il comando
+	<cmdref targ="estimate"/>. Una volta che il sistema è stato salvato, è
+	possibile imporre dei vincoli su di esso (compresi vincoli incrociati
+	tra equazioni) usando il comando <cmdref targ="restrict"/>.
+      </para>
+      
+      <para context="cli">
+	In alternativa, è possibile indicare uno stimatore per il sistema
+	usando <lit>method=</lit> seguito da una stringa che identifica uno
+	degli stimatori supportati: <cmd>ols</cmd> (ordinary least squares -
+	minimi quadrati ordinari), <cmd>tsls</cmd> (two-stage least squares -
+	minimi quadrati a due stadi), <cmd>sur</cmd> (seemingly unrelated
+	regressions - regressioni apparentemente non collegate), <cmd>3sls</cmd>
+	(three-stage least squares - minimi quadrati a tre stadi),
+	<cmd>fiml</cmd> (full information maximum likelihood - massima
+	verosimiglianza con informazione completa) o <cmd>liml</cmd> (limited
+	information maximum likelihood - massima verosimiglianza con
+	informazione limitata). In questo caso, il sistema viene stimato appena
+	completata la sua definizione.
+      </para>
+
+      <para context="cli">
+	Un sistema di equazioni termina con la riga
+	<cmd>end system</cmd>.  All'interno del sistema possono essere
+	definiti i quattro tipi di istruzioni seguenti.
+      </para>
+      
+      <ilist>
+	<li><para><cmdref targ="equation"/>: specifica un'equazione del sistema.
+	Occorre indicarne almeno due.</para>
+	</li>
+	<li><para><cmd>instr</cmd>: per i sistemi da stimare con i minimi
+	quadrati a tre stadi, indica la lista degli strumenti (indicati
+	dal nome o dal numero della variabile). In alternativa, è possibile
+	fornire questa informazione nella riga <cmd>equation</cmd> usando la
+	stessa sintassi accettata dal comando <cmdref targ="tsls"/>.</para>
+	</li>
+	<li><para><cmd>endog</cmd>: per i sistemi di equazioni
+	simultanee, indica la lista delle variabili endogene. È
+	indicato principalmente per la stima FIML, ma può essere usato
+	anche nella stima minimi quadrati a tre stadi al posto
+	dell'istruzione <cmd>instr</cmd>: in questo modo tutte le
+	variabili non identificate come endogene verranno usate come
+	strumenti.</para>
+	</li>
+	<li><para><cmd>identity</cmd>: per la stima FIML, un'identità
+	che collega due o più variabili del sistema. Questo tipo di
+	istruzione è ignorata se viene usato uno stimatore diverso da
+	FIML.
+      </para>
+	</li>
+      </ilist>
+      
+      <para context="cli">
+	Dopo la stima eseguita con i comandi <cmd>system</cmd> o
+	<cmd>estimate</cmd> è possibile recuperare informazioni aggiuntive dalle
+	seguenti variabili accessorie:
+      </para>
+      
+      <ilist context="cli">
+	<li>
+          <para><fncref targ="$uhat"/>: la matrice dei residui, una colonna per
+          equazione.
+	  </para>
+	</li>
+	<li>
+          <para><fncref targ="$yhat"/>: la matrice dei valori stimati, una colonna
+          per equazione.
+	  </para>
+	</li>
+	<li>
+          <para><fncref targ="$coeff"/>: il vettore colonna dei coefficienti
+          (tutti i coefficienti della prima equazione, seguiti da
+          quelli della seconda equazione, e così via).
+	  </para>
+	</li>
+	<li>
+          <para><fncref targ="$vcv"/>: la matrice di covarianza dei coefficienti.
+          Se il vettore <fncref targ="$coeff"/> ha <math>k</math> elementi,
+          questa matrice ha dimensione <math>k</math> per <math>k</math>.
+	  </para>
+	</li>
+	<li>
+          <para><fncref targ="$sigma"/>: la matrice di covarianza dei residui
+          incrociata tra equazioni.
+	  </para>
+	</li>
+	<li><para><fncref targ="$sysGamma"/>, <fncref targ="$sysA"/> e
+	<fncref targ="$sysB"/>: matrici dei coefficienti in forma
+	strutturale (si veda oltre).
+      </para>
+	</li>
+      </ilist>
+      
+      <para context="cli">
+	Se si vuole salvare i residui o i valori stimati per una specifica
+	equazione come serie di dati, basta selezionare la colonna dalla matrice
+	<fncref targ="$uhat"/> o <fncref targ="$yhat"/> e assegnarla a una serie, come in
+      </para>
+      <code context="cli">
+	series uh1 = $uhat[,1]
+      </code>
+      
+      <para context="cli">
+	Le matrici in forma strutturale corrispondono alla seguente
+	rappresentazione di un modello ad equazioni simultanee:
+	<equation status="display"
+		  tex="\[\Gamma y_t=Ay_{t-1}+Bx_t+\epsilon_t\]"
+		  ascii="Gamma y(t) = A y(t-1) + B x(t) + e(t)"
+		  graphic="structural"/> Se ci sono <math>n</math> variabili endogene e
+	<math>k</math> variabili esogene,
+	<equation status="inline"
+		  tex="$\Gamma$"
+		  ascii="Gamma"
+		  graphic="Gamma"/> è una matrice <by r="n" c="n"/> e <math>B</math> è
+	<by r="n" c="k"/>. Se il sistema non contiene ritardi delle variabili
+	endogene, la matrice <math>A</math> non è presente. Se il massimo
+	ritardo di un regressore endogeno è <math>p</math>, la matrice
+	<math>A</math> è <by r="n" c="np"/>.
+      </para>
+      
+    </description>
+    
+    <gui-access>
+      <menu-path>/Modello/Equazioni simultanee</menu-path>
+    </gui-access>
+    
+  </command>
   
-  <gui-access>
-    <menu-path>/Modello/Equazioni simultanee</menu-path>
-  </gui-access>
-
-</command>
-
-<command name="tabprint" section="Printing" label="Stampa modelli in forma
+  <command name="tabprint" section="Printing" label="Stampa modelli in forma
 						   tabulare" context="cli">
-
-  <usage>
-    <options>
-      <option>
-	<flag>--format="f1|f2|f3|f4"</flag>
-	<effect>Specifica un formato personalizzato</effect>
-      </option>
-      <option>
-	<flag>--output</flag>
-	<optparm>filename</optparm>
-	<effect>invia l'output al file specificato</effect>
-      </option>	
-    </options>
-  </usage>
-
-  <description>
-    <para>
-      Va eseguito dopo la stima di un modello.  Stampa il modello
-      stimato sotto forma di tabella, in formato &latex; o in
-      formato RTF o CSV, se viene usata l'opzione corrispondente.
-      Se viene specificato un nome di file dopo l'opzione
-      <opt>output</opt>, l'output viene scritto nel file, altrimenti
-      viene scritto in un file col nome
-      <filename>model_N.tex</filename> (o
-      <filename>model_N.rtf</filename>), dove <lit>N</lit> è il
-      numero dei modelli stimati finora nella sessione in corso.
-    </para>
-    <para>
-      Il file di output verrà scritto nella directory corrispondente
-      al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
-      di file contenga un percorso completo. 
+    
+    <usage>
+      <options>
+	<option>
+	  <flag>--format="f1|f2|f3|f4"</flag>
+	  <effect>Specifica un formato personalizzato</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>invia l'output al file specificato</effect>
+	</option>	
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Va eseguito dopo la stima di un modello.  Stampa il modello
+	stimato sotto forma di tabella, in formato &latex; o in
+	formato RTF o CSV, se viene usata l'opzione corrispondente.
+	Se viene specificato un nome di file dopo l'opzione
+	<opt>output</opt>, l'output viene scritto nel file, altrimenti
+	viene scritto in un file col nome
+	<filename>model_N.tex</filename> (o
+	<filename>model_N.rtf</filename>), dove <lit>N</lit> è il
+	numero dei modelli stimati finora nella sessione in corso.
+      </para>
+      <para>
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
+	di file contenga un percorso completo. 
     </para>
     <para>
       Selezionando il formato CSV, i valori sono separati da
@@ -15032,45 +15076,59 @@ sample range are saved.
 
 </command>
 
-<command name="tdisagg" section="Dataset" label="Disaggregazione temporale"
-	 context="gui">
-  <description>
-    <para>
-      Queste sono le opzioni disponibili nella finestra di dialogo
-      per la disaggregazione temporale
-    </para>
-    <ilist>
-      <li>
-	<para>
-	  <lit>nome di output</lit> (se applicabile): Qui si sceglie
-	  se sovrascrivere una serie esistente con i dati
-	  disaggregati o crearne una nuova.
-	</para>
-      </li>
-      <li>
-	<para>
-	  <lit>tipo di aggregazione</lit>: Se si andasse nella
-	  direzione opposta, (aggregando anziché disaggregando) come
-	  sarebbe definita la serie a bassa frequenza? Somma, media,
-	  periodo iniziale o periodo finale? La disaggregazione
-	  dipende anche da questo.
-	</para>
-      </li>
-      <li>
-	<para>
-	  CONTINUA
-	</para>
+  <command name="tdisagg" section="Dataset" label="Disaggregazione temporale"
+	   context="gui">
+    <description>
+      <para>
+	Queste sono le opzioni disponibili nella finestra di dialogo
+	per la disaggregazione temporale. Per un'esposizione
+	dettagliata si veda <guideref targ="chap:tdisagg"/>.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Nome di output: Qui si sceglie se sovrascrivere una serie
+	    esistente con i dati disaggregati o crearne una nuova.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Tipo di aggregazione: Se si andasse nella direzione
+	    opposta, (aggregando anziché disaggregando) come sarebbe
+	    definita la serie a bassa frequenza? La scelta
+	    <lit>sum</lit> è appropriata se la serie a bassa frequenza
+	    risulta dalla somma dei valori ad alta frequenza
+	    (variabili flusso, come ad esempio il PIL). 
+	    Scegliendo <lit>avg</lit> si assume che la serie ad alta
+	    frequenza sia uguale in media al valore a bassa frequenza
+	    (numeri indice, rapporti, o variabili flusso <quote>a
+	    tassi annuali</quote>). La scelta <lit>last</lit> o
+	    <lit>first</lit> va usata per serie di tipo stock, come ad
+	    esempio lo stock di moneta.
+         </para>
+       </li>
+       <li>
+	 <para>
+	   Basato su regressione o Denton: La prima opzione è quella
+	   generalmente consigliabile. In questo caso, si può
+	   selezionare il metodo di Fernández se si pensa che la serie
+	   contenga una radice unitaria; altrimenti, si può usare
+	   Chow&ndash;Lin. L'so del metodo di Denton è consigliato a
+	   chi sa cosa sta facendo. I metodi Denton sono in differenze
+	   prime, secondo la modifica di Cholette.
+        </para>
       </li>
     </ilist>
   </description>
-</command>
 
-<command name="textplot" section="Graphs" label="Grafici ASCII" context="cli">
-  <usage>
-    <arguments>
-      <argument>lista-variabili</argument>
-    </arguments>
-    <options>
+  </command>
+
+  <command name="textplot" section="Graphs" label="Grafici ASCII" context="cli">
+    <usage>
+      <arguments>
+<argument>lista-variabili</argument>
+</arguments>
+<options>
       <option>
 	<flag>--time-series</flag>
 	<effect>disegna per osservazione</effect>
@@ -15110,14 +15168,13 @@ sample range are saved.
     </para>
   </description>
 
-</command>
+  </command>
+  <command name="tobit" section="Estimation" label="Stima Tobit">
 
-<command name="tobit" section="Estimation" label="Stima Tobit">
-
-  <usage>
-    <arguments>
-      <argument>variabile-dipendente</argument>
-      <argument>variabili-indipendenti</argument>
+    <usage>
+      <arguments>
+        <argument>variabile-dipendente</argument>
+        <argument>variabili-indipendenti</argument>
     </arguments>
     <options>
       <option>
@@ -15216,172 +15273,178 @@ sample range are saved.
 
 </command>
 
-<command name="tsls" section="Estimation"
-	 label="Stima minimi quadrati a due stadi">
-
-  <usage>
-    <arguments>
-      <argument>variabile-dipendente</argument>
-      <argument>variabili-indipendenti</argument>
-      <argument separated="true">strumenti</argument>
-    </arguments>
-    <options>
-      <option>
-	<flag>--no-tests</flag>
-	<effect>omette i test diagnostici</effect>
-      </option>
-      <option>
-	<flag>--vcv</flag>
-	<effect>mostra la matrice di covarianza</effect>
-      </option>
-      <option>
-	<flag>--quiet</flag>
-	<effect>non stampare i risultati</effect>
-      </option>
-      <option>
-	<flag>--no-df-corr</flag>
-	<effect>omette la correzione per gradi di libertà</effect>
-      </option>
-      <option>
-	<flag>--robust</flag>
-	<effect>errori standard robusti</effect>
-      </option>
-      <option>
-	<flag>--cluster</flag>
-	<optparm>clustvar</optparm>
-	<effect>standard error clusterizzati</effect>
-      </option>
-      <option>
- 	<flag>--liml</flag>
- 	<effect>usa massima verosimiglianza a informazione limitata</effect>
-      </option>
-      <option>
- 	<flag>--gmm</flag>
- 	<effect>usa il metodo generalizzato dei momenti</effect>
-      </option>
-    </options>      
-    <examples>
-      <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
-    </examples>
-  </usage>
-
-  <description>
-    <para context="cli">
-      Calcola le stime con variabili strumentali, per impostazione predefinita
-      usando i minimi quadrati a due stadi (TSLS), ma è possibile scegliere
-      altre opzioni. Occorre specificare la <repl>variabile-dipendente</repl>,
-      la lista di <repl>variabili-indipendenti</repl> (che si intende includere
-      alcuni regressori endogeni), e infine gli <repl>strumenti</repl>, la lista
-      completa delle variabili esogene e predeterminate. Se la lista degli
-      <repl>strumenti</repl> non è lunga almeno quanto quella delle
-      <repl>variabili-indipendenti</repl>, il modello non è
-      identificato.
-    </para>
-
-    <para context="cli">
-      Nell'esempio precedente, le <lit>y</lit> sono le variabili
-      endogene e le <lit>x</lit> sono le variabili esogene e
-      predeterminate. Si noti che eventuali regressori esogeni devono essere
-      inclusi in entrambe le liste.
-    </para>
-
-    <para context="gui">
-      Questo comando richiede la scelta di due liste di variabili;
-      le variabili indipendenti che appaiono nel modello e un elenco
-      di strumenti. Si noti che eventuali regressori esogeni devono
-      essere inclusi in entrambe le liste.
-    </para>
+  <command name="tsls" section="Estimation"
+	   label="Stima minimi quadrati a due stadi">
     
-    <para>
-      L'output delle stime TSLS comprende il test di Hausman e, se
-      il modello è sovra-identificato, il test di Sargan per la
-      sovra-identificazione. Nel test di Hausman, l'ipotesi nulla è
-      che le stime OLS siano consistenti, o in altre parole che non
-      sia richiesta la stima per mezzo di variabili strumentali. Un
-      modello di questo tipo è sovra-identificato se ci sono più
-      strumenti di quelli strettamente necessari. Il test di Sargan
-      è basato su una regressione ausiliaria dei residui del modello
-      minimi quadrati a due stadi sull'intera lista degli
-      strumenti. L'ipotesi nulla è che tutti gli strumenti siano
-      validi, cosa di cui si dovrebbe dubitare se la regressione
-      ausiliaria ha un significativo potere esplicativo.  Davidson e
-      MacKinnon (2004, capitolo 8) forniscono una buona spiegazione
-      di entrambi i test.
-    </para>
+    <usage>
+      <arguments>
+	<argument>variabile-dipendente</argument>
+	<argument>variabili-indipendenti</argument>
+	<argument separated="true">strumenti</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--no-tests</flag>
+	  <effect>omette i test diagnostici</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampare i risultati</effect>
+	</option>
+	<option>
+	  <flag>--no-df-corr</flag>
+	  <effect>omette la correzione per gradi di libertà</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>standard error clusterizzati</effect>
+	</option>
+	<option>
+ 	  <flag>--liml</flag>
+ 	  <effect>usa massima verosimiglianza a informazione limitata</effect>
+	</option>
+	<option>
+ 	  <flag>--gmm</flag>
+ 	  <effect>usa il metodo generalizzato dei momenti</effect>
+	</option>
+      </options>      
+      <examples>
+	<example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    
+    <description>
+      <para context="cli">
+	Calcola le stime con variabili strumentali, per impostazione predefinita
+	usando i minimi quadrati a due stadi (TSLS), ma è possibile scegliere
+	altre opzioni. Occorre specificare la <repl>variabile-dipendente</repl>,
+	la lista di <repl>variabili-indipendenti</repl> (che si intende includere
+	alcuni regressori endogeni), e infine gli <repl>strumenti</repl>, la lista
+	completa delle variabili esogene e predeterminate. Se la lista degli
+	<repl>strumenti</repl> non è lunga almeno quanto quella delle
+	<repl>variabili-indipendenti</repl>, il modello non è
+	identificato.
+      </para>
 
-    <para>
-      Per gli stimatori TSLS e LIML, viene mostrata una statistica
-      aggiuntiva se il modello è stimato senza l'opzione
-      <opt>robust</opt>, che riguarda la presenza di strumenti
-      deboli. Con sttrumenti deboli, possono esserci seri problemi
-      inferenziali: stime distorte e/o livelli di significatività
-      sbagliati per le statistiche test basate sulla matrice di
-      covarianze, con tassi ti rifiuto ben più grandi del livello di
-      significatività nominale <cite key="stock-wright-yogo02"
-      p="true">(Stock, Wright and Yogo, 2002)</cite>.  La statistica
-      è la <math>F</math> di primo stadio se il modello contiene un
-      solo regressore endogeno, o il più piccolo autovalore della
-      matrice corrispondente in caso contrario. Quando disponibili,
-      sono mostrati i valori critici derivati dall'analisi di Monte
-      Carlo contenuta in <cite key="stock-yogo03">Stock e Yogo
-      (2003)</cite>.
-    </para>
+      <para context="cli">
+	Nell'esempio precedente, le <lit>y</lit> sono le variabili
+	endogene e le <lit>x</lit> sono le variabili esogene e
+	predeterminate. Si noti che eventuali regressori esogeni devono essere
+	inclusi in entrambe le liste.
+      </para>
 
-    <para>
-      Il valore R-quadro mostrato i modelli stimati con i minimi quadrati a
-      due stadi è il quadrato della correlazione tra la variabile dipendente
-      e i valori stimati.
-    </para>
+      <para context="gui">
+	Questo comando richiede la scelta di due liste di variabili;
+	le variabili indipendenti che appaiono nel modello e un elenco
+	di strumenti. Si noti che eventuali regressori esogeni devono
+	essere inclusi in entrambe le liste.
+      </para>
+    
+      <para>
+	L'output delle stime TSLS comprende il test di Hausman e, se
+	il modello è sovra-identificato, il test di Sargan per la
+	sovra-identificazione. Nel test di Hausman, l'ipotesi nulla è
+	che le stime OLS siano consistenti, o in altre parole che non
+	sia richiesta la stima per mezzo di variabili strumentali. Un
+	modello di questo tipo è sovra-identificato se ci sono più
+	strumenti di quelli strettamente necessari. Il test di Sargan
+	è basato su una regressione ausiliaria dei residui del modello
+	minimi quadrati a due stadi sull'intera lista degli
+	strumenti. L'ipotesi nulla è che tutti gli strumenti siano
+	validi, cosa di cui si dovrebbe dubitare se la regressione
+	ausiliaria ha un significativo potere esplicativo. <cite
+	key="davidson-mackinnon04">Davidson e MacKinnon (2004)</cite>
+	al capitolo 8 forniscono un'eccellente spiegazione di entrambi
+	i test.
+      </para>
 
-    <para context="cli">
-      Per dettagli sull'effetto delle opzioni <opt>robust</opt> e
-      <opt>cluster</opt> si veda la documentazione per il comando
-      <cmdref targ="ols"/>.
-    </para>
+      <para>
+	Per gli stimatori TSLS e LIML, viene mostrata una statistica
+	aggiuntiva se il modello è stimato senza l'opzione
+	<opt>robust</opt>, che riguarda la presenza di strumenti
+	deboli. Con sttrumenti deboli, possono esserci seri problemi
+	inferenziali: stime distorte e/o livelli di significatività
+	sbagliati per le statistiche test basate sulla matrice di
+	covarianze, con tassi di rifiuto ben più grandi del livello di
+	significatività nominale <cite key="stock-wright-yogo02"
+	p="true">(Stock, Wright and Yogo, 2002)</cite>.  La statistica
+	è la <math>F</math> di primo stadio se il modello contiene un
+	solo regressore endogeno, o il più piccolo autovalore della
+	matrice corrispondente in caso contrario. Quando disponibili,
+	sono mostrati i valori critici derivati dall'analisi di Monte
+	Carlo contenuta in <cite key="stock-yogo03">Stock e Yogo
+	(2003)</cite>.
+      </para>
 
-    <para context="cli">
-      In alternativa al metodo TSLS, il modello può essere stimato usando la
-      massima verosimiglianza a informazione limitata (opzione <opt>liml</opt>)
-      o il metodo generalizzato dei momenti (opzione <opt>gmm</opt>). Si noti che
-      se il modello è esattamente identificato, questi metodi dovrebbero
-      produrre gli stessi risultati del metodo TSLS, ma se il modello è
-      sovraidentificato, i risultati saranno in genere diversi.
-    </para>
+      <para>
+	Il valore R-quadro mostrato i modelli stimati con i minimi quadrati a
+	due stadi è il quadrato della correlazione tra la variabile dipendente
+	e i valori stimati.
+      </para>
+      
+      <para context="cli">
+	Per dettagli sull'effetto delle opzioni <opt>robust</opt> e
+	<opt>cluster</opt> si veda la documentazione per il comando
+	<cmdref targ="ols"/>.
+      </para>
 
-    <para context="cli">
-      Se si usa la stima GMM, è possibile usare le seguenti opzioni aggiuntive:
-    </para>
+      <para context="cli">
+	In alternativa al metodo TSLS, il modello può essere stimato
+	usando la massima verosimiglianza a informazione limitata
+	(opzione <opt>liml</opt>) o il metodo generalizzato dei
+	momenti (opzione <opt>gmm</opt>). Si noti che se il modello è
+	esattamente identificato, questi metodi dovrebbero produrre
+	gli stessi risultati del metodo TSLS, ma se il modello è
+	sovraidentificato, i risultati saranno in genere diversi.
+      </para>
 
-    <ilist>
-      <li>
-	<para>
-	  <opt>two-step</opt>: esegue la stima GMM in due passi, invece che
-          in un passo solo.
-	</para>
-      </li>
-      <li>
-	<para>
-	  <opt>iterate</opt>: itera il GMM fino alla convergenza.
-	</para>
-      </li>
-      <li>
-	<para>
-	  <lit>--weights=</lit><repl>Pesi</repl>: specifica una matrice
-          quadrata di pesi da usare nel calcolo della funzione criterio del
-          GMM. La dimensione di questa matrice deve essere pari al numero di
-          strumenti. L'impostazione predefinita consiste nell'usare una
-          matrice identità di dimensione opportuna.
- 	</para>
-      </li>	
-    </ilist>
-
-  </description>
-
-  <gui-access>
-    <menu-path>/Modello/TSLS - Minimi quadrati a due stadi</menu-path>
-  </gui-access>
-
-</command>
+      <para context="cli">
+	Se si usa la stima GMM, è possibile usare le seguenti opzioni aggiuntive:
+      </para>
+      
+      <ilist>
+	<li>
+	  <para>
+	    <opt>two-step</opt>: esegue la stima GMM in due passi, invece che
+            in un passo solo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <opt>iterate</opt>: itera il GMM fino alla convergenza.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <opt>weights=</opt><repl>Pesi</repl>: specifica una
+	    matrice quadrata di pesi da usare nel calcolo della
+	    funzione criterio del GMM. La dimensione di questa matrice
+	    deve essere pari al numero di strumenti. L'impostazione
+	    predefinita consiste nell'usare una matrice identità di
+	    dimensione opportuna.
+	  </para>
+	</li>	
+      </ilist>
+      
+    </description>
+    
+    <gui-access>
+      <menu-path>/Modello/TSLS - Minimi quadrati a due stadi</menu-path>
+    </gui-access>
+    
+  </command>
 
   <command name="var" section="Estimation"
 	   label="Autoregressione vettoriale">
