@@ -10557,9 +10557,8 @@ msgid "series code:"
 msgstr "codice della serie:"
 
 #: gui/dialogs.c:6944 gui/dialogs.c:7179
-#, fuzzy
 msgid "constant"
-msgstr "Costante"
+msgstr "costante"
 
 #: gui/dialogs.c:7088
 #, c-format
@@ -10567,48 +10566,40 @@ msgid "The series %s does not seem suitable for disaggregation"
 msgstr "La serie %s non sembra adatta per la disaggregazione"
 
 #: gui/dialogs.c:7133
-#, fuzzy
 msgid "Output name:"
-msgstr "Finestra dei risultati:"
+msgstr "Nome dell'output:"
 
 #: gui/dialogs.c:7146
-#, fuzzy
 msgid "Aggregation type:"
-msgstr "aggregazione"
+msgstr "Tipo di aggregazione:"
 
 #: gui/dialogs.c:7159
-#, fuzzy
 msgid "Regression based"
-msgstr "Regressione"
+msgstr "Basati su regressione"
 
 #: gui/dialogs.c:7174
 msgid "Deterministic terms:"
-msgstr ""
+msgstr "Termini deterministici:"
 
 #: gui/dialogs.c:7180
-#, fuzzy
 msgid "constant plus trend"
-msgstr "Con costante e trend"
+msgstr "costante e trend"
 
 #: gui/dialogs.c:7186
-#, fuzzy
 msgid "Covariate:"
-msgstr "variante"
+msgstr "Covariata:"
 
 #: gui/dialogs.c:7203
-#, fuzzy
 msgid "proportional"
-msgstr "Proporzione"
+msgstr "proporzionale"
 
 #: gui/dialogs.c:7204
-#, fuzzy
 msgid "additive"
-msgstr "Aggiungi derivata"
+msgstr "additivo"
 
 #: gui/dialogs.c:7210
-#, fuzzy
 msgid "Preliminary series:"
-msgstr "Serie precedente"
+msgstr "Serie preliminare:"
 
 #: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
 msgid "show regression results"
@@ -16793,9 +16784,8 @@ msgid "Calculator"
 msgstr "Calcolatrice"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "Comando per eseguire X-12-ARIMA"
+msgstr "Comando per eseguire X-12-ARIMA (oppure X13)"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
