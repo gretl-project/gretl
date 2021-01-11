@@ -13492,7 +13492,8 @@ gretl_matrix *gretl_matrix_isfinite (const gretl_matrix *m, int *err)
  * %E_NONCONF is written to @err.
  */
 
-int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
+int gretl_matrices_are_equal (const gretl_matrix *a,
+			      const gretl_matrix *b,
 			      double tol, int *err)
 {
     double ax, bx;
