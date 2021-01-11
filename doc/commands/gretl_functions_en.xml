@@ -635,12 +635,12 @@
     <function name="$obsmajor" section="access" output="series">
       <description>
 	<para>
-	  Applicable when the observations in the current dataset have
-	  a major:minor structure, as in quarterly time series
-	  (year:quarter), monthly time series (year:month), hourly
-	  data (day:hour) and panel data (individual:period).  Returns
-	  a series holding the major or low-frequency component of
-	  each observation (for example, the year).
+	  Returns a series holding the <quote>major</quote> or
+	  low-frequency component of each observation. This means the
+	  year for annual, quarterly or monthly time series; the day
+	  for hourly data; or the individual in the case of panel
+	  data. If the data are cross-sectional the series returned is
+	  just a 1-based index of the observations.
 	</para>
 	<para>
 	  <seelist>

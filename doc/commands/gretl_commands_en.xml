@@ -6817,7 +6817,9 @@
       the name of the series to import, and (if required) the names of
       series that correspond to the <quote>inner</quote> keys. (By
       default the inner and outer keys are presumed to have the same
-      name.)
+      name.) Also in this list-box you will see a <quote>dummy</quote>
+      entry, <lit>$obsmajor</lit>. This cannot be imported, but it
+      may be used as a key; see <fncref targ="$obsmajor"/>.
     </para>
     <para>
       In the middle panel of the dialog you can specify additional
