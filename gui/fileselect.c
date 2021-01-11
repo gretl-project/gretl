@@ -496,7 +496,9 @@ static void filesel_open_session (const char *fname)
    been imported from a file with name @fname and the user has
    now chosen "Save data" (implicitly in native format). We'd
    like to offer a suggestion for the name of the file to save.
-   A simple case would be, e.g. "foo.gdt" from imported "foo.xls".
+   A simple case would be, e.g., "foo" from imported "foo.xls".
+   We'll not add a suffix because this will depend on the user's
+   selection of gretl format, gdt vs gdtb.
 */
 
 static char *suggested_savename (const char *fname)
@@ -513,12 +515,13 @@ static char *suggested_savename (const char *fname)
     sfx = strrchr(s, '.');
 
     if (sfx != NULL) {
+	/* if what follows '.' really looks like a suffix,
+	   trim it off
+	*/
 	if (strlen(sfx) == 4 ||
 	    !strcmp(sfx, ".xlsx") ||
 	    !strcmp(sfx, ".gnumeric")) {
-	    if (strcmp(sfx, ".gdt")) {
-		strcpy(sfx, ".gdt");
-	    }
+	    *sfx = '\0';
 	}
     }
 
