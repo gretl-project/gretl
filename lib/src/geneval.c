@@ -10537,6 +10537,9 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
 #endif
         p->targ = l->t;
         p->flags = P_START;
+	if (saveflags & P_LISTDEF) {
+	    p->flags |= P_LISTDEF;
+	}
         ev = eval(op, p);
 #if LHDEBUG
         fputs("*** ev tree, after ***\n", stderr);
