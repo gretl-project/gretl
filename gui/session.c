@@ -4197,17 +4197,20 @@ gchar *session_graph_get_filename (void *p)
 static int is_idempotent (const gretl_matrix *m,
 			  const gretl_matrix *evals)
 {
+    double tol = 1.0e-12;
+
     if (evals != NULL) {
 	int i;
-
+	double x;
 	for (i=0; i<m->rows; i++) {
-	    if (evals->val[i] != 0.0 && evals->val[i] != 1.0) {
+	    x = fabs(evals->val[i] * (1.0 - evals->val[i])) > tol;
+	    if (x > tol) {
 		return 0;
 	    }
 	}
     }
 
-    return gretl_matrix_is_idempotent(m);
+    return gretl_matrix_is_idempotent(m, tol);
 }
 
 static void print_int_formatted (char *s, int k, PRN *prn)

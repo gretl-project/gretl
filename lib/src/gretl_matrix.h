@@ -234,7 +234,7 @@ int gretl_matrix_na_check (const gretl_matrix *m);
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 
-int gretl_matrix_is_idempotent (const gretl_matrix *m);
+int gretl_matrix_is_idempotent (const gretl_matrix *m, double tol);
 
 void gretl_matrix_xtr_symmetric (gretl_matrix *m);
 
@@ -799,7 +799,7 @@ int gretl_matrix_get_structure (const gretl_matrix *m);
 
 int gretl_matrices_are_equal (const gretl_matrix *a,
 			      const gretl_matrix *b,
-			      int *err);
+			      double tol, int *err);
 
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
 				       int corr, int dfc,

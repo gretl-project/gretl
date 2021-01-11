@@ -3879,11 +3879,12 @@ int gretl_matrix_is_symmetric (const gretl_matrix *m)
 /**
  * gretl_matrix_is_idempotent:
  * @m: gretl_matrix.
+ * @tol: numerical tolerance
  *
  * Returns: 1 if @m is idempotent, otherwise 0.
  */
 
-int gretl_matrix_is_idempotent (const gretl_matrix *m)
+int gretl_matrix_is_idempotent (const gretl_matrix *m, double tol)
 {
     gretl_matrix *b;
     int k, ret, err;
@@ -3904,7 +3905,7 @@ int gretl_matrix_is_idempotent (const gretl_matrix *m)
     }
 
     gretl_matrix_multiply(m, m, b);
-    ret = gretl_matrices_are_equal(m, b, &err);
+    ret = gretl_matrices_are_equal(m, b, tol, &err);
     gretl_matrix_free(b);
 
     return ret;
@@ -13483,6 +13484,7 @@ gretl_matrix *gretl_matrix_isfinite (const gretl_matrix *m, int *err)
  * gretl_matrices_are_equal:
  * @a: first matrix in comparison.
  * @b: second matrix in comparison.
+ * @tol: numerical tolerance.
  * @err: location to receive error code.
  *
  * Returns: 1 if the matrices @a and @b compare equal, 0 if they
@@ -13491,7 +13493,7 @@ gretl_matrix *gretl_matrix_isfinite (const gretl_matrix *m, int *err)
  */
 
 int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
-			      int *err)
+			      double tol, int *err)
 {
     double ax, bx;
     int i, j;
@@ -13510,7 +13512,7 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 	for (j=0; j<a->cols; j++) {
 	    ax = gretl_matrix_get(a, i, j);
 	    bx = gretl_matrix_get(b, i, j);
-	    if (ax != bx) {
+	    if (fabs(ax - bx) > tol) {
 		fprintf(stderr, "gretl_matrices_are_equal:\n "
 			"a(%d,%d) = %.15g but b(%d,%d) = %.15g\n",
 			i, j, ax, i, j, bx);
