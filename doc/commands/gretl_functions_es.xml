@@ -157,7 +157,7 @@
     <function name="$dotdir" section="access" output="string">
       <description>
 	<para>
-	  Este accesor devuelve una cadena de texto con la ruta donde Gretl
+	  Este accesor devuelve una cadena de texto con la ruta donde GRETL
 	  guarda archivos temporalmente, por ejemplo cuando usa la función
 	  <fncref targ="mwrite"/> con un tercer argumento distinto de cero.
 	</para>
@@ -544,7 +544,7 @@
     <function name="$mpirank" section="access" output="int">
       <description>
 	<para>
-	  Cuando se prepara Gretl con soporte MPI, y el programa está
+	  Cuando se prepara GRETL con soporte MPI, y el programa está
 	  funcionando en modo MPI, devuelve la <quote>jerarquía</quote>
 	  en base 0 o número ID del proceso vigente. En caso contrario,
 	  devuelve &minus;1.
@@ -555,7 +555,7 @@
     <function name="$mpisize" section="access" output="int">
       <description>
 	<para>
-	  Cuando se prepara Gretl con soporte MPI, y el programa está
+	  Cuando se prepara GRETL con soporte MPI, y el programa está
 	  funcionando en modo MPI, devuelve el número de procesos MPI
 	  que están funcionando en ese momento. En caso contrario, devuelve 0.
 	</para>
@@ -866,7 +866,7 @@
       <description>
 	<para>
 	  Devuelve un escalar con el valor de la semilla del generador de
-	  números aleatorios de Gretl. Si estableces la semilla por ti mismo,
+	  números aleatorios de GRETL. Si estableces la semilla por ti mismo,
 	  este accesor no es necesario; pero puede resultar interesante
 	  cuando la semilla se establece automáticamente (basándose
 	  en el momento en que empezó la ejecución del programa).
@@ -966,7 +966,7 @@
       <description>
 	<para>
 	  Devuelve un <quote>bundle</quote> que contiene información de las
-	  capacidades de Gretl y del sistema operativo en el que se está ejecutando.
+	  capacidades de GRETL y del sistema operativo en el que se está ejecutando.
 	  Los elementos del 'bundle' se indican a continuación:
 	</para>
 	<ilist>
@@ -978,7 +978,7 @@
 	  </li>
 	  <li>
             <para>
-              <lit>omp</lit>: número entero igual a 1 si Gretl se compiló
+              <lit>omp</lit>: número entero igual a 1 si GRETL se compiló
               con soporte para Open MP, y 0 en caso contrario.
             </para>
 	  </li>
@@ -1023,7 +1023,7 @@
             <para>
               <lit>hostname</lit>: cadena de texto con el nombre de la máquina (o
               <quote>host</quote>) en la que se está ejecutando el proceso vigente
-              de Gretl. Si no es posible determinar el nombre, se produce
+              de GRETL. Si no es posible determinar el nombre, se produce
               una vuelta atrás del <lit>localhost</lit>.
             </para>
 	  </li>
@@ -1052,7 +1052,10 @@
 	  mediante símbolos clave que son idénticos a los nombres habituales
 	  de los accesores, menos el símbolo de dólar inicial. Así, por ejemplo,
 	  los errores aparecen bajo la clave <lit>uhat</lit> y los coeficientes
-	  bajo <lit>coeff</lit>. Las claves para obtener información adicional
+	  bajo <lit>coeff</lit>. (Como excepciones están las claves <lit>A</lit>,
+	  <lit>B</lit>, e <lit>Gamma</lit>, que se corresponden con los accesores
+	  habituales sysA, sysB, y sysGamma.)
+	  Las claves para obtener información adicional
 	  se espera que debieran explicarse suficientemente por si mismas.
 	  Para comprobar lo que tienes a tu disposición, puedes obtener una copia
 	  del 'bundle' y representar su contenido, como en
@@ -1126,7 +1129,7 @@
 	  Devuelve un entero con el máximo valor válido establecido para indicar el
 	  final del rango de la muestra mediante la instrucción <cmdref targ="smpl"/>.
 	  En la mayoría de los casos, esto va a ser igual al número de observaciones del
-	  conjunto de datos; pero en una función de Hansl, el valor <lit>$tmax</lit>
+	  conjunto de datos; pero en una función de HANSL, el valor <lit>$tmax</lit>
 	  podría ser menor, puesto que el acceso habitual a los datos dentro de las
 	  funciones, se limita al rango muestral establecido por el solicitante.
 	</para>
@@ -1215,8 +1218,8 @@
     <function name="$version" section="access" output="scalar">
       <description>
 	<para>
-	  Devuelve un escalar con un valor entero que designa la versión de Gretl.
-	  La versión actual de Gretl está formada por una cadena de texto que
+	  Devuelve un escalar con un valor entero que designa la versión de GRETL.
+	  La versión actual de GRETL está formada por una cadena de texto que
 	  indica el año con formato de 4 dígitos seguido de una letra desde a hasta
 	  j, que representa las sucesivas actualizaciones dentro de cada año (por
 	  ejemplo, 2015d). El valor devuelto por este accesor está calculado
@@ -1225,7 +1228,7 @@
 	  20153.
 	</para>
 	<para>
-	  En versiones anteriores al Gretl 2015d, el identificador tenía el siguiente
+	  En versiones anteriores al GRETL 2015d, el identificador tenía el siguiente
 	  formato: x.y.z (tres números enteros separados por puntos); en ese caso,
 	  el valor de la función se calculaba con <lit>10000*x + 100*y + z</lit>. Por
 	  ejemplo, la última versión con el formato antiguo (1.10.2) se transcribía
@@ -1249,7 +1252,7 @@
     <function name="$windows" section="access" output="int">
       <description>
 	<para>
-	  Devuelve un número entero con el valor 1 si Gretl se está ejecutando en Windows,
+	  Devuelve un número entero con el valor 1 si GRETL se está ejecutando en Windows,
 	  y 0 en caso contrario. Poniendo como condición uno de estos valores, puedes escribir instrucciones
 	  <quote>shell </quote> que puedan ejecutarse en diferentes sistemas operativos.
 	</para>
@@ -1263,7 +1266,7 @@
       <description>
 	<para>
 	  Este accesor devuelve una cadena de texto con la ruta desde la que lee
-	  y en la que escribe Gretl por defecto. Se ofrece una discusión más
+	  y en la que escribe GRETL por defecto. Se ofrece una discusión más
 	  detallada en la Guía de instrucciones, en <cmdref targ="workdir"/>.
 	  Ten en cuenta que el usuario puede determinar esta cadena mediante
 	  la instrucción <cmdref targ="set"/>.
@@ -1289,11 +1292,13 @@
     <function name="$xtxinv" section="access" output="matrix">
       <description>
 	<para>
-	  Debe ejecutarse después de la estimación de un VAR o VECM (únicamente), y
-	  devuelve la matriz <math>X'X</math><sup>-1</sup>, donde <math>X</math> es
-	  la matriz habitual con los regresores utilizados en cada ecuación. Este
-	  accesor no está disponible para un VECM estimado con restricciones
-	  impuestas sobre la matriz de cargas (&agr;).
+	  Debe ejecutarse únicamente después de la estimación de un VAR o VECM, y
+	  devuelve la matriz <math>X'X</math><sup>-1</sup>, donde <math>X</math>
+	  es la matriz habitual con los regresores utilizados en cada ecuación.
+	  Aunque este accesorio está aún disponible para un VECM estimado con
+	  una restricción impuesta en &agr; (la matriz de <quote>cargas</quote>),
+	  debe tenerse en cuenta que en ese caso ya no todos los coeficientes de
+	  las <math>X</math> varían libremente.
 	</para>
       </description>
     </function>
@@ -1327,7 +1332,7 @@
       <description>
         <para>
           Proporciona una cadena de texto con la ruta completa del directorio que
-          utiliza Gretl para los archivos temporales. Para usarla en modo de
+          utiliza GRETL para los archivos temporales. Para usarla en modo de
           sustitución para cadenas de texto, antepón el símbolo arroba (@dotdir).
         </para>
         </description>
@@ -1346,7 +1351,7 @@
         <description>
         <para>
           Proporciona una cadena de texto con la ruta completa al directorio
-          de instalación de Gretl. Para usarla en modo de substitución para
+          de instalación de GRETL. Para usarla en modo de substitución para
           cadenas de texto, antepón el símbolo arroba (@gretldir).
         </para>
         </description>
@@ -2043,7 +2048,7 @@
 	  nombres separados por comas, y se usa para etiquetar las columnas
 	  que muestran las proporciones de varianza; el número de nombres
 	  debe coincidir con la dimensión de <argname>V</argname>. Después
-	  de estimar un modelo en Gretl, puedes obtener argumentos adecuados
+	  de estimar un modelo en GRETL, puedes obtener argumentos adecuados
 	  para indicar en esta función por medio de los accesores
 	  <fncref targ="$vcv"/> y <fncref targ="$parnames"/>.
 	</para>
@@ -2450,7 +2455,7 @@
 	  y <lit>z2</lit>.
 	</para>
 	<para context="tex">
-	  La disposición de parámetros que usa el Gretl para la variable
+	  La disposición de parámetros que usa el GRETL para la variable
 	  aleatoria Gamma implica que su función de densidad puede escribirse
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
@@ -2477,7 +2482,7 @@
       <description>
 	<para>
 	  Esta es una función heredada, anterior al soporte
-	  original de Gretl para matrices complejas.
+	  original de GRETL para matrices complejas.
 	</para>
 	<para>
 	  Devuelve una matriz con el resultado de dividir números complejos. Los dos
@@ -2640,7 +2645,7 @@
       <description>
 	<para>
 	  Esta es una función heredada, anterior al soporte
-	  original de Gretl para matrices complejas.
+	  original de GRETL para matrices complejas.
 	</para>
 	<para>
 	  Devuelve una matriz con el resultado de multiplicar números complejos. Los dos
@@ -2753,7 +2758,7 @@
 	  los nombres son los de las series listadas (es necesario que esa lista tenga
 	  <math>k</math>elementos). Cuando <argname>S</argname> es un 'array'
 	  de cadenas de texto, deberá tener <math>k</math> elementos. Para
-	  mantener la compatibilidad con versiones anteriores de Gretl, puedes
+	  mantener la compatibilidad con versiones anteriores de GRETL, puedes
 	  también utilizar una única cadena de texto como segundo argumento.
 	  En ese caso, esta cadena necesita tener <math>k</math> subcadenas separadas
 	  por espacios.
@@ -3425,7 +3430,7 @@
 	  <argname>x</argname>, que debe ser una serie temporal mensual
 	  o trimestral. Para utilizar el X-12-ARIMA indica <lit>X</lit> como
 	  segundo argumento; y para usar el TRAMO/SEATS indica <lit>T</lit>.
-	  Si omites el segundo argumento, Gretl utiliza el X-12-ARIMA.
+	  Si omites el segundo argumento, GRETL utiliza el X-12-ARIMA.
 	</para>
 	<para>
 	  Observa que, cuando la serie de entrada no tiene una componente
@@ -3769,8 +3774,8 @@
       <description>
 	<para>
 	  <emphasis>Esta es una función heredada, anterior al soporte
-	  original de Gretl para matrices complejas. No debes usarla en
-	  los guiones nuevos que escribas en lenguaje 'hansl'. Utiliza
+	  original de GRETL para matrices complejas. No debes usarla en
+	  los guiones nuevos que escribas en lenguaje HANSL. Utiliza
 	  </emphasis> <fncref targ="eigen"/> <emphasis> en su lugar.</emphasis>
 	</para>
 	<para>
@@ -3933,7 +3938,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve una cadena de texto con el mensaje de fallo de Gretl asociada
+	  Devuelve una cadena de texto con el mensaje de fallo de GRETL asociada
 	  a <argname>errno</argname>, que debe ser un número entero.
 	  Consulta también <fncref targ="$error"/>.
 	</para>
@@ -4215,8 +4220,8 @@
       <description>
 	<para>
 	  <emphasis>Esta es una función heredada, anterior al soporte
-	  original de Gretl para matrices complejas. No debes usarla en los
-	  guiones nuevos que escribas en lenguaje 'hansl'. Utiliza </emphasis>
+	  original de GRETL para matrices complejas. No debes usarla en los
+	  guiones nuevos que escribas en lenguaje HANSL. Utiliza </emphasis>
 	  <fncref targ="fft2"/> <emphasis> en su lugar.</emphasis>
 	</para>
 	<para>
@@ -4434,7 +4439,7 @@
 	<para>
 	  En principio, esta función está ideada para utilizarse en conjunto con la instrucción
 	  <cmdref targ="join"/>. Devuelve una cadena con el resultado de la conversión
-	  de <argname>nombresobrio</argname> en un identificador válido de Gretl;
+	  de <argname>nombresobrio</argname> en un identificador válido de GRETL;
 	  debe iniciarse con una letra, debe contener solo letras ASCII, dígitos
 	  y/o guion bajo, y no debe tener más de 31 caracteres. Las reglas
 	  que se utilizan en la conversión son:
@@ -4718,7 +4723,7 @@
 	  instrucción <cmdref targ="setinfo"/>. Y también contiene información
 	  adicional relevante para series que se generaron como transformaciones
 	  de datos primarios (mediante retardos, logaritmos, etc.); esto incluye
-	  la palabra de la instrucción de Gretl para la transformación con la 
+	  la palabra de la instrucción de GRETL para la transformación con la 
 	  clave <quote>transform</quote>, y el nombre de la serie asociada primaria
 	  con la clave <quote>parent</quote>. Para las series retardadas, puedes
 	  encontrar el número específico de retardos bajo la clave
@@ -5160,7 +5165,7 @@
 	  Los nombres de las series de la lista que se devuelve, se construyen a partir del
 	  <repl>prefijo</repl> indicado (que debe ser una cadena de texto,
 	  de una longitud máxima de 24 caracteres ASCII, y válida como
-	  identificador de Gretl), a la que se añade uno o más dígitos que
+	  identificador de GRETL), a la que se añade uno o más dígitos que
 	  representan el subperíodo de la observación. Si alguno de esos nombres repite
 	  el de algún objeto ya existente, se muestra un fallo.
   </para>
@@ -5178,7 +5183,7 @@
 	  Devuelve una serie que recoge la componente cíclica del filtro de
 	  Hodrick&ndash;Prescott aplicado a la serie <argname>y</argname>. Si
 	  no se indica el parámetro de suavizado <argname>lambda</argname>,
-	  Gretl usa valores por defecto basados en la periodicidad de los datos;
+	  GRETL usa valores por defecto basados en la periodicidad de los datos;
 	  en concreto, el parámetro es igual a 100 veces el cuadrado de la
 	  periodicidad (100 para datos anuales, 1600 para datos trimestrales, etc).
 	</para>
@@ -5521,12 +5526,12 @@
 	<para>
 	  Devuelve la matriz inversa de <argname>A</argname>. Cuando esta última
 	  es una matriz singular o no cuadrada, se produce un mensaje de fallo
-	  y no se devuelve nada. Ten en cuenta que Gretl comprueba
+	  y no se devuelve nada. Ten en cuenta que GRETL comprueba
 	  automáticamente la estructura de <argname>A</argname>, y utiliza el
 	  procedimiento numérico más eficiente para realizar la inversión.
 	</para>
 	<para>
-	  Los tipos de matriz que Gretl comprueba automáticamente son:
+	  Los tipos de matriz que GRETL comprueba automáticamente son:
 	  identidad, diagonal, simétrica definida positiva, simétrica definida
 	  no positiva, y triangular.
 	</para>
@@ -5795,7 +5800,10 @@
 	  set boot_iters 2999
 	</code>
 	<para>
-	  <seelist><fncref targ="fevd"/></seelist>
+	  <seelist>
+	    <fncref targ="fevd"/>
+	    <fncref targ="vma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -6177,14 +6185,14 @@
 	<para>
 	  Lo que se devuelve es un 'bundle' cuya estructura básicamente
 	  refleja la de la entrada: los objetos JSON se convierten en 'bundles'
-	  de Gretl, y los 'arrays' JSON se convierten en 'arrays' de Gretl; cada
+	  de GRETL, y los 'arrays' JSON se convierten en 'arrays' de GRETL; cada
 	  uno de ellos puede contener cadenas de texto, 'bundles' o 'arrays'.
 	  Los nodos de <quote>valor</quote> JSON se convierten en componentes
 	  de 'bundles' o elementos de 'arrays'; en el último caso, los valores
 	  numéricos se convierten en cadenas de texto utilizando <lit>sprintf</lit>.
 	  Ten en cuenta que, aunque la especificación JSON permite 'arrays' de
 	  tipo mixto, estos no se poden manejar mediante <lit>jsongetb</lit>
-	  puesto que los 'arrays' de Gretl deben ser de tipo único.
+	  puesto que los 'arrays' de GRETL deben ser de tipo único.
 	</para>
 	<para>
 	  Puedes usar el argumento <argname>ruta</argname> para limitar
@@ -6463,7 +6471,7 @@
 	  para hacer simulaciones.
 	</para>
 	<para>
-	  En realidad, el tipo de modelos que Gretl puede manejar es mucho más
+	  En realidad, el tipo de modelos que GRETL puede manejar es mucho más
 	  amplio que el implicado en la anterior representación: es posible disponer
 	  de modelos variantes en el tiempo, de modelos con precedentes difusos
 	  y con variable exógena en la ecuación de medida, y de modelos con
@@ -7110,8 +7118,8 @@
 	</para>
 	<code>
 	  set seed 123
-	  X    = mnormal(6,2)
-	  Retardo  = mlag(X,1)
+	  X = mnormal(6,2)
+	  Retardo = mlag(X,1)
 	  Adelanto = mlag(X,-1)
 	  print X Retardo Adelanto
 	  eval X'X
@@ -7550,16 +7558,35 @@
 	  <argname>m</argname>. Si omites <argname>m</argname>, se entiende que
 	  es igual a cero.
 	</para>
-	<para context="notex">
+	<para>
 	  Si <argname>p</argname> es un vector, la operación indicada en el párrafo
 	  anterior se realiza con cada uno de los elementos de <argname>p</argname>,
-	  juntando horizontalmente las matrices resultantes.
+	  y las matrices resultantes se unen horizontalmente. El siguiente código
+	  ilustra este uso, introduciendo para ello una matriz <argname>X</argname>
+	  que tiene dos columnas, y el argumento <argname>p</argname> que indica
+	  los retardos 1 y 2. También se determina que los valores ausentes tengan
+	  el valor NA, en contraposición al 0 establecido por defecto.
 	</para>
-	<para context="tex">
-	  Si $p$ es un vector, la operación indicada en el párrafo anterior
-	  se realiza con cada uno de los elementos de $p$, juntando horizontalmente
-	  las matrices resultantes.
-	</para>
+	<code>
+	matrix X = mnormal(5, 2)
+	print X
+	eval mlag(X, {1, 2}, NA)
+	</code>
+	<code>
+	m (5 x 2)
+
+	    1.5953    -0.070740
+    -0.52713     -0.47669
+	   -2.2056     -0.28112
+	   0.97753       1.4280
+	   0.49654      0.18532
+
+	       nan          nan          nan          nan
+     1.5953    -0.070740          nan          nan
+	   -0.52713     -0.47669       1.5953    -0.070740
+	   -2.2056     -0.28112     -0.52713     -0.47669
+	   0.97753       1.4280      -2.2056     -0.28112
+	</code>
 	<para>
 	  Consulta también <fncref targ="lags"/>.
 	</para>
@@ -7783,7 +7810,7 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  Solo disponible cuando GRETL está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo todos
 	  los procesos. Esta función opera igual que <fncref targ="mpireduce"/>
 	  excepto por el hecho de que todos los procesos (no solo el proceso
@@ -7798,7 +7825,7 @@
     <function name="mpibarrier" section="mpi" output="int">
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  Solo disponible cuando GRETL está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); no requiere
 	  argumentos. Fuerza la sincronización de los procesos MPI:
 	  ningún proceso puede continuar más allá de la barrera hasta
@@ -7818,7 +7845,7 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  Solo disponible cuando GRETL está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo
 	  todos los procesos. Difunde el argumento <argname>objeto</argname>,
 	  que deberás indicar en forma puntero, a todos los procesos. El
@@ -7855,7 +7882,7 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  Solo disponible cuando GRETL está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Para mayor aclaración,
 	  mira la función <fncref targ="mpisend"/>, con la que <lit>mpirecv</lit>
 	  deberá siempre emparejarse. El argumento <argname>src</argname>
@@ -7874,7 +7901,7 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  Solo disponible cuando GRETL está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo todos
 	  los procesos. Esta función reúne objetos (escalares, matrices o
 	  'arrays') con un nombre determinado indicados en forma de puntero,
@@ -7918,7 +7945,7 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  Solo disponible cuando GRETL está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo
 	  todos los procesos. Esta función distribuye trozos de una matriz
 	  del proceso raíz, a todos los procesos. Debes anunciar la matriz en
@@ -7961,7 +7988,7 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  Solo disponible cuando GRETL está en modo MPI (consulta
 	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Envía el objeto indicado
 	  (una matriz, un 'bundle', un 'array', un escalar, una cadena de texto
 	  o una lista) desde el proceso vigente hasta el identificado por el
@@ -8118,7 +8145,7 @@
 	  el número de filas y de columnas; y lo que resta del archivo contiene
 	  los elementos de la matriz ordenados por orden de mayor columna,
 	  con formato <quote>dobles</quote> en extremo menor (little-endian).
-	  Si ejecutas Gretl en un sistema de extremo mayor (big-endian), los
+	  Si ejecutas GRETL en un sistema de extremo mayor (big-endian), los
 	  valores binarios se convierten a extremo menor cuando se escriben,
 	  y se convierten a extremo mayor cuando se leen.
 	</para>
@@ -8130,19 +8157,19 @@
 	  del archivo según su formato son diferentes, y más laxas.
 	  En este caso, el conjunto de datos presentes <emphasis>no</emphasis>
 	  debe estar precedido por una línea que especifique el número de
-	  filas y de columnas. Gretl tratará de determinar el delimitador
+	  filas y de columnas. GRETL tratará de determinar el delimitador
 	  utilizado (coma, espacio, o punto y coma), y hará lo que pueda para
 	  importar la matriz, admitiendo el uso de la coma como separador decimal,
 	  si es necesario. Ten en cuenta que el delimitador no debe ser el
 	  carácter de tabulación, dado el riesgo de confundir ese tipo de archivos
-	  con los que tienen el formato de matrices <quote>original</quote> de Gretl.
+	  con los que tienen el formato de matrices <quote>original</quote> de GRETL.
 	</para>
 
-	<subhead>Archivos de conjuntos de datos de Gretl</subhead>
+	<subhead>Archivos de conjuntos de datos de GRETL</subhead>
 	<para>
 	  Los archivos que tengan extensión <quote><lit>.gdt</lit></quote> o
 	  <quote><lit>.gdtb</lit></quote> se tratan como archivos originales de
-	  datos de Gretl, tal como los crea la instrucción <cmdref targ="store"/>
+	  datos de GRETL, tal como los crea la instrucción <cmdref targ="store"/>
 	  (guardar). En tal caso, la matriz que se va a devolver contiene los valores
 	  numéricos de las series del conjunto de datos, ordenadas en columnas.
 	  Ten en cuenta que las series con valores en cadenas de texto no se leen
@@ -8438,7 +8465,7 @@
 	      el número de filas y de columnas; y lo que resta del archivo contiene
 	      los elementos de la matriz ordenados por orden de mayor columna,
 	      con formato <quote>dobles</quote> en extremo menor (little-endian).
-	      Si ejecutas Gretl en un sistema de extremo mayor (big-endian), los
+	      Si ejecutas GRETL en un sistema de extremo mayor (big-endian), los
 	      valores binarios se convierten a extremo menor cuando se escriben,
 	      y se convierten a extremo mayor cuando se leen.
 	    </para>
@@ -8451,14 +8478,14 @@
 	      que indique el número de filas y de columnas que la siguen.
 	      Esto podría hacer más sencillo el tratamiento con programas
 	      de terceros, pero no es recomendable cuando se pretende leer
-	      el archivo con los elementos de la matriz mediante Gretl.
+	      el archivo con los elementos de la matriz mediante GRETL.
 	    </para>
 	  </li>
 	</ilist>
 	<para>
 	  Ten en cuenta que, si vas a leer el archivo con la matriz utilizando
 	  otro software ajeno, no resulta aconsejable que utilices las
-	  opciones gzip ni binario. Pero si lo quieres para que lo lea Gretl,
+	  opciones gzip ni binario. Pero si lo quieres para que lo lea GRETL,
 	  estos dos formatos alternativos permiten ahorrar espacio; y con el
 	  formato binario logras una lectura más rápida de matrices
 	  grandes. El formato gzip no es recomendable para matrices muy
@@ -9052,16 +9079,26 @@
       </description>
     </function>
 
-    <function name="obslabel" section="data-utils" output="string">
+    <function name="obslabel" section="data-utils" output="string-or-strings">
       <fnargs>
-	<fnarg type="int">t</fnarg>
+	<fnarg type="scalar-or-vec">t</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve la etiqueta de la observación <argname>t</argname>, siendo
-	  <argname>t</argname> un número entero positivo que representa
-	  a esa observación. La operación inversa se puede hacer mediante la
-	  función <fncref targ="obsnum"/>.
+	  Si <argname>t</argname> es un escalar, devuelve una única cadena de
+	  texto que representa el marcador de etiquetado de la observación
+	  <argname>t</argname>. Puedes realizar la operación inversa mediante
+	  la función <fncref targ="obsnum"/>.
+	</para>
+	<para>
+	  Si <argname>t</argname> es un vector, devuelve un 'array' de cadenas de
+	  texto que representan los marcadores de etiquetado de las observaciones
+	  indicadas por los elementos de <argname>t</argname>.
+	</para>
+	<para>
+	  En cualquier caso, los valores <argname>t</argname> deben ser enteros
+	  que puedan resultar válidos como índices enteros de las observaciones en
+	  el conjunto de datos vigente; en otro caso, se muestra un aviso de fallo.
 	</para>
       </description>
     </function>
@@ -10016,7 +10053,7 @@
 	</para>
 	<para>
 	  <cite key="hyndman96">Hyndman y Fan (1996)</cite> describen nueve
-	  métodos distintos para calcular los cuantiles muestrales. En Gretl, por
+	  métodos distintos para calcular los cuantiles muestrales. En GRETL, por
 	  defecto, el método es el que ellos denominan <math>Q</math><sub>6</sub>
 	  (que también lo es en Python, por defecto). En cambio, puedes seleccionar
 	  los métodos <math>Q</math><sub>7</sub> (que es el usado por defecto
@@ -10410,7 +10447,7 @@
 	  complicadas, consulta también <fncref targ="curl"/>.
 	</para>
 	<para>
-	  Cuando el texto que se quiere leer no está codificado en UTF-8, Gretl va a
+	  Cuando el texto que se quiere leer no está codificado en UTF-8, GRETL va a
 	  tratar de volver a codificarlo desde el tipo vigente de codificación
 	  local (si este no es UTF-8), o desde ISO-8859-15 en otro caso. Si este
 	  sencillo funcionamiento por defecto no cumple con tus necesidades,
@@ -10470,7 +10507,7 @@
 	</para>
 	<para>
 	  Cuando <argname>fname</argname> contiene la ruta completa hasta el
-	  archivo, Gretl tratará de eliminarlo, y devolverá un fallo si ese
+	  archivo, GRETL tratará de eliminarlo, y devolverá un fallo si ese
 	  archivo no existe o no puede ser eliminado por algún motivo (por
 	  ejemplo, por no tener suficientes privilegios para poder hacerlo).
 	  Cuando <argname>fname</argname> no contiene la ruta completa,
@@ -10664,7 +10701,7 @@
 	  deberá tener <math>m</math> elementos). Cuando <argname>S</argname>
 	  es un 'array' de cadenas de texto, deberá tener <math>m</math>
 	  elementos. Para mantener la compatibilidad con versiones anteriores
-	  de Gretl, también puedes utilizar una única cadena de texto como
+	  de GRETL, también puedes utilizar una única cadena de texto como
 	  segundo argumento; en este caso esta deberá tener <math>m</math>
 	  subcadenas de texto separadas por espacios.
 	</para>
@@ -11067,7 +11104,7 @@
 	</para>
 	<para>
 	  Deberías indicar los dos primeros argumentos en el formato
-	  que prefiere Gretl para datos de tipo anual, trimestral o
+	  que prefiere GRETL para datos de tipo anual, trimestral o
 	  mensual (por ejemplo, <lit>1970</lit>, <lit>1970:1</lit>
 	  o <lit>1970:01</lit> para cada una de esas frecuencias,
 	  respectivamente) o como fechas en el formato ISO 8601,
@@ -11317,7 +11354,7 @@
 	  Si la cadena de texto del origen no coincide (exactamente) con el formato,
 	  el número de conversiones puede quedarse corta respecto al número
 	  de argumentos indicados. Esto no es por si mismo un fallo en lo que
-	  atañe a Gretl. Así y todo, podrías querer comprobar el número de
+	  atañe a GRETL. Así y todo, podrías querer comprobar el número de
 	  conversiones que se completaron; esto se indica en el valor que se
 	  devuelve  Some simple examples follow:
 	</para>
@@ -11399,7 +11436,7 @@
       <description>
 	<para>
 	  Diseñado para el manejo de datos con formato de series de tiempo
-	  apiladas, que necesita Gretl para datos de panel. El valor que se
+	  apiladas, que necesita GRETL para datos de panel. El valor que se
 	  devuelve es una serie que se consigue apilando de forma
 	  <quote>vertical</quote>, grupos de <argname>n</argname>
 	  observaciones de cada serie de la lista <argname>L</argname>. Por
@@ -11674,7 +11711,7 @@
           Ejemplo:
   </para>
   <code>
-          string s1 = "Gretl es un programa de Econometría"
+          string s1 = "GRETL es un programa de Econometría"
           string s2 = strstr(s1, "un")
           print s2
   </code>
@@ -11723,8 +11760,8 @@
           Ejemplo:
   </para>
   <code>
-          string s1 = "Hola, Gretl!"
-          string s2 = strsub(s1, "Gretl", "Hansl")
+          string s1 = "Hola, GRETL!"
+          string s2 = strsub(s1, "GRETL", "HANSL")
           print s2
   </code>
       </description>
@@ -11774,7 +11811,7 @@
           Por ejemplo, el código de abajo
   </para>
   <code>
-          string s1 = "Hola, Gretl!"
+          string s1 = "Hola, GRETL!"
           string s2 = substr(s1, 7, 11)
           print s2
   </code>
@@ -11783,7 +11820,7 @@
   </para>
   <code>
     ? print s2
-    Gretl
+    GRETL
   </code>
   <para>
           Debes darte cuenta de que, en algunos casos, podrías estar
@@ -11791,7 +11828,7 @@
           de reducción e incremento, como en
   </para>
   <code>
-          string s1 = "Hola, Gretl!"
+          string s1 = "Hola, GRETL!"
           string s2 = s1[7:11]
           string s3 = s1 + 6
           print s2
@@ -11802,9 +11839,9 @@
   </para>
   <code>
     ? print s2
-    Gretl
+    GRETL
     ? print s3
-    Gretl!
+    GRETL!
   </code>
       </description>
     </function>
@@ -12063,11 +12100,11 @@
         Ejemplos:
     </para>
     <code>
-        string s1 = "Hola, Gretl!"
+        string s1 = "Hola, GRETL!"
         string s2 = tolower(s1)
         print s2
 
-        string s3 = tolower("Hola, Gretl!")
+        string s3 = tolower("Hola, GRETL!")
         print s3
     </code>
       </description>
@@ -12086,11 +12123,11 @@
         Ejemplos:
     </para>
     <code>
-        string s1 = "Hola, Gretl!"
+        string s1 = "Hola, GRETL!"
         string s2 = toupper(s1)
         print s2
 
-        string s3 = toupper("Hola, Gretl!")
+        string s3 = toupper("Hola, GRETL!")
         print s3
     </code>
       </description>
@@ -12181,7 +12218,7 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve una cadena de texto con el nombre del tipo de dato de Gretl que
+	  Devuelve una cadena de texto con el nombre del tipo de dato de GRETL que
 	  se corresponde con el argumento <argname>codigotipo</argname>. Puedes
 	  utilizarlo junto con las funciones <fncref targ="typeof"/> e
 	  <fncref targ="inbundle"/>. La cadena de texto que se devuelve puede ser
@@ -12452,7 +12489,7 @@
 	  orden <by r="n" c="np"/>, con una fila por cada ecuación. Esta
 	  se corresponde con las primeras <math>n</math> filas de la matriz
 	  <lit>$compan</lit> que proporcionan las instrucciones <lit>var</lit> y
-	  <lit>vecm</lit> de Gretl.
+	  <lit>vecm</lit> de GRETL.
 	</para>
 	<para>
 	  Los vectores <math>u_t</math> están incluidos (como filas) en la matriz
@@ -12507,10 +12544,13 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve un vector columna con los elementos de <argname>A</argname> que
-	  están en su diagonal principal y por arriba de ella. Normalmente esta
-	  función se utiliza con matrices simétricas; en este caso, esa operación
-	  puede revertirse a través de la función <fncref targ="unvech"/>.
+	  Devuelve un vector columna con los elementos de <argname>A</argname>
+	  que están en su diagonal principal y por arriba de ella. Normalmente
+	  esta función se utiliza con matrices simétricas, en cuyo caso, esa
+	  operación puede revertirse mediante la función <fncref targ="unvech"/>.
+	  Si la matriz de entrada no es simétrica y su triángulo inferior contiene
+	  los valores <quote>correctos</quote>, puedes obtener el resultado
+	  deseado por medio de <lit>vech(A')</lit>.
 	  <seelist>
             <fncref targ="vec"/>
 	  </seelist>
@@ -12527,17 +12567,19 @@
       </fnargs>
       <description>
 	<para>
-	  Esta función genera una matriz con la representación VMA de un
-	  sistema VAR: si
-	  <equation status="inline"
-		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
-		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
-	  entonces la correspondiente representación VMA es
-	  <equation status="inline"
-		    ascii="y(t) = e(t) + C1 e(t-1) + ..."
-		    tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>,
-	  donde
+	  Esta función genera una matriz con la representación VMA de un sistema
+	  VAR. Si <math>u</math><sub>t</sub> son los residuos de las predicciones
+	  adelantadas un paso y
+	  <equation status="inline" ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)"
+	  tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$"/>,
+	  la correspondiente representación VMA es
+	  <equation status="inline" ascii="y(t) = C0 e(t) + C1 e(t-1) + ..."
+	  tex="$y_t = C_0 e_t + C_1 e_{t-1} + \ldots$."/>.
+	  La relación entre <math>u</math><sub>t</sub> (residuos de
+	  predicciones) y <math>e</math><sub>t</sub> (impactos estructurales) será
 	  <equation status="inline" ascii="u(t) = K e(t)" tex="$u_t = K e_t$"/>.
+	  (Observa que <math>C</math><sub>0</sub> =
+	  <math>K</math>.)
 	</para>
 	<para>
 	  La matriz <argname>A</argname> de coeficientes del primer argumento,
@@ -12552,7 +12594,7 @@
 	  La matriz que devuelve esta función tiene un número de filas igual a
 	  <argname>horizonte</argname>, y <math>n</math><sup>2</sup> columnas:
 	  cada <math>i</math>-ésima fila contiene <math>C</math><sub>i-1</sub>
-	  en formato vectorial. El parámetro <argname>horizonte</argname> se
+	  en formato vectorial. El valor de <argname>horizonte</argname> se
 	  establece por defecto igual a 24, cuando no se indique.
 	</para>
 	<para>

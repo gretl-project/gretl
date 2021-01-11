@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-08 09:00-0500\n"
-"PO-Revision-Date: 2020-12-17 14:23+0100\n"
+"PO-Revision-Date: 2021-01-08 17:50+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -9467,7 +9467,7 @@ msgstr "GRETL: Bancos de datos no servidor"
 
 #: gui/datafiles.c:2087
 msgid "gretl: DB.NOMICS providers"
-msgstr "gretl: Provedores de DB.NOMICS"
+msgstr "GRETL: Provedores de DB.NOMICS"
 
 #: gui/datafiles.c:2089
 msgid "gretl: function packages on server"
@@ -10569,9 +10569,8 @@ msgid "series code:"
 msgstr "Código de serie:"
 
 #: gui/dialogs.c:6944 gui/dialogs.c:7179
-#, fuzzy
 msgid "constant"
-msgstr "Constante"
+msgstr "constante"
 
 #: gui/dialogs.c:7088
 #, c-format
@@ -10579,48 +10578,40 @@ msgid "The series %s does not seem suitable for disaggregation"
 msgstr "A serie *%s* non semella axeitada para desagregala"
 
 #: gui/dialogs.c:7133
-#, fuzzy
 msgid "Output name:"
-msgstr "Xanela de resultados:"
+msgstr "Nome do resultado:"
 
 #: gui/dialogs.c:7146
-#, fuzzy
 msgid "Aggregation type:"
-msgstr "Agregación"
+msgstr "Tipo de agregación:"
 
 #: gui/dialogs.c:7159
-#, fuzzy
 msgid "Regression based"
-msgstr "Regresión"
+msgstr "Baseado en regresión"
 
 #: gui/dialogs.c:7174
 msgid "Deterministic terms:"
-msgstr ""
+msgstr "Termos determinísticos:"
 
 #: gui/dialogs.c:7180
-#, fuzzy
 msgid "constant plus trend"
-msgstr "Con constante máis tendencia"
+msgstr "constante máis tendencia"
 
 #: gui/dialogs.c:7186
-#, fuzzy
 msgid "Covariate:"
-msgstr "variante"
+msgstr "Covariable:"
 
 #: gui/dialogs.c:7203
-#, fuzzy
 msgid "proportional"
-msgstr "Proporción"
+msgstr "proporcional"
 
 #: gui/dialogs.c:7204
-#, fuzzy
 msgid "additive"
-msgstr "Engadir derivada"
+msgstr "aditivo"
 
 #: gui/dialogs.c:7210
-#, fuzzy
 msgid "Preliminary series:"
-msgstr "Serie anterior"
+msgstr "Serie previa:"
 
 #: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
 msgid "show regression results"
@@ -13086,7 +13077,7 @@ msgstr "_Atallos de teclado..."
 
 #: gui/gretl.c:1948
 msgid "_Hansl primer"
-msgstr "Manual básico de _Hansl"
+msgstr "Manual básico de _HANSL"
 
 #: gui/gretl.c:1949 gui/textbuf.c:1667
 msgid "_Function package guide"
@@ -16784,9 +16775,8 @@ msgid "Calculator"
 msgstr "Calculadora"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "Ruta a ArimaX12"
+msgstr "Ruta a x12arima (ou x13)"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
