@@ -15383,255 +15383,319 @@ sample range are saved.
 
 </command>
 
-<command name="var" section="Estimation"
-	 label="Autoregressione vettoriale">
+  <command name="var" section="Estimation"
+	   label="Autoregressione vettoriale">
 
-  <usage>
-    <arguments>
-      <argument>ordine</argument>
-      <argument>lista-variabili</argument>
-      <argument separated="true" optional="true">lista-esogene</argument>
-    </arguments>
-    <options>
-      <option>
-	<flag>--nc</flag>
-	<effect>non include una costante</effect>
-      </option>
-      <option>
-	<flag>--trend</flag>
-	<effect>include un trend</effect>
-      </option>
-      <option>
-	<flag>--seasonals</flag>
-	<effect>include variabili dummy stagionali</effect>
-      </option>
-      <option>
-	<flag>--robust</flag>
-	<effect>errori standard robusti</effect>
-      </option>
-      <option>
-	<flag>--quiet</flag>
-	<effect>omette l'output delle singole equazioni</effect>
-      </option>
-      <option>
-	<flag>--silent</flag>
-	<effect>non stampa nulla</effect>
-      </option>
-      <option>
-	<flag>--impulse-responses</flag>
-<effect>mostra le risposte di impulse</effect>
-</option>
-<option>
-<flag>--variance-decomp</flag>
-<effect>mostra scomposizioni della varianza</effect>
-</option>
-<option>
-<flag>--lagselect</flag>
-<effect>mostra i criteri di informazione per la selezione dei ritardi</effect>
-</option>
-</options>
-<examples>
-<example>var 4 x1 x2 x3 ; time mydum</example>
-<example>var 4 x1 x2 x3 --seasonals</example>
-<example>var 12 x1 x2 x3 --lagselect</example>
-<demos>
-<demo>sw_ch14.inp</demo>
-</demos>
-</examples>
-</usage>
+    <usage>
+      <arguments>
+	<argument>ordine</argument>
+	<argument>lista-variabili</argument>
+	<argument separated="true" optional="true">lista-esogene</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>non include una costante</effect>
+	</option>
+	<option>
+	  <flag>--trend</flag>
+	  <effect>include un trend</effect>
+	</option>
+	<option>
+	  <flag>--seasonals</flag>
+	  <effect>include variabili dummy stagionali</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+	</option>
+        <option>
+	  <flag>--robust-hac</flag>
+	  <effect>errori standard HAC</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>omette l'output delle singole equazioni</effect>
+	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>non stampa nulla</effect>
+	</option>
+	<option>
+	  <flag>--impulse-responses</flag>
+	  <effect>mostra le risposte di impulse</effect>
+	</option>
+	<option>
+	  <flag>--variance-decomp</flag>
+	  <effect>mostra scomposizioni della varianza</effect>
+	</option>
+	<option>
+	  <flag>--lagselect</flag>
+	  <effect>mostra i criteri di informazione per la selezione dei ritardi</effect>
+	</option>
+      </options>
+      <examples>
+	<example>var 4 x1 x2 x3 ; time mydum</example>
+	<example>var 4 x1 x2 x3 --seasonals</example>
+	<example>var 12 x1 x2 x3 --lagselect</example>
+	<demos>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
+      </examples>
+    </usage>
 
-<description>
+    <description>
 
-  <para context="gui">
-Questo comando richiede la specificazione dei seguenti elementi:</para>
+      <para context="gui">
+	Questo comando richiede la specificazione dei seguenti elementi:
+      </para>
+      <ilist context="gui">
+	<li><para context="gui">- L'ordine di ritardi, ossia il numero
+	di ritardi di ogni variabile presente nel sistema;</para>
+	</li>
+	<li><para context="gui">- Eventuali termini esogeni (ma si
+	noti che una costante viene inclusa automaticamente, a meno
+	che non si richieda altrimenti; inoltre è possibile includere
+	variabili dummy stagionali con l'apposita casella); e
+      </para>
+	</li>
+	<li><para context="gui">- Una lista di variabili endogene,
+	i cui ritardi saranno inclusi a destra delle equazioni (nota:
+	non includere variabili ritardate in questa lista, verranno
+	aggiunte automaticamente).</para>
+	</li>
+      </ilist>
+      <para context="gui">
+	Viene calcolata una regressione separata per
+	ogni variabile del sistema; i risultati comprendono i test F per i
+	vincoli di uguaglianza a zero su tutti i ritardi della variabili e
+	un test F per il ritardo massimo, oltre (opzionalmente) alla
+	scomposizione della varianza della previsione e alle funzioni di
+	impulso-risposta.
+      </para>  
 
-<ilist context="gui">
-  <li><para context="gui">- L'ordine di ritardi, ossia il numero
-di ritardi di ogni variabile presente nel sistema;</para>
-</li>
-<li><para context="gui">- Eventuali termini esogeni (ma si
-noti che una costante viene inclusa automaticamente, a meno
-che non si richieda altrimenti; inoltre è possibile includere
-variabili dummy stagionali con l'apposita casella); e
-</para>
-</li>
-<li><para context="gui">- Una lista di variabili esogene,
-i cui ritardi saranno inclusi a destra delle equazioni (nota:
-non includere variabili ritardate in questa lista, verranno
-aggiunte automaticamente).</para>
-</li>
-</ilist>
-<para context="gui">Viene calcolata una regressione separata per
-ogni variabile del sistema; i risultati comprendono i test F per i
-vincoli di uguaglianza a zero su tutti i ritardi della variabili e
-un test F per il ritardo massimo, oltre (opzionalmente) alla
-scomposizione della varianza della previsione e alle funzioni di
-impulso-risposta.</para>  
+      <para context="cli">
+	Imposta e stima (usando OLS) un'autoregressione vettoriale
+	(VAR).  Il primo argomento specifica l'ordine di ritardo (o il
+	massimo ordine di ritardi se è stata usata l'opzione
+	<opt>lagselect</opt>). L'ordine può essere indicato
+	numericamente o con il nome di una variabile scalare
+	preesistente.  Quindi segue l'impostazione della prima
+	equazione. Non occorre includere i ritardi tra gli elementi
+	della <repl>lista-variabili</repl>: verranno aggiunti
+	automaticamente. Il punto e virgola separa le variabili
+	stocastiche, per cui verrà incluso un numero di ritardi pari a
+	<repl>ordine</repl>, dai termini deterministici o esogeni
+	presenti nella <repl>lista-esogene</repl>. Si noti che viene
+	inclusa automaticamente una costante, a meno che non si usi
+	l'opzione <opt>nc</opt>; inoltre è possibile aggiungere un
+	trend con l'opzione <opt>trend</opt> e variabili dummy
+	stagionali con l'opzione <opt>seasonals</opt>.
+      </para>
 
-<para context="cli">
-  Imposta e stima (usando OLS) un'autoregressione vettoriale
-  (VAR).  Il primo argomento specifica l'ordine di ritardo (o il
-  massimo ordine di ritardi se è stata usata l'opzione
-  <opt>lagselect</opt>). L'ordine può essere indicato
-  numericamente o con il nome di una variabile scalare
-  preesistente.  Quindi segue l'impostazione della prima
-  equazione. Non occorre includere i ritardi tra gli elementi
-  della <repl>lista-variabili</repl>: verranno aggiunti
-  automaticamente. Il punto e virgola separa le variabili
-  stocastiche, per cui verrà incluso un numero di ritardi pari a
-  <repl>ordine</repl>, dai termini deterministici o esogeni
-  presenti nella <repl>lista-esogene</repl>. Si noti che viene
-  inclusa automaticamente una costante, a meno che non si usi
-  l'opzione <opt>nc</opt>; inoltre è possibile aggiungere un
-  trend con l'opzione <opt>trend</opt> e variabili dummy
-  stagionali con l'opzione <opt>seasonals</opt>.
-</para>
+      <para context="cli">
+	Benché normalmente un VAR comprenda tutti i ritardi da 1 a un
+	dato ordine, è possibile selezionare un set di ritardi
+	specifico. Per farlo, occorre sostituire l'argomento scalare
+	<repl>order</repl> col nome di un vettore predefinito o con
+	una lista di ritardi separati da virgole, racchiusi da
+	parentesi graffe. Qui di seguito, mostriamo due modi per
+	specificare un VAR contenente i ritardi 1, 2 e 4 (ma non il
+	3):
+      </para>
+      <code context="cli">
+	var {1,2,4} ylist
+	matrix p = {1,2,4}
+	var p ylist
+      </code>
+      
+      <para context="cli">
+	Viene stampata una regressione separata per ognuna delle
+	variabili nella <repl>lista-variabili</repl>. Il risultato di
+	ogni equazione include i test <math>F</math> per i vincoli
+	di uguaglianza a zero su tutti i ritardi delle variabili, un
+	test <math>F</math> per la significatività del ritardo massimo e,
+	se è stata usata l'opzione <opt>impulse-responses</opt>, la
+	scomposizione della varianza della previsione e le funzioni di
+	impulso-risposta.
+      </para>
+      
+      <para>
+	Le scomposizioni della varianza della previsione e le funzioni
+	di risposta di impulso sono basate sulla decomposizione di
+	Cholesky della matrice di covarianza contemporanea, e in
+	questo contesto l'ordine in cui vengono date le variabili
+	stocastiche conta.  La prima variabile nella lista viene
+	considerata come la <quote>più esogena</quote> all'interno del
+	periodo. L'orizzonte per le decomposizioni della varianza e le
+	funzioni di impulso-risposta può essere impostato usando il
+	comando <cmdref targ="set"/>. Per salvare una specifica
+	risposta di impulso sotto forma di matrice, si veda la
+	funzione <fncref targ="irf"/>.
+      </para>
 
-<para context="cli">
-  Viene stampata una regressione separata per ognuna delle
-  variabili nella <repl>lista-variabili</repl>. Il risultato di
-  ogni equazione include i test <math>F</math> per i vincoli
-  di uguaglianza a zero su tutti i ritardi delle variabili, un
-  test <math>F</math> per la significatività del ritardo massimo e,
-  se è stata usata l'opzione <opt>impulse-responses</opt>, la
-  scomposizione della varianza della previsione e le funzioni di
-impulso-risposta.</para>
+      <para context="cli">
+	Con l'opzione <opt>robust</opt> gli errori standard sono
+	corretti per l'eteroschedsasticità. In alternativa, l'opzione
+	<opt>robust-hac</opt> produce errori standard HAC, cioè
+	robusti tanto all'eteroschedasticità che
+	all'autocorrelazione. In generale, la seconda opzione non
+	dovrebbe essere necessaria se il modello include abbastanza
+	ritardi.
+      </para>
 
-<para>
-  Le decomposizioni della varianza della previsione e le funzioni di
-  impulso-risposta sono basate sulla decomposizione di Cholesky
-  della matrice di covarianza contemporanea, e in questo contesto
-  l'ordine in cui vengono date le variabili stocastiche conta.
-  La prima variabile nella lista viene considerata come la
-  <quote>più esogena</quote> all'interno del periodo. L'orizzonte
-  per le decomposizioni della varianza e le funzioni di impulso-risposta
-  può essere impostato usando il comando <cmdref
-  targ="set"/>. Per salvare una specifica risposta di impulso
-  sotto forma di matrice, si veda la funzione <fncref targ="irf"/>.
-</para>
+      <para context="cli">
+	Se si usa l'opzione <opt>lagselect</opt>, il primo parametro
+	del comando <lit>var</lit> viene interpretato come il massimo
+	ordine di ritardo.  In questo caso, il comando non produce il
+	solito risultato della stima del VAR, ma una tabella che
+	mostra i valori dei criteri di informazione di Akaike (AIC),
+	Schwartz (BIC) e Hannan&ndash;Quinn (HQC) calcolati per VAR
+	dall'ordine 1 fino all'ordine massimo indicato, in modo da
+	aiutare nella scelta dell'ordine di ritardo ottimale. Questa
+	opzione viene usata per scegliere l'ordine del VAR più
+	appropriato, e il solito output del VAR non viene mostrato. La
+	tavola coi criteri di informazione è recuperabile sotto forma
+	di matrice tramite l'accessore <fncref targ="$test"/>.
+      </para>
+      
+    </description>
+    
+    <gui-access>
+      <menu-path>/Modello/Serie storiche/VAR - Autoregressione vettoriale</menu-path>
+    </gui-access>
+    
+  </command>
+	
+  <command name="VAR-lagselect" section="Tests" context="gui"
+	   label="Scelta dell'ordine di ritardi in un VAR">
+    
+    <description>
+      <para>
+	In questa finestra di dialogo è possibile testare la stima di
+	un VAR per diversi ordini di ritardi; oltre a indicare la
+	specificazione del VAR è possibile selezionare il massimo
+	ordine di ritardi da testare.
+      </para>
+      <para>
+	Il risultato consiste in una tabella che mostra i valori dei criteri
+	di informazione di Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC)
+	calcolati per VAR dall'ordine 1 fino all'ordine massimo indicato.
+      </para>
+    </description>
 
-<para context="cli">
-  Se si usa l'opzione <opt>lagselect</opt>, il primo parametro
-  del comando <lit>var</lit> viene interpretato come il massimo
-  ordine di ritardo.  In questo caso, il comando non produce il
-  solito risultato della stima del VAR, ma una tabella che
-  mostra i valori dei criteri di informazione di Akaike (AIC),
-  Schwartz (BIC) e Hannan&ndash;Quinn (HQC) calcolati per VAR
-  dall'ordine 1 fino all'ordine massimo indicato, in modo da
-  aiutare nella scelta dell'ordine di ritardo ottimale.
-</para>
+  </command>
 
-</description>
+  <command name="VAR-omit" section="Tests" context="gui"
+	   label="Test per variabili esogene in un VAR">
 
-<gui-access>
-  <menu-path>/Modello/Serie storiche/VAR - Autoregressione vettoriale</menu-path>
-</gui-access>
+    <description>
+      <para>
+	In questa finestra di dialogo è possibile testare l'omissione da un VAR
+	di un gruppo di variabili esogene.
+      </para>
+      <para>
+	Viene calcolato un test del rapporto di verosimiglianza sotto
+	l'ipotesi nulla che i coefficienti delle variabili indicate
+	valgano zero in tutte le equazioni del VAR. Il test si basa
+	sulla differenza tra il log-determinante della matrice di
+	varianza per il modello non vincolato e per il modello con il
+	vincolo che i coefficienti delle variabili indicate valgano
+	zero.
+      </para>
+    </description>
 
-</command>
+  </command>
 
-<command name="VAR-lagselect" section="Tests" context="gui"
-	 label="Scelta dell'ordine di ritardi in un VAR">
+  <command name="varlist" section="Dataset" label="Elenca variabili" context="cli">
 
-  <description>
-    <para>
-      In questa finestra di dialogo è possibile testare la stima di un VAR
-      per diversi ordini di ritardi; oltre a indicare la specificazione del
-      VAR è possibile selezionare il massimo ordine di ritardi da testare.
-    </para>
+    <usage>
+      <options>
+	<option>
+	  <flag>--type</flag>
+	  <optparm>nometipo</optparm>
+	  <effect>tipo di oggetto mostrato</effect>
+	</option>	
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Di default, mostra un elenco delle variabili disponibili nel
+	dataset.  <cmd>list</cmd> e <cmd>ls</cmd> sono sinonimi.
+      </para>
+      <para>
+	L'opzione <opt>type</opt> deve essere seguita dal segno di
+	uguale e da una delle seguenti parole chiave:
+	<lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
+	<lit>list</lit>, <lit>string</lit>, <lit>bundle</lit> or
+	<lit>accessor</lit>. L'effetto è di stampare i nomi di tutti
+	gli oggetti di quel certo tipo attualmente definiti.
+      </para>
+      <para>
+	Un caso particolare è dato quando il tipo è
+	<lit>accessor</lit>: in questo caso, verrà stampato l'elenco
+	delle variabili interne di tipo <quote>accessore</quote>, come
+	ad esempio <fncref targ="$nobs"/> e <fncref targ="$uhat"/>
+	(indipendentemente dal tipo).
+      </para>
+    </description>
 
-    <para>
-      Il risultato consiste in una tabella che mostra i valori dei criteri
-      di informazione di Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC)
-      calcolati per VAR dall'ordine 1 fino all'ordine massimo indicato.
-    </para>
-  </description>
+  </command>
 
-</command>
+  <command name="vartest" section="Tests"
+	 label="Differenza delle varianze">
+    
+    <usage>
+      <arguments>
+	<argument>var1</argument>
+	<argument>var2</argument>
+      </arguments>
+    </usage>
+    
+    <description>
+      <para context="cli">
+	Calcola la statistica <math>F</math> per l'ipotesi nulla
+	che le varianze della popolazione per le variabili
+	<repl>var1</repl> e <repl>var2</repl> siano uguali e mostra il
+	p-value. La statistica test e il p-value sono disponibili
+	tramite gli accessori <fncref targ="$test"/> e
+	<fncref targ="$pvalue"/>. Il codice seguente
+      </para>
+      <code>
+      	open AWM18.gdt
+	vartest EEN EXR
+	eval $test
+	eval $pvalue
+      </code>
+      <para>
+	calcola il test e mostra come usare gli accessori:
+      </para>
+      <code>
+	Equality of variances test
+	
+	EEN: Number of observations = 192
+	EXR: Number of observations = 188
+	Ratio of sample variances = 3.70707
+	Null hypothesis: The two population variances are equal
+	Test statistic: F(191,187) = 3.70707
+	p-value (two-tailed) = 1.94866e-18
+	
+	3.7070716
+	1.9486605e-18
+      </code>
+      <para context="gui">
+	Calcola la statistica <math>F</math> per l'ipotesi nulla
+	che le varianze della popolazione per le variabili selezionate
+	siano uguali e mostra il p-value.
+      </para>
+    </description>
 
-<command name="VAR-omit" section="Tests" context="gui"
-	 label="Test per variabili esogene in un VAR">
+    <gui-access>
+      <menu-path>/Modello/Modelli bivariati/Differenza delle varianze</menu-path>
+    </gui-access>
 
-  <description>
-    <para>
-      In questa finestra di dialogo è possibile testare l'omissione da un VAR
-      di un gruppo di variabili esogene.
-    </para>
-    <para>
-      Viene calcolato un test del rapporto di verosimiglianza sotto l'ipotesi
-      nulla che i coefficienti delle variabili indicate valgano zero in
-      tutte le equazioni del VAR. Il test si basa sulla differenza tra il
-      log-determinante della matrice di varianza per il modello non vincolato
-      e per il modello con il vincolo che i coefficienti delle variabili
-      indicate valgano zero.
-    </para>
-  </description>
-
-</command>
-
-<command name="varlist" section="Dataset" label="Elenca variabili" context="cli">
-
-  <usage>
-    <options>
-      <option>
-	<flag>--type</flag>
-	<optparm>nometipo</optparm>
-	<effect/>
-      </option>	
-    </options>
-  </usage>
-
-  <description>
-    <para>
-      Mostra un elenco delle variabili disponibili nel dataset.
-      <cmd>list</cmd> e <cmd>ls</cmd> sono sinonimi. 
-    </para>
-    <para>
-      L'opzione <opt>type</opt> deve essere seguita dal segno di
-      uguale e da una delle seguenti parole chiave:
-      <lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
-      <lit>list</lit>, <lit>string</lit>, <lit>bundle</lit> or
-      <lit>accessor</lit>. L'effetto è di stampare i nomi di tutti
-      gli oggetti di quel certo tipo attualmente definiti.
-    </para>
-    <para>
-      Un caso particolare è dato quando il tipo è
-      <lit>accessor</lit>: in questo caso, verrà stampato l'elenco
-      delle variabili interne di tipo <quote>accessore</quote>, come
-      ad esempio <fncref targ="$nobs"/> e <fncref targ="$uhat"/>
-      (indipendentemente dal tipo).
-    </para>
-  </description>
-
-</command>
-
-<command name="vartest" section="Tests" label="Differenza delle varianze">
-
-  <usage>
-    <arguments>
-      <argument>var1</argument>
-      <argument>var2</argument>
-    </arguments>
-  </usage>
-
-  <description>
-    <para context="cli">
-      Calcola la statistica <math>F</math> per l'ipotesi nulla
-      che le varianze della popolazione per le variabili
-      <repl>var1</repl> e <repl>var2</repl> siano uguali e mostra il
-      p-value.
-    </para>
-    <para context="gui">
-      Calcola la statistica <math>F</math> per l'ipotesi nulla
-      che le varianze della popolazione per le variabili selezionate
-      siano uguali e mostra il p-value.
-    </para>
-  </description>
-
-  <gui-access>
-    <menu-path>/Modello/Modelli bivariati/Differenza delle varianze</menu-path>
-  </gui-access>
-
-</command>
+  </command>
 
   <command name="vecm" section="Estimation"
 	   label="Modello vettoriale a correzione d'errore">
