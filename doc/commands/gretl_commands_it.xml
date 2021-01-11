@@ -15633,238 +15633,239 @@ impulso-risposta.</para>
 
 </command>
 
-<command name="vecm" section="Estimation"
-	 label="Modello vettoriale a correzione d'errore">
+  <command name="vecm" section="Estimation"
+	   label="Modello vettoriale a correzione d'errore">
 
-  <usage>
-    <arguments>
-      <argument>ordine</argument>
-      <argument>rango</argument>
-      <argument>lista-y</argument>
-      <argblock optional="true" separated="true">
-	<argument>lista-x</argument>
-      </argblock>
-      <argblock optional="true" separated="true">
-	<argument>lista-rx</argument>
-      </argblock>
-    </arguments>
-    <options>
-      <option>
-	<flag>--nc</flag>
-	<effect>senza costante</effect>
-      </option>
-      <option>
-	<flag>--rc</flag>
-	<effect>costante vincolata</effect>
-      </option>
-      <option>
-	<flag>--crt</flag>
-	<effect>costante e trend vincolato</effect>
-      </option>
-      <option>
-	<flag>--ct</flag>
-	<effect>costante e trend non vincolato</effect>
-      </option>
-      <option>
-	<flag>--seasonals</flag>
-	<effect>include dummy stagionali centrate</effect>
-      </option>
-      <option>
-	<flag>--impulse-responses</flag>
-	<effect>mostra impulso-risposta</effect>
-      </option>
-      <option>
-	<flag>--variance-decomp</flag>
-	<effect>mostra decomposizioni della varianza delle previsioni</effect>
-      </option>
-    </options>
-    <examples>
-      <example>vecm 4 1 Y1 Y2 Y3</example>
-      <example>vecm 3 2 Y1 Y2 Y3 --rc</example>
-      <example>vecm 3 2 Y1 Y2 Y3 ; X1 --rc</example>
-      <demos>
-	<demo>denmark.inp</demo>
-	<demo>hamilton.inp</demo>
-      </demos>
-    </examples>
-  </usage>
+    <usage>
+      <arguments>
+	<argument>ordine</argument>
+	<argument>rango</argument>
+	<argument>lista-y</argument>
+	<argblock optional="true" separated="true">
+	  <argument>lista-x</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>lista-rx</argument>
+	</argblock>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>senza costante</effect>
+	</option>
+	<option>
+	  <flag>--rc</flag>
+	  <effect>costante vincolata</effect>
+	</option>
+	<option>
+	  <flag>--crt</flag>
+	  <effect>costante e trend vincolato</effect>
+	</option>
+	<option>
+	  <flag>--ct</flag>
+	  <effect>costante e trend non vincolato</effect>
+	</option>
+	<option>
+	  <flag>--seasonals</flag>
+	  <effect>include dummy stagionali centrate</effect>
+	</option>
+	<option>
+	  <flag>--impulse-responses</flag>
+	  <effect>mostra impulso-risposta</effect>
+	</option>
+	<option>
+	  <flag>--variance-decomp</flag>
+	  <effect>mostra decomposizioni della varianza delle previsioni</effect>
+	</option>
+      </options>
+      <examples>
+	<example>vecm 4 1 Y1 Y2 Y3</example>
+	<example>vecm 3 2 Y1 Y2 Y3 --rc</example>
+	<example>vecm 3 2 Y1 Y2 Y3 ; X1 --rc</example>
+	<demos>
+	  <demo>denmark.inp</demo>
+	  <demo>hamilton.inp</demo>
+	</demos>
+      </examples>
+    </usage>
 
-  <description>
-    <para>
-      Un VECM è un tipo di autoregressione vettoriale, o VAR (si
-      veda <cmdref targ="var"/>), applicabile quando le variabili
-      del modello sono individualmente integrate di ordine 1 (ossia,
-      sono <quote>random walk</quote> con o senza deriva), ma
-      esibiscono cointegrazione. Questo comando è strettamente
-      connesso al test di Johansen per la cointegrazione (si veda
-      <cmdref targ="johansen"/>).
-    </para>
-    <para context="cli">
-      Il parametro <repl>ordine</repl> rappresenta l'ordine di ritardo del
-      sistema VAR. Il numero di ritardi nel VECM (dove la variabile dipendente
-      è data da una differenza prima) è pari a <repl>ordine</repl> meno uno.
-    </para>
-    <para context="gui">
-      L'ordine di ritardo selezionato nella finestra di dialogo del VECM è
-      quello del sistema VAR.  Per ottenere il numero di ritardi nel VECM
-      (dove la variabile dipendente è data da una differenza prima) occorre
-      sottrarre uno da questo numero.
-    </para>
-    <para context="cli">
-      Il parametro <repl>rango</repl> rappresenta il rango di cointegrazione,
-      o in altre parole il numero di vettori di cointegrazione. Questo deve
-      essere maggiore di zero e minore o uguale (in genere minore) al numero
-      di variabili endogene contenute nella <repl>lista-y</repl>.
-    </para>
-    <para context="gui">
-      Il <quote>rango di cointegrazione</quote> rappresenta il numero di
-      vettori di cointegrazione. Questo deve essere maggiore di zero e minore
-      o uguale (in genere minore) al numero di variabili endogene selezionate.
-    </para>
-    <para context="cli">
-      La <repl>lista-y</repl> rappresenta l'elenco delle variabili
-      endogene, nei livelli. L'inclusione di trend deterministici nel modello
-      è controllata dalle opzioni del comando. Se non si indica alcuna
-      opzione, viene inclusa una <quote>costante non vincolata</quote>, che
-      permette la presenza di un'intercetta diversa da zero nelle relazioni di
-      cointegrazione e di un trend nei livelli delle variabili endogene. Nella
-      letteratura originata dal lavoro di Johansen (si veda ad esempio il suo
-      libro del 1995), si fa riferimento a questo come al <quote>caso
-      3</quote>.  Le prime quattro opzioni mostrate sopra, che sono
-      mutualmente esclusive, producono rispettivamente i casi 1, 2, 4 e 5. Il
-      significato di questi casi e i criteri per scegliere tra di essi sono
-      spiegati nella <guideref targ="chap:vecm"/>.
-    </para>
-    <para context="gui">
-      Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
-      il vettore delle variabili endogene, in livelli. L'inclusione di trend
-      deterministici nel modello è controllata dai pulsanti opzionali.  Se non
-      si seleziona alcuna opzione, viene inclusa una <quote>costante non
-      vincolata</quote>, che permette la presenza di un'intercetta diversa da
-      zero nelle relazioni di cointegrazione e di un trend nei livelli delle
-      variabili endogene. Nella letteratura originata dal lavoro di Johansen
-      (si veda ad esempio il suo libro del 1995), si fa riferimento a questo
-      come al <quote>caso 3</quote>.  Le altre quattro opzioni producono
-      rispettivamente i casi 1, 2, 4 e 5. Il significato di questi casi e i
-      criteri per scegliere tra di essi sono spiegati nella <guideref
-      targ="chap:vecm"/>.
-    </para>
-    <para context="gui">
-      Nel riquadro <quote>Variabili esogene</quote> è possibile aggiungere
-      specifiche variabili esogene. Per impostazione predefinita, le variabili
-      vengono aggiunte al modello in forma non vincolata (indicata da una
-      lettera <lit>N</lit> vicino al nome della variabile). Se si vuole che
-      una certa variabile esogena sia vincolata allo spazio di cointegrazione,
-      basta fare clic col tasto destro e selezionare <quote>Vincolata</quote>
-      dal menu pop-up. Il simbolo vicino alla variabile diventerà una V.
-    </para>
-    <para context="cli">
-      Le liste opzionali <repl>lista-x</repl> e <repl>lista-rx</repl>
-      permettono di specificare insiemi di variabili esogene che entrano nel
-      modello in modo non vincolato (<repl>lista-x</repl>) o in modo vincolato
-      allo spazio di cointegrazione (<repl>lista-rx</repl>). Queste liste
-      vanno separate dalla <repl>lista-y</repl> (e tra di loro) da caratteri
-      punto e virgola.
-    </para>
-    <para context="cli">
-      L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
-      delle altre opzioni, specifica l'inclusione di un gruppo di variabili
-      dummy stagionali centrate. Questa opzione è disponibile solo per dati
-      trimestrali o mensili.
-    </para>
-    <para context="gui">
-      Se i dati sono trimestrali o mensili, è presente anche una casella che
-      permette di includere un gruppo di variabili dummy stagionali centrate.
-      In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
-      vedere il risultato delle regressioni ausiliarie che sono il punto di
-      partenza per la procedura di stima di massima verosimiglianza di
-      Johansen.
-    </para>
-    <para context="cli">
-      Il primo degli esempi mostrati sopra specifica un VECM con ordine di
-      ritardo pari a 4 e un unico vettore di cointegrazione. Le variabili
-      endogene sono <lit>Y1</lit>, <lit>Y2</lit> e <lit>Y3</lit>. Il secondo
-      esempio usa le stesse variabili ma specifica un ritardo di ordine 3 e
-      due vettori di cointegrazione, oltre a specificare una <quote>costante
-      vincolata</quote>, che è appropriata se i vettori di cointegrazione
-      possono avere un'intercetta diversa da zero, ma le variabili
-      <lit>Y</lit> non hanno trend.
-</para>
-</description>
+    <description>
+      <para>
+	Un VECM è un tipo di autoregressione vettoriale, o VAR (si
+	veda <cmdref targ="var"/>), applicabile quando le variabili
+	del modello sono individualmente integrate di ordine 1 (ossia,
+	sono <quote>random walk</quote> con o senza deriva), ma
+	esibiscono cointegrazione. Questo comando è strettamente
+	connesso al test di Johansen per la cointegrazione (si veda
+	<cmdref targ="johansen"/>).
+      </para>
+      <para context="cli">
+	Il parametro <repl>ordine</repl> rappresenta l'ordine di ritardo del
+	sistema VAR. Il numero di ritardi nel VECM (dove la variabile dipendente
+	è data da una differenza prima) è pari a <repl>ordine</repl> meno uno.
+      </para>
+      <para context="gui">
+	L'ordine di ritardo selezionato nella finestra di dialogo del VECM è
+	quello del sistema VAR.  Per ottenere il numero di ritardi nel VECM
+	(dove la variabile dipendente è data da una differenza prima) occorre
+	sottrarre uno da questo numero.
+      </para>
+      <para context="cli">
+	Il parametro <repl>rango</repl> rappresenta il rango di cointegrazione,
+	o in altre parole il numero di vettori di cointegrazione. Questo deve
+	essere maggiore di zero e minore o uguale (in genere minore) al numero
+	di variabili endogene contenute nella <repl>lista-y</repl>.
+      </para>
+      <para context="gui">
+	Il <quote>rango di cointegrazione</quote> rappresenta il numero di
+	vettori di cointegrazione. Questo deve essere maggiore di zero e minore
+	o uguale (in genere minore) al numero di variabili endogene selezionate.
+      </para>
+      <para context="cli">
+	La <repl>lista-y</repl> rappresenta l'elenco delle variabili
+	endogene, nei livelli. L'inclusione di trend deterministici nel modello
+	è controllata dalle opzioni del comando. Se non si indica alcuna
+	opzione, viene inclusa una <quote>costante non vincolata</quote>, che
+	permette la presenza di un'intercetta diversa da zero nelle relazioni di
+	cointegrazione e di un trend nei livelli delle variabili endogene. Nella
+	letteratura originata dal lavoro di Johansen (si veda ad esempio il suo
+	libro del 1995), si fa riferimento a questo come al <quote>caso
+	3</quote>.  Le prime quattro opzioni mostrate sopra, che sono
+	mutualmente esclusive, producono rispettivamente i casi 1, 2, 4 e 5. Il
+	significato di questi casi e i criteri per scegliere tra di essi sono
+	spiegati nella <guideref targ="chap:vecm"/>.
+      </para>
 
-<gui-access>
-<menu-path>/Modello/Serie storiche/VECM</menu-path>
-</gui-access>
+      <para context="cli">
+	Le liste opzionali <repl>xlist</repl> e <repl>rxlist</repl>
+	permottoni di specificare delle variabili esogene che entrano
+	nel modello senza vincoli (<repl>xlist</repl>) o solo nello
+	spazio di cointegrazione (<repl>rxlist</repl>). Queste liste
+	sono separate da <repl>ylist</repl> e fra loro tramite punto e
+	virgola.
+      </para>
 
-</command>
+      <para context="gui">
+	Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
+	il vettore delle variabili endogene, in livelli. L'inclusione di trend
+	deterministici nel modello è controllata dai pulsanti opzionali.  Se non
+	si seleziona alcuna opzione, viene inclusa una <quote>costante non
+	vincolata</quote>, che permette la presenza di un'intercetta diversa da
+	zero nelle relazioni di cointegrazione e di un trend nei livelli delle
+	variabili endogene. Nella letteratura originata dal lavoro di Johansen
+	(si veda ad esempio il suo libro del 1995), si fa riferimento a questo
+	come al <quote>caso 3</quote>.  Le altre quattro opzioni producono
+	rispettivamente i casi 1, 2, 4 e 5. Il significato di questi casi e i
+	criteri per scegliere tra di essi sono spiegati nella <guideref
+	targ="chap:vecm"/>.
+      </para>
+      <para context="gui">
+	Nel riquadro <quote>Variabili esogene</quote> è possibile aggiungere
+	specifiche variabili esogene. Per impostazione predefinita, le variabili
+	vengono aggiunte al modello in forma non vincolata (indicata da una
+	lettera <lit>N</lit> vicino al nome della variabile). Se si vuole che
+	una certa variabile esogena sia vincolata allo spazio di cointegrazione,
+	basta fare clic col tasto destro e selezionare <quote>Vincolata</quote>
+	dal menu pop-up. Il simbolo vicino alla variabile diventerà una V.
+      </para>
+      <para context="cli">
+	L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
+	delle altre opzioni, specifica l'inclusione di un gruppo di variabili
+	dummy stagionali centrate. Questa opzione è disponibile solo per dati
+	trimestrali o mensili.
+      </para>
+      <para context="gui">
+	Se i dati sono trimestrali o mensili, è presente anche una casella che
+	permette di includere un gruppo di variabili dummy stagionali centrate.
+	In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
+	vedere il risultato delle regressioni ausiliarie che sono il punto di
+	partenza per la procedura di stima di massima verosimiglianza di
+	Johansen.
+      </para>
+      <para context="cli">
+	Il primo degli esempi mostrati sopra specifica un VECM con ordine di
+	ritardo pari a 4 e un unico vettore di cointegrazione. Le variabili
+	endogene sono <lit>Y1</lit>, <lit>Y2</lit> e <lit>Y3</lit>. Il secondo
+	esempio usa le stesse variabili ma specifica un ritardo di ordine 3 e
+	due vettori di cointegrazione, oltre a specificare una <quote>costante
+	vincolata</quote>, che è appropriata se i vettori di cointegrazione
+	possono avere un'intercetta diversa da zero, ma le variabili
+	<lit>Y</lit> non hanno trend.
+      </para>
+      <para context="cli">
+	Dopo la stima di un VECM sono disponibili alcuni accessori
+	specializzati: <lit>$jalpha</lit>, <lit>$jbeta</lit> e
+	<lit>$jvbeta</lit> contengono, rispettivamente, le matrici &agr; e &bgr;
+	e la varianza stimata di &bgr;.  Per accedere a una specifica
+	funzione di risposta di impulso in forma matriciale, si veda
+	la funzione <fncref targ="irf"/>.
+      </para>
+    </description>
 
-<command name="vif" section="Tests" context="cli"
-	 label="Fattori di inflazione della varianza">
+    <gui-access>
+      <menu-path>/Modello/Serie storiche/VECM</menu-path>
+    </gui-access>
+    
+  </command>
 
-  <usage>
-    <options>
-      <option>
-<flag>--quiet</flag>
-<effect>soppprime la stampa dei risultati</effect>
-</option>
-</options>
-</usage>
+  <command name="vif" section="Tests" context="cli"
+	   label="Fattori di inflazione della varianza">
 
-<description>
-  <para>
-    Deve seguire la stima di un modello che includa almeno due variabili
-    indipendenti. Calcola e mostra i informazioni diagnostiche
-    relativbe alla collinearità
-</para>
+    <usage>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>soppprime la stampa dei risultati</effect>
+	</option>
+      </options>
+      <examples>
+	<demos>
+	  <demo>longley.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    
+    <description>
+      <para>
+	Deve seguire la stima di un modello che includa almeno due variabili
+	indipendenti. Calcola e mostra i informazioni diagnostiche
+	relative alla collinearità
+      </para>
+      <para>
+	Il VIF per il regressore <math>j</math> è definito come
+	<equation status="display" tex="\[\frac{1}{1-R_j^2}\]"
+		  ascii="1/(1 - Rj^2)" graphic="vif"/> dove
+	<math>R</math><sub>j</sub> è il coefficiente di correlazione
+	multipla tra il regressore <math>j</math> e gli altri
+	regressori. Il fattore ha un valore minimo di 1.0 quando la
+	variabile in questione è ortogonale alle altre variabili
+	indipendenti.  <cite key="neter-etal90">Neter, Wasserman, e
+	Kutner (1990)</cite> suggeriscono di usare il VIF maggiore
+	come test diagnostico per la collinearità; un valore superiore
+	a 10 è in genere considerato indice di un grado di
+	collinearità problematico.
+      </para>
+      <para>
+	Dopo l'esecusione di questo comando, l'accessore <fncref
+	targ="$result"/> conterrà un vetttore colonna con glil indici
+	VIF. Per un approccio più sofisticato alla diagnosi della
+	collinearità, si vedia il comando  <cmdref targ="bkw"/>.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>Finestra del modello, /Test/collinearità</menu-path>
+    </gui-access>
+    
+  </command>
 
-<subhead>Fattori di inflazione della varianza (Variance Inflation Factors - VIF)</subhead>
-<para>
-  Il VIF per il regressore <math>j</math> è definito come
-  <equation status="display" tex="\[\frac{1}{1-R_j^2}\]"
-	    ascii="1/(1 - Rj^2)" graphic="vif"/> dove
-  <math>R</math><sub>j</sub> è il coefficiente di correlazione
-  multipla tra il regressore <math>j</math> e gli altri
-  regressori. Il fattore ha un valore minimo di 1.0 quando la
-  variabile in questione è ortogonale alle altre variabili
-  indipendenti.  <cite key="neter-etal90">Neter, Wasserman, e
-  Kutner (1990)</cite> suggeriscono di usare il VIF maggiore
-  come test diagnostico per la collinearità; un valore superiore
-  a 10 è in genere considerato indice di un grado di
-  collinearità problematico.
-</para>
-
-<subhead>Matrice BKW</subhead>
-<para>
-  Questa tabella, basata sul lavoro di <cite
-  key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>,
-  presenta un'analisi più sofisticata del grado di collinearità
-  e delle sue cause per mezzo dell'analisi spettrale della
-  matrice <math>X'X</math>. Per una descrizione completa della
-  tavola BKW in riferimento a gretl, si veda <cite
-  key="adkins15">Adkins, Waters e Hill (2015)</cite>.
-</para>
-
-<para>
-  Dopo l'esecusione di questo comando, l'accessore <fncref
-  targ="$result"/> conterrà un bundle copn due matrici: un
-  vetttore colonna con glil indici VIFs, sotto la chiave
-  <lit>vif</lit> e la matrice BKW matrix sotto <lit>BKW</lit>.
-</para>
-</description>
-
-<gui-access>
-  <menu-path>Finestra del modello, /Test/collinearità</menu-path>
-</gui-access>
-
-</command>
-
-<command name="wls" section="Estimation" label="Minimi quadrati ponderati">
-
-  <usage>
-    <arguments>
-      <argument>variabile-pesi</argument>
-      <argument>variabile-dipendente</argument>
-      <argument>variabili-indipendenti</argument>
+  <command name="wls" section="Estimation" label="Minimi quadrati ponderati">
+    
+    <usage>
+      <arguments>
+	<argument>variabile-pesi</argument>
+	<argument>variabile-dipendente</argument>
+	<argument>variabili-indipendenti</argument>
     </arguments>
     <options>
       <option>
@@ -15936,7 +15937,7 @@ impulso-risposta.</para>
       <ilist>
 	<li>
           <para>
-            leggere i file attraverso i comandi testuali <lit>append</lit>,
+            leggere i file attraverso i comandi <lit>append</lit>,
             <lit>open</lit>, <lit>run</lit> e <lit>include</lit>;
           </para>
 	</li>
@@ -16026,243 +16027,259 @@ impulso-risposta.</para>
 
   <command name="xcorrgm" section="Statistics" label="Correlogramma incrociato">
     
-  <usage>
-    <arguments>
-<argument>var1</argument>
-<argument>var2</argument>
-<argument optional="true">maxlag</argument>
-</arguments>
-<options>
-  <option>
-<flag>--plot</flag>
-<optparm>mode-or-filename</optparm>
-<effect>vedi sotto</effect>
-</option>	  
-</options>
-<examples>
-<example>xcorrgm x y 12</example>
-</examples>
-</usage>
+    <usage>
+      <arguments>
+	<argument>var1</argument>
+	<argument>var2</argument>
+	<argument optional="true">maxlag</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>vedi sotto</effect>
+	</option>	  
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non produrre il grafico</effect>
+        </option>
+      </options>
+      <examples>
+	<example>xcorrgm x y 12</example>
+      </examples>
+    </usage>
+    
+    <description>
+      <para>
+	Mostra il correlogramma incrociato per le variabili
+	<repl>var1</repl> e <repl>var2</repl>, che possono essere
+	specificate per nome o per numero. I valori sono i
+	coefficienti di correlazione campionari tra il valore presente
+	di <repl>var1</repl> e i valori ritardati e anticipati di
+	<repl>var2</repl>.
+      </para>
+      <para>
+	Se si indica un valore <repl>maxlag</repl>, la lunghezza del
+	correlogramma è limitata al numero di ritardi e anticipi
+	indicati, altrimenti è determinata automaticamente in funzione
+	della frequenza dei dati e del numero di osservazioni.
+      </para>
+      <para>
+	Di default, viene prodotto un grafico del correlogramma
+	incrociato: un grafico gnuplot in modo interattivo o un
+	grafico ASCII in modalità batch. Questo comportamento può
+	essere aggiustato con l'opzione <opt>plot</opt>. Per essa, i
+	valori accettabili dei parametri sono <lit>none</lit> (pr
+	sopprimere il grafico); <lit>ascii</lit> (per produrre un
+	grafico testuale anche se in modo interattivo);
+	<lit>display</lit> (per produrre un grafico gnuplot anche se
+	in modo batch), o il nome di un file. L'effetto di
+	quest'ultima scelta è identico a quello descritto sotto
+	l'opzione <opt>output</opt> del comando <cmdref
+	targ="gnuplot"/>.
+      </para>
+    </description>
 
-<description>
-  <para>
-    Mostra il correlogramma incrociato per le variabili
-    <repl>var1</repl> e <repl>var2</repl>, che possono essere
-    specificate per nome o per numero. I valori sono i
-    coefficienti di correlazione campionari tra il valore presente
-    di <repl>var1</repl> e i valori ritardati e anticipati di
-    <repl>var2</repl>.
-</para>
-<para>
-  Se si indica un valore <repl>maxlag</repl>, la lunghezza del
-  correlogramma è limitata al numero di ritardi e anticipi
-  indicati, altrimenti è determinata automaticamente in funzione
-  della frequenza dei dati e del numero di osservazioni.
-</para>
-<para>
-  Di default, viene prodotto un grafico del correlogramma
-  incrociato: un grafico gnuplot in modo interattivo o un
-  grafico ASCII in modalità batch. Questo comportamento può
-  essere aggiustato con l'opzione <opt>plot</opt>. Per essa, i
-  valori accettabili dei parametri sono <lit>none</lit> (pr
-  sopprimere il grafico); <lit>ascii</lit> (per produrre un
-  grafico testuale anche se in modo interattivo);
-  <lit>display</lit> (per produrre un grafico gnuplot anche se
-  in modo batch), o il nome di un file. L'effetto di
-  quest'ultima scelta è identico a quello descritto sotto
-  l'opzione <opt>output</opt> del comando <cmdref
-  targ="gnuplot"/>.
-</para>
-</description>
+    <gui-access>
+      <menu-path>/Visualizza/Correlogramma</menu-path>
+      <other-access>Menù pop-up nella finestra principale (selezione multipla)</other-access>
+    </gui-access>
 
-<gui-access>
-<menu-path>/Visualizza/Correlogramma</menu-path>
-<other-access>Menù pop-up nella finestra principale (selezione multipla)</other-access>
-</gui-access>
+  </command>
 
-</command>
+  <command name="xtab" section="Statistics" label="Tabulazione incrociata">
 
-<command name="xtab" section="Statistics" label="Tabulazione incrociata">
+    <usage>
+      <arguments>
+	<argument>lista-y</argument>
+	<argument optional="true" separated="true">lista-x</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--row</flag>
+	  <effect>mostra le percentuali per riga</effect>
+	</option>
+	<option>
+	  <flag>--column</flag>
+	  <effect>mostra le percentuali per colonna</effect>
+	</option>
+	<option>
+	  <flag>--zeros</flag>
+	  <effect>mostra i valori pari a zero</effect>
+	</option>
+	<option>
+	  <flag>--no-totals</flag>
+	  <effect>elimina la stampa delle marginali</effect>
+	</option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>matname</optparm>
+	  <effect>usa le frequenze da una matrice</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>vedi il caso bivariato più sotto</effect>
+	</option>
+	<option>
+	  <flag>--tex</flag>
+	  <optparm optional="true">nomefile</optparm>
+	  <effect>produce output &latex;</effect>
+	</option>
+	<option>
+	  <flag>--equal</flag>
+	  <effect>vedi il caso &latex; più sotto</effect>
+	</option>
+      </options>
+      <examples>
+	<example>xtab 1 2</example>
+	<example>xtab 1 ; 2 3 4</example>
+	<example>xtab --matrix=A</example>
+	<example>xtab 1 2 --tex="xtab.tex"</example>
+      </examples>
+    </usage>
 
-  <usage>
-    <arguments>
-<argument>lista-y</argument>
-<argument optional="true" separated="true">lista-x</argument>
-</arguments>
-<options>
-  <option>
-<flag>--row</flag>
-<effect>mostra le percentuali per riga</effect>
-</option>
-<option>
-<flag>--column</flag>
-<effect>mostra le percentuali per colonna</effect>
-</option>
-<option>
-<flag>--zeros</flag>
-<effect>mostra i valori pari a zero</effect>
-</option>
-<option>
-<flag>--no-totals</flag>
-<effect>elimina la stampa delle marginali</effect>
-</option>
-<option>
-<flag>--matrix</flag>
-<optparm>matname</optparm>
-<effect>usa le frequenze da una matrice</effect>
-</option>
-<option>
-<flag>--quiet</flag>
-<effect>vedi il caso bivariato più sotto</effect>
-</option>
-<option>
-<flag>--tex</flag>
-<optparm optional="true">nomefile</optparm>
-<effect>produce output &latex;</effect>
-</option>
-<option>
-<flag>--equal</flag>
-<effect>vedi il caso &latex; più sotto</effect>
-</option>
-</options>
-<examples>
-<example>xtab 1 2</example>
-<example>xtab 1 ; 2 3 4</example>
-<example>xtab --matrix=A</example>
-<example>xtab 1 2 --tex="xtab.tex"</example>
-</examples>
-</usage>
+    <description context="cli">
+      <para>
+	Mostra la tabella di contingenza, o la tabulazione incrociata,
+	tra ogni combinazione delle variabili della
+	<repl>lista-y</repl>; se si indica anche una seconda lista,
+	<repl>lista-x</repl>, ogni variabile della
+	<repl>lista-y</repl> viene tabulata (per riga) rispetto ad
+	ogni variabile della <repl>lista-x</repl> (per colonna). Le
+	variabili in queste liste possono essere referenziate per nome
+	o per numero, e devono essere state marcate come
+	discrete. Alternativamente, con l'opzione <opt>matrix</opt>,
+	la matrice specificata verrà trattata come un insieme di
+	frequenze già calcolate e il comando si limiterà a stamparla
+	col formato appropriato (vedi anche la funzione <fncref
+	targ="mxtab"/>). In questo caso, gli argomenti di tipo lista
+	vanno omessi.
+      </para>
+      <para>
+	Per impostazione predefinita le celle indicano la frequenza
+	assoluta.  Le opzioni <opt>row</opt> e <opt>column</opt> (che
+	sono mutualmente esclusive) sostituiscono la frequenza
+	assoluta con le frequenze in percentuale relativamente a
+	ciascuna riga o colonna. Le celle con valore di frequenza
+	nullo sono lasciate vuote, a meno che non venga usata
+	l'opzione <opt>zeros</opt>, che mostra esplicitamente i valori
+	pari a zero; questa opzione può essere comoda se occorre
+	importare la tabella in un altro programma, come un foglio di
+	calcolo.
+      </para>
+      <para>
+	Il test chi quadro di Pearson per l'indipendenza viene
+	mostrato se la frequenza attesa nell'ipotesi di indipendenza è
+	pari almeno a 1.0e-7 per tutte le celle. Una regola
+	approssimativa usata spesso nel giudicare la validità di
+	questa statistica richiede che la frequenza attesa sia
+	superiore a 5 per almeno l'80 per cento delle celle; se questa
+	condizione non viene soddisfatta viene mostrato un messaggio
+	di avvertimento.
+      </para>
+      <para>
+	Se la tabella di contingenza è 2 x 2, viene calcolato il test
+	esatto di Fisher per l'indipendenza. Si noti che questo test
+	si basa sull'ipotesi che i totali per riga e colonna siano
+	fissi; questo può essere appropriato o meno a seconda di come
+	sono stati generati i dati.  Il p-value sinistro va usato nel
+	caso in cui l'ipotesi alternativa a quella di indipendenza sia
+	quella dell'associazione negativa (ossia i valori tendono ad
+	accumularsi nelle celle che non appartengono alla diagonale
+	della tabella), mentre il p-value destro va usato nell'ipotesi
+	alternativa di associazione positiva. Il p-value a due code di
+	questo test è calcolato seguendo il metodo (b) descritto in
+	<cite key="agresti92">Agresti (1992)</cite>, (capitolo 2.1):
+	esso è la somma delle probabilità di tutte le possibili
+	tabelle che hanno i totali per riga e per colonna pari a
+	quelli della tabella data e che hanno una probabilità minore o
+	uguale a quella della tabella data.
+      </para>
 
-<description context="cli">
-  <para>
-    Mostra la tabella di contingenza, o la tabulazione incrociata,
-    tra ogni combinazione delle variabili della
-    <repl>lista-y</repl>; se si indica anche una seconda lista,
-    <repl>lista-x</repl>, ogni variabile della
-    <repl>lista-y</repl> viene tabulata (per riga) rispetto ad
-    ogni variabile della <repl>lista-x</repl> (per colonna). Le
-    variabili in queste liste possono essere referenziate per nome
-    o per numero, e devono essere state marcate come
-    discrete. Alternativamente, con l'opzione <opt>matrix</opt>,
-    la matrice specificata verrà trattata come un insieme di
-    frequenze già calcolate e il comando si limiterà a stamparla
-    col formato appropriato.
-</para>
-<para>
-  Per impostazione predefinita le celle indicano la frequenza
-  assoluta.  Le opzioni <opt>row</opt> e <opt>column</opt> (che
-  sono mutualmente esclusive) sostituiscono la frequenza
-  assoluta con le frequenze in percentuale relativamente a
-  ciascuna riga o colonna. Le celle con valore di frequenza
-  nullo sono lasciate vuote, a meno che non venga usata
-  l'opzione <opt>zeros</opt>, che mostra esplicitamente i valori
-  pari a zero; questa opzione può essere comoda se occorre
-  importare la tabella in un altro programma, come un foglio di
-  calcolo.
-</para>
-<para>
-  Il test chi quadro di Pearson per l'indipendenza viene
-  mostrato se la frequenza attesa nell'ipotesi di indipendenza è
-  pari almeno a 1.0e-7 per tutte le celle. Una regola
-  approssimativa usata spesso nel giudicare la validità di
-  questa statistica richiede che la frequenza attesa sia
-  superiore a 5 per almeno l'80 per cento delle celle; se questa
-  condizione non viene soddisfatta viene mostrato un messaggio
-  di avvertimento.
-</para>
-<para>
-  Se la tabella di contingenza è 2 x 2, viene calcolato il test
-  esatto di Fisher per l'indipendenza. Si noti che questo test
-  si basa sull'ipotesi che i totali per riga e colonna siano
-  fissi; questo può essere appropriato o meno a seconda di come
-  sono stati generati i dati.  Il p-value sinistro va usato nel
-  caso in cui l'ipotesi alternativa a quella di indipendenza sia
-  quella dell'associazione negativa (ossia i valori tendono ad
-  accumularsi nelle celle che non appartengono alla diagonale
-  della tabella), mentre il p-value destro va usato nell'ipotesi
-  alternativa di associazione positiva. Il p-value a due code di
-  questo test è calcolato seguendo il metodo (b) descritto in
-  Agresti <cite key="agresti92">Agresti (1992)</cite>, (capitolo
-  2.1): esso è la somma delle probabilità di tutte le possibili
-  tabelle che hanno i totali per riga e per colonna pari a
-  quelli della tabella data e che hanno una probabilità minore o
-  uguale a quella della tabella data.
-</para>
+      <subhead>Il caso bivariato</subhead>
+      <para>
+	Nel caso base di una semplice tabella a doppia entrata si
+	possono usare gli accessori <fncref targ="$test"/> e <fncref
+	targ="$pvalue"/> per il test chi-quadro di Pearson ed il
+	p-value corrispondente, a patto che sia rispettata la
+	condizione sul valore atteso minimo. In questo contesto,
+	l'opzione <opt>quiet</opt> fa sì che la tavola non venga
+	stampata.
+      </para>
 
-<subhead>Il caso bivariato</subhead>
-<para>
-  Nel caso base di una semplice tabella a doppia entrata si
-  possono usare gli accessori <fncref targ="$test"/> e <fncref
-  targ="$pvalue"/> per il test chi-quadro di Pearson ed il
-  p-value corrispondente, a patto che sia rispettata la
-  condizione sul valore atteso minimo. In questo contesto,
-  l'opzione <opt>quiet</opt> fa sì che la tavola non venga
-  stampata.
-</para>
+      <subhead>&latex; output</subhead>
+      <para>
+	Dando l'opzione <opt>tex</opt>, la tabella a doppia entrata
+	viene stampata sotto forma di un ambiente <lit>tabular</lit>
+	di &latex;. L'output verrà prodotto direttamente (così da
+	poterlo copincollare) o, se viene specificato il parametro
+	<repl>nomefile</repl>, nel file corrispondente. (Se
+	<repl>nomefile</repl> non contiene un percorso completo, il
+	file sarà scritto nella locazione <cmdref targ="workdir"/>
+	attuale). la statistica test non viene calcolata. L'opzione
+	addizionale <opt>equal</opt> viene usata per far sì che
+	venganp stampati in grassetto gli elementi della tabella per
+	cui le variabili riga e colonna hanno lo stesso valore
+	numerico. Quest'opzione è ignorata a se non è presente anche
+	l'opzione <opt>tex</opt> o quando una delle due variabili sia
+	di tipo stringa.
+      </para>
 
-<subhead>&latex; output</subhead>
-<para>
-  Dando l'opzione <opt>tex</opt>, la tabella a doppia entrata
-viene stampata sotto forma di un ambiente <lit>tabular</lit>
-di &latex;. L'output verrà prodotto direttamente (così da
-poterlo copincollare) o, se viene specificato il parametro
-<repl>nomefile</repl>, nel file corrispondente. (Se
-<repl>nomefile</repl> non contiene un percorso completo, il
-file sarà scritto nella locazione <cmdref targ="workdir"/>
-attuale). la statistica test non viene calcolata. L'opzione
-addizionale <opt>equal</opt> viene usata per far sì che
-venganp stampati in grassetto gli elementi della tabella per
-cui le variabili riga e colonna hanno lo stesso valore
-numerico. Quest'opzione è ignorata a se non è presente anche
-l'opzione <opt>tex</opt> o quando una delle due variabili sia
-di tipo stringa.
-</para>
+      <subhead>Salvare la tavola come matrice</subhead>
+      <para>
+	Quando l'argomento del comando è dato da una sola lista, la
+	tavola di contingenza può essere salvata come matrice
+	attraverso l'accessore <fncref targ="$result"/>.
+      </para>
+    </description>
 
-</description>
-
-<description context="gui">
-  <para>
-    Mostra la tabella di contingenza, o la tabulazione incrociata, tra ogni
-    combinazione delle variabili selezionate. Si noti che tutte le variabili
-    devono essere discrete.
-</para>
-<para>
-  Per impostazione predefinita le celle indicano la frequenza assoluta, ma
-  è possibile scegliere di avere le percentuali relative alle righe o alle
-  colonne.
-</para>
-<para>
-  Inoltre, le celle con un valore di frequenza nullo sono lasciate vuote,
-  ma è possibile scegliere di avere i valori pari a zero esplicitamente.
-</para>
-<para>
-  Il test chi quadro di Pearson per l'indipendenza viene mostrato
-  se la frequenza attesa nell'ipotesi di indipendenza è pari almeno a
-  1.0e-7 per tutte le celle. Una regola approssimativa usata spesso nel
-  giudicare la validità di questa statistica richiede che la frequenza
-  attesa sia superiore a 5 per almeno l'80 per cento delle celle; se
-  questa condizione non viene soddisfatta viene mostrato un messaggio di
-  avvertimento.
-</para>
-<para>
-  Se la tabella di contingenza è 2 x 2, viene calcolato il test esatto di
-  Fisher per l'indipendenza. Si noti che questo test si basa sull'ipotesi
-  che i totali per riga e colonna siano fissi; questo può essere
-  appropriato o meno a seconda di come sono stati generati i dati.
-  Il p-value sinistro va usato nel caso in cui l'ipotesi alternativa a
-  quella di indipendenza sia quella dell'associazione negativa (ossia i
-  valori tendono ad accumularsi nelle celle che non appartengono alla
-  diagonale della tabella), mentre il p-value destro va usato nell'ipotesi
-  alternativa di associazione positiva. Il p-value a due code di questo
-  test è calcolato seguendo il metodo (b) descritto in Agresti
-  (1992, capitolo 2.1): esso è la somma delle probabilità di tutte le
-  possibili tabelle che hanno i totali per riga e per colonna pari a
-  quelli della tabella data e che hanno una probabilità minore o uguale a
-  quella della tabella data.
-</para>
-</description>
-
-</command>
+    <description context="gui">
+      <para>
+	Mostra la tabella di contingenza, o la tabulazione incrociata,
+	tra ogni combinazione delle variabili selezionate. Si noti che
+	tutte le variabili devono essere discrete.
+      </para>
+      <para>
+	Per impostazione predefinita le celle indicano la frequenza
+	assoluta, ma è possibile scegliere di avere le percentuali
+	relative alle righe o alle colonne.
+      </para>
+      <para>
+	Inoltre, le celle con un valore di frequenza nullo sono
+	lasciate vuote, ma è possibile scegliere di avere i valori
+	pari a zero esplicitamente.
+      </para>
+      <para>
+	Il test chi quadro di Pearson per l'indipendenza viene
+	mostrato se la frequenza attesa nell'ipotesi di indipendenza è
+	pari almeno a 1.0e-7 per tutte le celle. Una regola
+	approssimativa usata spesso nel giudicare la validità di
+	questa statistica richiede che la frequenza attesa sia
+	superiore a 5 per almeno l'80 per cento delle celle; se questa
+	condizione non viene soddisfatta viene mostrato un messaggio
+	di avvertimento.
+      </para>
+      <para>
+	Se la tabella di contingenza è 2 x 2, viene calcolato il test
+	esatto di Fisher per l'indipendenza. Si noti che questo test
+	si basa sull'ipotesi che i totali per riga e colonna siano
+	fissi; questo può essere appropriato o meno a seconda di come
+	sono stati generati i dati.  Il p-value sinistro va usato nel
+	caso in cui l'ipotesi alternativa a quella di indipendenza sia
+	quella dell'associazione negativa (ossia i valori tendono ad
+	accumularsi nelle celle che non appartengono alla diagonale
+	della tabella), mentre il p-value destro va usato nell'ipotesi
+	alternativa di associazione positiva. Il p-value a due code di
+	questo test è calcolato seguendo il metodo (b) descritto in
+	<cite key="agresti92">Agresti (1992)</cite>, capitolo 2.1:
+	esso è la somma delle probabilità di tutte le possibili
+	tabelle che hanno i totali per riga e per colonna pari a
+	quelli della tabella data e che hanno una probabilità minore o
+	uguale a quella della tabella data.
+      </para>
+    </description>
+    
+  </command>
 
 </commandref>
 
