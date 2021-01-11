@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-08 09:00-0500\n"
-"PO-Revision-Date: 2020-11-09 19:08+0100\n"
+"PO-Revision-Date: 2021-01-11 14:49+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: lib/src/adf_kpss.c:581
 msgid "lagged differences"
@@ -7617,7 +7617,7 @@ msgstr "Unerwartetes Symbol %c"
 
 #: lib/src/tokenize.c:3403
 msgid "Command line is not valid UTF-8"
-msgstr ""
+msgstr "Befehlszeile ist kein valides UTF-8"
 
 #: lib/src/transforms.c:188
 #, c-format
@@ -10512,7 +10512,6 @@ msgid "series code:"
 msgstr "Reihencode:"
 
 #: gui/dialogs.c:6944 gui/dialogs.c:7179
-#, fuzzy
 msgid "constant"
 msgstr "Konstante"
 
@@ -10522,48 +10521,40 @@ msgid "The series %s does not seem suitable for disaggregation"
 msgstr "Die Reihe %s erscheint ungeeignet für Disaggregierung."
 
 #: gui/dialogs.c:7133
-#, fuzzy
 msgid "Output name:"
-msgstr "Ausgabefenster:"
+msgstr "Ausgabename:"
 
 #: gui/dialogs.c:7146
-#, fuzzy
 msgid "Aggregation type:"
-msgstr "Aggregation"
+msgstr "Aggregationstyp:"
 
 #: gui/dialogs.c:7159
-#, fuzzy
 msgid "Regression based"
-msgstr "Regression"
+msgstr "Regressionsbasiert"
 
 #: gui/dialogs.c:7174
 msgid "Deterministic terms:"
-msgstr ""
+msgstr "Deterministische Terme:"
 
 #: gui/dialogs.c:7180
-#, fuzzy
 msgid "constant plus trend"
-msgstr "mit Konstante und Trend"
+msgstr "Konstante und Trend"
 
 #: gui/dialogs.c:7186
-#, fuzzy
 msgid "Covariate:"
-msgstr "Variante"
+msgstr "Kovariate:"
 
 #: gui/dialogs.c:7203
-#, fuzzy
 msgid "proportional"
-msgstr "Anteil"
+msgstr "proportional"
 
 #: gui/dialogs.c:7204
-#, fuzzy
 msgid "additive"
-msgstr "Ableitung hinzufügen"
+msgstr "additiv"
 
 #: gui/dialogs.c:7210
-#, fuzzy
 msgid "Preliminary series:"
-msgstr "Vorherige Reihen"
+msgstr "Vorläufige Reihen:"
 
 #: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
 msgid "show regression results"
@@ -14151,9 +14142,8 @@ msgid "Accessors"
 msgstr "Zugriffsvariablen"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2334
-#, fuzzy
 msgid "Built-in strings"
-msgstr "Löschte Zeichenkette %s"
+msgstr "Eingebaute Zeichenketten"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
@@ -14164,9 +14154,8 @@ msgid "Mathematical"
 msgstr "Mathematisch"
 
 #: gui/helpfiles.c:335 doc/commands/matfuncs.c:43
-#, fuzzy
 msgid "Matrix manipulation"
-msgstr "Matrix-Formung"
+msgstr "Matrix-Manipulation"
 
 #: gui/helpfiles.c:337
 msgid "Linear algebra"
@@ -14185,7 +14174,6 @@ msgid "Calendar"
 msgstr "Kalender"
 
 #: gui/helpfiles.c:349
-#, fuzzy
 msgid "Time-series"
 msgstr "Zeitreihen"
 
@@ -14194,9 +14182,8 @@ msgid "Statistical"
 msgstr "Statistisch"
 
 #: gui/helpfiles.c:353
-#, fuzzy
 msgid "Non-parametric"
-msgstr "_Nichtparametrische Tests"
+msgstr "Nichtparametrisch"
 
 #: gui/helpfiles.c:357
 msgid "State space"
@@ -16733,9 +16720,8 @@ msgid "Calculator"
 msgstr "Rechner"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "Pfad von X12arima"
+msgstr "Pfad von x12arima (oder x13)"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
@@ -17248,9 +17234,8 @@ msgid "Gretl Function Reference"
 msgstr "Gretl-Funktionsdokumentation"
 
 #: gui/textbuf.c:2335
-#, fuzzy
 msgid "Functions proper"
-msgstr "_Funktionsdokumentation"
+msgstr "Funktionen an sich"
 
 #: gui/textbuf.c:2433
 msgid "Back"
@@ -17293,9 +17278,8 @@ msgid "Unindent region"
 msgstr "Region ent-einrücken"
 
 #: gui/textbuf.c:3936
-#, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
-msgstr "Auto-Einrückung für Skript"
+msgstr "Auto-Einrückung für Skript (Strg+I)"
 
 #: gui/textbuf.c:3947 gui/toolbar.c:820
 msgid "Preferences..."
@@ -17543,18 +17527,16 @@ msgid "Stop"
 msgstr "Stopp"
 
 #: gui/update.c:33
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "Version %s is available at http://gretl.sourceforge.net/\n"
 msgstr ""
 "Sie verwenden gretl %s.\n"
-"Version %s ist verfügbar auf http://ricardo.ecn.wfu.edu/pub/gretl/\n"
-"(Falls diese Version noch nicht auf http://gretl.sourceforge.net/\n"
-"vorliegt, sollte dies bald so sein.)"
+"Version %s ist verfügbar auf http://gretl.sourceforge.net/\n"
 
 #: gui/update.c:37
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "This seems to be a pre-release; the latest version available at\n"
@@ -17562,7 +17544,7 @@ msgid ""
 msgstr ""
 "Sie verwenden gretl %s.\n"
 "Dies scheint eine Vorabversion zu sein: die neueste verfügbare Version auf\n"
-"http://ricardo.ecn.wfu.edu/pub/gretl/ ist %s"
+"http://gretl.sourceforge.net/ ist %s"
 
 #: gui/update.c:42
 #, c-format
