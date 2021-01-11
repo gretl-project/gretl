@@ -252,15 +252,8 @@
         l'ordine di ritardo effettivamente usato viene ottenuto
         testando "all'indietro".  Il criterio per effettuare il test
         all'indietro può essere selezionato usando il parametro
-        opzionale e deve essere uno fra <lit>MAIC</lit>,
-        <lit>MBIC</lit> o <lit>tstat</lit>.  I metodi MAIC e MBIC sono
-        descritti in <cite key="ng-perron01">Ng e Perron
-        (2001)</cite>; l'ordine dei ritardi viene scelto in modo da
-        ottimizzare rispettivamente una versione modificata del
-        Criterio di Informazione di Akaike o del Criterio Bayesiano di
-        Schwartz. Il metodo MAIC è quello applicato di default quando
-        non viene esplicitamente dichiarato un metodo. Il metodo tstat
-        è il seguente:
+        opzionale e deve essere uno fra <lit>AIC</lit> (default),
+        <lit>BIC</lit> o <lit>tstat</lit>.  
       </para>
 
       <para context="gui">
@@ -273,13 +266,35 @@
         ordine massimo, e l'ordine da usare effettivamente sarà
         ricavato applicando la seguente procedura di test
         "all'indietro", usando il criterio scelto tramite la tendina
-        associata. I metodi AIC e BIC modificati sono descritti in
-        <cite key="ng-perron01">Ng e Perron (2001)</cite>; l'ordine
-        dei ritardi viene scelto in modo da ottimizzare
-        rispettivamente una versione modificata del Criterio di
-        Informazione di Akaike o del Criterio Bayesiano di
-        Schwartz. Il metodo della statistica <math>t</math> è il
-        seguente:
+        associata.
+      </para>
+
+      <para context="cli">
+	Quando si testa "all'indietro", l'ordine dei ritardi finale
+	viene scelto in modo da ottimizzare rispettivamente una
+	versione modificata del Criterio di Informazione di Akaike o
+	del Criterio Bayesiano di Schwartz. La procedura varia a
+	seconda se si sia scelta l'opzione <opt>gls</opt>: con la
+	de-trendizzazione GLS, i valori AIC e BIC sono quelli
+	<quote>modificati</quote> descritti in <cite
+	key="ng-perron01">Ng e Perron (2001)</cite>, altrimenti sono
+	quelli standard. Nel caso GLS è disponibile un'ulteriore
+	opzione, e cioè <opt>perron-qu</opt>; essa fa sì che i criteri
+	di informazione modificati sono calcolati secondo il metodo
+	raccomandato in <cite key="perron-qu07">Perron e Qu
+	(2007)</cite>.
+      </para>
+
+      <para context="gui">
+	Quando si testa "all'indietro", l'ordine dei ritardi finale
+	viene scelto in modo da ottimizzare rispettivamente una
+	versione modificata del Criterio di Informazione di Akaike o
+	del Criterio Bayesiano di Schwartz.
+      </para>
+
+      <para>
+	Quando si testa "all'indietro" usando la statistica
+	<math>t</math>, la procedura è la seguente:
       </para>
 
       <nlist>
@@ -303,26 +318,16 @@
         distribuzione normale pari a 0.10 o inferiore.
       </para> 
 
-      <para context="cli">
-        L'opzione <opt>gls</opt> può essere usata insieme a una
-        delle altre due opzioni <opt>c</opt> e <opt>ct</opt> (il
-        modello con costante o quello con costante e trend). L'effetto
-        di questa opzione è di rimuovere la media o il trend della
-        variabile da testare, usando la procedura GLS suggerita da
-        <cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>,
-        che fornisce un test di potenza maggiore rispetto a
-        quell'approccio standard di Dickey&ndash;Fuller. Questa
-        opzione non è compatibile con le opzioni <opt>nc</opt>,
-        <opt>ctt</opt> o <opt>seasonals</opt>.
-      </para>
       <para>
         I <emphasis>p-</emphasis>value per questo test sono basati su
         MacKinnon (1996). Il codice rilevante è incluso per gentile
-        concessione dell'autore. Nel caso del test con trend lineare
-        usando la procedura GLS questi <emphasis>P</emphasis>-value
-        non sono utilizzabili; vengono usati i valori critici
-        contenuti nella Tabella 1 di <cite key="ERS96">Elliott,
-        Rothenberg e Stock (1996)</cite>.
+        concessione dell'autore. (I valori per campioni finiti sono
+        fornmiti solo per test non aumentati. Se l'ordine dei ritardi
+        è diverso da zero, vengono usati i valori asintotici.)  Nel
+        caso del test con trend lineare usando la procedura GLS questi
+        <emphasis>P</emphasis>-value non sono utilizzabili; vengono
+        usati i valori critici contenuti nella Tabella 1 di <cite
+        key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>.
       </para>
 
       <subhead context="cli">Dati panel</subhead>
@@ -638,7 +643,7 @@
 	  <effect>usa un criterio di convergenza più blando</effect>
 	</option>
 	<option>
-	  <flag>--quite</flag>
+	  <flag>--quiet</flag>
 	  <effect>non stampa nulla</effect>
 	</option>
       </options>
@@ -739,6 +744,11 @@
     </usage>
 
     <description>
+      <para>
+	Questo comando è obsoleto; al suo posto, va usato <cmdref
+	targ="dpanel"/>, che è più flessibile e più efficiente. Prima
+	o poi verrà rimosso, e ne sconsigliamo l'utilizzo.
+      </para>
       <para>
 	Esegue la stima di modelli panel dinamici (ossia, modelli
 	panel che includono uno o più ritardi della variabile
@@ -922,7 +932,7 @@
         </option>
         <option>
 	  <flag>--x-12-arima</flag>
-	  <effect>usa X-12-ARIMA per la stima</effect>
+	  <effect>usa X-12-ARIMA, o X13, per la stima</effect>
         </option>
 	<option>
 	  <flag>--lbfgs</flag>
@@ -931,10 +941,6 @@
 	<option>
 	  <flag>--y-diff-only</flag>
 	  <effect>speciale per ARIMAX, si veda sotto</effect>
-	</option>
-	<option>
-	  <flag>--save-ehat</flag>
-	 <effect>si veda sotto</effect>
 	</option>
       </options>
       <examples>
@@ -1065,16 +1071,6 @@
 	differenziare sia la variabile dipendente che i regressori, ma quando
 	viene indicata questa opzione viene differenziata solo la variabile
 	dipendente, mentre i regressori restano nei livelli.
-      </para>
-
-      <para context="cli">
-	L'opzione <opt>save-ehat</opt> è applicabile solo alla stima nativa di MV
-	esatta. Il suo effetto è quello di rendere disponibile un vettore
-	contenente la stima ottimale alla data <math>t</math> del disturbo
-	o innovazione alla stessa data: questo valore può essere recuperato
-	grazie all'accessore <fncref targ="$ehat"/>. Questi valori sono diversi
-	dalla variabile dei residui (<fncref targ="$uhat"/>) che contiene gli errori 
-	di previsione un passo in avanti.
       </para>
 
       <para>
@@ -1883,6 +1879,10 @@
 	MacKinnon (1996). Il codice relativo è stato incluso per gentile
         concessione dell'autore.
       </para>
+      <para>
+	Per il test di cointegrazione di Søren Johansen, si veda il
+	comando <cmdref targ="johansen"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -1897,42 +1897,41 @@
 
     <description>
 
-      <para>Quando viene aggiunta a un dataset una serie di frequenza
+      <para>
+	Quando viene aggiunta a un dataset una serie di frequenza
         maggiore, occorre <quote>compattare</quote> la nuova serie.
 	Ad esempio, una serie mensile deve essere compattata per
-        adattarsi a un dataset trimestrale.</para>  
-
-      <para>Inoltre, a volte può essere necessario compattare un intero
+        adattarsi a un dataset trimestrale.
+      </para>  
+      <para>
+	Inoltre, a volte può essere necessario compattare un intero
 	dataset abbassandone la frequenza (ad esempio, prima di aggiungere
-	al dataset una variabile a frequenza minore).</para>
-
-      <para>Ci sono cinque opzioni per il compattamento:</para>
-
+	al dataset una variabile a frequenza minore).
+      </para>
+      <para>
+	Ci sono cinque opzioni per il compattamento:
+      </para>
       <ilist>
 	<li><para>Media: i nuovi valori saranno la media aritmetica
 	    dei corrispondenti valori della serie a frequenza maggiore.
             Ad esempio, il valore per il primo trimestre del 1990 sarà la
             media dei valori di gennaio, febbraio e marzo del 1990.</para>
 	</li>
-
 	<li><para>Somma: i nuovi valori saranno la somma dei 
             corrispondenti valori della serie a frequenza maggiore.
             Ad esempio, il valore per il primo trimestre sarà la somma dei
             valori di gennaio, febbraio e marzo.</para>
 	</li>
-
 	<li><para>Valori di fine periodo: il nuovo valore è l'ultimo
             valore corrispondente nella serie a frequenza maggiore.
 	    Ad esempio, il valore del primo trimestre del 1990 sarà quello
             del marzo 1990.</para>
 	</li>
-
 	<li><para>Valori di inizio periodo: il nuovo valore è il primo
             valore corrispondente nella serie a frequenza maggiore.
             Ad esempio, il valore del primo trimestre del 1990 sarà quello
             del gennaio 1990.</para>
 	</li>
-
 	<li>
 	  <para>
 	  Espansione su più serie: in questo caso non viene persa
@@ -1947,7 +1946,6 @@
 	  suffissi <lit>m01</lit>, <lit>m02</lit> e <lit>m03</lit>.
 	  </para>
 	</li>	
-
       </ilist>
 
       <para>Se si compatta un intero dataset, il metodo di
@@ -2293,6 +2291,11 @@
 	  <flag>--quiet</flag>
 	  <effect>stampa solamente il test di Harvey&ndash;Collier</effect>
 	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>output</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
       </options>
     </usage>
 
@@ -2318,7 +2321,6 @@
 	somma cumulata va al di fuori delle bande di confidenza al 95
 	per cento.
       </para>
-
       <para>
         Nel caso di test CUSUM, viene mostrata anche la statistica
         <math>t</math> di Harvey&ndash;Collier per testare l'ipotesi nulla
@@ -2327,8 +2329,19 @@
 	CUSUMSQ, la banda di confidenza al 95% è calcolata usando l'algoritmo
         descritto in <cite key="edgerton94">Edgerton e Wells
 	(1994)</cite>.
-
       </para>
+      <para>
+	Di default, se il programma non è in modalità batch, viene
+	mostrato un grafico della series cumulata con la sua banda di
+	confidenza. Questo comportamento può essere modificato tramite
+	l'opzione <opt>plot</opt>, che può prendere come parametri
+	<lit>none</lit> (per non produrre il grafico);
+	<lit>display</lit> (per mostrarlo anche quando si è in modo
+	batch); oppure, un nome di file. Nell'ultimo caso l'effetto è
+	lo stesso dell'opzione <opt>output</opt> del comando <cmdref
+	targ="gnuplot"/>.
+      </para>
+      
     </description>
 
     <gui-access>
