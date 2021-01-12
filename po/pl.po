@@ -1,15 +1,15 @@
-# Polish translation for gretl 2020e_cvs
+# Polish translation for gretl 2020f_cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <pawel.kufel@wsb.torun.pl>, 2004 - 2020
-# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2020
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2020
+# Pawel Kufel <pawel.kufel@wsb.torun.pl>, 2004 - 2021
+# Tadeusz Kufel <tadeusz.kufel@umk.pl>, 2004 - 2021
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2021
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 2020e\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-08 09:00-0500\n"
-"PO-Revision-Date: 2020-11-15 16:10-0500\n"
+"PO-Revision-Date: 2021-01-11 01:00-0500\n"
 "Last-Translator: Pawel Kufel <pawel.kufel@wsb.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -7628,7 +7628,7 @@ msgstr "Nieakceptowany symbol %c"
 
 #: lib/src/tokenize.c:3403
 msgid "Command line is not valid UTF-8"
-msgstr ""
+msgstr "Wiersz poleceń jest nieprawidłowy dla UTF-8"
 
 #: lib/src/transforms.c:188
 #, c-format
@@ -10526,7 +10526,6 @@ msgid "series code:"
 msgstr "Kod serii danych:"
 
 #: gui/dialogs.c:6944 gui/dialogs.c:7179
-#, fuzzy
 msgid "constant"
 msgstr "Wyraz wolny (constant)"
 
@@ -10536,48 +10535,40 @@ msgid "The series %s does not seem suitable for disaggregation"
 msgstr "Szereg %s nie jest odpowiedni do dezagregacji"
 
 #: gui/dialogs.c:7133
-#, fuzzy
 msgid "Output name:"
 msgstr "Okno wyników:"
 
 #: gui/dialogs.c:7146
-#, fuzzy
 msgid "Aggregation type:"
-msgstr "agregacja"
+msgstr "Typ agregacji:"
 
 #: gui/dialogs.c:7159
-#, fuzzy
 msgid "Regression based"
-msgstr "Regresja"
+msgstr "Opart na regresji"
 
 #: gui/dialogs.c:7174
 msgid "Deterministic terms:"
-msgstr ""
+msgstr "Deterministic terms:"
 
 #: gui/dialogs.c:7180
-#, fuzzy
 msgid "constant plus trend"
-msgstr "z wyrazem wolnym i trendem liniowym"
+msgstr "wyraz wolny i trend"
 
 #: gui/dialogs.c:7186
-#, fuzzy
 msgid "Covariate:"
-msgstr "wariant"
+msgstr "Kowariancja:"
 
 #: gui/dialogs.c:7203
-#, fuzzy
 msgid "proportional"
 msgstr "proporcja"
 
 #: gui/dialogs.c:7204
-#, fuzzy
 msgid "additive"
-msgstr "Dołącz pochodną"
+msgstr "additive"
 
 #: gui/dialogs.c:7210
-#, fuzzy
 msgid "Preliminary series:"
-msgstr "Poprzednia zmienna"
+msgstr "Wstępne serie:"
 
 #: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
 msgid "show regression results"
@@ -14166,7 +14157,7 @@ msgstr "Dodatki"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2334
 msgid "Built-in strings"
-msgstr ""
+msgstr "Wbudowane znaki"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
@@ -14177,9 +14168,8 @@ msgid "Mathematical"
 msgstr "Matematyczne"
 
 #: gui/helpfiles.c:335 doc/commands/matfuncs.c:43
-#, fuzzy
 msgid "Matrix manipulation"
-msgstr "Projektowanie macierzy"
+msgstr "Matrix manipulation"
 
 #: gui/helpfiles.c:337
 msgid "Linear algebra"
@@ -14198,7 +14188,6 @@ msgid "Calendar"
 msgstr "Kalendarz"
 
 #: gui/helpfiles.c:349
-#, fuzzy
 msgid "Time-series"
 msgstr "Szereg czasowy"
 
@@ -14207,9 +14196,8 @@ msgid "Statistical"
 msgstr "Statystyczne"
 
 #: gui/helpfiles.c:353
-#, fuzzy
 msgid "Non-parametric"
-msgstr "Testy _nieparametryczne"
+msgstr "Nieparametryczne"
 
 #: gui/helpfiles.c:357
 msgid "State space"
@@ -16750,9 +16738,8 @@ msgid "Calculator"
 msgstr "Kalkulator"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "Ścieżka dla programu X12-ARIMA"
+msgstr "Ścieżka dla X12-ARIMA (lub x13)"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
@@ -17265,9 +17252,8 @@ msgid "Gretl Function Reference"
 msgstr "Opis funkcji gretla"
 
 #: gui/textbuf.c:2335
-#, fuzzy
 msgid "Functions proper"
-msgstr "_Opis funkcji gretla"
+msgstr "Funkcjw właściwe"
 
 #: gui/textbuf.c:2433
 msgid "Back"
@@ -17310,9 +17296,8 @@ msgid "Unindent region"
 msgstr "Unindent region"
 
 #: gui/textbuf.c:3936
-#, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
-msgstr "Skrypt z automatycznym wcięciem"
+msgstr "Skrypt z automatycznym wcięciem (Ctrl+I)"
 
 #: gui/textbuf.c:3947 gui/toolbar.c:820
 msgid "Preferences..."
@@ -17560,18 +17545,16 @@ msgid "Stop"
 msgstr "Stop"
 
 #: gui/update.c:33
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "Version %s is available at http://gretl.sourceforge.net/\n"
 msgstr ""
 "Uruchomiona wersja gretl %s.\n"
-"Version %s is available at http://ricardo.ecn.wfu.edu/pub/gretl/\n"
-"(If this version is not yet at http://gretl.sourceforge.net/\n"
-"it should be shortly.)"
+"Version %s is available at http://gretl.sourceforge.net/\n"
 
 #: gui/update.c:37
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "This seems to be a pre-release; the latest version available at\n"
@@ -17579,7 +17562,7 @@ msgid ""
 msgstr ""
 "Uruchomiona wersja gretl %s.\n"
 "This seems to be a pre-release; the latest version available at\n"
-"http://ricardo.ecn.wfu.edu/pub/gretl/ is %s"
+"http://gretl.sourceforge.net/ is %s"
 
 #: gui/update.c:42
 #, c-format
@@ -19044,29 +19027,3 @@ msgstr "Statystyki/Transformacje"
 msgid "Decoration"
 msgstr "Decoration"
 
-#~ msgid "Couldn't load plugin function\n"
-#~ msgstr "Niemożliwe załadowanie dodatkowych funkcji\n"
-
-#, c-format
-#~ msgid "Failed to flip state of \"%s\"\n"
-#~ msgstr "Błąd flip dla \"%s\"\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "Reading session file %s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Wczytywanie pliku sesji %s\n"
-
-#~ msgid "Creation and I/O"
-#~ msgstr "Tworzenie i wejście/wyjście"
-
-#~ msgid "Shape/size/arrangement"
-#~ msgstr "Shape/size/arrangement"
-
-#~ msgid "Filters"
-#~ msgstr "Filtry"
-
-#~ msgid "Matrix building"
-#~ msgstr "Budowa macierzy"
