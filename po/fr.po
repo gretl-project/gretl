@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-08 09:00-0500\n"
-"PO-Revision-Date: 2021-01-06 08:47+0100\n"
+"PO-Revision-Date: 2021-01-12 19:09+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -4068,7 +4068,7 @@ msgstr "Ne peut récupérer 'uhat' : le jeu de données a changé"
 
 #: lib/src/gretl_model.c:7079
 msgid "Can't retrieve yhat: data set has changed"
-msgstr "Ne peut récupérer 'yhat' : jeu de données a changé"
+msgstr "Ne peut récupérer 'yhat' : le jeu de données a changé"
 
 #: lib/src/gretl_model.c:7081
 msgid "Can't retrieve ht: data set has changed"
@@ -4751,7 +4751,7 @@ msgstr "Ne peut ouvrir %s en écriture\n"
 #: lib/src/interact.c:1197
 #, c-format
 msgid "Now appending output to '%s'\n"
-msgstr "Écriture en cours à la fin du fichier '%s'\n"
+msgstr "Ajout en cours à la fin du fichier '%s'\n"
 
 #: lib/src/interact.c:1199
 #, c-format
@@ -4793,7 +4793,7 @@ msgstr "Statistiques descriptives de %s, groupées selon %s"
 
 #: lib/src/interact.c:2517 lib/src/monte_carlo.c:3322
 msgid "You cannot delete series in this context\n"
-msgstr "Ne peut suprimer des variables dans ce contexte\n"
+msgstr "Ne peut supprimer des variables dans ce contexte\n"
 
 #: lib/src/interact.c:2641
 #, c-format
@@ -5047,7 +5047,7 @@ msgstr "Avertissement : la convergence demeure discutable"
 
 #: lib/src/modelprint.c:692
 msgid "Convergence seems to be reasonably complete"
-msgstr "La convergence semble suffisamment complète"
+msgstr "La convergence semble plutôt réussie"
 
 #: lib/src/modelprint.c:697
 msgid "GNR: got incomplete results"
@@ -5059,7 +5059,7 @@ msgstr "Avertissement : Insuffisance de rang pour la jacobienne"
 
 #: lib/src/modelprint.c:703
 msgid "Warning: Jacobian near to rank-deficiency"
-msgstr "Avertissement : La jacobienne est proche de l’nsuffisance de rang"
+msgstr "Avertissement : La jacobienne est proche de l’insuffisance de rang"
 
 #: lib/src/modelprint.c:716
 msgid "Warning: solution is probably not unique"
@@ -5931,7 +5931,7 @@ msgstr "Pente"
 #: lib/src/modelprint.c:2545
 msgid "Warning: data matrix close to singularity!"
 msgstr ""
-"Avertissement : la matrice des données est proche d'une matrice singulière !"
+"Avertissement : la matrice des données est proche d'une matrice singulière"
 
 #: lib/src/modelprint.c:2567
 msgid ""
@@ -6439,7 +6439,7 @@ msgid ""
 "%d out of %d gradients looked suspicious.\n"
 "\n"
 msgstr ""
-"%d parmi %d gradients semblent suspects.\n"
+"%d parmi %d gradients semble(nt) suspect(s).\n"
 "\n"
 
 #: lib/src/nls.c:2670
@@ -7685,7 +7685,7 @@ msgstr "Symbole %c inattendu"
 
 #: lib/src/tokenize.c:3403
 msgid "Command line is not valid UTF-8"
-msgstr ""
+msgstr "La ligne de commande ne contient pas de texte UTF-8"
 
 #: lib/src/transforms.c:188
 #, c-format
@@ -8135,7 +8135,7 @@ msgid ""
 " gretlcli -r myfile.inp\n"
 msgstr ""
 "\n"
-"Vous pouvez fournir le nom du fichier de données sur la ligne de commandes.\n"
+"Vous pouvez fournir le nom du fichier de données sur la ligne de commande.\n"
 "Options :\n"
 " -b ou --batch     Traiter le code de commandes et quitter.\n"
 " -r ou --run       Exécuter le code et passer le contrôle à la ligne de "
@@ -8214,7 +8214,7 @@ msgstr ""
 #: cli/gretlcli.c:1003
 #, c-format
 msgid "writing session output to %s%s\n"
-msgstr "écriture de la session sur %s%s\n"
+msgstr "écriture du résultat de la session sur %s%s\n"
 
 #: cli/gretlcli.c:1037
 msgid "Terminated on error\n"
@@ -10592,9 +10592,8 @@ msgid "series code:"
 msgstr "code de séries :"
 
 #: gui/dialogs.c:6944 gui/dialogs.c:7179
-#, fuzzy
 msgid "constant"
-msgstr "Constante"
+msgstr "constante"
 
 #: gui/dialogs.c:7088
 #, c-format
@@ -10602,48 +10601,40 @@ msgid "The series %s does not seem suitable for disaggregation"
 msgstr "La série% s ne semble pas adaptée à la désagrégation"
 
 #: gui/dialogs.c:7133
-#, fuzzy
 msgid "Output name:"
-msgstr "Fenêtre de sortie :"
+msgstr "Nom du résultat:"
 
 #: gui/dialogs.c:7146
-#, fuzzy
 msgid "Aggregation type:"
-msgstr "agrégation"
+msgstr "Type d’agrégation"
 
 #: gui/dialogs.c:7159
-#, fuzzy
 msgid "Regression based"
-msgstr "Régression"
+msgstr "Basé sur la régression"
 
 #: gui/dialogs.c:7174
 msgid "Deterministic terms:"
-msgstr ""
+msgstr "Termes déterministes:"
 
 #: gui/dialogs.c:7180
-#, fuzzy
 msgid "constant plus trend"
 msgstr "avec constante et tendance temporelle"
 
 #: gui/dialogs.c:7186
-#, fuzzy
 msgid "Covariate:"
-msgstr "variante"
+msgstr "Covariance:"
 
 #: gui/dialogs.c:7203
-#, fuzzy
 msgid "proportional"
-msgstr "proportion"
+msgstr "proportionnel"
 
 #: gui/dialogs.c:7204
-#, fuzzy
 msgid "additive"
-msgstr "Ajouter une dérivée"
+msgstr "additive"
 
 #: gui/dialogs.c:7210
-#, fuzzy
 msgid "Preliminary series:"
-msgstr "Séries précédentes"
+msgstr "Séries préliminaires:"
 
 #: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
 msgid "show regression results"
@@ -10679,7 +10670,7 @@ msgstr "Afficher les détails des itérations"
 
 #: gui/dlgutils.c:905 gui/selector.c:6039
 msgid "Robust standard errors"
-msgstr "Écarts-types standard robustes"
+msgstr "Écarts-types robustes"
 
 #: gui/dlgutils.c:911 gui/selector.c:6261
 msgid "Use bootstrap"
@@ -13492,7 +13483,7 @@ msgstr "ajout simple"
 
 #: gui/gui_utils.c:1351
 msgid "\"join\" (advanced)"
-msgstr "« ajouter » (avancé)"
+msgstr "ajout « avancé »"
 
 #: gui/gui_utils.c:1354
 msgid "gretl: append data"
@@ -14794,7 +14785,7 @@ msgid ""
 "p-value is \"very small\" (the Imhof integral could not\n"
 "be evaluated so a definite value is not available)"
 msgstr ""
-"p. critique \"très faible\" (l'intégrale d'Imhof ne peut pas\n"
+"p. critique \"très faible\" (l'intégrale d'Imhof ne peut\n"
 "être calculée; une valeur précise n'est donc pas possible)"
 
 #: gui/library.c:3572
@@ -16823,9 +16814,8 @@ msgid "Calculator"
 msgstr "Calculateur"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "Chemin vers x12arima"
+msgstr "Chemin vers x12arima (ou x13)"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
