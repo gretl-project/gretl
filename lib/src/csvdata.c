@@ -6873,8 +6873,7 @@ static int has_native_suffix (const char *fname)
  * @tconvfmt: string giving format(s) for "timeconv" columns, or NULL.
  * @midas_pd: hint regarding pd for --aggr=spread (?).
  * @opt: may contain OPT_V for verbose operation, OPT_H to assume
- * no header row, OPT_G for native gretl import file as opposed to
- * CSV.
+ * no header row.
  * @prn: gretl printing struct (or NULL).
  *
  * Opens a delimited text data file or gdt file and carries out a
@@ -7092,7 +7091,7 @@ int gretl_join_data (const char *fname,
     if (!err) {
 	PRN *vprn = verbose ? prn : NULL;
 
-	if ((opt & OPT_G) || has_native_suffix(fname)) {
+	if (has_native_suffix(fname)) {
 	    gretlopt gdt_opt = OPT_NONE;
 
 	    if (dataset_is_time_series(dset)) {

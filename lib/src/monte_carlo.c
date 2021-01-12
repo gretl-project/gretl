@@ -2059,10 +2059,6 @@ static int loop_store_set_filename (LOOP_STORE *lstore,
 	return E_ALLOC;
     }
 
-    if (opt == OPT_NONE) {
-	opt = data_save_opt_from_suffix(lstore->fname);
-    }
-
     lstore->opt = opt;
 
     return 0;

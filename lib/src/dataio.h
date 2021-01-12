@@ -143,8 +143,6 @@ GretlFileType data_file_type_from_name (const char *fname);
 
 GretlFileType detect_filetype (char *fname, gretlopt opt);
 
-gretlopt data_save_opt_from_suffix (const char *fname);
-
 int check_varname (const char *varname);
 
 int check_identifier (const char *varname);
