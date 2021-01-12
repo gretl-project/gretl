@@ -4098,14 +4098,14 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
     } else {
         /* FIXME last arg to parse_command_line() ? */
         err = parse_command_line(s, dset, NULL);
-        if (loopstart != NULL && s->cmd->ci == LOOP) {
+        if (!err && loopstart != NULL && s->cmd->ci == LOOP) {
             *loopstart = 1;
         }
     }
 
     if (err) {
-        errmsg(err, s->prn);
-        return err;
+	errmsg(err, s->prn);
+	return (s->cmd->flags & CMD_CATCH)? 0 : err;
     }
 
     gretl_exec_state_transcribe_flags(s, s->cmd);
