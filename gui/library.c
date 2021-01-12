@@ -9047,7 +9047,8 @@ static gretlopt store_action_to_opt (const char *fname, int action,
         int level = get_optval_int(STORE, OPT_Z, &err);
 
         /* apply compression unless the user has set the
-           gzip level to zero via the file save dialog */
+           gzip level to zero via the file save dialog
+	*/
         if (level > 0) {
             opt |= OPT_Z; /* compression */
         }
@@ -9117,7 +9118,7 @@ int do_store (char *filename, int action, gpointer data)
     lib_command_sprintf("store \"%s\"", filename);
 
     if (exporting) {
-        /* This should give NULL unless there's a current selection
+        /* @mylist will be NULL unless there's a current selection
            of series from the apparatus in selector.c. That's OK:
            implicitly all series will be saved.
         */
