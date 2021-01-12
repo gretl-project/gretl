@@ -1279,12 +1279,12 @@
 	<para>
 	  Si el último modelo estimado era uniecuacional, este accesor va a
 	  devolver una lista con sus regresores. Si el último modelo era un
-	  sistema de ecuaciones, devuelve una lista <quote>global</quote> con
-	  las variables exógenas y predeterminadas (en el mismo orden en el que
-	  aparecen con el accesor <fncref targ="$sysB"/>). Si el último modelo
-	  era un VAR, devuelve una lista con los regresores exógenos (si hay
-	  alguno), con excepción de los términos determinísticos habituales
-	  (la constante, la tendencia y los elementos estacionales).
+	  sistema de ecuaciones, devuelve una lista <quote>global</quote>
+	  con las variables exógenas (en el mismo orden en el que aparecen
+	  con el accesor <fncref targ="$sysB"/>). Si el último modelo era un
+	  VAR, devuelve una lista con los regresores exógenos (si hay alguno),
+	  con excepción de los términos determinísticos habituales (la
+	  constante, la tendencia y los elementos estacionales).
 	</para>
       </description>
     </function>
@@ -1295,10 +1295,10 @@
 	  Debe ejecutarse únicamente después de la estimación de un VAR o VECM, y
 	  devuelve la matriz <math>X'X</math><sup>-1</sup>, donde <math>X</math>
 	  es la matriz habitual con los regresores utilizados en cada ecuación.
-	  Aunque este accesorio está aún disponible para un VECM estimado con
+	  Aunque este accesorio está disponible para un VECM estimado con
 	  una restricción impuesta en &agr; (la matriz de <quote>cargas</quote>),
-	  debe tenerse en cuenta que en ese caso ya no todos los coeficientes de
-	  las <math>X</math> varían libremente.
+	  debe tenerse en cuenta que en ese caso no todos los coeficientes de
+	  los regresores varían libremente.
 	</para>
       </description>
     </function>
