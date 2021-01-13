@@ -2698,6 +2698,7 @@
     </description>
   </command>
 
+  <!--
   <command name="debug" section="Programming" context="cli"
     label="Debugging">
 
@@ -2727,6 +2728,7 @@
       </para>
     </description>
   </command>
+  -->
 
   <command name="delete" section="Dataset"
     label="Delete variables" context="cli">
@@ -14385,10 +14387,6 @@
         <argument optional="true">varlist</argument>
       </arguments>
       <options>
-        <option>
-	  <flag>--csv</flag>
-	  <effect>use CSV format</effect>
-        </option>
         <option>
 	  <flag>--omit-obs</flag>
 	  <effect>see below, on CSV format</effect>
