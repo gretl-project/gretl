@@ -2778,7 +2778,8 @@
       </para>
     </description>
   </command>
-  
+
+  <!--
   <command name="debug" section="Programming" context="cli"
 	   label="Debugging">
 
@@ -2811,7 +2812,8 @@
       </para>
     </description>
   </command>  
-
+  -->
+  
   <command name="delete" section="Dataset" label="Elimina variabili" context="cli">
 
     <usage>

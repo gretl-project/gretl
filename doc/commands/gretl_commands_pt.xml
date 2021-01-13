@@ -2564,6 +2564,7 @@
     </description>
   </command>
 
+  <!--
   <command name="debug" section="Programming" context="cli"
     label="Despiste de erros de programa">
 
@@ -2594,6 +2595,7 @@
       </para>
     </description>
   </command>  
+  -->
 
   <command name="delete" section="Dataset" 
     label="Apagar variáveis" context="cli">
