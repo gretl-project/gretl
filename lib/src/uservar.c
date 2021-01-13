@@ -2416,6 +2416,7 @@ int list_user_vars_of_type (const DATASET *dset,
     } else if (t == GRETL_TYPE_LIST ||
 	       t == GRETL_TYPE_MATRIX ||
 	       t == GRETL_TYPE_BUNDLE ||
+	       t == GRETL_TYPE_ARRAY ||
 	       t == GRETL_TYPE_STRING) {
 	int i, n = 0;
 

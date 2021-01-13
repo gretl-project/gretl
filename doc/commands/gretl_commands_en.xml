@@ -15504,16 +15504,17 @@
 	If the <opt>type</opt> option is given, it should be followed
 	(after an equals sign) by one of the following typenames:
 	<lit>series</lit>, <lit>scalar</lit>, <lit>matrix</lit>,
-	<lit>list</lit>, <lit>string</lit>, <lit>bundle</lit> or
-	<lit>accessor</lit>. The effect is to print the names of all
-	currently defined objects of the named type.
+	<lit>list</lit>, <lit>string</lit>, <lit>bundle</lit>,
+	<lit>array</lit> or <lit>accessor</lit>. The effect is to
+	print the names of all currently defined objects of the named
+	type.
       </para>
       <para>
 	As a special case, if the typename is <lit>accessor</lit>, the
 	names printed are those of the internal variables currently
-	available as <quote>accessors,</quote> such as <fncref
-	targ="$nobs"/> and <fncref targ="$uhat"/> (regardless of their
-	specific type).
+	available as <quote>accessors</quote>, such as <fncref
+	targ="$nobs"/> and <fncref targ="$uhat"/>, regardless of their
+	specific type.
       </para>
     </description>
 
