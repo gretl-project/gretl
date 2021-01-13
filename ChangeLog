@@ -418,8 +418,6 @@ version 2020f, in progress
   with x12a/x13as
 
 2018-12-21 version 2018d
-- Internal representation of missing values: switch to
-  using NaN
 - Internal speed-ups for matrix reads and writes
 - Add new function, atan2(), as per the C function of the
   same name
@@ -467,7 +465,10 @@ version 2020f, in progress
 - Windows and Mac packages: update to gmp 6.1.2, mpfr 4.0.1
 
 2018-09-03 version 2018c
-- "outfile": new syntax, use "end outfile" instead of "outfile --close"
+- Internal representation of missing values: switch to
+  using NaN
+- "outfile": new syntax, use "end outfile" instead of
+  "outfile --close"
 - Fix bug: the panel-statistic functions pmean() and psd()
   give wrong results when only the first observation of a
   cross-sectional unit differs from the others
