@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-08 09:00-0500\n"
-"PO-Revision-Date: 2021-01-05 17:37+0100\n"
+"PO-Revision-Date: 2021-01-13 20:43+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -3603,7 +3603,7 @@ msgstr "Asnjë funksion nuk është i gatshëm për t'u paketuar tani."
 #: lib/src/gretl_func.c:6415
 #, c-format
 msgid "'%s' is the name of a built-in function"
-msgstr "'%s' është emri i një funksioni të mbrendshëm"
+msgstr "'%s' është emri i një funksioni të brendshëm"
 
 #: lib/src/gretl_func.c:5146 gui/fnsave.c:1759
 msgid "Time-series data"
@@ -5632,7 +5632,7 @@ msgstr "MP i saktë"
 #: lib/src/modelprint.c:1801 lib/src/modelprint.c:1825
 #: lib/src/modelprint.c:1830
 msgid "conditional ML"
-msgstr "MP i kushtëzuarWL"
+msgstr "MP i kushtëzuar"
 
 #: lib/src/modelprint.c:1807 lib/src/modelprint.c:1823
 msgid "Estimated using least squares"
@@ -6811,7 +6811,7 @@ msgstr "Matrica e kovariancave të koeficientëve të regresionit"
 
 #: lib/src/printout.c:89 lib/src/printout.c:166
 msgid "Current session"
-msgstr "Seanca aktuale"
+msgstr "Sesjoni i punës"
 
 #: lib/src/printout.c:106 lib/src/printout.c:164
 #, c-format
@@ -7660,7 +7660,7 @@ msgstr "Simbol i papritur ’%c’"
 
 #: lib/src/tokenize.c:3403
 msgid "Command line is not valid UTF-8"
-msgstr ""
+msgstr "Teksti në rreshtin e komandave nuk është UTF-8"
 
 #: lib/src/transforms.c:188
 #, c-format
@@ -8108,7 +8108,7 @@ msgid ""
 " gretlcli -r myfile.inp\n"
 msgstr ""
 "\n"
-"Mund të jepni emrin e një skede të dhënash në dritaren e komandave.\n"
+"Mund të jepni emrin e një skede të dhënash në rreshtin e komandave.\n"
 "Mundësi zgjedhjeje :\n"
 " -b ose --batch     Trajton skedën-skript dhe pastaj mbyllet.\n"
 " -r ose --run       Ekzekuton skriptin dhe i pason kontrollin dritares së "
@@ -8537,7 +8537,7 @@ msgstr " DW "
 
 #: gui/calculator.c:2027 gui/gpt_dialog.c:3273
 msgid "minimum"
-msgstr "minimum"
+msgstr "minimumi"
 
 #: gui/calculator.c:2029 gui/gpt_dialog.c:3290
 msgid "maximum"
@@ -9794,8 +9794,8 @@ msgid ""
 "Do you want to save the changes you made\n"
 "to this session?"
 msgstr ""
-"A doni t'i ruani ndryshimet e bëra gjatë kësaj\n"
-"seance?"
+"A doni t'i ruani ndryshimet e bëra gjatë këtij\n"
+"sesjoni?"
 
 #: gui/dialogs.c:329 gui/ssheet.c:2972
 msgid ""
@@ -10560,9 +10560,8 @@ msgid "series code:"
 msgstr "kodi i serisë:"
 
 #: gui/dialogs.c:6944 gui/dialogs.c:7179
-#, fuzzy
 msgid "constant"
-msgstr "Konstante"
+msgstr "konstante"
 
 #: gui/dialogs.c:7088
 #, c-format
@@ -10570,48 +10569,40 @@ msgid "The series %s does not seem suitable for disaggregation"
 msgstr "Seria% s ngjet e papërshtatshme për t’u ndarë"
 
 #: gui/dialogs.c:7133
-#, fuzzy
 msgid "Output name:"
-msgstr "Dritarja e rezultatit:"
+msgstr "Emërtimi i outputit:"
 
 #: gui/dialogs.c:7146
-#, fuzzy
 msgid "Aggregation type:"
-msgstr "grumbullim"
+msgstr "grumbulli"
 
 #: gui/dialogs.c:7159
-#, fuzzy
 msgid "Regression based"
-msgstr "Regresion"
+msgstr "Bazuar në regresion"
 
 #: gui/dialogs.c:7174
 msgid "Deterministic terms:"
-msgstr ""
+msgstr "Terma deterministë"
 
 #: gui/dialogs.c:7180
-#, fuzzy
 msgid "constant plus trend"
 msgstr "me konstante dhe prirje kohore"
 
 #: gui/dialogs.c:7186
-#, fuzzy
 msgid "Covariate:"
-msgstr "varianti"
+msgstr "Covariate:"
 
 #: gui/dialogs.c:7203
-#, fuzzy
 msgid "proportional"
-msgstr "frekuenca"
+msgstr "proporcional"
 
 #: gui/dialogs.c:7204
-#, fuzzy
 msgid "additive"
-msgstr "Shto një derivat"
+msgstr "shtim"
 
 #: gui/dialogs.c:7210
-#, fuzzy
 msgid "Preliminary series:"
-msgstr "Seria e mëparshme"
+msgstr "Seri paraprake"
 
 #: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
 msgid "show regression results"
@@ -12042,15 +12033,15 @@ msgstr "vijë me pika"
 
 #: gui/gpt_dialog.c:3193
 msgid "X-axis"
-msgstr "boshti X"
+msgstr "Boshti X"
 
 #: gui/gpt_dialog.c:3195
 msgid "Y-axis"
-msgstr "boshti Y"
+msgstr "Boshti Y"
 
 #: gui/gpt_dialog.c:3197
 msgid "Y2-axis"
-msgstr "boshti Y dytësor"
+msgstr "Boshti Y dytësor"
 
 #: gui/gpt_dialog.c:3250
 msgid "auto axis range"
@@ -12174,7 +12165,7 @@ msgstr "shtyp hollësitë mbi versionin"
 
 #: gui/gretl.c:605
 msgid "Start a new gretl instance?"
-msgstr "Dëshironi të hapni një seancë të re gretl-i?"
+msgstr "Dëshironi të hapni një sesjon gretl të ri?"
 
 #: gui/gretl.c:1379
 msgid "No lists are currently defined"
@@ -12602,7 +12593,7 @@ msgstr "_Krijo"
 
 #: gui/gretl.c:1798
 msgid "_Logs of selected variables"
-msgstr "_Logaritmin e ndryshoreve të zgjedhura"
+msgstr "L_ogaritmin e ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1799
 msgid "_Squares of selected variables"
@@ -12626,7 +12617,7 @@ msgstr "Di_ferencën stinore të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1807
 msgid "_Percentage change of selected variables"
-msgstr "Luhatjen në _përqindje të ndryshoreve të zgjedhura"
+msgstr "_Luhatjen (në %) të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1809
 msgid "_100-based indices of selected variables"
@@ -13476,9 +13467,9 @@ msgid ""
 "close the current session.  Any unsaved work\n"
 "will be lost.  Proceed to open session file?"
 msgstr ""
-"Hapja e një skede seance tjetër shkakton\n"
+"Hapja e një skede tjetër sesjoni shkakton\n"
 "mbylljen e asaj në përdorim: çdo punim i paruajtur\n"
-"do të humbasë. A doni të vazhdoni hapjen e skedës?"
+"do të humbasë. A doni të vazhdoni me hapjen e skedës?"
 
 #: gui/gui_utils.c:1507
 msgid "Buffer is empty"
@@ -14191,12 +14182,11 @@ msgstr "Të ndryshme"
 
 #: gui/helpfiles.c:325 gui/textbuf.c:2333
 msgid "Accessors"
-msgstr "Mjete"
+msgstr "Aksesorë"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2334
-#, fuzzy
 msgid "Built-in strings"
-msgstr "Teksti %s u fshi"
+msgstr "Vargje alfanumerike të rezervuara"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
@@ -14207,9 +14197,8 @@ msgid "Mathematical"
 msgstr "Veprime matematikore"
 
 #: gui/helpfiles.c:335 doc/commands/matfuncs.c:43
-#, fuzzy
 msgid "Matrix manipulation"
-msgstr "Organizimi i matricave"
+msgstr "Veprime me matricat"
 
 #: gui/helpfiles.c:337
 msgid "Linear algebra"
@@ -14228,23 +14217,21 @@ msgid "Calendar"
 msgstr "Kalendar"
 
 #: gui/helpfiles.c:349
-#, fuzzy
 msgid "Time-series"
-msgstr "seri kohore"
+msgstr "Seri kohore"
 
 #: gui/helpfiles.c:351
 msgid "Statistical"
 msgstr "Veprime statistikore"
 
 #: gui/helpfiles.c:353
-#, fuzzy
 msgid "Non-parametric"
-msgstr "T_este jo-parametrikë"
+msgstr "Metoda jo-parametrike"
 
 # kontekst
 #: gui/helpfiles.c:357
 msgid "State space"
-msgstr "State space"
+msgstr "Modele ‘State space’"
 
 #: gui/helpfiles.c:361
 msgid "Strings"
@@ -15093,7 +15080,7 @@ msgstr "Jo-bashkëveprues (nxjerr vetëm rezultatin)"
 
 #: gui/library.c:8514
 msgid "Interactive R session"
-msgstr "Seancë R bashkëvepruese"
+msgstr "Sesjon R bashkëveprues"
 
 #: gui/library.c:8520 gui/library.c:8525
 msgid "R mode"
@@ -16537,7 +16524,7 @@ msgstr ""
 
 #: gui/session.c:2106
 msgid "Display notes on opening session file"
-msgstr "Trego shënimet gjatë hapjes së një skede seance"
+msgstr "Trego shënimet gjatë hapjes së një skede sesjoni"
 
 #: gui/session.c:2225
 msgid "versus"
@@ -16787,9 +16774,8 @@ msgid "Calculator"
 msgstr "Makina llogaritëse"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "Skedari ku ndodhet x12arima"
+msgstr "Skedari për x12arima (ose x13)"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
@@ -17305,9 +17291,8 @@ msgid "Gretl Function Reference"
 msgstr "Treguesi i Funksioneve të Gretl-it"
 
 #: gui/textbuf.c:2335
-#, fuzzy
 msgid "Functions proper"
-msgstr "Udhëzime mbi _funksionet"
+msgstr "Funksjone specifikë"
 
 #: gui/textbuf.c:2433
 msgid "Back"
@@ -17350,9 +17335,8 @@ msgid "Unindent region"
 msgstr "Rikthe zgjedhjen siç ishte"
 
 #: gui/textbuf.c:3936
-#, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
-msgstr "Sposto automatikisht script-in"
+msgstr "Sposto automatikisht skriptin (Ctrl+I)"
 
 #: gui/textbuf.c:3947 gui/toolbar.c:820
 msgid "Preferences..."
@@ -17601,27 +17585,24 @@ msgid "Stop"
 msgstr "Ndal"
 
 #: gui/update.c:33
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "Version %s is available at http://gretl.sourceforge.net/\n"
 msgstr ""
 "Po përdorni gretl %s.\n"
-"Versioni %s është i disponueshëm në http://ricardo.ecn.wfu.edu/pub/gretl/\n"
-"(Nëse ky version nuk është ende në http://gretl.sourceforge.net/\n"
-"do ta gjeni aty së shpejti.)"
+"Versioni %s është i disponueshëm në http://gretl.sourceforge.net\n"
 
 #: gui/update.c:37
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "This seems to be a pre-release; the latest version available at\n"
 "http://gretl.sourceforge.net/ is %s"
 msgstr ""
 "Po përdorni gretl %s.\n"
-"çka ngjet të jetë një version ‘pre-release’; versioni i fundit i "
-"disponueshëm në\n"
-"http://ricardo.ecn.wfu.edu/pub/gretl/ është %s"
+"i cili ngjet të jetë një version ‘pre-release’; versioni i fundit është %s\n"
+"i disponueshëm në http://gretl.sourceforge.net/"
 
 #: gui/update.c:42
 #, c-format
@@ -18919,7 +18900,7 @@ msgstr "Vlera të tejskajshme"
 
 #: plugin/tramo_options.c:622
 msgid "Besides additive outliers, allow for:"
-msgstr "Përveç shtesës së vlerave të tejskajshme, lejo edhe:"
+msgstr "Përveç shtimit të vlerave të tejskajshme, lejo edhe:"
 
 #: plugin/tramo_options.c:628
 msgid "transitory changes"
