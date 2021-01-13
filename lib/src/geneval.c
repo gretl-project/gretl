@@ -8645,6 +8645,36 @@ static NODE *series_scalar_func (NODE *n, int f,
     return ret;
 }
 
+/* Functions normally taking a series or vector as argument and
+   returning a scalar, but are evaluated on a scalar, so output is
+   trivial
+*/
+
+static NODE *pretend_matrix_scalar_func (NODE *n, int f,
+					 NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	if (f == F_SUM || f == F_SUMALL || f == F_MEAN || f == F_MAX ||
+	    f == F_MIN || f == F_MEDIAN) {
+	    ret->v.xval = n->v.xval;
+	} else if (f == F_NOBS) {
+	    ret->v.xval = 1;
+	} else if (f == F_SD || f == F_VCE || f == F_SST || f == F_GINI) {
+	    ret->v.xval = 0;
+	} else if (f == F_SKEWNESS || f == F_KURTOSIS) {
+	    /* this is probably less intuitive than all the above:
+	       in "normal" cases we're returning NADBL when the variance
+	       is 0, se we're just being consistent here
+	    */
+	    ret->v.xval = NADBL;
+        }
+    }
+
+    return ret;
+}
+
 static gretlopt get_normtest_option (NODE *n, parser *p)
 {
     gretlopt opt = OPT_NONE;
@@ -16933,7 +16963,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_T1:
     case F_T2:
         /* functions taking series arg (mostly), returning scalar */
-        if (l->t == SERIES || l->t == MAT) {
+        if (l->t == NUM) {
+	    if ((t->t == F_T1 || t->t == F_T2)) {
+		node_type_error(t->t, 0, SERIES, l, p);
+	    } else {
+		ret = pretend_matrix_scalar_func(l, t->t, r, p);
+	    }
+        } else if (l->t == SERIES || l->t == MAT) {
             ret = series_scalar_func(l, t->t, r, p);
         } else if ((t->t == F_MEAN || t->t == F_SD ||
                     t->t == F_VCE || t->t == F_MIN ||
