@@ -1548,9 +1548,9 @@
 	addition it should not be used on calls to user-defined
 	functions; it is intended for use only with gretl commands and
 	calls to <quote>built-in</quote> functions or operators.
-	Furthermore, wenn using the backarrow-style assignment of models
-	or plots to session icons <lit>catch</lit> cannot be used on that
-	line, either.
+	Furthermore, <lit>catch</lit> cannot be used in conjunction
+	with <quote>back-arrow</quote> assignment of models or plots
+	to session icons (see <guideref targ="chap:modes"/>).
       </para>
     </description>
   </command>
