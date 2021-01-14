@@ -91,7 +91,7 @@ smpl --no-missing X
 \end{code}
 \end{samepage}
 
-\emph{Comment:} You can now save the file via a \cmd{store} command
+\emph{Comment:} You can save the file via a \cmd{store} command
 to preserve a subsampled version of the dataset. Alternative solutions
 based on the \cmd{ok} function, such as
 \begin{code}
@@ -159,9 +159,21 @@ length of the time dimension in the panel (3 in this example), gretl
 will perform the stacking automatically.  Rather than using the
 \cmd{append} command you could use the ``Append data'' item under
 the \textsf{File} menu in the GUI program.  For this to work, your
-main dataset must be recognized as a panel.  This can be arranged via
-the \cmd{setobs} command or the ``Dataset structure'' item under
-the \textsf{Data} menu.
+main dataset must already be recognized as a panel.  
+% This can be arranged via
+% the \cmd{setobs} command or the ``Dataset structure'' item under
+% the \textsf{Data} menu.
+
+If the length of your time series does not exactly match the $T$ 
+dimension of your panel dataset, you can use the \cmd{join} command 
+that is able to pick only the observations with matching time periods. 
+The corresponding
+dialog window is presented after ``Append data'' if you select the
+more flexible ``join'' option instead of the plain ``append''. 
+For native gdt files you can also use built-in series that identify
+the time periods such as \dollar{obsmajor} for your outer key to match
+the dates, since typically no explicit other date series exist there. 
+
 
 \subsection{Time averaging of panel datasets}
 
