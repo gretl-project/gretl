@@ -172,7 +172,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
    string json
    ret.error = 0
    ret.has_data = 0
-   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1&align_periods=1"
+   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1"
    ret.error = dbn_get_json(parms, verbose, &json)
    if ret.error
       return ret
@@ -180,6 +180,8 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
 
    catch bundle b = jsongetb(json, "series")
    if $error
+      ret.error = 1
+   elif inbundle(b, "series") == 0
       ret.error = 1
    elif nelem(b.series.docs) == 0
       ret.error = 1
