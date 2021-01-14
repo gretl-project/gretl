@@ -4105,7 +4105,12 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 
     if (err) {
 	errmsg(err, s->prn);
-	return (s->cmd->flags & CMD_CATCH)? 0 : err;
+	if (s->cmd->flags & CMD_CATCH) {
+	    set_gretl_errno(err);
+	    return 0;
+	} else {
+	    return err;
+	}
     }
 
     gretl_exec_state_transcribe_flags(s, s->cmd);
