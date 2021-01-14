@@ -742,6 +742,7 @@ int realgen (const char *s, parser *p, DATASET *dset,
 void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
 void parser_free_aux_nodes (parser *p);
+void free_tree (NODE *t, parser *p, int code);
 
 /* name lookup functions */
 const char *constname (int c);

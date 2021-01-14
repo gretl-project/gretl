@@ -89,8 +89,6 @@ static void real_rndebug (const char *format, ...)
 # define rndebug(x)
 #endif
 
-#define ONE_BY_ONE_CAST 1
-
 enum {
     FR_TREE = 1,
     FR_RET,
@@ -98,6 +96,8 @@ enum {
     FR_LHRES,
     FR_ARET
 };
+
+#define ONE_BY_ONE_CAST 1
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
@@ -427,7 +427,7 @@ static void free_node (NODE *t, parser *p)
    on the fly.
 */
 
-static void free_tree (NODE *t, parser *p, int code)
+void free_tree (NODE *t, parser *p, int code)
 {
     if (t == NULL) {
 	return;
