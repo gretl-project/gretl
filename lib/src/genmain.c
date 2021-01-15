@@ -907,7 +907,7 @@ double generate_boolean (const char *s, DATASET *dset, PRN *prn, int *err)
 {
     double x = generate_scalar_full(s, dset, prn, err);
 
-    return *err ? x : (double) (x != 0.0);
+    return (*err || na(x)) ? NADBL : (double) (x != 0.0);
 }
 
 /* retrieve an integer result directly */

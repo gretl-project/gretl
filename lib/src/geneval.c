@@ -1269,8 +1269,8 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return 0;
     }
 
-    /* otherwise NA propagates to the result */
     if (na(x) || na(y)) {
+	/* NaN always propagates to the result */
 	return NADBL;
     }
 
