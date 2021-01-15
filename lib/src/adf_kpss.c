@@ -40,7 +40,6 @@
  */
 
 /* codes for deterministic regressors */
-
 typedef enum {
     UR_NO_CONST = 1,
     UR_CONST,
@@ -50,20 +49,25 @@ typedef enum {
 } DetCode;
 
 /* flags for "special stuff" going on */
-
 typedef enum {
     ADF_EG_TEST   = 1 << 0, /* doing Engle-Granger test */
     ADF_EG_RESIDS = 1 << 1, /* final stage of the above */
     ADF_PANEL     = 1 << 2, /* working on panel data */
-    ADF_OLS_FIRST = 1 << 3  /* Perron-Qu, 2007 */
+    ADF_GLS       = 1 << 3, /* GLS: Elliott, Rothenberg, Stock */
+    ADF_PQ        = 1 << 3  /* Perron-Qu, 2007 */
 } AdfFlags;
 
 /* automatic lag selection methods */
-
 enum {
     k_AIC = 1,
     k_BIC,
     k_TSTAT
+};
+
+/* demean/detrend method */
+enum {
+    demean_GLS = 1,
+    demean_OLS
 };
 
 typedef struct adf_info_ adf_info;
@@ -364,7 +368,8 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
 */
 
 static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
-			     gretlopt opt, PRN *prn)
+			     gretlopt opt, int demean_mode,
+			     PRN *prn)
 {
     int err = 0;
 
@@ -382,7 +387,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	}
     }
 
-    if (ainfo->flags & ADF_OLS_FIRST) {
+    if (demean_mode == demean_OLS) {
 	/* OLS adjustment is wanted (first pass) */
 	DetCode det = UR_CONST;
 	int v = dset->v;
@@ -408,7 +413,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	    strcpy(dset->varname[v], "ydetols");
 	    ainfo->altv = v;
 	}
-    } else if (opt & OPT_G) {
+    } else if (demean_mode == demean_GLS) {
 	/* GLS adjustment is wanted */
 	DetCode det = (opt & OPT_T)? UR_TREND : UR_CONST;
 	int v;
@@ -768,7 +773,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 		DF_model_string(i));
     }
 
-    if (opt & OPT_G) {
+    if (ainfo->flags & ADF_GLS) {
 	strcpy(taustr, "tau");
     } else {
 	sprintf(taustr, "tau_%s(%d)", urcstrs[i], ainfo->niv);
@@ -779,7 +784,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 	    _("estimated value of (a - 1)"), ainfo->b0,
 	    _("test statistic"), taustr, ainfo->tau);
 
-    if ((opt & OPT_G) && i+1 == UR_TREND) {
+    if ((ainfo->flags & ADF_GLS) && i+1 == UR_TREND) {
 	double c[4];
 
 	/* FIXME distinguish GLS cases with testing down */
@@ -1231,13 +1236,12 @@ static int set_deterministic_terms (adf_info *ainfo,
 */
 
 static int reset_detrended_data (adf_info *ainfo,
-				 DATASET *dset,
-				 gretlopt opt)
+				 DATASET *dset)
 {
-    if (ainfo->flags & ADF_OLS_FIRST) {
+    if (ainfo->flags & ADF_PQ) {
 	/* testing down using Perron-Qu */
 	return 1;
-    } else if ((opt & OPT_G) && dset->t1 > 0) {
+    } else if ((ainfo->flags & ADF_GLS) && dset->t1 > 0) {
 	/* GLS + testing down + t1 > 0 */
 	return 1;
     } else {
@@ -1275,7 +1279,7 @@ static int handle_test_down_option (adf_info *ainfo,
     if (!*err) {
 	/* take the given order to be the max */
 	ainfo->kmax = ainfo->order;
-	if (opt & OPT_U) {
+	if (ainfo->flags & ADF_PQ) {
 	    /* --perron-qu */
 	    if (kmethod != k_AIC && kmethod != k_BIC) {
 		*err = E_BADOPT;
@@ -1288,7 +1292,7 @@ static int handle_test_down_option (adf_info *ainfo,
     return kmethod;
 }
 
-static int check_adf_options (gretlopt opt)
+static int check_adf_options (adf_info *ainfo, gretlopt opt)
 {
     int err = 0;
 
@@ -1298,8 +1302,15 @@ static int check_adf_options (gretlopt opt)
 	/* options incompatible with --gls: no-const, seasonals,
 	   and quadratic trend
 	*/
-	if (opt & (OPT_N | OPT_D | OPT_R)) {
+	if (!err && (opt & (OPT_N | OPT_D | OPT_R))) {
 	    err = E_BADOPT;
+	}
+	if (!err) {
+	    ainfo->flags |= ADF_GLS;
+	    if (opt & OPT_U) {
+		/* Perron-Qu */
+		ainfo->flags |= ADF_PQ;
+	    }
 	}
     } else if (opt & OPT_U) {
 	/* option dependent on --gls: Perron-Qu modified AIC/BIC */
@@ -1318,13 +1329,14 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     int *biglist = NULL;
     int orig_nvars = dset->v;
     int blurb_done = 0;
+    int demean_mode = 0;
     int test_down = 0;
     int test_num = 0;
     int i, err;
 
     /* (most of) this may have been done already
        but it won't hurt to check here */
-    err = check_adf_options(opt);
+    err = check_adf_options(ainfo, opt);
     if (err) {
 	return err;
     }
@@ -1408,6 +1420,12 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	}
     }
 
+    if (ainfo->flags & ADF_PQ) {
+	demean_mode = demean_OLS;
+    } else if (ainfo->flags & ADF_GLS) {
+	demean_mode = demean_GLS;
+    }
+
     err = adf_prepare_vars(ainfo, dset, opt, prn);
     if (err) {
 	return err;
@@ -1469,10 +1487,9 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    if (err) {
 		clear_model(&dfmod);
 		goto bailout;
-	    } else if (reset_detrended_data(ainfo, dset, opt)) {
+	    } else if (reset_detrended_data(ainfo, dset)) {
 		/* swap out the detrended data */
-		ainfo->flags &= ~ADF_OLS_FIRST;
-		err = adf_prepare_vars(ainfo, dset, opt, prn);
+		err = adf_prepare_vars(ainfo, dset, opt, demean_GLS, prn);
 	    }
 	}
 
@@ -1741,6 +1758,7 @@ static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
 static int panel_DF_test (int v, int order, DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
+    adf_info ainfo = {0};
     int u0 = dset->t1 / dset->pd;
     int uN = dset->t2 / dset->pd;
     int quiet = (opt & OPT_Q);
@@ -1787,12 +1805,16 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     /* number of units in sample range */
     n = uN - u0 + 1;
 
+    /* initialize @ainfo */
+    ainfo.v = v;
+    ainfo.niv = 1;
+    ainfo.flags = ADF_PANEL;
+
     /* run a Dickey-Fuller test for each unit and record the
        results */
 
     for (i=u0; i<=uN && !err; i++) {
-	adf_info ainfo = {0};
-
+	ainfo->order = order;
 	dset->t1 = i * dset->pd;
 	dset->t2 = dset->t1 + dset->pd - 1;
 	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
@@ -1991,7 +2013,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 		   some points Ng uses floor(T/100.0) in the following
 		   expression, which can give a lower max order.
 		*/
-		int T = dset->t2 - dset->t1 + 1;
+		int T = sample_size(dset);
 
 		ainfo.order = 12.0 * pow(T/100.0, 0.25);
 	    }
