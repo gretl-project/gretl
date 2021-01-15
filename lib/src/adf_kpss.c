@@ -453,8 +453,6 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     return err;
 }
 
-#if 0 /* not yet? */
-
 /* Peter Sephton's response-surface based critical values for
    ADF-GLS with testing down of lag order as per Ng and Perron,
    or Perron and Qu. See PS's paper in Computational Economics,
@@ -514,9 +512,11 @@ static void sephton_adf_critvals (int T, int pmax, int trend,
 
 #endif
 
-#if 0 /* based on a much larger replication of ERS:
-	 activate this after putting an account of
-	 the simulation in place */
+#if 0
+
+/* based on a much larger replication of ERS using gretl:
+   see http://gretl.sourceforge.net/papers/df-gls-pvals.pdf
+*/
 
 static void get_df_gls_ct_cval (int T, double *c)
 {
@@ -1818,11 +1818,6 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 	dset->t1 = i * dset->pd;
 	dset->t2 = dset->t1 + dset->pd - 1;
 	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
-
-	ainfo.v = v;
-	ainfo.order = order;
-	ainfo.niv = 1;
-	ainfo.flags = ADF_PANEL;
 
 	if (!err) {
 	    err = real_adf_test(&ainfo, dset, opt, prn);
