@@ -453,6 +453,8 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     return err;
 }
 
+#if 0 /* coming soon! */
+
 /* Peter Sephton's response-surface based critical values for
    ADF-GLS with testing down of lag order as per Ng and Perron,
    or Perron and Qu. See PS's paper in Computational Economics,
@@ -491,8 +493,9 @@ static void sephton_adf_critvals (int T, int pmax, int trend,
 	{-2.8196, 2.4706, -1346.6, 35398, -314840, 0.37564},
 	{-2.5401, -2.7442, -950.57, 25683, -233160, 0.52035}
     };
-    int r, i, j, rmin = 4 * PQ + trend ? 8 : 0;
-    double *b, X[6];
+    int i, j, rmin = 4 * PQ + trend ? 8 : 0;
+    const double *b;
+    double X[6];
 
     X[0] = 1.0;
     X[1] = 1.0/T;
@@ -502,17 +505,13 @@ static void sephton_adf_critvals (int T, int pmax, int trend,
     X[5] = pmax * X[1];
 
     for (i=0; i<4; i++) {
-	b = coeff[rmin+i];
+	b = coef[rmin+i];
 	c[i] = 0;
 	for (j=0; j<6; j++) {
 	    c[i] += X[j] * b[j];
 	}
     }
 }
-
-#endif
-
-#if 0
 
 /* based on a much larger replication of ERS using gretl:
    see http://gretl.sourceforge.net/papers/df-gls-pvals.pdf
@@ -1283,8 +1282,6 @@ static int handle_test_down_option (adf_info *ainfo,
 	    /* --perron-qu */
 	    if (kmethod != k_AIC && kmethod != k_BIC) {
 		*err = E_BADOPT;
-	    } else {
-		ainfo->flags |= ADF_OLS_FIRST;
 	    }
 	}
     }
@@ -1426,7 +1423,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	demean_mode = demean_GLS;
     }
 
-    err = adf_prepare_vars(ainfo, dset, opt, prn);
+    err = adf_prepare_vars(ainfo, dset, opt, demean_mode, prn);
     if (err) {
 	return err;
     }
@@ -1533,9 +1530,9 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	       finite-sample MacKinnon p-values are not correct
 	       in the GLS case.
 	    */
-	    int asymp = (ainfo->order > 0 || (opt & OPT_G));
+	    int asy = (ainfo->order > 0 || (opt & OPT_G));
 
-	    ainfo->pval = get_urc_pvalue(ainfo->tau, asymp ? 0 : dfmod.nobs,
+	    ainfo->pval = get_urc_pvalue(ainfo->tau, asy ? 0 : dfmod.nobs,
 					 ainfo->niv, ainfo->det, opt);
 	}
 
@@ -1814,7 +1811,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
        results */
 
     for (i=u0; i<=uN && !err; i++) {
-	ainfo->order = order;
+	ainfo.order = order;
 	dset->t1 = i * dset->pd;
 	dset->t2 = dset->t1 + dset->pd - 1;
 	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
