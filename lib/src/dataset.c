@@ -306,13 +306,13 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 #endif
 }
 
-static void copy_label (char **targ, const char *src)
+static void copy_label (VARINFO *vinfo, const char *src)
 {
-    free(*targ);
+    free(vinfo->label);
     if (src == NULL) {
-	*targ = NULL;
+	vinfo->label = NULL;
     } else {
-	*targ = gretl_strdup(src);
+	vinfo->label = gretl_strdup(src);
     }
 }
 
@@ -340,7 +340,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     if (src == NULL || targ == NULL) {
 	return;
     }
-    copy_label(&targ->label, src->label);
+    copy_label(targ, src->label);
     strcpy(targ->display_name, src->display_name);
     strcpy(targ->parent, src->parent);
     targ->flags = src->flags;
@@ -376,7 +376,7 @@ int shrink_varinfo (DATASET *dset, int nv)
 
     for (i=nv; i<dset->v; i++) {
 	free(dset->varname[i]);
-	free(dset->varinfo[i]);
+	free_varinfo(dset, i);
     }
 
     vnames = realloc(dset->varname, nv * sizeof *vnames);
@@ -1895,8 +1895,8 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 #endif
 
     /* check that no vars to be deleted are marked "const", and do
-       some preliminary accounting while we're at it */
-
+       some preliminary accounting while we're at it
+    */
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0 && v < oldv) {
@@ -1931,7 +1931,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 	    dset->Z[v] = NULL;
 	    if (drop == DROP_NORMAL) {
 		free(dset->varname[v]);
-		free(dset->varinfo[v]);
+		free_varinfo(dset, v);
 	    }
 	}
     }
@@ -2017,16 +2017,16 @@ static int *make_dollar_list (DATASET *dset, int *err)
 
 /**
  * dataset_drop_listed_variables:
- * @list: list of variable to drop, by ID number.
+ * @list: list of series to drop, by ID number.
  * @dset: pointer to dataset.
  * @renumber: location for return of information on whether
  * remaining variables have been renumbered as a result, or
  * NULL.
  * @prn: pointer to printing struct.
  *
- * Deletes the variables given in @list from the dataset.  Remaining
- * variables may have their ID numbers changed as a consequence. If
- * @renumber is not NULL, this location receives 1 in case variables
+ * Deletes the series given in @list from the dataset.  Remaining
+ * series may have their ID numbers changed as a consequence. If
+ * @renumber is not NULL, this location receives 1 in case series
  * have been renumbered, 0 otherwise.
  *
  * Returns: 0 on success, E_ALLOC on error.
@@ -2367,8 +2367,7 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 		if (!mask[i]) {
 		    memcpy(newset->Z[k], dset->Z[i], ssize);
 		    strcpy(newset->varname[k], dset->varname[i]);
-		    copy_label(&newset->varinfo[k]->label,
-			       dset->varinfo[i]->label);
+		    copy_label(newset->varinfo[k], dset->varinfo[i]->label);
 		    if (st != NULL && k < i) {
 			gretl_string_table_reset_column_id(st, i, k);
 		    }
@@ -2968,7 +2967,7 @@ int series_record_label (DATASET *dset, int i,
     char *targ = dset->varinfo[i]->label;
 
     if (labels_differ(targ, s)) {
-	copy_label(&dset->varinfo[i]->label, s);
+	copy_label(dset->varinfo[i], s);
 	set_dataset_is_changed(dset, 1);
     }
 
@@ -4039,7 +4038,7 @@ void series_set_label (DATASET *dset, int i,
 		       const char *s)
 {
     if (i > 0 && i < dset->v) {
-	copy_label(&dset->varinfo[i]->label, s);
+	copy_label(dset->varinfo[i], s);
     }
 }
 
@@ -4528,7 +4527,7 @@ static void maybe_adjust_label (DATASET *dset, int v,
 		strcat(tmp, ", ");
 	    }
 	}
-	copy_label(&dset->varinfo[v]->label, tmp);
+	copy_label(dset->varinfo[v], tmp);
 	free(tmp);
     }
 }
