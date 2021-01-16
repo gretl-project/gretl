@@ -25,6 +25,10 @@ version 2020f, in progress
 - Reorganize the categories for the functions help file
 - Fix obscure problem with plots: inability to show markers
   for observations in some cases where this should be OK
+- Fix memory leak on deleting a series with descriptive
+  label attached
+- Fix breakage in handling of boolean comparisons involving
+  missing values
 - Fix bug: potential crash on "Save as icon and close" for
   a model displayed in tabbed model viewer
 - Fix bug: possible crash on confusion between singleton
