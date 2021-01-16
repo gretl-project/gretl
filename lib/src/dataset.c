@@ -288,22 +288,9 @@ int dataset_allocate_obs_markers (DATASET *dset)
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
     memset(vinfo, 0, sizeof *vinfo);
-    vinfo->stack_level = gretl_function_depth();
-#if 0 /* prior to 2020-12-23 */
     vinfo->label = NULL;
-    vinfo->display_name[0] = '\0';
-    vinfo->parent[0] = '\0';
-    vinfo->flags = 0;
-    vinfo->transform = 0;
-    vinfo->lag = 0;
-    vinfo->midas_period = 0;
-    vinfo->midas_freq = 0;
-    vinfo->orig_pd = 0;
-    vinfo->compact_method = COMPACT_NONE;
-    vinfo->mtime = 0;
-    vinfo->stack_level = gretl_function_depth();
     vinfo->st = NULL;
-#endif
+    vinfo->stack_level = gretl_function_depth();
 }
 
 static void copy_label (VARINFO *vinfo, const char *src)
@@ -318,9 +305,13 @@ static void copy_label (VARINFO *vinfo, const char *src)
 
 static int labels_differ (const char *s1, const char *s2)
 {
-    if ((s1 == NULL && s2 != NULL) || (s1 != NULL && s2 == NULL)) {
+    int nv = (s1 != NULL) + (s2 != NULL);
+
+    if (nv == 1) {
+	/* one is NULL, the other not */
 	return 1;
-    } else if (s1 != NULL && s2 != NULL) {
+    } else if (nv == 2) {
+	/* neither one is NULL */
 	return strcmp(s1, s2) != 0;
     } else {
 	return 0;
