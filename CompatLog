@@ -47,9 +47,9 @@ works until further notice.
 Simplify iteration output from the --verbose flag for "mle"
 and similar commands. But the previous behavior can be
 obtained via "set max_verbose full".
-The "eigengen" function is now deprecated and has been 
-superseded by the new "eigen". 
 
+The "eigengen" function is now deprecated, having been
+superseded by the new "eigen".
 
 2019-12-22 version 2019d
 
