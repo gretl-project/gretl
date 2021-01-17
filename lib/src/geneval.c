@@ -89,6 +89,8 @@ static void real_rndebug (const char *format, ...)
 # define rndebug(x)
 #endif
 
+#define ONE_BY_ONE_CAST 1
+
 enum {
     FR_TREE = 1,
     FR_RET,
@@ -96,8 +98,6 @@ enum {
     FR_LHRES,
     FR_ARET
 };
-
-#define ONE_BY_ONE_CAST 1
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
@@ -427,7 +427,7 @@ static void free_node (NODE *t, parser *p)
    on the fly.
 */
 
-void free_tree (NODE *t, parser *p, int code)
+static void free_tree (NODE *t, parser *p, int code)
 {
     if (t == NULL) {
 	return;
@@ -1269,8 +1269,8 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return 0;
     }
 
-    /* otherwise NA propagates to the result */
     if (na(x) || na(y)) {
+	/* NaN always propagates to the result */
 	return NADBL;
     }
 
@@ -6669,16 +6669,21 @@ static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
 
 /* argument is list; value returned is series */
 
-static NODE *list_to_series_func (NODE *n, int f, parser *p)
+static NODE *list_to_series_func (NODE *n, int f, NODE *o, parser *p)
 {
     NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
-        int *list = node_get_list(n, p);
+	int deflt = (f == F_MIN || f == F_MAX);
+	int partial_ok = node_get_bool(o, p, deflt);
+	int *list = NULL;
 
+	if (!p->err) {
+	    list = node_get_list(n, p);
+	}
         if (list != NULL) {
             p->err = cross_sectional_stat(ret->v.xvec, list,
-                                          p->dset, f);
+                                          p->dset, f, partial_ok);
             free(list);
         }
     }
@@ -6795,7 +6800,7 @@ static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
         if (llist != NULL && rlist != NULL) {
             p->err = x_sectional_weighted_stat(ret->v.xvec,
                                                llist, rlist,
-                                               p->dset, f);
+                                               p->dset, f, 0);
         }
         free(llist);
         free(rlist);
@@ -8640,6 +8645,38 @@ static NODE *series_scalar_func (NODE *n, int f,
         if (n->t == MAT) {
             n->v.m = tmp;
         }
+    }
+
+    return ret;
+}
+
+/* Functions normally taking a series or vector as argument and
+   returning a scalar, but are evaluated on a scalar, so output is
+   trivial.
+*/
+
+static NODE *pretend_matrix_scalar_func (NODE *n, int f, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	if (f == F_SUM || f == F_SUMALL || f == F_MEAN || f == F_MAX ||
+	    f == F_MIN || f == F_MEDIAN) {
+	    ret->v.xval = n->v.xval;
+	} else if (f == F_NOBS) {
+	    ret->v.xval = 1;
+	} else if (f == F_SD || f == F_VCE || f == F_SST || f == F_GINI) {
+	    ret->v.xval = 0;
+	} else if (f == F_SKEWNESS || f == F_KURTOSIS) {
+	    /* this is probably less intuitive than all the above:
+	       in "normal" cases we're returning NADBL when the variance
+	       is 0, so we're just being consistent here
+	    */
+	    ret->v.xval = NADBL;
+        } else {
+	    /* any other cases not legit */
+	    node_type_error(f, 0, SERIES, n, p);
+	}
     }
 
     return ret;
@@ -16941,7 +16978,9 @@ static NODE *eval (NODE *t, parser *p)
                     t->t == F_MEDIAN)
                    && ok_list_node(l, p)) {
             /* list -> series also acceptable for these cases */
-            ret = list_to_series_func(l, t->t, p);
+            ret = list_to_series_func(l, t->t, r, p);
+	} else if (l->t == NUM) {
+	    ret = pretend_matrix_scalar_func(l, t->t, p);
         } else {
             node_type_error(t->t, 0, SERIES, l, p);
         }
