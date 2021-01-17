@@ -2127,7 +2127,7 @@ void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 
 void maybe_list_series (const DATASET *dset, PRN *prn)
 {
-    if (gretl_messages_on()) {
+    if (gretl_messages_on() && dset->v < 51) {
 	list_series(dset, OPT_NONE, prn);
     }
 }

@@ -2073,7 +2073,6 @@ int dataset_drop_listed_variables (int *list,
 	if (!err && !dset->auxiliary) {
 	    err = gretl_lists_revise(dlist, 0);
 	}
-
 	if (!err && complex_subsampled()) {
 	    DATASET *fdset = fetch_full_dataset();
 
