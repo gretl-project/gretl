@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-08 09:00-0500\n"
-"PO-Revision-Date: 2021-01-13 20:43+0100\n"
+"PO-Revision-Date: 2021-01-17 11:41+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -6261,7 +6261,7 @@ msgstr "« %s » nuk është numër"
 #: lib/src/monte_carlo.c:404 lib/src/monte_carlo.c:446
 #: lib/src/monte_carlo.c:480 lib/src/monte_carlo.c:3013
 msgid "error evaluating loop condition"
-msgstr "gabim në njehsimit e ’’loop\""
+msgstr "gabim në njehsimin e ’’loop\""
 
 #: lib/src/monte_carlo.c:740
 #, c-format
@@ -6269,7 +6269,7 @@ msgid ""
 "Using the same index variable (%s) for nested loops:\n"
 "this is acceptable only with \"for\" loops."
 msgstr ""
-"Përdor të njëjtën ndryshore indeksi (%s) për ‘’loop’’ të mbivendosura:\n"
+"Përdor të njëjtën ndryshore indeksi (%s) për ‘’loop’’ të ndërthurura:\n"
 "kjo është e pranueshme vetëm për ‘’loop’’ të llojit ‘’for’’."
 
 #: lib/src/monte_carlo.c:1618 lib/src/monte_carlo.c:1627
@@ -6283,7 +6283,7 @@ msgstr "Përdor \"set loop_maxiter\" për të ngritur vlerën kufi"
 
 #: lib/src/monte_carlo.c:1633
 msgid "You can reset \"set loop_maxiter\" to increase the limit"
-msgstr "Për të rritur kufirin, duhet rivendosur ’set loop_maxiter’"
+msgstr "Për të ngritur vlerën kufi, duhet përdorur ’set loop_maxiter’"
 
 #: lib/src/monte_carlo.c:2289
 msgid "progressive loop: model must be of constant size"
