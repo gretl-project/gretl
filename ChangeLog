@@ -27,6 +27,8 @@ version 2020f, in progress
   for observations in some cases where this should be OK
 - Fix memory leak on deleting a series with descriptive
   label attached
+- Fix excessive messaging on renaming series in a loop, a
+  serious issue if the dataset contains very many series
 - Fix breakage in handling of boolean comparisons involving
   missing values
 - Fix bug: potential crash on "Save as icon and close" for
