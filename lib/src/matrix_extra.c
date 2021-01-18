@@ -502,7 +502,7 @@ real_gretl_matrix_data_subset (const int *list,
 			       const char *mask,
 			       int op, int *err)
 {
-    gretl_matrix *M;
+    gretl_matrix *M = NULL;
     int T, Tmax = t2 - t1 + 1;
     int do_obs_info = 1;
     int k, mt1 = 0, mt2 = 0;
@@ -557,19 +557,22 @@ real_gretl_matrix_data_subset (const int *list,
 	}
     }
 
+    if (T < 0) {
+	/* "can't happen" */
+	*err = E_DATA;
+    } else {
+	M = gretl_matrix_alloc(T, k);
+	if (M == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err || T == 0) {
+	return M;
+    }
+
     if (do_obs_info) {
 	mt1 = t1; mt2 = t2;
-    }
-
-    if (T <= 0) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    M = gretl_matrix_alloc(T, k);
-    if (M == NULL) {
-	*err = E_ALLOC;
-	return NULL;
     }
 
     s = 0;
