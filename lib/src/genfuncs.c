@@ -4157,8 +4157,12 @@ static int data_and_weight_at_obs (double **targ, int *pn,
 	wi = dset->Z[wlist[i]][t];
 	if (wi < 0) {
 	    return E_INVARG;
+	} else if (wi == 0) {
+	    continue;
 	} else if (wi > 0 && na(xi)) {
-	    return E_MISSDATA;
+	    if (!partial_ok) {
+		return E_MISSDATA;
+	    }
 	} else if (!na(xi) && !na(wi)) {
 	    targ[0][j] = xi;
 	    targ[1][j] = wi;
@@ -4307,7 +4311,7 @@ int x_sectional_weighted_stat (double *y, const int *xlist,
 		    ws2 += w[i] * d * d;
 		    V2 += w[i] * w[i];
 		}
-		/* for frequency weights */
+		/* "frequency" weights */
 		adj = (n-1) * wsum / n;
 		/* for "reliability" weights? */
 		// adj = wsum - V2 / wsum;

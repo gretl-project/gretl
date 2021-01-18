@@ -9569,14 +9569,11 @@ static gretl_matrix *real_matrix_from_list (const int *list,
             M = gretl_matrix_data_subset_special(list, dset,
                                                  mmask, &p->err);
         } else {
-            int missop;
+            int missop = M_MISSING_OK;
 
             if (libset_get_bool(SKIP_MISSING)) {
                 missop = M_MISSING_SKIP;
-            } else {
-                missop = M_MISSING_OK;
             }
-
             M = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2,
                                          missop, &p->err);
         }
@@ -17577,7 +17574,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_WVAR:
     case F_WSD:
         /* two lists -> series, with optional boolean */
-        if (ok_list_node(l, p) && ok_list_node(r, p)) {
+        if (ok_list_node(l, p) && ok_list_node(m, p)) {
             ret = list_list_series_func(l, m, t->t, r, p);
         } else {
             p->err = E_TYPES;
