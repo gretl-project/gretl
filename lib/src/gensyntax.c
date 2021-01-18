@@ -1175,12 +1175,7 @@ static void get_args (NODE *t, parser *p, int f, int np,
 	p->flags &= ~P_LISTDEF;
     }
 
-    while (((np > 0 && i < np) || p->ch) && !p->err) {
-	if (p->sym == G_RPR) {
-	    /* right paren: got to the end */
-	    break;
-	}
-
+    while (p->sym != G_RPR && p->ch != '\0' && !p->err) {
 	/* get the next argument */
 	if (p->sym == P_COM) {
 	    /* implies an empty argument slot */
@@ -1208,7 +1203,7 @@ static void get_args (NODE *t, parser *p, int f, int np,
 	    /* lex unless next arg needs special handling */
 	    if (next_arg_is_string(i, callargs, np, opt)) {
 		/* don't let P_COM trip the newempty() call above,
-		   or else we'll get a spurious "too many args" error
+		   or we'll get a spurious "too many args" error
 		*/
 		p->sym = EMPTY;
 	    } else {
