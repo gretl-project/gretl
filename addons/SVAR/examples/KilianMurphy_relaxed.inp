@@ -30,7 +30,7 @@ numofaccept = 256 # takes long
 coverage = 0.95
 
 ## set up the sign restictions
-mod.snames = defarray("Supply", "Demand", "Speculative Demand",)
+mod.snames = defarray("Supply", "Demand", "Speculative Demand")
 
 # these are the "dynamic" and impact sign restrictions.
 SVAR_SRplain(&mod, "prod", "Supply", "-", 12) 
