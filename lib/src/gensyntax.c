@@ -1029,16 +1029,16 @@ static void attach_child (NODE *parent, NODE *child, int f,
 	    getsymb(child->t));
 #endif
 
-    /* catch erroneous case */
+    /* catch erroneous cases */
     if (np > 0 && i == np) {
 	gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
 			     _("too many arguments"));
 	p->err = E_ARGS;
-	free_tree(child, p, 0);
-	return;
-    } else if ((child == NULL || child->t == EMPTY) &&
-	       !empty_ok(f)) {
+    } else if (child->t == EMPTY && !empty_ok(f)) {
 	p->err = E_PARSE;
+    }
+
+    if (p->err) {
 	free_tree(child, p, 0);
 	return;
     }
@@ -1070,12 +1070,11 @@ static void attach_child (NODE *parent, NODE *child, int f,
 
 static void pad_parent (NODE *parent, int np, int i, parser *p)
 {
-    NODE *n;
     int j;
 
     for (j=i; j<np; j++) {
 	n = newempty();
-	attach_child(parent, n, 0, np, j, p);
+	attach_child(parent, newempty(), 0, np, j, p);
     }
 }
 
@@ -1104,8 +1103,7 @@ struct argrecord fncall_argrec[] = {
 
 static const int *get_callargs (int f)
 {
-    int n = G_N_ELEMENTS(fncall_argrec);
-    int i;
+    int i, n = G_N_ELEMENTS(fncall_argrec);
 
     for (i=0; i<n; i++) {
 	if (f == fncall_argrec[i].f) {
