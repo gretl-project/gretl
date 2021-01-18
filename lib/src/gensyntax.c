@@ -1215,7 +1215,7 @@ static void get_args (NODE *t, parser *p, int f, int np,
 		lex(p);
 		if (p->sym == G_RPR) {
 		    /* trailing empty argument slot */
-		    attach_child(t, NULL, f, np, i++, p);
+		    attach_child(t, newempty(), f, np, i++, p);
 		}
 	    }
 	} else {
