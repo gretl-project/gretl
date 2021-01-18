@@ -18,6 +18,7 @@ ChangesEnvironment=yes
 DirExistsWarning=no
 UsedUserAreasWarning=no
 OutputBaseFilename=gretl_install-64
+WizardStyle=modern
 
 [InstallDelete]
 Type: files; Name: "{app}\*.dll"
