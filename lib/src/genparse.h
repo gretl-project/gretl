@@ -320,9 +320,6 @@ enum {
     F_MXTAB,
     F_MRSEL,
     F_MCSEL,
-    F_WMEAN,
-    F_WVAR,
-    F_WSD,
     F_STRSTR,
     F_INSTRING,
     F_CNAMESET,
@@ -404,6 +401,9 @@ enum {
     F_BINCOEFF,
     F_ASSERT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
+    F_WMEAN,
+    F_WVAR,
+    F_WSD,
     F_LLAG,
     F_HFLAG,
     F_PRINCOMP,
@@ -721,6 +721,7 @@ void parser_ungetc (parser *p);
 void parser_advance (parser *p, int n);
 int parser_char_index (parser *p, int c);
 int parser_print_input (parser *p);
+void free_tree (NODE *t, parser *p, int code);
 void lex (parser *s);
 NODE *new_node (int t);
 NODE *expr (parser *s);

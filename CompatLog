@@ -3,6 +3,9 @@ version 2021b, in progress
 The default format for data saved as ".gdtb" is now a straight
 binary file, much faster than the old version.
 
+The --csv option to the "store" command is removed. Giving a
+suitable filename is sufficient.
+
 2021-01-18, version 2021a
 
 The command formerly known as "coint2" has been renamed as

@@ -427,7 +427,7 @@ static void free_node (NODE *t, parser *p)
    on the fly.
 */
 
-static void free_tree (NODE *t, parser *p, int code)
+void free_tree (NODE *t, parser *p, int code)
 {
     if (t == NULL) {
 	return;
@@ -4634,7 +4634,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
         if (!p->err && gretl_is_null_matrix(m1)) {
             p->err = E_DATA;
         }
-        if (!p->err && r->t != EMPTY) {
+        if (!p->err && !null_node(r)) {
             m2 = ptr_node_get_matrix(r, p);
         }
 
@@ -6789,18 +6789,19 @@ static NODE *lincomb_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *list_list_series_func (NODE *l1, NODE *l2, int f,
+				    NODE *o, parser *p)
 {
     NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
-        int *llist = node_get_list(l, p);
-        int *rlist = node_get_list(r, p);
+	int partial_ok = node_get_bool(o, p, 0);
+        int *llist = node_get_list(l1, p);
+        int *rlist = node_get_list(l2, p);
 
-        if (llist != NULL && rlist != NULL) {
-            p->err = x_sectional_weighted_stat(ret->v.xvec,
-                                               llist, rlist,
-                                               p->dset, f, 0);
+        if (!p->err) {
+            p->err = x_sectional_weighted_stat(ret->v.xvec, llist, rlist,
+                                               p->dset, f, partial_ok);
         }
         free(llist);
         free(rlist);
@@ -8206,7 +8207,7 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 
     if (!scalar_node(l) && l->t != SERIES) {
         node_type_error(f, 1, NUM, l, p);
-    } else if (!scalar_node(r) && r->t != EMPTY) {
+    } else if (!null_or_scalar(r)) {
         node_type_error(f, 2, NUM, r, p);
     }
 
@@ -11785,12 +11786,12 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             node_type_error(f, 1, NUM, l, p);
         } else if (!scalar_node(m)) {
             node_type_error(f, 2, NUM, m, p);
-        } else if (!scalar_node(r) && r->t != EMPTY) {
+        } else if (!null_or_scalar(r)) {
             node_type_error(f, 3, NUM, r, p);
         } else {
             double start = node_get_scalar(l, p);
             double end = node_get_scalar(m, p);
-            double step = (r->t != EMPTY)? node_get_scalar(r, p) : 1.0;
+            double step = (!null_node(r))? node_get_scalar(r, p) : 1.0;
 
             if (!p->err) {
                 A = gretl_matrix_seq(start, end, step, &p->err);
@@ -17575,9 +17576,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_WMEAN:
     case F_WVAR:
     case F_WSD:
-        /* two lists -> series */
+        /* two lists -> series, with optional boolean */
         if (ok_list_node(l, p) && ok_list_node(r, p)) {
-            ret = list_list_series_func(l, r, t->t, p);
+            ret = list_list_series_func(l, m, t->t, r, p);
         } else {
             p->err = E_TYPES;
         }
