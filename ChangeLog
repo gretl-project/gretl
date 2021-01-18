@@ -1,4 +1,4 @@
-version 2020f, in progress
+2021-01-18, version 2021a
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
