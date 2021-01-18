@@ -717,23 +717,6 @@ int get_precision (const double *x, int n, int placemax)
     return pmax;
 }
 
-gretlopt data_save_opt_from_suffix (const char *fname)
-{
-    gretlopt opt = OPT_NONE;
-
-    if (has_suffix(fname, ".R")) {
-	opt = OPT_R;
-    } else if (has_suffix(fname, ".m")) {
-	opt = OPT_M;
-    } else if (has_suffix(fname, ".csv") ||
-	       has_suffix(fname, ".txt") ||
-	       has_suffix(fname, ".asc")) {
-	opt = OPT_C;
-    }
-
-    return opt;
-}
-
 struct extmap {
     GretlFileType ftype;
     const char *ext;
@@ -830,7 +813,7 @@ GretlFileType data_file_type_from_name (const char *fname)
     return GRETL_UNRECOGNIZED;
 }
 
-#define non_native(o) (o & (OPT_M | OPT_R | OPT_C | OPT_D | OPT_G | OPT_J))
+#define non_native(o) (o & (OPT_M | OPT_R | OPT_D | OPT_G | OPT_J))
 
 static GretlDataFormat
 format_from_opt_or_name (gretlopt opt, const char *fname,
@@ -855,8 +838,6 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
 	fmt = GRETL_FMT_OCTAVE;
     } else if (opt & OPT_R) {
 	fmt = GRETL_FMT_R;
-    } else if (opt & OPT_C) {
-	fmt = GRETL_FMT_CSV;
     } else if (opt & OPT_D) {
 	fmt = GRETL_FMT_DB;
     } else if (opt & OPT_G) {

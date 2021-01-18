@@ -4115,309 +4115,214 @@ int check_declarations (char ***pS, parser *p)
     return n;
 }
 
-/* cross-sectional mean of observations on variables in @list
-   at time @t */
+/* cross-sectional (list-based) statistics */
 
-static double mean_at_obs (const int *list, const double **Z, int t)
+static double xsect_minmax (double *x, int n, int f)
 {
-    double xi, xsum = 0.0;
+    double ret = x[0];
     int i;
 
-    for (i=1; i<=list[0]; i++) {
-	xi = Z[list[i]][t];
-	if (na(xi)) {
-	    return NADBL;
-	}
-	xsum += xi;
-    }
-
-    return xsum / list[0];
-}
-
-/* weighted cross-sectional mean of observations on variables in @list
-   at time @t, weights given in @wlist */
-
-static double weighted_mean_at_obs (const int *list, const int *wlist,
-				    const double **Z, int t,
-				    double *pwsum, int *pm)
-{
-    double w, xi, wsum = 0.0, wxbar = 0.0;
-    int i, m = 0;
-
-    for (i=1; i<=list[0]; i++) {
-	w = Z[wlist[i]][t];
-	if (na(w) || w < 0.0) {
-	    return NADBL;
-	}
-	if (w > 0.0) {
-	    wsum += w;
-	    m++;
-	}
-    }
-
-    if (wsum <= 0.0) {
-	return NADBL;
-    }
-
-    if (pwsum != NULL) {
-	*pwsum = wsum;
-    }
-
-    if (pm != NULL) {
-	*pm = m;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	w = Z[wlist[i]][t] / wsum;
-	if (w > 0) {
-	    xi = Z[list[i]][t];
-	    if (na(xi)) {
-		return NADBL;
+    for (i=1; i<n; i++) {
+	if (f == F_MIN) {
+	    if (x[i] < ret) {
+		ret = x[i];
 	    }
-	    wxbar += xi * w;
+	} else if (x[i] > ret) {
+	    ret = x[i];
 	}
     }
 
-    return wxbar;
+    return ret;
 }
 
-/* Computes weighted mean of the variables in @list using the
-   (possibly time-varying) weights given in @wlist, or the
-   unweighted mean if @wlist is NULL.
+/* Fill @targ with data (from @xlist) and associated
+   weights (from @wlist) for the cross-section at obs @t.
+   If @partial_ok is 0 (false) we return E_MISSDATA if
+   any values or weights are missing at @t, otherwise
+   we skip missing terms and return the number of valid
+   terms in @pn.
 */
 
-static int x_sectional_weighted_mean (double *x, const int *list,
-				      const int *wlist,
-				      const DATASET *dset)
-{
-    int n = list[0];
-    int t, v;
-
-    if (n == 0) {
-	return 0; /* all NAs */
-    } else if (n == 1) {
-	v = list[1];
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    x[t] = dset->Z[v][t];
-	}
-	return 0;
-    }
-
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (wlist != NULL) {
-	    x[t] = weighted_mean_at_obs(list, wlist,
-					(const double **) dset->Z,
-					t, NULL, NULL);
-	} else {
-	    x[t] = mean_at_obs(list, (const double **) dset->Z, t);
-	}
-    }
-
-    return 0;
-}
-
-/* Computes weighted sample variance of the variables in @list using
-   the (possibly time-varying) weights given in @wlist, or the
-   unweighted sample variance if @wlist is NULL
-*/
-
-static int x_sectional_wtd_variance (double *x, const int *list,
-				     const int *wlist,
-				     const DATASET *dset)
-{
-    double xdev, xbar, wsum;
-    int m = 0, n = list[0];
-    int i, t, v;
-
-    if (n == 0) {
-	return 0; /* all NAs */
-    } else if (n == 1) {
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    x[t] = 0.0;
-	}
-	return 0;
-    }
-
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (wlist != NULL) {
-	    xbar = weighted_mean_at_obs(list, wlist,
-					(const double **) dset->Z,
-					t, &wsum, &m);
-	} else {
-	    xbar = mean_at_obs(list, (const double **) dset->Z, t);
-	}
-	if (na(xbar)) {
-	    x[t] = NADBL;
-	    continue;
-	}
-	if (wlist != NULL && m < 2) {
-	    x[t] = (m == 1)? 0.0 : NADBL;
-	    continue;
-	}
-	x[t] = 0.0;
-	for (i=1; i<=list[0]; i++) {
-	    v = list[i];
-	    xdev = dset->Z[v][t] - xbar;
-	    if (wlist != NULL) {
-		x[t] += xdev * xdev * dset->Z[wlist[i]][t] / wsum;
-	    } else {
-		x[t] += xdev * xdev;
-	    }
-	}
-	if (wlist != NULL) {
-	    x[t] *= m / (m - 1);
-	} else {
-	    x[t] /= (n - 1);
-	}
-    }
-
-    return 0;
-}
-
-static int x_sectional_wtd_stddev (double *x, const int *list,
+static int data_and_weight_at_obs (double **targ, int *pn,
+				   const int *xlist,
 				   const int *wlist,
-				   const DATASET *dset)
+				   const DATASET *dset,
+				   int t, int partial_ok)
 {
-    int t, err;
+    int i, j = 0;
+    double xi, wi;
 
-    err = x_sectional_wtd_variance(x, list, wlist, dset);
-
-    if (!err) {
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (!na(x[t])) {
-		x[t] = sqrt(x[t]);
-	    }
+    for (i=1; i<=xlist[0]; i++) {
+	xi = dset->Z[xlist[i]][t];
+	wi = dset->Z[wlist[i]][t];
+	if (wi < 0) {
+	    return E_INVARG;
+	} else if (wi > 0 && na(xi)) {
+	    return E_MISSDATA;
+	} else if (!na(xi) && !na(wi)) {
+	    targ[0][j] = xi;
+	    targ[1][j] = wi;
+	    j++;
+	} else if (!partial_ok) {
+	    return E_MISSDATA;
 	}
     }
 
-    return err;
+    *pn = j;
+    return (j == 0)? E_MISSDATA : 0;
 }
 
-static int x_sectional_extremum (int f, double *x, const int *list,
-				 const DATASET *dset)
-{
-    double xit, xx;
-    int i, t, err = 0;
+/* Fill @targ with data (from @xlist) for the cross-
+   section at obs @t. If @partial_ok is 0 (false) we
+   return E_MISSDATA if any values are missing at @t,
+   otherwise we skip missing terms and return the count
+   of valid values in @pn.
+*/
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	xx = (f == F_MIN)? DBL_MAX : -DBL_MAX;
-	for (i=1; i<=list[0]; i++) {
-	    xit = dset->Z[list[i]][t];
-	    if (!na(xit)) {
-		if (f == F_MAX && xit > xx) {
-		    xx = xit;
-		} else if (f == F_MIN && xit < xx) {
-		    xx = xit;
-		}
-	    }
-	}
-	if (xx == DBL_MAX || xx == -DBL_MAX) {
-	    x[t] = NADBL;
-	} else {
-	    x[t] = xx;
+static int data_at_obs (double *targ, int *pn,
+			const int *list,
+			const DATASET *dset,
+			int t, int partial_ok)
+{
+    int i, j = 0;
+    double xi;
+
+    for (i=1; i<=list[0]; i++) {
+	xi = dset->Z[list[i]][t];
+	if (!na(xi)) {
+	    targ[j++] = xi;
+	} else if (!partial_ok) {
+	    return E_MISSDATA;
 	}
     }
 
-    return err;
+    *pn = j;
+    return (j == 0)? E_MISSDATA : 0;
 }
 
-static int x_sectional_sum (double *x, const int *list,
-			    const DATASET *dset)
+int cross_sectional_stat (double *y, const int *list,
+			  const DATASET *dset, int f,
+			  int partial_ok)
 {
-    double xit, xx;
-    int i, t, err = 0;
+    double *x;
+    int missing;
+    int i, t, n;
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	xx = 0.0;
-	for (i=1; i<=list[0]; i++) {
-	    xit = dset->Z[list[i]][t];
-	    if (na(xit)) {
-		xx = NADBL;
-		break;
-	    } else {
-		xx += xit;
-	    }
-	}
-	x[t] = xx;
-    }
-
-    return err;
-}
-
-static int x_sectional_median (double *y, const int *list,
-			       const DATASET *dset)
-{
-    int i, t, n = list[0];
-    double *xt;
-
-    if (n == 0) {
-	return E_DATA;
-    }
-
-    xt = malloc(n * sizeof *xt);
-    if (xt == NULL) {
+    /* to hold the cross section */
+    x = malloc(list[0] * sizeof *x);
+    if (x == NULL) {
 	return E_ALLOC;
     }
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	y[t] = 0.0;
-	for (i=0; i<list[0]; i++) {
-	    xt[i] = dset->Z[list[i+1]][t];
-	    if (na(xt[i])) {
-		y[t] = NADBL;
-		break;
+	missing = data_at_obs(x, &n, list, dset, t, partial_ok);
+	if (missing) {
+	    y[t] = NADBL;
+	} else if ((f == F_VCE || f == F_SD) && n == 1) {
+	    y[t] = NADBL;
+	} else if (f == F_MIN || f == F_MAX) {
+	    y[t] = xsect_minmax(x, n, f);
+	} else if (f == F_MEDIAN) {
+	    y[t] = gretl_median(0, n-1, x);
+	} else {
+	    double xsum = 0;
+
+	    for (i=0; i<n; i++) {
+		xsum += x[i];
 	    }
-	}
-	if (y[t] == 0.0) {
-	    y[t] = gretl_median(0, n-1, xt);
+	    if (f == F_SUM) {
+		y[t] = xsum;
+	    } else if (f == F_MEAN) {
+		y[t] = xsum / n;
+	    } else {
+		/* F_VCE or F_SD */
+		double d, s2 = 0, xbar = xsum / n;
+
+		for (i=0; i<n; i++) {
+		    d = x[i] - xbar;
+		    s2 += d * d;
+		}
+		if (f == F_VCE) {
+		    y[t] = s2 / (n-1);
+		} else {
+		    y[t] = sqrt(s2 / (n-1));
+		}
+	    }
 	}
     }
 
-    free(xt);
+    free(x);
 
     return 0;
 }
 
-int cross_sectional_stat (double *x, const int *list,
-			  const DATASET *dset, int f)
-{
-    if (f == F_MEAN) {
-	return x_sectional_weighted_mean(x, list, NULL, dset);
-    } else if (f == F_VCE) {
-	return x_sectional_wtd_variance(x, list, NULL, dset);
-    } else if (f == F_SD) {
-	return x_sectional_wtd_stddev(x, list, NULL, dset);
-    } else if (f == F_MIN || f == F_MAX) {
-	return x_sectional_extremum(f, x, list, dset);
-    } else if (f == F_SUM) {
-	return x_sectional_sum(x, list, dset);
-    } else if (f == F_MEDIAN) {
-	return x_sectional_median(x, list, dset);
-    } else {
-	return E_TYPES;
-    }
-}
-
-int x_sectional_weighted_stat (double *x, const int *list,
+int x_sectional_weighted_stat (double *y, const int *xlist,
 			       const int *wlist,
 			       const DATASET *dset,
-			       int f)
+			       int f, int partial_ok)
 {
-    if (wlist[0] != list[0]) {
+    double wxbar, wsum, d, ws2, V2, adj;
+    double *x, *w, **X;
+    int i, t, n, missing;
+    int err = 0;
+
+    if (wlist[0] != xlist[0]) {
 	gretl_errmsg_sprintf("Weighted stats: data list has %d members but weight "
-			     "list has %d", list[0], wlist[0]);
+			     "list has %d", xlist[0], wlist[0]);
 	return E_DATA;
     }
 
-    if (f == F_WMEAN) {
-	return x_sectional_weighted_mean(x, list, wlist, dset);
-    } else if (f == F_WVAR) {
-	return x_sectional_wtd_variance(x, list, wlist, dset);
-    } else if (f == F_WSD) {
-	return x_sectional_wtd_stddev(x, list, wlist, dset);
-    } else {
-	return E_DATA;
+    /* storage for values and weights, per obs */
+    X = doubles_array_new(2, xlist[0]);
+    if (X == NULL) {
+	return E_ALLOC;
     }
+
+    x = X[0];
+    w = X[1];
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	missing = data_and_weight_at_obs(X, &n, xlist, wlist,
+					 dset, t, partial_ok);
+	if (missing == E_INVARG) {
+	    err = E_INVARG;
+	    break;
+	} else if (missing) {
+	    y[t] = NADBL;
+	} else if (f != F_WMEAN && n == 1) {
+	    y[t] = NADBL;
+	} else {
+	    wxbar = wsum = 0;
+	    for (i=0; i<n; i++) {
+		wxbar += x[i] * w[i];
+		wsum += w[i];
+	    }
+	    wxbar /= wsum;
+	    if (f == F_WMEAN) {
+		y[t] = wxbar;
+	    } else {
+		ws2 = V2 = 0;
+		for (i=0; i<n; i++) {
+		    d = (x[i] - wxbar);
+		    ws2 += w[i] * d * d;
+		    V2 += w[i] * w[i];
+		}
+		/* for frequency weights */
+		adj = (n-1) * wsum / n;
+		/* for "reliability" weights? */
+		// adj = wsum - V2 / wsum;
+		if (f == F_WVAR) {
+		    y[t] = ws2 / adj;
+		} else {
+		    y[t] = sqrt(ws2 / adj);
+		}
+	    }
+	}
+    }
+
+    doubles_array_free(X, 2);
+
+    return err;
 }
 
 /* writes to the series @y a linear combination of the variables given

@@ -8971,20 +8971,24 @@ static int maybe_back_up_datafile (const char *fname)
 static void maybe_add_compat_option (gretlopt *optp,
                                      int *cancel)
 {
-    if (any_missing_user_values(dataset)) {
-        const char *opts[] = {
-            N_("new style (faster)"),
-            N_("old style (compatible with gretl < 2018c)"),
-        };
-        const char *label = _("Missing values should be stored:");
-        int resp;
+    const char *label = _("gretl binary data format:");
+    const char *opts[] = {
+	N_("current (gretl >= 2020b, fastest)"),
+	N_("compatible with gretl >= 2018c"),
+	N_("compatible with gretl < 2018c")
+    };
+    int resp;
 
-        resp = radio_dialog(NULL, label, opts, 2, 0, 0, NULL);
-        if (resp == GRETL_CANCEL) {
-            *cancel = 1;
-        } else if (resp == 1) {
-            *optp |= OPT_O;
-        }
+    push_option_param(STORE, OPT_C, NULL);
+    resp = radio_dialog(NULL, label, opts, 3, 0, 0, NULL);
+
+    if (resp == GRETL_CANCEL) {
+	*cancel = 1;
+    } else if (resp == 1) {
+	*optp |= OPT_C; /* --compat */
+    } else if (resp == 2) {
+	*optp |= OPT_C; /* --compat=2018b */
+	push_option_param(STORE, OPT_C, gretl_strdup("2018b"));
     }
 }
 
@@ -9014,9 +9018,6 @@ static gretlopt store_action_to_opt (const char *fname, int action,
         break;
     case EXPORT_R:
         opt = OPT_R;
-        break;
-    case EXPORT_CSV:
-        opt = OPT_C;
         break;
     case EXPORT_DAT:
         opt = OPT_G; /* PcGive */

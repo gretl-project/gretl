@@ -14391,10 +14391,6 @@
       </arguments>
       <options>
         <option>
-	  <flag>--csv</flag>
-	  <effect>use CSV format</effect>
-        </option>
-        <option>
 	  <flag>--omit-obs</flag>
 	  <effect>see below, on CSV format</effect>
         </option>

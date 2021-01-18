@@ -2018,9 +2018,6 @@ static int open_append_stage_1 (CMD *cmd,
         if (op->ftype == GRETL_CSV || op->ftype == GRETL_XML_DATA ||
             op->ftype == GRETL_BINARY_DATA) {
             set_dataset_is_changed(dset, 0);
-            if (op->ftype != GRETL_CSV) {
-                opt |= OPT_G;
-            }
             err = lib_join_data(cmd->parm2, op->fname, dset, opt, prn);
         } else {
             gretl_errmsg_set("join: only CSV and gdt[b] files are supported");

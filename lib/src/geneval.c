@@ -6669,16 +6669,21 @@ static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
 
 /* argument is list; value returned is series */
 
-static NODE *list_to_series_func (NODE *n, int f, parser *p)
+static NODE *list_to_series_func (NODE *n, int f, NODE *o, parser *p)
 {
     NODE *ret = aux_series_node(p);
 
     if (ret != NULL && starting(p)) {
-        int *list = node_get_list(n, p);
+	int deflt = (f == F_MIN || f == F_MAX);
+	int partial_ok = node_get_bool(o, p, deflt);
+	int *list = NULL;
 
+	if (!p->err) {
+	    list = node_get_list(n, p);
+	}
         if (list != NULL) {
             p->err = cross_sectional_stat(ret->v.xvec, list,
-                                          p->dset, f);
+                                          p->dset, f, partial_ok);
             free(list);
         }
     }
@@ -6795,7 +6800,7 @@ static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
         if (llist != NULL && rlist != NULL) {
             p->err = x_sectional_weighted_stat(ret->v.xvec,
                                                llist, rlist,
-                                               p->dset, f);
+                                               p->dset, f, 0);
         }
         free(llist);
         free(rlist);
@@ -16973,7 +16978,7 @@ static NODE *eval (NODE *t, parser *p)
                     t->t == F_MEDIAN)
                    && ok_list_node(l, p)) {
             /* list -> series also acceptable for these cases */
-            ret = list_to_series_func(l, t->t, p);
+            ret = list_to_series_func(l, t->t, r, p);
 	} else if (l->t == NUM) {
 	    ret = pretend_matrix_scalar_func(l, t->t, p);
         } else {

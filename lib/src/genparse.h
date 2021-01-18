@@ -187,13 +187,9 @@ enum {
     F_ZEROMISS,
     F_MEDIAN,
     F_GINI,
-    F_SUM,
     F_SUMALL,
-    F_MEAN,
     F_MIN,
     F_MAX,
-    F_SD,
-    F_VCE,	  /* variance */
     F_SKEWNESS,
     F_KURTOSIS,
     F_SST,
@@ -293,6 +289,10 @@ enum {
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
+    F_SUM,
+    F_MEAN,
+    F_VCE,
+    F_SD,
     F_ARGNAME,
     F_T1,
     F_T2,
@@ -764,11 +764,11 @@ int check_declarations (char ***pS, parser *p);
 /* in genfuncs.c, used only internally */
 int cross_sectional_stat (double *x, const int *list,
 			  const DATASET *dset,
-			  int f);
+			  int f, int partial_ok);
 int x_sectional_weighted_stat (double *x, const int *list,
 			       const int *wlist,
 			       const DATASET *dset,
-			       int f);
+			       int f, int partial_ok);
 
 /* in geneval.c, used only internally */
 double dvar_get_scalar (int i, const DATASET *dset);

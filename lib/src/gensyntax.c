@@ -1015,28 +1015,45 @@ static void get_slice_parts (NODE *t, parser *p)
     set_slice_off(p);
 }
 
-static void attach_child (NODE *parent, NODE *child, int k, int i,
-			  parser *p)
+#define empty_ok(f) (f != F_DEFBUNDLE)
+
+static void attach_child (NODE *parent, NODE *child, int f,
+			  int np, int i, parser *p)
 {
     if (p->err) {
 	return;
     }
 
 #if SDEBUG
-    fprintf(stderr, "attach_child: i=%d, type=%d\n", i, child->t);
+    fprintf(stderr, "attach_child: np=%d, i=%d, type '%s'\n", np, i,
+	    getsymb(child->t));
 #endif
 
-    if (k == 1) {
+    /* catch erroneous case */
+    if (np > 0 && i == np) {
+	gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
+			     _("too many arguments"));
+	p->err = E_ARGS;
+	free_tree(child, p, 0);
+	return;
+    } else if ((child == NULL || child->t == EMPTY) &&
+	       !empty_ok(f)) {
+	p->err = E_PARSE;
+	free_tree(child, p, 0);
+	return;
+    }
+
+    if (np == 1) {
 	/* 1-place node */
 	parent->L = child;
-    } else if (k == 2) {
+    } else if (np == 2) {
 	/* 2-place node */
 	if (i == 0) {
 	    parent->L = child;
 	} else {
 	    parent->R = child;
 	}
-    } else if (k == 3) {
+    } else if (np == 3) {
 	/* 3-place node */
 	if (i == 0) {
 	    parent->L = child;
@@ -1045,20 +1062,20 @@ static void attach_child (NODE *parent, NODE *child, int k, int i,
 	} else {
 	    parent->R = child;
 	}
-    } else {
+    } else if (child != NULL) {
 	/* n-place node */
 	p->err = push_bn_node(parent, child);
     }
 }
 
-static void pad_parent (NODE *parent, int k, int i, parser *p)
+static void pad_parent (NODE *parent, int np, int i, parser *p)
 {
     NODE *n;
     int j;
 
-    for (j=i; j<k; j++) {
+    for (j=i; j<np; j++) {
 	n = newempty();
-	attach_child(parent, n, k, j, p);
+	attach_child(parent, n, 0, np, j, p);
     }
 }
 
@@ -1125,7 +1142,8 @@ static int next_arg_is_string (int i, const int *callargs, int k,
    can find (the number unknown in advance).
 */
 
-static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
+static void get_args (NODE *t, parser *p, int f, int np,
+		      int opt, int *next)
 {
     NODE *child;
     const int *callargs;
@@ -1133,8 +1151,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     int i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args: f=%s, k=%d, ch='%c', point='%s'\n",
-	    getsymb(f), k, p->ch, p->point);
+    fprintf(stderr, "get_args: f=%s, np=%d, ch='%c', point='%s'\n",
+	    getsymb(f), np, p->ch, p->point);
 #endif
 
     if (p->sym != G_LPR) {
@@ -1157,37 +1175,29 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	p->flags &= ~P_LISTDEF;
     }
 
-    while (((k > 0 && i < k) || p->ch) && !p->err) {
+    while (((np > 0 && i < np) || p->ch) && !p->err) {
 	if (p->sym == G_RPR) {
 	    /* right paren: got to the end */
 	    break;
 	}
 
-	if (k > 0 && i == k) {
-	    gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
-				 _("too many arguments"));
-	    p->err = E_ARGS;
-	    break;
-	}
-
 	/* get the next argument */
-
 	if (p->sym == P_COM) {
 	    /* implies an empty argument slot */
 	    child = newempty();
 	} else if (i < 4 && callargs && callargs[i]) {
 	    /* a function-call argument: don't insist on quotation */
 	    child = get_literal_string_arg(p, 0);
-	} else if (i > 0 && i < k - 1 && (opt & MID_STR)) {
+	} else if (i > 0 && i < np - 1 && (opt & MID_STR)) {
 	    child = get_literal_string_arg(p, opt);
-	} else if (i == k - 1 && (opt & RIGHT_STR)) {
+	} else if (i == np - 1 && (opt & RIGHT_STR)) {
 	    child = get_final_string_arg(p, t, f, 0);
 	} else {
 	    child = expr(p);
 	}
 
 	if (!p->err) {
-	    attach_child(t, child, k, i++, p);
+	    attach_child(t, child, f, np, i++, p);
 	}
 
 	if (p->err || p->sym == G_RPR) {
@@ -1196,17 +1206,21 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
 	    /* lex unless next arg needs special handling */
-	    if (next_arg_is_string(i, callargs, k, opt)) {
+	    if (next_arg_is_string(i, callargs, np, opt)) {
 		/* don't let P_COM trip the newempty() call above,
 		   or else we'll get a spurious "too many args" error
 		*/
 		p->sym = EMPTY;
 	    } else {
 		lex(p);
+		if (p->sym == G_RPR) {
+		    /* trailing empty argument slot */
+		    attach_child(t, NULL, f, np, i++, p);
+		}
 	    }
 	} else {
 	    /* either arg-separating comma or closing paren was expected */
-	    cexp = (i < k)? ',' : ')';
+	    cexp = (i < np)? ',' : ')';
 	    break;
 	}
     }
@@ -1215,8 +1229,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	if (cexp) {
 	    expected_symbol_error(cexp, p, 0);
 	} else if (p->sym == G_RPR) {
-	    if (i < k) {
-		pad_parent(t, k, i, p);
+	    if (i < np) {
+		pad_parent(t, np, i, p);
 	    }
 	    lex(p);
 	    if (p->sym == G_LBR) {
@@ -1278,14 +1292,14 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	    break;
 	}
 	child = newstr(p->idstr);
-	attach_child(t, child, -1, i++, p);
+	attach_child(t, child, 0, -1, i++, p);
 	/* then get some parseable value */
 	parser_getc(p);
 	while (p->ch == ' ') parser_getc(p);
 	lex(p);
 	child = expr(p);
 	if (!p->err) {
-	    attach_child(t, child, -1, i++, p);
+	    attach_child(t, child, 0, -1, i++, p);
 	}
 	if (p->sym == P_COM) {
 	    ; /* OK */
