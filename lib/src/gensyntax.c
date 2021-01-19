@@ -1015,7 +1015,8 @@ static void get_slice_parts (NODE *t, parser *p)
     set_slice_off(p);
 }
 
-#define empty_ok(f) (f != F_DEFBUNDLE)
+/* contexts where empty arguments are never acceptable */
+#define no_empty(f) (f == F_DEFBUNDLE || f == F_DEFARRAY || f == F_DEFLIST)
 
 static void attach_child (NODE *parent, NODE *child, int f,
 			  int np, int i, parser *p)
@@ -1034,7 +1035,7 @@ static void attach_child (NODE *parent, NODE *child, int f,
 	gretl_errmsg_sprintf("%s: %s", getsymb_full(f, p),
 			     _("too many arguments"));
 	p->err = E_ARGS;
-    } else if (child->t == EMPTY && !empty_ok(f)) {
+    } else if (child->t == EMPTY && no_empty(f)) {
 	p->err = E_PARSE;
     }
 
