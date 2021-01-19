@@ -1073,7 +1073,6 @@ static void pad_parent (NODE *parent, int np, int i, parser *p)
     int j;
 
     for (j=i; j<np; j++) {
-	n = newempty();
 	attach_child(parent, newempty(), 0, np, j, p);
     }
 }
