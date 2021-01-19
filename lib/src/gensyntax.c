@@ -1165,6 +1165,7 @@ static void get_args (NODE *t, parser *p, int f, int np,
 
     callargs = get_callargs(f);
     if (callargs == NULL || callargs[0] == 0) {
+	/* nothing special about the first arg */
 	lex(p);
     }
 
