@@ -7706,7 +7706,7 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
                 uscore = node_get_bool(x, p, 0);
             }
             ret->v.str = calloc(VNAMELEN, 1);
-            normalize_join_colname(ret->v.str, s, uscore, 0);
+            gretl_normalize_varname(ret->v.str, s, uscore, 0);
         } else {
             p->err = E_DATA;
         }

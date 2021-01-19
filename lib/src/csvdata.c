@@ -2861,45 +2861,6 @@ static int skip_data_column (csvdata *c, int k)
     }
 }
 
-/* special fix-up for column names in the context of "join":
-   the algorithm here is also used in the userspace fixname()
-   function
-*/
-
-void normalize_join_colname (char *targ, const char *src,
-			     int underscore, int k)
-{
-    const char *letters = "abcdefghijklmnopqrstuvwxyz"
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int i = 0;
-
-    /* skip any leading non-letters */
-    src += strcspn(src, letters);
-
-    while (*src && i < VNAMELEN - 1) {
-	if (strspn(src, letters) > 0 || isdigit(*src) || *src == '_') {
-	    /* transcribe valid characters */
-	    targ[i++] = *src;
-	} else if (*src == ' ' || underscore) {
-	    /* convert space to underscore */
-	    if (i > 0 && targ[i-1] == '_') {
-		; /* skip */
-	    } else {
-		targ[i++] = '_';
-	    }
-	}
-	src++;
-    }
-
-    if (i > 0) {
-	targ[i] = '\0';
-    } else if (k <= 0) {
-	strcpy(targ, "col[n]");
-    } else {
-	sprintf(targ, "col%d", k);
-    }
-}
-
 static int update_join_cols_list (csvdata *c, int k)
 {
     int *test;
@@ -2956,7 +2917,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	sprintf(okname, "col%d", k);
     } else {
 	/* convert to valid gretl identifier */
-	normalize_join_colname(okname, c->str, 0, k);
+	gretl_normalize_varname(okname, c->str, 0, k);
     }
 
 #if CDEBUG

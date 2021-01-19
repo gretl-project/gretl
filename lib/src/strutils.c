@@ -3067,6 +3067,54 @@ int gretl_scan_varname (const char *src, char *targ)
 }
 
 /**
+ * gretl_normalize_varname:
+ * @targ: target string.
+ * @src: source string.
+ * @underscore: flag to replace all illegal characters
+ * with underscore.
+ * @seq: sequence number in array of names, if applicable.
+ *
+ * Writes a vaid gretl identifier to @targ, which must be
+ * at least #VNAMELEN bytes in length, taking @src as basis
+ * and replacing any illegal characters as described in the
+ * documentation for the userland fixname function.
+ */
+
+void gretl_normalize_varname (char *targ, const char *src,
+			      int underscore, int seq)
+{
+    const char *letters = "abcdefghijklmnopqrstuvwxyz"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    int i = 0;
+
+    /* skip any leading non-letters */
+    src += strcspn(src, letters);
+
+    while (*src && i < VNAMELEN - 1) {
+	if (strspn(src, letters) > 0 || isdigit(*src) || *src == '_') {
+	    /* transcribe valid characters */
+	    targ[i++] = *src;
+	} else if (*src == ' ' || underscore) {
+	    /* convert space to underscore */
+	    if (i > 0 && targ[i-1] == '_') {
+		; /* skip */
+	    } else {
+		targ[i++] = '_';
+	    }
+	}
+	src++;
+    }
+
+    if (i > 0) {
+	targ[i] = '\0';
+    } else if (seq <= 0) {
+	strcpy(targ, "col[n]");
+    } else {
+	sprintf(targ, "col%d", seq);
+    }
+}
+
+/**
  * gretl_regexp_replace:
  * @orig: the original string.
  * @match: the pattern to match.

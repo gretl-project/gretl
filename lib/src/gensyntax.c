@@ -1198,11 +1198,8 @@ static void get_args (NODE *t, parser *p, int f, int np,
 	} else if (p->sym == P_COM) {
 	    /* turn off flag for accepting string as first arg */
 	    p->flags &= ~P_GETSTR;
-	    /* lex unless next arg needs special handling */
 	    if (next_arg_is_string(i, callargs, np, opt)) {
-		/* don't let P_COM trip the newempty() call above,
-		   or we'll get a spurious "too many args" error
-		*/
+		/* the next arg needs special handling */
 		p->sym = EMPTY;
 	    } else {
 		lex(p);

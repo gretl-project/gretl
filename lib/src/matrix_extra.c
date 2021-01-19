@@ -780,46 +780,6 @@ gretl_matrix_data_subset_special (const int *list,
     return X;
 }
 
-static void vname_from_colname (char *targ, const char *src,
-				int i)
-{
-    gchar *s, *p, *tmp = g_strdup(src);
-    int n, err = 0;
-
-    s = tmp;
-    /* skip any invalid leading bytes */
-    while (*s && !isalpha(*s)) {
-	s++;
-    }
-
-    n = strlen(s);
-    p = s;
-
-    if (n == 0) {
-	err = 1;
-    } else {
-	/* check for invalid embedded bytes */
-	while (*s) {
-	    if (*s == ' ') {
-		*s = '_';
-	    } else if (!isalnum(*s) && *s != '_') {
-		err = 1;
-		break;
-	    }
-	    s++;
-	}
-    }
-
-    if (err) {
-	sprintf(targ, "v%d", i);
-    } else {
-	*targ = '\0';
-	strncat(targ, p, VNAMELEN-1);
-    }
-
-    g_free(tmp);
-}
-
 static void check_matrix_varnames (DATASET *dset)
 {
     int i, j, err = 0;
@@ -928,7 +888,7 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	    memcpy(dset->Z[i], src, T * sizeof *src);
 	}
 	if (cnames != NULL) {
-	    vname_from_colname(dset->varname[i], cnames[col], i);
+	    gretl_normalize_varname(dset->varname[i], cnames[col], 0, i);
 	} else if (opt & OPT_N) {
 	    sprintf(dset->varname[i], "%d", col + 1);
 	} else if (opt & OPT_R) {

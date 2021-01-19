@@ -4269,7 +4269,7 @@ int add_dbnomics_data (windata_t *vwin)
 	    *vname = '\0';
 	    S[0] = gretl_bundle_get_string(b, "series_code", &err);
 	    if (!err) {
-		normalize_join_colname(vname, S[0], 0, 0);
+		gretl_normalize_varname(vname, S[0], 0, 0);
 	    }
 	    /* construct its description */
 	    S[1] = gretl_bundle_get_string(b, "provider_code", &err);
