@@ -5161,6 +5161,7 @@ void print_summary (const Summary *summ,
 	    N_("IQ range"),
 	    N_("Missing obs.")
 	};
+	/* cases where 0.05 and 0.95 quantiles are OK */
 	int npct = 0;
 
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
@@ -5177,6 +5178,12 @@ void print_summary (const Summary *summ,
 	    printf15(summ->low[i], d, prn);
 	    printf15(summ->high[i], d, prn);
 	    pputc(prn, '\n');
+	    /* while we're at it, register cases where we can
+	       show the 0.05 and 0.95 quantiles
+	    */
+	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+		npct++;
+	    }
 	}
 	pputc(prn, '\n');
 
@@ -5205,11 +5212,6 @@ void print_summary (const Summary *summ,
 	    printf15(summ->skew[i], d, prn);
 	    printf15(summ->xkurt[i], d, prn);
 	    pputc(prn, '\n');
-
-	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
-		/* we have some 5th and 95th percentiles to show */
-		npct++;
-	    }
 	}
 	pputc(prn, '\n');
 
@@ -5232,13 +5234,14 @@ void print_summary (const Summary *summ,
 		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
 		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
 	} else {
+	    /* not showing any 0.05, 0.95 quantiles */
 	    pprintf(prn, "%*s%*s%*s\n", len, " ",
 		    UTF_WIDTH(_(ha[2]), 15), _(hc[2]),
 		    UTF_WIDTH(_(ha[3]), 15), _(hc[3]));
 	}
 
 	for (i=0; i<summ->list[0]; i++) {
-	    vi = summ->list[i + 1];
+	    vi = summ->list[i+1];
 	    summary_print_varname(dset->varname[vi], len, prn);
 	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
 		printf15(summ->perc05[i], d, prn);
