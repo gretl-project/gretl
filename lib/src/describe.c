@@ -5161,6 +5161,7 @@ void print_summary (const Summary *summ,
 	    N_("IQ range"),
 	    N_("Missing obs.")
 	};
+	int npct = 0;
 
 	pprintf(prn, "%*s%*s%*s%*s%*s\n", len, " ",
 		UTF_WIDTH(_(ha[0]), 15), _(ha[0]),
@@ -5204,10 +5205,15 @@ void print_summary (const Summary *summ,
 	    printf15(summ->skew[i], d, prn);
 	    printf15(summ->xkurt[i], d, prn);
 	    pputc(prn, '\n');
+
+	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+		/* we have some 5th and 95th percentiles to show */
+		npct++;
+	    }
 	}
 	pputc(prn, '\n');
 
-	if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
+	if (npct > 0) {
 	    /* note: use pputs for strings containing literal '%' */
 	    gchar *hc0 = g_strdup(_(hc[0]));
 	    gchar *hc1 = g_strdup(_(hc[1]));
@@ -5237,6 +5243,9 @@ void print_summary (const Summary *summ,
 	    if (!na(summ->perc05[i]) && !na(summ->perc95[i])) {
 		printf15(summ->perc05[i], d, prn);
 		printf15(summ->perc95[i], d, prn);
+	    } else if (npct > 0) {
+		pprintf(prn, "%*s", 15, "NA");
+		pprintf(prn, "%*s", 15, "NA");
 	    }
 	    printf15(summ->iqr[i], d, prn);
 	    pprintf(prn, "%15d", (int) summ->misscount[i]);
