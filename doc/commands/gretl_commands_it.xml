@@ -14554,10 +14554,6 @@ qual caso viene usato QML.
       </arguments>
       <options>
 	<option>
-	  <flag>--csv</flag>
-	  <effect>usa il formato CSV</effect>
-	</option>
-	<option>
 	  <flag>--omit-obs</flag>
 	  <effect>si veda oltre, a proposito del formato CSV</effect>
 	</option>
