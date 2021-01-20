@@ -441,9 +441,22 @@ static void fix_wls_values (MODEL *pmod, const DATASET *dset)
     int t;
 
     if (gretl_model_get_int(pmod, "wt_dummy")) {
+	/* fill in fitted values and residuals for
+	   observations excluded from estimation
+	*/
+	double yh;
+	int i, v;
+
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (dset->Z[pmod->nwt][t] == 0.0) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		yh = 0.0;
+		for (i=0; i<pmod->ncoeff; i++) {
+		    v = pmod->list[i+2];
+		    yh += pmod->coeff[i] * dset->Z[v][t];
+		}
+		pmod->yhat[t] = yh;
+		v = pmod->list[1];
+		pmod->uhat[t] = dset->Z[v][t] - yh;
 	    }
 	}
     } else {
@@ -632,7 +645,15 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 
     if (*effobs) {
 	/* the weight var is a dummy, with effobs 1s */
+	int nz = 0;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (w[t] == 0) {
+		nz++;
+	    }
+	}
 	gretl_model_set_int(pmod, "wt_dummy", 1);
+	gretl_model_set_int(pmod, "wt_zeros", nz);
     }
 
     return 0;
