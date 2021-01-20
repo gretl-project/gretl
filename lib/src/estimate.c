@@ -123,10 +123,11 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 {
     double xx, sum = 0.0;
     int yno = pmod->list[1];
-    int t, dwt = 0;
+    int t, zw = 0;
 
-    if (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy")) {
-	dwt = pmod->nwt;
+    if (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_zeros")) {
+	/* WLS with some zero weights */
+	zw = 1;
     }
 
     pmod->ybar = pmod->sdy = NADBL;
@@ -136,7 +137,7 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
     }
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
+	if (zw && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
@@ -148,7 +149,7 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 
     sum = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
+	if (zw && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
@@ -164,7 +165,7 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 
     sum = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
+	if (zw && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}
 	if (!model_missing(pmod, t)) {
@@ -401,18 +402,15 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
 static void get_wls_stats (MODEL *pmod, const DATASET *dset,
 			   gretlopt opt)
 {
-    int dumwt = gretl_model_get_int(pmod, "wt_dummy");
-    int t, wobs = pmod->nobs, yno = pmod->list[1];
     double x, dy, wmean = 0.0, wsum = 0.0;
+    int yno = pmod->list[1];
+    int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t)) {
 	    continue;
 	}
-	if (dset->Z[pmod->nwt][t] == 0.0 && !dumwt) {
-	    wobs--;
-	    pmod->dfd -= 1;
-	} else {
+	if (dset->Z[pmod->nwt][t] > 0) {
 	    wmean += dset->Z[pmod->nwt][t] * dset->Z[yno][t];
 	    wsum += dset->Z[pmod->nwt][t];
 	}
@@ -438,46 +436,33 @@ static void get_wls_stats (MODEL *pmod, const DATASET *dset,
 
 static void fix_wls_values (MODEL *pmod, const DATASET *dset)
 {
-    int t;
+    int dwt = gretl_model_get_int(pmod, "wt_dummy");
+    double yh, ess_orig = 0.0;
+    double sw, sigma_orig;
+    int t, i, v;
 
-    if (gretl_model_get_int(pmod, "wt_dummy")) {
-	/* fill in fitted values and residuals for
-	   observations excluded from estimation
-	*/
-	double yh;
-	int i, v;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (dset->Z[pmod->nwt][t] == 0.0) {
-		yh = 0.0;
-		for (i=0; i<pmod->ncoeff; i++) {
-		    v = pmod->list[i+2];
-		    yh += pmod->coeff[i] * dset->Z[v][t];
-		}
-		pmod->yhat[t] = yh;
-		v = pmod->list[1];
-		pmod->uhat[t] = dset->Z[v][t] - yh;
-	    }
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
+	    continue;
 	}
-    } else {
-	double ess_orig = 0.0;
-	double sw, sigma_orig;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (model_missing(pmod, t)) {
-		continue;
+	if (dset->Z[pmod->nwt][t] == 0.0) {
+	    yh = 0.0;
+	    for (i=0; i<pmod->ncoeff; i++) {
+		v = pmod->list[i+2];
+		yh += pmod->coeff[i] * dset->Z[v][t];
 	    }
-	    if (dset->Z[pmod->nwt][t] == 0.0) {
-		pmod->yhat[t] = pmod->uhat[t] = NADBL;
-		pmod->nobs -= 1;
-	    } else {
-		sw = sqrt(dset->Z[pmod->nwt][t]);
-		pmod->yhat[t] /= sw;
-		pmod->uhat[t] /= sw;
-		ess_orig += pmod->uhat[t] * pmod->uhat[t];
-	    }
+	    pmod->yhat[t] = yh;
+	    v = pmod->list[1];
+	    pmod->uhat[t] = dset->Z[v][t] - yh;
+	} else if (!dwt) {
+	    sw = sqrt(dset->Z[pmod->nwt][t]);
+	    pmod->yhat[t] /= sw;
+	    pmod->uhat[t] /= sw;
+	    ess_orig += pmod->uhat[t] * pmod->uhat[t];
 	}
+    }
 
+    if (!dwt) {
 	sigma_orig = sqrt(ess_orig / pmod->dfd);
 	gretl_model_set_double(pmod, "ess_orig", ess_orig);
 	gretl_model_set_double(pmod, "sigma_orig", sigma_orig);
@@ -623,7 +608,8 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 	N_("Weight variable is all zeros, aborting regression");
     const char *wtneg =
 	N_("Weight variable contains negative values");
-    int t, allzero = 1;
+    int ones = 0, zeros = 0, nobs = 0;
+    int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (w[t] < 0.0) {
@@ -631,29 +617,30 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 	    pmod->errcode = E_DATA;
 	    return 1;
 	} else if (w[t] > 0.0) {
-	    allzero = 0;
+	    nobs++;
+	    if (w[t] == 1.0) {
+		ones++;
+	    }
+	} else if (w[t] == 0.0) {
+	    zeros++;
 	}
     }
 
-    if (allzero) {
+    if (nobs == 0) {
 	gretl_errmsg_set(_(wtzero));
 	pmod->errcode = E_DATA;
 	return 1;
     }
 
-    *effobs = gretl_isdummy(pmod->t1, pmod->t2, w);
+    *effobs = nobs;
 
-    if (*effobs) {
-	/* the weight var is a dummy, with effobs 1s */
-	int nz = 0;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (w[t] == 0) {
-		nz++;
-	    }
-	}
+    if (nobs == ones + zeros) {
+	/* the weight var is a dummy */
 	gretl_model_set_int(pmod, "wt_dummy", 1);
-	gretl_model_set_int(pmod, "wt_zeros", nz);
+    }
+
+    if (zeros > 0) {
+	gretl_model_set_int(pmod, "wt_zeros", zeros);
     }
 
     return 0;

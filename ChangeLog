@@ -2,6 +2,8 @@ version 2021b, in progress
 - gdtb data format: make the new variant the default
 - tighten up on defbundle() syntax: no empty arguments
   allowed
+- "wls" command, with 0/1 weights: compute $yhat and $uhat
+  for the excluded observations
 
 2021-01-18, version 2021a
 - New function vma() for multiple time series
