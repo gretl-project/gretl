@@ -2085,6 +2085,9 @@ static void print_model_heading (const MODEL *pmod,
 	    mc = Tmax - gretl_model_get_int(pmod, "totobs");
 	} else {
 	    mc = Tmax - pmod->nobs;
+	    if (pmod->ci == WLS) {
+		mc -= gretl_model_get_int(pmod, "wt_zeros");
+	    }
 	}
 
 	if (mc > 0) {
