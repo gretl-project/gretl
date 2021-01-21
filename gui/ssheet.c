@@ -779,7 +779,7 @@ add_treeview_column_with_title (Spreadsheet *sheet, const char *name)
 static int real_add_new_series (Spreadsheet *sheet, const char *varname)
 {
     GtkTreeViewColumn *column;
-    char tmp[32];
+    gchar *tmp = NULL;
 
     if (add_data_column(sheet)) {
 	return 1;
@@ -790,8 +790,9 @@ static int real_add_new_series (Spreadsheet *sheet, const char *varname)
 	    sheet->totcols);
 #endif
 
-    double_underscores(tmp, varname);
+    tmp = double_underscores_new(varname);
     column = add_treeview_column_with_title(sheet, tmp);
+    g_free(tmp);
 
     /* scroll to editing position if need be */
     spreadsheet_scroll_to_new_col(sheet, column);
@@ -1034,7 +1035,7 @@ static void name_matrix_col (GtkWidget *widget, dialog_t *dlg)
 	return;
     }
 
-    *tmp = 0;
+    *tmp = '\0';
     strncat(tmp, buf, 12);
     double_underscores(colname, tmp);
 
@@ -2639,7 +2640,7 @@ static int build_sheet_view (Spreadsheet *sheet)
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
     gchar *col0str = NULL;
-    gchar tmpstr[32];
+    gchar *tmpstr = NULL;
     gint i, width, colnum;
 
     if (get_local_decpoint() == ',') {
@@ -2678,9 +2679,9 @@ static int build_sheet_view (Spreadsheet *sheet)
     if (sheet->matrix != NULL) {
 	for (i=1; i<=sheet->datacols; i++) {
 	    if (sheet->colnames != NULL) {
-		double_underscores(tmpstr, sheet->colnames[i-1]);
+		tmpstr = double_underscores_new(sheet->colnames[i-1]);
 	    } else {
-		sprintf(tmpstr, "%d", i);
+		tmpstr = g_strdup_printf("%d", i);
 	    }
 	    column = gtk_tree_view_column_new_with_attributes(tmpstr,
 							      sheet->datacell,
@@ -2694,6 +2695,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	    gtk_tree_view_column_set_clickable(column, TRUE);
 	    g_signal_connect(G_OBJECT(column), "clicked",
 			     G_CALLBACK(name_column_dialog), sheet);
+	    g_free(tmpstr);
 	}
 	sheet->colnames = NULL;
     } else if (editing_scalars(sheet)) {
@@ -2731,7 +2733,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 		continue;
 	    }
 	    colnum++;
-	    double_underscores(tmpstr, dataset->varname[vi]);
+	    tmpstr = double_underscores_new(dataset->varname[vi]);
 	    column = gtk_tree_view_column_new_with_attributes(tmpstr,
 							      sheet->datacell,
 							      "text",
@@ -2740,6 +2742,7 @@ static int build_sheet_view (Spreadsheet *sheet)
 	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	    set_up_sheet_column(column, width, TRUE);
 	    set_treeview_column_number(column, colnum);
+	    g_free(tmpstr);
 	}
     }
 

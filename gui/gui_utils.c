@@ -5067,10 +5067,9 @@ static void add_blist_item_to_menu (gpointer listitem,
     GtkWidget *menu = data;
     GtkAction *action;
     GtkWidget *item;
-    gchar *label;
+    gchar *label, *keystr;
     const char *typestr = "?";
     const char *note;
-    char keystr[64];
     GretlType type;
     void *val;
     int r = 0, c = 0;
@@ -5102,7 +5101,7 @@ static void add_blist_item_to_menu (gpointer listitem,
 
     typestr = gretl_type_get_name(type);
     note = bundled_item_get_note((bundled_item *) value);
-    double_underscores(keystr, (gchar *) key);
+    keystr = double_underscores_new((gchar *) key);
 
     if (r > 0 && c > 0) {
 	if (note != NULL) {
@@ -5118,6 +5117,7 @@ static void add_blist_item_to_menu (gpointer listitem,
     } else {
 	label = g_strdup_printf("%s (%s)", keystr, typestr);
     }
+    g_free(keystr);
 
     action = gtk_action_new(key, label, NULL, NULL);
     g_signal_connect(G_OBJECT(action), "activate",
@@ -5723,6 +5723,22 @@ char *double_underscores (char *targ, const char *src)
     *p = '\0';
 
     return targ;
+}
+
+gchar *double_underscores_new (const char *src)
+{
+    const char *s = src;
+    gchar *ret;
+    int n = 0;
+
+    while (*s && (s = strchr(s, '_')) != NULL) {
+	n++;
+	s++;
+    }
+
+    ret = g_malloc(strlen(src) + n + 1);
+
+    return double_underscores(ret, src);
 }
 
 char *adjust_fontspec_string (char *targ, const char *src,

@@ -191,34 +191,6 @@ static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
     }
 }
 
-static char *winname_double_underscores (const gchar *src)
-{
-    char *s, *targ;
-    int i, u = 0;
-
-    for (i=0; src[i]; i++) {
-	if (src[i] == '_') {
-	    u++;
-	}
-    }
-
-    targ = malloc(strlen(src) + u + 1);
-    s = targ;
-
-    for (i=0; src[i]; i++) {
-	if (src[i] == '_' && src[i+1] != '_') {
-	    *s++ = '_';
-	    *s++ = '_';
-	} else {
-	    *s++ = src[i];
-	}
-    }
-
-    *s = '\0';
-
-    return targ;
-}
-
 /* callback for command-accent on Mac or Alt-PgUp/PgDn on
    X11 and Windows: switch window-focus within gretl
 */
@@ -278,7 +250,7 @@ void window_list_add (GtkWidget *w, int role)
     };
     GtkAction *action;
     const char *label;
-    char *modlabel = NULL;
+    gchar *modlabel = NULL;
     gchar *aname = NULL;
 
     if (window_group == NULL) {
@@ -301,7 +273,7 @@ void window_list_add (GtkWidget *w, int role)
     } else {
 	label = get_window_title(w);
 	if (label != NULL && strchr(label, '_') != NULL) {
-	    modlabel = winname_double_underscores(label);
+	    modlabel = double_underscores_new(label);
 	}
     }
 
@@ -337,7 +309,7 @@ void window_list_add (GtkWidget *w, int role)
     n_listed_windows++;
 
     g_free(aname);
-    free(modlabel);
+    g_free(modlabel);
 }
 
 /* GCompareFunc: returns "a negative integer if the first value comes

@@ -3652,7 +3652,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     static GtkActionEntry item = {
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
-    char *fixed_label = NULL;
+    gchar *fixed_label = NULL;
     guint merge_id;
 
 #if PKG_DEBUG
@@ -3664,15 +3664,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     item.label = gpi->label != NULL ? gpi->label : gpi->pkgname;
 
     if (strchr(item.label, '_')) {
-	const char *s = item.label;
-	int n = 0;
-
-	while (*s && (s = strchr(s, '_')) != NULL) {
-	    n++;
-	    s++;
-	}
-	fixed_label = malloc(strlen(item.label) + n + 1);
-	double_underscores(fixed_label, item.label);
+	fixed_label = double_underscores_new(item.label);
 	item.label = fixed_label;
     }
 
@@ -3694,7 +3686,7 @@ static void add_package_to_menu (gui_package_info *gpi,
     gtk_ui_manager_insert_action_group(vwin->ui, gpi->ag, 0);
     // g_object_unref(gpi->ag);
 
-    free(fixed_label);
+    g_free(fixed_label);
 #if PKG_DEBUG
     fprintf(stderr, " merge_id = %d\n", merge_id);
 #endif
