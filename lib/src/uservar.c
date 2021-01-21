@@ -2428,6 +2428,11 @@ int list_user_vars_of_type (const DATASET *dset,
 		}
 		if (uvars[i]->name[0] == '\0') {
 		    pputs(prn, "  (unnamed)\n");
+		} else if (t == GRETL_TYPE_ARRAY) {
+		    GretlType at = gretl_array_get_type(uvars[i]->ptr);
+		    
+		    pprintf(prn, "  %s (%s)\n", uvars[i]->name,
+			    gretl_type_get_name(at));
 		} else {
 		    pprintf(prn, "  %s\n", uvars[i]->name);
 		}
