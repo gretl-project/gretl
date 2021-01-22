@@ -20015,11 +20015,12 @@ static int save_generated_var (parser *p, PRN *prn)
 	    p->err = assign_null_to_array(p);
 	} else if (r->t == ARRAY) {
 	    /* full assignment of RHS array */
-	    GretlType atype = p->lh.gtype > 0 ? p->lh.gtype :
-		gretl_array_get_type(r->v.a);
-	    gretl_array *a;
+	    GretlType atype = gretl_array_get_type(r->v.a);
+	    gretl_array *a = NULL;
 
-	    if (is_tmp_node(r) || (p->flags & P_UFRET)) {
+	    if (p->lh.gtype > 0 && atype != p->lh.gtype) {
+		p->err = E_TYPES;
+	    } else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
 		/* grabbing r->v.a is OK */
 		a = r->v.a;
 	    } else {
