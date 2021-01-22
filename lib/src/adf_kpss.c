@@ -714,7 +714,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     if (na(ainfo->pval)) {
 	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
     } else {
-	int asy = (ainfo->order > 0 || (opt & OPT_G));
+	int asy = (ainfo->order > 0 || (ainfo->flags & ADF_GLS));
 
 	sprintf(pvstr, "%s %.4g",
 		(asy)? _("asymptotic p-value") : _("p-value"),
@@ -840,16 +840,8 @@ static int t_adjust_order (adf_info *ainfo, DATASET *dset,
 	pval = normal_pvalue_2(tstat);
 
 	if (pval > 0.10) {
-#if ADF_DEBUG
-	    pprintf(prn, "\nt_adjust_order: lagged difference not "
-		    "significant at order %d (t = %g)\n\n", k, tstat);
-#endif
 	    gretl_list_delete_at_pos(ainfo->list, k + 2);
 	} else {
-#if ADF_DEBUG
-	    pprintf(prn, "\nt_adjust_order: lagged difference is "
-		    "significant at order %d (t = %g)\n\n", k, tstat);
-#endif
 	    break;
 	}
     }
@@ -923,8 +915,8 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
 	return -1;
     }
 
-    if (opt & OPT_G) {
-	/* ADF-GLS */
+    if (ainfo->flags & ADF_GLS) {
+	/* modified criterion wanted */
 	use_MIC = 1;
     }
 
