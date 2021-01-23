@@ -2034,6 +2034,11 @@ static int dpd_beta_hat (ddset *dpd)
 	/* M <- XZ * A * XZ' */
 	err = gretl_matrix_qform(dpd->XZ, GRETL_MOD_NONE,
 				 dpd->A, dpd->M, GRETL_MOD_NONE);
+#if 0
+	gretl_matrix_print(dpd->XZ, "XZ");
+	gretl_matrix_print(dpd->A, "A");
+	gretl_matrix_print(dpd->M, "M");
+#endif
     }
 
     if (!err) {
