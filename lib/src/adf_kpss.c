@@ -54,7 +54,7 @@ typedef enum {
     ADF_EG_RESIDS = 1 << 1, /* final stage of the above */
     ADF_PANEL     = 1 << 2, /* working on panel data */
     ADF_GLS       = 1 << 3, /* GLS: Elliott, Rothenberg, Stock */
-    ADF_PQ        = 1 << 3  /* Perron-Qu, 2007 */
+    ADF_PQ        = 1 << 4  /* Perron-Qu, 2007 */
 } AdfFlags;
 
 /* automatic lag selection methods */
