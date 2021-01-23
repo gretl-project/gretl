@@ -1798,7 +1798,6 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 	}
 
 	/* need double, int, int, int */
-
 	for (i=0; i<4 && !p->err; i++) {
 	    s = r->v.bn.n[i];
 	    e = eval(s, p);
@@ -1823,8 +1822,7 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
-		ret->v.xval = get_urc_pvalue(tau, nobs, niv,
-					     itv, OPT_NONE);
+		ret->v.xval = get_urc_pvalue(tau, nobs, niv, itv);
 	    }
 	}
     } else {

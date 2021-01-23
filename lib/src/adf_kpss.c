@@ -70,6 +70,13 @@ enum {
     demean_OLS
 };
 
+/* p-value type */
+enum {
+    PV_FINITE = 1,
+    PV_ASY,
+    PV_APPROX
+};
+
 typedef struct adf_info_ adf_info;
 typedef struct kpss_info_ kpss_info;
 
@@ -81,6 +88,7 @@ struct adf_info_ {
     int niv;         /* number of (co-)integrated vars (Engle-Granger) */
     AdfFlags flags;  /* bitflags: see above */
     DetCode det;     /* code for deterministics */
+    int pvtype;      /* code for p-value type */
     int nseas;       /* number of seasonal dummies */
     int T;           /* number of obs used in test */
     int df;          /* degrees of freedom, test regression */
@@ -453,16 +461,13 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     return err;
 }
 
-#if 0 /* coming soon! */
-
 /* Peter Sephton's response-surface based critical values for
    ADF-GLS with testing down of lag order as per Ng and Perron,
    or Perron and Qu. See PS's paper in Computational Economics,
    https://doi.org/10.1007/s10614-020-10082-6
 */
 
-static void sephton_adf_critvals (int T, int pmax, int trend,
-				  int PQ, double *c)
+static void sephton_adf_critvals (adf_info *ainfo, double *c)
 {
     /* Each row contains 6 coeffs: const, 4 powers of 1/T,
        and maxlag / T. The rows are in blocks of four:
@@ -493,16 +498,18 @@ static void sephton_adf_critvals (int T, int pmax, int trend,
 	{-2.8196, 2.4706, -1346.6, 35398, -314840, 0.37564},
 	{-2.5401, -2.7442, -950.57, 25683, -233160, 0.52035}
     };
+    int PQ = (ainfo->flags & ADF_PQ)? 1 : 0;
+    int trend = (ainfo->det == UR_TREND);
     int i, j, rmin = 4 * PQ + trend ? 8 : 0;
     const double *b;
     double X[6];
 
     X[0] = 1.0;
-    X[1] = 1.0/T;
+    X[1] = 1.0 / ainfo->T;
     X[2] = X[1] * X[1];
     X[3] = X[2] * X[1];
     X[4] = X[3] * X[1];
-    X[5] = pmax * X[1];
+    X[5] = ainfo->kmax * X[1];
 
     for (i=0; i<4; i++) {
 	b = coef[rmin+i];
@@ -513,11 +520,13 @@ static void sephton_adf_critvals (int T, int pmax, int trend,
     }
 }
 
+#if 0 /* unused? */
+
 /* based on a much larger replication of ERS using gretl:
    see http://gretl.sourceforge.net/papers/df-gls-pvals.pdf
 */
 
-static void get_df_gls_ct_cval (int T, double *c)
+static void get_df_gls_ct_cval (adf_info *ainfo, double *c)
 {
     static double b[4][3] = {
 	/* b0       b(1/T)    b(1/T^2) */
@@ -526,17 +535,14 @@ static void get_df_gls_ct_cval (int T, double *c)
 	{ -3.10420, -18.2513,  9.99274 }, /* 2.5% */
 	{ -3.40846, -19.4237, -23.9869 }  /* 1% */
     };
-    double T2 = T * T;
-    int i;
+    int i, T = ainfo->T;
 
     for (i=0; i<4; i++) {
-	c[i] = b[i][0] + b[i][1] / T + b[i][2] / T2;
+	c[i] = b[i][0] + b[i][1] / T + b[i][2] / (T*T);
     }
 }
 
-#else
-
-static void get_df_gls_ct_cval (int T, double *c)
+static void get_df_gls_ct_cval (adf_info *ainfo, double *c)
 {
     /* Elliott, Rothenberg and Stock (1996), Table 1 */
     static double df_gls_ct_cvals[4][4] = {
@@ -546,6 +552,7 @@ static void get_df_gls_ct_cval (int T, double *c)
 	{ -2.64, -2.93, -3.18, -3.46 }, /* T = 200 */
 	{ -2.57, -2.89, -3.15, -3.48 }  /* \infty  */
     };
+    int T = ainfo->T;
     int j, i = 3;
 
     if (T <= 50){
@@ -702,7 +709,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     const char *urcstrs[] = {
 	"nc", "c", "ct", "ctt"
     };
-    char pvstr[48];
+    char pvstr[64];
     char taustr[16];
     int i;
 
@@ -713,12 +720,12 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 
     if (na(ainfo->pval)) {
 	sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
+    } else if (ainfo->pvtype == PV_ASY) {
+	sprintf(pvstr, "%s %.4g", _("asymptotic p-value"), ainfo->pval);
+    } else if (ainfo->pvtype == PV_APPROX) {
+	sprintf(pvstr, "%s %.4g", _("approximate p-value"), ainfo->pval);
     } else {
-	int asy = (ainfo->order > 0 || (ainfo->flags & ADF_GLS));
-
-	sprintf(pvstr, "%s %.4g",
-		(asy)? _("asymptotic p-value") : _("p-value"),
-		ainfo->pval);
+	sprintf(pvstr, "%s %.4g", _("p-value"), ainfo->pval);
     }
 
     if (*blurb_done == 0) {
@@ -735,7 +742,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     }
 
     if (ainfo->flags & ADF_EG_RESIDS) {
-	/* last step of Engle-Granger test: IS THIS RIGHT? */
+	/* last step of Engle-Granger test */
 	pprintf(prn, "  %s ", _(DF_test_string(0)));
 	pputc(prn, '\n');
 	if (test_down) {
@@ -783,16 +790,14 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 	    _("estimated value of (a - 1)"), ainfo->b0,
 	    _("test statistic"), taustr, ainfo->tau);
 
-    if ((ainfo->flags & ADF_GLS) && i+1 == UR_TREND) {
+    if ((ainfo->flags & ADF_GLS) && na(ainfo->pval)) {
 	double c[4];
 
-	/* FIXME distinguish GLS cases with testing down */
-
-	get_df_gls_ct_cval(ainfo->T, c);
+	sephton_adf_critvals(ainfo, c);
 	pprintf(prn, "\n  %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
 	pprintf(prn, "%g%%     %g%%     %g%%     %g%%\n", 10.0, 5.0, 2.5, 1.0);
 	pprintf(prn, "  %s: %.2f   %.2f   %.2f   %.2f\n",
-		_("Critical values"), c[0], c[1], c[2], c[3]);
+		_("Critical values"), c[3], c[2], c[1], c[0]);
     } else {
 	pprintf(prn, "  %s\n", pvstr);
     }
@@ -1020,8 +1025,6 @@ static void copy_list_values (int *targ, const int *src)
  * (1 for simple unit-root test).
  * @itv: code: 1, 2, 3, 4 for nc, c, ct, ctt models
  * respectively.
- * @opt: give OPT_G if GLS adjustment was applied in
- * the test from which @tau was obtained.
  *
  * Retrieves the p-value for @tau from the Dickey–Fuller
  * unit-root test or the Engle–Granger cointegration
@@ -1030,40 +1033,43 @@ static void copy_list_values (int *targ, const int *src)
  * Returns: p-value, or %NADBL on failure.
  */
 
-double get_urc_pvalue (double tau, int n, int niv, int itv,
-		       gretlopt opt)
+double get_urc_pvalue (double tau, int n, int niv, int itv)
 {
-    char datapath[FILENAME_MAX];
-    double (*mackinnon_pvalue)(double, int, int, int, char *);
+    double (*pvfunc)(double, int, int, int);
     double pval = NADBL;
-    static int nodata;
 
-    if (nodata) {
-	return pval;
-    }
-
-    mackinnon_pvalue = get_plugin_function("mackinnon_pvalue");
-    if (mackinnon_pvalue == NULL) {
-	nodata = 1;
+    pvfunc = get_plugin_function("mackinnon_pvalue");
+    if (pvfunc == NULL) {
         return pval;
     }
 
-    strcpy(datapath, gretl_plugin_path());
-
-    if ((opt & OPT_G) && itv == UR_CONST) {
-	itv = UR_NO_CONST;
-    }
-
-    pval = (*mackinnon_pvalue)(tau, n, niv, itv, datapath);
+    pval = (*pvfunc)(tau, n, niv, itv);
 
 #if ADF_DEBUG
     fprintf(stderr, "getting pval: tau=%g, n=%d, niv=%d, itv=%d: pval=%g\n",
 	    tau, n, niv, itv, pval);
 #endif
 
-    if (*datapath == '\0') {
-	nodata = 1;
+    return pval;
+}
+
+static double get_dfgls_pvalue (adf_info *ainfo)
+{
+    double (*pvfunc)(double, int, int, int *);
+    double pval = NADBL;
+    int trend, err = 0;
+
+    pvfunc = get_plugin_function("dfgls_pvalue");
+
+    if (pvfunc != NULL) {
+	trend = ainfo->det == UR_TREND;
+	pval = (*pvfunc)(ainfo->tau, ainfo->T, trend, &err);
     }
+
+#if ADF_DEBUG
+    fprintf(stderr, "get_dfgls_pval: tau=%g, T=%d, trend=%d: pval=%g\n",
+	    ainfo->tau, ainfo->T, trend, pval);
+#endif
 
     return pval;
 }
@@ -1451,8 +1457,8 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    copy_list_values(ainfo->list, biglist);
 	}
 
-	if (opt & OPT_G) {
-	    /* DF-GLS: skip deterministics */
+	if (ainfo->flags & ADF_GLS) {
+	    /* skip deterministics */
 	    ainfo->list[0] = ainfo->order + 2;
 	    b0pos = 0;
 	} else {
@@ -1514,18 +1520,36 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	if (getenv("DFGLS_NO_PVALUE")) {
 	    /* to speed up monte carlo stuff */
 	    ainfo->pval = NADBL;
-	} else if ((opt & OPT_G) && ainfo->det == UR_TREND) {
-	    /* DF-GLS with trend: MacKinnon p-values won't work */
-	    ainfo->pval = NADBL;
-	} else {
-	    /* Use asymp. p-value in augmented case; also the
-	       finite-sample MacKinnon p-values are not correct
-	       in the GLS case.
+	} else if (!(ainfo->flags & ADF_GLS)) {
+	    /* no GLS adjustment applied: use MacKinnon p-values,
+	       either finite sample or asymptotic in the case
+	       of an augmented test
 	    */
-	    int asy = (ainfo->order > 0 || (opt & OPT_G));
+	    int asy = (ainfo->kmax > 0 || ainfo->order > 0);
 
-	    ainfo->pval = get_urc_pvalue(ainfo->tau, asy ? 0 : dfmod.nobs,
-					 ainfo->niv, ainfo->det, opt);
+	    ainfo->pval = get_urc_pvalue(ainfo->tau, asy ? 0 : ainfo->T,
+					 ainfo->niv, ainfo->det);
+	    if (!na(ainfo->pval)) {
+		ainfo->pvtype = asy ? PV_ASY : PV_FINITE;
+	    }
+	    fprintf(stderr, "urc_pvalue: %g, det %d, asy %d\n",
+		    ainfo->pval, ainfo->det, asy);
+	} else {
+	    /* DF-GLS */
+	    if (ainfo->kmax == 0 && ainfo->order == 0) {
+		/* non-augmented: use Cottrell/Komashko p-values */
+		ainfo->pval = get_dfgls_pvalue(ainfo);
+		if (!na(ainfo->pval)) {
+		    ainfo->pvtype = PV_APPROX;
+		}
+		fprintf(stderr, "ac_pvalue: %g, det %d\n", ainfo->pval, ainfo->det);
+	    } else if (test_down) {
+		/* testing down: use Sephton critical values */
+		ainfo->pval = NADBL;
+	    } else if (ainfo->order > 0) {
+		/* fixed lag order: asy critical values ?? */
+		ainfo->pval = NADBL;
+	    }
 	}
 
 	if (!(opt & (OPT_Q | OPT_I)) && !(ainfo->flags & ADF_PANEL)) {

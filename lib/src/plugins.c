@@ -243,8 +243,9 @@ struct plugin_function_info plugin_functions[] = {
     { "biprobit_estimate", P_BIPROBIT },
     { "reprobit_estimate", P_REPROBIT },
 
-    /* MacKinnon Dickey-Fuller p-values */
+    /* Dickey-Fuller test p-values */
     { "mackinnon_pvalue",  P_URCDIST },
+    { "dfgls_pvalue",      P_URCDIST },
 
     /* kernel density estimation */
     { "kernel_density",        P_KERNEL },
