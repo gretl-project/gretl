@@ -244,6 +244,8 @@ SHP_CFLAGS := -I$(topsrc)/plugin/libshp
 
 URCDATA = $(topsrc)/plugin/data/urcdata.bin
 DWDATA = $(topsrc)/plugin/data/dwdata.gz
+DFCDATA = $(topsrc)/plugin/data/dfgls-beta-c.bin
+DFTDATA = $(topsrc)/plugin/data/dfgls-beta-t.bin
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(ODBC_CFLAGS) \
@@ -422,6 +424,8 @@ install: $(GRETLLIB) $(PLUGINS) $(URCDATA) $(DWDATA) installdirs
 	$(PLUGINS) $(DESTDIR)$(plugindir)
 	$(INSTALL_DATA) $(URCDATA) $(DESTDIR)$(plugindir)/data
 	$(INSTALL_DATA) $(DWDATA) $(DESTDIR)$(plugindir)/data
+	$(INSTALL_DATA) $(DFCDATA) $(DESTDIR)$(plugindir)/data
+	$(INSTALL_DATA) $(DFTDATA) $(DESTDIR)$(plugindir)/data
 
 install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
