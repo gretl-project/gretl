@@ -14441,6 +14441,10 @@
 	  <optparm>matrix-name</optparm>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--compat</flag>
+	  <effect>gdtb compatibility, see below</effect>
+        </option>
       </options>
     </usage>
 
@@ -14458,23 +14462,43 @@
 	contains a full path specification.
       </para>
       <para>
+	Note that the <lit>store</lit> command behaves in a special
+	manner in the context of a <quote>progressive loop</quote>;
+	see <guideref targ="chap:looping"/> for details.
+      </para>
+      <subhead>Native formats</subhead>
+      <para>
+	If <repl>filename</repl> has extension <lit>.gdt</lit> or
+	<lit>.gtdb</lit> this implies saving the data in one of
+	gretl's native formats. In addition, if no extension is given
+	<lit>.gdt</lit> is taken to be implicit and the suffix is
+	added automatically. The <lit>gdt</lit> format is XML,
+	optionally gzip-compressed, while the <lit>gdtb</lit> format
+	is binary. The former is recommended for datasets of moderate
+	size (say, up to several hundred kilobytes of data); the
+	binary format is much faster for very large datasets.
+      </para>
+      <para>
+	The <lit>gdtb</lit> format was revised as gretl 2021a. If you
+	wish to write a binary data file readable by earlier gretl
+	(2018c or higher) you should append the <opt>compat</opt>
+	option.
+      </para>
+      <para>
+	When data are saved in <lit>gdt</lit> format the
+	<opt>gzipped</opt> option may be used for data compression.
+	The optional parameter for this flag controls the level of
+	compression (from 0 to 9): higher levels produce a smaller
+	file, but compression takes longer. The default level is 1; a
+	level of 0 means that no compression is applied.
+      </para>
+      <subhead>Other formats</subhead>
+      <para>
 	The format in which the data are written may be controlled to
 	a degree by the extension or suffix of <repl>filename</repl>,
 	as follows:
       </para>
       <ilist>
-	<li>
-	  <para>
-	    <lit>.gdt</lit>, or no extension: gretl's native XML
-	    data format. (If no extension is provided,
-	    <quote><lit>.gdt</lit></quote> is added automatically.)
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>.gtdb</lit>: gretl's native binary data format.
-	  </para>
-	</li>
 	<li>
 	  <para>
 	    <lit>.csv</lit>: comma-separated values (CSV).
@@ -14499,63 +14523,48 @@
       </ilist>
       <para>
 	The format-related option flags shown above can be used to
-	force the issue of the save format independently of the
-	filename (or to get gretl to write in the formats of PcGive or
-	JMulTi). However, if <repl>filename</repl> has extension
-	<lit>.gdt</lit> or <lit>.gdtb</lit> this necessarily implies
-	use of native format and the addition of a conflicting
-	option flag will generate an error.
+	force the choice of format independently of the filename (or
+	to get gretl to write in the formats of PcGive or JMulTi).
       </para>
-      <para>
-	When data are saved in native format (only), the
-	<opt>gzipped</opt> option may be used for data compression,
-	which can be useful for large datasets. The optional parameter
-	for this flag controls the level of compression (from 0 to 9):
-	higher levels produce a smaller file, but compression takes
-	longer. The default level is 1; a level of 0 means that no
-	compression is applied.
-      </para>
+      <subhead>CSV options</subhead>
       <para>
 	The option flags <opt>omit-obs</opt> and <opt>no-header</opt>
-	are applicable only when saving data in CSV format.  By default,
-	if the data are time series or panel, or if the dataset includes
-	specific observation markers, the CSV file includes a first column
-	identifying the observations (&eg; by date).  If the
+	are specific to saving data in CSV format.  By default, if the
+	data are time series or panel, or if the dataset includes
+	specific observation markers, the output file includes a first
+	column identifying the observations (&eg; by date).  If the
 	<opt>omit-obs</opt> flag is given this column is omitted. The
 	<opt>no-header</opt> flag suppresses the usual printing of the
 	names of the variables at the top of the columns.
       </para>
       <para>
 	The option flag <opt>decimal-comma</opt> is also confined to
-	the case of saving data in CSV format. The effect of this option
-	is to replace the decimal point with the decimal comma; in
-	addition the column separator is forced to be a semicolon.
+	CSV. Its effect is to replace the decimal point with decimal
+	comma; in addition the column separator is forced to be a
+	semicolon rather than a comma.
       </para>
+      <subhead>Storing to a database</subhead>
       <para>
-	The option of saving in gretl database format is intended to help
-	with the construction of large sets of series, possibly having
-	mixed frequencies and ranges of observations.  At present this
+	The option of saving in gretl database format is intended to
+	help with the construction of large sets of series with mixed
+	frequencies and ranges of observations.  At present this
 	option is available only for annual, quarterly or monthly
-	time-series data. If you save to a file that already exists, the
-	default action is to append the newly saved series to the existing
-	content of the database.  In this context it is an error if one or
-	more of the variables to be saved has the same name as a variable
-	that is already present in the database. The
-	<opt>overwrite</opt> flag has the effect that, if there are
-	variable names in common, the newly saved variable replaces the
-	variable of the same name in the original dataset.
+	time-series data. If you save to a file that already exists,
+	the default action is to append the newly saved series to the
+	existing content of the database.  In this context it is an
+	error if one or more of the variables to be saved has the same
+	name as a variable that is already present in the
+	database. The <opt>overwrite</opt> flag has the effect that,
+	if there are variable names in common, the newly saved
+	variable replaces the variable of the same name in the
+	original dataset.
       </para>
       <para>
-	The <opt>comment</opt> option is available when saving data
-	as a database or in CSV format. The required parameter is a
+	The <opt>comment</opt> option is available when saving data as
+	a database or as CSV. The required parameter is a
 	double-quoted one-line string, attached to the option flag
 	with an equals sign. The string is inserted as a comment into
 	the database index file or at the top of the CSV output.
-      </para>
-      <para>
-	The <lit>store</lit> command behaves in a special manner in
-	the context of a <quote>progressive loop</quote>.  See
-	<guideref targ="chap:looping"/> for details.
       </para>
       <subhead>Writing a matrix as a dataset</subhead>
       <para>
@@ -14572,7 +14581,7 @@
       <para>
 	Note that matrices can be written to file in their own right,
 	see the <fncref targ="mwrite"/> function. But in some cases
-	it may be more useful to write them in dataset mode.
+	it may be useful to write them in dataset mode.
       </para>
     </description>
 

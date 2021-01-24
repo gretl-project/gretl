@@ -4,6 +4,15 @@ version 2021b, in progress
   allowed
 - "wls" command, with 0/1 weights: compute $yhat and $uhat
   for the excluded observations
+- The functions mean, sum, sd, var, wmean, wsd and wvar now
+  accept an optional boolean argument; specific to the
+  cross-sectional statistics produced when list arguments
+  are given, this allows skipping of missing values.
+- "adf" command: support more accurate inference with
+  improved p-values or critical values, for the GLS case
+  in particular
+- Fix bug: possible crash when displaying a matrix with very
+  long column names in the GUI program
 
 2021-01-18, version 2021a
 - New function vma() for multiple time series
