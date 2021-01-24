@@ -1053,22 +1053,47 @@ double get_urc_pvalue (double tau, int n, int niv, int itv)
     return pval;
 }
 
+static double get_mackinnon_pvalue (adf_info *ainfo)
+{
+    int asy = (ainfo->kmax > 0 || ainfo->order > 0);
+    int T = asy ? 0 : ainfo->T;
+    double pval;
+
+    pval = get_urc_pvalue(ainfo->tau, T, 1, ainfo->det);
+    if (!na(pval)) {
+	ainfo->pvtype = asy ? PV_ASY : PV_FINITE;
+    }
+
+#if ADF_DEBUG
+    fprintf(stderr, "get_mackinnon_pval: tau=%g, T=%d, itv=%d: pval=%g\n",
+	    ainfo->tau, T, ainfo->det, pval);
+#endif
+
+    return pval;
+}
+
 static double get_dfgls_pvalue (adf_info *ainfo)
 {
     double (*pvfunc)(double, int, int, int *);
     double pval = NADBL;
-    int trend, err = 0;
+    int T, trend, err = 0;
 
     pvfunc = get_plugin_function("dfgls_pvalue");
+    if (pvfunc == NULL) {
+	return pval;
+    }
 
-    if (pvfunc != NULL) {
-	trend = ainfo->det == UR_TREND;
-	pval = (*pvfunc)(ainfo->tau, ainfo->T, trend, &err);
+    T = ainfo->order > 0 ? 0 : ainfo->T;
+    trend = (ainfo->det == UR_TREND);
+
+    pval = (*pvfunc)(ainfo->tau, T, trend, &err);
+    if (!na(pval)) {
+	ainfo->pvtype = (T == 0)? PV_ASY : PV_APPROX;
     }
 
 #if ADF_DEBUG
     fprintf(stderr, "get_dfgls_pval: tau=%g, T=%d, trend=%d: pval=%g\n",
-	    ainfo->tau, ainfo->T, trend, pval);
+	    ainfo->tau, T, trend, pval);
 #endif
 
     return pval;
@@ -1408,7 +1433,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     if (test_opt_not_set(opt)) {
 	/* default model(s) */
-	if (opt & OPT_G) {
+	if (ainfo->flags & ADF_GLS) {
 	    opt |= OPT_C;
 	} else {
 	    opt |= (OPT_C | OPT_T);
@@ -1446,7 +1471,6 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	int b0pos = (i > UR_NO_CONST);
 
 	ainfo->det = i;
-
 	if (!test_wanted(ainfo->det, opt)) {
 	    continue;
 	}
@@ -1517,39 +1541,24 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    ainfo->det = engle_granger_itv(eg_opt);
 	}
 
+	/* obtain p-value if wanted and possible */
 	if (getenv("DFGLS_NO_PVALUE")) {
-	    /* to speed up monte carlo stuff */
+	    /* skip it, to speed up monte carlo stuff */
 	    ainfo->pval = NADBL;
-	} else if (!(ainfo->flags & ADF_GLS)) {
+	} else if (ainfo->flags & ADF_GLS) {
+	    if (test_down) {
+		/* testing down: use Sephton critical values */
+		ainfo->pval = NADBL;
+	    } else {
+		/* use Cottrell/Komashko p-values */
+		ainfo->pval = get_dfgls_pvalue(ainfo);
+	    }
+	} else {
 	    /* no GLS adjustment applied: use MacKinnon p-values,
 	       either finite sample or asymptotic in the case
 	       of an augmented test
 	    */
-	    int asy = (ainfo->kmax > 0 || ainfo->order > 0);
-
-	    ainfo->pval = get_urc_pvalue(ainfo->tau, asy ? 0 : ainfo->T,
-					 ainfo->niv, ainfo->det);
-	    if (!na(ainfo->pval)) {
-		ainfo->pvtype = asy ? PV_ASY : PV_FINITE;
-	    }
-	    fprintf(stderr, "urc_pvalue: %g, det %d, asy %d\n",
-		    ainfo->pval, ainfo->det, asy);
-	} else {
-	    /* DF-GLS */
-	    if (ainfo->kmax == 0 && ainfo->order == 0) {
-		/* non-augmented: use Cottrell/Komashko p-values */
-		ainfo->pval = get_dfgls_pvalue(ainfo);
-		if (!na(ainfo->pval)) {
-		    ainfo->pvtype = PV_APPROX;
-		}
-		fprintf(stderr, "ac_pvalue: %g, det %d\n", ainfo->pval, ainfo->det);
-	    } else if (test_down) {
-		/* testing down: use Sephton critical values */
-		ainfo->pval = NADBL;
-	    } else if (ainfo->order > 0) {
-		/* fixed lag order: asy critical values ?? */
-		ainfo->pval = NADBL;
-	    }
+	    ainfo->pval = get_mackinnon_pvalue(ainfo);
 	}
 
 	if (!(opt & (OPT_Q | OPT_I)) && !(ainfo->flags & ADF_PANEL)) {
@@ -1578,13 +1587,10 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     free(ainfo->list);
     ainfo->list = NULL;
-
     free(ainfo->slist);
     ainfo->slist = NULL;
-
     gretl_matrix_free(ainfo->g);
     ainfo->g = NULL;
-
     free(biglist);
 
     dataset_drop_last_variables(dset, dset->v - orig_nvars);

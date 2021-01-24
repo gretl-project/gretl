@@ -629,7 +629,7 @@ double mackinnon_pvalue (double tau, int T, int niv, int itv)
 }
 
 /* Extra: code to obtain approximate finite-sample p-values for
-    DF-GLS tests a la Elliott-Rotherberg-Stock.
+   DF-GLS tests a la Elliott-Rothenberg-Stock.
 */
 
 #define N_ALPHA_C 25
@@ -663,7 +663,6 @@ double dfgls_pvalue (double tau, int T, int trend, int *err)
     gretl_matrix *y, *X;
     double d, dmin = 1.0e6;
     double ci, s2, pval = NADBL;
-    double Tr = 1.0/T;
     int i1, i2, npoints = 5;
     int nreg, np2 = npoints/2;
     int ncoeff, nalpha;
@@ -700,10 +699,21 @@ double dfgls_pvalue (double tau, int T, int trend, int *err)
 	goto bailout;
     }
 
-    tvals[0] = 1.0;
-    tvals[1] = Tr;
-    for (j=2; j<ncoeff; j++) {
-	tvals[j] = pow(Tr, j);
+    if (T == 0) {
+	/* asymptotic value */
+	tvals[0] = 1.0;
+	for (j=1; j<ncoeff; j++) {
+	    tvals[j] = 0;
+	}
+    } else {
+	/* finite sample */
+	double Tr = 1.0 / T;
+
+	tvals[0] = 1.0;
+	tvals[1] = Tr;
+	for (j=2; j<ncoeff; j++) {
+	    tvals[j] = pow(Tr, j);
+	}
     }
 
     /* compute all critical values */
