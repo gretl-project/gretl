@@ -7181,6 +7181,7 @@
     <function name="mean" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7191,8 +7192,11 @@
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  mean of the values of the variables in the list at
-	  observation <math>t</math>, or <lit>NA</lit> if there are
-	  any missing values at <math>t</math>.
+	  observation <math>t</math>. By default the mean is recorded
+	  as <lit>NA</lit> if there are any missing values at
+	  <math>t</math>, but if you pass a non-zero value for
+	  <argname>partial</argname> any non-missing values will be
+	  used to form the statistic.
 	</para>
 	<para>
 	  The following example illustrates the working of the function
@@ -10766,6 +10770,7 @@
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10776,8 +10781,11 @@
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  sample standard deviation of the values of the variables in
-	  the list at observation <math>t</math>, or <lit>NA</lit> if
-	  there are any missing values at <math>t</math>.
+	  the list at observation <math>t</math>.  By default the
+	  standard deviation is recorded as <lit>NA</lit> if there are
+	  any missing values at <math>t</math>, but if you pass a
+	  non-zero value for <argname>partial</argname> any
+	  non-missing values will be used to form the statistic.
 	</para>
 	<para>
 	  <seelist>
@@ -11849,12 +11857,13 @@
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If <argname>x</argname> is a series, returns the (scalar) sum of the
-	  non-missing observations in <argname>x</argname>. See also
-	  <fncref targ="sumall"/>.
+	  If <argname>x</argname> is a series, returns the (scalar)
+	  sum of the non-missing observations in
+	  <argname>x</argname>. See also <fncref targ="sumall"/>.
 	</para>
 	<para>
 	  If <argname>x</argname> is a matrix, returns the sum of the
@@ -11864,8 +11873,11 @@
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  sum of the values of the variables in the list at
-	  observation <math>t</math>, or <lit>NA</lit> if there are
-	  any missing values at <math>t</math>.
+	  observation <math>t</math>. By default the sum is recorded
+	  as <lit>NA</lit> if there are any missing values at
+	  <math>t</math>, but if you pass a non-zero value for
+	  <argname>partial</argname> any non-missing values will be
+	  used to form the sum.
 	</para>
       </description>
     </function>
@@ -12378,18 +12390,22 @@
     <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If <argname>x</argname> is a series, returns the (scalar) sample
-	  variance, skipping any missing observations.
+	  If <argname>x</argname> is a series, returns the (scalar)
+	  sample variance, skipping any missing observations.
 	</para>
 	<para>
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  sample variance of the values of the variables in the list
-	  at observation <math>t</math>, or <lit>NA</lit> if there are
-	  any missing values at <math>t</math>.
+	  at observation <math>t</math>. By default the variance is
+	  recorded as <lit>NA</lit> if there are any missing values at
+	  <math>t</math>, but if you pass a non-zero value for
+	  <argname>partial</argname> any non-missing values will be
+	  used to form the statistic.
 	</para>
 	<para>
 	  In each case the sum of squared deviations from the mean is
@@ -12626,6 +12642,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12640,6 +12657,12 @@
 	  weights must be non-negative.
 	</para>
 	<para>
+	  By default the result is NA if any values are missing at
+	  observation <math>t</math>, but if you pass a non-zero value
+	  for <argname>partial</argname> any non-missing values will
+	  be used.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="wsd"/>
             <fncref targ="wvar"/>
@@ -12652,6 +12675,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12666,6 +12690,12 @@
 	  same length and the weights must be non-negative.
 	</para>
 	<para>
+	  By default the result is NA if any values are missing at
+	  observation <math>t</math>, but if you pass a non-zero value
+	  for <argname>partial</argname> any non-missing values will
+	  be used.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="wmean"/>
             <fncref targ="wvar"/>
@@ -12678,6 +12708,7 @@
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12690,6 +12721,12 @@
 	  time-varying. The lists <argname>Y</argname> and
 	  <argname>W</argname> must be of the same length and the
 	  weights must be non-negative.
+	</para>
+	<para>
+	  By default the result is NA if any values are missing at
+	  observation <math>t</math>, but if you pass a non-zero value
+	  for <argname>partial</argname> any non-missing values will
+	  be used.
 	</para>
 	<para context="tex">
 	  The weighted sample variance is computed as
