@@ -7174,6 +7174,7 @@
     <function name="mean" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7186,7 +7187,11 @@
 	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
 	  media dei valori delle variabili nella lista per
 	  l'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti in <math>t</math>.
+	  valori mancanti in <math>t</math>. Per default, la funzione
+	  ritorna <lit>NA</lit> se ci si sono dei missing a
+	  <math>t</math>, ma se si passa un valore non-zero come opzione
+	  <argname>partial</argname> la statistica sarà calcolata sui
+	  soli dati validi.
 	</para>
 	<para>
 	  L'esempio seguente illustra la funzione:
@@ -10674,6 +10679,7 @@
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>     
       <description>
 	<para>
@@ -10686,7 +10692,12 @@
 	  una variabile <math>y</math> tale per cui
 	  <math>y</math><sub>t</sub> è l'errore quadratico medio delle
 	  variabili nella lista all'osservazione <math>t</math>, o
-	  <lit>NA</lit> se ci sono dei valori mancanti <math>t</math>.
+	  <lit>NA</lit> se ci sono dei valori mancanti
+	  <math>t</math>. Per default, la funzione ritorna
+	  <lit>NA</lit> se ci si sono dei missing a <math>t</math>, ma
+	  se si passa un valore non-zero come opzione
+	  <argname>partial</argname> la statistica sarà calcolata sui
+	  soli dati validi.
 	</para>
 	<para>
 	  <seelist> 
@@ -11783,7 +11794,8 @@
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
-      </fnargs>      
+	<fnarg type="bool" optional="true">partial</fnarg>
+      </fnargs>     
       <description>
 	<para>
 	  Se <argname>x</argname> è una variabile restituisce la somma
@@ -11795,11 +11807,15 @@
 	  degli elementi della matrice.
 	</para> 
 	<para>
-	  Se <argname>x</argname> è una lista, restituisce una variabile 
-	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
-	  somma dei valori delle variabili nella lista
+	  Se <argname>x</argname> è una lista, restituisce una
+	  variabile <math>y</math> tale che <math>y</math><sub>t</sub>
+	  è la somma dei valori delle variabili nella lista
 	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti all'osservazione <math>t</math>.
+	  valori mancanti all'osservazione <math>t</math>. Per
+	  default, la funzione ritorna <lit>NA</lit> se ci si sono dei
+	  missing a <math>t</math>, ma se si passa un valore non-zero
+	  come opzione <argname>partial</argname> la statistica sarà
+	  calcolata sui soli dati validi.
 	</para>
       </description>
     </function>
@@ -12315,6 +12331,7 @@
     <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>     
       <description>
 	<para>
@@ -12326,7 +12343,11 @@
 	  <math>y</math> tale che <math>y</math><sub>t</sub> è la
 	  varianza campionaria dei valori delle variabili nella lista
 	  all'osservazione <math>t</math>, o <lit>NA</lit> se ci sono
-	  valori mancanti a <math>t</math>.
+	  valori mancanti a <math>t</math>. Per default, la funzione
+	  ritorna <lit>NA</lit> se ci si sono dei missing a
+	  <math>t</math>, ma se si passa un valore non-zero come opzione
+	  <argname>partial</argname> la statistica sarà calcolata sui
+	  soli dati validi.
 	</para>
 	<para>
 	  In ogni caso, la somma delle deviazioni al quadrato dalla
@@ -12560,6 +12581,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -12574,6 +12596,12 @@
 	  non-negativi.
 	</para>
 	<para>
+	  Per default, la funzione ritorna <lit>NA</lit> se ci si sono
+	  dei missing a <math>t</math>, ma se si passa un valore
+	  non-zero come opzione <argname>partial</argname> la
+	  statistica sarà calcolata sui soli dati validi.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="wsd"/>
 	    <fncref targ="wvar"/>
@@ -12586,6 +12614,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -12600,6 +12629,12 @@
 	  elementi ed i pesi devono essere non-negativi.
 	</para>
 	<para>
+	  Per default, la funzione ritorna <lit>NA</lit> se ci si sono
+	  dei missing a <math>t</math>, ma se si passa un valore
+	  non-zero come opzione <argname>partial</argname> la
+	  statistica sarà calcolata sui soli dati validi.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="wmean"/>
 	    <fncref targ="wvar"/>
@@ -12612,6 +12647,7 @@
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">partial</fnarg>
       </fnargs>    
       <description>
 	<para>
@@ -12624,6 +12660,12 @@
 	  tempo. Le due liste <argname>Y</argname> e
 	  <argname>W</argname> devono avere lo stesso numero di
 	  elementi ed i pesi devono essere non-negativi.
+	</para>
+	<para>
+	  Per default, la funzione ritorna <lit>NA</lit> se ci si sono
+	  dei missing a <math>t</math>, ma se si passa un valore
+	  non-zero come opzione <argname>partial</argname> la
+	  statistica sarà calcolata sui soli dati validi.
 	</para>
 	<para context="tex">
 	  La varianza ponderata è calcolata come 

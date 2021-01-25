@@ -11805,348 +11805,355 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
 
 	  </command>
 
-	  <command name="pvalue" section="Utilities" label="Calcola p-value" context="cli">
-
-	    <usage>
-	      <arguments>
-          <argument>distribuzione</argument>
-          <argument optional="true">parametri</argument>
-	  <argument>valore-x</argument>
-	  </arguments>
-	  <examples>
-          <example>pvalue z zscore</example>
-	  <example>pvalue t 25 3.0</example>
-	  <example>pvalue X 3 5.6</example>
-	  <example>pvalue F 4 58 fval</example>
-	  <example>pvalue G shape scale x</example>
-	  <example>pvalue B bprob 10 6</example>
-	  <example>pvalue P lambda x</example>
-	  <example>pvalue W shape scale x</example>
-	  <demos>
+  <command name="pvalue" section="Utilities" label="Calcola p-value" context="cli">
+    
+    <usage>
+      <arguments>
+        <argument>distribuzione</argument>
+        <argument optional="true">parametri</argument>
+	<argument>valore-x</argument>
+      </arguments>
+      <examples>
+        <example>pvalue z zscore</example>
+	<example>pvalue t 25 3.0</example>
+	<example>pvalue X 3 5.6</example>
+	<example>pvalue F 4 58 fval</example>
+	<example>pvalue G shape scale x</example>
+	<example>pvalue B bprob 10 6</example>
+	<example>pvalue P lambda x</example>
+	<example>pvalue W shape scale x</example>
+	<demos>
 	  <demo>mrw.inp</demo>
 	  <demo>restrict.inp</demo>
-	  </demos>  
-	  </examples>
-	  </usage>
-
-	  <description>
-	    <para>
-	      Calcola l'area alla destra del <repl>valore-x</repl> nella
-	      distribuzione indicata (<lit>z</lit> per la Gaussiana,
-	  <lit>t</lit> per la <math>t</math> di Student, <lit>X</lit>
-	  per la chi-quadro, <lit>F</lit> per la <math>F</math>,
-	  <lit>G</lit> per la gamma, <lit>B</lit> per la binomiale,
-	  <lit>P</lit> per la Poisson, <lit>exp</lit> per l'esponenziale
-	  negativa e <lit>W</lit> per la Weibull).
-	  </para>
-	  <para>
-	    A seconda della distribuzione, occorre fornire le seguenti
-	    informazioni, prima del <repl>valore-x</repl>: per le
-	    distribuzioni <math>t</math> e chi-quadro occorre indicare i
-	    gradi di libertà; per la <math>F</math> sono richiesti i gradi
-	    di libertà al numeratore e al denominatore; per la gamma sono
-	    richiesti il parametro di forma e quello di scala; per la
-	    binomiale sono richieste la probabilità di
-	    <quote>successo</quote> e il numero di prove; per la
-	    distribuzione di Poisson va indicato il parametro &lgr; (che
-	    rappresenta sia la media che la varianza); per l'esponenziale,
-	    il parametro di scala; per la distribuzione Weibull, i
-	    parametri di forma e scala.  Come si vede dagli esempi
-	    precedenti, gli argomenti numerici possono essere indicati
-	    sotto forma di numero o come nomi di variabili.
-	  </para>
-	  <para>
-            Si noti che talvolta la distribuzione gamma viene
-            caratterizzata dai parametri di media e varianza, invece che
-            da quelli di forma e scala.  La media è il prodotto di forma e
-            scala, mentre la varianza è il prodotto tra la forma e il
-            quadrato della scala. Quindi la scala si può ottenere come la
-            varianza divisa per la media, mentre la forma come la media
-            divisa per la scala.
-	  </para>
-	  </description>
-
-	  <gui-access>
-	  <menu-path>/Strumenti/Calcola p-value</menu-path>
-	  </gui-access>
-
-	  </command>
-	  
-	  <command name="qlrtest" section="Tests" label="Test del rapporto di verosimiglianza di Quandt">
-
-	    <usage>
-	      <options>
-		<option>
+	</demos>  
+      </examples>
+    </usage>
+    
+    <description>
+      <para>
+	Calcola l'area alla destra del <repl>valore-x</repl> nella
+	distribuzione indicata (<lit>z</lit> per la Gaussiana,
+	<lit>t</lit> per la <math>t</math> di Student, <lit>X</lit>
+	per la chi-quadro, <lit>F</lit> per la <math>F</math>,
+	<lit>G</lit> per la gamma, <lit>B</lit> per la binomiale,
+	<lit>P</lit> per la Poisson, <lit>exp</lit> per l'esponenziale
+	negativa e <lit>W</lit> per la Weibull).
+      </para>
+      <para>
+	A seconda della distribuzione, occorre fornire le seguenti
+	informazioni, prima del <repl>valore-x</repl>: per le
+	distribuzioni <math>t</math> e chi-quadro occorre indicare i
+	gradi di libertà; per la <math>F</math> sono richiesti i gradi
+	di libertà al numeratore e al denominatore; per la gamma sono
+	richiesti il parametro di forma e quello di scala; per la
+	binomiale sono richieste la probabilità di
+	<quote>successo</quote> e il numero di prove; per la
+	distribuzione di Poisson va indicato il parametro &lgr; (che
+	rappresenta sia la media che la varianza); per l'esponenziale,
+	il parametro di scala; per la distribuzione Weibull, i
+	parametri di forma e scala.  Come si vede dagli esempi
+	precedenti, gli argomenti numerici possono essere indicati
+	sotto forma di numero o come nomi di variabili.
+      </para>
+      <para>
+        Si noti che talvolta la distribuzione gamma viene
+        caratterizzata dai parametri di media e varianza, invece che
+        da quelli di forma e scala.  La media è il prodotto di forma e
+        scala, mentre la varianza è il prodotto tra la forma e il
+        quadrato della scala. Quindi la scala si può ottenere come la
+        varianza divisa per la media, mentre la forma come la media
+        divisa per la scala.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>/Strumenti/Calcola p-value</menu-path>
+    </gui-access>
+    
+  </command>
+  
+  <command name="qlrtest" section="Tests" label="Test del rapporto di verosimiglianza di Quandt">
+    
+    <usage>
+      <options>
+	<option>
 	  <flag>--limit-to</flag>
 	  <optparm>lista</optparm>
 	  <effect>limita il test a una parte delle variabili esplicative</effect>
-	  </option>
-	  <option>
+	</option>
+	<option>
 	  <flag>--plot</flag>
 	  <optparm>mode-or-filename</optparm>
-<effect>si veda sotto</effect>
-</option>
-<option>
-<flag>--quiet</flag>
-<effect>non mostra l'output</effect>
-</option>
-</options>      
-</usage>
+	  <effect>si veda sotto</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra l'output</effect>
+	</option>
+      </options>      
+    </usage>
+    
+    <description>
+      <para>
+	Per un modello stimato con OLS su serie storiche, esegue il
+	test del rapporto di verosimiglianza di Quandt (QLR) per un
+	break strutturale in un punto incognito del campione,
+	escludendo il 15% delle osservazioni all'inizio e ella fine
+	del campione.
+      </para>
+      <para>
+	Per ogni possibile punto di rottura compreso nel 70% centrale
+	delle osservazioni, viene eseguito un test di Chow (si veda
+	<cmdref targ="chow"/>); come per il test di Chow vero e
+	proprio, questo è un test di Wald robusto se il modello
+	originale è stato stimato con l'opzione <opt>robust</opt>. La
+	statistica del test QLR è il massimo dei valori <math>F</math>
+	di questi test e segue una distribuzione non standard.
+      </para>
+      <para>
+	Il p-value asintotico è ottenuto usando il metodo di <cite
+	key="hansen97">Bruce Hansen (1997)</cite>.
+      </para>
+      <para>
+	Oltre agli accessori standard <fncref targ="$test"/> e <fncref
+	targ="$pvalue"/>, questo comando genera anche <fncref
+	targ="$qlrbreak"/>, che restituisce l'indice
+	dell'ossservazione alla quale la statistica test è massima.
+      </para>
+      <para context="cli">
+	L'opzione <opt>limit-to</opt> serve a limitare le interazioni
+	con la dummy di divisione del campione nei test di Chow a un
+	sottoinsieme dei regressori originali. Il parametro dev'essere
+	una lista predefinita che non può contenere la costante; gli
+	elementi della lista devono essere tutti scelti fra i regressori
+	originali.
+      </para>
+      <para>
+	Quando questo comando viene eseguito interattivamente, di
+	default verrà mostrato un grafico delle statistiche del test
+	di Chow.  Questo comportamento si può modificare con l'opzione
+	<opt>plot</opt>. I parametri consentiti sono <lit>none</lit>
+	(per fare a meno del grafico); <lit>display</lit> (per
+	mostrare il grafico anche quando non si è in modo
+	interattivo), oppure un nome di file. Per la descrizione
+	dell'effetto di quest'ultima scelta, si veda l'opzione
+	<opt>output</opt> del comando <cmdref targ="gnuplot"/>.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>Finestra del modello, /Test/QLR</menu-path>
+    </gui-access>
+    
+  </command>
 
-<description>
-  <para>
-    Per un modello stimato con OLS su serie storiche, esegue il
-    test del rapporto di verosimiglianza di Quandt (QLR) per un
-    break strutturale in un punto incognito del campione,
-    escludendo il 15% delle osservazioni all'inizio e ella fine
-    del campione.
-</para>
-<para>
-  Per ogni possibile punto di rottura compreso nel 70% centrale
-  delle osservazioni, viene eseguito un test di Chow (si veda
-  <cmdref targ="chow"/>); come per il test di Chow vero e
-  proprio, questo è un test di Wald robusto se il modello
-  originale è stato stimato con l'opzione <opt>robust</opt>. La
-statistica del test QLR è il massimo dei valori <math>F</math>
-di questi test e segue una distribuzione non standard.
-</para>
-<para>
-  Il p-value asintotico è ottenuto usando il metodo di <cite
-  key="hansen97">Bruce Hansen (1997)</cite>.
-</para>
-<para context="cli">
-  L'opzione <opt>limit-to</opt> serve a limitare le interazioni
-  con la dummy di divisione del campione nei test di Chow a un
-  sottoinsieme dei regressori originali. Il parametro dev'essere
-  una lista predefinita che non può contenere la costante; gli
-  elementi della lista devono essere tutti scelti fra i regressori
-  originali.
-</para>
-<para>
-  Quando questo comando viene eseguito interattivamente, di
-  default verrà mostrato un grafico delle statistiche del test
-  di Chow.  Questo comportamento si può modificare con l'opzione
-<opt>plot</opt>. I parametri consentiti sono <lit>none</lit>
-(per fare a meno del grafico); <lit>display</lit> (per
-mostrare il grafico anche quando non si è in modo
-interattivo), oppure un nome di file. Per la descrizione
-dell'effetto di quest'ultima scelta, si veda l'opzione
-<opt>output</opt> del comando <cmdref targ="gnuplot"/>.
-</para>
-</description>
+  <command name="qqplot" section="Graphs" label="Q-Q plot">
 
-<gui-access>
-<menu-path>Finestra del modello, /Test/QLR</menu-path>
-</gui-access>
+    <usage>
+      <altforms>
+	<altform><lit>qqplot</lit> <repl>y</repl></altform>
+	<altform><lit>qqplot</lit> <repl>y</repl> <repl>x</repl></altform>
+      </altforms>
+      <options>
+	<option>
+	  <flag>--z-scores</flag>
+	  <effect>v. oltre</effect>
+	</option>
+	<option>
+	  <flag>--raw</flag>
+	  <effect>v. oltre</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>nomefile</optparm>
+	  <effect>manda il grafico ad un file specificato</effect>
+	</option>
+      </options>
+    </usage>
+    
+    <description>
+      <para context="gui">
+	Con una sola serie selezionata, mostra un grafico della
+	distribuzione empirica della serie stessa contro i quantili
+	della normale. La serie deve includere almeno 20 valori validi
+	nel campione selezionato al momento. Per impostazione
+	predefinita, i quantili empirici vengono disegnati contro
+	quelli della normale avente media e varianza uguali a quelli
+	campionari della serie, ma sono disponibili due alternative: i
+	dati possono essere standardizzati prima, oppure i quantili
+	empirici possono essere disegnati contro quelli della normale
+	standardizzata.
+      </para>
+      <para context="cli">
+	Con una sola serie come argomento, mostra un grafico della
+	distribuzione empirica della serie stessa (indicata col nome o
+	con il suo numero ID) contro i quantili della normale. La
+	serie deve includere almeno 20 valori validi nel campione
+	selezionato al momento. Per impostazione predefinita, i
+	quantili empirici vengono disegnati contro quelli della
+	normale avente media e varianza uguali a quelli campionari
+	della serie, ma sono disponibili due alternative: con
+	l'opzione <opt>z-scores</opt>, i dati vengono standardizzati
+	prima, oppure, con l'opzione <opt>raw</opt>, i quantili
+	empirici possono essere disegnati contro quelli della normale
+	standardizzata.
+      </para>
+      <para>
+	Tramite l'opzione <opt>output</opt> si invia il grafico al
+	file desiderato; usare <quote>display</quote> per forzare l'output
+	allo schermo, ad esempio nel contesto di un loop. si veda il comando
+	<cmdref targ="gnuplot"/> per maggiori dettagli in merito a quest'opzione.
+      </para>
+      <para>
+	Con due argomenti, <repl>y</repl> and <repl>x</repl>, mostra
+	un grafico dei quantili empirici di <repl>y</repl> contro
+	quelli di <repl>x</repl>. I dati non vengono standardizzati.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>/Variabile/Q-Q normale</menu-path>
+      <menu-path>/Visualizza/Grafico/Q-Q</menu-path>
+    </gui-access>
+    
+  </command>
 
-</command>
-
-<command name="qqplot" section="Graphs" label="Q-Q plot">
-
-  <usage>
-    <altforms>
-<altform><lit>qqplot</lit> <repl>y</repl></altform>
-<altform><lit>qqplot</lit> <repl>y</repl> <repl>x</repl></altform>
-</altforms>
-<options>
-  <option>
-<flag>--z-scores</flag>
-<effect>v. oltre</effect>
-</option>
-<option>
-<flag>--raw</flag>
-<effect>v. oltre</effect>
-</option>
-<option>
-<flag>--output</flag>
-<optparm>nomefile</optparm>
-<effect>manda il grafico ad un file specificato</effect>
-</option>
-</options>
-</usage>
-
-<description>
-  <para context="gui">
-    Con una sola serie selezionata, mostra un grafico della
-    distribuzione empirica della serie stessa contro i quantili
-    della normale. La serie deve includere almeno 20 valori validi
-    nel campione selezionato al momento. Per impostazione
-    predefinita, i quantili empirici vengono disegnati contro
-    quelli della normale avente media e varianza uguali a quelli
-    campionari della serie, ma sono disponibili due alternative: i
-    dati possono essere standardizzati prima, oppure i quantili
-    empirici possono essere disegnati contro quelli della normale
-    standardizzata.
-</para>
-<para context="cli">
-  Con una sola serie come argomento, mostra un grafico della
-  distribuzione empirica della serie stessa (indicata col nome o
-  con il suo numero ID) contro i quantili della normale. La
-  serie deve includere almeno 20 valori validi nel campione
-  selezionato al momento. Per impostazione predefinita, i
-  quantili empirici vengono disegnati contro quelli della
-  normale avente media e varianza uguali a quelli campionari
-  della serie, ma sono disponibili due alternative: con
-  l'opzione <opt>z-scores</opt>, i dati vengono standardizzati
-  prima, oppure, con l'opzione <opt>raw</opt>, i quantili
-  empirici possono essere disegnati contro quelli della normale
-  standardizzata.
-</para>
-<para>
-  Tramite l'opzione <opt>output</opt> si invia il grafico al
-  file desiderato; usare <quote>display</quote> per forzare l'output
-  allo schermo, ad esempio nel contesto di un loop. si veda il comando
-  <cmdref targ="gnuplot"/> per maggiori dettagli in merito a quest'opzione.
-</para>
-<para>
-  Con due argomenti, <repl>y</repl> and <repl>x</repl>, mostra
-  un grafico dei quantili empirici di <repl>y</repl> contro
-  quelli di <repl>x</repl>. I dati non vengono standardizzati.
-</para>
-</description>
-
-<gui-access>
-<menu-path>/Variabile/Q-Q normale</menu-path>
-<menu-path>/Visualizza/Grafico/Q-Q</menu-path>
-</gui-access>
-
-</command>
-
-<command name="quantreg" section="Estimation" 
-	 label="Regressione quantile">
-
-  <usage>
-    <arguments>
-<argument>tau</argument>
-<argument>variabile-dipendente</argument>
-<argument>variabili-indipendenti</argument>
-</arguments>
-<options>
-  <option>
-<flag>--robust</flag>
-<effect>errori standard robusti</effect>
-</option>
-<option>
-<flag>--intervals</flag>
-<optparm>level</optparm>
-<effect>calcola gli intervalli di confidenza</effect>
-</option>
-<option>
-<flag>--vcv</flag>
-<effect>mostra la matrice di covarianza</effect>
-</option>
-<option>
-<flag>--quiet</flag>
-<effect>sopprime la stampa dei risultati</effect>
-</option>
-</options>
-<examples>
-<example>quantreg 0.25 y 0 xlist</example>
-<example>quantreg 0.5 y 0 xlist --intervals</example>
-<example>quantreg 0.5 y 0 xlist --intervals=.95</example>
-<example>quantreg tauvec y 0 xlist --robust</example>
-<demos>
-<demo>mrw_qr.inp</demo>
-</demos>
-</examples>
-</usage>
-
-<description context="gui">
-  <para>
-    Regressione a quantili. Per default, gli errori standard sono
-    calcolati con la formula asintotica di Koenker e Bassett
-    (<book>Econometrica</book>, 1978), ma se si attiva la casella
-    <quote>robust</quote> verrà usata la variante robusta per
-    l'eteroschedasticità di Koenker e Zhao (<book>Journal of
-    Nonparametric Statistics</book>, 1994).
-</para>
-<para>
-  Se si abilita l'opzione <quote>Calcola intervalli di confidenza</quote>,
-  gretl calcolerà gli intervalli di confidenza invece degli errori
-  standard. La casella <quote>robust</quote> mantiene il suo effetto: se
-  non è selezionata, gli intervalli sono calcolati nell'ipotesi di errori
-  IID, altrimenti gretl usa lo stimatore robusto sviluppato da
-  Koenker e Machado (<book>Journal of the American
-  Statistical Association</book>, 1999).  Si noti che questi intervalli
-  non sono calcolati semplicemente aggiungendo e sottraendo un certo numero
-  di errori standard: in generale sono asimmetrici rispetto alle stime
-  puntuali dei parametri.
-</para>	
-<para>
-  È possibile indicare un elenco di quantili (il menù a discesa contiene
-  alcune possibilità predefinite), e in tal caso gretl calcolerà stime
-  quantili ed errori standard o intervalli di confidenza per ognuno dei
-  valori specificati.
-</para>
-<para>
-  Per un approfondimento, si veda la <guideref targ="chap:quantreg"/>.
-</para>
-</description>
-
-<description context="cli">
-  <para>
-    Regressione quantile. Il primo argomento, <repl>tau</repl>, è il
-    quantile condizionale per cui si desiderano le stime. Può essere un
-    valore numerico o il nome di una variabile scalare predefinita; il
-    valore deve essere compreso nell'intervallo da 0.01 a 0.99 (in
-    alternativa, può essere indicato un vettore di valori, si veda sotto per
-    i dettagli). Gli argomenti dal secondo in poi compongono un elenco di
-    regressori sul modello di quello usato in <cmdref targ="ols"/>.
-</para>
-<para>
-  Senza l'opzione <opt>intervals</opt>, vengono mostrati gli errori
-  standard per le stime quantili; per impostazione predefinita
-  questi sono calcolati con la formula asintotica di
-  <cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>, ma
-  se si usa l'opzione <opt>robust</opt>, verrà usata la variante robusta
-  per l'eteroschedasticità utilizzando il metodo di <cite key="koenker-zhao94">Koenker
-  e Zhao (1994)</cite>.
-</para>
-<para>
-  Se si usa l'opzione <opt>intervals</opt>, gretl calcolerà gli
-  intervalli di confidenza invece degli errori standard.  Questi
-  intervalli sono calcolati col metodo dell'inversione del rango e in
-  generale sono asimmetrici rispetto alle stime puntuali dei parametri.
-  Se non si usa l'opzione <quote>--robust</quote>, gli intervalli sono
-  calcolati nell'ipotesi di errori IID <cite key="koenker94" p="true">(Koenker,
-  1994)</cite>, mentre se viene indicata sono calcolati con lo stimatore
-  robusto sviluppato <cite key="koenker-machado99">Koenker e Machado (1999)</cite>.
-</para>
-<para>
-  Per impostazione predefinita vengono prodotti intervalli di confidenza
-  al 90%. È possibile specificare un altro livello di confidenza (sotto
-  forma di frazione decimale), aggiungendolo all'opzione, come in
-  <lit>--intervals=0.95</lit>.
-</para>
-<para>
-  Invece di indicare <repl>tau</repl> come uno scalare, è possibile usare
-  un vettore, indicando il nome di una matrice predefinita. In questo
-  caso le stime vengono eseguite per tutti i valori di <repl>tau</repl>, e
-  i risultati mostrano la sequenza delle stime quantili per ognuno dei
-  regressori.
-</para>
-</description>
-
-<gui-access>
-  <menu-path>/Modello/Stima robusta/Regressione quantile</menu-path>
-</gui-access>
-
-</command>
-
-<command name="quit" section="Utilities" label="Esce dal programma" context="cli">
-
-  <description>
-    <para>
-      Esce dal programma, dando la possibilità di salvare i
-      risultati della sessione.
-    </para>
-  </description>
-
-  <gui-access>
-    <menu-path>/File/Esci</menu-path>
-  </gui-access>
-
-</command>
+  <command name="quantreg" section="Estimation" 
+	   label="Regressione quantile">
+    
+    <usage>
+      <arguments>
+	<argument>tau</argument>
+	<argument>variabile-dipendente</argument>
+	<argument>variabili-indipendenti</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+	</option>
+	<option>
+	  <flag>--intervals</flag>
+	  <optparm optional="true">level</optparm>
+	  <effect>calcola gli intervalli di confidenza</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>sopprime la stampa dei risultati</effect>
+	</option>
+      </options>
+      <examples>
+	<example>quantreg 0.25 y 0 xlist</example>
+	<example>quantreg 0.5 y 0 xlist --intervals</example>
+	<example>quantreg 0.5 y 0 xlist --intervals=.95</example>
+	<example>quantreg tauvec y 0 xlist --robust</example>
+	<demos>
+	  <demo>mrw_qr.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    
+    <description context="gui">
+      <para>
+	Regressione a quantili. Per default, gli errori standard sono
+	calcolati con la formula asintotica di Koenker e Bassett
+	(<book>Econometrica</book>, 1978), ma se si attiva la casella
+	<quote>robust</quote> verrà usata la variante robusta per
+	l'eteroschedasticità di Koenker e Zhao (<book>Journal of
+	Nonparametric Statistics</book>, 1994).
+      </para>
+      <para>
+	Se si abilita l'opzione <quote>Calcola intervalli di confidenza</quote>,
+	gretl calcolerà gli intervalli di confidenza invece degli errori
+	standard. La casella <quote>robust</quote> mantiene il suo effetto: se
+	non è selezionata, gli intervalli sono calcolati nell'ipotesi di errori
+	IID, altrimenti gretl usa lo stimatore robusto sviluppato da
+	Koenker e Machado (<book>Journal of the American
+	Statistical Association</book>, 1999).  Si noti che questi intervalli
+	non sono calcolati semplicemente aggiungendo e sottraendo un certo numero
+	di errori standard: in generale sono asimmetrici rispetto alle stime
+	puntuali dei parametri.
+      </para>	
+      <para>
+	È possibile indicare un elenco di quantili (il menù a discesa contiene
+	alcune possibilità predefinite), e in tal caso gretl calcolerà stime
+	quantili ed errori standard o intervalli di confidenza per ognuno dei
+	valori specificati.
+      </para>
+      <para>
+	Per un approfondimento, si veda la <guideref targ="chap:quantreg"/>.
+      </para>
+    </description>
+    
+    <description context="cli">
+      <para>
+	Regressione quantile. Il primo argomento, <repl>tau</repl>, è il
+	quantile condizionale per cui si desiderano le stime. Può essere un
+	valore numerico o il nome di una variabile scalare predefinita; il
+	valore deve essere compreso nell'intervallo da 0.01 a 0.99 (in
+	alternativa, può essere indicato un vettore di valori, si veda sotto per
+	i dettagli). Gli argomenti dal secondo in poi compongono un elenco di
+	regressori sul modello di quello usato in <cmdref targ="ols"/>.
+      </para>
+      <para>
+	Senza l'opzione <opt>intervals</opt>, vengono mostrati gli
+	errori standard per le stime quantili; per impostazione
+	predefinita questi sono calcolati con la formula asintotica di
+	<cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>,
+	ma se si usa l'opzione <opt>robust</opt>, verrà usata la
+	variante robusta per l'eteroschedasticità utilizzando il
+	metodo di <cite key="koenker-zhao94">Koenker e Zhao
+	(1994)</cite>.
+      </para>
+      <para>
+	Se si usa l'opzione <opt>intervals</opt>, gretl calcolerà gli
+	intervalli di confidenza invece degli errori standard.  Questi
+	intervalli sono calcolati col metodo dell'inversione del rango e in
+	generale sono asimmetrici rispetto alle stime puntuali dei parametri.
+	Se non si usa l'opzione <quote>--robust</quote>, gli intervalli sono
+	calcolati nell'ipotesi di errori IID <cite key="koenker94" p="true">(Koenker,
+	1994)</cite>, mentre se viene indicata sono calcolati con lo stimatore
+	robusto sviluppato <cite key="koenker-machado99">Koenker e Machado (1999)</cite>.
+      </para>
+      <para>
+	Per impostazione predefinita vengono prodotti intervalli di confidenza
+	al 90%. È possibile specificare un altro livello di confidenza (sotto
+	forma di frazione decimale), aggiungendolo all'opzione, come in
+	<lit>--intervals=0.95</lit>.
+      </para>
+      <para>
+	Invece di indicare <repl>tau</repl> come uno scalare, è possibile usare
+	un vettore, indicando il nome di una matrice predefinita. In questo
+	caso le stime vengono eseguite per tutti i valori di <repl>tau</repl>, e
+	i risultati mostrano la sequenza delle stime quantili per ognuno dei
+	regressori.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>/Modello/Stima robusta/Regressione quantile</menu-path>
+    </gui-access>
+    
+  </command>
+  
+  <command name="quit" section="Utilities" label="Esce dal programma" context="cli">
+    
+    <description>
+      <para>
+	Esce dal programma, dando la possibilità di salvare i risultati
+	della sessione.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>/File/Esci</menu-path>
+    </gui-access>
+    
+  </command>
 
 <command name="regls" section="Estimation"
 	 label="Regularized least squares" context="gui">
@@ -14571,6 +14578,7 @@ qual caso viene usato QML.
 	</option>
 	<option>
 	  <flag>--gzipped</flag>
+	  <optparm optional="true">livello</optparm>
 	  <effect>comprime con gzip</effect>
 	</option>
 	<option>
@@ -14581,6 +14589,10 @@ qual caso viene usato QML.
 	  <flag>--dat</flag>
 	  <effect>usa il formato ASCII di PcGive</effect>
 	</option>
+        <option>
+	  <flag>--decimal-comma</flag>
+	  <effect>usa la virgola come separatore decimale</effect>
+        </option>
 	<option>
 	  <flag>--database</flag>
 	  <effect>usa il formato database di gretl</effect>
@@ -14599,6 +14611,10 @@ qual caso viene usato QML.
 	  <optparm>nome-matrice</optparm>
 	  <effect>vedi sotto</effect>
         </option>
+        <option>
+          <flag>--compat</flag>
+          <effect>compatibilità gdtb, vedi sotto</effect>
+        </option>
       </options>
     </usage>
 
@@ -14616,23 +14632,43 @@ qual caso viene usato QML.
 	di file contenga un percorso completo. 
       </para>
       <para>
+	Il comando <lit>store</lit> funziona in modo speciale se è
+	compreso in un <quote>progressive loop</quote>.  Vedi
+	<guideref targ="chap:looping"/> per dettagli.
+      </para>
+      <subhead>Formati nativi</subhead>
+      <para>
+       Se <repl>file-dati</repl> ha estensione <lit>.gdt</lit> o
+       <lit>.gtdb</lit>, il salvataggio avverrà in uno dei formati
+       nativi di gretl. Se non viene specificata alcuna estensione, si
+       dà <lit>.gdt</lit> come scelta implicita e il suffisso viene
+       aggiunto automaticamente. Il formato <lit>gdt</lit> è XML, con
+       compressione gzip opzionale, mentre il formato <lit>gdtb</lit>
+       è binario. Il primo è la scelta tipica per dati di dimensione
+       moderata (fino a qualche centinaio di kilobyte); per dataset
+       grandi, il formato binario è molto più efficiente.
+      </para>
+      <para>
+       A partire dalla versione 2021a, il formato <lit>gdtb</lit> è
+       stato modificato. Per salvare col vecchio formato, così che il
+       file sia leggibile con versioni precedenti di gretl, si deve
+       usare l'opzione <opt>compat</opt>.
+      </para>
+      <para>
+	Quando si salva in formato nativo, l'opzione
+	<opt>gzipped</opt> abilita la compressione, cosa che può
+	essere utile per grandi dataset. Pewr questa opzione, il
+	parametro opzione controla il livello di compressione (da 0 a
+	9): livelli più alti producono file più piccoli, ma in tempi
+	più lunghi. Il valore di default è 1; col livello 0 non c'è
+	alcuna compressione.
+      </para>
+      <subhead>Altri formati</subhead>
+      <para>
 	Il formato in cui i dati vengono salvati è controllato, in
 	primo luogo dall'estensione di <repl>filename</repl>, come segue:
       </para>
       <ilist>
-	<li>
-	  <para>
-	    <lit>.gdt</lit>, o senza estensione: formato XML nativo di
-	    gretl. (Se non viene specificata un'estensione,
-	    <quote><lit>.gdt</lit></quote> viane aggiunta
-	    automaticamente.)
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>.gtdb</lit>: formato nativo binario di gretl.
-	  </para>
-	</li>
 	<li>
 	  <para>
 	    <lit>.csv</lit>: testo separato da virgole (CSV).
@@ -14658,30 +14694,19 @@ qual caso viene usato QML.
       <para>
 	Le opzioni di formato mostrate sopra possono essere usate per
 	forzare un certo formato indipendentemente dall'estensione
-	data al file. Tuttavia, se <repl>nome-file</repl> ha estensione
-	<lit>.gdt</lit> o <lit>.gdtb</lit>, il formato usato sarà
-	comunque quello nativo e l'uso delle opzioni di formato
-	genererà un errore.
+	data al file, o per generare un file di formato PcGive o JMulTi
       </para>
       <para>
-	Quando si salva in formato nativo, l'opzione
-	<opt>gzipped</opt> abilita la compressione, cosa che può
-	essere utile per grandi dataset. Pewr questa opzione, il
-	parametro opzione controla il livello di compressione (da 0 a
-	9): livelli più alti producono file più piccoli, ma in tempi
-	più lunghi. Il valore di default è 1; col livello 0 non c'è
-	alcuna compressione.
-      </para>
-      <para>
-	L'opzione <opt>omit-obs</opt> è applicabile solo quando si
-	salvano dati in formato CSV. In modalità predefinita, se i
-	dati sono serie storiche o panel, o se il dataset include
-	marcatori per osservazioni specifiche, il file CSV comprende
-	una prima colonna che identifica le osservazioni (ad esempio
-	per data). Se si usa <opt>omit-obs</opt>, questa colonna verrà
-	omessa e verranno salvati solo i dati effettivi. L'opzione
-	<opt>no-header</opt> fa sì che venga omessa la stampa dei nomi
-	di variabile in cima al file.
+	Le opzioni <opt>omit-obs</opt> e <opt>no-header</opt> sono
+	applicabile solo quando si salvano dati in formato CSV. In
+	modalità predefinita, se i dati sono serie storiche o panel, o
+	se il dataset include marcatori per osservazioni specifiche,
+	il file CSV comprende una prima colonna che identifica le
+	osservazioni (ad esempio per data). Se si usa
+	<opt>omit-obs</opt>, questa colonna verrà omessa e verranno
+	salvati solo i dati effettivi.  L'opzione <opt>no-header</opt>
+	fa sì che venga omessa la stampa dei nomi di variabile in cima
+	al file.
       </para>
       <para>
 	L'opzione <opt>decimal-comma</opt> è anch'essa specifica al
@@ -14689,19 +14714,21 @@ qual caso viene usato QML.
 	virgola come separatore decimale e il punto e virgola come
 	separatore di campo.
       </para>  
-
+      <subhead>Salvataggio in formato database</subhead>
       <para>
-	L'opzione di salvataggio in formato database di gretl è indicata se
-	occorre costruire dei grandi dataset di serie, magari con frequenze
-	diverse e diversi intervalli di osservazioni. Al momento questa opzione
-	è disponibile solo per dati annuali, trimestrali o mensili. Salvando su
-	un file che esiste già, il comportamento predefinito è quello di
-	accodare le nuove serie al contenuto del database preesistente. In
-	questo contesto, se una o più delle variabili da salvare hanno lo stesso
-	nome di una delle variabili già presenti nel database si otterrà un
-	messaggio di errore. L'opzione <opt>overwrite</opt> permette invece di
-	sovrascrivere eventuali variabili del dataset che hanno lo stesso nome
-	delle nuove variabili, in modo che queste ultime rimpiazzino le
+	L'opzione di salvataggio in formato database di gretl è
+	indicata se occorre costruire dei grandi dataset di serie,
+	magari con frequenze diverse e diversi intervalli di
+	osservazioni. Al momento questa opzione è disponibile solo per
+	dati annuali, trimestrali o mensili. Salvando su un file che
+	esiste già, il comportamento predefinito è quello di accodare
+	le nuove serie al contenuto del database preesistente. In
+	questo contesto, se una o più delle variabili da salvare hanno
+	lo stesso nome di una delle variabili già presenti nel
+	database si otterrà un messaggio di errore. L'opzione
+	<opt>overwrite</opt> permette invece di sovrascrivere
+	eventuali variabili del dataset che hanno lo stesso nome delle
+	nuove variabili, in modo che queste ultime rimpiazzino le
 	variabili preesistenti.
       </para>
       <para>
@@ -14710,11 +14737,6 @@ qual caso viene usato QML.
 	linea, racchiusa da virgolette doppie, passata all'opzone dopo
 	un segno di uguale. Tale stringa verrà inserita come commento
 	nel file indice del database o all'inizio del file CSV.
-      </para>
-      <para>
-	Il comando <lit>store</lit> funziona in modo speciale se è
-	compreso in un <quote>progressive loop</quote>.  Vedi
-	<guideref targ="chap:looping"/> per dettagli.
       </para>
       <subhead>Salvare una matrice come dataset</subhead>
       <para>
