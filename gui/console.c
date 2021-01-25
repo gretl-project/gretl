@@ -401,16 +401,11 @@ static void update_console (ExecState *state, GtkWidget *cview)
 int console_is_busy (void)
 {
     if (console_main != NULL) {
-	if (console_protected || hlines > 0) {
-	    gtk_window_present(GTK_WINDOW(console_main));
-	    return 1;
-	} else {
-	    gtk_widget_destroy(console_main);
-	    return 0;
-	}
+	gtk_window_present(GTK_WINDOW(console_main));
+	return 1;
+    } else {
+	return 0;
     }
-
-    return 0;
 }
 
 static void console_destroyed (GtkWidget *w, ExecState *state)

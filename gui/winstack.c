@@ -169,6 +169,15 @@ static const gchar *get_window_title (GtkWidget *w)
     return s;
 }
 
+static const char *window_label (GtkWidget *w, int role)
+{
+    if (role == MAINWIN) {
+	return _("Main window");
+    } else {
+	return get_window_title(w);
+    }
+}
+
 /* callback to be invoked just before destroying a window that's
    on the list of open windows: remove its entry from the list
 */
@@ -176,12 +185,11 @@ static const gchar *get_window_title (GtkWidget *w)
 static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
 {
     GtkAction *action;
-    char aname[32];
-
-    sprintf(aname, "%p", (void *) w);
+    gchar *aname = g_strdup_printf("%p", (void *) w);
 
 #if WDEBUG
-    fprintf(stderr, "window_list_remove: %s\n", aname);
+    fprintf(stderr, "window_list_remove: %s (%s)\n", aname,
+	    window_label(w, 0));
 #endif
 
     action = gtk_action_group_get_action(group, aname);
@@ -189,6 +197,7 @@ static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
 	gtk_action_group_remove_action(group, action);
 	n_listed_windows--;
     }
+    g_free(aname);
 }
 
 /* callback for command-accent on Mac or Alt-PgUp/PgDn on
@@ -253,36 +262,26 @@ void window_list_add (GtkWidget *w, int role)
     gchar *modlabel = NULL;
     gchar *aname = NULL;
 
+    label = window_label(w, role);
+    if (label == NULL) {
+	return;
+    } else if (strchr(label, '_') != NULL) {
+	modlabel = double_underscores_new(label);
+    }
+
+#if WDEBUG
+    fprintf(stderr, "window_list_add: %p (%s)\n", (void *) w, label);
+#endif
+
     if (window_group == NULL) {
 	/* create the window list action group */
 	window_group = gtk_action_group_new("WindowList");
     }
 
     /* set up an action entry for window @w */
-
-    aname = g_strdup_printf("%p", (void *) w);
-    entry.name = aname;
+    entry.name = aname = g_strdup_printf("%p", (void *) w);
     entry.stock_id = window_list_icon(role);
-
-#if WDEBUG
-    fprintf(stderr, "window_list_add: %s\n", aname);
-#endif
-
-    if (role == MAINWIN) {
-	label = _("Main window");
-    } else {
-	label = get_window_title(w);
-	if (label != NULL && strchr(label, '_') != NULL) {
-	    modlabel = double_underscores_new(label);
-	}
-    }
-
-    if (label == NULL) {
-	g_free(aname);
-	return;
-    }
-
-    entry.label = modlabel != NULL ? modlabel : label,
+    entry.label = (modlabel != NULL)? modlabel : label,
 
     /* add new action entry to group */
     gtk_action_group_add_actions(window_group, &entry, 1, NULL);
