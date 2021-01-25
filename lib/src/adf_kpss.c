@@ -723,7 +723,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     } else if (ainfo->pvtype == PV_ASY) {
 	sprintf(pvstr, "%s %.4g", _("asymptotic p-value"), ainfo->pval);
     } else if (ainfo->pvtype == PV_APPROX) {
-	sprintf(pvstr, "%s %.4g", _("approximate p-value"), ainfo->pval);
+	sprintf(pvstr, "%s %.3f", _("approximate p-value"), ainfo->pval);
     } else {
 	sprintf(pvstr, "%s %.4g", _("p-value"), ainfo->pval);
     }
@@ -1074,26 +1074,31 @@ static double get_mackinnon_pvalue (adf_info *ainfo)
 
 static double get_dfgls_pvalue (adf_info *ainfo)
 {
-    double (*pvfunc)(double, int, int, int *);
+    double (*pvfunc)(double, int, int, int, int, int *);
     double pval = NADBL;
-    int T, trend, err = 0;
+    int T = ainfo->T;
+    int PQ, trend, err = 0;
 
     pvfunc = get_plugin_function("dfgls_pvalue");
     if (pvfunc == NULL) {
 	return pval;
     }
 
-    T = ainfo->order > 0 ? 0 : ainfo->T;
+    if (ainfo->kmax == 0 && ainfo->order > 0) {
+	/* fixed lag order > 0: asymptotic */
+	T = 0;
+    }
     trend = (ainfo->det == UR_TREND);
+    PQ = (ainfo->flags & ADF_PQ)? 1 : 0;
 
-    pval = (*pvfunc)(ainfo->tau, T, trend, &err);
+    pval = (*pvfunc)(ainfo->tau, T, trend, ainfo->kmax, PQ, &err);
     if (!na(pval)) {
 	ainfo->pvtype = (T == 0)? PV_ASY : PV_APPROX;
     }
 
 #if ADF_DEBUG
-    fprintf(stderr, "get_dfgls_pval: tau=%g, T=%d, trend=%d: pval=%g\n",
-	    ainfo->tau, T, trend, pval);
+    fprintf(stderr, "dfgls_pval: tau=%g, T=%d, trend=%d kmax=%d, PQ=%d: pval=%g\n",
+	    ainfo->tau, T, trend, ainfo->kmax, PQ, pval);
 #endif
 
     return pval;
@@ -1541,18 +1546,13 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    ainfo->det = engle_granger_itv(eg_opt);
 	}
 
-	/* obtain p-value if wanted and possible */
+	/* obtain p-value if wanted */
 	if (getenv("DFGLS_NO_PVALUE")) {
 	    /* skip it, to speed up monte carlo stuff */
 	    ainfo->pval = NADBL;
 	} else if (ainfo->flags & ADF_GLS) {
-	    if (test_down) {
-		/* testing down: use Sephton critical values */
-		ainfo->pval = NADBL;
-	    } else {
-		/* use Cottrell/Komashko p-values */
-		ainfo->pval = get_dfgls_pvalue(ainfo);
-	    }
+	    /* use Cottrell/Komashko or Sephton */
+	    ainfo->pval = get_dfgls_pvalue(ainfo);
 	} else {
 	    /* no GLS adjustment applied: use MacKinnon p-values,
 	       either finite sample or asymptotic in the case

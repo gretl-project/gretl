@@ -629,7 +629,9 @@ double mackinnon_pvalue (double tau, int T, int niv, int itv)
 }
 
 /* Extra: code to obtain approximate finite-sample p-values for
-   DF-GLS tests a la Elliott-Rothenberg-Stock.
+   DF-GLS tests a la Elliott-Rothenberg-Stock, using Sephton's
+   response surfaces for the test-down cases, otherwise Cottrell
+   and Komashko surfaces.
 */
 
 #define N_ALPHA_C 25
@@ -648,80 +650,123 @@ static const double alpha_t[N_ALPHA_T] = {
 };
 
 static const char *bnames[] = {
-    "dfgls-beta-c.bin",
-    "dfgls-beta-t.bin"
+    "dfgls-beta-c.bin", "dfgls-beta-t.bin"
 };
 
-double dfgls_pvalue (double tau, int T, int trend, int *err)
+static const char *snames[] = {
+    "npc.bin", "npt.bin", "pqc.bin", "pqt.bin"
+};
+
+static gretl_matrix *get_data_matrix (const char *base, int *err)
 {
-    gchar *bpath;
-    const double *alpha;
-    const double *beta;
-    double *tvals;
-    gretl_matrix *b;
+    gretl_matrix *m;
+    gchar *fname;
+
+    fname = g_strdup_printf("%sdata%c%s", gretl_plugin_path(),
+			    SLASH, base);
+    m = gretl_matrix_read_from_file(fname, 0, err);
+    if (*err) {
+	fprintf(stderr, "Couldn't open %s\n", fname);
+    }
+    g_free(fname);
+
+    return m;
+}
+
+#define PDEBUG 0
+
+double dfgls_pvalue (double tau, int T, int trend,
+		     int kmax, int PQ, int *err)
+{
+    const char *fbase;
+    gretl_matrix_block *B;
+    gretl_matrix *alpha = NULL;
+    gretl_matrix *beta = NULL;
     gretl_matrix *C, *V, *g;
-    gretl_matrix *y, *X;
+    gretl_matrix *r, *y, *X;
+    const double *a, *b;
     double d, dmin = 1.0e6;
     double ci, s2, pval = NADBL;
-    int i1, i2, npoints = 5;
-    int nreg, np2 = npoints/2;
-    int ncoeff, nalpha;
+    int i1, i2, npoints, np2;
+    int sephton = (kmax > 0);
+    int nreg, ncoeff, nalpha;
     int i, j, k, imin = 0;
 
-    bpath = g_strdup_printf("%sdata%c%s", gretl_plugin_path(),
-			    SLASH, bnames[trend]);
-    b = gretl_matrix_read_from_file(bpath, 0, err);
+    fbase = sephton ? snames[trend + 2*PQ] : bnames[trend];
+    beta = get_data_matrix(fbase, err);
+
+    if (!*err && sephton) {
+	alpha = get_data_matrix("s_alpha.bin", err);
+	if (!*err) {
+	    a = alpha->val;
+	    nalpha = alpha->rows;
+	    npoints = 13;
+	}
+    } else if (!*err) {
+	a = trend ? alpha_t : alpha_c;
+	nalpha = trend ? N_ALPHA_T : N_ALPHA_C;
+	npoints = 5;
+    }
+
     if (*err) {
-	fprintf(stderr, "Couldn't open %s\n", bpath);
-	g_free(bpath);
+	gretl_matrix_free(beta);
 	return pval;
     }
 
-    alpha = trend ? alpha_t : alpha_c;
-    nalpha = trend ? N_ALPHA_T : N_ALPHA_C;
-    ncoeff = b->rows;
-    beta = b->val;
+    ncoeff = beta->rows;
+    b = beta->val;
+    np2 = npoints / 2;
+
+#if PDEBUG
+    fprintf(stderr, "dfgls: tau %.8g, trend %d, kmax %d, PQ %d\n",
+	    tau, trend, kmax, PQ);
+    fprintf(stderr, "dfgls: ncoeff %d, nalpha %d\n", ncoeff, nalpha);
+#endif
 
     /* max # of second-stage regressors */
     nreg = 4;
 
     /* allocate all storage */
-    C = gretl_matrix_alloc(nalpha, 1);
-    y = gretl_matrix_alloc(npoints, 1);
-    X = gretl_matrix_alloc(npoints, nreg);
-    g = gretl_matrix_alloc(nreg, 1);
-    V = gretl_matrix_alloc(nreg, nreg);
-    tvals = malloc(ncoeff * sizeof *tvals);
-
-    if (C == NULL || y == NULL || X == NULL ||
-	g == NULL || V == NULL || tvals == NULL) {
+    B = gretl_matrix_block_new(&C, nalpha, 1,
+			       &y, npoints, 1,
+			       &X, npoints, nreg,
+			       &g, nreg, 1,
+			       &V, nreg, nreg,
+			       &r, ncoeff, 1, NULL);
+    if (B == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
     if (T == 0) {
 	/* asymptotic value */
-	tvals[0] = 1.0;
+	r->val[0] = 1.0;
 	for (j=1; j<ncoeff; j++) {
-	    tvals[j] = 0;
+	    r->val[j] = 0;
 	}
     } else {
 	/* finite sample */
+	int npow = ncoeff - 2 - sephton;
 	double Tr = 1.0 / T;
 
-	tvals[0] = 1.0;
-	tvals[1] = Tr;
-	for (j=2; j<ncoeff; j++) {
-	    tvals[j] = pow(Tr, j);
+	r->val[0] = 1.0;
+	r->val[1] = Tr;
+	for (j=0; j<npow; j++) {
+	    r->val[j+2] = pow(Tr, j+2);
+	}
+	if (sephton) {
+	    r->val[ncoeff-1] = kmax * Tr;
 	}
     }
 
-    /* compute all critical values */
+    /* compute all @nalpha critical values and determine
+       which is closest to @tau.
+    */
     k = 0;
     for (i=0; i<nalpha; i++) {
 	ci = 0;
 	for (j=0; j<ncoeff; j++) {
-	    ci += beta[k+j] * tvals[j];
+	    ci += b[k+j] * r->val[j];
 	}
 	gretl_matrix_set(C, i, 0, ci);
 	d = fabs(ci - tau);
@@ -732,8 +777,19 @@ double dfgls_pvalue (double tau, int T, int trend, int *err)
 	k += ncoeff;
     }
 
+#if PDEBUG
+    if (sephton) {
+	/* these value agree with Octave on Sephton's programs */
+	fprintf(stderr, "sephton: compute critical values for T = %d\n", T);
+	fprintf(stderr, "cv 0.01: %g\n", C->val[12]);
+	fprintf(stderr, "cv 0.05: %g\n", C->val[20]);
+	fprintf(stderr, "cv 0.10: %g\n", C->val[30]);
+	fprintf(stderr, "sephton: dmin = %g, imin = %d\n", dmin, imin);
+    }
+#endif
+
     /* select starting point @i1 for critvals range */
-    np2 = npoints / 2; i1 = imin - np2; i2 = imin + np2;
+    i1 = imin - np2; i2 = imin + np2;
     if (i1 < 0) {
 	i1 = 0;
     } else if (i2 >= nalpha) {
@@ -743,7 +799,7 @@ double dfgls_pvalue (double tau, int T, int trend, int *err)
 
     /* fill out y */
     for (i=0; i<npoints; i++) {
-	y->val[i] = normal_cdf_inverse(alpha[i1 + i]);
+	y->val[i] = normal_cdf_inverse(a[i1 + i]);
     }
 
     /* fill out X */
@@ -787,14 +843,9 @@ double dfgls_pvalue (double tau, int T, int trend, int *err)
 
  bailout:
 
-    gretl_matrix_free(C);
-    gretl_matrix_free(y);
-    gretl_matrix_free(X);
-    gretl_matrix_free(g);
-    gretl_matrix_free(V);
-    gretl_matrix_free(b);
-    free(tvals);
-    g_free(bpath);
+    gretl_matrix_free(beta);
+    gretl_matrix_free(alpha);
+    gretl_matrix_block_destroy(B);
 
     return pval;
 }

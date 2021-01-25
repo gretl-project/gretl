@@ -242,10 +242,8 @@ vpath %.c $(topsrc)/plugin/libshp
 vpath %.h $(topsrc)/plugin/libshp
 SHP_CFLAGS := -I$(topsrc)/plugin/libshp
 
-URCDATA = $(topsrc)/plugin/data/urcdata.bin
-DWDATA = $(topsrc)/plugin/data/dwdata.gz
-DFCDATA = $(topsrc)/plugin/data/dfgls-beta-c.bin
-DFTDATA = $(topsrc)/plugin/data/dfgls-beta-t.bin
+PLUGIN_DATA = urcdata.bin dwdata.gz dfgls-beta-c.bin dfgls-beta-t.bin \
+	npc.bin npt.bin pqc.bin pqt.bin s_alpha.bin
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(ODBC_CFLAGS) \
@@ -422,10 +420,9 @@ $(GRETLLIB):
 install: $(GRETLLIB) $(PLUGINS) $(URCDATA) $(DWDATA) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(PLUGINS) $(DESTDIR)$(plugindir)
-	$(INSTALL_DATA) $(URCDATA) $(DESTDIR)$(plugindir)/data
-	$(INSTALL_DATA) $(DWDATA) $(DESTDIR)$(plugindir)/data
-	$(INSTALL_DATA) $(DFCDATA) $(DESTDIR)$(plugindir)/data
-	$(INSTALL_DATA) $(DFTDATA) $(DESTDIR)$(plugindir)/data
+	for f in $(PLUGIN_DATA) ; do \
+	$(INSTALL_DATA) $(topsrc)/plugin/data/$$f \
+	$(DESTDIR)$(plugindir)/data ; done
 
 install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
