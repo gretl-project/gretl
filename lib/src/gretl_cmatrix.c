@@ -1044,45 +1044,69 @@ gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
     return cmatrix_SVD_inverse(A, 0, err);
 }
 
-/* Horizontal direct product of complex @A and @B */
+/* Horizontal direct product of complex @A and @B, or of
+   @A with itself if B is NULL.
+*/
 
 static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 				       const gretl_matrix *B,
 				       int *err)
 {
     gretl_matrix *C = NULL;
-    int r, p, q;
+    double complex aij, bik;
+    int do_symmetric = 0;
+    int i, j, k, ndx;
+    int r, p, q, ccols;
 
-    if (!cmatrix_validate(A,0) || !cmatrix_validate(B,0)) {
+    if (!cmatrix_validate(A,0)) {
 	*err = E_INVARG;
-	return NULL;
+    } else if (B != NULL) {
+	if (!cmatrix_validate(B,0)) {
+	    *err = E_INVARG;
+	} else if (B->rows != A->rows) {
+	    *err = E_NONCONF;
+	}
+    } else {
+	do_symmetric = 1;
     }
 
-    if (B->rows != A->rows) {
-	*err = E_NONCONF;
+    if (*err) {
 	return NULL;
     }
 
     r = A->rows;
     p = A->cols;
-    q = B->cols;
 
-    C = gretl_cmatrix_new0(r, p*q);
+    if (do_symmetric) {
+	q = p;
+	ccols = p * (p+1) / 2;
+    } else {
+	q = B->cols;
+	ccols = p * q;
+    }
+
+    C = gretl_cmatrix_new0(r, ccols);
 
     if (C == NULL) {
 	*err = E_ALLOC;
-    } else {
-	double complex aij, bik;
-	int i, j, k, joff;
+	return NULL;
+    }
 
-	for (i=0; i<r; i++) {
-	    for (j=0; j<p; j++) {
-		aij = gretl_cmatrix_get(A, i, j);
-		if (aij != 0.0) {
-		    joff = j * q;
+    for (i=0; i<r; i++) {
+	ndx = 0;
+	for (j=0; j<p; j++) {
+	    aij = gretl_cmatrix_get(A, i, j);
+	    if (aij != 0.0) {
+		if (do_symmetric) {
+		    for (k=j; k<q; k++) {
+			bik = gretl_cmatrix_get(A, i, k);
+			gretl_cmatrix_set(C, i, ndx++, aij*bik);
+		    }
+		} else {
+		    ndx = j * q;
 		    for (k=0; k<q; k++) {
 			bik = gretl_cmatrix_get(B, i, k);
-			gretl_cmatrix_set(C, i, joff + k, aij*bik);
+			gretl_cmatrix_set(C, i, ndx + k, aij*bik);
 		    }
 		}
 	    }

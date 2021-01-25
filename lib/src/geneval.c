@@ -4645,7 +4645,13 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
                 }
             } else if (f == F_EIGSYM) {
                 ret->v.m = user_matrix_eigensym(m1, m2, &p->err);
-            }
+            } else if (f == F_HDPROD) {
+		if (m1->is_complex) {
+		    ret->v.m = gretl_cmatrix_hdprod(m1, NULL, &p->err);
+		} else {
+		    ret->v.m = gretl_matrix_hdproduct_new(m1, NULL, &p->err);
+		}
+	    }
         }
 
         if (ret->v.m == NULL) {
@@ -16450,6 +16456,8 @@ static NODE *eval (NODE *t, parser *p)
         /* matrix-only binary operators (but promote scalars) */
         if (ok_matrix_node(l) && ok_matrix_node(r)) {
             ret = matrix_matrix_calc(l, r, t->t, p);
+	} else if (ok_matrix_node(l) && null_node(r) && t->t == F_HDPROD) {
+	    ret = matrix_to_matrix2_func(l, r, t->t, p);
         } else {
             node_type_error(t->t, (l->t == MAT)? 2 : 1,
                             MAT, (l->t == MAT)? r : l, p);

@@ -6260,8 +6260,8 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
  * @B: right-hand matrix, r x q or NULL.
  * @C: target matrix, r x (p * q).
  *
- * Writes into @C the horizontal direct product of @A and @B. 
- * That is, $C_i' = A_i' \otimes B_i'$ (in TeX notation). If @B 
+ * Writes into @C the horizontal direct product of @A and @B.
+ * That is, $C_i' = A_i' \otimes B_i'$ (in TeX notation). If @B
  * is NULL, then it's understood to be equal to @A.
  *
  * Returns: 0 on success, %E_NONCONF if @A and @B have different
@@ -6277,14 +6277,15 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
     int r, p, q;
     int i, j, k;
     int ndx, retcols;
-    int do_symmetric = gretl_is_null_matrix(B);
-    
+    int do_symmetric;
+
     if (gretl_is_null_matrix(A) || gretl_is_null_matrix(C)) {
 	return E_DATA;
     }
-    
+
     r = A->rows;
     p = A->cols;
+    do_symmetric = gretl_is_null_matrix(B);
 
     if (do_symmetric) {
 	q = p;
@@ -6294,12 +6295,12 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 	}
     } else {
 	q = B->cols;
-	retcols = p*q;
+	retcols = p * q;
 	if (B->rows != r || C->rows != r || C->cols != retcols) {
 	    return E_NONCONF;
 	}
     }
-    
+
     for (i=0; i<r; i++) {
 	ndx = 0;
 	for (j=0; j<p; j++) {
@@ -6320,7 +6321,7 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 	    }
 	}
     }
-    
+
     return 0;
 }
 
@@ -6330,12 +6331,12 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
  * @B: right-hand matrix, r x q or NULL.
  * @err: location to receive error code.
  *
- * If @B is NULL, then it is implicitly taken as equal to @A; in this case, 
+ * If @B is NULL, then it is implicitly taken as equal to @A; in this case,
  * the returned matrix only contains the non-redundant elements; therefore,
- * it has ncols = p*(p+1)/2 elements. Otherwise, all the products are computed 
+ * it has ncols = p*(p+1)/2 elements. Otherwise, all the products are computed
  * and ncols = p*q.
- *   
- * Returns: newly allocated r x cols matrix which is the horizontal
+ *
+ * Returns: newly allocated r x ncols matrix which is the horizontal
  * direct product of matrices @A and @B, or NULL on failure.
  */
 
@@ -6345,20 +6346,17 @@ gretl_matrix * gretl_matrix_hdproduct_new (const gretl_matrix *A,
 {
     gretl_matrix *K = NULL;
     int r, p, q, ncols;
-    
+
     if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
-	return NULL;
-    }
-
-    if (gretl_is_complex(A) && gretl_is_null_matrix(B)) {
+    } else if (gretl_is_complex(A) && gretl_is_null_matrix(B)) {
 	*err = E_DATA;
-	return NULL;
-    }
-
-    if (gretl_is_complex(A) || gretl_is_complex(B)) {
+    } else if (gretl_is_complex(A) || gretl_is_complex(B)) {
 	fprintf(stderr, "E_CMPLX in gretl_matrix_hdproduct_new\n");
 	*err = E_CMPLX;
+    }
+
+    if (*err) {
 	return NULL;
     }
 
