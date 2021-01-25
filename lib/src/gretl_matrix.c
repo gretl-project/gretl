@@ -6257,11 +6257,12 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
 /**
  * gretl_matrix_hdproduct:
  * @A: left-hand matrix, r x p.
- * @B: right-hand matrix, r x q.
+ * @B: right-hand matrix, r x q or NULL.
  * @C: target matrix, r x (p * q).
  *
- * Writes into @C the horizontal direct product of @A and @B.
- * That is, $C_i' = A_i' \otimes B_i'$ (in TeX notation)
+ * Writes into @C the horizontal direct product of @A and @B. 
+ * That is, $C_i' = A_i' \otimes B_i'$ (in TeX notation). If @B 
+ * is NULL, then it's understood to be equal to @A.
  *
  * Returns: 0 on success, %E_NONCONF if @A and @B have different
  * numbers of rows or matrix @C is not correctly dimensioned for the
@@ -6275,61 +6276,86 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
     double aij, bik;
     int r, p, q;
     int i, j, k;
-    int joff;
-
-    if (gretl_is_null_matrix(A) ||
-	gretl_is_null_matrix(B) ||
-	gretl_is_null_matrix(C)) {
+    int ndx, retcols;
+    int do_symmetric = gretl_is_null_matrix(B);
+    
+    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(C)) {
 	return E_DATA;
     }
-
+    
     r = A->rows;
     p = A->cols;
-    q = B->cols;
 
-    if (B->rows != r || C->rows != r || C->cols != p * q) {
-	return E_NONCONF;
+    if (do_symmetric) {
+	q = p;
+	retcols = p * (p+1) / 2;
+	if (C->rows != r || C->cols != retcols) {
+	    return E_NONCONF;
+	}
+    } else {
+	q = B->cols;
+	retcols = p*q;
+	if (B->rows != r || C->rows != r || C->cols != retcols) {
+	    return E_NONCONF;
+	}
     }
-
+    
     for (i=0; i<r; i++) {
+	ndx = 0;
 	for (j=0; j<p; j++) {
 	    aij = gretl_matrix_get(A, i, j);
 	    if (aij != 0.0) {
-		joff = j * q;
-		for (k=0; k<q; k++) {
-		    bik = gretl_matrix_get(B, i, k);
-		    gretl_matrix_set(C, i, joff + k, aij*bik);
+		if (do_symmetric) {
+		    for (k=j; k<q; k++) {
+			bik = gretl_matrix_get(A, i, k);
+			gretl_matrix_set(C, i, ndx++, aij*bik);
+		    }
+		} else {
+		    ndx = j * q;
+		    for (k=0; k<q; k++) {
+			bik = gretl_matrix_get(B, i, k);
+			gretl_matrix_set(C, i, ndx + k, aij*bik);
+		    }
 		}
 	    }
 	}
     }
-
+    
     return 0;
 }
 
 /**
  * gretl_matrix_hdproduct_new:
  * @A: left-hand matrix, r x p.
- * @B: right-hand matrix, r x q.
+ * @B: right-hand matrix, r x q or NULL.
  * @err: location to receive error code.
  *
- * Returns: newly allocated r x (p * q) matrix which is the
- * horizontal direct product of matrices @A and @B, or NULL on
- * failure.
+ * If @B is NULL, then it is implicitly taken as equal to @A; in this case, 
+ * the returned matrix only contains the non-redundant elements; therefore,
+ * it has ncols = p*(p+1)/2 elements. Otherwise, all the products are computed 
+ * and ncols = p*q.
+ *   
+ * Returns: newly allocated r x cols matrix which is the horizontal
+ * direct product of matrices @A and @B, or NULL on failure.
  */
 
-gretl_matrix *
-gretl_matrix_hdproduct_new (const gretl_matrix *A,
-			    const gretl_matrix *B,
-			    int *err)
+gretl_matrix * gretl_matrix_hdproduct_new (const gretl_matrix *A,
+					   const gretl_matrix *B,
+					   int *err)
 {
     gretl_matrix *K = NULL;
-    int r, p, q;
-
-    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
+    int r, p, q, ncols;
+    
+    if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
 	return NULL;
     }
+
+    if (gretl_is_complex(A) && gretl_is_null_matrix(B)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
     if (gretl_is_complex(A) || gretl_is_complex(B)) {
 	fprintf(stderr, "E_CMPLX in gretl_matrix_hdproduct_new\n");
 	*err = E_CMPLX;
@@ -6338,12 +6364,21 @@ gretl_matrix_hdproduct_new (const gretl_matrix *A,
 
     r = A->rows;
     p = A->cols;
-    q = B->cols;
 
-    if (B->rows != r) {
-	*err = E_NONCONF;
+    if (gretl_is_null_matrix(B)) {
+	q = A->cols;
+	ncols = p * (p+1) / 2;
     } else {
-	K = gretl_zero_matrix_new(r, p * q);
+	if (B->rows != r) {
+	    *err = E_NONCONF;
+	} else {
+	    q = B->cols;
+	    ncols = p * q;
+	}
+    }
+
+    if (!*err) {
+	K = gretl_zero_matrix_new(r, ncols);
 	if (K == NULL) {
 	    *err = E_ALLOC;
 	} else {
