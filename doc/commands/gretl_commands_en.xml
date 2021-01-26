@@ -175,82 +175,109 @@
 
     <description>
       <para context="gui">
-	This command needs an integer lag order; if the order is zero a
-	standard (not augmented) Dickey&ndash;Fuller test is run. Computes
-	a set of Dickey&ndash;Fuller tests on the selected variable, the
-	null hypothesis being that the variable has a unit root.  (But if
-	the differencing option is selected, the first difference of the
-	variable is taken prior to testing, and the discussion below must
-	be taken as referring to the transformed variable.)
+	This command needs an integer lag order; if the order is zero
+	a standard (not augmented) Dickey&ndash;Fuller test is run. It
+	computes one or more Dickey&ndash;Fuller tests on the selected
+	variable, the null hypothesis being that the variable has a
+	unit root.  (But if the differencing option is selected, the
+	first difference of the variable is taken prior to testing,
+	and the discussion below must be taken as referring to the
+	transformed variable.)
       </para>
 
       <para context="cli">
-	The options shown above and the discussion which follows pertain
-	to the use of the <lit>adf</lit> command with regular time series
-	data. For use of this command with panel data please see below.
+	The options shown above and the discussion which follows
+	mostly pertain to the use of the <lit>adf</lit> command with
+	regular time series data. For use of this command with panel
+	data please see the section titled <quote>Panel data</quote>
+	below.
       </para>
 
       <para context="cli">
-	Computes a set of Dickey&ndash;Fuller tests on each of the
-	listed variables, the null hypothesis being that the variable in
-	question has a unit root.  (But if the <opt>difference</opt>
-	flag is given, the first difference of the variable is taken prior
-	to testing, and the discussion below must be taken as referring to
-	the transformed variable.)
+	This command computes a set of Dickey&ndash;Fuller tests on
+	each of the listed variables, the null hypothesis being that
+	the variable in question has a unit root.  (But if the
+	<opt>difference</opt> flag is given, the first difference of
+	the variable is taken prior to testing, and the discussion
+	below must be taken as referring to the transformed variable.)
       </para>
 
       <para context="cli">
 	By default, two variants of the test are shown: one based on a
 	regression containing a constant and one using a constant and
 	linear trend.  You can control the variants that are presented by
-	specifying one or more of the option flags.
+	specifying one or more of the option flags <opt>nc</opt>,
+	<opt>c</opt>, <opt>ct</opt>, <opt>ctt</opt>.
       </para>
 
       <para context="cli">
-	The <opt>gls</opt> option can be used in conjunction with
-	one or other of the flags <opt>c</opt> and <opt>ct</opt>
-	(the model with constant, or model with constant and trend).
-	The effect of this option is that the de-meaning or
-	de-trending of the variable to be tested is done using the GLS
-	procedure suggested by <cite key="ERS96">Elliott,
-	Rothenberg and Stock (1996)</cite>, which gives a test of
-	greater power than the standard Dickey&ndash;Fuller approach.
-	This option is not compatible with <opt>nc</opt>,
-	<opt>ctt</opt> or <opt>seasonals</opt>.
+	The <opt>gls</opt> option can be used in conjunction with one
+	or other of the flags <opt>c</opt> and <opt>ct</opt>.  The
+	effect of this option is that the series to be tested is
+	demeaned or detrended using the GLS procedure proposed by
+	<cite key="ERS96">Elliott, Rothenberg and Stock (1996)</cite>,
+	which gives a test of greater power than the standard
+	Dickey&ndash;Fuller approach.  This option is not compatible
+	with <opt>nc</opt>, <opt>ctt</opt> or <opt>seasonals</opt>.
       </para>
 
       <para>
-	In all cases the dependent variable is the first difference of the
-	specified variable, <math>y</math>, and the key independent variable
-	is the first lag of <math>y</math>.  The model is constructed so that
-	the coefficient on lagged <math>y</math> equals the root in question
-	minus 1. For example, the model with a constant may be written as
-	<equation status="display"
+	In all cases the dependent variable in the test regression is
+	the first difference of the specified series, <math>y</math>,
+	and the key independent variable is the first lag of
+	<math>y</math>.  The regression is constructed such that the
+	coefficient on lagged <math>y</math> equals the root in
+	question, &agr;, minus 1. For example, the model with a
+	constant may e written as <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
-	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	  graphic="adf1"/> Under the null hypothesis of a unit root the
-	coefficient on lagged <math>y</math> equals zero; under the
-	alternative that <math>y</math> is stationary this coefficient is
-	negative.
+	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)" graphic="adf1"/>
+	Under the null hypothesis of a unit root the coefficient on
+	lagged <math>y</math> equals zero. Under the alternative that
+	<math>y</math> is stationary this coefficient is negative.  So
+	the test is inherently one-sided.
       </para>
 
       <subhead context="cli">Selecting the lag order</subhead>
 
       <para context="cli">
-	If the <repl>order</repl> argument (henceforth,
-	<math>k</math>) is greater than 0, then <math>k</math> lags of
-	the dependent variable are included on the right-hand side of
-	the test regressions.  If the order is given as &minus;1,
-	<math>k</math> is set following the recommendation of <cite
-	key="schwert89">Schwert (1989)</cite>, namely the integer part
-	of 12(<math>T</math>/100)<sup>0.25</sup>, where <math>T</math>
-	is the sample size.  In either case, however, if the
-	<opt>test-down</opt> option is given then <math>k</math> is
-	taken as the <emphasis>maximum</emphasis> lag and the actual
-	lag order used is obtained by testing down.  The criterion for
-	testing down can be selected using the option parameter, which
-	should be one of <lit>AIC</lit>, <lit>BIC</lit> or
-	<lit>tstat</lit>; <lit>AIC</lit> is the default.
+	The simplest version of the Dickey&ndash;Fuller test assumes
+	that the error term in the test regression is serially
+	uncorrelated. In practice this is unlikely to be the case and
+	the specification is often extended by including one or more
+	lags of the dependent variable, giving an Augmented
+	Dickey&ndash;Fuller (ADF) test.  The <repl>order</repl>
+	argument governs the number of such lags, <math>k</math>,
+	possibly depending on the sample size, <math>T</math>.
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    For a fixed, user-specified <math>k</math>: give a
+	    non-negative value for <repl>order</repl>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    For <math>T</math>-dependent <math>k</math>: give
+	    <repl>order</repl> as &minus;1. The order is then set
+	    following the recommendation of <cite
+	    key="schwert89">Schwert (1989)</cite>, namely the integer
+	    part of 12(<math>T</math>/100)<sup>0.25</sup>.
+	  </para>
+	</li>
+      </ilist>
+
+      <para context="cli">
+	In general, however, we don't know how many lags will be
+	required to <quote>whiten</quote> the Dickey&ndash;Fuller
+	residual. It's therefore common to specify the
+	<emphasis>maximum</emphasis> value of <math>k</math> and let
+	the data decide the actual number of lags to include.  This
+	can be done via the <opt>test-down</opt> option. The criterion
+	for selecting optimal <math>k</math> may be set using the
+	parameter to this option, which should be one of
+	<lit>AIC</lit>, <lit>BIC</lit> or <lit>tstat</lit>,
+	<lit>AIC</lit> being the default.
       </para>
 
       <para context="gui">
@@ -265,18 +292,20 @@
       </para>
 
       <para context="cli">
-	When testing down via AIC or BIC is called for, the final lag
-	order for the ADF equation is that which optimizes the chosen
-	information criterion (Akaike or Schwarz Bayesian).  The
-	exact procedure depends on whether or not the <opt>gls</opt>
-	option is given: when GLS detrending is specified, AIC and BIC
-	are the <quote>modified</quote> versions described in <cite
+	When testing down via AIC or BIC, the final lag order for the
+	ADF equation is that which optimizes the chosen information
+	criterion (Akaike or Schwarz Bayesian).  The exact procedure
+	depends on whether or not the <opt>gls</opt> option is
+	given. When GLS is specified, AIC and BIC are the
+	<quote>modified</quote> versions described in <cite
 	key="ng-perron01">Ng and Perron (2001)</cite>, otherwise they
 	are the standard versions. In the GLS case a refinement is
-	available: if the additional option <opt>perron-qu</opt> is
-	given, the modified information criteria are computed
-	according to the revised method recommended by <cite
-	key="perron-qu07">Perron and Qu (2007)</cite>.
+	available. If the additional option <opt>perron-qu</opt> is
+	given, lag-order selection is performed via the revised method
+	recommended by <cite key="perron-qu07">Perron and Qu
+	(2007)</cite>. In this case the data are first demeaned or
+	detrended via OLS; GLS is applied once the lag order is
+	determined.
       </para>
 
       <para context="gui">
@@ -289,7 +318,6 @@
 	When testing down via the <math>t</math>-statistic method
 	is called for, the procedure is as follows:
       </para>
-
       <nlist>
 	<li><para>Estimate the Dickey&ndash;Fuller regression with
 	    <math>k</math> lags of the dependent variable.
@@ -303,25 +331,37 @@
 	  </para>
 	</li>
       </nlist>
+      <para>
+	In the context of step 2 above, <quote>significant</quote>
+	means that the <math>t</math>-statistic for the last lag has
+	an asymptotic two-sided <emphasis>p</emphasis>-value, against
+	the normal distribution, of 0.10 or less.
+      </para>
 
-      <para>In the context of step 2 above, <quote>significant</quote>
-	means that the <math>t</math>-statistic for the last lag
-	has an asymptotic two-sided <emphasis>p</emphasis>-value,
-	against the normal distribution, of 0.10 or less.
+      <para context="cli">
+	To sum up, if we accept the various arguments of Perron, Ng,
+	Qu and Schwert referenced above, the favored command for
+	testing a series <lit>y</lit> is likely to be:
+      </para>
+      <code context="cli">
+	adf -1 y --c --gls --test-down --perron-qu
+      </code>
+      <para context="cli">
+	(Or substitute <opt>ct</opt> for <opt>c</opt> if the series
+	seems to display a trend.)  The lag order for the test will
+	then be determined by testing down via modified AIC from the
+	Schwert maximum, with the Perron&ndash;Qu refinement.
       </para>
 
       <para>
 	<emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
-	tests are based on <cite key="mackinnon96">MacKinnon
-	(1996)</cite>.  The relevant code is included by kind
-	permission of the author. (Finite-sample values are only given
-	in the case of a non-augmented test. For a positive lag order
-	the asymptotic values are used.)
-	In the case of the test with linear
-	trend using GLS these <emphasis>P</emphasis>-values are not
-	applicable; critical values from Table 1 in <cite
-	key="ERS96">Elliott, Rothenberg and Stock (1996)</cite> are
-	shown instead.
+	tests are based on response-surface estimates. When GLS is not
+	applied these are taken from <cite key="mackinnon96">MacKinnon
+	(1996)</cite>. Otherwise they are taken from <cite
+	key="cottrell15">Cottrell (2015)</cite> or, when testing down
+	is performed, <cite key="sephton21">Sephton (2021)</cite>.
+	The <emphasis>P</emphasis>-values are specific to the sample
+	size unless they are labeled as asymptotic.
       </para>
 
       <subhead context="cli">Panel data</subhead>
