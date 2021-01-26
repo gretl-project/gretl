@@ -5,13 +5,13 @@
 #
 # A. Talha YALTA <yalta@etu.edu.tr>, 2008, 2009, 2010.
 # A. Talha Yalta, 2010, 2011, 2012, 2013, 2014, 2015, 2016.
-# talhayalta <talhayalta@gmail.com>, 2020.
+# talhayalta <talhayalta@gmail.com>, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-01-08 09:00-0500\n"
-"PO-Revision-Date: 2020-09-17 13:18+0300\n"
+"PO-Revision-Date: 2021-01-26 17:49+0300\n"
 "Last-Translator: talhayalta <talhayalta@gmail.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
 "Language: tr\n"
@@ -272,7 +272,7 @@ msgstr ""
 #: lib/src/adf_kpss.c:2275 lib/src/adf_kpss.c:2321
 #, c-format
 msgid "Lag truncation parameter = %d\n"
-msgstr "Gecikme budama değiştirgesi = %d\n"
+msgstr "Gecikme kırpma değiştirgesi = %d\n"
 
 #: lib/src/adf_kpss.c:2276 lib/src/compare.c:391 lib/src/compare.c:985
 #: lib/src/compare.c:1968 lib/src/compare.c:2187 lib/src/compare.c:2392
@@ -1000,9 +1000,9 @@ msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
 msgstr "değişken %d (%s): sayısal olmayan değerler = %d (yüzde %.2f)\n"
 
 #: lib/src/csvdata.c:2227
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: variable %d (%s), observation %d, expected numeric value\n"
-msgstr "HATA: %d (%s) değişkeni, %d. gözlem değeri sayısal değil\n"
+msgstr "HATA: %d (%s) değişkeni %d. gözlem için sayısal değer bekleniyordu\n"
 
 #: lib/src/csvdata.c:2236
 msgid "allocating string table\n"
@@ -1077,7 +1077,7 @@ msgstr "'%s' -- sayısal bir dönüştürme yapılamadı!"
 #: lib/src/csvdata.c:3368
 #, c-format
 msgid "warning: %d labels were truncated.\n"
-msgstr "Uyarı: %d etiket kısaltıldı.\n"
+msgstr "Uyarı: %d etiket kırpıldı.\n"
 
 #: lib/src/csvdata.c:3410
 msgid "scanning for data...\n"
@@ -1917,9 +1917,9 @@ msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr "%s çıkarılıyor: örneklem aralığında geçerli gözlem yok\n"
 
 #: lib/src/describe.c:5648 lib/src/describe.c:5738
-#, fuzzy, c-format
+#, c-format
 msgid "Dropping %s: string-valued series\n"
-msgstr "%s çıkarılıyor: örneklem aralığında geçerli gözlem yok\n"
+msgstr "%s çıkarılıyor: karakter içerikli seri\n"
 
 #: lib/src/describe.c:6260
 msgid "corr: needs at least two non-constant arguments"
@@ -2408,14 +2408,14 @@ msgstr ""
 " %s"
 
 #: lib/src/geneval.c:7646
-#, fuzzy, c-format
+#, c-format
 msgid "Warning: assertion '%s' failed"
-msgstr "Uyarı: %s serisi boş"
+msgstr "Uyarı: bildirim '%s' başarısız"
 
 #: lib/src/geneval.c:7652
 #, c-format
 msgid "Assertion '%s' failed"
-msgstr ""
+msgstr "Bildirim '%s' başarısız"
 
 #: lib/src/geneval.c:8851
 #, c-format
@@ -2851,9 +2851,9 @@ msgid "The MPI library is not loaded"
 msgstr "MPI kütüphanesi yüklü değil"
 
 #: lib/src/gensyntax.c:247
-#, fuzzy, c-format
+#, c-format
 msgid "Expected '%c' but found '%c'\n"
-msgstr "'%c' beklenirken %s bulundu\n"
+msgstr "'%c' beklenirken '%c' bulundu\n"
 
 #: lib/src/gensyntax.c:253
 #, c-format
@@ -2870,9 +2870,8 @@ msgid "too many arguments"
 msgstr "aşırı sayıda argüman"
 
 #: lib/src/gensyntax.c:1296
-#, fuzzy
 msgid "Expected ',' or ')'"
-msgstr "'%c' beklenirken %s bulundu\n"
+msgstr "',' ya da ')' bekleniyordu"
 
 #: lib/src/gmm.c:132
 #, c-format
@@ -2920,7 +2919,7 @@ msgstr "Sonuncusu kesikli olacak şekilde üç değişken sağlamalısınız"
 #: lib/src/graphing.c:2386 gui/gpt_dialog.c:578
 #, c-format
 msgid "%s versus %s (with least squares fit)"
-msgstr "%s ve %s (en küçük kareler yakıştırması ile)"
+msgstr "%s ve %s (enküçük kareler yakıştırması ile)"
 
 #: lib/src/graphing.c:2389 gui/gpt_dialog.c:587
 #, c-format
@@ -3205,7 +3204,7 @@ msgstr "Ayarlamalı %s"
 
 #: lib/src/graphing.c:9486 plugin/range-mean.c:112
 msgid "with least squares fit"
-msgstr "(en küçük kareler yakıştırması ile)"
+msgstr "(enküçük kareler yakıştırması ile)"
 
 #: lib/src/graphing.c:9603 lib/src/gretl_func.c:2739 lib/src/gretl_utils.c:1964
 #: lib/src/interact.c:1501 gui/dialogs.c:5547 gui/fnsave.c:5291
@@ -3215,14 +3214,12 @@ msgid "Couldn't open %s"
 msgstr "%s açılamadı"
 
 #: lib/src/graphing.c:10169
-#, fuzzy
 msgid "original data"
-msgstr "%s (özgün veriler)"
+msgstr "ilk baştaki veriler"
 
 #: lib/src/graphing.c:10171
-#, fuzzy
 msgid "final series"
-msgstr "seri ekle"
+msgstr "nihai seriler"
 
 #: lib/src/gretl_array.c:1792 lib/src/gretl_array.c:1808
 #, c-format
@@ -3584,7 +3581,7 @@ msgstr "Şu an paketlemek için elde işlev bulunmuyor."
 #: lib/src/gretl_func.c:6415
 #, c-format
 msgid "'%s' is the name of a built-in function"
-msgstr "'%s' programa gömülü bir işlevin adı"
+msgstr "'%s' yerleşik bir işlevin adı"
 
 #: lib/src/gretl_func.c:5146 gui/fnsave.c:1759
 msgid "Time-series data"
@@ -3768,11 +3765,11 @@ msgstr "%s: yereli bu sistemde desteklenmiyor"
 #: lib/src/gretl_list.c:1747
 #, c-format
 msgid "Variable %d was not in the original list"
-msgstr "%d değişkeni özgün listede bulunmuyor"
+msgstr "%d değişkeni baştaki listede bulunmuyor"
 
 #: lib/src/gretl_list.c:2100
 msgid "Can't do this: some vars in original model have been redefined"
-msgstr "Yapılamıyor: Özgün modeldeki bazı değişkenler yeniden tanımlanmış"
+msgstr "Yapılamıyor: İlk modeldeki bazı değişkenler yeniden tanımlanmış"
 
 #: lib/src/gretl_midas.c:208 lib/src/subsample.c:3135 gui/dialogs.c:3959
 #: gui/dialogs.c:4089
@@ -5602,7 +5599,7 @@ msgstr "koşullu EO"
 
 #: lib/src/modelprint.c:1807 lib/src/modelprint.c:1823
 msgid "Estimated using least squares"
-msgstr "En küçük kareler kullanılarak tahmin edildi"
+msgstr "Enküçük kareler kullanılarak tahmin edildi"
 
 #: lib/src/modelprint.c:1809
 msgid "= MLE"
@@ -5888,7 +5885,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:2584
 msgid "Statistics based on the original data"
-msgstr "Özgün verilere dayalı istatistikler"
+msgstr "Baştaki verilere dayalı istatistikler"
 
 #: lib/src/modelprint.c:2585
 msgid "Statistics based on the weighted data"
@@ -6819,11 +6816,12 @@ msgstr ""
 "%s için sıklık dağılımı, %d-%d gözlemleri\n"
 
 #: lib/src/printout.c:399
-#, fuzzy
 msgid ""
 "frequency   percent\n"
 "\n"
-msgstr "Sıklık çizimi"
+msgstr ""
+"yüzde sıklık\n"
+"\n"
 
 #: lib/src/printout.c:418
 msgid ""
@@ -6865,7 +6863,6 @@ msgid "TOT."
 msgstr "TOP."
 
 #: lib/src/printout.c:827
-#, fuzzy
 msgid "TOTAL"
 msgstr "TOPLAM"
 
@@ -7427,7 +7424,7 @@ msgstr "Görünürde İlişkisiz Bağlanımlar"
 
 #: lib/src/system.c:104
 msgid "Three-Stage Least Squares"
-msgstr "Üç-Aşamalı En küçük Kareler"
+msgstr "Üç-Aşamalı Enküçük Kareler"
 
 #: lib/src/system.c:105
 msgid "Full Information Maximum Likelihood"
@@ -7443,11 +7440,11 @@ msgstr "Sıradan Enküçük Kareler"
 
 #: lib/src/system.c:108
 msgid "Two-Stage Least Squares"
-msgstr "İki-Aşamalı En küçük Kareler"
+msgstr "İki-Aşamalı Enküçük Kareler"
 
 #: lib/src/system.c:109
 msgid "Weighted Least Squares"
-msgstr "Ağırlıklı En küçük Kareler"
+msgstr "Ağırlıklı Enküçük Kareler"
 
 #: lib/src/system.c:113
 msgid "No system of equations has been defined"
@@ -7611,7 +7608,7 @@ msgstr "Beklenmeyen simge %c"
 
 #: lib/src/tokenize.c:3403
 msgid "Command line is not valid UTF-8"
-msgstr ""
+msgstr "Komut satırı geçerli UTF-8 değil"
 
 #: lib/src/transforms.c:188
 #, c-format
@@ -7960,7 +7957,7 @@ msgstr "gecik      log-olb    p(OO)       AIC          BIC          HQC"
 
 #: lib/src/vartest.c:1202
 msgid "Test on the original VAR"
-msgstr "Özgün VAR üzerine sınama"
+msgstr "Baştaki VAR üzerine sınama"
 
 #: lib/src/vartest.c:1491
 msgid "Test on VAR"
@@ -8168,7 +8165,7 @@ msgstr "kurulum tarihi"
 #: gui/about.c:190 gui/about.c:192
 msgid "translator_credits"
 msgstr ""
-"Çeviren: Doç. Dr. A. Talha YALTA\n"
+"Çeviren: Prof. Dr. A. Talha YALTA\n"
 "TOBB Ekonomi ve Teknoloji Üniversitesi\n"
 "İktisat Bölümü\n"
 "İletişim için: http://yalta.etu.edu.tr/"
@@ -8852,7 +8849,7 @@ msgid ""
 "for the variable \"%s\""
 msgstr ""
 "\"%s\" değişkeni için \"kayıp\"\n"
-"diye okunacak değeri giriniz"
+"olarak okunacak değeri giriniz"
 
 #: gui/callbacks.c:600
 msgid "Enter value to be read as \"missing\":"
@@ -8872,15 +8869,15 @@ msgstr "gretl: ençok olabilirlik"
 
 #: gui/callbacks.c:612 gui/callbacks.c:701
 msgid "MLE: Specify function, and derivatives if possible:"
-msgstr "EO: İşlevi ve eğer olanaklı ise türevlerini belirtiniz:"
+msgstr "EO: İşlevi ve eğer varsa türevlerini belirtiniz:"
 
 #: gui/callbacks.c:618 gui/callbacks.c:705
 msgid "gretl: nonlinear least squares"
-msgstr "gretl: doğrusal-dışı en küçük kareler"
+msgstr "gretl: doğrusal-dışı enküçük kareler"
 
 #: gui/callbacks.c:619 gui/callbacks.c:706
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr "DDEK: İşlevi ve eğer olanaklı ise türevlerini belirtiniz:"
+msgstr "DDEK: İşlevi ve eğer varsa türevlerini belirtiniz:"
 
 #: gui/callbacks.c:625 gui/callbacks.c:721 gui/library.c:3744
 msgid "gretl: simultaneous equations system"
@@ -9015,17 +9012,21 @@ msgid ""
 "The data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"İçeriye aktarılacak veriler şu anki veri setinden\n"
+"daha düşük sıklığa sahip. İlerlenilsin mi?"
 
 #: gui/database.c:242
 msgid ""
 "Some of the data to be imported are of a lower frequency\n"
 "than the current dataset. OK to proceed?"
 msgstr ""
+"İçeriye aktarılacak verilerin bir bölümü şu anki veri setinden\n"
+"daha düşük sıklığa sahip. İlerlenilsin mi?"
 
 #: gui/database.c:254
-#, fuzzy, c-format
+#, c-format
 msgid "Disaggregate %s now?"
-msgstr "toplulaştırma"
+msgstr "%s çözüştürülsün mü?"
 
 #: gui/database.c:385
 msgid "Sorry, can't handle this frequency conversion"
@@ -9134,7 +9135,7 @@ msgstr ""
 
 #: gui/database.c:2864
 msgid "Installed"
-msgstr "Kurulu"
+msgstr "Kuruldu"
 
 #: gui/database.c:2868 gui/database.c:2892 gui/database.c:2951
 #: gui/database.c:3185 gui/datafiles.c:1228 gui/datafiles.c:1264
@@ -9868,7 +9869,7 @@ msgstr "gretl: rastsal sayı tohumu"
 
 #: gui/dialogs.c:1291
 msgid "Seed for generator:"
-msgstr "Oluşturucu tohumu:"
+msgstr "Oluşturucu tohum değeri:"
 
 #: gui/dialogs.c:1358
 msgid "Choose named list"
@@ -9906,7 +9907,7 @@ msgstr "kümeler (N = %d)"
 #: gui/dialogs.c:1778
 #, c-format
 msgid "Included groups: %d"
-msgstr "İçerilen kümeler: %d"
+msgstr "Küme sayısı: %d"
 
 #: gui/dialogs.c:1780
 #, c-format
@@ -10202,18 +10203,16 @@ msgid "gretl: expand data"
 msgstr "gretl: veri setini genişlet"
 
 #: gui/dialogs.c:4085
-#, fuzzy
 msgid "Expand annual data to"
-msgstr "Yıllık verileri üç aylığa genişlet"
+msgstr "Yıllık verileri genişlet:"
 
 #: gui/dialogs.c:4095
 msgid "Expand quarterly data to monthly"
 msgstr "Üç aylık verileri aylığa genişlet"
 
 #: gui/dialogs.c:4102
-#, fuzzy
 msgid "Please read the Help before proceeding."
-msgstr "(Bilgi için lütfen Yardım'a başvurunuz)"
+msgstr "İlerlemeden önce lütfen Yardım'ı okuyunuz."
 
 #: gui/dialogs.c:4258
 msgid "density estimation options"
@@ -10507,58 +10506,49 @@ msgid "series code:"
 msgstr "seri kodu:"
 
 #: gui/dialogs.c:6944 gui/dialogs.c:7179
-#, fuzzy
 msgid "constant"
-msgstr "Sabit"
+msgstr "sabit"
 
 #: gui/dialogs.c:7088
 #, c-format
 msgid "The series %s does not seem suitable for disaggregation"
-msgstr ""
+msgstr "%s serisi çözüştürme için uygun gibi görünmüyor"
 
 #: gui/dialogs.c:7133
-#, fuzzy
 msgid "Output name:"
-msgstr "Çıktı penceresi:"
+msgstr "Çıktı adı:"
 
 #: gui/dialogs.c:7146
-#, fuzzy
 msgid "Aggregation type:"
-msgstr "toplulaştırma"
+msgstr "Toplulaştırma şekli:"
 
 #: gui/dialogs.c:7159
-#, fuzzy
 msgid "Regression based"
-msgstr "Bağlanım"
+msgstr "Bağlanım temelli"
 
 #: gui/dialogs.c:7174
 msgid "Deterministic terms:"
-msgstr ""
+msgstr "Belirlemesel terimler:"
 
 #: gui/dialogs.c:7180
-#, fuzzy
 msgid "constant plus trend"
-msgstr "sabit terim ve eğilim ile"
+msgstr "sabit terim ve eğilim"
 
 #: gui/dialogs.c:7186
-#, fuzzy
 msgid "Covariate:"
-msgstr "değişke"
+msgstr "Değişke:"
 
 #: gui/dialogs.c:7203
-#, fuzzy
 msgid "proportional"
-msgstr "orantı"
+msgstr "orantısal"
 
 #: gui/dialogs.c:7204
-#, fuzzy
 msgid "additive"
-msgstr "Türev ekle"
+msgstr "toplamsal"
 
 #: gui/dialogs.c:7210
-#, fuzzy
 msgid "Preliminary series:"
-msgstr "Önceki seriler"
+msgstr "Önsel seriler:"
 
 #: gui/dialogs.c:7236 gui/library.c:1030 gui/library.c:1127 gui/library.c:1203
 msgid "show regression results"
@@ -10618,7 +10608,7 @@ msgstr "(Bilgi için lütfen Yardım'a başvurunuz)"
 
 #: gui/dlgutils.c:1244
 msgid "right-click for some shortcuts"
-msgstr "kısa yollar için sağ-tıklayın"
+msgstr "kısa yollar için sağ-tıklayınız"
 
 #: gui/fileselect.c:386
 #, c-format
@@ -11012,7 +11002,7 @@ msgstr "Farkı alınan seriyi çiz"
 
 #: gui/filters.c:852
 msgid "Graph original and smoothed series"
-msgstr "Özgün ve düzgünleştirmeli serileri çiz"
+msgstr "Baştaki ve düzgünleştirmeli serileri çiz"
 
 #: gui/filters.c:854
 msgid "Graph residual or cycle series"
@@ -11025,7 +11015,7 @@ msgstr "Sıklık tepkisini çiz"
 #: gui/filters.c:978 gui/filters.c:1004
 #, c-format
 msgid "%s (original data)"
-msgstr "%s (özgün veriler)"
+msgstr "%s (ilk baştaki veriler)"
 
 #: gui/filters.c:979 gui/filters.c:1005
 #, c-format
@@ -11201,9 +11191,8 @@ msgid "Error reading package"
 msgstr "Paket okuma hatası"
 
 #: gui/fncall.c:4629
-#, fuzzy
 msgid "No mapfile is present"
-msgstr "ARCH etkisi bulunmuyor"
+msgstr "Harita dosyası (mapfile) bulunmuyor"
 
 #: gui/fnsave.c:374
 msgid "_Save gfn"
@@ -11613,7 +11602,7 @@ msgstr "Pencereler"
 
 #: gui/gpt_control.c:383
 msgid " Click to set position"
-msgstr " Konum saptamak için tıklayın"
+msgstr " Konum saptamak için tıklayınız"
 
 #: gui/gpt_control.c:1128
 msgid "gnuplot command failed"
@@ -12145,7 +12134,7 @@ msgstr " Yüklü bir veri dosyası yok "
 
 #: gui/gretl.c:1566
 msgid "Working directory: click to configure"
-msgstr "Çalışma klasörü: ayarlamak için tıklayın"
+msgstr "Çalışma klasörü: ayarlamak için tıklayınız"
 
 #: gui/gretl.c:1674 gui/gretl.c:1686
 msgid "_User file..."
@@ -12637,7 +12626,7 @@ msgstr "Tam aralığı geri _getir"
 
 #: gui/gretl.c:1829
 msgid "_Show status"
-msgstr "_Durumu göster"
+msgstr "_Örneklemi göster"
 
 #: gui/gretl.c:1830
 msgid "_Restrict, based on criterion..."
@@ -12780,9 +12769,8 @@ msgid "_Hurst exponent"
 msgstr "_Hurst üstü"
 
 #: gui/gretl.c:1877 gui/menustate.c:601
-#, fuzzy
 msgid "Disaggregate..."
-msgstr "toplulaştırma"
+msgstr "Çözüştürme..."
 
 #: gui/gretl.c:1878
 msgid "_Edit attributes"
@@ -12806,7 +12794,7 @@ msgstr "_Araç değişkenler"
 
 #: gui/gretl.c:1886
 msgid "_Two-Stage Least Squares"
-msgstr "_İki-Aşamalı En küçük Kareler"
+msgstr "_İki-Aşamalı Enküçük Kareler"
 
 #: gui/gretl.c:1887
 msgid "_LIML"
@@ -12822,16 +12810,15 @@ msgstr "Di_ğer doğrusal modeller"
 
 #: gui/gretl.c:1890
 msgid "_Weighted Least Squares"
-msgstr "_Ağırlıklı En küçük Kareler"
+msgstr "_Ağırlıklı Enküçük Kareler"
 
 #: gui/gretl.c:1891
 msgid "H_eteroskedasticity corrected"
 msgstr "_Farklıserpilimsellik düzeltmeli"
 
 #: gui/gretl.c:1892
-#, fuzzy
 msgid "_Regularized least squares"
-msgstr "_Ağırlıklı en küçük kareler"
+msgstr "_Düzenlemeli enküçük kareler"
 
 #: gui/gretl.c:1893
 msgid "High _precision OLS"
@@ -12899,7 +12886,7 @@ msgstr "_Sabit ya da rastsal etkiler"
 
 #: gui/gretl.c:1910
 msgid "_Weighted least squares"
-msgstr "_Ağırlıklı en küçük kareler"
+msgstr "_Ağırlıklı enküçük kareler"
 
 #: gui/gretl.c:1911
 msgid "_Between model"
@@ -12991,7 +12978,7 @@ msgstr "_Nadaraya-Watson"
 
 #: gui/gretl.c:1935
 msgid "_Nonlinear Least Squares"
-msgstr "_Doğrusal-dışı en küçük kareler"
+msgstr "_Doğrusal-dışı enküçük kareler"
 
 #: gui/gretl.c:1936
 msgid "_Maximum likelihood"
@@ -14142,9 +14129,8 @@ msgid "Accessors"
 msgstr "Erişiciler"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2334
-#, fuzzy
 msgid "Built-in strings"
-msgstr "%s dizgisi silindi"
+msgstr "Yerleşik dizgiler"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
@@ -14155,7 +14141,6 @@ msgid "Mathematical"
 msgstr "Matematiksel"
 
 #: gui/helpfiles.c:335 doc/commands/matfuncs.c:43
-#, fuzzy
 msgid "Matrix manipulation"
 msgstr "Dizey şekillendirme"
 
@@ -14176,18 +14161,16 @@ msgid "Calendar"
 msgstr "Takvim"
 
 #: gui/helpfiles.c:349
-#, fuzzy
 msgid "Time-series"
-msgstr "zaman-serisi"
+msgstr "Zaman-serisi"
 
 #: gui/helpfiles.c:351
 msgid "Statistical"
 msgstr "İstatistiksel"
 
 #: gui/helpfiles.c:353
-#, fuzzy
 msgid "Non-parametric"
-msgstr "De_ğiştirgesel-dışı sınamalar"
+msgstr "Değiştirgesel-dışı"
 
 #: gui/helpfiles.c:357
 msgid "State space"
@@ -14251,7 +14234,7 @@ msgstr "Bulunacak dizgi:"
 
 #: gui/helpfiles.c:1988
 msgid "Variable names only (case sensitive)"
-msgstr "Yalnızca değişken adları (büyük/küçük harfe duyarlı)"
+msgstr "Değişken adlarında ara (büyük/küçük harfe duyarlı)"
 
 #: gui/helpfiles.c:2264
 msgid "Failed to download file"
@@ -14563,16 +14546,15 @@ msgstr ""
 "ekleyebilirsiniz."
 
 #: gui/library.c:1977
-#, fuzzy
 msgid ""
 "There are no observations available for forecasting\n"
 "out of sample.  If you wish, you can add observations\n"
 "(Data menu, Add observations), or you can shorten the sample\n"
 "range over which the model is estimated (Sample menu)."
 msgstr ""
-"Elde, örneklem içi yordama için gözlem bulunmuyor.\n"
-"Dilerseniz, gözlem ekleyebilir (Veriler menüsü, Değerleri\n"
-"düzenle), ya da modelin tahmin edileceği örneklem\n"
+"Elde, örneklem dışı yordama için gözlem bulunmuyor.\n"
+"Dilerseniz, gözlem ekleyebilir (Veriler menüsü, Gözlem\n"
+"ekle), ya da modelin tahmin edileceği örneklem\n"
 "aralığını daraltabilirsiniz (Örneklem menüsü)."
 
 #: gui/library.c:2328 gui/selector.c:8302
@@ -15131,7 +15113,7 @@ msgstr "Yerine koyarak yeniden örnekleme"
 
 #: gui/library.c:8865
 msgid "Number of cases"
-msgstr "Durum sayısı"
+msgstr "Gözlem sayısı"
 
 #: gui/library.c:8890
 msgid "OK to overwrite?"
@@ -15175,7 +15157,7 @@ msgstr ""
 
 #: gui/library.c:9661
 msgid "Unbalanced \"loop\"/\"endloop\" in script"
-msgstr ""
+msgstr "Betikte dengesiz \"loop\"/\"endloop\""
 
 #: gui/library.c:9673
 msgid "Unmatched \"if\" in script (fixed)"
@@ -15322,9 +15304,8 @@ msgid "%s: Full range %s - %s"
 msgstr "%s: Tam aralık %s - %s"
 
 #: gui/menustate.c:1093
-#, fuzzy
 msgid "(unit:period)"
-msgstr "dönem"
+msgstr "(birim: dönem)"
 
 #: gui/menustate.c:1128
 #, c-format
@@ -15493,7 +15474,7 @@ msgstr "R"
 
 #: gui/selector.c:1338
 msgid "Select and right-click to edit specification"
-msgstr "Belirtimi düzenlemek için seçip sağ-tıklayın"
+msgstr "Belirtimi düzenlemek için seçip sağ-tıklayınız"
 
 #: gui/selector.c:1838 gui/selector.c:2366
 msgid "Unrestricted"
@@ -15530,11 +15511,11 @@ msgstr "Bir bağımlı değişken seçmelisiniz"
 
 #: gui/selector.c:3461 gui/selector.c:6421
 msgid "Elastic net"
-msgstr ""
+msgstr "Elastic net"
 
 #: gui/selector.c:3472 gui/selector.c:6392 gui/selector.c:6420
 msgid "Ridge"
-msgstr ""
+msgstr "Sırt"
 
 #: gui/selector.c:3499
 msgid "You must specify a quantile"
@@ -15642,11 +15623,11 @@ msgstr "Devingen panel modeli"
 
 #: gui/selector.c:4270
 msgid "Weighted least squares"
-msgstr "Ağırlıklı en küçük kareler"
+msgstr "Ağırlıklı enküçük kareler"
 
 #: gui/selector.c:4272
 msgid "Two-stage least squares"
-msgstr "İki aşamalı en küçük kareler"
+msgstr "İki aşamalı enküçük kareler"
 
 #: gui/selector.c:4274
 msgid "Limited information maximum likelihood"
@@ -15689,9 +15670,8 @@ msgid "MIDAS regression"
 msgstr "MIDAS bağlanımı"
 
 #: gui/selector.c:4310
-#, fuzzy
 msgid "Regularized least squares"
-msgstr "Ağırlıklı en küçük kareler"
+msgstr "Düzenlemeli enküçük kareler"
 
 #: gui/selector.c:4320
 msgid "Weight variable"
@@ -15715,7 +15695,7 @@ msgstr "AR gecikme listesi"
 
 #: gui/selector.c:4332
 msgid "Desired quantile(s)"
-msgstr "Arzulanan bölüt(ler)"
+msgstr "İstenilen bölüt(ler)"
 
 #: gui/selector.c:4334
 msgid "Upper bound variable"
@@ -15959,7 +15939,7 @@ msgstr "Baştaki DF sınamaları atlansın"
 
 #: gui/selector.c:6150
 msgid "Iterated weighted least squares"
-msgstr "Yinelemeli ağırlıklı en küçük kareler"
+msgstr "Yinelemeli ağırlıklı enküçük kareler"
 
 #: gui/selector.c:6153 gui/selector.c:6156
 msgid "Include time dummies"
@@ -16031,17 +16011,15 @@ msgstr "Belirtilmiş ençok"
 
 #: gui/selector.c:6389 gui/selector.c:6419
 msgid "LASSO"
-msgstr ""
+msgstr "Kement (Lasso)"
 
 #: gui/selector.c:6436
-#, fuzzy
 msgid "Single λ-fraction"
-msgstr "Merkezi kesir:"
+msgstr "Tekil λ-kesiri"
 
 #: gui/selector.c:6445
-#, fuzzy
 msgid "Multiple λ values"
-msgstr "Çoklu çizimler"
+msgstr "Çoklu λ değerleri"
 
 #: gui/selector.c:6464 gui/toolbar.c:617
 msgid "Confidence level"
@@ -16657,7 +16635,7 @@ msgstr "Tema seçimi"
 
 #: gui/settings.c:217
 msgid "Web browser"
-msgstr "Internet tarayıcı"
+msgstr "İnternet tarayıcı"
 
 #: gui/settings.c:220
 msgid "Allow shell commands"
@@ -16728,9 +16706,8 @@ msgid "Calculator"
 msgstr "Hesap makinesi"
 
 #: gui/settings.c:265
-#, fuzzy
 msgid "Path to x12arima (or x13)"
-msgstr "x12arima yolu"
+msgstr "x12arima (x13arima) yolu"
 
 #: gui/settings.c:269
 msgid "Path to tramo"
@@ -16806,7 +16783,7 @@ msgstr "Sekme başına düşen boşluk"
 
 #: gui/settings.c:314
 msgid "\"Smart\" Tab and Enter"
-msgstr "\"Akıllı\" Sekme ve Giriş"
+msgstr "\"Akıllı\" sekme ve giriş"
 
 #: gui/settings.c:316
 msgid "Show line numbers"
@@ -17245,9 +17222,8 @@ msgid "Gretl Function Reference"
 msgstr "Gretl İşlev Başvuru Belgesi"
 
 #: gui/textbuf.c:2335
-#, fuzzy
 msgid "Functions proper"
-msgstr "_İşlev başvuru belgesi"
+msgstr "Özgün işlevler"
 
 #: gui/textbuf.c:2433
 msgid "Back"
@@ -17290,9 +17266,8 @@ msgid "Unindent region"
 msgstr "Girinti kaldırma bölgesi"
 
 #: gui/textbuf.c:3936
-#, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
-msgstr "Kendinden-girinti kaldırma bölgesi"
+msgstr "Kendinden-girintile (Ctrl+I)"
 
 #: gui/textbuf.c:3947 gui/toolbar.c:820
 msgid "Preferences..."
@@ -17540,26 +17515,24 @@ msgid "Stop"
 msgstr "Dur"
 
 #: gui/update.c:33
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "Version %s is available at http://gretl.sourceforge.net/\n"
 msgstr ""
 "Şu an gretl %s kullanıyorsunuz.\n"
-"http://ricardo.ecn.wfu.edu/pub/gretl/ adresinde sürüm %s bulunuyor.\n"
-"(Bu sürüm eğer http://gretl.sourceforge.net/ adresinde yoksa\n"
-"yakında olacaktır.)"
+"http://gretl.sourceforge.net/ adresinde %s sürümü bulunuyor\n"
 
 #: gui/update.c:37
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "You are running gretl %s.\n"
 "This seems to be a pre-release; the latest version available at\n"
 "http://gretl.sourceforge.net/ is %s"
 msgstr ""
 "Şu an gretl %s kullanıyorsunuz.\n"
-"Bu bir önsürüm gibi görünüyor. http://ricardo.ecn.wfu.edu/pub/gretl/\n"
-"adresinde bulunan en son sürüm %s."
+"Bu bir önsürüm gibi görünüyor. En yeni %s sürümü\n"
+"http://gretl.sourceforge.net/ adresinde bulunuyor"
 
 #: gui/update.c:42
 #, c-format
@@ -17640,7 +17613,7 @@ msgstr "Daraltma yöntemi (sıklığı azaltmak için)"
 
 #: gui/varinfo.c:991
 msgid "Treat this variable as discrete"
-msgstr "Kesikli değişken olarak ele al"
+msgstr "Kesikli değişken olarak tanımla"
 
 #: gui/varinfo.c:1013
 msgid "Numeric values represent an encoding"
@@ -18244,23 +18217,20 @@ msgid "Produce debugging output"
 msgstr "Hata ayıklama çıktıları üret"
 
 #: plugin/interpolate.c:249 plugin/interpolate.c:263
-#, fuzzy
 msgid "GLS estimates"
-msgstr "SEK tahminleri"
+msgstr "GEK tahminleri"
 
 #: plugin/interpolate.c:253
-#, fuzzy
 msgid "Iterated GLS estimates"
-msgstr "Yinelemeli tahmin"
+msgstr "Yinelemeli GEK tahminleri"
 
 #: plugin/interpolate.c:257
 msgid "rho truncated to zero"
-msgstr ""
+msgstr "rho, sıfıra kırpıldı"
 
 #: plugin/interpolate.c:1736
-#, fuzzy
 msgid "Temporal disaggregation"
-msgstr "toplulaştırma"
+msgstr "Zamansal çözüştürme"
 
 #: plugin/interval.c:225
 #, c-format
@@ -18569,7 +18539,7 @@ msgstr "(1-L)%2$s için %1$.2f gecikme eklendi"
 #: plugin/panurc.c:574
 #, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Bartlett budaması %d gecikmede\n"
+msgstr "Bartlett kırpması %d. gecikmede\n"
 
 #: plugin/pca.c:122
 msgid "Components with eigenvalues > mean"
