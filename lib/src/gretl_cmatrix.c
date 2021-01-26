@@ -1175,7 +1175,9 @@ gretl_matrix *gretl_cmatrix_kronlike (const gretl_matrix *A,
     gretl_matrix *R = (gretl_matrix *) B;
     gretl_matrix *C = NULL;
 
-    if (A->is_complex && B->is_complex) {
+    if (A->is_complex && hdp && B == NULL) {
+	; /* OK */
+    } else if (A->is_complex && B->is_complex) {
 	; /* OK */
     } else if (A->is_complex) {
 	R = complex_from_real(B, err);
