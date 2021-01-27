@@ -1100,7 +1100,7 @@ static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 		if (do_symmetric) {
 		    for (k=j; k<q; k++) {
 			bik = gretl_cmatrix_get(A, i, k);
-			gretl_cmatrix_set(C, i, ndx++, aij*bik);
+			gretl_cmatrix_set(C, i, ndx++, aij*conj(bik));
 		    }
 		} else {
 		    ndx = j * q;
