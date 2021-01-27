@@ -14519,10 +14519,11 @@
 	binary format is much faster for very large datasets.
       </para>
       <para>
-	The <lit>gdtb</lit> format was revised as gretl 2021a. If you
-	wish to write a binary data file readable by earlier gretl
-	(2018c or higher) you should append the <opt>compat</opt>
-	option.
+	The <lit>gdtb</lit> format was revised in gretl 2021a
+	(producing a huge write/read speed-up for super-large
+	datasets). But if you wish to write a binary data file
+	readable by earlier gretl (2018c or higher) you should append
+	the <opt>compat</opt> option.
       </para>
       <para>
 	When data are saved in <lit>gdt</lit> format the
