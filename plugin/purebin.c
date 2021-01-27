@@ -383,6 +383,15 @@ static int read_purebin_tail (DATASET *bset,
     return err;
 }
 
+static void gh_to_bset_transcribe (gbin_header *gh, DATASET *bset)
+{
+    bset->structure = gh->structure;
+    bset->pd = gh->pd;
+    bset->sd0 = gh->sd0;
+    bset->panel_pd = gh->panel_pd;
+    bset->panel_sd0 = gh->panel_sd0;
+}
+
 int purebin_read_data (const char *fname, DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
@@ -411,10 +420,7 @@ int purebin_read_data (const char *fname, DATASET *dset,
     fprintf(stderr, "purebin read: v=%d, n=%d\n", bset->v, bset->n);
 #endif
 
-    bset->pd = gh.pd;
-    bset->sd0 = gh.sd0;
-    bset->panel_pd = gh.panel_pd;
-    bset->panel_sd0 = gh.panel_sd0;
+    gh_to_bset_transcribe(&gh, bset);
 
     /* variable names */
     for (i=1; i<bset->v; i++) {
@@ -507,10 +513,7 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 	goto bailout;
     }
 
-    bset->pd = gh.pd;
-    bset->sd0 = gh.sd0;
-    bset->panel_pd = gh.panel_pd;
-    bset->panel_sd0 = gh.panel_sd0;
+    gh_to_bset_transcribe(&gh, bset);
 
     sel = make_selection_array(gh.nvars, vlist);
 
