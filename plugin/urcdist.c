@@ -841,6 +841,11 @@ double dfgls_pvalue (double tau, int T, int trend,
 	}
     }
 
+    if (!*err && (pval < 0 || pval > 1)) {
+	/* allow for a little inaccuracy at the extremes */
+	pval = pval < 0 ? 0 : 1;
+    }
+
  bailout:
 
     gretl_matrix_free(beta);
