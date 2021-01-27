@@ -79,7 +79,7 @@ const char **get_addon_names (int *n)
 }
 
 /* Given a full path to an addon package, return its
-   version string. If @data is non-NULL, also return its
+   version string. If @date is non-NULL, also return its
    release date via this pointer. In both cases the
    strings are allocated, and belong to the caller.
 */
