@@ -287,6 +287,7 @@ static char lp_pvals;
 
 static char dpd_2step;
 static char dpd_asy;
+static char dpd_dpd;
 static char dpd_p;
 
 static int y_x_lags_enabled;
@@ -492,6 +493,7 @@ void clear_selector (void)
     lovar = hivar = 0;
 
     dpd_asy = dpd_2step = 0;
+    dpd_dpd = 0;
     dpd_p = 1;
 
     arma_p = 1;
@@ -4175,15 +4177,9 @@ static void compose_cmdlist (selector *sr)
 	} else if (sr->ci == DPANEL) {
 	    dpd_2step = (sr->opts & OPT_T)? 1 : 0;
 	    dpd_asy = (sr->opts & OPT_A)? 1 : 0;
+	    dpd_dpd = (sr->opts & OPT_X)? 1 : 0;
 	} else if (NONPARAM_CODE(sr->ci)) {
 	    nonparam_record_xvar(endbit);
-	}
-
-	/* FIXME: for now we'll make dpanel backward compatible
-	   with arbond (but this should be a settable option)
-	*/
-	if (sr->ci == DPANEL) {
-	    sr->opts |= OPT_X;
 	}
 
 	/* panel: scrub --nerlove if not doing random effects */
@@ -6159,6 +6155,8 @@ static void build_selector_switches (selector *sr)
 	pack_switch(tmp, sr, (model_opt & OPT_L), FALSE, OPT_L, 0);
 	tmp = gtk_check_button_new_with_label(_("Asymptotic standard errors"));
 	pack_switch(tmp, sr, (dpd_asy || (model_opt & OPT_A)), FALSE, OPT_A, 0);
+	tmp = gtk_check_button_new_with_label(_("DPD-style initial covariance matrix"));
+	pack_switch(tmp, sr, (dpd_dpd || (model_opt & OPT_X)), FALSE, OPT_X, 0);
     } else if (sr->ci == XTAB) {
 	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
