@@ -187,9 +187,10 @@
       </para>
       
       <para context="cli">
-	Le opzioni precedenti e la discussione seguente si riferiscono all'uso del comando 
-	<lit>adf</lit> con serie storiche regolari. La discussione dell'uso con
-	dati panel è esposta più avanti.
+	Le opzioni precedenti e la discussione seguente si riferiscono
+	per lo più all'uso del comando <lit>adf</lit> con serie
+	storiche vere e proprie. La discussione dell'uso con dati
+	panel è esposta nella sezione <quote>Dati Panel</quote>.
       </para>
 
       <para context="cli">
@@ -202,42 +203,100 @@
       </para>
 
       <para context="cli">
-        Per impostazione predefinita, vengono mostrate due varianti del
-        test: una basata su una regressione che contiene solo una costante,
-        e una che include la costante e un trend lineare. È possibile
-        controllare le varianti specificando una o più opzioni.
+        Per impostazione predefinita, vengono mostrate due varianti
+        del test: una basata su una regressione che contiene solo una
+        costante, e una che include la costante e un trend lineare. È
+        possibile controllare le varianti specificando una o più fra
+        le opzioni <opt>nc</opt>, <opt>c</opt>, <opt>ct</opt>,
+        <opt>ctt</opt>.
       </para>
       
       <para context="cli">
 	L'opzione <opt>gls</opt> può essere utilizzata congiuntamente
-	con una o più opzioni <opt>c</opt> e <opt>ct</opt> (referenti
-	al modello con solo una costante ed ad uno che include sia la
-	costante che un trend lineare).  L'effetto di questa opzione è
-	che la rimozione della media o del trend lineare dalla
-	variabile che deve essere testata è fatta utilizzando la
-	procedura GLS suggerita da <cite key="ERS96">Elliott,
-	Rothenberg e Stock (1996)</cite>, la quale restituisce un
-	test di potenza superiore al test standard di
-	Dickey&ndash;Fuller.  Questa opzione non è compatibile con
-	<opt>nc</opt>,<opt>ctt</opt> o <opt>seasonals</opt>.
+	alle opzioni <opt>c</opt> e <opt>ct</opt>.  L'effetto di
+	questa opzione è che la rimozione della media o del trend
+	lineare dalla variabile che deve essere testata è fatta
+	utilizzando la procedura GLS suggerita da <cite
+	key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>, la
+	quale restituisce un test di potenza superiore al test
+	standard di Dickey&ndash;Fuller.  Questa opzione non è
+	compatibile con <opt>nc</opt>,<opt>ctt</opt> o
+	<opt>seasonals</opt>.
       </para>
       
       <para>
-	In tutti i casi, la variabile dipendente è la differenza prima
-        della variabile specificata, <math>y</math>, e la variabile
-        dipendente più importante è il ritardo (di ordine uno) di
-        <math>y</math>. Il modello è costruito in modo che il coefficiente
-        della variabile ritardata <math>y</math> è pari a 1 meno
-        la radice. Ad esempio, il modello con una costante può essere
-        scritto come <equation status="display"
-        tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
-        ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	graphic="adf1"/> Sotto l'ipotesi nulla di radice unitaria il coefficiente 
-	della <math>y</math> ritardata è nullo; sotto l'alternativa che 
-	<math>y</math> sia stazionaria il coefficiente è negativo.
+	In tutti i casi, la variabile dipendente nella regressione
+	usata per calcolare il test è la differenza prima della
+	variabile specificata, <math>y</math>, e la variabile
+	dipendente più importante è il ritardo (di ordine uno) di
+	<math>y</math>. Il modello è costruito in modo che il
+	coefficiente della variabile ritardata <math>y</math> è pari a
+	1 meno la radice. Ad esempio, il modello con una costante può
+	essere scritto come <equation status="display"
+	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
+	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)" graphic="adf1"/>
+	Sotto l'ipotesi nulla di radice unitaria il coefficiente della
+	<math>y</math> ritardata è nullo; sotto l'alternativa che
+	<math>y</math> sia stazionaria il coefficiente è negativo. Di
+	conseguenza, questo test è intrinsecamente a una coda.
       </para>
 
       <subhead context="cli">Selezione dell'ordine dei ritardi</subhead>
+
+      <para context="cli">
+	Nella versione più semplice del test Dickey&ndash;Fuller test
+	si assume che il termine di errore nella regressione di test
+	sia serialmente incorrelato. Poiché questo è spesso
+	implausibile, la specificazione viene spesso estesa includendo
+	uno o più ritardi della variabile dipendente, dando così luogo
+	al cosiddetto test ADF (Augmented Dickey&ndash;Fuller).
+	L'argomento <repl>ordine</repl> indica il numero di tali
+	ritardi, <math>k</math>, che può dipendere dall'ampiezza
+	campiopnaria <math>T</math>.
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Per selezionare un <math>k</math> fisso, basta inserire un
+	    numero non negativo per <repl>ordine</repl>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Per avere un numero di ritardi dipendente da
+	    <math>T</math>, specificare come <repl>order</repl> il
+	    numero &minus;1. In questo caso, l'ordine viene
+	    automaticamente scelto secondo l'indicazione di <cite
+	    key="schwert89">Schwert (1989)</cite>, ossia la parte
+	    intera di 12(<math>T</math>/100)<sup>0.25</sup>.
+	  </para>
+	</li>
+      </ilist>
+
+      <para context="cli">
+	In generale, però, non si sa quanti ritardi siano necessari
+	per <quote>sbiancare</quote> i residui
+	Dickey&ndash;Fuller. Spesso si specifica il valore 
+	<emphasis>massimo</emphasis>  di <math>k</math> e si lascia
+	decidere ai dati il numero di ritardi effettivo.  Per fare
+	questo, c'è l'opzione <opt>test-down</opt>: il criterio usato
+	per scegliere il <math>k</math> ottimale è determinato dal
+	parametro dato a questa opzione, che deve essere uno fra 
+	<lit>AIC</lit> (default), <lit>BIC</lit> o <lit>tstat</lit>.
+      </para>
+
+      <para context="gui">
+        Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
+        regressori di ognuna delle regressioni calcolate per il test
+        saranno aggiunti <math>k</math> ritardi della variabile
+        dipendente, con la precisazione che segue. Se viene
+        selezionata la casella <quote>test per il ritardo
+        massimo</quote>, l'ordine selezionato verrà considerato come
+        ordine massimo, e l'ordine da usare effettivamente sarà
+        ricavato applicando la seguente procedura di test
+        <quote>all'indietro</quote>, usando il criterio scelto tramite
+        la tendina associata.
+      </para>
 
       <para context="cli">
         Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
@@ -256,33 +315,22 @@
         <lit>BIC</lit> o <lit>tstat</lit>.  
       </para>
 
-      <para context="gui">
-        Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
-        regressori di ognuna delle regressioni calcolate per il test
-        saranno aggiunti <math>k</math> ritardi della variabile
-        dipendente, con la precisazione che segue. Se viene
-        selezionata la casella <quote>test per il ritardo
-        massimo</quote>, l'ordine selezionato verrà considerato come
-        ordine massimo, e l'ordine da usare effettivamente sarà
-        ricavato applicando la seguente procedura di test
-        "all'indietro", usando il criterio scelto tramite la tendina
-        associata.
-      </para>
-
       <para context="cli">
-	Quando si testa "all'indietro", l'ordine dei ritardi finale
-	viene scelto in modo da ottimizzare rispettivamente una
-	versione modificata del Criterio di Informazione di Akaike o
-	del Criterio Bayesiano di Schwartz. La procedura varia a
-	seconda se si sia scelta l'opzione <opt>gls</opt>: con la
-	de-trendizzazione GLS, i valori AIC e BIC sono quelli
-	<quote>modificati</quote> descritti in <cite
-	key="ng-perron01">Ng e Perron (2001)</cite>, altrimenti sono
-	quelli standard. Nel caso GLS è disponibile un'ulteriore
-	opzione, e cioè <opt>perron-qu</opt>; essa fa sì che i criteri
-	di informazione modificati sono calcolati secondo il metodo
-	raccomandato in <cite key="perron-qu07">Perron e Qu
-	(2007)</cite>.
+	Quando si testa "all'indietro" con lo AIC o il BIC, l'ordine
+	dei ritardi finale viene scelto in modo da ottimizzare
+	rispettivamente una versione modificata del Criterio di
+	Informazione di Akaike o del Criterio Bayesiano di
+	Schwartz. La procedura varia a seconda se si sia scelta
+	l'opzione <opt>gls</opt>: con la de-trendizzazione GLS, i
+	valori AIC e BIC sono quelli <quote>modificati</quote>
+	descritti in <cite key="ng-perron01">Ng e Perron
+	(2001)</cite>, altrimenti sono quelli standard. Nel caso GLS è
+	disponibile un'ulteriore opzione, e cioè <opt>perron-qu</opt>;
+	essa fa sì che i criteri di informazione modificati sono
+	calcolati secondo il metodo raccomandato in <cite
+	key="perron-qu07">Perron e Qu (2007)</cite>. In quest'ultimo
+	caso, i dati sono prima centrati in media o detrendizzati via
+	OLS; il GLS viene applicato dopo aver scelto l'ordine dei ritardi.
       </para>
 
       <para context="gui">
@@ -296,7 +344,6 @@
 	Quando si testa "all'indietro" usando la statistica
 	<math>t</math>, la procedura è la seguente:
       </para>
-
       <nlist>
 	<li><para>
 	  Stima la regressione Dickey&ndash;Fuller con
@@ -319,28 +366,43 @@
         distribuzione normale pari a 0.10 o inferiore.
       </para> 
 
+      <para context="cli">
+	In sostanza, se accettiamo i vari argomenti di Perron, Ng, Qu
+	e Schwert citati sopra, il comando più appropriato per testare
+	una serie <lit>y</lit> è qualcosa del tipo:
+      </para>
+      <code context="cli">
+	adf -1 y --c --gls --test-down --perron-qu
+      </code>
+      <para context="cli">
+	(Sosotituendo <opt>ct</opt> a <opt>c</opt> se la serie
+	contiene un trend evidente.)  L'ordine dei ritardi del test
+	verrà determinato testando all'indietro con il criterio AIC
+	modificato partendo del massimo di Schwert maximum, col
+	raffinamento di Perron&ndash;Qu.
+      </para>
+
       <para>
         I <emphasis>p-</emphasis>value per questo test sono basati su
-        MacKinnon (1996). Il codice rilevante è incluso per gentile
-        concessione dell'autore. (I valori per campioni finiti sono
-        fornmiti solo per test non aumentati. Se l'ordine dei ritardi
-        è diverso da zero, vengono usati i valori asintotici.)  Nel
-        caso del test con trend lineare usando la procedura GLS questi
-        <emphasis>P</emphasis>-value non sono utilizzabili; vengono
-        usati i valori critici contenuti nella Tabella 1 di <cite
-        key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>.
+        stime della superficie di risposta. Se non si usa il GLS, essi
+        sono tratti da <cite key="mackinnon96">MacKinnon
+        (1996)</cite>. Altrimenti, si usa <cite
+        key="cottrell15">Cottrell (2015)</cite> o, quando si testa
+        all'indietro, <cite key="sephton21">Sephton (2021)</cite>.  I
+        <emphasis>P</emphasis>-value sono specifici per ampiezza
+        campionaria, a meno che non vengano dichiarati come asintotici
+        nell'output.
       </para>
 
       <subhead context="cli">Dati panel</subhead>
 
       <para context="cli">
-	Quando il comando <lit>adf</lit> è usato con dati panel per calcolare 
-	un test panel di radici unitarie le opzioni applicabili sono leggermente
-	diverse.
+	Quando il comando <lit>adf</lit> è usato con dati panel per
+	calcolare un test panel di radici unitarie le opzioni
+	applicabili sono piuttosto diverse.
       </para>
-
       <para context="cli">
-	In primo luogo, mentre nel caso di serie storiche regolari è
+	In primo luogo, mentre nel caso di serie storiche pure è
 	possibile indicare un elenco di variabili da testare, con dati
 	panel ciascun comando può esaminare una sola variabile alla
 	volta.  Secondo, le opzioni che governano l'inclusione di
@@ -14650,8 +14712,9 @@ qual caso viene usato QML.
       </para>
       <para>
        A partire dalla versione 2021a, il formato <lit>gdtb</lit> è
-       stato modificato. Per salvare col vecchio formato, così che il
-       file sia leggibile con versioni precedenti di gretl, si deve
+       stato modificato in modo da velocizzare la lettura e scrittura
+       di file molto grandi. Per salvare col vecchio formato, così che
+       il file sia leggibile con versioni precedenti di gretl, si deve
        usare l'opzione <opt>compat</opt>.
       </para>
       <para>
