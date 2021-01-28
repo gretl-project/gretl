@@ -5031,16 +5031,17 @@
     <function name="hdprod" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">Y</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Prodotto diretto orizzontale. I due argomenti devo avere lo stesso
-	  numero di righe, <math>r</math>. Il risultato è una matrice
-	  con <math>r</math> righe, in cui la riga
-	  <math>i</math>-esima è il prodotto di Kronecker 
-	  delle corrispondenti righe di <argname>X</argname> e
-	  <argname>Y</argname>.
+	  Prodotto diretto orizzontale. I due argomenti devo avere lo
+	  stesso numero di righe, <math>r</math>. Il risultato è una
+	  matrice con <math>r</math> righe, in cui la riga
+	  <math>i</math>-esima è il prodotto di Kronecker delle
+	  corrispondenti righe di <argname>X</argname> e
+	  <argname>Y</argname>. L'omissione di <argname>Y</argname> fa
+	  sì che venga usata la sintassi abbreviata (vedi sotto).
 	</para>
 	<para context="tex">
 	  In altri termini, se $X$ è una matrice $r \times k$, $Y$ è una matrice
@@ -5052,11 +5053,20 @@
 	  \]
 	  dove $n = (j-1) m + l$.
 	</para>
+	<para context="notex">
+	  Se <argname>X</argname> è una matrice <math>r x k</math> e
+	  <argname>Y</argname> è una matrice <math>r x m</math>, il
+	  risultato sarà una matrice con <math>r</math> righe e
+	  <math>km</math> colonne.
+	</para>
 	<para>
-	  "Prodotto diretto orizzontale" ("Horizontal direct product") è
-	  il modo con cui questa operazione viene chiamata nel linguaggio
-	  di programmazione GAUSS. Il suo equivalente in algebra
-	  matriciale standard si chiama "prodotto di Khatri-Rao per riga".
+	  <quote>Prodotto diretto orizzontale</quote>
+	  (<quote>Horizontal direct product</quote>) è il modo con cui
+	  questa operazione viene chiamata nel linguaggio di
+	  programmazione GAUSS. Il suo equivalente in algebra
+	  matriciale standard si chiama <quote>prodotto di Khatri-Rao
+	  per riga</quote>, o prodotto <quote>face-splitting</quote>
+	  in teoria dei segnali.
 	</para>
 	<para>
 	  Esempio: il codice
@@ -5070,9 +5080,46 @@
 	  produce la matrice seguente:
 	</para>
 	<code>
-          0    1    0    2    0    3 
+           0    1    0    2    0    3 
           -4    4   -5    5   -6    6 
 	</code>
+	<subhead>Sintassi abbreviata</subhead>
+	<para>
+	  Se <argname>X</argname> e <argname>Y</argname> sono uguali,
+	  ogni riga della matrice risultato sarà la vettorizzazione di
+	  una matrice simmetrica. In questi casi, il secondo argomento
+	  può essere omesso; tuttavia, la matrice risultato conterrà
+	  solo le colonne non ridondanti, e avrà quindi
+	  <math>k(k+1)/2</math> colonne.  Per esempio,
+	</para>
+	<code>
+	  A = {1,2,3; 4,5,6}
+	  C = hdprod(A)
+	</code>
+	<para>
+	  produce
+	</para>
+	<code>
+	  1    2    3    4    6    9 
+	  16   20   24   25   30   36 
+	</code>
+	<para context="tex">
+	  Si noti che la $i$-esima riga di $C$ è $\mathrm{vech}(a_i
+	  a_i')$, dove $a_i$ è la $i$-esima riga di $A$.
+	</para>
+	<para context="notex">
+	  Si noti che la <math>i</math>-esima riga di <math>C</math> è
+	  <math>vech(a</math><sub>i</sub>
+	  <math>a</math><sub>i</sub><math>')</math>, dove
+	  <math>a</math><sub>i</sub> è la <math>i</math>-esima riga
+	  di <math>A</math>.
+	</para>
+	<para>
+	  Quando si usa la sintassi abbreviata con matrici complesse,
+	  il secondo argomento implicito è la <i>coniugata</i> del
+	  primo, per far sì che ogni riga del risultato sia la
+	  vettorizzazione simmetrica di una matrice hermitiana.
+	</para>
       </description>
     </function>
 

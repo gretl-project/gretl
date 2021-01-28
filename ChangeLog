@@ -13,6 +13,7 @@ version 2021b, in progress
   accept an optional boolean argument; specific to the
   cross-sectional statistics produced when list arguments
   are given, this allows skipping of missing values.
+- hdprod(): introduce the "shorthand" syntax (one argument only)
 - Fix bug: possible crash when displaying a matrix with very
   long column names in the GUI program
 

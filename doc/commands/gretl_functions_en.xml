@@ -5042,7 +5042,7 @@
     <function name="hdprod" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">Y</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5051,24 +5051,29 @@
 	  matrix with <math>r</math> rows, in which the
 	  <math>i</math>-th row is the Kronecker product of the
 	  corresponding rows of <argname>X</argname> and
-	  <argname>Y</argname>.
+	  <argname>Y</argname>. If <argname>Y</argname> is omitted,
+	  the <quote>shorthand</quote> syntax applies (see below). 
 	</para>
 	<para context="tex">
-	  In other words, if $X$ is an $r \times k$ matrix, $Y$ is an
-	  $r \times m$ matrix and $Z$ is the result matrix of the
-	  horizontal direct product of $X$ times $Y$, then $Z$ will
-	  have $r$ rows and $k\cdot m$ columns; moreover,
-	  \[
-	  Z_{in} = X_{ij} Y_{il}
-	  \]
+	  If $X$ is an $r \times k$ matrix, $Y$ is an $r \times m$
+	  matrix and $Z$ is the result matrix of the horizontal direct
+	  product of $X$ times $Y$, then $Z$ will have $r$ rows and
+	  $k\cdot m$ columns; moreover, \[ Z_{in} = X_{ij} Y_{il} \]
 	  where $n = (j-1) m + l$.
+	</para>
+	<para context="notex">
+	  If <argname>X</argname> is an <math>r x k</math> matrix and
+	  <argname>Y</argname> is an <math>r x m</math> matrix, the
+	  result will be a matrix with <math>r</math> rows and
+	  <math>km</math> columns.
 	</para>
 	<para>
 	  This operation is called <quote>horizontal direct
 	  product</quote> in conformity to its implementation in the
 	  GAUSS programming language. Its equivalent in standard
 	  matrix algebra would be called the row-wise Khatri-Rao
-	  product.
+	  product, or <quote>face-splitting</quote> product in the
+	  signal processing literature.
 	</para>
 	<para>
 	  Example: the code
@@ -5085,6 +5090,43 @@
           0    1    0    2    0    3
          -4    4   -5    5   -6    6
 	</code>
+	<subhead>Shorthand syntax</subhead>
+	<para>
+	  If <argname>X</argname> and <argname>Y</argname> are the
+	  same matrix, then each row of the result is the
+	  vectorization of a symmetric matrix. In these cases, the
+	  second argument may be omitted; however, the returned matrix
+	  will only contain the non-redundant columns, and will
+	  therefore have <math>k(k+1)/2</math> columns.  For example,
+	</para>
+	<code>
+	  A = {1,2,3; 4,5,6}
+	  C = hdprod(A)
+	</code>
+	<para>
+	  produces
+	</para>
+	<code>
+	  1    2    3    4    6    9 
+	  16   20   24   25   30   36 
+	</code>
+	<para context="tex">
+	  Note that the $i$-th row of $C$ is $\mathrm{vech}(a_i
+	  a_i')$, where $a_i$  is the $i$-th row of $A$.
+	</para>
+	<para context="notex">
+	  Note that the <math>i</math>-th row of <math>C</math> is
+	  <math>vech(a</math><sub>i</sub>
+	  <math>a</math><sub>i</sub><math>')</math>, where
+	  <math>a</math><sub>i</sub> is the <math>i</math>-th row of
+	  <math>A</math>.
+	</para>
+	<para>
+	  When using the shorthand syntax with complex matrices, the
+	  implicit second argument will be the <i>conjugate</i> of the
+	  first one, so as to make each row of the result the
+	  symmetric vectorization of a Hermitian matrix.
+	</para>
       </description>
     </function>
 
