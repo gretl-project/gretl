@@ -1933,8 +1933,9 @@ real_restriction_set_parse_line (gretl_restriction *rset,
     } else if (*s == 'R' || *s == 'q') {
 	/* restrictions given in matrix form */
 	err = read_matrix_line(s, rset);
-    } else if (!strncmp(s, "strings", 7)) {
-	err = parse_strings_line(s + 7, rset, dset);
+    } else if (!strncmp(s, "inject", 6)) {
+	/* restrictions given as an array of strings */
+	err = parse_strings_line(s + 6, rset, dset);
     } else {
 	/* a regular linear restriction */
 	err = parse_restriction_row(rset, s, dset);
