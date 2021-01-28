@@ -175,81 +175,108 @@
 
     <description>
       <para context="gui">
-	Esta instrución necesita que indiques o nivel de retardos cun número enteiro;
-	se o nivel é cero, execútase a proba estándar de Dickey&ndash;Fuller (non
-	ampliada). Con ela calcúlase un conxunto de probas de Dickey&ndash;Fuller
-	sobre a(s) variable(s) do argumento, sendo a hipótese nula a existencia dunha
-	raíz unitaria. (Agora ben, cando escolles a opción 'difference', calcúlase a
-	primeira diferenza da(s) variable(s) antes de facer a proba, e a discusión de
-	abaixo debes de entendela como referida á(s) variable(s) transformada(s).)
+	Esta instrución necesita que indiques o nivel de retardos cun número
+	enteiro; se o nivel é cero, execútase a proba estándar (non ampliada)
+	de Dickey&ndash;Fuller. Calcúlase unha ou máis das probas de
+	Dickey&ndash;Fuller sobre a(s) variable(s) do argumento, sendo a
+	hipótese nula a existencia dunha raíz unitaria. (Agora ben, cando
+	escolles a opción 'difference', calcúlase a primeira diferenza da(s)
+	variable(s) antes de facer a proba, e a discusión de abaixo debes de
+	entendela como referida á(s) variable(s) transformada(s).)
       </para>
 
       <para context="cli">
-	As opcións que se amosan abaixo e a discusión que segue, correspóndense
-	co uso da instrución <lit>adf</lit> con datos de series temporais típicos.
-	Para utilizar esta instrución con datos de panel, mira máis abaixo.
+	As opcións que se amosan máis abaixo e a discusión que segue,
+	se corresponden principalmente co uso da instrución <lit>adf</lit>
+	con datos de típicas series temporais. Para utilizar esta instrución
+	con datos de panel, mira máis abaixo a sección titulada
+	<quote>Datos de panel</quote>.
       </para>
 
       <para context="cli">
-	Calcula un conxunto de probas de Dickey&ndash;Fuller sobre cada unha
-	das variables do argumento, sendo a hipótese nula a existencia dunha
-	raíz unitaria. (Agora ben, cando escolles a opción <opt>difference</opt>,
-	calcúlase a primeira diferenza da(s) variable(s) antes de facer a proba,
-	e a discusión de abaixo debes de entendela como referida á(s) variable(s)
-	transformada(s).)
+	Esta instrución calcula un conxunto de probas de Dickey&ndash;Fuller
+	sobre cada unha das variables do argumento, sendo a hipótese nula a
+	existencia dunha raíz unitaria. (Agora ben, cando escolles a opción
+	<opt>difference</opt>, calcúlase a primeira diferenza da(s) variable(s)
+	antes de facer a proba, e a discusión de abaixo debes de entendela
+	como referida á(s) variable(s) transformada(s).)
       </para>
 
       <para context="cli">
 	Por defecto, amósanse dúas variantes da proba: unha baseada nunha
 	regresión que utiliza unha constante, e outra que utiliza unha
-	constante máis unha tendencia linear. Podes controlar as variantes que
-	se presentan especificando un ou máis dos indicadores de opción.
+	constante máis unha tendencia linear. Podes controlar as variantes
+	que se presentan especificando un ou máis dos indicadores de
+	opción: <opt>nc</opt>, <opt>c</opt>, <opt>ct</opt>, ou <opt>ctt</opt>.
       </para>
 
       <para context="cli">
-	Podes utilizar a opción <opt>gls</opt> xunto con algunha das dúas
-	opcións <opt>c</opt> e <opt>ct</opt> (o modelo con constante, ou o
-	modelo con constante máis tendencia). O efecto desta opción é que a
-	detracción da media ou da tendencia da variable que se quere probar, faise
-	utilizando o procedemento de Mínimos Cadrados Xeneralizados suxerido
-	por <cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>,
+	Podes utilizar a opción <opt>gls</opt> xunto con algunha das dúas opcións
+	<opt>c</opt> e <opt>ct</opt> (con constante, e con constante máis tendencia).
+	O efecto desta opción é que a serie que se quere probar, detráese da media
+	ou da tendencia usando o procedemento de Mínimos Cadrados Xeneralizados
+	proposto por <cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>,
 	que proporciona unha proba de maior potencia que a aproximación
-	estándar de Dickey&ndash;Fuller. Esta opción non é compatible
-	con <opt>nc</opt>, <opt>ctt</opt> nin
-	<opt>seasonals</opt>.
+	estándar de Dickey&ndash;Fuller. Esta opción non é compatible con
+	<opt>nc</opt>, <opt>ctt</opt> nin <opt>seasonals</opt>.
       </para>
 
       <para>
-	En tódolos casos, a variable dependente é a primeira diferenza da
-	variable especificada (<math>y</math>) e a variable independente clave
-	é o primeiro retardo de <math>y</math>. O modelo constrúese de xeito que
-	o coeficiente da variable <math>y</math> retardada, é igual á raíz en
-	cuestión menos 1. Por exemplo, o modelo con constante pode escribirse como
+	En tódolos casos, a variable dependente na regresión da proba, é a
+	primeira diferenza da serie indicada (<math>y</math>), e a variable
+	independente chave é o primeiro retardo de <math>y</math>. A regresión
+	fórmase de xeito que o coeficiente da variable <math>y</math> retardada,
+	é igual á raíz en cuestión, &agr;, menos 1. Por exemplo, o modelo con
+	constante pode escribirse como
 	<equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
-	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)"
-	graphic="adf1"/>
-	Baixo a hipótese nula de existencia dunha raíz unitaria, o coeficiente da
-	variable <math>y</math> retardada é igual a cero; e baixo a hipótese
-	alternativa de que <math>y</math> é estacionaria, este coeficiente é negativo.
+	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)" graphic="adf1"/>
+	Baixo a hipótese nula de existencia dunha raíz unitaria, o coeficiente
+	da variable <math>y</math> retardada é igual a cero. Baixo a hipótese
+	alternativa de que <math>y</math> é estacionaria, este coeficiente é
+	negativo. Daquela a proba é propiamente dunha cola.
       </para>
 
       <subhead context="cli">Selección do nivel de retardos</subhead>
 
       <para context="cli">
-	Se o argumento <repl>nivel</repl> (de aquí en diante chamarémoslle nivel
-	ou orde <math>k</math>) é maior ca 0, entón inclúense <math>k</math>
-	retardos da variable dependente no lado dereito da regresión que se estima
-	para calcular o estatístico de proba en cada caso. Cando indicas o nivel de
-	retardos como &minus;1, <math>k</math> establécese seguindo o aconsellado
-	por <cite key="schwert89">Schwert (1989)</cite>: concretamente tómase a
-	parte enteira de calcular 12(<math>T</math>/100)<sup>0.25</sup>, onde
-	<math>T</math> indica o tamaño da mostra. Porén, en cada caso no que
-	indicas a opción <opt>test-down</opt>, entón <math>k</math> tómase como
-	o retardo <emphasis>máximo</emphasis>, e o nivel de retardos concreto que
-	se utilizará, obtense probando cara abaixo. Podes escoller o criterio
-	para ir probando cara abaixo, utilizando un dos parámetros de opción
-	que deberá ser <lit>AIC</lit> (por defecto), <lit>BIC</lit> ou
+	A versión máis sinxela da proba de Dickey&ndash;Fuller asume que a
+	perturbación aleatoria da regresión que se utiliza na proba non ten
+	autocorrelación. Na práctica, isto non é probable que aconteza polo
+	que a especificación da regresión habitualmente amplíase incluíndo
+	un ou máis retardos da variable dependente, orixinando unha proba
+	de Dickey&ndash;Fuller ampliada (ADF). O argumento <repl>nivel</repl>
+	determina o número deses retardos (<math>k</math>), eventualmente
+	dependendo do tamaño da mostra (<math>T</math>).
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Para usar un valor fixo de <math>k</math>, especificado polo
+	    usuario: indica un valor non negativo para <repl>nivel</repl>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Para usar un valor de <math>k</math> dependente de <math>T</math>:
+	    indica <repl>nivel</repl> igual a &minus;1. Así o nivel establécese
+	    segundo o consello de <cite key="schwert89">Schwert (1989)</cite>:
+	    concretamente tómase a parte enteira de calcular
+	    12(<math>T</math>/100)<sup>0.25</sup>.
+	  </para>
+	</li>
+      </ilist>
+
+      <para context="cli">
+	Porén, en xeral non se sabe cantos retardos serán necesarios para
+	<quote>branquear</quote> o erro da regresión de Dickey&ndash;Fuller.
+	En consecuencia é habitual especificar o <emphasis>máximo</emphasis>
+	valor de <math>k</math>, e deixar que os datos 'decidan' o número
+	concreto de retardos que se van incluír. Isto pódese facer mediante
+	a opción <opt>test-down</opt>. E tamén podes establecer o criterio
+	co que se determine un valor óptimo para <math>k</math>, utilizando
+	o parámetro para esta opción que deberá ser un a escoller entre
+	<lit>AIC</lit> (por defecto), <lit>BIC</lit> ou
 	<lit>tstat</lit>.
       </para>
 
@@ -267,16 +294,18 @@
       <para context="cli">
 	Cando pides que se probe cara atrás mediante AIC ou BIC, o nivel
 	de retardos final para a ecuación ADF é o que optimiza o criterio
-	de información escollido (de Akaike ou Bayesiano de Schwarz).
-	O procedemento exacto depende de se indicas ou non a opción
-	<opt>gls</opt>: cando se especifica a detracción con MCX (GLS) da
-	tendencia, os AIC e BIC son as versións <quote>modificadas</quote>
-	descritas en <cite key="ng-perron01">Ng e Perron (2001)</cite>;
-	se non, son as versións estándar. No caso de MCX, dispós dun
-	refinamento pois cando indicas a opción adicional <opt>perron-qu</opt>,
-	calcúlanse estes criterios de información modificados de acordo
-	co método revisado que recomendaron
-	<cite key="perron-qu07">Perron e Qu (2007)</cite>.
+	de información que escollas (de Akaike ou Bayesiano de Schwarz).
+	O procedemento exacto dependerá de se indicas ou non a opción
+	<opt>gls</opt>. Cando se especifica GLS (MCX), os criterios AIC
+	e BIC son as versións <quote>modificadas</quote> descritas en
+	<cite key="ng-perron01">Ng e Perron (2001)</cite>; se non, son
+	as versións estándar. No caso de MCX, dispós dun refinamento.
+	Cando indicas a opción adicional <opt>perron-qu</opt>, a selección do
+	nivel de retardo realízase mediante o método revisado que recomendaron
+	<cite key="perron-qu07">Perron e Qu (2007)</cite>. Neste caso, os
+	datos se detraen primeiro mediante OLS (MCO) da media ou da tendencia;
+	GLS (MCX) se aplica unha vez que se haxa determinado o nivel de
+	retardo.
       </para>
 
       <para context="gui">
@@ -289,7 +318,6 @@
 	Cando pides que se probe cara atrás mediante o método do estatístico
 	<math>t</math>, o procedemento é como se indica deseguido:
       </para>
-
       <nlist>
 	<li><para>
 	Estímase a regresión de Dickey&ndash;Fuller utilizando <math>k</math> retardos da variable dependente.
@@ -303,25 +331,37 @@
 	    </para>
 	</li>
       </nlist>
-
       <para>
-	No contexto do paso 2 de arriba, <quote>significativo</quote> quere dicir que o
-	estatístico <math>t</math> do derradeiro retardo ten un valor <emphasis>p</emphasis>
-	asintótico de dúas colas igual ou menor a 0.10, fronte á distribución Normal.
+	No contexto do paso 2 de arriba, <quote>significativo</quote> quere
+	dicir que o estatístico <math>t</math> do derradeiro retardo ten un
+	valor <emphasis>p</emphasis> asintótico de dúas colas igual ou menor
+	a 0.10, fronte á distribución Normal.
+      </para>
+
+      <para context="cli">
+	En resumo, se admitimos os diferentes argumentos de Perron, Ng, Qu
+	e Schwert indicados arriba, a instrución preferible para probar unha
+	serie <lit>y</lit> é probable que sexa:
+      </para>
+      <code context="cli">
+	adf -1 y --c --gls --test-down --perron-qu
+      </code>
+      <para context="cli">
+	(Ou substituíndo <opt>ct</opt> en troques de <opt>c</opt> se a serie
+	semella presentar unha tendencia.) O nivel de retardo para a proba será
+	entón determinado comprobándoo cara atrás, mediante os cambios no
+	AIC a partir do máximo de Schwert, co refinamento de Perron&ndash;Qu.
       </para>
 
       <para>
-	As probabilidades asociadas <emphasis>P</emphasis> para as probas
-	de Dickey&ndash;Fuller están baseadas en
-	<cite key="mackinnon96">MacKinnon (1996)</cite>; e o código relevante
-	inclúese co amable permiso do propio autor. (No caso de tratarse da
-	proba non aumentada, se proporcionan os valores para mostra finita.
-	Para un nivel de retardo positivo se utilizan os valores asintóticos.)
-	No caso da proba coa tendencia linear utilizando MCX (GLS),
-	estes valores <emphasis>P</emphasis> non son aplicables;
-	por iso, no seu lugar amósanse os puntos críticos da Táboa 1 que hai
-	en
-	<cite key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>.
+	As Probabilidades Asociadas (valores <emphasis>P</emphasis>) para as
+	probas de Dickey&ndash;Fuller están baseadas en estimacións de tipo
+	superficie de resposta. Cando non se aplica MCX (GLS), se toman de
+	<cite key="mackinnon96">MacKinnon (1996)</cite>. Noutro caso, tómanse
+	de <cite key="cottrell15">Cottrell (2015)</cite> ou, cando se realiza
+	a comprobación cara atrás, de <cite key="sephton21">Sephton (2021)</cite>.
+	As Probabilidades Asociadas son específicas para o tamaño da mostra,
+	agás que estean etiquetadas como asintóticas.
       </para>
 
       <subhead context="cli">Datos de Panel</subhead>
@@ -1548,6 +1588,9 @@
 	debe de utilizarse en peticións a funcións definidas polo usuario,
 	pois preténdese utilizala só coas instrucións de GRETL e coas
 	peticións aos operadores ou funcións <quote>internos</quote>.
+	Máis aínda, non podes usar <lit>catch</lit> combinada coa asignación
+	mediante <quote>frecha atrás</quote> de modelos ou gráficas, a
+	iconas de sesión (consulta o <guideref targ="chap:modes"/>).
       </para>
     </description>
   </command>
@@ -6809,17 +6852,19 @@
     <para>
 	    Na esquerda deberías de ver unha listaxe das series do conxunto de datos
 	    vixente. Aquí podes escoller unha serie, e utilizar os botóns coas frechas
-	    para especificala como unha ou outra das <quote>claves internas</quote>
-	    (opcionais). As claves funcionan para emparellar filas entre o conxunto
+	    para especificala como unha ou outra das <quote>chaves internas</quote>
+	    (opcionais). As chaves funcionan para emparellar filas entre o conxunto
 	    vixente de datos e o ficheiro do que esteas importando datos.
     </para>
     <para>
 	    Na dereita deberían de listarse as series do ficheiro de datos que
-	    escolliches. Podes usar os botóns coas frechas para elixir o nome
-	    das series a importar desa lista, e (de ser necesario) os nomes
-	    das series que se corresponden coas claves <quote>internas</quote>.
-	    (Por defecto, presuponse que as claves internas e externas teñen
-	    o mesmo nome.)
+	    escolliches. Podes usar os botóns coas frechas para elixir o nome das
+	    series a importar desa lista, e (de ser necesario) os nomes das series
+	    que se corresponden coas chaves <quote>internas</quote>. (Por defecto,
+	    suponse que as chaves internas e externas teñen o mesmo nome.) Na
+	    listaxe desta caixa tamén podes ver unha entrada <quote>ficticia</quote>
+	    nomeada <lit>$obsmajor</lit> que, aínda que non se pode importar,
+	    podes usala como chave; consulta <fncref targ="$obsmajor"/>.
     </para>
     <para>
 	    No medio do cadro de diálogo podes especificar parámetros
@@ -14386,10 +14431,6 @@
       </arguments>
       <options>
         <option>
-	  <flag>--csv</flag>
-	  <effect>Utiliza o formato CSV</effect>
-        </option>
-        <option>
 	  <flag>--omit-obs</flag>
 	  <effect>Mira abaixo, sobre o formato CSV</effect>
         </option>
@@ -14440,6 +14481,10 @@
 	  <optparm>nomematriz</optparm>
 	  <effect>Mira abaixo</effect>
         </option>
+        <option>
+	  <flag>--compat</flag>
+	  <effect>Compatibilidade gdtb, mira abaixo</effect>
+        </option>
       </options>
     </usage>
 
@@ -14457,23 +14502,44 @@
 	conteña unha especificación completa da ruta.
       </para>
       <para>
+	Cae na conta de que a instrución <lit>store</lit> compórtase de xeito
+	especial no contexto dun <quote>bucle progresivo</quote>; consulta
+	o <guideref targ="chap:looping"/> para obter máis detalles.
+      </para>
+      <subhead>Formatos propios</subhead>
+      <para>
+	Se <repl>nomeficheiro</repl> ten extensión <lit>.gdt</lit> ou
+	<lit>.gtdb</lit>, isto implica que se garden os datos nun dos formatos
+	propios de GRETL. Amais, se non indicas unha extensión, considérase
+	implicitamente a <lit>.gdt</lit> e este sufixo engádese de xeito
+	automático. O formato <lit>gdt</lit> é de tipo XML, opcionalmente
+	comprimido en gzip; mentres que o formato <lit>gdtb</lit> é binario.
+	O primeiro recoméndase para conxuntos de datos de tamaño moderado
+	(digamos que ata varios centos de quilobytes de datos); co formato
+	binario é moito maior a velocidade con conxuntos de datos moi grandes.
+      </para>
+      <para>
+	O formato <lit>gdtb</lit> foi revisado no GRETL 2021a (provocando
+	unha enorme aceleración na escritura/lectura de conxuntos de datos
+	súper grandes). Pero se queres escribir un ficheiro de datos binarios
+	que sexa lexible por unha versión previa de GRETL (da 2018c en diante),
+	debes de engadir a opción <opt>compat</opt>.
+      </para>
+      <para>
+	Cando gardas os datos en formato <lit>gdt</lit>, podes utilizar a
+	opción <opt>gzipped</opt> para comprimilos. O parámetro (optativo)
+	desta opción controla o nivel de compresión (de 0 a 9): os valores
+	maiores xeran un ficheiro máis pequeno, pero a compresión leva
+	máis tempo. O nivel por defecto é o 1; e un nivel de 0 significa
+	que non se aplica ningunha compresión.
+      </para>
+      <subhead>Outros formatos</subhead>
+      <para>
 	Ata certo punto, podes controlar o formato no que se escriben os
 	datos mediante a extensión ou sufixo de <repl>nomeficheiro</repl>,
 	como se indica deseguido:
       </para>
       <ilist>
-	<li>
-	  <para>
-	    <lit>.gdt</lit> (ou sen extensión): Formato de datos XML propio
-	    de GRETL. (Se non indicas ningunha extensión, automaticamente
-	    engádese <quote><lit>.gdt</lit></quote>)
-	  </para>
-	</li>
-	<li>
-	  <para>
-	    <lit>.gtdb</lit>: Formato de datos binario propio de GRETL.
-	  </para>
-	</li>
 	<li>
 	  <para>
 	    <lit>.csv</lit>: Valores Separados por Comas (CSV).
@@ -14497,64 +14563,49 @@
 	</li>
       </ilist>
       <para>
-	Podes usar os indicadores de opción relacionados co formato que se
-	amosan arriba para forzar a cuestión do formato cando se garda, con
-	independencia do nome do ficheiro (ou para lograr que GRETL escriba
-	nos formatos de PcGive ou JMulTi). Porén, se <repl>nomeficheiro</repl>
-	ten unha extensión <lit>.gdt</lit> ou <lit>.gdtb</lit>, isto implica
-	utilizar necesariamente o formato propio, e se engades un indicador
-	de opción conflitivo, vai xerarse un fallo.
+	Podes usar os indicadores de opción relacionados co formato amosados
+	arriba para forzar a elección do formato, con independencia do nome do
+	ficheiro (ou para lograr que GRETL escriba nos formatos de PcGive ou JMulTi).
       </para>
-      <para>
-	Cando gardas os datos no formato propio (unicamente), podes utilizar
-	a opción <opt>gzipped</opt> para comprimir os datos, o que pode ser
-	moi útil para conxuntos grandes de datos. O parámetro (optativo)
-	desta opción controla o nivel de compresión (de 0 a 9): os niveles
-	máis altos producen un ficheiro máis pequeno, pero a compresión leva
-	máis tempo. O nivel por defecto é 1, e un nivel igual a 0 significa
-	que non se aplica ningunha compresión.
-      </para>
+      <subhead>Opcións CSV</subhead>
       <para>
 	Os indicadores de opción <opt>omit-obs</opt> e <opt>no-header</opt>
-	son só aplicables cando se gardan datos no formato CSV. Por defecto,
+	son específicos para gardar datos no formato CSV. Por defecto,
 	se os datos son series temporais ou de panel, ou se o conxunto de
-	datos inclúe marcadores específicos de observación, o ficheiro CSV
+	datos inclúe marcadores específicos de observación, o ficheiro resultante
 	inclúe unha primeira columna que identifica as observacións (&eg; por data).
 	Cando indicas a opción <opt>omit-obs</opt>, esta columna omítese. A
 	opción <opt>no-header</opt> elimina a habitual representación dos
 	nomes das variables no encabezamento das columnas.
       </para>
       <para>
-	O indicador de opción <opt>decimal-comma</opt> está tamén limitado ao
-	caso de que se garden os datos en formato CSV. O efecto desta opción
-	consiste en substituír o punto decimal coa coma decimal; e, por engadido,
-	fórzase a que o separador de columnas sexa o punto e coma.
+	O indicador de opción <opt>decimal-comma</opt> está tamén limitado
+	a CSV. O seu efecto consiste en substituír o punto decimal coa coma
+	decimal; e, por engadido, fórzase a que o separador de columnas sexa
+	o punto e coma, en troques da coma.
       </para>
+      <subhead>Gardar nun banco de datos</subhead>
       <para>
-	A posibilidade de gardar no formato de banco de datos de GRETL está
-	pensada para axudar a construír conxuntos longos de series, tal vez
-	mesturando frecuencias e rangos de observacións. Neste momento, esta
-	opción só está dispoñible para datos de series temporais de tipo
-	anual, trimestral ou mensual. Se gardas nun ficheiro que xa existe,
-	o efecto por defecto consiste en engadir as series recentemente
-	gardadas ao contido existente no banco de datos. Neste contexto,
-	é un fallo que unha (ou máis) das variables que se van gardar teña
-	o mesmo nome ca unha variable que xa está presente no banco de datos.
-	A opción <opt>overwrite</opt> ten como consecuencia que, se hai nomes
-	de variables en común, a variable recentemente gardada substitúe á
-	variable do mesmo nome no conxunto de datos orixinal.
+	A posibilidade de gardar no formato de banco de datos de GRETL
+	está pensada para axudar a construír longos conxuntos de series,
+	con mesturas de frecuencias e rangos de observacións. Neste momento,
+	esta opción só está dispoñible para datos de series temporais de
+	tipo anual, trimestral ou mensual. Se fas o gardado nun ficheiro
+	que xa existe, o efecto por defecto consiste en engadir as series
+	recentemente gardadas ao contido existente no banco de datos.
+	Neste contexto, é un fallo que unha (ou máis) das variables que se
+	van gardar teña o mesmo nome ca unha variable que xa está presente
+	no banco de datos. A opción <opt>overwrite</opt> ten como consecuencia
+	que, se hai nomes de variables en común, a variable recentemente
+	gardada substitúe á variable do mesmo nome no conxunto de datos
+	orixinal.
       </para>
       <para>
 	A opción <opt>comment</opt> está dispoñible cando se gardan datos como
-	banco de datos ou en formato CSV. O parámetro que se require é unha
+	banco de datos ou como CSV. O parámetro que se require é unha
 	cadea nunha liña, entre comiñas, ligada ao indicador de opción mediante
 	un signo de igualdade. A cadea de texto insírese como comentario no
 	ficheiro índice do banco de datos ou no encabezamento do CSV.
-      </para>
-      <para>
-	A instrución <lit>store</lit> compórtase de xeito especial no contexto dun
-	<quote>bucle progresivo</quote>. Consulta o <guideref targ="chap:looping"/>
-	para obter máis detalles.
       </para>
       <subhead>Escribir unha matriz como conxunto de datos</subhead>
       <para>
@@ -14571,7 +14622,7 @@
       <para>
 	Cae na conta de que podes escribir as matrices como tales en ficheiros,
 	consulta para elo a función <fncref targ="mwrite"/>. Pero ás veces pode
-	resultarche máis útil escribilas en forma de conxuntos de datos.
+	resultarche útil escribilas en forma de conxuntos de datos.
       </para>
     </description>
 
@@ -15499,19 +15550,20 @@
 	datos (se hai algunha); e podes utilizar <cmd>ls</cmd> como alcume.
       </para>
       <para>
-	Cando indicas a opción <opt>type</opt>, debe de ir seguida (tras dun
-	signo de igualdade) por un dos seguintes tipos: <lit>series</lit>,
+	Cando indicas a opción <opt>type</opt>, debe de ir seguida (despois
+	dun signo de igualdade) por un dos seguintes tipos: <lit>series</lit>,
 	<lit>scalar</lit>, <lit>matrix</lit>, <lit>list</lit>, <lit>string</lit>,
-	<lit>bundle</lit> ou <lit>accessor</lit>. O seu efecto consiste en
-	presentar os nomes de tódolos obxectos do tipo indicado que estean
-	definidos nese momento.
+	<lit>bundle</lit>, <lit>array</lit> ou <lit>accessor</lit>. O seu
+	efecto consiste en presentar os nomes de tódolos obxectos do tipo
+	indicado que estean definidos nese
+	momento.
       </para>
       <para>
 	Como caso especial, se o tipo é <lit>accessor</lit>, os nomes
 	que se presentan son aqueles das variables internas dispoñibles
 	nese momento como <quote>accesorios</quote>, como poden ser
-	<fncref targ="$nobs"/> e <fncref targ="$uhat"/> (sexa cal sexa o
-	seu tipo en concreto).
+	<fncref targ="$nobs"/> e <fncref targ="$uhat"/> (sexan os que sexan
+	os seus tipos concretos).
       </para>
     </description>
 

@@ -635,12 +635,12 @@
     <function name="$obsmajor" section="access" output="series">
       <description>
 	<para>
-	  Pode executarse cando as observacións do conxunto vixente de datos
-	  teñen unha estrutura maior:menor, como en series temporais trimestrais
-	  (ano:trimestre), en series temporais mensuais (ano:mes), datos de
-	  horas (día:hora) e datos de panel (individuo:período). Devolve unha
-	  serie que mantén a compoñente maior (de menor frecuencia), de cada
-	  observación (por exemplo, o ano).
+	  Devolve unha serie que contén a compoñente maior (de menor
+	  frecuencia) de cada observación. Isto quere dicir o ano para series
+	  de tempo anuais, trimestrais, mensuais, semanais ou diarias; o día
+	  para datos horarios; ou o individuo no caso dos datos de panel.
+	  Se os datos son de sección cruzada, a serie que se devolve é
+	  simplemente o índice enteiro das observacións.
 	</para>
 	<para>
 	  <seelist>
@@ -7181,6 +7181,7 @@
     <function name="mean" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">parcial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7188,11 +7189,14 @@
 	  coa súa media na mostra, ignorando calquera observación ausente.
 	</para>
 	<para>
-	  Se <argname>x</argname> é unha lista, a función devolve unha serie
-	  <math>y</math> tal que <math>y</math><sub>t</sub> indica a media
-	  dos valores das variables desa lista na observación <math>t</math>,
-	  ou <lit>NA</lit> no caso de que exista algún valor ausente en
-	  <math>t</math>.
+	  Se <argname>x</argname> é unha lista, a función devolve unha
+	  serie <math>y</math> tal que <math>y</math><sub>t</sub> indica
+	  a media dos valores das variables desa lista na observación
+	  <math>t</math>. Por defecto, se hai algún valor ausente en
+	  <math>t</math>, a media rexístrase como <lit>NA</lit>; pero
+	  se lle das un valor non nulo a <argname>parcial</argname>,
+	  calquera valor non ausente se usará para crear o
+	  estatístico.
 	</para>
 	<para>
 	  O seguinte exemplo ilustra o funcionamento da función:
@@ -10766,6 +10770,7 @@
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">parcial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10773,11 +10778,14 @@
 	  coa súa desviación padrón na mostra, descartando as observacións ausentes.
 	</para>
 	<para>
-	  Se <argname>x</argname> é unha lista, a función devolve unha serie
-	  <math>y</math> tal que <math>y</math><sub>t</sub> representa a
-	  desviación padrón na mostra dos valores das variables da lista, na
-	  observación <math>t</math>; ou <lit>NA</lit> se existe algún valor
-	  ausente para a observación <math>t</math>.
+	  Se <argname>x</argname> é unha lista, a función devolve unha
+	  serie <math>y</math> tal que <math>y</math><sub>t</sub>
+	  representa a desviación padrón na mostra dos valores das
+	  variables da lista, na observación <math>t</math>. Por defecto,
+	  se hai algún valor ausente en <math>t</math>, a desviación
+	  padrón rexístrase como <lit>NA</lit>; pero se lle das un valor
+	  non nulo a <argname>parcial</argname>, calquera valor non
+	  ausente se usará para crear o estatístico.
 	</para>
 	<para>
 	  <seelist>
@@ -11849,6 +11857,7 @@
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
+	<fnarg type="bool" optional="true">parcial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -11861,11 +11870,14 @@
 	  resultado de sumar os elementos da matriz.
 	</para>
 	<para>
-	  Cando <argname>x</argname> é unha lista de variables, a función devolve
-	  unha serie <math>y</math>, na que cada valor <math>y</math><sub>t</sub>
-	  indica a suma dos valores das variables da lista na observación
-	  <math>t</math>, ou <lit>NA</lit> se algún deses valores está ausente
-	  en <math>t</math>.
+	  Cando <argname>x</argname> é unha lista de variables, a
+	  función devolve unha serie <math>y</math>, na que cada valor
+	  <math>y</math><sub>t</sub> indica a suma dos valores das
+	  variables da lista na observación <math>t</math>. Por defecto,
+	  se hai algún valor ausente en <math>t</math>, a suma rexístrase
+	  como <lit>NA</lit>; pero se lle das un valor non nulo a
+	  <argname>parcial</argname>, calquera valor non ausente se
+	  usará para crear a suma.
 	</para>
       </description>
     </function>
@@ -12378,6 +12390,7 @@
     <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
+	<fnarg type="bool" optional="true">parcial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12386,10 +12399,13 @@
 	</para>
 	<para>
 	  Cando <argname>x</argname> é unha lista, devolve unha serie
-	  <math>y</math> na que cada valor <math>y</math><sub>t</sub> indica
-	  a varianza na mostra dos valores das variables da lista na observación
-	  <math>t</math>, ou <lit>NA</lit> se algún deses valores está ausente
-	  en <math>t</math>.
+	  <math>y</math> na que cada valor <math>y</math><sub>t</sub>
+	  indica a varianza na mostra dos valores das variables da
+	  lista na observación <math>t</math>. Por defecto, se hai
+	  algún valor ausente en <math>t</math>, a varianza rexístrase
+	  como <lit>NA</lit>; pero se lle das un valor non nulo a
+	  <argname>parcial</argname>, calquera valor non ausente se
+	  usará para crear o estatístico.
 	</para>
 	<para>
 	  En cada un deses casos, a suma dos cadrados das desviacións con
@@ -12626,6 +12642,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">parcial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12640,6 +12657,12 @@
 	  negativas.
 	</para>
 	<para>
+	  Por defecto, o resultado é <lit>NA</lit>, se hai algún valor
+	  ausente na observación <math>t</math>; pero se lle das un
+	  valor non nulo a <argname>parcial</argname>, se utilizará
+	  calquera valor non ausente.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="wsd"/>
             <fncref targ="wvar"/>
@@ -12652,6 +12675,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">parcial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12666,6 +12690,12 @@
 	  negativas.
 	</para>
 	<para>
+	  Por defecto, o resultado é <lit>NA</lit>, se hai algún valor
+	  ausente na observación <math>t</math>; pero se lle das un
+	  valor non nulo a <argname>parcial</argname>, se utilizará
+	  calquera valor non ausente.
+	</para>
+	<para>
 	  <seelist>
             <fncref targ="wmean"/>
             <fncref targ="wvar"/>
@@ -12678,6 +12708,7 @@
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
+	<fnarg type="bool" optional="true">parcial</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -12690,6 +12721,12 @@
 	  As listas <argname>Y</argname> e <argname>W</argname> de variables
 	  deben de ter o mesmo tamaño, e as ponderacións deben de ser non
 	  negativas.
+	</para>
+	<para>
+	  Por defecto, o resultado é <lit>NA</lit>, se hai algún valor
+	  ausente na observación <math>t</math>; pero se lle das un
+	  valor non nulo a <argname>parcial</argname>, se utilizará
+	  calquera valor non ausente.
 	</para>
 	<para context="tex">
 	  A varianza ponderada na mostra calcúlase mediante
