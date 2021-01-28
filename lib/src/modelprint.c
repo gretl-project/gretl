@@ -574,6 +574,14 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
     double x;
     int k;
 
+    /* 2021-01-28: mask stats not calculated when showing
+       the 1-step model in the context of 2-step estimation
+       with the --verbose flag
+    */
+    if (pmod->ID < 0) {
+	return;
+    }
+
     ensure_vsep(prn);
 
     if (tex_format(prn)) {
@@ -5581,7 +5589,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
  * @adds: matrix containing an additional p statistics, or NULL.
  * @names: array of strings containing all required names.
  * @df: degrees of freedom, or 0 for asymptotic.
- * @opt: may contain OPT_I fpr printing the extra state inline.
+ * @opt: may contain OPT_I fpr printing the extra stats inline.
  * @prn: gretl printer.
  *
  * Prints to @prn the coefficient table and optional additional statistics
