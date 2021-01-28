@@ -10,10 +10,6 @@
 \newcommand{\bA}{\boldsymbol{A}}
 \newcommand{\biota}{\bm{\iota}}
 
-\DefineVerbatimEnvironment%
-{code}{Verbatim}
-{fontsize=\small, xleftmargin=1em}
-
 \newenvironment%
 {altcode}%
 {\vspace{1ex}\small\leftmargin 1em}{\vspace{1ex}}
@@ -747,14 +743,15 @@ to the target program.) For reference, the commands used with
 Stata are reproduced below:
 %
 \begin{code}
+#delimit ;
 insheet using CEL.csv
-tsset unit time
+tsset unit time;
 xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
-  gmm(lngd, lag(2 99)) rob nolev
+  gmm(lngd, lag(2 99)) rob nolev;
 xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
-  gmm(lngd, lag(2 99)) rob nolev twostep
+  gmm(lngd, lag(2 99)) rob nolev twostep;
 xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
-  gmm(lngd, lag(2 99)) rob nocons twostep
+  gmm(lngd, lag(2 99)) rob nocons twostep;
 \end{code}
 
 For the GMM-DIF model all three programs find 382 usable observations
@@ -963,8 +960,9 @@ print coef
 
 The time dummies option supports the qualifier \texttt{noprint}, as
 in
-
-\verb|  --time-dummies=noprint|
+\begin{code}
+--time-dummies=noprint
+\end{code}
 
 This means that although the dummies are included in the specification
 their coefficients, standard errors and so on are not printed.
