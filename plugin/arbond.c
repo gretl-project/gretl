@@ -996,16 +996,16 @@ static int dpd_wald_test (ddset *dpd)
 static int dpd_sargan_test (ddset *dpd)
 {
     int save_rows, save_cols;
-    gretl_matrix *Zu;
+    gretl_matrix *ZTE;
     int err = 0;
 
     save_rows = gretl_matrix_rows(dpd->L1);
     save_cols = gretl_matrix_cols(dpd->L1);
 
-    Zu = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
-    gretl_matrix_multiply(dpd->ZT, dpd->uhat, Zu);
+    ZTE = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
+    gretl_matrix_multiply(dpd->ZT, dpd->uhat, ZTE);
     gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
-    dpd->sargan = gretl_scalar_qform(Zu, dpd->A, &err);
+    dpd->sargan = gretl_scalar_qform(ZTE, dpd->A, &err);
 
     if (!err && dpd->sargan < 0) {
 	dpd->sargan = NADBL;
@@ -1021,7 +1021,7 @@ static int dpd_sargan_test (ddset *dpd)
 	}
     }
 
-#if ADEBUG
+#if 0
     fprintf(stderr, "Sargan (or Hansen) test: Chi-square(%d-%d) = %g\n",
 	    dpd->nz, dpd->k, dpd->sargan);
     if (1) {
@@ -1034,7 +1034,7 @@ static int dpd_sargan_test (ddset *dpd)
 	gretl_matrix_multiply_by_scalar(dpd->Acpy, dpd->s2);
 	err = gretl_invert_symmetric_matrix(dpd->Acpy);
 	if (!err) {
-	    sg = gretl_scalar_qform(Zu, dpd->Acpy, &err);
+	    sg = gretl_scalar_qform(ZTE, dpd->Acpy, &err);
 	    fprintf(stderr, "Sargan (xtabond2) test: Chi-square(%d-%d) = %g\n",
 		    dpd->nz, dpd->k, sg);
 	}
@@ -1711,6 +1711,60 @@ static int dpanel_adjust_uhat (ddset *dpd,
     return 0;
 }
 
+static void dpd_add_param_names (MODEL *pmod, ddset *dpd,
+				 const DATASET *dset,
+				 int full)
+{
+    char tmp[32];
+    int i, j = 0;
+
+    if (pmod->ci == DPANEL) {
+	if (dpd->laglist != NULL) {
+	    for (i=1; i<=dpd->laglist[0]; i++) {
+		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno],
+			dpd->laglist[i]);
+		gretl_model_set_param_name(pmod, j++, tmp);
+	    }
+	} else {
+	    for (i=0; i<dpd->p; i++) {
+		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], i+1);
+		gretl_model_set_param_name(pmod, j++, tmp);
+	    }
+	}
+    } else {
+	char prefix = (dpd->flags & DPD_ORTHDEV)? 'O' : 'D';
+
+	if (dpd->laglist != NULL) {
+	    for (i=1; i<=dpd->laglist[0]; i++) {
+		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno],
+			dpd->laglist[i]);
+		gretl_model_set_param_name(pmod, j++, tmp);
+	    }
+	} else {
+	    for (i=0; i<dpd->p; i++) {
+		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], i+1);
+		gretl_model_set_param_name(pmod, j++, tmp);
+	    }
+	}
+    }
+
+    for (i=0; i<dpd->nx; i++) {
+	gretl_model_set_param_name(pmod, j++, dset->varname[dpd->xlist[i+1]]);
+    }
+
+    if (full) {
+	for (i=0; i<dpd->ntdum; i++) {
+	    if (dpd->ifc) {
+		sprintf(tmp, "T%d", dpd->t1min + i + 2);
+		gretl_model_set_param_name(pmod, j++, tmp);
+	    } else {
+		sprintf(tmp, "T%d", dpd->t1min + i + 1);
+		gretl_model_set_param_name(pmod, j++, tmp);
+	    }
+	}
+    }
+}
+
 static int dpd_finalize_model (MODEL *pmod,
 			       ddset *dpd,
 			       int *list,
@@ -1721,9 +1775,7 @@ static int dpd_finalize_model (MODEL *pmod,
 {
     const double *y = dset->Z[dpd->yno];
     int keep_extra = opt & OPT_K;
-    char tmp[32];
-    int i, j;
-    int err = 0;
+    int i, err = 0;
 
     if (dpd->flags & DPD_REDO) {
 	goto restart;
@@ -1752,55 +1804,13 @@ static int dpd_finalize_model (MODEL *pmod,
     pmod->fstt = pmod->chisq = NADBL;
     pmod->lnL = NADBL;
 
-    gretl_model_allocate_param_names(pmod, dpd->k);
-    if (pmod->errcode) {
-	return pmod->errcode;
-    }
-
-    if (pmod->ci == DPANEL) {
-	j = 0;
-	if (dpd->laglist != NULL) {
-	    for (i=1; i<=dpd->laglist[0]; i++) {
-		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno],
-			dpd->laglist[i]);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
-	} else {
-	    for (i=0; i<dpd->p; i++) {
-		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], i+1);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
+    if (pmod->params == NULL) {
+	/* this step not already done */
+	gretl_model_allocate_param_names(pmod, dpd->k);
+	if (pmod->errcode) {
+	    return pmod->errcode;
 	}
-    } else {
-	char prefix = (dpd->flags & DPD_ORTHDEV)? 'O' : 'D';
-
-	j = 0;
-	if (dpd->laglist != NULL) {
-	    for (i=1; i<=dpd->laglist[0]; i++) {
-		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno],
-			dpd->laglist[i]);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
-	} else {
-	    for (i=0; i<dpd->p; i++) {
-		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], i+1);
-		gretl_model_set_param_name(pmod, j++, tmp);
-	    }
-	}
-    }
-
-    for (i=0; i<dpd->nx; i++) {
-	gretl_model_set_param_name(pmod, j++, dset->varname[dpd->xlist[i+1]]);
-    }
-
-    for (i=0; i<dpd->ntdum; i++) {
-	if (dpd->ifc) {
-	    sprintf(tmp, "T%d", dpd->t1min + i + 2);
-	    gretl_model_set_param_name(pmod, j++, tmp);
-	} else {
-	    sprintf(tmp, "T%d", dpd->t1min + i + 1);
-	    gretl_model_set_param_name(pmod, j++, tmp);
-	}
+	dpd_add_param_names(pmod, dpd, dset, 1);
     }
 
     err = gretl_model_allocate_storage(pmod);
@@ -2484,7 +2494,7 @@ static int dpd_invert_A_N (ddset *dpd)
     return err;
 }
 
-static int dpd_step_1 (ddset *dpd)
+static int dpd_step_1 (ddset *dpd, gretlopt opt)
 {
     int err;
 
@@ -2519,11 +2529,17 @@ static int dpd_step_1 (ddset *dpd)
 	err = dpd_variance_1(dpd);
     }
 
-    if (!err && !(dpd->flags & DPD_TWOSTEP)) {
-	/* do the tests if we're not continuing */
-	dpd_ar_test(dpd);
-	dpd_sargan_test(dpd);
-	dpd_wald_test(dpd);
+    if (!err) {
+	/* is step 1 the final destination? */
+	int onestep = !(dpd->flags & DPD_TWOSTEP);
+
+	if (onestep) {
+	    dpd_ar_test(dpd);
+	    dpd_sargan_test(dpd);
+	    dpd_wald_test(dpd);
+	} else if (opt & OPT_V) {
+	    dpd_sargan_test(dpd);
+	}
     }
 
     return err;
@@ -2789,7 +2805,7 @@ arbond_estimate (const int *list, const char *ispec,
     }
 
     if (!err) {
-	err = dpd_step_1(dpd);
+	err = dpd_step_1(dpd, opt);
     }
 
     if (!err && (opt & OPT_T)) {

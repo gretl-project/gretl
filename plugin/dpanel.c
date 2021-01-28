@@ -554,10 +554,12 @@ static void make_dpdstyle_H (gretl_matrix *H, int nd)
 
     for (i=1; i<H->rows; i++) {
 	if (i < nd) {
+	    /* the differences portion */
 	    gretl_matrix_set(H, i, i, 2);
 	    gretl_matrix_set(H, i-1, i, -1);
 	    gretl_matrix_set(H, i, i-1, -1);
 	} else {
+	    /* the levels portion */
 	    gretl_matrix_set(H, i, i, 1);
 	}
     }
@@ -979,7 +981,7 @@ static void build_Z (ddset *dpd, int *goodobs,
     }
 }
 
-static int trim_zero_inst (ddset *dpd)
+static int trim_zero_inst (ddset *dpd, PRN *prn)
 {
     char *mask;
     int err = 0;
@@ -997,6 +999,10 @@ static int trim_zero_inst (ddset *dpd)
     if (mask != NULL) {
 	err = gretl_matrix_cut_rows_cols(dpd->A, mask);
 	if (!err) {
+	    if (prn != NULL) {
+		pprintf(prn, "%d redundant instruments dropped, leaving %d\n",
+			dpd->nz - dpd->A->rows, dpd->A->rows);
+	    }
 	    dpd_shrink_matrices(dpd, mask);
 	}
 	free(mask);
@@ -1363,59 +1369,103 @@ static int dpanel_adjust_GMM_spec (ddset *dpd)
     return err;
 }
 
+static char *maxlag_string (char *targ, diag_info *d)
+{
+    if (d->maxlag == 99) {
+	strcpy(targ, "maximum");
+    } else {
+	sprintf(targ, "%d", d->maxlag);
+    }
+    return targ;
+}
+
+static void print_instrument_specs (ddset *dpd, const char *ispec,
+				    const DATASET *dset, PRN *prn)
+{
+    char lmax[16];
+    int i;
+
+#if IVDEBUG
+    if (ispec != NULL) {
+	pputs(prn, "Incoming instrument specification:\n");
+	pprintf(prn, "  '%s'\n", ispec);
+    }
+#endif
+
+    pprintf(prn, "Regular instruments: %d\n", dpd->nzr);
+
+    pprintf(prn, "GMM-style instruments, differences: %d\n", dpd->nzb);
+    for (i=0; i<dpd->nzb; i++) {
+	pprintf(prn, "  %s: lags %d to %s\n", dset->varname[dpd->d[i].v],
+		dpd->d[i].minlag, maxlag_string(lmax, &dpd->d[i]));
+    }
+
+    if (dpd->nzb2 > 0) {
+	pprintf(prn, "GMM-style instruments, levels: %d\n", dpd->nzb2);
+    }
+    for (i=0; i<dpd->nzb2; i++) {
+	pprintf(prn, "  %s: lags %d to %s\n", dset->varname[dpd->d[i].v],
+		dpd->d2[i].minlag, maxlag_string(lmax, &dpd->d2[i]));
+    }
+
+    // printlist(dpd->ilist, "ilist (regular instruments)");
+}
+
 /* we're doing two-step, but print the one-step results for
    reference */
 
-static int print_step_1 (MODEL *pmod, ddset *dpd,
-			 int *list, const int *ylags,
-			 const char *ispec,
+static int print_step_1 (ddset *dpd, MODEL *pmod,
 			 const DATASET *dset,
-			 gretlopt opt, PRN *prn)
+			 PRN *prn)
 {
-    int err = dpd_finalize_model(pmod, dpd, list, ylags, ispec,
-				 dset, opt);
+    gretl_array *pnames = NULL;
+    gretl_matrix *cse;
+    double sei;
+    int i, err = 0;
+
+    cse = gretl_matrix_alloc(dpd->k, 2);
+    if (cse == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_model_allocate_param_names(pmod, dpd->k);
+    if (pmod->errcode) {
+	return pmod->errcode;
+    }
+    dpd_add_param_names(pmod, dpd, dset, 1);
+
+    pnames = gretl_array_from_strings(pmod->params, dpd->k,
+				      0, &err);
 
     if (!err) {
-	dpd->flags &= ~DPD_TWOSTEP;
-	pmod->ID = -1;
-	printmodel(pmod, dset, OPT_NONE, prn);
-	pmod->ID = 0;
-	dpd->flags |= (DPD_TWOSTEP | DPD_REDO);
+	pputc(prn, '\n');
+	pprintf(prn, _("Step 1 parameter estimates, using %d observations"),
+		dpd->nobs);
+	pputc(prn, '\n');
+	for (i=0; i<dpd->k; i++) {
+	    gretl_matrix_set(cse, i, 0, dpd->beta->val[i]);
+	    sei = sqrt(gretl_matrix_get(dpd->vbeta, i, i));
+	    gretl_matrix_set(cse, i, 1, sei);
+	}
+	err = print_model_from_matrices(cse, NULL, pnames, 0,
+					OPT_NONE, prn);
+	if (!na(dpd->sargan)) {
+	    int df = dpd->nz - dpd->k;
+
+	    pputs(prn, "  ");
+	    pprintf(prn, _("Sargan test: Chi-square(%d) = %g [%.4f]\n"),
+		    df, dpd->sargan, chisq_cdf_comp(df, dpd->sargan));
+	}
+    }
+
+    gretl_matrix_free(cse);
+    if (pnames != NULL) {
+	gretl_array_nullify_content(pnames);
+	gretl_array_destroy(pnames);
     }
 
     return err;
 }
-
-#if DPDEBUG
-
-static void debug_print_specs (ddset *dpd, const char *ispec,
-			       const DATASET *dset)
-{
-    int i;
-
-    if (ispec != NULL) {
-	fprintf(stderr, "user's ispec = '%s'\n", ispec);
-    }
-
-    fprintf(stderr, "nzb = %d, nzb2 = %d\n", dpd->nzb, dpd->nzb2);
-    fprintf(stderr, "nzr = %d\n", dpd->nzr);
-
-    for (i=0; i<dpd->nzb; i++) {
-	fprintf(stderr, "var %d (%s): lags %d to %d (GMM)\n",
-		dpd->d[i].v, dset->varname[dpd->d[i].v],
-		dpd->d[i].minlag, dpd->d[i].maxlag);
-    }
-
-    for (i=0; i<dpd->nzb2; i++) {
-	fprintf(stderr, "var %d (%s): lags %d to %d (GMMlevel)\n",
-		dpd->d2[i].v, dset->varname[dpd->d[i].v],
-		dpd->d2[i].minlag, dpd->d2[i].maxlag);
-    }
-
-    printlist(dpd->ilist, "ilist (regular instruments)");
-}
-
-#endif
 
 /* Public interface for new approach, including system GMM:
    in a script use --system (OPT_L, think "levels") to get
@@ -1429,8 +1479,10 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 {
     diag_info *d = NULL;
     ddset *dpd = NULL;
+    PRN *vprn = NULL;
     int **Goodobs = NULL;
     int *dlist = NULL;
+    int verbose = 0;
     int nlevel = 0;
     int nzb = 0;
     MODEL mod;
@@ -1440,6 +1492,11 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     if (libset_get_bool(DPDSTYLE)) {
 	opt |= OPT_X;
+    }
+
+    if (opt & OPT_V) {
+	verbose = 1;
+	vprn = prn;
     }
 
     /* parse GMM instrument info, if present */
@@ -1470,11 +1527,9 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     dpanel_adjust_GMM_spec(dpd);
 
-#if DPDEBUG
-    if (dpd->nzb > 0 || dpd->nzb2 > 0) {
-	debug_print_specs(dpd, ispec, dset);
+    if (verbose && (dpd->nzb > 0 || dpd->nzb2 > 0)) {
+	print_instrument_specs(dpd, ispec, dset, prn);
     }
-#endif
 
     Goodobs = gretl_list_array_new(dpd->N, dpd->T);
     if (Goodobs == NULL) {
@@ -1494,18 +1549,17 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     gretl_list_array_free(Goodobs, dpd->N);
 
     if (!err) {
-	err = trim_zero_inst(dpd);
+	err = trim_zero_inst(dpd, vprn);
     }
 
     if (!err) {
-	err = dpd_step_1(dpd);
+	err = dpd_step_1(dpd, opt);
     }
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
-	if (opt & OPT_V) {
-	    err = print_step_1(&mod, dpd, dlist, laglist, ispec,
-			       dset, opt, prn);
+	if (verbose) {
+	    err = print_step_1(dpd, &mod, dset, prn);
 	}
 	if (!err) {
 	    err = dpd_step_2(dpd);
