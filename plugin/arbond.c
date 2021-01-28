@@ -1007,6 +1007,8 @@ static int dpd_sargan_test (ddset *dpd)
     gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     dpd->sargan = gretl_scalar_qform(ZTE, dpd->A, &err);
 
+    gretl_matrix_reuse(dpd->L1, save_rows, save_cols);
+
     if (!err && dpd->sargan < 0) {
 	dpd->sargan = NADBL;
 	err = E_NOTPD;
@@ -1020,28 +1022,6 @@ static int dpd_sargan_test (ddset *dpd)
 	    dpd->sargan *= 2.0 / dpd->s2;
 	}
     }
-
-#if 0
-    fprintf(stderr, "Sargan (or Hansen) test: Chi-square(%d-%d) = %g\n",
-	    dpd->nz, dpd->k, dpd->sargan);
-    if (1) {
-	/* try to replicate the xtabond2 'Sargan test' */
-	double sg;
-
-	gretl_matrix_multiply_mod(dpd->ZT, GRETL_MOD_NONE,
-				  dpd->ZT, GRETL_MOD_TRANSPOSE,
-				  dpd->Acpy, GRETL_MOD_NONE);
-	gretl_matrix_multiply_by_scalar(dpd->Acpy, dpd->s2);
-	err = gretl_invert_symmetric_matrix(dpd->Acpy);
-	if (!err) {
-	    sg = gretl_scalar_qform(ZTE, dpd->Acpy, &err);
-	    fprintf(stderr, "Sargan (xtabond2) test: Chi-square(%d-%d) = %g\n",
-		    dpd->nz, dpd->k, sg);
-	}
-    }
-#endif
-
-    gretl_matrix_reuse(dpd->L1, save_rows, save_cols);
 
     if (err) {
 	fprintf(stderr, "dpd_sargan_test failed: %s\n",
@@ -1977,12 +1957,13 @@ static int dpd_zero_check (ddset *dpd, const DATASET *dset)
 
 static void dpd_shrink_matrices (ddset *dpd, const char *mask)
 {
+#if 0
     fprintf(stderr, "%s: dpd_shrink_matrices: cut nz from %d to %d\n",
 	    (dpd->ci == DPANEL)? "dpanel" : "arbond",
 	    dpd->nz, dpd->A->rows);
+#endif
 
     gretl_matrix_cut_rows(dpd->ZT, mask);
-
     dpd->nz = dpd->A->rows;
 
     gretl_matrix_reuse(dpd->Acpy,  dpd->nz, dpd->nz);

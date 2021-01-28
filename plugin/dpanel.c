@@ -79,8 +79,10 @@ static void dpanel_residuals (ddset *dpd)
     if (dpd_style(dpd)) {
 	dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
     } else {
-	/* xtabond2 always uses differences for this? */
-	dpd->s2 = SSRd / (dpd->ndiff - dpd->k);
+	/* xtabond2 always uses differences for this,
+	   without a df-correction, it seems
+	*/
+	dpd->s2 = SSRd / dpd->ndiff;
     }
 }
 
