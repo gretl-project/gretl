@@ -4433,8 +4433,11 @@
 
     <description>
       <para>
-	Opens a block of statements in which a function is defined.  This
-	block must be closed with <lit>end function</lit>.  See
+	Opens a block of statements in which a function is defined. This
+	block must be closed with <lit>end function</lit>. (An exception is
+	the case when a user-defined function shall be deleted, which is 
+	achieved by the single command line <lit>function foo delete</lit> 
+	for a function named <quote>foo</quote>.) See
 	<guideref targ="chap:functions"/> for details.
       </para>
     </description>
