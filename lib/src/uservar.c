@@ -2433,14 +2433,14 @@ int list_user_vars_of_type (const DATASET *dset,
 	       gretl_array_type(t)) {
 	int i, n = 0;
 
-	pprintf(prn, "variables of type %s:", typename);
+	pprintf(prn, _("variables of type %s:"), typename);
 	for (i=0; i<n_vars; i++) {
 	    if (uvar_type_match(uvars[i], t)) {
 		if (n == 0) {
 		    pputc(prn, '\n');
 		}
 		if (uvars[i]->name[0] == '\0') {
-		    pputs(prn, "  (unnamed)\n");
+		    pputs(prn, _("  (unnamed)\n"));
 		} else if (t == GRETL_TYPE_ARRAY) {
 		    GretlType at = gretl_array_get_type(uvars[i]->ptr);
 
