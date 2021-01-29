@@ -4535,6 +4535,7 @@ int real_do_regls (const char *buf)
     gretl_bundle *parms = selector_get_regls_bundle();
     gretl_bundle *rb = NULL;
     fncall *fc = NULL;
+    int orig_v;
     int *X = NULL;
     PRN *prn = NULL;
     int err = 0;
@@ -4551,8 +4552,9 @@ int real_do_regls (const char *buf)
     }
 
     bufopen(&prn);
+    orig_v = dataset->v;
 
-    X = gretl_list_from_varnames(buf, dataset, &err);
+    X = generate_list(buf, dataset, &err);
     if (!err) {
 	int yno = X[1];
 
@@ -4575,6 +4577,10 @@ int real_do_regls (const char *buf)
 	if (!err) {
 	    view_buffer(prn, 78, 350, "gretl: regls", VIEW_BUNDLE, rb);
 	    prn = NULL; /* ownership taken by viewer */
+	}
+	if (dataset->v > orig_v) {
+	    /* in case any lags got added */
+	    populate_varlist();
 	}
     }
 
