@@ -140,8 +140,8 @@ on.
 Another basic option is \texttt{verbosity}. This has a default value
 of 1, meaning that \texttt{regls} prints out a certain amount of
 information about its progress and/or results. Setting it to 0 makes
-\texttt{regls} run (mostly) quietly; setting it to 2 produces more
-output in some cases.
+\texttt{regls} run (mostly) quietly; setting it to 2 or 3 produces
+more output in some cases.
 
 The further optional parameters, as well as the contents of the bundle
 returned by \texttt{regls}, are best explained by reference to the
@@ -596,7 +596,7 @@ bundle regls (series y, list X, bundle parms)
     \texttt{stdize} & 0/1, default 1 & standardize the data \\
     \texttt{ridge} & 0/1, default 0 & do Ridge regression \\
     \texttt{lambda\_scale} & 0, 1 or 2, default 1 & see section~\ref{sec:ridge} \\
-    \texttt{verbosity} & 0, 1 or 2, default 1 & printing of output\\
+    \texttt{verbosity} & 0, 1, 2 or 3, default 1 & printing of output\\
     \texttt{xvalidate} & 0/1, default 0 & do cross validation\\
     \texttt{nfolds} & optional integer $>1$, default 10 & number of
                                                           folds \\
@@ -696,6 +696,13 @@ series glmnet_pred (matrix *Rb, list X)
   coefficients, with row-names added based on the \texttt{X}
   list. This is then comparable with gretl's \texttt{nzb}.
 \end{funcdoc}
+
+\section{Change log}
+\label{sec:changes}
+
+Version 0.1, 2020-10-09: initial release. \\
+Version 0.2, 2021-01-29: support a higher verbosity level for GUI use;
+improve printout for LASS0 coefficients, when applicable.
 
 \begin{script}
   \caption{Usage of \texttt{regls\_multiprint}}

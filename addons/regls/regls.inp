@@ -116,7 +116,7 @@ end function
 
 function void print_regls_header (const bundle b, int nlam,
                                   int elnet, string est,
-				  string yname)
+                                  string yname)
 
    string algo = b.ccd ? "CCD" : b.ridge ? "SVD" : "ADMM"
    string t1str = obslabel($t1)
@@ -168,7 +168,7 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
          printf "nlambda=%d", parms.nlambda
       else
          printf "lfrac=%g", parms.lfrac
-      endif      
+      endif
       if inbundle(b, "ridge")
          printf ", ridge=1"
       endif
@@ -178,8 +178,23 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       printf ", verbosity=2))\n"
    end outfile
    printf "Command line equivalent:\n\n"
+   printf "# any required lags must be generated first\n"
    printf "%s\n", cmdstr
    b.commands = cmdstr
+end function
+
+function void nz_print (const bundle b, const string est, int nlam)
+   if nlam > 1
+      printf "\n%s minimum-BIC coefficients\n\n", est
+   else
+      printf "\n%s coefficients\n\n", est
+   endif
+   strings S = varnames(b.nzX)
+   len = max(strlen(S))
+   loop i=1..nelem(S)
+      printf "%*s %#12.6g\n", len, S[i], b.nzb[i]
+   endloop
+   printf "\n"
 end function
 
 function bundle regls (series depvar, list indeps,
@@ -297,7 +312,7 @@ function bundle regls (series depvar, list indeps,
    if inbundle(parms, "xvalidate")
       get_xvalidation_parms(&ret, &parms)
    endif
-   
+
    if ret.verbosity > 0 && rank <= 0
       yname = argname(depvar, "unnamed")
       est = elnet ? "Elastic net" : ret.ridge ? "Ridge" : "LASSO"
@@ -380,14 +395,10 @@ function bundle regls (series depvar, list indeps,
       strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
       modprint bse pnames addstats
    elif nlam == 1 && ret.verbosity > 1
-      printf "\n%s coefficients:\n\n", est
-      if inbundle(ret, "nzb")
-         printf "%13.6g\n", ret.nzb
-      else
-         printf "%13.6g\n", ret.b
-      endif
+      nz_print(ret, est, 1)
+   elif nlam > 1 && ret.verbosity > 2
+      nz_print(ret, est, nlam)
    endif
-
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
