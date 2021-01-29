@@ -4430,6 +4430,7 @@
   </usage>
 
   <description context="cli">
+
     <para>
       Se non vengono indicate opzioni, mostra la distribuzione di
       frequenza per la <repl>variabile</repl> (indicata con il nome
@@ -4579,9 +4580,12 @@
 
   <description>
     <para>
-      Apre un blocco di istruzioni che definiscono una funzione. Il blocco va
-      chiuso con <lit>end function</lit>. Per i dettagli, si veda
-      la <guideref targ="chap:functions"/>.
+      Apre un blocco di istruzioni che definiscono una funzione. Il
+      blocco va chiuso con <lit>end function</lit>. (Eccezione: per
+      cancellare dalla memoria una funzione definita dall'utente, si
+      usa il comando <lit>function pippo delete</lit>, dove
+      <quote>pippo</quote> è la funzione da cancellare.) Per maggiori
+      dettagli, si veda la <guideref targ="chap:functions"/>.
     </para>
   </description>
 
@@ -8691,671 +8695,687 @@ una o più delle variabili del test.</para>
 	</description>
       </command>
 
-      <command name="mle" section="Estimation"
-	       label="Stima di massima verosimiglianza">
+  <command name="mle" section="Estimation"
+	   label="Stima di massima verosimiglianza">
 
-	<usage>
-	  <arguments>
-            <argument>funzione di log-verosimiglianza</argument>
-            <argument optional="true">derivate</argument>
-	  </arguments>
-	  <options>
-	    <option>
-	      <flag>--quiet</flag>
-	      <effect>non stampa il modello stimato</effect>
-	    </option>
-	    <option>
-	      <flag>--vcv</flag>
-	      <effect>mostra la matrice di covarianza</effect>
-	    </option>
-	    <option>
-	      <flag>--hessian</flag>
-	      <effect>calcola la matrice di covarianza a partire dall'Hessiana</effect>
-	    </option>
-	    <option>
-	      <flag>--robust</flag>
-	      <effect>matrice di covarianza QML</effect>
-	    </option>
-	    <option>
-	      <flag>--cluster</flag>
-	      <optparm>clustvar</optparm>
-	      <effect>errori standard clusterizzati</effect>
-            </option>
-	    <option>
-<flag>--verbose</flag>
-<effect>mostra i dettagli delle iterazioni</effect>
-</option>
-<option>
-<flag>--no-gradient-check</flag>
-<effect>si veda sotto</effect>
-</option>
-<option>
-<flag>--auxiliary</flag>
-<effect>si veda sotto</effect>
-</option>
-<option>
-<flag>--lbfgs</flag>
-<effect>usa L-BFGS-B invece di BFGS</effect>
-</option>
-</options>
-<examples>
-  <demos>
-<demo>weibull.inp</demo>
-<demo>biprobit_via_ghk.inp</demo>
-<demo>frontier.inp</demo>
-<demo>keane.inp</demo>
-</demos>
-</examples>
-</usage>
-
-<description context="gui">
-  <para>
-    Esegue la stima di massima verosimiglianza (ML, Maximum
-    Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
-    Occorre specificare la funzione di log-verosimiglianza, e se possibile è
-    consigliabile indicare anche espressioni per le derivate di questa
-    funzione, rispetto ad ognuno dei parametri.
-</para>
-<para>
-  Esempio: si supponga di avere una serie <lit>X</lit> con
-  valori 0 o 1 e di voler ottenere la stima di massima
-  verosimiglianza della probabilità <lit>p</lit> che
-  <lit>X</lit> valga 1 (è semplice intuire che la stima ML di
-  <lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
-  campione).
-</para>
-<para>
-  Occorre per prima cosa aggiungere <lit>p</lit> al dataset
-  e assegnargli un valore iniziale, attraverso il comando
-  <cmd>genr</cmd> o i comandi del menù.  È possibile scrivere
-  delle istruzioni <quote>genr</quote> appropriate nella finestra
-  di specificazione del comando di stima, prima di indicare la
-  specificazione della funzione di log-verosimiglianza.
-</para>
-<para>
-  Si scrivano i seguenti comandi nella finestra del comando:
-</para>
-<code>
-  loglik = X*log(p) + (1-X)*log(1-p)
-  deriv p = X/p - (1-X)/(1-p)
-</code>
-<para>
-  La prima riga specifica la funzione di log-verosimiglianza, mentre
-  la seconda indica la derivata della funzione rispetto a p. Se non si
-  indicano righe "deriv", viene calcolata un'approssimazione numerica
-  delle derivate.
-</para>
-<para>
-  Se non si era dichiarato in precedenza il parametro p, sarebbe stato
-  necessario premettere alle righe precedenti la riga:
-</para>
-<code>
-  scalar p = 0.5
-</code>
-<para>
-  Per impostazione predefinita, gli errori standard sono basati
-  sul prodotto esterno del gradiente. Se si richiedono errori
-  standard robusti, viene usato uno stimatore QML (ossia, un
-  sandwich dell'inversa negativa dell'Hessiana e della matrice
-  di covarianza del gradiente).  L'Hessiana è approssimata
-  numericamente.
-</para>
-<para>
-  Per maggiori informazioni a riguardo della <cmd>massima
-  verosimiglianza (mle)</cmd>, consultare <guideref
-  targ="chap:mle"/>.
-</para>
-</description>
-
-<description context="cli">
-  <para>
-    Esegue la stima di massima verosimiglianza (ML, Maximum
-    Likelihood) usando a scelta o l'algoritmo BFGS (Broyden,
-    Fletcher, Goldfarb, Shanno) o l'algoritmo di Newton.
-    Occorre specificare la funzione di log-verosimiglianza e
-    dichiarare i valori iniziali per i parametri della funzione
-    Se possibile è consigliabile indicare anche le espressioni
-    per le derivate di questa funzione, rispetto ad ognuno dei
-    parametri; se non si indicano le derivate analitiche, verrà
-    calcolata un'approssimazione numerica.
-</para>
-<para>
-  Questo messaggio di aiuto presuppone l'utilizzo dell'algoritmo
-  di massimizzazione BFGS, per maggiori informazioni circa l'uso
-  dell'algoritmo di Newton si consulti <guideref targ="chap:mle"/>.
-</para>
-<para>
-  Esempio: si supponga di avere una serie <lit>X</lit> con
-  valori 0 o 1 e di voler ottenere la stima di massima
-  verosimiglianza della probabilità <lit>p</lit> che
-  <lit>X</lit> valga 1 (è semplice intuire che la stima ML di
-  <lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
-  campione).
-</para>
-<para>
-  Occorre per prima cosa aggiungere <lit>p</lit> al dataset e
-  assegnargli un valore iniziale; ad esempio, 
-</para>      
-<code>
-  scalar p = 0.5
-</code>
-<para>
-  Quindi costruiamo il blocco di comandi per la stima di massima
-  verosimiglianza:
-</para>
-<code>
-  mle loglik = X*log(p) + (1-X)*log(1-p)
-  deriv p = X/p - (1-X)/(1-p)
-  end mle
-</code>
-<para>
-  La prima riga specifica la funzione di log-verosimiglianza: inizia con
-  la parola chiave <lit>mle</lit>, quindi contiene la variabile
-  dipendente e una specificazione per la log-verosimiglianza usando la
-  stessa sintassi del comando <cmd>genr</cmd>. La riga seguente (che è
-  opzionale), inizia con la parola chiave <lit>deriv</lit> e fornisce
-  la derivata della funzione di log-verosimiglianza rispetto al parametro
-  <lit>p</lit>. Se non vengono indicate derivate, occorre includere una
-  dichiarazione che identifica i parametri liberi (separati da spazi)
-  utilizzando la parola chiave <lit>params</lit>; questi parametri liberi
-  possono essere sia scalari, che vettori, che una qualsiasi combinazione dei
-  due. Ad esempio si sarebbe potuto scrivere:
-</para>
-<code>
-  mle loglik = X*log(p) + (1-X)*log(1-p)
-  params p
-  end mle
-</code>
-<para>
-  e in questo caso la derivata verrebbe calcolata numericamente.
-</para>
-<para>
-  Si noti che eventuali opzioni vanno indicate nella riga finale del blocco
-  MLE.
-</para>
-<subhead>Matrice di covarianza ed errori standard</subhead>
-<para>
-  Se la funzione di log-verosimiglianza restituisce una variabile
-  o un vettore per ogni valore delle osservazioni allora gli errori
-  standard sono, per impostazione predefinita, basati sul prodotto
-  esterno del gradiente (OPG), mentre se l'opzione <opt>hessian</opt>
-  è fornita allora quest'ultimi saranno ottenuti sulla base dell'inversa
-  negativa della matrice hessiana, la quale verrà approssimata numericamente.
-  Se l'opzione <opt>robust</opt> è data allora verrà utilizzato uno
-  stimatore di quasi-massima verosimiglianza (QML), ossia uno stimatore
-  ottenuto dal sandwich dell'inversa negativa della matrice hessiana e
-  del prodotto esterno del gradiente (OPG). In ogni caso, se la funzione di
-  log-verosimiglianza restituisce semplicemente un valore scalare il metodo
-  OPG non risulta disponibile (come anche lo stimatore QML), e gli errori
-  standard sono necessariamente calcolati usando l'hessiana numerica.
-</para>
-<para>
-  Nel caso in cui si volesse solo il parametro primario delle stime
-  è possibile dare l'opzione <opt>auxiliary</opt>, la quale sopprime
-  il calcolo della matrice di covarianza e degli errori standard; questo
-  permetterà di risparmiare alcuni cicli della CPU, salvando anche un
-  po' di memoria.
-</para>
-<subhead>Controllo analitico delle derivate</subhead>
-<para>
-  Se si forniscono le derivate analitiche della funzione di
-  log-verosimiglianza, di default gretl esegue un controllo
-  numerico circa la loro attendibilità. Occasionalmente, questo
-  controllo potrebbe produrre dei falsi positivi, ovvero casi in
-  cui derivate calcolate correttamente vengono segnalate come
-  errate e di cui la stima viene quindi negata.  Per impedire
-  che ciò accada, o per aggiungere un poco di velocità in più al
-  processo, è possibile dare l'opzione
-  <opt>no-gradient-check</opt>.  Ovviamente questo andrebbe
-  fatto solo nel caso in cui si è assolutamente sicuri che il
-  gradiente dato in specifica è corretto.
-</para>
-<subhead>Nomi dei parametri</subhead>
-<para>
-  Quando si stima un modello non lineare spesso risulta
-  conveniente nominare i parametri in maniera concisa. Nella
-  stampa dei risultati, comunque, risulta desiderabile che le
-  etichette data siano le più informative e sintetiche
-  possibili. Questo risultato pyò venire ottenuto aggiungendo la
-  parola chiave <lit>param_names</lit> all'interno del blocco di
-  comando. Per un modello con <math>k</math> parametri
-  l'argomento successivo a questa parola chiave può essere sia
-  una stringa di testo, messa tra virgolette, contenente
-  <math>k</math> nomi separati da uno spazio, sia il nome di una
-  stringa di variabili avente al suo interno tutti i
-  <math>k</math> nomi.
-</para>
-<para>
-  Per maggiori informazioni circa la massima verosimiglianza
-  (<cmd>mle</cmd>) raccomandiamo di consultare <guideref
-  targ="chap:mle"/>.
-</para>
-</description>
-
-<gui-access>
-  <menu-path>/Modello/Massima verosimiglianza</menu-path>
-</gui-access>
-
-</command>
-
-<command name="modeltab" section="Utilities"
-	 label="Tabella modelli">
-
-  <usage>
-    <altforms>
-      <altform><lit>modeltab add</lit></altform>
-      <altform><lit>modeltab show</lit></altform>
-      <altform><lit>modeltab free</lit></altform>
-      <altform><lit>modeltab --output=</lit><repl>nomefile</repl></altform>
-    </altforms>
-  </usage>
-
-  <description context="gui"> 
-    <para>
-      Nella ricerca econometrica si è soliti stimare vari modelli con una
-      variabile dipendente comune, che differiscono tra loro per le variabili
-      indipendenti o per il tipo di stimatore usato. In questa situazione è comodo
-      poter rappresentare i risultati delle regressioni sotto forma di una
-      tabella dove ogni colonna contiene i risultati (stime dei coefficienti
-      e errori standard) per un dato modello e ogni riga contiene le stime
-      per una certa variabile nei differenti modelli.
-    </para>
-
-    <para>
-      Gretl dà la possibilità di costruire una tabella simile (e
-      di esportarla in testo semplice, &latex; o RTF - Rich Text Format).
-      Ecco come fare:
-    </para>
+    <usage>
+      <arguments>
+        <argument>funzione di log-verosimiglianza</argument>
+        <argument optional="true">derivate</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa il modello stimato</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--hessian</flag>
+	  <effect>calcola la matrice di covarianza a partire dall'Hessiana</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>matrice di covarianza QML</effect>
+	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>errori standard clusterizzati</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>stampa i dettagli delle iterazioni</effect>
+	</option>
+	<option>
+	  <flag>--no-gradient-check</flag>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--auxiliary</flag>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--lbfgs</flag>
+	  <effect>usa L-BFGS-B anziché il BFGS standard</effect>
+	</option>
+      </options>
+      <examples>
+	<demos>
+	  <demo>weibull.inp</demo>
+	  <demo>biprobit_via_ghk.inp</demo>
+	  <demo>frontier.inp</demo>
+	  <demo>keane.inp</demo>
+	</demos>
+      </examples>
+    </usage>
     
-    <nlist>
-      <li>
-	<para>
-	  Stimare un modello che si vuole includere nella
-          tabella e selezionare, nel menù File della finestra di
-          visualizzazione del modello, <quote>Salva alla sessione come
-          icona</quote> o <quote>Salva come icona e chiudi</quote>.
-        </para>
-      </li>
-      <li>
-        <para>
-          Ripetere il punto 1 per gli alri modelli da
-          includere nella tabella (fino a un massimo di sei modelli).
-        </para>
-      </li>
-      <li>
-        <para>
-          Completata la stima dei modelli, aprire l'icona
-della sessione di gretl (selezionando <quote>Visualizza Icone</quote>
-nel menù Sessione della finestra principale di gretl, o facendo
-clic su <quote>Finestra icone</quote> sulla barra degli
-strumenti di gretl).
-</para>
-</li>
-<li>
-  <para>
-    La finestra delle icone contiene un'icona chiamata
-    <quote>Tabella Modelli</quote>. Per aggiungere alla tabella
-    modelli il modello che deve apparire nella colonna più a
-    sinistra della tabella, basta trascinare l'icona del modello
-    sull'icona della <quote>Tabella Modelli</quote>, oppure fare
-    clic col tasto destro sull'icona del modello e selezionare
-    <quote>Aggiungi alla tabella modelli</quote> dal menù pop-up.
-</para>
-</li>
-<li>
-  <para>
-    Ripetere il punto 4 per gli altri modelli da aggiungere alla tabella.
-    Il secondo modello scelto apparirà nella seconda colonna da sinistra
-    della tabella, e così via.
-  </para>
-</li>
-<li>
-  <para>
-    Ultimata la composizione della tabella, è possibile
-    visualizzarla facendo doppio clic sulla sua icona. Per copiare
-    la tabella negli appunti in uno dei formati supportati, basta
-    fare clic sul menù Modifica della finestra in cui appare la
-    tabella.
-  </para>
-</li>
-<li>
-  <para>
-    Se l'ordinamento dei modelli nella tabella non è
-    quello voluto, fare clic col tasto destro sull'icona della
-    tabella modelli e selezionare <quote>Pulisci</quote>, quindi
-    tornare al punto 4.
-  </para>
-</li>
-</nlist>
-</description>
+    <description context="gui">
+      <para>
+	Esegue la stima di massima verosimiglianza (ML, Maximum
+	Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher,
+	Goldfarb, Shanno) o il metodo di Newton.  Occorre
+	specificare la funzione di log-verosimiglianza, e se
+	possibile è consigliabile indicare anche espressioni per le
+	derivate di questa funzione, rispetto ad ognuno dei
+	parametri.
+      </para>
+      <para>
+	Questo messaggio di aiuto presuppone l'utilizzo dell'algoritmo
+	di massimizzazione BFGS, per maggiori informazioni circa l'uso
+	dell'algoritmo di Newton si consulti <guideref targ="chap:mle"/>.
+      </para>
+      <para>
+	Esempio: si supponga di avere una serie <lit>X</lit> con
+	valori 0 o 1 e di voler ottenere la stima di massima
+	verosimiglianza della probabilità <lit>p</lit> che
+	<lit>X</lit> valga 1 (è semplice intuire che la stima ML di
+	<lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
+	campione).
+      </para>
+      <para>
+	Occorre per prima cosa aggiungere <lit>p</lit> al dataset
+	e assegnargli un valore iniziale, attraverso il comando
+	<cmd>genr</cmd> o i comandi del menù.  È possibile scrivere
+	delle istruzioni <quote>genr</quote> appropriate nella finestra
+	di specificazione del comando di stima, prima di indicare la
+	specificazione della funzione di log-verosimiglianza.
+      </para>
+      <para>
+	Si scrivano i seguenti comandi nella finestra del comando:
+      </para>
+      <code>
+	loglik = X*log(p) + (1-X)*log(1-p)
+	deriv p = X/p - (1-X)/(1-p)
+      </code>
+      <para>
+	La prima riga specifica la funzione di log-verosimiglianza, mentre
+	la seconda indica la derivata della funzione rispetto a p. Se non si
+	indicano righe "deriv", viene calcolata un'approssimazione numerica
+	delle derivate.
+      </para>
+      <para>
+	Se non si era dichiarato in precedenza il parametro p, sarebbe stato
+	necessario premettere alle righe precedenti la riga:
+      </para>
+      <code>
+	scalar p = 0.5
+      </code>
+      <para>
+	Per impostazione predefinita, gli errori standard sono basati
+	sul prodotto esterno del gradiente. Se si richiedono errori
+	standard robusti, viene usato uno stimatore QML (ossia, un
+	sandwich dell'inversa negativa dell'Hessiana e della matrice
+	di covarianza del gradiente).  L'Hessiana è approssimata
+	numericamente.
+      </para>
+      <para>
+	Per maggiori informazioni a riguardo della <cmd>massima
+	verosimiglianza (mle)</cmd>, consultare <guideref
+	targ="chap:mle"/>.
+      </para>
+    </description>
+    
+    <description context="cli">
+      <para>
+	Esegue la stima di massima verosimiglianza (ML, Maximum
+	Likelihood) usando a scelta o l'algoritmo BFGS (Broyden,
+	Fletcher, Goldfarb, Shanno) o l'algoritmo di Newton.
+	Occorre specificare la funzione di log-verosimiglianza e
+	dichiarare i valori iniziali per i parametri della funzione
+	Se possibile è consigliabile indicare anche le espressioni
+	per le derivate di questa funzione, rispetto ad ognuno dei
+	parametri; se non si indicano le derivate analitiche, verrà
+	calcolata un'approssimazione numerica.
+      </para>
+      <para>
+	Questo messaggio di aiuto presuppone l'utilizzo dell'algoritmo
+	di massimizzazione BFGS, per maggiori informazioni circa l'uso
+	dell'algoritmo di Newton si consulti <guideref targ="chap:mle"/>.
+      </para>
+      <para>
+	Esempio: si supponga di avere una serie <lit>X</lit> con
+	valori 0 o 1 e di voler ottenere la stima di massima
+	verosimiglianza della probabilità <lit>p</lit> che
+	<lit>X</lit> valga 1 (è semplice intuire che la stima ML di
+	<lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
+	campione).
+      </para>
+      <para>
+	Occorre per prima cosa aggiungere <lit>p</lit> al dataset e
+	assegnargli un valore iniziale; ad esempio, 
+      </para>      
+      <code>
+	scalar p = 0.5
+      </code>
+      <para>
+	Quindi costruiamo il blocco di comandi per la stima di massima
+	verosimiglianza:
+      </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	deriv p = X/p - (1-X)/(1-p)
+	end mle
+      </code>
+      <para>
+	La prima riga specifica la funzione di log-verosimiglianza:
+	inizia con la parola chiave <lit>mle</lit>, quindi contiene la
+	variabile dipendente e una specificazione per la
+	log-verosimiglianza usando la stessa sintassi del comando
+	<cmd>genr</cmd>. La riga seguente (che è opzionale), inizia
+	con la parola chiave <lit>deriv</lit> e fornisce la derivata
+	della funzione di log-verosimiglianza rispetto al parametro
+	<lit>p</lit>. Se non vengono indicate derivate, occorre
+	includere una dichiarazione che identifica i parametri liberi
+	(separati da spazi) utilizzando la parola chiave
+	<lit>params</lit>; questi parametri liberi possono essere sia
+	scalari, che vettori, che una qualsiasi combinazione dei
+	due. Ad esempio si sarebbe potuto scrivere:
+      </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	params p
+	end mle
+      </code>
+      <para>
+	e in questo caso la derivata verrebbe calcolata numericamente.
+      </para>
+      <para>
+	Si noti che eventuali opzioni vanno indicate nella riga finale del blocco
+	MLE.
+      </para>
+      <subhead>Matrice di covarianza ed errori standard</subhead>
+      <para>
+	Se la funzione di log-verosimiglianza restituisce una
+	variabile o un vettore per ogni valore delle osservazioni
+	allora gli errori standard sono, per impostazione predefinita,
+	basati sul prodotto esterno del gradiente (OPG), mentre se
+	l'opzione <opt>hessian</opt> è fornita allora quest'ultimi
+	saranno ottenuti sulla base dell'inversa negativa della
+	matrice hessiana, la quale verrà approssimata numericamente.
+	Se l'opzione <opt>robust</opt> è data allora verrà utilizzato
+	uno stimatore di quasi-massima verosimiglianza (QML), ossia
+	uno stimatore ottenuto dal sandwich dell'inversa negativa
+	della matrice hessiana e del prodotto esterno del gradiente
+	(OPG). In ogni caso, se la funzione di log-verosimiglianza
+	restituisce semplicemente un valore scalare il metodo OPG non
+	risulta disponibile (come anche lo stimatore QML), e gli
+	errori standard sono necessariamente calcolati usando
+	l'hessiana numerica.
+      </para>
+      <para>
+	Nel caso in cui si volesse solo il parametro primario delle
+	stime è possibile dare l'opzione <opt>auxiliary</opt>, la
+	quale sopprime il calcolo della matrice di covarianza e degli
+	errori standard; questo permetterà di risparmiare alcuni cicli
+	della CPU, salvando anche un po' di memoria.
+      </para>
+      <subhead>Controllo delle derivate analitiche</subhead>
+      <para>
+	Se si forniscono le derivate analitiche della funzione di
+	log-verosimiglianza, di default gretl esegue un controllo
+	numerico circa la loro attendibilità. Occasionalmente, questo
+	controllo potrebbe produrre dei falsi positivi, ovvero casi in
+	cui derivate calcolate correttamente vengono segnalate come
+	errate e di cui la stima viene quindi negata.  Per impedire
+	che ciò accada, o per aggiungere un poco di velocità in più al
+	processo, è possibile dare l'opzione
+	<opt>no-gradient-check</opt>.  Ovviamente questo andrebbe
+	fatto solo nel caso in cui si è assolutamente sicuri che il
+	gradiente dato in specifica è corretto.
+      </para>
+      <subhead>Nomi dei parametri</subhead>
+      <para>
+	Quando si stima un modello non lineare spesso risulta
+	conveniente nominare i parametri in maniera concisa. Nella
+	stampa dei risultati, comunque, risulta desiderabile che le
+	etichette data siano le più informative e sintetiche
+	possibili. Questo risultato pyò venire ottenuto aggiungendo la
+	parola chiave <lit>param_names</lit> all'interno del blocco di
+	comando. Per un modello con <math>k</math> parametri
+	l'argomento successivo a questa parola chiave può essere sia
+	una stringa di testo, messa tra virgolette, contenente
+	<math>k</math> nomi separati da uno spazio, sia il nome di una
+	stringa di variabili avente al suo interno tutti i
+	<math>k</math> nomi.
+      </para>
+      <para>
+	Per maggiori informazioni circa la massima verosimiglianza
+	(<cmd>mle</cmd>) raccomandiamo di consultare <guideref
+	targ="chap:mle"/>.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>/Modello/Massima verosimiglianza</menu-path>
+    </gui-access>
+    
+  </command>
+  
+  <command name="modeltab" section="Utilities"
+	   label="Tabella modelli">
+    
+    <usage>
+      <altforms>
+	<altform><lit>modeltab add</lit></altform>
+	<altform><lit>modeltab show</lit></altform>
+	<altform><lit>modeltab free</lit></altform>
+	<altform><lit>modeltab --output=</lit><repl>nomefile</repl></altform>
+      </altforms>
+    </usage>
+    
+    <description context="gui"> 
+      <para>
+	Nella ricerca econometrica, è comune stimare vari modelli per
+	la stessa variabile dipendente, che differiscono tra loro per
+	le variabili indipendenti o per il tipo di stimatore usato. In
+	questa situazione è comodo poter rappresentare i risultati
+	delle regressioni sotto forma di una tabella dove ogni colonna
+	contiene i risultati (stime dei coefficienti e errori
+	standard) per un dato modello e ogni riga contiene le stime
+	per una certa variabile nei differenti modelli.
+      </para>
 
-<description context="cli">
-  <para>
-    Manipola la <quote>tabella modelli</quote> di gretl. Si veda
-    la <guideref targ="chap:modes"/> per i dettagli. Le opzioni
-    hanno i seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo
-    modello stimato alla tabella modelli, se possibile;
-    <cmd>show</cmd> mostra la tabella modelli in una finestra;
-    <cmd>free</cmd> pulisce la tabella.
-  </para>
-  <para>
-    Per stampare la tabella del modello usate l'opzione
-    <opt>output=</opt> seguita dal nome di un file. Se
-    quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
-    l'output sarà in formato &tex;; se il suffisso è
-    <quote><lit>.rtf</lit></quote> l'output sarà RTF; in caso
-    contrario sarà in formato di testo. Nel caso di output in
-    formato &tex; per default verrà prodotto un
-    <quote>frammento</quote> pronto per essere inserito in un
-    documento; se invece si preferisce ottenere un documento
-    completo, usate l'opzione <opt>complete</opt>; per esempio,
-  </para>
-  <code>
-    modeltab --output="myfile.tex" --complete
-  </code>
+      <para>
+	Gretl dà la possibilità di costruire una tabella simile (e
+	di esportarla in testo semplice, &latex; o RTF - Rich Text Format).
+	Ecco come fare:
+      </para>
+    
+      <nlist>
+	<li>
+	  <para>
+	    Stimare un modello che si vuole includere nella
+            tabella e selezionare, nel menù File della finestra di
+            visualizzazione del modello, <quote>Salva alla sessione come
+            icona</quote> o <quote>Salva come icona e chiudi</quote>.
+          </para>
+	</li>
+	<li>
+          <para>
+            Ripetere il punto 1 per gli alri modelli da
+            includere nella tabella (fino a un massimo di sei modelli).
+          </para>
+	</li>
+	<li>
+          <para>
+            Completata la stima dei modelli, aprire l'icona della
+            sessione di gretl (selezionando <quote>Visualizza
+            Icone</quote> nel menù Sessione della finestra
+            principale di gretl, o facendo clic su <quote>Finestra
+            icone</quote> sulla barra degli strumenti di gretl).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    La finestra delle icone contiene un'icona chiamata
+	    <quote>Tabella Modelli</quote>. Per aggiungere alla
+	    tabella modelli il modello che deve apparire nella
+	    colonna più a sinistra della tabella, basta trascinare
+	    l'icona del modello sull'icona della <quote>Tabella
+	    Modelli</quote>, oppure fare clic col tasto destro
+	    sull'icona del modello e selezionare <quote>Aggiungi
+	    alla tabella modelli</quote> dal menù pop-up.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Ripetere il punto 4 per gli altri modelli da aggiungere alla tabella.
+	    Il secondo modello scelto apparirà nella seconda colonna da sinistra
+	    della tabella, e così via.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Ultimata la composizione della tabella, è possibile
+	    visualizzarla facendo doppio clic sulla sua icona. Per copiare
+	    la tabella negli appunti in uno dei formati supportati, basta
+	    fare clic sul menù Modifica della finestra in cui appare la
+	    tabella.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Se l'ordinamento dei modelli nella tabella non è
+	    quello voluto, fare clic col tasto destro sull'icona della
+	    tabella modelli e selezionare <quote>Pulisci</quote>, quindi
+	    tornare al punto 4.
+	  </para>
+	</li>
+      </nlist>
+    </description>
+    
+    <description context="cli">
+      <para>
+	Manipola la <quote>tabella modelli</quote> di gretl. Si veda
+	la <guideref targ="chap:modes"/> per i dettagli. Le opzioni
+	hanno i seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo
+	modello stimato alla tabella modelli, se possibile;
+	<cmd>show</cmd> mostra la tabella modelli in una finestra;
+	<cmd>free</cmd> pulisce la tabella.
+      </para>
+      <para>
+	Per stampare la tabella del modello, si usi l'opzione
+	<opt>output=</opt> seguita dal nome di un file. Se
+	quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
+	l'output sarà in formato &tex;; se il suffisso è
+	<quote><lit>.rtf</lit></quote> l'output sarà RTF; in caso
+	contrario sarà in formato di testo. Nel caso di output in
+	formato &tex; per default verrà prodotto un
+	<quote>frammento</quote> pronto per essere inserito in un
+	documento; se invece si preferisce ottenere un documento
+	completo, usate l'opzione <opt>complete</opt>; per esempio,
+      </para>
+      <code>
+	modeltab --output="myfile.tex" --complete
+      </code>
+      
+    </description>
+    
+    <gui-access>
+      <menu-path>Finestra delle icone, Icona Tabella Modelli</menu-path>
+    </gui-access>
+    
+  </command>
+    
+  <command name="modprint" section="Printing"
+	   label="Stampa un modello definito dall'utente" context="cli">
+      
+    <usage>
+      <arguments>
+	<argument>matcoeff</argument>
+	<argument>nomi</argument>
+	<argument optional="true">stat</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>invia l'output al file specificato</effect>
+	</option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Stampa la tabella dei coefficienti e le statistiche aggiuntive
+	opzionali per un modello stimato <quote>a mano</quote>. Utile
+	principalmente per le funzioni definite dall'utente.
+      </para>
+      <para>
+	L'argomento <repl>matcoeff</repl> deve essere una matrice
+	<math>k</math> per 2 che contiene i <math>k</math>
+	coefficienti stimati nella prima colonna ed i <math>k</math>
+	relativi errori standard associati nella seconda. L'argomento
+	<repl>nomi</repl> deve fornire almeno <math>k</math> etichette
+	per i coefficienti. Può avere la forma di una stringa fissa
+	(fra virgolette doppie) o di una variabile di tipo stringa,
+	nel qual caso le etichette vanno separate con spazi oppure
+	virgole. Alternativamente, si può usare allo scopo un array di
+	stringhe.
+      </para>
+      <para>
+	L'argomento opzionale <repl>stat</repl> è un vettore che
+	contiene <math>p</math> statistiche aggiuntive da stampare
+	sotto la tabella dei coefficienti. Se si usa questo argomento,
+	<repl>nomi</repl> deve contenere <math>k + p</math> stringhe
+	di cui le ultime <math>p</math> sono relative alle statistiche
+	aggiuntive.
+      </para>
+      <para>
+	Per inviare l'output ad un file, usate l'opzione
+	<opt>output=</opt> seguita dal nome di un file. Se
+	quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
+	l'output sarà in formato &tex;; se il suffisso è
+	<quote><lit>.rtf</lit></quote> l'output sarà RTF; in caso
+	contrario sarà in formato di testo. Nel caso di output in
+	formato &tex; per default verrà prodotto un
+	<quote>frammento</quote> pronto per essere inserito in un
+	documento; se invece si preferisce ottenere un documento
+	completo, usate l'opzione <opt>complete</opt>.
+      </para>
+      <para>
+	Il file di output verrà scritto nella directory corrispondente
+	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
+	di file contenga un percorso completo. 
+      </para>
+    </description>
+    
+  </command>
+  
+  <command name="modtest" section="Tests" label="Test LM">
 
-</description>
+    <usage>
+      <arguments>
+	<argument optional="true">ordine</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--normality</flag>
+	  <effect>normalità dei residui</effect>
+	</option>
+	<option>
+	  <flag>--logs</flag>
+	  <effect>non linearità, logaritmi</effect>
+	</option>
+	<option>
+	  <flag>--squares</flag>
+	  <effect>non linearità, quadrati</effect>
+	</option>
+	<option>
+	  <flag>--autocorr</flag>
+	  <effect>autocorrelazione</effect>
+	</option>
+	<option>
+	  <flag>--arch</flag>
+	  <effect>ARCH</effect>
+	</option>
+	<option>
+	  <flag>--white</flag>
+	  <effect>test di White per l'eteroschedasticità</effect>
+	</option>
+	<option>
+	  <flag>--white-nocross</flag>
+	  <effect>test di White per l'eteroschedasticità cono solo i quadrati</effect>
+	</option>
+	<option>
+	  <flag>--breusch-pagan</flag>
+	  <effect>test per l'eteroschedasticità di Breusch&ndash;Pagan</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>stima robusta della varianza per Breusch&ndash;Pagan</effect>
+	</option>
+	<option>
+	  <flag>--panel</flag>
+	  <effect>eteroschedasticità, a gruppi</effect>
+	</option>
+	<option>
+	  <flag>--comfac</flag>
+	  <effect>restrizione a fattor comune, solo per modelli AR1</effect>
+	</option>
+	<option>
+	  <flag>--xdepend</flag>
+	  <effect>dipendenza cross-section, solo per dati panel</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i dettagli</effect>
+	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>non mostra i risultati</effect>
+	</option>
+      </options>
+      <examples>
+	<demos>
+	  <demo>credscore.inp</demo>
+	</demos>
+      </examples>
+    </usage>
+    
+    <description>
+      <para>
+	Deve seguire immediatamente un comando di stima. La
+	discussione che segue è relativa all'esecuzione del comando
+	dopo la stima di un modello ad equazione singola; si veda
+	<guideref targ="chap:var"/> per una descrizione di come
+	funziona <cmd>modtest</cmd> dopo la stima di un VAR
+      </para>
+      <para>
+	A seconda dell'opzione usata, il comando esegue uno dei test
+	seguenti: test di Doornik&ndash;Hansen per la normalità del
+	termine di errore; test dei moltiplicatori di Lagrange per la
+	non-linearità (logaritmi o quadrati); test di White (con o
+	senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
+	l'eteroschedasticità (<cite key="breusch-pagan79">Breusch e
+	Pagan, 1979</cite>), test LMF per la correlazione seriale (si
+	veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
+	test per il modello ARCH (Autoregressive Conditional
+	Heteroskedasticity, si veda anche il comando <cmd>arch</cmd>);
+	o restrizione a fattore comune, (solo modelli AR1); o un test
+	per la dipendenza tra unità cross-sectio in caso di modelli
+	con dati panel. Ad eccezione dei test sulla normalità, a
+	fattor comune e sulla dipendenza cross-section, la maggior
+	parte dei test risultano disponibili solo in caso di stima
+	OLS; per ulteriori dettagli circa lo stimatore TSLS (two-stage
+	least squares) si veda oltre.
+      </para>
+      <para>
+	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel
+	caso si scelga l'opzione <opt>autocorr</opt> o l'opzione
+	<opt>arch</opt>.  Per impostazione predefinita, questi test
+	sono eseguiti usando un ordine di ritardo pari alla
+	periodicità dei dati, ma è possibile anche impostare un ordine
+	di ritardo specifico.
+      </para>
+      <para>
+	L'opzione <opt>robust</opt> ha effetto solo se viene scelto il
+	test di Breusch&ndash;Pagan; l'effetto è quello di usare lo
+	stimatore robusto per la varianza proposto da <cite
+	key="koenker81">Koenker (1981)</cite>, rendendo il test meno
+	sensibile all'ipotesi di normalità.
+      </para>
+      <para>
+	L'opzione <opt>panel</opt> è disponibile solo se il modello
+	viene stimato su dati panel: in questo caso viene eseguito un
+	test per eteroschedasticità a gruppi (ossia per una varianza
+	dell'errore diversa fra le unità cross section).
+      </para>
+      <para>
+	L'opzione <opt>comfac</opt> è disponibile solo quando il
+	modello è stimato usando un metodo AR(1), come quello di
+	Hildreth&ndash;Lu. La regressione ausiliaria ha la struttura
+	di un modello dinamico relativamente poco vincolato ed è usata
+	per verificare il vincolo di fattori comuni implicito nella
+	specificazione AR(1).
+      </para>
+      <para>
+	L'opzione <opt>xdepend</opt> è disponibile solo se il modello
+	viene stimato su dati panel. La statistica test è sviluppata
+	secondo il metodo di <cite key="pesaran04">Pesaran
+	(2004)</cite>.  L'ipotesi nulla riguarda il termine di errore
+	assunto come indipendentemente distribuito per tutte le
+	osservazioni cross-section o gli individui.
+      </para>
+      <para>
+	Per impostazione predefinita il programma mostra la
+	regressione ausiliaria sulla quale la statistica test è
+	basata, laddove possibile.  Questa funzione può venir
+	soppressa utilizzando o l'opzione <opt>quiet</opt> (che mostra
+	le informazioni strettamente necessarie) oppure con l'opzione
+	<opt>silent</opt> (che non mostra alcuna informazione). La
+	statistica test ed il relativo p-value possono essere
+	richiamati utilizzando gli accessori <fncref targ="$test"/> e
+	<fncref targ="$pvalue"/>.
+      </para>
+      <para>
+	Nel caso di modelli stimati col metodo dei minimi quadrati a
+	due stadi (si veda <cmdref targ="tsls"/>), non è possibile
+	usare il test LM, quindi gretl offre alcuni test equivalenti;
+	in questo caso, l'opzione <flag>--autocorr</flag> calcola il
+	test di Godfrey per l'autocorrelazione (si veda <cite
+	key="godfrey94" p="true">Godfrey, 1994</cite>), mentre
+	l'opzione <flag>--white</flag> produce il test HET1 per
+	l'eteroschedasticità (si veda <cite key="pesaran99"
+	p="true">Pesaran e Taylor, 1999</cite>.
+      </para>
+      <para>
+	Per ulteriori test diagnostici sui modelli si vedano anche le
+	voci <cmdref targ="chow"/>, <cmdref targ="cusum"/>, <cmdref
+	targ="reset"/> e <cmdref targ="qlrtest"/>.
+      </para>
+    </description>
 
-<gui-access>
-  <menu-path>Finestra delle icone, Icona Tabella Modelli</menu-path>
-</gui-access>
+    <gui-access>
+      <menu-path>Finestra del modello, /Test</menu-path>
+    </gui-access>
 
-</command>
+  </command>
 
-<command name="modprint" section="Printing"
-	 label="Stampa un modello definito dall'utente" context="cli">
+  <command name="mpols" section="Estimation"
+	   label="Stima OLS a precisione multipla">
 
-  <usage>
-    <arguments>
-      <argument>matcoeff</argument>
-      <argument>nomi</argument>
-      <argument optional="true">stat</argument>
-    </arguments>
-    <options>
-      <option>
-	<flag>--output</flag>
-	<optparm>filename</optparm>
-	<effect>invia l'output al file specificato</effect>
-      </option>
-    </options>
-  </usage>
-
-  <description>
-    <para>
-      Stampa la tabella dei coefficienti e le statistiche aggiuntive
-      opzionali per un modello stimato <quote>a mano</quote>. Utile
-      principalmente per le funzioni definite dall'utente.
-    </para>
-    <para>
-      L'argomento <repl>matcoeff</repl> deve essere una matrice
-      <math>k</math> per 2 che contiene i <math>k</math>
-      coefficienti stimati nella prima colonna ed i <math>k</math>
-      relativi errori standard associati nella seconda. L'argomento
-      <repl>nomi</repl> deve fornire almeno <math>k</math> etichette
-      per i coefficienti. Può avere la forma di una stringa fissa
-      (fra virgolette doppie) o di una variabile di tipo stringa,
-      nel qual caso le etichette vanno separate con spazi oppure
-      virgole. Alternativamente, si può usare allo scopo un array di
-      stringhe.
-    </para>
-    <para>
-      L'argomento opzionale <repl>stat</repl> è un vettore che
-      contiene <math>p</math> statistiche aggiuntive da stampare
-      sotto la tabella dei coefficienti. Se si usa questo argomento,
-      <repl>nomi</repl> deve contenere <math>k + p</math> stringhe
-      di cui le ultime <math>p</math> sono relative alle statistiche
-      aggiuntive.
-    </para>
-    <para>
-      Per inviare l'output ad un file, usate l'opzione
-      <opt>output=</opt> seguita dal nome di un file. Se
-      quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
-      l'output sarà in formato &tex;; se il suffisso è
-      <quote><lit>.rtf</lit></quote> l'output sarà RTF; in caso
-      contrario sarà in formato di testo. Nel caso di output in
-      formato &tex; per default verrà prodotto un
-      <quote>frammento</quote> pronto per essere inserito in un
-      documento; se invece si preferisce ottenere un documento
-      completo, usate l'opzione <opt>complete</opt>.
-    </para>
-    <para>
-      Il file di output verrà scritto nella directory corrispondente
-      al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
-      di file contenga un percorso completo. 
-    </para>
-  </description>
-
-</command>
-
-<command name="modtest" section="Tests" label="Test LM">
-
-  <usage>
-    <arguments>
-<argument optional="true">ordine</argument>
-</arguments>
-<options>
-  <option>
-<flag>--normality</flag>
-<effect>normalità dei residui</effect>
-</option>
-<option>
-<flag>--logs</flag>
-<effect>non linearità, logaritmi</effect>
-</option>
-<option>
-<flag>--squares</flag>
-<effect>non linearità, quadrati</effect>
-</option>
-<option>
-<flag>--autocorr</flag>
-<effect>autocorrelazione</effect>
-</option>
-<option>
-<flag>--arch</flag>
-<effect>ARCH</effect>
-</option>
-<option>
-<flag>--white</flag>
-<effect>test di White per l'eteroschedasticità</effect>
-</option>
-<option>
-<flag>--white-nocross</flag>
-<effect>test di White per l'eteroschedasticità cono solo i quadrati</effect>
-</option>
-<option>
-<flag>--breusch-pagan</flag>
-<effect>test per l'eteroschedasticità di Breusch&ndash;Pagan</effect>
-</option>
-<option>
-<flag>--robust</flag>
-<effect>stima robusta della varianza per Breusch&ndash;Pagan</effect>
-</option>
-<option>
-<flag>--panel</flag>
-<effect>eteroschedasticità, a gruppi</effect>
-</option>
-<option>
-<flag>--comfac</flag>
-<effect>restrizione a fattor comune, solo per modelli AR1</effect>
-</option>
-<option>
-<flag>--xdepend</flag>
-<effect>dipendenza cross-section, solo per dati panel</effect>
-</option>
-<option>
-<flag>--quiet</flag>
-<effect>non mostra i dettagli</effect>
-</option>
-<option>
-<flag>--silent</flag>
-<effect>non mostra i risultati</effect>
-</option>
-</options>
-<examples>
-  <demos>
-<demo>credscore.inp</demo>
-</demos>
-</examples>
-</usage>
-
-<description>
-  <para>
-    Deve seguire immediatamente un comando di stima. La
-    discussione che segue è relativa all'esecuzione del comando
-    dopo la stima di un modello ad equazione singola; si veda
-    <guideref targ="chap:var"/> per una descrizione di come
-    funziona <cmd>modtest</cmd>  dopo la stima di un VAR
-</para>
-<para>
-  A seconda dell'opzione usata, il comando esegue uno dei test
-  seguenti: test di Doornik&ndash;Hansen per la normalità del
-  termine di errore; test dei moltiplicatori di Lagrange per la
-  non-linearità (logaritmi o quadrati); test di White (con o
-  senza i prodotti incrociati) o test di Breusch&ndash;Pagan per
-  l'eteroschedasticità (<cite key="breusch-pagan79">Breusch e
-  Pagan, 1979</cite>), test LMF per la correlazione seriale (si
-  veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
-  test per il modello ARCH (Autoregressive Conditional
-  Heteroskedasticity, si veda anche il comando <cmd>arch</cmd>);
-  o restrizione a fattore comune, (solo modelli AR1); o un test
-  per la dipendenza tra unità cross-sectio in caso di modelli con
-  dati panel. Ad eccezione dei test sulla normalità, a fattor comune
-  e sulla dipendenza cross-section, la maggior parte dei test risultano
-  disponibili solo in caso di stima OLS; per ulteriori dettagli circa lo
-  stimatore TSLS (two-stage least squares) si veda oltre.
-</para>
-<para>
-  L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
-  scelga l'opzione <opt>autocorr</opt> o l'opzione <opt>arch</opt>.
-  Per impostazione predefinita, questi test sono eseguiti usando un ordine
-  di ritardo pari alla periodicità dei dati, ma è possibile anche
-  impostare un ordine di ritardo specifico.
-</para>
-<para>
-  L'opzione <opt>robust</opt> ha effetto solo se viene scelto
-  il test di Breusch&ndash;Pagan; l'effetto è quello di usare lo
-  stimatore robusto per la varianza proposto da <cite
-  key="koenker81">Koenker (1981)</cite>, rendendo il test meno
-  sensibile all'ipotesi di normalità.
-</para>
-<para>
-  L'opzione <opt>panel</opt> è disponibile solo se il modello viene
-  stimato su dati panel: in questo caso viene eseguito un test per
-  eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
-  fra le unità cross section).
-</para>
-<para>
-  L'opzione <opt>comfac</opt> è disponibile solo quando il
-  modello è stimato usando un metodo AR(1), come quello di
-  Hildreth&ndash;Lu. La regressione ausiliaria ha la struttura
-  di un modello dinamico relativamente poco vincolato ed è usata
-  per verificare il vincolo di fattori comuni implicito nella
-  specificazione AR(1).
-</para>
-<para>
-  L'opzione <opt>xdepend</opt> è disponibile solo se il modello
-  viene stimato su dati panel. La statistica test è sviluppata
-  secondo il metodo di <cite key="pesaran04">Pesaran
-  (2004)</cite>.  L'ipotesi nulla riguarda il termine di errore
-  assunto come indipendentemente distribuito per tutte le
-  osservazioni cross-section o gli individui.
-</para>
-<para>
-  Per impostazione predefinita il programma mostra la
-  regressione ausiliaria sulla quale la statistica test è
-  basata, laddove possibile.  Questa funzione può venir
-  soppressa utilizzando o l'opzione <opt>quiet</opt> (che mostra
-  le informazioni strettamente necessarie) oppure con l'opzione
-  <opt>silent</opt> (che non mostra alcuna informazione). La
-  statistica test ed il relativo p-value possono essere
-  richiamati utilizzando gli accessori <fncref targ="$test"/> e
-  <fncref targ="$pvalue"/>.
-</para>
-<para>
-  Nel caso di modelli stimati col metodo dei minimi quadrati a
-  due stadi (si veda <cmdref targ="tsls"/>), non è possibile
-  usare il test LM, quindi gretl offre alcuni test equivalenti;
-  in questo caso, l'opzione <flag>--autocorr</flag> calcola il
-  test di Godfrey per l'autocorrelazione (si veda <cite
-  key="godfrey94" p="true">Godfrey, 1994</cite>), mentre
-  l'opzione <flag>--white</flag> produce il test HET1 per
-  l'eteroschedasticità (si veda <cite key="pesaran99"
-  p="true">Pesaran e Taylor, 1999</cite>.
-</para>
-<para>
-  Per ulteriori test diagnostici sui modelli si vedano anche le voci
-  <cmdref targ="chow"/>, <cmdref targ="cusum"/>, <cmdref
-  targ="reset"/> e <cmdref targ="qlrtest"/>.
-</para>
-</description>
-
-<gui-access>
-  <menu-path>Finestra del modello, /Test</menu-path>
-</gui-access>
-
-</command>
-
-<command name="mpols" section="Estimation"
-	 label="Stima OLS a precisione multipla">
-
-  <usage>
-    <arguments>
-      <argument>variabile-dipendente</argument>
-      <argument>variabili-indipendenti</argument>
-    </arguments>
-    <options>
-      <option>
-	<flag>--vcv</flag>
-	<effect>mostra la matrice di covarianza</effect>
-      </option>
-      <option>
-	<flag>--simple-print</flag>
-	<effect>non mostra le statistiche ausiliarie</effect>
-      </option>
-      <option>
-	<flag>--quiet</flag>
-	<effect>non mostra i risultati</effect>
-      </option>
-    </options>
-  </usage>
-
-  <description>
-    <para>
-      Calcola le stime OLS per il modello indicato usando aritmetica
-      in virgola mobile a precisione multipla. Questo comando è
-      disponibile solo se <program>gretl</program> è compilato con
-      il supporto per la libreria Gnu Multiple Precision (GMP). Per
-      impostazione predefinita, vengono usati 256 bit di precisione
-      nei calcoli, ma è possibile aumentare questo valore usando la
-      variabile d'ambiente <lit>GRETL_MP_BITS</lit>.  Ad esempio,
-      usando l'interprete dei comandi bash, è possibile aumentare la
-      precisione a 1024 bit eseguendo il comando seguente prima di
-      avviare gretl
-    </para>
-    <code>
-      export GRETL_MP_BITS=1024
-    </code>
-    <para context="cli">
-      Per questo comando è disponibile un'opzione abbastanza speciale (utile
-      soprattutto a scopo di test): se la lista <repl>variabili-indipendenti</repl>
-      è seguita da un punto e virgola, e da un'ulteriore lista di numeri,
-      questi numeri vengono interpretati come potenze di <repl>x</repl> da aggiungere
-      alla regressione, dove <repl>x</repl> è l'ultima variabile della lista
-      <repl>variabili-indipendeti</repl>. Questi termini addizionali vengono
-      calcolati e memorizzati in precisione multipla. Nell'esempio seguente,
-      <lit>y</lit> è regredita su <lit>x</lit> e sulla seconda, terza e quarta
-      potenza di <lit>x</lit>:
-    </para>
-    <code context="cli">
-      mpols y 0 x ; 2 3 4
-    </code>
-  </description>
-
-  <gui-access>
-    <menu-path>/Modello/Altri modelli lineari/MPOLS - Minimi quadrati in alta precisione</menu-path>
-  </gui-access>
-
-</command>
+    <usage>
+      <arguments>
+	<argument>variabile-dipendente</argument>
+	<argument>variabili-indipendenti</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--simple-print</flag>
+	  <effect>non mostra le statistiche ausiliarie</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+	</option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Calcola le stime OLS per il modello indicato usando aritmetica
+	in virgola mobile a precisione multipla. Questo comando è
+	disponibile solo se <program>gretl</program> è compilato con
+	il supporto per la libreria Gnu Multiple Precision (GMP). Per
+	impostazione predefinita, vengono usati 256 bit di precisione
+	nei calcoli, ma è possibile aumentare questo valore usando la
+	variabile d'ambiente <lit>GRETL_MP_BITS</lit>.  Ad esempio,
+	usando l'interprete dei comandi bash, è possibile aumentare la
+	precisione a 1024 bit eseguendo il comando seguente prima di
+	avviare gretl
+      </para>
+      <code>
+	export GRETL_MP_BITS=1024
+      </code>
+      <para context="cli">
+	Per questo comando è disponibile un'opzione abbastanza speciale (utile
+	soprattutto a scopo di test): se la lista <repl>variabili-indipendenti</repl>
+	è seguita da un punto e virgola, e da un'ulteriore lista di numeri,
+	questi numeri vengono interpretati come potenze di <repl>x</repl> da aggiungere
+	alla regressione, dove <repl>x</repl> è l'ultima variabile della lista
+	<repl>variabili-indipendeti</repl>. Questi termini addizionali vengono
+	calcolati e memorizzati in precisione multipla. Nell'esempio seguente,
+	<lit>y</lit> è regredita su <lit>x</lit> e sulla seconda, terza e quarta
+	potenza di <lit>x</lit>:
+      </para>
+      <code context="cli">
+	mpols y 0 x ; 2 3 4
+      </code>
+    </description>
+    
+    <gui-access>
+      <menu-path>/Modello/Altri modelli lineari/MPOLS - Minimi quadrati in alta precisione</menu-path>
+    </gui-access>
+    
+  </command>
 
 <command name="nadarwat" section="Estimation" label="Nadaraya-Watson" 
 	 context="gui">

@@ -8609,10 +8609,16 @@
     <description context="gui">
       <para>
 	Performs Maximum Likelihood (ML) estimation using either the
-	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm.  You
-	must specify the log-likelihood function; it is recommended
-	that you also supply expressions for the derivatives of this
-	function with respect to each of the parameters if possible.
+	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm or
+	Newton's method.  You must specify the log-likelihood
+	function; it is recommended that you also supply expressions
+	for the derivatives of this function with respect to each of
+	the parameters if possible.
+      </para>
+      <para>
+	This help text assumes use of the default BFGS maximizer. For
+	information on using Newton's method please see
+	<guideref targ="chap:mle"/>.
       </para>
       <para>
 	Simple example: Suppose we have a series <lit>X</lit> with values 0
