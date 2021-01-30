@@ -161,6 +161,7 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
    set force_decpoint on
    outfile --buffer=cmdstr --quiet
       printf "include regls.gfn\n"
+      printf "# any required lags must be generated first\n"
       printf "list RX = \\\n"
       list X print
       printf "bundle rb = regls(%s, RX, _(", yname
@@ -175,10 +176,9 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       if inbundle(b, "alpha")
          printf ", alpha=%g", ret.alpha
       endif
-      printf ", verbosity=2))\n"
+      printf ", verbosity=3))\n"
    end outfile
    printf "Command line equivalent:\n\n"
-   printf "# any required lags must be generated first\n"
    printf "%s\n", cmdstr
    b.commands = cmdstr
 end function
@@ -248,7 +248,7 @@ function bundle regls (series depvar, list indeps,
    if inbundle(parms, "gui") == 1
       gui = parms.gui
       if gui
-         ret.verbosity = 2
+         ret.verbosity = 3
       endif
    endif
    if inbundle(parms, "alpha") == 1
