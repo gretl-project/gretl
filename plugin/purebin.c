@@ -98,14 +98,18 @@ static void get_string_counts (const DATASET *dset,
 			       const int *list,
 			       gbin_header *gh)
 {
-    int i, ns = 0, nl = 0;
+    int ns = 0, nl = 0;
+    int i, vi, nv;
     const char *s;
 
-    for (i=1; i<=list[0]; i++) {
-	if (is_string_valued(dset, list[i])) {
+    nv = list != NULL ? list[0] : dset->v - 1;
+
+    for (i=1; i<=nv; i++) {
+	vi = list != NULL ? list[i] : i;
+	if (is_string_valued(dset, vi)) {
 	    ns++;
 	}
-	s = series_get_label(dset, list[i]);
+	s = series_get_label(dset, vi);
 	if (s != NULL && *s != '\0') {
 	    nl++;
 	}
@@ -209,10 +213,13 @@ static void emit_string_tables (const DATASET *dset,
 				FILE *fp)
 {
     char **S;
-    int i, j, ns;
+    int i, vi, j, ns, nv;
 
-    for (i=1; i<=list[0]; i++) {
-	S = series_get_string_vals(dset, list[i], &ns, 1);
+    nv = list != NULL ? list[0] : dset->v - 1;
+
+    for (i=1; i<=nv; i++) {
+	vi = list != NULL ? list[i] : i;
+	S = series_get_string_vals(dset, vi, &ns, 1);
 	if (S != NULL) {
 	    /* series ID */
 	    fwrite(&i,  sizeof(int), 1, fp);
@@ -261,10 +268,13 @@ static void emit_var_labels (const DATASET *dset,
 			     FILE *fp)
 {
     const char *s;
-    int i;
+    int i, vi, nv;
 
-    for (i=1; i<=list[0]; i++) {
-	s = series_get_label(dset, list[i]);
+    nv = list != NULL ? list[0] : dset->v - 1;
+
+    for (i=1; i<=nv; i++) {
+	vi = list != NULL ? list[i] : i;
+	s = series_get_label(dset, vi);
 	if (s != NULL && *s != '\0') {
 	    /* series ID */
 	    fwrite(&i, sizeof(int), 1, fp);
@@ -619,7 +629,7 @@ int purebin_write_data (const char *fname,
     FILE *fp;
     double *x;
     int nobs, nv;
-    int i, t;
+    int i, t, vi;
     int err = 0;
 
     fp = gretl_fopen(fname, "wb");
@@ -627,7 +637,7 @@ int purebin_write_data (const char *fname,
 	return E_FOPEN;
     }
 
-    nv = list[0];
+    nv = list != NULL ? list[0] : dset->v - 1;
     nobs = sample_size(dset);
 
     /* fill out header struct */
@@ -656,18 +666,21 @@ int purebin_write_data (const char *fname,
 
     /* variable names */
     for (i=1; i<=nv; i++) {
-	fputs(dset->varname[list[i]], fp);
+	vi = list != NULL ? list[i] : i;
+	fputs(dset->varname[vi], fp);
 	fputc(0, fp);
     }
 
     /* varinfo stuff */
     for (i=1; i<=nv; i++) {
-	varinfo_write(dset, list[i], fp);
+	vi = list != NULL ? list[i] : i;
+	varinfo_write(dset, vi, fp);
     }
 
     /* numerical values */
     for (i=1; i<=nv; i++) {
-	x = dset->Z[list[i]] + dset->t1;
+	vi = list != NULL ? list[i] : i;
+	x = dset->Z[vi] + dset->t1;
 	fwrite(x, sizeof *x, nobs, fp);
     }
 
