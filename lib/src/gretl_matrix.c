@@ -12311,11 +12311,6 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
     int nasty = 0;
     int k, T, err = 0;
 
-    if (getenv("USE_LAPACK") != NULL) {
-	/* just for testing */
-	use_lapack = 1;
-    }
-
     if (gretl_is_null_matrix(y) ||
 	gretl_is_null_matrix(X) ||
 	gretl_is_null_matrix(b)) {
@@ -12342,10 +12337,13 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	return E_NONCONF;
     }
 
+#if 0
     if (k >= 50 || (T >= 250 && k >= 30)) {
 	/* this could maybe do with some more tuning? */
 	use_lapack = 1;
     }
+    fprintf(stderr, "gretl_matrix_ols: use_lapack = %d\n", use_lapack);
+#endif
 
     if (use_lapack) {
 	XTX = gretl_matrix_XTX_new(X);
