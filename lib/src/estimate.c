@@ -602,14 +602,18 @@ log_depvar_ll (MODEL *pmod, const DATASET *dset)
     }
 }
 
-static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
+static int check_weight_var (MODEL *pmod, const double *w, int *effobs,
+			     gretlopt opt)
 {
     const char *wtzero =
 	N_("Weight variable is all zeros, aborting regression");
     const char *wtneg =
 	N_("Weight variable contains negative values");
+    const char *wtsomezeros =
+	N_("Weight variable contains some zeros");
+    
     int ones = 0, zeros = 0, nobs = 0;
-    int t;
+    int t, is_dummy = 1;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (w[t] < 0.0) {
@@ -620,6 +624,8 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 	    nobs++;
 	    if (w[t] == 1.0) {
 		ones++;
+	    } else {
+		is_dummy = 0;
 	    }
 	} else if (w[t] == 0.0) {
 	    zeros++;
@@ -634,11 +640,17 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 
     *effobs = nobs;
 
-    if (nobs == ones + zeros) {
+    if (is_dummy) {
 	/* the weight var is a dummy */
 	gretl_model_set_int(pmod, "wt_dummy", 1);
+    } else {
+	if (zeros && !(opt & OPT_Z)) {
+	    gretl_errmsg_set(_(wtsomezeros));
+	    pmod->errcode = E_DATA;
+	    return 1;
+	}
     }
-
+    
     if (zeros > 0) {
 	gretl_model_set_int(pmod, "wt_zeros", zeros);
     }
@@ -1114,7 +1126,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* Doing weighted least squares? */
     if (ci == WLS) {
-	check_weight_var(&mdl, dset->Z[mdl.list[1]], &effobs);
+	check_weight_var(&mdl, dset->Z[mdl.list[1]], &effobs, opt);
 	if (mdl.errcode) {
 	    return mdl;
 	}
