@@ -1366,6 +1366,10 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
 			 G_CALLBACK(listbox_drag), NULL);
     }
 
+    /* enable interactive search on name */
+    gtk_tree_view_set_search_column(GTK_TREE_VIEW(view), COL_NAME);
+    gtk_tree_view_set_enable_search(GTK_TREE_VIEW(view), TRUE);
+
     if (locus == SR_LVARS) {
 	/* left-hand box with the selectable vars */
 	g_signal_connect(G_OBJECT(view), "button-press-event",
