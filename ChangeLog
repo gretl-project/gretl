@@ -6,6 +6,8 @@ version 2021b, in progress
   for the excluded observations
 - "dpanel" estimation via the GUI: make the --dpdstyle flag
   configurable
+- "dpanel" --verbose switch: provide some information on the
+  instruments used
 - "adf" command: support more accurate inference with
   improved p-values or critical values, for the GLS case
   in particular
@@ -14,8 +16,12 @@ version 2021b, in progress
   cross-sectional statistics produced when list arguments
   are given, this allows skipping of missing values.
 - hdprod(): introduce the "shorthand" syntax (one argument only)
+- GUI model specification dialog: enable interactive search in
+  lists of series
 - Fix bug: possible crash when displaying a matrix with very
   long column names in the GUI program
+- Fix bug: broken covariance matrix from mols() with a large
+  number of regressors
 
 2021-01-18, version 2021a
 - New function vma() for multiple time series
