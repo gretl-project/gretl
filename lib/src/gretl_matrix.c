@@ -12337,19 +12337,21 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	return E_NONCONF;
     }
 
-#if 0
     if (k >= 50 || (T >= 250 && k >= 30)) {
 	/* this could maybe do with some more tuning? */
 	use_lapack = 1;
     }
-    fprintf(stderr, "gretl_matrix_ols: use_lapack = %d\n", use_lapack);
-#endif
 
     if (use_lapack) {
 	XTX = gretl_matrix_XTX_new(X);
-	if (XTX == NULL) {
-	    err = E_ALLOC;
-	}
+    } else {
+	XTX = gretl_matrix_packed_XTX_new(X, &nasty);
+    }
+    if (XTX == NULL) {
+	return E_ALLOC;
+    }
+
+    if (use_lapack) {
 	if (!err) {
 	    err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					    y, GRETL_MOD_NONE,
@@ -12360,12 +12362,11 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	    if (err) {
 		try_QR = 1;
 	    }
+	    if (vcv != NULL) {
+		gretl_matrix_copy_values(vcv, XTX);
+	    }
 	}
     } else {
-	XTX = gretl_matrix_packed_XTX_new(X, &nasty);
-	if (XTX == NULL) {
-	    err = E_ALLOC;
-	}
 	if (!err && !nasty) {
 	    err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 					    y, GRETL_MOD_NONE,
