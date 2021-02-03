@@ -4024,8 +4024,21 @@
 
     <usage>
       <altforms>
-	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>] [</lit><repl>nome-variabile</repl><lit>]</lit></altform>
-	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]</lit> <repl>passi-avanti</repl> <lit>[</lit><repl>nome-variabile</repl><lit>] --recursive</lit></altform>
+	<altform>
+	  <lit>
+	    fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]
+	    [</lit><repl>nome-variabile</repl><lit>]
+	  </lit>
+	</altform>
+	<altform>
+	  <lit>
+	    fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]
+	  </lit>
+	  <repl>passi-avanti</repl>
+	  <lit>
+	    [</lit><repl>nome-variabile</repl><lit>] --recursive
+	  </lit>
+	</altform>
       </altforms>
       <options>
 	<option>
@@ -4071,7 +4084,7 @@
 	</demos>
       </examples>
     </usage>
-
+    
     <description>
       <para context="gui">
 	Deve seguire un comando di stima.  Calcola previsioni
@@ -4091,20 +4104,20 @@
 	di modello, calcola anche gli errori standard (si veda oltre).
 	L'opzione <opt>recursive</opt> produce un comportamento speciale
 	spiegato oltre.
-	</para>
-	<para context="cli">
-	  Se l'ultimo modello stimato consiste in un'equazione singola,
-	  l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto seguente:
-	  i valori della previsione non sono mostrati, ma vengono salvati nel
-	  dataset con il nome di variabile indicato. Se l'ultimo modello stimato è
-	  un sistema di equazioni, <repl>nome-variabile</repl> ha un effetto
-	  diverso, ossia seleziona una particolare varabile endogena per cui
-	  effettuare la previsione (l'impostazione predefinita consiste nel
-	  produrre previsioni per tutte le variabili endogene). Nel caso del
-	  sistema, o se non viene specificata <repl>nome-variabile</repl>, i
-	  valori della previsione possono essere recuperati usando la variabile
-	  accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
-	  disponibili, sono recuperabili con <fncref targ="$fcse"/>.
+      </para>
+      <para context="cli">
+	Se l'ultimo modello stimato consiste in un'equazione singola,
+	l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto seguente:
+	i valori della previsione non sono mostrati, ma vengono salvati nel
+	dataset con il nome di variabile indicato. Se l'ultimo modello stimato è
+	un sistema di equazioni, <repl>nome-variabile</repl> ha un effetto
+	diverso, ossia seleziona una particolare varabile endogena per cui
+	effettuare la previsione (l'impostazione predefinita consiste nel
+	produrre previsioni per tutte le variabili endogene). Nel caso del
+	sistema, o se non viene specificata <repl>nome-variabile</repl>, i
+	valori della previsione possono essere recuperati usando la variabile
+	accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
+	disponibili, sono recuperabili con <fncref targ="$fcse"/>.
       </para>
       <para>
 	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
@@ -4120,7 +4133,7 @@
 	se si dispone di una precedente previsione per
 	<math>y</math> nel 2007.
       </para>
-
+      
       <para>
 	La scelta predefinita consiste nel fornire una previsione statica per
 	ogni porzione dell'intervallo di previsione che fa parte dell'intervallo
@@ -4130,7 +4143,7 @@
 	dalla prima data possibile, mentre l'opzione <lit>static</lit>
 	richiede di produrre previsioni statiche anche fuori dal campione.
       </para>
-
+      
       <para context="cli">
 	L'opzione <lit>recursive</lit> al momento è disponibile solo per i
 	modelli composti da una singola equazione e stimati via OLS. Quando si
@@ -4144,7 +4157,7 @@
 	<lit>passi-avanti</lit> deve essere utilizzato solo insieme all'opzione
 	<lit>recursive</lit>.
       </para>
-
+      
       <para context="cli">
 	L'opzione <opt>plot</opt> (disponibile solo nel caso della
 	stima di un modello uniequazionale) consente di ottenere un
@@ -4164,7 +4177,7 @@
 	di file assoluti; in caso contrario i fail vengono scritti nella directory
 	di lavoro di gretl.
       </para>
-
+      
       <para>
 	La natura degli errori standard della previsione (se
 	disponibili) dipende dalla natura del modello e della
@@ -4179,200 +4192,200 @@
 	parametri. Per modelli non lineari, al momento non sono
 	disponibili errori standard della previsione.
       </para>
-
+      
     </description>
-
+    
     <gui-access>
       <menu-path>Finestra del modello, /Analisi/Previsioni</menu-path>
     </gui-access>
+    
+  </command>
+  
+  <command name="flush" section="Programming" context="cli">
 
+    <description>
+      <para>
+	Questo semplice comando non ha argomenti né opzioni; è pensato
+	per l'esecuzione di script, la cui esecuzione richieda qualche
+	tempo, attraverso l'interfaccia grafica (la versione di gretl
+	da linea di comando lo ignora). L'idea è di fornire all'utente
+	un'indicazione visuale che sta succedendo qualcosa e il
+	programma non si è <quote>piantato</quote>.
+      </para>
+      <para>
+	Normalmente, quando uno script viene fatto girare nel client
+	grafico, non viene mostrato alcun output finché l'esecuzione
+	non è completa; se perà si usa  <lit>flush</lit> l'effetto
+	prodotto è il seguente:
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Alla prima invocazione, gretl apre una finestra, mostra
+	    l'output prodotto fino a quel momento, e aggiunge il
+	    messaggio <quote>elaborazione in corso...</quote>.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Ad ogni invocazione successiva, il testo mostrato nella
+	    finestra di output viene aggiornato e un nuovo messaggio
+	    <quote>elaborazione in corso...</quote> viene aggiunto.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Tutto il resto dell'output viene automaticamente mostrato al
+	completamenteo dell'esecuzione dello script.
+      </para>
+      <para>
+	Attenzione: non ha senso usare <lit>flush</lit> in uno script
+	la cui esecuzione richiede pochi secondi. Inoltre, bisognerebbe
+	evitare di usare questo comando in un punto dello script dove
+	non c'è più output da mostrare, perché il messaggio
+	<quote>elaborazione in corso...</quote> risulterebbe fuorviante.
+      </para>
+      <para>
+	L'uso che abbiamo in mente per il comando <lit>flush</lit> è
+	esemplificato dal seguente frammento:
+      </para>
+      <code>
+	set echo off
+	scalar n = 10
+	loop i=1..n
+	# qualcosa che richiede del tempo
+	loop 100 --quiet
+	a = mnormal(200,200)
+	b = inv(a)
+	endloop
+	# stampa qualcosa in output
+	printf "Iterazione %2d fatta\n", i
+	if i &lt; n
+	flush
+	endif
+	endloop
+      </code>
+    </description>
+    
   </command>
 
-<command name="flush" section="Programming" context="cli">
+  <command name="foreign" section="Programming"
+	   label="Script esterni" context="cli">
 
-  <description>
-    <para>
-      Questo semplice comando non ha argomenti né opzioni; è pensato
-      per l'esecuzione di script, la cui esecuzione richieda qualche
-      tempo, attraverso l'interfaccia grafica (la versione di gretl
-      da linea di comando lo ignora). L'idea è di fornire all'utente
-      un'indicazione visuale che sta succedendo qualcosa e il
-      programma non si è <quote>piantato</quote>.
-    </para>
-    <para>
-      Normalmente, quando uno script viene fatto girare nel client
-      grafico, non viene mostrato alcun output finché l'esecuzione
-      non è completa; se perà si usa  <lit>flush</lit> l'effetto
-      prodotto è il seguente:
-    </para>
-    <ilist>
-      <li>
-	<para>
-	  Alla prima invocazione, gretl apre una finestra, mostra
-	  l'output prodotto fino a quel momento, e aggiunge il
-	  messaggio <quote>elaborazione in corso...</quote>.
-	</para>
-      </li>
-      <li>
-	<para>
-	  Ad ogni invocazione successiva, il testo mostrato nella
-	  finestra di output viene aggiornato e un nuovo messaggio
-	  <quote>elaborazione in corso...</quote> viene aggiunto.
-	</para>
-      </li>
-    </ilist>
-    <para>
-      Tutto il resto dell'output viene automaticamente mostrato al
-      completamenteo dell'esecuzione dello script.
-    </para>
-    <para>
-      Attenzione: non ha senso usare <lit>flush</lit> in uno script
-      la cui esecuzione richiede pochi secondi. Inoltre, bisognerebbe
-      evitare di usare questo comando in un punto dello script dove
-      non c'è più output da mostrare, perché il messaggio
-      <quote>elaborazione in corso...</quote> risulterebbe fuorviante.
-    </para>
-    <para>
-      L'uso che abbiamo in mente per il comando <lit>flush</lit> è
-      esemplificato dal seguente frammento:
-    </para>
-    <code>
-      set echo off
-      scalar n = 10
-      loop i=1..n
-      # qualcosa che richiede del tempo
-      loop 100 --quiet
-      a = mnormal(200,200)
-      b = inv(a)
-      endloop
-      # stampa qualcosa in output
-      printf "Iterazione %2d fatta\n", i
-      if i &lt; n
-      flush
-      endif
-      endloop
-    </code>
-  </description>
-
-</command>
-
-<command name="foreign" section="Programming"
-	 label="Script esterni" context="cli">
-
-  <usage>
-    <syntax><lit>foreign language=</lit><repl>lang</repl></syntax>
-    <options>
-      <option>
-        <flag>--send-data</flag>
-        <effect>pre-carica il dataset attuale</effect>
-      </option>
-      <option>
-        <flag>--quiet</flag>
-        <effect>sopprime l'output dal programma esterno</effect>
-      </option>
-    </options>
-  </usage>
-
-  <description>
-    <para>
-      Questo comando apre una modalità speciale, in cui vengono
-      accettati comandi che verranno eseguiti da un programma
-      esterno.  Con il comando <lit>end foreign</lit> si esce da
-      questa modalità e i comandi verranno eseguiti.
-    </para>
-    <para>
-      Al momento, i programmi esterni compatibili con questa modalità
-      sono GNU R (<lit>language=R</lit>), Ox di Jurgen Doornik Ox
-      (<lit>language=Ox</lit>), GNU Octave
-      (<lit>language=Octave</lit>), Python, Julia e Stata.
-      I nomi dei programmi esterni sono case-insensitive.
-    </para>
-    <para>
-      Con R, Octave e Stata l'opzione <opt>send-data</opt> ha
-      l'effetto di rendere disponibile all'interno del programma di
-      destinazione l'intero dataset corrente. È possibile limitare
-      l'invio dell'intero dataset al programma di destinazione attraverso
-      la creazione preventiva di una lista di variabili, a cui va assegnato
-      un nome che dovrà essere dato in specifica al comando.
-      Di seguito un esempio:
-    </para>
-    <code>
-      list Rlist = x1 x2 x3
-      foreign language=R --send-data=Rlist
-    </code>
-    <para>
-      Si veda la <guideref targ="chap:gretlR"/> per dettagli ed esempi.
-    </para>
-  </description>
-
-</command>
-
-<command name="fractint" section="Statistics" label="Fractional integration">
+    <usage>
+      <syntax><lit>foreign language=</lit><repl>lang</repl></syntax>
+      <options>
+	<option>
+          <flag>--send-data</flag>
+          <effect>pre-carica il dataset attuale</effect>
+	</option>
+	<option>
+          <flag>--quiet</flag>
+          <effect>sopprime l'output dal programma esterno</effect>
+	</option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Questo comando apre una modalità speciale, in cui vengono
+	accettati comandi che verranno eseguiti da un programma
+	esterno.  Con il comando <lit>end foreign</lit> si esce da
+	questa modalità e i comandi verranno eseguiti.
+      </para>
+      <para>
+	Al momento, i programmi esterni compatibili con questa modalità
+	sono GNU R (<lit>language=R</lit>), Ox di Jurgen Doornik Ox
+	(<lit>language=Ox</lit>), GNU Octave
+	(<lit>language=Octave</lit>), Python, Julia e Stata.
+	I nomi dei programmi esterni sono case-insensitive.
+      </para>
+      <para>
+	Con R, Octave e Stata l'opzione <opt>send-data</opt> ha
+	l'effetto di rendere disponibile all'interno del programma di
+	destinazione l'intero dataset corrente. È possibile limitare
+	l'invio dell'intero dataset al programma di destinazione attraverso
+	la creazione preventiva di una lista di variabili, a cui va assegnato
+	un nome che dovrà essere dato in specifica al comando.
+	Di seguito un esempio:
+      </para>
+      <code>
+	list Rlist = x1 x2 x3
+	foreign language=R --send-data=Rlist
+      </code>
+      <para>
+	Si veda la <guideref targ="chap:gretlR"/> per dettagli ed esempi.
+      </para>
+    </description>
+    
+  </command>
   
-  <usage>
-    <arguments>
-      <argument>series</argument>
-      <argument optional="true">order</argument>
-    </arguments>
-    <options>
-      <option>
-	<flag>--gph</flag>
-	<effect>calcola il test di Geweke e Porter-Hudak</effect>
-      </option>
-      <option>
-	<flag>--all</flag>
-	<effect>calcola entrambi i test</effect>
-      </option>
-      <option>
-	<flag>--quiet</flag>
-	<effect>non mostra i risultati</effect>
-      </option>
-    </options>
-  </usage>
-
-  <description>
-    <para>
-      Verifica la presenza di integrazione frazionale 
-      (<quote>long memory</quote>) per la variabile specificata. 
-      L'ipotesi nulla è che l'ordine di integrazione della variabile
-      sia zero. Di default viene utilizzato lo stimatore locale di 
-      Whittle <cite key="robinson95" p="true">(Robinson,
-      1995)</cite>, ma se si indica l'opzione <opt>gph</opt> il comando 
-      usa il test GPH <cite key="GPH83" p="true">(Geweke e
-      Porter-Hudak, 1983)</cite>. L'opzione 
-      <opt>all</opt> permette di ottenere i risultati di 
-      entrambi i test.
-    </para>
-    <para>
-      Per maggiori dettagli su questo tipo di test, v. <cite
-      key="phillips04">Phillips e Shimotsu (2004)</cite>.
-    </para>
-    <para>
-      Se non si specifica l'argomento opzionale <repl>order</repl>, 
-      l'ordine del test (o dei test) è automaticamente fissato al 
-      più piccolo fra 
-      <math>T</math>/2 e <math>T</math><sup>0.6</sup>.
-    </para>
-    <para>
-      Gli ordini di integrazione stimati e i loro errori standard
-      sono disponibili con l'accessore <fncref targ="$result"/>. Con
-      l'opzione <opt>all</opt>, lo stimatore Local Whittle è nella
-      prima riga e il GPH nella seconda.
-    </para>
-    <para>
-      I risultati possono essere recuperati usando gli accessori
-      <fncref targ="$test"/> e <fncref targ="$pvalue"/>. Questi valori sono
-      basati sullo stimatore locale di Whittle a meno che non sia
-      stata indicata l'opzione <opt>gph</opt>.
-    </para>
-  </description>
-
-  <gui-access>
-    <menu-path>/Variabile/Test per radici unitarie/Integrazione frazionale</menu-path>
-  </gui-access>
-
-</command>
-
+  <command name="fractint" section="Statistics" label="Fractional integration">
+    
+    <usage>
+      <arguments>
+	<argument>series</argument>
+	<argument optional="true">order</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--gph</flag>
+	  <effect>calcola il test di Geweke e Porter-Hudak</effect>
+	</option>
+	<option>
+	  <flag>--all</flag>
+	  <effect>calcola entrambi i test</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+	</option>
+      </options>
+    </usage>
+    
+    <description>
+      <para>
+	Verifica la presenza di integrazione frazionale 
+	(<quote>long memory</quote>) per la variabile specificata. 
+	L'ipotesi nulla è che l'ordine di integrazione della variabile
+	sia zero. Di default viene utilizzato lo stimatore locale di 
+	Whittle <cite key="robinson95" p="true">(Robinson,
+	1995)</cite>, ma se si indica l'opzione <opt>gph</opt> il comando 
+	usa il test GPH <cite key="GPH83" p="true">(Geweke e
+	Porter-Hudak, 1983)</cite>. L'opzione 
+	<opt>all</opt> permette di ottenere i risultati di 
+	entrambi i test.
+      </para>
+      <para>
+	Per maggiori dettagli su questo tipo di test, v. <cite
+	key="phillips04">Phillips e Shimotsu (2004)</cite>.
+      </para>
+      <para>
+	Se non si specifica l'argomento opzionale <repl>order</repl>, 
+	l'ordine del test (o dei test) è automaticamente fissato al 
+	più piccolo fra 
+	<math>T</math>/2 e <math>T</math><sup>0.6</sup>.
+      </para>
+      <para>
+	Gli ordini di integrazione stimati e i loro errori standard
+	sono disponibili con l'accessore <fncref targ="$result"/>. Con
+	l'opzione <opt>all</opt>, lo stimatore Local Whittle è nella
+	prima riga e il GPH nella seconda.
+      </para>
+      <para>
+	I risultati possono essere recuperati usando gli accessori
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>. Questi valori sono
+	basati sullo stimatore locale di Whittle a meno che non sia
+	stata indicata l'opzione <opt>gph</opt>.
+      </para>
+    </description>
+    
+    <gui-access>
+      <menu-path>/Variabile/Test per radici unitarie/Integrazione frazionale</menu-path>
+    </gui-access>
+    
+  </command>
+  
 <command name="freq" section="Statistics" label="Distribuzione di frequenza">
 
   <usage>
@@ -16110,6 +16123,10 @@ qual caso viene usato QML.
 	<flag>--quiet</flag>
 	<effect>non mostra i risultati</effect>
       </option>
+       <option>
+         <flag>--allow-zeros</flag>
+         <effect>vedi sotto</effect>
+       </option>
     </options> 
   </usage>
 
@@ -16126,26 +16143,41 @@ qual caso viene usato QML.
       <equation status="display"
 		tex="\[R^2 = 1 - \frac{\rm ESS}{\rm WTSS}\]"
 		ascii="R^2 = 1 - ESS / WTSS"
-		graphic="wlsr2"/> dove ESS è la somma dei quadrati degli errori (somma
-      dei quadrati dei residui) dalla regressione ponderata, mentre WTSS
-      denota la <quote>somma totale ponderata dei quadrati</quote>, che è pari 
-      alla somma dei quadrati dei residui della regressione della variabile
-      dipendente ponderata sulla sola costante ponderata.
+		graphic="wlsr2"/> 
+      dove ESS è la somma dei quadrati degli residui dalla regressione
+      ponderata, mentre WTSS denota la <quote>somma totale ponderata
+      dei quadrati</quote>, che è pari alla somma dei quadrati dei
+      residui della regressione della variabile dipendente ponderata
+      sulla sola costante ponderata.
     </para>
     <para>
-      Se <repl>variabile-pesi</repl> è una variabile dummy, la stima WLS
-      equivale a eliminare tutte le osservazioni per cui essa vale zero.
+      Nel caso particolare in cui <repl>variabile-pesi</repl> sia una
+      variabile dummy, la stima WLS equivale a una stima OLS in cui
+      tutte le osservazioni per cui essa vale zero sono eliminate. In
+      tutti gli altri casi, la presenza di zeri nella variabile di
+      ponderazione è considerata un errore, ma se per qualche motivo
+      si desidera ponderare per una variabile che contenga degli zeri,
+      si può disattivare tale errore usando l'opzione
+      <opt>allow-zeros</opt>.
+    </para>
+    <para context="cli">
+      Per la stima con minimi quadrati ponderati in un contesto panel,
+      in cui i pesi sono basati sulle varianze delle unità
+      longitudinali, si veda il comando  <cmdref targ="panel"/> con
+      l'opzione <opt>unit-weights</opt> option.
     </para>
     <para context="gui">
       Detta "variabile-pesi" la variabile scelta nel campo "Variabile
       pesi", viene stimata una regressione OLS in cui la variabile
       dipendente è il prodotto della variabile dipendente selezionata
-      e della radice quadrata della variabile-pesi, e anche le variabili
-      indipendenti sono moltiplicate per la radice quadrata della variabile-pesi.
-      Le statistiche della regressione, come l'<emphasis>R</emphasis>-quadro
-      sono basate sui dati ponderati. Se la variabile-pesi è una
-      variabile dummy, ciò equivale a eliminare tutte le osservazioni
-      per cui essa vale zero.</para>
+      e della radice quadrata della variabile-pesi, e anche le
+      variabili indipendenti sono moltiplicate per la radice quadrata
+      della variabile-pesi.  Le statistiche della regressione, come
+      l'<emphasis>R</emphasis>-quadro sono basate sui dati
+      ponderati. Se la variabile-pesi è una variabile dummy, ciò
+      equivale a eliminare tutte le osservazioni per cui essa vale
+      zero.
+    </para>
     </description>
 
     <gui-access>
