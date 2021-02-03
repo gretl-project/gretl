@@ -15900,6 +15900,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
         </option>
+	<option>
+	  <flag>--allow-zeros</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
     </usage>
 
@@ -15923,20 +15927,21 @@
 	sum of squared residuals from a regression of the weighted
 	dependent variable on the weighted constant alone.
       </para>
-
       <para context="cli">
-	If <repl>wtvar</repl> is a dummy variable, WLS estimation is
-	equivalent to eliminating all observations with value zero for
-	<repl>wtvar</repl>.
+	As a special case, if <repl>wtvar</repl> is a 0/1 dummy
+	variable, WLS estimation is equivalent to OLS on a sample that
+	excludes all observations with value zero for
+	<repl>wtvar</repl>. Otherwise including weights of zero is
+	considered an error, but if you really want to mix zero
+	weights with positive ones you can append the
+	<opt>allow-zeros</opt> option.
       </para>
-
-	  <para context="cli">
-	For weighted least squares estimation applied to panel data and
-	based on the unit specific error variances please see the
-	<cmdref targ="panel"/> command with the <lit>--unit-weights</lit>
-	option.
-	  </para>
-
+      <para context="cli">
+	For weighted least squares estimation applied to panel data
+	and based on the unit specific error variances please see the
+	<cmdref targ="panel"/> command with the
+	<opt>unit-weights</opt> option.
+      </para>
       <para context="gui">
 	Let "wtvar" denote the variable selected in the "Weight variable"
 	box.  An OLS regression is run, where the dependent variable is
