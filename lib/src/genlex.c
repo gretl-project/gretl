@@ -121,6 +121,7 @@ struct str_table dvars[] = {
     { R_PNGFONT,   "$pngfont" },
     { R_MAPFILE,   "$mapfile" },
     { R_INDEX,     "obs" },
+    { R_LOGLEVEL,  "$loglevel" },
     { 0,           NULL },
 };
 

@@ -130,6 +130,7 @@ struct set_vars_ {
     int fdjac_qual;             /* quality of "fdjac" function */
     double fdjac_eps;           /* finite increment for "fdjac" function */
     int wildboot_dist;          /* distribution for wild bootstrap */
+    int loglevel;               /* threshold for error/warning/info messages */
 };
 
 #define MESSAGES "messages"
@@ -203,7 +204,8 @@ struct set_vars_ {
 		       !strcmp(s, SIMD_MN_MIN) || \
 		       !strcmp(s, FDJAC_QUAL) || \
 		       !strcmp(s, WILDBOOT_DIST) || \
-		       !strcmp(s, QUANTILE_TYPE))
+		       !strcmp(s, QUANTILE_TYPE) || \
+		       !strcmp(s, LOGLEVEL))
 
 /* global state */
 set_vars *state;
@@ -692,6 +694,7 @@ static void state_vars_init (set_vars *sv)
     sv->initvals = NULL;
     sv->initcurv = NULL;
     sv->matmask = NULL;
+    sv->loglevel = 1;
 
     sv->bfgs_maxiter = UNSET_INT;
     sv->bfgs_toler = NADBL;
@@ -1673,6 +1676,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, "set echo %s\n", get_echo_status());
     }
 
+    libset_print_int(LOGLEVEL, prn, opt);
     libset_print_bool(FORCE_DECP, prn, opt);
     libset_print_int(LOOP_MAXITER, prn, opt);
     libset_print_int(BFGS_VERBSKIP, prn, opt);
@@ -2220,6 +2224,8 @@ int libset_get_int (const char *key)
 	return state->wildboot_dist;
     } else if (!strcmp(key, QUANTILE_TYPE)) {
 	return Qtype;
+    } else if (!strcmp(key, LOGLEVEL)) {
+	return state->loglevel;
     } else if (!strcmp(key, "loop_maxiter_default")) {
 	return LOOP_MAXITER_DEFAULT; /* for internal use */
     } else {
@@ -2297,6 +2303,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 0;
 	*max = 1;
 	*var = &state->wildboot_dist;
+    } else if (!strcmp(s, LOGLEVEL)) {
+	*min = 0;
+	*max = 9;
+	*var = &state->loglevel;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
 		"variable '%s'\n", s);
