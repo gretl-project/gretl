@@ -2954,7 +2954,8 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
-	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
+	G_TYPE_BOOLEAN,  /* hidden boolean: zipfile? */
+	G_TYPE_STRING    /* hidden string: dependencies */
     };
     GType addons_types[] = {
 	G_TYPE_STRING,
@@ -3021,7 +3022,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = remote_func_titles;
 	types = remote_func_types;
 	cols = G_N_ELEMENTS(remote_func_types);
-	hidden_cols = 1;
+	hidden_cols = 2;
 	full_width = 760;
 	file_height = 340;
 	break;

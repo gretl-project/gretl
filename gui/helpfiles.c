@@ -1817,7 +1817,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
     return (pos >= 0);
 }
 
-/* Given @targ the name of a function package, try to find
+/* Given @targ, the name of a function package, try to find
    it in @vwin's listbox, and if found focus that row.
    Return TRUE if found, FALSE otherwise.
 */
