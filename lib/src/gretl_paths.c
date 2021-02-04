@@ -1055,6 +1055,11 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     }
 #endif
 
+    if (stype == FUNCS_SEARCH) {
+	/* we don't really want the additional paths below? */
+	return dirs;
+    }
+
     if (!err) {
         /* the user's working dir */
         gretl_build_path(dirname, gretl_workdir(), subdir, NULL);
@@ -1123,7 +1128,6 @@ char *gretl_function_package_get_path (const char *name,
     }
 
     *path = '\0';
-
     dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
     for (i=0; i<n_dirs && !found; i++) {
