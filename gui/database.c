@@ -2767,8 +2767,8 @@ static gchar *make_gfn_path (const char *pkgname,
 #define ZIPFILE_COLUMN 6
 #define DEPENDS_COLUMN 7
 
-static int install_remote_dependency (const char *pkgname,
-				      const char *instpath)
+static int try_install_dependency (const char *pkgname,
+				   const char *instpath)
 {
     char *fname = NULL;
     int filetype = 0;
@@ -2835,6 +2835,7 @@ static int gui_install_gfn (const gchar *objname,
 	    pkgpath = gretl_function_package_get_path(Deps[i], PKG_ALL);
 	    if (pkgpath == NULL) {
 		fprintf(stderr, "dependency %s not satisfied: try download\n", Deps[i]);
+		err = try_install_dependency(Deps[i], instpath);
 		free(pkgpath);
 	    } else {
 		free(pkgpath);
