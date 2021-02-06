@@ -4620,7 +4620,7 @@
       </description>
     </function>
 
-    <function name="genseries" section="data-utils" output="scalar">
+    <function name="genseries" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
 	<fnarg type="series">rhs</fnarg>
@@ -10547,20 +10547,15 @@
       <description>
 	<para>
 	  If a file by the name of <argname>fname</argname> exists and
-	  is writable by the user, removes (deletes) the named
-	  file. Returns 0 on successful completion, non-zero if there
-	  is no such file or the file cannot be removed.
+	  is writable by the user, this function removes (deletes) the
+	  file and returns 0. If there is no such file or for some
+	  reason the file cannot be deleted, a non-zero error code is
+	  returned.
 	</para>
 	<para>
-	  If <argname>fname</argname> contains a full path
-	  specification, gretl will attempt to delete that file and
-	  return an error if the file doesn't exist or can't be
-	  deleted for some reason (such as insufficient
-	  privileges). If <argname>fname</argname> does not contain a
-	  full path, then it will be assumed that the given file name
-	  is relative to <cmdref targ="workdir"/>. If the file doesn't
-	  exist or is unwritable, no other directories will be
-	  searched.
+	  If <argname>fname</argname> does not specify a full path, it
+	  is taken to be relative to the current <cmdref
+	  targ="workdir"/>.
 	</para>
       </description>
     </function>
