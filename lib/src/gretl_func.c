@@ -48,7 +48,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define MINIMAL_SETVARS 0 /* not yet, probably later */
+#define MINIMAL_SETVARS 1 /* activated 2021-02-07 */
 
 #define LSDEBUG 0
 
@@ -1790,6 +1790,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 {
     char line[MAXLINE];
     char *buf, *s;
+    gint8 uses_set = 0;
     int err = 0;
 
     buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
@@ -1802,11 +1803,15 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     while (bufgets(line, sizeof line, buf) && !err) {
 	s = line;
 	while (isspace(*s)) s++;
-	if (!(fun->flags & UFUN_USES_SET) && !strncmp(s, "set ", 4)) {
-	    fun->flags |= UFUN_USES_SET;
+	if (uses_set == 0 && !strncmp(s, "set ", 4)) {
+	    uses_set = 1;
 	}
 	tailstrip(s);
 	err = push_function_line(fun, s, 0);
+    }
+
+    if (uses_set) {
+	fun->flags |= UFUN_USES_SET;
     }
 
     bufgets_finalize(buf);
