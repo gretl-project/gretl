@@ -379,9 +379,9 @@ series p3 = ln(P3)
 
 # Cobb-Douglas cost function with homogeneity restrictions
 # (for initialization)
-genr rcost = cost - p1
-genr rp2 = p2 - p1
-genr rp3 = p3 - p1
+series rcost = cost - p1
+series rp2 = p2 - p1
+series rp3 = p3 - p1
 
 ols rcost const q1 q2 rp2 rp3
 
@@ -431,9 +431,9 @@ series p3 = ln(P3)
 
 # Cobb-Douglas cost function with homogeneity restrictions
 # (for initialization)
-genr rcost = cost - p1
-genr rp2 = p2 - p1
-genr rp3 = p3 - p1
+series rcost = cost - p1
+series rp2 = p2 - p1
+series rp3 = p3 - p1
 list X = const q1 q2 rp2 rp3
 
 ols rcost X
@@ -567,12 +567,12 @@ following script:
 \begin{code}
 nulldata 1000
 
-genr x1 = normal()
-genr x2 = normal()
-genr x3 = normal()
+series x1 = normal()
+series x2 = normal()
+series x3 = normal()
 
-genr ystar = x1 + x2 + x3 + normal()
-genr y = (ystar > 0)
+series ystar = x1 + x2 + x3 + normal()
+series y = (ystar > 0)
 
 scalar b0 = 0
 scalar b1 = 0
