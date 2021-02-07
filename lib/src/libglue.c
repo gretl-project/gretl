@@ -516,6 +516,7 @@ int do_modprint (const char *mname, const char *names,
     gretl_array *parnames = NULL;
     const char *parstr = NULL;
     const char **rnames = NULL;
+    int free_coef_se = 0;
     int free_parnames = 0;
     int nnames = 0;
     int ncoef = 0;
@@ -528,7 +529,10 @@ int do_modprint (const char *mname, const char *names,
     /* k x 2 matrix: coeffs and standard errors */
     coef_se = get_matrix_by_name(mname);
     if (coef_se == NULL) {
-	return E_UNKVAR;
+	coef_se = generate_matrix(mname, NULL, &err);
+	if (coef_se == NULL) {
+	    return err;
+	}
     } else if (gretl_matrix_cols(coef_se) != 2) {
 	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
 	return E_DATA;
@@ -639,6 +643,9 @@ int do_modprint (const char *mname, const char *names,
 	}
     }
 
+    if (free_coef_se) {
+	gretl_matrix_free(coef_se);
+    }
     if (free_parnames) {
 	gretl_array_destroy(parnames);
     }
