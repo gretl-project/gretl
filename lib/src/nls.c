@@ -842,8 +842,11 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
     int i, nf = count_fields(str, NULL);
     int err = 0;
 
-    if (s->params != NULL || nf == 0) {
+    if (s->params != NULL) {
+	gretl_errmsg_set(_("Only one 'params' specification is allowed"));
 	return E_DATA;
+    } else if (nf == 0) {
+	return E_PARSE;
     }
 
 #if NLS_DEBUG
