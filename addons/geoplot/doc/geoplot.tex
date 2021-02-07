@@ -35,7 +35,7 @@
 \maketitle
 
 This document describes the \textsf{geoplot} addon package for gretl,
-which is new in version 2020c. We have found it preferable, for reason
+introduced in version 2020c. We have found it preferable, for reasons
 of efficiency, to implement its core mapping functionality via
 built-in functions, coded in C. For basic usage, therefore, it's not
 necessary to load the package explicitly via ``\texttt{include
@@ -107,18 +107,18 @@ offers a nice collection for European NUTS regions (NUTS =
 Nomenclature of Territorial Units for Statistics).}
 Gretl supports what are probably the two most common formats:
 \begin{itemize}
-\item GeoJSON files: plain JSON files with a pre-specified internal
-  structure, regulated by RFC 7946. Basically, an array of regions (or
-  ``features'') with each element containing the metadata and the
-  polygons, under the \texttt{properties} and \texttt{geometry} keys,
-  respectively.  This is our preferred format.
-\item ESRI shapefiles: more of a ``legacy'' format, but still very
-  common in the wild. These maps come as collections of several files,
+\item GeoJSON files: these are plain JSON files with a specified
+  internal structure regulated by RFC 7946. Basically, an array of
+  regions (or ``features'') with each element containing the metadata
+  and the polygons, under the \texttt{properties} and
+  \texttt{geometry} keys, respectively.
+\item ESRI shapefiles: these come as collections of several files,
   usually zipped together. The essential components are an
   \textsf{xBase} file, with \texttt{dbf} extension, holding the
   metadata; the shapefile proper with extension \texttt{shp}, holding
-  the polygons; and an index file with extension \texttt{shx}, used
-  to speed up operations when reading the data.
+  the polygons; and an index file with extension \texttt{shx}, used to
+  speed up operations when reading the data. The website
+  \url{https://gadm.org/} offers a huge collection of such files.
 \end{itemize}
 
 \subsection{The payload data}
