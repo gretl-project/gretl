@@ -6305,13 +6305,13 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 	ndx = 0;
 	for (j=0; j<p; j++) {
 	    aij = gretl_matrix_get(A, i, j);
-	    if (aij != 0.0) {
-		if (do_symmetric) {
-		    for (k=j; k<q; k++) {
-			bik = gretl_matrix_get(A, i, k);
-			gretl_matrix_set(C, i, ndx++, aij*bik);
-		    }
-		} else {
+	    if (do_symmetric) {
+		for (k=j; k<q; k++) {
+		    bik = gretl_matrix_get(A, i, k);
+		    gretl_matrix_set(C, i, ndx++, aij*bik);
+		}
+	    } else {
+		if (aij != 0.0) {
 		    ndx = j * q;
 		    for (k=0; k<q; k++) {
 			bik = gretl_matrix_get(B, i, k);
@@ -6321,7 +6321,7 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 	    }
 	}
     }
-
+    
     return 0;
 }
 
