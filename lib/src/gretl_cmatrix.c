@@ -1096,18 +1096,16 @@ static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 	ndx = 0;
 	for (j=0; j<p; j++) {
 	    aij = gretl_cmatrix_get(A, i, j);
-	    if (aij != 0.0) {
-		if (do_symmetric) {
-		    for (k=j; k<q; k++) {
-			bik = gretl_cmatrix_get(A, i, k);
-			gretl_cmatrix_set(C, i, ndx++, aij*conj(bik));
-		    }
-		} else {
-		    ndx = j * q;
-		    for (k=0; k<q; k++) {
-			bik = gretl_cmatrix_get(B, i, k);
-			gretl_cmatrix_set(C, i, ndx + k, aij*bik);
-		    }
+	    if (do_symmetric) {
+		for (k=j; k<q; k++) {
+		    bik = gretl_cmatrix_get(A, i, k);
+		    gretl_cmatrix_set(C, i, ndx++, aij*conj(bik));
+		}
+	    } else if (aij != 0.0) {
+		ndx = j * q;
+		for (k=0; k<q; k++) {
+		    bik = gretl_cmatrix_get(B, i, k);
+		    gretl_cmatrix_set(C, i, ndx + k, aij*bik);
 		}
 	    }
 	}

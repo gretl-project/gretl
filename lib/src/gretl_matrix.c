@@ -6310,18 +6310,16 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 		    bik = gretl_matrix_get(A, i, k);
 		    gretl_matrix_set(C, i, ndx++, aij*bik);
 		}
-	    } else {
-		if (aij != 0.0) {
-		    ndx = j * q;
-		    for (k=0; k<q; k++) {
-			bik = gretl_matrix_get(B, i, k);
-			gretl_matrix_set(C, i, ndx + k, aij*bik);
-		    }
+	    } else if (aij != 0.0) {
+		ndx = j * q;
+		for (k=0; k<q; k++) {
+		    bik = gretl_matrix_get(B, i, k);
+		    gretl_matrix_set(C, i, ndx + k, aij*bik);
 		}
 	    }
 	}
     }
-    
+
     return 0;
 }
 
