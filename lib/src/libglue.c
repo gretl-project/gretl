@@ -529,13 +529,11 @@ int do_modprint (const char *mname, const char *names,
     /* k x 2 matrix: coeffs and standard errors */
     coef_se = get_matrix_by_name(mname);
     if (coef_se == NULL) {
-	coef_se = generate_matrix(mname, NULL, &err);
-	if (coef_se == NULL) {
-	    return err;
-	}
+	gretl_errmsg_set(_("modprint: expected the name of a matrix"));
+	return E_INVARG;
     } else if (gretl_matrix_cols(coef_se) != 2) {
 	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
-	return E_DATA;
+	return E_INVARG;
     }
 
     nnames = ncoef = coef_se->rows;
