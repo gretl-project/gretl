@@ -9836,10 +9836,14 @@ static int gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == FCAST) {
         register_graph();
     } else if (ci == CLEAR) {
-        if (s->cmd->opt & OPT_D) {
-            /* --dataset only */
+	if (s->cmd->opt & OPT_F) {
+	    /* clear functions only */
+	    gretl_functions_cleanup();
+        } else if (s->cmd->opt & OPT_D) {
+            /* clear dataset only */
             close_session(OPT_P);
         } else {
+	    /* clear all except functions */
             close_session(OPT_NONE);
         }
     } else if (ci == GP_ASYNC) {
@@ -10432,11 +10436,13 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	err = incompatible_options(cmd->opt, OPT_D | OPT_F);
 	if (!err) {
 	    if (cmd->opt & OPT_F) {
+		/* clear functions only */
 		gretl_functions_cleanup();
 	    } else if (cmd->opt & OPT_D) {
-		/* --dataset only */
+		/* clear dataset only */
 		close_session(OPT_P);
 	    } else {
+		/* clear everything but functions */
 		close_session(OPT_NONE);
 	    }
 	}
