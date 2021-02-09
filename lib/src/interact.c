@@ -3216,7 +3216,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case CLEAR:
         err = check_clear_data();
         if (!err) {
-            if (gretl_in_gui_mode()) {
+	    if (cmd->opt == OPT_F) {
+		; /* destroy all functions */
+		
+	    } else if (gretl_in_gui_mode()) {
                 schedule_callback(s);
             } else {
                 lib_clear_data(s, dset);

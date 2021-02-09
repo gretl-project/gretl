@@ -2577,6 +2577,7 @@ static void dotdir_cleanup (void)
 
 void libgretl_session_cleanup (int mode)
 {
+    /* "last model" for accessors */
     gretl_saved_objects_cleanup();
 
     /* trash dataset-related items */
