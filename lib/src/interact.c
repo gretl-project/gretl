@@ -3217,8 +3217,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         err = check_clear_data();
         if (!err) {
 	    if (cmd->opt == OPT_F) {
-		; /* destroy all functions */
-		
+		fprintf(stderr, "got OPT_F\n");
+		/* destroy all functions */
+		gretl_functions_cleanup();
 	    } else if (gretl_in_gui_mode()) {
                 schedule_callback(s);
             } else {
