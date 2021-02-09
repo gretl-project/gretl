@@ -10429,12 +10429,17 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         break;
 
     case CLEAR:
-        if (cmd->opt & OPT_D) {
-            /* --dataset only */
-            close_session(OPT_P);
-        } else {
-            close_session(OPT_NONE);
-        }
+	err = incompatible_options(cmd->opt, OPT_D | OPT_F);
+	if (!err) {
+	    if (cmd->opt & OPT_F) {
+		gretl_functions_cleanup();
+	    } else if (cmd->opt & OPT_D) {
+		/* --dataset only */
+		close_session(OPT_P);
+	    } else {
+		close_session(OPT_NONE);
+	    }
+	}
         break;
 
     case PKG:
