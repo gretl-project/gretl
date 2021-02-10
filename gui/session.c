@@ -2951,7 +2951,7 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
     static int done;
 
     gtk_widget_override_background_color(widget,
-					 GTK_STATE_NORMAL,
+					 GTK_STATE_FLAG_NORMAL,
 					 &rgbw);
     if (!done) {
 	gdk_rgba_parse(&rgbb, "#4a90d9");
@@ -3613,7 +3613,7 @@ static gboolean icon_entered (GtkWidget *icon, GdkEventCrossing *event,
 			      gui_obj *obj)
 {
 #if GTK_MAJOR_VERSION == 3
-    gtk_widget_set_state(icon, GTK_STATE_FLAG_PRELIGHT);
+    gtk_widget_set_state_flags(icon, GTK_STATE_FLAG_PRELIGHT, FALSE);
 #else
     gtk_widget_set_state(icon, GTK_STATE_SELECTED);
 #endif
