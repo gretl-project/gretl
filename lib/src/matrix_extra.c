@@ -888,7 +888,9 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	    memcpy(dset->Z[i], src, T * sizeof *src);
 	}
 	if (cnames != NULL) {
-	    gretl_normalize_varname(dset->varname[i], cnames[col], 0, i);
+	    if (gretl_normalize_varname(dset->varname[i], cnames[col], 0, i)) {
+		series_record_display_name(dset, i, cnames[col]);
+	    }
 	} else if (opt & OPT_N) {
 	    sprintf(dset->varname[i], "%d", col + 1);
 	} else if (opt & OPT_R) {

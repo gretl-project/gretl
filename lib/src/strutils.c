@@ -3078,40 +3078,54 @@ int gretl_scan_varname (const char *src, char *targ)
  * at least #VNAMELEN bytes in length, taking @src as basis
  * and replacing any illegal characters as described in the
  * documentation for the userland fixname function.
+ *
+ * Returns: 1 if any changes were required, 0 if not.
  */
 
-void gretl_normalize_varname (char *targ, const char *src,
-			      int underscore, int seq)
+int gretl_normalize_varname (char *targ, const char *src,
+			     int underscore, int seq)
 {
     const char *letters = "abcdefghijklmnopqrstuvwxyz"
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    int i = 0;
+    int n, ret = 0, i = 0;
 
     /* skip any leading non-letters */
-    src += strcspn(src, letters);
+    n = strcspn(src, letters);
+    if (n > 0) {
+	src += n;
+	ret = 1;
+    }
 
     while (*src && i < VNAMELEN - 1) {
 	if (strspn(src, letters) > 0 || isdigit(*src) || *src == '_') {
 	    /* transcribe valid characters */
 	    targ[i++] = *src;
-	} else if (*src == ' ' || underscore) {
-	    /* convert space to underscore */
-	    if (i > 0 && targ[i-1] == '_') {
-		; /* skip */
-	    } else {
-		targ[i++] = '_';
+	} else {
+	    if (*src == ' ' || underscore) {
+		/* convert space to underscore */
+		if (i > 0 && targ[i-1] == '_') {
+		    ; /* skip */
+		} else {
+		    targ[i++] = '_';
+		}
 	    }
+	    ret = 1;
 	}
 	src++;
     }
 
     if (i > 0) {
 	targ[i] = '\0';
-    } else if (seq <= 0) {
-	strcpy(targ, "col[n]");
     } else {
-	sprintf(targ, "col%d", seq);
+	if (seq <= 0) {
+	    strcpy(targ, "col[n]");
+	} else {
+	    sprintf(targ, "col%d", seq);
+	}
+	ret = 1;
     }
+
+    return ret;
 }
 
 /**
