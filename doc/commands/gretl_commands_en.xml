@@ -11877,7 +11877,7 @@
 	<quote>raw</quote> empirical quantiles are plotted against the
 	quantiles of the standard normal distribution.
       </para>
-      <para>
+      <para context="cli">
 	The option <opt>output</opt> has the effect of sending the
 	output to the specified file; use <quote>display</quote> to
 	force output to the screen. See the <cmdref targ="gnuplot"/>
