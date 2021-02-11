@@ -198,7 +198,7 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
     free(mylist);
     mylist = NULL;
 
-    fcall = fncall_new(func);
+    fcall = fncall_new(func, 0);
     if (fn_n_params(func) == 1) {
 	/* pass full dataset list as argument */
 	biglist = full_var_list(dataset, NULL);
@@ -2648,7 +2648,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	fprintf(stderr, "bundle plot: using bundle %p (uvar %p, name '%s')\n",
 		(void *) b, (void *) uv, bname);
 #endif
-	fc = fncall_new(func);
+	fc = fncall_new(func, 0);
 	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
 
 	if (!err && iopt >= 0) {
@@ -3705,7 +3705,7 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(vwin);
-    err = gretl_function_exec(fncall_new(func), GRETL_TYPE_DOUBLE,
+    err = gretl_function_exec(fncall_new(func, 0), GRETL_TYPE_DOUBLE,
 			      dataset, &check_err, NULL, prn);
     unset_genr_model();
     gretl_print_destroy(prn);

@@ -20,6 +20,12 @@
 #ifndef GRETL_TYPEMAP_H_
 #define GRETL_TYPEMAP_H_
 
+#define NUMERIC_TYPE(t) (t == GRETL_TYPE_INT || \
+			 t == GRETL_TYPE_DOUBLE || \
+			 t == GRETL_TYPE_SERIES || \
+			 t == GRETL_TYPE_USERIES || \
+			 t == GRETL_TYPE_MATRIX)
+
 GretlType gretl_type_get_plural (GretlType type);
 
 GretlType gretl_type_get_singular (GretlType type);

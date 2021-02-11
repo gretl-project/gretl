@@ -9700,7 +9700,6 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
     ufunc *uf = l->v.ptr;
     fncall *fc = NULL;
     GretlType rtype = 0;
-    int exec_done = 0;
     int i, nparam, argc = 0;
 
     rtype = user_func_get_return_type(uf);
@@ -9746,7 +9745,7 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
     }
 #endif
 
-    fc = fncall_new(uf);
+    fc = fncall_new(uf, 1);
     if (fc == NULL) {
         p->err = E_ALLOC;
         return NULL;
@@ -9816,45 +9815,27 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
 
     if (!p->err) {
         char **pdescrip = NULL;
-        double xret = NADBL;
-        double *Xret = NULL;
-        gretl_matrix *mret = NULL;
-        gretl_bundle *bret = NULL;
-        gretl_array *aret = NULL;
-        char *sret = NULL;
-        int *iret = NULL;
-        void *retp = NULL;
+	void *altp = NULL;
+        void *retp = &altp;
 
-        if (rtype == GRETL_TYPE_DOUBLE) {
-            retp = &xret;
-        } else if (rtype == GRETL_TYPE_SERIES) {
-            retp = &Xret;
-        } else if (rtype == GRETL_TYPE_MATRIX) {
+	/* special cases */
+        if (rtype == GRETL_TYPE_MATRIX) {
             if (p->targ == UNK && p->tree == t) {
                 /* target type not specified, and function returns
                    a matrix -> set target type to matrix
                 */
                 p->targ = MAT;
             }
-            retp = &mret;
-        } else if (rtype == GRETL_TYPE_LIST) {
+         } else if (rtype == GRETL_TYPE_LIST) {
             if (p->targ == EMPTY && p->tree == t) {
                 /* this function offers a list return, but the
                    caller hasn't assigned it and it's not being
                    used as an argument to a further function, so
                    ignore the return value
                 */
-                ;
-            } else {
-                retp = &iret;
+                retp = NULL;
             }
-        } else if (rtype == GRETL_TYPE_STRING) {
-            retp = &sret;
-        } else if (rtype == GRETL_TYPE_BUNDLE) {
-            retp = &bret;
-        } else if (gretl_array_type(rtype)) {
-            retp = &aret;
-        }
+	}
 
         if ((p->flags & P_UFRET) && rtype == GRETL_TYPE_SERIES) {
             /* pick up description of generated series, if any */
@@ -9863,7 +9844,10 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
 
         p->err = gretl_function_exec(fc, rtype, p->dset, retp,
                                      pdescrip, p->prn);
-        exec_done = 1;
+
+	if (rtype == GRETL_TYPE_NUMERIC) {
+	    rtype = fncall_get_return_type(fc);
+	}
 
         if (!p->err && retp != NULL) {
             reset_p_aux(p, save_aux);
@@ -9876,23 +9860,23 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
 
         if (!p->err && ret != NULL) {
             if (rtype == GRETL_TYPE_DOUBLE) {
-                ret->v.xval = xret;
+                ret->v.xval = *(double *) altp;
             } else if (rtype == GRETL_TYPE_SERIES) {
                 if (ret->v.xvec != NULL) {
                     free(ret->v.xvec);
                 }
-                ret->v.xvec = Xret;
+                ret->v.xvec = altp;
             } else if (rtype == GRETL_TYPE_MATRIX) {
                 if (is_tmp_node(ret)) {
                     gretl_matrix_free(ret->v.m);
                 }
-                ret->v.m = mret;
+                ret->v.m = altp;
             } else if (rtype == GRETL_TYPE_LIST) {
                 if (is_tmp_node(ret)) {
                     free(ret->v.ivec);
                 }
-                if (iret != NULL) {
-                    ret->v.ivec = iret;
+                if (altp != NULL) {
+                    ret->v.ivec = altp;
                 } else {
                     ret->v.ivec = gretl_list_new(0);
                 }
@@ -9900,27 +9884,25 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
                 if (is_tmp_node(ret)) {
                     free(ret->v.str);
                 }
-                ret->v.str = sret;
+                ret->v.str = altp;
             } else if (rtype == GRETL_TYPE_BUNDLE) {
                 if (is_tmp_node(ret)) {
                     gretl_bundle_destroy(ret->v.b);
                 }
                 ret->t = BUNDLE;
-                ret->v.b = bret;
+                ret->v.b = altp;
             } else if (gretl_array_type(rtype)) {
                 if (is_tmp_node(ret)) {
                     gretl_array_destroy(ret->v.a);
                 }
                 ret->t = ARRAY;
-                ret->v.a = aret;
+                ret->v.a = altp;
             }
         }
     }
 
-    if (!exec_done) {
-        /* avoid leaking memory */
-        fncall_destroy(fc);
-    }
+    /* avoid leaking memory */
+    fncall_destroy(fc);
 
 #if EDEBUG
     fprintf(stderr, "eval_ufunc: p->err = %d, ret = %p\n",

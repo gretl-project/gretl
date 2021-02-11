@@ -1602,7 +1602,7 @@ static int kalman_update_matrices (kalman *K, PRN *prn)
 	check_for_matrix_updates(K, uf);
     }
 
-    fc = fncall_new(uf);
+    fc = fncall_new(uf, 0);
     err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, K->b);
 
     if (!err) {

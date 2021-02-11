@@ -163,6 +163,7 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_DATE:         return "date"; /* ODBC special */
 
     case GRETL_TYPE_VOID:       return "void";
+    case GRETL_TYPE_NUMERIC:    return "numeric";
     case GRETL_TYPE_NONE:       return "null";
     case GRETL_TYPE_ANY:        return "any";
     default:
@@ -258,6 +259,8 @@ GretlType gretl_type_from_string (const char *s)
 	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
 	    return GRETL_TYPE_LIST_REF;
 	}
+    } else if (!strncmp(s, "numeric", 7)) {
+	return GRETL_TYPE_NUMERIC;
     } else {
 	/* aliases */
 	if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
