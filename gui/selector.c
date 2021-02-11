@@ -4223,9 +4223,9 @@ static void destroy_selector (GtkWidget *w, selector *sr)
     open_selector = NULL;
 }
 
-static char *est_str (int cmdnum)
+static char *estimator_label (int ci)
 {
-    switch (cmdnum) {
+    switch (ci) {
     case OLS:
 	return N_("OLS");
     case HSK:
@@ -7168,7 +7168,7 @@ static void selection_dialog_add_top_label (selector *sr)
 	hbox = gtk_hbox_new(FALSE, 0);
 	button = add_var_button(sr);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
-	s = est_str(ci);
+	s = estimator_label(ci);
 	if (s != NULL) {
 	    label = gtk_label_new(_(s));
 	    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
@@ -7567,9 +7567,9 @@ selector *selection_dialog (int ci, const char *title,
     return sr;
 }
 
-static char *get_topstr (int cmdnum)
+static char *simple_sel_label (int ci)
 {
-    switch (cmdnum) {
+    switch (ci) {
     case LOGS:
 	return N_("Select variables for logging");
     case LAGS:
@@ -7738,7 +7738,7 @@ static void available_functions_list (selector *sr)
 
 static GtkWidget *simple_selection_top_label (int ci, const char *title)
 {
-    const char *s = get_topstr(ci);
+    const char *s = simple_sel_label(ci);
     GtkWidget *label = NULL;
     GtkWidget *hbox = NULL;
 
