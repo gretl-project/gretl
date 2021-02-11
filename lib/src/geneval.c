@@ -9838,7 +9838,7 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
 	}
 
         if ((p->flags & P_UFRET) && rtype == GRETL_TYPE_SERIES) {
-            /* pick up description of generated series, if any */
+            /* arrange to pick up description of generated series, if any */
             pdescrip = &p->lh.label;
         }
 
@@ -9846,6 +9846,7 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
                                      pdescrip, p->prn);
 
 	if (rtype == GRETL_TYPE_NUMERIC) {
+	    /* determine which numeric type we actually got */
 	    rtype = fncall_get_return_type(fc);
 	}
 
