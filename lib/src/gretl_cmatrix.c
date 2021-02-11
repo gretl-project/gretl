@@ -2066,7 +2066,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	int jmin = vs == V_PROD ? 1 : 0;
 
 	for (i=0; i<m->rows; i++) {
-	    z = vs == V_PROD ? m->z[0] : 0;
+	    z = vs == V_PROD ? m->z[i] : 0;
 	    for (j=jmin; j<m->cols; j++) {
 		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(m, i, j);
@@ -2084,7 +2084,7 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 	int imin = vs == V_PROD ? 1 : 0;
 
 	for (j=0; j<m->cols; j++) {
-	    z = vs == V_PROD ? m->z[0] : 0;
+	    z = vs == V_PROD ? gretl_cmatrix_get(m, 0, j) : 0;
 	    for (i=imin; i<m->rows; i++) {
 		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(m, i, j);
