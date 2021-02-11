@@ -119,6 +119,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_FREQ_SIMPLE,    "frequency plot (simple)" },
     { PLOT_FREQ_NORMAL,    "frequency plot (against normal)" },
     { PLOT_FREQ_GAMMA,     "frequency plot (against gamma)" },
+    { PLOT_FREQ_DISCRETE,  "frequency plot (discrete)" },
     { PLOT_GARCH,          "GARCH residual plot" },
     { PLOT_HURST,          "rescaled range plot" },
     { PLOT_IRFBOOT,        "impulse response plot with quantiles" },
@@ -2067,7 +2068,8 @@ static const char *plot_output_option (PlotType p, int *pci)
 	ci = LEVERAGE;
     } else if (p == PLOT_FREQ_SIMPLE ||
 	       p == PLOT_FREQ_NORMAL ||
-	       p == PLOT_FREQ_GAMMA) {
+	       p == PLOT_FREQ_GAMMA ||
+	       p == PLOT_FREQ_DISCRETE) {
 	ci = FREQ;
     } else if (p == PLOT_HEATMAP) {
 	ci = CORR;
@@ -5204,6 +5206,8 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	plottype = PLOT_FREQ_NORMAL;
     } else if (dist == D_GAMMA) {
 	plottype = PLOT_FREQ_GAMMA;
+    } else if (freq->discrete) {
+	plottype = PLOT_FREQ_DISCRETE;
     } else {
 	plottype = PLOT_FREQ_SIMPLE;
     }
@@ -5366,7 +5370,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	fputs("set style fill solid 0.6\n", fp);
 	strcpy(withstr, "w boxes");
     } else {
-	strcpy(withstr, "w impulses linewidth 3");
+	strcpy(withstr, "w impulses lw 3");
     }
 
     if (!dist) {

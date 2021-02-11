@@ -2457,7 +2457,9 @@ static int line_get_point_type (GPT_LINE *line, int i)
 }
 
 #define has_point(s) (s == GP_STYLE_POINTS || s == GP_STYLE_LINESPOINTS)
-#define has_line(s)  (s == GP_STYLE_LINES || s == GP_STYLE_LINESPOINTS)
+#define has_line(s)  (s == GP_STYLE_LINES || \
+		      s == GP_STYLE_LINESPOINTS || \
+		      s == GP_STYLE_IMPULSES)
 
 static void adjust_line_controls (GtkWidget *src, gpointer p)
 {

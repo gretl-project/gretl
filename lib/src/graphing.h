@@ -87,6 +87,7 @@ typedef enum {
     PLOT_FREQ_SIMPLE,
     PLOT_FREQ_NORMAL,
     PLOT_FREQ_GAMMA,
+    PLOT_FREQ_DISCRETE,
     PLOT_PERIODOGRAM,
     PLOT_CORRELOGRAM,
     PLOT_CUSUM,
@@ -156,7 +157,8 @@ typedef enum {
 
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
-				c == PLOT_FREQ_GAMMA)
+				c == PLOT_FREQ_GAMMA || \
+				c == PLOT_FREQ_DISCRETE)
 
 #define set_png_output(p) (p->flags |= GPT_PNG_OUTPUT)
 #define get_png_output(p) (p->flags & GPT_PNG_OUTPUT)
