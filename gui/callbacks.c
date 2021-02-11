@@ -446,6 +446,8 @@ static int selector_callback_code (const gchar *s)
 	return GR_BOX;
     if (!strcmp(s, "GR_FBOX"))
 	return GR_FBOX;
+    if (!strcmp(s, "GR_QQ"))
+	return QQPLOT;
     if (!strcmp(s, "VLAGSEL"))
 	return VLAGSEL;
     if (!strcmp(s, "ConfEllipse"))
@@ -523,6 +525,8 @@ void selector_callback (GtkAction *action, gpointer data)
 	simple_selection(ci, _("gretl: define graph"), do_scatters, NULL);
     } else if (ci == GR_BOX) {
 	simple_selection(ci, _("gretl: define graph"), do_regular_boxplot, NULL);
+    } else if (ci == QQPLOT) {
+	simple_selection(ci, _("gretl: define graph"), do_qq_from_selector, NULL);
     } else if (ci == LOESS || ci == NADARWAT) {
 	char title[64];
 

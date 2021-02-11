@@ -1780,7 +1780,7 @@ GtkActionEntry main_entries[] = {
     { "FrischPlot", NULL, N_("X-Y with _control..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "GR_BOX", NULL, N_("_Boxplots..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "GR_FBOX", NULL, N_("_Factorized boxplot..."), NULL, NULL, G_CALLBACK(selector_callback) },
-    { "GR_QQ", NULL, N_("_Q-Q plot..."), NULL, NULL, G_CALLBACK(menu_op_action) },
+    { "GR_QQ", NULL, N_("_Q-Q plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "ThreeDPlot", NULL, N_("_3D plot..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "MapPlot", NULL, N_("_Display map"), NULL, NULL, G_CALLBACK(map_plot_callback) },
     { "MultiPlots", NULL, N_("_Multiple graphs"), NULL, NULL, NULL },

@@ -7588,13 +7588,14 @@ static char *get_topstr (int cmdnum)
     case COEFFSUM:
 	return N_("Select coefficients to sum");
     case QQPLOT:
-	return N_("Select one or two variables");
+	return N_("Q-Q plot: select one or two variables");
     case ELLIPSE:
 	return N_("Confidence region: select two variables");
     case PRINT:
 	return N_("Select variables to display");
-    case GR_PLOT:
     case GR_BOX:
+	return N_("Select variables for boxplot");
+    case GR_PLOT:
     case TSPLOTS:
 	return N_("Select variables to plot");
     case SAVE_DATA:

@@ -821,23 +821,6 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt,
     }
 }
 
-static void do_qq_xyplot (const char *buf, gretlopt opt)
-{
-    int err;
-
-    lib_command_sprintf("qqplot%s", buf);
-    err = parse_lib_command();
-
-    if (!err) {
-        err = qq_plot(libcmd.list, dataset, opt);
-        gui_graph_handler(err);
-    }
-
-    if (!err) {
-        record_command_verbatim();
-    }
-}
-
 int menu_op_wrapper (selector *sr)
 {
     const char *buf = selector_list(sr);
@@ -847,8 +830,6 @@ int menu_op_wrapper (selector *sr)
 
     if (buf == NULL) {
         err = 1;
-    } else if (ci == QQPLOT) {
-        do_qq_xyplot(buf, opt);
     } else {
         do_menu_op(ci, buf, opt, NULL);
     }
@@ -861,12 +842,8 @@ static int menu_op_ci (GtkAction *action)
     const char *s = gtk_action_get_name(action);
     int ci = gretl_command_number(s);
 
-    if (ci == 0) {
-        if (!strcmp(s, "VarSummary")) {
-            ci = VAR_SUMMARY;
-        } else if (!strcmp(s, "GR_QQ")) {
-            ci = QQPLOT;
-        }
+    if (ci == 0 && !strcmp(s, "VarSummary")) {
+	ci = VAR_SUMMARY;
     }
 
     return ci;
@@ -892,8 +869,6 @@ void menu_op_action (GtkAction *action, gpointer p)
             str = N_("summary statistics");
         } else if (ci == CORR) {
             str = N_("correlation matrix");
-        } else if (ci == QQPLOT) {
-            str = N_("Q-Q plot");
         } else if (ci == XTAB) {
             str = N_("cross tabulation");
         }
@@ -7772,6 +7747,26 @@ int do_xyz_graph (selector *sr)
     err = xy_plot_with_control(libcmd.list, NULL,
                                dataset, OPT_NONE);
     gui_graph_handler(err);
+    if (!err) {
+        record_lib_command();
+    }
+
+    return 0;
+}
+
+int do_qq_from_selector (selector *sr)
+{
+    const char *buf = selector_list(sr);
+    int err;
+
+    lib_command_sprintf("qqplot%s", buf);
+    if (parse_lib_command()) {
+	return 1;
+    }
+
+    err = qq_plot(libcmd.list, dataset, OPT_NONE);
+    gui_graph_handler(err);
+
     if (!err) {
         record_lib_command();
     }
