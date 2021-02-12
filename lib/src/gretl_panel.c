@@ -4307,7 +4307,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 {
     MODEL mdl;
     panelmod_t pan;
-    gretlopt wlsopt = OPT_A;
+    gretlopt wlsopt = OPT_A | OPT_Z;
     double *uvar = NULL;
     double *bvec = NULL;
     double s2, diff = 1.0;

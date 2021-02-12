@@ -498,6 +498,21 @@ static int model_missval_count (const MODEL *pmod)
     return mc;
 }
 
+static int wls_usable_obs (MODEL *pmod, const DATASET *dset)
+{
+    int t, n = pmod->nobs;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (pmod->missmask[t] == '1') {
+	    n--;
+	} else if (dset->Z[pmod->nwt][t] == 0) {
+	    n--;
+	}
+    }
+
+    return n;
+}
+
 #define SMPL_DEBUG 0
 
 static int
@@ -561,6 +576,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 		pmod->t1, t1s, pmod->t2, t2s);
 	fprintf(stderr, "Valid observations in range = %d\n",
 		pmod->t2 - pmod->t1 + 1 - misscount);
+	fprintf(stderr, "Returning missv = %d\n", missv);
     }
 #endif
 
@@ -1194,11 +1210,13 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     mdl.ncoeff = mdl.list[0] - 1;
-    if (effobs) {
-	mdl.nobs = effobs; /* FIXME? */
+    if (effobs > 0 && mdl.missmask == NULL) {
+	mdl.nobs = effobs;
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
-	if (mdl.missmask != NULL) {
+	if (mdl.nwt) {
+	    mdl.nobs = wls_usable_obs(&mdl, dset);
+	} else if (mdl.missmask != NULL) {
 	    mdl.nobs -= model_missval_count(&mdl);
 	}
     }
