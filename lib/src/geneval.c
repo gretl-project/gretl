@@ -9819,14 +9819,16 @@ static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
         void *retp = &altp;
 
 	/* special cases */
-        if (rtype == GRETL_TYPE_MATRIX) {
+	if (rtype == GRETL_TYPE_VOID) {
+	    retp = NULL;
+        } else if (rtype == GRETL_TYPE_MATRIX) {
             if (p->targ == UNK && p->tree == t) {
                 /* target type not specified, and function returns
                    a matrix -> set target type to matrix
                 */
                 p->targ = MAT;
             }
-         } else if (rtype == GRETL_TYPE_LIST) {
+	} else if (rtype == GRETL_TYPE_LIST) {
             if (p->targ == EMPTY && p->tree == t) {
                 /* this function offers a list return, but the
                    caller hasn't assigned it and it's not being
