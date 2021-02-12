@@ -245,7 +245,7 @@ end function
 function void plot_feature(const bundle b, scalar i, string title, matrix extents)
     bundle geo = b.features[i].geometry
     string type = geo.type
-    matrices coord = geo.coordinates
+    coord = geo.coordinates
     scalar nc = nelem(coord)
     # printf "%4d: %s (%d)\n", i, type, nc
     if type == "Polygon"
@@ -343,7 +343,7 @@ function bundle simplify_feature(const bundle f, scalar param)
     bundle cpy = f
     bundle geo = cpy.geometry
     string type = geo.type
-    matrices coord = geo.coordinates
+    coord = geo.coordinates
     scalar nc = nelem(coord)
     # printf "%4d: %s (%d)\n", i, type, nc
     if type == "Polygon"
