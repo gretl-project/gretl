@@ -172,7 +172,11 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 #endif
 
     if (!err) {
-	wF = wX / gretl_vector_get_length(b);
+	if (wX < 0) {
+	    wF = wX = NADBL;
+	} else {
+	    wF = wX / gretl_vector_get_length(b);
+	}
     }
 
     if (!err) {
