@@ -109,22 +109,24 @@ struct obsinfo_ {
 
 /* structure representing a call to a user-defined function */
 
-enum {
-    RECURSING = 1 << 0,
-    PREV_MSGS = 1 << 1,
-    PREV_ECHO = 1 << 2
-};
+typedef enum {
+    FC_RECURSING = 1 << 0,
+    FC_PREV_MSGS = 1 << 1,
+    FC_PREV_ECHO = 1 << 2,
+    FC_PRESERVE  = 1 << 3
+} FCFlags;
 
 struct fncall_ {
-    ufunc *fun;    /* the function called */
-    int argc;      /* argument count */
-    int orig_v;    /* number of series defined on entry */
-    fn_arg *args;  /* argument array */
-    int *ptrvars;  /* list of pointer arguments */
-    int *listvars; /* list of series included in a list argument */
-    char *retname; /* name of return value (or dummy string) */
-    obsinfo obs;   /* sample info */
-    int flags;     /* indicators for recursive call, etc */
+    ufunc *fun;      /* the function called */
+    int argc;        /* argument count */
+    int orig_v;      /* number of series defined on entry */
+    fn_arg *args;    /* argument array */
+    int *ptrvars;    /* list of pointer arguments */
+    int *listvars;   /* list of series included in a list argument */
+    char *retname;   /* name of return value (or dummy string) */
+    GretlType rtype; /* return type (when not fixed in advance) */
+    obsinfo obs;     /* sample info */
+    FCFlags flags;   /* indicators for recursive call, etc */
 };
 
 /* structure representing a user-defined function */
@@ -207,7 +209,8 @@ struct fnpkg_ {
 				 t == GRETL_TYPE_MATRICES_REF ||	\
 	                         t == GRETL_TYPE_BUNDLES_REF ||         \
 	                         t == GRETL_TYPE_LISTS_REF ||           \
-				 t == GRETL_TYPE_ARRAYS_REF)
+				 t == GRETL_TYPE_ARRAYS_REF ||		\
+				 t == GRETL_TYPE_NUMERIC)
 
 enum {
     ARG_OPTIONAL = 1 << 0,
@@ -264,9 +267,9 @@ static char mpi_caller[FN_NAMELEN];
 #define function_is_noprint(f)   (f->flags & UFUN_NOPRINT)
 #define function_is_menu_only(f) (f->flags & UFUN_MENU_ONLY)
 
-#define set_call_recursing(c)   (c->flags |= RECURSING)
-#define unset_call_recursing(c) (c->flags &= ~RECURSING)
-#define is_recursing(c)         (c->flags & RECURSING)
+#define set_call_recursing(c)   (c->flags |= FC_RECURSING)
+#define unset_call_recursing(c) (c->flags &= ~FC_RECURSING)
+#define is_recursing(c)         (c->flags & FC_RECURSING)
 
 struct flag_and_key {
     int flag;
@@ -548,7 +551,14 @@ int push_function_args (fncall *fc, ...)
     return err;
 }
 
-fncall *fncall_new (ufunc *fun)
+/* fncall_new: if @preserve is non-zero, we don't destroy
+   the fncall struct automatically on completion of
+   function execution -- in which case the caller of this
+   function is responsible for calling fncall_destroy()
+   at a suitable point in the proceedings.
+*/
+
+fncall *fncall_new (ufunc *fun, int preserve)
 {
     fncall *call = malloc(sizeof *call);
 
@@ -557,9 +567,10 @@ fncall *fncall_new (ufunc *fun)
 	call->ptrvars = NULL;
 	call->listvars = NULL;
 	call->retname = NULL;
+	call->rtype = fun->rettype;
 	call->argc = 0;
 	call->args = NULL;
-	call->flags = 0;
+	call->flags = preserve ? FC_PRESERVE : 0;
     }
 
     return call;
@@ -574,6 +585,15 @@ void fncall_destroy (fncall *call)
 	free(call->retname);
 	free(call);
     }
+}
+
+GretlType fncall_get_return_type (fncall *call)
+{
+    if (call != NULL) {
+	return call->rtype;
+    }
+
+    return GRETL_TYPE_NONE;
 }
 
 /* Portmanteau function to get a caller struct for a
@@ -629,7 +649,7 @@ fncall *get_pkg_function_call (const char *funcname,
     if (uf == NULL) {
 	gretl_errmsg_sprintf(_("Couldn't find function %s"), funcname);
     } else {
-	fc = fncall_new(uf);
+	fc = fncall_new(uf, 0); /* FIXME second arg? */
     }
 
     return fc;
@@ -740,7 +760,9 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 	pprintf(prn, "exiting function %s, ", call->fun->name);
     }
 
-    fncall_destroy(call);
+    if (!(call->flags & FC_PRESERVE)) {
+	fncall_destroy(call);
+    }
 
     if (fn_executing > 0) {
 	GList *tmp = g_list_last(callstack);
@@ -7670,6 +7692,25 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    continue;
 	}
 
+	if (fp->type == GRETL_TYPE_NUMERIC) {
+	    /* param supports overloading */
+	    if (gretl_scalar_type(arg->type)) {
+		err = real_add_scalar_arg(fp, arg->val.x);
+	    } else if (arg->type == GRETL_TYPE_USERIES) {
+		err = dataset_copy_series_as(dset, arg->val.idnum, fp->name);
+	    } else if (arg->type == GRETL_TYPE_MATRIX) {
+		if (fp->flags & ARG_CONST) {
+		    err = localize_const_object(call, i, fp); /* ?? */
+		} else {
+		    err = copy_as_arg(fp->name, arg->type,
+				      arg_get_data(arg, 0));
+		}
+	    } else if (arg->val.px != NULL) {
+		err = dataset_add_series_as(dset, arg->val.px, fp->name);
+	    }
+	    continue;
+	}
+
 	if (gretl_scalar_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_MATRIX) {
 		err = do_matrix_scalar_cast(arg, fp);
@@ -7849,14 +7890,17 @@ static int maybe_check_function_needs (const DATASET *dset,
 
 static int handle_scalar_return (const char *vname, void *ptr)
 {
+    static double xret;
     int err = 0;
 
     if (gretl_is_scalar(vname)) {
-	*(double *) ptr = gretl_scalar_get_value(vname, NULL);
+	xret = gretl_scalar_get_value(vname, NULL);
     } else {
-	*(double *) ptr = NADBL;
-	err = E_UNKVAR; /* FIXME */
+	xret = NADBL;
+	/* FIXME err? */
     }
+
+    *(double **) ptr = &xret;
 
     return err;
 }
@@ -7928,6 +7972,26 @@ static int handle_matrix_return (const char *name, void *ptr,
     *(gretl_matrix **) ptr = ret;
 
     return err;
+}
+
+static GretlType fix_numeric_return_type (fncall *call,
+					  DATASET *dset)
+{
+    GretlType t = 0;
+    user_var *uv;
+
+    uv = user_var_get_value_and_type(call->retname, &t);
+    if (uv != NULL) {
+	call->rtype = t;
+    } else {
+	int v = current_series_index(dset, call->retname);
+
+	if (v >= 0) {
+	    t = call->rtype = GRETL_TYPE_SERIES;
+	}
+    }
+
+    return t;
 }
 
 static int handle_bundle_return (fncall *call, void *ptr, int copy)
@@ -8218,6 +8282,10 @@ function_assign_returns (fncall *call, int rtype,
 	*/
 	int copy = is_pointer_arg(call, rtype);
 
+	if (rtype == GRETL_TYPE_NUMERIC) {
+	    rtype = fix_numeric_return_type(call, dset);
+	}
+
 	if (rtype == GRETL_TYPE_DOUBLE) {
 	    err = handle_scalar_return(call->retname, ret);
 	} else if (rtype == GRETL_TYPE_SERIES) {
@@ -8339,17 +8407,17 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 static void push_verbosity (fncall *call)
 {
     if (gretl_messages_on()) {
-	call->flags |= PREV_MSGS;
+	call->flags |= FC_PREV_MSGS;
     }
     if (gretl_echo_on()) {
-	call->flags |= PREV_ECHO;
+	call->flags |= FC_PREV_ECHO;
     }
 }
 
 static void pop_verbosity (fncall *call)
 {
-    set_gretl_messages(call->flags & PREV_MSGS);
-    set_gretl_echo(call->flags & PREV_ECHO);
+    set_gretl_messages(call->flags & FC_PREV_MSGS);
+    set_gretl_echo(call->flags & FC_PREV_ECHO);
 }
 
 #endif /* MINIMAL_SETVARS */
@@ -8606,6 +8674,8 @@ static int check_function_args (fncall *call, PRN *prn)
 	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_NONE &&
 		   !no_scalar_default(fp)) {
 	    scalar_check = 0; /* OK: arg missing but we have a default value */
+	} else if (fp->type == GRETL_TYPE_NUMERIC && NUMERIC_TYPE(arg->type)) {
+	    ; /* OK, for overloaded param */
 	} else if (fp->type != arg->type) {
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"),
 		    u->name, i + 1, gretl_type_get_name(arg->type),
@@ -8635,9 +8705,7 @@ static int check_function_args (fncall *call, PRN *prn)
     }
 
 #if UDEBUG
-    if (err) {
-	fprintf(stderr, "CHECK_FUNCTION_ARGS: err = %d\n", err);
-    }
+    fprintf(stderr, "CHECK_FUNCTION_ARGS: err = %d\n", err);
 #endif
 
     return err;
@@ -8824,6 +8892,23 @@ static void set_func_error_message (int err, ufunc *u,
     }
 }
 
+static int determine_numeric_type (char *formula, DATASET *dset,
+				   PRN *prn)
+{
+    GretlType out_t;
+    int err;
+
+    err = generate(formula, dset, GRETL_TYPE_ANY, OPT_P, prn);
+    if (!err) {
+	out_t = genr_get_last_output_type();
+	if (!NUMERIC_TYPE(out_t)) {
+	    err = E_TYPES;
+	}
+    }
+
+    return err;
+}
+
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
 				    DATASET *dset,
@@ -8872,7 +8957,11 @@ static int handle_return_statement (fncall *call,
 	    char formula[MAXLINE];
 
 	    sprintf(formula, "$retval=%s", s);
-	    err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+	    if (fun->rettype == GRETL_TYPE_NUMERIC) {
+		err = determine_numeric_type(formula, dset, state->prn);
+	    } else {
+		err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
+	    }
 	    if (err) {
 		set_func_error_message(err, fun, state, s, lineno);
 	    } else {
