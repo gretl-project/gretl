@@ -2,6 +2,7 @@ version 2021b, in progress
 - gdtb data format: make the new variant the default
 - tighten up on defbundle() syntax: no empty arguments
   allowed
+- array definition: enforce the specific choice of type
 - "wls" command, with 0/1 weights: compute $yhat and $uhat
   for the excluded observations
 - "dpanel" estimation via the GUI: make the --dpdstyle flag
@@ -15,7 +16,7 @@ version 2021b, in progress
   accept an optional boolean argument; specific to the
   cross-sectional statistics produced when list arguments
   are given, this allows skipping of missing values.
-- hdprod(): introduce the "shorthand" syntax (one argument only)
+- hdprod(): introduce "shorthand" syntax (one argument only)
 - GUI model specification dialog: enable interactive search in
   lists of series
 - Fix bug: possible crash when displaying a matrix with very
