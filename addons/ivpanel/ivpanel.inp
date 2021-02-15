@@ -257,6 +257,17 @@ function bundle ivpanel (series y "dependent variable",
    X = 0 || X
    Z = 0 || Z
 
+   list D = dropcoll(X)
+   if nelem(X - D) > 0
+      printf "Regressor(s) %s dropped for collinearity\n", varname(X-D)
+      X = D
+   endif
+   list D = dropcoll(Z)
+   if nelem(Z - D) > 0
+      printf "Instrument(s) %s dropped for collinearity\n", varname(Z-D)
+      Z = D
+   endif
+
    scalar nendo = nelem(X - Z)
    scalar ninst = nelem(Z - X)
    if nendo > ninst
