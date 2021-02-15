@@ -1696,30 +1696,30 @@ static void set_plotfit_formula (char *formula, FitType f, const double *b,
 
     if (!na(x0)) {
 	if (pd > 1) {
-	    sprintf(x, "(%.1f*(x-%.10g)+1)", pd, x0);
+	    sprintf(x, "(%.1f*(x-%.8g)+1)", pd, x0);
 	} else {
-	    sprintf(x, "(x-%.10g+1)", x0);
+	    sprintf(x, "(x-%.8g+1)", x0);
 	}
     } else {
 	strcpy(x, "x");
     }
 
     if (f == PLOT_FIT_OLS) {
-	sprintf(formula, "%.10g + %.10g*%s", b[0], b[1], x);
+	sprintf(formula, "%.8g + %.8g*%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_QUADRATIC) {
-	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2", b[0], b[1], x, b[2], x);
+	sprintf(formula, "%.8g + %.8g*%s + %.8g*%s**2", b[0], b[1], x, b[2], x);
     } else if (f == PLOT_FIT_CUBIC) {
-	sprintf(formula, "%.10g + %.10g*%s + %.10g*%s**2 + %.10g*%s**3",
+	sprintf(formula, "%.8g + %.8g*%s + %.8g*%s**2 + %.8g*%s**3",
 		b[0], b[1], x, b[2], x, b[3], x);
     } else if (f == PLOT_FIT_INVERSE) {
-	sprintf(formula, "%.10g + %.10g/%s", b[0], b[1], x);
+	sprintf(formula, "%.8g + %.8g/%s", b[0], b[1], x);
     } else if (f == PLOT_FIT_LOGLIN) {
-	sprintf(formula, "exp(%.10g + %.10g*%s)", b[0], b[1], x);
+	sprintf(formula, "exp(%.8g + %.8g*%s)", b[0], b[1], x);
     } else if (f == PLOT_FIT_LINLOG) {
 	if (!na(x0)) {
-	    sprintf(formula, "%.10g + %.10g*log%s", b[0], b[1], x);
+	    sprintf(formula, "%.8g + %.8g*log%s", b[0], b[1], x);
 	} else {
-	    sprintf(formula, "%.10g + %.10g*log(x)", b[0], b[1]);
+	    sprintf(formula, "%.8g + %.8g*log(x)", b[0], b[1]);
 	}
     }
 
@@ -1966,6 +1966,7 @@ int plotspec_add_fit (GPT_SPEC *spec, FitType f)
     if (!err) {
 	if (f == PLOT_FIT_LOESS) {
 	    set_loess_fit(spec, d, q, X, y, yh);
+	    spec->lines[1].formula[0] = '\0';
 	} else {
 	    plotspec_set_fitted_line(spec, f, x0);
 	}
