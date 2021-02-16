@@ -692,7 +692,8 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
 
 static gretl_matrix *newey_west_H (const gretl_matrix *X,
 				   const gretl_matrix *u,
-				   gretl_matrix **pw)
+				   gretl_matrix **pw,
+				   int *err)
 {
     gretl_matrix *H;
     double x0 = X->val[0];
@@ -701,16 +702,21 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
     int make_w;
     int j, t;
 
-    /* tentative */
-    make_w = (pw != NULL && k > 1);
-
     if (u == NULL) {
 	H = gretl_matrix_copy(X);
     } else {
 	H = gretl_matrix_alloc(T, k);
     }
 
-    if (H != NULL && u == NULL) {
+    if (H == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* tentative */
+    make_w = (pw != NULL && k > 1);
+
+    if (u == NULL) {
 	/* we just have to check for constancy */
 	if (make_w) {
 	    for (t=1; t<T; t++) {
@@ -720,7 +726,7 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 		}
 	    }
 	}
-    } else if (H != NULL) {
+    } else {
 	/* @u is non-NULL */
 	double xtj;
 
@@ -736,7 +742,7 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 	}
     }
 
-    if (H != NULL && make_w) {
+    if (make_w) {
 	*pw = gretl_unit_matrix_new(k, 1);
 	if (*pw != NULL) {
 	    (*pw)->val[0] = 0;
@@ -789,15 +795,14 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
 #endif
 
     if (use_prior) {
-	H = newey_west_H(X, uhat, NULL);
+	H = newey_west_H(X, uhat, NULL, err);
     } else if (prewhiten || data_based) {
-	H = newey_west_H(X, uhat, &w);
+	H = newey_west_H(X, uhat, &w, err);
     } else {
-	H = newey_west_H(X, uhat, NULL);
+	H = newey_west_H(X, uhat, NULL, err);
     }
 
     if (H == NULL) {
-	*err = E_ALLOC;
 	return NULL;
     } else if (prewhiten) {
 	*err = nw_prewhiten(H, &A);
@@ -889,6 +894,11 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     }
 
     return XOX;
+}
+
+gretl_matrix *newey_west_OPG (const gretl_matrix *G, int *err)
+{
+    return HAC_XOX(G, NULL, NULL, 0, err);
 }
 
 /* To support the hansl function lrcovar(): note that

@@ -60,6 +60,7 @@ typedef enum {
     ML_OP,
     ML_QML,
     ML_BW,
+    ML_HAC,
     ML_VCVMAX
 } MLVCVType;
 

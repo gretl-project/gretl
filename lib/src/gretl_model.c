@@ -27,6 +27,7 @@
 #include "gretl_cmatrix.h"
 #include "gretl_panel.h"
 #include "gretl_array.h"
+#include "qr_estimate.h"
 
 /**
  * SECTION:gretl_model
@@ -2774,6 +2775,9 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 		err = model_make_clustered_GG(pmod, ci, G, GG,
 					      dset, &cvar, &n_c);
 	    }
+	} else if (opt & OPT_N) {
+	    /* Newey-West */
+	    GG = newey_west_OPG(G, &err);
 	} else {
 	    /* regular QML using OPG */
 	    GG = gretl_matrix_XTX_new(G);
@@ -2808,7 +2812,9 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	    gretl_model_set_vcv_info(pmod, VCV_CLUSTER, cvar);
 	    pmod->opt |= OPT_C;
 	} else {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+	    MLVCVType vt = (opt & OPT_N)? ML_HAC : ML_QML;
+
+	    gretl_model_set_vcv_info(pmod, VCV_ML, vt);
 	}
 	pmod->opt |= OPT_R;
     }

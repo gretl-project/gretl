@@ -1541,10 +1541,19 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 	if (!err) {
 	    if ((spec->opt & (OPT_R | OPT_C)) && spec->Hinv != NULL) {
 		/* robust option -> QML, possibly clustered */
-		gretlopt opt = (spec->opt & OPT_C)? OPT_C : OPT_NONE;
+		gretlopt vopt = OPT_NONE;
+		const char *vs;
 
+		if (spec->opt & OPT_C) {
+		    vopt = OPT_C;
+		} else {
+		    vs = get_optval_string(MLE, OPT_R);
+		    if (vs != NULL && !strcmp(vs, "hac")) {
+			vopt = OPT_N;
+		    }
+		}
 		err = gretl_model_add_QML_vcv(pmod, MLE, spec->Hinv,
-					      G, spec->dset, opt, NULL);
+					      G, spec->dset, vopt, NULL);
 	    } else {
 		err = gretl_model_add_OPG_vcv(pmod, G, NULL);
 	    }

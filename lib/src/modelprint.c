@@ -1538,6 +1538,9 @@ static void ml_vcv_line (const VCVInfo *vi, PRN *prn)
     case ML_QML:
 	s = N_("QML standard errors");
 	break;
+    case ML_HAC:
+	s = N_("HAC standard errors");
+	break;
     case ML_BW:
 	if (tex) {
 	    s = N_("Bollerslev--Wooldridge standard errors");
