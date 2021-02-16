@@ -3055,8 +3055,8 @@ int crosstab (const int *list, const DATASET *dset,
 			    opt |= OPT_S;
 			}
 			print_xtab(tab, dset, opt, prn);
-			record_xtab(tab, dset, opt);
 		    }
+		    record_xtab(tab, dset, opt);
 		    free_xtab(tab);
 		}
 	    }
