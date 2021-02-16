@@ -2837,9 +2837,9 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
     set_last_result_data(X, GRETL_TYPE_MATRIX);
 }
 
-/* for use in the context of "xtab" with --quiet option:
+/* For use in the context of "xtab" with --quiet option:
    compute and record the Pearson chi-square value and its
-   p-value
+   p-value.
 */
 
 static int xtab_test_only (const Xtab *tab)
@@ -2967,21 +2967,24 @@ int crosstab (const int *list, const DATASET *dset,
     Xtab *tab;
     int *rowvar = NULL;
     int *colvar = NULL;
-    int i, j, k;
-    int pos = gretl_list_separator_position(list);
-    int simple = 0;
-    int err = 0;
+    int i, j, k, pos;
+    int bivariate = 0;
     int blanket = 0;
     int nrv, ncv;
+    int err = 0;
+
+    pos = gretl_list_separator_position(list);
 
     if (pos == 0) {
+	/* single list case */
 	nrv = list[0];
 	ncv = nrv - 1;
 	blanket = 1;
 	if (ncv == 1) {
-	    simple = 1;
+	    bivariate = 1;
 	}
     } else {
+	/* double list case */
 	nrv = pos - 1;
 	ncv = list[0] - pos;
     }
@@ -3039,19 +3042,20 @@ int crosstab (const int *list, const DATASET *dset,
 	int vj, vi;
 
 	if (blanket) {
+	    /* the single list case */
 	    for (j=1; j<i && !err; j++) {
 		vj = rowvar[j];
 		vi = rowvar[i];
 		tab = get_new_xtab(vj, vi, dset, &err);
 		if (!err) {
 		    if (opt & OPT_Q) {
-			/* --quiet: no printing */
-			if (simple) {
+			/* quiet */
+			if (bivariate) {
 			    xtab_test_only(tab);
 			}
 		    } else {
-			if (simple) {
-			    /* add save/record flag */
+			if (bivariate) {
+			    /* set flag to record Pearson test */
 			    opt |= OPT_S;
 			}
 			print_xtab(tab, dset, opt, prn);
@@ -3061,6 +3065,7 @@ int crosstab (const int *list, const DATASET *dset,
 		}
 	    }
 	} else {
+	    /* the double list case: no quiet option and no $result */
 	    for (j=1; j<=colvar[0] && !err; j++) {
 		vi = rowvar[i];
 		vj = colvar[j];

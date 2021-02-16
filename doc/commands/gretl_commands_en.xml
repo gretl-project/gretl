@@ -16154,7 +16154,7 @@
         </option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>see the bivariate case below</effect>
+	  <effect>suppress printed output</effect>
 	</option>
 	<option>
 	  <flag>--tex</flag>
@@ -16179,49 +16179,52 @@
 
     <description context="cli">
       <para>
-        Displays a contingency table or cross-tabulation for each
-        combination of the variables included in <repl>ylist</repl>;
-        if a second list <repl>xlist</repl> is given, each variable in
-        <repl>ylist</repl> is cross-tabulated by row against each
-        variable in <repl>xlist</repl> (by column).  Variables in
-        these lists can be referenced by name or by number.  Note that
-        all the variables must have been marked as discrete.
-        Alternatively, if the <opt>matrix</opt> option is given, the
-        named matrix is treated as a precomputed set of frequencies,
-        to be displayed as a cross-tabulation (see also the <fncref
-        targ="mxtab"/> function). In this case the
-        <repl>list</repl> argument(s) should be omitted.
+	Given just the <repl>ylist</repl> argument, computes (and by
+	default displays) a contingency table or cross-tabulation for
+	each combination of the variables included in the list.  If a
+	second list <repl>xlist</repl> is given, each variable in
+	<repl>ylist</repl> is cross-tabulated by row against each
+	variable in <repl>xlist</repl> (by column).  Variables in
+	these lists can be referenced by name or by number.  Note that
+	all the variables must have been marked as discrete.
+	Alternatively, if the <opt>matrix</opt> option is given, the
+	named matrix is treated as a precomputed set of frequencies,
+	to be displayed as a cross-tabulation (see also the <fncref
+	targ="mxtab"/> function). In this case the <repl>list</repl>
+	argument(s) should be omitted.
       </para>
       <para>
 	By default the cell entries are given as frequency counts. The
 	<opt>row</opt> and <opt>column</opt> options (which are
-	mutually exclusive), replace the counts with the percentages for
-	each row or column, respectively.  By default, cells with a zero
-	count are left blank; the <opt>zeros</opt> option, which has the
-	effect of showing zero counts explicitly, may be useful for
-	importing the table into another program, such as a spreadsheet.
+	mutually exclusive) replace the counts with the percentages
+	for each row or column, respectively.  By default, cells with
+	a zero count are left blank but the <opt>zeros</opt> option
+	has the effect of showing zero counts explicitly, which may be
+	useful for importing the table into another program, such as a
+	spreadsheet.
       </para>
       <para>
         Pearson's chi-square test for independence is displayed if the
-        expected frequency under independence is at least 1.0e-7 for all
-        cells.  A common rule of thumb for the validity of this statistic is
-        that at least 80 percent of cells should have expected frequencies
-        of 5 or greater; if this criterion is not met a warning is printed.
+        expected frequency under independence is at least 1.0e-7 for
+        all cells.  A common rule of thumb for the validity of this
+        statistic is that at least 80 percent of cells should have
+        expected frequencies of 5 or greater; if this criterion is not
+        met a warning is printed.
       </para>
       <para>
 	If the contingency table is 2 by 2, Fisher's Exact Test for
-	independence is computed.  Note that this test is based on the
-	assumption that the row and column totals are fixed, which may or
-	may not be appropriate depending on how the data were generated.
-	The left p-value should be used when the alternative to
-	independence is negative association (values tend to cluster in
-	the lower left and upper right cells); the right p-value should be
-	used if the alternative is positive association.  The two-tailed
-	p-value for this test is calculated by method (b) in section 2.1
-	of <cite key="agresti92">Agresti (1992)</cite>: it is the sum of
-	the probabilities of all possible tables having the given row and
-	column totals and having a probability less than or equal to that
-	of the observed table.
+	independence is shown.  Note that this test is based on the
+	assumption that the row and column totals are fixed, which may
+	or may not be appropriate depending on how the data were
+	generated.  The left p-value should be used when the
+	alternative to independence is negative association (values
+	tend to cluster in the lower left and upper right cells), the
+	right p-value when the alternative is positive association.
+	The two-tailed p-value for this test is calculated by method
+	(b) in section 2.1 of <cite key="agresti92">Agresti
+	(1992)</cite>: it is the sum of the probabilities of all
+	possible tables with the given row and column totals and a
+	probability no greater than that of the observed table.
       </para>
 
       <subhead>The bivariate case</subhead>
@@ -16229,9 +16232,7 @@
 	In the simple case of a bivariate cross-tabulation the
 	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>
 	may be used to retrieve the Pearson chi-square test and its
-	p-value, provided the minimum expected value condition is
-	met. In that context the <opt>quiet</opt> option may be
-	used to suppress printing of the table.
+	p-value, provided the minimum expected value condition is met.
       </para>
 
       <subhead>&latex; output</subhead>
@@ -16256,6 +16257,15 @@
 	When a single list argument is given, the contingency table
 	may be retrieved in matrix form via the <fncref
 	targ="$result"/> accessor.
+      </para>
+
+      <subhead>Suppressing printing</subhead>
+      <para>
+	The <opt>quiet</opt> option can be used to suppress printed
+	output.  This makes sense only if the command does something
+	other than printing: either the table is bivariate and you
+	just want the Pearson test result (see above), or a single
+	list is given and you want the table as a matrix.
       </para>
 
     </description>

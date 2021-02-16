@@ -900,7 +900,8 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
  * to print column percentages, %OPT_Z to display zero entries,
  * %OPT_T to print as TeX (LaTeX), %OPT_N to omit marginal
  * totals, %OPT_B to bold-face counts where the row and
- * column values are equal (TeX only).
+ * column values are equal (TeX only), %OPT_S to record
+ * Pearson test result.
  * @prn: gretl printing struct.
  *
  * Print crosstab to @prn.
