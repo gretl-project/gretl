@@ -7649,6 +7649,10 @@
 	  <flag>--p-values</flag>
 	  <effect>show p-values instead of slopes</effect>
 	</option>
+	<option>
+	  <flag>--estrella</flag>
+	  <effect>select pseudo-R-squared variant</effect>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7660,17 +7664,18 @@
 
     <description>
       <para>
-	If the dependent variable is a binary variable (all values are 0
-	or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the Newton&ndash;Raphson
-	method. As the model is nonlinear the slopes depend on the
-	values of the independent variables.  By default the slopes with
-	respect to each of the independent variables are calculated (at
-	the means of those variables) and these slopes replace the usual
-	p-values in the regression output.  This behavior can be
-	suppressed by giving the <opt>p-values</opt> option. The
-	chi-square statistic tests the null hypothesis that all
-	coefficients are zero apart from the constant.
+	If the dependent variable is a binary variable (all values are
+	0 or 1) maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the
+	Newton&ndash;Raphson method. As the model is nonlinear the
+	slopes depend on the values of the independent variables.  By
+	default the slopes with respect to each of the independent
+	variables are calculated (at the means of those variables) and
+	these slopes replace the usual p-values in the regression
+	output.  This behavior can be suppressed by giving the
+	<opt>p-values</opt> option. The chi-square statistic tests the
+	null hypothesis that all coefficients are zero apart from the
+	constant.
       </para>
       <para context="cli">
 	By default, standard errors are computed using the negative
@@ -7685,6 +7690,16 @@
 	are produced; see <guideref targ="chap:robust_vcv"/> for
 	details.
       </para>
+      <para context="cli">
+	By default the pseudo-R-squared statistic suggested by <cite
+	key="mcfadden74">McFadden (1974)</cite> is shown, but in the
+	binary case if the <opt>estrella</opt> option is given, the
+	variant recommended by <cite key="estrella98">Estrella
+	(1998)</cite> is shown instead. This variant arguably mimics
+	more closely the properties of the regular
+	<math>R</math><sup>2</sup> in the context of least-squares
+	estimation.
+      </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
 	inverse of the Hessian.  If the "Robust standard errors" box is
@@ -7695,17 +7710,17 @@
 	Davidson and MacKinnon for details.
       </para>
       <para>
-	If the dependent variable is not binary but is discrete, then by
-	default it is interpreted as an ordinal response, and Ordered
-	Logit estimates are obtained.  However, if the
+	If the dependent variable is not binary but is discrete, then
+	by default it is interpreted as an ordinal response, and
+	Ordered Logit estimates are obtained.  However, if the
 	<opt>multinomial</opt> option is given, the dependent variable
 	is interpreted as an unordered response, and Multinomial Logit
-	estimates are produced. (In either case, if the variable selected
-	as dependent is not discrete an error is flagged.) In the
-	multinomial case, the accessor <lit>$mnlprobs</lit> is available
-	after estimation, to get a matrix containing the estimated
-	probabilities of the outcomes at each observation (observations in
-	rows, outcomes in columns).
+	estimates are produced. (In either case, if the variable
+	selected as dependent is not discrete an error is flagged.) In
+	the multinomial case, the accessor <lit>$mnlprobs</lit> is
+	available after estimation, to get a matrix containing the
+	estimated probabilities of the outcomes at each observation
+	(observations in rows, outcomes in columns).
       </para>
       <para>
 	If you want to use logit for analysis of proportions (where
@@ -11575,6 +11590,10 @@
 	  <effect>show p-values instead of slopes</effect>
 	</option>
 	<option>
+	  <flag>--estrella</flag>
+	  <effect>select pseudo-R-squared variant</effect>
+	</option>
+	<option>
 	  <flag>--random-effects</flag>
 	  <effect>estimates a random effects panel probit model</effect>
 	</option>
@@ -11595,40 +11614,52 @@
 
     <description>
       <para>
-	If the dependent variable is a binary variable (all values are 0
-	or 1) maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via the Newton&ndash;Raphson
-	method. As the model is nonlinear the slopes depend on the
-	values of the independent variables.  By default the slopes with
-	respect to each of the independent variables are calculated (at
-	the means of those variables) and these slopes replace the usual
-	p-values in the regression output.  This behavior can be
-	suppressed by giving the <opt>p-values</opt> option. The
-	chi-square statistic tests the null hypothesis that all
-	coefficients are zero apart from the constant.
+	If the dependent variable is a binary variable (all values are
+	0 or 1) maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via the
+	Newton&ndash;Raphson method. As the model is nonlinear the
+	slopes depend on the values of the independent variables.  By
+	default the slopes with respect to each of the independent
+	variables are calculated (at the means of those variables) and
+	these slopes replace the usual p-values in the regression
+	output.  This behavior can be suppressed by giving the
+	<opt>p-values</opt> option. The chi-square statistic tests the
+	null hypothesis that all coefficients are zero apart from the
+	constant.
       </para>
       <para context="cli">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <opt>robust</opt> flag is given,
-	then QML or Huber&ndash;White standard errors are calculated
-	instead. In this case the estimated covariance matrix is a
-	<quote>sandwich</quote> of the inverse of the estimated Hessian
-	and the outer product of the gradient. See chapter 10 of Davidson
-	and MacKinnon for details.
+	inverse of the Hessian.  If the <opt>robust</opt> flag is
+	given, then QML or Huber&ndash;White standard errors are
+	calculated instead. In this case the estimated covariance
+	matrix is a <quote>sandwich</quote> of the inverse of the
+	estimated Hessian and the outer product of the gradient. See
+	chapter 10 of Davidson and MacKinnon for details.
+      </para>
+      <para context="cli">
+	By default the pseudo-R-squared statistic suggested by <cite
+	key="mcfadden74">McFadden (1974)</cite> is shown, but in the
+	binary case if the <opt>estrella</opt> option is given, the
+	variant recommended by <cite key="estrella98">Estrella
+	(1998)</cite> is shown instead. This variant arguably mimics
+	more closely the properties of the regular
+	<math>R</math><sup>2</sup> in the context of least-squares
+	estimation.
       </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the "Robust standard errors" box is
-	checked, then QML or Huber&ndash;White standard errors are
-	calculated instead. In this case the estimated covariance matrix
-	is a <quote>sandwich</quote> of the inverse of the estimated
-	Hessian and the outer product of the gradient.  See chapter 10 of
-	Davidson and MacKinnon for details.
+	inverse of the Hessian.  If the <quote>Robust standard
+	errors</quote> box is checked, then QML or Huber&ndash;White
+	standard errors are calculated instead. In this case the
+	estimated covariance matrix is a <quote>sandwich</quote> of
+	the inverse of the estimated Hessian and the outer product of
+	the gradient.  See chapter 10 of Davidson and MacKinnon for
+	details.
       </para>
       <para>
-	If the dependent variable is not binary but is discrete, then Ordered
-	Probit estimates are obtained.  (If the variable selected as dependent
-	is not discrete, an error is flagged.)
+	If the dependent variable is not binary but is discrete, then
+	Ordered Probit estimates are obtained.  (If the variable
+	selected as dependent is not discrete, an error is flagged.)
       </para>
       <subhead>Probit for panel data</subhead>
       <para>
