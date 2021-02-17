@@ -383,11 +383,12 @@ int gretl_iscount (int t1, int t2, const double *x)
     return ret;
 }
 
-#define FEWVALS 32
+#define FEW_VALS 32
+#define FEWER_VALS 8
 
 static int few_vals (int t1, int t2, const double *x, double *ratio)
 {
-    double test[FEWVALS];
+    double test[FEW_VALS];
     int match;
     int i, t, n = 0, nv = 0;
 
@@ -396,12 +397,15 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
 	    match = 0;
 	    for (i=0; i<nv; i++) {
 		if (x[t] == test[i]) {
+		    /* we've already seen this value */
 		    match = 1;
 		    break;
 		}
 	    }
 	    if (!match) {
-		if (nv == FEWVALS) {
+		/* x[t] is a "new" value */
+		if (nv == FEW_VALS) {
+		    /* hit the limit */
 		    nv++;
 		    break;
 		}
@@ -411,7 +415,8 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
 	}
     }
 
-    *ratio = (double) nv / n;
+    /* ratio of distinct values to observations */
+    *ratio = nv / (double) n;
 
     return nv;
 }
@@ -430,7 +435,7 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
  *
  * Returns: 0 if test (a) is not passed or the number of distinct values
  * is > 32; else 1 if the number of distinct values is <= 32; else 2 if
- * the number of distinct values is <= 4.  A return of 1 is supposed
+ * the number of distinct values is <= 8.  A return of 1 is supposed
  * to indicate that it's "reasonable" to treat @x as discrete, while
  * a return of 2 indicates that it's probably unreasonable _not_ to
  * treat @x as discrete for the purpose of drawing up a frequency
@@ -469,8 +474,8 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
     if (disc) {
 	n = few_vals(t1, t2, x, &r);
 	if (allints) {
-	    disc = (n < 7)? 2 : 1;
-	} else if (n > FEWVALS) {
+	    disc = (n <= FEWER_VALS)? 2 : 1;
+	} else if (n > FEW_VALS) {
 	    disc = 0;
 	} else if (r > 0.9 && n > 30) {
 	    /* somewhat arbitrary: but if r (= ratio of distinct
@@ -479,7 +484,7 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 	       not automatically take the var as discrete
 	    */
 	    disc = 0;
-	} else if (n < 7) {
+	} else if (n <= FEWER_VALS) {
 	    disc = 2;
 	}
     }
