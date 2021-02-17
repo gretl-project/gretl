@@ -34,8 +34,6 @@
 # include <windows.h>
 #endif
 
-#include <glib.h>
-
 /**
  * SECTION:describe
  * @short_description: descriptive statistics plus some tests
@@ -2842,7 +2840,7 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
    p-value.
 */
 
-static int xtab_test_only (const Xtab *tab)
+static int xtab_do_pearson (const Xtab *tab)
 {
     double x, y, ymin = 1.0e-7;
     double pearson = 0.0;
@@ -2950,10 +2948,9 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     }
 
     if (opt & OPT_Q) {
-	xtab_test_only(tab);
+	xtab_do_pearson(tab);
     } else {
-	opt |= OPT_S;
-	print_xtab(tab, NULL, opt, prn);
+	print_xtab(tab, NULL, opt | OPT_S, prn);
     }
 
     free_xtab(tab);
@@ -2961,7 +2958,7 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     return err;
 }
 
-static int xtab_ok (const DATASET *dset, int v)
+static int xtab_is_discrete (const DATASET *dset, int v)
 {
     return series_is_discrete(dset, v) ||
 	gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v]) > 1;
@@ -3003,7 +3000,7 @@ int crosstab (const int *list, const DATASET *dset,
     j = 1;
     for (i=1; i<=nrv; i++) {
 	k = list[i];
-	if (xtab_ok(dset, k)) {
+	if (xtab_is_discrete(dset, k)) {
 	    rowvar[j++] = k;
 	} else {
 	    pprintf(prn, _("dropping %s: not a discrete variable\n"),
@@ -3026,11 +3023,10 @@ int crosstab (const int *list, const DATASET *dset,
 	    record_xtab(tab, dset, opt);
 	    if (opt & OPT_Q) {
 		/* quiet: run and record the Pearson test */
-		xtab_test_only(tab);
+		xtab_do_pearson(tab);
 	    } else {
-		/* set flag to record Pearson test */
-		opt |= OPT_S;
-		print_xtab(tab, dset, opt, prn);
+		/* print, and record Pearson test */
+		print_xtab(tab, dset, opt | OPT_S, prn);
 	    }
 	    free_xtab(tab);
 	}
@@ -3046,7 +3042,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    j = 1;
 	    for (i=1; i<=ncv; i++) {
 		k = list[pos+i];
-		if (xtab_ok(dset, k)) {
+		if (xtab_is_discrete(dset, k)) {
 		    colvar[j++] = k;
 		} else {
 		    colvar[0] -= 1;
