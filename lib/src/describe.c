@@ -2961,28 +2961,30 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     return err;
 }
 
+static int xtab_ok (const DATASET *dset, int v)
+{
+    return series_is_discrete(dset, v) ||
+	gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v]) > 1;
+}
+
 int crosstab (const int *list, const DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
     Xtab *tab;
     int *rowvar = NULL;
     int *colvar = NULL;
-    int i, j, k, pos;
-    int bivariate = 0;
-    int blanket = 0;
+    int i, j, vi, vj, k;
+    int pos, onelist;
     int nrv, ncv;
     int err = 0;
 
     pos = gretl_list_separator_position(list);
+    onelist = (pos == 0);
 
     if (pos == 0) {
 	/* single list case */
 	nrv = list[0];
 	ncv = nrv - 1;
-	blanket = 1;
-	if (ncv == 1) {
-	    bivariate = 1;
-	}
     } else {
 	/* double list case */
 	nrv = pos - 1;
@@ -3001,8 +3003,7 @@ int crosstab (const int *list, const DATASET *dset,
     j = 1;
     for (i=1; i<=nrv; i++) {
 	k = list[i];
-	if (series_is_discrete(dset, k) ||
-	    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[k]) > 1) {
+	if (xtab_ok(dset, k)) {
 	    rowvar[j++] = k;
 	} else {
 	    pprintf(prn, _("dropping %s: not a discrete variable\n"),
@@ -3011,23 +3012,42 @@ int crosstab (const int *list, const DATASET *dset,
 	}
     }
 
-    if (rowvar[0] == 0 || (blanket && rowvar[0] == 1)) {
+    if (rowvar[0] == 0 || (onelist && rowvar[0] == 1)) {
 	gretl_errmsg_set("xtab: variables must be discrete");
 	free(rowvar);
 	return E_TYPES;
     }
 
-    if (!blanket) {
+    if (onelist && rowvar[0] == 2) {
+	/* the bivariate case */
+	tab = get_new_xtab(rowvar[1], rowvar[2], dset, &err);
+	if (!err) {
+	    /* make $result matrix available */
+	    record_xtab(tab, dset, opt);
+	    if (opt & OPT_Q) {
+		/* quiet: run and record the Pearson test */
+		xtab_test_only(tab);
+	    } else {
+		/* set flag to record Pearson test */
+		opt |= OPT_S;
+		print_xtab(tab, dset, opt, prn);
+	    }
+	    free_xtab(tab);
+	}
+	goto finish;
+    }
+
+    if (!onelist) {
+	/* construct the second list */
 	colvar = gretl_list_new(ncv);
 	if (colvar == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    j = 1;
 	    for (i=1; i<=ncv; i++) {
-		k = pos + i;
-		if (series_is_discrete(dset, list[k]) ||
-		    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[list[k]]) > 1) {
-		    colvar[j++] = list[k];
+		k = list[pos+i];
+		if (xtab_ok(dset, k)) {
+		    colvar[j++] = k;
 		} else {
 		    colvar[0] -= 1;
 		}
@@ -3039,41 +3059,20 @@ int crosstab (const int *list, const DATASET *dset,
     }
 
     for (i=1; i<=rowvar[0] && !err; i++) {
-	int vj, vi;
-
-	if (blanket) {
-	    /* the single list case */
+	vi = rowvar[i];
+	if (onelist) {
+	    /* single list case */
 	    for (j=1; j<i && !err; j++) {
 		vj = rowvar[j];
-		vi = rowvar[i];
 		tab = get_new_xtab(vj, vi, dset, &err);
 		if (!err) {
-		    if (opt & OPT_Q) {
-			/* quiet */
-			if (bivariate) {
-			    /* make $result matrix available */
-			    record_xtab(tab, dset, opt);
-			    /* also the Pearson test */
-			    xtab_test_only(tab);
-			}
-		    } else {
-			if (bivariate) {
-			    /* make $result matrix available */
-			    record_xtab(tab, dset, opt);
-			    /* set flag to record Pearson test */
-			    opt |= OPT_S;
-			}
-			print_xtab(tab, dset, opt, prn);
-		    }
+		    print_xtab(tab, dset, opt, prn);
 		    free_xtab(tab);
 		}
 	    }
 	} else {
-	    /* the double list case: no quiet option, no $result,
-	       and no Pearson test
-	    */
+	    /* double list case */
 	    for (j=1; j<=colvar[0] && !err; j++) {
-		vi = rowvar[i];
 		vj = colvar[j];
 		tab = get_new_xtab(vi, vj, dset, &err);
 		if (!err) {
@@ -3083,6 +3082,8 @@ int crosstab (const int *list, const DATASET *dset,
 	    }
 	}
     }
+
+ finish:
 
     free(rowvar);
     free(colvar);
