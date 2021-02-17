@@ -3051,21 +3051,27 @@ int crosstab (const int *list, const DATASET *dset,
 		    if (opt & OPT_Q) {
 			/* quiet */
 			if (bivariate) {
+			    /* make $result matrix available */
+			    record_xtab(tab, dset, opt);
+			    /* also the Pearson test */
 			    xtab_test_only(tab);
 			}
 		    } else {
 			if (bivariate) {
+			    /* make $result matrix available */
+			    record_xtab(tab, dset, opt);
 			    /* set flag to record Pearson test */
 			    opt |= OPT_S;
 			}
 			print_xtab(tab, dset, opt, prn);
 		    }
-		    record_xtab(tab, dset, opt);
 		    free_xtab(tab);
 		}
 	    }
 	} else {
-	    /* the double list case: no quiet option and no $result */
+	    /* the double list case: no quiet option, no $result,
+	       and no Pearson test
+	    */
 	    for (j=1; j<=colvar[0] && !err; j++) {
 		vi = rowvar[i];
 		vj = colvar[j];
