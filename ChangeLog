@@ -12,6 +12,10 @@ version 2021b, in progress
 - "adf" command: support more accurate inference with
   improved p-values or critical values, for the GLS case
   in particular
+- "xtab" command: clarify that the $result (matrix) accessor
+  is just for the bivariate case
+- binary probit and logit: offer Estrella's pseudo R-squared
+  as an alternative to McFadden, via --estrella option
 - The functions mean, sum, sd, var, wmean, wsd and wvar now
   accept an optional boolean argument; specific to the
   cross-sectional statistics produced when list arguments
@@ -19,6 +23,8 @@ version 2021b, in progress
 - hdprod(): introduce "shorthand" syntax (one argument only)
 - GUI model specification dialog: enable interactive search in
   lists of series
+- GUI, saving contents of bundles: enable saving of integer
+  members
 - Fix bug: possible crash when displaying a matrix with very
   long column names in the GUI program
 - Fix bug: broken covariance matrix from mols() with a large
