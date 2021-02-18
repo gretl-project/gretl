@@ -1223,15 +1223,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
 		ok = 0;
 	    }
 	} else if (f == DUMMIFY) {
-	    ok = 0; /* reverse burden of proof */
-	    if (v > 0) {
-		if (series_is_discrete(dset, v)) {
-		    /* pre-approved */
-		    ok = 1;
-		} else if (gretl_isdiscrete(0, dset->n - 1, dset->Z[v])) {
-		    ok = 1;
-		}
-	    }
+	    ok = v > 0 && accept_as_discrete(dset, v, 0);
 	}
 
 	if (!ok) {

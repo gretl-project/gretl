@@ -89,6 +89,8 @@ int gretl_ispositive (int t1, int t2, const double *x, int strict);
 
 int gretl_is_oprobit_ok (int t1, int t2, const double *x);
 
+int accept_as_discrete (const DATASET *dset, int v, int strict);
+
 int true_const (int v, const DATASET *dset);
 
 /* setting observations */

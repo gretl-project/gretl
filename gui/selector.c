@@ -7101,11 +7101,7 @@ static int list_show_var (int v, int ci, int show_lags)
 	lags_hidden = 1;
 	ret = 0;
     } else if (ci == XTAB) {
-	ret = 0;
-	if (series_is_discrete(dataset, v) ||
-	    gretl_isdiscrete(dataset->t1, dataset->t2, dataset->Z[v])) {
-	    ret = 1;
-	}
+	ret = accept_as_discrete(dataset, v, 0);
     } else if (ci == MIDASREG && series_get_midas_period(dataset, v)) {
 	ret = 0;
     }

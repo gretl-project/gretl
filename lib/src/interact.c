@@ -2364,15 +2364,12 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     byvar = current_series_index(dset, byname);
     if (byvar < 0) {
         return E_UNKVAR;
-    }
-
-    x = (const double *) dset->Z[byvar];
-
-    if (!series_is_discrete(dset, byvar) &&
-	!gretl_isdiscrete(dset->t1, dset->t2, x)) {
+    } else if (!accept_as_discrete(dset, byvar, 0)) {
         gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byname);
         return E_DATA;
     }
+
+    x = (const double *) dset->Z[byvar];
 
     if (list == NULL) {
         /* compose full series list, but exclude the "by" variable */

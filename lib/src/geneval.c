@@ -11571,8 +11571,7 @@ static int aggregate_discrete_check (const int *list, const DATASET *dset)
 
     for (i=1; i<=list[0]; i++) {
         vi = list[i];
-        if (!series_is_discrete(dset, vi) &&
-            !gretl_isdiscrete(dset->t1, dset->t2, dset->Z[vi])) {
+        if (!accept_as_discrete(dset, vi, 0)) {
             gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
                                  dset->varname[vi]);
             return E_DATA;

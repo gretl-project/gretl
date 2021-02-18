@@ -2958,12 +2958,6 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     return err;
 }
 
-static int xtab_is_discrete (const DATASET *dset, int v)
-{
-    return series_is_discrete(dset, v) ||
-	gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v]) > 1;
-}
-
 int crosstab (const int *list, const DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
@@ -3000,7 +2994,7 @@ int crosstab (const int *list, const DATASET *dset,
     j = 1;
     for (i=1; i<=nrv; i++) {
 	k = list[i];
-	if (xtab_is_discrete(dset, k)) {
+	if (accept_as_discrete(dset, k, 0)) {
 	    rowvar[j++] = k;
 	} else {
 	    pprintf(prn, _("dropping %s: not a discrete variable\n"),
@@ -3042,7 +3036,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    j = 1;
 	    for (i=1; i<=ncv; i++) {
 		k = list[pos+i];
-		if (xtab_is_discrete(dset, k)) {
+		if (accept_as_discrete(dset, k, 0)) {
 		    colvar[j++] = k;
 		} else {
 		    colvar[0] -= 1;
@@ -3101,19 +3095,12 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
     rv = list[1];
     cv = list[2];
 
-    if (!series_is_discrete(dset, rv) &&
-	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[rv])) {
+    if (accept_as_discrete(dset, rv, 0) &&
+	accept_as_discrete(dset, cv, 0)) {
+	tab = get_new_xtab(rv, cv, dset, err);
+    } else {
 	*err = E_TYPES;
-	return NULL;
     }
-
-    if (!series_is_discrete(dset, cv) &&
-	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[cv])) {
-	*err = E_TYPES;
-	return NULL;
-    }
-
-    tab = get_new_xtab(rv, cv, dset, err);
 
     if (!*err) {
 	print_xtab(tab, dset, opt, prn);

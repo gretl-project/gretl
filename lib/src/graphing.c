@@ -751,8 +751,7 @@ static int factor_check (gnuplot_info *gi, const DATASET *dset)
 	err = E_DATA;
     } else {
 	v3 = gi->list[3];
-	if (!series_is_discrete(dset, v3) &&
-	    !gretl_isdiscrete(gi->t1, gi->t2, dset->Z[v3])) {
+	if (!accept_as_discrete(dset, v3, 0)) {
 	    err = E_DATA;
 	}
     }

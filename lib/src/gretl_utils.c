@@ -492,6 +492,19 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
     return disc;
 }
 
+int accept_as_discrete (const DATASET *dset, int v, int strict)
+{
+    if (series_is_discrete(dset, v)) {
+	/* the series has been explicitly marked as discrete */
+	return 1;
+    } else {
+	/* check for plausibility of discreteness */
+	int d = gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v]);
+
+	return strict ? d > 1 : d > 0;
+    }
+}
+
  /**
  * gretl_ispositive:
  * @x: data series to examine.

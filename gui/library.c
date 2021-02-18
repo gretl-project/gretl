@@ -5426,8 +5426,7 @@ void do_freq_dist (void)
 
     if (gretl_isdummy(dataset->t1, dataset->t2, y)) {
         nbins = 3;
-    } else if (series_is_discrete(dataset, v) ||
-               gretl_isdiscrete(dataset->t1, dataset->t2, y) > 1) {
+    } else if (accept_as_discrete(dataset, v, 1)) {
         discrete = 1;
     }
 
@@ -7662,7 +7661,7 @@ int do_regular_boxplot (selector *sr)
 int do_factorized_boxplot (selector *sr)
 {
     const char *buf = selector_list(sr);
-    int err;
+    int err = 0;
 
     if (buf == NULL) {
         return 1;
@@ -7674,13 +7673,15 @@ int do_factorized_boxplot (selector *sr)
         return 1;
     }
 
-    if (libcmd.list[0] != 2 ||
-        (!series_is_discrete(dataset, libcmd.list[2]) &&
-         !gretl_isdiscrete(dataset->t1, dataset->t2,
-                           dataset->Z[libcmd.list[2]]))) {
+    if (libcmd.list[0] != 2) {
+	err = 1;
+    } else if (!accept_as_discrete(dataset, libcmd.list[2], 0)) {
+	err = 1;
+    }
+    if (err) {
         errbox(_("You must supply two variables, the second of "
                  "which is discrete"));
-        return 1;
+        return err;
     }
 
     err = boxplots(libcmd.list, NULL, dataset, OPT_Z);
@@ -7698,7 +7699,7 @@ int do_factorized_boxplot (selector *sr)
 int do_dummy_graph (selector *sr)
 {
     const char *buf = selector_list(sr);
-    int err;
+    int err = 0;
 
     if (buf == NULL) return 1;
 
@@ -7707,13 +7708,15 @@ int do_dummy_graph (selector *sr)
         return 1;
     }
 
-    if (libcmd.list[0] != 3 ||
-        (!series_is_discrete(dataset, libcmd.list[3]) &&
-         !gretl_isdiscrete(dataset->t1, dataset->t2,
-                           dataset->Z[libcmd.list[3]]))) {
-        errbox(_("You must supply three variables, the last of "
+    if (libcmd.list[0] != 3) {
+	err = 1;
+    } else if (!accept_as_discrete(dataset,libcmd.list[3], 0)) {
+	err = 1;
+    }
+    if (err) {
+	errbox(_("You must supply three variables, the last of "
                  "which is discrete"));
-        return 1;
+        return err;
     }
 
     err = gnuplot(libcmd.list, NULL, dataset, OPT_G | OPT_Z);

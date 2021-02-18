@@ -991,7 +991,7 @@ void varinfo_dialog (int varnum)
 	tmp = gtk_check_button_new_with_label(_("Treat this variable "
 						"as discrete"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), d);
-	if (!d && !gretl_isdiscrete(0, dataset->n - 1, dataset->Z[varnum])) {
+	if (!d && !gretl_isdiscrete(0, dataset->n-1, dataset->Z[varnum])) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	}
 	g_signal_connect(tmp, "toggled",
