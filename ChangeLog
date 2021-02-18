@@ -14,6 +14,8 @@ version 2021b, in progress
   in particular
 - "xtab" command: clarify that the $result (matrix) accessor
   is just for the bivariate case
+- "clear" command: add --functions option to remove all hansl
+  functions from memory
 - binary probit and logit: offer Estrella's pseudo R-squared
   as an alternative to McFadden, via --estrella option
 - The functions mean, sum, sd, var, wmean, wsd and wvar now
