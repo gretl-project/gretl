@@ -3131,16 +3131,41 @@ static int in_foreign_land (GtkWidget *text_widget)
 
 static void auto_indent_script (GtkWidget *w, windata_t *vwin)
 {
+    GtkAdjustment *adj;
     GtkTextBuffer *tbuf;
-    GtkTextIter start, end;
+    GtkTextMark *mark;
+    GtkTextIter here, start, end;
     gchar *buf;
+    gint line, offset;
+    gdouble pos;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+
+    /* record scrolling position */
+    adj = gtk_text_view_get_vadjustment(GTK_TEXT_VIEW(vwin->text));
+    pos = gtk_adjustment_get_value(adj);
+
+    /* record cursor position (line, offset) */
+    mark = gtk_text_buffer_get_insert(tbuf);
+    gtk_text_buffer_get_iter_at_mark(tbuf, &here, mark);
+    line = gtk_text_iter_get_line(&here);
+    offset = gtk_text_iter_get_line_offset(&here);
+
+    /* grab and revise the text */
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
     buf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     normalize_indent(tbuf, buf, &start, &end);
     g_free(buf);
+
+    /* restore cursor position */
+    gtk_text_buffer_get_iter_at_line(tbuf, &here, line);
+    gtk_text_iter_set_line_offset(&here, offset);
+    gtk_text_buffer_place_cursor(tbuf, &here);
+
+    /* restore scrolling position */
+    gtk_adjustment_set_value(adj, pos);
+    gtk_adjustment_value_changed(adj);
 }
 
 static void indent_region (GtkWidget *w, gpointer p)
