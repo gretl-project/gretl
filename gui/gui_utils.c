@@ -4991,10 +4991,16 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    return;
 	}
 
-	if (type == GRETL_TYPE_DOUBLE) {
+	if (gretl_is_scalar_type(type)) {
 	    double *xp = malloc(sizeof *xp);
 
-	    *xp = *(double *) val;
+	    if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
+		*xp = *(int *) val;
+	    } else if (type == GRETL_TYPE_UNSIGNED) {
+		*xp = *(unsigned *) val;
+	    } else {
+		*xp = *(double *) val;
+	    }
 	    err = user_var_add_or_replace(vname, GRETL_TYPE_DOUBLE, xp);
 	} else if (type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *orig = (gretl_matrix *) val;
@@ -5032,7 +5038,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	}
 
 	if (show && !err) {
-	    if (type == GRETL_TYPE_DOUBLE) {
+	    if (gretl_is_scalar_type(type)) {
 		edit_scalars();
 	    } else {
 		view_session();
