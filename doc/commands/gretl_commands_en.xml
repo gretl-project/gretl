@@ -1670,22 +1670,33 @@
 	  <flag>--dataset</flag>
 	  <effect>clear dataset only</effect>
 	</option>
+	<option>
+	  <flag>--dataset</flag>
+	  <effect>clear functions (only)</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	With no options, clears all saved objects, including the current
-	dataset if any, out of memory. Note that opening a new dataset, or
-	using the <cmd>nulldata</cmd> command to create an empty dataset,
-	also has this effect, so use of <cmd>clear</cmd> is not usually
-	necessary.
+	By default this command clears the current dataset (if any)
+	plus all saved variables (scalars, matrices, etc.) out of
+	memory. Note that opening a new dataset, or using the
+	<cmd>nulldata</cmd> command to create an empty dataset, also
+	has this effect, so explicit use of <cmd>clear</cmd> is not
+	usually necessary.
       </para>
       <para>
 	If the <opt>dataset</opt> option is given, then only the
 	dataset is cleared (plus any named lists of series); other
-	saved objects such as named matrices and scalars are
+	saved objects such as matrices, scalars and bundles are
 	preserved.
+      </para>
+      <para>
+	If the <opt>functions</opt> option is given, then any
+	user-defined functions, and any functions defined by packages
+	that have been loaded, are cleared out of memory. The dataset
+	and other variables are not affected.
       </para>
     </description>
   </command>

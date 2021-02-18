@@ -2199,15 +2199,19 @@ static int lib_open_append (ExecState *s,
     return err;
 }
 
-static int check_clear_data (void)
+static int check_clear (gretlopt opt)
 {
+    int err = 0;
+
     if (gretl_function_depth() > 0) {
         gretl_errmsg_sprintf(_("The \"%s\" command cannot be used in this context"),
                              gretl_command_word(CLEAR));
-        return E_DATA;
+        err = E_DATA;
+    } else {
+	err = incompatible_options(opt, OPT_D | OPT_F);
     }
 
-    return 0;
+    return err;
 }
 
 static EXEC_CALLBACK gui_callback;
@@ -3211,9 +3215,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case CLEAR:
-        err = check_clear_data();
+        err = check_clear(cmd->opt);
         if (!err) {
-            if (gretl_in_gui_mode()) {
+	    if (cmd->opt & OPT_F) {
+		gretl_functions_cleanup();
+	    } else if (gretl_in_gui_mode()) {
                 schedule_callback(s);
             } else {
                 lib_clear_data(s, dset);
