@@ -474,7 +474,11 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
     if (disc) {
 	n = few_vals(t1, t2, x, &r);
 	if (allints) {
-	    disc = (n <= FEWER_VALS)? 2 : 1;
+	    if (n <= FEW_VALS && r < 0.2) {
+		disc = 2;
+	    } else {
+		disc = (n <= FEWER_VALS)? 2 : 1;
+	    }
 	} else if (n > FEW_VALS) {
 	    disc = 0;
 	} else if (r > 0.9 && n > 30) {
