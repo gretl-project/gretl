@@ -1049,10 +1049,10 @@ static stored_opt *matching_stored_opt (int ci, gretlopt opt)
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-        if (optinfo[i].ci == ci &&
-            optinfo[i].opt == opt &&
-            optinfo[i].fd == fd) {
-            return &optinfo[i];
+	stored_opt *so = &optinfo[i];
+
+        if (so->ci == ci && so->opt == opt && so->fd == fd) {
+            return so;
         }
     }
 
@@ -1081,6 +1081,7 @@ static int option_parm_status (int ci, gretlopt opt)
     int i, got_ci = 0;
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
+
         if (gretl_opts[i].ci == ci) {
             if (gretl_opts[i].o == opt) {
                 return gretl_opts[i].parminfo;
@@ -1140,7 +1141,8 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 
 #if OPTDEBUG
     fprintf(stderr, "push_option_param: ci=%d (%s), fd=%d, opt=%d,"
-            " val='%s'\n", ci, gretl_command_word(ci), fd, opt, val);
+            " val='%s', SETOPT %d\n", ci, gretl_command_word(ci),
+	    fd, opt, val, flags & OPT_SETOPT ? 1 : 0);
 #endif
 
     so = matching_stored_opt(ci, opt);
@@ -1355,9 +1357,11 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     }
 
     for (i=0; gretl_opts[i].o != 0; i++) {
-        if (ci == gretl_opts[i].ci) {
-            if (opt & gretl_opts[i].o) {
-                real_push_option(ci, gretl_opts[i].o, NULL, 1, flags);
+	struct gretl_option *gopt = &gretl_opts[i];
+
+        if (ci == gopt->ci) {
+            if (opt & gopt->o) {
+		real_push_option(ci, gopt->o, NULL, 1, flags);
             }
             got_ci = ci;
         } else if (got_ci > 0 && ci != got_ci) {
@@ -1367,7 +1371,8 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
 }
 
 /* Apparatus for pre-selecting options for a specified command,
-   using "setopt" */
+   using the "setopt" command.
+*/
 
 int set_options_for_command (const char *cmdword,
                              const char *param,
