@@ -1522,6 +1522,22 @@ static gretl_matrix *ml_gradient_matrix (nlspec *spec, int *err)
     return G;
 }
 
+static gretlopt ml_robust_specifier (nlspec *spec)
+{
+    if (spec->opt & OPT_C) {
+	/* clustered */
+	return OPT_C;
+    } else {
+	const char *s = get_optval_string(MLE, OPT_R);
+
+	if (s != NULL && !strcmp(s, "hac")) {
+	    return OPT_N; /* Newey-West */
+	}
+    }
+
+    return OPT_NONE;
+}
+
 static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 {
     int err = 0;
@@ -1540,18 +1556,9 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 
 	if (!err) {
 	    if ((spec->opt & (OPT_R | OPT_C)) && spec->Hinv != NULL) {
-		/* robust option -> QML, possibly clustered */
-		gretlopt vopt = OPT_NONE;
-		const char *vs;
+		/* robust option: QML, possibly clustered or HAC */
+		gretlopt vopt = ml_robust_specifier(spec);
 
-		if (spec->opt & OPT_C) {
-		    vopt = OPT_C;
-		} else {
-		    vs = get_optval_string(MLE, OPT_R);
-		    if (vs != NULL && !strcmp(vs, "hac")) {
-			vopt = OPT_N;
-		    }
-		}
 		err = gretl_model_add_QML_vcv(pmod, MLE, spec->Hinv,
 					      G, spec->dset, vopt, NULL);
 	    } else {
