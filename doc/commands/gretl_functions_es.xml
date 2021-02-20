@@ -4620,7 +4620,7 @@
       </description>
     </function>
 
-    <function name="genseries" section="data-utils" output="scalar">
+    <function name="genseries" section="programming" output="scalar">
       <fnargs>
 	<fnarg type="string">nombrevar</fnarg>
 	<fnarg type="series">rhs</fnarg>
@@ -5042,33 +5042,38 @@
     <function name="hdprod" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">Y</fnarg>
+	<fnarg optional="true" type="matrix">Y</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve la matriz que resulta del producto directo horizontal de dos
-	  matrices. Los dos argumentos deben tener el mismo número de filas,
-	  <math>r</math>. El valor que se devuelve es una matriz que tiene
-	  <math>r</math> filas, y en la que la <math>i</math>-ésima fila es el
-	  producto de Kronecker de las respectivas filas de las matrices
-	  <argname>X</argname> e <argname>Y</argname>.
+	  matrices. Los dos argumentos deben tener el mismo número <math>r</math>
+	  de filas. El valor que se devuelve es una matriz que tiene <math>r</math>
+	  filas, y en la que la <math>i</math>-ésima fila es el producto de
+	  Kronecker de las respectivas filas de las matrices <argname>X</argname>
+	  e <argname>Y</argname>. Si omites <argname>Y</argname>, se aplica
+	  la sintaxis <quote>breve</quote> (mira abajo).
 	</para>
 	<para context="tex">
-	  En otras palabras, si $X$ es una matriz $r \times k$, $Y$ es
-	  una matriz $r \times m$ y $Z$ es la matriz resultante del
-	  producto directo horizontal de $X$ times $Y$, entonces $Z$ va a
-	  tener $r$ filas y $k\cdot m$ columnas; más aún,
-	  \[
-	  Z_{in} = X_{ij} Y_{il}
-	  \]
+	  Si $X$ es una matriz $r \times k$, $Y$ es una matriz $r \times m$
+	  y $Z$ es la matriz resultante del producto directo horizontal de
+	  $X$ times $Y$, entonces $Z$ va a tener $r$ filas y $k\cdot m$ columnas;
+	  más aún, \[ Z_{in} = X_{ij} Y_{il} \]
 	  donde $n = (j-1) m + l$.
+	</para>
+	<para context="notex">
+	  Si <argname>X</argname> es una matriz <math>r x k</math> e
+	  <argname>Y</argname> es una matriz <math>r x m</math>, el resultado
+	  será una matriz con <math>r</math> filas y con <math>k x m</math>
+	  columnas.
 	</para>
 	<para>
 	  Esta operación se llama <quote>producto directo horizontal</quote>
 	  de acuerdo con la forma en la que se pone en funcionamiento, y se aplica
 	  en el lenguaje de programación GAUSS. Su equivalente en el álgebra
 	  matricial estándar podría denominarse producto horizontal (row-wise)
-	  de Khatri-Rao.
+	  de Khatri-Rao, o producto <quote>de división de caras</quote>
+	  (face-splitting) en la literatura sobre el procesado de señales.
 	</para>
 	<para>
 	  Ejemplo: el código...
@@ -5085,6 +5090,43 @@
           0    1    0    2    0    3
          -4    4   -5    5   -6    6
 	</code>
+	<subhead>Sintaxis breve</subhead>
+	<para>
+	  Si <argname>X</argname> e <argname>Y</argname> son la misma
+	  matriz, entonces cada fila del resultado representa la vectorización
+	  de una matriz simétrica. En estos casos, puedes omitir el segundo
+	  argumento; sin embargo, la matriz que se va a devolver contendrá
+	  solo las columnas no redundantes y, consecuentemente, tendrá
+	  <math>k(k+1)/2</math> columnas. Por ejemplo,
+	</para>
+	<code>
+	  A = {1,2,3; 4,5,6}
+	  C = hdprod(A)
+	</code>
+	<para>
+	  genera
+	</para>
+	<code>
+	  1    2    3    4    6    9 
+	  16   20   24   25   30   36 
+	</code>
+	<para context="tex">
+	  Ten en cuenta que la $i$-ésima fila de $C$ es $\mathrm{vech}(a_i a_i')$,
+	  donde $a_i$ es la $i$-ésima fila de $A$.
+	</para>
+	<para context="notex">
+	  Ten en cuenta que la <math>i</math>-ésima fila de <math>C</math> es
+	  <math>vech(a</math><sub>i</sub> <math>a</math><sub>i</sub><math>')</math>,
+	  donde
+	  <math>a</math><sub>i</sub> es la <math>i</math>-ésima fila de
+	  <math>A</math>.
+	</para>
+	<para>
+	  Cuando utilices la sintaxis breve con matrices complejas, el segundo
+	  argumento que se va a suponer implícito será el <i>conjugado</i> del
+	  primero, de tal forma que hará que cada fila del resultado sea la
+	  vectorización simétrica de una matriz Hermítica.
+	</para>
       </description>
     </function>
 
@@ -5512,6 +5554,7 @@
 	  con argumentos negativos: <lit>int(-3.5)</lit> genera &minus;3,
 	  mientras que <lit>floor(-3.5)</lit> genera &minus;4.
 	  <seelist>
+            <fncref targ="round"/>
             <fncref targ="ceil"/>
 	  </seelist>
 	</para>
@@ -10504,21 +10547,16 @@
       </fnargs>
       <description>
 	<para>
-	  Elimina el archivo del argumento <argname>nombrearchivo</argname> en caso
-	  de que este exista, y que el usuario lo pueda modificar. Esta función
-	  devuelve un entero igual a 0 en caso de que la operación tenga éxito,
-	  y un valor no nulo si el archivo no existe o no se puede eliminar.
+	  Si el archivo del argumento <argname>nombrearchivo</argname>
+	  existe y si el usuario puede modificarlo, esta función lo elimina
+	  y devuelve un 0. Si no existe el archivo, o no puede eliminarse
+	  por alguna razón, la función devuelve un código no nulo indicando
+	  un fallo.
 	</para>
 	<para>
-	  Cuando <argname>fname</argname> contiene la ruta completa hasta el
-	  archivo, GRETL tratará de eliminarlo, y devolverá un fallo si ese
-	  archivo no existe o no puede ser eliminado por algún motivo (por
-	  ejemplo, por no tener suficientes privilegios para poder hacerlo).
-	  Cuando <argname>fname</argname> no contiene la ruta completa,
-	  entonces se asume que el archivo al que se refiere, está en el directorio
-	  vigente de trabajo (<cmdref targ="workdir"/>). Si el archivo
-	  no existe o no puede guardarse, no se va a buscar en ningún
-	  otro directorio.
+	  Cuando <argname>nombrearchivo</argname> no especifica la ruta
+	  completa, entonces se asume que el archivo al que se refiere, está
+	  en el directorio vigente de trabajo (<cmdref targ="workdir"/>).
 	</para>
       </description>
     </function>

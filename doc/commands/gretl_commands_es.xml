@@ -1670,22 +1670,33 @@
 	  <flag>--dataset</flag>
 	  <effect>Vacía solo el conjunto de datos</effect>
 	</option>
+	<option>
+	  <flag>--functions</flag>
+	  <effect>Elimina las funciones (unicamente)</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Sin ninguna opción, quita de la memoria todos los objetos guardados,
-	incluyendo el conjunto de datos (si hay alguno). Ten en cuenta que también
-	tienes este efecto al abrir un nuevo conjunto de datos, o al utilizar la
-	instrucción <cmd>nulldata</cmd> para crear un conjunto de datos vacío;
-	por eso normalmente no necesitas utilizar <cmd>clear</cmd>.
+	Por defecto, esta instrucción quita de la memoria el conjunto de datos
+	vigente (si hay alguno), además de todas las variables guardadas
+	(escalares, matrices, etc.). Ten en cuenta que también tienes este
+	efecto al abrir un nuevo conjunto de datos, o al utilizar la instrucción
+	<cmd>nulldata</cmd> para crear un conjunto de datos vacío; por eso
+	normalmente no necesitas hace uso explícito de <cmd>clear</cmd>.
       </para>
       <para>
 	Cuando indicas la opción <opt>dataset</opt>, entonces solo se vacía
 	el conjunto de datos (más cualquier lista de series definida); otros
-	objetos guardados como matrices y escalares ya definidos, se van a
+	objetos guardados como matrices, escalares o 'bundles', se van a
 	conservar.
+      </para>
+      <para>
+	Cuando indicas la opción <opt>functions</opt>, entonces se elimina de
+	la memoria cualquier función definida por el usuario y cualquier función
+	definida en los paquetes que tengas cargados. El conjunto de datos y
+	otras variables no se ven afectados.
       </para>
     </description>
   </command>
@@ -4434,8 +4445,11 @@
     <description>
       <para>
 	Abre un bloque de expresiones en las que se define una función. Este
-	bloque debe estar terminado con <lit>end function</lit>. Consulta
-	<guideref targ="chap:functions"/> para obtener más detalles.
+	bloque debe estar terminado con <lit>end function</lit>. (Como excepción
+	está el caso en el que desees eliminar una función definida por el
+	usuario, pues lo puedes conseguir mediante la sencilla linea de instrucción
+	<lit>function foo delete</lit> para a función chamada <quote>foo</quote>.)
+	Consulta <guideref targ="chap:functions"/> para obtener más detalles.
       </para>
     </description>
 
@@ -7646,6 +7660,10 @@
 	  <flag>--p-values</flag>
 	  <effect>Muestra los valores p en vez de las pendientes</effect>
 	</option>
+	<option>
+	  <flag>--estrella</flag>
+	  <effect>Elige la variante pseudo-R-cuadrado</effect>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7659,15 +7677,16 @@
       <para>
 	Si la variable dependiente es una variable binaria (todos sus
 	valores son 0 o 1), se obtienen estimaciones máximo verosímiles
-	de los coeficientes de las variables de <repl>indepvars</repl> mediante
-	el método de Newton&ndash;Raphson. Como el modelo es no lineal,
-	las pendientes están condicionadas por los valores de las variables
-	independientes. Por defecto, se calculan las pendientes con respecto a
-	cada una de las variables independientes (en las medias de esas variables),
-	y estas pendientes substituyen los valores p habituales en el resultado
-	de la regresión. Puedes prescindir de este proceder indicando la opción
-	<opt>p-values</opt>. El estadístico chi-cuadrado contrasta la hipótesis
-	nula de que todos los coeficientes son cero, excepto el de la constante.
+	de los coeficientes de las variables de <repl>indepvars</repl>
+	mediante el método de Newton&ndash;Raphson. Como el modelo es no
+	lineal, las pendientes están condicionadas por los valores de las
+	variables independientes. Por defecto, se calculan las pendientes
+	con respecto a cada una de las variables independientes (en las
+	medias de esas variables), y estas pendientes substituyen los valores
+	p habituales en el resultado de la regresión. Puedes prescindir de
+	este proceder indicando la opción <opt>p-values</opt>. El estadístico
+	chi-cuadrado contrasta la hipótesis nula de que todos los coeficientes
+	son cero, excepto el de la constante.
       </para>
       <para context="cli">
 	Por defecto, las desviaciones típicas se calculan utilizando la inversa
@@ -7681,6 +7700,16 @@
 	desviaciones típicas <quote>robustas por agrupación</quote>;
 	consulta <guideref targ="chap:robust_vcv"/> para obtener más
 	detalles.
+      </para>
+      <para context="cli">
+	Por defecto, se va a presentar el estadístico pseudo-R-cuadrado que
+	fue sugerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	pero en el caso binario, si indicas la opción <opt>estrella</opt>
+	se va a presentar en su lugar la variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	presumiblemente imita de forma más parecida las propiedades del
+	<math>R</math><sup>2</sup> habitual en el contexto de la estimación
+	de mínimos cuadrados.
       </para>
       <para context="gui">
 	Por defecto, las desviaciones típicas se calculan utilizando la inversa
@@ -8606,10 +8635,16 @@
     <description context="gui">
       <para>
 	Realiza la estimación de Máxima Verosimilitud (MV o ML) usando
-	el algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno). Debes
-	especificar la función logaritmo de verosimilitud; y se te recomienda
-	que también proporciones las expresiones de las derivadas de esta función
-	con respecto a cada uno de los parámetros, si es posible.
+	el algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno) o el método
+	de Newton. Debes especificar la función logaritmo de verosimilitud;
+	y se te recomienda que también proporciones las expresiones de las
+	derivadas de esta función con respecto a cada uno de los parámetros,
+	si es posible.
+      </para>
+      <para>
+	Este texto de ayuda asume que se utiliza el maximizador por defecto
+	BFGS. Para obtener información relativa al uso del método de Newton,
+	consulta <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Ejemplo sencillo: Supón que tenemos una serie <lit>X</lit> con
@@ -11566,6 +11601,10 @@
 	  <effect>Muestra los valores p en lugar de las pendientes</effect>
 	</option>
 	<option>
+	  <flag>--estrella</flag>
+	  <effect>Elige la variante pseudo-R-cuadrado</effect>
+	</option>
+	<option>
 	  <flag>--random-effects</flag>
 	  <effect>Estima un modelo Probit de panel con efectos aleatorios, EA</effect>
 	</option>
@@ -11596,7 +11635,8 @@
 	y estas pendientes substituyen a los valores p habituales en el resultado
 	de la regresión. Puedes prescindir de este proceder indicando la opción
 	<opt>p-values</opt>. El estadístico chi-cuadrado contrasta la hipótesis
-	nula de que todos los coeficientes son cero, excepto el de la constante.
+	nula de que todos los coeficientes son cero, excepto el de la
+	constante.
       </para>
       <para context="cli">
 	Por defecto, las desviaciones típicas se calculan utilizando la inversa negativa
@@ -11607,13 +11647,24 @@
 	gradiente. Para obtener más detalles, consulta el capítulo 10 del libro de
 	<cite key="davidson-mackinnon04">Davidson y MacKinnon (2004)</cite>.
       </para>
+      <para context="cli">
+	Por defecto, se va a presentar el estadístico pseudo-R-cuadrado que
+	fue sugerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	pero en el caso binario, si indicas la opción <opt>estrella</opt>
+	se va a presentar en su lugar la variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	presumiblemente imita de forma más parecida las propiedades del
+	<math>R</math><sup>2</sup> habitual en el contexto de la estimación
+	de mínimos cuadrados.
+      </para>
       <para context="gui">
-	Por defecto, las desviaciones típicas se calculan utilizando la inversa
-	negativa de la matriz Hessiana. Si marcas el cuadradito de 'Desviaciones
-	típicas robustas', entonces se calculan en su lugar las desviaciones típicas
-	CMV (QML) o de Huber&ndash;White. En este caso, la matriz de covarianzas
-	estimadas es un <quote>emparedado</quote> entre la inversa de la matriz
-	Hessiana estimada y el producto externo del vector gradiente. Consulta el
+	Por defecto, las desviaciones típicas se calculan utilizando la
+	inversa negativa de la matriz Hessiana. Si marcas el cuadradito de
+	<quote>Desviaciones típicas robustas</quote>quote>, entonces se
+	calculan en su lugar las desviaciones típicas CMV (QML) o de
+	Huber&ndash;White. En este caso, la matriz de covarianzas estimadas es
+	un <quote>emparedado</quote> entre la inversa de la matriz Hessiana
+	estimada y el producto externo del vector gradiente. Consulta el
 	capítulo 10 del libro de Davidson y MacKinnon para obtener más detalles.
       </para>
       <para>
@@ -11868,7 +11919,7 @@
 	<quote>en bruto</quote> frente a los cuantiles de la distribución Normal
 	estándar.
       </para>
-      <para>
+      <para context="cli">
 	La opción <opt>output</opt> tiene como efecto el envío del resultado al
 	archivo especificado; utiliza <quote>display</quote> para forzar
 	que el resultado se presente en la pantalla. Consulta la instrucción
@@ -15891,12 +15942,16 @@
 	  <flag>--quiet</flag>
 	  <effect>No presenta los resultados</effect>
         </option>
+	<option>
+	  <flag>--allow-zeros</flag>
+	  <effect>Mira abajo</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula las estimaciones de mínimos cuadrados ponderados (MCP o WLS)
+	Calcula las estimaciones de mínimos cuadrados ponderados (MCP, WLS)
 	utilizando <repl>varponder</repl> como ponderación, <repl>depvar</repl>
 	como variable dependiente e <repl>indepvars</repl> como lista de
 	variables independientes. Sea <repl>w</repl> la raíz cuadrada positiva
@@ -15914,20 +15969,21 @@
 	igual a la suma de errores cuadrados de la regresión de la variable dependiente
 	ponderada sobre únicamente la constante ponderada.
       </para>
-
       <para context="cli">
-	Si <repl>varponder</repl> es una variable ficticia, la estimación MCP
-	es equivalente a la que resulta al eliminar todas las observaciones que
-	tienen un valor de cero para <repl>varponder</repl>.
+	Como caso especial, si <repl>varponder</repl> es una variable ficticia
+	0/1, la estimación MCP (WLS) es equivalente a MCO (OLS) en una muestra
+	en la que se excluyen todas las observaciones que tienen un valor de
+	cero para <repl>varponder</repl>. Por otro lado, la inclusión de
+	ponderaciones iguales a cero se considera un error, pero si realmente
+	quieres mezclar ponderaciones iguales a cero con ponderaciones positivas,
+	puedes añadir la opción <opt>allow-zeros</opt>.
       </para>
-
-	  <para context="cli">
+      <para context="cli">
 	Para aplicar la estimación de Mínimos Cuadrados Ponderados a datos
 	de panel, basada en las varianzas del error específico de cada unidad,
 	consulta la instrucción <cmdref targ="panel"/> junto con la opción
-	<lit>--unit-weights</lit>.
-	  </para>
-
+	<opt>unit-weights</opt>.
+	    </para>
       <para context="gui">
 	Sea 'varponder' la variable escogida en el cuadradito 'Variable de ponderaciones'.
 	Se ejecuta una regresión MCO, donde la variable dependiente es el producto
@@ -16113,8 +16169,8 @@
 
     <usage>
       <arguments>
-        <argument>ylista</argument>
-	      <argument optional="true" separated="true">xlista</argument>
+        <argument>listay</argument>
+	      <argument optional="true" separated="true">listax</argument>
       </arguments>
       <options>
         <option>
@@ -16140,7 +16196,7 @@
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>Consulta el caso bivariante de abajo</effect>
+	  <effect>Elimina la presentación de resultados</effect>
         </option>
 	      <option>
 	  <flag>--tex</flag>
@@ -16165,37 +16221,40 @@
 
     <description context="cli">
       <para>
-	Muestra una tabla de contingencia o una tabulación cruzada para
-	cada combinación de las variables incluidas en <repl>ylista</repl>; y cuando
-	indicas una segunda lista (<repl>xlista</repl>), cada variable de
-	<repl>ylista</repl> se cruza en una tabla por fila frente a cada variable
-	de <repl>xlista</repl> (por columna). Puedes referirte a las variables
-	de estas listas mediante sus nombres o sus números. Ten en cuenta
-	que todas las variables tienen que estar marcadas como discretas. Como
-	alternativa, cuando indicas la opción <opt>matrix</opt>, se trata la matriz
-	indicada como un conjunto calculado previamente de frecuencias a
-	presentar como tabulación cruzada (consulta también la función
-	<fncref targ="mxtab"/>). En este caso deberás omitir el argumento
-	<repl>list</repl>.
+	Indicando unicamente el argumento <repl>listay</repl>, calcula (y
+	presenta por defecto) una tabla de contingencia o una tabulación
+	cruzada para cada combinación de las variables incluidas en esa lista.
+	Cuando indicas una segunda lista (<repl>listax</repl>), cada variable
+	de <repl>listay</repl> se cruza en una tabla por fila frente a cada
+	variable de <repl>lista</repl> (por columna). Puedes referirte a las
+	variables de estas listas mediante sus nombres o sus números. Ten
+	en cuenta que todas las variables tienen que estar marcadas como
+	discretas. Como alternativa, cuando indicas la opción <opt>matrix</opt>,
+	se trata la matriz indicada como un conjunto calculado previamente
+	de frecuencias a presentar como tabulación cruzada (consulta también
+	la función <fncref targ="mxtab"/>). En este caso deberás omitir el
+	argumento <repl>list</repl>.
       </para>
       <para>
-	Por defecto, la anotación de cada celda indica el recuento de la frecuencia de
-	casos. Las opciones <opt>row</opt> y <opt>column</opt> (que se excluyen
-	mutuamente), substituyen los recuentos con los porcentajes para cada fila o
-	columna, respectivamente. Por defecto, las celdas con un recuento de cero casos
-	se dejan en blanco; pero la opción <opt>zeros</opt>, que tiene como efecto
-	la presentación explícita de los ceros, puede serte útil para importar la tabla
-	con otro programa tal como una hoja de cálculo.
+	Por defecto, la anotación de cada celda indica el recuento de la
+	frecuencia de casos. Las opciones <opt>row</opt> y <opt>column</opt>
+	(que se excluyen mutuamente) substituyen los recuentos con los
+	porcentajes para cada fila o columna, respectivamente. Por defecto,
+	las celdas con un recuento de cero casos se dejan en blanco, pero
+	la opción <opt>zeros</opt> tiene como efecto la presentación
+	explícita de los ceros, lo que te puede ser útil para importar la
+	tabla con un programa tal como una hoja de cálculo.
       </para>
       <para>
-	El contraste de independencia chi-cuadrado de Pearson se muestra si la frecuencia
-	esperada bajo independencia es cuando menos de 1.0e-7 para todas las celdas.
-	Una regla general habitual de la validez de este estadístico es que, al menos
-	el 80 por ciento de las celdas, deben tener frecuencias esperadas iguales a 5
-	o más; y si este criterio no se cumple, se presenta una advertencia.
+	El contraste de independencia chi-cuadrado de Pearson se muestra si
+	la frecuencia esperada bajo independencia es cuando menos de 1.0e-7
+	para todas las celdas. Una regla general habitual de la validez de
+	este estadístico es que, al menos el 80 por ciento de las celdas
+	deben tener frecuencias esperadas iguales a 5 o más; y si este
+	criterio no se cumple, se presenta una advertencia.
       </para>
       <para>
-	Si una tabla de contingencia es 2 por 2, se calcula el Contraste Exacto de
+	Si una tabla de contingencia es 2 por 2, se presenta el Contraste Exacto de
 	independencia de Fisher. Ten en cuenta que este contraste se basa en el
 	supuesto de que los totales por fila y por columna son fijos, lo que puede
 	ser o no ser adecuado dependiendo de cómo se generaron los datos. Debes
@@ -16207,17 +16266,20 @@
 	método (b) de la sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
 	esto es la suma de las probabilidades de todas las tablas posibles que tengan
 	los totales de filas y columnas indicados, y que tengan una probabilidad
-	menor o igual a la de la tabla observada.
+	no mayor a la de la tabla observada.
       </para>
 
       <subhead>El caso bivariante</subhead>
       <para>
-	En el sencillo caso de una tabulación cruzada bivariante, puedes utilizar
-	los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/> para
-	recuperar el estadístico del contraste chi-cuadrado de Pearson y su
-	probabilidad asociada (con tal de que se cumpla la condición del
-	mínimo valor esperado). En ese contexto, puedes utilizar la opción
-	<opt>quiet</opt> para eliminar la presentación de la tabla.
+	En el caso de una tabulación cruzada bivariante (cuando se indica tan
+	solo una lista que tiene dos elementos) se guardan algunos resultados.
+	Puedes recuperar la tabla de contingencia en forma de matriz mediante
+	el accesor <fncref targ="$result"/>. Además, si se cumple la condición
+	del valor esperado, puedes recuperar el estadístico del contraste
+	chi-cuadrado de Pearson y su probabilidad asociada (valor p) mediante
+	los accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/>. Si
+	son estos los resultados que te interesan, puedes utilizar la opción
+	<opt>quiet</opt> para eliminar la presentación habitual de resultados.
       </para>
 
       <subhead>Salida &latex;</subhead>
@@ -16236,14 +16298,6 @@
 	indiques la opción <opt>tex</opt>; y también cuando una o las dos
 	variables de la tabulación cruzada tenga valores de cadena de texto.
       </para>
-
-      <subhead>La tabla como matriz</subhead>
-      <para>
-	Cuando indicas un argumento con una única lista, vas a poder
-	obtener la tabla de contingencia en forma de matriz, por medio
-	del accesor <fncref targ="$result"/>.
-      </para>
-
     </description>
 
     <description context="gui">
@@ -16262,26 +16316,28 @@
 	pero puedes escoger que se muestre explícitamente el valor cero.
       </para>
       <para>
-	El contraste de independencia chi-cuadrado de Pearson se muestra si la frecuencia
-	esperada bajo independencia es al menos de 1.0e-7 para todas las celdas.
-	Una regla general habitual de la validez de este estadístico es que, al menos
-	el 80 por ciento de las celdas, deben tener frecuencias esperadas iguales a 5
-	o más; y si este criterio no se cumple, se presenta una advertencia.
+	El contraste de independencia chi-cuadrado de Pearson se muestra si
+	la frecuencia esperada bajo independencia es al menos de 1.0e-7
+	para todas las celdas. Una regla general habitual de la validez de
+	este estadístico es que, al menos el 80 por ciento de las celdas,
+	deben tener frecuencias esperadas iguales a 5 o más; y si este
+	criterio no se cumple, se presenta una advertencia.
       </para>
       <para>
-	Si una tabla de contingencia es 2 por 2, se calcula el Contraste Exacto de
-	independencia de Fisher. Ten en cuenta que este contraste se basa en el
-	supuesto de que los totales por fila y por columna son fijos, lo que puede
-	ser o no ser adecuado dependiendo de cómo se generaron los datos. Debes
-	utilizar la probabilidad asociada (valor p) de la izquierda cuando la hipótesis
-	alternativa a la de independencia es la asociación negativa (los valores tienden
-	a agruparse en las celdas de abajo a la izquierda y de arriba a la derecha); y
-	debes utilizar el valor p de la derecha si la alternativa es la asociación
-	positiva. El valor p de dos colas para este contraste se calcula mediante el
-	método (b) de la sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
-	esto es la suma de las probabilidades de todas las tablas posibles que tengan
-	los totales de filas y columnas indicados, y que tengan una probabilidad
-	menor o igual a la de la tabla observada.
+	Si una tabla de contingencia es 2 por 2, se presenta el Contraste
+	Exacto de independencia de Fisher. Ten en cuenta que este contraste
+	se basa en el supuesto de que los totales por fila y por columna
+	son fijos, lo que puede ser o no ser adecuado dependiendo de cómo
+	se generaron los datos. Debes utilizar el valor p de la izquierda
+	cuando la hipótesis alternativa a la de independencia es la de
+	asociación negativa (los valores tienden a agruparse en las celdas
+	de abajo a la izquierda y de arriba a la derecha); y debes utilizar
+	el valor p de la derecha si la alternativa es la de asociación positiva.
+	El valor p de dos colas para este contraste se calcula mediante el método
+	(b) de la sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
+	esto es la suma de las probabilidades de todas las tablas posibles
+	que tengan los totales de filas y columnas indicados, y que tengan
+	una probabilidad menor o igual a la de la tabla observada.
       </para>
     </description>
 
