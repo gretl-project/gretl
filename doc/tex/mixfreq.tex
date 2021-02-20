@@ -101,7 +101,7 @@ In this case we consider an Excel file provided by Eric Ghysels in his
   \url{http://eghysels.web.unc.edu/} for links.} namely
 \texttt{mydata.xlsx}.  This contains quarterly real GDP in Sheet1 and
 monthly non-farm payroll employment in Sheet2. A hansl script to build
-a MIDAS-style file named \texttt{gdp\_midas.gdt} is shown in
+a MIDAS-style file named \texttt{gdp\_payroll\_midas.gdt} is shown in
 Listing~\ref{lst:ghysels-data}.
 
 \begin{script}[htbp]
@@ -124,7 +124,7 @@ open MIDASv2.0/mydata.xlsx --sheet=1
 rename VALUE qgdp
 setinfo qgdp --description="Real quarterly US GDP"
 append payroll_midas.gdt
-store gdp_midas.gdt
+store gdp_payroll_midas.gdt
 \end{scode}
 \end{script}
 
@@ -141,10 +141,8 @@ happens, just containing one series) to quarterly frequency using the
 ``spread'' method. Once this is done, it is straightforward to
 \texttt{append} the compacted data to the quarterly GDP dataset.
 
-We will put this dataset to use in subsequent sections. Note that it
-is provided in the gretl package (\texttt{gdp\_midas}, which you can
-find under the \textsf{Gretl} tab in the practice datafiles window
-in the gretl GUI).
+We will put an extended version of this dataset (supplied with gretl,
+and named \texttt{gdp\_midas.gdt}) to use in subsequent sections.
 
 \section{The notion of a ``MIDAS list''}
 \label{sec:midas-list}
