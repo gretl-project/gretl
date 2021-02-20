@@ -1670,22 +1670,33 @@
 	  <flag>--dataset</flag>
 	  <effect>Libra só o conxunto de datos</effect>
 	</option>
+	<option>
+	  <flag>--functions</flag>
+	  <effect>Elimina as funcións (unicamente)</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Sen ningunha opción, quita da memoria todos os obxectos gardados,
-	incluíndo o conxunto de datos (se hai algún). Ten en conta que tamén
-	tes este efecto ao abrir un novo conxunto de datos, ou ao utilizar a
-	instrución <cmd>nulldata</cmd> para crear un conxunto de datos baleiro;
-	por iso normalmente non necesitas utilizar <cmd>clear</cmd>.
+	Por defecto, esta instrución quita da memoria o conxunto de datos
+	vixente (se hai algún), amais de todas as variables gardadas (escalares,
+	matrices, etc.). Ten en conta que tamén tes este efecto ao abrir un novo
+	conxunto de datos, ou ao utilizar a instrución <cmd>nulldata</cmd>
+	para crear un conxunto de datos baleiro; por iso normalmente non
+	necesitas facer uso explícito de <cmd>clear</cmd>.
       </para>
       <para>
 	Cando indicas a opción <opt>dataset</opt>, entón só se limpa
 	o conxunto de datos (máis calquera lista de series definida); outros
-	obxectos gardados como matrices e escalares xa definidos, vanse
+	obxectos gardados como matrices, escalares ou feixes, vanse
 	conservar.
+      </para>
+      <para>
+	Cando indicas a opción <opt>functions</opt>, entón se elimina da
+	memoria calquera función definida polo usuario e calquera función
+	definida nos paquetes que teñas cargados. O conxunto de datos e
+	outras variables non se ven afectados.
       </para>
     </description>
   </command>
@@ -4434,8 +4445,11 @@
     <description>
       <para>
 	Abre un bloque de expresións nas que se define unha función. Este
-	bloque debe de estar rematado con <lit>end function</lit>. Consulta
-	o <guideref targ="chap:functions"/> para obter máis detalles.
+	bloque debe de estar rematado con <lit>end function</lit>. (Como
+	excepción está o caso no que queiras eliminar unha función definida polo
+	usuario, pois o podes conseguir mediante a sinxela liña de instrución
+	<lit>function foo delete</lit> para a función chamada <quote>foo</quote>.)
+	Consulta o <guideref targ="chap:functions"/> para obter máis detalles.
       </para>
     </description>
 
@@ -7646,6 +7660,10 @@
 	  <flag>--p-values</flag>
 	  <effect>Amosa os valores p en vez das pendentes</effect>
 	</option>
+	<option>
+	  <flag>--estrella</flag>
+	  <effect>Escolle a variante pseudo-R-cadrado</effect>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7667,7 +7685,8 @@
 	e estas pendentes substitúen os valores p habituais no resultado
 	da regresión. Podes prescindir deste proceder indicando a opción
 	<opt>p-values</opt>. O estatístico khi-cadrado proba a hipótese
-	nula de que todos os coeficientes son cero, agás o da constante.
+	nula de que todos os coeficientes son cero, agás o da
+	constante.
       </para>
       <para context="cli">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
@@ -7681,6 +7700,16 @@
 	desviacións padrón <quote>robustas por agrupación</quote>;
 	consulta o <guideref targ="chap:robust_vcv"/> para obter máis
 	detalles.
+      </para>
+      <para context="cli">
+	Por defecto, vaise amosar o estatístico pseudo-R-cadrado que foi
+	suxerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	mais no caso binario, se indicas a opción <opt>estrella</opt>
+	vaise amosar en troques a variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	previsiblemente imita de xeito máis semellante as propiedades do
+	<math>R</math><sup>2</sup> habitual no contexto da estimación
+	de mínimos cadrados.
       </para>
       <para context="gui">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
@@ -8606,10 +8635,16 @@
     <description context="gui">
       <para>
 	Realiza a estimación de Máxima Verosimilitude (MV ou ML) usando
-	o algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno). Debes de
-	especificar a función logaritmo de verosimilitude; e se te recomenda
-	que tamén proporciones as expresións das derivadas desta función
-	con respecto a cada un dos parámetros, se é posible.
+	ben o algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno) ou ben
+	o método de Newton. Debes de especificar a función logaritmo de
+	verosimilitude; e se te recomenda que tamén proporciones as expresións
+	das derivadas desta función con respecto a cada un dos parámetros,
+	se é posible.
+      </para>
+      <para>
+	Este texto de axuda asume que se utiliza o maximizador por defecto
+	BFGS. Para obter información relativa ao uso do método de Newton,
+	consulta o <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Exemplo sinxelo: Supón que temos unha serie <lit>X</lit> con
@@ -11566,6 +11601,10 @@
 	  <effect>Amosa os valores p en vez das pendentes</effect>
 	</option>
 	<option>
+	  <flag>--estrella</flag>
+	  <effect>Escolle a variante pseudo-R-cadrado</effect>
+	</option>
+	<option>
 	  <flag>--random-effects</flag>
 	  <effect>Estima un modelo Probit de panel con efectos aleatorios, EA</effect>
 	</option>
@@ -11596,7 +11635,8 @@
 	e estas pendentes substitúen aos valores p habituais no resultado
 	da regresión. Podes prescindir deste proceder indicando a opción
 	<opt>p-values</opt>. O estatístico khi-cadrado proba a hipótese
-	nula de que todos os coeficientes son cero, agás o da constante.
+	nula de que todos os coeficientes son cero, agás o da
+	constante.
       </para>
       <para context="cli">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa negativa
@@ -11607,14 +11647,25 @@
 	gradiente. Para obter máis detalles, consulta o capítulo 10 do libro de
 	<cite key="davidson-mackinnon04">Davidson e MacKinnon (2004)</cite>.
       </para>
+      <para context="cli">
+	Por defecto, vaise amosar o estatístico pseudo-R-cadrado que foi
+	suxerido por <cite key="mcfadden74">McFadden (1974)</cite>;
+	mais no caso binario, se indicas a opción <opt>estrella</opt>
+	vaise amosar en troques a variante recomendada por
+	<cite key="estrella98">Estrella (1998)</cite>. Esta variante
+	previsiblemente imita de xeito máis semellante as propiedades do
+	<math>R</math><sup>2</sup> habitual no contexto da estimación
+	de mínimos cadrados.
+      </para>
       <para context="gui">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
-	negativa da matriz Hessiana. Se marcas o cadriño de 'Desviacións
-	padrón robustas', entón calcúlanse no seu lugar as desviacións padrón
-	CMV (QML) ou de Huber&ndash;White. Neste caso, a matriz de covarianzas
-	estimadas é un <quote>emparedado</quote> entre a inversa da matriz
-	Hessiana estimada e o produto externo do vector gradiente. Consulta o
-	capítulo 10 do libro de Davidson e MacKinnon para obter máis detalles.
+	negativa da matriz Hessiana. Se marcas o cadriño de
+	<quote>Desviacións padrón robustas</quote>, entón calcúlanse en
+	troques as desviacións padrón CMV (QML) ou de Huber&ndash;White.
+	Neste caso, a matriz de covarianzas estimadas é un
+	<quote>emparedado</quote> entre a inversa da matriz Hessiana
+	estimada e o produto externo do vector gradiente. Consulta o capítulo
+	10 do libro de Davidson e MacKinnon para obter máis detalles.
       </para>
       <para>
 	Se a variable dependente non é binaria senón discreta, entón se
@@ -11868,7 +11919,7 @@
 	<quote>en bruto</quote> fronte aos cuantís da distribución Normal
 	estándar.
       </para>
-      <para>
+      <para context="cli">
 	A opción <opt>output</opt> ten como efecto o envío do resultado ao
 	ficheiro especificado; utiliza <quote>display</quote> para forzar
 	que o resultado se presente na pantalla. Consulta a instrución
@@ -15891,12 +15942,16 @@
 	  <flag>--quiet</flag>
 	  <effect>Non presenta os resultados</effect>
         </option>
+	<option>
+	  <flag>--allow-zeros</flag>
+	  <effect>Mira abaixo</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para context="cli">
-	Calcula as estimacións de mínimos cadrados ponderados (MCP ou WLS)
+	Calcula as estimacións de mínimos cadrados ponderados (MCP, WLS)
 	utilizando <repl>varponder</repl> como ponderación, <repl>depvar</repl>
 	como variable dependente e <repl>indepvars</repl> como lista de
 	variables independentes. Sexa <repl>w</repl> a raíz cadrada positiva
@@ -15914,20 +15969,21 @@
 	igual á suma de erros cadrados da regresión da variable dependente
 	ponderada sobre unicamente a constante ponderada.
       </para>
-
       <para context="cli">
-	Se <repl>varponder</repl> é unha variable ficticia, a estimación MCP
-	é equivalente á que resulta ao eliminar todas as observacións que
-	teñen un valor de cero para <repl>varponder</repl>.
+	Como caso especial, se <repl>varponder</repl> é unha variable ficticia
+	0/1, a estimación MCP (WLS) é equivalente a MCO (OLS) nunha mostra na
+	que se exclúen todas as observacións que teñen un valor de cero para
+	<repl>varponder</repl>. Pola contra, a inclusión de ponderacións iguais
+	a cero se considera un fallo, pero se realmente desexas mesturar
+	ponderacións iguais a cero con ponderacións positivas, podes engadir
+	a opción <opt>allow-zeros</opt>.
       </para>
-
-	  <para context="cli">
+      <para context="cli">
 	Para aplicar a estimación de Mínimos Cadrados Ponderados a datos
 	de panel, baseada nas varianzas do erro específico de cada unidade,
 	consulta a instrución <cmdref targ="panel"/> xunto coa opción
-	<lit>--unit-weights</lit>.
-	  </para>
-
+	<opt>unit-weights</opt>.
+	    </para>
       <para context="gui">
 	Sexa 'varponder' a variable escollida no cadriño 'Variable de ponderacións'.
 	Execútase unha regresión MCO, onde a variable dependente é o produto
@@ -16113,8 +16169,8 @@
 
     <usage>
       <arguments>
-        <argument>ylista</argument>
-	      <argument optional="true" separated="true">xlista</argument>
+        <argument>listay</argument>
+	      <argument optional="true" separated="true">listax</argument>
       </arguments>
       <options>
         <option>
@@ -16140,7 +16196,7 @@
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>Consulta o caso bivariante de abaixo</effect>
+	  <effect>Elimina a presentación de resultados</effect>
         </option>
 	      <option>
 	  <flag>--tex</flag>
@@ -16165,59 +16221,65 @@
 
     <description context="cli">
       <para>
-	Amosa unha táboa de continxencia ou unha tabulación cruzada para
-	cada combinación das variables incluídas en <repl>ylista</repl>; e cando
-	indicas unha segunda lista (<repl>xlista</repl>), cada variable de
-	<repl>ylista</repl> crúzase nunha táboa por fila fronte a cada variable
-	de <repl>xlista</repl> (por columna). Podes referirte ás variables
-	destas listas mediante os seus nomes ou os seus números. Ten en conta
-	que todas as variables teñen que estar marcadas como discretas. Como
-	alternativa, cando indicas a opción <opt>matrix</opt>, se trata a matriz
-	indicada como un conxunto calculado previamente de frecuencias a
-	presentar como tabulación cruzada (consulta tamén a función
-	<fncref targ="mxtab"/>). Neste caso deberás de omitir o argumento
-	<repl>list</repl>.
+	Indicando unicamente o argumento <repl>listay</repl>, calcula (e
+	presenta por defecto) unha táboa de continxencia ou unha tabulación
+	cruzada para cada combinación das variables incluídas nesa lista.
+	Cando indicas unha segunda lista (<repl>listax</repl>), cada variable
+	de <repl>listay</repl> crúzase nunha táboa por fila fronte a cada
+	variable de <repl>listax</repl> (por columna). Podes referirte ás
+	variables destas listas mediante os seus nomes ou os seus números.
+	Ten en conta que todas as variables teñen que estar marcadas como
+	discretas. Como alternativa, cando indicas a opción <opt>matrix</opt>,
+	se trata a matriz indicada como un conxunto calculado previamente de
+	frecuencias a presentar como tabulación cruzada (consulta tamén a
+	función <fncref targ="mxtab"/>). Neste caso deberás de omitir o
+	argumento <repl>list</repl>.
       </para>
       <para>
 	Por defecto, a anotación de cada cela indica o reconto da frecuencia de
 	casos. As opcións <opt>row</opt> e <opt>column</opt> (que se exclúen
-	mutuamente), substitúen os recontos coas porcentaxes para cada fila ou
-	columna, respectivamente. Por defecto, as celas cun reconto de cero casos
-	déixanse en branco; mais a opción <opt>zeros</opt>, que ten como efecto
-	a presentación explícita dos ceros, pode serche útil para importar a táboa
-	con outro programa tal como unha folla de cálculo.
+	mutuamente) substitúen os recontos coas porcentaxes para cada fila
+	ou columna, respectivamente. Por defecto, as celas cun reconto de
+	cero casos déixanse en branco, mais a opción <opt>zeros</opt> ten
+	como efecto a presentación explícita dos ceros, o que pode serche
+	útil para importar a táboa con un outro programa tal como unha folla
+	de cálculo.
       </para>
       <para>
-	A proba de independencia khi-cadrado de Pearson amósase se a frecuencia
-	agardada baixo independencia é cando menos de 1.0e-7 para todas as celas.
-	Unha regra xeral habitual da validez deste estatístico é que, polo menos
-	o 80 por cento das celas, deben de ter frecuencias agardadas iguais a 5
-	ou máis; e se este criterio non se cumpre, preséntase unha advertencia.
+	A proba de independencia khi-cadrado de Pearson amósase se a
+	frecuencia agardada baixo independencia é cando menos de 1.0e-7
+	para todas as celas. Unha regra xeral habitual da validez deste
+	estatístico é que, polo menos o 80 por cento das celas deben de
+	ter frecuencias agardadas iguais a 5 ou máis; e se este criterio
+	non se cumpre, preséntase unha advertencia.
       </para>
       <para>
-	Se unha táboa de continxencia é 2 por 2, calcúlase a Proba Exacta de
+	Se unha táboa de continxencia é 2 por 2, amósase a Proba Exacta de
 	independencia de Fisher. Cae na conta de que esta proba baséase no
 	suposto de que os totais por fila e por columna son fixos, o que pode
 	ser ou non ser adecuado dependendo de como se xeraron os datos. Debes
 	de utilizar a probabilidade asociada (valor p) da esquerda cando a hipótese
 	alternativa á de independencia é a asociación negativa (os valores tenden
-	a agruparse nas celas de abaixo á esquerda e de arriba á dereita); e
+	a agruparse nas celas de abaixo á esquerda, e de arriba á dereita); e
 	debes de utilizar o valor p da dereita se a alternativa é a asociación
 	positiva. O valor p de dúas colas para esta proba calcúlase mediante o
 	método (b) da sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
 	isto é a suma das probabilidades de todas as táboas posibles que teñan
 	os totais de filas e columnas indicados, e que teñan unha probabilidade
-	menor ou igual á da táboa observada.
+	non maior á da táboa observada.
       </para>
 
       <subhead>O caso bivariante</subhead>
       <para>
-	No sinxelo caso dunha tabulación cruzada bivariante, podes utilizar
-	os accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/> para
-	recuperar o estatístico da proba khi-cadrado de Pearson e a súa
-	probabilidade asociada (con tal de que se cumpra a condición do
-	mínimo valor agardado). Nese contexto, podes utilizar a opción
-	<opt>quiet</opt> para eliminar a presentación da táboa.
+	No caso dunha tabulación cruzada bivariante (cando se indica tan
+	só unha lista que ten dous elementos) gárdanse algúns resultados.
+	Podes recuperar a táboa de continxencia en forma de matriz mediante
+	o accesorio <fncref targ="$result"/>. Amais, se se cumpre a condición
+	do valor agardado, podes recuperar o estatístico da proba khi-cadrado
+	de Pearson e a súa probabilidade asociada (valor p) mediante os
+	accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/>. Se
+	estes son os resultados que te interesan, podes utilizar a opción
+	<opt>quiet</opt> para eliminar a presentación habitual de resultados.
       </para>
 
       <subhead>Saída &latex;</subhead>
@@ -16236,14 +16298,6 @@
 	indiques a opción <opt>tex</opt>; e tamén cando unha ou as dúas
 	variables da tabulación cruzada teña valores de cadea de texto.
       </para>
-
-      <subhead>A táboa como matriz</subhead>
-      <para>
-	Cando indicas un argumento con unha única lista, vas poder
-	obter a táboa de continxencia en forma de matriz, mediante o
-	accesorio <fncref targ="$result"/>.
-      </para>
-
     </description>
 
     <description context="gui">
@@ -16262,26 +16316,28 @@
 	pero podes escoller que se amose explicitamente o valor cero.
       </para>
       <para>
-	A proba de independencia khi-cadrado de Pearson amósase se a frecuencia
-	agardada baixo independencia é cando menos de 1.0e-7 para todas as celas.
-	Unha regra xeral habitual da validez deste estatístico é que, polo menos
-	o 80 por cento das celas, deben de ter frecuencias agardadas iguais a 5
-	ou máis; e se este criterio non se cumpre, preséntase unha advertencia.
+	A proba de independencia khi-cadrado de Pearson amósase se a
+	frecuencia agardada baixo independencia é cando menos de 1.0e-7
+	para todas as celas. Unha regra xeral habitual da validez deste
+	estatístico é que, polo menos o 80 por cento das celas, deben de
+	ter frecuencias agardadas iguais a 5 ou máis; e se este criterio
+	non se cumpre, preséntase unha advertencia.
       </para>
       <para>
-	Se unha táboa de continxencia é 2 por 2, calcúlase a Proba Exacta de
-	independencia de Fisher. Cae na conta de que esta proba baséase no
-	suposto de que os totais por fila e por columna son fixos, o que pode
-	ser ou non ser adecuado dependendo de como se xeraron os datos. Debes
-	de utilizar a probabilidade asociada (valor p) da esquerda cando a hipótese
-	alternativa á de independencia é a asociación negativa (os valores tenden
-	a agruparse nas celas de abaixo á esquerda e de arriba á dereita); e
-	debes de utilizar o valor p da dereita se a alternativa é a asociación
-	positiva. O valor p de dúas colas para esta proba calcúlase mediante o
-	método (b) da sección 2.1 de <cite key="agresti92">Agresti (1992)</cite>:
-	isto é a suma das probabilidades de todas as táboas posibles que teñan
-	os totais de filas e columnas indicados, e que teñan unha probabilidade
-	menor ou igual á da táboa observada.
+	Se unha táboa de continxencia é 2 por 2, amósase a Proba Exacta
+	de independencia de Fisher. Cae na conta de que esta proba baséase
+	no suposto de que os totais por fila e por columna son fixos, o
+	que pode ser ou non ser adecuado dependendo de como se xeraron
+	os datos. Debes de utilizar a probabilidade asociada (valor p) da
+	esquerda cando a hipótese alternativa á de independencia é a d
+	asociación negativa (os valores tenden a agruparse nas celas de abaixo
+	á esquerda e de arriba á dereita); e debes de utilizar o valor p da
+	dereita se a alternativa é a de asociación positiva. O valor p de dúas
+	colas para esta proba calcúlase mediante o método (b) da sección 2.1
+	de <cite key="agresti92">Agresti (1992)</cite>: isto é a suma das
+	probabilidades de todas as táboas posibles que teñan os totais de
+	filas e columnas indicados, e que teñan unha probabilidade menor
+	ou igual á da táboa observada.
       </para>
     </description>
 
