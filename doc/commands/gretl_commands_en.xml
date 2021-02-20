@@ -1671,7 +1671,7 @@
 	  <effect>clear dataset only</effect>
 	</option>
 	<option>
-	  <flag>--dataset</flag>
+	  <flag>--functions</flag>
 	  <effect>clear functions (only)</effect>
 	</option>
       </options>
