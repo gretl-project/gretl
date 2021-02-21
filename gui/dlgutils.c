@@ -795,10 +795,13 @@ static GtkWidget *build_edit_popup (dialog_t *d)
 	N_("Add list of endogenous variables"),
 	N_("Add list of instruments")
     };
-
     GtkWidget *menu;
     GtkWidget *item;
     int i, n_items = sizeof items / sizeof items[0];
+
+    if (d->ci == GMM || d->ci == RESTRICT) {
+	return NULL;
+    }
 
     menu = gtk_menu_new();
 
@@ -1273,14 +1276,20 @@ static int vecm_model_window (windata_t *vwin)
     return vwin->role == VECM;
 }
 
-static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
+static void edit_dialog_add_note (int ci, const char *s,
+				  GtkWidget *vbox)
 {
     GtkWidget *w;
     gchar *lbl;
 
-    lbl = g_strdup_printf("%s\n%s\n%s", s,
-			  _("(Please refer to Help for guidance)"),
-			  _("right-click for some shortcuts"));
+    if (ci == GMM) {
+	lbl = g_strdup_printf("%s\n%s", s,
+			      _("(Please refer to Help for guidance)"));
+    } else {
+	lbl = g_strdup_printf("%s\n%s\n%s", s,
+			      _("(Please refer to Help for guidance)"),
+			      _("right-click for some shortcuts"));
+    }
     w = gtk_label_new(lbl);
     gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
     gtk_box_pack_start(GTK_BOX(vbox), w, FALSE, FALSE, 10);
@@ -1323,14 +1332,14 @@ blocking_edit_dialog (int ci, const char *title,
 	dlg_display_sys(d);
     } else if (ci == SYSTEM && d->data != NULL) {
 	/* respecifying equation system */
-	edit_dialog_add_note(info, d->vbox);
+	edit_dialog_add_note(ci, info, d->vbox);
 	dlg_display_sys(d);
 	clear = 1;
     } else if (ci == NLS || ci == MLE || ci == GMM ||
 	       ci == SYSTEM || ci == RESTRICT) {
 	int hsize = 62;
 
-	edit_dialog_add_note(info, d->vbox);
+	edit_dialog_add_note(ci, info, d->vbox);
 	d->edit = dlg_text_edit_new(&hsize, TRUE);
 	dialog_table_setup(d, hsize);
 	gretl_dialog_set_resizeable(d->dialog, TRUE);
@@ -1343,16 +1352,14 @@ blocking_edit_dialog (int ci, const char *title,
 	    }
 	} else if (dlg_text_set_previous(d) ||
 		   dlg_text_set_skeleton(d)) {
-	    /* insert previous text, if any and if the command
+	    /* insert previous text, if any, and if the command
 	       is the same as previously -- or insert skeleton
 	       of command
 	    */
 	    clear = 1;
 	}
-	if (ci != RESTRICT && ci != GMM) {
-	    g_signal_connect(G_OBJECT(d->edit), "button-press-event",
-			     G_CALLBACK(edit_dialog_popup_handler), d);
-	}
+	g_signal_connect(G_OBJECT(d->edit), "button-press-event",
+			 G_CALLBACK(edit_dialog_popup_handler), d);
     } else {
 	if (info != NULL) {
 	    w = gtk_label_new(info);
