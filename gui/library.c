@@ -3923,10 +3923,10 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     char bufline[MAXLINE];
     char **lines = NULL;
     int n_lines = 0;
-    int started = 0, ended = 0;
+    int started = 0;
     MODEL *pmod = NULL;
     const char *cstr;
-    char endstr[8];
+    gchar *endstr = NULL;
     PRN *prn = NULL;
     int err = 0;
 
@@ -3934,8 +3934,21 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
         return;
     }
 
+    if (ci == MLE && (opt & OPT_N)) {
+	/* GUI-special way of passing --robust=hac */
+	set_optval_string(MLE, OPT_R, "hac");
+	opt |= OPT_R;
+	opt &= ~OPT_N;
+    }
+
     cstr = gretl_command_word(ci);
-    sprintf(endstr, "end %s", cstr);
+    if (opt != OPT_NONE) {
+	const char *ostr = print_flags(opt, ci);
+
+	endstr = g_strdup_printf("end %s%s", cstr, ostr);
+    } else {
+	endstr = g_strdup_printf("end %s", cstr);
+    }
 
     bufgets_init(buf);
     *realline = '\0';
@@ -3970,8 +3983,6 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
         if (started && !strncmp(realline, endstr, 7)) {
             /* we got, e.g., "end nls" */
-            strings_array_add(&lines, &n_lines, realline);
-            ended = 1;
             break;
         }
 
@@ -4012,10 +4023,11 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     bufgets_finalize(buf);
     g_free(buf);
 
-    if (!err && !ended) {
-        /* if the user didn't give "end XXX", add it for the record */
+    if (!err && endstr != NULL) {
+        /* add "end XXX", including any option flags */
         strings_array_add(&lines, &n_lines, endstr);
     }
+    g_free(endstr);
 
     if (!err && bufopen(&prn)) {
         err = 1;

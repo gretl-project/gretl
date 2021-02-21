@@ -1032,29 +1032,27 @@ static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
     }
 }
 
-static void iter_control_button (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
+static void add_bfgs_controls (dialog_t *d,
+			       GtkWidget *vbox,
+			       GtkWidget *hbox)
 {
-    GtkWidget *hbox, *button;
-
-    if (pmod != NULL && pmod->ci == MLE) {
-	if (pmod->opt & OPT_L) {
-	    d->opt |= OPT_L;
-	}
-    }
-
-    hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *button;
 
     button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(mle_gmm_iters_dialog), d);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    if (hbox == NULL) {
+	/* in the MLE case we want this on a new line */
+	hbox = gtk_hbox_new(FALSE, 5);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show_all(hbox);
 }
 
 static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 {
-    GtkWidget *combo, *hbox, *button;
+    GtkWidget *combo, *hbox;
     static const char *strs[] = {
 	N_("One-step estimation"),
 	N_("Two-step estimation"),
@@ -1085,18 +1083,58 @@ static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
     }
 
     combo = gretl_opts_combo(&gmm_opts, deflt);
-
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    add_bfgs_controls(d, vbox, hbox);
+}
 
-    /* BFGS controls */
-    button = gtk_button_new_from_stock(GTK_STOCK_PREFERENCES);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(mle_gmm_iters_dialog), d);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+static void build_mle_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
+{
+    GtkWidget *combo, *hbox, *label;
+    static const char *strs[] = {
+	N_("Outer product of gradient"),
+	N_("Hessian"),
+	N_("Robust (QML)"),
+	N_("Robust (HAC)"),
+	NULL
+    };
+    static gretlopt opts[] = {
+	OPT_NONE,
+	OPT_H,
+	OPT_R,
+	OPT_N
+    };
+    static combo_opts mle_opts;
+    int tsmask[2] = {1, 3};
+    int deflt = 0;
 
+    mle_opts.strs = strs;
+    mle_opts.vals = opts;
+    mle_opts.optp = &d->opt;
+
+    if (pmod != NULL) {
+	if (pmod->opt & OPT_H) {
+	    deflt = 1;
+	} else if (pmod->opt & OPT_R) {
+	    deflt = 2;
+	}
+	if (pmod->opt & OPT_L) {
+	    d->opt |= OPT_L;
+	}
+    }
+
+    if (dataset_is_time_series(dataset)) {
+	combo = gretl_opts_combo(&mle_opts, deflt);
+    } else {
+	combo = gretl_opts_combo_masked(&mle_opts, deflt, tsmask);
+    }
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("Standard errors"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show_all(hbox);
+    add_bfgs_controls(d, vbox, NULL);
 }
 
 static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
@@ -1310,7 +1348,6 @@ blocking_edit_dialog (int ci, const char *title,
 	    */
 	    clear = 1;
 	}
-
 	if (ci != RESTRICT && ci != GMM) {
 	    g_signal_connect(G_OBJECT(d->edit), "button-press-event",
 			     G_CALLBACK(edit_dialog_popup_handler), d);
@@ -1346,12 +1383,12 @@ blocking_edit_dialog (int ci, const char *title,
 	bt = dialog_option_switch(d->vbox, d, OPT_T, NULL);
 	bv = dialog_option_switch(d->vbox, d, OPT_V, NULL);
 	system_estimator_list(d->vbox, d, bt, bv);
-    } else if (ci == NLS || ci == MLE) {
+    } else if (ci == NLS) {
 	dialog_option_switch(d->vbox, d, OPT_V, pmod);
 	dialog_option_switch(d->vbox, d, OPT_R, pmod);
-	if (ci == MLE) {
-	    iter_control_button(d->vbox, d, pmod);
-	}
+    } else if (ci == MLE) {
+	dialog_option_switch(d->vbox, d, OPT_V, pmod);
+	build_mle_combo(d->vbox, d, pmod);
     } else if (ci == GMM) {
 	dialog_option_switch(d->vbox, d, OPT_V, pmod);
 	build_gmm_combo(d->vbox, d, pmod);

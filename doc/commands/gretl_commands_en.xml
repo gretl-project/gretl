@@ -8598,7 +8598,8 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>QML covariance matrix</effect>
+	  <optparm optional="true">hac</optparm>
+	  <effect>QML or HAC covariance matrix</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8767,11 +8768,15 @@
 	are instead based on the negative inverse of the Hessian,
 	which is approximated numerically.  If the <opt>robust</opt>
 	option is given, a QML estimator is used (namely, a sandwich
-	of the negative inverse of the Hessian and the OPG).  However,
-	if the log-likelihood function just returns a scalar value,
-	the OPG is not available (and so neither is the QML
-	estimator), and standard errors are of necessity computed
-	using the numerical Hessian.
+	of the negative inverse of the Hessian and the OPG). If the
+	<lit>hac</lit> parameter is added to this option the OPG is
+	augmented in the manner of <cite key="newey-west87">Newey and
+	West</cite> to allow for serial correlation of the gradient.
+	(This only makes sense with time-series data.)  However, if
+	the log-likelihood function just returns a scalar value, the
+	OPG is not available (and so neither is the QML estimator),
+	and standard errors are of necessity computed using the
+	numerical Hessian.
       </para>
       <para>
 	In the event that you just want the primary parameter
