@@ -1126,6 +1126,7 @@ static void build_mle_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
     if (dataset_is_time_series(dataset)) {
 	combo = gretl_opts_combo(&mle_opts, deflt);
     } else {
+	/* disallow the HAC option */
 	combo = gretl_opts_combo_masked(&mle_opts, deflt, tsmask);
     }
     hbox = gtk_hbox_new(FALSE, 5);
