@@ -694,10 +694,6 @@ GTK2_LIBS
 GTK2_CFLAGS
 JSON_GLIB_LIBS
 JSON_GLIB_CFLAGS
-GLIB228_LIBS
-GLIB228_CFLAGS
-GLIB226_LIBS
-GLIB226_CFLAGS
 GLIB_LIBS
 GLIB_CFLAGS
 CURL_LIBS
@@ -926,10 +922,6 @@ CURL_CFLAGS
 CURL_LIBS
 GLIB_CFLAGS
 GLIB_LIBS
-GLIB226_CFLAGS
-GLIB226_LIBS
-GLIB228_CFLAGS
-GLIB228_LIBS
 JSON_GLIB_CFLAGS
 JSON_GLIB_LIBS
 GTK2_CFLAGS
@@ -1653,14 +1645,6 @@ Some influential environment variables:
   CURL_LIBS   linker flags for CURL, overriding pkg-config
   GLIB_CFLAGS C compiler flags for GLIB, overriding pkg-config
   GLIB_LIBS   linker flags for GLIB, overriding pkg-config
-  GLIB226_CFLAGS
-              C compiler flags for GLIB226, overriding pkg-config
-  GLIB226_LIBS
-              linker flags for GLIB226, overriding pkg-config
-  GLIB228_CFLAGS
-              C compiler flags for GLIB228, overriding pkg-config
-  GLIB228_LIBS
-              linker flags for GLIB228, overriding pkg-config
   JSON_GLIB_CFLAGS
               C compiler flags for JSON_GLIB, overriding pkg-config
   JSON_GLIB_LIBS
@@ -2916,7 +2900,6 @@ have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
 fake_gtkspinner="yes"
-fake_mono_time="no"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -22149,12 +22132,12 @@ if test -n "$GLIB_CFLAGS"; then
     pkg_cv_GLIB_CFLAGS="$GLIB_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GLIB_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GLIB_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.28.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22166,12 +22149,12 @@ if test -n "$GLIB_LIBS"; then
     pkg_cv_GLIB_LIBS="$GLIB_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GLIB_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GLIB_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.28.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22192,9 +22175,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.14.0" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
         else
-	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.14.0" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GLIB_PKG_ERRORS" >&5
@@ -22213,250 +22196,10 @@ $as_echo "yes" >&6; }
 fi
 if test "${have_glib2}" = "no" ; then
    echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
    exit 1
-fi
-
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB226" >&5
-$as_echo_n "checking for GLIB226... " >&6; }
-
-if test -n "$GLIB226_CFLAGS"; then
-    pkg_cv_GLIB226_CFLAGS="$GLIB226_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.26.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.26.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB226_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.26.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GLIB226_LIBS"; then
-    pkg_cv_GLIB226_LIBS="$GLIB226_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.26.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.26.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB226_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.26.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GLIB226_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.26.0" 2>&1`
-        else
-	        GLIB226_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.26.0" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GLIB226_PKG_ERRORS" >&5
-
-	$as_echo "#define GLIB_LT_2_26 1" >>confdefs.h
-
-
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	$as_echo "#define GLIB_LT_2_26 1" >>confdefs.h
-
-
-else
-	GLIB226_CFLAGS=$pkg_cv_GLIB226_CFLAGS
-	GLIB226_LIBS=$pkg_cv_GLIB226_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-fi
-
-if test "$darwin_build" = "no" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB228" >&5
-$as_echo_n "checking for GLIB228... " >&6; }
-
-if test -n "$GLIB228_CFLAGS"; then
-    pkg_cv_GLIB228_CFLAGS="$GLIB228_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB228_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.28.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GLIB228_LIBS"; then
-    pkg_cv_GLIB228_LIBS="$GLIB228_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GLIB228_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.28.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GLIB228_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
-        else
-	        GLIB228_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GLIB228_PKG_ERRORS" >&5
-
-	fake_mono_time="yes"
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	fake_mono_time="yes"
-else
-	GLIB228_CFLAGS=$pkg_cv_GLIB228_CFLAGS
-	GLIB228_LIBS=$pkg_cv_GLIB228_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	fake_mono_time="no"
-fi
-fi
-if test "$fake_mono_time" = "yes" ; then
-   have_clock_gettime="no"
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clock_gettime in -lc" >&5
-$as_echo_n "checking for clock_gettime in -lc... " >&6; }
-if ${ac_cv_lib_c_clock_gettime+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lc  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char clock_gettime ();
-int
-main ()
-{
-return clock_gettime ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_c_clock_gettime=yes
-else
-  ac_cv_lib_c_clock_gettime=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_c_clock_gettime" >&5
-$as_echo "$ac_cv_lib_c_clock_gettime" >&6; }
-if test "x$ac_cv_lib_c_clock_gettime" = xyes; then :
-  have_clock_gettime="yes"
-fi
-
-   if test "$have_clock_gettime" = "no" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clock_gettime in -lrt" >&5
-$as_echo_n "checking for clock_gettime in -lrt... " >&6; }
-if ${ac_cv_lib_rt_clock_gettime+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lrt  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char clock_gettime ();
-int
-main ()
-{
-return clock_gettime ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_rt_clock_gettime=yes
-else
-  ac_cv_lib_rt_clock_gettime=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rt_clock_gettime" >&5
-$as_echo "$ac_cv_lib_rt_clock_gettime" >&6; }
-if test "x$ac_cv_lib_rt_clock_gettime" = xyes; then :
-  have_clock_gettime="yes"; \
-       RT_LIB="-lrt"
-fi
-
-   fi
-   if test "$have_clock_gettime" = "yes" ; then
-      $as_echo "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
-
-   fi
 fi
 
 if test "$try_json_glib" = "yes" ; then
@@ -26535,7 +26278,7 @@ libcurl is available from http://curl.haxx.se/libcurl/
 
 elif test "${have_glib2}" = "no" ; then
 echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 

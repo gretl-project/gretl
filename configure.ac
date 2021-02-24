@@ -57,7 +57,6 @@ have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
 fake_gtkspinner="yes"
-fake_mono_time="no"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -637,43 +636,15 @@ if test "$use_curl" = "yes" ; then
 fi
 
 dnl
-dnl glib 2.0 (needed even if not building GUI; we need 2.14 for regexp functions)
+dnl glib 2.0 (needed even if not building GUI)
 dnl
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.14.0, have_glib2="yes", have_glib2="no")
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.28.0, have_glib2="yes", have_glib2="no")
 if test "${have_glib2}" = "no" ; then
    echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
    exit 1
-fi
-
-dnl
-dnl check for glib prior to 2.26 (re. deprecation warnings)
-dnl
-PKG_CHECK_MODULES(GLIB226, glib-2.0 >= 2.26.0,,
-  AC_DEFINE(GLIB_LT_2_26)
-)
-
-dnl
-dnl Do we need to "fake" g_get_monotonic_time() on Linux?
-dnl
-if test "$darwin_build" = "no" ; then
-  PKG_CHECK_MODULES(GLIB228, glib-2.0 >= 2.28.0,
-     fake_mono_time="no",
-     fake_mono_time="yes",
-  )
-fi
-if test "$fake_mono_time" = "yes" ; then
-   have_clock_gettime="no"
-   AC_CHECK_LIB(c, clock_gettime, have_clock_gettime="yes",,)
-   if test "$have_clock_gettime" = "no" ; then
-      AC_CHECK_LIB(rt, clock_gettime, have_clock_gettime="yes"; \
-       RT_LIB="-lrt",,)
-   fi
-   if test "$have_clock_gettime" = "yes" ; then
-      AC_DEFINE(HAVE_CLOCK_GETTIME)
-   fi
 fi
 
 dnl
@@ -1138,7 +1109,7 @@ libcurl is available from http://curl.haxx.se/libcurl/
 
 elif test "${have_glib2}" = "no" ; then
 echo "
-Please install glib-2.0 >= 2.14.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.28.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
