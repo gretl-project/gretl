@@ -77,9 +77,7 @@ int gretl_array_mpi_reduce (gretl_array *sa,
 void *gretl_mpi_receive (int source, GretlType *type,
 			 int *err);
 
-void gretl_mpi_stopwatch_init (void);
-
-double gretl_mpi_stopwatch (void);
+double gretl_mpi_time (void);
 
 int shm_write_matrix (const gretl_matrix *m,
 		      const char *fname);
