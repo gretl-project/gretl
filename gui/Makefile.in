@@ -23,7 +23,6 @@ pkg_build = @pkg_build@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
 gtk_version = @gtk_version@
-fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
 
 ifeq ($(AVX_CFLAGS),)
@@ -210,11 +209,6 @@ SRCS = about.c \
 	update.c \
 	varinfo.c \
 	winstack.c
-
-# use back-ported gtkspinner code?
-ifeq ($(fake_gtkspinner),yes)
-  SRCS += spinner.c
-endif
 
 ifeq ($(win32_build),yes)
   # using native font selector

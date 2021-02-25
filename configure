@@ -673,7 +673,6 @@ build_po
 have_mpi
 have_odbc
 have_gnu_regex
-fake_gtkspinner
 have_sourceview
 win32pkg
 win32_build
@@ -684,8 +683,6 @@ GSVWORDS_LIBS
 GSVWORDS_CFLAGS
 GTKSOURCEVIEW_LIBS
 GTKSOURCEVIEW_CFLAGS
-GTKSPINNER_LIBS
-GTKSPINNER_CFLAGS
 GTKMAC_LIBS
 GTKMAC_CFLAGS
 GTK3_LIBS
@@ -930,8 +927,6 @@ GTK3_CFLAGS
 GTK3_LIBS
 GTKMAC_CFLAGS
 GTKMAC_LIBS
-GTKSPINNER_CFLAGS
-GTKSPINNER_LIBS
 GTKSOURCEVIEW_CFLAGS
 GTKSOURCEVIEW_LIBS
 GSVWORDS_CFLAGS
@@ -1656,10 +1651,6 @@ Some influential environment variables:
   GTKMAC_CFLAGS
               C compiler flags for GTKMAC, overriding pkg-config
   GTKMAC_LIBS linker flags for GTKMAC, overriding pkg-config
-  GTKSPINNER_CFLAGS
-              C compiler flags for GTKSPINNER, overriding pkg-config
-  GTKSPINNER_LIBS
-              linker flags for GTKSPINNER, overriding pkg-config
   GTKSOURCEVIEW_CFLAGS
               C compiler flags for GTKSOURCEVIEW, overriding pkg-config
   GTKSOURCEVIEW_LIBS
@@ -2899,7 +2890,6 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
-fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -22295,12 +22285,12 @@ if test -n "$GTK2_CFLAGS"; then
     pkg_cv_GTK2_CFLAGS="$GTK2_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22312,12 +22302,12 @@ if test -n "$GTK2_LIBS"; then
     pkg_cv_GTK2_LIBS="$GTK2_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.14.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.14.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.14.0" 2>/dev/null`
+  pkg_cv_GTK2_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.20.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22338,9 +22328,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         else
-	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.14.0" 2>&1`
+	        GTK2_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK2_PKG_ERRORS" >&5
@@ -22423,12 +22413,12 @@ fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTK3_PKG_ERRORS" >&5
 
-	echo "GTK 3 >= 3.0.1 not found"
+	echo "GTK 3 >= 3.2.0 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "GTK 3 >= 3.0.1 not found"
+	echo "GTK 3 >= 3.2.0 not found"
 
 else
 	GTK3_CFLAGS=$pkg_cv_GTK3_CFLAGS
@@ -22442,7 +22432,6 @@ $as_echo "yes" >&6; }
       $as_echo "#define USE_GTK3 1" >>confdefs.h
 
       gtk_version="3.0"
-      fake_gtkspinner="no"
 fi
 fi
 
@@ -22646,77 +22635,6 @@ fi
 fi
 
 if test "$gtk_version" = "2.0" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSPINNER" >&5
-$as_echo_n "checking for GTKSPINNER... " >&6; }
-
-if test -n "$GTKSPINNER_CFLAGS"; then
-    pkg_cv_GTKSPINNER_CFLAGS="$GTKSPINNER_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GTKSPINNER_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.20.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GTKSPINNER_LIBS"; then
-    pkg_cv_GTKSPINNER_LIBS="$GTKSPINNER_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GTKSPINNER_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.20.0" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
-        else
-	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk+-2.0 >= 2.20.0" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GTKSPINNER_PKG_ERRORS" >&5
-
-	fake_gtkspinner="yes"
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	fake_gtkspinner="yes"
-else
-	GTKSPINNER_CFLAGS=$pkg_cv_GTKSPINNER_CFLAGS
-	GTKSPINNER_LIBS=$pkg_cv_GTKSPINNER_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	fake_gtkspinner="no"
-fi
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 else
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
@@ -22966,7 +22884,6 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
-
 
 
 

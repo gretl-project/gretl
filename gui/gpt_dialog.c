@@ -29,7 +29,7 @@
 #include "calculator.h"
 #include "gpt_dialog.h"
 
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+#if GTK_MAJOR_VERSION > 2
 # define USE_GTK_FONT_CHOOSER 1
 #else
 # define USE_GTK_FONT_CHOOSER 0

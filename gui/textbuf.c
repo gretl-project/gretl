@@ -44,9 +44,7 @@
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
-# if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 16
-#  define COMPLETION_OK 0
-# elif !defined(HAVE_GTKSOURCEVIEW_210)
+# if !defined(HAVE_GTKSOURCEVIEW_210)
 #  define COMPLETION_OK 0
 # else
 #  define COMPLETION_OK 1

@@ -56,7 +56,6 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_sourceview="no"
-fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
@@ -669,7 +668,7 @@ dnl
 dnl Initial check for GTK availability
 dnl
 if test "$prefer_gtk2" = "yes" ; then
-    PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.14.0,
+    PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.20.0,
       GTK_CFLAGS=$GTK2_CFLAGS
       GTK_LIBS=$GTK2_LIBS
       CFLAGS="$CFLAGS $GTK_CFLAGS"
@@ -684,9 +683,8 @@ elif test "$build_gui" = "yes" ; then
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       AC_DEFINE(USE_GTK3)
-      gtk_version="3.0"
-      fake_gtkspinner="no",
-      echo "GTK 3 >= 3.0.1 not found"
+      gtk_version="3.0",
+      echo "GTK 3 >= 3.2.0 not found"
     )
 fi
 
@@ -737,14 +735,9 @@ if test "$mac_native" = "yes" ; then
 fi
 
 dnl
-dnl For native gtkspinner: check for GTK 2.20 or higher,
-dnl and while we're at it grab the gtk prefix
+dnl Determine the gtk prefix
 dnl
 if test "$gtk_version" = "2.0" ; then
-    PKG_CHECK_MODULES(GTKSPINNER, gtk+-2.0 >= 2.20.0,
-      fake_gtkspinner="no",
-      fake_gtkspinner="yes",
-    )
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 else
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
@@ -800,7 +793,6 @@ AC_SUBST(mac_native)
 AC_SUBST(win32_build)
 AC_SUBST(win32pkg)
 AC_SUBST(have_sourceview)
-AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
