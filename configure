@@ -679,8 +679,6 @@ win32_build
 mac_native
 gtk_version
 build_gui
-GSVWORDS_LIBS
-GSVWORDS_CFLAGS
 GTKSOURCEVIEW_LIBS
 GTKSOURCEVIEW_CFLAGS
 GTKMAC_LIBS
@@ -929,8 +927,6 @@ GTKMAC_CFLAGS
 GTKMAC_LIBS
 GTKSOURCEVIEW_CFLAGS
 GTKSOURCEVIEW_LIBS
-GSVWORDS_CFLAGS
-GSVWORDS_LIBS
 GDK_PIXBUF_CFLAGS
 GDK_PIXBUF_LIBS
 XML_CFLAGS
@@ -1655,10 +1651,6 @@ Some influential environment variables:
               C compiler flags for GTKSOURCEVIEW, overriding pkg-config
   GTKSOURCEVIEW_LIBS
               linker flags for GTKSOURCEVIEW, overriding pkg-config
-  GSVWORDS_CFLAGS
-              C compiler flags for GSVWORDS, overriding pkg-config
-  GSVWORDS_LIBS
-              linker flags for GSVWORDS, overriding pkg-config
   GDK_PIXBUF_CFLAGS
               C compiler flags for GDK_PIXBUF, overriding pkg-config
   GDK_PIXBUF_LIBS
@@ -22650,12 +22642,12 @@ if test -n "$GTKSOURCEVIEW_CFLAGS"; then
     pkg_cv_GTKSOURCEVIEW_CFLAGS="$GTKSOURCEVIEW_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.2.2\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.2.2") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22667,12 +22659,12 @@ if test -n "$GTKSOURCEVIEW_LIBS"; then
     pkg_cv_GTKSOURCEVIEW_LIBS="$GTKSOURCEVIEW_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.2.2\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.2.2") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22693,19 +22685,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-2.0 >= 2.2.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
         else
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-2.0 >= 2.2.2" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKSOURCEVIEW_PKG_ERRORS" >&5
 
-	echo "version 2.0 >= 2.2.2 not found"
+	echo "version 2.0 >= 2.10.5 not found"
 
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-	echo "version 2.0 >= 2.2.2 not found"
+	echo "version 2.0 >= 2.10.5 not found"
 
 else
 	GTKSOURCEVIEW_CFLAGS=$pkg_cv_GTKSOURCEVIEW_CFLAGS
@@ -22717,82 +22709,6 @@ $as_echo "yes" >&6; }
       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0"
 fi
-    if test "$have_sourceview" = "2.0" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSVWORDS" >&5
-$as_echo_n "checking for GSVWORDS... " >&6; }
-
-if test -n "$GSVWORDS_CFLAGS"; then
-    pkg_cv_GSVWORDS_CFLAGS="$GSVWORDS_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GSVWORDS_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GSVWORDS_LIBS"; then
-    pkg_cv_GSVWORDS_LIBS="$GSVWORDS_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.10.5\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.10.5") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GSVWORDS_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.10.5" 2>/dev/null`
-		      test "x$?" != "x0" && pkg_failed=yes
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GSVWORDS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
-        else
-	        GSVWORDS_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtksourceview-2.0 >= 2.10.5" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GSVWORDS_PKG_ERRORS" >&5
-
-	echo "gtksourceview: word completion not supported"
-
-elif test $pkg_failed = untried; then
-     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	echo "gtksourceview: word completion not supported"
-
-else
-	GSVWORDS_CFLAGS=$pkg_cv_GSVWORDS_CFLAGS
-	GSVWORDS_LIBS=$pkg_cv_GSVWORDS_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	$as_echo "#define HAVE_GTKSOURCEVIEW_210 1" >>confdefs.h
-
-fi
-    fi
 fi
 
 if test "$gtk_version" = "3.0" ; then
