@@ -795,6 +795,73 @@ function scalar multi (bool s)
 end function
 \end{code}
     
+\subsection{Overloading}
+
+You may have noticed that several built-in functions in gretl are
+``overloaded''---that is, a given argument slot may accept more than
+one type of argument, and the return value may depend on the type of
+the argument in question. For instance, the argument \textsl{x} for
+the \texttt{pdf()} function may be a scalar, series or matrix and the
+return type will match that choice on the caller's part.
+
+Since gretl-2021b this possibility also exists for user-defined
+functions. The meta-type \texttt{numeric} can be used in place of a
+specific type to accept a scalar, series or matrix argument, and
+similarly the return-type of a function can be marked as
+\texttt{numeric}.
+
+As a function writer you can choose to be more restrictive than the
+default (which allows scalar, series or matrix for any
+\texttt{numeric} argument). For instance, if you write a function in
+which two arguments, \textsl{x} and \textsl{y}, are specified as
+numeric you might decide to disallow the case where \textsl{x} is a
+matrix and \textsl{y} a series, or vice versa, as too complicated. You
+can use the \texttt{typeof()} function to determine what types of
+arguments were supplied, and the \texttt{funcerr} command or
+\texttt{errorif()} function to reject an unsupported combination.
+
+If your function is going to return a certain specific type (say,
+\texttt{matrix}) regardless of the type of the input, then the return
+value should be labeled accordingly: use \texttt{numeric} for the
+return only if it's truly unknown in advance.
+
+Listing~\ref{ex:overload} offers an (admittedly artificial) example:
+its \texttt{numeric} inputs can be scalars, series or column vectors
+but they must be of a single type.
+
+Naturally, if your overloaded function is intended for public use you
+should state clearly in its documentation what is supported and what
+is not.
+
+\begin{script}[htbp]
+  \scriptcaption{Example of overloaded function}
+  \label{ex:overload}
+  \begin{scode}
+function numeric x_plus_b_y (numeric x, scalar b, numeric y)
+   errorif(typeof(x) != typeof(y), "x and y must be of the same type")
+   if typeof(x) <= 2 # scalar or series
+      return x + b*y
+   elif rows(x) == rows(y) && cols(x) == 1 && cols(y) == 1
+      return x + b*y
+   else
+      funcerr "x and y should be column vectors"
+   endif
+end function
+
+# call 1: x and y are scalars
+eval x_plus_b_y(10, 3, 2)
+
+# call 2: x and y are vectors
+matrix x = mnormal(10, 1)
+matrix y = mnormal(10, 1)
+eval x_plus_b_y(x, 2, y)
+
+open data4-1
+# call 3: x and y are series
+series bb = x_plus_b_y(bedrms, 0.5, baths)
+print bb --byobs
+\end{scode}
+\end{script}
 
 \subsection{Error checking}
 
@@ -847,4 +914,3 @@ use of these via the gretl GUI. This topic is covered in depth by the
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
 %%% End: 
-
