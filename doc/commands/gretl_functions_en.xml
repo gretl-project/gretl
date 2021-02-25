@@ -926,6 +926,13 @@
 	  subsequent uses of <lit>$stopwatch</lit> yield the seconds of CPU
 	  time since the previous access.
 	</para>
+	<para>
+	  When a user-defined function is executing, the <lit>set
+	  stopwatch</lit> command and <lit>$stopwatch</lit> accessor are
+	  specific to that function&mdash;that is, timing within a
+	  function does not disrupt any <quote>global</quote> timing
+	  that may be going on in the main script.
+	</para>
       </description>
     </function>
 
