@@ -2138,7 +2138,7 @@ static double get_xtime (void)
 
 static struct xtimer *new_xtimer (int level)
 {
-    struct xtimer *xt = malloc(sizeof *xt);
+    struct xtimer *xt = g_malloc(sizeof *xt);
 
     xt->level = level;
     xt->t0 = get_xtime();
@@ -2146,10 +2146,23 @@ static struct xtimer *new_xtimer (int level)
     return xt;
 }
 
+static void xtimer_init (void)
+{
+    if (xtimers == NULL) {
+	xtimers = g_ptr_array_sized_new(1);
+	new_xtimer(gretl_function_depth());
+    }
+}
+
 static struct xtimer *get_xtimer (void)
 {
     struct xtimer *xt;
     int i, lev = gretl_function_depth();
+
+    if (xtimers == NULL) {
+	xtimers = g_ptr_array_sized_new(1);
+	return new_xtimer(lev);
+    }
 
     for (i=0; i<xtimers->len; i++) {
 	xt = g_ptr_array_index(xtimers, i);
@@ -2159,14 +2172,6 @@ static struct xtimer *get_xtimer (void)
     }
 
     return new_xtimer(lev);
-}
-
-static void xtimer_init (void)
-{
-    if (xtimers == NULL) {
-	xtimers = g_ptr_array_sized_new(1);
-	new_xtimer(gretl_function_depth());
-    }
 }
 
 static double xtimer_stopwatch (void)
@@ -2197,7 +2202,7 @@ static GPtrArray *itimers;
 
 static struct itimer *new_itimer (int level)
 {
-    struct itimer *it = malloc(sizeof *it);
+    struct itimer *it = g_malloc(sizeof *it);
 
     it->level = level;
     it->t0 = g_get_monotonic_time();
@@ -2205,10 +2210,23 @@ static struct itimer *new_itimer (int level)
     return it;
 }
 
+static void itimer_init (void)
+{
+    if (itimers == NULL) {
+	itimers = g_ptr_array_sized_new(1);
+	new_itimer(gretl_function_depth());
+    }
+}
+
 static struct itimer *get_itimer (void)
 {
     struct itimer *it;
     int i, lev = gretl_function_depth();
+
+    if (itimers == NULL) {
+	itimers = g_ptr_array_sized_new(1);
+	return new_itimer(lev);
+    }
 
     for (i=0; i<itimers->len; i++) {
 	it = g_ptr_array_index(itimers, i);
@@ -2218,14 +2236,6 @@ static struct itimer *get_itimer (void)
     }
 
     return new_itimer(lev);
-}
-
-static void itimer_init (void)
-{
-    if (itimers == NULL) {
-	itimers = g_ptr_array_sized_new(1);
-	new_itimer(0);
-    }
 }
 
 static double itimer_stopwatch (void)
@@ -2248,7 +2258,7 @@ static void gretl_stopwatch_cleanup (void)
 #ifdef WANT_XTIMER
     if (xtimers != NULL) {
 	for (i=0; i<xtimers->len; i++) {
-	    free(xtimers->pdata[i]);
+	    g_free(xtimers->pdata[i]);
 	}
 	g_ptr_array_free(xtimers, TRUE);
 	xtimers = NULL;
@@ -2258,7 +2268,7 @@ static void gretl_stopwatch_cleanup (void)
 #ifdef NEED_ITIMER
     if (itimers != NULL) {
 	for (i=0; i<itimers->len; i++) {
-	    free(itimers->pdata[i]);
+	    g_free(itimers->pdata[i]);
 	}
 	g_ptr_array_free(itimers, TRUE);
 	itimers = NULL;
