@@ -77,9 +77,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Using gtksourceview-2.0? */
 #undef USE_GTKSOURCEVIEW_2
 
-/* Is gtksourceview-2.0 version >= 2.10? */
-#undef HAVE_GTKSOURCEVIEW_210
-
 /* Using gtksourceview-3.0? */
 #undef USE_GTKSOURCEVIEW_3
 

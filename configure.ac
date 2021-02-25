@@ -747,18 +747,12 @@ dnl
 dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
 if test "$gtk_version" = "2.0" ; then
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.2.2,
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.10.5,
       AC_DEFINE(USE_GTKSOURCEVIEW_2)
       GTKSOURCEVIEW_PREFIX=`$PKG_CONFIG --variable=prefix gtksourceview-2.0`
       have_sourceview="2.0",
-      echo "version 2.0 >= 2.2.2 not found"
+      echo "version 2.0 >= 2.10.5 not found"
     )
-    if test "$have_sourceview" = "2.0" ; then
-      PKG_CHECK_MODULES(GSVWORDS, gtksourceview-2.0 >= 2.10.5,
-        AC_DEFINE(HAVE_GTKSOURCEVIEW_210),
-	echo "gtksourceview: word completion not supported"
-      )
-    fi
 fi
 
 dnl

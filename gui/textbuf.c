@@ -38,22 +38,14 @@
 #ifdef USE_GTKSOURCEVIEW_3
 # define SVVER 3
 # define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
-# define COMPLETION_OK 1
 #else /* using GtkSourceView 2 */
 # define SVVER 2
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
-# if !defined(HAVE_GTKSOURCEVIEW_210)
-#  define COMPLETION_OK 0
-# else
-#  define COMPLETION_OK 1
-# endif
 #endif
 
-#if COMPLETION_OK
-# include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
-#endif
+#include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
@@ -539,8 +531,6 @@ static void sourceview_apply_language (windata_t *vwin)
     }
 }
 
-#if COMPLETION_OK
-
 #include "genparse.h"
 
 /* Create a GtkTextBuffer holing the names of built-in
@@ -641,8 +631,6 @@ static void set_sv_auto_complete (windata_t *vwin)
 	    script_auto_complete, (void *) comp, (void *) words, (void *) funcs);
 #endif
 }
-
-#endif /* COMPLETION_OK */
 
 #define SV_PRINT_DEBUG 0
 
@@ -1061,9 +1049,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	set_style_for_buffer(sbuf, get_sourceview_style());
     }
 
-#if COMPLETION_OK
     set_sv_auto_complete(vwin);
-#endif
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -1140,11 +1126,9 @@ void update_script_editor_options (windata_t *vwin)
 
     gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					  script_line_numbers);
-#if COMPLETION_OK
     if (vwin_is_editing(vwin)) {
 	set_sv_auto_complete(vwin);
     }
-#endif
 
     set_style_for_buffer(vwin->sbuf, get_sourceview_style());
 }
