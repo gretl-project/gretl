@@ -7200,7 +7200,6 @@ int gretl_function_append_line (ExecState *s)
     char *origline = NULL;
     ufunc *fun = current_fdef;
     int blank = 0;
-    int abort = 0;
     int ignore = 0;
     int err = 0;
 
@@ -7225,7 +7224,10 @@ int gretl_function_append_line (ExecState *s)
 	err = get_command_index(s, FUNC);
 	if (!err) {
 	    if (cmd->ci == QUIT) {
-		abort = 1;
+		gretl_errmsg_sprintf(_("%s: \"quit\" cannot be used in a function"),
+				     fun->name);
+		err = E_PARSE;
+		cmd->ci = 0;
 	    } else if (cmd->flags & CMD_ENDFUN) {
 		if (fun->n_lines == 0) {
 		    gretl_errmsg_sprintf("%s: empty function", fun->name);
@@ -7251,7 +7253,7 @@ int gretl_function_append_line (ExecState *s)
 	}
     }
 
-    if (abort || err) {
+    if (err) {
 	set_compiling_off();
     }
 
@@ -7272,7 +7274,7 @@ int gretl_function_append_line (ExecState *s)
 	}
     } else {
 	/* finished compilation */
-	if (!abort && !err && ifdepth != 0) {
+	if (!err && ifdepth != 0) {
 	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
 	    err = E_PARSE;
 	}
@@ -7286,7 +7288,7 @@ int gretl_function_append_line (ExecState *s)
     free(origline);
     cmd->flags &= ~CMD_ENDFUN;
 
-    if (abort || err) {
+    if (err) {
 	ufunc_unload(fun);
     }
 
