@@ -3963,7 +3963,11 @@ gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
 	*err = real_import_csv(csvname, NULL, NULL, NULL,
 			       NULL, NULL, &m, opt, prn);
     } else if (!*err) {
-	*err = real_import_csv(fname, NULL, NULL, NULL,
+	char fullname[FILENAME_MAX];
+
+	strcpy(fullname, fname);
+	gretl_maybe_prepend_dir(fullname);
+	*err = real_import_csv(fullname, NULL, NULL, NULL,
 			       NULL, NULL, &m, opt, prn);
     }
 

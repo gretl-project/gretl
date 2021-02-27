@@ -4492,18 +4492,25 @@ static NODE *list_reverse_node (NODE *n, parser *p)
     return ret;
 }
 
-static int check_matrix_file (const char *fname, int *csv_etc)
+/* We come here if we got a ".csv" suffix for the argument
+   to mread(). If we can open the file as-is, we check to
+   make sure it's not a gretl-format matrix file with the
+   wrong suffix.
+*/
+
+static int check_matrix_file (const char *fname, int *csv)
 {
     char line[1024];
     FILE *fp;
     int r, c, n;
 
+    *csv = 1;
+
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
-        return E_FOPEN;
+	/* just assume it's really CSV */
+        return 0;
     }
-
-    *csv_etc = 1;
 
     while (fgets(line, sizeof line, fp)) {
         if (*line != '#') {
@@ -4514,14 +4521,14 @@ static int check_matrix_file (const char *fname, int *csv_etc)
             */
             n = sscanf(line, "%d\t%d", &r, &c);
             if (n == 2 && count_fields(line, "\t") == 2) {
-                *csv_etc = 0;
+                *csv = 0;
             }
             break;
         }
     }
 
 #if 0
-    fprintf(stderr, "check_matrix_file : csv_etc = %d\n", *csv_etc);
+    fprintf(stderr, "check_matrix_file : csv = %d\n", *csv);
 #endif
 
     fclose(fp);
