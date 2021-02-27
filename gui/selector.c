@@ -1760,11 +1760,11 @@ static void set_dependent_var_callback (GtkWidget *w, selector *sr)
 
     if (sr->depvar == NULL) return;
 
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(sr->lvars));
-    gtk_tree_selection_selected_foreach (selection,
-					 (GtkTreeSelectionForeachFunc)
-					 real_set_dependent_var,
-					 sr);
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
+    gtk_tree_selection_selected_foreach(selection,
+					(GtkTreeSelectionForeachFunc)
+					real_set_dependent_var,
+					sr);
 }
 
 static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
