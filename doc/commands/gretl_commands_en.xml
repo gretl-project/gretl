@@ -12074,14 +12074,42 @@
 
     <description>
       <para>
-	Exits from the program, giving you the option of saving the
-	output from the session on the way out.
+	Exits from gretl's current modality.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    When called from a script, execution of the script is
+	    terminated.  If the context is gretlcli in batch mode,
+	    gretlcli itself exits, otherwise the program reverts to
+	    interactive mode.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    When called from the GUI console, the console window is
+	    closed.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    When called from gretlcli in interactive mode the program
+	    exits.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Note that this command cannot be called within functions or
+	loops.
+      </para>
+      <para>
+	In no case does the <lit>quit</lit> command cause the gretl
+	GUI program to exit. That is done via the <lit>Quit</lit> item
+	under the <lit>File</lit> menu, or <lit>Ctrl+Q</lit>, or by
+	clicking the close control on the title-bar of the main gretl
+	window.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/File/Exit</menu-path>
-    </gui-access>
   </command>
 
   <command name="regls" section="Estimation"
