@@ -23,6 +23,8 @@ version 2021b, in progress
   cross-sectional statistics produced when list arguments
   are given, this allows skipping of missing values.
 - hdprod(): introduce "shorthand" syntax (one argument only)
+- user-defined functions: allow overloading of numeric
+  arguments and return value (scalar, series or matrix)
 - gretl timer ("stopwatch"): provide a separate timer for each
   level of function execution
 - GUI model specification dialog: enable interactive search in
