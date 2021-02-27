@@ -1253,6 +1253,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
         break;
 
     case QUIT:
+	gretl_if_state_clear();
         cli_quit(s, cmdprn, err);
         break;
 

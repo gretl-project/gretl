@@ -514,7 +514,8 @@ int ok_in_loop (int c)
 	c == INCLUDE ||
 	c == NULLDATA ||
 	c == RUN ||
-	c == SETMISS) {
+	c == SETMISS ||
+	c == QUIT) {
 	return 0;
     }
 

@@ -10401,6 +10401,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case QUIT:
         pprintf(prn, _("Script done\n"));
+	gretl_if_state_clear();
         break;
 
     case RUN:
