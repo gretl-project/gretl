@@ -12299,6 +12299,19 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = vma_rep(compan_top, C, horizon, &p->err);
 	    }
         }
+    } else if (f == HF_BDSTEST) {
+	double eps = NADBL;
+	int embed = 0;
+
+	if (l->t != SERIES) {
+	    node_type_error(f, 1, SERIES, l, p);
+	} else {
+	    embed = node_get_int(m, p);
+	    eps = node_get_scalar(r, p);
+	}
+	if (!p->err) {
+	    A = bds_driver(l->v.xvec, p->dset, embed, eps, &p->err);
+	}
     }
 
     if (post_process) {
@@ -17362,6 +17375,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISOWEEK:
     case F_STACK:
     case HF_REGLS:
+    case HF_BDSTEST:
     case F_GEOPLOT:
     case F_VMA:
         /* built-in functions taking three args */

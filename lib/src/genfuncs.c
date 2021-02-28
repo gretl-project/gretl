@@ -8290,3 +8290,31 @@ int substitute_values (double *dest, const double *src, int n,
 
     return 0;
 }
+
+gretl_matrix *bds_driver (double *x, const DATASET *dset,
+			  int m, double eps, int *err)
+{
+    gretl_matrix *(*bdstest) (double *, int, int, double, int *);
+    gretl_matrix *ret = NULL;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
+
+    if (m < 2 || eps <= 0) {
+	*err = E_INVARG;
+    } else {
+	*err = series_adjust_sample(x, &t1, &t2);
+    }
+
+    if (!*err) {
+	int n = t2 - t1 + 1;
+
+	bdstest = get_plugin_function("bdstest");
+	if (bdstest == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    ret = bdstest(x, n, m, eps, err);
+	}
+    }
+
+    return ret;
+}

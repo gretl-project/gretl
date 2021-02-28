@@ -96,7 +96,8 @@ enum {
     P_SVM,
     P_REGLS,
     P_GEOPLOT,
-    P_PUREBIN
+    P_PUREBIN,
+    P_BDSTEST
 } plugin_codes;
 
 struct plugin_info {
@@ -159,7 +160,8 @@ struct plugin_info plugins[] = {
     { P_SVM,             "svm",             NULL },
     { P_REGLS,           "regls",           NULL },
     { P_GEOPLOT,         "geoplot",         NULL },
-    { P_PUREBIN,         "purebin",         NULL }
+    { P_PUREBIN,         "purebin",         NULL },
+    { P_BDSTEST,         "bdstest",         NULL },
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -322,6 +324,9 @@ struct plugin_function_info plugin_functions[] = {
     { "purebin_write_data", P_PUREBIN},
     { "purebin_read_subset",   P_PUREBIN},
     { "purebin_read_varnames", P_PUREBIN},
+
+    /* BDS nonlinearity test */
+    { "bdstest", P_BDSTEST},
 
     /* sentinel */
     { NULL, 0 }

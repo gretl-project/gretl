@@ -467,6 +467,7 @@ enum {
     F_GEOPLOT,
     F_VMA,
     HF_REGLS,
+    HF_BDSTEST,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
