@@ -520,7 +520,7 @@ static void make_resampled_y (boot *bs, int *z)
 
     /* resample the residuals, into y */
     if (bs->blocklen > 1) {
-	gretl_matrix_block_resample2(bs->u0, bs->y, bs->blocklen, z);
+	gretl_matrix_block_resample2(bs->y, bs->u0, bs->blocklen, z);
     } else {
 	resample_vector(bs->u0, bs->y, z);
     }

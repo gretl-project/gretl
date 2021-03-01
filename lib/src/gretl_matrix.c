@@ -2041,6 +2041,39 @@ double gretl_vector_variance (const gretl_vector *v)
     return s2 / den;
 }
 
+static int real_matrix_resample (gretl_matrix *R, const gretl_matrix *m)
+{
+    int i, j, k, t1, r = R->rows;
+    int *z = malloc(r * sizeof *z);
+    double x;
+
+    if (z == NULL) {
+	return E_ALLOC;
+    }
+
+    /* generate r drawings from [0 .. r-1] */
+    gretl_rand_int_minmax(z, r, 0, r - 1);
+
+    /* sample from source matrix @m based on row indices */
+    for (i=0; i<r; i++) {
+	k = z[i] % m->rows;
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, k, j);
+	    gretl_matrix_set(R, i, j, x);
+	}
+    }
+
+    t1 = gretl_matrix_get_t1(m);
+    if (t1 > 0 && r <= m->rows) {
+	gretl_matrix_set_t1(R, t1);
+	gretl_matrix_set_t2(R, t1 + r - 1);
+    }
+
+    free(z);
+
+    return 0;
+}
+
 /**
  * gretl_matrix_resample:
  * @m: input matrix.
@@ -2057,10 +2090,7 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
 				     int draws, int *err)
 {
     gretl_matrix *R = NULL;
-    int *z = NULL;
-    double x;
-    int t1;
-    int i, j, k, r;
+    int r;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
@@ -2080,36 +2110,26 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
     }
 
     R = gretl_matrix_alloc(r, m->cols);
-    z = malloc(r * sizeof *z);
 
-    if (R == NULL || z == NULL) {
-	gretl_matrix_free(R);
-	free(z);
+    if (R == NULL) {
 	*err = E_ALLOC;
-	return NULL;
+    } else {
+	*err = real_matrix_resample(R, m);
     }
-
-    /* generate r drawings from [0 .. r-1] */
-    gretl_rand_int_minmax(z, r, 0, r - 1);
-
-    /* sample from source matrix based on row indices */
-    for (i=0; i<r; i++) {
-	k = z[i] % m->rows;
-	for (j=0; j<m->cols; j++) {
-	    x = gretl_matrix_get(m, k, j);
-	    gretl_matrix_set(R, i, j, x);
-	}
-    }
-
-    t1 = gretl_matrix_get_t1(m);
-    if (t1 > 0 && r <= m->rows) {
-	gretl_matrix_set_t1(R, t1);
-	gretl_matrix_set_t2(R, t1 + r - 1);
-    }
-
-    free(z);
 
     return R;
+}
+
+int gretl_matrix_resample2 (gretl_matrix *targ,
+			    const gretl_matrix *src)
+{
+    if (gretl_is_null_matrix(targ) || gretl_is_null_matrix(src)) {
+	return E_DATA;
+    } else if (targ->is_complex || src->is_complex) {
+	return E_CMPLX;
+    } else {
+	return real_matrix_resample(targ, src);
+    }
 }
 
 /**
@@ -2206,8 +2226,8 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
 
 /**
  * gretl_matrix_block_resample2:
- * @src: source matrix.
  * @targ: target matrix.
+ * @src: source matrix.
  * @blocklen: length of moving blocks.
  * @z: array of length XXX.
  *
@@ -2221,8 +2241,8 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int gretl_matrix_block_resample2 (const gretl_matrix *src,
-				  gretl_matrix *targ,
+int gretl_matrix_block_resample2 (gretl_matrix *targ,
+				  const gretl_matrix *src,
 				  int blocklen,
 				  int *z)
 {
