@@ -103,7 +103,11 @@ double digamma (double x)
  * trigamma:
  * @x: argument.
  *
- * Returns: the trigamma function of @x, or #NADBL on failure.
+ * Returns: the trigamma function of @x, or #NADBL on failure. The code
+ * is adapted from
+ * https://people.sc.fsu.edu/~jburkardt/f_src/asa121/asa121.html
+ * See BE Schneider, Algorithm AS 121: Trigamma Function.
+ * Applied Statistics, Volume 27, Number 1, pages 97-99, 1978.
  */
 
 double trigamma (double x)
