@@ -8291,10 +8291,10 @@ int substitute_values (double *dest, const double *src, int n,
     return 0;
 }
 
-gretl_matrix *bds_driver (double *x, const DATASET *dset,
+gretl_matrix *bds_driver (const double *x, const DATASET *dset,
 			  int m, double eps, int *err)
 {
-    gretl_matrix *(*bdstest) (double *, int, int, double, int *);
+    gretl_matrix *(*bdstest) (const double *, int, int, double, int *);
     gretl_matrix *ret = NULL;
     int t1 = dset->t1;
     int t2 = dset->t2;

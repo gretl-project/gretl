@@ -38,7 +38,7 @@
 
 #define STANDALONE 0
 
-#if STANDALONE 
+#if STANDALONE
 # include <gretl/libgretl.h>
 #else
 # include "libgretl.h"
@@ -129,7 +129,7 @@ static bds_info *bds_info_new (int n)
 	for (i=0; i<=TABLEN; i++){
 	    bi->lookup[i] = 0;
 	    for (j=0; j<NBITS; j++) {
-		if ((i & bi->bits[j]) != 0) {
+		if (i & bi->bits[j]) {
 		    bi->lookup[i] += 1;
 		}
 	    }
@@ -163,24 +163,24 @@ static int comp (const void *a, const void *b)
 
 static void embed (int n, int dim, bds_info *bi)
 {
-    gint16 *i, *i2;
+    gint16 *ip, *ip2;
     int j;
 
     for (j=0; j<n-dim; j++) {
-	i = *(bi->start+j);
-	for (i2 = *(bi->start+j+1); i2 <= *(bi->start+j+2)-1; i2++) {
-	    *i = (*i) & (*i2);
-	    i++;
+	ip = bi->start[j];
+	for (ip2 = bi->start[j+1]; ip2 <= bi->start[j+2]-1; ip2++) {
+	    *ip = (*ip) & (*ip2);
+	    ip++;
 	}
-	if (i != *(bi->start+j+1)) {
-	    *i = 0;
+	if (ip != bi->start[j+1]) {
+	    *ip = 0;
 	}
     }
 }
 
 /* mask pattern for row l, nbits: number of bits used
                            omit: number of bits omitted
-                           mask: mask[0],mask[1] two word mask
+                           mask: mask[0], mask[1] two-word mask
 */
 
 static void genmask (int l, int n, int nbits, int omit,
@@ -191,10 +191,10 @@ static void genmask (int l, int n, int nbits, int omit,
     mask[0] = mask[1] = ALLBITS;
     last = (n-l-1)/nbits;
     for (i=n-omit; i<n; i++) {
-	itrue = i - l -1;
+	itrue = i - l - 1;
 	j = itrue/nbits;
-	k = nbits-1-(itrue % nbits);
-	j = last-j;
+	k = nbits - 1 -(itrue % nbits);
+	j = last - j;
 	mask[j] = mask[j] ^ bits[k];
     }
 }
@@ -205,27 +205,27 @@ static void genmask (int l, int n, int nbits, int omit,
 
 static double evalc (int n, bds_info *bi)
 {
-    long int count = 0;
+    gint32 nc = 0;
     double nd = n;
-    gint16 *i;
+    gint16 *ip;
     int j;
 
     for (j=0; j<n; j++) {
-	if ((*(bi->start+j+1) - *(bi->start+j)) > 2) {
-	    for (i = *(bi->start+j); i< *(bi->start+j+1)-2; i++) {
-		count += bi->lookup[*i];
+	if (bi->start[j+1] - bi->start[j] > 2) {
+	    for (ip = bi->start[j]; ip < bi->start[j+1]-2; ip++) {
+		nc += bi->lookup[*ip];
 	    }
-	    for (i = *(bi->start+j+1)-2; i< *(bi->start+j+1); i++) {
-		count += bi->lookup[(*i) & bi->mask[j*2 + *(bi->start+j+1)-i-1]];
+	    for (ip = bi->start[j+1]-2; ip < bi->start[j+1]; ip++) {
+		nc += bi->lookup[(*ip) & bi->mask[j*2 + bi->start[j+1]-ip-1]];
 	    }
 	} else {
-	    for (i = *(bi->start+j); i<*(bi->start+j+1); i++) {
-		count += bi->lookup[(*i) & bi->mask[j*2 + *(bi->start+j+1)-i-1]];
+	    for (ip = bi->start[j]; ip < bi->start[j+1]; ip++) {
+		nc += bi->lookup[(*ip) & bi->mask[j*2 + bi->start[j+1]-ip-1]];
 	    }
 	}
     }
 
-    return 2.0 * count / (nd*(nd-1));
+    return 2.0 * nc / (nd*(nd-1));
 }
 
 static void gridon (int ix, int iy, bds_info *bi)
@@ -243,10 +243,10 @@ static void gridon (int ix, int iy, bds_info *bi)
     iy = iy - ix - 1;
     ipos = iy / NBITS;
     ibit = NBITS - 1 - (iy % NBITS);
-    *(*(bi->start+ix)+ipos) |= bi->bits[ibit];
+    bi->start[ix][ipos] |= bi->bits[ibit];
 }
 
-static double fkc (double *x, int n, double *c,
+static double fkc (const double *x, int n, double *c,
 		   int m, double eps, bds_info *bi)
 {
     gint16 *ip;
@@ -254,9 +254,8 @@ static double fkc (double *x, int n, double *c,
     struct position *pt;
     struct position *p;
     int remove = m - 1;
-    long count, tcount;
+    gint32 count, tcount, phi;
     double dlen, k;
-    long phi;
 
     nobs = n - remove;
     dlen = nobs;
@@ -276,8 +275,7 @@ static double fkc (double *x, int n, double *c,
     bi->poslast = bi->postab + n - 1;
 
     /* start row by row construction */
-    count = 0;
-    phi = 0;
+    count = phi = 0;
     for (p=bi->postab; p<=bi->poslast; p++) {
 	tcount = 0;
 	pt = p;
@@ -316,13 +314,13 @@ static double fkc (double *x, int n, double *c,
     }
 
     /* adjust @k and @c to U statistic */
-    count = count - nobs;
-    phi = phi - nobs - 3*count;
+    count -= nobs;
+    phi -= nobs + 3*count;
 #if DEBUG
-    printf("%ld %ld\n", count, phi);
+    printf("%d %d\n", count, phi);
 #endif
-    k = ((double) phi) / (dlen * (dlen-1) * (dlen-2));
-    c[1] = ((double) count) / (dlen * (dlen-1));
+    k = phi / (dlen * (dlen-1) * (dlen-2));
+    c[1] = count / (dlen * (dlen-1));
 
     /* build mask */
     for (i=0; i<nobs; i++) {
@@ -378,35 +376,55 @@ static double cstat (double c, double cm, double k, int m, int n)
 
 int main (int argc, char **argv)
 {
-    gretl_matrix *a = NULL;
+    gretl_matrix *A = NULL;
+    gretl_matrix *Ar = NULL;
     bds_info *bi = NULL;
     int *rej = NULL;
-    int i, n, m, r;
-    double *x;
-    int iters = 0;
-    FILE *ifile;
-    double k, *c = NULL;
-    double eps, z, pv;
+    int *bc = NULL;
+    double *x = NULL;
+    double *c = NULL;
+    double *z = NULL;
+    int i, j, n, m, r;
+    int iters = 5000;
+    int NB = 1999;
+    int Ha = 0;
+    double k, eps, pv;
+    int err = 0;
 
     libgretl_init();
 
-    if (argc < 2) {
-	fprintf(stderr, "give a number of iterations\n");
+    if (argc == 1) {
+	; /* OK, testing under the null */
+    } else if (!strcmp(argv[1], "Ha")) {
+	Ha = 1; /* testing under an alternative */
+    } else {
+	fprintf(stderr, "please give \"Ha\" or nothing\n");
 	exit(EXIT_FAILURE);
     }
 
-    iters = atoi(argv[1]);
-    printf("monte carlo: iters = %d\n", iters);
-
-    n = 1000;
+    n = 200;
     m = 5;
     eps = 0.50;
-    a = gretl_matrix_alloc(n, 1);
-    rej = malloc((m+1) * sizeof *rej);
+    A = gretl_matrix_alloc(n, 1);
     c = malloc((m+1) * sizeof *c);
-    x = a->val;
-    for (i=0; i<=m; i++) {
+    rej = malloc((m-1) * sizeof *rej);
+    z = malloc((m-1) * sizeof *z);
+
+    if (Ha) {
+	x = malloc(n * sizeof *x);
+    }
+
+    /* initialize rejection counts */
+    for (i=0; i<m-1; i++) {
 	rej[i] = 0;
+    }
+
+    printf("monte carlo: iters=%d, n=%d, m=%d, eps=%g, NB=%d, Ha=%d\n",
+	   iters, n, m, eps, NB, Ha);
+
+    if (NB > 0) {
+	bc = malloc((m-1) * sizeof *bc);
+	Ar = gretl_matrix_alloc(n, 1);
     }
 
     bi = bds_info_new(n);
@@ -415,45 +433,90 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    for (r=0; r<iters; r++) {
-	if (a != NULL) {
-	    gretl_matrix_random_fill(a, D_NORMAL);
+    for (r=0; r<iters && !err; r++) {
+	/* Monte Carlo iterations */
+	if (NB > 0 && r > 0 && r % 100 == 0) {
+	    fprintf(stderr, "mc iter %d\n", r);
 	}
-	/* calculate raw c and k statistics: this is the hard part */
-	k = fkc(x, n, c, m, eps, bi);
+	gretl_matrix_random_fill(A, D_NORMAL);
+	if (Ha) {
+	    /* nonlinear MA alternative */
+	    for (i=0; i<n; i++) {
+		x[i] = A->val[i];
+	    }
+	    for (i=2; i<n; i++) {
+		A->val[i] = x[i] + 0.8*x[i-1]*x[i-2];
+	    }
+	}
+
+	/* calculate raw c and k statistics */
+	k = fkc(A->val, n, c, m, eps, bi);
 #if DEBUG
 	printf("k = %lf\n",k);
 	for (i=1; i<=m; i++) {
 	    printf("c(%d) %lf\n", i, c[i]);
 	}
 #endif
-	/* calculate normalized stats: this is the easy part */
+	/* calculate normalized stats */
 	for (i=2; i<=m; i++) {
-	    z = cstat(c[1], c[i], k, i, n-m+1);
-	    pv = normal_pvalue_2(z);
-	    if (iters <= 10) {
-		printf("dim %d: %f [%.4f]\n", i, z, pv);
-	    }
-	    if (pv < 0.05) {
-		rej[i] += 1;
+	    z[i-2] = cstat(c[1], c[i], k, i, n-m+1);
+	    if (NB == 0) {
+		/* not doing bootstrap */
+		pv = normal_pvalue_2(z[i-2]);
+		if (iters <= 10) {
+		    printf("dim %d: %f [%.4f]\n", i, z[i-2], pv);
+		}
+		if (pv < 0.05) {
+		    rej[i-2] += 1;
+		}
 	    }
 	}
-	if (iters <= 10) {
+
+	if (NB > 0) {
+	    /* doing bootstrap */
+	    double zji;
+
+	    for (i=0; i<m-1; i++) {
+		bc[i] = 0;
+	    }
+	    for (j=0; j<NB; j++) {
+		err = gretl_matrix_resample2(Ar, A);
+		k = fkc(Ar->val, n, c, m, eps, bi);
+		for (i=2; i<=m; i++) {
+		    zji = cstat(c[1], c[i], k, i, n-m+1);
+		    if (fabs(zji) > fabs(z[i-2])) {
+			bc[i-2] += 1;
+		    }
+		}
+	    }
+	    for (i=0; i<m-1 && !err; i++) {
+		pv = bc[i] / (double) (NB + 1);
+		if (pv < 0.05) {
+		    rej[i] += 1;
+		}
+	    }
+	} else if (iters <= 10) {
 	    putchar('\n');
 	}
     }
 
-    if (rej != NULL) {
+    if (err) {
+	printf("Hit an error!\n");
+    } else {
 	printf("Rejection rates at nominal 5 percent level:\n");
-	for (i=2; i<=m; i++) {
-	    printf("dim %d: %.3f\n", i, rej[i] / (double) iters);
+	for (i=0; i<m-1; i++) {
+	    printf("dim %d: %.3f\n", i+2, rej[i] / (double) iters);
 	}
     }
 
     bds_info_destroy(bi);
-    gretl_matrix_free(a);
+    gretl_matrix_free(A);
+    gretl_matrix_free(Ar);
+    free(x);
     free(c);
+    free(z);
     free(rej);
+    free(bc);
 
     libgretl_cleanup();
 
@@ -462,34 +525,87 @@ int main (int argc, char **argv)
 
 #else /* not STANDALONE */
 
-gretl_matrix *bdstest (double *x, int n, int m, double eps, int *err)
+gretl_matrix *bdstest (const double *x, int n, int m, double eps, int *err)
 {
-    gretl_matrix *ret = NULL;
-    bds_info *bi = NULL;
-    double *c;
-    double k;
-    int i;
+    gretl_matrix *ret;
+    gretl_matrix A = {0};
+    gretl_matrix *Ar = NULL;
+    bds_info *bi;
+    double *c, *z;
+    double k, pv;
+    int *bc = NULL;
+    int NB = 0;
+    int i, j;
 
+    if (n < 1500) {
+	NB = 1999;
+    }
+
+    if (NB > 0) {
+	/* apparatus for bootstrap */
+	bc = malloc((m-1) * sizeof *bc);
+	Ar = gretl_matrix_alloc(n, 1);
+	if (bc == NULL || Ar == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+	gretl_matrix_init(&A);
+	A.rows = n;
+	A.cols = 1;
+	A.val = (double *) x;
+    }
+
+    /* common allocations */
     c = malloc((m+1) * sizeof *c);
-    ret = gretl_matrix_alloc(m-1, 1);
+    z = malloc((m-1) * sizeof *z);
+    ret = gretl_matrix_alloc(m-1, 2);
     bi = bds_info_new(n);
-    
-    if (c == NULL || ret == NULL || bi == NULL) {
+
+    if (c == NULL || z == NULL || ret == NULL || bi == NULL) {
 	*err = E_ALLOC;
 	gretl_matrix_free(ret);
 	ret = NULL;
     } else {
 	/* calculate raw c and k statistics */
 	k = fkc(x, n, c, m, eps, bi);
-
 	/* calculate normalized statistics */
 	for (i=2; i<=m; i++) {
-	    ret->val[i-2] = cstat(c[1], c[i], k, i, n-m+1);
+	    z[i-2] = cstat(c[1], c[i], k, i, n-m+1);
+	    gretl_matrix_set(ret, i-2, 0, z[i-2]);
+	    if (NB == 0) {
+		/* record asymptotic p-value */
+		pv = normal_pvalue_2(z[i-2]);
+		gretl_matrix_set(ret, i-2, 1, pv);
+	    }
+	}
+	if (NB > 0) {
+	    double zji;
+
+	    for (i=0; i<m-1; i++) {
+		bc[i] = 0;
+	    }
+	    for (j=0; j<NB; j++) {
+		gretl_matrix_resample2(Ar, &A);
+		k = fkc(Ar->val, n, c, m, eps, bi);
+		for (i=2; i<=m; i++) {
+		    zji = cstat(c[1], c[i], k, i, n-m+1);
+		    if (fabs(zji) >= fabs(z[i-2])) {
+			bc[i-2] += 1;
+		    }
+		}
+	    }
+	    for (i=0; i<m-1; i++) {
+		pv = bc[i] / (double) (NB + 1);
+		gretl_matrix_set(ret, i, 1, pv);
+	    }
+	    gretl_matrix_free(Ar);
+	    free(bc);
 	}
     }
 
     bds_info_destroy(bi);
     free(c);
+    free(z);
 
     return ret;
 }
