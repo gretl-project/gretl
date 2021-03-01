@@ -100,6 +100,46 @@ double digamma (double x)
 }
 
 /**
+ * trigamma:
+ * @x: argument.
+ *
+ * Returns: the trigamma function of @x, or #NADBL on failure.
+ */
+
+double trigamma (double x)
+{
+    double ret = 0;
+    double A = 0.0001; /* threshold for "small" argument */
+    double B = 5.0;    /* threshold for "large" argument */
+
+    /* the Bernoulli numbers */
+    double b2 =  1.0/6;
+    double b4 = -1.0/30;
+    double b6 =  1.0/42;
+    double b8 = -1.0/30;
+
+    if (x <= 0) {
+	ret = NADBL;
+    } else if (x < A) {
+	ret = 1.0 / (x * x);
+    } else {
+	double y, a1, a2, z = x;
+
+	while (z < B) {
+	    ret += 1.0 / (z * z);
+	    z += 1.0;
+	}
+	/* Apply asymptotic formula for argument >= B */
+	y = 1.0 / (z * z);
+	a1 = 0.5 * y;
+	a2 = (1 + y * (b2 + y * (b4 + y * (b6 + y * b8)))) / z;
+	ret += a1 + a2;
+    }
+
+    return ret;
+}
+
+/**
  * hypergeo:
  * @a: argument.
  * @b: argument.
