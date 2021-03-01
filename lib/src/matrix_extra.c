@@ -1214,7 +1214,7 @@ static double unix_scan_NA (FILE *fp, int *err)
  * a text file the column separator must be space or tab. It is
  * assumed that the dimensions of the matrix (number of rows and
  * columns) are found on the first line of the file, so no
- * heuristics are necessary. In case of error,  @err is filled
+ * heuristics are necessary. In case of error @err is filled
  * appropriately.
  *
  * Returns: The matrix as read from file, or NULL.
