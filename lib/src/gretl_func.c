@@ -8344,6 +8344,7 @@ function_assign_returns (fncall *call, int rtype,
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
 		    fp->type == GRETL_TYPE_STRING ||
+		    fp->type == GRETL_TYPE_NUMERIC ||
 		    gretl_array_type(fp->type))) {
 	    if (arg->flags & ARG_SHIFTED) {
 		/* non-pointerized const object argument,
