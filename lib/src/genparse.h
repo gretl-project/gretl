@@ -159,6 +159,7 @@ enum {
     F_GAMMA,
     F_LNGAMMA,
     F_DIGAMMA,
+    F_TRIGAMMA,
     F_INVMILLS,
     F_ROUND,
     F_CNORM,

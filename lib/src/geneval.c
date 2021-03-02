@@ -16582,6 +16582,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_GAMMA:
     case F_LNGAMMA:
     case F_DIGAMMA:
+    case F_TRIGAMMA:
     case F_INVMILLS:
     case F_EASTER:
         /* functions taking one argument, any type */
