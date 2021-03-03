@@ -587,6 +587,13 @@ void fncall_destroy (fncall *call)
     }
 }
 
+static void maybe_destroy_fncall (fncall *call)
+{
+    if (call != NULL && !(call->flags & FC_PRESERVE)) {
+	fncall_destroy(call);
+    }
+}
+
 GretlType fncall_get_return_type (fncall *call)
 {
     if (call != NULL) {
@@ -760,9 +767,7 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 	pprintf(prn, "exiting function %s, ", call->fun->name);
     }
 
-    if (!(call->flags & FC_PRESERVE)) {
-	fncall_destroy(call);
-    }
+    maybe_destroy_fncall(call);
 
     if (fn_executing > 0) {
 	GList *tmp = g_list_last(callstack);
@@ -9251,7 +9256,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     err = maybe_check_function_needs(dset, u);
     if (err) {
-	fncall_destroy(call);
+	maybe_destroy_fncall(call);
 	return err;
     }
 
@@ -9280,7 +9285,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	if (!err) {
 	    err = handle_plugin_call(call, dset, ret, prn);
 	}
-	fncall_destroy(call);
+	maybe_destroy_fncall(call);
 	return err;
     }
 
@@ -9290,7 +9295,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     if (err) {
 	/* get out before allocating further storage */
-	fncall_destroy(call);
+	maybe_destroy_fncall(call);
 	return err;
     }
 
@@ -9487,7 +9492,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    err = stoperr;
 	}
     } else {
-	fncall_destroy(call);
+	maybe_destroy_fncall(call);
     }
 
 #if EXEC_DEBUG || GLOBAL_TRACE
