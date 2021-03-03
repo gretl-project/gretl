@@ -108,19 +108,25 @@ double digamma (double x)
  * https://people.sc.fsu.edu/~jburkardt/f_src/asa121/asa121.html
  * See BE Schneider, Algorithm AS 121: Trigamma Function.
  * Applied Statistics, Volume 27, Number 1, pages 97-99, 1978.
+ *
+ * The main modification with respect to the published version is the 
+ * addition of three extra terms to the asymptotic expansion for x >= B.
  */
 
 double trigamma (double x)
 {
     double ret = 0;
-    double A = 0.0001; /* threshold for "small" argument */
-    double B = 5.0;    /* threshold for "large" argument */
+    double A = 0.000001; /* threshold for "small" argument */
+    double B = 5.0;      /* threshold for "large" argument */
 
     /* the Bernoulli numbers */
     double b2 =  1.0/6;
     double b4 = -1.0/30;
     double b6 =  1.0/42;
     double b8 = -1.0/30;
+    double b10 = 5.0/66;
+    double b12 = -691.0/2730;
+    double b14 = 7.0/6;
 
     if (x <= 0) {
 	ret = NADBL;
@@ -136,7 +142,13 @@ double trigamma (double x)
 	/* Apply asymptotic formula for argument >= B */
 	y = 1.0 / (z * z);
 	a1 = 0.5 * y;
-	a2 = (1 + y * (b2 + y * (b4 + y * (b6 + y * b8)))) / z;
+	a2 = (1 + y *
+	      (b2 + y *
+	       (b4 + y *
+		(b6 + y *
+		 (b8 + y *
+		  (b10 + y *
+		   (b12 + y * b14))))))) / z;
 	ret += a1 + a2;
     }
 
