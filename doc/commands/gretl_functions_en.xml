@@ -3547,7 +3547,13 @@
 	</para>
 	<para context="tex">
 	  Returns the digamma (or Psi) function of $x$, that is
-	  $\frac{d}{dx}\, \mbox{ln } \Gamma(x)$.
+	  $\frac {\mathrm{d}} {\mathrm{d} x}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="trigamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -6461,7 +6467,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="naalen"/>
+            <fncref targ="nalen"/>
 	  </seelist>
 	</para>
       </description>
@@ -12214,6 +12220,28 @@
 	  Returns the transpose of <argname>X</argname>. Note: this is rarely
 	  used; in order to get the transpose of a matrix, in most cases you
 	  can just use the prime operator: <lit>X'</lit>.
+	</para>
+      </description>
+    </function>
+
+    <function name="trigamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Returns the trigamma function of <argname>x</argname>, that
+	  is the second derivative of the log of the Gamma function.
+	</para>
+	<para context="tex">
+	  Returns the trigamma function of $x$, that is
+	  $\frac {\mathrm{d}^2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="digamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>

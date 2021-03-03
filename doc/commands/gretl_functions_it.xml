@@ -3515,7 +3515,13 @@
 	</para>
 	<para context="tex">
 	  Restituisce la funzione digamma (o Psi) di $x$, cioè
-	  $\frac{\mathrm{d} \Gamma(x)}{\mathrm{d} x}$.
+	  $\frac {\mathrm{d}} {\mathrm{d} x}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="trigamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -12154,6 +12160,29 @@
 	  Trasposizione della matrice <argname>X</argname>. Si noti che per 
 	  ottenere la trasposta di una matrice nella maggior parte dei casi è
 	  possibile utilizzare l'operatore apice: <lit>X'</lit>.
+	</para>
+      </description>
+    </function>
+
+
+    <function name="trigamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>    
+      <description>
+	<para context="notex">
+	  Restituisce la funzione trigamma di <argname>x</argname>,
+	  cioè la derivata seconda del logaritmo della funzione Gamma.
+	</para>
+	<para context="tex">
+	  Restituisce la funzione trigamma di $x$, cioè
+	  $\frac {\mathrm{d}?2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="digamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
