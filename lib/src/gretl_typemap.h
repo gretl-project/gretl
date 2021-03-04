@@ -46,6 +46,8 @@ int gretl_is_arrayable_type (GretlType type);
 
 int gretl_is_scalar_type (GretlType type);
 
+int gretl_is_series_type (GretlType type);
+
 void gretl_typemap_cleanup (void);
 
 #endif /* GRETL_TYPEMAP_H_ */

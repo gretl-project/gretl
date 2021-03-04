@@ -351,6 +351,12 @@ int gretl_is_scalar_type (GretlType type)
 	type == GRETL_TYPE_DOUBLE;
 }
 
+int gretl_is_series_type (GretlType type)
+{
+    return type == GRETL_TYPE_SERIES ||
+	type == GRETL_TYPE_USERIES;
+}
+
 void gretl_typemap_cleanup (void)
 {
     gretl_get_gen_type(NULL);
