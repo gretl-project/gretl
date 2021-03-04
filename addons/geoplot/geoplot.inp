@@ -11,12 +11,17 @@ function bundle geoplot_describe_json (const bundle jb, int verbose[1])
     if rows(bbox) == 0
         printf "No bounding box\n"
     else
-        printf "%d-row bounding box\n", rows(bbox)
-	if verbose
-	    print bbox
-	endif
+        nbb = nelem(bbox)
+        ndim = nbb / 2
+        printf "%d-dimensional bounding box (SW; NE):\n", ndim
+        matrix rbb = vec(bbox)'
+        printf "  ["
+        loop i=1..nbb
+            tail = i==ndim ? "; " : i==nbb ? "" : ","
+            printf "%.3f%s", rbb[i], tail
+        endloop
+        printf "]\n\n"
     endif
-    ndim = rows(bbox)
     ret.bbox = bbox
 
     bundles feat = jb.features
@@ -28,15 +33,15 @@ function bundle geoplot_describe_json (const bundle jb, int verbose[1])
 
     loop i = 1 .. nf
         props = feat[i].properties
-	
+
         if i == 1
             ids = create_ids(props, nf)
         endif
-	
+
         fill_ids(props, &ids, i)
 
         if verbose
-	    describe_feature(feat[i], i, 0)
+            describe_feature(feat[i], i, 0)
         endif
     endloop
 
@@ -138,9 +143,9 @@ function matrix geoplot_seek_feature(const bundle b,
 end function
 
 
-function void geoplot_simplify(bundle *b, 
+function void geoplot_simplify(bundle *b,
                                scalar preserve[0.1:1:0.75])
-    
+
     feat = b.features
     set stopwatch
     loop i = 1 .. nelem(feat)
