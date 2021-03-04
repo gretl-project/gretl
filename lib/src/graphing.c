@@ -9582,17 +9582,19 @@ double gnuplot_time_from_date (const char *s, const char *fmt)
 
 /* stretch_limits(): allow a little extra space in the X and Y
    dimensions so that the map doesn't entirely fill the plot
-   area.
+   area; the range is scaled by the factor (1 + 2*@margin).
 */
 
 static void stretch_limits (double *targ, const gretl_matrix *minmax,
-			    int col, double by)
+			    int col, double margin)
 {
-    double mmv0 = gretl_matrix_get(minmax, 0, col);
-    double mmv1 = gretl_matrix_get(minmax, 1, col);
+    double lo = gretl_matrix_get(minmax, 0, col);
+    double hi = gretl_matrix_get(minmax, 1, col);
+    double mid = 0.5 * (lo + hi);
+    double hlf = 0.5 * (hi - lo) * (1 + 2*margin);
 
-    targ[0] = mmv0 * (mmv0 < 0 ? 1+by : 1-by);
-    targ[1] = mmv1 * (mmv1 > 0 ? 1+by : 1-by);
+    targ[0] = mid - hlf;
+    targ[1] = mid + hlf;
 }
 
 static int inline_map_data (const char *datfile, FILE *fp)
@@ -9769,7 +9771,8 @@ static void handle_palette (gretl_bundle *opts,
 
 static void set_plot_limits (gretl_bundle *opts,
 			     const gretl_matrix *bbox,
-			     double *xlim, double *ylim)
+			     double *xlim, double *ylim,
+			     double margin)
 {
     const gretl_matrix *mxy, *mx, *my;
 
@@ -9788,7 +9791,7 @@ static void set_plot_limits (gretl_bundle *opts,
 	xlim[0] = mx->val[0];
 	xlim[1] = mx->val[1];
     } else {
-	stretch_limits(xlim, bbox, 0, 0.02);
+	stretch_limits(xlim, bbox, 0, margin);
     }
 
     my = gretl_bundle_get_matrix(opts, "yrange", NULL);
@@ -9796,7 +9799,7 @@ static void set_plot_limits (gretl_bundle *opts,
 	ylim[0] = my->val[0];
 	ylim[1] = my->val[1];
     } else {
-	stretch_limits(ylim, bbox, 1, 0.02);
+	stretch_limits(ylim, bbox, 1, margin);
     }
 }
 
@@ -9834,6 +9837,7 @@ int write_map_gp_file (const char *plotfile,
     FILE *fp = NULL;
     gchar *datasrc = NULL;
     double linewidth = 1.0;
+    double margin = 0.02;
     int have_payload = 0;
     int use_arg0 = 0;
     int height = 600;
@@ -9850,10 +9854,10 @@ int write_map_gp_file (const char *plotfile,
     }
 
     if (opts != NULL) {
-	set_plot_limits(opts, bbox, xlim, ylim);
+	set_plot_limits(opts, bbox, xlim, ylim, margin);
     } else {
-	stretch_limits(xlim, bbox, 0, 0.02);
-	stretch_limits(ylim, bbox, 1, 0.02);
+	stretch_limits(xlim, bbox, 0, margin);
+	stretch_limits(ylim, bbox, 1, margin);
     }
 
     if (gretl_bundle_has_key(opts, "height")) {
