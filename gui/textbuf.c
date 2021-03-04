@@ -1659,6 +1659,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("_Seed for random numbers");
     } else if (!strcmp(key, "gretlDBN")) {
 	s = _("dbnomics for gretl");
+    } else if (!strcmp(key, "GeoplotDoc")) {
+	s = _("Creating maps");
     } else {
 	s = key;
     }

@@ -302,6 +302,7 @@
       <menuitem action="gretlMPI"/>
       <menuitem action="gretlSVM"/>
       <menuitem action="gretlDBN"/>
+      <menuitem action="GeoplotDoc"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
       <menuitem action="SFAddons"/>

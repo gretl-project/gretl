@@ -2028,7 +2028,8 @@ enum {
     PKGBOOK,
     GRETL_MPI,
     GRETL_SVM,
-    GRETL_DBN
+    GRETL_DBN,
+    GRETL_GEO
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2197,13 +2198,17 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = "dbnomics.pdf";
 	sprintf(fullpath, "%sfunctions%cdbnomics%c%s",
 		gretl_home(), SLASH, SLASH, fname);
+    } else if (code == GRETL_GEO) {
+	fname = "geoplot.pdf";
+	sprintf(fullpath, "%sfunctions%cgeoplot%c%s",
+		gretl_home(), SLASH, SLASH, fname);
     } else {
 	return E_DATA;
     }
 
     fprintf(stderr, "pdf help: looking for %s\n", fname);
 
-    if (code != GRETL_DBN) {
+    if (code != GRETL_DBN && code != GRETL_GEO) {
 	/* is the file available in public dir? */
 	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
     }
@@ -2227,6 +2232,9 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	/* try in the user's dotdir? */
 	if (code == GRETL_DBN) {
 	    sprintf(fullpath, "%sfunctions%cdbnomics%cdbnomics.pdf",
+		    gretl_dotdir(), SLASH, SLASH);
+	} else if (code == GRETL_GEO) {
+	    sprintf(fullpath, "%sfunctions%cgeojson%cgeoplot.pdf",
 		    gretl_dotdir(), SLASH, SLASH);
 	} else {
 	    sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
@@ -2310,6 +2318,8 @@ void display_pdf_help (GtkAction *action)
 	    code = GRETL_SVM;
 	} else if (!strcmp(aname, "gretlDBN")) {
 	    code = GRETL_DBN;
+	} else if (!strcmp(aname, "GeoplotDoc")) {
+	    code = GRETL_GEO;
 	}
     }
 
