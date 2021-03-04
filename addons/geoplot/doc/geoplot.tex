@@ -534,6 +534,12 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
   unless \texttt{geoplot} is invoked without any payload.
 \item[\texttt{title}:] string specifying a title for the
   plot. Default: no title.
+\item[\texttt{xrange}:] 2-element vector, containing the longitude
+  range used on the plot (see \ref{sec:xyranges}). Default:
+  automatically determined.
+\item[\texttt{yrange}:] 2-element vector, containing the latitude
+  range used on the plot (see \ref{sec:xyranges}). Default:
+  automatically determined.
 \end{description}
 
 It may be helpful to run through various \texttt{geoplot} scenarios
@@ -989,6 +995,7 @@ options.projection = "EPSG4326"
 \end{code}
 
 \subsection*{Limiting the area shown}
+\label{sec:xyranges}
 
 Section~\ref{sec:sub-sample} explains how to exclude certain features
 from a map using the \texttt{smpl} command. In some cases, however,
