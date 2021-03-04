@@ -11,7 +11,10 @@ function bundle geoplot_describe_json (const bundle jb, int verbose[1])
     if rows(bbox) == 0
         printf "No bounding box\n"
     else
-        printf "%d-dimensional bounding box\n", rows(bbox)
+        printf "%d-row bounding box\n", rows(bbox)
+	if verbose
+	    print bbox
+	endif
     endif
     ndim = rows(bbox)
     ret.bbox = bbox
