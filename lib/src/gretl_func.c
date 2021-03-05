@@ -8255,6 +8255,11 @@ static void push_series_to_caller (fn_arg *arg, DATASET *dset)
 {
     int v = arg->val.idnum;
 
+    if (arg->upname == NULL) {
+	fprintf(stderr, "ERROR in push_series_to_caller: arg->upname is NULL\n");
+	return;
+    }
+
     series_decrement_stack_level(dset, v);
     strcpy(dset->varname[v], arg->upname);
 }
@@ -8356,7 +8361,8 @@ function_assign_returns (fncall *call, int rtype,
 	    } else {
 		; /* pure "shell" object: no-op */
 	    }
-	} else if (arg->type == GRETL_TYPE_USERIES && fp->immut) {
+	} else if (arg->type == GRETL_TYPE_USERIES &&
+		   fp->type == GRETL_TYPE_SERIES && fp->immut) {
 	    push_series_to_caller(arg, dset);
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
