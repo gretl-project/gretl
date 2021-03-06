@@ -606,8 +606,12 @@
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
-	  Returns the number of variables in the dataset (including the
-	  constant).
+	  Returns the number of series in the dataset (including the
+	  constant). Since <lit>const</lit> is always present in
+	  any dataset a return value of 0 indicates that no
+	  dataset is in place. Note that if this accessor is used
+	  within a function, the number of series currently accessible
+	  may well fall short of that given by <lit>$nvars</lit>.
 	</para>
       </description>
     </function>
