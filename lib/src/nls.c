@@ -50,14 +50,6 @@
 #define ML_DEBUG 0
 #define GRAD_DEBUG 0
 
-enum {
-    NL_ANALYTICAL = 1 << 0,
-    NL_AUTOREG    = 1 << 1,
-    NL_AHESS      = 1 << 2,
-    NL_NEWTON     = 1 << 3,
-    NL_SMALLSTEP  = 1 << 4
-} nl_flags;
-
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter */
     gretl_bundle *bundle; /* parent bundle, if applicable */
@@ -796,10 +788,16 @@ static int nlspec_add_param_names (nlspec *spec, const char *s)
 	if (n == 0 || n >= VNAMELEN) {
 	    err = E_INVARG;
 	} else {
+	    user_var *uv = NULL;
+
 	    test = s + n;
 	    *sname = '\0';
 	    strncat(sname, s, n);
-	    if (is_user_string(sname)) {
+	    uv = get_user_var_by_name(sname);
+	    if (uv == NULL) {
+		err = E_INVARG;
+	    } else if (user_var_get_type(uv) == GRETL_TYPE_STRING) {
+		/* got a composite string variable */
 		const char *names = get_string_by_name(sname);
 
 		if (names == NULL || *names == '\0') {
@@ -808,8 +806,18 @@ static int nlspec_add_param_names (nlspec *spec, const char *s)
 		    free(spec->parnames);
 		    spec->parnames = gretl_strdup(names);
 		    if (spec->parnames == NULL) {
-		    err = E_ALLOC;
+			err = E_ALLOC;
 		    }
+		}
+	    } else if (user_var_get_type(uv) == GRETL_TYPE_ARRAY) {
+		/* got an array of strings */
+		gretl_array *a = user_var_get_value(uv);
+
+		if (gretl_array_get_type(a) == GRETL_TYPE_STRINGS) {
+		    spec->parnames = gretl_strdup(sname);
+		    spec->flags |= NL_NAMES_ARRAY;
+		} else {
+		    err = E_INVARG;
 		}
 	    } else {
 		err = E_INVARG;
@@ -1792,6 +1800,27 @@ static int copy_user_parnames (MODEL *pmod, nlspec *spec)
     char *tmp;
     int i, err = 0;
 
+    if (spec->flags & NL_NAMES_ARRAY) {
+	/* we got an array of strings */
+	gretl_array *a = get_array_by_name(spec->parnames);
+	int ns = 0;
+
+	if (a != NULL) {
+	    char **S = gretl_array_get_strings(a, &ns);
+
+	    for (i=0; i<pmod->ncoeff && !err; i++) {
+		if (i < ns) {
+		    pmod->params[i] = gretl_strdup(S[i]);
+		} else {
+		    pmod->params[i] = gretl_strdup("unnamed");
+		}
+	    }
+	} else {
+	    err = E_DATA;
+	}
+	return err;
+    }
+
     /* copy the user-defined string before applying strtok */
     tmp = gretl_strdup(spec->parnames);
     if (tmp == NULL) {
@@ -1861,7 +1890,8 @@ static int add_param_names_to_model (MODEL *pmod, nlspec *spec)
 
     if (spec->parnames != NULL) {
 	/* handle the case where the user has given a "parnames"
-	   string */
+	   string or strings array
+	*/
 	err = copy_user_parnames(pmod, spec);
     } else {
 	/* compose automatic parameter names */
