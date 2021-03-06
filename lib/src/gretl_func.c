@@ -9568,13 +9568,17 @@ int object_is_const (const char *name, int vnum)
 		}
 	    }
 	}
-	if (0 && !ret && vnum > 0 && vnum < call->orig_v) {
+	if (!ret && vnum > 0 && vnum < call->orig_v) {
 	    /* We're looking at a series that is not local to
 	       the called function, but not yet identified as
 	       read-only. It probably _should_ be read-only
 	       unless it was given in pointer form.
 	       Note: this check added 2018-10-18.
 	    */
+#if 0 /* debugging */
+	    fprintf(stderr, "*** object_is_const: name '%s', vnum %d, call->orig_v %d\n",
+		    name, vnum, call->orig_v);
+#endif
 	    if (!in_gretl_list(call->ptrvars, vnum)) {
 		ret = 1;
 	    }
