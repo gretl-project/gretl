@@ -9568,7 +9568,7 @@ int object_is_const (const char *name, int vnum)
 		}
 	    }
 	}
-	if (!ret && vnum > 0 && vnum < call->orig_v) {
+	if (0 && !ret && vnum > 0 && vnum < call->orig_v) {
 	    /* We're looking at a series that is not local to
 	       the called function, but not yet identified as
 	       read-only. It probably _should_ be read-only
