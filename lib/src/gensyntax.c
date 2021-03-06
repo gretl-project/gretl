@@ -1227,6 +1227,8 @@ static void get_args (NODE *t, parser *p, int f, int np,
 	    if (p->sym == G_LBR) {
 		*next = '[';
 	    }
+	} else {
+	    expected_symbol_error(')', p, 0);
 	}
     }
 
