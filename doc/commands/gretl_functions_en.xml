@@ -1454,13 +1454,12 @@
 	<para>
 	  In the most minimal usage, <argname>x</argname> is set to
 	  <lit>null</lit>, <argname>byvar</argname> is a single series
-	  and the third argument must then be omitted (or also set to 
-	  <lit>null</lit>). In that case the return
-	  value is a matrix with two columns holding, respectively,
-	  the distinct values of <argname>byvar</argname>, sorted in
-	  ascending order, and the count of observations at which
-	  <argname>byvar</argname> takes on each of these values. For
-	  example,
+	  and the third argument is omitted, or set to
+	  <lit>null</lit>. In this case, the return value is a matrix
+	  with two columns holding, respectively, the distinct values
+	  of <argname>byvar</argname>, sorted in ascending order, and
+	  the count of observations at which <argname>byvar</argname>
+	  takes on each of these values. For example,
 	</para>
 	<code>
 	  open data4-1
@@ -1477,38 +1476,37 @@
 	  of the <math>n</math> series and the count column holds the
 	  number of observations at which each combination is
 	  realized. Note that the count column can always be found at
-	  the position <lit>nelem(byvar) + 1</lit>. (Alternatively, since
-	  the columns of the returned matrix are labeled and the count
-	  column carries the natural label <quote>count</quote>, this
-	  index value can also be found with 
-	  <lit>instrings(cnameget(ret), "count")</lit>, where <lit>ret</lit>
-	  stands for the name of the returned matrix chosen by the user.) 	
+	  the position <lit>nelem(byvar) + 1</lit>. 	
 	</para>
-	<para>
+	<subhead>
 	  Usage with a functional operation:	
+	</subhead>
+	<para>
+	  If the third argument is given, then <argname>x</argname>
+	  must not be <lit>null</lit>, and the rightmost
+	  <math>m</math> columns hold the values of the statistic
+	  specified by <argname>funcname</argname> for each of the
+	  variables in <argname>x</argname>. (Thus, <math>m</math> is
+	  equal to 1 if <argname>x</argname> is a single series and
+	  equal to <lit>nelem(x)</lit> if <argname>x</argname> is a
+	  list.)  The given statistic is calculated on the respective
+	  sub-samples defined by the combinations in
+	  <argname>byvar</argname> (in ascending order); these
+	  combinations are shown in the first <math>n</math> column(s)
+	  of the returned matrix.
 	</para>
 	<para>
-	  If the third argument is given, then <argname>x</argname> must not
-	  be <lit>null</lit>, and the rightmost <math>m</math> columns hold
- 	  the values of the statistic specified by <argname>funcname</argname>
- 	  for each of the variables in <argname>x</argname>. (Thus, <math>m</math>
- 	  is equal to 1 if <argname>x</argname> is a single series and equal to
- 	  <lit>nelem(x)</lit> if <argname>x</argname> is a list.) 
- 	  The given statistic is calculated row-wise based on the respective
- 	  sub-samples defined by the ascending value (combinations) in the first
- 	  <math>n</math> column(s) which refer to the variables of
- 	  <argname>byvar</argname>. 
-    </para>
-    <para>
-      So, in the special case where <argname>x</argname> and 
-      <argname>byvar</argname> are both individual series, the return value
-      is a matrix with three columns holding, respectively, the distinct values
-      of <argname>byvar</argname>, sorted in ascending order; the
-	  count of observations at which <argname>byvar</argname> takes on each of
-	  these values; and the values of the statistic specified by 
-	  <argname>funcname</argname> calculated on series <argname>x</argname>,
-	  using only those observations at which <argname>byvar</argname> takes on
-	  the value given in the first column.	 
+	  So, in the special case where <argname>x</argname> and
+	  <argname>byvar</argname> are both individual series, the
+	  return value is a matrix with three columns holding,
+	  respectively, the distinct values of
+	  <argname>byvar</argname>, sorted in ascending order; the
+	  count of observations at which <argname>byvar</argname>
+	  takes on each of these values; and the values of the
+	  statistic specified by <argname>funcname</argname>
+	  calculated on series <argname>x</argname>, using only those
+	  observations at which <argname>byvar</argname> takes on the
+	  value given in the first column.
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are

@@ -1427,17 +1427,17 @@
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
 	<fnarg type="series-or-list">byvar</fnarg>
-	<fnarg type="string">funcname</fnarg>   
+	<fnarg type="string" optional="true">funcname</fnarg>   
       </fnargs>
       <description>
 	<para>
 	  Nella versione più minimale, <argname>x</argname> è la
 	  parola chiave <lit>null</lit>, <argname>byvar</argname> è
-	  una serie e il terzo argomento è omesso. In tal caso la
-	  funzione produce una matrice con due colonne contenenti
-	  rispettivamente i valori distinti di
-	  <argname>byvar</argname>, ordinati in senso ascendente e le
-	  corrispondenti frequenze assolute di
+	  una serie e il terzo argomento è omesso oppure
+	  <lit>null</lit>. In tal caso la funzione produce una matrice
+	  con due colonne contenenti rispettivamente i valori distinti
+	  di <argname>byvar</argname>, ordinati in senso ascendente e
+	  le corrispondenti frequenze assolute di
 	  <argname>byvar</argname>. Ad esempio,
 	</para>
 	<code>
@@ -1445,18 +1445,8 @@
 	  eval aggregate(null, bedrms)
 	</code>
 	<para>
-	  Se invece sia <argname>x</argname> che
-	  <argname>byvar</argname> sono singole variabili, questa
-	  funzione restituisce una matrice con tre colonne: la prima
-	  contiene i valori distinti di <argname>byvar</argname>,
-	  ordinati in senso crescente; la seconda contiene il numero
-	  delle osservazioni in cui <argname>byvar</argname> assume
-	  ciascuno di questi valori; la terza, infine, contiene i
-	  valori della statistica specificata da
-	  <argname>funcname</argname>, calcolata sulla variabile
-	  <argname>x</argname> usando solo quelle osservazioni per cui
-	  <argname>byvar</argname> assume il valore specificato nella
-	  prima colonna.
+	  mostrerà che la serie <lit>bedrms</lit> ha come valori
+	  3 (in 5 casi) e 4 (in 9 casi).
 	</para>
 	<para>
 	  Più in generale, se <argname>byvar</argname> è una lista di
@@ -1464,13 +1454,38 @@
 	  colonne da sinistra contengono le combinazioni dei valori
 	  distinti di ciascuna delle <math>n</math> variabili, mentre la
 	  colonna immediatamente successiva contiene il numero delle
-	  osservazioni in cui ciascuna combinazione ricorre. Se
-	  <argname>x</argname> è una lista con <math>m</math>
-	  elementi, allora le <math>m</math> colonne più a destra
-	  contengono i valori della statistica specificata da
-	  <argname>funcname</argname> per ciascuna delle variabili
-	  <argname>x</argname>, calcolati sul sottocampione
-	  individuato dalle prime colonne.
+	  osservazioni in cui ciascuna combinazione
+	  ricorre. Quest'ultima, quindi, starà alla posizione
+	  <lit>nelem(byvar) + 1</lit>. 
+	</para>
+	<subhead>
+	  Uso con un operatore funzionale:	
+	</subhead>
+	<para>
+	  Se viene usato il terzo argomento, <argname>x</argname> non
+	  può essere <lit>null</lit>, e le <math>m</math> colonne più
+	  a destra contengono i valori della statistica specificate da
+	  <argname>funcname</argname> per ciascuna delle variabili in
+	  <argname>x</argname>. (Pertanto, <math>m</math> è 1 se
+	  <argname>x</argname> <argname>x</argname> è una serie e
+	  <lit>nelem(x)</lit> se <argname>x</argname> è una lista.)
+	  La statistica è calcolata per righe sulla base dei
+	  sottocampioni definiti dalle combinazioni dei valori di
+	  <argname>byvar</argname>, in senso ascendente; tali
+	  combinazioni sono mostrate nelle prime <math>n</math>
+	  colonne della matrice risultato.
+	</para>
+	<para>
+	  Quindi, nel caso particolare in cui sia <argname>x</argname> che
+	  <argname>byvar</argname> siano serie, la matrice risultato
+	  avrà tre colonne, contenenti rispettivamente i valori di
+	  <argname>byvar</argname>, in senso ascendente, il numero di
+	  osservazioni di <argname>byvar</argname>
+	  per ognuno di essi e i valori della statistica specificata
+	  da <argname>funcname</argname>, calcolati su
+	  <argname>x</argname> sul sottocampione dato dalle
+	  osservazioni in cui <argname>byvar</argname> prende il
+	  valore in colonna 1.
 	</para>
 	<para>
 	  I seguenti valori di <argname>funcname</argname> sono
@@ -1513,18 +1528,21 @@
 	  Per un esempio che utilizza liste, si ipotizzi che
 	  <lit>gender</lit> sia una variabile dummy maschio/femmina e
 	  <lit>race</lit> una variabile categoriale con tre possibili
-	  valori. Allora quanto segue genererà una matrice con 6 righe
-	  e 5 colonne: le prime due colonne conterranno le
-	  combinazioni possibili gender/race; quella centrale
-	  il numero di osservazioni di ciascuna di queste combinazioni; e 
-	  le ultime due la deviazione standard campionaria di <lit>income</lit> e
-	  <lit>age</lit>:
+	  valori.
 	</para>
 	<code>
 	  list BY = gender race
 	  list X = income age
 	  matrix m = aggregate(X, BY, sd)
 	</code>
+	<para>
+	  Il codice qui sopra genererà una matrice con <by r="6"
+	  c="5"/>: le prime due colonne conterranno le combinazioni
+	  possibili gender/race; quella centrale il numero di
+	  osservazioni di ciascuna di queste combinazioni; e le ultime
+	  due la deviazione standard campionaria di <lit>income</lit>
+	  e <lit>age</lit>:
+	</para>
 	<para>
 	  Si noti che, nel caso in cui <argname>byvar</argname> sia
 	  una lista, alcune combinazioni dei valori di
