@@ -1454,7 +1454,8 @@
 	<para>
 	  In the most minimal usage, <argname>x</argname> is set to
 	  <lit>null</lit>, <argname>byvar</argname> is a single series
-	  and the third argument is omitted. In that case the return
+	  and the third argument must then be omitted (or also set to 
+	  <lit>null</lit>). In that case the return
 	  value is a matrix with two columns holding, respectively,
 	  the distinct values of <argname>byvar</argname>, sorted in
 	  ascending order, and the count of observations at which
@@ -1470,29 +1471,44 @@
 	  3 (with count 5) and 4 (with count 9).
 	</para>
 	<para>
-	  If <argname>x</argname> and <argname>byvar</argname> are
-	  both individual series and the third argument is given, the
-	  return value is a matrix with three columns holding,
-	  respectively, the distinct values of
-	  <argname>byvar</argname>, sorted in ascending order; the
-	  count of observations at which <argname>byvar</argname>
-	  takes on each of these values; and the values of the
-	  statistic specified by <argname>funcname</argname>
-	  calculated on series <argname>x</argname>, using only those
-	  observations at which <argname>byvar</argname> takes on the
-	  value given in the first column.
-	</para>
-	<para>
 	  More generally, if <argname>byvar</argname> is a list with
-	  <math>n</math> members then the left-hand <math>n</math>
+	  <math>n</math> members, then the left-hand <math>n</math>
 	  columns hold the combinations of the distinct values of each
 	  of the <math>n</math> series and the count column holds the
 	  number of observations at which each combination is
-	  realized.  If <argname>x</argname> is a list with
-	  <math>m</math> members then the rightmost <math>m</math>
-	  columns hold the values of the specified statistic for each
-	  of the <argname>x</argname> variables, again calculated on
-	  the sub-sample indicated in the first column(s).
+	  realized. Note that the count column can always be found at
+	  the position <lit>nelem(byvar) + 1</lit>. (Alternatively, since
+	  the columns of the returned matrix are labeled and the count
+	  column carries the natural label <quote>count</quote>, this
+	  index value can also be found with 
+	  <lit>instrings(cnameget(ret), "count")</lit>, where <lit>ret</lit>
+	  stands for the name of the returned matrix chosen by the user.) 	
+	</para>
+	<para>
+	  Usage with a functional operation:	
+	</para>
+	<para>
+	  If the third argument is given, then <argname>x</argname> must not
+	  be <lit>null</lit>, and the rightmost <math>m</math> columns hold
+ 	  the values of the statistic specified by <argname>funcname</argname>
+ 	  for each of the variables in <argname>x</argname>. (Thus, <math>m</math>
+ 	  is equal to 1 if <argname>x</argname> is a single series and equal to
+ 	  <lit>nelem(x)</lit> if <argname>x</argname> is a list.) 
+ 	  The given statistic is calculated row-wise based on the respective
+ 	  sub-samples defined by the ascending value (combinations) in the first
+ 	  <math>n</math> column(s) which refer to the variables of
+ 	  <argname>byvar</argname>. 
+    </para>
+    <para>
+      So, in the special case where <argname>x</argname> and 
+      <argname>byvar</argname> are both individual series, the return value
+      is a matrix with three columns holding, respectively, the distinct values
+      of <argname>byvar</argname>, sorted in ascending order; the
+	  count of observations at which <argname>byvar</argname> takes on each of
+	  these values; and the values of the statistic specified by 
+	  <argname>funcname</argname> calculated on series <argname>x</argname>,
+	  using only those observations at which <argname>byvar</argname> takes on
+	  the value given in the first column.	 
 	</para>
 	<para>
 	  The following values of <argname>funcname</argname> are
