@@ -54,6 +54,7 @@ static void varinfo_write (const DATASET *dset, int i, FILE *fp)
 {
     VARINFO V = *dset->varinfo[i]; /* shallow copy */
 
+    V.stack_level = 0;
     V.label = NULL;
     V.st = NULL;
     fwrite(&V, sizeof V, 1, fp);
@@ -348,7 +349,7 @@ static int read_purebin_basics (const char *fname,
 }
 
 /* Common function used by both the full data reader
-   and the subset version: write trailing metadata.
+   and the subset version: read trailing metadata.
 */
 
 static int read_purebin_tail (DATASET *bset,
