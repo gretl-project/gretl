@@ -3771,6 +3771,22 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
     return err;
 }
 
+static int is_public_funcs_line (const char *line, int *offset)
+{
+    const char *s = line;
+
+    if (!strncmp(s, "public", 6)) {
+	s += 6;
+	s += strspn(s, " ");
+	if (*s == '=') {
+	    *offset = 1 + s - line;
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 				      PRN *prn, int *err)
 {
@@ -3805,24 +3821,29 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, gretlopt opt,
 	/* first pass: gather names of public functions */
 
 	while (fgets(line, sizeof line, fp) && !*err) {
-	    if (!strncmp(line, "public =", 8)) {
+	    int offset = 0;
+
+	    if (is_public_funcs_line(line, &offset)) {
 		while (ends_with_backslash(line)) {
 		    gretl_charsub(line, '\\', '\0');
 		    *cont = '\0';
 		    if (fgets(cont, sizeof cont, fp)) {
 			strcat(line, cont);
 		    } else {
-			*err = E_DATA;
+			*err = E_PARSE;
 		    }
 		}
 		if (!*err) {
 		    tailstrip(line);
-		    pubnames = gretl_string_split(line + 8, &npub, NULL);
-		    if (npub == 0) {
-			*err = E_DATA;
-		    }
+		    pubnames = gretl_string_split(line + offset, &npub, NULL);
 		}
+		break;
 	    }
+	}
+
+	if (npub == 0) {
+	    pprintf(prn, "no specification of public functions was found\n");
+	    *err = E_DATA;
 	}
 
 	if (!*err) {
