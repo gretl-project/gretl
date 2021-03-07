@@ -1482,9 +1482,7 @@
 	  realized. Note that the count column can always be found at
 	  the position <lit>nelem(byvar) + 1</lit>. 	
 	</para>
-	<subhead>
-	  Usage with a functional operation:	
-	</subhead>
+	<subhead>Specifying an aggregation function</subhead>
 	<para>
 	  If the third argument is given, then <argname>x</argname>
 	  must not be <lit>null</lit>, and the rightmost

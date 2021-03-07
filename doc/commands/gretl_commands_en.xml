@@ -5111,10 +5111,11 @@
 	may be desirable to use more informative labels. This can be
 	achieved via the additional keyword <lit>param_names</lit>
 	within the command block. For a model with <math>k</math>
-	parameters the argument following this keyword should be
-	either a double-quoted string literal holding <math>k</math>
-	space-separated names or the name of a string variable that
-	holds <math>k</math> such names.
+	parameters the argument following this keyword should be a
+	double-quoted string literal holding <math>k</math>
+	space-separated names, the name of a string variable that
+	holds <math>k</math> such names, or the name of an array of
+	<math>k</math> strings.
       </para>
     </description>
 
@@ -8803,9 +8804,10 @@
 	achieved via the additional keyword <lit>param_names</lit>
 	within the command block. For a model with <math>k</math>
 	parameters the argument following this keyword should be
-	either a double-quoted string literal holding <math>k</math>
-	space-separated names or the name of a string variable that
-	holds <math>k</math> such names.
+	a double-quoted string literal holding <math>k</math>
+	space-separated names, the name of a string variable that
+	holds <math>k</math> such names, or the name of an array of
+	<math>k</math> strings.
       </para>
       <para>
 	For an in-depth description of <cmd>mle</cmd> please refer to
@@ -9527,10 +9529,11 @@
 	may be desirable to use more informative labels. This can be
 	achieved via the additional keyword <lit>param_names</lit>
 	within the command block. For a model with <math>k</math>
-	parameters the argument following this keyword should be
-	either a double-quoted string literal holding <math>k</math>
-	space-separated names or the name of a string variable that
-	holds <math>k</math> such names.
+	parameters the argument following this keyword should be a
+	double-quoted string literal holding <math>k</math>
+	space-separated names, the name of a string variable that
+	holds <math>k</math> such names, or the name of an array of
+	<math>k</math> strings.
       </para>
       <para>
 	For further details on NLS estimation please see

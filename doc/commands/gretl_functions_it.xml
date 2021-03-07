@@ -1458,9 +1458,7 @@
 	  ricorre. Quest'ultima, quindi, starà alla posizione
 	  <lit>nelem(byvar) + 1</lit>. 
 	</para>
-	<subhead>
-	  Uso con un operatore funzionale:	
-	</subhead>
+	<subhead>Uso con un operatore funzionale</subhead>
 	<para>
 	  Se viene usato il terzo argomento, <argname>x</argname> non
 	  può essere <lit>null</lit>, e le <math>m</math> colonne più
