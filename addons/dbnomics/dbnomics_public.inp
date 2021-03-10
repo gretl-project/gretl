@@ -172,7 +172,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
    string json
    ret.error = 0
    ret.has_data = 0
-   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1"
+   string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=1&metadata=0"
    ret.error = dbn_get_json(parms, verbose, &json)
    if ret.error
       return ret

@@ -22,12 +22,24 @@ end function
 
 function void print_series_dimensions (const bundle dims)
     strings keys = getkeys(dims)
-    printf "Dimensions, showing JSON mask form:\n"
-    loop i=1..nelem(keys) -q
-        b = dims[keys[i]]
-        printf "  %s: %s, {\"%s\":[\"%s\"]}\n", b.dimension_label, b.value_label,
-          keys[i], b.value
-    endloop
+    if nelem(keys) == 0
+        return
+    endif
+    di = dims[keys[1]]
+    if typeof(di) == 5 # bundle
+        printf "Dimensions, showing JSON mask form:\n"
+        loop i=1..nelem(keys) -q
+            di = dims[keys[i]]
+            printf "  %s: %s, {\"%s\":[\"%s\"]}\n", di.dimension_label, di.value_label,
+              keys[i], di.value
+        endloop
+    elif typeof(di) == 4 # string
+        printf "Dimensions in JSON mask form:\n"
+        loop i=1..nelem(keys) -q
+            di = dims[keys[i]]
+            printf "  {\"%s\":[\"%s\"]}\n", keys[i], di
+        endloop
+    endif
 end function
 
 ### ------------------------------------------------------------------------
