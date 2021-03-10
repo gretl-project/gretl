@@ -25,6 +25,7 @@
 <a href="#revert">Reverting local changes</a><br>
 <a href="#diffs">Looking at diffs</a><br>
 <a href="#branch">Branching</a><br>
+<a href="#branch-clean">Cleaning up old branches</a><br>
 <a href="#windows">Using git on MS Windows</a>
 </p>  
 
@@ -222,6 +223,18 @@ git branch -d somebranch
 
 <pre>
 git push origin --delete somebranch
+</pre>
+
+<h2><a name="branch-clean">Cleaning up unused branches</h2>
+
+<p>When branching has been going on for some time, you may end up
+with references to defunct branches in your local copy: branches
+that were at one time active at &ldquo;origin&rdquo; but have since been
+merged and/or deleted. How to get rid of these dangling references?
+Fairly simple, though not totally easy to remember:</p>
+
+<pre>
+git remote prune origin
 </pre>
 
 <h2><a name="windows">Using git on MS Windows</h2>
