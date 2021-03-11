@@ -769,6 +769,15 @@ double dfgls_pvalue (double tau, int T, int trend,
 	    ci += b[k+j] * r->val[j];
 	}
 	gretl_matrix_set(C, i, 0, ci);
+	if (i == 0) {
+	    if (tau < 1.25 * C->val[0]) {
+		/* extrapolation unlikely to work well for big
+		   negative tau: employ conservative fudge
+		*/
+		pval = 1.0e-5;
+		goto bailout;
+	    }
+	}
 	d = fabs(ci - tau);
 	if (d < dmin) {
 	    dmin = d;
@@ -832,7 +841,6 @@ double dfgls_pvalue (double tau, int T, int trend,
 
     if (!*err) {
 	double t3 = g->val[3] / sqrt(gretl_matrix_get(V, 3, 3));
-	int lo_tail = tau < y->val[0];
 
 	if (fabs(t3) < 2) {
 	    /* drop the cubic term */
@@ -845,12 +853,7 @@ double dfgls_pvalue (double tau, int T, int trend,
 	    for (i=2; i<g->rows; i++) {
 		ci += pow(tau, i) * g->val[i];
 	    }
-	    if (lo_tail && ci > tau) {
-		/* we're off-base here! so fudge it */
-		pval = normal_cdf(tau);
-	    } else {
-		pval = normal_cdf(ci);
-	    }
+	    pval = normal_cdf(ci);
 	}
     }
 
