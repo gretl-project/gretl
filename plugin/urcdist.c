@@ -802,6 +802,13 @@ double dfgls_pvalue (double tau, int T, int trend,
 	y->val[i] = normal_cdf_inverse(a[i1 + i]);
     }
 
+#if PDEBUG
+    fprintf(stderr, " i1 = %d, i2 = %d\n", i1, i2);
+    for (i=0; i<npoints; i++) {
+	fprintf(stderr, " %d: a=%g -> y=%g\n", i, a[i1 + i], y->val[i]);
+    }
+#endif
+
     /* fill out X */
     for (j=0; j<nreg; j++) {
 	for (i=0; i<npoints; i++) {
@@ -825,6 +832,7 @@ double dfgls_pvalue (double tau, int T, int trend,
 
     if (!*err) {
 	double t3 = g->val[3] / sqrt(gretl_matrix_get(V, 3, 3));
+	int lo_tail = tau < y->val[0];
 
 	if (fabs(t3) < 2) {
 	    /* drop the cubic term */
@@ -837,7 +845,12 @@ double dfgls_pvalue (double tau, int T, int trend,
 	    for (i=2; i<g->rows; i++) {
 		ci += pow(tau, i) * g->val[i];
 	    }
-	    pval = normal_cdf(ci);
+	    if (lo_tail && ci > tau) {
+		/* we're off-base here! so fudge it */
+		pval = normal_cdf(tau);
+	    } else {
+		pval = normal_cdf(ci);
+	    }
 	}
     }
 

@@ -1098,7 +1098,7 @@ static double get_dfgls_pvalue (adf_info *ainfo)
     }
 
 #if ADF_DEBUG
-    fprintf(stderr, "dfgls_pval: tau=%g, T=%d, trend=%d kmax=%d, PQ=%d: pval=%g\n",
+    fprintf(stderr, "dfgls_pval: tau=%g, T=%d, trend=%d, kmax=%d, PQ=%d: pval=%g\n",
 	    ainfo->tau, T, trend, ainfo->kmax, PQ, pval);
 #endif
 
