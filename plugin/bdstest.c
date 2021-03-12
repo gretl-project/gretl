@@ -17,597 +17,632 @@
  *
  */
 
-/*  Apparatus for BDS nonlinearity test based on code from Blake
-    LeBaron.
-
-    Original notice:
-
-    Blake LeBaron
-    Department of Economics
-    University Of Wisconsin-Madison
-    July 1988
-    March 1990
-
-    This software is distributed with the understanding that it is free.
-    Users may distribute it to anyone as long as they don't charge anything.
-    Also, the author gives this out without any support or responsibility
-    for errors of any kind. I hope that the distribution of this software
-    will further enhance are understanding of these new measures of
-    dependence.
+/*  Apparatus for BDS nonlinearity test: implementation in C of the
+    algorithm advocated by Ludwig Kanzler in his 1999 paper,
+    "Very fast and correctly sized estimation of the BDS statistic",
+    DOI:10.2139/ssrn.151669.
 */
 
-#define STANDALONE 0
+#include "libgretl.h"
+#include "version.h"
 
-#if STANDALONE
-# include <gretl/libgretl.h>
-#else
-# include "libgretl.h"
-# include "version.h"
-#endif
+typedef guint32 bword;
+typedef struct kinfo_ kinfo;
 
-/* NBITS: the number of usable bits per word entry. Only 15 bits
-   are used to keep the lookup table reasonably small.
-*/
-#define NBITS 15
-#define ALLBITS 0xffff
-#define TABLEN 32767
-
-#define DEBUG 0
-
-struct position {
-    double value;
-    int pos;
+struct kinfo_ {
+    int n;           /* number of observations */
+    int maxdim;      /* max correlation dimension */
+    double eps;      /* "closeness" criterion */
+    double kfac;     /* Dechert's 'k' */
+    double c0;       /* first correlation */
+    int bits;        /* number of bits required */
+    int nwords;      /* number of words required */
+    bword **wmat;    /* words matrix */
+    guint32 *colsum; /* column sums */
+    guint32 *rowsum; /* row sums */
+    guint8 *bitinfo; /* counts of bits set */
+    double *c1;      /* initial statistics */
+    double *dspace;  /* workspace, doubles */
+    double *wsave;   /* bootstrap test stats */
+    int *bcount;     /* bootstrap counts */
+    double *rx;      /* resampled x for bootstrap */
+    int *z;          /* resampling indices */
 };
 
-typedef struct bds_info_ bds_info;
-
-struct bds_info_ {
-    int bits[NBITS];
-    int *mask;
-    gint16 *grid;
-    gint16 **start;
-    int *lookup;
-    struct position *postab;
-    struct position *poslast;
-};
-
-static void bds_info_destroy (bds_info *bi)
+static void resample_array (kinfo *ki, const double *x)
 {
-    free(bi->mask);
-    free(bi->lookup);
-    free(bi->postab);
-    free(bi->start);
-    free(bi->grid);
-    free(bi);
-}
+    int i;
 
-static bds_info *bds_info_new (int n)
-{
-    bds_info *bi = calloc(1, sizeof *bi);
-    int err = 0;
+    /* generate n drawings from [0 .. n-1] */
+    gretl_rand_int_minmax(ki->z, ki->n, 0, ki->n - 1);
 
-    if (bi == NULL) {
-	err = E_ALLOC;
-    } else {
-	int memsize = 0;
-	int i, j;
-
-	bi->mask = calloc(2*n, sizeof *bi->mask);
-	bi->lookup = calloc(TABLEN+1, sizeof *bi->lookup);
-	bi->postab = calloc(n, sizeof *bi->postab);
-	bi->start = calloc(n+1, sizeof *bi->start);
-
-	if (bi->mask == NULL || bi->lookup == NULL ||
-	    bi->postab == NULL || bi->start == NULL) {
-	    err = 1;
-	    goto bi_finish;
-	}
-
-	/* determine the required grid size */
-	for (i=0; i<=n; i++) {
-	    memsize += (n-i)/NBITS + 1;
-	}
-
-	bi->grid = calloc(memsize, sizeof *bi->grid);
-	if (bi->grid == NULL) {
-	    err = E_ALLOC;
-	    goto bi_finish;
-	}
-
-	bi->start[0] = bi->grid;
-	for (i=1; i<=n; i++) {
-	    bi->start[i] = bi->start[i-1] + (n-i)/NBITS + 1;
-	}
-
-	/* bit vector */
-	bi->bits[0] = 1;
-	for (i=1; i<15; i++) {
-	    bi->bits[i] = (bi->bits[i-1] << 1);
-	}
-
-	/* table for bit counting */
-	for (i=0; i<=TABLEN; i++){
-	    bi->lookup[i] = 0;
-	    for (j=0; j<NBITS; j++) {
-		if (i & bi->bits[j]) {
-		    bi->lookup[i] += 1;
-		}
-	    }
-	}
-    }
-
- bi_finish:
-
-    if (err && bi != NULL) {
-	bds_info_destroy(bi);
-	bi = NULL;
-    }
-
-    return bi;
-}
-
-/* qsort callback */
-
-static int comp (const void *a, const void *b)
-{
-    const struct position *pa = a;
-    const struct position *pb = b;
-
-    return (pa->value > pb->value) - (pa->value < pb->value);
-}
-
-/* embed bitmap grid to next higher dimension
-
-   g(i,j) = g(i,j) & g(i+1,j+1)
-*/
-
-static void embed (int n, int dim, bds_info *bi)
-{
-    gint16 *ip, *ip2;
-    int j;
-
-    for (j=0; j<n-dim; j++) {
-	ip = bi->start[j];
-	for (ip2 = bi->start[j+1]; ip2 <= bi->start[j+2]-1; ip2++) {
-	    *ip = (*ip) & (*ip2);
-	    ip++;
-	}
-	if (ip != bi->start[j+1]) {
-	    *ip = 0;
-	}
+    /* fill target with selected rows of @x */
+    for (i=0; i<ki->n; i++) {
+	ki->rx[i] = x[ki->z[i]];
     }
 }
 
-/* mask pattern for row l, nbits: number of bits used
-                           omit: number of bits omitted
-                           mask: mask[0], mask[1] two-word mask
-*/
+/* return the sum of the sequence @imin:@imax */
 
-static void genmask (int l, int n, int nbits, int omit,
-		     int *mask, int *bits)
+static guint32 sumseq (int l, int r)
 {
-    int i, k, j, last, itrue;
+    guint32 ret = 0;
+    int i, imin, imax;
 
-    mask[0] = mask[1] = ALLBITS;
-    last = (n-l-1)/nbits;
-    for (i=n-omit; i<n; i++) {
-	itrue = i - l - 1;
-	j = itrue/nbits;
-	k = nbits - 1 -(itrue % nbits);
-	j = last - j;
-	mask[j] = mask[j] ^ bits[k];
+    imin = l < r ? l : r;
+    imax = r > l ? r : l;
+
+    for (i=imin; i<=imax; i++) {
+	ret += i;
     }
-}
-
-/* count @c stats for grid: zero out parts not counted using mask;
-   returns @c
-*/
-
-static double evalc (int n, bds_info *bi)
-{
-    gint32 nc = 0;
-    double nd = n;
-    gint16 *ip;
-    int j;
-
-    for (j=0; j<n; j++) {
-	if (bi->start[j+1] - bi->start[j] > 2) {
-	    for (ip = bi->start[j]; ip < bi->start[j+1]-2; ip++) {
-		nc += bi->lookup[*ip];
-	    }
-	    for (ip = bi->start[j+1]-2; ip < bi->start[j+1]; ip++) {
-		nc += bi->lookup[(*ip) & bi->mask[j*2 + bi->start[j+1]-ip-1]];
-	    }
-	} else {
-	    for (ip = bi->start[j]; ip < bi->start[j+1]; ip++) {
-		nc += bi->lookup[(*ip) & bi->mask[j*2 + bi->start[j+1]-ip-1]];
-	    }
-	}
-    }
-
-    return 2.0 * nc / (nd*(nd-1));
-}
-
-static void gridon (int ix, int iy, bds_info *bi)
-{
-    int tmp, ipos, ibit;
-
-    if (ix == iy) {
-	return;
-    }
-    if (ix > iy) {
-	tmp = ix;
-	ix = iy;
-	iy = tmp;
-    }
-    iy = iy - ix - 1;
-    ipos = iy / NBITS;
-    ibit = NBITS - 1 - (iy % NBITS);
-    bi->start[ix][ipos] |= bi->bits[ibit];
-}
-
-static double fkc (const double *x, int n, double *c,
-		   int m, double eps, bds_info *bi)
-{
-    gint16 *ip;
-    int i, nobs;
-    struct position *pt;
-    struct position *p;
-    int remove = m - 1;
-    gint32 count, tcount, phi;
-    double dlen, k;
-
-    nobs = n - remove;
-    dlen = nobs;
-
-    /* clear grid */
-    for (ip=bi->grid; ip<=bi->start[n]; ip++) {
-	*ip = 0;
-    }
-
-    /* initialize table from data */
-    for (i=0; i<n; i++){
-	bi->postab[i].value = x[i];
-	bi->postab[i].pos = i;
-    }
-    /* and perform Thieler sort */
-    qsort(bi->postab, n, sizeof *bi->postab, comp);
-    bi->poslast = bi->postab + n - 1;
-
-    /* start row by row construction */
-    count = phi = 0;
-    for (p=bi->postab; p<=bi->poslast; p++) {
-	tcount = 0;
-	pt = p;
-	/* count to right */
-	while (pt->value - p->value <= eps) {
-	    gridon(p->pos, pt->pos, bi);
-	    if (p->pos < nobs && pt->pos < nobs) {
-		tcount++;
-	    }
-	    if (pt == bi->poslast) {
-		break;
-	    } else {
-		pt++;
-	    }
-	}
-	if (p != bi->postab){
-	    /* count to left: this is not necessary for
-	       building the grid, but is needed to get
-	       the Dechert k
-	    */
-	    pt = p-1;
-	    while (p->value - pt->value <= eps) {
-		if (p->pos < nobs && pt->pos < nobs) {
-		    tcount++;
-		}
-		if (pt == bi->postab) {
-		    break;
-		} else {
-		    pt--;
-		}
-	    }
-	}
-	count += tcount;
-	/* Dechert speed up k */
-	phi += tcount * tcount;
-    }
-
-    /* adjust @k and @c to U statistic */
-    count -= nobs;
-    phi -= nobs + 3*count;
-#if DEBUG
-    printf("%d %d\n", count, phi);
-#endif
-    k = phi / (dlen * (dlen-1) * (dlen-2));
-    c[1] = count / (dlen * (dlen-1));
-
-    /* build mask */
-    for (i=0; i<nobs; i++) {
-	genmask(i, n, NBITS, remove, bi->mask+2*i, bi->bits);
-    }
-
-    for (i=2; i<=m; i++) {
-	embed(n, i, bi);
-	c[i] = evalc(nobs, bi);
-    }
-
-    return k;
-}
-
-static double ipow (double x, int m)
-{
-    double y = 1;
-    int j;
-
-    for (j=0; j<m; j++) {
-	y *= x;
-    }
-
-    return y;
-}
-
-/* This function calculates the asymptotic standard error from @c
-   and @k. It then returns the test statistic which is asymptotically
-   N(0,1). These formulas can be found in Brock, Hsieh, LeBaron,
-   page 43.
-*/
-
-static double cstat (double c, double cm, double k, int m, int n)
-{
-    double std, sigma = 0;
-    int j;
-
-    for (j=1; j<=m-1; j++) {
-	sigma += 2 * ipow(k, m-j) * ipow(c, 2*j);
-    }
-    sigma += ipow(k, m) + (m-1)*(m-1) * ipow(c, 2*m)
-	-m * m * k * ipow(c, 2*m-2);
-    sigma *= 4.0;
-
-    std = sqrt(sigma/n);
-
-    return (cm - ipow(c, m)) / std;
-}
-
-#if STANDALONE
-
-/* stand-alone program for Monte Carlo usage */
-
-int main (int argc, char **argv)
-{
-    gretl_matrix *A = NULL;
-    gretl_matrix *Ar = NULL;
-    bds_info *bi = NULL;
-    int *rej = NULL;
-    int *bc = NULL;
-    double *x = NULL;
-    double *c = NULL;
-    double *z = NULL;
-    int i, j, n, m, r;
-    int iters = 5000;
-    int NB = 1999;
-    int Ha = 0;
-    double k, eps, pv;
-    int err = 0;
-
-    libgretl_init();
-
-    if (argc == 1) {
-	; /* OK, testing under the null */
-    } else if (!strcmp(argv[1], "Ha")) {
-	Ha = 1; /* testing under an alternative */
-    } else {
-	fprintf(stderr, "please give \"Ha\" or nothing\n");
-	exit(EXIT_FAILURE);
-    }
-
-    n = 200;
-    m = 5;
-    eps = 0.50;
-    A = gretl_matrix_alloc(n, 1);
-    c = malloc((m+1) * sizeof *c);
-    rej = malloc((m-1) * sizeof *rej);
-    z = malloc((m-1) * sizeof *z);
-
-    if (Ha) {
-	x = malloc(n * sizeof *x);
-    }
-
-    /* initialize rejection counts */
-    for (i=0; i<m-1; i++) {
-	rej[i] = 0;
-    }
-
-    printf("monte carlo: iters=%d, n=%d, m=%d, eps=%g, NB=%d, Ha=%d\n",
-	   iters, n, m, eps, NB, Ha);
-
-    if (NB > 0) {
-	bc = malloc((m-1) * sizeof *bc);
-	Ar = gretl_matrix_alloc(n, 1);
-    }
-
-    bi = bds_info_new(n);
-    if (bi == NULL) {
-	fputs("Out of memory\n", stderr);
-	exit(EXIT_FAILURE);
-    }
-
-    for (r=0; r<iters && !err; r++) {
-	/* Monte Carlo iterations */
-	if (NB > 0 && r > 0 && r % 100 == 0) {
-	    fprintf(stderr, "mc iter %d\n", r);
-	}
-	gretl_matrix_random_fill(A, D_NORMAL);
-	if (Ha) {
-	    /* nonlinear MA alternative */
-	    for (i=0; i<n; i++) {
-		x[i] = A->val[i];
-	    }
-	    for (i=2; i<n; i++) {
-		A->val[i] = x[i] + 0.8*x[i-1]*x[i-2];
-	    }
-	}
-
-	/* calculate raw c and k statistics */
-	k = fkc(A->val, n, c, m, eps, bi);
-#if DEBUG
-	printf("k = %lf\n",k);
-	for (i=1; i<=m; i++) {
-	    printf("c(%d) %lf\n", i, c[i]);
-	}
-#endif
-	/* calculate normalized stats */
-	for (i=2; i<=m; i++) {
-	    z[i-2] = cstat(c[1], c[i], k, i, n-m+1);
-	    if (NB == 0) {
-		/* not doing bootstrap */
-		pv = normal_pvalue_2(z[i-2]);
-		if (iters <= 10) {
-		    printf("dim %d: %f [%.4f]\n", i, z[i-2], pv);
-		}
-		if (pv < 0.05) {
-		    rej[i-2] += 1;
-		}
-	    }
-	}
-
-	if (NB > 0) {
-	    /* doing bootstrap */
-	    double zji;
-
-	    for (i=0; i<m-1; i++) {
-		bc[i] = 0;
-	    }
-	    for (j=0; j<NB; j++) {
-		err = gretl_matrix_resample2(Ar, A);
-		k = fkc(Ar->val, n, c, m, eps, bi);
-		for (i=2; i<=m; i++) {
-		    zji = cstat(c[1], c[i], k, i, n-m+1);
-		    if (fabs(zji) > fabs(z[i-2])) {
-			bc[i-2] += 1;
-		    }
-		}
-	    }
-	    for (i=0; i<m-1 && !err; i++) {
-		pv = bc[i] / (double) (NB + 1);
-		if (pv < 0.05) {
-		    rej[i] += 1;
-		}
-	    }
-	} else if (iters <= 10) {
-	    putchar('\n');
-	}
-    }
-
-    if (err) {
-	printf("Hit an error!\n");
-    } else {
-	printf("Rejection rates at nominal 5 percent level:\n");
-	for (i=0; i<m-1; i++) {
-	    printf("dim %d: %.3f\n", i+2, rej[i] / (double) iters);
-	}
-    }
-
-    bds_info_destroy(bi);
-    gretl_matrix_free(A);
-    gretl_matrix_free(Ar);
-    free(x);
-    free(c);
-    free(z);
-    free(rej);
-    free(bc);
-
-    libgretl_cleanup();
-
-    return 0;
-}
-
-#else /* not STANDALONE */
-
-gretl_matrix *bdstest (const double *x, int n, int m, double eps, int *err)
-{
-    gretl_matrix *ret;
-    gretl_matrix A = {0};
-    gretl_matrix *Ar = NULL;
-    bds_info *bi;
-    double *c, *z;
-    double k, pv;
-    int *bc = NULL;
-    int NB = 0;
-    int i, j;
-
-    if (n < 1500) {
-	NB = 1999;
-    }
-
-    if (NB > 0) {
-	/* apparatus for bootstrap */
-	bc = malloc((m-1) * sizeof *bc);
-	Ar = gretl_matrix_alloc(n, 1);
-	if (bc == NULL || Ar == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	}
-	gretl_matrix_init(&A);
-	A.rows = n;
-	A.cols = 1;
-	A.val = (double *) x;
-    }
-
-    /* common allocations */
-    c = malloc((m+1) * sizeof *c);
-    z = malloc((m-1) * sizeof *z);
-    ret = gretl_matrix_alloc(m-1, 2);
-    bi = bds_info_new(n);
-
-    if (c == NULL || z == NULL || ret == NULL || bi == NULL) {
-	*err = E_ALLOC;
-	gretl_matrix_free(ret);
-	ret = NULL;
-    } else {
-	/* calculate raw c and k statistics */
-	k = fkc(x, n, c, m, eps, bi);
-	/* calculate normalized statistics */
-	for (i=2; i<=m; i++) {
-	    z[i-2] = cstat(c[1], c[i], k, i, n-m+1);
-	    gretl_matrix_set(ret, i-2, 0, z[i-2]);
-	    if (NB == 0) {
-		/* record asymptotic p-value */
-		pv = normal_pvalue_2(z[i-2]);
-		gretl_matrix_set(ret, i-2, 1, pv);
-	    }
-	}
-	if (NB > 0) {
-	    double zji;
-
-	    for (i=0; i<m-1; i++) {
-		bc[i] = 0;
-	    }
-	    for (j=0; j<NB; j++) {
-		gretl_matrix_resample2(Ar, &A);
-		k = fkc(Ar->val, n, c, m, eps, bi);
-		for (i=2; i<=m; i++) {
-		    zji = cstat(c[1], c[i], k, i, n-m+1);
-		    if (fabs(zji) >= fabs(z[i-2])) {
-			bc[i-2] += 1;
-		    }
-		}
-	    }
-	    for (i=0; i<m-1; i++) {
-		pv = bc[i] / (double) (NB + 1);
-		gretl_matrix_set(ret, i, 1, pv);
-	    }
-	    gretl_matrix_free(Ar);
-	    free(bc);
-	}
-    }
-
-    bds_info_destroy(bi);
-    free(c);
-    free(z);
 
     return ret;
 }
 
-#endif /* STANDALONE or not */
+/* write to @targ the powers of @base specified in @seq */
+
+static void ivp (double *targ, double base, int *seq, int len)
+{
+    int i;
+
+    for (i=0; i<len; i++) {
+	targ[i] = pow(base, seq[i]);
+    }
+}
+
+static int make_bitinfo (kinfo *ki)
+{
+    int pp, len = pow(2.0, ki->bits);
+    double *pb;
+    int i, j;
+
+    pb = malloc(ki->bits * sizeof *pb);
+    ki->bitinfo = malloc(len * sizeof *ki->bitinfo);
+
+    if (pb == NULL || ki->bitinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<ki->bits; i++) {
+	pb[i] = pow(2.0, -(ki->bits-i-1));
+    }
+    for (i=0; i<len; i++) {
+	ki->bitinfo[i] = 0;
+	for (j=0; j<ki->bits; j++) {
+	    pp = floor(i * pb[j]);
+	    ki->bitinfo[i] += pp % 2;
+	}
+    }
+    free(pb);
+
+    return 0;
+}
+
+static void free_words_mat (bword **wordmat, int n)
+{
+    if (wordmat != NULL) {
+	int i;
+
+	for (i=0; i<n-1; i++) {
+	    free(wordmat[i]);
+	}
+	free(wordmat);
+    }
+}
+
+static int allocate_words_matrix (kinfo *ki, int n)
+{
+    int i, err = 0;
+
+    ki->wmat = calloc(n-1, sizeof *ki->wmat);
+    if (ki->wmat == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<n-1 && !err; i++) {
+	    ki->wmat[i] = calloc(ki->nwords, sizeof **ki->wmat);
+	    if (ki->wmat[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* only required for bootstrap */
+
+static void reset_words_matrix (kinfo *ki, int n)
+{
+    int i, j;
+
+    for (i=0; i<n-1; i++) {
+	for (j=0; j<ki->nwords; j++) {
+	    ki->wmat[i][j] = 0;
+	}
+    }
+}
+
+static int make_words_matrix (const double *x, int n, kinfo *ki)
+{
+    bword **wmat = NULL;
+    bword *wrow = NULL;
+    guint8 *bitvec;
+    int *p2b;
+    int nw, bvlen;
+    int i, j, k, jj;
+    int err;
+
+    if (ki->wmat == NULL) {
+	/* allocate not already done */
+	err = allocate_words_matrix(ki, n);
+	if (err) {
+	    return err;
+	}
+    } else {
+	/* bootstrapping */
+	reset_words_matrix(ki, n);
+	x = ki->rx;
+    }
+
+    wmat = ki->wmat;
+
+    bitvec = calloc(n-1, sizeof *bitvec);
+    p2b = malloc(ki->bits * sizeof *p2b);
+    wrow = calloc(ki->nwords, sizeof *wrow);
+
+    if (bitvec == NULL || p2b == NULL || wrow == NULL) {
+	free(bitvec);
+	free(p2b);
+	free(wrow);
+	return E_ALLOC;
+    }
+
+    p2b[0] = 1;
+    for (i=1; i<ki->bits; i++) {
+	p2b[i] = 2 * p2b[i-1];
+    }
+
+    for (i=0; i<n-1; i++) {
+	bvlen = n-1-i;
+	k = 0;
+	for (j=i+1; j<n; j++) {
+	    bitvec[k] = fabs(x[j] - x[i]) <= ki->eps;
+	    ki->rowsum[i] += bitvec[k];
+	    ki->colsum[j] += bitvec[k];
+	    k++;
+	}
+	nw = ceil((n-i) / (double) ki->bits);
+	k = 0;
+	for (j=0; j<nw; j++) {
+	    wrow[j] = 0;
+	    for (jj=0; jj<ki->bits && k<bvlen; jj++) {
+		wrow[j] += bitvec[k++] * p2b[jj];
+	    }
+	    wmat[i][j] = wrow[j];
+	}
+    }
+
+    free(p2b);
+    free(wrow);
+    free(bitvec);
+
+    return err;
+}
+
+static int get_num_bits (int n, double *mem)
+{
+    const double a[] = {
+	0.000016,
+	0.000005,
+	0.000032
+    };
+    double mi, minv = 1e6;
+    double n2 = n * (double) n;
+    int i, bits = 1;
+
+    for (i=1; i<=52; i++) {
+	mi = (a[0] * i + a[1]) * pow(2.0, i);
+	mi += a[2] * n2 / i;
+	if (i == 1) {
+	    minv = mi;
+	} else if (mi < minv) {
+	    minv = mi;
+	    bits = i;
+	}
+    }
+
+    if (mem != NULL) {
+	*mem = minv;
+    }
+
+    return bits;
+}
+
+static int compute_k_c1 (int n, int maxdim, kinfo *ki)
+{
+    guint32 *md = malloc(maxdim * sizeof *md);
+    guint32 *den = malloc(maxdim * sizeof *den);
+    double bs0, tmp, fs2, xn = n;
+    guint32 rcs;
+    int i, k, err = 0;
+
+    if (md == NULL || den == NULL) {
+	free(md); free(den);
+	return E_ALLOC;
+    }
+
+    /* materials for c1 */
+    md[0] = 0;
+    for (i=maxdim-1; i<n-1; i++) {
+	md[0] += ki->rowsum[i];
+    }
+    k = maxdim - 1;
+    for (i=0; i<maxdim-1; i++) {
+	md[k--] = ki->rowsum[i];
+    }
+
+    /* c1, first round */
+    ki->c1[0] = md[0];
+    for (i=1; i<maxdim; i++) {
+	ki->c1[i] = ki->c1[i-1] + md[i];
+    }
+    bs0 = ki->c1[maxdim-1];
+
+    /* the divisor vector */
+    den[0] = 0;
+    for (i=1; i<=n-maxdim; i++) {
+	den[0] += i;
+    }
+
+    /* divide c1 by cumulated den */
+    ki->c1[0] /= den[0];
+    k = n - maxdim + 1;
+    for (i=1; i<maxdim; i++) {
+	den[i] = den[i-1] + k++;
+	ki->c1[i] /= den[i];
+    }
+
+    /* reverse c1 */
+    for (i=0; i<maxdim/2; i++) {
+	tmp = ki->c1[i];
+	ki->c1[i] = ki->c1[maxdim-i-1];
+	ki->c1[maxdim-i-1] = tmp;
+    }
+
+    /* sum of squares */
+    fs2 = 0;
+    for (i=0; i<n; i++) {
+	rcs = ki->rowsum[i] + ki->colsum[i];
+	fs2 += rcs * rcs;
+    }
+
+    ki->c0 = ki->c1[0];
+    ki->kfac = (fs2 + 2.0*n - 3*(2*bs0+n)) / (xn * (xn-1) * (xn-2));
+
+    if (isnan(ki->c0) || isnan(ki->kfac)) {
+	fprintf(stderr, "bdstest: got NaN for c0 and/or k\n");
+	err = E_NAN;
+    }
+
+    free(md);
+    free(den);
+
+    return err;
+}
+
+static double kanzler_eps (const double *x, int n, double e)
+{
+    guint32 s1 = 0, s2 = 0, i1 = 0, i2 = 0;
+    guint32 smax = sumseq(1, n-1);
+    double *dist;
+    double eps;
+    int i, j, k, n1 = n-1;
+
+    dist = calloc(smax, sizeof *dist);
+    if (dist == NULL) {
+	return NADBL;
+    }
+
+    for (i=1; i<n; i++) {
+	s1 = sumseq(0, i-2);
+	s2 = sumseq(1, i-1);
+	i1 = (i-1) * n1 - s1;
+	i2 = i * n1 - s2 - 1;
+	k = i;
+	for (j=i1; j<=i2; j++) {
+	    dist[j] = fabs(x[k++] - x[i-1]);
+	}
+    }
+
+    qsort(dist, smax, sizeof *dist, gretl_compare_doubles);
+    i = (int) round(e * smax);
+    eps = dist[i-1];
+    free(dist);
+
+    return eps;
+}
+
+static void destroy_kinfo (kinfo *ki)
+{
+    free(ki->colsum);
+    free(ki->rowsum);
+    free(ki->c1);
+    free(ki->bitinfo);
+    free(ki->dspace);
+    free(ki->wsave);
+    free(ki->bcount);
+    free(ki->rx);
+    free(ki->z);
+
+    if (ki->wmat != NULL) {
+	free_words_mat(ki->wmat, ki->n);
+    }
+}
+
+static int kanzler_init (kinfo *ki, int n, int maxdim)
+{
+    int i, err = 0;
+
+    ki->n = n;
+    ki->maxdim = maxdim;
+    ki->bits = get_num_bits(n, NULL);
+    ki->nwords = ceil((n-1) / (double) ki->bits);
+    ki->wmat = NULL;
+    ki->colsum = NULL;
+    ki->rowsum = NULL;
+    ki->c1 = NULL;
+    ki->bitinfo = NULL;
+    ki->dspace = NULL;
+    ki->wsave = NULL;
+    ki->bcount = NULL;
+    ki->rx = NULL;
+    ki->z = NULL;
+
+    if (ki->bits > 32) {
+	gretl_errmsg_sprintf("bdstest: input is too big (requires %d bits)\n", ki->bits);
+	err = E_DATA;
+    } else {
+	ki->colsum = malloc(n * sizeof *ki->colsum);
+	ki->rowsum = malloc(n * sizeof *ki->rowsum);
+	ki->c1 = malloc(maxdim * sizeof *ki->c1);
+	if (ki->colsum == NULL ||
+	    ki->rowsum == NULL ||
+	    ki->c1 == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		ki->colsum[i] = 1;
+		ki->rowsum[i] = 0;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* allocate workspace for use in the main function */
+
+static int make_dspace (kinfo *ki, int md1,
+			double **iv1, double **iv2,
+			double **c, double **sigma,
+			double **w)
+{
+    ki->dspace = malloc(5 * md1 * sizeof *ki->dspace);
+
+    if (ki->dspace == NULL) {
+	return E_ALLOC;
+    } else {
+	*iv1 = ki->dspace;
+	*iv2 = *iv1 + md1;
+	*c =   *iv2 + md1;
+	*sigma = *c + md1;
+	*w = *sigma + md1;
+    }
+
+    return 0;
+}
+
+/* apparatus for bootstrap */
+
+static int bds_boot_round (kinfo *ki, const double *x,
+			   double *w, int md1)
+{
+    int i;
+
+    if (ki->wsave == NULL) {
+	/* initialize */
+	ki->rx = malloc(ki->n * sizeof *ki->rx);
+	ki->wsave = malloc(md1 * sizeof *ki->wsave);
+	ki->bcount = malloc(md1 * sizeof *ki->bcount);
+	ki->z = malloc(ki->n * sizeof *ki->z);
+
+	if (ki->rx == NULL || ki->wsave == NULL ||
+	    ki->bcount == NULL || ki->z == NULL) {
+	    return E_ALLOC;
+	}
+	for (i=0; i<md1; i++) {
+	    ki->wsave[i] = w[i];
+	    ki->bcount[i] = 0;
+	}
+    } else {
+	/* record */
+	for (i=0; i<md1; i++) {
+	    if (fabs(w[i]) > fabs(ki->wsave[i])) {
+		ki->bcount[i] += 1;
+	    }
+	}
+    }
+
+    /* re-initialize counters */
+    for (i=0; i<ki->n; i++) {
+	ki->colsum[i] = 1;
+	ki->rowsum[i] = 0;
+    }
+
+    /* resample */
+    resample_array(ki, x);
+
+    return 0;
+}
+
+/* Matrix with normalized statistics on first row,
+   p-values on second row; the p-values are either
+   asymptotic or bootstrapped.
+*/
+
+gretl_matrix *make_return_matrix (kinfo *ki, int NB,
+				  double *w, int mdi)
+{
+    gretl_matrix *m = gretl_matrix_alloc(2, mdi);
+
+    if (m != NULL) {
+	double pv;
+	int i;
+
+	for (i=0; i<mdi; i++) {
+	    if (ki->wsave != NULL) {
+		gretl_matrix_set(m, 0, i, ki->wsave[i]);
+		pv = ki->bcount[i] / (double) NB;
+	    } else {
+		gretl_matrix_set(m, 0, i, w[i]);
+		pv = normal_pvalue_2(w[i]);
+	    }
+	    gretl_matrix_set(m, 1, i, pv);
+	}
+    }
+
+    return m;
+}
+
+gretl_matrix *bdstest (const double *x, int n, int maxdim,
+		       double eps, int *err)
+{
+    kinfo ki = {0};
+    gretl_matrix *ret = NULL;
+    bword *wcol = NULL;
+    double *iv1 = NULL, *iv2 = NULL;
+    double *c = NULL, *w = NULL;
+    double *sigma = NULL;
+    int *seq = NULL;
+    int NB = 0, iter = 0;
+    int i, j, m, md1;
+
+    *err = kanzler_init(&ki, n, maxdim);
+    if (*err) {
+	return NULL;
+    }
+
+    if (eps < 0) {
+	ki.eps = kanzler_eps(x, n, -eps);
+    } else {
+	ki.eps = eps * gretl_stddev(0, n-1, x);
+    }
+    if (na(ki.eps) || ki.eps <= 0) {
+	*err = E_INVARG;
+    }
+
+    md1 = maxdim - 1;
+
+    /* construct bitinfo vector */
+    *err = make_bitinfo(&ki);
+
+ run_again:
+
+    /* construct words matrix */
+    if (!*err) {
+	*err = make_words_matrix(x, n, &ki);
+    }
+
+    /* allocate double-precision workspace */
+    if (!*err && ki.dspace == NULL) {
+	*err = make_dspace(&ki, md1, &iv1, &iv2, &c, &sigma, &w);
+    }
+
+    if (!*err) {
+	*err = compute_k_c1(n, maxdim, &ki);
+    }
+
+    if (!*err && iter == 0) {
+	seq = malloc(md1 * sizeof *seq);
+	wcol = malloc((n-1) * sizeof *wcol);
+	if (seq == NULL || wcol == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err) {
+	goto bailout;
+    }
+
+    for (m=1; m<maxdim; m++) {
+	double a1, a2a3, a4, a5;
+	int bitcount = 0;
+
+	for (j=0; j<ki.nwords; j++) {
+	    for (i=0; i<n-1; i++) {
+		wcol[i] = ki.wmat[i][j];
+	    }
+	    for (i=m; i<n-1; i++) {
+		ki.wmat[i][j] = wcol[i] & wcol[i-1];
+		bitcount += ki.bitinfo[ki.wmat[i][j]];
+	    }
+	}
+
+	c[m-1] = bitcount / (double) sumseq(1, n-m-1);
+
+	/* the a's hold the terms required to compute sigma */
+	a1 = pow(ki.kfac, m+1);
+
+	/* compute a2 * a3 */
+	for (i=0; i<m; i++) {
+	    seq[i] = m - i;
+	}
+	ivp(iv1, ki.kfac, seq, m);
+	for (i=0; i<m; i++) {
+	    seq[i] = 2*(i+1);
+	}
+	ivp(iv2, ki.c0, seq, m);
+	a2a3 = 0;
+	for (i=0; i<m; i++) {
+	    a2a3 += 2 * iv1[i] * iv2[i];
+	}
+
+	a4 = pow(ki.c0, 2*(m+1));
+	a5 = (m+1) * (m+1) * ki.kfac * pow(ki.c0, 2*m);
+
+	sigma[m-1] = 2 * sqrt(a1 + a2a3 + m*m*a4 - a5);
+    }
+
+    /* compute normalized statistics */
+    for (i=0; i<md1 && !*err; i++) {
+	w[i] = sqrt(n-(i+2)+1) * (c[i] - pow(ki.c1[i+1], i+2)) / sigma[i];
+	if (isnan(w[i])) {
+	    fprintf(stderr, "bdstest: NaN computing w[%d]\n", i);
+	    *err = E_NAN;
+	}
+    }
+
+    if (!*err && iter < NB) {
+	/* bootstrapping */
+	*err = bds_boot_round(&ki, x, w, md1);
+	if (!*err) {
+	    iter++;
+	    goto run_again;
+	}
+    }
+
+    if (!*err) {
+	ret = make_return_matrix(&ki, NB, w, md1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+ bailout:
+
+    destroy_kinfo(&ki);
+    free(seq);
+    free(wcol);
+
+    return ret;
+}

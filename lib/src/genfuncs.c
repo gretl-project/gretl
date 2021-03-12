@@ -8299,7 +8299,7 @@ gretl_matrix *bds_driver (const double *x, const DATASET *dset,
     int t1 = dset->t1;
     int t2 = dset->t2;
 
-    if (m < 2 || eps <= 0) {
+    if (m < 2) {
 	*err = E_INVARG;
     } else {
 	*err = series_adjust_sample(x, &t1, &t2);
