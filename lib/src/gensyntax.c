@@ -1252,7 +1252,10 @@ static void get_assertion (NODE *t, parser *p)
     }
 }
 
-/* get 1 or more comma-separated pairs of the form key=value */
+/* For defining a bundle via _(): get one or more comma-separated pairs
+   of the form key=value. In the @bpack case the key and value are the
+   same thing: we extract it first as a string then as an object.
+*/
 
 static void get_bundle_pairs (NODE *t, parser *p, int bpack, int *next)
 {
