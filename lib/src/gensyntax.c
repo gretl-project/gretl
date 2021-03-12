@@ -1252,12 +1252,12 @@ static void get_assertion (NODE *t, parser *p)
     }
 }
 
-/* For defining a bundle via _(): get one or more comma-separated pairs
-   of the form key=value. In the @bpack case the key and value are the
-   same thing: we extract it first as a string then as an object.
+/* For defining a bundle via _(): get one or more comma-separated
+   terms: each must take the form key=value, or just key if the
+   key and the name of a pre-defined object are one and the same.
 */
 
-static void get_bundle_pairs (NODE *t, parser *p, int bpack, int *next)
+static void get_bundle_pairs (NODE *t, parser *p, int *next)
 {
     NODE *child;
     const char *src;
@@ -1281,26 +1281,20 @@ static void get_bundle_pairs (NODE *t, parser *p, int bpack, int *next)
 	    parser_getc(p);
 	}
 	p->idstr = gretl_strndup(src, n);
-	while (p->ch == ' ') parser_getc(p);
-	if (!bpack && p->ch != '=') {
-	    if (p->ch == 0) lex(p);
-	    expected_symbol_error('=', p, p->ch);
-	    break;
-	}
 	child = newstr(p->idstr);
 	attach_child(t, child, 0, -1, i++, p);
-
-	if (bpack) {
-	    /* double back to start of identifier */
-	    parser_advance(p, -(p->point - src));
-	    lex(p);
-	    child = base(p, NULL);
-	} else {
+	while (p->ch == ' ') parser_getc(p);
+	if (p->ch == '=') {
 	    /* parse the folowing expresssion */
 	    parser_getc(p);
 	    while (p->ch == ' ') parser_getc(p);
 	    lex(p);
 	    child = expr(p);
+	} else {
+	    /* backtrack to get named object */
+	    parser_advance(p, -(p->point - src));
+	    lex(p);
+	    child = base(p, NULL);
 	}
 	if (!p->err) {
 	    attach_child(t, child, 0, -1, i++, p);
@@ -1315,29 +1309,6 @@ static void get_bundle_pairs (NODE *t, parser *p, int bpack, int *next)
 	    p->err = E_PARSE;
 	}
     }
-}
-
-/* Distinguish between these two variant alternatives to
-   defbundle():
-
-   (a) _(id1=val1, id2=val2,...)
-   (b) _(val1, val2,...).
-
-   The marker for the second case ("bpack") is that after
-   the first identifier we find a comma, or right-paren if
-   if there's a singleton term.
-
-   Return 1 if bpack is found, otherwise 0.
-*/
-
-static int peek_bpack (parser *p)
-{
-    const char *s = p->point;
-
-    s += strspn(s, " ");    /* skip any spaces */
-    s += strcspn(s, ",=)"); /* skip identifier or key */
-    s += strspn(s, " ");    /* skip any spaces */
-    return (*s == ',' || *s == ')');
 }
 
 static NODE *powterm (parser *p, NODE *l)
@@ -1576,14 +1547,12 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	}
     } else if (sym == F_DEFARGS) {
-	int bpack = peek_bpack(p);
-
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
 	    if (t != NULL) {
-		get_bundle_pairs(t->L, p, bpack, &next);
+		get_bundle_pairs(t->L, p, &next);
 	    }
 	}
     } else if (funcn_symb(sym)) {
