@@ -1,5 +1,5 @@
 version 2021b, in progress
-- New function trigamma(): second derivative of lngamma()
+- New function trigamma(): second derivative of lngamma
 - gdtb data format: make the new variant the default
 - tighten up on defbundle() syntax: no empty arguments
   allowed
@@ -17,6 +17,8 @@ version 2021b, in progress
   is just for the bivariate case
 - "clear" command: add --functions option to remove all hansl
   functions from memory
+- "param_names" keyword for nls, mle, gmm: accept an array of
+  strings as argument
 - binary probit and logit: offer Estrella's pseudo R-squared
   as an alternative to McFadden, via --estrella option
 - The functions mean, sum, sd, var, wmean, wsd and wvar now
