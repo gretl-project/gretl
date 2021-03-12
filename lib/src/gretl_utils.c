@@ -1944,6 +1944,7 @@ static int gp_fatal (const char *cmd, const char *s)
        "Warning: empty y2 range..."
        pango warning for, e.g., FreeSans font w/o GPOS table
        pango error on quartz
+       missing Icon theme
     */
 
     if (strstr(s, "using default") ||
@@ -1953,6 +1954,7 @@ static int gp_fatal (const char *cmd, const char *s)
 	strstr(s, "warning: ") ||
 	strstr(s, "Pango-WARNING") ||
 	strstr(s, "rid drawn") ||
+	strstr(s, "Icon theme") ||
 	strstr(s, "CGContextSetFont")) {
 	return 0;
     } else {
