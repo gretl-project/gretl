@@ -1254,21 +1254,21 @@ static void get_assertion (NODE *t, parser *p)
 
 /* get 1 or more comma-separated pairs of the form key=value */
 
-static void get_bundle_pairs (NODE *t, parser *p, int *next)
+static void get_bundle_pairs (NODE *t, parser *p, int bpack, int *next)
 {
     NODE *child;
     const char *src;
     int n, j, i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args_args: ch='%c', point='%s'\n",
+    fprintf(stderr, "get_bundle_pairs: ch='%c', point='%s'\n",
 	    p->ch, p->point);
 #endif
 
     while (p->ch && !p->err) {
 	/* first get an unquoted key */
 	while (p->ch == ' ') parser_getc(p);
-	src = p->point -1;
+	src = p->point - 1;
 	n = gretl_namechar_spn(src);
 	if (n == 0) {
 	    p->err = E_PARSE;
@@ -1279,18 +1279,26 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
 	}
 	p->idstr = gretl_strndup(src, n);
 	while (p->ch == ' ') parser_getc(p);
-	if (p->ch != '=') {
+	if (!bpack && p->ch != '=') {
 	    if (p->ch == 0) lex(p);
 	    expected_symbol_error('=', p, p->ch);
 	    break;
 	}
 	child = newstr(p->idstr);
 	attach_child(t, child, 0, -1, i++, p);
-	/* then get some parseable value */
-	parser_getc(p);
-	while (p->ch == ' ') parser_getc(p);
-	lex(p);
-	child = expr(p);
+
+	if (bpack) {
+	    /* double back to start of identifier */
+	    parser_advance(p, -(p->point - src));
+	    lex(p);
+	    child = base(p, NULL);
+	} else {
+	    /* parse the folowing expresssion */
+	    parser_getc(p);
+	    while (p->ch == ' ') parser_getc(p);
+	    lex(p);
+	    child = expr(p);
+	}
 	if (!p->err) {
 	    attach_child(t, child, 0, -1, i++, p);
 	}
@@ -1306,10 +1314,17 @@ static void get_bundle_pairs (NODE *t, parser *p, int *next)
     }
 }
 
-/* Distinguish between the variants _(id1=val1, id2=val2,...),
-   F_DEFARGS, and _(val1, val2,...), F_BPACK. The marker for
-   the latter is that after the first identifier we find ',',
-   or ')' if there's a singleton term.
+/* Distinguish between these two variant alternatives to
+   defbundle():
+
+   (a) _(id1=val1, id2=val2,...)
+   (b) _(val1, val2,...).
+
+   The marker for the second case ("bpack") is that after
+   the first identifier we find a comma, or right-paren if
+   if there's a singleton term.
+
+   Return 1 if bpack is found, otherwise 0.
 */
 
 static int peek_bpack (parser *p)
@@ -1558,17 +1573,14 @@ static NODE *powterm (parser *p, NODE *l)
 	    }
 	}
     } else if (sym == F_DEFARGS) {
-	if (peek_bpack(p)) {
-	    sym = p->sym = F_BPACK;
-	}
+	int bpack = peek_bpack(p);
+
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
 	    t->L = newbn(FARGS);
-	    if (t != NULL && sym == F_BPACK) {
-		get_args(t->L, p, sym, -1, opt, &next);
-	    } else if (t != NULL) {
-		get_bundle_pairs(t->L, p, &next);
+	    if (t != NULL) {
+		get_bundle_pairs(t->L, p, bpack, &next);
 	    }
 	}
     } else if (funcn_symb(sym)) {
