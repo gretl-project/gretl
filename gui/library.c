@@ -2722,7 +2722,7 @@ void add_leverage_data (windata_t *vwin)
 {
     unsigned char (*leverage_data_dialog) (void);
     gretl_matrix *m = (gretl_matrix *) vwin->data;
-    unsigned char opt;
+    unsigned char flags;
     int err;
 
     if (m == NULL) return;
@@ -2730,10 +2730,10 @@ void add_leverage_data (windata_t *vwin)
     leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog");
     if (leverage_data_dialog == NULL) return;
 
-    opt = leverage_data_dialog();
-    if (opt == 0) return;
+    flags = leverage_data_dialog();
+    if (flags == 0) return;
 
-    err = add_leverage_values_to_dataset(dataset, m, opt);
+    err = add_leverage_values_to_dataset(dataset, m, OPT_O, flags);
 
     if (err) {
         gui_errmsg(err);
