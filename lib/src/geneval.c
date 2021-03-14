@@ -6906,10 +6906,89 @@ static gretl_matrix *fc_matrix_from_list (NODE *n, int n1,
     return ret;
 }
 
+static NODE *fcstats_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (starting(p)) {
+        gretl_matrix *Fmat = NULL;
+        const double *x = NULL, *y = NULL;
+	gretlopt Fopt = OPT_D;
+        int U2, free_Fmat = 0;
+        int n = 0, n2 = 0;
+
+	if (l->t == SERIES || m->t == SERIES || m->t == LIST) {
+	    if (dataset_is_time_series(p->dset)) {
+		Fopt |= OPT_T;
+	    }
+	}
+	U2 = node_get_bool(r, p, (Fopt & OPT_T) ? 1 : 0);
+	if (U2) {
+	    Fopt |= OPT_T;
+	} else {
+	    Fopt &= ~OPT_T;
+	}
+
+	if (!p->err) {
+	    if (l->t == SERIES) {
+		n = sample_size(p->dset);
+		x = l->v.xvec + p->dset->t1;
+	    } else {
+		n = gretl_vector_get_length(l->v.m);
+		if (n == 0) {
+		    p->err = E_TYPES;
+		} else {
+		    x = l->v.m->val;
+		}
+	    }
+	}
+
+        if (!p->err) {
+            if (m->t == SERIES) {
+		n2 = sample_size(p->dset);
+                if (n2 != n) {
+                    p->err = E_NONCONF;
+                } else {
+                    y = m->v.xvec + p->dset->t1;
+                }
+            } else if (m->t == MAT) {
+                n2 = gretl_vector_get_length(m->v.m);
+                if (n2 != n) {
+                    if (m->v.m->rows == n) {
+                        Fmat = m->v.m;
+                    } else {
+                        p->err = E_NONCONF;
+                    }
+                } else {
+                    y = m->v.m->val;
+                }
+            } else {
+                Fmat = fc_matrix_from_list(m, n, p);
+                if (!p->err) {
+                    free_Fmat = 1;
+                }
+            }
+	}
+
+        if (!p->err) {
+	    if (Fmat != NULL) {
+		ret->v.m = matrix_fc_stats(x, Fmat, Fopt, &p->err);
+	    } else {
+		ret->v.m = forecast_stats(x, y, 0, n-1, NULL, Fopt, &p->err);
+	    }
+	    if (free_Fmat) {
+		gretl_matrix_free(Fmat);
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* Functions taking two series as arguments and returning a scalar
    or matrix result. We also accept as arguments two matrices if
    they are vectors of the same length. In the case of F_NAALEN
-   and F_KMEIER we can accept input with no right-hand argument
+   and F_KMEIER we can accept input with no @r node argument
    (meaning no censoring).
 */
 
@@ -6918,27 +6997,27 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-        gretl_matrix *Fmat = NULL;
         const double *x = NULL, *y = NULL;
-        int free_Fmat = 0;
         int n = 0, n2 = 0;
 
-        if (l->t == SERIES) {
-            /* series on left */
-            n = sample_size(p->dset);
-            x = l->v.xvec + p->dset->t1;
-        } else if (l->t == NUM) {
-            n = 1;
-            x = &l->v.xval;
-        } else {
-            /* must be matrix on left */
-            n = gretl_vector_get_length(l->v.m);
-            if (n == 0) {
-                p->err = E_TYPES;
-            } else {
-                x = l->v.m->val;
-            }
-        }
+	if (!p->err) {
+	    if (l->t == SERIES) {
+		n = sample_size(p->dset);
+		x = l->v.xvec + p->dset->t1;
+	    } else if (l->t == NUM) {
+		n = 1;
+		x = &l->v.xval;
+	    } else if (l->t == MAT) {
+		n = gretl_vector_get_length(l->v.m);
+		if (n == 0) {
+		    p->err = E_TYPES;
+		} else {
+		    x = l->v.m->val;
+		}
+	    } else {
+		p->err = E_INVARG;
+	    }
+	}
 
         if (!p->err) {
             if (null_node(r)) {
@@ -6962,19 +7041,9 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
                 /* matrix on right */
                 n2 = gretl_vector_get_length(r->v.m);
                 if (n2 != n) {
-                    if (f == F_FCSTATS && r->v.m->rows == n) {
-                        Fmat = r->v.m;
-                    } else {
-                        p->err = E_NONCONF;
-                    }
-                } else {
+		    p->err = E_NONCONF;
+		} else {
                     y = r->v.m->val;
-                }
-            } else if (r->t == LIST && f == F_FCSTATS) {
-                /* a list may work for fcstats */
-                Fmat = fc_matrix_from_list(r, n, p);
-                if (!p->err) {
-                    free_Fmat = 1;
                 }
             } else {
                 p->err = E_TYPES;
@@ -6983,14 +7052,11 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 
         if (p->err) {
             return ret;
-        }
-
-        if (f == F_FCSTATS || f == F_NAALEN || f == F_KMEIER) {
+        } else if (f == F_NAALEN || f == F_KMEIER) {
             ret = aux_matrix_node(p);
         } else {
             ret = aux_scalar_node(p);
         }
-
         if (ret == NULL) {
             return NULL;
         }
@@ -7005,13 +7071,6 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
         case F_COV:
             ret->v.xval = gretl_covar(0, n, x, y, NULL);
             break;
-        case F_FCSTATS:
-            if (Fmat != NULL) {
-                ret->v.m = matrix_fc_stats(x, Fmat, OPT_D, &p->err);
-            } else {
-                ret->v.m = forecast_stats(x, y, 0, n, NULL, OPT_D, &p->err);
-            }
-            break;
         case F_NAALEN:
             ret->v.m = duration_func(x, y, 0, n, OPT_NONE, &p->err);
             break;
@@ -7020,10 +7079,6 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
             break;
         default:
             break;
-        }
-
-        if (free_Fmat) {
-            gretl_matrix_free(Fmat);
         }
     } else {
         ret = aux_any_node(p);
@@ -17030,20 +17085,25 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_COV:
     case F_COR:
-    case F_FCSTATS:
     case F_NAALEN:
     case F_KMEIER:
-        /* functions taking two series/vectors as args */
-        if ((l->t == SERIES || l->t == MAT || l->t == NUM) &&
+        /* functions taking two series/vectors as args, mostly */
+	if ((l->t == SERIES || l->t == MAT || l->t == NUM) &&
             (r->t == SERIES || r->t == MAT || r->t == NUM)) {
             ret = series_2_func(l, r, t->t, p);
         } else if ((l->t == SERIES || l->t == MAT) &&
                    null_node(r) &&
                    (t->t == F_NAALEN || t->t == F_KMEIER)) {
             ret = series_2_func(l, NULL, t->t, p);
-        } else if ((l->t == SERIES || l->t == MAT) &&
-                   r->t == LIST && t->t == F_FCSTATS) {
-            ret = series_2_func(l, r, t->t, p);
+        } else {
+            p->err = E_INVARG;
+        }
+        break;
+    case F_FCSTATS:
+        /* two series or vectors, plus optional boolean */
+        if ((l->t == SERIES || l->t == MAT) &&
+            (m->t == SERIES || m->t == MAT || m->t == LIST)) {
+            ret = fcstats_node(l, m, r, p);
         } else {
             p->err = E_INVARG;
         }

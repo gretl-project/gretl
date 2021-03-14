@@ -5712,7 +5712,7 @@ static int theil_decomp (double *m, double MSE,
 }
 
 /* OPT_O allows embedded missing values (which will be skipped);
-   OPT_D requests Theil decomposition
+   OPT_D requests Theil decomposition; OPT_T means time series.
 */
 
 static int fill_fcstats_column (gretl_matrix *m,
@@ -5723,12 +5723,15 @@ static int fill_fcstats_column (gretl_matrix *m,
 				int col)
 {
     double ME, MSE, MAE, MPE, MAPE, U;
+    double Unum, Uden1, Uden2;
     double fe, u[2];
     int do_theil = 0;
+    int do_U2 = (opt & OPT_T);
     int ok_T = T;
     int t, err = 0;
 
     ME = MSE = MAE = MPE = MAPE = U = 0.0;
+    Unum = Uden1 = Uden2 = 0.0;
     u[0] = u[1] = 0.0;
 
     for (t=0; t<T; t++) {
@@ -5754,29 +5757,37 @@ static int fill_fcstats_column (gretl_matrix *m,
 	    MPE += 100 * fe / y[t];
 	    MAPE += 100 * fabs(fe / y[t]);
 	}
-	if (t < T-1 && !na(U)) {
-	    if (na(f[t+1]) || na(y[t+1])) {
-		U = NADBL;
-	    } else {
-		fe = f[t+1] - y[t+1];
-		if (floatneq(fe, 0)) {
-		    if (y[t] == 0.0) {
-			U = NADBL;
-		    } else {
-			fe /= y[t];
-			u[0] += fe * fe;
+	if (do_U2) {
+	    /* let U = U2 */
+	    if (t < T-1 && !na(U)) {
+		if (na(f[t+1]) || na(y[t+1])) {
+		    U = NADBL;
+		} else {
+		    fe = f[t+1] - y[t+1];
+		    if (floatneq(fe, 0)) {
+			if (y[t] == 0.0) {
+			    U = NADBL;
+			} else {
+			    fe /= y[t];
+			    u[0] += fe * fe;
+			}
 		    }
-		}
-		fe = y[t+1] - y[t];
-		if (floatneq(fe, 0)) {
-		    if (y[t] == 0.0) {
-			U = NADBL;
-		    } else {
-			fe /= y[t];
-			u[1] += fe * fe;
+		    fe = y[t+1] - y[t];
+		    if (floatneq(fe, 0)) {
+			if (y[t] == 0.0) {
+			    U = NADBL;
+			} else {
+			    fe /= y[t];
+			    u[1] += fe * fe;
+			}
 		    }
 		}
 	    }
+	} else {
+	    /* let U = U1 */
+	    Unum += fe * fe;
+	    Uden1 += y[t] * y[t];
+	    Uden2 += f[t] * f[t];
 	}
     }
 
@@ -5812,8 +5823,15 @@ static int fill_fcstats_column (gretl_matrix *m,
 	if (!isnan(MAPE)) {
 	    MAPE /= T;
 	}
-	if (!isnan(U) && u[1] > 0.0) {
-	    U = sqrt(u[0] / T) / sqrt(u[1] / T);
+	if (do_U2) {
+	    if (!isnan(U) && u[1] > 0.0) {
+		U = sqrt(u[0] / T) / sqrt(u[1] / T);
+	    }
+	} else {
+	    Unum = sqrt(Unum/T);
+	    Uden1 = sqrt(Uden1/T);
+	    Uden2 = sqrt(Uden2/T);
+	    U = Unum / (Uden1+ Uden2);
 	}
 	gretl_matrix_set(m, 0, col, ME);
 	if (show_MSE) {
@@ -5919,6 +5937,7 @@ static int fcstats_sample_check (const double *y,
 
    OPT_D indicates that we should include the Theil decomposition.
    OPT_O allows missing values (which will be skipped).
+   OPT_T indicates that the data are time series.
 */
 
 gretl_matrix *forecast_stats (const double *y, const double *f,

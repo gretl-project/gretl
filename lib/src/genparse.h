@@ -332,7 +332,6 @@ enum {
     F_IMHOF,
     F_XMIN,
     F_XMAX,
-    F_FCSTATS,
     F_FRACLAG,
     F_MREV,
     F_DESEAS,
@@ -467,6 +466,7 @@ enum {
     F_STACK,
     F_GEOPLOT,
     F_VMA,
+    F_FCSTATS,
     HF_REGLS,
     HF_BDSTEST,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
