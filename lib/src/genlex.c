@@ -120,6 +120,7 @@ struct str_table dvars[] = {
     { R_RESULT,    "$result" },
     { R_PNGFONT,   "$pngfont" },
     { R_MAPFILE,   "$mapfile" },
+    { R_MAP,       "$map" },
     { R_INDEX,     "obs" },
     { 0,           NULL },
 };

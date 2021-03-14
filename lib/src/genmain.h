@@ -53,6 +53,7 @@ typedef enum {
     R_RESULT,     /* result of a "result-compatible" command */
     R_PNGFONT,    /* name of font selected for plots */
     R_MAPFILE,    /* name of current map file, if any */
+    R_MAP,        /* current map (if any) as bundle */
     R_MAX
 } RetrievalIndex;
 
