@@ -2991,7 +2991,8 @@ int print_data_in_columns (const int *list, const int *obsvec,
 }
 
 int print_fcast_stats_matrix (const gretl_matrix *m,
-			      int T, PRN *prn)
+			      int T, gretlopt opt,
+			      PRN *prn)
 {
     const char *strs[] = {
 	N_("Mean Error"),
@@ -2999,11 +3000,12 @@ int print_fcast_stats_matrix (const gretl_matrix *m,
 	N_("Mean Absolute Error"),
 	N_("Mean Percentage Error"),
 	N_("Mean Absolute Percentage Error"),
-	N_("Theil's U"),
+	N_("Theil's U1"),
 	N_("Bias proportion, UM"),
 	N_("Regression proportion, UR"),
 	N_("Disturbance proportion, UD")
     };
+    const char *U2_str = N_("Theil's U2");
     double x;
     int i, n, nmax = 0;
     int len, err = 0;
@@ -3029,9 +3031,12 @@ int print_fcast_stats_matrix (const gretl_matrix *m,
     pputs(prn, "\n\n");
 
     for (i=0; i<len; i++) {
+	const char *si;
+
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(strs[i]), nmax), _(strs[i]), x);
+	    si = (i == 5 && (opt & OPT_T))? U2_str : strs[i];
+	    pprintf(prn, "  %-*s % .5g\n", UTF_WIDTH(_(si), nmax), _(si), x);
 	}
     }
     pputc(prn, '\n');
@@ -3056,7 +3061,7 @@ static int fr_print_fc_stats (const FITRESID *fr, gretlopt opt,
 		       opt, &err);
 
     if (!err) {
-	err = print_fcast_stats_matrix(m, n_used, prn);
+	err = print_fcast_stats_matrix(m, n_used, opt, prn);
     }
 
     gretl_matrix_free(m);
@@ -3070,6 +3075,7 @@ int text_print_fit_resid (const FITRESID *fr,
 			  const DATASET *dset,
 			  PRN *prn)
 {
+    gretlopt fc_opt = OPT_NONE;
     int kstep = fr->method == FC_KSTEP;
     int t, anyast = 0;
     double yt, yf, et;
@@ -3131,7 +3137,10 @@ int text_print_fit_resid (const FITRESID *fr,
 		     "2.5 standard errors\n"));
     }
 
-    fr_print_fc_stats(fr, OPT_NONE, prn);
+    if (dataset_is_time_series(dset)) {
+	fc_opt |= OPT_T;
+    }
+    fr_print_fc_stats(fr, fc_opt, prn);
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
 	err = plot_fcast_errs(fr, NULL, dset, OPT_NONE);
@@ -3268,7 +3277,12 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     pputc(prn, '\n');
 
     if (!(opt & OPT_N)) {
-	fr_print_fc_stats(fr, OPT_D, prn);
+	gretlopt fc_opt = OPT_D;
+
+	if (dataset_is_time_series(dset)) {
+	    fc_opt |= OPT_T;
+	}
+	fr_print_fc_stats(fr, fc_opt, prn);
     }
 
     /* do we really want a plot for non-time series? */

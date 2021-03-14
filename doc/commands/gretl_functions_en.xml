@@ -4025,6 +4025,7 @@
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="series-list-or-mat">f</fnarg>
+	<fnarg optional="true" type="bool">U2</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4055,11 +4056,18 @@
 	  3  Mean Absolute Error (MAE)
 	  4  Mean Percentage Error (MPE)
 	  5  Mean Absolute Percentage Error (MAPE)
-	  6  Theil's U
+	  6  Theil's U (U1 or U2)
 	  7  Bias proportion, UM
 	  8  Regression proportion, UR
 	  9  Disturbance proportion, UD
 	</code>
+	<para>
+	  The variant of Theil's U shown by default depends on the
+	  nature of the data: if they are known to be time series then
+	  U2 is shown, otherwise U1 is produced. But this choice can
+	  be forced via the optional trailing argument: give a
+	  non-zero value to force U2, or zero to force U1.
+	</para>
 	<para>
 	  For details on the calculation of these statistics, and the
 	  interpretation of the <math>U</math> values, please see

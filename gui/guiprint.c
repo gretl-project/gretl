@@ -1453,11 +1453,12 @@ static int texprint_fcast_stats (const FITRESID *fr,
 	N_("Mean Absolute Error"),
 	N_("Mean Percentage Error"),
 	N_("Mean Absolute Percentage Error"),
-	N_("Theil's $U$"),
+	N_("Theil's $U_1$"),
 	N_("Bias proportion, $U^M$"),
 	N_("Regression proportion, $U^R$"),
 	N_("Disturbance proportion, $U^D$")
     };
+    const char *U2_str = N_("Theil's $U_2$");
     gretl_matrix *m;
     double x;
     int i, j, t1, t2;
@@ -1485,9 +1486,15 @@ static int texprint_fcast_stats (const FITRESID *fr,
 
     j = 0;
     for (i=0; i<len; i++) {
+	const char *sj;
+
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    pprintf(prn, "%s & %s%.5g \\\\\n", A_(strs[j]), (x < 0)? "$-$" : "",
+	    sj = strs[j];
+	    if ((opt & OPT_T) && !strncmp(sj, "Theil", 5)) {
+		sj = U2_str;
+	    }
+	    pprintf(prn, "%s & %s%.5g \\\\\n", A_(sj), (x < 0)? "$-$" : "",
 		    fabs(x));
 	    if (i == 1) {
 		pprintf(prn, "%s & %.5g \\\\\n", A_(strs[j+1]), sqrt(x));
@@ -1557,14 +1564,15 @@ static void tex_print_x (double x, int pmax, PRN *prn)
 }
 
 static void texprint_fit_resid (const FITRESID *fr,
-				const DATASET *pdinfo,
+				const DATASET *dset,
 				PRN *prn)
 {
+    gretlopt fc_opt = OPT_NONE;
     int t, anyast = 0;
     double xx;
     char vname[16];
 
-    tex_fit_resid_head(fr, pdinfo, prn);
+    tex_fit_resid_head(fr, dset, prn);
 
     tex_escape(vname, fr->depvar);
 
@@ -1577,7 +1585,7 @@ static void texprint_fit_resid (const FITRESID *fr,
 	    vname, A_("fitted"), A_("residual"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
-	tex_print_obs_marker(t, pdinfo, prn);
+	tex_print_obs_marker(t, dset, prn);
 	pputs(prn, " & ");
 
 	if (na(fr->actual[t])) {
@@ -1607,7 +1615,10 @@ static void texprint_fit_resid (const FITRESID *fr,
 		      "in excess of 2.5 standard errors\n\n"));
     }
 
-    texprint_fcast_stats(fr, OPT_NONE, prn);
+    if (dataset_is_time_series(dset)) {
+	fc_opt |= OPT_T;
+    }
+    texprint_fcast_stats(fr, fc_opt, prn);
 
     pputs(prn, "\\end{center}\n\n");
 }
