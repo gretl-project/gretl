@@ -7300,6 +7300,10 @@
 	  <effect>save the resulting series</effect>
 	</option>
         <option>
+	  <flag>--overwrite</flag>
+	  <effect>OK to overwrite existing series</effect>
+	</option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>don't print results</effect>
 	</option>
@@ -7361,10 +7365,13 @@
 	data set; in this context the <opt>quiet</opt> flag may be
 	used to suppress the printing of results.  The default names
 	of the saved series are, respectively, <lit>lever</lit>,
-	<lit>influ</lit> and <lit>dffits</lit>. However, if series of
-	these names already exist, the names of the newly saved series
-	will be adjusted to ensure uniqueness; in any case, they will
-	be the highest-numbered three series in the dataset.
+	<lit>influ</lit> and <lit>dffits</lit>. If series of these
+	names already exist, what happens depends on whether the
+	<opt>overwrite</opt> option is given. If so, the existing
+	series are overwritten; if not, the names will be adjusted to
+	ensure uniqueness. In the latter case the newly generated
+	series will always be the highest-numbered three series in the
+	dataset.
       </para>
       <para context="gui">
 	The "+" icon at the top of the leverage test window brings up

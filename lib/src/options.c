@@ -349,6 +349,7 @@ struct gretl_option gretl_opts[] = {
     { LAGS,     OPT_L, "bylag", 0 },
     { LEVERAGE, OPT_S, "save", 0 },
     { LEVERAGE, OPT_U, "plot", 2 },
+    { LEVERAGE, OPT_O, "overwrite", 0 },
     { LEVINLIN, OPT_N, "nc", 0 },
     { LEVINLIN, OPT_T, "ct", 0 },
     { LEVINLIN, OPT_V, "verbose", 0 },
