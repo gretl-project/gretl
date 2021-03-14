@@ -15579,12 +15579,14 @@ static NODE *dollar_var_node (NODE *t, parser *p)
                 ret->v.str = gretl_png_font_string();
             }
         } else if (idx == R_MAPFILE) {
+	    const char *fname = dataset_get_mapfile(p->dset);
+
             ret = aux_string_node(p);
-            if (ret != NULL) {
-                if (p->dset == NULL || p->dset->mapfile == NULL) {
+            if (!p->err) {
+                if (fname == NULL) {
                     ret->v.str = gretl_strdup("");
                 } else {
-                    ret->v.str = gretl_strdup(p->dset->mapfile);
+                    ret->v.str = gretl_strdup(fname);
                 }
             }
 	} else if (idx == R_MAP) {
