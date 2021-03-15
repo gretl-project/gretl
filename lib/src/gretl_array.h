@@ -46,6 +46,8 @@ int gretl_array_set_element (gretl_array *A, int i,
 			     void *ptr, GretlType type,
 			     int copy);
 
+int gretl_array_delete_element (gretl_array *A, int i);
+
 void *gretl_array_get_data (gretl_array *A, int i);
 
 int gretl_array_set_data (gretl_array *A, int i, void *ptr);

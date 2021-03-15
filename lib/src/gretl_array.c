@@ -1196,8 +1196,10 @@ int gretl_array_set_bundle (gretl_array *A, int i,
     return err;
 }
 
+/* respond to A[i] = a */
+
 int gretl_array_set_array (gretl_array *A, int i,
-			   gretl_array *ai,
+			   gretl_array *a,
 			   int copy)
 {
     int err = 0;
@@ -1209,9 +1211,9 @@ int gretl_array_set_array (gretl_array *A, int i,
     } else if (i < 0 || i >= A->n) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	err = E_DATA;
-    } else if (ai != A->data[i]) {
+    } else if (a != A->data[i]) {
 	gretl_array_destroy(A->data[i]);
-	err = set_array(A, i, ai, copy);
+	err = set_array(A, i, a, copy);
     }
 
     return err;
@@ -1238,6 +1240,8 @@ int gretl_array_append_bundle (gretl_array *A,
 
     return err;
 }
+
+/* respond to A += a */
 
 int gretl_array_append_array (gretl_array *A,
 			      gretl_array *a,
@@ -1322,6 +1326,43 @@ int gretl_array_set_element (gretl_array *A, int i,
     }
 
     return err;
+}
+
+static void free_array_element (gretl_array *A, int i)
+{
+    if (A->type == GRETL_TYPE_STRINGS ||
+	A->type == GRETL_TYPE_LISTS) {
+	free(A->data[i]);
+    } else if (A->type == GRETL_TYPE_MATRICES) {
+	gretl_matrix_free(A->data[i]);
+    } else if (A->type == GRETL_TYPE_BUNDLES) {
+	gretl_bundle_destroy(A->data[i]);
+    } else if (A->type == GRETL_TYPE_ARRAYS) {
+	gretl_array_destroy(A->data[i]);
+    }
+}
+
+int gretl_array_delete_element (gretl_array *A, int i)
+{
+    if (A == NULL) {
+	return E_DATA;
+    } else if (i < 0 || i >= A->n) {
+	return E_INVARG;
+    } else {
+	int j;
+
+	if (A->data[i] != NULL) {
+	    free_array_element(A, i);
+	}
+	/* shift the higher-numbered elements down */
+	for (j=i; j<A->n-1; j++) {
+	    A->data[j] = A->data[j+1];
+	}
+	/* decrement the element count */
+	A->n -= 1;
+
+	return 0;
+    }
 }
 
 /* @ptr must be pre-checked as matching the array type */
