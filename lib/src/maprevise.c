@@ -1,6 +1,14 @@
 
 #define MAP_DEBUG 1
 
+/* Given the current dataset and the $mapfile name recorded
+   on it: get the content of $mapfile as a bundle then
+   revise the bundle (a) to include only the features in the
+   current sample and (b) to reflect any changes in the dataset
+   (series added, deleted or modified). Return the modified
+   bundle.
+*/
+
 gretl_bundle *get_current_map (const DATASET *dset, int *err)
 {
     const char *sj, *id, *fname;
@@ -16,6 +24,7 @@ gretl_bundle *get_current_map (const DATASET *dset, int *err)
 	gretl_errmsg_set("no mapfile is present");
 	*err = E_DATA;
     } else if (dataset_is_resampled(dset)) {
+	/* most unlikely */
 	gretl_errmsg_set("dataset is resampled!");
 	*err = E_DATA;
     }
@@ -35,6 +44,10 @@ gretl_bundle *get_current_map (const DATASET *dset, int *err)
 	    n = dset->n;
 	}
 	if (fmax != n) {
+	    /* Although it may be sub-sampled the full dataset must
+	       have a number of observations equal to the number of
+	       features in the existing map.
+	    */
 	    gretl_errmsg_set("map and dataset are out of sync!");
 	    *err = E_DATA;
 	}
@@ -68,6 +81,7 @@ gretl_bundle *get_current_map (const DATASET *dset, int *err)
 	if (dsi < dset->t1) {
 	    skip = 1;
 	} else if (dsi > dset->t2) {
+	    /* we've got everything we need */
 	    break;
 	}
 	if (skip) {
@@ -83,15 +97,17 @@ gretl_bundle *get_current_map (const DATASET *dset, int *err)
 	    fprintf(stderr, "  include feature %d (%s)\n", i, id);
 #endif
 	    pp = gretl_bundle_get_bundle(fi, "properties", err);
+	    /* clear the existing properties bundle */
 	    gretl_bundle_void_content(pp);
-	    /* insert properties for this feature */
+	    /* and refill it from the dataset */
 	    for (j=1; j<dset->v; j++) {
+		id = dset->varname[j];
 		if (is_string_valued(dset, j)) {
 		    sj = series_get_string_for_obs(dset, j, dsi);
-		    gretl_bundle_set_string(pp, dset->varname[j], sj);
+		    gretl_bundle_set_string(pp, id, sj);
 		} else {
 		    xj = dset->Z[j][dsi];
-		    gretl_bundle_set_scalar(pp, dset->varname[j], xj);
+		    gretl_bundle_set_scalar(pp, id, xj);
 		}
 	    }
 	    fidx++;
