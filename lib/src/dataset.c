@@ -5693,3 +5693,5 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 	return linfo_matrix_via_labels(list, dset, opt, err);
     }
 }
+
+#include "maprevise.c"

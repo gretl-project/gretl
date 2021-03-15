@@ -15590,15 +15590,11 @@ static NODE *dollar_var_node (NODE *t, parser *p)
                 }
             }
 	} else if (idx == R_MAP) {
-	    const char *fname = dataset_get_mapfile(p->dset);
-
-	    if (fname == NULL) {
-		p->err = E_UNKVAR;
-	    } else {
-		ret = aux_bundle_node(p);
-		if (!p->err) {
-		    ret->v.b = gretl_bundle_read_from_file(fname, 0, &p->err);
-		}
+	    extern gretl_bundle *get_current_map(const DATASET *dset,
+						 int *err);
+	    ret = aux_bundle_node(p);
+	    if (!p->err) {
+		ret->v.b = get_current_map(p->dset, &p->err);
 	    }
         } else if (dvar_variant1(idx)) {
             GretlType type = get_last_test_type();
