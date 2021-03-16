@@ -17040,14 +17040,6 @@ static NODE *eval (NODE *t, parser *p)
                 ret = isconst_or_dum_node(l, r, p, t->t);
             } else if (t->t == F_LRVAR) {
                 ret = series_scalar_scalar_func(l, m, r, t->t, p);
-            } else if (scalar_node(r)) {
-                if (t->t == F_QUANTILE && l->t == MAT) {
-                    ret = matrix_quantiles_node(l, r, p);
-                } else {
-                    ret = series_scalar_scalar_func(l, r, NULL, t->t, p);
-                }
-            } else {
-                node_type_error(t->t, 2, NUM, r, p);
             }
         } else {
             node_type_error(t->t, 1, SERIES, l, p);
