@@ -8119,16 +8119,13 @@ int geoplot_driver (const char *fname,
 
     if (plx != NULL) {
 	/* payload is a series at source */
-	if (subsampled) {
-	    payload = full_length_vector(plx + dset->t1, dset, &err);
-	} else {
-	    payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
-	}
-	if (payload == NULL && !err) {
+	payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
+	if (payload == NULL) {
 	    err = E_ALLOC;
 	}
 	free_payload = 1;
     } else if (plm == NULL && subsampled) {
+	/* FIXME this case needs work, simplification */
 	if (gretl_bundle_has_key(opts, "mask")) {
 	    ; /* let's not mess with it */
 	} else {

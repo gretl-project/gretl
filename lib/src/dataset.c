@@ -5706,7 +5706,7 @@ gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
     }
 }
 
-#define MAP_DEBUG 1
+#define MAP_DEBUG 0
 
 /* Given the current dataset and the $mapfile name recorded
    on it: get the content of $mapfile as a bundle then
@@ -5719,6 +5719,9 @@ gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
 gretl_bundle *get_current_map (const DATASET *dset, int *err)
 {
     const char *sj, *id, *fname;
+#if MAP_DEBUG
+    const char *id;
+#endif
     gretl_bundle *fi, *pp, *jb = NULL;
     gretl_array *features = NULL;
     int n, fmax = 0;
@@ -5800,9 +5803,13 @@ gretl_bundle *get_current_map (const DATASET *dset, int *err)
 	    fmax--;
 	} else {
 	    fi = gretl_array_get_element(features, fidx, NULL, err);
-	    id = gretl_bundle_get_string(fi, "id", err);
 #if MAP_DEBUG
-	    fprintf(stderr, "  include feature %d (%s)\n", i, id);
+	    id = gretl_bundle_get_string(fi, "id", NULL);
+	    if (id != NULL) {
+		fprintf(stderr, "  include feature %d (%s)\n", i, id);
+	    } else {
+		fprintf(stderr, "  include feature %d\n", i);
+	    }
 #endif
 	    pp = gretl_bundle_get_bundle(fi, "properties", err);
 	    /* clear the existing properties bundle */
