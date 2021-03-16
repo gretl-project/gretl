@@ -507,12 +507,13 @@ static int dataset_could_be_midas (const DATASET *dset)
 }
 
 enum MenuIdx_ {
+    MNU_MPLOT,
+    MNU_MSAVE,
     MNU_DISP,
     MNU_EDIT,
     MNU_STATS,
     MNU_TPLOT,
     MNU_PPLOT,
-    MNU_MPLOT,
     MNU_FDIST,
     MNU_BPLOT,
     MNU_CGRAM,
@@ -571,12 +572,14 @@ struct mpopup_entries {
 };
 
 struct popup_entries main_pop_entries[] = {
+    { MNU_MPLOT, N_("Display map..."), T_BOTH },
+    { MNU_MSAVE, N_("Save map as..."), T_BOTH },
+    { MNU_SEPAR, NULL, T_BOTH },
     { MNU_DISP,  N_("Display values"), T_BOTH },
     { MNU_EDIT,  N_("Edit values"), T_BOTH },
     { MNU_STATS, N_("Summary statistics"), T_BOTH },
     { MNU_TPLOT, N_("Time series plot"), T_BOTH },
     { MNU_PPLOT, N_("Panel plot..."), T_SINGLE },
-    { MNU_MPLOT, N_("Display map"), T_BOTH },
     { MNU_FDIST, N_("Frequency distribution"), T_SINGLE },
     { MNU_BPLOT, N_("Boxplot"), T_SINGLE },
     { MNU_CGRAM, N_("Correlogram"), T_SINGLE, },
@@ -637,6 +640,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
         break;
     case MNU_MPLOT:
         map_plot_callback(v);
+        break;
+    case MNU_MSAVE:
+        map_save_callback();
         break;
     case MNU_FDIST:
         do_freq_dist();
@@ -724,8 +730,8 @@ GtkWidget *build_var_popup (int selvar)
             /* don't offer panel plot */
             continue;
         }
-        if (!have_map && i == MNU_MPLOT) {
-            /* don't offer map plot */
+        if (!have_map && (i == MNU_MPLOT || i == MNU_MSAVE)) {
+            /* don't offer map plot or save */
             continue;
         }
         if ((i == MNU_CGRAM || i == MNU_PGRAM || i == MNU_IDXV) &&
@@ -760,6 +766,7 @@ GtkWidget *build_var_popup (int selvar)
                          GINT_TO_POINTER(i));
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
         nullbak = 0;
     }
 
@@ -798,6 +805,8 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
         plot_from_selection(GR_XY);
     } else if (i == MNU_MPLOT) {
         map_plot_callback(0);
+    } else if (i == MNU_MSAVE) {
+	map_save_callback();
     } else if (i == MNU_EDIT)  {
         show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (i == MNU_CLIPB) {
@@ -852,7 +861,7 @@ static GtkWidget *build_regular_selection_popup (void)
         if (i == MNU_TPLOT && !extended_ts(dataset)) {
             continue;
         }
-        if (i == MNU_MPLOT && dataset->mapfile == NULL) {
+        if ((i == MNU_MPLOT || i == MNU_MSAVE) && dataset->mapfile == NULL) {
             continue;
         }
         item = gtk_menu_item_new_with_label(_(main_pop_entries[j].str));

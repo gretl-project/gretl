@@ -8928,12 +8928,15 @@ static int shrink_dataset_to_sample (void)
     return err;
 }
 
-static void maybe_shrink_dataset (const char *newname)
+static void maybe_shrink_dataset (const char *newname,
+				  int action)
 {
     int shrink = 0;
     int resp;
 
-    if (datafile == newname || !strcmp(datafile, newname)) {
+    if (action == SAVE_MAP) {
+	shrink = 1;
+    } else if (datafile == newname || !strcmp(datafile, newname)) {
         shrink = 1;
     } else {
         resp = yes_no_dialog(_("gretl: revised data set"),
@@ -9093,6 +9096,26 @@ gboolean get_csv_exclude_obs (void)
     return csv_exclude_obs;
 }
 
+static int save_geojson (const char *fname)
+{
+    gretl_bundle *b = NULL;
+    int err = 0;
+
+    b = get_current_map(dataset, &err);
+
+    if (!err) {
+	err = gretl_bundle_write_to_file(b, fname, 0);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    gretl_bundle_destroy(b);
+
+    return err;
+}
+
 /* This is called from the file selector when doing a
    data save, and also from the callback from Ctrl-S
    in the main gretl window.
@@ -9104,6 +9127,18 @@ int do_store (char *filename, int action, gpointer data)
     int exporting = 0;
     int cancel = 0;
     int err = 0;
+
+    if (action == SAVE_MAP) {
+	err = save_geojson(filename);
+	if (err) {
+	    return err;
+	} else {
+	    dataset_set_mapfile(dataset, filename);
+	    lib_command_sprintf("store \"%s\"", filename);
+	    record_command_verbatim();
+	    goto post_process;
+	}
+    }
 
     /* If the dataset is sub-sampled, give the user a chance to
        rebuild the full data range before saving.
@@ -9173,11 +9208,13 @@ int do_store (char *filename, int action, gpointer data)
         }
     }
 
+ post_process:
+
     if (!err && !exporting) {
         /* record the fact that data have been saved, etc. */
         mkfilelist(FILE_LIST_DATA, filename, 0);
         if (dataset_is_subsampled(dataset)) {
-            maybe_shrink_dataset(filename);
+            maybe_shrink_dataset(filename, action);
         } else if (datafile != filename) {
             strcpy(datafile, filename);
         }
@@ -9188,7 +9225,7 @@ int do_store (char *filename, int action, gpointer data)
         set_sample_label(dataset);
     }
 
-    if (!err) {
+    if (!err && action != SAVE_MAP) {
         if (WRITING_DB(opt)) {
             database_description_dialog(filename);
         } else {
