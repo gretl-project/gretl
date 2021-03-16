@@ -4626,11 +4626,13 @@ void map_plot_callback (int v)
     if (mapfile == NULL) {
 	errbox(_("No mapfile is present"));
     } else {
+	gretl_bundle *map = NULL;
 	gretl_bundle *opts = NULL;
 	GList *payload_list = NULL;
 	int payload_id = 0;
 	double *plx = NULL;
 	int selpos = 0;
+	int myerr = 0;
 	int resp, err = 0;
 
 	opts = gretl_bundle_new();
@@ -4650,7 +4652,12 @@ void map_plot_callback (int v)
 	} else {
 	    plx = dataset->Z[payload_id];
 	}
-	err = geoplot_driver(mapfile, NULL, NULL, plx, dataset, opts);
+	map = get_current_map(dataset, &myerr);
+	if (map != NULL) {
+	    err = geoplot_driver(NULL, map, NULL, plx, dataset, opts);
+	} else {
+	    err = geoplot_driver(mapfile, NULL, NULL, plx, dataset, opts);
+	}
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -4661,5 +4668,6 @@ void map_plot_callback (int v)
             g_free(mapname);
 	}
 	gretl_bundle_destroy(opts);
+	gretl_bundle_destroy(map);
     }
 }
