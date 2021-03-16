@@ -5111,10 +5111,11 @@
 	porén, pode que desexes utilizar etiquetas máis informativas. Podes
 	acadar isto mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrución. Para un modelo con <math>k</math>
-	parámetros, o argumento que sigue a esta palabra chave debe de ser,
-	ben unha cadea de texto literal entre comiñas que conteña <math>k</math>
-	nomes separados por espazos, ou ben o nome dunha variable de cadea que
-	conteña <math>k</math> deses nomes.
+	parámetros, o argumento que sigue a esta palabra chave debe de ser
+	unha cadea de texto literal entre comiñas que conteña <math>k</math>
+	nomes separados por espazos, o nome dunha variable de cadea que
+	conteña <math>k</math> deses nomes, ou o nome dun arranxo con
+	<math>k</math> cadeas de texto.
       </para>
     </description>
 
@@ -7294,19 +7295,23 @@
 
     <usage>
       <options>
-        <option>
+	<option>
 	  <flag>--save</flag>
 	  <effect>Garda as series resultantes</effect>
 	</option>
-        <option>
+	<option>
+	  <flag>--overwrite</flag>
+	  <effect>Conformidade para sobrescribir series xa existentes</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>Non presenta os resultados</effect>
 	</option>
 	<option>
 	  <flag>--plot</flag>
-	  <optparm>modo-ou-nomeficheiro</optparm>
+	  <optparm>Modo-ou-nomeficheiro</optparm>
 	  <effect>Mira abaixo</effect>
-        </option>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7355,15 +7360,18 @@
 	desviación padrón.
       </para>
       <para context="cli">
-	Cando especificas a opción <opt>save</opt> con esta instrución,
+	Cando especificas a opción <opt>save</opt> xunto con esta instrución,
 	os valores de pancamento, influencia e DFFITS engádense ao
 	conxunto vixente de datos; neste contexto, podes utilizar a opción
 	<opt>quiet</opt> para eliminar a presentación dos resultados. Os
 	nomes por defecto das series gardadas son <lit>lever</lit>,
-	<lit>influ</lit> e <lit>dffits</lit>, respectivamente. Porén, se xa
-	existen series con eses nomes, os das novas series gardadas
-	axústanse para garantir a unicidade; en calquera caso, estas serán
-	as 3 series con números ID máis grandes do conxunto de datos.
+	<lit>influ</lit> e <lit>dffits</lit>, respectivamente. Se xa existen
+	series con eses nomes, o que aconteza dependerá de se indicas
+	a opción <opt>overwrite</opt>, pois nese caso vanse sobrescribir
+	as series xa existentes. En caso contrario, os nomes vanse axustar
+	para poder garantir a unicidade, e as series novas xeradas serán
+	as tres series con números ID máis grandes do conxunto de
+	datos.
       </para>
       <para context="gui">
 	Coa icona '+' da parte de arriba da xanela da proba de pancamento,
@@ -7374,7 +7382,7 @@
 	Logo da execución, o accesorio <fncref targ="$test"/> devolve o criterio
 	de validación cruzada, que se define como
         \[
-        \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
+	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2
         \]
 	onde $\hat{y}_{-i}$ é o erro de predición para a observación
 	$i$-ésima, logo de que esta sexa excluída da mostra. Por iso, o
@@ -8598,7 +8606,8 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Matriz de covarianzas CMV (QML)</effect>
+	  <optparm optional="true">hac</optparm>
+	  <effect>Matriz de covarianzas CMV (QML) ou HAC</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8767,11 +8776,15 @@
 	baséanse pola contra na inversa negativa da matriz Hessiana, que se
 	aproxima numericamente. Cando indicas a opción <opt>robust</opt>,
 	utilízase un estimador CMV (QML, un <quote>emparedado</quote> entre
-	a inversa negativa da matriz Hessiana e o PEG). Agora ben, cando a
-	función do logaritmo da verosimilitude unicamente devolve un valor
-	escalar, o PEG non está dispoñible (polo tanto tampouco o estimador
-	CMV), e as desviacións padrón teñen que calcularse necesariamente
-	utilizando a matriz Hessiana numérica.
+	a inversa negativa da matriz Hessiana e o PEG). Se ademais engades o
+	parámetro <lit>hac</lit> a esta opción, o PEG se incrementa do xeito
+	de <cite key="newey-west87">Newey e West</cite> para permitir
+	autocorrelación do gradente. (Isto unicamente ten sentido con datos
+	de series de tempo.) Agora ben, cando a función do logaritmo da
+	verosimilitude unicamente devolve un valor escalar, o PEG non está
+	dispoñible (polo tanto tampouco o estimador CMV), e as desviacións
+	padrón teñen que calcularse necesariamente utilizando a matriz
+	Hessiana numérica.
       </para>
       <para>
 	No caso de que unicamente queiras as estimacións do parámetro
@@ -8798,9 +8811,10 @@
 	lograr mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrucións. Para un modelo con <math>k</math>
 	parámetros, o argumento que sigue a esta palabra chave debe de ser
-	ben unha cadea de texto literal contornada entre comiñas, que conteña
-	<math>k</math> nomes separados por espazos, ou ben o nome dunha
-	variable de cadea que conteña <math>k</math> deses nomes.
+	unha cadea de texto literal entre comiñas que conteña <math>k</math>
+	nomes separados por espazos, o nome dunha variable de cadea que
+	conteña <math>k</math> deses nomes, ou o nome dun arranxo con
+	<math>k</math> cadeas de texto.
       </para>
       <para>
 	Para unha descrición máis en profundidade da estimación
@@ -9522,10 +9536,11 @@
 	pode que desexes utilizar etiquetas máis informativas. Isto o podes
 	lograr mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrucións. Para un modelo con <math>k</math>
-	parámetros, o argumento que sigue a esta palabra chave debe de ser,
-	ben unha cadea de texto literal contornada entre comiñas que conteña
-	<math>k</math> nomes separados por espazos, ou ben o nome dunha
-	variable de cadea que conteña <math>k</math> deses nomes.
+	parámetros, o argumento que sigue a esta palabra chave debe de ser
+	unha cadea de texto literal entre comiñas que conteña <math>k</math>
+	nomes separados por espazos, o nome dunha variable de cadea que
+	conteña <math>k</math> deses nomes, ou o nome dun arranxo con
+	<math>k</math> cadeas de texto.
       </para>
       <para>
 	Para obter outros detalles sobre a estimación MCNL (NLS), consulta
@@ -12069,14 +12084,42 @@
 
     <description>
       <para>
-	Sae do programa, ofrecéndote a opción de gardar os resultados da
-	sesión ao saír.
+	Sae da modalidade vixente de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Cando esta instrución se invoca desde un guión, remátase a execución
+	    de ese guión. No contexto de gretlcli en modo de procesamento por
+	    lotes, o propio gretlcli remata; noutro caso, o programa recúa a
+	    modo interactivo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cando se invoca desde a consola do programa de Interface Gráfica
+	    de Usuario (GUI), péchase a xanela da consola.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cando se invoca desde gretlcli en modo interactivo, este programa
+	    remata.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Cae na conta de que esta instrución non pode invocarse desde dentro
+	de funcións nin de bucles.
+      </para>
+      <para>
+	A instrución <lit>quit</lit> en ningún caso provoca que remate o
+	programa de Interface Gráfica de Usuario (GUI) de GRETL. Isto faise
+	ben mediante a opción <lit>Saír</lit> do apartado <lit>Ficheiro</lit>
+	do menú, ben mediante <lit>Ctrl+Q</lit>, ou ben premendo co rato o
+	control de peche na barra do título da xanela principal de GRETL.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/Ficheiro/Saír</menu-path>
-    </gui-access>
   </command>
 
   <command name="regls" section="Estimation"

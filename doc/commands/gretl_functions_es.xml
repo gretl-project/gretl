@@ -606,8 +606,12 @@
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
-	  Devuelve un número entero con la cantidad de variables incluidas en el
-	  conjunto vigente de datos (contando con la constante).
+	  Devuelve un número entero con la cantidad de series incluidas en el
+	  conjunto vigente de datos (contando con la constante). Dado que
+	  <lit>const</lit> está siempre presente en cualquier conjunto de datos,
+	  la obtención del valor 0 indica que no hay conjunto de datos. Observa
+	  que al usar este accesorio dentro de una función, el número vigente de
+	  series accesibles puede caer por debajo de lo indicado por <lit>$nvars</lit>.
 	</para>
       </description>
     </function>
@@ -925,6 +929,13 @@
 	  la instrucción <lit>set stopwatch</lit>. Con cada acceso, se reinicia el
 	  reloj, por lo que las sucesivas utilizaciones de <lit>$stopwatch</lit>
 	  generan cada vez un escalar indicativo de los segundos de CPU desde el acceso previo.
+	</para>
+	<para>
+	  Cuando una función definida por el usuario está en ejecución, al usar la
+	  instrucción <lit>set stopwatch</lit> y el accesor <lit>$stopwatch</lit>,
+	  estos resultan específicos para esa función &mdash;es decir, la medición
+	  del tiempo dentro de una función no interrumpe cualquier medición
+	  <quote>global</quote> que pueda estar haciéndose en un guion principal.
 	</para>
       </description>
     </function>
@@ -1447,12 +1458,12 @@
 	<para>
 	  En la forma más simple de uso de esta función, <argname>x</argname>
 	  se establece igual a <lit>null</lit>, <argname>segunvar</argname> es
-	  una serie individual y el tercer argumento se omite. En ese caso,
-	  se devuelve una matriz con dos columnas que contiene: los distintos
-	  valores de <argname>segunvar</argname> ordenados de forma creciente
-	  en la primera columna, y el número de observaciones en las que
-	  <argname>segunvar</argname> toma cada uno de esos valores.
-	  Por ejemplo...
+	  una serie individual y el tercer argumento se omite (o se establece
+	  igual a cero). En este caso, se devuelve una matriz con dos columnas
+	  que contiene: los distintos valores de <argname>segunvar</argname>
+	  ordenados de forma creciente en la primera columna, y el número de
+	  observaciones en las que <argname>segunvar</argname> toma cada uno
+	  de esos valores. Por ejemplo...
 	</para>
 	<code>
 	  open data4-1
@@ -1463,9 +1474,33 @@
 	  3 (en total 5 veces) y 4 (en total 9 veces).
 	</para>
 	<para>
-	  Si <argname>x</argname> y <argname>segunvar</argname> son ambas
-	  series individuales, e indicas el tercer argumento de esta
-	  función, el valor que se devuelve es una matriz con tres columnas
+	  De modo más general, si <argname>segunvar</argname> es una lista con
+	  <math>n</math> elementos, entonces las <math>n</math> columnas a la
+	  izquierda contienen las combinaciones de los distintos valores de cada
+	  una de las <math>n</math> series, y la columna de recuento contiene
+	  el número de observaciones en las que se produce cada combinación.
+	  Observa que siempre puedes encontrar la columna de recuento en la
+	  posición <lit>nelem(segunvar) + 1</lit>.
+	</para>
+	<subhead>Especificar una función de agregación</subhead>
+	<para>
+	  Cuando indicas el tercer argumento, entonces <argname>x</argname>
+	  no debe ser <lit>null</lit>, y las <math>m</math> columnas más a
+	  la derecha van a contener los valores del estadístico especificado
+	  por <argname>nombrefunc</argname> para cada una de las variables
+	  en <argname>x</argname>. (De este modo, <math>m</math> se iguala
+	  a 1 cuando <argname>x</argname> es una única serie, y se iguala a
+	  <lit>nelem(x)</lit> cuando <argname>x</argname> es una lista.)
+	  El estadístico indicado se calcula en las submuestras respectivas
+	  que estén definidas por medio de las combinaciones indicadas en
+	  <argname>segunvar</argname> (en orden ascendente); estas
+	  combinaciones se muestran en la(s) primera(s) <math>n</math>
+	  columna(s) de la matriz que se devuelve.
+	</para>
+	<para>
+	  Entonces, en el caso especial en el que <argname>x</argname> y
+	  <argname>segunvar</argname> son ambas series individuales, el
+	  valor que se devuelve es una matriz con tres columnas
 	  que va a contener respectivamente: los distintos valores de
 	  <argname>segunvar</argname> ordenados de forma creciente, el número
 	  de observaciones en las que <argname>segunvar</argname> toma cada
@@ -1474,18 +1509,6 @@
 	  <argname>x</argname>, pero usando tan solo aquellas observaciones
 	  en las que <argname>segunvar</argname> toma el mismo valor que se
 	  especifica en la primera columna de la matriz.
-	</para>
-	<para>
-	  De modo más general, si <argname>segunvar</argname> es una lista con
-	  <math>n</math> elementos, entonces las <math>n</math> columnas a la
-	  izquierda contienen las combinaciones de los distintos valores de cada
-	  una de las <math>n</math> series, y la columna de recuento contiene
-	  el número de observaciones en las que se produce cada combinación.
-	  Si <argname>x</argname> es una lista con <math>m</math>
-	  elementos, entonces las <math>m</math> columnas más a la derecha
-	  contienen los valores del estadístico especificado, para cada una
-	  de las variables de <argname>x</argname>, nuevamente calculadas en la
-	  submuestra indicada en la(s) primera(s) columna(s).
 	</para>
 	<para>
 	  Las siguientes opciones de <argname>nombrefunc</argname> se mantienen
@@ -3540,7 +3563,13 @@
 	</para>
 	<para context="tex">
 	  Devuelve un resultado con el valor de la función digamma (o Psi) de $x$, es
-	  decir $\frac{d}{dx}\, \mbox{ln } \Gamma(x)$.
+	  decir $\frac {\mathrm{d}} {\mathrm{d} x}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="trigamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -3996,6 +4025,7 @@
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="series-list-or-mat">f</fnarg>
+	<fnarg optional="true" type="bool">U2</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4026,11 +4056,18 @@
 	  3  Error absoluto medio
 	  4  Porcentaje de error medio
 	  5  Porcentaje de error absoluto medio
-	  6  U de Theil
+	  6  U de Theil (U1 o U2)
 	  7  Proporción de sesgo, UM
 	  8  Proporción de regresión, UR
 	  9  Proporción de perturbación, UD
 	</code>
+	<para>
+	  La variante del U de Theil que se presenta por defecto depende de la
+	  naturaleza de los datos: cuando se sabe que son series de tiempo, se
+	  muestra el U2; en caso contrario, se produce el U1. Pero puedes forzar
+	  esta elección por medio del último argumento opcional: indica un valor
+	  no nulo para forzar el U2, o un valor de cero para forzar el U1.
+	</para>
 	<para>
 	  Para obtener más detalles sobre el cálculo de esos estadísticos y de la
 	  interpretación de los valores de <math>U</math>, consulta
@@ -12207,6 +12244,28 @@
 	  Devuelve una matriz que es la traspuesta de <argname>X</argname>. Aviso:
 	  Esta función se utiliza raramente. Para trasponer una matriz, en general
 	  puedes usar simplemente el operador para trasposición: <lit>X'</lit>.
+	</para>
+      </description>
+    </function>
+
+    <function name="trigamma" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Devuelve un resultado del mismo tipo que el argumento con la función trigamma de
+	  <argname>x</argname>; es decir, la segunda derivada del logaritmo de la función Gamma.
+	</para>
+	<para context="tex">
+	  Devuelve un resultado del mismo tipo que el argumento con la función trigamma
+	  de $x$; es decir, $\frac {\mathrm{d}^2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="lngamma"/>
+            <fncref targ="digamma"/>
+	  </seelist>
 	</para>
       </description>
     </function>

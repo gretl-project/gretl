@@ -5112,9 +5112,10 @@
 	lograr esto mediante la palabra clave adicional <lit>param_names</lit>
 	dentro del bloque de instrucción. Para un modelo con <math>k</math>
 	parámetros, el argumento que sigue a esta palabra clave debe ser,
-	bien una cadena de texto literal entre comillas que contenga <math>k</math>
-	nombres separados por espacios, o bien el nombre de una variable de cadena que
-	contenga <math>k</math> de esos nombres.
+	una cadena de texto literal entre comillas que contenga <math>k</math>
+	nombres separados por espacios, el nombre de una variable de cadena
+	que contenga <math>k</math> de esos nombres, o el nombre de un array
+	con <math>k</math> cadenas de texto.
       </para>
     </description>
 
@@ -7294,19 +7295,23 @@
 
     <usage>
       <options>
-        <option>
+	<option>
 	  <flag>--save</flag>
 	  <effect>Guarda las series resultantes</effect>
 	</option>
-        <option>
+	<option>
+	  <flag>--overwrite</flag>
+	  <effect>Conformidad para sobrescribir series ya existentes</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>No presenta los resultados</effect>
 	</option>
 	<option>
 	  <flag>--plot</flag>
-	  <optparm>modo-o-nombrearchivo</optparm>
+	  <optparm>Modo-o-nombrearchivo</optparm>
 	  <effect>Mira abajo</effect>
-        </option>
+	</option>
       </options>
 	<examples>
 	<demos>
@@ -7360,10 +7365,13 @@
 	conjunto vigente de datos; en este contexto, puedes utilizar la opción
 	<opt>quiet</opt> para eliminar la presentación de los resultados. Los
 	nombres por defecto de las series guardadas son <lit>lever</lit>,
-	<lit>influ</lit> y <lit>dffits</lit>, respectivamente. Sin embargo, si ya
-	existen series con esos nombres, los de las nuevas series guardadas
-	se ajustan para garantizar la unicidad; en cualquier caso, estas serán
-	las 3 series con números ID más grandes del conjunto de datos.
+	<lit>influ</lit> y <lit>dffits</lit>, respectivamente. Si ya
+	existen series con esos nombres, lo que suceda dependerá de si
+	indicas la opción <opt>overwrite</opt>, pues en ese caso se van
+	a sobrescribir las series ya existentes. En caso contrario, los
+	nombres se van a ajustar para poder garantizar la unicidad, y las
+	nuevas series generadas serán las 3 series con números ID más
+	grandes del conjunto de datos.
       </para>
       <para context="gui">
 	Con el icono '+' de la parte de arriba de la ventana del contraste de apalancamiento,
@@ -7374,7 +7382,7 @@
 	Después de la ejecución, el accesor <fncref targ="$test"/> devuelve el criterio
 	de validación cruzada, que se define como
         \[
-        \sum_{i=1}^n (y_i - \hat{y}_{-i})^2
+	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2
         \]
 	donde $\hat{y}_{-i}$ es el error de predicción para la observación
 	$i$-ésima, después de que esta sea excluida de la muestra. Por eso, el
@@ -8598,7 +8606,8 @@
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>Matriz de covarianzas CMV (QML)</effect>
+	  <optparm optional="true">hac</optparm>
+	  <effect>Matriz de covarianzas CMV (QML) o HAC</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -8767,11 +8776,15 @@
 	por el contario se basan en la inversa negativa de la matriz Hessiana, que se
 	aproxima numéricamente. Cuando indicas la opción <opt>robust</opt>,
 	se utiliza un estimador CMV (QML, un <quote>emparedado</quote> entre
-	la inversa negativa de la matriz Hessiana y el PEG). Ahora bien, cuando la
-	función del logaritmo de la verosimilitud únicamente devuelve un valor
-	escalar, el PEG no está disponible (por lo tanto tampoco el estimador
-	CMV), y las desviaciones típicas tienen que calcularse necesariamente
-	utilizando la matriz Hessiana numérica.
+	la inversa negativa de la matriz Hessiana y el PEG). Si además añades
+	el parámetro <lit>hac</lit> a esta opción, el PEG se incrementa del
+	modo de <cite key="newey-west87">Newey y West</cite> para permitir
+	autocorrelación del gradiente. (Esto únicamente tiene sentido con
+	datos de series de tiempo.) Ahora bien, cuando la función del logaritmo
+	de la verosimilitud únicamente devuelve un valor escalar, el PEG no
+	está disponible (por lo tanto tampoco el estimador CMV), y las
+	desviaciones típicas tienen que calcularse necesariamente utilizando
+	la matriz Hessiana numérica.
       </para>
       <para>
 	En caso de que únicamente quieras las estimaciones del parámetro
@@ -8798,9 +8811,10 @@
 	conseguir mediante la palabra clave adicional <lit>param_names</lit>
 	dentro del bloque de instrucciones. Para un modelo con <math>k</math>
 	parámetros, el argumento que sigue a esta palabra clave debe ser
-	bien una cadena de texto literal puesta entre comillas, que contenga
-	<math>k</math> nombres separados por espacios, o bien el nombre de una
-	variable de cadena que contenga <math>k</math> de esos nombres.
+	una cadena de texto literal entre comillas que contenga <math>k</math>
+	nombres separados por espacios, el nombre de una variable de cadena
+	que contenga <math>k</math> de esos nombres, o el nombre de un array
+	con <math>k</math> cadenas de texto.
       </para>
       <para>
 	Para una descripción más en profundidad de la estimación
@@ -9522,10 +9536,11 @@
 	puede que desees utilizar etiquetas más informativas. Esto lo puedes
 	lograr mediante la palabra clave adicional <lit>param_names</lit>
 	dentro del bloque de instrucciones. Para un modelo con <math>k</math>
-	parámetros, el argumento que sigue a esta palabra clave debe ser,
-	bien una cadena de texto literal puesta entre comillas que contenga
-	<math>k</math> nombres separados por espacios, o bien el nombre de una
-	variable de cadena que contenga <math>k</math> de esos nombres.
+	parámetros, el argumento que sigue a esta palabra clave debe ser
+	una cadena de texto literal entre comillas que contenga <math>k</math>
+	nombres separados por espacios, el nombre de una variable de cadena
+	que contenga <math>k</math> de esos nombres, o el nombre de un array
+	con <math>k</math> cadenas de texto.
       </para>
       <para>
 	Para obtener otros detalles sobre la estimación MCNL (NLS), consulta
@@ -12069,14 +12084,42 @@
 
     <description>
       <para>
-	Sale del programa, ofreciéndote la opción de guardar los resultados de la
-	sesión al salir.
+	Sale de la modalidad vigente de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Cuando esta instrucción se invoca desde un guion, finaliza la
+	    ejecución de ese guion. En el contexto de gretlcli en modo de
+	    procesamiento por lotes, el propio gretlcli finaliza; en caso
+	    contrario, el programa retrocede a modo interactivo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cuando se invoca desde la consola del programa de Interface Gráfica
+	    de Usuario (GUI), se cierra la ventana de la consola.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cuando se invoca desde gretlcli en modo interactivo, este programa
+	    finaliza.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Ten en cuenta que esta instrucción no puede invocarse desde dentro
+	de funciones ni de bucles.
+      </para>
+      <para>
+	La instrucción <lit>quit</lit> en ningún caso provoca que finalice el
+	programa de Interface Gráfica de Usuario (GUI) de GRETL. Esto se
+	hace mediante la opción <lit>Salir</lit> del apartado <lit>Archivo</lit>
+	del menú, o mediante <lit>Ctrl+Q</lit>, o pulsando con el ratón el
+	control de cierre en la barra de título de la ventana principal de GRETL.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/Archivo/Salir</menu-path>
-    </gui-access>
   </command>
 
   <command name="regls" section="Estimation"
