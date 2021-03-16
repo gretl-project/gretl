@@ -1146,23 +1146,6 @@ static gretl_matrix *shp2dat (const char *shpname,
     return bbox;
 }
 
-static gchar *feature_get_id (gretl_bundle *f, int i)
-{
-    gchar *ret = NULL;
-    GretlType t;
-    void *data;
-    int err = 0;
-
-    data = gretl_bundle_get_data(f, "id", &t, NULL, &err);
-    if (data != NULL && t == GRETL_TYPE_STRING) {
-	ret = g_strdup((const char *) data);
-    } else {
-	ret = g_strdup_printf("F%d", i);
-    }
-
-    return ret;
-}
-
 /* Write metadata from GeoJSON file @fname to @csvname */
 
 static int geojson_to_csv (const char *fname,
@@ -1202,7 +1185,6 @@ static int geojson_to_csv (const char *fname,
 	gretl_array *features = NULL;
 	gretl_array *keys = NULL;
 	const char *key;
-	gchar *id;
 	int nf = 0, nk = 0;
 	int i, j;
 
@@ -1242,7 +1224,6 @@ static int geojson_to_csv (const char *fname,
 	    nk = gretl_array_get_length(keys);
 	}
 	/* output header */
-	fputs("obs,", fp);
 	for (j=0; j<nk && !err; j++) {
 	    key = gretl_array_get_data(keys, j);
 	    fprintf(fp, "%s%c", key, j < nk-1 ? ',' : '\n');
@@ -1250,9 +1231,6 @@ static int geojson_to_csv (const char *fname,
 	/* output actual data */
 	for (i=0; i<nf && !err; i++) {
 	    fi = gretl_array_get_element(features, i, NULL, &err);
-	    id = feature_get_id(fi, i+1);
-	    fprintf(fp, "\"%s\",", id);
-	    g_free(id);
 	    pp = gretl_bundle_get_bundle(fi, "properties", &err);
 	    for (j=0; j<nk && !err; j++) {
 		key = gretl_array_get_data(keys, j);
