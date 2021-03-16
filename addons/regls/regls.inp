@@ -178,6 +178,7 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       endif
       printf ", verbosity=3))\n"
    end outfile
+   set force_decpoint off
    printf "Command line equivalent:\n\n"
    printf "%s\n", cmdstr
    b.commands = cmdstr
