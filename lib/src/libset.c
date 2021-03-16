@@ -2650,8 +2650,14 @@ int pop_program_state (void)
     if (n_states < 2) {
 	err = 1;
     } else {
+	int fdp = state->flags & STATE_FORCE_DECPOINT;
+
 	state_idx--;
 	state = g_ptr_array_index(state_stack, state_idx);
+
+	if (fdp && !(state->flags & STATE_FORCE_DECPOINT)) {
+	    libset_set_decpoint(0);
+	}
     }
 
 #if PPDEBUG
