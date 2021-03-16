@@ -3346,7 +3346,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
             handle_use_cwd(rc_bool(val), cpaths);
 #endif
         } else if (!strcmp(key, "lcnumeric")) {
-            libset_set_bool(FORCE_DECP, !rc_bool(val));
+	    set_lcnumeric(LANG_AUTO, rc_bool(val));
         } else if (!strcmp(key, "dbhost")) {
             strncat(cpaths->dbhost, val, 32 - 1);
         } else if (!strcmp(key, "dbproxy")) {
