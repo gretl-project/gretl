@@ -2273,6 +2273,18 @@ const char *dataset_get_mapfile (const DATASET *dset)
     return dset == NULL ? NULL : dset->mapfile;
 }
 
+void dataset_set_mapfile (DATASET *dset, const char *fname)
+{
+    if (dset != NULL) {
+	free(dset->mapfile);
+	if (fname != NULL) {
+	    dset->mapfile = gretl_strdup(fname);
+	} else {
+	    dset->mapfile = NULL;
+	}
+    }
+}
+
 const char *dataset_period_label (const DATASET *dset)
 {
     if (dset == NULL) {
