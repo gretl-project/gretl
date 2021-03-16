@@ -20,6 +20,9 @@
 #ifndef DATASET_H
 #define DATASET_H
 
+#include "gretl_matrix.h"
+#include "gretl_bundle.h"
+
 typedef enum {
     DATA_NONE,
     DATA_XSECT,
@@ -608,12 +611,15 @@ void series_set_orig_pd (const DATASET *dset, int i, int pd);
 
 void series_unset_orig_pd (const DATASET *dset, int i);
 
-void *series_info_bundle (const DATASET *dset, int i,
-			  int *err);
+gretl_bundle *series_info_bundle (const DATASET *dset, int i,
+				  int *err);
 
-void *list_info_matrix (const int *list,
-			const DATASET *dset,
-			gretlopt opt,
-			int *err);
+gretl_matrix *list_info_matrix (const int *list,
+				const DATASET *dset,
+				gretlopt opt,
+				int *err);
+
+gretl_bundle *get_current_map (const DATASET *dset,
+			       int *err);
 
 #endif /* DATASET_H */

@@ -15590,8 +15590,6 @@ static NODE *dollar_var_node (NODE *t, parser *p)
                 }
             }
 	} else if (idx == R_MAP) {
-	    extern gretl_bundle *get_current_map(const DATASET *dset,
-						 int *err);
 	    ret = aux_bundle_node(p);
 	    if (!p->err) {
 		ret->v.b = get_current_map(p->dset, &p->err);
