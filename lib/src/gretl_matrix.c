@@ -7603,7 +7603,8 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
     gretl_matrix *qvals;
     const double *mval;
     double *a, *q;
-    int i, j, n, plen;
+    int i, j, k;
+    int n, plen;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_INVARG;
@@ -7618,7 +7619,7 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
     }
 
     for (i=0; i<plen; i++) {
-	if (p->val[i] <= 0 || p->val[i] >= 1) {
+	if (p->val[i] <= 0 || p->val[i] >= 1 || na(p->val[i])) {
 	    *err = E_INVARG;
 	    return NULL;
 	}
@@ -7646,9 +7647,14 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
     mval = m->val;
 
     for (j=0; j<m->cols && !*err; j++) {
-	memcpy(a, mval, n * sizeof *a);
+	k = 0;
+	for (i=0; i<n; i++) {
+	    if (!na(mval[i])) {
+		a[k++] = mval[i];
+	    }
+	}
 	memcpy(q, p->val, plen * sizeof *q);
-	*err = gretl_array_quantiles(a, n, q, plen);
+	*err = gretl_array_quantiles(a, k, q, plen);
 	if (!*err) {
 	    for (i=0; i<plen; i++) {
 		gretl_matrix_set(qvals, i, j, q[i]);
