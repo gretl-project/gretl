@@ -4652,7 +4652,8 @@ void map_plot_callback (int v)
 	} else {
 	    plx = dataset->Z[payload_id];
 	}
-	map = get_current_map(dataset, &myerr);
+	/* FIXME: do we want to do this, here? */
+	map = get_current_map(dataset, NULL, &myerr);
 	if (map != NULL) {
 	    err = geoplot_driver(NULL, map, NULL, plx, dataset, opts);
 	} else {
