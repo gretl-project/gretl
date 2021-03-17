@@ -6885,6 +6885,7 @@ static void build_data_export_combo (selector *sr)
     GtkWidget *hbox, *label, *combo;
     static const char *opt_strs[] = {
 	N_("CSV"),
+	N_("GeoJSON"),
 	N_("gretl datafile (.gdt)"),
 	N_("gretl binary datafile (.gdtb)"),
 	N_("gretl database (.bin)"),
@@ -6897,6 +6898,7 @@ static void build_data_export_combo (selector *sr)
     };
     static gretlopt opts[] = {
 	OPT_C,
+	OPT_P,
 	OPT_Z,
 	OPT_B,
 	OPT_D,
@@ -6918,10 +6920,17 @@ static void build_data_export_combo (selector *sr)
     label = gtk_label_new(_("Select format"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
-    if (DSET_DB_OK(dataset)) {
-	combo = gretl_opts_combo(&export_opts, deflt);
+    if (dataset->mapfile != NULL) {
+	int masked[4] = {3, 4, 8, 9};
+
+	deflt = 1;
+	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
+    } else if (DSET_DB_OK(dataset)) {
+	int masked[2] = {1, 1};
+
+	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
     } else {
-	int masked[2] = {1, 3};
+	int masked[3] = {2, 1, 4};
 
 	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
     }
@@ -8321,6 +8330,8 @@ static int data_export_selection_callback (selector *sr)
 	    ci = EXPORT_DTA;
 	} else if (sr->opts & OPT_D) {
 	    ci = EXPORT_DB;
+	} else if (sr->opts & OPT_P) {
+	    ci = SAVE_MAP;
 	} else if (sr->opts & OPT_B) {
 	    ci = EXPORT_GDTB;
 	} else {
