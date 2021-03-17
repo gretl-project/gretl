@@ -6737,10 +6737,16 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent)
 
 /* geoplot GUI helper functions */
 
+static const char *palettes[] = {
+    "default", "blues", "oranges", "green-to-red"
+};
+
 struct geoplot_info {
     int *retval;
     gretl_bundle *bundle;
     int *payload_id;
+    int *palette_id;
+    gchar **pplname;
     GtkWidget *payload_combo;
     GtkWidget *palette_combo;
     GtkWidget *border_check;
@@ -6754,19 +6760,24 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     int border, logscale, height;
 
     if (gtk_widget_is_sensitive(gi->payload_combo)) {
-        gchar *payload = NULL, *palette = NULL;
+        gchar *payload = NULL;
+	int palnum = 0;
 
         payload = combo_box_get_active_text(gi->payload_combo);
-        palette = combo_box_get_active_text(gi->palette_combo);
+	palnum = gtk_combo_box_get_active(GTK_COMBO_BOX(gi->palette_combo));
 
         if (payload != NULL && strcmp(payload, "none")) {
             *gi->payload_id = current_series_index(dataset, payload);
-            if (strcmp(palette, "default")) {
-                gretl_bundle_set_string(gi->bundle, "palette", palette);
+            if (palnum > 0) {
+                gretl_bundle_set_string(gi->bundle, "palette",
+					palettes[palnum]);
             }
         }
-        g_free(payload);
-        g_free(palette);
+	/* record the user's choices */
+	g_free(*gi->pplname);
+	*gi->pplname = payload;
+	fprintf(stderr, "HERE 1 *pplname = '%s'\n", *gi->pplname);
+	*gi->palette_id = palnum;
     }
 
     border = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gi->border_check));
@@ -6791,14 +6802,37 @@ static void sensitize_map_controls (GtkComboBox *combo,
     gtk_widget_set_sensitive(gi->logscale_check, active);
 }
 
+/* If we have a previously selected @payload, and it's a
+   member of the current @plist, select it again by default.
+*/
+
+static void maybe_reinstate_selection (GList *plist,
+				       const gchar *payload,
+				       int *selpos)
+{
+    GList *tmp = g_list_first(plist);
+    int i = 0;
+
+    while (tmp != NULL) {
+	if (!strcmp((gchar *) tmp->data, payload)) {
+	    *selpos = 1;
+	    break;
+	}
+	tmp = tmp->next;
+	i++;
+    }
+}
+
 int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
                         int *payload_id)
 {
+    static gchar *payload = NULL;
+    static int palette_id = 0;
     struct geoplot_info gi = {0};
     GtkWidget *dialog, *com1, *com2;
     GtkWidget *vbox, *hbox, *tmp;
     GtkWidget *bc, *ls, *hs;
-    int ret = GRETL_CANCEL;
+    int i, ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
         return ret;
@@ -6810,6 +6844,8 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gi.retval = &ret;
     gi.bundle = b;
     gi.payload_id = payload_id;
+    gi.palette_id = &palette_id;
+    gi.pplname = &payload;
     gi.dlg = dialog;
 
     /* want a payload? */
@@ -6819,6 +6855,10 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gi.payload_combo = com1 = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com1, FALSE, FALSE, 5);
     if (plist != NULL) {
+	fprintf(stderr, "HERE payload = '%s'\n", payload);
+	if (payload != NULL) {
+	    maybe_reinstate_selection(plist, payload, &selpos);
+	}
         set_combo_box_strings_from_list(com1, plist);
         gtk_combo_box_set_active(GTK_COMBO_BOX(com1), selpos);
     } else {
@@ -6834,11 +6874,10 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gi.palette_combo = com2 = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com2, FALSE, FALSE, 5);
-    combo_box_append_text(com2, "default");
-    combo_box_append_text(com2, "blues");
-    combo_box_append_text(com2, "oranges");
-    combo_box_append_text(com2, "green-to-red");
-    gtk_combo_box_set_active(GTK_COMBO_BOX(com2), 0);
+    for (i=0; i<G_N_ELEMENTS(palettes); i++) {
+	combo_box_append_text(com2, palettes[i]);
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(com2), palette_id);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_set_sensitive(com2, selpos ? 1 : 0);
     gtk_widget_set_sensitive(hbox, plist != NULL);
