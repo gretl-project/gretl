@@ -5708,6 +5708,8 @@ gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
 
 #define MAP_DEBUG 0
 
+#define excluded(l,i) (l != NULL && !in_gretl_list(l,i))
+
 /* Given the current dataset and the $mapfile name recorded
    on it: get the content of $mapfile as a bundle then
    revise the bundle (a) to include only the features in the
@@ -5716,7 +5718,9 @@ gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
    bundle.
 */
 
-gretl_bundle *get_current_map (const DATASET *dset, int *err)
+gretl_bundle *get_current_map (const DATASET *dset,
+			       const int *list,
+			       int *err)
 {
     const char *sj, *id, *fname;
 #if MAP_DEBUG
@@ -5816,6 +5820,9 @@ gretl_bundle *get_current_map (const DATASET *dset, int *err)
 	    gretl_bundle_void_content(pp);
 	    /* and refill it from the dataset */
 	    for (j=1; j<dset->v; j++) {
+		if (excluded(list, i)) {
+		    continue;
+		}
 		id = dset->varname[j];
 		if (is_string_valued(dset, j)) {
 		    sj = series_get_string_for_obs(dset, j, dsi);

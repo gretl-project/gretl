@@ -622,6 +622,7 @@ gretl_matrix *list_info_matrix (const int *list,
 				int *err);
 
 gretl_bundle *get_current_map (const DATASET *dset,
+			       const int *list,
 			       int *err);
 
 #endif /* DATASET_H */

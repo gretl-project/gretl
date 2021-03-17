@@ -1061,15 +1061,14 @@ static int write_dta_data (const char *fname, const int *list,
     return err;
 }
 
-static int write_map_data (const char *fname, const int *list,
+static int write_map_data (const char *fname,
+			   const int *list,
 			   const DATASET *dset)
 {
     gretl_bundle *b = NULL;
     int err = 0;
 
-    /* note: @list is unused at present */
-
-    b = get_current_map(dset, &err);
+    b = get_current_map(dset, list, &err);
 
     if (!err) {
 	err = gretl_bundle_write_to_file(b, fname, 0);
