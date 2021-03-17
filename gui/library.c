@@ -8934,9 +8934,7 @@ static void maybe_shrink_dataset (const char *newname,
     int shrink = 0;
     int resp;
 
-    if (action == SAVE_MAP) {
-	shrink = 1;
-    } else if (datafile == newname || !strcmp(datafile, newname)) {
+    if (datafile == newname || !strcmp(datafile, newname)) {
         shrink = 1;
     } else {
         resp = yes_no_dialog(_("gretl: revised data set"),
@@ -8949,6 +8947,9 @@ static void maybe_shrink_dataset (const char *newname,
     if (shrink) {
         if (dataset_is_subsampled(dataset)) {
             shrink_dataset_to_sample();
+	    if (action == SAVE_MAP) {
+		dataset_set_mapfile(dataset, newname);
+	    }
         }
         if (datafile != newname) {
             strcpy(datafile, newname);
@@ -9096,26 +9097,6 @@ gboolean get_csv_exclude_obs (void)
     return csv_exclude_obs;
 }
 
-static int save_geojson (const char *fname)
-{
-    gretl_bundle *b = NULL;
-    int err = 0;
-
-    b = get_current_map(dataset, &err);
-
-    if (!err) {
-	err = gretl_bundle_write_to_file(b, fname, 0);
-    }
-
-    if (err) {
-	gui_errmsg(err);
-    }
-
-    gretl_bundle_destroy(b);
-
-    return err;
-}
-
 /* This is called from the file selector when doing a
    data save, and also from the callback from Ctrl-S
    in the main gretl window.
@@ -9128,18 +9109,6 @@ int do_store (char *filename, int action, gpointer data)
     int cancel = 0;
     int err = 0;
 
-    if (action == SAVE_MAP) {
-	err = save_geojson(filename);
-	if (err) {
-	    return err;
-	} else {
-	    dataset_set_mapfile(dataset, filename);
-	    lib_command_sprintf("store \"%s\"", filename);
-	    record_command_verbatim();
-	    goto post_process;
-	}
-    }
-
     /* If the dataset is sub-sampled, give the user a chance to
        rebuild the full data range before saving.
     */
@@ -9147,9 +9116,11 @@ int do_store (char *filename, int action, gpointer data)
         return 0; /* canceled */
     }
 
-    opt = store_action_to_opt(filename, action, &exporting, &cancel);
-    if (cancel) {
-        return 0;
+    if (action != SAVE_MAP) {
+	opt = store_action_to_opt(filename, action, &exporting, &cancel);
+	if (cancel) {
+	    return 0;
+	}
     }
 
     if (action == AUTO_SAVE_DATA) {
@@ -9159,7 +9130,7 @@ int do_store (char *filename, int action, gpointer data)
 
     lib_command_sprintf("store \"%s\"", filename);
 
-    if (exporting) {
+    if (exporting || action == SAVE_MAP) {
         /* @mylist will be NULL unless there's a current selection
            of series from the apparatus in selector.c. That's OK:
            implicitly all series will be saved.
@@ -9186,7 +9157,7 @@ int do_store (char *filename, int action, gpointer data)
 
     err = parse_lib_command();
 
-    if (!err && !WRITING_DB(opt)) {
+    if (!err && !WRITING_DB(opt) && action != SAVE_MAP) {
         /* back up the existing datafile if need be */
         err = maybe_back_up_datafile(filename);
         if (err) {
@@ -9207,8 +9178,6 @@ int do_store (char *filename, int action, gpointer data)
             gui_errmsg(err);
         }
     }
-
- post_process:
 
     if (!err && !exporting) {
         /* record the fact that data have been saved, etc. */
