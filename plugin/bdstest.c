@@ -515,7 +515,7 @@ gretl_matrix *make_return_matrix (kinfo *ki, int NB,
 }
 
 gretl_matrix *bdstest (const double *x, int n, int maxdim,
-		       double eps, int *err)
+		       double eps, int boot, int *err)
 {
     kinfo ki = {0};
     gretl_matrix *ret = NULL;
@@ -539,6 +539,10 @@ gretl_matrix *bdstest (const double *x, int n, int maxdim,
     }
     if (na(ki.eps) || ki.eps <= 0) {
 	*err = E_INVARG;
+    }
+
+    if (boot) {
+	NB = 1999;
     }
 
     md1 = maxdim - 1;

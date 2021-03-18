@@ -468,7 +468,6 @@ enum {
     F_VMA,
     F_FCSTATS,
     HF_REGLS,
-    HF_BDSTEST,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -503,6 +502,7 @@ enum {
     F_TDISAGG,
     F_HYP2F1,
     F_MMULT,
+    F_BDSTEST,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

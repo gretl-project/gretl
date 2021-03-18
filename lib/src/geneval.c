@@ -12318,19 +12318,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = vma_rep(compan_top, C, horizon, &p->err);
 	    }
         }
-    } else if (f == HF_BDSTEST) {
-	double eps = NADBL;
-	int embed = 0;
-
-	if (l->t != SERIES) {
-	    node_type_error(f, 1, SERIES, l, p);
-	} else {
-	    embed = node_get_int(m, p);
-	    eps = node_get_scalar(r, p);
-	}
-	if (!p->err) {
-	    A = bds_driver(l->v.xvec, p->dset, embed, eps, &p->err);
-	}
     }
 
     if (post_process) {
@@ -14173,6 +14160,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         }
         for (i=0; i<k && !p->err; i++) {
             e = eval(n->v.bn.n[i], p);
+	    if (p->err) break;
             if (i == 0) {
                 if (e->t == BUNDLE) {
                     mb = e->v.b;
@@ -14194,6 +14182,39 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         if (!p->err) {
             ret->v.m = midas_multipliers(mb, cum, idx, &p->err);
         }
+    } else if (t->t == F_BDSTEST) {
+	double *x = NULL;
+	double eps = NADBL;
+	int embed = 0;
+	int boot = -1;
+
+        if (k < 3 || k > 4) {
+            n_args_error(k, 3, t->t, p);
+        }
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (p->err) break;
+	    if (i == 0) {
+		if (e->t == SERIES) {
+		    x = e->v.xvec;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    } else if (i == 1) {
+		embed = node_get_int(e, p);
+	    } else if (i == 2) {
+		eps = node_get_scalar(e, p);
+	    } else if (!null_node(e)) {
+		boot = node_get_int(e, p);
+	    }
+	}
+        if (!p->err) {
+            reset_p_aux(p, save_aux);
+            ret = aux_matrix_node(p);
+        }
+	if (!p->err) {
+	    ret->v.m = bds_driver(x, p->dset, embed, eps, boot, &p->err);
+	}
     } else if (t->t == F_TDISAGG) {
         gretl_matrix *Y = NULL;
         gretl_matrix *X = NULL;
@@ -17422,7 +17443,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_STACK:
     case F_VMA:
     case HF_REGLS:
-    case HF_BDSTEST:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
             ret = replace_value(l, m, r, p);
@@ -17493,6 +17513,7 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CLOGFI:
     case F_DEFARGS:
     case F_MMULT:
+    case F_BDSTEST:
         /* built-in functions taking more than three args */
         if (t->t == F_FEVAL) {
             ret = eval_feval(t, p);

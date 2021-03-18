@@ -576,6 +576,7 @@ struct str_table funcs[] = {
     { F_TDISAGG,   "tdisagg" },
     { F_ASSERT,    "assert" },
     { F_VMA,       "vma" },
+    { F_BDSTEST,   "bdstest" },
     { 0,           NULL }
 };
 
@@ -605,7 +606,6 @@ struct str_table hidden_funcs[] = {
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_REGLS,    "_regls" },
-    { HF_BDSTEST,  "_bdstest" },
     { 0,           NULL }
 };
 
