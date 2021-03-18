@@ -5820,7 +5820,7 @@ gretl_bundle *get_current_map (const DATASET *dset,
 	    gretl_bundle_void_content(pp);
 	    /* and refill it from the dataset */
 	    for (j=1; j<dset->v; j++) {
-		if (excluded(list, i)) {
+		if (excluded(list, j)) {
 		    continue;
 		}
 		id = dset->varname[j];
