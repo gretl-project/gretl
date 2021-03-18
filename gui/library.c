@@ -9111,6 +9111,18 @@ int do_store (char *filename, int action, gpointer data)
     int cancel = 0;
     int err = 0;
 
+    if (action == WRITE_MAP) {
+	/* quick, simple writing of map to geojson */
+	err = gui_write_data(filename, NULL, dataset, OPT_NONE);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    lib_command_sprintf("store \"%s\"", filename);
+	    record_command_verbatim();
+	}
+	return err;
+    }
+
     /* If the dataset is sub-sampled, give the user a chance to
        rebuild the full data range before saving.
     */

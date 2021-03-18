@@ -937,7 +937,7 @@ void cond_number_callback (void)
 
 void map_save_callback (void)
 {
-    file_selector(SAVE_MAP, FSEL_DATA_NONE, NULL);
+    file_selector(WRITE_MAP, FSEL_DATA_NONE, NULL);
 }
 
 static int nist_verbosity (GtkAction *action)

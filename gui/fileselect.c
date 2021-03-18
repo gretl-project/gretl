@@ -78,6 +78,7 @@ static struct extmap action_map[] = {
     { SAVE_GFN_SPEC,     ".spec" },
     { SAVE_GFN_ZIP,      ".zip" },
     { SAVE_MAP,          ".geojson" },
+    { WRITE_MAP,         ".geojson" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".txt" },
     { EXPORT_OCTAVE,     ".m" },
@@ -727,7 +728,7 @@ file_selector_process_result (const char *in_fname, int action,
 	err = save_function_package_spec(fname, data);
     } else if (action == SAVE_GFN_ZIP) {
 	err = save_function_package_zipfile(fname, data);
-    } else if (action == SAVE_MAP) {
+    } else if (action == SAVE_MAP || action == WRITE_MAP) {
 	err = do_store(fname, action, data);
     } else if (action == SELECT_PDF) {
 	err = set_package_pdfname(fname, data);
@@ -1231,6 +1232,8 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	}
 	if (action == SAVE_MAP) {
 	    title = g_strdup_printf("gretl: %s", _("save map as geojson"));
+	} else if (action == WRITE_MAP) {
+	    title = g_strdup_printf("gretl: %s", _("write map as geojson"));
 	} else {
 	    title = g_strdup_printf("gretl: %s", _("save file"));
 	}
