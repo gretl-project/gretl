@@ -12292,39 +12292,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                                           p->dset);
         }
         free(list);
-    } else if (f == F_GEOPLOT) {
-        const char *mapfile = NULL;
-        gretl_bundle *mapbun = NULL;
-        double *plx = NULL;
-        gretl_bundle *opts = NULL;
-
-        post_process = 0;
-        if (l->t == STR) {
-            mapfile = l->v.str;
-        } else if (l->t == BUNDLE) {
-            mapbun = l->v.b;
-        } else {
-            p->err = E_TYPES;
-        }
-        if (!p->err && !null_node(m)) {
-            if (m->t == SERIES) {
-                plx = m->v.xvec;
-            } else {
-                p->err = E_TYPES;
-            }
-        }
-        if (!p->err && !null_node(r)) {
-            if (r->t == BUNDLE) {
-                opts = r->v.b;
-            } else {
-                p->err = E_TYPES;
-            }
-        }
-        if (!p->err) {
-            ret = aux_scalar_node(p);
-            p->err = ret->v.xval = geoplot_driver(mapfile, mapbun, plx,
-                                                  p->dset, opts);
-	}
     } else if (f == F_VMA) {
 	if (l->t != MAT) {
 	    /* matrix A, required */
@@ -12377,6 +12344,67 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (p->err) {
 	    /* don't leak memory on error */
 	    gretl_matrix_free(A);
+	}
+    }
+
+    return ret;
+}
+
+static NODE *geoplot_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (!p->err) {
+        const char *mapfile = NULL;
+        gretl_bundle *mapbun = NULL;
+        double *payload = NULL;
+        gretl_bundle *opts = NULL;
+
+	if (l->t == STR || l->t == BUNDLE) {
+	    /* map-fname-or-bundle [,series] [,options] */
+	    if (l->t == STR) {
+		mapfile = l->v.str;
+	    } else {
+		mapbun = l->v.b;
+	    }
+	    if (!null_node(m)) {
+		if (m->t == SERIES) {
+		    payload = m->v.xvec;
+		} else if (m->t == BUNDLE) {
+		    opts = m->v.b;
+		} else {
+		    p->err = E_INVARG;
+		}
+	    }
+	    if (!p->err && !null_node(r)) {
+		if (opts == NULL) {
+		    opts = r->v.b;
+		} else {
+		    p->err = E_INVARG;
+		}
+	    }
+	} else if (l->t == SERIES) {
+	    /* series [,options] (map is implicit) */
+	    payload = l->v.xvec;
+	    if (!null_node(m)) {
+		if (m->t == BUNDLE) {
+		    opts = m->v.b;
+		} else {
+		    p->err = E_INVARG;
+		}
+	    }
+	    if (!p->err && !null_node(r)) {
+		p->err = E_INVARG;
+	    }
+	} else if (null_node(l) && null_node(m) && null_node(r)) {
+	    ; /* implicit map, no payload, no options */
+	} else {
+	    p->err = E_INVARG;
+	}
+
+        if (!p->err) {
+            p->err = ret->v.xval = geoplot_driver(mapfile, mapbun, payload,
+                                                  p->dset, opts);
 	}
     }
 
@@ -17392,10 +17420,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_BRENAME:
     case F_ISOWEEK:
     case F_STACK:
+    case F_VMA:
     case HF_REGLS:
     case HF_BDSTEST:
-    case F_GEOPLOT:
-    case F_VMA:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
             ret = replace_value(l, m, r, p);
@@ -17407,6 +17434,9 @@ static NODE *eval (NODE *t, parser *p)
             ret = eval_3args_func(l, m, r, t->t, p);
         }
         break;
+    case F_GEOPLOT:
+	ret = geoplot_node(l, m, r, p);
+	break;
     case F_PRINTF:
     case F_SPRINTF:
         if (l->t == STR && null_or_string(r)) {
