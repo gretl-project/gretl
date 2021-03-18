@@ -8017,8 +8017,6 @@ int fill_permutation_vector (gretl_vector *v, int n)
     return 0;
 }
 
-#define GEO_DEBUG 0
-
 /* Driver function for calling the geoplot plugin to produce
    a map. To obtain the map polygons we need EITHER the name
    of the source file (GeoJSON or Shapefile), via @fname,
@@ -8036,34 +8034,53 @@ int geoplot_driver (const char *fname,
 		    const DATASET *dset,
 		    gretl_bundle *opts)
 {
+    int (*mapfunc) (const char *, gretl_bundle *,
+		    gretl_matrix *, gretl_bundle *);
     gretl_matrix *payload = NULL;
+    const char *mapfile = NULL;
+    int free_map = 0;
     int err = 0;
 
-    if ((fname != NULL && map != NULL) ||
-	(fname == NULL && map == NULL)) {
-	fprintf(stderr, "geoplot_driver: must have filename or map bundle "
-		"but not both\n");
+    if (fname != NULL && map != NULL) {
+	gretl_errmsg_set("geoplot: cannot give both filename and map bundle");
 	return E_DATA;
     }
 
+    if (map == NULL) {
+	mapfile = dataset_get_mapfile(dset);
+    }
+
+    if (fname == NULL && map == NULL) {
+	fname = mapfile;
+	if (fname == NULL) {
+	    gretl_errmsg_set("geoplot: no map was specified");
+	}
+    }
+
     if (plx != NULL) {
-	/* convert payload series to vector (?) */
+	/* convert payload series to vector for convenience in plugin */
 	payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
 	if (payload == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
-#if GEO_DEBUG
-    if (payload != NULL) {
-	gretl_matrix_print(payload, "geoplot_driver: payload");
+    /* In the case where we got @fname, do we want to produce a
+       map bundle in which the actual map data are synced with
+       the dataset? Probably so if @fname is just $mapfile
+       (metadata loaded as dataset), and presumably not if @fname
+       is an "external" reference.
+    */
+    if (map == NULL && mapfile != NULL) {
+	if (fname == mapfile || !strcmp(fname, mapfile)) {
+	    fprintf(stderr, "*** geoplot_driver: calling get_current_map()\n");
+	    map = get_current_map(dset, NULL, &err);
+	    free_map = 1;
+	    fname = NULL;
+	}
     }
-#endif
 
     if (!err) {
-	int (*mapfunc) (const char *, gretl_bundle *,
-			gretl_matrix *, gretl_bundle *);
-
 	mapfunc = get_plugin_function("geoplot");
 	if (mapfunc == NULL) {
 	    err = E_FOPEN;
@@ -8073,6 +8090,9 @@ int geoplot_driver (const char *fname,
     }
 
     gretl_matrix_free(payload);
+    if (free_map) {
+	gretl_bundle_destroy(map);
+    }
 
     return err;
 }

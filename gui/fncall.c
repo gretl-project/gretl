@@ -4628,14 +4628,12 @@ void map_plot_callback (int v)
     if (mapfile == NULL) {
 	errbox(_("No mapfile is present"));
     } else {
-	gretl_bundle *map = NULL;
 	gretl_bundle *opts = NULL;
 	GList *payload_list = NULL;
+	double *payload = NULL;
 	int payload_id = 0;
-	double *plx = NULL;
-	int selpos = 0;
-	int myerr = 0;
-	int resp, err = 0;
+	int resp, selpos = 0;
+	int err = 0;
 
 	opts = gretl_bundle_new();
 	gretl_bundle_set_int(opts, "gui_auto", 1);
@@ -4651,17 +4649,12 @@ void map_plot_callback (int v)
 	    g_list_free(payload_list);
 	}
 	if (payload_id == 0) {
+	    /* just showing outlines */
 	    gretl_bundle_set_int(opts, "tics", 1);
 	} else {
-	    plx = dataset->Z[payload_id];
+	    payload = dataset->Z[payload_id];
 	}
-	/* FIXME: do we want to do this, here? */
-	map = get_current_map(dataset, NULL, &myerr);
-	if (map != NULL) {
-	    err = geoplot_driver(NULL, map, plx, dataset, opts);
-	} else {
-	    err = geoplot_driver(mapfile, NULL, plx, dataset, opts);
-	}
+	err = geoplot_driver(mapfile, NULL, payload, dataset, opts);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -4672,6 +4665,5 @@ void map_plot_callback (int v)
             g_free(mapname);
 	}
 	gretl_bundle_destroy(opts);
-	gretl_bundle_destroy(map);
     }
 }
