@@ -92,7 +92,6 @@ typedef enum {
 #define WILDBOOT_DIST    "wildboot"
 #define MWRITE_G         "mwrite_g"
 #define MPI_USE_SMT      "mpi_use_smt"
-#define GEOJSON_FAST     "geojson_fast"
 #define GRETL_ASSERT     "assert"
 #define QUANTILE_TYPE    "quantile_type"
 
