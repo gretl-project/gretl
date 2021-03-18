@@ -6776,7 +6776,6 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
 	/* record the user's choices */
 	g_free(*gi->pplname);
 	*gi->pplname = payload;
-	fprintf(stderr, "HERE 1 *pplname = '%s'\n", *gi->pplname);
 	*gi->palette_id = palnum;
     }
 
@@ -6855,7 +6854,6 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gi.payload_combo = com1 = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com1, FALSE, FALSE, 5);
     if (plist != NULL) {
-	fprintf(stderr, "HERE payload = '%s'\n", payload);
 	if (payload != NULL) {
 	    maybe_reinstate_selection(plist, payload, &selpos);
 	}
