@@ -97,14 +97,14 @@ gretl_vector *gretl_vector_from_series (const double *x,
 					int t1, int t2)
 {
     gretl_matrix *v = NULL;
-    int i, n = t2 - t1 + 1;
+    int n = t2 - t1 + 1;
 
     if (n > 0) {
+	size_t sz = n * sizeof *x;
+
 	v = gretl_column_vector_alloc(n);
 	if (v != NULL) {
-	    for (i=0; i<n; i++) {
-		v->val[i] = x[i + t1];
-	    }
+	    memcpy(v->val, x + t1, sz);
 	    gretl_matrix_set_t1(v, t1);
 	    gretl_matrix_set_t2(v, t2);
 	}
