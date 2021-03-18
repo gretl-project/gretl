@@ -1551,8 +1551,9 @@ int geoplot (const char *mapfile,
 	}
 	if (!err && map != NULL && payload == NULL &&
 	    gretl_bundle_has_key(opts, "payload")) {
-	    /* payload can be specified as a property, via
-	       the options bundle
+	    /* The payload can be specified as a property, via
+	       the options bundle. TODO: support this when we
+	       get a filename rather than a map bundle?
 	    */
 	    sval = gretl_bundle_get_string(opts, "payload", &err);
 	    if (sval != NULL) {
