@@ -4999,6 +4999,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 #else
 	set_plot_for_copy(plot);
 #endif
+	return TRUE;
     }
 
     switch (k) {
