@@ -8928,8 +8928,8 @@ static int shrink_dataset_to_sample (void)
     return err;
 }
 
-static void maybe_shrink_dataset (const char *newname,
-				  int action)
+static int maybe_shrink_dataset (const char *newname,
+				 int action)
 {
     int shrink = 0;
     int resp;
@@ -8955,6 +8955,8 @@ static void maybe_shrink_dataset (const char *newname,
             strcpy(datafile, newname);
         }
     }
+
+    return shrink;
 }
 
 static int maybe_back_up_datafile (const char *fname)
@@ -9181,13 +9183,20 @@ int do_store (char *filename, int action, gpointer data)
 
     if (!err && !exporting) {
         /* record the fact that data have been saved, etc. */
+	int modified = data_status & MODIFIED_DATA;
+	int shrunk = 0;
+
         mkfilelist(FILE_LIST_DATA, filename, 0);
         if (dataset_is_subsampled(dataset)) {
-            maybe_shrink_dataset(filename, action);
+            shrunk = maybe_shrink_dataset(filename, action);
         } else if (datafile != filename) {
             strcpy(datafile, filename);
         }
         data_status = (HAVE_DATA | USER_DATA);
+	if (action == SAVE_MAP && !shrunk && modified) {
+	    /* reinstate the "modified" flag */
+	    data_status |= MODIFIED_DATA;
+	}
         if (is_gzipped(datafile)) {
             data_status |= GZIPPED_DATA;
         }

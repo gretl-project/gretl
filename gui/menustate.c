@@ -573,7 +573,7 @@ struct mpopup_entries {
 
 struct popup_entries main_pop_entries[] = {
     { MNU_MPLOT, N_("Display map..."), T_BOTH },
-    { MNU_MSAVE, N_("Save map as..."), T_BOTH },
+    { MNU_MSAVE, N_("Save map as GeoJSON..."), T_BOTH },
     { MNU_SEPAR, NULL, T_BOTH },
     { MNU_DISP,  N_("Display values"), T_BOTH },
     { MNU_EDIT,  N_("Edit values"), T_BOTH },
