@@ -481,7 +481,7 @@ of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 
 \begin{description}
 \item[\texttt{border}:] boolean, show a rectangular border around the
-  map. Default: true. (FIXME maybe reverse the default?)
+  map. Default: true.
 \item[\texttt{height}:] scalar, giving the height of the plot in
   pixels. Default: 600. Even if the desired output is a vector graphic
   (PDF or EPS) rather than a bitmap (see \texttt{plotfile} below),
@@ -618,16 +618,14 @@ be plausible ``payload'' variables,\footnote{Admittedly, the heuristic
 select one, in which case you'll get a choice of color palette to
 represent it. Otherwise you just get to view the map outlines.
 
-Further, the window shown by \textsf{Display map} offers a right-click
-menu that allows saving the map (as PDF, EPS, PNG or EMF), copying
-it to the clipboard, or saving it ``as an icon''.
+Further, the plot window shown by \textsf{Display map} offers a
+right-click menu that allows saving the map (as PDF, EPS, PNG or EMF),
+copying it to the clipboard, or saving it ``as an icon''.
 
 So far, that's it. We may at some point expand the \textsf{Display
   map} dialog to offer more of the choices available via the
 \texttt{options} argument to the \texttt{geoplot}
-function. (\textbf{TODO}: even if we don't load up this dialog with
-lots of options we should at least add a \textsf{Help} button which
-gives a brief account of how to exploit more options via scripting.)
+function.
 
 \section{``Expert'' refinements}
 \label{sec:expert}
