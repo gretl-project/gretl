@@ -4619,6 +4619,8 @@ static GList *plausible_payload_list (int v, int *selpos)
     return list;
 }
 
+/* Called in response to "Display map" */
+
 void map_plot_callback (int v)
 {
     const char *mapfile = dataset_get_mapfile(dataset);
@@ -4639,6 +4641,7 @@ void map_plot_callback (int v)
 	gretl_bundle_set_int(opts, "gui_auto", 1);
 	payload_list = plausible_payload_list(v, &selpos);
 
+	/* get options from the user */
 	resp = map_options_dialog(payload_list, selpos,
 				  opts, &payload_id);
 	if (resp == GRETL_CANCEL) {
@@ -4655,9 +4658,9 @@ void map_plot_callback (int v)
 	/* FIXME: do we want to do this, here? */
 	map = get_current_map(dataset, NULL, &myerr);
 	if (map != NULL) {
-	    err = geoplot_driver(NULL, map, NULL, plx, dataset, opts);
+	    err = geoplot_driver(NULL, map, plx, dataset, opts);
 	} else {
-	    err = geoplot_driver(mapfile, NULL, NULL, plx, dataset, opts);
+	    err = geoplot_driver(mapfile, NULL, plx, dataset, opts);
 	}
 	if (err) {
 	    gui_errmsg(err);

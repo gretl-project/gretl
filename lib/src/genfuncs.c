@@ -4949,10 +4949,9 @@ static int process_midas_bundle (gretl_bundle *mb, int idx,
     return err;
 }
 
-gretl_matrix *midas_multipliers (void *data, int cumulate,
+gretl_matrix *midas_multipliers (gretl_bundle *mb, int cumulate,
 				 int idx, int *err)
 {
-    gretl_bundle *mb = (gretl_bundle *) data;
     gretl_matrix *ret = NULL;
     gretl_matrix *theta = NULL;
     gretl_matrix *mult = NULL;
@@ -6533,7 +6532,8 @@ gretl_matrix *tdisagg_matrix_from_series (const double *x,
 
 gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
 			      const gretl_matrix *X,
-			      int s, void *b, void *r,
+			      int s, gretl_bundle *b,
+			      gretl_bundle *res,
 			      DATASET *dset,
 			      PRN *prn, int *err)
 {
@@ -6567,7 +6567,7 @@ gretl_matrix *matrix_tdisagg (const gretl_matrix *Y,
     if (tdisagg == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*tdisagg) (Y, X, s, b, r, dset, prn, err);
+	ret = (*tdisagg) (Y, X, s, b, res, dset, prn, err);
     }
 
     return ret;
@@ -8017,143 +8017,41 @@ int fill_permutation_vector (gretl_vector *v, int n)
     return 0;
 }
 
-/* Given a gretl series @src under sub-sampling, construct a version
-   that is of the full length of the unrestricted dataset, with DBL_MAX
-   inserted in out-of-sample positions (we use DBL_MAX to avoid
-   collision with missing values). But if @src is NULL (no payload)
-   we can simply use 1s to mark out-of-sample observations.
-*/
-
-static gretl_matrix *full_length_vector (const double *src,
-					 const DATASET *dset,
-					 int *err)
-{
-    gretl_matrix *vf = NULL;
-    int len;
-
-    if (dset->submask == RESAMPLED ||
-	(complex_subsampled() && dset->submask == NULL)) {
-	/* can't do this! */
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (complex_subsampled()) {
-	len = get_full_length_n();
-	vf = gretl_zero_matrix_new(len, 1);
-    } else if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
-	len = dset->n;
-	vf = gretl_zero_matrix_new(len, 1);
-    } else {
-	/* nothing needed */
-	return NULL;
-    }
-
-    if (vf == NULL) {
-	*err = E_ALLOC;
-    } else if (complex_subsampled()) {
-	int exclude, t, rt = 0;
-	int i = 0;
-
-	for (t=0; t<len; t++) {
-	    if (dset->submask[t] == 0) {
-		exclude = 1;
-	    } else {
-		exclude = (rt < dset->t1 || rt > dset->t2);
-		rt++;
-	    }
-	    if (src != NULL) {
-		vf->val[t] = exclude ? DBL_MAX : src[i++];
-	    } else {
-		vf->val[t] = exclude ? 1 : 0;
-	    }
-	}
-    } else {
-	int t, i = 0;
-
-	for (t=0; t<dset->n; t++) {
-	    if (t < dset->t1 || t > dset->t2) {
-		vf->val[t] = src == NULL ? 1 : DBL_MAX;
-	    } else if (src != NULL) {
-		vf->val[t] = src == NULL? 0 : src[i++];
-	    }
-	}
-    }
-
-    return vf;
-}
-
-static int dset_subsampled (const DATASET *dset)
-{
-    return dset != NULL && (dset->t1 > 0 ||
-			    dset->t2 < dset->n-1 ||
-			    complex_subsampled());
-}
-
 #define GEO_DEBUG 0
 
+/* Driver function for calling the geoplot plugin to produce
+   a map. To obtain the map polygons we need EITHER the name
+   of the source file (GeoJSON or Shapefile), via @fname,
+   OR the map info in the form of a gretl_bundle, via @mapptr.
+
+   The "payload" (if any) is given as a series, via @plx.
+
+   Options (if any) are provided via @optptr, a pointer to
+   gretl_bundle.
+*/
+
 int geoplot_driver (const char *fname,
-		    void *mapptr,
-		    const gretl_matrix *plm,
+		    gretl_bundle *map,
 		    const double *plx,
 		    const DATASET *dset,
-		    void *optptr)
+		    gretl_bundle *opts)
 {
-    gretl_bundle *opts = optptr;
-    gretl_bundle *map = mapptr;
     gretl_matrix *payload = NULL;
-    int free_payload = 0;
-    int free_opts = 0;
-    int delmask = 0;
-    int subsampled;
     int err = 0;
 
-    if ((fname != NULL && mapptr != NULL) ||
-	(fname == NULL && mapptr == NULL)) {
+    if ((fname != NULL && map != NULL) ||
+	(fname == NULL && map == NULL)) {
 	fprintf(stderr, "geoplot_driver: must have filename or map bundle "
 		"but not both\n");
 	return E_DATA;
     }
 
-    subsampled = dset_subsampled(dset);
-
     if (plx != NULL) {
-	/* payload is a series at source */
+	/* convert payload series to vector (?) */
 	payload = gretl_vector_from_series(plx, dset->t1, dset->t2);
 	if (payload == NULL) {
 	    err = E_ALLOC;
 	}
-	free_payload = 1;
-    } else if (plm == NULL && subsampled) {
-	/* FIXME this case needs work, simplification */
-	if (gretl_bundle_has_key(opts, "mask")) {
-	    ; /* let's not mess with it */
-	} else {
-	    gretl_matrix *mask = full_length_vector(NULL, dset, &err);
-
-	    if (!err) {
-		if (opts == NULL) {
-		    opts = gretl_bundle_new();
-		    if (opts == NULL) {
-			err = E_ALLOC;
-		    }
-		    free_opts = 1;
-		} else {
-		    delmask = 1;
-		}
-		if (opts != NULL) {
-		    gretl_bundle_donate_data(opts, "mask", mask,
-					     GRETL_TYPE_MATRIX, 0);
-		}
-	    }
-#if GEO_DEBUG
-	    if (mask != NULL) {
-		gretl_matrix_print(mask, "geoplot_driver: mask");
-	    }
-#endif
-	}
-    } else {
-	payload = (gretl_matrix *) plm;
     }
 
 #if GEO_DEBUG
@@ -8174,14 +8072,7 @@ int geoplot_driver (const char *fname,
 	}
     }
 
-    if (free_payload) {
-	gretl_matrix_free(payload);
-    }
-    if (free_opts) {
-	gretl_bundle_destroy(opts);
-    } else if (delmask) {
-	gretl_bundle_delete_data(opts, "mask");
-    }
+    gretl_matrix_free(payload);
 
     return err;
 }
