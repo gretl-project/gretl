@@ -4966,9 +4966,17 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 }
 
 static gboolean
-plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
+plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 {
-    guint k = key->keyval;
+    int Ctrl = (event->state & GDK_CONTROL_MASK);
+    guint k = event->keyval;
+
+#ifdef OS_OSX
+    if (!Ctrl && cmd_key(event)) {
+	/* treat Command as Ctrl */
+	Ctrl = 1;
+    }
+#endif
 
     if (plot_is_editable(plot) &&
 	(k == GDK_plus || k == GDK_greater ||
@@ -4983,6 +4991,14 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	}
 	plot_do_rescale(plot, rk);
 	return TRUE;
+    }
+
+    if (Ctrl && k == GDK_c) {
+#ifdef G_OS_WIN32
+	win32_process_graph(plot, WIN32_TO_CLIPBOARD);
+#else
+	set_plot_for_copy(plot);
+#endif
     }
 
     switch (k) {
@@ -5004,11 +5020,6 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	    prepare_for_zoom(plot);
 	}
 	break;
-#ifdef G_OS_WIN32
-    case GDK_c:
-	win32_process_graph(plot, WIN32_TO_CLIPBOARD);
-	break;
-#endif
     default:
 	break;
     }
