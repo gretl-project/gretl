@@ -511,149 +511,6 @@ static gretl_matrix *geo2dat (gretl_array *features,
     return bbox;
 }
 
-static int json_get_char (gchar **ps, int targ)
-{
-    gchar *s = *ps;
-    int ret = 0;
-
-    while (isspace(*s)) s++;
-    if (*s == targ) {
-	ret = 1;
-	s++;
-	while (isspace(*s)) s++;
-    }
-
-    *ps = s;
-
-    return ret;
-}
-
-/* fast version of geo2dat() -- see above -- which does
-   not rely on full JSON parsing.
-*/
-
-static gretl_matrix *fast_geo2dat (const char *geoname,
-				   const char *datname,
-				   const gretl_matrix *zvec,
-				   const gretl_matrix *mask)
-{
-    GError *gerr = NULL;
-    gsize len = 0;
-    const char *targ = "\"coordinates\"";
-    double gmin[2] = {GEOHUGE, GEOHUGE};
-    double gmax[2] = {-GEOHUGE, -GEOHUGE};
-    gretl_matrix *bbox = NULL;
-    FILE *fp;
-    char *test;
-    int i, nlbr, nrbr;
-    gchar *JSON, *p, *s;
-    gboolean ok;
-    int err = 0;
-
-    ok = g_file_get_contents(geoname, &JSON, &len, &gerr);
-    if (!ok) {
-	if (gerr != NULL) {
-	    gretl_errmsg_set(gerr->message);
-	    g_error_free(gerr);
-	}
-	return NULL;
-    }
-
-    fp = gretl_fopen(datname, "wb");
-    if (fp == NULL) {
-	g_free(JSON);
-	return NULL;
-    }
-
-    s = JSON;
-
-    for (i=0; !err; i++) {
-	double x, y, z = 0;
-
-	p = strstr(s, targ);
-	if (p == NULL) break;
-
-	if (skip_object(i, zvec, mask, &z)) {
-	    s = p + 14;
-	    continue;
-	}
-
-	if (i > 0) {
-	    fputc('\n', fp);
-	}
-	p += 13;
-	if (!json_get_char(&p, ':')) {
-	    gretl_errmsg_set("geo2dat: expected ':'");
-	    err = E_DATA;
-	    break;
-	}
-	nlbr = 0;
-	while (json_get_char(&p, '[')) {
-	    nlbr++;
-	}
-	if (nlbr < 3 || nlbr > 4) {
-	    gretl_errmsg_sprintf("geo2dat: unexpected count of '[': %d", nlbr);
-	    err = E_DATA;
-	}
-	while (!err) {
-	    x = strtod(p, &test);
-	    if (json_get_char(&test, ',')) {
-		p = test;
-		y = strtod(p, &test);
-		if (!json_get_char(&test, ']')) {
-		    gretl_errmsg_sprintf("geo2dat: found '%c', expected ']'", *test);
-		    err = E_DATA;
-		    break;
-		}
-		nrbr = 1;
-		if (proj == EPSG3857) {
-		    mercator(&x, &y);
-		} else if (proj >= EPSG2163) {
-		    lambert_azimuthal(&x, &y);
-		}
-		if (zvec != NULL) {
-		    print_xyz(x, y, z, fp);
-		} else {
-		    fprintf(fp, "%#.8g %#.8g\n", x, y);
-		}
-		record_extrema(x, y, gmin, gmax);
-		p = test;
-		while (json_get_char(&p, ']')) {
-		    nrbr++;
-		}
-		if (nrbr == nlbr) {
-		    /* reached the end of a feature */
-		    fputc('\n', fp);
-		    break;
-		} else if (nrbr > 1) {
-		    /* reached the end of a sub-feature */
-		    fputc('\n', fp);
-		}
-		json_get_char(&p, ',');
-		while (json_get_char(&p, '[')) {
-		    ;
-		}
-	    } else if (json_get_char(&test, '}')) {
-		break;
-	    } else {
-		gretl_errmsg_sprintf("geo2dat: unexpected char '%c'", *test);
-		err = E_DATA;
-		break;
-	    }
-	}
-	s = p;
-    }
-
-    fclose(fp);
-    g_free(JSON);
-
-    if (!err) {
-	bbox = make_bbox(gmin, gmax);
-    }
-
-    return bbox;
-}
-
 static void output_dbf_string (const char *s, FILE *fp)
 {
     fputc('"', fp);
@@ -1236,16 +1093,10 @@ static int geojson_to_csv (const char *fname,
 		key = gretl_array_get_data(keys, j);
 		ptr = gretl_bundle_get_data(pp, key, &type, NULL, &err);
 		if (err) {
-#if 0
-		    /* 2020-09-23: this is too stringent? */
-		    fprintf(stderr, "error at feature %d, propkey %d\n", i, j);
-		    break;
-#else
 		    /* ignore the missing data */
 		    err = 0;
 		    fputc(j < nk-1 ? ',' : '\n', fp);
 		    continue;
-#endif
 		}
 		if (type == GRETL_TYPE_STRING) {
 		    fprintf(fp, "\"%s\"", (char *) ptr);
@@ -1362,9 +1213,6 @@ static gretl_matrix *map2dat (const char *mapname,
 
     if (has_suffix(infile, ".shp")) {
 	ret = shp2dat(infile, datname, zvec, mask);
-    } else if (*infile && libset_get_bool(GEOJSON_FAST)) {
-	/* FIXME revisit this */
-	ret = fast_geo2dat(infile, datname, zvec, mask);
     } else {
 	/* Regular GeoJSON procedure, either reading from
 	   @infile or working from pre-loaded @map bundle.
@@ -1703,6 +1551,9 @@ int geoplot (const char *mapfile,
 	}
 	if (!err && map != NULL && payload == NULL &&
 	    gretl_bundle_has_key(opts, "payload")) {
+	    /* payload can be specified as a property, via
+	       the options bundle
+	    */
 	    sval = gretl_bundle_get_string(opts, "payload", &err);
 	    if (sval != NULL) {
 		payload = payload_from_prop(map, sval, &err);
@@ -1726,7 +1577,9 @@ int geoplot (const char *mapfile,
 	zrange = get_zrange(payload, opts, &err);
     }
 
-    /* do we have a sub-sampling mask? */
+    /* do we have a sub-sampling mask? (note, 2021-03-18: this
+       is not documented, but might be useful in some cases?)
+    */
     if (!err && gretl_bundle_has_key(opts, "mask")) {
 	mask = gretl_bundle_get_matrix(opts, "mask", &err);
     }
