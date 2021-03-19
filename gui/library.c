@@ -9482,7 +9482,10 @@ static void gui_output_line (const char *line, ExecState *s, PRN *prn)
 {
     int coding, n;
 
-    if (!strcmp(line, "set echo off") || !strcmp(line, "flush")) {
+    if (!strcmp(line, "set echo off") ||
+	!strcmp(line, "flush") ||
+	!strncmp(line, "printf", 6) ||
+	(!strncmp(line, "print ", 6) && strchr(line, '"'))) {
         return;
     }
 
@@ -9643,9 +9646,7 @@ int execute_script (char *runfile, const char *buf,
             }
 
             if (!exec_err) {
-                if (!strncmp(line, "(* saved objects:", 17)) {
-                    strcpy(line, "quit");
-                } else if (!including) {
+		if (!including) {
                     if (gretl_echo_on()) {
                         gui_output_line(line, &state, prn);
                     } else if (*line == '#' && gretl_comments_on()) {
