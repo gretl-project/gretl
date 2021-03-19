@@ -5477,6 +5477,20 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                     }
                 }
             }
+	} else if (l->t == NUM) {
+	    /* allow "indexing into" a scalar, but only only for a
+	       single index with value 1
+	    */
+	    int i = get_single_element(r->v.mspec, p);
+
+	    if (i == 1) {
+		ret = aux_scalar_node(p);
+		if (!p->err) {
+		    ret->v.xval = l->v.xval;
+		}
+	    } else {
+		p->err = E_TYPES;
+	    }
         } else {
             fprintf(stderr, "subobject_node: l='%s', r='%s'\n",
                     getsymb(l->t), getsymb(r->t));
