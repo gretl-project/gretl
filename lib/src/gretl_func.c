@@ -67,6 +67,11 @@ typedef struct fn_arg_ fn_arg;
 typedef struct fn_line_ fn_line;
 typedef struct obsinfo_ obsinfo;
 
+enum {
+    FP_CONST    = 1 << 0,
+    FP_OPTIONAL = 1 << 1
+};
+
 /* structure representing a parameter of a user-defined function */
 
 struct fn_param_ {
@@ -80,6 +85,7 @@ struct fn_param_ {
     double min;     /* minimum value (scalar parameters only) */
     double max;     /* maximum value (scalar parameters only) */
     double step;    /* step increment (scalars only) */
+    char immut;     /* state: immutable (const) at run-time */
 };
 
 /* structure representing a line of a user-defined function */
@@ -115,6 +121,17 @@ typedef enum {
     FC_PREV_ECHO = 1 << 2,
     FC_PRESERVE  = 1 << 3
 } FCFlags;
+
+/* Note: the FC_PRESERVE flag is specific to the case of
+   overloaded functions whose return type is 'numeric'.
+   In that case the caller doesn't know in advance what
+   specific type to expect, and needs to be able to access
+   the function-call struct (fncall) to determine the type.
+   Therefore, the fncall must not be destroyed when
+   execution terminates (as usual). The caller then takes
+   on responsibility for destroying the call. The only
+   relevant caller is eval_ufunc(), in geneval.c.
+*/
 
 struct fncall_ {
     ufunc *fun;      /* the function called */
@@ -212,18 +229,11 @@ struct fnpkg_ {
 				 t == GRETL_TYPE_ARRAYS_REF ||		\
 				 t == GRETL_TYPE_NUMERIC)
 
-enum {
-    ARG_OPTIONAL = 1 << 0,
-    ARG_CONST    = 1 << 1,
-    ARG_SHIFTED  = 1 << 2
-};
-
 /* structure representing an argument to a user-defined function */
 
 struct fn_arg_ {
     char type;            /* argument type */
-    char flags;           /* ARG_OPTIONAL, ARG_CONST as appropriate */
-    const char *name;     /* name as function param */
+    char shifted;         /* level was shifted for execution */
     const char *upname;   /* name of supplied arg at caller level */
     user_var *uvar;       /* reference to "parent", if any */
     union {
@@ -383,8 +393,7 @@ static int fn_arg_set_data (fn_arg *arg, const char *name,
     int err = 0;
 
     arg->type = type;
-    arg->flags = 0;
-    arg->name = NULL;
+    arg->shifted = 0;
     arg->upname = name;
     arg->uvar = uvar;
 
@@ -435,8 +444,7 @@ static int fncall_add_args_array (fncall *fc)
     } else {
 	for (i=0; i<np; i++) {
 	    fc->args[i].type = 0;
-	    fc->args[i].flags = 0;
-	    fc->args[i].name = NULL;
+	    fc->args[i].shifted = 0;
 	    fc->args[i].upname = NULL;
 	    fc->args[i].uvar = NULL;
 	}
@@ -593,6 +601,11 @@ static void maybe_destroy_fncall (fncall *call)
 	fncall_destroy(call);
     }
 }
+
+/* For use with overloaded functions whose return type is
+   'numeric'. The specific return type is not known
+   until execution is completed; we can supply it here.
+*/
 
 GretlType fncall_get_return_type (fncall *call)
 {
@@ -1036,7 +1049,7 @@ int fn_param_optional (const ufunc *fun, int i)
     }
 
     return arg_may_be_optional(fun->params[i].type) &&
-	(fun->params[i].flags & ARG_OPTIONAL);
+	(fun->params[i].flags & FP_OPTIONAL);
 }
 
 /**
@@ -1743,10 +1756,10 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		    }
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "optional")) {
-		    param->flags |= ARG_OPTIONAL;
+		    param->flags |= FP_OPTIONAL;
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "const")) {
-		    param->flags |= ARG_CONST;
+		    param->flags |= FP_CONST;
 		}
 	    } else {
 		err = E_DATA;
@@ -1850,7 +1863,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 
 static void print_opt_flags (fn_param *param, PRN *prn)
 {
-    if (param->flags & ARG_OPTIONAL) {
+    if (param->flags & FP_OPTIONAL) {
 	pputs(prn, "[null]");
     }
 }
@@ -2329,10 +2342,10 @@ static int write_function_xml (ufunc *fun, PRN *prn)
 	    if (!na(param->step)) {
 		pprintf(prn, " step=\"%g\"", param->step);
 	    }
-	    if (param->flags & ARG_OPTIONAL) {
+	    if (param->flags & FP_OPTIONAL) {
 		pputs(prn, " optional=\"true\"");
 	    }
-	    if (param->flags & ARG_CONST) {
+	    if (param->flags & FP_CONST) {
 		pputs(prn, " const=\"true\"");
 	    }
 	    if (parm_has_children(param)) {
@@ -2401,7 +2414,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
     for (i=0; i<fun->n_params; i++) {
 	fn_param *fp = &fun->params[i];
 
-	if (fp->flags & ARG_CONST) {
+	if (fp->flags & FP_CONST) {
 	    pputs(prn, "const ");
 	}
 	s = gretl_type_get_name(fp->type);
@@ -6699,7 +6712,7 @@ static int read_param_option (char **ps, fn_param *param)
 #endif
 
     if (!strncmp(*ps, "[null]", 6)) {
-	param->flags |= ARG_OPTIONAL;
+	param->flags |= FP_OPTIONAL;
 	*ps += 6;
     } else {
 	gretl_errmsg_sprintf(_("got invalid field '%s'"), *ps);
@@ -6797,7 +6810,7 @@ static void trash_param_info (char *name, fn_param *param)
 
 static int parse_function_param (char *s, fn_param *param, int i)
 {
-    GretlType type;
+    GretlType type = GRETL_TYPE_NONE;
     char tstr[22] = {0};
     char *name;
     int len, nvals = 0;
@@ -6811,7 +6824,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
     /* pick up the "const" flag if present */
     if (!strncmp(s, "const ", 6)) {
-	param->flags |= ARG_CONST;
+	param->flags |= FP_CONST;
 	s += 6;
 	while (isspace(*s)) s++;
     }
@@ -7323,21 +7336,6 @@ int gretl_function_append_line (ExecState *s)
 
 /* next block: handling function arguments */
 
-static int maybe_set_arg_const (fn_arg *arg, fn_param *fp)
-{
-    if (fp->flags & ARG_CONST) {
-	/* param is marked CONST directly */
-	arg->name = fp->name;
-	arg->flags |= ARG_CONST;
-    } else if (object_is_const(arg->upname, -1)) {
-	/* param is CONST by inheritance */
-	arg->name = fp->name;
-	arg->flags |= ARG_CONST;
-    }
-
-    return arg->flags & ARG_CONST;
-}
-
 /* Given a list of variables supplied as an argument to a function,
    copy the list under the name assigned by the function and
    make the variables referenced in that list accessible within
@@ -7410,15 +7408,6 @@ static int localize_list (fncall *call, fn_arg *arg,
     }
 
     if (!err) {
-	/* 2018-10-18: comment this out for now, as it
-	   breaks a few function packages, and also it's
-	   kinda redundant since when a list given as an
-	   argument is modified within a function the
-	   changes do not propagate back to the caller.
-	*/
-#if 0
-	maybe_set_arg_const(arg, fp);
-#endif
 	localize_list_members(call, list, dset);
     }
 
@@ -7479,15 +7468,8 @@ static int localize_object_as_shell (fn_arg *arg,
 {
     GretlType type = gretl_type_get_plain_type(arg->type);
     void *data = arg_get_data(arg, type);
-    int err;
 
-    err = arg_add_as_shell(fp->name, type, data);
-
-    if (!err) {
-	arg->name = fp->name;
-    }
-
-    return err;
+    return arg_add_as_shell(fp->name, type, data);
 }
 
 static int localize_const_object (fncall *call, int i, fn_param *fp)
@@ -7522,13 +7504,8 @@ static int localize_const_object (fncall *call, int i, fn_param *fp)
 	if (!done) {
 	    user_var_adjust_level(thisvar, 1);
 	    user_var_set_name(thisvar, fp->name);
-	    arg->flags |= ARG_SHIFTED;
+	    arg->shifted = 1;
 	}
-    }
-
-    if (!err) {
-	arg->name = fp->name;
-	arg->flags |= ARG_CONST;
     }
 
     return err;
@@ -7545,8 +7522,6 @@ static int localize_series_ref (fncall *call, fn_arg *arg,
     if (!in_gretl_list(call->ptrvars, v)) {
 	gretl_list_append_term(&call->ptrvars, v);
     }
-
-    maybe_set_arg_const(arg, fp);
 
     return 0;
 }
@@ -7686,6 +7661,53 @@ static int duplicated_pointer_arg_check (fn_arg *args, int argc)
     return err;
 }
 
+static int process_series_arg (fncall *call, fn_param *fp,
+			       fn_arg *arg, DATASET *dset)
+{
+    if (arg->type == GRETL_TYPE_USERIES) {
+	/* an existing named series */
+	if (fp->immut) {
+	    /* we can pass it by reference */
+	    return localize_series_ref(call, arg, fp, dset);
+	} else {
+	    /* pass it by value */
+	    return dataset_copy_series_as(dset, arg->val.idnum, fp->name);
+	}
+    } else if (arg->val.px != NULL) {
+	/* an on-the-fly series */
+	return dataset_add_series_as(dset, arg->val.px, fp->name);
+    } else {
+	return E_DATA;
+    }
+}
+
+/* for matrix, bundle, array, string */
+
+static int process_object_arg (fncall *call, int i, fn_param *fp)
+{
+    fn_arg *arg = &call->args[i];
+
+    if (fp->immut) {
+	/* we can pass it by reference */
+	return localize_const_object(call, i, fp);
+    } else {
+	/* pass it by value */
+	return copy_as_arg(fp->name, arg->type,
+			   arg_get_data(arg, 0));
+    }
+}
+
+/* for *matrix, *bundle, *array, *string */
+
+static int process_object_ref_arg (fn_arg *arg, fn_param *fp)
+{
+    if (arg->upname != NULL) {
+	return user_var_localize(arg->upname, fp->name, fp->type);
+    } else {
+	return localize_object_as_shell(arg, fp);
+    }
+}
+
 /* Note that if we reach here we've already successfully
    negotiated check_function_args(): now we're actually
    making the argument objects (if any) available within
@@ -7710,12 +7732,15 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		i, gretl_type_get_name(fp->type),
 		gretl_type_get_name(arg->type));
 #endif
+	if (!fp->immut && arg->upname != NULL) {
+	    fp->immut = object_is_const(arg->upname, -1);
+	}
 
 	if (arg->type == GRETL_TYPE_NONE) {
 	    if (gretl_scalar_type(fp->type)) {
 		err = add_scalar_arg_default(fp);
 	    } else if (fp->type == GRETL_TYPE_LIST) {
-		add_empty_list(call, fp, dset);
+		err = add_empty_list(call, fp, dset);
 	    }
 	    continue;
 	}
@@ -7724,17 +7749,10 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    /* param supports overloading */
 	    if (gretl_scalar_type(arg->type)) {
 		err = real_add_scalar_arg(fp, arg->val.x);
-	    } else if (arg->type == GRETL_TYPE_USERIES) {
-		err = dataset_copy_series_as(dset, arg->val.idnum, fp->name);
+	    } else if (gretl_is_series_type(arg->type)) {
+		process_series_arg(call, fp, arg, dset);
 	    } else if (arg->type == GRETL_TYPE_MATRIX) {
-		if (fp->flags & ARG_CONST) {
-		    err = localize_const_object(call, i, fp); /* ?? */
-		} else {
-		    err = copy_as_arg(fp->name, arg->type,
-				      arg_get_data(arg, 0));
-		}
-	    } else if (arg->val.px != NULL) {
-		err = dataset_add_series_as(dset, arg->val.px, fp->name);
+		err = process_object_arg(call, i, fp);
 	    }
 	    continue;
 	}
@@ -7746,13 +7764,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		err = real_add_scalar_arg(fp, arg->val.x);
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    if (arg->type == GRETL_TYPE_USERIES) {
-		/* an existing named series */
-		err = dataset_copy_series_as(dset, arg->val.idnum, fp->name);
-	    } else if (arg->val.px != NULL) {
-		/* an on-the-fly constructed series */
-		err = dataset_add_series_as(dset, arg->val.px, fp->name);
-	    }
+	    err = process_series_arg(call, fp, arg, dset);
 	} else if (fp->type == GRETL_TYPE_MATRIX &&
 		   arg->type == GRETL_TYPE_DOUBLE) {
 	    err = do_scalar_matrix_cast(arg, fp);
@@ -7760,25 +7772,13 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		   fp->type == GRETL_TYPE_BUNDLE ||
 		   fp->type == GRETL_TYPE_STRING ||
 		   gretl_array_type(fp->type)) {
-	    if (fp->flags & ARG_CONST) {
-		err = localize_const_object(call, i, fp);
-	    } else {
-		err = copy_as_arg(fp->name, fp->type,
-				  arg_get_data(arg, 0));
-	    }
+	    err = process_object_arg(call, i, fp);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    err = localize_list(call, arg, fp, dset);
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    err = localize_series_ref(call, arg, fp, dset);
 	} else if (gretl_ref_type(fp->type)) {
-	    if (arg->upname != NULL) {
-		err = user_var_localize(arg->upname, fp->name, fp->type);
-	    } else {
-		err = localize_object_as_shell(arg, fp);
-	    }
-	    if (!err) {
-		maybe_set_arg_const(arg, fp);
-	    }
+	    err = process_object_ref_arg(arg, fp);
 	}
 	if (!err && (fp->type == GRETL_TYPE_BUNDLE ||
 		     fp->type == GRETL_TYPE_BUNDLE_REF)) {
@@ -8262,7 +8262,7 @@ static int is_pointer_arg (fncall *call, int rtype)
 	for (i=0; i<call->argc; i++) {
 	    fp = &u->params[i];
 	    if ((fp->type == gretl_type_get_ref_type(rtype) ||
-		 (fp->flags & ARG_CONST)) &&
+		 (fp->flags & FP_CONST)) &&
 		strcmp(fp->name, call->retname) == 0) {
 		return 1;
 	    }
@@ -8270,6 +8270,25 @@ static int is_pointer_arg (fncall *call, int rtype)
     }
 
     return 0;
+}
+
+static void push_series_to_caller (fn_arg *arg, DATASET *dset)
+{
+    int v = arg->val.idnum;
+
+    if (arg->upname == NULL) {
+	fprintf(stderr, "ERROR in push_series_to_caller: arg->upname is NULL\n");
+	return;
+    }
+
+    series_decrement_stack_level(dset, v);
+    strcpy(dset->varname[v], arg->upname);
+}
+
+static void push_object_to_caller (fn_arg *arg)
+{
+    user_var_adjust_level(arg->uvar, -1);
+    user_var_set_name(arg->uvar, arg->upname);
 }
 
 #define null_return(t) (t == GRETL_TYPE_VOID || t == GRETL_TYPE_NONE)
@@ -8355,29 +8374,27 @@ function_assign_returns (fncall *call, int rtype,
 	    ierr = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_SERIES_REF) {
-		int v = arg->val.idnum;
-
-		series_decrement_stack_level(dset, v);
-		strcpy(dset->varname[v], arg->upname);
+		push_series_to_caller(arg, dset);
 	    } else if (arg->upname != NULL) {
-		user_var_adjust_level(arg->uvar, -1);
-		user_var_set_name(arg->uvar, arg->upname);
+		push_object_to_caller(arg);
 	    } else if (arg->uvar != NULL) {
 		ierr = check_sub_object_return(arg, fp);
 	    } else {
 		; /* pure "shell" object: no-op */
 	    }
+	} else if (arg->type == GRETL_TYPE_USERIES &&
+		   fp->type == GRETL_TYPE_SERIES && fp->immut) {
+	    push_series_to_caller(arg, dset);
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
 		    fp->type == GRETL_TYPE_STRING ||
 		    fp->type == GRETL_TYPE_NUMERIC ||
 		    gretl_array_type(fp->type))) {
-	    if (arg->flags & ARG_SHIFTED) {
+	    if (arg->shifted) {
 		/* non-pointerized const object argument,
 		   which we renamed and shifted
 		*/
-		user_var_adjust_level(arg->uvar, -1);
-		user_var_set_name(arg->uvar, arg->upname);
+		push_object_to_caller(arg);
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, arg, NULL, dset);
@@ -8678,13 +8695,18 @@ static int check_function_args (fncall *call, PRN *prn)
     double x;
     int i, err = 0;
 
+    for (i=0; i<u->n_params; i++) {
+	/* initialize "immutability" flags */
+	u->params[i].immut = u->params[i].flags & FP_CONST;
+    }
+
     for (i=0; i<call->argc && !err; i++) {
 	int scalar_check = 1;
 
 	arg = &call->args[i];
 	fp = &u->params[i];
 
-	if ((fp->flags & ARG_OPTIONAL) && arg->type == GRETL_TYPE_NONE) {
+	if ((fp->flags & FP_OPTIONAL) && arg->type == GRETL_TYPE_NONE) {
 	    ; /* this is OK */
 	} else if (gretl_scalar_type(fp->type) && arg->type == GRETL_TYPE_DOUBLE) {
 	    ; /* OK: types match */
@@ -8727,7 +8749,7 @@ static int check_function_args (fncall *call, PRN *prn)
     for (i=call->argc; i<u->n_params && !err; i++) {
 	/* do we have defaults for any empty args? */
 	fp = &u->params[i];
-	if (!(fp->flags & ARG_OPTIONAL) && no_scalar_default(fp)) {
+	if (!(fp->flags & FP_OPTIONAL) && no_scalar_default(fp)) {
 	    pprintf(prn, _("%s: not enough arguments\n"), u->name);
 	    err = E_ARGS;
 	}
@@ -9578,13 +9600,12 @@ int object_is_const (const char *name, int vnum)
 
     if (call != NULL) {
 	if (name != NULL) {
-	    const char *aname;
+	    fn_param *params = call->fun->params;
 	    int i;
 
-	    for (i=0; i<call->argc; i++) {
-		aname = call->args[i].name;
-		if (aname != NULL && !strcmp(name, aname)) {
-		    ret = call->args[i].flags & ARG_CONST;
+	    for (i=0; i<call->fun->n_params; i++) {
+		if (!strcmp(name, params[i].name)) {
+		    ret = params[i].immut;
 		    break;
 		}
 	    }
@@ -9606,11 +9627,6 @@ int object_is_const (const char *name, int vnum)
 	}
     }
 
-#if 0
-    fprintf(stderr, "object_is_const? (%s, %d): %d\n",
-	    name, vnum, ret);
-#endif
-
     return ret;
 }
 
@@ -9629,12 +9645,11 @@ int object_is_function_arg (const char *name)
     fncall *call = current_function_call();
 
     if (call != NULL) {
-	const char *aname;
+	fn_param *params = call->fun->params;
 	int i;
 
-	for (i=0; i<call->argc; i++) {
-	    aname = call->args[i].name;
-	    if (aname != NULL && !strcmp(name, aname)) {
+	for (i=0; i<call->fun->n_params; i++) {
+	    if (!strcmp(name, params[i].name)) {
 		return 1;
 	    }
 	}
