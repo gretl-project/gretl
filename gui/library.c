@@ -9482,6 +9482,7 @@ static void gui_output_line (const char *line, ExecState *s, PRN *prn)
 {
     int coding, n;
 
+    /* a few things that we don't want to echo at all */
     if (!strcmp(line, "set echo off") ||
 	!strcmp(line, "flush") ||
 	!strncmp(line, "printf", 6) ||
