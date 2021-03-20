@@ -7748,9 +7748,18 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		i, gretl_type_get_name(fp->type),
 		gretl_type_get_name(arg->type));
 #endif
+#if STRICT_CONST
+	/* extra conditions needed to avoid "const poisoning" */
+	if (!fp->immut && arg->upname != NULL &&
+	    fp->type != GRETL_TYPE_LIST &&
+	    !gretl_is_scalar_type(fp->type)) {
+	    fp->immut = object_is_const(arg->upname, -1);
+	}
+#else
 	if (!fp->immut && arg->upname != NULL) {
 	    fp->immut = object_is_const(arg->upname, -1);
 	}
+#endif
 
 	if (arg->type == GRETL_TYPE_NONE) {
 	    if (gretl_scalar_type(fp->type)) {
