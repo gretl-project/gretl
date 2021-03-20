@@ -453,6 +453,20 @@ static int fncall_add_args_array (fncall *fc)
     return err;
 }
 
+#define STRICT_CONST 0 /* not just yet */
+
+static void maybe_set_param_const (fn_param *fp)
+{
+#if STRICT_CONST
+    fp->flags |= FP_CONST;
+#else
+    if (fp->type != GRETL_TYPE_LIST &&
+	!gretl_is_scalar_type(fp->type)) {
+	fp->flags |= FP_CONST;
+    }
+#endif
+}
+
 /**
  * push_function_arg:
  * @fc: pointer to function call.
@@ -1759,7 +1773,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		    param->flags |= FP_OPTIONAL;
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "const")) {
-		    param->flags |= FP_CONST;
+		    maybe_set_param_const(param);
 		}
 	    } else {
 		err = E_DATA;
@@ -6814,6 +6828,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     char tstr[22] = {0};
     char *name;
     int len, nvals = 0;
+    int const_flag = 0;
     int err = 0;
 
 #if FNPARSE_DEBUG
@@ -6824,7 +6839,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
     /* pick up the "const" flag if present */
     if (!strncmp(s, "const ", 6)) {
-	param->flags |= FP_CONST;
+	const_flag = 1;
 	s += 6;
 	while (isspace(*s)) s++;
     }
@@ -6861,10 +6876,8 @@ static int parse_function_param (char *s, fn_param *param, int i)
     }
 
     /* get the required parameter name */
-
     while (isspace(*s)) s++;
     len = gretl_namechar_spn(s);
-
     if (len == 0) {
 	gretl_errmsg_sprintf(_("parameter %d: name is missing"), i + 1);
 	err = E_PARSE;
@@ -6883,6 +6896,9 @@ static int parse_function_param (char *s, fn_param *param, int i)
     }
 
     param->type = type;
+    if (const_flag) {
+	maybe_set_param_const(param);
+    }
 
     s += len;
     s += strspn(s, " ");
@@ -8697,7 +8713,8 @@ static int check_function_args (fncall *call, PRN *prn)
 
     for (i=0; i<u->n_params; i++) {
 	/* initialize "immutability" flags */
-	u->params[i].immut = u->params[i].flags & FP_CONST;
+	fp = &u->params[i];
+	fp->immut = fp->flags & FP_CONST;
     }
 
     for (i=0; i<call->argc && !err; i++) {
