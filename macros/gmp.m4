@@ -32,7 +32,7 @@ dnl
 dnl Now check if the installed GMP is sufficiently new.
 dnl
   rm -f conf.gmptest
-  AC_RUN_IFELSE([
+  AC_TRY_RUN([
 #include <gmp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,7 +103,7 @@ main ()
        echo "*** Could not run GNU MP test program, checking why..."
        CFLAGS="$CFLAGS $GMP_CFLAGS"
        LIBS="$LIBS $GMP_LIBS"
-       AC_LINK_IFELSE([
+       AC_TRY_LINK([
 #include <gmp.h>
 #include <stdio.h>
 ],     [ return (1); ],

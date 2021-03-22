@@ -28,7 +28,7 @@ dnl
 dnl Check the installed ODBC.
 dnl
   rm -f conf.ODBCtest
-  AC_RUN_IFELSE([
+  AC_TRY_RUN([
 #include <stdlib.h>
 #include <sql.h>
 #include <sqlext.h>
@@ -54,7 +54,7 @@ int main (void)
        echo "*** Could not run ODBC test program, checking why..."
        CFLAGS="$ODBC_CFLAGS $CFLAGS"
        LIBS="$LIBS $ODBC_LIBS"
-       AC_LINK_IFELSE([
+       AC_TRY_LINK([
 #include <stdlib.h>
 #include <sql.h>
 #include <sqlext.h>
