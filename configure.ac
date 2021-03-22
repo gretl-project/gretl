@@ -361,7 +361,6 @@ AC_CHECK_LIB(m, sin)
 AC_CHECK_LIB(c, fopen)
 
 dnl Checks for header files, etc.
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(stdint.h unistd.h dirent.h fnmatch.h fenv.h byteswap.h sys/times.h)
 AC_CHECK_HEADERS(libproc.h sys/proc_info.h)
@@ -369,7 +368,6 @@ AC_C_CONST
 AC_CHECK_FUNCS(vasprintf)
 AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_SIZEOF(int)
-AC_TYPE_SIGNAL
 AC_C_BIGENDIAN
 
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
