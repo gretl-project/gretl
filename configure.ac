@@ -79,6 +79,7 @@ pkg_build="no"
 mac_native="no"
 mac_integration="no"
 gui_disabled="no"
+have_carbon="yes"
 gp_3d="yes"
 MAKE="make"
 XML_LIBS=
@@ -189,6 +190,13 @@ AC_ARG_ENABLE(pkgbuild,
 then
   AC_DEFINE(PKGBUILD)
   pkg_build="yes"
+fi])
+
+AC_ARG_ENABLE(carbon,
+[  --disable-carbon        Don't try to use Carbon on macOS],
+[if test "$enableval" = "no"
+then
+  have_carbon="no"
 fi])
 
 AC_ARG_ENABLE(gnuplot-checks,
@@ -487,8 +495,11 @@ esac
 
 dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then
-  CARBONLIB="-Wl,-framework -Wl,Carbon"
-  AC_SUBST(CARBONLIB)
+  if test "$have_carbon" = "yes" ; then
+    CARBONLIB="-Wl,-framework -Wl,Carbon"
+    AC_SUBST(CARBONLIB)
+    AC_DEFINE(HAVE_CARBON)
+  fi
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
     AC_SUBST(DARWIN_RPATH)

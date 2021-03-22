@@ -9229,9 +9229,11 @@ int do_store (char *filename, int action, gpointer data)
 
 #ifdef OS_OSX
 
+#ifdef HAVE_CARBON
+
 #include <Carbon/Carbon.h>
 
-#if 1 /* deprecated in OS X >= 10.10 */
+/* deprecated in macOS >= 10.10, removed in macOS 11 */
 
 int osx_open_file (const char *path)
 {
@@ -9246,7 +9248,7 @@ int osx_open_file (const char *path)
     return err;
 }
 
-#else /* OK? */
+#else /* macOS >= 10.10 */
 
 int osx_open_file (const char *path)
 {
@@ -9267,7 +9269,7 @@ int osx_open_file (const char *path)
     return err;
 }
 
-#endif
+#endif /* OS_OSX */
 
 int osx_open_pdf (const char *path, const char *dest)
 {

@@ -859,6 +859,7 @@ enable_json
 enable_gmp
 enable_xdg_utils
 enable_pkgbuild
+enable_carbon
 enable_gnuplot_checks
 enable_gnuplot_3d
 enable_www
@@ -1561,6 +1562,7 @@ Optional Features:
   --disable-gmp           Don't try to include GMP support
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
+  --disable-carbon        Don't try to use Carbon on macOS
   --disable-gnuplot-checks do not run checks for gnuplot
   --disable-gnuplot-3d     assume gnuplot can't do interactive 3D plots
   --disable-www           do not link to libcurl for http
@@ -2905,6 +2907,7 @@ pkg_build="no"
 mac_native="no"
 mac_integration="no"
 gui_disabled="no"
+have_carbon="yes"
 gp_3d="yes"
 MAKE="make"
 XML_LIBS=
@@ -6986,6 +6989,15 @@ then
   $as_echo "#define PKGBUILD 1" >>confdefs.h
 
   pkg_build="yes"
+fi
+fi
+
+
+# Check whether --enable-carbon was given.
+if test "${enable_carbon+set}" = set; then :
+  enableval=$enable_carbon; if test "$enableval" = "no"
+then
+  have_carbon="no"
 fi
 fi
 
@@ -21479,8 +21491,12 @@ rm -f conf.lapacktest
 esac
 
 if test "$darwin_build" = "yes" ; then
-  CARBONLIB="-Wl,-framework -Wl,Carbon"
+  if test "$have_carbon" = "yes" ; then
+    CARBONLIB="-Wl,-framework -Wl,Carbon"
 
+    $as_echo "#define HAVE_CARBON 1" >>confdefs.h
+
+  fi
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
 
