@@ -41,7 +41,7 @@ LIBS="$LAPACK_LIBS $LIBS"
 dnl Check a LAPACK function in the specified or detected setup
 dnl
   rm -f conf.lapacktest
-  AC_TRY_RUN([
+  AC_RUN_IFELSE([
 #include <stdlib.h>
 int dpotrf_(char *, int *, double *, int *, int *);
 int main (void) {
@@ -64,7 +64,7 @@ else
     :
   else
     echo "*** Could not run LAPACK test program, checking why..."
-    AC_TRY_LINK([
+    AC_LINK_IFELSE([
 #include <stdio.h>
 ],     [ return (1); ],
        [ echo "*** The test program compiled, but did not run. This usually means"

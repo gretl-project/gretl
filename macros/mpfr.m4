@@ -31,7 +31,7 @@ dnl
 dnl Now check if the installed MPFR is sufficiently new.
 dnl
   rm -f conf.mpfrtest
-  AC_TRY_RUN([
+  AC_RUN_IFELSE([
 #include <mpfr.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,7 +105,7 @@ main ()
        echo "*** Could not run MPFR test program, checking why..."
        CFLAGS="$CFLAGS $MPFR_CFLAGS"
        LIBS="$LIBS $MPFR_LIBS"
-       AC_TRY_LINK([
+       AC_LINK_IFELSE([
 #include <mpfr.h>
 #include <stdio.h>
 ],     [ return (1); ],
