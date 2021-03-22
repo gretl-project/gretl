@@ -473,6 +473,7 @@ dnl
 dnl Check for LAPACK
 dnl
 case $host_os in
+  echo "host_os: $host_os"
   *arwin*)
     LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
     have_lapack="yes"
