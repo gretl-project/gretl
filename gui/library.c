@@ -9250,6 +9250,9 @@ int osx_open_file (const char *path)
 
 #else /* macOS >= 10.10 */
 
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreServices/CoreServices.h>
+
 int osx_open_file (const char *path)
 {
     CFURLRef u;
