@@ -493,9 +493,12 @@ esac
 dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then
   if test "$have_carbon" = "yes" ; then
-    CARBONLIB="-Wl,-framework -Wl,Carbon"
-    AC_SUBST(CARBONLIB)
+    MACLIB="-Wl,-framework -Wl,Carbon"
+    AC_SUBST(MACLIB)
     AC_DEFINE(HAVE_CARBON)
+  else
+    MACLIB="-Wl,-framework -Wl,CoreServices"
+    AC_SUBST(MACLIB)
   fi
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"

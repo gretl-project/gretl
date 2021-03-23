@@ -703,7 +703,7 @@ GNUPLOT
 ODBC_LIBS
 ODBC_CFLAGS
 DARWIN_RPATH
-CARBONLIB
+MACLIB
 LAPACK_LIBS
 MPFR_LIBS
 MPFR_CFLAGS
@@ -21388,9 +21388,12 @@ esac
 
 if test "$darwin_build" = "yes" ; then
   if test "$have_carbon" = "yes" ; then
-    CARBONLIB="-Wl,-framework -Wl,Carbon"
+    MACLIB="-Wl,-framework -Wl,Carbon"
 
     $as_echo "#define HAVE_CARBON 1" >>confdefs.h
+
+  else
+    MACLIB="-Wl,-framework -Wl,CoreServices"
 
   fi
   if test "$pkg_build" = "yes" ; then
