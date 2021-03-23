@@ -1779,6 +1779,73 @@
       </description>
     </function>
 
+    <function name="bdstest" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="int">maxdim</fnarg>
+	<fnarg type="scalar">eps</fnarg>
+	<fnarg optional="true" type="bool">bootstrap</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esegue il test BDS (<cite key="brock-etal96">Brock, Dechert,
+	  Scheinkman and LeBaron, 1996</cite>) per la nonlinearità
+	  della serie <argname>x</argname>. In un contesto
+	  econometrico il suo uso è tipicamente associato all'analisi
+	  dei residui per la violazione della condizione IID. Il test
+	  si basa su un insieme di integrali di correlazione, pensati
+	  per rintracciare la nonlinearità in dimensioni via via più
+	  ampie, e <argname>maxdim</argname> indica il numero di tali
+	  integrali. Esso deve essere almeno 2; il primo integrale
+	  stabilisce una base ma non può essere usato per calcolare il
+	  test. Gli integrali di correlazione sono, in sostanza,
+	  misure di <quote>contiguità</quote> di ogni punto con gli
+	  altri, e l'argomento <argname>eps</argname> definisce ciò
+	  che si intende per <quote>contiguo</quote>. Di default,
+	  questo parametro viene espresso come multiplo dello scarto
+	  quadratico medio di <argname>x</argname>, nel qual caso
+	  <cite key="kanzler99">Kanzler (1999)</cite> suggerisce un
+	  valore fra 1.5 e 2.0 (ma si veda più sotto per
+	  un'alternativa).
+	</para>
+	<para>
+	  La funzione restituisce una matrice con due righe e
+	  <argname>maxdim</argname> &minus; 1 colonne. La prima riga
+	  contiene le statistiche test, mentre la seconda contiene i
+	  <math>P</math>-values per ognuna delle dimensioni, sotto
+	  l'ipotesi nulla per cui <argname>x</argname> sia
+	  lineare/IID.  Il test è di tipo generico: rintraccia ogni
+	  tipo di deviazione dalla linearità ma non è informativo sul
+	  perché questa condizione venisse eventualmente violata.
+	</para>
+	<para>
+	  Le statistiche test sono asintoticamente distribuite come
+	  <math>N</math>(0,1) ma il test tende a sovra-rigettare in
+	  piccoli campioni. per questa ragione, i
+	  <math>P</math>-values sono ottenuti con una procedura
+	  di bootstrap, con 1999 replicazioni, se la lunghezza di
+	  <argname>x</argname> fosse minore di 600 (in caso
+	  contrario, si fa riferimento alla normale standard). Per
+	  usare il bootstrap in campioni più grandi basta dare un
+	  valore non zero all'argomento
+	  <argname>bootstrap</argname>. Al contrario, per evitare il
+	  bootstrap in piccoli campioni, basta settarlo a 0.
+	</para>
+	<subhead>Specificazioni alternative di contiguità</subhead>
+	<para>
+	  Dando al parametro <argname>eps</argname> un valore
+	  negativo, verrà usata l'alternativa caldeggiata da
+	  Kanzler&mdash;in particolare, per <argname>x</argname> non
+	  normale&mdash; con uno sforzo computazionale maggiore. Il
+	  valore di <quote>contiguità</quote> effettivamente impiegato
+	  è tale per cui l'integrale di correlazione di primo ordine
+	  sia approssimativamente pari a
+	  &minus;<argname>eps</argname>. Kanzler suggerisce come
+	  ottimale un valore per <argname>eps</argname> di &minus;0.7.
+	</para>
+      </description>
+    </function>
+
     <function name="bessel" section="math" output="asinput">
       <fnargs>
 	<fnarg type="char">type</fnarg>
