@@ -1195,7 +1195,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
         return E_ALLOC;
     }
 
-    B = VAR_coeff_matrix_from_VECM(var);
+    B = VAR_coeff_matrix_from_VECM(var, 0);
     if (B == NULL) {
         gretl_matrix_free(var->F);
         var->F = NULL;
@@ -3152,7 +3152,7 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 
     err = allocate_johansen_extra_matrices(v);
     if (err) {
-        fprintf(stderr, "allocate_extra_matrices: err = %d\n", err);
+        fprintf(stderr, "allocate_johansen_extra_matrices: err = %d\n", err);
         return err;
     }
 
@@ -3172,6 +3172,11 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
         gretl_matrix *R = v->jinfo->RR;
 
         VECM_fill_Y(v, dset, Y);
+
+#if 0
+	gretl_matrix_print(v->X, "X in johansen_stage_1");
+	gretl_matrix_print(Y, "Y  in johansen_stage_1");
+#endif
 
 #if JVAR_USE_SVD
         err = gretl_matrix_multi_SVD_ols(Y, v->X, B, R, NULL);

@@ -458,7 +458,8 @@ static gretl_matrix *make_restricted_coeff_matrix (const GRETL_VAR *v)
    without breaking stuff here.
 */
 
-gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var)
+gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var,
+					  int Atrans)
 {
     gretl_matrix *C0 = NULL;
     gretl_matrix *rbeta = NULL;
@@ -531,8 +532,11 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var)
 	/* endogenous vars: use companion matrix */
 	for (j=0; j<var->neqns; j++) {
 	    for (k=0; k<order; k++) {
-		// aij = gretl_matrix_get(var->A, k * var->neqns + j, i);
-		aij = gretl_matrix_get(var->A, i, k * var->neqns + j);
+		if (Atrans) {
+		    aij = gretl_matrix_get(var->A, k * var->neqns + j, i);
+		} else {
+		    aij = gretl_matrix_get(var->A, i, k * var->neqns + j);
+		}
 		gretl_matrix_set(C0, i, col++, aij);
 	    }
 	}
@@ -1080,7 +1084,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
     }
 
     if (var->ci == VECM) {
-	boot->C0 = VAR_coeff_matrix_from_VECM(var);
+	boot->C0 = VAR_coeff_matrix_from_VECM(var, 1);
 	if (boot->C0 == NULL) {
 	    *err = E_ALLOC;
 	} else {
@@ -1090,6 +1094,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 
 #if 0 /* just checking, for mild debugging */
     fprintf(stderr, "boot->iters = %d\n", boot->iters);
+    gretl_matrix_print(boot->C0, "boot->C0");
 #endif
 
     for (iter=0; iter<boot->iters && !*err; iter++) {
