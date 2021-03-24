@@ -42,7 +42,7 @@ version 2021b, in progress
 - Fix bug: broken covariance matrix from mols() with a large
   number of regressors
 
-2021-01-18, version 2021a
+2021-01-18 Version 2021a
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
