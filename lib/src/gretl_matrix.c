@@ -11895,9 +11895,11 @@ static int svd_ols_work (gretl_matrix *A,
     }
 
     if (info != 0) {
-	err = 1;
+	fprintf(stderr, "svd_ols_work: got info = %d (with use_dc = %d)\n",
+		info, use_dc);
+	err = E_NOCONV;
     } else if (rank < n) {
-	fprintf(stderr, "gretl_matrix_SVD_ols:\n"
+	fprintf(stderr, "svd_ols_work:\n"
 		" data matrix X (%d x %d) has column rank %d\n",
 		m, n, (int) rank);
     }
