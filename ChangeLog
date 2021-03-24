@@ -1,5 +1,6 @@
 version 2021b, in progress
 - New function trigamma(): second derivative of lngamma
+- New function bdstest(): BDS nonlinearity/IID test
 - gdtb data format: make the new variant the default
 - tighten up on defbundle() syntax: no empty arguments
   allowed
@@ -34,6 +35,8 @@ version 2021b, in progress
   lists of series
 - GUI, saving contents of bundles: enable saving of integer
   members
+- Fix bug: breakage in computing out-of-sample forecasts from
+  VECMs
 - Fix bug: possible crash when displaying a matrix with very
   long column names in the GUI program
 - Fix bug: broken covariance matrix from mols() with a large
