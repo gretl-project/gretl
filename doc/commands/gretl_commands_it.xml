@@ -8897,8 +8897,13 @@ una o più delle variabili del test.</para>
       </para>
       <para>
 	Si noti che eventuali opzioni vanno indicate nella riga finale del blocco
-	MLE.
+	MLE. Ad esempio:
       </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	  params p
+	end mle --quiet
+      </code>
       <subhead>Matrice di covarianza ed errori standard</subhead>
       <para>
 	Se la funzione di log-verosimiglianza restituisce una

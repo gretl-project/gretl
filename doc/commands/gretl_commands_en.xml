@@ -8765,8 +8765,13 @@
       </para>
       <para>
 	Note that any option flags should be appended to the ending line
-	of the MLE block.
+	of the MLE block. For example:
       </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	  params p
+	end mle --quiet
+      </code>
       <subhead>Covariance matrix and standard errors</subhead>
       <para>
 	If the log-likelihood function returns a series or vector

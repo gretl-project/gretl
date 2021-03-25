@@ -8765,8 +8765,13 @@
       </para>
       <para>
 	Ten en cuenta que cualquier indicador de opción debe añadirse a la
-	línea final del bloque EMV (MLE).
+	línea final del bloque EMV (MLE). Por ejemplo:
       </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	  params p
+	end mle --quiet
+      </code>
       <subhead>Matriz de covarianzas y desviaciones típicas</subhead>
       <para>
 	Cuando la función del logaritmo de la verosimilitud devuelve una serie o
