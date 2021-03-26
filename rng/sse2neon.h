@@ -2,7 +2,8 @@
 #define SSE2NEON_H
 
 /* A small subset of sse2neon.h by John W. Ratcliff et al,
-   released under the MIT license, reproduced below.
+   released under the MIT license, reproduced below. Should
+   be sufficient for useage of SSE2 in SFMT.
 */
 
 /*
@@ -27,11 +28,23 @@
  * SOFTWARE.
  */
 
+#include <arm_neon.h>
+
+typedef int64x2_t __m128i; /* 128-bit vector containing integers */
+
+#ifndef likely
+# define likely(x) __builtin_expect(!!(x), 1)
+#endif
+# ifndef unlikely
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
+
 #define vreinterpretq_m128_u32(x) vreinterpretq_f32_u32(x)
 #define vreinterpretq_u32_m128i(x) vreinterpretq_u32_s64(x)
 #define vreinterpretq_m128_s8(x) vreinterpretq_f32_s8(x)
 #define vreinterpretq_s8_m128i(x) vreinterpretq_s8_s64(x)
 #define vreinterpretq_m128i_s32(x) vreinterpretq_s64_s32(x)
+#define vreinterpretq_m128i_u32(x) vreinterpretq_s64_u32(x)
 #define vreinterpretq_s32_m128i(x) vreinterpretq_s32_s64(x)
 #define vreinterpretq_m128i_s8(x) vreinterpretq_s64_s8(x)
 
