@@ -320,8 +320,8 @@ static int show_pkg_pdf (const char *fname)
     CFURLRef u;
 
     u = CFURLCreateFromFileSystemRepresentation(NULL,
-                                                (const UInt8 *) path,
-                                                strlen(path),
+                                                (const UInt8 *) fname,
+                                                strlen(fname),
                                                 false);
     if (u != NULL) {
         err = LSOpenCFURLRef(u, NULL);
