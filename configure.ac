@@ -499,6 +499,7 @@ if test "$darwin_build" = "yes" ; then
   else
     MACLIB="-Wl,-framework -Wl,CoreServices"
     AC_SUBST(MACLIB)
+    AC_DEFINE(USE_SSE2)
   fi
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
