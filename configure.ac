@@ -500,6 +500,7 @@ if test "$darwin_build" = "yes" ; then
     MACLIB="-Wl,-framework -Wl,CoreServices"
     AC_SUBST(MACLIB)
     AC_DEFINE(USE_SSE2)
+    sse2_result="yes"
   fi
   if test "$pkg_build" = "yes" ; then
     DARWIN_RPATH="@executable_path/../lib"
@@ -1147,7 +1148,7 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  sse2 support for RNG:                   ${sse2_result}
+  SIMD support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}
   AVX support for arithmetic:             ${avx_result}

@@ -65,12 +65,12 @@
         ret;                                                                \
     })
 
-FORCE_INLINE __m128i _mm_setzero_si128(void)
+static inline __m128i _mm_setzero_si128(void)
 {
     return vreinterpretq_m128i_s32(vdupq_n_s32(0));
 }
 
-FORCE_INLINE __m128i _mm_slli_epi32(__m128i a, int imm)
+static inline __m128i _mm_slli_epi32(__m128i a, int imm)
 {
     if (unlikely(imm <= 0)) /* TODO: add constant range macro: [0, 255] */
         return a;
@@ -80,7 +80,7 @@ FORCE_INLINE __m128i _mm_slli_epi32(__m128i a, int imm)
         vshlq_s32(vreinterpretq_s32_m128i(a), vdupq_n_s32(imm)));
 }
 
-FORCE_INLINE __m128i _mm_xor_si128(__m128i a, __m128i b)
+static inline __m128i _mm_xor_si128(__m128i a, __m128i b)
 {
     return vreinterpretq_m128i_s32(
         veorq_s32(vreinterpretq_s32_m128i(a), vreinterpretq_s32_m128i(b)));
@@ -101,7 +101,7 @@ FORCE_INLINE __m128i _mm_xor_si128(__m128i a, __m128i b)
         ret;                                                            \
     })
 
-FORCE_INLINE __m128i _mm_and_si128(__m128i a, __m128i b)
+static inline __m128i _mm_and_si128(__m128i a, __m128i b)
 {
     return vreinterpretq_m128i_s32(
         vandq_s32(vreinterpretq_s32_m128i(a), vreinterpretq_s32_m128i(b)));
