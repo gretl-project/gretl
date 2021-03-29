@@ -171,9 +171,9 @@ function void process_series_bundle (string json, bundle *b)
         endloop
         b.value = vals
     endif
-    if inbundle(b, "dimensions")
-        fix_dimensions_bundle(json, &b)
-    endif
+    # if inbundle(b, "dimensions")
+    #    fix_dimensions_bundle(json, &b)
+    # endif
 end function
 
 ### ------------------------------------------------------------------------
@@ -299,7 +299,7 @@ function string build_parms(const string pcode, const string dcode,
         string mid = build_URL_mid(spec)
         head ~= sanitize_url(mid)
     endif
-    string tail = sprintf("limit=%d&offset=%d&format=json&observations=1&align_periods=1", limit, offset)
+    string tail = sprintf("limit=%d&offset=%d&format=json&observations=1&metadata=0", limit, offset)
     return head ~ tail
 end function
 
