@@ -8533,34 +8533,48 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-        const char *buf = l->v.str;
+        const char *buf = NULL;
+	NODE *rs = NULL;
 
-        if (null_node(r)) {
-            bufgets_finalize(buf);
-        } else if (l->vname == NULL) {
+	if (l->vname == NULL) {
             gretl_errmsg_set("getline: the source must be a named string variable");
             p->err = E_INVARG;
-        } else if (r->vname == NULL) {
-            gretl_errmsg_set("getline: the target must be a named string variable");
-            p->err = E_INVARG;
-        } else {
-            p->err = query_bufgets_init(buf);
-            if (!p->err) {
-                size_t len = bufgets_peek_line_length(buf);
+	} else {
+	    buf = l->v.str;
+	    if (null_node(r)) {
+		/* clean-up only */
+		bufgets_finalize(buf);
+		ret->v.xval = 0;
+		return ret;
+	    }
+	    if (r->t == STR && r->vname != NULL) {
+		rs = r;
+	    } else if (r->t == U_ADDR && r->L->t == STR) {
+		rs = r->L;
+	    } else {
+		gretl_errmsg_set("getline: the target must be a named string variable");
+		p->err = E_INVARG;
+	    }
+	}
 
-                if (len == 0) {
-                    bufgets_finalize(buf);
-                    r->v.str = user_string_reset(r->vname, NULL, &p->err);
-                    ret->v.xval = 0;
-                } else {
-                    r->v.str = user_string_resize(r->vname, len, &p->err);
-                    if (!p->err) {
-                        bufgets(r->v.str, len, buf);
-                        strip_newline(r->v.str);
-                        ret->v.xval = 1;
-                    }
-                }
-            }
+	if (!p->err) {
+	    p->err = query_bufgets_init(buf);
+	}
+	if (!p->err) {
+	    size_t len = bufgets_peek_line_length(buf);
+
+	    if (len == 0) {
+		bufgets_finalize(buf);
+		rs->v.str = user_string_reset(rs->vname, NULL, &p->err);
+		ret->v.xval = 0;
+	    } else {
+		rs->v.str = user_string_resize(rs->vname, len, &p->err);
+		if (!p->err) {
+		    bufgets(rs->v.str, len, buf);
+		    strip_newline(rs->v.str);
+		    ret->v.xval = 1;
+		}
+	    }
         }
     }
 
@@ -17808,7 +17822,7 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_GETLINE:
-        if (l->t == STR && null_or_string(r)) {
+        if (l->t == STR && (null_or_string(r) || r->t == U_ADDR)) {
             ret = getline_node(l, r, p);
         } else {
             node_type_error(t->t, (l->t == STR)? 2 : 1,
