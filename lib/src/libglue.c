@@ -306,49 +306,96 @@ static void bds_print (const gretl_matrix *m,
 		       int order, double eps,
 		       int boot, PRN *prn)
 {
+    const char *vname = dset->varname[v];
     double z, pv;
     int i;
 
     pputc(prn, '\n');
-    pprintf(prn, "BDS test for %s using ", dset->varname[v]);
-    pprintf(prn, "order %d, eps %g", order, fabs(eps));
+    pprintf(prn, "BDS test for %s, maximum order %d", vname, order);
     pputc(prn, '\n');
     pputs(prn, "H0: the series is linear/IID");
+    pputc(prn, '\n');
+    if (eps < 0) {
+	pprintf(prn, "'close' criterion: first-order correlation ~= %g",
+		fabs(eps));
+    } else {
+	pprintf(prn, "'close' criterion: %g * sd(%s)", eps, vname);
+    }
     pputs(prn, "\n\n");
 
     for (i=0; i<order-1; i++) {
 	z = gretl_matrix_get(m, 0, i);
 	pv = gretl_matrix_get(m, 1, i);
-	pprintf(prn, "order %d: z = %.3f [%.3f]\n", i+2, z, pv);
+	pprintf(prn, "  order %d test: z = %.3f [%.3f]\n", i+2, z, pv);
+    }
+    pputc(prn, '\n');
+    if (boot > 0) {
+	pputs(prn, "Bootstrapped p-values in []");
+    } else {
+	pputs(prn, "Asymptotic p-values in []");
     }
     pputc(prn, '\n');
 }
 
-int bds_command_driver (int order, int v, DATASET *dset,
-			gretlopt opt, PRN *prn)
+int bds_test_driver (int order, int v, DATASET *dset,
+		     gretlopt opt, PRN *prn)
 {
     gretl_matrix *res = NULL;
+    const double *x = dset->Z[v];
     double eps = -0.7;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int boot = -1;
     int err = 0;
 
-    if (opt & OPT_E) {
-	eps = get_optval_double(BDS, OPT_E, &err);
+    if (order < 2) {
+	err = E_INVARG;
+    } else {
+	err = series_adjust_sample(x, &t1, &t2);
     }
 
+    if (!err && (opt & OPT_E)) {
+	eps = get_optval_double(BDS, OPT_E, &err);
+	if (!err && eps <= 0) {
+	    err = E_INVARG;
+	}
+    }
     if (!err && (opt & OPT_B)) {
 	boot = get_optval_int(BDS, OPT_B, &err);
     }
+    if (!err && (opt & OPT_K)) {
+	/* Set the signal to interpret eps in the manner recommended
+	   by Kanzler: as the target first-order correlation integral
+	   rather than multiple of standard deviation of @x.
+	*/
+	if (eps > 0.9) {
+	    err = E_INVARG;
+	}
+	eps = -eps;
+    }
 
     if (!err) {
-	res = bds_driver(dset->Z[v], dset, order, eps, boot, &err);
+	gretl_matrix *(*bdstest) (const double *, int, int, double,
+				  int, int *);
+	int n = t2 - t1 + 1;
+
+	bdstest = get_plugin_function("bdstest");
+	if (bdstest == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    if (boot < 0) {
+		/* auto selection */
+		boot = n < 600;
+	    }
+	    res = bdstest(x + t1, n, order, eps, boot, &err);
+	}
     }
 
     if (res != NULL) {
 	if (!(opt & OPT_Q)) {
 	    bds_print(res, v, dset, order, eps, boot, prn);
 	}
-	gretl_matrix_free(res);
+	set_last_result_data(res, GRETL_TYPE_MATRIX);
     }
 
     return err;

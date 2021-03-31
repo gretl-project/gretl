@@ -14210,39 +14210,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         if (!p->err) {
             ret->v.m = midas_multipliers(mb, cum, idx, &p->err);
         }
-    } else if (t->t == F_BDSTEST) {
-	double *x = NULL;
-	double eps = NADBL;
-	int embed = 0;
-	int boot = -1;
-
-        if (k < 3 || k > 4) {
-            n_args_error(k, 3, t->t, p);
-        }
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (p->err) break;
-	    if (i == 0) {
-		if (e->t == SERIES) {
-		    x = e->v.xvec;
-		} else {
-		    p->err = E_TYPES;
-		}
-	    } else if (i == 1) {
-		embed = node_get_int(e, p);
-	    } else if (i == 2) {
-		eps = node_get_scalar(e, p);
-	    } else if (!null_node(e)) {
-		boot = node_get_int(e, p);
-	    }
-	}
-        if (!p->err) {
-            reset_p_aux(p, save_aux);
-            ret = aux_matrix_node(p);
-        }
-	if (!p->err) {
-	    ret->v.m = bds_driver(x, p->dset, embed, eps, boot, &p->err);
-	}
     } else if (t->t == F_TDISAGG) {
         gretl_matrix *Y = NULL;
         gretl_matrix *X = NULL;
@@ -17541,7 +17508,6 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CLOGFI:
     case F_DEFARGS:
     case F_MIDASMULT:
-    case F_BDSTEST:
         /* built-in functions taking more than three args */
         if (t->t == F_FEVAL) {
             ret = eval_feval(t, p);

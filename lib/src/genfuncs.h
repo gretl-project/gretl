@@ -279,7 +279,4 @@ int substitute_values (double *dest, const double *src, int n,
 		       const double *v0, int n0,
 		       const double *v1, int n1);
 
-gretl_matrix *bds_driver (const double *x, const DATASET *dset,
-			  int m, double eps, int boot, int *err);
-
 #endif /* GENFUNCS_H */

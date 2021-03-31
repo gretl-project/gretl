@@ -576,7 +576,6 @@ struct str_table funcs[] = {
     { F_TDISAGG,   "tdisagg" },
     { F_ASSERT,    "assert" },
     { F_VMA,       "vma" },
-    { F_BDSTEST,   "bdstest" },
     { 0,           NULL }
 };
 

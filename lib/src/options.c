@@ -151,6 +151,7 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_S, "stdx", 0 },
     { BDS,      OPT_E, "eps", 2 },
     { BDS,      OPT_B, "boot", 2 },
+    { BDS,      OPT_K, "kanzler", 0 },
     { BIPROBIT, OPT_G, "opg", 0 },
     { BIPROBIT, OPT_R, "robust", 0 },
     { BIPROBIT, OPT_V, "verbose", 0 },
