@@ -3842,6 +3842,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         }
         break;
 
+    case BDS:
+        err = bds_command_driver(cmd->order, cmd->list[1], dset,
+				 cmd->opt, prn);
+        break;
+
     case NORMTEST:
         err = gretl_normality_test(cmd->list[1], dset, cmd->opt, prn);
         break;

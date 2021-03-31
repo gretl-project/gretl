@@ -301,6 +301,59 @@ int llc_test_driver (const char *param, const int *list,
     return err;
 }
 
+static void bds_print (const gretl_matrix *m,
+		       int v, const DATASET *dset,
+		       int order, double eps,
+		       int boot, PRN *prn)
+{
+    double z, pv;
+    int i;
+
+    pputc(prn, '\n');
+    pprintf(prn, "BDS test for %s using ", dset->varname[v]);
+    pprintf(prn, "order %d, eps %g", order, fabs(eps));
+    pputc(prn, '\n');
+    pputs(prn, "H0: the series is linear/IID");
+    pputs(prn, "\n\n");
+
+    for (i=0; i<order-1; i++) {
+	z = gretl_matrix_get(m, 0, i);
+	pv = gretl_matrix_get(m, 1, i);
+	pprintf(prn, "order %d: z = %.3f [%.3f]\n", i+2, z, pv);
+    }
+    pputc(prn, '\n');
+}
+
+int bds_command_driver (int order, int v, DATASET *dset,
+			gretlopt opt, PRN *prn)
+{
+    gretl_matrix *res = NULL;
+    double eps = -0.7;
+    int boot = -1;
+    int err = 0;
+
+    if (opt & OPT_E) {
+	eps = get_optval_double(BDS, OPT_E, &err);
+    }
+
+    if (!err && (opt & OPT_B)) {
+	boot = get_optval_int(BDS, OPT_B, &err);
+    }
+
+    if (!err) {
+	res = bds_driver(dset->Z[v], dset, order, eps, boot, &err);
+    }
+
+    if (res != NULL) {
+	if (!(opt & OPT_Q)) {
+	    bds_print(res, v, dset, order, eps, boot, prn);
+	}
+	gretl_matrix_free(res);
+    }
+
+    return err;
+}
+
 /* parse the tau vector out of @param before calling the
    "real" quantreg function
 */

@@ -41,6 +41,7 @@
                          c == ADF ||            \
                          c == ANOVA ||          \
                          c == APPEND ||         \
+			 c == BDS ||		\
                          c == BKW ||            \
                          c == COEFFSUM ||       \
                          c == CHOW ||           \
@@ -148,6 +149,8 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_R, "robust", 0 },
     { ARMA,     OPT_B, "cml-init", 0 },
     { ARMA,     OPT_S, "stdx", 0 },
+    { BDS,      OPT_E, "eps", 2 },
+    { BDS,      OPT_B, "boot", 2 },
     { BIPROBIT, OPT_G, "opg", 0 },
     { BIPROBIT, OPT_R, "robust", 0 },
     { BIPROBIT, OPT_V, "verbose", 0 },
