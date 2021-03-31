@@ -14178,7 +14178,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
         if (!p->err) {
             ret->v.m = matrix_chowlin(Y, X, fac, &p->err);
         }
-    } else if (t->t == F_MMULT) {
+    } else if (t->t == F_MIDASMULT) {
         gretl_bundle *mb = NULL;
 	int cum = 0;
 	int idx = 1;
@@ -17540,7 +17540,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_TDISAGG:
     case HF_CLOGFI:
     case F_DEFARGS:
-    case F_MMULT:
+    case F_MIDASMULT:
     case F_BDSTEST:
         /* built-in functions taking more than three args */
         if (t->t == F_FEVAL) {

@@ -7487,12 +7487,70 @@
 	</para>
 	<para>
 	  <seelist>
-	    <fncref targ="mweights"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
+            <fncref targ="mweights"/>
 	  </seelist>
 	</para>	
       </description>
     </function>    
+
+    <function name="midasmult" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="bundle">mod</fnarg>
+	<fnarg type="bool">cumulate</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcola i moltiplicatori MIDAS. L'argomento
+	  <argname>mod</argname> dev'essere un bundle contenente un
+	  modello MIDAS, così come quello disponibile sotto <fncref
+	  targ="$model"/> dopo l'esecuzione del comando <cmdref
+	  targ="midasreg"/>. La funzione resituisce una matrice con i
+	  moltiplicatori MIDAS impliciti per la variabile
+	  <argname>v</argname> nella prima colonna e i relativi errori
+	  standard nella seconda. Se l'argomento
+	  <argname>cumulate</argname> è non-zero, i moltiplicatori
+	  vengono cumulati.
+	</para>
+	<para>
+	  Si noti che la matrice risultato possiede automaticamente
+	  delle etichette riga appropriate, cosicché la si può usare
+	  come argomento del comando <cmdref targ="modprint"/>. Ad
+	  esempio, il codice
+	</para>
+	<code>
+	  open gdp_midas.gdt
+	  list dIP = ld_indpro*
+	  smpl 1985:1 ;
+	  midasreg ld_qgdp 0 ; mds(dIP, 0, 6, 2)
+	  matrix ip_m = midasmult($model, 0, 1)
+	  modprint ip_m
+	</code>
+	<para>
+	  produce il seguente risultato:
+	</para>
+	<code>
+             coefficient   std. error      z       p-value
+  ---------------------------------------------------------
+  dIP_0      0.343146      0.0957752     3.583     0.0003   ***
+  dIP_1      0.402547      0.0834904     4.821     1.43e-06 ***
+  dIP_2      0.176437      0.0673776     2.619     0.0088   ***
+  dIP_3      0.0601876     0.0621927     0.9678    0.3332
+  dIP_4      0.0131263     0.0259137     0.5065    0.6125
+  dIP_5      0.000965260   0.00346703    0.2784    0.7807
+  dIP_6      0.00000       0.00000      NA        NA
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
+            <fncref targ="mweights"/>
+	    <fncref targ="mlincomb"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
 
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
@@ -8451,7 +8509,8 @@
 	</code>
 	<para>
 	  <seelist>
-	    <fncref targ="mgradient"/>
+            <fncref targ="mgradient"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>	
