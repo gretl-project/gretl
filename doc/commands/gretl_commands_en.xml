@@ -12369,25 +12369,28 @@
       </para>
       <para>
 	Depending on the context, the restrictions to be tested may be
-	expressed in various ways.  The simplest form is as follows: each
-	restriction is given as an equation, with a linear combination of
-	parameters on the left and a scalar value to the right of the equals
-	sign (either a numerical constant or the name of a scalar variable).
+	expressed in various ways.  The simplest form is as follows:
+	each restriction is given as an equation, with a linear
+	combination of parameters on the left and a scalar value to
+	the right of the equals sign (either a numerical constant or
+	the name of a scalar variable).
       </para>
       <para>
-	In the single-equation case, parameters may be referenced in the form
-	<lit>b[</lit><repl>i</repl><lit>]</lit>, where <repl>i</repl>
-	represents the position in the list of regressors (starting at 1), or
+	In the single-equation case, parameters may be referenced in
+	the form <lit>b[</lit><repl>i</repl><lit>]</lit>, where
+	<repl>i</repl> represents the position in the list of
+	regressors (starting at 1), or
 	<lit>b[</lit><repl>varname</repl><lit>]</lit>, where
-	<repl>varname</repl> is the name of the regressor in question. In the
-	system case, parameters are referenced using <lit>b</lit> plus two
-	numbers in square brackets. The leading number represents the position
-	of the equation within the system and the second number indicates
-	position in the list of regressors.  For example <lit>b[2,1]</lit>
-	denotes the first parameter in the second equation, and
-	<lit>b[3,2]</lit> the second parameter in the third equation.
-	The <lit>b</lit> terms in the equation representing a restriction may
-	be prefixed with a numeric multiplier, for example
+	<repl>varname</repl> is the name of the regressor in
+	question. In the system case, parameters are referenced using
+	<lit>b</lit> plus two numbers in square brackets. The leading
+	number represents the position of the equation within the
+	system and the second number indicates position in the list of
+	regressors.  For example <lit>b[2,1]</lit> denotes the first
+	parameter in the second equation, and <lit>b[3,2]</lit> the
+	second parameter in the third equation.  The <lit>b</lit>
+	terms in the equation representing a restriction may be
+	prefixed with a numeric multiplier, for example
 	<lit>3.5*b[4]</lit>.
       </para>
       <para>
@@ -12430,8 +12433,8 @@
 	otherwise.
       </para>
       <para>
-	There are two alternatives to the method of expressing restrictions
-	discussed above.  First, a set of <math>g</math> linear restrictions
+	There are three alternatives to the method of expressing restrictions
+	described above.  First, a set of <math>g</math> linear restrictions
 	on a <math>k</math>-vector of parameters, &bgr;, may be written
 	compactly as <math>R</math>&bgr; &minus; <math>q</math> = 0, where
 	<math>R</math> is an <by r="g" c="k"/> matrix and <math>q</math> is a
@@ -12446,7 +12449,27 @@
 	end restrict
       </code>
       <para>
-	Secondly, if you wish to test a nonlinear restriction (this is
+	Second, in a variant that may be useful when
+	<lit>restrict</lit> is used within a function, you can
+	construct the set of restriction statements in the form of an
+	array of strings.  You then use the <lit>inject</lit> keyword
+	with the name of the array. Here's a simple example:
+      </para>
+      <code>
+	strings SR = array(2)
+	RS[1] = "b[1,2] = 0"
+	RS[2] = "b[2,1] = 0"
+	restrict
+	  inject RS
+	end restrict	
+      </code>
+      <para>
+	In actual usage of this method one would likely use <fncref
+	targ="sprintf"/> to construct the strings, based on input to
+	a function.
+      </para>
+      <para>
+	Lastly, if you wish to test a nonlinear restriction (this is
 	currently available for single-equation models only) you should give
 	the restriction as the name of a function, preceded by
 	<quote><lit>rfunc = </lit></quote>, as in
