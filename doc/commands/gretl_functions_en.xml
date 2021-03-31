@@ -3334,7 +3334,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line)
+	      loop while getline(s, &amp;line)
 	          printf "%s\n", line
 	      endloop
 	  endif
@@ -4888,7 +4888,7 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
-	<fnarg type="string">target</fnarg>
+	<fnarg type="stringref">&amp;target</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4896,9 +4896,10 @@
 	  <argname>source</argname>, which should be a named string
 	  variable. On each call a line from the source is written to
 	  <argname>target</argname> (which must also be a named string
-	  variable), with the newline character stripped off. The
-	  valued returned is 1 if there was anything to be read
-	  (including blank lines), 0 if the source has been exhausted.
+	  variable, given in pointer form), with the newline character
+	  stripped off. The valued returned is 1 if there was anything
+	  to be read (including blank lines), 0 if the source has been
+	  exhausted.
 	</para>
 	<para>
 	  Here is an example in which the content of a text file is
@@ -4908,7 +4909,7 @@
 	  string s = readfile("data.txt")
 	  string line
 	  scalar i = 1
-	  loop while getline(s, line)
+	  loop while getline(s, &amp;line)
 	      printf "line %d = '%s'\n", i++, line
 	  endloop
 	</code>
@@ -4921,7 +4922,7 @@
 	  omitted altogether) as in
 	</para>
 	<code>
-	  getline(s, line) # get a single line
+	  getline(s, &amp;line) # get a single line
 	  getline(s, null) # clean up
 	</code>
 	<para>
