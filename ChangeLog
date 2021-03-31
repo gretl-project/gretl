@@ -1,6 +1,7 @@
 version 2021b, in progress
 - New function trigamma(): second derivative of lngamma
 - New function bdstest(): BDS nonlinearity/IID test
+- New function midasmult(): gives MIDAS multipliers
 - gdtb data format: make the new variant the default
 - tighten up on defbundle() syntax: no empty arguments
   allowed
