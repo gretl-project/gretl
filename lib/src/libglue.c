@@ -334,7 +334,7 @@ static void bds_print (const gretl_matrix *m,
     } else {
 	pputs(prn, "Asymptotic p-values in []");
     }
-    pputc(prn, '\n');
+    pputs(prn, "\n\n");
 }
 
 int bds_test_driver (int order, int v, DATASET *dset,
