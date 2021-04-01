@@ -29,7 +29,7 @@ int chow_test_driver (const char *param, MODEL *pmod,
 int llc_test_driver (const char *param, const int *list, 
 		     DATASET *dset, gretlopt opt, PRN *prn);
 
-int bds_test_driver (int order, int v, DATASET *dset,
+int bds_test_driver (int order, int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn);
 
 MODEL quantreg_driver (const char *param, const int *list, 

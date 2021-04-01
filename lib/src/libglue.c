@@ -302,12 +302,11 @@ int llc_test_driver (const char *param, const int *list,
 }
 
 static void bds_print (const gretl_matrix *m,
-		       int v, const DATASET *dset,
+		       const char *vname,
 		       int order, double eps,
 		       int c1, int boot,
 		       double *detail, PRN *prn)
 {
-    const char *vname = dset->varname[v];
     double z, pv;
     int i;
 
@@ -346,18 +345,58 @@ static void bds_print (const gretl_matrix *m,
     pputs(prn, "\n\n");
 }
 
-int bds_test_driver (int order, int v, DATASET *dset,
+static int get_vector_x (const double **px, int *n,
+			 const char **pvname)
+{
+    const char *mname = get_optval_string(BDS, OPT_X);
+    int err = 0;
+
+    if (mname != NULL) {
+	gretl_matrix *m = get_matrix_by_name(mname);
+
+	if (gretl_is_null_matrix(m)) {
+	    err = E_INVARG;
+	} else {
+	    *n = gretl_vector_get_length(m);
+	    if (*n == 0) {
+		err = E_INVARG;
+	    } else {
+		*px = m->val;
+		*pvname = mname;
+	    }
+	}
+    } else {
+	err = E_INVARG;
+    }
+
+    return err;
+}
+
+int bds_test_driver (int order, int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     gretl_matrix *res = NULL;
-    const double *x = dset->Z[v];
+    const double *x = NULL;
+    const char *vname = NULL;
     double detail[2] = {0};
     double eps = -0.7;
     int t1 = dset->t1;
     int t2 = dset->t2;
     int boot = -1;
     int c1 = 1;
+    int n, v = 0;
     int err = 0;
+
+    if (list == NULL) {
+	err = get_vector_x(&x, &n, &vname);
+	if (err) {
+	    return err;
+	}
+    } else {
+	v = list[1];
+	x = dset->Z[v];
+	vname = dset->varname[v];
+    }
 
     if (order < 2) {
 	err = E_INVARG;
@@ -389,17 +428,20 @@ int bds_test_driver (int order, int v, DATASET *dset,
 
     if (!err && (opt & OPT_B)) {
 	boot = get_optval_int(BDS, OPT_B, &err);
+	if (boot < 0) {
+	    err = E_INVARG;
+	}
     }
 
     if (!err) {
 	gretl_matrix *(*bdstest) (const double *, int, int, double,
 				  int, int, double *, int *);
-	int n = t2 - t1 + 1;
 
 	bdstest = get_plugin_function("bdstest");
 	if (bdstest == NULL) {
 	    err = E_FOPEN;
 	} else {
+	    n = t2 - t1 + 1;
 	    if (boot < 0) {
 		/* auto selection */
 		boot = n < 600;
@@ -410,7 +452,7 @@ int bds_test_driver (int order, int v, DATASET *dset,
 
     if (res != NULL) {
 	if (!(opt & OPT_Q)) {
-	    bds_print(res, v, dset, order, eps, c1, boot, detail, prn);
+	    bds_print(res, vname, order, eps, c1, boot, detail, prn);
 	}
 	set_last_result_data(res, GRETL_TYPE_MATRIX);
     }

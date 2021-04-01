@@ -3843,7 +3843,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case BDS:
-        err = bds_test_driver(cmd->order, cmd->list[1], dset,
+        err = bds_test_driver(cmd->order, cmd->list, dset,
 			      cmd->opt, prn);
         break;
 

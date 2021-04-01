@@ -496,6 +496,7 @@ gretl_matrix *make_return_matrix (kinfo *ki, int NB,
     gretl_matrix *m = gretl_matrix_alloc(2, mdi);
 
     if (m != NULL) {
+	char **S;
 	double pv;
 	int i;
 
@@ -509,6 +510,10 @@ gretl_matrix *make_return_matrix (kinfo *ki, int NB,
 	    }
 	    gretl_matrix_set(m, 1, i, pv);
 	}
+	S = strings_array_new(2);
+	S[0] = gretl_strdup("test");
+	S[1] = gretl_strdup("pvalue");
+	gretl_matrix_set_rownames(m, S);
     }
 
     return m;
@@ -554,8 +559,10 @@ gretl_matrix *bdstest (const double *x, int n, int maxdim,
 	*err = E_INVARG;
     }
 
-    if (boot) {
+    if (boot == 1) {
 	NB = 1999;
+    } else if (boot > 1) {
+	NB = boot;
     }
 
     md1 = maxdim - 1;
