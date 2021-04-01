@@ -30,6 +30,7 @@
 #include "kalman.h"
 #include "var.h"
 #include "system.h"
+#include "gretl_array.h"
 #include "gretl_bundle.h"
 
 #define BDEBUG 0
@@ -1708,6 +1709,77 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
     }
 
     return b;
+}
+
+struct bchecker {
+    gretl_bundle *b;
+    int *err;
+    PRN *prn;
+};
+
+static void check_bundled_item (gpointer key, gpointer value, gpointer p)
+{
+    bundled_item *targ, *src = (bundled_item *) value;
+    struct bchecker *bchk = (struct bchecker *) p;
+    gretl_bundle *template = bchk->b;
+
+    if (*bchk->err) {
+	return;
+    }
+
+    targ = g_hash_table_lookup(template->ht, (const char *) key);
+
+    if (targ == NULL) {
+	/* duff key in input */
+	pprintf(bchk->prn, "bcheck: unrecognized key '%s'\n", key);
+	*bchk->err = E_INVARG;
+    } else if (src->type != targ->type) {
+	/* types mismatch */
+	pprintf(bchk->prn, "bcheck: '%s' should be %s, is %s\n", key,
+		gretl_type_get_name(targ->type),
+		gretl_type_get_name(src->type));
+	*bchk->err = E_INVARG;
+    } else {
+	/* transcribe input -> template */
+	*bchk->err = bundled_item_replace_data(targ, src->data, 0, 1);
+	if (*bchk->err) {
+	    pprintf(bchk->prn, "bcheck: failed to copy '%s'\n", key);
+	}
+    }
+}
+
+/* The return value here is 0 if @input is valid given @template,
+   non-zero otherwise.
+*/
+
+int gretl_bundle_extract_args (gretl_bundle *template,
+			       gretl_bundle *input,
+			       void *ptr, PRN *prn)
+{
+    gretl_array *reqd = ptr;
+    int ret = 0;
+
+    if (reqd != NULL) {
+	int i, n = gretl_array_get_length(reqd);
+	const char *key;
+
+	for (i=0; i<n; i++) {
+	    key = gretl_array_get_data(reqd, i);
+	    if (!gretl_bundle_has_key(input, key)) {
+		pprintf(prn, "bcheck: required key '%s' is missing\n", key);
+		ret = E_INVARG;
+		break;
+	    }
+	}
+    }
+
+    if (ret == 0) {
+	struct bchecker bchk = {template, &ret, prn};
+
+	g_hash_table_foreach(input->ht, check_bundled_item, &bchk);
+    }
+
+    return ret;
 }
 
 int gretl_bundle_append (gretl_bundle *bundle1,

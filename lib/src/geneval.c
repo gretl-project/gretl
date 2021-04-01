@@ -12346,6 +12346,32 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 A = vma_rep(compan_top, C, horizon, &p->err);
 	    }
         }
+    } else if (f == F_BCHECK) {
+	gretl_array *reqd = NULL;
+
+	post_process = 0;
+	if (l->t != U_ADDR || l->L->t != BUNDLE) {
+	    node_type_error(f, 1, BUNDLE, l, p);
+	} else if (m->t != BUNDLE) {
+	    node_type_error(f, 2, BUNDLE, m, p);
+	} else if (!null_node(r) && r->t != ARRAY) {
+	    node_type_error(f, 3, ARRAY, r, p);
+	} else {
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		if (!null_node(r)) {
+		    if (gretl_array_get_type(r->v.a) == GRETL_TYPE_STRINGS) {
+			reqd = r->v.a;
+		    } else {
+			p->err = E_INVARG;
+		    }
+		}
+	    }
+	    if (!p->err) {
+		ret->v.xval = gretl_bundle_extract_args(l->L->v.b, m->v.b,
+							reqd, p->prn);
+	    }
+        }
     }
 
     if (post_process) {
@@ -17437,6 +17463,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISOWEEK:
     case F_STACK:
     case F_VMA:
+    case F_BCHECK:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
