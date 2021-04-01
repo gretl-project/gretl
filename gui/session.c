@@ -802,6 +802,9 @@ static int real_add_graph_to_session (const char *fname,
 	mark_session_changed();
 	if (iconlist != NULL) {
 	    session_add_icon(graph, type, ICON_ADD_SINGLE);
+	    if (autoicon_on()) {
+		gtk_window_present(GTK_WINDOW(iconview));
+	    }
 	} else if (autoicon_on()) {
 	    auto_view_session();
 	}

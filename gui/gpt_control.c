@@ -1360,7 +1360,6 @@ static int get_gpt_marker (const char *line, char *label,
                       p == PLOT_TRI_GRAPH || \
                       p == PLOT_BI_GRAPH || \
 		      p == PLOT_ELLIPSE || \
-		      p == PLOT_RQ_TAU || \
 		      p == PLOT_3D || \
 		      p == PLOT_HEATMAP || \
 		      p == PLOT_GEOMAP)
@@ -2084,6 +2083,11 @@ static int parse_gp_set_line (GPT_SPEC *spec,
     } else if (!strncmp(s, "set style line", 14)) {
 	/* legacy: e.g. set style line 1 lc rgb "#ff0000" */
 	lt_pos = 14;
+    } else if (!strncmp(s, "set style fill solid", 20)) {
+	/* special with multi-word key */
+	strncat(val, s + 20, 8);
+	spec->fillfrac = (float) atof(val);
+	val[0] = '\0';
     }
 
     if (lt_pos > 0) {

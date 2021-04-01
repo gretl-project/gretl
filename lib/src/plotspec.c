@@ -114,6 +114,7 @@ GPT_SPEC *plotspec_new (void)
     spec->pd = 0;
     spec->nbars = 0;
     spec->boxwidth = 0;
+    spec->fillfrac = 0;
     spec->samples = 0;
     spec->border = GP_BORDER_DEFAULT;
     spec->border_lc[0] = '\0';
@@ -1475,6 +1476,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	} else {
 	    fputs("set style fill solid 0.6\n", fp);
 	}
+    } else if (spec->fillfrac > 0) {
+	fprintf(fp, "set style fill solid %g\n", (double) spec->fillfrac);
     }
 
     if (spec->flags & GPT_PRINT_MARKERS) {

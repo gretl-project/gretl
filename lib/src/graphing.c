@@ -1212,7 +1212,13 @@ void write_plot_line_styles (int ptype, FILE *fp)
 	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
     } else if (ptype == PLOT_RQ_TAU) {
 	fputs("set linetype 1 lc rgb \"#000000\"\n", fp);
-	inject_gp_style(1, fp);
+	fputs("set linetype 2 lc rgb \"#000000\"\n", fp);
+	fputs("set linetype 3 lc rgb \"#0000FF\"\n", fp);
+	fputs("set linetype 4 lc rgb \"#0000FF\"\n", fp);
+	fputs("set linetype 5 lc rgb \"#0000FF\"\n", fp);
+	fputs("set linetype 6 lc rgb \"#FFA500\"\n", fp);
+	fputs("set linetype 7 lc rgb \"#E51E10\"\n", fp);
+	fputs("set linetype 8 lc rgb \"#000000\"\n", fp);
     } else if (ptype == PLOT_HEATMAP || ptype == PLOT_GEOMAP) {
 	; /* these are handled specially */
     } else {
@@ -6860,7 +6866,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
     fprintf(fp, "set title \"%s\"\n", tmp);
     g_free(tmp);
 
-    fputs("set style fill solid 0.4\n", fp);
+    fputs("set style fill solid 0.5\n", fp);
 
     if (ymax[0] < .88 * ymax[1]) {
 	fputs("set key left top\n", fp);
@@ -6880,7 +6886,7 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* rq estimates */
     tmp = g_strdup_printf(_("Quantile estimates with %g%% band"), cval);
-    fprintf(fp, "'-' using 1:2 title '%s' w lp lt 1, \\\n", tmp);
+    fprintf(fp, "'-' using 1:2 title '%s' w lp, \\\n", tmp);
     g_free(tmp);
 
     /* numeric output coming up! */
@@ -6888,10 +6894,10 @@ int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 
     /* ols estimate plus (1 - alpha) band */
     tmp = g_strdup_printf(_("OLS estimate with %g%% band"), cval);
-    fprintf(fp, "%g title '%s' w lines lt 2, \\\n", pmod->coeff[k], tmp);
+    fprintf(fp, "%g title '%s' w l, \\\n", pmod->coeff[k], tmp);
     g_free(tmp);
-    fprintf(fp, "%g notitle w dots lt 2, \\\n", pmod->coeff[k] + olsband);
-    fprintf(fp, "%g notitle w dots lt 2\n", pmod->coeff[k] - olsband);
+    fprintf(fp, "%g notitle w l dt 2, \\\n", pmod->coeff[k] + olsband);
+    fprintf(fp, "%g notitle w l dt 2\n", pmod->coeff[k] - olsband);
 
     /* write out the interval values */
 
