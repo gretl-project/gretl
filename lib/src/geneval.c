@@ -11396,8 +11396,12 @@ static int set_matrix_chunk (NODE *lhs, NODE *rhs, parser *p)
     gretl_matrix_print(m1, "m1, in set_matrix_chunk");
     fprintf(stderr, "op = '%s'\n", getsymb(p->op));
     print_mspec(spec);
-    fprintf(stderr, "rhs type %s\n", getsymb(rhs->t));
-    if (rhs->t == NUM) fprintf(stderr, " value %g\n", rhs->v.xval);
+    if (rhs != NULL) {
+	fprintf(stderr, "rhs type %s\n", getsymb(rhs->t));
+	if (rhs->t == NUM) fprintf(stderr, " value %g\n", rhs->v.xval);
+    } else {
+	fprintf(stderr, "rhs NULL\n");
+    }
 #endif
 
     /* Is the assignment straight or inflected?  Note that in
@@ -11408,7 +11412,13 @@ static int set_matrix_chunk (NODE *lhs, NODE *rhs, parser *p)
         inflected = 1;
     }
 
-    if (scalar_node(rhs)) {
+    if (p->op == INC || p->op == DEC) {
+	/* treat as add or subtract */
+	rhs_x = 1;
+	rhs_z = rhs_x;
+	rhs_scalar = 1;
+	p->op = (p->op == INC)? B_ADD : B_SUB;
+    } else if (scalar_node(rhs)) {
         /* single value (could be 1 x 1 matrix) on RHS */
         rhs_x = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
         rhs_z = rhs_x;
