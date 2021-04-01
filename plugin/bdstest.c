@@ -514,8 +514,21 @@ gretl_matrix *make_return_matrix (kinfo *ki, int NB,
     return m;
 }
 
+/* @x: series to test
+   @n: length of series
+   @maxdim: maximum order of correlation integral
+   @eps: proximity-of-points criterion
+   @ci: flag to interpret @eps as target 1st-order correlation
+   @boot: flag to produce bootstrapped p-values
+   @detail: location to receive additional info (eps, c1), or NULL
+   @err: location to recive error code
+
+   If @detail is provided it must have space to hold 2 doubles.
+*/
+
 gretl_matrix *bdstest (const double *x, int n, int maxdim,
-		       double eps, int boot, int *err)
+		       double eps, int c1, int boot,
+		       double *detail, int *err)
 {
     kinfo ki = {0};
     gretl_matrix *ret = NULL;
@@ -532,8 +545,8 @@ gretl_matrix *bdstest (const double *x, int n, int maxdim,
 	return NULL;
     }
 
-    if (eps < 0) {
-	ki.eps = kanzler_eps(x, n, -eps);
+    if (c1) {
+	ki.eps = kanzler_eps(x, n, eps);
     } else {
 	ki.eps = eps * gretl_stddev(0, n-1, x);
     }
@@ -571,6 +584,9 @@ gretl_matrix *bdstest (const double *x, int n, int maxdim,
 	wcol = malloc((n-1) * sizeof *wcol);
 	if (seq == NULL || wcol == NULL) {
 	    *err = E_ALLOC;
+	} else if (detail != NULL) {
+	    detail[0] = ki.eps;
+	    detail[1] = ki.c0;
 	}
     }
 

@@ -304,36 +304,45 @@ int llc_test_driver (const char *param, const int *list,
 static void bds_print (const gretl_matrix *m,
 		       int v, const DATASET *dset,
 		       int order, double eps,
-		       int boot, PRN *prn)
+		       int c1, int boot,
+		       double *detail, PRN *prn)
 {
     const char *vname = dset->varname[v];
     double z, pv;
     int i;
 
+    /* header */
     pputc(prn, '\n');
-    pprintf(prn, "BDS test for %s, maximum order %d", vname, order);
+    pprintf(prn, _("BDS test for %s, maximum order %d"), vname, order);
     pputc(prn, '\n');
-    pputs(prn, "H0: the series is linear/IID");
+    pputs(prn, _("H0: the series is linear/IID"));
     pputc(prn, '\n');
-    if (eps < 0) {
-	pprintf(prn, "'close' criterion: first-order correlation ~= %g",
-		fabs(eps));
+    if (boot > 0) {
+	pputs(prn, _("Bootstrapped p-values in []"));
     } else {
-	pprintf(prn, "'close' criterion: %g * sd(%s)", eps, vname);
+	pputs(prn, _("Asymptotic p-values in []"));
     }
     pputs(prn, "\n\n");
 
+    /* test statistics */
     for (i=0; i<order-1; i++) {
 	z = gretl_matrix_get(m, 0, i);
 	pv = gretl_matrix_get(m, 1, i);
-	pprintf(prn, "  order %d test: z = %.3f [%.3f]\n", i+2, z, pv);
+	pputs(prn, "  ");
+	pprintf(prn, _("test order %d: z = %.3f [%.3f]"), i+2, z, pv);
+	pputc(prn, '\n');
     }
     pputc(prn, '\n');
-    if (boot > 0) {
-	pputs(prn, "Bootstrapped p-values in []");
+
+    /* trailer */
+    if (c1) {
+	pputs(prn, _("Distance criterion based on first-order correlation"));
     } else {
-	pputs(prn, "Asymptotic p-values in []");
+	pprintf(prn, _("Distance criterion based on sd(%s)"), vname);
     }
+    pputc(prn, '\n');
+    pprintf(prn, _("eps = %g, first-order correlation %.3f"),
+	    detail[0], detail[1]);
     pputs(prn, "\n\n");
 }
 
@@ -342,10 +351,12 @@ int bds_test_driver (int order, int v, DATASET *dset,
 {
     gretl_matrix *res = NULL;
     const double *x = dset->Z[v];
+    double detail[2] = {0};
     double eps = -0.7;
     int t1 = dset->t1;
     int t2 = dset->t2;
     int boot = -1;
+    int c1 = 1;
     int err = 0;
 
     if (order < 2) {
@@ -354,29 +365,35 @@ int bds_test_driver (int order, int v, DATASET *dset,
 	err = series_adjust_sample(x, &t1, &t2);
     }
 
-    if (!err && (opt & OPT_E)) {
-	eps = get_optval_double(BDS, OPT_E, &err);
-	if (!err && eps <= 0) {
-	    err = E_INVARG;
+    if (!err) {
+	err = incompatible_options(opt, OPT_E | OPT_C);
+    }
+
+    if (!err) {
+	if (opt & OPT_E) {
+	    /* eps as multiple of std dev of @x */
+	    eps = get_optval_double(BDS, OPT_E, &err);
+	    if (!err && eps <= 0) {
+		err = E_INVARG;
+	    }
+	    c1 = 0;
+	} else if (opt & OPT_C) {
+	    /* eps as target first-order correlation */
+	    eps = get_optval_double(BDS, OPT_C, &err);
+	    if (!err && (eps < 0.1 || eps > 0.9)) {
+		err = E_INVARG;
+	    }
+	    c1 = 1;
 	}
     }
+
     if (!err && (opt & OPT_B)) {
 	boot = get_optval_int(BDS, OPT_B, &err);
-    }
-    if (!err && (opt & OPT_K)) {
-	/* Set the signal to interpret eps in the manner recommended
-	   by Kanzler: as the target first-order correlation integral
-	   rather than multiple of standard deviation of @x.
-	*/
-	if (eps > 0.9) {
-	    err = E_INVARG;
-	}
-	eps = -eps;
     }
 
     if (!err) {
 	gretl_matrix *(*bdstest) (const double *, int, int, double,
-				  int, int *);
+				  int, int, double *, int *);
 	int n = t2 - t1 + 1;
 
 	bdstest = get_plugin_function("bdstest");
@@ -387,13 +404,13 @@ int bds_test_driver (int order, int v, DATASET *dset,
 		/* auto selection */
 		boot = n < 600;
 	    }
-	    res = bdstest(x + t1, n, order, eps, boot, &err);
+	    res = bdstest(x + t1, n, order, eps, c1, boot, detail, &err);
 	}
     }
 
     if (res != NULL) {
 	if (!(opt & OPT_Q)) {
-	    bds_print(res, v, dset, order, eps, boot, prn);
+	    bds_print(res, v, dset, order, eps, c1, boot, detail, prn);
 	}
 	set_last_result_data(res, GRETL_TYPE_MATRIX);
     }
