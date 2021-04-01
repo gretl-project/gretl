@@ -3805,7 +3805,9 @@
 	  Calcola gli autovalori e, opzionalmente, gli autovettori destri
 	  e/o sinistri, della matrice <by r="n" c="n"/>
 	  <argname>A</argname>, che può essere reale o complessa. Gli
-	  autovalori sono ritornati come vettore colonna complesso.
+	  autovalori sono ritornati come vettore colonna
+	  complesso. Per ottenere la loro norma, si può usare la
+	  funzione <fncref targ="abs"/>, che accetta argomenti complessi.
 	</para>
 	<para>
 	  Se si desidera ottenere gli autovettori destri (nella forma di una

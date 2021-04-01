@@ -3835,7 +3835,9 @@
 	  Computes the eigenvalues, and optionally the right and/or
 	  left eigenvectors, of the <by r="n" c="n"/> matrix
 	  <argname>A</argname>, which may be real or complex. The
-	  eigenvalues are returned in a complex column vector.
+	  eigenvalues are returned in a complex column vector. To
+	  obtain the norm of the eigenvalues, you can use the <fncref
+	  targ="abs"/> function, which accepts complex arguments.
 	</para>
 	<para>
 	  If you wish to retrieve the right eigenvectors (as an <by
