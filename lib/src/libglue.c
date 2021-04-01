@@ -366,13 +366,13 @@ int bds_test_driver (int order, int v, DATASET *dset,
     }
 
     if (!err) {
-	err = incompatible_options(opt, OPT_E | OPT_C);
+	err = incompatible_options(opt, OPT_S | OPT_C);
     }
 
     if (!err) {
-	if (opt & OPT_E) {
+	if (opt & OPT_S) {
 	    /* eps as multiple of std dev of @x */
-	    eps = get_optval_double(BDS, OPT_E, &err);
+	    eps = get_optval_double(BDS, OPT_S, &err);
 	    if (!err && eps <= 0) {
 		err = E_INVARG;
 	    }
