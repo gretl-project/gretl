@@ -1805,6 +1805,10 @@
       </fnargs>
       <description>
 	<para>
+	  THIS FUNCTION is replaced by the bds command. The docs
+	  will be updated shortly.
+	</para>
+	<para>
 	  Performs the BDS (<cite key="brock-etal96">Brock, Dechert,
 	  Scheinkman and LeBaron, 1996</cite>) test for nonlinearity
 	  of the series <argname>x</argname>. In an econometric

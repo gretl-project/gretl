@@ -1170,6 +1170,14 @@
     </description>
   </command>
 
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <description>
+      <para>
+	TBD
+      </para>
+    </description>
+  </command>
+
   <command name="bfgs-config" section="Estimation" label="BFGS options"
     context="gui">
     <description>
