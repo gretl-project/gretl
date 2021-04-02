@@ -1477,7 +1477,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    fputs("set style fill solid 0.6\n", fp);
 	}
     } else if (spec->fillfrac > 0) {
+	gretl_push_c_numeric_locale();
 	fprintf(fp, "set style fill solid %g\n", (double) spec->fillfrac);
+	gretl_pop_c_numeric_locale();
     }
 
     if (spec->flags & GPT_PRINT_MARKERS) {
