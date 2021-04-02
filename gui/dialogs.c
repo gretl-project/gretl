@@ -40,6 +40,7 @@
 #include "libset.h"
 #include "uservar.h"
 #include "gretl_bfgs.h"
+#include "libglue.h"
 
 #include <errno.h>
 
@@ -7283,6 +7284,146 @@ void tdisagg_dialog (int v)
                      G_CALLBACK(do_tdisagg), &tdi);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, TDISAGG);
+
+    gtk_widget_show_all(dialog);
+}
+
+/* apparatus for BDS nonlineariry test from menu */
+
+struct bds_info {
+    int vnum;
+    GtkWidget *dlg;
+    GtkWidget *mspin;
+    GtkWidget *sdb;
+    GtkWidget *cspin;
+    GtkWidget *sspin;
+    GtkWidget *boot;
+};
+
+static void do_bdstest (GtkWidget *w, struct bds_info *bi)
+{
+    gretlopt dopt, opt = OPT_B;
+    int m = spinner_get_int(bi->mspin);
+    int sdcrit = button_is_active(bi->sdb);
+    int boot = button_is_active(bi->boot);
+    double dval;
+    PRN *prn = NULL;
+
+    if (sdcrit) {
+	dval = gtk_spin_button_get_value(GTK_SPIN_BUTTON(bi->sspin));
+	dopt = OPT_S;
+    } else {
+	dval = gtk_spin_button_get_value(GTK_SPIN_BUTTON(bi->cspin));
+	dopt = OPT_C;
+    }
+
+    opt |= dopt;
+    set_optval_double(BDS, dopt, dval);
+    set_optval_int(BDS, OPT_B, boot);
+
+    bufopen(&prn);
+
+    if (prn != NULL) {
+	int list[2] = {1, bi->vnum};
+	int err = 0;
+
+	err = bds_test_driver(m, list, dataset, opt, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+            view_buffer(prn, 78, 400, "bds", PRINT, NULL);
+	}
+    }
+
+    gtk_widget_destroy(bi->dlg);
+}
+
+static void switch_bds_mode (GtkToggleButton *b, struct bds_info *bi)
+{
+    int sdcrit = gtk_toggle_button_get_active(b);
+
+    gtk_widget_set_sensitive(bi->sspin, sdcrit);
+    gtk_widget_set_sensitive(bi->cspin, !sdcrit);
+}
+
+void bdstest_dialog (int v)
+{
+    struct bds_info bi = {0};
+    GtkWidget *dialog, *hbox;
+    GtkWidget *vbox, *label;
+    GtkWidget *rb1, *tmp;
+    GtkWidget *tbl;
+    GSList *group = NULL;
+
+    if (maybe_raise_dialog()) {
+        return;
+    }
+
+    dialog = gretl_dialog_new("gretl: BDS test", NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    bi.vnum = v;
+    bi.dlg = dialog;
+
+    /* maximum dimension control */
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new("Maximum dimension:");
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    bi.mspin = gtk_spin_button_new_with_range(2, 10, 1);
+    gtk_box_pack_start(GTK_BOX(hbox), bi.mspin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+
+    /* distance controls */
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new("Distance criterion:");
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    tbl = gtk_table_new(2, 2, FALSE);
+    /* via correlation */
+    rb1 = gtk_radio_button_new_with_label(group, "First-order correlation");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), rb1, 0, 1, 0, 1);
+    bi.cspin = tmp = gtk_spin_button_new_with_range(0.1, 0.9, .01);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), 0.7);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 1, 2, 0, 1);
+    /* via s.d. */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb1));
+    bi.sdb = gtk_radio_button_new_with_label(group, "Multiple of std. dev.");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), bi.sdb, 0, 1, 1, 2);
+    bi.sspin = tmp = gtk_spin_button_new_with_range(0.1, 4.0, .01);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), 1.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 1, 2, 1, 2);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    gtk_widget_set_sensitive(bi.sspin, FALSE);
+    g_signal_connect(G_OBJECT(bi.sdb), "toggled",
+		     G_CALLBACK(switch_bds_mode), &bi);
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+
+    /* p-value type control */
+    hbox = gtk_hbox_new(FALSE, 5);
+    rb1 = gtk_radio_button_new_with_label(NULL, "Asymptotic p-values");
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb1));
+    gtk_box_pack_start(GTK_BOX(hbox), rb1, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 5);
+    bi.boot = tmp = gtk_radio_button_new_with_label(group, "Bootstrap p-values");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), dataset->n < 600);
+
+    /* buttons */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+                     G_CALLBACK(do_bdstest), &bi);
+    gtk_widget_grab_default(tmp);
+    context_help_button(hbox, BDS);
 
     gtk_widget_show_all(dialog);
 }

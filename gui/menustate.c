@@ -266,6 +266,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Variable/Tramo", get_tramo_ok());
 #endif
     flip(mdata->ui, "/menubar/Variable/Hurst", s);
+    flip(mdata->ui, "/menubar/Variable/BDS", s);
     flip(mdata->ui, "/menubar/Variable/tdisagg", s &&
          quarterly_or_monthly(dataset));
 
@@ -682,8 +683,8 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
         add_discrete_dummies(v);
         break;
     case MNU_TDIS:
-        tdisagg_dialog(v);
-        break;
+	tdisagg_dialog(v);
+	break;
     case MNU_GENR:
         genr_callback();
         break;

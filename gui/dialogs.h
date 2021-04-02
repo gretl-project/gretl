@@ -220,4 +220,6 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
 void tdisagg_dialog (int v);
 
+void bdstest_dialog (int v);
+
 #endif /* DIALOGS_H */
