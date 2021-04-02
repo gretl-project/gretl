@@ -1278,8 +1278,10 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 
     switch (op) {
     case B_ADD:
+    case INC:
 	return x + y;
     case B_SUB:
+    case DEC:
 	return x - y;
     case B_MUL:
 	return x * y;
@@ -11417,7 +11419,6 @@ static int set_matrix_chunk (NODE *lhs, NODE *rhs, parser *p)
 	rhs_x = 1;
 	rhs_z = rhs_x;
 	rhs_scalar = 1;
-	p->op = (p->op == INC)? B_ADD : B_SUB;
     } else if (scalar_node(rhs)) {
         /* single value (could be 1 x 1 matrix) on RHS */
         rhs_x = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
