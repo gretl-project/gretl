@@ -5391,7 +5391,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     strcpy(dset->varname[uv], "residual");
 
     if (bds) {
-	bdstest_dialog(uv);
+	bdstest_dialog(uv, vwin_toplevel(vwin));
 	goto finish;
     } else {
 	/* OPT_Z: compare with normal dist */

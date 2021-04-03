@@ -7288,11 +7288,12 @@ void tdisagg_dialog (int v)
     gtk_widget_show_all(dialog);
 }
 
-/* apparatus for BDS nonlineariry test from menu */
+/* apparatus for BDS nonlinearity test from menu */
 
 struct bds_info {
     int vnum;         /* ID of series to test */
     GtkWidget *dlg;   /* the dialog widget */
+    GtkWidget *src;   /* source or parent of dialog */
     GtkWidget *mspin; /* spin button for order/max dimension */
     GtkWidget *sdb;   /* radio button for interpretation of eps */
     GtkWidget *cspin; /* spin button for eps a la Kanzler */
@@ -7301,11 +7302,16 @@ struct bds_info {
 };
 
 static void record_bdstest (int m, int v, gretlopt opt, double dval,
-			    int boot)
+			    int boot, GtkWidget *modelwin)
 {
     const char *dstr[2] = {"corr1", "sdcrit"};
     GString *gs = g_string_new("bds ");
     int i = (opt == OPT_C)? 0 : 1;
+
+    if (modelwin != NULL) {
+	lib_command_strcpy("# series residual = $uhat");
+	record_command_verbatim();
+    }
 
     g_string_append_printf(gs, "%d %s ", m, dataset->varname[v]);
     gretl_push_c_numeric_locale();
@@ -7351,7 +7357,7 @@ static void do_bdstest (GtkWidget *w, struct bds_info *bi)
 	    gretl_print_destroy(prn);
 	} else {
             view_buffer(prn, 78, 400, "bds", PRINT, NULL);
-	    record_bdstest(m, bi->vnum, dopt, dval, boot);
+	    record_bdstest(m, bi->vnum, dopt, dval, boot, bi->src);
 	}
     }
 
@@ -7366,7 +7372,7 @@ static void switch_bds_mode (GtkToggleButton *b, struct bds_info *bi)
     gtk_widget_set_sensitive(bi->cspin, !sdcrit);
 }
 
-void bdstest_dialog (int v)
+void bdstest_dialog (int v, GtkWidget *parent)
 {
     struct bds_info bi = {0};
     GtkWidget *dialog, *hbox;
@@ -7379,11 +7385,12 @@ void bdstest_dialog (int v)
         return;
     }
 
-    dialog = gretl_dialog_new("gretl: BDS test", NULL, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new("gretl: BDS test", parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     bi.vnum = v;
     bi.dlg = dialog;
+    bi.src = parent;
 
     /* maximum dimension control */
     hbox = gtk_hbox_new(FALSE, 5);

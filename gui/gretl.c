@@ -224,7 +224,7 @@ static void tdisagg_callback (void)
 
 static void bds_callback (void)
 {
-    bdstest_dialog(mdata->active_var);
+    bdstest_dialog(mdata->active_var, NULL);
 }
 
 static void prefs_dialog_callback (void)
