@@ -1727,10 +1727,11 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 	return;
     }
 
+    /* look up @key (from input) in the template bundle */
     targ = g_hash_table_lookup(template->ht, (const char *) key);
 
     if (targ == NULL) {
-	/* duff key in input */
+	/* extraneous key in input */
 	pprintf(bchk->prn, "bcheck: unrecognized key '%s'\n", key);
 	*bchk->err = E_INVARG;
     } else if (src->type != targ->type) {
@@ -1740,7 +1741,7 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 		gretl_type_get_name(src->type));
 	*bchk->err = E_INVARG;
     } else {
-	/* transcribe input -> template */
+	/* transcribe input value -> template */
 	*bchk->err = bundled_item_replace_data(targ, src->data, 0, 1);
 	if (*bchk->err) {
 	    pprintf(bchk->prn, "bcheck: failed to copy '%s'\n", key);
