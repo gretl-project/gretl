@@ -5322,8 +5322,13 @@ static void normal_test (MODEL *pmod, FreqDist *freq)
     }
 }
 
+/* we'll roll the BDS nonlinearity test in with the following,
+   since it requires the same basic setup
+*/
+
 void do_resid_freq (GtkAction *action, gpointer p)
 {
+    const gchar *aname = gtk_action_get_name(action);
     FreqDist *freq = NULL;
     PRN *prn;
     windata_t *vwin = (windata_t *) p;
@@ -5332,6 +5337,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
     int origv = dataset->v;
+    int uv, bds = 0;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -5340,7 +5346,10 @@ void do_resid_freq (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    if (LIMDEP(pmod->ci)) {
+    if (!strcmp(aname, "bds")) {
+	/* BDS test */
+	bds = 1;
+    } else if (LIMDEP(pmod->ci)) {
         err = gretl_model_get_normality_test(pmod, prn);
         if (err) {
             gui_errmsg(err);
@@ -5378,9 +5387,17 @@ void do_resid_freq (GtkAction *action, gpointer p)
         return;
     }
 
-    /* OPT_Z: compare with normal dist */
-    freq = get_freq(dset->v - 1, dset, NADBL, NADBL, 0,
-                    pmod->ncoeff, OPT_Z, &err);
+    uv = dset->v - 1;
+    strcpy(dset->varname[uv], "residual");
+
+    if (bds) {
+	bdstest_dialog(uv);
+	goto finish;
+    } else {
+	/* OPT_Z: compare with normal dist */
+	freq = get_freq(uv, dset, NADBL, NADBL, 0,
+			pmod->ncoeff, OPT_Z, &err);
+    }
 
     if (err) {
         gui_errmsg(err);
@@ -5403,6 +5420,8 @@ void do_resid_freq (GtkAction *action, gpointer p)
             }
         }
     }
+
+ finish:
 
     trim_dataset(pmod, origv);
     dataset->t1 = save_t1;

@@ -6197,7 +6197,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	/* can't do these with embedded missing obs? */
 	if (gretl_is_regular_panel_model(pmod)) {
 	    ; /* OK? */
-	} else if (ci == CUSUM ||
+	} else if (ci == CUSUM || ci == BDS ||
 	    (ci == MODTEST && (opt & (OPT_A | OPT_H)))) {
 	    ok = 0;
 	}
@@ -6221,7 +6221,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_time_series(dset)) {
 	/* time-series-only tests */
-	if (ci == CUSUM || ci == QLRTEST ||
+	if (ci == CUSUM || ci == QLRTEST || ci == BDS ||
 	    (ci == MODTEST && (opt & (OPT_H | OPT_A)))) {
 	    ok = 0;
 	}
