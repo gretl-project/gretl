@@ -801,9 +801,9 @@
 	  include <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref
 	  targ="summary"/>, <cmdref targ="xtab"/>, <cmdref
-	  targ="vif"/> and <cmdref targ="bkw"/> (in which cases the
-	  result is a matrix), plus <cmdref targ="pkg"/> (which
-	  optionally stores a bundle result).
+	  targ="vif"/>, <cmdref targ="bds"/> and <cmdref targ="bkw"/>
+	  (in which cases the result is a matrix), plus <cmdref
+	  targ="pkg"/> (which optionally stores a bundle result).
 	</para>
       </description>
     </function>
@@ -1792,76 +1792,6 @@
 	<para>
 	  See also <fncref targ="sscanf"/> for more flexible string to
 	  numeric conversion.
-	</para>
-      </description>
-    </function>
-
-    <function name="bdstest" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="series">x</fnarg>
-	<fnarg type="int">maxdim</fnarg>
-	<fnarg type="scalar">eps</fnarg>
-	<fnarg optional="true" type="bool">bootstrap</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  THIS FUNCTION is replaced by the bds command. The docs
-	  will be updated shortly.
-	</para>
-	<para>
-	  Performs the BDS (<cite key="brock-etal96">Brock, Dechert,
-	  Scheinkman and LeBaron, 1996</cite>) test for nonlinearity
-	  of the series <argname>x</argname>. In an econometric
-	  context this is typically used to test a regression residual
-	  for violation of the IID condition. The test is based on a
-	  set of correlation integrals, designed to detect
-	  nonlinearity of progressively higher dimensionality, and
-	  <argname>maxdim</argname> sets the number of such
-	  integrals. This must be at least 2; the first integral
-	  establishes a baseline but does not support a test. The
-	  correlation integrals are basically measures of
-	  <quote>closeness</quote> of data points to each other, and
-	  the <argname>eps</argname> argument sets the criterion for
-	  <quote>close</quote>. By default this is expressed as a
-	  multiple of the standard deviation of <argname>x</argname>,
-	  in which case <cite key="kanzler99">Kanzler (1999)</cite>
-	  recommends a value in the range 1.5 to 2.0 (but see below
-	  for an alternative).
-	</para>
-	<para>
-	  The return value is a matrix with two rows and
-	  <argname>maxdim</argname> &minus; 1 columns. The first row
-	  contains test statistics and the second
-	  <math>P</math>-values, for each of the per-dimension tests,
-	  under the null that <argname>x</argname> is linear/IID.  The
-	  test is of the portmanteau type: able to detect all manner
-	  of departures from linearity but not informative about how
-	  exactly the condition was violated.
-	</para>
-	<para>
-	  The test statistics are asymptotically distributed as
-	  <math>N</math>(0,1) but the test over-rejects quite markedly
-	  in small to moderate-sized samples. For that reason
-	  <math>P</math>-values are by default obtained via
-	  bootstrapping, with 1999 replications, if
-	  <argname>x</argname> is of length less than 600 (but by
-	  reference to the normal distribution otherwise). If you want
-	  to use the bootstrap for larger samples you can force the
-	  issue by giving a non-zero value for the
-	  <argname>bootstrap</argname> argument. Conversely, if you
-	  don't want bootstrapping for smaller samples, give a zero
-	  value for <argname>bootstrap</argname>.
-	</para>
-	<subhead>Alternative specification of closeness</subhead>
-	<para>
-	  If you give <argname>eps</argname> as a negative value, the
-	  alternative recommended by Kanzler&mdash;for non-normal
-	  <argname>x</argname> in particular&mdash;is invoked, at the
-	  cost of some extra computation. The actual
-	  <quote>closeness</quote> value employed is such that the
-	  first-order correlation integral estimate is around
-	  &minus;<argname>eps</argname>.  An <argname>eps</argname> of
-	  &minus;0.7 gives what Kanzler found to be optimal.
 	</para>
       </description>
     </function>

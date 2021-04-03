@@ -1171,9 +1171,105 @@
   </command>
 
   <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <usage>
+      <arguments>
+        <argument>order</argument>
+	<argument>x</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--corr1</flag>
+	  <optparm>rho</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--sdcrit</flag>
+	  <optparm>multiple</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--boot</flag>
+	  <optparm>N</optparm>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>m</optparm>
+	  <effect>use matrix input</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+        </option>
+      </options>
+      <examples>
+        <example>bds 5 x</example>
+	<example>bds 3 --matrix=m</example>
+	<example>bds 4 --sdcrit=2.0</example>
+      </examples>
+    </usage>
     <description>
       <para>
-	TBD
+	Performs the BDS (<cite key="brock-etal96">Brock, Dechert,
+	Scheinkman and LeBaron, 1996</cite>) test for nonlinearity of
+	the series <repl>x</repl>. In an econometric context this is
+	typically used to test a regression residual for violation of
+	the IID condition. The test is based on a set of correlation
+	integrals, designed to detect nonlinearity of progressively
+	higher dimensionality, and <argname>order</argname> sets the
+	number of such integrals. This must be at least 2; the first
+	integral establishes a baseline but does not support a test.
+	The BDS test is of the portmanteau type: able to detect all
+	manner of departures from linearity but not informative about
+	how exactly the condition was violated.
+      </para>
+      <para>
+	Instead of giving <repl>x</repl> as a series, the
+	<opt>matrix</opt> option can be used to specify a matrix as
+	input. The matrix must be a vector (column or row).
+      </para>
+      <subhead>Criterion for closeness</subhead>
+      <para>
+	The correlation integrals are based on a measure of
+	<quote>closeness</quote> of data points, where two points are
+	considered close if they lie within &egr; of each other.  The
+	test requires a specification of &egr;.  By default gretl
+	follows the recommendation of <cite key="kanzler99">Kanzler
+	(1999)</cite>: &egr; is chosen such that the first-order
+	correlation integral is around 0.7. A common alternative
+	(requiring less computation) is to specify &egr; as a multiple
+	of the standard deviation of the target series. The
+	<opt>sdcrit</opt> option supports the latter method; in the
+	third example above &egr; is set to twice the standard
+	deviation of <repl>x</repl>. The <opt>corr1</opt> option
+	implies use of Kanzler's method but allows for a target
+	correlation other than 0.7. It should be clear that these two
+	options are mutually exclusive.
+      </para>
+      <subhead>Bootstrapping</subhead>
+      <para>
+	The BDS test statistics are asymptotically distributed as
+	<math>N</math>(0,1) but the test over-rejects quite markedly
+	in small to moderate-sized samples. For that reason
+	<math>P</math>-values are by default obtained via
+	bootstrapping when <argname>x</argname> is of length less than
+	600 (but by reference to the normal distribution
+	otherwise). If you want to use the bootstrap for larger
+	samples you can force the issue by giving a non-zero value for
+	the <opt>boot</opt> option, Conversely, if you don't want
+	bootstrapping for smaller samples, give a zero value for
+	<opt>boot</opt>. When bootstrapping is performed the default
+	number of iterations is 1999, but you can specify a different
+	number by giving a value greater than 1 with <opt>boot</opt>.
+      </para>
+      <subhead>Accessor matrix</subhead>
+      <para>
+	On successful completion of this command, <fncref
+	targ="$result"/> retrieves the test results in the form of a
+	matrix with two rows and <argname>order</argname> &minus; 1
+	columns. The first row contains test statistics and the second
+	<math>P</math>-values for each of the per-dimension tests
+	under the null that <argname>x</argname> is linear/IID.
       </para>
     </description>
   </command>
