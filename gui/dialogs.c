@@ -7296,7 +7296,7 @@ struct bds_info {
     GtkWidget *mspin; /* spin button for order/max dimension */
     GtkWidget *sdb;   /* radio button for interpretation of eps */
     GtkWidget *cspin; /* spin button for eps a la Kanzler */
-    GtkWidget *sspin; /* spin button for eps = multiple of s.d */
+    GtkWidget *sspin; /* spin button for eps = multiple of s.d. */
     GtkWidget *boot;  /* radio button for bootstrapped P-values */
 };
 
