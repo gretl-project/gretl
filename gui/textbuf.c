@@ -47,6 +47,8 @@
 
 #include <gtksourceview/completion-providers/words/gtksourcecompletionwords.h>
 
+#define TABDEBUG 0
+
 /* Dummy "page" numbers for use in hyperlinks: these
    must be greater than the number of gretl commands
    and built-in functions to avoid collisions.
@@ -831,6 +833,9 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 	    if (keyval == GDK_Return) {
 		ret = script_electric_enter(vwin);
 	    } else if (tabkey(keyval)) {
+#if TABDEBUG
+		fprintf(stderr, "*** calling script_tab_handler ***\n");
+#endif
 		ret = script_tab_handler(vwin, event->state);
 	    } else if (script_auto_bracket && lbracket(keyval)) {
 		ret = script_bracket_handler(vwin, keyval);
@@ -2685,7 +2690,7 @@ void textview_format_paragraph (GtkWidget *view)
     }
 }
 
-gchar *textview_get_current_line (GtkWidget *view)
+static gchar *textview_get_current_line (GtkWidget *view, int allow_blank)
 {
     GtkTextBuffer *buf;
     GtkTextIter start, end;
@@ -2704,7 +2709,7 @@ gchar *textview_get_current_line (GtkWidget *view)
 
     ret = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 
-    if (string_is_blank(ret)) {
+    if (!allow_blank && string_is_blank(ret)) {
 	g_free(ret);
 	ret = NULL;
     }
@@ -2714,7 +2719,7 @@ gchar *textview_get_current_line (GtkWidget *view)
 
 static gchar *textview_get_current_line_with_newline (GtkWidget *view)
 {
-    gchar *s = textview_get_current_line(view);
+    gchar *s = textview_get_current_line(view, 0);
 
     if (s != NULL && *s != '\0' && s[strlen(s)-1] != '\n') {
 	gchar *tmp = g_strdup_printf("%s\n", s);
@@ -3319,8 +3324,6 @@ static int leading_spaces_at_iter (GtkTextBuffer *tbuf,
     return n;
 }
 
-#define TABDEBUG 0
-
 static int incremental_leading_spaces (const char *prevword,
 				       const char *thisword)
 {
@@ -3350,6 +3353,11 @@ static int incremental_leading_spaces (const char *prevword,
 	    this_indent = next_indent - this_indent;
 	}
     }
+
+#if TABDEBUG > 1
+    fprintf(stderr, "incremental_leading_spaces: returning %d*%d = %d\n",
+	    this_indent, tabwidth, this_indent * tabwidth);
+#endif
 
     return this_indent * tabwidth;
 }
@@ -3514,7 +3522,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 
 	*thisword = '\0';
 
-	s = textview_get_current_line(vwin->text);
+	s = textview_get_current_line(vwin->text, 1);
 	if (s != NULL) {
 #if TABDEBUG > 1
 	    fprintf(stderr, "*** maybe_insert_smart_tab: "
@@ -3532,7 +3540,8 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	} else {
 	    nsp += incremental_leading_spaces(prevword, thisword);
 #if TABDEBUG > 1
-	    fprintf(stderr, "    leading spaces: nsp + incr = %d\n", nsp);
+	    fprintf(stderr, "    leading spaces: nsp + incr = %d, curr_nsp %d\n",
+		    nsp, curr_nsp);
 #endif
 	}
 
@@ -3632,7 +3641,7 @@ static gboolean script_electric_enter (windata_t *vwin)
     fprintf(stderr, "*** script_electric_enter\n");
 #endif
 
-    s = textview_get_current_line(vwin->text);
+    s = textview_get_current_line(vwin->text, 0); /* second arg? */
 
     if (s != NULL && *s != '\0') {
 	/* work on the line that starts with @thisword, and

@@ -62,8 +62,6 @@ gchar *textview_get_wrapped_text (GtkWidget *view);
 gchar *textview_get_selection_or_all (GtkWidget *view,
 				      gboolean *selection);
 
-gchar *textview_get_current_line (GtkWidget *view);
-
 int textview_set_text (GtkWidget *view, const gchar *text);
 
 void textview_append_text (GtkWidget *view, const char *text);
