@@ -7291,13 +7291,13 @@ void tdisagg_dialog (int v)
 /* apparatus for BDS nonlineariry test from menu */
 
 struct bds_info {
-    int vnum;
-    GtkWidget *dlg;
-    GtkWidget *mspin;
-    GtkWidget *sdb;
-    GtkWidget *cspin;
-    GtkWidget *sspin;
-    GtkWidget *boot;
+    int vnum;         /* ID of series to test */
+    GtkWidget *dlg;   /* the dialog widget */
+    GtkWidget *mspin; /* spin button for order/max dimension */
+    GtkWidget *sdb;   /* radio button for interpretation of eps */
+    GtkWidget *cspin; /* spin button for eps a la Kanzler */
+    GtkWidget *sspin; /* spin button for eps = multiple of s.d */
+    GtkWidget *boot;  /* radio button for bootstrapped P-values */
 };
 
 static void do_bdstest (GtkWidget *w, struct bds_info *bi)
@@ -7374,8 +7374,7 @@ void bdstest_dialog (int v)
     gtk_box_pack_start(GTK_BOX(hbox), bi.mspin, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+    vbox_add_hsep(vbox);
 
     /* distance controls */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -7384,7 +7383,7 @@ void bdstest_dialog (int v)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     tbl = gtk_table_new(2, 2, FALSE);
     /* via correlation */
-    rb1 = gtk_radio_button_new_with_label(group, _("First-order correlation"));
+    rb1 = gtk_radio_button_new_with_label(NULL, _("First-order correlation"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), rb1, 0, 1, 0, 1);
     bi.cspin = tmp = gtk_spin_button_new_with_range(0.1, 0.9, .01);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), 0.7);
@@ -7401,8 +7400,7 @@ void bdstest_dialog (int v)
     g_signal_connect(G_OBJECT(bi.sdb), "toggled",
 		     G_CALLBACK(switch_bds_mode), &bi);
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+    vbox_add_hsep(vbox);
 
     /* p-value type control */
     hbox = gtk_hbox_new(FALSE, 5);
