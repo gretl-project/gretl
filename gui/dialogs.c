@@ -7368,7 +7368,7 @@ void bdstest_dialog (int v)
 
     /* maximum dimension control */
     hbox = gtk_hbox_new(FALSE, 5);
-    label = gtk_label_new("Maximum dimension:");
+    label = gtk_label_new(_("Maximum dimension:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     bi.mspin = gtk_spin_button_new_with_range(2, 10, 1);
     gtk_box_pack_start(GTK_BOX(hbox), bi.mspin, FALSE, FALSE, 5);
@@ -7379,19 +7379,19 @@ void bdstest_dialog (int v)
 
     /* distance controls */
     hbox = gtk_hbox_new(FALSE, 5);
-    label = gtk_label_new("Distance criterion:");
+    label = gtk_label_new(_("Criterion for closeness:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     tbl = gtk_table_new(2, 2, FALSE);
     /* via correlation */
-    rb1 = gtk_radio_button_new_with_label(group, "First-order correlation");
+    rb1 = gtk_radio_button_new_with_label(group, _("First-order correlation"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), rb1, 0, 1, 0, 1);
     bi.cspin = tmp = gtk_spin_button_new_with_range(0.1, 0.9, .01);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), 0.7);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 1, 2, 0, 1);
     /* via s.d. */
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb1));
-    bi.sdb = gtk_radio_button_new_with_label(group, "Multiple of std. dev.");
+    bi.sdb = gtk_radio_button_new_with_label(group, _("Multiple of std. dev."));
     gtk_table_attach_defaults(GTK_TABLE(tbl), bi.sdb, 0, 1, 1, 2);
     bi.sspin = tmp = gtk_spin_button_new_with_range(0.1, 4.0, .01);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), 1.5);
@@ -7406,12 +7406,12 @@ void bdstest_dialog (int v)
 
     /* p-value type control */
     hbox = gtk_hbox_new(FALSE, 5);
-    rb1 = gtk_radio_button_new_with_label(NULL, "Asymptotic p-values");
+    rb1 = gtk_radio_button_new_with_label(NULL, _("Asymptotic p-values"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb1));
     gtk_box_pack_start(GTK_BOX(hbox), rb1, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
-    bi.boot = tmp = gtk_radio_button_new_with_label(group, "Bootstrap p-values");
+    bi.boot = tmp = gtk_radio_button_new_with_label(group, _("Bootstrap p-values"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), dataset->n < 600);
