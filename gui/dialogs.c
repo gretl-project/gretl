@@ -7300,6 +7300,24 @@ struct bds_info {
     GtkWidget *boot;  /* radio button for bootstrapped P-values */
 };
 
+static void record_bdstest (int m, int v, gretlopt opt, double dval,
+			    int boot)
+{
+    const char *dstr[2] = {"corr1", "sdcrit"};
+    GString *gs = g_string_new("bds ");
+    int i = (opt == OPT_C)? 0 : 1;
+
+    g_string_append_printf(gs, "%d %s ", m, dataset->varname[v]);
+    gretl_push_c_numeric_locale();
+    g_string_append_printf(gs, "--%s=%g ", dstr[i], dval);
+    gretl_pop_c_numeric_locale();
+    g_string_append_printf(gs, "--boot=%d", boot);
+
+    lib_command_strcpy(gs->str);
+    record_command_verbatim();
+    g_string_free(gs, TRUE);
+}
+
 static void do_bdstest (GtkWidget *w, struct bds_info *bi)
 {
     gretlopt dopt, opt = OPT_B;
@@ -7333,6 +7351,7 @@ static void do_bdstest (GtkWidget *w, struct bds_info *bi)
 	    gretl_print_destroy(prn);
 	} else {
             view_buffer(prn, 78, 400, "bds", PRINT, NULL);
+	    record_bdstest(m, bi->vnum, dopt, dval, boot);
 	}
     }
 
