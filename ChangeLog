@@ -1,7 +1,7 @@
 version 2021b, in progress
 - New function trigamma(): second derivative of lngamma
-- New function bdstest(): BDS nonlinearity/IID test
 - New function midasmult(): gives MIDAS multipliers
+- New command "bds": BDS nonlinearity test
 - gdtb data format: make the new variant the default
 - tighten up on defbundle() syntax: no empty arguments
   allowed
@@ -19,6 +19,8 @@ version 2021b, in progress
   is just for the bivariate case
 - "clear" command: add --functions option to remove all hansl
   functions from memory
+- "restrict" command: add "inject" keyword to support use of
+  an array of strings to specify restrictions
 - "param_names" keyword for nls, mle, gmm: accept an array of
   strings as argument
 - binary probit and logit: offer Estrella's pseudo R-squared
@@ -28,20 +30,28 @@ version 2021b, in progress
   cross-sectional statistics produced when list arguments
   are given, this allows skipping of missing values.
 - hdprod(): introduce "shorthand" syntax (one argument only)
+- dbnomics addon: speed up retrieval of data
 - user-defined functions: allow overloading of numeric
   arguments and return value (scalar, series or matrix)
+- user-defined function parameters: enforce the "const" flag
+  more consistently
 - gretl timer ("stopwatch"): provide a separate timer for each
   level of function execution
+- GUI usage of geoplot addon: make it easier to save an edited
+  map as GeoJSON
 - GUI model specification dialog: enable interactive search in
   lists of series
 - GUI, saving contents of bundles: enable saving of integer
   members
+- GUI, handle dependencies when installing function packages
+- GUI script editor: improve implementation of "smart tab"
 - Fix bug: breakage in computing out-of-sample forecasts from
   VECMs
 - Fix bug: possible crash when displaying a matrix with very
   long column names in the GUI program
 - Fix bug: broken covariance matrix from mols() with a large
   number of regressors
+- Fix bug: crash on applying postfix "++" to a submatrix
 
 2021-01-18 Version 2021a
 - New function vma() for multiple time series
