@@ -4137,7 +4137,7 @@ void series_ensure_level_zero (DATASET *dset)
 }
 
 void series_attach_string_table (DATASET *dset, int i,
-				 gretl_string_table *st)
+				 series_table *st)
 {
     if (dset != NULL && i > 0 && i < dset->v) {
 	series_set_discrete(dset, i, 1);

@@ -36,7 +36,7 @@ enum {
     ST_ALLDBLS = 1 << 2
 };
 
-struct _series_table {
+struct series_table_ {
     int n_strs;       /* number of strings in table */
     char **strs;      /* saved strings */
     GHashTable *ht;   /* hash table for quick lookup */

@@ -97,7 +97,7 @@ typedef enum {
     COMPACT_MAX
 } CompactMethod;
 
-typedef struct _series_table series_table;
+typedef struct series_table_ series_table;
 
 /**
  * dataset_is_cross_section:
@@ -539,7 +539,7 @@ void series_decrement_stack_level (DATASET *dset, int i);
 void series_ensure_level_zero (DATASET *dset);
 
 void series_attach_string_table (DATASET *dset, int i,
-				 gretl_string_table *st);
+				 series_table *st);
 
 void series_destroy_string_table (DATASET *dset, int i);
 
