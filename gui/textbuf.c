@@ -1041,6 +1041,10 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	if (window_is_tab(vwin)) {
 	    vsize += 15;
 	}
+	if (vsize < 0.62 * hsize) {
+	    /* approx golden ratio */
+	    vsize = 0.62 * hsize;
+	}
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
 
@@ -4563,6 +4567,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
 
 #if HDEBUG
+    /* the incoming @hsize is expressed in characters */
     fprintf(stderr, "create_text: initial hsize = %d\n", hsize);
 #endif
 
@@ -4575,16 +4580,19 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    hsize += 48;
 	}
 #if HDEBUG
-	fprintf(stderr, " px = %d, hsize now = %d\n", px, hsize);
+	fprintf(stderr, " px = %d, hsize now = %d, nlines = %d\n",
+		px, hsize, nlines);
 #endif
 	if (nlines > 0) {
 	    /* Perhaps adjust how tall the window is? */
 	    double v1 = (nlines + 2) * py;
 	    int sv = get_screen_height();
 
-	    if (v1 > 0.8 * vsize && v1 < 1.2 * vsize && v1 <= .9 * sv) {
+	    if (v1 > 0.8 * vsize && v1 < 1.35 * vsize && v1 <= 0.9 * sv) {
 		vsize = v1;
 	    }
+	} else if (vsize < 0.62 * hsize) {
+	    vsize = 0.62 * hsize;
 	}
     }
 
@@ -4672,6 +4680,9 @@ void create_console (windata_t *vwin, int hsize, int vsize)
     if (hsize > 0) {
 	hsize *= cw;
 	hsize += 48; /* ?? */
+    }
+    if (vsize < 0.62 * hsize) {
+	vsize = 0.62 * hsize;
     }
 
     if (hsize > 0 && vsize > 0) {
