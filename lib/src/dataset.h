@@ -413,7 +413,7 @@ int renumber_series_with_checks (const int *list,
 				 DATASET *dset,
 				 PRN *prn);
 
-int maybe_prune_dataset (DATASET **pdset, void *p);
+int maybe_prune_dataset (DATASET **pdset, gretl_string_table *st);
 
 int build_stacked_series (double **pstack, int *list,
 			  int length, int offset,
@@ -538,7 +538,8 @@ void series_decrement_stack_level (DATASET *dset, int i);
 
 void series_ensure_level_zero (DATASET *dset);
 
-void series_attach_string_table (DATASET *dset, int i, void *ptr);
+void series_attach_string_table (DATASET *dset, int i,
+				 gretl_string_table *st);
 
 void series_destroy_string_table (DATASET *dset, int i);
 
@@ -557,7 +558,7 @@ int series_set_string_val (DATASET *dset, int i, int t, const char *s);
 int string_series_assign_value (DATASET *dset, int i,
 				int t, double x);
 
-int series_set_string_vals (DATASET *dset, int i, void *ptr);
+int series_set_string_vals (DATASET *dset, int i, gretl_array *a);
 
 int series_set_string_vals_direct (DATASET *dset, int i,
 				   char **S, int ns);

@@ -260,7 +260,7 @@ void gretl_model_free_on_exit (MODEL *pmod);
 
 void display_model_data_items (const MODEL *pmod);
 
-int bundlize_model_data_items (const MODEL *pmod, void *ptr);
+int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b);
 
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
 					  GretlType type, size_t size, 
@@ -318,9 +318,9 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 				  const DATASET *dset,
 				  int i, char *targ);
 
-void *gretl_model_get_param_names (const MODEL *pmod,
-				   const DATASET *dset,
-				   int *err);
+gretl_array *gretl_model_get_param_names (const MODEL *pmod,
+					  const DATASET *dset,
+					  int *err);
 
 int gretl_model_get_param_number (const MODEL *pmod, 
 				  const DATASET *dset,

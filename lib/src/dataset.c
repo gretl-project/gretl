@@ -2308,7 +2308,7 @@ const char *dataset_period_label (const DATASET *dset)
    series that contain nothing but NAs
 */
 
-int maybe_prune_dataset (DATASET **pdset, void *p)
+int maybe_prune_dataset (DATASET **pdset, gretl_string_table *st)
 {
     DATASET *dset = *pdset;
     int allmiss, prune = 0, err = 0;
@@ -2361,7 +2361,6 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 	}
 
 	if (!err) {
-	    gretl_string_table *st = (gretl_string_table *) p;
 	    size_t ssize = dset->n * sizeof **newset->Z;
 	    int k = 1;
 
@@ -4137,11 +4136,12 @@ void series_ensure_level_zero (DATASET *dset)
     }
 }
 
-void series_attach_string_table (DATASET *dset, int i, void *ptr)
+void series_attach_string_table (DATASET *dset, int i,
+				 gretl_string_table *st)
 {
     if (dset != NULL && i > 0 && i < dset->v) {
 	series_set_discrete(dset, i, 1);
-	dset->varinfo[i]->st = ptr;
+	dset->varinfo[i]->st = st;
     }
 }
 
@@ -4587,9 +4587,8 @@ static int alt_strvals_case (DATASET *dset, int v, gretl_array *a)
 /* here we're trying to set strings values on a series from
    scratch */
 
-int series_set_string_vals (DATASET *dset, int i, void *ptr)
+int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 {
-    gretl_array *a = ptr;
     gretl_matrix *vals = NULL;
     char **S = NULL;
     int ns = 0;

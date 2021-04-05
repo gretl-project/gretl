@@ -292,6 +292,10 @@ typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
 typedef struct equation_system_ equation_system;
 
+typedef struct gretl_bundle_ gretl_bundle;
+typedef struct gretl_array_ gretl_array;
+typedef struct gretl_string_table_ gretl_string_table;
+
 /**
  * VARINFO:
  *

@@ -34,7 +34,6 @@ typedef enum {
     BUNDLE_KALMAN
 } BundleType;
 
-typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 
 gretl_bundle *gretl_bundle_new (void);
@@ -102,9 +101,9 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 				     const char *key,
 				     int *err);
 
-void *gretl_bundle_get_array (gretl_bundle *bundle,
-			      const char *key,
-			      int *err);
+gretl_array *gretl_bundle_get_array (gretl_bundle *bundle,
+				     const char *key,
+				     int *err);
 
 gretl_bundle *gretl_bundle_get_bundle (gretl_bundle *bundle,
 				       const char *key,
@@ -211,7 +210,7 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
 					     int len,
 					     int *err);
 
-void *gretl_bundle_get_keys (gretl_bundle *b, int *err);
+gretl_array *gretl_bundle_get_keys (gretl_bundle *b, int *err);
 
 char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns);
 

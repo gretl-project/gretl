@@ -723,9 +723,9 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
  * specified @bundle, if any; otherwise NULL.
  */
 
-void *gretl_bundle_get_array (gretl_bundle *bundle,
-			      const char *key,
-			      int *err)
+gretl_array *gretl_bundle_get_array (gretl_bundle *bundle,
+				     const char *key,
+				     int *err)
 {
     gretl_array *a = NULL;
     GretlType type;
@@ -2638,7 +2638,7 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
 
 /* get the key strings from @b in the form of a gretl_array */
 
-void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
+gretl_array *gretl_bundle_get_keys (gretl_bundle *b, int *err)
 {
     gretl_array *A = NULL;
     int myerr = 0;
@@ -2673,7 +2673,7 @@ void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
 	*err = myerr;
     }
 
-    return (void *) A;
+    return A;
 }
 
 /* get the key strings from @b in the form of a "raw" array

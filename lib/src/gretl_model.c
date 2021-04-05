@@ -1011,9 +1011,9 @@ char *gretl_model_get_param_name (const MODEL *pmod,
     return targ;
 }
 
-void *gretl_model_get_param_names (const MODEL *pmod,
-				   const DATASET *dset,
-				   int *err)
+gretl_array *gretl_model_get_param_names (const MODEL *pmod,
+					  const DATASET *dset,
+					  int *err)
 {
     gretl_array *names = NULL;
 
@@ -5011,9 +5011,8 @@ static gretl_matrix *matrix_from_cmplx (model_data_item *item)
     return m;
 }
 
-int bundlize_model_data_items (const MODEL *pmod, void *ptr)
+int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b)
 {
-    gretl_bundle *b = (gretl_bundle *) ptr;
     model_data_item *item;
     char bkey[VNAMELEN];
     gretl_matrix *m;

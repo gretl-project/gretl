@@ -20,8 +20,6 @@
 #ifndef GRETL_ARRAY_H_
 #define GRETL_ARRAY_H_
 
-typedef struct gretl_array_ gretl_array;
-
 void gretl_array_destroy (gretl_array *A);
 
 void gretl_array_void_content (gretl_array *A);
