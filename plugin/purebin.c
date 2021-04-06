@@ -42,10 +42,10 @@ struct gbin_header_ {
     double sd0;       /* first obs as double */
     int nsv;          /* number of string-valued series */
     int labels;       /* number of series with labels */
-    int descrip;      /* dataset description, if any */
+    int has_descrip;  /* dataset description present? (0/1) */
     int panel_pd;     /* panel time-series frequency */
-    int panel_sd0;    /* panel time first obs */
-    int pangrps;      /* panel group-names present? (0/1) */
+    float panel_sd0;  /* panel time first obs */
+    int has_pangrps;  /* panel group-names present? (0/1) */
 };
 
 /* Write the VARINFO struct for series @i */
@@ -118,8 +118,8 @@ static void get_string_counts (const DATASET *dset,
 
     gh->nsv = ns;
     gh->labels = nl;
-    gh->descrip = dset->descrip != NULL ? 1 : 0;
-    gh->pangrps = dset->pangrps != NULL ? 1 : 0;
+    gh->has_descrip = dset->descrip != NULL ? 1 : 0;
+    gh->has_pangrps = dset->pangrps != NULL ? 1 : 0;
 }
 
 static void read_string (char *targ, int len, FILE *fp)
@@ -382,12 +382,12 @@ static int read_purebin_tail (DATASET *bset,
     }
 
     /* description? */
-    if (!err && gh->descrip) {
+    if (!err && gh->has_descrip) {
 	bset->descrip = read_string_with_size(fp, 0, &err);
     }
 
     /* panels groups series? */
-    if (!err && gh->pangrps) {
+    if (!err && gh->has_pangrps) {
 	bset->pangrps = read_string_with_size(fp, 0, &err);
     }
 
@@ -400,7 +400,7 @@ static void gh_to_bset_transcribe (gbin_header *gh, DATASET *bset)
     bset->pd = gh->pd;
     bset->sd0 = gh->sd0;
     bset->panel_pd = gh->panel_pd;
-    bset->panel_sd0 = gh->panel_sd0;
+    bset->panel_sd0 = (double) gh->panel_sd0;
 }
 
 int purebin_read_data (const char *fname, DATASET *dset,
@@ -658,7 +658,7 @@ int purebin_write_data (const char *fname,
 	gh.sd0 = 1;
     }
     gh.panel_pd = dset->panel_pd;
-    gh.panel_sd0 = dset->panel_sd0;
+    gh.panel_sd0 = (float) dset->panel_sd0;
 
     /* write header */
     fwrite(magic, 1, strlen(magic), fp);
@@ -704,12 +704,12 @@ int purebin_write_data (const char *fname,
     }
 
     /* description? */
-    if (gh.descrip) {
+    if (gh.has_descrip) {
 	emit_string_with_size(dset->descrip, fp);
     }
 
     /* panels groups series? */
-    if (gh.pangrps) {
+    if (gh.has_pangrps) {
 	emit_string_with_size(dset->pangrps, fp);
     }
 
