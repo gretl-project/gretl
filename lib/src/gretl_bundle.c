@@ -1727,7 +1727,7 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 	return;
     }
 
-    /* look up @key (from input) in the template bundle */
+    /* look up @key (from input) in the @template bundle */
     targ = g_hash_table_lookup(template->ht, (const char *) key);
 
     if (targ == NULL) {
@@ -1749,15 +1749,32 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
     }
 }
 
-/* The return value here is 0 if @input is valid given @template,
-   non-zero otherwise.
-*/
+/**
+ * gretl_bundle_extract_args:
+ * @template: bundle containing keys for all supported
+ * inputs, both optional and required (if any).
+ * @input: bundle supplied by caller.
+ * @reqd: array of strings identifying required keys, if any
+ * (or NULL).
+ * @prn: pointer to printing struct for display of error
+ * messages.
+ *
+ * This function checks @input against @template. It flags an
+ * error (a) if a required element is missing, (b) if @input
+ * contains an unrecognized key, or (c) if the type of any element
+ * in @input fails to match the type of the corresponding element
+ * in @template. If there's no error the content of @template
+ * is updated from @input; that is, defaults are replaced by
+ * values selected by the caller.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int gretl_bundle_extract_args (gretl_bundle *template,
 			       gretl_bundle *input,
-			       void *ptr, PRN *prn)
+			       gretl_array *reqd,
+			       PRN *prn)
 {
-    gretl_array *reqd = ptr;
     int ret = 0;
 
     if (reqd != NULL) {
