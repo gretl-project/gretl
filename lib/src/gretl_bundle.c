@@ -1712,6 +1712,8 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
     return b;
 }
 
+/* argument-bundle checking apparatus */
+
 struct bchecker {
     gretl_bundle *b;
     int *err;
