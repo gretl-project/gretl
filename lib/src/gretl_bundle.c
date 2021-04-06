@@ -30,6 +30,7 @@
 #include "kalman.h"
 #include "var.h"
 #include "system.h"
+#include "matrix_extra.h"
 #include "gretl_array.h"
 #include "gretl_bundle.h"
 
@@ -1722,8 +1723,10 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
     bundled_item *targ, *src = (bundled_item *) value;
     struct bchecker *bchk = (struct bchecker *) p;
     gretl_bundle *template = bchk->b;
+    int err = 0;
 
     if (*bchk->err) {
+	/* don't waste time if we already hit an error */
 	return;
     }
 
@@ -1733,20 +1736,40 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
     if (targ == NULL) {
 	/* extraneous key in input */
 	pprintf(bchk->prn, "bcheck: unrecognized key '%s'\n", key);
-	*bchk->err = E_INVARG;
+	err = E_INVARG;
+    } else if (targ->type == GRETL_TYPE_MATRIX &&
+	       src->type == GRETL_TYPE_DOUBLE) {
+	double x = *(double *) src->data;
+	gretl_matrix *m = gretl_matrix_from_scalar(x);
+
+	err = bundled_item_replace_data(targ, m, 0, 0);
+    } else if (targ->type == GRETL_TYPE_DOUBLE &&
+	       src->type == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = src->data;
+
+	if (gretl_matrix_is_scalar(m)) {
+	    err = bundled_item_replace_data(targ, &m->val[0], 0, 0);
+	} else {
+	    err = E_TYPES;
+	}
     } else if (src->type != targ->type) {
-	/* types mismatch */
-	pprintf(bchk->prn, "bcheck: '%s' should be %s, is %s\n", key,
-		gretl_type_get_name(targ->type),
-		gretl_type_get_name(src->type));
-	*bchk->err = E_INVARG;
+	err = E_TYPES;
     } else {
 	/* transcribe input value -> template */
-	*bchk->err = bundled_item_replace_data(targ, src->data, 0, 1);
-	if (*bchk->err) {
+	err = bundled_item_replace_data(targ, src->data, 0, 1);
+	if (err) {
 	    pprintf(bchk->prn, "bcheck: failed to copy '%s'\n", key);
 	}
     }
+
+    if (err == E_TYPES) {
+	pprintf(bchk->prn, "bcheck: '%s' should be %s, is %s\n", key,
+		gretl_type_get_name(targ->type),
+		gretl_type_get_name(src->type));
+    }
+
+    /* transcribe error flag */
+    *bchk->err = err;
 }
 
 /**
