@@ -801,9 +801,9 @@
 	  en cuestión incluyen <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>,
 	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
-	  <cmdref targ="vif"/> y <cmdref targ="bkw"/> (en cuyos casos, el
-	  resultado es una matriz), además de <cmdref targ="pkg"/> (en cuyo caso,
-	  se guarda opcionalmente un 'bundle').
+	  <cmdref targ="vif"/>, <cmdref targ="bds"/> y <cmdref targ="bkw"/> (en
+	  cuyos casos, el resultado es una matriz), además de <cmdref targ="pkg"/>
+	  (en cuyo caso, se guarda opcionalmente un 'bundle').
 	</para>
       </description>
     </function>
@@ -3268,7 +3268,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line)
+	      loop while getline(s, &amp;line)
 	          printf "%s\n", line
 	      endloop
 	  endif
@@ -3766,10 +3766,12 @@
       </fnargs>
       <description>
 	<para>
-	  Calcula los autovalores (y opcionalmente los autovectores
-	  derechos y/o izquierdos) de la matriz <argname>A</argname> de
-	  dimensión <by r="n" c="n"/>, que puede ser real o compleja.
-	  Los autovalores se devuelven en un vector columna complejo.
+	  Calcula los autovalores (y opcionalmente los autovectores derechos
+	  y/o izquierdos) de la matriz <argname>A</argname> de dimensión
+	  <by r="n" c="n"/>, que puede ser real o compleja. Los autovalores
+	  se devuelven en un vector columna complejo. Para obtener la norma
+	  de los autovalores puedes utilizar la función <fncref targ="abs"/>,
+	  que admite argumentos complejos.
 	</para>
 	<para>
 	  Si quieres recuperar los autovectores derechos (como en el caso de
@@ -4822,17 +4824,18 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">origen</fnarg>
-	<fnarg type="string">destino</fnarg>
+	<fnarg type="stringref">&amp;destino</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Esta función lee filas consecutivas de <argname>origen</argname>,
 	  que debe ser una cadena de texto ya definida. Con cada llamada a la
 	  función se escribe una línea de texto en <argname>destino</argname>
-	  (que también debe ser una cadena de texto) sin el carácter de línea
-    nueva. El valor que se devuelve es un escalar igual a 1, cuando existe
-	  algo por leer (incluidas filas en blanco), o igual a 0 si todas las
-	  filas de <argname>origen</argname> ya se leyeron.
+	  (que también debe ser una cadena de texto indicada en formato de
+	  puntero) sin el carácter de línea nueva. El valor que se devuelve
+	  es un escalar igual a 1, cuando existe algo por leer (incluidas
+	  filas en blanco), o igual a 0 si todas las filas de
+	  <argname>origen</argname> ya se leyeron.
 	</para>
 	<para>
 	  A continuación se presenta un ejemplo en el que el contenido de un archivo de
@@ -4842,7 +4845,7 @@
 	  string s = readfile("data.txt")
 	  string line
 	  scalar i = 1
-	  loop while getline(s, line)
+	  loop while getline(s, &amp;line)
 	      printf "line %d = '%s'\n", i++, line
 	  endloop
 	</code>
@@ -4855,7 +4858,7 @@
 	  con lo que se reinicia la lectura de <argname>origen</argname>, como en
 	</para>
 	<code>
-	  getline(s, line) # Obtiene una única fila
+	  getline(s, &amp;line) # Obtiene una única fila
 	  getline(s, null) # Reinicia la lectura
 	</code>
 	<para>
@@ -7463,6 +7466,63 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="midasmult"/>
+	    <fncref targ="mlincomb"/>
+	    <fncref targ="mweights"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="midasmult" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="bundle">mod</fnarg>
+	<fnarg type="bool">acumular</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve el cálculo de los multiplicadores MIDAS. El argumento
+	  <argname>mod</argname> debe ser un 'bundle' que incluya un
+	  modelo MIDAS, del tipo que se genera mediante la instrucción
+	  <cmdref targ="midasreg"/> y que es accesible por medio de la clave
+	  <fncref targ="$model"/>. La función devuelve una matriz con los
+	  multiplicadores implícitos MIDAS para la variable <argname>v</argname>
+	  en la primera columna, y las desviaciones típicas correspondientes en la
+	  segunda columna. Si el argumento <argname>acumular</argname> no
+	  es cero, los multiplicadores se acumulan.
+	</para>
+	<para>
+	  Observa que automáticamente se proporciona la matriz que se devuelve con
+	  etiquetas adecuadas para las filas, de forma que resultan indicadas para
+	  usar como primer argumento de la instrucción <cmdref targ="modprint"/>.
+	  Por ejemplo, el código
+	</para>
+	<code>
+	  open gdp_midas.gdt
+	  list dIP = ld_indpro*
+	  smpl 1985:1 ;
+	  midasreg ld_qgdp 0 ; mds(dIP, 0, 6, 2)
+	  matrix ip_m = midasmult($model, 0, 1)
+	  modprint ip_m
+	</code>
+	<para>
+	  genera el siguiente resultado:
+	</para>
+	<code>
+             Coeficiente   Desv. tipica     z       Valor p
+  ---------------------------------------------------------
+  dIP_0      0.343146      0.0957752     3.583     0.0003   ***
+  dIP_1      0.402547      0.0834904     4.821     1.43e-06 ***
+  dIP_2      0.176437      0.0673776     2.619     0.0088   ***
+  dIP_3      0.0601876     0.0621927     0.9678    0.3332
+  dIP_4      0.0131263     0.0259137     0.5065    0.6125
+  dIP_5      0.000965260   0.00346703    0.2784    0.7807
+  dIP_6      0.00000       0.00000      NA        NA
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
             <fncref targ="mweights"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
@@ -8478,7 +8538,8 @@
 	</code>
 	<para>
 	  <seelist>
-            <fncref targ="mgradient"/>
+	    <fncref targ="mgradient"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>

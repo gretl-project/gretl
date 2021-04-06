@@ -1170,6 +1170,148 @@
     </description>
   </command>
 
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+	<argument>x</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--corr1</flag>
+	  <optparm>rho</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+	<option>
+	  <flag>--sdcrit</flag>
+	  <optparm>multiple</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+	<option>
+	  <flag>--boot</flag>
+	  <optparm>N</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>m</optparm>
+	  <effect>Utilizar una entrada matricial</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Eliminar la presentación de resultados</effect>
+        </option>
+      </options>
+      <examples>
+        <example>bds 5 x</example>
+	<example>bds 3 --matrix=m</example>
+	<example>bds 4 --sdcrit=2.0</example>
+      </examples>
+    </usage>
+    <description>
+      <para context="cli">
+	Lleva a cabo el contraste BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman y LeBaron, 1996</cite>)
+	de no linealidad para la serie <repl>x</repl>. En el contexto econométrico, esto
+	se aplica habitualmente para comprobar si los residuos de una regresión incumplen
+	la condición IID (distribución idéntica e independiente). El contraste se basa
+	en un conjunto de integrales de correlación, preparadas para detectar la no
+	linealidad de dimensión progresivamente mayor; y se establece el número de esas
+	integrales con el argumento <argname>orden</argname>. Estas deben ser por lo
+	menos 2; con la primera integral se establece una referencia de partida, pero sin
+	que permita un contraste. El contraste BDS es de tipo <quote>portmanteau</quote>:
+	adecuado para detectar toda clase de desviaciones respecto a la linealidad,
+	pero no esclarecedor del modo exacto en el que se incumple la condición.
+      </para>
+      <para context="gui">
+	El contraste BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman y LeBaron, 1996</cite>)
+	comprueba la no linealidad de una serie temporal. En el contexto econométrico, esto
+	se aplica habitualmente para comprobar si los residuos de una regresión incumplen
+	la condición IID (distribución idéntica e independiente). El contraste se basa
+	en un conjunto de integrales de correlación, preparadas para detectar la no
+	linealidad de dimensión progresivamente mayor; el número de esas integrales
+	se elige mediante el control <quote>Dimensión máxima</quote>. Estas deben ser por lo
+	menos 2; con la primera integral se establece una referencia de partida, pero sin
+	que permita un contraste. El contraste BDS es de tipo <quote>portmanteau</quote>:
+	adecuado para detectar toda clase de desviaciones respecto a la linealidad,
+	pero no esclarecedor del modo exacto en el que se incumple la condición.
+      </para>
+      <para context="cli">
+	En lugar de indicar <repl>x</repl> como serie, puedes utilizar la
+	opción <opt>matrix</opt> para especificar una matriz como entrada,
+	la cual debe tener forma de vector (columna o fila).
+      </para>
+      <subhead>Criterio de proximidad</subhead>
+      <para context="cli">
+	Las integrales de correlación están basadas en una medida de
+	<quote>proximidad</quote> entre los puntos de datos, de forma
+	que se consideran próximos a dos de esos puntos si están situados
+	uno del otro a menos de &egr;. Dado que el contraste necesita que se
+	especifique &egr;, por defecto, GRETL sigue la recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; se escoge de modo que
+	la integral de correlación de primer orden esté en torno a 0.7. Una
+	alternativa habitual (que necesita menos cálculos) consiste en especificar
+	&egr; como un múltiplo de la desviación típica de la serie de interés.
+	La opción <opt>sdcrit</opt> permite este último método;
+	así, en el tercer ejemplo indicado más arriba, &egr; se determina que
+	sea igual a dos veces la desviación típica de <repl>x</repl>.
+	La opción <opt>corr1</opt> implica la utilización del método de Kanzler
+	pero permite otra correlación objetivo diferente de 0.7. Deberías
+	tener claro que estas dos opciones se excluyen mutuamente.
+      </para>
+      <para context="gui">
+	Las integrales de correlación están basadas en una medida de
+	<quote>proximidad</quote> entre los puntos de datos, de forma
+	que se consideran próximos a dos de esos puntos si están situados
+	uno del otro a menos de &egr;. Dado que el contraste necesita que se
+	especifique &egr;, por defecto, GRETL sigue la recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; se escoge de modo que
+	la integral de correlación de primer orden esté en torno a 0.7. Una
+	alternativa habitual (que necesita menos cálculos) consiste en especificar
+	&egr; como un múltiplo de la desviación típica de la serie de interés.
+      </para>
+      <subhead context="cli">Muestreo repetido</subhead>
+      <para context="cli">
+	Los estadísticos del contraste BDS tienen distribución asintótica de
+	tipo <math>N</math>(0,1), pero el contraste rechaza demasiado la hipótesis
+	nula de modo muy notable con muestras de tamaño entre pequeño y moderado.
+	Por ese motivo, los valores <math>P</math> se obtienen por defecto
+	mediante muestreo repetido (bootstrapping) cuando <argname>x</argname>
+	tiene una longitud menor que 600 (y con referencia a la distribución
+	Normal, en caso contrario). Si quieres utilizar el muestreo repetido
+	con muestras más largas, puedes forzar esta cuestión indicando un
+	valor no nulo para la opción <opt>boot</opt>. Por el contrario, si no
+	quieres que se haga el muestreo repetido con las muestras más
+	pequeñas, indica un valor de cero para <opt>boot</opt>.
+      </para>
+      <subhead context="gui">Valores p</subhead>
+      <para context="gui">
+	Los estadísticos del contraste BDS tienen distribución asintótica de
+	tipo <math>N</math>(0,1), pero el contraste rechaza demasiado la hipótesis
+	nula de modo muy notable con muestras de tamaño entre pequeño y moderado.
+	Por ese motivo, los valores <math>P</math> se obtienen por defecto
+	mediante muestreo repetido (bootstrapping) cuando <argname>x</argname>
+	tiene una longitud menor que 600 (y con referencia a la distribución
+	Normal, en caso contrario).
+      </para>
+      <para context="cli">
+	Cuando se hace el muestreo repetido, el número de iteraciones por
+	defecto es de 1999; pero puedes especificar un número diferente
+	indicando un valor mayor que 1 con la opción <opt>boot</opt>.
+      </para>
+      <subhead context="cli">Matriz accesoria matrix</subhead>
+      <para context="cli">
+	Cuando se completa con éxito la ejecución de esta instrucción,
+	<fncref targ="$result"/> proporciona los resultados del contraste en
+	forma de una matriz con dos filas y <argname>orden</argname> &minus; 1
+	columnas. La primera fila contiene los estadísticos de contraste y la
+	segunda los valores <math>P</math>, de cada uno de los contrastes por
+	dimensión, bajo la hipótesis nula de que <argname>x</argname> es lineal/IID.
+      </para>
+    </description>
+  </command>
+
   <command name="bfgs-config" section="Estimation" label="Opciones de BFGS"
     context="gui">
     <description>
@@ -12368,27 +12510,30 @@
 	sistema, pero aún no lo has estimado.
       </para>
       <para>
-	Dependiendo del contexto, puedes expresar de varios modos las restricciones que
-	quieras contrastar. El más simple es como se indica a continuación: cada restricción
-	se expresa como una ecuación, con una combinación lineal de parámetros a la
-	izquierda del signo de igualdad y un valor escalar a la derecha (bien
-	una constante numérica, o bien el nombre de una variable escalar).
+	Dependiendo del contexto, puedes expresar de varios modos las
+	restricciones que quieras contrastar. El más simple es como se
+	indica a continuación: cada restricción se expresa como una ecuación,
+	con una combinación lineal de parámetros a la izquierda del signo
+	de igualdad y un valor escalar a la derecha (bien una constante
+	numérica, o bien el nombre de una variable escalar).
       </para>
       <para>
-	En caso de una única ecuación, puedes referirte a sus parámetros con el
-	formato <lit>b[</lit><repl>i</repl><lit>]</lit>, donde <repl>i</repl>
-	representa la posición en la lista de regresores (comenzando en el 1), o
-	con el formato <lit>b[</lit><repl>nombrevar</repl><lit>]</lit>, donde
-	<repl>nombrevar</repl> es el nombre del regresor en cuestión. En caso
-	de un sistema, la referencia a los parámetros se hace utilizando la letra
-	<lit>b</lit> junto con dos números colocados entre corchetes.
-	El primer número representa la posición de la ecuación dentro del
-	sistema, y el segundo número indica la posición del regresor dentro
-	de la lista de ellos. Por ejemplo, <lit>b[2,1]</lit> denota el primer
-	parámetro de la segunda ecuación, mientras que <lit>b[3,2]</lit>
-	denota el segundo parámetro de la tercera ecuación. Puedes anteponer
-	multiplicadores numéricos a los elementos <lit>b</lit> de la ecuación
-	que representa una restricción, por ejemplo <lit>3.5*b[4]</lit>.
+	En caso de una única ecuación, puedes referirte a sus parámetros
+	con el formato <lit>b[</lit><repl>i</repl><lit>]</lit>, donde
+	<repl>i</repl> representa la posición en la lista de regresores
+	(comenzando en el 1), o con el formato
+	<lit>b[</lit><repl>nombrevar</repl><lit>]</lit>, donde
+	<repl>nombrevar</repl> es el nombre del regresor en cuestión.
+	En caso de un sistema, la referencia a los parámetros se hace
+	utilizando la letra <lit>b</lit> junto con dos números colocados
+	entre corchetes. El primer número representa la posición de la
+	ecuación dentro del sistema, y el segundo número indica la
+	posición del regresor dentro de la lista de ellos. Por ejemplo,
+	<lit>b[2,1]</lit> denota el primer parámetro de la segunda
+	ecuación, mientras que <lit>b[3,2]</lit> denota el segundo
+	parámetro de la tercera ecuación. Puedes anteponer multiplicadores
+	numéricos a los elementos <lit>b</lit> de la ecuación que representa
+	una restricción, por ejemplo <lit>3.5*b[4]</lit>.
       </para>
       <para>
 	Aquí tienes un ejemplo de un conjunto de restricciones para un modelo
@@ -12430,7 +12575,7 @@
 	<math>F</math> asintótico, en otro caso.
       </para>
       <para>
-	Tienes 2 alternativas al método para expresar las restricciones que se discutió
+	Tienes tres alternativas al método para expresar las restricciones descrito
 	más arriba. Primero, puedes escribir de forma compacta un conjunto de
 	<math>g</math> restricciones lineales sobre el vector con los <math>k</math>
 	parámetros (&bgr;), como <math>R</math>&bgr; &minus; <math>q</math> = 0,
@@ -12446,7 +12591,27 @@
 	end restrict
       </code>
       <para>
-	En segundo lugar, si quieres contrastar una restricción no lineal (lo que
+	En segundo lugar, como variante que puede serte útil cando uses la
+	función <lit>restrict</lit> dentro de otra función, puedes elaborar
+	un conjunto de enunciados de restricción con el formato de un 'array'
+	de cadenas de texto. Después utiliza la palabra clave <lit>inject</lit>
+	con el nombre del 'array'. Este es un ejemplo simple:
+      </para>
+      <code>
+	strings SR = array(2)
+	RS[1] = "b[1,2] = 0"
+	RS[2] = "b[2,1] = 0"
+	restrict
+	  inject RS
+	end restrict	
+      </code>
+      <para>
+	Con el uso actual de este método, posiblemente preferirás utilizar la
+	función <fncref targ="sprintf"/> para elaborar las cadenas de texto,
+	en base a la entrada para una función.
+      </para>
+      <para>
+	Finalmente, si quieres contrastar una restricción no lineal (lo que
 	actualmente solo está disponible para modelos de una única ecuación),
 	debes indicar la restricción con el nombre de una función, precedida por
 	<quote><lit>rfunc = </lit></quote>, como en

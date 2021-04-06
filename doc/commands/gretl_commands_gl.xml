@@ -1170,6 +1170,148 @@
     </description>
   </command>
 
+  <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <usage>
+      <arguments>
+        <argument>orde</argument>
+	<argument>x</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--corr1</flag>
+	  <optparm>rho</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+	<option>
+	  <flag>--sdcrit</flag>
+	  <optparm>multiple</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+	<option>
+	  <flag>--boot</flag>
+	  <optparm>N</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>m</optparm>
+	  <effect>Usar unha entrada matricial</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Eliminar a presentación de resultados</effect>
+        </option>
+      </options>
+      <examples>
+        <example>bds 5 x</example>
+	<example>bds 3 --matrix=m</example>
+	<example>bds 4 --sdcrit=2.0</example>
+      </examples>
+    </usage>
+    <description>
+      <para context="cli">
+	Realiza a proba BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman e LeBaron, 1996</cite>)
+	de non linearidade para a serie <repl>x</repl>. No contexto econométrico, isto
+	aplícase habitualmente para comprobar se as perturbacións dunha regresión
+	incumpren a condición IID (distribución idéntica e independente). A proba
+	baséase nun conxunto de integrais de correlación, amañadas para detectar a
+	non linearidade de dimensión progresivamente maior; e establécese o número
+	desas integrais co argumento <argname>orde</argname>. Estas deben de ser
+	polo menos 2; coa primeira integral establécese unha referencia de partida, pero
+	sen que permita unha proba. A proba BDS é de tipo <quote>portmanteau</quote>:
+	axeitada para detectar toda clase de desvíos respecto da linearidade, pero
+	non clarificadora do xeito exacto no que se incumpre a condición.
+      </para>
+      <para context="gui">
+	A proba BDS
+	(<cite key="brock-etal96">Brock, Dechert, Scheinkman e LeBaron, 1996</cite>)
+	comproba a non linearidade dunha serie temporal. No contexto econométrico,
+	isto aplícase habitualmente para comprobar se as perturbacións dunha regresión
+	incumpren a condición IID (distribución idéntica e independente). A proba
+	baséase nun conxunto de integrais de correlación, amañadas para detectar a
+	non linearidade de dimensión progresivamente maior; o número desas integrais
+	elíxese mediante o control <quote>Dimensión máxima</quote>. Estas deben de ser
+	polo menos 2; coa primeira integral establécese unha referencia de partida, pero
+	sen que permita unha proba. A proba BDS é de tipo <quote>portmanteau</quote>:
+	axeitada para detectar toda clase de desvíos respecto da linearidade, pero
+	non clarificadora do xeito exacto no que se incumpre a condición.
+      </para>
+      <para context="cli">
+	En troques de indicar <repl>x</repl> como serie, podes usar a opción
+	<opt>matrix</opt> para especificar unha matriz como entrada, que
+	debe ter forma de vector (columna ou fila).
+      </para>
+      <subhead>Criterio de proximidade</subhead>
+      <para context="cli">
+	As integrais de correlación están baseadas nunha medida de
+	<quote>proximidade</quote> entre os puntos dos datos, de xeito
+	que se consideran próximos a dous deses puntos se están situados
+	un do outro a menos de &egr;. Dado que a proba necesita que se
+	especifique &egr;, por defecto, GRETL segue a recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; elíxese de modo que
+	a integral de correlación de primeira orde estea arredor de 0.7. Unha
+	alternativa habitual (que require menos cálculos) consiste en especificar
+	&egr; como un múltiplo da desviación padrón da serie de interese.
+	A opción <opt>sdcrit</opt> permite este derradeiro método;
+	así, no terceiro exemplo indicado máis arriba, &egr; establécese que
+	sexa igual a dúas veces a desviación padrón de <repl>x</repl>.
+	A opción <opt>corr1</opt> implica a utilización do método de Kanzler
+	pero permite outra correlación obxectivo diferente de 0.7. Debería
+	quedarche claro que estas dúas opcións exclúense mutuamente.
+      </para>
+      <para context="gui">
+	As integrais de correlación están baseadas nunha medida de
+	<quote>proximidade</quote> entre os puntos dos datos, de xeito
+	que se consideran próximos a dous deses puntos se están situados
+	un do outro a menos de &egr;. Dado que a proba necesita que se
+	especifique &egr;, por defecto, GRETL segue a recomendación de
+	<cite key="kanzler99">Kanzler (1999)</cite>: &egr; elíxese de modo que
+	a integral de correlación de primeira orde estea arredor de 0.7. Unha
+	alternativa habitual (que require menos cálculos) consiste en especificar
+	&egr; como un múltiplo da desviación padrón da serie de interese. 
+      </para>
+      <subhead context="cli">Mostraxe repetida</subhead>
+      <para context="cli">
+	Os estatísticos da proba BDS teñen distribución asintótica de tipo
+	<math>N</math>(0,1), pero a proba rexeita demasiado a hipótese nula
+	de xeito moi notable con mostras de tamaño entre pequeno e moderado.
+	Por ese motivo, os valores <math>P</math> obtéñense por defecto
+	mediante mostraxe repetida (bootstrapping) cando <argname>x</argname>
+	ten unha longura menor que 600 (e con referencia á distribución Normal,
+	noutro caso). Se queres utilizar a mostraxe repetida con mostras máis
+	longas, podes forzar esta cuestión indicando un valor non nulo para
+	a opción <opt>boot</opt>. Pola contra, se non queres que se faga a
+	mostraxe repetida coas mostras máis pequenas, indica un valor de
+	cero para <opt>boot</opt>.
+      </para>
+      <subhead context="gui">Valores p</subhead>
+      <para context="gui">
+	Os estatísticos da proba BDS teñen distribución asintótica de tipo
+	<math>N</math>(0,1), pero a proba rexeita demasiado a hipótese nula
+	de xeito moi notable con mostras de tamaño entre pequeno e moderado.
+	Por ese motivo, os valores <math>P</math> obtéñense por defecto
+	mediante mostraxe repetida (bootstrapping) cando <argname>x</argname>
+	ten unha longura menor que 600 (e con referencia á distribución Normal,
+	noutro caso).
+      </para>
+      <para context="cli">
+	Cando se fai a mostraxe repetida, o número de iteracións por defecto
+	é de 1999; pero podes especificar un número diferente indicando un
+	valor maior ca 1 coa opción <opt>boot</opt>.
+      </para>
+      <subhead context="cli">Matriz accesoria</subhead>
+      <para context="cli">
+	Cando se completa con éxito a execución desta instrución,
+	<fncref targ="$result"/> proporciona os resultados da proba en forma
+	dunha matriz con dúas filas e <argname>orde</argname> &minus; 1
+	columnas. A primeira fila contén os estatísticos de proba e a segunda
+	os valores <math>P</math>, de cada unha das probas por dimensión,
+	baixo a hipótese nula de que <argname>x</argname> é linear/IID.
+      </para>
+    </description>
+  </command>
+
   <command name="bfgs-config" section="Estimation" label="Opcións de BFGS"
     context="gui">
     <description>
@@ -8765,8 +8907,13 @@
       </para>
       <para>
 	Ten en conta que calquera indicador de opción debe de engadirse á
-	liña final do bloque EMV (MLE).
+	liña final do bloque EMV (MLE). Por exemplo:
       </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	  params p
+	end mle --quiet
+      </code>
       <subhead>Matriz de covarianzas e desviacións padrón</subhead>
       <para>
 	Cando a función do logaritmo da verosimilitude devolve unha serie ou
@@ -12363,27 +12510,30 @@
 	sistema, pero aínda non o estimaches.
       </para>
       <para>
-	Dependendo do contexto, podes expresar de varios xeitos as restricións que
-	queiras probar. O máis simple é como se indica deseguido: cada restrición
-	exprésase como unha ecuación, cunha combinación linear de parámetros á
-	esquerda do signo de igualdade e un valor escalar á dereita (ben
-	unha constante numérica, ou ben o nome dunha variable escalar).
+	Dependendo do contexto, podes expresar de varios xeitos as
+	restricións que queiras probar. O máis simple é como se indica
+	deseguido: cada restrición exprésase como unha ecuación, cunha
+	combinación linear de parámetros á esquerda do signo de igualdade
+	e un valor escalar á dereita (ben unha constante numérica, ou ben
+	o nome dunha variable escalar).
       </para>
       <para>
-	No caso dunha única ecuación, podes referirte aos seus parámetros co
-	formato <lit>b[</lit><repl>i</repl><lit>]</lit>, onde <repl>i</repl>
-	representa a posición na lista de regresores (comezando no 1), ou
-	co formato <lit>b[</lit><repl>nomevar</repl><lit>]</lit>, onde
+	No caso dunha única ecuación, podes referirte aos parámetros
+	da mesma co formato <lit>b[</lit><repl>i</repl><lit>]</lit>, onde
+	<repl>i</repl> representa a posición na lista de regresores
+	(comezando no 1), ou co formato
+	<lit>b[</lit><repl>nomevar</repl><lit>]</lit>, onde
 	<repl>nomevar</repl> é o nome do regresor en cuestión. No caso
 	dun sistema, a referencia aos parámetros faise utilizando a letra
 	<lit>b</lit> xunto con dous números colocados entre corchetes.
 	O primeiro número representa a posición da ecuación dentro do
-	sistema, e o segundo número indica a posición do regresor dentro
-	da lista deles. Por exemplo, <lit>b[2,1]</lit> denota o primeiro
-	parámetro da segunda ecuación, mentres que <lit>b[3,2]</lit>
-	denota o segundo parámetro da terceira ecuación. Podes antepoñer
-	multiplicadores numéricos aos elementos <lit>b</lit> da ecuación
-	que representa unha restrición, por exemplo <lit>3.5*b[4]</lit>.
+	sistema, e o segundo número indica a posición do regresor
+	dentro da lista deles. Por exemplo, <lit>b[2,1]</lit> denota
+	o primeiro parámetro da segunda ecuación, mentres que
+	<lit>b[3,2]</lit> denota o segundo parámetro da terceira ecuación.
+	Podes antepoñer multiplicadores numéricos aos elementos
+	<lit>b</lit> da ecuación que representa unha restrición, por exemplo
+	<lit>3.5*b[4]</lit>.
       </para>
       <para>
 	Aquí tes un exemplo dun conxunto de restricións para un modelo
@@ -12425,7 +12575,7 @@
 	<math>F</math> asintótico, noutro caso.
       </para>
       <para>
-	Tes 2 alternativas ao método para expresar as restricións que se discutiu
+	Tes tres alternativas ao método para expresar as restricións descrito
 	máis arriba. Primeiro, podes escribir de forma compacta un conxunto de
 	<math>g</math> restricións lineais sobre o vector cos <math>k</math>
 	parámetros (&bgr;), como <math>R</math>&bgr; &minus; <math>q</math> = 0,
@@ -12441,7 +12591,27 @@
 	end restrict
       </code>
       <para>
-	En segundo lugar, se queres probar unha restrición non linear (o que
+	En segundo lugar, como variante que te pode ser útil cando uses a
+	función <lit>restrict</lit> dentro doutra función, podes elaborar
+	o conxunto de enunciados de restrición co formato dun arranxo de
+	cadeas de texto. Despois utiliza a palabra chave <lit>inject</lit>
+	co nome do arranxo. Este é un exemplo sinxelo:
+      </para>
+      <code>
+	strings SR = array(2)
+	RS[1] = "b[1,2] = 0"
+	RS[2] = "b[2,1] = 0"
+	restrict
+	  inject RS
+	end restrict	
+      </code>
+      <para>
+	Co uso actual deste método, posiblemente preferirás utilizar a función
+	<fncref targ="sprintf"/> para elaborar as cadeas de texto, en base
+	á entrada para unha función.
+      </para>
+      <para>
+	Finalmente, se queres probar unha restrición non linear (o que
 	actualmente só está dispoñible para modelos dunha única ecuación),
 	debes de indicar a restrición co nome dunha función, precedida por
 	<quote><lit>rfunc = </lit></quote>, como en

@@ -801,9 +801,9 @@
 	  en cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="fractint"/>,
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>,
 	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>,
-	  <cmdref targ="vif"/> e <cmdref targ="bkw"/> (en cuxos casos, o resultado
-	  é unha matriz), ademais de <cmdref targ="pkg"/> (en cuxo caso,
-	  gárdase opcionalmente un feixe).
+	  <cmdref targ="vif"/>, <cmdref targ="bds"/> e <cmdref targ="bkw"/> (en
+	  cuxos casos, o resultado é unha matriz), ademais de <cmdref targ="pkg"/>
+	  (en cuxo caso, gárdase opcionalmente un feixe).
 	</para>
       </description>
     </function>
@@ -3268,7 +3268,7 @@
 	  if err == 0
 	      s = req.output
 	      string line
-	      loop while getline(s, line)
+	      loop while getline(s, &amp;line)
 	          printf "%s\n", line
 	      endloop
 	  endif
@@ -3766,10 +3766,12 @@
       </fnargs>
       <description>
 	<para>
-	  Calcula os autovalores (e opcionalmente os autovectores
-	  dereitos e/ou esquerdos) da matriz <argname>A</argname> de
-	  dimensión <by r="n" c="n"/>, que pode ser real ou complexa.
-	  Os autovalores devólvense nun vector columna complexo.
+	  Calcula os autovalores (e opcionalmente os autovectores dereitos
+	  e/ou esquerdos) da matriz <argname>A</argname> de dimensión
+	  <by r="n" c="n"/>, que pode ser real ou complexa. Os autovalores
+	  devólvense nun vector columna complexo. Para obter a norma dos
+	  autovalores podes utilizar a función <fncref targ="abs"/>, que
+	  admite argumentos complexos.
 	</para>
 	<para>
 	  Se queres recuperar os autovectores dereitos (como no caso dunha
@@ -4822,17 +4824,18 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">orixe</fnarg>
-	<fnarg type="string">destino</fnarg>
+	<fnarg type="stringref">&amp;destino</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Esta función le filas consecutivas de <argname>orixe</argname>,
 	  que debe de ser unha cadea de texto xa definida. Con cada chamada á
 	  función escríbese unha liña de texto en <argname>destino</argname>
-	  (que tamén debe de ser unha cadea de texto) sen o carácter de nova
-	  liña. O valor que se devolve é un escalar igual a 1, cando existe
-	  algo por ler (incluídas filas en branco), ou igual a 0 se todas as
-	  filas de <argname>orixe</argname> xa se leron.
+	  (que tamén debe de ser unha cadea de texto, indicada en formato de
+	  punteiro) sen o carácter de nova liña. O valor que se devolve é un
+	  escalar igual a 1, cando existe algo por ler (incluídas filas en
+	  branco), ou igual a 0 se todas as filas de <argname>orixe</argname>
+	  xa se leron.
 	</para>
 	<para>
 	  A continuación preséntase un exemplo no que o contido dun ficheiro de
@@ -4842,7 +4845,7 @@
 	  string s = readfile("data.txt")
 	  string line
 	  scalar i = 1
-	  loop while getline(s, line)
+	  loop while getline(s, &amp;line)
 	      printf "line %d = '%s'\n", i++, line
 	  endloop
 	</code>
@@ -4855,7 +4858,7 @@
 	  co que se reinicia a lectura de <argname>orixe</argname>, como en
 	</para>
 	<code>
-	  getline(s, line) # Obtén unha única fila
+	  getline(s, &amp;line) # Obtén unha única fila
 	  getline(s, null) # Reinicia a lectura
 	</code>
 	<para>
@@ -7463,6 +7466,63 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="midasmult"/>
+	    <fncref targ="mlincomb"/>
+	    <fncref targ="mweights"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="midasmult" section="midas" output="matrix">
+      <fnargs>
+	<fnarg type="bundle">mod</fnarg>
+	<fnarg type="bool">acumular</fnarg>
+	<fnarg type="int">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve o cálculo dos multiplicadores MIDAS. O argumento
+	  <argname>mod</argname> debe ser un feixe que inclúa un
+	  modelo MIDAS, do tipo que se xera mediante a instrución
+	  <cmdref targ="midasreg"/> e que é accesible mediante a clave
+	  <fncref targ="$model"/>. A función devolve unha matriz cos
+	  multiplicadores implícitos MIDAS para a variable <argname>v</argname>
+	  na primeira columna, e as desviacións padrón correspondentes na
+	  segunda columna. Se o argumento <argname>acumular</argname> non
+	  é cero, os multiplicadores se acumulan.
+	</para>
+	<para>
+	  Observa que automaticamente fornécese a matriz que se devolve de
+	  etiquetas adecuadas para as filas, de xeito que resultan indicadas para
+	  usar como primeiro argumento da instrución <cmdref targ="modprint"/>.
+	  Por exemplo, o código
+	</para>
+	<code>
+	  open gdp_midas.gdt
+	  list dIP = ld_indpro*
+	  smpl 1985:1 ;
+	  midasreg ld_qgdp 0 ; mds(dIP, 0, 6, 2)
+	  matrix ip_m = midasmult($model, 0, 1)
+	  modprint ip_m
+	</code>
+	<para>
+	  xera o seguinte resultado:
+	</para>
+	<code>
+             Coeficiente   Desv. padron     z       Valor p
+  ---------------------------------------------------------
+  dIP_0      0.343146      0.0957752     3.583     0.0003   ***
+  dIP_1      0.402547      0.0834904     4.821     1.43e-06 ***
+  dIP_2      0.176437      0.0673776     2.619     0.0088   ***
+  dIP_3      0.0601876     0.0621927     0.9678    0.3332
+  dIP_4      0.0131263     0.0259137     0.5065    0.6125
+  dIP_5      0.000965260   0.00346703    0.2784    0.7807
+  dIP_6      0.00000       0.00000      NA        NA
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="mgradient"/>
             <fncref targ="mweights"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
@@ -8478,7 +8538,8 @@
 	</code>
 	<para>
 	  <seelist>
-            <fncref targ="mgradient"/>
+	    <fncref targ="mgradient"/>
+	    <fncref targ="midasmult"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>
