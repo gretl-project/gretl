@@ -1218,6 +1218,151 @@
     </description>
   </command>
 
+    <command name="bds" section="Tests" label="BDS nonlinearity test">
+    <usage>
+      <arguments>
+        <argument>ordine</argument>
+	<argument>x</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--corr1</flag>
+	  <optparm>rho</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
+	<option>
+	  <flag>--sdcrit</flag>
+	  <optparm>multiple</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
+	<option>
+	  <flag>--boot</flag>
+	  <optparm>N</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
+	<option>
+	  <flag>--matrix</flag>
+	  <optparm>m</optparm>
+	  <effect>usa una matrice come input</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+        </option>
+      </options>
+      <examples>
+        <example>bds 5 x</example>
+	<example>bds 3 --matrix=m</example>
+	<example>bds 4 --sdcrit=2.0</example>
+      </examples>
+    </usage>
+    <description>
+      <para context="cli">
+	Esegue il test BDS (<cite key="brock-etal96">Brock, Dechert,
+	Scheinkman and LeBaron, 1996</cite>) per la nonlinearità
+	della serie <argname>x</argname>. In un contesto
+	econometrico il suo uso è tipicamente associato all'analisi
+	dei residui per la violazione della condizione IID. Il test
+	si basa su un insieme di integrali di correlazione, pensati
+	per rintracciare la nonlinearità in dimensioni via via più
+	ampie, e l'argomento <argname>ordine</argname> indica il
+	numero di tali integrali. Esso deve essere almeno 2; il
+	primo integrale stabilisce una base ma non può essere usato
+	per calcolare il test. Il test è di tipo generico: rintraccia ogni
+	tipo di deviazione dalla linearità ma non è informativo sul
+	perché questa condizione venisse eventualmente violata.
+      </para>
+      <para context="gui">
+	Il test BDS (<cite key="brock-etal96">Brock, Dechert,
+	Scheinkman and LeBaron, 1996</cite>) è usato per rintracciare
+	la nonlinearità di una serie storica. In un contesto
+	econometrico il suo uso è tipicamente associato all'analisi
+	dei residui per la violazione della condizione IID. Il test si
+	basa su un insieme di integrali di correlazione, pensati per
+	rintracciare la nonlinearità in dimensioni via via più ampie;
+	il numero di questi integrali può essere scelto usando
+	l'elemento <quote>Dimensione massima</quote> e deve essere
+	almeno 2; il primo integrale stabilisce una base ma non può
+	essere usato per calcolare il test. Il test è di tipo
+	generico: rintraccia ogni tipo di deviazione dalla linearità
+	ma non è informativo sul perché questa condizione venisse
+	eventualmente violata.
+      </para>
+      <para context="cli">
+	Il test può essere calcolato su un vettore (riga o colonna)
+	anziché su una serie usando l'opzione <opt>matrix</opt>.
+      </para>
+      <subhead>Criterio di contiguità</subhead>
+      <para context="cli">
+	Gli integrali di correlazione sono, in sostanza, misure di
+	<quote>contiguità</quote>, ove due punti sono considerati
+	vicini se la differenza fra loro non eccede &egr;.  Per
+	specificare &egr;, di default gretl segue la raccomandazione
+	di <cite key="kanzler99">Kanzler (1999)</cite>: &egr; è scelto
+	in modo tale che l'integrale di correlazione del primo ordine
+	sia intorno a 0.7. Una possibile alternativa (meno intensiva
+	computazionalmente) è quella di specificare &egr; come
+	multiplo delle scarto quadratico medio della serie in
+	esame. L'opzione <opt>sdcrit</opt> è usata per quest'ultimo
+	metodo; nel terzo esempio fornito sopra &egr; è posto al
+	doppio dello sqm di <repl>x</repl>. L'opzione <opt>corr1</opt>
+	implica invece l'uso del metodo di Kanzler's ma consente di
+	specificare un valore di scala diverso da 0.7. Ovviamente,
+	queste due opzioni non possono essere usate insieme.
+      </para>
+      <para context="gui">
+	Gli integrali di correlazione sono, in sostanza, misure di
+	<quote>contiguità</quote>, ove due punti sono considerati
+	vicini se la differenza fra loro non eccede &egr;.  Per
+	specificare &egr;, di default gretl segue la raccomandazione
+	di <cite key="kanzler99">Kanzler (1999)</cite>: &egr; è scelto
+	in modo tale che l'integrale di correlazione del primo ordine
+	sia intorno a 0.7. Una possibile alternativa (meno intensiva
+	computazionalmente) è quella di specificare &egr; come
+	multiplo delle scarto quadratico medio della serie in
+	esame.
+      </para>
+      <subhead context="cli">Bootstrap</subhead>
+      <para context="cli">
+	Le statistiche test sono asintoticamente distribuite come
+	<math>N</math>(0,1) ma il test tende a sovra-rigettare la
+	nulla in piccoli campioni. Per questa ragione, i
+	<math>P</math>-values sono ottenuti con una procedura di
+	bootstrap se la lunghezza di <argname>x</argname> fosse
+	minore di 600 (in caso contrario, si fa riferimento alla
+	normale standard). Per usare il bootstrap in campioni più
+	grandi basta dare un valore non zero all'opzione
+	<opt>boot</opt>. Al contrario, per evitare il bootstrap in
+	piccoli campioni, basta settarla a 0.
+      </para>
+      <subhead context="gui">P-values</subhead>
+      <para context="gui">
+	Le statistiche test sono asintoticamente distribuite come
+	<math>N</math>(0,1) ma il test tende a sovra-rigettare in
+	piccoli campioni. Per questa ragione, i
+	<math>P</math>-values sono ottenuti con una procedura di
+	bootstrap se la lunghezza di <argname>x</argname> fosse
+	minore di 600 (in caso contrario, si fa riferimento alla
+	normale standard).
+      </para>
+      <para context="cli">
+	Il default per il numero di iterazioni bootstrap è di 1999, ma
+	questo settaggio può essere modificato dandolo come argomento
+	all'opzione <opt>boot</opt>.
+      </para>
+      <subhead context="cli">Matrice accessore</subhead>
+      <para context="cli">
+	Se il comando va a buon fine, <fncref targ="$result"/>
+	conterrà i risultati sotto forma di una matrice con due righe e
+	  <argname>maxdim</argname> &minus; 1 colonne. La prima riga
+	  contiene le statistiche test, mentre la seconda contiene i
+	  <math>P</math>-values per ognuna delle dimensioni, sotto
+	  l'ipotesi nulla per cui <argname>x</argname> sia
+	  lineare/IID.
+      </para>
+    </description>
+  </command>
+
   <command name="bfgs-config" section="Estimation" label="BFGS options"
 	   context="gui">
     <description>
