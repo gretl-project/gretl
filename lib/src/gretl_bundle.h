@@ -236,7 +236,7 @@ gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 int gretl_bundle_extract_args (gretl_bundle *template,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
-			       PRN *prn);
+			       PRN *prn, int *err);
 
 void gretl_bundle_cleanup (void);
 

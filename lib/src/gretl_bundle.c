@@ -1716,6 +1716,7 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 
 struct bchecker {
     gretl_bundle *b;
+    int *ret;
     int *err;
     PRN *prn;
 };
@@ -1725,9 +1726,8 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
     bundled_item *targ, *src = (bundled_item *) value;
     struct bchecker *bchk = (struct bchecker *) p;
     gretl_bundle *template = bchk->b;
-    int err = 0;
 
-    if (*bchk->err) {
+    if (*bchk->ret || *bchk->err) {
 	/* don't waste time if we already hit an error */
 	return;
     }
@@ -1738,40 +1738,37 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
     if (targ == NULL) {
 	/* extraneous key in input */
 	pprintf(bchk->prn, "bcheck: unrecognized key '%s'\n", key);
-	err = E_INVARG;
+	*bchk->ret = 2;
     } else if (targ->type == GRETL_TYPE_MATRIX &&
 	       src->type == GRETL_TYPE_DOUBLE) {
 	double x = *(double *) src->data;
 	gretl_matrix *m = gretl_matrix_from_scalar(x);
 
-	err = bundled_item_replace_data(targ, m, 0, 0);
+	*bchk->err = bundled_item_replace_data(targ, m, 0, 0);
     } else if (targ->type == GRETL_TYPE_DOUBLE &&
 	       src->type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = src->data;
 
 	if (gretl_matrix_is_scalar(m)) {
-	    err = bundled_item_replace_data(targ, &m->val[0], 0, 0);
+	    *bchk->err = bundled_item_replace_data(targ, &m->val[0], 0, 0);
 	} else {
-	    err = E_TYPES;
+	    *bchk->ret = 3;
 	}
     } else if (src->type != targ->type) {
-	err = E_TYPES;
+	*bchk->ret = 3;
     } else {
 	/* transcribe input value -> template */
-	err = bundled_item_replace_data(targ, src->data, 0, 1);
-	if (err) {
+	*bchk->err = bundled_item_replace_data(targ, src->data, 0, 1);
+	if (*bchk->err) {
 	    pprintf(bchk->prn, "bcheck: failed to copy '%s'\n", key);
 	}
     }
 
-    if (err == E_TYPES) {
+    if (*bchk->ret == 3) {
 	pprintf(bchk->prn, "bcheck: '%s' should be %s, is %s\n", key,
 		gretl_type_get_name(targ->type),
 		gretl_type_get_name(src->type));
     }
-
-    /* transcribe error flag */
-    *bchk->err = err;
 }
 
 /**
@@ -1783,6 +1780,7 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
  * (or NULL).
  * @prn: pointer to printing struct for display of error
  * messages.
+ * @err:location to receive error code.
  *
  * This function checks @input against @template. It flags an
  * error (a) if a required element is missing, (b) if @input
@@ -1792,15 +1790,25 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
  * is updated from @input; that is, defaults are replaced by
  * values selected by the caller.
  *
- * Returns: 0 on success, non-zero on error.
+ * Note the the @err pointer receives a non-zero value only
+ * if this function fails, which is distinct from the case
+ * where it successfully diagnoses an error in @input.
+ *
+ * Returns: 0 if @input is validated successfully, non-zero
+ * otherwise.
  */
 
 int gretl_bundle_extract_args (gretl_bundle *template,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
-			       PRN *prn)
+			       PRN *prn, int *err)
 {
     int ret = 0;
+
+    if (reqd != NULL && gretl_array_get_type(reqd) != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+	return *err;
+    }
 
     if (reqd != NULL) {
 	int i, n = gretl_array_get_length(reqd);
@@ -1810,14 +1818,14 @@ int gretl_bundle_extract_args (gretl_bundle *template,
 	    key = gretl_array_get_data(reqd, i);
 	    if (!gretl_bundle_has_key(input, key)) {
 		pprintf(prn, "bcheck: required key '%s' is missing\n", key);
-		ret = E_INVARG;
+		ret = 1;
 		break;
 	    }
 	}
     }
 
     if (ret == 0) {
-	struct bchecker bchk = {template, &ret, prn};
+	struct bchecker bchk = {template, &ret, err, prn};
 
 	g_hash_table_foreach(input->ht, check_bundled_item, &bchk);
     }

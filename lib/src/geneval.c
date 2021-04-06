@@ -12369,19 +12369,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    node_type_error(f, 3, ARRAY, r, p);
 	} else {
 	    ret = aux_scalar_node(p);
-	    if (!p->err) {
-		if (!null_node(r)) {
-		    if (gretl_array_get_type(r->v.a) == GRETL_TYPE_STRINGS) {
-			reqd = r->v.a;
-		    } else {
-			p->err = E_INVARG;
-		    }
-		}
-	    }
-	    if (!p->err) {
-		ret->v.xval = gretl_bundle_extract_args(l->L->v.b, m->v.b,
-							reqd, p->prn);
-	    }
+	}
+	if (!p->err && !null_node(r)) {
+	    reqd = r->v.a;
+	}
+	if (!p->err) {
+	    ret->v.xval = gretl_bundle_extract_args(l->L->v.b, m->v.b,
+						    reqd, p->prn, &p->err);
         }
     }
 
