@@ -1801,9 +1801,9 @@ static void print_array_elements (gretl_array *A,
 				  int imin, int imax,
 				  PRN *prn)
 {
-    int i;
+    int i, lim = MIN(A->n, imax);
 
-    for (i=imin; i<imax; i++) {
+    for (i=imin; i<lim; i++) {
 	pprintf(prn, "[%d] ", i+1);
 	if (A->data[i] == NULL) {
 	    pputs(prn, "null\n");
@@ -1822,6 +1822,10 @@ static void print_array_elements (gretl_array *A,
 	}
     }
 
+    if (A->n > lim) {
+	pputs(prn, "...");
+    }
+
     pputc(prn, '\n');
 }
 
@@ -1829,12 +1833,13 @@ int gretl_array_print (gretl_array *A, PRN *prn)
 {
     if (A != NULL) {
 	const char *s = gretl_type_get_name(A->type);
+	int nmax = 10;
 
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
 
-	if (A->n > 0 && A->n < 10 &&
+	if (A->n > 0 &&
 	    A->type != GRETL_TYPE_BUNDLES && A->type != GRETL_TYPE_ARRAYS) {
-	    print_array_elements(A, 0, A->n, prn);
+	    print_array_elements(A, 0, nmax, prn);
 	}
     }
 
