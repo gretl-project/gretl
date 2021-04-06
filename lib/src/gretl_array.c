@@ -1799,7 +1799,7 @@ static void print_array_string (const char *s, PRN *prn)
 
 static void print_array_elements (gretl_array *A,
 				  int imin, int imax,
-				  PRN *prn)
+				  int range, PRN *prn)
 {
     int i, lim = MIN(A->n, imax);
 
@@ -1822,11 +1822,11 @@ static void print_array_elements (gretl_array *A,
 	}
     }
 
-    if (A->n > lim) {
-	pputs(prn, "...");
+    if (!range && A->n > lim) {
+	pputs(prn, "...\n\n");
+    } else {
+	pputc(prn, '\n');
     }
-
-    pputc(prn, '\n');
 }
 
 int gretl_array_print (gretl_array *A, PRN *prn)
@@ -1839,7 +1839,7 @@ int gretl_array_print (gretl_array *A, PRN *prn)
 
 	if (A->n > 0 &&
 	    A->type != GRETL_TYPE_BUNDLES && A->type != GRETL_TYPE_ARRAYS) {
-	    print_array_elements(A, 0, nmax, prn);
+	    print_array_elements(A, 0, nmax, 0, prn);
 	}
     }
 
@@ -1854,7 +1854,7 @@ int gretl_array_print_range (gretl_array *A, int imin, int imax, PRN *prn)
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
 
 	if (A->type != GRETL_TYPE_BUNDLES && A->type != GRETL_TYPE_ARRAYS) {
-	    print_array_elements(A, imin, imax, prn);
+	    print_array_elements(A, imin, imax, 1, prn);
 	}
     }
 
