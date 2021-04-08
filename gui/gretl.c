@@ -2165,11 +2165,6 @@ static GtkUIManager *add_mac_menu (void)
 	g_error_free(error);
     }
 
-#if 0
-    accel_group = gtk_ui_manager_get_accel_group(mgr);
-    gtk_window_add_accel_group(GTK_WINDOW(mdata->main), accel_group);
-#endif
-
     menu = gtk_ui_manager_get_widget(mgr, "/menubar/");
     g_object_ref_sink(menu);
 
@@ -2184,6 +2179,7 @@ static void finish_mac_ui (GtkUIManager *mac_mgr)
 
     menu = gtk_ui_manager_get_widget(mac_mgr, "/menubar");
     if (menu != NULL) {
+	/* @menu needs a gtk window toplevel */
 	gtk_box_pack_end(GTK_BOX(mdata->vbox), menu, FALSE, FALSE, 0);
 	gtk_widget_hide(menu);
 	gtkosx_application_set_menu_bar(MacApp, GTK_MENU_SHELL(menu));
