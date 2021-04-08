@@ -15,33 +15,65 @@
 </center>
 
 <p>
- Per prima cosa, bisogna stabilire se il vostro Mac ha un processore
- Interl o PPC.  Tutti i Mac recenti (dopo il 2006) hanno Intel. Se il
- vostro modello è molto vecchio e non siete sicuri, cliccate
- sull'icona Apple in alto a sinistra dello schermo e selezionate
- "About this Mac". Apparirà una finestra col numero di versione di OS
- X e il tipo di processore.
+Questa pagina descrive gretl per macOS 10.6 ("Snow Leopard", uscita
+ nel 2009) o seguente. Se la vostra versione di OS X è precedente,
+ date un'occhiata <a href="mac-legacy.html">qui</a>.
 </p>
 
-<p>
- Se avete in mac Intel con OS X 10.6 (Snow Leopard) o successive, vi
- consigliamo la versione "quartz", a meno che per qualche motivo non
- preferiate X11.
-</p>
 
-<p>
- Selezionate uno dei tre link qui sotto.
-</p>
+<p><b>macOS 11, Big Sur, con processori M1</b>: Se il vostro Mac
+  risponde a questa descrizione, i pacchetti standard, linkati più
+  sotto, probabilmente funzionano male (forse <i>molto</i> male). Vi
+  consigliamo di provare questa versione di prova:
+<a
+href="https://sourceforge.net/projects/gretl/files/snapshots/gretl-os11-m1.pkg/download">gretl-os11-m1.pkg</a>.
+I vostri commenti su se e come funziona sono molto utili per noi;
+se ne avete voglia, mandateci un messaggio alla
+<a
+href="https://gretlml.univpm.it/postorius/lists/gretl-users.gretlml.univpm.it/">mailing
+  list degli utenti</a>. Abbiate cura di leggere, più sotto, la
+sezione &quot;Importante: problemi di sicurezza (o presunti
+tali)&quot;; la procedura su Big Sur dovrebbe essere essenzialmente
+la stessa che su Catalina.
+</p> 
 
-<div id="menucontent">
- <ul class="menu">
-  <li><a href="mac-intel-quartz.html">Intel Mac, quartz (consigliato)</a></li>
-  <li><a href="mac-intel-x11.html">Intel Mac, X11</a></li>
-  <li><a href="mac-ppc.html">PPC Mac (vecchi Mac)</a></li>
- </ul>
-</div>
 
-<h2>Important</h2>
+
+<h2>Installare gretl</h2> 
+
+<p>Dovete decidere se volete la versione ufficiale o la "snapshot".
+La snapshot è la versione su cui il team di sviluppo sta lavorando, e
+quindi è più aggiornata: spesso contiene la correzione di alcuni bug,
+ma a volte potrebbe contenerne di nuovi. C'è una descrizione del
+  contenuto della snapshot al link
+<a href="../ChangeLog.html">Change log</a> (sotto la voce "in progress").</p>
+
+<table cellpadding="2">
+<tr>
+<td><p>ultima versione ufficiale (SHORTDATE)</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/gretl/VERSION/gretl-VERSION-quartz.pkg/download">gretl-VERSION-quartz.pkg</a>
+</p></td>
+</tr>
+
+<tr>
+<td><p>OPPURE snapshot attuale</p></td>
+<td><p>
+<a
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-quartz.pkg/download">gretl-quartz.pkg</a>
+</p></td>
+</tr>
+</table>
+
+<p><b>Consiglio</b>: Se state aggiornando gretl, potrebbe essere il
+  caso di disinstallare la vecchia versione prima di installare la
+  nuova.</p>
+  
+<p>Vi consigliamo anche di dare un'occhiata agli "extra opzionali",
+  più sotto.</p>
+
+
+<h2>Importante: problemi di sicurezza (o presunti tali)</h2>
 
 <p>
   Alcuni utenti Mac ci hanno fatto sapere che con versioni recenti di
@@ -73,6 +105,23 @@
 
 
 </ol>
+
+
+<h2>Extra opzionali</h2>
+
+<p>Se lavorate con serie storiche, potrebbero farvi comodo
+X-13-ARIMA-SEATS e/o TRAMO/SEATS, che sono programmi specializzati per
+  l'analisi di serie stagionali. Per installare delle versioni a 64
+  bit compatibili con macOS, basta aprere la console di gretl e
+  digitare i seguenti comandi:</p>
+<pre>
+pkg install x13as-mac64.tar.gz
+pkg install tramo-seats-mac64.tar.gz
+</pre>
+
+<p>
+&nbsp;
+</p>
 
 </body>
 </html>
