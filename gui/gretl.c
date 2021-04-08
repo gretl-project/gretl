@@ -2184,6 +2184,8 @@ static void finish_mac_ui (GtkUIManager *mac_mgr)
 
     menu = gtk_ui_manager_get_widget(mac_mgr, "/menubar");
     if (menu != NULL) {
+	gtk_box_pack_end(GTK_BOX(mdata->vbox), menu, FALSE, FALSE, 0);
+	gtk_widget_hide(menu);
 	gtkosx_application_set_menu_bar(MacApp, GTK_MENU_SHELL(menu));
     }
     gtkosx_application_set_use_quartz_accelerators(MacApp, FALSE);
