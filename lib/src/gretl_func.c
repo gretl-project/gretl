@@ -49,6 +49,7 @@
 #include <fcntl.h>
 
 #define MINIMAL_SETVARS 1 /* activated 2021-02-07 */
+#define STRICT_CONST 1    /* activated 2021-04-08 */
 
 #define LSDEBUG 0
 
@@ -452,8 +453,6 @@ static int fncall_add_args_array (fncall *fc)
 
     return err;
 }
-
-#define STRICT_CONST 0 /* not just yet */
 
 static void maybe_set_param_const (fn_param *fp)
 {
