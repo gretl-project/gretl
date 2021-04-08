@@ -2165,8 +2165,10 @@ static GtkUIManager *add_mac_menu (void)
 	g_error_free(error);
     }
 
+#if 0
     accel_group = gtk_ui_manager_get_accel_group(mgr);
     gtk_window_add_accel_group(GTK_WINDOW(mdata->main), accel_group);
+#endif
 
     menu = gtk_ui_manager_get_widget(mgr, "/menubar/");
     g_object_ref_sink(menu);
@@ -2174,11 +2176,13 @@ static GtkUIManager *add_mac_menu (void)
     return mgr;
 }
 
-static void finish_mac_ui (GtkUIManager *mgr)
+/* add minimal top-of-screen gretl menu */
+
+static void finish_mac_ui (GtkUIManager *mac_mgr)
 {
     GtkWidget *menu;
 
-    menu = gtk_ui_manager_get_widget(mgr, "/menubar");
+    menu = gtk_ui_manager_get_widget(mac_mgr, "/menubar");
     if (menu != NULL) {
 	gtkosx_application_set_menu_bar(MacApp, GTK_MENU_SHELL(menu));
     }
