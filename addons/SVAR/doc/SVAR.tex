@@ -3420,6 +3420,12 @@ typically be called before \texttt{SVAR\_SRirf}.
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
+\subsection*{Version 1.94, April 2021}
+\begin{itemize}
+\item Fix bug (introduced in 1.92): for AB-models, the $C$ matrix was
+  not updated over bootstrap iterations.
+\end{itemize}
+
 \subsection*{Version 1.93, December 2020}
 \begin{itemize}
 \item Add helper function SVAR\_SRresetalpha. (Hide IRF\_plotdata as 
