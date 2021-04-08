@@ -126,14 +126,14 @@ function matrix mat_exp(const matrix theta, const matrix Ss)
     return mshape(C,n,n)
 end function
 
-function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
-    n2 = rows(dat)
-    n = round(sqrt(n2))
-    k = cols(dat)
+# function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
+#     n2 = rows(dat)
+#     n = round(sqrt(n2))
+#     k = cols(dat)
 
-    Sigma = mshape(dat[,1],n,n)
-    Ss = dat[,2:k]
-end function
+#     Sigma = mshape(dat[,1],n,n)
+#     Ss = dat[,2:k]
+# end function
 
 
 function void maybe_flip_columns(const matrix C, matrix *X)

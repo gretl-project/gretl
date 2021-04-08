@@ -1,6 +1,7 @@
-function void scoreC(matrix *ret, matrix *theta, matrix *dat)
-    matrix Sigma Ss
-    unscramble_dat(&dat, &Sigma, &Ss)
+function void scoreC(matrix *ret, const matrix theta, matrices dat)
+    matrix Sigma = dat[1]
+    matrix Ss = dat[2]
+    # unscramble_dat(&dat, &Sigma, &Ss)
     scalar n = rows(Sigma)
     scalar npar = cols(Ss) - 1
 
@@ -69,9 +70,11 @@ function matrix init_C(matrix Sigma, matrix Rd)
     return ret
 end function
 
-function void PseudoHessC(matrix *H, matrix *theta, matrix *dat)
-    matrix Sigma Ss
-    unscramble_dat(&dat, &Sigma, &Ss)
+function void PseudoHessC(matrix *H, const matrix theta,
+				  matrices dat)
+    matrix Sigma = dat[1]
+    matrix Ss = dat[2]
+    # unscramble_dat(&dat, &Sigma, &Ss)
     scalar n = rows(Sigma)
     scalar npar = cols(Ss) - 1
     matrix S = Ss[,1:npar]
@@ -117,7 +120,7 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
         printf "check within estC -- before estimation\n"
         check_const(tmp, Rd)
     endif
-    matrix dat = vec(sSig) ~ Ss
+    matrices dat = defarray(sSig, Ss)
 
     matrix g H
     if verbose > 1
@@ -130,29 +133,29 @@ function matrix estC(matrix *theta, matrix Sigma, matrix Rd, matrix *vcv[null],\
     #set bfgs_toler 1.0e-03
 
     matrix theta0 = theta
-    errcode = 0
+    scalar errcode = 0
 
     loop while (err==1 && iters<100) --quiet
         if method == 0
-            catch scalar ll = BFGSmax(theta, "loglik(&theta, &dat, -1)")
+            catch scalar ll = BFGSmax(theta, "loglik(theta, dat, -1)")
             errcode = $error
-            scoreC(&g, &theta, &dat)
+            scoreC(&g, theta, dat)
         elif method == 1
-            catch scalar ll = BFGSmax(theta, "loglik(&theta, &dat, -1)",
-              "scoreC(&g, &theta, &dat)")
+            catch scalar ll = BFGSmax(theta, "loglik(theta, dat, -1)",
+              "scoreC(&g, theta, dat)")
             errcode = $error
         elif method == 2
-            catch scalar ll = NRmax(theta, "loglik(&theta, &dat, -1)")
+            catch scalar ll = NRmax(theta, "loglik(theta, dat, -1)")
             errcode = $error
-            scoreC(&g, &theta, &dat)
+            scoreC(&g, theta, dat)
         elif method == 3
-            catch scalar ll = NRmax(theta, "loglik(&theta, &dat, -1)",
-              "scoreC(&g, &theta, &dat)")
+            catch scalar ll = NRmax(theta, "loglik(theta, dat, -1)",
+              "scoreC(&g, theta, dat)")
             errcode = $error
         elif method == 4
-            catch scalar ll = NRmax(theta, "loglik(&theta, &dat, -1)",
-              "scoreC(&g, &theta, &dat)",
-              "PseudoHessC(&H, &theta, &dat)")
+            catch scalar ll = NRmax(theta, "loglik(theta, dat, -1)",
+              "scoreC(&g, theta, dat)",
+              "PseudoHessC(&H, theta, dat)")
             errcode = $error
         endif
 

@@ -212,11 +212,11 @@ end function
 
 ##########
 
-function scalar loglik(matrix *theta, matrix *dat, scalar modeltype)
+function scalar loglik(const matrix theta, matrices dat, scalar modeltype)
     # modeltype < 0->C; modeltype>=0: AB (contains free elements of a)
-    matrix Sigma = {}
-    matrix Ss = {}
-    unscramble_dat(&dat, &Sigma, &Ss)
+    matrix Sigma = dat[1]
+    matrix Ss = dat[2]
+    
     if modeltype < 0
         matrix C = mat_exp(theta, Ss) # was: , 0)
     else
