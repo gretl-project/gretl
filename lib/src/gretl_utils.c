@@ -1955,7 +1955,8 @@ static int gp_fatal (const char *cmd, const char *s)
 	strstr(s, "Pango-WARNING") ||
 	strstr(s, "rid drawn") ||
 	strstr(s, "Icon theme") ||
-	strstr(s, "CGContextSetFont")) {
+	strstr(s, "CGContextSetFont") ||
+	strstr(s, "qt5ct: using")) {
 	return 0;
     } else {
 	return 1;
