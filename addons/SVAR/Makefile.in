@@ -41,7 +41,7 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_compatibility_funcs.inp
 
 SPEC = SVAR.spec
-	
+
 all: $(PKG).gfn pdfdoc
 
 $(PKG).gfn: symlinks $(INP) $(SPEC)
@@ -67,10 +67,13 @@ install: $(PKG).gfn doc/$(PKG).pdf installdirs
 	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
 	for f in examples/* ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+	for f in examples/SignRestrictions/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SignRestrictions ; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples/SignRestrictions
 
 clean: 
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
