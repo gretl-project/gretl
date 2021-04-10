@@ -4,11 +4,11 @@ function scalar is_standard_AB(matrix aRd, matrix bRd)
 end function
 
 function void scoreAB(matrix *ret, const matrix theta,
-		      matrices dat, int p1)
+                      matrices dat, int p1)
     # FIXME: This func might benefit from getting the pre-computed C matrix
 
     matrix Sigma = dat[1]
-    matrix Ss = dat[2] 
+    matrix Ss = dat[2]
     # unscramble_dat(&dat, &Sigma, &Ss)
 
     p2 = rows(theta)
@@ -153,10 +153,10 @@ function void ABmat_exp(matrix theta, matrix aSs, matrix bSs,
 end function
 
 function void PseudoHessAB(matrix *H, const matrix theta,
-			   matrices dat, int p1)
-    
+                           matrices dat, int p1)
+
     matrix Sigma = dat[1]
-    matrix Ss = dat[2] 
+    matrix Ss = dat[2]
     # unscramble_dat(&dat, &Sigma, &Ss)
 
     scalar p2 = rows(theta)
@@ -235,9 +235,9 @@ function matrix estAB(matrix *theta, matrix Sigma, matrix aRd, matrix bRd, \
     if err || warn
         matrix C = {}
         errcode = err + 10*warn
-        outfile stderr --write
-        printf "err = %d; warn = %d; Gradient: %10.6f", err, warn, g
-        outfile --close
+        outfile stderr
+            printf "err = %d; warn = %d; Gradient: %10.6f", err, warn, g
+        end outfile 
         return C
     endif
 
