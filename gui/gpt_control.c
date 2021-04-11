@@ -181,11 +181,13 @@ static void set_plot_for_copy (png_plot *plot);
 #endif
 static void build_plot_menu (png_plot *plot);
 static void set_plot_collection (png_plot *plot);
-static void reset_plot_collection (png_plot *plot);
+static void unset_plot_collection (GtkWidget *w, png_plot *plot);
 static int plot_collection_show_plot (png_plot *coll,
 				      png_plot *show,
 				      int pos);
 static void kill_png_plot (png_plot *plot);
+static void extract_png_plot (png_plot *plot);
+static int plot_add_shell (png_plot *plot, const char *name);
 
 enum {
     GRETL_PNG_OK,
@@ -394,19 +396,36 @@ static void add_plot_pager (png_plot *plot)
     gtk_widget_show(GTK_WIDGET(sep));
 }
 
-static void sensitize_plot_pager (png_plot *plot)
+static void adjust_plot_pager (png_plot *plot)
 {
-    multiplot *mp = plot->mp;
     GtkToolItem *item;
     gboolean s;
-    int i;
+    int i, n;
+
+    if (plot->mp == NULL) {
+	return;
+    }
+
+    n = g_list_length(plot->mp->list);
+
+    if (n == 1) {
+	/* @plot is not a "collection" any more */
+	unset_plot_collection(NULL, plot);
+	for (i=0; i<4; i++) {
+	    item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), 0);
+	    gtk_widget_destroy(GTK_WIDGET(item));
+	}
+	plot->status ^= PLOT_HAS_PAGER;
+	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
+	return;
+    }
 
     for (i=0; i<4; i++) {
 	item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), i);
 	if (i < 2) {
-	    s = mp->current > 0;
+	    s = plot->mp->current > 0;
 	} else {
-	    s = mp->current < g_list_length(mp->list) - 1;
+	    s = plot->mp->current < n - 1;
 	}
 	gtk_widget_set_sensitive(GTK_WIDGET(item), s);
     }
@@ -3814,9 +3833,13 @@ static int copy_pixbuf_to_surface (png_plot *plot,
 
     plot->cs = cairo_image_surface_create(format, width, height);
 
-    if (plot->cs == NULL ||
-	cairo_surface_status(plot->cs) != CAIRO_STATUS_SUCCESS) {
+    if (plot->cs == NULL) {
 	fprintf(stderr, "copy_pixbuf_to_surface: failed\n");
+	return 1;
+    } else if (cairo_surface_status(plot->cs) != CAIRO_STATUS_SUCCESS) {
+	fprintf(stderr, "copy_pixbuf_to_surface: failed\n");
+	cairo_surface_destroy(plot->cs);
+	plot->cs = NULL;
 	return 1;
     } else if (plot_in_collection(plot)) {
 	sync_cairo_surface(plot);
@@ -4618,12 +4641,21 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	start_editing_png_plot(plot);
     } else if (!strcmp(item_string, _("Font"))) {
 	plot_show_font_selector(plot, plot->spec->fontstr);
-    } else if (!strcmp(item_string, _("Close"))) {
+    } else if (!strcmp(item_string, _("Close")) ||
+	       !strcmp(item_string, _("Close plot"))) {
         killplot = 1;
+    } else if (!strcmp(item_string, _("Close collection"))) {
+	killplot = 2;
+    } else if (!strcmp(item_string, _("Extract plot"))) {
+	killplot = 3;
     }
 
-    if (killplot) {
+    if (killplot == 1) {
 	kill_png_plot(plot);
+    } else if (killplot == 2) {
+	gtk_widget_destroy(shell);
+    } else if (killplot == 3) {
+	extract_png_plot(plot);
     }
 
     return TRUE;
@@ -4695,6 +4727,9 @@ static void build_plot_menu (png_plot *plot)
 	N_("Font"),
 	N_("Help"),
         N_("Close"),
+	N_("Close plot"),
+	N_("Close collection"),
+	N_("Extract plot"),
         NULL
     };
     const char *zoomed_items[] = {
@@ -4785,6 +4820,16 @@ static void build_plot_menu (png_plot *plot)
 	}
 	if (plot->spec->code != PLOT_BOXPLOTS &&
 	    !strcmp(plot_items[i], "Numerical summary")) {
+	    i++;
+	    continue;
+	}
+	if (plot_has_pager(plot)) {
+	    if (!strcmp(plot_items[i], "Close")) {
+		i++;
+		continue;
+	    }
+	} else if (!strncmp(plot_items[i], "Close ", 6) ||
+		   !strncmp(plot_items[i], "Extract", 7)) {
 	    i++;
 	    continue;
 	}
@@ -5403,14 +5448,18 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     if (plot->mp != NULL) {
 	GList *L = g_list_nth(plot->mp->list, 1);
+	png_plot *child;
 
 	while (L != NULL) {
+	    child = L->data;
+#if GTK_MAJOR_VERSION >= 3
+	    child->cs = NULL;
+#else
+	    child->pixmap = NULL;
+#endif
 	    destroy_png_plot(NULL, L->data);
 	    L = L->next;
 	}
-	g_list_free(plot->mp->list);
-	free(plot->mp);
-	plot->mp = NULL;
     }
 
     if (!plot_is_saved(plot) && plot->spec != NULL) {
@@ -5420,7 +5469,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	}
     }
 
-#if GPDEBUG
+#if 1 || GPDEBUG
     fprintf(stderr, "destroy_png_plot: plot = %p, spec = %p\n",
 	    (void *) plot, (void *) plot->spec);
 #endif
@@ -5456,12 +5505,17 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     free(plot);
 }
 
-/* kill a png_plot, allowing for the possibility that it's a
-   member of a plot collection
+/* Kill a png_plot, allowing for the possibility that it's a
+   member of a "plot collection".
 */
 
 static void kill_png_plot (png_plot *plot)
 {
+    if (plot->editor != NULL) {
+	gtk_widget_destroy(plot->editor);
+	plot->editor = NULL;
+    }
+
     if (plot->parent != NULL) {
 	/* kill a child plot */
 	png_plot *coll = g_object_get_data(G_OBJECT(plot->parent), "plot");
@@ -5476,43 +5530,74 @@ static void kill_png_plot (png_plot *plot)
 	plot->pixmap = NULL;
 #endif
 	destroy_png_plot(NULL, plot);
-	sensitize_plot_pager(coll);
-    } else if (plot->mp != NULL) {
-	/* kill current parent plot and rejig if needed */
-	int n = g_list_length(plot->mp->list);
-
-	fprintf(stderr, "HERE kill and re-parent, n=%d\n", n);
-
-	if (n == 1) {
-	    gtk_widget_destroy(plot->shell);
-	} else {
-	    png_plot *p0 = g_list_nth_data(plot->mp->list, 1);
-
-	    fprintf(stderr, "HERE 2 plot->spec %p, p0->spec %p\n",
-		    plot->spec, p0->spec);
-
-	    plot_collection_show_plot(plot, p0, 1);
-	    fprintf(stderr, "HERE 3 plot->spec %p, p0->spec %p\n",
-		    plot->spec, p0->spec);
-	    
-	    plotspec_destroy(plot->spec);
-	    plot->spec = p0->spec;
-	    p0->spec = NULL;
-	    g_object_unref(plot->pbuf);
-	    plot->pbuf = p0->pbuf;
-	    p0->pbuf = NULL;
-	    plot->mp->list = g_list_remove(plot->mp->list, p0);
-	    plot->mp->current = 0;
-	    sensitize_plot_pager(plot);
-#if GTK_MAJOR_VERSION >= 3
-	    p0->cs = NULL;
-#else
-	    p0->pixmap = NULL;
-#endif	    
-	    destroy_png_plot(NULL, p0);
-	}
+	adjust_plot_pager(coll);
     } else {
-	gtk_widget_destroy(plot->shell);
+	/* kill current parent plot and rejig */
+	png_plot *p0 = g_list_nth_data(plot->mp->list, 1);
+	GPT_SPEC *spec = plot->spec;
+	GdkPixbuf *pbuf = plot->pbuf;
+
+	fprintf(stderr, "HERE 2 plot->spec %p, p0->spec %p\n",
+		plot->spec, p0->spec);
+	plot_collection_show_plot(plot, p0, 1);
+	plot->spec = p0->spec;
+	p0->spec = spec;
+	plot->pbuf = p0->pbuf;
+	p0->pbuf = pbuf;
+	fprintf(stderr, "HERE 3 plot->spec %p, p0->spec %p\n",
+		plot->spec, p0->spec);
+	plot->mp->list = g_list_remove(plot->mp->list, p0);
+	plot->mp->current = 0;
+	adjust_plot_pager(plot);
+#if GTK_MAJOR_VERSION >= 3
+	p0->cs = NULL;
+#else
+	p0->pixmap = NULL;
+#endif
+	destroy_png_plot(NULL, p0);
+    }
+}
+
+static void extract_png_plot (png_plot *plot)
+{
+    if (plot->parent != NULL) {
+	/* extract a child plot */
+	png_plot *coll = g_object_get_data(G_OBJECT(plot->parent), "plot");
+
+	plot_collection_show_plot(coll, coll, 0);
+	coll->mp->list = g_list_remove(coll->mp->list, plot);
+	plot->parent = NULL;
+#if GTK_MAJOR_VERSION >= 3
+	plot->cs = NULL;
+#else
+	plot->pixmap = NULL;
+#endif
+	plot_add_shell(plot, NULL);
+	render_png(plot, PNG_START);
+	adjust_plot_pager(coll);
+    } else {
+	/* extract current parent plot and rejig */
+	png_plot *p1 = g_list_nth_data(plot->mp->list, 1);
+	GPT_SPEC *spec = plot->spec;
+	GdkPixbuf *pbuf = plot->pbuf;
+
+	/* switch to the plot currently at position 1 */
+	plot_collection_show_plot(plot, p1, 1);
+	plot->spec = p1->spec;
+	p1->spec = spec;
+	plot->pbuf = p1->pbuf;
+	p1->pbuf = pbuf;
+	plot->mp->list = g_list_remove(plot->mp->list, p1);
+	plot->mp->current = 0;
+	p1->parent = NULL;
+#if GTK_MAJOR_VERSION >= 3
+	p1->cs = NULL;
+#else
+	p1->pixmap = NULL;
+#endif
+	plot_add_shell(p1, NULL);
+	render_png(p1, PNG_START);
+	adjust_plot_pager(plot);
     }
 }
 
@@ -5792,6 +5877,8 @@ static int plot_collection_attach_plot (png_plot *coll,
 #endif
 
     if (!plot_has_pager(coll)) {
+	gtk_window_set_title(GTK_WINDOW(coll->shell),
+			     _("gretl: plot collection"));
 	add_plot_pager(coll);
     }
 
@@ -5800,7 +5887,7 @@ static int plot_collection_attach_plot (png_plot *coll,
     fprintf(stderr, "  plot_collection now contains %d plots\n",
 	    g_list_length(coll->mp->list));
 
-    sensitize_plot_pager(coll);
+    adjust_plot_pager(coll);
 
     return 0;
 }
@@ -5815,7 +5902,7 @@ static int plot_collection_show_plot (png_plot *coll,
 	fprintf(stderr, "plot_collection: showing plot %d, %p\n",
 		pos, (void *) show);
 	coll->mp->current = pos;
-	sensitize_plot_pager(coll);
+	adjust_plot_pager(coll);
     }
 
     return err;
@@ -6054,12 +6141,12 @@ int gnuplot_show_map (gretl_bundle *mb)
 
 static png_plot *plot_collection;
 
-static void unset_plot_collection (GtkWidget *w, gpointer p)
+static void unset_plot_collection (GtkWidget *w, png_plot *plot)
 {
     if (plot_collection != NULL) {
-	g_list_free(plot_collection->mp->list);
-	free(plot_collection->mp);
-	plot_collection->mp = NULL;
+	g_list_free(plot->mp->list);
+	free(plot->mp);
+	plot->mp = NULL;
 	plot_collection = NULL;
     }
 }
@@ -6086,14 +6173,7 @@ static void set_plot_collection (png_plot *plot)
     plot_collection = plot;
     plot->mp = mp;
     g_signal_connect(G_OBJECT(plot->shell), "destroy",
-		     G_CALLBACK(unset_plot_collection), NULL);
-}
-
-static void reset_plot_collection (png_plot *plot)
-{
-    plot_collection = plot;
-    g_signal_connect(G_OBJECT(plot->shell), "destroy",
-		     G_CALLBACK(unset_plot_collection), NULL);
+		     G_CALLBACK(unset_plot_collection), plot);
 }
 
 /* Called on a newly created PNG graph; note that
