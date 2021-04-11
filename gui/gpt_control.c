@@ -5537,15 +5537,11 @@ static void kill_png_plot (png_plot *plot)
 	GPT_SPEC *spec = plot->spec;
 	GdkPixbuf *pbuf = plot->pbuf;
 
-	fprintf(stderr, "HERE 2 plot->spec %p, p0->spec %p\n",
-		plot->spec, p0->spec);
 	plot_collection_show_plot(plot, p0, 1);
 	plot->spec = p0->spec;
 	p0->spec = spec;
 	plot->pbuf = p0->pbuf;
 	p0->pbuf = pbuf;
-	fprintf(stderr, "HERE 3 plot->spec %p, p0->spec %p\n",
-		plot->spec, p0->spec);
 	plot->mp->list = g_list_remove(plot->mp->list, p0);
 	plot->mp->current = 0;
 	adjust_plot_pager(plot);
@@ -5560,6 +5556,12 @@ static void kill_png_plot (png_plot *plot)
 
 static void extract_png_plot (png_plot *plot)
 {
+    if (plot->editor != NULL) {
+	/* is this actually required? */
+	gtk_widget_destroy(plot->editor);
+	plot->editor = NULL;
+    }
+
     if (plot->parent != NULL) {
 	/* extract a child plot */
 	png_plot *coll = g_object_get_data(G_OBJECT(plot->parent), "plot");
