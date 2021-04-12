@@ -5501,7 +5501,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	}
     }
 
-#if 1 || GPDEBUG
+#if GPDEBUG
     fprintf(stderr, "destroy_png_plot: plot = %p, spec = %p\n",
 	    (void *) plot, (void *) plot->spec);
 #endif
@@ -5529,11 +5529,11 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     free(plot);
 }
 
-/* Kill a png_plot, allowing for the possibility that it's a
-   member of a "plot collection".
+/* Remove a png_plot from a collection, either killing it or
+   extracting it as a plot in its own right.
 */
 
-static void kill_png_plot (png_plot *plot)
+static void remove_png_plot (png_plot *plot, int kill)
 {
     if (plot->editor != NULL) {
 	gtk_widget_destroy(plot->editor);
@@ -5541,7 +5541,7 @@ static void kill_png_plot (png_plot *plot)
     }
 
     if (plot->parent != NULL) {
-	/* kill a child plot */
+	/* kill or extract a child plot */
 	png_plot *coll = g_object_get_data(G_OBJECT(plot->parent), "plot");
 
 	plot_collection_show_plot(coll, coll, 0);
@@ -5549,53 +5549,19 @@ static void kill_png_plot (png_plot *plot)
 	plot->shell = NULL; /* just to be sure */
 	plot->parent = NULL;
 	plot_nullify_surface(plot);
-	destroy_png_plot(NULL, plot);
+	if (kill) {
+	    destroy_png_plot(NULL, plot);
+	} else {
+	    plot_add_shell(plot, NULL);
+	    render_png(plot, PNG_START);
+	}
 	adjust_plot_pager(coll);
     } else {
-	/* kill current parent plot and rejig */
-	png_plot *p0 = g_list_nth_data(plot->mp->list, 1);
-	GPT_SPEC *spec = plot->spec;
-	GdkPixbuf *pbuf = plot->pbuf;
-
-	plot_collection_show_plot(plot, p0, 1);
-	plot->spec = p0->spec;
-	p0->spec = spec;
-	plot->pbuf = p0->pbuf;
-	p0->pbuf = pbuf;
-	plot->mp->list = g_list_remove(plot->mp->list, p0);
-	plot->mp->current = 0;
-	adjust_plot_pager(plot);
-	plot_nullify_surface(p0);
-	destroy_png_plot(NULL, p0);
-    }
-}
-
-static void extract_png_plot (png_plot *plot)
-{
-    if (plot->editor != NULL) {
-	/* is this actually required? */
-	gtk_widget_destroy(plot->editor);
-	plot->editor = NULL;
-    }
-
-    if (plot->parent != NULL) {
-	/* extract a child plot */
-	png_plot *coll = g_object_get_data(G_OBJECT(plot->parent), "plot");
-
-	plot_collection_show_plot(coll, coll, 0);
-	coll->mp->list = g_list_remove(coll->mp->list, plot);
-	plot->parent = NULL;
-	plot_nullify_surface(plot);
-	plot_add_shell(plot, NULL);
-	render_png(plot, PNG_START);
-	adjust_plot_pager(coll);
-    } else {
-	/* extract current parent plot and rejig */
+	/* kill or extract current parent plot and rejig */
 	png_plot *p1 = g_list_nth_data(plot->mp->list, 1);
 	GPT_SPEC *spec = plot->spec;
 	GdkPixbuf *pbuf = plot->pbuf;
 
-	/* switch to the plot currently at position 1 */
 	plot_collection_show_plot(plot, p1, 1);
 	plot->spec = p1->spec;
 	p1->spec = spec;
@@ -5603,12 +5569,26 @@ static void extract_png_plot (png_plot *plot)
 	p1->pbuf = pbuf;
 	plot->mp->list = g_list_remove(plot->mp->list, p1);
 	plot->mp->current = 0;
-	p1->parent = NULL;
 	plot_nullify_surface(p1);
-	plot_add_shell(p1, NULL);
-	render_png(p1, PNG_START);
+	if (kill) {
+	    destroy_png_plot(NULL, p1);
+	} else {
+	    p1->parent = NULL;
+	    plot_add_shell(p1, NULL);
+	    render_png(p1, PNG_START);
+	}
 	adjust_plot_pager(plot);
     }
+}
+
+static void kill_png_plot (png_plot *plot)
+{
+    remove_png_plot(plot, 1);
+}
+
+static void extract_png_plot (png_plot *plot)
+{
+    remove_png_plot(plot, 0);
 }
 
 /* Do a partial parse of the gnuplot source file: enough to determine
