@@ -168,6 +168,9 @@ struct png_plot_t {
     unsigned char format;
 };
 
+/* FIXME add userland control for this */
+static int use_collection = 1;
+
 static int render_png (png_plot *plot, int view);
 static int repaint_png (png_plot *plot, int view);
 static int zoom_replaces_plot (png_plot *plot);
@@ -5882,6 +5885,14 @@ static int plot_collection_attach_plot (png_plot *coll,
     return 0;
 }
 
+/* It's too complicated to "collect" plots of different sizes */
+
+static int plot_can_be_collected (png_plot *coll, png_plot *plot)
+{
+    return plot->pixel_width == coll->pixel_width &&
+	plot->pixel_height == coll->pixel_height;
+}
+
 static int plot_collection_show_plot (png_plot *coll,
 				      png_plot *show,
 				      int pos)
@@ -6018,10 +6029,16 @@ static int gnuplot_show_png (const char *fname,
     }
 
     if (coll != NULL) {
-	if (!err) {
-	    plot_collection_attach_plot(coll, plot);
+	/* add this plot to current collection? */
+	int attached = 0;
+
+	if (!err && plot_can_be_collected(coll, plot)) {
+	    err = plot_collection_attach_plot(coll, plot);
+	    attached = (err == 0);
 	}
-	return err;
+	if (err || attached) {
+	    return err;
+	}
     }
 
     plot_add_shell(plot, name);
@@ -6033,8 +6050,7 @@ static int gnuplot_show_png (const char *fname,
 	if (session_ptr != NULL) {
 	    g_object_set_data(G_OBJECT(plot->shell),
 			      "session-ptr", session_ptr);
-	} else if (coll == NULL) {
-	    /* FIXME conditionality */
+	} else if (coll == NULL && use_collection) {
 	    set_plot_collection(plot);
 	}
     }
