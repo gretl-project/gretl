@@ -110,6 +110,7 @@ enum {
 
 #define plot_has_controller(p) (p->editor != NULL)
 #define plot_in_collection(p) (p->mp != NULL || p->parent != NULL)
+#define plot_is_singleton(p) (p->mp == NULL && p->parent == NULL)
 
 enum {
     PNG_START,
@@ -394,6 +395,9 @@ static void add_plot_pager (png_plot *plot)
     sep = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, i);
     gtk_widget_show(GTK_WIDGET(sep));
+
+    gtk_widget_set_sensitive(plot->up_icon, FALSE);
+    gtk_widget_set_sensitive(plot->down_icon, FALSE);
 }
 
 static void adjust_plot_pager (png_plot *plot)
@@ -417,6 +421,8 @@ static void adjust_plot_pager (png_plot *plot)
 	}
 	plot->status ^= PLOT_HAS_PAGER;
 	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
+	gtk_widget_set_sensitive(plot->up_icon, TRUE);
+	gtk_widget_set_sensitive(plot->down_icon, TRUE);
 	return;
     }
 
@@ -4824,7 +4830,8 @@ static void build_plot_menu (png_plot *plot)
 	    continue;
 	}
 	if (plot_has_pager(plot)) {
-	    if (!strcmp(plot_items[i], "Close")) {
+	    if (!strcmp(plot_items[i], "Close") ||
+		!strncmp(plot_items[i], "Save to", 7)) {
 		i++;
 		continue;
 	    }
@@ -5374,7 +5381,7 @@ static int render_png (png_plot *plot, int view)
     fprintf(stderr, "\nrender_png: plot %p, plot->pbuf %p, view = %d\n",
 	    (void *) plot, (void *) plot->pbuf, view);
 
-    if (view == PNG_REDISPLAY) {
+    if (view == PNG_REDISPLAY || view == PNG_ZOOM || view == PNG_UNZOOM) {
 	/* we need to read a revised PNG file */
 	plot_invalidate_pixbuf(plot);
     }
@@ -5418,8 +5425,11 @@ static int render_png (png_plot *plot, int view)
     }
 #endif
 
-    // g_object_unref(pbuf);
-    plot->pbuf = pbuf; /* FIXME */
+    if (0 && plot_is_singleton(plot)) {
+	g_object_unref(pbuf);
+    } else {
+	plot->pbuf = pbuf;
+    }
 
     if (view != PNG_REPLACE) {
 	gretl_build_path(pngname, gretl_dotdir(), "gretltmp.png", NULL);
@@ -5444,6 +5454,32 @@ static int render_png (png_plot *plot, int view)
     return 0;
 }
 
+static void plot_nullify_surface (png_plot *plot)
+{
+#if GTK_MAJOR_VERSION >= 3
+    plot->cs = NULL;
+#else
+    plot->pixmap = NULL;
+    plot->savebuf = NULL;
+#endif
+}
+
+static void plot_destroy_surface (png_plot *plot)
+{
+#if GTK_MAJOR_VERSION >= 3
+    if (plot->cs != NULL) {
+	cairo_surface_destroy(plot->cs);
+    }
+#else
+    if (plot->pixmap != NULL) {
+	g_object_unref(plot->pixmap);
+    }
+    if (plot->savebuf != NULL) {
+	g_object_unref(plot->savebuf);
+    }
+#endif
+}
+
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     if (plot->mp != NULL) {
@@ -5452,11 +5488,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 
 	while (L != NULL) {
 	    child = L->data;
-#if GTK_MAJOR_VERSION >= 3
-	    child->cs = NULL;
-#else
-	    child->pixmap = NULL;
-#endif
+	    plot_nullify_surface(child);
 	    destroy_png_plot(NULL, L->data);
 	    L = L->next;
 	}
@@ -5484,15 +5516,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 	plotspec_destroy(plot->spec);
     }
 
-#if GTK_MAJOR_VERSION >= 3
-    if (plot->cs != NULL) {
-	cairo_surface_destroy(plot->cs);
-    }
-#else
-    if (plot->savebuf != NULL) {
-	g_object_unref(plot->savebuf);
-    }
-#endif
+    plot_destroy_surface(plot);
 
     if (plot->pbuf != NULL) {
 	g_object_unref(plot->pbuf);
@@ -5524,11 +5548,7 @@ static void kill_png_plot (png_plot *plot)
 	coll->mp->list = g_list_remove(coll->mp->list, plot);
 	plot->shell = NULL; /* just to be sure */
 	plot->parent = NULL;
-#if GTK_MAJOR_VERSION >= 3
-	plot->cs = NULL;
-#else
-	plot->pixmap = NULL;
-#endif
+	plot_nullify_surface(plot);
 	destroy_png_plot(NULL, plot);
 	adjust_plot_pager(coll);
     } else {
@@ -5545,11 +5565,7 @@ static void kill_png_plot (png_plot *plot)
 	plot->mp->list = g_list_remove(plot->mp->list, p0);
 	plot->mp->current = 0;
 	adjust_plot_pager(plot);
-#if GTK_MAJOR_VERSION >= 3
-	p0->cs = NULL;
-#else
-	p0->pixmap = NULL;
-#endif
+	plot_nullify_surface(p0);
 	destroy_png_plot(NULL, p0);
     }
 }
@@ -5569,11 +5585,7 @@ static void extract_png_plot (png_plot *plot)
 	plot_collection_show_plot(coll, coll, 0);
 	coll->mp->list = g_list_remove(coll->mp->list, plot);
 	plot->parent = NULL;
-#if GTK_MAJOR_VERSION >= 3
-	plot->cs = NULL;
-#else
-	plot->pixmap = NULL;
-#endif
+	plot_nullify_surface(plot);
 	plot_add_shell(plot, NULL);
 	render_png(plot, PNG_START);
 	adjust_plot_pager(coll);
@@ -5592,11 +5604,7 @@ static void extract_png_plot (png_plot *plot)
 	plot->mp->list = g_list_remove(plot->mp->list, p1);
 	plot->mp->current = 0;
 	p1->parent = NULL;
-#if GTK_MAJOR_VERSION >= 3
-	p1->cs = NULL;
-#else
-	p1->pixmap = NULL;
-#endif
+	plot_nullify_surface(p1);
 	plot_add_shell(p1, NULL);
 	render_png(p1, PNG_START);
 	adjust_plot_pager(plot);
@@ -5875,7 +5883,7 @@ static int plot_collection_attach_plot (png_plot *coll,
     add->cs = coll->cs;
 #else
     add->pixmap = coll->pixmap;
-    /* plot->savebuf? */
+    add->savebuf = coll->savebuf;
 #endif
 
     if (!plot_has_pager(coll)) {
