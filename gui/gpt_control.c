@@ -134,7 +134,6 @@ struct png_plot_t {
     multiplot *mp;
     GtkWidget *canvas;
     GtkWidget *popup;
-    GtkWidget *statusarea;
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
     GtkWidget *pos_entry;
@@ -168,8 +167,8 @@ struct png_plot_t {
     unsigned char format;
 };
 
-/* FIXME add userland control for this */
-static int use_collection = 1;
+/* global accessed in settings.c */
+int collect_plots;
 
 static int render_png (png_plot *plot, int view);
 static int repaint_png (png_plot *plot, int view);
@@ -474,7 +473,7 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 
 /* Provide the data coordinates for a gretl/gnuplot
    graph, if they are all positive, otherwise return
-   non-zero.
+   non-zero. Called by the plot editor.
 */
 
 int plot_get_coordinates (png_plot *plot,
@@ -3792,30 +3791,6 @@ static int make_alt_label (gchar *alt, const gchar *label)
 
 #if GTK_MAJOR_VERSION >= 3
 
-static void sync_cairo_surface (png_plot *plot)
-{
-    fprintf(stderr, "HERE cairo sync, plot %p\n", (void *) plot);
-
-    if (plot->mp != NULL) {
-	/* parent of collection: sync to children */
-	GList *L = g_list_nth(plot->mp->list, 1);
-	png_plot *child;
-
-	while (L) {
-	    child = L->data;
-	    fprintf(stderr, " parent case, sync to child %p\n", (void *) child);
-	    child->cs = plot->cs;
-	    L = L->next;
-	}
-    } else if (plot->parent != NULL) {
-	/* sync from child to parent */
-	png_plot *pp = g_object_get_data(G_OBJECT(plot->parent), "plot");
-
-	fprintf(stderr, " child case, sync to parent = %p\n", (void *) pp);
-	pp->cs = plot->cs;
-    }
-}
-
 /* given a GdkPixbuf read from file, create a corresponding cairo
    surface, attached to @plot as plot->cs. This will be used as
    the "backing store" for re-draws of the plot.
@@ -3850,8 +3825,6 @@ static int copy_pixbuf_to_surface (png_plot *plot,
 	cairo_surface_destroy(plot->cs);
 	plot->cs = NULL;
 	return 1;
-    } else if (plot_in_collection(plot)) {
-	sync_cairo_surface(plot);
     }
 
     ss = cairo_image_surface_get_stride(plot->cs);
@@ -4081,7 +4054,8 @@ static void heatmap_show_z (png_plot *plot, double x, double y,
 }
 
 static gint
-plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
+plot_motion_callback (GtkWidget *widget, GdkEventMotion *event,
+		      png_plot *plot)
 {
     GdkModifierType state;
     gchar label[48], label_y[24];
@@ -4090,6 +4064,7 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
     int do_label;
     int x, y;
 
+    plot = plot_get_current(plot);
     if (plot->err) {
 	return TRUE;
     }
@@ -4599,9 +4574,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     GtkWidget *shell;
     int killplot = 0;
 
-    if (plot->mp != NULL) {
-	plot = plot_get_current(plot);
-    }
+    plot = plot_get_current(plot);
     shell = plot_get_shell(plot);
     item_string = menu_item_get_text(item);
 
@@ -4832,7 +4805,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (plot_has_pager(plot)) {
+	if (plot_in_collection(plot)) {
 	    if (!strcmp(plot_items[i], "Close") ||
 		!strncmp(plot_items[i], "Save to", 7)) {
 		i++;
@@ -4889,10 +4862,8 @@ int redisplay_edited_plot (png_plot *plot)
     fprintf(stderr, "redisplay_edited_plot: plot = %p\n", (void *) plot);
 #endif
 
-    if (plot->mp != NULL) {
-	/* get the actual target of the edit */
-	plot = plot_get_current(plot);
-    }
+    /* get the actual target of the edit */
+    plot = plot_get_current(plot);
 
     /* open file in which to dump plot specification */
     gnuplot_png_init(plot, &fp);
@@ -5098,6 +5069,8 @@ static int zoom_replaces_plot (png_plot *plot)
 static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 				 png_plot *plot)
 {
+    plot = plot_get_current(plot);
+
     if (plot_is_zooming(plot)) {
 	double z;
 
@@ -5135,6 +5108,8 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 			       png_plot *plot)
 {
+    plot = plot_get_current(plot);
+
     if (plot_is_zooming(plot)) {
 	if (get_data_xy(plot, event->x, event->y,
 			&plot->zoom_xmin, &plot->zoom_ymin)) {
@@ -5242,7 +5217,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 static
 void plot_draw (GtkWidget *canvas, cairo_t *cr, gpointer data)
 {
-    png_plot *plot = data;
+    png_plot *plot = plot_get_current(data);
 
     cairo_set_source_surface(cr, plot->cs, 0, 0);
     cairo_paint(cr);
@@ -5457,15 +5432,15 @@ static int render_png (png_plot *plot, int view)
     return 0;
 }
 
+#if GTK_MAJOR_VERSION == 2
+
 static void plot_nullify_surface (png_plot *plot)
 {
-#if GTK_MAJOR_VERSION >= 3
-    plot->cs = NULL;
-#else
     plot->pixmap = NULL;
     plot->savebuf = NULL;
-#endif
 }
+
+#endif
 
 static void plot_destroy_surface (png_plot *plot)
 {
@@ -5491,8 +5466,10 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 
 	while (L != NULL) {
 	    child = L->data;
+#if GTK_MAJOR_VERSION == 2
 	    plot_nullify_surface(child);
-	    destroy_png_plot(NULL, L->data);
+#endif
+	    destroy_png_plot(NULL, child);
 	    L = L->next;
 	}
     }
@@ -5551,7 +5528,9 @@ static void remove_png_plot (png_plot *plot, int kill)
 	coll->mp->list = g_list_remove(coll->mp->list, plot);
 	plot->shell = NULL; /* just to be sure */
 	plot->parent = NULL;
+#if GTK_MAJOR_VERSION == 2
 	plot_nullify_surface(plot);
+#endif
 	if (kill) {
 	    destroy_png_plot(NULL, plot);
 	} else {
@@ -5572,7 +5551,9 @@ static void remove_png_plot (png_plot *plot, int kill)
 	p1->pbuf = pbuf;
 	plot->mp->list = g_list_remove(plot->mp->list, p1);
 	plot->mp->current = 0;
+#if GTK_MAJOR_VERSION == 2
 	plot_nullify_surface(p1);
+#endif
 	if (kill) {
 	    destroy_png_plot(NULL, p1);
 	} else {
@@ -5703,7 +5684,6 @@ static png_plot *png_plot_new (void)
     plot->mp = NULL;
     plot->canvas = NULL;
     plot->popup = NULL;
-    plot->statusarea = NULL;
     plot->statusbar = NULL;
     plot->cursor_label = NULL;
     plot->pbuf = NULL;
@@ -5745,6 +5725,7 @@ static int plot_add_shell (png_plot *plot, const char *name)
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
     GtkWidget *status_hbox;
+    GtkWidget *status_area;
     gchar *title;
 
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -5770,10 +5751,10 @@ static int plot_add_shell (png_plot *plot, const char *name)
     gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
 
     /* eventbox and hbox for status area  */
-    plot->statusarea = gtk_event_box_new();
-    gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
+    status_area = gtk_event_box_new();
+    gtk_box_pack_start(GTK_BOX(vbox), status_area, FALSE, FALSE, 0);
     status_hbox = gtk_hbox_new(FALSE, 2);
-    gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
+    gtk_container_add(GTK_CONTAINER(status_area), status_hbox);
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
@@ -5858,13 +5839,15 @@ static int plot_collection_attach_plot (png_plot *coll,
     fprintf(stderr, "plot_collection_attach_plot: add=%p, add->pbuf=%p\n",
 	    (void *) add, (void *) add->pbuf);
 
+    /* shared GUI elements */
     add->parent = coll->shell;
     add->window = coll->window;
     add->canvas = coll->canvas;
+    add->cursor_label = coll->cursor_label;
+    add->statusbar = coll->statusbar;
 
-#if GTK_MAJOR_VERSION >= 3
-    add->cs = coll->cs;
-#else
+    /* shared drawing apparatus */
+#if GTK_MAJOR_VERSION == 2
     add->pixmap = coll->pixmap;
     add->savebuf = coll->savebuf;
 #endif
@@ -6050,7 +6033,7 @@ static int gnuplot_show_png (const char *fname,
 	if (session_ptr != NULL) {
 	    g_object_set_data(G_OBJECT(plot->shell),
 			      "session-ptr", session_ptr);
-	} else if (coll == NULL && use_collection) {
+	} else if (coll == NULL && collect_plots) {
 	    set_plot_collection(plot);
 	}
     }

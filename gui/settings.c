@@ -229,6 +229,8 @@ RCVAR rc_vars[] = {
       BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "workdir_tooltip", "Working directory tooltip", NULL, &wdir_tooltip,
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
+    { "collect_plots", N_("Enable collecting plots"), NULL, &collect_plots,
+      BOOLSET, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
     { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder,
