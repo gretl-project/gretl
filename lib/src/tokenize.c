@@ -198,9 +198,9 @@ static struct gretl_cmd gretl_cmds[] = {
     { SHELL,    "shell",    CI_EXPR },
     { SMPL,     "smpl",     CI_PARM1 | CI_PARM2 | CI_INFL }, /* alternate forms */
     { SPEARMAN, "spearman", CI_LIST | CI_LLEN2 },
-    { SPRINTF,  "sprintf",  CI_PARM1 | CI_PARM2 | CI_VARGS | CI_OBSOL },
+    { SPRINTF,  "sprintf",  CI_PARM1 | CI_PARM2 | CI_VARGS },
     { SQUARE,   "square",   CI_LIST },
-    { SSCANF,   "sscanf",   CI_EXPR | CI_OBSOL },
+    { SSCANF,   "sscanf",   CI_EXPR },
     { STDIZE,   "stdize",   CI_LIST },
     { STORE,    "store",    CI_PARM1 | CI_FNAME | CI_LIST | CI_DOALL },
     { SUMMARY,  "summary",  CI_LIST | CI_DOALL },
@@ -2574,13 +2574,11 @@ static int try_for_command_index (CMD *cmd, int i,
 	    cmd->ciflags = CI_EXPR;
 	} else {
 	    cmd->ciflags = command_get_flags(cmd->ci);
-
 	    if (cmd->ciflags & CI_OBSOL) {
 		if (cmd->ci == ARBOND) {
 		    deprecate_alias("arbond", "dpanel", 1);
 		}
 	    }
-    
 	    if (cmd->ci == EQUATION && (cmd->opt & OPT_M)) {
 		/* the system "equations" keyword */
 		cmd->ciflags ^= CI_LIST;
