@@ -2407,13 +2407,18 @@ static int test_for_genr (CMD *c, int i, char cnext, DATASET *dset)
     return c->ci;
 }
 
-static void deprecate_alias (const char *bad, const char *good,
+static void set_deprecation (const char *bad, const char *good,
 			     int command)
 {
     const char *tag = command ? "command" : "construction";
 
-    gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use \"%s\"",
-			  bad, tag, good);
+    if (strstr(good, "()")) {
+	gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use the function %s",
+			      bad, tag, good);
+    } else {
+	gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use \"%s\"",
+			      bad, tag, good);
+    }
 }
 
 static int try_for_command_alias (const char *s, CMD *cmd)
@@ -2426,7 +2431,7 @@ static int try_for_command_alias (const char *s, CMD *cmd)
     } else if (!strcmp(s, "ls")) {
 	ci = VARLIST;
     } else if (!strcmp(s, "pooled")) {
-	deprecate_alias("pooled", "ols", 1);
+	set_deprecation("pooled", "ols", 1);
 	ci = OLS;
     } else if (!strcmp(s, "equations")) {
 	/* reached only when compiling loop */
@@ -2438,14 +2443,14 @@ static int try_for_command_alias (const char *s, CMD *cmd)
 	ci = SHELL;
 	cmd->opt |= OPT_A;
     } else if (!strcmp(s, "fcasterr")) {
-	deprecate_alias("fcasterr", "fcast", 1);
+	set_deprecation("fcasterr", "fcast", 1);
 	ci = FCAST;
     } else if (!strcmp(s, "install")) {
 	ci = PKG;
 	cmd->opt |= OPT_B; /* back-compat */
 #if ALLOW_ADDOBS
     } else if (!strcmp(s, "addobs")) {
-	deprecate_alias("addobs", "dataset addobs", 0);
+	set_deprecation("addobs", "dataset addobs", 0);
 	ci = DATAMOD;
 #endif
     } else if (!strcmp(s, "continue")) {
@@ -2576,7 +2581,7 @@ static int try_for_command_index (CMD *cmd, int i,
 	    cmd->ciflags = command_get_flags(cmd->ci);
 	    if (cmd->ciflags & CI_OBSOL) {
 		if (cmd->ci == ARBOND) {
-		    deprecate_alias("arbond", "dpanel", 1);
+		    set_deprecation("arbond", "dpanel", 1);
 		}
 	    }
 	    if (cmd->ci == EQUATION && (cmd->opt & OPT_M)) {
@@ -3763,6 +3768,8 @@ static int post_process_sprintf_command (CMD *cmd,
 					 char *line)
 {
     int err = 0;
+
+    set_deprecation("sprintf", "sprintf()", 1);
 
     *line = '\0';
 
