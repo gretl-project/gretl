@@ -416,22 +416,21 @@ static void add_plot_pager (png_plot *plot)
     sep = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, i);
     gtk_widget_show(GTK_WIDGET(sep));
-
-    //gtk_widget_set_sensitive(plot->up_icon, FALSE);
-    //gtk_widget_set_sensitive(plot->down_icon, FALSE);
 }
 
 static void adjust_plot_pager (png_plot *plot)
 {
+    gchar *status_str;
     GtkToolItem *item;
     gboolean s;
-    int i, n;
+    int i, n, curr;
 
     if (plot->mp == NULL) {
 	return;
     }
 
     n = g_list_length(plot->mp->list);
+    curr = plot->mp->current;
 
     if (n == 1) {
 	/* @plot is not a "collection" any more */
@@ -441,21 +440,26 @@ static void adjust_plot_pager (png_plot *plot)
 	    gtk_widget_destroy(GTK_WIDGET(item));
 	}
 	plot->status ^= PLOT_HAS_PAGER;
+	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
 	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
-	//gtk_widget_set_sensitive(plot->up_icon, TRUE);
-	//gtk_widget_set_sensitive(plot->down_icon, TRUE);
 	return;
     }
 
     for (i=0; i<4; i++) {
 	item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), i);
 	if (i < 2) {
-	    s = plot->mp->current > 0;
+	    s = curr > 0;
 	} else {
-	    s = plot->mp->current < n - 1;
+	    s = curr < n - 1;
 	}
 	gtk_widget_set_sensitive(GTK_WIDGET(item), s);
     }
+
+    status_str = g_strdup_printf("\tplot %d of %d", curr + 1, n);
+    gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid,
+		       status_str);
+    g_free(status_str);
 }
 
 static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
@@ -5370,6 +5374,26 @@ static void record_coordinate_info (png_plot *plot, png_bounds *b)
 #endif
 }
 
+#if GTK_MAJOR_VERSION == 2
+
+static void pixmap_sync (png_plot *plot)
+{
+    png_plot *coll, *child;
+    GList *L;
+
+    coll = (plot->mp != NULL)? plot : widget_get_plot(plot->parent);
+    L = coll->mp->list;
+    while (L != NULL) {
+	child = L->data;
+	if (child != plot) {
+	    child->pixmap = plot->pixmap;
+	}
+	L = L->next;
+    }
+}
+
+#endif
+
 static int resize_png_plot (png_plot *plot, int width, int height,
 			    int follower)
 {
@@ -5387,6 +5411,9 @@ static int resize_png_plot (png_plot *plot, int width, int height,
 				      plot->pixel_width,
 				      plot->pixel_height,
 				      -1);
+	if (plot_in_collection(plot)) {
+	    pixmap_sync(plot);
+	}
 #endif
     }
 
@@ -5454,7 +5481,7 @@ static int render_png (png_plot *plot, viewcode view)
     fprintf(stderr, "\nrender_png: plot %p, pixbuf %p, view = %s\n",
 	    (void *) plot, (void *) plot->pbuf, viewstr(view));
 #endif
-    
+
     if (plot->pbuf != NULL) {
 	pbuf = plot->pbuf;
     } else {
@@ -5937,6 +5964,7 @@ static int plot_collection_attach_plot (png_plot *coll,
     add->statusbar = coll->statusbar;
     add->up_icon = coll->up_icon;
     add->down_icon = coll->down_icon;
+    add->cid = coll->cid;
 
     /* shared drawing apparatus */
 #if GTK_MAJOR_VERSION == 2
