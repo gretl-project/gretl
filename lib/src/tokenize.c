@@ -33,7 +33,8 @@ typedef enum {
     CI_LCHK  = 1 << 17, /* needs checking for "list" specials */
     CI_INFL  = 1 << 18, /* command arglist "inflected" by options */
     CI_FCMIN = 1 << 19, /* minimal (single word) flow control */
-    CI_LGEN  = 1 << 20  /* command generates a named list */
+    CI_LGEN  = 1 << 20, /* command generates a named list */
+    CI_OBSOL = 1 << 21  /* command is obsolete and therefore deprecated */
 } CIFlags;
 
 struct gretl_cmd {
@@ -79,7 +80,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { APPEND,   "append",   CI_PARM1 | CI_FNAME },
     { AR,       "ar",       CI_LIST | CI_L1INT },
     { AR1,      "ar1",      CI_LIST },
-    { ARBOND,   "arbond",   CI_LIST | CI_L1INT },
+    { ARBOND,   "arbond",   CI_LIST | CI_L1INT | CI_OBSOL },
     { ARCH,     "arch",     CI_ORD1 | CI_LIST },
     { ARMA,     "arima",    CI_LIST | CI_L1INT },
     { BDS,      "bds",      CI_ORD1 | CI_LIST | CI_LLEN1 },
@@ -197,9 +198,9 @@ static struct gretl_cmd gretl_cmds[] = {
     { SHELL,    "shell",    CI_EXPR },
     { SMPL,     "smpl",     CI_PARM1 | CI_PARM2 | CI_INFL }, /* alternate forms */
     { SPEARMAN, "spearman", CI_LIST | CI_LLEN2 },
-    { SPRINTF,  "sprintf",  CI_PARM1 | CI_PARM2 | CI_VARGS },
+    { SPRINTF,  "sprintf",  CI_PARM1 | CI_PARM2 | CI_VARGS | CI_OBSOL },
     { SQUARE,   "square",   CI_LIST },
-    { SSCANF,   "sscanf",   CI_EXPR },
+    { SSCANF,   "sscanf",   CI_EXPR | CI_OBSOL },
     { STDIZE,   "stdize",   CI_LIST },
     { STORE,    "store",    CI_PARM1 | CI_FNAME | CI_LIST | CI_DOALL },
     { SUMMARY,  "summary",  CI_LIST | CI_DOALL },
@@ -2573,6 +2574,13 @@ static int try_for_command_index (CMD *cmd, int i,
 	    cmd->ciflags = CI_EXPR;
 	} else {
 	    cmd->ciflags = command_get_flags(cmd->ci);
+
+	    if (cmd->ciflags & CI_OBSOL) {
+		if (cmd->ci == ARBOND) {
+		    deprecate_alias("arbond", "dpanel", 1);
+		}
+	    }
+    
 	    if (cmd->ci == EQUATION && (cmd->opt & OPT_M)) {
 		/* the system "equations" keyword */
 		cmd->ciflags ^= CI_LIST;
