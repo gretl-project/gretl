@@ -121,6 +121,7 @@ static int tabbed_editor = 1;
 static int tabbed_models = 0;
 static int display_wdir = 1;
 static int wdir_tooltip = 1;
+static int auto_collect = 0;
 static int script_output_policy;
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -229,7 +230,7 @@ RCVAR rc_vars[] = {
       BOOLSET | RESTART, 0, TAB_MAIN, NULL },
     { "workdir_tooltip", "Working directory tooltip", NULL, &wdir_tooltip,
       INVISET | BOOLSET, 0, TAB_NONE, NULL },
-    { "collect_plots", N_("Enable collecting plots"), NULL, &collect_plots,
+    { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
       BOOLSET, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
@@ -2222,6 +2223,10 @@ static void find_and_set_rc_var (const char *key, const char *val)
 	    if (!(rcvar->flags & FIXSET)) {
 		if (rcvar->flags & BOOLSET) {
 		    str_to_boolvar(val, rcvar->var);
+		    if (!strcmp(key, "collect_plots")) {
+			/* special: set to "auto" */
+			libset_set_int(PLOT_COLLECTION, 1);
+		    }
 		} else if (rcvar->flags & INTSET) {
 		    str_to_int(val, rcvar->var);
 		} else if (rcvar->flags & FLOATSET) {

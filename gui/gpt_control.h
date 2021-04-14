@@ -22,8 +22,6 @@
 
 #include "plotspec.h"
 
-extern int collect_plots;
-
 typedef struct png_plot_t png_plot;
 
 int remove_png_term_from_plot_by_name (const char *fname);

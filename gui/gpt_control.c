@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "plotspec.h"
+#include "libset.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "gpt_dialog.h"
@@ -179,9 +180,6 @@ struct png_plot_t {
     unsigned char format;
 };
 
-/* global accessed in settings.c */
-int collect_plots;
-
 static int render_png (png_plot *plot, viewcode view);
 static int repaint_png (png_plot *plot, int view);
 static int zoom_replaces_plot (png_plot *plot);
@@ -243,6 +241,11 @@ struct linestyle_ {
 static int get_png_bounds_info (png_bounds *bounds);
 
 #define PLOTSPEC_DETAILS_IN_MEMORY(s) (s->lines != NULL)
+
+static int do_collect_plots (void)
+{
+    return libset_get_int(PLOT_COLLECTION);
+}
 
 static void terminate_plot_positioning (png_plot *plot)
 {
@@ -6155,7 +6158,7 @@ static int gnuplot_show_png (const char *fname,
 	if (session_ptr != NULL) {
 	    g_object_set_data(G_OBJECT(plot->shell),
 			      "session-ptr", session_ptr);
-	} else if (coll == NULL && collect_plots) {
+	} else if (coll == NULL && do_collect_plots()) {
 	    set_plot_collection(plot);
 	}
     }
@@ -6299,14 +6302,21 @@ static void set_plot_collection (png_plot *plot)
 
 void register_graph (void)
 {
+    int dcp = do_collect_plots();
     png_plot *pp = NULL;
 
-    if (plot_collection != NULL) {
-	gint64 now = gretl_monotonic_time();
-	gint64 ptm = plot_collection_get_mtime();
-
-	if (now - ptm < 1.0e6) {
+    if (dcp && plot_collection != NULL) {
+	if (dcp > 1) {
+	    /* explicitly "on" */
 	    pp = plot_collection;
+	} else {
+	    /* "auto": time-limited */
+	    gint64 now = gretl_monotonic_time();
+	    gint64 ptm = plot_collection_get_mtime();
+
+	    if (now - ptm < 1.25e6) {
+		pp = plot_collection;
+	    }
 	}
     }
 
