@@ -602,9 +602,9 @@ function matrices SVAR_boot_innerloop(bundle *bobj, const bundle obj, const bund
             i++
         else
             failed++
-            outfile stderr --write
-            printf "Iter %4d failed (error code = %d)\n", i, errcode
-            outfile --close	# TODO: should be replaced with 'end outfile' once we can require 2018b or so
+            outfile stderr 
+                printf "Iter %4d failed (error code = %d)\n", i, errcode
+            end outfile
         endif
     endloop
 

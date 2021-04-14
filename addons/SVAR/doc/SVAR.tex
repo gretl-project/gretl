@@ -2147,8 +2147,8 @@ An important versioning note: These new parts of the SVAR code use some recent
 syntactic features of the \textsl{hansl} language, such that \textsl{gretl} version 
 2020b or newer is required to use this model type.
 But the whole SVAR addon does not yet impose this requirement to keep the traditional
-model types available for those users who cannot or do not want to install the brand
-new gretl version.
+model types available for those users who cannot or do not want to install a recent
+gretl version.
 
 Some artificial as well as real-life example scripts are included with SVAR to demonstrate
 the usage of sign restrictions and set identification in general. These are: 
@@ -3422,8 +3422,9 @@ typically be called before \texttt{SVAR\_SRirf}.
 
 \subsection*{Version 1.94, April 2021}
 \begin{itemize}
-\item Fix bug (introduced in 1.92): for AB-models, the $C$ matrix was
-  not updated over bootstrap iterations.
+\item Fix bug (introduced in 1.32 or so): for AB-models, the $C$ matrix was
+  not updated over bootstrap iterations, leading to zero-width confidence 
+  intervals for the impact effect.
 \item Bump version requirement to 2018c to accommodate some internal changes.
 \end{itemize}
 
