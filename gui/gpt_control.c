@@ -179,8 +179,6 @@ struct png_plot_t {
     unsigned char format;
 };
 
-
-
 /* global accessed in settings.c */
 int collect_plots;
 
