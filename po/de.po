@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-14 12:33-0400\n"
-"PO-Revision-Date: 2021-01-11 14:49+0100\n"
+"PO-Revision-Date: 2021-04-15 17:47+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -135,9 +135,8 @@ msgid "asymptotic p-value"
 msgstr "asymptotischer p-Wert"
 
 #: lib/src/adf_kpss.c:726
-#, fuzzy
 msgid "approximate p-value"
-msgstr "Interpolierter p-Wert"
+msgstr "ungefährer p-Wert"
 
 #: lib/src/adf_kpss.c:734
 #, c-format
@@ -2187,9 +2186,8 @@ msgid "Weight variable contains negative values"
 msgstr "Gewichtsvariable enthält negativen Wert"
 
 #: lib/src/estimate.c:629
-#, fuzzy
 msgid "Weight variable is not a dummy but contains zeros"
-msgstr "Gewichtsvariable ist überall null, Abbruch der Regression"
+msgstr "Gewichtsvariable ist keine Dummy, aber enthält Nullen"
 
 #: lib/src/estimate.c:1167 plugin/arma.c:1761
 #, c-format
@@ -3659,9 +3657,9 @@ msgid "Identifier exceeds the maximum of 31 characters"
 msgstr "Name überschreitet Maximum von 31 Zeichen"
 
 #: lib/src/gretl_func.c:7281
-#, fuzzy, c-format
+#, c-format
 msgid "%s: \"quit\" cannot be used in a function"
-msgstr "'catch' in diesem Kontext nicht benutzbar"
+msgstr "%s: \"quit\" nicht innerhalb einer Funktion benutzbar"
 
 #: lib/src/gretl_func.c:7549
 #, c-format
@@ -4810,43 +4808,40 @@ msgid "kalman: required matrix %s is missing"
 msgstr "kalman: benötigte Matrix %s fehlt"
 
 #: lib/src/libglue.c:315
-#, fuzzy, c-format
+#, c-format
 msgid "BDS test for %s, maximum order %d"
-msgstr "VAR-System, maximaler Lag %d"
+msgstr "BDS-Test für %s, maximale Dimension %d"
 
 #: lib/src/libglue.c:317
 msgid "H0: the series is linear/IID"
-msgstr ""
+msgstr "H0: die Reihe ist linear/iid"
 
 #: lib/src/libglue.c:320
-#, fuzzy
 msgid "Bootstrapped p-values in []"
-msgstr "mit Bootstrap-p-Wert"
+msgstr "Mit Bootstrap-p-Werten in []"
 
 #: lib/src/libglue.c:322
-#, fuzzy
 msgid "Asymptotic p-values in []"
-msgstr "asymptotischer p-Wert"
+msgstr "Asymptotische p-Werte in []"
 
 #: lib/src/libglue.c:331
 #, c-format
 msgid "test order %d: z = %.3f [%.3f]"
-msgstr ""
+msgstr "Testdimension %d: z = %.3f [%.3f]"
 
 #: lib/src/libglue.c:338
-#, fuzzy
 msgid "Distance criterion based on first-order correlation"
-msgstr "Breusch-Godfrey-Test auf Autokorrelation erster Ordnung"
+msgstr "Distanzkriterium basierend auf Korrelation erster Ordnung"
 
 #: lib/src/libglue.c:340
 #, c-format
 msgid "Distance criterion based on sd(%s)"
-msgstr ""
+msgstr "Distanzkriterium basierend auf StdAbw(%s)"
 
 #: lib/src/libglue.c:343
-#, fuzzy, c-format
+#, c-format
 msgid "eps = %g, first-order correlation %.3f"
-msgstr "Autokorrelation erster Ordnung"
+msgstr "eps = %g, Korrelation erster Ordnung %.3f"
 
 #: lib/src/libglue.c:624
 #, c-format
@@ -4854,9 +4849,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: erwartete %d Namen"
 
 #: lib/src/libglue.c:691
-#, fuzzy
 msgid "modprint: expected the name of a matrix"
-msgstr "modprint: erwartete %d Namen"
+msgstr "modprint: erwartete Namen einer Matrix"
 
 #: lib/src/libglue.c:694
 msgid "modprint: the first matrix argument must have 2 columns"
@@ -5593,9 +5587,8 @@ msgid "QML standard errors"
 msgstr "QML-Standardfehler"
 
 #: lib/src/modelprint.c:1542
-#, fuzzy
 msgid "HAC standard errors"
-msgstr "QML-Standardfehler"
+msgstr "HAC-Standardfehler"
 
 #: lib/src/modelprint.c:1546
 msgid "Bollerslev--Wooldridge standard errors"
@@ -6111,14 +6104,12 @@ msgid "McFadden R-squared"
 msgstr "McFadden-R-Quadrat"
 
 #: lib/src/modelprint.c:3189
-#, fuzzy
 msgid "Estrella $R^2$"
-msgstr "Korrigiertes $R^2$"
+msgstr ""
 
 #: lib/src/modelprint.c:3190
-#, fuzzy
 msgid "Estrella R-squared"
-msgstr "Korrigiertes R-Quadrat"
+msgstr "Estrella R-Quadrat"
 
 #: lib/src/modelprint.c:3198
 msgid "LSDV $R^2$"
@@ -6425,7 +6416,7 @@ msgstr "%s: erwartete Skalar oder Vektor"
 
 #: lib/src/nls.c:854
 msgid "Only one 'params' specification is allowed"
-msgstr ""
+msgstr "Nur eine 'params'-Spezifikation erlaubt"
 
 #: lib/src/nls.c:2095
 msgid "In Gauss-Newton Regression:\n"
@@ -7072,9 +7063,8 @@ msgid "Mean Absolute Percentage Error"
 msgstr "Mittlerer absoluter prozentualer Fehler"
 
 #: lib/src/printout.c:3003
-#, fuzzy
 msgid "Theil's U1"
-msgstr "Theils U"
+msgstr "Theils U1"
 
 #: lib/src/printout.c:3004
 msgid "Bias proportion, UM"
@@ -7089,9 +7079,8 @@ msgid "Disturbance proportion, UD"
 msgstr "Störterm-Verhältnis, UD"
 
 #: lib/src/printout.c:3008
-#, fuzzy
 msgid "Theil's U2"
-msgstr "Theils U"
+msgstr "Theils U2"
 
 #: lib/src/printout.c:3028 gui/guiprint.c:1482
 msgid "Forecast evaluation statistics"
@@ -7824,13 +7813,13 @@ msgid "The variable %s is currently read-only"
 msgstr "Die Variable %s ist momentan nur lesbar"
 
 #: lib/src/uservar.c:2436
-#, fuzzy, c-format
+#, c-format
 msgid "variables of type %s:"
-msgstr "Zu testende Variablen"
+msgstr "Variablen vom Typ %s:"
 
 #: lib/src/uservar.c:2443
 msgid "  (unnamed)\n"
-msgstr ""
+msgstr "  (unbenannt)\n"
 
 #: lib/src/uservar.c:2672
 #, c-format
@@ -9235,9 +9224,9 @@ msgstr ""
 "Jetzt öffnen?"
 
 #: gui/database.c:2810
-#, fuzzy, c-format
+#, c-format
 msgid "Installed %s"
-msgstr "Installiert"
+msgstr "Installierte %s"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
@@ -9493,9 +9482,8 @@ msgid "The gui package registry is empty"
 msgstr "Das GUI-Paketregister ist leer"
 
 #: gui/datafiles.c:2081
-#, fuzzy
 msgid "gretl: example scripts"
-msgstr "gretl: bearbeite Octave-Skript"
+msgstr "gretl: Beispiel-Skripte"
 
 #: gui/datafiles.c:2083
 msgid "gretl: data files"
@@ -10612,11 +10600,10 @@ msgid "constant"
 msgstr "Konstante"
 
 #: gui/dialogs.c:7126
-#, fuzzy, c-format
+#, c-format
 msgid "The series %s seems to be of the same frequency as the current dataset"
 msgstr ""
-"Zu importierende Daten haben geringere Frequenz\n"
-"als die derzeitigen. Fortfahren OK?"
+"Die Reihe %s hat anscheinend dieselbe Periodizität wie der aktuelle Datensatz"
 
 #: gui/dialogs.c:7171
 msgid "Output name:"
@@ -10659,33 +10646,28 @@ msgid "show regression results"
 msgstr "Zeige Regressionsergebnisse"
 
 #: gui/dialogs.c:7397
-#, fuzzy
 msgid "Maximum dimension:"
-msgstr "Maximale Iterationen:"
+msgstr "Maximale Dimension:"
 
 #: gui/dialogs.c:7407
 msgid "Criterion for closeness:"
-msgstr ""
+msgstr "Kriterium der Nähe:"
 
 #: gui/dialogs.c:7412
-#, fuzzy
 msgid "First-order correlation"
-msgstr "Autokorrelation erster Ordnung"
+msgstr "Korrelation erster Ordnung"
 
 #: gui/dialogs.c:7419
-#, fuzzy
 msgid "Multiple of std. dev."
-msgstr "Mehrere Graphen"
+msgstr "Vielfaches der StdAbw"
 
 #: gui/dialogs.c:7433
-#, fuzzy
 msgid "Asymptotic p-values"
-msgstr "asymptotischer p-Wert"
+msgstr "Asymptotische p-Werte"
 
 #: gui/dialogs.c:7438
-#, fuzzy
 msgid "Bootstrap p-values"
-msgstr "mit Bootstrap-p-Wert"
+msgstr "Mit Bootstrap-p-Werten"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -10737,21 +10719,19 @@ msgstr "Zweistufige Schätzung"
 
 #: gui/dlgutils.c:1098
 msgid "Outer product of gradient"
-msgstr ""
+msgstr "Äußeres Gradientenprodukt"
 
 #: gui/dlgutils.c:1099 plugin/addons-i18n.c:18 plugin/addons-i18n.c:103
 msgid "Hessian"
 msgstr "Hessematrix"
 
 #: gui/dlgutils.c:1100
-#, fuzzy
 msgid "Robust (QML)"
-msgstr "Robustes F"
+msgstr ""
 
 #: gui/dlgutils.c:1101
-#, fuzzy
 msgid "Robust (HAC)"
-msgstr "Robustes F"
+msgstr ""
 
 #: gui/dlgutils.c:1287 gui/dlgutils.c:1290
 msgid "(Please refer to Help for guidance)"
@@ -10918,13 +10898,12 @@ msgid "open file"
 msgstr "öffne Datei"
 
 #: gui/fileselect.c:1234
-#, fuzzy
 msgid "save map as geojson"
-msgstr "Sitzung speichern"
+msgstr "Karte als geojson speichern"
 
 #: gui/fileselect.c:1236
 msgid "write map as geojson"
-msgstr ""
+msgstr "Karte als geojson schreiben"
 
 #: gui/fileselect.c:1238
 msgid "save file"
@@ -12342,9 +12321,8 @@ msgid "_Script files"
 msgstr "S_kriptdateien"
 
 #: gui/gretl.c:1692
-#, fuzzy
 msgid "_Example scripts..."
-msgstr "Beispiel-Skript"
+msgstr "Beispiel-_Skripte..."
 
 #: gui/gretl.c:1693
 msgid "_New script"
@@ -12931,9 +12909,8 @@ msgid "_Hurst exponent"
 msgstr "_Hurst-Exponent"
 
 #: gui/gretl.c:1882
-#, fuzzy
 msgid "_BDS nonlinearity test"
-msgstr "Nichtlinearität"
+msgstr "B_DS-Nichtlinearitätstest"
 
 #: gui/gretl.c:1883 gui/menustate.c:605
 msgid "Disaggregate..."
@@ -13200,9 +13177,8 @@ msgid "_gretl + DB.NOMICS"
 msgstr "_gretl + DB.NOMICS"
 
 #: gui/gretl.c:1959 gui/textbuf.c:1672
-#, fuzzy
 msgid "Creating maps"
-msgstr "Erzeugung und I/O"
+msgstr "Landkartenerzeugung"
 
 #: gui/gretl.c:1960
 msgid "Check for _updates"
@@ -13381,9 +13357,8 @@ msgid "Mean Squared Error"
 msgstr "Mittlerer quadratischer Fehler"
 
 #: gui/guiprint.c:1456
-#, fuzzy
 msgid "Theil's $U_1$"
-msgstr "Theils $U$"
+msgstr "Theils $U_1$"
 
 #: gui/guiprint.c:1457
 msgid "Bias proportion, $U^M$"
@@ -13398,9 +13373,8 @@ msgid "Disturbance proportion, $U^D$"
 msgstr "Störtermverhältnis, $U^D$"
 
 #: gui/guiprint.c:1461
-#, fuzzy
 msgid "Theil's $U_2$"
-msgstr "Theils $U$"
+msgstr "Theils $U_2$"
 
 #: gui/guiprint.c:1523 gui/guiprint.c:1541
 msgid "Model estimation range:"
@@ -13638,9 +13612,8 @@ msgid "A_RCH"
 msgstr "A_RCH"
 
 #: gui/gui_utils.c:265
-#, fuzzy
 msgid "Non-linearity (_BDS)"
-msgstr "Nichtlinearität (_Logs)"
+msgstr "Nichtlinearität (_BDS)"
 
 #: gui/gui_utils.c:266
 msgid "_QLR test"
@@ -15320,23 +15293,20 @@ msgstr ""
 "Wollen Sie jetzt zur reduzierten Version wechseln?"
 
 #: gui/library.c:9005
-#, fuzzy
 msgid "gretl binary data format:"
-msgstr "gretl: Zahlenformat"
+msgstr "gretl binäres Datenformat:"
 
 #: gui/library.c:9007
 msgid "current (gretl >= 2020b, fastest)"
-msgstr ""
+msgstr "aktuell (gretl >= 2020b, am schnellsten)"
 
 #: gui/library.c:9008
-#, fuzzy
 msgid "compatible with gretl >= 2018c"
-msgstr "alte Art (kompatibel mit gretl < 2018c)"
+msgstr "kompatibel mit gretl >= 2018c"
 
 #: gui/library.c:9009
-#, fuzzy
 msgid "compatible with gretl < 2018c"
-msgstr "alte Art (kompatibel mit gretl < 2018c)"
+msgstr "kompatibel mit gretl < 2018c"
 
 #: gui/library.c:9571 gui/library.c:9714
 msgid "No commands to execute"
@@ -15375,13 +15345,12 @@ msgid "Ensure uniform sample size"
 msgstr "Einheitliche Stichprobengröße sicher stellen"
 
 #: gui/menustate.c:576
-#, fuzzy
 msgid "Display map..."
-msgstr "Landkarte anzeigen"
+msgstr "Landkarte anzeigen..."
 
 #: gui/menustate.c:577
 msgid "Write map as GeoJSON..."
-msgstr ""
+msgstr "Karte als GeoJSON schreiben..."
 
 #: gui/menustate.c:580
 msgid "Edit values"
@@ -16152,9 +16121,8 @@ msgid "Include levels equations (GMM-SYS)"
 msgstr "Beziehe Niveaugleichungen ein (GMM-SYS)"
 
 #: gui/selector.c:6162
-#, fuzzy
 msgid "DPD-style initial covariance matrix"
-msgstr "Determinante der Kovarianzmatrix"
+msgstr "DPD-artige anfängliche Kovarianzmatrix"
 
 #: gui/selector.c:6165
 msgid "Show zeros explicitly"
@@ -16481,9 +16449,8 @@ msgid "Select coefficients to sum"
 msgstr "Wähle zu summierende Variablen"
 
 #: gui/selector.c:7596
-#, fuzzy
 msgid "Q-Q plot: select one or two variables"
-msgstr "Wähle ein oder zwei Variablen aus"
+msgstr "Q-Q-Plot: wähle eine oder zwei Variablen aus"
 
 #: gui/selector.c:7598
 msgid "Confidence region: select two variables"
@@ -16494,9 +16461,8 @@ msgid "Select variables to display"
 msgstr "Wähle anzuzeigende Variablen"
 
 #: gui/selector.c:7602
-#, fuzzy
 msgid "Select variables for boxplot"
-msgstr "Wähle zu plottende Variablen"
+msgstr "Wähle Variablen für Boxplot"
 
 #: gui/selector.c:7605
 msgid "Select variables to plot"
@@ -18239,14 +18205,14 @@ msgid "Failed to execute x12arima"
 msgstr "Ausführung von X12arima schlug fehl"
 
 #: plugin/dpanel.c:1444
-#, fuzzy, c-format
+#, c-format
 msgid "Step 1 parameter estimates, using %d observations"
-msgstr "%s-Schätzungen mit den %d Beobachtungen %s-%s\n"
+msgstr "Stufe-1-Parameterschätzungen, mit %d Beobachtungen"
 
 #: plugin/dpanel.c:1458
-#, fuzzy, c-format
+#, c-format
 msgid "Sargan test: Chi-square(%d) = %g [%.4f]\n"
-msgstr "Teststatistik: chi-Quadrat(%d) = %d * %g/%g = %g\n"
+msgstr "Sargan-Test: chi-Quadrat(%d) = %g [%.4f]\n"
 
 #: plugin/eviews_import.c:349
 msgid "No variables were read\n"
