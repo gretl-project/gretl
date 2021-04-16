@@ -2564,6 +2564,18 @@ static void line_controls_init (plot_editor *ed, int i)
     ed->yaxiscombo[i] = NULL;
 }
 
+/* For the "lines" tab: we don't want this to take up
+   too much vertical space, so we need to provide for
+   vertical scrolling if the number of lines to be
+   handled exceeds some maximum. This max used to be
+   4, but it seems a smaller value is called for.
+*/
+
+static int want_vertical_scroller (plot_editor *ed)
+{
+    return ed->gui_nlines > 2;
+}
+
 static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 {
     GtkWidget *notebook = ed->notebook;
@@ -2604,7 +2616,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     label = gtk_label_new(_("Lines"));
     gtk_widget_show(label);
 
-    if (ed->gui_nlines > 4) {
+    if (want_vertical_scroller(ed)) {
 	page = scroller_page(vbox);
     } else {
 	page = vbox;
