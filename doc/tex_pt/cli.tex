@@ -1,55 +1,55 @@
 \chapter{O interface de linha de comandos (CLI)}
 \label{cli}
 
-A aplicaÁ„o \app{gretl} inclui o programa de linha de comandos \app{gretlcli}.
+A aplica√ß√£o \app{gretl} inclui o programa de linha de comandos \app{gretlcli}.
 Em Linux pode ser iniciado a partir de uma janela de terminal (xterm,
 rxvt, ou semelhante), ou de uma consola de texto.  No MS Windows pode ser 
 executado numa janela de linha de comandos (algumas vezes incorrectamente
 chamada de ``janela MS DOS'').
-\app{gretlcli} tem o seu prÛprio ficheiro de ajuda, que pode ser acedido
+\app{gretlcli} tem o seu pr√≥prio ficheiro de ajuda, que pode ser acedido
 escrevendo o comando ``help'' no interface CLI. Pode ser executado em modo de
 script, enviando os resultados directamente para um ficheiro
-(ver tambÈm o \GCR).
+(ver tamb√©m o \GCR).
     
-Se \app{gretlcli} tiver sido ligado no momento da compilaÁ„o ‡ biblioteca de
-programas \app{readline} (o que acontece sempre no caso da vers„o MS Windows;
-ver tambÈm ApÍndice~\ref{app-build}), È possÌvel repetir e editar as linhas
-de comandos, e tambÈm completar comandos automaticamente.  VocÍ pode usar as
+Se \app{gretlcli} tiver sido ligado no momento da compila√ß√£o √† biblioteca de
+programas \app{readline} (o que acontece sempre no caso da vers√£o MS Windows;
+ver tamb√©m Ap√™ndice~\ref{app-build}), √© poss√≠vel repetir e editar as linhas
+de comandos, e tamb√©m completar comandos automaticamente.  Voc√™ pode usar as
 teclas seta-Acima e seta-Abaixo para percorrer os comandos anteriormente
-executados.  Numa dada linha de comando, vocÍ pode usar as setas para mover o
-cursor, em conjunto com as combinaÁıes de teclas do editor Emacs.\footnote{Na realidade, as combinaÁıes de  teclas referidas abaixo s„o apenas as definidas por omiss„o; elas poder„o ser personalizadas por si.
+executados.  Numa dada linha de comando, voc√™ pode usar as setas para mover o
+cursor, em conjunto com as combina√ß√µes de teclas do editor Emacs.\footnote{Na realidade, as combina√ß√µes de  teclas referidas abaixo s√£o apenas as definidas por omiss√£o; elas poder√£o ser personalizadas por si.
   Ver o \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{manual
-    do readline}.} As mais comuns s„o:
+    do readline}.} As mais comuns s√£o:
 %    
 \begin{center}
   \begin{tabular}{cl}
-    \textit{CombinaÁ„o} & \multicolumn{1}{c}{\textit{Efeito}}\\
-    \verb+Ctrl-a+ & ir para o inÌcio da linha\\
+    \textit{Combina√ß√£o} & \multicolumn{1}{c}{\textit{Efeito}}\\
+    \verb+Ctrl-a+ & ir para o in√≠cio da linha\\
     \verb+Ctrl-e+ & ir para o fim da linha\\
-    \verb+Ctrl-d+ & apagar o caracter ‡ direita\\
+    \verb+Ctrl-d+ & apagar o caracter √† direita\\
   \end{tabular}
 \end{center}
 %
 onde ``\verb+Ctrl-a+'' significa premir a tecla ``\verb+a+'' ao mesmo tempo
-que a tecla ``\verb+Ctrl+'' È premida.  Assim, se vocÍ quiser alterar algo no
-inÌcio de um comando, vocÍ \emph{n„o} precisa de apagar caracter a caracter
-na linha toda.  Basta saltar para o inÌcio e acrescentar ou apagar caracteres.
-Se vocÍ escrever as primeiras letras de um comando e pressionar a tecla Tab, o
-sistema \app{readline} vai tentar completar o comando por vocÍ.  Se houver uma
-˙nica possibilidade, o comando È automaticamente completado.  Se houver mais
+que a tecla ``\verb+Ctrl+'' √© premida.  Assim, se voc√™ quiser alterar algo no
+in√≠cio de um comando, voc√™ \emph{n√£o} precisa de apagar caracter a caracter
+na linha toda.  Basta saltar para o in√≠cio e acrescentar ou apagar caracteres.
+Se voc√™ escrever as primeiras letras de um comando e pressionar a tecla Tab, o
+sistema \app{readline} vai tentar completar o comando por voc√™.  Se houver uma
+√∫nica possibilidade, o comando √© automaticamente completado.  Se houver mais
 que uma, pressionando Tab uma segunda vez faz aparecer uma lista.
 
-Provavelmente o modo mais produtivo para an·lises intensivas com o
-\app{gretlcli} È em modo de script (n„o-interactivo), no qual o
-programa lÍ e processa um ficheiro de script, e envia a saÌda
+Provavelmente o modo mais produtivo para an√°lises intensivas com o
+\app{gretlcli} √© em modo de script (n√£o-interactivo), no qual o
+programa l√™ e processa um ficheiro de script, e envia a sa√≠da
 para um ficheiro.  Por exemplo
 \begin{code}
 gretlcli -b ficheirodescript > ficheiroderesultados
 \end{code}
 
-O \textsl{ficheirodescript} È tratado como um argumento de programa; apenas o ficheiro de resultados requer redirecionamento (\verb|>|).  N„o esquecer a opÁ„o \texttt{-b}
-(\textit{batch}=lote), de outro modo o programa ficar· a aguardar comandos do
-utilizador apÛs a execuÁ„o do script (e se a saÌda estiver redirecionada, o programa aparentar· estar "pendurado").
+O \textsl{ficheirodescript} √© tratado como um argumento de programa; apenas o ficheiro de resultados requer redirecionamento (\verb|>|).  N√£o esquecer a op√ß√£o \texttt{-b}
+(\textit{batch}=lote), de outro modo o programa ficar√° a aguardar comandos do
+utilizador ap√≥s a execu√ß√£o do script (e se a sa√≠da estiver redirecionada, o programa aparentar√° estar "pendurado").
 
     
 %%% Local Variables: 
