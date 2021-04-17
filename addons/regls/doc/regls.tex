@@ -24,7 +24,7 @@
 \newcommand{\startappendices}{%
 \newcounter{appcount}
 \setcounter{appcount}{0}
-\renewcommand{\thesection}{\Alph{appcount}}}
+\renewcommand{\thesection}{Appendix \Alph{appcount}}}
 
 \newcommand{\myappendix}[1]{%
 \addtocounter{appcount}{1}
@@ -34,7 +34,7 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{regls: regularized least squares in gretl}
+\title{regls 0.3: regularized least squares for gretl}
 \author{Allin Cottrell}
 
 \begin{document}
@@ -700,9 +700,11 @@ series glmnet_pred (matrix *Rb, list X)
 \section{Change log}
 \label{sec:changes}
 
-Version 0.1, 2020-10-09: initial release. \\
+Version 0.3, 2021-04-17: replace some tables wih figures in the doc,
+for ease of comprehension of comparative experiments.\\
 Version 0.2, 2021-01-29: support a higher verbosity level for GUI use;
-improve printout for LASS0 coefficients, when applicable.
+improve printout for LASS0 coefficients, when applicable.\\
+Version 0.1, 2020-10-09: initial release.
 
 \begin{script}
   \caption{Usage of \texttt{regls\_multiprint}}
