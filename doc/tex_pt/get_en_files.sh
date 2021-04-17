@@ -6,6 +6,7 @@
 
 untranslated="
 calendar.tex
+complex_matrices.tex
 cmdtopics.tex
 funcbody.tex
 gretl-guide-a4.tex
@@ -15,18 +16,21 @@ gretlJulia.tex
 gretl-keys-a4.tex
 gretl-keys.tex
 gretl-lite.sty
+gretl-mpi-a4.tex
 gretl-mpi.tex
 gretlPython.tex
 gretl-ref-a4.tex
 gretl-ref.tex
 gretlStata.tex
-hansl-primer.tex
+gretl-svm.tex
+hansl-primer-a4.tex
 hp-bundles.tex
 hp-ctrlflow.tex
 hp-dataset.tex
 hp-estimate.tex
 hp-functions.tex
 hp-further.tex
+hp-greeks.tex
 hp-hello.tex
 hp-matrices.tex
 hp-numerical.tex
@@ -35,6 +39,9 @@ hp-reference.tex
 hp-series.tex
 join.tex
 lucidabr.sty
+midas-gretl.tex
+midas.tex
+mixfreq.tex
 nonparam.tex
 numerical.tex
 optshort.tex
@@ -42,6 +49,7 @@ pkgbook-a4.tex
 pkgbook.tex
 realtime.tex
 refbody.tex
+string_series.tex
 system.tex
 tsfilter.tex
 appendices.tex 
@@ -76,6 +84,7 @@ quantreg.tex
 robust_vcv.tex 
 sampling.tex 
 starting.tex 
+tdisagg.tex
 timeseries.tex 
 trouble.tex 
 var.tex 
