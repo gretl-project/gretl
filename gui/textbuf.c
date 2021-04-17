@@ -799,7 +799,8 @@ static void set_source_tabs (GtkWidget *w, int cw)
 
 /* Special keystrokes in native script window: Ctrl-Return sends the
    current line for execution; Ctrl-R sends the whole script for
-   execution (i.e. is the keyboard equivalent of the "execute" icon).
+   execution (keyboard equivalent of the "execute" button);
+   Ctrl-I does auto-indentation.
 */
 
 static gint
