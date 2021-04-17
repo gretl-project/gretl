@@ -6037,48 +6037,62 @@
 
 <command name="gui-htest" section="Tests" context="gui"
 	 label="Calcolatore per le statistiche test">
-
+  
   <description>
     <para>
-      Il calcolatore dei test di Gretl calcola statistiche test e p-value
-      per molti tipi di test di ipotesi su una o due popolazioni.
-      Per utilizzarlo, occorre indicare le statistiche campionarie derivate
-      da uno o due campioni, a seconda del test scelto. Queste possono essere
-      indicate esplicitamente in forma numerica, oppure, se si ha un file di
-      dati aperto, è possibile far calcolare a gretl le statistiche test per
-      una o più variabili selezionate dal dataset (nel caso delle medie e
+      Il calcolatore dei test di Gretl calcola statistiche test e
+      p-value per molti tipi di test di ipotesi su una o due
+      popolazioni.  Per utilizzarlo, occorre indicare le statistiche
+      campionarie derivate da uno o due campioni, a seconda del test
+      scelto. Queste possono essere indicate esplicitamente in forma
+      numerica, oppure, se si ha un file di dati aperto, è possibile
+      far calcolare a gretl le statistiche test per una o più
+      variabili selezionate dal dataset (nel caso delle medie e
       varianze, ma non nel caso delle proporzioni).
     </para>
     <para>
-      Per eseguire un test indicando una variabile del dataset, occorre per
-      prima cosa attivare questa opzione selezionando la casella <quote>Usa
-      variabile dal dataset</quote>, e poi scegliere la variabile nella lista.
-      Appena si sceglie una variabile, i valori delle statistiche rilevanti
-      sono automaticamente inseriti nelle caselle sottostanti.
+      Per eseguire un test indicando una variabile del dataset,
+      occorre per prima cosa attivare questa opzione selezionando la
+      casella <quote>Usa variabile dal dataset</quote>, e poi
+      scegliere la variabile nella lista.  Appena si sceglie una
+      variabile, i valori delle statistiche rilevanti sono
+      automaticamente inseriti nelle caselle sottostanti.
     </para>
     <para>
       Oltre che selezionare semplicemente una variabile, è possibile
-      specificare un sotto-campione. Ad esempio, si ipotizzi di avere dei dati
-      sui salari in una variabile chiamata <lit>wage</lit> e una variabile dummy
-      chiamata <lit>gender</lit>, pari a 1 per gli uomini e 0 per le donne (o
-      viceversa). Quindi, nel test per la differenza fra le medie, è possibile
-      selezionare <lit>wage</lit> in entrambi i campi, ma aggiungendo nel campo
-      superiore <lit>(gender=0)</lit> e nel campo inferiore <lit>(gender=1)</lit> si otterrà
-      un test per la differenza tra il reddito medio degli uomini e delle
-      donne. Quando si specifica un vincolo che identifica un sotto-campione,
-      occorre premere il tasto Invio perché le statistiche campionarie siano
-      calcolate.
+      specificare un sotto-campione. Ad esempio, si ipotizzi di avere
+      dei dati sui salari in una variabile chiamata <lit>wage</lit> e
+      una variabile dummy chiamata <lit>gender</lit>, pari a 1 per gli
+      uomini e 0 per le donne (o viceversa). Quindi, nel test per la
+      differenza fra le medie, è possibile selezionare <lit>wage</lit>
+      in entrambi i campi, ma aggiungendo nel campo superiore
+      <lit>(gender=0)</lit> e nel campo inferiore
+      <lit>(gender=1)</lit> si otterrà un test per la differenza tra
+      il reddito medio degli uomini e delle donne. Quando si specifica
+      un vincolo che identifica un sotto-campione, occorre premere il
+      tasto Invio perché le statistiche campionarie siano calcolate.
     </para>
     <para>
       Il vincolo che definisce il sotto-campione deve essere indicato tra
-      parentesi e in generale prende la forma "variabile operatore valore",
-      dove "variabile" è il nome di una variabile nel dataset attuale,
-      "valore" è un valore numerico e "operatore" è un operatore di confronto,
-      da scegliere tra =, !=, &lt;, &gt;, &lt;= o &gt;= (rispettivamente uguale
-      diverso, minore, maggiore, minore o uguale, maggiore o uguale). Gli
-      spazi prima e dopo l'operatore sono opzionali.
+      parentesi e in generale prende la forma "variabile operatore
+      valore", come in 
     </para>
-
+    <code>
+      var2 op val
+    </code>
+    <para>
+      dove <lit>var2</lit> è il nome di una variabile nel dataset
+      attuale, <lit>val</lit> è un valore numerico e <lit>val</lit>
+      è un operatore di confronto, da scegliere tra
+    </para> 
+    <code>
+      ==  !=   &lt;  &gt;  &lt;  &gt;
+    </code>
+    <para>
+      (rispettivamente: uguale, diverso, minore, maggiore, minore o
+      uguale, maggiore o uguale). Gli spazi prima e dopo
+      l'operatore sono opzionali.
+    </para>
   </description>
 </command>
 
@@ -10130,61 +10144,66 @@ del comando <cmdref targ="set"/>.
     </examples>
   </usage>
 
-  <description>
-    <para context="gui">
+  <description context="gui">
+    <para>
       Questo comando stima di nuovo il modello dato, dopo aver omesso
-      le variabili specificate o dopo aver omesso sequenzialmente le variabili
-      non significative, se è stata selezionata l'apposita casella.
-      Oltre ai consueti risultati della stima del modello, viene fornita una
-      statistica test per la significatività congiunta delle variabili omesse:
-      l'ipotesi nulla è che i coefficienti di tutte le variabili omesse siano
+      le variabili specificate.  Oltre ai consueti risultati della
+      stima del modello, viene fornita una statistica test per la
+      significatività congiunta delle variabili omesse: l'ipotesi
+      nulla è che i coefficienti di tutte le variabili omesse siano
       pari a zero.
     </para>
+      <para>
+	Selezionando l'opzione <quote>Wald test</quote>, viene
+	valutata la significatività congiunta delle variabili
+	specificate per mezzo di un test di Wald e la stima vincolata
+	non viene eseguita.
+      </para>
     <para context="gui">
-      Se il modello originale è stato stimato con OLS, la statistica test è un
-      valore <math>F</math>, basato sulle somme dei quadrati dei residui
-      del modello vincolato e di quello originale. Per stimatori diversi da OLS,
-      o se si usa l'opzione Wald, la statistica è un valore chi-quadro di Wald
-      asintotico basato sulla matrice di covarianza del modello originale.
+      Selezionando l'opzione <quote>Eliminazione sequenziale</quote>
+      (non sempre disponibile) il programma si comporta come segue: ad
+      ogni passo viene omessa la variabile con il p-value più alto,
+      fino a che tutte le variabili restanti hanno un p-value
+      inferiore a una certa soglia. La soglia predefinita è del 10 per
+      cento (con due code), che può essere modificata usando
+      l'apposito pulsante.  Per default, questo processo opera su
+      tutte le variabili del modello (esclusa la costante). Se si
+      vuole limitare il numero di variabili sul quale far agire il
+      comando allora bisogna spuntare la casella chiamata <quote>Testa
+      solo le variabili selezionate</quote> e fare la selezione.
     </para>
-    <para context="gui">
-      L'eliminazione sequenziale funziona nel modo seguente: ad ogni passo
-      viene omessa la variabile con il p-value più alto, fino a che tutte le
-      variabili restanti hanno un p-value inferiore a una certa soglia. La
-      soglia predefinita è del 10 per cento (con due code), che può essere
-      modificata usando l'apposito pulsante.
-      Per default, questo processo opera su tutte le variabili del modello
-      (esclusa la costante). Se si vuole limitare il numero di variabili sul
-      quale far agire il comando allora bisogna spuntare la casella chiamata
-      <quote>Testa solo le variabili selezionate</quote> e fare la selezione.
+  </description>
+
+  <description context="cli">
+    <para>
+      Questo comando deve seguire un comando di stima. Nella sua forma
+      principale, questo comando calcola un test di Wald per la
+      significatività congiunta delle variabili presenti nella
+      <repl>lista variabili</repl>, che deve essere un sottoinsieme
+      delle variabili indipendenti presenti nell'ultimo modello
+      stimato. I risultati possono poi venire richiamati attraverso
+      l'uso degli accessori <fncref targ="$test"/> e <fncref
+      targ="$pvalue"/>.
     </para>
-    <para context="cli">
-      Questo comando deve seguire un comando di stima. Questo comando
-      calcola un test di Wald per la significatività congiunta delle
-      variabili presenti nella <repl>lista variabili</repl>, che deve
-      essere un sottoinsieme delle variabili indipendenti presenti
-      nell'ultimo modello stimato. I risultati possono poi venire
-      richiamati attraverso l'uso degli accessori <fncref
-      targ="$test"/> e <fncref targ="$pvalue"/>.
-    </para>
-    <para context="cli">
-      Per default, il modello ristretto che viene stimato va a
-      rimpiazzare il modello originale come <quote>modello corrente</quote>
-      con lo scopo, ad esempio, di richiamare i residui come <lit>$uhat</lit>
-      o di eseguire dei test. Questo comportamento può essere soppresso
+    <para>
+      A meno che non vengano rimossi tutti i regressori, il modello
+      ristretto che viene stimato va a rimpiazzare il modello
+      originale come <quote>modello corrente</quote> con lo scopo, ad
+      esempio, di richiamare i residui come <lit>$uhat</lit> o di
+      eseguire dei test. Questo comportamento può essere soppresso
       attraverso l'uso dell'opzione <opt>test-only</opt>.
     </para>
-    <para context="cli">
+    <para>
       Per default, viene usata la forma <math>F</math> del test di
       Wald; se invece si vuole un test chi-quadro, si usi l'opzione
       <opt>chi-square</opt>.
     </para>
-    <para context="cli">
+    <para>
       Se il modello ristretto viene sia stimato che stampato l'utilizzo
       dell'opzione <opt>vcv</opt> ha l'effetto di stampare anche la matrice
       di covarianze, altrimenti se non usata l'opzione viene ignorata.
     </para>
-    <para context="cli">
+    <para>
       Alternativamente, se l'opzione <opt>auto</opt> è abilitata,
       l'eliminazione sequenziale viene eseguita in questo modo: ad
       ogni step le variabili con p-value più alto vengono omesse
@@ -10199,17 +10218,6 @@ del comando <cmdref targ="set"/>.
       altrimenti tutte le variabili saranno coinvolte e considerate
       come possibili candidate all'omissione.  Si noti che le opzioni
       <opt>auto</opt> e <opt>test-only</opt> sono incompatibili.
-    </para>
-    <para context="cli">
-      Se il modello originale è stato stimato con i minimi quadrati a due
-      stadi, può sorgere un'ambiguità: le nuove variabili vanno omesse come
-      regressori, come strumenti o con entrambe le funzioni? Per risolvere
-      l'ambiguità, nella modalità predefinita le variabili sono omesse
-      dall'elenco dei regressori, se si usa l'opzione <opt>inst</opt> sono
-      omesse dall'elenco degli strumenti, mentre se si usa l'opzione
-      <opt>both</opt> sono rimosse totalmente dal modello. Queste due opzioni
-      sono incompatibili con l'opzione <opt>wald</opt>; se uno o più strumenti
-      vengono omessi, il modello va ri-stimato.
     </para>
 </description>
 
@@ -16121,6 +16129,10 @@ qual caso viene usato QML.
 	  <flag>--rc</flag>
 	  <effect>costante vincolata</effect>
 	</option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>costante non vincolata</effect>
+        </option>
 	<option>
 	  <flag>--crt</flag>
 	  <effect>costante e trend vincolato</effect>
@@ -16133,6 +16145,14 @@ qual caso viene usato QML.
 	  <flag>--seasonals</flag>
 	  <effect>include dummy stagionali centrate</effect>
 	</option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>omette l'output delle singole equazioni</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
 	<option>
 	  <flag>--impulse-responses</flag>
 	  <effect>mostra impulso-risposta</effect>
@@ -16199,7 +16219,6 @@ qual caso viene usato QML.
 	significato di questi casi e i criteri per scegliere tra di essi sono
 	spiegati nella <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	Le liste opzionali <repl>xlist</repl> e <repl>rxlist</repl>
 	permottoni di specificare delle variabili esogene che entrano
@@ -16208,7 +16227,6 @@ qual caso viene usato QML.
 	sono separate da <repl>ylist</repl> e fra loro tramite punto e
 	virgola.
       </para>
-
       <para context="gui">
 	Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
 	il vettore delle variabili endogene, in livelli. L'inclusione di trend
