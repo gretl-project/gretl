@@ -175,6 +175,8 @@ struct VCVInfo_ {
                              c == TOBIT || \
                              c == BIPROBIT)
 
+#define EQN_SYSTEM_COMMAND(c) (c == VAR || c == VECM || c == SYSTEM)
+
 /* model where the specification is not based on a list
    of variables */
 #define NONLIST_MODEL(c) (c == NLS || c == MLE || c == GMM || c == MIDASREG)

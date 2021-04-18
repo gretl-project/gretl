@@ -3720,13 +3720,21 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 static int maybe_add_model_pkg (gui_package_info *gpi,
 				windata_t *vwin)
 {
-    MODEL *pmod = vwin->data;
-    int dreq, modelreq, minver = 0;
+    int ci, dreq, modelreq, minver = 0;
     gchar *precheck = NULL;
     fnpkg *pkg;
     int err = 0;
 
-    if (gpi->modelreq > 0 && pmod->ci != gpi->modelreq) {
+    if (vwin->role == VIEW_MODEL) {
+	MODEL *pmod = vwin->data;
+
+	ci = pmod->ci;
+    } else {
+	/* system: VAR, VECM or SYSTEM */
+	ci = vwin->role;
+    }
+
+    if (gpi->modelreq > 0 && ci != gpi->modelreq) {
 	return 0;
     }
 
@@ -3757,7 +3765,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	int skip = 0;
 
 	if (modelreq > 0) {
-	    skip = pmod->ci != modelreq;
+	    skip = ci != modelreq;
 	}
 	if (!skip) {
 	    skip = check_function_needs(dataset, dreq, minver);

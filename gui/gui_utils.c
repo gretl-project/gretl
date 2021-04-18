@@ -70,7 +70,7 @@
 #endif
 
 static void set_up_model_view_menu (windata_t *vwin);
-static void add_system_menu_items (windata_t *vwin, int vecm);
+static void add_system_menu_items (windata_t *vwin, int role);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 			      gpointer data);
@@ -4918,6 +4918,8 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    vwin_menu_add_item(vwin, save, &item);
 	}
     }
+
+    maybe_add_packages_to_model_menus(vwin);
 
     if (latex_is_ok()) {
 	int n = G_N_ELEMENTS(sys_tex_items);
