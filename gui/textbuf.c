@@ -3384,12 +3384,12 @@ static int get_word_and_cont (const char *s, char *word, int *contd)
 {
     /* don't move onto next line */
     if (*s != '\n' && *s != '\r') {
-	if (contd != NULL) {
-	    *contd = line_continues(s);
-	}
 	s += strspn(s, " \t");
 	if (sscanf(s, "%*s <- %8s", word) != 1) {
 	    sscanf(s, "%8s", word);
+	}
+	if (*word != '#' && contd != NULL) {
+	    *contd = line_continues(s);
 	}
     }
 
