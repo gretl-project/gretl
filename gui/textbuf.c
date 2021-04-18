@@ -799,7 +799,8 @@ static void set_source_tabs (GtkWidget *w, int cw)
 
 /* Special keystrokes in native script window: Ctrl-Return sends the
    current line for execution; Ctrl-R sends the whole script for
-   execution (i.e. is the keyboard equivalent of the "execute" icon).
+   execution (keyboard equivalent of the "execute" button);
+   Ctrl-I does auto-indentation.
 */
 
 static gint
@@ -3383,12 +3384,12 @@ static int get_word_and_cont (const char *s, char *word, int *contd)
 {
     /* don't move onto next line */
     if (*s != '\n' && *s != '\r') {
-	if (contd != NULL) {
-	    *contd = line_continues(s);
-	}
 	s += strspn(s, " \t");
 	if (sscanf(s, "%*s <- %8s", word) != 1) {
 	    sscanf(s, "%8s", word);
+	}
+	if (*word != '#' && contd != NULL) {
+	    *contd = line_continues(s);
 	}
     }
 

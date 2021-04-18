@@ -1,8 +1,9 @@
 \documentclass[oneside]{book}
 \usepackage{url,verbatim,fancyvrb,appendix}
 \usepackage{pifont}
-\usepackage[latin1]{inputenc}
+\usepackage[utf8]{inputenc}
 \usepackage[pdftex]{graphicx}
+\usepackage{tikz}
 \usepackage[portuguese]{babel}
 \usepackage[authoryear]{natbib}
 \usepackage{color,gretl}
@@ -14,7 +15,7 @@
 \allowdisplaybreaks[1]
 
 %% \pdfimageresolution=120
-\hypersetup{pdftitle={Manual de Utilização do Gretl},
+\hypersetup{pdftitle={Manual de UtilizaÃ§Ã£o do Gretl},
             pdfsubject={GNU Regression, Econometrics and Time Series Library},
             pdfauthor={Allin Cottrell e Jack Lucchetti},
             colorlinks=true,
@@ -26,11 +27,12 @@
             plainpages=false
 }
 
+
 \begin{document}
 
 \renewcommand{\scriptname}{Exemplo}
 \renewcommand{\GCR}{\textit{Manual dos Comandos do Gretl}}
-\renewcommand{\GUG}{\textit{Manual de Utilização do Gretl}}
+\renewcommand{\GUG}{\textit{Manual de UtilizaÃ§Ã£o do Gretl}}
 
 \VerbatimFootnotes
 
@@ -43,13 +45,13 @@
 \thispagestyle{empty}
 
 \begin{center}
-\pdfbookmark[1]{Manual de Utilização do Gretl}{titlepage}
+\pdfbookmark[1]{Manual de UtilizaÃ§Ã£o do Gretl}{titlepage}
 
-\gtitle{Manual de Utilização do Gretl}
+\gtitle{Manual de UtilizaÃ§Ã£o do Gretl}
 
 \gsubtitle{Gnu Regression, Econometrics and Time-series Library}
 
-{\large \sffamily 
+{\large \sffamily
 Allin Cottrell\\
 Department of Economics\\
 Wake Forest University\\
@@ -57,11 +59,11 @@ Wake Forest University\\
 \vspace{20pt}
 Riccardo ``Jack'' Lucchetti\\
 Dipartimento di Economia\\
-Università Politecnica delle Marche\\
+UniversitÃ  Politecnica delle Marche\\
 
 \vspace{20pt}
-Hélio Guilherme\\
-Tradução Portuguesa\\
+HÃ©lio Guilherme\\
+TraduÃ§Ã£o Portuguesa\\
 \vspace{20pt}
 \input date
 }
@@ -73,7 +75,7 @@ Tradução Portuguesa\\
 
 \thispagestyle{empty}
 
-\pdfbookmark[1]{Licença}{license}
+\pdfbookmark[1]{LicenÃ§a}{license}
 
 \vspace*{2in}
 
@@ -83,15 +85,15 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 (see \url{http://www.gnu.org/licenses/fdl.html}).\\
 
 \vspace{20pt}
-A cópia, distribuição e/ou modificação deste documento é permitida de
-acordo com os termos da \emph{Licença de Documentação Livre GNU},
-Versão 1.1 ou qualquer versão posterior publicada pela Free Software
+A cÃ³pia, distribuiÃ§Ã£o e/ou modificaÃ§Ã£o deste documento Ã© permitida de
+acordo com os termos da \emph{LicenÃ§a de DocumentaÃ§Ã£o Livre GNU},
+VersÃ£o 1.1 ou qualquer versÃ£o posterior publicada pela Free Software
 Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 
 \clearpage
 
 %% end license page, start table of contents
-\pdfbookmark[1]{Conteúdo}{contents}
+\pdfbookmark[1]{ConteÃºdo}{contents}
 
 \pagenumbering{roman}
 \pagestyle{headings}
@@ -118,10 +120,12 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \guidechap{looping}
 \guidechap{functions}
 \guidechap{persistent}
+\guidechap{string_series}
 \guidechap{matrices}
+\guidechap{calendar}
 \guidechap{cheatsheet}
 
-\part{Métodos econométricos}
+\part{MÃ©todos economÃ©tricos}
 
 \guidechap{robust_vcv}
 \guidechap{panel}
@@ -130,7 +134,7 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \guidechap{mle}
 \guidechap{gmm}
 \guidechap{criteria}
-%% \guidechap{df}
+\guidechap{df}
 \guidechap{tsfilter}
 \guidechap{timeseries}
 \guidechap{var}
@@ -143,7 +147,7 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \guidechap{quantreg}
 \guidechap{nonparam}
 
-\part{Detalhes técnicos}
+\part{Detalhes tÃ©cnicos}
 
 \guidechap{gretltex}
 \guidechap{gretlR}
@@ -155,7 +159,7 @@ Foundation (ver em \url{http://www.gnu.org/licenses/fdl.html}).
 \guidechap{trouble}
 \guidechap{cli}
 
-\part{Apêndices}
+\part{ApÃªndices}
 
 \begin{appendices}
 \include{appendices}

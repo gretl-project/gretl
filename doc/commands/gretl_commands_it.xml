@@ -176,14 +176,16 @@
     </usage>
 
     <description>
-      <para context="gui">Questo comando richiede un ordine di ritardo intero;
-      se si indica un ordine pari a zero, viene eseguito un test
-      Dickey&ndash;Fuller standard (non aumentato). Il comando calcola una
-      serie di test Dickey&ndash;Fuller sulla variabile selezionata, assumendo
-      come ipotesi nulla che la variabile abbia una radice unitaria. Se si usa
-      l'opzione di differenziazione, i test vengono condotti sulla differenza
-      prima della variabile e la discussione che segue va riferita a questa
-      trasformazione della variabile.
+      <para context="gui">
+	Questo comando richiede un ordine di ritardo intero; se si
+	indica un ordine pari a zero, viene eseguito un test
+	Dickey&ndash;Fuller standard (non aumentato). Il comando
+	calcola una serie di test Dickey&ndash;Fuller sulla variabile
+	selezionata, assumendo come ipotesi nulla che la variabile
+	abbia una radice unitaria. Se si usa l'opzione di
+	differenziazione, i test vengono condotti sulla differenza
+	prima della variabile e la discussione che segue va riferita a
+	questa trasformazione della variabile.
       </para>
       
       <para context="cli">
@@ -296,23 +298,6 @@
         ricavato applicando la seguente procedura di test
         <quote>all'indietro</quote>, usando il criterio scelto tramite
         la tendina associata.
-      </para>
-
-      <para context="cli">
-        Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
-        regressori di ognuna delle regressioni calcolate per il test
-        saranno aggiunti <math>k</math> ritardi della variabile
-        dipendente. Se l'ordine è &minus;1, <math>k</math> è impostato
-        secondo la raccomandazione di <cite key="schwert89">Schwert
-        (1989)</cite>, ossia 12(<math>T</math>/100)<sup>0.25</sup>,
-        dove <math>T</math> è l'ampiezza campionaria. In tutti e due i
-        casi, comunque, se si usa l'opzione <opt>test-down</opt>,
-        <math>k</math> viene interpretato come ritardo massimo, mentre
-        l'ordine di ritardo effettivamente usato viene ottenuto
-        testando "all'indietro".  Il criterio per effettuare il test
-        all'indietro può essere selezionato usando il parametro
-        opzionale e deve essere uno fra <lit>AIC</lit> (default),
-        <lit>BIC</lit> o <lit>tstat</lit>.  
       </para>
 
       <para context="cli">
@@ -1723,8 +1708,8 @@
 
   </command>
 
-  <command name="break" section="Programming" label="Esce da un ciclo" context="cli">
-
+  <command name="break" section="Programming"
+	   label="Esce da un ciclo" context="cli">
     <description>
       <para>
 	Esce da un ciclo. Questo comando può essere usato solo
@@ -1733,9 +1718,7 @@
 	cicli nidificati). Si veda anche il comando <cmdref
 	targ="loop"/>.
       </para> 
-
     </description>
-
   </command>
 
   <command name="bwfilter" section="Transformations" context="gui"
@@ -6054,48 +6037,62 @@
 
 <command name="gui-htest" section="Tests" context="gui"
 	 label="Calcolatore per le statistiche test">
-
+  
   <description>
     <para>
-      Il calcolatore dei test di Gretl calcola statistiche test e p-value
-      per molti tipi di test di ipotesi su una o due popolazioni.
-      Per utilizzarlo, occorre indicare le statistiche campionarie derivate
-      da uno o due campioni, a seconda del test scelto. Queste possono essere
-      indicate esplicitamente in forma numerica, oppure, se si ha un file di
-      dati aperto, è possibile far calcolare a gretl le statistiche test per
-      una o più variabili selezionate dal dataset (nel caso delle medie e
+      Il calcolatore dei test di Gretl calcola statistiche test e
+      p-value per molti tipi di test di ipotesi su una o due
+      popolazioni.  Per utilizzarlo, occorre indicare le statistiche
+      campionarie derivate da uno o due campioni, a seconda del test
+      scelto. Queste possono essere indicate esplicitamente in forma
+      numerica, oppure, se si ha un file di dati aperto, è possibile
+      far calcolare a gretl le statistiche test per una o più
+      variabili selezionate dal dataset (nel caso delle medie e
       varianze, ma non nel caso delle proporzioni).
     </para>
     <para>
-      Per eseguire un test indicando una variabile del dataset, occorre per
-      prima cosa attivare questa opzione selezionando la casella <quote>Usa
-      variabile dal dataset</quote>, e poi scegliere la variabile nella lista.
-      Appena si sceglie una variabile, i valori delle statistiche rilevanti
-      sono automaticamente inseriti nelle caselle sottostanti.
+      Per eseguire un test indicando una variabile del dataset,
+      occorre per prima cosa attivare questa opzione selezionando la
+      casella <quote>Usa variabile dal dataset</quote>, e poi
+      scegliere la variabile nella lista.  Appena si sceglie una
+      variabile, i valori delle statistiche rilevanti sono
+      automaticamente inseriti nelle caselle sottostanti.
     </para>
     <para>
       Oltre che selezionare semplicemente una variabile, è possibile
-      specificare un sotto-campione. Ad esempio, si ipotizzi di avere dei dati
-      sui salari in una variabile chiamata <lit>wage</lit> e una variabile dummy
-      chiamata <lit>gender</lit>, pari a 1 per gli uomini e 0 per le donne (o
-      viceversa). Quindi, nel test per la differenza fra le medie, è possibile
-      selezionare <lit>wage</lit> in entrambi i campi, ma aggiungendo nel campo
-      superiore <lit>(gender=0)</lit> e nel campo inferiore <lit>(gender=1)</lit> si otterrà
-      un test per la differenza tra il reddito medio degli uomini e delle
-      donne. Quando si specifica un vincolo che identifica un sotto-campione,
-      occorre premere il tasto Invio perché le statistiche campionarie siano
-      calcolate.
+      specificare un sotto-campione. Ad esempio, si ipotizzi di avere
+      dei dati sui salari in una variabile chiamata <lit>wage</lit> e
+      una variabile dummy chiamata <lit>gender</lit>, pari a 1 per gli
+      uomini e 0 per le donne (o viceversa). Quindi, nel test per la
+      differenza fra le medie, è possibile selezionare <lit>wage</lit>
+      in entrambi i campi, ma aggiungendo nel campo superiore
+      <lit>(gender=0)</lit> e nel campo inferiore
+      <lit>(gender=1)</lit> si otterrà un test per la differenza tra
+      il reddito medio degli uomini e delle donne. Quando si specifica
+      un vincolo che identifica un sotto-campione, occorre premere il
+      tasto Invio perché le statistiche campionarie siano calcolate.
     </para>
     <para>
       Il vincolo che definisce il sotto-campione deve essere indicato tra
-      parentesi e in generale prende la forma "variabile operatore valore",
-      dove "variabile" è il nome di una variabile nel dataset attuale,
-      "valore" è un valore numerico e "operatore" è un operatore di confronto,
-      da scegliere tra =, !=, &lt;, &gt;, &lt;= o &gt;= (rispettivamente uguale
-      diverso, minore, maggiore, minore o uguale, maggiore o uguale). Gli
-      spazi prima e dopo l'operatore sono opzionali.
+      parentesi e in generale prende la forma "variabile operatore
+      valore", come in 
     </para>
-
+    <code>
+      var2 op val
+    </code>
+    <para>
+      dove <lit>var2</lit> è il nome di una variabile nel dataset
+      attuale, <lit>val</lit> è un valore numerico e <lit>val</lit>
+      è un operatore di confronto, da scegliere tra
+    </para> 
+    <code>
+      ==  !=   &lt;  &gt;  &lt;  &gt;
+    </code>
+    <para>
+      (rispettivamente: uguale, diverso, minore, maggiore, minore o
+      uguale, maggiore o uguale). Gli spazi prima e dopo
+      l'operatore sono opzionali.
+    </para>
   </description>
 </command>
 
@@ -10147,61 +10144,66 @@ del comando <cmdref targ="set"/>.
     </examples>
   </usage>
 
-  <description>
-    <para context="gui">
+  <description context="gui">
+    <para>
       Questo comando stima di nuovo il modello dato, dopo aver omesso
-      le variabili specificate o dopo aver omesso sequenzialmente le variabili
-      non significative, se è stata selezionata l'apposita casella.
-      Oltre ai consueti risultati della stima del modello, viene fornita una
-      statistica test per la significatività congiunta delle variabili omesse:
-      l'ipotesi nulla è che i coefficienti di tutte le variabili omesse siano
+      le variabili specificate.  Oltre ai consueti risultati della
+      stima del modello, viene fornita una statistica test per la
+      significatività congiunta delle variabili omesse: l'ipotesi
+      nulla è che i coefficienti di tutte le variabili omesse siano
       pari a zero.
     </para>
+      <para>
+	Selezionando l'opzione <quote>Wald test</quote>, viene
+	valutata la significatività congiunta delle variabili
+	specificate per mezzo di un test di Wald e la stima vincolata
+	non viene eseguita.
+      </para>
     <para context="gui">
-      Se il modello originale è stato stimato con OLS, la statistica test è un
-      valore <math>F</math>, basato sulle somme dei quadrati dei residui
-      del modello vincolato e di quello originale. Per stimatori diversi da OLS,
-      o se si usa l'opzione Wald, la statistica è un valore chi-quadro di Wald
-      asintotico basato sulla matrice di covarianza del modello originale.
+      Selezionando l'opzione <quote>Eliminazione sequenziale</quote>
+      (non sempre disponibile) il programma si comporta come segue: ad
+      ogni passo viene omessa la variabile con il p-value più alto,
+      fino a che tutte le variabili restanti hanno un p-value
+      inferiore a una certa soglia. La soglia predefinita è del 10 per
+      cento (con due code), che può essere modificata usando
+      l'apposito pulsante.  Per default, questo processo opera su
+      tutte le variabili del modello (esclusa la costante). Se si
+      vuole limitare il numero di variabili sul quale far agire il
+      comando allora bisogna spuntare la casella chiamata <quote>Testa
+      solo le variabili selezionate</quote> e fare la selezione.
     </para>
-    <para context="gui">
-      L'eliminazione sequenziale funziona nel modo seguente: ad ogni passo
-      viene omessa la variabile con il p-value più alto, fino a che tutte le
-      variabili restanti hanno un p-value inferiore a una certa soglia. La
-      soglia predefinita è del 10 per cento (con due code), che può essere
-      modificata usando l'apposito pulsante.
-      Per default, questo processo opera su tutte le variabili del modello
-      (esclusa la costante). Se si vuole limitare il numero di variabili sul
-      quale far agire il comando allora bisogna spuntare la casella chiamata
-      <quote>Testa solo le variabili selezionate</quote> e fare la selezione.
+  </description>
+
+  <description context="cli">
+    <para>
+      Questo comando deve seguire un comando di stima. Nella sua forma
+      principale, questo comando calcola un test di Wald per la
+      significatività congiunta delle variabili presenti nella
+      <repl>lista variabili</repl>, che deve essere un sottoinsieme
+      delle variabili indipendenti presenti nell'ultimo modello
+      stimato. I risultati possono poi venire richiamati attraverso
+      l'uso degli accessori <fncref targ="$test"/> e <fncref
+      targ="$pvalue"/>.
     </para>
-    <para context="cli">
-      Questo comando deve seguire un comando di stima. Questo comando
-      calcola un test di Wald per la significatività congiunta delle
-      variabili presenti nella <repl>lista variabili</repl>, che deve
-      essere un sottoinsieme delle variabili indipendenti presenti
-      nell'ultimo modello stimato. I risultati possono poi venire
-      richiamati attraverso l'uso degli accessori <fncref
-      targ="$test"/> e <fncref targ="$pvalue"/>.
-    </para>
-    <para context="cli">
-      Per default, il modello ristretto che viene stimato va a
-      rimpiazzare il modello originale come <quote>modello corrente</quote>
-      con lo scopo, ad esempio, di richiamare i residui come <lit>$uhat</lit>
-      o di eseguire dei test. Questo comportamento può essere soppresso
+    <para>
+      A meno che non vengano rimossi tutti i regressori, il modello
+      ristretto che viene stimato va a rimpiazzare il modello
+      originale come <quote>modello corrente</quote> con lo scopo, ad
+      esempio, di richiamare i residui come <lit>$uhat</lit> o di
+      eseguire dei test. Questo comportamento può essere soppresso
       attraverso l'uso dell'opzione <opt>test-only</opt>.
     </para>
-    <para context="cli">
+    <para>
       Per default, viene usata la forma <math>F</math> del test di
       Wald; se invece si vuole un test chi-quadro, si usi l'opzione
       <opt>chi-square</opt>.
     </para>
-    <para context="cli">
+    <para>
       Se il modello ristretto viene sia stimato che stampato l'utilizzo
       dell'opzione <opt>vcv</opt> ha l'effetto di stampare anche la matrice
       di covarianze, altrimenti se non usata l'opzione viene ignorata.
     </para>
-    <para context="cli">
+    <para>
       Alternativamente, se l'opzione <opt>auto</opt> è abilitata,
       l'eliminazione sequenziale viene eseguita in questo modo: ad
       ogni step le variabili con p-value più alto vengono omesse
@@ -10216,17 +10218,6 @@ del comando <cmdref targ="set"/>.
       altrimenti tutte le variabili saranno coinvolte e considerate
       come possibili candidate all'omissione.  Si noti che le opzioni
       <opt>auto</opt> e <opt>test-only</opt> sono incompatibili.
-    </para>
-    <para context="cli">
-      Se il modello originale è stato stimato con i minimi quadrati a due
-      stadi, può sorgere un'ambiguità: le nuove variabili vanno omesse come
-      regressori, come strumenti o con entrambe le funzioni? Per risolvere
-      l'ambiguità, nella modalità predefinita le variabili sono omesse
-      dall'elenco dei regressori, se si usa l'opzione <opt>inst</opt> sono
-      omesse dall'elenco degli strumenti, mentre se si usa l'opzione
-      <opt>both</opt> sono rimosse totalmente dal modello. Queste due opzioni
-      sono incompatibili con l'opzione <opt>wald</opt>; se uno o più strumenti
-      vengono omessi, il modello va ri-stimato.
     </para>
 </description>
 
@@ -10529,8 +10520,9 @@ del comando <cmdref targ="set"/>.
 
   <usage>
     <altforms>
-      <altform><lit>outfile</lit> <repl>nomefile</repl> <repl>opzione</repl></altform>
-      <altform><lit>outfile --close</lit></altform>
+	<altform><lit>outfile</lit> <repl>nomefile</repl></altform>
+	<altform><lit>outfile</lit> <lit>--buffer=</lit><repl>varstr</repl></altform>
+	<altform><lit>outfile</lit> <lit>--tempfile=</lit><repl>varstr</repl></altform>
     </altforms>
     <options>
       <option>
@@ -10545,6 +10537,10 @@ del comando <cmdref targ="set"/>.
 	<flag>--buffer</flag>
 	<effect>vedi sotto</effect>
       </option>	
+        <option>
+	  <flag>--tempfile</flag>
+	  <effect>vedi sotto</effect>
+        </option>
     </options>
     <examples>
 <example>outfile regress.txt</example>
@@ -10554,115 +10550,143 @@ del comando <cmdref targ="set"/>.
 
 <description>
   <para>
-    Reindirizza l'output sul file <repl>nomefile</repl>.  Di
-    default, il file viene creato ex novo (nel caso ne esista già
-    uno quest'ultimo viene sovrascritto); se lo si desidera,
-    usando l'opzione <opt>append</opt> è possibile aggiungere
-    l'output in coda ad un file preesistente. Il reindirizzamento
-    si conclude una volta inserito il comando <quote><lit>end
-    output</lit></quote>; facendo ciò l'output viene mandato di
-    nuovo allo stream predefinito.
-</para>
-<para>
-  L'output verrà scritto nella corrente <cmdref
-  targ="workdir"/>, a meno che il <repl>nomefile</repl> non
-  contenga un percorso completo.
-</para>
-<para>
-  Nel primo esempio il file <filename>regress.txt</filename>
-  viene aperto in scrittura, e nel secondo esempio viene chiuso.
-  Avrebbe senso farlo solo se alcuni comandi si fossero
-  rivelati essere problematici prima della chiusura. Ad esempio
-  se interviene un comando di stima, il suo output andrà al file
-  <filename>regress.txt</filename> piuttosto che venir mostrato
-  a video.
-</para>
-<para>
-  Tre varianti speciali del comando sono disponibili. Se si
-  utilizza la parola chiave <lit>null</lit> al posto del vero
-  nome del file l'effetto prodotto sarà quello di sopprimere
-  tutti gli output fino alla istruzione successiva. Se una delle
-  due parole chiave, tra <lit>stdout</lit> o <lit>stderr</lit>,
-  è data al posto dello standard nome di file l'effetto che si
-  produrrà sarà quello di reindirizzare l'output sull'output
-  standard o sullo standard errors.
-</para>
-<para>
-  L'effetto dell'opzione <opt>quite</opt> è quello di
-  disattivare la stampa dei comandi e dei messaggi ausiliari nel
-  frattempo che l'output viene reindirizzato. È l'equivalente di
-  fare:
-</para>
-<code>
-  set echo off
-  set messages off
-</code>
-<para>
-  se non per il fatto che al termine della ridirezione i valori
-  originali di <lit>echo</lit> e <lit>messages</lit> vengono
-  ripristinati.
-</para>
-<para>
-  In un dato punto del codice, ci può essere solo un file aperto
-  con questa tecnica; quindi, le chiamate a questo comando non
-  possono essere annidate. Ciononostante, questo comando è
-  consentito nelle funzioni scritte dall'utente (purché il file
-  di output venga chiuso nella stessa funzione), cosicché
-  l'output può essere ridiretto temporaneamente e poi riassegnato
-  al file di output originale. Ad esempio, il codice
-</para>
-<code>
-  function void f (string s)
-  outfile inner.txt
-  print s
-  end outfile
-  end function
+    Il comando <lit>outfile</lit> inizia un blocco in cui tutto
+    l'output stampato viene deviato a un file o a un buffer (o,
+    volendo, semplicemnte buttato via). Tale blocco è chiuso dal
+    comando <quote><lit>end outfile</lit></quote>, dopodiché l'output
+    viene mandato di nuovo allo stream predefinito.
+  </para>
 
-  outfile outer.txt --quiet
-  print "Fuori"
-  f("Dentro")
-  print "Ancora fuori"
-  end outfile
-</code>
-<para>
-  produrrà un file di nome <quote>outer.txt</quote> contenente le
-  due linee
-</para>
-<code>
-  Fuori
-  Ancora fuori
-</code>
-<para>
-  e un file di nome <quote>inner.txt</quote> contenente la linea
-</para>
-<code>
-  Dentro
-</code>
-<para>
-  Come si è detto, l'uso primario di questo comando è di
-  ridirezionare l'output verso un file dato. Tuttavia, l'opzione
-  <opt>buffer</opt> serve ad ottenere un effetto diverso, e cioè
-  che l'output vada ad alimentare una variabile
-  stringa. Quest'opzione implica quella <opt>write</opt> ed è
-  incompatibile con quella <opt>append</opt>. la posizione
-  dell'argomento <repl>nomefile</repl> è in questo caso occupata
-  dal nome di una variabile stringa (che deve, naturalmente,
-  essere un valido identificativo di variabile). Se una stringa
-  di tal nome esiste già, verrà sovrascritta; altrimeti, verrà
-  creata autometicamente. Ecco un semplice esempio d'uso:
-</para>
-<code>
-  open data4-1
-  outfile mybuf --buffer --quiet
-  labels
-  end outfile
-  printf "mybuf = \n'%s'\n", mybuf
-</code>
-<para>
-  In questo caso la variabile <lit>mybuf</lit> cattura l'output
-  del comando <lit>labels</lit>. Questa funzionalità può tornar
-  comoda agli autori di pacchetti di funzioni.
-</para>
+  <subhead>Reindirizzamento a un file</subhead>
+  <para>
+    La prima variante manda l'output a un file il cui nome è dato come
+    argomento <repl>nomefile</repl>. Di default, viene creato un file
+    nuovo (sovrascrivendo il file dello stesso nome, se esiste).
+    L'output verrà scritto nella corrente <cmdref targ="workdir"/>, a
+    meno che il <repl>nomefile</repl> non contenga un percorso
+    completo.  Se invece di sovrascrivere si vuole aggiungere in coda,
+    va usata l'opzione <opt>append</opt>.
+  </para>
+  <para>
+    Tre varianti speciali del comando sono disponibili. Se si
+    utilizza la parola chiave <lit>null</lit> al posto del vero
+    nome del file l'effetto prodotto sarà quello di sopprimere
+    tutti gli output fino alla istruzione successiva. Se una delle
+    due parole chiave, tra <lit>stdout</lit> o <lit>stderr</lit>,
+    è data al posto dello standard nome di file l'effetto che si
+    produrrà sarà quello di reindirizzare l'output sull'output
+    standard o sullo standard errors.
+  </para>
+  <para>
+    Quello che segue è un semplice esempio, in cui l'ouput di una
+    regressione viene scritto su un file.
+  </para>
+  <code>
+    open data4-10
+    outfile regress.txt
+    ols ENROLL 0 CATHOL INCOME COLLEGE
+    end outfile
+  </code>
+
+  <subhead>Reindirizzamento a un buffer</subhead>
+  <para>
+    L'opzione <opt>buffer</opt> serve a mandare l'ouput a una
+    variabile stringa. Il parametro per questa opzione dev'essere il
+    nome di una variabile stringa preesistente, il cuni contenuto sarà
+    sovrascritto.  Quello che segue è lo stesso esempio fatto appena
+    sopra, a parte che l'output va ad una stringa. In questo caso
+    stampando <lit>model_out</lit> si vedrà l'output reindirizzato.
+  </para>
+  <code>
+    open data4-10
+    string model_out = ""
+    outfile --buffer=model_out
+    ols ENROLL 0 CATHOL INCOME COLLEGE
+    end outfile
+    print model_out
+  </code>
+
+  <subhead>Reindirizzamento a un file temporaneo</subhead>
+  <para>
+    L'opzione <opt>tempfile</opt> serve a mandare l'output a un file
+    temporaneo, con un nome costruito automaticamente per assicurarne
+    l'unicità, nella directory <quote>di servizio</quote>. Così come
+    nel caso del buffer, il parametro dell'opzione dev'essere il nome
+    di una variabile stringa, che viene riempita col nome del file
+    temporaneo. <i>Nota bene</i>: i file scritti sulla directory di
+    servizio vengono cancellati quando si esce dal programma: non
+    usate questa forma se volete che il file sia conservato.
+  </para>
+  <para>
+    Ripetiamo l'esempio fatto sopra, con un paio di linee in più per
+    illustrare il punto che <repl>varstr</repl> dice dove l'output è
+    andato, e volendo lo si può leggere usando la funzione <fncref
+    targ="readfile"/>.
+  </para>
+  <code>
+    open data4-10
+    string mytemp
+    outfile --tempfile=mytemp
+    ols ENROLL 0 CATHOL INCOME COLLEGE
+    end outfile
+    printf "Output went to %s\n", mytemp
+    printf "The output was:\n%s\n", readfile(mytemp)
+  </code>
+
+  <subhead>L'opzione <opt>quiet</opt></subhead>
+  <para>
+    L'effetto dell'opzione <opt>quiet</opt> è quello di disattivare la
+    stampa dei comandi e dei messaggi ausiliari nel frattempo che
+    l'output viene reindirizzato. È l'equivalente di fare:
+  </para>
+  <code>
+    set echo off
+    set messages off
+  </code>
+  <para>
+    se non per il fatto che al termine della ridirezione i valori
+    originali di <lit>echo</lit> e <lit>messages</lit> vengono
+    ripristinati. Quest'opzione è disponibile in tutti i casi.
+  </para>
+
+  <subhead>Livelli di ridirezione</subhead>
+
+  <para>
+    In un dato punto del codice, ci può essere solo un file aperto
+    con questa tecnica; quindi, le chiamate a questo comando non
+    possono essere annidate. Ciononostante, questo comando è
+    consentito nelle funzioni scritte dall'utente (purché il file
+    di output venga chiuso nella stessa funzione), cosicché
+    l'output può essere ridiretto temporaneamente e poi riassegnato
+    al file di output originale. Ad esempio, il codice
+  </para>
+  <code>
+    function void f (string s)
+        outfile inner.txt
+	    print s
+        end outfile
+    end function
+
+    outfile outer.txt --quiet
+    print "Fuori"
+    f("Dentro")
+    print "Ancora fuori"
+    end outfile
+  </code>
+  <para>
+    produrrà un file di nome <quote>outer.txt</quote> contenente le
+    due linee
+  </para>
+  <code>
+    Fuori
+    Ancora fuori
+  </code>
+  <para>
+    e un file di nome <quote>inner.txt</quote> contenente la linea
+  </para>
+  <code>
+    Dentro
+  </code>
 </description>
 
 </command>
@@ -12389,14 +12413,42 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
     
     <description>
       <para>
-	Esce dal programma, dando la possibilità di salvare i risultati
-	della sessione.
+	Esce dalla modalità corrente di gretl.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Quando il comando è in uno script, l'esecuzione dello
+	    script viene interrotta.  Se il contesto è gretlcli (il
+	    client testuale) in modalità batch, terminerà gretlcli
+	    stesso; altrimenti, il programma tornerà in modalità interattiva.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Quando il comando viene eseguito nel terminale GUI, il
+	    terminale si chiuderà.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Quando il comando viene eseguito in modo interattivo, il
+	    programma esce.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Si noti che questo comando non può essere eseguito all'interno
+	di funzioni o di loop.
+      </para>
+      <para>
+	In comando <lit>quit</lit> non provoca l'uscita dal programma
+	GUI in alcun caso. Per uscire, si può usare la voce
+	<lit>Esci</lit> del menu <lit>File</lit>, o <lit>Ctrl+Q</lit>,
+	o cliccando sul pulsante di chiusura della barra della
+	finestra.
       </para>
     </description>
-    
-    <gui-access>
-      <menu-path>/File/Esci</menu-path>
-    </gui-access>
     
   </command>
 
@@ -13229,56 +13281,83 @@ l'effetto in questo contesto dell'opzione <opt>midas</opt>
 
   <usage>
     <arguments>
-<argument>variabile-y</argument>
-<argument separated="true">lista-variabili-x</argument>
-<argument alternate="true">lista-variabili-y ; variabile-x</argument>
-</arguments>
-<options>
-  <option>
-<flag>--with-lines</flag>
-<effect>crea grafici lineari</effect>
-</option>
-</options>
-<examples>
-<example>scatters 1 ; 2 3 4 5</example>
-<example>scatters 1 2 3 4 5 6 ; 7</example>
-</examples>
-</usage>
+      <argument>variabile-y</argument>
+      <argument separated="true">lista-variabili-x</argument>
+      <argument alternate="true">lista-variabili-y ; variabile-x</argument>
+    </arguments>
+    <options>
+      <option>
+	<flag>--with-lines</flag>
+	<effect>crea grafici lineari</effect>
+      </option>
+      <option>
+	<flag>--matrix</flag>
+	<optparm>nome</optparm>
+	<effect>mostra le colonne della matrice</effect>
+      </option>
+      <option>
+	<flag>--output</flag>
+	<optparm>noemfile</optparm>
+	<effect>manda l'output al file specificato</effect>
+      </option>
+    </options>
+    <examples>
+      <example>scatters 1 ; 2 3 4 5</example>
+      <example>scatters 1 2 3 4 5 6 ; 7</example>
+      <example>scatters y1 y2 y3 ; x --with-lines</example>
+    </examples>
+  </usage>
 
-<description>
-  <para context="cli">
-    Produce grafici della <repl>variabile-y</repl> rispetto ad ognuna delle
-    variabili nella <repl>lista-variabili-x</repl>, oppure di tutte le
-    variabili nella <repl>lista-variabili-y</repl> rispetto alla
-    <repl>variabile-x</repl>.  Il primo esempio visto sopra assegna
-    la variabile 1 all'asse <math>y</math> e produce quattro
-    grafici, il primo con la variabile 2 sull'asse
-    <math>x</math>, il secondo con la variabile 3 sull'asse
-    <math>x</math>, e così via. Il secondo esempio rappresenta
-    ognuna delle variabili da 1 a 6 rispetto alla variabile 7
-    sull'asse <math>x</math>. Questi gruppi di grafici sono
-    utili nell'analisi esplorativa dei dati. È possibile creare fino
-    a sei grafici alla volta, eventuali variabili in sovrappiù
-    saranno ignorate.
-</para>
-<para context="cli">
-  Per impostazione predefinita vengono prodotti dei classici grafici a
-  dispersione, ma se si usa l'opzione <opt>with-lines</opt> vengono
-  mostrate anche le linee di collegamento tra i punti del grafico.
-</para>
-<para context="gui">
-  Produce grafici a dispersione della <quote>Variabile asse
-  Y</quote> selezionata rispetto ad ognuna delle <quote>Variabili
-  asse X</quote> selezionate (ma è possibile fare anche viceversa). Questi
-  gruppi di grafici sono utili nell'analisi esplorativa dei dati. È
-  possibile creare fino a sei grafici alla volta, eventuali variabili in
-  sovrappiù saranno ignorate.
-</para>
-</description>
+  <description>
+    <para context="cli">
+      Produce grafici della <repl>variabile-y</repl> rispetto ad
+      ognuna delle variabili nella <repl>lista-variabili-x</repl>,
+      oppure di tutte le variabili nella
+      <repl>lista-variabili-y</repl> rispetto alla
+      <repl>variabile-x</repl>.  Il primo esempio visto sopra assegna
+      la variabile 1 all'asse <math>y</math> e produce quattro
+      grafici, il primo con la variabile 2 sull'asse <math>x</math>,
+      il secondo con la variabile 3 sull'asse <math>x</math>, e così
+      via. Il secondo esempio rappresenta ognuna delle variabili da 1
+      a 6 rispetto alla variabile 7 sull'asse <math>x</math>. Questi
+      gruppi di grafici sono utili nell'analisi esplorativa dei
+      dati. È possibile creare fino a sei grafici alla volta,
+      eventuali variabili in sovrappiù saranno ignorate.
+    </para>
+    <para context="cli">
+      Per impostazione predefinita vengono prodotti dei classici grafici a
+      dispersione, ma se si usa l'opzione <opt>with-lines</opt> vengono
+      mostrate anche le linee di collegamento tra i punti del grafico.
+    </para>
+    <para context="cli">
+      Per una spiegazione dell'opzione <opt>output</opt>, si veda il
+      comando <cmdref targ="gnuplot"/> command.
+    </para>
+    <para context="cli">
+      Se la fonte dei dati è una matrice, le liste <repl>x</repl> e
+      <repl>y</repl> devono contenere in numeri di colonna; se non
+      vengono dati, tuttle le colonne sono graficate rispetto al tempo
+      o ad una variabile indice.
+    </para>
+    <para context="gui">
+      Produce grafici a dispersione della <quote>Variabile asse
+      Y</quote> selezionata rispetto ad ognuna delle <quote>Variabili
+      asse X</quote> selezionate (ma è possibile fare anche
+      viceversa). Questi gruppi di grafici sono utili nell'analisi
+      esplorativa dei dati. È possibile creare fino a sei grafici alla
+      volta, eventuali variabili in sovrappiù saranno ignorate.
+    </para>
+    <para>
+      Se il dataset è temporale, la seconda sotto-lista può essere
+      omessa, nel qual caso si intende che le serie saranno graficate
+      rispetto al tempo in sotto-grafici separati.
+    </para>
 
-<gui-access>
-<menu-path>/Visualizza/Grafici multipli</menu-path>
-</gui-access>
+  </description>
+
+  <gui-access>
+    <menu-path>/Visualizza/Grafici multipli</menu-path>
+  </gui-access>
 
 </command>
 
@@ -16050,6 +16129,10 @@ qual caso viene usato QML.
 	  <flag>--rc</flag>
 	  <effect>costante vincolata</effect>
 	</option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>costante non vincolata</effect>
+        </option>
 	<option>
 	  <flag>--crt</flag>
 	  <effect>costante e trend vincolato</effect>
@@ -16062,6 +16145,14 @@ qual caso viene usato QML.
 	  <flag>--seasonals</flag>
 	  <effect>include dummy stagionali centrate</effect>
 	</option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>omette l'output delle singole equazioni</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
 	<option>
 	  <flag>--impulse-responses</flag>
 	  <effect>mostra impulso-risposta</effect>
@@ -16128,7 +16219,6 @@ qual caso viene usato QML.
 	significato di questi casi e i criteri per scegliere tra di essi sono
 	spiegati nella <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	Le liste opzionali <repl>xlist</repl> e <repl>rxlist</repl>
 	permottoni di specificare delle variabili esogene che entrano
@@ -16137,7 +16227,6 @@ qual caso viene usato QML.
 	sono separate da <repl>ylist</repl> e fra loro tramite punto e
 	virgola.
       </para>
-
       <para context="gui">
 	Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
 	il vettore delle variabili endogene, in livelli. L'inclusione di trend

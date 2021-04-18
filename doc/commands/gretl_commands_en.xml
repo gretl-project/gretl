@@ -15965,34 +15965,29 @@
 	related to the Johansen test for cointegration (see <cmdref
 	  targ="johansen"/>).
       </para>
-
       <para context="cli">
 	The <repl>order</repl> parameter to this command represents the lag
 	order of the VAR system.  The number of lags in the VECM itself (where
 	the dependent variable is given as a first difference) is one less than
 	<repl>order</repl>.
       </para>
-
       <para context="gui">
 	The lag order selected in the VECM dialog box is that of the VAR system.
 	The number of lags in the VECM itself (where the dependent variable is
 	given as a first difference) is one less than this number.
       </para>
-
       <para context="cli">
 	The <repl>rank</repl> parameter represents the cointegration rank, or in
 	other words the number of cointegrating vectors.  This must be greater
 	than zero and less than or equal to (generally, less than) the number of
 	endogenous variables given in <repl>ylist</repl>.
       </para>
-
       <para context="gui">
 	The <quote>rank</quote> represents the number of cointegrating
 	vectors.  This must be greater than zero and less than or
 	equal to (generally, less than) the number of endogenous
 	variables selected.
       </para>
-
       <para context="cli">
 	<repl>ylist</repl> supplies the list of endogenous variables,
 	in levels. The inclusion of deterministic terms in the model
@@ -16008,7 +16003,6 @@
 	these cases and the criteria for selecting a case are
 	explained in <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	The optional lists <repl>xlist</repl> and <repl>rxlist</repl>
 	allow you to specify sets of exogenous variables which enter the
@@ -16017,7 +16011,6 @@
 	separated from <repl>ylist</repl> and from each other by
 	semicolons.
       </para>
-
       <para context="gui">
 	In the <quote>Endogenous variables</quote> box you select the
 	vector of endogenous variables, in levels. The inclusion of
@@ -16032,7 +16025,6 @@
 	The meaning of these cases and the criteria for selecting a
 	case are explained in <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="gui">
 	In the <quote>Exogenous variables</quote> box you may add specific
 	exogenous variables.  By default these enter the model in
@@ -16042,14 +16034,12 @@
 	select <quote>Restricted</quote> from the pop-up menu.  The symbol
 	next to the variable will change to R.
       </para>
-
       <para context="cli">
 	The <opt>seasonals</opt> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
       </para>
-
       <para context="gui">
 	If the data are quarterly or monthly, a check box is shown that allows
 	you to include a set of centered seasonal dummy variables.  In all
@@ -16057,7 +16047,6 @@
 	for the printing of the auxiliary regressions that form the starting
 	point of the Johansen maximum likelihood estimation procedure.
       </para>
-
       <para context="cli">
 	The first example above specifies a VECM with lag order 4 and a single
 	cointegrating vector.  The endogenous variables are <lit>Y1</lit>,
@@ -16067,7 +16056,6 @@
 	appropriate if the cointegrating vectors may have a non-zero intercept
 	but the <lit>Y</lit> variables have no trend.
       </para>
-
       <para context="cli">
 	Following estimation of a VECM some special accessors are
 	available: <lit>$jalpha</lit>, <lit>$jbeta</lit> and
