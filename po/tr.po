@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-14 12:33-0400\n"
+"POT-Creation-Date: 2021-04-18 18:56-0400\n"
 "PO-Revision-Date: 2021-01-26 17:49+0300\n"
 "Last-Translator: talhayalta <talhayalta@gmail.com>\n"
 "Language-Team: Turkish <kde-l10n-tr@kde.org>\n"
@@ -1392,7 +1392,7 @@ msgstr "İçe aktarılan veriler: %s, %s\n"
 msgid "auto-generated constant"
 msgstr "kendiliğinden ekli sabit terim"
 
-#: lib/src/dataset.c:1540 gui/gui_utils.c:6129 gui/toolbar.c:1440
+#: lib/src/dataset.c:1540 gui/gui_utils.c:6131 gui/toolbar.c:1440
 #: gui/toolbar.c:1449
 msgid "Please open a data file first"
 msgstr "Lütfen önce bir veri dosyası açınız"
@@ -1426,7 +1426,7 @@ msgstr "Bazı veriler kullanımda"
 msgid "variable %d duplicated in the command list."
 msgstr "değişken %d komut listesinde tekrar edilmiş"
 
-#: lib/src/dataset.c:2142 gui/gui_utils.c:5547
+#: lib/src/dataset.c:2142 gui/gui_utils.c:5549
 msgid "dataset is subsampled"
 msgstr "veri seti altörneklemeli"
 
@@ -1504,7 +1504,7 @@ msgstr "Veri seti şu an altörneklemeli durumda"
 msgid "dataset restore: dataset is not resampled\n"
 msgstr "Veri seti geri yerleştirme: yeniden-örneklemeli değil\n"
 
-#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4258
+#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4266
 #, c-format
 msgid "%s: no data found"
 msgstr "%s: veri bulunamadı"
@@ -2703,7 +2703,7 @@ msgstr "model ile ilgili"
 #: lib/src/genfuncs.c:6652 lib/src/gretl_func.c:5231 lib/src/plotspec.c:328
 #: lib/src/plotspec.c:347 lib/src/uservar.c:1533 lib/src/uservar.c:2456
 #: gui/dialogs.c:6975 gui/dialogs.c:7216 gui/dialogs.c:7222 gui/fnsave.c:2360
-#: gui/fnsave.c:2890 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
+#: gui/fnsave.c:2891 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
 #: gui/join-gui.c:231 gui/join-gui.c:234 gui/join-gui.c:407 gui/join-gui.c:462
 #: gui/join-gui.c:797
 msgid "none"
@@ -2973,13 +2973,13 @@ msgstr "kümelere göre zaman serileri"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:735
 #: lib/src/plotspec.c:1585 gui/gpt_dialog.c:969 gui/gpt_dialog.c:1389
-#: gui/gpt_dialog.c:2871
+#: gui/gpt_dialog.c:2883
 msgid "right"
 msgstr "sağ"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:731
 #: lib/src/plotspec.c:737 lib/src/plotspec.c:1583 gui/gpt_dialog.c:1384
-#: gui/gpt_dialog.c:2870
+#: gui/gpt_dialog.c:2882
 msgid "left"
 msgstr "sol"
 
@@ -3218,8 +3218,8 @@ msgid "with least squares fit"
 msgstr "(enküçük kareler yakıştırması ile)"
 
 #: lib/src/graphing.c:9614 lib/src/gretl_func.c:2797 lib/src/gretl_utils.c:2030
-#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5291
-#: gui/textbuf.c:2005 plugin/tramo-x12a.c:833
+#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5292
+#: gui/textbuf.c:2006 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr "%s açılamadı"
@@ -3304,7 +3304,7 @@ msgid "Initial value of objective function is not finite"
 msgstr "Hedef işlevin başlangıç değeri sonlu değil"
 
 #: lib/src/gretl_bundle.c:520 lib/src/gretl_bundle.c:592
-#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1506
+#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1515
 msgid "no such item"
 msgstr "böyle bir kalem yok"
 
@@ -3579,7 +3579,7 @@ msgstr "%s: işlev için geçersiz geri dönüş türü"
 msgid "PDF doc should be called %s.pdf"
 msgstr "PDF belgesi %s.pdf diye adlandırılmalı"
 
-#: lib/src/gretl_func.c:3999 gui/fnsave.c:4116
+#: lib/src/gretl_func.c:3999 gui/fnsave.c:4117
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: DTD'ye karşı geçerleme tamam"
@@ -3994,7 +3994,7 @@ msgstr "Birinci-derece özilinti özilinti yok (ro = 0)"
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "ki-kare(%d) = %g (%s gözleminde)"
 
-#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1405
+#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1406
 msgid "failed"
 msgstr "başarısız"
 
@@ -5445,7 +5445,7 @@ msgstr ""
 msgid "bias"
 msgstr "yanlılık"
 
-#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2846
+#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2858
 msgid "size"
 msgstr "büyüklük"
 
@@ -6712,11 +6712,11 @@ msgstr "Sistem"
 msgid "%s saved\n"
 msgstr "%s kaydedildi\n"
 
-#: lib/src/objstack.c:1659
+#: lib/src/objstack.c:1668
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "Yapılamıyor: Daha tahmin edilmiş bir model yok\n"
 
-#: lib/src/objstack.c:1673
+#: lib/src/objstack.c:1682
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -8575,11 +8575,11 @@ msgstr "Weibull"
 msgid " DW "
 msgstr "DW"
 
-#: gui/calculator.c:2027 gui/gpt_dialog.c:3275
+#: gui/calculator.c:2027 gui/gpt_dialog.c:3287
 msgid "minimum"
 msgstr "enaz"
 
-#: gui/calculator.c:2029 gui/gpt_dialog.c:3292
+#: gui/calculator.c:2029 gui/gpt_dialog.c:3304
 msgid "maximum"
 msgstr "ençok"
 
@@ -8828,7 +8828,7 @@ msgstr "Elde uygun veri bulunmuyor"
 msgid "gretl: plot a curve"
 msgstr "gretl: bir eğri çiz"
 
-#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2660
+#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2672
 msgid "formula"
 msgstr "formül"
 
@@ -9234,7 +9234,7 @@ msgstr "Kuruldu"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
-#: gui/fncall.c:4191
+#: gui/fncall.c:4199
 msgid "Up to date"
 msgstr "Güncel"
 
@@ -9246,7 +9246,7 @@ msgstr "Sıkıştırılmış dosya açma hatası"
 msgid "Unknown: access error"
 msgstr "Bilinmiyor: erişim hatası"
 
-#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4193
+#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4201
 msgid "Not up to date"
 msgstr "Güncel değil"
 
@@ -9424,7 +9424,7 @@ msgstr "Klasör seçiniz"
 msgid "Details"
 msgstr "Ayrıntılar"
 
-#: gui/datafiles.c:1713 gui/textbuf.c:1662
+#: gui/datafiles.c:1713 gui/textbuf.c:1663
 msgid "Package registry"
 msgstr "Paket kayıt defteri"
 
@@ -9579,15 +9579,15 @@ msgid "Package"
 msgstr "Paket"
 
 #: gui/datafiles.c:2907 gui/datafiles.c:2914 gui/datafiles.c:2922
-#: gui/fnsave.c:3785
+#: gui/fnsave.c:3786
 msgid "Version"
 msgstr "Sürüm"
 
-#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3783
+#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3784
 msgid "Author"
 msgstr "Yazar"
 
-#: gui/datafiles.c:2928 gui/fnsave.c:2887
+#: gui/datafiles.c:2928 gui/fnsave.c:2888
 msgid "Window"
 msgstr "Pencere"
 
@@ -11316,15 +11316,15 @@ msgstr ""
 "%s paketi bulunamadı, ya da güncel değil.\n"
 "Şimdi indirmeyi denemek istiyor musunuz?"
 
-#: gui/fncall.c:3908 gui/fnsave.c:2891
+#: gui/fncall.c:3916 gui/fnsave.c:2892
 msgid "main window"
 msgstr "ana pencere"
 
-#: gui/fncall.c:3909 gui/fnsave.c:2892
+#: gui/fncall.c:3917 gui/fnsave.c:2893
 msgid "model window"
 msgstr "model penceresi"
 
-#: gui/fncall.c:3914
+#: gui/fncall.c:3922
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -11335,16 +11335,16 @@ msgstr ""
 "\"%2$s/%3$s\" olarak eklenebilir.\n"
 "Bunu yapmak ister misiniz?"
 
-#: gui/fncall.c:4195
+#: gui/fncall.c:4203
 #, c-format
 msgid "Requires gretl %s"
 msgstr "gretl %s gerekli"
 
-#: gui/fncall.c:4201
+#: gui/fncall.c:4209
 msgid "Error reading package"
 msgstr "Paket okuma hatası"
 
-#: gui/fncall.c:4629
+#: gui/fncall.c:4637
 msgid "No mapfile is present"
 msgstr "Harita dosyası (mapfile) bulunmuyor"
 
@@ -11384,7 +11384,7 @@ msgstr "gfn dosyasını kaydet"
 msgid "A file of this name already exists."
 msgstr "Adı bu olan bir dosya zaten var."
 
-#: gui/fnsave.c:701 gui/gui_utils.c:5580
+#: gui/fnsave.c:701 gui/gui_utils.c:5582
 msgid "OK to overwrite it?"
 msgstr "Üzerine yazılsın mı?"
 
@@ -11469,7 +11469,7 @@ msgstr "Grafik arayüz yardımını farklı kaydet"
 msgid "Saving %s.spec: also save ancillary file(s)?"
 msgstr "%s.spec kaydediliyor: Yan dosya(lar) da kaydedilsin mi?"
 
-#: gui/fnsave.c:1591 gui/fnsave.c:3543
+#: gui/fnsave.c:1591 gui/fnsave.c:3544
 msgid "Please save your package first"
 msgstr "Lütfen önce paketinizi kaydediniz"
 
@@ -11550,16 +11550,26 @@ msgstr "Bugünün tarihini ekle"
 msgid "Save changes?"
 msgstr "Değişiklikler kaydedilsin mi?"
 
-#: gui/fnsave.c:2625
+#: gui/fnsave.c:2621
+#, fuzzy
+msgid "Model requirement"
+msgstr "Özel bir gereksinim yok"
+
+#: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Herhangi bir model"
 
-#: gui/fnsave.c:2706
+#: gui/fnsave.c:2655
+#, fuzzy
+msgid "request access to out-of-sample data"
+msgstr "örneklem-dışı verilere izin ver"
+
+#: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
 msgstr ""
 "Pakete eklenmek üzere veri dosyası adları ekleyebilir ya da silebilirsiniz."
 
-#: gui/fnsave.c:2759
+#: gui/fnsave.c:2760
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
 "Leave off the .gfn or .zip suffix."
@@ -11568,11 +11578,11 @@ msgstr ""
 "silebilirsiniz.\n"
 ".gfn veya .zip uzantılarını eklemeyin."
 
-#: gui/fnsave.c:2780
+#: gui/fnsave.c:2781
 msgid "provider?"
 msgstr "sağlayıcı?"
 
-#: gui/fnsave.c:2803
+#: gui/fnsave.c:2804
 msgid ""
 "This package has no GUI-specific help text at present.\n"
 "Would you like to add some?"
@@ -11580,80 +11590,85 @@ msgstr ""
 "Şu anda bu paketin grafik arayüzüne özel bir yardım metni yok.\n"
 "Şimdi eklemek ister misiniz?"
 
-#: gui/fnsave.c:2873
+#: gui/fnsave.c:2874
 msgid "Label"
 msgstr "Etiket"
 
-#: gui/fnsave.c:3038
+#: gui/fnsave.c:2900
+#, fuzzy
+msgid "GUI help text"
+msgstr "Yardım metni"
+
+#: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
 msgstr "Menü eklentisi yaratmak için, bir etiket sağlamalısınız."
 
-#: gui/fnsave.c:3206 gui/textbuf.c:1811
+#: gui/fnsave.c:3207 gui/textbuf.c:1812
 #, c-format
 msgid "Couldn't find %s"
 msgstr "%s bulunamadı"
 
-#: gui/fnsave.c:3405 gui/fnsave.c:3424
+#: gui/fnsave.c:3406 gui/fnsave.c:3425
 msgid "Apply changes?"
 msgstr "Değişiklikler uygulansın mı?"
 
-#: gui/fnsave.c:3553
+#: gui/fnsave.c:3554
 msgid "gretl: extra properties"
 msgstr "gretl: fazladan özellikler"
 
-#: gui/fnsave.c:3570
+#: gui/fnsave.c:3571
 msgid "Special functions"
 msgstr "Özel işlevler"
 
-#: gui/fnsave.c:3658
+#: gui/fnsave.c:3659
 msgid "Menu attachment"
 msgstr "Menü eklentisi"
 
-#: gui/fnsave.c:3674
+#: gui/fnsave.c:3675
 msgid "Data files"
 msgstr "Veri dosyaları"
 
-#: gui/fnsave.c:3682
+#: gui/fnsave.c:3683
 msgid "Dependencies"
 msgstr "Bağımlı değişkenler"
 
-#: gui/fnsave.c:3784
+#: gui/fnsave.c:3785
 msgid "Email"
 msgstr "Eposta"
 
-#: gui/fnsave.c:3786
+#: gui/fnsave.c:3787
 msgid "Date (YYYY-MM-DD)"
 msgstr "Tarih (YYYY-AA-GG)"
 
-#: gui/fnsave.c:3787
+#: gui/fnsave.c:3788
 msgid "Package description"
 msgstr "Paket betimlemesi"
 
-#: gui/fnsave.c:3910
+#: gui/fnsave.c:3911
 msgid "Edit function code"
 msgstr "İşlev kodunu düzenle"
 
-#: gui/fnsave.c:3924
+#: gui/fnsave.c:3925
 msgid "Extra properties"
 msgstr "Fazladan özellikler"
 
-#: gui/fnsave.c:3930 gui/toolbar.c:1086 gui/toolbar.c:1095
+#: gui/fnsave.c:3931 gui/toolbar.c:1086 gui/toolbar.c:1095
 msgid "Save..."
 msgstr "Kaydet..."
 
-#: gui/fnsave.c:3940
+#: gui/fnsave.c:3941
 msgid "Edit sample script"
 msgstr "Örnek betik düzenle"
 
-#: gui/fnsave.c:3946
+#: gui/fnsave.c:3947
 msgid "Add/remove functions"
 msgstr "İşlev ekle/çıkar"
 
-#: gui/fnsave.c:3952
+#: gui/fnsave.c:3953
 msgid "Validate"
 msgstr "Geçerle"
 
-#: gui/fnsave.c:3978
+#: gui/fnsave.c:3979
 msgid ""
 "Upload package: This means that the package will\n"
 "be uploaded to the gretl server for approval.\n"
@@ -11669,19 +11684,19 @@ msgstr ""
 "son yüklemeden sonra değişiklik yaptıysanız\n"
 "gerçekleştirmelisiniz."
 
-#: gui/fnsave.c:3990
+#: gui/fnsave.c:3991
 msgid "gretl: upload"
 msgstr "gretl: gönder"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Login"
 msgstr "Giriş"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Password"
 msgstr "Parola"
 
-#: gui/fnsave.c:4026
+#: gui/fnsave.c:4027
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
@@ -11693,11 +11708,11 @@ msgstr ""
 "Aşağıda bulunan 'Web sitesi' düğmesi, bu sayfayı Internet\n"
 "tarayıcınızda açacaktır."
 
-#: gui/fnsave.c:4170 gui/fnsave.c:4282
+#: gui/fnsave.c:4171 gui/fnsave.c:4283
 msgid "build zip file"
 msgstr "zip dosyası oluştur"
 
-#: gui/fnsave.c:4267
+#: gui/fnsave.c:4268
 msgid ""
 "This package must be uploaded as a zip file.\n"
 "Try to create the zip file now?"
@@ -11705,7 +11720,7 @@ msgstr ""
 "Bu paket zip dosyası olarak gönderilmelidir.\n"
 "Zip dosyası yaratmayı denemek ister misiniz?"
 
-#: gui/fnsave.c:4417
+#: gui/fnsave.c:4418
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
 "must be less than 32 characters in length, must include only\n"
@@ -11715,7 +11730,7 @@ msgstr ""
 "32 karakterden az olmalı, yalnızca ASCII harfleri, rakamlar\n"
 "ya da '_' simgesini içermeli ve \".gfn\" ile bitmelidir."
 
-#: gui/fnsave.c:4422 gui/selector.c:8261
+#: gui/fnsave.c:4423 gui/selector.c:8261
 msgid ""
 "Invalid package name: the name must start with a letter,\n"
 "must be less than 32 characters in length, and must include\n"
@@ -11725,7 +11740,7 @@ msgstr ""
 "32 karakterden az olmalı, yalnızca ASCII harfleri, rakamlar\n"
 "ya da '_' simgesini içermelidir."
 
-#: gui/fnsave.c:5264
+#: gui/fnsave.c:5265
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -11733,11 +11748,11 @@ msgstr ""
 "Şu an paketlemek için elde işlev bulunmuyor.\n"
 "Şimdi bir işlev yazmak ister misiniz?"
 
-#: gui/fnsave.c:5269
+#: gui/fnsave.c:5270
 msgid "gretl: function packages"
 msgstr "gretl: işlev paketleri"
 
-#: gui/fnsave.c:5324
+#: gui/fnsave.c:5325
 msgid "build gfn file"
 msgstr "gfn dosyası oluştur"
 
@@ -12053,120 +12068,120 @@ msgstr "dışadüşenler"
 msgid "label %d: "
 msgstr "Etiket %d: "
 
-#: gui/gpt_dialog.c:2604
+#: gui/gpt_dialog.c:2616
 msgid "Lines"
 msgstr "Çizgiler"
 
-#: gui/gpt_dialog.c:2689
+#: gui/gpt_dialog.c:2701
 msgid "legend"
 msgstr "açıklama"
 
-#: gui/gpt_dialog.c:2722
+#: gui/gpt_dialog.c:2734
 msgid "type"
 msgstr "tür"
 
-#: gui/gpt_dialog.c:2782
+#: gui/gpt_dialog.c:2794
 msgid "line"
 msgstr "çizgi"
 
-#: gui/gpt_dialog.c:2783
+#: gui/gpt_dialog.c:2795
 msgid "line width"
 msgstr "çizgi genişliği"
 
-#: gui/gpt_dialog.c:2793 gui/graphics.c:195
+#: gui/gpt_dialog.c:2805 gui/graphics.c:195
 msgid "width"
 msgstr "genişlik"
 
-#: gui/gpt_dialog.c:2840
+#: gui/gpt_dialog.c:2852
 msgid "point"
 msgstr "nokta"
 
-#: gui/gpt_dialog.c:2868
+#: gui/gpt_dialog.c:2880
 msgid "y axis"
 msgstr "y ekseni"
 
-#: gui/gpt_dialog.c:2895
+#: gui/gpt_dialog.c:2907
 msgid "Add line..."
 msgstr "Çizgi ekle..."
 
-#: gui/gpt_dialog.c:2931
+#: gui/gpt_dialog.c:2943
 msgid "Labels"
 msgstr "Etiketler"
 
-#: gui/gpt_dialog.c:2959
+#: gui/gpt_dialog.c:2971
 msgid "text"
 msgstr "metin"
 
-#: gui/gpt_dialog.c:2975
+#: gui/gpt_dialog.c:2987
 msgid "position (X Y)"
 msgstr "konum (X Y)"
 
-#: gui/gpt_dialog.c:3012
+#: gui/gpt_dialog.c:3024
 msgid "justification"
 msgstr "yanaştırma"
 
-#: gui/gpt_dialog.c:3040 gui/gpt_dialog.c:3175 gui/ssheet.c:139
+#: gui/gpt_dialog.c:3052 gui/gpt_dialog.c:3187 gui/ssheet.c:139
 #: gui/ssheet.c:146
 msgid "Add..."
 msgstr "Ekle..."
 
-#: gui/gpt_dialog.c:3079
+#: gui/gpt_dialog.c:3091
 msgid "Arrows"
 msgstr "Oklar"
 
-#: gui/gpt_dialog.c:3110
+#: gui/gpt_dialog.c:3122
 msgid "from (X Y)"
 msgstr "(X Y) başlama"
 
-#: gui/gpt_dialog.c:3112
+#: gui/gpt_dialog.c:3124
 msgid "to (X Y)"
 msgstr "(X Y) bitiş"
 
-#: gui/gpt_dialog.c:3148
+#: gui/gpt_dialog.c:3160
 msgid "arrow has head"
 msgstr "ok başı"
 
-#: gui/gpt_dialog.c:3157
+#: gui/gpt_dialog.c:3169
 msgid "line is dotted"
 msgstr "noktalı çizgi"
 
-#: gui/gpt_dialog.c:3195
+#: gui/gpt_dialog.c:3207
 msgid "X-axis"
 msgstr "X-ekseni"
 
-#: gui/gpt_dialog.c:3197
+#: gui/gpt_dialog.c:3209
 msgid "Y-axis"
 msgstr "Y-ekseni"
 
-#: gui/gpt_dialog.c:3199
+#: gui/gpt_dialog.c:3211
 msgid "Y2-axis"
 msgstr "Y2-ekseni"
 
-#: gui/gpt_dialog.c:3252
+#: gui/gpt_dialog.c:3264
 msgid "auto axis range"
 msgstr "eksen aralığı kendiliğinden"
 
-#: gui/gpt_dialog.c:3265
+#: gui/gpt_dialog.c:3277
 msgid "manual range:"
 msgstr "eksen aralığı:"
 
-#: gui/gpt_dialog.c:3340
+#: gui/gpt_dialog.c:3352
 msgid "linear scale"
 msgstr "doğrusal ölçek"
 
-#: gui/gpt_dialog.c:3348
+#: gui/gpt_dialog.c:3360
 msgid "logarithmic scale, base:"
 msgstr "logaritmik ölçek, taban:"
 
-#: gui/gpt_dialog.c:3635
+#: gui/gpt_dialog.c:3647
 msgid "Title of plot"
 msgstr "Çizim başlığı"
 
-#: gui/gpt_dialog.c:3636
+#: gui/gpt_dialog.c:3648
 msgid "Title for axis"
 msgstr "Eksen başlığı"
 
-#: gui/gpt_dialog.c:3662
+#: gui/gpt_dialog.c:3674
 msgid "gretl plot controls"
 msgstr "gretl çizim denetimleri"
 
@@ -12415,11 +12430,11 @@ msgstr "Veritabanı _sunucusu..."
 msgid "_Function packages"
 msgstr "İ_şlev paketleri"
 
-#: gui/gretl.c:1720 gui/textbuf.c:1654
+#: gui/gretl.c:1720 gui/textbuf.c:1655
 msgid "On _local machine..."
 msgstr "Yerel _makine..."
 
-#: gui/gretl.c:1721 gui/textbuf.c:1656
+#: gui/gretl.c:1721 gui/textbuf.c:1657
 msgid "On _server..."
 msgstr "_Sunucu..."
 
@@ -12491,7 +12506,7 @@ msgstr "Sınama _hesaplayıcı"
 msgid "_Nonparametric tests"
 msgstr "De_ğiştirgesel-dışı sınamalar"
 
-#: gui/gretl.c:1747 gui/textbuf.c:1668
+#: gui/gretl.c:1747 gui/textbuf.c:1669
 msgid "_Seed for random numbers"
 msgstr "Rastsal sayı _tohumu"
 
@@ -13176,7 +13191,7 @@ msgstr "_Klavye kısayolları"
 msgid "_Hansl primer"
 msgstr "_Hansl başlangıç kitabı"
 
-#: gui/gretl.c:1955 gui/textbuf.c:1658
+#: gui/gretl.c:1955 gui/textbuf.c:1659
 msgid "_Function package guide"
 msgstr "İ_şlev paketleri kılavuzu"
 
@@ -13192,7 +13207,7 @@ msgstr "_gretl + SVM"
 msgid "_gretl + DB.NOMICS"
 msgstr "_gretl + DB.NOMICS"
 
-#: gui/gretl.c:1959 gui/textbuf.c:1672
+#: gui/gretl.c:1959 gui/textbuf.c:1673
 #, fuzzy
 msgid "Creating maps"
 msgstr "Oluşturma ve I/O"
@@ -13201,7 +13216,7 @@ msgstr "Oluşturma ve I/O"
 msgid "Check for _updates"
 msgstr "_Güncellemeleri sorgula"
 
-#: gui/gretl.c:1961 gui/textbuf.c:1660
+#: gui/gretl.c:1961 gui/textbuf.c:1661
 msgid "Check for _addons"
 msgstr "_Eklentileri sorgula"
 
@@ -13827,8 +13842,8 @@ msgstr "gretl: adsız"
 msgid "gretl: script output %d"
 msgstr "gretl: betik çıktısı %d"
 
-#: gui/gui_utils.c:1839 gui/gui_utils.c:5813 gui/gui_utils.c:5877
-#: gui/gui_utils.c:6050
+#: gui/gui_utils.c:1839 gui/gui_utils.c:5815 gui/gui_utils.c:5879
+#: gui/gui_utils.c:6052
 msgid "gretl: script output"
 msgstr "gretl: betik çıktılarını düzenle"
 
@@ -14140,15 +14155,15 @@ msgstr "%s tepkisi"
 msgid "to %s"
 msgstr "%s "
 
-#: gui/gui_utils.c:5336
+#: gui/gui_utils.c:5338
 msgid "_Save text..."
 msgstr "_Metni kaydet..."
 
-#: gui/gui_utils.c:5343
+#: gui/gui_utils.c:5345
 msgid "Save bundle to session as _icon"
 msgstr "Bohçayı _simge olarak oturuma kaydet"
 
-#: gui/gui_utils.c:5425
+#: gui/gui_utils.c:5427
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -14162,7 +14177,7 @@ msgstr ""
 "Bu modelin tahmin edilmiş olduğu örneklemi\n"
 "geri getirmek ister misiniz?"
 
-#: gui/gui_utils.c:5488
+#: gui/gui_utils.c:5490
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled."
@@ -14170,42 +14185,42 @@ msgstr ""
 "Model örneklemi, veri seti örnekleminden farklı olduğu\n"
 "için bazı menü seçenekleri geçersiz kılınacak."
 
-#: gui/gui_utils.c:5558 gui/library.c:5279
+#: gui/gui_utils.c:5560 gui/library.c:5279
 #, c-format
 msgid "A series named %s already exists"
 msgstr "%s adında bir seri zaten var"
 
-#: gui/gui_utils.c:5560
+#: gui/gui_utils.c:5562
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "%s adında bir dizey zaten var"
 
-#: gui/gui_utils.c:5562
+#: gui/gui_utils.c:5564
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "%s adında bir dizey zaten var"
 
-#: gui/gui_utils.c:5564
+#: gui/gui_utils.c:5566
 #, c-format
 msgid "A list named %s already exists"
 msgstr "%s adında bir liste zaten var"
 
-#: gui/gui_utils.c:5566
+#: gui/gui_utils.c:5568
 #, c-format
 msgid "A string named %s already exists"
 msgstr "%s adında bir dizgi zaten var"
 
-#: gui/gui_utils.c:5568
+#: gui/gui_utils.c:5570
 #, c-format
 msgid "A bundle named %s already exists"
 msgstr "%s adında bir bohça zaten var"
 
-#: gui/gui_utils.c:5570
+#: gui/gui_utils.c:5572
 #, c-format
 msgid "An array named %s already exists"
 msgstr "%s adında bir dizge zaten var"
 
-#: gui/gui_utils.c:5606
+#: gui/gui_utils.c:5608
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -14214,7 +14229,7 @@ msgstr ""
 "Değişken adı %s... aşırı uzun\n"
 "(ençok %d harf)"
 
-#: gui/gui_utils.c:5611
+#: gui/gui_utils.c:5613
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -14223,7 +14238,7 @@ msgstr ""
 "Adın ilk harfi ('%c') hatalı\n"
 "(bir harf ile başlamalıdır)"
 
-#: gui/gui_utils.c:5619
+#: gui/gui_utils.c:5621
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -14232,23 +14247,23 @@ msgstr ""
 "Ad, geçersiz bir simge (%d. harf) içeriyor.\n"
 "Yalnızca vurgusuz harf, rakam ya da altçizgi kullanınız"
 
-#: gui/gui_utils.c:5779 gui/gui_utils.c:5784
+#: gui/gui_utils.c:5781 gui/gui_utils.c:5786
 msgid "No output was produced"
 msgstr "Üretilen bir çıktı yok"
 
-#: gui/gui_utils.c:5945
+#: gui/gui_utils.c:5947
 msgid "No command was supplied to start R"
 msgstr "R'yi başlatmak için sağlanmış bir komut yok"
 
-#: gui/gui_utils.c:6141
+#: gui/gui_utils.c:6143
 msgid "multiple time series object"
 msgstr "çoklu zaman serileri nesnesi"
 
-#: gui/gui_utils.c:6142
+#: gui/gui_utils.c:6144
 msgid "data frame"
 msgstr "veri çerçevesi"
 
-#: gui/gui_utils.c:6146
+#: gui/gui_utils.c:6148
 msgid "Send data as"
 msgstr "Verileri farklı gönder"
 
@@ -14300,11 +14315,11 @@ msgstr "Dönüştürmeler"
 msgid "Utilities"
 msgstr "Yardımcı programlar"
 
-#: gui/helpfiles.c:325 gui/textbuf.c:2326
+#: gui/helpfiles.c:325 gui/textbuf.c:2327
 msgid "Accessors"
 msgstr "Erişiciler"
 
-#: gui/helpfiles.c:327 gui/textbuf.c:2327
+#: gui/helpfiles.c:327 gui/textbuf.c:2328
 msgid "Built-in strings"
 msgstr "Yerleşik dizgiler"
 
@@ -14360,7 +14375,7 @@ msgstr "Dizgiler"
 msgid "MPI"
 msgstr "MPI"
 
-#: gui/helpfiles.c:405 gui/textbuf.c:2425
+#: gui/helpfiles.c:405 gui/textbuf.c:2426
 msgid "Index"
 msgstr "Endeks"
 
@@ -17387,92 +17402,92 @@ msgstr "İleri alma bilgisi bulunmuyor"
 msgid "No undo information available"
 msgstr "Geri alma bilgisi bulunmuyor"
 
-#: gui/textbuf.c:1401
+#: gui/textbuf.c:1402
 msgid "OK"
 msgstr "Tamam"
 
-#: gui/textbuf.c:1458
+#: gui/textbuf.c:1459
 msgid "Next results"
 msgstr "Sonraki sonuçlar"
 
-#: gui/textbuf.c:1507
+#: gui/textbuf.c:1508
 msgid "processing...\n"
 msgstr "işleniyor...\n"
 
-#: gui/textbuf.c:1664
+#: gui/textbuf.c:1665
 msgid "gretl + MPI"
 msgstr "gretl + MPI"
 
-#: gui/textbuf.c:1666
+#: gui/textbuf.c:1667
 msgid "gretl + SVM"
 msgstr "gretl + SVM"
 
-#: gui/textbuf.c:1670
+#: gui/textbuf.c:1671
 msgid "dbnomics for gretl"
 msgstr "gretl için dbnomics"
 
-#: gui/textbuf.c:1815
+#: gui/textbuf.c:1816
 #, c-format
 msgid "Couldn't read %s"
 msgstr "%s okunamadı"
 
-#: gui/textbuf.c:2280
+#: gui/textbuf.c:2281
 msgid "Gretl Command Reference"
 msgstr "Gretl Komut Başvuru Belgesi"
 
-#: gui/textbuf.c:2324
+#: gui/textbuf.c:2325
 msgid "Gretl Function Reference"
 msgstr "Gretl İşlev Başvuru Belgesi"
 
-#: gui/textbuf.c:2328
+#: gui/textbuf.c:2329
 msgid "Functions proper"
 msgstr "Özgün işlevler"
 
-#: gui/textbuf.c:2426
+#: gui/textbuf.c:2427
 msgid "Back"
 msgstr "Geri dön"
 
-#: gui/textbuf.c:3871
+#: gui/textbuf.c:3872
 msgid "Comment line"
 msgstr "Yorum satırı"
 
-#: gui/textbuf.c:3872
+#: gui/textbuf.c:3873
 msgid "Uncomment line"
 msgstr "Yorum kaldırma satırı"
 
-#: gui/textbuf.c:3873
+#: gui/textbuf.c:3874
 msgid "Comment region"
 msgstr "Yorum bölgesi"
 
-#: gui/textbuf.c:3874
+#: gui/textbuf.c:3875
 msgid "Uncomment region"
 msgstr "Yorum kaldırma bölgesi"
 
-#: gui/textbuf.c:3910
+#: gui/textbuf.c:3911
 msgid "Execute region"
 msgstr "Çalıştırma bölgesi"
 
-#: gui/textbuf.c:3912
+#: gui/textbuf.c:3913
 msgid "Execute line"
 msgstr "Çalıştırma satırı"
 
-#: gui/textbuf.c:3940
+#: gui/textbuf.c:3941
 msgid "Auto-indent region"
 msgstr "Kendinden-girinti bölgesi"
 
-#: gui/textbuf.c:3941
+#: gui/textbuf.c:3942
 msgid "Indent region"
 msgstr "Girinti bölgesi"
 
-#: gui/textbuf.c:3950
+#: gui/textbuf.c:3951
 msgid "Unindent region"
 msgstr "Girinti kaldırma bölgesi"
 
-#: gui/textbuf.c:3958
+#: gui/textbuf.c:3959
 msgid "Auto-indent script (Ctrl+I)"
 msgstr "Kendinden-girintile (Ctrl+I)"
 
-#: gui/textbuf.c:3969 gui/toolbar.c:820
+#: gui/textbuf.c:3970 gui/toolbar.c:820
 msgid "Preferences..."
 msgstr "Seçenekler..."
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-14 12:33-0400\n"
+"POT-Creation-Date: 2021-04-18 18:56-0400\n"
 "PO-Revision-Date: 2019-01-21 19:28-0500\n"
 "Last-Translator: Oleh Komashko <oleg_komashko@ukr.net>\n"
 "Language-Team: \n"
@@ -1388,7 +1388,7 @@ msgstr "Дані імпортовано з %s, %s\n"
 msgid "auto-generated constant"
 msgstr "автоматично згенерована константа"
 
-#: lib/src/dataset.c:1540 gui/gui_utils.c:6129 gui/toolbar.c:1440
+#: lib/src/dataset.c:1540 gui/gui_utils.c:6131 gui/toolbar.c:1440
 #: gui/toolbar.c:1449
 msgid "Please open a data file first"
 msgstr "Будь ласка, спочатку відкрийте файл з даними"
@@ -1422,7 +1422,7 @@ msgstr "деякі дані були у використанні"
 msgid "variable %d duplicated in the command list."
 msgstr "змінну %d продубльовано у списку команд."
 
-#: lib/src/dataset.c:2142 gui/gui_utils.c:5547
+#: lib/src/dataset.c:2142 gui/gui_utils.c:5549
 msgid "dataset is subsampled"
 msgstr "утворено підвибірку"
 
@@ -1500,7 +1500,7 @@ msgstr "В даний момент використовується частин
 msgid "dataset restore: dataset is not resampled\n"
 msgstr "відновлення набору даних: вибірка не зазнавала змін\n"
 
-#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4258
+#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4266
 #, fuzzy, c-format
 msgid "%s: no data found"
 msgstr "Дані не знайдено.\n"
@@ -2705,7 +2705,7 @@ msgstr "пов’язано з моделлю"
 #: lib/src/genfuncs.c:6652 lib/src/gretl_func.c:5231 lib/src/plotspec.c:328
 #: lib/src/plotspec.c:347 lib/src/uservar.c:1533 lib/src/uservar.c:2456
 #: gui/dialogs.c:6975 gui/dialogs.c:7216 gui/dialogs.c:7222 gui/fnsave.c:2360
-#: gui/fnsave.c:2890 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
+#: gui/fnsave.c:2891 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
 #: gui/join-gui.c:231 gui/join-gui.c:234 gui/join-gui.c:407 gui/join-gui.c:462
 #: gui/join-gui.c:797
 msgid "none"
@@ -2980,13 +2980,13 @@ msgstr "часові ряди за групами"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:735
 #: lib/src/plotspec.c:1585 gui/gpt_dialog.c:969 gui/gpt_dialog.c:1389
-#: gui/gpt_dialog.c:2871
+#: gui/gpt_dialog.c:2883
 msgid "right"
 msgstr "вправо"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:731
 #: lib/src/plotspec.c:737 lib/src/plotspec.c:1583 gui/gpt_dialog.c:1384
-#: gui/gpt_dialog.c:2870
+#: gui/gpt_dialog.c:2882
 msgid "left"
 msgstr "вліво"
 
@@ -3225,8 +3225,8 @@ msgid "with least squares fit"
 msgstr "з МНК-регресійною функцією"
 
 #: lib/src/graphing.c:9614 lib/src/gretl_func.c:2797 lib/src/gretl_utils.c:2030
-#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5291
-#: gui/textbuf.c:2005 plugin/tramo-x12a.c:833
+#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5292
+#: gui/textbuf.c:2006 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Неможливо відкрити %s"
@@ -3314,7 +3314,7 @@ msgid "Initial value of objective function is not finite"
 msgstr "Початкове значення цільової функції не є скінченним"
 
 #: lib/src/gretl_bundle.c:520 lib/src/gretl_bundle.c:592
-#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1506
+#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1515
 msgid "no such item"
 msgstr "такого елемента не існує"
 
@@ -3594,7 +3594,7 @@ msgstr "%s: невірний тип виведення функції"
 msgid "PDF doc should be called %s.pdf"
 msgstr ""
 
-#: lib/src/gretl_func.c:3999 gui/fnsave.c:4116
+#: lib/src/gretl_func.c:3999 gui/fnsave.c:4117
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: перевірка DTD  успішна"
@@ -4013,7 +4013,7 @@ msgstr "автокореляція першого порядку"
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "хі-квадрат(%d) = %g для спостереження %s"
 
-#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1405
+#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1406
 msgid "failed"
 msgstr "не вдалося"
 
@@ -5466,7 +5466,7 @@ msgstr ""
 msgid "bias"
 msgstr "зміщення"
 
-#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2846
+#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2858
 msgid "size"
 msgstr "розмір"
 
@@ -6749,11 +6749,11 @@ msgstr "Система"
 msgid "%s saved\n"
 msgstr "%s збережено\n"
 
-#: lib/src/objstack.c:1659
+#: lib/src/objstack.c:1668
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "Неможливо виконати: жодна  модель  була оцінена\n"
 
-#: lib/src/objstack.c:1673
+#: lib/src/objstack.c:1682
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -8618,11 +8618,11 @@ msgstr "Вейбулла"
 msgid " DW "
 msgstr "Дурбіна-Уотсона"
 
-#: gui/calculator.c:2027 gui/gpt_dialog.c:3275
+#: gui/calculator.c:2027 gui/gpt_dialog.c:3287
 msgid "minimum"
 msgstr "мінімум"
 
-#: gui/calculator.c:2029 gui/gpt_dialog.c:3292
+#: gui/calculator.c:2029 gui/gpt_dialog.c:3304
 msgid "maximum"
 msgstr "максимум"
 
@@ -8871,7 +8871,7 @@ msgstr "Придатні дані відсутні"
 msgid "gretl: plot a curve"
 msgstr "gretl: графік функції"
 
-#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2660
+#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2672
 msgid "formula"
 msgstr "формула"
 
@@ -9272,7 +9272,7 @@ msgstr "Інстальовано"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
-#: gui/fncall.c:4191
+#: gui/fncall.c:4199
 msgid "Up to date"
 msgstr "Остання версія"
 
@@ -9284,7 +9284,7 @@ msgstr "Помилка розпакування стиснених даних"
 msgid "Unknown: access error"
 msgstr "Невідомо: помилка доступу"
 
-#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4193
+#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4201
 msgid "Not up to date"
 msgstr "Застаріло"
 
@@ -9465,7 +9465,7 @@ msgstr "Обрати директорію"
 msgid "Details"
 msgstr "Показати деталі"
 
-#: gui/datafiles.c:1713 gui/textbuf.c:1662
+#: gui/datafiles.c:1713 gui/textbuf.c:1663
 msgid "Package registry"
 msgstr "Реєстр пакету"
 
@@ -9623,15 +9623,15 @@ msgid "Package"
 msgstr "Пакет"
 
 #: gui/datafiles.c:2907 gui/datafiles.c:2914 gui/datafiles.c:2922
-#: gui/fnsave.c:3785
+#: gui/fnsave.c:3786
 msgid "Version"
 msgstr "Версія"
 
-#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3783
+#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3784
 msgid "Author"
 msgstr "Автор"
 
-#: gui/datafiles.c:2928 gui/fnsave.c:2887
+#: gui/datafiles.c:2928 gui/fnsave.c:2888
 msgid "Window"
 msgstr "Вікно"
 
@@ -11378,15 +11378,15 @@ msgstr ""
 "Пакет %s не знайдено, або його не оновлено.\n"
 "Бажаєте завантажити його зараз?"
 
-#: gui/fncall.c:3908 gui/fnsave.c:2891
+#: gui/fncall.c:3916 gui/fnsave.c:2892
 msgid "main window"
 msgstr "головне вікно"
 
-#: gui/fncall.c:3909 gui/fnsave.c:2892
+#: gui/fncall.c:3917 gui/fnsave.c:2893
 msgid "model window"
 msgstr "вікно моделі"
 
-#: gui/fncall.c:3914
+#: gui/fncall.c:3922
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -11397,16 +11397,16 @@ msgstr ""
 "як \"%s/%s\" у  %s.\n"
 "Бажаєте це зробити?"
 
-#: gui/fncall.c:4195
+#: gui/fncall.c:4203
 #, c-format
 msgid "Requires gretl %s"
 msgstr "Потребує gretl %s"
 
-#: gui/fncall.c:4201
+#: gui/fncall.c:4209
 msgid "Error reading package"
 msgstr "Помилка при читанні пакету"
 
-#: gui/fncall.c:4629
+#: gui/fncall.c:4637
 #, fuzzy
 msgid "No mapfile is present"
 msgstr "ARCH-ефекти відсутні"
@@ -11447,7 +11447,7 @@ msgstr "Зберегти файл gfn"
 msgid "A file of this name already exists."
 msgstr "Файл з таким ім'ям вже існує."
 
-#: gui/fnsave.c:701 gui/gui_utils.c:5580
+#: gui/fnsave.c:701 gui/gui_utils.c:5582
 msgid "OK to overwrite it?"
 msgstr "Перезаписати?"
 
@@ -11532,7 +11532,7 @@ msgstr "Зберегти довідку для ГКІ(GUI) як"
 msgid "Saving %s.spec: also save ancillary file(s)?"
 msgstr "Збереження %s.спец.: також зберегти допоміжний(і) файл(и)?"
 
-#: gui/fnsave.c:1591 gui/fnsave.c:3543
+#: gui/fnsave.c:1591 gui/fnsave.c:3544
 msgid "Please save your package first"
 msgstr "Будь ласка, спочатку збережіть Ваш пакет"
 
@@ -11613,16 +11613,26 @@ msgstr "Вставити поточну дату"
 msgid "Save changes?"
 msgstr "Зберегти зміни?"
 
-#: gui/fnsave.c:2625
+#: gui/fnsave.c:2621
+#, fuzzy
+msgid "Model requirement"
+msgstr "Без обмежень"
+
+#: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Будь-яка модель"
 
-#: gui/fnsave.c:2706
+#: gui/fnsave.c:2655
+#, fuzzy
+msgid "request access to out-of-sample data"
+msgstr "дозволити доступ до позавибіркових даних"
+
+#: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
 msgstr ""
 "Ви можете додавати або вилучати імена файлів даних для включення до пакету."
 
-#: gui/fnsave.c:2759
+#: gui/fnsave.c:2760
 #, fuzzy
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
@@ -11630,11 +11640,11 @@ msgid ""
 msgstr ""
 "Ви можете додавати або вилучати імена файлів даних для включення до пакету."
 
-#: gui/fnsave.c:2780
+#: gui/fnsave.c:2781
 msgid "provider?"
 msgstr ""
 
-#: gui/fnsave.c:2803
+#: gui/fnsave.c:2804
 msgid ""
 "This package has no GUI-specific help text at present.\n"
 "Would you like to add some?"
@@ -11642,81 +11652,86 @@ msgstr ""
 "Даний пакет не має довідки для ГКІ(GUI).\n"
 "Бажаєте додати зараз?"
 
-#: gui/fnsave.c:2873
+#: gui/fnsave.c:2874
 msgid "Label"
 msgstr "Мітка"
 
-#: gui/fnsave.c:3038
+#: gui/fnsave.c:2900
+#, fuzzy
+msgid "GUI help text"
+msgstr "Текст довідки"
+
+#: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
 msgstr "Щоб створити пункт меню, ви мусите вказати мітку."
 
-#: gui/fnsave.c:3206 gui/textbuf.c:1811
+#: gui/fnsave.c:3207 gui/textbuf.c:1812
 #, c-format
 msgid "Couldn't find %s"
 msgstr "Неможливо знайти %s"
 
-#: gui/fnsave.c:3405 gui/fnsave.c:3424
+#: gui/fnsave.c:3406 gui/fnsave.c:3425
 msgid "Apply changes?"
 msgstr "Застосувати зміни?"
 
-#: gui/fnsave.c:3553
+#: gui/fnsave.c:3554
 msgid "gretl: extra properties"
 msgstr "gretl: додаткові властивості"
 
-#: gui/fnsave.c:3570
+#: gui/fnsave.c:3571
 msgid "Special functions"
 msgstr "Спеціальні функції"
 
-#: gui/fnsave.c:3658
+#: gui/fnsave.c:3659
 msgid "Menu attachment"
 msgstr "Включення до меню"
 
-#: gui/fnsave.c:3674
+#: gui/fnsave.c:3675
 msgid "Data files"
 msgstr "Файли даних"
 
-#: gui/fnsave.c:3682
+#: gui/fnsave.c:3683
 #, fuzzy
 msgid "Dependencies"
 msgstr "Залежна змінна"
 
-#: gui/fnsave.c:3784
+#: gui/fnsave.c:3785
 msgid "Email"
 msgstr "Емейл"
 
-#: gui/fnsave.c:3786
+#: gui/fnsave.c:3787
 msgid "Date (YYYY-MM-DD)"
 msgstr "Дата (РРРР-ММ-ДД)"
 
-#: gui/fnsave.c:3787
+#: gui/fnsave.c:3788
 msgid "Package description"
 msgstr "Опис пакету"
 
-#: gui/fnsave.c:3910
+#: gui/fnsave.c:3911
 msgid "Edit function code"
 msgstr "Редагування коду функції"
 
-#: gui/fnsave.c:3924
+#: gui/fnsave.c:3925
 msgid "Extra properties"
 msgstr "Додаткові властивості"
 
-#: gui/fnsave.c:3930 gui/toolbar.c:1086 gui/toolbar.c:1095
+#: gui/fnsave.c:3931 gui/toolbar.c:1086 gui/toolbar.c:1095
 msgid "Save..."
 msgstr "Зберегти..."
 
-#: gui/fnsave.c:3940
+#: gui/fnsave.c:3941
 msgid "Edit sample script"
 msgstr "Редагувати  скрипт з прикладами"
 
-#: gui/fnsave.c:3946
+#: gui/fnsave.c:3947
 msgid "Add/remove functions"
 msgstr "Додати/видалити функції"
 
-#: gui/fnsave.c:3952
+#: gui/fnsave.c:3953
 msgid "Validate"
 msgstr "Перевірити"
 
-#: gui/fnsave.c:3978
+#: gui/fnsave.c:3979
 msgid ""
 "Upload package: This means that the package will\n"
 "be uploaded to the gretl server for approval.\n"
@@ -11732,19 +11747,19 @@ msgstr ""
 "до серверу, або післе внесення змін після останнього\n"
 "надсилання."
 
-#: gui/fnsave.c:3990
+#: gui/fnsave.c:3991
 msgid "gretl: upload"
 msgstr "gretl: надіслати"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Login"
 msgstr "Логін"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Password"
 msgstr "Пароль"
 
-#: gui/fnsave.c:4026
+#: gui/fnsave.c:4027
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
@@ -11756,11 +11771,11 @@ msgstr ""
 "Кнопка  'Вебсайт', розт. нижче, має відкрити цю стор.\n"
 "у Вашому веб-браузері."
 
-#: gui/fnsave.c:4170 gui/fnsave.c:4282
+#: gui/fnsave.c:4171 gui/fnsave.c:4283
 msgid "build zip file"
 msgstr "створити файл zip"
 
-#: gui/fnsave.c:4267
+#: gui/fnsave.c:4268
 msgid ""
 "This package must be uploaded as a zip file.\n"
 "Try to create the zip file now?"
@@ -11768,7 +11783,7 @@ msgstr ""
 "Цей пакет мусить надсилатись як файл zip.\n"
 "Спробувати створити файл zip зараз?"
 
-#: gui/fnsave.c:4417
+#: gui/fnsave.c:4418
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
 "must be less than 32 characters in length, must include only\n"
@@ -11778,7 +11793,7 @@ msgstr ""
 "її довжина мусить не перевищувати 31 символ, мусить включати лише\n"
 "ASCII-літери, числа і '_', та мусить закінчуватись як \".gfn\"."
 
-#: gui/fnsave.c:4422 gui/selector.c:8261
+#: gui/fnsave.c:4423 gui/selector.c:8261
 msgid ""
 "Invalid package name: the name must start with a letter,\n"
 "must be less than 32 characters in length, and must include\n"
@@ -11788,7 +11803,7 @@ msgstr ""
 "її довжина мусить не перевищувати 31 символ, мусить включати лише\n"
 "ASCII-літери, числа і '_'."
 
-#: gui/fnsave.c:5264
+#: gui/fnsave.c:5265
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -11796,11 +11811,11 @@ msgstr ""
 "Функції для включення до пакету відсутні.\n"
 "Бажаєте створити нову функцію?"
 
-#: gui/fnsave.c:5269
+#: gui/fnsave.c:5270
 msgid "gretl: function packages"
 msgstr "gretl: пакети функцій"
 
-#: gui/fnsave.c:5324
+#: gui/fnsave.c:5325
 msgid "build gfn file"
 msgstr "побудувати файл gfn"
 
@@ -12119,121 +12134,121 @@ msgstr "Викиди"
 msgid "label %d: "
 msgstr "мітка %d: "
 
-#: gui/gpt_dialog.c:2604
+#: gui/gpt_dialog.c:2616
 msgid "Lines"
 msgstr "Лінії"
 
-#: gui/gpt_dialog.c:2689
+#: gui/gpt_dialog.c:2701
 msgid "legend"
 msgstr "легенда"
 
-#: gui/gpt_dialog.c:2722
+#: gui/gpt_dialog.c:2734
 msgid "type"
 msgstr "тип"
 
-#: gui/gpt_dialog.c:2782
+#: gui/gpt_dialog.c:2794
 #, fuzzy
 msgid "line"
 msgstr "лінії"
 
-#: gui/gpt_dialog.c:2783
+#: gui/gpt_dialog.c:2795
 msgid "line width"
 msgstr "товщина лінії"
 
-#: gui/gpt_dialog.c:2793 gui/graphics.c:195
+#: gui/gpt_dialog.c:2805 gui/graphics.c:195
 msgid "width"
 msgstr "ширина"
 
-#: gui/gpt_dialog.c:2840
+#: gui/gpt_dialog.c:2852
 msgid "point"
 msgstr "точка"
 
-#: gui/gpt_dialog.c:2868
+#: gui/gpt_dialog.c:2880
 msgid "y axis"
 msgstr "вісь y"
 
-#: gui/gpt_dialog.c:2895
+#: gui/gpt_dialog.c:2907
 msgid "Add line..."
 msgstr "Додати лінію..."
 
-#: gui/gpt_dialog.c:2931
+#: gui/gpt_dialog.c:2943
 msgid "Labels"
 msgstr "Мітки"
 
-#: gui/gpt_dialog.c:2959
+#: gui/gpt_dialog.c:2971
 msgid "text"
 msgstr "текст"
 
-#: gui/gpt_dialog.c:2975
+#: gui/gpt_dialog.c:2987
 msgid "position (X Y)"
 msgstr "позиція (X Y)"
 
-#: gui/gpt_dialog.c:3012
+#: gui/gpt_dialog.c:3024
 msgid "justification"
 msgstr "вирівнювання"
 
-#: gui/gpt_dialog.c:3040 gui/gpt_dialog.c:3175 gui/ssheet.c:139
+#: gui/gpt_dialog.c:3052 gui/gpt_dialog.c:3187 gui/ssheet.c:139
 #: gui/ssheet.c:146
 msgid "Add..."
 msgstr "Додати..."
 
-#: gui/gpt_dialog.c:3079
+#: gui/gpt_dialog.c:3091
 msgid "Arrows"
 msgstr "Стрілки"
 
-#: gui/gpt_dialog.c:3110
+#: gui/gpt_dialog.c:3122
 msgid "from (X Y)"
 msgstr "від (X Y)"
 
-#: gui/gpt_dialog.c:3112
+#: gui/gpt_dialog.c:3124
 msgid "to (X Y)"
 msgstr "до (X Y)"
 
-#: gui/gpt_dialog.c:3148
+#: gui/gpt_dialog.c:3160
 msgid "arrow has head"
 msgstr "стрілка з наконечником"
 
-#: gui/gpt_dialog.c:3157
+#: gui/gpt_dialog.c:3169
 msgid "line is dotted"
 msgstr "точкова лінія"
 
-#: gui/gpt_dialog.c:3195
+#: gui/gpt_dialog.c:3207
 msgid "X-axis"
 msgstr "Вісь Х"
 
-#: gui/gpt_dialog.c:3197
+#: gui/gpt_dialog.c:3209
 msgid "Y-axis"
 msgstr "Вісь Y"
 
-#: gui/gpt_dialog.c:3199
+#: gui/gpt_dialog.c:3211
 msgid "Y2-axis"
 msgstr "Вісь Y2"
 
-#: gui/gpt_dialog.c:3252
+#: gui/gpt_dialog.c:3264
 msgid "auto axis range"
 msgstr "авто-діапазон для вісей"
 
-#: gui/gpt_dialog.c:3265
+#: gui/gpt_dialog.c:3277
 msgid "manual range:"
 msgstr "діапазон \"вручну\":"
 
-#: gui/gpt_dialog.c:3340
+#: gui/gpt_dialog.c:3352
 msgid "linear scale"
 msgstr "лінійна шкала"
 
-#: gui/gpt_dialog.c:3348
+#: gui/gpt_dialog.c:3360
 msgid "logarithmic scale, base:"
 msgstr "логарифмічна шкала, основа:"
 
-#: gui/gpt_dialog.c:3635
+#: gui/gpt_dialog.c:3647
 msgid "Title of plot"
 msgstr "Назва графіку"
 
-#: gui/gpt_dialog.c:3636
+#: gui/gpt_dialog.c:3648
 msgid "Title for axis"
 msgstr "Назва уздовж вісі"
 
-#: gui/gpt_dialog.c:3662
+#: gui/gpt_dialog.c:3674
 msgid "gretl plot controls"
 msgstr "gretl: налаштування графіка"
 
@@ -12483,11 +12498,11 @@ msgstr "На _сервері баз даних..."
 msgid "_Function packages"
 msgstr "Пакети _функцій"
 
-#: gui/gretl.c:1720 gui/textbuf.c:1654
+#: gui/gretl.c:1720 gui/textbuf.c:1655
 msgid "On _local machine..."
 msgstr "На _локальному комп'ютері..."
 
-#: gui/gretl.c:1721 gui/textbuf.c:1656
+#: gui/gretl.c:1721 gui/textbuf.c:1657
 msgid "On _server..."
 msgstr "На _сервері..."
 
@@ -12560,7 +12575,7 @@ msgstr "_калькулятор тестових статистик"
 msgid "_Nonparametric tests"
 msgstr "_Непараметричні тести"
 
-#: gui/gretl.c:1747 gui/textbuf.c:1668
+#: gui/gretl.c:1747 gui/textbuf.c:1669
 msgid "_Seed for random numbers"
 msgstr "_Зерно датчика випадкових  чисел"
 
@@ -13252,7 +13267,7 @@ msgstr "Гарячі _клавіші"
 msgid "_Hansl primer"
 msgstr "Довідник з _Hansl"
 
-#: gui/gretl.c:1955 gui/textbuf.c:1658
+#: gui/gretl.c:1955 gui/textbuf.c:1659
 msgid "_Function package guide"
 msgstr "Довідник з пакетів _функцій"
 
@@ -13270,7 +13285,7 @@ msgstr "_gretl + MPI"
 msgid "_gretl + DB.NOMICS"
 msgstr "_gretl + MPI"
 
-#: gui/gretl.c:1959 gui/textbuf.c:1672
+#: gui/gretl.c:1959 gui/textbuf.c:1673
 #, fuzzy
 msgid "Creating maps"
 msgstr "Створення та В/В"
@@ -13279,7 +13294,7 @@ msgstr "Створення та В/В"
 msgid "Check for _updates"
 msgstr "Перевірка _оновлень"
 
-#: gui/gretl.c:1961 gui/textbuf.c:1660
+#: gui/gretl.c:1961 gui/textbuf.c:1661
 msgid "Check for _addons"
 msgstr "Перевірка _розширень"
 
@@ -13908,8 +13923,8 @@ msgstr "gretl: без імені"
 msgid "gretl: script output %d"
 msgstr "gretl: виведення скрипту %d"
 
-#: gui/gui_utils.c:1839 gui/gui_utils.c:5813 gui/gui_utils.c:5877
-#: gui/gui_utils.c:6050
+#: gui/gui_utils.c:1839 gui/gui_utils.c:5815 gui/gui_utils.c:5879
+#: gui/gui_utils.c:6052
 msgid "gretl: script output"
 msgstr "gretl: виведення скрипту"
 
@@ -14222,15 +14237,15 @@ msgstr "Реакція %s"
 msgid "to %s"
 msgstr "на %s"
 
-#: gui/gui_utils.c:5336
+#: gui/gui_utils.c:5338
 msgid "_Save text..."
 msgstr "_Зберегти текст..."
 
-#: gui/gui_utils.c:5343
+#: gui/gui_utils.c:5345
 msgid "Save bundle to session as _icon"
 msgstr "Зберегти пакунок (bundle) у поточній сесії як _іконку"
 
-#: gui/gui_utils.c:5425
+#: gui/gui_utils.c:5427
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -14244,7 +14259,7 @@ msgstr ""
 "Чи бажаєте зберегти вибірку, використану для\n"
 "оцінювання цієї моделі?"
 
-#: gui/gui_utils.c:5488
+#: gui/gui_utils.c:5490
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled."
@@ -14252,42 +14267,42 @@ msgstr ""
 "Вибірка, використана для моделі, відрізняється від вихідної,\n"
 "тому деякі опції меню стануть неактивними."
 
-#: gui/gui_utils.c:5558 gui/library.c:5279
+#: gui/gui_utils.c:5560 gui/library.c:5279
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Ряд на ім'я  %s вже існує"
 
-#: gui/gui_utils.c:5560
+#: gui/gui_utils.c:5562
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "Матриця на ім'я %s вже існує"
 
-#: gui/gui_utils.c:5562
+#: gui/gui_utils.c:5564
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "Скаляр на ім'я %s вже існує"
 
-#: gui/gui_utils.c:5564
+#: gui/gui_utils.c:5566
 #, c-format
 msgid "A list named %s already exists"
 msgstr "Список на ім'я %s вже існує"
 
-#: gui/gui_utils.c:5566
+#: gui/gui_utils.c:5568
 #, c-format
 msgid "A string named %s already exists"
 msgstr "Рядок на ім'я %s вже існує"
 
-#: gui/gui_utils.c:5568
+#: gui/gui_utils.c:5570
 #, c-format
 msgid "A bundle named %s already exists"
 msgstr "Пакунок (bundle) на ім'я %s вже існує"
 
-#: gui/gui_utils.c:5570
+#: gui/gui_utils.c:5572
 #, c-format
 msgid "An array named %s already exists"
 msgstr "Масив на ім'я %s вже існує"
 
-#: gui/gui_utils.c:5606
+#: gui/gui_utils.c:5608
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -14296,7 +14311,7 @@ msgstr ""
 "Ім'я змінної %s... задовге \n"
 "(не більше %d символів)"
 
-#: gui/gui_utils.c:5611
+#: gui/gui_utils.c:5613
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -14305,7 +14320,7 @@ msgstr ""
 "Перший симв. імені ('%c') не пасує\n"
 "(він мусить бути (латинським) абетковим"
 
-#: gui/gui_utils.c:5619
+#: gui/gui_utils.c:5621
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -14314,23 +14329,23 @@ msgstr ""
 "Ім’я містить неприпустимий символ (на позиції %d)\n"
 "Викор. лише неакцентовані літери, цифри та підкреслювання"
 
-#: gui/gui_utils.c:5779 gui/gui_utils.c:5784
+#: gui/gui_utils.c:5781 gui/gui_utils.c:5786
 msgid "No output was produced"
 msgstr "Не вдалося одержати результатів"
 
-#: gui/gui_utils.c:5945
+#: gui/gui_utils.c:5947
 msgid "No command was supplied to start R"
 msgstr "Команда для запуску R не завдана"
 
-#: gui/gui_utils.c:6141
+#: gui/gui_utils.c:6143
 msgid "multiple time series object"
 msgstr "декілька часових рядів як об'єкт"
 
-#: gui/gui_utils.c:6142
+#: gui/gui_utils.c:6144
 msgid "data frame"
 msgstr "фрейм даних"
 
-#: gui/gui_utils.c:6146
+#: gui/gui_utils.c:6148
 msgid "Send data as"
 msgstr "Відправити  дані як"
 
@@ -14382,11 +14397,11 @@ msgstr "Перетворення"
 msgid "Utilities"
 msgstr "Утиліти"
 
-#: gui/helpfiles.c:325 gui/textbuf.c:2326
+#: gui/helpfiles.c:325 gui/textbuf.c:2327
 msgid "Accessors"
 msgstr "Функції доступу"
 
-#: gui/helpfiles.c:327 gui/textbuf.c:2327
+#: gui/helpfiles.c:327 gui/textbuf.c:2328
 msgid "Built-in strings"
 msgstr ""
 
@@ -14446,7 +14461,7 @@ msgstr "Рядки"
 msgid "MPI"
 msgstr "MPI"
 
-#: gui/helpfiles.c:405 gui/textbuf.c:2425
+#: gui/helpfiles.c:405 gui/textbuf.c:2426
 msgid "Index"
 msgstr "Індекс"
 
@@ -17508,98 +17523,98 @@ msgstr "Історія команди 'повторити' відсутня"
 msgid "No undo information available"
 msgstr "Історія команди 'повернути' відсутня"
 
-#: gui/textbuf.c:1401
+#: gui/textbuf.c:1402
 msgid "OK"
 msgstr "OK"
 
-#: gui/textbuf.c:1458
+#: gui/textbuf.c:1459
 #, fuzzy
 msgid "Next results"
 msgstr "Наступний ряд"
 
-#: gui/textbuf.c:1507
+#: gui/textbuf.c:1508
 msgid "processing...\n"
 msgstr "йде обробка...\n"
 
-#: gui/textbuf.c:1664
+#: gui/textbuf.c:1665
 #, fuzzy
 msgid "gretl + MPI"
 msgstr "_gretl + MPI"
 
-#: gui/textbuf.c:1666
+#: gui/textbuf.c:1667
 #, fuzzy
 msgid "gretl + SVM"
 msgstr "_gretl + MPI"
 
-#: gui/textbuf.c:1670
+#: gui/textbuf.c:1671
 #, fuzzy
 msgid "dbnomics for gretl"
 msgstr "динамічний прогноз"
 
-#: gui/textbuf.c:1815
+#: gui/textbuf.c:1816
 #, fuzzy, c-format
 msgid "Couldn't read %s"
 msgstr "Неможливо прочитати '%s'"
 
-#: gui/textbuf.c:2280
+#: gui/textbuf.c:2281
 msgid "Gretl Command Reference"
 msgstr "Довідник Команд Gretl"
 
-#: gui/textbuf.c:2324
+#: gui/textbuf.c:2325
 msgid "Gretl Function Reference"
 msgstr "Довідник Функцій Gretl"
 
-#: gui/textbuf.c:2328
+#: gui/textbuf.c:2329
 #, fuzzy
 msgid "Functions proper"
 msgstr "_Довідник функцій"
 
-#: gui/textbuf.c:2426
+#: gui/textbuf.c:2427
 msgid "Back"
 msgstr "Назад"
 
-#: gui/textbuf.c:3871
+#: gui/textbuf.c:3872
 msgid "Comment line"
 msgstr "Закоментувати рядок"
 
-#: gui/textbuf.c:3872
+#: gui/textbuf.c:3873
 msgid "Uncomment line"
 msgstr "Відмінити коментування для рядку"
 
-#: gui/textbuf.c:3873
+#: gui/textbuf.c:3874
 msgid "Comment region"
 msgstr "Закоментувати виділення"
 
-#: gui/textbuf.c:3874
+#: gui/textbuf.c:3875
 msgid "Uncomment region"
 msgstr "Відмінити коментування для виділення"
 
-#: gui/textbuf.c:3910
+#: gui/textbuf.c:3911
 msgid "Execute region"
 msgstr "Виконати виділений блок"
 
-#: gui/textbuf.c:3912
+#: gui/textbuf.c:3913
 msgid "Execute line"
 msgstr "Виконати рядок"
 
-#: gui/textbuf.c:3940
+#: gui/textbuf.c:3941
 msgid "Auto-indent region"
 msgstr "Авто-вирівнювання у виділенні"
 
-#: gui/textbuf.c:3941
+#: gui/textbuf.c:3942
 msgid "Indent region"
 msgstr "Вирівняти рядки у виділенні"
 
-#: gui/textbuf.c:3950
+#: gui/textbuf.c:3951
 msgid "Unindent region"
 msgstr "Скасувати вирівнювання у виділенні"
 
-#: gui/textbuf.c:3958
+#: gui/textbuf.c:3959
 #, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
 msgstr "Авто-вирівнювання у скрипті"
 
-#: gui/textbuf.c:3969 gui/toolbar.c:820
+#: gui/textbuf.c:3970 gui/toolbar.c:820
 msgid "Preferences..."
 msgstr "Налаштування..."
 

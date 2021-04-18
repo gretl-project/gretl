@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-14 12:33-0400\n"
+"POT-Creation-Date: 2021-04-18 18:56-0400\n"
 "PO-Revision-Date: 2019-01-21 19:19-0500\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>\n"
 "Language-Team: \n"
@@ -1397,7 +1397,7 @@ msgstr "Datu inportatuak %s -tik, %s\n"
 msgid "auto-generated constant"
 msgstr "Berez eraikitako konstantea"
 
-#: lib/src/dataset.c:1540 gui/gui_utils.c:6129 gui/toolbar.c:1440
+#: lib/src/dataset.c:1540 gui/gui_utils.c:6131 gui/toolbar.c:1440
 #: gui/toolbar.c:1449
 msgid "Please open a data file first"
 msgstr "Mesedez, ireki datu-fitxategia lehenik"
@@ -1431,7 +1431,7 @@ msgstr "datu batzuk erabiltzen ari dira"
 msgid "variable %d duplicated in the command list."
 msgstr "%d aldagaia bikoiztuta komando zerrendan."
 
-#: lib/src/dataset.c:2142 gui/gui_utils.c:5547
+#: lib/src/dataset.c:2142 gui/gui_utils.c:5549
 msgid "dataset is subsampled"
 msgstr "datu-multzoa azpilaginduta"
 
@@ -1509,7 +1509,7 @@ msgstr "Une honetan datu-multzoa azpilagindurik dago"
 msgid "dataset restore: dataset is not resampled\n"
 msgstr "datu-multzoa berreraiki: datu-multzoa ez dago birlaginduta\n"
 
-#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4258
+#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4266
 #, fuzzy, c-format
 msgid "%s: no data found"
 msgstr "Ez da daturik aurkitzen.\n"
@@ -2721,7 +2721,7 @@ msgstr "ereduarekin erlazionatuta"
 #: lib/src/genfuncs.c:6652 lib/src/gretl_func.c:5231 lib/src/plotspec.c:328
 #: lib/src/plotspec.c:347 lib/src/uservar.c:1533 lib/src/uservar.c:2456
 #: gui/dialogs.c:6975 gui/dialogs.c:7216 gui/dialogs.c:7222 gui/fnsave.c:2360
-#: gui/fnsave.c:2890 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
+#: gui/fnsave.c:2891 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
 #: gui/join-gui.c:231 gui/join-gui.c:234 gui/join-gui.c:407 gui/join-gui.c:462
 #: gui/join-gui.c:797
 msgid "none"
@@ -2995,13 +2995,13 @@ msgstr "taldezko denbora serieak"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:735
 #: lib/src/plotspec.c:1585 gui/gpt_dialog.c:969 gui/gpt_dialog.c:1389
-#: gui/gpt_dialog.c:2871
+#: gui/gpt_dialog.c:2883
 msgid "right"
 msgstr "eskuina"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:731
 #: lib/src/plotspec.c:737 lib/src/plotspec.c:1583 gui/gpt_dialog.c:1384
-#: gui/gpt_dialog.c:2870
+#: gui/gpt_dialog.c:2882
 msgid "left"
 msgstr "ezkerra"
 
@@ -3245,8 +3245,8 @@ msgid "with least squares fit"
 msgstr "karratu txikieneko doikuntzarekin"
 
 #: lib/src/graphing.c:9614 lib/src/gretl_func.c:2797 lib/src/gretl_utils.c:2030
-#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5291
-#: gui/textbuf.c:2005 plugin/tramo-x12a.c:833
+#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5292
+#: gui/textbuf.c:2006 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr " %s ezin da ireki"
@@ -3333,7 +3333,7 @@ msgid "Initial value of objective function is not finite"
 msgstr "Helburu funtzioaren hasiera-balioa ez da finitua"
 
 #: lib/src/gretl_bundle.c:520 lib/src/gretl_bundle.c:592
-#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1506
+#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1515
 msgid "no such item"
 msgstr "horrelako elementurik ez"
 
@@ -3618,7 +3618,7 @@ msgstr "Funtzioarentzat argumentu baliogabea"
 msgid "PDF doc should be called %s.pdf"
 msgstr ""
 
-#: lib/src/gretl_func.c:3999 gui/fnsave.c:4116
+#: lib/src/gretl_func.c:3999 gui/fnsave.c:4117
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: DTD OK aurka balioetsia"
@@ -4044,7 +4044,7 @@ msgstr "lehen ordenako autokorrelazioa"
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "chi-square(%d) = %g, %s behaketan"
 
-#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1405
+#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1406
 msgid "failed"
 msgstr "huts egin du"
 
@@ -5532,7 +5532,7 @@ msgstr ""
 msgid "bias"
 msgstr "alborapena"
 
-#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2846
+#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2858
 msgid "size"
 msgstr "tamainua"
 
@@ -6807,11 +6807,11 @@ msgstr "Sistema"
 msgid "%s saved\n"
 msgstr "%s gordeta\n"
 
-#: lib/src/objstack.c:1659
+#: lib/src/objstack.c:1668
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "Ezin aurrera egin: oraindik ez da eredurik estimatu\n"
 
-#: lib/src/objstack.c:1673
+#: lib/src/objstack.c:1682
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -8668,11 +8668,11 @@ msgstr "weibull"
 msgid " DW "
 msgstr "DW"
 
-#: gui/calculator.c:2027 gui/gpt_dialog.c:3275
+#: gui/calculator.c:2027 gui/gpt_dialog.c:3287
 msgid "minimum"
 msgstr "minimoa"
 
-#: gui/calculator.c:2029 gui/gpt_dialog.c:3292
+#: gui/calculator.c:2029 gui/gpt_dialog.c:3304
 msgid "maximum"
 msgstr "maximoa"
 
@@ -8922,7 +8922,7 @@ msgstr "Datu egokiak eskuragarri EZ"
 msgid "gretl: plot a curve"
 msgstr "gretl: irudikatu kurba bat"
 
-#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2660
+#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2672
 msgid "formula"
 msgstr "formula"
 
@@ -9331,7 +9331,7 @@ msgstr "Instalatua"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
-#: gui/fncall.c:4191
+#: gui/fncall.c:4199
 msgid "Up to date"
 msgstr "Eguneratuta"
 
@@ -9343,7 +9343,7 @@ msgstr "Konprimatutako datuak zabaltzean huts egin du"
 msgid "Unknown: access error"
 msgstr "Ezezaguna: sartze errorea"
 
-#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4193
+#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4201
 msgid "Not up to date"
 msgstr "Eguneratzeke"
 
@@ -9526,7 +9526,7 @@ msgstr "Aukeratu direktorioa"
 msgid "Details"
 msgstr "Xehetasunak azaldu"
 
-#: gui/datafiles.c:1713 gui/textbuf.c:1662
+#: gui/datafiles.c:1713 gui/textbuf.c:1663
 #, fuzzy
 msgid "Package registry"
 msgstr "Paketearen deskribapena"
@@ -9690,15 +9690,15 @@ msgid "Package"
 msgstr "Programa-paketea"
 
 #: gui/datafiles.c:2907 gui/datafiles.c:2914 gui/datafiles.c:2922
-#: gui/fnsave.c:3785
+#: gui/fnsave.c:3786
 msgid "Version"
 msgstr "Bertsioa"
 
-#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3783
+#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3784
 msgid "Author"
 msgstr "Egilea"
 
-#: gui/datafiles.c:2928 gui/fnsave.c:2887
+#: gui/datafiles.c:2928 gui/fnsave.c:2888
 msgid "Window"
 msgstr "Leihoa"
 
@@ -11478,15 +11478,15 @@ msgstr ""
 "Ez da  %s paketea aurkitu, edota ez dago eguneratuta.\n"
 "Deskargatzea saiatu nahii?"
 
-#: gui/fncall.c:3908 gui/fnsave.c:2891
+#: gui/fncall.c:3916 gui/fnsave.c:2892
 msgid "main window"
 msgstr "lehioa nagusia"
 
-#: gui/fncall.c:3909 gui/fnsave.c:2892
+#: gui/fncall.c:3917 gui/fnsave.c:2893
 msgid "model window"
 msgstr "ereduen leihoa"
 
-#: gui/fncall.c:3914
+#: gui/fncall.c:3922
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -11497,16 +11497,16 @@ msgstr ""
 "\"%s/%s\" bezala %s -an.\n"
 "Hori egin nahi?"
 
-#: gui/fncall.c:4195
+#: gui/fncall.c:4203
 #, c-format
 msgid "Requires gretl %s"
 msgstr "Beharrezkoa gretl %s"
 
-#: gui/fncall.c:4201
+#: gui/fncall.c:4209
 msgid "Error reading package"
 msgstr "Paketea irakurtzean huts"
 
-#: gui/fncall.c:4629
+#: gui/fncall.c:4637
 #, fuzzy
 msgid "No mapfile is present"
 msgstr "ARCH efekturik ez"
@@ -11554,7 +11554,7 @@ msgstr "Gorde fitxategira"
 msgid "A file of this name already exists."
 msgstr "Jadanik %s izeneko zerrenda dago"
 
-#: gui/fnsave.c:701 gui/gui_utils.c:5580
+#: gui/fnsave.c:701 gui/gui_utils.c:5582
 msgid "OK to overwrite it?"
 msgstr "Gainidatzi? "
 
@@ -11638,7 +11638,7 @@ msgstr "Gorde honela"
 msgid "Saving %s.spec: also save ancillary file(s)?"
 msgstr ""
 
-#: gui/fnsave.c:1591 gui/fnsave.c:3543
+#: gui/fnsave.c:1591 gui/fnsave.c:3544
 #, fuzzy
 msgid "Please save your package first"
 msgstr "Mesedez, ireki datu-fitxategia lehenik"
@@ -11718,19 +11718,28 @@ msgstr "Barneratu gaurko data"
 msgid "Save changes?"
 msgstr "Aldaketak gorde?"
 
-#: gui/fnsave.c:2625
+#: gui/fnsave.c:2621
+#, fuzzy
+msgid "Model requirement"
+msgstr "Ez du baldintza berezirik"
+
+#: gui/fnsave.c:2626
 #, fuzzy
 msgid "Any model"
 msgstr "eredua"
 
-#: gui/fnsave.c:2706
+#: gui/fnsave.c:2655
+msgid "request access to out-of-sample data"
+msgstr ""
+
+#: gui/fnsave.c:2707
 #, fuzzy
 msgid "You may add or delete names of datafiles to be included in the package."
 msgstr ""
 "\n"
 "Datu-fitxategiaren izana eman behar duzu komando lerroan"
 
-#: gui/fnsave.c:2759
+#: gui/fnsave.c:2760
 #, fuzzy
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
@@ -11739,11 +11748,11 @@ msgstr ""
 "\n"
 "Datu-fitxategiaren izana eman behar duzu komando lerroan"
 
-#: gui/fnsave.c:2780
+#: gui/fnsave.c:2781
 msgid "provider?"
 msgstr ""
 
-#: gui/fnsave.c:2803
+#: gui/fnsave.c:2804
 #, fuzzy
 msgid ""
 "This package has no GUI-specific help text at present.\n"
@@ -11752,83 +11761,88 @@ msgstr ""
 "Datu-fitxategiak ez du informazio eruzkinik.\n"
 "Orain erantsi nahi diozu?"
 
-#: gui/fnsave.c:2873
+#: gui/fnsave.c:2874
 msgid "Label"
 msgstr "Etiketa"
 
-#: gui/fnsave.c:3038
+#: gui/fnsave.c:2900
+#, fuzzy
+msgid "GUI help text"
+msgstr "Laguntza testua:"
+
+#: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
 msgstr "Menuaren eranskina sortzeko, eskaini etiketa bat."
 
-#: gui/fnsave.c:3206 gui/textbuf.c:1811
+#: gui/fnsave.c:3207 gui/textbuf.c:1812
 #, fuzzy, c-format
 msgid "Couldn't find %s"
 msgstr " %s ezin da ireki"
 
-#: gui/fnsave.c:3405 gui/fnsave.c:3424
+#: gui/fnsave.c:3406 gui/fnsave.c:3425
 #, fuzzy
 msgid "Apply changes?"
 msgstr "Aldaketak gorde?"
 
-#: gui/fnsave.c:3553
+#: gui/fnsave.c:3554
 msgid "gretl: extra properties"
 msgstr "gretl: propietate gehigarriak"
 
-#: gui/fnsave.c:3570
+#: gui/fnsave.c:3571
 msgid "Special functions"
 msgstr "Funtzio bereziak"
 
-#: gui/fnsave.c:3658
+#: gui/fnsave.c:3659
 msgid "Menu attachment"
 msgstr "Menuaren eranskina"
 
-#: gui/fnsave.c:3674
+#: gui/fnsave.c:3675
 #, fuzzy
 msgid "Data files"
 msgstr "Datuen baliagarritasunak"
 
-#: gui/fnsave.c:3682
+#: gui/fnsave.c:3683
 #, fuzzy
 msgid "Dependencies"
 msgstr "Aldagai azaldua"
 
-#: gui/fnsave.c:3784
+#: gui/fnsave.c:3785
 msgid "Email"
 msgstr ""
 
-#: gui/fnsave.c:3786
+#: gui/fnsave.c:3787
 msgid "Date (YYYY-MM-DD)"
 msgstr "Data (UUUU-HH-EE)"
 
-#: gui/fnsave.c:3787
+#: gui/fnsave.c:3788
 msgid "Package description"
 msgstr "Paketearen deskribapena"
 
-#: gui/fnsave.c:3910
+#: gui/fnsave.c:3911
 msgid "Edit function code"
 msgstr "Editatu kode funtzioak"
 
-#: gui/fnsave.c:3924
+#: gui/fnsave.c:3925
 msgid "Extra properties"
 msgstr "Propietate gehigarriak"
 
-#: gui/fnsave.c:3930 gui/toolbar.c:1086 gui/toolbar.c:1095
+#: gui/fnsave.c:3931 gui/toolbar.c:1086 gui/toolbar.c:1095
 msgid "Save..."
 msgstr "Gorde..."
 
-#: gui/fnsave.c:3940
+#: gui/fnsave.c:3941
 msgid "Edit sample script"
 msgstr "Editau lagin-gidoia"
 
-#: gui/fnsave.c:3946
+#: gui/fnsave.c:3947
 msgid "Add/remove functions"
 msgstr "Gehitu/ezabatu funtzioak"
 
-#: gui/fnsave.c:3952
+#: gui/fnsave.c:3953
 msgid "Validate"
 msgstr "Balidatu"
 
-#: gui/fnsave.c:3978
+#: gui/fnsave.c:3979
 msgid ""
 "Upload package: This means that the package will\n"
 "be uploaded to the gretl server for approval.\n"
@@ -11838,19 +11852,19 @@ msgid ""
 "last upload."
 msgstr ""
 
-#: gui/fnsave.c:3990
+#: gui/fnsave.c:3991
 msgid "gretl: upload"
 msgstr "gretl: kargatu"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Login"
 msgstr "Login"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Password"
 msgstr "Pasahitza"
 
-#: gui/fnsave.c:4026
+#: gui/fnsave.c:4027
 #, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
@@ -11863,17 +11877,17 @@ msgstr ""
 "Ondorengo 'Web guneko' botoiak orri hau irekitzen du\n"
 "zure web arakatzailean. "
 
-#: gui/fnsave.c:4170 gui/fnsave.c:4282
+#: gui/fnsave.c:4171 gui/fnsave.c:4283
 msgid "build zip file"
 msgstr ""
 
-#: gui/fnsave.c:4267
+#: gui/fnsave.c:4268
 msgid ""
 "This package must be uploaded as a zip file.\n"
 "Try to create the zip file now?"
 msgstr ""
 
-#: gui/fnsave.c:4417
+#: gui/fnsave.c:4418
 #, fuzzy
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
@@ -11884,7 +11898,7 @@ msgstr ""
 "32 karaktere baino gutxiagoko luzaera, ASCII hizkiak,\n"
 "zenbakiak eta '_' izan ditzake, eta  \".gfn\" bezala bukatu behar du"
 
-#: gui/fnsave.c:4422 gui/selector.c:8261
+#: gui/fnsave.c:4423 gui/selector.c:8261
 #, fuzzy
 msgid ""
 "Invalid package name: the name must start with a letter,\n"
@@ -11895,7 +11909,7 @@ msgstr ""
 "32 karaktere baino gutxiagoko luzaera, ASCII hizkiak,\n"
 "zenbakiak eta '_' izan ditzake, eta  \".gfn\" bezala bukatu behar du"
 
-#: gui/fnsave.c:5264
+#: gui/fnsave.c:5265
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -11903,11 +11917,11 @@ msgstr ""
 "Funtzioak ez daude erabilgarri programatzeko.\n"
 "Funtzio bat idatzi nahi duzu orain?"
 
-#: gui/fnsave.c:5269
+#: gui/fnsave.c:5270
 msgid "gretl: function packages"
 msgstr "gretl: funtzio-paketeak"
 
-#: gui/fnsave.c:5324
+#: gui/fnsave.c:5325
 msgid "build gfn file"
 msgstr ""
 
@@ -12227,121 +12241,121 @@ msgstr "Ezohikoak"
 msgid "label %d: "
 msgstr "%d etiketa: "
 
-#: gui/gpt_dialog.c:2604
+#: gui/gpt_dialog.c:2616
 msgid "Lines"
 msgstr "Lerroak"
 
-#: gui/gpt_dialog.c:2689
+#: gui/gpt_dialog.c:2701
 msgid "legend"
 msgstr "legenda"
 
-#: gui/gpt_dialog.c:2722
+#: gui/gpt_dialog.c:2734
 msgid "type"
 msgstr "mota"
 
-#: gui/gpt_dialog.c:2782
+#: gui/gpt_dialog.c:2794
 #, fuzzy
 msgid "line"
 msgstr "lerroak"
 
-#: gui/gpt_dialog.c:2783
+#: gui/gpt_dialog.c:2795
 msgid "line width"
 msgstr "lerro zabalera"
 
-#: gui/gpt_dialog.c:2793 gui/graphics.c:195
+#: gui/gpt_dialog.c:2805 gui/graphics.c:195
 msgid "width"
 msgstr "zabalera"
 
-#: gui/gpt_dialog.c:2840
+#: gui/gpt_dialog.c:2852
 msgid "point"
 msgstr "puntua"
 
-#: gui/gpt_dialog.c:2868
+#: gui/gpt_dialog.c:2880
 msgid "y axis"
 msgstr "y ardatza"
 
-#: gui/gpt_dialog.c:2895
+#: gui/gpt_dialog.c:2907
 msgid "Add line..."
 msgstr "Erantsi lerroa..."
 
-#: gui/gpt_dialog.c:2931
+#: gui/gpt_dialog.c:2943
 msgid "Labels"
 msgstr "Etiketak"
 
-#: gui/gpt_dialog.c:2959
+#: gui/gpt_dialog.c:2971
 msgid "text"
 msgstr "testua"
 
-#: gui/gpt_dialog.c:2975
+#: gui/gpt_dialog.c:2987
 msgid "position (X Y)"
 msgstr "(X,Y) kokapena"
 
-#: gui/gpt_dialog.c:3012
+#: gui/gpt_dialog.c:3024
 msgid "justification"
 msgstr "lerrokadura"
 
-#: gui/gpt_dialog.c:3040 gui/gpt_dialog.c:3175 gui/ssheet.c:139
+#: gui/gpt_dialog.c:3052 gui/gpt_dialog.c:3187 gui/ssheet.c:139
 #: gui/ssheet.c:146
 msgid "Add..."
 msgstr "erantsi..."
 
-#: gui/gpt_dialog.c:3079
+#: gui/gpt_dialog.c:3091
 msgid "Arrows"
 msgstr "Lerroak"
 
-#: gui/gpt_dialog.c:3110
+#: gui/gpt_dialog.c:3122
 msgid "from (X Y)"
 msgstr "(X,Y)-gandik"
 
-#: gui/gpt_dialog.c:3112
+#: gui/gpt_dialog.c:3124
 msgid "to (X Y)"
 msgstr "(X,Y)-rako"
 
-#: gui/gpt_dialog.c:3148
+#: gui/gpt_dialog.c:3160
 msgid "arrow has head"
 msgstr "geziak burua du"
 
-#: gui/gpt_dialog.c:3157
+#: gui/gpt_dialog.c:3169
 msgid "line is dotted"
 msgstr "lerroa punteatua"
 
-#: gui/gpt_dialog.c:3195
+#: gui/gpt_dialog.c:3207
 msgid "X-axis"
 msgstr "X-ardatza"
 
-#: gui/gpt_dialog.c:3197
+#: gui/gpt_dialog.c:3209
 msgid "Y-axis"
 msgstr "Y-ardatza"
 
-#: gui/gpt_dialog.c:3199
+#: gui/gpt_dialog.c:3211
 msgid "Y2-axis"
 msgstr "Y2-ardatza"
 
-#: gui/gpt_dialog.c:3252
+#: gui/gpt_dialog.c:3264
 msgid "auto axis range"
 msgstr "ardatzaren ibiltartea automatikoki:"
 
-#: gui/gpt_dialog.c:3265
+#: gui/gpt_dialog.c:3277
 msgid "manual range:"
 msgstr "ardatzaren ibiltartea eskuz:"
 
-#: gui/gpt_dialog.c:3340
+#: gui/gpt_dialog.c:3352
 msgid "linear scale"
 msgstr "eskala lineala"
 
-#: gui/gpt_dialog.c:3348
+#: gui/gpt_dialog.c:3360
 msgid "logarithmic scale, base:"
 msgstr "eskala logaritmikoa, oinarria:"
 
-#: gui/gpt_dialog.c:3635
+#: gui/gpt_dialog.c:3647
 msgid "Title of plot"
 msgstr "Grafikoaren izenburua"
 
-#: gui/gpt_dialog.c:3636
+#: gui/gpt_dialog.c:3648
 msgid "Title for axis"
 msgstr "Ardatzen izenburua"
 
-#: gui/gpt_dialog.c:3662
+#: gui/gpt_dialog.c:3674
 msgid "gretl plot controls"
 msgstr "gretleko grafikoen kontrolatzaileak"
 
@@ -12594,11 +12608,11 @@ msgstr "Datu-base _zerbitzaria..."
 msgid "_Function packages"
 msgstr "_Funtzio-paketeak"
 
-#: gui/gretl.c:1720 gui/textbuf.c:1654
+#: gui/gretl.c:1720 gui/textbuf.c:1655
 msgid "On _local machine..."
 msgstr "_Bertako makinan..."
 
-#: gui/gretl.c:1721 gui/textbuf.c:1656
+#: gui/gretl.c:1721 gui/textbuf.c:1657
 msgid "On _server..."
 msgstr "_Zerbitzarian..."
 
@@ -12675,7 +12689,7 @@ msgstr "_Kontrasteen estatistikoen kalkulatzailea"
 msgid "_Nonparametric tests"
 msgstr "_Kontraste ez parametrikoak"
 
-#: gui/gretl.c:1747 gui/textbuf.c:1668
+#: gui/gretl.c:1747 gui/textbuf.c:1669
 msgid "_Seed for random numbers"
 msgstr "_Zenbaki aleatorioak sortzeko hazia"
 
@@ -13410,7 +13424,7 @@ msgstr "_Laster-tekla"
 msgid "_Hansl primer"
 msgstr ""
 
-#: gui/gretl.c:1955 gui/textbuf.c:1658
+#: gui/gretl.c:1955 gui/textbuf.c:1659
 #, fuzzy
 msgid "_Function package guide"
 msgstr "_Funtzio-paketeak"
@@ -13430,7 +13444,7 @@ msgstr "gretl: MOM"
 msgid "_gretl + DB.NOMICS"
 msgstr "gretl: MOM"
 
-#: gui/gretl.c:1959 gui/textbuf.c:1672
+#: gui/gretl.c:1959 gui/textbuf.c:1673
 #, fuzzy
 msgid "Creating maps"
 msgstr "Eraikuntza eta I/O"
@@ -13439,7 +13453,7 @@ msgstr "Eraikuntza eta I/O"
 msgid "Check for _updates"
 msgstr "Begiratu _eguneratzeak"
 
-#: gui/gretl.c:1961 gui/textbuf.c:1660
+#: gui/gretl.c:1961 gui/textbuf.c:1661
 msgid "Check for _addons"
 msgstr "Begiratu _osagarriak"
 
@@ -14077,8 +14091,8 @@ msgstr "gretl: izen gabe"
 msgid "gretl: script output %d"
 msgstr "gretl: irteera-gidoia"
 
-#: gui/gui_utils.c:1839 gui/gui_utils.c:5813 gui/gui_utils.c:5877
-#: gui/gui_utils.c:6050
+#: gui/gui_utils.c:1839 gui/gui_utils.c:5815 gui/gui_utils.c:5879
+#: gui/gui_utils.c:6052
 msgid "gretl: script output"
 msgstr "gretl: irteera-gidoia"
 
@@ -14394,16 +14408,16 @@ msgstr "%s -ren erantzuna"
 msgid "to %s"
 msgstr "%s -ri"
 
-#: gui/gui_utils.c:5336
+#: gui/gui_utils.c:5338
 #, fuzzy
 msgid "_Save text..."
 msgstr "_Gordetestua  honela..."
 
-#: gui/gui_utils.c:5343
+#: gui/gui_utils.c:5345
 msgid "Save bundle to session as _icon"
 msgstr "Gorde bundle saioan _ikono bezala"
 
-#: gui/gui_utils.c:5425
+#: gui/gui_utils.c:5427
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -14417,7 +14431,7 @@ msgstr ""
 "Eredu hau estimatzean erabili izan den lagina\n"
 "berreskuratu nahi duzu?"
 
-#: gui/gui_utils.c:5488
+#: gui/gui_utils.c:5490
 #, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
@@ -14429,42 +14443,42 @@ msgstr ""
 "Eredu hau estimatzean erabili izan den lagina\n"
 "berreskuratu nahi duzu?"
 
-#: gui/gui_utils.c:5558 gui/library.c:5279
+#: gui/gui_utils.c:5560 gui/library.c:5279
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Jadanik %s izeneko seriea badago"
 
-#: gui/gui_utils.c:5560
+#: gui/gui_utils.c:5562
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "Jadanik %s izeneko matrizea badago"
 
-#: gui/gui_utils.c:5562
+#: gui/gui_utils.c:5564
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "Jadanik %s izeneko eskalarra badago"
 
-#: gui/gui_utils.c:5564
+#: gui/gui_utils.c:5566
 #, c-format
 msgid "A list named %s already exists"
 msgstr "Jadanik %s izeneko zerrenda dago"
 
-#: gui/gui_utils.c:5566
+#: gui/gui_utils.c:5568
 #, c-format
 msgid "A string named %s already exists"
 msgstr "Jadanik %s izeneko katea badago"
 
-#: gui/gui_utils.c:5568
+#: gui/gui_utils.c:5570
 #, fuzzy, c-format
 msgid "A bundle named %s already exists"
 msgstr "Jadanik %s izeneko zerrenda dago"
 
-#: gui/gui_utils.c:5570
+#: gui/gui_utils.c:5572
 #, fuzzy, c-format
 msgid "An array named %s already exists"
 msgstr "Jadanik %s izeneko matrizea badago"
 
-#: gui/gui_utils.c:5606
+#: gui/gui_utils.c:5608
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -14473,7 +14487,7 @@ msgstr ""
 "Aldagaiaren izena %s... luzeegia da\n"
 "(gehienez %d karaktere)"
 
-#: gui/gui_utils.c:5611
+#: gui/gui_utils.c:5613
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -14482,7 +14496,7 @@ msgstr ""
 "Aldagaiaren izenaren ('%c') lehen karakterea kerra\n"
 "(lehenengoa alfabetikoa izan behar da)"
 
-#: gui/gui_utils.c:5619
+#: gui/gui_utils.c:5621
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -14491,25 +14505,25 @@ msgstr ""
 "Izenak legez kanpoko karaktere bat du (%d lekuan)\n"
 "Erabili azentugabeko letrak, digitu eta puntuazioa"
 
-#: gui/gui_utils.c:5779 gui/gui_utils.c:5784
+#: gui/gui_utils.c:5781 gui/gui_utils.c:5786
 msgid "No output was produced"
 msgstr ""
 
-#: gui/gui_utils.c:5945
+#: gui/gui_utils.c:5947
 msgid "No command was supplied to start R"
 msgstr "R hasteko ez da komandorik eskaintzen"
 
-#: gui/gui_utils.c:6141
+#: gui/gui_utils.c:6143
 #, fuzzy
 msgid "multiple time series object"
 msgstr "Pilatutako denbora serieak"
 
-#: gui/gui_utils.c:6142
+#: gui/gui_utils.c:6144
 #, fuzzy
 msgid "data frame"
 msgstr "eskala"
 
-#: gui/gui_utils.c:6146
+#: gui/gui_utils.c:6148
 #, fuzzy
 msgid "Send data as"
 msgstr "Gorde datuak _honela..."
@@ -14562,11 +14576,11 @@ msgstr "Eraldakuntzak"
 msgid "Utilities"
 msgstr "Baliagarritasunak"
 
-#: gui/helpfiles.c:325 gui/textbuf.c:2326
+#: gui/helpfiles.c:325 gui/textbuf.c:2327
 msgid "Accessors"
 msgstr "Eranskinak"
 
-#: gui/helpfiles.c:327 gui/textbuf.c:2327
+#: gui/helpfiles.c:327 gui/textbuf.c:2328
 #, fuzzy
 msgid "Built-in strings"
 msgstr "Ezabatutako katea %s"
@@ -14628,7 +14642,7 @@ msgstr "Kateak"
 msgid "MPI"
 msgstr ""
 
-#: gui/helpfiles.c:405 gui/textbuf.c:2425
+#: gui/helpfiles.c:405 gui/textbuf.c:2426
 msgid "Index"
 msgstr "Aurkibidea"
 
@@ -17731,99 +17745,99 @@ msgstr "Desegiteko infor. eskuragarri ez"
 msgid "No undo information available"
 msgstr "Ez dago desegintzeko informaziorik"
 
-#: gui/textbuf.c:1401
+#: gui/textbuf.c:1402
 msgid "OK"
 msgstr ""
 
-#: gui/textbuf.c:1458
+#: gui/textbuf.c:1459
 #, fuzzy
 msgid "Next results"
 msgstr "Hurrengo serieak"
 
-#: gui/textbuf.c:1507
+#: gui/textbuf.c:1508
 #, fuzzy
 msgid "processing...\n"
 msgstr "_Ireki saioa..."
 
-#: gui/textbuf.c:1664
+#: gui/textbuf.c:1665
 #, fuzzy
 msgid "gretl + MPI"
 msgstr "gretl: MOM"
 
-#: gui/textbuf.c:1666
+#: gui/textbuf.c:1667
 #, fuzzy
 msgid "gretl + SVM"
 msgstr "gretl: MOM"
 
-#: gui/textbuf.c:1670
+#: gui/textbuf.c:1671
 #, fuzzy
 msgid "dbnomics for gretl"
 msgstr "aurresan dinamikoa"
 
-#: gui/textbuf.c:1815
+#: gui/textbuf.c:1816
 #, fuzzy, c-format
 msgid "Couldn't read %s"
 msgstr " '%s' ezin da ireki"
 
-#: gui/textbuf.c:2280
+#: gui/textbuf.c:2281
 msgid "Gretl Command Reference"
 msgstr "Gretleko Erreferentzia Komandoa"
 
-#: gui/textbuf.c:2324
+#: gui/textbuf.c:2325
 msgid "Gretl Function Reference"
 msgstr "Gretleko Erreferentzia Funtzioa"
 
-#: gui/textbuf.c:2328
+#: gui/textbuf.c:2329
 #, fuzzy
 msgid "Functions proper"
 msgstr "_Funtzioaren erreferentzia"
 
-#: gui/textbuf.c:2426
+#: gui/textbuf.c:2427
 msgid "Back"
 msgstr "Atzera"
 
-#: gui/textbuf.c:3871
+#: gui/textbuf.c:3872
 msgid "Comment line"
 msgstr "Iruzkin lerroa"
 
-#: gui/textbuf.c:3872
+#: gui/textbuf.c:3873
 msgid "Uncomment line"
 msgstr "Iruzkin gabeko lerroa"
 
-#: gui/textbuf.c:3873
+#: gui/textbuf.c:3874
 msgid "Comment region"
 msgstr "Iruzkin eremua"
 
-#: gui/textbuf.c:3874
+#: gui/textbuf.c:3875
 msgid "Uncomment region"
 msgstr "Iruzkin gabeko eremeua"
 
-#: gui/textbuf.c:3910
+#: gui/textbuf.c:3911
 msgid "Execute region"
 msgstr "Exekuzio eremua"
 
-#: gui/textbuf.c:3912
+#: gui/textbuf.c:3913
 msgid "Execute line"
 msgstr "Exekuzio lerroa"
 
-#: gui/textbuf.c:3940
+#: gui/textbuf.c:3941
 msgid "Auto-indent region"
 msgstr "Berezko koskako arloa "
 
-#: gui/textbuf.c:3941
+#: gui/textbuf.c:3942
 msgid "Indent region"
 msgstr "Koska arloa "
 
-#: gui/textbuf.c:3950
+#: gui/textbuf.c:3951
 msgid "Unindent region"
 msgstr "Koskarik gabeko arloa "
 
-#: gui/textbuf.c:3958
+#: gui/textbuf.c:3959
 #, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
 msgstr "Berezko koskako gidoia"
 
-#: gui/textbuf.c:3969 gui/toolbar.c:820
+#: gui/textbuf.c:3970 gui/toolbar.c:820
 #, fuzzy
 msgid "Preferences..."
 msgstr "_Lehentasunak"

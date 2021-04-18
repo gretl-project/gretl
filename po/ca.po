@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-04-14 12:33-0400\n"
+"POT-Creation-Date: 2021-04-18 18:56-0400\n"
 "PO-Revision-Date: 2019-01-21 19:15-0500\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
@@ -1411,7 +1411,7 @@ msgstr "Dades importades des de %s, %s\n"
 msgid "auto-generated constant"
 msgstr "constant generada automàticament"
 
-#: lib/src/dataset.c:1540 gui/gui_utils.c:6129 gui/toolbar.c:1440
+#: lib/src/dataset.c:1540 gui/gui_utils.c:6131 gui/toolbar.c:1440
 #: gui/toolbar.c:1449
 msgid "Please open a data file first"
 msgstr "Per favor, obri primer un fitxer de dades"
@@ -1445,7 +1445,7 @@ msgstr "algunes dades s'estaven usant"
 msgid "variable %d duplicated in the command list."
 msgstr "la variable %d està duplicada a la llista d'instruccions."
 
-#: lib/src/dataset.c:2142 gui/gui_utils.c:5547
+#: lib/src/dataset.c:2142 gui/gui_utils.c:5549
 msgid "dataset is subsampled"
 msgstr "el conjunt de dades s'ha submostrejat"
 
@@ -1523,7 +1523,7 @@ msgstr "Ara el conjunt de dades té la mida mostral retallada"
 msgid "dataset restore: dataset is not resampled\n"
 msgstr "dataset restore: no s'ha remostrejat el conjunt de dades\n"
 
-#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4258
+#: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4266
 #, fuzzy, c-format
 msgid "%s: no data found"
 msgstr "No s'han trobat dades.\n"
@@ -2740,7 +2740,7 @@ msgstr "relatiu al modelo"
 #: lib/src/genfuncs.c:6652 lib/src/gretl_func.c:5231 lib/src/plotspec.c:328
 #: lib/src/plotspec.c:347 lib/src/uservar.c:1533 lib/src/uservar.c:2456
 #: gui/dialogs.c:6975 gui/dialogs.c:7216 gui/dialogs.c:7222 gui/fnsave.c:2360
-#: gui/fnsave.c:2890 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
+#: gui/fnsave.c:2891 gui/gpt_dialog.c:140 gui/gui_utils.c:3389
 #: gui/join-gui.c:231 gui/join-gui.c:234 gui/join-gui.c:407 gui/join-gui.c:462
 #: gui/join-gui.c:797
 msgid "none"
@@ -3018,13 +3018,13 @@ msgstr "sèries temporals per grups"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:735
 #: lib/src/plotspec.c:1585 gui/gpt_dialog.c:969 gui/gpt_dialog.c:1389
-#: gui/gpt_dialog.c:2871
+#: gui/gpt_dialog.c:2883
 msgid "right"
 msgstr "dreta"
 
 #: lib/src/graphing.c:4234 lib/src/graphing.c:6506 lib/src/plotspec.c:731
 #: lib/src/plotspec.c:737 lib/src/plotspec.c:1583 gui/gpt_dialog.c:1384
-#: gui/gpt_dialog.c:2870
+#: gui/gpt_dialog.c:2882
 msgid "left"
 msgstr "esquerra"
 
@@ -3266,8 +3266,8 @@ msgid "with least squares fit"
 msgstr "amb ajust mínim-quadràtic"
 
 #: lib/src/graphing.c:9614 lib/src/gretl_func.c:2797 lib/src/gretl_utils.c:2030
-#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5291
-#: gui/textbuf.c:2005 plugin/tramo-x12a.c:833
+#: lib/src/interact.c:1501 gui/dialogs.c:5548 gui/fnsave.c:5292
+#: gui/textbuf.c:2006 plugin/tramo-x12a.c:833
 #, c-format
 msgid "Couldn't open %s"
 msgstr "No s'ha pogut obrir %s"
@@ -3354,7 +3354,7 @@ msgid "Initial value of objective function is not finite"
 msgstr "El valor inicial de la funció objectiu no és finit"
 
 #: lib/src/gretl_bundle.c:520 lib/src/gretl_bundle.c:592
-#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1506
+#: lib/src/gretl_bundle.c:646 lib/src/kalman.c:4281 lib/src/objstack.c:1515
 msgid "no such item"
 msgstr "no existe aquest element"
 
@@ -3647,7 +3647,7 @@ msgstr "Argument no vàlid per a la funció"
 msgid "PDF doc should be called %s.pdf"
 msgstr ""
 
-#: lib/src/gretl_func.c:3999 gui/fnsave.c:4116
+#: lib/src/gretl_func.c:3999 gui/fnsave.c:4117
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: s'ha validat correctament respecte a DTD"
@@ -4077,7 +4077,7 @@ msgstr "autocorrelació de primer ordre"
 msgid "chi-square(%d) = %g at observation %s"
 msgstr "Khi-cuadrado(%d) = %g a l'observació %s"
 
-#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1405
+#: lib/src/gretl_model.c:4438 lib/src/gretl_model.c:4445 gui/textbuf.c:1406
 msgid "failed"
 msgstr "fallada"
 
@@ -5578,7 +5578,7 @@ msgstr ""
 msgid "bias"
 msgstr "biaix"
 
-#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2846
+#: lib/src/modelprint.c:1173 gui/gpt_dialog.c:2858
 msgid "size"
 msgstr "mida"
 
@@ -6870,11 +6870,11 @@ msgstr "Sistema"
 msgid "%s saved\n"
 msgstr "%s guardat\n"
 
-#: lib/src/objstack.c:1659
+#: lib/src/objstack.c:1668
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "No es pot fer això: encara no s'ha estimat cap model\n"
 
-#: lib/src/objstack.c:1673
+#: lib/src/objstack.c:1682
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -8727,11 +8727,11 @@ msgstr "weibull"
 msgid " DW "
 msgstr " DW "
 
-#: gui/calculator.c:2027 gui/gpt_dialog.c:3275
+#: gui/calculator.c:2027 gui/gpt_dialog.c:3287
 msgid "minimum"
 msgstr "mínim"
 
-#: gui/calculator.c:2029 gui/gpt_dialog.c:3292
+#: gui/calculator.c:2029 gui/gpt_dialog.c:3304
 msgid "maximum"
 msgstr "màxim"
 
@@ -8981,7 +8981,7 @@ msgstr "No es disposa de dades adequades"
 msgid "gretl: plot a curve"
 msgstr "gretl: dibuixar una corba"
 
-#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2660
+#: gui/calculator.c:3294 gui/gpt_dialog.c:1972 gui/gpt_dialog.c:2672
 msgid "formula"
 msgstr "fórmula"
 
@@ -9391,7 +9391,7 @@ msgstr "Instal·lat"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
-#: gui/fncall.c:4191
+#: gui/fncall.c:4199
 msgid "Up to date"
 msgstr "Actualitzat"
 
@@ -9403,7 +9403,7 @@ msgstr "Error en descomprimir dades (unzip)"
 msgid "Unknown: access error"
 msgstr "Desconegut: error d'accés"
 
-#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4193
+#: gui/database.c:3250 gui/datafiles.c:1220 gui/fncall.c:4201
 msgid "Not up to date"
 msgstr "No actualitzat"
 
@@ -9586,7 +9586,7 @@ msgstr "Seleccioni un directori"
 msgid "Details"
 msgstr "Mostrar els detalls"
 
-#: gui/datafiles.c:1713 gui/textbuf.c:1662
+#: gui/datafiles.c:1713 gui/textbuf.c:1663
 #, fuzzy
 msgid "Package registry"
 msgstr "Descripció del paquet"
@@ -9750,15 +9750,15 @@ msgid "Package"
 msgstr "Paquet"
 
 #: gui/datafiles.c:2907 gui/datafiles.c:2914 gui/datafiles.c:2922
-#: gui/fnsave.c:3785
+#: gui/fnsave.c:3786
 msgid "Version"
 msgstr "Versió"
 
-#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3783
+#: gui/datafiles.c:2909 gui/datafiles.c:2916 gui/fnsave.c:3784
 msgid "Author"
 msgstr "Autor"
 
-#: gui/datafiles.c:2928 gui/fnsave.c:2887
+#: gui/datafiles.c:2928 gui/fnsave.c:2888
 msgid "Window"
 msgstr "Finestra"
 
@@ -11545,15 +11545,15 @@ msgstr ""
 "El paquet %s no s'ha trobat o no està actualitzat.\n"
 "Vol intentar descarregar-lo ara?"
 
-#: gui/fncall.c:3908 gui/fnsave.c:2891
+#: gui/fncall.c:3916 gui/fnsave.c:2892
 msgid "main window"
 msgstr "finestra principal"
 
-#: gui/fncall.c:3909 gui/fnsave.c:2892
+#: gui/fncall.c:3917 gui/fnsave.c:2893
 msgid "model window"
 msgstr "finestra de model"
 
-#: gui/fncall.c:3914
+#: gui/fncall.c:3922
 #, c-format
 msgid ""
 "The package %s can be attached to the gretl menus\n"
@@ -11564,16 +11564,16 @@ msgstr ""
 "com a \"%s/%s\" a %s.\n"
 "Vol afegir-lo?"
 
-#: gui/fncall.c:4195
+#: gui/fncall.c:4203
 #, c-format
 msgid "Requires gretl %s"
 msgstr "Requereix gretl %s"
 
-#: gui/fncall.c:4201
+#: gui/fncall.c:4209
 msgid "Error reading package"
 msgstr "Error en llegir el paquet"
 
-#: gui/fncall.c:4629
+#: gui/fncall.c:4637
 #, fuzzy
 msgid "No mapfile is present"
 msgstr "no hi ha efecte ARCH"
@@ -11621,7 +11621,7 @@ msgstr "Guardar a un fitxer"
 msgid "A file of this name already exists."
 msgstr "Ja hi ha una llista amb nom %s"
 
-#: gui/fnsave.c:701 gui/gui_utils.c:5580
+#: gui/fnsave.c:701 gui/gui_utils.c:5582
 msgid "OK to overwrite it?"
 msgstr "Sobreescriure'l?"
 
@@ -11705,7 +11705,7 @@ msgstr "Guardar com"
 msgid "Saving %s.spec: also save ancillary file(s)?"
 msgstr ""
 
-#: gui/fnsave.c:1591 gui/fnsave.c:3543
+#: gui/fnsave.c:1591 gui/fnsave.c:3544
 #, fuzzy
 msgid "Please save your package first"
 msgstr "Per favor, obri primer un fitxer de dades"
@@ -11785,19 +11785,28 @@ msgstr "Instrodueixi la data d'avui"
 msgid "Save changes?"
 msgstr "Guardar els canvis?"
 
-#: gui/fnsave.c:2625
+#: gui/fnsave.c:2621
+#, fuzzy
+msgid "Model requirement"
+msgstr "Cap requisit especial"
+
+#: gui/fnsave.c:2626
 #, fuzzy
 msgid "Any model"
 msgstr "model"
 
-#: gui/fnsave.c:2706
+#: gui/fnsave.c:2655
+msgid "request access to out-of-sample data"
+msgstr ""
+
+#: gui/fnsave.c:2707
 #, fuzzy
 msgid "You may add or delete names of datafiles to be included in the package."
 msgstr ""
 "\n"
 "Pot proporcionar el nom d'un fitxer de dades a la línia d'instruccions"
 
-#: gui/fnsave.c:2759
+#: gui/fnsave.c:2760
 #, fuzzy
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
@@ -11806,11 +11815,11 @@ msgstr ""
 "\n"
 "Pot proporcionar el nom d'un fitxer de dades a la línia d'instruccions"
 
-#: gui/fnsave.c:2780
+#: gui/fnsave.c:2781
 msgid "provider?"
 msgstr ""
 
-#: gui/fnsave.c:2803
+#: gui/fnsave.c:2804
 #, fuzzy
 msgid ""
 "This package has no GUI-specific help text at present.\n"
@@ -11819,83 +11828,88 @@ msgstr ""
 "El fitxer de dades no contenia comentaris d'informació.\n"
 "En vol aafegir algun ara?"
 
-#: gui/fnsave.c:2873
+#: gui/fnsave.c:2874
 msgid "Label"
 msgstr "Etiqueta"
 
-#: gui/fnsave.c:3038
+#: gui/fnsave.c:2900
+#, fuzzy
+msgid "GUI help text"
+msgstr "Text d'ajuda:"
+
+#: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
 msgstr "Per crear un menú adjunt s'ha de proporcionar una etiqueta"
 
-#: gui/fnsave.c:3206 gui/textbuf.c:1811
+#: gui/fnsave.c:3207 gui/textbuf.c:1812
 #, fuzzy, c-format
 msgid "Couldn't find %s"
 msgstr "No s'ha pogut obrir %s"
 
-#: gui/fnsave.c:3405 gui/fnsave.c:3424
+#: gui/fnsave.c:3406 gui/fnsave.c:3425
 #, fuzzy
 msgid "Apply changes?"
 msgstr "Guardar els canvis?"
 
-#: gui/fnsave.c:3553
+#: gui/fnsave.c:3554
 msgid "gretl: extra properties"
 msgstr "gretl: propietats extra"
 
-#: gui/fnsave.c:3570
+#: gui/fnsave.c:3571
 msgid "Special functions"
 msgstr "Funcions especials"
 
-#: gui/fnsave.c:3658
+#: gui/fnsave.c:3659
 msgid "Menu attachment"
 msgstr "Afegitó al menú"
 
-#: gui/fnsave.c:3674
+#: gui/fnsave.c:3675
 #, fuzzy
 msgid "Data files"
 msgstr "Utilitats de dades"
 
-#: gui/fnsave.c:3682
+#: gui/fnsave.c:3683
 #, fuzzy
 msgid "Dependencies"
 msgstr "Variable dependent"
 
-#: gui/fnsave.c:3784
+#: gui/fnsave.c:3785
 msgid "Email"
 msgstr ""
 
-#: gui/fnsave.c:3786
+#: gui/fnsave.c:3787
 msgid "Date (YYYY-MM-DD)"
 msgstr "Data (YYYY-MM-DD)"
 
-#: gui/fnsave.c:3787
+#: gui/fnsave.c:3788
 msgid "Package description"
 msgstr "Descripció del paquet"
 
-#: gui/fnsave.c:3910
+#: gui/fnsave.c:3911
 msgid "Edit function code"
 msgstr "Editar codi de funció"
 
-#: gui/fnsave.c:3924
+#: gui/fnsave.c:3925
 msgid "Extra properties"
 msgstr "Extra properties"
 
-#: gui/fnsave.c:3930 gui/toolbar.c:1086 gui/toolbar.c:1095
+#: gui/fnsave.c:3931 gui/toolbar.c:1086 gui/toolbar.c:1095
 msgid "Save..."
 msgstr "Guardar..."
 
-#: gui/fnsave.c:3940
+#: gui/fnsave.c:3941
 msgid "Edit sample script"
 msgstr "Editar script d'exemple"
 
-#: gui/fnsave.c:3946
+#: gui/fnsave.c:3947
 msgid "Add/remove functions"
 msgstr "Afegir/esborrar funcions"
 
-#: gui/fnsave.c:3952
+#: gui/fnsave.c:3953
 msgid "Validate"
 msgstr "Validar"
 
-#: gui/fnsave.c:3978
+#: gui/fnsave.c:3979
 msgid ""
 "Upload package: This means that the package will\n"
 "be uploaded to the gretl server for approval.\n"
@@ -11905,19 +11919,19 @@ msgid ""
 "last upload."
 msgstr ""
 
-#: gui/fnsave.c:3990
+#: gui/fnsave.c:3991
 msgid "gretl: upload"
 msgstr "gretl: carregar"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Login"
 msgstr "Usuari"
 
-#: gui/fnsave.c:4004
+#: gui/fnsave.c:4005
 msgid "Password"
 msgstr "Clau"
 
-#: gui/fnsave.c:4026
+#: gui/fnsave.c:4027
 #, fuzzy
 msgid ""
 "If you don't have a login to the gretl server\n"
@@ -11930,17 +11944,17 @@ msgstr ""
 "El botó de 'Lloc web' de baix hauria d'obrir aquesta pàgina\n"
 "al seu navegador web."
 
-#: gui/fnsave.c:4170 gui/fnsave.c:4282
+#: gui/fnsave.c:4171 gui/fnsave.c:4283
 msgid "build zip file"
 msgstr ""
 
-#: gui/fnsave.c:4267
+#: gui/fnsave.c:4268
 msgid ""
 "This package must be uploaded as a zip file.\n"
 "Try to create the zip file now?"
 msgstr ""
 
-#: gui/fnsave.c:4417
+#: gui/fnsave.c:4418
 #, fuzzy
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
@@ -11951,7 +11965,7 @@ msgstr ""
 "una lletra, ha de tenir menys de 32 caràcters, només pot contenir\n"
 "lletres ASCII, nombres i el caràcter '_', i ha d'acabar amb \".gfn\""
 
-#: gui/fnsave.c:4422 gui/selector.c:8261
+#: gui/fnsave.c:4423 gui/selector.c:8261
 #, fuzzy
 msgid ""
 "Invalid package name: the name must start with a letter,\n"
@@ -11962,7 +11976,7 @@ msgstr ""
 "una lletra, ha de tenir menys de 32 caràcters, només pot contenir\n"
 "lletres ASCII, nombres i el caràcter '_', i ha d'acabar amb \".gfn\""
 
-#: gui/fnsave.c:5264
+#: gui/fnsave.c:5265
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -11971,11 +11985,11 @@ msgstr ""
 "que es pigui empaquetar.\n"
 "Vol escriure una funció ara?"
 
-#: gui/fnsave.c:5269
+#: gui/fnsave.c:5270
 msgid "gretl: function packages"
 msgstr "gretl: paquets de funcions"
 
-#: gui/fnsave.c:5324
+#: gui/fnsave.c:5325
 msgid "build gfn file"
 msgstr ""
 
@@ -12295,121 +12309,121 @@ msgstr "Outliers"
 msgid "label %d: "
 msgstr "etiqueta %d: "
 
-#: gui/gpt_dialog.c:2604
+#: gui/gpt_dialog.c:2616
 msgid "Lines"
 msgstr "Línies"
 
-#: gui/gpt_dialog.c:2689
+#: gui/gpt_dialog.c:2701
 msgid "legend"
 msgstr "Llegenda"
 
-#: gui/gpt_dialog.c:2722
+#: gui/gpt_dialog.c:2734
 msgid "type"
 msgstr "Tipus"
 
-#: gui/gpt_dialog.c:2782
+#: gui/gpt_dialog.c:2794
 #, fuzzy
 msgid "line"
 msgstr "línies"
 
-#: gui/gpt_dialog.c:2783
+#: gui/gpt_dialog.c:2795
 msgid "line width"
 msgstr "amplada de línia"
 
-#: gui/gpt_dialog.c:2793 gui/graphics.c:195
+#: gui/gpt_dialog.c:2805 gui/graphics.c:195
 msgid "width"
 msgstr "amplada"
 
-#: gui/gpt_dialog.c:2840
+#: gui/gpt_dialog.c:2852
 msgid "point"
 msgstr "punt"
 
-#: gui/gpt_dialog.c:2868
+#: gui/gpt_dialog.c:2880
 msgid "y axis"
 msgstr "eix y "
 
-#: gui/gpt_dialog.c:2895
+#: gui/gpt_dialog.c:2907
 msgid "Add line..."
 msgstr "Afegir línia..."
 
-#: gui/gpt_dialog.c:2931
+#: gui/gpt_dialog.c:2943
 msgid "Labels"
 msgstr "Etiquetes"
 
-#: gui/gpt_dialog.c:2959
+#: gui/gpt_dialog.c:2971
 msgid "text"
 msgstr "text"
 
-#: gui/gpt_dialog.c:2975
+#: gui/gpt_dialog.c:2987
 msgid "position (X Y)"
 msgstr "posició (X Y)"
 
-#: gui/gpt_dialog.c:3012
+#: gui/gpt_dialog.c:3024
 msgid "justification"
 msgstr "justificació"
 
-#: gui/gpt_dialog.c:3040 gui/gpt_dialog.c:3175 gui/ssheet.c:139
+#: gui/gpt_dialog.c:3052 gui/gpt_dialog.c:3187 gui/ssheet.c:139
 #: gui/ssheet.c:146
 msgid "Add..."
 msgstr "Afegir..."
 
-#: gui/gpt_dialog.c:3079
+#: gui/gpt_dialog.c:3091
 msgid "Arrows"
 msgstr "Fletxes"
 
-#: gui/gpt_dialog.c:3110
+#: gui/gpt_dialog.c:3122
 msgid "from (X Y)"
 msgstr "des de (X Y)"
 
-#: gui/gpt_dialog.c:3112
+#: gui/gpt_dialog.c:3124
 msgid "to (X Y)"
 msgstr "fins a (X Y)"
 
-#: gui/gpt_dialog.c:3148
+#: gui/gpt_dialog.c:3160
 msgid "arrow has head"
 msgstr "fletxa amb cap"
 
-#: gui/gpt_dialog.c:3157
+#: gui/gpt_dialog.c:3169
 msgid "line is dotted"
 msgstr "línia de punts"
 
-#: gui/gpt_dialog.c:3195
+#: gui/gpt_dialog.c:3207
 msgid "X-axis"
 msgstr "eix X"
 
-#: gui/gpt_dialog.c:3197
+#: gui/gpt_dialog.c:3209
 msgid "Y-axis"
 msgstr "eix Y"
 
-#: gui/gpt_dialog.c:3199
+#: gui/gpt_dialog.c:3211
 msgid "Y2-axis"
 msgstr "eix Y2"
 
-#: gui/gpt_dialog.c:3252
+#: gui/gpt_dialog.c:3264
 msgid "auto axis range"
 msgstr "amplitud d'eixos automàtica"
 
-#: gui/gpt_dialog.c:3265
+#: gui/gpt_dialog.c:3277
 msgid "manual range:"
 msgstr "amplitud manual:"
 
-#: gui/gpt_dialog.c:3340
+#: gui/gpt_dialog.c:3352
 msgid "linear scale"
 msgstr "Escala lineal"
 
-#: gui/gpt_dialog.c:3348
+#: gui/gpt_dialog.c:3360
 msgid "logarithmic scale, base:"
 msgstr "escala logarítmica, base:"
 
-#: gui/gpt_dialog.c:3635
+#: gui/gpt_dialog.c:3647
 msgid "Title of plot"
 msgstr "Títol del gràfic"
 
-#: gui/gpt_dialog.c:3636
+#: gui/gpt_dialog.c:3648
 msgid "Title for axis"
 msgstr "Títol de l'eix"
 
-#: gui/gpt_dialog.c:3662
+#: gui/gpt_dialog.c:3674
 msgid "gretl plot controls"
 msgstr "controladors de gràfic gretl"
 
@@ -12663,11 +12677,11 @@ msgstr "Sobre base de dades de  _servidor..."
 msgid "_Function packages"
 msgstr "Paquets de _funcions"
 
-#: gui/gretl.c:1720 gui/textbuf.c:1654
+#: gui/gretl.c:1720 gui/textbuf.c:1655
 msgid "On _local machine..."
 msgstr "Sobre la màquina _local..."
 
-#: gui/gretl.c:1721 gui/textbuf.c:1656
+#: gui/gretl.c:1721 gui/textbuf.c:1657
 msgid "On _server..."
 msgstr "Sobre _servidor..."
 
@@ -12744,7 +12758,7 @@ msgstr "_Calculadora d'estadístics de contrast"
 msgid "_Nonparametric tests"
 msgstr "C_ontrastos no paramètrics"
 
-#: gui/gretl.c:1747 gui/textbuf.c:1668
+#: gui/gretl.c:1747 gui/textbuf.c:1669
 msgid "_Seed for random numbers"
 msgstr "_Llavor per als nombres aleatoris"
 
@@ -13480,7 +13494,7 @@ msgstr "_Dreceres de teclat"
 msgid "_Hansl primer"
 msgstr ""
 
-#: gui/gretl.c:1955 gui/textbuf.c:1658
+#: gui/gretl.c:1955 gui/textbuf.c:1659
 #, fuzzy
 msgid "_Function package guide"
 msgstr "Paquets de _funcions"
@@ -13500,7 +13514,7 @@ msgstr "gretl: GMM"
 msgid "_gretl + DB.NOMICS"
 msgstr "gretl: GMM"
 
-#: gui/gretl.c:1959 gui/textbuf.c:1672
+#: gui/gretl.c:1959 gui/textbuf.c:1673
 #, fuzzy
 msgid "Creating maps"
 msgstr "Creació i I/O"
@@ -13509,7 +13523,7 @@ msgstr "Creació i I/O"
 msgid "Check for _updates"
 msgstr "_Comprovar actualizacions"
 
-#: gui/gretl.c:1961 gui/textbuf.c:1660
+#: gui/gretl.c:1961 gui/textbuf.c:1661
 msgid "Check for _addons"
 msgstr "_Revisar complements"
 
@@ -14146,8 +14160,8 @@ msgstr "gretl: sense nom"
 msgid "gretl: script output %d"
 msgstr "gretl: resultats d'script"
 
-#: gui/gui_utils.c:1839 gui/gui_utils.c:5813 gui/gui_utils.c:5877
-#: gui/gui_utils.c:6050
+#: gui/gui_utils.c:1839 gui/gui_utils.c:5815 gui/gui_utils.c:5879
+#: gui/gui_utils.c:6052
 msgid "gretl: script output"
 msgstr "gretl: resultats d'script"
 
@@ -14463,16 +14477,16 @@ msgstr "Resposta de %s"
 msgid "to %s"
 msgstr "a %s"
 
-#: gui/gui_utils.c:5336
+#: gui/gui_utils.c:5338
 #, fuzzy
 msgid "_Save text..."
 msgstr "_Guardar el text com..."
 
-#: gui/gui_utils.c:5343
+#: gui/gui_utils.c:5345
 msgid "Save bundle to session as _icon"
 msgstr "Guardar el bundle a sessió com a _icona"
 
-#: gui/gui_utils.c:5425
+#: gui/gui_utils.c:5427
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled.\n"
@@ -14486,7 +14500,7 @@ msgstr ""
 "Vol recuperar la mostra sobre la qual s'estimà\n"
 "aquest model?"
 
-#: gui/gui_utils.c:5488
+#: gui/gui_utils.c:5490
 #, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
@@ -14498,42 +14512,42 @@ msgstr ""
 "Vol recuperar la mostra sobre la qual s'estimà\n"
 "aquest model?"
 
-#: gui/gui_utils.c:5558 gui/library.c:5279
+#: gui/gui_utils.c:5560 gui/library.c:5279
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Ja hi ha una sèrie amb nom %s"
 
-#: gui/gui_utils.c:5560
+#: gui/gui_utils.c:5562
 #, c-format
 msgid "A matrix named %s already exists"
 msgstr "Ja hi ha una matriu amb nom %s"
 
-#: gui/gui_utils.c:5562
+#: gui/gui_utils.c:5564
 #, c-format
 msgid "A scalar named %s already exists"
 msgstr "Ja hi ha un escalar amb nom %s"
 
-#: gui/gui_utils.c:5564
+#: gui/gui_utils.c:5566
 #, c-format
 msgid "A list named %s already exists"
 msgstr "Ja hi ha una llista amb nom %s"
 
-#: gui/gui_utils.c:5566
+#: gui/gui_utils.c:5568
 #, c-format
 msgid "A string named %s already exists"
 msgstr "Ja hi ha una cadena amb nom %s"
 
-#: gui/gui_utils.c:5568
+#: gui/gui_utils.c:5570
 #, fuzzy, c-format
 msgid "A bundle named %s already exists"
 msgstr "Ja hi ha una llista amb nom %s"
 
-#: gui/gui_utils.c:5570
+#: gui/gui_utils.c:5572
 #, fuzzy, c-format
 msgid "An array named %s already exists"
 msgstr "Ja hi ha una matriu amb nom %s"
 
-#: gui/gui_utils.c:5606
+#: gui/gui_utils.c:5608
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -14542,7 +14556,7 @@ msgstr ""
 "El nom de variable %s... és massa llarg\n"
 "(el màxim és %d caràcters)"
 
-#: gui/gui_utils.c:5611
+#: gui/gui_utils.c:5613
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -14551,7 +14565,7 @@ msgstr ""
 "El primer caràcter del nom ('%c') no és vàlid\n"
 "(el primer ha de ser alfabètic)"
 
-#: gui/gui_utils.c:5619
+#: gui/gui_utils.c:5621
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -14560,25 +14574,25 @@ msgstr ""
 "El nom conté un caràcter il·legal (en el lloc %d)\n"
 "Usi només lletres no accentuades, dígits i el subratllat (_)"
 
-#: gui/gui_utils.c:5779 gui/gui_utils.c:5784
+#: gui/gui_utils.c:5781 gui/gui_utils.c:5786
 msgid "No output was produced"
 msgstr ""
 
-#: gui/gui_utils.c:5945
+#: gui/gui_utils.c:5947
 msgid "No command was supplied to start R"
 msgstr "No s'ha subministrat cap instrucció per iniciar R"
 
-#: gui/gui_utils.c:6141
+#: gui/gui_utils.c:6143
 #, fuzzy
 msgid "multiple time series object"
 msgstr "Sèries temporals apilades"
 
-#: gui/gui_utils.c:6142
+#: gui/gui_utils.c:6144
 #, fuzzy
 msgid "data frame"
 msgstr "escala"
 
-#: gui/gui_utils.c:6146
+#: gui/gui_utils.c:6148
 #, fuzzy
 msgid "Send data as"
 msgstr "G_uardar dades com..."
@@ -14631,11 +14645,11 @@ msgstr "Transformacions"
 msgid "Utilities"
 msgstr "Utilitats"
 
-#: gui/helpfiles.c:325 gui/textbuf.c:2326
+#: gui/helpfiles.c:325 gui/textbuf.c:2327
 msgid "Accessors"
 msgstr "Descriptors d'accés"
 
-#: gui/helpfiles.c:327 gui/textbuf.c:2327
+#: gui/helpfiles.c:327 gui/textbuf.c:2328
 #, fuzzy
 msgid "Built-in strings"
 msgstr "Se ha borrado la cadena de caracteres %s"
@@ -14697,7 +14711,7 @@ msgstr "Cadenes de caràcters"
 msgid "MPI"
 msgstr ""
 
-#: gui/helpfiles.c:405 gui/textbuf.c:2425
+#: gui/helpfiles.c:405 gui/textbuf.c:2426
 msgid "Index"
 msgstr "Índex"
 
@@ -17810,99 +17824,99 @@ msgstr "No hi ha informació disponible per 'refer'"
 msgid "No undo information available"
 msgstr "No hi ha informació disponible per 'desfer'"
 
-#: gui/textbuf.c:1401
+#: gui/textbuf.c:1402
 msgid "OK"
 msgstr ""
 
-#: gui/textbuf.c:1458
+#: gui/textbuf.c:1459
 #, fuzzy
 msgid "Next results"
 msgstr "Sèrie següent"
 
-#: gui/textbuf.c:1507
+#: gui/textbuf.c:1508
 #, fuzzy
 msgid "processing...\n"
 msgstr "_Obrir sessió..."
 
-#: gui/textbuf.c:1664
+#: gui/textbuf.c:1665
 #, fuzzy
 msgid "gretl + MPI"
 msgstr "gretl: GMM"
 
-#: gui/textbuf.c:1666
+#: gui/textbuf.c:1667
 #, fuzzy
 msgid "gretl + SVM"
 msgstr "gretl: GMM"
 
-#: gui/textbuf.c:1670
+#: gui/textbuf.c:1671
 #, fuzzy
 msgid "dbnomics for gretl"
 msgstr "predicció dinàmica"
 
-#: gui/textbuf.c:1815
+#: gui/textbuf.c:1816
 #, fuzzy, c-format
 msgid "Couldn't read %s"
 msgstr "No s'ha pogut obrir '%s'"
 
-#: gui/textbuf.c:2280
+#: gui/textbuf.c:2281
 msgid "Gretl Command Reference"
 msgstr "Guia d'Instruccions de Gretl"
 
-#: gui/textbuf.c:2324
+#: gui/textbuf.c:2325
 msgid "Gretl Function Reference"
 msgstr "Guia de Funcions de Gretl"
 
-#: gui/textbuf.c:2328
+#: gui/textbuf.c:2329
 #, fuzzy
 msgid "Functions proper"
 msgstr "Guia de _funcions"
 
-#: gui/textbuf.c:2426
+#: gui/textbuf.c:2427
 msgid "Back"
 msgstr "Tornar"
 
-#: gui/textbuf.c:3871
+#: gui/textbuf.c:3872
 msgid "Comment line"
 msgstr "Marcar com a línia de comentaris"
 
-#: gui/textbuf.c:3872
+#: gui/textbuf.c:3873
 msgid "Uncomment line"
 msgstr "Desmarcar com a línia de comentaris"
 
-#: gui/textbuf.c:3873
+#: gui/textbuf.c:3874
 msgid "Comment region"
 msgstr "Marcar com a paràgraf de comentaris"
 
-#: gui/textbuf.c:3874
+#: gui/textbuf.c:3875
 msgid "Uncomment region"
 msgstr "Desmarcar com a paràgraf de comentaris"
 
-#: gui/textbuf.c:3910
+#: gui/textbuf.c:3911
 msgid "Execute region"
 msgstr "Executar paràgraf"
 
-#: gui/textbuf.c:3912
+#: gui/textbuf.c:3913
 msgid "Execute line"
 msgstr "Executar línia"
 
-#: gui/textbuf.c:3940
+#: gui/textbuf.c:3941
 msgid "Auto-indent region"
 msgstr "Sagnar paràgraf automàticament"
 
-#: gui/textbuf.c:3941
+#: gui/textbuf.c:3942
 msgid "Indent region"
 msgstr "Sagnar paràgraf"
 
-#: gui/textbuf.c:3950
+#: gui/textbuf.c:3951
 msgid "Unindent region"
 msgstr "Dessagnar paràgraf"
 
-#: gui/textbuf.c:3958
+#: gui/textbuf.c:3959
 #, fuzzy
 msgid "Auto-indent script (Ctrl+I)"
 msgstr "Sagnar automàticament l'script"
 
-#: gui/textbuf.c:3969 gui/toolbar.c:820
+#: gui/textbuf.c:3970 gui/toolbar.c:820
 #, fuzzy
 msgid "Preferences..."
 msgstr "_Preferències"
