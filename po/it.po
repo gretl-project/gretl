@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-14 19:16+0200\n"
+"PO-Revision-Date: 2021-04-19 08:35+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -11580,18 +11580,16 @@ msgid "Save changes?"
 msgstr "Salva le modifiche?"
 
 #: gui/fnsave.c:2621
-#, fuzzy
 msgid "Model requirement"
-msgstr "Nessun requisito speciale"
+msgstr "Requisiti del modello"
 
 #: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Qualsiasi modello"
 
 #: gui/fnsave.c:2655
-#, fuzzy
 msgid "request access to out-of-sample data"
-msgstr "permetti l'accesso ai dati fuori dal sottocampione selezionato"
+msgstr "richiedi l'accesso ai dati fuori dal sottocampione selezionato"
 
 #: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
@@ -11623,9 +11621,8 @@ msgid "Label"
 msgstr "Etichetta"
 
 #: gui/fnsave.c:2900
-#, fuzzy
 msgid "GUI help text"
-msgstr "Testo di aiuto"
+msgstr "Testo di aiuto GUI"
 
 #: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
