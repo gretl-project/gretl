@@ -52,7 +52,6 @@ version 2021b, in progress
 - Fix bug: broken covariance matrix from mols() with a large
   number of regressors
 - Fix bug: crash on applying postfix "++" to a submatrix
-- Fix bug (SVAR addon): perform bootstrap correctly with AB-models
 
 2021-01-18 Version 2021a
 - New function vma() for multiple time series
