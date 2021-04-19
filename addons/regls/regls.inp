@@ -190,6 +190,14 @@ function void nz_print (const bundle b, const string est, int nlam)
    else
       printf "\n%s coefficients\n\n", est
    endif
+   if !inbundle(b, "nzX")
+      if inbundle(b, "b")
+         eval b.b
+      else
+         eval b.B
+      endif
+      return
+   endif
    strings S = varnames(b.nzX)
    len = max(strlen(S))
    loop i=1..nelem(S)
