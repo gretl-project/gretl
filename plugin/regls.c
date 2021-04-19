@@ -64,6 +64,7 @@ double admm_abstol;
 
 #define RHO_DEBUG 0
 #define LAMBDA_DEBUG 0
+#define RIDGE_DEBUG 0
 
 double ccd_toler;
 
@@ -1570,7 +1571,7 @@ static void lasso_lambda_report (regls_info *ri)
     } else {
 	pprintf(ri->prn, "single lambda-fraction %g\n", ri->lfrac->val[0]);
     }
-#endif    
+#endif
 }
 
 /* Remedial R^2 calculation for CCD: it seems that we end up
@@ -1796,6 +1797,10 @@ static int svd_ridge_vcv (regls_info *ri,
     int offset = 0;
     int i, j, err = 0;
 
+#if RIDGE_DEBUG
+    fprintf(stderr, "*** svd_ridge_vcv, lam = %g ***\n", lam);
+#endif
+
     err = gretl_matrix_SVD(ri->X, NULL, &sv, &Vt, 0);
 
     if (!err) {
@@ -1909,6 +1914,10 @@ static int ridge_bhat (double *lam, int nlam, gretl_matrix *X,
     int i, j, l;
     int err;
 
+#if RIDGE_DEBUG
+    fprintf(stderr, "*** ridge_bhat ***\n");
+#endif
+
     err = gretl_matrix_SVD(X, &U, &sv, &Vt, 0);
 
     if (!err) {
@@ -1987,11 +1996,21 @@ static double ridge_scale (regls_info *ri,
     double lmax = NADBL;
     int i;
 
+#if RIDGE_DEBUG
+    fprintf(stderr, "*** ridge_scale, lamscale = %d ***\n",
+	    ri->lamscale);
+#endif
+
     if (ri->lamscale == LAMSCALE_GLMNET) {
 	gretl_matrix *Xty = gretl_matrix_alloc(ri->X->cols, 1);
 
 	if (Xty == NULL) {
 	    return lmax;
+	} else if (ri->nlam == 1) {
+	    gretl_matrix_multiply_mod(ri->X, GRETL_MOD_TRANSPOSE,
+				      ri->y, GRETL_MOD_NONE,
+				      Xty, GRETL_MOD_NONE);
+	    lmax = 1000 * vector_infnorm(Xty);
 	} else {
 	    /* as per glmnet, scale data by sqrt(1/n) */
 	    ccd_scale(ri->X, ri->y->val, Xty->val, NULL);
@@ -2024,6 +2043,10 @@ static int svd_ridge (regls_info *ri)
     double lam0 = 0.0;
     int err = 0;
 
+#if RIDGE_DEBUG
+    fprintf(stderr, "\n*** svd_ridge ***\n");
+#endif
+
     lam = gretl_matrix_copy(ri->lfrac);
     B = gretl_zero_matrix_new(ri->k + ri->stdize, ri->nlam);
     if (lam == NULL || B == NULL) {
@@ -2033,6 +2056,10 @@ static int svd_ridge (regls_info *ri)
     if (ri->lamscale != LAMSCALE_NONE) {
 	lmax = ridge_scale(ri, lam);
     }
+
+#if RIDGE_DEBUG
+    fprintf(stderr, "lfrac[0] = %g, lmax = %g\n", ri->lfrac->val[0], lmax);
+#endif
 
     if (ri->nlam == 1) {
 	/* calculate the covariance matrix */
