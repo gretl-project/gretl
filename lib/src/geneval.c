@@ -4802,6 +4802,8 @@ static int set_sel_vector (matrix_subspec *spec, int r,
 static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 {
     matrix_subspec *spec = targ->v.mspec;
+    int lscalar = 0;
+    int rscalar = 0;
     int i = 0, j = 0;
 
     if (spec == NULL) {
@@ -4833,7 +4835,10 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         goto finished;
     }
 
-    if (l->t == NUM) {
+    lscalar = scalar_node(l);
+    rscalar = (r != NULL && scalar_node(r));
+
+    if (lscalar) {
         i = node_get_int(l, p);
         if (!p->err && i == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
@@ -4847,7 +4852,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
             goto finished;
         }
     }
-    if (!p->err && r != NULL && r->t == NUM) {
+    if (!p->err && rscalar) {
         j = node_get_int(r, p);
         if (!p->err && j == 0) {
             gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
@@ -4880,7 +4885,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         mspec_set_row_index(spec, i);
         mspec_set_col_index(spec, j);
         goto finished;
-    } else if (l->t == NUM) {
+    } else if (lscalar) {
         spec->ltype = i > 0 ? SEL_RANGE : SEL_EXCL;
         mspec_set_row_index(spec, i);
     } else if (l->t == IVEC) {
@@ -4888,12 +4893,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         spec->lsel.range[0] = l->v.ivec[0];
         spec->lsel.range[1] = l->v.ivec[1];
     } else if (l->t == MAT) {
-        if (gretl_matrix_is_scalar(l->v.m)) {
-            spec->ltype = SEL_RANGE;
-            mspec_set_row_index(spec, l->v.m->val[0]);
-        } else {
-            p->err = set_sel_vector(spec, 0, l->v.m);
-        }
+	p->err = set_sel_vector(spec, 0, l->v.m);
     } else if (null_node(l)) {
         spec->ltype = SEL_ALL;
     } else {
@@ -4903,7 +4903,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 
     if (r == NULL) {
         spec->rtype = SEL_NULL;
-    } else if (r->t == NUM) {
+    } else if (rscalar) {
         spec->rtype = j > 0 ? SEL_RANGE : SEL_EXCL;
         mspec_set_col_index(spec, j);
     } else if (r->t == IVEC) {
@@ -4911,12 +4911,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
         spec->rsel.range[0] = r->v.ivec[0];
         spec->rsel.range[1] = r->v.ivec[1];
     } else if (r->t == MAT) {
-        if (gretl_matrix_is_scalar(r->v.m)) {
-            spec->rtype = SEL_RANGE;
-            mspec_set_col_index(spec, r->v.m->val[0]);
-        } else {
-            p->err = set_sel_vector(spec, 1, r->v.m);
-        }
+	p->err = set_sel_vector(spec, 1, r->v.m);
     } else if (null_node(r)) {
         spec->rtype = SEL_ALL;
     } else {
