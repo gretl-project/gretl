@@ -19,15 +19,11 @@
 
 /* Handling of ESRI shapfiles and GeoJSON files for gretl */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
-#include "shapefile.h"
 #include "libgretl.h"
 #include "gretl_typemap.h"
 #include "libset.h"
+#include "version.h"
+#include "shapefile.h"
 
 #define GEODEBUG 0
 
