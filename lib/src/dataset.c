@@ -5774,13 +5774,11 @@ gretl_bundle *get_current_map (const DATASET *dset,
 
 #if MAP_DEBUG
     fprintf(stderr, "get_current_map: fmax %d, ntarg %d\n", fmax, ntarg);
+    printf(stderr, "checking for features to include/drop\n");
 #endif
 
+    /* index into dataset rows */
     dsi = -1;
-
-#if MAP_DEBUG
-    fprintf(stderr, "checking for features to include/drop\n");
-#endif
 
     for (i=0, fidx=0; i<fmax; i++) {
 	int skip = 0;
@@ -5826,11 +5824,11 @@ gretl_bundle *get_current_map (const DATASET *dset,
 	    }
 	    fidx++;
 #if MAP_DEBUG
-	    fprintf(stderr, "  include feature %d, now got %d\n", i, fidx);
+	    fprintf(stderr, "  included feature %d, now got %d\n", i, fidx);
 #endif
 	    if (fidx == ntarg) {
 #if MAP_DEBUG
-		fprintf(stderr, "  reached target of %d, break\n", ntarg);
+		fprintf(stderr, "  reached target of %d features, break\n", ntarg);
 #endif
 		break;
 	    }
