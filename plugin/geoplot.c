@@ -390,12 +390,14 @@ static gretl_matrix *geo2dat (gretl_array *features,
     gretl_array *AC, *ACj, *ACjk;
     gretl_matrix *X, *bbox = NULL;
     gretl_bundle *fi, *geom;
+    GretlType atype;
     double gmin[2] = {GEOHUGE, GEOHUGE};
     double gmax[2] = {-GEOHUGE, -GEOHUGE};
     FILE *fp = NULL;
     const char *gtype;
     int nf, mp, nac, ncj;
     int i, j, k, p;
+    int freeX;
     int err = 0;
 
     nf = gretl_array_get_length(features);
@@ -416,7 +418,7 @@ static gretl_matrix *geo2dat (gretl_array *features,
 	return NULL;
     }
 
-    for (i=0; i<nf; i++) {
+    for (i=0; i<nf && !err; i++) {
 	double x, y, z = 0;
 
 	if (skip_object(i, zvec, mask, &z)) {
@@ -439,9 +441,15 @@ static gretl_matrix *geo2dat (gretl_array *features,
 	nac = gretl_array_get_length(AC);
 	if (mp == 0) {
 	    /* got Polygon */
-	    for (j=0; j<nac; j++) {
-		ACj = gretl_array_get_data(AC, j);
-		X = ring2matrix(ACj);
+	    for (j=0; j<nac && !err; j++) {
+		freeX = 1;
+		ACj = gretl_array_get_element(AC, j, &atype, &err);
+		if (atype == GRETL_TYPE_MATRIX) {
+		    X = gretl_array_get_data(AC, j);
+		    freeX = 0;
+		} else {
+		    X = ring2matrix(ACj);
+		}
 		for (k=0; k<X->rows; k++) {
 		    x = gretl_matrix_get(X, k, 0);
 		    y = gretl_matrix_get(X, k, 1);
@@ -457,19 +465,27 @@ static gretl_matrix *geo2dat (gretl_array *features,
 		    }
 		    record_extrema(x, y, gmin, gmax);
 		}
-		gretl_matrix_free(X);
+		if (freeX) {
+		    gretl_matrix_free(X);
+		}
 		if (j < nac-1) {
 		    fputc('\n', fp);
 		}
 	    }
 	} else {
 	    /* got MultiPolygon */
-	    for (j=0; j<nac; j++) {
+	    for (j=0; j<nac && !err; j++) {
 		ACj = gretl_array_get_data(AC, j);
 		ncj = gretl_array_get_length(ACj);
-		for (k=0; k<ncj; k++) {
-		    ACjk = gretl_array_get_data(ACj, k);
-		    X = ring2matrix(ACjk);
+		for (k=0; k<ncj && !err; k++) {
+		    freeX = 1;
+		    ACjk = gretl_array_get_element(ACj, k, &atype, &err);
+		    if (atype == GRETL_TYPE_MATRIX) {
+			X = gretl_array_get_data(ACj, k);
+			freeX = 0;
+		    } else {
+			X = ring2matrix(ACjk);
+		    }
 		    for (p=0; p<X->rows; p++) {
 			x = gretl_matrix_get(X, p, 0);
 			y = gretl_matrix_get(X, p, 1);
@@ -485,7 +501,9 @@ static gretl_matrix *geo2dat (gretl_array *features,
 			}
 			record_extrema(x, y, gmin, gmax);
 		    }
-		    gretl_matrix_free(X);
+		    if (freeX) {
+			gretl_matrix_free(X);
+		    }
 		    if (k < ncj-1) {
 			fputc('\n', fp);
 		    }
