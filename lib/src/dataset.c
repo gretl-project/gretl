@@ -5724,7 +5724,7 @@ gretl_bundle *get_current_map (const DATASET *dset,
     const char *sj, *id, *fname;
     gretl_bundle *fi, *pp, *jb = NULL;
     gretl_array *features = NULL;
-    int n, ntarg, fmax = 0;
+    int ntarg, fmax = 0;
     int i, j, dsi, fidx;
     double xj;
 
@@ -5747,13 +5747,15 @@ gretl_bundle *get_current_map (const DATASET *dset,
     }
 
     if (!*err) {
+	int nobs;
+
 	fmax = gretl_array_get_length(features);
 	if (dset->submask != NULL) {
-	    n = get_full_length_n();
+	    nobs = get_full_length_n();
 	} else {
-	    n = dset->n;
+	    nobs = dset->n;
 	}
-	if (fmax != n) {
+	if (fmax != nobs) {
 	    /* Although it may be sub-sampled, the full dataset must
 	       have a number of observations equal to the number of
 	       features in the existing map.
@@ -5761,7 +5763,7 @@ gretl_bundle *get_current_map (const DATASET *dset,
 	    gretl_errmsg_set("map and dataset are out of sync!");
 	    *err = E_DATA;
 	}
-	n = fmax;
+	/* the number of features we're seeking */
 	ntarg = sample_size(dset);
     }
 
