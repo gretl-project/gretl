@@ -2378,6 +2378,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 {
     call_info *cinfo;
     int data_access = 0;
+    int gid = -1;
     fnpkg *pkg;
 
     pkg = get_function_package_by_name(pkgname);
@@ -2403,6 +2404,7 @@ static call_info *start_cinfo_for_package (const char *pkgname,
 					   "name", &cinfo->pkgname,
 					   "version", &cinfo->pkgver,
 					   "gui-publist", &cinfo->publist,
+					   "gui-main-id", &gid,
 					   "data-requirement", &cinfo->dreq,
 					   "model-requirement", &cinfo->modelreq,
 					   "min-version", &cinfo->minver,
@@ -2412,6 +2414,13 @@ static call_info *start_cinfo_for_package (const char *pkgname,
     if (*err) {
 	gui_errmsg(*err);
     } else if (cinfo->publist == NULL) {
+	if (gid >= 0) {
+	    cinfo->publist = gretl_list_new(1);
+	    cinfo->publist[1] = gid;
+	}
+    }
+
+    if (!*err && cinfo->publist == NULL) {
 	/* no available interfaces */
 	errbox(_("Function package is broken"));
 	*err = E_DATA;
