@@ -8017,6 +8017,8 @@ int fill_permutation_vector (gretl_vector *v, int n)
     return 0;
 }
 
+#define GEODEBUG 0
+
 /* Driver function for calling the geoplot plugin to produce
    a map. To obtain the map polygons we need EITHER the name
    of the source file (GeoJSON or Shapefile), via @fname,
@@ -8054,6 +8056,7 @@ int geoplot_driver (const char *fname,
 	fname = mapfile;
 	if (fname == NULL) {
 	    gretl_errmsg_set("geoplot: no map was specified");
+	    return E_DATA;
 	}
     }
 
@@ -8065,6 +8068,11 @@ int geoplot_driver (const char *fname,
 	}
     }
 
+#if GEODEBUG
+    fprintf(stderr, "geoplot_driver: map=%p, mapfile=%p, fname=%p\n",
+	    (void *) map, (void *) mapfile, (void *) fname);
+#endif
+
     /* In the case where we got @fname, do we want to produce a
        map bundle in which the actual map data are synced with
        the dataset? Probably so if @fname is just $mapfile
@@ -8073,7 +8081,9 @@ int geoplot_driver (const char *fname,
     */
     if (map == NULL && mapfile != NULL) {
 	if (fname == mapfile || !strcmp(fname, mapfile)) {
-	    fprintf(stderr, "*** geoplot_driver: calling get_current_map()\n");
+#if GEODEBUG
+	    fprintf(stderr, "geoplot_driver: calling get_current_map()\n");
+#endif
 	    map = get_current_map(dset, NULL, &err);
 	    free_map = 1;
 	    fname = NULL;
@@ -8217,4 +8227,3 @@ int substitute_values (double *dest, const double *src, int n,
 
     return 0;
 }
-
