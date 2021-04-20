@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-16 13:10+0200\n"
+"PO-Revision-Date: 2021-04-20 11:25+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -10712,7 +10712,7 @@ msgstr "Criterio de proximidade:"
 
 #: gui/dialogs.c:7412
 msgid "First-order correlation"
-msgstr "Autocorrelación de 1ª orde"
+msgstr "Correlación de 1ª orde"
 
 #: gui/dialogs.c:7419
 msgid "Multiple of std. dev."
@@ -11593,18 +11593,16 @@ msgid "Save changes?"
 msgstr "Gardar os cambios?"
 
 #: gui/fnsave.c:2621
-#, fuzzy
 msgid "Model requirement"
-msgstr "Ningún requisito especial"
+msgstr "Requisito do modelo"
 
 #: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Un modelo calquera"
 
 #: gui/fnsave.c:2655
-#, fuzzy
 msgid "request access to out-of-sample data"
-msgstr "Permitir acceder a datos fóra da mostra"
+msgstr "Solicitar acceso a datos fóra da mostra"
 
 #: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
@@ -11636,9 +11634,8 @@ msgid "Label"
 msgstr "Etiqueta"
 
 #: gui/fnsave.c:2900
-#, fuzzy
 msgid "GUI help text"
-msgstr "Texto de axuda"
+msgstr "Texto de axuda da GUI"
 
 #: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
@@ -13041,7 +13038,7 @@ msgstr "MCO _Lineais de Alta Precisión"
 
 #: gui/gretl.c:1900 gui/library.c:4092 gui/library.c:6178 gui/selector.c:7213
 msgid "ANOVA"
-msgstr "_ANOVA"
+msgstr "ANOVA"
 
 #: gui/gretl.c:1901
 msgid "_Univariate time series"
@@ -18817,7 +18814,7 @@ msgstr "As n compoñentes máis importantes"
 
 #: plugin/pca.c:213
 msgid "Eigenanalysis of the Correlation Matrix"
-msgstr "Análise dos valores propios da matriz de correlación"
+msgstr "Análise dos valores propios da Matriz de Correlación"
 
 #: plugin/pca.c:215
 msgid "Eigenanalysis of the Covariance Matrix"
