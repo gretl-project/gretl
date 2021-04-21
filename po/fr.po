@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-16 19:25+0100\n"
+"PO-Revision-Date: 2021-04-21 19:42+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -10742,7 +10742,6 @@ msgid "Multiple of std. dev."
 msgstr "Multiple de l’éc.type"
 
 #: gui/dialogs.c:7433
-#, fuzzy
 msgid "Asymptotic p-values"
 msgstr "p. critique asymptotique"
 
@@ -11623,18 +11622,16 @@ msgid "Save changes?"
 msgstr "Enregistrer les modifications ?"
 
 #: gui/fnsave.c:2621
-#, fuzzy
 msgid "Model requirement"
-msgstr "No special requirement"
+msgstr "Exigences du modèle"
 
 #: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Tout modèle"
 
 #: gui/fnsave.c:2655
-#, fuzzy
 msgid "request access to out-of-sample data"
-msgstr "autoriser l’accès aux données hors échantillon"
+msgstr "demander l’accès aux données hors échantillon"
 
 #: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
@@ -11667,9 +11664,8 @@ msgid "Label"
 msgstr "Étiquette"
 
 #: gui/fnsave.c:2900
-#, fuzzy
 msgid "GUI help text"
-msgstr "Texte d'aide"
+msgstr "Texte d'aide GUI"
 
 # menu attachement = descriptif de menu
 #: gui/fnsave.c:3039
