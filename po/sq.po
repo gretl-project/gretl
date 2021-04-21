@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-01-17 11:41+0100\n"
+"PO-Revision-Date: 2021-04-21 19:38+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -130,9 +130,8 @@ msgid "asymptotic p-value"
 msgstr "p. kritik asimptotik"
 
 #: lib/src/adf_kpss.c:726
-#, fuzzy
 msgid "approximate p-value"
-msgstr "P. kritik i interpoluar"
+msgstr "p. kritik i përafërt"
 
 #: lib/src/adf_kpss.c:734
 #, c-format
@@ -538,7 +537,7 @@ msgstr "F-form"
 
 #: lib/src/compare.c:396 lib/src/gretl_restrict.c:2425
 msgid "Robust F"
-msgstr "F i korrigjuar"
+msgstr "F i qëndrueshëm"
 
 #: lib/src/compare.c:400
 msgid "LM test"
@@ -2192,16 +2191,15 @@ msgstr "Numri i vrojtimeve (%d) është më i vogël se numri i parametrave (%d)
 
 #: lib/src/estimate.c:625
 msgid "Weight variable is all zeros, aborting regression"
-msgstr "Ndryshorja e ponderimit përmban vetëm vlerën 0; llogaritja u ndërpre"
+msgstr "Ndryshorja ponderuese përmban vetëm vlerën 0; llogaritja u ndërpre"
 
 #: lib/src/estimate.c:627
 msgid "Weight variable contains negative values"
-msgstr "Ndryshorja e ponderimit përmban vlera negative"
+msgstr "Ndryshorja ponderuese përmban vlera negative"
 
 #: lib/src/estimate.c:629
-#, fuzzy
 msgid "Weight variable is not a dummy but contains zeros"
-msgstr "Ndryshorja e ponderimit përmban vetëm vlerën 0; llogaritja u ndërpre"
+msgstr "Ndryshorja ponderues nuk është memece edhe pse përmban disa vlera 0"
 
 #: lib/src/estimate.c:1167 plugin/arma.c:1761
 #, c-format
@@ -3679,9 +3677,9 @@ msgid "Identifier exceeds the maximum of 31 characters"
 msgstr "Identifikuesi tejkalon maksimumin e 31 karaktereve"
 
 #: lib/src/gretl_func.c:7281
-#, fuzzy, c-format
+#, c-format
 msgid "%s: \"quit\" cannot be used in a function"
-msgstr "‘catch’ nuk mund të përdoret në këtë kontekst"
+msgstr "%s: «quit» nuk mund të përdoret në këtë kontekst"
 
 #: lib/src/gretl_func.c:7549
 #, c-format
@@ -4835,43 +4833,40 @@ msgid "kalman: required matrix %s is missing"
 msgstr "kalman: mungon matrica e nevojshme %s"
 
 #: lib/src/libglue.c:315
-#, fuzzy, c-format
+#, c-format
 msgid "BDS test for %s, maximum order %d"
-msgstr "Sistem VAR, rendi më i madh i vonesës %d"
+msgstr "Testi BDS për %s, rendi maksimal %d"
 
 #: lib/src/libglue.c:317
 msgid "H0: the series is linear/IID"
-msgstr ""
+msgstr "H0: seria është lineare/IID"
 
 #: lib/src/libglue.c:320
-#, fuzzy
 msgid "Bootstrapped p-values in []"
-msgstr "me p. kritik nga bootstrap"
+msgstr "Në [] p. kritik nga bootstrap"
 
 #: lib/src/libglue.c:322
-#, fuzzy
 msgid "Asymptotic p-values in []"
-msgstr "p. kritik asimptotik"
+msgstr "Në [] p. kritik asimptotik"
 
 #: lib/src/libglue.c:331
 #, c-format
 msgid "test order %d: z = %.3f [%.3f]"
-msgstr ""
+msgstr "rendi i testit %d: z = %.3f [%.3f]"
 
 #: lib/src/libglue.c:338
-#, fuzzy
 msgid "Distance criterion based on first-order correlation"
-msgstr "Testi Breusch-Godfrey për autokorrelacion të rendit 1"
+msgstr "Kriteri i largësisë bazuar në korrelacion të rendit 1"
 
 #: lib/src/libglue.c:340
 #, c-format
 msgid "Distance criterion based on sd(%s)"
-msgstr ""
+msgstr "Kriteri i largësisë bazuar në gabimin std(%s)"
 
 #: lib/src/libglue.c:343
-#, fuzzy, c-format
+#, c-format
 msgid "eps = %g, first-order correlation %.3f"
-msgstr "autokorrelacion i rendit të parë"
+msgstr "eps = %g, korrelacion i rendit të parë %.3f"
 
 #: lib/src/libglue.c:624
 #, c-format
@@ -4879,9 +4874,8 @@ msgid "modprint: expected %d names"
 msgstr "modprint: priteshin %d emra"
 
 #: lib/src/libglue.c:691
-#, fuzzy
 msgid "modprint: expected the name of a matrix"
-msgstr "modprint: priteshin %d emra"
+msgstr "modprint: pritej emri i matricës"
 
 #: lib/src/libglue.c:694
 msgid "modprint: the first matrix argument must have 2 columns"
@@ -5623,9 +5617,8 @@ msgid "QML standard errors"
 msgstr "Gabimi std. sipas QML"
 
 #: lib/src/modelprint.c:1542
-#, fuzzy
 msgid "HAC standard errors"
-msgstr "Gabimi std. sipas QML"
+msgstr "Gabimi std. sipas HAC"
 
 #: lib/src/modelprint.c:1546
 msgid "Bollerslev--Wooldridge standard errors"
@@ -6144,14 +6137,12 @@ msgid "McFadden R-squared"
 msgstr "R-katror i McFadden"
 
 #: lib/src/modelprint.c:3189
-#, fuzzy
 msgid "Estrella $R^2$"
-msgstr "$R^2$ i korrigjuar"
+msgstr "$R^2$ Estrella"
 
 #: lib/src/modelprint.c:3190
-#, fuzzy
 msgid "Estrella R-squared"
-msgstr "R-katror i korrigjuar"
+msgstr "R-katror Estrella"
 
 #: lib/src/modelprint.c:3198
 msgid "LSDV $R^2$"
@@ -6458,7 +6449,7 @@ msgstr "%s: pritej një numër ose një vektor"
 
 #: lib/src/nls.c:854
 msgid "Only one 'params' specification is allowed"
-msgstr ""
+msgstr "Lejohet përcaktimi për një ‘params’ vetëm"
 
 #: lib/src/nls.c:2095
 msgid "In Gauss-Newton Regression:\n"
@@ -7109,9 +7100,8 @@ msgid "Mean Absolute Percentage Error"
 msgstr "Përqindja Mesatare e Gabimit Absolut"
 
 #: lib/src/printout.c:3003
-#, fuzzy
 msgid "Theil's U1"
-msgstr "U e Theil"
+msgstr "U1 e Theil"
 
 #: lib/src/printout.c:3004
 msgid "Bias proportion, UM"
@@ -7126,9 +7116,8 @@ msgid "Disturbance proportion, UD"
 msgstr "Kontributi i gabimit, UD"
 
 #: lib/src/printout.c:3008
-#, fuzzy
 msgid "Theil's U2"
-msgstr "U e Theil"
+msgstr "U2 e Theil"
 
 #: lib/src/printout.c:3028 gui/guiprint.c:1482
 msgid "Forecast evaluation statistics"
@@ -7867,13 +7856,13 @@ msgid "The variable %s is currently read-only"
 msgstr "Në këtë çast, ndryshorja %s nuk mund te preket (read-only)"
 
 #: lib/src/uservar.c:2436
-#, fuzzy, c-format
+#, c-format
 msgid "variables of type %s:"
-msgstr "Ndryshoret për t'u testuar"
+msgstr "ndryshore të llojit %s:"
 
 #: lib/src/uservar.c:2443
 msgid "  (unnamed)\n"
-msgstr ""
+msgstr "  (i paemërtuar)\n"
 
 #: lib/src/uservar.c:2672
 #, c-format
@@ -9282,9 +9271,9 @@ msgstr ""
 "Doni ta hapni tani?"
 
 #: gui/database.c:2810
-#, fuzzy, c-format
+#, c-format
 msgid "Installed %s"
-msgstr "Instaluar"
+msgstr "Instaluar %s"
 
 #: gui/database.c:2814 gui/database.c:2959 gui/database.c:3018
 #: gui/database.c:3252 gui/datafiles.c:1228 gui/datafiles.c:1264
@@ -9541,9 +9530,8 @@ msgid "The gui package registry is empty"
 msgstr "Regjistri i paketave gui është bosh"
 
 #: gui/datafiles.c:2081
-#, fuzzy
 msgid "gretl: example scripts"
-msgstr "gretl: skript Octave"
+msgstr "gretl: shembuj skripti"
 
 #: gui/datafiles.c:2083
 msgid "gretl: data files"
@@ -10660,11 +10648,10 @@ msgid "constant"
 msgstr "konstante"
 
 #: gui/dialogs.c:7126
-#, fuzzy, c-format
+#, c-format
 msgid "The series %s seems to be of the same frequency as the current dataset"
 msgstr ""
-"Të dhënat që do të importohen paraqesin frekuencë më të ulët\n"
-"se të dhënat në përdorim. Në rregull për të vazhduar?"
+"Seria %s duket se paraqet të njëjtën frekuencë me të dhënat në përdorim"
 
 #: gui/dialogs.c:7171
 msgid "Output name:"
@@ -10707,33 +10694,28 @@ msgid "show regression results"
 msgstr "shfaq rezultatet e regresionit"
 
 #: gui/dialogs.c:7397
-#, fuzzy
 msgid "Maximum dimension:"
-msgstr "Maksimumi i përsëritjeve:"
+msgstr "Dimensioni maksimal:"
 
 #: gui/dialogs.c:7407
 msgid "Criterion for closeness:"
-msgstr ""
+msgstr "Kriteri i përputhjes:"
 
 #: gui/dialogs.c:7412
-#, fuzzy
 msgid "First-order correlation"
-msgstr "autokorrelacion i rendit të parë"
+msgstr "Korrelacion i rendit të parë"
 
 #: gui/dialogs.c:7419
-#, fuzzy
 msgid "Multiple of std. dev."
-msgstr "Grafik i shumëfishtë"
+msgstr "Shumëfish i gabimit std."
 
 #: gui/dialogs.c:7433
-#, fuzzy
 msgid "Asymptotic p-values"
-msgstr "p. kritik asimptotik"
+msgstr "P. kritik asimptotik"
 
 #: gui/dialogs.c:7438
-#, fuzzy
 msgid "Bootstrap p-values"
-msgstr "me p. kritik nga bootstrap"
+msgstr "P. kritik nga bootstrap"
 
 #: gui/dlgutils.c:792
 msgid "Add equation"
@@ -10785,21 +10767,19 @@ msgstr "Vlerësim në 2 etapa"
 
 #: gui/dlgutils.c:1098
 msgid "Outer product of gradient"
-msgstr ""
+msgstr "Produkt i jashtëm i gradientit"
 
 #: gui/dlgutils.c:1099 plugin/addons-i18n.c:18 plugin/addons-i18n.c:103
 msgid "Hessian"
 msgstr "Hesiania"
 
 #: gui/dlgutils.c:1100
-#, fuzzy
 msgid "Robust (QML)"
-msgstr "F i korrigjuar"
+msgstr "I qëndrueshëm (QML)"
 
 #: gui/dlgutils.c:1101
-#, fuzzy
 msgid "Robust (HAC)"
-msgstr "F i korrigjuar"
+msgstr "I qëndrueshëm (HAC)"
 
 #: gui/dlgutils.c:1287 gui/dlgutils.c:1290
 msgid "(Please refer to Help for guidance)"
@@ -10966,13 +10946,12 @@ msgid "open file"
 msgstr "hap skedë të re"
 
 #: gui/fileselect.c:1234
-#, fuzzy
 msgid "save map as geojson"
-msgstr "ruaj sesjonin"
+msgstr "ruaj hartën në formatin geojson"
 
 #: gui/fileselect.c:1236
 msgid "write map as geojson"
-msgstr ""
+msgstr "krijo hartën në formatin geojson"
 
 #: gui/fileselect.c:1238
 msgid "save file"
@@ -11525,7 +11504,7 @@ msgstr "Ruaj %s.spec: të ruhen po ashtu edhe skeda(t) ndihmëse?"
 
 #: gui/fnsave.c:1591 gui/fnsave.c:3544
 msgid "Please save your package first"
-msgstr "Ju lutem, ruani së pari paktën"
+msgstr "Ju lutem, ruani së pari paketën"
 
 #: gui/fnsave.c:1727
 msgid "private"
@@ -11605,18 +11584,16 @@ msgid "Save changes?"
 msgstr "Doni t'i ruani ndryshimet e bëra ?"
 
 #: gui/fnsave.c:2621
-#, fuzzy
 msgid "Model requirement"
-msgstr "Asnjë kusht i veçantë"
+msgstr "Kërkesat e modelit"
 
 #: gui/fnsave.c:2626
 msgid "Any model"
 msgstr "Ndonjë model"
 
 #: gui/fnsave.c:2655
-#, fuzzy
 msgid "request access to out-of-sample data"
-msgstr "lejo përdorimin e të dhënave jashtë kampionit"
+msgstr "kërko leje për përdorimin e të dhënave jashtë kampionit"
 
 #: gui/fnsave.c:2707
 msgid "You may add or delete names of datafiles to be included in the package."
@@ -11650,9 +11627,8 @@ msgid "Label"
 msgstr "Emërtimet"
 
 #: gui/fnsave.c:2900
-#, fuzzy
 msgid "GUI help text"
-msgstr "teksti i Ndihmës"
+msgstr "teksti i ndihmës GUI"
 
 #: gui/fnsave.c:3039
 msgid "To create a menu attachment, you must supply a label."
@@ -12405,9 +12381,8 @@ msgid "_Script files"
 msgstr "S_kript (program)"
 
 #: gui/gretl.c:1692
-#, fuzzy
 msgid "_Example scripts..."
-msgstr "Shembull skripti"
+msgstr "Sh_embuj skripti"
 
 #: gui/gretl.c:1693
 msgid "_New script"
@@ -12994,9 +12969,8 @@ msgid "_Hurst exponent"
 msgstr "Eksponenti _Hurst"
 
 #: gui/gretl.c:1882
-#, fuzzy
 msgid "_BDS nonlinearity test"
-msgstr "jo-linearitet"
+msgstr "Test _BDS i jo-linearitetit"
 
 #: gui/gretl.c:1883 gui/menustate.c:605
 msgid "Disaggregate..."
@@ -13263,9 +13237,8 @@ msgid "_gretl + DB.NOMICS"
 msgstr "_gretl + DB.NOMICS"
 
 #: gui/gretl.c:1959 gui/textbuf.c:1673
-#, fuzzy
 msgid "Creating maps"
-msgstr "Krijim dhe I/O"
+msgstr "Duke krijuar hartat"
 
 #: gui/gretl.c:1960
 msgid "Check for _updates"
@@ -13442,9 +13415,8 @@ msgid "Mean Squared Error"
 msgstr "Gabimi Katror Mesatar"
 
 #: gui/guiprint.c:1456
-#, fuzzy
 msgid "Theil's $U_1$"
-msgstr "$U$ i Theil"
+msgstr "$U_1$ i Theil"
 
 #: gui/guiprint.c:1457
 msgid "Bias proportion, $U^M$"
@@ -13459,9 +13431,8 @@ msgid "Disturbance proportion, $U^D$"
 msgstr "Përqindja e luhatjes,  $U^M$"
 
 #: gui/guiprint.c:1461
-#, fuzzy
 msgid "Theil's $U_2$"
-msgstr "$U$ i Theil"
+msgstr "$U_2$ i Theil"
 
 #: gui/guiprint.c:1523 gui/guiprint.c:1541
 msgid "Model estimation range:"
@@ -13699,9 +13670,8 @@ msgid "A_RCH"
 msgstr "A_RCH"
 
 #: gui/gui_utils.c:265
-#, fuzzy
 msgid "Non-linearity (_BDS)"
-msgstr "Jo-linearitet i modelit (_logaritmi i ndryshoreve)"
+msgstr "Jo-linearitet (_BDS)"
 
 #: gui/gui_utils.c:266
 msgid "_QLR test"
@@ -15382,23 +15352,20 @@ msgstr ""
 "A doni të punoni tani me këtë version?"
 
 #: gui/library.c:9005
-#, fuzzy
 msgid "gretl binary data format:"
-msgstr "gretl: formati i të dhënave"
+msgstr "të dhëna të formatit gretl binary:"
 
 #: gui/library.c:9007
 msgid "current (gretl >= 2020b, fastest)"
-msgstr ""
+msgstr "aktual (gretl >= 2020b, më i shpejti)"
 
 #: gui/library.c:9008
-#, fuzzy
 msgid "compatible with gretl >= 2018c"
-msgstr "lloj i vjetër (i pajtueshëm me gretl < 2018c)"
+msgstr "i pajtueshëm me gretl >= 2018c)"
 
 #: gui/library.c:9009
-#, fuzzy
 msgid "compatible with gretl < 2018c"
-msgstr "lloj i vjetër (i pajtueshëm me gretl < 2018c)"
+msgstr "i pajtueshëm me gretl < 2018c"
 
 #: gui/library.c:9571 gui/library.c:9714
 msgid "No commands to execute"
@@ -15437,13 +15404,12 @@ msgid "Ensure uniform sample size"
 msgstr "Përdor kampion uniform"
 
 #: gui/menustate.c:576
-#, fuzzy
 msgid "Display map..."
-msgstr "Shfaq hartën"
+msgstr "Shfaq hartën…"
 
 #: gui/menustate.c:577
 msgid "Write map as GeoJSON..."
-msgstr ""
+msgstr "Krijo hartën në formatin GeoJSON…"
 
 #: gui/menustate.c:580
 msgid "Edit values"
@@ -15577,7 +15543,7 @@ msgstr "Importuar %s"
 
 #: gui/menustate.c:1147
 msgid " Unsaved data "
-msgstr " Të dhënat nuk janë ruajtur "
+msgstr " Të dhënat të paruajtura "
 
 #: gui/model_table.c:82
 msgid "Model table is full"
@@ -16221,9 +16187,8 @@ msgid "Include levels equations (GMM-SYS)"
 msgstr "Përfshi ekuacjonet në nivel (GMM-SYS)"
 
 #: gui/selector.c:6162
-#, fuzzy
 msgid "DPD-style initial covariance matrix"
-msgstr "Përcaktori i matricës së kovariancave"
+msgstr "Matrica fillestare e kovariancave e llojit DPD"
 
 #: gui/selector.c:6165
 msgid "Show zeros explicitly"
@@ -16431,7 +16396,7 @@ msgstr "CSV"
 
 #: gui/selector.c:6888
 msgid "GeoJSON"
-msgstr ""
+msgstr "GeoJSON"
 
 #: gui/selector.c:6889
 msgid "gretl datafile (.gdt)"
@@ -16550,9 +16515,8 @@ msgid "Select coefficients to sum"
 msgstr "Zgjidhni koeficientët që doni të mblidhni"
 
 #: gui/selector.c:7596
-#, fuzzy
 msgid "Q-Q plot: select one or two variables"
-msgstr "Zgjidhni 1 ose 2 ndryshore"
+msgstr "Grafik Q-Q: zgjidhni 1 ose 2 ndryshore"
 
 #: gui/selector.c:7598
 msgid "Confidence region: select two variables"
@@ -16563,9 +16527,8 @@ msgid "Select variables to display"
 msgstr "Zgjidhni ndryshoret që doni të shikoni"
 
 #: gui/selector.c:7602
-#, fuzzy
 msgid "Select variables for boxplot"
-msgstr "Zgjidhni ndryshoret që doni të vizatoni në grafik"
+msgstr "Zgjidhni ndryshoret për boxplot"
 
 #: gui/selector.c:7605
 msgid "Select variables to plot"
@@ -18314,14 +18277,14 @@ msgid "Failed to execute x12arima"
 msgstr "Ekzekutimi i x12arima është i pamundur"
 
 #: plugin/dpanel.c:1444
-#, fuzzy, c-format
+#, c-format
 msgid "Step 1 parameter estimates, using %d observations"
-msgstr "%s vlerësime duke përdorur %d vrojtime %s-%s\n"
+msgstr "Vlerësimet në etapën 1 duke përdorur %d vrojtime"
 
 #: plugin/dpanel.c:1458
-#, fuzzy, c-format
+#, c-format
 msgid "Sargan test: Chi-square(%d) = %g [%.4f]\n"
-msgstr "Statistika e testit: Hi-katror(%d) = %d * %g/%g = %g\n"
+msgstr "Testi Sargan: Hi-katror(%d) = %g [%.4f]\n"
 
 #: plugin/eviews_import.c:349
 msgid "No variables were read\n"
