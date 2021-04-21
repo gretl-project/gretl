@@ -126,7 +126,8 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
       setopt join --tkey="obs,%Y-%m-%d"
    endif
 
-   outfile tracestr --buffer
+   string tracestr
+   outfile --buffer=tracestr
       # try "append" first
       catch append @tmpfile --quiet --fixed-sample
       err = $error
