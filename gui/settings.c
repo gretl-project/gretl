@@ -2201,6 +2201,10 @@ static int common_read_rc_setup (int updated)
     }
     set_lcnumeric(langid, lcnumeric);
 
+    if (updated) {
+	update_addons_index(NULL);
+    }
+
     return err;
 }
 
