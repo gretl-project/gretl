@@ -2076,6 +2076,9 @@ static int svd_ridge (regls_info *ri)
     if (ri->lamscale == LAMSCALE_GLMNET) {
 	/* not entirely truthful! */
 	lam->val[0] = ri->lfrac->val[0] * lmax;
+	if (ri->nlam == 1) {
+	    lam->val[0] /= ri->n;
+	}
     }
 
     if (!ri->xvalid) {
@@ -2107,6 +2110,7 @@ static int svd_ridge (regls_info *ri)
 	}
 	if (ri->nlam == 1) {
 	    gretl_bundle_set_scalar(ri->b, "lambda", lam0);
+	    // ri->lam->val[0] /= ri->n;
 	    if (V != NULL) {
 		gretl_bundle_donate_data(ri->b, "vcv", V,
 					 GRETL_TYPE_MATRIX, 0);
