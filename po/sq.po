@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-21 19:38+0100\n"
+"PO-Revision-Date: 2021-04-22 17:09+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -378,7 +378,7 @@ msgstr "me rikampionim të mbetjeve"
 
 #: lib/src/bootstrap.c:733
 msgid "using resampled y,X \"pairs\""
-msgstr "përdor çifte y,X të rikampionuar"
+msgstr "përdor ‘çifte’ y,X të rikampionuar"
 
 #: lib/src/bootstrap.c:735
 msgid "using \"wild\" bootstrap"
@@ -1113,7 +1113,7 @@ msgstr "E pamundur të hap %s\n"
 
 #: lib/src/csvdata.c:3570
 msgid "using fixed column format\n"
-msgstr "duke përdorur ndarje fikse të shtyllave\n"
+msgstr "Bazuar në ndarje fikse të shtyllave\n"
 
 #: lib/src/csvdata.c:3653
 #, c-format
@@ -1620,7 +1620,7 @@ msgstr "E pamundur të shkruhet në %s"
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
 msgstr ""
-"Nga ndryshoret që duhen ruajtur, %d ndodhen në bazën e të dhënave që përpara."
+"Nga ndryshoret që duhen ruajtur, %d ndodhen tashmë në bazën e të dhënave."
 
 #: lib/src/describe.c:1245
 msgid "Insufficient data"
@@ -1695,7 +1695,7 @@ msgstr "ACF përdor gabimet std. të Bartlett"
 #: lib/src/describe.c:3570
 #, c-format
 msgid "using standard error 1/T^%.1f"
-msgstr "me gabimin std. 1/T^%.1f"
+msgstr "bazuar në gabimin std. 1/T^%.1f"
 
 #: lib/src/describe.c:3588
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
@@ -1753,7 +1753,7 @@ msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr ""
-"Duke përdorur dritaren e Bartlett, gjerësia %d\n"
+"Bazuar në dritaren e Bartlett, gjerësia %d\n"
 "\n"
 
 #: lib/src/describe.c:4423
@@ -2152,7 +2152,7 @@ msgstr "'%s' nuk është ndryshore binare"
 
 #: lib/src/discrete.c:3109 lib/src/discrete.c:3183
 msgid "Perfect prediction obtained: no MLE exists"
-msgstr "Parashikim i përsosur :MP nuk ekziston"
+msgstr "Parashikim i përsosur: MLE nuk ekziston"
 
 #: lib/src/discrete.c:3349
 msgid "Illegal non-positive value of the dependent variable"
@@ -3468,7 +3468,7 @@ msgstr ""
 
 #: lib/src/gretl_errors.c:70
 msgid "The convergence criterion was not met"
-msgstr "Kriteri i konvergjencës nuk u respektua dot"
+msgstr "Kriteri i konvergjencës nuk u respektua"
 
 #: lib/src/gretl_errors.c:71
 msgid "The operation was canceled"
@@ -5344,7 +5344,7 @@ msgstr "Efekte të rastësishme (GLS)"
 
 #: lib/src/modelprint.c:1019
 msgid "Maximum Likelihood"
-msgstr "Maksimumi i përgjasisë"
+msgstr "Maksimumi i Gjasës"
 
 #: lib/src/modelprint.c:1024
 msgid "Between-groups"
@@ -5806,11 +5806,11 @@ msgstr "%s, duke përdorur %d vrojtime"
 
 #: lib/src/modelprint.c:2123
 msgid "Using weighted Nerlove transformation"
-msgstr "Përdor transformimin e ponderuar të Nerlove"
+msgstr "Përdor transformimin e ponderuar Nerlove"
 
 #: lib/src/modelprint.c:2125
 msgid "Using Nerlove's transformation"
-msgstr "Me transformimin e Nerlove"
+msgstr "Bazuar në transformimin Nerlove"
 
 #: lib/src/modelprint.c:2135
 #, c-format
@@ -5852,7 +5852,7 @@ msgstr "Ndryshorja e zgjedhjes"
 #: lib/src/modelprint.c:2284
 #, c-format
 msgid "Using %d quadrature points"
-msgstr "Duke përdorur %d pika kuadrature"
+msgstr "Bazuar në %d pika kuadrature"
 
 #: lib/src/modelprint.c:2288
 msgid "Without squared terms in variance equation"
@@ -6552,11 +6552,11 @@ msgstr "%s : asnjë parametër nuk është dhënë"
 
 #: lib/src/nls.c:3514
 msgid "Using numerical derivatives\n"
-msgstr "Duke përdorur derivate numerikë\n"
+msgstr "Bazuar në derivate numerikë\n"
 
 #: lib/src/nls.c:3515
 msgid "Using analytical derivatives\n"
-msgstr "Duke përdorur derivate analitikë\n"
+msgstr "Bazuar në derivate analitikë\n"
 
 #: lib/src/nls.c:3542
 #, c-format
@@ -7556,7 +7556,7 @@ msgstr "Maksimumi i Gjasës me Informacion të Plotë"
 
 #: lib/src/system.c:106
 msgid "Limited Information Maximum Likelihood"
-msgstr "Maksimumi i Gjasës me Informacion të Kufizuar"
+msgstr "Maksimumi i Gjasës me Informacion të Kufizuar (LIML)"
 
 #: lib/src/system.c:107
 msgid "Ordinary Least Squares"
@@ -8022,7 +8022,7 @@ msgstr "Metoda: %s; vrojtimet %s--%s ($T=%d$)"
 
 #: lib/src/varprint.c:1055 lib/src/varprint.c:1064 lib/src/varprint.c:1072
 msgid "Maximum likelihood"
-msgstr "Maksimumi i përgjasisë"
+msgstr "Maksimumi i gjasës"
 
 #: lib/src/varprint.c:1063 lib/src/varprint.c:1071
 #, c-format
@@ -10082,7 +10082,7 @@ msgstr "në"
 
 #: gui/dialogs.c:2280
 msgid "Make this restriction permanent"
-msgstr "Ky kusht është përfundimtar"
+msgstr "Kjo zgjedhje është përfundimtare"
 
 #: gui/dialogs.c:2304
 msgid "The current data range is too small for this option"
@@ -10245,7 +10245,7 @@ msgstr "vija të poshtme dhe të sipërme"
 
 #: gui/dialogs.c:3385
 msgid "Plot confidence interval using"
-msgstr "Vizato intervalin e besimit duke përdorur"
+msgstr "Vizato intervalin e besimit bazuar në"
 
 #: gui/dialogs.c:3447 gui/library.c:6414
 msgid "Add observations"
@@ -12934,7 +12934,7 @@ msgstr "_Mesatarja e lëvizshme e thjeshtë (MA)"
 
 #: gui/gretl.c:1869
 msgid "_Exponential moving average"
-msgstr "M_esatarja e lëvizshme _eksponenciale"
+msgstr "M_esatarja e lëvizshme eksponenciale"
 
 #: gui/gretl.c:1870
 msgid "_Hodrick-Prescott"
@@ -12970,7 +12970,7 @@ msgstr "Eksponenti _Hurst"
 
 #: gui/gretl.c:1882
 msgid "_BDS nonlinearity test"
-msgstr "Test _BDS i jo-linearitetit"
+msgstr "Testi _BDS i jo-linearitetit"
 
 #: gui/gretl.c:1883 gui/menustate.c:605
 msgid "Disaggregate..."
@@ -12990,23 +12990,23 @@ msgstr "M_odeli"
 
 #: gui/gretl.c:1890
 msgid "_Ordinary Least Squares"
-msgstr "Katrorët më të Vegjël të Zak_onshëm - KVZ"
+msgstr "_KVZ - Katrorët më të Vegjël të Zakonshëm"
 
 #: gui/gretl.c:1891
 msgid "_Instrumental variables"
-msgstr "_IV - Ndryshoret Instrumentale (NI)"
+msgstr "_Ndryshoret Instrumentale (IV)"
 
 #: gui/gretl.c:1892
 msgid "_Two-Stage Least Squares"
-msgstr "Katrorët më të Vegjël të Dyfishtë (_TSLS)"
+msgstr "_Katrorët më të Vegjël të Dyfishtë (TSLS)"
 
 #: gui/gretl.c:1893
 msgid "_LIML"
-msgstr "Maksimumi i Përgjasisë me Informacion të Kufizuar (_LIML)"
+msgstr "_Maksimumi i Gjasës me Informacion të Kufizuar (LIML)"
 
 #: gui/gretl.c:1894 gui/gretl.c:1943
 msgid "_GMM"
-msgstr "Metoda e Përgjithësuar e Momenteve (_GMM)"
+msgstr "M_etoda e Përgjithësuar e Momenteve (GMM)"
 
 #: gui/gretl.c:1895
 msgid "Other _linear models"
@@ -13014,19 +13014,19 @@ msgstr "_Modele të tjerë linearë"
 
 #: gui/gretl.c:1896
 msgid "_Weighted Least Squares"
-msgstr "Katrorët më të Vegjël të Ponderuar (_WLS)"
+msgstr "_Katrorët më të Vegjël të Ponderuar (WLS)"
 
 #: gui/gretl.c:1897
 msgid "H_eteroskedasticity corrected"
-msgstr "Korrigjim të _heteroskedasticitetit"
+msgstr "K_orrigjim të heteroskedasticitetit"
 
 #: gui/gretl.c:1898
 msgid "_Regularized least squares"
-msgstr "Katrorët më të vegjël të _rregullt"
+msgstr "K_atrorët më të vegjël të rregullt"
 
 #: gui/gretl.c:1899
 msgid "High _precision OLS"
-msgstr "_KVZ të saktësisë së lartë"
+msgstr "K_VZ të saktësisë së lartë"
 
 #: gui/gretl.c:1900 gui/library.c:4092 gui/library.c:6178 gui/selector.c:7213
 msgid "ANOVA"
@@ -13090,7 +13090,7 @@ msgstr "Efekte _fikse ose të rastësishme"
 
 #: gui/gretl.c:1916
 msgid "_Weighted least squares"
-msgstr "Katrorët më të vegjël të ponderuar"
+msgstr "_Katrorët më të vegjël të ponderuar"
 
 #: gui/gretl.c:1917
 msgid "_Between model"
@@ -13138,7 +13138,7 @@ msgstr "Efekte të _rastësishme"
 
 #: gui/gretl.c:1930
 msgid "To_bit"
-msgstr "Model To_bit"
+msgstr "Model _Tobit"
 
 #: gui/gretl.c:1931
 msgid "_Heckit"
@@ -13146,7 +13146,7 @@ msgstr "_Heckit"
 
 #: gui/gretl.c:1932
 msgid "_Count data"
-msgstr "Model me n_umërime (count)"
+msgstr "Model me _numërime (count)"
 
 #: gui/gretl.c:1933
 msgid "_Duration data"
@@ -13166,11 +13166,11 @@ msgstr "_Regresion i qëndrueshëm"
 
 #: gui/gretl.c:1937
 msgid "Least _Absolute Deviation"
-msgstr "Shmangia më e Vogël _Absolute (LAD)"
+msgstr "_Shmangia më e Vogël Absolute (LAD)"
 
 #: gui/gretl.c:1938
 msgid "_Quantile regression"
-msgstr "Regresion _kuantil"
+msgstr "_Regresion kuantil"
 
 #: gui/gretl.c:1939
 msgid "_Loess"
@@ -13182,15 +13182,15 @@ msgstr "_Nadaraya-Watson"
 
 #: gui/gretl.c:1941
 msgid "_Nonlinear Least Squares"
-msgstr "_NLS - Katrorët më të Vegjël Jo-linearë"
+msgstr "K_atrorët më të Vegjël Jo-linearë (NLS)"
 
 #: gui/gretl.c:1942
 msgid "_Maximum likelihood"
-msgstr "_Maksimumi i përgjasisë"
+msgstr "_Maksimumi i Gjasës (MLE)"
 
 #: gui/gretl.c:1944
 msgid "_Simultaneous equations"
-msgstr "Ekuacione të njëkoh_shme"
+msgstr "_Ekuacione të njëkohshme"
 
 #: gui/gretl.c:1947
 msgid "_Help"
@@ -13611,7 +13611,7 @@ msgstr "_Vrojtime ndikuese"
 
 #: gui/gui_utils.c:247
 msgid "_ANOVA"
-msgstr "_ANOVA - Analiza e variancës"
+msgstr "A_NOVA - Analiza e variancës"
 
 #: gui/gui_utils.c:248
 msgid "_Bootstrap..."
@@ -15582,7 +15582,7 @@ msgstr "ARCH"
 
 #: gui/model_table.c:458
 msgid "MLE"
-msgstr "MV"
+msgstr "MLE"
 
 #: gui/model_table.c:464
 msgid "Within"
@@ -15811,7 +15811,7 @@ msgstr "Duhet të zgjidhni të paktën 2 ndryshore endogjene"
 
 #: gui/selector.c:4125
 msgid "You must specify a set of instrumental variables"
-msgstr "Duhet të përcaktoni një grup ndryshoresh instrmentale"
+msgstr "Duhet të përcaktoni një grup ndryshoresh instrumentale"
 
 #: gui/selector.c:4128
 msgid "You must specify regressors for the selection equation"
@@ -15871,7 +15871,7 @@ msgstr "Maksimumi i Gjasës me Informacion të Kufizuar"
 
 #: gui/selector.c:4276
 msgid "Generalized method of moments"
-msgstr "Metoda e Përgjithësuar e Momenteve"
+msgstr "Metoda e përgjithësuar e momenteve (GMM)"
 
 #: gui/selector.c:4278
 msgid "Autoregressive errors"
@@ -16292,7 +16292,7 @@ msgstr "Vlerëso modelin e shtuar"
 
 #: gui/selector.c:6578
 msgid "LM test using auxiliary regression"
-msgstr "Testi LM duke përdorur regresion ndihmës"
+msgstr "Testi LM bazuar në regresion ndihmës"
 
 #: gui/selector.c:6591
 msgid "Estimate reduced model"
@@ -16356,7 +16356,7 @@ msgstr "Trego përqindjet sipas shtyllave"
 
 #: gui/selector.c:6746
 msgid "Fine-tune using Cochrane-Orcutt"
-msgstr "Korrigjim i imët me metodën Cochrane-Orcutt"
+msgstr "Kalibrimi sipas Cochrane-Orcutt"
 
 #: gui/selector.c:6771 gui/selector.c:6783
 msgid "Exact Maximum Likelihood"
@@ -16880,7 +16880,7 @@ msgstr "Përdor parametrin lokal për presjen dhjetore"
 
 #: gui/settings.c:213
 msgid "Theme preference"
-msgstr "Tema e dëshiruar"
+msgstr "Tema e paraqitjes"
 
 #: gui/settings.c:217
 msgid "Web browser"
@@ -16916,7 +16916,7 @@ msgstr "Mbaj mend skedarin"
 
 #: gui/settings.c:237
 msgid "Language preference"
-msgstr "Gjuha e dëshiruar"
+msgstr "Gjuha e programit"
 
 #: gui/settings.c:240
 msgid "Default graph scale"
@@ -17040,7 +17040,7 @@ msgstr "Trego numrin e rreshtave"
 
 #: gui/settings.c:318
 msgid "Script editor uses tabs"
-msgstr "Editori i skriptit përdor shtyllat ndarëse"
+msgstr "Përdor ‘tab’ në editorin e skriptit"
 
 #: gui/settings.c:321
 msgid "Enable auto-completion"
@@ -17081,7 +17081,7 @@ msgstr "Për vlerësimin GARCH"
 
 #: gui/settings.c:350
 msgid "PDF manual preference"
-msgstr "Manualet në PDF"
+msgstr "Manualet PDF"
 
 #: gui/settings.c:567
 msgid "This change will apply to newly opened windows"
@@ -17127,7 +17127,7 @@ msgstr "Programet"
 
 #: gui/settings.c:1420
 msgid "Editor"
-msgstr "Redaktuesi"
+msgstr "Skripti"
 
 #: gui/settings.c:1422
 msgid "Network"
@@ -18249,11 +18249,11 @@ msgstr "vlera të vogla për MA"
 
 #: plugin/arma.c:1380
 msgid "using nonlinear AR model"
-msgstr "duke përdorur model AR jo-linear"
+msgstr "Bazuar në model AR jo-linear"
 
 #: plugin/arma.c:1382
 msgid "using linear AR model"
-msgstr "duke përdorur model AR linear"
+msgstr "Bazuar në model AR linear"
 
 #: plugin/arma_cml.c:701
 msgid "BHHH iteration"
@@ -18279,7 +18279,7 @@ msgstr "Ekzekutimi i x12arima është i pamundur"
 #: plugin/dpanel.c:1444
 #, c-format
 msgid "Step 1 parameter estimates, using %d observations"
-msgstr "Vlerësimet në etapën 1 duke përdorur %d vrojtime"
+msgstr "Vlerësimet në etapën 1 bazuar në %d vrojtime"
 
 #: plugin/dpanel.c:1458
 #, c-format
@@ -18887,7 +18887,7 @@ msgid ""
 "using %d sub-samples of size %d\n"
 "\n"
 msgstr ""
-"duke përdorur %d nën-kampionë me vëllim %d\n"
+"bazuar në %d nën-kampionë me vëllim %d\n"
 "\n"
 
 #: plugin/range-mean.c:273
