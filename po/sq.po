@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-22 17:09+0100\n"
+"PO-Revision-Date: 2021-04-24 10:32+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -3296,7 +3296,7 @@ msgstr "Vlerësimet e funksionit: %d\n"
 #: lib/src/gretl_bfgs.c:2176 lib/src/modelprint.c:3373
 #, c-format
 msgid "Evaluations of gradient: %d\n"
-msgstr "Vlerësimet e gradientit : %d\n"
+msgstr "Vlerësimet e gradientit: %d\n"
 
 #: lib/src/gretl_bfgs.c:2601
 #, c-format
@@ -5280,7 +5280,7 @@ msgstr "Paneli dinamik"
 
 #: lib/src/modelprint.c:978 gui/selector.c:4252
 msgid "Bivariate probit"
-msgstr "Probit me 2 ndryshore (bivariate)"
+msgstr "Probit binar"
 
 #: lib/src/modelprint.c:979 gui/helpfiles.c:355
 msgid "MIDAS"
@@ -14742,7 +14742,7 @@ msgid ""
 "Would you like to:"
 msgstr ""
 "Përshkrimet e ndryshoreve u janë bashkëngjitur të dhënave.\n"
-"A doni të:"
+"Mundet të:"
 
 #: gui/library.c:1913
 msgid ""
@@ -15658,7 +15658,7 @@ msgstr "Në kllapa, p. kritik"
 
 #: gui/model_table.c:1135
 msgid "For logit and probit, R-squared is McFadden's pseudo-R-squared"
-msgstr "Për modelet logit-probit, R-katror është pseudo-R-katror i McFadden"
+msgstr "Për modelet logit/probit, R-katror është pseudo-R-katror i McFadden"
 
 #: gui/model_table.c:1146 gui/model_table.c:1185 gui/model_table.c:1286
 #: gui/model_table.c:1422
@@ -15675,7 +15675,7 @@ msgstr "$p$. kritik në kllapa"
 
 #: gui/model_table.c:1255
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr "Për modelet logit-probit, $R^2$ është pseudo-$R^2$ i McFadden"
+msgstr "Për modelet logit/probit, $R^2$ është pseudo-$R^2$ i McFadden"
 
 #: gui/model_table.c:1342
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
