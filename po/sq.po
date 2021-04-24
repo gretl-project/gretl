@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-24 10:32+0100\n"
+"PO-Revision-Date: 2021-04-24 13:28+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -9473,7 +9473,7 @@ msgstr "Rregjistri i paketave"
 
 #: gui/datafiles.c:1716
 msgid "Look on server"
-msgstr "Kërko në server"
+msgstr "Në _server"
 
 #: gui/datafiles.c:1717
 msgid "Local machine"
@@ -12302,7 +12302,7 @@ msgstr "ruaj parametrimin e gretl-it në një skedë"
 
 #: gui/gretl.c:146
 msgid "send debugging info to console"
-msgstr "dërgo të dhënat e bug-ut në konsolë"
+msgstr "dërgo të dhënat ‘debbug’ në konsolë"
 
 #: gui/gretl.c:149
 msgid "print version information"
@@ -12338,15 +12338,15 @@ msgstr "Skedari i punës: kliko për konfigurimin"
 
 #: gui/gretl.c:1679 gui/gretl.c:1691
 msgid "_User file..."
-msgstr "Nga të _miat, personale..."
+msgstr "_Nga të miat..."
 
 #: gui/gretl.c:1680
 msgid "_Sample file..."
-msgstr "Nga _shembujt e gretl..."
+msgstr "_Shembuj nga gretl..."
 
 #: gui/gretl.c:1681
 msgid "_Append data..."
-msgstr "Sh_to të dhëna..."
+msgstr "S_hto të dhëna..."
 
 #: gui/gretl.c:1682
 msgid "_Save data"
@@ -12362,31 +12362,31 @@ msgstr "_Eksporto të dhënat në..."
 
 #: gui/gretl.c:1685 gui/toolbar.c:822
 msgid "Send To..."
-msgstr "Dërgo drejt…"
+msgstr "Dërgo…"
 
 #: gui/gretl.c:1686
 msgid "_New data set"
-msgstr "Kr_ijo të dhëna të reja"
+msgstr "_Krijo të dhëna të reja"
 
 #: gui/gretl.c:1687
 msgid "C_lear data set"
-msgstr "_Fshij të dhënat e tanishme"
+msgstr "_Fshij të dhënat"
 
 #: gui/gretl.c:1689
 msgid "_Working directory..."
-msgstr "Sked_ari i punës..."
+msgstr "Ske_dari i punës..."
 
 #: gui/gretl.c:1690
 msgid "_Script files"
-msgstr "S_kript (program)"
+msgstr "K_od (skript)"
 
 #: gui/gretl.c:1692
 msgid "_Example scripts..."
-msgstr "Sh_embuj skripti"
+msgstr "_Shembuj nga gretl…"
 
 #: gui/gretl.c:1693
 msgid "_New script"
-msgstr "_Skript i ri"
+msgstr "S_kript i ri"
 
 #: gui/gretl.c:1694
 msgid "gretl script"
@@ -12422,7 +12422,7 @@ msgstr "Kod Stata"
 
 #: gui/gretl.c:1703
 msgid "_Session files"
-msgstr "_Skedë sesjoni"
+msgstr "_Sesjon"
 
 #: gui/gretl.c:1704
 msgid "_Open session..."
@@ -12434,7 +12434,7 @@ msgstr "_Ruaj sesjonin"
 
 #: gui/gretl.c:1707
 msgid "Save session _as..."
-msgstr "Ruaj sesjonin me emrin..."
+msgstr "R_uaj sesjonin me emrin..."
 
 #: gui/gretl.c:1710
 msgid "_Databases"
@@ -12458,11 +12458,11 @@ msgstr "Tërhiq nga _serveri..."
 
 #: gui/gretl.c:1719
 msgid "_Function packages"
-msgstr "Paketa e _funksioneve"
+msgstr "_Paketë funksioni"
 
 #: gui/gretl.c:1720 gui/textbuf.c:1655
 msgid "On _local machine..."
-msgstr "Kërko në _kompjuter..."
+msgstr "Në _kompjuter..."
 
 #: gui/gretl.c:1721 gui/textbuf.c:1657
 msgid "On _server..."
@@ -12474,7 +12474,7 @@ msgstr "_Ndrysho..."
 
 #: gui/gretl.c:1723
 msgid "_New package"
-msgstr "_Krijo të ri"
+msgstr "K_rijo"
 
 #: gui/gretl.c:1724
 msgid "_Upload package..."
@@ -12486,7 +12486,7 @@ msgstr "Ndrysho skedën spec…"
 
 #: gui/gretl.c:1726
 msgid "_Resource from addon"
-msgstr "Kontribute addon"
+msgstr "K_ontribute ‘addon’"
 
 #: gui/gretl.c:1731
 msgid "_Tools"
@@ -12514,27 +12514,27 @@ msgstr "_Lloji i shkrimit për menunë..."
 
 #: gui/gretl.c:1741
 msgid "_Statistical tables"
-msgstr "T_abela statistike"
+msgstr "_Tabela statistike"
 
 #: gui/gretl.c:1742
 msgid "_P-value finder"
-msgstr "Ll_ogarit probabilitetin kritik"
+msgstr "_Llogaritje probabiliteti kritik"
 
 #: gui/gretl.c:1743
 msgid "_Distribution graphs"
-msgstr "V_izato ligjet e shpërndarjes"
+msgstr "L_igjet e shpërndarjes"
 
 #: gui/gretl.c:1744
 msgid "_Plot a curve"
-msgstr "Vi_zato një grafik"
+msgstr "_Vizato një grafik"
 
 #: gui/gretl.c:1745
 msgid "_Test statistic calculator"
-msgstr "Llogaritës i _testeve statistikë"
+msgstr "T_este statistikë"
 
 #: gui/gretl.c:1746
 msgid "_Nonparametric tests"
-msgstr "T_este jo-parametrikë"
+msgstr "Te_ste jo-parametrikë"
 
 #: gui/gretl.c:1747 gui/textbuf.c:1669
 msgid "_Seed for random numbers"
@@ -12542,7 +12542,7 @@ msgstr "_Vlera fillestare për numrat e rastit"
 
 #: gui/gretl.c:1748
 msgid "_Command log"
-msgstr "_Lista e komandave të deritanishme"
+msgstr "L_ista e komandave të deritanishme"
 
 #: gui/gretl.c:1749
 msgid "_Gretl console"
@@ -12562,11 +12562,11 @@ msgstr "Lista e testeve _NIST"
 
 #: gui/gretl.c:1753
 msgid "_Basic"
-msgstr "_Ç'ka duhet të di"
+msgstr "_Elementare"
 
 #: gui/gretl.c:1754
 msgid "_Verbose"
-msgstr "Më tepër _hollësi"
+msgstr "_Me hollësi"
 
 #: gui/gretl.c:1755
 msgid "V_ery verbose"
@@ -12642,7 +12642,7 @@ msgstr "R_endit të dhënat..."
 
 #: gui/gretl.c:1775 gui/gretl.c:1885
 msgid "Set missing _value code..."
-msgstr "Përca_kto kodin për vlerat munguese..."
+msgstr "_Kodi i vlerave munguese..."
 
 #: gui/gretl.c:1778 gui/gui_utils.c:326 gui/gui_utils.c:371 gui/ssheet.c:176
 msgid "_View"
@@ -12662,19 +12662,19 @@ msgstr "Grafik _kohor..."
 
 #: gui/gretl.c:1782
 msgid "X-Y _scatter..."
-msgstr "Grafik _pikash (X,Y)..."
+msgstr "X-Y i _thjeshtë…"
 
 #: gui/gretl.c:1783
 msgid "X-Y with _impulses..."
-msgstr "Grafik pikash (X,Y) me _impulse..."
+msgstr "X-Y me _impulse..."
 
 #: gui/gretl.c:1784
 msgid "X-Y with _factor separation..."
-msgstr "Grafik pikash (X,Y) të g_rupuara..."
+msgstr "X-Y i _grupuar..."
 
 #: gui/gretl.c:1785
 msgid "X-Y with _control..."
-msgstr "Grafik pikash (X,Y) të k_orrigjuara..."
+msgstr "X-Y i k_orrigjuara..."
 
 #: gui/gretl.c:1786
 msgid "_Boxplots..."
@@ -12682,7 +12682,7 @@ msgstr "Grafik _BoxPlot..."
 
 #: gui/gretl.c:1787
 msgid "_Factorized boxplot..."
-msgstr "Grafik Boxplot i _faktorizuar..."
+msgstr "Bo_xplot i faktorizuar..."
 
 #: gui/gretl.c:1788
 msgid "_Q-Q plot..."
@@ -12698,23 +12698,23 @@ msgstr "_Shfaq hartën"
 
 #: gui/gretl.c:1791
 msgid "_Multiple graphs"
-msgstr "Grafikë të shu_mëfishtë"
+msgstr "G_rafikë të shumëfishtë"
 
 #: gui/gretl.c:1792
 msgid "X-Y _scatters..."
-msgstr "_Grafik pikash (X,Y)..."
+msgstr "X-Y të _thjeshtë…"
 
 #: gui/gretl.c:1793
 msgid "_Time series..."
-msgstr "G_rafik kohor..."
+msgstr "_Kohor..."
 
 #: gui/gretl.c:1794 gui/gretl.c:1849
 msgid "_Summary statistics"
-msgstr "S_tatistikat përshkruese"
+msgstr "_Statistikat përshkruese"
 
 #: gui/gretl.c:1795
 msgid "_Correlation matrix"
-msgstr "M_atrica e korrelacioneve"
+msgstr "_Matrica e korrelacioneve"
 
 #: gui/gretl.c:1796
 msgid "Cross _Tabulation"
@@ -12726,7 +12726,7 @@ msgstr "_Faktorët kryesorë - PCA"
 
 #: gui/gretl.c:1798
 msgid "_Mahalanobis distances"
-msgstr "D_istancat e Mahalanobis"
+msgstr "_Distancat Mahalanobis"
 
 #: gui/gretl.c:1799
 msgid "C_ross-correlogram"
@@ -12738,7 +12738,7 @@ msgstr "_Krijo"
 
 #: gui/gretl.c:1803
 msgid "_Logs of selected variables"
-msgstr "L_ogaritmin e ndryshoreve të zgjedhura"
+msgstr "_Logaritmin e ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1804
 msgid "_Squares of selected variables"
@@ -12746,7 +12746,7 @@ msgstr "_Katrorin e ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1805
 msgid "_Lags of selected variables"
-msgstr "_Vonesa të ndryshoreve të zgjedhura"
+msgstr "_Vonesat e ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1806
 msgid "_First differences of selected variables"
@@ -12754,7 +12754,7 @@ msgstr "_Diferencën e parë të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1808
 msgid "_Log differences of selected variables"
-msgstr "D_iferencën e logaritmit të ndryshoreve të zgjedhura"
+msgstr "_Diferencën e logaritmit të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1810
 msgid "_Seasonal differences of selected variables"
@@ -12762,11 +12762,11 @@ msgstr "Di_ferencën stinore të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1812
 msgid "_Percentage change of selected variables"
-msgstr "_Luhatjen (në %) të ndryshoreve të zgjedhura"
+msgstr "L_uhatjen e ndryshoreve të zgjedhura (%)"
 
 #: gui/gretl.c:1814
 msgid "_100-based indices of selected variables"
-msgstr "Indekse bazë _100 të ndryshoreve të zgjedhura"
+msgstr "I_ndekse bazë 100 të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1816
 msgid "_Standardize selected variables"
@@ -12774,39 +12774,39 @@ msgstr "_Standartizim të ndryshoreve të zgjedhura"
 
 #: gui/gretl.c:1818
 msgid "_Index variable"
-msgstr "Tregues _vrojtimesh"
+msgstr "_Tregues vrojtimesh"
 
 #: gui/gretl.c:1819
 msgid "_Time trend"
-msgstr "Tr_egues kohor"
+msgstr "_Tregues kohor"
 
 #: gui/gretl.c:1820
 msgid "_Panel unit index"
-msgstr "Tregues individësh (_panel)"
+msgstr "_Tregues individësh paneli"
 
 #: gui/gretl.c:1821
 msgid "_Random variable..."
-msgstr "_Ndryshore të rastit..."
+msgstr "N_dryshore të rastit..."
 
 #: gui/gretl.c:1822
 msgid "_Periodic dummies"
-msgstr "Memece peri_udhash"
+msgstr "_Memece periudhash"
 
 #: gui/gretl.c:1823
 msgid "_Unit dummies"
-msgstr "Memece _individësh"
+msgstr "_Memece individësh"
 
 #: gui/gretl.c:1824
 msgid "_Time dummies"
-msgstr "Memece _kohore"
+msgstr "_Memece kohore"
 
 #: gui/gretl.c:1825
 msgid "_Observation range dummy"
-msgstr "Memece për një kampi_on të caktuar…"
+msgstr "_Memece për një kampi_on të caktuar…"
 
 #: gui/gretl.c:1826
 msgid "Dummies for _discrete variable..."
-msgstr "Memece për ndryshore _diskrete..."
+msgstr "_Memece për ndryshore diskrete..."
 
 #: gui/gretl.c:1828
 msgid "_Define matrix..."
@@ -12818,35 +12818,35 @@ msgstr "K_ampioni"
 
 #: gui/gretl.c:1832
 msgid "_Set range..."
-msgstr "_Ndrysho kufijtë e kampionit..."
+msgstr "_Përcakto kufijtë..."
 
 #: gui/gretl.c:1833
 msgid "_Restore full range"
-msgstr "_Rikthe kufijtë fillestare të kampionit"
+msgstr "_Rikthe kufijtë e plotë"
 
 #: gui/gretl.c:1834
 msgid "_Show status"
-msgstr "_Trego hollësi mbi kampionin"
+msgstr "_Trego hollësitë"
 
 #: gui/gretl.c:1835
 msgid "_Restrict, based on criterion..."
-msgstr "_Kufizo kampionin sipas një kushti..."
+msgstr "_Kushtëzo…"
 
 #: gui/gretl.c:1837
 msgid "R_andom sub-sample..."
-msgstr "_Zgjidh një kampion të rastësishëm..."
+msgstr "_Zgjidh në mënyrë të rastësishme…"
 
 #: gui/gretl.c:1838
 msgid "_Resample with replacement..."
-msgstr "Zgj_idh një kampion të rastësishëm me rivendosje..."
+msgstr "Z_gjidh në mënyrë të rastësishme dhe me rivendosje..."
 
 #: gui/gretl.c:1840
 msgid "Drop observations with _missing values..."
-msgstr "Hiq të gjithë vrojtimet që kanë vlera munguese..."
+msgstr "_Hiq vrojtimet me vlera munguese..."
 
 #: gui/gretl.c:1842
 msgid "Make current subsample permanent..."
-msgstr "Bëj të përhershëm nënkampionin në përdorim…"
+msgstr "Për_cakto si të përhershëm nënkampionin në përdorim"
 
 #: gui/gretl.c:1844
 msgid "_Count missing values"
@@ -12858,27 +12858,27 @@ msgstr "_Ndryshorja"
 
 #: gui/gretl.c:1850
 msgid "_Normality test"
-msgstr "Testi i _normalitetit"
+msgstr "_Testi i normalitetit"
 
 #: gui/gretl.c:1851
 msgid "_Frequency distribution..."
-msgstr "Shpërndarja e _frekuencave…"
+msgstr "S_hpërndarja e frekuencave…"
 
 #: gui/gretl.c:1852
 msgid "Estimated _density plot..."
-msgstr "Grafiku i vlerësimit të _densitetit..."
+msgstr "_Grafiku i vlerësimit të densitetit..."
 
 #: gui/gretl.c:1853 gui/gui_utils.c:3184
 msgid "_Boxplot"
-msgstr "Grafik _ BoxPlot"
+msgstr "_BoxPlot"
 
 #: gui/gretl.c:1854
 msgid "Normal _Q-Q plot..."
-msgstr "Grafik _Q-Q normal..."
+msgstr "_Q-Q normal..."
 
 #: gui/gretl.c:1855
 msgid "_Gini coefficient"
-msgstr "Koeficienti _Gini"
+msgstr "K_oeficienti Gini"
 
 #: gui/gretl.c:1856
 msgid "_Range-mean graph"
@@ -12890,7 +12890,7 @@ msgstr "Gr_afik kohor"
 
 #: gui/gretl.c:1858
 msgid "_Panel plot..."
-msgstr "Grafik _paneli..."
+msgstr "Gr_afik paneli..."
 
 #: gui/gretl.c:1859
 msgid "_Unit root tests"
@@ -13062,11 +13062,11 @@ msgstr "Seri kohore ‘_multivariate’"
 
 #: gui/gretl.c:1909
 msgid "_Vector Autoregression"
-msgstr "Model _Vector Autoregression"
+msgstr "Model _Vector Autoregression (VAR)"
 
 #: gui/gretl.c:1910
 msgid "VAR _lag selection"
-msgstr "Mode_li VAR- Zgjedhja e vonesës"
+msgstr "_Zgjedhja e vonesës VAR"
 
 #: gui/gretl.c:1911
 msgid "V_ECM"
@@ -13074,11 +13074,11 @@ msgstr "Model V_ECM"
 
 #: gui/gretl.c:1912
 msgid "Cointegration test (_Johansen)"
-msgstr "Testi i kointegrimit (_Johansen)"
+msgstr "Testi i kointegrimit _Johansen"
 
 #: gui/gretl.c:1913
 msgid "Cointegration test (_Engle-Granger)"
-msgstr "Testi i kointegrimit (_Engle-Granger)"
+msgstr "Testi i kointegrimit _Engle-Granger"
 
 #: gui/gretl.c:1914
 msgid "_Panel"
@@ -13198,19 +13198,19 @@ msgstr "_Udhëzime"
 
 #: gui/gretl.c:1948 gui/gretl.c:1952
 msgid "_Command reference"
-msgstr "Udhëzime mbi _komandat"
+msgstr "Mbi _komandat"
 
 #: gui/gretl.c:1949
 msgid "_Function reference"
-msgstr "Udhëzime mbi _funksionet"
+msgstr "Mbi _funksionet"
 
 #: gui/gretl.c:1950
 msgid "_Packages"
-msgstr "_Paketë funksioni"
+msgstr "Mbi _paketat e funksioneve"
 
 #: gui/gretl.c:1951
 msgid "_User's guide"
-msgstr "Udhëzues për _përdoruesin"
+msgstr "_Udhëzuesi i përdoruesit"
 
 #: gui/gretl.c:1953
 msgid "_Keyboard shortcuts"
@@ -13218,11 +13218,11 @@ msgstr "_Shkurtimet me tastjerë"
 
 #: gui/gretl.c:1954
 msgid "_Hansl primer"
-msgstr "Udhëzues për _Hansl"
+msgstr "_Doracak për Hansl"
 
 #: gui/gretl.c:1955 gui/textbuf.c:1659
 msgid "_Function package guide"
-msgstr "Udhëzues mbi paketën e _funksionit"
+msgstr "_Udhëzues mbi paketat e funksioneve"
 
 #: gui/gretl.c:1956
 msgid "_gretl + MPI"
@@ -13238,19 +13238,19 @@ msgstr "_gretl + DB.NOMICS"
 
 #: gui/gretl.c:1959 gui/textbuf.c:1673
 msgid "Creating maps"
-msgstr "Duke krijuar hartat"
+msgstr "Krijimi i hartave"
 
 #: gui/gretl.c:1960
 msgid "Check for _updates"
-msgstr "Përditësimi i p_rogramit"
+msgstr "_Përditësimi i programit"
 
 #: gui/gretl.c:1961 gui/textbuf.c:1661
 msgid "Check for _addons"
-msgstr "Kërk_o module shtesë"
+msgstr "Kë_rko module shtesë"
 
 #: gui/gretl.c:1962
 msgid "_About gretl"
-msgstr "_Diçka rreth gretl-it"
+msgstr "_Mbi gretl-in"
 
 #: gui/gretl.c:2047 gui/gui_utils.c:237 gui/gui_utils.c:363
 msgid "_Analysis"
