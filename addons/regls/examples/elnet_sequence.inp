@@ -36,7 +36,9 @@ end foreign
 # verify that the difference across estimates is minimal
 RB = mread("RB.mat", 1)
 d = max(abs(eb.B - RB))
-printf "\nMax. difference of coefficient estimates, regls/glmnet: %g\n", d
+printf "\nMax. absolute difference of estimates, regls/glmnet: %g\n", d
+mad = sum(abs(eb.B - RB)) / (25 * nelem(X))
+printf "Mean absolute difference: %g\n", mad
 
 
 
