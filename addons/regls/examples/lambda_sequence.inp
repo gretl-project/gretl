@@ -35,6 +35,9 @@ printf "\ngretl (CCD, tol 1.0e-7):\n"
 regls_multiprint(lb.B, lb.lfrac, murdPerPop, X, lb.crit)
 printf "time %.4fs\n", tm
 
+# STOP here if R + glmnet is not available
+# quit
+
 # R::glmnet
 list LL = murdPerPop X
 foreign language=R --send-data=LL
