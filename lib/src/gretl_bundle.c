@@ -2770,6 +2770,7 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	if (b == NULL) {
 	    *err = E_ALLOC;
 	} else {
+	    gretl_bundle *fb;
 	    char *s1, *s2;
 	    int ival = 0;
 
@@ -2805,6 +2806,11 @@ gretl_bundle *get_sysinfo_bundle (int *err)
 	    if (get_openblas_details(&s1, &s2)) {
 		gretl_bundle_set_string(b, "blascore", s1);
 		gretl_bundle_set_string(b, "blas_parallel", s2);
+	    }
+	    fb = foreign_info();
+	    if (fb != NULL) {
+		gretl_bundle_donate_data(b, "foreign", fb,
+					 GRETL_TYPE_BUNDLE, 0);
 	    }
 	}
 	sysinfo_bundle = b;

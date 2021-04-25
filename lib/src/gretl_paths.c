@@ -3828,3 +3828,45 @@ char *gretl_build_path (char *targ, const gchar *first_element, ...)
 
     return targ;
 }
+
+struct foreign_paths {
+    const char *id;
+    const char *path;
+};
+
+static struct foreign_paths fpaths[] = {
+    { "Rbin",   paths.rbinpath },
+    { "Rlib",   paths.rlibpath },
+    { "ox",     paths.oxlpath },
+    { "octave", paths.octpath },
+    { "stata",  paths.statapath },
+    { "python", paths.pypath },
+    { "julia",  paths.jlpath },
+    { NULL, NULL}
+};
+
+gretl_bundle *foreign_info (void)
+{
+    gretl_bundle *b = gretl_bundle_new();
+    gchar *fullpath;
+    int found, i;
+
+    for (i=0; fpaths[i].id != NULL; i++) {
+	if (fpaths[i].path[0] == '\0') {
+	    gretl_bundle_set_int(b, fpaths[i].id, 0);
+	} else if (g_path_is_absolute(fpaths[i].path)) {
+	    found = gretl_stat(fpaths[i].path, NULL) == 0;
+	    gretl_bundle_set_int(b, fpaths[i].id, found);
+	} else {
+	    fullpath = g_find_program_in_path(fpaths[i].path);
+	    if (fullpath == NULL) {
+		gretl_bundle_set_int(b, fpaths[i].id, 0);
+	    } else {
+		gretl_bundle_set_int(b, fpaths[i].id, 1);
+		g_free(fullpath);
+	    }
+	}
+    }
+
+    return b;
+}
