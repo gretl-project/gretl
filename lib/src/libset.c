@@ -2460,7 +2460,13 @@ static void libset_set_decpoint (int on)
 	setlocale(LC_NUMERIC, "C");
     } else {
 	/* revert to whatever is the local default */
-	setlocale(LC_NUMERIC, "");
+	char *native = setlocale(LC_NUMERIC, "");
+
+	if (native != NULL) {
+	    fprintf(stderr, "decpoint: setlocale gave '%s'\n", native);
+	} else {
+	    fputs("decpoint: setlocale gave NULL\n", stderr);
+	}
     }
 
     reset_local_decpoint();
