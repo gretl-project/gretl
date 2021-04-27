@@ -1492,8 +1492,8 @@ static void make_main_window (void)
     GtkUIManager *mac_mgr = NULL;
 #endif
     GtkWidget *box, *dlabel;
+    GtkWidget *hbox, *ebox;
     GtkWidget *wlabel = NULL;
-    GtkWidget *align;
     const char *titles[] = {
 	N_("ID #"),
 	N_("Variable name"),
@@ -1504,7 +1504,6 @@ static void make_main_window (void)
 	G_TYPE_STRING,
 	G_TYPE_STRING
     };
-    int show_wdir = display_workdir();
 
     mdata = gretl_viewer_new(MAINWIN, "gretl", NULL);
     if (mdata == NULL) {
@@ -1559,30 +1558,21 @@ static void make_main_window (void)
     dlabel = gtk_label_new(_(" No datafile loaded "));
     g_object_set_data(G_OBJECT(mdata->main), "dlabel", dlabel);
 
-    /* label for working directory? */
-    if (show_wdir) {
-	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-	GtkWidget *ebox = gtk_event_box_new();
-
-	gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), dlabel, FALSE, FALSE, 0);
-	wlabel = gtk_label_new("");
-	if (show_workdir_tooltip()) {
-	    gtk_widget_set_tooltip_text(wlabel, _("Working directory: "
-						  "click to configure"));
-	}
-	g_object_set_data(G_OBJECT(mdata->main), "wlabel", wlabel);
-	gtk_container_add(GTK_CONTAINER(ebox), wlabel);
-	gtk_box_pack_end(GTK_BOX(hbox), ebox, FALSE, FALSE, 5);
-	g_signal_connect(ebox, "button-press-event",
-			 G_CALLBACK(workdir_dialog1), NULL);
-	g_signal_connect(ebox, "enter-notify-event",
-			 G_CALLBACK(show_link_cursor), NULL);
-    } else {
-	align = gtk_alignment_new(0, 0, 0, 0);
-	gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(align), dlabel);
-    }
+    /* label for working directory */
+    hbox = gtk_hbox_new(FALSE, 5);
+    ebox = gtk_event_box_new();
+    gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), dlabel, FALSE, FALSE, 0);
+    wlabel = gtk_label_new("");
+    gtk_widget_set_tooltip_text(wlabel, _("Working directory: "
+					  "click to configure"));
+    g_object_set_data(G_OBJECT(mdata->main), "wlabel", wlabel);
+    gtk_container_add(GTK_CONTAINER(ebox), wlabel);
+    gtk_box_pack_end(GTK_BOX(hbox), ebox, FALSE, FALSE, 5);
+    g_signal_connect(ebox, "button-press-event",
+		     G_CALLBACK(workdir_dialog1), NULL);
+    g_signal_connect(ebox, "enter-notify-event",
+		     G_CALLBACK(show_link_cursor), NULL);
 
 #if GUI_DEBUG
     fprintf(stderr, " adding main-window listbox...\n");

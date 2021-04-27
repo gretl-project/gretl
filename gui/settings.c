@@ -119,8 +119,6 @@ static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor = 1;
 static int tabbed_models = 0;
-static int display_wdir = 1;
-static int wdir_tooltip = 1;
 static int script_output_policy;
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -225,10 +223,6 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_MAIN, NULL },
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt,
       BOOLSET, 0, TAB_MAIN, NULL },
-    { "display_workdir", N_("Display working directory"), NULL, &display_wdir,
-      BOOLSET | RESTART, 0, TAB_MAIN, NULL },
-    { "workdir_tooltip", "Working directory tooltip", NULL, &wdir_tooltip,
-      INVISET | BOOLSET, 0, TAB_NONE, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
     { "keepfolder", N_("File selector remembers folder"), NULL, &keep_folder,
@@ -448,16 +442,6 @@ int session_prompt_on (void)
 void set_session_prompt (int val)
 {
     session_prompt = val;
-}
-
-int display_workdir (void)
-{
-    return display_wdir;
-}
-
-int show_workdir_tooltip (void)
-{
-    return wdir_tooltip;
 }
 
 int get_keep_folder (void)
@@ -1393,11 +1377,26 @@ static void add_themes_examples_button (GtkWidget *hbox)
 		     G_CALLBACK(themes_page), NULL);
 }
 
+static GtkWidget *scroller_page (GtkWidget *vbox)
+{
+    GtkWidget *scroller;
+
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				   GTK_POLICY_NEVER,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_widget_show(scroller);
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller),
+					  vbox);
+    return scroller;
+}
+
 static void make_prefs_tab (GtkWidget *notebook, int tab)
 {
     GtkWidget *b_table = NULL, *s_table = NULL;
     GtkWidget *l_table = NULL;
     GtkWidget *vbox, *w = NULL;
+    GtkWidget *page;
     int s_len = 1, b_len = 0, l_len = 1;
     int s_cols, b_cols = 0, l_cols = 0;
     int b_col = 0;
@@ -1428,8 +1427,14 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 #endif
     }
 
+    if (tab == TAB_PROGS) {
+	page = scroller_page(vbox);
+    } else {
+	page = vbox;
+    }
+
     gtk_widget_show(w);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, w);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, w);
 
     get_table_sizes(tab, &n_str, &n_bool, &n_browse, &n_list);
 
@@ -2995,7 +3000,6 @@ struct wdir_setter {
     GtkWidget *wdir_combo;
     GtkWidget *cwd_radio;
     GtkWidget *keep_radio;
-    GtkWidget *show_check;
     GtkWidget *ok_button;
 };
 
@@ -3109,16 +3113,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
-    /* check box for show working dir in main */
-    vbox_add_hsep(vbox);
-    hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_check_button_new_with_label(_("Show working directory in "
-					  "main window"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), display_wdir);
-    gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    wset->show_check = w;
-
     /* button to open working directory via OS */
     vbox_add_hsep(vbox);
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3136,7 +3130,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 {
     char tmp[MAXLEN];
     gchar *str;
-    int dw, err;
+    int err;
 
     str = combo_box_get_active_text(GTK_COMBO_BOX(wset->wdir_combo));
     *tmp = '\0';
@@ -3158,12 +3152,6 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->cwd_radio));
     keep_folder = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->keep_radio));
-    dw = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->show_check));
-
-    if (dw != display_wdir) {
-	display_wdir = dw;
-	restart_message(wset->dialog);
-    }
 
     if (!err) {
 	if (w == wset->ok_button) {
@@ -3214,14 +3202,6 @@ static void workdir_dialog (int from_wlabel)
 		     G_CALLBACK(apply_wdir_changes), &wset);
 
     context_help_button(hbox, WORKDIR);
-
-    /* We'll assume that once the user has called this dialog
-       by clicking on the working dir label, the toolip for
-       that label becomes redundant.
-    */
-    if (from_wlabel) {
-	wdir_tooltip = 0;
-    }
 
     gtk_widget_show_all(dialog);
 }
