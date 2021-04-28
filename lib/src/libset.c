@@ -2467,6 +2467,8 @@ static void libset_set_decpoint (int on)
 	} else {
 	    fputs("decpoint: setlocale gave NULL\n", stderr);
 	}
+	/* and for good measure */
+	gretl_setenv("LC_NUMERIC", "");
     }
 
     reset_local_decpoint();
