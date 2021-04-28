@@ -2042,7 +2042,7 @@ static int handle_command_preamble (CMD *c)
 
     if (c->toks[0].type == TOK_CATCH) {
 	if (not_catchable(c->ci)) {
-	    gretl_errmsg_set("catch: cannot be applied to this command");
+	    gretl_errmsg_set(_("catch: cannot be applied to this command"));
 	    c->err = E_DATA;
 	    return c->err;
 	} else {
@@ -2059,7 +2059,7 @@ static int handle_command_preamble (CMD *c)
 	int n = strlen(s);
 
 	if (n >= MAXSAVENAME) {
-	    gretl_errmsg_set("savename is too long");
+	    gretl_errmsg_set(_("savename is too long"));
 	    c->err = E_DATA;
 	} else {
 	    strcpy(c->savename, s);
@@ -2413,10 +2413,10 @@ static void set_deprecation (const char *bad, const char *good,
     const char *tag = command ? "command" : "construction";
 
     if (strstr(good, "()")) {
-	gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use the function %s",
+	gretl_warnmsg_sprintf(_("\"%s\": obsolete %s; please use the function %s"),
 			      bad, tag, good);
     } else {
-	gretl_warnmsg_sprintf("\"%s\": obsolete %s; please use \"%s\"",
+	gretl_warnmsg_sprintf(_("\"%s\": obsolete %s; please use \"%s\""),
 			      bad, tag, good);
     }
 }
@@ -2621,7 +2621,7 @@ static int try_for_command_index (CMD *cmd, int i,
 		if (compmode == FUNC && endci == FUNC) {
 		    cmd->flags |= CMD_ENDFUN;
 		} else if (endci == LOOP) {
-		    gretl_errmsg_set("'end loop': did you mean 'endloop'");
+		    gretl_errmsg_set(_("'end loop': did you mean 'endloop'"));
 		    gretl_abort_compiling_loop();
 		    *err = E_PARSE;
 		}
@@ -3328,7 +3328,7 @@ static int check_end_command (CMD *cmd)
     }
 
     if (endci != cmd->context) {
-	gretl_errmsg_sprintf("end: invalid parameter '%s'", cmd->param);
+	gretl_errmsg_sprintf(_("end: invalid parameter '%s'"), cmd->param);
 	cmd->err = E_DATA;
     }
 

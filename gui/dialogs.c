@@ -6838,7 +6838,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
         return ret;
     }
 
-    dialog = gretl_dialog_new("gretl: display map", NULL, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("gretl: display map"), NULL, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     gi.retval = &ret;
@@ -6850,7 +6850,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* want a payload? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("series to plot:");
+    tmp = gtk_label_new(_("series to plot:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gi.payload_combo = com1 = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com1, FALSE, FALSE, 5);
@@ -6861,7 +6861,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
         set_combo_box_strings_from_list(com1, plist);
         gtk_combo_box_set_active(GTK_COMBO_BOX(com1), selpos);
     } else {
-        combo_box_append_text(com1, "none");
+        combo_box_append_text(com1, _("none"));
         gtk_combo_box_set_active(GTK_COMBO_BOX(com1), 0);
     }
     gtk_widget_set_sensitive(hbox, plist != NULL);
@@ -6869,7 +6869,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* palette? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("palette:");
+    tmp = gtk_label_new(_("palette:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gi.palette_combo = com2 = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), com2, FALSE, FALSE, 5);
@@ -6883,7 +6883,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* logscale? */
     hbox = gtk_hbox_new(FALSE, 5);
-    ls = gtk_check_button_new_with_label("Log scale");
+    ls = gtk_check_button_new_with_label(_("Log scale"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ls), FALSE);
     gi.logscale_check = ls;
     gtk_box_pack_start(GTK_BOX(hbox), ls, FALSE, FALSE, 5);
@@ -6892,7 +6892,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* border? */
     hbox = gtk_hbox_new(FALSE, 5);
-    bc = gtk_check_button_new_with_label("draw border around map");
+    bc = gtk_check_button_new_with_label(_("draw border around map"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bc), TRUE);
     gi.border_check = bc;
     gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
@@ -6900,7 +6900,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* height in pixels? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("height in pixels:");
+    tmp = gtk_label_new(_("height in pixels:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     hs = gtk_spin_button_new_with_range(300, 1000, 50);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(hs), 600);

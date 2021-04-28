@@ -584,7 +584,7 @@ static int set_omp_n_threads (int n)
 {
 #if defined(_OPENMP)
     if (n < 1 || n > gretl_n_processors()) {
-	gretl_errmsg_sprintf("omp_num_threads: must be >= 1 and <= %d",
+	gretl_errmsg_sprintf(_("omp_num_threads: must be >= 1 and <= %d"),
 			     gretl_n_processors());
 	return E_DATA;
     } else {
@@ -595,7 +595,7 @@ static int set_omp_n_threads (int n)
 	}
     }
 #else
-    gretl_warnmsg_set("set_omp_n_threads: OpenMP is not enabled");
+    gretl_warnmsg_set(_("set_omp_n_threads: OpenMP is not enabled"));
 #endif
 
     return 0;

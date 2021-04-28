@@ -2398,7 +2398,7 @@ static int odbc_transcribe_data (char **vnames, DATASET *dset,
 	}
 
 	if (!err && vnew && obs_used == 0) {
-	    gretl_warnmsg_sprintf("ODBC import: '%s': no valid observations in sample range",
+	    gretl_warnmsg_sprintf(_("ODBC import: '%s': no valid observations in sample range"),
 				  vnames[i]);
 	}
     }
