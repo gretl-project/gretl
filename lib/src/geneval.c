@@ -15292,6 +15292,32 @@ static NODE *query_eval_scalar (double x, NODE *n, parser *p)
     return ret;
 }
 
+/* The following allows for @n to hold a scalar, real matrix
+   or complex matrix, and also allows for the case where
+   @n's payload is real-valued but a complex result is required,
+   signalled by @need_z.
+*/
+
+static void query_term_get_value (NODE *n, int i, int j,
+				  double *py, double complex *pz,
+				  int need_z)
+{
+    if (n->t == MAT && n->v.m->is_complex) {
+	*pz = gretl_cmatrix_get(n->v.m, i, j);
+    } else {
+	if (n->t == NUM) {
+	    *py = n->v.xval;
+	} else {
+	    *py = gretl_matrix_get(n->v.m, i, j);
+	}
+	if (need_z) {
+	    double complex z = *py + 0 * I;
+
+	    *pz = z;
+	}
+    }
+}
+
 /* the condition in the ternary query operator is a matrix */
 
 static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
@@ -15299,6 +15325,8 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
     NODE *save_aux = p->aux;
     NODE *ret, *l, *r;
     gretl_matrix *mret;
+    int lcomplex = 0;
+    int rcomplex = 0;
 
     if (gretl_is_null_matrix(m)) {
         p->err = E_TYPES;
@@ -15321,26 +15349,40 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
         return NULL;
     }
 
-    if (l->t == MAT && (l->v.m->cols != m->cols ||
-                        l->v.m->rows != m->rows)) {
-        p->err = E_NONCONF;
-        return NULL;
-    } else if (r->t == MAT && (r->v.m->cols != m->cols ||
-                               r->v.m->rows != m->rows)) {
-        p->err = E_NONCONF;
-        return NULL;
+    if (l->t == MAT) {
+	if (l->v.m->cols != m->cols || l->v.m->rows != m->rows) {
+	    p->err = E_NONCONF;
+	    return NULL;
+	} else if (l->v.m->is_complex) {
+	    lcomplex = 1;
+	}
+    } else if (r->t == MAT) {
+	if (r->v.m->cols != m->cols || r->v.m->rows != m->rows) {
+	    p->err = E_NONCONF;
+	    return NULL;
+	} else if (r->v.m->is_complex) {
+	    rcomplex = 1;
+	}
     }
 
-    mret = gretl_matrix_copy(m);
-    if (mret == NULL) {
-        p->err = E_ALLOC;
-        return NULL;
+    if (lcomplex || rcomplex) {
+	mret = gretl_cmatrix_build(m, NULL, 0, 0, &p->err);
+    } else {
+	mret = gretl_matrix_copy(m);
+	if (mret == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+    if (p->err) {
+	return NULL;
     }
 
     reset_p_aux(p, save_aux);
     ret = aux_matrix_node(p);
 
     if (!p->err) {
+	int need_z = mret->is_complex;
+	double complex z;
         double x, y;
         int j, i;
 
@@ -15348,15 +15390,25 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
             for (i=0; i<m->rows; i++) {
                 x = gretl_matrix_get(m, i, j);
                 if (isnan(x)) {
-                    gretl_matrix_set(mret, i, j, x);
+		    if (mret->is_complex) {
+			gretl_cmatrix_set(mret, i, j, x + x * I);
+		    } else {
+			gretl_matrix_set(mret, i, j, x);
+		    }
                 } else if (x != 0.0) {
-                    y = l->t == NUM ? l->v.xval :
-                        gretl_matrix_get(l->v.m, i, j);
-                    gretl_matrix_set(mret, i, j, y);
+		    query_term_get_value(l, i, j, &y, &z, need_z);
+		    if (mret->is_complex) {
+			gretl_cmatrix_set(mret, i, j, z);
+		    } else {
+			gretl_matrix_set(mret, i, j, y);
+		    }
                 } else {
-                    y = r->t == NUM ? r->v.xval :
-                        gretl_matrix_get(r->v.m, i, j);
-                    gretl_matrix_set(mret, i, j, y);
+		    query_term_get_value(r, i, j, &y, &z, need_z);
+		    if (mret->is_complex) {
+			gretl_cmatrix_set(mret, i, j, z);
+		    } else {
+			gretl_matrix_set(mret, i, j, y);
+		    }
                 }
             }
         }
