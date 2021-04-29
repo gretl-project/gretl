@@ -9942,7 +9942,7 @@ int write_map_gp_file (const char *plotfile,
 	if (!err && lw >= 0) {
 	    if (have_payload) {
 		linewidth = lw;
-	    } else if (lw >= 0.5) {
+	    } else if (lw >= 0.1) {
 		linewidth = lw;
 	    }
 	}

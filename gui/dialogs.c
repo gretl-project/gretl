@@ -6752,6 +6752,7 @@ struct geoplot_info {
     GtkWidget *palette_combo;
     GtkWidget *border_check;
     GtkWidget *logscale_check;
+    GtkWidget *linewidth_spin;
     GtkWidget *height_spin;
     GtkWidget *dlg;
 };
@@ -6759,6 +6760,7 @@ struct geoplot_info {
 static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
 {
     int border, logscale, height;
+    double linewidth = 1.0;
 
     if (gtk_widget_is_sensitive(gi->payload_combo)) {
         gchar *payload = NULL;
@@ -6788,6 +6790,11 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     gretl_bundle_set_int(gi->bundle, "logscale", logscale);
     gretl_bundle_set_int(gi->bundle, "height", height);
 
+    linewidth = gtk_spin_button_get_value(GTK_SPIN_BUTTON(gi->linewidth_spin));
+    if (linewidth != 1.0) {
+	gretl_bundle_set_scalar(gi->bundle, "linewidth", linewidth);
+    }
+
     *gi->retval = 0;
     gtk_widget_destroy(gi->dlg);
 }
@@ -6800,6 +6807,8 @@ static void sensitize_map_controls (GtkComboBox *combo,
 
     gtk_widget_set_sensitive(gi->palette_combo, active);
     gtk_widget_set_sensitive(gi->logscale_check, active);
+    gtk_spin_button_set_range(GTK_SPIN_BUTTON(gi->linewidth_spin),
+			      active ? 0.0 : 0.1, 2.0);
 }
 
 /* If we have a previously selected @payload, and it's a
@@ -6831,7 +6840,8 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     struct geoplot_info gi = {0};
     GtkWidget *dialog, *com1, *com2;
     GtkWidget *vbox, *hbox, *tmp;
-    GtkWidget *bc, *ls, *hs;
+    GtkWidget *bc, *ls, *hs, *lw;
+    double lw_min = 0.0;
     int i, ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -6898,6 +6908,20 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gtk_box_pack_start(GTK_BOX(hbox), bc, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
+    /* feature outlines? */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Feature borders width:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(com1)) == 0) {
+	/* no payload selected */
+	lw_min = 0.1;
+    }
+    lw = gtk_spin_button_new_with_range(lw_min, 2.0, 0.1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(lw), 1.0);
+    gi.linewidth_spin = lw;
+    gtk_box_pack_start(GTK_BOX(hbox), lw, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
     /* height in pixels? */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("height in pixels:"));
@@ -6908,7 +6932,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
     gtk_box_pack_start(GTK_BOX(hbox), hs, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    /* inter-connect selectors */
+    /* inter-connect controls */
     g_signal_connect(G_OBJECT(gi.payload_combo), "changed",
                      G_CALLBACK(sensitize_map_controls), &gi);
 
