@@ -8288,6 +8288,16 @@
 	</li>
 	<li>
 	  <para>
+	    feature border width: gives you control over the width of
+	    the border or outline drawn around the distinct
+	    <quote>features</quote> in the map (for example,
+	    countries, states or counties). If your plot includes a
+	    payload the width can be run down to zero to eliminate
+	    such borders.
+	  </para>
+	</li>
+	<li>
+	  <para>
 	    height: this controls the size of the map image. Given the
 	    height, the width is calculated based on the longitude
 	    range of the map.

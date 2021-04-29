@@ -6910,7 +6910,7 @@ int map_options_dialog (GList *plist, int selpos, gretl_bundle *b,
 
     /* feature outlines? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new(_("Feature borders width:"));
+    tmp = gtk_label_new(_("Feature border width:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     if (gtk_combo_box_get_active(GTK_COMBO_BOX(com1)) == 0) {
 	/* no payload selected */
