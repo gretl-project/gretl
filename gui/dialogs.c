@@ -6791,6 +6791,11 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     gretl_bundle_set_int(gi->bundle, "height", height);
 
     linewidth = gtk_spin_button_get_value(GTK_SPIN_BUTTON(gi->linewidth_spin));
+
+    if (linewidth < 1.0e-7) {
+	linewidth = 0;
+    }
+
     if (linewidth != 1.0) {
 	gretl_bundle_set_scalar(gi->bundle, "linewidth", linewidth);
     }
