@@ -6760,7 +6760,7 @@ struct geoplot_info {
 static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
 {
     int border, logscale, height;
-    double linewidth = 1.0;
+    double lwidth;
 
     if (gtk_widget_is_sensitive(gi->payload_combo)) {
         gchar *payload = NULL;
@@ -6790,14 +6790,10 @@ static void geoplot_callback (GtkWidget *w, struct geoplot_info *gi)
     gretl_bundle_set_int(gi->bundle, "logscale", logscale);
     gretl_bundle_set_int(gi->bundle, "height", height);
 
-    linewidth = gtk_spin_button_get_value(GTK_SPIN_BUTTON(gi->linewidth_spin));
-
-    if (linewidth < 1.0e-7) {
-	linewidth = 0;
-    }
-
-    if (linewidth != 1.0) {
-	gretl_bundle_set_scalar(gi->bundle, "linewidth", linewidth);
+    lwidth = gtk_spin_button_get_value(GTK_SPIN_BUTTON(gi->linewidth_spin));
+    lwidth = nearbyint(10*lwidth) / 10;
+    if (lwidth != 1.0) {
+	gretl_bundle_set_scalar(gi->bundle, "linewidth", lwidth);
     }
 
     *gi->retval = 0;
