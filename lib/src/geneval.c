@@ -7750,6 +7750,86 @@ static NODE *do_assert (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *in_set_node (NODE *set, NODE *val, parser *p)
+{
+    gretl_matrix *m = set->v.m;
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	if (val->t == NUM) {
+	    ret = aux_scalar_node(p);
+	} else if (val->t == SERIES) {
+	    ret = aux_series_node(p);
+	} else if (val->t == MAT) {
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		int r = val->v.m->rows;
+		int c = val->v.m->cols;
+
+		ret->v.m = gretl_zero_matrix_new(r, c);
+	    }
+	}
+	if (!p->err) {
+	    int i, n = m->rows * m->cols;
+	    double x;
+
+	    if (val->t == NUM) {
+		x = val->v.xval;
+		if (na(x)) {
+		    ret->v.xval = NADBL;
+		} else {
+		    ret->v.xval = 0;
+		    for (i=0; i<n; i++) {
+			if (m->val[i] == x) {
+			    ret->v.xval = 1;
+			    break;
+			}
+		    }
+		}
+	    } else if (val->t == SERIES) {
+		int t;
+
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    x = val->v.xvec[t];
+		    if (na(x)) {
+			ret->v.xvec[t] = NADBL;
+		    } else {
+			ret->v.xvec[t] = 0;
+			for (i=0; i<n; i++) {
+			    if (m->val[i] == x) {
+				ret->v.xvec[t] = 1;
+				break;
+			    }
+			}
+		    }
+		}
+	    } else if (val->t == MAT) {
+		gretl_matrix *v = val->v.m;
+		int k, nv = v->rows * v->cols;
+
+		for (k=0; k<nv; k++) {
+		    x = v->val[k];
+		    if (na(x)) {
+			ret->v.m->val[k] = NADBL;
+		    } else {
+			ret->v.m->val[k] = 0;
+			for (i=0; i<n; i++) {
+			    if (m->val[i] == x) {
+				ret->v.m->val[k] = 1;
+				break;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    } else {
+	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
 static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -17792,6 +17872,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_ASSERT:
         if (l->t == NUM && r->t == STR) {
             ret = do_assert(l, r, p);
+        } else {
+            p->err = E_TYPES;
+        }
+        break;
+    case F_INSET:
+        if (l->t == MAT && (r->t == NUM || r->t == SERIES || r->t == MAT)) {
+            ret = in_set_node(l, r, p);
         } else {
             p->err = E_TYPES;
         }

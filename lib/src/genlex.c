@@ -577,6 +577,7 @@ struct str_table funcs[] = {
     { F_ASSERT,    "assert" },
     { F_VMA,       "vma" },
     { F_BCHECK,    "bcheck" },
+    { F_INSET,     "inset" },
     { 0,           NULL }
 };
 
