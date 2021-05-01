@@ -3451,6 +3451,10 @@ static void add_tau_plot_menu (windata_t *vwin)
 	item.label = tmp;
 	vwin_menu_add_item(vwin, "/menubar/Graphs/TauMenu", &item);
     }
+
+    /* and disable what we can't (yet) show */
+    flip(vwin->ui, "/menubar/Graphs/ResidPlot", FALSE);
+    flip(vwin->ui, "/menubar/Graphs/FittedActualPlot", FALSE);
 }
 
 static void x12_output_callback (GtkAction *action, gpointer p)
