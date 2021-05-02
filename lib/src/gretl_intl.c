@@ -110,32 +110,6 @@ int doing_nls (void)
 
 static int decpoint;
 
-#ifdef OS_OSX
-
-#include <CoreFoundation/CoreFoundation.h>
-
-static void macos_recheck_locale (void)
-{
-    CFLocaleRef cfloc = CFLocaleCopyCurrent();
-    CFStringRef cfprop;
-    const char *s;
-
-    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleIdentifier);
-    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
-    if (s != NULL) {
-	fprintf(stderr, "macos_recheck_locale: CF gave ID '%s'\n", s);
-    }
-    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleDecimalSeparator);
-    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
-    if (s != NULL) {
-	fprintf(stderr, "macos_recheck_locale: CF gave decimal '%s'\n", s);
-    }
-
-    CFRelease(cfloc);
-}
-
-#endif
-
 /**
  * reset_local_decpoint:
  *
@@ -163,7 +137,6 @@ int reset_local_decpoint (void)
 
 #ifdef OS_OSX
     fprintf(stderr, "via localeconv, decimal = '%c'\n", decpoint);
-    macos_recheck_locale();
 #endif
 
     return decpoint;
