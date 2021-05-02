@@ -408,11 +408,6 @@ static void macos_check_locale (void)
     if (s != NULL) {
 	fprintf(stderr, "macos_check_locale: CF gave ID '%s'\n", s);
     }
-    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleDecimalSeparator);
-    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
-    if (s != NULL) {
-	fprintf(stderr, "macos_check_locale: CF gave decimal '%s'\n", s);
-    }
 
     CFRelease(cfloc);
 }

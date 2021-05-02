@@ -2197,7 +2197,7 @@ static int common_read_rc_setup (int updated)
 
     langid = lang_id_from_name(langpref);
 #ifdef G_OS_WIN32
-    fprintf(stderr, "langpref='%s', langid=%d, lcnumeric=%d\n",
+    fprintf(stderr, "rc_setup: langpref='%s', langid=%d, lcnumeric=%d\n",
 	    langpref, langid, lcnumeric);
 #endif
     force_language(langid);

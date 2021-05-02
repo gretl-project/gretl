@@ -25,6 +25,7 @@
 #include "uservar.h"
 #include "matrix_extra.h"
 #include "gretl_func.h"
+#include "gretl_string_table.h"
 
 #ifdef _OPENMP
 # include <omp.h>
@@ -2460,15 +2461,20 @@ static void libset_set_decpoint (int on)
 	setlocale(LC_NUMERIC, "C");
     } else {
 	/* revert to whatever is the local default */
-	char *native = setlocale(LC_NUMERIC, "");
+	char *current = get_built_in_string_by_name("lang");
+	char *locale;
 
-	if (native != NULL) {
-	    fprintf(stderr, "libset_set_decpoint: setlocale gave '%s'\n", native);
+	if (current != NULL && strcmp(current, "unknown")) {
+	    fprintf(stderr, "libset_set_decpoint: current = '%s'\n", current);
+	    locale = setlocale(LC_NUMERIC, current);
+	} else {
+	    locale = setlocale(LC_NUMERIC, "");
+	}
+	if (locale != NULL) {
+	    fprintf(stderr, "libset_set_decpoint: setlocale gave '%s'\n", locale);
 	} else {
 	    fputs("libset_set_decpoint: setlocale gave NULL\n", stderr);
 	}
-	/* and for good measure */
-	gretl_setenv("LC_NUMERIC", "");
     }
 
     reset_local_decpoint();
