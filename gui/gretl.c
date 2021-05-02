@@ -389,27 +389,35 @@ static void real_nls_init (void)
 
 #elif defined(OS_OSX)
 
-#if 0
+#define LOCALE_CHECK 1
+
+#if LOCALE_CHECK
 
 #include <CoreFoundation/CoreFoundation.h>
 
 /* Use this to check what we get from setlocale() ? */
 
-static void osx_check_locale (void)
+static void macos_check_locale (void)
 {
-    CFLocaleRef cflocale = CFLocaleCopyCurrent();
-    CFStringRef locid;
+    CFLocaleRef cfloc = CFLocaleCopyCurrent();
+    CFStringRef cfprop;
     const char *s;
 
-    locid = (CFStringRef) CFLocaleGetValue(cflocale, kCFLocaleIdentifier);
-    s = CFStringGetCStringPtr(locid, kCFStringEncodingASCII);
+    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleIdentifier);
+    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
     if (s != NULL) {
-	fprintf(stderr, "CFLocale gave '%s'\n", s);
+	fprintf(stderr, "macos_check_locale: CF gave ID '%s'\n", s);
     }
-    CFRelease(cflocale);
+    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleDecimalSeparator);
+    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
+    if (s != NULL) {
+	fprintf(stderr, "macos_check_locale: CF gave decimal '%s'\n", s);
+    }
+
+    CFRelease(cfloc);
 }
 
-#endif /* not yet */
+#endif /* LOCALE_CHECK */
 
 static void real_nls_init (void)
 {
@@ -429,6 +437,9 @@ static void real_nls_init (void)
 
     p = setlocale(LC_ALL, "");
     fprintf(stderr, "NLS init: setlocale() gave '%s'\n", p);
+#if LOCALE_CHECK
+    macos_check_locale();
+#endif
     set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);

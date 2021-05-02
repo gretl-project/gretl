@@ -2463,9 +2463,9 @@ static void libset_set_decpoint (int on)
 	char *native = setlocale(LC_NUMERIC, "");
 
 	if (native != NULL) {
-	    fprintf(stderr, "decpoint: setlocale gave '%s'\n", native);
+	    fprintf(stderr, "libset_set_decpoint: setlocale gave '%s'\n", native);
 	} else {
-	    fputs("decpoint: setlocale gave NULL\n", stderr);
+	    fputs("libset_set_decpoint: setlocale gave NULL\n", stderr);
 	}
 	/* and for good measure */
 	gretl_setenv("LC_NUMERIC", "");
