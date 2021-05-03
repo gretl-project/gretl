@@ -232,6 +232,9 @@ function bundle regls (series depvar, list indeps,
    if inlist(indeps, 0)
       indeps -= const
    endif
+   if nelem(indeps) == 0
+      funcerr "no regressors were supplied"
+   endif
 
    err = check_params(parms, &lfrac, &nlam, &ret)
    if err
