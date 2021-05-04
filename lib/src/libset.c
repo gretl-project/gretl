@@ -2462,12 +2462,11 @@ static void libset_set_decpoint (int on)
     } else {
 	/* revert to whatever is the local default */
 	char *current = get_built_in_string_by_name("lang");
-	char *locale;
 
 	if (current != NULL && strcmp(current, "unknown")) {
-	    locale = setlocale(LC_NUMERIC, current);
+	    setlocale(LC_NUMERIC, current);
 	} else {
-	    locale = setlocale(LC_NUMERIC, "");
+	    setlocale(LC_NUMERIC, "");
 	}
     }
 
