@@ -1793,7 +1793,7 @@
     <usage>
       <altforms>
         <altform><lit>chow</lit> <repl>obs</repl></altform>
-        <altform><lit>chow</lit> <repl>dummyvar</repl> <opt>dummy</opt></altform>
+        <altform><lit>chow</lit> <repl>dummyvar</repl> <lit>--dummy</lit></altform>
       </altforms>
       <options>
 	<option>
@@ -2778,7 +2778,7 @@
       <options>
 	<option>
 	  <flag>--panel-time</flag>
-	  <effect>vedi oltre, sotto <quote>addobs</quote></effect>
+	  <effect>vedi oltre, sotto addobs</effect>
 	</option>
       </options>
       <examples>
@@ -10633,7 +10633,7 @@ del comando <cmdref targ="set"/>.
     printf "The output was:\n%s\n", readfile(mytemp)
   </code>
 
-  <subhead>L'opzione <opt>quiet</opt></subhead>
+  <subhead>L'opzione quiet</subhead>
   <para>
     L'effetto dell'opzione <opt>quiet</opt> è quello di disattivare la
     stampa dei comandi e dei messaggi ausiliari nel frattempo che
@@ -14530,12 +14530,12 @@ qual caso viene usato QML.
     <altforms>
       <altform><lit>smpl</lit> <repl>oss-iniziale oss-finale</repl></altform>
       <altform><lit>smpl</lit> <repl>+i -j</repl></altform>
-      <altform><lit>smpl</lit> <repl>variabile-dummy</repl> <opt>dummy</opt></altform>
-      <altform><lit>smpl</lit> <repl>condizione</repl> <opt>restrict</opt></altform>
+      <altform><lit>smpl</lit> <repl>variabile-dummy</repl> <lit>--dummy</lit></altform>
+      <altform><lit>smpl</lit> <repl>condizione</repl> <lit>--restrict</lit></altform>
       <altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
       <altform><lit>smpl</lit> <lit>--no-all-missing [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
       <altform><lit>smpl</lit> <lit>--contiguous [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
-      <altform><lit>smpl</lit> <repl>n</repl> <opt>random</opt></altform>
+      <altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
       <altform><lit>smpl full</lit></altform>
     </altforms>
     <options>
