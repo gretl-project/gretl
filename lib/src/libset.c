@@ -2465,15 +2465,9 @@ static void libset_set_decpoint (int on)
 	char *locale;
 
 	if (current != NULL && strcmp(current, "unknown")) {
-	    fprintf(stderr, "libset_set_decpoint: current = '%s'\n", current);
 	    locale = setlocale(LC_NUMERIC, current);
 	} else {
 	    locale = setlocale(LC_NUMERIC, "");
-	}
-	if (locale != NULL) {
-	    fprintf(stderr, "libset_set_decpoint: setlocale gave '%s'\n", locale);
-	} else {
-	    fputs("libset_set_decpoint: setlocale gave NULL\n", stderr);
 	}
     }
 
