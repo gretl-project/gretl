@@ -1,4 +1,4 @@
-version 2021b, in progress
+2021-05-04 version 2021b
 - New function trigamma(): second derivative of lngamma
 - New function midasmult(): gives MIDAS multipliers
 - New command "bds": BDS nonlinearity test
@@ -52,8 +52,9 @@ version 2021b, in progress
 - Fix bug: broken covariance matrix from mols() with a large
   number of regressors
 - Fix bug: crash on applying postfix "++" to a submatrix
+- macOS: first release for arm64
 
-2021-01-18 Version 2021a
+2021-01-18 version 2021a
 - New function vma() for multiple time series
 - quantile(): support variant methods Q7 and Q8 described
   in Hyndman and Fan (1996)
