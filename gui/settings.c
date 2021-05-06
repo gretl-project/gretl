@@ -119,6 +119,7 @@ static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor = 1;
 static int tabbed_models = 0;
+static int auto_collect = 0;
 static int script_output_policy;
 static char datapage[24] = "Gretl";
 static char scriptpage[24] = "Gretl";
@@ -222,6 +223,8 @@ RCVAR rc_vars[] = {
     { "tabmodels", N_("Model viewer uses tabs"), NULL, &tabbed_models,
       BOOLSET, 0, TAB_MAIN, NULL },
     { "session_prompt", N_("Prompt to save session"), NULL, &session_prompt,
+      BOOLSET, 0, TAB_MAIN, NULL },
+    { "collect_plots", N_("Enable collecting plots"), NULL, &auto_collect,
       BOOLSET, 0, TAB_MAIN, NULL },
     { "usecwd", N_("Set working directory from shell"), NULL, &usecwd,
       INVISET | BOOLSET | RESTART, 0, TAB_NONE, NULL },
@@ -2229,6 +2232,10 @@ static void find_and_set_rc_var (const char *key, const char *val)
 	    if (!(rcvar->flags & FIXSET)) {
 		if (rcvar->flags & BOOLSET) {
 		    str_to_boolvar(val, rcvar->var);
+		    if (!strcmp(key, "collect_plots")) {
+			/* special: set to "auto" */
+			libset_set_int(PLOT_COLLECTION, 1);
+		    }
 		} else if (rcvar->flags & INTSET) {
 		    str_to_int(val, rcvar->var);
 		} else if (rcvar->flags & FLOATSET) {

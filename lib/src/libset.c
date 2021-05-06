@@ -203,7 +203,8 @@ struct set_vars_ {
 		       !strcmp(s, SIMD_MN_MIN) || \
 		       !strcmp(s, FDJAC_QUAL) || \
 		       !strcmp(s, WILDBOOT_DIST) || \
-		       !strcmp(s, QUANTILE_TYPE))
+		       !strcmp(s, QUANTILE_TYPE) || \
+		       !strcmp(s, PLOT_COLLECTION))
 
 /* global state */
 set_vars *state;
@@ -215,6 +216,7 @@ static int R_lib = 1;
 static int csv_digits = UNSET_INT;
 static int comments_on = 0;
 static int gretl_assert = 0;
+static int plot_collection = 0;
 static int Qtype = 0;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
@@ -325,6 +327,13 @@ static const char *assert_strs[] = {
     NULL
 };
 
+static const char *plotcoll_strs[] = {
+    "off",
+    "auto",
+    "on",
+    NULL
+};
+
 static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
@@ -351,6 +360,8 @@ static const char **libset_option_strings (const char *s)
 	return qtype_strs;
     } else if (!strcmp(s, GRETL_ASSERT)) {
 	return assert_strs;
+    } else if (!strcmp(s, PLOT_COLLECTION)) {
+	return plotcoll_strs;
     } else {
 	return NULL;
     }
@@ -410,6 +421,8 @@ static const char *libset_option_string (const char *s)
 	return qtype_strs[Qtype];
     } else if (!strcmp(s, GRETL_ASSERT)) {
 	return assert_strs[gretl_assert];
+    } else if (!strcmp(s, PLOT_COLLECTION)) {
+	return plotcoll_strs[plot_collection];
     } else {
 	return "?";
     }
@@ -1279,6 +1292,14 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, PLOT_COLLECTION)) {
+	for (i=0; plotcoll_strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, plotcoll_strs[i])) {
+		plot_collection = i;
+		err = 0;
+		break;
+	    }
+	}
     }
 
     if (err) {
@@ -1561,7 +1582,8 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, MAX_VERBOSE) || \
 			 !strcmp(s, WILDBOOT_DIST) || \
 			 !strcmp(s, QUANTILE_TYPE) || \
-			 !strcmp(s, GRETL_ASSERT))
+			 !strcmp(s, GRETL_ASSERT) || \
+			 !strcmp(s, PLOT_COLLECTION))
 
 const char *intvar_code_string (const char *s)
 {
@@ -2220,6 +2242,8 @@ int libset_get_int (const char *key)
 	return state->wildboot_dist;
     } else if (!strcmp(key, QUANTILE_TYPE)) {
 	return Qtype;
+    } else if (!strcmp(key, PLOT_COLLECTION)) {
+	return plot_collection;
     } else if (!strcmp(key, "loop_maxiter_default")) {
 	return LOOP_MAXITER_DEFAULT; /* for internal use */
     } else {
@@ -2297,6 +2321,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 0;
 	*max = 1;
 	*var = &state->wildboot_dist;
+    } else if (!strcmp(s, PLOT_COLLECTION)) {
+	*min = 0;
+	*max = 2;
+	*var = &plot_collection;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
 		"variable '%s'\n", s);

@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "plotspec.h"
+#include "libset.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "gpt_dialog.h"
@@ -46,6 +47,7 @@
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
+#define COLLDEBUG 1
 
 /* the following needs more testing */
 #define HANDLE_HEREDATA 1
@@ -62,7 +64,8 @@ enum {
     PLOT_DONT_MOUSE     = 1 << 8,
     PLOT_POSITIONING    = 1 << 9,
     PLOT_CURSOR_LABEL   = 1 << 10,
-    PLOT_TERM_HIDDEN    = 1 << 11
+    PLOT_TERM_HIDDEN    = 1 << 11,
+    PLOT_HAS_PAGER      = 1 << 12
 } plot_status_flags;
 
 enum {
@@ -85,6 +88,7 @@ enum {
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
 #define plot_is_editable(p)     (!(p->status & PLOT_DONT_EDIT))
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
+#define plot_has_pager(p)       (p->status & PLOT_HAS_PAGER)
 
 #define plot_has_title(p)        (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)       (p->format & PLOT_XLABEL)
@@ -107,26 +111,51 @@ enum {
 #define plot_show_cursor_label(p) (p->status & PLOT_CURSOR_LABEL)
 
 #define plot_has_controller(p) (p->editor != NULL)
+#define plot_in_collection(p) (p->mp != NULL || p->parent != NULL)
+#define plot_is_singleton(p) (p->mp == NULL && p->parent == NULL)
 
-enum {
+typedef enum {
     PNG_START,
     PNG_ZOOM,
     PNG_UNZOOM,
-    PNG_REDISPLAY
-} png_zoom_codes;
+    PNG_REDISPLAY,
+    PNG_REPLACE
+} viewcode;
+
+#if COLLDEBUG
+static const char *viewstrs[] = {
+    "START", "ZOOM", "UNZOOM", "REDISPLAY", "REPLACE"
+};
+
+static const char *viewstr (viewcode i)
+{
+    return viewstrs[i];
+}
+#endif
+
+struct multiplot_ {
+    gint64 mtime;
+    GList *list;
+    int current;
+};
+
+typedef struct multiplot_ multiplot;
 
 struct png_plot_t {
     GtkWidget *shell;
+    GtkWidget *parent;
+    multiplot *mp;
     GtkWidget *canvas;
     GtkWidget *popup;
-    GtkWidget *statusarea;
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
     GtkWidget *pos_entry;
     GtkWidget *editor;
+    GtkWidget *toolbar;
     GtkWidget *up_icon;
     GtkWidget *down_icon;
     GdkWindow *window;
+    GdkPixbuf *pbuf;
     cairo_t *cr;
 #if GTK_MAJOR_VERSION >= 3
     cairo_surface_t *cs;
@@ -151,7 +180,7 @@ struct png_plot_t {
     unsigned char format;
 };
 
-static int render_pngfile (png_plot *plot, int view);
+static int render_png (png_plot *plot, viewcode view);
 static int repaint_png (png_plot *plot, int view);
 static int zoom_replaces_plot (png_plot *plot);
 static void prepare_for_zoom (png_plot *plot);
@@ -164,6 +193,17 @@ static void win32_process_graph (png_plot *plot, int dest);
 static void set_plot_for_copy (png_plot *plot);
 #endif
 static void build_plot_menu (png_plot *plot);
+static void set_plot_collection (png_plot *plot);
+static void unset_plot_collection (GtkWidget *w, png_plot *plot);
+static int plot_collection_show_plot (png_plot *coll,
+				      png_plot *show,
+				      int pos);
+static void kill_png_plot (png_plot *plot);
+static void extract_png_plot (png_plot *plot);
+static int plot_add_shell (png_plot *plot, const char *name);
+static GdkPixbuf *pixbuf_from_file (png_plot *plot);
+static int resize_png_plot (png_plot *plot, int width, int height,
+			    int follower);
 
 enum {
     GRETL_PNG_OK,
@@ -202,6 +242,11 @@ static int get_png_bounds_info (png_bounds *bounds);
 
 #define PLOTSPEC_DETAILS_IN_MEMORY(s) (s->lines != NULL)
 
+static int do_collect_plots (void)
+{
+    return libset_get_int(PLOT_COLLECTION);
+}
+
 static void terminate_plot_positioning (png_plot *plot)
 {
     if (plot->status & PLOT_POSITIONING) {
@@ -215,15 +260,41 @@ static void terminate_plot_positioning (png_plot *plot)
     }
 }
 
+static void plot_invalidate_pixbuf (png_plot *plot)
+{
+    if (plot->pbuf != NULL) {
+	g_object_unref(G_OBJECT(plot->pbuf));
+	plot->pbuf = NULL;
+    }
+}
+
+static png_plot *plot_get_current (png_plot *plot)
+{
+    if (plot->mp != NULL) {
+	return g_list_nth_data(plot->mp->list, plot->mp->current);
+    } else {
+	return plot;
+    }
+}
+
+static png_plot *widget_get_plot (gpointer p)
+{
+    return g_object_get_data(G_OBJECT(p), "plot");
+}
+
 GtkWidget *plot_get_shell (png_plot *plot)
 {
-    return plot->shell;
+    if (plot->shell != NULL) {
+	return plot->shell;
+    } else {
+	return plot->parent;
+    }
 }
 
 gboolean is_shell_for_plotfile (GtkWidget *w,
 				const char *fname)
 {
-    png_plot *plot = g_object_get_data(G_OBJECT(w), "plot");
+    png_plot *plot = widget_get_plot(w);
 
     return plot != NULL && plot->spec != NULL &&
 	!strcmp(fname, plot->spec->fname);
@@ -264,14 +335,11 @@ void plot_get_pixel_dims (png_plot *plot,
 
 /* apparatus for graph toolbar */
 
-static void graph_enlarge_callback (GtkWidget *w, png_plot *plot)
+static void graph_rescale_callback (GtkWidget *w, png_plot *plot)
 {
-    plot_do_rescale(plot, 1);
-}
+    int mod = (w == plot->up_icon)? 1 : -1;
 
-static void graph_shrink_callback (GtkWidget *w, png_plot *plot)
-{
-    plot_do_rescale(plot, -1);
+    plot_do_rescale(plot, mod);
 }
 
 static void graph_edit_callback (GtkWidget *w, png_plot *plot)
@@ -288,40 +356,139 @@ static void graph_popup_callback (GtkWidget *w, png_plot *plot)
 
 static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
 {
-    window_list_popup(w, NULL, plot->shell);
+    window_list_popup(w, NULL, plot_get_shell(plot));
 }
+
+static void plot_pager_call (GtkWidget *w, png_plot *plot)
+{
+    int pos, action = widget_get_int(w, "action");
+    multiplot *mp = plot->mp;
+    int n = g_list_length(mp->list);
+
+    if (action == 1) {
+	pos = 0;
+    } else if (action == 2) {
+	pos = mp->current - 1;
+    } else if (action == 3) {
+	pos = mp->current + 1;
+    } else {
+	pos = n - 1;
+    }
+
+    if (pos >= 0 && pos < n) {
+	png_plot *target = g_list_nth_data(mp->list, pos);
+
+	if (target != NULL) {
+	    plot_collection_show_plot(plot, target, pos);
+	}
+    }
+}
+
+static GretlToolItem plot_pager_items[] = {
+    { N_("First"),    GTK_STOCK_GOTO_FIRST, G_CALLBACK(plot_pager_call), 1 },
+    { N_("Previous"), GTK_STOCK_GO_BACK,    G_CALLBACK(plot_pager_call), 2 },
+    { N_("Next"),     GTK_STOCK_GO_FORWARD, G_CALLBACK(plot_pager_call), 3 },
+    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(plot_pager_call), 4 }
+};
 
 static GretlToolItem plotbar_items[] = {
     { N_("Menu"),        GRETL_STOCK_MENU,    G_CALLBACK(graph_popup_callback), 0 },
-    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_enlarge_callback), 0 },
-    { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_shrink_callback), 0 },
+    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_rescale_callback), 1 },
+    { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_rescale_callback), -1 },
     { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
 };
 
+static void add_plot_pager (png_plot *plot)
+{
+    GretlToolItem *item;
+    GtkToolItem *sep;
+    GtkWidget *button;
+    int i, n = G_N_ELEMENTS(plot_pager_items);
+
+    for (i=0; i<n; i++) {
+	item = &plot_pager_items[i];
+	button = gretl_toolbar_insert(plot->toolbar, item,
+				      item->func, plot, i);
+	widget_set_int(button, "action", item->flag);
+	gtk_widget_show(button);
+    }
+    plot->status |= PLOT_HAS_PAGER;
+
+    sep = gtk_separator_tool_item_new();
+    gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, i);
+    gtk_widget_show(GTK_WIDGET(sep));
+}
+
+static void adjust_plot_pager (png_plot *plot)
+{
+    gchar *status_str;
+    GtkToolItem *item;
+    gboolean s;
+    int i, n, curr;
+
+    if (plot->mp == NULL) {
+	return;
+    }
+
+    n = g_list_length(plot->mp->list);
+    curr = plot->mp->current;
+
+    if (n == 1) {
+	/* @plot is not a "collection" any more */
+	unset_plot_collection(NULL, plot);
+	for (i=0; i<4; i++) {
+	    item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), 0);
+	    gtk_widget_destroy(GTK_WIDGET(item));
+	}
+	plot->status ^= PLOT_HAS_PAGER;
+	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
+	return;
+    }
+
+    for (i=0; i<4; i++) {
+	item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), i);
+	if (i < 2) {
+	    s = curr > 0;
+	} else {
+	    s = curr < n - 1;
+	}
+	gtk_widget_set_sensitive(GTK_WIDGET(item), s);
+    }
+
+    status_str = g_strdup_printf("\tplot %d of %d", curr + 1, n);
+    gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+    gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid,
+		       status_str);
+    g_free(status_str);
+}
+
 static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 {
-    GtkWidget *tbar, *button;
+    GtkWidget *tbar, *button, **pb;
     GretlToolItem *item;
     int i, n = G_N_ELEMENTS(plotbar_items);
 
-    tbar = gretl_toolbar_new(NULL);
+    plot->toolbar = tbar = gretl_toolbar_new(NULL);
 
     for (i=0; i<n; i++) {
+	pb = NULL;
 	item = &plotbar_items[i];
 	if (item->func == G_CALLBACK(graph_edit_callback) &&
 	    plot_not_editable(plot)) {
 	    continue;
 	}
-	if ((item->func == G_CALLBACK(graph_enlarge_callback) ||
-	     item->func == G_CALLBACK(graph_shrink_callback)) &&
-	    plot_not_editable(plot)) {
-	    continue;
+	if (item->func == G_CALLBACK(graph_rescale_callback)) {
+	    if (plot_not_editable(plot)) {
+		continue;
+	    } else {
+		pb = (item->flag == 1)? &plot->up_icon :
+		    &plot->down_icon;
+	    }
 	}
 	button = gretl_toolbar_insert(tbar, item, item->func, plot, -1);
-	if (item->func == G_CALLBACK(graph_enlarge_callback)) {
-	    plot->up_icon = button;
-	} else if (item->func == G_CALLBACK(graph_shrink_callback)) {
-	    plot->down_icon = button;
+	if (pb != NULL) {
+	    *pb = button;
 	}
     }
 
@@ -332,7 +499,7 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 
 /* Provide the data coordinates for a gretl/gnuplot
    graph, if they are all positive, otherwise return
-   non-zero.
+   non-zero. Called by the plot editor.
 */
 
 int plot_get_coordinates (png_plot *plot,
@@ -3676,9 +3843,13 @@ static int copy_pixbuf_to_surface (png_plot *plot,
 
     plot->cs = cairo_image_surface_create(format, width, height);
 
-    if (plot->cs == NULL ||
-	cairo_surface_status(plot->cs) != CAIRO_STATUS_SUCCESS) {
+    if (plot->cs == NULL) {
 	fprintf(stderr, "copy_pixbuf_to_surface: failed\n");
+	return 1;
+    } else if (cairo_surface_status(plot->cs) != CAIRO_STATUS_SUCCESS) {
+	fprintf(stderr, "copy_pixbuf_to_surface: failed\n");
+	cairo_surface_destroy(plot->cs);
+	plot->cs = NULL;
 	return 1;
     }
 
@@ -3738,7 +3909,7 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 	label = alt_label;
     }
 
-    context = gtk_widget_get_pango_context(plot->shell);
+    context = gtk_widget_get_pango_context(plot_get_shell(plot));
     pl = pango_layout_new(context);
     pango_layout_set_text(pl, label, -1);
 
@@ -3909,7 +4080,8 @@ static void heatmap_show_z (png_plot *plot, double x, double y,
 }
 
 static gint
-plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
+plot_motion_callback (GtkWidget *widget, GdkEventMotion *event,
+		      png_plot *plot)
 {
     GdkModifierType state;
     gchar label[48], label_y[24];
@@ -3918,6 +4090,7 @@ plot_motion_callback (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
     int do_label;
     int x, y;
 
+    plot = plot_get_current(plot);
     if (plot->err) {
 	return TRUE;
     }
@@ -4104,7 +4277,7 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 
     adjust_fontspec_string(fontspec, grfont, ADD_COMMA);
 
-#if 0
+#if GPDEBUG
     fprintf(stderr, "font choice: grfont='%s', fontspec='%s'\n",
 	    grfont, fontspec);
 #endif
@@ -4156,7 +4329,7 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
     } else {
 	free(plot->spec->fontstr);
 	plot->spec->fontstr = gretl_strdup(fontspec);
-	render_pngfile(plot, PNG_REDISPLAY);
+	render_png(plot, PNG_REDISPLAY);
     }
 }
 
@@ -4169,7 +4342,7 @@ static const gchar *menu_item_get_text (GtkMenuItem *item)
 
 static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 {
-    png_plot *plot = g_object_get_data(G_OBJECT(item), "plot");
+    png_plot *plot = widget_get_plot(item);
     GtkWidget *parent = data;
     const gchar *item_string = NULL;
     const gchar *menu_string = NULL;
@@ -4184,7 +4357,7 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
     if (!strcmp(menu_string, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
 	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC,
-				  plot, plot->shell);
+				  plot, plot_get_shell(plot));
     } else if (!strcmp(menu_string, _("Copy to clipboard"))) {
 #ifdef G_OS_WIN32
 	win32_process_graph(plot, WIN32_TO_CLIPBOARD);
@@ -4296,6 +4469,19 @@ static void add_to_session_callback (png_plot *plot)
     }
 }
 
+static GList *plot_get_siblings (png_plot *plot)
+{
+    if (plot->mp != NULL) {
+	return plot->mp->list;
+    } else if (plot->parent != NULL) {
+	png_plot *pp = widget_get_plot(plot->parent);
+
+	return pp->mp->list;
+    } else {
+	return NULL;
+    }
+}
+
 static double graph_scales[] = {
     0.8, 1.0, 1.1, 1.2, 1.4
 };
@@ -4312,18 +4498,89 @@ int get_graph_scale (int i, double *s)
     }
 }
 
+static int real_plot_rescale (png_plot *plot, double scale)
+{
+    FILE *fp = NULL;
+    int err = 0;
+
+    plot->spec->scale = scale;
+    gnuplot_png_init(plot, &fp);
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+	gui_errmsg(err);
+    } else {
+	set_png_output(plot->spec);
+	plotspec_print(plot->spec, fp);
+	fclose(fp);
+	unset_png_output(plot->spec);
+    }
+
+    return err;
+}
+
+static int regenerate_pixbuf (png_plot *plot)
+{
+    gchar *cmd = g_strdup_printf("\"%s\" \"%s\"",
+				 gretl_gnuplot_path(),
+				 plot->spec->fname);
+    int err = gretl_spawn(cmd);
+
+    if (!err) {
+	plot_invalidate_pixbuf(plot);
+	plot->pbuf = pixbuf_from_file(plot);
+	if (plot->pbuf == NULL) {
+	    err = 1;
+	}
+    }
+
+    g_free(cmd);
+
+    return err;
+}
+
+static int rescale_siblings (png_plot *plot, double scale)
+{
+    GList *L = plot_get_siblings(plot);
+    png_plot *sib;
+    int w, h, err = 0;
+
+    while (L != NULL && !err) {
+	sib = L->data;
+	if (sib != plot) {
+	    fprintf(stderr, "rescale sibling %p\n", (void *) sib);
+	    err = real_plot_rescale(sib, scale);
+	    if (!err) {
+		err = regenerate_pixbuf(sib);
+	    }
+	    if (!err) {
+		w = gdk_pixbuf_get_width(sib->pbuf);
+		h = gdk_pixbuf_get_height(sib->pbuf);
+		if (w != sib->pixel_width || h != sib->pixel_height) {
+		    resize_png_plot(sib, w, h, 1);
+		}
+	    }
+	}
+	L = L->next;
+    }
+
+    return err;
+}
+
 static void plot_do_rescale (png_plot *plot, int mod)
 {
     int n = G_N_ELEMENTS(graph_scales);
-    FILE *fp = NULL;
+    double scale = 1.0;
+    int err = 0;
+
+    plot = plot_get_current(plot);
+    fprintf(stderr, "plot_do_rescale: %p\n", (void *) plot);
 
     if (mod == 0) {
 	/* reset to default */
 	if (plot->spec->scale == 1.0) {
 	    /* no-op */
 	    return;
-	} else {
-	    plot->spec->scale = 1.0;
 	}
     } else {
 	/* enlarge or shrink */
@@ -4335,31 +4592,28 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	    }
 	}
 	if (mod == 1 && i < n - 1) {
-	    plot->spec->scale = graph_scales[i+1];
+	    scale = graph_scales[i+1];
 	} else if (mod == -1 && i > 0) {
-	    plot->spec->scale = graph_scales[i-1];
+	    scale = graph_scales[i-1];
 	} else {
 	    gdk_window_beep(plot->window);
 	    return;
 	}
     }
 
-    gnuplot_png_init(plot, &fp);
+    fprintf(stderr, "call real_plot_scale on current\n");
+    err = real_plot_rescale(plot, scale);
 
-    if (fp == NULL) {
-	gui_errmsg(E_FOPEN);
-	return;
+    if (!err) {
+	fprintf(stderr, "repaint current\n");
+	repaint_png(plot, PNG_REDISPLAY);
+	if (plot_in_collection(plot)) {
+	    rescale_siblings(plot, scale);
+	}
     }
 
-    gtk_widget_set_sensitive(plot->up_icon, plot->spec->scale != graph_scales[n-1]);
-    gtk_widget_set_sensitive(plot->down_icon, plot->spec->scale != graph_scales[0]);
-
-    set_png_output(plot->spec);
-    plotspec_print(plot->spec, fp);
-    fclose(fp);
-    unset_png_output(plot->spec);
-
-    repaint_png(plot, PNG_REDISPLAY);
+    gtk_widget_set_sensitive(plot->up_icon, scale != graph_scales[n-1]);
+    gtk_widget_set_sensitive(plot->down_icon, scale != graph_scales[0]);
 }
 
 static void show_all_labels (png_plot *plot)
@@ -4423,9 +4677,12 @@ static void prepare_for_zoom (png_plot *plot)
 static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 {
     png_plot *plot = (png_plot *) data;
-    const gchar *item_string = NULL;
+    const gchar *item_string;
+    GtkWidget *shell;
     int killplot = 0;
 
+    plot = plot_get_current(plot);
+    shell = plot_get_shell(plot);
     item_string = menu_item_get_text(item);
 
     if (!strcmp(item_string, _("Add another curve..."))) {
@@ -4433,13 +4690,13 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Save as PNG..."))) {
 	plot->spec->termtype = GP_TERM_PNG;
         file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC,
-				  plot, plot->shell);
+				  plot, shell);
     } else if (!strcmp(item_string, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
-	pdf_ps_dialog(plot->spec, plot->shell);
+	pdf_ps_dialog(plot->spec, shell);
     } else if (!strcmp(item_string, _("Save as postscript (EPS)..."))) {
 	plot->spec->termtype = GP_TERM_EPS;
-	pdf_ps_dialog(plot->spec, plot->shell);
+	pdf_ps_dialog(plot->spec, shell);
     } else if (!strcmp(item_string, _("Save to session as icon"))) {
 	add_to_session_callback(plot);
     } else if (plot_is_range_mean(plot) && !strcmp(item_string, _("Help"))) {
@@ -4473,12 +4730,21 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	start_editing_png_plot(plot);
     } else if (!strcmp(item_string, _("Font"))) {
 	plot_show_font_selector(plot, plot->spec->fontstr);
-    } else if (!strcmp(item_string, _("Close"))) {
+    } else if (!strcmp(item_string, _("Close")) ||
+	       !strcmp(item_string, _("Close plot"))) {
         killplot = 1;
+    } else if (!strcmp(item_string, _("Close collection"))) {
+	killplot = 2;
+    } else if (!strcmp(item_string, _("Extract plot"))) {
+	killplot = 3;
     }
 
-    if (killplot) {
-	gtk_widget_destroy(plot->shell);
+    if (killplot == 1) {
+	kill_png_plot(plot);
+    } else if (killplot == 2) {
+	gtk_widget_destroy(shell);
+    } else if (killplot == 3) {
+	extract_png_plot(plot);
     }
 
     return TRUE;
@@ -4550,6 +4816,9 @@ static void build_plot_menu (png_plot *plot)
 	N_("Font"),
 	N_("Help"),
         N_("Close"),
+	N_("Close plot"),
+	N_("Close collection"),
+	N_("Extract plot"),
         NULL
     };
     const char *zoomed_items[] = {
@@ -4643,6 +4912,17 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
+	if (plot_in_collection(plot)) {
+	    if (!strcmp(plot_items[i], "Close") ||
+		!strncmp(plot_items[i], "Save to", 7)) {
+		i++;
+		continue;
+	    }
+	} else if (!strncmp(plot_items[i], "Close ", 6) ||
+		   !strncmp(plot_items[i], "Extract", 7)) {
+	    i++;
+	    continue;
+	}
 
 	item = gtk_menu_item_new_with_label(_(plot_items[i]));
 
@@ -4689,6 +4969,9 @@ int redisplay_edited_plot (png_plot *plot)
     fprintf(stderr, "redisplay_edited_plot: plot = %p\n", (void *) plot);
 #endif
 
+    /* get the actual target of the edit */
+    plot = plot_get_current(plot);
+
     /* open file in which to dump plot specification */
     gnuplot_png_init(plot, &fp);
     if (fp == NULL) {
@@ -4719,7 +5002,7 @@ int redisplay_edited_plot (png_plot *plot)
     get_plot_ranges(plot, plot->spec->code);
 
     /* put the newly created PNG onto the plot canvas */
-    return render_pngfile(plot, PNG_REDISPLAY);
+    return render_png(plot, PNG_REDISPLAY);
 }
 
 static gchar *recover_plot_header (char *line, FILE *fp)
@@ -4826,7 +5109,7 @@ static int repaint_png (png_plot *plot, int view)
 	return err;
     }
 
-    return render_pngfile(plot, view);
+    return render_png(plot, view);
 }
 
 /* with a zoomed version of the current plot in place,
@@ -4893,6 +5176,8 @@ static int zoom_replaces_plot (png_plot *plot)
 static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 				 png_plot *plot)
 {
+    plot = plot_get_current(plot);
+
     if (plot_is_zooming(plot)) {
 	double z;
 
@@ -4930,6 +5215,8 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 			       png_plot *plot)
 {
+    plot = plot_get_current(plot);
+
     if (plot_is_zooming(plot)) {
 	if (get_data_xy(plot, event->x, event->y,
 			&plot->zoom_xmin, &plot->zoom_ymin)) {
@@ -5037,7 +5324,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 static
 void plot_draw (GtkWidget *canvas, cairo_t *cr, gpointer data)
 {
-    png_plot *plot = data;
+    png_plot *plot = plot_get_current(data);
 
     cairo_set_source_surface(cr, plot->cs, 0, 0);
     cairo_paint(cr);
@@ -5059,22 +5346,6 @@ void plot_expose (GtkWidget *canvas, GdkEventExpose *event,
 }
 
 #endif
-
-static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
-{
-    GdkPixbuf *pbuf = NULL;
-    GError *gerr = NULL;
-
-    pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
-    if (gerr != NULL) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    } else if (pbuf == NULL) {
-	file_read_errbox(fname);
-    }
-
-    return pbuf;
-}
 
 static void record_coordinate_info (png_plot *plot, png_bounds *b)
 {
@@ -5104,23 +5375,48 @@ static void record_coordinate_info (png_plot *plot, png_bounds *b)
 #endif
 }
 
-static int resize_png_plot (png_plot *plot, int width, int height)
+#if GTK_MAJOR_VERSION == 2
+
+static void pixmap_sync (png_plot *plot)
+{
+    png_plot *coll, *child;
+    GList *L;
+
+    coll = (plot->mp != NULL)? plot : widget_get_plot(plot->parent);
+    L = coll->mp->list;
+    while (L != NULL) {
+	child = L->data;
+	if (child != plot) {
+	    child->pixmap = plot->pixmap;
+	}
+	L = L->next;
+    }
+}
+
+#endif
+
+static int resize_png_plot (png_plot *plot, int width, int height,
+			    int follower)
 {
     png_bounds b;
 
     plot->pixel_width = width;
     plot->pixel_height = height;
 
-    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas),
-				plot->pixel_width, plot->pixel_height);
-
+    if (!follower) {
+	gtk_widget_set_size_request(GTK_WIDGET(plot->canvas),
+				    plot->pixel_width, plot->pixel_height);
 #if GTK_MAJOR_VERSION == 2
-    g_object_unref(plot->pixmap);
-    plot->pixmap = gdk_pixmap_new(plot->window,
-				  plot->pixel_width,
-				  plot->pixel_height,
-				  -1);
+	g_object_unref(plot->pixmap);
+	plot->pixmap = gdk_pixmap_new(plot->window,
+				      plot->pixel_width,
+				      plot->pixel_height,
+				      -1);
+	if (plot_in_collection(plot)) {
+	    pixmap_sync(plot);
+	}
 #endif
+    }
 
     if (plot->status & (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE)) {
 	return 0;
@@ -5140,38 +5436,67 @@ static int resize_png_plot (png_plot *plot, int width, int height)
     return 0;
 }
 
+static GdkPixbuf *pixbuf_from_file (png_plot *plot)
+{
+    char fname[MAXLEN];
+    GError *gerr = NULL;
+    GdkPixbuf *pbuf;
+
+    gretl_build_path(fname, gretl_dotdir(), "gretltmp.png", NULL);
+    pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
+
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    } else if (pbuf == NULL) {
+	file_read_errbox(fname);
+	gretl_remove(fname);
+    } else if (gdk_pixbuf_get_width(pbuf) == 0 ||
+	       gdk_pixbuf_get_height(pbuf) == 0) {
+	errbox(_("Malformed PNG file for graph"));
+	g_object_unref(pbuf);
+	pbuf = NULL;
+    }
+
+    return pbuf;
+}
+
 /* The last step in displaying a graph (or redisplaying after some
    change has been made): grab the gnuplot-generated PNG file, make a
    pixbuf out of it, and draw the pixbuf onto the canvas of the plot
    window.
 */
 
-static int render_pngfile (png_plot *plot, int view)
+static int render_png (png_plot *plot, viewcode view)
 {
+    char pngname[MAXLEN];
     gint width, height;
     GdkPixbuf *pbuf;
-    char pngname[MAXLEN];
 
-    gretl_build_path(pngname, gretl_dotdir(), "gretltmp.png", NULL);
-    pbuf = gretl_pixbuf_new_from_file(pngname);
+    if (view == PNG_REDISPLAY || view == PNG_ZOOM || view == PNG_UNZOOM) {
+	/* we need to read a revised PNG file */
+	plot_invalidate_pixbuf(plot);
+    }
 
-    if (pbuf == NULL) {
-	gretl_remove(pngname);
-	return 1;
+#if COLLDEBUG
+    fprintf(stderr, "\nrender_png: plot %p, pixbuf %p, view = %s\n",
+	    (void *) plot, (void *) plot->pbuf, viewstr(view));
+#endif
+
+    if (plot->pbuf != NULL) {
+	pbuf = plot->pbuf;
+    } else {
+	pbuf = pixbuf_from_file(plot);
+	if (pbuf == NULL) {
+	    return 1;
+	}
     }
 
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
 
-    if (width == 0 || height == 0) {
-	errbox(_("Malformed PNG file for graph"));
-	g_object_unref(pbuf);
-	gretl_remove(pngname);
-	return 1;
-    }
-
     if (width != plot->pixel_width || height != plot->pixel_height) {
-	resize_png_plot(plot, width, height);
+	resize_png_plot(plot, width, height, 0);
     }
 
     /* scrap any old record of which points are labeled */
@@ -5197,8 +5522,13 @@ static int render_pngfile (png_plot *plot, int view)
     }
 #endif
 
-    g_object_unref(pbuf);
-    gretl_remove(pngname);
+    /* FIXME case of singleton plot? */
+    plot->pbuf = pbuf;
+
+    if (view != PNG_REPLACE) {
+	gretl_build_path(pngname, gretl_dotdir(), "gretltmp.png", NULL);
+	gretl_remove(pngname);
+    }
 
     if (view != PNG_START) {
 	/* we're changing the view, so refresh the whole canvas */
@@ -5212,15 +5542,55 @@ static int render_pngfile (png_plot *plot, int view)
 
 #ifdef G_OS_WIN32
     /* somehow the plot can end up underneath */
-    gtk_window_present(GTK_WINDOW(plot->shell));
+    gtk_window_present(GTK_WINDOW(plot_get_shell(plot)));
 #endif
 
     return 0;
 }
 
+#if GTK_MAJOR_VERSION == 2
+
+static void plot_nullify_surface (png_plot *plot)
+{
+    plot->pixmap = NULL;
+    plot->savebuf = NULL;
+}
+
+#endif
+
+static void plot_destroy_surface (png_plot *plot)
+{
+#if GTK_MAJOR_VERSION >= 3
+    if (plot->cs != NULL) {
+	cairo_surface_destroy(plot->cs);
+    }
+#else
+    if (plot->pixmap != NULL) {
+	g_object_unref(plot->pixmap);
+    }
+    if (plot->savebuf != NULL) {
+	g_object_unref(plot->savebuf);
+    }
+#endif
+}
+
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
-    if (!plot_is_saved(plot)) {
+    if (plot->mp != NULL) {
+	GList *L = g_list_nth(plot->mp->list, 1);
+	png_plot *child;
+
+	while (L != NULL) {
+	    child = L->data;
+#if GTK_MAJOR_VERSION == 2
+	    plot_nullify_surface(child);
+#endif
+	    destroy_png_plot(NULL, child);
+	    L = L->next;
+	}
+    }
+
+    if (!plot_is_saved(plot) && plot->spec != NULL) {
 	/* delete temporary plot source file? */
 	if (strstr(plot->spec->fname, gretl_dotdir())) {
 	    gretl_remove(plot->spec->fname);
@@ -5238,21 +5608,87 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     }
 #endif
 
-    plotspec_destroy(plot->spec);
-
-#if GTK_MAJOR_VERSION >= 3
-    if (plot->cs != NULL) {
-	cairo_surface_destroy(plot->cs);
+    if (plot->spec != NULL) {
+	plotspec_destroy(plot->spec);
     }
-#else
-    if (plot->savebuf != NULL) {
-	g_object_unref(plot->savebuf);
-    }
-#endif
 
-    g_object_unref(plot->shell);
+    plot_destroy_surface(plot);
+
+    if (plot->pbuf != NULL) {
+	g_object_unref(plot->pbuf);
+    }
+
+    if (plot->shell != NULL) {
+	g_object_unref(plot->shell);
+    }
 
     free(plot);
+}
+
+/* Remove a png_plot from a collection, either killing it or
+   extracting it as a plot in its own right.
+*/
+
+static void remove_png_plot (png_plot *plot, int kill)
+{
+    if (plot->editor != NULL) {
+	gtk_widget_destroy(plot->editor);
+	plot->editor = NULL;
+    }
+
+    if (plot->parent != NULL) {
+	/* kill or extract a child plot */
+	png_plot *coll = widget_get_plot(plot->parent);
+
+	plot_collection_show_plot(coll, coll, 0);
+	coll->mp->list = g_list_remove(coll->mp->list, plot);
+	plot->shell = NULL; /* just to be sure */
+	plot->parent = NULL;
+#if GTK_MAJOR_VERSION == 2
+	plot_nullify_surface(plot);
+#endif
+	if (kill) {
+	    destroy_png_plot(NULL, plot);
+	} else {
+	    plot_add_shell(plot, NULL);
+	    render_png(plot, PNG_START);
+	}
+	adjust_plot_pager(coll);
+    } else {
+	/* kill or extract current parent plot and rejig */
+	png_plot *p1 = g_list_nth_data(plot->mp->list, 1);
+	GPT_SPEC *spec = plot->spec;
+	GdkPixbuf *pbuf = plot->pbuf;
+
+	plot_collection_show_plot(plot, p1, 1);
+	plot->spec = p1->spec;
+	p1->spec = spec;
+	plot->pbuf = p1->pbuf;
+	p1->pbuf = pbuf;
+	plot->mp->list = g_list_remove(plot->mp->list, p1);
+	plot->mp->current = 0;
+#if GTK_MAJOR_VERSION == 2
+	plot_nullify_surface(p1);
+#endif
+	if (kill) {
+	    destroy_png_plot(NULL, p1);
+	} else {
+	    p1->parent = NULL;
+	    plot_add_shell(p1, NULL);
+	    render_png(p1, PNG_START);
+	}
+	adjust_plot_pager(plot);
+    }
+}
+
+static void kill_png_plot (png_plot *plot)
+{
+    remove_png_plot(plot, 1);
+}
+
+static void extract_png_plot (png_plot *plot)
+{
+    remove_png_plot(plot, 0);
 }
 
 /* Do a partial parse of the gnuplot source file: enough to determine
@@ -5360,11 +5796,13 @@ static png_plot *png_plot_new (void)
     }
 
     plot->shell = NULL;
+    plot->parent = NULL;
+    plot->mp = NULL;
     plot->canvas = NULL;
     plot->popup = NULL;
-    plot->statusarea = NULL;
     plot->statusbar = NULL;
     plot->cursor_label = NULL;
+    plot->pbuf = NULL;
     plot->cr = NULL;
 #if GTK_MAJOR_VERSION >= 3
     plot->cs = NULL;
@@ -5375,6 +5813,7 @@ static png_plot *png_plot_new (void)
     plot->spec = NULL;
     plot->editor = NULL;
     plot->window = NULL;
+    plot->toolbar = NULL;
     plot->up_icon = NULL;
     plot->down_icon = NULL;
 
@@ -5402,6 +5841,7 @@ static int plot_add_shell (png_plot *plot, const char *name)
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
     GtkWidget *status_hbox;
+    GtkWidget *status_area;
     gchar *title;
 
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -5427,10 +5867,10 @@ static int plot_add_shell (png_plot *plot, const char *name)
     gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
 
     /* eventbox and hbox for status area  */
-    plot->statusarea = gtk_event_box_new();
-    gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
+    status_area = gtk_event_box_new();
+    gtk_box_pack_start(GTK_BOX(vbox), status_area, FALSE, FALSE, 0);
     status_hbox = gtk_hbox_new(FALSE, 2);
-    gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
+    gtk_container_add(GTK_CONTAINER(status_area), status_hbox);
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
@@ -5504,6 +5944,79 @@ static int plot_add_shell (png_plot *plot, const char *name)
     return 0;
 }
 
+static int plot_collection_attach_plot (png_plot *coll,
+					png_plot *add)
+{
+    add->pbuf = pixbuf_from_file(add);
+    if (add->pbuf == NULL) {
+	return 1;
+    }
+
+#if COLLDEBUG
+    fprintf(stderr, "plot_collection_attach_plot: adding %p, pixbuf %p\n",
+	    (void *) add, (void *) add->pbuf);
+#endif
+
+    /* shared GUI elements */
+    add->parent = coll->shell;
+    add->window = coll->window;
+    add->canvas = coll->canvas;
+    add->cursor_label = coll->cursor_label;
+    add->statusbar = coll->statusbar;
+    add->up_icon = coll->up_icon;
+    add->down_icon = coll->down_icon;
+    add->cid = coll->cid;
+
+    /* shared drawing apparatus */
+#if GTK_MAJOR_VERSION == 2
+    add->pixmap = coll->pixmap;
+    add->savebuf = coll->savebuf;
+#endif
+
+    if (!plot_has_pager(coll)) {
+	gtk_window_set_title(GTK_WINDOW(coll->shell),
+			     _("gretl: plot collection"));
+	add_plot_pager(coll);
+    }
+
+    coll->mp->list = g_list_append(coll->mp->list, add);
+    coll->mp->mtime = gretl_monotonic_time();
+#if COLLDEBUG
+    fprintf(stderr, "  plot_collection now contains %d plots\n",
+	    g_list_length(coll->mp->list));
+#endif
+
+    adjust_plot_pager(coll);
+
+    return 0;
+}
+
+/* It's too complicated to "collect" plots of different sizes */
+
+static int plot_can_be_collected (png_plot *coll, png_plot *plot)
+{
+    return plot->pixel_width == coll->pixel_width &&
+	plot->pixel_height == coll->pixel_height;
+}
+
+static int plot_collection_show_plot (png_plot *coll,
+				      png_plot *show,
+				      int pos)
+{
+    int err = render_png(show, PNG_REPLACE);
+
+    if (!err) {
+#if COLLDEBUG
+	fprintf(stderr, "plot_collection: showing plot %d, %p\n",
+		pos, (void *) show);
+#endif
+	coll->mp->current = pos;
+	adjust_plot_pager(coll);
+    }
+
+    return err;
+}
+
 static void plot_handle_specials (png_plot *plot)
 {
     if (plot->spec->code == PLOT_PERIODOGRAM) {
@@ -5543,7 +6056,8 @@ static void plot_handle_specials (png_plot *plot)
 
 static int gnuplot_show_png (const char *fname,
 			     const char *name,
-			     void *session_ptr)
+			     void *session_ptr,
+			     png_plot *coll)
 {
     png_plot *plot;
     int err = 0;
@@ -5622,9 +6136,21 @@ static int gnuplot_show_png (const char *fname,
 	}
     }
 
-    plot_add_shell(plot, name);
-    err = render_pngfile(plot, PNG_START);
+    if (coll != NULL) {
+	/* add this plot to current collection? */
+	int attached = 0;
 
+	if (!err && plot_can_be_collected(coll, plot)) {
+	    err = plot_collection_attach_plot(coll, plot);
+	    attached = (err == 0);
+	}
+	if (err || attached) {
+	    return err;
+	}
+    }
+
+    plot_add_shell(plot, name);
+    err = render_png(plot, PNG_START);
     if (err) {
 	gtk_widget_destroy(plot->shell);
     } else {
@@ -5632,6 +6158,8 @@ static int gnuplot_show_png (const char *fname,
 	if (session_ptr != NULL) {
 	    g_object_set_data(G_OBJECT(plot->shell),
 			      "session-ptr", session_ptr);
+	} else if (coll == NULL && do_collect_plots()) {
+	    set_plot_collection(plot);
 	}
     }
 
@@ -5697,9 +6225,10 @@ int gnuplot_show_map (gretl_bundle *mb)
     plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM);
     plot->pixel_width = dims->val[0];
     plot->pixel_height = dims->val[1];
-
-    fprintf(stderr, "via bundle: pixwidth %d, pixheight %d\n",
+#if GPDEBUG
+    fprintf(stderr, "map, via bundle: pixwidth %d, pixheight %d\n",
 	    plot->pixel_width, plot->pixel_height);
+#endif
 
     if (get_png_bounds_info(&b) == GRETL_PNG_OK) {
 	record_coordinate_info(plot, &b);
@@ -5707,14 +6236,17 @@ int gnuplot_show_map (gretl_bundle *mb)
 	plot->status |= PLOT_PNG_COORDS;
 	plot->status |= PLOT_HAS_XRANGE;
 	plot->status |= PLOT_HAS_YRANGE;
-	fprintf(stderr, "via png bounds: %d, %d\n", plot->pixel_width, plot->pixel_height);
+#if GPDEBUG
+	fprintf(stderr, "map, via png bounds: %d, %d\n",
+		plot->pixel_width, plot->pixel_height);
+#endif
     } else {
 	plot->status |= PLOT_DONT_MOUSE;
     }
 
     mapname = gretl_bundle_get_string(mb, "mapname", NULL);
     plot_add_shell(plot, mapname != NULL ? mapname : "map");
-    err = render_pngfile(plot, PNG_START);
+    err = render_png(plot, PNG_START);
 
     if (err) {
 	gtk_widget_destroy(plot->shell);
@@ -5725,6 +6257,44 @@ int gnuplot_show_map (gretl_bundle *mb)
     return err;
 }
 
+static png_plot *plot_collection;
+
+static void unset_plot_collection (GtkWidget *w, png_plot *plot)
+{
+    if (plot_collection != NULL) {
+	g_list_free(plot->mp->list);
+	free(plot->mp);
+	plot->mp = NULL;
+	plot_collection = NULL;
+    }
+}
+
+static gint64 plot_collection_get_mtime (void)
+{
+    if (plot_collection != NULL) {
+	return plot_collection->mp->mtime;
+    } else {
+	return 0;
+    }
+}
+
+static void set_plot_collection (png_plot *plot)
+{
+    multiplot *mp = malloc(sizeof *mp);
+
+#if COLLDEBUG
+    fprintf(stderr, "\nSet plot collection using %p\n", (void *) plot);
+#endif
+    mp->mtime = gretl_monotonic_time();
+    mp->list = NULL;
+    mp->list = g_list_append(mp->list, plot);
+    mp->current = 0;
+    plot_collection = plot;
+    plot->mp = mp;
+    g_signal_connect(G_OBJECT(plot->shell), "destroy",
+		     G_CALLBACK(unset_plot_collection), plot);
+}
+
 /* Called on a newly created PNG graph; note that
    the filename returned by gretl_plotfile() is the
    input file (set of gnuplot commands).
@@ -5732,7 +6302,25 @@ int gnuplot_show_map (gretl_bundle *mb)
 
 void register_graph (void)
 {
-    gnuplot_show_png(gretl_plotfile(), NULL, NULL);
+    int dcp = do_collect_plots();
+    png_plot *pp = NULL;
+
+    if (dcp && plot_collection != NULL) {
+	if (dcp > 1) {
+	    /* explicitly "on" */
+	    pp = plot_collection;
+	} else {
+	    /* "auto": time-limited */
+	    gint64 now = gretl_monotonic_time();
+	    gint64 ptm = plot_collection_get_mtime();
+
+	    if (now - ptm < 1.25e6) {
+		pp = plot_collection;
+	    }
+	}
+    }
+
+    gnuplot_show_png(gretl_plotfile(), NULL, NULL, pp);
 }
 
 /* @fname is the name of a plot command file from the
@@ -5769,7 +6357,7 @@ void display_session_graph (const char *fname,
 	/* display the bad plot file */
 	view_file(fullname, 0, 0, 78, 350, VIEW_FILE);
     } else {
-	err = gnuplot_show_png(fullname, title, session_ptr);
+	err = gnuplot_show_png(fullname, title, session_ptr, NULL);
     }
 
     if (err) {
