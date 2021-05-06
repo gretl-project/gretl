@@ -1970,7 +1970,7 @@ int gretl_spawn (char *cmdline)
     gchar *sout = NULL;
     int ok, status;
     int ret = 0;
-    int catch_gnuplot_errs = (getenv("BYPASS_GNUPLOT") == NULL); 
+    int catch_gnuplot_errs = (getenv("CATCH_GNUPLOT") != NULL); 
     
     gretl_error_clear();
 
@@ -1985,8 +1985,8 @@ int gretl_spawn (char *cmdline)
 	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
-    } else if (errout != NULL && *errout) {
-	if (catch_gnuplot_errs && gp_fatal(cmdline, errout)) {
+    } else if (catch_gnuplot_errs && errout != NULL && *errout) {
+	if (gp_fatal(cmdline, errout)) {
 	    gretl_errmsg_set(errout);
 	    fprintf(stderr, "gnuplot stderr: '%s'\n", errout);
 	    ret = 1;
