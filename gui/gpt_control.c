@@ -47,7 +47,7 @@
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
-#define COLLDEBUG 1
+#define COLLDEBUG 0
 
 /* the following needs more testing */
 #define HANDLE_HEREDATA 1
