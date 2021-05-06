@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.10\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-22 17:14+0100\n"
+"PO-Revision-Date: 2021-05-06 09:20+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: French <artur.bala.tn@gmail.com>\n"
 "Language: fr\n"
@@ -12687,11 +12687,11 @@ msgstr "Initialiser le code pour _valeur manquante..."
 
 #: gui/gretl.c:1778 gui/gui_utils.c:326 gui/gui_utils.c:371 gui/ssheet.c:176
 msgid "_View"
-msgstr "_Vue"
+msgstr "_Afficher"
 
 #: gui/gretl.c:1779
 msgid "_Icon view"
-msgstr "_Vue en icônes"
+msgstr "_Fenêtre des icônes"
 
 #: gui/gretl.c:1780
 msgid "_Graph specified vars"
@@ -16712,7 +16712,7 @@ msgstr "Copier en tant que CSV..."
 #: gui/session.c:208 gui/session.c:212 gui/session.c:222 gui/session.c:3440
 #: gui/session.c:3474 gui/textutil.c:489
 msgid "View"
-msgstr "Vue"
+msgstr "Afficher"
 
 #: gui/session.c:214 gui/session.c:3450
 msgid "Properties"
