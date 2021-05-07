@@ -1,3 +1,7 @@
+version 2021c, in progress
+- Introduce experimental "plot collection"
+- MS Windows, 64-bit: update to gnuplot 5.4.1
+
 2021-05-04 version 2021b
 - New function trigamma(): second derivative of lngamma
 - New function midasmult(): gives MIDAS multipliers
