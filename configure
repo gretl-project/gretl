@@ -22480,12 +22480,12 @@ if test -n "$GTKMAC_CFLAGS"; then
     pkg_cv_GTKMAC_CFLAGS="$GTKMAC_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.1") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKMAC_CFLAGS=`$PKG_CONFIG --cflags "gtk-mac-integration >= 2.0.1" 2>/dev/null`
+  pkg_cv_GTKMAC_CFLAGS=`$PKG_CONFIG --cflags "gtk-mac-integration >= 2.0.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22497,12 +22497,12 @@ if test -n "$GTKMAC_LIBS"; then
     pkg_cv_GTKMAC_LIBS="$GTKMAC_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.1\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.1") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk-mac-integration >= 2.0.5\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk-mac-integration >= 2.0.5") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKMAC_LIBS=`$PKG_CONFIG --libs "gtk-mac-integration >= 2.0.1" 2>/dev/null`
+  pkg_cv_GTKMAC_LIBS=`$PKG_CONFIG --libs "gtk-mac-integration >= 2.0.5" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -22523,9 +22523,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk-mac-integration >= 2.0.1" 2>&1`
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "gtk-mac-integration >= 2.0.5" 2>&1`
         else
-	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk-mac-integration >= 2.0.1" 2>&1`
+	        GTKMAC_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "gtk-mac-integration >= 2.0.5" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKMAC_PKG_ERRORS" >&5
@@ -23255,7 +23255,7 @@ ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/de
 
 
 if test "${darwin_build}" = "yes" ; then
-  ac_config_files="$ac_config_files osx/Makefile osx/gretl.sh osx/fixlinks.sh osx/Info.plist"
+  ac_config_files="$ac_config_files osx/Info.plist"
 
 fi
 
@@ -24518,9 +24518,6 @@ do
     "utils/emacs/Makefile") CONFIG_FILES="$CONFIG_FILES utils/emacs/Makefile" ;;
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
-    "osx/Makefile") CONFIG_FILES="$CONFIG_FILES osx/Makefile" ;;
-    "osx/gretl.sh") CONFIG_FILES="$CONFIG_FILES osx/gretl.sh" ;;
-    "osx/fixlinks.sh") CONFIG_FILES="$CONFIG_FILES osx/fixlinks.sh" ;;
     "osx/Info.plist") CONFIG_FILES="$CONFIG_FILES osx/Info.plist" ;;
     "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "win32/windist/post-install.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/post-install.sh" ;;
