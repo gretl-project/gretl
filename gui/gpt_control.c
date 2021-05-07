@@ -4574,7 +4574,9 @@ static void plot_do_rescale (png_plot *plot, int mod)
     int err = 0;
 
     plot = plot_get_current(plot);
+#if 0
     fprintf(stderr, "plot_do_rescale: %p\n", (void *) plot);
+#endif
 
     if (mod == 0) {
 	/* reset to default */
@@ -4601,11 +4603,15 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	}
     }
 
+#if 0
     fprintf(stderr, "call real_plot_scale on current\n");
+#endif
     err = real_plot_rescale(plot, scale);
 
     if (!err) {
+#if 0
 	fprintf(stderr, "repaint current\n");
+#endif
 	repaint_png(plot, PNG_REDISPLAY);
 	if (plot_in_collection(plot)) {
 	    rescale_siblings(plot, scale);
