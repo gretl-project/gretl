@@ -26,6 +26,15 @@ AC_SUBST(LIBGRETL_CURRENT)
 AC_SUBST(LIBGRETL_REVISION)
 AC_SUBST(LIBGRETL_AGE)
 
+dnl PWD=`pwd`
+dnl ABS_SRCDIR=`(cd $srcdir && pwd)`
+dnl if test $PWD = $ABS_SRCDIR ; then
+dnl  echo "Building of gretl in the main source tree is not supported. Please"
+dnl  echo "create a build directory either parallel to the gretl source or"
+dnl  echo "under it, then configure and make from there."
+dnl  exit 1
+dnl fi
+
 echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 dnl

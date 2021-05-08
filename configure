@@ -2857,6 +2857,7 @@ _ACEOF
 
 
 
+
 echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 build_gui="yes"
