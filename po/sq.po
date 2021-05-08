@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-24 13:28+0100\n"
+"PO-Revision-Date: 2021-05-08 21:01+0100\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Bookmarks: 2462,2318,1768,1701,1672,1189,912,788,449,200\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 2.4.3\n"
 
 #: lib/src/adf_kpss.c:592
 msgid "lagged differences"
@@ -770,7 +770,7 @@ msgstr "('*' shënon një vlerë jashtë intervalit të besimit 95%)"
 
 #: lib/src/compare.c:3652 lib/src/gretl_model.c:4177
 msgid "Test of common factor restriction"
-msgstr "Testi i kushtit mbi faktorin e përbashkët"
+msgstr "Testi i kufizimit të faktorit të përbashkët"
 
 #: lib/src/compare.c:3657 lib/src/gretl_restrict.c:2431
 #: lib/src/gretl_restrict.c:3035 lib/src/gretl_restrict.c:3043
@@ -1515,7 +1515,7 @@ msgstr "rikthimi i të dhënave fillestare: kampioni i plotë\n"
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4266
 #, c-format
 msgid "%s: no data found"
-msgstr "%s: asnjë e dhënë nuk u gjet"
+msgstr "%s: nuk ka asnjë të dhënë"
 
 #: lib/src/dbread.c:406 lib/src/dbread.c:690
 msgid "Couldn't open database index file"
@@ -1550,7 +1550,7 @@ msgstr "frekuenca %d nuk merret akoma përsipër"
 
 #: lib/src/dbread.c:1242
 msgid "No valid series found"
-msgstr "Asnjë seri e vlefshme nuk u gjet"
+msgstr "Nuk u gjet asnjë seri e vlefshme"
 
 #: lib/src/dbread.c:1254 lib/src/dbread.c:1308 lib/src/dbread.c:1323
 #: lib/src/dbread.c:2595 lib/src/gretl_errors.c:50
@@ -2199,7 +2199,7 @@ msgstr "Ndryshorja ponderuese përmban vlera negative"
 
 #: lib/src/estimate.c:629
 msgid "Weight variable is not a dummy but contains zeros"
-msgstr "Ndryshorja ponderues nuk është memece edhe pse përmban disa vlera 0"
+msgstr "Ndryshorja ponderuese nuk është memece edhe pse përmban disa vlera 0"
 
 #: lib/src/estimate.c:1167 plugin/arma.c:1761
 #, c-format
@@ -2879,7 +2879,7 @@ msgstr "Biblioteka MPI nuk është ngarkuar"
 #: lib/src/gensyntax.c:247
 #, c-format
 msgid "Expected '%c' but found '%c'\n"
-msgstr "Pritej vlera '%c' por u gjet ’%c’\n"
+msgstr "Pritej '%c' por u gjet ’%c’\n"
 
 #: lib/src/gensyntax.c:253
 #, c-format
@@ -2889,7 +2889,7 @@ msgstr "Formula pritej të mbaronte me '%c'\n"
 #: lib/src/gensyntax.c:255
 #, c-format
 msgid "Expected '%c' but found '%s'\n"
-msgstr "Pritej vlera '%c' por u gjet '%s'\n"
+msgstr "Pritej '%c' por u gjet '%s'\n"
 
 #: lib/src/gensyntax.c:1036
 msgid "too many arguments"
@@ -3496,7 +3496,7 @@ msgstr "Zgjedhje kontradiktore"
 
 #: lib/src/gretl_errors.c:77
 msgid "The restrictions do not identify the parameters"
-msgstr "Kushtet e vëna nuk lejojnë identifikimin e parametrave"
+msgstr "Kufizimet e vëna nuk lejojnë identifikimin e parametrave"
 
 #: lib/src/gretl_errors.c:78
 msgid "External command failed"
@@ -4330,8 +4330,8 @@ msgstr "gretl_prn_new : Jepni ju lutem, një emër për skedën\n"
 #: lib/src/gretl_restrict.c:108
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
 msgstr ""
-"E pamundur të llogaritet matrica e anasjelltë: kushtet janë të pasaktë ose "
-"përsëritës"
+"E pamundur të llogaritet matrica e anasjelltë: kufizimet mund të jenë të "
+"pasaktë ose përsëritës"
 
 #: lib/src/gretl_restrict.c:674
 msgid "Invalid restriction on beta"
@@ -4340,7 +4340,7 @@ msgstr "Kufizim i pavlefshëm për beta"
 #: lib/src/gretl_restrict.c:683
 #, c-format
 msgid "Too many restrictions: the maximum number is %d"
-msgstr "Kufizime të tepërta (maksimumi është %d)"
+msgstr "Kufizime të tepërt (maksimumi është %d)"
 
 #: lib/src/gretl_restrict.c:687
 #, c-format
@@ -4390,14 +4390,16 @@ msgstr "Kushti"
 msgid "Coefficient number (%d) out of range for equation %d"
 msgstr "Koeficienti (%d) i ekuacionit %d është jashtë kufijve"
 
+# Kusht
 #: lib/src/gretl_restrict.c:1861
 msgid "Invalid restriction"
-msgstr "Kusht i pavlefshëm"
+msgstr "Kufizim i pavlefshëm"
 
+# Kusht?
 #: lib/src/gretl_restrict.c:1956
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr "Kushte të tepërta (maksimumi %d)"
+msgstr "Kufizime të tepërt (maksimumi %d)"
 
 #: lib/src/gretl_restrict.c:2110
 msgid "Restricted estimates"
@@ -4418,7 +4420,7 @@ msgid ""
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
 "Njehsimi i matricës te anasjelltë dështoi:\n"
-" ka mundësi që kushtet të jenë përsëritës ose të pakuptimtë\n"
+" ka mundësi që kufizimet të jenë përsëritës ose të pakuptimtë\n"
 
 #: lib/src/gretl_restrict.c:2760
 #, c-format
@@ -5685,12 +5687,12 @@ msgstr "Vlerësim përmes X-12-ARIMA"
 
 #: lib/src/modelprint.c:1812 lib/src/modelprint.c:1831
 msgid "exact ML"
-msgstr "MP i saktë"
+msgstr "ML i saktë"
 
 #: lib/src/modelprint.c:1812 lib/src/modelprint.c:1836
 #: lib/src/modelprint.c:1841
 msgid "conditional ML"
-msgstr "MP i kushtëzuar"
+msgstr "ML i kushtëzuar"
 
 #: lib/src/modelprint.c:1818 lib/src/modelprint.c:1834
 msgid "Estimated using least squares"
@@ -6072,7 +6074,7 @@ msgstr "P. kritik për F"
 #: lib/src/texprint.c:1099 lib/src/varprint.c:1091 lib/src/varprint.c:1100
 #: gui/library.c:6842 plugin/johansen.c:1602
 msgid "Log-likelihood"
-msgstr "Log-gjasa"
+msgstr "Log-përgjasia"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:3093
@@ -7153,7 +7155,7 @@ msgstr "         intervali %g%%\n"
 
 #: lib/src/printout.c:3361 gui/guiprint.c:878 plugin/jrestrict.c:2819
 msgid "loglikelihood"
-msgstr "log-gjasa"
+msgstr "logpërgjasia"
 
 #: lib/src/printout.c:3364
 msgid "Criterion"
@@ -7503,7 +7505,7 @@ msgstr "Nën-kampion të dhënash"
 
 #: lib/src/subsample.c:3189 lib/src/subsample.c:3214
 msgid "restriction"
-msgstr "kusht"
+msgstr "kufizim"
 
 #: lib/src/subsample.c:3241
 #, c-format
@@ -7606,25 +7608,25 @@ msgstr "'%s': nuk është listë apo grup listash"
 
 #: lib/src/system.c:1305
 msgid "Wald test for the specified restrictions"
-msgstr "Testi Wald për kufizimet e përcaktuara"
+msgstr "Testi Wald për kufizimet e vënë"
 
 #: lib/src/system.c:1309
 msgid "F test for the specified restrictions"
-msgstr "Testi F për kushtet e përcaktuara"
+msgstr "Testi F për kufizimet e vënë"
 
 #: lib/src/system.c:1377
 msgid "LR test for the specified restrictions"
-msgstr "Testi LR për kushtet e përcaktuara"
+msgstr "Testi LR për kufizimet e vënë"
 
 #: lib/src/system.c:1378 lib/src/system.c:3593 lib/src/system.c:3595
 #: lib/src/system.c:3607
 msgid "Restricted log-likelihood"
-msgstr "Logaritmi i përgjasisë së kufizuar"
+msgstr "Log-përgjasi e kufizuar"
 
 #: lib/src/system.c:1379 lib/src/system.c:3599 lib/src/system.c:3601
 #: lib/src/system.c:3608
 msgid "Unrestricted log-likelihood"
-msgstr "Logaritmi i përgjasisë së pakufizuar"
+msgstr "Log-përgjasi e pakufizuar"
 
 #: lib/src/system.c:1556 lib/src/tokenize.c:1345
 #, c-format
@@ -7968,22 +7970,22 @@ msgstr "Në lidhje me kufizimin e mëparshëm"
 #: lib/src/varprint.c:885
 #, c-format
 msgid "Unrestricted loglikelihood $(l_u) = %.8g$"
-msgstr "Logaritmi i përgjasisë së pakufizuar $(l_u) = %.8g$"
+msgstr "Logpërgjasi e pakufizuar $(l_u) = %.8g$"
 
 #: lib/src/varprint.c:887
 #, c-format
 msgid "Restricted loglikelihood $(l_r) = %.8g$"
-msgstr "Logaritmi i përgjasisë së kufizuar $(l_r) = %.8g$"
+msgstr "Logpërgjasi e kufizuar $(l_r) = %.8g$"
 
 #: lib/src/varprint.c:889
 #, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g"
-msgstr "Logaritmi i përgjasisë së pakufizuar (lu) = %.8g"
+msgstr "Logpërgjasi e pakufizuar (lu) = %.8g"
 
 #: lib/src/varprint.c:891
 #, c-format
 msgid "Restricted loglikelihood (lr) = %.8g"
-msgstr "Logaritmi i përgjasisë së kufizuar (lr) = %.8g"
+msgstr "Logpërgjasi e kufizuar (lr) = %.8g"
 
 #: lib/src/varprint.c:909
 msgid "Cointegration rank"
@@ -8022,7 +8024,7 @@ msgstr "Metoda: %s; vrojtimet %s--%s ($T=%d$)"
 
 #: lib/src/varprint.c:1055 lib/src/varprint.c:1064 lib/src/varprint.c:1072
 msgid "Maximum likelihood"
-msgstr "Maksimumi i gjasës"
+msgstr "Maksimumi i përgjasisë"
 
 #: lib/src/varprint.c:1063 lib/src/varprint.c:1071
 #, c-format
@@ -9002,7 +9004,7 @@ msgstr "GMM: Përcakto funksionet dhe kushtet e ortogonalitetit:"
 
 #: gui/callbacks.c:615 gui/callbacks.c:704
 msgid "gretl: maximum likelihood"
-msgstr "gretl: gjasa maksimale"
+msgstr "gretl: përgjasia maksimale"
 
 #: gui/callbacks.c:616 gui/callbacks.c:705
 msgid "MLE: Specify function, and derivatives if possible:"
@@ -9026,11 +9028,11 @@ msgstr "Përcakto ekuacionet e njëkohshme:"
 
 #: gui/callbacks.c:636
 msgid "gretl: linear restrictions"
-msgstr "gretl: kushtet lineare"
+msgstr "gretl: kufizime lineare"
 
 #: gui/callbacks.c:637
 msgid "Specify restrictions:"
-msgstr "Përcaktoni kushtet:"
+msgstr "Përcaktoni kufizimet:"
 
 #: gui/callbacks.c:642 gui/callbacks.c:750
 msgid "gretl: command entry"
@@ -10157,11 +10159,11 @@ msgstr "Përdor ndryshore memece:"
 
 #: gui/dialogs.c:2760
 msgid "add to current restriction"
-msgstr "i shtohet kushtit të mëparshëm"
+msgstr "i shtohet kufizimit të tanishëm"
 
 #: gui/dialogs.c:2768
 msgid "replace current restriction"
-msgstr "zëvendëson kushtin e mëparshëm"
+msgstr "zëvendëson kufizimin e tanishëm"
 
 #: gui/dialogs.c:2840
 msgid "Observation at which to split the sample:"
@@ -10783,7 +10785,7 @@ msgstr "I qëndrueshëm (HAC)"
 
 #: gui/dlgutils.c:1287 gui/dlgutils.c:1290
 msgid "(Please refer to Help for guidance)"
-msgstr "(Nevojë për udhëzim? Shikoni ju lutem, rubrikën e Ndihmës )"
+msgstr "(Për udhëzim shikoni rubrikën e Ndihmës)"
 
 #: gui/dlgutils.c:1291
 msgid "right-click for some shortcuts"
@@ -13631,7 +13633,7 @@ msgstr "_Shuma e koeficientëve"
 
 #: gui/gui_utils.c:255
 msgid "_Linear restrictions"
-msgstr "_Kusht linear mbi parametrat"
+msgstr "_Kufizime lineare mbi parametrat"
 
 #: gui/gui_utils.c:256
 msgid "Non-linearity (s_quares)"
@@ -13643,7 +13645,7 @@ msgstr "Jo-linearitet i modelit (_logaritmi i ndryshoreve)"
 
 #: gui/gui_utils.c:258
 msgid "_Ramsey's RESET"
-msgstr "R_ESET i Ramsey"
+msgstr "_RESET i Ramsey"
 
 #: gui/gui_utils.c:259
 msgid "_Heteroskedasticity"
@@ -13651,15 +13653,15 @@ msgstr "_Homoskedasticiteti i mbetjes"
 
 #: gui/gui_utils.c:260
 msgid "_Normality of residual"
-msgstr "N_ormaliteti i mbetjes"
+msgstr "_Normaliteti i mbetjes"
 
 #: gui/gui_utils.c:261
 msgid "_Chow test"
-msgstr "Testi Cho_w (qëndrueshmëria e parametrave)"
+msgstr "_Testi Chow (qëndrueshmëria e parametrave)"
 
 #: gui/gui_utils.c:262 gui/gui_utils.c:4679
 msgid "_Autocorrelation"
-msgstr "Au_tokorrelacioni i mbetjes"
+msgstr "_Autokorrelacioni i mbetjes"
 
 #: gui/gui_utils.c:263
 msgid "_Durbin-Watson p-value"
@@ -13955,7 +13957,7 @@ msgstr "_T*R-katror"
 
 #: gui/gui_utils.c:2995
 msgid "_Log likelihood"
-msgstr "_Log i funksionit të përgjasisë"
+msgstr "_Log i përgjasisë"
 
 #: gui/gui_utils.c:3000
 msgid "_Akaike Information Criterion"
@@ -14108,7 +14110,7 @@ msgstr "_Normaliteti i mbetjes"
 
 #: gui/gui_utils.c:4698
 msgid "Linear restrictions"
-msgstr "Kushtet lineare"
+msgstr "Kufizimet lineare"
 
 #: gui/gui_utils.c:4705
 msgid "Omit exogenous variables..."
@@ -14909,7 +14911,7 @@ msgstr ""
 
 #: gui/library.c:3543
 msgid "linear restrictions"
-msgstr "kushtet lineare"
+msgstr "kufizimet lineare"
 
 #: gui/library.c:3764
 msgid ""
@@ -18588,17 +18590,17 @@ msgstr "vlera e veçantë %d = %g\n"
 #: plugin/johansen.c:1838 plugin/jrestrict.c:2814
 #, c-format
 msgid "Unrestricted loglikelihood (lu) = %.8g\n"
-msgstr "Log-gjasa e pakufizuar (lu) = %.8g\n"
+msgstr "Logpërgjasi e pakufizuar (lu) = %.8g\n"
 
 #: plugin/johansen.c:1839 plugin/jrestrict.c:2815
 #, c-format
 msgid "Restricted loglikelihood (lr) = %.8g\n"
-msgstr "Log-gjasa e kufizuar (lr) = %.8g\n"
+msgstr "Logpërgjasi e kufizuar (lr) = %.8g\n"
 
 #: plugin/johansen.c:1846 plugin/jrestrict.c:1887
 #, c-format
 msgid "Allowing for prior restriction, df = %d\n"
-msgstr "Lejo për kushtëzim paraprak, shl = %d\n"
+msgstr "Me kufizim paraprak, shl = %d\n"
 
 #: plugin/johansen.c:2605
 msgid "Test of restrictions on cointegrating relations"
@@ -19178,7 +19180,7 @@ msgstr "vlerat e veçanta të matricës së anasjelltë të kovariancave"
 # të rishikohet
 #: plugin/vif.c:424
 msgid "condition index"
-msgstr "condition index"
+msgstr "treguesi i kushtit"
 
 #: plugin/vif.c:425
 msgid "note: variance proportions columns sum to 1.0"
