@@ -10574,7 +10574,7 @@ int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     if (!full && x->rows > x->cols && getenv("GRETL_REAL_SVD") == NULL) {
 	/* The "tall" variant is very fast, but not at all
 	   accurate for near-singular matrices. If @x is
-	   too close to singular this wll be flagged by an
+	   too close to singular this will be flagged by an
 	   error code of E_SINGULAR from tall_SVD(), in which
 	   case we'll proceed to try "real" SVD; any other
 	   error will be treated as fatal.
