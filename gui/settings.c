@@ -717,7 +717,7 @@ void set_gretl_startdir (void)
 	char *test = getenv("GRETL_STARTDIR");
 	gchar *startdir = NULL;
 
-	/* the environment variable check is mostly for the OS X
+	/* the environment variable check is mostly for the macOS
 	   package */
 
 	if (test != NULL) {
