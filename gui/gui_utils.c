@@ -5891,40 +5891,13 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 
 #else /* some non-Windows functions follow */
 
-#ifndef OS_OSX
-
-static int alt_show (const char *uri)
-{
-    GError *err = NULL;
-    int ret;
-
-    ret = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &err);
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-    }
-
-    return ret == FALSE;
-}
-
-#endif /* not used on Mac */
-
 int browser_open (const char *url)
 {
 # if defined(OS_OSX)
     return osx_open_url(url);
 # else
-    int err;
-
-    if (getenv("ALTSHOW") != NULL) {
-	err = alt_show(url);
-    } else {
-	err = gretl_fork("Browser", url, NULL);
-    }
-
-    return err;
-# endif /* !OSX */
+    return gretl_fork("Browser", url, NULL);
+# endif
 }
 
 /* Start an R session in asynchronous (interactive) mode.
