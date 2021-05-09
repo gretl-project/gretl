@@ -443,6 +443,7 @@ static void adjust_plot_pager (png_plot *plot)
 	plot->status ^= PLOT_HAS_PAGER;
 	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
 	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
+	plot_window_set_label(plot->shell);
 	return;
     }
 
@@ -5983,6 +5984,7 @@ static int plot_collection_attach_plot (png_plot *coll,
 	gtk_window_set_title(GTK_WINDOW(coll->shell),
 			     _("gretl: plot collection"));
 	add_plot_pager(coll);
+	plot_window_set_label(coll->shell);
     }
 
     coll->mp->list = g_list_append(coll->mp->list, add);
