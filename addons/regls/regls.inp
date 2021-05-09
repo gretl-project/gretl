@@ -185,7 +185,10 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
 end function
 
 function void nz_print (const bundle b, const string est, int nlam)
-   if nlam > 1
+   if b.xvalidate
+      scalar lf = b.use_1se ? b.lf1se : b.lfmin
+      printf "\n%s coefficients (s = %g)\n\n", est, lf
+   elif nlam > 1
       printf "\n%s minimum-BIC coefficients\n\n", est
    else
       printf "\n%s coefficients\n\n", est

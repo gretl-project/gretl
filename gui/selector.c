@@ -127,7 +127,9 @@ enum {
     REGLS_EST,
     REGLS_ALPHA,
     REGLS_LAMVAL,
-    REGLS_NLAM
+    REGLS_NLAM,
+    REGLS_NFOLDS,
+    REGLS_FTYPE
 };
 
 #define EXTRA_LAGS (N_EXTRA - 1)
@@ -3490,6 +3492,17 @@ static void read_regls_extras (selector *sr)
 	gretl_bundle_set_int(rb, "nlambda", nlam);
     }
 
+    if (gtk_widget_is_sensitive(sr->extra[REGLS_NFOLDS])) {
+	int nfolds = spinner_get_int(sr->extra[REGLS_NFOLDS]);
+	gchar *ft = combo_box_get_active_text(sr->extra[REGLS_FTYPE]);
+
+	gretl_bundle_set_int(rb, "xvalidate", 1);
+	gretl_bundle_set_int(rb, "nfolds", nfolds);
+	if (!strcmp(ft, _("random"))) {
+	    gretl_bundle_set_int(rb, "randfolds", 1);
+	}
+    }
+
     gretl_bundle_destroy(regls_bundle);
     regls_bundle = rb;
 
@@ -5382,7 +5395,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (want_radios(sr)) {
 	if (ci == REGLS) {
 	    /* more stuff to show */
-	    dlgy += 140;
+	    dlgy += 240;
 	} else {
 	    dlgy += 60;
 	}
@@ -6407,13 +6420,19 @@ static void regls_estim_switch (GtkComboBox *cb, selector *sr)
     g_free(estr);
 }
 
+static void xvalidation_ok (GtkToggleButton *b, GtkWidget *targ)
+{
+    gtk_widget_set_sensitive(targ, button_is_active(b));
+}
+
 static void build_regls_controls (selector *sr)
 {
-    GtkWidget *w, *hbox, *b1, *b2;
+    GtkWidget *w, *hbox, *b1, *b2, *b3;
     GSList *group;
 
     vbox_add_vwedge(sr->vbox);
 
+    /* choice of estimator */
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new("Estimator");
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
@@ -6434,6 +6453,7 @@ static void build_regls_controls (selector *sr)
 
     vbox_add_vwedge(sr->vbox);
 
+    /* single lambda value */
     hbox = gtk_hbox_new(FALSE, 5);
     b1 = gtk_radio_button_new_with_label(NULL, _("Single λ-fraction"));
     gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 5);
@@ -6442,6 +6462,7 @@ static void build_regls_controls (selector *sr)
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
+    /* multiple lambda values */
     hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Multiple λ values"));
@@ -6451,6 +6472,34 @@ static void build_regls_controls (selector *sr)
     sensitize_conditional_on(w, b2);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+
+    vbox_add_vwedge(sr->vbox);
+
+    /* cross validation */
+    hbox = gtk_hbox_new(FALSE, 5);
+    b3 = gtk_check_button_new_with_label(_("Optimize via cross-validation"));
+    gtk_widget_set_sensitive(b3, FALSE);
+    gtk_box_pack_start(GTK_BOX(hbox), b3, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("Folds:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    sr->extra[REGLS_NFOLDS] = w = gtk_spin_button_new_with_range(4, 20, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), 10);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    w = gtk_label_new(_("type:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    sr->extra[REGLS_FTYPE] = w = gtk_combo_box_text_new();
+    combo_box_append_text(w, _("random"));
+    combo_box_append_text(w, _("contiguous"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_set_sensitive(hbox, FALSE);
+    sensitize_conditional_on(hbox, b3);
+
+    g_signal_connect(G_OBJECT(b2), "toggled",
+		     G_CALLBACK(xvalidation_ok), b3);
 }
 
 static void build_ellipse_spinner (selector *sr)
