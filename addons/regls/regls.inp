@@ -157,6 +157,9 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
    if inbundle(b, "B")
       setnote(b, "B", "all coefficients")
    endif
+   if inbundle(b, "XVC")
+      setnote(b, "XVC", "cross-validation info")
+   endif
    string cmdstr
    set force_decpoint on
    outfile --buffer=cmdstr --quiet
@@ -176,8 +179,14 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       if inbundle(b, "alpha")
          printf ", alpha=%g", ret.alpha
       endif
+      if b.xvalidate
+         printf ", xvalidate=1"
+         printf ", randfolds=%d", b.randfolds
+         printf ", nfolds=%d", b.nfolds
+      endif
       printf ", verbosity=3))\n"
    end outfile
+
    set force_decpoint off
    printf "Command line equivalent:\n\n"
    printf "%s\n", cmdstr
