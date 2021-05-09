@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-05-08 21:01+0100\n"
-"Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
+"PO-Revision-Date: 2021-05-09 13:47+0100\n"
+"Last-Translator: Artur Bala <artur.bala.fr@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: sq\n"
 "MIME-Version: 1.0\n"
@@ -3978,7 +3978,7 @@ msgstr "Testi LR për rho = 0"
 
 #: lib/src/gretl_model.c:4186 lib/src/gretl_model.c:4189
 msgid "Joint test on named regressors"
-msgstr "Test i përbashkët mbi regresorët e treguar"
+msgstr "Test i përbashkët mbi regresorët"
 
 #: lib/src/gretl_model.c:4192
 msgid "Robust test for differing group intercepts"
@@ -3986,11 +3986,11 @@ msgstr "Test i qëndrueshëm për diferencën e konstanteve individuale"
 
 #: lib/src/gretl_model.c:4195 lib/src/gretl_panel.c:4925
 msgid "Pesaran CD test for cross-sectional dependence"
-msgstr "Testi Pesaran CD për varësi individuale"
+msgstr "Testi Pesaran CD për varësi mes individëve"
 
 #: lib/src/gretl_model.c:4196
 msgid "No cross-sectional dependence"
-msgstr "Asnjë varësi individuale"
+msgstr "Asnjë varësi mes individëve"
 
 #: lib/src/gretl_model.c:4198
 msgid "Wooldridge test for autocorrelation in panel data"
@@ -4089,7 +4089,7 @@ msgid ""
 "allows for a unit-specific component to the error term\n"
 msgstr ""
 "Modeli i efekteve të rastësishme\n"
-"lejon një përbërëse individuale në termin e gabimit \n"
+"lejon një faktor individual në termin e gabimit \n"
 
 #: lib/src/gretl_panel.c:1585
 msgid ""
@@ -4383,7 +4383,7 @@ msgstr "Kushtet"
 
 #: lib/src/gretl_restrict.c:1301
 msgid "Restriction"
-msgstr "Kushti"
+msgstr "Kufizimi"
 
 #: lib/src/gretl_restrict.c:1588
 #, c-format
@@ -5128,8 +5128,7 @@ msgstr "mesatarja theta"
 #: lib/src/modelprint.c:871
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr ""
-"Përjashto konstanten, p. kritik më madh i takon ndryshores me ID %d (%s)"
+msgstr "Përjashto konstanten, ndryshorja nr. %d (%s) ka p. kritik më të madh"
 
 #: lib/src/modelprint.c:874
 #, c-format
@@ -5600,7 +5599,7 @@ msgstr "Gabimet std. të qëndrueshëm ndaj heteroskedasticitetit"
 
 #: lib/src/modelprint.c:1512
 msgid "variant"
-msgstr "varianti"
+msgstr "metoda"
 
 #: lib/src/modelprint.c:1530
 msgid "Standard errors based on Hessian"
@@ -5790,7 +5789,7 @@ msgstr "Modeli"
 #: lib/src/modelprint.c:2067 lib/src/modelprint.c:2082
 #, c-format
 msgid "%s, using observations %s%s%s"
-msgstr "%s, mbi kampionin %s%s%s"
+msgstr "%s, kampioni %s%s%s"
 
 #: lib/src/modelprint.c:2077
 #, c-format
@@ -6000,7 +5999,7 @@ msgstr "Rezultati bazuar në të dhënat e transformuara"
 #: lib/src/modelprint.c:2694
 #, c-format
 msgid "Log-likelihood for %s"
-msgstr "Log i përgjasisë për %s"
+msgstr "Log-përgjasia për %s"
 
 #: lib/src/modelprint.c:3010
 msgid "Mean of dependent variable"
@@ -6475,8 +6474,8 @@ msgid ""
 "Warning: The supplied derivatives may be incorrect, or perhaps\n"
 "the data are ill-conditioned for this function.\n"
 msgstr ""
-"KUJDES: derivatet e dhëna nuk janë të sakta ose, për ketë funksion,\n"
-"të dhënat paraqesin problem (ill-conditioned).\n"
+"KUJDES: derivatet e dhëna nuk janë të sakta ose të dhënat \n"
+"paraqesin problem për ketë funksion (ill-conditioned).\n"
 
 #: lib/src/nls.c:2632
 #, c-format
@@ -6484,7 +6483,7 @@ msgid ""
 "%d out of %d gradients looked suspicious.\n"
 "\n"
 msgstr ""
-"%d gradient(ë) ndër %d gjthsej ngjajnë të dyshimtë.\n"
+"Dyshohet për %d gradient(ë) ndër %d gjthsej.\n"
 "\n"
 
 #: lib/src/nls.c:2719
@@ -7688,7 +7687,7 @@ msgstr "Test i qëndrueshëm Breusch-Pagan për matricën diagonale të kovarian
 
 #: lib/src/system.c:4761 lib/src/system.c:4771 gui/dlgutils.c:1161
 msgid "Estimator"
-msgstr "Vlerësimi me"
+msgstr "Vlerësimi"
 
 #: lib/src/system.c:4891
 msgid "Ljung-Box Q'"
@@ -8029,7 +8028,7 @@ msgstr "Maksimumi i përgjasisë"
 #: lib/src/varprint.c:1063 lib/src/varprint.c:1071
 #, c-format
 msgid "%s estimates, observations %s-%s (T = %d)"
-msgstr "Metoda e vlerësimit: %s; vrojtimet %s-%s (T = %d)"
+msgstr "Vlerësim %s, kampioni %s-%s (T = %d)"
 
 #: lib/src/varprint.c:1129 lib/src/varprint.c:1133 lib/src/varprint.c:1136
 msgid "Equation for "
@@ -13693,7 +13692,7 @@ msgstr "_Faktori i përbashkët"
 
 #: gui/gui_utils.c:270
 msgid "_Cross-sectional dependence"
-msgstr "_Varësi individuale"
+msgstr "_Varësi mes individëve"
 
 #: gui/gui_utils.c:271
 msgid "_Panel diagnostics"
@@ -14309,7 +14308,7 @@ msgstr "Të dhënat"
 
 #: gui/helpfiles.c:172
 msgid "Estimation"
-msgstr "Përafrim"
+msgstr "Vlerësime"
 
 #: gui/helpfiles.c:173
 msgid "Graphs"
@@ -14819,7 +14818,7 @@ msgstr "gretl: testi i faktorit të përbashkët"
 
 #: gui/library.c:2626
 msgid "gretl: cross-sectional dependence"
-msgstr "gretl: varësi individuale"
+msgstr "gretl: varësi mes individëve"
 
 #: gui/library.c:2659
 msgid "Lag order for ARCH test:"
@@ -17135,9 +17134,11 @@ msgstr "Skripti"
 msgid "Network"
 msgstr "Rrjeti"
 
+# Metoda për korrigjim të HC
+# Korrigjim heteroskedasticiteti
 #: gui/settings.c:1424
 msgid "HCCME"
-msgstr "Metoda për korrigjim të HC"
+msgstr "HCCME"
 
 #: gui/settings.c:1896
 msgid "This change will take effect when you restart gretl"
