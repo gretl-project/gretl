@@ -2934,6 +2934,7 @@ int gretl_regls (gretl_matrix *X,
 
     ri = regls_info_new(X, y, bun, prn, &err);
     if (err) {
+	fprintf(stderr, "err %d from regls_info_new\n", err);
 	return err;
     }
 

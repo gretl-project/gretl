@@ -106,9 +106,9 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
       ndef = nelem(deflts)
       loop foreach i nfolds randfolds no_mpi np hpc use_1se single_b seed
          if inbundle(src, "$i")
-            targ.$i = src.$i
+            scalar targ.$i = src.$i
          elif i <= ndef
-            targ.$i = deflts[i]
+            scalar targ.$i = deflts[i]
          endif
       endloop
    endif
@@ -249,6 +249,8 @@ function bundle regls (series depvar, list indeps,
    ret.ridge = 0
    ret.ccd = 0
    ret.xvalidate = 0
+   ret.sample_t1 = $t1
+   ret.sample_t2 = $t2
 
    # read optional parameters
    if inbundle(parms, "stdize") == 1
