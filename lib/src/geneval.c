@@ -7750,7 +7750,7 @@ static NODE *do_assert (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *contains_node (NODE *set, NODE *val, parser *p)
+static NODE *contains_node (NODE *val, NODE *set, parser *p)
 {
     gretl_matrix *m = set->v.m;
     NODE *ret = NULL;
@@ -17877,7 +17877,7 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_CONTAINS:
-        if (l->t == MAT && (r->t == NUM || r->t == SERIES || r->t == MAT)) {
+        if (r->t == MAT && (l->t == NUM || l->t == SERIES || l->t == MAT)) {
             ret = contains_node(l, r, p);
         } else {
             p->err = E_TYPES;
