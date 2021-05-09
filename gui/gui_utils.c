@@ -5080,11 +5080,12 @@ static void add_blist_item_to_menu (gpointer listitem,
     GtkWidget *menu = data;
     GtkAction *action;
     GtkWidget *item;
-    gchar *label, *keystr;
+    gchar *keystr, *label = NULL;
     const char *typestr = "?";
     const char *note;
     GretlType type;
     void *val;
+    int scalar = 0;
     int r = 0, c = 0;
     int size = 0;
 
@@ -5110,6 +5111,8 @@ static void add_blist_item_to_menu (gpointer listitem,
 	type = GRETL_TYPE_MATRIX;
 	r = size;
 	c = 1;
+    } else if (gretl_is_scalar_type(type)) {
+	scalar = 1;
     }
 
     typestr = gretl_type_get_name(type);
@@ -5124,12 +5127,23 @@ static void add_blist_item_to_menu (gpointer listitem,
 	    label = g_strdup_printf("%s (%s, %d x %d)", keystr,
 				    typestr, r, c);
 	}
+    } else if (scalar) {
+	if (type == GRETL_TYPE_DOUBLE) {
+	    label = g_strdup_printf("%s (scalar: %g)", keystr,
+				    *(double *) val);
+	} else if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
+	    label = g_strdup_printf("%s (scalar: %d)", keystr,
+				    *(int *) val);
+	} else if (type == GRETL_TYPE_UNSIGNED) {
+	    label = g_strdup_printf("%s (scalar: %d)", keystr,
+				    *(unsigned int *) val);
+	}
     } else if (note != NULL) {
-	label = g_strdup_printf("%s (%s: %s)", keystr,
-				typestr, note);
+	label = g_strdup_printf("%s (%s: %s)", keystr, typestr, note);
     } else {
 	label = g_strdup_printf("%s (%s)", keystr, typestr);
     }
+
     g_free(keystr);
 
     action = gtk_action_new(key, label, NULL, NULL);

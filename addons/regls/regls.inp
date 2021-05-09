@@ -179,7 +179,7 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       if inbundle(b, "alpha")
          printf ", alpha=%g", ret.alpha
       endif
-      if b.xvalidate
+      if inbundle(b, "xvalidate") && b.xvalidate
          printf ", xvalidate=1"
          printf ", randfolds=%d", b.randfolds
          printf ", nfolds=%d", b.nfolds
