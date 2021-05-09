@@ -174,6 +174,18 @@ static const char *window_label (GtkWidget *w, int role)
     }
 }
 
+void plot_window_set_label (GtkWidget *w)
+{
+    gchar *aname = g_strdup_printf("%p", (void *) w);
+    GtkAction *action;
+
+    action = gtk_action_group_get_action(window_group, aname);
+    if (action != NULL) {
+	gtk_action_set_label(action, window_label(w, GNUPLOT));
+    }
+    g_free(aname);
+}
+
 /* callback to be invoked just before destroying a window that's
    on the list of open windows: remove its entry from the list
 */

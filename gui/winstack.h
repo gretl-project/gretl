@@ -28,6 +28,8 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 void window_list_revise_label (GtkWidget *targ,
 			       const char *label);
 
+void plot_window_set_label (GtkWidget *w);
+
 void vwin_record_toolbar_popup (windata_t *vwin,
 				GtkWidget *menu);
 
