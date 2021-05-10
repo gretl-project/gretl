@@ -82,7 +82,7 @@ end function
 # report training-data R-squared after cross validation
 
 function void training_R2 (bundle *b, series y, list X)
-   if inbundle(b, "nZX")
+   if inbundle(b, "nzX")
       series yhat = lincomb(b.nzX, b.nzb)
    else
       if b.stdize
@@ -91,6 +91,6 @@ function void training_R2 (bundle *b, series y, list X)
       series yhat = lincomb(X, b.b)
    endif
    matrix m = regls_get_stats(y, yhat)
-   printf "training data R-squared = %.3f\n", m[2]
+   printf "training data R-squared = %.3f\n\n", m[2]
    b.training_R2 = m[2]
 end function

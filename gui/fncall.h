@@ -36,7 +36,11 @@ void fncall_register_genr (int addv, gpointer p);
 
 gchar *get_bundle_plot_function (gretl_bundle *b);
 
+gchar *get_bundle_fcast_function (gretl_bundle *b);
+
 int exec_bundle_plot_function (gretl_bundle *b, const char *funname);
+
+int exec_bundle_fcast_function (gretl_bundle *b, const char *funname);
 
 int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn);
 

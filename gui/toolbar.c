@@ -64,6 +64,7 @@
 #include "../pixmaps/mini.heatmap.xpm"
 #include "../pixmaps/mini.dbnomics.xpm"
 #include "../pixmaps/mail_16.xpm"
+#include "../pixmaps/fcast_16.xpm"
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -122,7 +123,8 @@ enum {
     BUILD_ITEM,
     HMAP_ITEM,
     DIGITS_ITEM,
-    DBN_ITEM
+    DBN_ITEM,
+    FCAST_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -164,6 +166,7 @@ void gretl_stock_icons_init (void)
 	{ open_menu_xpm, GRETL_STOCK_MENU},
 	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
 	{ mini_dbnomics_xpm, GRETL_STOCK_DBN},
+	{ fcast_16_xpm, GRETL_STOCK_FCAST}
     };
     static GtkIconFactory *gretl_factory;
     int n = G_N_ELEMENTS(stocks);
@@ -716,6 +719,13 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
+static void toolbar_fcast_callback (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin->role == VIEW_BUNDLE) {
+	exec_bundle_fcast_function(vwin->data, NULL);
+    }
+}
+
 static void dbnomics_show_series (GtkWidget *w, windata_t *vwin)
 {
     show_dbnomics_data(vwin, 0);
@@ -753,6 +763,20 @@ static int bundle_plot_ok (windata_t *vwin)
     if (pf != NULL) {
 	ret = 1;
 	g_free(pf);
+    }
+
+    return ret;
+}
+
+static int bundle_fcast_ok (windata_t *vwin)
+{
+    gretl_bundle *b = vwin->data;
+    gchar *ff = get_bundle_fcast_function(b);
+    int ret = 0;
+
+    if (ff != NULL) {
+	ret = 1;
+	g_free(ff);
     }
 
     return ret;
@@ -824,6 +848,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(toolbar_plot_callback), PLOT_ITEM },
+    { N_("Forecast"), GRETL_STOCK_FCAST, G_CALLBACK(toolbar_fcast_callback), FCAST_ITEM },
     { N_("Heatmap"), GRETL_STOCK_HMAP, G_CALLBACK(toolbar_plot_callback), HMAP_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
     { N_("Edit values..."), GTK_STOCK_EDIT, G_CALLBACK(series_view_edit), EDITOR_ITEM },
@@ -993,6 +1018,12 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	} else {
 	    return NULL;
 	}
+    } else if (f == FCAST_ITEM) {
+	if (r == VIEW_BUNDLE && bundle_fcast_ok(vwin)) {
+	    ; /* alright then */
+	} else {
+	    return NULL;
+	}	    
     } else if (!split_h_ok(r) && f == SPLIT_H_ITEM) {
 	return NULL;
     } else if (!split_v_ok(r) && f == SPLIT_V_ITEM) {

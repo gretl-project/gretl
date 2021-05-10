@@ -189,7 +189,7 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
    end outfile
 
    set force_decpoint off
-   printf "Command line equivalent:\n\n"
+   printf "Command line equivalent:\n"
    printf "%s\n", cmdstr
    b.commands = cmdstr
 end function
@@ -437,6 +437,10 @@ function bundle regls (series depvar, list indeps,
    endif
 
    return ret
+end function
+
+function void regls_fcast (bundle *b, int ftype[0:1:0])
+   printf "Just a dummy for now\n"
 end function
 
 include regls_helpers.inp

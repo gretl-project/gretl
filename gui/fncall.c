@@ -105,6 +105,8 @@ static void set_genr_model_from_vwin (windata_t *vwin);
 static void maybe_open_sample_script (call_info *cinfo,
 				      windata_t *vwin,
 				      const char *path);
+static gchar *get_bundle_special_function (gretl_bundle *b,
+					   const char *task);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -2610,13 +2612,15 @@ void function_call_cleanup (void)
     arglist_cleanup();
 }
 
-/* Execute the plotting function made available by the function
+/* Execute a special-purpose function made available by the function
    package that produced bundle @b, possibly inflected by an
    integer option -- if an option is present it's packed into
    @aname, after a colon.
 */
 
-int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
+static int exec_bundle_special_function (gretl_bundle *b,
+					 const char *id,
+					 const char *aname)
 {
     ufunc *func = NULL;
     fncall *fc = NULL;
@@ -2634,13 +2638,13 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	    strcpy(funname, aname);
 	}
     } else {
-	gchar *pf = get_bundle_plot_function(b);
+	gchar *sf = get_bundle_special_function(b, id);
 
-	if (pf == NULL) {
+	if (sf == NULL) {
 	    return E_DATA;
 	} else {
-	    strcpy(funname, pf);
-	    g_free(pf);
+	    strcpy(funname, sf);
+	    g_free(sf);
 	}
     }
 
@@ -2654,8 +2658,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 
 	bname = gretl_strdup(user_var_get_name(uv));
 #if 1
-	fprintf(stderr, "bundle plot: using bundle %p (uvar %p, name '%s')\n",
-		(void *) b, (void *) uv, bname);
+	fprintf(stderr, "%s: using bundle %p (uvar %p, name '%s')\n",
+		id, (void *) b, (void *) uv, bname);
 #endif
 	fc = fncall_new(func, 0);
 	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
@@ -2671,8 +2675,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	}
     }
 
-    if (!err) {
-	/* Note that the function may need a non-NULL prn for
+    if (!err && !strcmp(id, BUNDLE_PLOT)) {
+	/* Note that a plotting function may need a non-NULL prn for
 	   use with printing redirection (outfile).
 	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
@@ -2680,6 +2684,21 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 				  NULL, NULL, prn);
 	gretl_print_destroy(prn);
+    } else if (!err) {
+	/* We expect some printed output */
+	PRN *prn = NULL;
+
+	err = bufopen(&prn);
+	if (!err) {
+	    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+				      NULL, NULL, prn);
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
+		view_buffer(prn, 78, 350, id, PRINT, NULL);
+		prn = NULL; /* ownership taken by viewer */
+	    }
+	}
     } else {
 	fncall_destroy(fc);
     }
@@ -2691,6 +2710,16 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     }
 
     return err;
+}
+
+int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
+{
+    return exec_bundle_special_function(b, BUNDLE_PLOT, aname);
+}
+
+int exec_bundle_fcast_function (gretl_bundle *b, const char *aname)
+{
+    return exec_bundle_special_function(b, BUNDLE_FCAST, aname);
 }
 
 /* See if a bundle has the name of a "creator" function package
@@ -2730,6 +2759,11 @@ static gchar *get_bundle_special_function (gretl_bundle *b,
 gchar *get_bundle_plot_function (gretl_bundle *b)
 {
     return get_bundle_special_function(b, BUNDLE_PLOT);
+}
+
+gchar *get_bundle_fcast_function (gretl_bundle *b)
+{
+    return get_bundle_special_function(b, BUNDLE_FCAST);
 }
 
 /* See if we can find a "native" printing function for a
@@ -4592,6 +4626,10 @@ int real_do_regls (const char *buf)
 				  &rb, NULL, prn);
 	unset_wait_cursor(cwin);
 	if (!err) {
+	    /* 2021-05-10: add bundle as uservar */
+	    char *bname = temp_name_for_bundle();
+
+	    user_var_add(bname, GRETL_TYPE_BUNDLE, rb);
 	    view_buffer(prn, 78, 350, "gretl: regls", VIEW_BUNDLE, rb);
 	    prn = NULL; /* ownership taken by viewer */
 	}
