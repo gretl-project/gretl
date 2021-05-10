@@ -2662,7 +2662,11 @@ static int exec_bundle_special_function (gretl_bundle *b,
 		id, (void *) b, (void *) uv, bname);
 #endif
 	fc = fncall_new(func, 0);
-	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
+	if (bname != NULL) {
+	    err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
+	} else {
+	    err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, b);
+	}
 
 	if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
@@ -4626,10 +4630,6 @@ int real_do_regls (const char *buf)
 				  &rb, NULL, prn);
 	unset_wait_cursor(cwin);
 	if (!err) {
-	    /* 2021-05-10: add bundle as uservar */
-	    char *bname = temp_name_for_bundle();
-
-	    user_var_add(bname, GRETL_TYPE_BUNDLE, rb);
 	    view_buffer(prn, 78, 350, "gretl: regls", VIEW_BUNDLE, rb);
 	    prn = NULL; /* ownership taken by viewer */
 	}
