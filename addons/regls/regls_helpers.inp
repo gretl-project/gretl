@@ -41,7 +41,7 @@ end function
 
 function void regls_multiprint (const matrix B, const matrix lambda,
                                 const series y, list X,
-				const matrix crit[null])
+                                const matrix crit[null])
 
    if exists(crit)
       printf "\n       lambda     R^2    sum(|b|)   df   criterion\n"
@@ -57,10 +57,10 @@ function void regls_multiprint (const matrix B, const matrix lambda,
    loop i=1..cols(B) -q
       if haveconst
          matrix bi = B[2:,i]
-	 series yhat = lincomb(X, bi) + B[1,i]
+         series yhat = lincomb(X, bi) + B[1,i]
       else
          matrix bi = B[,i]
-	 series yhat = lincomb(X, bi)
+         series yhat = lincomb(X, bi)
       endif
       scalar l1 = sumc(abs(bi))
       scalar df = sumc(bi .!= 0)
@@ -77,4 +77,20 @@ function void regls_multiprint (const matrix B, const matrix lambda,
       endif
    endloop
    printf "\n"
+end function
+
+# report training-data R-squared after cross validation
+
+function void training_R2 (bundle *b, series y, list X)
+   if inbundle(b, "nZX")
+      series yhat = lincomb(b.nzX, b.nzb)
+   else
+      if b.stdize
+         X = const X
+      endif
+      series yhat = lincomb(X, b.b)
+   endif
+   matrix m = regls_get_stats(y, yhat)
+   printf "training data R-squared = %.3f\n", m[2]
+   b.training_R2 = m[2]
 end function

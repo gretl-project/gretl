@@ -5395,7 +5395,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (want_radios(sr)) {
 	if (ci == REGLS) {
 	    /* more stuff to show */
-	    dlgy += 240;
+	    dlgy += 200;
 	} else {
 	    dlgy += 60;
 	}

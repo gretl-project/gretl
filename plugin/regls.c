@@ -2524,11 +2524,6 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 
     *imin = 0;
 
-    if (prn != NULL) {
-	pprintf(prn, "          s        %s         se\n",
-		crit_string(crit_type));
-    }
-
     for (i=0; i<XVC->rows; i++) {
 	v = avg = 0;
 	for (j=0; j<nf; j++) {
@@ -2549,9 +2544,6 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	v /= (nf - 1);
 	se = sqrt(v/nf);
 	gretl_matrix_set(metrics, i, 1, se);
-	if (prn != NULL) {
-	    pprintf(prn, "%11f %10f %10f\n", lfrac->val[i], avg, se);
-	}
     }
 
     *i1se = *imin;
@@ -2569,6 +2561,27 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	    *i1se = i;
 	} else {
 	    break;
+	}
+    }
+
+    if (prn != NULL) {
+	int common = (*i1se == *imin);
+
+	pprintf(prn, "          s        %s         se\n",
+		crit_string(crit_type));
+
+	for (i=0; i<XVC->rows; i++) {
+	    avg = gretl_matrix_get(metrics, i, 0);
+	    se = gretl_matrix_get(metrics, i, 1);
+	    pprintf(prn, "%11f %10f %10f", lfrac->val[i], avg, se);
+	    if (i == *imin && common) {
+		pputs(prn, " *+");
+	    } else if (i == *imin) {
+		pputs(prn, " *");
+	    } else if (i == *i1se) {
+		pputs(prn, " +");
+	    }
+	    pputc(prn, '\n');
 	}
     }
 

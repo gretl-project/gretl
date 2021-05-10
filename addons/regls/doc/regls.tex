@@ -757,7 +757,7 @@ We measure the difference between sets of results via Euclidean
 distance.\footnote{We also tried Mean Absolute Deviation but this did
   not seem to contribute additional information.}  To gauge the
 trade-off between accuracy and speed we also record the execution time
-for method B divided by that for A (labeled ``reltime'').
+for method B divided by that for A.
 
 In the experiments reported below we used the murder rates dataset
 (\texttt{murder.gdt}) supplied with the \texttt{regls} package, with
@@ -983,9 +983,13 @@ processing a sequence of $\lambda$ values.
 In \textsf{regls} cross validation, the entire training dataset is
 standardized at the outset, then each fold gets its share of the
 standardized data. The maximum $\lambda$ is also determined using the
-full training set, so the same $\lambda$ sequence is used for each
+full training set and the same $\lambda$ sequence is used for each
 fold. In \textsf{glmnet}, by contrast, both standardization and
-calculation of the $\lambda$ sequence are done per fold.
+calculation of the $\lambda$ sequence are done per fold. For example,
+suppose the training data are divided into 10 folds, each comprising
+10 percent of the observations. Then \textsf{glmnet} both standardizes
+and computes a $\lambda$ sequence using the complementary 90 percent
+of the data.
 
 \subsection*{Extended test of cross validation}
 

@@ -426,6 +426,9 @@ function bundle regls (series depvar, list indeps,
    elif nlam > 1 && ret.verbosity > 2
       nz_print(ret, est, nlam)
    endif
+   if ret.xvalidate && ret.verbosity > 2
+      training_R2(&ret, depvar, indeps)
+   endif
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
