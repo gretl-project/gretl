@@ -111,8 +111,6 @@ enum {
 #define plot_show_cursor_label(p) (p->status & PLOT_CURSOR_LABEL)
 
 #define plot_has_controller(p) (p->editor != NULL)
-#define plot_in_collection(p) (p->mp != NULL || p->parent != NULL)
-#define plot_is_singleton(p) (p->mp == NULL && p->parent == NULL)
 
 typedef enum {
     PNG_START,
@@ -4614,7 +4612,7 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	fprintf(stderr, "repaint current\n");
 #endif
 	repaint_png(plot, PNG_REDISPLAY);
-	if (plot_in_collection(plot)) {
+	if (plot_has_pager(plot)) {
 	    rescale_siblings(plot, scale);
 	}
     }
@@ -4919,7 +4917,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (plot_in_collection(plot)) {
+	if (plot_has_pager(plot)) {
 	    if (!strcmp(plot_items[i], "Close") ||
 		!strncmp(plot_items[i], "Save to", 7)) {
 		i++;
@@ -5419,7 +5417,7 @@ static int resize_png_plot (png_plot *plot, int width, int height,
 				      plot->pixel_width,
 				      plot->pixel_height,
 				      -1);
-	if (plot_in_collection(plot)) {
+	if (plot_has_pager(plot)) {
 	    pixmap_sync(plot);
 	}
 #endif

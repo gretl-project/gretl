@@ -1,6 +1,10 @@
 version 2021c, in progress
 - Introduce experimental "plot collection"
 - MS Windows, 64-bit: update to gnuplot 5.4.1
+- gretl GUI: add --new command-line option to start a new
+  instance unconditionally
+- fcstats() matrix row labels: distinguish U1 vs U2 variant
+  of Theil's U statistic
 
 2021-05-04 version 2021b
 - New function trigamma(): second derivative of lngamma
