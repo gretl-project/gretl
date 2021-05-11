@@ -433,14 +433,52 @@ function bundle regls (series depvar, list indeps,
       delete ret.verbosity
    endif
    if gui
+      string ret.depvar = argname(depvar)
+      list ret.ylist = outer_series_id(ret.depvar)
+      list ret.xlist = indeps
       gui_adjust_ret(&ret, parms, yname, indeps)
    endif
 
    return ret
 end function
 
-function void regls_fcast (bundle *b, int ftype[0:1:0])
-   printf "Just a dummy for now\n"
+function bundle regls_fcast (bundle *b)
+   strings S = defarray("R-squared", "Mean Error",
+     "Root Mean Squared Error", "Mean Absolute Error",
+     "Mean Percentage Error", "Mean Absolute Percentage Error",
+     "Theil's U", "Bias proportion", "Regression proportion",
+     "Disturbance proportion")
+   bundle ret
+   if $tmax > b.sample_t2
+      t1 = b.sample_t2 + 1
+      smpl t1 $tmax
+      string os = "Out-of-sample"
+   else
+      string os = "Within-sample"
+   endif
+   smpl
+   series y = b.ylist[1]
+   series yhat = regls_yhat(b, b.xlist)
+   scalar ret.R2 = 1 - sst(y-yhat) / sst(y)
+   matrix stats = fcstats(y, yhat)
+   printf "%s forecast evaluation statistics for %s\n\n", os, b.depvar
+   if !ok(stats[4])
+      sel = {1,2,3,4,7,8,9,10}
+      len = maxc(strlen(S[sel]))
+   else
+      len = maxc(strlen(S))
+   endif
+   n = rows(stats) + 1
+   loop i=1..n
+      scalar x = i==1 ? ret.R2 : stats[i-1]
+      if ok(x)
+         fill = x < 0 ? " " : "  "
+         printf "%-*s %s%g\n", len, S[i], fill, x
+      endif
+   endloop
+   printf "\n"
+   matrix ret.stats = stats
+   return ret
 end function
 
 include regls_helpers.inp

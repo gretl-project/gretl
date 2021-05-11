@@ -79,18 +79,37 @@ function void regls_multiprint (const matrix B, const matrix lambda,
    printf "\n"
 end function
 
-# report training-data R-squared after cross validation
+# compute fitted values
 
-function void training_R2 (bundle *b, series y, list X)
+function series regls_yhat (const bundle b, list X)
+   series yhat
    if inbundle(b, "nzX")
-      series yhat = lincomb(b.nzX, b.nzb)
+      yhat = lincomb(b.nzX, b.nzb)
    else
       if b.stdize
          X = const X
       endif
-      series yhat = lincomb(X, b.b)
+      yhat = lincomb(X, b.b)
    endif
+   return yhat
+end function
+
+# report training-data R-squared after cross validation
+
+function void training_R2 (bundle *b, series y, list X)
+   series yhat = regls_yhat(b, X)
    matrix m = regls_get_stats(y, yhat)
    printf "training data R-squared = %.3f\n\n", m[2]
    b.training_R2 = m[2]
+end function
+
+function list outer_series_id (const string arg)
+   list L
+   loop i=1..$nvars
+      if varname(i) == arg
+         L = {i}
+         break
+      endif
+   endloop
+   return L
 end function
