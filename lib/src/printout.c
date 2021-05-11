@@ -2398,9 +2398,31 @@ static int *column_widths_from_list (const int *list,
     return ret;
 }
 
+static void print_plain_numbers (int *list, const DATASET *dset,
+				 PRN *prn)
+{
+    int i, vi, t;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (na(dset->Z[vi][t])) {
+		pputs(prn, "NA");
+	    } else {
+		pprintf(prn, "%.8g", dset->Z[vi][t]);
+	    }
+	    if (i < list[0]) {
+		pputc(prn, ' ');
+	    } else {
+		pputc(prn, '\n');
+	    }
+	}
+    }
+}
+
 #define BMAX 5
 
-/* print the series referenced in 'list' by observation */
+/* print the series referenced in @list by observation */
 
 static int print_by_obs (int *list, const DATASET *dset,
 			 gretlopt opt, int screenvar,
@@ -2636,7 +2658,9 @@ int printdata (const int *list, const char *mstr,
 	}
 	dset->t1 = save_t1 + start;
 	dset->t2 = save_t1 + stop;
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
@@ -2644,7 +2668,9 @@ int printdata (const int *list, const char *mstr,
 	dset->t1 = save_t1;
 	dset->t2 = save_t2;
     } else {
-	if (opt & OPT_O) {
+	if (opt & OPT_X) {
+	    print_plain_numbers(plist, dset, prn);
+	} else if (opt & OPT_O) {
 	    err = print_by_obs(plist, dset, opt, screenvar, prn);
 	} else {
 	    err = print_by_var(plist, dset, opt, prn);
