@@ -709,7 +709,7 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
     if (vwin->role == VIEW_SERIES) {
 	series_view_graph(w, vwin);
     } else if (vwin->role == VIEW_BUNDLE) {
-	exec_bundle_plot_function(vwin->data, NULL);
+	exec_bundle_special_function(vwin->data, BUNDLE_PLOT, NULL);
     } else if (vwin->role == CORR) {
 	do_corr_plot(vwin);
     } else if (vwin->role == VIEW_DBNOMICS) {
@@ -722,7 +722,7 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
 static void toolbar_fcast_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == VIEW_BUNDLE) {
-	exec_bundle_fcast_function(vwin->data, NULL);
+	exec_bundle_special_function(vwin->data, BUNDLE_FCAST, NULL);
     }
 }
 
@@ -757,7 +757,7 @@ static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
 static int bundle_plot_ok (windata_t *vwin)
 {
     gretl_bundle *b = vwin->data;
-    gchar *pf = get_bundle_plot_function(b);
+    gchar *pf = get_bundle_special_function(b, BUNDLE_PLOT);
     int ret = 0;
 
     if (pf != NULL) {
@@ -771,7 +771,7 @@ static int bundle_plot_ok (windata_t *vwin)
 static int bundle_fcast_ok (windata_t *vwin)
 {
     gretl_bundle *b = vwin->data;
-    gchar *ff = get_bundle_fcast_function(b);
+    gchar *ff = get_bundle_special_function(b, BUNDLE_FCAST);
     int ret = 0;
 
     if (ff != NULL) {

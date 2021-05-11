@@ -5062,8 +5062,9 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     gretl_bundle *bundle = vwin->data;
+    const gchar *aname = gtk_action_get_name(action);
 
-    exec_bundle_plot_function(bundle, gtk_action_get_name(action));
+    exec_bundle_special_function(bundle, BUNDLE_PLOT, aname);
 }
 
 struct bitem {
@@ -5305,7 +5306,7 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin)
     gchar *plotfunc;
     GtkWidget *menu = NULL;
 
-    plotfunc = get_bundle_plot_function(bundle);
+    plotfunc = get_bundle_special_function(bundle, BUNDLE_PLOT);
 
     if (plotfunc != NULL) {
 	ufunc *fun = NULL;

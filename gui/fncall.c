@@ -105,8 +105,6 @@ static void set_genr_model_from_vwin (windata_t *vwin);
 static void maybe_open_sample_script (call_info *cinfo,
 				      windata_t *vwin,
 				      const char *path);
-static gchar *get_bundle_special_function (gretl_bundle *b,
-					   const char *task);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -2612,15 +2610,15 @@ void function_call_cleanup (void)
     arglist_cleanup();
 }
 
-/* Execute a special-purpose function made available by the function
+/* Execute a special-purpose function made available by the
    package that produced bundle @b, possibly inflected by an
-   integer option -- if an option is present it's packed into
-   @aname, after a colon.
+   integer option. If an option is present it's packed into
+   @aname, following a colon.
 */
 
-static int exec_bundle_special_function (gretl_bundle *b,
-					 const char *id,
-					 const char *aname)
+int exec_bundle_special_function (gretl_bundle *b,
+				  const char *id,
+				  const char *aname)
 {
     ufunc *func = NULL;
     fncall *fc = NULL;
@@ -2680,8 +2678,9 @@ static int exec_bundle_special_function (gretl_bundle *b,
     }
 
     if (!err && !strcmp(id, BUNDLE_PLOT)) {
-	/* Note that a plotting function may need a non-NULL prn for
-	   use with printing redirection (outfile).
+	/* A plotting function may need a non-NULL PRN for
+	   use with printing redirection (outfile). But we
+	   don't expect any printed output.
 	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
@@ -2689,19 +2688,42 @@ static int exec_bundle_special_function (gretl_bundle *b,
 				  NULL, NULL, prn);
 	gretl_print_destroy(prn);
     } else if (!err) {
-	/* We expect some printed output */
+	/* For other bundle-specials we expect printed output */
 	PRN *prn = NULL;
 
 	err = bufopen(&prn);
 	if (!err) {
-	    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
-				      NULL, NULL, prn);
+	    GretlType rtype = user_func_get_return_type(func);
+	    gretl_bundle *retb = NULL;
+	    int save_t1 = dataset->t1;
+	    int save_t2 = dataset->t2;
+
+	    if (!strcmp(id, BUNDLE_FCAST)) {
+		dataset->t1 = 0;
+		dataset->t2 = dataset->n - 1;
+	    }
+
+	    if (rtype == GRETL_TYPE_BUNDLE) {
+		/* if a bundle is offered, let's grab it */
+		err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+					  &retb, NULL, prn);
+	    } else {
+		/* otherwise ignore any return value */
+		err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+					  NULL, NULL, prn);
+	    }
 	    if (err) {
 		gui_errmsg(err);
+	    } else if (retb != NULL) {
+		view_buffer(prn, 78, 350, id, VIEW_BUNDLE, retb);
+		prn = NULL; /* ownership taken by viewer */
 	    } else {
 		view_buffer(prn, 78, 350, id, PRINT, NULL);
 		prn = NULL; /* ownership taken by viewer */
 	    }
+	    gretl_print_destroy(prn);
+	    dataset->t1 = save_t1;
+	    dataset->t2 = save_t2;
 	}
     } else {
 	fncall_destroy(fc);
@@ -2716,24 +2738,14 @@ static int exec_bundle_special_function (gretl_bundle *b,
     return err;
 }
 
-int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
-{
-    return exec_bundle_special_function(b, BUNDLE_PLOT, aname);
-}
-
-int exec_bundle_fcast_function (gretl_bundle *b, const char *aname)
-{
-    return exec_bundle_special_function(b, BUNDLE_FCAST, aname);
-}
-
 /* See if a bundle has the name of a "creator" function package
    recorded on it. If so, see whether that package is already loaded,
    or can be loaded.  And if that works, see if the package has a
    default function for @task (e.g. BUNDLE_PRINT).
 */
 
-static gchar *get_bundle_special_function (gretl_bundle *b,
-					   const char *task)
+gchar *get_bundle_special_function (gretl_bundle *b,
+				    const char *id)
 {
     const char *pkgname = gretl_bundle_get_creator(b);
     gchar *ret = NULL;
@@ -2751,23 +2763,12 @@ static gchar *get_bundle_special_function (gretl_bundle *b,
 		free(fname);
 	    }
 	}
-
 	if (pkg != NULL) {
-	    function_package_get_properties(pkg, task, &ret, NULL);
+	    function_package_get_properties(pkg, id, &ret, NULL);
 	}
     }
 
     return ret;
-}
-
-gchar *get_bundle_plot_function (gretl_bundle *b)
-{
-    return get_bundle_special_function(b, BUNDLE_PLOT);
-}
-
-gchar *get_bundle_fcast_function (gretl_bundle *b)
-{
-    return get_bundle_special_function(b, BUNDLE_FCAST);
 }
 
 /* See if we can find a "native" printing function for a
