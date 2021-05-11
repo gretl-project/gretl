@@ -5853,24 +5853,23 @@ static int fill_fcstats_column (gretl_matrix *m,
     return err;
 }
 
-static void add_fcstats_rownames (gretl_matrix *m)
+static void add_fcstats_rownames (gretl_matrix *m,
+				  gretlopt opt)
 {
-    int ns = m->rows;
-    char **rownames;
-
-    rownames = strings_array_new(ns);
+    const char *S[] = {
+	"ME", "RMSE", "MAE", "MPE", "MAPE",
+	"U1", "UM", "UR", "UD"
+    };
+    int i, ns = m->rows;
+    char **rownames = strings_array_new(ns);
 
     if (rownames != NULL) {
-	rownames[0] = gretl_strdup("ME");
-	rownames[1] = gretl_strdup("RMSE");
-	rownames[2] = gretl_strdup("MAE");
-	rownames[3] = gretl_strdup("MPE");
-	rownames[4] = gretl_strdup("MAPE");
-	rownames[5] = gretl_strdup("U");
-	if (ns == 9) {
-	    rownames[6] = gretl_strdup("UM");
-	    rownames[7] = gretl_strdup("UR");
-	    rownames[8] = gretl_strdup("UD");
+	for (i=0; i<ns; i++) {
+	    if (i == 5 && (opt & OPT_T)) {
+		rownames[5] = gretl_strdup("U2");
+	    } else {
+		rownames[i] = gretl_strdup(S[i]);
+	    }
 	}
 	gretl_matrix_set_rownames(m, rownames);
     }
@@ -5983,7 +5982,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	if (n_used != NULL) {
 	    *n_used = t2 - t1 + 1 - nmiss;
 	}
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
@@ -6017,7 +6016,7 @@ gretl_matrix *matrix_fc_stats (const double *y,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
-	add_fcstats_rownames(m);
+	add_fcstats_rownames(m, opt);
     }
 
     return m;
