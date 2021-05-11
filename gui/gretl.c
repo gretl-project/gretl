@@ -122,6 +122,9 @@ static int optrun, opteng, optbasque, optdump, optver;
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
+#ifdef GRETL_OPEN_HANDLER
+static int optnew;
+#endif
 
 static gchar *param_msg =
     N_("\nYou may supply the name of a data or script file on the command line");
@@ -147,6 +150,10 @@ static GOptionEntry options[] = {
 #endif
     { "version", 'v', 0, G_OPTION_ARG_NONE, &optver,
       N_("print version information"), NULL },
+#ifdef GRETL_OPEN_HANDLER
+    { "new", 'n', 0, G_OPTION_ARG_NONE, &optnew,
+      N_("start a new gretl instance unconditionally"), NULL },
+#endif
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -829,7 +836,7 @@ int main (int argc, char **argv)
     }
 
 #ifdef GRETL_OPEN_HANDLER
-    if (maybe_hand_off(filearg, auxname)) {
+    if (!optnew && maybe_hand_off(filearg, auxname)) {
 	fflush(stderr);
 	exit(EXIT_SUCCESS);
     }
