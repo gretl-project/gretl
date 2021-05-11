@@ -2655,7 +2655,7 @@ int exec_bundle_special_function (gretl_bundle *b,
 	user_var *uv = get_user_var_by_data(b);
 
 	bname = gretl_strdup(user_var_get_name(uv));
-#if 1
+#if 0
 	fprintf(stderr, "%s: using bundle %p (uvar %p, name '%s')\n",
 		id, (void *) b, (void *) uv, bname);
 #endif

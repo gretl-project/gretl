@@ -442,6 +442,25 @@ function bundle regls (series depvar, list indeps,
    return ret
 end function
 
+function void regls_plot (const series y, const series yhat,
+                          string yname)
+   string tmpname
+   set force_decpoint on
+   outfile --tempfile=tmpname --quiet
+      printf "set title 'actual vs predicted %s'\n", yname
+      printf "set xlabel 'predicted'\n"
+      printf "set ylabel 'actual'\n"
+      printf "set key left top\n"
+      printf "plot '-' using 1:2 title '' w p, \\\n"
+      printf " x title 'actual = predicted' w l\n"
+      print yhat y --data-only
+      printf "e\n"
+   end outfile
+   set force_decpoint off
+   gnuplot --input="@tmpname" --output=display
+   remove(tmpname)
+end function
+
 function bundle regls_fcast (bundle *b)
    strings S = defarray("R-squared", "Mean Error",
      "Root Mean Squared Error", "Mean Absolute Error",
@@ -477,6 +496,8 @@ function bundle regls_fcast (bundle *b)
       endif
    endloop
    printf "\n"
+   # experiment
+   regls_plot(y, yhat, b.depvar)
    matrix ret.stats = stats
    return ret
 end function
