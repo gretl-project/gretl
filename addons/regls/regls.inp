@@ -141,7 +141,8 @@ function void print_regls_header (const bundle b, int nlam,
 end function
 
 function void gui_adjust_ret (bundle *b, const bundle parms,
-                              const string yname, const list X)
+                              const string yname, const list X,
+                              const string xname)
    strings S = defarray("xvalidate", "ridge", "ccd")
    loop i=1..nelem(S)
       if inbundle(b, S[i]) == 1 && b[S[i]] == 0
@@ -164,10 +165,7 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
    set force_decpoint on
    outfile --buffer=cmdstr --quiet
       printf "include regls.gfn\n"
-      printf "# any required lags must be generated first\n"
-      printf "list RX = \\\n"
-      list X print
-      printf "bundle rb = regls(%s, RX, _(", yname
+      printf "bundle rb = regls(%s, %s, _(", yname, xname
       if inbundle(parms, "nlambda")
          printf "nlambda=%d", parms.nlambda
       else
@@ -433,10 +431,11 @@ function bundle regls (series depvar, list indeps,
       delete ret.verbosity
    endif
    if gui
-      string ret.depvar = argname(depvar)
+      string ret.depvar = argname(depvar, "y")
       list ret.ylist = outer_series_id(ret.depvar)
       list ret.xlist = indeps
-      gui_adjust_ret(&ret, parms, yname, indeps)
+      string xname = argname(indeps, "X")
+      gui_adjust_ret(&ret, parms, yname, indeps, xname)
    endif
 
    return ret
