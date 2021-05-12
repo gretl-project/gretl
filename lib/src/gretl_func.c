@@ -4483,7 +4483,7 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
     return list;
 }
 
-static char *pkg_get_special_func (fnpkg *pkg, UfunRole role)
+static char *pkg_get_special_func_name (fnpkg *pkg, UfunRole role)
 {
     int i;
 
@@ -4643,28 +4643,28 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
 	} else if (!strcmp(key, BUNDLE_PRINT)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_PRINT);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_PRINT);
 	} else if (!strcmp(key, BUNDLE_PLOT)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_PLOT);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_PLOT);
 	} else if (!strcmp(key, BUNDLE_TEST)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_TEST);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_TEST);
 	} else if (!strcmp(key, BUNDLE_FCAST)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_FCAST);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_FCAST);
 	} else if (!strcmp(key, BUNDLE_EXTRA)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_EXTRA);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_BUNDLE_EXTRA);
 	} else if (!strcmp(key, GUI_MAIN)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_GUI_MAIN);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_GUI_MAIN);
 	} else if (!strcmp(key, GUI_PRECHECK)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_GUI_PRECHECK);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_GUI_PRECHECK);
 	} else if (!strcmp(key, LIST_MAKER)) {
 	    ps = (char **) ptr;
-	    *ps = pkg_get_special_func(pkg, UFUN_LIST_MAKER);
+	    *ps = pkg_get_special_func_name(pkg, UFUN_LIST_MAKER);
 	} else if (!strcmp(key, "gui-attrs")) {
 	    unsigned char *s = (unsigned char *) ptr;
 
@@ -8064,7 +8064,9 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
 
     if (ret != NULL && call->fun->pkg != NULL &&
 	gretl_function_depth() == 1) {
-	gretl_bundle_set_creator(ret, call->fun->pkg->name);
+	if (call->fun->pkg_role != UFUN_BUNDLE_FCAST) {
+	    gretl_bundle_set_creator(ret, call->fun->pkg->name);
+	}
     }
 
     *(gretl_bundle **) ptr = ret;
