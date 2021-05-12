@@ -140,27 +140,8 @@ function void print_regls_header (const bundle b, int nlam,
    endif
 end function
 
-function void gui_adjust_ret (bundle *b, const bundle parms,
-                              const string yname, const list X,
-                              const string xname)
-   strings S = defarray("xvalidate", "ridge", "ccd")
-   loop i=1..nelem(S)
-      if inbundle(b, S[i]) == 1 && b[S[i]] == 0
-         delete b[S[i]] --force
-      endif
-   endloop
-   if inbundle(b, "nzb")
-      setnote(b, "nzb", "non-zero coefficients")
-   endif
-   if inbundle(b, "nzX")
-      setnote(b, "nzX", "included regressors")
-   endif
-   if inbundle(b, "B")
-      setnote(b, "B", "all coefficients")
-   endif
-   if inbundle(b, "XVC")
-      setnote(b, "XVC", "cross-validation info")
-   endif
+function void gui_add_commands (bundle *b, const bundle parms,
+                                const string yname, const string xname)
    string cmdstr
    set force_decpoint on
    outfile --buffer=cmdstr --quiet
@@ -175,7 +156,7 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
          printf ", ridge=1"
       endif
       if inbundle(b, "alpha")
-         printf ", alpha=%g", ret.alpha
+         printf ", alpha=%g", b.alpha
       endif
       printf ", verbosity=3"
       if inbundle(b, "xvalidate") && b.xvalidate
@@ -185,11 +166,25 @@ function void gui_adjust_ret (bundle *b, const bundle parms,
       endif
       printf "))\n"
    end outfile
-
    set force_decpoint off
    printf "Command line equivalent:\n"
    printf "%s\n", cmdstr
    b.commands = cmdstr
+end function
+
+function void regls_set_notes (bundle *b)
+   if inbundle(b, "nzb")
+      setnote(b, "nzb", "non-zero coefficients")
+   endif
+   if inbundle(b, "nzX")
+      setnote(b, "nzX", "included regressors")
+   endif
+   if inbundle(b, "B")
+      setnote(b, "B", "all coefficients")
+   endif
+   if inbundle(b, "XVC")
+      setnote(b, "XVC", "cross-validation info")
+   endif
 end function
 
 function void nz_print (const bundle b, const string est, int nlam)
@@ -430,12 +425,13 @@ function bundle regls (series depvar, list indeps,
    if inbundle(ret, "verbosity")
       delete ret.verbosity
    endif
+   string ret.depvar = argname(depvar, "y")
+   list ret.ylist = outer_series_id(ret.depvar)
+   list ret.xlist = indeps
+   string xname = argname(indeps, "X")
+   regls_set_notes(&ret)
    if gui
-      string ret.depvar = argname(depvar, "y")
-      list ret.ylist = outer_series_id(ret.depvar)
-      list ret.xlist = indeps
-      string xname = argname(indeps, "X")
-      gui_adjust_ret(&ret, parms, yname, indeps, xname)
+      gui_add_commands(&ret, parms, yname, xname)
    endif
 
    return ret
