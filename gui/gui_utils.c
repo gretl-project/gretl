@@ -5067,38 +5067,32 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
     exec_bundle_special_function(bundle, BUNDLE_PLOT, aname);
 }
 
-struct bitem {
-    gchar *key;
-    gpointer value;
-};
-
 static void add_blist_item_to_menu (gpointer listitem,
-				    gpointer data)
+				    gpointer p)
 {
-    struct bitem *bi = listitem;
-    gchar *key = bi->key;
-    gpointer value = bi->value;
-    GtkWidget *menu = data;
+    bundled_item *bi = listitem;
+    gpointer data;
+    const char *key;
     GtkAction *action;
     GtkWidget *item;
+    GtkWidget *menu = p;
     gchar *keystr, *label = NULL;
     const char *typestr = "?";
     const char *note;
     GretlType type;
-    void *val;
     int scalar = 0;
     int r = 0, c = 0;
     int size = 0;
 
-    val = bundled_item_get_data((bundled_item *) value, &type, &size);
+    key = bundled_item_get_key(bi);
+    data = bundled_item_get_data(bi, &type, &size);
 
-    if (val == NULL || type == GRETL_TYPE_STRING) {
-	free(bi);
+    if (data == NULL || type == GRETL_TYPE_STRING) {
 	return;
     }
 
     if (type == GRETL_TYPE_MATRIX) {
-	gretl_matrix *m = val;
+	gretl_matrix *m = data;
 
 	if (gretl_is_null_matrix(m)) {
 	    return;
@@ -5117,7 +5111,7 @@ static void add_blist_item_to_menu (gpointer listitem,
     }
 
     typestr = gretl_type_get_name(type);
-    note = bundled_item_get_note((bundled_item *) value);
+    note = bundled_item_get_note(bi);
     keystr = double_underscores_new((gchar *) key);
 
     if (r > 0 && c > 0) {
@@ -5131,13 +5125,13 @@ static void add_blist_item_to_menu (gpointer listitem,
     } else if (scalar) {
 	if (type == GRETL_TYPE_DOUBLE) {
 	    label = g_strdup_printf("%s (scalar: %g)", keystr,
-				    *(double *) val);
+				    *(double *) data);
 	} else if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
 	    label = g_strdup_printf("%s (scalar: %d)", keystr,
-				    *(int *) val);
+				    *(int *) data);
 	} else if (type == GRETL_TYPE_UNSIGNED) {
 	    label = g_strdup_printf("%s (scalar: %d)", keystr,
-				    *(unsigned int *) val);
+				    *(unsigned int *) data);
 	}
     } else if (note != NULL) {
 	label = g_strdup_printf("%s (%s: %s)", keystr, typestr, note);
@@ -5156,21 +5150,6 @@ static void add_blist_item_to_menu (gpointer listitem,
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
     g_free(label);
-    free(bi);
-}
-
-static void add_bundled_item_to_list (gpointer key,
-				      gpointer value,
-				      gpointer data)
-{
-    GList **plist = (GList **) data;
-    struct bitem *bi;
-
-    bi = malloc(sizeof *bi);
-    bi->key = key;
-    bi->value = value;
-
-    *plist = g_list_prepend(*plist, bi);
 }
 
 static void add_kalman_items_to_menu (GtkWidget *menu,
@@ -5227,12 +5206,10 @@ static void check_for_saveable (gpointer key,
 	/* "can't happen" */
 	return;
     }
-
     if (type == GRETL_TYPE_STRING) {
 	/* not useful in GUI? */
 	return;
     }
-
     if (type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = val;
 
@@ -5259,15 +5236,6 @@ static int any_saveable_content (gretl_bundle *b)
     return n;
 }
 
-static gint blist_sort_by_key (gconstpointer a,
-			       gconstpointer b)
-{
-    const struct bitem *bia = a;
-    const struct bitem *bib = b;
-
-    return g_ascii_strcasecmp(bia->key, bib->key);
-}
-
 GtkWidget *make_bundle_content_menu (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
@@ -5284,15 +5252,12 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
     }
 
     if (any_saveable_content(bundle)) {
-	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
-	GList *blist = NULL;
+	GList *blist = gretl_bundle_get_sorted_items(bundle);
 
 	if (menu == NULL) {
 	    menu = gtk_menu_new();
 	    g_object_set_data(G_OBJECT(menu), "vwin", vwin);
 	}
-	g_hash_table_foreach(ht, add_bundled_item_to_list, &blist);
-	blist = g_list_sort(blist, blist_sort_by_key);
 	g_list_foreach(blist, add_blist_item_to_menu, menu);
 	g_list_free(blist);
     }

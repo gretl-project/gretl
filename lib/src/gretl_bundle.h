@@ -113,6 +113,8 @@ const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
 const char *gretl_bundle_get_creator (gretl_bundle *bundle);
 
+const char *bundled_item_get_key (bundled_item *item);
+
 void *bundled_item_get_data (bundled_item *item, GretlType *type,
 			     int *size);
 
@@ -233,10 +235,12 @@ gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 				 int copy[], int nmat,
 				 int *err);
 
-int gretl_bundle_extract_args (gretl_bundle *template,
+int gretl_bundle_extract_args (gretl_bundle *defaults,
 			       gretl_bundle *input,
 			       gretl_array *reqd,
 			       PRN *prn, int *err);
+
+GList *gretl_bundle_get_sorted_items (gretl_bundle *b);
 
 void gretl_bundle_cleanup (void);
 
