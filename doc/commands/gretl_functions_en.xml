@@ -2865,6 +2865,53 @@
       </description>
     </function>
 
+    <function name="contains" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="matrix">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Provides a means of determining whether the numerical
+	  object <argname>x</argname> contains any of the elements of
+	  <argname>S</argname>, a matrix which plays the role of a
+	  set.
+	</para>
+	<para>
+	  The return value is an object of the same size as
+	  <argname>x</argname> containing 1s in positions where
+	  a value of <argname>x</argname> matches any element of
+	  <argname>S</argname> and zeros elsewhere.
+	  For example, the code
+	</para>
+	<code>
+	  matrix A = mshape(seq(1,9), 3, 3)
+	  matrix C = contains(A, {1, 5, 9})
+	</code>
+	<para>
+	  gives
+	</para>
+	<code>
+	  A (3 x 3)
+
+	  1   4   7
+	  2   5   8
+	  3   6   9
+
+	  C (3 x 3)
+
+	  1   0   0
+	  0   1   0
+	  0   0   1	  
+	</code>
+	<para>
+	  Since <argname>S</argname> serves as a set, for greatest
+	  efficiency it should be a vector with no repeated values,
+	  however an arbitrary matrix is accepted.
+	</para>
+      </description>
+    </function>    
+
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
