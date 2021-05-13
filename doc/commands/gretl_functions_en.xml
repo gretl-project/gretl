@@ -2905,6 +2905,15 @@
 	  0   0   1	  
 	</code>
 	<para>
+	  This function may be particularly useful when
+	  <argname>x</argname> is a series that contains a
+	  fine-grained encoding for a qualitative characteristic, and
+	  you wish to reduce this to a smaller number of
+	  categories. You can pack into <argname>S</argname> a set of
+	  values to be consolidated, and obtain a dummy variable with
+	  value 1 for observations matching this set, 0 otherwise.
+	</para>
+	<para>
 	  Since <argname>S</argname> serves as a set, for greatest
 	  efficiency it should be a vector with no repeated values,
 	  however an arbitrary matrix is accepted.
