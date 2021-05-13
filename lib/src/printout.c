@@ -2571,7 +2571,8 @@ static int midas_print_list (const int *list,
  * @opt: if OPT_O, print the data by observation (series in columns);
  * if OPT_D, use simple obs numbers, not dates; if OPT_M, print midas
  * list in original time-series order; if OPT_R print specified range
- * of object.
+ * of object; if OPT_X (relevant only for series), print the data
+ * by observation without any header or observation info.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
