@@ -7194,27 +7194,6 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static int type_translate_to_int (GretlType type)
-{
-    if (gretl_scalar_type(type)) {
-        return 1;
-    } else if (type == GRETL_TYPE_SERIES) {
-        return 2;
-    } else if (type == GRETL_TYPE_MATRIX) {
-        return 3;
-    } else if (type == GRETL_TYPE_STRING) {
-        return 4;
-    } else if (type == GRETL_TYPE_BUNDLE) {
-        return 5;
-    } else if (type == GRETL_TYPE_ARRAY) {
-        return 6;
-    } else if (type == GRETL_TYPE_LIST) {
-        return 7;
-    } else {
-        return 0;
-    }
-}
-
 static NODE *object_status (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -7241,7 +7220,7 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
                 /* handle the "isnull" alias */
                 ret->v.xval = (type == 0);
             } else {
-                ret->v.xval = type_translate_to_int(type);
+                ret->v.xval = gretl_type_get_order(type);
             }
         } else if (f == F_ISDISCR) {
             int v = current_series_index(p->dset, s);
@@ -7355,7 +7334,7 @@ static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
         /* handle the "isnull" alias */
         ret->v.xval = (t == 0);
     } else {
-        ret->v.xval = type_translate_to_int(t);
+        ret->v.xval = gretl_type_get_order(t);
     }
 
     return ret;
@@ -10327,7 +10306,7 @@ static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
         int err = 0;
 
         gretl_bundle_get_data(bundle, key, &type, NULL, &err);
-        ret->v.xval = type_translate_to_int(type);
+        ret->v.xval = gretl_type_get_order(type);
         if (err) {
             gretl_error_clear();
         }

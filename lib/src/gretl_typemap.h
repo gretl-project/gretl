@@ -40,6 +40,8 @@ GretlType gretl_type_from_string (const char *s);
 
 GretlType gretl_get_gen_type (const char *s);
 
+int gretl_type_get_order (GretlType type);
+
 int gretl_is_array_type (GretlType type);
 
 int gretl_is_arrayable_type (GretlType type);
