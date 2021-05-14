@@ -326,9 +326,6 @@ function bundle regls (series depvar, list indeps,
    if inbundle(parms, "admmctrl") == 3
       matrix ret.admmctrl = parms.admmctrl
    endif
-   if inbundle(parms, "xvcrit")
-      string ret.xvcrit = parms.xvcrit
-   endif
    if inbundle(parms, "xvalidate")
       get_xvalidation_parms(&ret, &parms)
    endif
