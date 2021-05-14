@@ -2851,6 +2851,62 @@
       </description>
     </function>
     
+    <function name="contains" section="data-utils" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">x</fnarg>
+	<fnarg type="matrix">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione permette di determinare se l'oggetto
+	  <argname>x</argname> contiene uno degli elementi della matrice
+	  <argname>S</argname> usate per indicare un insieme.
+	</para>
+	<para>
+	  Il valore restituito è un oggetto della stessa dimensione di
+	  <argname>x</argname> contenente elementi zero o uno, a
+	  seconda che l'elemento corrispondente di
+	  <argname>x</argname> sia uguale ad uno degli elementi di <argname>S</argname>.
+	  Ad esempio, il codice
+	</para>
+	<code>
+	  matrix A = mshape(seq(1,9), 3, 3)
+	  matrix C = contains(A, {1, 5, 9})
+	</code>
+	<para>
+	  produce il seguente output
+	</para>
+	<code>
+	  A (3 x 3)
+
+	  1   4   7
+	  2   5   8
+	  3   6   9
+
+	  C (3 x 3)
+
+	  1   0   0
+	  0   1   0
+	  0   0   1	  
+	</code>
+	<para>
+	  Questa funzione è particolarmente utile nei casi in cui
+	  <argname>x</argname> sia una serie contenente una codifica
+	  di una variabile qualitativa, e si desideri estrarre un
+	  sottoinsieme delle categorie. Includendo in
+	  <argname>S</argname> i valori da estrarre si può ottenere
+	  facilmente una dummy con valore 1 per le osservazioni volute
+	  e 0 altrimenti.
+	</para>
+	<para>
+	  Poiché <argname>S</argname> è inteso come insieme, è
+	  consigliabile per ragioni di efficienza di evitare che
+	  contenga valori ripetuti, anche se in realtà la funzione
+	  accetta matrici arbitarie.
+	</para>
+      </description>
+    </function>
+    
     <function name="conv2d" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
