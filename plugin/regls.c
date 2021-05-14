@@ -69,11 +69,6 @@ double admm_abstol;
 double ccd_toler;
 
 enum {
-    CRIT_MSE,
-    CRIT_MAE
-};
-
-enum {
     LAMSCALE_NONE,
     LAMSCALE_GLMNET,
     LAMSCALE_FROB
@@ -102,8 +97,8 @@ typedef struct regls_info_ {
     gint8 xvalid;
     gint8 verbose;
     gint8 lamscale;
-    gint8 crit_type;
     gint8 randfolds;
+    gint8 use_1se;
     PRN *prn;
 } regls_info;
 
@@ -166,25 +161,6 @@ static void prepare_admm_params (regls_info *ri)
     admm_abstol *= sqrt(ri->X->cols);
 }
 
-static int get_crit_type (gretl_bundle *bun)
-{
-    const char *s = gretl_bundle_get_string(bun, "xvcrit", NULL);
-    int ret = 0;
-
-    if (s != NULL) {
-	if (g_ascii_strcasecmp(s, "mse") == 0) {
-	    ret = CRIT_MSE;
-	} else if (g_ascii_strcasecmp(s, "mae") == 0) {
-	    ret = CRIT_MAE;
-	} else {
-	    gretl_errmsg_sprintf("'%s' invalid criterion", s);
-	    ret = -1;
-	}
-    }
-
-    return ret;
-}
-
 static int get_xvalidation_details (regls_info *ri)
 {
     int err = 0;
@@ -194,12 +170,6 @@ static int get_xvalidation_details (regls_info *ri)
 
     if (!err && ri->nf < 2) {
 	err = E_INVARG;
-    }
-    if (!err) {
-	ri->crit_type = get_crit_type(ri->b);
-	if (ri->crit_type < 0) {
-	    err = E_INVARG;
-	}
     }
 
     return err;
@@ -269,7 +239,7 @@ static regls_info *regls_info_new (gretl_matrix *X,
 	if (!*err && ri->xvalid) {
 	    *err = get_xvalidation_details(ri);
 	} else if (!*err) {
-	    ri->nf = ri->randfolds = ri->crit_type = 0;
+	    ri->nf = ri->randfolds = ri->use_1se;
 	    ri->crit = gretl_matrix_alloc(ri->nlam, 1);
 	    ri->R2 = gretl_matrix_alloc(ri->nlam, 1);
 	    ri->BIC = gretl_matrix_alloc(ri->nlam, 1);
@@ -362,17 +332,6 @@ static int regls_set_Xty (regls_info *ri)
     }
 
     return err;
-}
-
-static const char *crit_string (int crit)
-{
-    if (crit == CRIT_MSE) {
-	return "MSE";
-    } else if (crit == CRIT_MAE) {
-	return "MAE";
-    } else {
-	return "pc correct";
-    }
 }
 
 static int randomize_rows (gretl_matrix *X, gretl_matrix *y)
@@ -1313,8 +1272,7 @@ static double lasso_objective (const gretl_matrix *X,
 static double xv_score (const gretl_matrix *X,
 			const gretl_vector *y,
 			const gretl_vector *b,
-			gretl_vector *Xb,
-			int crit_type)
+			gretl_vector *Xb)
 {
     double sum = 0;
 
@@ -1322,11 +1280,7 @@ static double xv_score (const gretl_matrix *X,
     gretl_matrix_multiply(X, b, Xb);
     /* compute and process residuals */
     vector_subtract_from(Xb, y, X->rows);
-    if (crit_type == CRIT_MSE) {
-	sum = own_dot_product(Xb);
-    } else {
-	sum = abs_sum(Xb);
-    }
+    sum = own_dot_product(Xb);
 
     return sum / X->rows;
 }
@@ -2252,7 +2206,7 @@ static int admm_do_fold (const gretl_matrix *X,
 			 const gretl_matrix *lfrac,
 			 gretl_matrix *XVC,
 			 double lmax, double rho0,
-			 int fold, int crit_type)
+			 int fold)
 {
     static gretl_vector *v, *u, *b;
     static gretl_vector *r, *bprev, *bdiff;
@@ -2307,7 +2261,7 @@ static int admm_do_fold (const gretl_matrix *X,
 	if (!err) {
 	    /* record out-of-sample criterion */
 	    gretl_matrix_reuse(n1, X_out->rows, 1);
-	    score = xv_score(X_out, y_out, b, n1, crit_type);
+	    score = xv_score(X_out, y_out, b, n1);
 	    gretl_matrix_reuse(n1, n, 1);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
@@ -2322,7 +2276,7 @@ static int ccd_do_fold (gretl_matrix *X,
 			gretl_matrix *y_out,
 			const gretl_matrix *lam,
 			gretl_matrix *XVC,
-			int fold, int crit_type,
+			int fold,
 			double alpha)
 {
     static gretl_matrix_block *MB;
@@ -2383,7 +2337,7 @@ static int ccd_do_fold (gretl_matrix *X,
 
 	for (j=0; j<nlam; j++) {
 	    memcpy(b->val, B->val + j*k, bsize);
-	    score = xv_score(X_out, y_out, b, u, crit_type);
+	    score = xv_score(X_out, y_out, b, u);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
     }
@@ -2397,7 +2351,7 @@ static int svd_do_fold (gretl_matrix *X,
 			gretl_matrix *y_out,
 			const gretl_matrix *lam,
 			gretl_matrix *XVC,
-			int fold, int crit_type,
+			int fold,
 			gint8 lamscale)
 {
     static gretl_matrix_block *MB;
@@ -2446,7 +2400,7 @@ static int svd_do_fold (gretl_matrix *X,
 
 	for (j=0; j<nlam; j++) {
 	    memcpy(b->val, B->val + j*k, bsize);
-	    score = xv_score(X_out, y_out, b, u, crit_type);
+	    score = xv_score(X_out, y_out, b, u);
 	    gretl_matrix_set(XVC, j, fold, score);
 	}
     }
@@ -2508,7 +2462,6 @@ static void prepare_xv_data (const gretl_matrix *X,
 static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 					   gretl_matrix *lfrac,
 					   int *imin, int *i1se,
-					   int crit_type,
 					   PRN *prn)
 {
     gretl_matrix *metrics;
@@ -2567,8 +2520,7 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
     if (prn != NULL) {
 	int common = (*i1se == *imin);
 
-	pprintf(prn, "          s        %s         se\n",
-		crit_string(crit_type));
+	pprintf(prn, "          s        %s         se\n", "MSE");
 
 	for (i=0; i<XVC->rows; i++) {
 	    avg = gretl_matrix_get(metrics, i, 0);
@@ -2597,16 +2549,14 @@ static int post_xvalidation_task (regls_info *ri,
     gretl_matrix *metrics;
     int imin = 0, i1se = 0;
 
-    metrics = process_xv_criterion(XVC, ri->lfrac, &imin, &i1se,
-				   ri->crit_type, prn);
+    metrics = process_xv_criterion(XVC, ri->lfrac, &imin, &i1se, prn);
     if (metrics == NULL) {
 	return E_ALLOC;
     }
 
     if (prn != NULL) {
 	pprintf(prn, "\nAverage out-of-sample %s minimized at %#g for s=%#g\n",
-		crit_string(ri->crit_type), gretl_matrix_get(metrics, imin, 0),
-		ri->lfrac->val[imin]);
+		"MSE", gretl_matrix_get(metrics, imin, 0), ri->lfrac->val[imin]);
 	pprintf(prn, "Largest s within one s.e. of best criterion: %#g\n",
 		ri->lfrac->val[i1se]);
     }
@@ -2654,11 +2604,11 @@ static double get_xvalidation_lmax (regls_info *ri, int esize)
 static void xv_cleanup (regls_info *ri)
 {
     if (ri->ccd) {
-	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
+	ccd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     } else if (ri->ridge) {
-	svd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
+	svd_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     } else {
-	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
+	admm_do_fold(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
     }
 }
 
@@ -2704,9 +2654,9 @@ static int regls_xv (regls_info *ri)
     esize = (ri->nf - 1) * fsize;
 
     if (ri->verbose) {
-	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s, "
+	pprintf(prn, "regls_xv: nf=%d, fsize=%d, randfolds=%d, "
 		"ridge=%d, ccd=%d\n", ri->nf, fsize, ri->randfolds,
-		crit_string(ri->crit_type), ri->ridge, ri->ccd);
+		ri->ridge, ri->ccd);
 	gretl_flush(prn);
     }
 
@@ -2743,15 +2693,14 @@ static int regls_xv (regls_info *ri)
     for (f=0; f<ri->nf && !err; f++) {
 	prepare_xv_data(ri->X, ri->y, Xe, ye, Xf, yf, f);
 	if (ri->ccd) {
-	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
-			      ri->crit_type, ri->alpha);
+	    err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, f, ri->alpha);
 
 	} else if (ri->ridge) {
 	    err = svd_do_fold(Xe, ye, Xf, yf, lam, XVC, f,
-			      ri->crit_type, ri->lamscale);
+			      ri->lamscale);
 	} else {
 	    err = admm_do_fold(Xe, ye, Xf, yf, ri->lfrac, XVC,
-			       lmax, ri->rho, f, ri->crit_type);
+			       lmax, ri->rho, f);
 	}
     }
 
@@ -2857,8 +2806,8 @@ static int real_regls_xv_mpi (regls_info *ri)
 
     if (rank == 0) {
 	if (ri->verbose) {
-	    pprintf(prn, "regls_xv_mpi: nf=%d, fsize=%d, randfolds=%d, crit=%s\n\n",
-		    ri->nf, fsize, ri->randfolds, crit_string(ri->crit_type));
+	    pprintf(prn, "regls_xv_mpi: nf=%d, fsize=%d, randfolds=%d\n\n",
+		    ri->nf, fsize, ri->randfolds);
 	    gretl_flush(prn);
 	}
     }
@@ -2873,13 +2822,13 @@ static int real_regls_xv_mpi (regls_info *ri)
 	    }
 	    if (ri->ccd) {
 		err = ccd_do_fold(Xe, ye, Xf, yf, lam, XVC, my_f++,
-				  ri->crit_type, ri->alpha);
+				  ri->alpha);
 	    } else if (ri->ridge) {
 		err = svd_do_fold(Xe, ye, Xf, yf, lam, XVC, my_f++,
-				  ri->crit_type, ri->lamscale);
+				  ri->lamscale);
 	    } else {
 		err = admm_do_fold(Xe, ye, Xf, yf, ri->lfrac, XVC, lmax,
-				   ri->rho, my_f++, ri->crit_type);
+				   ri->rho, my_f++);
 	    }
 	}
 	if (r == rankmax) {
