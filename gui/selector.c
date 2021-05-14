@@ -6383,7 +6383,7 @@ static GtkWidget *ymax_spinner (void)
 {
     GtkAdjustment *adj;
 
-    adj = gtk_adjustment_new(1.0, 0, 1e+10, 0.01, 0.1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(1.0, 0, 1e+10, 0.01, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 1);
 }
 
@@ -6391,7 +6391,7 @@ static GtkWidget *single_lambda_spinner (double lam)
 {
     GtkAdjustment *adj;
 
-    adj = gtk_adjustment_new(lam, 0, 1, 0.001, 0.1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(lam, 0, 1, 0.001, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 3);
 }
 
@@ -6399,7 +6399,7 @@ static GtkWidget *multi_lambda_spinner (int nlam)
 {
     GtkAdjustment *adj;
 
-    adj = gtk_adjustment_new(nlam, 4, 100, 1, 10, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(nlam, 4, 100, 1, 10, 0);
     return gtk_spin_button_new(adj, 1, 0);
 }
 
@@ -6407,7 +6407,7 @@ static GtkWidget *regls_alpha_spinner (double alpha)
 {
     GtkAdjustment *adj;
 
-    adj = gtk_adjustment_new(alpha, 0, 1, 0.1, 0.1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(alpha, 0, 1, 0.1, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 1);
 }
 
