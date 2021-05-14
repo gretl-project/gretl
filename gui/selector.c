@@ -3462,7 +3462,7 @@ void *selector_get_regls_bundle (void)
 
 /* add "advanced" options from @src, if present */
 
-static void regls_transcribe_advanced (gretl_bundle *b,
+static void regls_transcribe_advanced (gretl_bundle *rb,
 				       gretl_bundle *src,
 				       int xvalidate,
 				       int eid)
@@ -3473,17 +3473,17 @@ static void regls_transcribe_advanced (gretl_bundle *b,
 	(eid == 1 && gretl_bundle_get_int(src, "rccd", NULL))) {
 	ccd = 1;
     }
-    gretl_bundle_set_int(b, "ccd", ccd);
+    gretl_bundle_set_int(rb, "ccd", ccd);
 
     if (xvalidate) {
 	int use_1se = gretl_bundle_get_int(src, "use_1se", NULL);
 	double s = gretl_bundle_get_scalar(src, "seed", NULL);
 
-	gretl_bundle_set_int(b, "use_1se", use_1se);
+	gretl_bundle_set_int(rb, "use_1se", use_1se);
 	if (gretl_bundle_get_int(src, "set_seed", NULL)) {
-	    gretl_bundle_set_scalar(b, "seed", s);
+	    gretl_bundle_set_scalar(rb, "seed", s);
 	} else {
-	    gretl_bundle_delete_data(b, "seed");
+	    gretl_bundle_delete_data(rb, "seed");
 	}
     }
 }
@@ -3492,10 +3492,11 @@ static void read_regls_extras (selector *sr)
 {
     GtkWidget *w = sr->extra[REGLS_EST];
     gchar *estr = combo_box_get_active_text(w);
-    gretl_bundle *rb = gretl_bundle_new();
+    gretl_bundle *rb = regls_bundle;
     int xvalidate = 0;
     int eid = 0;
 
+    gretl_bundle_void_content(rb);
     gretl_bundle_set_int(rb, "gui", 1);
 
     if (!strcmp(estr, _("Elastic net"))) {
@@ -3540,11 +3541,8 @@ static void read_regls_extras (selector *sr)
     }
 
     if (regls_adv != NULL) {
-	regls_transcribe_advanced(rb, regls_adv, eid, xvalidate);
+	regls_transcribe_advanced(rb, regls_adv, xvalidate, eid);
     }
-
-    gretl_bundle_destroy(regls_bundle);
-    regls_bundle = rb;
 
     g_free(estr);
 }
@@ -5435,7 +5433,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (want_radios(sr)) {
 	if (ci == REGLS) {
 	    /* more stuff to show */
-	    dlgy += 200;
+	    dlgy += 220;
 	} else {
 	    dlgy += 60;
 	}
@@ -6385,35 +6383,31 @@ static GtkWidget *ymax_spinner (void)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(1.0, 0, 1e+10,
-					       0.01, 0.1, 0);
+    adj = gtk_adjustment_new(1.0, 0, 1e+10, 0.01, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 1);
 }
 
-static GtkWidget *single_lambda_spinner (void)
+static GtkWidget *single_lambda_spinner (double lam)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(0.5, 0, 1,
-					       0.001, 0.1, 0);
+    adj = gtk_adjustment_new(lam, 0, 1, 0.001, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 3);
 }
 
-static GtkWidget *multi_lambda_spinner (void)
+static GtkWidget *multi_lambda_spinner (int nlam)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(25, 4, 100,
-					       1, 10, 0);
+    adj = gtk_adjustment_new(nlam, 4, 100, 1, 10, 0);
     return gtk_spin_button_new(adj, 1, 0);
 }
 
-static GtkWidget *regls_alpha_spinner (void)
+static GtkWidget *regls_alpha_spinner (double alpha)
 {
     GtkAdjustment *adj;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 1,
-					       0.1, 0.1, 0);
+    adj = gtk_adjustment_new(alpha, 0, 1, 0.1, 0.1, 0);
     return gtk_spin_button_new(adj, 1, 1);
 }
 
@@ -6482,10 +6476,59 @@ static void call_regls_advanced (GtkWidget *w, selector *sr)
     regls_advanced_dialog(regls_adv, sr->dlg);
 }
 
+static int regls_int_default (const char *key)
+{
+    if (gretl_bundle_has_key(regls_bundle, key)) {
+	return gretl_bundle_get_int(regls_bundle, key, NULL);
+    } else if (!strcmp(key, "nlambda")) {
+	return 25;
+    } else if (!strcmp(key, "nfolds")) {
+	return 10;
+    } else if (!strcmp(key, "randfolds")) {
+	return 1;
+    } else if (!strcmp(key, "eid")) {
+	if (gretl_bundle_get_int(regls_bundle, "ridge", NULL)) {
+	    return 1;
+	} else if (gretl_bundle_has_key(regls_bundle, "alpha")) {
+	    return 2;
+	}
+    }
+
+    return 0;
+}
+
+static double regls_scalar_default (const char *key)
+{
+    if (gretl_bundle_has_key(regls_bundle, key)) {
+	return gretl_bundle_get_scalar(regls_bundle, key, NULL);
+    } else if (!strcmp(key, "lfrac")) {
+	return 0.5;
+    } else if (!strcmp(key, "alpha")) {
+	return 1.0;
+    } else {
+	return 0.0;
+    }
+}
+
 static void build_regls_controls (selector *sr)
 {
     GtkWidget *w, *hbox, *b1, *b2, *b3;
+    int eid, nlambda, xvalidate, nfolds, randfolds;
+    double lfrac, alpha;
     GSList *group;
+
+    if (regls_bundle == NULL) {
+	regls_bundle = gretl_bundle_new();
+    }
+
+    eid       = regls_int_default("eid");
+    nlambda   = regls_int_default("nlambda");
+    xvalidate = regls_int_default("xvalidate");
+    nfolds    = regls_int_default("nfolds");
+    randfolds = regls_int_default("randfolds");
+
+    lfrac = regls_scalar_default("lfrac");
+    alpha = regls_scalar_default("alpha");
 
     vbox_add_vwedge(sr->vbox);
 
@@ -6497,12 +6540,12 @@ static void build_regls_controls (selector *sr)
     combo_box_append_text(w, _("LASSO"));
     combo_box_append_text(w, _("Ridge"));
     combo_box_append_text(w, _("Elastic net"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), eid);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_label_new("α =");
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    sr->extra[REGLS_ALPHA] = w = regls_alpha_spinner();
-    gtk_widget_set_sensitive(w, FALSE);
+    sr->extra[REGLS_ALPHA] = w = regls_alpha_spinner(alpha);
+    gtk_widget_set_sensitive(w, (eid == 2));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(sr->extra[REGLS_EST]), "changed",
@@ -6514,7 +6557,7 @@ static void build_regls_controls (selector *sr)
     hbox = gtk_hbox_new(FALSE, 5);
     b1 = gtk_radio_button_new_with_label(NULL, _("Single λ-fraction"));
     gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 5);
-    w = sr->extra[REGLS_LAMVAL] = single_lambda_spinner();
+    w = sr->extra[REGLS_LAMVAL] = single_lambda_spinner(lfrac);
     sensitize_conditional_on(w, b1);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
@@ -6524,8 +6567,9 @@ static void build_regls_controls (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Multiple λ values"));
     gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 5);
-    w = sr->extra[REGLS_NLAM] = multi_lambda_spinner();
-    gtk_widget_set_sensitive(w, FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), xvalidate);
+    w = sr->extra[REGLS_NLAM] = multi_lambda_spinner(nlambda);
+    gtk_widget_set_sensitive(w, xvalidate);
     sensitize_conditional_on(w, b2);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
@@ -6535,24 +6579,25 @@ static void build_regls_controls (selector *sr)
     /* cross validation */
     hbox = gtk_hbox_new(FALSE, 5);
     b3 = gtk_check_button_new_with_label(_("Optimize via cross-validation"));
-    gtk_widget_set_sensitive(b3, FALSE);
+    gtk_widget_set_sensitive(b3, xvalidate);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b3), xvalidate);
     gtk_box_pack_start(GTK_BOX(hbox), b3, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(_("Folds:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     sr->extra[REGLS_NFOLDS] = w = gtk_spin_button_new_with_range(4, 20, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), 10);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), nfolds);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_label_new(_("type:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     sr->extra[REGLS_FTYPE] = w = gtk_combo_box_text_new();
     combo_box_append_text(w, _("random"));
     combo_box_append_text(w, _("contiguous"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), randfolds? 0 : 1);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_set_sensitive(hbox, FALSE);
+    gtk_widget_set_sensitive(hbox, xvalidate);
     sensitize_conditional_on(hbox, b3);
 
     g_signal_connect(G_OBJECT(b2), "toggled",
