@@ -1738,15 +1738,14 @@ static void check_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *targ, *src = (bundled_item *) value;
     struct bchecker *bchk = (struct bchecker *) p;
-    gretl_bundle *template = bchk->b;
 
     if (*bchk->ret || *bchk->err) {
 	/* don't waste time if we already hit an error */
 	return;
     }
 
-    /* look up @key (from input) in the @template bundle */
-    targ = g_hash_table_lookup(template->ht, (const char *) key);
+    /* look up @key (from input) in the template bundle */
+    targ = g_hash_table_lookup(bchk->b->ht, (const char *) key);
 
     if (targ == NULL) {
 	/* extraneous key in input */
@@ -2185,6 +2184,29 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
     }
 
     return err;
+}
+
+/**
+ * gretl_bundle_debug_print:
+ * @bundle: gretl bundle.
+ * @msg: extra string to print, or NULL.
+ *
+ * Prints to stderr a list of the keys defined in @bundle, along
+ * with descriptive notes, if any. If @msg is non-NULL it is
+ * printed first.
+ */
+
+void gretl_bundle_debug_print (gretl_bundle *bundle, const char *msg)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+    if (msg != NULL) {
+	pputs(prn, msg);
+	pputc(prn, '\n');
+    }
+    real_bundle_print(bundle, 0, 0, prn);
+    pputc(prn, '\n');
+    gretl_print_destroy(prn);
 }
 
 int gretl_bundle_print_tree (gretl_bundle *bundle, PRN *prn)
