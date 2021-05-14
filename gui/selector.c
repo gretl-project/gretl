@@ -6425,6 +6425,20 @@ static void xvalidation_ok (GtkToggleButton *b, GtkWidget *targ)
     gtk_widget_set_sensitive(targ, button_is_active(b));
 }
 
+#if 0 /* not yet */
+
+static void call_regls_advanced (GtkWidget *w, selector *sr)
+{
+    int a[2] = {0};
+    int set_seed = 0;
+    guint32 seed = gretl_rand_get_seed();
+    int use_mpi = 1;
+
+    regls_advanced_dialog(a, &set_seed, &seed, &use_mpi, sr->dlg);
+}
+
+#endif
+
 static void build_regls_controls (selector *sr)
 {
     GtkWidget *w, *hbox, *b1, *b2, *b3;
@@ -6500,6 +6514,15 @@ static void build_regls_controls (selector *sr)
 
     g_signal_connect(G_OBJECT(b2), "toggled",
 		     G_CALLBACK(xvalidation_ok), b3);
+#if 0 /* not yet */
+    /* advanced controls */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_button_new_with_label("Advanced...");
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(call_regls_advanced), sr);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+#endif
 }
 
 static void build_ellipse_spinner (selector *sr)

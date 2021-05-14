@@ -412,6 +412,20 @@ static void add_plot_pager (png_plot *plot)
     }
     plot->status |= PLOT_HAS_PAGER;
 
+#if 0
+    if (1) {
+	int n = g_list_length(plot->mp->list);
+	GtkToolItem *spin_item;
+	GtkWidget *sb;
+
+	spin_item = gtk_tool_item_new();
+	sb = gtk_spin_button_new_with_range(1, n, 1);
+	gtk_container_add(GTK_CONTAINER(spin_item), sb);
+	gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), spin_item, i++);
+	gtk_widget_show_all(GTK_WIDGET(spin_item));
+    }
+#endif
+
     sep = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, i);
     gtk_widget_show(GTK_WIDGET(sep));
@@ -5978,6 +5992,9 @@ static int plot_collection_attach_plot (png_plot *coll,
     add->savebuf = coll->savebuf;
 #endif
 
+    coll->mp->list = g_list_append(coll->mp->list, add);
+    coll->mp->mtime = gretl_monotonic_time();
+
     if (!plot_has_pager(coll)) {
 	gtk_window_set_title(GTK_WINDOW(coll->shell),
 			     _("gretl: plot collection"));
@@ -5985,8 +6002,6 @@ static int plot_collection_attach_plot (png_plot *coll,
 	plot_window_set_label(coll->shell);
     }
 
-    coll->mp->list = g_list_append(coll->mp->list, add);
-    coll->mp->mtime = gretl_monotonic_time();
 #if COLLDEBUG
     fprintf(stderr, "  plot_collection now contains %d plots\n",
 	    g_list_length(coll->mp->list));

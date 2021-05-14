@@ -1260,26 +1260,21 @@ void database_description_dialog (const char *binname)
     gtk_widget_show_all(dlg);
 }
 
-static void record_seed (GtkWidget *w, guint32 *s)
+static void set_rand_seed (GtkWidget *w, GtkAdjustment *adj)
 {
-    *s = (guint32) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
-}
+    guint32 s = (guint32) gtk_adjustment_get_value(GTK_ADJUSTMENT(adj));
 
-static void set_rand_seed (GtkWidget *w, guint32 *s)
-{
-    guint32 newseed = *s;
-
-    gretl_rand_set_seed(newseed);
-    lib_command_sprintf("set seed %u", newseed);
+    gretl_rand_set_seed(s);
+    lib_command_sprintf("set seed %u", s);
     record_command_verbatim();
 }
 
 void rand_seed_dialog (void)
 {
-    guint32 dseed;
     GtkWidget *dlg;
     GtkWidget *tmp, *hbox, *vbox;
     GtkAdjustment *adj;
+    guint32 dseed;
 
     if (maybe_raise_dialog()) {
         return;
@@ -1295,11 +1290,9 @@ void rand_seed_dialog (void)
     dseed = gretl_rand_get_seed();
     adj = (GtkAdjustment *) gtk_adjustment_new((gdouble) dseed, 1,
                                                (gdouble) UINT_MAX,
-                                               1, 1000, 0);
-    g_signal_connect(G_OBJECT(adj), "value-changed",
-                     G_CALLBACK(record_seed), &dseed);
-
+                                               1, 10000, 0);
     tmp = gtk_spin_button_new(adj, 1, 0);
+    gtk_entry_set_width_chars(GTK_ENTRY(tmp), 10);
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
@@ -1314,7 +1307,7 @@ void rand_seed_dialog (void)
     /* OK button */
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(set_rand_seed), &dseed);
+                     G_CALLBACK(set_rand_seed), adj);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);
@@ -7473,6 +7466,105 @@ void bdstest_dialog (int v, GtkWidget *parent)
                      G_CALLBACK(do_bdstest), &bi);
     gtk_widget_grab_default(tmp);
     context_help_button(hbox, BDS);
+
+    gtk_widget_show_all(dialog);
+}
+
+struct regls_options {
+    int *algo;
+    int *set_seed;
+    guint32 *seed;
+    int *use_mpi;
+    GtkWidget *dlg;
+    GtkWidget *a[2];
+    GtkWidget *b[3];
+};
+
+static void set_regls_options (GtkWidget *w, struct regls_options *ro)
+{
+    ro->algo[0] = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->a[0]));
+    ro->algo[1] = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->a[1]));
+    *ro->set_seed = button_is_active(ro->b[0]);
+    if (ro->set_seed) {
+	*ro->seed =
+	    (guint32) gtk_spin_button_get_value(GTK_SPIN_BUTTON(ro->b[1]));
+    }
+    *ro->use_mpi = button_is_active(ro->b[2]);
+
+    fprintf(stderr, "algo %d,%d; set_seed %d, seed %u, mpi %d\n",
+	    ro->algo[0], ro->algo[1], *ro->set_seed,
+	    *ro->seed, *ro->use_mpi);
+
+    gtk_widget_destroy(ro->dlg);
+}
+
+void regls_advanced_dialog (int *algo, int *set_seed,
+			    guint32 *seed, int *use_mpi,
+			    GtkWidget *parent)
+{
+    struct regls_options ro = {0};
+    const char *anames[] = {
+	N_("LASSO algorithm:"),
+	N_("RIDGE algorithm:")
+    };
+    const char *lopts[] = {"ADMM", "CCD"};
+    const char *ropts[] = {"SVD", "CCD"};
+    const char **opts;
+    GtkWidget *dialog, *vbox, *hbox;
+    GtkWidget *w;
+    int i;
+
+    dialog = gretl_dialog_new("gretl: regls options", parent, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    ro.dlg = dialog;
+    ro.algo = algo;
+    ro.set_seed = set_seed;
+    ro.seed = seed;
+    ro.use_mpi = use_mpi;
+
+    /* algorithms for LASSO, Ridge */
+    for (i=0; i<2; i++) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_label_new(_(anames[i]));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	ro.a[i] = gtk_combo_box_text_new();
+	opts = (i == 1)? ropts : lopts;
+	combo_box_append_text(ro.a[i], opts[0]);
+	combo_box_append_text(ro.a[i], opts[1]);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(ro.a[i]), algo[i]);
+	gtk_box_pack_start(GTK_BOX(hbox), ro.a[i], FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    }
+
+    /* seed */
+    hbox = gtk_hbox_new(FALSE, 5);
+    ro.b[0] = gtk_check_button_new_with_label(_("set seed for random folds"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[0]), *set_seed);
+    gtk_box_pack_start(GTK_BOX(hbox), ro.b[0], FALSE, FALSE, 5);
+    ro.b[1] = gtk_spin_button_new_with_range(1, (gdouble) UINT_MAX, 1);
+    gtk_entry_set_width_chars(GTK_ENTRY(ro.b[1]), 10);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ro.b[1]), (gdouble) *seed);
+    gtk_spin_button_set_increments(GTK_SPIN_BUTTON(ro.b[1]), 1, 100000);
+    gtk_widget_set_sensitive(ro.b[1], *set_seed);
+    sensitize_conditional_on(ro.b[1], ro.b[0]);
+    gtk_box_pack_start(GTK_BOX(hbox), ro.b[1], FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* MPI switch */
+    hbox = gtk_hbox_new(FALSE, 5);
+    ro.b[2] = gtk_check_button_new_with_label(_("use MPI if available"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[2]), *use_mpi);
+    gtk_box_pack_start(GTK_BOX(hbox), ro.b[2], FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* buttons */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+    cancel_delete_button(hbox, dialog);
+    w = ok_button(hbox);
+    g_signal_connect(G_OBJECT(w), "clicked",
+                     G_CALLBACK(set_regls_options), &ro);
+    gtk_widget_grab_default(w);
 
     gtk_widget_show_all(dialog);
 }
