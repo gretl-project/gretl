@@ -7471,36 +7471,39 @@ void bdstest_dialog (int v, GtkWidget *parent)
 }
 
 struct regls_options {
-    int *algo;
-    int *set_seed;
-    guint32 *seed;
-    int *use_mpi;
+    gretl_bundle *parms;
     GtkWidget *dlg;
-    GtkWidget *a[2];
+    GtkWidget *c[3];
     GtkWidget *b[3];
 };
 
 static void set_regls_options (GtkWidget *w, struct regls_options *ro)
 {
-    ro->algo[0] = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->a[0]));
-    ro->algo[1] = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->a[1]));
-    *ro->set_seed = button_is_active(ro->b[0]);
-    if (ro->set_seed) {
-	*ro->seed =
-	    (guint32) gtk_spin_button_get_value(GTK_SPIN_BUTTON(ro->b[1]));
-    }
-    *ro->use_mpi = button_is_active(ro->b[2]);
+    int use_1se, use_mpi, set_seed;
+    int lccd, rccd;
+    double seed;
 
-    fprintf(stderr, "algo %d,%d; set_seed %d, seed %u, mpi %d\n",
-	    ro->algo[0], ro->algo[1], *ro->set_seed,
-	    *ro->seed, *ro->use_mpi);
+    lccd = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->c[0]));
+    rccd = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->c[1]));
+    use_1se = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->c[2]));
+    set_seed = button_is_active(ro->b[0]);
+    use_mpi = button_is_active(ro->b[2]);
+
+    gretl_bundle_set_int(ro->parms, "lccd", lccd);
+    gretl_bundle_set_int(ro->parms, "rccd", rccd);
+    gretl_bundle_set_int(ro->parms, "use_1se", use_1se);
+    gretl_bundle_set_int(ro->parms, "use_mpi", use_mpi);
+    gretl_bundle_set_int(ro->parms, "set_seed", set_seed);
+
+    if (set_seed) {
+	seed = gtk_spin_button_get_value(GTK_SPIN_BUTTON(ro->b[1]));
+	gretl_bundle_set_scalar(ro->parms, "seed", seed);
+    }
 
     gtk_widget_destroy(ro->dlg);
 }
 
-void regls_advanced_dialog (int *algo, int *set_seed,
-			    guint32 *seed, int *use_mpi,
-			    GtkWidget *parent)
+void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
 {
     struct regls_options ro = {0};
     const char *anames[] = {
@@ -7510,43 +7513,60 @@ void regls_advanced_dialog (int *algo, int *set_seed,
     const char *lopts[] = {"ADMM", "CCD"};
     const char *ropts[] = {"SVD", "CCD"};
     const char **opts;
-    GtkWidget *dialog, *vbox, *hbox;
-    GtkWidget *w;
+    GtkWidget *dialog, *vbox, *hbox, *w;
+    double seed;
+    int use_1se, use_mpi, set_seed;
+    int lccd, rccd;
     int i;
 
     dialog = gretl_dialog_new("gretl: regls options", parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     ro.dlg = dialog;
-    ro.algo = algo;
-    ro.set_seed = set_seed;
-    ro.seed = seed;
-    ro.use_mpi = use_mpi;
+    ro.parms = b;
+
+    lccd = gretl_bundle_get_int(b, "lccd", NULL);
+    rccd = gretl_bundle_get_int(b, "rccd", NULL);
+    use_mpi = gretl_bundle_get_int(b, "use_mpi", NULL);
+    use_1se = gretl_bundle_get_int(b, "use_1se", NULL);
+    set_seed = gretl_bundle_get_int(b, "set_seed", NULL);
+    seed = gretl_bundle_get_scalar(b, "seed", NULL);
 
     /* algorithms for LASSO, Ridge */
     for (i=0; i<2; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_label_new(_(anames[i]));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	ro.a[i] = gtk_combo_box_text_new();
+	ro.c[i] = gtk_combo_box_text_new();
 	opts = (i == 1)? ropts : lopts;
-	combo_box_append_text(ro.a[i], opts[0]);
-	combo_box_append_text(ro.a[i], opts[1]);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(ro.a[i]), algo[i]);
-	gtk_box_pack_start(GTK_BOX(hbox), ro.a[i], FALSE, FALSE, 5);
+	combo_box_append_text(ro.c[i], opts[0]);
+	combo_box_append_text(ro.c[i], opts[1]);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(ro.c[i]), (i == 1)? rccd : lccd);
+	gtk_box_pack_start(GTK_BOX(hbox), ro.c[i], FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     }
+
+    /* optimization criterion */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("cross validation criterion"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    ro.c[i] = gtk_combo_box_text_new();
+    combo_box_append_text(ro.c[i], _("minimized MSE"));
+    combo_box_append_text(ro.c[i], _("one-standard-error rule"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(ro.c[i]), use_1se);
+    gtk_box_pack_start(GTK_BOX(hbox), ro.c[i], FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* seed */
     hbox = gtk_hbox_new(FALSE, 5);
     ro.b[0] = gtk_check_button_new_with_label(_("set seed for random folds"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[0]), *set_seed);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[0]), set_seed);
     gtk_box_pack_start(GTK_BOX(hbox), ro.b[0], FALSE, FALSE, 5);
     ro.b[1] = gtk_spin_button_new_with_range(1, (gdouble) UINT_MAX, 1);
     gtk_entry_set_width_chars(GTK_ENTRY(ro.b[1]), 10);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ro.b[1]), (gdouble) *seed);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ro.b[1]), seed);
     gtk_spin_button_set_increments(GTK_SPIN_BUTTON(ro.b[1]), 1, 100000);
-    gtk_widget_set_sensitive(ro.b[1], *set_seed);
+    gtk_widget_set_sensitive(ro.b[1], set_seed);
     sensitize_conditional_on(ro.b[1], ro.b[0]);
     gtk_box_pack_start(GTK_BOX(hbox), ro.b[1], FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -7554,7 +7574,7 @@ void regls_advanced_dialog (int *algo, int *set_seed,
     /* MPI switch */
     hbox = gtk_hbox_new(FALSE, 5);
     ro.b[2] = gtk_check_button_new_with_label(_("use MPI if available"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[2]), *use_mpi);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[2]), use_mpi);
     gtk_box_pack_start(GTK_BOX(hbox), ro.b[2], FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 

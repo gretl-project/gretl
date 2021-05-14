@@ -316,6 +316,8 @@ static gretlopt model_opt;
 static GtkWidget *multiplot_label;
 static GtkWidget *multiplot_menu;
 
+static gretl_bundle *regls_adv;
+
 static selector *open_selector;
 
 static gint listvar_reorder_click (GtkWidget *widget, GdkEventButton *event,
@@ -3458,11 +3460,41 @@ void *selector_get_regls_bundle (void)
     return regls_bundle;
 }
 
+/* add "advanced" options from @src, if present */
+
+static void regls_transcribe_advanced (gretl_bundle *b,
+				       gretl_bundle *src,
+				       int xvalidate,
+				       int eid)
+{
+    int ccd = 0;
+
+    if ((eid == 0 && gretl_bundle_get_int(src, "lccd", NULL)) ||
+	(eid == 1 && gretl_bundle_get_int(src, "rccd", NULL))) {
+	ccd = 1;
+    }
+    gretl_bundle_set_int(b, "ccd", ccd);
+
+    if (xvalidate) {
+	int use_1se = gretl_bundle_get_int(src, "use_1se", NULL);
+	double s = gretl_bundle_get_scalar(src, "seed", NULL);
+
+	gretl_bundle_set_int(b, "use_1se", use_1se);
+	if (gretl_bundle_get_int(src, "set_seed", NULL)) {
+	    gretl_bundle_set_scalar(b, "seed", s);
+	} else {
+	    gretl_bundle_delete_data(b, "seed");
+	}
+    }
+}
+
 static void read_regls_extras (selector *sr)
 {
-    GtkWidget *est = sr->extra[REGLS_EST];
-    gchar *estr = combo_box_get_active_text(est);
+    GtkWidget *w = sr->extra[REGLS_EST];
+    gchar *estr = combo_box_get_active_text(w);
     gretl_bundle *rb = gretl_bundle_new();
+    int xvalidate = 0;
+    int eid = 0;
 
     gretl_bundle_set_int(rb, "gui", 1);
 
@@ -3474,11 +3506,14 @@ static void read_regls_extras (selector *sr)
 	    ; /* LASSO */
 	} else if (a == 0) {
 	    gretl_bundle_set_int(rb, "ridge", 1);
+	    eid = 1;
 	} else {
 	    gretl_bundle_set_scalar(rb, "alpha", a);
+	    eid = 2;
 	}
     } else if (!strcmp(estr, _("Ridge"))) {
 	gretl_bundle_set_int(rb, "ridge", 1);
+	eid = 1;
     }
 
     if (gtk_widget_is_sensitive(sr->extra[REGLS_LAMVAL])) {
@@ -3501,6 +3536,11 @@ static void read_regls_extras (selector *sr)
 	if (!strcmp(ft, _("random"))) {
 	    gretl_bundle_set_int(rb, "randfolds", 1);
 	}
+	xvalidate = 1;
+    }
+
+    if (regls_adv != NULL) {
+	regls_transcribe_advanced(rb, regls_adv, eid, xvalidate);
     }
 
     gretl_bundle_destroy(regls_bundle);
@@ -6425,19 +6465,22 @@ static void xvalidation_ok (GtkToggleButton *b, GtkWidget *targ)
     gtk_widget_set_sensitive(targ, button_is_active(b));
 }
 
-#if 0 /* not yet */
-
 static void call_regls_advanced (GtkWidget *w, selector *sr)
 {
-    int a[2] = {0};
-    int set_seed = 0;
-    guint32 seed = gretl_rand_get_seed();
-    int use_mpi = 1;
+    if (regls_adv == NULL) {
+	double seed = (double) gretl_rand_get_seed();
 
-    regls_advanced_dialog(a, &set_seed, &seed, &use_mpi, sr->dlg);
+	regls_adv = gretl_bundle_new();
+	gretl_bundle_set_int(regls_adv, "lccd", 0);
+	gretl_bundle_set_int(regls_adv, "rccd", 0);
+	gretl_bundle_set_int(regls_adv, "use_mpi", 1);
+	gretl_bundle_set_int(regls_adv, "use_1se", 0);
+	gretl_bundle_set_int(regls_adv, "set_seed", 0);
+	gretl_bundle_set_scalar(regls_adv, "seed", seed);
+    }
+
+    regls_advanced_dialog(regls_adv, sr->dlg);
 }
-
-#endif
 
 static void build_regls_controls (selector *sr)
 {
@@ -6514,15 +6557,14 @@ static void build_regls_controls (selector *sr)
 
     g_signal_connect(G_OBJECT(b2), "toggled",
 		     G_CALLBACK(xvalidation_ok), b3);
-#if 0 /* not yet */
-    /* advanced controls */
+
+    /* "advanced" controls */
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_button_new_with_label("Advanced...");
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(call_regls_advanced), sr);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-#endif
 }
 
 static void build_ellipse_spinner (selector *sr)

@@ -222,8 +222,6 @@ void tdisagg_dialog (int v);
 
 void bdstest_dialog (int v, GtkWidget *parent);
 
-void regls_advanced_dialog (int *algo, int *set_seed,
-			    guint32 *seed, int *use_mpi,
-			    GtkWidget *parent);
+void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent);
 
 #endif /* DIALOGS_H */
