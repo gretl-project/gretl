@@ -7605,6 +7605,7 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
     g_signal_connect(G_OBJECT(w), "clicked",
                      G_CALLBACK(set_regls_options), &ro);
     gtk_widget_grab_default(w);
+    context_help_button(hbox, REGLS_ADV);
 
     gtk_widget_show_all(dialog);
 }

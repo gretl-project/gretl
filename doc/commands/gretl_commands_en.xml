@@ -12283,14 +12283,14 @@
 	   label="Regularized least squares" context="gui">
     <description>
       <para>
-	This dialog gives you a limited degree of access to the
-	<lit>regls</lit> function for regularized least squares.
+	This dialog gives you access to the <lit>regls</lit> function
+	for regularized least squares.
       </para>
       <para>
-	Three variants are supported: LASSO, which limits the sum of
+	Three estimators are supported: LASSO, which limits the sum of
 	absolute values of the coefficients; Ridge, which limits the
 	sum of squared coefficients; and Elastic net, which is a
-	combination of the first two, governed by the hyperparameter
+	combination of the first two governed by the hyperparameter
 	&alpha;. (&alpha; = 1 gives LASSO, &alpha; = 0 gives Ridge,
 	intermediate values give a weighted combination.)
       </para>
@@ -12302,11 +12302,78 @@
 	the second case the penalty values are scaled automatically.
       </para>
       <para>
-	You can exercise much greater control over gretl's regularized
-	least squares facility by calling the <lit>regls</lit>
-	function via scripting. In particular you are able to specify
-	cross validation; see <doc>regls.pdf</doc> for details.
+	If you select multiple &lgr; values the option of cross
+	validation becomes available. In that case you can select the
+	number of <quote>folds</quote> for the training data (default
+	10) and whether these folds should be random or contiguous
+	subsets of the observations. You may also choose to show
+	a plot of average Mean Squared Error (MSE) against the
+	&lgr;-fraction.
       </para>
+      <para>
+	The <quote>Advanced</quote> button opens a further dialog that
+	provides somewhat greater control over the regularization
+	procedure. But note that you can exercise finer control by
+	calling the <lit>regls</lit> function via scripting. In
+	particular you are able to specify cross validation; see
+	<doc>regls.pdf</doc> for details.
+      </para>
+    </description>
+  </command>
+
+  <command name="regls-advanced" section="Estimation"
+	   label="Further regls options" context="gui">
+    <description>
+      <para>
+	Selections made via this dialog are applied only where
+	relevant, based on the choices made in the main regls dialog.
+	They are remembered for the duration of the gretl session.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Choice of algorithm: You may select the Cyclical
+	    Coordinate Descent (CCD) method for either LASSO or Ridge
+	    regression, as opposed to the default methods, namely the
+	    Alternating Direction Method of Multipliers (ADMM) for
+	    LASSO and Singular Value Decomposition (SVD) for Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The default criterion for <quote>best</quote> performance
+	    on cross validation is minimization of MSE, but you can
+	    select the alternative <quote>one standard error</quote>
+	    rule. This alternative, which favors parsimony, selects
+	    the largest penalty factor whose MSE is within one
+	    standard error of the minimum.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Seed for random folds: If you wish to obtain replicable
+	    results when cross validating with random folds, it is
+	    necessary to specify a seed for the random number
+	    generator.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    By default regls will use MPI (if available) in an effort
+	    to speed up cross validation. The MPI checkbox (shown only
+	    if gretl is compiled with MPI support) lets you turn this
+	    off, which may yield a speed-up for smaller datasets.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The option of showing execution time may be helpful if you
+	    wish to compare the performance of different algorithms,
+	    or to check whether MPI is worthwhile. The timing shown in
+	    the output is for execution of the underlying C code.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 

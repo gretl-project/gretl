@@ -122,6 +122,7 @@ enum extra_cmds {
     BFGS_CONFIG,
     COUNTMOD,
     REGLS,
+    REGLS_ADV,
     BWFILTER,
     POLYWEIGHTS,
     EMAFILTER,
