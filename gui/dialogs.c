@@ -7474,26 +7474,31 @@ struct regls_options {
     gretl_bundle *parms;
     GtkWidget *dlg;
     GtkWidget *c[3];
-    GtkWidget *b[3];
+    GtkWidget *b[4];
 };
 
 static void set_regls_options (GtkWidget *w, struct regls_options *ro)
 {
-    int use_1se, use_mpi, set_seed;
-    int lccd, rccd;
+    int use_1se, set_seed;
+    int lccd, rccd, timer;
     double seed;
 
     lccd = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->c[0]));
     rccd = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->c[1]));
     use_1se = gtk_combo_box_get_active(GTK_COMBO_BOX(ro->c[2]));
     set_seed = button_is_active(ro->b[0]);
-    use_mpi = button_is_active(ro->b[2]);
+    timer = button_is_active(ro->b[3]);
 
     gretl_bundle_set_int(ro->parms, "lccd", lccd);
     gretl_bundle_set_int(ro->parms, "rccd", rccd);
     gretl_bundle_set_int(ro->parms, "use_1se", use_1se);
-    gretl_bundle_set_int(ro->parms, "use_mpi", use_mpi);
     gretl_bundle_set_int(ro->parms, "set_seed", set_seed);
+    gretl_bundle_set_int(ro->parms, "timer", timer);
+
+#ifdef HAVE_MPI
+    int no_mpi = !button_is_active(ro->b[2]);
+    gretl_bundle_set_int(ro->parms, "no_mpi", no_mpi);
+#endif
 
     if (set_seed) {
 	seed = gtk_spin_button_get_value(GTK_SPIN_BUTTON(ro->b[1]));
@@ -7515,8 +7520,11 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
     const char **opts;
     GtkWidget *dialog, *vbox, *hbox, *w;
     double seed;
-    int use_1se, use_mpi, set_seed;
-    int lccd, rccd;
+    int use_1se, set_seed;
+    int lccd, rccd, timer;
+#ifdef HAVE_MPI
+    int no_mpi = 0;
+#endif
     int i;
 
     dialog = gretl_dialog_new("gretl: regls options", parent, GRETL_DLG_BLOCK);
@@ -7527,10 +7535,13 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
 
     lccd = gretl_bundle_get_int(b, "lccd", NULL);
     rccd = gretl_bundle_get_int(b, "rccd", NULL);
-    use_mpi = gretl_bundle_get_int(b, "use_mpi", NULL);
     use_1se = gretl_bundle_get_int(b, "use_1se", NULL);
+    timer = gretl_bundle_get_int(b, "timer", NULL);
     set_seed = gretl_bundle_get_int(b, "set_seed", NULL);
     seed = gretl_bundle_get_scalar(b, "seed", NULL);
+#ifdef HAVE_MPI
+    no_mpi = gretl_bundle_get_int(b, "no_mpi", NULL);
+#endif
 
     /* algorithms for LASSO, Ridge */
     for (i=0; i<2; i++) {
@@ -7571,11 +7582,20 @@ void regls_advanced_dialog (gretl_bundle *b, GtkWidget *parent)
     gtk_box_pack_start(GTK_BOX(hbox), ro.b[1], FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
+#ifdef HAVE_MPI
     /* MPI switch */
     hbox = gtk_hbox_new(FALSE, 5);
     ro.b[2] = gtk_check_button_new_with_label(_("use MPI if available"));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[2]), use_mpi);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[2]), !no_mpi);
     gtk_box_pack_start(GTK_BOX(hbox), ro.b[2], FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+#endif
+
+    /* timer */
+    hbox = gtk_hbox_new(FALSE, 5);
+    ro.b[3] = gtk_check_button_new_with_label(_("show execution time"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ro.b[3]), timer);
+    gtk_box_pack_start(GTK_BOX(hbox), ro.b[3], FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* buttons */

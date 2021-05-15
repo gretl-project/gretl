@@ -3470,6 +3470,10 @@ static void regls_transcribe_advanced (gretl_bundle *rb,
 {
     int ccd = 0;
 
+    if (gretl_bundle_get_int(src, "timer", NULL)) {
+	gretl_bundle_set_int(rb, "timer", 1);
+    }
+
     if ((eid == 0 && gretl_bundle_get_int(src, "lccd", NULL)) ||
 	(eid == 1 && gretl_bundle_get_int(src, "rccd", NULL))) {
 	ccd = 1;
@@ -3487,6 +3491,14 @@ static void regls_transcribe_advanced (gretl_bundle *rb,
 	    gretl_bundle_delete_data(rb, "seed");
 	}
     }
+
+#ifdef HAVE_MPI
+    if (xvalidate) {
+	int no_mpi = gretl_bundle_get_int(src, "no_mpi", NULL);
+
+	gretl_bundle_set_int(rb, "no_mpi", no_mpi);
+    }
+#endif
 }
 
 static void read_regls_extras (selector *sr)
@@ -5438,7 +5450,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (want_radios(sr)) {
 	if (ci == REGLS) {
 	    /* more stuff to show */
-	    dlgy += 230;
+	    dlgy += 240;
 	} else {
 	    dlgy += 60;
 	}
@@ -6472,10 +6484,13 @@ static void call_regls_advanced (GtkWidget *w, selector *sr)
 	regls_adv = gretl_bundle_new();
 	gretl_bundle_set_int(regls_adv, "lccd", 0);
 	gretl_bundle_set_int(regls_adv, "rccd", 0);
-	gretl_bundle_set_int(regls_adv, "use_mpi", 1);
 	gretl_bundle_set_int(regls_adv, "use_1se", 0);
+	gretl_bundle_set_int(regls_adv, "timer", 0);
 	gretl_bundle_set_int(regls_adv, "set_seed", 0);
 	gretl_bundle_set_scalar(regls_adv, "seed", seed);
+#ifdef HAVE_MPI
+	gretl_bundle_set_int(regls_adv, "no_mpi", 0);
+#endif
     }
 
     regls_advanced_dialog(regls_adv, sr->dlg);
