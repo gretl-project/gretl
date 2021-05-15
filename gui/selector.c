@@ -57,7 +57,7 @@ enum {
     SR_LVARS2
 };
 
-#define N_EXTRA  8
+#define N_EXTRA 8
 
 struct _selector {
     GtkWidget *parent;
@@ -129,7 +129,8 @@ enum {
     REGLS_LAMVAL,
     REGLS_NLAM,
     REGLS_NFOLDS,
-    REGLS_FTYPE
+    REGLS_FTYPE,
+    REGLS_PLOT
 };
 
 #define EXTRA_LAGS (N_EXTRA - 1)
@@ -3530,12 +3531,16 @@ static void read_regls_extras (selector *sr)
 
     if (gtk_widget_is_sensitive(sr->extra[REGLS_NFOLDS])) {
 	int nfolds = spinner_get_int(sr->extra[REGLS_NFOLDS]);
+	int plot = button_is_active(sr->extra[REGLS_PLOT]);
 	gchar *ft = combo_box_get_active_text(sr->extra[REGLS_FTYPE]);
 
 	gretl_bundle_set_int(rb, "xvalidate", 1);
 	gretl_bundle_set_int(rb, "nfolds", nfolds);
 	if (!strcmp(ft, _("random"))) {
 	    gretl_bundle_set_int(rb, "randfolds", 1);
+	}
+	if (plot) {
+	    gretl_bundle_set_int(rb, "mse_plot", 1);
 	}
 	xvalidate = 1;
     }
@@ -5433,7 +5438,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     if (want_radios(sr)) {
 	if (ci == REGLS) {
 	    /* more stuff to show */
-	    dlgy += 220;
+	    dlgy += 230;
 	} else {
 	    dlgy += 60;
 	}
@@ -6486,6 +6491,8 @@ static int regls_int_default (const char *key)
 	return 10;
     } else if (!strcmp(key, "randfolds")) {
 	return 1;
+    } else if (!strcmp(key, "mse_plot")) {
+	return 1;
     } else if (!strcmp(key, "eid")) {
 	if (gretl_bundle_get_int(regls_bundle, "ridge", NULL)) {
 	    return 1;
@@ -6513,7 +6520,8 @@ static double regls_scalar_default (const char *key)
 static void build_regls_controls (selector *sr)
 {
     GtkWidget *w, *hbox, *b1, *b2, *b3;
-    int eid, nlambda, xvalidate, nfolds, randfolds;
+    int nlambda, xvalidate, nfolds, randfolds;
+    int eid, mse_plot;
     double lfrac, alpha;
     GSList *group;
 
@@ -6526,6 +6534,7 @@ static void build_regls_controls (selector *sr)
     xvalidate = regls_int_default("xvalidate");
     nfolds    = regls_int_default("nfolds");
     randfolds = regls_int_default("randfolds");
+    mse_plot  = regls_int_default("mse_plot");
 
     lfrac = regls_scalar_default("lfrac");
     alpha = regls_scalar_default("alpha");
@@ -6600,8 +6609,20 @@ static void build_regls_controls (selector *sr)
     gtk_widget_set_sensitive(hbox, xvalidate);
     sensitize_conditional_on(hbox, b3);
 
+    /* optional plot */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_check_button_new_with_label(_("Show MSE plot"));
+    sr->extra[REGLS_PLOT] = w;
+    gtk_widget_set_sensitive(w, xvalidate);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), xvalidate && mse_plot);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    sensitize_conditional_on(hbox, b3);
+
     g_signal_connect(G_OBJECT(b2), "toggled",
 		     G_CALLBACK(xvalidation_ok), b3);
+    g_signal_connect(G_OBJECT(b2), "toggled",
+		     G_CALLBACK(xvalidation_ok), w);
 
     /* "advanced" controls */
     hbox = gtk_hbox_new(FALSE, 5);

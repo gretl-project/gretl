@@ -104,13 +104,16 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
    if targ.xvalidate
       matrix deflts = {10, 0, 0, 0, 0, 0, 0}
       ndef = nelem(deflts)
-      loop foreach i nfolds randfolds no_mpi np hpc use_1se single_b seed
+      loop foreach i nfolds randfolds no_mpi mpi_np mpi_local use_1se single_b seed
          if inbundle(src, "$i")
             scalar targ.$i = src.$i
          elif i <= ndef
             scalar targ.$i = deflts[i]
          endif
       endloop
+      if inbundle(src, "mse_plot") == 1
+         targ.mse_plot = src.mse_plot
+      endif
    endif
 end function
 
@@ -429,6 +432,10 @@ function bundle regls (series depvar, list indeps,
    regls_set_notes(&ret)
    if gui
       gui_add_commands(&ret, parms, yname, xname)
+   endif
+
+   if inbundle(ret, "mse_plot") && ret.mse_plot
+      regls_mse_plot(ret)
    endif
 
    return ret
