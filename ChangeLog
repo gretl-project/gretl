@@ -8,6 +8,8 @@ version 2021c, in progress
 - fcstats() matrix row labels: distinguish U1 vs U2 variant
   of Theil's U statistic
 - printing of bundles: sort members by type and key
+- gretl_bundle.h: rename argument named "template" to avoid
+  trouble with C++
 
 2021-05-04 version 2021b
 - New function trigamma(): second derivative of lngamma
