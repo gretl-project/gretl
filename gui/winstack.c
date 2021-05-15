@@ -27,6 +27,7 @@
 #include "toolbar.h"
 #include "cmdstack.h"
 #include "winstack.h"
+#include "gretl_ipc.h"
 
 #include "uservar.h"
 
@@ -168,6 +169,19 @@ static const gchar *get_window_title (GtkWidget *w)
 static const char *window_label (GtkWidget *w, int role)
 {
     if (role == MAINWIN) {
+#ifdef GRETL_PID_FILE
+	static char label[32];
+	int seqno = gretl_sequence_number();
+	gchar *tmp;
+
+	if (seqno > 1) {
+	    strcpy(label, _("Main window"));
+	    tmp = g_strdup_printf(" (%d)", seqno);
+	    strcat(label, tmp);
+	    g_free(tmp);
+	    return label;
+	}
+#endif
 	return _("Main window");
     } else {
 	return get_window_title(w);

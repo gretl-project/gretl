@@ -864,6 +864,11 @@ int main (int argc, char **argv)
     set_up_mac_look();
 #endif
 
+#ifdef GRETL_PID_FILE
+    write_pid_to_file();
+    atexit(delete_pid_from_file);
+#endif
+
     /* create the GUI */
     gretl_stock_icons_init();
 #if GUI_DEBUG
@@ -879,11 +884,6 @@ int main (int argc, char **argv)
 
 #if GUI_DEBUG
     fprintf(stderr, " done add_files_to_menus\n");
-#endif
-
-#ifdef GRETL_PID_FILE
-    write_pid_to_file();
-    atexit(delete_pid_from_file);
 #endif
 
     session_menu_state(FALSE);
