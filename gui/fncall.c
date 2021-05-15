@@ -2610,6 +2610,22 @@ void function_call_cleanup (void)
     arglist_cleanup();
 }
 
+static gchar *compose_pkg_title (ufunc *func,
+					const char *id)
+{
+    fnpkg *pkg = gretl_function_get_package(func);
+    const char *pname = function_package_get_name(pkg);
+    gchar *title;
+
+    if (!strcmp(id, BUNDLE_FCAST)) {
+	title = g_strdup_printf("gretl: %s %s", pname, _("forecast"));
+    } else {
+	title = g_strdup_printf("gretl: %s bundle", pname);
+    }
+
+    return title;
+}
+
 /* Execute a special-purpose function made available by the
    package that produced bundle @b, possibly inflected by an
    integer option. If an option is present it's packed into
@@ -2624,6 +2640,8 @@ int exec_bundle_special_function (gretl_bundle *b,
     fncall *fc = NULL;
     char *bname = NULL;
     char funname[32];
+    PRN *prn = NULL;
+    int plotting = 0;
     int iopt = -1;
     int err = 0;
 
@@ -2655,17 +2673,12 @@ int exec_bundle_special_function (gretl_bundle *b,
 	user_var *uv = get_user_var_by_data(b);
 
 	bname = gretl_strdup(user_var_get_name(uv));
-#if 0
-	fprintf(stderr, "%s: using bundle %p (uvar %p, name '%s')\n",
-		id, (void *) b, (void *) uv, bname);
-#endif
 	fc = fncall_new(func, 0);
 	if (bname != NULL) {
 	    err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
 	} else {
 	    err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, b);
 	}
-
 	if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
 	    double minv = fn_param_minval(func, 1);
@@ -2677,58 +2690,60 @@ int exec_bundle_special_function (gretl_bundle *b,
 	}
     }
 
-    if (!err && !strcmp(id, BUNDLE_PLOT)) {
+    if (!err) {
+	plotting = strcmp(id, BUNDLE_PLOT) == 0;
+	if (plotting) {
+	    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+	} else {
+	    err = bufopen(&prn);
+	}
+    }
+
+    if (!err && plotting) {
 	/* A plotting function may need a non-NULL PRN for
 	   use with printing redirection (outfile). But we
 	   don't expect any printed output.
 	*/
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-
 	err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
 				  NULL, NULL, prn);
-	gretl_print_destroy(prn);
     } else if (!err) {
 	/* For other bundle-specials we expect printed output */
-	PRN *prn = NULL;
+	GretlType rtype = user_func_get_return_type(func);
+	gretl_bundle *retb = NULL;
+	int save_t1 = dataset->t1;
+	int save_t2 = dataset->t2;
 
-	err = bufopen(&prn);
-	if (!err) {
-	    GretlType rtype = user_func_get_return_type(func);
-	    gretl_bundle *retb = NULL;
-	    int save_t1 = dataset->t1;
-	    int save_t2 = dataset->t2;
-
-	    if (!strcmp(id, BUNDLE_FCAST)) {
-		dataset->t1 = 0;
-		dataset->t2 = dataset->n - 1;
-	    }
-
-	    if (rtype == GRETL_TYPE_BUNDLE) {
-		/* if a bundle is offered, let's grab it */
-		err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
-					  &retb, NULL, prn);
-	    } else {
-		/* otherwise ignore any return value */
-		err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
-					  NULL, NULL, prn);
-	    }
-	    if (err) {
-		gui_errmsg(err);
-	    } else if (retb != NULL) {
-		view_buffer(prn, 78, 350, id, VIEW_BUNDLE, retb);
-		prn = NULL; /* ownership taken by viewer */
-	    } else {
-		view_buffer(prn, 78, 350, id, PRINT, NULL);
-		prn = NULL; /* ownership taken by viewer */
-	    }
-	    gretl_print_destroy(prn);
-	    dataset->t1 = save_t1;
-	    dataset->t2 = save_t2;
+	if (!strcmp(id, BUNDLE_FCAST)) {
+	    /* FIXME make more like other forecast cases */
+	    dataset->t1 = 0;
+	    dataset->t2 = dataset->n - 1;
 	}
+	if (rtype == GRETL_TYPE_BUNDLE) {
+	    /* if a bundle is offered, let's grab it */
+	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
+				      &retb, NULL, prn);
+	} else {
+	    /* otherwise ignore any return value */
+	    err = gretl_function_exec(fc, GRETL_TYPE_NONE, dataset,
+				      NULL, NULL, prn);
+	}
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    int role = retb != NULL ? VIEW_BUNDLE : PRINT;
+	    gchar *title = compose_pkg_title(func, id);
+
+	    view_buffer(prn, 78, 350, title, role, retb);
+	    g_free(title);
+	    prn = NULL; /* ownership taken by viewer */
+	}
+	dataset->t1 = save_t1;
+	dataset->t2 = save_t2;
     } else {
 	fncall_destroy(fc);
     }
 
+    gretl_print_destroy(prn);
     free(bname);
 
     if (err) {
