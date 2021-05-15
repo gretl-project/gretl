@@ -12314,8 +12314,7 @@
 	The <quote>Advanced</quote> button opens a further dialog that
 	provides somewhat greater control over the regularization
 	procedure. But note that you can exercise finer control by
-	calling the <lit>regls</lit> function via scripting. In
-	particular you are able to specify cross validation; see
+	calling the <lit>regls</lit> function via scripting; see
 	<doc>regls.pdf</doc> for details.
       </para>
     </description>
