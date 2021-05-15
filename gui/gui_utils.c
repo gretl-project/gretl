@@ -1840,7 +1840,20 @@ static gchar *script_output_title (void)
     }
 }
 
-static gchar *make_viewer_title (int role, const char *fname)
+static gchar *title_from_data (gpointer data)
+{
+    gretl_bundle *b = data;
+    const char *s = gretl_bundle_get_creator(b);
+
+    if (s != NULL) {
+	return g_strdup_printf("gretl: %s bundle", s);
+    } else {
+	return NULL;
+    }
+}
+
+static gchar *make_viewer_title (int role, const char *fname,
+				 gpointer data)
 {
     gchar *title = NULL;
 
@@ -1883,6 +1896,9 @@ static gchar *make_viewer_title (int role, const char *fname)
 	break;
     case VIEW_DATA:
 	title = g_strdup(_("gretl: display data")); break;
+    case VIEW_BUNDLE:
+	title = title_from_data(data);
+	break;
     default:
 	break;
     }
@@ -2028,7 +2044,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin = gretl_viewer_new_with_parent(parent, role, title,
 					    data);
     } else {
-	gchar *tmp = make_viewer_title(role, NULL);
+	gchar *tmp = make_viewer_title(role, NULL, data);
 
 	vwin = gretl_viewer_new_with_parent(parent, role, tmp,
 					    data);
@@ -2164,7 +2180,7 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 	vwin = gretl_viewer_new_with_parent(NULL, role,
 					    title, NULL);
     } else {
-	gchar *tmp = make_viewer_title(role, NULL);
+	gchar *tmp = make_viewer_title(role, NULL, NULL);
 
 	vwin = gretl_viewer_new_with_parent(NULL, role,
 					    tmp, NULL);
@@ -2223,7 +2239,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     } else if (given_title != NULL) {
 	vwin = gretl_viewer_new(role, given_title, NULL);
     } else {
-	gchar *title = make_viewer_title(role, filename);
+	gchar *title = make_viewer_title(role, filename, NULL);
 
 	vwin = gretl_viewer_new(role, (title != NULL)? title : filename,
 				NULL);
@@ -2381,7 +2397,7 @@ windata_t *view_help_file (const char *filename, int role)
 	return NULL;
     }
 
-    title = make_viewer_title(role, NULL);
+    title = make_viewer_title(role, NULL, NULL);
     vwin = gretl_viewer_new(role, title, NULL);
     g_free(title);
 
