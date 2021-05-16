@@ -10009,6 +10009,11 @@ static int gui_exec_callback (ExecState *s, void *ptr,
         const char *pf = gretl_plotfile();
 
         gnuplot_view_3d(pf);
+    } else if (ci == SET) {
+	/* 2021-05-16: at present this is used only for
+	   setting of plot_collection
+	*/
+	adjust_plot_collection(s->cmd->parm2);
     }
 
     if (err) {

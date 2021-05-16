@@ -226,7 +226,7 @@ static char *bundle_items[] = {
 
 /* file-scope globals */
 
-SESSION session;            /* hold models, graphs */
+SESSION session; /* holds named models, graphs, etc. */
 
 static char sessionfile[MAXLEN];
 
@@ -1815,6 +1815,7 @@ void close_session (gretlopt opt)
     session_graph_count = 0;
     session_bundle_count = 0;
     reset_plot_count();
+    reset_collection_count();
 
     set_session_log(NULL, logcode);
 

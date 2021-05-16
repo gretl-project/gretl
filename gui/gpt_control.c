@@ -135,6 +135,7 @@ struct multiplot_ {
     gint64 mtime;
     GList *list;
     int current;
+    int id;
 };
 
 typedef struct multiplot_ multiplot;
@@ -240,9 +241,29 @@ static int get_png_bounds_info (png_bounds *bounds);
 
 #define PLOTSPEC_DETAILS_IN_MEMORY(s) (s->lines != NULL)
 
+/* file-scope globals */
+static png_plot *plot_collection;
+static int collection_count;
+
 static int do_collect_plots (void)
 {
     return libset_get_int(PLOT_COLLECTION);
+}
+
+/* callback from toggling plot collection via "set" */
+
+void adjust_plot_collection (const char *parm)
+{
+    if (!strcmp(parm, "off")) {
+	plot_collection = NULL;
+    }
+}
+
+/* called from session.c on close_session() */
+
+void reset_collection_count (void)
+{
+    collection_count = 0;
 }
 
 static void terminate_plot_positioning (png_plot *plot)
@@ -5996,8 +6017,11 @@ static int plot_collection_attach_plot (png_plot *coll,
     coll->mp->mtime = gretl_monotonic_time();
 
     if (!plot_has_pager(coll)) {
-	gtk_window_set_title(GTK_WINDOW(coll->shell),
-			     _("gretl: plot collection"));
+	gchar *title = g_strdup_printf(_("gretl: plot collection %d"),
+				       coll->mp->id);
+
+	gtk_window_set_title(GTK_WINDOW(coll->shell), title);
+	g_free(title);
 	add_plot_pager(coll);
 	plot_window_set_label(coll->shell);
     }
@@ -6278,8 +6302,6 @@ int gnuplot_show_map (gretl_bundle *mb)
     return err;
 }
 
-static png_plot *plot_collection;
-
 static void unset_plot_collection (GtkWidget *w, png_plot *plot)
 {
     if (plot_collection != NULL) {
@@ -6310,6 +6332,7 @@ static void set_plot_collection (png_plot *plot)
     mp->list = NULL;
     mp->list = g_list_append(mp->list, plot);
     mp->current = 0;
+    mp->id = ++collection_count;
     plot_collection = plot;
     plot->mp = mp;
     g_signal_connect(G_OBJECT(plot->shell), "destroy",
@@ -6336,6 +6359,7 @@ void register_graph (void)
 	    gint64 ptm = plot_collection_get_mtime();
 
 	    if (now - ptm < 1.25e6) {
+		/* time limit 1.25 seconds */
 		pp = plot_collection;
 	    }
 	}

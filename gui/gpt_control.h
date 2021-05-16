@@ -31,6 +31,10 @@ void display_session_graph (const char *path, const char *title,
 
 void register_graph (void);
 
+void adjust_plot_collection (const char *parm);
+
+void reset_collection_count (void);
+
 void saver_preview_graph (GPT_SPEC *spec, char *termstr);
 
 int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname);
