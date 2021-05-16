@@ -3218,16 +3218,21 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
 
+    /* forecast range selection */
     tmp = obs_spinbox(rset, _("Forecast range:"),
                       _("Start"), _("End"),
                       t1min, t1max, *t1,
                       t2min, t2max, *t2,
                       SPIN_LABEL_INLINE);
-
     g_signal_connect(G_OBJECT(rset->adj1), "value-changed",
                      G_CALLBACK(sync_pre_forecast), rset);
-
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+
+    if (!dataset_is_time_series(dataset)) {
+	/* only static forecast is available */
+	deflt = 2;
+	goto skip_ts_options;
+    }
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
@@ -3238,7 +3243,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         /* allow the "recursive" option */
         nopts++;
     }
-
     if (!(flags & (FC_AUTO_OK | FC_DYNAMIC_OK))) {
         /* default to static forecast */
         deflt = 2;
@@ -3252,7 +3256,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         if (button != NULL) {
             group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
         }
-
         hbox = gtk_hbox_new(FALSE, 5);
         button = gtk_radio_button_new_with_label(group, _(opts[i]));
         gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
@@ -3278,16 +3281,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
             radio_val = i;
         }
-
         if (i < 2 && !(flags & FC_DYNAMIC_OK)) {
             /* disallow dynamic options */
             opt_ok = FALSE;
         }
-
         if (i == 0 && (flags & FC_AUTO_OK)) {
             opt_ok = TRUE;
         }
-
         if (i >= 2) {
             g_signal_connect(G_OBJECT(button), "clicked",
                              G_CALLBACK(adjust_fcast_t1),
@@ -3297,7 +3297,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                          G_CALLBACK(set_radio_opt), &radio_val);
         g_object_set_data(G_OBJECT(button), "action",
                           GINT_TO_POINTER(i));
-
         if (!opt_ok) {
             gtk_widget_set_sensitive(button, FALSE);
             if (ibutton != NULL) {
@@ -3309,12 +3308,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         }
     }
 
-    if (ibutton != NULL && sbutton != NULL &&
-        !(flags & FC_DYNAMIC_OK)) {
+    if (ibutton != NULL && sbutton != NULL && !(flags & FC_DYNAMIC_OK)) {
         g_signal_connect(G_OBJECT(ibutton), "toggled",
                          G_CALLBACK(snap_to_static),
                          sbutton);
     }
+
+ skip_ts_options:
 
      /* pre-forecast obs spinner */
     tmp = gtk_hseparator_new();
@@ -3407,6 +3407,61 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                      G_CALLBACK(set_obs_from_dialog), rset);
     gtk_widget_grab_default(tmp);
     context_help_button(bbox, FCAST);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy",
+                     G_CALLBACK(free_rsetting), rset);
+    gtk_widget_show_all(rset->dlg);
+
+    return ret;
+}
+
+int simple_forecast_dialog (int *t1, int *t2, GtkWidget *parent)
+{
+    GtkWidget *vbox, *hbox;
+    GtkWidget *tmp, *button;
+    struct range_setting *rset;
+    int radio_val = 0;
+    int ret = GRETL_CANCEL;
+
+    if (dataset->t2 == dataset->n - 1) {
+	const char *msg = N_("No out-of-sample observations are "
+			     "available.\nShow \"forecast\" information "
+			     "for the estimation sample?");
+	*t1 = dataset->t1;
+	*t2 = dataset->t2;
+	ret = yes_no_dialog(_("gretl: forecast"), _(msg), parent);
+	return (ret == GRETL_NO)? GRETL_CANCEL : ret;
+    }
+
+    rset = rset_new(0, NULL, NULL, t1, t2, _("gretl: forecast"),
+                    parent);
+    if (rset == NULL) {
+        return ret;
+    }
+
+    *t1 = dataset->t2 + 1;
+    *t2 = dataset->n - 1;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
+
+    /* forecast range selection */
+    tmp = obs_spinbox(rset, _("Forecast range:"),
+                      _("Start"), _("End"),
+                      *t1, dataset->n - 2, *t1,
+                      dataset->t2 + 2, *t2, *t2,
+                      SPIN_LABEL_INLINE);
+    g_signal_connect(G_OBJECT(rset->adj1), "value-changed",
+                     G_CALLBACK(sync_pre_forecast), rset);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
+
+    /* Buttons: Cancel and OK */
+    cancel_delete_button(hbox, rset->dlg);
+    button = ok_validate_button(hbox, &ret, &radio_val);
+    g_signal_connect(G_OBJECT(button), "clicked",
+                     G_CALLBACK(set_obs_from_dialog), rset);
+    gtk_widget_grab_default(button);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy",
                      G_CALLBACK(free_rsetting), rset);

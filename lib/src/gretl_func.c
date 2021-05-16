@@ -3352,23 +3352,32 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 		; /* OK, type does not matter */
 	    } else {
 		/* bundle-print, bundle-plot, etc. */
+		int fcast = (role == UFUN_BUNDLE_FCAST);
+		int pmin = fcast ? 2 : 1;
+		GretlType pjt;
+
 		if (u->n_params == 0) {
 		    pprintf(prn, "%s: must take a %s argument\n", attr,
 			    gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
 		    err = E_TYPES;
 		}
 		for (j=0; j<u->n_params && !err; j++) {
-		    if (j == 0 && u->params[j].type != GRETL_TYPE_BUNDLE_REF) {
+		    pjt = u->params[j].type;
+		    if (j == 0 && pjt != GRETL_TYPE_BUNDLE_REF) {
 			pprintf(prn, "%s: first param type must be %s\n",
 				attr, gretl_type_get_name(GRETL_TYPE_BUNDLE_REF));
 			err = E_TYPES;
-		    } else if (j == 1 && u->params[j].type != GRETL_TYPE_INT) {
+		    } else if (j == 1 && pjt != GRETL_TYPE_INT) {
 			pprintf(prn, "%s: second param type must be %s\n",
 				attr, gretl_type_get_name(GRETL_TYPE_INT));
 			err = E_TYPES;
-		    } else if (j > 1 && !fn_param_optional(u, j) &&
+		    } else if (j == 2 && fcast && pjt != GRETL_TYPE_INT) {
+			pprintf(prn, "%s: third param type must be %s\n",
+				attr, gretl_type_get_name(GRETL_TYPE_INT));
+			err = E_TYPES;
+		    } else if (j > pmin && !fn_param_optional(u, j) &&
 			       na(fn_param_default(u, j))) {
-			pprintf(prn, "%s: params beyond the second must be optional\n",
+			pprintf(prn, "%s: extra params must be optional\n",
 				attr);
 			err = E_TYPES;
 		    }

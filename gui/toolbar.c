@@ -709,7 +709,8 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
     if (vwin->role == VIEW_SERIES) {
 	series_view_graph(w, vwin);
     } else if (vwin->role == VIEW_BUNDLE) {
-	exec_bundle_special_function(vwin->data, BUNDLE_PLOT, NULL);
+	exec_bundle_special_function(vwin->data, BUNDLE_PLOT,
+				     NULL, vwin->main);
     } else if (vwin->role == CORR) {
 	do_corr_plot(vwin);
     } else if (vwin->role == VIEW_DBNOMICS) {
@@ -722,7 +723,8 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
 static void toolbar_fcast_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin->role == VIEW_BUNDLE) {
-	exec_bundle_special_function(vwin->data, BUNDLE_FCAST, NULL);
+	exec_bundle_special_function(vwin->data, BUNDLE_FCAST,
+				     NULL, vwin->main);
     }
 }
 

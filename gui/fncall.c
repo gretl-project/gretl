@@ -2634,16 +2634,21 @@ static gchar *compose_pkg_title (ufunc *func,
 
 int exec_bundle_special_function (gretl_bundle *b,
 				  const char *id,
-				  const char *aname)
+				  const char *aname,
+				  GtkWidget *parent)
 {
     ufunc *func = NULL;
     fncall *fc = NULL;
-    char *bname = NULL;
     char funname[32];
     PRN *prn = NULL;
     int plotting = 0;
+    int forecast = 0;
+    int t1 = 0, t2 = 0;
     int iopt = -1;
     int err = 0;
+
+    plotting = strcmp(id, BUNDLE_PLOT) == 0;
+    forecast = strcmp(id, BUNDLE_FCAST) == 0;
 
     if (aname != NULL) {
 	if (strchr(aname, ':') != NULL) {
@@ -2667,19 +2672,38 @@ int exec_bundle_special_function (gretl_bundle *b,
     func = get_user_function_by_name(funname);
 
     if (func == NULL) {
-	fprintf(stderr, "Couldn't find function %s\n", funname);
-	err = E_DATA;
-    } else {
-	user_var *uv = get_user_var_by_data(b);
+	errbox_printf(_("Couldn't find function %s"), funname);
+	return E_DATA;
+    }
 
-	bname = gretl_strdup(user_var_get_name(uv));
+    if (forecast) {
+	/* check for feasibility */
+	int resp = simple_forecast_dialog(&t1, &t2, parent);
+
+	if (canceled(resp)) {
+	    return 0;
+	}
+	allow_full_data_access(1);
+    }
+
+    if (!err) {
+	user_var *uv = get_user_var_by_data(b);
+	char *bname = NULL;
+
+	if (uv != NULL) {
+	    bname = gretl_strdup(user_var_get_name(uv));
+	}
 	fc = fncall_new(func, 0);
 	if (bname != NULL) {
 	    err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
 	} else {
 	    err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE_REF, b);
 	}
-	if (!err && iopt >= 0) {
+	if (!err && forecast) {
+	    t1++; t2++; /* convert to 1-based */
+	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t1);
+	    push_anon_function_arg(fc, GRETL_TYPE_INT, &t2);
+	} else if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
 	    double minv = fn_param_minval(func, 1);
 
@@ -2688,10 +2712,10 @@ int exec_bundle_special_function (gretl_bundle *b,
 		err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
 	    }
 	}
+	free(bname);
     }
 
     if (!err) {
-	plotting = strcmp(id, BUNDLE_PLOT) == 0;
 	if (plotting) {
 	    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 	} else {
@@ -2710,14 +2734,7 @@ int exec_bundle_special_function (gretl_bundle *b,
 	/* For other bundle-specials we expect printed output */
 	GretlType rtype = user_func_get_return_type(func);
 	gretl_bundle *retb = NULL;
-	int save_t1 = dataset->t1;
-	int save_t2 = dataset->t2;
 
-	if (!strcmp(id, BUNDLE_FCAST)) {
-	    /* FIXME make more like other forecast cases */
-	    dataset->t1 = 0;
-	    dataset->t2 = dataset->n - 1;
-	}
 	if (rtype == GRETL_TYPE_BUNDLE) {
 	    /* if a bundle is offered, let's grab it */
 	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, dataset,
@@ -2737,14 +2754,11 @@ int exec_bundle_special_function (gretl_bundle *b,
 	    g_free(title);
 	    prn = NULL; /* ownership taken by viewer */
 	}
-	dataset->t1 = save_t1;
-	dataset->t2 = save_t2;
     } else {
 	fncall_destroy(fc);
     }
 
     gretl_print_destroy(prn);
-    free(bname);
 
     if (err) {
 	gui_errmsg(err);

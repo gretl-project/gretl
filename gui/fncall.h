@@ -39,7 +39,8 @@ gchar *get_bundle_special_function (gretl_bundle *b,
 
 int exec_bundle_special_function (gretl_bundle *b,
 				  const char *id,
-				  const char *aname);
+				  const char *aname,
+				  GtkWidget *parent);
 
 int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn);
 

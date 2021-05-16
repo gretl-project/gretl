@@ -2670,27 +2670,24 @@ editor these appear under the \textsf{Special functions} tab in the
 
   \vbusage{} \verb|bundle-plot = Brown_print|
 
-\item \texttt{bundle-test} (optional): Intended for identifying a
-  function that performs some sort of statistical test based on
-  a bundle's content. Unused at present.
+\item \texttt{bundle-fcast} (optional): Identifies a function that
+  generates a forecast based on a bundle's content.
 
-\item \texttt{bundle-fcast} (optional): Intended for identifying a
-  function that generates a forecast based on a bundle's
-  content. Unused at present.
-
-\item \texttt{bundle-extra} (optional): Unused at present.
+  \vbusage{} \verb|bundle-fcast = regls_fcast|
 
 \end{description}
 
 Functions selected for the special bundle-related roles must conform
-to a definite standard, as follows:
+to certain rules, as follows.
 \begin{itemize}
-\item The first argument must be a bundle-pointer.
-\item The second argument, if present, must be an \texttt{int} that
-  controls the function's behavior in some way, and it must have a
-  specified default value.
-\item Any further arguments should also have default values (meaning
-  that they can be omitted).
+\item In all cases the first argument must be a bundle-pointer.
+\item In the case of \texttt{bundle-fcast} this is followed by two
+  mandatory integer arguments giving the start and end of the sample
+  range for the forecast. In other cases the second argument, if
+  present, must be an \texttt{int} that controls the function's
+  behavior in some way, and it must have a specified default value.
+\item Any further arguments must have default values (meaning that
+  they can be omitted).
 \end{itemize}
 
 Taking the \textsf{gig} package as an example, we have:

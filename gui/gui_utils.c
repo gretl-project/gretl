@@ -5080,7 +5080,8 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
     gretl_bundle *bundle = vwin->data;
     const gchar *aname = gtk_action_get_name(action);
 
-    exec_bundle_special_function(bundle, BUNDLE_PLOT, aname);
+    exec_bundle_special_function(bundle, BUNDLE_PLOT,
+				 aname, vwin->main);
 }
 
 static void add_blist_item_to_menu (gpointer listitem,
