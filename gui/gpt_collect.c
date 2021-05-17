@@ -19,9 +19,7 @@
 
 static void add_plot_pager (png_plot *plot);
 static void adjust_plot_pager (png_plot *plot);
-static int plot_collection_show_plot (png_plot *coll,
-				      png_plot *show,
-				      int pos);
+static int plot_collection_show_plot (png_plot *plot, int pos);
 
 /* determine whether or not we're doing collection */
 
@@ -108,6 +106,8 @@ static void finalize_removed_plot (png_plot *plot, int kill)
 
 static void plot_collection_remove_plot (png_plot *plot, int kill)
 {
+    png_plot *coll = g_list_nth_data(plot->mp->list, 0);
+
     if (plot->editor != NULL) {
 	gtk_widget_destroy(plot->editor);
 	plot->editor = NULL;
@@ -115,20 +115,18 @@ static void plot_collection_remove_plot (png_plot *plot, int kill)
 
 #if COLLDEBUG
     fprintf(stderr, "collection remove plot: %s, root=%d\n",
-	    kill ? "kill" : "extract", plot->rshell == NULL);
+	    kill ? "kill" : "extract", plot == col);
 #endif
 
-    if (plot->rshell != NULL) {
-	/* kill or extract a "child" plot */
-	png_plot *coll = widget_get_plot(plot->rshell);
-
+    if (plot != coll) {
+	/* kill or extract a non-root plot */
 	coll->mp->list = g_list_remove(coll->mp->list, plot);
-	plot_collection_show_plot(coll, coll, 0);
-	plot->shell = NULL; /* just to be sure */
-	plot->rshell = NULL;
+	plot_collection_show_plot(coll, 0);
+	plot->shell = NULL;
+	plot->mp = NULL;
 	finalize_removed_plot(plot, kill);
     } else {
-	/* kill or extract the current "root" plot of
+	/* kill or extract the current root plot of
 	   a collection, and rejig
 	*/
 	png_plot *p0 = g_list_nth_data(plot->mp->list, 0);
@@ -137,18 +135,19 @@ static void plot_collection_remove_plot (png_plot *plot, int kill)
 	GdkPixbuf *pbtmp;
 
 	/* swap GPT_SPEC and pixbuf pointers */
-	sptmp = p1->spec;
-	p1->spec = p0->spec;
-	p0->spec = sptmp;
-	pbtmp = p1->pbuf;
-	p1->pbuf = p0->pbuf;
-	p0->pbuf = pbtmp;
+	sptmp = p0->spec;
+	p0->spec = p1->spec;
+	p1->spec = sptmp;
+	pbtmp = p0->pbuf;
+	p0->pbuf = p1->pbuf;
+	p1->pbuf = pbtmp;
 	/* trim the outgoing @p1 */
 	p1->canvas = NULL;
-	p1->rshell = NULL;
+	p1->shell = NULL;
+	p1->mp = NULL;
 	/* sync the display */
 	p0->mp->list = g_list_remove(p0->mp->list, p1);
-	plot_collection_show_plot(plot, p0, 0);
+	plot_collection_show_plot(p0, 0);
 	finalize_removed_plot(p1, kill);
     }
 }
@@ -167,12 +166,12 @@ static int plot_collection_add_plot (png_plot *coll,
 #endif
 
     /* shared GUI elements */
-    add->rshell = coll->shell;
+    add->shell = coll->shell;
     add->window = coll->window;
     add->canvas = coll->canvas;
     add->cursor_label = coll->cursor_label;
     add->statusbar = coll->statusbar;
-    add->toolbar = coll->toolbar; /* ?? */
+    add->toolbar = coll->toolbar;
     add->up_icon = coll->up_icon;
     add->down_icon = coll->down_icon;
     add->cid = coll->cid;
@@ -185,8 +184,9 @@ static int plot_collection_add_plot (png_plot *coll,
 
     coll->mp->list = g_list_append(coll->mp->list, add);
     coll->mp->mtime = gretl_monotonic_time();
+    add->mp = coll->mp;
 
-    if (!plot_has_pager(coll)) {
+    if (g_list_length(coll->mp->list) == 2) {
 	gchar *title = g_strdup_printf(_("gretl: plot collection %d"),
 				       coll->mp->id);
 
@@ -216,19 +216,17 @@ static int plot_can_be_collected (png_plot *coll, png_plot *plot)
 
 /* switch to viewing a specific plot in a collection */
 
-static int plot_collection_show_plot (png_plot *coll,
-				      png_plot *show,
-				      int pos)
+static int plot_collection_show_plot (png_plot *plot, int pos)
 {
-    int err = render_png(show, PNG_REPLACE);
+    int err = render_png(plot, PNG_REPLACE);
 
     if (!err) {
 #if COLLDEBUG
 	fprintf(stderr, "plot_collection: showing plot %d, %p\n",
-		pos, (void *) show);
+		pos, (void *) plot);
 #endif
-	coll->mp->current = pos;
-	adjust_plot_pager(coll);
+	plot->mp->current = pos;
+	adjust_plot_pager(plot);
     }
 
     return err;
@@ -251,7 +249,7 @@ static void coll_page_changed (GtkSpinButton *sb, png_plot *plot)
 	png_plot *target = g_list_nth_data(plot->mp->list, i);
 
 	if (target != NULL) {
-	    plot_collection_show_plot(plot, target, i);
+	    plot_collection_show_plot(target, i);
 	}
     }
 }
@@ -277,8 +275,6 @@ static void add_plot_pager (png_plot *plot)
     sep = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, 1);
     gtk_widget_show(GTK_WIDGET(sep));
-
-    plot->status |= PLOT_HAS_PAGER;
 }
 
 static void adjust_plot_pager (png_plot *plot)
@@ -299,7 +295,6 @@ static void adjust_plot_pager (png_plot *plot)
 	    item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), 0);
 	    gtk_widget_destroy(GTK_WIDGET(item));
 	}
-	plot->status ^= PLOT_HAS_PAGER;
 	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
 	plot_window_set_label(plot->shell);
     } else {
@@ -312,24 +307,23 @@ static void adjust_plot_pager (png_plot *plot)
 static void plot_pager_call (GtkWidget *w, png_plot *plot)
 {
     int pos, action = widget_get_int(w, "action");
-    multiplot *mp = plot->mp;
-    int n = g_list_length(mp->list);
+    int n = g_list_length(plot->mp->list);
 
     if (action == 1) {
 	pos = 0;
     } else if (action == 2) {
-	pos = mp->current - 1;
+	pos = plot->mp->current - 1;
     } else if (action == 3) {
-	pos = mp->current + 1;
+	pos = plot->mp->current + 1;
     } else {
 	pos = n - 1;
     }
 
     if (pos >= 0 && pos < n) {
-	png_plot *target = g_list_nth_data(mp->list, pos);
+	png_plot *target = g_list_nth_data(plot->mp->list, pos);
 
 	if (target != NULL) {
-	    plot_collection_show_plot(plot, target, pos);
+	    plot_collection_show_plot(target, pos);
 	}
     }
 }
@@ -355,7 +349,6 @@ static void add_plot_pager (png_plot *plot)
 	widget_set_int(button, "action", item->flag);
 	gtk_widget_show(button);
     }
-    plot->status |= PLOT_HAS_PAGER;
 
     sep = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, i);
@@ -383,7 +376,6 @@ static void adjust_plot_pager (png_plot *plot)
 	    item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), 0);
 	    gtk_widget_destroy(GTK_WIDGET(item));
 	}
-	plot->status ^= PLOT_HAS_PAGER;
 	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
 	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
 	plot_window_set_label(plot->shell);

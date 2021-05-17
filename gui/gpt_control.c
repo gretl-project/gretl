@@ -67,8 +67,7 @@ enum {
     PLOT_DONT_MOUSE     = 1 << 8,
     PLOT_POSITIONING    = 1 << 9,
     PLOT_CURSOR_LABEL   = 1 << 10,
-    PLOT_TERM_HIDDEN    = 1 << 11,
-    PLOT_HAS_PAGER      = 1 << 12
+    PLOT_TERM_HIDDEN    = 1 << 11
 } plot_status_flags;
 
 enum {
@@ -91,7 +90,6 @@ enum {
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
 #define plot_is_editable(p)     (!(p->status & PLOT_DONT_EDIT))
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
-#define plot_has_pager(p)       (p->status & PLOT_HAS_PAGER)
 
 #define plot_has_title(p)        (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)       (p->format & PLOT_XLABEL)
@@ -148,7 +146,6 @@ typedef struct multiplot_ multiplot;
 
 struct png_plot_t {
     GtkWidget *shell;  /* top-level GTK window */
-    GtkWidget *rshell; /* pointer to shell of plot-collection root */
     multiplot *mp;     /* info residing on plot-collection root */
     GtkWidget *canvas;
     GtkWidget *popup;
@@ -286,15 +283,6 @@ static png_plot *widget_get_plot (gpointer p)
     return g_object_get_data(G_OBJECT(p), "plot");
 }
 
-GtkWidget *plot_get_shell (png_plot *plot)
-{
-    if (plot->shell != NULL) {
-	return plot->shell;
-    } else {
-	return plot->rshell;
-    }
-}
-
 gboolean is_shell_for_plotfile (GtkWidget *w,
 				const char *fname)
 {
@@ -307,6 +295,13 @@ gboolean is_shell_for_plotfile (GtkWidget *w,
 GPT_SPEC *plot_get_spec (png_plot *plot)
 {
     return plot->spec;
+}
+
+/* called from calculator.c */
+
+GtkWidget *plot_get_shell (png_plot *plot)
+{
+    return plot->shell;
 }
 
 int plot_is_saved (const png_plot *plot)
@@ -360,7 +355,7 @@ static void graph_popup_callback (GtkWidget *w, png_plot *plot)
 
 static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
 {
-    window_list_popup(w, NULL, plot_get_shell(plot));
+    window_list_popup(w, NULL, plot->shell);
 }
 
 static GretlToolItem plotbar_items[] = {
@@ -3816,7 +3811,7 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 	label = alt_label;
     }
 
-    context = gtk_widget_get_pango_context(plot_get_shell(plot));
+    context = gtk_widget_get_pango_context(plot->shell);
     pl = pango_layout_new(context);
     pango_layout_set_text(pl, label, -1);
 
@@ -4264,7 +4259,7 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
     if (!strcmp(menu_string, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
 	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC,
-				  plot, plot_get_shell(plot));
+				  plot, plot->shell);
     } else if (!strcmp(menu_string, _("Copy to clipboard"))) {
 #ifdef G_OS_WIN32
 	win32_process_graph(plot, WIN32_TO_CLIPBOARD);
@@ -4380,10 +4375,6 @@ static GList *plot_get_siblings (png_plot *plot)
 {
     if (plot->mp != NULL) {
 	return plot->mp->list;
-    } else if (plot->rshell != NULL) {
-	png_plot *pp = widget_get_plot(plot->rshell);
-
-	return pp->mp->list;
     } else {
 	return NULL;
     }
@@ -4519,7 +4510,7 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	fprintf(stderr, "repaint current\n");
 #endif
 	repaint_png(plot, PNG_REDISPLAY);
-	if (plot_has_pager(plot)) {
+	if (plot->mp != NULL) {
 	    rescale_siblings(plot, scale);
 	}
     }
@@ -4589,12 +4580,11 @@ static void prepare_for_zoom (png_plot *plot)
 static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 {
     png_plot *plot = (png_plot *) data;
+    GtkWidget *shell = plot->shell;
     const gchar *item_string;
-    GtkWidget *shell;
     int killplot = 0;
 
     plot = plot_get_current(plot);
-    shell = plot_get_shell(plot);
     item_string = menu_item_get_text(item);
 
     if (!strcmp(item_string, _("Add another curve..."))) {
@@ -4758,7 +4748,7 @@ static void build_plot_menu (png_plot *plot)
        support them for geoplot or don't show them
     */
 
-    in_collection = (plot_has_pager(plot) || plot->rshell != NULL);
+    in_collection = (plot->mp != NULL);
 
     i = 0;
     while (plot_items[i]) {
@@ -5212,7 +5202,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 	return TRUE;
     }
 
-    if (plot_has_pager(plot) || plot->rshell != NULL) {
+    if (plot->mp != NULL) {
 	return TRUE;
     }
 
@@ -5302,15 +5292,13 @@ static void record_coordinate_info (png_plot *plot, png_bounds *b)
 
 static void pixmap_sync (png_plot *plot)
 {
-    png_plot *coll, *child;
-    GList *L;
+    GList *L = plot->mp->list;
+    png_plot *sibling;
 
-    coll = (plot->mp != NULL)? plot : widget_get_plot(plot->rshell);
-    L = coll->mp->list;
     while (L != NULL) {
-	child = L->data;
-	if (child != plot) {
-	    child->pixmap = plot->pixmap;
+	sibling = L->data;
+	if (sibling != plot) {
+	    sibling->pixmap = plot->pixmap;
 	}
 	L = L->next;
     }
@@ -5335,7 +5323,7 @@ static int resize_png_plot (png_plot *plot, int width, int height,
 				      plot->pixel_width,
 				      plot->pixel_height,
 				      -1);
-	if (plot_has_pager(plot)) {
+	if (plot->mp != NULL) {
 	    pixmap_sync(plot);
 	}
 #endif
@@ -5465,7 +5453,7 @@ static int render_png (png_plot *plot, viewcode view)
 
 #ifdef G_OS_WIN32
     /* somehow the plot can end up underneath */
-    gtk_window_present(GTK_WINDOW(plot_get_shell(plot)));
+    gtk_window_present(GTK_WINDOW(plot->shell));
 #endif
 
     return 0;
@@ -5500,15 +5488,19 @@ static void plot_destroy_surface (png_plot *plot)
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
     if (plot->mp != NULL) {
-	GList *L = g_list_nth(plot->mp->list, 1);
-	png_plot *child;
+	GList *L = g_list_first(plot->mp->list);
+	png_plot *sibling;
 
 	while (L != NULL) {
-	    child = L->data;
+	    sibling = L->data;
+	    if (sibling != plot) {
 #if GTK_MAJOR_VERSION == 2
-	    plot_nullify_surface(child);
+		plot_nullify_surface(sibling);
 #endif
-	    destroy_png_plot(NULL, child);
+		sibling->shell = NULL;
+		sibling->mp = NULL;
+		destroy_png_plot(NULL, sibling);
+	    }
 	    L = L->next;
 	}
     }
@@ -5653,7 +5645,6 @@ static png_plot *png_plot_new (void)
     }
 
     plot->shell = NULL;
-    plot->rshell = NULL;
     plot->mp = NULL;
     plot->canvas = NULL;
     plot->popup = NULL;
