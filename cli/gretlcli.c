@@ -66,6 +66,7 @@ char cmdfile[MAXLEN];
 FILE *fb;
 int batch;
 int runit;
+int indent0;
 int batch_stdin;
 int data_status;
 char linebak[MAXLINE];      /* for storing comments */
@@ -1051,6 +1052,7 @@ static void cli_quit (ExecState *s, PRN *cmdprn, int err)
         if (fb == NULL) {
 	    do_quit_message(s, err);
         } else {
+	    gretl_if_state_reset(indent0);
             s->cmd->ci = ENDRUN;
         }
     } else if (batch && fb == NULL) {
@@ -1303,6 +1305,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
                 pprintf(cmdprn, "run \"%s\"\n", runfile);
             }
             runit++;
+	    indent0 = gretl_if_state_record();
         }
         break;
 
