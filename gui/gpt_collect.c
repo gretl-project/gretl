@@ -21,6 +21,13 @@ static void add_plot_pager (png_plot *plot);
 static void adjust_plot_pager (png_plot *plot);
 static int plot_collection_show_plot (png_plot *plot, int pos);
 
+/* is a plot a member of a (non-degenerate) collection? */
+
+static int in_collection (png_plot *plot)
+{
+    return plot->mp != NULL && g_list_length(plot->mp->list) > 1;
+}
+
 /* determine whether or not we're doing collection */
 
 static int do_collect_plots (void)
@@ -57,15 +64,17 @@ static gint64 plot_collection_get_mtime (void)
 
 /* remove "collection" status from @plot */
 
-static void unset_plot_collection (GtkWidget *w, png_plot *plot)
+static void unset_plot_collection (png_plot *plot)
 {
-    if (plot_collection != NULL) {
+    if (plot != NULL) {
+	if (plot == plot_collection) {
+	    plot_collection = NULL;
+	}
 	if (plot->mp != NULL) {
 	    g_list_free(plot->mp->list);
 	    free(plot->mp);
 	    plot->mp = NULL;
 	}
-	plot_collection = NULL;
     }
 }
 
@@ -85,8 +94,6 @@ static void set_plot_collection (png_plot *plot)
     mp->id = ++collection_count;
     plot_collection = plot;
     plot->mp = mp;
-    g_signal_connect(G_OBJECT(plot->shell), "destroy",
-		     G_CALLBACK(unset_plot_collection), plot);
 }
 
 static void finalize_removed_plot (png_plot *plot, int kill)
@@ -295,7 +302,7 @@ static void adjust_plot_pager (png_plot *plot)
 
     if (n == 1) {
 	/* @plot is not a "collection" any more */
-	unset_plot_collection(NULL, plot);
+	unset_plot_collection(plot);
 	for (i=0; i<2; i++) {
 	    item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), 0);
 	    gtk_widget_destroy(GTK_WIDGET(item));
@@ -376,7 +383,7 @@ static void adjust_plot_pager (png_plot *plot)
 
     if (n == 1) {
 	/* @plot is not a "collection" any more */
-	unset_plot_collection(NULL, plot);
+	unset_plot_collection(plot);
 	for (i=0; i<4; i++) {
 	    item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), 0);
 	    gtk_widget_destroy(GTK_WIDGET(item));

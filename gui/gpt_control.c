@@ -271,7 +271,7 @@ static void plot_invalidate_pixbuf (png_plot *plot)
 
 static png_plot *plot_get_current (png_plot *plot)
 {
-    if (plot->mp != NULL) {
+    if (in_collection(plot)) {
 	return g_list_nth_data(plot->mp->list, plot->mp->current);
     } else {
 	return plot;
@@ -4373,7 +4373,7 @@ static void add_to_session_callback (png_plot *plot)
 
 static GList *plot_get_siblings (png_plot *plot)
 {
-    if (plot->mp != NULL) {
+    if (in_collection(plot)) {
 	return plot->mp->list;
     } else {
 	return NULL;
@@ -4510,7 +4510,7 @@ static void plot_do_rescale (png_plot *plot, int mod)
 	fprintf(stderr, "repaint current\n");
 #endif
 	repaint_png(plot, PNG_REDISPLAY);
-	if (plot->mp != NULL) {
+	if (in_collection(plot)) {
 	    rescale_siblings(plot, scale);
 	}
     }
@@ -4734,7 +4734,7 @@ static void build_plot_menu (png_plot *plot)
 	NULL
     };
     const char **plot_items;
-    int i, in_collection;
+    int i, in_coll;
 
     plot->popup = gtk_menu_new();
 
@@ -4748,7 +4748,7 @@ static void build_plot_menu (png_plot *plot)
        support them for geoplot or don't show them
     */
 
-    in_collection = (plot->mp != NULL);
+    in_coll = in_collection(plot);
 
     i = 0;
     while (plot_items[i]) {
@@ -4820,7 +4820,7 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (in_collection) {
+	if (in_coll) {
 	    if (!strcmp(plot_items[i], "Close") ||
 		!strncmp(plot_items[i], "Save to", 7)) {
 		i++;
@@ -5202,7 +5202,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 	return TRUE;
     }
 
-    if (plot->mp != NULL) {
+    if (in_collection(plot)) {
 	return TRUE;
     }
 
@@ -5323,7 +5323,7 @@ static int resize_png_plot (png_plot *plot, int width, int height,
 				      plot->pixel_width,
 				      plot->pixel_height,
 				      -1);
-	if (plot->mp != NULL) {
+	if (in_collection(plot)) {
 	    pixmap_sync(plot);
 	}
 #endif
@@ -5487,7 +5487,7 @@ static void plot_destroy_surface (png_plot *plot)
 
 static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 {
-    if (plot->mp != NULL) {
+    if (in_collection(plot)) {
 	GList *L = g_list_first(plot->mp->list);
 	png_plot *sibling;
 
@@ -5535,6 +5535,15 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 
     if (plot->shell != NULL) {
 	g_object_unref(plot->shell);
+    }
+
+    if (plot == plot_collection) {
+	plot_collection = NULL;
+    }
+
+    if (plot->mp != NULL) {
+	g_list_free(plot->mp->list);
+	free(plot->mp);
     }
 
     free(plot);
