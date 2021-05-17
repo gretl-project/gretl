@@ -60,9 +60,11 @@ static gint64 plot_collection_get_mtime (void)
 static void unset_plot_collection (GtkWidget *w, png_plot *plot)
 {
     if (plot_collection != NULL) {
-	g_list_free(plot->mp->list);
-	free(plot->mp);
-	plot->mp = NULL;
+	if (plot->mp != NULL) {
+	    g_list_free(plot->mp->list);
+	    free(plot->mp);
+	    plot->mp = NULL;
+	}
 	plot_collection = NULL;
     }
 }
