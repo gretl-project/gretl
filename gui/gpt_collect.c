@@ -115,22 +115,21 @@ static void plot_collection_remove_plot (png_plot *plot, int kill)
 
 #if COLLDEBUG
     fprintf(stderr, "collection remove plot: %s, root=%d\n",
-	    kill ? "kill" : "extract", plot->parent == NULL);
+	    kill ? "kill" : "extract", plot->rshell == NULL);
 #endif
 
-    if (plot->parent != NULL) {
-	/* kill or extract a child plot */
-	png_plot *coll = widget_get_plot(plot->parent);
+    if (plot->rshell != NULL) {
+	/* kill or extract a "child" plot */
+	png_plot *coll = widget_get_plot(plot->rshell);
 
 	coll->mp->list = g_list_remove(coll->mp->list, plot);
 	plot_collection_show_plot(coll, coll, 0);
 	plot->shell = NULL; /* just to be sure */
-	plot->parent = NULL;
+	plot->rshell = NULL;
 	finalize_removed_plot(plot, kill);
     } else {
-	/* kill or extract the current "parent" plot of
-	   a collection, and rejig; p1 will become the
-	   new value of collection
+	/* kill or extract the current "root" plot of
+	   a collection, and rejig
 	*/
 	png_plot *p0 = g_list_nth_data(plot->mp->list, 0);
 	png_plot *p1 = g_list_nth_data(plot->mp->list, 1);
@@ -146,7 +145,7 @@ static void plot_collection_remove_plot (png_plot *plot, int kill)
 	p0->pbuf = pbtmp;
 	/* trim the outgoing @p1 */
 	p1->canvas = NULL;
-	p1->parent = NULL;
+	p1->rshell = NULL;
 	/* sync the display */
 	p0->mp->list = g_list_remove(p0->mp->list, p1);
 	plot_collection_show_plot(plot, p0, 0);
@@ -168,7 +167,7 @@ static int plot_collection_add_plot (png_plot *coll,
 #endif
 
     /* shared GUI elements */
-    add->parent = coll->shell;
+    add->rshell = coll->shell;
     add->window = coll->window;
     add->canvas = coll->canvas;
     add->cursor_label = coll->cursor_label;

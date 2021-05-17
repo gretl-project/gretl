@@ -147,15 +147,15 @@ struct multiplot_ {
 typedef struct multiplot_ multiplot;
 
 struct png_plot_t {
-    GtkWidget *shell;
-    GtkWidget *parent;
-    multiplot *mp;
+    GtkWidget *shell;  /* top-level GTK window */
+    GtkWidget *rshell; /* pointer to shell of plot-collection root */
+    multiplot *mp;     /* info residing on plot-collection root */
     GtkWidget *canvas;
     GtkWidget *popup;
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
-    GtkWidget *editor;
-    GtkWidget *pos_entry;
+    GtkWidget *editor;    /* state-dependent pointer */
+    GtkWidget *pos_entry; /* state-dependent pointer */
     GtkWidget *toolbar;
     GtkWidget *up_icon;
     GtkWidget *down_icon;
@@ -181,8 +181,8 @@ struct png_plot_t {
     double zoom_xmin, zoom_xmax;
     double zoom_ymin, zoom_ymax;
     int screen_x0, screen_y0; /* to define selection */
-    unsigned long status;
-    unsigned char format;
+    guint32 status;
+    guint8 format;
 };
 
 static int render_png (png_plot *plot, viewcode view);
@@ -291,7 +291,7 @@ GtkWidget *plot_get_shell (png_plot *plot)
     if (plot->shell != NULL) {
 	return plot->shell;
     } else {
-	return plot->parent;
+	return plot->rshell;
     }
 }
 
@@ -4380,8 +4380,8 @@ static GList *plot_get_siblings (png_plot *plot)
 {
     if (plot->mp != NULL) {
 	return plot->mp->list;
-    } else if (plot->parent != NULL) {
-	png_plot *pp = widget_get_plot(plot->parent);
+    } else if (plot->rshell != NULL) {
+	png_plot *pp = widget_get_plot(plot->rshell);
 
 	return pp->mp->list;
     } else {
@@ -4758,7 +4758,7 @@ static void build_plot_menu (png_plot *plot)
        support them for geoplot or don't show them
     */
 
-    in_collection = (plot_has_pager(plot) || plot->parent != NULL);
+    in_collection = (plot_has_pager(plot) || plot->rshell != NULL);
 
     i = 0;
     while (plot_items[i]) {
@@ -5212,7 +5212,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 	return TRUE;
     }
 
-    if (plot_has_pager(plot) || plot->parent != NULL) {
+    if (plot_has_pager(plot) || plot->rshell != NULL) {
 	return TRUE;
     }
 
@@ -5305,7 +5305,7 @@ static void pixmap_sync (png_plot *plot)
     png_plot *coll, *child;
     GList *L;
 
-    coll = (plot->mp != NULL)? plot : widget_get_plot(plot->parent);
+    coll = (plot->mp != NULL)? plot : widget_get_plot(plot->rshell);
     L = coll->mp->list;
     while (L != NULL) {
 	child = L->data;
@@ -5653,7 +5653,7 @@ static png_plot *png_plot_new (void)
     }
 
     plot->shell = NULL;
-    plot->parent = NULL;
+    plot->rshell = NULL;
     plot->mp = NULL;
     plot->canvas = NULL;
     plot->popup = NULL;
