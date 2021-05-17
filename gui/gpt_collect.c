@@ -182,11 +182,14 @@ static int plot_collection_add_plot (png_plot *coll,
     add->savebuf = coll->savebuf;
 #endif
 
+    /* append to mp list and update last-modified time */
     coll->mp->list = g_list_append(coll->mp->list, add);
     coll->mp->mtime = gretl_monotonic_time();
+    /* share mp with new sibling */
     add->mp = coll->mp;
 
     if (g_list_length(coll->mp->list) == 2) {
+	/* add a pager */
 	gchar *title = g_strdup_printf(_("gretl: plot collection %d"),
 				       coll->mp->id);
 

@@ -145,17 +145,17 @@ struct multiplot_ {
 typedef struct multiplot_ multiplot;
 
 struct png_plot_t {
-    GtkWidget *shell;  /* top-level GTK window */
-    multiplot *mp;     /* info residing on plot-collection root */
-    GtkWidget *canvas;
-    GtkWidget *popup;
+    GtkWidget *shell;     /* top-level GTK window */
+    multiplot *mp;        /* collection-specific info */
+    GtkWidget *canvas;    /* area in which plot is drawn */
+    GtkWidget *popup;     /* transient popup menu */
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
     GtkWidget *editor;    /* state-dependent pointer */
     GtkWidget *pos_entry; /* state-dependent pointer */
-    GtkWidget *toolbar;
-    GtkWidget *up_icon;
-    GtkWidget *down_icon;
+    GtkWidget *toolbar;   /* toolbar at bottom right of window */
+    GtkWidget *up_icon;   /* resizing button */
+    GtkWidget *down_icon; /* resizing button */
     GdkWindow *window;
     GdkPixbuf *pbuf;
     cairo_t *cr;
