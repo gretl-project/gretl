@@ -52,6 +52,9 @@
 /* the following needs more testing */
 #define HANDLE_HEREDATA 1
 
+/* pager for plot collection: use spin button? */
+#define SPIN_PAGER 0
+
 enum {
     PLOT_SAVED          = 1 << 0,
     PLOT_ZOOMED         = 1 << 1,
@@ -136,6 +139,9 @@ struct multiplot_ {
     GList *list;
     int current;
     int id;
+#if SPIN_PAGER
+    GtkWidget *sb;
+#endif
 };
 
 typedef struct multiplot_ multiplot;
@@ -378,6 +384,82 @@ static void plot_winlist_popup (GtkWidget *w, png_plot *plot)
     window_list_popup(w, NULL, plot_get_shell(plot));
 }
 
+static GretlToolItem plotbar_items[] = {
+    { N_("Menu"),        GRETL_STOCK_MENU,    G_CALLBACK(graph_popup_callback), 0 },
+    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_rescale_callback), 1 },
+    { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_rescale_callback), -1 },
+    { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
+};
+
+#if SPIN_PAGER
+
+static void coll_page_changed (GtkSpinButton *sb, png_plot *plot)
+{
+    int i = gtk_spin_button_get_value_as_int(sb) - 1;
+    int n = g_list_length(plot->mp->list);
+
+    if (i >= 0 && i < n) {
+	png_plot *target = g_list_nth_data(plot->mp->list, i);
+
+	if (target != NULL) {
+	    plot_collection_show_plot(plot, target, i);
+	}
+    }
+}
+
+static void add_plot_pager (png_plot *plot)
+{
+    GtkToolItem *spin_item, *sep;
+    GtkWidget *sb;
+    int n = g_list_length(plot->mp->list);
+
+    spin_item = gtk_tool_item_new();
+    sb = gtk_spin_button_new_with_range(1, n, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(sb), 1);
+    gtk_entry_set_width_chars(GTK_ENTRY(sb), (int) ceil(log10(n)));
+    gtk_container_add(GTK_CONTAINER(spin_item), sb);
+    gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), spin_item, 0);
+    gtk_widget_show_all(GTK_WIDGET(spin_item));
+    g_signal_connect(G_OBJECT(sb), "value-changed",
+		     G_CALLBACK(coll_page_changed),
+		     plot);
+    plot->mp->sb = sb;
+
+    sep = gtk_separator_tool_item_new();
+    gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, 1);
+    gtk_widget_show(GTK_WIDGET(sep));
+
+    plot->status |= PLOT_HAS_PAGER;
+}
+
+static void adjust_plot_pager (png_plot *plot)
+{
+    GtkToolItem *item;
+    int i, n;
+
+    if (plot->mp == NULL) {
+	return;
+    }
+
+    n = g_list_length(plot->mp->list);
+
+    if (n == 1) {
+	/* @plot is not a "collection" any more */
+	unset_plot_collection(NULL, plot);
+	for (i=0; i<2; i++) {
+	    item = gtk_toolbar_get_nth_item(GTK_TOOLBAR(plot->toolbar), 0);
+	    gtk_widget_destroy(GTK_WIDGET(item));
+	}
+	plot->status ^= PLOT_HAS_PAGER;
+	gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: graph"));
+	plot_window_set_label(plot->shell);
+    } else {
+	gtk_spin_button_set_range(GTK_SPIN_BUTTON(plot->mp->sb), 1, n);
+    }
+}
+
+#else
+
 static void plot_pager_call (GtkWidget *w, png_plot *plot)
 {
     int pos, action = widget_get_int(w, "action");
@@ -410,13 +492,6 @@ static GretlToolItem plot_pager_items[] = {
     { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(plot_pager_call), 4 }
 };
 
-static GretlToolItem plotbar_items[] = {
-    { N_("Menu"),        GRETL_STOCK_MENU,    G_CALLBACK(graph_popup_callback), 0 },
-    { N_("Bigger"),      GRETL_STOCK_BIGGER,  G_CALLBACK(graph_rescale_callback), 1 },
-    { N_("Smaller"),     GRETL_STOCK_SMALLER, G_CALLBACK(graph_rescale_callback), -1 },
-    { N_("Windows"),     GRETL_STOCK_WINLIST, G_CALLBACK(plot_winlist_popup), 0 }
-};
-
 static void add_plot_pager (png_plot *plot)
 {
     GretlToolItem *item;
@@ -432,20 +507,6 @@ static void add_plot_pager (png_plot *plot)
 	gtk_widget_show(button);
     }
     plot->status |= PLOT_HAS_PAGER;
-
-#if 0
-    if (1) {
-	int n = g_list_length(plot->mp->list);
-	GtkToolItem *spin_item;
-	GtkWidget *sb;
-
-	spin_item = gtk_tool_item_new();
-	sb = gtk_spin_button_new_with_range(1, n, 1);
-	gtk_container_add(GTK_CONTAINER(spin_item), sb);
-	gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), spin_item, i++);
-	gtk_widget_show_all(GTK_WIDGET(spin_item));
-    }
-#endif
 
     sep = gtk_separator_tool_item_new();
     gtk_toolbar_insert(GTK_TOOLBAR(plot->toolbar), sep, i);
@@ -496,6 +557,8 @@ static void adjust_plot_pager (png_plot *plot)
 		       status_str);
     g_free(status_str);
 }
+
+#endif /* SPIN_PAGER or not */
 
 static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 {
@@ -4582,7 +4645,6 @@ static int rescale_siblings (png_plot *plot, double scale)
     while (L != NULL && !err) {
 	sib = L->data;
 	if (sib != plot) {
-	    fprintf(stderr, "rescale sibling %p\n", (void *) sib);
 	    err = real_plot_rescale(sib, scale);
 	    if (!err) {
 		err = regenerate_pixbuf(sib);
@@ -4771,7 +4833,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Font"))) {
 	plot_show_font_selector(plot, plot->spec->fontstr);
     } else if (!strcmp(item_string, _("Close")) ||
-	       !strcmp(item_string, _("Close plot"))) {
+	       !strcmp(item_string, _("Delete plot"))) {
         killplot = 1;
     } else if (!strcmp(item_string, _("Close collection"))) {
 	killplot = 2;
@@ -4856,7 +4918,7 @@ static void build_plot_menu (png_plot *plot)
 	N_("Font"),
 	N_("Help"),
         N_("Close"),
-	N_("Close plot"),
+	N_("Delete plot"),
 	N_("Close collection"),
 	N_("Extract plot"),
         NULL
@@ -4868,7 +4930,7 @@ static void build_plot_menu (png_plot *plot)
 	NULL
     };
     const char **plot_items;
-    int i;
+    int i, in_collection;
 
     plot->popup = gtk_menu_new();
 
@@ -4881,6 +4943,8 @@ static void build_plot_menu (png_plot *plot)
     /* geoplot FIXME: for several menu items below: either
        support them for geoplot or don't show them
     */
+
+    in_collection = (plot_has_pager(plot) || plot->parent != NULL);
 
     i = 0;
     while (plot_items[i]) {
@@ -4952,13 +5016,14 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}
-	if (plot_has_pager(plot)) {
+	if (in_collection) {
 	    if (!strcmp(plot_items[i], "Close") ||
 		!strncmp(plot_items[i], "Save to", 7)) {
 		i++;
 		continue;
 	    }
 	} else if (!strncmp(plot_items[i], "Close ", 6) ||
+		   !strncmp(plot_items[i], "Delete ", 7) ||
 		   !strncmp(plot_items[i], "Extract", 7)) {
 	    i++;
 	    continue;
@@ -5333,6 +5398,10 @@ plot_key_handler (GtkWidget *w, GdkEventKey *event, png_plot *plot)
 	return TRUE;
     }
 
+    if (plot_has_pager(plot) || plot->parent != NULL) {
+	return TRUE;
+    }
+
     switch (k) {
     case GDK_q:
     case GDK_Q:
@@ -5695,29 +5764,66 @@ static void remove_png_plot (png_plot *plot, int kill)
 	}
 	adjust_plot_pager(coll);
     } else {
-	/* kill or extract current parent plot and rejig */
+	/* kill or extract the current parent plot of
+	   a collection, and rejig; p1 will become the
+	   new value of collection
+	*/
+	png_plot *p0 = g_list_nth_data(plot->mp->list, 0);
 	png_plot *p1 = g_list_nth_data(plot->mp->list, 1);
-	GPT_SPEC *spec = plot->spec;
-	GdkPixbuf *pbuf = plot->pbuf;
+	GPT_SPEC *sptmp;
+	GdkPixbuf *pbtmp;
+
+#if 0
+	fprintf(stderr, "delete old p0\n");
+	fprintf(stderr, " p0: %p, shell %p, parent %p, pbuf %p, spec %p\n",
+		(void *) p0, (void *) p0->shell, (void *) p0->parent,
+		(void *) p0->pbuf, (void *) p0->spec);
+	fprintf(stderr, "   canvas %p, surface %p, mp %p\n", (void *) p0->canvas,
+		(void *) p0->cs, (void *) p0->mp);
+	fprintf(stderr, " p1: %p, shell %p, parent %p, pbuf %p, spec %p\n",
+		(void *) p1, (void *) p1->shell, (void *) p1->parent,
+		(void *) p1->pbuf, (void *) p1->spec);
+	fprintf(stderr, "   canvas %p, surface %p, mp %p\n\n", (void *) p1->canvas,
+		(void *) p1->cs, (void *) p1->mp);
+#endif
 
 	plot_collection_show_plot(plot, p1, 1);
-	plot->spec = p1->spec;
-	p1->spec = spec;
-	plot->pbuf = p1->pbuf;
-	p1->pbuf = pbuf;
-	plot->mp->list = g_list_remove(plot->mp->list, p1);
-	plot->mp->current = 0;
+
+	/* swap key components */
+	sptmp = p1->spec;
+	p1->spec = p0->spec;
+	p0->spec = sptmp;
+	pbtmp = p1->pbuf;
+	p1->pbuf = p0->pbuf;
+	p0->pbuf = pbtmp;
+	/* and trim the outgoing p1 */
+	p1->canvas = NULL;
+	p1->parent = NULL;
+#if 0
+	fprintf(stderr, " p0: %p, shell %p, parent %p, pbuf %p, spec %p\n",
+		(void *) p0, (void *) p0->shell, (void *) p0->parent,
+		(void *) p0->pbuf, (void *) p0->spec);
+	fprintf(stderr, "   canvas %p, surface %p, mp %p\n", (void *) p0->canvas,
+		(void *) p0->cs, (void *) p0->mp);
+	fprintf(stderr, " p1: %p, shell %p, parent %p, pbuf %p, spec %p\n",
+		(void *) p1, (void *) p1->shell, (void *) p1->parent,
+		(void *) p1->pbuf, (void *) p1->spec);
+	fprintf(stderr, "   canvas %p, surface %p, mp %p\n\n", (void *) p1->canvas,
+		(void *) p1->cs, (void *) p1->mp);
+#endif
+	p0->mp->list = g_list_remove(p0->mp->list, p1);
+	plot_collection_show_plot(plot, p0, 0);
+	p0->mp->current = 0;
 #if GTK_MAJOR_VERSION == 2
 	plot_nullify_surface(p1);
 #endif
 	if (kill) {
 	    destroy_png_plot(NULL, p1);
 	} else {
-	    p1->parent = NULL;
 	    plot_add_shell(p1, NULL);
 	    render_png(p1, PNG_START);
 	}
-	adjust_plot_pager(plot);
+	adjust_plot_pager(p0);
     }
 }
 
@@ -5965,7 +6071,7 @@ static int plot_add_shell (png_plot *plot, const char *name)
     g_object_set_data(G_OBJECT(plot->shell), "plot-filename",
 		      plot->spec->fname);
     window_list_add(plot->shell, GNUPLOT);
-    g_signal_connect(G_OBJECT(plot->shell), "key-press-event",
+    g_signal_connect(G_OBJECT(plot->canvas), "key-press-event",
 		     G_CALLBACK(plot_key_handler), plot);
     gtk_widget_show_all(plot->shell);
 
