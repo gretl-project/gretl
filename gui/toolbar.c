@@ -65,6 +65,7 @@
 #include "../pixmaps/mini.dbnomics.xpm"
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/fcast_16.xpm"
+#include "../pixmaps/close_16.xpm"
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -116,7 +117,6 @@ enum {
     EDITOR_ITEM,
     NOTES_ITEM,
     NEW_ITEM,
-    CLOSE_ITEM,
     BUNDLE_ITEM,
     FIND_ITEM,
     COPY_SCRIPT_ITEM,
@@ -124,7 +124,8 @@ enum {
     HMAP_ITEM,
     DIGITS_ITEM,
     DBN_ITEM,
-    FCAST_ITEM
+    FCAST_ITEM,
+    CLOSE_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -166,7 +167,8 @@ void gretl_stock_icons_init (void)
 	{ open_menu_xpm, GRETL_STOCK_MENU},
 	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
 	{ mini_dbnomics_xpm, GRETL_STOCK_DBN},
-	{ fcast_16_xpm, GRETL_STOCK_FCAST}
+	{ fcast_16_xpm, GRETL_STOCK_FCAST},
+	{ close_16_xpm, GRETL_STOCK_CLOSE}
     };
     static GtkIconFactory *gretl_factory;
     int n = G_N_ELEMENTS(stocks);
@@ -1213,6 +1215,8 @@ static void gretl_tool_item_set_tip (GtkWidget *item,
 	accel = "Ctrl+S";
     } else if (tool->flag == FIND_ITEM) {
 	accel = "Ctrl+F";
+    } else if (!strcmp(tool->icon, GTK_STOCK_FIND_AND_REPLACE)) {
+	accel = "Ctrl+H";
     }
 
     if (accel != NULL) {

@@ -592,10 +592,6 @@ static void vwin_select_all (windata_t *vwin)
     }
 }
 
-#define HANDLE_GREEKS 1
-
-#if HANDLE_GREEKS
-
 /* GDK_KEY_A 0x041 .. GDK_KEY_Z 0x05a
    GDK_KEY_a 0x061 .. GDK_KEY_z 0x07a
 */
@@ -676,8 +672,6 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
     return 0;
 }
 
-#endif
-
 /* Signal attached to editor/viewer windows. Note that @w is
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -696,7 +690,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	return TRUE;
     }
 
-#if HANDLE_GREEKS
     if (editing && Alt) {
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
@@ -705,7 +698,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	}
     }
-#endif
 
     if (is_control_key(event->keyval)) {
 	return FALSE;
@@ -728,6 +720,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	} else if (upkey == GDK_G) {
 	    text_find_again(NULL, vwin);
+	    return TRUE;
+	} else if (upkey == GDK_H) {
+	    text_replace(NULL, vwin);
 	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
@@ -2286,9 +2281,8 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			     G_CALLBACK(query_save_text), vwin);
 	}
-#if 0 /* not yet */
+	/* note: added 2021-05-18 */
 	vwin_add_footer_finder(vwin);
-#endif
     }
 
     /* clean up when dialog is destroyed */
@@ -2474,7 +2468,7 @@ static gboolean leave_close_button (GtkWidget *button,
 
 static GtkWidget *small_close_button (GtkWidget *targ)
 {
-    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_CLOSE,
+    GtkWidget *img = gtk_image_new_from_stock(GRETL_STOCK_CLOSE,
 					      GTK_ICON_SIZE_MENU);
     GtkWidget *button = gtk_button_new();
 
@@ -2535,8 +2529,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 {
     windata_t *vwin;
 
-    vwin = gretl_viewer_new_with_parent(NULL, role, title,
-					NULL);
+    vwin = gretl_viewer_new_with_parent(NULL, role, title, NULL);
     if (vwin == NULL) return NULL;
 
     /* non-editable text */

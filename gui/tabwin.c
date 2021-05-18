@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "winstack.h"
 #include "textbuf.h"
+#include "dlgutils.h"
 #include "tabwin.h"
 
 #ifdef G_OS_WIN32
@@ -345,6 +346,9 @@ static gboolean switch_page_callback (GtkNotebook *tabs,
 	if (vwin->mbar != NULL && vwin->mbar != tabwin->mbar) {
 	    /* a "new" toolbar should be shown */
 	    tabwin_insert_toolbar(tabwin, vwin);
+	}
+	if (vwin->finder != NULL && widget_get_int(vwin->finder, "footer")) {
+	    gtk_widget_hide(gtk_widget_get_parent(vwin->finder));
 	}
     }
 

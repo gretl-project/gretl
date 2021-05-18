@@ -52,6 +52,7 @@
 #define GRETL_STOCK_HMAP    "gretl-hmap"
 #define GRETL_STOCK_DBN     "gretl-dbnomics"
 #define GRETL_STOCK_FCAST   "gretl-fcast"
+#define GRETL_STOCK_CLOSE   "gretl-close"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,
