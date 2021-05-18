@@ -63,7 +63,8 @@ typedef enum {
     VWIN_TABBED          = 1 << 5,
     VWIN_CB_PDF          = 1 << 6,
     VWIN_MULTI_SERIES    = 1 << 7,
-    VWIN_NO_SAVE         = 1 << 8
+    VWIN_NO_SAVE         = 1 << 8,
+    VWIN_USE_FOOTER      = 1 << 9
 } windata_flags;
 
 typedef struct windata_t_ windata_t;

@@ -1095,7 +1095,7 @@ void vwin_add_finder (windata_t *vwin)
 		     vwin);
 }
 
-static void add_hide_button (GtkWidget *hbox)
+static void add_footer_close_button (GtkWidget *hbox)
 {
     GtkWidget *img = gtk_image_new_from_stock(GRETL_STOCK_CLOSE,
 					      GTK_ICON_SIZE_MENU);
@@ -1105,36 +1105,35 @@ static void add_hide_button (GtkWidget *hbox)
     gtk_container_add(GTK_CONTAINER(button), img);
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect_swapped(button, "clicked",
-			     G_CALLBACK(gtk_widget_hide),
+			     G_CALLBACK(gtk_widget_destroy),
 			     hbox);
     gtk_widget_show_all(button);
 }
 
-void vwin_add_footer_finder (windata_t *vwin)
+static void vwin_add_footer_finder (windata_t *vwin)
 {
     GtkWidget *hbox, *entry;
 
-    hbox = gtk_hbox_new(FALSE, 10);
-    vwin->finder = entry = gtk_entry_new();
-    widget_set_int(entry, "footer", 1);
+    hbox = gtk_hbox_new(FALSE, 5);
+    entry = gtk_entry_new();
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
 #ifdef USE_ENTRY_ICON
     add_finder_icon(vwin, entry);
 #else
     add_finder_label(vwin, hbox, 0);
 #endif
-    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-    add_hide_button(hbox);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 10);
+    add_footer_close_button(hbox);
+    gtk_box_pack_end(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 2);
 
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);
     g_signal_connect(G_OBJECT(entry), "activate",
 		     G_CALLBACK(vwin_finder_callback),
 		     vwin);
-    /* on creating the parent window, hide this box */
-    g_signal_connect(G_OBJECT(hbox), "realize",
-		     G_CALLBACK(gtk_widget_hide), NULL);
+
+    gtk_widget_show_all(hbox);
+    gtk_widget_grab_focus(entry);
 }
 
 #define SHOW_FINDER(r)    (r != GUI_HELP && r != GUI_HELP_EN)
@@ -1587,12 +1586,11 @@ void text_find (gpointer unused, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin->finder != NULL) {
-	if (!gtk_widget_is_visible(vwin->finder)) {
-	    gtk_widget_show_all(gtk_widget_get_parent(vwin->finder));
-	}
 	gtk_widget_grab_focus(vwin->finder);
 	gtk_editable_select_region(GTK_EDITABLE(vwin->finder),
 				   0, -1);
+    } else if (vwin->flags & VWIN_USE_FOOTER) {
+	vwin_add_footer_finder(vwin);
     } else {
 	find_string_dialog(find_in_text, vwin);
     }

@@ -2282,7 +2282,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
 			     G_CALLBACK(query_save_text), vwin);
 	}
 	/* note: added 2021-05-18 */
-	vwin_add_footer_finder(vwin);
+	vwin->flags |= VWIN_USE_FOOTER;
     }
 
     /* clean up when dialog is destroyed */

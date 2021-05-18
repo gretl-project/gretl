@@ -55,8 +55,6 @@ void text_find_again (gpointer unused, gpointer data);
 
 void vwin_add_finder (windata_t *vwin);
 
-void vwin_add_footer_finder (windata_t *vwin);
-
 gboolean find_package_in_viewer (windata_t *vwin, 
 				 const gchar *targ);
 
