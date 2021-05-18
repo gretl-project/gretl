@@ -4592,7 +4592,7 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    if (v1 > 0.8 * vsize && v1 < 1.35 * vsize && v1 <= 0.9 * sv) {
 		vsize = v1;
 	    }
-	} else if (vsize < 0.62 * hsize) {
+	} else if (role != VIEW_BIBITEM && vsize < 0.62 * hsize) {
 	    vsize = 0.62 * hsize;
 	}
     }
