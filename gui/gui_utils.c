@@ -2286,6 +2286,9 @@ view_file_with_title (const char *filename, int editable, int del_file,
 	    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			     G_CALLBACK(query_save_text), vwin);
 	}
+#if 0 /* not yet */
+	vwin_add_footer_finder(vwin);
+#endif
     }
 
     /* clean up when dialog is destroyed */

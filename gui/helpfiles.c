@@ -1022,15 +1022,38 @@ static void finder_icon_press (GtkEntry *entry,
     vwin_finder_callback(entry, vwin);
 }
 
+static void add_finder_icon (windata_t *vwin, GtkWidget *entry)
+{
+    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry),
+				  GTK_ENTRY_ICON_SECONDARY,
+				  GTK_STOCK_FIND);
+    gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
+				   GTK_ENTRY_ICON_SECONDARY,
+				   TRUE);
+    g_signal_connect(G_OBJECT(entry), "icon-press",
+		     G_CALLBACK(finder_icon_press),
+		     vwin);
+}
+
+#else
+
+static void add_finder_label (windata_t *vwin, GtkWidget *hbox, int pos)
+{
+    GtkWidget *label = gtk_label_new(_("Find:"));
+
+    if (pos == 1) {
+	gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    } else {
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    }
+}
+
 #endif
 
 /* add a "search box" to the right of a viewer window's toolbar */
 
 void vwin_add_finder (windata_t *vwin)
 {
-#ifndef USE_ENTRY_ICON
-    GtkWidget *label;
-#endif
     GtkWidget *entry;
     GtkWidget *hbox;
     int fwidth = 16;
@@ -1052,20 +1075,10 @@ void vwin_add_finder (windata_t *vwin)
 
     gtk_entry_set_width_chars(GTK_ENTRY(entry), fwidth);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-
 #ifdef USE_ENTRY_ICON
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry),
-				  GTK_ENTRY_ICON_SECONDARY,
-				  GTK_STOCK_FIND);
-    gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
-				   GTK_ENTRY_ICON_SECONDARY,
-				   TRUE);
-    g_signal_connect(G_OBJECT(entry), "icon-press",
-		     G_CALLBACK(finder_icon_press),
-		     vwin);
+    add_finder_icon(vwin, entry);
 #else
-    label = gtk_label_new(_("Find:"));
-    gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    add_finder_label(vwin, hbox, 1);
 #endif
 
     if (vwin->role == DBNOMICS_TOP ||
@@ -1074,6 +1087,30 @@ void vwin_add_finder (windata_t *vwin)
 	vwin->role == DBNOMICS_DB) {
 	maybe_fill_dbn_finder(vwin->finder);
     }
+
+    g_signal_connect(G_OBJECT(entry), "key-press-event",
+		     G_CALLBACK(finder_key_handler), vwin);
+    g_signal_connect(G_OBJECT(entry), "activate",
+		     G_CALLBACK(vwin_finder_callback),
+		     vwin);
+}
+
+void vwin_add_footer_finder (windata_t *vwin)
+{
+    GtkWidget *entry;
+    GtkWidget *hbox;
+    int fwidth = 16;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    vwin->finder = entry = gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), fwidth);
+#ifdef USE_ENTRY_ICON
+    add_finder_icon(vwin, entry);
+#else
+    add_finder_label(vwin, hbox, 0);
+#endif
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 5);
 
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);
