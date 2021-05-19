@@ -2451,7 +2451,8 @@ static int literal_line_out (const char *s, int len,
 	q = p + strspn(p, " \t");
 	n = strlen(q);
 	if (n > 0) {
-	    if (!strncmp(q, "set term", 8)) {
+	    /* note: allow "set termoption ..." */
+	    if (!strncmp(q, "set term ", 9)) {
 		warn = 1;
 	    } else {
 		fputs(q, fp);
@@ -2470,6 +2471,7 @@ static int gnuplot_literal_from_string (const char *s,
 					FILE *fp)
 {
     const char *p;
+    int braces = 1;
     int wi, warn = 0;
 
     s += strspn(s, " \t{");
@@ -2477,7 +2479,15 @@ static int gnuplot_literal_from_string (const char *s,
 
     fputs("# start literal lines\n", fp);
 
-    while (*s && *s != '}') {
+    while (*s) {
+	if (*s == '{') {
+	    braces++;
+	} else if (*s == '}') {
+	    braces--;
+	}
+	if (braces == 0) {
+	    break;
+	}
 	if (*s == ';') {
 	    wi = literal_line_out(p, s - p, fp);
 	    if (wi && !warn) {
