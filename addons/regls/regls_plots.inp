@@ -31,11 +31,12 @@ function void regls_mse_plot (const bundle b)
    ymin = 0.95 * minc(b.XVC[,1] - b.XVC[,2])
    ymin = ymin < 0 ? 0 : ymin
    plot M
-      option with-lp
-      options band=B band-style=dash
+      literal set termoption enhanced
+      options with-lp band=B band-style=dash
       printf "set yrange [%g:1]", ymin
-      literal set xlabel 's = λ/λ-max'
+      literal set xlabel 's = λ/λ_{max}'
       literal set ylabel 'MSE'
+      literal set logscale x
       literal set title 'Mean cross-validation MSE with one-s.e. band'
    end plot --output=display
 end function
