@@ -1110,6 +1110,17 @@ static void add_footer_close_button (GtkWidget *hbox)
     gtk_widget_show_all(button);
 }
 
+static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
+			      GtkWidget *targ)
+{
+    if (event->keyval == GDK_Escape) {
+	gtk_widget_destroy(targ);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
 static void vwin_add_footer_finder (windata_t *vwin)
 {
     GtkWidget *hbox, *entry;
@@ -1126,6 +1137,8 @@ static void vwin_add_footer_finder (windata_t *vwin)
     add_footer_close_button(hbox);
     gtk_box_pack_end(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 2);
 
+    g_signal_connect(G_OBJECT(entry), "key-press-event",
+		     G_CALLBACK(catch_footer_key), hbox);
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);
     g_signal_connect(G_OBJECT(entry), "activate",
