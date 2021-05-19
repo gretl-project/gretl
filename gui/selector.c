@@ -1306,7 +1306,7 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
     GtkTreeSelection *select;
     gboolean flagcol = FALSE;
     gboolean midascol = FALSE;
-    int width = 140;
+    int width = 160;
     int height = -1;
 
     if (USE_RXLIST(sr->ci) && locus == SR_RVARS2) {
@@ -1419,7 +1419,7 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
 
     gtk_box_pack_start(hbox, scroller, TRUE, TRUE, 0);
 
-    width *= 1.2 * gui_scale;
+    width *= gui_scale;
     gtk_widget_set_size_request(view, width, height);
     gtk_widget_show(view);
 

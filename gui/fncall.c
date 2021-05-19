@@ -2750,7 +2750,7 @@ int exec_bundle_special_function (gretl_bundle *b,
 	    int role = retb != NULL ? VIEW_BUNDLE : PRINT;
 	    gchar *title = compose_pkg_title(func, id);
 
-	    view_buffer(prn, 78, 350, title, role, retb);
+	    view_buffer(prn, 78, 450, title, role, retb);
 	    g_free(title);
 	    prn = NULL; /* ownership taken by viewer */
 	}
