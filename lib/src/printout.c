@@ -2420,14 +2420,13 @@ static void print_plain_numbers (int *list, const DATASET *dset,
     }
 }
 
-#define BMAX 5
-
 /* print the series referenced in @list by observation */
 
 static int print_by_obs (int *list, const DATASET *dset,
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, k, t, nrem;
     int *colwidths = NULL;
     int obslen = 0;
@@ -2694,6 +2693,7 @@ int print_series_with_format (const int *list,
 			      char fmt, int digits,
 			      PRN *prn)
 {
+    int BMAX = libset_get_int(DATACOLS);
     int i, j, j0, v, t, k, nrem = 0;
     int *colwidths, blist[BMAX+1];
     char obslabel[OBSLEN];

@@ -204,7 +204,8 @@ struct set_vars_ {
 		       !strcmp(s, FDJAC_QUAL) || \
 		       !strcmp(s, WILDBOOT_DIST) || \
 		       !strcmp(s, QUANTILE_TYPE) || \
-		       !strcmp(s, PLOT_COLLECTION))
+		       !strcmp(s, PLOT_COLLECTION) ||	\
+		       !strcmp(s, DATACOLS))
 
 /* global state */
 set_vars *state;
@@ -217,6 +218,7 @@ static int csv_digits = UNSET_INT;
 static int comments_on = 0;
 static int gretl_assert = 0;
 static int plot_collection = 0;
+static int datacols = 5;
 static int Qtype = 0;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
@@ -1707,6 +1709,8 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(OMP_N_THREADS, prn, opt);
     libset_print_int(SIMD_K_MAX, prn, opt);
     libset_print_int(SIMD_MN_MIN, prn, opt);
+    libset_print_int(PLOT_COLLECTION, prn, opt);
+    libset_print_int(DATACOLS, prn, opt);
 
     if (opt & OPT_D) {
 	/* display only */
@@ -2244,6 +2248,8 @@ int libset_get_int (const char *key)
 	return Qtype;
     } else if (!strcmp(key, PLOT_COLLECTION)) {
 	return plot_collection;
+    } else if (!strcmp(key, DATACOLS)) {
+	return datacols;
     } else if (!strcmp(key, "loop_maxiter_default")) {
 	return LOOP_MAXITER_DEFAULT; /* for internal use */
     } else {
@@ -2325,6 +2331,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 0;
 	*max = 2;
 	*var = &plot_collection;
+    } else if (!strcmp(s, DATACOLS)) {
+	*min = 1;
+	*max = 15;
+	*var = &datacols;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
 		"variable '%s'\n", s);

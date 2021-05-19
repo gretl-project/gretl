@@ -95,6 +95,7 @@ typedef enum {
 #define GRETL_ASSERT     "assert"
 #define QUANTILE_TYPE    "quantile_type"
 #define PLOT_COLLECTION  "plot_collection"
+#define DATACOLS         "datacols"
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
