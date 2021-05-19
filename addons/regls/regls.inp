@@ -118,17 +118,16 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
 end function
 
 function void print_regls_header (const bundle b, int nlam,
-                                  int elnet, string est,
-                                  string yname)
+                                  int elnet, string yname)
 
    string algo = b.ccd ? "CCD" : b.ridge ? "SVD" : "ADMM"
    string t1str = obslabel($t1)
    string t2str = obslabel($t2)
 
    if elnet
-      printf "\n%s, alpha = %g, ", est, b.alpha
+      printf "\n%s, alpha = %g, ", b.estimator, b.alpha
    else
-      printf "\n%s (%s) ", est, algo
+      printf "\n%s (%s) ", b.estimator, algo
    endif
    printf "using observations %s to %s (n = %d)\n", t1str, t2str, b.nobs
    printf "Dependent variable: %s\n", yname
@@ -190,14 +189,14 @@ function void regls_set_notes (bundle *b)
    endif
 end function
 
-function void nz_print (const bundle b, const string est, int nlam)
+function void nz_print (const bundle b, int nlam)
    if b.xvalidate
       scalar lf = b.use_1se ? b.lf1se : b.lfmin
-      printf "\n%s coefficients (s = %g)\n\n", est, lf
+      printf "\n%s coefficients (s = %g)\n\n", b.estimator, lf
    elif nlam > 1
-      printf "\n%s minimum-BIC coefficients\n\n", est
+      printf "\n%s minimum-BIC coefficients\n\n", b.estimator
    else
-      printf "\n%s coefficients\n\n", est
+      printf "\n%s coefficients\n\n", b.estimator
    endif
    if !inbundle(b, "nzX")
       if inbundle(b, "b")
@@ -230,7 +229,6 @@ function bundle regls (series depvar, list indeps,
    scalar alpha_set = 0
    scalar elnet = 0
    scalar gui = 0
-   string est
    string yname
 
    if !exists(parms)
@@ -333,10 +331,12 @@ function bundle regls (series depvar, list indeps,
       get_xvalidation_parms(&ret, &parms)
    endif
 
+   string ret.estimator = elnet ? "Elastic net" : \
+     ret.ridge ? "Ridge" : "LASSO"
+
    if ret.verbosity > 0 && rank <= 0
       yname = argname(depvar, "unnamed")
-      est = elnet ? "Elastic net" : ret.ridge ? "Ridge" : "LASSO"
-      print_regls_header(ret, nlam, elnet, est, yname)
+      print_regls_header(ret, nlam, elnet, yname)
    endif
 
    # call plugin C code
@@ -415,9 +415,9 @@ function bundle regls (series depvar, list indeps,
       strings pnames = varnames(X0) + defarray("edf", "BIC", "R^2")
       modprint bse pnames addstats
    elif nlam == 1 && ret.verbosity > 1
-      nz_print(ret, est, 1)
+      nz_print(ret, 1)
    elif nlam > 1 && ret.verbosity > 2
-      nz_print(ret, est, nlam)
+      nz_print(ret, nlam)
    endif
    if ret.xvalidate && ret.verbosity > 2
       training_R2(&ret, depvar, indeps)
@@ -479,7 +479,7 @@ function bundle regls_fcast (bundle *b, int t1, int t2)
    endloop
    printf "\n"
    # plot: should be conditional?
-   regls_fcast_plot(y, yhat, b.depvar)
+   regls_fcast_plot(y, yhat, b)
    series ret.yhat = yhat
    matrix ret.stats = stats
    return ret

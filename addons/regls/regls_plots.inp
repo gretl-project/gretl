@@ -1,7 +1,7 @@
 # regls plotting functions
 
 function void regls_fcast_plot (const series y, const series yhat,
-                                string yname)
+                                const bundle b)
    string tmpname
    scalar x0 = min(yhat)
    scalar x1 = max(yhat)
@@ -10,7 +10,7 @@ function void regls_fcast_plot (const series y, const series yhat,
    x1 += xd
    set force_decpoint on
    outfile --tempfile=tmpname --quiet
-      printf "set title 'actual vs predicted %s'\n", yname
+      printf "set title 'actual vs predicted %s (%s)'\n", b.depvar, b.estimator
       printf "set xlabel 'predicted'\n"
       printf "set ylabel 'actual'\n"
       printf "set key left top\n"
@@ -36,6 +36,6 @@ function void regls_mse_plot (const bundle b)
       printf "set yrange [%g:1]", ymin
       literal set xlabel 's = λ/λ-max'
       literal set ylabel 'MSE'
-      literal set title 'Average MSE as a function of s, with one-s.e. band'
+      literal set title 'Mean cross-validation MSE with one-s.e. band'
    end plot --output=display
 end function
