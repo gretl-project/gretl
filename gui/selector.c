@@ -1419,7 +1419,7 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
 
     gtk_box_pack_start(hbox, scroller, TRUE, TRUE, 0);
 
-    width *= gui_scale;
+    width *= 1.2 * gui_scale;
     gtk_widget_set_size_request(view, width, height);
     gtk_widget_show(view);
 
@@ -6598,7 +6598,7 @@ static void build_regls_controls (selector *sr)
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
-    vbox_add_vwedge(sr->vbox);
+    // vbox_add_vwedge(sr->vbox);
 
     /* cross validation */
     hbox = gtk_hbox_new(FALSE, 5);
