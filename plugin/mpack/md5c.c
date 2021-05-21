@@ -45,9 +45,9 @@ documentation and/or software.
 #define S43 15
 #define S44 21
 
-static void MD5Transform (UINT4 [4], unsigned char [64]);
-static void Encode (unsigned char *, UINT4 *, unsigned int);
-static void Decode (UINT4 *, unsigned char *, unsigned int);
+static void MD5Transform (guint32 [4], unsigned char [64]);
+static void Encode (unsigned char *, guint32 *, guint32);
+static void Decode (guint32 *, unsigned char *, guint32);
 
 static unsigned char PADDING[64] = {
     0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -68,22 +68,22 @@ static unsigned char PADDING[64] = {
    Rotation is separate from addition to prevent recomputation.
 */
 #define FF(a, b, c, d, x, s, ac) { \
- (a) += F ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += F ((b), (c), (d)) + (x) + (guint32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define GG(a, b, c, d, x, s, ac) { \
- (a) += G ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += G ((b), (c), (d)) + (x) + (guint32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define HH(a, b, c, d, x, s, ac) { \
- (a) += H ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += H ((b), (c), (d)) + (x) + (guint32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
 #define II(a, b, c, d, x, s, ac) { \
- (a) += I ((b), (c), (d)) + (x) + (UINT4)(ac); \
+ (a) += I ((b), (c), (d)) + (x) + (guint32)(ac); \
  (a) = ROTATE_LEFT ((a), (s)); \
  (a) += (b); \
   }
@@ -108,19 +108,19 @@ void MD5Init (MD5_CTX *context)
 */
 
 void MD5Update (MD5_CTX *context, unsigned char *input, 
-		unsigned int inputLen)
+		guint32 inputLen)
 {
-    unsigned int i, index, partLen;
+    guint32 i, index, partLen;
 
     /* Compute number of bytes mod 64 */
-    index = (unsigned int)((context->count[0] >> 3) & 0x3F);
+    index = (guint32)((context->count[0] >> 3) & 0x3F);
 
     /* Update number of bits */
-    if ((context->count[0] += ((UINT4)inputLen << 3))
-	< ((UINT4)inputLen << 3)) {
+    if ((context->count[0] += ((guint32)inputLen << 3))
+	< ((guint32)inputLen << 3)) {
 	context->count[1]++;
     }
-    context->count[1] += ((UINT4)inputLen >> 29);
+    context->count[1] += ((guint32)inputLen >> 29);
 
     partLen = 64 - index;
 
@@ -149,14 +149,14 @@ void MD5Update (MD5_CTX *context, unsigned char *input,
 void MD5Final (unsigned char *digest, MD5_CTX *context)
 {
     unsigned char bits[8];
-    unsigned int index, padLen;
+    guint32 index, padLen;
 
     /* Save number of bits */
     Encode(bits, context->count, 8);
 
     /* Pad out to 56 mod 64.
      */
-    index = (unsigned int)((context->count[0] >> 3) & 0x3f);
+    index = (guint32)((context->count[0] >> 3) & 0x3f);
     padLen = (index < 56) ? (56 - index) : (120 - index);
     MD5Update(context, PADDING, padLen);
 
@@ -172,9 +172,9 @@ void MD5Final (unsigned char *digest, MD5_CTX *context)
 
 /* MD5 basic transformation. Transforms state based on block. */
 
-static void MD5Transform (UINT4 *state, unsigned char *block)
+static void MD5Transform (guint32 state[], unsigned char block[])
 {
-    UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+    guint32 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
     Decode(x, block, 64);
 
@@ -259,12 +259,12 @@ static void MD5Transform (UINT4 *state, unsigned char *block)
     memset(x, 0, sizeof x);
 }
 
-/* Encodes input (UINT4) into output (unsigned char). Assumes len is
+/* Encodes input (guint32) into output (unsigned char). Assumes len is
    a multiple of 4. */
 
-static void Encode (unsigned char *output, UINT4 *input, unsigned int len)
+static void Encode (unsigned char *output, guint32 *input, guint32 len)
 {
-    unsigned int i, j;
+    guint32 i, j;
 
     for (i=0, j=0; j<len; i++, j+=4) {
 	output[j] = (unsigned char)(input[i] & 0xff);
@@ -274,15 +274,15 @@ static void Encode (unsigned char *output, UINT4 *input, unsigned int len)
     }
 }
 
-/* Decodes input (unsigned char) into output (UINT4). Assumes len is
+/* Decodes input (unsigned char) into output (guint32). Assumes len is
    a multiple of 4. */
 
-static void Decode (UINT4 *output, unsigned char *input, unsigned int len)
+static void Decode (guint32 *output, unsigned char *input, guint32 len)
 {
-    unsigned int i, j;
+    guint32 i, j;
 
     for (i=0, j=0; j<len; i++, j+=4) {
-	output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) |
-	    (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
+	output[i] = ((guint32)input[j]) | (((guint32)input[j+1]) << 8) |
+	    (((guint32)input[j+2]) << 16) | (((guint32)input[j+3]) << 24);
     }
 }
