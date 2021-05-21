@@ -29,7 +29,6 @@
 #define ARMA_DEBUG 0
 #define ARMA_MDEBUG 0
 #define SHOW_INIT 0
-#define CHK_FOR_ENV 0
 
 #include "arma_common.c"
 
@@ -854,17 +853,6 @@ static double kalman_arma_ll (const double *b, void *data)
     double ll = NADBL;
     int err = 0;
 
-#if CHK_FOR_ENV /* temporary debugging */
-    const char *envstr = getenv("GRETL_MATRIX_DEBUG");
-    if (envstr != NULL && atoi(envstr) > 0) {
-	int i;
-	fputs("kalman_arma_ll: @b from BFGS\n", stderr);
-	for (i=0; i<ainfo->nc; i++) {
-	    fprintf(stderr, " %d: %.16g\n", i, b[i]);
-	}
-    }
-#endif
-
 #if ARMA_DEBUG
     if (ainfo->q > 0 || ainfo->Q > 0) {
 	debug_print_theta(theta, Theta, ainfo);
@@ -1265,15 +1253,6 @@ static int kalman_arma (const double *coeff,
 	avg_ll = arma_avg_ll(ainfo);
 	use_newton = libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON;
 
-#if CHK_FOR_ENV
-	if (getenv("KALMAN_AVG_LL") != NULL) {
-	    avg_ll = 1;
-	}
-	if (getenv("ARMA_USE_NEWTON") != NULL) {
-	    use_newton = 1;
-	}
-#endif
-
 	if (avg_ll) {
 	    kalman_set_options(K, KALMAN_ARMA_LL | KALMAN_AVG_LL);
 	} else {
@@ -1299,10 +1278,6 @@ static int kalman_arma (const double *coeff,
 	    } else if (opt & OPT_L) {
 		libset_set_bool(USE_LBFGS, 1);
 		ainfo->pflags |= ARMA_LBFGS;
-	    }
-
-	    if (arma_cml_init(ainfo) && (opt & OPT_V)) {
-		pprintf(ainfo->prn, "%s\n\n", _("BFGS iteration"));
 	    }
 
 	    err = BFGS_max(b, ainfo->nc, maxit, toler,
@@ -1454,37 +1429,6 @@ static int prefer_hr_init (arma_info *ainfo)
 #if ARMA_DEBUG
     fprintf(stderr, "prefer_hr_init? %s\n", ret? "yes" : "no");
 #endif
-
-    return ret;
-}
-
-/* Should we try refining initialization via a CML
-   (BHHH) run? */
-
-static int maybe_set_cml_init (arma_info *ainfo)
-{
-    int ret = 1;
-
-    if (ainfo->T < 300) {
-	/* probably not for smaller samples */
-	ret = 0;
-    } else if (!arma_exact_ml(ainfo)) {
-	/* only if final estimation will be exact ML! */
-	ret = 0;
-    } else if (ainfo->nexo > 0) {
-	/* can't handle ARMAX? */
-	ret = 0;
-    } else if (arma_missvals(ainfo)) {
-	/* can't handle NAs */
-	ret = 0;
-    } else if (ainfo->q == 0 && ainfo->Q == 0) {
-	/* AR initialization should do the job */
-	ret = 0;
-    }
-
-    if (ret) {
-	set_arma_cml_init(ainfo);
-    }
 
     return ret;
 }
@@ -1830,14 +1774,6 @@ MODEL arma_model (const int *list, const int *pqspec,
 	goto bailout; /* estimation handled */
     }
 
-    /* before calling the candidate "basic" initializers below,
-       check if it will be possible and desirable to apply
-       CML to refine the initialization.
-    */
-    if (ainfo->init != INI_USER && ((opt & OPT_B) || getenv("INIT_VIA_CML"))) {
-	maybe_set_cml_init(ainfo);
-    }
-
     /* see if it may be helpful to scale the dependent
        variable, if we're doing exact ML */
     if (arma_exact_ml(ainfo) && ainfo->ifc && ainfo->init != INI_USER) {
@@ -1870,10 +1806,6 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     if (ainfo->prn != NULL && ainfo->init) {
 	arma_init_message(ainfo);
-    }
-
-    if (!err && arma_cml_init(ainfo)) {
-	cml_arma_init(coeff, dset, ainfo, opt);
     }
 
     if (!err) {

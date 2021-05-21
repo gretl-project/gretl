@@ -147,7 +147,6 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_X, "x-12-arima", 0 },
     { ARMA,     OPT_Y, "y-diff-only", 0 },
     { ARMA,     OPT_R, "robust", 0 },
-    { ARMA,     OPT_B, "cml-init", 0 },
     { ARMA,     OPT_S, "stdx", 0 },
     { BDS,      OPT_B, "boot", 2 },
     { BDS,      OPT_C, "corr1", 2 },
