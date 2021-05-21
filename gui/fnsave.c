@@ -2163,7 +2163,7 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     g_signal_connect(G_OBJECT(spin), "output",
 		     G_CALLBACK(version_output), NULL);
     gtk_entry_set_width_chars(GTK_ENTRY(spin), 5);
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 12
+#if GTK_MAJOR_VERSION == 3
     /* remedy required for gtk3 */
     gtk_entry_set_max_width_chars(GTK_ENTRY(spin), 5);
 #endif

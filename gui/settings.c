@@ -314,10 +314,8 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "tabedit", N_("Script editor uses tabs"), NULL, &tabbed_editor,
       BOOLSET, 0, TAB_EDITOR, NULL },
-#if GTK_MAJOR_VERSION >= 3 || GTK_MINOR_VERSION >= 16
     { "script_auto_complete", N_("Enable auto-completion"), NULL, &script_auto_complete,
       BOOLSET, 0, TAB_EDITOR, NULL },
-#endif
     { "script_auto_bracket", N_("Enable auto-brackets"), NULL, &script_auto_bracket,
       BOOLSET, 0, TAB_EDITOR, NULL },
     { "sview_style", N_("Highlighting style"), NULL, &sview_style,
