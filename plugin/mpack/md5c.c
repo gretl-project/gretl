@@ -45,7 +45,7 @@ documentation and/or software.
 #define S43 15
 #define S44 21
 
-static void MD5Transform (guint32 [4], unsigned char [64]);
+static void MD5Transform (guint32[4], unsigned char[64]);
 static void Encode (unsigned char *, guint32 *, guint32);
 static void Decode (guint32 *, unsigned char *, guint32);
 
@@ -130,7 +130,7 @@ void MD5Update (MD5_CTX *context, unsigned char *input,
 	MD5Transform(context->state, context->buffer);
 
 	for (i = partLen; i + 63 < inputLen; i += 64) {
-	    MD5Transform (context->state, &input[i]);
+	    MD5Transform(context->state, &input[i]);
 	}
 
 	index = 0;
@@ -172,7 +172,7 @@ void MD5Final (unsigned char *digest, MD5_CTX *context)
 
 /* MD5 basic transformation. Transforms state based on block. */
 
-static void MD5Transform (guint32 state[], unsigned char block[])
+static void MD5Transform (guint32 state[4], unsigned char block[64])
 {
     guint32 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 

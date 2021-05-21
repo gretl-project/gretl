@@ -1753,7 +1753,7 @@ static decision_function svm_train_one(const svm_problem *prob,
     Solver::SolutionInfo si;
     decision_function f;
 
-    si.rho = 0;
+    si.obj = si.rho = 0;
 
     switch(param->svm_type) {
     case C_SVC:
