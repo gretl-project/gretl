@@ -7169,54 +7169,14 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
-static PRN *data_prn_via_file (const int *list)
-{
-    PRN *prn = NULL;
-    char fname[MAXLEN];
-    gchar *buf = NULL;
-    gsize sz = 0;
-    int err = 0;
-
-    if (user_fopen("data_display_tmp", fname, &prn)) {
-        return NULL;
-    }
-
-    err = printdata(list, NULL, dataset, OPT_O, prn);
-    gretl_print_destroy(prn);
-    prn = NULL;
-
-    if (!err) {
-        err = gretl_file_get_contents(fname, &buf, &sz);
-    }
-
-    if (err) {
-        gui_errmsg(err);
-    } else {
-        prn = gretl_print_new_with_gchar_buffer(buf);
-    }
-
-    remove(fname);
-
-    return prn;
-}
-
-/* Max number of observations for which we use the buffer approach for
-   displaying data, as opposed to disk file. (Note, 2015-12-05: the
-   number is now increased substantially; however, this limit may
-   now be pretty much redundant. It was introduced because printing
-   to memory via pprintf was much slower than printing to file, on
-   account of the need to track the size of the in-memory buffer.
-   However, pprintf() is now more efficient and computers are
-   faster.
-*/
-
-#define MAXDISPLAY 65536 /* was 8192 */
+#define MAXDISPLAY 1000000
 
 void display_selected (void)
 {
     int n = sample_size(dataset);
     PRN *prn = NULL;
     int *list = NULL;
+    int nvals;
     int err = 0;
 
     list = main_window_selection_as_list();
@@ -7224,28 +7184,29 @@ void display_selected (void)
         return;
     }
 
+    nvals = list[0] * n;
+    if (nvals > MAXDISPLAY) {
+	warnbox_printf(_("Too many data values (%d) for display.\n"
+			 "You might try limiting the sample range."),
+		       nvals);
+	free(list);
+	return;
+    }
+
     /* special case: showing only one series */
     if (list[0] == 1) {
         display_var();
-        goto display_exit;
+	free(list);
+        return;
     }
 
-    if (list[0] * n > MAXDISPLAY) {
-        /* use disk file */
-        prn = data_prn_via_file(list);
-        if (prn == NULL) {
-            err = 1;
-        }
-    } else {
-        /* use buffer */
-        if (bufopen(&prn)) {
-            goto display_exit;
-        }
-        err = printdata(list, NULL, dataset, OPT_O, prn);
-        if (err) {
-            gui_errmsg(err);
-            gretl_print_destroy(prn);
-        }
+    err = bufopen(&prn);
+    if (!err) {
+	err = printdata(list, NULL, dataset, OPT_O, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	}
     }
 
     if (!err) {
@@ -7255,8 +7216,6 @@ void display_selected (void)
         view_buffer(prn, 78, 400, _("gretl: display data"),
                     PRINT, sview);
     }
-
- display_exit:
 
     free(list);
 }
@@ -8052,17 +8011,15 @@ void display_var (void)
     n = sample_size(dataset);
 
     if (n > MAXDISPLAY) {
-        /* use disk file */
-        prn = data_prn_via_file(list);
-        if (prn == NULL) {
-            err = 1;
-        }
-    } else {
-        /* use buffer */
-        if (bufopen(&prn)) {
-            return;
-        }
-        err = printdata(list, NULL, dataset, OPT_O, prn);
+	warnbox_printf(_("Too many data values (%d) for display.\n"
+			 "You might try limiting the sample range."),
+		       n);
+	return;
+    }
+
+    err = bufopen(&prn);
+    if (!err) {
+         err = printdata(list, NULL, dataset, OPT_O, prn);
         if (err) {
             gui_errmsg(err);
             gretl_print_destroy(prn);
