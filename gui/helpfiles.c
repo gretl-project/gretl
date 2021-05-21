@@ -1008,12 +1008,6 @@ static void finder_add_dbn_options (windata_t *vwin,
 		     entry);
 }
 
-#if (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 16)
-# define USE_ENTRY_ICON
-#endif
-
-#ifdef USE_ENTRY_ICON
-
 static void finder_icon_press (GtkEntry *entry,
 			       GtkEntryIconPosition pos,
 			       GdkEvent *event,
@@ -1034,21 +1028,6 @@ static void add_finder_icon (windata_t *vwin, GtkWidget *entry)
 		     G_CALLBACK(finder_icon_press),
 		     vwin);
 }
-
-#else
-
-static void add_finder_label (windata_t *vwin, GtkWidget *hbox, int pos)
-{
-    GtkWidget *label = gtk_label_new(_("Find:"));
-
-    if (pos == 1) {
-	gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    } else {
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    }
-}
-
-#endif
 
 /* add a "search box" to the right of a viewer window's toolbar */
 
@@ -1075,11 +1054,7 @@ void vwin_add_finder (windata_t *vwin)
 
     gtk_entry_set_width_chars(GTK_ENTRY(entry), fwidth);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-#ifdef USE_ENTRY_ICON
     add_finder_icon(vwin, entry);
-#else
-    add_finder_label(vwin, hbox, 1);
-#endif
 
     if (vwin->role == DBNOMICS_TOP ||
 	vwin->role == VIEW_DBSEARCH ||
@@ -1128,11 +1103,8 @@ static void vwin_add_footer_finder (windata_t *vwin)
     hbox = gtk_hbox_new(FALSE, 5);
     entry = gtk_entry_new();
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
-#ifdef USE_ENTRY_ICON
     add_finder_icon(vwin, entry);
-#else
-    add_finder_label(vwin, hbox, 0);
-#endif
+
     gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 10);
     add_footer_close_button(hbox);
     gtk_box_pack_end(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 2);
