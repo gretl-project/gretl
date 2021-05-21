@@ -8288,6 +8288,16 @@
 	</li>
 	<li>
 	  <para>
+	    feature border width: Te proporciona el control sobre la anchura
+	    del borde o del contorno que se dibuja alrededor de las distintas
+	    <quote>características</quote> del mapa (por ejemplo: países,
+	    estados, regiones, provincias,...). Si tu gráfico ya incluye una
+	    carga, puedes reducir la anchura hasta cero para eliminar esos
+	    bordes.
+	  </para>
+	</li>
+	<li>
+	  <para>
 	    height: Esto indica altura, y permite controlar el tamaño de la
 	    imagen del mapa. Dada la altura, el ancho se calcula en base
 	    al rango de longitud del mapa.
@@ -12270,17 +12280,17 @@
   </command>
 
   <command name="regls" section="Estimation"
-	   label="Mínimos cuadrados regularizados" context="gui">
+	   label="Mínimos Cuadrados Regularizados" context="gui">
     <description>
       <para>
-	Este diálogo te permite un grado limitado de acceso a la función
-	<lit>regls</lit> para mínimos cuadrados regularizados.
+	Este diálogo te permite el acceso a la función <lit>regls</lit> para
+	Mínimos Cuadrados Regularizados.
       </para>
       <para>
-	Se toleran tres variantes: LASSO, que limita la suma de los valores
+	Se toleran tres estimadores: LASSO, que limita la suma de los valores
 	absolutos de los coeficientes; Ridge (cresta), que limita la suma de
 	los coeficientes cuadrados; y Elastic net (malla elástica), que es una
-	combinación de las dos primeras, regida por el 'hiperparámetro' &alpha;
+	combinación de las dos primeras regida por el 'hiperparámetro' &alpha;
 	de forma que &alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona
 	Ridge, y valores intermedios proporcionan una combinación ponderada.
       </para>
@@ -12288,15 +12298,81 @@
 	El término &lgr; especifica el grado hasta el que se penaliza la suma
 	de coeficientes absolutos o cuadrados. Puedes indicar una única
 	fracción &lgr; desde 0 (sin penalización) hasta 1 (máxima penalización),
-	o bien un número de valores &lgr;. En el segundo caso, los valores de
+	o bien un grupo de valores &lgr;. En el segundo caso, los valores de
 	penalización se escalan automáticamente.
       </para>
       <para>
-	Puedes ejercer un control mucho mayor sobre la funcionalidad de Mínimos
-	Cuadrados Regularizados de GRETL recurriendo a la función <lit>regls</lit>
-	con el uso de guiones. En particular, tienes la potestad de especificar la
-	validación cruzada; consulta <doc>regls.pdf</doc> para tener más detalles.
+	Si eliges varios valores para &lgr;, se va a habilitar la opción de
+	validación cruzada. En ese caso, vas a poder escoger tanto el número
+	de <quote>pliegues</quote> para los datos de ensayo (por defecto es 10),
+	como si estos pliegues deben ser subconjuntos aleatorios o contiguos
+	de observaciones. Asimismo, podrás escoger si quieres que presente
+	un gráfico con las medias del Erro Cuadrático Medio (MSE) frente a las
+	fracciones &lgr;.
       </para>
+      <para>
+	El botón <quote>Avanzado</quote> abre un nuevo diálogo que proporciona
+	de cierta forma un mayor grado de control sobre el procedimiento de
+	regularización. Pero ten en cuenta que puedes ejercer un control más
+	detallado invocando a la función <lit>regls</lit> mediante la redacción
+	de guiones; para más detalles consulta <doc>regls.pdf</doc>.
+      </para>
+    </description>
+  </command>
+
+  <command name="regls-advanced" section="Estimation"
+	   label="Otras opciones para regls" context="gui">
+    <description>
+      <para>
+	Las elecciones hechas mediante este diálogo se aplican solo cuando son
+	relevantes, en función de las elecciones hechas en el diálogo principal
+	<quote>reglsbest</quote>. Se recuerdan mientras dure la sesión de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Elección de algoritmo: Puedes elegir el método Descenso de Coordenada
+	    Cíclico (CCD) tanto para el LASSO como para la regresión Ridge (cresta),
+	    en contraste con el método por defecto; es decir, el Método de
+	    Multiplicadores de Dirección Alterna (ADMM) para el LASSO y la
+	    Descomposición del Valor Singular (SVD) para el Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    El criterio por defecto para que rinda <quote>mejor</quote>
+	    la validación cruzada es minimizar el Error Cuadrático Medio
+	    (MSE), pero puedes seleccionar la regla alternativa
+	    <quote>una desviación típica</quote>. Esta alternativa, que
+	    favorece la sobriedad, escoge el mayor factor de penalización
+	    cuyo MSE está a menos de una desviación típica del mínimo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Semilla para los pliegues aleatorios: Si quieres obtener resultados
+	    replicables en la validación cruzada con pliegues aleatorios, es
+	    necesario especificar una semilla para el generador de números
+	    aleatorios.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Por defecto, regls utilizará MPI (si está disponible) en un esfuerzo por
+	    acelerar la validación cruzada. El recuadro para MPI (que se muestra solo
+	    cuando se compila GRETL con soporte MPI) te permite desactivar esto,
+	    lo que puede producir una aceleración para bases pequeñas de datos.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    La opción de mostrar el tiempo de ejecución te puede ser útil si
+	    quieres comparar el comportamiento de diferentes algoritmos, o
+	    comprobar si vale la pena usar el MPI. El tiempo que se muestra en
+	    el resultado corresponde a la ejecución del código C subyacente.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -15965,34 +16041,29 @@
 	íntimamente relacionada con el contraste de cointegración de Johansen
 	(consulta <cmdref targ="johansen"/>).
       </para>
-
       <para context="cli">
 	El parámetro <repl>orden</repl> de esta instrucción representa el orden de
 	retardos del sistema VAR. El número de retardos en el propio VECM (donde la
 	variable dependiente se indica como una primera diferencia) es de uno
 	menos que <repl>orden</repl>.
       </para>
-
       <para context="gui">
 	El orden de retardos escogido en la caja de diálogo del VECM es el del sistema
 	VAR. El número de retardos en el propio VECM (donde la variable dependiente
 	se indica como una primera diferencia) es de uno menos que ese número.
       </para>
-
       <para context="cli">
 	El parámetro <repl>rango</repl> representa el rango de cointegración
 	o, en otras palabras, el número de vectores cointegrantes. Este debe
 	ser mayor que cero, y menor o igual (generalmente menor) que el número
 	de variables endógenas indicadas en <repl>ylista</repl>.
       </para>
-
       <para context="gui">
 	El <quote>rango</quote> representa el número de vectores
 	cointegrantes. Este debe ser mayor que cero, y menor o
 	igual (generalmente menor) que el número de variables endógenas
 	escogidas.
       </para>
-
       <para context="cli">
 	El argumento <repl>ylista</repl> proporciona la lista de variables
 	endógenas, expresadas en niveles. La inclusión de términos de tipo
@@ -16008,7 +16079,6 @@
 	Los significados de estos casos y los criterios que se usan para escoger
 	un caso, se explican en <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	Las listas (opcionales) <repl>xlista</repl> y <repl>rxlista</repl> te
 	permiten especificar conjuntos de variables exógenas que forman
@@ -16017,7 +16087,6 @@
 	listas se separan de <repl>ylista</repl> y unas de las otras, mediante
 	punto y coma.
       </para>
-
       <para context="gui">
 	En el cuadradito <quote>Variables endógenas </quote> puedes escoger
 	el vector de variables endógenas, expresadas en niveles. La inclusión
@@ -16032,7 +16101,6 @@
 	significados de estos casos y los criterios que se usan para escoger
 	un caso, se explican en <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="gui">
 	En el cuadradito <quote>Variables exógenas</quote> puedes añadir determinadas
 	variables exógenas. Por defecto, estas entran en el modelo de forma no
@@ -16042,14 +16110,12 @@
 	ella y selecciona <quote>Restringida</quote> en el menú emergente. Entonces
 	el símbolo al lado de la variable va a cambiarse a R.
       </para>
-
       <para context="cli">
 	La opción <opt>seasonals</opt>, que puedes combinar con cualquiera de las
 	otras opciones, especifica la inclusión de un conjunto de variables
 	ficticias estacionales centradas. Esta opción únicamente está disponible
 	para datos trimestrales o mensuales.
       </para>
-
       <para context="gui">
 	Si los datos son trimestrales o mensuales, se muestra un cuadro de verificación que
 	te permite incluir un conjunto de variables ficticias estacionales centradas. En
@@ -16057,7 +16123,6 @@
 	permite presentar las regresiones auxiliares que forman el punto de
 	inicio del procedimiento de estimación Máximo Verosímil de Johansen.
       </para>
-
       <para context="cli">
 	El primer ejemplo de arriba especifica un VECM, con un orden de retardos de 4 y
 	un único vector de cointegración. Las variables endógenas son <lit>Y1</lit>,
@@ -16067,7 +16132,6 @@
 	los vectores de cointegración pueden tener ordenada en el origen no nula pero las
 	variables <lit>Y</lit> no tienen tendencia.
       </para>
-
       <para context="cli">
 	A continuación de la estimación de un VECM, tienes disponibles algunos accesores
 	especiales: <lit>$jalpha</lit>, <lit>$jbeta</lit> y <lit>$jvbeta</lit>

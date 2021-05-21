@@ -8288,6 +8288,16 @@
 	</li>
 	<li>
 	  <para>
+	    feature border width: Te proporciona o control sobre a anchura
+	    do borde ou do contorno que se debuxa arredor das distintas
+	    <quote>características</quote> do mapa (por exemplo: países,
+	    estados, rexións, provincias,...). Se o teu gráfico xa inclúe
+	    unha carga, podes reducir a anchura ata cero para eliminar eses
+	    bordes.
+	  </para>
+	</li>
+	<li>
+	  <para>
 	    height: Isto indica altura, e permite controlar o tamaño da imaxe
 	    do mapa. Dada a altura, o ancho calcúlase en base ao rango de
 	    lonxitude do mapa.
@@ -12270,17 +12280,17 @@
   </command>
 
   <command name="regls" section="Estimation"
-	   label="Mínimos cadrados regularizados" context="gui">
+	   label="Mínimos Cadrados Regularizados" context="gui">
     <description>
       <para>
-	Este diálogo te permite un grao limitado de acceso á función
-	<lit>regls</lit> para mínimos cadrados regularizados.
+	Este diálogo te permite o acceso á función <lit>regls</lit> para
+	Mínimos Cadrados Regularizados.
       </para>
       <para>
-	Se toleran tres variantes: LASSO, que limita a suma dos valores absolutos
+	Se toleran tres estimadores: LASSO, que limita a suma dos valores absolutos
 	dos coeficientes; Ridge (crista), que limita a suma dos coeficientes
 	cadrados; e Elastic net (malla elástica), que é unha combinación das
-	dúas primeiras, rexida polo 'hiperparámetro' &alpha; de xeito que
+	dúas primeiras rexida polo 'hiperparámetro' &alpha; de xeito que
 	&alpha; = 1 proporciona LASSO, &alpha; = 0 proporciona Ridge, e
 	valores intermedios proporcionan unha combinación ponderada.
       </para>
@@ -12288,15 +12298,81 @@
 	O termo &lgr; especifica o grao ata o que se penaliza a suma de
 	coeficientes absolutos ou cadrados. Podes ben indicar unha única
 	fracción &lgr; desde 0 (sen penalización) ata 1 (máxima penalización),
-	ou ben un número de valores &lgr;. No segundo caso, os valores de
+	ou ben un grupo de valores &lgr;. No segundo caso, os valores de
 	penalización escálanse automaticamente.
       </para>
       <para>
-	Podes exercer un control moito maior sobre a funcionalidade de Mínimos
-	Cadrados Regularizados de GRETL apelando á función <lit>regls</lit>
-	mediante o uso de guións. En particular, tes a potestade de especificar a
-	validación cruzada; consulta <doc>regls.pdf</doc> para ter máis detalles.
+	Se elixes varios valores para &lgr;, vaise habilitar a opción de
+	validación cruzada. Nese caso, vas poder escoller tanto o número de
+	<quote>pregos</quote> para os datos de ensaio (por defecto é 10),
+	como se estes pregos deben de ser subconxuntos aleatorios ou
+	contiguos de observacións. Tamén poderás escoller se queres que
+	se amose unha gráfica coas medias do Erro Cadrado Medio (MSE) fronte
+	ás fraccións &lgr;.
       </para>
+      <para>
+	O botón <quote>Avanzado</quote> abre un novo diálogo que proporciona
+	en certa maneira un maior grao de control sobre o procedemento de
+	regularización. Mais cae na conta de que podes exercer un control
+	máis detallado invocando á función <lit>regls</lit> mediante a redacción
+	de guións; para máis detalles consulta <doc>regls.pdf</doc>.
+      </para>
+    </description>
+  </command>
+
+  <command name="regls-advanced" section="Estimation"
+	   label="Outras opcións para regls" context="gui">
+    <description>
+      <para>
+	As escollas feitas mediante este diálogo aplícanse unicamente cando
+	son relevantes, en función das eleccións feitas no diálogo principal
+	<quote>reglsbest</quote>. Vanse lembrar mentres dure a sesión de GRETL.
+      </para>
+      <ilist>
+	<li>
+	  <para>
+	    Elección de algoritmo: Podes escoller o método Descenso de Coordenada
+	    Cíclico (CCD) tanto para o LASSO como para a regresión Ridge (crista),
+	    en contraste co método por defecto; é dicir, o Método de Multiplicadores
+	    de Dirección Alterna (ADMM) para o LASSO e a Descomposición
+	    do Valor Singular (SVD) para o Ridge.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    O criterio por defecto para que renda <quote>mellor</quote>
+	    a validación cruzada é minimizar o Erro Cadrado Medio (MSE),
+	    pero podes seleccionar a regra alternativa
+	    <quote>unha desviación padrón</quote>. Esta alternativa, que
+	    favorece a sobriedade, escolle o maior factor de penalización
+	    cuxo MSE está a menos dunha desviación padrón do mínimo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Semente para os pregos aleatorios: Se queres obter resultados
+	    replicables na validación cruzada con pregos aleatorios, é
+	    necesario especificar unha semente para o xerador de números
+	    aleatorios.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Por defecto, regls utilizará MPI (se está dispoñible) nun esforzo por
+	    acelerar a validación cruzada. O recadro para MPI (que se amosa só
+	    cando se compila GRETL con soporte MPI) te permite desactivar isto,
+	    o que pode producir unha aceleración para bancos pequenos de datos.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    A opción de amosar o tempo de execución pode serte útil se queres
+	    comparar o comportamento de diferentes algoritmos, ou comprobar
+	    se paga a pena usar o MPI. O tempo que se amosa no resultado
+	    corresponde á execución do código C subxacente.
+	  </para>
+	</li>
+      </ilist>
     </description>
   </command>
 
@@ -15965,34 +16041,29 @@
 	intimamente relacionada coa proba de cointegración de Johansen
 	(consulta <cmdref targ="johansen"/>).
       </para>
-
       <para context="cli">
 	O parámetro <repl>nivel</repl> desta instrución representa o nivel de
 	retardos do sistema VAR. O número de retardos no propio VECM (onde a
 	variable dependente se indica como unha primeira diferenza) é de un
 	menos ca <repl>nivel</repl>.
       </para>
-
       <para context="gui">
 	O nivel de retardos escollido na caixa de diálogo do VECM é o do sistema
 	VAR. O número de retardos no propio VECM (onde a variable dependente
 	indícase como unha primeira diferenza) é de un menos ca ese número.
       </para>
-
       <para context="cli">
 	O parámetro <repl>rango</repl> representa o rango de cointegración
 	ou, noutras palabras, o número de vectores cointegrantes. Este debe
 	de ser maior ca cero, e menor ou igual (xeralmente menor) que o número
 	de variables endóxenas indicadas en <repl>ylista</repl>.
       </para>
-
       <para context="gui">
 	O <quote>rango</quote> representa o número de vectores
 	cointegrantes. Este debe de ser maior ca cero, e menor ou
 	igual (xeralmente menor) que o número de variables endóxenas
 	escollidas.
       </para>
-
       <para context="cli">
 	O argumento <repl>ylista</repl> proporciona a lista de variables
 	endóxenas, expresadas en niveis. A inclusión de termos de tipo
@@ -16008,7 +16079,6 @@
 	Os significados destes casos e os criterios que se usan para escoller
 	un caso, explícanse no <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="cli">
 	As listas (opcionais) <repl>xlista</repl> e <repl>rxlista</repl> te
 	permiten especificar conxuntos de variables esóxenas que forman
@@ -16017,7 +16087,6 @@
 	listas sepáranse de <repl>ylista</repl> e unhas das outras, mediante
 	punto e coma.
       </para>
-
       <para context="gui">
 	No cadriño <quote>Variables endóxenas </quote> podes escoller
 	o vector de variables endóxenas, expresadas en niveis. A inclusión
@@ -16032,7 +16101,6 @@
 	significados destes casos e os criterios que se usan para escoller
 	un caso, explícanse no <guideref targ="chap:vecm"/>.
       </para>
-
       <para context="gui">
 	No cadriño <quote>Variables esóxenas</quote> podes engadir determinadas
 	variables esóxenas. Por defecto, estas entran no modelo de forma non
@@ -16042,14 +16110,12 @@
 	ela e selecciona <quote>Restrinxida</quote> no menú emerxente. Entón
 	o símbolo á beira da variable vai trocarse en R.
       </para>
-
       <para context="cli">
 	A opción <opt>seasonals</opt>, que podes combinar con calquera das
 	outras opcións, especifica a inclusión dun conxunto de variables
 	ficticias estacionais centradas. Esta opción unicamente está dispoñible
 	para datos trimestrais ou mensuais.
       </para>
-
       <para context="gui">
 	Se os datos son trimestrais ou mensuais, amósase un cadro de verificación que
 	te permite incluír un conxunto de variables ficticias estacionais centradas. En
@@ -16057,7 +16123,6 @@
 	permite presentar as regresións auxiliares que forman o punto de
 	inicio do procedemento de estimación Máximo Verosímil de Johansen.
       </para>
-
       <para context="cli">
 	O primeiro exemplo de arriba especifica un VECM, cun nivel de retardos de 4 e
 	un único vector de cointegración. As variables endóxenas son <lit>Y1</lit>,
@@ -16067,7 +16132,6 @@
 	os vectores de cointegración poden ter ordenada na orixe non nula pero as
 	variables <lit>Y</lit> non teñen tendencia.
       </para>
-
       <para context="cli">
 	A continuación da estimación dun VECM, tes dispoñibles algúns accesorios
 	especiais: <lit>$jalpha</lit>, <lit>$jbeta</lit> e <lit>$jvbeta</lit>
