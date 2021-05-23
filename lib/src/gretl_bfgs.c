@@ -1186,7 +1186,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	goto skipcalc;
     }
 
-    verbskip = libset_get_int("bfgs_verbskip");
+    verbskip = libset_get_int(BFGS_VERBSKIP);
     show_activity = show_activity_func_installed();
 
     do {
@@ -1541,7 +1541,7 @@ int LBFGS_max (double *b, int n,
     nbd = ispace;
     iwa = nbd + n;
 
-    verbskip = libset_get_int("bfgs_verbskip");
+    verbskip = libset_get_int(BFGS_VERBSKIP);
     show_activity = show_activity_func_installed();
 
     if (gradfunc == NULL && combfunc == NULL) {
@@ -3505,8 +3505,8 @@ static double find_x1 (double x0, double y0, double *py1,
     int warnsave, negbad = 0;
     int i;
 
-    warnsave = libset_get_bool("warnings");
-    libset_set_bool("warnings", 0);
+    warnsave = libset_get_bool(WARNINGS);
+    libset_set_bool(WARNINGS, 0);
 
     if (fabs(x0) < 0.001) {
 	a = (x0 == 0)? 0.1 : sgn(x0) * 0.1;
@@ -3533,7 +3533,7 @@ static double find_x1 (double x0, double y0, double *py1,
 	}
     }
 
-    libset_set_bool("warnings", warnsave);
+    libset_set_bool(WARNINGS, warnsave);
 
     return na(*py1) ? NADBL : x1;
 }

@@ -1647,7 +1647,7 @@ static int loop_count_too_high (LOOPSET *loop)
 	}
     } else {
 	int maxit = libset_get_int(LOOP_MAXITER);
-	int maxdef = libset_get_int("loop_maxiter_default");
+	int maxdef = libset_get_int(LOOP_MAXITER_DEFAULT);
 
 	if (maxit > 0 && nt > maxit) {
 	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),

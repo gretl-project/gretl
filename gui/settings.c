@@ -1311,7 +1311,7 @@ const char *get_default_hc_string (int ci)
 	    return "HAC";
 	} else {
 	    /* panel */
-	    return libset_get_bool(PCSE) ? "PCSE" : "Arellano";
+	    return libset_get_bool(USE_PCSE) ? "PCSE" : "Arellano";
 	}
     }
 }

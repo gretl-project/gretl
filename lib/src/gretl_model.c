@@ -6427,7 +6427,7 @@ int model_use_zscore (const MODEL *pmod)
 	return 1;
     } else if (pmod->ci == PANEL && (pmod->opt & OPT_U)) {
 	return 1;
-    } else if ((pmod->opt & OPT_R) && libset_get_bool("robust_z")) {
+    } else if ((pmod->opt & OPT_R) && libset_get_bool(ROBUST_Z)) {
 	return 1;
     } else {
 	return 0;
