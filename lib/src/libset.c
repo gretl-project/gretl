@@ -183,7 +183,7 @@ setvar setvars[] = {
     { CSV_READ_NA,   "csv_read_na",  SV_SPECIAL },
     { INITVALS,      "initvals", SV_NUMERIC },
     { INITCURV,      "initcurv", SV_NUMERIC },
-    { MATMASK,       "matmask",    SV_BEHAVE },
+    { MATMASK,       "matrix_mask", SV_BEHAVE },
     { CSV_DIGITS,    "csv_digits", SV_BEHAVE },
     { BLAS_MNK_MIN,  "blas_mnk_min", SV_BEHAVE },
     { CSV_DELIM,     "csv_delim", SV_SPECIAL },
