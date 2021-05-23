@@ -128,7 +128,7 @@ typedef enum {
     GRAPH_THEME,
     DISP_DIGITS,
     SETVAR_MAX
-} SetVar;
+} SetKey;
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
@@ -143,16 +143,16 @@ void libset_cleanup (void);
 int push_program_state (void);
 int pop_program_state (void);
 
-int libset_get_bool (SetVar key);
-int libset_set_bool (SetVar key, int val);
+int libset_get_bool (SetKey key);
+int libset_set_bool (SetKey key, int val);
 
-double libset_get_double (SetVar key);
-int libset_set_double (SetVar key, double val);
+double libset_get_double (SetKey key);
+int libset_set_double (SetKey key, double val);
 
-double libset_get_user_tolerance (SetVar key);
+double libset_get_user_tolerance (SetKey key);
 
-int libset_get_int (SetVar key);
-int libset_set_int (SetVar key, int val);
+int libset_get_int (SetKey key);
+int libset_set_int (SetKey key, int val);
 
 int is_libset_var (const char *s);
 

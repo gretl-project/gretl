@@ -39,6 +39,7 @@
 # include "gretl_win32.h"
 #endif
 
+#include <stddef.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -119,27 +120,47 @@ struct set_state_ {
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
 };
 
+#if 0 /* not yet */
+typedef union sv_addr_ sv_addr;
+
+union sv_addr_ {
+    void *ptr;
+    size_t off;
+};
+
+/* Could add a field to @setvars below to locate the variable to
+   be read or modified. For members of "set_state" this would take
+   the form of, for example,
+
+   {.off=offsetof(set_state,conv_huge)}
+
+   For "set variables" that are not members of set_state, this
+   could be the address of the associated file-scope int or double,
+   using the @ptr member of union sv_addr_.
+*/
+#endif /* not yet */
+
 typedef struct setvar_ setvar;
 
 struct setvar_ {
-    SetVar id;
+    SetKey key;
     const char *name;
     gint8 category;
 };
 
 setvar setvars[] = {
-    { USE_CWD,      "use_cwd",  SV_BEHAVE },
-    { ECHO_ON,      "echo",     SV_SPECIAL },
-    { MSGS_ON,      "messages", SV_BEHAVE },
-    { FORCE_DECPOINT, "force_decpoint" , SV_BEHAVE },
-    { USE_PCSE,     "pcse", SV_ROBUST },
-    { USE_SVD,      "svd",      SV_NUMERIC },
+    { USE_CWD,      "use_cwd",   SV_BEHAVE },
+    { ECHO_ON,      "echo",      SV_SPECIAL },
+    { MSGS_ON,      "messages",  SV_BEHAVE },
+    { FORCE_DECPOINT, "force_decpoint", SV_BEHAVE },
+    { USE_PCSE,     "pcse",      SV_ROBUST },
+    { USE_SVD,      "svd",       SV_NUMERIC },
     { USE_QR,       "force_qr", SV_NUMERIC },
     { PREWHITEN,    "hac_prewhiten", SV_ROBUST },
     { FORCE_HC,     "force_hc",      SV_ROBUST },
-    { USE_LBFGS,    "lbfgs",    SV_NUMERIC },
-    { SHELL_OK,     "shell_ok", SV_SPECIAL },
-    { WARNINGS,     "warnings", SV_BEHAVE },
+    { USE_LBFGS,    "lbfgs",     SV_NUMERIC },
+    { SHELL_OK,     "shell_ok",  SV_SPECIAL },
+    { WARNINGS,     "warnings",  SV_BEHAVE },
     { SKIP_MISSING, "skip_missing", SV_BEHAVE },
     { BFGS_RSTEP,   "bfgs_richardson", SV_NUMERIC },
     { DPDSTYLE,     "dpdstyle", SV_BEHAVE },
@@ -161,17 +182,17 @@ setvar setvars[] = {
     { HAC_LAG,       "hac_lag", SV_ROBUST },
     { HORIZON,       "horizon", SV_TS },
     { BOOTREP,       "bootrep", SV_BEHAVE },
-    { LOOP_MAXITER,  "loop_maxiter",  SV_BEHAVE },
-    { BFGS_MAXITER,  "bfgs_maxiter",  SV_NUMERIC },
+    { LOOP_MAXITER,  "loop_maxiter",   SV_BEHAVE },
+    { BFGS_MAXITER,  "bfgs_maxiter",   SV_NUMERIC },
     { BFGS_VERBSKIP, "bfgs_verbskip", SV_BEHAVE },
     { BOOT_ITERS,    "boot_iters", SV_TS },
     { OPTIM_STEPLEN, "optim_steplen", SV_NUMERIC },
     { BHHH_MAXITER,  "bhhh_maxiter", SV_NUMERIC },
-    { LBFGS_MEM,     "lbfgs_mem",    SV_NUMERIC },
-    { RQ_MAXITER,    "rq_maxiter",   SV_NUMERIC },
-    { GMM_MAXITER,   "gmm_maxiter",  SV_NUMERIC },
+    { LBFGS_MEM,     "lbfgs_mem",     SV_NUMERIC },
+    { RQ_MAXITER,    "rq_maxiter",    SV_NUMERIC },
+    { GMM_MAXITER,   "gmm_maxiter",   SV_NUMERIC },
     { SEED,          "seed", SV_RNG },
-    { CONV_HUGE,     "huge", SV_BEHAVE },
+    { CONV_HUGE,     "huge",         SV_BEHAVE },
     { NLS_TOLER,     "nls_toler",    SV_NUMERIC },
     { BFGS_TOLER,    "bfgs_toler",   SV_NUMERIC },
     { BFGS_MAXGRAD,  "bfgs_maxgrad", SV_NUMERIC },
@@ -237,15 +258,15 @@ static const char *hac_lag_string (void);
 static int real_libset_read_script (const char *fname,
 				    PRN *prn);
 static int set_csv_digits (const char *s);
-static int libset_get_scalar (SetVar var, const char *arg,
+static int libset_get_scalar (SetKey key, const char *arg,
 			      int *pi, double *px);
 
-static const char *setvar_get_name (SetVar sv)
+static const char *setkey_get_name (SetKey key)
 {
     int i;
 
     for (i=0; i<G_N_ELEMENTS(setvars); i++) {
-	if (setvars[i].id == sv) {
+	if (setvars[i].key == key) {
 	    return setvars[i].name;
 	}
     }
@@ -258,8 +279,7 @@ static GHashTable *libset_hash_init (void)
     int i;
 
     for (i=0; i<G_N_ELEMENTS(setvars); i++) {
-	g_hash_table_insert(ht, (gpointer) setvars[i].name,
-			    GINT_TO_POINTER(setvars[i].id));
+	g_hash_table_insert(ht, (gpointer) setvars[i].name, &setvars[i]);
     }
 
     return ht;
@@ -267,13 +287,13 @@ static GHashTable *libset_hash_init (void)
 
 static GHashTable *svht;
 
-static SetVar get_setvar_by_name (const char *name)
+static setvar *get_setvar_by_name (const char *name)
 {
     if (svht == NULL) {
 	svht = libset_hash_init();
     }
 
-    return GPOINTER_TO_INT(g_hash_table_lookup(svht, name));
+    return g_hash_table_lookup(svht, name);
 }
 
 static void robust_opts_init (set_state *sv)
@@ -302,7 +322,7 @@ static const char *plc_strs[] = {"off", "auto", "on", NULL};
 static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", NULL};
 
 struct setvar_strings {
-    SetVar id;
+    SetKey key;
     const char **strvals;
 };
 
@@ -322,21 +342,21 @@ struct setvar_strings coded[] = {
     { PLOT_COLLECTION, plc_strs }
 };
 
-static const char **libset_option_strings (SetVar id)
+static const char **libset_option_strings (SetKey key)
 {
     int i;
 
     for (i=0; i<G_N_ELEMENTS(coded); i++) {
-	if (coded[i].id == id) {
+	if (coded[i].key == key) {
 	    return coded[i].strvals;
 	}
     }
     return NULL;
 }
 
-static void coded_var_show_opts (SetVar sv, PRN *prn)
+static void coded_var_show_opts (SetKey key, PRN *prn)
 {
-    const char **S = libset_option_strings(sv);
+    const char **S = libset_option_strings(key);
 
     if (S != NULL) {
 	pputs(prn, "valid settings:");
@@ -344,7 +364,7 @@ static void coded_var_show_opts (SetVar sv, PRN *prn)
 	    pprintf(prn, " %s", *S);
 	    S++;
 	}
-	if (sv == CSV_DELIM) {
+	if (key == CSV_DELIM) {
 	    pputs(prn, " or quoted punctuation character");
 	}
 	pputc(prn, '\n');
@@ -362,7 +382,7 @@ static const char *get_arma_vcv_str (int v)
     }
 }
 
-static const char *libset_option_string (SetVar key)
+static const char *libset_option_string (SetKey key)
 {
     if (key == HAC_LAG) {
 	return hac_lag_string(); /* special */
@@ -431,12 +451,12 @@ static int check_for_state (void)
     }
 }
 
-static int flag_to_bool (set_state *sv, SetVar flag)
+static int flag_to_bool (set_state *sv, SetKey key)
 {
     if (sv == NULL) {
 	return 0;
     } else {
-	return (sv->flags & flag)? 1 : 0;
+	return (sv->flags & key)? 1 : 0;
     }
 }
 
@@ -1046,15 +1066,13 @@ libset_numeric_test (const char *s, int *pi, double *px)
     return ret;
 }
 
-static int negval_invalid (SetVar var)
+static int negval_invalid (SetKey key)
 {
     int ret = 1; /* presume invalid */
 
-    if (var > 0) {
-	if (var == BLAS_MNK_MIN ||
-	    var == OMP_MNK_MIN ||
-	    var == SIMD_K_MAX ||
-	    var == SIMD_MN_MIN) {
+    if (key > 0) {
+	if (key == BLAS_MNK_MIN || key == OMP_MNK_MIN ||
+	    key == SIMD_K_MAX || key == SIMD_MN_MIN) {
 	    /* these can all be set to -1 */
 	    ret = 0;
 	}
@@ -1063,7 +1081,7 @@ static int negval_invalid (SetVar var)
     return ret;
 }
 
-static int libset_get_scalar (SetVar var, const char *arg,
+static int libset_get_scalar (SetKey key, const char *arg,
 			      int *pi, double *px)
 {
     double x = NADBL;
@@ -1078,7 +1096,7 @@ static int libset_get_scalar (SetVar var, const char *arg,
     if (nstatus == NUMERIC_BAD) {
 	return E_INVARG; /* handled */
     } else if (nstatus == NUMERIC_OK) {
-	if (pi != NULL && negval_invalid(var) && *pi < 0) {
+	if (pi != NULL && negval_invalid(key) && *pi < 0) {
 	    err = E_INVARG;
 	} else if (px != NULL && *px < 0.0) {
 	    err = E_INVARG;
@@ -1090,7 +1108,7 @@ static int libset_get_scalar (SetVar var, const char *arg,
     x = get_scalar_value_by_name(arg, &err);
 
     if (!err) {
-	if (negval_invalid(var) && x < 0.0) {
+	if (negval_invalid(key) && x < 0.0) {
 	    err = E_INVARG;
 	} else if (px != NULL) {
 	    *px = x;
@@ -1164,7 +1182,7 @@ static int parse_hc_variant (const char *s)
     return 1;
 }
 
-static int parse_libset_int_code (SetVar key, const char *val)
+static int parse_libset_int_code (SetKey key, const char *val)
 {
     int i, err = E_DATA;
 
@@ -1521,13 +1539,13 @@ static const char *arg_from_delim (char c)
     return "unset";
 }
 
-static void libset_print_bool (SetVar sv, const char *s,
+static void libset_print_bool (SetKey key, const char *s,
 			       PRN *prn, gretlopt opt)
 {
-    int v = libset_get_bool(sv);
+    int v = libset_get_bool(key);
 
     if (s == NULL) {
-	s = setvar_get_name(sv);
+	s = setkey_get_name(key);
     }
 
     if (opt & OPT_D) {
@@ -1551,30 +1569,30 @@ static void libset_print_bool (SetVar sv, const char *s,
 			 k == GRETL_ASSERT || \
 			 k == PLOT_COLLECTION)
 
-const char *intvar_code_string (SetVar sv)
+const char *intvar_code_string (SetKey key)
 {
-    if (sv == HAC_LAG) {
+    if (key == HAC_LAG) {
 	return hac_lag_string(); /* special */
     } else {
-	return libset_option_string(sv);
+	return libset_option_string(key);
     }
 }
 
-static void libset_print_int (SetVar sv, const char *s,
+static void libset_print_int (SetKey key, const char *s,
 			      PRN *prn, gretlopt opt)
 {
     if (s == NULL) {
-	s = setvar_get_name(sv);
+	s = setkey_get_name(key);
     }
 
-    if (coded_intvar(sv)) {
+    if (coded_intvar(key)) {
 	if (opt & OPT_D) {
-	    pprintf(prn, " %s = %s\n", s, intvar_code_string(sv));
+	    pprintf(prn, " %s = %s\n", s, intvar_code_string(key));
 	} else {
-	    pprintf(prn, "set %s %s\n", s, intvar_code_string(sv));
+	    pprintf(prn, "set %s %s\n", s, intvar_code_string(key));
 	}
     } else {
-	int k = libset_get_int(sv);
+	int k = libset_get_int(key);
 
 	if (opt & OPT_D) {
 	    if (is_unset(k)) {
@@ -1588,17 +1606,17 @@ static void libset_print_int (SetVar sv, const char *s,
     }
 }
 
-static void libset_print_double (SetVar sv, const char *s,
+static void libset_print_double (SetKey key, const char *s,
 				 PRN *prn, gretlopt opt)
 {
-    double x = libset_get_double(sv);
+    double x = libset_get_double(key);
 
     if (s == NULL) {
-	s = setvar_get_name(sv);
+	s = setkey_get_name(key);
     }
 
     if (opt & OPT_D) {
-	if (na(x) || (x == 0.0 && sv == FDJAC_EPS)) {
+	if (na(x) || (x == 0.0 && key == FDJAC_EPS)) {
 	    pprintf(prn, " %s = auto\n", s);
 	} else {
 	    pprintf(prn, " %s = %.15g\n", s, x);
@@ -1630,12 +1648,12 @@ static void print_vars_for_category (int category, PRN *prn,
 	    continue;
 	}
 	v = &setvars[i];
-	if (libset_boolvar(v->id)) {
-	    libset_print_bool(v->id, v->name, prn, opt);
-	} else if (libset_int(setvars[i].id)) {
-	    libset_print_int(v->id, v->name, prn, opt);
-	} else if (libset_double(v->id)) {
-	    libset_print_double(v->id, v->name, prn, opt);
+	if (libset_boolvar(v->key)) {
+	    libset_print_bool(v->key, v->name, prn, opt);
+	} else if (libset_int(setvars[i].key)) {
+	    libset_print_int(v->key, v->name, prn, opt);
+	} else if (libset_double(v->key)) {
+	    libset_print_double(v->key, v->name, prn, opt);
 	}
     }
 }
@@ -1722,81 +1740,81 @@ static int print_settings (PRN *prn, gretlopt opt)
     return 0;
 }
 
-static int libset_query_settings (const char *s, PRN *prn)
+static int libset_query_settings (setvar *sv, PRN *prn)
 {
-    SetVar sv = get_setvar_by_name(s);
     int err = 0;
 
-    if (!strcmp(s, "echo")) {
-	pprintf(prn, "%s: code, currently '%s'\n", s, get_echo_status());
-    } else if (libset_boolvar(sv)) {
+    if (sv->key == ECHO_ON) {
+	pprintf(prn, "%s: code, currently '%s'\n", sv->name, get_echo_status());
+    } else if (libset_boolvar(sv->key)) {
 	pprintf(prn, "%s: boolean (on/off), currently %s\n",
-		s, libset_get_bool(sv)? "on" : "off");
-    } else if (coded_intvar(sv)) {
-	pprintf(prn, "%s: code, currently \"%s\"\n", s, intvar_code_string(sv));
-	coded_var_show_opts(sv, prn);
-    } else if (libset_int(sv)) {
-	int k = libset_get_int(sv);
+		sv->name, libset_get_bool(sv->key)? "on" : "off");
+    } else if (coded_intvar(sv->key)) {
+	pprintf(prn, "%s: code, currently \"%s\"\n", sv->name,
+		intvar_code_string(sv->key));
+	coded_var_show_opts(sv->key, prn);
+    } else if (libset_int(sv->key)) {
+	int k = libset_get_int(sv->key);
 
 	if (is_unset(k)) {
-	    pprintf(prn, "%s: positive integer, currently unset\n", s);
+	    pprintf(prn, "%s: positive integer, currently unset\n", sv->name);
 	} else {
-	    pprintf(prn, "%s: positive integer, currently %d\n", s, k);
+	    pprintf(prn, "%s: positive integer, currently %d\n", sv->name, k);
 	}
-    } else if (libset_double(sv)) {
-	double x = libset_get_double(sv);
+    } else if (libset_double(sv->key)) {
+	double x = libset_get_double(sv->key);
 
 	if (na(x)) {
 	    pprintf(prn, "%s: positive floating-point value, "
-		    "currently automatic\n", s);
+		    "currently automatic\n", sv->name);
 	} else {
 	    pprintf(prn, "%s: positive floating-point value, "
-		    "currently %g\n", s, x);
+		    "currently %g\n", sv->name, x);
 	}
-    } else if (!strcmp(s, "initvals")) {
+    } else if (sv->key == INITVALS) {
 	if (state->initvals != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", s);
+	    pprintf(prn, "%s: matrix, currently\n", sv->name);
 	    gretl_matrix_print_to_prn(state->initvals, NULL, prn);
 	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", s);
+	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
 	}
-    } else if (!strcmp(s, "initcurv")) {
+    } else if (sv->key == INITCURV) {
 	if (state->initcurv != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", s);
+	    pprintf(prn, "%s: matrix, currently\n", sv->name);
 	    gretl_matrix_print_to_prn(state->initcurv, NULL, prn);
 	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", s);
+	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
 	}
-    } else if (!strcmp(s, "matrix_mask")) {
+    } else if (sv->key == MATMASK) {
 	if (state->matmask != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", s);
+	    pprintf(prn, "%s: matrix, currently\n", sv->name);
 	    gretl_matrix_print_to_prn(state->matmask, NULL, prn);
 	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", s);
+	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
 	}
-    } else if (sv == SEED) {
+    } else if (sv->key == SEED) {
 	pprintf(prn, "%s: unsigned int, currently %u (%s)\n",
-		s, state->seed ? state->seed : gretl_rand_get_seed(),
+		sv->name, state->seed ? state->seed : gretl_rand_get_seed(),
 		seed_is_set ? "set by user" : "automatic");
-    } else if (sv == CSV_DELIM) {
-	pprintf(prn, "%s: named character, currently \"%s\"\n", s,
+    } else if (sv->key == CSV_DELIM) {
+	pprintf(prn, "%s: named character, currently \"%s\"\n", sv->name,
 		arg_from_delim(data_delim));
-	coded_var_show_opts(sv, prn);
-    } else if (!strcmp(s, "workdir")) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+	coded_var_show_opts(sv->key, prn);
+    } else if (sv->key == SV_WORKDIR) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", sv->name,
 		gretl_workdir());
-    } else if (sv == CSV_WRITE_NA) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+    } else if (sv->key == CSV_WRITE_NA) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", sv->name,
 		state->csv_write_na);
-    } else if (sv == CSV_READ_NA) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
+    } else if (sv->key == CSV_READ_NA) {
+	pprintf(prn, "%s: string, currently \"%s\"\n", sv->name,
 		state->csv_read_na);
-    } else if (!strcmp(s, "display_digits")) {
-	pprintf(prn, "%s: integer, currently %d\n", s,
+    } else if (sv->key == DISP_DIGITS) {
+	pprintf(prn, "%s: integer, currently %d\n", sv->name,
 		get_gretl_digits());
-    } else if (!strcmp(s, "stopwatch")) {
+    } else if (sv->key == STOPWATCH) {
 	err = 0;
-    } else if (!strcmp(s, "verbose")) {
+    } else if (sv->key == VERBOSE) {
 	err = 0;
     } else {
 	err = 1;
@@ -1807,7 +1825,12 @@ static int libset_query_settings (const char *s, PRN *prn)
 
 int is_libset_var (const char *s)
 {
-    int err = libset_query_settings(s, NULL);
+    setvar *sv = get_setvar_by_name(s);
+    int err = (sv == NULL);
+
+    if (!err) {
+	err = libset_query_settings(sv, NULL);
+    }
 
     return (err == 0);
 }
@@ -1841,13 +1864,13 @@ static int write_or_read_settings (gretlopt opt, PRN *prn)
     return err;
 }
 
-static int check_set_bool (SetVar sv, const char *name,
+static int check_set_bool (SetKey key, const char *name,
 			   const char *arg)
 {
     if (boolean_on(arg)) {
-	return libset_set_bool(sv, 1);
+	return libset_set_bool(key, 1);
     } else if (boolean_off(arg)) {
-	return libset_set_bool(sv, 0);
+	return libset_set_bool(key, 0);
     } else {
 	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), name, arg);
 	return E_PARSE;
@@ -1890,7 +1913,7 @@ static int set_verbosity (const char *arg)
 int execute_set (const char *setobj, const char *setarg,
 		 DATASET *dset, gretlopt opt, PRN *prn)
 {
-    SetVar sv = 0;
+    setvar *sv = NULL;
     int k, argc, err;
     unsigned int u;
 
@@ -1906,7 +1929,7 @@ int execute_set (const char *setobj, const char *setarg,
     }
 
     sv = get_setvar_by_name(setobj);
-    if (sv == 0) {
+    if (sv == NULL) {
 	gretl_errmsg_sprintf(_("set: unknown variable '%s'"), setobj);
 	return E_DATA;
     }
@@ -1915,72 +1938,72 @@ int execute_set (const char *setobj, const char *setarg,
     err = E_PARSE;
 
     if (argc == 1) {
-	if (!strcmp(setobj, "stopwatch")) {
+	if (sv->key == STOPWATCH) {
 	    gretl_stopwatch();
 	    return 0;
 	} else {
-	    return libset_query_settings(setobj, prn);
+	    return libset_query_settings(sv, prn);
 	}
     } else if (argc == 2) {
 	/* specials first */
-	if (sv == ECHO_ON) {
+	if (sv->key == ECHO_ON) {
 	    return set_echo_status(setarg);
-	} else if (sv == CSV_WRITE_NA) {
+	} else if (sv->key == CSV_WRITE_NA) {
 	    /* allow "csv_na"? */
 	    return set_csv_na_write_string(setarg);
-	} else if (sv == CSV_READ_NA) {
+	} else if (sv->key == CSV_READ_NA) {
 	    return set_csv_na_read_string(setarg);
-	} else if (sv == CSV_DIGITS) {
+	} else if (sv->key == CSV_DIGITS) {
 	    return set_csv_digits(setarg);
-	} else if (sv == INITVALS) {
+	} else if (sv->key == INITVALS) {
 	    return set_initmat(setarg, INIT_VALS, prn);
-	} else if (sv == INITCURV) {
+	} else if (sv->key == INITCURV) {
 	    return set_initmat(setarg, INIT_CURV, prn);
-	} else if (sv == MATMASK) {
+	} else if (sv->key == MATMASK) {
 	    return set_matmask(setarg, dset, prn);
-	} else if (sv == SV_WORKDIR) {
+	} else if (sv->key == SV_WORKDIR) {
 	    return set_workdir(setarg);
-	} else if (sv == GRAPH_THEME) {
+	} else if (sv->key == GRAPH_THEME) {
 	    return set_plotstyle(setarg);
-	} else if (sv == DISP_DIGITS) {
+	} else if (sv->key == DISP_DIGITS) {
 	    return set_display_digits(setarg);
-	} else if (sv == VERBOSE) {
+	} else if (sv->key == VERBOSE) {
 	    return set_verbosity(setarg);
 	}
 
-	if (libset_boolvar(sv)) {
-	    if (sv == SHELL_OK) {
+	if (libset_boolvar(sv->key)) {
+	    if (sv->key == SHELL_OK) {
 		pprintf(prn, "'%s': this must be set via the gretl GUI\n", setobj);
 		err = E_DATA;
-	    } else if (sv == OPENMP_ON) {
+	    } else if (sv->key == OPENMP_ON) {
 #if defined(_OPENMP)
-		err = check_set_bool(sv, setobj, setarg);
+		err = check_set_bool(sv->key, setobj, setarg);
 #else
 		pprintf(prn, "Warning: openmp not supported\n");
 #endif
 	    } else {
-		err = check_set_bool(sv, setobj, setarg);
+		err = check_set_bool(sv->key, setobj, setarg);
 	    }
-	} else if (libset_double(sv)) {
-	    if (default_ok(sv) && default_str(setarg)) {
-		libset_set_double(sv, NADBL);
+	} else if (libset_double(sv->key)) {
+	    if (default_ok(sv->key) && default_str(setarg)) {
+		libset_set_double(sv->key, NADBL);
 		err = 0;
 	    } else {
 		double x;
 
-		err = libset_get_scalar(sv, setarg, NULL, &x);
+		err = libset_get_scalar(sv->key, setarg, NULL, &x);
 		if (!err) {
-		    err = libset_set_double(sv, x);
+		    err = libset_set_double(sv->key, x);
 		}
 	    }
-	} else if (sv == CSV_DELIM) {
+	} else if (sv->key == CSV_DELIM) {
 	    char c = delim_from_arg(setarg);
 
 	    if (c > 0) {
 		data_delim = c;
 		err = 0;
 	    }
-	} else if (sv == SEED) {
+	} else if (sv->key == SEED) {
 	    err = libset_get_unsigned(setarg, &u);
 	    if (!err) {
 		gretl_rand_set_seed(u);
@@ -1991,25 +2014,25 @@ int execute_set (const char *setobj, const char *setarg,
 		state->seed = u;
 		seed_is_set = 1;
 	    }
-	} else if (sv == HORIZON) {
+	} else if (sv->key == HORIZON) {
 	    /* horizon for VAR impulse responses */
 	    if (!strcmp(setarg, "auto")) {
 		state->horizon = UNSET_INT;
 		err = 0;
 	    } else {
-		err = libset_get_scalar(sv, setarg, &k, NULL);
+		err = libset_get_scalar(sv->key, setarg, &k, NULL);
 		if (!err) {
 		    state->horizon = k;
 		} else {
 		    state->horizon = UNSET_INT;
 		}
 	    }
-	} else if (coded_intvar(sv)) {
-	    err = parse_libset_int_code(sv, setarg);
-	} else if (libset_int(sv)) {
-	    err = libset_get_scalar(sv, setarg, &k, NULL);
+	} else if (coded_intvar(sv->key)) {
+	    err = parse_libset_int_code(sv->key, setarg);
+	} else if (libset_int(sv->key)) {
+	    err = libset_get_scalar(sv->key, setarg, &k, NULL);
 	    if (!err) {
-		err = libset_set_int(sv, k);
+		err = libset_set_int(sv->key, k);
 	    }
 	} else {
 	    gretl_errmsg_sprintf(_("set: unknown variable '%s'"), setobj);
@@ -2020,7 +2043,7 @@ int execute_set (const char *setobj, const char *setarg,
     return err;
 }
 
-double libset_get_double (SetVar key)
+double libset_get_double (SetKey key)
 {
     if (check_for_state()) {
 	return NADBL;
@@ -2056,7 +2079,7 @@ double libset_get_double (SetVar key)
     }
 }
 
-double libset_get_user_tolerance (SetVar key)
+double libset_get_user_tolerance (SetKey key)
 {
     if (key == NLS_TOLER) {
 	return state->nls_toler;
@@ -2071,7 +2094,7 @@ double libset_get_user_tolerance (SetVar key)
     }
 }
 
-int libset_set_double (SetVar key, double val)
+int libset_set_double (SetKey key, double val)
 {
     int err = 0;
 
@@ -2112,7 +2135,7 @@ int libset_set_double (SetVar key, double val)
     return err;
 }
 
-int libset_get_int (SetVar key)
+int libset_get_int (SetKey key)
 {
     if (check_for_state()) {
 	return 0;
@@ -2191,7 +2214,7 @@ int libset_get_int (SetVar key)
     }
 }
 
-static int intvar_min_max (SetVar key, int *min, int *max,
+static int intvar_min_max (SetKey key, int *min, int *max,
 			   gint8 **var8, int **var)
 {
     *max = 100000;
@@ -2272,7 +2295,7 @@ static int intvar_min_max (SetVar key, int *min, int *max,
     return 0;
 }
 
-int libset_set_int (SetVar key, int val)
+int libset_set_int (SetKey key, int val)
 {
     int err = 0;
 
@@ -2312,7 +2335,7 @@ int libset_set_int (SetVar key, int val)
     return err;
 }
 
-static void set_flag_from_env (SetVar flag, const char *s, int neg)
+static void set_flag_from_env (SetKey flag, const char *s, int neg)
 {
     char *e = getenv(s);
     int action = 0;
@@ -2332,7 +2355,7 @@ static void set_flag_from_env (SetVar flag, const char *s, int neg)
     }
 }
 
-static void maybe_check_env (SetVar key)
+static void maybe_check_env (SetKey key)
 {
     if (key == USE_SVD) {
 	set_flag_from_env(USE_SVD, "GRETL_USE_SVD", 0);
@@ -2343,7 +2366,7 @@ static void maybe_check_env (SetVar key)
     }
 }
 
-int libset_get_bool (SetVar key)
+int libset_get_bool (SetKey key)
 {
     /* global specials */
     if (key == R_FUNCTIONS) {
@@ -2411,12 +2434,12 @@ char get_data_export_delimiter (void)
     return data_delim;
 }
 
-static int check_R_setting (int *var, SetVar sv, int val)
+static int check_R_setting (int *var, SetKey key, int val)
 {
     int err = 0;
 
 #ifdef USE_RLIB
-    if (sv == R_FUNCTIONS && val != 0) {
+    if (key == R_FUNCTIONS && val != 0) {
 	/* This depends on having R_lib on, so in case
 	   it's off we should turn it on too.
 	*/
@@ -2425,7 +2448,7 @@ static int check_R_setting (int *var, SetVar sv, int val)
     *var = val;
 #else
     if (val) {
-	const char *s = setvar_get_name(sv);
+	const char *s = setvar_get_name(key);
 
 	gretl_errmsg_sprintf("%s: not supported", s);
 	err = E_EXTERNAL;
@@ -2435,28 +2458,28 @@ static int check_R_setting (int *var, SetVar sv, int val)
     return err;
 }
 
-int libset_set_bool (SetVar sv, int val)
+int libset_set_bool (SetKey key, int val)
 {
     if (check_for_state()) {
 	return E_ALLOC;
     }
 
     /* global specials */
-    if (sv == R_FUNCTIONS) {
-	return check_R_setting(&R_functions, sv, val);
-    } else if (sv == R_LIB) {
-	return check_R_setting(&R_lib, sv, val);
-    } else if (sv == USE_DCMT) {
+    if (key == R_FUNCTIONS) {
+	return check_R_setting(&R_functions, key, val);
+    } else if (key == R_LIB) {
+	return check_R_setting(&R_lib, key, val);
+    } else if (key == USE_DCMT) {
 	return gretl_rand_set_dcmt(val);
     }
 
     if (val) {
-	state->flags |= sv;
+	state->flags |= key;
     } else {
-	state->flags &= ~sv;
+	state->flags &= ~key;
     }
 
-    if (sv == FORCE_DECPOINT) {
+    if (key == FORCE_DECPOINT) {
 	libset_set_decpoint(val);
     }
 
