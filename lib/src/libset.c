@@ -1790,9 +1790,13 @@ static int libset_query_settings (setvar *sv, PRN *prn)
     } else if (sv->key == DISP_DIGITS) {
 	pprintf(prn, "%s: integer, currently %d\n", sv->name,
 		get_gretl_digits());
-    } else if (sv->key == STOPWATCH) {
-	err = 0;
+    } else if (sv->key == GRAPH_THEME) {
+	pprintf(prn, "%s: keyword, currently \"%s\"\n", sv->name,
+		get_plotstyle());
     } else if (sv->key == VERBOSE) {
+	pprintf(prn, "%s: boolean (on/off), currently %s\n", sv->name,
+		(libset_get_bool(ECHO_ON) || libset_get_bool(MSGS_ON)) ?
+		"on" : "off");
 	err = 0;
     } else {
 	err = 1;

@@ -3464,7 +3464,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case SET:
         err = execute_set(cmd->param, cmd->parm2, dset, cmd->opt, prn);
-	if (!err) {
+	if (!err && cmd->parm2 != NULL) {
 	    maybe_schedule_set_callback(s);
 	}
         break;
