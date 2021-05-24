@@ -111,9 +111,6 @@ function void get_xvalidation_parms (bundle *targ, bundle *src)
             scalar targ.$i = deflts[i]
          endif
       endloop
-      if inbundle(src, "mse_plot") == 1
-         targ.mse_plot = src.mse_plot
-      endif
    endif
 end function
 
@@ -330,6 +327,9 @@ function bundle regls (series depvar, list indeps,
    if inbundle(parms, "xvalidate")
       get_xvalidation_parms(&ret, &parms)
    endif
+   if inbundle(parms, "crit_plot") == 1
+      ret.crit_plot = parms.crit_plot
+   endif
 
    string ret.estimator = elnet ? "Elastic net" : \
      ret.ridge ? "Ridge" : "LASSO"
@@ -434,11 +434,14 @@ function bundle regls (series depvar, list indeps,
       gui_add_commands(&ret, parms, yname, xname)
    endif
 
-   if inbundle(ret, "mse_plot") && ret.mse_plot
-      regls_mse_plot(ret)
-   endif
-   if inbundle(ret, "BIC") == 3
-      regls_bic_plot(ret)
+   if inbundle(ret, "crit_plot") && ret.crit_plot
+      if inbundle(ret, "XVC") == 3
+         regls_mse_plot(ret)
+      elif inbundle(ret, "BIC") == 3
+         regls_bic_plot(ret)
+      else
+         delete ret.crit_plot
+      endif
    endif
 
    return ret
