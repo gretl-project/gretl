@@ -60,10 +60,10 @@ typedef enum {
     OPENMP_ON       = 1 << 15, /* using openmp */
     ROBUST_Z        = 1 << 16, /* use z- not t-score with HCCM/HAC */
     MWRITE_G        = 1 << 17, /* use %g format with mwrite() */
-    ECHO_SPACE      = 1 << 18, /* preserve vertical whitespace in output */
-    MPI_USE_SMT     = 1 << 19,  /* MPI: use hyperthreads by default */
+    MPI_USE_SMT     = 1 << 18,  /* MPI: use hyperthreads by default */
     /* state small int (but non-boolean) vars */
-    GRETL_OPTIM = 1 << 20,
+    STATE_FLAG_MAX = 1 << 19,
+    GRETL_OPTIM,
     VECM_NORM,
     GARCH_VCV,
     GARCH_ROBUST_VCV,
@@ -210,7 +210,6 @@ int gretl_in_tool_mode (void);
 
 void set_gretl_echo (int e);
 int gretl_echo_on (void);
-int gretl_echo_space (void);
 
 void set_gretl_messages (int e);
 int gretl_messages_on (void);

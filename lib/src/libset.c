@@ -59,12 +59,12 @@ enum {
 };
 
 enum {
-    SV_BEHAVE,
-    SV_NUMERIC,
-    SV_RNG,
-    SV_ROBUST,
-    SV_TS,
-    SV_SPECIAL
+    CAT_BEHAVE,
+    CAT_NUMERIC,
+    CAT_RNG,
+    CAT_ROBUST,
+    CAT_TS,
+    CAT_SPECIAL
 };
 
 /* for values that really want a non-negative integer */
@@ -149,87 +149,86 @@ struct setvar_ {
 };
 
 setvar setvars[] = {
-    { USE_CWD,      "use_cwd",   SV_BEHAVE },
-    { ECHO_ON,      "echo",      SV_SPECIAL },
-    { MSGS_ON,      "messages",  SV_BEHAVE },
-    { FORCE_DECPOINT, "force_decpoint", SV_BEHAVE },
-    { USE_PCSE,     "pcse",      SV_ROBUST },
-    { USE_SVD,      "svd",       SV_NUMERIC },
-    { USE_QR,       "force_qr", SV_NUMERIC },
-    { PREWHITEN,    "hac_prewhiten", SV_ROBUST },
-    { FORCE_HC,     "force_hc",      SV_ROBUST },
-    { USE_LBFGS,    "lbfgs",     SV_NUMERIC },
-    { SHELL_OK,     "shell_ok",  SV_SPECIAL },
-    { WARNINGS,     "warnings",  SV_BEHAVE },
-    { SKIP_MISSING, "skip_missing", SV_BEHAVE },
-    { BFGS_RSTEP,   "bfgs_richardson", SV_NUMERIC },
-    { DPDSTYLE,     "dpdstyle", SV_BEHAVE },
-    { OPENMP_ON,    "openmp",   SV_BEHAVE },
-    { ROBUST_Z,     "robust_z", SV_ROBUST },
-    { MWRITE_G,     "mwrite_g", SV_BEHAVE },
-    { ECHO_SPACE,   "echo_space",  SV_BEHAVE },
-    { MPI_USE_SMT,  "mpi_use_smt", SV_BEHAVE },
-    { GRETL_OPTIM,  "optimizer", SV_NUMERIC },
-    { VECM_NORM,    "vecm_norm", SV_TS },
-    { GARCH_VCV,    "garch_vcv", SV_ROBUST },
-    { GARCH_ROBUST_VCV, "garch_robust_vcv", SV_ROBUST },
-    { ARMA_VCV,      "arma_vcv", SV_ROBUST },
-    { WILDBOOT_DIST, "wildboot", SV_BEHAVE },
-    { FDJAC_QUAL,    "fdjac_quality", SV_NUMERIC },
-    { MAX_VERBOSE,   "max_verbose", SV_BEHAVE },
-    { HC_VERSION,    "hc_version", SV_ROBUST },
-    { HAC_KERNEL,    "hac_kernel", SV_ROBUST },
-    { HAC_LAG,       "hac_lag", SV_ROBUST },
-    { HORIZON,       "horizon", SV_TS },
-    { BOOTREP,       "bootrep", SV_BEHAVE },
-    { LOOP_MAXITER,  "loop_maxiter",   SV_BEHAVE },
-    { BFGS_MAXITER,  "bfgs_maxiter",   SV_NUMERIC },
-    { BFGS_VERBSKIP, "bfgs_verbskip", SV_BEHAVE },
-    { BOOT_ITERS,    "boot_iters", SV_TS },
-    { OPTIM_STEPLEN, "optim_steplen", SV_NUMERIC },
-    { BHHH_MAXITER,  "bhhh_maxiter", SV_NUMERIC },
-    { LBFGS_MEM,     "lbfgs_mem",     SV_NUMERIC },
-    { RQ_MAXITER,    "rq_maxiter",    SV_NUMERIC },
-    { GMM_MAXITER,   "gmm_maxiter",   SV_NUMERIC },
-    { SEED,          "seed", SV_RNG },
-    { CONV_HUGE,     "huge",         SV_BEHAVE },
-    { NLS_TOLER,     "nls_toler",    SV_NUMERIC },
-    { BFGS_TOLER,    "bfgs_toler",   SV_NUMERIC },
-    { BFGS_MAXGRAD,  "bfgs_maxgrad", SV_NUMERIC },
-    { BHHH_TOLER,    "bhhh_toler",   SV_NUMERIC },
-    { QS_BANDWIDTH,  "qs_bandwidth", SV_ROBUST },
-    { FDJAC_EPS,     "fdjac_eps",    SV_NUMERIC },
-    { NADARWAT_TRIM, "nadarwat_trim", SV_NUMERIC },
-    { CSV_WRITE_NA,  "csv_write_na", SV_SPECIAL },
-    { CSV_READ_NA,   "csv_read_na",  SV_SPECIAL },
-    { INITVALS,      "initvals", SV_NUMERIC },
-    { INITCURV,      "initcurv", SV_NUMERIC },
-    { MATMASK,       "matrix_mask", SV_BEHAVE },
-    { CSV_DIGITS,    "csv_digits", SV_BEHAVE },
-    { BLAS_MNK_MIN,  "blas_mnk_min", SV_BEHAVE },
-    { CSV_DELIM,     "csv_delim", SV_SPECIAL },
-    { DATACOLS,      "datacols",  SV_BEHAVE },
-    { GRETL_ASSERT,  "assert",    SV_BEHAVE },
-    { GRETL_DEBUG,   "debug",     SV_BEHAVE },
-    { OMP_MNK_MIN,   "omp_mnk_min", SV_BEHAVE },
-    { OMP_N_THREADS, "omp_num_threads", SV_BEHAVE },
-    { PLOT_COLLECTION, "plot_collection", SV_BEHAVE },
-    { QUANTILE_TYPE,   "quantile_type", SV_BEHAVE },
-    { R_FUNCTIONS,   "R_functions", SV_BEHAVE },
-    { R_LIB,         "R_lib", SV_BEHAVE },
-    { SIMD_K_MAX,    "simd_k_max", SV_BEHAVE },
-    { SIMD_MN_MIN,   "simd_mn_min", SV_BEHAVE },
-    { USE_DCMT,      "use_dcmt", SV_RNG },
-    { STOPWATCH,   "stopwatch", SV_SPECIAL },
-    { VERBOSE,     "verbose", SV_SPECIAL },
-    { SV_WORKDIR,  "workdir", SV_SPECIAL },
-    { GRAPH_THEME, "graph_theme", SV_SPECIAL },
-    { DISP_DIGITS, "display_digits", SV_SPECIAL }
+    { USE_CWD,      "use_cwd",   CAT_BEHAVE },
+    { ECHO_ON,      "echo",      CAT_BEHAVE },
+    { MSGS_ON,      "messages",  CAT_BEHAVE },
+    { FORCE_DECPOINT, "force_decpoint", CAT_BEHAVE },
+    { USE_PCSE,     "pcse",      CAT_ROBUST },
+    { USE_SVD,      "svd",       CAT_NUMERIC },
+    { USE_QR,       "force_qr", CAT_NUMERIC },
+    { PREWHITEN,    "hac_prewhiten", CAT_ROBUST },
+    { FORCE_HC,     "force_hc",      CAT_ROBUST },
+    { USE_LBFGS,    "lbfgs",     CAT_NUMERIC },
+    { SHELL_OK,     "shell_ok",  CAT_SPECIAL },
+    { WARNINGS,     "warnings",  CAT_BEHAVE },
+    { SKIP_MISSING, "skip_missing", CAT_BEHAVE },
+    { BFGS_RSTEP,   "bfgs_richardson", CAT_NUMERIC },
+    { DPDSTYLE,     "dpdstyle", CAT_BEHAVE },
+    { OPENMP_ON,    "openmp",   CAT_BEHAVE },
+    { ROBUST_Z,     "robust_z", CAT_ROBUST },
+    { MWRITE_G,     "mwrite_g", CAT_BEHAVE },
+    { MPI_USE_SMT,  "mpi_use_smt", CAT_BEHAVE },
+    { GRETL_OPTIM,  "optimizer", CAT_NUMERIC },
+    { VECM_NORM,    "vecm_norm", CAT_TS },
+    { GARCH_VCV,    "garch_vcv", CAT_ROBUST },
+    { GARCH_ROBUST_VCV, "garch_robust_vcv", CAT_ROBUST },
+    { ARMA_VCV,      "arma_vcv", CAT_ROBUST },
+    { WILDBOOT_DIST, "wildboot", CAT_BEHAVE },
+    { FDJAC_QUAL,    "fdjac_quality", CAT_NUMERIC },
+    { MAX_VERBOSE,   "max_verbose", CAT_BEHAVE },
+    { HC_VERSION,    "hc_version", CAT_ROBUST },
+    { HAC_KERNEL,    "hac_kernel", CAT_ROBUST },
+    { HAC_LAG,       "hac_lag", CAT_ROBUST },
+    { HORIZON,       "horizon", CAT_TS },
+    { BOOTREP,       "bootrep", CAT_BEHAVE },
+    { LOOP_MAXITER,  "loop_maxiter",   CAT_BEHAVE },
+    { BFGS_MAXITER,  "bfgs_maxiter",   CAT_NUMERIC },
+    { BFGS_VERBSKIP, "bfgs_verbskip", CAT_BEHAVE },
+    { BOOT_ITERS,    "boot_iters", CAT_TS },
+    { OPTIM_STEPLEN, "optim_steplen", CAT_NUMERIC },
+    { BHHH_MAXITER,  "bhhh_maxiter", CAT_NUMERIC },
+    { LBFGS_MEM,     "lbfgs_mem",     CAT_NUMERIC },
+    { RQ_MAXITER,    "rq_maxiter",    CAT_NUMERIC },
+    { GMM_MAXITER,   "gmm_maxiter",   CAT_NUMERIC },
+    { SEED,          "seed", CAT_RNG },
+    { CONV_HUGE,     "huge",         CAT_BEHAVE },
+    { NLS_TOLER,     "nls_toler",    CAT_NUMERIC },
+    { BFGS_TOLER,    "bfgs_toler",   CAT_NUMERIC },
+    { BFGS_MAXGRAD,  "bfgs_maxgrad", CAT_NUMERIC },
+    { BHHH_TOLER,    "bhhh_toler",   CAT_NUMERIC },
+    { QS_BANDWIDTH,  "qs_bandwidth", CAT_ROBUST },
+    { FDJAC_EPS,     "fdjac_eps",    CAT_NUMERIC },
+    { NADARWAT_TRIM, "nadarwat_trim", CAT_NUMERIC },
+    { CSV_WRITE_NA,  "csv_write_na", CAT_SPECIAL },
+    { CSV_READ_NA,   "csv_read_na",  CAT_SPECIAL },
+    { INITVALS,      "initvals", CAT_NUMERIC },
+    { INITCURV,      "initcurv", CAT_NUMERIC },
+    { MATMASK,       "matrix_mask", CAT_BEHAVE },
+    { CSV_DIGITS,    "csv_digits", CAT_BEHAVE },
+    { BLAS_MNK_MIN,  "blas_mnk_min", CAT_BEHAVE },
+    { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
+    { DATACOLS,      "datacols",  CAT_BEHAVE },
+    { GRETL_ASSERT,  "assert",    CAT_BEHAVE },
+    { GRETL_DEBUG,   "debug",     CAT_BEHAVE },
+    { OMP_MNK_MIN,   "omp_mnk_min", CAT_BEHAVE },
+    { OMP_N_THREADS, "omp_num_threads", CAT_BEHAVE },
+    { PLOT_COLLECTION, "plot_collection", CAT_BEHAVE },
+    { QUANTILE_TYPE,   "quantile_type", CAT_BEHAVE },
+    { R_FUNCTIONS,   "R_functions", CAT_BEHAVE },
+    { R_LIB,         "R_lib", CAT_BEHAVE },
+    { SIMD_K_MAX,    "simd_k_max", CAT_BEHAVE },
+    { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
+    { USE_DCMT,      "use_dcmt", CAT_RNG },
+    { STOPWATCH,   "stopwatch", CAT_SPECIAL },
+    { VERBOSE,     "verbose", CAT_SPECIAL },
+    { SV_WORKDIR,  "workdir", CAT_SPECIAL },
+    { GRAPH_THEME, "graph_theme", CAT_SPECIAL },
+    { DISP_DIGITS, "display_digits", CAT_SPECIAL }
 };
 
-#define libset_boolvar(k) (k <= (1 << 19) || k==R_FUNCTIONS || k==R_LIB)
+#define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || k==R_LIB)
 #define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
-#define libset_int(k) ((k >= GRETL_OPTIM && k < STATE_INT_MAX) || \
+#define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
 
 /* global state */
@@ -750,8 +749,11 @@ void set_gretl_echo (int e)
 
 int gretl_echo_on (void)
 {
-    if (check_for_state()) return 1;
-    return flag_to_bool(state, ECHO_ON);
+    if (check_for_state()) {
+	return 1;
+    } else {
+	return flag_to_bool(state, ECHO_ON);
+    }
 }
 
 int gretl_comments_on (void)
@@ -761,12 +763,6 @@ int gretl_comments_on (void)
     } else {
 	return comments_on;
     }
-}
-
-int gretl_echo_space (void)
-{
-    if (check_for_state()) return 0;
-    return flag_to_bool(state, ECHO_SPACE);
 }
 
 void set_gretl_messages (int e)
@@ -1391,47 +1387,6 @@ static int set_initmat (const char *mname, int type,
     return err;
 }
 
-static int set_echo_status (const char *arg)
-{
-    int err = 0;
-
-    if (check_for_state()) {
-	return 1;
-    }
-
-    if (!strcmp(arg, "on")) {
-	state->flags |= ECHO_ON;
-    } else if (!strcmp(arg, "off")) {
-	state->flags &= ~ECHO_ON;
-	state->flags &= ~ECHO_SPACE;
-    } else if (!strcmp(arg, "space")) {
-	state->flags |= ECHO_SPACE;
-    } else if (!strcmp(arg, "full")) {
-	state->flags |= ECHO_ON;
-	state->flags |= ECHO_SPACE;
-    } else {
-	err = E_INVARG;
-    }
-
-    return err;
-}
-
-static const char *get_echo_status (void)
-{
-    if (check_for_state()) {
-	return "on";
-    } else if ((state->flags & ECHO_ON) &&
-	       (state->flags & ECHO_SPACE)) {
-	return "full";
-    } else if (state->flags & ECHO_ON) {
-	return "on";
-    } else if (state->flags & ECHO_SPACE) {
-	return "space";
-    } else {
-	return "off";
-    }
-}
-
 static int set_matmask (const char *vname, const DATASET *dset,
 			PRN *prn)
 {
@@ -1700,20 +1655,14 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, "set csv_read_na %s\n", get_csv_na_read_string());
     }
 
-    if (opt & OPT_D) {
-	pprintf(prn, " echo = %s\n", get_echo_status());
-    } else {
-	pprintf(prn, "set echo %s\n", get_echo_status());
-    }
-
-    print_vars_for_category(SV_BEHAVE, prn, opt);
+    print_vars_for_category(CAT_BEHAVE, prn, opt);
     if (opt & OPT_D) {
 	/* display only */
 	libset_print_bool(SHELL_OK, NULL, prn, opt);
     }
 
     libset_header(N_("Numerical methods"), prn, opt);
-    print_vars_for_category(SV_NUMERIC, prn, opt);
+    print_vars_for_category(CAT_NUMERIC, prn, opt);
     print_initmat(state->initvals, INIT_VALS, prn, opt);
     print_initmat(state->initcurv, INIT_CURV, prn, opt);
 
@@ -1730,10 +1679,10 @@ static int print_settings (PRN *prn, gretlopt opt)
     }
 
     libset_header(N_("Robust estimation"), prn, opt);
-    print_vars_for_category(SV_ROBUST, prn, opt);
+    print_vars_for_category(CAT_ROBUST, prn, opt);
 
     libset_header(N_("Time series"), prn, opt);
-    print_vars_for_category(SV_TS, prn, opt);
+    print_vars_for_category(CAT_TS, prn, opt);
 
     pputc(prn, '\n');
 
@@ -1744,9 +1693,7 @@ static int libset_query_settings (setvar *sv, PRN *prn)
 {
     int err = 0;
 
-    if (sv->key == ECHO_ON) {
-	pprintf(prn, "%s: code, currently '%s'\n", sv->name, get_echo_status());
-    } else if (libset_boolvar(sv->key)) {
+    if (libset_boolvar(sv->key)) {
 	pprintf(prn, "%s: boolean (on/off), currently %s\n",
 		sv->name, libset_get_bool(sv->key)? "on" : "off");
     } else if (coded_intvar(sv->key)) {
@@ -1894,14 +1841,14 @@ static int set_verbosity (const char *arg)
 
     if (!strcmp(arg, "on")) {
 	set_gretl_messages(1);
-	set_echo_status(arg);
+	set_gretl_echo(1);
     } else if (!strcmp(arg, "off")) {
 	set_gretl_messages(0);
-	set_echo_status(arg);
+	set_gretl_echo(0);
 	comments_on = 0;
     } else if (!strcmp(arg, "comments")) {
 	set_gretl_messages(0);
-	set_echo_status("off");
+	set_gretl_echo(0);
 	comments_on = 1;
     } else {
 	err = E_INVARG;
@@ -1946,9 +1893,7 @@ int execute_set (const char *setobj, const char *setarg,
 	}
     } else if (argc == 2) {
 	/* specials first */
-	if (sv->key == ECHO_ON) {
-	    return set_echo_status(setarg);
-	} else if (sv->key == CSV_WRITE_NA) {
+	if (sv->key == CSV_WRITE_NA) {
 	    /* allow "csv_na"? */
 	    return set_csv_na_write_string(setarg);
 	} else if (sv->key == CSV_READ_NA) {
