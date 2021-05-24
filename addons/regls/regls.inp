@@ -154,7 +154,7 @@ function void gui_add_commands (bundle *b, const bundle parms,
       else
          printf "lfrac=%g", parms.lfrac
       endif
-      if inbundle(b, "ridge")
+      if inbundle(b, "ridge") && b.ridge
          printf ", ridge=1"
       endif
       if inbundle(b, "alpha")
@@ -436,6 +436,9 @@ function bundle regls (series depvar, list indeps,
 
    if inbundle(ret, "mse_plot") && ret.mse_plot
       regls_mse_plot(ret)
+   endif
+   if inbundle(ret, "BIC") == 3
+      regls_bic_plot(ret)
    endif
 
    return ret

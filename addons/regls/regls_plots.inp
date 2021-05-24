@@ -40,3 +40,15 @@ function void regls_mse_plot (const bundle b)
       literal set title 'Mean cross-validation MSE with one-s.e. band'
    end plot --output=display
 end function
+
+function void regls_bic_plot (const bundle b)
+   matrix M = b.BIC ~ b.lfrac
+   plot M
+      literal set termoption enhanced
+      options with-lp
+      literal set xlabel 's = λ/λ_{max}'
+      literal set ylabel 'BIC'
+      # literal set logscale x
+      literal set title 'BIC as a function of s'
+   end plot --output=display
+end function
