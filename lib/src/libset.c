@@ -288,11 +288,24 @@ static GHashTable *svht;
 
 static setvar *get_setvar_by_name (const char *name)
 {
+    setvar *ret = NULL;
+
     if (svht == NULL) {
 	svht = libset_hash_init();
     }
 
-    return g_hash_table_lookup(svht, name);
+    ret = g_hash_table_lookup(svht, name);
+
+    if (ret == NULL) {
+	/* backward compatibility */
+	if (!strcmp(name, "csv_na")) {
+	    ret = g_hash_table_lookup(svht, "csv_write_na");
+	} else if (!strcmp(name, "mp_mnk_min")) {
+	    ret = g_hash_table_lookup(svht, "omp_mnk_min");
+	}
+    }
+
+    return ret;
 }
 
 static void robust_opts_init (set_state *sv)
@@ -307,6 +320,7 @@ static void robust_opts_init (set_state *sv)
 /* value strings for integer-coded variables */
 
 static const char *gvc_strs[] = {"unset", "hessian", "im", "op", "qml", "bw", NULL};
+static const char *gvr_strs[] = {"qml", "bw", NULL};
 static const char *avc_strs[] = {"hessian", "op", NULL};
 static const char *hkn_strs[] = {"bartlett", "parzen", "qs", NULL};
 static const char *hcv_strs[] = {"0", "1", "2", "3", "3a", NULL};
@@ -326,19 +340,20 @@ struct setvar_strings {
 };
 
 struct setvar_strings coded[] = {
-    { GARCH_VCV,       gvc_strs },
-    { ARMA_VCV,        avc_strs },
-    { HAC_KERNEL,      hkn_strs },
-    { HC_VERSION,      hcv_strs },
-    { VECM_NORM,       vnm_strs },
-    { GRETL_OPTIM,     opt_strs },
-    { MAX_VERBOSE,     mxv_strs },
-    { CSV_DELIM,       csv_strs },
-    { OPTIM_STEPLEN,   stl_strs },
-    { WILDBOOT_DIST,   wbt_strs },
-    { QUANTILE_TYPE,   qnt_strs },
-    { GRETL_ASSERT,    ast_strs },
-    { PLOT_COLLECTION, plc_strs }
+    { GARCH_VCV,        gvc_strs },
+    { GARCH_ROBUST_VCV, gvr_strs },
+    { ARMA_VCV,         avc_strs },
+    { HAC_KERNEL,       hkn_strs },
+    { HC_VERSION,       hcv_strs },
+    { VECM_NORM,        vnm_strs },
+    { GRETL_OPTIM,      opt_strs },
+    { MAX_VERBOSE,      mxv_strs },
+    { CSV_DELIM,        csv_strs },
+    { OPTIM_STEPLEN,    stl_strs },
+    { WILDBOOT_DIST,    wbt_strs },
+    { QUANTILE_TYPE,    qnt_strs },
+    { GRETL_ASSERT,     ast_strs },
+    { PLOT_COLLECTION,  plc_strs }
 };
 
 static const char **libset_option_strings (SetKey key)
@@ -370,6 +385,17 @@ static void coded_var_show_opts (SetKey key, PRN *prn)
     }
 }
 
+static const char *get_garch_robust_vcv_str (int v)
+{
+    if (v == ML_QML) {
+	return gvr_strs[0];
+    } else if (v == ML_BW) {
+	return gvr_strs[1];
+    } else {
+	return "unset";
+    }
+}
+
 static const char *get_arma_vcv_str (int v)
 {
     if (v == ML_HESSIAN) {
@@ -377,7 +403,7 @@ static const char *get_arma_vcv_str (int v)
     } else if (v == ML_OP) {
 	return avc_strs[1];
     } else {
-	return "unknown";
+	return "unset";
     }
 }
 
@@ -387,6 +413,8 @@ static const char *libset_option_string (SetKey key)
 	return hac_lag_string(); /* special */
     } else if (key == GARCH_VCV) {
 	return gvc_strs[state->garch_vcv];
+    } else if (key == GARCH_ROBUST_VCV) {
+	return get_garch_robust_vcv_str(state->garch_vcv);
     } else if (key == ARMA_VCV) {
 	return get_arma_vcv_str(state->arma_vcv);
     } else if (key == HAC_KERNEL) {
@@ -1511,6 +1539,7 @@ static void libset_print_bool (SetKey key, const char *s,
 }
 
 #define coded_intvar(k) (k == GARCH_VCV || \
+			 k == GARCH_ROBUST_VCV || \
 			 k == ARMA_VCV || \
 			 k == HAC_LAG || \
 			 k == HAC_KERNEL || \
@@ -1645,6 +1674,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 	pprintf(prn, " csv_write_na = %s\n", get_csv_na_write_string());
 	pprintf(prn, " csv_read_na = %s\n", get_csv_na_read_string());
 	pprintf(prn, " display_digits = %d\n", get_gretl_digits());
+	pprintf(prn, " graph_theme = %s\n", get_plotstyle());
     } else {
 	const char *dl = arg_from_delim(data_delim);
 
@@ -1653,6 +1683,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 	}
 	pprintf(prn, "set csv_write_na %s\n", get_csv_na_write_string());
 	pprintf(prn, "set csv_read_na %s\n", get_csv_na_read_string());
+	pprintf(prn, "set graph_theme %s\n", get_plotstyle());
     }
 
     print_vars_for_category(CAT_BEHAVE, prn, opt);

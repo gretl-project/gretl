@@ -209,6 +209,8 @@ void set_special_plot_size (float width, float height);
 
 int set_plotstyle (const char *style);
 
+const char *get_plotstyle (void);
+
 PlotType plot_type_from_string (const char *str);
 
 void plot_get_scaled_dimensions (int *width, int *height, double scale);

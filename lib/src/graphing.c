@@ -1171,6 +1171,20 @@ int set_plotstyle (const char *style)
     }
 }
 
+const char *get_plotstyle (void)
+{
+    static char pstyle[32];
+    char *p;
+
+    strcpy(pstyle, gp_style);
+    p = strrchr(pstyle, '.');
+    if (p != NULL) {
+	*p = '\0';
+    }
+
+    return pstyle;
+}
+
 /* Write the content of either the default, or an alternative,
    gnuplot style into @fp. The @offset argument allows for
    skipping one or more leading linetype definitions.
