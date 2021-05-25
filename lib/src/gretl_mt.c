@@ -127,13 +127,13 @@ int gretl_n_physical_cores (void)
 
 #ifdef _OPENMP
 
-/* Called only from gretl_matrix.c, where it is guarded by
-   _OPENMP being defined
+/* Called only from gretl_matrix.c, where it is invoked only when
+   _OPENMP is defined.
 */
 
 int gretl_use_openmp (guint64 n)
 {
-    if (!libset_get_bool(OPENMP_ON) || omp_n_threads < 2) {
+    if (omp_n_threads < 2) {
 	return 0;
     } else if (omp_mnk_min >= 0 && n >= (guint64) omp_mnk_min) {
 	return 1;
@@ -154,6 +154,14 @@ int set_omp_mnk_min (int n)
     }
 }
 
+/* Called from gretl_foreign.c (via libset.c) to set the number
+   of OpenMP threads per process in the context of an mpi block.
+   We issue a call to omp_set_num_threads(), which will override
+   any value for OMP_NUM_THREADS that may be in the environment.
+   We do this in response to the --omp-threads mpi option, or to
+   enforce the advertised default of one thread per process.
+*/
+
 int set_omp_n_threads (int n)
 {
 #if defined(_OPENMP)
@@ -163,7 +171,7 @@ int set_omp_n_threads (int n)
 	return E_DATA;
     } else {
 	omp_n_threads = n;
-	omp_set_num_threads(n);
+	omp_set_num_threads(n); /* note: overrides env */
 	if (blas_is_openblas()) {
 	    blas_set_num_threads(n);
 	}
@@ -193,7 +201,12 @@ void num_threads_init (int blas_type)
 
 int get_omp_n_threads (void)
 {
+#if defined(_OPENMP)
     return omp_n_threads;
+#else
+    gretl_warnmsg_set(_("set_omp_n_threads: OpenMP is not enabled"));
+    return 0;
+#endif
 }
 
 #if defined(_OPENMP)

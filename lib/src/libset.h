@@ -51,12 +51,11 @@ typedef enum {
     SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
     BFGS_RSTEP      = 1 << 13, /* use Richardson in BFGS numerical gradient */
     DPDSTYLE        = 1 << 14, /* emulate dpd in dynamic panel data models */
-    OPENMP_ON       = 1 << 15, /* using openmp */
-    ROBUST_Z        = 1 << 16, /* use z- not t-score with HCCM/HAC */
-    MWRITE_G        = 1 << 17, /* use %g format with mwrite() */
-    MPI_USE_SMT     = 1 << 18,  /* MPI: use hyperthreads by default */
+    ROBUST_Z        = 1 << 15, /* use z- not t-score with HCCM/HAC */
+    MWRITE_G        = 1 << 16, /* use %g format with mwrite() */
+    MPI_USE_SMT     = 1 << 17, /* MPI: use hyperthreads by default */
+    STATE_FLAG_MAX  = 1 << 18, /* separator */
     /* state small int (but non-boolean) vars */
-    STATE_FLAG_MAX = 1 << 19,
     GRETL_OPTIM,
     VECM_NORM,
     GARCH_VCV,
@@ -89,7 +88,7 @@ typedef enum {
     BHHH_TOLER,
     QS_BANDWIDTH,
     NADARWAT_TRIM,
-    STATE_FLOAT_MAX, /* separator */
+    STATE_FLOAT_MAX, /* separator: end state floats */
     CSV_WRITE_NA,
     CSV_READ_NA,
     STATE_STRING_MAX, /* separator */
@@ -105,21 +104,21 @@ typedef enum {
     R_FUNCTIONS,
     R_LIB,
     CSV_DIGITS,
-    NS_SMALL_INT_MAX,
+    NS_SMALL_INT_MAX, /* separator */
     BLAS_MNK_MIN,
     OMP_MNK_MIN,
     OMP_N_THREADS,
     SIMD_K_MAX,
     SIMD_MN_MIN,
     USE_DCMT,
-    NS_INT_MAX,
+    NS_INT_MAX, /* separator */
     CSV_DELIM,
     STOPWATCH,
     VERBOSE,
     SV_WORKDIR,
     GRAPH_THEME,
     DISP_DIGITS,
-    SETVAR_MAX
+    SETVAR_MAX /* sentinel */
 } SetKey;
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);

@@ -157,7 +157,6 @@ setvar setvars[] = {
     { SKIP_MISSING, "skip_missing", CAT_BEHAVE },
     { BFGS_RSTEP,   "bfgs_richardson", CAT_NUMERIC },
     { DPDSTYLE,     "dpdstyle", CAT_BEHAVE },
-    { OPENMP_ON,    "openmp",   CAT_BEHAVE },
     { ROBUST_Z,     "robust_z", CAT_ROBUST },
     { MWRITE_G,     "mwrite_g", CAT_BEHAVE },
     { MPI_USE_SMT,  "mpi_use_smt", CAT_BEHAVE },
@@ -203,7 +202,7 @@ setvar setvars[] = {
     { GRETL_ASSERT,  "assert",    CAT_BEHAVE },
     { GRETL_DEBUG,   "debug",     CAT_BEHAVE },
     { OMP_MNK_MIN,   "omp_mnk_min", CAT_BEHAVE },
-    { OMP_N_THREADS, "omp_num_threads", CAT_BEHAVE },
+    { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
     { PLOT_COLLECTION, "plot_collection", CAT_BEHAVE },
     { R_FUNCTIONS,   "R_functions", CAT_BEHAVE },
     { R_LIB,         "R_lib", CAT_BEHAVE },
@@ -518,11 +517,6 @@ static set_state default_state = {
 static void state_vars_init (set_state *sv)
 {
     *sv = default_state;
-#if defined(_OPENMP)
-    if (openmp_by_default()) {
-	sv->flags |= OPENMP_ON;
-    }
-#endif
 }
 
 int get_bkbp_k (const DATASET *dset)
@@ -1634,12 +1628,6 @@ int execute_set (const char *setobj, const char *setarg,
 	    if (sv->key == SHELL_OK) {
 		pprintf(prn, "'%s': this must be set via the gretl GUI\n", setobj);
 		err = E_DATA;
-	    } else if (sv->key == OPENMP_ON) {
-#if defined(_OPENMP)
-		err = check_set_bool(sv->key, setobj, setarg);
-#else
-		pprintf(prn, "Warning: openmp not supported\n");
-#endif
 	    } else {
 		err = check_set_bool(sv->key, setobj, setarg);
 	    }
