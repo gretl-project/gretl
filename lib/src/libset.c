@@ -217,17 +217,32 @@ setvar setvars[] = {
     { SIMD_K_MAX,    "simd_k_max", CAT_BEHAVE },
     { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
     { USE_DCMT,      "use_dcmt", CAT_RNG },
-    { STOPWATCH,   "stopwatch", CAT_SPECIAL },
-    { VERBOSE,     "verbose", CAT_SPECIAL },
-    { SV_WORKDIR,  "workdir", CAT_SPECIAL },
-    { GRAPH_THEME, "graph_theme", CAT_SPECIAL },
-    { DISP_DIGITS, "display_digits", CAT_SPECIAL }
+    { STOPWATCH,     "stopwatch", CAT_SPECIAL },
+    { VERBOSE,       "verbose", CAT_SPECIAL },
+    { SV_WORKDIR,    "workdir", CAT_SPECIAL },
+    { GRAPH_THEME,   "graph_theme", CAT_SPECIAL },
+    { DISP_DIGITS,   "display_digits", CAT_SPECIAL }
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || k==R_LIB)
 #define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
+
+#define coded_intvar(k) (k == GARCH_VCV || \
+			 k == GARCH_ROBUST_VCV || \
+			 k == ARMA_VCV || \
+			 k == HAC_LAG || \
+			 k == HAC_KERNEL || \
+                         k == HC_VERSION || \
+			 k == VECM_NORM || \
+			 k == GRETL_OPTIM || \
+			 k == OPTIM_STEPLEN || \
+			 k == MAX_VERBOSE || \
+			 k == WILDBOOT_DIST || \
+			 k == QUANTILE_TYPE || \
+			 k == GRETL_ASSERT || \
+			 k == PLOT_COLLECTION)
 
 /* global state */
 set_state *state;
@@ -323,12 +338,12 @@ static const char *ast_strs[] = {"off", "warn", "stop", NULL};
 static const char *plc_strs[] = {"off", "auto", "on", NULL};
 static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", NULL};
 
-struct setvar_strings {
+struct codevar_info {
     SetKey key;
     const char **strvals;
 };
 
-struct setvar_strings coded[] = {
+struct codevar_info coded[] = {
     { GARCH_VCV,        gvc_strs },
     { GARCH_ROBUST_VCV, gvr_strs },
     { ARMA_VCV,         avc_strs },
@@ -337,9 +352,9 @@ struct setvar_strings coded[] = {
     { VECM_NORM,        vnm_strs },
     { GRETL_OPTIM,      opt_strs },
     { MAX_VERBOSE,      mxv_strs },
-    { CSV_DELIM,        csv_strs },
     { OPTIM_STEPLEN,    stl_strs },
     { WILDBOOT_DIST,    wbt_strs },
+    { CSV_DELIM,        csv_strs },
     { QUANTILE_TYPE,    qnt_strs },
     { GRETL_ASSERT,     ast_strs },
     { PLOT_COLLECTION,  plc_strs }
@@ -403,7 +418,7 @@ static const char *libset_option_string (SetKey key)
     } else if (key == GARCH_VCV) {
 	return gvc_strs[state->garch_vcv];
     } else if (key == GARCH_ROBUST_VCV) {
-	return get_garch_robust_vcv_str(state->garch_vcv);
+	return get_garch_robust_vcv_str(state->garch_robust_vcv);
     } else if (key == ARMA_VCV) {
 	return get_arma_vcv_str(state->arma_vcv);
     } else if (key == HAC_KERNEL) {
@@ -681,7 +696,7 @@ static int openmp_by_default (void)
 #endif /* _OPENMP defined */
 
 static set_state default_state = {
-    ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING, /* flags */
+    ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING, /* .flags */
     OPTIM_AUTO,     /* .optim */
     NORM_PHILLIPS,  /* .vecm_norm */
     ML_UNSET,       /* .garch_vcv */
@@ -1169,169 +1184,98 @@ static int libset_get_unsigned (const char *arg, unsigned int *pu)
     return err;
 }
 
-static int parse_hc_variant (const char *s)
-{
-    int i;
-
-    check_for_state();
-
-    if (!strncmp(s, "hc", 2)) {
-	s += 2;
-    }
-
-    for (i=0; hcv_strs[i] != NULL; i++) {
-	if (!strcmp(s, hcv_strs[i])) {
-	    state->hc_version = i;
-	    return 0;
-	}
-    }
-
-    if (!strcmp(s, "4")) {
-	state->hc_version = 4;
-	return 0;
-    }
-
-    return 1;
-}
-
 static int parse_libset_int_code (SetKey key, const char *val)
 {
     int i, err = E_DATA;
 
-    if (key == HC_VERSION) {
-	err = parse_hc_variant(val);
-    } else if (key == HAC_LAG) {
+    if (key == HAC_LAG) {
 	err = parse_hac_lag_variant(val);
-    } else if (key == GARCH_VCV) {
-	for (i=0; i<ML_VCVMAX; i++) {
-	    if (!g_ascii_strcasecmp(val, gvc_strs[i])) {
-		state->garch_vcv = i;
-		err = 0;
+    } else if (coded_intvar(key)) {
+	const char **strs = libset_option_strings(key);
+	int ival = -1;
+
+	for (i=0; strs[i] != NULL; i++) {
+	    if (!g_ascii_strcasecmp(val, strs[i])) {
+		ival = i;
 		break;
 	    }
 	}
-    } else if (key == ARMA_VCV) {
-	if (!g_ascii_strcasecmp(val, "op")) {
-	    state->arma_vcv = ML_OP;
+	if (ival >= 0) {
 	    err = 0;
-	} else if (!g_ascii_strcasecmp(val, "hessian")) {
-	    state->arma_vcv = ML_HESSIAN;
-	    err = 0;
-	}
-    } else if (key == HAC_KERNEL) {
-	for (i=0; i<KERNEL_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, hkn_strs[i])) {
-		state->hac_kernel = i;
-		err = 0;
-		break;
+	    if (key == GARCH_VCV) {
+		state->garch_vcv = ival;
+	    } else if (key == GARCH_ROBUST_VCV) {
+		state->garch_robust_vcv = (ival == 1)? ML_BW : ML_QML;
+	    } else if (key == ARMA_VCV) {
+		state->arma_vcv = (ival == 1)? ML_OP : ML_HESSIAN;
+	    } else if (key == HC_VERSION) {
+		state->hc_version = ival;
+	    } else if (key == HAC_KERNEL) {
+		state->hac_kernel = ival;
+	    } else if (key == VECM_NORM) {
+		state->vecm_norm = ival;
+	    } else if (key == GRETL_OPTIM) {
+		state->optim = ival;
+	    } else if (key == MAX_VERBOSE) {
+		state->max_verbose = ival;
+	    } else if (key == WILDBOOT_DIST) {
+		state->wildboot_dist = ival;
+	    } else if (key == OPTIM_STEPLEN) {
+		state->optim_steplen = ival;
+	    } else if (key == QUANTILE_TYPE) {
+		Qtype = ival;
+	    } else if (key == GRETL_ASSERT) {
+		gretl_assert = ival;
+	    } else if (key == PLOT_COLLECTION) {
+		plot_collection = ival;
 	    }
-	}
-    } else if (key == VECM_NORM) {
-	for (i=0; i<NORM_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, vnm_strs[i])) {
-		state->vecm_norm = i;
+	} else if (key == MAX_VERBOSE) {
+	    if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0) {
+		state->max_verbose = atoi(val);
 		err = 0;
-		break;
-	    }
-	}
-    } else if (key == GRETL_OPTIM) {
-	for (i=0; i<OPTIM_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, opt_strs[i])) {
-		state->optim = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (key == MAX_VERBOSE) {
-	for (i=0; mxv_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, mxv_strs[i])) {
-		state->max_verbose = i;
-		err = 0;
-		break;
-	    }
-	}
-	if (err && (strcmp(val, "0") == 0 || strcmp(val, "1") == 0)) {
-	    state->max_verbose = atoi(val);
-	    err = 0;
-	}
-    } else if (key == WILDBOOT_DIST) {
-	for (i=0; wbt_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, wbt_strs[i])) {
-		state->wildboot_dist = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (key == QUANTILE_TYPE) {
-	for (i=0; qnt_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, qnt_strs[i])) {
-		Qtype = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (key == OPTIM_STEPLEN) {
-	for (i=0; i<STEPLEN_MAX; i++) {
-	    if (!g_ascii_strcasecmp(val, stl_strs[i])) {
-		state->optim_steplen = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (key == GRETL_ASSERT) {
-	for (i=0; ast_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, ast_strs[i])) {
-		gretl_assert = i;
-		err = 0;
-		break;
-	    }
-	}
-    } else if (key == PLOT_COLLECTION) {
-	for (i=0; plc_strs[i] != NULL; i++) {
-	    if (!g_ascii_strcasecmp(val, plc_strs[i])) {
-		plot_collection = i;
-		err = 0;
-		break;
 	    }
 	}
     }
 
+#if 0
+    fprintf(stderr, "parse_libset_int_code: %s, %s, err = %d\n",
+	    setkey_get_name(key), val, err);
+#endif
+
     if (err) {
-	gretl_errmsg_sprintf(_("%s: invalid value '%s'"), key, val);
+	gretl_errmsg_sprintf(_("%s: invalid value '%s'"),
+			     setkey_get_name(key), val);
     }
 
     return err;
 }
 
+/* start public functions called from gui/settings.c */
+
 void set_xsect_hccme (const char *s)
 {
-    char *scpy;
-
     if (check_for_state()) return;
 
-    scpy = gretl_strdup(s);
-    if (scpy != NULL) {
-	gretl_lower(scpy);
-	parse_hc_variant(scpy);
-	free(scpy);
+    if (!strncmp(s, "HC", 2)) {
+	s += 2;
     }
+    parse_libset_int_code(HC_VERSION, s);
 }
 
 void set_tseries_hccme (const char *s)
 {
-    char *scpy;
-
     if (check_for_state()) return;
 
-    scpy = gretl_strdup(s);
-    if (scpy != NULL) {
-	gretl_lower(scpy);
-	if (parse_hc_variant(scpy) == 0) {
-	    libset_set_bool(FORCE_HC, 1);
-	} else {
-	    libset_set_bool(FORCE_HC, 0);
+    if (!strcmp(s, "HAC")) {
+	libset_set_bool(FORCE_HC, 0);
+    } else {
+	if (!strncmp(s, "HC", 2)) {
+	    s += 2;
 	}
-	free(scpy);
+	if (parse_libset_int_code(HC_VERSION, s) == 0) {
+	    /* non-HAC variant chosen */
+	    libset_set_bool(FORCE_HC, 1);
+	}
     }
 }
 
@@ -1348,22 +1292,12 @@ void set_panel_hccme (const char *s)
 
 void set_garch_robust_vcv (const char *s)
 {
-    char *scpy;
-
     if (check_for_state()) return;
 
-    scpy = gretl_strdup(s);
-
-    if (scpy != NULL) {
-	gretl_lower(scpy);
-	if (!strcmp(scpy, "qml")) {
-	    state->garch_robust_vcv = ML_QML;
-	} else if (!strcmp(scpy, "bw")) {
-	    state->garch_robust_vcv = ML_BW;
-	}
-	free(scpy);
-    }
+    parse_libset_int_code(GARCH_ROBUST_VCV, s);
 }
+
+/* end public functions called from gui/settings.c */
 
 static int set_initmat (const char *mname, int type,
 			PRN *prn)
@@ -1526,30 +1460,6 @@ static void libset_print_bool (SetKey key, const char *s,
     }
 }
 
-#define coded_intvar(k) (k == GARCH_VCV || \
-			 k == GARCH_ROBUST_VCV || \
-			 k == ARMA_VCV || \
-			 k == HAC_LAG || \
-			 k == HAC_KERNEL || \
-                         k == HC_VERSION || \
-			 k == VECM_NORM || \
-			 k == GRETL_OPTIM || \
-			 k == OPTIM_STEPLEN || \
-			 k == MAX_VERBOSE || \
-			 k == WILDBOOT_DIST || \
-			 k == QUANTILE_TYPE || \
-			 k == GRETL_ASSERT || \
-			 k == PLOT_COLLECTION)
-
-const char *intvar_code_string (SetKey key)
-{
-    if (key == HAC_LAG) {
-	return hac_lag_string(); /* special */
-    } else {
-	return libset_option_string(key);
-    }
-}
-
 static void libset_print_int (SetKey key, const char *s,
 			      PRN *prn, gretlopt opt)
 {
@@ -1559,9 +1469,9 @@ static void libset_print_int (SetKey key, const char *s,
 
     if (coded_intvar(key)) {
 	if (opt & OPT_D) {
-	    pprintf(prn, " %s = %s\n", s, intvar_code_string(key));
+	    pprintf(prn, " %s = %s\n", s, libset_option_string(key));
 	} else {
-	    pprintf(prn, "set %s %s\n", s, intvar_code_string(key));
+	    pprintf(prn, "set %s %s\n", s, libset_option_string(key));
 	}
     } else {
 	int k = libset_get_int(key);
@@ -1717,7 +1627,7 @@ static int libset_query_settings (setvar *sv, PRN *prn)
 		sv->name, libset_get_bool(sv->key)? "on" : "off");
     } else if (coded_intvar(sv->key)) {
 	pprintf(prn, "%s: code, currently \"%s\"\n", sv->name,
-		intvar_code_string(sv->key));
+		libset_option_string(sv->key));
 	coded_var_show_opts(sv->key, prn);
     } else if (libset_int(sv->key)) {
 	int k = libset_get_int(sv->key);
