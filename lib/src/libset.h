@@ -36,12 +36,6 @@ typedef enum {
 } OptimCode;
 
 typedef enum {
-    STEPLEN_POWER,
-    STEPLEN_QUAD,
-    STEPLEN_MAX
-} SteplenCode;
-
-typedef enum {
     USE_CWD         = 1 << 0,  /* store: use current dir as default */
     ECHO_ON         = 1 << 1,  /* echoing commands or not */
     MSGS_ON         = 1 << 2,  /* emitting non-error messages or not */
@@ -75,7 +69,7 @@ typedef enum {
     HAC_KERNEL,
     HAC_LAG,
     LBFGS_MEM,
-    OPTIM_STEPLEN,
+    QUANTILE_TYPE,
     STATE_SMALL_INT_MAX, /* separator: start state int vars */
     HORIZON,
     BOOTREP,
@@ -104,19 +98,19 @@ typedef enum {
     MATMASK,
     STATE_VARS_MAX, /* separator */
     /* non-state vars follow */
+    GRETL_DEBUG,
+    GRETL_ASSERT,
+    DATACOLS,
+    PLOT_COLLECTION,
+    R_FUNCTIONS,
+    R_LIB,
     CSV_DIGITS,
+    NS_SMALL_INT_MAX,
     BLAS_MNK_MIN,
     OMP_MNK_MIN,
     OMP_N_THREADS,
     SIMD_K_MAX,
     SIMD_MN_MIN,
-    DATACOLS,
-    GRETL_ASSERT,
-    GRETL_DEBUG,
-    PLOT_COLLECTION,
-    QUANTILE_TYPE,
-    R_FUNCTIONS,
-    R_LIB,
     USE_DCMT,
     NS_INT_MAX,
     CSV_DELIM,

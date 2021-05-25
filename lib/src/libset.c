@@ -89,7 +89,7 @@ struct set_state_ {
     gint8 auto_hac_lag;         /* HAC auto lag-length formula */
     gint8 user_hac_lag;         /* user-set HAC lag length */
     gint8 lbfgs_mem;            /* memory span for L-BFGS-B */
-    gint8 optim_steplen;        /* step length algorithm (only BFGS for now) */
+    gint8 quantile_type;        /* Formula for computing quantiles */
     /* potentially larger integers */
     int horizon;                /* for VAR impulse responses */
     int bootrep;                /* bootstrap replications */
@@ -119,25 +119,29 @@ struct set_state_ {
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
 };
 
-#if 0 /* not yet */
-typedef union sv_addr_ sv_addr;
+static struct global_vars {
+    gint8 gretl_debug;
+    gint8 gretl_assert;
+    gint8 datacols;
+    gint8 plot_collection;
+    gint8 R_functions;
+    gint8 R_lib;
+    gint8 csv_digits;
+} globals = {0, 0, 5, 0, 0, 1, UNSET_INT};
 
-union sv_addr_ {
-    void *ptr;
-    size_t off;
-};
+/* globals for internal use */
+static int seed_is_set;
+static int comments_on;
+static int user_mp_bits;
+static char data_delim = ',';
+static char export_decpoint = '.';
 
-/* Could add a field to @setvars below to locate the variable to
-   be read or modified. For members of "set_state" this would take
-   the form of, for example,
-
-   {.off=offsetof(set_state,conv_huge)}
-
-   For "set variables" that are not members of set_state, this
-   could be the address of the associated file-scope int or double,
-   using the @ptr member of union sv_addr_.
-*/
-#endif /* not yet */
+#ifdef OS_OSX
+static int omp_mnk_min = -1;
+#else
+static int omp_mnk_min = 80000;
+#endif
+static int omp_n_threads;
 
 typedef struct setvar_ setvar;
 
@@ -184,7 +188,7 @@ setvar setvars[] = {
     { BFGS_MAXITER,  "bfgs_maxiter",  CAT_NUMERIC },
     { BFGS_VERBSKIP, "bfgs_verbskip", CAT_BEHAVE },
     { BOOT_ITERS,    "boot_iters",    CAT_TS },
-    { OPTIM_STEPLEN, "optim_steplen", CAT_NUMERIC },
+    { QUANTILE_TYPE, "quantile_type", CAT_BEHAVE },
     { BHHH_MAXITER,  "bhhh_maxiter",  CAT_NUMERIC },
     { LBFGS_MEM,     "lbfgs_mem",     CAT_NUMERIC },
     { RQ_MAXITER,    "rq_maxiter",    CAT_NUMERIC },
@@ -211,7 +215,6 @@ setvar setvars[] = {
     { OMP_MNK_MIN,   "omp_mnk_min", CAT_BEHAVE },
     { OMP_N_THREADS, "omp_num_threads", CAT_BEHAVE },
     { PLOT_COLLECTION, "plot_collection", CAT_BEHAVE },
-    { QUANTILE_TYPE,   "quantile_type", CAT_BEHAVE },
     { R_FUNCTIONS,   "R_functions", CAT_BEHAVE },
     { R_LIB,         "R_lib", CAT_BEHAVE },
     { SIMD_K_MAX,    "simd_k_max", CAT_BEHAVE },
@@ -237,7 +240,6 @@ setvar setvars[] = {
                          k == HC_VERSION || \
 			 k == VECM_NORM || \
 			 k == GRETL_OPTIM || \
-			 k == OPTIM_STEPLEN || \
 			 k == MAX_VERBOSE || \
 			 k == WILDBOOT_DIST || \
 			 k == QUANTILE_TYPE || \
@@ -246,30 +248,11 @@ setvar setvars[] = {
 
 /* global state */
 set_state *state;
-static int seed_is_set;
-static int gretl_debug;
 static int user_mp_bits;
-static int R_functions;
-static int R_lib = 1;
-static int csv_digits = UNSET_INT;
-static int comments_on = 0;
-static int gretl_assert = 0;
-static int plot_collection = 0;
-static int datacols = 5;
-static int Qtype = 0;
-static char data_delim = ',';
-static char data_export_decpoint = '.';
-#ifdef OS_OSX
-static int omp_mnk_min = -1;
-#else
-static int omp_mnk_min = 80000; /* was 65535 */
-#endif
-static int omp_n_threads;
 
 static const char *hac_lag_string (void);
 static int real_libset_read_script (const char *fname,
 				    PRN *prn);
-static int set_csv_digits (const char *s);
 static int libset_get_scalar (SetKey key, const char *arg,
 			      int *pi, double *px);
 
@@ -331,7 +314,6 @@ static const char *hcv_strs[] = {"0", "1", "2", "3", "3a", NULL};
 static const char *vnm_strs[] = {"phillips", "diag", "first", "none", NULL};
 static const char *opt_strs[] = {"auto", "BFGS", "newton", NULL};
 static const char *mxv_strs[] = {"off", "on", "full", NULL};
-static const char *stl_strs[] = {"power", "quadratic", NULL};
 static const char *wbt_strs[] = {"rademacher", "mammen", NULL};
 static const char *qnt_strs[] = {"Q6", "Q7", "Q8", NULL};
 static const char *ast_strs[] = {"off", "warn", "stop", NULL};
@@ -343,6 +325,8 @@ struct codevar_info {
     const char **strvals;
 };
 
+/* offsetof(set_state,conv_huge) */
+
 struct codevar_info coded[] = {
     { GARCH_VCV,        gvc_strs },
     { GARCH_ROBUST_VCV, gvr_strs },
@@ -352,7 +336,6 @@ struct codevar_info coded[] = {
     { VECM_NORM,        vnm_strs },
     { GRETL_OPTIM,      opt_strs },
     { MAX_VERBOSE,      mxv_strs },
-    { OPTIM_STEPLEN,    stl_strs },
     { WILDBOOT_DIST,    wbt_strs },
     { CSV_DELIM,        csv_strs },
     { QUANTILE_TYPE,    qnt_strs },
@@ -389,22 +372,22 @@ static void coded_var_show_opts (SetKey key, PRN *prn)
     }
 }
 
-static const char *get_garch_robust_vcv_str (int v)
+static const char *garch_robust_vcv_string (void)
 {
-    if (v == ML_QML) {
+    if (state->garch_robust_vcv == ML_QML) {
 	return gvr_strs[0];
-    } else if (v == ML_BW) {
+    } else if (state->garch_robust_vcv == ML_BW) {
 	return gvr_strs[1];
     } else {
 	return "unset";
     }
 }
 
-static const char *get_arma_vcv_str (int v)
+static const char *arma_vcv_string (void)
 {
-    if (v == ML_HESSIAN) {
+    if (state->arma_vcv == ML_HESSIAN) {
 	return avc_strs[0];
-    } else if (v == ML_OP) {
+    } else if (state->arma_vcv == ML_OP) {
 	return avc_strs[1];
     } else {
 	return "unset";
@@ -414,13 +397,13 @@ static const char *get_arma_vcv_str (int v)
 static const char *libset_option_string (SetKey key)
 {
     if (key == HAC_LAG) {
-	return hac_lag_string(); /* special */
+	return hac_lag_string();          /* special */
+    } else if (key == GARCH_ROBUST_VCV) {
+	return garch_robust_vcv_string(); /* special */
+    } else if (key == ARMA_VCV) {
+	return arma_vcv_string();         /* special */
     } else if (key == GARCH_VCV) {
 	return gvc_strs[state->garch_vcv];
-    } else if (key == GARCH_ROBUST_VCV) {
-	return get_garch_robust_vcv_str(state->garch_robust_vcv);
-    } else if (key == ARMA_VCV) {
-	return get_arma_vcv_str(state->arma_vcv);
     } else if (key == HAC_KERNEL) {
 	return hkn_strs[state->hac_kernel];
     } else if (key == HC_VERSION) {
@@ -429,18 +412,16 @@ static const char *libset_option_string (SetKey key)
 	return vnm_strs[state->vecm_norm];
     } else if (key == GRETL_OPTIM) {
 	return opt_strs[state->optim];
-    } else if (key == OPTIM_STEPLEN) {
-	return stl_strs[state->optim_steplen];
     } else if (key == MAX_VERBOSE) {
 	return mxv_strs[state->max_verbose];
     } else if (key == WILDBOOT_DIST) {
 	return wbt_strs[state->wildboot_dist];
     } else if (key == QUANTILE_TYPE) {
-	return qnt_strs[Qtype];
+	return qnt_strs[state->quantile_type];
     } else if (key == GRETL_ASSERT) {
-	return ast_strs[gretl_assert];
+	return ast_strs[globals.gretl_assert];
     } else if (key == PLOT_COLLECTION) {
-	return plc_strs[plot_collection];
+	return plc_strs[globals.plot_collection];
     } else {
 	return "?";
     }
@@ -710,7 +691,7 @@ static set_state default_state = {
     AUTO_LAG_STOCK_WATSON, /* .auto_hac_lag */
     UNSET_INT,             /* .user_hac_lag */
     8,             /* .lbfgs_mem */
-    STEPLEN_POWER, /* .optim_steplen */
+    0,             /* .quantile_type */
     UNSET_INT,     /* .horizon */
     1000,          /* .bootrep */
     100000,        /* .loop_maxiter */
@@ -824,7 +805,7 @@ int gretl_warnings_on (void)
 
 int gretl_debugging_on (void)
 {
-    return gretl_debug;
+    return globals.gretl_debug;
 }
 
 #define DEFAULT_MP_BITS 256
@@ -1220,14 +1201,12 @@ static int parse_libset_int_code (SetKey key, const char *val)
 		state->max_verbose = ival;
 	    } else if (key == WILDBOOT_DIST) {
 		state->wildboot_dist = ival;
-	    } else if (key == OPTIM_STEPLEN) {
-		state->optim_steplen = ival;
 	    } else if (key == QUANTILE_TYPE) {
-		Qtype = ival;
+		state->quantile_type = ival;
 	    } else if (key == GRETL_ASSERT) {
-		gretl_assert = ival;
+		globals.gretl_assert = ival;
 	    } else if (key == PLOT_COLLECTION) {
-		plot_collection = ival;
+		globals.plot_collection = ival;
 	    }
 	} else if (key == MAX_VERBOSE) {
 	    if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0) {
@@ -1827,12 +1806,9 @@ int execute_set (const char *setobj, const char *setarg,
     } else if (argc == 2) {
 	/* specials first */
 	if (sv->key == CSV_WRITE_NA) {
-	    /* allow "csv_na"? */
 	    return set_csv_na_write_string(setarg);
 	} else if (sv->key == CSV_READ_NA) {
 	    return set_csv_na_read_string(setarg);
-	} else if (sv->key == CSV_DIGITS) {
-	    return set_csv_digits(setarg);
 	} else if (sv->key == INITVALS) {
 	    return set_initmat(setarg, INIT_VALS, prn);
 	} else if (sv->key == INITCURV) {
@@ -2012,8 +1988,6 @@ int libset_get_int (SetKey key)
 	return state->max_verbose;
     } else if (key == BOOT_ITERS) {
 	return state->boot_iters;
-    } else if (key == OPTIM_STEPLEN) {
-	return state->optim_steplen;
     } else if (key == BHHH_MAXITER) {
 	return state->bhhh_maxiter;
     } else if (key == RQ_MAXITER) {
@@ -2043,9 +2017,9 @@ int libset_get_int (SetKey key)
     } else if (key == GRETL_OPTIM) {
 	return state->optim;
     } else if (key == GRETL_DEBUG) {
-	return gretl_debug;
+	return globals.gretl_debug;
     } else if (key == GRETL_ASSERT) {
-	return gretl_assert;
+	return globals.gretl_assert;
     } else if (key == BLAS_MNK_MIN) {
 	return get_blas_mnk_min();
     } else if (key == OMP_MNK_MIN) {
@@ -2059,17 +2033,17 @@ int libset_get_int (SetKey key)
     } else if (key == BFGS_VERBSKIP) {
 	return state->bfgs_verbskip;
     } else if (key == CSV_DIGITS) {
-	return csv_digits;
+	return globals.csv_digits;
     } else if (key == FDJAC_QUAL) {
 	return state->fdjac_qual;
     } else if (key == WILDBOOT_DIST) {
 	return state->wildboot_dist;
     } else if (key == QUANTILE_TYPE) {
-	return Qtype;
+	return state->quantile_type;
     } else if (key == PLOT_COLLECTION) {
-	return plot_collection;
+	return globals.plot_collection;
     } else if (key == DATACOLS) {
-	return datacols;
+	return globals.datacols;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"code %d\n", key);
@@ -2083,33 +2057,30 @@ static int intvar_min_max (SetKey key, int *min, int *max,
     *max = 100000;
     *min = 0;
 
-    if (key >= GRETL_OPTIM && key < STATE_SMALL_INT_MAX) {
+    if ((key >= GRETL_OPTIM && key < STATE_SMALL_INT_MAX) ||
+	(key > STATE_VARS_MAX && key < NS_SMALL_INT_MAX)) {
 	/* small ints */
-	if (key == HAC_KERNEL) {
-	    *max = KERNEL_MAX;
-	    *var8 = &state->hac_kernel;
-	} else if (key == HC_VERSION) {
-	    *max = 4 + 1;
+	if (key == HC_VERSION) {
+	    *max = 5;
 	    *var8 = &state->hc_version;
-	} else if (key == VECM_NORM) {
-	    *max = NORM_MAX;
-	    *var8 = &state->vecm_norm;
-	} else if (key == GRETL_OPTIM) {
-	    *max = OPTIM_MAX;
-	    *var8 = &state->optim;
 	} else if (key == FDJAC_QUAL) {
 	    *max = 4;
 	    *var8 = &state->fdjac_qual;
-	} else if (key == WILDBOOT_DIST) {
-	    *max = 1;
-	    *var8 = &state->wildboot_dist;
-	} else if (key == OPTIM_STEPLEN) {
-	    *max = STEPLEN_MAX;
-	    *var8 = &state->optim_steplen;
-	} else if (LBFGS_MEM) {
+	} else if (key == LBFGS_MEM) {
 	    *min = 3;
 	    *max = 20;
 	    *var8 = &state->lbfgs_mem;
+	} else if (key == DATACOLS) {
+	    *min = 1;
+	    *max = 15;
+	    *var8 = &globals.datacols;
+	} else if (key == PLOT_COLLECTION) {
+	    *max = 2;
+	    *var8 = &globals.plot_collection;
+	} else if (key == CSV_DIGITS) {
+	    *min = 1;
+	    *max = 26;
+	    *var8 = &globals.csv_digits;
 	}
     } else {
 	/* regular ints */
@@ -2140,15 +2111,6 @@ static int intvar_min_max (SetKey key, int *min, int *max,
 	} else if (key == LOOP_MAXITER) {
 	    *max = INT_MAX - 1;
 	    *var = &state->loop_maxiter;
-	} else if (key == GRETL_DEBUG) {
-	    *var = &gretl_debug;
-	} else if (key == PLOT_COLLECTION) {
-	    *max = 2;
-	    *var = &plot_collection;
-	} else if (key == DATACOLS) {
-	    *min = 1;
-	    *max = 15;
-	    *var = &datacols;
 	} else {
 	    fprintf(stderr, "libset_set_int: unrecognized key %d\n", key);
 	    return E_UNKVAR;
@@ -2157,6 +2119,13 @@ static int intvar_min_max (SetKey key, int *min, int *max,
 
     return 0;
 }
+
+/* Called from within libset.c and also from various places in
+   libgretl. It's primarily designed pr "real" integer variables
+   (not int-coded categories), but for now we make an exception
+   for HC_VERSION and PLOT_COLLECTION, to support existing calls
+   from lib/src/estimate.c and gui/settings.c.
+*/
 
 int libset_set_int (SetKey key, int val)
 {
@@ -2233,9 +2202,9 @@ int libset_get_bool (SetKey key)
 {
     /* global specials */
     if (key == R_FUNCTIONS) {
-	return R_functions;
+	return globals.R_functions;
     } else if (key == R_LIB) {
-	return R_lib;
+	return globals.R_lib;
     } else if (key == USE_DCMT) {
         return gretl_rand_get_dcmt();
     }
@@ -2272,18 +2241,18 @@ static void libset_set_decpoint (int on)
 void set_data_export_decimal_comma (int s)
 {
     if (s) {
-	data_export_decpoint = ',';
+	export_decpoint = ',';
     } else {
-	data_export_decpoint = '.';
+	export_decpoint = '.';
     }
 }
 
 char get_data_export_decpoint (void)
 {
-    char c = data_export_decpoint;
+    char c = export_decpoint;
 
     /* revert to '.' on access */
-    data_export_decpoint = '.';
+    export_decpoint = '.';
     return c;
 }
 
@@ -2297,7 +2266,7 @@ char get_data_export_delimiter (void)
     return data_delim;
 }
 
-static int check_R_setting (int *var, SetKey key, int val)
+static int check_R_setting (gint8 *var, SetKey key, int val)
 {
     int err = 0;
 
@@ -2329,9 +2298,9 @@ int libset_set_bool (SetKey key, int val)
 
     /* global specials */
     if (key == R_FUNCTIONS) {
-	return check_R_setting(&R_functions, key, val);
+	return check_R_setting(&globals.R_functions, key, val);
     } else if (key == R_LIB) {
-	return check_R_setting(&R_lib, key, val);
+	return check_R_setting(&globals.R_lib, key, val);
     } else if (key == USE_DCMT) {
 	return gretl_rand_set_dcmt(val);
     }
@@ -2787,18 +2756,6 @@ int set_csv_na_read_string (const char *s)
 	return E_DATA;
     } else {
 	return set_string_setvar(state->csv_read_na, s, 7);
-    }
-}
-
-static int set_csv_digits (const char *s)
-{
-    int k = atoi(s);
-
-    if (k > 0 && k < 26) {
-	csv_digits = k;
-	return 0;
-    } else {
-	return E_DATA;
     }
 }
 
