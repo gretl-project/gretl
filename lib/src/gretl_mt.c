@@ -30,6 +30,7 @@
 /* for processors count */
 #if defined(WIN32)
 # include <windows.h>
+# include "gretl_win32.h"
 #elif defined(OS_OSX)
 # include <sys/param.h>
 # include <sys/sysctl.h>
