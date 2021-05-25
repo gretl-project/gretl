@@ -1647,18 +1647,12 @@ static int loop_count_too_high (LOOPSET *loop)
 	}
     } else {
 	int maxit = libset_get_int(LOOP_MAXITER);
-	int maxdef = libset_get_int(LOOP_MAXITER_DEFAULT);
 
-	if (maxit > 0 && nt > maxit) {
+	if (nt > maxit) {
 	    gretl_errmsg_sprintf(_("Reached maximum iterations, %d"),
 				 maxit);
-	    if (maxit == maxdef) {
-		gretl_errmsg_append(_("You can use \"set loop_maxiter\" "
-				      "to increase the limit"), 0);
-	    } else {
-		gretl_errmsg_append(_("You can reset \"set loop_maxiter\" "
-				      "to increase the limit"), 0);
-	    }
+	    gretl_errmsg_append(_("You can use \"set loop_maxiter\" "
+				  "to increase the limit"), 0);
 	    loop->err = 1;
 	}
     }

@@ -94,7 +94,6 @@ typedef enum {
     BFGS_MAXGRAD,
     BHHH_TOLER,
     QS_BANDWIDTH,
-    FDJAC_EPS,
     NADARWAT_TRIM,
     STATE_FLOAT_MAX, /* separator */
     CSV_WRITE_NA,
@@ -121,7 +120,6 @@ typedef enum {
     USE_DCMT,
     NS_INT_MAX,
     CSV_DELIM,
-    LOOP_MAXITER_DEFAULT,
     STOPWATCH,
     VERBOSE,
     SV_WORKDIR,

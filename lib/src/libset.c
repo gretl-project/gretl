@@ -108,7 +108,6 @@ struct set_state_ {
     double bfgs_toler;          /* convergence tolerance, BFGS */
     double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
     double bhhh_toler;          /* convergence tolerance, BHHH */
-    double fdjac_eps;           /* finite increment for "fdjac" function */
     double qs_bandwidth;        /* bandwidth for QS HAC kernel */
     double nadarwat_trim;       /* multiple of h to use in nadarwat() for trimming */
     /* strings */
@@ -181,12 +180,12 @@ setvar setvars[] = {
     { HAC_LAG,       "hac_lag", CAT_ROBUST },
     { HORIZON,       "horizon", CAT_TS },
     { BOOTREP,       "bootrep", CAT_BEHAVE },
-    { LOOP_MAXITER,  "loop_maxiter",   CAT_BEHAVE },
-    { BFGS_MAXITER,  "bfgs_maxiter",   CAT_NUMERIC },
+    { LOOP_MAXITER,  "loop_maxiter",  CAT_BEHAVE },
+    { BFGS_MAXITER,  "bfgs_maxiter",  CAT_NUMERIC },
     { BFGS_VERBSKIP, "bfgs_verbskip", CAT_BEHAVE },
-    { BOOT_ITERS,    "boot_iters", CAT_TS },
+    { BOOT_ITERS,    "boot_iters",    CAT_TS },
     { OPTIM_STEPLEN, "optim_steplen", CAT_NUMERIC },
-    { BHHH_MAXITER,  "bhhh_maxiter", CAT_NUMERIC },
+    { BHHH_MAXITER,  "bhhh_maxiter",  CAT_NUMERIC },
     { LBFGS_MEM,     "lbfgs_mem",     CAT_NUMERIC },
     { RQ_MAXITER,    "rq_maxiter",    CAT_NUMERIC },
     { GMM_MAXITER,   "gmm_maxiter",   CAT_NUMERIC },
@@ -197,14 +196,13 @@ setvar setvars[] = {
     { BFGS_MAXGRAD,  "bfgs_maxgrad", CAT_NUMERIC },
     { BHHH_TOLER,    "bhhh_toler",   CAT_NUMERIC },
     { QS_BANDWIDTH,  "qs_bandwidth", CAT_ROBUST },
-    { FDJAC_EPS,     "fdjac_eps",    CAT_NUMERIC },
     { NADARWAT_TRIM, "nadarwat_trim", CAT_NUMERIC },
     { CSV_WRITE_NA,  "csv_write_na", CAT_SPECIAL },
     { CSV_READ_NA,   "csv_read_na",  CAT_SPECIAL },
-    { INITVALS,      "initvals", CAT_NUMERIC },
-    { INITCURV,      "initcurv", CAT_NUMERIC },
+    { INITVALS,      "initvals",    CAT_NUMERIC },
+    { INITCURV,      "initcurv",    CAT_NUMERIC },
     { MATMASK,       "matrix_mask", CAT_BEHAVE },
-    { CSV_DIGITS,    "csv_digits", CAT_BEHAVE },
+    { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE },
     { BLAS_MNK_MIN,  "blas_mnk_min", CAT_BEHAVE },
     { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
     { DATACOLS,      "datacols",  CAT_BEHAVE },
@@ -306,15 +304,6 @@ static setvar *get_setvar_by_name (const char *name)
     }
 
     return ret;
-}
-
-static void robust_opts_init (set_state *sv)
-{
-    sv->auto_hac_lag = AUTO_LAG_STOCK_WATSON;
-    sv->user_hac_lag = UNSET_INT;
-    sv->hc_version = 0;
-    sv->hac_kernel = KERNEL_BARTLETT;
-    sv->qs_bandwidth = NADBL;
 }
 
 /* value strings for integer-coded variables */
@@ -691,55 +680,54 @@ static int openmp_by_default (void)
 
 #endif /* _OPENMP defined */
 
-#define loop_maxiter_default 100000
+static set_state default_state = {
+    ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING, /* flags */
+    OPTIM_AUTO,     /* .optim */
+    NORM_PHILLIPS,  /* .vecm_norm */
+    ML_UNSET,       /* .garch_vcv */
+    ML_UNSET,       /* .garch_robust_vcv */
+    ML_HESSIAN,     /* .arma_vcv */
+    0,              /* .wildboot_dist */
+    0,              /* .fdjac_qual */
+    0,              /* .max_verbose */
+    0,              /* .hc_version */
+    KERNEL_BARTLETT,       /* .hac_kernel */
+    AUTO_LAG_STOCK_WATSON, /* .auto_hac_lag */
+    UNSET_INT,             /* .user_hac_lag */
+    8,             /* .lbfgs_mem */
+    STEPLEN_POWER, /* .optim_steplen */
+    UNSET_INT,     /* .horizon */
+    1000,          /* .bootrep */
+    100000,        /* .loop_maxiter */
+    UNSET_INT,     /* .bfgs_maxiter */
+    1,       /* .bfgs_verbskip */
+    1999,    /* .boot_iters */
+    500,     /* .bhhh_maxiter */
+    1000,    /* .rq_maxiter */
+    250,     /* .gmm_maxiter */
+    0,       /* .seed */
+    1.0e100, /* .conv_huge */
+    NADBL,   /* .nls_toler */
+    NADBL,   /* .bfgs_toler */
+    5.0,     /* .bfgs_maxgrad */
+    1.0e-6,  /* .bhhh_toler */
+    2.0,     /* .qs_bandwidth */
+    4.0,     /* .nadarwat_trim */
+    "NA",      /* .csv_write_na */
+    "default", /* .csv_read_na */
+    NULL,  /* .initvals */
+    NULL,  /* .initcurv */
+    NULL   /* .matmask */
+};
 
 static void state_vars_init (set_state *sv)
 {
-#if PDEBUG
-    fprintf(stderr, "state_vars_init called\n");
-#endif
-    sv->flags = ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING;
+    *sv = default_state;
 #if defined(_OPENMP)
     if (openmp_by_default()) {
 	sv->flags |= OPENMP_ON;
     }
 #endif
-    sv->seed = 0;
-    sv->conv_huge = 1.0e100;
-    sv->horizon = UNSET_INT;
-    sv->bootrep = 1000;
-    sv->nls_toler = NADBL;
-    sv->loop_maxiter = loop_maxiter_default;
-    sv->rq_maxiter = 1000;
-    sv->gmm_maxiter = 250;
-    sv->vecm_norm = NORM_PHILLIPS;
-    sv->optim = OPTIM_AUTO;
-    sv->max_verbose = 0;
-    sv->initvals = NULL;
-    sv->initcurv = NULL;
-    sv->matmask = NULL;
-
-    sv->bfgs_maxiter = UNSET_INT;
-    sv->bfgs_toler = NADBL;
-    sv->bfgs_maxgrad = 5.0;
-    sv->bfgs_verbskip = 1;
-    sv->optim_steplen = STEPLEN_POWER;
-    sv->bhhh_maxiter = 500;
-    sv->bhhh_toler = NADBL;
-    sv->boot_iters = 1999;
-    sv->lbfgs_mem = 8;
-    sv->garch_vcv = ML_UNSET;
-    sv->arma_vcv = ML_HESSIAN;
-    sv->garch_robust_vcv = ML_UNSET;
-    sv->nadarwat_trim = 4.0;
-    sv->fdjac_qual = 0;
-    sv->fdjac_eps = 0.0;
-    sv->wildboot_dist = 0;
-
-    strcpy(sv->csv_write_na, "NA");
-    strcpy(sv->csv_read_na, "default");
-
-    robust_opts_init(sv);
 }
 
 int get_bkbp_k (const DATASET *dset)
@@ -1600,7 +1588,7 @@ static void libset_print_double (SetKey key, const char *s,
     }
 
     if (opt & OPT_D) {
-	if (na(x) || (x == 0.0 && key == FDJAC_EPS)) {
+	if (na(x)) {
 	    pprintf(prn, " %s = auto\n", s);
 	} else {
 	    pprintf(prn, " %s = %.15g\n", s, x);
@@ -2030,28 +2018,21 @@ double libset_get_double (SetKey key)
     }
 
     if (key == QS_BANDWIDTH) {
-	if (!na(state->qs_bandwidth) && state->qs_bandwidth > 0) {
-	    return state->qs_bandwidth;
-	} else {
-	    /* what's a sensible default here? */
-	    return 2.0;
-	}
+	return state->qs_bandwidth;
     } else if (key == NLS_TOLER) {
 	return na(state->nls_toler) ? get_default_nls_toler() :
 	    state->nls_toler;
     } else if (key == BHHH_TOLER) {
-	return na(state->bhhh_toler) ? 1.0e-6 : state->bhhh_toler;
+	return state->bhhh_toler;
     } else if (key == BFGS_TOLER) {
 	return na(state->bfgs_toler) ? get_default_nls_toler() :
 	    state->bfgs_toler;
     } else if (key == BFGS_MAXGRAD) {
 	return state->bfgs_maxgrad;
     } else if (key == NADARWAT_TRIM) {
-	return na(state->nadarwat_trim) ? 4.0 : state->nadarwat_trim;
+	return state->nadarwat_trim;
     } else if (key == CONV_HUGE) {
-	return na(state->conv_huge) ? 1.0e100 : state->conv_huge;
-    } else if (key == FDJAC_EPS) {
-	return na(state->fdjac_eps) ? 0.0 : state->fdjac_eps;
+	return state->conv_huge;
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
 		"key %d\n", key);
@@ -2082,12 +2063,8 @@ int libset_set_double (SetKey key, double val)
 	return 1;
     }
 
-    /* all the libset double vals must be positive, except for
-       FDJAC_EPS, where 0.0 means "auto"
-    */
-    if (val < 0.0) {
-	return E_DATA;
-    } else if (val == 0.0 && key == FDJAC_EPS) {
+    /* all the libset double vals must be positive */
+    if (val <= 0.0 || na(val)) {
 	return E_DATA;
     }
 
@@ -2105,8 +2082,6 @@ int libset_set_double (SetKey key, double val)
 	state->nadarwat_trim = val;
     } else if (key == CONV_HUGE) {
 	state->conv_huge = val;
-    } else if (key == FDJAC_EPS) {
-	state->fdjac_eps = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized key %d\n", key);
 	err = E_UNKVAR;
@@ -2185,8 +2160,6 @@ int libset_get_int (SetKey key)
 	return plot_collection;
     } else if (key == DATACOLS) {
 	return datacols;
-    } else if (key == LOOP_MAXITER_DEFAULT) {
-	return loop_maxiter_default; /* for internal use */
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"code %d\n", key);
