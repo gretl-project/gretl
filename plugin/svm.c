@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "gretl_mt.h"
 #include "version.h"
 
 #ifdef HAVE_MPI

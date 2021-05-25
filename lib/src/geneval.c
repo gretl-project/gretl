@@ -31,6 +31,7 @@
 #include "gretl_panel.h"
 #include "kalman.h"
 #include "libset.h"
+#include "gretl_mt.h"
 #include "version.h"
 #include "csvdata.h"
 #include "uservar_priv.h"

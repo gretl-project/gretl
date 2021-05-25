@@ -198,6 +198,8 @@ int get_omp_n_threads (void)
 
 #if defined(_OPENMP)
 
+/* try to determine whether OMP should be enabled by default */
+
 int openmp_by_default (void)
 {
     static int called = 0;

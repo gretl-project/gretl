@@ -26,10 +26,7 @@
 #include "matrix_extra.h"
 #include "gretl_func.h"
 #include "gretl_string_table.h"
-
-#ifdef _OPENMP
-# include <omp.h>
-#endif
+#include "gretl_mt.h"
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
@@ -135,13 +132,6 @@ static int comments_on;
 static int user_mp_bits;
 static char data_delim = ',';
 static char export_decpoint = '.';
-
-#ifdef OS_OSX
-static int omp_mnk_min = -1;
-#else
-static int omp_mnk_min = 80000;
-#endif
-static int omp_n_threads;
 
 typedef struct setvar_ setvar;
 
@@ -484,197 +474,6 @@ static void state_vars_copy (set_state *sv)
     sv->initcurv = NULL;
     sv->matmask = NULL;
 }
-
-/* for processors count */
-#if defined(WIN32)
-# include <windows.h>
-#elif defined(OS_OSX)
-# include <sys/param.h>
-# include <sys/sysctl.h>
-#endif
-
-int gretl_n_processors (void)
-{
-    static int n_proc = -1;
-
-    if (n_proc >= 1) {
-	return n_proc;
-    }
-
-    n_proc = 1;
-
-#if defined(WIN32)
-    SYSTEM_INFO sysinfo;
-
-    GetSystemInfo(&sysinfo);
-    n_proc = sysinfo.dwNumberOfProcessors;
-#elif defined(OS_OSX)
-    int mib[2] = {CTL_HW, HW_NCPU};
-    size_t len = sizeof n_proc;
-
-    if (sysctl(mib, 2, &n_proc, &len, NULL, 0) == -1) {
-	perror("could not determine number of CPUs available");
-	n_proc = 1;
-    }
-#else
-    n_proc = sysconf(_SC_NPROCESSORS_ONLN);
-#endif
-
-    return n_proc;
-}
-
-int gretl_n_physical_cores (void)
-{
-    static int n_cores = -1;
-
-    if (n_cores >= 1) {
-	return n_cores;
-    }
-
-    /* this may well not be what we want, but it's a
-       starting point and fallback
-    */
-    n_cores = gretl_n_processors();
-
-#if defined(WIN32)
-    int nc = win32_get_core_count();
-
-    if (nc > 0) {
-	n_cores = nc;
-    }
-#elif defined(OS_OSX)
-    if (n_cores > 1) {
-	int nc = 0;
-	size_t len = sizeof nc;
-
-	if (sysctlbyname("hw.physicalcpu", &nc, &len, NULL, 0) == -1) {
-	    perror("could not determine number of physical cores available");
-	} else {
-	    n_cores = nc;
-	}
-    }
-#else
-    if (n_cores > 1) {
-	/* check SMT status */
-	FILE *fp = fopen("/sys/devices/system/cpu/smt/active", "r");
-	char line[2];
-	int smt = 0;
-
-	if (fp != NULL) {
-	    if (fgets(line, sizeof line, fp)) {
-		smt = atoi(line);
-	    }
-	    fclose(fp);
-	}
-	if (smt) {
-	    n_cores /= 2;
-	}
-    }
-#endif
-
-    return n_cores;
-}
-
-#define OMP_SHOW 0
-
-int libset_use_openmp (guint64 n)
-{
-#if defined(_OPENMP)
-    if (state == NULL || !(state->flags & OPENMP_ON) || omp_n_threads < 2) {
-	return 0;
-    } else if (omp_mnk_min >= 0 && n >= (guint64) omp_mnk_min) {
-# if OMP_SHOW > 1
-	fprintf(stderr, "libset_use_openmp: yes\n");
-# endif
-	return 1;
-    }
-#endif
-
-    return 0;
-}
-
-static int set_omp_n_threads (int n)
-{
-#if defined(_OPENMP)
-    if (n < 1 || n > gretl_n_processors()) {
-	gretl_errmsg_sprintf(_("omp_num_threads: must be >= 1 and <= %d"),
-			     gretl_n_processors());
-	return E_DATA;
-    } else {
-	omp_n_threads = n;
-	omp_set_num_threads(n);
-	if (blas_is_openblas()) {
-	    blas_set_num_threads(n);
-	}
-    }
-#else
-    gretl_warnmsg_set(_("set_omp_n_threads: OpenMP is not enabled"));
-#endif
-
-    return 0;
-}
-
-void num_threads_init (int blas_type)
-{
-    int nc = gretl_n_physical_cores();
-
-#if defined(_OPENMP)
-    omp_n_threads = nc;
-    omp_set_num_threads(nc);
-#endif
-    if (blas_type == BLAS_OPENBLAS) {
-	blas_set_num_threads(nc);
-    }
-    if (blas_type > BLAS_NETLIB) {
-	set_blas_mnk_min(90000);
-    }
-}
-
-int get_omp_n_threads (void)
-{
-    return omp_n_threads;
-}
-
-#if defined(_OPENMP)
-
-static int openmp_by_default (void)
-{
-    static int called = 0;
-    int num_cores = gretl_n_processors();
-    int ret = num_cores > 1;
-
-    if (ret) {
-	/* one can use the environment to turn this off */
-	char *envstr = getenv("GRETL_USE_OPENMP");
-
-	if (envstr != NULL && !strcmp(envstr, "0")) {
-	    ret = 0;
-	}
-    }
-
-    if (!called && ret) {
-	char *s = getenv("OMP_NUM_THREADS");
-
-	if (s != NULL && *s != '\0') {
-	    omp_n_threads = atoi(s);
-	} else {
-	    omp_n_threads = num_cores;
-	}
-	called = 1;
-    }
-
-# if OMP_SHOW
-    if (1) {
-	fprintf(stderr, "number of cores detected = %d\n", num_cores);
-	fprintf(stderr, "use OpenMP by default? %s\n", ret ? "yes" : "no");
-	fprintf(stderr, "omp_num_threads = %d\n", omp_n_threads);
-    }
-# endif
-
-    return ret;
-}
-
-#endif /* _OPENMP defined */
 
 static set_state default_state = {
     ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING, /* .flags */
@@ -1823,6 +1622,12 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_display_digits(setarg);
 	} else if (sv->key == VERBOSE) {
 	    return set_verbosity(setarg);
+	} else if (sv->key == OMP_MNK_MIN) {
+#if defined(_OPENMP)
+	    return set_omp_mnk_min(atoi(setarg));
+#else
+	    pprintf(prn, "Warning: openmp not supported\n");
+#endif
 	}
 
 	if (libset_boolvar(sv->key)) {
@@ -2022,10 +1827,8 @@ int libset_get_int (SetKey key)
 	return globals.gretl_assert;
     } else if (key == BLAS_MNK_MIN) {
 	return get_blas_mnk_min();
-    } else if (key == OMP_MNK_MIN) {
-	return omp_mnk_min;
     } else if (key == OMP_N_THREADS) {
-	return omp_n_threads;
+	return get_omp_n_threads();
     } else if (key == SIMD_K_MAX) {
 	return get_simd_k_max();
     } else if (key == SIMD_MN_MIN) {
@@ -2141,8 +1944,6 @@ int libset_set_int (SetKey key, int val)
 	set_simd_k_max(val);
     } else if (key == SIMD_MN_MIN) {
 	set_simd_mn_min(val);
-    } else if (key == OMP_MNK_MIN) {
-	omp_mnk_min = val;
     } else if (key == OMP_N_THREADS) {
 	err = set_omp_n_threads(val);
     } else {

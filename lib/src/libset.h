@@ -148,14 +148,6 @@ int libset_set_int (SetKey key, int val);
 
 int is_libset_var (const char *s);
 
-int libset_use_openmp (guint64 n);
-
-int gretl_n_processors (void);
-int gretl_n_physical_cores (void);
-
-void num_threads_init (int blas_type);
-int get_omp_n_threads (void);
-
 /* GUI setter functions */
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);

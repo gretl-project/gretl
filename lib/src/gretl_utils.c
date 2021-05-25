@@ -23,6 +23,7 @@
 #include "objstack.h"
 #include "cmd_private.h"
 #include "libset.h"
+#include "gretl_mt.h"
 #include "uservar.h"
 #include "gretl_panel.h"
 #include "gretl_string_table.h"
