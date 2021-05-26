@@ -38,6 +38,8 @@ int openmp_by_default (void);
 
 int set_omp_mnk_min (int n);
 
+int get_omp_mnk_min (void);
+
 #endif
 
 #endif /* GRETL_MT_H */

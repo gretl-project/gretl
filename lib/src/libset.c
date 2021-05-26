@@ -47,11 +47,6 @@ enum {
 };
 
 enum {
-    INIT_VALS,
-    INIT_CURV
-};
-
-enum {
     CAT_BEHAVE,
     CAT_NUMERIC,
     CAT_RNG,
@@ -120,12 +115,12 @@ static struct global_vars {
     gint8 R_functions;
     gint8 R_lib;
     gint8 csv_digits;
-} globals = {0, 0, 5, 0, 0, 1, UNSET_INT};
+    int gmp_bits;
+} globals = {0, 0, 5, 0, 0, 1, UNSET_INT, 256};
 
 /* globals for internal use */
 static int seed_is_set;
 static int comments_on;
-static int user_mp_bits;
 static char data_delim = ',';
 static char export_decpoint = '.';
 
@@ -152,7 +147,6 @@ setvar setvars[] = {
     { WARNINGS,     "warnings",  CAT_BEHAVE },
     { SKIP_MISSING, "skip_missing", CAT_BEHAVE },
     { BFGS_RSTEP,   "bfgs_richardson", CAT_NUMERIC },
-    { DPDSTYLE,     "dpdstyle", CAT_BEHAVE },
     { ROBUST_Z,     "robust_z", CAT_ROBUST },
     { MWRITE_G,     "mwrite_g", CAT_BEHAVE },
     { MPI_USE_SMT,  "mpi_use_smt", CAT_BEHAVE },
@@ -192,6 +186,7 @@ setvar setvars[] = {
     { INITCURV,      "initcurv",    CAT_NUMERIC },
     { MATMASK,       "matrix_mask", CAT_BEHAVE },
     { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE },
+    { GMP_BITS,      "gmp_bits",    CAT_BEHAVE },
     { BLAS_MNK_MIN,  "blas_mnk_min", CAT_BEHAVE },
     { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
     { DATACOLS,      "datacols",  CAT_BEHAVE },
@@ -233,7 +228,6 @@ setvar setvars[] = {
 
 /* global state */
 set_state *state;
-static int user_mp_bits;
 
 static const char *hac_lag_string (void);
 static int real_libset_read_script (const char *fname,
@@ -412,23 +406,24 @@ static const char *libset_option_string (SetKey key)
     }
 }
 
-static void print_initmat (const gretl_matrix *imat,
-			   int type, PRN *prn,
-			   gretlopt opt)
+static void print_state_matrix (SetKey key, PRN *prn, gretlopt opt)
 {
+    gretl_matrix *m;
     char *name;
 
-    if (type == INIT_VALS) {
+    if (key == INITVALS) {
 	name = "initvals";
-    } else if (type == INIT_CURV) {
+	m = state->initvals;
+    } else {
 	name = "initcurv";
+	m = state->initcurv;
     }
 
     if (opt & OPT_D) {
-	if (imat == NULL) {
+	if (m == NULL) {
 	    pprintf(prn, " %s = auto\n", name);
 	} else {
-	    gretl_matrix_print_to_prn(imat, name, prn);
+	    gretl_matrix_print_to_prn(m, name, prn);
 	}
     }
 }
@@ -600,17 +595,14 @@ int gretl_debugging_on (void)
 #define DEFAULT_MP_BITS 256
 #define mp_bits_ok(b) (b >= 256 && b <= 8192)
 
-void set_mp_bits (int b)
-{
-    if (mp_bits_ok(b)) {
-	user_mp_bits = b;
-    }
-}
+/* Called from the mp_ols plugin, also gretl_utils.c and
+   the GUI model specification dialog.
+*/
 
 int get_mp_bits (void)
 {
-    if (user_mp_bits > DEFAULT_MP_BITS) {
-	return user_mp_bits;
+    if (globals.gmp_bits > DEFAULT_MP_BITS) {
+	return globals.gmp_bits;
     } else {
 	char *s = getenv("GRETL_MP_BITS");
 	int b;
@@ -1067,73 +1059,54 @@ void set_garch_robust_vcv (const char *s)
 
 /* end public functions called from gui/settings.c */
 
-static int set_initmat (const char *mname, int type,
-			PRN *prn)
+static int set_init_matrix (SetKey key, const char *name,
+			    PRN *prn)
 {
-    gretl_matrix *m;
-    int err = 0;
+    gretl_matrix **targ;
 
-    if (!strcmp(mname, "auto")) {
-	if (type == INIT_VALS) {
-	    gretl_matrix_free(state->initvals);
-	    state->initvals = NULL;
-	} else if (type == INIT_CURV) {
-	    gretl_matrix_free(state->initcurv);
-	    state->initcurv = NULL;
-	}
-    } else {
-	m = get_matrix_by_name(mname);
+    targ = (key == INITVALS)? &state->initvals : &state->initcurv;
+
+    gretl_matrix_free(*targ);
+    *targ = NULL;
+
+    if (strcmp(name, "auto")) {
+	gretl_matrix *m = get_matrix_by_name(name);
+
 	if (m == NULL) {
-	    pprintf(prn, _("'%s': no such matrix"), mname);
+	    pprintf(prn, _("'%s': no such matrix"), name);
 	    pputc(prn, '\n');
-	    err = E_DATA;
-	} else {
-	    if (type == INIT_VALS) {
-		state->initvals = gretl_matrix_copy(m);
-		if (state->initvals == NULL) {
-		    err = E_ALLOC;
-		}
-	    } else if (type == INIT_CURV) {
-		state->initcurv = gretl_matrix_copy(m);
-		if (state->initcurv == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
+	    return E_DATA;
+	}
+	*targ = gretl_matrix_copy(m);
+	if (*targ == NULL) {
+	    return E_ALLOC;
 	}
     }
 
-    return err;
+    return 0;
 }
 
-static int set_matmask (const char *vname, const DATASET *dset,
-			PRN *prn)
+static int set_matrix_mask (const char *name, DATASET *dset)
 {
-    int err = 0;
+    gretl_matrix_free(state->matmask);
+    state->matmask = NULL;
 
-    if (!strcmp(vname, "null")) {
-	gretl_matrix_free(state->matmask);
-	state->matmask = NULL;
-    } else {
-	int t, v = current_series_index(dset, vname);
+    if (strcmp(name, "null")) {
+	int t, v = current_series_index(dset, name);
 
 	if (v < 0) {
-	    err = E_UNKVAR;
-	} else {
-	    if (state->matmask != NULL) {
-		gretl_matrix_free(state->matmask);
-	    }
-	    state->matmask = gretl_column_vector_alloc(dset->n);
-	    if (state->matmask == NULL) {
-		err = E_ALLOC;
-	    } else {
-		for (t=0; t<dset->n; t++) {
-		    state->matmask->val[t] = dset->Z[v][t];
-		}
-	    }
+	    return E_UNKVAR;
+	}
+	state->matmask = gretl_column_vector_alloc(dset->n);
+	if (state->matmask == NULL) {
+	    return E_ALLOC;
+	}
+	for (t=0; t<dset->n; t++) {
+	    state->matmask->val[t] = dset->Z[v][t];
 	}
     }
 
-    return err;
+    return 0;
 }
 
 void destroy_matrix_mask (void)
@@ -1360,8 +1333,11 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     libset_header(N_("Numerical methods"), prn, opt);
     print_vars_for_category(CAT_NUMERIC, prn, opt);
-    print_initmat(state->initvals, INIT_VALS, prn, opt);
-    print_initmat(state->initcurv, INIT_CURV, prn, opt);
+    if (opt & OPT_D) {
+	/* script version of this? */
+	print_state_matrix(INITVALS, prn, opt);
+	print_state_matrix(INITCURV, prn, opt);
+    }
 
     libset_header(N_("Random number generation"), prn, opt);
     if (opt & OPT_D) {
@@ -1415,24 +1391,15 @@ static int libset_query_settings (setvar *sv, PRN *prn)
 	    pprintf(prn, "%s: positive floating-point value, "
 		    "currently %g\n", sv->name, x);
 	}
-    } else if (sv->key == INITVALS) {
-	if (state->initvals != NULL) {
+    } else if (sv->key == INITVALS || sv->key == INITCURV ||
+	       sv->key == MATMASK) {
+	gretl_matrix *m =
+	    (sv->key == INITVALS)? state->initvals :
+	    (sv->key == INITCURV)? state->initcurv : state->matmask;
+
+	if (m != NULL) {
 	    pprintf(prn, "%s: matrix, currently\n", sv->name);
-	    gretl_matrix_print_to_prn(state->initvals, NULL, prn);
-	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
-	}
-    } else if (sv->key == INITCURV) {
-	if (state->initcurv != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", sv->name);
-	    gretl_matrix_print_to_prn(state->initcurv, NULL, prn);
-	} else {
-	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
-	}
-    } else if (sv->key == MATMASK) {
-	if (state->matmask != NULL) {
-	    pprintf(prn, "%s: matrix, currently\n", sv->name);
-	    gretl_matrix_print_to_prn(state->matmask, NULL, prn);
+	    gretl_matrix_print_to_prn(m, NULL, prn);
 	} else {
 	    pprintf(prn, "%s: matrix, currently null\n", sv->name);
 	}
@@ -1598,12 +1565,10 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_csv_na_write_string(setarg);
 	} else if (sv->key == CSV_READ_NA) {
 	    return set_csv_na_read_string(setarg);
-	} else if (sv->key == INITVALS) {
-	    return set_initmat(setarg, INIT_VALS, prn);
-	} else if (sv->key == INITCURV) {
-	    return set_initmat(setarg, INIT_CURV, prn);
+	} else if (sv->key == INITVALS || sv->key == INITCURV) {
+	    return set_init_matrix(sv->key, setarg, prn);
 	} else if (sv->key == MATMASK) {
-	    return set_matmask(setarg, dset, prn);
+	    return set_matrix_mask(setarg, dset);
 	} else if (sv->key == SV_WORKDIR) {
 	    return set_workdir(setarg);
 	} else if (sv->key == GRAPH_THEME) {
@@ -1813,6 +1778,8 @@ int libset_get_int (SetKey key)
 	return get_blas_mnk_min();
     } else if (key == OMP_N_THREADS) {
 	return get_omp_n_threads();
+    } else if (key == OMP_MNK_MIN) {
+	return get_omp_mnk_min();
     } else if (key == SIMD_K_MAX) {
 	return get_simd_k_max();
     } else if (key == SIMD_MN_MIN) {
@@ -1831,9 +1798,11 @@ int libset_get_int (SetKey key)
 	return globals.plot_collection;
     } else if (key == DATACOLS) {
 	return globals.datacols;
+    } else if (key == GMP_BITS) {
+	return globals.gmp_bits;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
-		"code %d\n", key);
+		"key %d\n", key);
 	return 0;
     }
 }
@@ -1898,6 +1867,10 @@ static int intvar_min_max (SetKey key, int *min, int *max,
 	} else if (key == LOOP_MAXITER) {
 	    *max = INT_MAX - 1;
 	    *var = &state->loop_maxiter;
+	} else if (key == GMP_BITS) {
+	    *min = 256;
+	    *max = 8193;
+	    *var = &globals.gmp_bits;
 	} else {
 	    fprintf(stderr, "libset_set_int: unrecognized key %d\n", key);
 	    return E_UNKVAR;
@@ -1908,7 +1881,7 @@ static int intvar_min_max (SetKey key, int *min, int *max,
 }
 
 /* Called from within libset.c and also from various places in
-   libgretl. It's primarily designed pr "real" integer variables
+   libgretl. It's primarily designed for "real" integer variables
    (not int-coded categories), but for now we make an exception
    for HC_VERSION and PLOT_COLLECTION, to support existing calls
    from lib/src/estimate.c and gui/settings.c.

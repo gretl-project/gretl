@@ -6017,7 +6017,7 @@ static void gui_set_mp_bits (GtkComboBox *cb, gpointer p)
 	b *= 2;
     }
 
-    set_mp_bits(b);
+    libset_set_int(GMP_BITS, b);
 }
 
 static GtkWidget *mpols_bits_selector (void)

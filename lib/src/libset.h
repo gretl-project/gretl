@@ -50,11 +50,10 @@ typedef enum {
     WARNINGS        = 1 << 11, /* print numerical warning messages */
     SKIP_MISSING    = 1 << 12, /* skip NAs when building matrix from series */
     BFGS_RSTEP      = 1 << 13, /* use Richardson in BFGS numerical gradient */
-    DPDSTYLE        = 1 << 14, /* emulate dpd in dynamic panel data models */
-    ROBUST_Z        = 1 << 15, /* use z- not t-score with HCCM/HAC */
-    MWRITE_G        = 1 << 16, /* use %g format with mwrite() */
-    MPI_USE_SMT     = 1 << 17, /* MPI: use hyperthreads by default */
-    STATE_FLAG_MAX  = 1 << 18, /* separator */
+    ROBUST_Z        = 1 << 14, /* use z- not t-score with HCCM/HAC */
+    MWRITE_G        = 1 << 15, /* use %g format with mwrite() */
+    MPI_USE_SMT     = 1 << 16, /* MPI: use hyperthreads by default */
+    STATE_FLAG_MAX  = 1 << 17, /* separator */
     /* state small int (but non-boolean) vars */
     GRETL_OPTIM,
     VECM_NORM,
@@ -105,6 +104,7 @@ typedef enum {
     R_LIB,
     CSV_DIGITS,
     NS_SMALL_INT_MAX, /* separator */
+    GMP_BITS,
     BLAS_MNK_MIN,
     OMP_MNK_MIN,
     OMP_N_THREADS,
@@ -159,7 +159,7 @@ int data_based_hac_bandwidth (void);
 int get_bkbp_k (const DATASET *dset);
 void get_bkbp_periods (const DATASET *dset, int *l, int *u);
 
-void set_mp_bits (int b);
+/* convenience accessor */
 int get_mp_bits (void);
 
 gretl_matrix *get_initvals (void);

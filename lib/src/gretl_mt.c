@@ -155,6 +155,11 @@ int set_omp_mnk_min (int n)
     }
 }
 
+int get_omp_mnk_min (void)
+{
+    return omp_mnk_min;
+}
+
 /* Called from gretl_foreign.c (via libset.c) to set the number
    of OpenMP threads per process in the context of an mpi block.
    We issue a call to omp_set_num_threads(), which will override
