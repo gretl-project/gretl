@@ -32,7 +32,7 @@ static int in_collection (png_plot *plot)
 
 static int do_collect_plots (void)
 {
-    return libset_get_int(PLOT_COLLECTION);
+    return libset_get_int(PLOT_COLLECT);
 }
 
 /* callback from toggling plot collection via "set" */

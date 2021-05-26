@@ -1289,7 +1289,7 @@ static const char **get_radio_setting_strings (void *var, int *n)
 const char *get_default_hc_string (int ci)
 {
     if (ci == GARCH) {
-	int k = libset_get_int(GARCH_ROBUST_VCV);
+	int k = libset_get_int(GARCH_ALT_VCV);
 
 	return (k == ML_BW)? "BW" : "QML";
     } else if (!robust_conf(ci)) {
@@ -1981,7 +1981,7 @@ static void apply_changes (GtkWidget *widget, GtkWidget *parent)
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
-    set_garch_robust_vcv(hc_garch);
+    set_garch_alt_vcv(hc_garch);
 
     selector_register_hc_choice();
 
@@ -2171,7 +2171,7 @@ static int common_read_rc_setup (int updated)
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_panel_hccme(hc_panel);
-    set_garch_robust_vcv(hc_garch);
+    set_garch_alt_vcv(hc_garch);
 
     err = gretl_set_paths(&paths);
     if (err) {
@@ -2232,7 +2232,7 @@ static void find_and_set_rc_var (const char *key, const char *val)
 		    str_to_boolvar(val, rcvar->var);
 		    if (!strcmp(key, "collect_plots")) {
 			/* special: set to "auto" */
-			libset_set_int(PLOT_COLLECTION, 1);
+			libset_set_int(PLOT_COLLECT, 1);
 		    }
 		} else if (rcvar->flags & INTSET) {
 		    str_to_int(val, rcvar->var);

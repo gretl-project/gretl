@@ -58,7 +58,7 @@ typedef enum {
     GRETL_OPTIM,
     VECM_NORM,
     GARCH_VCV,
-    GARCH_ROBUST_VCV,
+    GARCH_ALT_VCV,
     ARMA_VCV,
     WILDBOOT_DIST,
     FDJAC_QUAL,
@@ -99,12 +99,13 @@ typedef enum {
     GRETL_DEBUG,
     GRETL_ASSERT,
     DATACOLS,
-    PLOT_COLLECTION,
+    PLOT_COLLECT,
     R_FUNCTIONS,
     R_LIB,
     CSV_DIGITS,
     NS_SMALL_INT_MAX, /* separator */
     GMP_BITS,
+    NS_MAX, /* separator */
     BLAS_MNK_MIN,
     OMP_MNK_MIN,
     OMP_N_THREADS,
@@ -151,7 +152,7 @@ int is_libset_var (const char *s);
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
 void set_panel_hccme (const char *s);
-void set_garch_robust_vcv (const char *s);
+void set_garch_alt_vcv (const char *s);
 
 int get_hac_lag (int T);
 int data_based_hac_bandwidth (void);

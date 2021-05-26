@@ -69,7 +69,7 @@ struct set_state_ {
     gint8 garch_vcv;            /* GARCH vcv variant */
     gint8 garch_robust_vcv;     /* GARCH vcv variant, robust estimation */
     gint8 arma_vcv;             /* ARMA vcv variant */
-    gint8 wildboot_dist;        /* distribution for wild bootstrap */
+    gint8 wildboot_d;        /* distribution for wild bootstrap */
     gint8 fdjac_qual;           /* quality of "fdjac" function */
     gint8 max_verbose;          /* optimizer verbosity level */
     gint8 hc_version;           /* HCCME version */
@@ -153,7 +153,7 @@ setvar setvars[] = {
     { GRETL_OPTIM,  "optimizer", CAT_NUMERIC },
     { VECM_NORM,    "vecm_norm", CAT_TS },
     { GARCH_VCV,    "garch_vcv", CAT_ROBUST },
-    { GARCH_ROBUST_VCV, "garch_robust_vcv", CAT_ROBUST },
+    { GARCH_ALT_VCV, "garch_robust_vcv", CAT_ROBUST },
     { ARMA_VCV,      "arma_vcv", CAT_ROBUST },
     { WILDBOOT_DIST, "wildboot", CAT_BEHAVE },
     { FDJAC_QUAL,    "fdjac_quality", CAT_NUMERIC },
@@ -194,7 +194,7 @@ setvar setvars[] = {
     { GRETL_DEBUG,   "debug",     CAT_BEHAVE },
     { OMP_MNK_MIN,   "omp_mnk_min", CAT_BEHAVE },
     { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
-    { PLOT_COLLECTION, "plot_collection", CAT_BEHAVE },
+    { PLOT_COLLECT,  "plot_collection", CAT_BEHAVE },
     { R_FUNCTIONS,   "R_functions", CAT_BEHAVE },
     { R_LIB,         "R_lib", CAT_BEHAVE },
     { SIMD_K_MAX,    "simd_k_max", CAT_BEHAVE },
@@ -213,7 +213,7 @@ setvar setvars[] = {
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
 
 #define coded_intvar(k) (k == GARCH_VCV || \
-			 k == GARCH_ROBUST_VCV || \
+			 k == GARCH_ALT_VCV || \
 			 k == ARMA_VCV || \
 			 k == HAC_LAG || \
 			 k == HAC_KERNEL || \
@@ -224,7 +224,7 @@ setvar setvars[] = {
 			 k == WILDBOOT_DIST || \
 			 k == QUANTILE_TYPE || \
 			 k == GRETL_ASSERT || \
-			 k == PLOT_COLLECTION)
+			 k == PLOT_COLLECT)
 
 /* global state */
 set_state *state;
@@ -307,19 +307,19 @@ struct codevar_info {
 /* offsetof(set_state,conv_huge) */
 
 struct codevar_info coded[] = {
-    { GARCH_VCV,        gvc_strs },
-    { GARCH_ROBUST_VCV, gvr_strs },
-    { ARMA_VCV,         avc_strs },
-    { HAC_KERNEL,       hkn_strs },
-    { HC_VERSION,       hcv_strs },
-    { VECM_NORM,        vnm_strs },
-    { GRETL_OPTIM,      opt_strs },
-    { MAX_VERBOSE,      mxv_strs },
-    { WILDBOOT_DIST,    wbt_strs },
-    { CSV_DELIM,        csv_strs },
-    { QUANTILE_TYPE,    qnt_strs },
-    { GRETL_ASSERT,     ast_strs },
-    { PLOT_COLLECTION,  plc_strs }
+    { GARCH_VCV,      gvc_strs },
+    { GARCH_ALT_VCV,  gvr_strs },
+    { ARMA_VCV,       avc_strs },
+    { HAC_KERNEL,     hkn_strs },
+    { HC_VERSION,     hcv_strs },
+    { VECM_NORM,      vnm_strs },
+    { GRETL_OPTIM,    opt_strs },
+    { MAX_VERBOSE,    mxv_strs },
+    { WILDBOOT_DIST,  wbt_strs },
+    { CSV_DELIM,      csv_strs },
+    { QUANTILE_TYPE,  qnt_strs },
+    { GRETL_ASSERT,   ast_strs },
+    { PLOT_COLLECT,   plc_strs }
 };
 
 static const char **libset_option_strings (SetKey key)
@@ -377,7 +377,7 @@ static const char *libset_option_string (SetKey key)
 {
     if (key == HAC_LAG) {
 	return hac_lag_string();          /* special */
-    } else if (key == GARCH_ROBUST_VCV) {
+    } else if (key == GARCH_ALT_VCV) {
 	return garch_robust_vcv_string(); /* special */
     } else if (key == ARMA_VCV) {
 	return arma_vcv_string();         /* special */
@@ -394,12 +394,12 @@ static const char *libset_option_string (SetKey key)
     } else if (key == MAX_VERBOSE) {
 	return mxv_strs[state->max_verbose];
     } else if (key == WILDBOOT_DIST) {
-	return wbt_strs[state->wildboot_dist];
+	return wbt_strs[state->wildboot_d];
     } else if (key == QUANTILE_TYPE) {
 	return qnt_strs[state->quantile_type];
     } else if (key == GRETL_ASSERT) {
 	return ast_strs[globals.gretl_assert];
-    } else if (key == PLOT_COLLECTION) {
+    } else if (key == PLOT_COLLECT) {
 	return plc_strs[globals.plot_collection];
     } else {
 	return "?";
@@ -472,7 +472,7 @@ static set_state default_state = {
     ML_UNSET,       /* .garch_vcv */
     ML_UNSET,       /* .garch_robust_vcv */
     ML_HESSIAN,     /* .arma_vcv */
-    0,              /* .wildboot_dist */
+    0,              /* .wildboot_d */
     0,              /* .fdjac_qual */
     0,              /* .max_verbose */
     0,              /* .hc_version */
@@ -966,7 +966,7 @@ static int parse_libset_int_code (SetKey key, const char *val)
 	    err = 0;
 	    if (key == GARCH_VCV) {
 		state->garch_vcv = ival;
-	    } else if (key == GARCH_ROBUST_VCV) {
+	    } else if (key == GARCH_ALT_VCV) {
 		state->garch_robust_vcv = (ival == 1)? ML_BW : ML_QML;
 	    } else if (key == ARMA_VCV) {
 		state->arma_vcv = (ival == 1)? ML_OP : ML_HESSIAN;
@@ -981,12 +981,12 @@ static int parse_libset_int_code (SetKey key, const char *val)
 	    } else if (key == MAX_VERBOSE) {
 		state->max_verbose = ival;
 	    } else if (key == WILDBOOT_DIST) {
-		state->wildboot_dist = ival;
+		state->wildboot_d = ival;
 	    } else if (key == QUANTILE_TYPE) {
 		state->quantile_type = ival;
 	    } else if (key == GRETL_ASSERT) {
 		globals.gretl_assert = ival;
-	    } else if (key == PLOT_COLLECTION) {
+	    } else if (key == PLOT_COLLECT) {
 		globals.plot_collection = ival;
 	    }
 	} else if (key == MAX_VERBOSE) {
@@ -1050,11 +1050,11 @@ void set_panel_hccme (const char *s)
     }
 }
 
-void set_garch_robust_vcv (const char *s)
+void set_garch_alt_vcv (const char *s)
 {
     if (check_for_state()) return;
 
-    parse_libset_int_code(GARCH_ROBUST_VCV, s);
+    parse_libset_int_code(GARCH_ALT_VCV, s);
 }
 
 /* end public functions called from gui/settings.c */
@@ -1754,7 +1754,7 @@ int libset_get_int (SetKey key)
 	return state->bootrep;
     } else if (key == GARCH_VCV) {
 	return state->garch_vcv;
-    } else if (key == GARCH_ROBUST_VCV) {
+    } else if (key == GARCH_ALT_VCV) {
 	return state->garch_robust_vcv;
     } else if (key == ARMA_VCV) {
 	return state->arma_vcv;
@@ -1791,10 +1791,10 @@ int libset_get_int (SetKey key)
     } else if (key == FDJAC_QUAL) {
 	return state->fdjac_qual;
     } else if (key == WILDBOOT_DIST) {
-	return state->wildboot_dist;
+	return state->wildboot_d;
     } else if (key == QUANTILE_TYPE) {
 	return state->quantile_type;
-    } else if (key == PLOT_COLLECTION) {
+    } else if (key == PLOT_COLLECT) {
 	return globals.plot_collection;
     } else if (key == DATACOLS) {
 	return globals.datacols;
@@ -1830,7 +1830,7 @@ static int intvar_min_max (SetKey key, int *min, int *max,
 	    *min = 1;
 	    *max = 15;
 	    *var8 = &globals.datacols;
-	} else if (key == PLOT_COLLECTION) {
+	} else if (key == PLOT_COLLECT) {
 	    *max = 2;
 	    *var8 = &globals.plot_collection;
 	} else if (key == CSV_DIGITS) {
@@ -1883,7 +1883,7 @@ static int intvar_min_max (SetKey key, int *min, int *max,
 /* Called from within libset.c and also from various places in
    libgretl. It's primarily designed for "real" integer variables
    (not int-coded categories), but for now we make an exception
-   for HC_VERSION and PLOT_COLLECTION, to support existing calls
+   for HC_VERSION and PLOT_COLLECT, to support existing calls
    from lib/src/estimate.c and gui/settings.c.
 */
 

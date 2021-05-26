@@ -3392,7 +3392,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
         } else if (!strcmp(key, "HC_panel")) {
             set_panel_hccme(val);
         } else if (!strcmp(key, "HC_garch")) {
-            set_garch_robust_vcv(val);
+            set_garch_alt_vcv(val);
         } else if (!strcmp(key, "graph_theme")) {
             *gptheme = g_strdup(val);
         } else if (!strcmp(key, "build_date")) {
