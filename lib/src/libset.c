@@ -39,6 +39,7 @@
 #include <glib.h>
 
 #define PDEBUG 0
+#define SVDEBUG 0
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -47,13 +48,19 @@ enum {
 };
 
 enum {
-    CAT_BEHAVE,
+    CAT_BEHAVE = 1,
     CAT_NUMERIC,
     CAT_RNG,
     CAT_ROBUST,
     CAT_TS,
     CAT_SPECIAL
 };
+
+typedef enum {
+    SV_ALL,
+    SV_INT,
+    SV_DOUBLE
+} SVType;
 
 /* for values that really want a non-negative integer */
 #define UNSET_INT -9
@@ -67,15 +74,15 @@ struct set_state_ {
     gint8 optim;                /* code for preferred optimizer */
     gint8 vecm_norm;            /* VECM beta normalization */
     gint8 garch_vcv;            /* GARCH vcv variant */
-    gint8 garch_robust_vcv;     /* GARCH vcv variant, robust estimation */
+    gint8 garch_alt_vcv;        /* GARCH vcv variant, robust estimation */
     gint8 arma_vcv;             /* ARMA vcv variant */
-    gint8 wildboot_d;        /* distribution for wild bootstrap */
+    gint8 wildboot_d;           /* distribution for wild bootstrap */
     gint8 fdjac_qual;           /* quality of "fdjac" function */
     gint8 max_verbose;          /* optimizer verbosity level */
     gint8 hc_version;           /* HCCME version */
     gint8 hac_kernel;           /* HAC kernel type */
-    gint8 auto_hac_lag;         /* HAC auto lag-length formula */
-    gint8 user_hac_lag;         /* user-set HAC lag length */
+    gint8 auto_hac_lag;         /* HAC automatic lag-length formula */
+    gint8 user_hac_lag;         /* fixed user-set HAC lag length */
     gint8 lbfgs_mem;            /* memory span for L-BFGS-B */
     gint8 quantile_type;        /* Formula for computing quantiles */
     /* potentially larger integers */
@@ -107,11 +114,13 @@ struct set_state_ {
     gretl_matrix *matmask;      /* mask for series -> matrix conversion */
 };
 
-static struct global_vars {
+typedef struct global_vars_ global_vars;
+
+static struct global_vars_ {
     gint8 gretl_debug;
     gint8 gretl_assert;
     gint8 datacols;
-    gint8 plot_collection;
+    gint8 plot_collect;
     gint8 R_functions;
     gint8 R_lib;
     gint8 csv_digits;
@@ -130,79 +139,98 @@ struct setvar_ {
     SetKey key;
     const char *name;
     gint8 category;
+    size_t offset;
 };
 
 setvar setvars[] = {
+    /* booleans (bitflags) */
     { USE_CWD,      "use_cwd",   CAT_BEHAVE },
     { ECHO_ON,      "echo",      CAT_BEHAVE },
     { MSGS_ON,      "messages",  CAT_BEHAVE },
     { FORCE_DECPOINT, "force_decpoint", CAT_BEHAVE },
     { USE_PCSE,     "pcse",      CAT_ROBUST },
     { USE_SVD,      "svd",       CAT_NUMERIC },
-    { USE_QR,       "force_qr", CAT_NUMERIC },
+    { USE_QR,       "force_qr",  CAT_NUMERIC },
     { PREWHITEN,    "hac_prewhiten", CAT_ROBUST },
     { FORCE_HC,     "force_hc",      CAT_ROBUST },
-    { USE_LBFGS,    "lbfgs",     CAT_NUMERIC },
-    { SHELL_OK,     "shell_ok",  CAT_SPECIAL },
-    { WARNINGS,     "warnings",  CAT_BEHAVE },
+    { USE_LBFGS,    "lbfgs",        CAT_NUMERIC },
+    { SHELL_OK,     "shell_ok",     CAT_SPECIAL },
+    { WARNINGS,     "warnings",     CAT_BEHAVE },
     { SKIP_MISSING, "skip_missing", CAT_BEHAVE },
     { BFGS_RSTEP,   "bfgs_richardson", CAT_NUMERIC },
     { ROBUST_Z,     "robust_z", CAT_ROBUST },
     { MWRITE_G,     "mwrite_g", CAT_BEHAVE },
     { MPI_USE_SMT,  "mpi_use_smt", CAT_BEHAVE },
-    { GRETL_OPTIM,  "optimizer", CAT_NUMERIC },
-    { VECM_NORM,    "vecm_norm", CAT_TS },
-    { GARCH_VCV,    "garch_vcv", CAT_ROBUST },
-    { GARCH_ALT_VCV, "garch_robust_vcv", CAT_ROBUST },
-    { ARMA_VCV,      "arma_vcv", CAT_ROBUST },
-    { WILDBOOT_DIST, "wildboot", CAT_BEHAVE },
-    { FDJAC_QUAL,    "fdjac_quality", CAT_NUMERIC },
-    { MAX_VERBOSE,   "max_verbose", CAT_BEHAVE },
-    { HC_VERSION,    "hc_version", CAT_ROBUST },
-    { HAC_KERNEL,    "hac_kernel", CAT_ROBUST },
-    { HAC_LAG,       "hac_lag", CAT_ROBUST },
-    { HORIZON,       "horizon", CAT_TS },
-    { BOOTREP,       "bootrep", CAT_BEHAVE },
-    { LOOP_MAXITER,  "loop_maxiter",  CAT_BEHAVE },
-    { BFGS_MAXITER,  "bfgs_maxiter",  CAT_NUMERIC },
-    { BFGS_VERBSKIP, "bfgs_verbskip", CAT_BEHAVE },
-    { BOOT_ITERS,    "boot_iters",    CAT_TS },
-    { QUANTILE_TYPE, "quantile_type", CAT_BEHAVE },
-    { BHHH_MAXITER,  "bhhh_maxiter",  CAT_NUMERIC },
-    { LBFGS_MEM,     "lbfgs_mem",     CAT_NUMERIC },
-    { RQ_MAXITER,    "rq_maxiter",    CAT_NUMERIC },
-    { GMM_MAXITER,   "gmm_maxiter",   CAT_NUMERIC },
+    { STATE_FLAG_MAX, NULL },
+    /* small integers */
+    { GRETL_OPTIM,  "optimizer", CAT_NUMERIC, offsetof(set_state,optim) },
+    { VECM_NORM,    "vecm_norm", CAT_TS,      offsetof(set_state,vecm_norm) },
+    { GARCH_VCV,    "garch_vcv", CAT_ROBUST,  offsetof(set_state,garch_vcv) },
+    { GARCH_ALT_VCV, "garch_alt_vcv", CAT_ROBUST, offsetof(set_state,garch_alt_vcv) },
+    { ARMA_VCV,      "arma_vcv", CAT_ROBUST, offsetof(set_state,arma_vcv) },
+    { WILDBOOT_DIST, "wildboot", CAT_BEHAVE, offsetof(set_state,wildboot_d) },
+    { FDJAC_QUAL,    "fdjac_quality", CAT_NUMERIC, offsetof(set_state,fdjac_qual) },
+    { MAX_VERBOSE,   "max_verbose", CAT_BEHAVE, offsetof(set_state,max_verbose) },
+    { HC_VERSION,    "hc_version",  CAT_ROBUST, offsetof(set_state,hc_version) },
+    { HAC_KERNEL,    "hac_kernel",  CAT_ROBUST, offsetof(set_state,hac_kernel) },
+    { HAC_LAG,       "hac_lag",     CAT_ROBUST },
+    { USER_HAC_LAG,  NULL },
+    { LBFGS_MEM,     "lbfgs_mem",     CAT_NUMERIC, offsetof(set_state,lbfgs_mem) },
+    { QUANTILE_TYPE, "quantile_type", CAT_BEHAVE, offsetof(set_state,quantile_type) },
+    { STATE_SMALL_INT_MAX, NULL },
+    /* larger integers */
+    { HORIZON,       "horizon", CAT_TS,     offsetof(set_state,horizon) },
+    { BOOTREP,       "bootrep", CAT_BEHAVE, offsetof(set_state,bootrep) },
+    { LOOP_MAXITER,  "loop_maxiter",  CAT_BEHAVE,  offsetof(set_state,loop_maxiter) },
+    { BFGS_MAXITER,  "bfgs_maxiter",  CAT_NUMERIC, offsetof(set_state,bfgs_maxiter) },
+    { BFGS_VERBSKIP, "bfgs_verbskip", CAT_BEHAVE,  offsetof(set_state,bfgs_verbskip) },
+    { BOOT_ITERS,    "boot_iters",    CAT_TS,      offsetof(set_state,boot_iters) },
+    { BHHH_MAXITER,  "bhhh_maxiter",  CAT_NUMERIC, offsetof(set_state,bhhh_maxiter) },
+    { RQ_MAXITER,    "rq_maxiter",    CAT_NUMERIC, offsetof(set_state,rq_maxiter) },
+    { GMM_MAXITER,   "gmm_maxiter",   CAT_NUMERIC, offsetof(set_state,gmm_maxiter) },
+    { STATE_INT_MAX, NULL },
+    /* unsigned int */
     { SEED,          "seed", CAT_RNG },
-    { CONV_HUGE,     "huge",         CAT_BEHAVE },
-    { NLS_TOLER,     "nls_toler",    CAT_NUMERIC },
-    { BFGS_TOLER,    "bfgs_toler",   CAT_NUMERIC },
-    { BFGS_MAXGRAD,  "bfgs_maxgrad", CAT_NUMERIC },
-    { BHHH_TOLER,    "bhhh_toler",   CAT_NUMERIC },
-    { QS_BANDWIDTH,  "qs_bandwidth", CAT_ROBUST },
-    { NADARWAT_TRIM, "nadarwat_trim", CAT_NUMERIC },
+    /* doubles */
+    { CONV_HUGE,     "huge",         CAT_BEHAVE,  offsetof(set_state,conv_huge) },
+    { NLS_TOLER,     "nls_toler",    CAT_NUMERIC, offsetof(set_state,nls_toler) },
+    { BFGS_TOLER,    "bfgs_toler",   CAT_NUMERIC, offsetof(set_state,bfgs_toler) },
+    { BFGS_MAXGRAD,  "bfgs_maxgrad", CAT_NUMERIC, offsetof(set_state,bfgs_maxgrad) },
+    { BHHH_TOLER,    "bhhh_toler",   CAT_NUMERIC, offsetof(set_state,bhhh_toler) },
+    { QS_BANDWIDTH,  "qs_bandwidth", CAT_ROBUST,  offsetof(set_state,qs_bandwidth) },
+    { NADARWAT_TRIM, "nadarwat_trim", CAT_NUMERIC, offsetof(set_state,nadarwat_trim) },
+    { STATE_FLOAT_MAX, NULL },
+    /* strings */
     { CSV_WRITE_NA,  "csv_write_na", CAT_SPECIAL },
     { CSV_READ_NA,   "csv_read_na",  CAT_SPECIAL },
+    /* matrices */
     { INITVALS,      "initvals",    CAT_NUMERIC },
     { INITCURV,      "initcurv",    CAT_NUMERIC },
     { MATMASK,       "matrix_mask", CAT_BEHAVE },
-    { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE },
-    { GMP_BITS,      "gmp_bits",    CAT_BEHAVE },
+    { STATE_VARS_MAX, NULL },
+    /* global ints */
+    { GRETL_DEBUG,   "debug",     CAT_BEHAVE, offsetof(global_vars,gretl_debug) },
+    { GRETL_ASSERT,  "assert",    CAT_BEHAVE, offsetof(global_vars,gretl_assert) },
+    { DATACOLS,      "datacols",  CAT_BEHAVE, offsetof(global_vars,datacols) },
+    { PLOT_COLLECT,  "plot_collection", CAT_BEHAVE, offsetof(global_vars,plot_collect) },
+    { R_FUNCTIONS,   "R_functions", CAT_BEHAVE, offsetof(global_vars,R_functions) },
+    { R_LIB,         "R_lib",       CAT_BEHAVE, offsetof(global_vars,R_lib) },
+    { CSV_DIGITS,    "csv_digits",  CAT_BEHAVE, offsetof(global_vars,csv_digits) },
+    { NS_SMALL_INT_MAX, NULL },
+    { GMP_BITS,      "gmp_bits",    CAT_BEHAVE, offsetof(global_vars,gmp_bits) },
+    { NS_MAX, NULL },
+    /* delegated ints */
     { BLAS_MNK_MIN,  "blas_mnk_min", CAT_BEHAVE },
-    { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
-    { DATACOLS,      "datacols",  CAT_BEHAVE },
-    { GRETL_ASSERT,  "assert",    CAT_BEHAVE },
-    { GRETL_DEBUG,   "debug",     CAT_BEHAVE },
-    { OMP_MNK_MIN,   "omp_mnk_min", CAT_BEHAVE },
+    { OMP_MNK_MIN,   "omp_mnk_min",  CAT_BEHAVE },
     { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
-    { PLOT_COLLECT,  "plot_collection", CAT_BEHAVE },
-    { R_FUNCTIONS,   "R_functions", CAT_BEHAVE },
-    { R_LIB,         "R_lib", CAT_BEHAVE },
-    { SIMD_K_MAX,    "simd_k_max", CAT_BEHAVE },
+    { SIMD_K_MAX,    "simd_k_max",  CAT_BEHAVE },
     { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
     { USE_DCMT,      "use_dcmt", CAT_RNG },
+    /* specials */
+    { CSV_DELIM,     "csv_delim", CAT_SPECIAL },
     { STOPWATCH,     "stopwatch", CAT_SPECIAL },
-    { VERBOSE,       "verbose", CAT_SPECIAL },
-    { SV_WORKDIR,    "workdir", CAT_SPECIAL },
+    { VERBOSE,       "verbose",   CAT_SPECIAL },
+    { SV_WORKDIR,    "workdir",   CAT_SPECIAL },
     { GRAPH_THEME,   "graph_theme", CAT_SPECIAL },
     { DISP_DIGITS,   "display_digits", CAT_SPECIAL }
 };
@@ -211,6 +239,9 @@ setvar setvars[] = {
 #define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
+
+#define libset_small_int(k) (k < STATE_SMALL_INT_MAX || \
+			     (k > STATE_VARS_MAX && k < NS_SMALL_INT_MAX))
 
 #define coded_intvar(k) (k == GARCH_VCV || \
 			 k == GARCH_ALT_VCV || \
@@ -253,7 +284,9 @@ static GHashTable *libset_hash_init (void)
     int i;
 
     for (i=0; i<G_N_ELEMENTS(setvars); i++) {
-	g_hash_table_insert(ht, (gpointer) setvars[i].name, &setvars[i]);
+	if (setvars[i].name != NULL) {
+	    g_hash_table_insert(ht, (gpointer) setvars[i].name, &setvars[i]);
+	}
     }
 
     return ht;
@@ -283,6 +316,43 @@ static setvar *get_setvar_by_name (const char *name)
     return ret;
 }
 
+static void *setvar_get_target (setvar *sv)
+{
+    if (sv->offset == 0 || sv->key > GMP_BITS) {
+	/* FIXME criterion? */
+	return NULL;
+    } else {
+	void *p = (sv->key < STATE_VARS_MAX)? (void *) state : (void *) &globals;
+#if SVDEBUG
+	fprintf(stderr, "setvar_get_target: '%s': %s=%p, offset=%lu, ret=%p\n",
+		sv->name, sv->key < STATE_VARS_MAX ? "state" : "globals",
+		(void *) p, sv->offset, p + sv->offset);
+#endif
+	return p + sv->offset;
+    }
+}
+
+#define INTS_OFFSET (1 + log2(STATE_FLAG_MAX))
+
+static void *setkey_get_target (SetKey key, SVType t)
+{
+    int i = INTS_OFFSET + key - GRETL_OPTIM;
+    setvar *sv = &setvars[i];
+
+    if (sv->key != key) {
+	fprintf(stderr, "*** internal error, looking for %s, found %s ***\n",
+		setkey_get_name(key), sv->name);
+	return NULL;
+    } else if ((t == SV_INT && !libset_int(key)) ||
+	       (t == SV_DOUBLE && !libset_double(key))) {
+	fprintf(stderr, "*** type mismatch in setkey_get_target for %s ***\n",
+		sv->name);
+	return NULL;
+    } else {
+	return setvar_get_target(sv);
+    }
+}
+
 /* value strings for integer-coded variables */
 
 static const char *gvc_strs[] = {"unset", "hessian", "im", "op", "qml", "bw", NULL};
@@ -298,6 +368,7 @@ static const char *qnt_strs[] = {"Q6", "Q7", "Q8", NULL};
 static const char *ast_strs[] = {"off", "warn", "stop", NULL};
 static const char *plc_strs[] = {"off", "auto", "on", NULL};
 static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", NULL};
+static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
 
 struct codevar_info {
     SetKey key;
@@ -307,19 +378,20 @@ struct codevar_info {
 /* offsetof(set_state,conv_huge) */
 
 struct codevar_info coded[] = {
-    { GARCH_VCV,      gvc_strs },
-    { GARCH_ALT_VCV,  gvr_strs },
-    { ARMA_VCV,       avc_strs },
-    { HAC_KERNEL,     hkn_strs },
-    { HC_VERSION,     hcv_strs },
-    { VECM_NORM,      vnm_strs },
-    { GRETL_OPTIM,    opt_strs },
-    { MAX_VERBOSE,    mxv_strs },
-    { WILDBOOT_DIST,  wbt_strs },
-    { CSV_DELIM,      csv_strs },
-    { QUANTILE_TYPE,  qnt_strs },
-    { GRETL_ASSERT,   ast_strs },
-    { PLOT_COLLECT,   plc_strs }
+    { GARCH_VCV,     gvc_strs },
+    { GARCH_ALT_VCV, gvr_strs },
+    { ARMA_VCV,      avc_strs },
+    { HAC_KERNEL,    hkn_strs },
+    { HC_VERSION,    hcv_strs },
+    { VECM_NORM,     vnm_strs },
+    { GRETL_OPTIM,   opt_strs },
+    { MAX_VERBOSE,   mxv_strs },
+    { WILDBOOT_DIST, wbt_strs },
+    { CSV_DELIM,     csv_strs },
+    { QUANTILE_TYPE, qnt_strs },
+    { GRETL_ASSERT,  ast_strs },
+    { PLOT_COLLECT,  plc_strs },
+    { HAC_LAG,       ahl_strs }
 };
 
 static const char **libset_option_strings (SetKey key)
@@ -344,18 +416,15 @@ static void coded_var_show_opts (SetKey key, PRN *prn)
 	    pprintf(prn, " %s", *S);
 	    S++;
 	}
-	if (key == CSV_DELIM) {
-	    pputs(prn, " or quoted punctuation character");
-	}
 	pputc(prn, '\n');
     }
 }
 
-static const char *garch_robust_vcv_string (void)
+static const char *garch_alt_vcv_string (void)
 {
-    if (state->garch_robust_vcv == ML_QML) {
+    if (state->garch_alt_vcv == ML_QML) {
 	return gvr_strs[0];
-    } else if (state->garch_robust_vcv == ML_BW) {
+    } else if (state->garch_alt_vcv == ML_BW) {
 	return gvr_strs[1];
     } else {
 	return "unset";
@@ -378,31 +447,14 @@ static const char *libset_option_string (SetKey key)
     if (key == HAC_LAG) {
 	return hac_lag_string();          /* special */
     } else if (key == GARCH_ALT_VCV) {
-	return garch_robust_vcv_string(); /* special */
+	return garch_alt_vcv_string();    /* special */
     } else if (key == ARMA_VCV) {
 	return arma_vcv_string();         /* special */
-    } else if (key == GARCH_VCV) {
-	return gvc_strs[state->garch_vcv];
-    } else if (key == HAC_KERNEL) {
-	return hkn_strs[state->hac_kernel];
-    } else if (key == HC_VERSION) {
-	return hcv_strs[state->hc_version];
-    } else if (key == VECM_NORM) {
-	return vnm_strs[state->vecm_norm];
-    } else if (key == GRETL_OPTIM) {
-	return opt_strs[state->optim];
-    } else if (key == MAX_VERBOSE) {
-	return mxv_strs[state->max_verbose];
-    } else if (key == WILDBOOT_DIST) {
-	return wbt_strs[state->wildboot_d];
-    } else if (key == QUANTILE_TYPE) {
-	return qnt_strs[state->quantile_type];
-    } else if (key == GRETL_ASSERT) {
-	return ast_strs[globals.gretl_assert];
-    } else if (key == PLOT_COLLECT) {
-	return plc_strs[globals.plot_collection];
     } else {
-	return "?";
+	const char **strs = libset_option_strings(key);
+	void *valp = setkey_get_target(key, SV_INT);
+
+	return strs[*(gint8 *) valp];
     }
 }
 
@@ -470,9 +522,9 @@ static set_state default_state = {
     OPTIM_AUTO,     /* .optim */
     NORM_PHILLIPS,  /* .vecm_norm */
     ML_UNSET,       /* .garch_vcv */
-    ML_UNSET,       /* .garch_robust_vcv */
+    ML_UNSET,       /* .garch_alt_vcv */
     ML_HESSIAN,     /* .arma_vcv */
-    0,              /* .wildboot_d */
+    0,              /* .wildboot_dist */
     0,              /* .fdjac_qual */
     0,              /* .max_verbose */
     0,              /* .hc_version */
@@ -654,7 +706,7 @@ int n_initcurv (void)
 {
     check_for_state();
     if (state->initcurv != NULL) {
-	return state->initcurv->rows;
+	return gretl_vector_get_length(state->initcurv);
     } else {
 	return 0;
     }
@@ -729,10 +781,8 @@ static const char *hac_lag_string (void)
 
 	sprintf(lagstr, "%d", state->user_hac_lag);
 	return lagstr;
-    } else if (state->auto_hac_lag == AUTO_LAG_STOCK_WATSON) {
-	return "nw1";
     } else {
-	return "nw2";
+	return ahl_strs[state->auto_hac_lag];
     }
 }
 
@@ -740,28 +790,19 @@ static const char *hac_lag_string (void)
 
 static int parse_hac_lag_variant (const char *s)
 {
-    int err = E_DATA;
+    int i, err = 0;
 
-    if (!strcmp(s, "nw1")) {
-	state->auto_hac_lag = AUTO_LAG_STOCK_WATSON;
-	state->user_hac_lag = UNSET_INT;
-	err = 0;
-    } else if (!strcmp(s, "nw2")) {
-	state->auto_hac_lag = AUTO_LAG_WOOLDRIDGE;
-	state->user_hac_lag = UNSET_INT;
-	err = 0;
-    } else if (!strcmp(s, "nw3") ||
-	       !strcmp(s, "auto")) {
-	state->auto_hac_lag = AUTO_LAG_NEWEYWEST;
-	state->user_hac_lag = UNSET_INT;
-	err = 0;
-    } else {
-	int k = 0;
-
-	err = libset_get_scalar(HAC_LAG, s, &k, NULL);
-	if (!err) {
-	    state->user_hac_lag = k;
+    for (i=0; ahl_strs[i] != NULL; i++) {
+	if (!strcmp(s, ahl_strs[i])) {
+	    state->auto_hac_lag = i;
+	    state->user_hac_lag = UNSET_INT;
+	    return 0;
 	}
+    }
+
+    err = libset_get_scalar(HAC_LAG, s, &i, NULL);
+    if (!err) {
+	state->user_hac_lag = i;
     }
 
     return err;
@@ -963,32 +1004,15 @@ static int parse_libset_int_code (SetKey key, const char *val)
 	    }
 	}
 	if (ival >= 0) {
+	    void *valp = setkey_get_target(key, SV_INT);
+
 	    err = 0;
-	    if (key == GARCH_VCV) {
-		state->garch_vcv = ival;
-	    } else if (key == GARCH_ALT_VCV) {
-		state->garch_robust_vcv = (ival == 1)? ML_BW : ML_QML;
+	    if (key == GARCH_ALT_VCV) {
+		ival = (ival == 1)? ML_BW : ML_QML;
 	    } else if (key == ARMA_VCV) {
-		state->arma_vcv = (ival == 1)? ML_OP : ML_HESSIAN;
-	    } else if (key == HC_VERSION) {
-		state->hc_version = ival;
-	    } else if (key == HAC_KERNEL) {
-		state->hac_kernel = ival;
-	    } else if (key == VECM_NORM) {
-		state->vecm_norm = ival;
-	    } else if (key == GRETL_OPTIM) {
-		state->optim = ival;
-	    } else if (key == MAX_VERBOSE) {
-		state->max_verbose = ival;
-	    } else if (key == WILDBOOT_DIST) {
-		state->wildboot_d = ival;
-	    } else if (key == QUANTILE_TYPE) {
-		state->quantile_type = ival;
-	    } else if (key == GRETL_ASSERT) {
-		globals.gretl_assert = ival;
-	    } else if (key == PLOT_COLLECT) {
-		globals.plot_collection = ival;
+		ival = (ival == 1)? ML_OP : ML_HESSIAN;
 	    }
+	    *(gint8 *) valp = ival;
 	} else if (key == MAX_VERBOSE) {
 	    if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0) {
 		state->max_verbose = atoi(val);
@@ -1159,27 +1183,17 @@ static char delim_from_arg (const char *s)
 	}
     }
 
-    if (strlen(s) == 1 && ispunct(*s)) {
-	return s[0];
-    }
-
     return 0;
 }
 
 static const char *arg_from_delim (char c)
 {
-    static char d[2];
     int i;
 
     for (i=0; csv_delims[i] != '\0'; i++) {
 	if (c == csv_delims[i]) {
 	    return csv_strs[i];
 	}
-    }
-
-    if (ispunct(c)) {
-	sprintf(d, "%c", c);
-	return d;
     }
 
     return "unset";
@@ -1653,26 +1667,20 @@ int execute_set (const char *setobj, const char *setarg,
 
 double libset_get_double (SetKey key)
 {
+    void *valp;
+
     if (check_for_state()) {
 	return NADBL;
     }
 
-    if (key == QS_BANDWIDTH) {
-	return state->qs_bandwidth;
-    } else if (key == NLS_TOLER) {
-	return na(state->nls_toler) ? get_default_nls_toler() :
-	    state->nls_toler;
-    } else if (key == BHHH_TOLER) {
-	return state->bhhh_toler;
-    } else if (key == BFGS_TOLER) {
-	return na(state->bfgs_toler) ? get_default_nls_toler() :
-	    state->bfgs_toler;
-    } else if (key == BFGS_MAXGRAD) {
-	return state->bfgs_maxgrad;
-    } else if (key == NADARWAT_TRIM) {
-	return state->nadarwat_trim;
-    } else if (key == CONV_HUGE) {
-	return state->conv_huge;
+    valp = setkey_get_target(key, SV_DOUBLE);
+    if (valp != NULL) {
+	double x = *(double *) valp;
+
+	if (na(x) && (key == NLS_TOLER || key == BFGS_TOLER)) {
+	    x = get_default_nls_toler();
+	}
+	return x;
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
 		"key %d\n", key);
@@ -1682,14 +1690,10 @@ double libset_get_double (SetKey key)
 
 double libset_get_user_tolerance (SetKey key)
 {
-    if (key == NLS_TOLER) {
-	return state->nls_toler;
-    } else if (key == BHHH_TOLER) {
-	return state->bhhh_toler;
-    } else if (key == BFGS_TOLER) {
-	return state->bfgs_toler;
-    } else if (key == BFGS_MAXGRAD) {
-	return state->bfgs_maxgrad;
+    if (key >= NLS_TOLER && key <= BHHH_TOLER) {
+	void *valp = setkey_get_target(key, SV_ALL);
+
+	return *(double *) valp;
     } else {
 	return NADBL;
     }
@@ -1697,6 +1701,7 @@ double libset_get_user_tolerance (SetKey key)
 
 int libset_set_double (SetKey key, double val)
 {
+    void *valp;
     int err = 0;
 
     if (check_for_state()) {
@@ -1708,20 +1713,9 @@ int libset_set_double (SetKey key, double val)
 	return E_DATA;
     }
 
-    if (key == QS_BANDWIDTH) {
-	state->qs_bandwidth = val;
-    } else if (key == NLS_TOLER) {
-	state->nls_toler = val;
-    } else if (key == BHHH_TOLER) {
-	state->bhhh_toler = val;
-    } else if (key == BFGS_TOLER) {
-	state->bfgs_toler = val;
-    } else if (key == BFGS_MAXGRAD) {
-	state->bfgs_maxgrad = val;
-    } else if (key == NADARWAT_TRIM) {
-	state->nadarwat_trim = val;
-    } else if (key == CONV_HUGE) {
-	state->conv_huge = val;
+    valp = setkey_get_target(key, SV_DOUBLE);
+    if (valp != NULL) {
+	*(double *) valp = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized key %d\n", key);
 	err = E_UNKVAR;
@@ -1732,48 +1726,23 @@ int libset_set_double (SetKey key, double val)
 
 int libset_get_int (SetKey key)
 {
+    void *valp;
+
     if (check_for_state()) {
 	return 0;
     }
 
-    if (key == BFGS_MAXITER) {
-	return state->bfgs_maxiter;
-    } else if (key == MAX_VERBOSE) {
-	return state->max_verbose;
-    } else if (key == BOOT_ITERS) {
-	return state->boot_iters;
-    } else if (key == BHHH_MAXITER) {
-	return state->bhhh_maxiter;
-    } else if (key == RQ_MAXITER) {
-	return state->rq_maxiter;
-    } else if (key == GMM_MAXITER) {
-	return state->gmm_maxiter;
-    } else if (key == LBFGS_MEM) {
-	return state->lbfgs_mem;
-    } else if (key == BOOTREP) {
-	return state->bootrep;
-    } else if (key == GARCH_VCV) {
-	return state->garch_vcv;
-    } else if (key == GARCH_ALT_VCV) {
-	return state->garch_robust_vcv;
-    } else if (key == ARMA_VCV) {
-	return state->arma_vcv;
-    } else if (key == HAC_KERNEL) {
-	return state->hac_kernel;
-    } else if (key == HC_VERSION) {
-	return state->hc_version;
-    } else if (key == HORIZON) {
-	return state->horizon;
-    } else if (key == LOOP_MAXITER) {
-	return state->loop_maxiter;
-    } else if (key == VECM_NORM) {
-	return state->vecm_norm;
-    } else if (key == GRETL_OPTIM) {
-	return state->optim;
-    } else if (key == GRETL_DEBUG) {
-	return globals.gretl_debug;
-    } else if (key == GRETL_ASSERT) {
-	return globals.gretl_assert;
+    valp = setkey_get_target(key, SV_INT);
+
+    if (valp != NULL) {
+#if SVDEBUG
+	fprintf(stderr, "libset_get_int: valp %p\n", valp);
+#endif
+	if (libset_small_int(key)) {
+	    return *(gint8 *) valp;
+	} else {
+	    return *(int *) valp;
+	}
     } else if (key == BLAS_MNK_MIN) {
 	return get_blas_mnk_min();
     } else if (key == OMP_N_THREADS) {
@@ -1784,22 +1753,6 @@ int libset_get_int (SetKey key)
 	return get_simd_k_max();
     } else if (key == SIMD_MN_MIN) {
 	return get_simd_mn_min();
-    } else if (key == BFGS_VERBSKIP) {
-	return state->bfgs_verbskip;
-    } else if (key == CSV_DIGITS) {
-	return globals.csv_digits;
-    } else if (key == FDJAC_QUAL) {
-	return state->fdjac_qual;
-    } else if (key == WILDBOOT_DIST) {
-	return state->wildboot_d;
-    } else if (key == QUANTILE_TYPE) {
-	return state->quantile_type;
-    } else if (key == PLOT_COLLECT) {
-	return globals.plot_collection;
-    } else if (key == DATACOLS) {
-	return globals.datacols;
-    } else if (key == GMP_BITS) {
-	return globals.gmp_bits;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"key %d\n", key);
@@ -1807,77 +1760,37 @@ int libset_get_int (SetKey key)
     }
 }
 
-static int intvar_min_max (SetKey key, int *min, int *max,
-			   gint8 **var8, int **var)
-{
-    *max = 100000;
-    *min = 0;
+struct int_limits {
+    SetKey key;
+    int min;
+    int max;
+};
 
-    if ((key >= GRETL_OPTIM && key < STATE_SMALL_INT_MAX) ||
-	(key > STATE_VARS_MAX && key < NS_SMALL_INT_MAX)) {
-	/* small ints */
-	if (key == HC_VERSION) {
-	    *max = 5;
-	    *var8 = &state->hc_version;
-	} else if (key == FDJAC_QUAL) {
-	    *max = 4;
-	    *var8 = &state->fdjac_qual;
-	} else if (key == LBFGS_MEM) {
-	    *min = 3;
-	    *max = 20;
-	    *var8 = &state->lbfgs_mem;
-	} else if (key == DATACOLS) {
-	    *min = 1;
-	    *max = 15;
-	    *var8 = &globals.datacols;
-	} else if (key == PLOT_COLLECT) {
-	    *max = 2;
-	    *var8 = &globals.plot_collection;
-	} else if (key == CSV_DIGITS) {
-	    *min = 1;
-	    *max = 26;
-	    *var8 = &globals.csv_digits;
-	}
-    } else {
-	/* regular ints */
-	if (key == BFGS_MAXITER) {
-	    *var = &state->bfgs_maxiter;
-	} else if (key == BOOT_ITERS) {
-	    *max = 999999;
-	    *min = 499;
-	    *var = &state->boot_iters;
-	} else if (key == BFGS_VERBSKIP) {
-	    *min = 1;
-	    *var = &state->bfgs_verbskip;
-	} else if (key == BHHH_MAXITER) {
-	    *min = 1;
-	    *var = &state->bhhh_maxiter;
-	} else if (key == RQ_MAXITER) {
-	    *min = 1;
-	    *var = &state->rq_maxiter;
-	} else if (key == GMM_MAXITER) {
-	    *min = 1;
-	    *var = &state->gmm_maxiter;
-	} else if (key == BOOTREP) {
-	    *min = 1;
-	    *var = &state->bootrep;
-	} else if (key == HORIZON) {
-	    *min = 1;
-	    *var = &state->horizon;
-	} else if (key == LOOP_MAXITER) {
-	    *max = INT_MAX - 1;
-	    *var = &state->loop_maxiter;
-	} else if (key == GMP_BITS) {
-	    *min = 256;
-	    *max = 8193;
-	    *var = &globals.gmp_bits;
-	} else {
-	    fprintf(stderr, "libset_set_int: unrecognized key %d\n", key);
-	    return E_UNKVAR;
+static void get_int_limits (SetKey key, int *min, int *max)
+{
+    static struct int_limits ilims[] = {
+	{ HC_VERSION, 0, 4 },
+	{ FDJAC_QUAL, 0, 2 },
+	{ LBFGS_MEM,  3, 20 },
+	{ DATACOLS,   1, 15 },
+	{ PLOT_COLLECT, 0, 2 },
+	{ CSV_DIGITS, 1, 25 },
+	{ BOOT_ITERS, 499, 999999 },
+	{ BFGS_VERBSKIP, 1 },
+	{ BOOTREP, 1, 99999 },
+	{ HORIZON, 1, 1000 },
+	{ LOOP_MAXITER, 1, INT_MAX - 1 },
+	{ GMP_BITS, 256, 8192 }
+    };
+    int i;
+
+    for (i=0; i<G_N_ELEMENTS(ilims); i++) {
+	if (ilims[i].key == key) {
+	    *min = ilims[i].min;
+	    *max = ilims[i].max;
+	    break;
 	}
     }
-
-    return 0;
 }
 
 /* Called from within libset.c and also from various places in
@@ -1904,20 +1817,20 @@ int libset_set_int (SetKey key, int val)
     } else if (key == OMP_N_THREADS) {
 	err = set_omp_n_threads(val);
     } else {
-	int min = 0, max = 0;
-	gint8 *ivar8 = NULL;
-	int *ivar = NULL;
+	int min = 1, max = 100000;
+	void *valp;
 
-	err = intvar_min_max(key, &min, &max, &ivar8, &ivar);
-	if (!err) {
-	    if (val < min || val >= max) {
+	get_int_limits(key, &min, &max);
+	if (val < min || val > max) {
+	    err = E_DATA;
+	} else {
+	    valp = setkey_get_target(key, SV_INT);
+	    if (valp == NULL) {
 		err = E_DATA;
-	    } else if (ivar != NULL) {
-		*ivar = val;
-	    } else if (ivar8 != NULL) {
-		*ivar8 = val;
+	    } else if (libset_small_int(key)) {
+		*(gint8 *) valp = val;
 	    } else {
-		err = E_DATA;
+		*(int *) valp = val;
 	    }
 	}
     }
@@ -2038,7 +1951,7 @@ static int check_R_setting (gint8 *var, SetKey key, int val)
     *var = val;
 #else
     if (val) {
-	const char *s = setvar_get_name(key);
+	const char *s = (key == R_FUNTIONS)? "R_functions" : "R_lib";
 
 	gretl_errmsg_sprintf("%s: not supported", s);
 	err = E_EXTERNAL;
@@ -2109,6 +2022,10 @@ int push_program_state (void)
     set_state *newstate;
     int err = 0;
 
+#if SVDEBUG
+    fprintf(stderr, "push_program_state: n_states = %d\n", n_states);
+#endif
+
     if (n_states == 0) {
 	state_stack = g_ptr_array_new();
     }
@@ -2135,6 +2052,13 @@ int push_program_state (void)
 	}
 	state = newstate;
     }
+
+#if SVDEBUG
+    fprintf(stderr, " newstate = %p, state = %p\n",
+	    (void *) newstate, (void *) state);
+    fprintf(stderr, " gmm_maxiter at %p, value %d\n",
+	    (void *) &(state->gmm_maxiter), state->gmm_maxiter);
+#endif
 
 #if PPDEBUG
     print_state_stack(0);
