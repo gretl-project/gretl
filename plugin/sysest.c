@@ -814,20 +814,20 @@ static void clean_up_models (equation_system *sys)
 
 static int perfect_collinearity_check (MODEL *pmod,
 				       DATASET *dset,
-				       int eqn)
+				       int i)
 {
     const int *d1 = gretl_model_get_list(pmod, "droplist");
     const int *d2 = gretl_model_get_list(pmod, "inst_droplist");
 
     if (d1 != NULL) {
 	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
-			     "The regressor %s had to be dropped. Please respecify the system.",
-			     eqn + 1, dset->varname[d1[1]]);
+			     "The regressor %s had to be dropped. Please "
+			     "respecify the system.", i, dset->varname[d1[1]]);
 	return E_SINGULAR;
     } else if (d2 != NULL) {
 	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
-			     "The instrument %s had to be dropped. Please respecify the system.",
-			     eqn + 1, dset->varname[d2[1]]);
+			     "The instrument %s had to be dropped. Please "
+			     "respecify the system.", i, dset->varname[d2[1]]);
 	return E_SINGULAR;
     } else {
 	return 0;
@@ -1142,7 +1142,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	}
 
 #if REJECT_COLLINEAR
-	err = perfect_collinearity_check(pmod, dset, i);
+	err = perfect_collinearity_check(pmod, dset, i+1);
 #else
 	droplist = gretl_model_get_list(pmod, "droplist");
 	if (droplist != NULL) {
