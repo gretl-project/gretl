@@ -808,40 +808,84 @@ static void clean_up_models (equation_system *sys)
     }
 }
 
-/* Given a record of the redundant instruments dropped at the tsls
-   stage, namely @idroplist, purge these series IDs from both the
-   global system instrument list (sys->ilist) and the per-equation
-   regression specification list (if the latter is given in tsls
-   form).
-*/
+#define REJECT_COLLINEAR 1
 
-static int drop_redundant_instruments (equation_system *sys,
-				       const int *idroplist,
+#if REJECT_COLLINEAR
+
+static int perfect_collinearity_check (MODEL *pmod,
+				       DATASET *dset,
 				       int eqn)
 {
-    int i, j, di, pos;
+    const int *d1 = gretl_model_get_list(pmod, "droplist");
+    const int *d2 = gretl_model_get_list(pmod, "inst_droplist");
+
+    if (d1 != NULL) {
+	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
+			     "The regressor %s had to be dropped. Please respecify the system.",
+			     eqn + 1, dset->varname[d1[1]]);
+	return E_SINGULAR;
+    } else if (d2 != NULL) {
+	gretl_errmsg_sprintf("Equation %d exhibits perfect collinearity.\n"
+			     "The instrument %s had to be dropped. Please respecify the system.",
+			     eqn + 1, dset->varname[d2[1]]);
+	return E_SINGULAR;
+    } else {
+	return 0;
+    }
+}
+
+#else
+
+/* Given a record of redundant regressors or instruments dropped
+   at the initial OLS or TSLS stage, namely @droplist, purge these
+   series IDs from both the relevant system lists. The @mk pointer
+   argument tells us whether we're looking at regular regressors
+   (mk non-NULL) or instruments.
+*/
+
+static int drop_redundant_variables (equation_system *sys,
+				     const int *droplist,
+				     int eqn, int *mk)
+{
+    int i, j, di, pmax, pmin = 0;
+    int *eqnlist = sys->lists[eqn];
+    int insts = (mk == NULL);
     int err = 0;
 
-    for (i=1; i<=idroplist[0]; i++) {
-	di = idroplist[i];
-	pos = in_gretl_list(sys->ilist, di);
-	if (pos > 0) {
-	    gretl_list_delete_at_pos(sys->ilist, pos);
-	} else {
-	    err = 1;
+    if (insts) {
+	for (i=1; i<=droplist[0]; i++) {
+	    di = droplist[i];
+	    j = in_gretl_list(sys->ilist, di);
+	    if (j > 0) {
+		gretl_list_delete_at_pos(sys->ilist, j);
+	    } else {
+		err = 1;
+	    }
 	}
     }
 
-    pos = gretl_list_separator_position(sys->lists[eqn]);
+    j = gretl_list_separator_position(eqnlist);
 
-    if (pos > 0) {
-	int *eqnlist = sys->lists[eqn];
+    if (insts) {
+	/* instruments */
+	if (j > 0) {
+	    pmin = j + 1;
+	    pmax = eqnlist[0];
+	}
+    } else {
+	pmin = 2;
+	pmax = (j > 0) ? j - 1 : eqnlist[0];
+    }
 
-	for (i=1; i<=idroplist[0]; i++) {
-	    di = idroplist[i];
-	    for (j=pos+1; j<=eqnlist[0]; j++) {
+    if (pmin > 0) {
+	for (i=1; i<=droplist[0]; i++) {
+	    di = droplist[i];
+	    for (j=pmax; j>=pmin; j--) {
 		if (eqnlist[j] == di) {
 		    gretl_list_delete_at_pos(eqnlist, j);
+		    if (mk != NULL) {
+			mk -= 1;
+		    }
 		    break;
 		}
 	    }
@@ -850,6 +894,8 @@ static int drop_redundant_instruments (equation_system *sys,
 
     return err;
 }
+
+#endif /* REJECT_COLLINEAR or not */
 
 /* options to be passed in running initial 2SLS */
 
@@ -1067,9 +1113,11 @@ int system_estimate (equation_system *sys, DATASET *dset,
     */
 
     for (i=0; i<sys->neqns; i++) {
+#if !REJECT_COLLINEAR
+	const int *droplist = NULL;
+#endif
 	int freeit = 0;
 	int *list = system_model_list(sys, i, &freeit);
-	const int *idroplist = NULL;
 	MODEL *pmod = models[i];
 
 	if (list == NULL) {
@@ -1093,10 +1141,18 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	    break;
 	}
 
-	idroplist = gretl_model_get_list(pmod, "inst_droplist");
-	if (idroplist != NULL) {
-	    drop_redundant_instruments(sys, idroplist, i);
+#if REJECT_COLLINEAR
+	err = perfect_collinearity_check(pmod, dset, i);
+#else
+	droplist = gretl_model_get_list(pmod, "droplist");
+	if (droplist != NULL) {
+	    drop_redundant_variables(sys, droplist, i, &mk);
 	}
+	droplist = gretl_model_get_list(pmod, "inst_droplist");
+	if (droplist != NULL) {
+	    drop_redundant_variables(sys, droplist, i, NULL);
+	}
+#endif
 
 	pmod->ID = i;
 	pmod->aux = AUX_SYS;
