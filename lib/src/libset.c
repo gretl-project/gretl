@@ -2038,7 +2038,8 @@ static int check_R_setting (gint8 *var, SetKey key, int val)
     *var = val;
 #else
     if (val) {
-	const char *s = setvar_get_name(key);
+	const char *s =
+	    (key == R_FUNTIONS)? "R_functions" : "R_lib";
 
 	gretl_errmsg_sprintf("%s: not supported", s);
 	err = E_EXTERNAL;
