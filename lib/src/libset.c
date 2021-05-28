@@ -212,7 +212,7 @@ setvar setvars[] = {
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || \
-			   k==R_LIB || k=LOGSTAMP)
+			   k==R_LIB || k==LOGSTAMP)
 #define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
@@ -1821,6 +1821,8 @@ int libset_get_int (SetKey key)
 	return globals.datacols;
     } else if (key == GMP_BITS) {
 	return globals.gmp_bits;
+    } else if (key == LOGLEVEL) {
+	return globals.loglevel;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"key %d\n", key);
@@ -2089,6 +2091,9 @@ int libset_set_bool (SetKey key, int val)
 	return check_R_setting(&globals.R_lib, key, val);
     } else if (key == USE_DCMT) {
 	return gretl_rand_set_dcmt(val);
+    } else if (key == LOGSTAMP) {
+	globals.logstamp = val;
+	return 0;
     }
 
     if (val) {
