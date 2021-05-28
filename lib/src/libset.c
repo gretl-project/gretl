@@ -236,7 +236,7 @@ setvar setvars[] = {
 };
 
 #define libset_boolvar(k) (k < STATE_FLAG_MAX || k==R_FUNCTIONS || k==R_LIB)
-#define libset_double(k) (k > STATE_INT_MAX && k < STATE_FLOAT_MAX)
+#define libset_double(k) (k > SEED && k < STATE_FLOAT_MAX)
 #define libset_int(k) ((k > STATE_FLAG_MAX && k < STATE_INT_MAX) || \
 		       (k > STATE_VARS_MAX && k < NS_INT_MAX))
 
@@ -257,7 +257,7 @@ setvar setvars[] = {
 			 k == GRETL_ASSERT || \
 			 k == PLOT_COLLECT)
 
-/* global state */
+/* the current set of state variables */
 set_state *state;
 
 static const char *hac_lag_string (void);
@@ -265,6 +265,10 @@ static int real_libset_read_script (const char *fname,
 				    PRN *prn);
 static int libset_get_scalar (SetKey key, const char *arg,
 			      int *pi, double *px);
+static int libset_int_min (SetKey key);
+
+/* In case we have a SetKey and want to print the
+   associated userspace keyword. */
 
 static const char *setkey_get_name (SetKey key)
 {
@@ -277,6 +281,10 @@ static const char *setkey_get_name (SetKey key)
     }
     return NULL;
 }
+
+/* Set up a hash table to map from userspace keywords
+   to setvar structs.
+*/
 
 static GHashTable *libset_hash_init (void)
 {
@@ -318,18 +326,22 @@ static setvar *get_setvar_by_name (const char *name)
 
 static void *setvar_get_target (setvar *sv)
 {
+    void *p;
+
     if (sv->offset == 0 || sv->key > GMP_BITS) {
-	/* FIXME criterion? */
-	return NULL;
-    } else {
-	void *p = (sv->key < STATE_VARS_MAX)? (void *) state : (void *) &globals;
-#if SVDEBUG
-	fprintf(stderr, "setvar_get_target: '%s': %s=%p, offset=%lu, ret=%p\n",
-		sv->name, sv->key < STATE_VARS_MAX ? "state" : "globals",
-		(void *) p, sv->offset, p + sv->offset);
-#endif
-	return p + sv->offset;
+	/* FIXME criterion? (0 offset is legit for "debug") */
+	if (sv->key != GRETL_DEBUG) {
+	    return NULL;
+	}
     }
+
+    p = (sv->key < STATE_VARS_MAX)? (void *) state : (void *) &globals;
+#if SVDEBUG
+    fprintf(stderr, "setvar_get_target: '%s': %s=%p, offset=%lu, ret=%p\n",
+	    sv->name, sv->key < STATE_VARS_MAX ? "state" : "globals",
+	    (void *) p, sv->offset, p + sv->offset);
+#endif
+    return p + sv->offset;
 }
 
 #define INTS_OFFSET (1 + log2(STATE_FLAG_MAX))
@@ -670,6 +682,8 @@ int get_mp_bits (void)
     return DEFAULT_MP_BITS;
 }
 
+/* start accessors for libset matrices */
+
 gretl_matrix *get_initvals (void)
 {
     gretl_matrix *iv;
@@ -736,6 +750,8 @@ int get_matrix_mask_nobs (void)
 
     return n;
 }
+
+/* end accessors for libset matrices */
 
 int get_hac_lag (int T)
 {
@@ -1014,6 +1030,7 @@ static int parse_libset_int_code (SetKey key, const char *val)
 	    }
 	    *(gint8 *) valp = ival;
 	} else if (key == MAX_VERBOSE) {
+	    /* special: bare integers allowed? */
 	    if (strcmp(val, "0") == 0 || strcmp(val, "1") == 0) {
 		state->max_verbose = atoi(val);
 		err = 0;
@@ -1392,6 +1409,8 @@ static int libset_query_settings (setvar *sv, PRN *prn)
 
 	if (is_unset(k)) {
 	    pprintf(prn, "%s: positive integer, currently unset\n", sv->name);
+	} else if (libset_int_min(sv->key) == 0) {
+	    pprintf(prn, "%s: non-negative integer, currently %d\n", sv->name, k);
 	} else {
 	    pprintf(prn, "%s: positive integer, currently %d\n", sv->name, k);
 	}
@@ -1717,7 +1736,8 @@ int libset_set_double (SetKey key, double val)
     if (valp != NULL) {
 	*(double *) valp = val;
     } else {
-	fprintf(stderr, "libset_set_double: unrecognized key %d\n", key);
+	fprintf(stderr, "libset_set_double: unrecognized key %d (%s)\n",
+		key, setkey_get_name(key));
 	err = E_UNKVAR;
     }
 
@@ -1766,17 +1786,18 @@ struct int_limits {
     int max;
 };
 
-static void get_int_limits (SetKey key, int *min, int *max)
+static int get_int_limits (SetKey key, int *min, int *max)
 {
     static struct int_limits ilims[] = {
 	{ HC_VERSION, 0, 4 },
 	{ FDJAC_QUAL, 0, 2 },
 	{ LBFGS_MEM,  3, 20 },
-	{ DATACOLS,   1, 15 },
+	{ GRETL_DEBUG, 0, 10 },
+	{ DATACOLS,    1, 15 },
 	{ PLOT_COLLECT, 0, 2 },
 	{ CSV_DIGITS, 1, 25 },
 	{ BOOT_ITERS, 499, 999999 },
-	{ BFGS_VERBSKIP, 1 },
+	{ BFGS_VERBSKIP, 1, 1000 },
 	{ BOOTREP, 1, 99999 },
 	{ HORIZON, 1, 1000 },
 	{ LOOP_MAXITER, 1, INT_MAX - 1 },
@@ -1788,9 +1809,20 @@ static void get_int_limits (SetKey key, int *min, int *max)
 	if (ilims[i].key == key) {
 	    *min = ilims[i].min;
 	    *max = ilims[i].max;
+	    return 1;
 	    break;
 	}
     }
+
+    return 0;
+}
+
+static int libset_int_min (SetKey key)
+{
+    int m1, m0 = 1;
+
+    get_int_limits(key, &m0, &m1);
+    return m0;
 }
 
 /* Called from within libset.c and also from various places in
