@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-04-18 18:56-0400\n"
-"PO-Revision-Date: 2021-04-27 00:36-0300\n"
+"PO-Revision-Date: 2021-05-28 13:02-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 2.4.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -1015,7 +1015,7 @@ msgstr "ERRO: variável %d (%s), observação %d, esperado valor numérico\n"
 
 #: lib/src/csvdata.c:2238
 msgid "allocating string table\n"
-msgstr "alocando tabela de texto (string)\n"
+msgstr "alocando tabela de  (string)\n"
 
 #: lib/src/csvdata.c:2663
 msgid ""
@@ -1500,8 +1500,7 @@ msgstr "O comando 'dataset' não está disponível dentro de funções"
 
 #: lib/src/dataset.c:3416
 msgid "Sorry, this command is not available in loop mode\n"
-msgstr ""
-"Infelizmente este comando não está disponível em modo de ciclo (\"loop\").\n"
+msgstr "Infelizmente este comando não está disponível em modo de loop\n"
 
 #: lib/src/dataset.c:3431
 msgid "The data set is currently sub-sampled"
@@ -4795,7 +4794,7 @@ msgstr "Modelo escrito em %s\n"
 
 #: lib/src/interact.c:3311
 msgid "You can't end a loop here, you haven't started one\n"
-msgstr "Não pode terminar um ciclo (\"loop\") aqui, nenhum foi iniciado\n"
+msgstr "Não pode terminar um loop aqui, nenhum foi iniciado\n"
 
 #: lib/src/interact.c:3581
 #, c-format
@@ -4813,7 +4812,7 @@ msgstr "Não foi possível formatar o modelo\n"
 #: lib/src/interact.c:3994 cli/gretlcli.c:1286 cli/gretlcli-mpi.c:815
 #: gui/library.c:10584
 msgid "Infinite loop detected in script\n"
-msgstr "Ciclo (\"loop\") infinito detectado no script\n"
+msgstr "Loop infinito detectado no script\n"
 
 #: lib/src/interact.c:4035 cli/gretlcli.c:943 cli/gretlcli-mpi.c:578
 #, c-format
@@ -4857,7 +4856,7 @@ msgstr "teste de ordem %d: z = %.3f [%.3f]"
 
 #: lib/src/libglue.c:338
 msgid "Distance criterion based on first-order correlation"
-msgstr "Critério de distância baseado em correlação de primeira ordem"
+msgstr "Critério de distância baseado na correlação de primeira ordem"
 
 #: lib/src/libglue.c:340
 #, c-format
@@ -6323,7 +6322,7 @@ msgstr "'%s': não é um escalar"
 #: lib/src/monte_carlo.c:404 lib/src/monte_carlo.c:446
 #: lib/src/monte_carlo.c:480 lib/src/monte_carlo.c:3035
 msgid "error evaluating loop condition"
-msgstr "erro ao avaliar a condição de ciclo (\"loop\")"
+msgstr "erro ao avaliar a condição de loop"
 
 #: lib/src/monte_carlo.c:741
 #, c-format
@@ -6350,7 +6349,7 @@ msgstr "É possível redefinir \"set loop_maxiter\" para aumentar o limite"
 
 #: lib/src/monte_carlo.c:2311
 msgid "progressive loop: model must be of constant size"
-msgstr "Ciclo (\"loop\") progressivo: modelo deve ser de tamanho constante"
+msgstr "loop progressivo: modelo deve ser de tamanho constante"
 
 #: lib/src/monte_carlo.c:2494
 #, c-format
@@ -6772,7 +6771,7 @@ msgstr "A opção '--%s' requer um parâmetro"
 #: lib/src/options.c:1797
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
-msgstr "Aviso: opção%s ignorada fora do ciclo (\"loop\")"
+msgstr "Aviso: opção%s ignorada fora do loop"
 
 #: lib/src/options.c:1929 lib/src/subsample.c:2704
 #, c-format
@@ -8240,8 +8239,7 @@ msgstr "O comando '%s' foi ignorado; não é válido em um sistema de equações
 
 #: cli/gretlcli.c:1178 gui/library.c:10441
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
-msgstr ""
-"Inserir instruções para ciclo (\"loop\"). Escrever 'endloop' para sair\n"
+msgstr "Inserir instruções para loop. Escrever 'endloop' para sair\n"
 
 #: cli/gretlcli.c:1221 gui/library.c:7436 gui/library.c:10506
 msgid "Take note: variables have been renumbered"
@@ -8307,7 +8305,7 @@ msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>,\n"
 "Henrique Andrade <henrique.coelho@economia.gov.br> e\n"
 "Raquel Guimarães.\n"
-"(atualizada em 27 de abril de 2021)"
+"(atualizada em 28 de maio de 2021)"
 
 #: gui/about.c:201
 msgid "News"
@@ -10709,7 +10707,7 @@ msgstr "Correlação de primeira-ordem"
 
 #: gui/dialogs.c:7419
 msgid "Multiple of std. dev."
-msgstr "Múltiplo do desv. padrão"
+msgstr "Múltiplo do desvio padrão"
 
 #: gui/dialogs.c:7433
 msgid "Asymptotic p-values"
@@ -11455,7 +11453,7 @@ msgstr "Favor fornecer um endereço de email válido"
 #: gui/fnsave.c:821
 msgid "Invalid version string: use numbers and '.' only"
 msgstr ""
-"Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
+"Valor de texto inválido para número de versão: use apenas números e '.'"
 
 #: gui/fnsave.c:826
 msgid "Please select a tag (or two) for this package"
@@ -14010,7 +14008,7 @@ msgstr "_Periodograma residual"
 
 #: gui/gui_utils.c:3270
 msgid "_Spectrum vs sample periodogram"
-msgstr "\"E_spectro versus periodograma amostral"
+msgstr "E_spectro versus periodograma amostral"
 
 #: gui/gui_utils.c:3275
 msgid "_MIDAS coefficients"
@@ -14349,7 +14347,7 @@ msgstr "Funções de acesso"
 
 #: gui/helpfiles.c:327 gui/textbuf.c:2328
 msgid "Built-in strings"
-msgstr "Strings integradas"
+msgstr "Strin de texto integradas"
 
 #: gui/helpfiles.c:329
 msgid "Data utilities"
@@ -14397,7 +14395,7 @@ msgstr "Espaço de estados"
 
 #: gui/helpfiles.c:361
 msgid "Strings"
-msgstr "Cadeias de caracteres"
+msgstr "Strings"
 
 #: gui/helpfiles.c:363 gui/settings.c:1427
 msgid "MPI"
