@@ -387,7 +387,7 @@ static const char *ast_strs[] = {"off", "warn", "stop", NULL};
 static const char *plc_strs[] = {"off", "auto", "on", NULL};
 static const char *csv_strs[] = {"comma", "space", "tab", "semicolon", NULL};
 static const char *ahl_strs[] = {"nw1", "nw2", "nw3", NULL};
-static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", "none", NULL};
+static const char *llv_strs[] = {"debug", "info", "warn", "error", "critical", NULL};
 
 struct codevar_info {
     SetKey key;
@@ -1029,6 +1029,7 @@ static int parse_libset_int_code (SetKey key, const char *val)
 	err = parse_hac_lag_variant(val);
     } else if (coded_intvar(key)) {
 	const char **strs = libset_option_strings(key);
+	void *valp = setkey_get_target(key, SV_INT);
 	int ival = -1;
 
 	for (i=0; strs[i] != NULL; i++) {
@@ -1038,8 +1039,6 @@ static int parse_libset_int_code (SetKey key, const char *val)
 	    }
 	}
 	if (ival >= 0) {
-	    void *valp = setkey_get_target(key, SV_INT);
-
 	    err = 0;
 	    if (key == GARCH_ALT_VCV) {
 		ival = (ival == 1)? ML_BW : ML_QML;
@@ -1053,7 +1052,7 @@ static int parse_libset_int_code (SetKey key, const char *val)
 
 	    for (i=0; i<n; i++) {
 		if (val[0] == i + 48 && val[1] == '\0') {
-		    state->max_verbose = i;
+		    *(gint8 *) valp = i;
 		    err = 0;
 		    break;
 		}
@@ -1815,7 +1814,7 @@ static int get_int_limits (SetKey key, int *min, int *max)
 	{ HC_VERSION, 0, 4 },
 	{ FDJAC_QUAL, 0, 2 },
 	{ LBFGS_MEM,  3, 20 },
-	{ GRETL_DEBUG, 0, 10 },
+	{ GRETL_DEBUG, 0, 4 },
 	{ DATACOLS,    1, 15 },
 	{ PLOT_COLLECT, 0, 2 },
 	{ CSV_DIGITS, 1, 25 },
